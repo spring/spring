@@ -106,6 +106,7 @@ void AMoveType::DependentDied(CObject* o)
 {
 	if (o == reservedPad) {
 		reservedPad = NULL;
+		padStatus = 0;
 	}
 }
 

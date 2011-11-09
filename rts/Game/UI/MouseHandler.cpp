@@ -651,11 +651,8 @@ void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebin
 
 	if (hardwareCursor && !hide && currentCursor) {
 		if (currentCursor->hwValid) {
-			if (hwHide) {
-				SDL_ShowCursor(SDL_ENABLE);
-				hwHide = false;
-			}
-			currentCursor->BindHwCursor();
+			hwHide = false;
+			currentCursor->BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
 		} else {
 			hwHide = true;
 			SDL_ShowCursor(SDL_DISABLE);
