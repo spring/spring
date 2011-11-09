@@ -37,12 +37,12 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 	oldGoalPos(owner? owner->pos : ZeroVector),
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
 	wantedHeight(80.0f),
+	orgWantedHeight(0.0f),
 	collide(true),
 	useSmoothMesh(false),
 	autoLand(true),
 	lastColWarning(NULL),
 	lastColWarningType(0),
-	orgWantedHeight(0.0f),
 	lastFuelUpdateFrame(gs->frameNum)
 {
 	useHeading = false;
