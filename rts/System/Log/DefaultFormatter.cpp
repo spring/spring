@@ -59,12 +59,9 @@ static void log_formatter_createPrefix_default(char* prefix,
 	prefix[0] = '\0';
 
 	// HACK this stuff should be done later, closer to the point where it is written to a file or the console
-	#ifndef NDEBUG
 	if (frameNum != NULL) {
 		SNPRINTF(prefix, prefixSize, "[f=%07d] ", *frameNum);
 	}
-	#endif
-
 	if (!LOG_SECTION_IS_DEFAULT(section)) {
 		section = log_util_prepareSection(section);
 		STRCAT_T(prefix, prefixSize, "[");
