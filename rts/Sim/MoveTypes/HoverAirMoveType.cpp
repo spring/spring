@@ -25,8 +25,6 @@ CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(bankingAllowed),
 	CR_MEMBER(airStrafe),
 
-	CR_MEMBER(orgWantedHeight),
-
 	CR_MEMBER(circlingPos),
 	CR_MEMBER(goalDistance),
 	CR_MEMBER(waitCounter),
@@ -66,7 +64,6 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	loadingUnits(false),
 	bankingAllowed(true),
 	airStrafe(owner->unitDef->airStrafe),
-	orgWantedHeight(0.0f),
 	circlingPos(ZeroVector),
 	goalDistance(1),
 	waitCounter(0),
@@ -927,17 +924,12 @@ void CHoverAirMoveType::SetDefaultAltitude(float altitude)
 
 void CHoverAirMoveType::DependentDied(CObject* o)
 {
-	if (o == reservedPad) {
-		reservedPad = NULL;
-		SetState(AIRCRAFT_FLYING);
-		goalPos = oldGoalPos;
-	}
 	if (o == lastColWarning) {
 		lastColWarning = NULL;
 		lastColWarningType = 0;
 	}
 
-	AMoveType::DependentDied(o);
+	AAirMoveType::DependentDied(o);
 }
 
 void CHoverAirMoveType::Takeoff()
