@@ -69,18 +69,21 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	maxHeightMapIdx = ((header.mapx + 1) * (header.mapy + 1)) - 1;
 	heightMapSizeX  =  (header.mapx + 1);
 
-	cornerHeightMapSynced.resize((width + 1) * (height + 1));
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	cornerHeightMapUnsynced.resize((width + 1) * (height + 1));
-#endif
-
 	groundDrawer = NULL;
+
+	cornerHeightMapSynced.resize((width + 1) * (height + 1));
 
 	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;
 	const float maxH = smf.maxHeightOverride ? smf.maxHeight : header.maxHeight;
 
 	file.ReadHeightmap(&cornerHeightMapSynced[0],  minH, (maxH - minH) / 65536.0f);
 	CReadMap::Initialize();
+
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	//FIXME UHM is later a 2nd time initialized in CReadMap::Initialize() via UpdateHeightMapSynced(0, 0, gs->mapx, gs->mapy);
+	// merge them some way so UHM & shadingtex is available from the time readmap got created
+	cornerHeightMapUnsynced = cornerHeightMapSynced;
+#endif
 
 
 	for (unsigned int a = 0; a < mapname.size(); ++a) {
