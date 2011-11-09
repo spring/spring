@@ -134,7 +134,8 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 						if (md != NULL) {
 							const float height = hm[hmIdx];
-							const float slope = 1.0f - cn[cnIdx].y;
+							const float rawSlope = 1.0f - cn[cnIdx].y;
+							const float modSlope = Clamp(rawSlope * md->slopeMod, 0.0f, 1.0f);
 							float m = 1.0f;
 
 							if (md->moveFamily == MoveData::Ship) {
@@ -142,7 +143,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 								m = (height >= (-md->depth))? 0.0f: m;
 							} else {
 								// check depth and slope (if hover, only over land)
-								m = std::max(0.0f, 1.0f - (slope / (md->maxSlope + 0.1f)));
+								m = std::max(0.0f, 1.0f - (modSlope / (md->maxSlope + 0.1f)));
 								m = (height < (-md->depth))? 0.0f: m;
 								m = (height <= 0.0f && md->moveFamily == MoveData::Hover)? 1.0f: m;
 							}
@@ -152,13 +153,13 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 							if (los || loshandler->InLos(sqx, sqy, gu->myAllyTeam)) {
 								float fact = 1.0f;
-								if (md->moveMath->IsBlocked(*md, sqx, sqy) & CMoveMath::BLOCK_STRUCTURE)
+								if (md->moveMath->IsBlocked(*md, sqx,     sqy    ) & CMoveMath::BLOCK_STRUCTURE)
 									fact -= 0.25f;
-								if (md->moveMath->IsBlocked(*md, sqx+1, sqy) & CMoveMath::BLOCK_STRUCTURE)
+								if (md->moveMath->IsBlocked(*md, sqx + 1, sqy    ) & CMoveMath::BLOCK_STRUCTURE)
 									fact -= 0.25f;
-								if (md->moveMath->IsBlocked(*md, sqx, sqy+1) & CMoveMath::BLOCK_STRUCTURE)
+								if (md->moveMath->IsBlocked(*md, sqx,     sqy + 1) & CMoveMath::BLOCK_STRUCTURE)
 									fact -= 0.25f;
-								if (md->moveMath->IsBlocked(*md, sqx+1, sqy+1) & CMoveMath::BLOCK_STRUCTURE)
+								if (md->moveMath->IsBlocked(*md, sqx + 1, sqy + 1) & CMoveMath::BLOCK_STRUCTURE)
 									fact -= 0.25f;
 								m *= fact;
 							}
