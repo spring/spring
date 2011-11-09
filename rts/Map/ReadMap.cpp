@@ -186,6 +186,8 @@ void CReadMap::Initialize()
 
 	CalcHeightmapChecksum();
 	UpdateHeightMapSynced(0, 0, gs->mapx, gs->mapy);
+	//FIXME can't call that yet cause sky & skyLight aren't created yet (crashes in SMFReadMap.cpp)
+	//UpdateDraw(); 
 }
 
 
