@@ -19,8 +19,7 @@ class CInterceptHandler : public boost::noncopyable
 	CR_DECLARE(CInterceptHandler)
 
 public:
-	CInterceptHandler();
-	~CInterceptHandler();
+	void Update();
 
 	void AddInterceptorWeapon(CWeapon* weapon);
 	void RemoveInterceptorWeapon(CWeapon* weapon);
@@ -33,7 +32,7 @@ public:
 
 private:
 	std::list<CWeapon*> interceptors;
-	std::list<CPlasmaRepulser*> plasmaRepulsors;
+	std::list<CPlasmaRepulser*> repulsors;
 };
 
 extern CInterceptHandler interceptHandler;
