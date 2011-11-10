@@ -43,8 +43,8 @@ RE_STACKFRAME = re.compile(RE_PREFIX + r'\(\d+\)\s+(.*(?:\.exe|\.dll))(?:\([^)]*
 ## regex for RC12 versions: first two parts are
 ## mandatory, last two form one optional group
 RE_VERSION_NAME_PREFIX = "([sS]pring)?"
-RE_VERSION_MAJOR_PATCH = "[0-9]*\.[0-9]*"
-RE_VERSION_COMMIT_HASH = "(\.[0-9]*-[0-9]*-g[0-9a-fA-F]*"
+RE_VERSION_MAJOR_PATCH = "[0-9]*\.[0-9]*(\.1)?"
+RE_VERSION_COMMIT_HASH = "(-[0-9]*-g[0-9a-fA-F]*"
 RE_VERSION_BRANCH_NAME = "[a-zA-Z\-]*)?"
 RE_VERSION =                          \
 	RE_VERSION_NAME_PREFIX + "[ ]*" + \
