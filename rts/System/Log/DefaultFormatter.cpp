@@ -101,10 +101,10 @@ char* log_formatter_getFrame_prefix()
 void log_formatter_format(char* record, size_t recordSize,
 		const char* section, int level, const char* fmt, va_list arguments)
 {
-	char prefix[64];
+	char prefix[128];
 	log_formatter_createPrefix(prefix, sizeof(prefix), section, level);
 
-	char message[1024];
+	char message[16384];
 	VSNPRINTF(message, sizeof(message), fmt, arguments);
 
 	SNPRINTF(record, recordSize, "%s%s", prefix, message);
