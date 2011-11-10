@@ -71,6 +71,7 @@ cd ${SOURCEDIR}
 
 # create symlinks required for building installer
 rm -f ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
+mkdir -p ${SOURCEDIR}/installer/downloads/
 ln -sv ${MIN_PORTABLE_ARCHIVE} ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
 
 rm -f  ${SOURCEDIR}/installer/downloads/ArchiveMover_testing.7z
