@@ -38,6 +38,8 @@ void CInterceptHandler::Update() {
 		const CUnit* wOwner = w->owner;
 		const float3& wOwnerPos = wOwner->pos;
 
+		printf("[IH::Up][f=%d] w=%p\n", gs->frameNum, w);
+
 		for (pit = interceptables.begin(); pit != interceptables.end(); ++pit) {
 			CWeaponProjectile* p = pit->second;
 			const WeaponDef* pDef = p->weaponDef;
@@ -84,9 +86,11 @@ void CInterceptHandler::Update() {
 				continue; // 3
 			}
 
+			const float pSpeed = p->speed.Length();
 			const float3 pCurSeparationVec = wOwnerPos - pFlightPos;
-			const float pMinSeparationTime = Clamp(pCurSeparationVec.dot(p->dir), 0.0f, 1.0f);
-			const float3 pMinSeparationVec = pCurSeparationVec - (p->speed * pMinSeparationTime);
+			const float pMinSeparationDist = std::max(pCurSeparationVec.dot(p->dir), 0.0f);
+			const float3 pMinSeparationPos = pFlightPos + (p->dir * pMinSeparationDist);
+			const float3 pMinSeparationVec = wOwnerPos - pMinSeparationPos;
 
 			if (pMinSeparationVec.SqLength() < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
