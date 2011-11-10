@@ -95,6 +95,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
@@ -1434,6 +1435,7 @@ void CGame::SimFrame() {
 	GUnitScriptEngine.Tick(33);
 	wind.Update();
 	loshandler->Update();
+	interceptHandler.Update();
 
 	teamHandler->GameFrame(gs->frameNum);
 	playerHandler->GameFrame(gs->frameNum);
