@@ -86,7 +86,6 @@ void CInterceptHandler::Update() {
 				continue; // 3
 			}
 
-			const float pSpeed = p->speed.Length();
 			const float3 pCurSeparationVec = wOwnerPos - pFlightPos;
 			const float pMinSeparationDist = std::max(pCurSeparationVec.dot(p->dir), 0.0f);
 			const float3 pMinSeparationPos = pFlightPos + (p->dir * pMinSeparationDist);
