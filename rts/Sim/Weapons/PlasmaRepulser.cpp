@@ -28,11 +28,10 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(rechargeDelay),
 	CR_MEMBER(isEnabled),
 	CR_MEMBER(wasDrawn),
-	CR_MEMBER(incoming),
 	CR_MEMBER(hasGfx),
 	CR_MEMBER(visibleShieldParts),
 	CR_RESERVED(8)
-	));
+));
 
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
@@ -139,8 +138,8 @@ void CPlasmaRepulser::Update(void)
 		return;
 	}
 
-	for (std::list<CWeaponProjectile*>::iterator pi = incoming.begin(); pi != incoming.end(); ++pi) {
-		CWeaponProjectile* pro = *pi;
+	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
+		CWeaponProjectile* pro = pi->second;
 
 		if (!pro->checkCol) {
 			continue;
@@ -276,7 +275,7 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 	// it should probably be: radius + closeLength / |projectile->speed| * |owner->speed|,
 	// but this still doesn't solve anything for e.g. teleporting shields.
 	if (closeDist < Square(radius * 1.5f)) {
-		incoming.push_back(p);
+		incomingProjectiles[p->id] = p;
 		AddDeathDependence(p, DEPENDENCE_REPULSED);
 	}
 }
@@ -323,8 +322,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 
 void CPlasmaRepulser::DependentDied(CObject* o)
 {
-	incoming.remove((CWeaponProjectile*)o);
-	ListErase<CWeaponProjectile*>(hasGfx, (CWeaponProjectile*)o);
+	ListErase<CWeaponProjectile*>(hasGfx, (CWeaponProjectile*) o);
 	CWeapon::DependentDied(o);
 }
 

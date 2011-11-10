@@ -701,20 +701,17 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
 			// check if we have valid target parameter and that we aren't attacking ourselves
-			if (targetUnit != NULL && targetUnit != owner) {
-				float3 fix = targetUnit->pos + owner->posErrorVector * 128;
-				float3 diff = float3(fix - owner->pos).Normalize();
+			if (targetUnit == NULL) { StopMove(); FinishCommand(); return; }
+			if (targetUnit == owner) { StopMove(); FinishCommand(); return; }
+			if (targetUnit->GetTransporter() != NULL) { StopMove(); FinishCommand(); return; }
 
-				SetGoal(fix - diff * targetUnit->radius, owner->pos);
+			const float3 fix = targetUnit->pos + owner->posErrorVector * 128;
+			const float3 diff = (fix - owner->pos).Normalize();
 
-				SetOrderTarget(targetUnit);
-				inCommand = true;
-			} else {
-				// unit may not fire on itself, cancel order
-				StopMove();
-				FinishCommand();
-				return;
-			}
+			SetGoal(fix - diff * targetUnit->radius, owner->pos);
+			SetOrderTarget(targetUnit);
+
+			inCommand = true;
 		}
 		else if (c.params.size() >= 3) {
 			// user gave force-fire attack command

@@ -24,7 +24,7 @@ fi
 
 
 CONFIG=${1:-default}
-BRANCH=${2:-master}
+BRANCH=${2:-develop}
 shift 2
 
 REV=$(git describe --tags)

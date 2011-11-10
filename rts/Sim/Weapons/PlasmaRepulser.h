@@ -19,10 +19,9 @@ public:
 	void Update(void);
 	void NewProjectile(CWeaponProjectile* p);
 	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);
-	bool BeamIntercepted(CWeapon* emitter, float damageMultiplier = 1.0f);		//returns true if its a repulsing shield
+	bool BeamIntercepted(CWeapon* emitter, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
 	void Init(void);
 
-	std::list<CWeaponProjectile*> incoming;
 	std::list<CWeaponProjectile*> hasGfx;
 	std::list<CShieldPartProjectile*> visibleShieldParts;
 
