@@ -74,7 +74,6 @@ class CSphereParticleSpawner : public CSimpleParticleSystem
 
 public:
 	CSphereParticleSpawner();
-	~CSphereParticleSpawner();
 
 	void Draw() {}
 	void Update() {}
