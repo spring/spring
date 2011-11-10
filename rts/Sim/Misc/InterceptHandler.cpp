@@ -38,17 +38,11 @@ void CInterceptHandler::Update() {
 		const CUnit* wOwner = w->owner;
 		const float3& wOwnerPos = wOwner->pos;
 
-		std::map<int, CWeaponProjectile*>& incomingProjectiles = w->incomingProjectiles;
-
-		for (pit = incomingProjectiles.begin(); pit != incomingProjectiles.end(); ++pit) {
+		for (pit = interceptables.begin(); pit != interceptables.end(); ++pit) {
 			CWeaponProjectile* p = pit->second;
 			const WeaponDef* pDef = p->weaponDef;
 
-			// <incomingProjectiles> might contain non-interceptable
-			// projectiles too (if <w> is interceptor *and* repulsor)
-			if ((pDef->targetable & wDef->interceptor) == 0)
-				continue;
-			if (incomingProjectiles.find(p->id) != incomingProjectiles.end())
+			if (w->incomingProjectiles.find(p->id) != w->incomingProjectiles.end())
 				continue;
 
 			const CUnit* pOwner = p->owner();
@@ -73,13 +67,21 @@ void CInterceptHandler::Update() {
 			const float3& pTargetPos = p->targetPos;
 
 			if ((pFlightPos - wOwnerPos).SqLength2D() < Square(wDef->coverageRange)) {
-				incomingProjectiles[p->id] = p; continue; // 1
+				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
+				w->incomingProjectiles[p->id] = p;
+				continue; // 1
 			}
+
 			if ((pTargetPos - wOwnerPos).SqLength2D() < Square(wDef->coverageRange)) {
-				incomingProjectiles[p->id] = p; continue; // 2
+				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
+				w->incomingProjectiles[p->id] = p;
+				continue; // 2
 			}
+
 			if ((pImpactPos - wOwnerPos).SqLength2D() < Square(wDef->coverageRange)) {
-				incomingProjectiles[p->id] = p; continue; // 3
+				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
+				w->incomingProjectiles[p->id] = p;
+				continue; // 3
 			}
 
 			const float3 pCurSeparationVec = wOwnerPos - pFlightPos;
@@ -87,7 +89,9 @@ void CInterceptHandler::Update() {
 			const float3 pMinSeparationVec = pCurSeparationVec - (p->speed * pMinSeparationTime);
 
 			if (pMinSeparationVec.SqLength() < Square(wDef->coverageRange)) {
-				incomingProjectiles[p->id] = p; continue; // 4
+				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
+				w->incomingProjectiles[p->id] = p;
+				continue; // 4
 			}
 		}
 	}
@@ -125,6 +129,9 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target, const floa
 		w->incomingProjectiles[target->id] = target;
 		w->AddDeathDependence(target, CObject::DEPENDENCE_INTERCEPT);
 	}
+
+	// keep track of all interceptable projectiles
+	interceptables[target->id] = target;
 }
 
 
