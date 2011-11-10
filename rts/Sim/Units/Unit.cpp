@@ -911,15 +911,28 @@ void CUnit::SlowUpdate()
 	}
 
 	if (beingBuilt) {
-		if (modInfo.constructionDecay && lastNanoAdd < gs->frameNum - modInfo.constructionDecayTime) {
-			const float buildDecay = 1.0f / (buildTime * modInfo.constructionDecaySpeed);
-			health -= maxHealth * buildDecay;
+		if (modInfo.constructionDecay && (lastNanoAdd < (gs->frameNum - modInfo.constructionDecayTime))) {
+			const float buildDecay = std::min(1.0f, 1.0f / (buildTime * modInfo.constructionDecaySpeed));
+			const float healthDecay = maxHealth * buildDecay;
+			const float metalRefund = ((health - healthDecay) <= 0.0f)?
+				(health / healthDecay) * (metalCost * buildDecay):
+				                         (metalCost * buildDecay);
+
+			health -= healthDecay;
 			buildProgress -= buildDecay;
-			AddMetal(metalCost * buildDecay, false);
+
+			// NOTE:
+			//     all new buildees have 0.1 health, so canceling a nanoframe
+			//     still yields ((0.1 / healthDecay) * metalCost * buildDecay)
+			//     worth of free metal even if no build-power was expended (!)
+			//     not game-breaking unless metalCost is gigantic
+			AddMetal(metalRefund, false);
+
 			if (health < 0.0f) {
 				KillUnit(false, true, NULL);
 			}
 		}
+
 		ScriptDecloak(false);
 		return;
 	}
@@ -1313,6 +1326,7 @@ void CUnit::AddExperience(float exp)
 	}
 	if (expHealthScale > 0.0f) {
 		const float oldMaxHealth = maxHealth;
+
 		maxHealth = std::max(0.1f, unitDef->health * (1.0f + (limExperience * expHealthScale)));
 		health = health * (maxHealth / oldMaxHealth);
 	}
@@ -1698,6 +1712,8 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 	const float part = amount / buildTime;
 	const float metalUse  = (metalCost  * part);
 	const float energyUse = (energyCost * part);
+
+	printf("[CUnit::AddBuildPower] amount=%f metalUse=%f part=%f\n", amount, metalUse, part);
 
 	if (amount >= 0.0f) { //  build / repair
 		if (!beingBuilt && (health >= maxHealth)) {
