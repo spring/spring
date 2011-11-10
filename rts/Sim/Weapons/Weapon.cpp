@@ -780,6 +780,7 @@ void CWeapon::DependentDied(CObject *o)
 	// NOTE: DependentDied is called from ~CObject-->Detach, object is just barely valid
 	if (weaponDef->interceptor || weaponDef->isShield) {
 		incomingProjectiles.erase(((CWeaponProjectile*) o)->id);
+		interceptHandler.DelInterceptTarget(((CWeaponProjectile*) o)->id);
 	}
 
 	if (o == interceptTarget) {
