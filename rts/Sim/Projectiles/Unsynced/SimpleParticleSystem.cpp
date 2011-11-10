@@ -10,6 +10,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "System/float3.h"
+#include "System/Log/ILog.h"
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, );
 
@@ -155,7 +156,6 @@ void CSimpleParticleSystem::Update()
 			deleteMe = false;
 		}
 	}
-
 }
 
 void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
@@ -168,9 +168,12 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
 	float3 right = up.cross(float3(up.y, up.z, -up.x));
 	float3 forward = up.cross(right);
 
-	for(int i=0; i<numParticles; i++)
-	{
+	if (colorMap == NULL) {
+		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
+		LOG_L(L_WARNING, "[CSimpleParticleSystem::Init] no color-map specified");
+	}
 
+	for (int i = 0; i < numParticles; i++) {
 		float az = gu->usRandFloat() * 2 * PI;
 		float ay = (emitRot + (emitRotSpread * gu->usRandFloat())) * (PI / 180.0);
 
@@ -186,6 +189,10 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
 }
 
 
+
+
+
+
 CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, );
 
 CR_REG_METADATA(CSphereParticleSpawner,
@@ -194,20 +201,21 @@ CR_REG_METADATA(CSphereParticleSpawner,
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
-CSphereParticleSpawner::CSphereParticleSpawner()
-: 	CSimpleParticleSystem()
+CSphereParticleSpawner::CSphereParticleSpawner(): CSimpleParticleSystem()
 {
 }
 
-CSphereParticleSpawner::~CSphereParticleSpawner()
-{
-}
 
 void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 {
 	float3 up = emitVector;
 	float3 right = up.cross(float3(up.y, up.z, -up.x));
 	float3 forward = up.cross(right);
+
+	if (colorMap == NULL) {
+		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
+		LOG_L(L_WARNING, "[CSphereParticleSpawner::Init] no color-map specified");
+	}
 
 	for (int i = 0; i < numParticles; i++) {
 		const float az = gu->usRandFloat() * 2 * PI;
