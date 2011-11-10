@@ -122,7 +122,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					if (!selUnits.empty()) {
 						selUnit = *selUnits.begin();
 						md = selUnit->unitDef->movedata;
-						mm = md->moveMath;
+						mm = (md != NULL)? md->moveMath: NULL;
 					}
 				}
 
