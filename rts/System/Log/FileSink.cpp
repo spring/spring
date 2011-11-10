@@ -14,6 +14,17 @@
 #include <list>
 #include <map>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+	//FIXME `extern` is evil better export functions correctly in their header files!!!
+	extern char* log_formatter_getFrame_prefix();
+	
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 
 namespace {
 
@@ -105,8 +116,8 @@ namespace {
 	}
 
 	void log_file_writeToFile(FILE* outStream, const char* record) {
-
-		FPRINTF(outStream, "%s\n", record);
+		char* framePrefix = log_formatter_getFrame_prefix();
+		FPRINTF(outStream, "%s%s\n", framePrefix, record);
 
 		// We never flush, but only close the stream before process exit.
 		// This decision was made in two engine dev meetings, the last one was
