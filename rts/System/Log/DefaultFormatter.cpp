@@ -58,10 +58,6 @@ static void log_formatter_createPrefix_default(char* prefix,
 {
 	prefix[0] = '\0';
 
-	// HACK this stuff should be done later, closer to the point where it is written to a file or the console
-	if (frameNum != NULL) {
-		SNPRINTF(prefix, prefixSize, "[f=%07d] ", *frameNum);
-	}
 	if (!LOG_SECTION_IS_DEFAULT(section)) {
 		section = log_util_prepareSection(section);
 		STRCAT_T(prefix, prefixSize, "[");
@@ -90,14 +86,25 @@ static inline void log_formatter_createPrefix(char* prefix, size_t prefixSize,
  */
 ///@{
 
+char* log_formatter_getFrame_prefix()
+{
+	//FIXME using a static var may make it thread-unsafe!!!
+	static char prefix[128] = {'\0'};
+	if (frameNum != NULL) {
+		SNPRINTF(prefix, sizeof(prefix), "[f=%07d] ", *frameNum);
+	}
+	return prefix;
+}
+
+
 /// Formats a log entry into its final string form
 void log_formatter_format(char* record, size_t recordSize,
 		const char* section, int level, const char* fmt, va_list arguments)
 {
-	char prefix[64];
+	char prefix[128];
 	log_formatter_createPrefix(prefix, sizeof(prefix), section, level);
 
-	char message[1024];
+	char message[16384];
 	VSNPRINTF(message, sizeof(message), fmt, arguments);
 
 	SNPRINTF(record, recordSize, "%s%s", prefix, message);
