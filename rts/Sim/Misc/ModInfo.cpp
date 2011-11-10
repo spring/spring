@@ -64,7 +64,7 @@ void CModInfo::Init(const char* modArchive)
 	const LuaTable constructionTbl = root.SubTable("construction");
 	constructionDecay = constructionTbl.GetBool("constructionDecay", true);
 	constructionDecayTime = (int)(constructionTbl.GetFloat("constructionDecayTime", 6.66) * 30);
-	constructionDecaySpeed = constructionTbl.GetFloat("constructionDecaySpeed", 0.03);
+	constructionDecaySpeed = std::max(constructionTbl.GetFloat("constructionDecaySpeed", 0.03), 0.01f);
 
 	// reclaim
 	const LuaTable reclaimTbl = root.SubTable("reclaim");

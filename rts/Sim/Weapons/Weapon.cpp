@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/mmgr.h"
-#include "System/creg/STL_List.h"
+#include "System/creg/STL_Map.h"
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
 #include "Game/GameHelper.h"
@@ -29,7 +29,7 @@
 
 CR_BIND_DERIVED(CWeapon, CObject, (NULL));
 
-CR_REG_METADATA(CWeapon,(
+CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
 	CR_MEMBER(range),
 	CR_MEMBER(heightMod),
@@ -70,7 +70,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(badTargetCategory),
 	CR_MEMBER(onlyTargetCategory),
-	CR_MEMBER(incoming),
+	CR_MEMBER(incomingProjectiles),
 //	CR_MEMBER(weaponDef),
 	CR_MEMBER(stockpileTime),
 	CR_MEMBER(buildPercent),
@@ -99,7 +99,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(fuelUsage),
 	CR_MEMBER(weaponNum),
 	CR_RESERVED(64)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -776,8 +776,11 @@ void CWeapon::DependentDied(CObject *o)
 			haveUserTarget = false;
 		}
 	}
-	if (weaponDef->interceptor) {
-		incoming.remove((CWeaponProjectile*) o);
+
+	// NOTE: DependentDied is called from ~CObject-->Detach, object is just barely valid
+	if (weaponDef->interceptor || weaponDef->isShield) {
+		incomingProjectiles.erase(((CWeaponProjectile*) o)->id);
+		interceptHandler.DelInterceptTarget(((CWeaponProjectile*) o)->id);
 	}
 
 	if (o == interceptTarget) {
@@ -1026,13 +1029,15 @@ void CWeapon::CheckIntercept(void)
 {
 	targetType = Target_None;
 
-	for (std::list<CWeaponProjectile*>::iterator pi = incoming.begin(); pi != incoming.end(); ++pi) {
-		if ((*pi)->targeted)
+	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
+		CWeaponProjectile* p = pi->second;
+
+		if (p->targeted)
 			continue;
 
 		targetType = Target_Intercept;
-		interceptTarget = *pi;
-		targetPos = (*pi)->pos;
+		interceptTarget = p;
+		targetPos = p->pos;
 
 		break;
 	}

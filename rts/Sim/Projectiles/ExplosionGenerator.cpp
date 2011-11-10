@@ -514,12 +514,13 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 
 void CCustomExplosionGenerator::ParseExplosionCode(
 	CCustomExplosionGenerator::ProjectileSpawnInfo* psi,
-	int offset, boost::shared_ptr<creg::IType> type, const string& script, string& code)
+	int offset,
+	boost::shared_ptr<creg::IType> type,
+	const string& script,
+	string& code)
 {
-
 	string::size_type end = script.find(';', 0);
 	string vastr = script.substr(0, end);
-
 
 	if (vastr == "dir") { // first see if we can match any keywords
 		// if the user uses a keyword assume he knows that it is put on the right datatype for now
@@ -557,8 +558,8 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
 			else {
 				LOG_L(L_WARNING,
-						"[CCEG::ParseExplosionCode] unknown op-code \"%c\" in \"%s\"",
-						c, script.c_str());
+					"[CCEG::ParseExplosionCode] unknown op-code \"%c\" in \"%s\" at index %d",
+					c, script.c_str(), p);
 				continue;
 			}
 
