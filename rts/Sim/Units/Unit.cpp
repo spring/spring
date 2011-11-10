@@ -1713,8 +1713,6 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 	const float metalUse  = (metalCost  * part);
 	const float energyUse = (energyCost * part);
 
-	printf("[CUnit::AddBuildPower] amount=%f metalUse=%f part=%f\n", amount, metalUse, part);
-
 	if (amount >= 0.0f) { //  build / repair
 		if (!beingBuilt && (health >= maxHealth)) {
 			return false;
