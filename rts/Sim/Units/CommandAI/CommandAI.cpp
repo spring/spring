@@ -427,9 +427,10 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			if (c.params.size() == 1) {
 				const CUnit* attackee = GetCommandUnit(c, 0);
 
-				if (attackee && !attackee->pos.IsInBounds()) {
+				if (attackee == NULL)
 					return false;
-				}
+				if (!attackee->pos.IsInBounds())
+					return false;
 			} else {
 				if (c.params.size() >= 3) {
 					const float3 cPos(c.params[0], c.params[1], c.params[2]);
@@ -1230,22 +1231,20 @@ void CCommandAI::ExecuteAttack(Command& c)
 			FinishCommand();
 			return;
 		}
-	}
-	else {
+	} else {
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
-			if (targetUnit != NULL && targetUnit != owner) {
-				owner->AttackUnit(targetUnit, c.GetID() == CMD_MANUALFIRE);
+			if (targetUnit == NULL) { FinishCommand(); return; }
+			if (targetUnit == owner) { FinishCommand(); return; }
+			if (targetUnit->GetTransporter() != NULL) { FinishCommand(); return; }
 
-				SetOrderTarget(targetUnit);
-				inCommand = true;
-			} else {
-				FinishCommand();
-				return;
-			}
+			SetOrderTarget(targetUnit);
+			owner->AttackUnit(targetUnit, c.GetID() == CMD_MANUALFIRE);
+
+			inCommand = true;
 		} else {
 			float3 pos(c.params[0], c.params[1], c.params[2]);
 			owner->AttackGround(pos, c.GetID() == CMD_MANUALFIRE);
