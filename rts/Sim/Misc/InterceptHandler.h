@@ -6,6 +6,7 @@
 #include "System/Object.h"
 
 #include <list>
+#include <map>
 #include <boost/noncopyable.hpp>
 #include "System/float3.h"
 
@@ -19,12 +20,13 @@ class CInterceptHandler : public boost::noncopyable
 	CR_DECLARE(CInterceptHandler)
 
 public:
-	CInterceptHandler();
-	~CInterceptHandler();
+	void Update();
 
 	void AddInterceptorWeapon(CWeapon* weapon);
 	void RemoveInterceptorWeapon(CWeapon* weapon);
+
 	void AddInterceptTarget(CWeaponProjectile* target, const float3& destination);
+	void DelInterceptTarget(int targetID) { interceptables.erase(targetID); }
 
 	void AddShieldInterceptableProjectile(CWeaponProjectile* p);
 	float AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy);
@@ -33,7 +35,8 @@ public:
 
 private:
 	std::list<CWeapon*> interceptors;
-	std::list<CPlasmaRepulser*> plasmaRepulsors;
+	std::list<CPlasmaRepulser*> repulsors;
+	std::map<int, CWeaponProjectile*> interceptables;
 };
 
 extern CInterceptHandler interceptHandler;
