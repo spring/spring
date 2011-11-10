@@ -16,6 +16,9 @@
 extern "C" {
 #endif
 
+//FIXME `extern` is evil better export functions correctly in their header files!!!
+extern char* log_formatter_getFrame_prefix();
+
 /// Choose the out-stream for logging
 static inline FILE* log_chooseStream(int level) {
 
@@ -40,8 +43,10 @@ static inline FILE* log_chooseStream(int level) {
 static void log_sink_record_console(const char* section, int level,
 		const char* record)
 {
+	char* framePrefix = log_formatter_getFrame_prefix();
+
 	FILE* outStream = log_chooseStream(level);
-	FPRINTF(outStream, "%s\n", record);
+	FPRINTF(outStream, "%s%s\n", framePrefix, record);
 	// *printf does not always flush after a newline
 	// (eg. if stdout is being redirected to a file)
 	fflush(outStream);
