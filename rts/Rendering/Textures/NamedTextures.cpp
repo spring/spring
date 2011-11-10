@@ -253,12 +253,12 @@ namespace CNamedTextures {
 
 	void Update()
 	{
-		GML_STDMUTEX_LOCK(ntex); // Update
-
 		if (texWaiting.empty()) {
 			return;
 		}
 
+		GML_STDMUTEX_LOCK(ntex); // Update
+		
 		glPushAttrib(GL_TEXTURE_BIT);
 		for (std::vector<std::string>::iterator it = texWaiting.begin(); it != texWaiting.end(); ++it) {
 			boost::unordered_map<std::string, TexInfo>::iterator mit = texMap.find(*it);
