@@ -203,18 +203,16 @@ function gadget:Initialize()
 	if teamDeathMode == "none" then
 		gadgetHandler:RemoveGadget()
 	end
+
+	gaiaAllyTeamID = select(6, spGetTeamInfo(gaiaTeamID))
+
 	-- at start, fill in the table of all alive allyteams
 	for _,allyTeamID in ipairs(allyTeams) do
 		local teamList = spGetTeamList(allyTeamID)
 		local teamCount = 0
 		for _,teamID in ipairs(teamList) do
 			teamToAllyTeam[teamID] = allyTeamID
-			if teamID == gaiaTeamID then
-				if ignoreGaia == 0 then
-					teamCount = teamCount + 1
-				end
-				gaiaAllyTeamID = allyTeamID
-			else
+			if (ignoreGaia == 0) or (teamID ~= gaiaTeamID) then
 				teamCount = teamCount + 1
 			end
 		end
