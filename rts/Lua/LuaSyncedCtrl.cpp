@@ -363,6 +363,11 @@ int LuaSyncedCtrl::KillTeam(lua_State* L)
 	if (!teamHandler->IsValidTeam(teamID)) {
 		return 0;
 	}
+	if (teamID == teamHandler->GaiaTeamID()) {
+		//FIXME either we disallow it here or it needs modifications in GameServer.cpp (it creates a `teams` vector w/o gaia)
+		//  possible fix would be to always create the Gaia team (currently it's conditional on gs->useLuaGaia)
+		return 0;
+	}
 	CTeam* team = teamHandler->Team(teamID);
 	if (team == NULL) {
 		return 0;
