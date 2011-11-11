@@ -91,7 +91,8 @@ local function CheckSingleAllyVictoryEnd()
 			return {candidateWinner}
 		end
 	end
-	return false
+
+	return {}
 end
 
 local function AreAllyTeamsDoubleAllied( firstAllyTeamID,  secondAllyTeamID )
@@ -184,7 +185,7 @@ function gadget:TeamDied(teamID)
 	if aliveTeamCount then
 		aliveTeamCount = aliveTeamCount - 1
 		allyTeamAliveTeamsCount[allyTeamID] = aliveTeamCount
-		if aliveTeamCount == 0 then -- one allyteam just died
+		if aliveTeamCount <= 0 then
 			-- one allyteam just died
 			aliveAllyTeamCount = aliveAllyTeamCount - 1
 			allyTeamUnitCount[allyTeamID] = nil
@@ -192,6 +193,7 @@ function gadget:TeamDied(teamID)
 		end
 	end
 end
+
 
 function gadget:Initialize()
 	if teamDeathMode == "none" then
