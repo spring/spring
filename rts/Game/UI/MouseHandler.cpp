@@ -41,6 +41,7 @@
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/mmgr.h"
+#include "System/Util.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
 
@@ -905,7 +906,7 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 
 	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
 		if (it->second == cursor) {
-			cursorFileMap.erase(it);
+			it = set_erase(cursorFileMap, it);
 		}
 	}
 
