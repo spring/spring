@@ -144,33 +144,24 @@ end
 
 local function KillTeamsZeroUnits()
 	-- kill all the teams that have zero units
-	local tempCopy = teamsUnitCount
 	for teamID, unitCount in pairs(teamsUnitCount) do
 		if unitCount == 0 then
 			spKillTeam( teamID )
-			tempCopy[teamID] = nil
 		end
 	end
-	-- we had to temp copy to not delete elements in the vector we're iterating
-	teamsUnitCount = tempCopy
 end
 
 local function KillAllyTeamsZeroUnits()
 	-- kill all the allyteams that have zero units
-	local tempCopy = allyTeamUnitCount
 	for allyTeamID, unitCount in pairs(allyTeamUnitCount) do
 		if unitCount == 0 then
-			tempCopy[allyTeamID] = nil
 			-- kill all the teams in the allyteam
 			local teamList = spGetTeamList(allyTeamID)
 			for _,teamID in ipairs(teamList) do
 				spKillTeam( teamID )
-				teamsUnitCount[teamID]= nil
 			end
 		end
 	end
-	-- we had to temp copy to not delete elements in the vector we're iterating
-	allyTeamUnitCount = tempCopy
 end
 
 function gadget:GameFrame(frame)
@@ -187,13 +178,16 @@ function gadget:GameFrame(frame)
 end
 
 function gadget:TeamDied(teamID)
+	teamsUnitCount[teamID] = nil
 	local allyTeamID = teamToAllyTeam[teamID]
 	local aliveTeamCount = allyTeamAliveTeamsCount[allyTeamID]
 	if aliveTeamCount then
 		aliveTeamCount = aliveTeamCount - 1
 		allyTeamAliveTeamsCount[allyTeamID] = aliveTeamCount
 		if aliveTeamCount == 0 then -- one allyteam just died
+			-- one allyteam just died
 			aliveAllyTeamCount = aliveAllyTeamCount - 1
+			allyTeamUnitCount[allyTeamID] = nil
 			killedAllyTeams[allyTeamID] = true
 		end
 	end
