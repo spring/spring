@@ -1435,7 +1435,7 @@ void CGame::SimFrame() {
 	GUnitScriptEngine.Tick(33);
 	wind.Update();
 	loshandler->Update();
-	interceptHandler.Update();
+	interceptHandler.Update(false);
 
 	teamHandler->GameFrame(gs->frameNum);
 	playerHandler->GameFrame(gs->frameNum);

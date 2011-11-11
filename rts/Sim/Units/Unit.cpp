@@ -912,23 +912,15 @@ void CUnit::SlowUpdate()
 
 	if (beingBuilt) {
 		if (modInfo.constructionDecay && (lastNanoAdd < (gs->frameNum - modInfo.constructionDecayTime))) {
-			const float buildDecay = std::min(1.0f, 1.0f / (buildTime * modInfo.constructionDecaySpeed));
-			const float healthDecay = maxHealth * buildDecay;
-			const float metalRefund = ((health - healthDecay) <= 0.0f)?
-				(health / healthDecay) * (metalCost * buildDecay):
-				                         (metalCost * buildDecay);
+			float buildDecay = 1.0f / std::max(0.001f, buildTime * modInfo.constructionDecaySpeed);
+			buildDecay = std::min(buildProgress, buildDecay);
 
-			health -= healthDecay;
+			health         = std::min(0.0f, health - maxHealth * buildDecay);
 			buildProgress -= buildDecay;
 
-			// NOTE:
-			//     all new buildees have 0.1 health, so canceling a nanoframe
-			//     still yields ((0.1 / healthDecay) * metalCost * buildDecay)
-			//     worth of free metal even if no build-power was expended (!)
-			//     not game-breaking unless metalCost is gigantic
-			AddMetal(metalRefund, false);
+			AddMetal(metalCost * buildDecay, false);
 
-			if (health < 0.0f) {
+			if (health <= 0.0f) {
 				KillUnit(false, true, NULL);
 			}
 		}
