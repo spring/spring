@@ -137,6 +137,6 @@ rm -rf ${TMP_PATH}/${BUNDLE_NAME}
 
 #create symbolic link
 cd ${TMP_PATH}/..
-ln -sv ${REV}/${ARCHIVE_NAME} Spring_testing-MacOSX-10.6-SnowLeopard.zip
+ln -sfv ${REV}/${ARCHIVE_NAME} Spring_testing-MacOSX-10.6-SnowLeopard.zip
 echo "-- done"
 
