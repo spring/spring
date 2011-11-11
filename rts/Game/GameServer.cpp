@@ -1287,6 +1287,16 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					const unsigned toTeam                    = inbuf[3];
 					// may be the players team or a team controlled by one of his AIs
 					const unsigned fromTeam_g                = inbuf[4];
+
+					if (toTeam >= teams.size()) {
+						Message(str(format("Invalid teamID %d in TEAMMSG_GIVEAWAY from player %d") %toTeam %player));
+						break;
+					}
+					if (fromTeam_g >= teams.size()) {
+						Message(str(format("Invalid teamID %d in TEAMMSG_GIVEAWAY from player %d") %fromTeam_g %player));
+						break;
+					}
+
 					const int numPlayersInTeam_g             = countNumPlayersInTeam(players, fromTeam_g);
 					const std::vector<unsigned char> &totAIsInTeam_g = getSkirmishAIIds(ais, fromTeam_g);
 					const std::vector<unsigned char> &myAIsInTeam_g  = getSkirmishAIIds(ais, fromTeam_g, player);
@@ -1391,23 +1401,29 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					break;
 				}
 				case TEAMMSG_TEAM_DIED: {
-					const unsigned team = inbuf[3];
+					const unsigned teamID = inbuf[3];
 #ifndef DEDICATED
 					if (players[player].isLocal) { // currently only host is allowed
 #else
 					if (!players[player].desynced) {
 #endif
-						teams[team].active = false;
-						teams[team].leader = -1;
+
+						if (teamID >= teams.size()) {
+							Message(str(format("Invalid teamID %d in TEAMMSG_TEAM_DIED from player %d") %teamID %player));
+							break;
+						}
+
+						teams[teamID].active = false;
+						teams[teamID].leader = -1;
 						// convert all the teams players to spectators
 						for (size_t p = 0; p < players.size(); ++p) {
-							if ((players[p].team == team) && !(players[p].spectator)) {
+							if ((players[p].team == teamID) && !(players[p].spectator)) {
 								// are now spectating if this was their team
 								//players[p].team = 0;
 								players[p].spectator = true;
 								if (hostif)
 									hostif->SendPlayerDefeated(p);
-								Broadcast(CBaseNetProtocol::Get().SendTeamDied(player, team));
+								Broadcast(CBaseNetProtocol::Get().SendTeamDied(player, teamID));
 							}
 						}
 						// The teams Skirmish AIs destruction process
@@ -1437,6 +1453,11 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				pckt >> aiTeamId;
 				std::string aiName;
 				pckt >> aiName;
+
+				if (aiTeamId >= teams.size()) {
+					Message(str(format("Invalid teamID %d in NETMSG_AI_CREATED from player %d") %aiTeamId %playerId));
+					break;
+				}
 
 				const unsigned char playerTeamId = players[playerId].team;
 				GameTeam* tpl                    = &teams[playerTeamId];
