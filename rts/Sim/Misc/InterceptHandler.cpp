@@ -101,18 +101,6 @@ void CInterceptHandler::Update() {
 
 
 
-void CInterceptHandler::AddInterceptorWeapon(CWeapon* weapon)
-{
-	interceptors.push_back(weapon);
-}
-
-void CInterceptHandler::RemoveInterceptorWeapon(CWeapon* weapon)
-{
-	interceptors.remove(weapon);
-}
-
-
-
 void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target, const float3& destination)
 {
 	const CUnit* targetOwner = target->owner();
@@ -172,18 +160,6 @@ float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const floa
 		}
 	}
 	return minRange;
-}
-
-
-
-void CInterceptHandler::AddPlasmaRepulser(CPlasmaRepulser* r)
-{
-	repulsors.push_back(r);
-}
-
-void CInterceptHandler::RemovePlasmaRepulser(CPlasmaRepulser* r)
-{
-	repulsors.remove(r);
 }
 
 
