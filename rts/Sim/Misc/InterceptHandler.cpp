@@ -63,7 +63,7 @@ void CInterceptHandler::Update(bool forced) {
 			//
 			// these checks all need to be evaluated periodically, not just
 			// when a projectile is created and handed to AddInterceptTarget
-			const float interceptDist = (w->weaponPos - p->pos).Length() + wDef->coverageRange * 2.0f;
+			const float interceptDist = (w->weaponPos - p->pos).Length();
 			const float impactDist = ground->LineGroundCol(p->pos, p->pos + p->dir * interceptDist);
 
 			const float3& pFlightPos = p->pos;
@@ -83,9 +83,17 @@ void CInterceptHandler::Update(bool forced) {
 			}
 
 			if ((pImpactPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {
-				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
-				w->incomingProjectiles[p->id] = p;
-				continue; // 3
+				const float3 pTargetDir = (pTargetPos - pFlightPos).SafeNormalize();
+				const float3 pImpactDir = (pImpactPos - pFlightPos).SafeNormalize();
+
+				// the projected impact position can briefly shift into the covered
+				// area during transition from vertical to horizontal flight, so we
+				// perform an extra test (NOTE: assumes non-parabolic trajectory)
+				if (pTargetDir.dot(pImpactDir) >= 0.999f) {
+					w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
+					w->incomingProjectiles[p->id] = p;
+					continue; // 3
+				}
 			}
 
 			const float3 pCurSeparationVec = wPos - pFlightPos;
