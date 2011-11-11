@@ -1441,7 +1441,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 		case NETMSG_AI_CREATED: {
 			try {
 				netcode::UnpackPacket pckt(packet, 2);
-				unsigned playerId;
+				unsigned char playerId;
 				pckt >> playerId;
 				if (playerId != a) {
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerId));
@@ -1449,7 +1449,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				}
 				unsigned char skirmishAIId_rec; // ignored, we have to create the real one
 				pckt >> skirmishAIId_rec;
-				unsigned aiTeamId;
+				unsigned char aiTeamId;
 				pckt >> aiTeamId;
 				std::string aiName;
 				pckt >> aiName;
