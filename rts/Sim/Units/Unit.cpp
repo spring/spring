@@ -912,10 +912,12 @@ void CUnit::SlowUpdate()
 
 	if (beingBuilt) {
 		if (modInfo.constructionDecay && (lastNanoAdd < (gs->frameNum - modInfo.constructionDecayTime))) {
-			float buildDecay = 1.0f / std::max(0.001f, buildTime * modInfo.constructionDecaySpeed);
+			float buildDecay = buildTime * modInfo.constructionDecaySpeed;
+
+			buildDecay = 1.0f / std::max(0.001f, buildDecay);
 			buildDecay = std::min(buildProgress, buildDecay);
 
-			health         = std::min(0.0f, health - maxHealth * buildDecay);
+			health         = std::max(0.0f, health - maxHealth * buildDecay);
 			buildProgress -= buildDecay;
 
 			AddMetal(metalCost * buildDecay, false);
