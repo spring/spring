@@ -1455,7 +1455,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				pckt >> aiName;
 
 				if (aiTeamId >= teams.size()) {
-					Message(str(format("Invalid teamID %d in NETMSG_AI_CREATED from player %d") %aiTeamId %playerId));
+					Message(str(format("Invalid teamID %d in NETMSG_AI_CREATED from player %d") %unsigned(aiTeamId) %unsigned(playerId)));
 					break;
 				}
 
