@@ -21,9 +21,7 @@ CLaserCannon::CLaserCannon(CUnit* owner)
 {
 }
 
-CLaserCannon::~CLaserCannon(void)
-{
-}
+
 
 void CLaserCannon::Update(void)
 {
