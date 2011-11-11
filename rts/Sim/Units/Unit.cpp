@@ -922,7 +922,7 @@ void CUnit::SlowUpdate()
 
 			AddMetal(metalCost * buildDecay, false);
 
-			if (health <= 0.0f) {
+			if (health <= 0.0f || buildProgress <= 0.0f) {
 				KillUnit(false, true, NULL);
 			}
 		}
