@@ -23,16 +23,16 @@ class CInterceptHandler : public CObject, boost::noncopyable
 public:
 	void Update();
 
-	void AddInterceptorWeapon(CWeapon* weapon);
-	void RemoveInterceptorWeapon(CWeapon* weapon);
+	void AddInterceptorWeapon(CWeapon* weapon) { interceptors.push_back(weapon); }
+	void RemoveInterceptorWeapon(CWeapon* weapon) { interceptors.remove(weapon); }
 
 	void AddInterceptTarget(CWeaponProjectile* target, const float3& destination);
 	void AddShieldInterceptableProjectile(CWeaponProjectile* p);
 
 	float AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy);
 
-	void AddPlasmaRepulser(CPlasmaRepulser* r);
-	void RemovePlasmaRepulser(CPlasmaRepulser* r);
+	void AddPlasmaRepulser(CPlasmaRepulser* r) { repulsors.push_back(r); }
+	void RemovePlasmaRepulser(CPlasmaRepulser* r) { repulsors.remove(r); }
 
 	void DependentDied(CObject* o);
 
