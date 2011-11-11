@@ -165,6 +165,20 @@ local function KillAllyTeamsZeroUnits()
 	end
 end
 
+local function KillResignedTeams()
+	-- Check for teams w/o leaders -> all players resigned & no AIs left in the team
+	-- Note: In the case a player drops he will still be the leader of the team!
+	--       So he can reconnect and take his units.
+	local teamList = Spring.GetTeamList()
+	for i=1, #teamList do
+		local teamID = teamList[i]
+		local leaderID = select(2, spGetTeamInfo(teamID))
+		if (leaderID < 0) then
+			spKillTeam(teamID)
+		end
+	end
+end
+
 function gadget:GameFrame(frame)
 	-- only do a check in slowupdate
 	if (frame%16) == 0 then
@@ -175,6 +189,7 @@ function gadget:GameFrame(frame)
 		elseif teamDeathMode == "allyzerounits" then
 			KillAllyTeamsZeroUnits()
 		end
+		KillResignedTeams()
 	end
 end
 
