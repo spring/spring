@@ -5,7 +5,7 @@
 --  brief:   spawns start unit and sets storage levels
 --  author:  Andrea Piras
 --
---  Copyright (C) 2010.
+--  Copyright (C) 2010,2011.
 --  Licensed under the terms of the GNU GPL, v2 or later.
 --
 --------------------------------------------------------------------------------
@@ -32,10 +32,13 @@ if (not gadgetHandler:IsSyncedCode()) then
 end
 
 local modOptions = Spring.GetModOptions()
+
 -- teamDeathMode possible values: "none", "teamzerounits" , "allyzerounits"
 local teamDeathMode = modOptions.teamdeathmode or "teamzerounits"
+
 -- sharedDynamicAllianceVictory is a C-like bool
 local sharedDynamicAllianceVictory = tonumber(modOptions.shareddynamicalliancevictory) or 0
+
 -- ignoreGaia is a C-like bool
 local ignoreGaia = tonumber(modOptions.ignoregaiawinner) or 1
 
@@ -43,17 +46,18 @@ local ignoreGaia = tonumber(modOptions.ignoregaiawinner) or 1
 --------------------------------------------------------------------------------
 
 local gaiaTeamID = Spring.GetGaiaTeamID()
-local KillTeam = Spring.KillTeam
-local GetAllyTeamList = Spring.GetAllyTeamList
-local GetTeamList = Spring.GetTeamList
-local GameOver = Spring.GameOver
-local AreTeamsAllied = Spring.AreTeamsAllied
+local spKillTeam = Spring.KillTeam
+local spGetAllyTeamList = Spring.GetAllyTeamList
+local spGetTeamList = Spring.GetTeamList
+local spGetTeamInfo = Spring.GetTeamInfo
+local spGameOver = Spring.GameOver
+local spAreTeamsAllied = Spring.AreTeamsAllied
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 local gaiaAllyTeamID
-local allyTeams = GetAllyTeamList()
+local allyTeams = spGetAllyTeamList()
 local teamsUnitCount = {}
 local allyTeamUnitCount = {}
 local allyTeamAliveTeamsCount = {}
@@ -71,8 +75,8 @@ function gadget:GameOver()
 end
 
 local function IsCandidateWinner(allyTeamID)
-	local isAlive = killedAllyTeams[allyTeamID] ~= true
-	local gaiaCheck = ignoreGaia == 0 or allyTeamID ~= gaiaAllyTeamID
+	local isAlive = (killedAllyTeams[allyTeamID] ~= true)
+	local gaiaCheck = (ignoreGaia == 0) or (allyTeamID ~= gaiaAllyTeamID)
 	return isAlive and gaiaCheck
 end
 
@@ -80,6 +84,7 @@ local function CheckSingleAllyVictoryEnd()
 	if aliveAllyTeamCount ~= 1 then
 		return false
 	end
+
 	-- find the last remaining allyteam
 	for _,candidateWinner in ipairs(allyTeams) do
 		if IsCandidateWinner(candidateWinner) then
@@ -91,7 +96,7 @@ end
 
 local function AreAllyTeamsDoubleAllied( firstAllyTeamID,  secondAllyTeamID )
 	-- we need to check for both directions of alliance
-	return AreTeamsAllied( firstAllyTeamID,  secondAllyTeamID ) and AreTeamsAllied( secondAllyTeamID, firstAllyTeamID )
+	return spAreTeamsAllied( firstAllyTeamID,  secondAllyTeamID ) and spAreTeamsAllied( secondAllyTeamID, firstAllyTeamID )
 end
 
 local function CheckSharedAllyVictoryEnd()
@@ -105,11 +110,12 @@ local function CheckSharedAllyVictoryEnd()
 					-- store both check directions
 					-- since we're gonna check if we're allied against ourself, only secondAllyTeamID needs to be stored
 					candidateWinners[secondAllyTeamID] =  true
-					winnerCountSquared = winnerCountSquared +1
+					winnerCountSquared = winnerCountSquared + 1
 				end
 			end
 		end
 	end
+
 	if winnerCountSquared == (aliveAllyTeamCount*aliveAllyTeamCount) then
 		-- all the allyteams alive are bidirectionally allied against eachother, they are all winners
 		local winnersCorrectFormat = {}
@@ -118,6 +124,7 @@ local function CheckSharedAllyVictoryEnd()
 		end
 		return winnersCorrectFormat
 	end
+
 	-- couldn't find any winner
 	return false
 end
@@ -129,8 +136,9 @@ local function CheckGameOver()
 	else
 		winners = CheckSharedAllyVictoryEnd()
 	end
+
 	if winners then
-		GameOver(winners)
+		spGameOver(winners)
 	end
 end
 
@@ -139,7 +147,7 @@ local function KillTeamsZeroUnits()
 	local tempCopy = teamsUnitCount
 	for teamID, unitCount in pairs(teamsUnitCount) do
 		if unitCount == 0 then
-			KillTeam( teamID )
+			spKillTeam( teamID )
 			tempCopy[teamID] = nil
 		end
 	end
@@ -154,9 +162,9 @@ local function KillAllyTeamsZeroUnits()
 		if unitCount == 0 then
 			tempCopy[allyTeamID] = nil
 			-- kill all the teams in the allyteam
-			local teamList = GetTeamList(allyTeamID)
+			local teamList = spGetTeamList(allyTeamID)
 			for _,teamID in ipairs(teamList) do
-				KillTeam( teamID )
+				spKillTeam( teamID )
 				teamsUnitCount[teamID]= nil
 			end
 		end
@@ -166,7 +174,8 @@ local function KillAllyTeamsZeroUnits()
 end
 
 function gadget:GameFrame(frame)
-	if (frame%16) == 0 then -- only do a check in slowupdate
+	-- only do a check in slowupdate
+	if (frame%16) == 0 then
 		CheckGameOver()
 		-- kill teams after checking for gameover to avoid to trigger instantly gameover
 		if teamDeathMode == "teamzerounits" then
@@ -181,7 +190,7 @@ function gadget:TeamDied(teamID)
 	local allyTeamID = teamToAllyTeam[teamID]
 	local aliveTeamCount = allyTeamAliveTeamsCount[allyTeamID]
 	if aliveTeamCount then
-		aliveTeamCount = aliveTeamCount -1
+		aliveTeamCount = aliveTeamCount - 1
 		allyTeamAliveTeamsCount[allyTeamID] = aliveTeamCount
 		if aliveTeamCount == 0 then -- one allyteam just died
 			aliveAllyTeamCount = aliveAllyTeamCount - 1
@@ -192,13 +201,11 @@ end
 
 function gadget:Initialize()
 	if teamDeathMode == "none" then
-		-- all our checks are useless if teams cannot die
 		gadgetHandler:RemoveGadget()
 	end
-	local allyTeamCount = 0
 	-- at start, fill in the table of all alive allyteams
 	for _,allyTeamID in ipairs(allyTeams) do
-		local teamList = GetTeamList(allyTeamID)
+		local teamList = spGetTeamList(allyTeamID)
 		local teamCount = 0
 		for _,teamID in ipairs(teamList) do
 			teamToAllyTeam[teamID] = allyTeamID
@@ -213,10 +220,9 @@ function gadget:Initialize()
 		end
 		allyTeamAliveTeamsCount[allyTeamID] = teamCount
 		if teamCount > 0 then
-			 allyTeamCount = allyTeamCount +1
+			 aliveAllyTeamCount = aliveAllyTeamCount + 1
 		end
 	end
-	aliveAllyTeamCount = allyTeamCount
 end
 
 function gadget:UnitCreated(unitID, unitDefID, unitTeamID)
@@ -229,13 +235,8 @@ function gadget:UnitCreated(unitID, unitDefID, unitTeamID)
 	allyTeamUnitCount[allyTeamID] = allyUnitCount
 end
 
-function gadget:UnitGiven(unitID, unitDefID, unitTeamID)
-	gadget:UnitCreated(unitID, unitDefID, unitTeamID)
-end
-
-function gadget:UnitCaptured(unitID, unitDefID, unitTeamID)
-	gadget:UnitCreated(unitID, unitDefID, unitTeamID)
-end
+gadget.UnitGiven = gadget.UnitCreated
+gadget.UnitCaptured = gadget.UnitCreated
 
 function gadget:UnitDestroyed(unitID, unitDefID, unitTeamID)
 	if unitTeamID == gaiaTeamID and ignoreGaia ~= 0 then
@@ -255,6 +256,4 @@ function gadget:UnitDestroyed(unitID, unitDefID, unitTeamID)
 	end
 end
 
-function gadget:UnitTaken(unitID, unitDefID, unitTeamID)
-	gadget:UnitDestroyed(unitID, unitDefID, unitTeamID)
-end
+gadget.UnitTaken = gadget.UnitDestroyed
