@@ -11,6 +11,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "System/float3.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
 
@@ -37,8 +38,6 @@ void CInterceptHandler::Update() {
 		const WeaponDef* wDef = w->weaponDef;
 		const CUnit* wOwner = w->owner;
 		const float3& wOwnerPos = wOwner->pos;
-
-		printf("[IH::Up][f=%d] w=%p\n", gs->frameNum, w);
 
 		for (pit = interceptables.begin(); pit != interceptables.end(); ++pit) {
 			CWeaponProjectile* p = pit->second;
@@ -135,8 +134,14 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target, const floa
 
 	// keep track of all interceptable projectiles
 	interceptables[target->id] = target;
-}
 
+	// if the target projectile dies in any way, we need to remove it
+	// (we cannot rely on any interceptor telling us, because they may
+	// die before the interceptable itself does)
+	//
+	// NOTE: should really invent a new dependence-type for this
+	AddDeathDependence(target, CObject::DEPENDENCE_INCOMING);
+}
 
 void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
 {
@@ -147,6 +152,7 @@ void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
 		}
 	}
 }
+
 
 
 float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy)
@@ -169,6 +175,7 @@ float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const floa
 }
 
 
+
 void CInterceptHandler::AddPlasmaRepulser(CPlasmaRepulser* r)
 {
 	repulsors.push_back(r);
@@ -178,3 +185,14 @@ void CInterceptHandler::RemovePlasmaRepulser(CPlasmaRepulser* r)
 {
 	repulsors.remove(r);
 }
+
+
+
+void CInterceptHandler::DependentDied(CObject* o) {
+	std::map<int, CWeaponProjectile*>::iterator it = interceptables.find(((CWeaponProjectile*) o)->id);
+
+	if (it != interceptables.end()) {
+		interceptables.erase(it->first);
+	}
+}
+
