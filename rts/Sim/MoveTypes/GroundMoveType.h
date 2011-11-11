@@ -63,7 +63,8 @@ public:
 	unsigned int pathId;
 	float goalRadius;
 
-	SyncedFloat3 waypoint;
+	SyncedFloat3 currWayPoint;
+	SyncedFloat3 nextWayPoint;
 
 protected:
 	float3 ObstacleAvoidance(const float3& desiredDir);

@@ -72,7 +72,8 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(pathId),
 	CR_MEMBER(goalRadius),
 
-	CR_MEMBER(waypoint),
+	CR_MEMBER(currWayPoint),
+	CR_MEMBER(nextWayPoint),
 	CR_MEMBER(atGoal),
 	CR_MEMBER(haveFinalWaypoint),
 	CR_MEMBER(currWayPointDist),
@@ -131,7 +132,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	pathId(0),
 	goalRadius(0),
 
-	waypoint(ZeroVector),
+	currWayPoint(ZeroVector),
+	nextWayPoint(ZeroVector),
 	atGoal(false),
 	haveFinalWaypoint(false),
 	currWayPointDist(0.0f),
@@ -225,11 +227,12 @@ bool CGroundMoveType::Update()
 				SetMainHeading();
 			} else {
 				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
-				ASSERT_SYNCED(waypoint);
+				ASSERT_SYNCED(currWayPoint);
+				ASSERT_SYNCED(nextWayPoint);
 				ASSERT_SYNCED(owner->pos);
 
 				prevWayPointDist = currWayPointDist;
-				currWayPointDist = owner->pos.distance2D(waypoint);
+				currWayPointDist = owner->pos.distance2D(currWayPoint);
 				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(MIN_WAYPOINT_DISTANCE));
 
 				if (!atGoal) {
@@ -244,8 +247,16 @@ bool CGroundMoveType::Update()
 					}
 				}
 
-				// Set direction to waypoint.
-				waypointDir = waypoint - owner->pos;
+				if (!haveFinalWaypoint) {
+					GetNextWayPoint();
+				} else {
+					if (atGoal) {
+						Arrived();
+					}
+				}
+
+				// set direction to waypoint AFTER requesting it
+				waypointDir = currWayPoint - owner->pos;
 				waypointDir.y = 0.0f;
 				waypointDir.SafeNormalize();
 
@@ -254,14 +265,6 @@ bool CGroundMoveType::Update()
 				const float3 wpDirInv = -waypointDir;
 //				const float3 wpPosTmp = owner->pos + wpDirInv;
 				const bool   wpBehind = (waypointDir.dot(flatFrontDir) < 0.0f);
-
-				if (!haveFinalWaypoint) {
-					GetNextWayPoint();
-				} else {
-					if (atGoal) {
-						Arrived();
-					}
-				}
 
 				if (wpBehind) {
 					wantReverse = WantReverse(waypointDir);
@@ -466,7 +469,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 
 		wSpeed *= groundMod;
 
-		const float3 goalDifFwd = waypoint - owner->pos;
+		const float3 goalDifFwd = currWayPoint - owner->pos;
 		const float3 goalDifRev = -goalDifFwd;
 //		const float3 goalPosTmp = owner->pos + goalDifRev;
 
@@ -1084,7 +1087,8 @@ void CGroundMoveType::GetNewPath()
 		atGoal = false;
 		haveFinalWaypoint = false;
 
-		waypoint = pathManager->NextWayPoint(pathId, owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id);
+		currWayPoint = pathManager->NextWayPoint(pathId, owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id);
+		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 	} else {
 		Fail();
 	}
@@ -1105,9 +1109,9 @@ void CGroundMoveType::GetNextWayPoint()
 
 	{
 		#if (DEBUG_OUTPUT == 1)
-		// plot the vector to the waypoint
+		// plot the vector to currWayPoint
 		const int figGroupID =
-			geometricObjects->AddLine(owner->pos + UpVector * 20, waypoint + UpVector * 20, 8.0f, 1, 4);
+			geometricObjects->AddLine(owner->pos + UpVector * 20, currWayPoint + UpVector * 20, 8.0f, 1, 4);
 
 		geometricObjects->SetColor(figGroupID, 1, 0.3f, 0.3f, 0.6f);
 		#endif
@@ -1130,20 +1134,18 @@ void CGroundMoveType::GetNextWayPoint()
 	}
 
 
-	if (waypoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
+	if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
 		// trigger Arrived on the next Update
 		haveFinalWaypoint = true;
 	}
 
-	haveFinalWaypoint = haveFinalWaypoint || (waypoint.x == -1.0f);
+	haveFinalWaypoint = haveFinalWaypoint || (nextWayPoint.x == -1.0f);
 
 	if (haveFinalWaypoint) {
-		waypoint = goalPos;
+		currWayPoint = goalPos;
+		nextWayPoint = goalPos;
 		return;
 	}
-
-	const float breakDist = BreakingDistance((reversing)? maxReverseSpeed: maxSpeed);
-	const float minDistSq = breakDist * breakDist;
 
 	// TODO-QTPFS:
 	//     regularly check if a terrain-change modified our path by comparing
@@ -1152,11 +1154,13 @@ void CGroundMoveType::GetNextWayPoint()
 	//     if we do not and a terrain-change area happened to contain <waypoint>
 	//     (the immediate next destination), then the unit will keep heading for
 	//     it and might possibly get stuck
-	if ((waypoint - owner->pos).SqLength2D() < minDistSq) {
-		waypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
+	//
+	if ((nextWayPoint - currWayPoint).SqLength2D() > 0.01f) {
+		currWayPoint = nextWayPoint;
+		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
-		if (waypoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
-			waypoint = goalPos;
+		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
+			currWayPoint = goalPos;
 		}
 	}
 }
@@ -1217,7 +1221,7 @@ void CGroundMoveType::StopEngine() {
 		pathId = 0;
 
 		if (!atGoal) {
-			waypoint = Here();
+			currWayPoint = Here();
 		}
 
 		// Stop animation.
@@ -1663,8 +1667,8 @@ void CGroundMoveType::TestNewTerrainSquare()
 			moveSquareY = newMoveSquareY;
 
 			// if we have moved, check if we can get to the next waypoint
-			int nwsx = (int) waypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
-			int nwsy = (int) waypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
+			int nwsx = (int) nextWayPoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
+			int nwsy = (int) nextWayPoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
 			int numIter = 0;
 
 			static const unsigned int blockBits =
@@ -1696,8 +1700,8 @@ void CGroundMoveType::TestNewTerrainSquare()
 
 				GetNextWayPoint();
 
-				nwsx = (int) waypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
-				nwsy = (int) waypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
+				nwsx = (int) nextWayPoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
+				nwsy = (int) nextWayPoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
 				++numIter;
 			}
 		}
@@ -1877,9 +1881,9 @@ bool CGroundMoveType::UpdateDirectControl()
 	const bool wantReverse = (unitCon.back && !unitCon.forward);
 	float turnSign = 0.0f;
 
-	waypoint = owner->pos;
-	waypoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
-	waypoint.CheckInBounds();
+	currWayPoint = owner->pos;
+	currWayPoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
+	currWayPoint.CheckInBounds();
 
 	if (unitCon.forward) {
 		SetDeltaSpeed(maxSpeed, wantReverse, true);
