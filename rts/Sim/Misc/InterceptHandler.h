@@ -21,7 +21,7 @@ class CInterceptHandler : public CObject, boost::noncopyable
 	CR_DECLARE(CInterceptHandler)
 
 public:
-	void Update();
+	void Update(bool forced);
 
 	void AddInterceptorWeapon(CWeapon* weapon) { interceptors.push_back(weapon); }
 	void RemoveInterceptorWeapon(CWeapon* weapon) { interceptors.remove(weapon); }
