@@ -112,16 +112,14 @@ void CLaserCannon::FireImpl()
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 	dir.Normalize();
 
-	int fpsSub = 0;
-
-	if (owner->fpsControlPlayer != NULL) {
-		// subtract 24 elmos in FPS mode (?)
-		fpsSub = 24;
-	}
+	// subtract a magic 24 elmos in FPS mode (helps against range-exploits)
+	const int fpsRangeSub = (owner->fpsControlPlayer != NULL)? (SQUARE_SIZE * 3): 0;
+	const float boltLength = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
+	const int boltTTL = ((weaponDef->range - fpsRangeSub) / weaponDef->projectilespeed) - (fpsRangeSub >> 2);
 
 	new CLaserProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED),
+		boltLength,
 		weaponDef->visuals.color, weaponDef->visuals.color2,
 		weaponDef->intensity, weaponDef,
-		(int) ((weaponDef->range - fpsSub) / weaponDef->projectilespeed) - 6);
+		boltTTL);
 }
