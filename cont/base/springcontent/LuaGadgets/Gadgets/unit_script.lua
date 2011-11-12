@@ -560,10 +560,10 @@ local function Wrap_AimWeapon(unitID, callins)
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
 	local function AimWeaponThread(weaponNum, heading, pitch)
-		if AimWeapon(weaponNum, heading, pitch) then
-			-- SetUnitWeaponState counts weapons from 0
-			return sp_SetUnitWeaponState(unitID, weaponNum - 1, "aimReady", 1)
-		end
+		local aimReady = AimWeapon(weaponNum, heading, pitch) or false
+
+		-- SetUnitWeaponState counts weapons from 0
+		return sp_SetUnitWeaponState(unitID, weaponNum - 1, "aimReady", aimReady)
 	end
 
 	callins["AimWeapon"] = function(weaponNum, heading, pitch)
