@@ -280,26 +280,27 @@ static int VisualsTable(lua_State* L, const void* data)
 	const struct WeaponDef::Visuals& v =
 		*((const struct WeaponDef::Visuals*)data);
 	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "modelName",   v.modelName);
-	HSTR_PUSH_NUMBER(L, "colorR",      v.color.x);
-	HSTR_PUSH_NUMBER(L, "colorG",      v.color.y);
-	HSTR_PUSH_NUMBER(L, "colorB",      v.color.z);
-	HSTR_PUSH_NUMBER(L, "color2R",     v.color2.x);
-	HSTR_PUSH_NUMBER(L, "color2G",     v.color2.y);
-	HSTR_PUSH_NUMBER(L, "color2B",     v.color2.z);
-	HSTR_PUSH_BOOL  (L, "smokeTrail",  v.smokeTrail);
-	HSTR_PUSH_BOOL  (L, "beamWeapon",  v.beamweapon);
-	HSTR_PUSH_BOOL	(L, "hardStop",    v.hardStop);
-	HSTR_PUSH_NUMBER(L, "tileLength",  v.tilelength);
-	HSTR_PUSH_NUMBER(L, "scrollSpeed", v.scrollspeed);
-	HSTR_PUSH_NUMBER(L, "pulseSpeed",  v.pulseSpeed);
-	HSTR_PUSH_NUMBER(L, "beamTTL",     v.beamttl);
-	HSTR_PUSH_NUMBER(L, "beamDecay",   v.beamdecay);
-	HSTR_PUSH_NUMBER(L, "stages",      v.stages);
-	HSTR_PUSH_NUMBER(L, "sizeDecay",   v.sizeDecay);
-	HSTR_PUSH_NUMBER(L, "alphaDecay",  v.alphaDecay);
-	HSTR_PUSH_NUMBER(L, "separation",  v.separation);
-	HSTR_PUSH_BOOL  (L, "noGap",       v.noGap);
+	HSTR_PUSH_STRING(L, "modelName",      v.modelName);
+	HSTR_PUSH_NUMBER(L, "colorR",         v.color.x);
+	HSTR_PUSH_NUMBER(L, "colorG",         v.color.y);
+	HSTR_PUSH_NUMBER(L, "colorB",         v.color.z);
+	HSTR_PUSH_NUMBER(L, "color2R",        v.color2.x);
+	HSTR_PUSH_NUMBER(L, "color2G",        v.color2.y);
+	HSTR_PUSH_NUMBER(L, "color2B",        v.color2.z);
+	HSTR_PUSH_BOOL  (L, "smokeTrail",     v.smokeTrail);
+	HSTR_PUSH_BOOL  (L, "beamWeapon",     v.beamweapon);
+	HSTR_PUSH_NUMBER(L, "tileLength",     v.tilelength);
+	HSTR_PUSH_NUMBER(L, "scrollSpeed",    v.scrollspeed);
+	HSTR_PUSH_NUMBER(L, "pulseSpeed",     v.pulseSpeed);
+	HSTR_PUSH_NUMBER(L, "laserFlareSize", v.laserflaresize);
+	HSTR_PUSH_NUMBER(L, "thickness",      v.thickness);
+	HSTR_PUSH_NUMBER(L, "coreThickness",  v.corethickness);
+	HSTR_PUSH_NUMBER(L, "beamDecay",      v.beamdecay);
+	HSTR_PUSH_NUMBER(L, "stages",         v.stages);
+	HSTR_PUSH_NUMBER(L, "sizeDecay",      v.sizeDecay);
+	HSTR_PUSH_NUMBER(L, "alphaDecay",     v.alphaDecay);
+	HSTR_PUSH_NUMBER(L, "separation",     v.separation);
+	HSTR_PUSH_BOOL  (L, "noGap",          v.noGap);
 
 	HSTR_PUSH_BOOL  (L, "alwaysVisible", v.alwaysVisible);
 
@@ -517,12 +518,9 @@ static bool InitParamMap()
 	ADD_FLOAT("stockpileTime", wd.stockpileTime);
 
 	ADD_FLOAT("intensity", wd.intensity);
-	ADD_FLOAT("thickness", wd.thickness);
-	ADD_FLOAT("laserFlareSize", wd.laserflaresize);
-	ADD_FLOAT("coreThickness", wd.corethickness);
 	ADD_FLOAT("duration", wd.duration);
+	ADD_INT("beamTTL", wd.beamLaserTTL);
 
-	ADD_INT("graphicsType",  wd.graphicsType);
 	ADD_BOOL("soundTrigger", wd.soundTrigger);
 
 	ADD_BOOL("selfExplode", wd.selfExplode);
@@ -541,6 +539,7 @@ static bool InitParamMap()
 	ADD_FLOAT("trajectoryHeight", wd.trajectoryHeight);
 
 	ADD_BOOL("largeBeamLaser", wd.largeBeamLaser);
+	ADD_BOOL("laserHardStop", wd.laserHardStop);
 
 	ADD_BOOL("isShield",                wd.isShield);
 	ADD_BOOL("shieldRepulser",          wd.shieldRepulser);

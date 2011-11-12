@@ -204,11 +204,10 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 	weapon->reloadTime = int(weaponDef->reload * GAME_SPEED);
 	if (weapon->reloadTime == 0)
 		weapon->reloadTime = 1;
+
 	weapon->range = weaponDef->range;
-//	weapon->baseRange = weaponDef->range;
 	weapon->heightMod = weaponDef->heightmod;
 	weapon->projectileSpeed = weaponDef->projectilespeed;
-//	weapon->baseProjectileSpeed = weaponDef->projectilespeed / GAME_SPEED;
 
 	weapon->areaOfEffect = weaponDef->areaOfEffect;
 	weapon->accuracy = weaponDef->accuracy;

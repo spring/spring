@@ -35,12 +35,12 @@ CBeamLaserProjectile::CBeamLaserProjectile(
 	CUnit* owner,
 	const WeaponDef* weaponDef):
 
-	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, NULL, ZeroVector, weaponDef, NULL, (weaponDef? weaponDef->visuals.beamttl: 0)),
+	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, NULL, ZeroVector, weaponDef, NULL, (weaponDef? weaponDef->beamLaserTTL: 0)),
 	startPos(startPos),
 	endPos(endPos),
-	thickness(weaponDef? weaponDef->thickness: 0.0f),
-	corethickness(weaponDef? weaponDef->corethickness: 0.0f),
-	flaresize(weaponDef? weaponDef->laserflaresize: 0.0f),
+	thickness(weaponDef? weaponDef->visuals.thickness: 0.0f),
+	corethickness(weaponDef? weaponDef->visuals.corethickness: 0.0f),
+	flaresize(weaponDef? weaponDef->visuals.laserflaresize: 0.0f),
 	decay(weaponDef? weaponDef->visuals.beamdecay: 0.0f)
 {
 	projectileType = WEAPON_BEAMLASER_PROJECTILE;
