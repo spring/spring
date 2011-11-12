@@ -283,31 +283,43 @@ void CWeapon::Update()
 			const float goalDot = owner->frontdir.dot(goalDir);
 
 			angleGood = (goalDot > maxAngleDif);
-		} else if ((lastRequest + (GAME_SPEED >> 1)) < gs->frameNum) {
+		} else if (gs->frameNum >= (lastRequest + (GAME_SPEED >> 1))) {
+			// NOTE:
+			//   if AimWeapon sets angleGood immediately (ie. before it returns),
+			//   the weapon can continuously fire at its maximum rate once every
+			//   int(reloadTime / owner->reloadSpeed) frames
+			//
+			//   if it does not (eg. because AimWeapon always spawns a thread to
+			//   aim the weapon and defers setting angleGood to it) then this can
+			//   lead to irregular/stuttering firing behavior, even in scenarios
+			//   when the weapon does not have to re-aim --> detecting this case
+			//   is the responsibility of the script
+			angleGood = false;
+
 			lastRequestedDir = wantedDir;
 			lastRequest = gs->frameNum;
 
 			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
 			const float pitch = math::asin(Clamp(wantedDir.dot(owner->updir), -1.0f, 1.0f));
 
-			// call AimWeapon every N=15 frames regardless of current anglegood state
+			// call AimWeapon every N=15 frames regardless of current angleGood state
 			// for COB, this sets anglegood to return value of AimWeapon when it finished,
-			// for Lua, there exists a callout to set the anglegood member.
+			// for Lua, there exists a callout to set the angleGood member.
 			// FIXME: convert CSolidObject::heading to radians too.
 			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
 		}
 	}
 	if (weaponDef->stockpile && numStockpileQued) {
-		float p = 1.0f / stockpileTime;
+		const float p = 1.0f / stockpileTime;
 
 		if (teamHandler->Team(owner->team)->metal >= metalFireCost*p && teamHandler->Team(owner->team)->energy >= energyFireCost*p) {
-			owner->UseEnergy(energyFireCost*p);
-			owner->UseMetal(metalFireCost*p);
-			buildPercent+=p;
+			owner->UseEnergy(energyFireCost * p);
+			owner->UseMetal(metalFireCost * p);
+			buildPercent += p;
 		} else {
 			// update the energy and metal required counts
-			teamHandler->Team(owner->team)->energyPull += energyFireCost*p;
-			teamHandler->Team(owner->team)->metalPull += metalFireCost*p;
+			teamHandler->Team(owner->team)->energyPull += energyFireCost * p;
+			teamHandler->Team(owner->team)->metalPull += metalFireCost * p;
 		}
 		if (buildPercent >= 1) {
 			const int oldCount = numStockpiled;
