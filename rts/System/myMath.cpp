@@ -252,3 +252,41 @@ float3 smoothstep(const float edge0, const float edge1, float3 vec)
 	vec.z = smoothstep(edge0, edge1, vec.z);
 	return vec;
 }
+
+
+
+float3 hs2rgb(float h, float s)
+{
+	// FIXME? ignores saturation completely
+	s = 1.0f;
+
+	const float invSat = 1.0f - s;
+
+	if (h > 0.5f) { h += 0.1f; }
+	if (h > 1.0f) { h -= 1.0f; }
+
+	float3 col(invSat / 2.0f, invSat / 2.0f, invSat / 2.0f);
+
+	if (h < (1.0f / 6.0f)) {
+		col.x += s;
+		col.y += s * (h * 6.0f);
+	} else if (h < (1.0f / 3.0f)) {
+		col.y += s;
+		col.x += s * ((1.0f / 3.0f - h) * 6.0f);
+	} else if (h < (1.0f / 2.0f)) {
+		col.y += s;
+		col.z += s * ((h - (1.0f / 3.0f)) * 6.0f);
+	} else if (h < (2.0f / 3.0f)) {
+		col.z += s;
+		col.y += s * ((2.0f / 3.0f - h) * 6.0f);
+	} else if (h < (5.0f / 6.0f)) {
+		col.z += s;
+		col.x += s * ((h - (2.0f / 3.0f)) * 6.0f);
+	} else {
+		col.x += s;
+		col.z += s * ((3.0f / 3.0f - h) * 6.0f);
+	}
+
+	return col;
+}
+
