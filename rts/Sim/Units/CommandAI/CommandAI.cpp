@@ -434,7 +434,8 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			} else {
 				if (c.params.size() >= 3) {
 					const float3 cPos(c.params[0], c.params[1], c.params[2]);
-					const float gHeight = ground->GetHeightReal(cPos.x, cPos.z, fromSynced);
+					//FIXME is fromSynced really sync-safe??? const float gHeight = ground->GetHeightReal(cPos.x, cPos.z, fromSynced);
+					const float gHeight = ground->GetHeightReal(cPos.x, cPos.z, true);
 
 					#if 0
 					// check if attack-ground is really attack-ground
@@ -449,6 +450,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 					//     at positions outside LOS where UHM and SHM do not
 					//     match will not be broken)
 					//
+					
 					if (!aiOrder && math::fabs(cPos.y - gHeight) > SQUARE_SIZE) {
 						return false;
 					}
