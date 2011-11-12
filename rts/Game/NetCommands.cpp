@@ -1046,7 +1046,7 @@ void CGame::ClientReadNet()
 					eventHandler.PlayerAdded(player.playerNum);
 					LOG("Added new player: %s", name.c_str());
 					if (!player.spectator) {
-						eventHandler.TeamChanged(player.team)
+						eventHandler.TeamChanged(player.team);
 					}
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
