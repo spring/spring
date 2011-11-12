@@ -831,7 +831,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float len
 	const float g = TraceRay::TraceRay(pos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
 
 	// true iff ground does not block the ray of length <length> from <pos> along <dir>
-	return ((g <= 0.0f || g >= (length * 0.9f)) || (unit == target));
+	return (g <= 0.0f || g >= (length * 0.9f));
 }
 
 bool CWeapon::AdjustTargetVectorLength(
