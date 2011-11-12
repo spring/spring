@@ -446,7 +446,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	try {
 		archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
 	} catch (const content_error& ex) {
-		LOG_L(L_WARNING, ex.what());
+		LOG_L(L_WARNING, "Incompatible map-checksum: %s", ex.what());
 	}
 
 	LOG("Using game: %s", gameSetup->modName.c_str());
@@ -456,7 +456,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	try {
 		archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
 	} catch (const content_error& ex) {
-		LOG_L(L_WARNING, ex.what());
+		LOG_L(L_WARNING, "Incompatible game-checksum: %s", ex.what());
 	}
 
 	if (net && net->GetDemoRecorder()) {
