@@ -1454,7 +1454,13 @@ int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 int LuaUnsyncedRead::GetTimer(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushlightuserdata(L, (void*)SDL_GetTicks());
+
+	// TODO: something cleaner?
+	static unsigned int timerQueries[128] = {0};
+	static unsigned int timerQuery = 0;
+
+	timerQueries[timerQuery] = SDL_GetTicks();
+	lua_pushlightuserdata(L, (void*) &timerQueries[(timerQuery++ % 128)]);
 	return 1;
 }
 
