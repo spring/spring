@@ -49,15 +49,8 @@ bool CLightningCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 	if (!CWeapon::TryTarget(pos, userTarget, unit))
 		return false;
 
-	if (!weaponDef->waterweapon) {
-		if (unit) {
-			if (unit->isUnderWater)
-				return false;
-		} else {
-			if (pos.y < 0)
-				return false;
-		}
-	}
+	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
+		return false;
 
 	float3 dir = pos - weaponMuzzlePos;
 	float length = dir.Length();
