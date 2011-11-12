@@ -502,7 +502,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 					pckt >> spectator;
 					pckt >> team;
 					pckt >> name;
-					AddAdditionalUser(name, "", true); // even though this is a demo, keep the players vector properly updated
+					AddAdditionalUser(name, "", true,(bool)spectator,(int)team); // even though this is a demo, keep the players vector properly updated
 				} catch (const netcode::UnpackPacketException& ex) {
 					Message(str(format("Warning: Discarding invalid new player packet in demo: %s") %ex.what()));
 					continue;
@@ -2023,7 +2023,14 @@ void CGameServer::PushAction(const Action& action)
 			if (tokens.size() > 1) {
 				const std::string& name = tokens[0];
 				const std::string& password = tokens[1];
-
+				int team = 0;
+				bool spectator = true;
+				if ( tokens.size() > 2 ) {
+					spectator = (tokens[2] == "0") ? false : true;
+				}
+				if ( tokens.size() > 3 ) {
+					team = atoi(tokens[3].c_str());
+				}
 				GameParticipant gp;
 					gp.name = name;
 				// note: this must only compare by name
@@ -2040,11 +2047,15 @@ void CGameServer::PushAction(const Action& action)
 					participantIter->SetValue("password", password);
 					LOG("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 				} else {
-					AddAdditionalUser(name, password);
-					LOG("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+					AddAdditionalUser(name, password, false, spectator, team);
+					std::string logstring = "Added ";
+					if ( spectator ) logstring = logstring + "spectator";
+					else logstring = logstring + "player";
+					logstring = logstring + " \"%s\" with password \"%s\", to team %d";
+					LOG(logstring.c_str(), name.c_str(), password.c_str(),team);
 				}
 			} else {
-				LOG_L(L_WARNING, "Failed to add player/spectator password. usage: /adduser <player-name> <password>");
+				LOG_L(L_WARNING, "Failed to add player/spectator password. usage: /adduser <player-name> <password> [spectator] [team]");
 			}
 		}
 	}
@@ -2243,13 +2254,13 @@ void CGameServer::KickPlayer(const int playerNum)
 }
 
 
-void CGameServer::AddAdditionalUser(const std::string& name, const std::string& passwd, bool fromDemo)
+void CGameServer::AddAdditionalUser(const std::string& name, const std::string& passwd, bool fromDemo, bool spectator, int team)
 {
 	GameParticipant buf;
 	buf.isFromDemo = fromDemo;
 	buf.name = name;
-	buf.spectator = true;
-	buf.team = 0;
+	buf.spectator = spectator;
+	buf.team = team;
 	buf.isMidgameJoin = true;
 	if (passwd.size() > 0)
 		buf.SetValue("password",passwd);
@@ -2461,4 +2472,3 @@ void CGameServer::AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &
 	}
 	packetCache.back().push_back(pckt);
 }
-
