@@ -32,6 +32,7 @@ public:
 
 	void DependentDied(CObject* o);
 
+	bool TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit) const;
 	bool HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const;
 	bool AdjustTargetVectorLength(CUnit*, float3&, float3&, float3&) const;
 	virtual bool TryTarget(const float3& pos, bool userTarget,CUnit* unit);
