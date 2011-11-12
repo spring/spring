@@ -59,14 +59,14 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
 	kocolstart[3]   = 1;
 
 	if (weaponDef) {
-		thickness     = weaponDef->thickness;
-		corethickness = weaponDef->corethickness;
-		flaresize     = weaponDef->laserflaresize;
+		thickness     = weaponDef->visuals.thickness;
+		corethickness = weaponDef->visuals.corethickness;
+		flaresize     = weaponDef->visuals.laserflaresize;
 		tilelength    = weaponDef->visuals.tilelength;
 		scrollspeed   = weaponDef->visuals.scrollspeed;
 		pulseSpeed    = weaponDef->visuals.pulseSpeed;
-		ttl           = weaponDef->visuals.beamttl;
 		decay         = weaponDef->visuals.beamdecay;
+		ttl           = weaponDef->beamLaserTTL;
 	}
 
 	cegID = gCEG->Load(explGenHandler, cegTag);
