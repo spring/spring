@@ -25,13 +25,6 @@ extern "C" {
 static const int SECTION_SIZE_MIN = 10;
 static const int SECTION_SIZE_MAX = 20;
 
-static int* frameNum = NULL;
-
-void log_formatter_setFrameNumReference(int* frameNumReference)
-{
-	frameNum = frameNumReference;
-}
-
 static void log_formatter_createPrefix_xorgStyle(char* prefix,
 		size_t prefixSize, const char* section, int level)
 {
@@ -85,17 +78,6 @@ static inline void log_formatter_createPrefix(char* prefix, size_t prefixSize,
  * ILog.h formatter implementation.
  */
 ///@{
-
-char* log_formatter_getFrame_prefix()
-{
-	//FIXME using a static var may make it thread-unsafe!!!
-	static char prefix[128] = {'\0'};
-	if (frameNum != NULL) {
-		SNPRINTF(prefix, sizeof(prefix), "[f=%07d] ", *frameNum);
-	}
-	return prefix;
-}
-
 
 /// Formats a log entry into its final string form
 void log_formatter_format(char* record, size_t recordSize,
