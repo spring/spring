@@ -1041,10 +1041,13 @@ void CGame::ClientReadNet()
 					player.team = team;
 					player.playerNum = playerNum;
 					// add the new player
+					// TODO NETMSG_CREATE_NEWPLAYER perhaps add a lua hook; hook should be able to reassign the player to a team and/or create a new team/allyteam
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
 					LOG("Added new player: %s", name.c_str());
-					// TODO NETMSG_CREATE_NEWPLAYER perhaps add a lua hook; hook should be able to reassign the player to a team and/or create a new team/allyteam
+					if (!player.spectator) {
+						eventHandler.TeamChanged(player.team)
+					}
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid New player message: %s", ex.what());
@@ -1071,4 +1074,3 @@ void CGame::ClientReadNet()
 		}
 	}
 }
-
