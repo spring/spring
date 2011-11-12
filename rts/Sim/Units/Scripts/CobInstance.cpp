@@ -353,9 +353,7 @@ int CCobInstance::QueryWeapon(int weaponNum)
 // Called when unit's AimWeapon script finished executing
 static void ScriptCallback(int retCode, void* p1, void* p2)
 {
-	if (retCode == 1) {
-		((CWeapon*)p1)->angleGood = true;
-	}
+	((CWeapon*)p1)->angleGood = (retCode == 1);
 }
 
 void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)

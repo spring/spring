@@ -11,7 +11,6 @@ class CLaserCannon :
 	CR_DECLARE(CLaserCannon);
 public:
 	CLaserCannon(CUnit* owner);
-	~CLaserCannon(void);
 
 	void Update(void);
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);

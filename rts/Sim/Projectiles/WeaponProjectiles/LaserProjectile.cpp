@@ -29,22 +29,26 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_MEMBER(intensityFalloff),
 	CR_MEMBER(midtexx),
 	CR_RESERVED(16)
-	));
+));
 
 CLaserProjectile::CLaserProjectile(
-	const float3& pos, const float3& speed,
-	CUnit* owner, float length,
-	const float3& color, const float3& color2,
+	const float3& pos,
+	const float3& speed,
+	CUnit* owner,
+	float length,
+	const float3& color,
+	const float3& color2,
 	float intensity,
-	const WeaponDef* weaponDef, int ttl):
+	const WeaponDef* weaponDef,
+	int ttl):
 
 	CWeaponProjectile(pos, speed, owner, NULL, ZeroVector, weaponDef, NULL, ttl),
 	intensity(intensity),
 	color(color),
 	color2(color2),
 	length(length),
-	curLength(0),
-	intensityFalloff(weaponDef ? (intensity * weaponDef->falloffRate) : 0),
+	curLength(0.0f),
+	intensityFalloff(weaponDef ? (intensity * weaponDef->falloffRate) : 0.0f),
 	stayTime(0)
 {
 	projectileType = WEAPON_LASER_PROJECTILE;
@@ -91,9 +95,10 @@ void CLaserProjectile::Update()
 			curLength -= speedf;
 		else
 			stayTime--;
-		if (curLength <= 0) {
+
+		if (curLength <= 0.0f) {
 			deleteMe = true;
-			curLength = 0;
+			curLength = 0.0f;
 		}
 	}
 
@@ -102,7 +107,7 @@ void CLaserProjectile::Update()
 		gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
 	}
 
-	if (weaponDef->visuals.hardStop) {
+	if (weaponDef->laserHardStop) {
 		if (ttl == 0 && checkCol) {
 			checkCol = false;
 			speed = ZeroVector;
@@ -110,27 +115,29 @@ void CLaserProjectile::Update()
 				// if the laser wasn't fully extended yet,
 				// remember how long until it would have been
 				// fully extended
-				stayTime = int(1 + (length - curLength) / speedf);
+				stayTime = 1 + (length - curLength) / speedf;
 			}
 		}
 	} else {
 		if (ttl < 5 && checkCol) {
-			intensity -= intensityFalloff * 0.2f;
-			if (intensity <= 0) {
+			intensity -= (intensityFalloff * 0.2f);
+
+			if (intensity <= 0.0f) {
+				intensity = 0.0f;
 				deleteMe = true;
-				intensity = 0;
 			}
 		}
 	}
 
-	if (!luaMoveCtrl) {
-		float3 tempSpeed = speed;
-		UpdateGroundBounce();
+	if (luaMoveCtrl)
+		return;
 
-		if (tempSpeed != speed) {
-			dir = speed;
-			dir.Normalize();
-		}
+	float3 tempSpeed = speed;
+	UpdateGroundBounce();
+
+	if (tempSpeed != speed) {
+		dir = speed;
+		dir.Normalize();
 	}
 }
 
@@ -152,7 +159,7 @@ void CLaserProjectile::Collision(CUnit* unit)
 			// remember how long until it would have
 			// been fully extended
 			curLength += speedf;
-			stayTime = int(1 + (length - curLength) / speedf);
+			stayTime = 1 + (length - curLength) / speedf;
 		}
 	}
 }
@@ -164,16 +171,19 @@ void CLaserProjectile::Collision(CFeature* feature)
 
 	// we will fade out over some time
 	deleteMe = false;
-	if (!weaponDef->noExplode) {
-		checkCol = false;
-		speed = ZeroVector;
-		pos = oldPos;
-		if (curLength < length) {
-			// if the laser wasn't fully extended yet,
-			// remember how long until it would have been
-			// fully extended
-			stayTime = int(1 + (length - curLength) / speedf);
-		}
+
+	if (weaponDef->noExplode)
+		return;
+
+	checkCol = false;
+	speed = ZeroVector;
+	pos = oldPos;
+
+	if (curLength < length) {
+		// if the laser wasn't fully extended yet,
+		// remember how long until it would have been
+		// fully extended
+		stayTime = 1 + (length - curLength) / speedf;
 	}
 }
 
@@ -184,16 +194,19 @@ void CLaserProjectile::Collision()
 
 	// we will fade out over some time
 	deleteMe = false;
-	if (!weaponDef->noExplode) {
-		checkCol = false;
-		speed = ZeroVector;
-		pos = oldPos;
-		if (curLength < length) {
-			// if the laser wasn't fully extended yet,
-			// remember how long until it would have been
-			// fully extended
-			stayTime = (int)(1 + (length - curLength) / speedf);
-		}
+
+	if (weaponDef->noExplode)
+		return;
+
+	checkCol = false;
+	speed = ZeroVector;
+	pos = oldPos;
+
+	if (curLength < length) {
+		// if the laser wasn't fully extended yet,
+		// remember how long until it would have been
+		// fully extended
+		stayTime = 1 + (length - curLength) / speedf;
 	}
 }
 
@@ -225,11 +238,11 @@ void CLaserProjectile::Draw()
 	col2[2] = (unsigned char) (color2.z * intensity * 255);
 	col2[3] = 1; //intensity*255;
 
-	const float size = weaponDef->thickness;
-	const float coresize = size * weaponDef->corethickness;
+	const float size = weaponDef->visuals.thickness;
+	const float coresize = size * weaponDef->visuals.corethickness;
 
 	va->EnlargeArrays(32, 0, VA_SIZE_TC);
-	if (camDist < weaponDef->lodDistance) {
+	if (camDist < weaponDef->visuals.lodDistance) {
 		const float3 pos2 = drawPos - (dir * curLength);
 		float texStartOffset;
 		float texEndOffset;

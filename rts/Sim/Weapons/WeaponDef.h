@@ -75,13 +75,9 @@ public:
 		, coverageRange(0.0f)
 		, stockpileTime(0.0f)
 		, intensity(0.0f)
-		, thickness(0.0f)
-		, laserflaresize(0.0f)
-		, corethickness(0.0f)
-		, duration(0.0f)
-		, lodDistance(0)
 		, falloffRate(0.0f)
-		, graphicsType(0)
+		, duration(0.0f)
+		, beamLaserTTL(0)
 		, soundTrigger(false)
 		, selfExplode(false)
 		, gravityAffected(false)
@@ -98,6 +94,7 @@ public:
 		, dance(0.0f)
 		, trajectoryHeight(0.0f)
 		, largeBeamLaser(false)
+		, laserHardStop(false)
 		, isShield(false) //FIXME REMOVE! (this information is/should be saved in the weapontype)
 		, shieldRepulser(false)
 		, smartShield(false)
@@ -217,15 +214,15 @@ public:
 
 	float stockpileTime;        ///< builtime of a missile
 
+	///< determines alpha-fading for BeamLasers (UNSYNCED);
+	///< combines with falloffRate for Lasers to determine
+	///< when projectile should be deleted (SYNCED) instead
+	///< of TTL
 	float intensity;
-	float thickness;
-	float laserflaresize;
-	float corethickness;
-	float duration;
-	int   lodDistance;
 	float falloffRate;
+	float duration;
+	int beamLaserTTL;
 
-	int graphicsType;
 	bool soundTrigger;
 
 	bool selfExplode;
@@ -256,7 +253,6 @@ public:
 			, explosionScar(true)
 			, smokeTrail(false)
 			, beamweapon(false)
-			, hardStop(false)
 			, texture1(NULL)
 			, texture2(NULL)
 			, texture3(NULL)
@@ -264,7 +260,10 @@ public:
 			, tilelength(0.0f)
 			, scrollspeed(0.0f)
 			, pulseSpeed(0.0f)
-			, beamttl(0)
+			, laserflaresize(0.0f)
+			, thickness(0.0f)
+			, corethickness(0.0f)
+			, lodDistance(0)
 			, beamdecay(0.0f)
 			, stages(0)
 			, alphaDecay(0.0f)
@@ -288,8 +287,6 @@ public:
 		bool explosionScar;
 		bool smokeTrail;
 		bool beamweapon;
-		/// whether the shot should fade out or stop and contract at max range
-		bool hardStop;
 
 		AtlasedTexture* texture1;
 		AtlasedTexture* texture2;
@@ -298,7 +295,10 @@ public:
 		float tilelength;
 		float scrollspeed;
 		float pulseSpeed;
-		int beamttl;
+		float laserflaresize;
+		float thickness;
+		float corethickness;
+		int   lodDistance;
 		float beamdecay;
 
 		int stages;
@@ -306,12 +306,12 @@ public:
 		float sizeDecay;
 		float separation;
 		bool noGap;
-
 		bool alwaysVisible;
 	};
 	Visuals visuals;
 
-	bool largeBeamLaser;
+	bool largeBeamLaser;             // whether a BeamLaser should spawn LargeBeamLaserProjectile's or regular ones
+	bool laserHardStop;              // whether the shot should fade out or stop and contract at max-range (applies to LaserCannons only)
 
 	bool isShield;                   // if the weapon is a shield rather than a weapon
 	bool shieldRepulser;             // if the weapon should be repulsed or absorbed
