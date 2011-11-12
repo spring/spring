@@ -4075,32 +4075,36 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getIntensity(int skirmishAIId, int we
 	return getWeaponDefById(skirmishAIId, weaponDefId)->intensity;
 }
 
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_WeaponDef_getThickness(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->thickness;
+	return 0.0f;
 }
-
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_WeaponDef_getLaserFlareSize(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->laserflaresize;
+	return 0.0f;
 }
 
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_WeaponDef_getCoreThickness(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->corethickness;
+	return 0.0f;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getDuration(int skirmishAIId, int weaponDefId) {
 	return getWeaponDefById(skirmishAIId, weaponDefId)->duration;
 }
 
+// DEPRECATED
 EXPORT(int) skirmishAiCallback_WeaponDef_getLodDistance(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->lodDistance;
+	return 0;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getFalloffRate(int skirmishAIId, int weaponDefId) {
 	return getWeaponDefById(skirmishAIId, weaponDefId)->falloffRate;
 }
 
+// DEPRECATED
 EXPORT(int) skirmishAiCallback_WeaponDef_getGraphicsType(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->graphicsType;
+	return 0;
 }
 
 EXPORT(bool) skirmishAiCallback_WeaponDef_isSoundTrigger(int skirmishAIId, int weaponDefId) {
