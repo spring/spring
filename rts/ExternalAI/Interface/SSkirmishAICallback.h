@@ -2075,18 +2075,23 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *WeaponDef_getIntensity)(int skirmishAIId, int weaponDefId);
 
+	/** @deprecated only relevant for visualization */
 	float             (CALLING_CONV *WeaponDef_getThickness)(int skirmishAIId, int weaponDefId);
 
+	/** @deprecated only relevant for visualization */
 	float             (CALLING_CONV *WeaponDef_getLaserFlareSize)(int skirmishAIId, int weaponDefId);
 
+	/** @deprecated only relevant for visualization */
 	float             (CALLING_CONV *WeaponDef_getCoreThickness)(int skirmishAIId, int weaponDefId);
 
 	float             (CALLING_CONV *WeaponDef_getDuration)(int skirmishAIId, int weaponDefId);
 
+	/** @deprecated only relevant for visualization */
 	int               (CALLING_CONV *WeaponDef_getLodDistance)(int skirmishAIId, int weaponDefId);
 
 	float             (CALLING_CONV *WeaponDef_getFalloffRate)(int skirmishAIId, int weaponDefId);
 
+	/** @deprecated only relevant for visualization */
 	int               (CALLING_CONV *WeaponDef_getGraphicsType)(int skirmishAIId, int weaponDefId);
 
 	bool              (CALLING_CONV *WeaponDef_isSoundTrigger)(int skirmishAIId, int weaponDefId);
