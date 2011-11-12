@@ -1,4 +1,24 @@
-# Making the chroot
+# Setting up buildmaster
+
+The build master is set up using virtualenv, so that buildbot needs not to be installed as root, and so that buildbot can't conflict with other installed python packages.
+So, first, set up the virtualenv (in the directory virtualenv in this example):
+
+	apt-get install python-dev python-virtualenv
+	virtualenv --no-site-packages virtualenv
+	echo 'source $HOME/virtualenv/bin/activate' >> ~/.profile
+	source virtualenv/bin/activate
+
+Then we check out buildbot sources, switch to the last stable release, and install into the virtual environment.
+
+	git clone git://github.com/buildbot/buildbot.git
+	cd buildbot/master
+	git checkout v0.8.5
+	python setup.py install
+
+After this commands like `buildbot create-master` and `buildbot start` can be used to create/control the master.
+After creating the master, the generated `public_html` can be erased and linked to the `buildbot/master/public_html` in the Spring repository.
+
+# Setting up buildslave (Making the chroot)
 
 At least debootstrap and schroot are required. I didn't compile an exhaustive list of other dependencies on the host system, so YMMV.
 

@@ -1,5 +1,30 @@
 Spring change log
 
+-- 84.0 ---------------------------------------------------------
+Bugfixes & Improvements:
+ - reduced 'Got invalid Select' message spam
+ - hide framNums from chat console
+ - fixed command queue bug (zombie builders)
+ - always flush stdout/stderr
+ - workaround a SDL bug with X11 & fullscreen that broke MiddleClickScrolling
+ - changed target behavior of enemies outside of LOS
+ - fixed BumpWater with DepthBufferBits=16
+ - fixed aircraft landing on repairpads
+ - reset aircraft state after starting from repairpad (`ground hover bug`)
+ - make UHM available before the gamestart (fixes Spring.GetGroundHeight in :Initialize() etc.)
+ - workaround 'Bertha' issue (UHM related)
+ - make C++ AI Wrapper compile with VS
+ - fixed fog in some shaders
+ - fixed F2 view
+ - improve weapon interceptors (anti nukes can now intercept nukes that fly over them)
+ - fixed free resources by NanoFrameDecay
+ - handle resigned players (:= /spectator) in game_end.lua gadget
+ - Lua Spring.KillTeam: disallow killing of Gaia (engine doesn't support so atm)
+ - fixed lasers not hitting targets at edge of range
+ - fixed stutter with low-reloadtime weapons
+ - Lua: removed WeaponDefs[i].graphicsType & renamed WeaponDefs[i].hardStop -> WeaponDefs[i].laserHardStop
+
+
 -- 83.0 ---------------------------------------------------------
 Major Changes:
  - EFX/EAX support (sound reverb)
