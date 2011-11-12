@@ -105,7 +105,7 @@ static inline void log_formatter_createPrefix(char** buffer, size_t* bufferSize,
 	log_formatter_createPrefix_default(buffer, bufferSize, section, level);
 
 	// check if the buffer was large enough, if not resize it and try again
-	bool bufferTooSmall = (STRCAT_T(*buffer, *bufferSize, "\0foo") < 0);
+	const bool bufferTooSmall = ((strlen(*buffer) + 1) >= *bufferSize);
 	if (bufferTooSmall) {
 		ResizeBuffer(buffer, bufferSize);
 		log_formatter_createPrefix(buffer, bufferSize, section, level); // recursive
