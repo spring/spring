@@ -93,7 +93,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings
 	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG
 	${ENGINE_SRC_ROOT_DIR}/System/Util
-	${ENGINE_SRC_ROOT_DIR}/System/float4)
+	${ENGINE_SRC_ROOT_DIR}/System/float4
 	${ENGINE_SRC_ROOT_DIR}/System/Log/Backend.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFilter.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFormatter.cpp
@@ -101,6 +101,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Log/LogSinkHandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/LogUtil.c
 	${ENGINE_SRC_ROOT_DIR}/System/Log/ConsoleSink.cpp
+	)
 IF    (WIN32)
 	LIST(APPEND system_files ${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/WinVersion)
 ENDIF (WIN32)
