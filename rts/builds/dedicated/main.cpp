@@ -20,11 +20,24 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
+#include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Exceptions.h"
 #include "System/UnsyncedRNG.h"
+
+
+
+#define LOG_SECTION_DEDICATED_SERVER "DS"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DEDICATED_SERVER)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_DEDICATED_SERVER
+
 
 #ifdef __cplusplus
 extern "C"
@@ -45,19 +58,19 @@ int main(int argc, char* argv[])
 	CrashHandler::Install();
 
 	if (argc != 2) {
-		printf("[DS] usage: %s <full_path_to_script | --version>\n", argv[0]);
-		return 0;
+		LOG_L(L_ERROR, "usage: %s <full_path_to_script | --version>", argv[0]);
+		return 1;
 	}
 	if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0) {
-		printf("[DS] %s\n", (SpringVersion::GetFull()).c_str());
+		LOG("%s", (SpringVersion::GetFull()).c_str());
 		return 0;
 	}
 
 	std::string scriptName(argv[1]);
 	std::string scriptText;
 
-	printf("[DS] report any errors to Mantis or the forums\n.");
-	printf("[DS] loading script from file: %s\n", scriptName.c_str());
+	LOG("report any errors to Mantis or the forums.");
+	LOG("loading script from file: %s", scriptName.c_str());
 
 	SDL_Init(SDL_INIT_TIMER);
 
@@ -71,17 +84,17 @@ int main(int argc, char* argv[])
 	CFileHandler fh(scriptName);
 
 	if (!fh.FileExists())
-		throw content_error("[DS] script does not exist in given location: " + scriptName);
+		throw content_error("script does not exist in given location: " + scriptName);
 
 	if (!fh.LoadStringData(scriptText))
-		throw content_error("[DS] script cannot be read: " + scriptName);
+		throw content_error("script cannot be read: " + scriptName);
 
 	settings.Init(scriptText);
 	gameSetup = new CGameSetup(); // to store the gamedata inside
 
 	if (!gameSetup->Init(scriptText)) {
 		// read the script provided by cmdline
-		printf("[DS] failed to load script %s\n", scriptName.c_str());
+		LOG_L(L_ERROR, "failed to load script %s", scriptName.c_str());
 		return 1;
 	}
 
@@ -115,7 +128,7 @@ int main(int argc, char* argv[])
 		data.SetModChecksum(modCheckSum);
 	}
 
-	printf("[DS] starting server...\n");
+	LOG("starting server...");
 
 	data.SetSetup(gameSetup->gameSetupText);
 	server = new CGameServer(settings.hostIP, settings.hostPort, &data, gameSetup);
@@ -137,10 +150,10 @@ int main(int argc, char* argv[])
 			const boost::scoped_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
 			const boost::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
 
-			printf("[DS] recording demo: %s\n", (demoRec->GetName()).c_str());
-			printf("[DS] using mod: %s\n", (gameSetup->modName).c_str());
-			printf("[DS] using map: %s\n", (gameSetup->mapName).c_str());
-			printf("[DS] GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n", gameID[0], gameID[1], gameID[2], gameID[3], gameID[4], gameID[5], gameID[6], gameID[7], gameID[8], gameID[9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
+			LOG("recording demo: %s", (demoRec->GetName()).c_str());
+			LOG("using mod: %s", (gameSetup->modName).c_str());
+			LOG("using map: %s", (gameSetup->mapName).c_str());
+			LOG("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", gameID[0], gameID[1], gameID[2], gameID[3], gameID[4], gameID[5], gameID[6], gameID[7], gameID[8], gameID[9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
 		}
 
 		// wait 1 second between checks
@@ -159,7 +172,7 @@ int main(int argc, char* argv[])
 
 #ifdef _WIN32
 } catch (const std::exception& err) {
-	printf("[DS] exception raised: %s\n", err.what());
+	LOG_L(L_ERROR, "Dedicated server failed to start: %s", err.what());
 	return 1;
 }
 #endif
