@@ -3,6 +3,7 @@
 #include "FileSink.h"
 
 #include "Backend.h"
+#include "FramePrefixer.h"
 #include "Level.h" // for LOG_LEVEL_*
 #include "System/maindefines.h"
 #include "System/Log/ILog.h"
@@ -13,17 +14,6 @@
 #include <string>
 #include <list>
 #include <map>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-	//FIXME `extern` is evil better export functions correctly in their header files!!!
-	extern char* log_formatter_getFrame_prefix();
-	
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 
 namespace {
@@ -116,7 +106,10 @@ namespace {
 	}
 
 	void log_file_writeToFile(FILE* outStream, const char* record) {
-		char* framePrefix = log_formatter_getFrame_prefix();
+
+		char framePrefix[128] = {'\0'};
+		log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));
+
 		FPRINTF(outStream, "%s%s\n", framePrefix, record);
 
 		// We never flush, but only close the stream before process exit.
