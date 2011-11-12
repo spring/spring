@@ -27,12 +27,14 @@ static const int SECTION_SIZE_MAX = 20;
 
 // *******************************************************************************************
 // Helpers
-static inline void ResizeBuffer(char** buffer, size_t* bufferSize)
+static inline void ResizeBuffer(char** buffer, size_t* bufferSize, const bool copy = false)
 {
 	*bufferSize <<= 1;
 	char* old = *buffer;
 	*buffer = new char[*bufferSize];
-	memcpy(*buffer, old, *bufferSize >> 1);
+	if (copy) {
+		memcpy(*buffer, old, *bufferSize >> 1);
+	}
 	delete[] old;
 }
 
@@ -48,7 +50,7 @@ static inline void PrintfAppend(char** buffer, size_t* bufferSize, const char* f
 		int ret = VSNPRINTF(bufAppendPos, freeBufferSize, fmt, arguments);
 		if (ret >= 0) break;
 
-		ResizeBuffer(buffer, bufferSize);
+		ResizeBuffer(buffer, bufferSize, true);
 	} while (true);
 }
 
