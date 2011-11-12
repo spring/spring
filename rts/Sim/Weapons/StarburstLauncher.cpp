@@ -66,13 +66,8 @@ bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* un
 	if (!CWeapon::TryTarget(pos, userTarget, unit))
 		return false;
 
-	if (unit) {
-		if (unit->isUnderWater && !weaponDef->waterweapon)
-			return false;
-	} else {
-		if (pos.y < 0 && !weaponDef->waterweapon)
-			return false;
-	}
+	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
+		return false;
 
 	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos,
 		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner->allyteam, owner)) {
