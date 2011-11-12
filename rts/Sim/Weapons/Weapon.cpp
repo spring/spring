@@ -480,7 +480,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (!TryTarget(pos,userTarget, 0))
+	if (!TryTarget(pos, userTarget, 0))
 		return false;
 	if (targetUnit) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
@@ -797,12 +797,34 @@ void CWeapon::DependentDied(CObject *o)
 	}
 }
 
-bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const {
+bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit) const
+{
+	if (targetUnit != NULL) {
+		if (targetUnit->isUnderWater) {
+			// target-unit underwater
+			return true;
+		}
+	} else {
+		if (targetPos.y < 0.0f) {
+			// target-position underwater
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const
+{
 	CUnit* unit = NULL;
 	CFeature* feature = NULL;
 
 	// any non-ballistic turreted weapon by default ignores everything BUT the ground; if
 	// the weapon is also set not to collide with the ground, then it ignores everything
+	//
+	// NOTE:
+	//     ballistic weapons (Cannon / Missile icw. trajectoryHeight) do not call this,
+	//     they use TrajectoryGroundCol with an external check for the NOGROUND flag
 	if ((collisionFlags & Collision::NOGROUND) != 0)
 		return true;
 
@@ -870,6 +892,9 @@ const {
 	return retCode;
 }
 
+// if targetUnit != NULL, this checks our onlyTargetCategory against unit->category
+// etc. as well as range, otherwise the only concern is range and angular difference
+// (terrain is NOT checked here, subclasses do that)
 bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* targetUnit)
 {
 	if (targetUnit && !(onlyTargetCategory & targetUnit->category)) {
