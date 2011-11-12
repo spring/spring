@@ -4887,7 +4887,7 @@ int LuaOpenGL::CreateQuery(lua_State* L)
 		return 0;
 	}
 	occlusionQueries.insert(q);
-	lua_pushlightuserdata(L, (void*)q);
+	lua_pushlightuserdata(L, (void*) &(*occlusionQueries.find(q)));
 	return 1;
 }
 
