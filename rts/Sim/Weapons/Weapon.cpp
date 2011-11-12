@@ -279,24 +279,27 @@ void CWeapon::Update()
 	}
 	if (targetType != Target_None) {
 		if (onlyForward) {
-			float3 goaldir = (targetPos - owner->pos).Normalize();
-			angleGood = (owner->frontdir.dot(goaldir) > maxAngleDif);
-		} else if (lastRequestedDir.dot(wantedDir) < maxAngleDif || (lastRequest + 15 < gs->frameNum)) {
-			angleGood = false;
+			const float3 goalDir = (targetPos - owner->pos).Normalize();
+			const float goalDot = owner->frontdir.dot(goalDir);
+
+			angleGood = (goalDot > maxAngleDif);
+		} else if ((lastRequest + (GAME_SPEED >> 1)) < gs->frameNum) {
 			lastRequestedDir = wantedDir;
 			lastRequest = gs->frameNum;
 
 			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
 			const float pitch = math::asin(Clamp(wantedDir.dot(owner->updir), -1.0f, 1.0f));
+
 			// for COB, this sets anglegood to return value of aim script when it finished,
 			// for Lua, there exists a callout to set the anglegood member.
 			// FIXME: convert CSolidObject::heading to radians too.
 			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
 		}
 	}
-	if(weaponDef->stockpile && numStockpileQued){
-		float p=1.0f/stockpileTime;
-		if(teamHandler->Team(owner->team)->metal>=metalFireCost*p && teamHandler->Team(owner->team)->energy>=energyFireCost*p){
+	if (weaponDef->stockpile && numStockpileQued) {
+		float p = 1.0f / stockpileTime;
+
+		if (teamHandler->Team(owner->team)->metal >= metalFireCost*p && teamHandler->Team(owner->team)->energy >= energyFireCost*p) {
 			owner->UseEnergy(energyFireCost*p);
 			owner->UseMetal(metalFireCost*p);
 			buildPercent+=p;
@@ -305,7 +308,7 @@ void CWeapon::Update()
 			teamHandler->Team(owner->team)->energyPull += energyFireCost*p;
 			teamHandler->Team(owner->team)->metalPull += metalFireCost*p;
 		}
-		if(buildPercent>=1){
+		if (buildPercent >= 1) {
 			const int oldCount = numStockpiled;
 			buildPercent=0;
 			numStockpileQued--;
@@ -315,19 +318,23 @@ void CWeapon::Update()
 		}
 	}
 
-	if ((salvoLeft == 0)
-	    && (owner->fpsControlPlayer == NULL || owner->fpsControlPlayer->fpsController.mouse1
-	                                        || owner->fpsControlPlayer->fpsController.mouse2)
-	    && (targetType != Target_None)
-	    && angleGood
-	    && subClassReady
-	    && (reloadStatus <= gs->frameNum)
-	    && (!weaponDef->stockpile || numStockpiled)
-	    && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0))
-	    && ((((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0)) &&
-	       !isBeingServicedOnPad(owner)))
-	   )
-	{
+	bool canFire = true;
+	const CPlayer* fpsPlayer = owner->fpsControlPlayer;
+
+	canFire = canFire && angleGood;
+	canFire = canFire && subClassReady;
+	canFire = canFire && (salvoLeft == 0);
+	canFire = canFire && (targetType != Target_None);
+	canFire = canFire && (reloadStatus <= gs->frameNum);
+	canFire = canFire && (!weaponDef->stockpile || numStockpiled);
+	canFire = canFire && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0));
+	canFire = canFire && ((fpsPlayer == NULL)
+		 || fpsPlayer->fpsController.mouse1
+		 || fpsPlayer->fpsController.mouse2);
+	canFire = canFire && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0));
+	canFire = canFire && !isBeingServicedOnPad(owner);
+
+	if (canFire) {
 		if ((weaponDef->stockpile ||
 		     (teamHandler->Team(owner->team)->metal >= metalFireCost &&
 		      teamHandler->Team(owner->team)->energy >= energyFireCost)))
@@ -355,7 +362,8 @@ void CWeapon::Update()
 					owner->UseMetal(metalFireCost);
 					owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
 				}
-				reloadStatus = gs->frameNum + (int)(reloadTime / owner->reloadSpeed);
+
+				reloadStatus = gs->frameNum + int(reloadTime / owner->reloadSpeed);
 
 				salvoLeft = salvoSize;
 				nextSalvo = gs->frameNum;
@@ -381,6 +389,7 @@ void CWeapon::Update()
 			}
 		}
 	}
+
 	if (salvoLeft && nextSalvo <= gs->frameNum) {
 		salvoLeft--;
 		nextSalvo = gs->frameNum + salvoDelay;
