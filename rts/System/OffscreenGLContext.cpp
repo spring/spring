@@ -158,8 +158,9 @@ COffscreenGLContext::COffscreenGLContext()
 	const int fbattrib[] = {
 		GLX_RENDER_TYPE, GLX_RGBA_BIT,
 		GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
-		GLX_BUFFER_SIZE, 24,
+		GLX_BUFFER_SIZE, 32,
 		GLX_DEPTH_SIZE, 24,
+		GLX_STENCIL_SIZE, 8,
 		None
 	};
 	GLXFBConfig* fbcfg = glXChooseFBConfig(display, scrnum, (const int*)fbattrib, &nelements);
