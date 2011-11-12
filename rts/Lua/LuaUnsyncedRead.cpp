@@ -1460,7 +1460,8 @@ int LuaUnsyncedRead::GetTimer(lua_State* L)
 	static unsigned int timerQuery = 0;
 
 	timerQueries[timerQuery] = SDL_GetTicks();
-	lua_pushlightuserdata(L, (void*) &timerQueries[(timerQuery++ % 128)]);
+	lua_pushlightuserdata(L, (void*) &timerQueries[timerQuery]);
+	timerQuery = (timerQuery + 1) % 128;
 	return 1;
 }
 
