@@ -801,6 +801,11 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float len
 	CUnit* unit = NULL;
 	CFeature* feature = NULL;
 
+	// any non-ballistic turreted weapon by default ignores everything BUT the ground; if
+	// the weapon is also set not to collide with the ground, then it ignores everything
+	if ((collisionFlags & Collision::NOGROUND) != 0)
+		return true;
+
 	const float g = TraceRay::TraceRay(pos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
 
 	// true iff ground does not block the ray of length <length> from <pos> along <dir>
