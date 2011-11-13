@@ -120,9 +120,7 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target, const floa
 	// if the target projectile dies in any way, we need to remove it
 	// (we cannot rely on any interceptor telling us, because they may
 	// die before the interceptable itself does)
-	//
-	// NOTE: should really invent a new dependence-type for this
-	AddDeathDependence(target, CObject::DEPENDENCE_INCOMING);
+	AddDeathDependence(target, CObject::DEPENDENCE_INTERCEPTABLE);
 
 	Update(true);
 }
