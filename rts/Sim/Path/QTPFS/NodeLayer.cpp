@@ -66,6 +66,11 @@ bool QTPFS::NodeLayer::Update(const SRectangle& r, const MoveData* md, const CMo
 	static const float speedModRng = PM::MAX_SPEEDMOD_VALUE - PM::MIN_SPEEDMOD_VALUE;
 	static const float minSpeedMod = PM::MIN_SPEEDMOD_VALUE;
 
+	#ifdef QTPFS_IGNORE_MAP_EDGES
+	const unsigned int mdxsh = md->xsizeh;
+	const unsigned int mdzsh = md->zsizeh;
+	#endif
+
 	unsigned int numNewBinSquares = 0;
 
 	// divide speed-modifiers into bins
@@ -73,10 +78,18 @@ bool QTPFS::NodeLayer::Update(const SRectangle& r, const MoveData* md, const CMo
 		for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
 			const unsigned int sqrIdx = hmz * xsize + hmx;
 
-			// NOTE: GetPosSpeedMod only checks terrain (height/slope/type), not the blocking-map
-			const CMoveMath::BlockType blockBits = mm->IsBlockedNoSpeedModCheck(*md, hmx, hmz);
+			#ifdef QTPFS_IGNORE_MAP_EDGES
+			const unsigned int smx = Clamp(hmx, mdxsh, r.x2 - mdxsh - 1);
+			const unsigned int smz = Clamp(hmz, mdzsh, r.z2 - mdzsh - 1);
+			#else
+			const unsigned int smx = hmx;
+			const unsigned int smz = hmz;
+			#endif
 
-			const float rawAbsSpeedMod = mm->GetPosSpeedMod(*md, hmx, hmz);
+			// NOTE: GetPosSpeedMod only checks terrain (height/slope/type), not the blocking-map
+			const CMoveMath::BlockType blockBits = mm->IsBlockedNoSpeedModCheck(*md, smx, smz);
+
+			const float rawAbsSpeedMod = mm->GetPosSpeedMod(*md, smx, smz);
 			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, PM::MIN_SPEEDMOD_VALUE, PM::MAX_SPEEDMOD_VALUE);
 			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
 			const float newRelSpeedMod = (newAbsSpeedMod - minSpeedMod) / speedModRng;

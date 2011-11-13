@@ -341,10 +341,10 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 	// adjust the borders so we are not left with "rims" of
 	// impassable squares when eg. a structure is reclaimed
 	SRectangle mr = SRectangle(r);
-	mr.x1 = std::max(int(r.x1) - (md->xsize >> 1),        0);
-	mr.z1 = std::max(int(r.z1) - (md->zsize >> 1),        0);
-	mr.x2 = std::min(int(r.x2) + (md->xsize >> 1), gs->mapx);
-	mr.z2 = std::min(int(r.z2) + (md->zsize >> 1), gs->mapy);
+	mr.x1 = std::max(int(r.x1) - (md->xsizeh),        0);
+	mr.z1 = std::max(int(r.z1) - (md->zsizeh),        0);
+	mr.x2 = std::min(int(r.x2) + (md->xsizeh), gs->mapx);
+	mr.z2 = std::min(int(r.z2) + (md->zsizeh), gs->mapy);
 
 	if (nodeLayers[layerNum].Update(mr, md, mm) && wantTesselation) {
 		nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr);
