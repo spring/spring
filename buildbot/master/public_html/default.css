@@ -544,3 +544,9 @@ pre.comments>a:link,pre.comments>a:visited {
 pre.comments>a:active {
 	color: purple;
 }
+
+/* align forms */
+.label {
+	width: 15em;
+	display: inline-block;
+}

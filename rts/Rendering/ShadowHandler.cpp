@@ -49,7 +49,7 @@ void CShadowHandler::Reload(const char* argv)
 
 	configHandler->Set("Shadows", nextShadowConfig & 0xF);
 	configHandler->Set("ShadowMapSize", Clamp(nextShadowMapSize, int(MIN_SHADOWMAP_SIZE), int(MAX_SHADOWMAP_SIZE)));
-	configHandler->Set("ShadowProjectionMode", Clamp(nextShadowProMode, int(SHADOWPROMODE_MAP_CENTER), int(SHADOWPROMODE_CAM_CENTER)));
+	configHandler->Set("ShadowProjectionMode", Clamp(nextShadowProMode, int(SHADOWPROMODE_MAP_CENTER), int(SHADOWPROMODE_MIX_CAMMAP)));
 
 	Kill();
 	Init();
@@ -390,10 +390,7 @@ void CShadowHandler::CreateShadows()
 	//     when DynamicSun is enabled, the orbit is always circular in the xz
 	//     plane, instead of elliptical when the map has an aspect-ratio != 1
 	//
-	const float xyScale =
-		(shadowProMode == SHADOWPROMODE_CAM_CENTER)? GetOrthoProjectedFrustumRadius(camera, centerPos):
-		(shadowProMode == SHADOWPROMODE_MAP_CENTER)? GetOrthoProjectedMapRadius(-sunDirZ, centerPos):
-		1.0f;
+	const float xyScale = GetShadowProjectionRadius(camera, centerPos, -sunDirZ);
 	const float xScale = xyScale;
 	const float yScale = xyScale;
 	const float zScale = globalRendering->viewRange;
@@ -454,6 +451,31 @@ void CShadowHandler::CreateShadows()
 }
 
 
+
+float CShadowHandler::GetShadowProjectionRadius(CCamera* cam, float3& proPos, const float3& proDir) const {
+	float radius = 1.0f;
+
+	switch (shadowProMode) {
+		case SHADOWPROMODE_CAM_CENTER: {
+			radius = GetOrthoProjectedFrustumRadius(cam, proPos);
+		} break;
+		case SHADOWPROMODE_MAP_CENTER: {
+			radius = GetOrthoProjectedMapRadius(proDir, proPos);
+		} break;
+		case SHADOWPROMODE_MIX_CAMMAP: {
+			static float3 opfPos;
+			static float3 opmPos;
+
+			const float opfRad = GetOrthoProjectedFrustumRadius(cam, opfPos);
+			const float opmRad = GetOrthoProjectedMapRadius(proDir, opmPos);
+
+			if (opfRad <= opmRad) { radius = opfRad; proPos = opfPos; }
+			if (opmRad <= opfRad) { radius = opmRad; proPos = opmPos; }
+		} break;
+	}
+
+	return radius;
+}
 
 float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& projectionMidPos) const {
 	// to fit the map inside the frustum, we need to know
