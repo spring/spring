@@ -44,11 +44,12 @@ public:
 	inline CUnit* owner() const {
 		// Note: this death dependency optimization using "ownerId" is logically flawed,
 		//  since ids are being reused it could return a unit that is not the original owner
-		return
 #if defined(USE_GML) && GML_ENABLE_SIM
-			*(CUnit* volatile*)&
+		CUnit* unit = uh->GetUnit(ownerId);
+		return *(CUnit* volatile*)&unit; // make volatile
+#else
+		return uh->GetUnit(ownerId); //returns NULL when we are outside of valid unitID range (e.g. for -1)
 #endif
-			uh->GetUnit(ownerId); //returns NULL when we are outside of valid unitID range (e.g. for -1)
 	}
 
 	int GetOwnerID() const {
