@@ -47,12 +47,12 @@ CR_REG_METADATA(CWeaponProjectile,(
 CWeaponProjectile::CWeaponProjectile(): CProjectile()
 {
 	targeted = false;
-	weaponDef = 0;
-	target = 0;
+	weaponDef = NULL;
+	target = NULL;
 	projectileType = WEAPON_BASE_PROJECTILE;
 	ttl = 0;
 	colorTeam = 0;
-	interceptTarget = 0;
+	interceptTarget = NULL;
 	bounces = 0;
 	keepBouncing = true;
 	cegID = -1U;
@@ -92,18 +92,18 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		AddDeathDependence(interceptTarget, DEPENDENCE_INTERCEPTTARGET);
 	}
 
-	if (weaponDef != NULL) {
-		if (weaponDef->interceptedByShieldType) {
-			interceptHandler.AddShieldInterceptableProjectile(this);
-		}
+	assert(weaponDef != NULL);
 
-		alwaysVisible = weaponDef->visuals.alwaysVisible;
-		ignoreWater = weaponDef->waterweapon;
-
-		model = weaponDef->LoadModel();
-
-		collisionFlags = weaponDef->collisionFlags;
+	if (weaponDef->interceptedByShieldType) {
+		interceptHandler.AddShieldInterceptableProjectile(this);
 	}
+
+	alwaysVisible = weaponDef->visuals.alwaysVisible;
+	ignoreWater = weaponDef->waterweapon;
+
+	model = weaponDef->LoadModel();
+
+	collisionFlags = weaponDef->collisionFlags;
 
 	ph->AddProjectile(this);
 }
