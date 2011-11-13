@@ -15,10 +15,18 @@
 #include "System/TimeProfiler.h"
 #include "System/Vec2.h"
 
+#ifdef _MSC_VER
+	#include <map>
+	// only way to compile unordered_map with MSVC appears to require inclusion of math.h instead of streflop, 
+	// and that cannot be done here because it gives rise to other conflicts
+	typedef std::map<std::string, CNamedTextures::TexInfo> TEXMAP;
+#else
+	typedef boost::unordered_map<std::string, CNamedTextures::TexInfo> TEXMAP;
+#endif
 
 namespace CNamedTextures {
 
-	static boost::unordered_map<std::string, TexInfo> texMap;
+	static TEXMAP texMap;
 	static std::vector<std::string> texWaiting;
 
 	/******************************************************************************/
@@ -32,7 +40,7 @@ namespace CNamedTextures {
 	{
 		GML_STDMUTEX_LOCK(ntex); // Kill
 
-		boost::unordered_map<std::string, TexInfo>::iterator it;
+		TEXMAP::iterator it;
 		for (it = texMap.begin(); it != texMap.end(); ++it) {
 			const GLuint texID = it->second.id;
 			glDeleteTextures(1, &texID);
@@ -217,7 +225,7 @@ namespace CNamedTextures {
 
 		GML_STDMUTEX_LOCK(ntex); // Bind
 
-		boost::unordered_map<std::string, TexInfo>::iterator it = texMap.find(texName);
+		TEXMAP::iterator it = texMap.find(texName);
 		if (it != texMap.end()) {
 			const GLuint texID = it->second.id;
 			if (texID == 0) {
@@ -261,7 +269,7 @@ namespace CNamedTextures {
 		
 		glPushAttrib(GL_TEXTURE_BIT);
 		for (std::vector<std::string>::iterator it = texWaiting.begin(); it != texWaiting.end(); ++it) {
-			boost::unordered_map<std::string, TexInfo>::iterator mit = texMap.find(*it);
+			TEXMAP::iterator mit = texMap.find(*it);
 			if (mit != texMap.end()) {
 				Load(*it,mit->second.id);
 			}
@@ -279,7 +287,7 @@ namespace CNamedTextures {
 
 		GML_STDMUTEX_LOCK(ntex); // Free
 
-		boost::unordered_map<std::string, TexInfo>::iterator it = texMap.find(texName);
+		TEXMAP::iterator it = texMap.find(texName);
 		if (it != texMap.end()) {
 			const GLuint texID = it->second.id;
 			glDeleteTextures(1, &texID);
@@ -298,7 +306,7 @@ namespace CNamedTextures {
 
 		GML_STDMUTEX_LOCK(ntex); // GetInfo
 
-		boost::unordered_map<std::string, TexInfo>::const_iterator it = texMap.find(texName);
+		TEXMAP::const_iterator it = texMap.find(texName);
 		if (it != texMap.end()) {
 			return &it->second;
 		}
