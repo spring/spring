@@ -29,11 +29,11 @@ static const int SECTION_SIZE_MAX = 20;
 // Helpers
 static inline void ResizeBuffer(char** buffer, size_t* bufferSize, const bool copy = false)
 {
-	*bufferSize <<= 1;
+	*bufferSize <<= 2; // `2` to increase it faster
 	char* old = *buffer;
 	*buffer = new char[*bufferSize];
 	if (copy) {
-		memcpy(*buffer, old, *bufferSize >> 1);
+		memcpy(*buffer, old, *bufferSize >> 2);
 	}
 	delete[] old;
 }
