@@ -47,8 +47,15 @@ static inline void PrintfAppend(char** buffer, size_t* bufferSize, const char* f
 	do {
 		size_t freeBufferSize = (*bufferSize) - bufferPos;
 		char* bufAppendPos = &((*buffer)[bufferPos]);
-		int ret = VSNPRINTF(bufAppendPos, freeBufferSize, fmt, arguments);
-		if (ret >= 0) break;
+
+		// printf will move the internal pointer of va_list.
+		// So we need to make a copy, if want to run it again.
+		va_list arguments_;
+		va_copy(arguments_, arguments); 
+			VSNPRINTF(bufAppendPos, freeBufferSize, fmt, arguments_);
+		va_end(arguments_);
+		const bool bufferTooSmall = ((strlen(*buffer) + 1) >= *bufferSize);
+		if (!bufferTooSmall) break;
 
 		ResizeBuffer(buffer, bufferSize, true);
 	} while (true);
