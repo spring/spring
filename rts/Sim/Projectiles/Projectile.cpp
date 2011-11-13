@@ -60,7 +60,7 @@ CProjectile::CProjectile():
 	castShadow(false),
 	speed(ZeroVector),
 	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	ownerId(0),
+	ownerId(-1),
 	projectileType(-1U),
 	collisionFlags(0)
 {
@@ -79,7 +79,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	castShadow(false),
 	speed(spd),
 	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	ownerId(0),
+	ownerId(-1),
 	projectileType(-1U),
 	collisionFlags(0)
 {
