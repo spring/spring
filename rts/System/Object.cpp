@@ -160,17 +160,17 @@ void CObject::DeleteDeathDependence(CObject* obj, DependenceType dep)
 {
 	assert(!detached);
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-	if (!ListErase<CObject *>(listening[dep], obj)) {
-#ifndef NDEBUG
-		LOG_L(L_ERROR, "DeleteDeathDependence: Non existent listening object for dependence type %d", (int)dep);
-		CrashHandler::OutputStacktrace();
-#endif
-	}
-
-	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
 	if (!ListErase<CObject *>(obj->listeners[dep], this)) {
 #ifndef NDEBUG
 		LOG_L(L_ERROR, "DeleteDeathDependence: Non existent listener object for dependence type %d", (int)dep);
+		CrashHandler::OutputStacktrace();
+#endif
+	}
+	
+	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
+	if (!ListErase<CObject *>(listening[dep], obj)) {
+#ifndef NDEBUG
+		LOG_L(L_ERROR, "DeleteDeathDependence: Non existent listening object for dependence type %d", (int)dep);
 		CrashHandler::OutputStacktrace();
 #endif
 	}
