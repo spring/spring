@@ -35,21 +35,30 @@ void CObject::Detach()
 	assert(!detached);
 	detached = true;
 	for (std::map<DependenceType, std::list<CObject*> >::iterator i = listeners.begin(); i != listeners.end(); ++i) {
-		for (std::list<CObject*>::iterator di = i->second.begin(); di != i->second.end(); ++di) {
+		const DependenceType& depType = i->first;
+		std::list<CObject*>& objs = i->second;
+
+		for (std::list<CObject*>::iterator di = objs.begin(); di != objs.end(); ++di) {
+			CObject*& obj = (*di);
+			
 			m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-			(*di)->DependentDied(this);
+			obj->DependentDied(this);
 			m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-			std::map<DependenceType, std::list<CObject*> >::iterator dio = (*di)->listening.find(i->first);
-			if (dio != (*di)->listening.end())
-				ListErase<CObject*>(dio->second, this);
+
+			assert(obj->listening.find(depType) != obj->listening.end());
+			ListErase<CObject*>(obj->listening[depType], this);
 		}
 	}
 	for (std::map<DependenceType, std::list<CObject*> >::iterator i = listening.begin(); i != listening.end(); ++i) {
-		for (std::list<CObject*>::iterator di = i->second.begin(); di != i->second.end(); ++di) {
+		const DependenceType& depType = i->first;
+		std::list<CObject*>& objs = i->second;
+
+		for (std::list<CObject*>::iterator di = objs.begin(); di != objs.end(); ++di) {
+			CObject*& obj = (*di);
+
 			m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-			std::map<DependenceType, std::list<CObject*> >::iterator dio = (*di)->listeners.find(i->first);
-			if (dio != (*di)->listeners.end())
-				ListErase<CObject*>(dio->second, this);
+			assert(obj->listeners.find(depType) != obj->listeners.end());
+			ListErase<CObject*>(obj->listeners[depType], this);
 		}
 	}
 	m_resetGlobals();
