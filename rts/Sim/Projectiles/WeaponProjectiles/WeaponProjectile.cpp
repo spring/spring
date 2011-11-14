@@ -94,10 +94,6 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 
 	assert(weaponDef != NULL);
 
-	if (weaponDef->interceptedByShieldType) {
-		interceptHandler.AddShieldInterceptableProjectile(this);
-	}
-
 	alwaysVisible = weaponDef->visuals.alwaysVisible;
 	ignoreWater = weaponDef->waterweapon;
 
@@ -106,6 +102,11 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 	collisionFlags = weaponDef->collisionFlags;
 
 	ph->AddProjectile(this);
+
+	if (weaponDef->interceptedByShieldType) {
+		// this needs a valid projectile id set
+		interceptHandler.AddShieldInterceptableProjectile(this);
+	}
 }
 
 
