@@ -204,7 +204,7 @@ void CPlasmaRepulser::Update()
 				}
 
 				if (i == hasGfx.end()) {
-					hasGfx.insert(hasGfx.end(), pro);
+					ListInsert<CWeaponProjectile*>(hasGfx, pro);
 
 					const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
 					const float3 color =
