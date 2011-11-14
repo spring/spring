@@ -33,7 +33,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		// debugging dev-version demos impossible (because the version is different
 		// each build.)
 #ifndef _DEBUG
-		|| (!SpringVersion::IsRelease() && strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()))
+		|| (SpringVersion::IsRelease() && strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()))
 #endif
 	) {
 		throw std::runtime_error(std::string("Demofile corrupt or created by a different version of Spring: ")+filename);
