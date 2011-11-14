@@ -8,6 +8,7 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/RepulseGfx.h"
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -59,7 +60,7 @@ CPlasmaRepulser::~CPlasmaRepulser(void)
 }
 
 
-void CPlasmaRepulser::Init(void)
+void CPlasmaRepulser::Init()
 {
 	radius=weaponDef->shieldRadius;
 	sqRadius=radius*radius;
@@ -73,7 +74,7 @@ void CPlasmaRepulser::Init(void)
 }
 
 
-void CPlasmaRepulser::Update(void)
+void CPlasmaRepulser::Update()
 {
 	const int defHitFrames = weaponDef->visibleShieldHitFrames;
 	const bool couldBeVisible = (weaponDef->visibleShield || (defHitFrames > 0));
@@ -139,7 +140,11 @@ void CPlasmaRepulser::Update(void)
 	}
 
 	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
+		assert(ph->GetMapPairBySyncedID(pi->first)); // valid projectile id?
+
 		CWeaponProjectile* pro = pi->second;
+		const WeaponDef* proWd = pro->weaponDef;
+		assert(proWd);
 
 		if (!pro->checkCol) {
 			continue;
@@ -155,7 +160,7 @@ void CPlasmaRepulser::Update(void)
 			continue;
 		}
 
-		if (curPower < pro->weaponDef->damages[0]) {
+		if (curPower < proWd->damages[0]) {
 			// shield does not have enough power, don't touch the projectile
 			continue;
 		}
@@ -170,8 +175,8 @@ void CPlasmaRepulser::Update(void)
 		if (weaponDef->shieldRepulser) {
 			// bounce the projectile
 			const int type = pro->ShieldRepulse(this, weaponPos,
-													weaponDef->shieldForce,
-													weaponDef->shieldMaxSpeed);
+				weaponDef->shieldForce,
+				weaponDef->shieldMaxSpeed);
 
 			if (type == 0) {
 				continue;
@@ -179,13 +184,13 @@ void CPlasmaRepulser::Update(void)
 				owner->UseEnergy(weaponDef->shieldEnergyUse);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= pro->weaponDef->damages[0];
+					curPower -= proWd->damages[0];
 				}
 			} else {
 				owner->UseEnergy(weaponDef->shieldEnergyUse / 30.0f);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= pro->weaponDef->damages[0] / 30.0f;
+					curPower -= proWd->damages[0] / 30.0f;
 				}
 			}
 
@@ -217,7 +222,7 @@ void CPlasmaRepulser::Update(void)
 			// kill the projectile
 			if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
 				if (weaponDef->shieldPower != 0) {
-					curPower -= pro->weaponDef->damages[0];
+					curPower -= proWd->damages[0];
 				}
 
 				pro->Collision(owner);
