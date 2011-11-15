@@ -348,6 +348,7 @@ void CGame::ClientReadNet()
 				}
 			} break;
 
+
 			case NETMSG_KEYFRAME: {
 				int serverframenum = *(int*)(inbuf+1);
 				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum));
@@ -357,12 +358,14 @@ void CGame::ClientReadNet()
 				}
 				// Fall-through
 			}
+
 			case NETMSG_NEWFRAME: {
 				timeLeft -= 1.0f;
 				SimFrame();
 				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 #ifdef SYNCCHECK
-				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gs->frameNum, CSyncChecker::GetChecksum()));
+				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
+
 				if ((gs->frameNum & 4095) == 0) {// reset checksum every ~2.5 minute gametime
 					CSyncChecker::NewFrame();
 				}
@@ -374,6 +377,32 @@ void CGame::ClientReadNet()
 				}
 				break;
 			}
+
+			case NETMSG_SYNCRESPONSE: {
+#if (defined(SYNCCHECK) && defined(DEBUG))
+				// this packet can only come from a demo-stream
+				netcode::UnpackPacket pckt(packet, 1);
+
+				unsigned char playerNum; pckt >> playerNum;
+				          int  frameNum; pckt >> frameNum;
+				unsigned  int  checkSum; pckt >> checkSum;
+
+				const unsigned int ourCheckSum = CSyncChecker::GetChecksum();
+				const char* fmtStr =
+					"[NETMSG_SYNCRESPONSE] checksum %x from demo-player %d"
+					" does not match our checksum %x for frame-number %d";
+
+				// check if our checksum for this frame matches what
+				// player <playerNum> sent to the server at the same
+				// frame in the original game
+				if (gs->frameNum != frameNum) { return; }
+				if (checkSum == ourCheckSum) { return; }
+
+				LOG_L(L_ERROR, fmtStr, checkSum, playerNum, ourCheckSum, gs->frameNum);
+#endif
+			} break;
+
+
 
 			case NETMSG_COMMAND: {
 				try {
