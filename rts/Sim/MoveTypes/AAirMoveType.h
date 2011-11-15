@@ -31,8 +31,8 @@ public:
 
 	virtual bool Update();
 	virtual bool IsFighter() const = 0;
-	virtual void Takeoff() = 0;
-	virtual void SetState(AircraftState state) = 0;
+	virtual void Takeoff() {}
+	virtual void SetState(AircraftState state) {}
 	virtual AircraftState GetLandingState() const { return AIRCRAFT_LANDING; }
 
 	bool UseSmoothMesh() const;

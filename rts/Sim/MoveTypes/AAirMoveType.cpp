@@ -60,6 +60,9 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 
 AAirMoveType::~AAirMoveType()
 {
+	// NOTE:
+	//   this calls Takeoff and (indirectly) SetState,
+	//   so neither of these must be pure virtuals (!)
 	UnreservePad(reservedPad);
 }
 
