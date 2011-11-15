@@ -959,7 +959,7 @@ void CMobileCAI::StopMove()
 
 void CMobileCAI::BuggerOff(const float3& pos, float radius)
 {
-	if(radius < 0.0f) {
+	if (radius < 0.0f) {
 		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
 		return;
 	}
