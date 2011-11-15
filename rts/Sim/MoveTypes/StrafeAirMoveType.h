@@ -34,7 +34,6 @@ public:
 	void ImpulseAdded(const float3&);
 	float3 FindLandingPos() const;
 
-	void DependentDied(CObject* o);
 	void SetMaxSpeed(float speed);
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}

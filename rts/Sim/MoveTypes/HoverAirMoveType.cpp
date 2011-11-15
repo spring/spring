@@ -922,16 +922,6 @@ void CHoverAirMoveType::SetDefaultAltitude(float altitude)
 	orgWantedHeight = altitude;
 }
 
-void CHoverAirMoveType::DependentDied(CObject* o)
-{
-	if (o == lastColWarning) {
-		lastColWarning = NULL;
-		lastColWarningType = 0;
-	}
-
-	AAirMoveType::DependentDied(o);
-}
-
 void CHoverAirMoveType::Takeoff()
 {
 	if (aircraftState == AAirMoveType::AIRCRAFT_LANDED) {

@@ -25,8 +25,9 @@ public:
 	virtual void StopMoving() = 0;
 	virtual void ImpulseAdded(const float3&) {}
 	virtual void ReservePad(CAirBaseHandler::LandingPad* lp);
+	virtual void UnreservePad(CAirBaseHandler::LandingPad* lp);
 
-	virtual void SetGoal(const float3& pos);
+	virtual void SetGoal(const float3& pos) { goalPos = pos; }
 	virtual void SetMaxSpeed(float speed);
 	virtual void SetWantedMaxSpeed(float speed);
 	virtual void LeaveTransport() {}
