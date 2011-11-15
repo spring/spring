@@ -299,6 +299,11 @@ CUnit::~CUnit()
 	// Remove us from our group, if we were in one
 	SetGroup(NULL);
 
+	if (script != &CNullUnitScript::value) {
+		delete script;
+		script = NULL;
+	}
+	// ScriptCallback may reference weapons, so delete the script first
 	for (std::vector<CWeapon*>::const_iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		delete *wi;
 	}
@@ -307,11 +312,6 @@ CUnit::~CUnit()
 	loshandler->DelayedFreeInstance(los);
 	los = NULL;
 	radarhandler->RemoveUnit(this);
-
-	if (script != &CNullUnitScript::value) {
-		delete script;
-		script = NULL;
-	}
 
 	modelParser->DeleteLocalModel(this);
 }
