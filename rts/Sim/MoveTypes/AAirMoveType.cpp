@@ -22,11 +22,14 @@ CR_REG_METADATA(AAirMoveType, (
 
 	CR_MEMBER(collide),
 	CR_MEMBER(useSmoothMesh),
-	CR_MEMBER(lastColWarning),
-	CR_MEMBER(lastColWarningType),
-
 	CR_MEMBER(autoLand),
+
+	CR_MEMBER(lastColWarning),
+	CR_MEMBER(reservedPad),
+
+	CR_MEMBER(lastColWarningType),
 	CR_MEMBER(lastFuelUpdateFrame),
+	CR_MEMBER(padStatus),
 
 	CR_RESERVED(16)
 ));
@@ -34,16 +37,23 @@ CR_REG_METADATA(AAirMoveType, (
 AAirMoveType::AAirMoveType(CUnit* unit) :
 	AMoveType(unit),
 	aircraftState(AIRCRAFT_LANDED),
+
 	oldGoalPos(owner? owner->pos : ZeroVector),
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
+
 	wantedHeight(80.0f),
 	orgWantedHeight(0.0f),
+
 	collide(true),
 	useSmoothMesh(false),
 	autoLand(true),
+
 	lastColWarning(NULL),
+	reservedPad(NULL),
+
 	lastColWarningType(0),
-	lastFuelUpdateFrame(gs->frameNum)
+	lastFuelUpdateFrame(gs->frameNum),
+	padStatus(0)
 {
 	useHeading = false;
 }
@@ -65,12 +75,38 @@ bool AAirMoveType::UseSmoothMesh() const {
 	return !forceDisableSmooth;
 }
 
+
 void AAirMoveType::ReservePad(CAirBaseHandler::LandingPad* lp) {
 	oldGoalPos = goalPos;
 	orgWantedHeight = wantedHeight;
 
-	AMoveType::ReservePad(lp);
+	assert(reservedPad == NULL);
+
+	AddDeathDependence(lp, DEPENDENCE_LANDINGPAD);
+	SetGoal(lp->GetUnit()->pos);
+
+	reservedPad = lp;
+	padStatus = 0;
+
 	Takeoff();
+}
+
+void AAirMoveType::UnreservePad(CAirBaseHandler::LandingPad* lp)
+{
+	if (lp == NULL)
+		return;
+
+	assert(reservedPad == lp);
+
+	DeleteDeathDependence(reservedPad, DEPENDENCE_LANDINGPAD);
+	airBaseHandler->LeaveLandingPad(reservedPad);
+
+	reservedPad = NULL;
+	padStatus = 0;
+
+	goalPos = oldGoalPos;
+	wantedHeight = orgWantedHeight;
+	SetState(AIRCRAFT_TAKEOFF);
 }
 
 void AAirMoveType::DependentDied(CObject* o) {
@@ -80,13 +116,14 @@ void AAirMoveType::DependentDied(CObject* o) {
 	}
 
 	if (o == reservedPad) {
-		SetState(AIRCRAFT_FLYING);
+		SetState(AIRCRAFT_TAKEOFF);
 
 		goalPos = oldGoalPos;
 		wantedHeight = orgWantedHeight;
-	}
 
-	AMoveType::DependentDied(o);
+		reservedPad = NULL;
+		padStatus = 0;
+	}
 }
 
 bool AAirMoveType::Update() {
@@ -232,10 +269,6 @@ bool AAirMoveType::MoveToRepairPad() {
 			if (owner->health >= owner->maxHealth - 1.0f && owner->currentFuel >= owner->unitDef->maxFuel) {
 				// repaired and filled up, leave the pad
 				UnreservePad(reservedPad);
-
-				goalPos = oldGoalPos;
-				wantedHeight = orgWantedHeight;
-				SetState(AIRCRAFT_TAKEOFF);
 			}
 		}
 	}

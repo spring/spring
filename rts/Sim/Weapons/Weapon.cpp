@@ -213,8 +213,8 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 
 static inline bool isBeingServicedOnPad(CUnit* u)
 {
-	AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
-	return a && a->padStatus != 0;
+	const AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
+	return (a != NULL && a->GetPadStatus() != 0);
 }
 
 void CWeapon::Update()
