@@ -27,7 +27,7 @@ public:
 	} aircraftState;
 
 	AAirMoveType(CUnit* unit);
-	~AAirMoveType();
+	virtual ~AAirMoveType();
 
 	virtual bool Update();
 	virtual bool IsFighter() const = 0;
