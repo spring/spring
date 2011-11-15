@@ -790,7 +790,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	}
 }
 
-void CWeapon::DependentDied(CObject *o)
+void CWeapon::DependentDied(CObject* o)
 {
 	if (o == targetUnit) {
 		targetUnit = NULL;

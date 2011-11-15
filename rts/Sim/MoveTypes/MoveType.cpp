@@ -97,10 +97,6 @@ void AMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)
 	KeepPointingTo(float3(unit->pos), distance, aggressive);
 }
 
-void AMoveType::SetGoal(const float3& pos)
-{
-	goalPos = pos;
-}
 
 void AMoveType::DependentDied(CObject* o)
 {
@@ -120,6 +116,21 @@ void AMoveType::ReservePad(CAirBaseHandler::LandingPad* lp)
 	reservedPad = lp;
 	padStatus = 0;
 }
+
+void AMoveType::UnreservePad(CAirBaseHandler::LandingPad* lp)
+{
+	if (lp == NULL)
+		return;
+
+	assert(reservedPad == lp);
+
+	DeleteDeathDependence(reservedPad, DEPENDENCE_LANDINGPAD);
+	airBaseHandler->LeaveLandingPad(reservedPad);
+
+	reservedPad = NULL;
+	padStatus = 0;
+}
+
 
 bool AMoveType::WantsRepair() const { return (owner->health      < (repairBelowHealth * owner->maxHealth)); }
 bool AMoveType::WantsRefuel() const { return (owner->currentFuel < (repairBelowHealth * owner->unitDef->maxFuel)); }

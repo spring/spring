@@ -33,7 +33,9 @@ bool ListInsert(std::list<T>& list, const T& what)
 		}
 	}
 #endif
-	list.insert(list.end(), what);
+	if (ret)
+		list.insert(list.end(), what);
+
 	return ret;
 }
 

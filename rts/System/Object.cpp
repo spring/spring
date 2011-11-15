@@ -139,40 +139,67 @@ void CObject::AddDeathDependence(CObject* obj, DependenceType dep)
 {
 	assert(!detached);
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
+
 	if (!ListInsert<CObject *>(obj->listeners[dep], this)) {
 #ifndef NDEBUG
-		LOG_L(L_ERROR, "AddDeathDependence: Duplicated listener object for dependence type %d", (int)dep);
+		LOG_L(L_ERROR, "AddDeathDependence: obj=%p has duplicated listener (this=%p) for dependence type=%d:", obj, this, (int)dep);
+
+		for (std::list<CObject*>::iterator di = obj->listeners[dep].begin(); di != obj->listeners[dep].end(); ++di) {
+			LOG_L(L_ERROR, "\tlistener=%p", *di);
+		}
+
 		CrashHandler::OutputStacktrace();
 #endif
 	}
 
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
+
 	if (!ListInsert<CObject *>(listening[dep], obj)) {
 #ifndef NDEBUG
-		LOG_L(L_ERROR, "AddDeathDependence: Duplicated listening object for dependence type %d", (int)dep);
+		LOG_L(L_ERROR, "AddDeathDependence: duplicated listening object (obj=%p) for dependence type=%d:", obj, (int)dep);
+
+		for (std::list<CObject*>::iterator di = this->listening[dep].begin(); di != this->listening[dep].end(); ++di) {
+			LOG_L(L_ERROR, "\tlistening=%p", *di);
+		}
+
 		CrashHandler::OutputStacktrace();
 #endif
 	}
+
 	m_resetGlobals();
 }
+
 
 void CObject::DeleteDeathDependence(CObject* obj, DependenceType dep)
 {
 	assert(!detached);
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
+
 	if (!ListErase<CObject *>(obj->listeners[dep], this)) {
 #ifndef NDEBUG
-		LOG_L(L_ERROR, "DeleteDeathDependence: Non existent listener object for dependence type %d", (int)dep);
+		LOG_L(L_ERROR, "DeleteDeathDependence: obj=%p has non-existent listener (this=%p) for dependence type=%d:", obj, this, (int)dep);
+
+		for (std::list<CObject*>::iterator di = obj->listeners[dep].begin(); di != obj->listeners[dep].end(); ++di) {
+			LOG_L(L_ERROR, "\tlistener=%p", *di);
+		}
+
 		CrashHandler::OutputStacktrace();
 #endif
 	}
 	
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
+
 	if (!ListErase<CObject *>(listening[dep], obj)) {
 #ifndef NDEBUG
-		LOG_L(L_ERROR, "DeleteDeathDependence: Non existent listening object for dependence type %d", (int)dep);
+		LOG_L(L_ERROR, "DeleteDeathDependence: non-existent listening object (obj=%p) for dependence type=%d:", obj, (int)dep);
+
+		for (std::list<CObject*>::iterator di = this->listening[dep].begin(); di != this->listening[dep].end(); ++di) {
+			LOG_L(L_ERROR, "\tlistening=%p", *di);
+		}
+
 		CrashHandler::OutputStacktrace();
 #endif
 	}
+
 	m_resetGlobals();
 }
