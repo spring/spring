@@ -865,9 +865,7 @@ void CHoverAirMoveType::SlowUpdate()
 		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 
 		if (lp != NULL) {
-			AMoveType::ReservePad(lp);
-
-			oldGoalPos = goalPos;
+			AAirMoveType::ReservePad(lp);
 		}
 	}
 

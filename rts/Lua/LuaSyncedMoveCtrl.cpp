@@ -562,7 +562,7 @@ static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, flo
 	} else if (key == "maxWantedSpeed") {
 		mt->SetWantedMaxSpeed(value / GAME_SPEED); return true;
 	} else if (key == "repairBelowHealth") {
-		mt->repairBelowHealth = value; return true;
+		mt->SetRepairBelowHealth(value); return true;
 	}
 	return false;
 }

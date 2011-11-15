@@ -17,11 +17,11 @@ CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(goalPos),
 	CR_MEMBER(oldPos),
 	CR_MEMBER(oldSlowUpdatePos),
+
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(maxWantedSpeed),
-	CR_MEMBER(reservedPad),
-	CR_MEMBER(padStatus),
 	CR_MEMBER(repairBelowHealth),
+
 	CR_MEMBER(useHeading),
 	CR_ENUM_MEMBER(progressState),
 	CR_RESERVED(32)
@@ -29,14 +29,15 @@ CR_REG_METADATA(AMoveType, (
 
 AMoveType::AMoveType(CUnit* owner):
 	owner(owner),
+
 	goalPos(owner ? owner->pos : float3(0.0f, 0.0f, 0.0f)),
 	oldPos(owner? owner->pos: float3(0.0f, 0.0f, 0.0f)),
 	oldSlowUpdatePos(oldPos),
+
 	maxSpeed(0.2f),
 	maxWantedSpeed(0.2f),
-	reservedPad(0),
-	padStatus(0),
 	repairBelowHealth(0.3f),
+
 	useHeading(true),
 	progressState(Done)
 {
@@ -97,39 +98,6 @@ void AMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)
 	KeepPointingTo(float3(unit->pos), distance, aggressive);
 }
 
-
-void AMoveType::DependentDied(CObject* o)
-{
-	if (o == reservedPad) {
-		reservedPad = NULL;
-		padStatus = 0;
-	}
-}
-
-void AMoveType::ReservePad(CAirBaseHandler::LandingPad* lp)
-{
-	assert(reservedPad == NULL);
-
-	AddDeathDependence(lp, DEPENDENCE_LANDINGPAD);
-	SetGoal(lp->GetUnit()->pos);
-
-	reservedPad = lp;
-	padStatus = 0;
-}
-
-void AMoveType::UnreservePad(CAirBaseHandler::LandingPad* lp)
-{
-	if (lp == NULL)
-		return;
-
-	assert(reservedPad == lp);
-
-	DeleteDeathDependence(reservedPad, DEPENDENCE_LANDINGPAD);
-	airBaseHandler->LeaveLandingPad(reservedPad);
-
-	reservedPad = NULL;
-	padStatus = 0;
-}
 
 
 bool AMoveType::WantsRepair() const { return (owner->health      < (repairBelowHealth * owner->maxHealth)); }
