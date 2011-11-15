@@ -1466,10 +1466,6 @@ void CCommandAI::WeaponFired(CWeapon* weapon)
 	}
 }
 
-void CCommandAI::BuggerOff(const float3& pos, float radius)
-{
-}
-
 void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 {
 	int queSize = commandQue.size();
