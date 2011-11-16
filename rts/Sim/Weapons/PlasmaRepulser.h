@@ -26,12 +26,6 @@ public:
 	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);
 	bool BeamIntercepted(CWeapon* emitter, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
 
-	std::set<CWeaponProjectile*> hasGfx;
-	std::list<CShieldPartProjectile*> visibleShieldParts;
-
-	void DependentDied(CObject* o);
-	void SlowUpdate(void);
-
 public:
 	float curPower;
 
@@ -45,8 +39,12 @@ public:
 	bool wasDrawn;
 	bool startShowingShield;
 
-private:	
+private:
 	virtual void FireImpl() {};
+
+private:
+	std::set<CWeaponProjectile*> hasGfx;
+	std::list<CShieldPartProjectile*> visibleShieldParts;
 };
 
 #endif
