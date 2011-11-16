@@ -1452,11 +1452,11 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 void CUnit::ChangeTeamReset()
 {
 	// stop friendly units shooting at us
-	const std::map<DependenceType, std::set<CObject*> >& listeners = GetAllListeners();
+	const std::map<DependenceType, std::list<CObject*> >& listeners = GetAllListeners();
 	std::vector<CUnit *> alliedunits;
-	for (std::map<DependenceType, std::set<CObject*> >::const_iterator li = listeners.begin(); li != listeners.end(); ++li) {
-		for (std::set<CObject*>::iterator di = li->second.begin(); di != li->second.end(); ++di) {
-			CUnit* u = dynamic_cast<CUnit*>(*di);
+	for (std::map<DependenceType, std::list<CObject*> >::const_iterator li = listeners.begin(); li != listeners.end(); ++li) {
+		for (std::list<CObject *>::const_iterator di = li->second.begin(); di != li->second.end(); ++di) {
+			CUnit* u = dynamic_cast<CUnit *>(*di);
 			if (u != NULL && teamHandler->AlliedTeams(team, u->team))
 				alliedunits.push_back(u);
 		}

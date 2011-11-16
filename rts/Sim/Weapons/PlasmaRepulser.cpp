@@ -197,7 +197,7 @@ void CPlasmaRepulser::Update()
 			}
 
 			if (weaponDef->visibleShieldRepulse) {
-				bool newlyAdded = hasGfx.insert(pro).second;
+				const bool newlyAdded = hasGfx.insert(pro).second;
 
 				if (newlyAdded) {
 					const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
