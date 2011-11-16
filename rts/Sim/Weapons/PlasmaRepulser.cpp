@@ -113,7 +113,7 @@ void CPlasmaRepulser::Update()
 
 	if (couldBeVisible) {
 		float drawAlpha = 0.0f;
-		if (hitFrames > 0) {
+		if ((hitFrames > 0) && (defHitFrames > 0)) {
 			drawAlpha += float(hitFrames) / float(defHitFrames);
 			hitFrames--;
 		}
