@@ -34,31 +34,31 @@ void CObject::Detach()
 	// SYNCED
 	assert(!detached);
 	detached = true;
-	for (std::map<DependenceType, std::set<CObject*> >::iterator i = listeners.begin(); i != listeners.end(); ++i) {
+	for (std::map<DependenceType, std::list<CObject*> >::iterator i = listeners.begin(); i != listeners.end(); ++i) {
 		const DependenceType& depType = i->first;
-		std::set<CObject*>& objs = i->second;
+		std::list<CObject*>& objs = i->second;
 
-		for (std::set<CObject*>::iterator di = objs.begin(); di != objs.end(); ++di) {
-			CObject* const& obj = (*di);
+		for (std::list<CObject*>::iterator di = objs.begin(); di != objs.end(); ++di) {
+			CObject*& obj = (*di);
 			
 			m_setOwner(__FILE__, __LINE__, __FUNCTION__);
 			obj->DependentDied(this);
-
 			m_setOwner(__FILE__, __LINE__, __FUNCTION__);
+
 			assert(obj->listening.find(depType) != obj->listening.end());
-			obj->listening[depType].erase(this);
+			ListErase<CObject*>(obj->listening[depType], this);
 		}
 	}
-	for (std::map<DependenceType, std::set<CObject*> >::iterator i = listening.begin(); i != listening.end(); ++i) {
+	for (std::map<DependenceType, std::list<CObject*> >::iterator i = listening.begin(); i != listening.end(); ++i) {
 		const DependenceType& depType = i->first;
-		std::set<CObject*>& objs = i->second;
+		std::list<CObject*>& objs = i->second;
 
-		for (std::set<CObject*>::iterator di = objs.begin(); di != objs.end(); ++di) {
-			CObject* const& obj = (*di);
+		for (std::list<CObject*>::iterator di = objs.begin(); di != objs.end(); ++di) {
+			CObject*& obj = (*di);
 
 			m_setOwner(__FILE__, __LINE__, __FUNCTION__);
 			assert(obj->listeners.find(depType) != obj->listeners.end());
-			obj->listeners[depType].erase(this);
+			ListErase<CObject*>(obj->listeners[depType], this);
 		}
 	}
 	m_resetGlobals();
@@ -74,17 +74,15 @@ CObject::~CObject()
 
 void CObject::Serialize(creg::ISerializer* ser)
 {
-	//FIXME this was written when listeners & listening were std::list's, with switching to std::set it would need a rewrite
-	assert(false);
-	/*if (ser->IsWriting()) {
+	if (ser->IsWriting()) {
 		int num = listening.size();
 		ser->Serialize(&num, sizeof(int));
-		for (std::map<DependenceType, std::set<CObject*> >::iterator i = listening.begin(); i != listening.end(); ++i) {
+		for (std::map<DependenceType, std::list<CObject*> >::iterator i = listening.begin(); i != listening.end(); ++i) {
 			int dt = i->first;
 			ser->Serialize(&dt, sizeof(int));
-			std::set<CObject*>& dl = i->second;
+			std::list<CObject*>& dl = i->second;
 			int size = 0;
-			std::set<CObject*>::const_iterator oi;
+			std::list<CObject*>::const_iterator oi;
 			for (oi = dl.begin(); oi != dl.end(); ++oi) {
 				if ((*oi)->GetClass() != CObject::StaticClass()) {
 					size++;
@@ -95,7 +93,8 @@ void CObject::Serialize(creg::ISerializer* ser)
 				if ((*oi)->GetClass() != CObject::StaticClass()) {
 					ser->SerializeObjectPtr((void**)&*oi, (*oi)->GetClass());
 				} else {
-					LOG("Death dependance not serialized in %s", GetClass()->name.c_str());
+					LOG("Death dependance not serialized in %s",
+						GetClass()->name.c_str());
 				}
 			}
 		}
@@ -107,26 +106,25 @@ void CObject::Serialize(creg::ISerializer* ser)
 			ser->Serialize(&dt, sizeof(int));
 			int size;
 			ser->Serialize(&size, sizeof(int));
-			std::set<CObject*>& dl = listening[(DependenceType)dt];
+			std::list<CObject*>& dl = listening[(DependenceType)dt];
 			for (int o = 0; o < size; o++) {
-				std::set<CObject*>::iterator oi = dl.insert(NULL);
+				std::list<CObject*>::iterator oi =
+					dl.insert(dl.end(), NULL);
 				ser->SerializeObjectPtr((void**)&*oi, NULL);
 			}
 		}
-	}*/
+	}
 }
 
 void CObject::PostLoad()
 {
-	//FIXME this was written when listeners & listening were std::list's, with switching to std::set it would need a rewrite
-	assert(false);
-	/*for (std::map<DependenceType, std::set<CObject*> >::iterator i = listening.begin(); i != listening.end(); ++i) {
-		for (std::set<CObject*>::iterator oi = i->second.begin(); oi != i->second.end(); ++oi) {
+	for (std::map<DependenceType, std::list<CObject*> >::iterator i = listening.begin(); i != listening.end(); ++i) {
+		for (std::list<CObject*>::iterator oi = i->second.begin(); oi != i->second.end(); ++oi) {
 			m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-			std::set<CObject*>& dl = (*oi)->listeners[i->first];
-			dl.insert(this);
+			std::list<CObject*>& dl = (*oi)->listeners[i->first];
+			dl.insert(dl.end(), this);
 		}
-	}*/
+	}
 	m_resetGlobals();
 }
 
@@ -141,10 +139,33 @@ void CObject::AddDeathDependence(CObject* obj, DependenceType dep)
 {
 	assert(!detached);
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-	listening[dep].insert(obj);
+
+	if (!ListInsert<CObject *>(obj->listeners[dep], this)) {
+#ifndef NDEBUG
+		LOG_L(L_ERROR, "AddDeathDependence: obj=%p has duplicated listener (this=%p) for dependence type=%d:", obj, this, (int)dep);
+
+		for (std::list<CObject*>::iterator di = obj->listeners[dep].begin(); di != obj->listeners[dep].end(); ++di) {
+			LOG_L(L_ERROR, "\tlistener=%p", *di);
+		}
+
+		CrashHandler::OutputStacktrace();
+#endif
+	}
 
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-	obj->listeners[dep].insert(this);
+
+	if (!ListInsert<CObject *>(listening[dep], obj)) {
+#ifndef NDEBUG
+		LOG_L(L_ERROR, "AddDeathDependence: duplicated listening object (obj=%p) for dependence type=%d:", obj, (int)dep);
+
+		for (std::list<CObject*>::iterator di = this->listening[dep].begin(); di != this->listening[dep].end(); ++di) {
+			LOG_L(L_ERROR, "\tlistening=%p", *di);
+		}
+
+		CrashHandler::OutputStacktrace();
+#endif
+	}
+
 	m_resetGlobals();
 }
 
@@ -153,9 +174,32 @@ void CObject::DeleteDeathDependence(CObject* obj, DependenceType dep)
 {
 	assert(!detached);
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-	obj->listeners[dep].erase(this);
 
+	if (!ListErase<CObject *>(obj->listeners[dep], this)) {
+#ifndef NDEBUG
+		LOG_L(L_ERROR, "DeleteDeathDependence: obj=%p has non-existent listener (this=%p) for dependence type=%d:", obj, this, (int)dep);
+
+		for (std::list<CObject*>::iterator di = obj->listeners[dep].begin(); di != obj->listeners[dep].end(); ++di) {
+			LOG_L(L_ERROR, "\tlistener=%p", *di);
+		}
+
+		CrashHandler::OutputStacktrace();
+#endif
+	}
+	
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-	listening[dep].erase(obj);
+
+	if (!ListErase<CObject *>(listening[dep], obj)) {
+#ifndef NDEBUG
+		LOG_L(L_ERROR, "DeleteDeathDependence: non-existent listening object (obj=%p) for dependence type=%d:", obj, (int)dep);
+
+		for (std::list<CObject*>::iterator di = this->listening[dep].begin(); di != this->listening[dep].end(); ++di) {
+			LOG_L(L_ERROR, "\tlistening=%p", *di);
+		}
+
+		CrashHandler::OutputStacktrace();
+#endif
+	}
+
 	m_resetGlobals();
 }

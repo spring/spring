@@ -552,14 +552,14 @@ void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
 	GML_STDMUTEX_LOCK(cai); // AddBuilderCAI
 
-	builderCAIs.push_back(b);
+	ListInsert<CBuilderCAI*>(builderCAIs, b);
 }
 
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
 	GML_STDMUTEX_LOCK(cai); // RemoveBuilderCAI
 
-	builderCAIs.remove(b);
+	ListErase<CBuilderCAI*>(builderCAIs, b);
 }
 
 
