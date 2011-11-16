@@ -246,12 +246,9 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 		return;
 	}
 
-	float3 dir;
-
+	float3 dir = p->speed;
 	if (p->targetPos != ZeroVector) {
 		dir = p->targetPos - p->pos; // assume that it will travel roughly in the direction of the targetpos if it have one
-	} else {
-		dir = p->speed;            // otherwise assume speed will hold constant
 	}
 
 	dir.y = 0.0f;
@@ -286,7 +283,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 	if (emitter->weaponDef->damages[0] > curPower) {
 		return -1;
 	}
-	if (weaponDef->smartShield && teamHandler->AlliedTeams(emitter->owner->team,owner->team)) {
+	if (weaponDef->smartShield && teamHandler->AlliedTeams(emitter->owner->team, owner->team)) {
 		return -1;
 	}
 
@@ -302,15 +299,14 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 		return -1;
 	}
 
-	const float3 closeVect = dif-dir*closeLength;
+	const float3 closeVect = dif - dir * closeLength;
 
 	const float tmp = sqRadius - closeVect.SqLength();
 	if ((tmp > 0) && (length > (closeLength - sqrt(tmp)))) {
-		float colLength = closeLength - sqrt(tmp);
-		float3 colPoint = start + dir * colLength;
-		float3 normal = colPoint - weaponPos;
-		normal.Normalize();
-		newDir = dir-normal*normal.dot(dir) * 2;
+		const float colLength = closeLength - sqrt(tmp);
+		const float3 colPoint = start + dir * colLength;
+		const float3 normal = (colPoint - weaponPos).Normalize();
+		newDir = dir - normal * normal.dot(dir) * 2;
 		return colLength;
 	}
 	return -1;
