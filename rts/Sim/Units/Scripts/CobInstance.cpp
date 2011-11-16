@@ -471,7 +471,7 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 
 	LOG_L(L_DEBUG, "Calling %s:%s", script.name.c_str(), script.scriptNames[functionId].c_str());
 
-	const bool res = thread->Tick(30);
+	const bool res = thread->Tick(GAME_SPEED);
 
 	// Make sure this is run even if the call terminates instantly
 	if (cb)

@@ -103,8 +103,8 @@ void CPlasmaRepulser::Update()
 	}
 
 	if (isEnabled && (curPower < weaponDef->shieldPower) && rechargeDelay <= 0) {
-		if (owner->UseEnergy(weaponDef->shieldPowerRegenEnergy * (1.0f / 30.0f))) {
-			curPower += weaponDef->shieldPowerRegen * (1.0f / 30.0f);
+		if (owner->UseEnergy(weaponDef->shieldPowerRegenEnergy * (1.0f / GAME_SPEED))) {
+			curPower += weaponDef->shieldPowerRegen * (1.0f / GAME_SPEED);
 		}
 	}
 	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
@@ -187,10 +187,10 @@ void CPlasmaRepulser::Update()
 					curPower -= proWd->damages[0];
 				}
 			} else {
-				owner->UseEnergy(weaponDef->shieldEnergyUse / 30.0f);
+				owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= proWd->damages[0] / 30.0f;
+					curPower -= proWd->damages[0] / GAME_SPEED;
 				}
 			}
 
