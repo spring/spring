@@ -18,14 +18,17 @@ class CPlasmaRepulser :
 public:
 	CPlasmaRepulser(CUnit* owner);
 	~CPlasmaRepulser(void);
+	void Init(void);
+	void DependentDied(CObject* o);
+
 	void Update(void);
+	void SlowUpdate(void);
+
 	void NewProjectile(CWeaponProjectile* p);
 	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);
 	bool BeamIntercepted(CWeapon* emitter, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
-	void Init(void);
-	void DependentDied(CObject* o);
-	void SlowUpdate(void);
 
+public:
 	float curPower;
 
 	float radius;

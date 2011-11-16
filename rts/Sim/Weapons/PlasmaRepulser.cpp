@@ -184,9 +184,11 @@ void CPlasmaRepulser::Update()
 				owner->UseEnergy(weaponDef->shieldEnergyUse);
 
 				if (weaponDef->shieldPower != 0) {
+					//FIXME some weapons do range dependent damage! (mantis #2345)
 					curPower -= proWd->damages[0];
 				}
 			} else {
+				//FIXME why do all weapons except LASERs do only (1 / GAME_SPEED) damage???
 				owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
 				if (weaponDef->shieldPower != 0) {
@@ -214,6 +216,7 @@ void CPlasmaRepulser::Update()
 			// kill the projectile
 			if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
 				if (weaponDef->shieldPower != 0) {
+					//FIXME some weapons do range dependent damage! (mantis #2345)
 					curPower -= proWd->damages[0];
 				}
 
@@ -323,6 +326,7 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float damageMultiplier)
 {
 	if (weaponDef->shieldPower > 0) {
+		//FIXME some weapons do range dependent damage! (mantis #2345)
 		curPower -= emitter->weaponDef->damages[0] * damageMultiplier;
 	}
 	return weaponDef->shieldRepulser;
