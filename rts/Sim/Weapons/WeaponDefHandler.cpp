@@ -281,7 +281,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	}
 	wd.interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 
-	wd.wobble = wdTable.GetFloat("wobble", 0.0f) * TAANG2RAD / 30.0f;
+	wd.wobble = (wdTable.GetFloat("wobble", 0.0f) * TAANG2RAD) / GAME_SPEED;
 	wd.dance = wdTable.GetFloat("dance", 0.0f) / GAME_SPEED;
 	wd.trajectoryHeight = wdTable.GetFloat("trajectoryHeight", 0.0f);
 
@@ -307,7 +307,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.onlyForward = !wd.turret && (wd.type != "StarburstLauncher");
 	wd.uptime = wdTable.GetFloat("weaponTimer", 0.0f);
 	wd.flighttime = wdTable.GetFloat("flightTime", 0) * 32;
-	wd.turnrate = wdTable.GetFloat("turnRate", 0.0f) * TAANG2RAD / 30.0f;
+	wd.turnrate = (wdTable.GetFloat("turnRate", 0.0f) * TAANG2RAD) / GAME_SPEED;
 
 	if ((wd.type == "AircraftBomb") && !wdTable.GetBool("manualBombSettings", false)) {
 		// allow manually specifying burst and burstrate for AircraftBomb
