@@ -56,8 +56,8 @@ void CInterceptHandler::Update(bool forced) {
 				continue;
 
 			// there are four cases when an interceptor <w> should fire at a projectile <p>:
-			//     1. p's current position inside w's interception circle
-			//     2. p's target position inside w's interception circle (w's owner can move!)
+			//     1. p's target position inside w's interception circle (w's owner can move!)
+			//     2. p's current position inside w's interception circle
 			//     3. p's projected impact position inside w's interception circle
 			//     4. p's trajectory intersects w's interception circle
 			//
@@ -70,13 +70,21 @@ void CInterceptHandler::Update(bool forced) {
 			const float3& pImpactPos = p->pos + p->dir * impactDist;
 			const float3& pTargetPos = p->targetPos;
 
-			if ((pFlightPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {
+			if ((pTargetPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
 				w->incomingProjectiles[p->id] = p;
 				continue; // 1
 			}
 
-			if ((pTargetPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {
+			if (wDef->interceptor == 1) {
+				// <w> is just a static interceptor and fires only at projectiles
+				// TARGETED within its current interception area; any projectiles
+				// CROSSING its interception area are fired at only if interceptor
+				// is >= 2
+				continue;
+			}
+
+			if ((pFlightPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
 				w->incomingProjectiles[p->id] = p;
 				continue; // 2
