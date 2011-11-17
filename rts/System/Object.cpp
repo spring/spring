@@ -27,6 +27,13 @@ CR_REG_METADATA(CObject, (
 
 CObject::CObject() : detached(false)
 {
+	// Note1: this static var is shared between all different types of classes synced & unsynced (CUnit, CFeature, CProjectile, ...)
+	//  Still it doesn't break syncness even when synced objects have different sync_ids as long as the sync_id is creation time dependent
+	//  and monotonously increasing, so the order remains between clients.
+	// Note2: this needs mutexes when sim is multithreaded and 2 sim threads create objects at the same time.
+	static volatile uint64_t num = 0;
+	assert(num + 1 > num); // check for overflow
+	sync_id = ++num;
 }
 
 void CObject::Detach()
@@ -34,11 +41,11 @@ void CObject::Detach()
 	// SYNCED
 	assert(!detached);
 	detached = true;
-	for (std::map<DependenceType, std::set<CObject*> >::iterator i = listeners.begin(); i != listeners.end(); ++i) {
+	for (TDependenceMap::iterator i = listeners.begin(); i != listeners.end(); ++i) {
 		const DependenceType& depType = i->first;
-		std::set<CObject*>& objs = i->second;
+		TSyncSafeSet& objs = i->second;
 
-		for (std::set<CObject*>::iterator di = objs.begin(); di != objs.end(); ++di) {
+		for (TSyncSafeSet::iterator di = objs.begin(); di != objs.end(); ++di) {
 			CObject* const& obj = (*di);
 			
 			m_setOwner(__FILE__, __LINE__, __FUNCTION__);
@@ -49,11 +56,11 @@ void CObject::Detach()
 			obj->listening[depType].erase(this);
 		}
 	}
-	for (std::map<DependenceType, std::set<CObject*> >::iterator i = listening.begin(); i != listening.end(); ++i) {
+	for (TDependenceMap::iterator i = listening.begin(); i != listening.end(); ++i) {
 		const DependenceType& depType = i->first;
-		std::set<CObject*>& objs = i->second;
+		TSyncSafeSet& objs = i->second;
 
-		for (std::set<CObject*>::iterator di = objs.begin(); di != objs.end(); ++di) {
+		for (TSyncSafeSet::iterator di = objs.begin(); di != objs.end(); ++di) {
 			CObject* const& obj = (*di);
 
 			m_setOwner(__FILE__, __LINE__, __FUNCTION__);
@@ -79,12 +86,12 @@ void CObject::Serialize(creg::ISerializer* ser)
 	/*if (ser->IsWriting()) {
 		int num = listening.size();
 		ser->Serialize(&num, sizeof(int));
-		for (std::map<DependenceType, std::set<CObject*> >::iterator i = listening.begin(); i != listening.end(); ++i) {
+		for (std::map<DependenceType, TSyncSafeSet >::iterator i = listening.begin(); i != listening.end(); ++i) {
 			int dt = i->first;
 			ser->Serialize(&dt, sizeof(int));
-			std::set<CObject*>& dl = i->second;
+			TSyncSafeSet& dl = i->second;
 			int size = 0;
-			std::set<CObject*>::const_iterator oi;
+			TSyncSafeSet::const_iterator oi;
 			for (oi = dl.begin(); oi != dl.end(); ++oi) {
 				if ((*oi)->GetClass() != CObject::StaticClass()) {
 					size++;
@@ -107,9 +114,9 @@ void CObject::Serialize(creg::ISerializer* ser)
 			ser->Serialize(&dt, sizeof(int));
 			int size;
 			ser->Serialize(&size, sizeof(int));
-			std::set<CObject*>& dl = listening[(DependenceType)dt];
+			TSyncSafeSet& dl = listening[(DependenceType)dt];
 			for (int o = 0; o < size; o++) {
-				std::set<CObject*>::iterator oi = dl.insert(NULL);
+				TSyncSafeSet::iterator oi = dl.insert(NULL);
 				ser->SerializeObjectPtr((void**)&*oi, NULL);
 			}
 		}
@@ -120,10 +127,10 @@ void CObject::PostLoad()
 {
 	//FIXME this was written when listeners & listening were std::list's, with switching to std::set it would need a rewrite
 	assert(false);
-	/*for (std::map<DependenceType, std::set<CObject*> >::iterator i = listening.begin(); i != listening.end(); ++i) {
-		for (std::set<CObject*>::iterator oi = i->second.begin(); oi != i->second.end(); ++oi) {
+	/*for (std::map<DependenceType, TSyncSafeSet >::iterator i = listening.begin(); i != listening.end(); ++i) {
+		for (TSyncSafeSet::iterator oi = i->second.begin(); oi != i->second.end(); ++oi) {
 			m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-			std::set<CObject*>& dl = (*oi)->listeners[i->first];
+			TSyncSafeSet& dl = (*oi)->listeners[i->first];
 			dl.insert(this);
 		}
 	}*/
