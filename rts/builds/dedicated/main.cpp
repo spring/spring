@@ -21,6 +21,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Log/ILog.h"
+#include "System/LogOutput.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
@@ -66,16 +67,18 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	SDL_Init(SDL_INIT_TIMER);
+
+	ConfigHandler::Instantiate(); // use the default config file
+	GlobalConfig::Instantiate();
+	logOutput.Initialize();
+
 	std::string scriptName(argv[1]);
 	std::string scriptText;
 
 	LOG("report any errors to Mantis or the forums.");
 	LOG("loading script from file: %s", scriptName.c_str());
 
-	SDL_Init(SDL_INIT_TIMER);
-
-	ConfigHandler::Instantiate(); // use the default config file
-	GlobalConfig::Instantiate();
 	FileSystemInitializer::Initialize();
 
 	CGameServer* server = NULL;
