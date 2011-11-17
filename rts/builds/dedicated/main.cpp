@@ -30,7 +30,7 @@
 
 
 
-#define LOG_SECTION_DEDICATED_SERVER "DS"
+#define LOG_SECTION_DEDICATED_SERVER "DedicatedServer"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DEDICATED_SERVER)
 
 // use the specific section for all LOG*() calls in this source file
