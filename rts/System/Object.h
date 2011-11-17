@@ -5,6 +5,7 @@
 
 #include <map>
 #include <set>
+#include <inttypes.h>
 #include "System/creg/creg_cond.h"
 
 
@@ -93,16 +94,40 @@ public:
 #define INSTANCE_OF_SUBCLASS_OF(type,obj) ((obj->objType & kind) == kind) // exact class or any subclass of it
 #define INSTANCE_OF(type,obj) (obj->objType == type) // exact class only, saves one instruction yay :)
 */
-protected:
-	bool detached;
-	const std::set<CObject*>& GetListeners(const DependenceType dep) { return listeners[dep]; }
-	const std::map<DependenceType, std::set<CObject*> >& GetAllListeners() const { return listeners; }
-	const std::set<CObject*>& GetListening(const DependenceType dep)  { return listening[dep]; }
-	const std::map<DependenceType, std::set<CObject*> >& GetAllListening() const { return listening; }
 
 private:
-	std::map<DependenceType, std::set<CObject*> > listeners;
-	std::map<DependenceType, std::set<CObject*> > listening;
+	// Note, this has nothing to do with the UnitID, FeatureID, ...
+	// It's only purpose is to make the sorting in TSyncSafeSet syncsafe
+	uint64_t sync_id;
+
+	// makes std::set<T*> syncsafe (else iteration order dependents on the pointer's address, which is not syncsafe)
+	struct syncsafe_compare
+	{
+		bool operator() (const CObject* const& a1, const CObject* const& a2) const
+		{
+			// I don't think the default less-op is sync-safe
+			//return a1 < a2;
+			return a1->sync_id < a2->sync_id;
+		}
+	};
+
+public:
+	typedef std::set<CObject*, syncsafe_compare> TSyncSafeSet;
+	typedef std::map<DependenceType, TSyncSafeSet> TDependenceMap;
+
+protected:
+	const TSyncSafeSet& GetListeners(const DependenceType dep) { return listeners[dep]; }
+	const TDependenceMap& GetAllListeners() const { return listeners; }
+	const TSyncSafeSet& GetListening(const DependenceType dep)  { return listening[dep]; }
+	const TDependenceMap& GetAllListening() const { return listening; }
+
+protected:
+	bool detached;
+	TDependenceMap listeners;
+	TDependenceMap listening;
 };
+
+
+
 
 #endif /* OBJECT_H */
