@@ -63,7 +63,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0) {
-		LOG("%s", (SpringVersion::GetFull()).c_str());
+		// we do no want this in the "DedicatedServer" section
+		LOG_S(LOG_SECTION_DEFAULT, "%s", (SpringVersion::GetFull()).c_str());
 		return 0;
 	}
 
