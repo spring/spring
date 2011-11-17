@@ -202,18 +202,17 @@ void CLogOutput::InitializeSections()
 	// and the ones specified in the configuration file.
 	// configHandler cannot be accessed here in unitsync, as it may not exist.
 	std::string enabledSections = ",";
-#ifndef UNITSYNC
-	#ifndef DEBUG
+#if defined(UNITSYNC)
+	#if defined(DEBUG)
+	// unitsync logging in debug mode always on
+	enabledSections += "unitsync,ArchiveScanner,";
+	#endif
+#else
 	// Always show at least INFO level of these sections
 	enabledSections += "Sound,";
 	#endif
 	enabledSections += StringToLower(configHandler->GetString("LogSections")) + ",";
 	enabledSections += StringToLower(configHandler->GetString("LogSubsystems")) + ","; // XXX deprecated on 22. August 2011, before the 0.83 release
-#else
-	#ifdef DEBUG
-	// unitsync logging in debug mode always on
-	enabledSections += "unitsync,ArchiveScanner,";
-	#endif
 #endif
 
 	const char* const envSec = getenv("SPRING_LOG_SECTIONS");
