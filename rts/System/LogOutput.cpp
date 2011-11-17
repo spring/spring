@@ -208,6 +208,10 @@ void CLogOutput::InitializeSections()
 	enabledSections += "unitsync,ArchiveScanner,";
 	#endif
 #else
+	#if defined(DEDICATED)
+	enabledSections += "DedicatedServer,";
+	#endif
+	#if !defined(DEBUG)
 	// Always show at least INFO level of these sections
 	enabledSections += "Sound,";
 	#endif
