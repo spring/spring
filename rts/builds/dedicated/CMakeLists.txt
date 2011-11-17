@@ -140,26 +140,19 @@ IF    (MINGW)
 	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY})
 ENDIF (MINGW)
 
-# HACK we do not use the vars here, casue they might be uninitialized
-# (This might have happend on the windows build-bot)
 ADD_LIBRARY(springserver SHARED
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
-#		${sources_engine_System_Log_sinkFile}
-#		${sources_engine_System_Log_sinkOutputDebugString}
-		"${CMAKE_SOURCE_DIR}/rts/System/Log/FileSink.cpp"
-		"${CMAKE_SOURCE_DIR}/rts/System/Log/OutputDebugStringSink.cpp"
+		${sources_engine_System_Log_sinkFile}
+		${sources_engine_System_Log_sinkOutputDebugString}
 	)
 TARGET_LINK_LIBRARIES(springserver springserver-static)
 
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
-#		${sources_engine_System_Log_sinkConsole}
-#		${sources_engine_System_Log_sinkFile}
-#		${sources_engine_System_Log_sinkOutputDebugString}
-		"${CMAKE_SOURCE_DIR}/rts/System/Log/ConsoleSink.cpp"
-		"${CMAKE_SOURCE_DIR}/rts/System/Log/FileSink.cpp"
-		"${CMAKE_SOURCE_DIR}/rts/System/Log/OutputDebugStringSink.cpp"
+		${sources_engine_System_Log_sinkConsole}
+		${sources_engine_System_Log_sinkFile}
+		${sources_engine_System_Log_sinkOutputDebugString}
 		main
 	)
 TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
