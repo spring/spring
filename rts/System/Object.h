@@ -3,47 +3,17 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <list>
 #include <map>
+#include <set>
 #include "System/creg/creg_cond.h"
 
-template<typename T>
-bool ListErase(std::list<T>& list, const T& what)
-{
-	typename std::list<T>::iterator it;
-	for (it = list.begin(); it != list.end(); ++it) {
-		if (*it == what) {
-			list.erase(it);
-			return true;
-		}
-	}
-	return false;
-}
-
-template<typename T>
-bool ListInsert(std::list<T>& list, const T& what)
-{
-	bool ret = true;
-#ifndef NDEBUG
-	typename std::list<T>::iterator it;
-	for (it = list.begin(); it != list.end(); ++it) {
-		if (*it == what) {
-			ret = false;
-			break;
-		}
-	}
-#endif
-	if (ret)
-		list.insert(list.end(), what);
-
-	return ret;
-}
 
 class CObject
 {
 public:
 	CR_DECLARE(CObject);
 
+	//FIXME why different depType's (it's not used anywhere currently except as a std::map key?!)
 	enum DependenceType {
 		DEPENDENCE_ATTACKER,
 		DEPENDENCE_BUILD,
@@ -87,6 +57,7 @@ public:
 	virtual void AddDeathDependence(CObject* obj, DependenceType dep);
 	/// Called when an object died, that this is interested in
 	virtual void DependentDied(CObject* obj);
+
 /*
 	// Possible future replacement for dynamic_cast (10x faster)
 	// Identifier bits for classes that have subclasses
@@ -124,14 +95,14 @@ public:
 */
 protected:
 	bool detached;
-	const std::list<CObject*>& GetListeners(const DependenceType dep) { return listeners[dep]; }
-	const std::map<DependenceType, std::list<CObject*> >& GetAllListeners() { return listeners; }
-	const std::list<CObject*>& GetListening(const DependenceType dep) { return listening[dep]; }
-	const std::map<DependenceType, std::list<CObject*> >& GetAllListening() { return listening; }
+	const std::set<CObject*>& GetListeners(const DependenceType dep) { return listeners[dep]; }
+	const std::map<DependenceType, std::set<CObject*> >& GetAllListeners() const { return listeners; }
+	const std::set<CObject*>& GetListening(const DependenceType dep)  { return listening[dep]; }
+	const std::map<DependenceType, std::set<CObject*> >& GetAllListening() const { return listening; }
 
 private:
-	std::map<DependenceType, std::list<CObject*> > listeners;
-	std::map<DependenceType, std::list<CObject*> > listening;
+	std::map<DependenceType, std::set<CObject*> > listeners;
+	std::map<DependenceType, std::set<CObject*> > listening;
 };
 
 #endif /* OBJECT_H */

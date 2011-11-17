@@ -4,6 +4,8 @@
 #define PLASMAREPULSER_H
 
 #include "Weapon.h"
+#include <list>
+#include <set>
 
 class CProjectile;
 class CRepulseGfx;
