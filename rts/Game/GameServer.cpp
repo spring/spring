@@ -264,7 +264,7 @@ CGameServer::~CGameServer()
 	if (setup->useLuaGaia && (numTeams > 0)) {
 		--numTeams;
 	}
-	demoRecorder->SetTime(serverFrameNum / 30, spring_tomsecs(spring_gettime()-serverStartTime)/1000);
+	demoRecorder->SetTime(serverFrameNum / GAME_SPEED, spring_tomsecs(spring_gettime() - serverStartTime) / 1000);
 	demoRecorder->InitializeStats(players.size(), numTeams);
 
 	// Pass the winners to the CDemoRecorder.
@@ -1171,7 +1171,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			}
 		} break;
 
-		case NETMSG_LUAMSG:
+
+		case NETMSG_LUAMSG: {
 			try {
 				netcode::UnpackPacket pckt(packet, 3);
 				unsigned char playerNum;
@@ -1188,19 +1189,36 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format("Player %s sent invalid LuaMsg: %s") %players[a].name %ex.what()));
 			}
-			break;
+		} break;
+
 
 		case NETMSG_SYNCRESPONSE: {
 #ifdef SYNCCHECK
-			const int frameNum = *(int*)&inbuf[1];
+			netcode::UnpackPacket pckt(packet, 1);
+
+			unsigned char playerNum; pckt >> playerNum;
+			          int  frameNum; pckt >> frameNum;
+			unsigned  int  checkSum; pckt >> checkSum;
+
+			assert(a == playerNum);
+
 			if (outstandingSyncFrames.find(frameNum) != outstandingSyncFrames.end())
-				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
-				// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
+				players[a].syncResponse[frameNum] = checkSum;
+
+			// update player's ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
 			if (frameNum <= serverFrameNum && frameNum > players[a].lastFrameResponse)
 				players[a].lastFrameResponse = frameNum;
+
+#ifdef DEBUG
+			// send player <a>'s sync-response back to everybody
+			// (the only purpose of this is to allow a client to
+			// detect if it is desynced wrt. a demo-stream)
+			if ((frameNum % GAME_SPEED) == 0) {
+				Broadcast((CBaseNetProtocol::Get()).SendSyncResponse(playerNum, frameNum, checkSum));
+			}
 #endif
-		}
-			break;
+#endif
+		} break;
 
 		case NETMSG_SHARE:
 			if (inbuf[1] != a) {
