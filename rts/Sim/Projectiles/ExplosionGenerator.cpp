@@ -529,7 +529,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		code.append((char*) &ofs, (char*) &ofs + 2);
 	}
 	else if (dynamic_cast<creg::BasicType*>(type.get())) {
-		const creg::BasicType* basicType = (creg::BasicType*)type.get();
+		const creg::BasicType* basicType = (creg::BasicType*) type.get();
 		const bool legalType =
 			(basicType->id == creg::crInt  ) ||
 			(basicType->id == creg::crFloat) ||
@@ -597,10 +597,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			case creg::crBool:  code.push_back(OP_STOREI); break;
 			case creg::crFloat: code.push_back(OP_STOREF); break;
 			case creg::crUChar: code.push_back(OP_STOREC); break;
-			default:
-				throw content_error("Explosion script variable is of unsupported type. "
-					"Contact the Spring team to fix this.");
-					break;
+			default: break;
 		}
 
 		boost::uint16_t ofs = offset;
