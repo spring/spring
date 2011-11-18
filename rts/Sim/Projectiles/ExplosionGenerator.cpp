@@ -529,59 +529,72 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		code.append((char*) &ofs, (char*) &ofs + 2);
 	}
 	else if (dynamic_cast<creg::BasicType*>(type.get())) {
-		creg::BasicType *bt = (creg::BasicType*)type.get();
+		const creg::BasicType* basicType = (creg::BasicType*)type.get();
+		const bool legalType =
+			(basicType->id == creg::crInt  ) ||
+			(basicType->id == creg::crFloat) ||
+			(basicType->id == creg::crUChar) ||
+			(basicType->id == creg::crBool );
 
-		if (bt->id != creg::crInt && bt->id != creg::crFloat && bt->id != creg::crUChar && bt->id != creg::crBool) {
-			throw content_error("Projectile properties other than int, float and uchar, are not supported (" + script + ")");
+		if (!legalType) {
+			throw content_error("[CCEG::ParseExplosionCode] projectile type-properties other than int, float, uchar, or bool are not supported (" + script + ")");
 			return;
 		}
 
 		int p = 0;
+
 		while (p < script.length()) {
-			char opcode;
-			char c;
-			do { c = script[p++]; } while (c == ' ');
+			char opcode = OP_END;
+			char c = script[p++];
+
+			// consume whitespace
+			if (c == ' ')
+				continue;
 
 			bool useInt = false;
 
-			if (c == 'i')      opcode = OP_INDEX;
-			else if (c == 'r') opcode = OP_RAND;
-			else if (c == 'd') opcode = OP_DAMAGE;
-			else if (c == 'm') opcode = OP_SAWTOOTH;
-			else if (c == 'k') opcode = OP_DISCRETE;
-			else if (c == 's') opcode = OP_SINE;
-			else if (c == 'y') {opcode = OP_YANK; useInt = true;}
-			else if (c == 'x') {opcode = OP_MULTIPLY; useInt = true;}
-			else if (c == 'a') {opcode = OP_ADDBUFF; useInt = true;}
-			else if (c == 'p') opcode = OP_POW;
-			else if (c == 'q') {opcode = OP_POWBUFF; useInt = true;}
+			     if (c == 'i')   opcode = OP_INDEX;
+			else if (c == 'r')   opcode = OP_RAND;
+			else if (c == 'd')   opcode = OP_DAMAGE;
+			else if (c == 'm')   opcode = OP_SAWTOOTH;
+			else if (c == 'k')   opcode = OP_DISCRETE;
+			else if (c == 's')   opcode = OP_SINE;
+			else if (c == 'p')   opcode = OP_POW;
+			else if (c == 'y') { opcode = OP_YANK;     useInt = true; }
+			else if (c == 'x') { opcode = OP_MULTIPLY; useInt = true; }
+			else if (c == 'a') { opcode = OP_ADDBUFF;  useInt = true; }
+			else if (c == 'q') { opcode = OP_POWBUFF;  useInt = true; }
 			else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
 			else {
-				LOG_L(L_WARNING,
-					"[CCEG::ParseExplosionCode] unknown op-code \"%c\" in \"%s\" at index %d",
-					c, script.c_str(), p);
+				const char* fmt = "[CCEG::ParseExplosionCode] unknown op-code \"%c\" in \"%s\" at index %d";
+				LOG_L(L_WARNING, fmt, c, script.c_str(), p);
 				continue;
 			}
 
-			char* endp;
+			// be sure to exit cleanly if there are no more operators or operands
+			if (p == script.size())
+				continue;
+
+			char* endp = NULL;
+
 			if (!useInt) {
 				const float v = (float)strtod(&script[p], &endp);
 
-				p += endp - &script[p];
+				p += (endp - &script[p]);
 				code += opcode;
 				code.append((char*) &v, ((char*) &v) + 4);
 			} else {
 				const int v = std::max(0, std::min(16, (int)strtol(&script[p], &endp, 10)));
 
-				p += endp - &script[p];
+				p += (endp - &script[p]);
 				code += opcode;
 				code.append((char*) &v, ((char*) &v) + 4);
 			}
 		}
 
-		switch (bt->id) {
-			case creg::crInt: code.push_back(OP_STOREI); break;
-			case creg::crBool: code.push_back(OP_STOREI); break;
+		switch (basicType->id) {
+			case creg::crInt:   code.push_back(OP_STOREI); break;
+			case creg::crBool:  code.push_back(OP_STOREI); break;
 			case creg::crFloat: code.push_back(OP_STOREF); break;
 			case creg::crUChar: code.push_back(OP_STOREC); break;
 			default:
@@ -589,6 +602,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 					"Contact the Spring team to fix this.");
 					break;
 		}
+
 		boost::uint16_t ofs = offset;
 		code.append((char*)&ofs, (char*)&ofs + 2);
 	}
