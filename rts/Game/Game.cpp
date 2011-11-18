@@ -2073,10 +2073,6 @@ void CGame::ReloadCOB(const string& msg, int player)
 	LOG("Reloaded cob script for %i units", count);
 }
 
-void CGame::ReloadCEGs(const std::string& tag) {
-	gCEG->RefreshCache(tag);
-}
-
 
 
 void CGame::SelectUnits(const string& line)
