@@ -207,7 +207,7 @@ public:
 
 	bool noAutoTarget;          ///< cant target stuff (for antinuke,dgun)
 	bool manualfire;            ///< if true, slave us to the ManualFire button
-	int interceptor;            ///< anti nuke
+	int interceptor;            ///< if >= 1, weapon will fire at any interceptable projectiles
 	int targetable;             ///< nuke (can be shot by interceptor)
 	bool stockpile;
 	float coverageRange;        ///< range of anti nuke
