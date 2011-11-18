@@ -1171,7 +1171,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			}
 		} break;
 
-		case NETMSG_LUAMSG: {
+		case NETMSG_LUAMSG:
 			try {
 				netcode::UnpackPacket pckt(packet, 3);
 				unsigned char playerNum;
@@ -1188,30 +1188,19 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format("Player %s sent invalid LuaMsg: %s") %players[a].name %ex.what()));
 			}
-		} break;
-
+			break;
 
 		case NETMSG_SYNCRESPONSE: {
 #ifdef SYNCCHECK
-			const int frameNum = *(int*) &inbuf[2];
-			const unsigned int checkSum = *(unsigned*) &inbuf[6];
-
+			const int frameNum = *(int*)&inbuf[1];
 			if (outstandingSyncFrames.find(frameNum) != outstandingSyncFrames.end())
-				players[a].syncResponse[frameNum] = checkSum;
-
-			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
+				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
+				// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
 			if (frameNum <= serverFrameNum && frameNum > players[a].lastFrameResponse)
 				players[a].lastFrameResponse = frameNum;
-
-#ifdef DEBUG
-			// save player <a>'s sync-response
-			if (demoRecorder) {
-				demoRecorder->SaveToDemo(packet->data, packet->length, GetDemoTime());
-			}
 #endif
-#endif
-		} break;
-
+		}
+			break;
 
 		case NETMSG_SHARE:
 			if (inbuf[1] != a) {
