@@ -25,6 +25,8 @@ CR_REG_METADATA(CObject, (
 	CR_POSTLOAD(PostLoad)
 	));
 
+Threading::AtomicCounterInt64 CObject::cur_sync_id(0);
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -36,18 +38,7 @@ CObject::CObject() : detached(false)
 	//  creation time dependent and monotonously increasing, so the _order_ remains between clients.
 
 	// Use atomic fetch-and-add, so threads don't read half written data nor write old (= smaller) numbers
-#ifdef _MSC_VER
-	static volatile uint64_t num = 0;
-	assert(((char*)&num - (char*)0) % 8 == 0); // InterlockedIncrement64 expects 64bit-aligned data
-	sync_id = InterlockedIncrement64(&num);
-#elifdef __APPLE__
-	static volatile __attribute__ ((aligned (8))) uint64_t num = 0;
-	sync_id = OSAtomicIncrement64(&num);
-#else
-	// assuming GCC (__sync_fetch_and_add is a builtin)
-	static volatile __attribute__ ((aligned (8))) uint64_t num = 0;
-	sync_id = __sync_fetch_and_add(&num, uint64_t(1));
-#endif
+	sync_id = ++cur_sync_id;
 
 	assert(sync_id + 1 > sync_id); // check for overflow
 }
