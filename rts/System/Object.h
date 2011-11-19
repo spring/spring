@@ -100,7 +100,7 @@ private:
 	// It's only purpose is to make the sorting in TSyncSafeSet syncsafe
 	uint64_t sync_id;
 
-	// makes std::set<T*> syncsafe (else iteration order dependents on the pointer's address, which is not syncsafe)
+	// makes std::set<T*> syncsafe (else iteration order depends on the pointer's address, which is not syncsafe)
 	struct syncsafe_compare
 	{
 		bool operator() (const CObject* const& a1, const CObject* const& a2) const
