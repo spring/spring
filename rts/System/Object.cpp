@@ -12,6 +12,10 @@
 # define m_resetGlobals()
 #endif
 
+#ifdef _MSC_VER
+	#include "Winbase.h" // InterlockedIncrement64
+#endif
+
 CR_BIND(CObject, )
 
 CR_REG_METADATA(CObject, (
@@ -28,12 +32,24 @@ CR_REG_METADATA(CObject, (
 CObject::CObject() : detached(false)
 {
 	// Note1: this static var is shared between all different types of classes synced & unsynced (CUnit, CFeature, CProjectile, ...)
-	//  Still it doesn't break syncness even when synced objects have different sync_ids as long as the sync_id is creation time dependent
-	//  and monotonously increasing, so the order remains between clients.
-	// Note2: this needs mutexes when sim is multithreaded and 2 sim threads create objects at the same time.
+	//  Still it doesn't break syncness even when synced objects have different sync_ids between clients as long as the sync_id is
+	//  creation time dependent and monotonously increasing, so the _order_ remains between clients.
+
+	// Use atomic fetch-and-add, so threads don't read half written data nor write old (= smaller) numbers
+#ifdef _MSC_VER
 	static volatile uint64_t num = 0;
-	assert(num + 1 > num); // check for overflow
-	sync_id = ++num;
+	assert(((char*)&num - (char*)0) % 8 == 0); // InterlockedIncrement64 expects 64bit-aligned data
+	sync_id = InterlockedIncrement64(&num);
+#elifdef __APPLE__
+	static volatile __attribute__ ((aligned (8))) uint64_t num = 0;
+	sync_id = OSAtomicIncrement64(&num);
+#else
+	// assuming GCC (__sync_fetch_and_add is a builtin)
+	static volatile __attribute__ ((aligned (8))) uint64_t num = 0;
+	sync_id = __sync_fetch_and_add(&num, uint64_t(1));
+#endif
+
+	assert(sync_id + 1 > sync_id); // check for overflow
 }
 
 void CObject::Detach()
