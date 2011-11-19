@@ -378,7 +378,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_SYNCRESPONSE: {
-#if (defined(SYNCCHECK) && defined(DEBUG))
+#if (defined(SYNCCHECK) && !defined(NDEBUG))
 				// NOTE:
 				//     this packet is also sent during live games,
 				//     during which we should just ignore it (the
