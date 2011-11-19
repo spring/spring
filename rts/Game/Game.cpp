@@ -408,7 +408,6 @@ CGame::~CGame()
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
 	SafeDelete(explGenHandler);
-	SafeDelete(gCEG);
 	SafeDelete(helper);
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
@@ -534,7 +533,6 @@ void CGame::LoadSimulation(const std::string& mapName)
 	qf = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
-	gCEG = new CCustomExplosionGenerator();
 
 	{
 		//! FIXME: these five need to be loaded before featureHandler
