@@ -1209,7 +1209,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			if (frameNum <= serverFrameNum && frameNum > players[a].lastFrameResponse)
 				players[a].lastFrameResponse = frameNum;
 
-#ifdef DEBUG
+#ifndef NDEBUG
 			// send player <a>'s sync-response back to everybody
 			// (the only purpose of this is to allow a client to
 			// detect if it is desynced wrt. a demo-stream)
