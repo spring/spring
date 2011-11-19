@@ -22,6 +22,10 @@
 extern "C" {
 #endif
 
+#ifdef _MSC_VER
+#define va_copy(dst, src) ((dst) = (src))
+#endif
+
 static const int SECTION_SIZE_MIN = 10;
 static const int SECTION_SIZE_MAX = 20;
 
