@@ -1455,7 +1455,7 @@ void CUnit::ChangeTeamReset()
 	const CObject::TDependenceMap& listeners = GetAllListeners();
 	std::vector<CUnit *> alliedunits;
 	for (CObject::TDependenceMap::const_iterator li = listeners.begin(); li != listeners.end(); ++li) {
-		for (CObject::TSyncSafeSet::iterator di = li->second.begin(); di != li->second.end(); ++di) {
+		for (CObject::TSyncSafeSet::const_iterator di = li->second.begin(); di != li->second.end(); ++di) {
 			CUnit* u = dynamic_cast<CUnit*>(*di);
 			if (u != NULL && teamHandler->AlliedTeams(team, u->team))
 				alliedunits.push_back(u);
