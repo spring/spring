@@ -122,6 +122,8 @@ CExplosionGeneratorHandler::CExplosionGeneratorHandler()
 	aliasParser = NULL;
 	explTblRoot = NULL;
 
+	gCEG = new CCustomExplosionGenerator();
+
 	ParseExplosionTables();
 }
 
@@ -132,6 +134,11 @@ CExplosionGeneratorHandler::~CExplosionGeneratorHandler()
 	delete explTblRoot; explTblRoot = NULL;
 
 	explosionGenerators.clear();
+
+	gCEG->Unload(this);
+	gCEG->ClearCache();
+
+	delete gCEG; gCEG = NULL;
 }
 
 void CExplosionGeneratorHandler::ParseExplosionTables() {
@@ -183,9 +190,10 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 	}
 
 	IExplosionGenerator* explGen = (IExplosionGenerator*) cls->CreateInstance();
+	explGen->SetGeneratorID(++numLoadedGenerators);
+
 	assert(gCEG != explGen);
 	assert(gCEG->GetGeneratorID() == 0);
-	explGen->SetGeneratorID(++numLoadedGenerators);
 
 	if (seppos != string::npos) {
 		explGen->Load(this, postfix);
@@ -200,6 +208,7 @@ void CExplosionGeneratorHandler::UnloadGenerator(IExplosionGenerator* explGen)
 	assert(gCEG != explGen);
 	assert(gCEG->GetGeneratorID() == 0);
 
+	explGen->Unload(this);
 	explosionGenerators.erase(explGen->GetGeneratorID());
 
 	creg::Class* cls = explGen->GetClass();
@@ -803,6 +812,7 @@ void CCustomExplosionGenerator::Reload(CExplosionGeneratorHandler* handler, cons
 		std::map<std::string, unsigned int> oldExplosionIDs(explosionIDs);
 		std::map<std::string, unsigned int>::const_iterator it;
 
+		Unload(handler);
 		ClearCache();
 
 		// reload all currently cached CEGs by tag
@@ -951,16 +961,18 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 	}
 }
 
+void CCustomExplosionGenerator::Unload(CExplosionGeneratorHandler* handler) {
+	std::vector<IExplosionGenerator*>::iterator egi;
+
+	for (egi = spawnExplGens.begin(); egi != spawnExplGens.end(); ++egi) {
+		handler->UnloadGenerator(*egi);
+	}
+}
+
 void CCustomExplosionGenerator::ClearCache()
 {
-	std::vector<IExplosionGenerator*>::iterator egi;
-	for (egi = spawnExplGens.begin(); egi != spawnExplGens.end(); ++egi) {
-		explGenHandler->UnloadGenerator(*egi);
-	}
-
 	spawnExplGens.clear();
 	explosionIDs.clear();
 	explosionData.clear();
 }
-
 
