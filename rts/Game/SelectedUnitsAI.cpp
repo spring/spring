@@ -165,7 +165,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		// use the vector from the middle of group to new pos as forward dir
-		const float3 pos(c.GetParam(0), c.GetParam(1), c.GetParam(3));
+		const float3 pos(c.GetParam(0), c.GetParam(1), c.GetParam(2));
 		float3 frontdir = pos - centerCoor;
 		frontdir.y = 0.0f;
 		frontdir.ANormalize();
