@@ -12,9 +12,6 @@
 # define m_resetGlobals()
 #endif
 
-#ifdef _MSC_VER
-	#include "Winbase.h" // InterlockedIncrement64
-#endif
 
 CR_BIND(CObject, )
 

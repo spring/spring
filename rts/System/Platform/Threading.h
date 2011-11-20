@@ -12,6 +12,9 @@
 #include "System/Platform/Win/win32.h"
 #include <boost/cstdint.hpp>
 
+#ifdef __APPLE__
+#include <libkern/OSAtomic.h>
+#endif
 
 namespace Threading {
 #ifdef WIN32
