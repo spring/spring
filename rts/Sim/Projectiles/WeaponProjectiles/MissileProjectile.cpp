@@ -97,7 +97,7 @@ CMissileProjectile::CMissileProjectile(
 
 	drawRadius = radius + maxSpeed * 8;
 
-	float3 camDir = (pos - camera->pos).Normalize();
+	float3 camDir = (pos - camera->pos).ANormalize();
 	if ((camera->pos.distance(pos) * 0.2f + (1 - fabs(camDir.dot(dir))) * 3000) < 200) {
 		drawTrail = false;
 	}
@@ -295,7 +295,7 @@ void CMissileProjectile::Update()
 		useAirLos = tp->useAirLos;
 
 		if (!drawTrail) {
-			const float3 camDir = (pos - camera->pos).Normalize();
+			const float3 camDir = (pos - camera->pos).ANormalize();
 
 			if ((camera->pos.distance(pos) * 0.2f + (1 - fabs(camDir.dot(dir))) * 3000) > 300) {
 				drawTrail = true;
