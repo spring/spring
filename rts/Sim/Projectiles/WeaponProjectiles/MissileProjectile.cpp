@@ -83,7 +83,7 @@ CMissileProjectile::CMissileProjectile(
 {
 	projectileType = WEAPON_MISSILE_PROJECTILE;
 	curSpeed = speed.Length();
-	dir = speed / curSpeed;
+	dir = (curSpeed > 0.0f) ? speed / curSpeed : ZeroVector;
 	oldDir = dir;
 
 	SetRadius(0.0f);
@@ -117,10 +117,9 @@ CMissileProjectile::CMissileProjectile(
 		float dist = pos.distance(targPos);
 		extraHeight = (dist * weaponDef->trajectoryHeight);
 
-		if (dist < maxSpeed) {
-			dist = maxSpeed;
-		}
+		dist = std::max(dist, maxSpeed);
 
+		assert(maxSpeed > 0.0f);
 		extraHeightTime = (int)(dist / maxSpeed);
 		extraHeightDecay = extraHeight / extraHeightTime;
 	}
@@ -217,7 +216,7 @@ void CMissileProjectile::Update()
 			}
 
 			const float3 orgTargPos = targPos;
-			const float3 targetDir = (targPos - pos).Normalize();
+			const float3 targetDir = (targPos - pos).SafeNormalize();
 			const float dist = targPos.distance(pos) + 0.1f;
 
 			if (extraHeightTime > 0) {
@@ -243,7 +242,7 @@ void CMissileProjectile::Update()
 			}
 
 
-			float3 dif = (targPos + targSpeed * (dist / maxSpeed) * 0.7f - pos).Normalize();
+			float3 dif = (targPos + targSpeed * (dist / maxSpeed) * 0.7f - pos).SafeNormalize();
 			float3 dif2 = dif - dir;
 
 			if (dif2.SqLength() < Square(weaponDef->turnrate)) {
@@ -270,7 +269,7 @@ void CMissileProjectile::Update()
 				speed *= 0.98f;
 				speed.y += mygravity;
 				dir = speed;
-				dir.Normalize();
+				dir.SafeNormalize();
 			}
 		}
 	}
@@ -318,7 +317,7 @@ void CMissileProjectile::UpdateGroundBounce() {
 	if (tempSpeed != speed) {
 		curSpeed = speed.Length();
 		dir = speed;
-		dir.Normalize();
+		dir.SafeNormalize();
 	}
 }
 
@@ -417,7 +416,7 @@ int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
 {
 	if (!luaMoveCtrl) {
 		if (ttl > 0) {
-			const float3 sdir = (pos - shieldPos).Normalize();
+			const float3 sdir = (pos - shieldPos).SafeNormalize();
 			// steer away twice as fast as we can steer toward target
 			float3 dif2 = sdir - dir;
 			float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
@@ -426,9 +425,9 @@ int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
 				dir = sdir;
 			} else {
 				dif2 -= dir * (dif2.dot(dir));
-				dif2.Normalize();
+				dif2.SafeNormalize();
 				dir += dif2 * tracking;
-				dir.Normalize();
+				dir.SafeNormalize();
 			}
 
 			return 2;
