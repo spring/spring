@@ -610,7 +610,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			}
 
 			// be sure to exit cleanly if there are no more operators or operands
-			if (p == script.size())
+			if (p >= script.size())
 				continue;
 
 			char* endp = NULL;
