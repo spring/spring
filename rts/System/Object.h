@@ -98,7 +98,7 @@ public:
 private:
 	// Note, this has nothing to do with the UnitID, FeatureID, ...
 	// It's only purpose is to make the sorting in TSyncSafeSet syncsafe
-	boost::uint64_t sync_id;
+	boost::int64_t sync_id;
 	static Threading::AtomicCounterInt64 cur_sync_id;
 
 	// makes std::set<T*> syncsafe (else iteration order depends on the pointer's address, which is not syncsafe)
