@@ -367,7 +367,11 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	p->id = newID;
 	(*proIDs)[p->id] = pp;
 
-	eventHandler.ProjectileCreated(pp.first, pp.second);
+	if (p->synced) {
+		// ProjectileCreated is a synced event
+		//FIXME create a unsynced one, too? (for the unsynced projectiles)
+		eventHandler.ProjectileCreated(pp.first, pp.second);
+	}
 }
 
 
