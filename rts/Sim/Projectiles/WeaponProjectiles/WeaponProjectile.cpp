@@ -102,6 +102,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 	collisionFlags = weaponDef->collisionFlags;
 
 	ph->AddProjectile(this);
+	ASSERT_SYNCED(id);
 
 	if (weaponDef->interceptedByShieldType) {
 		// this needs a valid projectile id set
