@@ -803,7 +803,8 @@ void CUnitScript::Explode(int piece, int flags)
 	}
 	speed += baseSpeed;
 	if (speed.SqLength() > 12*12) {
-		speed = speed.Normalize() * 12;
+		speed.Normalize();
+		speed *= 12;
 	}
 
 	/* TODO Push this back. Don't forget to pass the team (color).  */
