@@ -518,15 +518,11 @@ static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
 	const int proID = luaL_checkint(L, index);
-	ProjectileMap::iterator it = ph->syncedProjectileIDs.find(proID);
-
-	if (it == ph->syncedProjectileIDs.end()) {
-		// not an assigned synced projectile ID
+	const ProjectileMapPair* pp = ph->GetMapPairBySyncedID(proID);
+	if (!pp) {
 		return NULL;
 	}
-
-	const ProjectileMapPair& pp = it->second;
-	return IsProjectileVisible(pp)? pp.first: NULL;
+	return IsProjectileVisible(*pp)? pp->first: NULL;
 }
 
 

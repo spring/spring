@@ -275,17 +275,15 @@ static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, 
 	}
 
 	const int projID = lua_toint(L, index);
-	const ProjectileMap& projectiles = synced?
-		ph->syncedProjectileIDs:
-		ph->unsyncedProjectileIDs;
 
-	ProjectileMap::const_iterator it = projectiles.find(projID);
-
-	if (it == projectiles.end()) {
-		return NULL;
+	const ProjectileMapPair* pp = NULL;
+	if (synced) {
+		pp = ph->GetMapPairBySyncedID(projID);
+	} else {
+		pp = ph->GetMapPairByUnsyncedID(projID);
 	}
-
-	return ((it->second).first);
+	
+	return (pp) ? pp->first : NULL;
 }
 
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
