@@ -204,6 +204,7 @@ private:
 	float minUserSpeed;
 
 	bool noHelperAIs;
+	bool canReconnect;
 	bool allowSpecDraw;
 	bool allowAdditionalPlayers;
 	bool whiteListAdditionalPlayers;
@@ -239,7 +240,6 @@ private:
 
 	mutable Threading::RecursiveMutex gameServerMutex;
 
-	bool canReconnect;
 	volatile bool gameHasStarted;
 	volatile bool generatedGameID;
 
