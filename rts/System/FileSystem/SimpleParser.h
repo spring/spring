@@ -10,7 +10,7 @@ class CFileHandler;
 
 
 /**
- * Allows to tokenize a string or a text-files content based on white-space.
+ * Allows one to tokenize a string or a text-files content based on white-space.
  */
 class CSimpleParser
 {

@@ -21,9 +21,7 @@ CLaserCannon::CLaserCannon(CUnit* owner)
 {
 }
 
-CLaserCannon::~CLaserCannon(void)
-{
-}
+
 
 void CLaserCannon::Update(void)
 {
@@ -53,13 +51,8 @@ bool CLaserCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	if (!CWeapon::TryTarget(pos, userTarget, unit))
 		return false;
 
-	if (unit) {
-		if (unit->isUnderWater && !weaponDef->waterweapon)
-			return false;
-	} else {
-		if (pos.y < 0 && !weaponDef->waterweapon)
-			return false;
-	}
+	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
+		return false;
 
 	float3 dir(pos - weaponMuzzlePos);
 	const float length = dir.Length();
@@ -112,16 +105,14 @@ void CLaserCannon::FireImpl()
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 	dir.Normalize();
 
-	int fpsSub = 0;
-
-	if (owner->fpsControlPlayer != NULL) {
-		// subtract 24 elmos in FPS mode (?)
-		fpsSub = 24;
-	}
+	// subtract a magic 24 elmos in FPS mode (helps against range-exploits)
+	const int fpsRangeSub = (owner->fpsControlPlayer != NULL)? (SQUARE_SIZE * 3): 0;
+	const float boltLength = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
+	const int boltTTL = ((weaponDef->range - fpsRangeSub) / weaponDef->projectilespeed) - (fpsRangeSub >> 2);
 
 	new CLaserProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED),
+		boltLength,
 		weaponDef->visuals.color, weaponDef->visuals.color2,
 		weaponDef->intensity, weaponDef,
-		(int) ((weaponDef->range - fpsSub) / weaponDef->projectilespeed) - 6);
+		boltTTL);
 }

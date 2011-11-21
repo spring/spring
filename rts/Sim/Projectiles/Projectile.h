@@ -42,13 +42,19 @@ public:
 	virtual void DrawCallback() {}
 
 	inline CUnit* owner() const {
-		return
+		// Note: this death dependency optimization using "ownerId" is logically flawed,
+		//  since ids are being reused it could return a unit that is not the original owner
 #if defined(USE_GML) && GML_ENABLE_SIM
-		*(CUnit * volatile *)&
+		CUnit* unit = uh->GetUnit(ownerId);
+		return *(CUnit* volatile*)&unit; // make volatile
+#else
+		return uh->GetUnit(ownerId); //returns NULL when we are outside of valid unitID range (e.g. for -1)
 #endif
-		uh->units[ownerId]; // Note: this death dependency optimization using "ownerId" is logically flawed, since ids are being reused it could return a unit that is not the original owner
 	}
 
+	int GetOwnerID() const {
+		return ownerId;
+	}
 
 	void SetQuadFieldCellCoors(const int2& cell) { quadFieldCellCoors = cell; }
 	int2 GetQuadFieldCellCoors() const { return quadFieldCellCoors; }
@@ -84,9 +90,9 @@ public:
 
 	float mygravity;
 	float tempdist; ///< temp distance used for sorting when rendering
-	
+
 protected:
-	unsigned int ownerId;
+	int ownerId;
 	unsigned int projectileType;
 	unsigned int collisionFlags;
 

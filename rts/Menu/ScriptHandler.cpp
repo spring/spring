@@ -65,7 +65,7 @@ CScriptHandler::CScriptHandler()
 		Add(new CSkirmishAIScript(aiData));
 	}
 	// Lua AIs can not be added, as the selection would get invalid when
-	// selecting an other mod.
+	// selecting another mod.
 }
 
 

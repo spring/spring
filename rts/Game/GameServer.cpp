@@ -136,6 +136,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	internalSpeed = 1.0f;
 	gamePausable = true;
 	noHelperAIs = false;
+	canReconnect = false;
 	allowSpecDraw = true;
 	cheating = false;
 
@@ -264,7 +265,7 @@ CGameServer::~CGameServer()
 	if (setup->useLuaGaia && (numTeams > 0)) {
 		--numTeams;
 	}
-	demoRecorder->SetTime(serverFrameNum / 30, spring_tomsecs(spring_gettime()-serverStartTime)/1000);
+	demoRecorder->SetTime(serverFrameNum / GAME_SPEED, spring_tomsecs(spring_gettime() - serverStartTime) / 1000);
 	demoRecorder->InitializeStats(players.size(), numTeams);
 
 	// Pass the winners to the CDemoRecorder.
@@ -502,7 +503,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 					pckt >> spectator;
 					pckt >> team;
 					pckt >> name;
-					AddAdditionalUser(name, "", true); // even though this is a demo, keep the players vector properly updated
+					AddAdditionalUser(name, "", true,(bool)spectator,(int)team); // even though this is a demo, keep the players vector properly updated
 				} catch (const netcode::UnpackPacketException& ex) {
 					Message(str(format("Warning: Discarding invalid new player packet in demo: %s") %ex.what()));
 					continue;
@@ -1171,7 +1172,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			}
 		} break;
 
-		case NETMSG_LUAMSG:
+
+		case NETMSG_LUAMSG: {
 			try {
 				netcode::UnpackPacket pckt(packet, 3);
 				unsigned char playerNum;
@@ -1188,19 +1190,36 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format("Player %s sent invalid LuaMsg: %s") %players[a].name %ex.what()));
 			}
-			break;
+		} break;
+
 
 		case NETMSG_SYNCRESPONSE: {
 #ifdef SYNCCHECK
-			const int frameNum = *(int*)&inbuf[1];
+			netcode::UnpackPacket pckt(packet, 1);
+
+			unsigned char playerNum; pckt >> playerNum;
+			          int  frameNum; pckt >> frameNum;
+			unsigned  int  checkSum; pckt >> checkSum;
+
+			assert(a == playerNum);
+
 			if (outstandingSyncFrames.find(frameNum) != outstandingSyncFrames.end())
-				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
-				// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
+				players[a].syncResponse[frameNum] = checkSum;
+
+			// update player's ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
 			if (frameNum <= serverFrameNum && frameNum > players[a].lastFrameResponse)
 				players[a].lastFrameResponse = frameNum;
+
+#ifndef NDEBUG
+			// send player <a>'s sync-response back to everybody
+			// (the only purpose of this is to allow a client to
+			// detect if it is desynced wrt. a demo-stream)
+			if ((frameNum % GAME_SPEED) == 0) {
+				Broadcast((CBaseNetProtocol::Get()).SendSyncResponse(playerNum, frameNum, checkSum));
+			}
 #endif
-		}
-			break;
+#endif
+		} break;
 
 		case NETMSG_SHARE:
 			if (inbuf[1] != a) {
@@ -1287,6 +1306,16 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					const unsigned toTeam                    = inbuf[3];
 					// may be the players team or a team controlled by one of his AIs
 					const unsigned fromTeam_g                = inbuf[4];
+
+					if (toTeam >= teams.size()) {
+						Message(str(format("Invalid teamID %d in TEAMMSG_GIVEAWAY from player %d") %toTeam %player));
+						break;
+					}
+					if (fromTeam_g >= teams.size()) {
+						Message(str(format("Invalid teamID %d in TEAMMSG_GIVEAWAY from player %d") %fromTeam_g %player));
+						break;
+					}
+
 					const int numPlayersInTeam_g             = countNumPlayersInTeam(players, fromTeam_g);
 					const std::vector<unsigned char> &totAIsInTeam_g = getSkirmishAIIds(ais, fromTeam_g);
 					const std::vector<unsigned char> &myAIsInTeam_g  = getSkirmishAIIds(ais, fromTeam_g, player);
@@ -1391,23 +1420,29 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					break;
 				}
 				case TEAMMSG_TEAM_DIED: {
-					const unsigned team = inbuf[3];
+					const unsigned teamID = inbuf[3];
 #ifndef DEDICATED
 					if (players[player].isLocal) { // currently only host is allowed
 #else
 					if (!players[player].desynced) {
 #endif
-						teams[team].active = false;
-						teams[team].leader = -1;
+
+						if (teamID >= teams.size()) {
+							Message(str(format("Invalid teamID %d in TEAMMSG_TEAM_DIED from player %d") %teamID %player));
+							break;
+						}
+
+						teams[teamID].active = false;
+						teams[teamID].leader = -1;
 						// convert all the teams players to spectators
 						for (size_t p = 0; p < players.size(); ++p) {
-							if ((players[p].team == team) && !(players[p].spectator)) {
+							if ((players[p].team == teamID) && !(players[p].spectator)) {
 								// are now spectating if this was their team
 								//players[p].team = 0;
 								players[p].spectator = true;
 								if (hostif)
 									hostif->SendPlayerDefeated(p);
-								Broadcast(CBaseNetProtocol::Get().SendTeamDied(player, team));
+								Broadcast(CBaseNetProtocol::Get().SendTeamDied(player, teamID));
 							}
 						}
 						// The teams Skirmish AIs destruction process
@@ -1437,6 +1472,11 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				pckt >> aiTeamId;
 				std::string aiName;
 				pckt >> aiName;
+
+				if (aiTeamId >= teams.size()) {
+					Message(str(format("Invalid teamID %d in NETMSG_AI_CREATED from player %d") %unsigned(aiTeamId) %unsigned(playerId)));
+					break;
+				}
 
 				const unsigned char playerTeamId = players[playerId].team;
 				GameTeam* tpl                    = &teams[playerTeamId];
@@ -2002,7 +2042,14 @@ void CGameServer::PushAction(const Action& action)
 			if (tokens.size() > 1) {
 				const std::string& name = tokens[0];
 				const std::string& password = tokens[1];
-
+				int team = 0;
+				bool spectator = true;
+				if ( tokens.size() > 2 ) {
+					spectator = (tokens[2] == "0") ? false : true;
+				}
+				if ( tokens.size() > 3 ) {
+					team = atoi(tokens[3].c_str());
+				}
 				GameParticipant gp;
 					gp.name = name;
 				// note: this must only compare by name
@@ -2019,11 +2066,15 @@ void CGameServer::PushAction(const Action& action)
 					participantIter->SetValue("password", password);
 					LOG("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 				} else {
-					AddAdditionalUser(name, password);
-					LOG("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+					AddAdditionalUser(name, password, false, spectator, team);
+					std::string logstring = "Added ";
+					if ( spectator ) logstring = logstring + "spectator";
+					else logstring = logstring + "player";
+					logstring = logstring + " \"%s\" with password \"%s\", to team %d";
+					LOG(logstring.c_str(), name.c_str(), password.c_str(),team);
 				}
 			} else {
-				LOG_L(L_WARNING, "Failed to add player/spectator password. usage: /adduser <player-name> <password>");
+				LOG_L(L_WARNING, "Failed to add player/spectator password. usage: /adduser <player-name> <password> [spectator] [team]");
 			}
 		}
 	}
@@ -2222,13 +2273,13 @@ void CGameServer::KickPlayer(const int playerNum)
 }
 
 
-void CGameServer::AddAdditionalUser(const std::string& name, const std::string& passwd, bool fromDemo)
+void CGameServer::AddAdditionalUser(const std::string& name, const std::string& passwd, bool fromDemo, bool spectator, int team)
 {
 	GameParticipant buf;
 	buf.isFromDemo = fromDemo;
 	buf.name = name;
-	buf.spectator = true;
-	buf.team = 0;
+	buf.spectator = spectator;
+	buf.team = team;
 	buf.isMidgameJoin = true;
 	if (passwd.size() > 0)
 		buf.SetValue("password",passwd);
@@ -2440,4 +2491,3 @@ void CGameServer::AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &
 	}
 	packetCache.back().push_back(pckt);
 }
-

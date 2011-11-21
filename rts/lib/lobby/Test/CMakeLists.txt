@@ -6,6 +6,7 @@ set(lobbyTestAppSources
 	../../../System/Log/Backend.cpp
 	../../../System/Log/DefaultFilter.cpp
 	../../../System/Log/DefaultFormatter.cpp
+	../../../System/Log/FramePrefixer.cpp
 	../../../System/Log/LogSinkHandler.cpp
 	../../../System/Log/LogUtil.c
 	../../../System/Log/ConsoleSink.cpp

@@ -8,9 +8,7 @@
 #elif WIN32
 	#include "System/Platform/Win/win32.h"
 #elif __APPLE__
-	//! duno where this definition comes from, still it breaks MachineExceptions.h included by agl.h
-	#undef Status
-	#include <AGL/agl.h>
+	#include <OpenGL/CGLTypes.h>
 #else
 	#include <GL/glx.h>
 
@@ -36,8 +34,7 @@ private:
 	HDC hdc;
 	HGLRC offscreenRC;
 #elif __APPLE__
-	AGLPixelFormat pxlfmt;
-	AGLContext workerCtx;
+	CGLContextObj cglWorkerCtx;
 #else
 	Display* display;
 	GLXPbuffer pbuf;

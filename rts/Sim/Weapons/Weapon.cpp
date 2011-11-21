@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/mmgr.h"
-#include "System/creg/STL_List.h"
+#include "System/creg/STL_Map.h"
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
 #include "Game/GameHelper.h"
@@ -29,7 +29,7 @@
 
 CR_BIND_DERIVED(CWeapon, CObject, (NULL));
 
-CR_REG_METADATA(CWeapon,(
+CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
 	CR_MEMBER(range),
 	CR_MEMBER(heightMod),
@@ -70,7 +70,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(badTargetCategory),
 	CR_MEMBER(onlyTargetCategory),
-	CR_MEMBER(incoming),
+	CR_MEMBER(incomingProjectiles),
 //	CR_MEMBER(weaponDef),
 	CR_MEMBER(stockpileTime),
 	CR_MEMBER(buildPercent),
@@ -99,7 +99,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(fuelUsage),
 	CR_MEMBER(weaponNum),
 	CR_RESERVED(64)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -213,8 +213,8 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 
 static inline bool isBeingServicedOnPad(CUnit* u)
 {
-	AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
-	return a && a->padStatus != 0;
+	const AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
+	return (a != NULL && a->GetPadStatus() != 0);
 }
 
 void CWeapon::Update()
@@ -279,33 +279,49 @@ void CWeapon::Update()
 	}
 	if (targetType != Target_None) {
 		if (onlyForward) {
-			float3 goaldir = (targetPos - owner->pos).Normalize();
-			angleGood = (owner->frontdir.dot(goaldir) > maxAngleDif);
-		} else if (lastRequestedDir.dot(wantedDir) < maxAngleDif || (lastRequest + 15 < gs->frameNum)) {
+			const float3 goalDir = (targetPos - owner->pos).Normalize();
+			const float goalDot = owner->frontdir.dot(goalDir);
+
+			angleGood = (goalDot > maxAngleDif);
+		} else if (gs->frameNum >= (lastRequest + (GAME_SPEED >> 1))) {
+			// NOTE:
+			//   if AimWeapon sets angleGood immediately (ie. before it returns),
+			//   the weapon can continuously fire at its maximum rate once every
+			//   int(reloadTime / owner->reloadSpeed) frames
+			//
+			//   if it does not (eg. because AimWeapon always spawns a thread to
+			//   aim the weapon and defers setting angleGood to it) then this can
+			//   lead to irregular/stuttering firing behavior, even in scenarios
+			//   when the weapon does not have to re-aim --> detecting this case
+			//   is the responsibility of the script
 			angleGood = false;
+
 			lastRequestedDir = wantedDir;
 			lastRequest = gs->frameNum;
 
 			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
 			const float pitch = math::asin(Clamp(wantedDir.dot(owner->updir), -1.0f, 1.0f));
-			// for COB, this sets anglegood to return value of aim script when it finished,
-			// for Lua, there exists a callout to set the anglegood member.
+
+			// call AimWeapon every N=15 frames regardless of current angleGood state
+			// for COB, this sets anglegood to return value of AimWeapon when it finished,
+			// for Lua, there exists a callout to set the angleGood member.
 			// FIXME: convert CSolidObject::heading to radians too.
 			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
 		}
 	}
-	if(weaponDef->stockpile && numStockpileQued){
-		float p=1.0f/stockpileTime;
-		if(teamHandler->Team(owner->team)->metal>=metalFireCost*p && teamHandler->Team(owner->team)->energy>=energyFireCost*p){
-			owner->UseEnergy(energyFireCost*p);
-			owner->UseMetal(metalFireCost*p);
-			buildPercent+=p;
+	if (weaponDef->stockpile && numStockpileQued) {
+		const float p = 1.0f / stockpileTime;
+
+		if (teamHandler->Team(owner->team)->metal >= metalFireCost*p && teamHandler->Team(owner->team)->energy >= energyFireCost*p) {
+			owner->UseEnergy(energyFireCost * p);
+			owner->UseMetal(metalFireCost * p);
+			buildPercent += p;
 		} else {
 			// update the energy and metal required counts
-			teamHandler->Team(owner->team)->energyPull += energyFireCost*p;
-			teamHandler->Team(owner->team)->metalPull += metalFireCost*p;
+			teamHandler->Team(owner->team)->energyPull += energyFireCost * p;
+			teamHandler->Team(owner->team)->metalPull += metalFireCost * p;
 		}
-		if(buildPercent>=1){
+		if (buildPercent >= 1) {
 			const int oldCount = numStockpiled;
 			buildPercent=0;
 			numStockpileQued--;
@@ -315,19 +331,23 @@ void CWeapon::Update()
 		}
 	}
 
-	if ((salvoLeft == 0)
-	    && (owner->fpsControlPlayer == NULL || owner->fpsControlPlayer->fpsController.mouse1
-	                                        || owner->fpsControlPlayer->fpsController.mouse2)
-	    && (targetType != Target_None)
-	    && angleGood
-	    && subClassReady
-	    && (reloadStatus <= gs->frameNum)
-	    && (!weaponDef->stockpile || numStockpiled)
-	    && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0))
-	    && ((((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0)) &&
-	       !isBeingServicedOnPad(owner)))
-	   )
-	{
+	bool canFire = true;
+	const CPlayer* fpsPlayer = owner->fpsControlPlayer;
+
+	canFire = canFire && angleGood;
+	canFire = canFire && subClassReady;
+	canFire = canFire && (salvoLeft == 0);
+	canFire = canFire && (targetType != Target_None);
+	canFire = canFire && (reloadStatus <= gs->frameNum);
+	canFire = canFire && (!weaponDef->stockpile || numStockpiled);
+	canFire = canFire && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0));
+	canFire = canFire && ((fpsPlayer == NULL)
+		 || fpsPlayer->fpsController.mouse1
+		 || fpsPlayer->fpsController.mouse2);
+	canFire = canFire && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0));
+	canFire = canFire && !isBeingServicedOnPad(owner);
+
+	if (canFire) {
 		if ((weaponDef->stockpile ||
 		     (teamHandler->Team(owner->team)->metal >= metalFireCost &&
 		      teamHandler->Team(owner->team)->energy >= energyFireCost)))
@@ -355,7 +375,8 @@ void CWeapon::Update()
 					owner->UseMetal(metalFireCost);
 					owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
 				}
-				reloadStatus = gs->frameNum + (int)(reloadTime / owner->reloadSpeed);
+
+				reloadStatus = gs->frameNum + int(reloadTime / owner->reloadSpeed);
 
 				salvoLeft = salvoSize;
 				nextSalvo = gs->frameNum;
@@ -381,6 +402,7 @@ void CWeapon::Update()
 			}
 		}
 	}
+
 	if (salvoLeft && nextSalvo <= gs->frameNum) {
 		salvoLeft--;
 		nextSalvo = gs->frameNum + salvoDelay;
@@ -428,16 +450,17 @@ void CWeapon::Update()
 		//Rock the unit in the direction of the fireing
 		if (owner->script->HasRockUnit()) {
 			float3 rockDir = wantedDir;
-			rockDir.y = 0;
-			rockDir = -rockDir.Normalize();
+			rockDir.y = 0.0f;
+			rockDir = -rockDir.SafeNormalize();
 			owner->script->RockUnit(rockDir);
 		}
 
 		owner->commandAI->WeaponFired(this);
 
-		if(salvoLeft==0){
+		if (salvoLeft == 0) {
 			owner->script->EndBurst(weaponNum);
 		}
+
 #ifdef TRACE_SYNC
 	tracefile << "Weapon fire: ";
 	tracefile << weaponPos.x << " " << weaponPos.y << " " << weaponPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
@@ -470,7 +493,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (!TryTarget(pos,userTarget, 0))
+	if (!TryTarget(pos, userTarget, 0))
 		return false;
 	if (targetUnit) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
@@ -767,7 +790,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	}
 }
 
-void CWeapon::DependentDied(CObject *o)
+void CWeapon::DependentDied(CObject* o)
 {
 	if (o == targetUnit) {
 		targetUnit = NULL;
@@ -776,8 +799,10 @@ void CWeapon::DependentDied(CObject *o)
 			haveUserTarget = false;
 		}
 	}
-	if (weaponDef->interceptor) {
-		incoming.remove((CWeaponProjectile*) o);
+
+	// NOTE: DependentDied is called from ~CObject-->Detach, object is just barely valid
+	if (weaponDef->interceptor || weaponDef->isShield) {
+		incomingProjectiles.erase(((CWeaponProjectile*) o)->id);
 	}
 
 	if (o == interceptTarget) {
@@ -785,14 +810,41 @@ void CWeapon::DependentDied(CObject *o)
 	}
 }
 
-bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const {
+bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit) const
+{
+	if (targetUnit != NULL) {
+		if (targetUnit->isUnderWater) {
+			// target-unit underwater
+			return true;
+		}
+	} else {
+		if (targetPos.y < 0.0f) {
+			// target-position underwater
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const
+{
 	CUnit* unit = NULL;
 	CFeature* feature = NULL;
+
+	// any non-ballistic turreted weapon by default ignores everything BUT the ground; if
+	// the weapon is also set not to collide with the ground, then it ignores everything
+	//
+	// NOTE:
+	//     ballistic weapons (Cannon / Missile icw. trajectoryHeight) do not call this,
+	//     they use TrajectoryGroundCol with an external check for the NOGROUND flag
+	if ((collisionFlags & Collision::NOGROUND) != 0)
+		return true;
 
 	const float g = TraceRay::TraceRay(pos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
 
 	// true iff ground does not block the ray of length <length> from <pos> along <dir>
-	return ((g <= 0.0f || g >= (length * 0.9f)) || (unit == target));
+	return (g <= 0.0f || g >= (length * 0.9f));
 }
 
 bool CWeapon::AdjustTargetVectorLength(
@@ -853,6 +905,9 @@ const {
 	return retCode;
 }
 
+// if targetUnit != NULL, this checks our onlyTargetCategory against unit->category
+// etc. as well as range, otherwise the only concern is range and angular difference
+// (terrain is NOT checked here, subclasses do that)
 bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* targetUnit)
 {
 	if (targetUnit && !(onlyTargetCategory & targetUnit->category)) {
@@ -1026,13 +1081,15 @@ void CWeapon::CheckIntercept(void)
 {
 	targetType = Target_None;
 
-	for (std::list<CWeaponProjectile*>::iterator pi = incoming.begin(); pi != incoming.end(); ++pi) {
-		if ((*pi)->targeted)
+	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
+		CWeaponProjectile* p = pi->second;
+
+		if (p->targeted)
 			continue;
 
 		targetType = Target_Intercept;
-		interceptTarget = *pi;
-		targetPos = (*pi)->pos;
+		interceptTarget = p;
+		targetPos = p->pos;
 
 		break;
 	}

@@ -20,6 +20,12 @@
 #endif
 #endif // !defined __cplusplus && !defined bool
 
+// define if we have a X11 enviroment (:= linux/freebsd)
+#if !defined(__APPLE__) && !defined(_WIN32)
+	//FIXME move this check to cmake, which has FindX11.cmake?
+	#define _X11
+#endif
+
 // define a common indicator for 32bit or 64bit-ness
 #if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9)
 #define __arch64__
@@ -57,7 +63,7 @@
 		#define PRINTF    printf_s
 		#define FPRINTF   fprintf_s
 		#define SNPRINTF  sprintf_s
-		#define VSNPRINTF vsprintf_s
+		#define VSNPRINTF _vsnprintf // vsprintf_s misbehaves in debug mode, triggering breakpoints
 		#define STRCPY    strcpy
 		#define STRCPYS   strcpy_s
 		#define STRNCPY   strncpy

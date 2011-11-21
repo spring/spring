@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Author: Tobi Vollebregt
 # Thanks to bibim for providing the perl source of his translator.
-
+# requires mingw32-binutils and p7zip to work
 
 import os, re, sys
 import logging
@@ -40,8 +40,20 @@ RE_SUFFIX = '\r?$'
 #          -> ('C:\\Program Files\\Spring\\spring.exe', '0x0080F268')
 RE_STACKFRAME = re.compile(RE_PREFIX + r'\(\d+\)\s+(.*(?:\.exe|\.dll))(?:\([^)]*\))?\s+\[(0x[\dA-Fa-f]+)\]' + RE_SUFFIX, re.MULTILINE)
 
-# Match complete version string, capture `Additional' version string.
-RE_VERSION = r'Spring [^\(]+ \(([^\)]+)\)[\w\(\) ]*'
+## regex for RC12 versions: first two parts are
+## mandatory, last two form one optional group
+RE_VERSION_NAME_PREFIX = "(?:[sS]pring)"
+RE_VERSION_MAJOR_PATCH = "([0-9]+\.[0-9]+[\.0-9]*)"
+RE_VERSION_COMMIT_HASH = "(?:-)?(?:([0-9]+-g[0-9a-f]+)"
+RE_VERSION_BRANCH_NAME = "([a-zA-Z0-9\-]+))?"
+RE_VERSION =                          \
+	RE_VERSION_NAME_PREFIX + " ?" + \
+	RE_VERSION_MAJOR_PATCH + " ?" + \
+	RE_VERSION_COMMIT_HASH + " ?" + \
+	RE_VERSION_BRANCH_NAME
+
+## Match complete version string, capture `Additional' version string.
+## RE_VERSION = r'Spring [^\(]+ \(([^\)]+)\)[\w\(\) ]*'
 RE_OLD_VERSION = r'Spring [^\(]+ \(([^\)]+)\{\@\}-cmake-mingw32\)[\w\(\) ]*'
 
 # Match complete line containing version string.

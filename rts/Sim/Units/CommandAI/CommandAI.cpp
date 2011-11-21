@@ -16,16 +16,13 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/UnitTypes/Factory.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/LoadSave/LoadSaveInterface.h"
 #include "System/myMath.h"
@@ -34,7 +31,16 @@
 #include "System/creg/STL_Deque.h"
 #include <assert.h>
 
-static const int TARGET_LOST_TIMER = 120; // in calls to SlowUpdate() (approx. twice every second)
+// number of SlowUpdate calls that a target (unit) must
+// be out of radar (and hence LOS) contact before it is
+// considered 'lost' and invalid (for attack orders etc)
+//
+// historically this value was 120, which meant that it
+// took (120 * UNIT_SLOWUPDATE_RATE) / GAME_SPEED == 64
+// seconds (!) before eg. aircraft would stop tracking a
+// target that cloaked after flying over it --> obviously
+// unreasonable
+static const int TARGET_LOST_TIMER = 15;
 
 CR_BIND(CCommandQueue, );
 CR_REG_METADATA(CCommandQueue, (
@@ -241,7 +247,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.params.push_back("0");
 		c.params.push_back("Repeat off");
 		c.params.push_back("Repeat on");
-		c.tooltip = "Repeat: If on the unit will continously\n push finished orders to the end of its\n order queue";
+		c.tooltip = "Repeat: If on the unit will continuously\n push finished orders to the end of its\n order queue";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_REPEAT);
 	}
@@ -421,18 +427,41 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			if (c.params.size() == 1) {
 				const CUnit* attackee = GetCommandUnit(c, 0);
 
-				if (attackee && !attackee->pos.IsInBounds()) {
+				if (attackee == NULL)
 					return false;
-				}
+				if (!attackee->pos.IsInBounds())
+					return false;
 			} else {
-				if (c.params.size() == 3) {
+				if (c.params.size() >= 3) {
 					const float3 cPos(c.params[0], c.params[1], c.params[2]);
+					//FIXME is fromSynced really sync-safe??? const float gHeight = ground->GetHeightReal(cPos.x, cPos.z, fromSynced);
+					const float gHeight = ground->GetHeightReal(cPos.x, cPos.z, true);
 
-					// check if attack ground is really attack ground
-					if (!aiOrder && !fromSynced &&
-						fabs(cPos.y - ground->GetHeightReal(cPos.x, cPos.z)) > SQUARE_SIZE) {
+					#if 0
+					// check if attack-ground is really attack-ground
+					//
+					// NOTE:
+					//     problematic if command contains value from UHM
+					//     but is evaluated in synced context against SHM
+					//     after roundtrip (when UHM and SHM differ a lot)
+					//
+					//     instead just clamp the elevation, which creates
+					//     fewer issues overall (eg. artillery force-firing
+					//     at positions outside LOS where UHM and SHM do not
+					//     match will not be broken)
+					//
+					
+					if (!aiOrder && math::fabs(cPos.y - gHeight) > SQUARE_SIZE) {
 						return false;
 					}
+					#else
+					if (!aiOrder) {
+						Command& cc = const_cast<Command&>(c);
+						cc.params[1] = gHeight;
+					}
+
+					return true;
+					#endif
 				}
 			}
 			break;
@@ -1171,13 +1200,17 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 
 int CCommandAI::UpdateTargetLostTimer(int unitID)
 {
-	if (targetLostTimer)
-		--targetLostTimer;
-
 	const CUnit* unit = uh->GetUnit(unitID);
 
-	if (unit && (unit->losStatus[owner->allyteam] & LOS_INRADAR))
-		targetLostTimer = TARGET_LOST_TIMER;
+	if (targetLostTimer > 0)
+		--targetLostTimer;
+
+	if (unit == NULL) {
+		targetLostTimer = 0;
+	} else {
+		if ((unit->losStatus[owner->allyteam] & LOS_INRADAR) || unit->unitDef->IsImmobileUnit())
+			targetLostTimer = TARGET_LOST_TIMER;
+	}
 
 	return targetLostTimer;
 }
@@ -1200,22 +1233,20 @@ void CCommandAI::ExecuteAttack(Command& c)
 			FinishCommand();
 			return;
 		}
-	}
-	else {
+	} else {
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
-			if (targetUnit != NULL && targetUnit != owner) {
-				owner->AttackUnit(targetUnit, c.GetID() == CMD_MANUALFIRE);
+			if (targetUnit == NULL) { FinishCommand(); return; }
+			if (targetUnit == owner) { FinishCommand(); return; }
+			if (targetUnit->GetTransporter() != NULL) { FinishCommand(); return; }
 
-				SetOrderTarget(targetUnit);
-				inCommand = true;
-			} else {
-				FinishCommand();
-				return;
-			}
+			SetOrderTarget(targetUnit);
+			owner->AttackUnit(targetUnit, c.GetID() == CMD_MANUALFIRE);
+
+			inCommand = true;
 		} else {
 			float3 pos(c.params[0], c.params[1], c.params[2]);
 			owner->AttackGround(pos, c.GetID() == CMD_MANUALFIRE);
@@ -1433,10 +1464,6 @@ void CCommandAI::WeaponFired(CWeapon* weapon)
 		eoh->WeaponFired(*owner, *(weapon->weaponDef));
 		FinishCommand();
 	}
-}
-
-void CCommandAI::BuggerOff(const float3& pos, float radius)
-{
 }
 
 void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)

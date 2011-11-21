@@ -24,9 +24,6 @@ public:
 	bool bankingAllowed;
 	bool airStrafe;
 
-	/// to reset altitude back
-	float orgWantedHeight;
-
 	float3 circlingPos;
 	/// Used when circling something
 	float goalDistance;
@@ -81,6 +78,7 @@ public:
 	void ForceHeading(short h);
 	void SetGoal(float3 newPos, float distance);
 	void SetState(AircraftState newState);
+	virtual AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
 	void SetWantedAltitude(float altitude);
 	void SetDefaultAltitude(float altitude);
 
@@ -101,7 +99,6 @@ private:
 
 	bool CanLandAt(const float3& pos) const;
 	void ExecuteStop();
-	void DependentDied(CObject* o);
 
 	void Takeoff();
 	bool IsFighter() const { return false; }

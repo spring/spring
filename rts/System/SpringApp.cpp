@@ -469,6 +469,7 @@ bool SpringApp::SetSDLVideoMode()
 
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
+	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE,  &globalRendering->depthBufferBits);
 	if (globalRendering->fullScreen) {
 		LOG("Video mode set to %ix%i/%ibit", globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
 	} else {
@@ -1032,7 +1033,6 @@ int SpringApp::Sim()
 
 
 
-
 /**
  * @return return code of activecontroller draw function
  *
@@ -1047,29 +1047,31 @@ int SpringApp::Update()
 	int ret = 1;
 	if (activeController) {
 		Watchdog::ClearTimer(WDT_MAIN);
+
+		bool updateSim = true;
 #if defined(USE_GML) && GML_ENABLE_SIM
-		if (gmlMultiThreadSim) {
-			if (!gs->frameNum) {
-				ret = UpdateSim(activeController);
-				if (gs->frameNum) {
-					gmlStartSim = true;
-				}
-			}
-		} else {
-			ret = UpdateSim(activeController);
-		}
-#else
-		ret = UpdateSim(activeController);
+		updateSim = !gmlStartSim; // runs in a thread?
 #endif
+
+		if (updateSim) {
+			ret = UpdateSim(activeController);
+#if defined(USE_GML) && GML_ENABLE_SIM
+			if (gmlMultiThreadSim && gs->frameNum > 0) {
+				gmlStartSim = true;
+			}
+#endif
+		}
+
+
 		if (ret) {
 			globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 
-			if (
+			bool updateDrawFrameTimer = ((gs->frameNum - lastRequiredDraw) >= (GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor));
 #if defined(USE_GML) && GML_ENABLE_SIM
-				!gmlMultiThreadSim &&
+			updateDrawFrameTimer &= !gmlMultiThreadSim;
 #endif
-				(gs->frameNum - lastRequiredDraw) >= GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor)
-			{
+
+			if (updateDrawFrameTimer) {
 				ScopedTimer cputimer("GameController::Draw"); // Update
 
 				ret = activeController->Draw();
@@ -1288,7 +1290,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			//! unlock mouse
 			if (mouse && mouse->locked) {
-				mouse->ToggleState();
+				mouse->ToggleMiddleClickScroll();
 			}
 
 			//! release all keyboard keys

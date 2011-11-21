@@ -95,6 +95,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
@@ -407,7 +408,6 @@ CGame::~CGame()
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
 	SafeDelete(explGenHandler);
-	SafeDelete(gCEG);
 	SafeDelete(helper);
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
@@ -533,7 +533,6 @@ void CGame::LoadSimulation(const std::string& mapName)
 	qf = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
-	gCEG = new CCustomExplosionGenerator();
 
 	{
 		//! FIXME: these five need to be loaded before featureHandler
@@ -1035,8 +1034,8 @@ bool CGame::Draw() {
 	texturehandlerS3O->Update();
 	modelParser->Update();
 	worldDrawer->Update();
+	mouse->Update();
 	mouse->UpdateCursors();
-	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
@@ -1434,6 +1433,7 @@ void CGame::SimFrame() {
 	GUnitScriptEngine.Tick(33);
 	wind.Update();
 	loshandler->Update();
+	interceptHandler.Update(false);
 
 	teamHandler->GameFrame(gs->frameNum);
 	playerHandler->GameFrame(gs->frameNum);
@@ -1737,7 +1737,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 		file << "\t\t\t\toldUpdatePos: <" << oldUpdatePos.x << ", " << oldUpdatePos.y << ", " << oldUpdatePos.z << ">\n";
 		file << "\t\t\t\toldSlowUpPos: <" << oldSlowUpPos.x << ", " << oldSlowUpPos.y << ", " << oldSlowUpPos.z << ">\n";
 		file << "\t\t\t\tmaxSpeed: " << amt->maxSpeed << ", maxWantedSpeed: " << amt->maxWantedSpeed << "\n";
-		file << "\t\t\t\tpadStatus: " << amt->padStatus << ", progressState: " << amt->progressState << "\n";
+		file << "\t\t\t\tprogressState: " << amt->progressState << "\n";
 		#endif
 	}
 	#endif
@@ -2069,10 +2069,6 @@ void CGame::ReloadCOB(const string& msg, int player)
 		}
 	}
 	LOG("Reloaded cob script for %i units", count);
-}
-
-void CGame::ReloadCEGs(const std::string& tag) {
-	gCEG->RefreshCache(tag);
 }
 
 

@@ -3,11 +3,12 @@
 #ifndef SELECTED_UNITS_H
 #define SELECTED_UNITS_H
 
+#include "Sim/Units/UnitSet.h"
+#include "Sim/Units/CommandAI/Command.h"
+#include "System/float4.h"
 #include "System/Object.h"
 #include <vector>
 #include <string>
-#include "Sim/Units/CommandAI/Command.h"
-#include "Sim/Units/UnitSet.h"
 
 class CFeature;
 
@@ -38,6 +39,10 @@ public:
 	void RemoveUnit(CUnit* unit);
 	void ClearSelected();
 
+	/// used by MouseHandler.cpp & MiniMap.cpp
+	void HandleUnitBoxSelection(const float4& planeRight, const float4& planeLeft, const float4& planeTop, const float4& planeBottom);
+	void HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest);
+
 	void ToggleBuildIconsFirst();
 	bool BuildIconsFirst() const { return buildIconsFirst; }
 
@@ -58,6 +63,9 @@ public:
 
 	bool buildIconsFirst;
 	int selectedGroup;
+
+private:
+	int soundMultiselID;
 };
 
 extern CSelectedUnits selectedUnits;

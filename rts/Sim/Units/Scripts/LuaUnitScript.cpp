@@ -655,15 +655,18 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 
 	if (lua_istable(L, -1)) {
 		int n = 1;
+		// get the first piece number at t[n=1]
 		lua_rawgeti(L, -1, n);
+
+		// t = {[1] = piece_number_1, [2] = piece_number_2, ...}
 		while (lua_israwnumber(L, -1)) {
-			out_pieces.push_back(lua_toint(L, 0) - 1);
+			out_pieces.push_back(lua_toint(L, -1) - 1);
 			lua_pop(L, 1);
 			lua_rawgeti(L, -1, ++n);
 		}
+
 		lua_pop(L, 1);
-	}
-	else {
+	} else {
 		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		LOG_L(L_ERROR, "%s: bad return value, expected table", fname.c_str());

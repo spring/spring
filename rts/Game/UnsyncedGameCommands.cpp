@@ -985,7 +985,7 @@ public:
 class TeamActionExecutor : public IUnsyncedActionExecutor {
 public:
 	TeamActionExecutor() : IUnsyncedActionExecutor("Team",
-			"Lets the local user change to an other team", true) {}
+			"Lets the local user change to another team", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
 		const int teamId = atoi(action.GetArgs().c_str());
@@ -1056,7 +1056,7 @@ public:
 class AllyActionExecutor : public IUnsyncedActionExecutor {
 public:
 	AllyActionExecutor() : IUnsyncedActionExecutor("Ally",
-			"Starts/Ends alliance of the local players ally-team with an other ally-team") {}
+			"Starts/Ends alliance of the local players ally-team with another ally-team") {}
 
 	void Execute(const UnsyncedAction& action) const {
 		if (!gu->spectating) {
@@ -1589,11 +1589,10 @@ public:
 			"Enables/Disables hardware mouse-cursor support") {}
 
 	void Execute(const UnsyncedAction& action) const {
-// XXX one setting stored in two places (mouse->hardwareCursor & configHandler["HardwareCursor"]) -> refactor?
-		SetBoolArg(mouse->hardwareCursor, action.GetArgs());
-		mouse->UpdateHwCursor();
-		configHandler->Set("HardwareCursor", (int)mouse->hardwareCursor);
-		LogSystemStatus("Hardware mouse-cursor", mouse->hardwareCursor);
+		const bool enable = (atoi(action.GetArgs().c_str()) != 0);
+		mouse->ToggleHwCursor(enable);
+		configHandler->Set("HardwareCursor", enable);
+		LogSystemStatus("Hardware mouse-cursor", enable);
 	}
 };
 
@@ -2003,7 +2002,7 @@ public:
 class CrossActionExecutor : public IUnsyncedActionExecutor {
 public:
 	CrossActionExecutor() : IUnsyncedActionExecutor("Cross",
-			"Allows to exchange and modify the appearance of the"
+			"Allows one to exchange and modify the appearance of the"
 			" cross/mouse-pointer in first-person-control view") {}
 
 	void Execute(const UnsyncedAction& action) const {
@@ -2984,7 +2983,7 @@ bool CGame::ActionReleased(const Action& action)
 		mouse->MouseRelease(mouse->lastx, mouse->lasty, 3);
 	}
 	else if (cmd == "mousestate") {
-		mouse->ToggleState();
+		mouse->ToggleMiddleClickScroll();
 	}
 	else if (cmd == "gameinfoclose") {
 		CGameInfo::Disable();

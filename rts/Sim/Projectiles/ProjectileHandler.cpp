@@ -332,6 +332,9 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		freeIDs = &freeSyncedIDs;
 		proIDs = &syncedProjectileIDs;
 		maxUsedID = &maxUsedSyncedID;
+
+		ASSERT_SYNCED(*maxUsedID);
+		ASSERT_SYNCED(freeIDs->size());
 	} else {
 		unsyncedProjectiles.push(p);
 #if UNSYNCED_PROJ_NOEVENT
@@ -353,6 +356,10 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 	if ((*maxUsedID) > (1 << 24)) {
 		LOG_L(L_WARNING, "Lua %s projectile IDs are now out of range", (p->synced? "synced": "unsynced"));
+	}
+	
+	if (p->synced) {
+		ASSERT_SYNCED(newID);
 	}
 
 	ProjectileMapPair pp(p, p->owner() ? p->owner()->allyteam : -1);
