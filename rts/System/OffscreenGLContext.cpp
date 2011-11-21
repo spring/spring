@@ -83,6 +83,8 @@ void COffscreenGLContext::WorkerThreadFree()
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! APPLE
 
+#include <CGLCurrent.h>
+
 COffscreenGLContext::COffscreenGLContext()
 {
 	// Get Current OnScreen Context
