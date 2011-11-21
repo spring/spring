@@ -83,8 +83,8 @@ void COffscreenGLContext::WorkerThreadFree()
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! APPLE
 
-#include "Rendering/GL/myGL.h"
 #include <OpenGL/CGLCurrent.h>
+#include <OpenGL/OpenGL.h>
 
 COffscreenGLContext::COffscreenGLContext()
 {
@@ -99,12 +99,12 @@ COffscreenGLContext::COffscreenGLContext()
 	};
 	GLint numPixelFormats = 0;
 	CGLPixelFormatObj cglPxlfmt = NULL;
-	CGLChoosePixelFormat(attributeList, &cglPxlfmt, &numPixelFormats);
+	CGLChoosePixelFormat(attribs, &cglPxlfmt, &numPixelFormats);
 	if (!cglPxlfmt)
 		throw opengl_error("Couldn't create an offscreen GL context: CGLChoosePixelFmt failed!");
 
 	// Create Shared Context
-	CGLCreateContext(cglPxlfmt, currentCglCtx, cglWorkerCtx);
+	CGLCreateContext(cglPxlfmt, currentCglCtx, &cglWorkerCtx);
 	CGLDestroyPixelFormat(cglPxlfmt);
 	if (!cglWorkerCtx)
 		throw opengl_error("Couldn't create an offscreen GL context: CGLCreateContext failed!");
