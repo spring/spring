@@ -429,7 +429,7 @@ bool CStdExplosionGenerator::Explosion(
 
 
 
-void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3 &dir)
+void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir, bool synced)
 {
 	float val = 0.0f;
 	void* ptr = NULL;
@@ -467,7 +467,12 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				break;
 			}
 			case OP_RAND: {
-				val += gu->usRandFloat() * (*(float*) code);
+				if (synced) {
+					val += gs->randFloat() * (*(float*) code);
+				} else {
+					val += gu->usRandFloat() * (*(float*) code);
+				}
+
 				code += 4;
 				break;
 			}
@@ -915,7 +920,7 @@ bool CCustomExplosionGenerator::Explosion(
 		for (int c = 0; c < psi.count; c++) {
 			CExpGenSpawnable* projectile = (CExpGenSpawnable*) (psi.projectileClass)->CreateInstance();
 
-			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir);
+			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir, (psi.flags & SPW_SYNCED) != 0);
 			projectile->Init(pos, owner);
 		}
 	}
