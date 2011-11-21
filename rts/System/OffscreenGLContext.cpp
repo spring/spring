@@ -83,7 +83,7 @@ void COffscreenGLContext::WorkerThreadFree()
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! APPLE
 
-#include <CGLCurrent.h>
+#include <OpenGL/CGLCurrent.h>
 
 COffscreenGLContext::COffscreenGLContext()
 {
