@@ -3,15 +3,10 @@
 #include "System/mmgr.h"
 
 #include "Projectile.h"
-#include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Rendering/Colors.h"
-#include "Rendering/ProjectileDrawer.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 
@@ -103,12 +98,15 @@ CProjectile::~CProjectile() {
 void CProjectile::Init(const float3& offset, CUnit* owner)
 {
 	if (owner != NULL) {
-		//! must be set before the AddProjectile call
+		// must be set before the AddProjectile call
 		ownerId = owner->id;
 	}
 	if (!(weapon || piece)) {
-		//! we need to be able to dynacast to derived
-		//! types, but this throws away too much RTTI
+		// NOTE:
+		//   new CWeapon- and CPieceProjectile*'s add themselves
+		//   to CProjectileHandler (other code needs to be able
+		//   to dyna-cast CProjectile*'s to those derived types,
+		//   and adding them here would throw away too much RTTI)
 		ph->AddProjectile(this);
 	}
 	if (synced) {
