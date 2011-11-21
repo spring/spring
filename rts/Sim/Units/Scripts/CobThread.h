@@ -24,7 +24,7 @@ public:
 	/**
 	 * Returns false if this thread is dead and needs to be killed.
 	 */
-	bool Tick(int deltaTime);
+	bool Tick();
 	/**
 	 * This function sets the thread in motion. Should only be called once.
 	 * If schedule is false the thread is not added to the scheduler, and thus

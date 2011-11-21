@@ -97,6 +97,7 @@ SET(sources_engine_System_Log
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/Backend.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFilter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFormatter.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/FramePrefixer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogSinkHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogUtil.c"
 	)

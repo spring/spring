@@ -114,10 +114,10 @@ void CAirCAI::GiveCommandReal(const Command& c)
 			airMT = (CStrafeAirMoveType*)owner->moveType;
 		}
 		switch ((int)c.params[0]) {
-			case 0: { airMT->repairBelowHealth = 0.0f; break; }
-			case 1: { airMT->repairBelowHealth = 0.3f; break; }
-			case 2: { airMT->repairBelowHealth = 0.5f; break; }
-			case 3: { airMT->repairBelowHealth = 0.8f; break; }
+			case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
+			case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
+			case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
+			case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
 		}
 		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi)
@@ -509,15 +509,15 @@ void CAirCAI::ExecuteAttack(Command& c)
 		if (c.params.size() == 1) {
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
-			if (targetUnit != NULL && targetUnit != owner) {
-				SetOrderTarget(targetUnit);
-				owner->AttackUnit(targetUnit, false);
-				inCommand = true;
-				SetGoal(targetUnit->pos, owner->pos, cancelDistance);
-			} else {
-				FinishCommand();
-				return;
-			}
+			if (targetUnit == NULL) { FinishCommand(); return; }
+			if (targetUnit == owner) { FinishCommand(); return; }
+			if (targetUnit->GetTransporter() != NULL) { FinishCommand(); return; }
+
+			SetGoal(targetUnit->pos, owner->pos, cancelDistance);
+			SetOrderTarget(targetUnit);
+			owner->AttackUnit(targetUnit, false);
+
+			inCommand = true;
 		} else {
 			const float3 pos(c.params[0], c.params[1], c.params[2]);
 			owner->AttackGround(pos, false);

@@ -353,9 +353,7 @@ int CCobInstance::QueryWeapon(int weaponNum)
 // Called when unit's AimWeapon script finished executing
 static void ScriptCallback(int retCode, void* p1, void* p2)
 {
-	if (retCode == 1) {
-		((CWeapon*)p1)->angleGood = true;
-	}
+	((CWeapon*)p1)->angleGood = (retCode == 1);
 }
 
 void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
@@ -473,7 +471,7 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 
 	LOG_L(L_DEBUG, "Calling %s:%s", script.name.c_str(), script.scriptNames[functionId].c_str());
 
-	const bool res = thread->Tick(30);
+	const bool res = thread->Tick();
 
 	// Make sure this is run even if the call terminates instantly
 	if (cb)

@@ -35,7 +35,8 @@ public:
 
 private:
 	void ParseWeapon(const LuaTable& wdTable, WeaponDef& wd);
-	float3 hs2rgb(float h, float s);
+	void ParseWeaponVisuals(const LuaTable& wdTable, WeaponDef& wd);
+	void ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd);
 };
 
 

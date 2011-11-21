@@ -24,9 +24,8 @@ public:
 	virtual void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 	virtual void StopMoving() = 0;
 	virtual void ImpulseAdded(const float3&) {}
-	virtual void ReservePad(CAirBaseHandler::LandingPad* lp);
 
-	virtual void SetGoal(const float3& pos);
+	virtual void SetGoal(const float3& pos) { goalPos = pos; }
 	virtual void SetMaxSpeed(float speed);
 	virtual void SetWantedMaxSpeed(float speed);
 	virtual void LeaveTransport() {}
@@ -38,9 +37,16 @@ public:
 	virtual bool IsFlying() const { return false; }
 	virtual bool IsReversing() const { return false; }
 
+	virtual void ReservePad(CAirBaseHandler::LandingPad* lp) { /* AAirMoveType only */ }
+	virtual void UnreservePad(CAirBaseHandler::LandingPad* lp) { /* AAirMoveType only */ }
+	virtual CAirBaseHandler::LandingPad* GetReservedPad() { return NULL; }
+
 	bool WantsRepair() const;
 	bool WantsRefuel() const;
 
+	void SetRepairBelowHealth(float rbHealth) { repairBelowHealth = rbHealth; }
+
+public:
 	CUnit* owner;
 
 	float3 goalPos;
@@ -49,11 +55,6 @@ public:
 
 	float maxSpeed;
 	float maxWantedSpeed;
-
-	CAirBaseHandler::LandingPad* reservedPad;
-
-	/// 0: moving toward, 1: landing at, 2: arrived
-	int padStatus;
 	float repairBelowHealth;
 
 	/// TODO: probably should move the code in CUnit that reads this into the movement classes
@@ -65,9 +66,6 @@ public:
 		Failed = 2
 	};
 	ProgressState progressState;
-
-protected:
-	void DependentDied(CObject* o);
 };
 
 #endif // MOVETYPE_H

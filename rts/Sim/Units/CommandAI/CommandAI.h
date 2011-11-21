@@ -39,7 +39,7 @@ public:
 	virtual std::vector<CommandDescription>& GetPossibleCommands();
 	virtual void FinishCommand();
 	virtual void WeaponFired(CWeapon* weapon);
-	virtual void BuggerOff(const float3& pos, float radius);
+	virtual void BuggerOff(const float3& pos, float radius) {}
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	/**
 	 * @brief Determins if c will cancel a queued command
@@ -126,14 +126,15 @@ protected:
 	 *   the location of the origional command.
 	 */
 	void PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2);
-	int UpdateTargetLostTimer(int unitid);
+	int UpdateTargetLostTimer(int unitID);
 	void DrawDefaultCommand(const Command& c) const;
 
 private:
 	std::set<CObject *> commandDeathDependences;
 	/**
-	 * continously set to some non-zero value while target is in radar
-	 * decremented every frame, command is canceled if it reaches 0
+	 * continuously set to some non-zero value while target is in radar
+	 * decremented by 1 every SlowUpdate (!), command is canceled when
+	 * timer reaches 0
 	 */
 	int targetLostTimer;
 };

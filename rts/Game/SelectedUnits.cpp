@@ -37,8 +37,10 @@
 #include "System/NetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Input/KeyInput.h"
+#include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 
+#include <SDL_mouse.h>
 #include <SDL_keysym.h>
 #include <map>
 
@@ -55,6 +57,7 @@ CSelectedUnits::CSelectedUnits()
 	, possibleCommandsChanged(true)
 	, buildIconsFirst(false)
 	, selectedGroup(-1)
+	, soundMultiselID(0)
 {
 }
 
@@ -66,6 +69,7 @@ CSelectedUnits::~CSelectedUnits()
 
 void CSelectedUnits::Init(unsigned numPlayers)
 {
+	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 	buildIconsFirst = configHandler->GetBool("BuildIconsFirst");
 	netSelected.resize(numPlayers);
 }
@@ -261,6 +265,110 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 	}
 	#endif
 }
+
+
+void CSelectedUnits::HandleUnitBoxSelection(const float4& planeRight, const float4& planeLeft, const float4& planeTop, const float4& planeBottom)
+{
+	GML_RECMUTEX_LOCK(sel); // SelectUnits
+
+	CUnit* unit = NULL;
+	int addedunits = 0;
+	int team, lastTeam;
+
+	if (gu->spectatingFullSelect) {
+		team = 0;
+		lastTeam = teamHandler->ActiveTeams() - 1;
+	} else {
+		team = gu->myTeam;
+		lastTeam = gu->myTeam;
+	}
+	for (; team <= lastTeam; team++) {
+		CUnitSet& teamUnits = teamHandler->Team(team)->units;
+		for (CUnitSet::iterator ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
+			const float4 vec((*ui)->midPos, 1.0f);
+
+			if (vec.dot4(planeRight) < 0.0f && vec.dot4(planeLeft) < 0.0f && vec.dot4(planeTop) < 0.0f && vec.dot4(planeBottom) < 0.0f) {
+				if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(*ui) != selectedUnits.end())) {
+					RemoveUnit(*ui);
+				} else {
+					AddUnit(*ui);
+					unit = *ui;
+					addedunits++;
+				}
+			}
+		}
+	}
+
+	#if (PLAY_SOUNDS == 1)
+	if (addedunits >= 2) {
+		Channels::UserInterface.PlaySample(soundMultiselID);
+	}
+	else if (addedunits == 1) {
+		const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+		if (soundIdx >= 0) {
+			Channels::UnitReply.PlaySample(
+				unit->unitDef->sounds.select.getID(soundIdx), unit,
+				unit->unitDef->sounds.select.getVolume(soundIdx));
+		}
+	}
+	#endif
+}
+
+
+void CSelectedUnits::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest)
+{
+	GML_RECMUTEX_LOCK(sel); // SelectUnits
+
+	int button = SDL_BUTTON_LEFT; //FIXME make modular?
+	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
+
+	if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
+		if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
+			if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
+				RemoveUnit(unit);
+			} else {
+				AddUnit(unit);
+			}
+		} else {
+			//double click
+			if (unit->group && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
+				//select the current units group if it has one
+				SelectGroup(unit->group->id);
+			} else {
+				//select all units of same type (on screen, unless CTRL is pressed)
+				int team, lastTeam;
+				if (gu->spectatingFullSelect) {
+					team = 0;
+					lastTeam = teamHandler->ActiveTeams() - 1;
+				} else {
+					team = gu->myTeam;
+					lastTeam = gu->myTeam;
+				}
+				for (; team <= lastTeam; team++) {
+					CUnitSet::iterator ui;
+					CUnitSet& teamUnits = teamHandler->Team(team)->units;
+					for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
+						if ((*ui)->unitDef->id == unit->unitDef->id) {
+							if (!doInViewTest || camera->InView((*ui)->midPos) || keyInput->IsKeyPressed(SDLK_LCTRL)) {
+								AddUnit(*ui);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		#if (PLAY_SOUNDS == 1)
+		const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+		if (soundIdx >= 0) {
+			Channels::UnitReply.PlaySample(
+				unit->unitDef->sounds.select.getID(soundIdx), unit,
+				unit->unitDef->sounds.select.getVolume(soundIdx));
+		}
+		#endif
+	}
+}
+
 
 
 void CSelectedUnits::AddUnit(CUnit* unit)

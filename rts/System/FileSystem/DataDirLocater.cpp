@@ -279,7 +279,7 @@ void DataDirLocater::LocateDataDirs()
 
 	// Construct the list of dataDirs from various sources.
 	dataDirs.clear();
-	// The first dir added will be the writeable data dir.
+	// The first dir added will be the writable data dir.
 
 	if (isolationMode) {
 		AddCwdOrParentDir(dd_curWorkDir, true); // "./" or "../"
@@ -313,8 +313,8 @@ void DataDirLocater::LocateDataDirs()
 		// This has to correspond with the value in the build-script
 		const std::string dd_curWorkDirData = bundleResourceDir + "/share/games/spring";
 
-		// we need this as default writeable dir, because the Bundle.pp dir
-		// might not be writeable by the user starting the game
+		// we need this as default writable dir, because the Bundle.pp dir
+		// might not be writable by the user starting the game
 		AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
 		AddDirs(dd_curWorkDirData);             // "Spring.app/Contents/Resources/share/games/spring"
 		AddDirs(dd_etc);                        // from /etc/spring/datadir

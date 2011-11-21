@@ -8,6 +8,7 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/RepulseGfx.h"
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -28,11 +29,10 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(rechargeDelay),
 	CR_MEMBER(isEnabled),
 	CR_MEMBER(wasDrawn),
-	CR_MEMBER(incoming),
 	CR_MEMBER(hasGfx),
 	CR_MEMBER(visibleShieldParts),
 	CR_RESERVED(8)
-	));
+));
 
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
@@ -60,7 +60,7 @@ CPlasmaRepulser::~CPlasmaRepulser(void)
 }
 
 
-void CPlasmaRepulser::Init(void)
+void CPlasmaRepulser::Init()
 {
 	radius=weaponDef->shieldRadius;
 	sqRadius=radius*radius;
@@ -74,7 +74,7 @@ void CPlasmaRepulser::Init(void)
 }
 
 
-void CPlasmaRepulser::Update(void)
+void CPlasmaRepulser::Update()
 {
 	const int defHitFrames = weaponDef->visibleShieldHitFrames;
 	const bool couldBeVisible = (weaponDef->visibleShield || (defHitFrames > 0));
@@ -103,8 +103,8 @@ void CPlasmaRepulser::Update(void)
 	}
 
 	if (isEnabled && (curPower < weaponDef->shieldPower) && rechargeDelay <= 0) {
-		if (owner->UseEnergy(weaponDef->shieldPowerRegenEnergy * (1.0f / 30.0f))) {
-			curPower += weaponDef->shieldPowerRegen * (1.0f / 30.0f);
+		if (owner->UseEnergy(weaponDef->shieldPowerRegenEnergy * (1.0f / GAME_SPEED))) {
+			curPower += weaponDef->shieldPowerRegen * (1.0f / GAME_SPEED);
 		}
 	}
 	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
@@ -113,7 +113,7 @@ void CPlasmaRepulser::Update(void)
 
 	if (couldBeVisible) {
 		float drawAlpha = 0.0f;
-		if (hitFrames > 0) {
+		if ((hitFrames > 0) && (defHitFrames > 0)) {
 			drawAlpha += float(hitFrames) / float(defHitFrames);
 			hitFrames--;
 		}
@@ -139,8 +139,12 @@ void CPlasmaRepulser::Update(void)
 		return;
 	}
 
-	for (std::list<CWeaponProjectile*>::iterator pi = incoming.begin(); pi != incoming.end(); ++pi) {
-		CWeaponProjectile* pro = *pi;
+	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
+		assert(ph->GetMapPairBySyncedID(pi->first)); // valid projectile id?
+
+		CWeaponProjectile* pro = pi->second;
+		const WeaponDef* proWd = pro->weaponDef;
+		assert(proWd);
 
 		if (!pro->checkCol) {
 			continue;
@@ -156,7 +160,7 @@ void CPlasmaRepulser::Update(void)
 			continue;
 		}
 
-		if (curPower < pro->weaponDef->damages[0]) {
+		if (curPower < proWd->damages[0]) {
 			// shield does not have enough power, don't touch the projectile
 			continue;
 		}
@@ -171,8 +175,8 @@ void CPlasmaRepulser::Update(void)
 		if (weaponDef->shieldRepulser) {
 			// bounce the projectile
 			const int type = pro->ShieldRepulse(this, weaponPos,
-													weaponDef->shieldForce,
-													weaponDef->shieldMaxSpeed);
+				weaponDef->shieldForce,
+				weaponDef->shieldMaxSpeed);
 
 			if (type == 0) {
 				continue;
@@ -180,28 +184,22 @@ void CPlasmaRepulser::Update(void)
 				owner->UseEnergy(weaponDef->shieldEnergyUse);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= pro->weaponDef->damages[0];
+					//FIXME some weapons do range dependent damage! (mantis #2345)
+					curPower -= proWd->damages[0];
 				}
 			} else {
-				owner->UseEnergy(weaponDef->shieldEnergyUse / 30.0f);
+				//FIXME why do all weapons except LASERs do only (1 / GAME_SPEED) damage???
+				owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
 				if (weaponDef->shieldPower != 0) {
-					curPower -= pro->weaponDef->damages[0] / 30.0f;
+					curPower -= proWd->damages[0] / GAME_SPEED;
 				}
 			}
 
 			if (weaponDef->visibleShieldRepulse) {
-				std::list<CWeaponProjectile*>::iterator i;
+				bool newlyAdded = hasGfx.insert(pro).second;
 
-				for (i = hasGfx.begin(); i != hasGfx.end(); ++i) {
-					if (*i == pro) {
-						break;
-					}
-				}
-
-				if (i == hasGfx.end()) {
-					hasGfx.insert(hasGfx.end(), pro);
-
+				if (newlyAdded) {
 					const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
 					const float3 color =
 						(weaponDef->shieldGoodColor * colorMix) +
@@ -218,7 +216,8 @@ void CPlasmaRepulser::Update(void)
 			// kill the projectile
 			if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
 				if (weaponDef->shieldPower != 0) {
-					curPower -= pro->weaponDef->damages[0];
+					//FIXME some weapons do range dependent damage! (mantis #2345)
+					curPower -= proWd->damages[0];
 				}
 
 				pro->Collision(owner);
@@ -250,12 +249,9 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 		return;
 	}
 
-	float3 dir;
-
+	float3 dir = p->speed;
 	if (p->targetPos != ZeroVector) {
 		dir = p->targetPos - p->pos; // assume that it will travel roughly in the direction of the targetpos if it have one
-	} else {
-		dir = p->speed;            // otherwise assume speed will hold constant
 	}
 
 	dir.y = 0.0f;
@@ -276,7 +272,7 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 	// it should probably be: radius + closeLength / |projectile->speed| * |owner->speed|,
 	// but this still doesn't solve anything for e.g. teleporting shields.
 	if (closeDist < Square(radius * 1.5f)) {
-		incoming.push_back(p);
+		incomingProjectiles[p->id] = p;
 		AddDeathDependence(p, DEPENDENCE_REPULSED);
 	}
 }
@@ -290,7 +286,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 	if (emitter->weaponDef->damages[0] > curPower) {
 		return -1;
 	}
-	if (weaponDef->smartShield && teamHandler->AlliedTeams(emitter->owner->team,owner->team)) {
+	if (weaponDef->smartShield && teamHandler->AlliedTeams(emitter->owner->team, owner->team)) {
 		return -1;
 	}
 
@@ -306,15 +302,14 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 		return -1;
 	}
 
-	const float3 closeVect = dif-dir*closeLength;
+	const float3 closeVect = dif - dir * closeLength;
 
 	const float tmp = sqRadius - closeVect.SqLength();
 	if ((tmp > 0) && (length > (closeLength - sqrt(tmp)))) {
-		float colLength = closeLength - sqrt(tmp);
-		float3 colPoint = start + dir * colLength;
-		float3 normal = colPoint - weaponPos;
-		normal.Normalize();
-		newDir = dir-normal*normal.dot(dir) * 2;
+		const float colLength = closeLength - sqrt(tmp);
+		const float3 colPoint = start + dir * colLength;
+		const float3 normal = (colPoint - weaponPos).Normalize();
+		newDir = dir - normal * normal.dot(dir) * 2;
 		return colLength;
 	}
 	return -1;
@@ -323,8 +318,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 
 void CPlasmaRepulser::DependentDied(CObject* o)
 {
-	incoming.remove((CWeaponProjectile*)o);
-	ListErase<CWeaponProjectile*>(hasGfx, (CWeaponProjectile*)o);
+	hasGfx.erase((CWeaponProjectile*) o);
 	CWeapon::DependentDied(o);
 }
 
@@ -332,6 +326,7 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float damageMultiplier)
 {
 	if (weaponDef->shieldPower > 0) {
+		//FIXME some weapons do range dependent damage! (mantis #2345)
 		curPower -= emitter->weaponDef->damages[0] * damageMultiplier;
 	}
 	return weaponDef->shieldRepulser;

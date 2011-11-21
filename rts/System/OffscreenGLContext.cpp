@@ -83,46 +83,44 @@ void COffscreenGLContext::WorkerThreadFree()
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! APPLE
 
+#include <OpenGL/CGLCurrent.h>
+#include <OpenGL/OpenGL.h>
+
 COffscreenGLContext::COffscreenGLContext()
 {
-	//FIXME: couldn't test this code myself! (coded from online documentations)
+	// Get Current OnScreen Context
+	CGLContextObj currentCglCtx = CGLGetCurrentContext();
+	if (!currentCglCtx)
+		throw opengl_error("Couldn't create an offscreen GL context: CGLGetCurrentContext failed!");
 
-	AGLContext currentCtx = aglGetCurrentContext();
-	if (!currentCtx)
-		throw opengl_error("Couldn't create an offscreen GL context: aglGetCurrentContext/aglGetCurrentDrawable failed!");
-	
-
-	//! Get PixelFormat
-	int attributeList[] = {
-		AGL_ACCELERATED,
-		AGL_RGBA,
-		//AGL_OFFSCREEN,
-		//AGL_DISPLAY_MASK, 1 //FIXME: detect SDL Window's CGOpenGLDisplayMask
-		AGL_NONE
+	// Get PixelFormat
+	CGLPixelFormatAttribute attribs[] = {
+		(CGLPixelFormatAttribute)0
 	};
-	pxlfmt = aglChoosePixelFormat(NULL, 0, attributeList);
-	if (!pxlfmt)
-		throw opengl_error("Couldn't create an offscreen GL context: aglChoosePixelFmt failed!");
+	GLint numPixelFormats = 0;
+	CGLPixelFormatObj cglPxlfmt = NULL;
+	CGLChoosePixelFormat(attribs, &cglPxlfmt, &numPixelFormats);
+	if (!cglPxlfmt)
+		throw opengl_error("Couldn't create an offscreen GL context: CGLChoosePixelFmt failed!");
 
-
-	//! Create Shared Context
-	workerCtx = aglCreateContext(pxlfmt, currentCtx);
-	if (!workerCtx)
-		throw opengl_error("Couldn't create an offscreen GL context: aglCreateContext failed!");
+	// Create Shared Context
+	CGLCreateContext(cglPxlfmt, currentCglCtx, &cglWorkerCtx);
+	CGLDestroyPixelFormat(cglPxlfmt);
+	if (!cglWorkerCtx)
+		throw opengl_error("Couldn't create an offscreen GL context: CGLCreateContext failed!");
 }
 
 
 void COffscreenGLContext::WorkerThreadPost()
 {
-	aglSetCurrentContext(workerCtx);
+	CGLSetCurrentContext(cglWorkerCtx);
 }
 
 
 void COffscreenGLContext::WorkerThreadFree()
 {
-	aglSetCurrentContext(NULL);
-	aglDestroyContext(workerCtx);
-	aglDestroyPixelFormat(pxlfmt);
+	CGLSetCurrentContext(NULL);
+	CGLDestroyContext(cglWorkerCtx);
 }
 
 #else
@@ -158,8 +156,9 @@ COffscreenGLContext::COffscreenGLContext()
 	const int fbattrib[] = {
 		GLX_RENDER_TYPE, GLX_RGBA_BIT,
 		GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
-		GLX_BUFFER_SIZE, 24,
+		GLX_BUFFER_SIZE, 32,
 		GLX_DEPTH_SIZE, 24,
+		GLX_STENCIL_SIZE, 8,
 		None
 	};
 	GLXFBConfig* fbcfg = glXChooseFBConfig(display, scrnum, (const int*)fbattrib, &nelements);

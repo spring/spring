@@ -30,6 +30,7 @@ public:
 	void SlowUpdate();
 
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
+	void BuggerOff(const float3& pos, float radius);
 
 	/**
 	 * @param noResCheck no resources check

@@ -18,21 +18,28 @@
 	Several people confirmed its working.
 */
 
+#include "System/Platform/Win/win32.h"
 #include "System/mmgr.h"
 
+#include "MouseInput.h"
+#include "InputHandler.h"
+
+#include "Game/GlobalUnsynced.h"
 #include "Game/UI/MouseHandler.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/FBO.h"
+#include "System/maindefines.h"
 
 #include <boost/bind.hpp>
 #include <SDL_events.h>
-#include "Game/GlobalUnsynced.h"
-#include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/FBO.h"
 #ifdef _WIN32
 	#include <SDL_syswm.h>
 	#include "System/Platform/Win/wsdl.h"
 #endif
-#include "System/Input/MouseInput.h"
-#include "System/Input/InputHandler.h"
+#if defined(_X11) && !defined(HEADLESS)
+	#include <SDL_syswm.h>
+	#include <X11/Xlib.h>
+#endif
 
 
 IMouseInput* mouseInput = NULL;
@@ -208,23 +215,49 @@ CWin32MouseInput* CWin32MouseInput::inst = 0;
 
 void IMouseInput::SetPos(int2 pos)
 {
+	if (!globalRendering->active) {
+		return;
+	}
+
 	mousepos = pos;
 #ifdef WIN32
 	wsdl::SDL_WarpMouse(pos.x, pos.y);
 #else
 	SDL_WarpMouse(pos.x, pos.y);
+
+	#if defined(_X11) && !defined(HEADLESS)
+		// SDL Workaround!
+		// SDL_WarpMouse has a bug on Linux in fullscreen mode & SDL_ShowCursor(SDL_DISABLE).
+		// It just won't move the real X11 cursor pos (instead it seems to update some SDL internal vars only).
+		// But we use SDL_ShowCursor for MiddleClickScroll and want that the cursor spawns
+		// at screen center when calling SDL_ShowCursor(SDL_ENABLE), so we call X11 here to
+		// force cursor pos update even when the cursor is hidden.
+		if (globalRendering->fullScreen) {
+			SDL_SysWMinfo info;
+			SDL_VERSION(&info.version);
+			if(SDL_GetWMInfo(&info)) {
+				info.info.x11.lock_func();
+					Display* display = info.info.x11.display;
+					Window& window = info.info.x11.window;
+
+					if (display && window != None)
+						XWarpPointer(display, None, window, 0, 0, 0, 0, pos.x, pos.y);
+				info.info.x11.unlock_func();
+			}
+		}
+	#endif
 #endif
 
-	//! SDL_WarpMouse generates SDL_MOUSEMOTION events
-	//! in `middle click scrolling` those SDL generated ones would point into
-	//! the oppossite direction the user moved the mouse, and so events would
-	//! cancel each other -> camera wouldn't move at all
-	//! so we need to catch those SDL generated events and delete them
+	// SDL_WarpMouse generates SDL_MOUSEMOTION events
+	// in `middle click scrolling` those SDL generated ones would point into
+	// the oppossite direction the user moved the mouse, and so events would
+	// cancel each other -> camera wouldn't move at all
+	// so we need to catch those SDL generated events and delete them
 
-	//! first we need to gather the motion events
+	// first we need to gather the motion events
 	SDL_PumpEvents();
 
-	//! delete all SDL_MOUSEMOTION in the queue
+	// delete all SDL_MOUSEMOTION in the queue
 	static SDL_Event events[100];
 	SDL_PeepEvents(&events[0], 100, SDL_GETEVENT, SDL_MOUSEMOTIONMASK);
 }

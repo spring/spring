@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# tarball generation script
+
 # Quit on error.
 set -e
 
@@ -47,14 +49,16 @@ fi
 if ${isRelease}; then
 	echo "Making release-packages"
 	versionString=${describe}
+	versionInfo=${describe}
 else
 	echo "Making test-packages"
 	# Insert the branch name as the patch-set part.
 	# (double-quotation is required because of the sub-shell)
 	versionString="${describe}_${branch}"
+	versionInfo="${describe} ${branch}"
 fi
 
-echo "Using branch \"${versionString}\" as source"
+echo "Using version \"${versionInfo}\" as source"
 
 
 dir="spring_${versionString}"
@@ -75,30 +79,15 @@ tgz="spring_${versionString}_src.tar.gz"
 
 # This is the list of files/directories that go in the source package.
 # (directories are included recursively)
-include=" \
- ${dir}/AI/ \
- ${dir}/doc/ \
- ${dir}/cont/ \
- ${dir}/include/ \
- ${dir}/installer/ \
- ${dir}/rts/ \
- ${dir}/tools/unitsync/ \
- ${dir}/tools/ArchiveMover/ \
- ${dir}/tools/DemoTool/ \
- ${dir}/tools/CMakeLists.txt \
- ${dir}/CMakeLists.txt \
- ${dir}/Doxyfile \
- ${dir}/directories.txt \
- ${dir}/README.markdown \
- ${dir}/LICENSE \
- ${dir}/LICENSE.html \
- ${dir}/THANKS \
- ${dir}/AUTHORS \
- ${dir}/FAQ \
- ${dir}/COPYING"
+# Note: include all files by default
+include="${dir}"
 
-# On linux, win32 executables are useless.
-exclude_from_all=""
+# Excude list (exclude git-files, win32 executables on linux, etc.)
+exclude_from_all=" \
+ ${dir}/.git \
+ ${dir}/.gitignore \
+ ${dir}/.gitmodules \
+ ${dir}/.mailmap"
 linux_exclude="${exclude_from_all}"
 linux_include=""
 windows_exclude="${exclude_from_all}"
@@ -108,9 +97,17 @@ windows_include=""
 echo 'Exporting checkout dir with LF line endings'
 git clone -n . lf/${dir}
 cd lf/${dir}
+
+# Checkout the release-version
 git checkout ${branch}
+# ... and respective submodules (mostly AIs)
 git submodule update --init
+# Add the engine version info, as we can not fetch it through git
+# when using a source archive
+echo "${versionInfo}" > ./VERSION
+
 cd ..
+# XXX use git-archive instead? (submodules may cause a bit trouble with it)
 [ -n "${linux_exclude}" ] && rm -rf ${linux_exclude}
 [ -n "${lzma}" ] && echo "Creating .tar.lzma archive (${lzma})" && \
 	tar -c --lzma  -f "../${lzma}" ${include} ${linux_include} --exclude=.git

@@ -56,6 +56,10 @@ struct float4 : public float3
 	}
 
 
+	inline float dot4(const float4& f) const {
+		return (x * f.x) + (y * f.y) + (z * f.z) + (w * f.w);
+	}
+	
 	/// Allows implicit conversion to float* (for passing to gl functions)
 	operator const float* () const { return &x; }
 	operator float* () { return &x; }

@@ -106,26 +106,26 @@ void CLightningProjectile::Draw()
 	for (size_t d = 1; d < displacements_size-1; ++d) {
 		float f = (d + 1) * 0.111f;
 
-		#define WD weaponDef
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d    ] + WD->thickness)), WD->visuals.texture1->xstart, WD->visuals.texture1->ystart, col);
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d    ] - WD->thickness)), WD->visuals.texture1->xstart, WD->visuals.texture1->yend,   col);
+		#define WDV (&weaponDef->visuals)
+		va->AddVertexQTC(tempPos + (dir1 * (displacements[d    ] + WDV->thickness)), WDV->texture1->xstart, WDV->texture1->ystart, col);
+		va->AddVertexQTC(tempPos + (dir1 * (displacements[d    ] - WDV->thickness)), WDV->texture1->xstart, WDV->texture1->yend,   col);
 		tempPos = (pos * (1.0f - f)) + (endPos * f);
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d + 1] - WD->thickness)), WD->visuals.texture1->xend,   WD->visuals.texture1->yend,   col);
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d + 1] + WD->thickness)), WD->visuals.texture1->xend,   WD->visuals.texture1->ystart, col);
-		#undef WD
+		va->AddVertexQTC(tempPos + (dir1 * (displacements[d + 1] - WDV->thickness)), WDV->texture1->xend,   WDV->texture1->yend,   col);
+		va->AddVertexQTC(tempPos + (dir1 * (displacements[d + 1] + WDV->thickness)), WDV->texture1->xend,   WDV->texture1->ystart, col);
+		#undef WDV
 	}
 
 	tempPos = pos;
 	for (size_t d = 1; d < displacements_size-1; ++d) {
 		float f = (d + 1) * 0.111f;
 
-		#define WD weaponDef
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d    ] + WD->thickness), WD->visuals.texture1->xstart, WD->visuals.texture1->ystart, col);
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d    ] - WD->thickness), WD->visuals.texture1->xstart, WD->visuals.texture1->yend,   col);
+		#define WDV (&weaponDef->visuals)
+		va->AddVertexQTC(tempPos + dir1 * (displacements2[d    ] + WDV->thickness), WDV->texture1->xstart, WDV->texture1->ystart, col);
+		va->AddVertexQTC(tempPos + dir1 * (displacements2[d    ] - WDV->thickness), WDV->texture1->xstart, WDV->texture1->yend,   col);
 		tempPos = pos * (1.0f - f) + endPos * f;
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d + 1] - WD->thickness), WD->visuals.texture1->xend,   WD->visuals.texture1->yend,   col);
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d + 1] + WD->thickness), WD->visuals.texture1->xend,   WD->visuals.texture1->ystart, col);
-		#undef WD
+		va->AddVertexQTC(tempPos + dir1 * (displacements2[d + 1] - WDV->thickness), WDV->texture1->xend,   WDV->texture1->yend,   col);
+		va->AddVertexQTC(tempPos + dir1 * (displacements2[d + 1] + WDV->thickness), WDV->texture1->xend,   WDV->texture1->ystart, col);
+		#undef WDV
 	}
 }
 

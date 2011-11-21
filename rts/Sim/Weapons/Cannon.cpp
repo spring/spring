@@ -99,23 +99,14 @@ void CCannon::Update()
 	CWeapon::Update();
 }
 
-bool CCannon::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
+bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 {
 	if (!CWeapon::TryTarget(pos, userTarget, unit)) {
 		return false;
 	}
 
-	if (!weaponDef->waterweapon) {
-		if (unit) {
-			if (unit->isUnderWater) {
-				return false;
-			}
-		} else {
-			if (pos.y < 0) {
-				return false;
-			}
-		}
-	}
+	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
+		return false;
 
 	if (projectileSpeed == 0) {
 		return true;
@@ -210,7 +201,9 @@ bool CCannon::AttackGround(float3 pos, bool userTarget)
 		// mostly prevents firing longer than max range using fps mode
 		pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 	}
-	return CWeapon::AttackGround(pos, userTarget);
+
+	// NOTE: this calls back into our derived TryTarget
+	return (CWeapon::AttackGround(pos, userTarget));
 }
 
 float3 CCannon::GetWantedDir(const float3& diff)

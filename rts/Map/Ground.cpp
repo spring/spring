@@ -212,8 +212,8 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 
 	bool keepgoing = true;
 
-	const float* hm  = (synced) ? readmap->GetCornerHeightMapSynced() : readmap->GetCornerHeightMapUnsynced();
-	const float3* nm = (synced) ? readmap->GetFaceNormalsSynced()     : readmap->GetFaceNormalsUnsynced();
+	const float* hm  = readmap->GetCornerHeightMap(synced);
+	const float3* nm = readmap->GetFaceNormals(synced);
 
 	if ((floor(from.x / SQUARE_SIZE) == floor(to.x / SQUARE_SIZE)) && (floor(from.z / SQUARE_SIZE) == floor(to.z / SQUARE_SIZE))) {
 		// <from> and <to> are the same
@@ -328,17 +328,8 @@ float CGround::GetApproximateHeight(float x, float y, bool synced) const
 	xsquare = Clamp(xsquare, 0, gs->mapxm1);
 	ysquare = Clamp(ysquare, 0, gs->mapym1);
 
-	const float* heightmap = readmap->GetCenterHeightMapSynced();
-
-	/* TODO
-	#ifdef USE_UNSYNCED_HEIGHTMAP
-	if (!synced) {
-		heightmap = readmap->GetCenterHeightMapUnsynced();
-	}
-	#endif
-	*/
-
-	return heightmap[xsquare + ysquare * gs->mapx];
+	const float* heightMap = readmap->GetCenterHeightMap(synced);
+	return heightMap[xsquare + ysquare * gs->mapx];
 }
 
 float CGround::GetHeightAboveWater(float x, float y, bool synced) const
@@ -348,8 +339,7 @@ float CGround::GetHeightAboveWater(float x, float y, bool synced) const
 
 float CGround::GetHeightReal(float x, float y, bool synced) const
 {
-	const float* heightmap = (synced) ? readmap->GetCornerHeightMapSynced() : readmap->GetCornerHeightMapUnsynced();
-	return InterpolateHeight(x, y, heightmap);
+	return InterpolateHeight(x, y, readmap->GetCornerHeightMap(synced));
 }
 
 float CGround::GetOrigHeight(float x, float y) const
@@ -365,8 +355,8 @@ const float3& CGround::GetNormal(float x, float y, bool synced) const
 	xsquare = Clamp(xsquare, 0, gs->mapxm1);
 	ysquare = Clamp(ysquare, 0, gs->mapym1);
 
-	const float3* normalmap = (synced) ? readmap->GetCenterNormalsSynced() : readmap->GetCenterNormalsUnsynced();
-	return normalmap[xsquare + ysquare * gs->mapx];
+	const float3* normalMap = readmap->GetCenterNormals(synced);
+	return normalMap[xsquare + ysquare * gs->mapx];
 }
 
 
@@ -377,17 +367,8 @@ float CGround::GetSlope(float x, float y, bool synced) const
 	xhsquare = Clamp(xhsquare, 0, gs->hmapx - 1);
 	yhsquare = Clamp(yhsquare, 0, gs->hmapy - 1);
 
-	const float* slopemap = readmap->GetSlopeMapSynced();
-
-	/* TODO
-	#ifdef USE_UNSYNCED_HEIGHTMAP
-	if (!synced) {
-		slopemap = readmap->GetSlopeMapUnsynced();
-	}
-	#endif
-	*/
-
-	return slopemap[xhsquare + yhsquare * gs->hmapx];
+	const float* slopeMap = readmap->GetSlopeMap(synced);
+	return slopeMap[xhsquare + yhsquare * gs->hmapx];
 }
 
 
@@ -433,12 +414,12 @@ float3 CGround::GetSmoothNormal(float x, float y, bool synced) const
 	float ify = 1.0f - fy;
 	float ifx = 1.0f - fx;
 
-	const float3* normalmap = (synced) ? readmap->GetCenterNormalsSynced() : readmap->GetCenterNormalsUnsynced();
+	const float3* normalMap = readmap->GetCenterNormals(synced);
 
-	const float3& n1 = normalmap[sy  * gs->mapx + sx ] * ifx * ify;
-	const float3& n2 = normalmap[sy  * gs->mapx + sx2] *  fx * ify;
-	const float3& n3 = normalmap[sy2 * gs->mapx + sx ] * ifx * fy;
-	const float3& n4 = normalmap[sy2 * gs->mapx + sx2] *  fx * fy;
+	const float3& n1 = normalMap[sy  * gs->mapx + sx ] * ifx * ify;
+	const float3& n2 = normalMap[sy  * gs->mapx + sx2] *  fx * ify;
+	const float3& n3 = normalMap[sy2 * gs->mapx + sx ] * ifx * fy;
+	const float3& n4 = normalMap[sy2 * gs->mapx + sx2] *  fx * fy;
 
 	float3 norm1 = n1 + n2 + n3 + n4;
 	norm1.Normalize();

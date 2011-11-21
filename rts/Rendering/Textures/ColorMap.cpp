@@ -31,7 +31,7 @@ CColorMap::CColorMap(const std::vector<float>& vec)
 	: map(NULL)
 {
 	if (vec.size() < 8) {
-		throw content_error("Too few colors in colormap, need at least 2.");
+		throw content_error("[ColorMap] too few colors in colormap (need at least two RGBA values)");
 	}
 
 	unsigned char* lmap = new unsigned char[vec.size() - (vec.size() % 4)];
@@ -100,6 +100,7 @@ void CColorMap::LoadMap(const unsigned char* buf, int num)
 	std::memcpy(map, buf, num);
 }
 
+
 CColorMap* CColorMap::LoadFromBitmapFile(const std::string& fileName)
 {
 	CColorMap* map;
@@ -135,26 +136,37 @@ CColorMap* CColorMap::LoadFromFloatString(const std::string& fString)
 		vec.push_back(value);
 	}
 
-	return CColorMap::LoadFromFloatVector(vec);
+	CColorMap* map = CColorMap::LoadFromFloatVector(vec);
+	return map;
 }
 
 CColorMap* CColorMap::LoadFromDefString(const std::string& dString)
 {
 	std::stringstream stream;
-	stream << dString;
 	std::vector<float> vec;
 
+	stream << dString;
 	float value;
+
 	while (stream >> value) {
 		vec.push_back(value);
 	}
 
-	if (!vec.empty()) {
-		return CColorMap::LoadFromFloatVector(vec);
+	CColorMap* map = NULL;
+
+	if (vec.empty()) {
+		map = CColorMap::LoadFromBitmapFile("bitmaps\\" + dString);
 	} else {
-		return CColorMap::LoadFromBitmapFile("bitmaps\\" + dString);
+		map = CColorMap::LoadFromFloatVector(vec);
 	}
+
+	if (map == NULL) {
+		throw content_error("[ColorMap::LoadFromDefString] unable to load color-map " + dString);
+	}
+
+	return map;
 }
+
 
 CColorMap* CColorMap::Load8f(float r1, float g1, float b1, float a1, float r2, float g2, float b2, float a2)
 {

@@ -37,7 +37,7 @@ void CMissileLauncher::Update(void)
 			predict = dist / projectileSpeed;
 			wantedDir /= dist;
 
-			if (weaponDef->trajectoryHeight > 0) {
+			if (weaponDef->trajectoryHeight > 0.0f) {
 				wantedDir.y += weaponDef->trajectoryHeight;
 				wantedDir.Normalize();
 			}
@@ -57,7 +57,7 @@ void CMissileLauncher::FireImpl()
 		dir = targetPos - weaponMuzzlePos;
 		dir.Normalize();
 
-		if (weaponDef->trajectoryHeight > 0) {
+		if (weaponDef->trajectoryHeight > 0.0f) {
 			dir.y += weaponDef->trajectoryHeight;
 			dir.Normalize();
 		}
@@ -85,21 +85,16 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 	if (!CWeapon::TryTarget(pos, userTarget, unit))
 		return false;
 
-	if (!weaponDef->waterweapon) {
-		if (unit) {
-			if (unit->isUnderWater) {
-				return false;
-			}
-		} else {
-			if (pos.y < 0)
-				return false;
-		}
-	}
+	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
+		return false;
 
 	float3 dir = pos - weaponMuzzlePos;
 
-	if (weaponDef->trajectoryHeight > 0) {
-		// do a different test depending on if the missile has a high trajectory or not
+	if (weaponDef->trajectoryHeight > 0.0f) {
+		// do a different test depending on if the missile has high
+		// trajectory (parabolic vs. linear ground intersection; in
+		// the latter case, HaveFreeLineOfFire() checks the NOGROUND
+		// collision flag for us)
 		float3 flatdir(dir.x, 0, dir.z);
 		dir.Normalize();
 		float flatlength = flatdir.Length();

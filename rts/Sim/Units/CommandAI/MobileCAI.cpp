@@ -228,10 +228,10 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 			return;
 
 		switch ((int) c.params[0]) {
-			case 0: { airMT->repairBelowHealth = 0.0f; break; }
-			case 1: { airMT->repairBelowHealth = 0.3f; break; }
-			case 2: { airMT->repairBelowHealth = 0.5f; break; }
-			case 3: { airMT->repairBelowHealth = 0.8f; break; }
+			case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
+			case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
+			case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
+			case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
 		}
 		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi) {
@@ -284,7 +284,7 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 /// returns true if the unit has to land
 bool CMobileCAI::RefuelIfNeeded()
 {
-	if (owner->moveType->reservedPad != NULL) {
+	if (owner->moveType->GetReservedPad() != NULL) {
 		// we already have a pad
 		return false;
 	}
@@ -343,22 +343,26 @@ bool CMobileCAI::RefuelIfNeeded()
 /// returns true if the unit has to land
 bool CMobileCAI::LandRepairIfNeeded()
 {
-	if (owner->moveType->reservedPad == NULL && owner->moveType->WantsRepair()) {
-		// we're damaged, just seek a pad for repairs
-		CAirBaseHandler::LandingPad* lp =
-			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+	if (owner->moveType->GetReservedPad() != NULL)
+		return false;
 
-		if (lp != NULL) {
-			owner->moveType->ReservePad(lp);
-			return true;
-		}
+	if (!owner->moveType->WantsRepair())
+		return false;
 
-		const float3& newGoal = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
+	// we're damaged, just seek a pad for repairs
+	CAirBaseHandler::LandingPad* lp =
+		airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 
-		if (newGoal != ZeroVector) {
-			SetGoal(newGoal, owner->pos);
-			return true;
-		}
+	if (lp != NULL) {
+		owner->moveType->ReservePad(lp);
+		return true;
+	}
+
+	const float3& newGoal = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
+
+	if (newGoal != ZeroVector) {
+		SetGoal(newGoal, owner->pos);
+		return true;
 	}
 
 	return false;
@@ -366,7 +370,7 @@ bool CMobileCAI::LandRepairIfNeeded()
 
 void CMobileCAI::SlowUpdate()
 {
-	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+	if (gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 	bool wantToLand = false;
 	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
@@ -697,20 +701,17 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
 			// check if we have valid target parameter and that we aren't attacking ourselves
-			if (targetUnit != NULL && targetUnit != owner) {
-				float3 fix = targetUnit->pos + owner->posErrorVector * 128;
-				float3 diff = float3(fix - owner->pos).Normalize();
+			if (targetUnit == NULL) { StopMove(); FinishCommand(); return; }
+			if (targetUnit == owner) { StopMove(); FinishCommand(); return; }
+			if (targetUnit->GetTransporter() != NULL) { StopMove(); FinishCommand(); return; }
 
-				SetGoal(fix - diff * targetUnit->radius, owner->pos);
+			const float3 fix = targetUnit->pos + owner->posErrorVector * 128;
+			const float3 diff = (fix - owner->pos).Normalize();
 
-				SetOrderTarget(targetUnit);
-				inCommand = true;
-			} else {
-				// unit may not fire on itself, cancel order
-				StopMove();
-				FinishCommand();
-				return;
-			}
+			SetGoal(fix - diff * targetUnit->radius, owner->pos);
+			SetOrderTarget(targetUnit);
+
+			inCommand = true;
 		}
 		else if (c.params.size() >= 3) {
 			// user gave force-fire attack command
@@ -958,7 +959,7 @@ void CMobileCAI::StopMove()
 
 void CMobileCAI::BuggerOff(const float3& pos, float radius)
 {
-	if(radius < 0.0f) {
+	if (radius < 0.0f) {
 		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
 		return;
 	}

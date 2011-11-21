@@ -135,8 +135,9 @@ void CBuilder::Update()
 {
 	if (!beingBuilt && !stunned) {
 		if (terraforming && inBuildStance) {
-			const float* heightmap = readmap->GetCornerHeightMapSynced();
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
+
+			const float* heightmap = readmap->GetCornerHeightMapSynced();
 			float terraformScale = 0.1;
 
 			switch (terraformType) {
@@ -205,7 +206,6 @@ void CBuilder::Update()
 			}
 
 			ScriptDecloak(true);
-
 			CreateNanoParticle(terraformCenter, terraformRadius * 0.5f, false);
 
 			for (int z = tz1; z <= tz2; z++) {
@@ -267,27 +267,46 @@ void CBuilder::Update()
 			if (curBuild->soloBuilder && (curBuild->soloBuilder != this)) {
 				StopBuild();
 			} else {
-				if (!inBuildStance) {
-					curBuild->AddBuildPower(0.0f, this); //prevent building timing out
-				} else {
+				if (inBuildStance || true) {
+					// NOTE:
+					//     technically this block of code should be guarded by
+					//     "if (inBuildStance)", but doing so can create zombie
+					//     guarders because scripts might not set inBuildStance
+					//     to true when guard or repair orders are executed and
+					//     SetRepairTarget does not check for it
+					//
+					//     StartBuild *does* ensure construction will not start
+					//     until inBuildStance is set to true by the builder's
+					//     script, and there are no cases during construction
+					//     when inBuildStance can become false yet the buildee
+					//     should be kept from decaying, so this is free from
+					//     serious side-effects (when repairing, a builder might
+					//     start adding build-power before having fully finished
+					//     its opening animation)
+					//
 					ScriptDecloak(true);
 
-					float adjBuildSpeed; // adjusted build speed
-					if (curBuild->buildProgress < 1.0f) {
-						adjBuildSpeed = buildSpeed;  // new build
-					} else {
-						adjBuildSpeed = min(unitDef->maxRepairSpeed / 2.0f - curBuild->repairAmount, repairSpeed); // repair
+					// adjusted build-speed: use repair-speed on units with
+					// progress >= 1 rather than raw build-speed on buildees
+					// with progress < 1
+					float adjBuildSpeed = buildSpeed;
+
+					if (curBuild->buildProgress >= 1.0f) {
+						adjBuildSpeed = std::min(unitDef->maxRepairSpeed / 2.0f - curBuild->repairAmount, repairSpeed);
 					}
 
-					if (adjBuildSpeed > 0 && !commandAI->commandQue.empty()
-							&& commandAI->commandQue.front().GetID() == CMD_WAIT) {
-						curBuild->AddBuildPower(0, this);
-					} else if (adjBuildSpeed > 0 && curBuild->AddBuildPower(adjBuildSpeed, this)) {
+					const CCommandQueue& queue = commandAI->commandQue;
+					const Command& command = (!queue.empty())? queue.front(): Command();
+
+					if (adjBuildSpeed > 0.0f && command.GetID() == CMD_WAIT) {
+						// prevent buildee from decaying
+						curBuild->AddBuildPower(0.0f, this);
+					} else if (adjBuildSpeed > 0.0f && curBuild->AddBuildPower(adjBuildSpeed, this)) {
 						CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
 					} else {
+						// check if buildee finished construction
 						if (!curBuild->beingBuilt && curBuild->health >= curBuild->maxHealth) {
 							StopBuild();
-							inBuildStance = false;
 						}
 					}
 				}
@@ -398,13 +417,13 @@ void CBuilder::SlowUpdate(void)
 
 void CBuilder::SetRepairTarget(CUnit* target)
 {
-	if (target==curBuild)
+	if (target == curBuild)
 		return;
 
 	StopBuild(false);
 	TempHoldFire();
 
-	curBuild=target;
+	curBuild = target;
 	AddDeathDependence(curBuild, DEPENDENCE_BUILD);
 
 	if (!target->groundLevelled) {
@@ -522,12 +541,14 @@ void CBuilder::StopBuild(bool callScript)
 		DeleteDeathDependence(curResurrect, DEPENDENCE_RESURRECT);
 	if (curCapture)
 		DeleteDeathDependence(curCapture, DEPENDENCE_CAPTURE);
-	curBuild=0;
-	curReclaim=0;
-	helpTerraform=0;
-	curResurrect=0;
-	curCapture=0;
-	terraforming=false;
+
+	curBuild = 0;
+	curReclaim = 0;
+	helpTerraform = 0;
+	curResurrect = 0;
+	curCapture = 0;
+	terraforming = false;
+
 	if (callScript)
 		script->StopBuilding();
 	ReleaseTempHoldFire();
@@ -617,7 +638,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 		b->AddDeathDependence(this, DEPENDENCE_BUILDER);
 	}
 	AddDeathDependence(b, DEPENDENCE_BUILD);
-	curBuild=b;
+	curBuild = b;
 
 	/* The ground isn't going to be terraformed.
 	 * When the building is completed, it'll 'pop'
@@ -661,24 +682,24 @@ float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 
 void CBuilder::DependentDied(CObject *o)
 {
-	if (o==curBuild) {
-		curBuild=0;
+	if (o == curBuild) {
+		curBuild = 0;
 		StopBuild();
 	}
-	if (o==curReclaim) {
-		curReclaim=0;
+	if (o == curReclaim) {
+		curReclaim = 0;
 		StopBuild();
 	}
-	if (o==helpTerraform) {
-		helpTerraform=0;
+	if (o == helpTerraform) {
+		helpTerraform = 0;
 		StopBuild();
 	}
-	if (o==curResurrect) {
-		curResurrect=0;
+	if (o == curResurrect) {
+		curResurrect = 0;
 		StopBuild();
 	}
-	if (o==curCapture) {
-		curCapture=0;
+	if (o == curCapture) {
+		curCapture = 0;
 		StopBuild();
 	}
 	CUnit::DependentDied(o);
