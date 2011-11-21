@@ -136,6 +136,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	internalSpeed = 1.0f;
 	gamePausable = true;
 	noHelperAIs = false;
+	canReconnect = false;
 	allowSpecDraw = true;
 	cheating = false;
 
