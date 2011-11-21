@@ -8,7 +8,7 @@
 #elif WIN32
 	#include "System/Platform/Win/win32.h"
 #elif __APPLE__
-	#include <CGLTypes.h>
+	#include <OpenGL/CGLTypes.h>
 #else
 	#include <GL/glx.h>
 
