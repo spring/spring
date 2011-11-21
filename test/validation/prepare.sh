@@ -1,5 +1,18 @@
+#!/bin/sh
+
+set -e #abort on error
+
+if [ $# -lt 2 ]; then
+	echo "Usage: $0 AI AIversion"
+	exit 1
+fi
+
+AI="$1"
+AIVERSION="$2"
+
+cat <<EOD
 // a validation script
-// runs a Shard vs Shard game
+// runs a $AI $AIVERSION vs $AI $AIVERSION game
 [GAME]
 {
 	IsHost=1;
@@ -55,8 +68,8 @@
 	[AI0]
 	{
 		Name=Bot1;
-		ShortName=Shard;
-		Version=dev;
+		ShortName=$AI;
+		Version=$AIVERSION;
 		Team=0;
 		IsFromDemo=0;
 		Host=2;
@@ -67,8 +80,8 @@
 	[AI1]
 	{
 		Name=Bot2;
-		ShortName=Shard;
-		Version=dev;
+		ShortName=$AI;
+		Version=$AIVERSION;
 		Team=1;
 		IsFromDemo=0;
 		Host=2;
@@ -107,3 +120,4 @@
 		NumAllies=0;
 	}
 }
+EOD
