@@ -36,8 +36,7 @@ private:
 	HDC hdc;
 	HGLRC offscreenRC;
 #elif __APPLE__
-	AGLPixelFormat pxlfmt;
-	AGLContext workerCtx;
+	CGLContextObj cglWorkerCtx;
 #else
 	Display* display;
 	GLXPbuffer pbuf;
