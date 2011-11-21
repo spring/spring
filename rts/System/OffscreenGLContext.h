@@ -8,8 +8,7 @@
 #elif WIN32
 	#include "System/Platform/Win/win32.h"
 #elif __APPLE__
-	//! duno where this definition comes from, still it breaks MachineExceptions.h included by agl.h
-	#include "Rendering/GL/myGL.h"
+	#include <CGLTypes.h>
 #else
 	#include <GL/glx.h>
 
