@@ -22,11 +22,14 @@ CR_REG_METADATA(AAirMoveType, (
 
 	CR_MEMBER(collide),
 	CR_MEMBER(useSmoothMesh),
-	CR_MEMBER(lastColWarning),
-	CR_MEMBER(lastColWarningType),
-
 	CR_MEMBER(autoLand),
+
+	CR_MEMBER(lastColWarning),
+	CR_MEMBER(reservedPad),
+
+	CR_MEMBER(lastColWarningType),
 	CR_MEMBER(lastFuelUpdateFrame),
+	CR_MEMBER(padStatus),
 
 	CR_RESERVED(16)
 ));
@@ -34,57 +37,96 @@ CR_REG_METADATA(AAirMoveType, (
 AAirMoveType::AAirMoveType(CUnit* unit) :
 	AMoveType(unit),
 	aircraftState(AIRCRAFT_LANDED),
+
 	oldGoalPos(owner? owner->pos : ZeroVector),
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
+
 	wantedHeight(80.0f),
 	orgWantedHeight(0.0f),
+
 	collide(true),
 	useSmoothMesh(false),
 	autoLand(true),
+
 	lastColWarning(NULL),
+	reservedPad(NULL),
+
 	lastColWarningType(0),
-	lastFuelUpdateFrame(gs->frameNum)
+	lastFuelUpdateFrame(gs->frameNum),
+	padStatus(0)
 {
 	useHeading = false;
 }
 
 AAirMoveType::~AAirMoveType()
 {
-	if (reservedPad) {
-		airBaseHandler->LeaveLandingPad(reservedPad);
-		reservedPad = NULL;
-	}
+	// NOTE:
+	//   this calls Takeoff and (indirectly) SetState,
+	//   so neither of these must be pure virtuals (!)
+	UnreservePad(reservedPad);
 }
 
 bool AAirMoveType::UseSmoothMesh() const {
-	if (useSmoothMesh) {
-		const bool onTransportMission =
-			!owner->commandAI->commandQue.empty() &&
-			((owner->commandAI->commandQue.front().GetID() == CMD_LOAD_UNITS) || (owner->commandAI->commandQue.front().GetID() == CMD_UNLOAD_UNIT));
-		const bool repairing = reservedPad ? padStatus >= 1 : false;
-		const bool forceDisableSmooth = repairing || onTransportMission || (aircraftState != AIRCRAFT_FLYING);
-		return !forceDisableSmooth;
-	} else {
+	if (!useSmoothMesh)
 		return false;
-	}
+
+	const bool onTransportMission =
+		!owner->commandAI->commandQue.empty() &&
+		((owner->commandAI->commandQue.front().GetID() == CMD_LOAD_UNITS) || (owner->commandAI->commandQue.front().GetID() == CMD_UNLOAD_UNIT));
+	const bool repairing = reservedPad ? padStatus >= 1 : false;
+	const bool forceDisableSmooth = repairing || onTransportMission || (aircraftState != AIRCRAFT_FLYING);
+	return !forceDisableSmooth;
 }
+
 
 void AAirMoveType::ReservePad(CAirBaseHandler::LandingPad* lp) {
 	oldGoalPos = goalPos;
 	orgWantedHeight = wantedHeight;
 
-	AMoveType::ReservePad(lp);
+	assert(reservedPad == NULL);
+
+	AddDeathDependence(lp, DEPENDENCE_LANDINGPAD);
+	SetGoal(lp->GetUnit()->pos);
+
+	reservedPad = lp;
+	padStatus = 0;
+
 	Takeoff();
 }
 
+void AAirMoveType::UnreservePad(CAirBaseHandler::LandingPad* lp)
+{
+	if (lp == NULL)
+		return;
+
+	assert(reservedPad == lp);
+
+	DeleteDeathDependence(reservedPad, DEPENDENCE_LANDINGPAD);
+	airBaseHandler->LeaveLandingPad(reservedPad);
+
+	reservedPad = NULL;
+	padStatus = 0;
+
+	goalPos = oldGoalPos;
+	wantedHeight = orgWantedHeight;
+	SetState(AIRCRAFT_TAKEOFF);
+}
+
 void AAirMoveType::DependentDied(CObject* o) {
-	if (o == reservedPad) {
-		SetState(AIRCRAFT_FLYING);
-		goalPos = oldGoalPos;
-		wantedHeight = orgWantedHeight;
+	if (o == lastColWarning) {
+		lastColWarning = NULL;
+		lastColWarningType = 0;
 	}
 
-	AMoveType::DependentDied(o);
+	if (o == reservedPad) {
+		SetState(AIRCRAFT_TAKEOFF);
+
+		goalPos = oldGoalPos;
+		wantedHeight = orgWantedHeight;
+
+		reservedPad = NULL;
+		padStatus = 0;
+	}
 }
 
 bool AAirMoveType::Update() {
@@ -229,12 +271,7 @@ bool AAirMoveType::MoveToRepairPad() {
 
 			if (owner->health >= owner->maxHealth - 1.0f && owner->currentFuel >= owner->unitDef->maxFuel) {
 				// repaired and filled up, leave the pad
-				airBaseHandler->LeaveLandingPad(reservedPad);
-				reservedPad = NULL;
-				padStatus = 0;
-				goalPos = oldGoalPos;
-				wantedHeight = orgWantedHeight;
-				SetState(AIRCRAFT_TAKEOFF);
+				UnreservePad(reservedPad);
 			}
 		}
 	}

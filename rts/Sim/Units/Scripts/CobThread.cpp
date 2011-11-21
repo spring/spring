@@ -213,7 +213,7 @@ int CCobThread::POP()
 		return 0;
 }
 
-bool CCobThread::Tick(int deltaTime)
+bool CCobThread::Tick()
 {
 	if (state == Sleep) {
 		LOG_L(L_ERROR, "sleeping thread ticked!");

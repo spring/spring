@@ -39,7 +39,7 @@ public:
 	virtual std::vector<CommandDescription>& GetPossibleCommands();
 	virtual void FinishCommand();
 	virtual void WeaponFired(CWeapon* weapon);
-	virtual void BuggerOff(const float3& pos, float radius);
+	virtual void BuggerOff(const float3& pos, float radius) {}
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	/**
 	 * @brief Determins if c will cancel a queued command

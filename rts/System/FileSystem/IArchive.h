@@ -37,7 +37,7 @@ public:
 	 * archive.
 	 */
 	inline bool IsFileId(unsigned int fileId) const {
-		return (fileId >= 0) && (fileId < NumFiles());
+		return (fileId < NumFiles());
 	}
 	/**
 	 * Returns true if the file exists in this archive.

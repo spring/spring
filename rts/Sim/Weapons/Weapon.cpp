@@ -213,8 +213,8 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 
 static inline bool isBeingServicedOnPad(CUnit* u)
 {
-	AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
-	return a && a->padStatus != 0;
+	const AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
+	return (a != NULL && a->GetPadStatus() != 0);
 }
 
 void CWeapon::Update()
@@ -450,16 +450,17 @@ void CWeapon::Update()
 		//Rock the unit in the direction of the fireing
 		if (owner->script->HasRockUnit()) {
 			float3 rockDir = wantedDir;
-			rockDir.y = 0;
-			rockDir = -rockDir.Normalize();
+			rockDir.y = 0.0f;
+			rockDir = -rockDir.SafeNormalize();
 			owner->script->RockUnit(rockDir);
 		}
 
 		owner->commandAI->WeaponFired(this);
 
-		if(salvoLeft==0){
+		if (salvoLeft == 0) {
 			owner->script->EndBurst(weaponNum);
 		}
+
 #ifdef TRACE_SYNC
 	tracefile << "Weapon fire: ";
 	tracefile << weaponPos.x << " " << weaponPos.y << " " << weaponPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
@@ -789,7 +790,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	}
 }
 
-void CWeapon::DependentDied(CObject *o)
+void CWeapon::DependentDied(CObject* o)
 {
 	if (o == targetUnit) {
 		targetUnit = NULL;

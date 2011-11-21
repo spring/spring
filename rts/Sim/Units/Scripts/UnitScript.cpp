@@ -793,8 +793,8 @@ void CUnitScript::Explode(int piece, int flags)
 	float sql = baseSpeed.SqLength();
 
 	if (sql > 9) {
-		const float l  = sqrt(sql);
-		const float l2 = 3 + sqrt(l - 3);
+		const float l  = math::sqrt(sql);
+		const float l2 = 3 + math::sqrt(l - 3);
 		baseSpeed *= (l2 / l);
 	}
 	float3 speed((0.5f-gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
@@ -803,7 +803,8 @@ void CUnitScript::Explode(int piece, int flags)
 	}
 	speed += baseSpeed;
 	if (speed.SqLength() > 12*12) {
-		speed = speed.Normalize() * 12;
+		speed.Normalize();
+		speed *= 12;
 	}
 
 	/* TODO Push this back. Don't forget to pass the team (color).  */

@@ -22,63 +22,110 @@
 extern "C" {
 #endif
 
+#ifdef _MSC_VER
+#define va_copy(dst, src) ((dst) = (src))
+#endif
+
 static const int SECTION_SIZE_MIN = 10;
 static const int SECTION_SIZE_MAX = 20;
 
-static int* frameNum = NULL;
-
-void log_formatter_setFrameNumReference(int* frameNumReference)
+// *******************************************************************************************
+// Helpers
+static inline void ResizeBuffer(char** buffer, size_t* bufferSize, const bool copy = false)
 {
-	frameNum = frameNumReference;
+	*bufferSize <<= 2; // `2` to increase it faster
+	char* old = *buffer;
+	*buffer = new char[*bufferSize];
+	if (copy) {
+		memcpy(*buffer, old, *bufferSize >> 2);
+	}
+	delete[] old;
 }
 
-static void log_formatter_createPrefix_xorgStyle(char* prefix,
-		size_t prefixSize, const char* section, int level)
+
+static inline void PrintfAppend(char** buffer, size_t* bufferSize, const char* fmt, va_list arguments)
+{
+	// dynamically adjust the buffer size until VSNPRINTF returns fine
+	size_t bufferPos = strlen(*buffer);
+
+	do {
+		size_t freeBufferSize = (*bufferSize) - bufferPos;
+		char* bufAppendPos = &((*buffer)[bufferPos]);
+
+		// printf will move the internal pointer of va_list.
+		// So we need to make a copy, if want to run it again.
+		va_list arguments_;
+		va_copy(arguments_, arguments); 
+			VSNPRINTF(bufAppendPos, freeBufferSize, fmt, arguments_);
+		va_end(arguments_);
+		const bool bufferTooSmall = ((strlen(*buffer) + 1) >= *bufferSize);
+		if (!bufferTooSmall) break;
+
+		ResizeBuffer(buffer, bufferSize, true);
+	} while (true);
+}
+
+
+// *******************************************************************************************
+
+static void log_formatter_createPrefix_xorgStyle(char** buffer,
+		size_t* bufferSize, const char* section, int level)
 {
 	section = log_util_prepareSection(section);
 
 	const char levelChar = log_util_levelToChar(level);
 
-	SNPRINTF(prefix, prefixSize, "(%c%c) %*.*s - ", levelChar, levelChar,
+	SNPRINTF(*buffer, *bufferSize, "(%c%c) %*.*s - ", levelChar, levelChar,
 			SECTION_SIZE_MIN, SECTION_SIZE_MAX, section);
 }
 
-static void log_formatter_createPrefix_testing(char* prefix,
-		size_t prefixSize, const char* section, int level)
+
+static void log_formatter_createPrefix_testing(char** buffer,
+		size_t* bufferSize, const char* section, int level)
 {
 	section = log_util_prepareSection(section);
 
 	const char* levelStr = log_util_levelToString(level);
 
-	SNPRINTF(prefix, prefixSize, "%s %s: ", levelStr, section);
+	SNPRINTF(*buffer, *bufferSize, "%s %s: ", levelStr, section);
 }
 
-static void log_formatter_createPrefix_default(char* prefix,
-		size_t prefixSize, const char* section, int level)
+
+static void log_formatter_createPrefix_default(char** buffer,
+		size_t* bufferSize, const char* section, int level)
 {
-	prefix[0] = '\0';
+	(*buffer)[0] = '\0';
 
 	if (!LOG_SECTION_IS_DEFAULT(section)) {
 		section = log_util_prepareSection(section);
-		STRCAT_T(prefix, prefixSize, "[");
-		STRCAT_T(prefix, prefixSize, section);
-		STRCAT_T(prefix, prefixSize, "] ");
+		STRCAT_T(*buffer, *bufferSize, "[");
+		STRCAT_T(*buffer, *bufferSize, section);
+		STRCAT_T(*buffer, *bufferSize, "] ");
 	}
 	if (level != LOG_LEVEL_INFO) {
 		const char* levelStr = log_util_levelToString(level);
-		STRCAT_T(prefix, prefixSize, levelStr);
-		STRCAT_T(prefix, prefixSize, ": ");
+		STRCAT_T(*buffer, *bufferSize, levelStr);
+		STRCAT_T(*buffer, *bufferSize, ": ");
 	}
 }
 
-static inline void log_formatter_createPrefix(char* prefix, size_t prefixSize,
+
+static inline void log_formatter_createPrefix(char** buffer, size_t* bufferSize,
 		const char* section, int level)
 {
-	//log_formatter_createPrefix_xorgStyle(prefix, prefixSize, section, level);
-	//log_formatter_createPrefix_testing(prefix, prefixSize, section, level);
-	log_formatter_createPrefix_default(prefix, prefixSize, section, level);
+	//log_formatter_createPrefix_xorgStyle(buffer, bufferSize, section, level);
+	//log_formatter_createPrefix_testing(buffer, bufferSize, section, level);
+	log_formatter_createPrefix_default(buffer, bufferSize, section, level);
+
+	// check if the buffer was large enough, if not resize it and try again
+	const bool bufferTooSmall = ((strlen(*buffer) + 1) >= *bufferSize);
+	if (bufferTooSmall) {
+		ResizeBuffer(buffer, bufferSize);
+		log_formatter_createPrefix(buffer, bufferSize, section, level); // recursive
+	}
 }
 
+// *******************************************************************************************
 
 /**
  * @name logging_formatter
@@ -86,28 +133,17 @@ static inline void log_formatter_createPrefix(char* prefix, size_t prefixSize,
  */
 ///@{
 
-char* log_formatter_getFrame_prefix()
-{
-	//FIXME using a static var may make it thread-unsafe!!!
-	static char prefix[128] = {'\0'};
-	if (frameNum != NULL) {
-		SNPRINTF(prefix, sizeof(prefix), "[f=%07d] ", *frameNum);
-	}
-	return prefix;
-}
-
-
 /// Formats a log entry into its final string form
-void log_formatter_format(char* record, size_t recordSize,
-		const char* section, int level, const char* fmt, va_list arguments)
+char* log_formatter_format(const char* section, int level, const char* fmt, va_list arguments)
 {
-	char prefix[128];
-	log_formatter_createPrefix(prefix, sizeof(prefix), section, level);
+	size_t bufferSize = 256;
+	char* mem = new char[bufferSize];
+	char** buffer = &mem;
 
-	char message[16384];
-	VSNPRINTF(message, sizeof(message), fmt, arguments);
+	log_formatter_createPrefix(buffer, &bufferSize, section, level);
+	PrintfAppend(buffer, &bufferSize, fmt, arguments);
 
-	SNPRINTF(record, recordSize, "%s%s", prefix, message);
+	return *buffer;
 }
 
 ///@}

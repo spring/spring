@@ -54,7 +54,7 @@ public:
 
 	bool ValidAllyTeam(size_t id) const
 	{
-		return ((id >= 0) && (id < allyTeams.size()));
+		return (id < allyTeams.size());
 	}
 
 	/**
