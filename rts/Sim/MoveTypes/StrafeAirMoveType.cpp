@@ -1083,18 +1083,6 @@ float3 CStrafeAirMoveType::FindLandingPos() const
 
 
 
-void CStrafeAirMoveType::DependentDied(CObject* o)
-{
-	if (o == lastColWarning) {
-		lastColWarning = NULL;
-		lastColWarningType = 0;
-	}
-
-	AAirMoveType::DependentDied(o);
-}
-
-
-
 void CStrafeAirMoveType::SetMaxSpeed(float speed)
 {
 	maxSpeed = speed;

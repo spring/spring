@@ -362,8 +362,10 @@ void CGame::ClientReadNet()
 				SimFrame();
 				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 #ifdef SYNCCHECK
-				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gs->frameNum, CSyncChecker::GetChecksum()));
-				if ((gs->frameNum & 4095) == 0) {// reset checksum every ~2.5 minute gametime
+				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
+
+				if ((gs->frameNum & 4095) == 0) {
+					// reset checksum every 4096 frames =~ 2.5 minutes
 					CSyncChecker::NewFrame();
 				}
 #endif
@@ -374,6 +376,36 @@ void CGame::ClientReadNet()
 				}
 				break;
 			}
+
+			case NETMSG_SYNCRESPONSE: {
+#if (defined(SYNCCHECK) && !defined(NDEBUG))
+				// NOTE:
+				//     this packet is also sent during live games,
+				//     during which we should just ignore it (the
+				//     server does sync-checking for us)
+				netcode::UnpackPacket pckt(packet, 1);
+
+				unsigned char playerNum; pckt >> playerNum;
+				          int  frameNum; pckt >> frameNum;
+				unsigned  int  checkSum; pckt >> checkSum;
+
+				const unsigned int ourCheckSum = CSyncChecker::GetChecksum();
+				const char* fmtStr =
+					"[DESYNC_WARNING] checksum %x from player %d (%s)"
+					" does not match our checksum %x for frame-number %d";
+				const CPlayer* player = playerHandler->Player(playerNum);
+
+				// check if our checksum for this frame matches what
+				// player <playerNum> sent to the server at the same
+				// frame in the original game (in case of a demo)
+				if (playerNum == gu->myPlayerNum) { return; }
+				if (gs->frameNum != frameNum) { return; }
+				if (checkSum == ourCheckSum) { return; }
+
+				LOG_L(L_ERROR, fmtStr, checkSum, playerNum, player->name.c_str(), ourCheckSum, gs->frameNum);
+#endif
+			} break;
+
 
 			case NETMSG_COMMAND: {
 				try {
@@ -1041,10 +1073,13 @@ void CGame::ClientReadNet()
 					player.team = team;
 					player.playerNum = playerNum;
 					// add the new player
+					// TODO NETMSG_CREATE_NEWPLAYER perhaps add a lua hook; hook should be able to reassign the player to a team and/or create a new team/allyteam
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
 					LOG("Added new player: %s", name.c_str());
-					// TODO NETMSG_CREATE_NEWPLAYER perhaps add a lua hook; hook should be able to reassign the player to a team and/or create a new team/allyteam
+					if (!player.spectator) {
+						eventHandler.TeamChanged(player.team);
+					}
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid New player message: %s", ex.what());
@@ -1071,4 +1106,3 @@ void CGame::ClientReadNet()
 		}
 	}
 }
-

@@ -39,7 +39,7 @@ protected:
 	std::list<CCobThread*> wantToRun;
 	std::priority_queue<CCobThread*, std::vector<CCobThread*>, CCobThreadPtr_less> sleeping;
 	CCobThread* curThread;
-	void TickThread(int deltaTime, CCobThread* thread);
+	void TickThread(CCobThread* thread);
 public:
 	CCobEngine();
 	~CCobEngine();

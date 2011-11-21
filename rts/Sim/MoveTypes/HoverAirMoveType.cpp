@@ -865,9 +865,7 @@ void CHoverAirMoveType::SlowUpdate()
 		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 
 		if (lp != NULL) {
-			AMoveType::ReservePad(lp);
-
-			oldGoalPos = goalPos;
+			AAirMoveType::ReservePad(lp);
 		}
 	}
 
@@ -920,16 +918,6 @@ void CHoverAirMoveType::SetDefaultAltitude(float altitude)
 {
 	wantedHeight =  altitude;
 	orgWantedHeight = altitude;
-}
-
-void CHoverAirMoveType::DependentDied(CObject* o)
-{
-	if (o == lastColWarning) {
-		lastColWarning = NULL;
-		lastColWarningType = 0;
-	}
-
-	AAirMoveType::DependentDied(o);
 }
 
 void CHoverAirMoveType::Takeoff()

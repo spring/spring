@@ -125,12 +125,6 @@ public:
 	};
 	virtual void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize = 0) = 0;
 
-	virtual const float* GetCornerHeightMapSynced()   const = 0;
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	virtual const float* GetCornerHeightMapUnsynced() const = 0;
-#else
-	        const float* GetCornerHeightMapUnsynced() const { return GetCornerHeightMapSynced(); }
-#endif
 
 	/// synced only
 	const float* GetOriginalHeightMapSynced() const { return &originalHeightMap[0]; }
@@ -145,35 +139,31 @@ public:
 
 	/// both
 	/// synced versions
+	virtual const float* GetCornerHeightMapSynced()   const = 0;
 	const float3* GetFaceNormalsSynced()   const { return &faceNormalsSynced[0]; }
 	const float3* GetCenterNormalsSynced() const { return &centerNormalsSynced[0]; }
 	/// unsynced versions
 #ifdef USE_UNSYNCED_HEIGHTMAP
+	virtual const float* GetCornerHeightMapUnsynced() const = 0;
 	const float3* GetFaceNormalsUnsynced()   const { return &faceNormalsUnsynced[0]; }
 	const float3* GetCenterNormalsUnsynced() const { return &centerNormalsUnsynced[0]; }
 #else
-	const float3* GetFaceNormalsUnsynced()   const { return GetFaceNormalsSynced(); }
-	const float3* GetCenterNormalsUnsynced() const { return GetCenterNormalsSynced(); }
+	const float* GetCornerHeightMapUnsynced() const { return GetCornerHeightMapSynced(); }
+	const float3* GetFaceNormalsUnsynced()    const { return GetFaceNormalsSynced(); }
+	const float3* GetCenterNormalsUnsynced()  const { return GetCenterNormalsSynced(); }
 #endif
 
-
+	// shared interface
+	// Use when code is shared between synced & unsynced, in such cases these functions will have a better branch-prediciton behavior.
+	static const float* GetCornerHeightMap(const bool& synced);
+	static const float* GetCenterHeightMap(const bool& synced);
+	static const float3* GetFaceNormals(const bool& synced);
+	static const float3* GetCenterNormals(const bool& synced);
+	static const float* GetSlopeMap(const bool& synced);
 
 	/// if you modify the heightmap through these, call UpdateHeightMapSynced
-	inline void SetHeight(const int& idx, const float& h) {
-		static float* hm = const_cast<float*>(GetCornerHeightMapSynced());
-
-		hm[idx] = h;
-		currMinHeight = std::min(h, currMinHeight);
-		currMaxHeight = std::max(h, currMaxHeight);
-	}
-
-	inline void AddHeight(const int& idx, const float& a) {
-		static float* hm = const_cast<float*>(GetCornerHeightMapSynced());
-
-		hm[idx] += a;
-		currMinHeight = std::min(hm[idx], currMinHeight);
-		currMaxHeight = std::max(hm[idx], currMaxHeight);
-	}
+	void SetHeight(const int& idx, const float& h);
+	void AddHeight(const int& idx, const float& a);
 
 public:
 	/// number of heightmap mipmaps, including full resolution
@@ -238,6 +228,78 @@ extern CReadMap* readmap;
 
 
 
+/**
+ * Inlined functions
+ */
+inline const float* CReadMap::GetCornerHeightMap(const bool& synced) {
+	// Note, this doesn't save a branch compared to `(synced) ? SHM : UHM`. Cause static vars always check if they were already initialized.
+	//  But they are only initialized once, so this branch will always fail. And so branch-prediction will have easier going.
+	assert(readmap && readmap->mapChecksum);
+	static const float* heightMaps[2] = {
+		readmap->GetCornerHeightMapUnsynced(),
+		readmap->GetCornerHeightMapSynced(),
+	};
+	return heightMaps[int(synced) & 1];
+}
+inline const float* CReadMap::GetCenterHeightMap(const bool& synced) {
+	assert(readmap && readmap->mapChecksum);
+	static const float* heightMaps[2] = {
+		readmap->GetCenterHeightMapSynced(), // TODO: add unsynced variant
+		readmap->GetCenterHeightMapSynced(),
+	};
+	return heightMaps[int(synced) & 1];
+}
+inline const float3* CReadMap::GetFaceNormals(const bool& synced) {
+	assert(readmap && readmap->mapChecksum);
+	static const float3* normalMaps[2] = {
+		readmap->GetFaceNormalsUnsynced(),
+		readmap->GetFaceNormalsSynced(),
+	};
+	return normalMaps[int(synced) & 1];
+}
+inline const float3* CReadMap::GetCenterNormals(const bool& synced) {
+	assert(readmap && readmap->mapChecksum);
+	static const float3* normalMaps[2] = {
+		readmap->GetCenterNormalsUnsynced(),
+		readmap->GetCenterNormalsSynced(),
+	};
+	return normalMaps[int(synced) & 1];
+}
+inline const float* CReadMap::GetSlopeMap(const bool& synced) {
+	assert(readmap && readmap->mapChecksum);
+	static const float* slopeMaps[2] = {
+		readmap->GetSlopeMapSynced(), // TODO: add unsynced variant (or add a LOS check foreach square access?)
+		readmap->GetSlopeMapSynced(),
+	};
+	return slopeMaps[int(synced) & 1];
+}
+
+
+
+
+
+
+/// if you modify the heightmap through these, call UpdateHeightMapSynced
+inline void CReadMap::SetHeight(const int& idx, const float& h) {
+	static float* hm = const_cast<float*>(GetCornerHeightMapSynced());
+
+	hm[idx] = h;
+	currMinHeight = std::min(h, currMinHeight);
+	currMaxHeight = std::max(h, currMaxHeight);
+}
+
+inline void CReadMap::AddHeight(const int& idx, const float& a) {
+	static float* hm = const_cast<float*>(GetCornerHeightMapSynced());
+
+	hm[idx] += a;
+	currMinHeight = std::min(hm[idx], currMinHeight);
+	currMaxHeight = std::max(hm[idx], currMaxHeight);
+}
+
+
+
+
+
 /// Converts a map-square into a float3-position.
 inline float3 SquareToFloat3(int xSquare, int zSquare) {
 	const float* hm = readmap->GetCenterHeightMapSynced();
@@ -247,13 +309,7 @@ inline float3 SquareToFloat3(int xSquare, int zSquare) {
 
 /// TODO: use in SM3 renderer also
 inline float GetVisibleVertexHeight(int idx) {
-
-	#ifdef USE_UNSYNCED_HEIGHTMAP
 	static const float* hm = readmap->GetCornerHeightMapUnsynced();
-	#else
-	static const float* hm = readmap->GetCornerHeightMapSynced();
-	#endif
-
 	return hm[idx];
 }
 
