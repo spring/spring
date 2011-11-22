@@ -40,7 +40,7 @@ function makescript {
 	AI=$3
 	AIVERSION=$4
 	OUTPUT=${CONTENT_DIR}/$AI.script.txt
-	echo "Creating $OUTPUT"
+	echo "Creating script: test/validation/prepare.sh \"$GAME\" \"$MAP\" \"$AI\" \"$AIVERSION\""
 	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
 }
 
