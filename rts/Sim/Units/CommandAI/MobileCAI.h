@@ -19,13 +19,14 @@ public:
 	CMobileCAI();
 	virtual ~CMobileCAI();
 
-	void StopMove();
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius, float speed);
+	virtual void BuggerOff(const float3& pos, float radius);
+
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
+	void StopMove();
 	void SlowUpdate();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
-	void BuggerOff(const float3& pos, float radius);
 	void NonMoving();
 	void FinishCommand();
 	void IdleCheck();

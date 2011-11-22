@@ -9,6 +9,7 @@
 #ifdef _MSC_VER
 
 #include "Backend.h"
+#include "FramePrefixer.h"
 
 #include <windows.h>
 
@@ -27,6 +28,10 @@ extern "C" {
 static void log_sink_record_outputDebugString(const char* section, int level,
 		const char* record)
 {
+	char framePrefix[128] = {'\0'};
+	log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));
+
+	OutputDebugString(framePrefix);
 	OutputDebugString(record);
 	OutputDebugString("\n");
 }

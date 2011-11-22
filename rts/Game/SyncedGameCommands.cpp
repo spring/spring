@@ -19,6 +19,7 @@
 #include "Lua/LuaRules.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
@@ -180,11 +181,11 @@ public:
 
 class ReloadCegsActionExecutor : public ISyncedActionExecutor {
 public:
-	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCegs",
-			"Reloads Ceg scripts", true) {}
+	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCEGs",
+			"Reloads CEG scripts", true) {}
 
 	void Execute(const SyncedAction& action) const {
-		game->ReloadCEGs(action.GetArgs());
+		explGenHandler->ReloadGenerators(action.GetArgs());
 	}
 };
 

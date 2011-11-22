@@ -1635,3 +1635,13 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 
 	return true;
 }
+
+
+
+void CBuilderCAI::BuggerOff(const float3& pos, float radius) {
+	if (owner->unitDef->IsStaticBuilderUnit())
+		return;
+
+	CMobileCAI::BuggerOff(pos, radius);
+}
+

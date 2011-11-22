@@ -204,6 +204,7 @@ private:
 	float minUserSpeed;
 
 	bool noHelperAIs;
+	bool canReconnect;
 	bool allowSpecDraw;
 	bool allowAdditionalPlayers;
 	bool whiteListAdditionalPlayers;
@@ -220,7 +221,7 @@ private:
 	void InternalSpeedChange(float newSpeed);
 	void UserSpeedChange(float newSpeed, int player);
 
-	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false );
+	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false, bool spectator = true, int team = 0);
 
 	bool hasLocalClient;
 	unsigned localClientNumber;
@@ -239,7 +240,6 @@ private:
 
 	mutable Threading::RecursiveMutex gameServerMutex;
 
-	bool canReconnect;
 	volatile bool gameHasStarted;
 	volatile bool generatedGameID;
 
@@ -250,4 +250,3 @@ private:
 extern CGameServer* gameServer;
 
 #endif // _GAME_SERVER_H
-

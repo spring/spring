@@ -79,11 +79,11 @@ void CCobEngine::AddThread(CCobThread *thread)
 }
 
 
-void CCobEngine::TickThread(int deltaTime, CCobThread* thread)
+void CCobEngine::TickThread(CCobThread* thread)
 {
 	curThread = thread; // for error messages originating in CUnitScript
 
-	if (!thread->Tick(deltaTime))
+	if (!thread->Tick())
 		delete thread;
 
 	curThread = NULL;
@@ -104,7 +104,7 @@ void CCobEngine::Tick(int deltaTime)
 #ifdef _CONSOLE
 		printf("----\n");
 #endif
-		TickThread(deltaTime, *i);
+		TickThread(*i);
 	}
 
 	// A thread can never go from running->running, so clear the list
@@ -136,7 +136,7 @@ void CCobEngine::Tick(int deltaTime)
 #endif
 			if (cur->state == CCobThread::Sleep) {
 				cur->state = CCobThread::Run;
-				TickThread(deltaTime, cur);
+				TickThread(cur);
 			} else if (cur->state == CCobThread::Dead) {
 				delete cur;
 			} else {

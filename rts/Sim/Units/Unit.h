@@ -9,6 +9,7 @@
 #endif
 
 #include <map>
+#include <list>
 #include <vector>
 #include <string>
 
@@ -454,7 +455,7 @@ public:
 
 	UnitTrackStruct* myTrack;
 
-	std::list<CMissileProjectile*> incomingMissiles;
+	std::list<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
 	int lastFlareDrop;
 
 	float currentFuel;
