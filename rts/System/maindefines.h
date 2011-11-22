@@ -63,7 +63,7 @@
 		#define PRINTF    printf_s
 		#define FPRINTF   fprintf_s
 		#define SNPRINTF  sprintf_s
-		#define VSNPRINTF vsprintf_s
+		#define VSNPRINTF _vsnprintf // vsprintf_s misbehaves in debug mode, triggering breakpoints
 		#define STRCPY    strcpy
 		#define STRCPYS   strcpy_s
 		#define STRNCPY   strncpy

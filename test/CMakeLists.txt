@@ -23,6 +23,7 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/Log/LogUtil.c"
 			"${ENGINE_SOURCE_DIR}/System/Log/DefaultFilter.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/DefaultFormatter.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Log/FramePrefixer.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/ConsoleSink.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/StreamSink.cpp"
 		)

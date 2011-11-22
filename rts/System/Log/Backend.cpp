@@ -11,8 +11,7 @@
 extern "C" {
 #endif
 
-extern void log_formatter_format(char* record, size_t recordSize,
-		const char* section, int level, const char* fmt, va_list arguments);
+extern char* log_formatter_format(const char* section, int level, const char* fmt, va_list arguments);
 
 namespace {
 	std::vector<log_sink_ptr>& log_formatter_getSinks() {
@@ -60,15 +59,15 @@ void log_backend_record(const char* section, int level, const char* fmt,
 		}
 	} else {
 		// format the record
-		char record[1024 + 64];
-		log_formatter_format(record, sizeof(record), section, level, fmt,
-				arguments);
+		char* record = log_formatter_format(section, level, fmt, arguments);
 
 		// sink the record
 		std::vector<log_sink_ptr>::const_iterator si;
 		for (si = sinks.begin(); si != sinks.end(); ++si) {
 			(*si)(section, level, record);
 		}
+
+		delete[] record;
 	}
 }
 
