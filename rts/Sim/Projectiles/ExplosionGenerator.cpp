@@ -116,9 +116,13 @@ string ClassAliasList::FindAlias(const string& className)
 
 CExplosionGeneratorHandler::CExplosionGeneratorHandler()
 {
+	numLoadedGenerators = 0;
+
 	exploParser = NULL;
 	aliasParser = NULL;
 	explTblRoot = NULL;
+
+	gCEG = new CCustomExplosionGenerator();
 
 	ParseExplosionTables();
 }
@@ -128,6 +132,13 @@ CExplosionGeneratorHandler::~CExplosionGeneratorHandler()
 	delete exploParser; exploParser = NULL;
 	delete aliasParser; aliasParser = NULL;
 	delete explTblRoot; explTblRoot = NULL;
+
+	explosionGenerators.clear();
+
+	gCEG->Unload(this);
+	gCEG->ClearCache();
+
+	delete gCEG; gCEG = NULL;
 }
 
 void CExplosionGeneratorHandler::ParseExplosionTables() {
@@ -161,34 +172,61 @@ void CExplosionGeneratorHandler::ParseExplosionTables() {
 
 IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag)
 {
-	string klass;
+	string prefix = tag;
+	string postfix = "";
 	string::size_type seppos = tag.find(':');
 
-	if (seppos == string::npos) {
-		klass = tag;
-	} else {
-		klass = tag.substr(0, seppos);
+	if (seppos != string::npos) {
+		// grab the "custom" prefix (the only supported value)
+		prefix = tag.substr(0, seppos);
+		postfix = tag.substr(seppos + 1);
+		assert(prefix == "custom");
 	}
 
-	creg::Class* cls = generatorClasses.GetClass(klass);
+	creg::Class* cls = generatorClasses.GetClass(prefix);
 
 	if (!cls->IsSubclassOf(IExplosionGenerator::StaticClass())) {
-		throw content_error(klass + " is not a subclass of IExplosionGenerator");
+		throw content_error(prefix + " is not a subclass of IExplosionGenerator");
 	}
 
-	IExplosionGenerator* eg = (IExplosionGenerator*) cls->CreateInstance();
+	IExplosionGenerator* explGen = (IExplosionGenerator*) cls->CreateInstance();
+	explGen->SetGeneratorID(++numLoadedGenerators);
+
+	assert(gCEG != explGen);
+	assert(gCEG->GetGeneratorID() == 0);
 
 	if (seppos != string::npos) {
-		eg->Load(this, tag.substr(seppos + 1));
+		explGen->Load(this, postfix);
 	}
 
-	return eg;
+	explosionGenerators[explGen->GetGeneratorID()] = explGen;
+	return explGen;
 }
 
 void CExplosionGeneratorHandler::UnloadGenerator(IExplosionGenerator* explGen)
 {
+	assert(gCEG != explGen);
+	assert(gCEG->GetGeneratorID() == 0);
+
+	explGen->Unload(this);
+	explosionGenerators.erase(explGen->GetGeneratorID());
+
 	creg::Class* cls = explGen->GetClass();
 	cls->DeleteInstance(explGen);
+}
+
+void CExplosionGeneratorHandler::ReloadGenerators(const std::string& tag) {
+	// re-parse the projectile and generator tables
+	ParseExplosionTables();
+
+	std::map<unsigned int, IExplosionGenerator*>& egs = explosionGenerators;
+	std::map<unsigned int, IExplosionGenerator*>::iterator egsIt;
+
+	for (egsIt = egs.begin(); egsIt != egs.end(); ++egsIt) {
+		(egsIt->second)->Reload(this, tag);
+	}
+
+	gCEG->Reload(this, tag);
 }
 
 
@@ -391,7 +429,7 @@ bool CStdExplosionGenerator::Explosion(
 
 
 
-void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3 &dir)
+void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir, bool synced)
 {
 	float val = 0.0f;
 	void* ptr = NULL;
@@ -429,7 +467,12 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				break;
 			}
 			case OP_RAND: {
-				val += gu->usRandFloat() * (*(float*) code);
+				if (synced) {
+					val += gs->randFloat() * (*(float*) code);
+				} else {
+					val += gu->usRandFloat() * (*(float*) code);
+				}
+
 				code += 4;
 				break;
 			}
@@ -529,66 +572,77 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		code.append((char*) &ofs, (char*) &ofs + 2);
 	}
 	else if (dynamic_cast<creg::BasicType*>(type.get())) {
-		creg::BasicType *bt = (creg::BasicType*)type.get();
+		const creg::BasicType* basicType = (creg::BasicType*) type.get();
+		const bool legalType =
+			(basicType->id == creg::crInt  ) ||
+			(basicType->id == creg::crFloat) ||
+			(basicType->id == creg::crUChar) ||
+			(basicType->id == creg::crBool );
 
-		if (bt->id != creg::crInt && bt->id != creg::crFloat && bt->id != creg::crUChar && bt->id != creg::crBool) {
-			throw content_error("Projectile properties other than int, float and uchar, are not supported (" + script + ")");
+		if (!legalType) {
+			throw content_error("[CCEG::ParseExplosionCode] projectile type-properties other than int, float, uchar, or bool are not supported (" + script + ")");
 			return;
 		}
 
 		int p = 0;
+
 		while (p < script.length()) {
-			char opcode;
-			char c;
-			do { c = script[p++]; } while (c == ' ');
+			char opcode = OP_END;
+			char c = script[p++];
+
+			// consume whitespace
+			if (c == ' ')
+				continue;
 
 			bool useInt = false;
 
-			if (c == 'i')      opcode = OP_INDEX;
-			else if (c == 'r') opcode = OP_RAND;
-			else if (c == 'd') opcode = OP_DAMAGE;
-			else if (c == 'm') opcode = OP_SAWTOOTH;
-			else if (c == 'k') opcode = OP_DISCRETE;
-			else if (c == 's') opcode = OP_SINE;
-			else if (c == 'y') {opcode = OP_YANK; useInt = true;}
-			else if (c == 'x') {opcode = OP_MULTIPLY; useInt = true;}
-			else if (c == 'a') {opcode = OP_ADDBUFF; useInt = true;}
-			else if (c == 'p') opcode = OP_POW;
-			else if (c == 'q') {opcode = OP_POWBUFF; useInt = true;}
+			     if (c == 'i')   opcode = OP_INDEX;
+			else if (c == 'r')   opcode = OP_RAND;
+			else if (c == 'd')   opcode = OP_DAMAGE;
+			else if (c == 'm')   opcode = OP_SAWTOOTH;
+			else if (c == 'k')   opcode = OP_DISCRETE;
+			else if (c == 's')   opcode = OP_SINE;
+			else if (c == 'p')   opcode = OP_POW;
+			else if (c == 'y') { opcode = OP_YANK;     useInt = true; }
+			else if (c == 'x') { opcode = OP_MULTIPLY; useInt = true; }
+			else if (c == 'a') { opcode = OP_ADDBUFF;  useInt = true; }
+			else if (c == 'q') { opcode = OP_POWBUFF;  useInt = true; }
 			else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
 			else {
-				LOG_L(L_WARNING,
-					"[CCEG::ParseExplosionCode] unknown op-code \"%c\" in \"%s\" at index %d",
-					c, script.c_str(), p);
+				const char* fmt = "[CCEG::ParseExplosionCode] unknown op-code \"%c\" in \"%s\" at index %d";
+				LOG_L(L_WARNING, fmt, c, script.c_str(), p);
 				continue;
 			}
 
-			char* endp;
+			// be sure to exit cleanly if there are no more operators or operands
+			if (p >= script.size())
+				continue;
+
+			char* endp = NULL;
+
 			if (!useInt) {
 				const float v = (float)strtod(&script[p], &endp);
 
-				p += endp - &script[p];
+				p += (endp - &script[p]);
 				code += opcode;
 				code.append((char*) &v, ((char*) &v) + 4);
 			} else {
 				const int v = std::max(0, std::min(16, (int)strtol(&script[p], &endp, 10)));
 
-				p += endp - &script[p];
+				p += (endp - &script[p]);
 				code += opcode;
 				code.append((char*) &v, ((char*) &v) + 4);
 			}
 		}
 
-		switch (bt->id) {
-			case creg::crInt: code.push_back(OP_STOREI); break;
-			case creg::crBool: code.push_back(OP_STOREI); break;
+		switch (basicType->id) {
+			case creg::crInt:   code.push_back(OP_STOREI); break;
+			case creg::crBool:  code.push_back(OP_STOREI); break;
 			case creg::crFloat: code.push_back(OP_STOREF); break;
 			case creg::crUChar: code.push_back(OP_STOREC); break;
-			default:
-				throw content_error("Explosion script variable is of unsupported type. "
-					"Contact the Spring team to fix this.");
-					break;
+			default: break;
 		}
+
 		boost::uint16_t ofs = offset;
 		code.append((char*)&ofs, (char*)&ofs + 2);
 	}
@@ -651,8 +705,10 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		} else if (type->GetName() == "IExplosionGenerator*") {
 			string::size_type end = script.find(';', 0);
 			string name = script.substr(0, end);
+
 			IExplosionGenerator* explGen = explGenHandler->LoadGenerator(name);
-			explGens.push_back(explGen); // these will be unloaded in ~CCustomExplosionGenerator()
+			spawnExplGens.push_back(explGen); // these will be unloaded in ~CCustomExplosionGenerator()
+
 			void* explGenRaw = (void*) explGen;
 			code += OP_LOADP;
 			code.append((char*)(&explGenRaw), ((char*)(&explGenRaw)) + sizeof(void*));
@@ -665,7 +721,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 
 
-unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string& tag)
+unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const string& tag)
 {
 	unsigned int explosionID = -1U;
 
@@ -678,7 +734,7 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, cons
 	if (it == explosionIDs.end()) {
 		CEGData cegData;
 
-		const LuaTable* root = h->GetExplosionTableRoot();
+		const LuaTable* root = handler->GetExplosionTableRoot();
 		const LuaTable& expTable = (root != NULL)? root->SubTable(tag): LuaTable();
 
 		if (!expTable.IsValid()) {
@@ -704,7 +760,7 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, cons
 
 			const string className = spawnTable.GetString("class", spawnName);
 
-			psi.projectileClass = h->projectileClasses.GetClass(className);
+			psi.projectileClass = handler->projectileClasses.GetClass(className);
 			psi.flags = GetFlagsFromTable(spawnTable);
 			psi.count = spawnTable.GetInt("count", 1);
 
@@ -756,32 +812,30 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, cons
 	return explosionID;
 }
 
-void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
-	// re-parse the projectile and generator tables
-	explGenHandler->ParseExplosionTables();
-
+void CCustomExplosionGenerator::Reload(CExplosionGeneratorHandler* handler, const std::string& tag) {
 	if (tag.empty()) {
 		std::map<std::string, unsigned int> oldExplosionIDs(explosionIDs);
 		std::map<std::string, unsigned int>::const_iterator it;
 
+		Unload(handler);
 		ClearCache();
 
 		// reload all currently cached CEGs by tag
 		// (ID's of active CEGs will remain valid)
 		for (it = oldExplosionIDs.begin(); it != oldExplosionIDs.end(); ++it) {
 			const std::string& tmpTag = it->first;
+			const char* fmt = "[%s][generatorID=%u] reloading CEG \"%s\" (tagID %u)";
 
-			LOG("[%s] reloading CEG \"%s\" (ID %u)",
-					__FUNCTION__, tmpTag.c_str(), it->second);
+			LOG(fmt, __FUNCTION__, generatorID, tmpTag.c_str(), it->second);
 			Load(explGenHandler, tmpTag);
 		}
 	} else {
 		// reload a single CEG
 		const std::map<std::string, unsigned int>::const_iterator it = explosionIDs.find(tag);
+		const char* fmt = "[%s][generatorID=%u] unknown CEG-tag \"%s\"";
 
 		if (it == explosionIDs.end()) {
-			LOG_L(L_WARNING, "[%s] unknown CEG-tag \"%s\"",
-					__FUNCTION__, tag.c_str());
+			// LOG_L(L_WARNING, fmt, __FUNCTION__, generatorID, tag.c_str());
 			return;
 		}
 
@@ -797,12 +851,12 @@ void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
 		explosionData[cegIndex] = tmpCEG;
 		explosionData.pop_back();
 
-		LOG("[%s] reloading single CEG \"%s\" (ID %u)",
-				__FUNCTION__, tag.c_str(), cegIndex);
+		LOG("[%s][generatorID=%u] reloading single CEG \"%s\" (tagID %u)",
+			__FUNCTION__, generatorID, tag.c_str(), cegIndex);
 
 		if (Load(explGenHandler, tag) == -1U) {
-			LOG_L(L_ERROR, "[%s] failed to reload single CEG \"%s\" (ID %u)",
-					__FUNCTION__, tag.c_str(), cegIndex);
+			LOG_L(L_ERROR, "[%s][generatorID=%u] failed to reload single CEG \"%s\" (tagID %u)",
+				__FUNCTION__, generatorID, tag.c_str(), cegIndex);
 
 			// reload failed, keep the old CEG
 			explosionIDs[tag] = cegIndex;
@@ -821,7 +875,6 @@ void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
 		}
 	}
 }
-
 
 bool CCustomExplosionGenerator::Explosion(
 	unsigned int explosionID,
@@ -867,7 +920,7 @@ bool CCustomExplosionGenerator::Explosion(
 		for (int c = 0; c < psi.count; c++) {
 			CExpGenSpawnable* projectile = (CExpGenSpawnable*) (psi.projectileClass)->CreateInstance();
 
-			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir);
+			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir, (psi.flags & SPW_SYNCED) != 0);
 			projectile->Init(pos, owner);
 		}
 	}
@@ -913,14 +966,18 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 	}
 }
 
+void CCustomExplosionGenerator::Unload(CExplosionGeneratorHandler* handler) {
+	std::vector<IExplosionGenerator*>::iterator egi;
+
+	for (egi = spawnExplGens.begin(); egi != spawnExplGens.end(); ++egi) {
+		handler->UnloadGenerator(*egi);
+	}
+}
+
 void CCustomExplosionGenerator::ClearCache()
 {
-	std::vector<IExplosionGenerator*>::iterator egi;
-	for (egi = explGens.begin(); egi != explGens.end(); ++egi) {
-		explGenHandler->UnloadGenerator(*egi);
-	}
-
-	explGens.clear();
+	spawnExplGens.clear();
 	explosionIDs.clear();
 	explosionData.clear();
 }
+

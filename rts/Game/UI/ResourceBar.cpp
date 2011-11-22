@@ -99,9 +99,10 @@ void CResourceBar::Draw()
 	x2 = metalbarx2;
 	y2 = metaly + .020f;
 
-	if (myTeam->metalStorage != 0.0f) {
+	if (myTeam->metalStorage != 0.0f)
 		x = (myTeam->metal / myTeam->metalStorage) * metalbarlen;
-	}
+	else
+		x = 0.0f;
 
 	// metal draw
 	glColor4f(0.8f, 0.8f, 0.8f, 0.2f);

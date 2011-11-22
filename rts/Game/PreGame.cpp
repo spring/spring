@@ -443,13 +443,21 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	LOG("Using map: %s", gameSetup->mapName.c_str());
 
 	vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
-	archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
+	try {
+		archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
+	} catch (const content_error& ex) {
+		LOG_L(L_WARNING, "Incompatible map-checksum: %s", ex.what());
+	}
 
 	LOG("Using game: %s", gameSetup->modName.c_str());
 	vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
 	modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
 	LOG("Using game archive: %s", modArchive.c_str());
-	archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
+	try {
+		archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
+	} catch (const content_error& ex) {
+		LOG_L(L_WARNING, "Incompatible game-checksum: %s", ex.what());
+	}
 
 	if (net && net->GetDemoRecorder()) {
 		net->GetDemoRecorder()->SetName(gameSetup->mapName, gameSetup->modName);

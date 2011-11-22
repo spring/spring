@@ -823,11 +823,9 @@ bool CLuaRules::ShieldPreDamaged(
 		return ret;
 	}
 
-	const CUnit* projectileOwner = projectile->owner();
-
 	// push the call-in arguments
 	lua_pushnumber(L, projectile->id);
-	lua_pushnumber(L, ((projectileOwner != NULL)? projectileOwner->id: -1));
+	lua_pushnumber(L, projectile->GetOwnerID());
 	lua_pushnumber(L, shieldEmitter->weaponNum);
 	lua_pushnumber(L, shieldCarrier->id);
 	lua_pushboolean(L, bounceProjectile);

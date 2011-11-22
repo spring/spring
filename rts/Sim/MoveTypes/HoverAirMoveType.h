@@ -99,7 +99,6 @@ private:
 
 	bool CanLandAt(const float3& pos) const;
 	void ExecuteStop();
-	void DependentDied(CObject* o);
 
 	void Takeoff();
 	bool IsFighter() const { return false; }

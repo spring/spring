@@ -299,6 +299,11 @@ CUnit::~CUnit()
 	// Remove us from our group, if we were in one
 	SetGroup(NULL);
 
+	if (script != &CNullUnitScript::value) {
+		delete script;
+		script = NULL;
+	}
+	// ScriptCallback may reference weapons, so delete the script first
 	for (std::vector<CWeapon*>::const_iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		delete *wi;
 	}
@@ -307,11 +312,6 @@ CUnit::~CUnit()
 	loshandler->DelayedFreeInstance(los);
 	los = NULL;
 	radarhandler->RemoveUnit(this);
-
-	if (script != &CNullUnitScript::value) {
-		delete script;
-		script = NULL;
-	}
 
 	modelParser->DeleteLocalModel(this);
 }
@@ -721,10 +721,8 @@ void CUnit::Update()
 
 	if (stunned) {
 		// leave the pad if reserved
-		if (moveType->reservedPad) {
-			airBaseHandler->LeaveLandingPad(moveType->reservedPad);
-			moveType->DependentDied(moveType->reservedPad->GetUnit()); // restore wantedHeight etc
-		}
+		moveType->UnreservePad(moveType->GetReservedPad());
+
 		// paralyzed weapons shouldn't reload
 		for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 			++(*wi)->reloadStatus;
@@ -1454,16 +1452,16 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 void CUnit::ChangeTeamReset()
 {
 	// stop friendly units shooting at us
-	const std::map<DependenceType, std::list<CObject*> >& listeners = GetAllListeners();
+	const CObject::TDependenceMap& listeners = GetAllListeners();
 	std::vector<CUnit *> alliedunits;
-	for (std::map<DependenceType, std::list<CObject*> >::const_iterator li = listeners.begin(); li != listeners.end(); ++li) {
-		for (std::list<CObject *>::const_iterator di = li->second.begin(); di != li->second.end(); ++di) {
-			CUnit* u = dynamic_cast<CUnit *>(*di);
+	for (CObject::TDependenceMap::const_iterator li = listeners.begin(); li != listeners.end(); ++li) {
+		for (CObject::TSyncSafeSet::const_iterator di = li->second.begin(); di != li->second.end(); ++di) {
+			CUnit* u = dynamic_cast<CUnit*>(*di);
 			if (u != NULL && teamHandler->AlliedTeams(team, u->team))
 				alliedunits.push_back(u);
 		}
 	}
-	for (std::vector<CUnit *>::const_iterator ui = alliedunits.begin(); ui != alliedunits.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = alliedunits.begin(); ui != alliedunits.end(); ++ui) {
 		(*ui)->StopAttackingAllyTeam(allyteam);
 	}
 	// and stop shooting at friendly ally teams

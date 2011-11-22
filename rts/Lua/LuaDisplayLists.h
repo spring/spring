@@ -35,10 +35,11 @@ class CLuaDisplayLists {
 		
 		GLuint GetDList(unsigned int index) const
 		{
-			if ((index <= 0) || (index >= active.size())) {
+			if (index < active.size()) {
+				return active[index];
+			} else {
 				return 0;
 			}
-			return active[index];
 		}
 
 		unsigned int NewDList(GLuint dlist)
@@ -58,10 +59,7 @@ class CLuaDisplayLists {
 				
 		void FreeDList(unsigned int index)
 		{
-			if ((index <= 0) || (index >= active.size())) {
-				return;
-			}
-			if (active[index] != 0) {
+			if ((index < active.size()) && (active[index] != 0)) {
 				active[index] = 0;
 				unused.push_back(index);
 			}

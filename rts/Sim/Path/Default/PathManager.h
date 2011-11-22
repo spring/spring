@@ -96,7 +96,8 @@ private:
 
 	struct MultiPath {
 		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveData* moveData)
-			: start(pos)
+			: searchResult(IPath::Error)
+			, start(pos)
 			, peDef(def)
 			, moveData(moveData)
 			, finalGoal(ZeroVector)
