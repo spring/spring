@@ -2,26 +2,27 @@
 
 set -e #abort on error
 
-if [ $# -lt 2 ]; then
-	echo "Usage: $0 AI AIversion"
+if [ $# -lt 4 ]; then
+	echo "Usage: $0 Game Map AI AIversion"
 	exit 1
 fi
-
-AI="$1"
-AIVERSION="$2"
+GAME="$1"
+MAP="$2"
+AI="$3"
+AIVERSION="$4"
 
 cat <<EOD
 // a validation script
-// runs a $AI $AIVERSION vs $AI $AIVERSION game
+// runs $GAME with $AI $AIVERSION vs $AI $AIVERSION on $MAP
 [GAME]
 {
 	IsHost=1;
 	MyPlayerName=TestMonkey;
 
-	Mapname=Altair_Crossing-V1;
-	GameType=Balanced Annihilation V7.60;
+	Mapname=$MAP;
+	GameType=$GAME;
 
-	startpostype=3;
+	StartPosType=0;
 	[mapoptions]
 	{
 	}
@@ -93,8 +94,6 @@ cat <<EOD
 	[TEAM0]
 	{
 		TeamLeader=2;
-		StartPosX=496;
-		StartPosZ=1924;
 		AllyTeam=0;
 		RGBColor=0.976471 1 0;
 		Side=ARM;
@@ -103,8 +102,6 @@ cat <<EOD
 	[TEAM1]
 	{
 		TeamLeader=2;
-		StartPosX=3755;
-		StartPosZ=2037;
 		AllyTeam=1;
 		RGBColor=0.509804 0.498039 1;
 		Side=ARM;
