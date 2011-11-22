@@ -39,7 +39,9 @@ function makescript {
 	MAP=$2
 	AI=$3
 	AIVERSION=$4
-	${SOURCEDIR}/test/validation/prepare.sh $GAME $MAP $AI $AIVERSION > ${CONTENT_DIR}/$AI.script.txt
+	OUTPUT=${CONTENT_DIR}/$AI.script.txt
+	echo "Creating $OUTPUT"
+	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
 }
 
 download_file $DOWNLOADDIR/ba760.sdz http://springfiles.com/sites/default/files/downloads/spring/games/ba760.sdz
