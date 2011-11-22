@@ -6,6 +6,7 @@
  */
 
 #include "Backend.h"
+#include "FramePrefixer.h"
 #include "Level.h" // for LOG_LEVEL_*
 #include "System/maindefines.h"
 
@@ -15,9 +16,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-//FIXME `extern` is evil better export functions correctly in their header files!!!
-extern char* log_formatter_getFrame_prefix();
 
 /// Choose the out-stream for logging
 static inline FILE* log_chooseStream(int level) {
@@ -43,7 +41,8 @@ static inline FILE* log_chooseStream(int level) {
 static void log_sink_record_console(const char* section, int level,
 		const char* record)
 {
-	char* framePrefix = log_formatter_getFrame_prefix();
+	char framePrefix[128] = {'\0'};
+	log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));
 
 	FILE* outStream = log_chooseStream(level);
 	FPRINTF(outStream, "%s%s\n", framePrefix, record);

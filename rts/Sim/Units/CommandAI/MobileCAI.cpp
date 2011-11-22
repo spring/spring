@@ -228,10 +228,10 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 			return;
 
 		switch ((int) c.params[0]) {
-			case 0: { airMT->repairBelowHealth = 0.0f; break; }
-			case 1: { airMT->repairBelowHealth = 0.3f; break; }
-			case 2: { airMT->repairBelowHealth = 0.5f; break; }
-			case 3: { airMT->repairBelowHealth = 0.8f; break; }
+			case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
+			case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
+			case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
+			case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
 		}
 		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi) {
@@ -284,7 +284,7 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 /// returns true if the unit has to land
 bool CMobileCAI::RefuelIfNeeded()
 {
-	if (owner->moveType->reservedPad != NULL) {
+	if (owner->moveType->GetReservedPad() != NULL) {
 		// we already have a pad
 		return false;
 	}
@@ -343,7 +343,7 @@ bool CMobileCAI::RefuelIfNeeded()
 /// returns true if the unit has to land
 bool CMobileCAI::LandRepairIfNeeded()
 {
-	if (owner->moveType->reservedPad != NULL)
+	if (owner->moveType->GetReservedPad() != NULL)
 		return false;
 
 	if (!owner->moveType->WantsRepair())
@@ -959,7 +959,7 @@ void CMobileCAI::StopMove()
 
 void CMobileCAI::BuggerOff(const float3& pos, float radius)
 {
-	if(radius < 0.0f) {
+	if (radius < 0.0f) {
 		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
 		return;
 	}

@@ -518,15 +518,11 @@ static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
 	const int proID = luaL_checkint(L, index);
-	ProjectileMap::iterator it = ph->syncedProjectileIDs.find(proID);
-
-	if (it == ph->syncedProjectileIDs.end()) {
-		// not an assigned synced projectile ID
+	const ProjectileMapPair* pp = ph->GetMapPairBySyncedID(proID);
+	if (!pp) {
 		return NULL;
 	}
-
-	const ProjectileMapPair& pp = it->second;
-	return IsProjectileVisible(pp)? pp.first: NULL;
+	return IsProjectileVisible(*pp)? pp->first: NULL;
 }
 
 
@@ -3388,11 +3384,10 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 	HSTR_PUSH_NUMBER(L, "goalx", amt->goalPos.x);
 	HSTR_PUSH_NUMBER(L, "goaly", amt->goalPos.y);
 	HSTR_PUSH_NUMBER(L, "goalz", amt->goalPos.z);
-	HSTR_PUSH_NUMBER(L, "padStatus", amt->padStatus);
-	HSTR_PUSH_NUMBER(L, "repairBelowHealth", amt->repairBelowHealth);
 
-	CGroundMoveType* groundmt = dynamic_cast<CGroundMoveType*>(unit->moveType);
-	if (groundmt) {
+	const CGroundMoveType* groundmt = dynamic_cast<CGroundMoveType*>(unit->moveType);
+
+	if (groundmt != NULL) {
 		HSTR_PUSH_STRING(L, "name", "ground");
 
 		HSTR_PUSH_NUMBER(L, "turnRate", groundmt->turnRate);
@@ -3420,8 +3415,16 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		return 1;
 	}
 
-	CHoverAirMoveType* hAMT = dynamic_cast<CHoverAirMoveType*>(unit->moveType);
-	if (hAMT) {
+	const AAirMoveType* aamt = dynamic_cast<AAirMoveType*>(unit->moveType);
+
+	if (aamt != NULL) {
+		HSTR_PUSH_NUMBER(L, "padStatus", aamt->GetPadStatus());
+		HSTR_PUSH_NUMBER(L, "repairBelowHealth", aamt->repairBelowHealth);
+	}
+
+	const CHoverAirMoveType* hAMT = dynamic_cast<CHoverAirMoveType*>(unit->moveType);
+
+	if (hAMT != NULL) {
 		HSTR_PUSH_STRING(L, "name", "gunship");
 
 		HSTR_PUSH_NUMBER(L, "wantedHeight", hAMT->wantedHeight);
@@ -3482,8 +3485,9 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		return 1;
 	}
 
-	CStrafeAirMoveType* sAMT = dynamic_cast<CStrafeAirMoveType*>(unit->moveType);
-	if (sAMT) {
+	const CStrafeAirMoveType* sAMT = dynamic_cast<CStrafeAirMoveType*>(unit->moveType);
+
+	if (sAMT != NULL) {
 		HSTR_PUSH_STRING(L, "name", "airplane");
 
 		switch (sAMT->aircraftState) {
@@ -3524,14 +3528,16 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		return 1;
 	}
 
-	CStaticMoveType* staticmt = dynamic_cast<CStaticMoveType*>(unit->moveType);
-	if (staticmt) {
+	const CStaticMoveType* staticmt = dynamic_cast<CStaticMoveType*>(unit->moveType);
+
+	if (staticmt != NULL) {
 		HSTR_PUSH_STRING(L, "name", "static");
 		return 1;
 	}
 
-	CScriptMoveType* scriptmt = dynamic_cast<CScriptMoveType*>(unit->moveType);
-	if (scriptmt) {
+	const CScriptMoveType* scriptmt = dynamic_cast<CScriptMoveType*>(unit->moveType);
+
+	if (scriptmt != NULL) {
 		HSTR_PUSH_STRING(L, "name", "script");
 		return 1;
 	}

@@ -408,7 +408,6 @@ CGame::~CGame()
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
 	SafeDelete(explGenHandler);
-	SafeDelete(gCEG);
 	SafeDelete(helper);
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
@@ -534,7 +533,6 @@ void CGame::LoadSimulation(const std::string& mapName)
 	qf = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
-	gCEG = new CCustomExplosionGenerator();
 
 	{
 		//! FIXME: these five need to be loaded before featureHandler
@@ -1739,7 +1737,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 		file << "\t\t\t\toldUpdatePos: <" << oldUpdatePos.x << ", " << oldUpdatePos.y << ", " << oldUpdatePos.z << ">\n";
 		file << "\t\t\t\toldSlowUpPos: <" << oldSlowUpPos.x << ", " << oldSlowUpPos.y << ", " << oldSlowUpPos.z << ">\n";
 		file << "\t\t\t\tmaxSpeed: " << amt->maxSpeed << ", maxWantedSpeed: " << amt->maxWantedSpeed << "\n";
-		file << "\t\t\t\tpadStatus: " << amt->padStatus << ", progressState: " << amt->progressState << "\n";
+		file << "\t\t\t\tprogressState: " << amt->progressState << "\n";
 		#endif
 	}
 	#endif
@@ -2071,10 +2069,6 @@ void CGame::ReloadCOB(const string& msg, int player)
 		}
 	}
 	LOG("Reloaded cob script for %i units", count);
-}
-
-void CGame::ReloadCEGs(const std::string& tag) {
-	gCEG->RefreshCache(tag);
 }
 
 

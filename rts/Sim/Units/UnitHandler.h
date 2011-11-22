@@ -70,7 +70,7 @@ public:
 
 	std::list<CUnit*> activeUnits;                    ///< used to get all active units
 	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
-	std::list<CBuilderCAI*> builderCAIs;
+	std::list<CBuilderCAI*> builderCAIs; //FIXME use std::set?
 
 	float maxUnitRadius;                              ///< largest radius of any unit added so far
 	bool morphUnitToFeature;

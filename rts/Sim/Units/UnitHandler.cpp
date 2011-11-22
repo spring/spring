@@ -124,10 +124,10 @@ bool CUnitHandler::AddUnit(CUnit *unit)
 	}
 
 	unit->id = freeUnitIDs.front();
+	freeUnitIDs.pop_front();
 	units[unit->id] = unit;
 
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
-
 	if (ui != activeUnits.end()) {
 		// randomize this to make the slow-update order random (good if one
 		// builds say many buildings at once and then many mobile ones etc)
@@ -137,9 +137,7 @@ bool CUnitHandler::AddUnit(CUnit *unit)
 			++ui;
 		}
 	}
-
 	activeUnits.insert(ui, unit);
-	freeUnitIDs.pop_front();
 
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
 	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
@@ -552,14 +550,14 @@ void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
 	GML_STDMUTEX_LOCK(cai); // AddBuilderCAI
 
-	builderCAIs.insert(builderCAIs.end(), b);
+	builderCAIs.push_back(b);
 }
 
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
 	GML_STDMUTEX_LOCK(cai); // RemoveBuilderCAI
 
-	ListErase<CBuilderCAI*>(builderCAIs, b);
+	builderCAIs.remove(b);
 }
 
 
