@@ -50,12 +50,18 @@ download_file $DOWNLOADDIR/zk-v0.8.14.sdz http://packages.springrts.com/builds/z
 
 #install required files into spring dir
 cd ${SOURCEDIR}
-mkdir -p ${CONTENT_DIR}/games ${CONTENT_DIR}/maps ${CONTENT_DIR}/LuaUI/Widgets
+mkdir -p ${CONTENT_DIR}/games ${CONTENT_DIR}/maps ${CONTENT_DIR}/LuaUI/Widgets ${CONTENT_DIR}/LuaUI/Config
+
 #symlink files into into destination dir
 cp -suv ${DOWNLOADDIR}/ba760.sdz ${CONTENT_DIR}/games/ba760.sdz
 cp -suv ${DOWNLOADDIR}/zk-v0.8.14.sdz ${CONTENT_DIR}/games/zk-v0.8.14.sdz
 cp -suv ${DOWNLOADDIR}/Altair_Crossing.sd7 ${CONTENT_DIR}/maps/Altair_Crossing.sd7
+
+#copy widget + config
 cp -suv ${SOURCEDIR}/test/validation/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
+cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI/Config/ZK_data.lua
+
+#copy default config for spring-headless
 cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${TESTDIR}/.springrc
 
 #set data directory to test directory
