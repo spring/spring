@@ -20,6 +20,9 @@ fi
 cd ${BUILDDIR}
 make install-spring-headless DESTDIR=${TESTDIR}
 
+# HACK/FIXME force spring to detect install dir as read-only
+find ${TESTDIR} -type d |xargs chmod 555
+
 cd ${SOURCEDIR}
 
 function download_file {
