@@ -1,7 +1,8 @@
+-- Widget Custom Data
 return {
 	version = 8,
         ["Local Widgets Config"] = {
-                localWidgets = false,
+                localWidgets = true,
                 localWidgetsFirst = true,
         },
 }
