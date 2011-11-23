@@ -695,7 +695,7 @@ void CGroundMoveType::UpdateSkid()
 
 			skidRotSpd = math::floor(skidRotSpeed + skidRotAccel + 0.5f);
 			skidRotAccel = (skidRotSpd - skidRotSpeed) * 0.5f;
-			skidRotAccel *= (M_PI / 180.0f);
+			skidRotAccel *= (PI / 180.0f);
 
 			ChangeHeading(owner->heading);
 		} else {
@@ -716,7 +716,7 @@ void CGroundMoveType::UpdateSkid()
 
 			skidRotSpd = math::floor(skidRotSpeed + skidRotAccel * (remTime - 1.0f) + 0.5f);
 			skidRotAccel = (skidRotSpd - skidRotSpeed) / remTime;
-			skidRotAccel *= (M_PI / 180.0f);
+			skidRotAccel *= (PI / 180.0f);
 
 			if (math::floor(skidRotSpeed) != math::floor(skidRotSpeed + skidRotAccel)) {
 				skidRotSpeed = 0.0f;
