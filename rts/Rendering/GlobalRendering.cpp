@@ -117,6 +117,7 @@ void CGlobalRendering::PostInit() {
 		const std::string renderer = (glRenderer != NULL)? StringToLower(std::string(glRenderer)): "";
 
 		haveATI = (vendor.find("ati ") != std::string::npos);
+		haveGLSL = haveGLSL && (vendor.find("intel") == std::string::npos);
 
 		if (haveATI) {
 			// x-series doesn't support NPOTs (but hd-series does)
