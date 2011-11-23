@@ -103,8 +103,8 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(flatFrontDir),
 
 	CR_MEMBER(skidRotVector),
-	CR_MEMBER(skidRotAccel),
 	CR_MEMBER(skidRotSpeed),
+	CR_MEMBER(skidRotAccel),
 	CR_ENUM_MEMBER(oldPhysState),
 
 	CR_MEMBER(mainHeadingPos),
@@ -147,8 +147,9 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	useMainHeading(false),
 
 	skidRotVector(UpVector),
-	skidRotAccel(0.0f),
 	skidRotSpeed(0.0f),
+	skidRotAccel(0.0f),
+
 	oldPhysState(CSolidObject::OnGround),
 
 	flatFrontDir(0.0f, 0.0, 1.0f),
@@ -558,6 +559,9 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
  * FIXME near-duplicate of HoverAirMoveType::UpdateHeading
  */
 void CGroundMoveType::ChangeHeading(short newHeading) {
+	if (flying)
+		return;
+
 	wantedHeading = newHeading;
 	SyncedSshort& heading = owner->heading;
 	const short deltaHeading = wantedHeading - heading;
@@ -600,34 +604,34 @@ void CGroundMoveType::ImpulseAdded(const float3&)
 	if (groundImpulseScale < 0.0f)
 		impulse -= (groundNormal * groundImpulseScale);
 
-	if (impulse.SqLength() > 9.0f || groundImpulseScale > 0.3f) {
-		skidding = true;
-		speed += impulse;
-		impulse = ZeroVector;
+	if (impulse.SqLength() <= 9.0f && groundImpulseScale <= 0.3f)
+		return;
 
-		skidRotAccel = 0.0f;
-		skidRotSpeed = 0.0f;
+	skidding = true;
+	useHeading = false;
 
-		float3 skidDir;
+	speed += impulse;
+	impulse = ZeroVector;
 
-		if (speed.SqLength2D() >= 0.01f) {
-			skidDir = speed;
-			skidDir.y = 0.0f;
-			skidDir.Normalize();
-		} else {
-			skidDir = owner->frontdir;
-		}
+	skidRotSpeed = 0.0f;
+	skidRotAccel = 0.0f;
 
-		skidRotVector = skidDir.cross(UpVector);
+	float3 skidDir = owner->frontdir;
 
-		oldPhysState = owner->physicalState;
-		owner->physicalState = CSolidObject::Flying;
-		owner->moveType->useHeading = false;
+	if (speed.SqLength2D() >= 0.01f) {
+		skidDir = speed;
+		skidDir.y = 0.0f;
+		skidDir.Normalize();
+	}
 
-		if (speed.dot(groundNormal) > 0.2f) {
-			skidRotAccel = (gs->randFloat() - 0.5f) * 0.04f;
-			flying = true;
-		}
+	skidRotVector = skidDir.cross(UpVector);
+
+	oldPhysState = owner->physicalState;
+	owner->physicalState = CSolidObject::Flying;
+
+	if (speed.dot(groundNormal) > 0.2f) {
+		skidRotAccel = (gs->randFloat() - 0.5f) * 0.04f;
+		flying = true;
 	}
 
 	ASSERT_SANE_OWNER_SPEED(speed);
@@ -644,44 +648,54 @@ void CGroundMoveType::UpdateSkid()
 	const UnitDef* ud = owner->unitDef;
 
 	if (flying) {
-		speed.y += mapInfo->map.gravity;
-
+		// water drag
 		if (midPos.y < 0.0f)
 			speed *= 0.95f;
 
-		const float wh = GetGroundHeight(midPos);
+		const float groundHeight = GetGroundHeight(midPos);
 		const float impactSpeed = midPos.IsInBounds()?
 			-speed.dot(ground->GetNormal(midPos.x, midPos.z)):
 			-speed.dot(UpVector);
 		const float impactDamageMult = impactSpeed * owner->mass * 0.02f;
 
-		if (wh > (midPos.y - owner->relMidPos.y)) {
+		if (groundHeight > (midPos.y - owner->relMidPos.y)) {
 			flying = false;
-			midPos.y = wh + owner->relMidPos.y - speed.y * 0.5f;
+			midPos.y = groundHeight + owner->relMidPos.y - speed.y * 0.5f;
 
 			// deal ground impact damage
+			// TODO:
+			//     bouncing behaves too much like a rubber-ball,
+			//     most impact energy needs to go into the ground
 			if (impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0.0f) {
 				owner->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 			}
+
+			skidRotSpeed = 0.0f;
+			// skidRotAccel = 0.0f;
+		} else {
+			speed.y += mapInfo->map.gravity;
 		}
 	} else {
 		float speedf = speed.Length();
-		float skidRotSpdNew = 0.0f;
+		float skidRotSpd = 0.0f;
 
 		const bool onSlope = OnSlope(-1.0f);
 		const float speedReduction = 0.35f;
+		const float groundHeight = GetGroundHeight(pos);
 
 		if (speedf < speedReduction && !onSlope) {
 			// stop skidding
 			currentSpeed = 0.0f;
 			speed = ZeroVector;
+
 			skidding = false;
+			useHeading = true;
 
 			owner->physicalState = oldPhysState;
-			owner->moveType->useHeading = true;
 
-			skidRotSpdNew = floor(skidRotSpeed + skidRotAccel + 0.5f);
-			skidRotAccel = (skidRotSpdNew - skidRotSpeed) * 0.5f;
+			skidRotSpd = math::floor(skidRotSpeed + skidRotAccel + 0.5f);
+			skidRotAccel = (skidRotSpd - skidRotSpeed) * 0.5f;
+			skidRotAccel *= (M_PI / 180.0f);
 
 			ChangeHeading(owner->heading);
 		} else {
@@ -697,25 +711,26 @@ void CGroundMoveType::UpdateSkid()
 				speed *= (1.0f - std::min(1.0f, speedReduction / speedf)); // clamped 0..1
 			}
 
-			// number of frames until rotational speed drops to 0
-			const float remTime = speedf / speedReduction;
+			// number of frames until rotational speed would drop to 0
+			const float remTime = std::max(1.0f, speedf / speedReduction);
 
-			skidRotSpdNew = floor(skidRotSpeed + skidRotAccel * (remTime - 1.0f) + 0.5f);
-			skidRotAccel = (remTime > 0.1f)? ((skidRotSpdNew - skidRotSpeed) / remTime): 0.0f;
+			skidRotSpd = math::floor(skidRotSpeed + skidRotAccel * (remTime - 1.0f) + 0.5f);
+			skidRotAccel = (skidRotSpd - skidRotSpeed) / remTime;
+			skidRotAccel *= (M_PI / 180.0f);
 
-			if (floor(skidRotSpeed) != floor(skidRotSpeed + skidRotAccel)) {
+			if (math::floor(skidRotSpeed) != math::floor(skidRotSpeed + skidRotAccel)) {
 				skidRotSpeed = 0.0f;
 				skidRotAccel = 0.0f;
 			}
 		}
 
-		const float wh = GetGroundHeight(pos);
-
-		if ((wh - pos.y) < (speed.y + mapInfo->map.gravity)) {
+		if ((groundHeight - pos.y) < (speed.y + mapInfo->map.gravity)) {
 			speed.y += mapInfo->map.gravity;
-			skidding = true; // flying requires skidding
+
 			flying = true;
-		} else if ((wh - pos.y) > speed.y) {
+			skidding = true; // flying requires skidding
+			useHeading = false; // and relies on CalcSkidRot
+		} else if ((groundHeight - pos.y) > speed.y) {
 			const float3& normal = (pos.IsInBounds())? ground->GetNormal(pos.x, pos.z): UpVector;
 			const float dot = speed.dot(normal);
 
@@ -728,8 +743,10 @@ void CGroundMoveType::UpdateSkid()
 		}
 	}
 
-	CalcSkidRot();
+	// translate before rotate
 	owner->MoveMidPos(speed);
+
+	CalcSkidRot();
 	CheckCollisionSkid();
 
 	// always update <oldPos> here so that <speed> does not make
@@ -743,25 +760,26 @@ void CGroundMoveType::UpdateSkid()
 
 void CGroundMoveType::UpdateControlledDrop()
 {
+	if (!owner->falling)
+		return;
+
 	float3& speed = owner->speed;
 	SyncedFloat3& midPos = owner->midPos;
 
-	if (owner->falling) {
-		speed.y += (mapInfo->map.gravity * owner->fallSpeed);
-		speed.y = std::min(speed.y, 0.0f);
+	speed.y += (mapInfo->map.gravity * owner->fallSpeed);
+	speed.y = std::min(speed.y, 0.0f);
 
-		owner->MoveMidPos(speed);
+	owner->MoveMidPos(speed);
 
-		if (midPos.y < 0.0f)
-			speed *= 0.90;
+	if (midPos.y < 0.0f)
+		speed *= 0.90;
 
-		const float wh = GetGroundHeight(midPos);
+	const float wh = GetGroundHeight(midPos);
 
-		if (wh > (midPos.y - owner->relMidPos.y)) {
-			owner->falling = false;
-			midPos.y = wh + owner->relMidPos.y - speed.y * 0.8;
-			owner->script->Landed(); //stop parachute animation
-		}
+	if (wh > (midPos.y - owner->relMidPos.y)) {
+		owner->falling = false;
+		midPos.y = wh + owner->relMidPos.y - speed.y * 0.8;
+		owner->script->Landed(); //stop parachute animation
 	}
 }
 
@@ -889,10 +907,12 @@ void CGroundMoveType::CheckCollisionSkid()
 void CGroundMoveType::CalcSkidRot()
 {
 	skidRotSpeed += skidRotAccel;
+	skidRotSpeed *= 0.999f;
 	skidRotAccel *= 0.95f;
 
-	const float cosp = cos(skidRotSpeed * PI * 2.0f);
-	const float sinp = sin(skidRotSpeed * PI * 2.0f);
+	const float angle = (skidRotSpeed / GAME_SPEED) * (PI * 2.0f);
+	const float cosp = math::cos(angle);
+	const float sinp = math::sin(angle);
 
 	float3 f1 = skidRotVector * skidRotVector.dot(owner->frontdir);
 	float3 f2 = owner->frontdir - f1;
@@ -1740,44 +1760,45 @@ void CGroundMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressiv
 * @brief Orients owner so that weapon[0]'s arc includes mainHeadingPos
 */
 void CGroundMoveType::SetMainHeading() {
-	if (useMainHeading && !owner->weapons.empty()) {
-		float3 dir1 = owner->weapons.front()->mainDir;
-		float3 dir2 = mainHeadingPos - owner->pos;
-		dir1.y = 0.0f;
-		dir1.Normalize();
-		dir2.y = 0.0f;
-		dir2.SafeNormalize();
+	if (!useMainHeading) return;
+	if (owner->weapons.empty()) return;
 
-		ASSERT_SYNCED(dir1);
-		ASSERT_SYNCED(dir2);
+	float3 dir1 = owner->weapons.front()->mainDir;
+	float3 dir2 = mainHeadingPos - owner->pos;
+	dir1.y = 0.0f;
+	dir1.Normalize();
+	dir2.y = 0.0f;
+	dir2.SafeNormalize();
 
-		if (dir2 != ZeroVector) {
-			short heading =
-				GetHeadingFromVector(dir2.x, dir2.z) -
-				GetHeadingFromVector(dir1.x, dir1.z);
+	ASSERT_SYNCED(dir1);
+	ASSERT_SYNCED(dir2);
 
-			ASSERT_SYNCED(heading);
+	if (dir2 != ZeroVector) {
+		short heading =
+			GetHeadingFromVector(dir2.x, dir2.z) -
+			GetHeadingFromVector(dir1.x, dir1.z);
 
-			if (progressState == Active && owner->heading == heading) {
-				// stop turning
-				owner->script->StopMoving();
-				progressState = Done;
-			} else if (progressState == Active) {
-				ChangeHeading(heading);
+		ASSERT_SYNCED(heading);
+
+		if (progressState == Active && owner->heading == heading) {
+			// stop turning
+			owner->script->StopMoving();
+			progressState = Done;
+		} else if (progressState == Active) {
+			ChangeHeading(heading);
 #ifdef TRACE_SYNC
-				tracefile << "[" << __FUNCTION__ << "][1] test heading: " << heading << ", real heading: " << owner->heading << "\n";
+			tracefile << "[" << __FUNCTION__ << "][1] test heading: " << heading << ", real heading: " << owner->heading << "\n";
 #endif
-			} else if (progressState != Active
-			  && owner->heading != heading
-			  && !owner->weapons.front()->TryTarget(mainHeadingPos, true, 0)) {
-				// start moving
-				progressState = Active;
-				owner->script->StartMoving();
-				ChangeHeading(heading);
+		} else if (progressState != Active
+		  && owner->heading != heading
+		  && !owner->weapons.front()->TryTarget(mainHeadingPos, true, 0)) {
+			// start moving
+			progressState = Active;
+			owner->script->StartMoving();
+			ChangeHeading(heading);
 #ifdef TRACE_SYNC
-				tracefile << "[" << __FUNCTION__ << "][2] test heading: " << heading << ", real heading: " << owner->heading << "\n";
+			tracefile << "[" << __FUNCTION__ << "][2] test heading: " << heading << ", real heading: " << owner->heading << "\n";
 #endif
-			}
 		}
 	}
 }
