@@ -70,6 +70,9 @@ Options
 *--list-skirmish-ais*::
   Dump a list of available Skirmish AIs to STDOUT
 
+*--list-config-vars*::
+  Dump all default config vars in JSON-format to STDOUT
+
 See also
 --------
 

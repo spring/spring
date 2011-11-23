@@ -111,8 +111,8 @@ protected:
 	bool useMainHeading;
 
 	float3 skidRotVector;  /// vector orthogonal to skidDir
-	float skidRotAccel;    /// rotational acceleration when skidding
-	float skidRotSpeed;    /// rotational speed when skidding
+	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
+	float skidRotAccel;    /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
 
 	CSolidObject::PhysicalState oldPhysState;
 
