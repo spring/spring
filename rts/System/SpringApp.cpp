@@ -789,6 +789,7 @@ void SpringApp::LoadFonts()
 void SpringApp::ParseCmdLine()
 {
 	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf]");
+	cmdline->AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
 	cmdline->AddSwitch('f', "fullscreen",         "Run in fullscreen mode");
 	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
 	cmdline->AddInt(   'x', "xresolution",        "Set X resolution");
