@@ -42,9 +42,9 @@ Release Time
 		git merge release --no-ff
 5)  Tag the develop branch:
 		git tag -a -m "dev version after the 83.0 release" 83.0.1
-7)  POINT OF NO RETURN: Push to the main repo:
-		git push --tags origin master develop
-9)  Force build of the master branch on hte windows and the OS-X buildbots.
+7)  POINT OF NO RETURN: Push to the main repo (and delete the release branch):
+		git push --tags origin develop :release master
+9)  Force build of the master branch on the windows and the OS-X buildbots.
     The later will take long to compleete, one hour or more!
 10) Write the news post for the springrts.com frontpage, while waiting for the
     buildbot to compile the master branch.
