@@ -106,6 +106,9 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 		if (src && prio <= sndItem->GetPriority()) {
 			src->Stop();
+		} else {
+			LOG_L(L_DEBUG, "CSound::PlaySample: Max sounds reached! Dropping playback!");
+			return;
 		}
 	}
 
