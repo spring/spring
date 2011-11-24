@@ -5,14 +5,12 @@
 #include "System/mmgr.h"
 
 #include "InfoConsole.h"
+#include "InputReceiver.h"
 #include "GuiHandler.h"
 #include "Rendering/glFont.h"
-
-#include "System/Sync/SyncTracer.h"
+#include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/EventClient.h"
 #include "System/Log/LogSinkHandler.h"
-#include "InputReceiver.h"
 
 #include <fstream>
 
@@ -54,11 +52,13 @@ CInfoConsole::CInfoConsole()
 	fontSize = fontScale * smallFont->GetSize();
 
 	logSinkHandler.AddSink(this);
+	eventHandler.AddClient(this);
 }
 
 CInfoConsole::~CInfoConsole()
 {
 	logSinkHandler.RemoveSink(this);
+	eventHandler.RemoveClient(this);
 }
 
 void CInfoConsole::Draw()
