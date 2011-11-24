@@ -1068,6 +1068,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		_isFetching = 1;
 		_isRetSize  = 0;
 		_isObj      = 0;
+		_isNative   = !_isObj;
 		_mapVar_size      = "_size";
 		_mapVar_keys      = "keys";
 		_mapVar_values    = "values";
@@ -1129,7 +1130,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo "[" _mapVar_keys "[i]] = " _mapVar_values "[i];" "\n";
 				}
 			} else if (_isNative) {
-				#conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
+				conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo "[" _mapVar_keys "[i]] = " _mapVar_values "[i];" "\n";
 			} else {
 				print("Error: not transfering C to OO type in map transfer code");
 				exit(1);
