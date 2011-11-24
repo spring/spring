@@ -17,7 +17,11 @@ Synopsis
 
 *spring* --list-skirmish-ais
 
+*spring* --list-config-vars
+
 *spring* [-h|--help]
+
+*spring* --sync-version
 
 *spring* [-V|--version]
 
@@ -40,6 +44,9 @@ Options
 
 *-V, --version*::
   Display program version and exit
+
+*--sync-version*::
+  Display program sync version (for online gaming) and exit
 
 *-f, --fullscreen*::
   Run in fullscreen mode
