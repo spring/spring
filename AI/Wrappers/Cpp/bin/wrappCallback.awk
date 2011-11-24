@@ -1130,6 +1130,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				}
 			} else if (_isNative) {
 				#conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
+			} else {
+				print("Error: not transfering C to OO type in map transfer code");
+				exit(1);
 			}
 			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
 
@@ -1280,6 +1283,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				}
 			} else if (_isNative) {
 				conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".push_back(" _arrayPaNa "[i]);" "\n";
+			} else {
+				print("Error: not transfering C to OO type in array transfer code");
+				exit(1);
 			}
 			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
 
@@ -1299,6 +1305,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar "[i]->Get" _refObj "Id();" "\n";
 			} else if (_isNative) {
 				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar "[i];" "\n";
+			} else {
+				print("Error: not transfering OO to C type in array transfer code");
+				exit(1);
 			}
 			conversionCode_pre = conversionCode_pre "\t\t" "}" "\n";
 		}
