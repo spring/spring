@@ -66,6 +66,9 @@ protected:
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
+
+private:
+	std::string binaryName;
 };
 
 /**
