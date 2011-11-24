@@ -72,13 +72,12 @@ void FPSUnitController::Update() {
 		targetPos  = pos + viewDir * targetDist;
 
 		if (!mouse2) {
-			controllee->AttackGround(targetPos, true, true);
-
-			for (std::vector<CWeapon*>::iterator wi = controllee->weapons.begin(); wi != controllee->weapons.end(); ++wi) {
-				const float d = std::min(targetDist, (*wi)->range * 0.95f);
-				const float3 p = pos + viewDir * d;
-
-				(*wi)->AttackGround(p, true);
+			// if a target position is in range, but not on the ground,
+			// projectiles can gain extra flighttime and travel further
+			//
+			// NOTE: CWeapon::AttackGround checks range via TryTarget
+			if ((targetPos.y - ground->GetHeightReal(targetPos.x, targetPos.z)) <= SQUARE_SIZE) {
+				controllee->AttackGround(targetPos, true, true);
 			}
 		}
 	}
