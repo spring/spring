@@ -63,7 +63,7 @@ CDemoRecorder::~CDemoRecorder()
 	if (demoName != wantedName) {
 		if (rename(demoName.c_str(), wantedName.c_str()) != 0) {
 #ifndef DEDICATED
-			LOG_L(L_ERROR, "Renaming demo %s to %s failed: %s",
+			LOG_L(L_ERROR, "Renaming demo `%s` to `%s` failed: %s",
 					demoName.c_str(), wantedName.c_str(), strerror(errno));
 #endif
 		}
@@ -105,8 +105,6 @@ void CDemoRecorder::SetName(const std::string& mapname, const std::string& modna
 
 	std::ostringstream demoName;
 	demoName << "demos/" << curTime << "_";
-	//if (!modname.empty())
-	//	demoName << modname << "_";
 	demoName << mapname.substr(0, mapname.find_first_of(".")) << "_" << SpringVersion::GetSync();
 
 	std::ostringstream buf;
@@ -114,7 +112,7 @@ void CDemoRecorder::SetName(const std::string& mapname, const std::string& modna
 	CFileHandler ifs(buf.str());
 	if (ifs.FileExists()) {
 		for (int a = 0; a < 9; ++a) {
-			buf.clear();
+			buf.str(""); // clears content
 			buf << demoName.str() << "_" << a << ".sdf";
 			CFileHandler ifs(buf.str());
 			if (!ifs.FileExists())
