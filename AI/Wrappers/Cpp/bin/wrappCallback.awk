@@ -1076,7 +1076,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		_mapType_oo_key   = "std::string";
 		_mapType_oo_value = "std::string";
 		_mapVar_oo        = "_map";
-		_mapType_int      = "std::map<"     _mapType_oo_key "," _mapType_oo_value ">";
+		_mapType_int      = "std::map<" _mapType_oo_key "," _mapType_oo_value ">";
 		_mapType_impl     = "std::map<" _mapType_oo_key "," _mapType_oo_value ">"; # TODO: should be unused, but needs check
 
 		_mapType_key_regexEscaped = regexEscape(_mapType_key);
