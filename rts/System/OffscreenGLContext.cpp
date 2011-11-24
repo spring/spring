@@ -241,20 +241,16 @@ void COffscreenGLThread::WrapFunc(boost::function<void()> f)
 	glOffscreenCtx.WorkerThreadPost();
 
 #ifdef STREFLOP_H
-	//! init streflop to make it available for synced computations, too
+	// init streflop to make it available for synced computations, too
+	// redundant? threads copy the FPU state of their parent.
 	streflop_init<streflop::Simple>();
 #endif
 
 	try {
-		try {
-			f();
-		} CATCH_SPRING_ERRORS
+		f();
 	} catch(boost::thread_interrupted const&) {
-		//! CATCH_SPRING_ERRORS may retrow a thread_interrupted,
-		//! so it needs an own try..catch block
-
-		//! do nothing
-	}
+		// do nothing
+	} CATCH_SPRING_ERRORS
 
 
 	glOffscreenCtx.WorkerThreadFree();
