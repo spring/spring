@@ -129,7 +129,7 @@ void CFactory::Update()
 			#if (PLAY_SOUNDS == 1)
 			const int soundIdx = unitDef->sounds.build.getRandomIdx();
 			if (soundIdx >= 0) {
-				Channels::UnitReply.PlaySample(
+				Channels::General.PlaySample(
 					unitDef->sounds.build.getID(soundIdx), pos,
 					unitDef->sounds.build.getVolume(0));
 			}

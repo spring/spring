@@ -1178,9 +1178,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				break;
 		}
 		if (p4 == 0) {
-			Channels::UnitReply.PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
+			Channels::General.PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
 		} else {
-			Channels::UnitReply.PlaySample(script->sounds[p1], float(p2) / COBSCALE);
+			Channels::General.PlaySample(script->sounds[p1], float(p2) / COBSCALE);
 		}
 		return 0;
 	}
