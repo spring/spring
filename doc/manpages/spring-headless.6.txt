@@ -17,7 +17,11 @@ Synopsis
 
 *spring-headless* --list-skirmish-ais
 
+*spring-headless* --list-config-vars
+
 *spring-headless* [-h|--help]
+
+*spring-headless* --sync-version
 
 *spring-headless* [-V|--version]
 
@@ -48,6 +52,9 @@ Options
 
 *-V, --version*::
   Display program version and exit
+
+*--sync-version*::
+  Display program sync version (for online gaming) and exit
 
 *-s, --server*::
   Run as a server

@@ -11,8 +11,15 @@ spring-dedicated - An open source RTS game engine - Dedicated Server
 
 Synopsis
 --------
-*spring-dedicated* SCRIPT
+*spring-dedicated* [-C|--config 'FILE'] SCRIPT
 
+*spring-dedicated* --list-config-vars
+
+*spring-dedicated* [-h|--help]
+
+*spring-dedicated* --sync-version
+
+*spring-dedicated* [-V|--version]
 
 Description
 -----------
@@ -34,6 +41,24 @@ runs a full blown simulation of the game.
 For more details, please reffer to:
 
   man spring
+
+Options
+-------
+*-h, --help*::
+  Print the options help message and exit
+
+*-V, --version*::
+  Display program version and exit
+
+*--sync-version*::
+  Display program sync version (for online gaming) and exit
+
+ *-C, --config*::'FILE'
+  Configuration file
+
+*--list-config-vars*::
+  Dump all default config vars in JSON-format to STDOUT
+
 
 See also
 --------
