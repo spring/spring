@@ -817,10 +817,17 @@ void SpringApp::ParseCmdLine()
 	if (cmdline->IsSet("help")) {
 		cmdline->PrintUsage();
 		exit(0);
-	} else if (cmdline->IsSet("version")) {
+	}
+	if (cmdline->IsSet("version")) {
 		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
 		exit(0);
-	} else if (cmdline->IsSet("projectiledump")) {
+	}
+	if (cmdline->IsSet("sync-version")) {
+		// Note, the missing "Spring " is intentionally to make it compatible with `spring-dedicated --sync-version`
+		std::cout << SpringVersion::GetSync() << std::endl;
+		exit(0);
+	}
+	if (cmdline->IsSet("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
 		exit(0);
 	}
