@@ -600,6 +600,10 @@ bool SpringApp::GetDisplayGeometry()
  */
 void SpringApp::RestoreWindowPosition()
 {
+	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
+	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
+	globalRendering->winState = configHandler->GetInt("WindowState");
+
 #ifndef HEADLESS
 	if (!globalRendering->fullScreen) {
 		SDL_SysWMinfo info;
@@ -875,23 +879,6 @@ void SpringApp::ParseCmdLine()
 	globalRendering->viewSizeY = configHandler->GetInt("YResolution");
 	if (cmdline->IsSet("yresolution"))
 		globalRendering->viewSizeY = std::max(cmdline->GetInt("yresolution"), 480);
-
-	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
-	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
-	globalRendering->winState = configHandler->GetInt("WindowState");
-
-#ifdef USE_GML
-	gmlShareLists = configHandler->GetBool("MultiThreadShareLists");
-	if (!gmlShareLists) {
-		gmlMaxServerThreadNum = GML_LOAD_THREAD_NUM;
-		gmlNoGLThreadNum = GML_SIM_THREAD_NUM;
-	}
-	gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
-	gmlThreadCount=GML_CPU_COUNT;
-#if GML_ENABLE_SIM
-	gmlMultiThreadSim = configHandler->GetInt("MultiThreadSim");
-#endif
-#endif
 }
 
 
@@ -1142,8 +1129,18 @@ int SpringApp::Run(int argc, char *argv[])
 		return -1;
 
 #ifdef USE_GML
+	gmlShareLists = configHandler->GetBool("MultiThreadShareLists");
+	if (!gmlShareLists) {
+		gmlMaxServerThreadNum = GML_LOAD_THREAD_NUM;
+		gmlNoGLThreadNum = GML_SIM_THREAD_NUM;
+	}
+	gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
+	gmlThreadCount=GML_CPU_COUNT;
+
 	gmlProcessor = new gmlClientServer<void, int, CUnit*>;
 #	if GML_ENABLE_SIM
+	gmlMultiThreadSim = configHandler->GetInt("MultiThreadSim");
+
 	gmlKeepRunning = true;
 	gmlStartSim = false;
 
