@@ -119,7 +119,6 @@ ClientSetup* startsetup = NULL;
 COffscreenGLContext* SpringApp::ogc = NULL;
 
 
-
 /**
  * @brief multisample verify
  * @return whether verification passed
@@ -789,6 +788,7 @@ void SpringApp::LoadFonts()
  */
 void SpringApp::ParseCmdLine()
 {
+	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf]");
 	cmdline->AddSwitch('f', "fullscreen",         "Run in fullscreen mode");
 	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
 	cmdline->AddInt(   'x', "xresolution",        "Set X resolution");
@@ -808,13 +808,13 @@ void SpringApp::ParseCmdLine()
 		cmdline->Parse();
 	} catch (const std::exception& err) {
 		std::cerr << err.what() << std::endl << std::endl;
-		cmdline->PrintUsage("Spring", SpringVersion::GetFull());
+		cmdline->PrintUsage();
 		exit(1);
 	}
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->IsSet("help")) {
-		cmdline->PrintUsage("Spring",SpringVersion::GetFull());
+		cmdline->PrintUsage();
 		exit(0);
 	} else if (cmdline->IsSet("version")) {
 		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
@@ -824,12 +824,11 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	}
 
+	string configSource = "";
 	if (cmdline->IsSet("config")) {
-		string configSource = cmdline->GetString("config");
-		ConfigHandler::Instantiate(configSource);
-	} else {
-		ConfigHandler::Instantiate();
+		configSource = cmdline->GetString("config");
 	}
+	ConfigHandler::Instantiate(configSource);
 	GlobalConfig::Instantiate();
 
 	// mutually exclusive options that cause spring to quit immediately
@@ -1124,6 +1123,7 @@ static void ResetScreenSaverTimeout()
 int SpringApp::Run(int argc, char *argv[])
 {
 	cmdline = new CmdLineParams(argc, argv);
+	binaryName = argv[0];
 
 	if (!Initialize())
 		return -1;
