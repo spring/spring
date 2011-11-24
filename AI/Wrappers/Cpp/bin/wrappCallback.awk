@@ -1114,8 +1114,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			#conversionCode_pre = conversionCode_pre "\t\t" _mapVar_values " = new " _mapType_value "[" _mapVar_size "];" "\n";
 			#conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_values ";" "\n";
 			#conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_keys ";" "\n";
-			conversionCode_pre = conversionCode_pre "\t\t" _mapType_key   " " _mapVar_keys   "[" _mapVar_size "];" "\n";
-			conversionCode_pre = conversionCode_pre "\t\t" _mapType_value " " _mapVar_values "[" _mapVar_size "];" "\n";
+			# we use "new" here, for VS inflicted C90 compatibility (or C99 incompatibility)
+			conversionCode_pre = conversionCode_pre "\t\t" _mapType_key   "* " _mapVar_keys   " = new " _mapType_key   "[" _mapVar_size "];" "\n";
+			conversionCode_pre = conversionCode_pre "\t\t" _mapType_value "* " _mapVar_values " = new " _mapType_value "[" _mapVar_size "];" "\n";
 		}
 
 		if (_isFetching) {
@@ -1136,6 +1137,12 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				exit(1);
 			}
 			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
+
+			if (!_isRetSize) {
+				conversionCode_post = conversionCode_post "\n";
+				conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_keys   ";" "\n";
+				conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_values ";" "\n";
+			}
 
 			retParamType = _mapType_int;
 			retVar_out_m = _mapVar_oo;
