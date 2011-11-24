@@ -2014,7 +2014,7 @@ void CUnit::Activate()
 	#if (PLAY_SOUNDS == 1)
 	const int soundIdx = unitDef->sounds.activate.getRandomIdx();
 	if (soundIdx >= 0) {
-		Channels::UnitReply.PlaySample(
+		Channels::General.PlaySample(
 			unitDef->sounds.activate.getID(soundIdx), this,
 			unitDef->sounds.activate.getVolume(soundIdx));
 	}
@@ -2038,7 +2038,7 @@ void CUnit::Deactivate()
 	#if (PLAY_SOUNDS == 1)
 	const int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
 	if (soundIdx >= 0) {
-		Channels::UnitReply.PlaySample(
+		Channels::General.PlaySample(
 			unitDef->sounds.deactivate.getID(soundIdx), this,
 			unitDef->sounds.deactivate.getVolume(soundIdx));
 	}
