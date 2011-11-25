@@ -114,8 +114,6 @@ void CTransportUnit::DependentDied(CObject* o)
 
 void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool)
 {
-	const bool alreadyDead = isDead;
-
 	if (!isDead) {
 		// guard against recursive invocation via
 		//     transportee->KillUnit
@@ -215,11 +213,12 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 		}
 
 		transportedUnits.clear();
+
+		// make sure CUnit::KillUnit does not return early
+		isDead = false;
 	}
 
-	if (!alreadyDead) {
-		CUnit::KillUnit(selfDestruct, reclaimed, attacker);
-	}
+	CUnit::KillUnit(selfDestruct, reclaimed, attacker);
 }
 
 
