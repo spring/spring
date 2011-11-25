@@ -81,6 +81,8 @@ namespace Watchdog
 
 	static void HangDetectorLoop()
 	{
+		Threading::SetThreadName("watchdog");
+
 		while (!hangDetectorThreadInterrupted) {
 			spring_time curtime = spring_gettime();
 			bool hangDetected = false;
@@ -153,6 +155,9 @@ namespace Watchdog
 			return;
 		}
 		registeredThreads[num] = &registeredThreadsData[i];
+
+		// set threadname
+		//Threading::SetThreadName(threadNames[num]);
 
 		WatchDogThreadInfo* th_info = registeredThreads[num];
 		th_info->thread = thread;
