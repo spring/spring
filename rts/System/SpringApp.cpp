@@ -213,6 +213,10 @@ bool SpringApp::Initialize()
 
 	Watchdog::Install();
 	Watchdog::RegisterThread(WDT_MAIN, true);
+
+	// We give the process itself the name `unknown`, htop & co. will still show the binary's name.
+	// But all child threads copy by default the name of their parent, so all threads that don't set
+	// their name themselves will show up as 'unknown'.
 	Threading::SetThreadName("unknown");
 
 	// log OS version
