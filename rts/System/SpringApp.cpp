@@ -193,6 +193,7 @@ bool SpringApp::Initialize()
 	// Initialize crash reporting
 	CrashHandler::Install();
 
+#ifdef _OPENMP
 	#pragma omp parallel
 	{
 		int i = omp_get_thread_num();
@@ -202,6 +203,7 @@ bool SpringApp::Initialize()
 			Threading::SetThreadName(buf.str().c_str());
 		}
 	}
+#endif
 
 	globalRendering = new CGlobalRendering();
 
