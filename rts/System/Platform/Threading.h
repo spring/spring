@@ -50,6 +50,11 @@ namespace Threading {
 
 
 	/**
+	 * Give the current thread a name (posix-only)
+	 */
+	void SetThreadName(std::string newname);
+
+	/**
 	 * Used to raise errors in the main-thread issued by worker-threads
 	 */
 	struct Error {

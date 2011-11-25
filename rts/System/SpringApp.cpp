@@ -49,6 +49,7 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/OffscreenGLContext.h"
+#include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "System/FileSystem/DataDirLocater.h"
@@ -65,6 +66,7 @@
 
 #include "System/mmgr.h"
 
+#include <sstream>
 #ifdef WIN32
 	#include "System/Platform/Win/WinVersion.h"
 #elif defined(__APPLE__)
@@ -191,6 +193,16 @@ bool SpringApp::Initialize()
 	// Initialize crash reporting
 	CrashHandler::Install();
 
+	#pragma omp parallel
+	{
+		int i = omp_get_thread_num();
+		if (i != 0) { // 0 is the source thread
+			std::ostringstream buf;
+			buf << "omp" << i;
+			Threading::SetThreadName(buf.str().c_str());
+		}
+	}
+
 	globalRendering = new CGlobalRendering();
 
 	ParseCmdLine();
@@ -198,8 +210,8 @@ bool SpringApp::Initialize()
 	good_fpu_control_registers("::Run");
 
 	Watchdog::Install();
-	//! register (this) mainthread
 	Watchdog::RegisterThread(WDT_MAIN, true);
+	Threading::SetThreadName("unknown");
 
 	// log OS version
 	LOG("OS: %s", Platform::GetOS().c_str());

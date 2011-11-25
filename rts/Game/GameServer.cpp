@@ -58,6 +58,7 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoReader.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Platform/Threading.h"
 
 
 #define PKTCACHE_VECSIZE 1000
@@ -2227,6 +2228,8 @@ std::string CGameServer::SpeedControlToString(int speedCtrl) {
 void CGameServer::UpdateLoop()
 {
 	try {
+		Threading::SetThreadName("netcode");
+		
 		while (!quitServer) {
 			spring_sleep(spring_msecs(10));
 
