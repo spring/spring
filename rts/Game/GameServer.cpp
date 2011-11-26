@@ -1881,7 +1881,7 @@ void CGameServer::StartGame()
 		packetCache.clear(); // free memory
 
 	if (UDPNet && !canReconnect && !allowAdditionalPlayers)
-		UDPNet->Listen(false); // don't accept new connections
+		UDPNet->SetAcceptingConnections(false); // do not accept new connections
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
 	UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
@@ -2257,7 +2257,7 @@ void CGameServer::UpdateLoop()
 
 bool CGameServer::WaitsOnCon() const
 {
-	return (UDPNet && UDPNet->Listen());
+	return (UDPNet && UDPNet->IsAcceptingConnections());
 }
 
 void CGameServer::KickPlayer(const int playerNum)
