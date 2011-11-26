@@ -81,6 +81,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading
 	${ENGINE_SRC_ROOT_DIR}/System/TdfParser
 	${ENGINE_SRC_ROOT_DIR}/System/GlobalConfig
 	${ENGINE_SRC_ROOT_DIR}/System/Info
