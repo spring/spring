@@ -29,6 +29,7 @@ namespace netcode
 using namespace boost::asio;
 
 UDPListener::UDPListener(int port, const std::string& ip)
+	: acceptNewConnections(false)
 {
 	SocketPtr socket;
 
