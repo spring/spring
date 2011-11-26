@@ -1054,11 +1054,12 @@ void CStrafeAirMoveType::ImpulseAdded(const float3&)
 float3 CStrafeAirMoveType::FindLandingPos() const
 {
 	const float3 ret(-1.0f, -1.0f, -1.0f);
+	const UnitDef* ud = owner->unitDef;
 
 	float3 tryPos = owner->pos + owner->speed * owner->speed.Length() / (maxAcc * 3);
 	tryPos.y = ground->GetHeightReal(tryPos.x, tryPos.z);
 
-	if ((tryPos.y < 0) && !(owner->unitDef->floater || owner->unitDef->canSubmerge)) {
+	if ((tryPos.y < 0) && !(ud->floatOnWater || ud->canSubmerge)) {
 		return ret;
 	}
 

@@ -19,7 +19,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Sim/Units/UnitHandler.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Log/ILog.h"
@@ -1126,58 +1126,62 @@ void CDynWater::AddShipWakes()
 		va2->EnlargeArrays(nadd, 0, VA_SIZE_TN);
 
 		for (std::set<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-			CUnit* unit = *ui;
+			const CUnit* unit = *ui;
+			const UnitDef* unitDef = unit->unitDef;
+			const MoveData* moveData = unitDef->movedata;
 
-			if (unit->moveType && unit->mobility) {
-				if (unit->unitDef->canhover) {
-					// hovercraft
-					const float3& pos = unit->pos;
+			if (moveData == NULL) {
+				continue;
+			}
 
-					if ((fabs(pos.x - camPosBig.x) > (WH_SIZE - 50))
-							|| (fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
-					{
-						continue;
-					}
-					if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) {
-						continue;
-					}
+			if (moveData->moveType == MoveData::Hover_Move) {
+				// hovercraft
+				const float3& pos = unit->pos;
 
-					if ((pos.y > -4.0f) && (pos.y < 4.0f)) {
-						const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
-						const float3 sideAdd = unit->rightdir * unit->radius * 0.75f;
-						const float depth = sqrt(sqrt(unit->mass)) * 0.4f;
-						const float3 n(depth, 0.05f * depth, depth);
+				if ((fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
+					(fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
+				{
+					continue;
+				}
+				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) {
+					continue;
+				}
 
-						va2->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
-						va2->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
-						va2->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
-						va2->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
-					}
-				} else if (unit->floatOnWater) {
-					// surface ship
-					const float speedf = unit->speed.Length2D();
-					const float3& pos = unit->pos;
+				if ((pos.y > -4.0f) && (pos.y < 4.0f)) {
+					const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
+					const float3 sideAdd = unit->rightdir * unit->radius * 0.75f;
+					const float depth = sqrt(sqrt(unit->mass)) * 0.4f;
+					const float3 n(depth, 0.05f * depth, depth);
 
-					if ((fabs(pos.x - camPosBig.x) > (WH_SIZE - 50))
-							|| (fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
-					{
-						continue;
-					}
-					if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) {
-						continue;
-					}
+					va2->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
+					va2->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
+					va2->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
+					va2->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
+				}
+			} else if (moveData->moveType == MoveData::Ship_Move) {
+				// surface ship
+				const float speedf = unit->speed.Length2D();
+				const float3& pos = unit->pos;
 
-					if ((pos.y > -4.0f) && (pos.y < 1.0f)) {
-						const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
-						const float3 sideAdd = unit->rightdir * unit->radius * 0.18f;
-						const float depth = sqrt(sqrt(unit->mass));
-						const float3 n(depth, 0.04f * speedf * depth, depth);
+				if ((fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
+					(fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
+				{
+					continue;
+				}
+				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) {
+					continue;
+				}
 
-						va->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
-						va->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
-						va->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
-						va->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
-					}
+				if ((pos.y > -4.0f) && (pos.y < 1.0f)) {
+					const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
+					const float3 sideAdd = unit->rightdir * unit->radius * 0.18f;
+					const float depth = sqrt(sqrt(unit->mass));
+					const float3 n(depth, 0.04f * speedf * depth, depth);
+
+					va->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
+					va->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
+					va->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
+					va->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
 				}
 			}
 		}

@@ -462,30 +462,32 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 void CUnitLoader::FlattenGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
+	const MoveData* moveData = unitDef->movedata;
 	const float groundheight = ground->GetHeightReal(unit->pos.x, unit->pos.z);
 
-	if (!mapDamage->disabled && unitDef->levelGround &&
-		!(unitDef->floater && groundheight <= 0) &&
-		!(unitDef->canmove && (unitDef->speed > 0.0f))) {
-		// if we are float-capable, only flatten
-		// if the terrain here is above sea level
+	if (mapDamage->disabled) return;
+	if (!unitDef->levelGround) return;
+	if (!unitDef->IsImmobileUnit()) return;
+	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
 
-		BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
-		bi.pos = helper->Pos2BuildPos(bi, true);
-		const float hss = 0.5f * SQUARE_SIZE;
-		const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
-		const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
-		const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
-		const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
+	// if we are float-capable, only flatten
+	// if the terrain here is above sea level
+	BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
+	bi.pos = helper->Pos2BuildPos(bi, true);
 
-		for (int z = tz1; z <= tz2; z++) {
-			for (int x = tx1; x <= tx2; x++) {
-				readmap->SetHeight(z * gs->mapxp1 + x, bi.pos.y);
-			}
+	const float hss = 0.5f * SQUARE_SIZE;
+	const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
+	const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
+	const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
+	const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
+
+	for (int z = tz1; z <= tz2; z++) {
+		for (int x = tx1; x <= tx2; x++) {
+			readmap->SetHeight(z * gs->mapxp1 + x, bi.pos.y);
 		}
-
-		mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 	}
+
+	mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 }
 
 void CUnitLoader::RestoreGround(const CUnit* unit)
@@ -493,47 +495,47 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	const UnitDef* unitDef = unit->unitDef;
 	const float groundheight = ground->GetHeightReal(unit->pos.x, unit->pos.z);
 
-	if (!mapDamage->disabled && unitDef->levelGround &&
-		!(unitDef->floater && groundheight <= 0) &&
-		!(unitDef->canmove && (unitDef->speed > 0.0f))) {
+	if (mapDamage->disabled) return;
+	if (!unitDef->levelGround) return;
+	if (!unitDef->IsImmobileUnit()) return;
+	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
 
-		BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
-		bi.pos = helper->Pos2BuildPos(bi, true);
-		const float hss = 0.5f * SQUARE_SIZE;
-		const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
-		const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
-		const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
-		const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
+	BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
+	bi.pos = helper->Pos2BuildPos(bi, true);
+	const float hss = 0.5f * SQUARE_SIZE;
+	const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
+	const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
+	const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
+	const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
 
 
-		const float* heightmap = readmap->GetCornerHeightMapSynced();
-		int num = 0;
-		float heightdiff = 0.0f;
-		for (int z = tz1; z <= tz2; z++) {
-			for (int x = tx1; x <= tx2; x++) {
-				int index = z * gs->mapxp1 + x;
-				heightdiff += heightmap[index] - readmap->GetOriginalHeightMapSynced()[index];
-				++num;
-			}
+	const float* heightmap = readmap->GetCornerHeightMapSynced();
+	int num = 0;
+	float heightdiff = 0.0f;
+	for (int z = tz1; z <= tz2; z++) {
+		for (int x = tx1; x <= tx2; x++) {
+			int index = z * gs->mapxp1 + x;
+			heightdiff += heightmap[index] - readmap->GetOriginalHeightMapSynced()[index];
+			++num;
 		}
-		// adjust the terrain profile to match orgheightmap
-		heightdiff /= (float)num;
-		heightdiff += unit->pos.y - bi.pos.y;
-		for (int z = tz1; z <= tz2; z++) {
-			for (int x = tx1; x <= tx2; x++) {
-				int index = z * gs->mapxp1 + x;
-				readmap->SetHeight(index, heightdiff + readmap->GetOriginalHeightMapSynced()[index]);
-			}
-		}
-		// but without affecting the build height
-		heightdiff = bi.pos.y - helper->Pos2BuildPos(bi, true).y;
-		for (int z = tz1; z <= tz2; z++) {
-			for (int x = tx1; x <= tx2; x++) {
-				int index = z * gs->mapxp1 + x;
-				readmap->SetHeight(index, heightdiff + heightmap[index]);
-			}
-		}
-
-		mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 	}
+	// adjust the terrain profile to match orgheightmap
+	heightdiff /= (float)num;
+	heightdiff += unit->pos.y - bi.pos.y;
+	for (int z = tz1; z <= tz2; z++) {
+		for (int x = tx1; x <= tx2; x++) {
+			int index = z * gs->mapxp1 + x;
+			readmap->SetHeight(index, heightdiff + readmap->GetOriginalHeightMapSynced()[index]);
+		}
+	}
+	// but without affecting the build height
+	heightdiff = bi.pos.y - helper->Pos2BuildPos(bi, true).y;
+	for (int z = tz1; z <= tz2; z++) {
+		for (int x = tx1; x <= tx2; x++) {
+			int index = z * gs->mapxp1 + x;
+			readmap->SetHeight(index, heightdiff + heightmap[index]);
+		}
+	}
+
+	mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 }

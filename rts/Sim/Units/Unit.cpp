@@ -419,13 +419,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	decloakDistance = unitDef->decloakDistance;
 	cloakTimeout = unitDef->cloakTimeout;
 
-
-	floatOnWater =
-		unitDef->floater ||
-		(unitDef->movedata && ((unitDef->movedata->moveType == MoveData::Hover_Move) ||
-							   (unitDef->movedata->moveType == MoveData::Ship_Move)));
-
-	if (floatOnWater && (pos.y <= 0.0f))
+	if (unitDef->floatOnWater && (pos.y <= 0.0f))
 		pos.y = -unitDef->waterline;
 
 	maxSpeed = unitDef->speed / GAME_SPEED;
@@ -471,15 +465,22 @@ void CUnit::PostInit(const CUnit* builder)
 
 	UpdateMidPos();
 
-	// all ships starts on water, all others on ground.
-	// TODO: Improve this. There might be cases when this is not correct.
-	if (unitDef->movedata &&
-	    (unitDef->movedata->moveType == MoveData::Hover_Move)) {
-		physicalState = CSolidObject::Hovering;
-	} else if (floatOnWater) {
-		physicalState = CSolidObject::Floating;
+	if (unitDef->movedata != NULL) {
+		switch (unitDef->movedata->moveType) {
+			case MoveData::Hover_Move: {
+				physicalState = CSolidObject::Hovering;
+			} break;
+			case MoveData::Ship_Move: {
+				physicalState = CSolidObject::Floating;
+			} break;
+			default: {
+				physicalState = CSolidObject::OnGround;
+			} break;
+		}
 	} else {
-		physicalState = CSolidObject::OnGround;
+		physicalState = (unitDef->floatOnWater)?
+			CSolidObject::Floating:
+			CSolidObject::OnGround;
 	}
 
 	// all units are blocking (ie. register on the blk-map

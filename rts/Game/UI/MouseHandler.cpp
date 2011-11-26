@@ -146,36 +146,49 @@ void CMouseHandler::LoadCursors()
 	const CMouseCursor::HotSpot mTopLeft = CMouseCursor::TopLeft;
 
 	AssignMouseCursor("",             "cursornormal",     mTopLeft, false);
+
 	AssignMouseCursor("Area attack",  "cursorareaattack", mCenter,  false);
 	AssignMouseCursor("Area attack",  "cursorattack",     mCenter,  false); // backup
+
 	AssignMouseCursor("Attack",       "cursorattack",     mCenter,  false);
 	AssignMouseCursor("BuildBad",     "cursorbuildbad",   mCenter,  false);
 	AssignMouseCursor("BuildGood",    "cursorbuildgood",  mCenter,  false);
 	AssignMouseCursor("Capture",      "cursorcapture",    mCenter,  false);
 	AssignMouseCursor("Centroid",     "cursorcentroid",   mCenter,  false);
+
 	AssignMouseCursor("DeathWait",    "cursordwatch",     mCenter,  false);
 	AssignMouseCursor("DeathWait",    "cursorwait",       mCenter,  false); // backup
-	AssignMouseCursor("ManualFire",   "cursordgun",       mCenter,  false); // FIXME
+
+	AssignMouseCursor("ManualFire",   "cursormanfire",    mCenter,  false);
 	AssignMouseCursor("ManualFire",   "cursorattack",     mCenter,  false); // backup
+
 	AssignMouseCursor("Fight",        "cursorfight",      mCenter,  false);
 	AssignMouseCursor("Fight",        "cursorattack",     mCenter,  false); // backup
+
 	AssignMouseCursor("GatherWait",   "cursorgather",     mCenter,  false);
 	AssignMouseCursor("GatherWait",   "cursorwait",       mCenter,  false); // backup
+
 	AssignMouseCursor("Guard",        "cursordefend",     mCenter,  false);
 	AssignMouseCursor("Load units",   "cursorpickup",     mCenter,  false);
 	AssignMouseCursor("Move",         "cursormove",       mCenter,  false);
 	AssignMouseCursor("Patrol",       "cursorpatrol",     mCenter,  false);
 	AssignMouseCursor("Reclaim",      "cursorreclamate",  mCenter,  false);
 	AssignMouseCursor("Repair",       "cursorrepair",     mCenter,  false);
+
 	AssignMouseCursor("Resurrect",    "cursorrevive",     mCenter,  false);
 	AssignMouseCursor("Resurrect",    "cursorrepair",     mCenter,  false); // backup
+
 	AssignMouseCursor("Restore",      "cursorrestore",    mCenter,  false);
 	AssignMouseCursor("Restore",      "cursorrepair",     mCenter,  false); // backup
+
 	AssignMouseCursor("SelfD",        "cursorselfd",      mCenter,  false);
+
 	AssignMouseCursor("SquadWait",    "cursornumber",     mCenter,  false);
 	AssignMouseCursor("SquadWait",    "cursorwait",       mCenter,  false); // backup
+
 	AssignMouseCursor("TimeWait",     "cursortime",       mCenter,  false);
 	AssignMouseCursor("TimeWait",     "cursorwait",       mCenter,  false); // backup
+
 	AssignMouseCursor("Unload units", "cursorunload",     mCenter,  false);
 	AssignMouseCursor("Wait",         "cursorwait",       mCenter,  false);
 
@@ -823,11 +836,12 @@ bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
                                       bool overwrite)
 {
 	std::map<std::string, CMouseCursor*>::iterator cmdIt;
-	cmdIt = cursorCommandMap.find(cmdName);
-	const bool haveCmd = (cmdIt != cursorCommandMap.end());
-
 	std::map<std::string, CMouseCursor*>::iterator fileIt;
+
+	cmdIt = cursorCommandMap.find(cmdName);
 	fileIt = cursorFileMap.find(fileName);
+
+	const bool haveCmd = (cmdIt != cursorCommandMap.end());
 	const bool haveFile = (fileIt != cursorFileMap.end());
 
 	if (haveCmd && !overwrite) {
@@ -841,18 +855,18 @@ bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
 	}
 
 	CMouseCursor* oldCursor = haveCmd ? cmdIt->second : NULL;
+	CMouseCursor* newCursor = CMouseCursor::New(fileName, hotSpot);
 
-	CMouseCursor* cursor = CMouseCursor::New(fileName, hotSpot);
-	if (cursor == NULL) {
+	if (newCursor == NULL) {
 		return false; // invalid cursor
 	}
-	cursorFileMap[fileName] = cursor;
+
+	cursorFileMap[fileName] = newCursor;
 
 	// assign the new cursor
-	cursorCommandMap[cmdName] = cursor;
+	cursorCommandMap[cmdName] = newCursor;
 
 	SafeDeleteCursor(oldCursor);
-
 	return true;
 }
 
@@ -889,7 +903,6 @@ bool CMouseHandler::ReplaceMouseCursor(const string& oldName,
 	}
 
 	delete oldCursor;
-
 	return true;
 }
 

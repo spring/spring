@@ -2407,11 +2407,14 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToMove(int skirmishAIId, int unitD
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToHover(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->canhover;
+	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
+	const MoveData* md = ud->movedata;
+ 
+	return ((md != NULL)? (md->moveType == MoveData::Hover_Move): false);
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isFloater(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->floater;
+	return getUnitDefById(skirmishAIId, unitDefId)->floatOnWater;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isBuilder(int skirmishAIId, int unitDefId) {
@@ -2725,8 +2728,9 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isHideDamage(int skirmishAIId, int unitD
 	return getUnitDefById(skirmishAIId, unitDefId)->hideDamage;
 }
 
+// DEPRECATED
 EXPORT(bool) skirmishAiCallback_UnitDef_isCommander(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->isCommander;
+	return false;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isShowPlayerName(int skirmishAIId, int unitDefId) {

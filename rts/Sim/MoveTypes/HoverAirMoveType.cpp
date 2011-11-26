@@ -881,7 +881,10 @@ bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 	if (!autoLand) { return false; }
 	if (!pos.IsInBounds()) { return false; }
 
-	if ((ground->GetApproximateHeight(pos.x, pos.z) < 0.0f) && !(owner->unitDef->floater || owner->unitDef->canSubmerge)) {
+	const UnitDef* ud = owner->unitDef;
+	const float gah = ground->GetApproximateHeight(pos.x, pos.z);
+
+	if ((gah < 0.0f) && !(ud->floatOnWater || ud->canSubmerge)) {
 		return false;
 	}
 

@@ -5,6 +5,7 @@
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Units/Scripts/CobInstance.h"
@@ -458,18 +459,29 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	float wantedHeight = unit->pos.y;
 	float clampedHeight = wantedHeight;
 
+	const UnitDef* unitDef = unit->unitDef;
+	const MoveData* moveData = unitDef->movedata;
+
 	if (unit->transporter != NULL) {
 		// unit is being transported, set <clampedHeight> to
 		// the altitude at which to unload the transportee
 		wantedHeight = ground->GetHeightReal(wantedPos.x, wantedPos.z);
-		isAllowedHeight = unit->unitDef->IsAllowedTerrainHeight(wantedHeight, &clampedHeight);
+		isAllowedHeight = unitDef->IsAllowedTerrainHeight(wantedHeight, &clampedHeight);
 
 		if (isAllowedHeight) {
-			if (unit->unitDef->floater) {
-				wantedHeight = std::max(-unit->unitDef->waterline, wantedHeight);
-				clampedHeight = wantedHeight;
-			} else if (unit->unitDef->canhover) {
-				wantedHeight = std::max(0.0f, wantedHeight);
+			if (moveData != NULL) {
+				switch (moveData->moveType) {
+					case MoveData::Ship_Move: {
+						wantedHeight = std::max(-unitDef->waterline, wantedHeight);
+						clampedHeight = wantedHeight;
+					} break;
+					case MoveData::Hover_Move: {
+						wantedHeight = std::max(0.0f, wantedHeight);
+						clampedHeight = wantedHeight;
+					} break;
+				}
+			} else {
+				wantedHeight = (unitDef->floatOnWater)? 0.0f: wantedHeight;
 				clampedHeight = wantedHeight;
 			}
 		}
@@ -477,7 +489,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 		if (dynamic_cast<const CBuilding*>(unit) != NULL) {
 			// for transported structures, <wantedPos> must be free/buildable
 			// (note: TestUnitBuildSquare calls IsAllowedTerrainHeight again)
-			BuildInfo bi(unit->unitDef, wantedPos, unit->buildFacing);
+			BuildInfo bi(unitDef, wantedPos, unit->buildFacing);
 			bi.pos = helper->Pos2BuildPos(bi, true);
 			CFeature* f = NULL;
 
