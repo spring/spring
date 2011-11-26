@@ -30,16 +30,22 @@ CTorpedoLauncher::~CTorpedoLauncher(void)
 
 void CTorpedoLauncher::Update(void)
 {
-	if(targetType!=Target_None){
-		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-//		if(!onlyForward){
-			wantedDir=targetPos-weaponPos;
-			float dist=wantedDir.Length();
-			predict=dist/projectileSpeed;
-			wantedDir/=dist;
-//		}
+	if (targetType != Target_None) {
+		weaponPos = owner->pos +
+			owner->frontdir * relWeaponPos.z +
+			owner->updir    * relWeaponPos.y +
+			owner->rightdir * relWeaponPos.x;
+		weaponMuzzlePos = owner->pos +
+			owner->frontdir * relWeaponMuzzlePos.z +
+			owner->updir    * relWeaponMuzzlePos.y +
+			owner->rightdir * relWeaponMuzzlePos.x;
+
+		wantedDir = targetPos - weaponPos;
+		const float dist = wantedDir.Length();
+		predict = dist / projectileSpeed;
+		wantedDir /= dist;
 	}
+
 	CWeapon::Update();
 }
 
@@ -91,10 +97,10 @@ bool CTorpedoLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 	// +0.05f since torpedoes have an unfortunate tendency to hit own ships due to movement
 	float spread = (accuracy + sprayAngle) + 0.05f;
 
-	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, targetVec, targetDist, spread, owner->allyteam, owner)) {
+	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, targetVec, targetDist, spread, owner->allyteam, true, false, false, owner)) {
 		return false;
 	}
-	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, targetVec, targetDist, spread, owner)) {
+	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, targetVec, targetDist, spread, owner->allyteam, false, true, false, owner)) {
 		return false;
 	}
 
