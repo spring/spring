@@ -428,6 +428,8 @@ bool TestCone(
 			}
 		}
 	}
+
+	return false;
 }
 
 
