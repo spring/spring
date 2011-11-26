@@ -515,9 +515,9 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 
 	const float groundHeight = ground->GetHeightReal(pos.x, pos.z, synced);
 
-	if (!unitdef->floater || groundHeight > 0.0f) {
+	if (!unitdef->floatOnWater || groundHeight > 0.0f) {
 		// if we are capable of floating, only test local
-		// height difference if terrain is above sea-level
+		// height difference IF terrain is above sea-level
 		const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
 		const float* curHeightMap = readmap->GetCornerHeightMapSynced();
 
