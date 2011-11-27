@@ -634,7 +634,7 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height) const
 
 void CBitmap::CopySubImage(const CBitmap& src, unsigned int xpos, unsigned int ypos)
 {
-	if (xpos + src.xsize >= xsize || ypos + src.ysize >= ysize) {
+	if (xpos + src.xsize > xsize || ypos + src.ysize > ysize) {
 		LOG_L(L_WARNING, "CBitmap::CopySubImage src image does not fit into dst");
 		return;
 	}

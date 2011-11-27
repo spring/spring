@@ -20,7 +20,7 @@ void CStaticMoveType::SlowUpdate()
 	// FIXME: intercept heightmapUpdate events and update buildings y-pos only on-demand!
 	owner->pos.y = ground->GetHeightReal(owner->pos.x, owner->pos.z);
 
-	if (owner->floatOnWater && owner->pos.y < -owner->unitDef->waterline) {
+	if (owner->unitDef->floatOnWater && owner->pos.y < -owner->unitDef->waterline) {
 		owner->pos.y = -owner->unitDef->waterline;
 	}
 

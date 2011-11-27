@@ -19,18 +19,17 @@
 #include <cerrno>
 #include <cstring>
 
-CDemoRecorder::CDemoRecorder()
+CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName)
 {
 	// We want this folder to exist
 	if (!FileSystem::CreateDirectory("demos"))
 		return;
 
-	SetName("unnamed", "");
-	demoName = GetName();
+	SetName(mapName, modName);
 
 	const std::string filename = dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE);
 	const std::string versionString = SpringVersion::GetSync();
-	recordDemo.open(filename.c_str(), std::ios::out | std::ios::binary);
+	demoStream.open(filename.c_str(), std::ios::out | std::ios::binary);
 
 	memset(&fileHeader, 0, sizeof(DemoFileHeader));
 	strcpy(fileHeader.magic, DEMOFILE_MAGIC);
@@ -41,7 +40,7 @@ CDemoRecorder::CDemoRecorder()
 	__time64_t currtime = CTimeUtil::GetCurrentTime();
 	fileHeader.unixTime = currtime;
 
-	recordDemo.write((char*) &fileHeader, sizeof(fileHeader));
+	demoStream.write((char*) &fileHeader, sizeof(fileHeader));
 
 	fileHeader.playerStatElemSize = sizeof(PlayerStatistics);
 	fileHeader.teamStatElemSize = sizeof(TeamStatistics);
@@ -58,20 +57,7 @@ CDemoRecorder::~CDemoRecorder()
 	WriteTeamStats();
 	WriteFileHeader();
 
-	recordDemo.close();
-
-	if (demoName != wantedName) {
-		if (rename(demoName.c_str(), wantedName.c_str()) != 0) {
-#ifndef DEDICATED
-			LOG_L(L_ERROR, "Renaming demo %s to %s failed: %s",
-					demoName.c_str(), wantedName.c_str(), strerror(errno));
-#endif
-		}
-	} else {
-		// pointless?
-		//remove("demos/unnamed.sdf");
-		//rename(demoName.c_str(), "demos/unnamed.sdf");
-	}
+	demoStream.close();
 }
 
 void CDemoRecorder::WriteSetupText(const std::string& text)
@@ -82,7 +68,7 @@ void CDemoRecorder::WriteSetupText(const std::string& text)
 	}
 
 	fileHeader.scriptSize = length;
-	recordDemo.write(text.c_str(), length);
+	demoStream.write(text.c_str(), length);
 }
 
 void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime)
@@ -92,10 +78,10 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 	chunkHeader.modGameTime = modGameTime;
 	chunkHeader.length = length;
 	chunkHeader.swab();
-	recordDemo.write((char*) &chunkHeader, sizeof(chunkHeader));
-	recordDemo.write((char*) buf, length);
+	demoStream.write((char*) &chunkHeader, sizeof(chunkHeader));
+	demoStream.write((char*) buf, length);
 	fileHeader.demoStreamSize += length + sizeof(chunkHeader);
-	recordDemo.flush();
+	demoStream.flush();
 }
 
 void CDemoRecorder::SetName(const std::string& mapname, const std::string& modname)
@@ -103,26 +89,21 @@ void CDemoRecorder::SetName(const std::string& mapname, const std::string& modna
 	// Returns the current local time as "JJJJMMDD_HHmmSS", eg: "20091231_115959"
 	const std::string curTime = CTimeUtil::GetCurrentTimeStr();
 
-	std::ostringstream demoName;
-	demoName << "demos/" << curTime << "_";
-	//if (!modname.empty())
-	//	demoName << modname << "_";
-	demoName << mapname.substr(0, mapname.find_first_of(".")) << "_" << SpringVersion::GetSync();
-
+	std::ostringstream oss;
 	std::ostringstream buf;
-	buf << demoName.str() << ".sdf";
-	CFileHandler ifs(buf.str());
-	if (ifs.FileExists()) {
-		for (int a = 0; a < 9; ++a) {
-			buf.clear();
-			buf << demoName.str() << "_" << a << ".sdf";
-			CFileHandler ifs(buf.str());
-			if (!ifs.FileExists())
-				break;
-		}
+
+	oss << "demos/" << curTime << "_";
+	oss << mapname.substr(0, mapname.find_first_of(".")) << "_" << SpringVersion::GetSync();
+	buf << oss.str() << ".sdf";
+
+	unsigned int n = 0;
+
+	while (FileSystem::FileExists(buf.str()) && (n < 99)) {
+		buf.str(""); // clears content
+		buf << oss.str() << "_" << n++ << ".sdf";
 	}
 
-	wantedName = buf.str();
+	demoName = buf.str();
 }
 
 void CDemoRecorder::SetGameID(const unsigned char* buf)
@@ -179,17 +160,17 @@ Write the DemoFileHeader at the start of the file and restores the original
 position in the file afterwards. */
 void CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 {
-	int pos = recordDemo.tellp();
+	int pos = demoStream.tellp();
 
-	recordDemo.seekp(0);
+	demoStream.seekp(0);
 
 	DemoFileHeader tmpHeader;
 	memcpy(&tmpHeader, &fileHeader, sizeof(fileHeader));
 	if (!updateStreamLength)
 		tmpHeader.demoStreamSize = 0;
 	tmpHeader.swab(); // to little endian
-	recordDemo.write((char*) &tmpHeader, sizeof(tmpHeader));
-	recordDemo.seekp(pos);
+	demoStream.write((char*) &tmpHeader, sizeof(tmpHeader));
+	demoStream.seekp(pos);
 }
 
 /** @brief Write the CPlayer::Statistics at the current position in the file. */
@@ -198,16 +179,16 @@ void CDemoRecorder::WritePlayerStats()
 	if (fileHeader.numPlayers == 0)
 		return;
 
-	int pos = recordDemo.tellp();
+	int pos = demoStream.tellp();
 
 	for (std::vector< PlayerStatistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
 		PlayerStatistics& stats = *it;
 		stats.swab();
-		recordDemo.write((char*) &stats, sizeof(PlayerStatistics));
+		demoStream.write((char*) &stats, sizeof(PlayerStatistics));
 	}
 	playerStats.clear();
 
-	fileHeader.playerStatSize = (int)recordDemo.tellp() - pos;
+	fileHeader.playerStatSize = (int)demoStream.tellp() - pos;
 }
 
 
@@ -218,16 +199,16 @@ void CDemoRecorder::WriteWinnerList()
 	if (fileHeader.numTeams == 0)
 		return;
 
-	const int pos = recordDemo.tellp();
+	const int pos = demoStream.tellp();
 
 	// Write the array of winningAllyTeams.
 	for (std::vector<unsigned char>::const_iterator it = winningAllyTeams.begin(); it != winningAllyTeams.end(); ++it) {
-		recordDemo.write((char*) &(*it), sizeof(unsigned char));
+		demoStream.write((char*) &(*it), sizeof(unsigned char));
 	}
 
 	winningAllyTeams.clear();
 
-	fileHeader.winningAllyTeamsSize = int(recordDemo.tellp()) - pos;
+	fileHeader.winningAllyTeamsSize = int(demoStream.tellp()) - pos;
 }
 
 /** @brief Write the TeamStatistics at the current position in the file. */
@@ -236,12 +217,12 @@ void CDemoRecorder::WriteTeamStats()
 	if (fileHeader.numTeams == 0)
 		return;
 
-	int pos = recordDemo.tellp();
+	int pos = demoStream.tellp();
 
 	// Write array of dwords indicating number of TeamStatistics per team.
 	for (std::vector< std::vector< TeamStatistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
 		unsigned int c = swabDWord(it->size());
-		recordDemo.write((char*)&c, sizeof(unsigned int));
+		demoStream.write((char*)&c, sizeof(unsigned int));
 	}
 
 	// Write big array of TeamStatistics.
@@ -249,10 +230,10 @@ void CDemoRecorder::WriteTeamStats()
 		for (std::vector< TeamStatistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
 			TeamStatistics& stats = *it2;
 			stats.swab();
-			recordDemo.write((char*)&stats, sizeof(TeamStatistics));
+			demoStream.write((char*)&stats, sizeof(TeamStatistics));
 		}
 	}
 	teamStats.clear();
 
-	fileHeader.teamStatSize = (int)recordDemo.tellp() - pos;
+	fileHeader.teamStatSize = (int)demoStream.tellp() - pos;
 }

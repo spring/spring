@@ -17,7 +17,7 @@
 class CDemoRecorder : public CDemo
 {
 public:
-	CDemoRecorder();
+	CDemoRecorder(const std::string& mapName, const std::string& modName);
 	~CDemoRecorder();
 
 	void WriteSetupText(const std::string& text);
@@ -30,7 +30,7 @@ public:
 	destructor. Otherwise the name "DATE_TIME_unnamed_VERSION.sdf" will be used.
 	*/
 	void SetName(const std::string& mapname, const std::string& modname);
-	const std::string& GetName() const { return wantedName; }
+	const std::string& GetName() const { return demoName; }
 
 	void SetGameID(const unsigned char* buf);
 	void SetTime(int gameTime, int wallclockTime);
@@ -46,8 +46,7 @@ private:
 	void WriteTeamStats();
 	void WriteWinnerList();
 
-	std::ofstream recordDemo;
-	std::string wantedName;
+	std::ofstream demoStream;
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
 	std::vector<unsigned char> winningAllyTeams;

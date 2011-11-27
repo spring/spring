@@ -26,12 +26,12 @@ public:
 	CmdLineParams(int argc, char* argv[]);
 	~CmdLineParams();
 
-	/// Returns the script or demofile given on the command-line
 	/**
-	 * @return the script or demofile given on the command-line,
-	 *   or "" if none was given.
+	 * 
 	 */
-	std::string GetInputFile();
+	void SetUsageDescription(std::string usagedesc) {
+		usage_desc = usagedesc;
+	}
 
 	/**
 	 * Print out usage information, along with a list of command-line
@@ -39,7 +39,13 @@ public:
 	 * @param program name of the program
 	 * @param version version of this program
 	 */
-	void PrintUsage(std::string program, std::string version);
+	void PrintUsage() const;
+
+	/**
+	 * @return the script or demofile given on the command-line,
+	 *   or "" if none was given.
+	 */
+	std::string GetInputFile() const;
 
 	/**
 	 * @brief add options
@@ -90,6 +96,13 @@ protected:
 	 * Stores the C string array given at initialization
 	 */
 	char** argv;
+
+	/**
+	 * @brief usage_desc
+	 *
+	 * Stores the C string array given at initialization
+	 */
+	std::string usage_desc;
 
 	boost::program_options::variables_map vm;
 	boost::program_options::options_description desc;

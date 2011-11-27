@@ -109,13 +109,17 @@ UnitDef::UnitDef()
 , captureSpeed(0.0f)
 , terraformSpeed(0.0f)
 , mass(0.0f)
+
+, canSubmerge(false)
+, canfly(false)
+, floatOnWater(false)
 , pushResistant(false)
 , strafeToAttack(false)
 , minCollisionSpeed(0.0f)
 , slideTolerance(0.0f)
 , maxHeightDif(0.0f)
-, minWaterDepth(0.0f)
 , waterline(0.0f)
+, minWaterDepth(0.0f)
 , maxWaterDepth(0.0f)
 , armoredMultiple(0.0f)
 , armorType(0)
@@ -131,13 +135,7 @@ UnitDef::UnitDef()
 , maxWeaponRange(0.0f)
 , maxCoverage(0.0f)
 , buildPic(NULL)
-, canSelfD(true)
 , selfDCountdown(0)
-, canSubmerge(false)
-, canfly(false)
-, canmove(false)
-, canhover(false)
-, floater(false)
 , builder(false)
 , activateWhenBuilt(false)
 , onoffable(false)
@@ -146,18 +144,29 @@ UnitDef::UnitDef()
 , reclaimable(false)
 , capturable(false)
 , repairable(false)
+
+, canmove(false)
+, canAttack(false)
+, canFight(false)
+, canPatrol(false)
+, canGuard(false)
+, canRepeat(false)
+, canResurrect(false)
+, canCapture(false)
+, canCloak(false)
+, canSelfD(true)
+
 , canRestore(false)
 , canRepair(false)
-, canSelfRepair(false)
 , canReclaim(false)
-, canAttack(false)
-, canPatrol(false)
-, canFight(false)
-, canGuard(false)
 , canAssist(false)
+
 , canBeAssisted(false)
-, canRepeat(false)
+, canSelfRepair(false)
+
 , canFireControl(false)
+, canManualFire(false)
+
 , fireState(FIRESTATE_HOLDFIRE)
 , moveState(MOVESTATE_HOLDPOS)
 , wingDrag(0.0f)
@@ -201,7 +210,6 @@ UnitDef::UnitDef()
 , transportUnloadMethod(0)
 , fallSpeed(0.0f)
 , unitFallSpeed(0.0f)
-, canCloak(false)
 , startCloaked(false)
 , cloakCost(0.0f)
 , cloakCostMoving(0.0f)
@@ -213,14 +221,10 @@ UnitDef::UnitDef()
 , kamikazeDist(0.0f)
 , kamikazeUseLOS(false)
 , targfac(false)
-, canManualFire(false)
 , needGeo(false)
 , isFeature(false)
 , hideDamage(false)
-, isCommander(false)
 , showPlayerName(false)
-, canResurrect(false)
-, canCapture(false)
 , highTrajectoryType(0)
 , noChaseCategory(0)
 , leaveTracks(false)
@@ -281,8 +285,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	buildPicName = udTable.GetString("buildPic", "");
 	decoyName = udTable.GetString("decoyFor", "");
 
-	isCommander = udTable.GetBool("commander", false);
-
 	metalStorage  = udTable.GetFloat("metalStorage",  0.0f);
 	energyStorage = udTable.GetFloat("energyStorage", 0.0f);
 
@@ -319,17 +321,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		airLosRadius = airLosRadius * modInfo.airLosMul / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
 	}
 
-	canSubmerge = udTable.GetBool("canSubmerge", false);
-	canfly      = udTable.GetBool("canFly",      false);
-	canmove     = udTable.GetBool("canMove",     false);
-	reclaimable = udTable.GetBool("reclaimable", true);
-	capturable  = udTable.GetBool("capturable",  true);
-	repairable  = udTable.GetBool("repairable",  true);
-	canAttack   = udTable.GetBool("canAttack",   true);
-	canFight    = udTable.GetBool("canFight",    true);
-	canPatrol   = udTable.GetBool("canPatrol",   true);
-	canGuard    = udTable.GetBool("canGuard",    true);
-	canRepeat   = udTable.GetBool("canRepeat",   true);
 
 	builder = udTable.GetBool("builder", false);
 	buildRange3D = udTable.GetBool("buildRange3D", false);
@@ -348,13 +339,33 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	captureSpeed   = udTable.GetFloat("captureSpeed",   buildSpeed);
 	terraformSpeed = udTable.GetFloat("terraformSpeed", buildSpeed);
 
-	canRestore = udTable.GetBool("canRestore", builder);
-	canRepair  = udTable.GetBool("canRepair",  builder);
-	canReclaim = udTable.GetBool("canReclaim", builder);
-	canAssist  = udTable.GetBool("canAssist",  builder);
+	reclaimable  = udTable.GetBool("reclaimable",  true);
+	capturable   = udTable.GetBool("capturable",   true);
+	repairable   = udTable.GetBool("repairable",   true);
+
+	canmove      = udTable.GetBool("canMove",         false);
+	canAttack    = udTable.GetBool("canAttack",       true);
+	canFight     = udTable.GetBool("canFight",        true);
+	canPatrol    = udTable.GetBool("canPatrol",       true);
+	canGuard     = udTable.GetBool("canGuard",        true);
+	canRepeat    = udTable.GetBool("canRepeat",       true);
+	canResurrect = udTable.GetBool("canResurrect",    false);
+	canCapture   = udTable.GetBool("canCapture",      false);
+	canCloak     = udTable.GetBool("canCloak",        (udTable.GetFloat("cloakCost", 0.0f) != 0.0f));
+	canSelfD     = udTable.GetBool("canSelfDestruct", true);
+	canKamikaze  = udTable.GetBool("kamikaze",        false);
+
+	canRestore   = udTable.GetBool("canRestore", builder);
+	canRepair    = udTable.GetBool("canRepair",  builder);
+	canReclaim   = udTable.GetBool("canReclaim", builder);
+	canAssist    = udTable.GetBool("canAssist",  builder);
 
 	canBeAssisted = udTable.GetBool("canBeAssisted", true);
 	canSelfRepair = udTable.GetBool("canSelfRepair", false);
+
+	canFireControl = !udTable.GetBool("noAutoFire", false);
+	canManualFire = udTable.GetBool("canDGun", false);
+
 	fullHealthFactory = udTable.GetBool("fullHealthFactory", false);
 	factoryHeadingTakeoff = udTable.GetBool("factoryHeadingTakeoff", true);
 
@@ -374,8 +385,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	minCollisionSpeed = udTable.GetFloat("minCollisionSpeed", 1.0f);
 	slideTolerance = udTable.GetFloat("slideTolerance", 0.0f); // disabled
 	pushResistant = udTable.GetBool("pushResistant", false);
-
-	canSelfD = udTable.GetBool("canSelfDestruct", true);
 	selfDCountdown = udTable.GetInt("selfDestructCountdown", 5);
 
 	speed  = udTable.GetFloat("maxVelocity", 0.0f) * GAME_SPEED;
@@ -391,7 +400,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	turnInPlaceSpeedLimit = ((turnRate / SPRING_CIRCLE_DIVS) * ((PI + PI) * SQUARE_SIZE)) * (speed / GAME_SPEED);
 	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
 
-	canFireControl = !udTable.GetBool("noAutoFire", false);
 	fireState = udTable.GetInt("fireState", canFireControl? FIRESTATE_NONE: FIRESTATE_FIREATWILL);
 	fireState = std::min(fireState, int(FIRESTATE_FIREATWILL));
 	moveState = udTable.GetInt("moveState", (canmove && speed > 0.0f)? MOVESTATE_NONE: MOVESTATE_MANEUVER);
@@ -418,17 +426,15 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	sonarStealth   = udTable.GetBool("sonarStealth",       false);
 	targfac        = udTable.GetBool("isTargetingUpgrade", false);
 	isFeature      = udTable.GetBool("isFeature",          false);
-	canResurrect   = udTable.GetBool("canResurrect",       false);
-	canCapture     = udTable.GetBool("canCapture",         false);
 	hideDamage     = udTable.GetBool("hideDamage",         false);
 	showPlayerName = udTable.GetBool("showPlayerName",     false);
 
-	cloakCost = udTable.GetFloat("cloakCost", -1.0f);
-	cloakCostMoving = udTable.GetFloat("cloakCostMoving", -1.0f);
-	if (cloakCostMoving < 0) {
+	cloakCost = udTable.GetFloat("cloakCost", 0.0f);
+	cloakCostMoving = udTable.GetFloat("cloakCostMoving", 0.0f);
+
+	if (cloakCostMoving < 0.0f) {
 		cloakCostMoving = cloakCost;
 	}
-	canCloak = (cloakCost >= 0);
 
 	startCloaked     = udTable.GetBool("initCloaked", false);
 	decloakDistance  = udTable.GetFloat("minCloakDistance", 0.0f);
@@ -438,7 +444,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	highTrajectoryType = udTable.GetInt("highTrajectory", 0);
 
-	canKamikaze = udTable.GetBool("kamikaze", false);
 	kamikazeDist = udTable.GetFloat("kamikazeDistance", -25.0f) + 25.0f; //we count 3d distance while ta count 2d distance so increase slightly
 	kamikazeUseLOS = udTable.GetBool("kamikazeUseLOS", false);
 
@@ -446,8 +451,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	showNanoSpray = udTable.GetBool("showNanoSpray", true);
 	nanoColor = udTable.GetFloat3("nanoColor", float3(0.2f,0.7f,0.2f));
 
-	canhover = udTable.GetBool("canHover", false);
-	floater = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
+	canSubmerge = udTable.GetBool("canSubmerge", false);
+	canfly      = udTable.GetBool("canFly",      false);
 
 	airStrafe      = udTable.GetBool("airStrafe", true);
 	hoverAttack    = udTable.GetBool("hoverAttack", false);
@@ -471,15 +476,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
 	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
-	transportUnloadMethod	= udTable.GetInt("transportUnloadMethod" , 0);
-
-	// modrules transport settings
-	if ((!modInfo.transportAir    && canfly)   ||
-	    (!modInfo.transportShip   && floater)  ||
-	    (!modInfo.transportHover  && canhover) ||
-	    (!modInfo.transportGround && !canhover && !floater && !canfly)) {
- 		cantBeTransported = true;
-	}
+	transportUnloadMethod = udTable.GetInt("transportUnloadMethod" , 0);
 
 	wingDrag     = udTable.GetFloat("wingDrag",     0.07f);  // drag caused by wings
 	wingDrag     = Clamp(wingDrag, 0.0f, 1.0f);
@@ -503,10 +500,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	refuelTime = udTable.GetFloat("refuelTime", 5.0f);
 	minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
 	maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
-
-	if (gameSetup->restrictedUnits.find(name) != gameSetup->restrictedUnits.end()) {
-		maxThisUnit = std::min(maxThisUnit, gameSetup->restrictedUnits.find(name)->second);
-	}
+	maxThisUnit = std::min(maxThisUnit, gameSetup->GetRestrictedUnitLimit(name, MAX_UNITS));
 
 	categoryString = udTable.GetString("category", "");
 
@@ -524,12 +518,23 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	LuaTable weaponsTable = udTable.SubTable("weapons");
 	ParseWeaponsTable(weaponsTable);
 
-	canManualFire = udTable.GetBool("canDGun", false); // NOTE: deprecated, remove after 0.83.*
-	canManualFire = udTable.GetBool("canManualFire", canManualFire);
 	needGeo = false;
 
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 	extractSquare = udTable.GetBool("extractSquare", false);
+
+
+	const bool canHover = udTable.GetBool("canHover", false);
+	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
+
+	// modrules transport settings
+	// FIXME: do we want to check moveData->moveType for these?
+	if ((!modInfo.transportAir    && canfly)   ||
+		(!modInfo.transportShip   && canFloat) ||
+		(!modInfo.transportHover  && canHover) ||
+		(!modInfo.transportGround && !canHover && !canFloat && !canfly)) {
+ 		cantBeTransported = true;
+	}
 
 	// aircraft have MoveTypes but no MoveData;
 	// static structures have no use for either
@@ -547,19 +552,20 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		if (LOG_IS_ENABLED(L_WARNING)) {
 			const char* typeStr = NULL;
 			const char* wantedTypeStr = NULL;
-			if (canhover) {
+
+			if (canHover) {
 				if (movedata->moveType != MoveData::Hover_Move) {
-					typeStr       = "canhover";
+					typeStr       = "canHover";
 					wantedTypeStr = "hover";
 				}
-			} else if (floater) {
+			} else if (canFloat) {
 				if (movedata->moveType != MoveData::Ship_Move) {
-					typeStr       = "floater";
+					typeStr       = "canFloat";
 					wantedTypeStr = "ship";
 				}
 			} else {
 				if (movedata->moveType != MoveData::Ground_Move) {
-					typeStr       = "!(canhover || floater)";
+					typeStr       = "!(canHover || canFloat)";
 					wantedTypeStr = "ground";
 				}
 			}
@@ -575,8 +581,12 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	if (movedata == NULL) {
 		upright = upright || !canfly;
+		floatOnWater = canFloat;
 	} else {
 		upright = upright ||
+			(movedata->moveType == MoveData::Hover_Move) ||
+			(movedata->moveType == MoveData::Ship_Move);
+		floatOnWater =
 			(movedata->moveType == MoveData::Hover_Move) ||
 			(movedata->moveType == MoveData::Ship_Move);
 	}
@@ -689,7 +699,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	seismicRadius    = udTable.GetInt("seismicDistance", 0);
 	seismicSignature = udTable.GetFloat("seismicSignature", -1.0f);
 	if (seismicSignature == -1.0f) {
-		if (!floater && !canhover && !canfly) {
+		if (!canFloat && !canHover && !canfly) {
 			seismicSignature = sqrt(mass / 100.0f);
 		} else {
 			seismicSignature = 0.0f;
@@ -943,7 +953,7 @@ bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) cons
 		}
 	}
 
-	if (floater || canhover) {
+	if (floatOnWater) {
 		// if we are a surface unit, <maxDepth> is irrelevant
 		// (eg. hovercraft may be dropped anywhere over water)
 		maxDepth = +10e6f;

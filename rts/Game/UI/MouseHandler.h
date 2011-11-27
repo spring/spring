@@ -23,9 +23,7 @@ public:
 	CMouseHandler();
 	virtual ~CMouseHandler();
 
-	void SetCursor(const std::string& cmdName, const bool& forceRebind = false);
-
-	void ToggleHwCursor(const bool& enable);
+	void ChangeCursor(const std::string& cmdName, const float& scale = 1.0f);
 
 	void Update();
 	void UpdateCursors();
@@ -52,6 +50,19 @@ public:
 	                        const std::string& newName,
 	                        CMouseCursor::HotSpot hotSpot);
 
+	const CMouseCursor* FindCursor(const std::string& cursorName) const {
+		std::map<std::string, CMouseCursor*>::const_iterator it = cursorCommandMap.find(cursorName);
+		if (it != cursorCommandMap.end()) {
+			return it->second;
+		}
+		return NULL;
+	}
+
+	const std::string& GetCurrentCursor() const { return newCursor; }
+	const float&  GetCurrentCursorScale() const { return cursorScale; }
+
+	void ToggleHwCursor(const bool& enable);
+
 	/// @see ConfigHandler::ConfigNotifyCallback
 	void ConfigNotify(const std::string& key, const std::string& value);
 
@@ -63,7 +74,6 @@ public:
 
 	float doubleClickTime;
 	float scrollWheelSpeed;
-	float dragScrollThreshold;
 
 	struct ButtonPressEvt {
 		bool pressed;
@@ -89,15 +99,10 @@ public:
 	float crossSize;
 	float crossAlpha;
 	float crossMoveScale;
-	float cursorScale;
-
-	std::string cursorText; /// current cursor name
-	CMouseCursor* currentCursor;
-
-	std::map<std::string, CMouseCursor*> cursorFileMap;
-	std::map<std::string, CMouseCursor*> cursorCommandMap;
 
 private:
+	void SetCursor(const std::string& cmdName, const bool& forceRebind = false);
+
 	void SafeDeleteCursor(CMouseCursor* cursor);
 	void LoadCursors();
 
@@ -107,13 +112,24 @@ private:
 	void DrawFPSCursor();
 
 private:
+	std::string newCursor; /// cursor changes are delayed
+	std::string cursorText; /// current cursor name
+	CMouseCursor* currentCursor;
+
+	float cursorScale;
+
 	bool hide;
 	bool hwHide;
 	bool hardwareCursor;
 	bool invertMouse;
 
+	float dragScrollThreshold;
+
 	float scrollx;
 	float scrolly;
+
+	std::map<std::string, CMouseCursor*> cursorFileMap;
+	std::map<std::string, CMouseCursor*> cursorCommandMap;
 };
 
 extern CMouseHandler* mouse;

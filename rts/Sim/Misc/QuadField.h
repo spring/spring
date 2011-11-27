@@ -21,8 +21,6 @@ class CQuadField : boost::noncopyable
 	CR_DECLARE(CQuadField);
 	CR_DECLARE_SUB(Quad);
 
-	const static int QUAD_SIZE = 256;
-
 public:
 	CQuadField();
 	~CQuadField();
@@ -101,16 +99,20 @@ public:
 	const Quad& GetQuadAt(int x, int z) const {
 		return baseQuads[numQuadsX * z + x];
 	}
+
 	int GetNumQuadsX() const { return numQuadsX; }
 	int GetNumQuadsZ() const { return numQuadsZ; }
+
+	const static int QUAD_SIZE = 256;
+	const static int NUM_TEMP_QUADS = 1024;
 
 private:
 	void Serialize(creg::ISerializer& s);
 
 	std::vector<Quad> baseQuads;
+	std::vector<int> tempQuads;
 	int numQuadsX;
 	int numQuadsZ;
-	int* tempQuads;
 };
 
 extern CQuadField* qf;

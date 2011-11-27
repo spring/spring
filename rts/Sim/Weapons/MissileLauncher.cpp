@@ -95,32 +95,36 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		// trajectory (parabolic vs. linear ground intersection; in
 		// the latter case, HaveFreeLineOfFire() checks the NOGROUND
 		// collision flag for us)
-		float3 flatdir(dir.x, 0, dir.z);
+		float3 flatDir(dir.x, 0, dir.z);
 		dir.Normalize();
-		float flatlength = flatdir.Length();
+		float flatLength = flatDir.Length();
 
-		if (flatlength == 0)
+		if (flatLength == 0)
 			return true;
 
-		flatdir /= flatlength;
+		flatDir /= flatLength;
 
 		const float linear = dir.y + weaponDef->trajectoryHeight;
-		const float quadratic = -weaponDef->trajectoryHeight / flatlength;
+		const float quadratic = -weaponDef->trajectoryHeight / flatLength;
 		const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
-			ground->TrajectoryGroundCol(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic):
+			ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 30, linear, quadratic):
 			-1.0f;
+		const float modFlatLength = flatLength - 30.0f;
 
 		if (gc > 0.0f)
 			return false;
 
-		if (avoidFriendly && TraceRay::TestTrajectoryAllyCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner->allyteam, owner)) {
+		if (avoidFriendly && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength, linear, quadratic, 0, 8, owner->allyteam, true, false, false, owner)) {
 			return false;
 		}
-		if (avoidNeutral && TraceRay::TestTrajectoryNeutralCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner)) {
+		if (avoidNeutral && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength, linear, quadratic, 0, 8, owner->allyteam, false, true, false, owner)) {
+			return false;
+		}
+		if (avoidFeature && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength, linear, quadratic, 0, 8, owner->allyteam, false, false, true, owner)) {
 			return false;
 		}
 	} else {
-		float length = dir.Length();
+		const float length = dir.Length();
 		if (length == 0)
 			return true;
 
@@ -137,10 +141,13 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 				return false;
 		}
 
-		if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, owner)) {
+		if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, true, false, false, owner)) {
 			return false;
 		}
-		if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner)) {
+		if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, false, true, false, owner)) {
+			return false;
+		}
+		if (avoidFeature && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, false, false, true, owner)) {
 			return false;
 		}
 	}

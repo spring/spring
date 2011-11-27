@@ -13,6 +13,7 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Platform/Threading.h"
 
 #undef CreateDirectory
 
@@ -83,6 +84,8 @@ private:
 
 	void SaveStuff()
 	{
+		Threading::SetThreadName("screenshot");
+		
 		FunctionArgs args;
 		while (GetTask(args))
 		{
