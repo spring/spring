@@ -91,7 +91,7 @@ void CCursorIcons::DrawCursors()
 	glColor4f(1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha());
 	
 	int currentCmd = (icons.begin()->cmd + 1); // force the first binding
-	CMouseCursor* currentCursor = NULL;
+	const CMouseCursor* currentCursor = NULL;
 	
 	std::set<Icon>::iterator it;
 	for (it = icons.begin(); it != icons.end(); ++it) {
@@ -167,7 +167,7 @@ void CCursorIcons::DrawBuilds()
 
 
 
-CMouseCursor* CCursorIcons::GetCursor(int cmd)
+const CMouseCursor* CCursorIcons::GetCursor(int cmd) const
 {
 	string cursorName;
 
@@ -222,11 +222,5 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 	}
 
 	// look for the cursor of this name assigned in MouseHandler
-	std::map<std::string, CMouseCursor *>::const_iterator it;
-	it = mouse->cursorCommandMap.find(cursorName);
-	if (it != mouse->cursorCommandMap.end()) {
-		return it->second;
-	}
-	
-	return NULL;
+	return mouse->FindCursor(cursorName);
 }
