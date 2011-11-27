@@ -841,19 +841,24 @@ void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool force
 float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 {
 	float3 pos;
+
 	if (buildInfo.GetXSize() & 2)
-		pos.x = floor((buildInfo.pos.x    ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + 8;
+		pos.x = floor((buildInfo.pos.x              ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + SQUARE_SIZE;
 	else
-		pos.x = floor((buildInfo.pos.x + 8) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
+		pos.x = floor((buildInfo.pos.x + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
 	if (buildInfo.GetZSize() & 2)
-		pos.z = floor((buildInfo.pos.z    ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + 8;
+		pos.z = floor((buildInfo.pos.z              ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + SQUARE_SIZE;
 	else
-		pos.z = floor((buildInfo.pos.z + 8) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
+		pos.z = floor((buildInfo.pos.z + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
-	pos.y = uh->GetBuildHeight(pos, buildInfo.def, synced);
-	if (buildInfo.def->floater && pos.y < 0)
-		pos.y = -buildInfo.def->waterline;
+	const UnitDef* ud = buildInfo.def;
+	const float bh = uh->GetBuildHeight(pos, ud, synced);
+
+	pos.y = bh;
+
+	if (ud->floatOnWater && bh < 0.0f)
+		pos.y = -ud->waterline;
 
 	return pos;
 }

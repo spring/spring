@@ -558,7 +558,6 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 		return 1;                                       \
 	}
 
-TYPE_FUNC(GetTypeString, string);
 TYPE_FUNC(IsBuildingUnit, boolean);
 TYPE_FUNC(IsFactoryUnit, boolean);
 TYPE_FUNC(IsFighterUnit, boolean);
@@ -628,7 +627,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
 
-	ADD_FUNCTION("type",         ud, GetTypeString); // NOTE: deprecated, remove after 0.83.*
 	ADD_FUNCTION("isBuilding",   ud, IsBuildingUnit);
 	ADD_FUNCTION("isFactory",    ud, IsFactoryUnit);
 	ADD_FUNCTION("isFighter",    ud, IsFighterUnit);
@@ -717,7 +715,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_FLOAT("mass", ud.mass);
 
-	ADD_FLOAT("maxSlope",      ud.maxHeightDif); // NOTE: deprecated, remove after 0.83.*
 	ADD_FLOAT("maxHeightDif",  ud.maxHeightDif);
 	ADD_FLOAT("minWaterDepth", ud.minWaterDepth);
 	ADD_FLOAT("waterline",     ud.waterline);
@@ -751,12 +748,10 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("terraformSpeed", ud.terraformSpeed);
 
 	ADD_BOOL("canSubmerge",       ud.canSubmerge);
+	ADD_BOOL("floatOnWater",      ud.floatOnWater);
 	ADD_BOOL("canFly",            ud.canfly);
 	ADD_BOOL("canMove",           ud.canmove);
-	ADD_BOOL("canHover",          ud.canhover);
-	ADD_BOOL("floater",           ud.floater);
 	ADD_BOOL("builder",           ud.builder);
-	ADD_BOOL("isBuilder",         ud.builder); // NOTE: deprecated, remove after 0.83.*
 	ADD_BOOL("onOffable",         ud.onoffable);
 	ADD_BOOL("activateWhenBuilt", ud.activateWhenBuilt);
 
@@ -764,7 +759,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("capturable",  ud.capturable);
 	ADD_BOOL("repairable",  ud.repairable);
 
-	ADD_BOOL("canDGun",               ud.canManualFire); // NOTE: deprecated, remove after 0.83.*
 	ADD_BOOL("canManualFire",         ud.canManualFire);
 	ADD_BOOL("canCloak",              ud.canCloak);
 	ADD_BOOL("canRestore",            ud.canRestore);
@@ -781,7 +775,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canCapture",            ud.canCapture);
 	ADD_BOOL("canResurrect",          ud.canResurrect);
 	ADD_BOOL("canLoopbackAttack",     ud.canLoopbackAttack);
-	ADD_BOOL("canCrash",              ud.canLoopbackAttack); // NOTE: deprecated, remove after 0.83.*
 	ADD_BOOL("canFireControl",        ud.canFireControl);
 	ADD_INT( "fireState",             ud.fireState);
 	ADD_INT( "moveState",             ud.moveState);
@@ -862,8 +855,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_BOOL("needGeo",   ud.needGeo);
 	ADD_BOOL("isFeature", ud.isFeature);
-
-	ADD_BOOL("isCommander", ud.isCommander);
 
 	ADD_BOOL("hideDamage",     ud.hideDamage);
 	ADD_BOOL("showPlayerName", ud.showPlayerName);

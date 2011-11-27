@@ -20,6 +20,7 @@ class CGameSetup
 public:
 	CGameSetup();
 	~CGameSetup();
+
 	bool Init(const std::string& script);
 	/**
 	 * @brief Load startpositions from map/script
@@ -31,6 +32,13 @@ public:
 	 * is not known before CPreGame recieves the gamedata from the server.
 	 */
 	void LoadStartPositions(bool withoutMap = false);
+
+	int GetRestrictedUnitLimit(const std::string& name, int defLimit) const {
+		const std::map<std::string, int>::const_iterator it = restrictedUnits.find(name);
+		if (it == restrictedUnits.end())
+			return defLimit;
+		return (it->second);
+	}
 
 	enum StartPosType
 	{
@@ -61,8 +69,6 @@ public:
 
 	std::vector<TeamBase> teamStartingData;
 	std::vector<AllyTeam> allyStartingData;
-
-	std::map<std::string, int> restrictedUnits;
 
 	std::map<std::string, std::string> mapOptions;
 	std::map<std::string, std::string> modOptions;
@@ -140,6 +146,8 @@ private:
 
 	std::vector<SkirmishAIData> skirmishAIStartingData;
 	std::map<int, const SkirmishAIData*> team_skirmishAI;
+
+	std::map<std::string, int> restrictedUnits;
 };
 
 extern const CGameSetup* gameSetup;

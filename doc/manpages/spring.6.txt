@@ -17,7 +17,11 @@ Synopsis
 
 *spring* --list-skirmish-ais
 
+*spring* --list-config-vars
+
 *spring* [-h|--help]
+
+*spring* --sync-version
 
 *spring* [-V|--version]
 
@@ -40,6 +44,9 @@ Options
 
 *-V, --version*::
   Display program version and exit
+
+*--sync-version*::
+  Display program sync version (for online gaming) and exit
 
 *-f, --fullscreen*::
   Run in fullscreen mode
@@ -109,6 +116,20 @@ Contains the users settings for the engine, for things like graphic and sound.
   /etc/spring/datadir
 
 Contains the ':' separated paths to additional data-dirs (see section DATA DIR).
+
+
+Enviroment Variables
+--------------------
+
+*SPRING_LOG_SECTIONS*
+  Selective functionality to change the verbosity (separated by ',').
+
+*SPRING_DATADIR*
+  Adds additional directories Spring will search for files (separated by ':').
+
+*SPRING_ISOLATED*
+  If defined Spring will stop searching files outside of the binaries directory.
+
 
 See also
 --------

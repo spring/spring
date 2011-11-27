@@ -73,7 +73,6 @@ bool LuaConstCMD::PushEntries(lua_State* L)
 	PUSH_CMD(LOOPBACKATTACK);
 	PUSH_CMD(IDLEMODE);
 
-	LuaInsertDualMapPair(L, "DGUN", CMD_MANUALFIRE); // NOTE: deprecated, remove after 0.83.*
 	return true;
 }
 

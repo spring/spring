@@ -1,5 +1,14 @@
 Spring change log
 
+-- 85.0 ---------------------------------------------------------
+CommandLine:
+ - updated man-pages
+ - added new argument `--sync-version` (i.e. prints "85" for a 85.0 build);
+ - added a full set of new arguments to spring-dedicated (you can now also change the config-file)
+
+Sound:
+ - limit UnitReplies to max one concurrent
+
 -- 84.0 ---------------------------------------------------------
 Bugfixes & Improvements:
  - reduced 'Got invalid Select' message spam

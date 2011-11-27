@@ -1776,8 +1776,8 @@ int LuaUnsyncedRead::GetMouseState(lua_State* L)
 int LuaUnsyncedRead::GetMouseCursor(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushsstring(L, mouse->cursorText);
-	lua_pushnumber(L, mouse->cursorScale);
+	lua_pushsstring(L, mouse->GetCurrentCursor());
+	lua_pushnumber(L, mouse->GetCurrentCursorScale());
 	return 2;
 }
 

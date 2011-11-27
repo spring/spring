@@ -51,7 +51,6 @@ public:
 	// Static properties
 	float mass;                                 ///< the physical mass of this object
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
-	bool floatOnWater;                          ///< if the object will float on water (TODO: "float density;" would be more dynamic.)
 	bool immobile;                              ///< Immobile objects can not be moved. (Except perhaps along y-axis, to make them stay on ground.)
 	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 	bool crushKilled;                           ///< true if this object died by being crushed (currently applies only to features)
