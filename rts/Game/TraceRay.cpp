@@ -376,7 +376,7 @@ bool TestCone(
 	bool testFeatures,
 	CUnit* owner)
 {
-	int quads[2048];
+	int quads[CQuadField::NUM_TEMP_QUADS];
 	int* endQuad = quads;
 
 	qf->GetQuadsOnRay(from, dir, length, endQuad);
@@ -448,7 +448,7 @@ bool TestTrajectoryCone(
 	bool testFeatures,
 	CUnit* owner)
 {
-	int quads[2048];
+	int quads[CQuadField::NUM_TEMP_QUADS];
 	int* endQuad = quads;
 
 	qf->GetQuadsOnRay(from, dir, length, endQuad);
