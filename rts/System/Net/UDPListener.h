@@ -67,11 +67,11 @@ public:
 			const unsigned port);
 
 	/**
-	 * Set if we are going to accept new connections
+	 * Set if we are accepting new connections
 	 * or drop all data from unconnected addresses.
 	 */
-	bool Listen(const bool state);
-	bool Listen() const;
+	void SetAcceptingConnections(const bool enable);
+	bool IsAcceptingConnections() const;
 
 	bool HasIncomingConnections() const;
 	boost::weak_ptr<UDPConnection> PreviewConnection();

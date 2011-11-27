@@ -58,6 +58,7 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoReader.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Platform/Threading.h"
 
 
 #define PKTCACHE_VECSIZE 1000
@@ -224,8 +225,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	commandBlacklist = std::set<std::string>(commands, commands+numCommands);
 
 #ifdef DEDICATED
-	demoRecorder.reset(new CDemoRecorder());
-	demoRecorder->SetName(setup->mapName, setup->modName);
+	demoRecorder.reset(new CDemoRecorder(setup->mapName, setup->modName));
 	demoRecorder->WriteSetupText(gameData->GetSetup());
 	const netcode::RawPacket* ret = gameData->Pack();
 	demoRecorder->SaveToDemo(ret->data, ret->length, GetDemoTime());
@@ -1880,7 +1880,7 @@ void CGameServer::StartGame()
 		packetCache.clear(); // free memory
 
 	if (UDPNet && !canReconnect && !allowAdditionalPlayers)
-		UDPNet->Listen(false); // don't accept new connections
+		UDPNet->SetAcceptingConnections(false); // do not accept new connections
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
 	UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
@@ -2227,6 +2227,8 @@ std::string CGameServer::SpeedControlToString(int speedCtrl) {
 void CGameServer::UpdateLoop()
 {
 	try {
+		Threading::SetThreadName("netcode");
+		
 		while (!quitServer) {
 			spring_sleep(spring_msecs(10));
 
@@ -2254,7 +2256,7 @@ void CGameServer::UpdateLoop()
 
 bool CGameServer::WaitsOnCon() const
 {
-	return (UDPNet && UDPNet->Listen());
+	return (UDPNet && UDPNet->IsAcceptingConnections());
 }
 
 void CGameServer::KickPlayer(const int playerNum)

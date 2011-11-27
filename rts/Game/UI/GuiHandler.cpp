@@ -982,19 +982,19 @@ void CGuiHandler::Update()
 void CGuiHandler::SetCursorIcon() const
 {
 	string newCursor = "cursornormal";
-	mouse->cursorScale = 1.0f;
+	float cursorScale = 1.0f;
 
 	CInputReceiver* ir = NULL;
 	if (!game->hideInterface)
 		ir = GetReceiverAt(mouse->lastx, mouse->lasty);
 
 	if ((ir != NULL) && (ir != minimap)) {
-		mouse->SetCursor(newCursor);
+		mouse->ChangeCursor(newCursor, cursorScale);
 		return;
 	}
 
 	if (ir == minimap)
-		mouse->cursorScale = minimap->CursorScale();
+		cursorScale = minimap->CursorScale();
 
 	const bool useMinimap = (minimap->ProxyMode() || ((activeReceiver != this) && (ir == minimap)));
 
@@ -1047,7 +1047,7 @@ void CGuiHandler::SetCursorIcon() const
 		newCursor = "GatherWait";
 	}
 
-	mouse->SetCursor(newCursor);
+	mouse->ChangeCursor(newCursor, cursorScale);
 }
 
 
@@ -3893,15 +3893,11 @@ void CGuiHandler::DrawCentroidCursor()
 	pos /= (float)selUnits.size();
 	const float3 winPos = camera->CalcWindowCoordinates(pos);
 	if (winPos.z <= 1.0f) {
-		std::map<std::string, CMouseCursor*>::const_iterator mcit;
-		mcit = mouse->cursorCommandMap.find("Centroid");
-		if (mcit != mouse->cursorCommandMap.end()) {
-			CMouseCursor* mc = mcit->second;
-			if (mc != NULL) {
-				glDisable(GL_DEPTH_TEST);
-				mc->Draw((int)winPos.x, globalRendering->viewSizeY - (int)winPos.y, 1.0f);
-				glEnable(GL_DEPTH_TEST);
-			}
+		const CMouseCursor* mc = mouse->FindCursor("Centroid");
+		if (mc != NULL) {
+			glDisable(GL_DEPTH_TEST);
+			mc->Draw((int)winPos.x, globalRendering->viewSizeY - (int)winPos.y, 1.0f);
+			glEnable(GL_DEPTH_TEST);
 		}
 	}
 }

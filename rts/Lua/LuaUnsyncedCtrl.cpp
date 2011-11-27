@@ -1938,10 +1938,12 @@ int LuaUnsyncedCtrl::SetMouseCursor(lua_State* L)
 	if (!CheckModUICtrl()) {
 		return 0;
 	}
-	mouse->SetCursor(luaL_checkstring(L, 1));
-	if (lua_israwnumber(L, 2)) {
-		mouse->cursorScale = lua_tonumber(L, 2);
-	}
+
+	const std::string& cursorName = luaL_checkstring(L, 1);
+	const float cursorScale = luaL_optfloat(L, 2, 1.0f);
+	
+	mouse->ChangeCursor(cursorName, cursorScale);
+
 	return 0;
 }
 

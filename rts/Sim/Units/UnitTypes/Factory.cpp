@@ -156,7 +156,7 @@ void CFactory::Update()
 			curBuild->heading = (h + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
 			curBuild->pos = buildPos;
 
-			if (curBuild->floatOnWater && (buildPos.y <= 0.0f))
+			if (curBuild->unitDef->floatOnWater && (buildPos.y <= 0.0f))
 				curBuild->pos.y = -curBuild->unitDef->waterline;
 
 			curBuild->UpdateMidPos();

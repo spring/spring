@@ -27,23 +27,37 @@ namespace TraceRay {
 	bool LineFeatureCol(const float3& start, const float3& dir, float length);
 
 	/**
-	 * @return true if there is an allied unit within
-	 *   the firing cone of \<owner\> (that might be hit)
+	 * @return true if there is an object (allied/neutral unit, feature)
+	 * within the firing cone of \<owner\> (that might be hit)
 	 */
-	bool TestAllyCone(const float3& from, const float3& weaponDir, float length, float spread, int allyteam, CUnit* owner);
+	bool TestCone(
+		const float3& from,
+		const float3& dir,
+		float length,
+		float spread,
+		int allyteam,
+		bool testFriendly,
+		bool testNeutral,
+		bool testFeatures,
+		CUnit* owner);
+
 	/**
-	 * same as TestAllyCone, but looks for neutral units
+	 * @return true if there is an object (allied/neutral unit, feature)
+	 *  within the firing trajectory of \<owner\> (that might be hit)
 	 */
-	bool TestNeutralCone(const float3& from, const float3& weaponDir, float length, float spread, CUnit* owner);
-	/**
-	 * @return true if there is an allied unit within
-	 *   the firing trajectory of \<owner\> (that might be hit)
-	 */
-	bool TestTrajectoryAllyCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, int allyteam, CUnit* owner);
-	/**
-	 * same as TestTrajectoryAllyCone, but looks for neutral units
-	 */
-	bool TestTrajectoryNeutralCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, CUnit* owner);
+	bool TestTrajectoryCone(
+		const float3& from,
+		const float3& dir,
+		float length,
+		float linear,
+		float quadratic,
+		float spread,
+		float baseSize,
+		int allyteam,
+		bool testFriendly,
+		bool testNeutral,
+		bool testFeatures,
+		CUnit* owner);
 }
 
 #endif // _TRACE_RAY_H

@@ -15,6 +15,7 @@
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/SimpleParser.h"
 
 using std::string;
@@ -26,14 +27,31 @@ using std::string;
 CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
 {
 	CMouseCursor* c = new CMouseCursor(name, hs);
-	if (c->frames.size() <= 0) {
+	if (c->frames.empty()) {
 		delete c;
 		return NULL;
 	}
 	return c;
 }
 
-CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
+
+CMouseCursor* CMouseCursor::GetNullCursor()
+{
+	static CMouseCursor nullCursor("", Center);
+	return &nullCursor;
+}
+
+
+CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
+ : animated(false)
+ , hwValid(false)
+ , animTime(0.0f)
+ , animPeriod(0.0f)
+ , currentFrame(0)
+ , xmaxsize(0)
+ , ymaxsize(0)
+ , xofs(0)
+ , yofs(0)
 {
 	hwCursor = GetNewHwCursor();
 	hwCursor->hotSpot = hs;
@@ -42,17 +60,11 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 	if (!BuildFromSpecFile(name))
 		BuildFromFileNames(name, 123456);
 
-	if (frames.size() <= 0)
+	if (frames.empty())
 		return;
 
-	animated = (frames.size() > 1);
+	animated = !frames.empty();
 	hwValid  = hwCursor->IsValid();
-
-	animTime = 0.0f;
-	animPeriod = 0.0f;
-	currentFrame = 0;
-	xmaxsize = 0;
-	ymaxsize = 0;
 
 	for (int f = 0; f < (int)frames.size(); f++) {
 		FrameData& frame = frames[f];
@@ -73,7 +85,7 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 }
 
 
-CMouseCursor::~CMouseCursor(void)
+CMouseCursor::~CMouseCursor()
 {
 	delete hwCursor;
 
@@ -148,7 +160,7 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 		}
 	}
 
-	if (frames.size() <= 0) {
+	if (frames.empty()) {
 		return BuildFromFileNames(name, lastFrame);
 	}
 
@@ -207,9 +219,8 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 	}
 
 	// hardcoded bmp transparency mask
-	if ((name.size() >= 3) &&
-	    (StringToLower(name.substr(name.size() - 3)) == "bmp")) {
-		setBitmapTransparency(b, 84, 84, 252);
+	if (FileSystem::GetExtension(name) == "bmp") {
+		b.SetTransparent(SColor(84, 84, 252));
 	}
 
 	if (hwCursor->NeedsYFlip()) {
@@ -222,72 +233,38 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 		b.ReverseYAxis();
 	}
 
-	CBitmap* final = getAlignedBitmap(b);
 
-	GLuint texID = 0;
-	glGenTextures(1, &texID);
-	glBindTexture(GL_TEXTURE_2D, texID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-	             final->xsize, final->ysize, 0,
-	             GL_RGBA, GL_UNSIGNED_BYTE, final->mem);
+	const int nx = next_power_of_2(b.xsize);
+	const int ny = next_power_of_2(b.ysize);
 
-	image.texture = texID;
-	image.xOrigSize = b.xsize;
-	image.yOrigSize = b.ysize;
-	image.xAlignedSize = final->xsize;
-	image.yAlignedSize = final->ysize;
+	if (b.xsize != nx || b.ysize != ny) {
+		CBitmap bn;
+		bn.Alloc(nx, ny);
+		bn.CopySubImage(b, 0, ny - b.ysize);
 
-	delete final;
+		image.texture = bn.CreateTexture(false);
+		image.xOrigSize = b.xsize;
+		image.yOrigSize = b.ysize;
+		image.xAlignedSize = bn.xsize;
+		image.yAlignedSize = bn.ysize;
+	} else {
+		image.texture = b.CreateTexture(false);
+		image.xOrigSize = b.xsize;
+		image.yOrigSize = b.ysize;
+		image.xAlignedSize = b.xsize;
+		image.yAlignedSize = b.ysize;
+	}
 
 	return true;
 }
 
 
-CBitmap* CMouseCursor::getAlignedBitmap(const CBitmap &orig)
+void CMouseCursor::Draw(int x, int y, float scale) const
 {
-	CBitmap *nb;
-
-	const int nx = next_power_of_2(orig.xsize);
-	const int ny = next_power_of_2(orig.ysize);
-
-	unsigned char* data = new unsigned char[nx * ny * 4];
-	std::memset(data, 0, nx * ny * 4);
-
-	for (int y = 0; y < orig.ysize; ++y) {
-		for (int x = 0; x < orig.xsize; ++x) {
-			for (int v = 0; v < 4; ++v) {
-				data[((y + (ny-orig.ysize))*nx+x)*4+v] = orig.mem[(y*orig.xsize+x)*4+v];
-			}
-		}
+	if (frames.empty()) {
+		return;
 	}
 
-	nb = new CBitmap(data, nx, ny);
-	delete[] data;
-	return nb;
-}
-
-
-void CMouseCursor::setBitmapTransparency(CBitmap &bm, int r, int g, int b)
-{
-	for(int y=0;y<bm.ysize;++y){
-		for(int x=0;x<bm.xsize;++x){
-			if ((bm.mem[(y*bm.xsize+x)*4 + 0] == r) &&
-			    (bm.mem[(y*bm.xsize+x)*4 + 1] == g) &&
-			    (bm.mem[(y*bm.xsize+x)*4 + 2] == b))
-			{
-				bm.mem[(y*bm.xsize+x)*4 + 3] = 0;
-			}
-		}
-	}
-}
-
-
-void CMouseCursor::Draw(int x, int y, float scale)
-{
 	if (scale<0) scale=-scale;
 
 	const FrameData& frame = frames[currentFrame];
@@ -332,8 +309,12 @@ void CMouseCursor::Draw(int x, int y, float scale)
 }
 
 
-void CMouseCursor::DrawQuad(int x, int y)
+void CMouseCursor::DrawQuad(int x, int y) const
 {
+	if (frames.empty()) {
+		return;
+	}
+
 	const float scale = cmdColors.QueueIconScale();
 
 	const FrameData& frame = frames[currentFrame];
@@ -360,7 +341,7 @@ void CMouseCursor::DrawQuad(int x, int y)
 
 	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
 	glVertexPointer(3, GL_FLOAT, 0, vertices);
-
+//FIXME pass va?
 	glDrawArrays(GL_QUADS, 0, 4);
 
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -370,7 +351,7 @@ void CMouseCursor::DrawQuad(int x, int y)
 
 void CMouseCursor::Update()
 {
-	if (frames.size() <= 1) {
+	if (frames.empty()) {
 		return;
 	}
 
@@ -390,13 +371,17 @@ void CMouseCursor::Update()
 }
 
 
-void CMouseCursor::BindTexture()
+void CMouseCursor::BindTexture() const
 {
+	if (frames.empty()) {
+		return;
+	}
+
 	const FrameData& frame = frames[currentFrame];
 	glBindTexture(GL_TEXTURE_2D, frame.image.texture);
 }
 
-void CMouseCursor::BindHwCursor()
+void CMouseCursor::BindHwCursor() const
 {
 	hwCursor->Bind();
 }

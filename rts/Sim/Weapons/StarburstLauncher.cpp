@@ -30,11 +30,20 @@ CStarburstLauncher::~CStarburstLauncher(void)
 
 void CStarburstLauncher::Update(void)
 {
-	if(targetType!=Target_None){
-		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-		wantedDir=(targetPos-weaponPos).Normalize();		//the aiming upward is apperently implicid so aim toward target
+	if (targetType != Target_None) {
+		weaponPos = owner->pos +
+			owner->frontdir * relWeaponPos.z +
+			owner->updir    * relWeaponPos.y +
+			owner->rightdir * relWeaponPos.x;
+		weaponMuzzlePos = owner->pos +
+			owner->frontdir * relWeaponMuzzlePos.z +
+			owner->updir    * relWeaponMuzzlePos.y +
+			owner->rightdir * relWeaponMuzzlePos.x;
+
+		// the aiming upward is apperently implicid so aim toward target
+		wantedDir = (targetPos - weaponPos).Normalize();
 	}
+
 	CWeapon::Update();
 }
 
@@ -69,12 +78,12 @@ bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* un
 	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
 		return false;
 
-	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos,
-		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner->allyteam, owner)) {
+	const float3& wdir = weaponDef->fixedLauncher? weaponDir: UpVector;
+
+	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, true, false, false, owner)) {
 		return false;
 	}
-	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos,
-		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner)) {
+	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, false, true, false, owner)) {
 		return false;
 	}
 

@@ -81,27 +81,6 @@ public:
 	bool HasBomberWeapon() const;
 	const std::vector<unsigned char>& GetYardMap(unsigned int facing) const { return (yardmaps[facing % /*NUM_FACINGS*/ 4]); }
 
-	// NOTE: deprecated, remove after 0.83.*
-	const char* GetTypeString() const {
-		if (IsTransportUnit()) { return "Transport"; }
-
-		if (IsBuildingUnit()) {
-			if (IsFactoryUnit()) { return "Factory"; }
-			if (IsExtractorUnit()) { return "MetalExtractor"; }
-			return "Building";
-		}
-
-		if (IsMobileBuilderUnit() || IsStaticBuilderUnit()) { return "Builder"; }
-
-		if (IsGroundUnit()) { return "GroundUnit"; }
-		if (IsAirUnit()) {
-			if (IsFighterUnit()) { return "Fighter"; }
-			if (IsBomberUnit()) { return "Bomber"; }
-			return "Aircraft";
-		}
-
-		return "Unknown";
-	}
 
 	std::string name;
 	std::string humanName;
@@ -183,14 +162,16 @@ public:
 
 	float mass;
 
+	bool canSubmerge;
+	bool canfly;
+	bool floatOnWater;
 	bool pushResistant;
 	bool strafeToAttack;  /// should the unit move sideways when it can't shoot?
 	float minCollisionSpeed;
 	float slideTolerance;
 	float maxHeightDif;   /// maximum terraform height this building allows
-	float minWaterDepth;
 	float waterline;
-
+	float minWaterDepth;
 	float maxWaterDepth;
 
 	float armoredMultiple;
@@ -238,14 +219,8 @@ public:
 
 	mutable icon::CIcon iconType;
 
-	bool canSelfD;
 	int selfDCountdown;
 
-	bool canSubmerge;
-	bool canfly;
-	bool canmove;
-	bool canhover;
-	bool floater;
 	bool builder;
 	bool activateWhenBuilt;
 	bool onoffable;
@@ -256,18 +231,29 @@ public:
 	bool capturable;
 	bool repairable;
 
+	// order-capabilities for CommandAI
+	bool canmove;
+	bool canAttack;
+	bool canFight;
+	bool canPatrol;
+	bool canGuard;
+	bool canRepeat;
+	bool canResurrect;
+	bool canCapture;
+	bool canCloak;
+	bool canSelfD;
+	bool canKamikaze;
+
 	bool canRestore;
 	bool canRepair;
-	bool canSelfRepair;
 	bool canReclaim;
-	bool canAttack;
-	bool canPatrol;
-	bool canFight;
-	bool canGuard;
 	bool canAssist;
+
 	bool canBeAssisted;
-	bool canRepeat;
+	bool canSelfRepair;
+
 	bool canFireControl;
+	bool canManualFire;
 
 	int fireState;
 	int moveState;
@@ -285,6 +271,7 @@ public:
 	float turnRadius;
 	float wantedHeight;
 	float verticalSpeed;
+
 	bool useSmoothMesh;
 	bool hoverAttack;
 	bool airStrafe;
@@ -326,7 +313,6 @@ public:
 	float fallSpeed;								///< dictates fall speed of all transported units
 	float unitFallSpeed;							///< sets the transported units fbi, overrides fallSpeed
 
-	bool canCloak;									///< if the unit can cloak
 	bool startCloaked;								///< if the units want to start out cloaked
 	float cloakCost;								///< energy cost per second to stay cloaked when stationary
 	float cloakCostMoving;							///< energy cost per second when moving
@@ -335,20 +321,15 @@ public:
 	bool decloakOnFire;								///< should the unit decloak upon firing
 	int cloakTimeout;								///< minimum time between decloak and subsequent cloak
 
-	bool canKamikaze;
 	float kamikazeDist;
 	bool kamikazeUseLOS;
 
 	bool targfac;
-	bool canManualFire;
 	bool needGeo;
 	bool isFeature;
 	bool hideDamage;
-	bool isCommander;								///< @deprecated, has no meaning to the engine (AI's and gadgets should not rely on it)
 	bool showPlayerName;
 
-	bool canResurrect;
-	bool canCapture;
 	int highTrajectoryType;							///< 0 (default) = only low, 1 = only high, 2 = choose
 
 	unsigned int noChaseCategory;

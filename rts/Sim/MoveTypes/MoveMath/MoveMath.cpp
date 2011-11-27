@@ -159,12 +159,15 @@ bool CMoveMath::CrushResistant(const MoveData& moveData, const CSolidObject* obj
  */
 bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obstacle)
 {
-	if (!obstacle->blocking) {
+	if (!obstacle->blocking)
 		return true;
-	}
 
 	const CSolidObject* unit = moveData.tempOwner;
 
+	if (unit == obstacle)
+		return true;
+
+	// NOTE: only tests ONE square underneath obstacle
 	const int hx = int(obstacle->pos.x / SQUARE_SIZE);
 	const int hz = int(obstacle->pos.z / SQUARE_SIZE);
 	const int hi = (hx >> 1) + (hz >> 1) * gs->hmapx;
@@ -210,7 +213,7 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 	//   1.
 	//      (unit is ground-following or not currently in water) and
 	//      obstacle's altitude minus its model height leaves a gap
-	//      between it and the ground
+	//      between it and the ground large enough for unit to pass
 	//   2.
 	//      unit is a submarine, obstacle sticks out above-water
 	//      (and not itself flagged as a submarine) *OR* unit is
@@ -224,7 +227,7 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 	// owner would need to be accessible (but the path-estimator
 	// defs aren't tied to any)
 	if (moveData.followGround || (gy > 0.0f)) {
-		return ((oy - oh) > gy);
+		return ((oy - oh) > ((unit != NULL)? unit->height: gy));
 	} else {
 		if (unitSub) {
 			return (((oy + oh) >  0.0f) && !obstSub);

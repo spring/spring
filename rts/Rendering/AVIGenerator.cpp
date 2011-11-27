@@ -8,6 +8,7 @@
 #include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
 #include "System/SpringApp.h"
+#include "System/Platform/Threading.h"
 
 #include <windows.h>
 
@@ -403,6 +404,8 @@ bool CAVIGenerator::readOpenglPixelDataThreaded() {
 
 
 void CAVIGenerator::AVIGeneratorThreadProc() {
+
+	Threading::SetThreadName("avi-recorder");
 
 	//Run init from the encoding thread because custom controls displayed by codecs
 	//sends window messages to the thread it started from, thus deadlocking if

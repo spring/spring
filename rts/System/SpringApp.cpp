@@ -49,6 +49,7 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/OffscreenGLContext.h"
+#include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "System/FileSystem/DataDirLocater.h"
@@ -65,6 +66,7 @@
 
 #include "System/mmgr.h"
 
+#include <sstream>
 #ifdef WIN32
 	#include "System/Platform/Win/WinVersion.h"
 #elif defined(__APPLE__)
@@ -117,7 +119,6 @@ CONFIG(std::string, name).defaultValue("UnnamedPlayer");
 
 ClientSetup* startsetup = NULL;
 COffscreenGLContext* SpringApp::ogc = NULL;
-
 
 
 /**
@@ -192,6 +193,18 @@ bool SpringApp::Initialize()
 	// Initialize crash reporting
 	CrashHandler::Install();
 
+#ifdef _OPENMP
+	#pragma omp parallel
+	{
+		int i = omp_get_thread_num();
+		if (i != 0) { // 0 is the source thread
+			std::ostringstream buf;
+			buf << "omp" << i;
+			Threading::SetThreadName(buf.str().c_str());
+		}
+	}
+#endif
+
 	globalRendering = new CGlobalRendering();
 
 	ParseCmdLine();
@@ -199,8 +212,12 @@ bool SpringApp::Initialize()
 	good_fpu_control_registers("::Run");
 
 	Watchdog::Install();
-	//! register (this) mainthread
 	Watchdog::RegisterThread(WDT_MAIN, true);
+
+	// We give the process itself the name `unknown`, htop & co. will still show the binary's name.
+	// But all child threads copy by default the name of their parent, so all threads that don't set
+	// their name themselves will show up as 'unknown'.
+	Threading::SetThreadName("unknown");
 
 	// log OS version
 	LOG("OS: %s", Platform::GetOS().c_str());
@@ -789,6 +806,8 @@ void SpringApp::LoadFonts()
  */
 void SpringApp::ParseCmdLine()
 {
+	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf]");
+	cmdline->AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
 	cmdline->AddSwitch('f', "fullscreen",         "Run in fullscreen mode");
 	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
 	cmdline->AddInt(   'x', "xresolution",        "Set X resolution");
@@ -808,28 +827,34 @@ void SpringApp::ParseCmdLine()
 		cmdline->Parse();
 	} catch (const std::exception& err) {
 		std::cerr << err.what() << std::endl << std::endl;
-		cmdline->PrintUsage("Spring", SpringVersion::GetFull());
+		cmdline->PrintUsage();
 		exit(1);
 	}
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->IsSet("help")) {
-		cmdline->PrintUsage("Spring",SpringVersion::GetFull());
+		cmdline->PrintUsage();
 		exit(0);
-	} else if (cmdline->IsSet("version")) {
+	}
+	if (cmdline->IsSet("version")) {
 		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
 		exit(0);
-	} else if (cmdline->IsSet("projectiledump")) {
+	}
+	if (cmdline->IsSet("sync-version")) {
+		// Note, the missing "Spring " is intentionally to make it compatible with `spring-dedicated --sync-version`
+		std::cout << SpringVersion::GetSync() << std::endl;
+		exit(0);
+	}
+	if (cmdline->IsSet("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
 		exit(0);
 	}
 
+	string configSource = "";
 	if (cmdline->IsSet("config")) {
-		string configSource = cmdline->GetString("config");
-		ConfigHandler::Instantiate(configSource);
-	} else {
-		ConfigHandler::Instantiate();
+		configSource = cmdline->GetString("config");
 	}
+	ConfigHandler::Instantiate(configSource);
 	GlobalConfig::Instantiate();
 
 	// mutually exclusive options that cause spring to quit immediately
@@ -1124,6 +1149,7 @@ static void ResetScreenSaverTimeout()
 int SpringApp::Run(int argc, char *argv[])
 {
 	cmdline = new CmdLineParams(argc, argv);
+	binaryName = argv[0];
 
 	if (!Initialize())
 		return -1;
