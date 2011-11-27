@@ -59,6 +59,17 @@ Options
 *--list-config-vars*::
   Dump all default config vars in JSON-format to STDOUT
 
+Enviroment Variables
+--------------------
+
+*SPRING_LOG_SECTIONS*
+  Selective functionality to change the verbosity (separated by ',').
+
+*SPRING_DATADIR*
+  Adds additional directories Spring will search for files (separated by ':').
+
+*SPRING_ISOLATED*
+  If defined Spring will stop searching files outside of the binaries directory.
 
 See also
 --------
