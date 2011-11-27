@@ -34,7 +34,7 @@ class CCursorIcons
 		void DrawTexts();
 		void DrawBuilds();
 
-		CMouseCursor* GetCursor(int cmd);
+		const CMouseCursor* GetCursor(int cmd) const;
 
 	protected:
 	

@@ -145,6 +145,12 @@ void CMouseHandler::LoadCursors()
 	const CMouseCursor::HotSpot mCenter  = CMouseCursor::Center;
 	const CMouseCursor::HotSpot mTopLeft = CMouseCursor::TopLeft;
 
+	CMouseCursor* nullCursor = CMouseCursor::GetNullCursor();
+	cursorCommandMap["none"] = nullCursor;
+	// Note: we intentionally don't add it there cause GetNullCursor() returns
+	//  a pointer to a static var, so it gets automatically deleted
+	//cursorFileMap["null"] = nullCursor;
+
 	AssignMouseCursor("",             "cursornormal",     mTopLeft, false);
 
 	AssignMouseCursor("Area attack",  "cursorareaattack", mCenter,  false);
@@ -563,6 +569,8 @@ std::string CMouseHandler::GetCurrentTooltip()
 
 void CMouseHandler::Update()
 {
+	SetCursor(newCursor);
+
 	if (!hide) {
 		return;
 	}
@@ -592,7 +600,7 @@ void CMouseHandler::ShowMouse()
 {
 	if (hide) {
 		hide = false;
-		cursorText = "%none%"; // force hardware cursor rebinding (else we have standard b&w cursor)
+		cursorText = "none"; // force hardware cursor rebinding (else we have standard b&w cursor)
 
 		// I don't use SDL_ShowCursor here 'cos it would cause a flicker with hwCursor
 		// (flicker caused by switching between default cursor and later the really one e.g. `attack`)
@@ -643,11 +651,18 @@ void CMouseHandler::ToggleHwCursor(const bool& enable)
 		mouseInput->SetWMMouseCursor(NULL);
 		SDL_ShowCursor(SDL_DISABLE);
 	}
-	cursorText = "%none%";
+	cursorText = "none";
 }
 
 
 /******************************************************************************/
+
+void CMouseHandler::ChangeCursor(const std::string& cmdName, const float& scale)
+{
+	newCursor = cmdName;
+	cursorScale = scale;
+}
+
 
 void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebind)
 {
@@ -663,7 +678,7 @@ void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebin
 		currentCursor = cursorCommandMap[""];
 	}
 
-	if (hardwareCursor && !hide && currentCursor) {
+	if (hardwareCursor && !hide) {
 		if (currentCursor->hwValid) {
 			hwHide = false;
 			currentCursor->BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
@@ -777,6 +792,8 @@ void CMouseHandler::DrawFPSCursor()
 
 void CMouseHandler::DrawCursor()
 {
+	assert(currentCursor);
+	
 	if (guihandler)
 		guihandler->DrawCentroidCursor();
 
@@ -802,12 +819,11 @@ void CMouseHandler::DrawCursor()
 		return;
 	}
 
-	if (hide || (cursorText == "%none%"))
+	if (hide)
 		return;
 
-	if (!currentCursor || (hardwareCursor && currentCursor->hwValid)) {
+	if (hardwareCursor && currentCursor->hwValid)
 		return;
-	}
 
 	// draw the 'software' cursor
 	if (cursorScale >= 0.0f) {
@@ -924,7 +940,7 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 	}
 
 	if (currentCursor == cursor) {
-		SetCursor("%none%", true);
+		SetCursor("none", true);
 	}
 
 	delete cursor;

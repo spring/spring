@@ -17,7 +17,7 @@ class CMouseCursor {
 
 	public:
 		static CMouseCursor* New(const std::string &name, HotSpot hs);
-
+		static CMouseCursor* GetNullCursor();
 		~CMouseCursor();
 
 		void Update();

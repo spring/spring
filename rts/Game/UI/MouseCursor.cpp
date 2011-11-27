@@ -34,7 +34,15 @@ CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
 	return c;
 }
 
-CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
+
+CMouseCursor* CMouseCursor::GetNullCursor()
+{
+	static CMouseCursor nullCursor("", Center);
+	return &nullCursor;
+}
+
+
+CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
  : animated(false)
  , hwValid(false)
  , animTime(0.0f)
@@ -333,7 +341,7 @@ void CMouseCursor::DrawQuad(int x, int y) const
 
 	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
 	glVertexPointer(3, GL_FLOAT, 0, vertices);
-
+//FIXME pass va?
 	glDrawArrays(GL_QUADS, 0, 4);
 
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
