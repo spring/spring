@@ -35,12 +35,19 @@ CRifle::~CRifle()
 
 void CRifle::Update()
 {
-	if(targetType!=Target_None){
-		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-		wantedDir=targetPos-weaponPos;
-		wantedDir.Normalize();
+	if (targetType != Target_None) {
+		weaponPos = owner->pos +
+			owner->frontdir * relWeaponPos.z +
+			owner->updir    * relWeaponPos.y +
+			owner->rightdir * relWeaponPos.x;
+		weaponMuzzlePos = owner->pos +
+			owner->frontdir * relWeaponMuzzlePos.z +
+			owner->updir    * relWeaponMuzzlePos.y +
+			owner->rightdir * relWeaponMuzzlePos.x;
+
+		wantedDir = (targetPos - weaponPos).Normalize();
 	}
+
 	CWeapon::Update();
 }
 
@@ -72,10 +79,10 @@ bool CRifle::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 		(accuracy + sprayAngle) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
-	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
+	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, true, false, false, owner)) {
 		return false;
 	}
-	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner)) {
+	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, false, true, false, owner)) {
 		return false;
 	}
 

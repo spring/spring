@@ -585,7 +585,10 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 
 void CGroundMoveType::ImpulseAdded(const float3&)
 {
-	if (owner->beingBuilt || owner->unitDef->movedata->moveType == MoveData::Ship_Move)
+	const UnitDef* ud = owner->unitDef;
+	const MoveData* md = ud->movedata;
+
+	if (owner->beingBuilt || md->moveType == MoveData::Ship_Move)
 		return;
 
 	float3& impulse = owner->residualImpulse;
@@ -1827,7 +1830,7 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 	const float3& mp = owner->midPos;
 
 	if (ud->slideTolerance < minSlideTolerance) { return false; }
-	if (owner->floatOnWater && owner->inWater) { return false; }
+	if (ud->floatOnWater && owner->inWater) { return false; }
 	if (!mp.IsInBounds()) { return false; }
 
 	// if minSlideTolerance is zero, do not multiply maxSlope by ud->slideTolerance
@@ -1855,7 +1858,7 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 {
 	float h = 0.0f;
 
-	if (owner->floatOnWater) {
+	if (owner->unitDef->floatOnWater) {
 		// in [0, maxHeight]
 		h = ground->GetHeightAboveWater(p.x, p.z);
 	} else {
@@ -1871,7 +1874,7 @@ void CGroundMoveType::AdjustPosToWaterLine()
 	if (!(owner->falling || flying)) {
 		float groundHeight = GetGroundHeight(owner->pos);
 
-		if (owner->floatOnWater && owner->inWater && groundHeight <= 0.0f) {
+		if (owner->unitDef->floatOnWater && owner->inWater && groundHeight <= 0.0f) {
 			groundHeight = -owner->unitDef->waterline;
 		}
 
@@ -1885,7 +1888,7 @@ void CGroundMoveType::AdjustPosToWaterLine()
 
 		owner->pos.y = mm->yLevel(owner->pos.x, owner->pos.z);
 
-		if (owner->floatOnWater && owner->inWater) {
+		if (owner->unitDef->floatOnWater && owner->inWater) {
 			owner->pos.y -= owner->unitDef->waterline;
 		}
 

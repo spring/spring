@@ -107,6 +107,7 @@ void CLoadScreen::Init()
 	}
 
 	if (!mt_loading) {
+		LOG("LoadingScreen: single-threaded");
 		game->LoadGame(mapName);
 	}
 }

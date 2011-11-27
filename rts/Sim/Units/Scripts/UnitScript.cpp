@@ -20,6 +20,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -549,8 +550,11 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	float alphaFalloff = 0.004f;
 	float fadeupTime = 4;
 
-	// Hovers need special care
-	if (unit->unitDef->canhover) {
+	const UnitDef* ud = unit->unitDef;
+	const MoveData* md = ud->movedata;
+
+	// hovercraft need special care
+	if (md != NULL && md->moveType == MoveData::Hover_Move) {
 		fadeupTime = 8.0f;
 		alpha = 0.15f + gu->usRandFloat() * 0.2f;
 		alphaFalloff = 0.008f;

@@ -25,8 +25,9 @@
 
 CONFIG(int, SourcePort).defaultValue(0);
 
-CNetProtocol::CNetProtocol() : loading(false), disableDemo(false)
+CNetProtocol::CNetProtocol() : loading(false)
 {
+	demoRecorder.reset(NULL);
 }
 
 CNetProtocol::~CNetProtocol()
@@ -104,29 +105,25 @@ void CNetProtocol::DeleteBufferPacketAt(unsigned index)
 	return serverConn->DeleteBufferPacketAt(index);
 }
 
-boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)
+float CNetProtocol::GetPacketTime(int frameNum) const
+{
+	if (frameNum == 0)
+		return gu->gameTime;
+
+	return (gu->startTime + (float)frameNum / (float)GAME_SPEED);
+}
+
+boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
 {
 	GML_STDMUTEX_LOCK(net); // GetData
 
 	boost::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
 
-	if (ret) {
-		const float demoTime = (framenum == 0) ? gu->gameTime
-				: gu->startTime + (float)framenum / (float)GAME_SPEED;
-		if (record) {
-			record->SaveToDemo(ret->data, ret->length, demoTime);
-		} else if (ret->data[0] == NETMSG_GAMEDATA && !disableDemo) {
-			try {
-				GameData gd(ret);
+	if (ret.get() == NULL) { return ret; }
+	if (ret->data[0] == NETMSG_GAMEDATA) { return ret; }
 
-				LOG("Starting demo recording");
-				record.reset(new CDemoRecorder());
-				record->WriteSetupText(gd.GetSetup());
-				record->SaveToDemo(ret->data, ret->length, demoTime);
-			} catch (const netcode::UnpackPacketException& ex) {
-				LOG_L(L_WARNING, "Invalid GameData received: %s", ex.what());
-			}
-		}
+	if (demoRecorder.get() != NULL) {
+		demoRecorder->SaveToDemo(ret->data, ret->length, GetPacketTime(frameNum));
 	}
 
 	return ret;
@@ -161,16 +158,16 @@ void CNetProtocol::Update()
 	serverConn->Update();
 }
 
-void CNetProtocol::DisableDemoRecording()
-{
-	disableDemo = true;
-}
-
 void CNetProtocol::Close(bool flush) {
 	GML_STDMUTEX_LOCK(net); // Close
 
 	serverConn->Close(flush);
 }
+
+
+
+void CNetProtocol::SetDemoRecorder(CDemoRecorder* r) { demoRecorder.reset(r); }
+CDemoRecorder* CNetProtocol::GetDemoRecorder() const { return demoRecorder.get(); }
 
 CNetProtocol* net = NULL;
 

@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <cstdio>
 
+#include "Game/GameVersion.h"
+
 namespace po = boost::program_options;
 
 CmdLineParams::CmdLineParams(int _argc, char* _argv[]) : desc("Allowed options")
@@ -21,7 +23,7 @@ CmdLineParams::~CmdLineParams()
 {
 }
 
-std::string CmdLineParams::GetInputFile()
+std::string CmdLineParams::GetInputFile() const
 {
 	if (vm.count("input-file"))
 		return vm["input-file"].as<std::string>();
@@ -64,16 +66,16 @@ void CmdLineParams::Parse()
 	po::notify(vm);
 }
 
-void CmdLineParams::PrintUsage(std::string program, std::string version)
+void CmdLineParams::PrintUsage() const
 {
-	if (!program.empty()) {
-		std::cout << program;
-		if (!version.empty())
-			std::cout << " " << version;
-		std::cout << std::endl;
-		std::cout << "This program is licensed under the GNU General Public License" << std::endl;
+	if (!usage_desc.empty()) {
+		std::cout << usage_desc << std::endl;
 	}
+	
 	std::cout << desc << std::endl;
+
+	std::cout << "Spring" << " " << SpringVersion::GetFull() << std::endl;
+	std::cout << "This program is licensed under the GNU General Public License" << std::endl;
 }
 
 bool CmdLineParams::IsSet(const std::string& var) const

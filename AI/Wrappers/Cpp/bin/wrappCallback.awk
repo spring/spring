@@ -1068,6 +1068,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		_isFetching = 1;
 		_isRetSize  = 0;
 		_isObj      = 0;
+		_isNative   = !_isObj;
 		_mapVar_size      = "_size";
 		_mapVar_keys      = "keys";
 		_mapVar_values    = "values";
@@ -1076,7 +1077,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		_mapType_oo_key   = "std::string";
 		_mapType_oo_value = "std::string";
 		_mapVar_oo        = "_map";
-		_mapType_int      = "std::map<"     _mapType_oo_key "," _mapType_oo_value ">";
+		_mapType_int      = "std::map<" _mapType_oo_key "," _mapType_oo_value ">";
 		_mapType_impl     = "std::map<" _mapType_oo_key "," _mapType_oo_value ">"; # TODO: should be unused, but needs check
 
 		_mapType_key_regexEscaped = regexEscape(_mapType_key);
@@ -1113,8 +1114,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			#conversionCode_pre = conversionCode_pre "\t\t" _mapVar_values " = new " _mapType_value "[" _mapVar_size "];" "\n";
 			#conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_values ";" "\n";
 			#conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_keys ";" "\n";
-			conversionCode_pre = conversionCode_pre "\t\t" _mapType_key   " " _mapVar_keys   "[" _mapVar_size "];" "\n";
-			conversionCode_pre = conversionCode_pre "\t\t" _mapType_value " " _mapVar_values "[" _mapVar_size "];" "\n";
+			# we use "new" here, for VS inflicted C90 compatibility (or C99 incompatibility)
+			conversionCode_pre = conversionCode_pre "\t\t" _mapType_key   "* " _mapVar_keys   " = new " _mapType_key   "[" _mapVar_size "];" "\n";
+			conversionCode_pre = conversionCode_pre "\t\t" _mapType_value "* " _mapVar_values " = new " _mapType_value "[" _mapVar_size "];" "\n";
 		}
 
 		if (_isFetching) {
@@ -1129,9 +1131,18 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo "[" _mapVar_keys "[i]] = " _mapVar_values "[i];" "\n";
 				}
 			} else if (_isNative) {
-				#conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
+				conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo "[" _mapVar_keys "[i]] = " _mapVar_values "[i];" "\n";
+			} else {
+				print("Error: not transfering C to OO type in map transfer code");
+				exit(1);
 			}
 			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
+
+			if (!_isRetSize) {
+				conversionCode_post = conversionCode_post "\n";
+				conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_keys   ";" "\n";
+				conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_values ";" "\n";
+			}
 
 			retParamType = _mapType_int;
 			retVar_out_m = _mapVar_oo;
@@ -1280,6 +1291,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				}
 			} else if (_isNative) {
 				conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".push_back(" _arrayPaNa "[i]);" "\n";
+			} else {
+				print("Error: not transfering C to OO type in array transfer code");
+				exit(1);
 			}
 			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
 
@@ -1299,6 +1313,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar "[i]->Get" _refObj "Id();" "\n";
 			} else if (_isNative) {
 				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar "[i];" "\n";
+			} else {
+				print("Error: not transfering OO to C type in array transfer code");
+				exit(1);
 			}
 			conversionCode_pre = conversionCode_pre "\t\t" "}" "\n";
 		}
