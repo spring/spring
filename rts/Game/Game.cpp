@@ -1611,6 +1611,8 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 			file << "map name: " << gameSetup->mapName << "\n";
 			file << "mod name: " << gameSetup->modName << "\n";
 			file << "minFrame: " << gMinFrameNum << ", maxFrame: " << gMaxFrameNum << "\n";
+			file << "randSeed: " << gs->GetRandSeed() << "\n";
+			file << "initSeed: " << gs->GetInitRandSeed() << "\n";
 		}
 	}
 
@@ -1631,7 +1633,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 	std::vector<LocalModelPiece*>::const_iterator piecesIt;
 	std::vector<CWeapon*>::const_iterator weaponsIt;
 
-	file << "frame: " << gs->frameNum << "\n";
+	file << "frame: " << gs->frameNum << ", seed: " << gs->GetRandSeed() << "\n";
 	file << "\tunits: " << units.size() << "\n";
 
 	#define DUMP_UNIT_DATA
