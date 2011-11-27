@@ -26,8 +26,8 @@ class CLuaHandleSynced : public CLuaHandle
 
 		void UpdateThreading();
 
-		inline bool GetAllowChanges() const { return IsDrawCallIn() ? false : allowChanges; }
-		inline void SetAllowChanges(bool ac, bool all = false) { if(!IsDrawCallIn() || all) allowChanges = ac; }
+		inline bool GetAllowChanges() const { return IsDrawCallIn() ? allowChangesDraw : allowChanges; }
+		inline void SetAllowChanges(bool ac, bool all = false) { if (all) allowChangesDraw = allowChanges = ac; else if (IsDrawCallIn()) allowChangesDraw = ac; else allowChanges = ac; }
 
 	public: // call-ins
 		bool HasCallIn(lua_State *L, const string& name);
@@ -80,7 +80,8 @@ class CLuaHandleSynced : public CLuaHandle
 		}
 
 	private:
-		bool allowChanges;
+		bool allowChanges; // sim thread
+		bool allowChangesDraw; // other threads (a non sim thread may load gadgets)
 	protected:
 		bool teamsLocked; // disables CallAsTeam()
 		map<string, string> textCommands; // name, help
