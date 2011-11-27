@@ -1295,6 +1295,8 @@ void CGroundMoveType::Fail()
 
 
 
+#include "Sim/Misc/GroundBlockingObjectMap.h"
+
 void CGroundMoveType::HandleObjectCollisions()
 {
 	//FIXME move this to a global space to optimize the check (atm unit collision checks are done twice for the collider & collidee!)
