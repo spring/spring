@@ -14,7 +14,7 @@
 struct SDL_Surface;
 
 
-class CBitmap  
+class CBitmap
 {
 public:
 	CBitmap(const unsigned char* data,int xsize,int ysize);
@@ -32,13 +32,8 @@ public:
 	bool LoadGrayscale(std::string const& filename);
 	bool Save(std::string const& filename, bool opaque = true) const;
 
-#ifndef BITMAP_NO_OPENGL
 	const unsigned int CreateTexture(bool mipmaps = false) const;
 	const unsigned int CreateDDSTexture(unsigned int texID = 0) const;
-#else  // !BITMAP_NO_OPENGL
-	const unsigned int CreateTexture(bool mipmaps = false) const;
-	const unsigned int CreateDDSTexture(unsigned int texID = 0) const;
-#endif // !BITMAP_NO_OPENGL
 
 	void CreateAlpha(unsigned char red, unsigned char green, unsigned char blue);
 	void SetTransparent(const SColor& c, const SColor& trans = SColor(0,0,0,0));
