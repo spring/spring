@@ -225,8 +225,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	commandBlacklist = std::set<std::string>(commands, commands+numCommands);
 
 #ifdef DEDICATED
-	demoRecorder.reset(new CDemoRecorder());
-	demoRecorder->SetName(setup->mapName, setup->modName);
+	demoRecorder.reset(new CDemoRecorder(setup->mapName, setup->modName));
 	demoRecorder->WriteSetupText(gameData->GetSetup());
 	const netcode::RawPacket* ret = gameData->Pack();
 	demoRecorder->SaveToDemo(ret->data, ret->length, GetDemoTime());

@@ -67,6 +67,8 @@ public:
 	 */
 	void DeleteBufferPacketAt(unsigned index);
 
+	float GetPacketTime(int frameNum) const;
+
 	/**
 	 * @brief Receive a single message (and remove it from the recieve buffer)
 	 * @return The first data packet from the buffer, or 0 if there is no data
@@ -85,7 +87,8 @@ public:
 	/// @overload
 	void Send(const netcode::RawPacket* pkt);
 
-	CDemoRecorder* GetDemoRecorder() const { return record.get(); }
+	void SetDemoRecorder(CDemoRecorder* r);
+	CDemoRecorder* GetDemoRecorder() const;
 
 	/**
 	 * Updates our network while the game loads to prevent timeouts.
@@ -96,8 +99,6 @@ public:
 	/// Must be called to send / recieve packets
 	void Update();
 
-	void DisableDemoRecording();
-
 	void Close(bool flush = false);
 
 
@@ -105,8 +106,7 @@ public:
 
 private:
 	boost::scoped_ptr<netcode::CConnection> serverConn;
-	boost::scoped_ptr<CDemoRecorder> record;
-	bool disableDemo;
+	boost::scoped_ptr<CDemoRecorder> demoRecorder;
 };
 
 extern CNetProtocol* net;
