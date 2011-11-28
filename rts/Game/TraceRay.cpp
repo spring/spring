@@ -149,7 +149,7 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 				for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 					CFeature* f = *ui;
 
-					if (!f->blocking || !f->collisionVolume) {
+					if (!f->blocking || f->collisionVolume == NULL) {
 						//! NOTE: why check the blocking property?
 						continue;
 					}
@@ -292,7 +292,7 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 			for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 				CFeature* f = *fi;
 
-				if (!f->collisionVolume) {
+				if (f->collisionVolume == NULL) {
 					continue;
 				}
 				//FIXME add useradar?
@@ -361,7 +361,7 @@ bool LineFeatureCol(const float3& start, const float3& dir, float length)
 			CFeature* f = *ui;
 			CollisionVolume* cv = f->collisionVolume;
 
-			if (!f->blocking || !cv) {
+			if (!f->blocking || cv == NULL) {
 				// NOTE: why check the blocking property?
 				continue;
 			}
@@ -436,6 +436,8 @@ bool TestCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
+				if (f->collisionVolume == NULL)
+					continue;
 				if (TestConeHelper(from, dir, length, spread, f))
 					return true;
 			}
@@ -512,6 +514,8 @@ bool TestTrajectoryCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
+				if (f->collisionVolume == NULL)
+					continue;
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, baseSize, f))
 					return true;
 			}
