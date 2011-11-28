@@ -1014,17 +1014,20 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		return;
 	}
 
-	if (newState == AIRCRAFT_FLYING) {
-		owner->Activate();
-		owner->script->StartMoving();
-		owner->UnBlock();
-	}
-
 	owner->physicalState = (newState == AIRCRAFT_LANDED)?
 		CSolidObject::OnGround:
 		CSolidObject::Flying;
 	owner->useAirLos = (newState != AIRCRAFT_LANDED);
 	owner->crashing = (newState == AIRCRAFT_CRASHING);
+
+	// this checks our physicalState, and blocks only
+	// if not flying (otherwise unblocks and returns)
+	owner->Block();
+
+	if (newState == AIRCRAFT_FLYING) {
+		owner->Activate();
+		owner->script->StartMoving();
+	}
 
 	if (newState != AIRCRAFT_LANDING) {
 		// don't need a reserved position anymore
