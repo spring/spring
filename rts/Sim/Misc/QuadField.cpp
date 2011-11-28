@@ -63,7 +63,11 @@ CQuadField::CQuadField()
 	numQuadsZ = gs->mapy * SQUARE_SIZE / QUAD_SIZE;
 
 	baseQuads.resize(numQuadsX * numQuadsZ);
-	tempQuads.resize(std::max(NUM_TEMP_QUADS, numQuadsX * numQuadsZ));
+
+	// Without the temporary, std::max takes address of NUM_TEMP_QUADS
+	// if it isn't inlined, forcing NUM_TEMP_QUADS to be defined.
+	const int numTempQuads = NUM_TEMP_QUADS;
+	tempQuads.resize(std::max(numTempQuads, numQuadsX * numQuadsZ));
 }
 
 CQuadField::~CQuadField()
