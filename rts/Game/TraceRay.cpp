@@ -136,12 +136,15 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 		GML_RECMUTEX_LOCK(quad); // TraceRay
 		CollisionQuery cq;
 
-		const vector<int>& quads = qf->GetQuadsOnRay(start, dir, length);
+		int* begQuad = NULL;
+		int* endQuad = NULL;
+
+		qf->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
 
 		//! feature intersection
 		if (!ignoreFeatures) {
-			for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-				const CQuadField::Quad& quad = qf->GetQuad(*qi);
+			for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+				const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 				for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 					CFeature* f = *ui;
@@ -167,8 +170,8 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 
 		//! unit intersection
 		if (!ignoreUnits) {
-			for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-				const CQuadField::Quad& quad = qf->GetQuad(*qi);
+			for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+				const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 				for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 					CUnit* u = *ui;
@@ -228,12 +231,16 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 	{
 		GML_RECMUTEX_LOCK(quad); //! GuiTraceRay
 
-		const vector<int> &quads = qf->GetQuadsOnRay(start, dir, length);
+		int* begQuad = NULL;
+		int* endQuad = NULL;
+
+		qf->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
+
 		std::list<CUnit*>::const_iterator ui;
 		std::list<CFeature*>::const_iterator fi;
 
-		for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-			const CQuadField::Quad& quad = qf->GetQuad(*qi);
+		for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+			const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 			//! Unit Intersection
 			for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
@@ -339,12 +346,16 @@ bool LineFeatureCol(const float3& start, const float3& dir, float length)
 {
 	GML_RECMUTEX_LOCK(quad); // GuiTraceRayFeature
 
-	const std::vector<int> &quads = qf->GetQuadsOnRay(start, dir, length);
+	int* begQuad = NULL;
+	int* endQuad = NULL;
+
+	if (qf->GetQuadsOnRay(start, dir, length, begQuad, endQuad) == 0)
+		return false;
 
 	CollisionQuery cq;
 
-	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
+	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 		for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 			CFeature* f = *ui;
@@ -360,6 +371,7 @@ bool LineFeatureCol(const float3& start, const float3& dir, float length)
 			}
 		}
 	}
+
 	return false;
 }
 
@@ -376,13 +388,14 @@ bool TestCone(
 	bool testFeatures,
 	CUnit* owner)
 {
-	int quads[CQuadField::NUM_TEMP_QUADS];
-	int* endQuad = quads;
+	int* begQuad = NULL;
+	int* endQuad = NULL;
 
-	qf->GetQuadsOnRay(from, dir, length, endQuad);
+	if (qf->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
+		return true;
 
-	for (int* qi = quads; qi != endQuad; ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
+	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 		if (testFriendly) {
 			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
@@ -448,13 +461,14 @@ bool TestTrajectoryCone(
 	bool testFeatures,
 	CUnit* owner)
 {
-	int quads[CQuadField::NUM_TEMP_QUADS];
-	int* endQuad = quads;
+	int* begQuad = NULL;
+	int* endQuad = NULL;
 
-	qf->GetQuadsOnRay(from, dir, length, endQuad);
+	if (qf->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
+		return true;
 
-	for (int* qi = quads; qi != endQuad; ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
+	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 		// friendly units in this quad
 		if (testFriendly) {
