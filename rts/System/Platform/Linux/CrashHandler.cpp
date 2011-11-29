@@ -60,7 +60,7 @@ static std::string CreateAbsolutePath(const std::string& relativePath)
 
 /**
  * Returns a path to a file that most likely contains the debug symbols
- * for the supplied bianry file.
+ * for the supplied binary file.
  * Always returns an absolute path.
  * Always returns an existing path, may be the input one.
  * precedence (top entries considered first):
@@ -90,21 +90,12 @@ static std::string LocateSymbolFile(const std::string& binaryFile)
 	std::string symbolFile;
 
 	static const std::string debugPath = "/usr/lib/debug";
-	const std::string absBinFile = binaryFile;
 
-	const std::string::size_type lastSlash = absBinFile.find_last_of('/');
-	std::string::size_type lastPoint       = absBinFile.find_last_of('.');
-	if (lastPoint < lastSlash+2) {
-		lastPoint = std::string::npos;
-	}
-	const std::string bin_path = absBinFile.substr(0, lastSlash);                       //! eg: "/usr/lib"
-	const std::string bin_file = absBinFile.substr(lastSlash+1, lastPoint-lastSlash-1); //! eg: "libunitsync"
-	std::string bin_ext        = "";
-	if (lastPoint != std::string::npos) {
-		bin_ext                = absBinFile.substr(lastPoint);                          //! eg: ".so"
-	}
+	const std::string bin_path = FileSystem::GetDirectory(binaryFile);
+	const std::string bin_file = FileSystem::GetFilename(binaryFile);
+	const std::string bin_ext  = FileSystem::GetExtension(binaryFile);
 
-	if (bin_ext.length() > 0) {
+	if (!bin_ext.empty()) {
 		symbolFile = bin_path + '/' + bin_file + bin_ext + ".dbg";
 		if (FileSystem::IsReadableFile(symbolFile)) {
 			return symbolFile;
@@ -121,7 +112,7 @@ static std::string LocateSymbolFile(const std::string& binaryFile)
 		return symbolFile;
 	}
 
-	symbolFile = absBinFile;
+	symbolFile = binaryFile;
 
 	return symbolFile;
 }
@@ -413,7 +404,7 @@ namespace CrashHandler
 		//! Translate it
 		TranslateStackTrace(&stacktrace, symbols);
 
-		//! Print out the StackTrace
+		//! Print out the translated StackTrace
 		unsigned numLine = 0;
 		for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
 			LOG_L(L_ERROR, "  <%u> %s", numLine++, it->c_str());
