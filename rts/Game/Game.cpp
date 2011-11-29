@@ -881,7 +881,7 @@ bool CGame::Update()
 	if (gs->frameNum == 0 || gs->paused)
 		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
 
-	ClientReadNet();
+	ClientReadNet(); // this can issue new SimFrames()
 
 	if (net->NeedsReconnect() && !gameOver) {
 		extern ClientSetup* startsetup;
