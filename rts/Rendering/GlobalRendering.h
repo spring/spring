@@ -88,6 +88,7 @@ public:
 	 *
 	 * Player's view range
 	 */
+	float zNear;
 	float viewRange;
 
 

@@ -74,6 +74,7 @@ CGlobalRendering::CGlobalRendering()
 
 	, aspectRatio(1.0f)
 
+	, zNear(NEAR_PLANE)
 	, viewRange(MAX_VIEW_RANGE)
 	, FSAA(0)
 	, depthBufferBits(0)
