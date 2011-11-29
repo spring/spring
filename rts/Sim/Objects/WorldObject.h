@@ -15,7 +15,7 @@ public:
 	CR_DECLARE(CWorldObject);
 
 	CWorldObject()
-		: id(0)
+		: id(-1)
 		, pos(ZeroVector)
 		, radius(0.0f)
 		, sqRadius(0.0f)
@@ -25,7 +25,7 @@ public:
 		, model(NULL)
 	{}
 	CWorldObject(const float3& pos)
-		: id(0)
+		: id(-1)
 		, pos(pos)
 		, radius(0.0f)
 		, sqRadius(0.0f)
