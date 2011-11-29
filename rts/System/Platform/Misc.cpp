@@ -135,6 +135,10 @@ static std::string GetRealPath(const std::string& path) {
 		pathRealC = NULL;
 	}
 
+	if (FileSystem::GetDirectory(pathReal).empty()) {
+		pathReal = GetProcessExecutablePath() + pathReal;
+	}
+
 	return pathReal;
 }
 #endif
