@@ -1614,6 +1614,8 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 			file << "randSeed: " << gs->GetRandSeed() << "\n";
 			file << "initSeed: " << gs->GetInitRandSeed() << "\n";
 		}
+
+		LOG("[DumpState] using dump-file \"%s\"", name.c_str());
 	}
 
 	if (file.bad() || !file.is_open()) { return; }
