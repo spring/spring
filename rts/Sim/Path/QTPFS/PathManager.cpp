@@ -7,6 +7,11 @@
 #include "System/OpenMP_cond.h"
 #include "lib/gml/gml.h" // for gmlCPUCount
 
+#ifdef GetTempPath
+#undef GetTempPath
+#undef GetTempPathA
+#endif
+
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
 #include "Game/GameSetup.h"
