@@ -430,9 +430,7 @@ void CLuaUI::ExecuteUIEventBatch() {
 		luaUIEventBatch.swap(lleb);
 	}
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	SELECT_LUA_STATE();
-#endif
+	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteUIEventBatch
 
 	if(Threading::IsSimThread())

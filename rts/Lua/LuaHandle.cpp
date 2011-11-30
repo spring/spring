@@ -1522,9 +1522,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteUnitEventBatch
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteUnitEventBatch
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	SELECT_LUA_STATE();
-#endif
+	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteUnitEventBatch
 
 	if (Threading::IsSimThread())
@@ -1645,9 +1643,7 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteFeatEventBatch
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteFeatEventBatch
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	SELECT_LUA_STATE();
-#endif
+	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFeatEventBatch
 
 	if(Threading::IsSimThread())
@@ -1690,9 +1686,7 @@ void CLuaHandle::ExecuteObjEventBatch() {
 	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteObjEventBatch
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteObjEventBatch
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	SELECT_LUA_STATE();
-#endif
+	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteObjEventBatch
 
 	if(Threading::IsSimThread())
@@ -1730,9 +1724,7 @@ void CLuaHandle::ExecuteProjEventBatch() {
 		luaProjEventBatch.swap(lpeb);
 	}
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	SELECT_LUA_STATE();
-#endif
+	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteProjEventBatch
 
 	if(Threading::IsSimThread())
@@ -1773,9 +1765,7 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteFrameEventBatch
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteFrameEventBatch
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	SELECT_LUA_STATE();
-#endif
+	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
 
 	if(Threading::IsSimThread())
@@ -1806,9 +1796,7 @@ void CLuaHandle::ExecuteLogEventBatch() {
 	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteLogEventBatch
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteLogEventBatch
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	SELECT_LUA_STATE();
-#endif
+	GML_SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteLogEventBatch
 
 	if (Threading::IsSimThread()) {
