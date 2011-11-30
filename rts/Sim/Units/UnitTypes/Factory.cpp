@@ -185,13 +185,14 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 	const CMatrix44f& mat = script->GetPieceMatrix(buildPiece);
 	const int h = GetHeadingFromVector(mat[2], mat[10]); //! x.z, z.z
 
-	// rotate unit nanoframe with platform (FIXME)
-	buildee->heading = (h + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
+	// rotate unit nanoframe with platform
+	buildee->heading = (-h + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
 	buildee->pos = buildPos;
 
 	if (buildee->unitDef->floatOnWater && (buildPos.y <= 0.0f))
 		buildee->pos.y = -buildee->unitDef->waterline;
 
+	buildee->SetDirectionFromHeading();
 	buildee->UpdateMidPos();
 
 	const CCommandQueue& queue = commandAI->commandQue;
