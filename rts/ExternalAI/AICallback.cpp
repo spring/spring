@@ -733,7 +733,7 @@ int CAICallback::InitPath(const float3& start, const float3& end, int pathType, 
 
 float3 CAICallback::GetNextWaypoint(int pathId)
 {
-	return pathManager->NextWaypoint(pathId, ZeroVector, 0.0f, 0, 0, false);
+	return pathManager->NextWayPoint(pathId, ZeroVector, 0.0f, 0, 0, false);
 }
 
 void CAICallback::FreePath(int pathId)
@@ -753,7 +753,7 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType, float g
 	std::vector<float3> points;
 	std::vector<int>    lengths;
 
-	pathManager->GetEstimatedPath(pathID, points, lengths);
+	pathManager->GetPathWayPoints(pathID, points, lengths);
 
 	if (points.empty()) {
 		return 0.0f;

@@ -3400,12 +3400,12 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 
 		HSTR_PUSH_NUMBER(L, "goalRadius", groundmt->goalRadius);
 
-		HSTR_PUSH_NUMBER(L, "waypointx", groundmt->waypoint.x);
-		HSTR_PUSH_NUMBER(L, "waypointy", groundmt->waypoint.y);
-		HSTR_PUSH_NUMBER(L, "waypointz", groundmt->waypoint.z);
-		HSTR_PUSH_NUMBER(L, "nextwaypointx", groundmt->nextWaypoint.x);
-		HSTR_PUSH_NUMBER(L, "nextwaypointy", groundmt->nextWaypoint.y);
-		HSTR_PUSH_NUMBER(L, "nextwaypointz", groundmt->nextWaypoint.z);
+		HSTR_PUSH_NUMBER(L, "currwaypointx", groundmt->currWayPoint.x);
+		HSTR_PUSH_NUMBER(L, "currwaypointy", groundmt->currWayPoint.y);
+		HSTR_PUSH_NUMBER(L, "currwaypointz", groundmt->currWayPoint.z);
+		HSTR_PUSH_NUMBER(L, "nextwaypointx", groundmt->nextWayPoint.x);
+		HSTR_PUSH_NUMBER(L, "nextwaypointy", groundmt->nextWayPoint.y);
+		HSTR_PUSH_NUMBER(L, "nextwaypointz", groundmt->nextWayPoint.z);
 
 		HSTR_PUSH_NUMBER(L, "requestedSpeed", groundmt->requestedSpeed);
 

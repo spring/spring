@@ -74,10 +74,12 @@ class CCollisionHandler {
 		static bool IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q);
 		static void IntersectPieceTreeHelper(LocalModelPiece* lmp, CMatrix44f mat, const float3& p0, const float3& p1, std::list<CollisionQuery>* hits);
 
+	public:
 		static bool IntersectEllipsoid(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q);
 		static bool IntersectCylinder(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q);
 		static bool IntersectBox(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q);
 
+	private:
 		static unsigned int numCollisionTests;
 		static unsigned int numIntersectionTests;
 };

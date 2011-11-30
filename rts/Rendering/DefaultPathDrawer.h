@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef DEFAULTPATHDRAWER_HDR
-#define DEFAULTPATHDRAWER_HDR
+#ifndef DEFAULT_PATHDRAWER_HDR
+#define DEFAULT_PATHDRAWER_HDR
 
 #include "IPathDrawer.h"
 
@@ -14,16 +14,15 @@ struct DefaultPathDrawer: public IPathDrawer {
 public:
 	DefaultPathDrawer();
 
-	void Draw() const;
+	void DrawAll() const;
 	void UpdateExtraTexture(int, int, int, int, unsigned char*) const;
 
 private:
-	void Draw(const CPathManager*) const;
+	void Draw() const;
 	void Draw(const CPathFinderDef*) const;
 	void Draw(const CPathFinder*) const;
 	void Draw(const CPathEstimator*) const;
-
-	CPathManager* pm;
 };
 
 #endif
+

@@ -4,6 +4,7 @@
 #define MOD_INFO_H
 
 #include <string>
+#include "Sim/Path/PFSTypes.h"
 
 class CModInfo
 {
@@ -41,8 +42,9 @@ public:
 		, requireSonarUnderWater(true)
 		, featureVisibility(FEATURELOS_NONE)
 		, luaThreadingModel(2)
+		, pathFinderSystem(PFS_TYPE_DEFAULT)
 	{}
-	~CModInfo() {}
+
 
 	void Init(const char* modArchive);
 
@@ -158,8 +160,12 @@ public:
 	int featureVisibility;
 	// Lua threading model: Controls which Lua MT optimizations the mod will use by default (see LuaConfig.h for details)
 	int luaThreadingModel;
+
+	// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
+	int pathFinderSystem;
 };
 
 extern CModInfo modInfo;
 
 #endif // MOD_INFO_H
+
