@@ -96,7 +96,7 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		// the latter case, HaveFreeLineOfFire() checks the NOGROUND
 		// collision flag for us)
 		float3 flatDir(dir.x, 0, dir.z);
-		dir.Normalize();
+		dir.SafeNormalize();
 		float flatLength = flatDir.Length();
 
 		if (flatLength == 0)
@@ -136,7 +136,7 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 			}
 		} else {
 			float3 goaldir = pos - owner->pos;
-			goaldir.Normalize();
+			goaldir.SafeNormalize();
 			if (owner->frontdir.dot(goaldir) < maxAngleDif)
 				return false;
 		}

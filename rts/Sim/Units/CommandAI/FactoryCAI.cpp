@@ -10,7 +10,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/WaitCommandsAI.h"
-#include "Lua/LuaRules.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitHandler.h"
@@ -26,34 +25,26 @@
 CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , );
 
 CR_REG_METADATA(CFactoryCAI , (
-				CR_MEMBER(newUnitCommands),
-				CR_MEMBER(buildOptions),
-				CR_MEMBER(building),
-				CR_MEMBER(lastRestrictedWarning),
-				CR_RESERVED(16),
-				CR_POSTLOAD(PostLoad)
-				));
+	CR_MEMBER(newUnitCommands),
+	CR_MEMBER(buildOptions),
+	CR_RESERVED(16),
+	CR_POSTLOAD(PostLoad)
+));
 
 CR_BIND(CFactoryCAI::BuildOption, );
 
 CR_REG_METADATA_SUB(CFactoryCAI,BuildOption , (
-				CR_MEMBER(name),
-				CR_MEMBER(fullName),
-				CR_MEMBER(numQued)
-				));
+	CR_MEMBER(name),
+	CR_MEMBER(fullName),
+	CR_MEMBER(numQued)
+));
 
 
-CFactoryCAI::CFactoryCAI()
-: CCommandAI(),
-	building(false),
-	lastRestrictedWarning(0)
+CFactoryCAI::CFactoryCAI(): CCommandAI()
 {}
 
 
-CFactoryCAI::CFactoryCAI(CUnit* owner)
-: CCommandAI(owner),
-	building(false),
-	lastRestrictedWarning(0)
+CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 {
 	commandQue.SetQueueType(CCommandQueue::BuildQueueType);
 	newUnitCommands.SetQueueType(CCommandQueue::NewUnitQueueType);
@@ -102,7 +93,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 
 	CFactory* fac=(CFactory*)owner;
 
-	map<int,string>::const_iterator bi;
+	map<int, string>::const_iterator bi;
 	for (bi = fac->unitDef->buildOptions.begin(); bi != fac->unitDef->buildOptions.end(); ++bi) {
 		const string name = bi->second;
 
@@ -142,15 +133,6 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	}
 }
 
-
-CFactoryCAI::~CFactoryCAI()
-{
-}
-
-
-void CFactoryCAI::PostLoad()
-{
-}
 
 
 void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
@@ -192,8 +174,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				} else {
 					newUnitCommands.push_back(c);
 				}
-			}
-			else {
+			} else {
 				bool dummy;
 				if (CancelCommands(c, newUnitCommands, dummy) > 0) {
 					return;
@@ -223,7 +204,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		return;
 	}
 
-	BuildOption &bo = boi->second;
+	BuildOption& bo = boi->second;
 
 	int numItems = 1;
 	if (c.options & SHIFT_KEY)   { numItems *= 5; }
@@ -243,8 +224,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 					numToErase--;
 				}
 			}
-		}
-		else {
+		} else {
 			for (int cmdNum = commandQue.size() - 1; cmdNum != -1 && numToErase; --cmdNum) {
 				if (commandQue[cmdNum].GetID() == cmd_id) {
 					commandQue[cmdNum] = Command(CMD_STOP);
@@ -252,7 +232,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				}
 			}
 		}
-		UpdateIconName(cmd_id,bo);
+		UpdateIconName(cmd_id, bo);
 		SlowUpdate();
 	}
 	else {
@@ -271,7 +251,6 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				}
 			}
 			if (!repeatOrders) {
-				building=false;
 				CFactory* fac = (CFactory*)owner;
 				fac->StopBuild();
 			}
@@ -299,7 +278,6 @@ void CFactoryCAI::InsertBuildCommand(CCommandQueue::iterator& it,
 	if (!commandQue.empty() && (it == commandQue.begin())) {
 		// ExecuteStop(), without the pop_front()
 		CFactory* fac = (CFactory*)owner;
-		building = false;
 		fac->StopBuild();
 	}
 	commandQue.insert(it, newCmd);
@@ -328,84 +306,56 @@ bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 }
 
 
-void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOption)
+void CFactoryCAI::DecreaseQueueCount(const Command& c, BuildOption& buildOption)
 {
-	if(!repeatOrders || c.options & DONT_REPEAT) {
+	if (!repeatOrders || (c.options & DONT_REPEAT)) {
 		buildOption.numQued--;
-		if (owner->team == gu->myTeam) {
-			if(lastRestrictedWarning+100<gs->frameNum) {
-				LOG_L(L_WARNING, "%s: Build failed, unit type limit reached",
-						owner->unitDef->humanName.c_str());
-				eventHandler.LastMessagePosition(owner->pos);
-				lastRestrictedWarning = gs->frameNum;
-			}
-		}
 	}
+
 	UpdateIconName(c.GetID(), buildOption);
 	FinishCommand();
 }
 
 
+
+// owner->curBuild can remain NULL for several frames after calling
+// QueueBuild(); hence we need a callback or listen for an event to
+// detect when the build-process actually finished
+//
+// if fac->QueueBuild() returned false, this will NOT be called (so
+// when eg. the unit-limit is reached, build commands will remain in
+// the queue)
+void FactoryFinishBuildCallBack(CFactory* factory, const Command& command) {
+	CFactoryCAI* cai = dynamic_cast<CFactoryCAI*>(factory->commandAI);
+	CFactoryCAI::BuildOption& bo = cai->buildOptions[command.GetID()];
+
+	cai->DecreaseQueueCount(command, bo);
+}
+
 void CFactoryCAI::SlowUpdate()
 {
-	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+	// Commands issued may invoke SlowUpdate when paused
+	if (gs->paused)
 		return;
 	if (commandQue.empty() || owner->beingBuilt) {
 		return;
 	}
 
 	CFactory* fac = (CFactory*) owner;
+	unsigned int oldSize = 0;
 
-	unsigned int oldSize;
 	do {
 		Command& c = commandQue.front();
 		oldSize = commandQue.size();
 		map<int, BuildOption>::iterator boi;
 
 		if ((boi = buildOptions.find(c.GetID())) != buildOptions.end()) {
-			const UnitDef* def = unitDefHandler->GetUnitDefByName(boi->second.name);
-
-			if (building) {
-				if (!fac->curBuild && !fac->quedBuild) {
-					building = false;
-					if (!repeatOrders || c.options & DONT_REPEAT) {
-						boi->second.numQued--;
-					}
-					UpdateIconName(c.GetID(),boi->second);
-					FinishCommand();
-				}
-
-				// This can only be true if two factories started building
-				// the restricted unit in the same simulation frame
-				else if (uh->unitsByDefs[owner->team][def->id].size() > def->maxThisUnit) { //unit restricted?
-					building = false;
-					fac->StopBuild();
-					CancelRestrictedUnit(c, boi->second);
-				}
-			} else {
-				const UnitDef *def = unitDefHandler->GetUnitDefByName(boi->second.name);
-				if(luaRules && !luaRules->AllowUnitCreation(def, owner, NULL)) {
-					if(!repeatOrders || c.options & DONT_REPEAT){
-						boi->second.numQued--;
-					}
-					UpdateIconName(c.GetID(),boi->second);
-					FinishCommand();
-				}
-				else if (uh->unitsByDefs[owner->team][def->id].size() >= def->maxThisUnit) { //unit restricted?
-					CancelRestrictedUnit(c, boi->second);
-				}
-				else if (!teamHandler->Team(owner->team)->AtUnitLimit()) {
-					fac->StartBuild(def);
-					building = true;
-				}
-			}
-		}
-		else {
-			switch(c.GetID()){
+			fac->QueueBuild(unitDefHandler->GetUnitDefByID(-c.GetID()), c, &FactoryFinishBuildCallBack);
+		} else {
+			switch (c.GetID()) {
 				case CMD_STOP: {
 					ExecuteStop(c);
-					break;
-				}
+				} break;
 				default: {
 					CCommandAI::SlowUpdate();
 					return;
@@ -420,8 +370,6 @@ void CFactoryCAI::SlowUpdate()
 
 void CFactoryCAI::ExecuteStop(Command &c)
 {
-	building = false;
-
 	CFactory* fac = (CFactory*) owner;
 	fac->StopBuild();
 
@@ -443,19 +391,24 @@ int CFactoryCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 }
 
 
-void CFactoryCAI::UpdateIconName(int id,BuildOption& bo)
+void CFactoryCAI::UpdateIconName(int cmdID, const BuildOption& bo)
 {
 	vector<CommandDescription>::iterator pci;
-	for(pci=possibleCommands.begin();pci!=possibleCommands.end();++pci){
-		if(pci->id==id){
-			char t[32];
-			SNPRINTF(t,10,"%d",bo.numQued);
-			pci->name=bo.name;
-			pci->params.clear();
-			if(bo.numQued)
-				pci->params.push_back(t);
-			break;
-		}
+	for (pci = possibleCommands.begin(); pci != possibleCommands.end(); ++pci) {
+		if (pci->id != cmdID)
+			continue;
+
+		char t[32];
+		SNPRINTF(t, 10, "%d", bo.numQued);
+
+		pci->name = bo.name;
+		pci->params.clear();
+
+		if (bo.numQued)
+			pci->params.push_back(t);
+
+		break;
 	}
+
 	selectedUnits.PossibleCommandChange(owner);
 }
