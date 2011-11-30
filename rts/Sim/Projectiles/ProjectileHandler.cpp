@@ -322,6 +322,9 @@ void CProjectileHandler::Update()
 
 void CProjectileHandler::AddProjectile(CProjectile* p)
 {
+	// already initialized?
+	assert(p->id < 0);
+	
 	std::list<int>* freeIDs = NULL;
 	std::map<int, ProjectileMapPair>* proIDs = NULL;
 	int* maxUsedID = NULL;

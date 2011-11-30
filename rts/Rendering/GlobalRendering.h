@@ -88,6 +88,7 @@ public:
 	 *
 	 * Player's view range
 	 */
+	float zNear;
 	float viewRange;
 
 
@@ -153,11 +154,21 @@ public:
 	bool compressTextures;
 
 	/**
+	 * @brief GPU driver's vendor
+	 *
+	 * These can be used to enable workarounds for bugs in their drivers.
+	 * Note, you should always give the user the possiblity to override such workarounds via config-tags.
+	 */
+	bool haveATI;
+	bool haveMesa;
+	bool haveIntel;
+	bool haveNvidia;
+
+	/**
 	 * @brief collection of some ATI bugfixes
 	 *
 	 * enables some ATI bugfixes
 	 */
-	bool haveATI;
 	bool atiHacks;
 
 	/**

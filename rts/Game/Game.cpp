@@ -881,7 +881,7 @@ bool CGame::Update()
 	if (gs->frameNum == 0 || gs->paused)
 		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
 
-	ClientReadNet();
+	ClientReadNet(); // this can issue new SimFrames()
 
 	if (net->NeedsReconnect() && !gameOver) {
 		extern ClientSetup* startsetup;
@@ -1614,6 +1614,8 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 			file << "randSeed: " << gs->GetRandSeed() << "\n";
 			file << "initSeed: " << gs->GetInitRandSeed() << "\n";
 		}
+
+		LOG("[DumpState] using dump-file \"%s\"", name.c_str());
 	}
 
 	if (file.bad() || !file.is_open()) { return; }
@@ -2253,26 +2255,26 @@ void CGame::ActionReceived(const Action& action, int playerID)
 bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 {
 	const IUnsyncedActionExecutor* executor = unsyncedGameCommands->GetActionExecutor(action.command);
-
 	if (executor != NULL) {
 		// an executor for that action was found
 		UnsyncedAction unsyncedAction(action, key, isRepeat);
 		executor->ExecuteAction(unsyncedAction);
-	} else {
-		static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
-		if (serverCommands.find(action.command) != serverCommands.end())
-		{
-			CommandMessage pckt(action, gu->myPlayerNum);
-			net->Send(pckt.Pack());
-		}
-
-		if (!Console::Instance().ExecuteAction(action))
-		{
-			if (guihandler != NULL) // maybe a widget is interested?
-				guihandler->PushLayoutCommand(action.rawline, false);
-			return false;
-		}
+		return true; // XXX catch exceptions thrown in ExecuteAction to deside what to return here?
 	}
+
+	static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
+	if (serverCommands.find(action.command) != serverCommands.end()) {
+		CommandMessage pckt(action, gu->myPlayerNum);
+		net->Send(pckt.Pack());
+		return true;
+	}
+
+	if (Console::Instance().ExecuteAction(action)) {
+		return true;
+	}
+
+	if (guihandler != NULL) // maybe a widget is interested?
+		guihandler->PushLayoutCommand(action.rawline, false);
 
 	return false;
 }
