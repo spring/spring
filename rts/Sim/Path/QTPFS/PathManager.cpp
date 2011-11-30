@@ -3,7 +3,9 @@
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
+
 #include "System/OpenMP_cond.h"
+#include "lib/gml/gml.h" // for gmlCPUCount
 
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
