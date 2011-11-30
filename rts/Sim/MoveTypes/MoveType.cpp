@@ -30,8 +30,8 @@ CR_REG_METADATA(AMoveType, (
 AMoveType::AMoveType(CUnit* owner):
 	owner(owner),
 
-	goalPos(owner ? owner->pos : float3(0.0f, 0.0f, 0.0f)),
-	oldPos(owner? owner->pos: float3(0.0f, 0.0f, 0.0f)),
+	goalPos(owner? owner->pos: ZeroVector),
+	oldPos(owner? owner->pos: ZeroVector),
 	oldSlowUpdatePos(oldPos),
 
 	maxSpeed(0.2f),
