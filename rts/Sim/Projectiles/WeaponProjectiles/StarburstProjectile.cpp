@@ -124,7 +124,7 @@ CStarburstProjectile::CStarburstProjectile(
 void CStarburstProjectile::Detach()
 {
 	// SYNCED
-	CWeaponProjectile::Detach();
+	CProjectile::Detach();
 }
 
 CStarburstProjectile::~CStarburstProjectile()
