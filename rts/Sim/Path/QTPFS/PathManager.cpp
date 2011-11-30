@@ -499,7 +499,6 @@ void QTPFS::PathManager::ExecuteSearch(
 ) {
 	IPathSearch* search = *searchesIt;
 	IPath* path = pathCache.GetTempPath(search->GetID());
-	PathSearchTrace::Execution* exec = NULL;
 
 	assert(search != NULL);
 	assert(path != NULL);
@@ -568,7 +567,6 @@ void QTPFS::PathManager::ExecuteSearch(
 
 void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
 	#ifndef IGNORE_DEAD_PATHS
-	NodeLayer& nodeLayer = nodeLayers[pathType];
 	PathCache& pathCache = pathCaches[pathType];
 	PathCache::PathMap::const_iterator deadPathsIt;
 
