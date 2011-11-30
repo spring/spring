@@ -95,6 +95,7 @@ protected:
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();
 	void UpdateOwnerPos(bool);
+	bool FollowPath();
 	bool WantReverse(const float3&) const;
 
 
