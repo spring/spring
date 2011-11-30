@@ -38,6 +38,23 @@ CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
 
 static const std::string PATH_CACHE_DIR = "cache/paths/";
 
+static size_t GetNumThreads() {
+	size_t numThreads = std::max(0, configHandler->GetInt("HardwareThreadCount"));
+
+	if (numThreads == 0) {
+		// auto-detect
+		#if (BOOST_VERSION >= 103500)
+		numThreads = boost::thread::hardware_concurrency();
+		#elif defined(USE_GML)
+		numThreads = gmlCPUCount();
+		#else
+		numThreads = 1;
+		#endif
+	}
+
+	return numThreads;
+}
+
 #if !defined(USE_MMGR)
 void* CPathEstimator::operator new(size_t size) { return PathAllocator::Alloc(size); }
 void CPathEstimator::operator delete(void* p, size_t size) { PathAllocator::Free(p, size); }
@@ -101,18 +118,7 @@ CPathEstimator::~CPathEstimator()
 
 void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::string& map)
 {
-	unsigned int numThreads = std::max(0, configHandler->GetInt("HardwareThreadCount"));
-
-	if (numThreads == 0) {
-		// auto-detect
-		#if (BOOST_VERSION >= 103500)
-		numThreads = boost::thread::hardware_concurrency();
-		#elif defined(USE_GML)
-		numThreads = gmlCPUCount();
-		#else
-		numThreads = 1;
-		#endif
-	}
+	const unsigned int numThreads = GetNumThreads();
 
 	if (threads.size() != numThreads) {
 		threads.resize(numThreads);

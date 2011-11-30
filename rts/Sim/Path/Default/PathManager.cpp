@@ -290,15 +290,15 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, i
 /*
 Removes and return the next waypoint in the multipath corresponding to given id.
 */
-float3 CPathManager::NextWaypoint(
+float3 CPathManager::NextWayPoint(
 	unsigned int pathId,
 	float3 callerPos,
 	float minDistance,
 	int numRetries,
 	int ownerId,
 	bool synced
-) const {
-	SCOPED_TIMER("PathManager::NextWaypoint");
+) {
+	SCOPED_TIMER("PathManager::NextWayPoint");
 
 	// 0 indicates a no-path id
 	if (pathId == 0)
@@ -358,7 +358,7 @@ float3 CPathManager::NextWaypoint(
 					return float3(-1.0f, -1.0f, -1.0f);
 				}
 			} else {
-				return NextWaypoint(pathId, callerPos, minDistance, numRetries + 1, ownerId, synced);
+				return NextWayPoint(pathId, callerPos, minDistance, numRetries + 1, ownerId, synced);
 			}
 		} else {
 			waypoint = multiPath->maxResPath.path.back();
@@ -482,7 +482,7 @@ void CPathManager::GetDetailedPathSquares(unsigned pathId, std::vector<int2>& po
 
 
 
-void CPathManager::GetEstimatedPath(
+void CPathManager::GetPathWayPoints(
 	unsigned int pathId,
 	std::vector<float3>& points,
 	std::vector<int>& starts

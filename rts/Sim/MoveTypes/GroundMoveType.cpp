@@ -72,8 +72,8 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(pathId),
 	CR_MEMBER(goalRadius),
 
-	CR_MEMBER(waypoint),
-	CR_MEMBER(nextWaypoint),
+	CR_MEMBER(currWayPoint),
+	CR_MEMBER(nextWayPoint),
 	CR_MEMBER(atGoal),
 	CR_MEMBER(haveFinalWaypoint),
 	CR_MEMBER(currWayPointDist),
@@ -132,8 +132,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	pathId(0),
 	goalRadius(0),
 
-	waypoint(ZeroVector),
-	nextWaypoint(ZeroVector),
+	currWayPoint(ZeroVector),
+	nextWayPoint(ZeroVector),
 	atGoal(false),
 	haveFinalWaypoint(false),
 	currWayPointDist(0.0f),
@@ -228,11 +228,12 @@ bool CGroundMoveType::Update()
 				SetMainHeading();
 			} else {
 				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
-				ASSERT_SYNCED(waypoint);
+				ASSERT_SYNCED(currWayPoint);
+				ASSERT_SYNCED(nextWayPoint);
 				ASSERT_SYNCED(owner->pos);
 
 				prevWayPointDist = currWayPointDist;
-				currWayPointDist = owner->pos.distance2D(waypoint);
+				currWayPointDist = owner->pos.distance2D(currWayPoint);
 				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(MIN_WAYPOINT_DISTANCE));
 
 				if (!atGoal) {
@@ -247,8 +248,16 @@ bool CGroundMoveType::Update()
 					}
 				}
 
-				// Set direction to waypoint.
-				waypointDir = waypoint - owner->pos;
+				if (!haveFinalWaypoint) {
+					GetNextWayPoint();
+				} else {
+					if (atGoal) {
+						Arrived();
+					}
+				}
+
+				// set direction to waypoint AFTER requesting it
+				waypointDir = currWayPoint - owner->pos;
 				waypointDir.y = 0.0f;
 				waypointDir.SafeNormalize();
 
@@ -257,14 +266,6 @@ bool CGroundMoveType::Update()
 				const float3 wpDirInv = -waypointDir;
 //				const float3 wpPosTmp = owner->pos + wpDirInv;
 				const bool   wpBehind = (waypointDir.dot(flatFrontDir) < 0.0f);
-
-				if (!haveFinalWaypoint) {
-					GetNextWaypoint();
-				} else {
-					if (atGoal) {
-						Arrived();
-					}
-				}
 
 				if (wpBehind) {
 					wantReverse = WantReverse(waypointDir);
@@ -345,6 +346,7 @@ void CGroundMoveType::SlowUpdate()
 
 			if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
 				// case A: we have a path but are not moving
+				// FIXME: triggers during 180-degree turns
 				LOG_L(L_DEBUG,
 						"SlowUpdate: unit %i has pathID %i but %i ETA failures",
 						owner->id, pathId, numIdlingUpdates);
@@ -361,15 +363,13 @@ void CGroundMoveType::SlowUpdate()
 		} else {
 			if (gs->frameNum > pathRequestDelay) {
 				// case B: we want to be moving but don't have a path
-				LOG_L(L_DEBUG,
-						"SlowUpdate: unit %i has no path", owner->id);
+				LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
 
 				StopEngine();
 				StartEngine();
 			}
 		}
 	}
-
 
 	if (!flying) {
 		// move us into the map, and update <oldPos>
@@ -418,8 +418,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 	currWayPointDist = 0.0f;
 	prevWayPointDist = 0.0f;
 
-	LOG_L(L_DEBUG,
-			"StartMoving: starting engine for unit %i", owner->id);
+	LOG_L(L_DEBUG, "StartMoving: starting engine for unit %i", owner->id);
 
 	StartEngine();
 
@@ -441,8 +440,7 @@ void CGroundMoveType::StopMoving() {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
-	LOG_L(L_DEBUG,
-			"StopMoving: stopping engine for unit %i", owner->id);
+	LOG_L(L_DEBUG, "StopMoving: stopping engine for unit %i", owner->id);
 
 	StopEngine();
 
@@ -472,7 +470,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 
 		wSpeed *= groundMod;
 
-		const float3 goalDifFwd = waypoint - owner->pos;
+		const float3 goalDifFwd = currWayPoint - owner->pos;
 		const float3 goalDifRev = -goalDifFwd;
 //		const float3 goalPosTmp = owner->pos + goalDifRev;
 
@@ -493,7 +491,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			}
 
 			if (startBreaking) {
-				// at this point, Update() will no longer call GetNextWaypoint()
+				// at this point, Update() will no longer call GetNextWayPoint()
 				// and we must slow down to prevent entering an infinite circle
 				wSpeed = std::min(wSpeed, fastmath::apxsqrt(currWayPointDist * decRate));
 			}
@@ -1104,7 +1102,7 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 // Creates a path to the goal.
 void CGroundMoveType::GetNewPath()
 {
-	pathManager->DeletePath(pathId);
+	assert(pathId == 0);
 	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
 
 	// if new path received, can't be at waypoint
@@ -1112,8 +1110,8 @@ void CGroundMoveType::GetNewPath()
 		atGoal = false;
 		haveFinalWaypoint = false;
 
-		waypoint = owner->pos;
-		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
+		currWayPoint = pathManager->NextWayPoint(pathId, owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id);
+		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 	} else {
 		Fail();
 	}
@@ -1126,18 +1124,18 @@ void CGroundMoveType::GetNewPath()
 /*
 Sets waypoint to next in path.
 */
-void CGroundMoveType::GetNextWaypoint()
+void CGroundMoveType::GetNextWayPoint()
 {
-
 	if (pathId == 0) {
 		return;
 	}
 
 	{
 		#if (DEBUG_OUTPUT == 1)
-		// plot the vector to the waypoint
+		// plot the vector to currWayPoint
 		const int figGroupID =
-			geometricObjects->AddLine(owner->pos + UpVector * 20, waypoint + UpVector * 20, 8.0f, 1, 4);
+			geometricObjects->AddLine(owner->pos + UpVector * 20, currWayPoint + UpVector * 20, 8.0f, 1, 4);
+
 		geometricObjects->SetColor(figGroupID, 1, 0.3f, 0.3f, 0.6f);
 		#endif
 
@@ -1158,19 +1156,35 @@ void CGroundMoveType::GetNextWaypoint()
 		}
 	}
 
-	if (nextWaypoint.x != -1.0f && (nextWaypoint - waypoint).SqLength2D() > 0.1f) {
-		waypoint = nextWaypoint;
-		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
-		if (waypoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
-			waypoint = goalPos;
-		}
-	} else {
+	if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
 		// trigger Arrived on the next Update
 		haveFinalWaypoint = true;
+	}
 
-		waypoint = goalPos;
-		nextWaypoint = goalPos;
+	haveFinalWaypoint = haveFinalWaypoint || (nextWayPoint.x == -1.0f);
+
+	if (haveFinalWaypoint) {
+		currWayPoint = goalPos;
+		nextWayPoint = goalPos;
+		return;
+	}
+
+	// TODO-QTPFS:
+	//     regularly check if a terrain-change modified our path by comparing
+	//     NextWayPoint(pathId, owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id)
+	//     and waypoint, eg. every 15 frames
+	//     if we do not and a terrain-change area happened to contain <waypoint>
+	//     (the immediate next destination), then the unit will keep heading for
+	//     it and might possibly get stuck
+	//
+	if ((nextWayPoint - currWayPoint).SqLength2D() > 0.01f) {
+		currWayPoint = nextWayPoint;
+		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
+
+		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
+			currWayPoint = goalPos;
+		}
 	}
 }
 
@@ -1230,14 +1244,13 @@ void CGroundMoveType::StopEngine() {
 		pathId = 0;
 
 		if (!atGoal) {
-			waypoint = Here();
+			currWayPoint = Here();
 		}
 
 		// Stop animation.
 		owner->script->StopMoving();
 
-		LOG_L(L_DEBUG,
-				"StopEngine: engine stopped for unit %i", owner->id);
+		LOG_L(L_DEBUG, "StopEngine: engine stopped for unit %i", owner->id);
 	}
 
 	owner->isMoving = false;
@@ -1269,8 +1282,7 @@ void CGroundMoveType::Arrived()
 		progressState = Done;
 		owner->commandAI->SlowUpdate();
 
-		LOG_L(L_DEBUG,
-				"Arrived: unit %i arrived", owner->id);
+		LOG_L(L_DEBUG, "Arrived: unit %i arrived", owner->id);
 	}
 }
 
@@ -1280,8 +1292,7 @@ No more trials will be done before a new goal is given.
 */
 void CGroundMoveType::Fail()
 {
-	LOG_L(L_DEBUG,
-			"Fail: unit %i failed", owner->id);
+	LOG_L(L_DEBUG, "Fail: unit %i failed", owner->id);
 
 	StopEngine();
 
@@ -1679,8 +1690,8 @@ void CGroundMoveType::TestNewTerrainSquare()
 			moveSquareY = newMoveSquareY;
 
 			// if we have moved, check if we can get to the next waypoint
-			int nwsx = (int) nextWaypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
-			int nwsy = (int) nextWaypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
+			int nwsx = (int) nextWayPoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
+			int nwsy = (int) nextWayPoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
 			int numIter = 0;
 
 			static const unsigned int blockBits =
@@ -1710,10 +1721,10 @@ void CGroundMoveType::TestNewTerrainSquare()
 					break;
 				}
 
-				GetNextWaypoint();
+				GetNextWayPoint();
 
-				nwsx = (int) nextWaypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
-				nwsy = (int) nextWaypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
+				nwsx = (int) nextWayPoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
+				nwsy = (int) nextWayPoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
 				++numIter;
 			}
 		}
@@ -1894,9 +1905,9 @@ bool CGroundMoveType::UpdateDirectControl()
 	const bool wantReverse = (unitCon.back && !unitCon.forward);
 	float turnSign = 0.0f;
 
-	waypoint = owner->pos;
-	waypoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
-	waypoint.CheckInBounds();
+	currWayPoint = owner->pos;
+	currWayPoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
+	currWayPoint.CheckInBounds();
 
 	if (unitCon.forward) {
 		SetDeltaSpeed(maxSpeed, wantReverse, true);

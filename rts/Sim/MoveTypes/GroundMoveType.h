@@ -63,15 +63,15 @@ public:
 	unsigned int pathId;
 	float goalRadius;
 
-	SyncedFloat3 waypoint;
-	SyncedFloat3 nextWaypoint;
+	SyncedFloat3 currWayPoint;
+	SyncedFloat3 nextWayPoint;
 
 protected:
 	float3 ObstacleAvoidance(const float3& desiredDir);
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
 	void GetNewPath();
-	void GetNextWaypoint();
+	void GetNextWayPoint();
 
 	float BreakingDistance(float speed) const;
 	float3 Here();

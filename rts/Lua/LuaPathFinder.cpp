@@ -71,7 +71,7 @@ int LuaPathFinder::PushPathNodes(lua_State* L, const int pathID)
 	vector<float3> points;
 	vector<int>    starts;
 
-	pathManager->GetEstimatedPath(pathID, points, starts);
+	pathManager->GetPathWayPoints(pathID, points, starts);
 
 	const int pointCount = points.size();
 	const int startCount = starts.size();
@@ -127,7 +127,7 @@ static int path_next(lua_State* L)
 	const float minDist = luaL_optfloat(L, 5, 0.0f);
 
 	const bool synced = CLuaHandle::GetSynced(L);
-	const float3 point = pathManager->NextWaypoint(pathID, callerPos, minDist, 0, 0, synced);
+	const float3 point = pathManager->NextWayPoint(pathID, callerPos, minDist, 0, 0, synced);
 
 	if ((point.x == -1.0f) &&
 	    (point.y == -1.0f) &&
@@ -143,7 +143,7 @@ static int path_next(lua_State* L)
 }
 
 
-static int path_estimates(lua_State* L)
+static int path_nodes(lua_State* L)
 {
 	const int* idPtr = (int*)luaL_checkudata(L, 1, "Path");
 	const int pathID = *idPtr;
@@ -163,8 +163,8 @@ static int path_index(lua_State* L)
 		lua_pushcfunction(L, path_next);
 		return 1;
 	}
-	else if (key == "GetEstimatedPath") {
-		lua_pushcfunction(L, path_estimates);
+	else if (key == "GetPathWayPoints") {
+		lua_pushcfunction(L, path_nodes);
 		return 1;
 	}
 	return 0;
