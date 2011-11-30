@@ -7,11 +7,6 @@
 #include "System/OpenMP_cond.h"
 #include "lib/gml/gml.h" // for gmlCPUCount
 
-#ifdef GetTempPath
-#undef GetTempPath
-#undef GetTempPathA
-#endif
-
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
 #include "Game/GameSetup.h"
@@ -27,6 +22,11 @@
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
+
+#ifdef GetTempPath
+#undef GetTempPath
+#undef GetTempPathA
+#endif
 
 namespace QTPFS {
 	struct PMLoadScreen {
