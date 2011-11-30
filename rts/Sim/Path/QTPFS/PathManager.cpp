@@ -23,6 +23,11 @@
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 
+#ifdef GetTempPath
+#undef GetTempPath
+#undef GetTempPathA
+#endif
+
 namespace QTPFS {
 	struct PMLoadScreen {
 		PMLoadScreen(): loading(true) {}
