@@ -3,7 +3,7 @@
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
-#include <omp.h>
+#include "System/OpenMP_cond.h"
 
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
