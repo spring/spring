@@ -210,8 +210,12 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	if (buildee->beingBuilt) { return; }
 	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth) { return; }
 
-	if (group && buildee->group == 0) {
-		buildee->SetGroup(group);
+	{
+		GML_RECMUTEX_LOCK(group); // FinishBuild
+
+		if (group && buildee->group == 0) {
+			buildee->SetGroup(group);
+		}
 	}
 
 	const CCommandAI* bcai = buildee->commandAI;

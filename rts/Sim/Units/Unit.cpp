@@ -1678,6 +1678,8 @@ void CUnit::CalculateTerrainType()
 
 bool CUnit::SetGroup(CGroup* newGroup)
 {
+	GML_RECMUTEX_LOCK(grpsel); // SetGroup
+
 	if (group != NULL) {
 		group->RemoveUnit(this);
 	}
@@ -1688,9 +1690,6 @@ bool CUnit::SetGroup(CGroup* newGroup)
 			group = NULL; // group ai did not accept us
 			return false;
 		} else { // add us to selected units, if group is selected
-
-			GML_RECMUTEX_LOCK(sel); // SetGroup
-
 			if (selectedUnits.selectedGroup == group->id) {
 				selectedUnits.AddUnit(this);
 			}
