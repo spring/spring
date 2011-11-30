@@ -82,9 +82,12 @@ public:
 	std::vector<FrustumLine> negFrustumSides;
 
 private:
+	void ComputeViewRange();
+
 	void myGluPerspective(float aspect, float zNear, float zFar);
 	void myGluLookAt(const float3&, const float3&, const float3&);
 
+private:
 	CMatrix44f projectionMatrix;
 	CMatrix44f projectionMatrixInverse;
 	CMatrix44f viewMatrix;

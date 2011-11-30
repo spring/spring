@@ -121,18 +121,24 @@ void CLuaHandle::UpdateThreading() {
 void CLuaHandle::KillLua()
 {
 	if (L_Draw != NULL) {
+		lua_State* L_Old = L_Sim;
+		L_Sim = L_Draw;
 		CLuaHandle* orig = GetActiveHandle();
 		SetActiveHandle(L_Draw);
 		LUA_CLOSE(L_Draw);
-		SetActiveHandle(orig);
+		SetActiveHandle((orig == this) ? NULL : orig);
 		L_Draw = NULL;
+		L_Sim = L_Old;
 	}
 	if (L_Sim != NULL) {
+		lua_State* L_Old = L_Draw;
+		L_Draw = L_Sim;
 		CLuaHandle* orig = GetActiveHandle();
 		SetActiveHandle(L_Sim);
 		LUA_CLOSE(L_Sim);
-		SetActiveHandle(orig);
+		SetActiveHandle((orig == this) ? NULL : orig);
 		L_Sim = NULL;
+		L_Draw = L_Old;
 	}
 }
 

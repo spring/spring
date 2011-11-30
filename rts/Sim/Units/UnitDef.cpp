@@ -58,7 +58,7 @@ UnitDef::UnitDef()
 , cobID(-1)
 , collisionVolume(NULL)
 , decoyDef(NULL)
-, techLevel(0)
+, techLevel(-1)
 , metalUpkeep(0.0f)
 , energyUpkeep(0.0f)
 , metalMake(0.0f)
@@ -265,21 +265,12 @@ UnitDef::UnitDef()
 
 
 UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
-: name(unitName)
-, id(id)
-, collisionVolume(NULL)
-, decoyDef(NULL)
-, techLevel(-1)
-, buildPic(NULL)
-, movedata(NULL)
-, trackType(0)
-, buildingDecalType(-1)
-, realMetalCost(0.0f)
-, realEnergyCost(0.0f)
-, realMetalUpkeep(0.0f)
-, realEnergyUpkeep(0.0f)
-, realBuildTime(0.0f)
 {
+	// rely on default-ctor to initialize all members
+	*this = UnitDef();
+	this->id = id;
+
+	name = unitName;
 	humanName = udTable.GetString("name", "");
 	tooltip = udTable.GetString("description", name);
 	buildPicName = udTable.GetString("buildPic", "");
@@ -388,17 +379,9 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	selfDCountdown = udTable.GetInt("selfDestructCountdown", 5);
 
 	speed  = udTable.GetFloat("maxVelocity", 0.0f) * GAME_SPEED;
-	rSpeed = udTable.GetFloat("maxReverseVelocity", 0.0f) * GAME_SPEED;
 	speed  = fabs(speed);
+	rSpeed = udTable.GetFloat("maxReverseVelocity", 0.0f) * GAME_SPEED;
 	rSpeed = fabs(rSpeed);
-
-	maxAcc = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
-	maxDec = fabs(udTable.GetFloat("brakeRate", 3.0f * maxAcc)) * (canfly? 0.1f: 1.0f); // no negative values
-
-	turnRate    = udTable.GetFloat("turnRate", 0.0f);
-	turnInPlace = udTable.GetBool("turnInPlace", true);
-	turnInPlaceSpeedLimit = ((turnRate / SPRING_CIRCLE_DIVS) * ((PI + PI) * SQUARE_SIZE)) * (speed / GAME_SPEED);
-	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
 
 	fireState = udTable.GetInt("fireState", canFireControl? FIRESTATE_NONE: FIRESTATE_FIREATWILL);
 	fireState = std::min(fireState, int(FIRESTATE_FIREATWILL));
@@ -444,7 +427,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	highTrajectoryType = udTable.GetInt("highTrajectory", 0);
 
-	kamikazeDist = udTable.GetFloat("kamikazeDistance", -25.0f) + 25.0f; //we count 3d distance while ta count 2d distance so increase slightly
+	// we count 3d distance while ta count 2d distance so increase slightly
+	kamikazeDist = udTable.GetFloat("kamikazeDistance", -25.0f) + 25.0f;
 	kamikazeUseLOS = udTable.GetBool("kamikazeUseLOS", false);
 
 	showNanoFrame = udTable.GetBool("showNanoFrame", true);
@@ -460,6 +444,16 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	dlHoverFactor  = udTable.GetFloat("airHoverFactor", -1.0f);
 	bankingAllowed = udTable.GetBool("bankingAllowed", true);
 	useSmoothMesh  = udTable.GetBool("useSmoothMesh", true);
+
+
+	maxAcc = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
+	maxDec = fabs(udTable.GetFloat("brakeRate", 3.0f * maxAcc)) * (canfly? 0.1f: 1.0f); // no negative values
+
+	turnRate    = udTable.GetFloat("turnRate", 0.0f);
+	turnInPlace = udTable.GetBool("turnInPlace", true);
+	turnInPlaceSpeedLimit = ((turnRate / SPRING_CIRCLE_DIVS) * ((PI + PI) * SQUARE_SIZE)) * (speed / GAME_SPEED);
+	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
+
 
 	transportSize     = udTable.GetInt("transportSize",      0);
 	minTransportSize  = udTable.GetInt("minTransportSize",   0);

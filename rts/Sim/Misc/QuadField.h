@@ -25,13 +25,18 @@ public:
 	CQuadField();
 	~CQuadField();
 
-	std::vector<int> GetQuadsOnRay(const float3& start, float3 dir, float length);
 	std::vector<int> GetQuads(float3 pos, float radius) const;
-	std::vector<int> GetQuadsRectangle(const float3& pos, const float3& pos2) const;
+	std::vector<int> GetQuadsRectangle(const float3& pos1, const float3& pos2) const;
 
 	// optimized functions, somewhat less userfriendly
-	void GetQuads(float3 pos, float radius, int*& dst) const;
-	void GetQuadsOnRay(float3 start, float3 dir, float length, int*& dst);
+	//
+	// when calling these, <begQuad> and <endQuad> are both expected
+	// to point to the *start* of an array of int's of size at least
+	// numQuadsX * numQuadsZ (eg. tempQuads) -- GetQuadsOnRay ensures
+	// this by itself, for GetQuads the callers take care of it
+	//
+	unsigned int GetQuads(float3 pos, float radius, int*& begQuad, int*& endQuad) const;
+	unsigned int GetQuadsOnRay(float3 start, float3 dir, float length, int*& begQuad, int*& endQuad);
 	void GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature);
 
 	/**

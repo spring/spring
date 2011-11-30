@@ -37,7 +37,7 @@
 
 #include <vector>
 
-CONFIG(bool, LoadingMT).defaultValue(true);
+CONFIG(int, LoadingMT).defaultValue(-1);
 
 CLoadScreen* CLoadScreen::singleton = NULL;
 
@@ -70,7 +70,11 @@ void CLoadScreen::Init()
 #ifdef HEADLESS
 	mt_loading = false;
 #else
-	mt_loading = configHandler->GetBool("LoadingMT");
+	const int mtCfg = configHandler->GetInt("LoadingMT");
+	// user override
+	mt_loading = (mtCfg > 0);
+	// runtime detect. disable for intel/mesa drivers, they crash at multithreaded OpenGL (date: Nov. 2011)
+	mt_loading |= (mtCfg < 0) && !globalRendering->haveMesa && !globalRendering->haveIntel;
 #endif
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading

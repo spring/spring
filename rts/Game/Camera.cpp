@@ -4,7 +4,7 @@
 #include "System/mmgr.h"
 
 #include "Camera.h"
-#include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "System/myMath.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
@@ -105,17 +105,11 @@ void CCamera::Update(bool resetUp)
 	if (this == camera)
 		cam2->CopyState(this);
 
-	const float gndHeight = ground->GetHeightAboveWater(pos.x, pos.z, false);
-	const float rangemod = 1.0f + std::max(0.0f, pos.y - gndHeight - 500.0f) * 0.0003f;
-	const float zNear = (CGlobalRendering::NEAR_PLANE * rangemod);
-
-	globalRendering->viewRange = CGlobalRendering::MAX_VIEW_RANGE * rangemod;
-	
 	// apply and store the projection transform
+	ComputeViewRange();
 	glMatrixMode(GL_PROJECTION);
-	myGluPerspective(aspect, zNear, globalRendering->viewRange);
+	myGluPerspective(aspect, globalRendering->zNear, globalRendering->viewRange);
 
-	
 	// FIXME: should be applying the offsets to pos/up/right/forward/etc,
 	//        but without affecting the real positions (need an intermediary)
 	float3 fShake = (forward * (1.0f + tiltOffset.z)) +
@@ -150,6 +144,28 @@ void CCamera::Update(bool resetUp)
 	viewport[1] = 0;
 	viewport[2] = globalRendering->viewSizeX;
 	viewport[3] = globalRendering->viewSizeY;
+}
+
+
+void CCamera::ComputeViewRange()
+{
+	float wantedViewRange = CGlobalRendering::MAX_VIEW_RANGE;
+
+	// Camera height dependent (i.e. TAB-view)
+	wantedViewRange = std::max(wantedViewRange, (pos.y - readmap->currMinHeight) * 2.4f);
+
+	// View angle dependent (i.e. FPS-view)
+	const float azimuthCos       = forward.dot(UpVector);
+	const float maxDistToBorderX = std::max(pos.x, float3::maxxpos - pos.x);
+	const float maxDistToBorderZ = std::max(pos.z, float3::maxzpos - pos.z);
+	const float minViewRange     = (1.0f - azimuthCos) * math::sqrt(Square(maxDistToBorderX) + Square(maxDistToBorderZ));
+	wantedViewRange = std::max(wantedViewRange, minViewRange);
+	//LOG("viewRange %f", wantedViewRange);
+
+	// Update
+	const float factor = wantedViewRange / CGlobalRendering::MAX_VIEW_RANGE;
+	globalRendering->zNear     = CGlobalRendering::NEAR_PLANE * factor;
+	globalRendering->viewRange = CGlobalRendering::MAX_VIEW_RANGE * factor;
 }
 
 
