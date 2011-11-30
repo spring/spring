@@ -223,74 +223,7 @@ bool CGroundMoveType::Update()
 		if (owner->fpsControlPlayer != NULL) {
 			wantReverse = UpdateDirectControl();
 		} else {
-			if (pathId == 0) {
-				SetDeltaSpeed(0.0f, false);
-				SetMainHeading();
-			} else {
-				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
-				ASSERT_SYNCED(currWayPoint);
-				ASSERT_SYNCED(nextWayPoint);
-				ASSERT_SYNCED(owner->pos);
-
-				prevWayPointDist = currWayPointDist;
-				currWayPointDist = owner->pos.distance2D(currWayPoint);
-				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(MIN_WAYPOINT_DISTANCE));
-
-				if (!atGoal) {
-					if (!idling) {
-						numIdlingUpdates = std::max(0, int(numIdlingUpdates - 1));
-					} else {
-						// note: the unit could just be turning in-place
-						// over several frames (eg. to maneuver around an
-						// obstacle), which unlike actual immobilization
-						// should be ignored
-						numIdlingUpdates = std::min(SHORTINT_MAXVALUE, int(numIdlingUpdates + 1));
-					}
-				}
-
-				if (!haveFinalWaypoint) {
-					GetNextWayPoint();
-				} else {
-					if (atGoal) {
-						Arrived();
-					}
-				}
-
-				// set direction to waypoint AFTER requesting it
-				waypointDir = currWayPoint - owner->pos;
-				waypointDir.y = 0.0f;
-				waypointDir.SafeNormalize();
-
-				ASSERT_SYNCED(waypointDir);
-
-				const float3 wpDirInv = -waypointDir;
-//				const float3 wpPosTmp = owner->pos + wpDirInv;
-				const bool   wpBehind = (waypointDir.dot(flatFrontDir) < 0.0f);
-
-				if (wpBehind) {
-					wantReverse = WantReverse(waypointDir);
-				}
-
-				// apply obstacle avoidance (steering)
-				const float3 avoidVec = ObstacleAvoidance(waypointDir);
-
-				ASSERT_SYNCED(avoidVec);
-
-				if (avoidVec != ZeroVector) {
-					if (wantReverse) {
-						ChangeHeading(GetHeadingFromVector(wpDirInv.x, wpDirInv.z));
-					} else {
-						// should be waypointDir + avoidanceDir
-						ChangeHeading(GetHeadingFromVector(avoidVec.x, avoidVec.z));
-					}
-				} else {
-					SetMainHeading();
-				}
-
-				SetDeltaSpeed(requestedSpeed, wantReverse);
-			}
-
-			pathManager->UpdatePath(owner, pathId);
+			wantReverse = FollowPath();
 		}
 	}
 
@@ -449,6 +382,80 @@ void CGroundMoveType::StopMoving() {
 }
 
 
+
+bool CGroundMoveType::FollowPath()
+{
+	bool wantReverse = false;
+
+	if (pathId == 0) {
+		SetDeltaSpeed(0.0f, false);
+		SetMainHeading();
+	} else {
+		ASSERT_SYNCED(currWayPoint);
+		ASSERT_SYNCED(nextWayPoint);
+		ASSERT_SYNCED(owner->pos);
+
+		prevWayPointDist = currWayPointDist;
+		currWayPointDist = owner->pos.distance2D(currWayPoint);
+		atGoal = ((owner->pos - goalPos).SqLength2D() < Square(MIN_WAYPOINT_DISTANCE));
+
+		if (!atGoal) {
+			if (!idling) {
+				numIdlingUpdates = std::max(0, int(numIdlingUpdates - 1));
+			} else {
+				// note: the unit could just be turning in-place
+				// over several frames (eg. to maneuver around an
+				// obstacle), which unlike actual immobilization
+				// should be ignored
+				numIdlingUpdates = std::min(SHORTINT_MAXVALUE, int(numIdlingUpdates + 1));
+			}
+		}
+
+		if (!haveFinalWaypoint) {
+			GetNextWayPoint();
+		} else {
+			if (atGoal) {
+				Arrived();
+			}
+		}
+
+		// set direction to waypoint AFTER requesting it
+		waypointDir = currWayPoint - owner->pos;
+		waypointDir.y = 0.0f;
+		waypointDir.SafeNormalize();
+
+		ASSERT_SYNCED(waypointDir);
+
+		const float3 wpDirInv = -waypointDir;
+	//	const float3 wpPosTmp = owner->pos + wpDirInv;
+		const bool   wpBehind = (waypointDir.dot(flatFrontDir) < 0.0f);
+
+		if (wpBehind) {
+			wantReverse = WantReverse(waypointDir);
+		}
+
+		// apply obstacle avoidance (steering)
+		const float3 avoidVec = ObstacleAvoidance(waypointDir);
+
+		ASSERT_SYNCED(avoidVec);
+
+		if (avoidVec != ZeroVector) {
+			if (wantReverse) {
+				ChangeHeading(GetHeadingFromVector(wpDirInv.x, wpDirInv.z));
+			} else {
+				// should be waypointDir + avoidanceDir
+				ChangeHeading(GetHeadingFromVector(avoidVec.x, avoidVec.z));
+			}
+		} else {
+			SetMainHeading();
+		}
+
+		SetDeltaSpeed(requestedSpeed, wantReverse);
+	}
+
+	pathManager->UpdatePath(owner, pathId);
+	return wantReverse;
+}
 
 void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool fpsMode)
 {
