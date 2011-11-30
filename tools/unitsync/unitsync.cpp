@@ -319,6 +319,8 @@ EXPORT(int) Init(bool isServer, int id)
 		if (!configHandler) {
 			ConfigHandler::Instantiate(); // use the default config file
 		}
+		if (archiveScanner || vfsHandler)
+			LOG("Unitsync is already initialized, call UnInit first");
 		FileSystemInitializer::Initialize();
 
 		if (!logOutputInitialised) {
