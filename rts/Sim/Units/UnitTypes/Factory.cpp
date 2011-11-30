@@ -163,11 +163,12 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 
 		#if (PLAY_SOUNDS == 1)
 		if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-			const int soundIdx = unitDef->sounds.build.getRandomIdx();
+			const GuiSoundSet& buildSound = unitDef->sounds.build;
+			const int soundIdx = buildSound.getRandomIdx();
 
 			if (soundIdx >= 0) {
-				const int soundID = unitDef->sounds.build.getID(soundIdx);
-				const float soundVol = unitDef->sounds.build.getVolume(0);
+				const int soundID = buildSound.getID(soundIdx);
+				const float soundVol = buildSound.getVolume(soundIdx);
 				Channels::General.PlaySample(soundID, pos, soundVol);
 			}
 		}

@@ -2012,11 +2012,15 @@ void CUnit::Activate()
 	radarhandler->MoveUnit(this);
 
 	#if (PLAY_SOUNDS == 1)
-	const int soundIdx = unitDef->sounds.activate.getRandomIdx();
-	if (soundIdx >= 0) {
-		Channels::General.PlaySample(
-			unitDef->sounds.activate.getID(soundIdx), this,
-			unitDef->sounds.activate.getVolume(soundIdx));
+	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+		const GuiSoundSet& activateSound = unitDef->sounds.activate;
+		const int soundIdx = activateSound.getRandomIdx();
+
+		if (soundIdx >= 0) {
+			const int soundID = activateSound.getID(soundIdx);
+			const float soundVol = activateSound.getVolume(soundIdx);
+			Channels::General.PlaySample(soundID, this, soundVol);
+		}
 	}
 	#endif
 }
@@ -2036,11 +2040,15 @@ void CUnit::Deactivate()
 	radarhandler->RemoveUnit(this);
 
 	#if (PLAY_SOUNDS == 1)
-	const int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
-	if (soundIdx >= 0) {
-		Channels::General.PlaySample(
-			unitDef->sounds.deactivate.getID(soundIdx), this,
-			unitDef->sounds.deactivate.getVolume(soundIdx));
+	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+		const GuiSoundSet& deactivateSound = unitDef->sounds.activate;
+		const int soundIdx = deactivateSound.getRandomIdx();
+
+		if (soundIdx >= 0) {
+			const int soundID = deactivateSound.getID(soundIdx);
+			const float soundVol = deactivateSound.getVolume(soundIdx);
+			Channels::General.PlaySample(soundID, this, soundVol);
+		}
 	}
 	#endif
 }
