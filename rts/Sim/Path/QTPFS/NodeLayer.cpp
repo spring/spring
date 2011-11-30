@@ -15,7 +15,10 @@ static int GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
 	// NOTE:
 	//     bins N and N+1 are reserved for modifiers <= min and >= max
 	//     respectively; blocked squares MUST be in their own category
-	int speedModBin = Clamp(int(relSpeedMod * PM::NUM_SPEEDMOD_BINS), 0, int(PM::NUM_SPEEDMOD_BINS - 1));
+	const int defBin = int(PM::NUM_SPEEDMOD_BINS * relSpeedMod);
+	const int maxBin = int(PM::NUM_SPEEDMOD_BINS - 1);
+
+	int speedModBin = Clamp(defBin, 0, maxBin);
 
 	if (absSpeedMod <= PM::MIN_SPEEDMOD_VALUE) { speedModBin = PM::NUM_SPEEDMOD_BINS + 0; }
 	if (absSpeedMod >= PM::MAX_SPEEDMOD_VALUE) { speedModBin = PM::NUM_SPEEDMOD_BINS + 1; }
@@ -65,6 +68,7 @@ bool QTPFS::NodeLayer::Update(const SRectangle& r, const MoveData* md, const CMo
 	//   across ALL nodes)
 	static const float speedModRng = PM::MAX_SPEEDMOD_VALUE - PM::MIN_SPEEDMOD_VALUE;
 	static const float minSpeedMod = PM::MIN_SPEEDMOD_VALUE;
+	static const float maxSpeedMod = PM::MAX_SPEEDMOD_VALUE;
 
 	#ifdef QTPFS_IGNORE_MAP_EDGES
 	const unsigned int mdxsh = md->xsizeh;
@@ -90,7 +94,7 @@ bool QTPFS::NodeLayer::Update(const SRectangle& r, const MoveData* md, const CMo
 			const CMoveMath::BlockType blockBits = mm->IsBlockedNoSpeedModCheck(*md, smx, smz);
 
 			const float rawAbsSpeedMod = mm->GetPosSpeedMod(*md, smx, smz);
-			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, PM::MIN_SPEEDMOD_VALUE, PM::MAX_SPEEDMOD_VALUE);
+			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, minSpeedMod, maxSpeedMod);
 			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
 			const float newRelSpeedMod = (newAbsSpeedMod - minSpeedMod) / speedModRng;
 			const float curRelSpeedMod = curSpeedMods[sqrIdx];
