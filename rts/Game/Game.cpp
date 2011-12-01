@@ -114,7 +114,6 @@
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Groups/GroupHandler.h"
-#include "Sim/Units/UnitLoader.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "UI/CommandColors.h"
@@ -394,7 +393,6 @@ CGame::~CGame()
 	SafeDelete(cubeMapHandler);
 	SafeDelete(modelParser);
 
-	SafeDelete(unitLoader);
 	SafeDelete(pathManager);
 	SafeDelete(ground);
 	SafeDelete(smoothGround);
@@ -550,7 +548,6 @@ void CGame::LoadSimulation(const std::string& mapName)
 	weaponDefHandler = new CWeaponDefHandler();
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler();
-	unitLoader = new CUnitLoader();
 
 	CGroundMoveType::CreateLineTable();
 

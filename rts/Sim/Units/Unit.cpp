@@ -56,8 +56,9 @@
 #include "Sim/MoveTypes/ScriptMoveType.h"
 #include "Sim/Projectiles/FlareProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponLoader.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
@@ -451,12 +452,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 void CUnit::PostInit(const CUnit* builder)
 {
-	weapons.reserve(unitDef->weapons.size());
-
-	for (unsigned int i = 0; i < unitDef->weapons.size(); i++) {
-		weapons.push_back(unitLoader->LoadWeapon(this, &unitDef->weapons[i]));
-	}
-
+	weaponLoader->LoadWeapons(this);
 	// Call initializing script functions
 	script->Create();
 
