@@ -255,13 +255,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 	#if (PLAY_SOUNDS == 1)
 	if (!selectedUnits.empty()) {
 		CUnitSet::const_iterator ui = selectedUnits.begin();
-
-		const int soundIdx = (*ui)->unitDef->sounds.ok.getRandomIdx();
-		if (soundIdx >= 0) {
-			Channels::UnitReply.PlaySample(
-				(*ui)->unitDef->sounds.ok.getID(soundIdx), (*ui),
-				(*ui)->unitDef->sounds.ok.getVolume(soundIdx));
-		}
+		Channels::UnitReply.PlayRandomSample((*ui)->unitDef->sounds.ok, *ui);
 	}
 	#endif
 }
@@ -304,12 +298,7 @@ void CSelectedUnits::HandleUnitBoxSelection(const float4& planeRight, const floa
 		Channels::UserInterface.PlaySample(soundMultiselID);
 	}
 	else if (addedunits == 1) {
-		const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
-		if (soundIdx >= 0) {
-			Channels::UnitReply.PlaySample(
-				unit->unitDef->sounds.select.getID(soundIdx), unit,
-				unit->unitDef->sounds.select.getVolume(soundIdx));
-		}
+		Channels::UnitReply.PlayRandomSample(unit->unitDef->sounds.select, unit);
 	}
 	#endif
 }
@@ -359,12 +348,7 @@ void CSelectedUnits::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTe
 		}
 
 		#if (PLAY_SOUNDS == 1)
-		const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
-		if (soundIdx >= 0) {
-			Channels::UnitReply.PlaySample(
-				unit->unitDef->sounds.select.getID(soundIdx), unit,
-				unit->unitDef->sounds.select.getVolume(soundIdx));
-		}
+		Channels::UnitReply.PlayRandomSample(unit->unitDef->sounds.select, unit);
 		#endif
 	}
 }

@@ -2013,14 +2013,7 @@ void CUnit::Activate()
 
 	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		const GuiSoundSet& activateSound = unitDef->sounds.activate;
-		const int soundIdx = activateSound.getRandomIdx();
-
-		if (soundIdx >= 0) {
-			const int soundID = activateSound.getID(soundIdx);
-			const float soundVol = activateSound.getVolume(soundIdx);
-			Channels::General.PlaySample(soundID, this, soundVol);
-		}
+		Channels::General.PlayRandomSample(unitDef->sounds.activate, this);
 	}
 	#endif
 }
@@ -2041,14 +2034,7 @@ void CUnit::Deactivate()
 
 	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		const GuiSoundSet& deactivateSound = unitDef->sounds.activate;
-		const int soundIdx = deactivateSound.getRandomIdx();
-
-		if (soundIdx >= 0) {
-			const int soundID = deactivateSound.getID(soundIdx);
-			const float soundVol = deactivateSound.getVolume(soundIdx);
-			Channels::General.PlaySample(soundID, this, soundVol);
-		}
+		Channels::General.PlayRandomSample(unitDef->sounds.deactivate, this);
 	}
 	#endif
 }
