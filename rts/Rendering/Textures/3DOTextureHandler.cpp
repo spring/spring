@@ -16,6 +16,7 @@
 #include "System/Util.h"
 #include "System/Vec2.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/SimpleParser.h"
 
 
@@ -61,11 +62,8 @@ C3DOTextureHandler::C3DOTextureHandler()
 
 	std::set<string> usedNames;
 	for (std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
-		std::string s = std::string(*fi);
-		std::string s2 = s;
-
-		s2.erase(0, s2.find_last_of('/') + 1);
-		s2 = StringToLower(s2.substr(0, s2.find_last_of('.')));
+		const std::string& s = *fi;
+		const std::string s2 = StringToLower(FileSystem::GetBasename(s));
 
 		// avoid duplicate names and give tga images priority
 		if (usedNames.find(s2) != usedNames.end()) {
