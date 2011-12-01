@@ -93,7 +93,7 @@ void CDemoRecorder::SetName(const std::string& mapname, const std::string& modna
 	std::ostringstream buf;
 
 	oss << "demos/" << curTime << "_";
-	oss << mapname.substr(0, mapname.find_first_of(".")) << "_" << SpringVersion::GetSync();
+	oss << FileSystem::GetBasename(mapname) << "_" << SpringVersion::GetSync();
 	buf << oss.str() << ".sdf";
 
 	unsigned int n = 0;

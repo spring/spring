@@ -15,6 +15,7 @@
 #include "TerrainTexture.h"
 #include "TerrainNode.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include <assert.h>
@@ -930,7 +931,7 @@ namespace terrain {
 			throw content_error("No heightmap given");
 		}
 
-		std::string extension = heightMapName.substr(heightMapName.length() - 3, heightMapName.length());
+		std::string extension = FileSystem::GetExtension(heightMapName);
 
 		if (extension == "raw") {
 			heightmap = LoadHeightmapFromRAW(heightMapName, cb);

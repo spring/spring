@@ -1947,13 +1947,27 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			}
 		}
 
-		// note: currentSpeed can be out of sync with
-		// owner->speed.Length(), eg. when in front of
-		// an obstacle ==> bad for MANY reasons, such
-		// as too-quick consumption of waypoints when
-		// a new path is requested
 		currentSpeed += deltaSpeed;
-		owner->pos += (flatFrontDir * currentSpeed * (reversing? -1.0f: 1.0f));
+
+		const UnitDef* ud = owner->unitDef;
+		const MoveData* md = ud->movedata;
+		const CMoveMath* mm = md->moveMath;
+
+		const float3 difVec = flatFrontDir * currentSpeed * (reversing? -1.0f: 1.0f);
+		const float3 newPos = owner->pos + difVec;
+
+		if (mm->GetPosSpeedMod(*md, newPos) > 0.01f) {
+			// never move onto an impassable square (units
+			// can still tunnel across them at high enough
+			// speeds however)
+			//
+			// note: currentSpeed can be out of sync with
+			// owner->speed.Length(), eg. when in front of
+			// an obstacle ==> bad for MANY reasons, such
+			// as too-quick consumption of waypoints when
+			// a new path is requested
+			owner->pos = newPos;
+		}
 
 		assert(math::fabs(currentSpeed) < 1e6f);
 	}
