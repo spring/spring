@@ -312,12 +312,16 @@ void CAICallback::ReleasedSharedMemArea(char* name)
 
 int CAICallback::CreateGroup()
 {
+	GML_RECMUTEX_LOCK(group); // CreateGroup
+
 	const CGroup* g = gh->CreateNewGroup();
 	return g->id;
 }
 
 void CAICallback::EraseGroup(int groupId)
 {
+	GML_RECMUTEX_LOCK(group); // EraseGroup
+
 	if (CHECK_GROUPID(groupId)) {
 		if (gh->groups[groupId]) {
 			gh->RemoveGroup(gh->groups[groupId]);
@@ -330,8 +334,12 @@ bool CAICallback::AddUnitToGroup(int unitId, int groupId)
 	bool added = false;
 
 	CUnit* unit = GetMyTeamUnit(unitId);
-	if (unit && CHECK_GROUPID(groupId) && gh->groups[groupId]) {
-		added = unit->SetGroup(gh->groups[groupId]);
+	if (unit) {
+		GML_RECMUTEX_LOCK(group); // AddUnitToGroup
+
+		if (CHECK_GROUPID(groupId) && gh->groups[groupId]) {
+			added = unit->SetGroup(gh->groups[groupId]);
+		}
 	}
 
 	return added;

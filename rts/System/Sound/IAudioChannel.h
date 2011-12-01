@@ -6,6 +6,7 @@
 #include <string.h>
 #include "System/float3.h"
 
+struct GuiSoundSet;
 class CSoundSource;
 class CUnit;
 class CWorldObject;
@@ -45,6 +46,9 @@ public:
 
 	virtual void PlaySample(size_t id, const CUnit* u, float volume = 1.0f) = 0;
 	virtual void PlaySample(size_t id, const CWorldObject* p, float volume = 1.0f) = 0;
+
+	virtual void PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit) = 0;
+	virtual void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos) = 0;
 
 	/**
 	 * @brief Start playing an ogg-file

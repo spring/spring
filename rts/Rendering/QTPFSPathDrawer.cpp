@@ -19,6 +19,7 @@
 #include "Sim/Path/QTPFS/NodeLayer.hpp"
 #include "Sim/Path/QTPFS/PathCache.hpp"
 #include "Sim/Path/QTPFS/PathManager.hpp"
+#undef protected
 #undef private
 
 #include "Rendering/glFont.h"

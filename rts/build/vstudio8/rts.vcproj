@@ -2261,10 +2261,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\CommandDrawer.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Rendering\DebugColVolDrawer.cpp"
 				>
 			</File>
@@ -2394,6 +2390,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Rendering\ProjectileDrawer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\QTPFSPathDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\QTPFSPathDrawer.h"
 				>
 			</File>
 			<File
@@ -2749,6 +2753,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Textures\ColorMap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\CommandDrawer.h"
 					>
 				</File>
 				<File
@@ -4172,6 +4180,138 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Path\Default\PathManager.h"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="QTPFS"
+					>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\Node.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\Node.hpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\NodeLayer.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\NodeLayer.hpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\Path.hpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\PathCache.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\PathCache.hpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\PathDataTypes.hpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\PathDefines.hpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\PathEnums.hpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\PathManager.cpp"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="No debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug+MT|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Dedicated Server (Release)|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Dedicated Server (Debug)|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\PathManager.hpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\PathSearch.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\QTPFS\PathSearch.hpp"
 						>
 					</File>
 				</Filter>
