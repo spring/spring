@@ -21,7 +21,7 @@ void* CPathFinder::operator new(size_t size) { return PathAllocator::Alloc(size)
 void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p, size); }
 #endif
 
-CMoveMath::BlockType CPathFinder::testSquareBlockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
+const CMoveMath::BlockType testSquareBlockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 CPathFinder::CPathFinder()
 	: heatMapOffset(0)
