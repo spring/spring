@@ -12,7 +12,6 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Misc/GeometricObjects.h"
 
 #define PATHDEBUG 0
@@ -22,7 +21,7 @@ void* CPathFinder::operator new(size_t size) { return PathAllocator::Alloc(size)
 void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p, size); }
 #endif
 
-
+CMoveMath::BlockType CPathFinder::testSquareBlockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 CPathFinder::CPathFinder()
 	: heatMapOffset(0)
@@ -300,9 +299,7 @@ bool CPathFinder::TestSquare(
 		return false;
 	}
 
-	static CMoveMath::BlockType blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
-
-	if (testMobile && (blockStatus & blockBits)) {
+	if (testMobile && (blockStatus & testSquareBlockBits)) {
 		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY)
 			squareSpeedMod *= 0.10f;
 		else if (blockStatus & CMoveMath::BLOCK_MOBILE)
