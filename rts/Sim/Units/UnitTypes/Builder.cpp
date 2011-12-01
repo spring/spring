@@ -722,14 +722,7 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 
 	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		const GuiSoundSet& buildSound = unitDef->sounds.build;
-		const int soundIdx = buildSound.getRandomIdx();
-
-		if (soundIdx >= 0) {
-			const int soundID = buildSound.getID(soundIdx);
-			const float soundVol = buildSound.getVolume(soundIdx);
-			Channels::General.PlaySample(soundID, pos, soundVol);
-		}
+		Channels::General.PlayRandomSample(unitDef->sounds.build, pos);
 	}
 	#endif
 }

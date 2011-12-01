@@ -7,6 +7,7 @@
 #include "SoundItem.h"
 #include "SoundLog.h"
 #include "SoundSource.h"
+#include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
 
@@ -147,6 +148,7 @@ void AudioChannel::PlaySample(size_t id, const float3& pos, const float3& veloci
 	FindSourceAndPlay(id, pos, velocity, volume, false);
 }
 
+
 void AudioChannel::PlaySample(size_t id, const CUnit* unit, float volume)
 {
 	FindSourceAndPlay(id, unit->pos, unit->speed, volume, false);
@@ -156,6 +158,26 @@ void AudioChannel::PlaySample(size_t id, const CWorldObject* obj, float volume)
 {
 	FindSourceAndPlay(id, obj->pos, ZeroVector, volume, false);
 }
+
+
+void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit)
+{
+	PlayRandomSample(soundSet, unit->pos);
+}
+
+void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos)
+{
+	const int soundIdx = soundSet.getRandomIdx();
+
+	if (soundIdx < 0)
+		return;
+
+	const int soundID = soundSet.getID(soundIdx);
+	const float soundVol = soundSet.getVolume(soundIdx);
+
+	PlaySample(soundID, pos, soundVol);
+}
+
 
 void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool enqueue)
 {
