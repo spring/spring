@@ -26,6 +26,9 @@
 #include "System/mmgr.h"
 
 #define PLAY_SOUNDS 1
+#if (PLAY_SOUNDS == 1)
+#include "Game/GlobalUnsynced.h"
+#endif
 
 CR_BIND_DERIVED(CFactory, CBuilding, );
 
@@ -159,11 +162,8 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 		curBuildDef = NULL;
 
 		#if (PLAY_SOUNDS == 1)
-		const int soundIdx = unitDef->sounds.build.getRandomIdx();
-		if (soundIdx >= 0) {
-			Channels::General.PlaySample(
-				unitDef->sounds.build.getID(soundIdx), pos,
-				unitDef->sounds.build.getVolume(0));
+		if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+			Channels::General.PlayRandomSample(unitDef->sounds.build, buildPos);
 		}
 		#endif
 	} else {
@@ -210,8 +210,12 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	if (buildee->beingBuilt) { return; }
 	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth) { return; }
 
-	if (group && buildee->group == 0) {
-		buildee->SetGroup(group);
+	{
+		GML_RECMUTEX_LOCK(group); // FinishBuild
+
+		if (group && buildee->group == 0) {
+			buildee->SetGroup(group);
+		}
 	}
 
 	const CCommandAI* bcai = buildee->commandAI;

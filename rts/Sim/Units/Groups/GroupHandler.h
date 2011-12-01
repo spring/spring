@@ -46,6 +46,8 @@ public:
 	CGroup* CreateNewGroup();
 	void RemoveGroup(CGroup* group);
 
+	void PushGroupChange(int id);
+
 	std::vector<CGroup*> groups;
 	int team;
 
@@ -56,6 +58,7 @@ protected:
 	 * This is always greater or equal FIRST_SPECIAL_GROUP.
 	 */
 	int firstUnusedGroup;
+	std::set<int> changedGroups;
 };
 
 extern std::vector<CGroupHandler*> grouphandlers;

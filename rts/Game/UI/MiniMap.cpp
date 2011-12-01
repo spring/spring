@@ -55,8 +55,6 @@
 
 #include <boost/cstdint.hpp>
 
-#define PLAY_SOUNDS 1
-
 CONFIG(std::string, MiniMapGeometry).defaultValue("2 2 200 200");
 CONFIG(bool, MiniMapFullProxy).defaultValue(true);
 CONFIG(int, MiniMapButtonSize).defaultValue(16);

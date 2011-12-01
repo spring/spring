@@ -56,6 +56,7 @@ extern boost::mutex tnummutex;
 extern boost::mutex ntexmutex;
 extern boost::mutex lodmutex;
 extern boost::mutex catmutex;
+extern boost::mutex grpchgmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;

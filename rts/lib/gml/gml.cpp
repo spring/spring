@@ -262,6 +262,7 @@ boost::mutex tnummutex;
 boost::mutex ntexmutex;
 boost::mutex lodmutex;
 boost::mutex catmutex;
+boost::mutex grpchgmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;

@@ -343,5 +343,11 @@ struct LuaUIEvent {
 	#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
 #endif
 
+#if defined(USE_GML) && GML_ENABLE_SIM
+	#define GML_SELECT_LUA_STATE() SELECT_LUA_STATE()
+#else
+	#define GML_SELECT_LUA_STATE()
+#endif
+
 #endif // LUA_EVENT_BATCH_H
 

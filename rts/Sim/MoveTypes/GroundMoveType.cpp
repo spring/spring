@@ -357,12 +357,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 
 	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
-		const int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
-		if (soundIdx >= 0) {
-			Channels::General.PlaySample(
-				owner->unitDef->sounds.activate.getID(soundIdx), owner,
-				owner->unitDef->sounds.activate.getVolume(soundIdx));
-		}
+		Channels::General.PlayRandomSample(owner->unitDef->sounds.activate, owner);
 	}
 	#endif
 }
@@ -1276,12 +1271,7 @@ void CGroundMoveType::Arrived()
 
 		#if (PLAY_SOUNDS == 1)
 		if (owner->team == gu->myTeam) {
-			const int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
-			if (soundIdx >= 0) {
-				Channels::General.PlaySample(
-					owner->unitDef->sounds.arrived.getID(soundIdx), owner,
-					owner->unitDef->sounds.arrived.getVolume(soundIdx));
-			}
+			Channels::General.PlayRandomSample(owner->unitDef->sounds.arrived, owner);
 		}
 		#endif
 

@@ -1678,6 +1678,8 @@ void CUnit::CalculateTerrainType()
 
 bool CUnit::SetGroup(CGroup* newGroup)
 {
+	GML_RECMUTEX_LOCK(grpsel); // SetGroup
+
 	if (group != NULL) {
 		group->RemoveUnit(this);
 	}
@@ -1688,9 +1690,6 @@ bool CUnit::SetGroup(CGroup* newGroup)
 			group = NULL; // group ai did not accept us
 			return false;
 		} else { // add us to selected units, if group is selected
-
-			GML_RECMUTEX_LOCK(sel); // SetGroup
-
 			if (selectedUnits.selectedGroup == group->id) {
 				selectedUnits.AddUnit(this);
 			}
@@ -2013,11 +2012,8 @@ void CUnit::Activate()
 	radarhandler->MoveUnit(this);
 
 	#if (PLAY_SOUNDS == 1)
-	const int soundIdx = unitDef->sounds.activate.getRandomIdx();
-	if (soundIdx >= 0) {
-		Channels::General.PlaySample(
-			unitDef->sounds.activate.getID(soundIdx), this,
-			unitDef->sounds.activate.getVolume(soundIdx));
+	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+		Channels::General.PlayRandomSample(unitDef->sounds.activate, this);
 	}
 	#endif
 }
@@ -2037,11 +2033,8 @@ void CUnit::Deactivate()
 	radarhandler->RemoveUnit(this);
 
 	#if (PLAY_SOUNDS == 1)
-	const int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
-	if (soundIdx >= 0) {
-		Channels::General.PlaySample(
-			unitDef->sounds.deactivate.getID(soundIdx), this,
-			unitDef->sounds.deactivate.getVolume(soundIdx));
+	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+		Channels::General.PlayRandomSample(unitDef->sounds.deactivate, this);
 	}
 	#endif
 }
