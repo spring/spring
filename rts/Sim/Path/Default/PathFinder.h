@@ -10,6 +10,7 @@
 #include "IPath.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 
 struct MoveData;
 class CPathFinderDef;
@@ -180,6 +181,8 @@ private:
 	PathPriorityQueue openSquares;
 
 	std::vector<int> dirtySquares;     ///< Squares tested by search.
+
+	static CMoveMath::BlockType testSquareBlockBits;
 };
 
 #endif // PATH_FINDER_H
