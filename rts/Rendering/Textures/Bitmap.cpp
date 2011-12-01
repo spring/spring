@@ -206,6 +206,10 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	CFileHandler file(filename);
 	if (file.FileExists() == false) {
 		Alloc(1, 1);
+		mem[0] = 255; // Red allows us to easily see textures that failed to load
+		mem[1] = 0;
+		mem[2] = 0;
+		mem[3] = 255; // Non Transparent
 		return false;
 	}
 
@@ -225,9 +229,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	delete[] buffer;
 
 	if (success == false) {
-		xsize = 1;
-		ysize = 1;
-		mem = new unsigned char[4];
+		Alloc(1, 1);
 		mem[0] = 255; // Red allows us to easily see textures that failed to load
 		mem[1] = 0;
 		mem[2] = 0;
