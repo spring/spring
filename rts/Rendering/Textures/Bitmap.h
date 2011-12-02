@@ -84,6 +84,11 @@ public:
 	void InvertAlpha();
 	void GrayScale();
 	void Tint(const float tint[3]);
+private:
+	/**
+	 * Allocates a red 1x1, 4-channel bitmap
+	 */
+	void AllocDummy();
 };
 
 #endif // __BITMAP_H__
