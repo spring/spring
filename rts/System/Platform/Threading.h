@@ -38,7 +38,7 @@ namespace Threading {
 	 * are numbered logically from 1 to N) we want to run.
 	 * Note: that this approach will fail when N > 32.
 	 */
-	uint32_t SetAffinity(uint32_t cores_bitmask, bool hard = true);
+	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard = true);
 	unsigned GetAvailableCores();
 
 	/**
