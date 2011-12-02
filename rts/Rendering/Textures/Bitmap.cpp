@@ -149,6 +149,15 @@ void CBitmap::Alloc(int w, int h)
 	memset(mem, 0, size);
 }
 
+void CBitmap::AllocDummy()
+{
+	channels = 4;
+	Alloc(1, 1);
+	mem[0] = 255; // Red allows us to easily see textures that failed to load
+	mem[1] = 0;
+	mem[2] = 0;
+	mem[3] = 255; // Non Transparent
+}
 
 bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 {
@@ -166,9 +175,9 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 #endif // !BITMAP_NO_OPENGL
 
 	if (filename.find(".dds") != std::string::npos) {
+#ifndef BITMAP_NO_OPENGL
 		bool status = false;
 
-#ifndef BITMAP_NO_OPENGL
 		type = BitmapTypeDDS;
 		xsize = 0;
 		ysize = 0;
@@ -196,8 +205,11 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 					break;
 			}
 		}
-#endif // !BITMAP_NO_OPENGL
 		return status;
+#else // !BITMAP_NO_OPENGL
+		AllocDummy(); //allocate a dummy texture, as dds aren't supported in headless
+		return true;
+#endif // !BITMAP_NO_OPENGL
 	}
 
 	type = BitmapTypeStandardRGBA;
@@ -205,11 +217,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 	CFileHandler file(filename);
 	if (file.FileExists() == false) {
-		Alloc(1, 1);
-		mem[0] = 255; // Red allows us to easily see textures that failed to load
-		mem[1] = 0;
-		mem[2] = 0;
-		mem[3] = 255; // Non Transparent
+		AllocDummy();
 		return false;
 	}
 
@@ -229,11 +237,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	delete[] buffer;
 
 	if (success == false) {
-		Alloc(1, 1);
-		mem[0] = 255; // Red allows us to easily see textures that failed to load
-		mem[1] = 0;
-		mem[2] = 0;
-		mem[3] = 255; // Non Transparent
+		AllocDummy();
 		return false;
 	}
 
