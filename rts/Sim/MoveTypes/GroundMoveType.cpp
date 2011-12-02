@@ -944,7 +944,7 @@ void CGroundMoveType::CalcSkidRot()
  */
 float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 	// multiplier for how strongly an object should be avoided
-	static const float AVOIDANCE_STRENGTH = 2000.0f;
+	static const float AVOIDANCE_STRENGTH = 8000.0f;
 
 	// NOTE: based on the requirement that all objects have symetrical footprints.
 	// If this is false, then radius has to be calculated in a different way!
