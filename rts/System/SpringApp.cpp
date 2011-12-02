@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
+#include <sstream>
 #include <iostream>
 
 #include <SDL.h>
@@ -66,7 +66,6 @@
 
 #include "System/mmgr.h"
 
-#include <sstream>
 #ifdef WIN32
 	#include "System/Platform/Win/WinVersion.h"
 #elif defined(__APPLE__)
@@ -192,6 +191,26 @@ bool SpringApp::Initialize()
 	// Initialize crash reporting
 	CrashHandler::Install();
 
+	globalRendering = new CGlobalRendering();
+
+	ParseCmdLine();
+	CMyMath::Init();
+	good_fpu_control_registers("::Run");
+
+	// log OS version
+	LOG("OS: %s", Platform::GetOS().c_str());
+	if (Platform::Is64Bit())
+		LOG("OS: 64bit native mode");
+	else if (Platform::Is32BitEmulation())
+		LOG("OS: emulated 32bit mode");
+	else
+		LOG("OS: 32bit native mode");
+
+	// Rename Threads
+	// We give the process itself the name `unknown`, htop & co. will still show the binary's name.
+	// But all child threads copy by default the name of their parent, so all threads that don't set
+	// their name themselves will show up as 'unknown'.
+	Threading::SetThreadName("unknown");
 #ifdef _OPENMP
 	#pragma omp parallel
 	{
@@ -204,33 +223,15 @@ bool SpringApp::Initialize()
 	}
 #endif
 
-	globalRendering = new CGlobalRendering();
-
-	ParseCmdLine();
-	CMyMath::Init();
-	good_fpu_control_registers("::Run");
-
+	// Install Watchdog
 	Watchdog::Install();
 	Watchdog::RegisterThread(WDT_MAIN, true);
-
-	// We give the process itself the name `unknown`, htop & co. will still show the binary's name.
-	// But all child threads copy by default the name of their parent, so all threads that don't set
-	// their name themselves will show up as 'unknown'.
-	Threading::SetThreadName("unknown");
-
-	// log OS version
-	LOG("OS: %s", Platform::GetOS().c_str());
-	if (Platform::Is64Bit())
-		LOG("OS: 64bit native mode");
-	else if (Platform::Is32BitEmulation())
-		LOG("OS: emulated 32bit mode");
-	else
-		LOG("OS: 32bit native mode");
 
 	FileSystemInitializer::Initialize();
 
 	UpdateOldConfigs();
 
+	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
 		SDL_Quit();
 		return false;
@@ -263,7 +264,7 @@ bool SpringApp::Initialize()
 	// Initialize Lua GL
 	LuaOpenGL::Init();
 
-	// Sound
+	// Sound & Input
 	ISound::Initialize();
 	InitJoystick();
 
