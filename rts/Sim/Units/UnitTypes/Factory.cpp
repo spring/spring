@@ -34,9 +34,9 @@ CR_BIND_DERIVED(CFactory, CBuilding, );
 
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
-	CR_MEMBER(nextBuildUnitDefID),
-	CR_MEMBER(curBuild),
 	CR_MEMBER(opening),
+	CR_MEMBER(curBuild),
+	CR_MEMBER(nextBuildUnitDefID),
 	CR_MEMBER(lastBuildUpdateFrame),
 	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
