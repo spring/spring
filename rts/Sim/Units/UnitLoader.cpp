@@ -324,7 +324,6 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 void CUnitLoader::FlattenGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const MoveData* moveData = unitDef->movedata;
 	const float groundheight = ground->GetHeightReal(unit->pos.x, unit->pos.z);
 
 	if (mapDamage->disabled) return;

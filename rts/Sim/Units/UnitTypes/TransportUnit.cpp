@@ -479,6 +479,8 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 						wantedHeight = std::max(0.0f, wantedHeight);
 						clampedHeight = wantedHeight;
 					} break;
+					default: {
+					} break;
 				}
 			} else {
 				wantedHeight = (unitDef->floatOnWater)? 0.0f: wantedHeight;
