@@ -31,6 +31,15 @@ namespace Threading {
 	NativeThreadId GetCurrentThreadId();
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);
 
+	/**
+	 * Sets the affinity of the current thread
+	 *
+	 * Interpret <cores_bitmask> as a bit-mask indicating on which of the available system CPU's (which
+	 * are numbered logically from 1 to N) we want to run.
+	 * Note: that this approach will fail when N > 32.
+	 */
+	uint32_t SetAffinity(uint32_t cores_bitmask, bool hard = true);
+	unsigned GetAvailableCores();
 
 	/**
 	 * Used to detect the main-thread which runs SDL, GL, Input, Sim, ...

@@ -73,7 +73,6 @@
 #elif defined(HEADLESS)
 #else
 	#include <X11/Xlib.h>
-	#include <sched.h>
 	#include "System/Platform/Linux/myX11.h"
 #endif
 
@@ -86,7 +85,7 @@
 #endif
 
 
-CONFIG(int, SetCoreAffinity).defaultValue(0);
+CONFIG(int, SetCoreAffinity).defaultValue(0).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(int, DepthBufferBits).defaultValue(24);
 CONFIG(int, StencilBufferBits).defaultValue(8);
 CONFIG(int, FSAALevel).defaultValue(0);
@@ -268,74 +267,27 @@ bool SpringApp::Initialize()
 	ISound::Initialize();
 	InitJoystick();
 
-	SetProcessAffinity(configHandler->GetInt("SetCoreAffinity"));
+	// Multithreading & Affinity
+	LOG("CPU Cores: %d", Threading::GetAvailableCores());
+	const uint32_t affinity = (uint32_t)configHandler->GetInt("SetCoreAffinity");
+	const uint32_t cpuMask  = Threading::SetAffinity(affinity);
+	if (cpuMask == 0xFFFFFF) {
+		LOG("CPU affinity not set");
+	}
+	else if (cpuMask != affinity) {
+		LOG("CPU affinity mask set: %d (config is %d)", cpuMask, affinity);
+	}
+	else if (cpuMask == 0) {
+		LOG_L(L_ERROR, "Failed to CPU affinity mask <%d>", affinity);
+	}
+	else {
+		LOG("CPU affinity mask set: %d", cpuMask);
+	}
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
 
 	return true;
-}
-
-void SpringApp::SetProcessAffinity(int affinity)
-{
-#ifdef WIN32
-	if (affinity > 0) {
-		//! Get the available cores
-		DWORD curMask;
-		DWORD cores = 0;
-		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cores);
-
-		DWORD_PTR wantedCore = 0xff;
-
-		//! Find an useable core
-		while ((wantedCore & cores) == 0 ) {
-			wantedCore >>= 1;
-		}
-
-		//! Set the affinity
-		HANDLE thread = GetCurrentThread();
-		DWORD_PTR result = 0;
-		if (affinity == 1) {
-			result = SetThreadIdealProcessor(thread, (DWORD)wantedCore);
-		} else if (affinity >= 2) {
-			result = SetThreadAffinityMask(thread, wantedCore);
-		}
-
-		if (result > 0) {
-			LOG("CPU: affinity set (%d)", affinity);
-		} else {
-			LOG("CPU: affinity failed");
-		}
-	}
-#elif defined(__APPLE__)
-	// no-op
-#elif defined(HEADLESS)
-	// no-op
-#else
-	if (affinity > 0) {
-		cpu_set_t cpusSystem; CPU_ZERO(&cpusSystem);
-		cpu_set_t cpusWanted; CPU_ZERO(&cpusWanted);
-
-		// use pid of calling process (0)
-		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
-
-		// interpret <affinity> as a bit-mask indicating
-		// on which of the available system CPU's (which
-		// are numbered logically from 0 to N-1) we want
-		// to run
-		// note that this approach will fail when N > 32
-		LOG("[SetProcessAffinity(%d)] available system CPU's: %d", affinity, CPU_COUNT(&cpusSystem));
-
-		// add the available system CPU's to the wanted set
-		for (int n = CPU_COUNT(&cpusSystem) - 1; n >= 0; n--) {
-			if ((affinity & (1 << n)) != 0 && CPU_ISSET(n, &cpusSystem)) {
-				CPU_SET(n, &cpusWanted);
-			}
-		}
-
-		sched_setaffinity(0, sizeof(cpu_set_t), &cpusWanted);
-	}
-#endif
 }
 
 

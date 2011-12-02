@@ -34,7 +34,6 @@ protected:
 	static void UpdateOldConfigs();                 //!< Forces an update to new config defaults
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
 	static bool SetSDLVideoMode();                  //!< Sets SDL video mode
-	static void SetProcessAffinity(int);
 	int Update();                                   //!< Run simulation and draw
 	bool UpdateSim(CGameController *ac);
 
