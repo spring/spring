@@ -1249,8 +1249,9 @@ void CLuaHandle::UnitDecloaked(const CUnit* unit)
 void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 {
 	// if empty, we are not a LuaHandleSynced
-	if (watchUnitDefs.empty() || 
-		!watchUnitDefs[collider->unitDef->id] || !watchUnitDefs[collidee->unitDef->id]) return;
+	if (watchUnitDefs.empty()) return;
+	if (!watchUnitDefs[collider->unitDef->id]) return;
+	if (!watchUnitDefs[collidee->unitDef->id]) return;
 
 	LUA_UNIT_BATCH_PUSH(,UNIT_UNIT_COLLISION, collider, collidee);
 	LUA_CALL_IN_CHECK(L);
@@ -1276,8 +1277,10 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
 {
 	// if empty, we are not a LuaHandleSynced
-	if (watchUnitDefs.empty() || !watchUnitDefs[collider->unitDef->id]) return;
-	if (watchFeatureDefs.empty() || !watchFeatureDefs[collidee->def->id]) return;
+	if (watchUnitDefs.empty()) return;
+	if (watchFeatureDefs.empty()) return;
+	if (!watchUnitDefs[collider->unitDef->id]) return;
+	if (!watchFeatureDefs[collidee->def->id]) return;
 
 	LUA_OBJ_BATCH_PUSH(UNIT_FEAT_COLLISION, collider, collidee);
 	LUA_CALL_IN_CHECK(L);
@@ -1304,6 +1307,7 @@ void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 {
 	// if empty, we are not a LuaHandleSynced
 	if (watchUnitDefs.empty()) return;
+	if (!watchUnitDefs[unit->unitDef->id]) return;
 
 	LUA_UNIT_BATCH_PUSH(,UNIT_MOVE_FAILED, unit);
 	static const LuaHashString cmdStr("UnitMoveFailed");
@@ -1436,7 +1440,8 @@ bool CLuaHandle::Explosion(int weaponDefID, const float3& pos, const CUnit* owne
 	if (weaponDefID < 0) return false;
 
 	// if empty, we are not a LuaHandleSynced
-	if (watchWeaponDefs.empty() || !watchWeaponDefs[weaponDefID]) return false;
+	if (watchWeaponDefs.empty()) return false;
+	if (!watchWeaponDefs[weaponDefID]) return false;
 
 	LUA_UNIT_BATCH_PUSH(false, UNIT_EXPLOSION, weaponDefID, pos, owner);
 	LUA_CALL_IN_CHECK(L);
