@@ -236,44 +236,42 @@ CR_REG_METADATA(CGame,(
 
 
 
-CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile) :
-	gameDrawMode(gameNotDrawing),
-	defsParser(NULL),
-	thisFps(0),
-	lastSimFrame(-1),
-
-	totalGameTime(0),
-
-	hideInterface(false),
-
-	gameOver(false),
-
-	noSpectatorChat(false),
-	finishedLoading(false),
-
-	infoConsole(NULL),
-	consoleHistory(NULL),
-
-	skipping(false),
-	playing(false),
-	chatting(false),
-	lastFrameTime(0),
-
-	leastQue(0),
-	timeLeft(0.0f),
-	consumeSpeed(1.0f),
-	luaLockTime(0),
-	luaExportSize(0),
-
-	saveFile(saveFile),
-
-	worldDrawer(NULL)
+CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
+	: finishedLoading(false)
+	, gameOver(false)
+	, gameDrawMode(gameNotDrawing)
+	, defsParser(NULL)
+	, thisFps(0)
+	, lastSimFrame(-1)
+	, lastUpdate(spring_gettime())
+	, lastMoveUpdate(spring_gettime())
+	, lastModGameTimeMeasure(spring_gettime())
+	, lastUpdateRaw(spring_gettime())
+	, updateDeltaSeconds(0.0f)
+	, lastCpuUsageTime(0.0f)
+	, totalGameTime(0)
+	, hideInterface(false)
+	, noSpectatorChat(false)
+	, skipping(false)
+	, playing(false)
+	, chatting(false)
+	, leastQue(0)
+	, timeLeft(0.0f)
+	, consumeSpeed(1.0f)
+	, lastframe(spring_gettime())
+	, luaLockTime(0)
+	, luaExportSize(0)
+	, saveFile(saveFile)
+	, infoConsole(NULL)
+	, consoleHistory(NULL)
+	, worldDrawer(NULL)
 {
 	game = this;
 
 	memset(gameID, 0, sizeof(gameID));
 
 	frameStartTime = spring_gettime();
+	lastFrameTime  = spring_gettime();
 	lastTick = clock();
 
 	for (int a = 0; a < 8; ++a) { camMove[a] = false; }
@@ -693,7 +691,7 @@ void CGame::LoadFinalize()
 	loadscreen->SetLoadMessage("Finalizing");
 	eventHandler.GamePreload();
 
-	lastframe = SDL_GetTicks();
+	lastframe = spring_gettime();
 	lastModGameTimeMeasure = lastframe;
 	lastUpdate = lastframe;
 	lastMoveUpdate = lastframe;
