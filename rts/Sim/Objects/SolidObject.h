@@ -33,6 +33,10 @@ public:
 	virtual void Kill(const float3& impulse, bool crushKill) {}
 	virtual int GetBlockingMapID() const { return -1; }
 
+	void MovePos(const float3& v) { pos += v; }
+	void MoveMidPos(const float3&);
+	void UpdateMidPos();
+
 	/**
 	 * Adds this object to the GroundBlockingMap if and only if its collidable
 	 * property is set (blocking), else does nothing (except call UnBlock()).
@@ -74,6 +78,10 @@ public:
 
 	MoveData* mobility;                         ///< holds information about the mobility and movedata of this object (if NULL, object is either static or aircraft)
 	CollisionVolume* collisionVolume;
+
+	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
+	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)
+	SyncedFloat3 updir;                         ///< object-local y-axis (in WS)
 
 	SyncedFloat3 relMidPos;                     ///< set by the model, used to derive midPos = pos + relMidPos
 	SyncedFloat3 midPos;                        ///< center position of the model (pos is at the very bottom of the model). Used as mass center.

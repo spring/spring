@@ -6,7 +6,9 @@
 #include "MoveType.h"
 #include "Sim/Objects/SolidObject.h"
 
+struct UnitDef;
 struct MoveData;
+class CMoveMath;
 
 class CGroundMoveType : public AMoveType
 {
@@ -82,6 +84,28 @@ protected:
 	void Arrived();
 	void Fail();
 	void HandleObjectCollisions();
+	void HandleUnitCollisions(
+		CUnit* collider,
+		const float3& colliderCurPos,
+		const float3& colliderOldPos,
+		const float colliderSpeed,
+		const float colliderRadius,
+		const float3& sepDirMask,
+		const UnitDef* colliderUD,
+		const MoveData* colliderMD,
+		const CMoveMath* colliderMM,
+		const short* cardinalHeadings);
+	void HandleFeatureCollisions(
+		CUnit* collider,
+		const float3& colliderCurPos,
+		const float3& colliderOldPos,
+		const float colliderSpeed,
+		const float colliderRadius,
+		const float3& sepDirMask,
+		const UnitDef* colliderUD,
+		const MoveData* colliderMD,
+		const CMoveMath* colliderMM,
+		const short* cardinalHeadings);
 
 	void SetMainHeading();
 	void ChangeHeading(short newHeading);
@@ -125,9 +149,7 @@ protected:
 	static const int LINETABLE_SIZE = 11;
 	static std::vector<int2> lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
 
-	unsigned int nextDeltaSpeedUpdate;
 	unsigned int nextObstacleAvoidanceUpdate;
-
 	unsigned int pathRequestDelay;
 
 	/// {in, de}creased every Update if idling is true/false and pathId != 0

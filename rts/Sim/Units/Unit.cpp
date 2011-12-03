@@ -88,9 +88,6 @@ float CUnit::expGrade       = 0.0f;
 CUnit::CUnit() : CSolidObject(),
 	unitDef(NULL),
 	unitDefID(-1),
-	frontdir(0.0f, 0.0f, 1.0f),
-	rightdir(-1.0f, 0.0f, 0.0f),
-	updir(0.0f, 1.0f, 0.0f),
 	upright(true),
 	travel(0.0f),
 	travelPeriod(0.0f),
@@ -611,21 +608,6 @@ void CUnit::UpdateDirVectors(bool useGroundNormal)
 	UpdateMidPos();
 }
 
-void CUnit::UpdateMidPos()
-{
-	midPos = pos +
-		(frontdir * relMidPos.z) +
-		(updir    * relMidPos.y) +
-		(rightdir * relMidPos.x);
-}
-
-void CUnit::MoveMidPos(const float3& deltaPos) {
-	midPos += deltaPos;
-	pos = midPos -
-		(frontdir * relMidPos.z) -
-		(updir    * relMidPos.y) -
-		(rightdir * relMidPos.x);
-}
 
 
 void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent)
@@ -2205,13 +2187,9 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 }
 
 CR_BIND_DERIVED(CUnit, CSolidObject, );
-// Member bindings
 CR_REG_METADATA(CUnit, (
 	// CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
-	CR_MEMBER(frontdir),
-	CR_MEMBER(rightdir),
-	CR_MEMBER(updir),
 	CR_MEMBER(upright),
 	CR_MEMBER(deathSpeed),
 	CR_MEMBER(travel),

@@ -89,7 +89,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(moveSquareX),
 	CR_MEMBER(moveSquareY),
 
-	CR_MEMBER(nextDeltaSpeedUpdate),
 	CR_MEMBER(nextObstacleAvoidanceUpdate),
 
 	CR_MEMBER(skidding),
@@ -155,7 +154,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	flatFrontDir(0.0f, 0.0, 1.0f),
 	mainHeadingPos(ZeroVector),
 
-	nextDeltaSpeedUpdate(0),
 	nextObstacleAvoidanceUpdate(0),
 
 	pathRequestDelay(0),
@@ -200,6 +198,7 @@ bool CGroundMoveType::Update()
 	}
 	if (skidding) {
 		UpdateSkid();
+		HandleObjectCollisions();
 		return false;
 	}
 
@@ -231,17 +230,17 @@ bool CGroundMoveType::Update()
 	// units do not get buried by restoring terrain)
 	UpdateOwnerPos(wantReverse);
 	AdjustPosToWaterLine();
+	HandleObjectCollisions();
+
+	ASSERT_SANE_OWNER_SPEED(owner->speed);
 
 	if (owner->pos != oldPos) {
 		TestNewTerrainSquare();
-		HandleObjectCollisions();
 
 		// note: HandleObjectCollisions() may have negated the position set
 		// by UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
-		owner->speed = owner->pos - oldPos;
 		owner->UpdateMidPos();
-
-		ASSERT_SANE_OWNER_SPEED(owner->speed);
+		oldPos = owner->pos;
 
 		// too many false negatives: speed is unreliable if stuck behind an obstacle
 		//   idling = (owner->speed.SqLength() < (accRate * accRate));
@@ -251,10 +250,8 @@ bool CGroundMoveType::Update()
 		//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
 
 		idling = (Square(currWayPointDist - prevWayPointDist) <= (owner->speed.SqLength() * 0.5f));
-		oldPos = owner->pos;
 		hasMoved = true;
 	} else {
-		owner->speed = ZeroVector;
 		idling = true;
 	}
 
@@ -527,25 +524,24 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 	if (math::fabs(speedDif) < 0.05f) {
 		// we are already going (mostly) how fast we want to go
 		deltaSpeed = speedDif * 0.125f;
-		nextDeltaSpeedUpdate = gs->frameNum + 8;
 	} else if (speedDif > 0.0f) {
 		// we want to accelerate
 		if (speedDif < accRate) {
 			deltaSpeed = speedDif;
-			nextDeltaSpeedUpdate = gs->frameNum;
 		} else {
 			deltaSpeed = accRate;
-			nextDeltaSpeedUpdate = (gs->frameNum + std::min(8.0f, speedDif / accRate));
 		}
+
+		deltaSpeed = Clamp(deltaSpeed, -accRate, accRate);
 	} else {
 		// we want to decelerate
 		if (speedDif > -10.0f * decRate) {
 			deltaSpeed = speedDif;
-			nextDeltaSpeedUpdate = gs->frameNum + 1;
 		} else {
 			deltaSpeed = -10.0f * decRate;
-			nextDeltaSpeedUpdate = (gs->frameNum + std::min(8.0f, speedDif / deltaSpeed));
 		}
+
+		deltaSpeed = Clamp(deltaSpeed, -decRate, decRate);
 	}
 
 #ifdef TRACE_SYNC
@@ -688,7 +684,6 @@ void CGroundMoveType::UpdateSkid()
 
 		if (speedf < speedReduction && !onSlope) {
 			// stop skidding
-			currentSpeed = 0.0f;
 			speed = ZeroVector;
 
 			skidding = false;
@@ -1303,221 +1298,256 @@ void CGroundMoveType::Fail()
 
 
 
+
+// FIXME move this to a global space to optimize the check (atm unit collision checks are done twice for the collider & collidee!)
+//
+// allow some degree of inter-penetration (1 - 0.75)
+// between objects to avoid sudden extreme responses
+//
+// FIXME: this is bad for immobile obstacles because
+// their corners might stick out through the radius;
+// such units and features should furthermore supply
+// their instance->*size rather than their def->*size
+#define FOOTPRINT_RADIUS(xs, zs) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * 0.75f)
+
 void CGroundMoveType::HandleObjectCollisions()
 {
-	//FIXME move this to a global space to optimize the check (atm unit collision checks are done twice for the collider & collidee!)
+	static const short cardinalHeadings[4] = {
+		GetHeadingFromVector( 0.0f,  1.0f), // +z == FACING_SOUTH (0)
+		GetHeadingFromVector( 1.0f,  0.0f), // +x == FACING_EAST  (1)
+		GetHeadingFromVector( 0.0f, -1.0f), // -z == FACING_NORTH (2)
+		GetHeadingFromVector(-1.0f,  0.0f), // -x == FACING_WEST  (3)
+	};
+	static const float3 sepDirMask = float3(1.0f, 0.0f, 1.0f);
 
 	CUnit* collider = owner;
 	collider->mobility->tempOwner = collider;
 
 	{
-		// allow some degree of inter-penetration (1 - 0.75)
-		// between objects to avoid sudden extreme responses
-		#define FOOTPRINT_RADIUS(xs, zs) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * 0.75f)
-
 		const UnitDef*   colliderUD = collider->unitDef;
 		const MoveData*  colliderMD = collider->mobility;
 		const CMoveMath* colliderMM = colliderMD->moveMath;
 
-		static const float3 dirMask = float3(1.0f, 0.0f, 1.0f);
-
-		const float3& colliderCurPos = collider->pos;
-		const float3& colliderOldPos = collider->moveType->oldPos;
 		const float colliderSpeed = collider->speed.Length();
 		const float colliderRadius = (colliderMD != NULL)?
 			FOOTPRINT_RADIUS(colliderMD->xsize, colliderMD->zsize):
 			FOOTPRINT_RADIUS(colliderUD->xsize, colliderUD->zsize);
 
-		const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(colliderCurPos, colliderRadius * 2.0f);
-		const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(colliderCurPos, colliderRadius * 2.0f);
-
-		std::vector<CUnit*>::const_iterator uit;
-		std::vector<CFeature*>::const_iterator fit;
-
-		for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
-			CUnit* collidee = const_cast<CUnit*>(*uit);
-
-			if (collidee == collider) { continue; }
-			if (collidee->moveType->IsSkidding()) { continue; }
-			if (collidee->moveType->IsFlying()) { continue; }
-
-			const UnitDef*   collideeUD = collidee->unitDef;
-			const MoveData*  collideeMD = collidee->mobility;
-			const CMoveMath* collideeMM = (collideeMD != NULL)? collideeMD->moveMath: NULL;
-
-			const float3& collideeCurPos = collidee->pos;
-			const float3& collideeOldPos = collidee->moveType->oldPos;
- 
-			const bool collideeMobile = (collideeMD != NULL);
-			const float collideeSpeed = collidee->speed.Length();
-			const float collideeRadius = collideeMobile?
-				FOOTPRINT_RADIUS(collideeMD->xsize, collideeMD->zsize):
-				FOOTPRINT_RADIUS(collideeUD->xsize, collideeUD->zsize);
-
-			bool colliderMobile = (collider->mobility != NULL);
-			bool pushCollider = colliderMobile;
-			bool pushCollidee = (collideeMobile || collideeUD->canfly);
-
-			const float3 separationVector = colliderCurPos - collideeCurPos;
-			const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
-
-			if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
-			if (collidee->usingScriptMoveType) { pushCollidee = false; }
-			if (collideeUD->pushResistant) { pushCollidee = false; }
-
-			if (!modInfo.allowPushingEnemyUnits) {
-				if (!teamHandler->Ally(collider->allyteam, collidee->allyteam)) { pushCollider = false; pushCollidee = false; }
-				if (!teamHandler->Ally(collidee->allyteam, collider->allyteam)) { pushCollider = false; pushCollidee = false; }
-			}
-
-			// don't push either party if the collidee does not block the collider
-			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
-			if (!collideeMobile && (colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
-
-			eventHandler.UnitUnitCollision(collider, collidee);
-
-			const float  sepDistance    = (separationVector.Length() + 0.01f);
-			const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
-			const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
-
-			const float3 sepDirection   = (separationVector / sepDistance);
-			const float3 colResponseVec = sepDirection * dirMask * sepResponse;
-
-			const float
-				m1 = collider->mass,
-				m2 = collidee->mass,
-				v1 = std::max(1.0f, colliderSpeed), // TODO: precalculate
-				v2 = std::max(1.0f, collideeSpeed), // TODO: precalculate
-				c1 = 1.0f + (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
-				c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
-				s1 = m1 * v1 * c1,
-				s2 = m2 * v2 * c2;
-
-			// far from a realistic treatment, but works
-			const float collisionMassSum  = s1 + s2 + 1.0f;
-			      float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
-			      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
-
-			if (!collideeMobile) {
-				const float3 colliderNextPos = colliderCurPos + collider->frontdir * currentSpeed;
-				const CMoveMath::BlockType colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
-
-				if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0 && collider->frontdir.dot(sepDirection) < -0.25f) {
-					const int2   sgnVec = int2((colResponseVec.x >= 0.0f)? 1: -1, (colResponseVec.z >= 0.0f)? 1: -1);
-					const float2 absVec = float2(math::fabs(colResponseVec.x * collideeMassScale), math::fabs(colResponseVec.z * collideeMassScale));
-					const float3 resVec = float3(std::max(absVec.x, 0.25f) * sgnVec.x, 0.0f, std::max(absVec.y, 0.25f) * sgnVec.y);
-
-					collider->pos = colliderOldPos + resVec;
-
-					currentSpeed = 0.0f;
-					// <requestedSpeed> is only reset every SlowUpdate, do not touch it
-					// requestedSpeed = 0.0f;
-				}
-
-				if (colliderMassScale > collideeMassScale) {
-					std::swap(colliderMassScale, collideeMassScale);
-				}
-			}
-
-			const float3 colliderNewPos = colliderCurPos + (colResponseVec * colliderMassScale);
-			const float3 collideeNewPos = collideeCurPos - (colResponseVec * collideeMassScale);
-
-			// try to prevent both parties from being pushed onto non-traversable squares
-			if (                  (colliderMM->IsBlocked(*colliderMD, colliderNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { colliderMassScale = 0.0f; }
-			if (collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideeNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { collideeMassScale = 0.0f; }
-			if (                  colliderMM->GetPosSpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { colliderMassScale = 0.0f; }
-			if (collideeMobile && collideeMM->GetPosSpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
-
-			if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else if (colliderMobile) { collider->pos = colliderOldPos; }
-			if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else if (collideeMobile) { collidee->pos = collideeOldPos; }
-
-			collider->UpdateMidPos();
-			collidee->UpdateMidPos();
-
-			if (!((gs->frameNum + collider->id) & 31) && !collider->commandAI->unimportantMove) {
-				// if we do not have an internal move order, tell units around us to bugger off
-				helper->BuggerOff(colliderCurPos + collider->frontdir * colliderRadius, colliderRadius, true, false, collider->team, collider);
-			}
-		}
-
-		for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
-			CFeature* collidee = const_cast<CFeature*>(*fit);
-
-			const FeatureDef* collideeFD = collidee->def;
-			const float3& collideeCurPos = collidee->pos;
-			const float collideeRadius = FOOTPRINT_RADIUS(collideeFD->xsize, collideeFD->zsize);
-
-			const float3 separationVector = colliderCurPos - collideeCurPos;
-			const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
-
-			if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
-			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
-
-			const float3 crushImpulse = collider->frontdir * currentSpeed * ((reversing)? -200.0f: 200.0f);
-
-			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
-			if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
-
-			eventHandler.UnitFeatureCollision(collider, collidee);
-
-			const float  sepDistance    = (separationVector.Length() + 0.01f);
-			const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
-			const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
-
-			const float3 sepDirection   = (separationVector / sepDistance);
-			const float3 colResponseVec = sepDirection * dirMask * sepResponse;
-
-			// multiply the collider's mass by a large constant (so that heavy
-			// features do not bounce light units away like jittering pinballs;
-			// collideeMassScale ~= 0.01 suppresses large responses)
-			const float
-				m1 = collider->mass,
-				m2 = collidee->mass * 10000.0f,
-				v1 = std::max(1.0f, colliderSpeed),
-				v2 = 1.0f,
-				c1 = (1.0f - math::fabs( collider->frontdir.dot(-sepDirection))) * 5.0f,
-				c2 = (1.0f - math::fabs(-collider->frontdir.dot( sepDirection))) * 5.0f,
-				s1 = m1 * v1 * c1,
-				s2 = m2 * v2 * c2;
-
-			const float collisionMassSum  = s1 + s2 + 1.0f;
-			      float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
-			      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
-
-			if (collidee->reachedFinalPos) {
-				const float3 colliderNextPos = colliderCurPos + collider->frontdir * currentSpeed;
-				const CMoveMath::BlockType colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
-
-				if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0 && collider->frontdir.dot(sepDirection) < -0.25f) {
-					// make sure the scaled response is never of epsilon-length (units would get stuck otherwise)
-					const int2   sgnVec = int2((colResponseVec.x >= 0.0f)? 1: -1, (colResponseVec.z >= 0.0f)? 1: -1);
-					const float2 absVec = float2(math::fabs(colResponseVec.x * collideeMassScale), math::fabs(colResponseVec.z * collideeMassScale));
-					const float3 resVec = float3(std::max(absVec.x, 0.25f) * sgnVec.x, 0.0f, std::max(absVec.y, 0.25f) * sgnVec.y);
-
-					collider->pos = colliderOldPos + resVec;
-
-					currentSpeed = 0.0f;
-					// <requestedSpeed> is only reset every SlowUpdate, do not touch it
-					// requestedSpeed = 0.0f;
-				}
-
-				if (colliderMassScale > collideeMassScale) {
-					std::swap(colliderMassScale, collideeMassScale);
-				}
-			}
-
-			collider->pos += (colResponseVec * colliderMassScale);
-		//	collidee->pos -= (colResponseVec * collideeMassScale);
-
-			collider->UpdateMidPos();
-		}
-
-		#undef FOOTPRINT_RADIUS
+		HandleUnitCollisions(collider, collider->pos, oldPos, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD, colliderMM, cardinalHeadings);
+		HandleFeatureCollisions(collider, collider->pos, oldPos, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD, colliderMM, cardinalHeadings);
 	}
 
 	collider->mobility->tempOwner = NULL;
 	collider->Block();
 }
+
+void CGroundMoveType::HandleUnitCollisions(
+	CUnit* collider,
+	const float3& colliderCurPos,
+	const float3& colliderOldPos,
+	const float colliderSpeed,
+	const float colliderRadius,
+	const float3& sepDirMask,
+	const UnitDef* colliderUD,
+	const MoveData* colliderMD,
+	const CMoveMath* colliderMM,
+	const short* cardinalHeadings
+) {
+	const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(colliderCurPos, colliderRadius * 2.0f);
+	      std::vector<CUnit*>::const_iterator uit;
+
+	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
+		CUnit* collidee = const_cast<CUnit*>(*uit);
+
+		if (collidee == collider) { continue; }
+		if (collidee->moveType->IsSkidding()) { continue; }
+		if (collidee->moveType->IsFlying()) { continue; }
+
+		const UnitDef*   collideeUD = collidee->unitDef;
+		const MoveData*  collideeMD = collidee->mobility;
+		const CMoveMath* collideeMM = (collideeMD != NULL)? collideeMD->moveMath: NULL;
+
+		const float3& collideeCurPos = collidee->pos;
+		const float3& collideeOldPos = collidee->moveType->oldPos;
+
+		const bool collideeMobile = (collideeMD != NULL);
+		const float collideeSpeed = collidee->speed.Length();
+		const float collideeRadius = collideeMobile?
+			FOOTPRINT_RADIUS(collideeMD->xsize, collideeMD->zsize):
+			FOOTPRINT_RADIUS(collidee  ->xsize, collidee  ->zsize);
+
+		bool colliderMobile = (collider->mobility != NULL);
+		bool pushCollider = colliderMobile;
+		bool pushCollidee = (collideeMobile || collideeUD->canfly);
+
+		const float3 separationVector = colliderCurPos - collideeCurPos;
+		const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
+
+		if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
+		if (collidee->usingScriptMoveType) { pushCollidee = false; }
+		if (collideeUD->pushResistant) { pushCollidee = false; }
+
+		if (!modInfo.allowPushingEnemyUnits) {
+			if (!teamHandler->Ally(collider->allyteam, collidee->allyteam)) { pushCollider = false; pushCollidee = false; }
+			if (!teamHandler->Ally(collidee->allyteam, collider->allyteam)) { pushCollider = false; pushCollidee = false; }
+		}
+
+		// don't push either party if the collidee does not block the collider
+		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
+		if (!collideeMobile && (colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
+
+		eventHandler.UnitUnitCollision(collider, collidee);
+
+		const float  sepDistance    = (separationVector.Length() + 0.01f);
+		const float  penDistance    = std::max((colliderRadius + collideeRadius) - sepDistance, 1.0f);
+		const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
+
+		const float3 sepDirection   = (separationVector / sepDistance);
+		const float3 colResponseVec = sepDirection * sepDirMask * sepResponse;
+
+		const float
+			m1 = collider->mass,
+			m2 = collidee->mass,
+			v1 = std::max(1.0f, colliderSpeed), // TODO: precalculate
+			v2 = std::max(1.0f, collideeSpeed), // TODO: precalculate
+			c1 = 1.0f + (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
+			c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
+			s1 = m1 * v1 * c1,
+			s2 = m2 * v2 * c2;
+
+		// far from a realistic treatment, but works
+		const float collisionMassSum  = s1 + s2 + 1.0f;
+		      float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
+		      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
+
+		if (!collideeMobile) {
+			const float3 colliderNextPos = colliderCurPos + collider->speed;
+			const CMoveMath::BlockType colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
+
+			if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
+				// currentSpeed = 0.0f;
+				// <requestedSpeed> is only reset every SlowUpdate, do not touch it
+				// requestedSpeed = 0.0f;
+
+				// applied every frame objects are colliding, so be careful
+				collider->AddImpulse(sepDirection * std::max(currentSpeed, accRate));
+				collider->MovePos(collider->speed);
+			}
+
+			if (colliderMassScale > collideeMassScale) {
+				std::swap(colliderMassScale, collideeMassScale);
+			}
+		}
+
+		const float3 colliderNewPos = colliderCurPos + (colResponseVec * colliderMassScale);
+		const float3 collideeNewPos = collideeCurPos - (colResponseVec * collideeMassScale);
+
+		// try to prevent both parties from being pushed onto non-traversable squares
+		if (                  (colliderMM->IsBlocked(*colliderMD, colliderNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { colliderMassScale = 0.0f; }
+		if (collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideeNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { collideeMassScale = 0.0f; }
+		if (                  colliderMM->GetPosSpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { colliderMassScale = 0.0f; }
+		if (collideeMobile && collideeMM->GetPosSpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
+
+		if (pushCollider) { collider->MovePos( colResponseVec * colliderMassScale); } else if (colliderMobile) { collider->pos = colliderOldPos; }
+		if (pushCollidee) { collidee->MovePos(-colResponseVec * collideeMassScale); } else if (collideeMobile) { collidee->pos = collideeOldPos; }
+
+		collider->UpdateMidPos();
+		collidee->UpdateMidPos();
+
+		if (!((gs->frameNum + collider->id) & 31) && !collider->commandAI->unimportantMove) {
+			// if we do not have an internal move order, tell units around us to bugger off
+			helper->BuggerOff(colliderCurPos + collider->frontdir * colliderRadius, colliderRadius, true, false, collider->team, collider);
+		}
+	}
+}
+
+void CGroundMoveType::HandleFeatureCollisions(
+	CUnit* collider,
+	const float3& colliderCurPos,
+	const float3& colliderOldPos,
+	const float colliderSpeed,
+	const float colliderRadius,
+	const float3& sepDirMask,
+	const UnitDef* colliderUD,
+	const MoveData* colliderMD,
+	const CMoveMath* colliderMM,
+	const short* cardinalHeadings)
+{
+	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(colliderCurPos, colliderRadius * 2.0f);
+	      std::vector<CFeature*>::const_iterator fit;
+
+	for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
+		CFeature* collidee = const_cast<CFeature*>(*fit);
+
+		const FeatureDef* collideeFD = collidee->def;
+		const float3& collideeCurPos = collidee->pos;
+
+	//	const float collideeRadius = FOOTPRINT_RADIUS(collideeFD->xsize, collideeFD->zsize);
+		const float collideeRadius = FOOTPRINT_RADIUS(collidee  ->xsize, collidee  ->zsize);
+
+		const float3 separationVector = colliderCurPos - collideeCurPos;
+		const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
+
+		if ((separationVector.SqLength() - separationMinDist) > 0.01f   && false) { continue; }
+		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
+
+		const float3 crushImpulse = collider->speed * ((reversing)? -collider->mass: collider->mass);
+
+		if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
+		if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
+
+		eventHandler.UnitFeatureCollision(collider, collidee);
+
+		const float  sepDistance    = (separationVector.Length() + 0.01f);
+		const float  penDistance    = std::max((colliderRadius + collideeRadius) - sepDistance, 1.0f);
+		const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
+
+		const float3 sepDirection   = (separationVector / sepDistance);
+		const float3 colResponseVec = sepDirection * sepDirMask * sepResponse;
+
+		// multiply the collider's mass by a large constant (so that heavy
+		// features do not bounce light units away like jittering pinballs;
+		// collideeMassScale ~= 0.01 suppresses large responses)
+		const float
+			m1 = collider->mass,
+			m2 = collidee->mass * 10000.0f,
+			v1 = std::max(1.0f, colliderSpeed),
+			v2 = 1.0f,
+			c1 = (1.0f - math::fabs( collider->frontdir.dot(-sepDirection))) * 5.0f,
+			c2 = (1.0f - math::fabs(-collider->frontdir.dot( sepDirection))) * 5.0f,
+			s1 = m1 * v1 * c1,
+			s2 = m2 * v2 * c2;
+
+		const float collisionMassSum  = s1 + s2 + 1.0f;
+		      float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
+		      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
+
+		if (collidee->reachedFinalPos) {
+			const float3 colliderNextPos = colliderCurPos + collider->speed;
+			const CMoveMath::BlockType colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
+
+			if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
+				// currentSpeed = 0.0f;
+				// <requestedSpeed> is only reset every SlowUpdate, do not touch it
+				// requestedSpeed = 0.0f;
+
+				// applied every frame objects are colliding, so be careful
+				collider->AddImpulse(sepDirection * std::max(currentSpeed, accRate));
+				collider->MovePos(collider->speed);
+			}
+
+			if (colliderMassScale > collideeMassScale) {
+				std::swap(colliderMassScale, collideeMassScale);
+			}
+		}
+
+		collider->MovePos(colResponseVec * colliderMassScale);
+		collider->UpdateMidPos();
+	}
+}
+
+#undef FOOTPRINT_RADIUS
+
 
 
 
@@ -1947,27 +1977,28 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			}
 		}
 
-		currentSpeed += deltaSpeed;
-
 		const UnitDef* ud = owner->unitDef;
 		const MoveData* md = ud->movedata;
 		const CMoveMath* mm = md->moveMath;
 
-		const float3 difVec = flatFrontDir * currentSpeed * (reversing? -1.0f: 1.0f);
-		const float3 newPos = owner->pos + difVec;
+		const int    speedSign = int(!wantReverse) * 2 - 1;
+		const float  speedScale = currentSpeed + deltaSpeed;
+		const float3 speedVector = owner->frontdir * speedScale * speedSign;
 
-		if (mm->GetPosSpeedMod(*md, newPos) > 0.01f) {
+		if (mm->GetPosSpeedMod(*md, owner->pos + speedVector) > 0.01f) {
 			// never move onto an impassable square (units
 			// can still tunnel across them at high enough
 			// speeds however)
-			//
-			// note: currentSpeed can be out of sync with
-			// owner->speed.Length(), eg. when in front of
-			// an obstacle ==> bad for MANY reasons, such
-			// as too-quick consumption of waypoints when
-			// a new path is requested
-			owner->pos = newPos;
+			// use the simplest possible Euler integration
+			owner->speed = speedVector;
+		} else {
+			owner->speed = ZeroVector;
 		}
+
+		owner->MovePos(owner->speed);
+
+		currentSpeed = owner->speed.Length();
+		deltaSpeed = 0.0f;
 
 		assert(math::fabs(currentSpeed) < 1e6f);
 	}
