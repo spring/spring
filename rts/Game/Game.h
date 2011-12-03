@@ -66,7 +66,7 @@ public:
 	bool Draw();
 	bool DrawMT();
 
-	static void DrawMTcb(void* c) { ((CGame *)c)->DrawMT(); }
+	static void DrawMTcb(void* c) { static_cast<CGame*>(c)->DrawMT(); }
 	bool Update();
 	/// Called when a key is released by the user
 	int KeyReleased(unsigned short k);

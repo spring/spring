@@ -130,7 +130,7 @@ protected:
 	void DrawDefaultCommand(const Command& c) const;
 
 private:
-	std::set<CObject *> commandDeathDependences;
+	std::set<CObject*> commandDeathDependences;
 	/**
 	 * continuously set to some non-zero value while target is in radar
 	 * decremented by 1 every SlowUpdate (!), command is canceled when
