@@ -1305,19 +1305,11 @@ void CGroundMoveType::Fail()
 // between objects to avoid sudden extreme responses
 //
 // FIXME: this is bad for immobile obstacles because
-// their corners might stick out through the radius;
-// such units and features should furthermore supply
-// their instance->*size rather than their def->*size
+// their corners might stick out through the radius
 #define FOOTPRINT_RADIUS(xs, zs) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * 0.75f)
 
 void CGroundMoveType::HandleObjectCollisions()
 {
-	static const short cardinalHeadings[4] = {
-		GetHeadingFromVector( 0.0f,  1.0f), // +z == FACING_SOUTH (0)
-		GetHeadingFromVector( 1.0f,  0.0f), // +x == FACING_EAST  (1)
-		GetHeadingFromVector( 0.0f, -1.0f), // -z == FACING_NORTH (2)
-		GetHeadingFromVector(-1.0f,  0.0f), // -x == FACING_WEST  (3)
-	};
 	static const float3 sepDirMask = float3(1.0f, 0.0f, 1.0f);
 
 	CUnit* collider = owner;
@@ -1333,8 +1325,8 @@ void CGroundMoveType::HandleObjectCollisions()
 			FOOTPRINT_RADIUS(colliderMD->xsize, colliderMD->zsize):
 			FOOTPRINT_RADIUS(colliderUD->xsize, colliderUD->zsize);
 
-		HandleUnitCollisions(collider, collider->pos, oldPos, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD, colliderMM, cardinalHeadings);
-		HandleFeatureCollisions(collider, collider->pos, oldPos, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD, colliderMM, cardinalHeadings);
+		HandleUnitCollisions(collider, collider->pos, oldPos, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD, colliderMM);
+		HandleFeatureCollisions(collider, collider->pos, oldPos, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD, colliderMM);
 	}
 
 	collider->mobility->tempOwner = NULL;
@@ -1351,7 +1343,6 @@ void CGroundMoveType::HandleUnitCollisions(
 	const UnitDef* colliderUD,
 	const MoveData* colliderMD,
 	const CMoveMath* colliderMM,
-	const short* cardinalHeadings
 ) {
 	const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(colliderCurPos, colliderRadius * 2.0f);
 	      std::vector<CUnit*>::const_iterator uit;
@@ -1471,7 +1462,6 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const UnitDef* colliderUD,
 	const MoveData* colliderMD,
 	const CMoveMath* colliderMM,
-	const short* cardinalHeadings)
 {
 	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(colliderCurPos, colliderRadius * 2.0f);
 	      std::vector<CFeature*>::const_iterator fit;
