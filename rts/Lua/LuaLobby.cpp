@@ -2,7 +2,7 @@
 
 #include "LuaLobby.h"
 
-#include "Game/UI/LuaUI.h"
+#include "LuaUI.h"
 #include "LuaCallInCheck.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"

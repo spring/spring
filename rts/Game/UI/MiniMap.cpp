@@ -21,9 +21,9 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/LuaUI.h" // FIXME: for GML
 #include "Game/UI/UnitTracker.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Lua/LuaUI.h" // FIXME: for GML
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
