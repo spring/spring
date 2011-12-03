@@ -4,6 +4,7 @@
 
 #include "LuaGaia.h"
 #include "LuaRules.h"
+#include "LuaUI.h"
 
 #include "LuaCallInCheck.h"
 #include "LuaHashString.h"
@@ -12,7 +13,6 @@
 #include "LuaUtils.h"
 #include "LuaZip.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/UI/LuaUI.h"
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/UI/KeyCodes.h"

@@ -14,9 +14,9 @@
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
 
-#include "UI/LuaUI.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
+#include "Lua/LuaUI.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"

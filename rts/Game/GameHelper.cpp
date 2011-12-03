@@ -5,7 +5,7 @@
 #include "Camera.h"
 #include "GameSetup.h"
 #include "Game/GlobalUnsynced.h"
-#include "UI/LuaUI.h"
+#include "Lua/LuaUI.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
