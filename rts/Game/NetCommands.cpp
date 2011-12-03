@@ -23,6 +23,7 @@
 #include "UI/GameSetupDrawer.h"
 #include "UI/LuaUI.h"
 #include "UI/MouseHandler.h"
+#include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/EventHandler.h"
@@ -44,7 +45,7 @@ void CGame::ClientReadNet()
 			float simCpuUsage = profiler.GetPercent("Game::SimFrame");
 #if !defined(USE_GML) && !defined(GML_ENABLE_SIM)
 			// take the minimum drawframes into account, too
-			simCpuUsage += (profiler.GetPercent("GameController::Draw") / game->fps) * gu->minFPS;
+			simCpuUsage += (profiler.GetPercent("GameController::Draw") / globalRendering->FPS) * gu->minFPS;
 #endif
 
 			net->Send(CBaseNetProtocol::Get().SendCPUUsage(simCpuUsage));

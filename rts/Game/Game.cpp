@@ -189,11 +189,9 @@ CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 CR_REG_METADATA(CGame,(
 //	CR_MEMBER(finishedLoading),
 //	CR_MEMBER(drawMode),
-//	CR_MEMBER(fps),
 //	CR_MEMBER(thisFps),
 	CR_MEMBER(lastSimFrame),
-//	CR_MEMBER(fpstimer),
-//	CR_MEMBER(starttime),
+//	CR_MEMBER(frameStartTime),
 //	CR_MEMBER(lastUpdate),
 //	CR_MEMBER(lastMoveUpdate),
 //	CR_MEMBER(lastModGameTimeMeasure),
@@ -241,7 +239,6 @@ CR_REG_METADATA(CGame,(
 CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile) :
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
-	fps(0),
 	thisFps(0),
 	lastSimFrame(-1),
 
@@ -276,7 +273,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	memset(gameID, 0, sizeof(gameID));
 
-	time(&starttime);
+	frameStartTime = spring_gettime();
 	lastTick = clock();
 
 	for (int a = 0; a < 8; ++a) { camMove[a] = false; }
@@ -839,13 +836,14 @@ bool CGame::Update()
 
 	lastModGameTimeMeasure = timeNow;
 
-	time(&fpstimer);
+	spring_time now = spring_gettime();
+	float diffsecs = spring_tomsecs(spring_difftime(now, frameStartTime)) / 1000.0f;
 
-	if (difftime(fpstimer, starttime) != 0) { // do once every second
-		fps = thisFps;
+	if (diffsecs >= 1.0f) { // do once every second
+		globalRendering->FPS = thisFps / diffsecs;
 		thisFps = 0;
 
-		starttime = fpstimer;
+		frameStartTime = now;
 #if defined(USE_GML) && GML_ENABLE_SIM
 		extern int backupSize;
 		luaExportSize = backupSize;
@@ -1140,8 +1138,8 @@ bool CGame::Draw() {
 	if (globalRendering->drawdebug) {
 		//print some infos (fps,gameframe,particles)
 		glColor4f(1,1,0.5f,0.8f);
-		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %d Frame: %d Particles: %d (%d)",
-		    fps, gs->frameNum, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
+		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %0.1f Frame: %d Particles: %d (%d)",
+		    globalRendering->FPS, gs->frameNum, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
 
 		if (playing) {
 			font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",
@@ -1183,7 +1181,7 @@ bool CGame::Draw() {
 
 		if (showFPS) {
 			char buf[32];
-			SNPRINTF(buf, sizeof(buf), "%i", fps);
+			SNPRINTF(buf, sizeof(buf), "%.0f", globalRendering->FPS);
 
 			const float4 yellow(1.0f, 1.0f, 0.25f, 1.0f);
 			smallFont->SetColors(&yellow,NULL);

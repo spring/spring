@@ -48,6 +48,8 @@ public:
 	/// the draw frame number (never 0)
 	unsigned int drawFrame;
 
+	/// Frames Per Second
+	float FPS;
 
 	/// the window state (0=normal,1=maximized,2=minimized)
 	int winState;
