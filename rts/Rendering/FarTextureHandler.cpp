@@ -122,13 +122,14 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 {
 	const S3DModel* model = obj->model;
 
-	//! make space in the std::vectors
-	while (cache.size() <= obj->team) {
-		cache.push_back(std::vector<int>());
+	// make space in the std::vectors
+	if (obj->team >= (int)obj->team) {
+		cache.resize(obj->team);
 	}
-	while (cache[obj->team].size() <= model->id) {
-		cache[obj->team].push_back(0);
+	if (model->id >= (int)cache[obj->team].size()) {
+		cache[obj->team].resize(model->id, 0);
 	}
+
 	cache[obj->team][model->id] = -1;
 
 	//! check if there is enough free space in the atlas, if not try to resize it
@@ -216,8 +217,8 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 
 	glLightfv(GL_LIGHT1, GL_POSITION, &sunDir.x);
 
-	//! draw the model in 8 different orientations
-	for (size_t orient = 0; orient < numOrientations; ++orient) {
+	// draw the model in 8 different orientations
+	for (int orient = 0; orient < numOrientations; ++orient) {
 		//! setup viewport
 		int2 pos = GetTextureCoordsInt(usedFarTextures, orient);
 		glViewport(pos.x * iconSizeX, pos.y * iconSizeY, iconSizeX, iconSizeY);
@@ -295,10 +296,10 @@ void CFarTextureHandler::Draw()
 		return;
 	}
 
-	//! create new faricons
+	// create new faricons
 	for (GML_VECTOR<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
 		const CSolidObject& obj = **it;
-		if (cache.size() <= obj.team || cache[obj.team].size() <= obj.model->id || !cache[obj.team][obj.model->id]) {
+		if ((int)cache.size() <= obj.team || (int)cache[obj.team].size() <= obj.model->id || !cache[obj.team][obj.model->id]) {
 			CreateFarTexture(*it);
 		}
 	}
