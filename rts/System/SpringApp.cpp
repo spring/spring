@@ -975,18 +975,17 @@ int SpringApp::Update()
 
 		bool updateSim = true;
 #if defined(USE_GML) && GML_ENABLE_SIM
-		updateSim = !gmlStartSim; // runs in a thread?
+		updateSim = !gmlStartSim || !gmlMultiThreadSim;
 #endif
 
 		if (updateSim) {
 			ret = UpdateSim(activeController);
 #if defined(USE_GML) && GML_ENABLE_SIM
-			if (gmlMultiThreadSim && gs->frameNum > 0) {
+			if (!gmlStartSim && gmlMultiThreadSim && gs->frameNum > 0) {
 				gmlStartSim = true;
 			}
 #endif
 		}
-
 
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");

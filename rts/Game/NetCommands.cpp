@@ -43,10 +43,12 @@ void CGame::ClientReadNet()
 
 		if (playing) {
 			float simCpuUsage = profiler.GetPercent("Game::SimFrame");
-#if !defined(USE_GML) && !defined(GML_ENABLE_SIM)
-			// take the minimum drawframes into account, too
-			simCpuUsage += (profiler.GetPercent("GameController::Draw") / globalRendering->FPS) * gu->minFPS;
+
+#if defined(USE_GML) && GML_ENABLE_SIM
+			if (!gmlMultiThreadSim)
 #endif
+			// take the minimum drawframes into account, too
+			simCpuUsage += (profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
 
 			net->Send(CBaseNetProtocol::Get().SendCPUUsage(simCpuUsage));
 #if defined(USE_GML) && GML_ENABLE_SIM
