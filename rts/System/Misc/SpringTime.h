@@ -3,7 +3,7 @@
 #ifndef SPRINGTIME_H
 #define SPRINGTIME_H
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(SPRING_TIME)
 	#define STATIC_SPRING_TIME
 #endif
 

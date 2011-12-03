@@ -1,4 +1,5 @@
 
+#define SPRING_TIME 1
 #include "System/Net/UDPListener.h"
 
 #define BOOST_TEST_MODULE UDPListener
