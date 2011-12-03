@@ -48,9 +48,10 @@ CR_REG_METADATA(CFactory, (
 
 CFactory::CFactory():
 	buildSpeed(100.0f),
+	opening(false),
 	curBuildDef(NULL),
 	curBuild(NULL),
-	opening(false),
+	nextBuildUnitDefID(-1),
 	lastBuildUpdateFrame(-1000)
 {
 }

@@ -149,6 +149,11 @@ public:
 private:
 	struct ArchiveInfo
 	{
+		ArchiveInfo()
+			: modified(0)
+			, checksum(0)
+			, updated(false)
+			{}
 		std::string path;
 		std::string origName;     ///< Could be useful to have the non-lowercased name around
 		unsigned int modified;
@@ -159,6 +164,10 @@ private:
 	};
 	struct BrokenArchive
 	{
+		BrokenArchive()
+			: modified(0)
+			, updated(false)
+			{}
 		std::string path;
 		unsigned int modified;
 		bool updated;

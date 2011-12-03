@@ -13,20 +13,20 @@
 namespace VorbisCallbacks {
 	size_t VorbisStreamRead(void* ptr, size_t size, size_t nmemb, void* datasource)
 	{
-		CFileHandler* buffer = (CFileHandler*)datasource;
+		CFileHandler* buffer = static_cast<CFileHandler*>(datasource);
 		return buffer->Read(ptr, size * nmemb);
 	}
 
 	int VorbisStreamClose(void* datasource)
 	{
-		CFileHandler* buffer = (CFileHandler*)datasource;
+		CFileHandler* buffer = static_cast<CFileHandler*>(datasource);
 		delete buffer;
 		return 0;
 	}
 
 	int VorbisStreamSeek(void* datasource, ogg_int64_t offset, int whence)
 	{
-		CFileHandler* buffer = (CFileHandler*)datasource;
+		CFileHandler* buffer = static_cast<CFileHandler*>(datasource);
 		if (whence == SEEK_SET)
 		{
 			buffer->Seek(offset, std::ios_base::beg);
@@ -45,7 +45,7 @@ namespace VorbisCallbacks {
 
 	long VorbisStreamTell(void* datasource)
 	{
-		CFileHandler* buffer = (CFileHandler*)datasource;
+		CFileHandler* buffer = static_cast<CFileHandler*>(datasource);
 		return buffer->GetPos();
 	}
 
