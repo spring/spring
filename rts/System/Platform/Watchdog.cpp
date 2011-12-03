@@ -18,7 +18,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/maindefines.h"
-#include "System/myTime.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
 
