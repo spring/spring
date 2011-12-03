@@ -84,7 +84,7 @@
 #endif
 
 
-CONFIG(int, SetCoreAffinity).defaultValue(0).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
+CONFIG(unsigned, SetCoreAffinity).defaultValue(0).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(int, DepthBufferBits).defaultValue(24);
 CONFIG(int, StencilBufferBits).defaultValue(8);
 CONFIG(int, FSAALevel).defaultValue(0);
@@ -270,7 +270,7 @@ bool SpringApp::Initialize()
 
 	// Multithreading & Affinity
 	LOG("CPU Cores: %d", Threading::GetAvailableCores());
-	const uint32_t affinity = (uint32_t)configHandler->GetInt("SetCoreAffinity");
+	const uint32_t affinity = configHandler->GetUnsigned("SetCoreAffinity");
 	const uint32_t cpuMask  = Threading::SetAffinity(affinity);
 	if (cpuMask == 0xFFFFFF) {
 		LOG("CPU affinity not set");
