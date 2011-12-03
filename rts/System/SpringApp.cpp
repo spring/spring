@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
+#include <sstream>
 #include <iostream>
 
 #include <SDL.h>
@@ -66,14 +66,12 @@
 
 #include "System/mmgr.h"
 
-#include <sstream>
 #ifdef WIN32
 	#include "System/Platform/Win/WinVersion.h"
 #elif defined(__APPLE__)
 #elif defined(HEADLESS)
 #else
 	#include <X11/Xlib.h>
-	#include <sched.h>
 	#include "System/Platform/Linux/myX11.h"
 #endif
 
@@ -86,16 +84,14 @@
 #endif
 
 
-CONFIG(int, SetCoreAffinity).defaultValue(0);
+CONFIG(unsigned, SetCoreAffinity).defaultValue(0).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(int, DepthBufferBits).defaultValue(24);
 CONFIG(int, StencilBufferBits).defaultValue(8);
 CONFIG(int, FSAALevel).defaultValue(0);
-CONFIG(int, SmoothLines).defaultValue(0); //! FSAA ? 0 : 3;  // until a few things get fixed
-CONFIG(int, SmoothPoints).defaultValue(0); //! FSAA ? 0 : 3;
+CONFIG(int, SmoothLines).defaultValue(2).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
+CONFIG(int, SmoothPoints).defaultValue(2).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
 CONFIG(float, TextureLODBias).defaultValue(0.0f);
 CONFIG(bool, FixAltTab).defaultValue(false);
-CONFIG(int, Version).defaultValue(0);
-CONFIG(bool, FSAA).defaultValue(false);
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf");
 CONFIG(int, FontSize).defaultValue(23);
@@ -146,9 +142,8 @@ static bool MultisampleVerify()
  * Initializes SpringApp variables
  */
 SpringApp::SpringApp()
+	: cmdline(NULL)
 {
-	cmdline = NULL;
-	lastRequiredDraw = 0;
 }
 
 /**
@@ -193,6 +188,26 @@ bool SpringApp::Initialize()
 	// Initialize crash reporting
 	CrashHandler::Install();
 
+	globalRendering = new CGlobalRendering();
+
+	ParseCmdLine();
+	CMyMath::Init();
+	good_fpu_control_registers("::Run");
+
+	// log OS version
+	LOG("OS: %s", Platform::GetOS().c_str());
+	if (Platform::Is64Bit())
+		LOG("OS: 64bit native mode");
+	else if (Platform::Is32BitEmulation())
+		LOG("OS: emulated 32bit mode");
+	else
+		LOG("OS: 32bit native mode");
+
+	// Rename Threads
+	// We give the process itself the name `unknown`, htop & co. will still show the binary's name.
+	// But all child threads copy by default the name of their parent, so all threads that don't set
+	// their name themselves will show up as 'unknown'.
+	Threading::SetThreadName("unknown");
 #ifdef _OPENMP
 	#pragma omp parallel
 	{
@@ -205,33 +220,13 @@ bool SpringApp::Initialize()
 	}
 #endif
 
-	globalRendering = new CGlobalRendering();
-
-	ParseCmdLine();
-	CMyMath::Init();
-	good_fpu_control_registers("::Run");
-
+	// Install Watchdog
 	Watchdog::Install();
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
-	// We give the process itself the name `unknown`, htop & co. will still show the binary's name.
-	// But all child threads copy by default the name of their parent, so all threads that don't set
-	// their name themselves will show up as 'unknown'.
-	Threading::SetThreadName("unknown");
-
-	// log OS version
-	LOG("OS: %s", Platform::GetOS().c_str());
-	if (Platform::Is64Bit())
-		LOG("OS: 64bit native mode");
-	else if (Platform::Is32BitEmulation())
-		LOG("OS: emulated 32bit mode");
-	else
-		LOG("OS: 32bit native mode");
-
 	FileSystemInitializer::Initialize();
 
-	UpdateOldConfigs();
-
+	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
 		SDL_Quit();
 		return false;
@@ -264,78 +259,31 @@ bool SpringApp::Initialize()
 	// Initialize Lua GL
 	LuaOpenGL::Init();
 
-	// Sound
+	// Sound & Input
 	ISound::Initialize();
 	InitJoystick();
 
-	SetProcessAffinity(configHandler->GetInt("SetCoreAffinity"));
+	// Multithreading & Affinity
+	LOG("CPU Cores: %d", Threading::GetAvailableCores());
+	const uint32_t affinity = configHandler->GetUnsigned("SetCoreAffinity");
+	const uint32_t cpuMask  = Threading::SetAffinity(affinity);
+	if (cpuMask == 0xFFFFFF) {
+		LOG("CPU affinity not set");
+	}
+	else if (cpuMask != affinity) {
+		LOG("CPU affinity mask set: %d (config is %d)", cpuMask, affinity);
+	}
+	else if (cpuMask == 0) {
+		LOG_L(L_ERROR, "Failed to CPU affinity mask <%d>", affinity);
+	}
+	else {
+		LOG("CPU affinity mask set: %d", cpuMask);
+	}
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
 
 	return true;
-}
-
-void SpringApp::SetProcessAffinity(int affinity)
-{
-#ifdef WIN32
-	if (affinity > 0) {
-		//! Get the available cores
-		DWORD curMask;
-		DWORD cores = 0;
-		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cores);
-
-		DWORD_PTR wantedCore = 0xff;
-
-		//! Find an useable core
-		while ((wantedCore & cores) == 0 ) {
-			wantedCore >>= 1;
-		}
-
-		//! Set the affinity
-		HANDLE thread = GetCurrentThread();
-		DWORD_PTR result = 0;
-		if (affinity == 1) {
-			result = SetThreadIdealProcessor(thread, (DWORD)wantedCore);
-		} else if (affinity >= 2) {
-			result = SetThreadAffinityMask(thread, wantedCore);
-		}
-
-		if (result > 0) {
-			LOG("CPU: affinity set (%d)", affinity);
-		} else {
-			LOG("CPU: affinity failed");
-		}
-	}
-#elif defined(__APPLE__)
-	// no-op
-#elif defined(HEADLESS)
-	// no-op
-#else
-	if (affinity > 0) {
-		cpu_set_t cpusSystem; CPU_ZERO(&cpusSystem);
-		cpu_set_t cpusWanted; CPU_ZERO(&cpusWanted);
-
-		// use pid of calling process (0)
-		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
-
-		// interpret <affinity> as a bit-mask indicating
-		// on which of the available system CPU's (which
-		// are numbered logically from 0 to N-1) we want
-		// to run
-		// note that this approach will fail when N > 32
-		LOG("[SetProcessAffinity(%d)] available system CPU's: %d", affinity, CPU_COUNT(&cpusSystem));
-
-		// add the available system CPU's to the wanted set
-		for (int n = CPU_COUNT(&cpusSystem) - 1; n >= 0; n--) {
-			if ((affinity & (1 << n)) != 0 && CPU_ISSET(n, &cpusSystem)) {
-				CPU_SET(n, &cpusWanted);
-			}
-		}
-
-		sched_setaffinity(0, sizeof(cpu_set_t), &cpusWanted);
-	}
-#endif
 }
 
 
@@ -722,41 +670,6 @@ void SpringApp::InitOpenGL()
 }
 
 
-void SpringApp::UpdateOldConfigs()
-{
-	const int cfgVersion = configHandler->GetInt("Version");
-	if (cfgVersion < 2) {
-		// force an update to new defaults
-		configHandler->Delete("FontFile");
-		configHandler->Delete("FontSize");
-		configHandler->Delete("SmallFontSize");
-		configHandler->Delete("StencilBufferBits"); //! update to 8 bits
-		configHandler->Delete("DepthBufferBits"); //! update to 24bits
-		configHandler->Set("Version",2);
-	}
-	if (cfgVersion < 3) {
-		configHandler->Delete("AtiHacks"); //! new runtime detection with -1
-		configHandler->Set("Version",3);
-	}
-	if (cfgVersion < 4) {
-		const bool fsaaEnabled = configHandler->GetBool("FSAA");
-		if (!fsaaEnabled)
-			configHandler->Set("FSAALevel", 0);
-		configHandler->Delete("FSAA");
-		configHandler->Set("Version",4);
-	}
-	if (cfgVersion < 5) {
-		const int xres = configHandler->GetInt("XResolution");
-		const int yres = configHandler->GetInt("YResolution");
-		if ((xres == 1024) && (yres == 768)) { //! old default res (use desktop res now by default)
-			configHandler->Delete("XResolution");
-			configHandler->Delete("YResolution");
-		}
-		configHandler->Set("Version",5);
-	}
-}
-
-
 void SpringApp::LoadFonts()
 {
 	// Initialize font
@@ -1076,21 +989,9 @@ int SpringApp::Update()
 
 
 		if (ret) {
-			globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
+			ScopedTimer cputimer("GameController::Draw");
+			ret = activeController->Draw();
 
-			bool updateDrawFrameTimer = ((gs->frameNum - lastRequiredDraw) >= (GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor));
-#if defined(USE_GML) && GML_ENABLE_SIM
-			updateDrawFrameTimer &= !gmlMultiThreadSim;
-#endif
-
-			if (updateDrawFrameTimer) {
-				ScopedTimer cputimer("GameController::Draw"); // Update
-
-				ret = activeController->Draw();
-				lastRequiredDraw = gs->frameNum;
-			} else {
-				ret = activeController->Draw();
-			}
 #if defined(USE_GML) && GML_ENABLE_SIM
 			gmlProcessor->PumpAux();
 #endif

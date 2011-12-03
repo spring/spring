@@ -114,7 +114,6 @@
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Groups/GroupHandler.h"
-#include "Sim/Units/UnitLoader.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "UI/CommandColors.h"
@@ -190,11 +189,9 @@ CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 CR_REG_METADATA(CGame,(
 //	CR_MEMBER(finishedLoading),
 //	CR_MEMBER(drawMode),
-//	CR_MEMBER(fps),
 //	CR_MEMBER(thisFps),
 	CR_MEMBER(lastSimFrame),
-//	CR_MEMBER(fpstimer),
-//	CR_MEMBER(starttime),
+//	CR_MEMBER(frameStartTime),
 //	CR_MEMBER(lastUpdate),
 //	CR_MEMBER(lastMoveUpdate),
 //	CR_MEMBER(lastModGameTimeMeasure),
@@ -239,45 +236,51 @@ CR_REG_METADATA(CGame,(
 
 
 
-CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile) :
-	gameDrawMode(gameNotDrawing),
-	defsParser(NULL),
-	fps(0),
-	thisFps(0),
-	lastSimFrame(-1),
-
-	totalGameTime(0),
-
-	hideInterface(false),
-
-	gameOver(false),
-
-	noSpectatorChat(false),
-	finishedLoading(false),
-
-	infoConsole(NULL),
-	consoleHistory(NULL),
-
-	skipping(false),
-	playing(false),
-	chatting(false),
-	lastFrameTime(0),
-
-	leastQue(0),
-	timeLeft(0.0f),
-	consumeSpeed(1.0f),
-	luaLockTime(0),
-	luaExportSize(0),
-
-	saveFile(saveFile),
-
-	worldDrawer(NULL)
+CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
+	: finishedLoading(false)
+	, gameOver(false)
+	, gameDrawMode(gameNotDrawing)
+	, defsParser(NULL)
+	, thisFps(0)
+	, lastSimFrame(-1)
+	, lastUpdate(spring_gettime())
+	, lastMoveUpdate(spring_gettime())
+	, lastModGameTimeMeasure(spring_gettime())
+	, lastUpdateRaw(spring_gettime())
+	, updateDeltaSeconds(0.0f)
+	, lastCpuUsageTime(0.0f)
+	, totalGameTime(0)
+	, hideInterface(false)
+	, noSpectatorChat(false)
+	, skipping(false)
+	, playing(false)
+	, chatting(false)
+	, leastQue(0)
+	, timeLeft(0.0f)
+	, consumeSpeed(1.0f)
+	, lastframe(spring_gettime())
+	, skipStartFrame(0)
+	, skipEndFrame(0)
+	, skipTotalFrames(0)
+	, skipSeconds(0.0f)
+	, skipSoundmute(false)
+	, skipOldSpeed(0.0f)
+	, skipOldUserSpeed(0.0f)
+	, skipLastDraw(spring_gettime())
+	, speedControl(-1)
+	, luaLockTime(0)
+	, luaExportSize(0)
+	, saveFile(saveFile)
+	, infoConsole(NULL)
+	, consoleHistory(NULL)
+	, worldDrawer(NULL)
 {
 	game = this;
 
 	memset(gameID, 0, sizeof(gameID));
 
-	time(&starttime);
+	frameStartTime = spring_gettime();
+	lastFrameTime  = spring_gettime();
 	lastTick = clock();
 
 	for (int a = 0; a < 8; ++a) { camMove[a] = false; }
@@ -394,7 +397,6 @@ CGame::~CGame()
 	SafeDelete(cubeMapHandler);
 	SafeDelete(modelParser);
 
-	SafeDelete(unitLoader);
 	SafeDelete(pathManager);
 	SafeDelete(ground);
 	SafeDelete(smoothGround);
@@ -550,7 +552,6 @@ void CGame::LoadSimulation(const std::string& mapName)
 	weaponDefHandler = new CWeaponDefHandler();
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler();
-	unitLoader = new CUnitLoader();
 
 	CGroundMoveType::CreateLineTable();
 
@@ -699,7 +700,7 @@ void CGame::LoadFinalize()
 	loadscreen->SetLoadMessage("Finalizing");
 	eventHandler.GamePreload();
 
-	lastframe = SDL_GetTicks();
+	lastframe = spring_gettime();
 	lastModGameTimeMeasure = lastframe;
 	lastUpdate = lastframe;
 	lastMoveUpdate = lastframe;
@@ -825,10 +826,11 @@ bool CGame::Update()
 {
 	good_fpu_control_registers("CGame::Update");
 
-	unsigned timeNow = SDL_GetTicks();
+	const spring_time timeNow = spring_gettime();
 
-	const unsigned difTime = (timeNow - lastModGameTimeMeasure);
-	const float dif = skipping ? 0.010f : (float)difTime * 0.001f;
+	const float difTime = spring_tomsecs(timeNow - lastModGameTimeMeasure);
+	const float dif = skipping ? 0.010f : difTime * 0.001f;
+	lastModGameTimeMeasure = timeNow;
 
 	if (!gs->paused) {
 		gu->modGameTime += dif * gs->speedFactor;
@@ -840,15 +842,14 @@ bool CGame::Update()
 		totalGameTime += dif;
 	}
 
-	lastModGameTimeMeasure = timeNow;
+	const spring_time now = spring_gettime();
+	const float diffsecs = spring_tomsecs(spring_difftime(now, frameStartTime)) / 1000.0f;
 
-	time(&fpstimer);
-
-	if (difftime(fpstimer, starttime) != 0) { // do once every second
-		fps = thisFps;
+	if (diffsecs >= 1.0f) { // do once every second
+		globalRendering->FPS = thisFps / diffsecs;
 		thisFps = 0;
 
-		starttime = fpstimer;
+		frameStartTime = now;
 #if defined(USE_GML) && GML_ENABLE_SIM
 		extern int backupSize;
 		luaExportSize = backupSize;
@@ -930,11 +931,13 @@ bool CGame::Draw() {
 #endif
 	GML_STDMUTEX_LOCK(draw); //Draw
 
-	//! timings and frame interpolation
-	const unsigned currentTime = SDL_GetTicks();
+	// timings and frame interpolation
+	const spring_time currentTime = spring_gettime();
 
 	if (skipping) {
-		if (skipLastDraw + 500 > currentTime) // render at 2 FPS
+		const float diff =  spring_tomsecs(currentTime - skipLastDraw);
+
+		if (diff >= 500) // render at 2 FPS
 			return true;
 		skipLastDraw = currentTime;
 #if defined(USE_GML) && GML_ENABLE_SIM
@@ -947,16 +950,17 @@ bool CGame::Draw() {
 	}
 
 	thisFps++;
+	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 
-	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
-	lastUpdateRaw = SDL_GetTicks();
+	updateDeltaSeconds = 0.001f * spring_tomsecs(currentTime - lastUpdateRaw);
+	lastUpdateRaw = spring_gettime();
 	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
-		globalRendering->lastFrameStart = SDL_GetTicks();
+		globalRendering->lastFrameStart = spring_gettime();
 		globalRendering->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
-		globalRendering->timeOffset = (float)(globalRendering->lastFrameStart - lastUpdate) * globalRendering->weightedSpeedFactor;
+		globalRendering->timeOffset = spring_tomsecs(globalRendering->lastFrameStart - lastUpdate) * globalRendering->weightedSpeedFactor;
 	} else  {
 		globalRendering->timeOffset=0;
-		lastUpdate = SDL_GetTicks();
+		lastUpdate = spring_gettime();
 	}
 
 
@@ -990,10 +994,10 @@ bool CGame::Draw() {
 	if (!skipping) {
 		bool newSimFrame = (lastSimFrame != gs->frameNum);
 		if (newSimFrame || gs->paused) {
-			static unsigned lastUpdate = SDL_GetTicks();
-			unsigned deltaMSec = currentTime - lastUpdate;
+			static spring_time lastUpdate = spring_gettime();
+			const float deltaSec = spring_tomsecs(currentTime - lastUpdate) / 1000.f;
 
-			if (!gs->paused || deltaMSec >= 1000/30.f) {
+			if (!gs->paused || deltaSec >= (1.0f/GAME_SPEED)) {
 				lastUpdate = currentTime;
 
 				{
@@ -1002,7 +1006,7 @@ bool CGame::Draw() {
 				}
 
 				// TODO call only when camera changed
-				sound->UpdateListener(camera->pos, camera->forward, camera->up, deltaMSec / 1000.f);
+				sound->UpdateListener(camera->pos, camera->forward, camera->up, deltaSec);
 			}
 		}
 	}
@@ -1047,7 +1051,8 @@ bool CGame::Draw() {
 		return true;
 	}
 
-	CTeamHighlight::Enable(currentTime);
+	
+	CTeamHighlight::Enable(spring_tomsecs(currentTime));
 
 	if (unitTracker.Enabled()) {
 		unitTracker.SetCam();
@@ -1142,8 +1147,8 @@ bool CGame::Draw() {
 	if (globalRendering->drawdebug) {
 		//print some infos (fps,gameframe,particles)
 		glColor4f(1,1,0.5f,0.8f);
-		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %d Frame: %d Particles: %d (%d)",
-		    fps, gs->frameNum, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
+		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %0.1f Frame: %d Particles: %d (%d)",
+		    globalRendering->FPS, gs->frameNum, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
 
 		if (playing) {
 			font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",
@@ -1185,7 +1190,7 @@ bool CGame::Draw() {
 
 		if (showFPS) {
 			char buf[32];
-			SNPRINTF(buf, sizeof(buf), "%i", fps);
+			SNPRINTF(buf, sizeof(buf), "%.0f", globalRendering->FPS);
 
 			const float4 yellow(1.0f, 1.0f, 0.25f, 1.0f);
 			smallFont->SetColors(&yellow,NULL);
@@ -1229,8 +1234,8 @@ bool CGame::Draw() {
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 
-	unsigned start = SDL_GetTicks();
-	globalRendering->lastFrameTime = (float)(start - lastMoveUpdate)/1000.f;
+	const spring_time start = spring_gettime();
+	globalRendering->lastFrameTime = spring_tomsecs(start - lastMoveUpdate) / 1000.f;
 	lastMoveUpdate = start;
 
 	videoCapturing->RenderFrame();
@@ -1316,7 +1321,7 @@ void CGame::StartPlaying()
 	playing = true;
 	GameSetupDrawer::Disable();
 	lastTick = clock();
-	lastframe = SDL_GetTicks();
+	lastframe = spring_gettime();
 
 	gu->startTime = gu->gameTime;
 	gu->myTeam = playerHandler->Player(gu->myPlayerNum)->team;
@@ -1387,7 +1392,7 @@ void CGame::SimFrame() {
 	ScopedTimer cputimer("Game::SimFrame", true); // SimFrame
 
 	good_fpu_control_registers("CGame::SimFrame");
-	lastFrameTime = SDL_GetTicks();
+	lastFrameTime = spring_gettime();
 
 	gs->frameNum++;
 
@@ -1438,7 +1443,7 @@ void CGame::SimFrame() {
 	teamHandler->GameFrame(gs->frameNum);
 	playerHandler->GameFrame(gs->frameNum);
 
-	lastUpdate = SDL_GetTicks();
+	lastUpdate = spring_gettime();
 
 	DumpState(-1, -1, 1);
 }
@@ -1985,7 +1990,7 @@ void CGame::StartSkip(int toFrame) {
 	gs->speedFactor     = speed;
 	gs->userSpeedFactor = speed;
 
-	skipLastDraw = SDL_GetTicks();
+	skipLastDraw = spring_gettime();
 
 	skipping = true;
 }
@@ -2197,8 +2202,10 @@ void CGame::ReColorTeams()
 
 bool CGame::HasLag() const
 {
-	unsigned timeNow = SDL_GetTicks();
-	if (!gs->paused && (timeNow > (lastFrameTime + (500.0f / gs->speedFactor)))) {
+	const spring_time timeNow = spring_gettime();
+	const float diffTime = spring_tomsecs(timeNow - lastFrameTime);
+
+	if (!gs->paused && (diffTime > (500.0f / gs->speedFactor))) {
 		return true;
 	} else {
 		return false;

@@ -42,7 +42,7 @@ public:
 	void Blur(int iterations = 1, float weight = 1.0f);
 
 	CBitmap GetRegion(int startx, int starty, int width, int height) const;
-	void CopySubImage(const CBitmap& src, unsigned int x, unsigned int y);
+	void CopySubImage(const CBitmap& src, int x, int y);
 
 	/**
 	 * Allocates a new SDL_Surface, and feeds it with the data of this bitmap.
@@ -84,6 +84,11 @@ public:
 	void InvertAlpha();
 	void GrayScale();
 	void Tint(const float tint[3]);
+private:
+	/**
+	 * Allocates a red 1x1, 4-channel bitmap
+	 */
+	void AllocDummy();
 };
 
 #endif // __BITMAP_H__

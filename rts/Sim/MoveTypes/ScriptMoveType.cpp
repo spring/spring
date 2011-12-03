@@ -119,20 +119,25 @@ bool CScriptMoveType::Update()
 		CalcDirections();
 	}
 
-	owner->speed = vel;
+	float3& speed = vel;
+	speed = vel;
+
 	if (extrapolate) {
 		if (drag != 0.0f) {
 			vel *= (1.0f - drag); // quadratic drag does not work well here
 		}
+
 		if (useRelVel) {
 			const float3 rVel = (owner->frontdir *  relVel.z) +
 			                    (owner->updir    *  relVel.y) +
 			                    (owner->rightdir * -relVel.x); // x is left
-			owner->speed += rVel;
+			speed += rVel;
 		}
-		vel.y        += mapInfo->map.gravity * gravityFactor;
-		owner->speed += (wind.GetCurrentWind() * windFactor);
-		owner->pos   += owner->speed;
+
+		vel.y += (mapInfo->map.gravity * gravityFactor);
+		speed += (wind.GetCurrentWind() * windFactor);
+
+		owner->MovePos(speed);
 	}
 
 	if (trackGround) {

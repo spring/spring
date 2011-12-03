@@ -196,7 +196,7 @@ void CCregLoadSaveHandler::LoadGame()
 
 	assert (pGSC && gsccls == CGameStateCollector::StaticClass());
 
-	CGameStateCollector* gsc = (CGameStateCollector*)pGSC;
+	CGameStateCollector* gsc = static_cast<CGameStateCollector*>(pGSC);
 	delete gsc; // the only job of gsc is to collect gamestate data
 	gsc = NULL;
 	eoh->Load(ifs);

@@ -1250,13 +1250,12 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 {
 	// if empty, we are not a LuaHandleSynced
 	if (watchUnitDefs.empty()) return;
+	if (!watchUnitDefs[collider->unitDef->id]) return;
+	if (!watchUnitDefs[collidee->unitDef->id]) return;
 
 	LUA_UNIT_BATCH_PUSH(,UNIT_UNIT_COLLISION, collider, collidee);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
-
-	if (!watchUnitDefs[collider->unitDef->id]) { return; }
-	if (!watchUnitDefs[collidee->unitDef->id]) { return; }
 
 	static const LuaHashString cmdStr("UnitUnitCollision");
 	const int errFunc = SetupTraceback(L);
@@ -1280,13 +1279,12 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 	// if empty, we are not a LuaHandleSynced
 	if (watchUnitDefs.empty()) return;
 	if (watchFeatureDefs.empty()) return;
+	if (!watchUnitDefs[collider->unitDef->id]) return;
+	if (!watchFeatureDefs[collidee->def->id]) return;
 
 	LUA_OBJ_BATCH_PUSH(UNIT_FEAT_COLLISION, collider, collidee);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
-
-	if (!watchUnitDefs[collider->unitDef->id]) { return; }
-	if (!watchFeatureDefs[collidee->def->id]) { return; }
 
 	static const LuaHashString cmdStr("UnitFeatureCollision");
 	const int errFunc = SetupTraceback(L);
@@ -1309,6 +1307,7 @@ void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 {
 	// if empty, we are not a LuaHandleSynced
 	if (watchUnitDefs.empty()) return;
+	if (!watchUnitDefs[unit->unitDef->id]) return;
 
 	LUA_UNIT_BATCH_PUSH(,UNIT_MOVE_FAILED, unit);
 	static const LuaHashString cmdStr("UnitMoveFailed");
@@ -1369,18 +1368,16 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 void CLuaHandle::ProjectileCreated(const CProjectile* p)
 {
 	// if empty, we are not a LuaHandleSynced
-	if (watchWeaponDefs.empty()) { return; }
+	if (watchWeaponDefs.empty()) return;
 
-	if (!p->synced) { return; }
-	if (!p->weapon && !p->piece) { return; }
+	if (!p->synced) return;
+	if (!p->weapon && !p->piece) return;
 	if (p->weapon) {
 		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 		const WeaponDef* wd = wp->weaponDef;
 
 		// if this weapon-type is not being watched, bail
-		if (wd == NULL || !watchWeaponDefs[wd->id]) {
-			return;
-		}
+		if (wd == NULL || !watchWeaponDefs[wd->id])	return;
 	}
 
 	LUA_PROJ_BATCH_PUSH(PROJ_CREATED, p);
@@ -1406,18 +1403,16 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 {
 	// if empty, we are not a LuaHandleSynced
-	if (watchWeaponDefs.empty()) { return; }
+	if (watchWeaponDefs.empty()) return;
 
-	if (!p->synced) { return; }
-	if (!p->weapon && !p->piece) { return; }
+	if (!p->synced) return;
+	if (!p->weapon && !p->piece) return;
 	if (p->weapon) {
 		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 		const WeaponDef* wd = wp->weaponDef;
 
 		// if this weapon-type is not being watched, bail
-		if (wd == NULL || !watchWeaponDefs[wd->id]) {
-			return;
-		}
+		if (wd == NULL || !watchWeaponDefs[wd->id]) return;
 	}
 
 	LUA_PROJ_BATCH_PUSH(PROJ_DESTROYED, p);
@@ -1442,11 +1437,11 @@ bool CLuaHandle::Explosion(int weaponDefID, const float3& pos, const CUnit* owne
 {
 	// piece-projectile collision (*ALL* other
 	// explosion events pass valid weaponDefIDs)
-	if (weaponDefID < 0) { return false; }
+	if (weaponDefID < 0) return false;
 
 	// if empty, we are not a LuaHandleSynced
-	if (watchWeaponDefs.empty()) { return false; }
-	if (!watchWeaponDefs[weaponDefID]) { return false; }
+	if (watchWeaponDefs.empty()) return false;
+	if (!watchWeaponDefs[weaponDefID]) return false;
 
 	LUA_UNIT_BATCH_PUSH(false, UNIT_EXPLOSION, weaponDefID, pos, owner);
 	LUA_CALL_IN_CHECK(L);

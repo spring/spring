@@ -23,6 +23,7 @@
 #include "UI/GameSetupDrawer.h"
 #include "UI/LuaUI.h"
 #include "UI/MouseHandler.h"
+#include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/EventHandler.h"
@@ -41,7 +42,13 @@ void CGame::ClientReadNet()
 		lastCpuUsageTime = gu->gameTime;
 
 		if (playing) {
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("Game::SimFrame") + profiler.GetPercent("GameController::Draw")));
+			float simCpuUsage = profiler.GetPercent("Game::SimFrame");
+#if !defined(USE_GML) && !defined(GML_ENABLE_SIM)
+			// take the minimum drawframes into account, too
+			simCpuUsage += (profiler.GetPercent("GameController::Draw") / globalRendering->FPS) * gu->minFPS;
+#endif
+
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(simCpuUsage));
 #if defined(USE_GML) && GML_ENABLE_SIM
 			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaLockTime));
 #endif
@@ -55,13 +62,16 @@ void CGame::ClientReadNet()
 
 	// compute new timeLeft to "smooth" out SimFrame() calls
 	if (!gameServer) {
-		const unsigned int currentFrame = SDL_GetTicks();
+		const spring_time currentFrame = spring_gettime();
 
-		if (timeLeft > 1.0f)
-			timeLeft -= 1.0f;
-		timeLeft += consumeSpeed * ((float)(currentFrame - lastframe) / 1000.f);
-		if (skipping)
+		if (skipping) {
 			timeLeft = 0.01f;
+		} else {
+			if (timeLeft > 1.0f)
+				timeLeft -= 1.0f;
+			timeLeft += consumeSpeed * (spring_tomsecs(currentFrame - lastframe) / 1000.0f);
+		}
+
 		lastframe = currentFrame;
 
 		// read ahead to calculate the number of NETMSG_NEWFRAMES
@@ -98,9 +108,9 @@ void CGame::ClientReadNet()
 	}
 
 	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
-	unsigned procstarttime = SDL_GetTicks();
+	const spring_time procstarttime = spring_gettime();
 	// really process the messages
-	while (timeLeft > 0.0f && (SDL_GetTicks() - procstarttime) < 500 && (packet = net->GetData(gs->frameNum)))
+	while (timeLeft > 0.0f && spring_tomsecs(spring_gettime() - procstarttime) < 500 && (packet = net->GetData(gs->frameNum)))
 	{
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
@@ -185,7 +195,7 @@ void CGame::ClientReadNet()
 						playerHandler->Player(player)->name.c_str(),
 						(gs->paused ? "paused" : "unpaused"));
 				eventHandler.GamePaused(player, gs->paused);
-				lastframe = SDL_GetTicks();
+				lastframe = spring_gettime();
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
