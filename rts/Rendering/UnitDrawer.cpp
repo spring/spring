@@ -641,7 +641,7 @@ static void DrawLuaMatBins(LuaMatType type)
 	for (it = bins.begin(); it != bins.end(); ++it) {
 		LuaMatBin* bin = *it;
 		bin->Execute(*currMat);
-		currMat = (LuaMaterial*)bin;
+		currMat = bin;
 
 		const GML_VECTOR<CUnit*>& units = bin->GetUnits();
 		const int count = (int)units.size();

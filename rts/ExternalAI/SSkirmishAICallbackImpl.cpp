@@ -849,7 +849,7 @@ static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int skirmis
 	IAILibraryManager::T_skirmishAIInfos infs = libMan->GetSkirmishAIInfos();
 	IAILibraryManager::T_skirmishAIInfos::const_iterator inf = infs.find(*key);
 	if (inf != infs.end()) {
-		info = (const CSkirmishAILibraryInfo*) inf->second;
+		info = const_cast<const CSkirmishAILibraryInfo*>(inf->second);
 	}
 
 	return info;

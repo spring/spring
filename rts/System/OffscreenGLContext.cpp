@@ -33,7 +33,6 @@ COffscreenGLContext::COffscreenGLContext()
 	hdc = wglGetCurrentDC();
 	if (!hdc || !mainRC) {
 		throw opengl_error("Couldn't create an offscreen GL context: wglGetCurrentDC failed!");
-		return;
 	}
 
 
@@ -41,7 +40,6 @@ COffscreenGLContext::COffscreenGLContext()
 	offscreenRC = wglCreateContext(hdc);
 	if (!offscreenRC) {
 		throw opengl_error("Couldn't create an offscreen GL context: wglCreateContext failed!");
-		return;
 	}
 
 

@@ -128,7 +128,7 @@ static inline CScriptMoveType* ParseMoveType(lua_State* L,
 	if (!unit->usingScriptMoveType) {
 		return NULL;
 	}
-	return (CScriptMoveType*)unit->moveType;
+	return static_cast<CScriptMoveType*>(unit->moveType);
 }
 
 
