@@ -933,7 +933,7 @@ void CBumpWater::UpdateCoastmap()
 		glPopMatrix();
 
 	blurShader->Disable();
-	coastFBO.Unattach(GL_COLOR_ATTACHMENT1_EXT);
+	coastFBO.Detach(GL_COLOR_ATTACHMENT1_EXT);
 	//coastFBO.Unbind();
 
 	//! generate mipmaps

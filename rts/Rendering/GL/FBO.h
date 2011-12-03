@@ -91,15 +91,15 @@ public:
 	void CreateRenderBuffer(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height);
 
 	/**
-	 * @brief Unattach
+	 * @brief Detach
 	 * @param attachment
 	 */
-	void Unattach(const GLenum attachment);
+	void Detach(const GLenum attachment);
 
 	/**
-	 * @brief UnattachAll
+	 * @brief DetachAll
 	 */
-	void UnattachAll();
+	void DetachAll();
 
 	/**
 	 * @brief Bind
