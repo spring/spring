@@ -4,6 +4,7 @@
 #define _GLOBAL_RENDERING_H
 
 #include "System/creg/creg_cond.h"
+#include "System/myTime.h"
 
 /**
  * @brief Globally accessible unsynced, rendering related data
@@ -40,7 +41,7 @@ public:
 	float lastFrameTime;
 
 	/// the starting time in tick for last draw frame
-	unsigned lastFrameStart;
+	spring_time lastFrameStart;
 
 	/// 0.001f * GAME_SPEED * gs->speedFactor, used for rendering
 	float weightedSpeedFactor;
