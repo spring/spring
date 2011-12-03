@@ -161,7 +161,7 @@ void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 
 static int GetAvailableVideoRAM_inMB()
 {
-#ifdef HEADLESS
+#if defined(HEADLESS) || !defined(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX) || !defined(GL_TEXTURE_FREE_MEMORY_ATI)
 	return 0;
 #else
 	// check free video ram
