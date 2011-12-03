@@ -93,8 +93,7 @@ protected:
 		const float3& sepDirMask,
 		const UnitDef* colliderUD,
 		const MoveData* colliderMD,
-		const CMoveMath* colliderMM,
-		const short* cardinalHeadings);
+		const CMoveMath* colliderMM);
 	void HandleFeatureCollisions(
 		CUnit* collider,
 		const float3& colliderCurPos,
@@ -104,8 +103,7 @@ protected:
 		const float3& sepDirMask,
 		const UnitDef* colliderUD,
 		const MoveData* colliderMD,
-		const CMoveMath* colliderMM,
-		const short* cardinalHeadings);
+		const CMoveMath* colliderMM);
 
 	void SetMainHeading();
 	void ChangeHeading(short newHeading);
