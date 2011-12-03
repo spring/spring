@@ -21,7 +21,6 @@
 #include "LuaUnitDefs.h"
 #include "LuaWeaponDefs.h"
 #include "LuaScream.h"
-#include "LuaArray.h"
 #include "LuaOpenGL.h"
 #include "LuaUtils.h"
 #include "LuaVFS.h"
@@ -181,7 +180,6 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Script",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
-	    !AddEntriesToTable(L, "Script",      LuaArray::PushEntries)        ||
 	    !AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)        ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
