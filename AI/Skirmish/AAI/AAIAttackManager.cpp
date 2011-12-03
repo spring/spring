@@ -128,13 +128,13 @@ void AAIAttackManager::LaunchAttack()
 	}
 
 	// determine max lost units
-	float max_lost_units = 0.0f, lost_units;
+	float max_lost_units = 0.0f;
 
 	for(int x = 0; x < map->xSectors; ++x)
 	{
 		for(int y = 0; y < map->ySectors; ++y)
 		{
-			lost_units = map->sector[x][y].GetLostUnits(1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+			float lost_units = map->sector[x][y].GetLostUnits(1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
 			if(lost_units > max_lost_units)
 				max_lost_units = lost_units;
@@ -144,9 +144,11 @@ void AAIAttackManager::LaunchAttack()
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	// determine attack sector
 	//////////////////////////////////////////////////////////////////////////////////////////////
-	float def_power, att_power;
-	float best_rating = 0, my_rating;
-	AAISector *dest = 0, *sector;
+	float def_power;
+	float att_power;
+	float best_rating = 0.0f;
+	AAISector* sector;
+	AAISector* dest = NULL;
 
 	for(int x = 0; x < map->xSectors; ++x)
 	{
@@ -154,8 +156,10 @@ void AAIAttackManager::LaunchAttack()
 		{
 			sector = &map->sector[x][y];
 
+			float my_rating;
+
 			if(sector->distance_to_base == 0 || sector->enemy_structures < 0.0001)
-				my_rating = 0;
+				my_rating = 0.0f;
 			else
 			{
 				if(ai->map->continents[sector->continent].water)
