@@ -158,7 +158,8 @@ void AAIAttackManager::LaunchAttack()
 
 			float my_rating;
 
-			if(sector->distance_to_base == 0 || sector->enemy_structures < 0.0001)
+			// max_lost_units check to prevent SIGFPE, later on
+			if(sector->distance_to_base == 0 || sector->enemy_structures < 0.0001 || max_lost_units <= 0.0f)
 				my_rating = 0.0f;
 			else
 			{
