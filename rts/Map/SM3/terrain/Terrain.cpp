@@ -162,7 +162,7 @@ namespace terrain {
 		int vertexSize = GetVertexSize();
 
 		// Bind the vertex buffer components
-		Vector3* vbuf = (Vector3*) renderData->vertexBuffer.Bind();
+		Vector3* vbuf = static_cast<Vector3*>(renderData->vertexBuffer.Bind());
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3, GL_FLOAT, vertexSize, vbuf ++);
 		if (vda & VRT_Normal)

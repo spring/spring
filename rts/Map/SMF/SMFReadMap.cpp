@@ -291,7 +291,7 @@ CSMFReadMap::~CSMFReadMap()
 
 
 void CSMFReadMap::NewGroundDrawer() { groundDrawer = new CSMFGroundDrawer(this); }
-CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
+CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return groundDrawer; }
 
 
 
