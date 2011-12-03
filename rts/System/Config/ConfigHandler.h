@@ -59,11 +59,13 @@ public:
 	}
 
 	/// @brief Get bool, throw if key not present
-	bool  GetBool(const std::string& key)  const { return Get<bool>(key); }
+	bool  GetBool(const std::string& key)     const { return Get<bool>(key); }
 	/// @brief Get int, throw if key not present
-	int   GetInt(const std::string& key)   const { return Get<int>(key); }
+	int   GetInt(const std::string& key)      const { return Get<int>(key); }
+	/// @brief Get int, throw if key not present
+	int   GetUnsigned(const std::string& key) const { return Get<unsigned>(key); }
 	/// @brief Get float, throw if key not present
-	float GetFloat(const std::string& key) const { return Get<float>(key); }
+	float GetFloat(const std::string& key)    const { return Get<float>(key); }
 
 public:
 	virtual ~ConfigHandler() {}
