@@ -47,18 +47,25 @@ function makescript {
 	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
 }
 
-download_file $DOWNLOADDIR/ba760.sdz http://springfiles.com/sites/default/files/downloads/spring/games/ba760.sdz
-download_file $DOWNLOADDIR/Altair_Crossing.sd7 http://springfiles.com/sites/default/files/downloads/spring/spring-maps/Altair_Crossing.sd7
-download_file $DOWNLOADDIR/zk-v0.8.14.sdz http://packages.springrts.com/builds/zk-v0.8.14.sdz
+GAME1="Balanced Annihilation V7.60"
+GAME1_FILENAME="ba760.sdz"
+GAME2="Zero-K v0.9.1"
+GAME2_FILENAME="zk-v0.9.1.sdz"
+MAP="Altair_Crossing-V1"
+MAP_FILENAME="Altair_Crossing.sd7"
+
+download_file $DOWNLOADDIR/$GAME1_FILENAME http://springfiles.com/sites/default/files/downloads/spring/games/$GAME1_FILENAME
+download_file $DOWNLOADDIR/$GAME2_FILENAME http://packages.springrts.com/builds/$GAME2_FILENAME
+download_file $DOWNLOADDIR/$MAP_FILENAME http://springfiles.com/sites/default/files/downloads/spring/spring-maps/$MAP_FILENAME
 
 #install required files into spring dir
 cd ${SOURCEDIR}
 mkdir -p ${CONTENT_DIR}/games ${CONTENT_DIR}/maps ${CONTENT_DIR}/LuaUI/Widgets ${CONTENT_DIR}/LuaUI/Config
 
 #symlink files into into destination dir
-cp -suv ${DOWNLOADDIR}/ba760.sdz ${CONTENT_DIR}/games/ba760.sdz
-cp -suv ${DOWNLOADDIR}/zk-v0.8.14.sdz ${CONTENT_DIR}/games/zk-v0.8.14.sdz
-cp -suv ${DOWNLOADDIR}/Altair_Crossing.sd7 ${CONTENT_DIR}/maps/Altair_Crossing.sd7
+cp -suv ${DOWNLOADDIR}/$GAME1_FILENAME ${CONTENT_DIR}/games/$GAME1_FILENAME
+cp -suv ${DOWNLOADDIR}/$GAME2_FILENAME ${CONTENT_DIR}/games/$GAME2_FILENAME
+cp -suv ${DOWNLOADDIR}/$MAP_FILENAME ${CONTENT_DIR}/maps/$MAP_FILENAME
 
 #copy widget + config
 cp -suv ${SOURCEDIR}/test/validation/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
@@ -71,9 +78,6 @@ cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${TESTDIR}/.springrc
 echo "SpringData = ${TESTDIR}/usr/local/share/games/spring" >> ${TESTDIR}/.springrc
 
 
-GAME1="Balanced Annihilation V7.60"
-GAME2="Zero-K v0.8.14"
-MAP="Altair_Crossing-V1"
 
 makescript "$GAME1" "$MAP" AAI 0.9
 makescript "$GAME1" "$MAP" E323AI 3.25.0
