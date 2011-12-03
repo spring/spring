@@ -92,7 +92,6 @@ CONFIG(int, SmoothLines).defaultValue(2).minimumValue(0).maximumValue(3).descrip
 CONFIG(int, SmoothPoints).defaultValue(2).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
 CONFIG(float, TextureLODBias).defaultValue(0.0f);
 CONFIG(bool, FixAltTab).defaultValue(false);
-CONFIG(int, Version).defaultValue(0);
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf");
 CONFIG(int, FontSize).defaultValue(23);
@@ -227,8 +226,6 @@ bool SpringApp::Initialize()
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	FileSystemInitializer::Initialize();
-
-	UpdateOldConfigs();
 
 	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
@@ -671,41 +668,6 @@ void SpringApp::InitOpenGL()
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-}
-
-
-void SpringApp::UpdateOldConfigs()
-{
-	const int cfgVersion = configHandler->GetInt("Version");
-	if (cfgVersion < 2) {
-		// force an update to new defaults
-		configHandler->Delete("FontFile");
-		configHandler->Delete("FontSize");
-		configHandler->Delete("SmallFontSize");
-		configHandler->Delete("StencilBufferBits"); //! update to 8 bits
-		configHandler->Delete("DepthBufferBits"); //! update to 24bits
-		configHandler->Set("Version",2);
-	}
-	if (cfgVersion < 3) {
-		configHandler->Delete("AtiHacks"); //! new runtime detection with -1
-		configHandler->Set("Version",3);
-	}
-	if (cfgVersion < 4) {
-		const bool fsaaEnabled = configHandler->GetBool("FSAA");
-		if (!fsaaEnabled)
-			configHandler->Set("FSAALevel", 0);
-		configHandler->Delete("FSAA");
-		configHandler->Set("Version",4);
-	}
-	if (cfgVersion < 5) {
-		const int xres = configHandler->GetInt("XResolution");
-		const int yres = configHandler->GetInt("YResolution");
-		if ((xres == 1024) && (yres == 768)) { //! old default res (use desktop res now by default)
-			configHandler->Delete("XResolution");
-			configHandler->Delete("YResolution");
-		}
-		configHandler->Set("Version",5);
-	}
 }
 
 
