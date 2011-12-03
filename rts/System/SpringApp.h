@@ -53,13 +53,6 @@ protected:
 	 */
 	CmdLineParams* cmdline;
 
-	/**
-	 * @brief last required draw
-	 *
-	 * sim frame after which the last required draw was conducted
-	 */
-	int lastRequiredDraw;
-
 	static COffscreenGLContext* ogc;
 
 private:

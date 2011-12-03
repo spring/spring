@@ -142,9 +142,8 @@ static bool MultisampleVerify()
  * Initializes SpringApp variables
  */
 SpringApp::SpringApp()
+	: cmdline(NULL)
 {
-	cmdline = NULL;
-	lastRequiredDraw = 0;
 }
 
 /**
@@ -990,21 +989,9 @@ int SpringApp::Update()
 
 
 		if (ret) {
-			globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
+			ScopedTimer cputimer("GameController::Draw");
+			ret = activeController->Draw();
 
-			bool updateDrawFrameTimer = ((gs->frameNum - lastRequiredDraw) >= (GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor));
-#if defined(USE_GML) && GML_ENABLE_SIM
-			updateDrawFrameTimer &= !gmlMultiThreadSim;
-#endif
-
-			if (updateDrawFrameTimer) {
-				ScopedTimer cputimer("GameController::Draw"); // Update
-
-				ret = activeController->Draw();
-				lastRequiredDraw = gs->frameNum;
-			} else {
-				ret = activeController->Draw();
-			}
 #if defined(USE_GML) && GML_ENABLE_SIM
 			gmlProcessor->PumpAux();
 #endif

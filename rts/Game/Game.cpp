@@ -944,6 +944,7 @@ bool CGame::Draw() {
 	}
 
 	thisFps++;
+	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 
 	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
 	lastUpdateRaw = SDL_GetTicks();
