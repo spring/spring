@@ -31,7 +31,7 @@ public:
 
 	bool IsValidUnitDefID(const int& id) const {
 		/// zero is not valid!
-		return (id > 0) && (id < unitDefs.size());
+		return (id > 0) && (id < (int)unitDefs.size());
 	}
 
 	unsigned int GetUnitDefImage(const UnitDef* unitDef);

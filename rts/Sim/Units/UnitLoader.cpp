@@ -28,25 +28,8 @@
 #include "Map/ReadMap.h"
 
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Weapons/WeaponDef.h"
-#include "Sim/Weapons/BeamLaser.h"
-#include "Sim/Weapons/BombDropper.h"
-#include "Sim/Weapons/Cannon.h"
-#include "Sim/Weapons/DGunWeapon.h"
-#include "Sim/Weapons/EmgCannon.h"
-#include "Sim/Weapons/FlameThrower.h"
-#include "Sim/Weapons/LaserCannon.h"
-#include "Sim/Weapons/LightningCannon.h"
-#include "Sim/Weapons/MeleeWeapon.h"
-#include "Sim/Weapons/MissileLauncher.h"
-#include "Sim/Weapons/NoWeapon.h"
-#include "Sim/Weapons/PlasmaRepulser.h"
-#include "Sim/Weapons/Rifle.h"
-#include "Sim/Weapons/StarburstLauncher.h"
-#include "Sim/Weapons/TorpedoLauncher.h"
 
 #include "System/EventBatchHandler.h"
 #include "System/Exceptions.h"
@@ -54,16 +37,19 @@
 #include "System/Platform/Watchdog.h"
 #include "System/TimeProfiler.h"
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+CUnitLoader* CUnitLoader::GetInstance()
+{
+	static CUnitLoader instance;
+	return &instance;
+}
 
-CUnitLoader* unitLoader = NULL;
+
 
 CUnit* CUnitLoader::LoadUnit(const std::string& name, const float3& pos, int team,
                              bool build, int facing, const CUnit* builder)
 {
 	const UnitDef* ud = unitDefHandler->GetUnitDefByName(name);
+
 	if (ud == NULL) {
 		throw content_error("Couldn't find unittype " +  name);
 	}
@@ -137,130 +123,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(unit, unit->isCloaked));
 
 	return unit;
-}
-
-CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
-{
-	CWeapon* weapon = NULL;
-	const WeaponDef* weaponDef = udw->def;
-
-	if (udw->name == "NOWEAPON") {
-		weapon = new CNoWeapon(owner);
-	} else if (weaponDef->type == "Cannon") {
-		weapon = new CCannon(owner);
-		((CCannon*)weapon)->selfExplode = weaponDef->selfExplode;
-	} else if (weaponDef->type == "Rifle") {
-		weapon = new CRifle(owner);
-	} else if (weaponDef->type == "Melee") {
-		weapon = new CMeleeWeapon(owner);
-	} else if (weaponDef->type == "AircraftBomb") {
-		weapon = new CBombDropper(owner, false);
-	} else if (weaponDef->type == "Shield") {
-		weapon = new CPlasmaRepulser(owner);
-	} else if (weaponDef->type == "Flame") {
-		weapon = new CFlameThrower(owner);
-	} else if (weaponDef->type == "MissileLauncher") {
-		weapon = new CMissileLauncher(owner);
-	} else if (weaponDef->type == "TorpedoLauncher") {
-		if (owner->unitDef->canfly && !weaponDef->submissile) {
-			weapon = new CBombDropper(owner, true);
-			if (weaponDef->tracks)
-				((CBombDropper*) weapon)->tracking = weaponDef->turnrate;
-			((CBombDropper*) weapon)->bombMoveRange = weaponDef->range;
-		} else {
-			weapon = new CTorpedoLauncher(owner);
-			if (weaponDef->tracks)
-				((CTorpedoLauncher*) weapon)->tracking = weaponDef->turnrate;
-		}
-	} else if (weaponDef->type == "LaserCannon") {
-		weapon = new CLaserCannon(owner);
-		((CLaserCannon*) weapon)->color = weaponDef->visuals.color;
-	} else if (weaponDef->type == "BeamLaser") {
-		weapon = new CBeamLaser(owner);
-		((CBeamLaser*) weapon)->color = weaponDef->visuals.color;
-	} else if (weaponDef->type == "LightningCannon") {
-		weapon = new CLightningCannon(owner);
-		((CLightningCannon*) weapon)->color = weaponDef->visuals.color;
-	} else if (weaponDef->type == "EmgCannon") {
-		weapon = new CEmgCannon(owner);
-	} else if (weaponDef->type == "DGun") {
-		// NOTE: no special connection to UnitDef::canManualFire
-		// (any type of weapon may be slaved to the button which
-		// controls manual firing) or the CMD_MANUALFIRE command
-		weapon = new CDGunWeapon(owner);
-	} else if (weaponDef->type == "StarburstLauncher") {
-		weapon = new CStarburstLauncher(owner);
-		if (weaponDef->tracks)
-			((CStarburstLauncher*) weapon)->tracking = weaponDef->turnrate;
-		else
-			((CStarburstLauncher*) weapon)->tracking = 0;
-		((CStarburstLauncher*) weapon)->uptime = weaponDef->uptime * GAME_SPEED;
-	} else {
-		weapon = new CNoWeapon(owner);
-		LOG_L(L_ERROR, "Unknown weapon type %s", weaponDef->type.c_str());
-	}
-	weapon->weaponDef = weaponDef;
-
-	weapon->reloadTime = int(weaponDef->reload * GAME_SPEED);
-	if (weapon->reloadTime == 0)
-		weapon->reloadTime = 1;
-
-	weapon->range = weaponDef->range;
-	weapon->heightMod = weaponDef->heightmod;
-	weapon->projectileSpeed = weaponDef->projectilespeed;
-
-	weapon->areaOfEffect = weaponDef->areaOfEffect;
-	weapon->accuracy = weaponDef->accuracy;
-	weapon->sprayAngle = weaponDef->sprayAngle;
-
-	weapon->stockpileTime = int(weaponDef->stockpileTime * GAME_SPEED);
-
-	weapon->salvoSize = weaponDef->salvosize;
-	weapon->salvoDelay = int(weaponDef->salvodelay * GAME_SPEED);
-	weapon->projectilesPerShot = weaponDef->projectilespershot;
-
-	weapon->metalFireCost = weaponDef->metalcost;
-	weapon->energyFireCost = weaponDef->energycost;
-
-	weapon->fireSoundId = weaponDef->firesound.getID(0);
-	weapon->fireSoundVolume = weaponDef->firesound.getVolume(0);
-
-	weapon->onlyForward = weaponDef->onlyForward;
-	if (owner->unitDef->IsFighterUnit() && !owner->unitDef->hoverAttack) {
-		// fighter aircraft have too big tolerance in TA
-		weapon->maxAngleDif = cos(weaponDef->maxAngle * 0.4f / 180 * PI);
-	} else {
-		weapon->maxAngleDif = cos(weaponDef->maxAngle / 180 * PI);
-	}
-
-	weapon->SetWeaponNum(owner->weapons.size());
-
-	weapon->badTargetCategory = udw->badTargetCat;
-	weapon->onlyTargetCategory = weaponDef->onlyTargetCategory & udw->onlyTargetCat;
-
-	if (udw->slavedTo) {
-		const int index = (udw->slavedTo - 1);
-		if ((index < 0) || (static_cast<size_t>(index) >= owner->weapons.size())) {
-			throw content_error("Bad weapon slave in " + owner->unitDef->name);
-		}
-		weapon->slavedTo = owner->weapons[index];
-	}
-
-	weapon->mainDir = udw->mainDir;
-	weapon->maxMainDirAngleDif = udw->maxAngleDif;
-
-	weapon->fuelUsage = udw->fuelUsage;
-	weapon->avoidFriendly = weaponDef->avoidFriendly;
-	weapon->avoidFeature = weaponDef->avoidFeature;
-	weapon->avoidNeutral = weaponDef->avoidNeutral;
-	weapon->targetBorder = weaponDef->targetBorder;
-	weapon->cylinderTargetting = weaponDef->cylinderTargetting;
-	weapon->minIntensity = weaponDef->minIntensity;
-	weapon->heightBoostFactor = weaponDef->heightBoostFactor;
-	weapon->collisionFlags = weaponDef->collisionFlags;
-	weapon->Init();
-
-	return weapon;
 }
 
 
@@ -462,7 +324,6 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 void CUnitLoader::FlattenGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const MoveData* moveData = unitDef->movedata;
 	const float groundheight = ground->GetHeightReal(unit->pos.x, unit->pos.z);
 
 	if (mapDamage->disabled) return;

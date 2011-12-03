@@ -39,5 +39,7 @@ inline spring_time spring_gettime() { return microsec_clock::local_time(); };
 
 #endif
 
+#define spring_difftime(now, before) (now - before)
+
 #endif // MYTIME_H
 

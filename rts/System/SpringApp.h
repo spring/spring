@@ -31,10 +31,8 @@ protected:
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
 	bool InitWindow(const char* title);             //!< Initializes window
 	static void InitOpenGL();                       //!< Initializes OpenGL
-	static void UpdateOldConfigs();                 //!< Forces an update to new config defaults
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
 	static bool SetSDLVideoMode();                  //!< Sets SDL video mode
-	static void SetProcessAffinity(int);
 	int Update();                                   //!< Run simulation and draw
 	bool UpdateSim(CGameController *ac);
 
@@ -54,13 +52,6 @@ protected:
 	 * Pointer to instance of commandline parser
 	 */
 	CmdLineParams* cmdline;
-
-	/**
-	 * @brief last required draw
-	 *
-	 * sim frame after which the last required draw was conducted
-	 */
-	int lastRequiredDraw;
 
 	static COffscreenGLContext* ogc;
 

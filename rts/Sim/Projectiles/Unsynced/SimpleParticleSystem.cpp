@@ -7,6 +7,7 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "System/float3.h"
@@ -168,9 +169,14 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
 	float3 right = up.cross(float3(up.y, up.z, -up.x));
 	float3 forward = up.cross(right);
 
+	// FIXME: should catch these earlier and for more projectile-types
 	if (colorMap == NULL) {
 		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
 		LOG_L(L_WARNING, "[CSimpleParticleSystem::Init] no color-map specified");
+	}
+	if (texture == NULL) {
+		texture = projectileDrawer->textureAtlas->GetTexturePtr("simpleparticle");
+		LOG_L(L_WARNING, "[CSimpleParticleSystem::Init] no texture specified");
 	}
 
 	for (int i = 0; i < numParticles; i++) {
@@ -212,9 +218,14 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 	float3 right = up.cross(float3(up.y, up.z, -up.x));
 	float3 forward = up.cross(right);
 
+	// FIXME: should catch these earlier and for more projectile-types
 	if (colorMap == NULL) {
 		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
 		LOG_L(L_WARNING, "[CSphereParticleSpawner::Init] no color-map specified");
+	}
+	if (texture == NULL) {
+		texture = projectileDrawer->textureAtlas->GetTexturePtr("sphereparticle");
+		LOG_L(L_WARNING, "[CSphereParticleSpawner::Init] no texture specified");
 	}
 
 	for (int i = 0; i < numParticles; i++) {

@@ -1583,8 +1583,8 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 int LuaUnsyncedRead::GetFPS(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	if (game) {
-		lua_pushnumber(L, game->fps);
+	if (globalRendering) {
+		lua_pushnumber(L, globalRendering->FPS);
 	} else {
 		lua_pushnumber(L, 0);
 	}

@@ -56,8 +56,9 @@
 #include "Sim/MoveTypes/ScriptMoveType.h"
 #include "Sim/Projectiles/FlareProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponLoader.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
@@ -87,9 +88,6 @@ float CUnit::expGrade       = 0.0f;
 CUnit::CUnit() : CSolidObject(),
 	unitDef(NULL),
 	unitDefID(-1),
-	frontdir(0.0f, 0.0f, 1.0f),
-	rightdir(-1.0f, 0.0f, 0.0f),
-	updir(0.0f, 1.0f, 0.0f),
 	upright(true),
 	travel(0.0f),
 	travelPeriod(0.0f),
@@ -451,12 +449,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 void CUnit::PostInit(const CUnit* builder)
 {
-	weapons.reserve(unitDef->weapons.size());
-
-	for (unsigned int i = 0; i < unitDef->weapons.size(); i++) {
-		weapons.push_back(unitLoader->LoadWeapon(this, &unitDef->weapons[i]));
-	}
-
+	weaponLoader->LoadWeapons(this);
 	// Call initializing script functions
 	script->Create();
 
@@ -615,21 +608,6 @@ void CUnit::UpdateDirVectors(bool useGroundNormal)
 	UpdateMidPos();
 }
 
-void CUnit::UpdateMidPos()
-{
-	midPos = pos +
-		(frontdir * relMidPos.z) +
-		(updir    * relMidPos.y) +
-		(rightdir * relMidPos.x);
-}
-
-void CUnit::MoveMidPos(const float3& deltaPos) {
-	midPos += deltaPos;
-	pos = midPos -
-		(frontdir * relMidPos.z) -
-		(updir    * relMidPos.y) -
-		(rightdir * relMidPos.x);
-}
 
 
 void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent)
@@ -2209,13 +2187,9 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 }
 
 CR_BIND_DERIVED(CUnit, CSolidObject, );
-// Member bindings
 CR_REG_METADATA(CUnit, (
 	// CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
-	CR_MEMBER(frontdir),
-	CR_MEMBER(rightdir),
-	CR_MEMBER(updir),
 	CR_MEMBER(upright),
 	CR_MEMBER(deathSpeed),
 	CR_MEMBER(travel),

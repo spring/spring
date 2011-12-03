@@ -150,6 +150,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/Weapon.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponDefHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponLoader.cpp"
 	)
 
 MakeGlobal(sources_engine_Sim)
