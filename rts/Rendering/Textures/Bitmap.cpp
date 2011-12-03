@@ -507,8 +507,8 @@ void CBitmap::SetTransparent(const SColor& c, const SColor& trans)
 	static const uint32_t RGB = 0x00FFFFFF;
 
 	uint32_t* mem_i = reinterpret_cast<uint32_t*>(mem);
-	for (unsigned int y = 0; y < ysize; ++y) {
-		for (unsigned int x = 0; x < xsize; ++x) {
+	for (int y = 0; y < ysize; ++y) {
+		for (int x = 0; x < xsize; ++x) {
 			if ((*mem_i & RGB) == (c.i & RGB))
 				*mem_i = trans.i;
 			mem_i++;
@@ -638,7 +638,7 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height) const
 }
 
 
-void CBitmap::CopySubImage(const CBitmap& src, unsigned int xpos, unsigned int ypos)
+void CBitmap::CopySubImage(const CBitmap& src, int xpos, int ypos)
 {
 	if (xpos + src.xsize > xsize || ypos + src.ysize > ysize) {
 		LOG_L(L_WARNING, "CBitmap::CopySubImage src image does not fit into dst");

@@ -83,7 +83,7 @@ CEFX::CEFX(ALCdevice* device)
 		ALuint alFx;
 		alGenEffects(1, &alFx);
 		if (alGetError() == AL_NO_ERROR) {
-			for(int i = 0; i < sizeof(effects); i++) {
+			for(size_t i = 0; i < sizeof(effects); i++) {
 				const ALuint fx = effects[i];
 				alEffecti(alFx, AL_EFFECT_TYPE, fx);
 				effectsSupported[fx] = (alGetError() == AL_NO_ERROR);
@@ -103,7 +103,7 @@ CEFX::CEFX(ALCdevice* device)
 		ALuint alFilter;
 		alGenFilters(1, &alFilter);
 		if (alGetError() == AL_NO_ERROR) {
-			for(int i = 0; i < sizeof(filters); i++) {
+			for(size_t i = 0; i < sizeof(filters); i++) {
 				const ALuint filter = filters[i];
 				alFilteri(alFilter, AL_FILTER_TYPE, filter);
 				filtersSupported[filter] = (alGetError() == AL_NO_ERROR);
