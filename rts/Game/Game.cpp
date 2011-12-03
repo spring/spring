@@ -1212,7 +1212,7 @@ bool CGame::Draw() {
 			const char *pstr = (showMTInfo == MT_LUA_DUAL_EXPORT) ? "LUA-EXP-SIZE(MT): %2.1fK" : "LUA-SYNC-CPU(MT): %2.1f%%";
 			char buf[40];
 			SNPRINTF(buf, sizeof(buf), pstr, pval);
-			float4 warncol(pval >= 10.0f && (currentTime & 128) ?
+			float4 warncol(pval >= 10.0f && ((int)spring_tomsecs(currentTime) & 128) ?
 				0.5f : std::max(0.0f, std::min(pval / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - pval / 5.0f, 1.0f)), 0.0f, 1.0f);
 			smallFont->SetColors(&warncol, NULL);
 			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
