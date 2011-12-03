@@ -1342,7 +1342,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	const float3& sepDirMask,
 	const UnitDef* colliderUD,
 	const MoveData* colliderMD,
-	const CMoveMath* colliderMM,
+	const CMoveMath* colliderMM
 ) {
 	const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(colliderCurPos, colliderRadius * 2.0f);
 	      std::vector<CUnit*>::const_iterator uit;
@@ -1461,8 +1461,8 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const float3& sepDirMask,
 	const UnitDef* colliderUD,
 	const MoveData* colliderMD,
-	const CMoveMath* colliderMM,
-{
+	const CMoveMath* colliderMM
+) {
 	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(colliderCurPos, colliderRadius * 2.0f);
 	      std::vector<CFeature*>::const_iterator fit;
 
