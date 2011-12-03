@@ -1714,7 +1714,7 @@ void CGameServer::ServerReadNet()
 		}
 	}
 
-	const float updateBandwidth = (float)(spring_gettime() - lastBandwidthUpdate) / (float)playerBandwidthInterval;
+	const float updateBandwidth = spring_tomsecs(spring_gettime() - lastBandwidthUpdate) / (float)playerBandwidthInterval;
 	if (updateBandwidth >= 1.0f)
 		lastBandwidthUpdate = spring_gettime();
 
