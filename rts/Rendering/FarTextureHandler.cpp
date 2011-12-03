@@ -124,10 +124,10 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 
 	// make space in the std::vectors
 	if (obj->team >= (int)cache.size()) {
-		cache.resize(obj->team);
+		cache.resize(obj->team + 1);
 	}
 	if (model->id >= (int)cache[obj->team].size()) {
-		cache[obj->team].resize(model->id, 0);
+		cache[obj->team].resize(model->id + 1, 0);
 	}
 
 	cache[obj->team][model->id] = -1;
