@@ -143,8 +143,6 @@ public:
 
 	void SetDirVectors(const CMatrix44f&);
 	void UpdateDirVectors(bool);
-	void UpdateMidPos();
-	void MoveMidPos(const float3&);
 
 	bool IsNeutral() const {
 		return neutral;
@@ -177,10 +175,6 @@ public:
 	LuaRulesParams::Params  modParams;
 	LuaRulesParams::HashMap modParamsMap; ///< name map for mod parameters
 
-	/// the forward direction of the unit
-	SyncedFloat3 frontdir;
-	SyncedFloat3 rightdir;
-	SyncedFloat3 updir;
 	/// if the updir is straight up or align to the ground vector
 	bool upright;
 

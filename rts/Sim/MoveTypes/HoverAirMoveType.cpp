@@ -737,7 +737,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	}
 
 	if (modInfo.allowAirPlanesToLeaveMap || (pos + speed).CheckInBounds()) {
-		pos += speed;
+		owner->MovePos(speed);
 	}
 }
 
@@ -967,16 +967,16 @@ bool CHoverAirMoveType::HandleCollisions()
 				const float3 dif = (pos - unit->pos).Normalize();
 
 				if (unit->mass >= CSolidObject::DEFAULT_MASS || unit->immobile) {
-					pos -= dif * (dist - totRad);
+					owner->MovePos(-dif * (dist - totRad));
 					owner->UpdateMidPos();
 					owner->speed *= 0.99f;
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
 
-					pos -= dif * (dist - totRad) * (1.0f - part);
+					owner->MovePos(-dif * (dist - totRad) * (1.0f - part));
 					owner->UpdateMidPos();
 
-					unit->pos += dif * (dist - totRad) * (part);
+					unit->MovePos(dif * (dist - totRad) * (part));
 					unit->UpdateMidPos();
 
 					const float colSpeed = -owner->speed.dot(dif) + unit->speed.dot(dif);

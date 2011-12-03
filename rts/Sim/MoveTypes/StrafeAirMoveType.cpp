@@ -282,8 +282,7 @@ bool CStrafeAirMoveType::HandleCollisions() {
 				const float3 dif = (pos - unit->pos).Normalize();
 
 				if (unit->immobile) {
-					pos -= dif * (dist - totRad);
-
+					owner->MovePos(-dif * (dist - totRad));
 					owner->UpdateMidPos();
 					owner->speed *= 0.99f;
 
@@ -295,10 +294,10 @@ bool CStrafeAirMoveType::HandleCollisions() {
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
 
-					pos -= dif * (dist - totRad) * (1 - part);
+					owner->MovePos(-dif * (dist - totRad) * (1 - part));
 					owner->UpdateMidPos();
 
-					unit->pos += dif * (dist - totRad) * (part);
+					unit->MovePos(dif * (dist - totRad) * (part));
 					unit->UpdateMidPos();
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
@@ -792,9 +791,7 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 		speed += owner->frontdir * maxAcc;
 	}
 
-	speed *= invDrag;
-	pos += speed;
-
+	owner->MovePos(speed *= invDrag);
 	owner->UpdateDirVectors(false);
 }
 
@@ -871,8 +868,6 @@ void CStrafeAirMoveType::UpdateLanding()
 		}
 	}
 
-	pos += speed;
-
 	// make the aircraft right itself up and turn toward goal
 	if (rightdir.y < -0.01f)
 		updir -= rightdir * 0.02f;
@@ -889,6 +884,7 @@ void CStrafeAirMoveType::UpdateLanding()
 	else if (rightdir.dot(dif) < -0.01f)
 		frontdir -= rightdir * 0.02f;
 
+	owner->MovePos(speed);
 	owner->UpdateDirVectors(false);
 
 	// see if we are at the reserved (not user-clicked) landing spot
@@ -967,7 +963,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	speed += ((frontdir * speedf - speed) * speedToFront);
 
 	if (nextPosInBounds) {
-		pos += speed;
+		owner->MovePos(speed);
 	}
 
 	// ground collision; bounce away

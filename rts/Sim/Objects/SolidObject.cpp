@@ -29,6 +29,9 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(height),
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
+	CR_MEMBER(frontdir),
+	CR_MEMBER(rightdir),
+	CR_MEMBER(updir),
 	CR_MEMBER(relMidPos),
 	CR_MEMBER(midPos),
 //	CR_MEMBER(drawPos),
@@ -69,6 +72,9 @@ CSolidObject::CSolidObject():
 	team(0),
 	mobility(NULL),
 	collisionVolume(NULL),
+	frontdir(0.0f, 0.0f, 1.0f),
+	rightdir(-1.0f, 0.0f, 0.0f),
+	updir(0.0f, 1.0f, 0.0f),
 	relMidPos(0.0f, 0.0f, 0.0f),
 	midPos(pos),
 	curYardMap(NULL),
@@ -86,6 +92,23 @@ CSolidObject::~CSolidObject() {
 
 	delete collisionVolume;
 	collisionVolume = NULL;
+}
+
+
+
+void CSolidObject::MoveMidPos(const float3& deltaPos) {
+	midPos += deltaPos;
+	pos = midPos -
+		(frontdir * relMidPos.z) -
+		(updir    * relMidPos.y) -
+		(rightdir * relMidPos.x);
+}
+void CSolidObject::UpdateMidPos()
+{
+	midPos = pos +
+		(frontdir * relMidPos.z) +
+		(updir    * relMidPos.y) +
+		(rightdir * relMidPos.x);
 }
 
 
