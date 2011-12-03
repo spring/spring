@@ -1502,7 +1502,6 @@ public:
 		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? mtEnabled : gmlMultiThreadSim;
 		SetBoolArg(mtSim, action.GetArgs());
 		gmlMultiThreadSim = mtSim;
-		gmlStartSim = true;
 
 		LogSystemStatus("Simulation threading", gmlMultiThreadSim);
 #	endif // GML_ENABLE_SIM
