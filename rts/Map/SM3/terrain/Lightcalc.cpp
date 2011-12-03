@@ -16,7 +16,7 @@
 #include <IL/il.h>
 #include <assert.h>
 
-#include "System/myTime.h"
+#include "System/Misc/SpringTime.h"
 
 namespace terrain {
 

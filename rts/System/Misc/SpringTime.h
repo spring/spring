@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef MYTIME_H
-#define MYTIME_H
+#ifndef SPRINGTIME_H
+#define SPRINGTIME_H
 
 #ifndef SPRING_TIME
 	#define SPRING_TIME 1 // boost microsec timer SUCKS atm, when it works again, set to 0
@@ -11,6 +11,7 @@
 
 //! SDL Timers
 #include <SDL_timer.h>
+
 typedef unsigned spring_time;
 typedef int spring_duration;
 inline spring_time spring_gettime() { return SDL_GetTicks(); };
@@ -29,8 +30,8 @@ inline spring_time spring_gettime() { return SDL_GetTicks(); };
 using namespace boost::posix_time;
 typedef ptime spring_time;
 typedef time_duration spring_duration;
-inline spring_time spring_gettime() { return microsec_clock::local_time(); };
 #define spring_tomsecs(time) ((time).total_milliseconds())
+inline spring_time spring_gettime() { return microsec_clock::local_time(); };
 #define spring_msecs(time) (milliseconds(time))
 #define spring_secs(time) (seconds(time))
 #define spring_istime(time) (!(time).is_not_a_date_time())
@@ -41,5 +42,5 @@ inline spring_time spring_gettime() { return microsec_clock::local_time(); };
 
 #define spring_difftime(now, before) (now - before)
 
-#endif // MYTIME_H
+#endif // SPRINGTIME_H
 
