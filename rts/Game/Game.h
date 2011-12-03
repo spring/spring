@@ -10,6 +10,7 @@
 
 #include "GameController.h"
 #include "System/creg/creg_cond.h"
+#include "System/myTime.h"
 
 class IWater;
 class CConsoleHistory;
@@ -86,12 +87,10 @@ public:
 
 	LuaParser* defsParser;
 
-	unsigned int fps;
 	unsigned int thisFps;
 
 	int lastSimFrame;
 
-	time_t fpstimer, starttime;
 	unsigned lastUpdate;
 	unsigned lastMoveUpdate;
 	unsigned lastModGameTimeMeasure;
@@ -161,6 +160,7 @@ public:
 	void EndSkip();
 
 public:
+	spring_time frameStartTime;
 	std::string hotBinding;
 	float inputTextPosX;
 	float inputTextPosY;

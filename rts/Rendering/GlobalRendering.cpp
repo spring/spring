@@ -51,6 +51,7 @@ CGlobalRendering::CGlobalRendering()
 	, lastFrameStart(0)
 	, weightedSpeedFactor(0.0f)
 	, drawFrame(1)
+	, FPS(30.0f)
 
 	, winState(0)
 	, screenSizeX(1)
