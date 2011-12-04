@@ -3,7 +3,7 @@
 #ifndef SPRINGTIME_H
 #define SPRINGTIME_H
 
-#if defined(DEBUG) && !defined(SPRING_TIME)
+#if defined(DEBUG) && !defined(UNIT_TEST) && !defined(SPRING_TIME)
 	#define STATIC_SPRING_TIME
 #endif
 
@@ -24,7 +24,7 @@
 		spring_time() : x(0) {}
 		spring_time(int x_) : x(x_) {}
 
-		spring_time& operator=(const spring_time v)        { x = v.x; return *this; }
+		spring_time& operator=(const spring_time& v)        { x = v.x; return *this; }
 		spring_time  operator-(const spring_time& v) const { return spring_time(x - v.x); }
 		spring_time  operator+(const spring_time& v) const { return spring_time(x + v.x); }
 		bool         operator<(const spring_time& v) const { return (x < v.x); }

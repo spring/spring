@@ -1,5 +1,4 @@
 
-#define NOT_USING_CREG
 #include "System/Net/UDPListener.h"
 
 #define BOOST_TEST_MODULE UDPListener
