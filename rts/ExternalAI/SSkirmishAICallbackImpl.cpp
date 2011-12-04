@@ -3904,7 +3904,7 @@ EXPORT(int) skirmishAiCallback_WeaponDef_Damage_getTypes(int skirmishAIId, int w
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getAreaOfEffect(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->areaOfEffect;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damageAreaOfEffect;
 }
 
 EXPORT(bool) skirmishAiCallback_WeaponDef_isNoSelfDamage(int skirmishAIId, int weaponDefId) {

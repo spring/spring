@@ -47,7 +47,7 @@ CBeamLaserProjectile::CBeamLaserProjectile(
 	checkCol = false;
 	useAirLos = true;
 
-	SetRadius(pos.distance(endPos));
+	SetRadiusAndHeight(pos.distance(endPos), 0.0f);
 
 	if (weaponDef) {
 		midtexx =

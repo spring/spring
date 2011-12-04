@@ -41,7 +41,9 @@ CFlareProjectile::CFlareProjectile(const float3& pos, const float3& speed, CUnit
 	alphaFalloff = owner? 1.0f / owner->unitDef->flareTime: 1.0f;
 	checkCol = false;
 	useAirLos = true;
-	SetRadius(45);
+
+	SetRadiusAndHeight(45.0f, 0.0f);
+
 	subPos.resize(owner->unitDef->flareSalvoSize);
 	subSpeed.resize(owner->unitDef->flareSalvoSize);
 	mygravity *= 0.3f; //! flares fall slower

@@ -34,14 +34,15 @@ bool float3::CheckInBounds()
 
 	bool in = true;
 
-	if (x < 1.0f) {
-		x = 1.0f;
+	if (x < 0.0f) {
+		x = 0.0f;
 		in = false;
 	}
-	if (z < 1.0f) {
-		z = 1.0f;
+	if (z < 0.0f) {
+		z = 0.0f;
 		in = false;
 	}
+
 	if (x > maxxpos) {
 		x = maxxpos;
 		in = false;
@@ -53,3 +54,4 @@ bool float3::CheckInBounds()
 
 	return in;
 }
+

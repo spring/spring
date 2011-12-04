@@ -189,7 +189,7 @@ bool CGroundMoveType::Update()
 {
 	ASSERT_SYNCED(owner->pos);
 
-	if (owner->transporter != NULL) {
+	if (owner->GetTransporter() != NULL) {
 		return false;
 	}
 
@@ -260,7 +260,7 @@ bool CGroundMoveType::Update()
 
 void CGroundMoveType::SlowUpdate()
 {
-	if (owner->transporter) {
+	if (owner->GetTransporter() != NULL) {
 		if (progressState == Active)
 			StopEngine();
 		return;
@@ -555,8 +555,8 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
  * FIXME near-duplicate of HoverAirMoveType::UpdateHeading
  */
 void CGroundMoveType::ChangeHeading(short newHeading) {
-	if (flying)
-		return;
+	if (flying) return;
+	if (owner->GetTransporter() != NULL) return;
 
 	wantedHeading = newHeading;
 	SyncedSshort& heading = owner->heading;
@@ -571,7 +571,8 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 		heading += std::max(deltaHeading, short(-turnRate));
 	}
 
-	owner->SetDirectionFromHeading();
+	owner->UpdateDirVectors(!owner->upright && owner->maxSpeed > 0.0f);
+	owner->UpdateMidPos();
 
 	flatFrontDir = owner->frontdir;
 	flatFrontDir.y = 0.0f;
@@ -586,7 +587,8 @@ void CGroundMoveType::ImpulseAdded(const float3&)
 	const UnitDef* ud = owner->unitDef;
 	const MoveData* md = ud->movedata;
 
-	if (owner->beingBuilt || md->moveType == MoveData::Ship_Move)
+	// NOTE: ships must be able to receive impulse too (for collision handling)
+	if (owner->beingBuilt)
 		return;
 
 	float3& impulse = owner->residualImpulse;
@@ -640,26 +642,27 @@ void CGroundMoveType::UpdateSkid()
 {
 	ASSERT_SYNCED(owner->midPos);
 
-	float3& speed  = owner->speed;
-	float3& pos    = owner->pos;
-	float3  midPos = owner->midPos;
+	const float3& pos = owner->pos;
+	      float3& speed  = owner->speed;
 
 	const UnitDef* ud = owner->unitDef;
+	const float groundHeight = GetGroundHeight(pos);
 
 	if (flying) {
 		// water drag
-		if (midPos.y < 0.0f)
+		if (pos.y < 0.0f)
 			speed *= 0.95f;
 
-		const float groundHeight = GetGroundHeight(midPos);
-		const float impactSpeed = midPos.IsInBounds()?
-			-speed.dot(ground->GetNormal(midPos.x, midPos.z)):
+		const float impactSpeed = pos.IsInBounds()?
+			-speed.dot(ground->GetNormal(pos.x, pos.z)):
 			-speed.dot(UpVector);
 		const float impactDamageMult = impactSpeed * owner->mass * 0.02f;
 
-		if (groundHeight > (midPos.y - owner->relMidPos.y)) {
+		if (groundHeight > pos.y) {
+			// ground impact, stop flying
 			flying = false;
-			midPos.y = groundHeight + owner->relMidPos.y - speed.y * 0.5f;
+
+			owner->Move1D(groundHeight, 1, false);
 
 			// deal ground impact damage
 			// TODO:
@@ -680,7 +683,6 @@ void CGroundMoveType::UpdateSkid()
 
 		const bool onSlope = OnSlope(-1.0f);
 		const float speedReduction = 0.35f;
-		const float groundHeight = GetGroundHeight(pos);
 
 		if (speedf < speedReduction && !onSlope) {
 			// stop skidding
@@ -698,7 +700,7 @@ void CGroundMoveType::UpdateSkid()
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
-				const float3 normal = ground->GetNormal(midPos.x, midPos.z);
+				const float3 normal = ground->GetNormal(pos.x, pos.z);
 				const float3 normalForce = normal * normal.dot(UpVector * mapInfo->map.gravity);
 				const float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
 
@@ -742,10 +744,16 @@ void CGroundMoveType::UpdateSkid()
 	}
 
 	// translate before rotate
-	owner->MoveMidPos(speed);
+	owner->Move3D(speed, true);
 
-	CalcSkidRot();
-	CheckCollisionSkid();
+	// NOTE: only needed to match terrain normal
+	if ((pos.y - groundHeight) <= SQUARE_SIZE)
+		owner->UpdateDirVectors(true);
+
+	if (skidding) {
+		CalcSkidRot();
+		CheckCollisionSkid();
+	}
 
 	// always update <oldPos> here so that <speed> does not make
 	// extreme jumps when the unit transitions from skidding back
@@ -753,7 +761,7 @@ void CGroundMoveType::UpdateSkid()
 	oldPos = owner->pos;
 
 	ASSERT_SANE_OWNER_SPEED(speed);
-	ASSERT_SYNCED(midPos);
+	ASSERT_SYNCED(owner->midPos);
 }
 
 void CGroundMoveType::UpdateControlledDrop()
@@ -761,22 +769,24 @@ void CGroundMoveType::UpdateControlledDrop()
 	if (!owner->falling)
 		return;
 
-	float3& speed = owner->speed;
-	SyncedFloat3& midPos = owner->midPos;
+	const float3& pos = owner->pos;
+	      float3& speed = owner->speed;
 
 	speed.y += (mapInfo->map.gravity * owner->fallSpeed);
 	speed.y = std::min(speed.y, 0.0f);
 
-	owner->MoveMidPos(speed);
+	owner->Move3D(speed, true);
 
-	if (midPos.y < 0.0f)
+	// water drag
+	if (pos.y < 0.0f)
 		speed *= 0.90;
 
-	const float wh = GetGroundHeight(midPos);
+	const float wh = GetGroundHeight(pos);
 
-	if (wh > (midPos.y - owner->relMidPos.y)) {
+	if (wh > pos.y) {
+		// ground impact
 		owner->falling = false;
-		midPos.y = wh + owner->relMidPos.y - speed.y * 0.8;
+		owner->Move1D(wh, 1, false);
 		owner->script->Landed(); //stop parachute animation
 	}
 }
@@ -815,7 +825,7 @@ void CGroundMoveType::CheckCollisionSkid()
 			const float impactDamageMult = std::min(impactSpeed * owner->mass * MASS_MULT, MAX_UNIT_SPEED);
 
 			if (impactSpeed > 0.0f) {
-				owner->MoveMidPos(dif * impactSpeed);
+				owner->Move3D(dif * impactSpeed, true);
 				owner->speed += ((dif * impactSpeed) * 1.8f);
 
 				// damage the collider, no added impulse
@@ -842,10 +852,10 @@ void CGroundMoveType::CheckCollisionSkid()
 			const float3 collideeImpactImpulse = dif * collideeRelImpactSpeed;
 
 			if (impactSpeed > 0.0f) {
-				owner->MoveMidPos(colliderImpactImpulse);
+				owner->Move3D(colliderImpactImpulse, true);
 				owner->speed += colliderImpactImpulse;
 
-				u->MoveMidPos(-collideeImpactImpulse);
+				u->Move3D(-collideeImpactImpulse, true);
 				u->speed -= collideeImpactImpulse;
 
 				if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
@@ -886,7 +896,7 @@ void CGroundMoveType::CheckCollisionSkid()
 		const float3 impactImpulse = dif * impactSpeed;
 
 		if (impactSpeed > 0.0f) {
-			owner->MoveMidPos(impactImpulse);
+			owner->Move3D(impactImpulse, true);
 			owner->speed += (impactImpulse * 1.8f);
 
 			// damage the collider, no added impulse (!) 
@@ -928,6 +938,8 @@ void CGroundMoveType::CalcSkidRot()
 	owner->frontdir = f1 + f2;
 	owner->rightdir = r1 + r2;
 	owner->updir    = u1 + u2;
+
+	owner->UpdateMidPos();
 }
 
 
@@ -1422,7 +1434,7 @@ void CGroundMoveType::HandleUnitCollisions(
 
 				// applied every frame objects are colliding, so be careful
 				collider->AddImpulse(sepDirection * std::max(currentSpeed, accRate));
-				collider->MovePos(collider->speed);
+				collider->Move3D(collider->speed, true);
 			}
 
 			if (colliderMassScale > collideeMassScale) {
@@ -1439,11 +1451,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (                  colliderMM->GetPosSpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { colliderMassScale = 0.0f; }
 		if (collideeMobile && collideeMM->GetPosSpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
 
-		if (pushCollider) { collider->MovePos( colResponseVec * colliderMassScale); } else if (colliderMobile) { collider->pos = colliderOldPos; }
-		if (pushCollidee) { collidee->MovePos(-colResponseVec * collideeMassScale); } else if (collideeMobile) { collidee->pos = collideeOldPos; }
-
-		collider->UpdateMidPos();
-		collidee->UpdateMidPos();
+		if (pushCollider) { collider->Move3D( colResponseVec * colliderMassScale, true); } else if (colliderMobile) { collider->Move3D(colliderOldPos, false); }
+		if (pushCollidee) { collidee->Move3D(-colResponseVec * collideeMassScale, true); } else if (collideeMobile) { collidee->Move3D(collideeOldPos, false); }
 
 		if (!((gs->frameNum + collider->id) & 31) && !collider->commandAI->unimportantMove) {
 			// if we do not have an internal move order, tell units around us to bugger off
@@ -1481,6 +1490,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		if ((separationVector.SqLength() - separationMinDist) > 0.01f   && false) { continue; }
 		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 
+		// NOTE: probably too large for most units (causes animation to be skipped)
 		const float3 crushImpulse = collider->speed * ((reversing)? -collider->mass: collider->mass);
 
 		if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
@@ -1523,7 +1533,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 				// applied every frame objects are colliding, so be careful
 				collider->AddImpulse(sepDirection * std::max(currentSpeed, accRate));
-				collider->MovePos(collider->speed);
+				collider->Move3D(collider->speed, true);
 			}
 
 			if (colliderMassScale > collideeMassScale) {
@@ -1531,8 +1541,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 			}
 		}
 
-		collider->MovePos(colResponseVec * colliderMassScale);
-		collider->UpdateMidPos();
+		collider->Move3D(colResponseVec * colliderMassScale, true);
 	}
 }
 
@@ -1699,7 +1708,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 			newMoveSquareX = (int) owner->pos.x / (MIN_WAYPOINT_DISTANCE);
 			newMoveSquareY = (int) owner->pos.z / (MIN_WAYPOINT_DISTANCE);
 		} else {
-			owner->pos = newpos;
+			owner->Move3D(newpos, false);
 		}
 
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
@@ -1759,7 +1768,7 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 
 	if (useMainHeading && !owner->weapons.empty()) {
 		if (!owner->weapons[0]->weaponDef->waterweapon && mainHeadingPos.y <= 1) {
-			mainHeadingPos.y = 1;
+			mainHeadingPos.y = 1.0f;
 		}
 
 		float3 dir1 = owner->weapons.front()->mainDir;
@@ -1895,21 +1904,20 @@ void CGroundMoveType::AdjustPosToWaterLine()
 			groundHeight = -owner->unitDef->waterline;
 		}
 
-		owner->pos.y = groundHeight;
-		owner->midPos.y = owner->pos.y + owner->relMidPos.y;
+		owner->Move1D(groundHeight, 1, false);
 
 		/*
 		const UnitDef* ud = owner->unitDef;
 		const MoveData* md = ud->movedata;
 		const CMoveMath* mm = md->moveMath;
 
-		owner->pos.y = mm->yLevel(owner->pos.x, owner->pos.z);
+		y = mm->yLevel(owner->pos.x, owner->pos.z);
 
 		if (owner->unitDef->floatOnWater && owner->inWater) {
-			owner->pos.y -= owner->unitDef->waterline;
+			y -= owner->unitDef->waterline;
 		}
 
-		owner->midPos.y = owner->pos.y + owner->relMidPos.y;
+		owner->Move1D(y, 1, false);
 		*/
 	}
 }
@@ -1975,19 +1983,21 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		const float  speedScale = currentSpeed + deltaSpeed;
 		const float3 speedVector = owner->frontdir * speedScale * speedSign;
 
+		float3& speed = owner->speed;
+
 		if (mm->GetPosSpeedMod(*md, owner->pos + speedVector) > 0.01f) {
 			// never move onto an impassable square (units
 			// can still tunnel across them at high enough
 			// speeds however)
-			// use the simplest possible Euler integration
-			owner->speed = speedVector;
+			speed = speedVector;
 		} else {
-			owner->speed = ZeroVector;
+			speed = ZeroVector;
 		}
 
-		owner->MovePos(owner->speed);
+		// use the simplest possible Euler integration
+		owner->Move3D(speed, true);
 
-		currentSpeed = owner->speed.Length();
+		currentSpeed = (speed != ZeroVector)? speedScale: 0.0f;
 		deltaSpeed = 0.0f;
 
 		assert(math::fabs(currentSpeed) < 1e6f);

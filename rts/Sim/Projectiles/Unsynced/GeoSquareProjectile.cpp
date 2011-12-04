@@ -39,7 +39,8 @@ CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1, const float3& p2, c
 {
 	checkCol = false;
 	alwaysVisible = true;
-	SetRadius(p1.distance(p2) * 0.55f);
+
+	SetRadiusAndHeight(p1.distance(p2) * 0.55f, 0.0f);
 }
 
 CGeoSquareProjectile::~CGeoSquareProjectile()

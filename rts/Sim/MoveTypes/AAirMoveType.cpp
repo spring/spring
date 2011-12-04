@@ -265,7 +265,10 @@ bool AAirMoveType::MoveToRepairPad() {
 			}
 
 			owner->pos = absPadPos;
+
+			owner->UpdateMidPos();
 			owner->AddBuildPower(airBase->unitDef->buildSpeed / GAME_SPEED, airBase);
+
 			owner->currentFuel += (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime));
 			owner->currentFuel = std::min(owner->unitDef->maxFuel, owner->currentFuel);
 

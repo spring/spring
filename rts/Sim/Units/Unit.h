@@ -104,7 +104,6 @@ public:
 
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
-	void SetDirectionFromHeading();
 	void SetHeadingFromDirection();
 
 	void EnableScriptMoveType();
