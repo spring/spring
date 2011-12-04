@@ -130,8 +130,8 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		oldInfos[a]->size = gu->usRandFloat() * 2 + 2;
 	}
 
-	SetRadius(radius);
-	drawRadius = 32;
+	SetRadiusAndHeight(radius, 0.0f);
+	drawRadius = 32.0f;
 
 #ifdef TRACE_SYNC
 	tracefile << "New CPieceProjectile: ";
@@ -177,7 +177,8 @@ void CPieceProjectile::Collision()
 			owner(),
 			NULL,              // hitUnit
 			NULL,              // hitFeature
-			5.0f,              // areaOfEffect
+			5.0f,              // craterAreaOfEffect
+			5.0f,              // damageAreaOfEffect
 			0.0f,              // edgeEffectiveness
 			10.0f,             // explosionSpeed
 			1.0f,              // gfxMod
@@ -228,17 +229,18 @@ void CPieceProjectile::Collision(CUnit* unit)
 			pos,
 			ZeroVector,
 			damageArray,
-			NULL,                                            // weaponDef
+			NULL,              // weaponDef
 			owner(),
-			unit,                                            // hitUnit
-			NULL,                                            // hitFeature
-			5.0f,                                            // areaOfEffect
-			0.0f,                                            // edgeEffectiveness
-			10.0f,                                           // explosionSpeed
-			1.0f,                                            // gfxMod
-			false,                                           // impactOnly
-			false,                                           // ignoreOwner
-			true                                             // damageGround
+			unit,              // hitUnit
+			NULL,              // hitFeature
+			5.0f,              // craterAreaOfEffect
+			5.0f,              // damageAreaOfEffect
+			0.0f,              // edgeEffectiveness
+			10.0f,             // explosionSpeed
+			1.0f,              // gfxMod
+			false,             // impactOnly
+			false,             // ignoreOwner
+			true               // damageGround
 		};
 
 		helper->Explosion(params);

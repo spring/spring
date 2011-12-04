@@ -197,7 +197,6 @@ class CEventHandler
 		void GameProgress(int gameFrame);
 		/// @}
 
-		// FIXME: void ShockFront(float power, const float3& pos, float areaOfEffect);
 		inline void LoadedModelRequested();
 
 	private:

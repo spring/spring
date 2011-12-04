@@ -57,8 +57,9 @@ CHeatCloudProjectile::CHeatCloudProjectile(const float3& pos, const float3& spee
 	sizeGrowth = size / temperature;
 	checkCol = false;
 	useAirLos = true;
-	SetRadius(size + sizeGrowth * heat / heatFalloff);
 	texture = projectileDrawer->heatcloudtex;
+
+	SetRadiusAndHeight(size + sizeGrowth * heat / heatFalloff, 0.0f);
 }
 
 CHeatCloudProjectile::~CHeatCloudProjectile()

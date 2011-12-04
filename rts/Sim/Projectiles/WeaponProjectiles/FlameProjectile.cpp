@@ -41,7 +41,7 @@ CFlameProjectile::CFlameProjectile(
 	invttl = 1.0f / ttl;
 
 	if (weaponDef) {
-		SetRadius(weaponDef->size * weaponDef->collisionSize);
+		SetRadiusAndHeight(weaponDef->size * weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 		physLife = 1.0f / weaponDef->duration;
 	}

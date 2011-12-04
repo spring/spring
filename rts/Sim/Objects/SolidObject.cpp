@@ -26,7 +26,6 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(crushKilled),
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
-	CR_MEMBER(height),
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
 	CR_MEMBER(frontdir),
@@ -38,8 +37,8 @@ CR_REG_METADATA(CSolidObject,
 //	CR_MEMBER(drawMidPos),
 	CR_MEMBER(isMoving),
 	CR_MEMBER(residualImpulse),
-	CR_MEMBER(allyteam),
 	CR_MEMBER(team),
+	CR_MEMBER(allyteam),
 	CR_MEMBER(mobility),
 	CR_MEMBER(collisionVolume),
 	// can not get creg work on templates
@@ -60,7 +59,6 @@ CSolidObject::CSolidObject():
 	crushKilled(false),
 	xsize(1),
 	zsize(1),
-	height(1.0f),
 	heading(0),
 	physicalState(OnGround),
 	isMoving(false),
@@ -68,20 +66,19 @@ CSolidObject::CSolidObject():
 	isMarkedOnBlockingMap(false),
 	speed(ZeroVector),
 	residualImpulse(ZeroVector),
-	allyteam(0),
 	team(0),
+	allyteam(0),
 	mobility(NULL),
 	collisionVolume(NULL),
 	frontdir(0.0f, 0.0f, 1.0f),
 	rightdir(-1.0f, 0.0f, 0.0f),
 	updir(0.0f, 1.0f, 0.0f),
-	relMidPos(0.0f, 0.0f, 0.0f),
+	relMidPos(ZeroVector),
 	midPos(pos),
+	mapPos(GetMapPos()),
 	curYardMap(NULL),
 	buildFacing(0)
 {
-	mapPos = GetMapPos();
-	// FIXME collisionVolume volume with CWorldObject.radius?
 }
 
 CSolidObject::~CSolidObject() {
@@ -96,19 +93,13 @@ CSolidObject::~CSolidObject() {
 
 
 
-void CSolidObject::MoveMidPos(const float3& deltaPos) {
-	midPos += deltaPos;
-	pos = midPos -
-		(frontdir * relMidPos.z) -
-		(updir    * relMidPos.y) -
-		(rightdir * relMidPos.x);
-}
 void CSolidObject::UpdateMidPos()
 {
-	midPos = pos +
-		(frontdir * relMidPos.z) +
-		(updir    * relMidPos.y) +
-		(rightdir * relMidPos.x);
+	const float3 dz = (frontdir * relMidPos.z);
+	const float3 dy = (updir    * relMidPos.y);
+	const float3 dx = (rightdir * relMidPos.x);
+
+	midPos = pos + dz + dy + dx;
 }
 
 
@@ -142,35 +133,17 @@ void CSolidObject::Block() {
 
 
 
-bool CSolidObject::AddBuildPower(float amount, CUnit* builder) {
-	return false;
-}
-
-int2 CSolidObject::GetMapPos()
+// FIXME move somewhere else?
+int2 CSolidObject::GetMapPos(const float3& position) const
 {
-	return GetMapPos(pos);
-}
+	int2 mp;
+	mp.x = (int(position.x + SQUARE_SIZE / 2) / SQUARE_SIZE) - (xsize / 2);
+	mp.y = (int(position.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - (zsize / 2);
 
-//FIXME move somewhere else?
-int2 CSolidObject::GetMapPos(const float3& position)
-{
-	int2 p;
-	p.x = (int(position.x + SQUARE_SIZE / 2) / SQUARE_SIZE) - (xsize / 2);
-	p.y = (int(position.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - (zsize / 2);
+	if (mp.x <                0) { mp.x =                0; }
+	if (mp.y <                0) { mp.y =                0; }
+	if (mp.x > gs->mapx - xsize) { mp.x = gs->mapx - xsize; }
+	if (mp.y > gs->mapy - zsize) { mp.y = gs->mapy - zsize; }
 
-	if (p.x < 0) {
-		p.x = 0;
-	}
-	if (p.x > gs->mapx - xsize) {
-		p.x = gs->mapx - xsize;
-	}
-
-	if (p.y < 0) {
-		p.y = 0;
-	}
-	if (p.y > gs->mapy - zsize) {
-		p.y = gs->mapy - zsize;
-	}
-
-	return p;
+	return mp;
 }

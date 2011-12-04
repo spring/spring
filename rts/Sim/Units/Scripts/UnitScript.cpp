@@ -685,7 +685,8 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 					unit,                              // owner
 					NULL,                              // hitUnit
 					NULL,                              // hitFeature
-					weaponDef->areaOfEffect,
+					weaponDef->craterAreaOfEffect,
+					weaponDef->damageAreaOfEffect,
 					weaponDef->edgeEffectiveness,
 					weaponDef->explosionSpeed,
 					1.0f,                              // gfxMod
@@ -772,21 +773,21 @@ void CUnitScript::Explode(int piece, int flags)
 	}
 
 #ifndef _CONSOLE
-	const float3 relpos = GetPiecePos(piece);
-	const float3 pos =
+	const float3 relPos = GetPiecePos(piece);
+	const float3 absPos =
 		unit->pos +
-		unit->frontdir * relpos.z +
-		unit->updir    * relpos.y +
-		unit->rightdir * relpos.x;
+		unit->frontdir * relPos.z +
+		unit->updir    * relPos.y +
+		unit->rightdir * relPos.x;
 
 #ifdef TRACE_SYNC
 	tracefile << "Cob explosion: ";
-	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << piece << " " << flags << "\n";
+	tracefile << absPos.x << " " << absPos.y << " " << absPos.z << " " << piece << " " << flags << "\n";
 #endif
 
 	if (!(flags & PF_NoHeatCloud)) {
 		// Do an explosion at the location first
-		new CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
+		new CHeatCloudProjectile(absPos, float3(0, 0, 0), 30, 30, NULL);
 	}
 
 	// If this is true, no stuff should fly off
@@ -814,7 +815,7 @@ void CUnitScript::Explode(int piece, int flags)
 	/* TODO Push this back. Don't forget to pass the team (color).  */
 
 	if (flags & PF_Shatter) {
-		Shatter(piece, pos, speed);
+		Shatter(piece, absPos, speed);
 	}
 	else {
 		LocalModelPiece* pieceData = pieces[piece];
@@ -828,7 +829,7 @@ void CUnitScript::Explode(int piece, int flags)
 			if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 
 			//LOG_L(L_DEBUG, "Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
-			new CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5f);
+			new CPieceProjectile(absPos, speed, pieceData, newflags,unit,0.5f);
 		}
 	}
 #endif
@@ -852,16 +853,16 @@ void CUnitScript::ShowFlare(int piece)
 		return;
 	}
 #ifndef _CONSOLE
-	const float3 relpos = GetPiecePos(piece);
-	const float3 pos =
+	const float3 relPos = GetPiecePos(piece);
+	const float3 absPos =
 		unit->pos +
-		unit->frontdir * relpos.z +
-		unit->updir    * relpos.y +
-		unit->rightdir * relpos.x;
+		unit->frontdir * relPos.z +
+		unit->updir    * relPos.y +
+		unit->rightdir * relPos.x;
 	const float3 dir = unit->lastMuzzleFlameDir;
 	const float size = unit->lastMuzzleFlameSize;
 
-	new CMuzzleFlame(pos, unit->speed, dir, size);
+	new CMuzzleFlame(absPos, unit->speed, dir, size);
 #endif
 }
 
@@ -919,18 +920,18 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			ShowScriptError("Invalid piecenumber for get piece_xz");
 			break;
 		}
-		float3 relPos = GetPiecePos(p1);
-		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
-		return PACKXZ(pos.x, pos.z);
+		const float3 relPos = GetPiecePos(p1);
+		const float3 absPos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+		return PACKXZ(absPos.x, absPos.z);
 	}
 	case PIECE_Y: {
 		if (!PieceExists(p1)) {
 			ShowScriptError("Invalid piecenumber for get piece_y");
 			break;
 		}
-		float3 relPos = GetPiecePos(p1);
-		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
-		return int(pos.y * COBSCALE);
+		const float3 relPos = GetPiecePos(p1);
+		const float3 absPos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+		return int(absPos.y * COBSCALE);
 	}
 	case UNIT_XZ: {
 		if (p1 <= 0)
@@ -1558,7 +1559,8 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case HEADING: {
 			unit->heading = param % COBSCALE;
-			unit->SetDirectionFromHeading();
+			unit->UpdateDirVectors(!unit->upright && unit->maxSpeed > 0.0f);
+			unit->UpdateMidPos();
 			break;
 		}
 		case LOS_RADIUS: {

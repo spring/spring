@@ -47,7 +47,7 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
 		this->side    = *weaponDef->visuals.texture3;
 	}
 
-	SetRadius(pos.distance(endPos));
+	SetRadiusAndHeight(pos.distance(endPos), 0.0f);
 
 	corecolstart[0] = (color2.x * 255);
 	corecolstart[1] = (color2.y * 255);

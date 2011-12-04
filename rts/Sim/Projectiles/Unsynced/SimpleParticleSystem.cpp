@@ -249,7 +249,8 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 
 		particle->gravity = gravity;
 		particle->directional = directional;
-		particle->SetRadius(particle->size + sizeGrowth * particleLife);
+
+		particle->SetRadiusAndHeight(particle->size + sizeGrowth * particleLife, 0.0f);
 	}
 
 	deleteMe = true;
