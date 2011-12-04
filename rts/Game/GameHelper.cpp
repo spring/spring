@@ -213,7 +213,8 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	CUnit* hitUnit = params.hitUnit;
 	CFeature* hitFeature = params.hitFeature;
 
-	const float expRad = std::max(1.0f, params.areaOfEffect);
+	const float craterAOE = std::max(1.0f, params.craterAreaOfEffect);
+	const float damageAOE = std::max(1.0f, params.damageAreaOfEffect);
 	const float edgeEffectiveness = params.edgeEffectiveness;
 	const float expSpeed = params.explosionSpeed;
 	const float gfxMod = params.gfxMod;
@@ -227,20 +228,20 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 	if (luaUI) {
 		if (weaponDef != NULL && weaponDef->cameraShake > 0.0f) {
-			luaUI->ShockFront(weaponDef->cameraShake, expPos, expRad);
+			luaUI->ShockFront(weaponDef->cameraShake, expPos, damageAOE);
 		}
 	}
 
 	if (impactOnly) {
 		if (hitUnit) {
-			DoExplosionDamage(hitUnit, owner, expPos, expRad, expSpeed, ignoreOwner, edgeEffectiveness, damages, weaponDefID);
+			DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, ignoreOwner, edgeEffectiveness, damages, weaponDefID);
 		} else if (hitFeature) {
-			DoExplosionDamage(hitFeature, expPos, expRad, damages);
+			DoExplosionDamage(hitFeature, expPos, damageAOE, damages);
 		}
 	} else {
 		{
 			// damage all units within the explosion radius
-			const vector<CUnit*>& units = qf->GetUnitsExact(expPos, expRad);
+			const vector<CUnit*>& units = qf->GetUnitsExact(expPos, damageAOE);
 			bool hitUnitDamaged = false;
 
 			for (vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
@@ -250,20 +251,20 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 					hitUnitDamaged = true;
 				}
 
-				DoExplosionDamage(unit, owner, expPos, expRad, expSpeed, ignoreOwner, edgeEffectiveness, damages, weaponDefID);
+				DoExplosionDamage(unit, owner, expPos, damageAOE, expSpeed, ignoreOwner, edgeEffectiveness, damages, weaponDefID);
 			}
 
 			// HACK: for a unit with an offset coldet volume, the explosion
 			// (from an impacting projectile) position might not correspond
 			// to its quadfield position so we need to damage it separately
 			if (hitUnit != NULL && !hitUnitDamaged) {
-				DoExplosionDamage(hitUnit, owner, expPos, expRad, expSpeed, ignoreOwner, edgeEffectiveness, damages, weaponDefID);
+				DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, ignoreOwner, edgeEffectiveness, damages, weaponDefID);
 			}
 		}
 
 		{
 			// damage all features within the explosion radius
-			const vector<CFeature*>& features = qf->GetFeaturesExact(expPos, expRad);
+			const vector<CFeature*>& features = qf->GetFeaturesExact(expPos, damageAOE);
 			bool hitFeatureDamaged = false;
 
 			for (vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
@@ -273,23 +274,25 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 					hitFeatureDamaged = true;
 				}
 
-				DoExplosionDamage(feature, expPos, expRad, damages);
+				DoExplosionDamage(feature, expPos, damageAOE, damages);
 			}
 
 			if (hitFeature != NULL && !hitFeatureDamaged) {
-				DoExplosionDamage(hitFeature, expPos, expRad, damages);
+				DoExplosionDamage(hitFeature, expPos, damageAOE, damages);
 			}
 		}
 
 		// deform the map if the explosion was above-ground
 		// (but had large enough radius to touch the ground)
 		if (altitude >= -1.0f) {
-			if (damageGround && !mapDamage->disabled && (expRad > altitude) && (damages.craterMult > 0.0f)) {
+			if (damageGround && !mapDamage->disabled && (craterAOE > altitude) && (damages.craterMult > 0.0f)) {
 				// limit the depth somewhat
-				const float craterDepth = damages.GetDefaultDamage() * (1.0f - (altitude / expRad));
-				const float damageDepth = std::min(expRad * 10.0f, craterDepth);
+				const float craterDepth = damages.GetDefaultDamage() * (1.0f - (altitude / craterAOE));
+				const float damageDepth = std::min(craterAOE * 10.0f, craterDepth);
+				const float craterStrength = (damageDepth + damages.craterBoost) * damages.craterMult;
+				const float craterRadius = craterAOE - altitude;
 
-				mapDamage->Explosion(expPos, (damageDepth + damages.craterBoost) * damages.craterMult, expRad - altitude);
+				mapDamage->Explosion(expPos, craterStrength, craterRadius);
 			}
 		}
 	}
@@ -302,10 +305,10 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 			explosionGenerator = weaponDef->explosionGenerator;
 		}
 
-		explosionGenerator->Explosion(0, expPos, damages.GetDefaultDamage(), expRad, owner, gfxMod, hitUnit, dir);
+		explosionGenerator->Explosion(0, expPos, damages.GetDefaultDamage(), damageAOE, owner, gfxMod, hitUnit, dir);
 	}
 
-	CExplosionEvent explosionEvent(expPos, damages.GetDefaultDamage(), expRad, weaponDef);
+	CExplosionEvent explosionEvent(expPos, damages.GetDefaultDamage(), damageAOE, weaponDef);
 	FireExplosionEvent(explosionEvent);
 }
 

@@ -308,7 +308,8 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 			owner,
 			hitUnit,
 			hitFeature,
-			areaOfEffect,
+			craterAreaOfEffect,
+			damageAreaOfEffect,
 			weaponDef->edgeEffectiveness,
 			weaponDef->explosionSpeed,
 			1.0f,                                             // gfxMod

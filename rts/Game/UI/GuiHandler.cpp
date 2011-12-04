@@ -3593,7 +3593,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				if (!unitdef->selfDExplosion.empty()) {
 					glColor4fv(cmdColors.rangeSelfDestruct);
 					const WeaponDef* wd = weaponDefHandler->GetWeapon(unitdef->selfDExplosion);
-					glSurfaceCircle(unit->pos, wd->areaOfEffect, 40);
+					glSurfaceCircle(unit->pos, wd->damageAreaOfEffect, 40);
 				}
 			}
 			// draw build distance for immobile builders
