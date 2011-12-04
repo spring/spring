@@ -17,6 +17,7 @@ INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 SET(gmlSources
 		"ThreadSafeContainers.cpp"
 		"gml.cpp"
+		"gml_base.cpp"
 		"speedy-tls.cpp"
 	)
 

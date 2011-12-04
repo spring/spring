@@ -40,7 +40,6 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
@@ -48,7 +47,6 @@
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/OffscreenGLContext.h"
 #include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
@@ -78,11 +76,7 @@
 #undef KeyPress
 #undef KeyRelease
 
-#ifdef USE_GML
-	#include "lib/gml/gmlsrv.h"
-	extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
-#endif
-
+#include "lib/gml/gml_base.h"
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(int, DepthBufferBits).defaultValue(24);
@@ -108,13 +102,10 @@ CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false);
 CONFIG(int, HardwareThreadCount).defaultValue(0);
-CONFIG(bool, MultiThreadShareLists).defaultValue(true);
-CONFIG(int, MultiThreadSim).defaultValue(1);
 CONFIG(std::string, name).defaultValue("UnnamedPlayer");
 
 
 ClientSetup* startsetup = NULL;
-COffscreenGLContext* SpringApp::ogc = NULL;
 
 
 /**
@@ -905,58 +896,6 @@ void SpringApp::Startup()
 	}
 }
 
-bool SpringApp::UpdateSim(CGameController *ac)
-{
-	GML_MSTMUTEX_LOCK(sim); // UpdateSim
-
-	Threading::SetSimThread(true);
-	bool ret = ac->Update();
-	Threading::SetSimThread(false);
-	return ret;
-}
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-
-int SpringApp::Sim()
-{
-	try {
-		if(gmlShareLists)
-			ogc->WorkerThreadPost();
-
-		Watchdog::ClearTimer(WDT_SIM, true);
-
-		while(gmlKeepRunning && !gmlStartSim)
-			SDL_Delay(100);
-
-		Watchdog::ClearTimer(WDT_SIM);
-
-		while(gmlKeepRunning) {
-			if(!gmlMultiThreadSim) {
-				Watchdog::ClearTimer(WDT_SIM, true);
-				while(!gmlMultiThreadSim && gmlKeepRunning)
-					SDL_Delay(200);
-			}
-			else if (activeController) {
-				Watchdog::ClearTimer(WDT_SIM);
-				gmlProcessor->ExpandAuxQueue();
-
-				if(!UpdateSim(activeController))
-					return 0;
-
-				gmlProcessor->GetQueue();
-			}
-			boost::thread::yield();
-		}
-
-		if(gmlShareLists)
-			ogc->WorkerThreadFree();
-	} CATCH_SPRING_ERRORS
-
-	return 1;
-}
-#endif
-
-
 
 /**
  * @return return code of activecontroller draw function
@@ -973,27 +912,14 @@ int SpringApp::Update()
 	if (activeController) {
 		Watchdog::ClearTimer(WDT_MAIN);
 
-		bool updateSim = true;
-#if defined(USE_GML) && GML_ENABLE_SIM
-		updateSim = !gmlStartSim || !gmlMultiThreadSim;
-#endif
-
-		if (updateSim) {
-			ret = UpdateSim(activeController);
-#if defined(USE_GML) && GML_ENABLE_SIM
-			if (!gmlStartSim && gmlMultiThreadSim && gs->frameNum > 0) {
-				gmlStartSim = true;
-			}
-#endif
+		if (!GML::SimThreadRunning()) {
+			ret = activeController->Update();
 		}
 
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");
 			ret = activeController->Draw();
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-			gmlProcessor->PumpAux();
-#endif
+			GML::PumpAux();
 		}
 	}
 
@@ -1054,27 +980,7 @@ int SpringApp::Run(int argc, char *argv[])
 	if (!Initialize())
 		return -1;
 
-#ifdef USE_GML
-	gmlShareLists = configHandler->GetBool("MultiThreadShareLists");
-	if (!gmlShareLists) {
-		gmlMaxServerThreadNum = GML_LOAD_THREAD_NUM;
-		gmlNoGLThreadNum = GML_SIM_THREAD_NUM;
-	}
-	gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
-	gmlThreadCount=GML_CPU_COUNT;
-
-	gmlProcessor = new gmlClientServer<void, int, CUnit*>;
-#	if GML_ENABLE_SIM
-	gmlMultiThreadSim = configHandler->GetInt("MultiThreadSim");
-
-	gmlKeepRunning = true;
-	gmlStartSim = false;
-
-	if (gmlShareLists)
-		ogc = new COffscreenGLContext();
-	gmlProcessor->AuxWork(&SpringApp::Simcb, this); // start sim thread
-#	endif
-#endif
+	GML::Init();
 
 	while (!gu->globalQuit) {
 		ResetScreenSaverTimeout();
@@ -1110,19 +1016,7 @@ void SpringApp::Shutdown()
 
 #define DeleteAndNull(x) delete x; x = NULL;
 
-#ifdef USE_GML
-	if(gmlProcessor) {
-#if GML_ENABLE_SIM
-		gmlKeepRunning = false; // wait for sim to finish
-		while(!gmlProcessor->PumpAux())
-			boost::thread::yield();
-		if(gmlShareLists)
-			DeleteAndNull(ogc);
-#endif
-		DeleteAndNull(gmlProcessor);
-	}
-#endif
-
+	GML::Exit();
 	DeleteAndNull(pregame);
 	DeleteAndNull(game);
 	DeleteAndNull(gameServer);
