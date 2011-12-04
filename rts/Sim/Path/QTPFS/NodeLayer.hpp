@@ -14,6 +14,12 @@ namespace QTPFS {
 	struct INode;
 	struct NodeLayer {
 	public:
+		NodeLayer()
+			: numLeafNodes(0)
+			, layerNumber(0)
+			, xsize(0)
+			, zsize(0)
+			{}
 		void Init(unsigned int n);
 		bool Update(const SRectangle& r, const MoveData* md, const CMoveMath* mm);
 		void Clear();
