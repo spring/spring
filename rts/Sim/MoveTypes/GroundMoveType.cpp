@@ -239,7 +239,6 @@ bool CGroundMoveType::Update()
 
 		// note: HandleObjectCollisions() may have negated the position set
 		// by UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
-		owner->UpdateMidPos();
 		oldPos = owner->pos;
 
 		// too many false negatives: speed is unreliable if stuck behind an obstacle
