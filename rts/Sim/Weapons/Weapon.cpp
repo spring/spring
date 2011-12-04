@@ -67,7 +67,8 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(relWeaponMuzzlePos),
 	CR_MEMBER(muzzleFlareSize),
 	CR_MEMBER(lastTargetRetry),
-	CR_MEMBER(areaOfEffect),
+	CR_MEMBER(craterAreaOfEffect),
+	CR_MEMBER(damageAreaOfEffect),
 	CR_MEMBER(badTargetCategory),
 	CR_MEMBER(onlyTargetCategory),
 	CR_MEMBER(incomingProjectiles),
@@ -110,7 +111,8 @@ CWeapon::CWeapon(CUnit* owner):
 	weaponDef(0),
 	weaponNum(-1),
 	haveUserTarget(false),
-	areaOfEffect(1),
+	craterAreaOfEffect(1.0f),
+	damageAreaOfEffect(1.0f),
 	relWeaponPos(0,1,0),
 	weaponPos(0,0,0),
 	relWeaponMuzzlePos(0,1,0),
@@ -1047,7 +1049,7 @@ void CWeapon::Init(void)
 		owner->maxRange = range;
 	}
 
-	muzzleFlareSize = std::min(areaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
+	muzzleFlareSize = std::min(damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
 
 	if (weaponDef->interceptor)
 		interceptHandler.AddInterceptorWeapon(this);

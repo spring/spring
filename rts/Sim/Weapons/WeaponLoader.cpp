@@ -135,7 +135,8 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->heightMod = weaponDef->heightmod;
 	weapon->projectileSpeed = weaponDef->projectilespeed;
 
-	weapon->areaOfEffect = weaponDef->areaOfEffect;
+	weapon->damageAreaOfEffect = weaponDef->damageAreaOfEffect;
+	weapon->craterAreaOfEffect = weaponDef->craterAreaOfEffect;
 	weapon->accuracy = weaponDef->accuracy;
 	weapon->sprayAngle = weaponDef->sprayAngle;
 

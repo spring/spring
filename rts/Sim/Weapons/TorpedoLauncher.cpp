@@ -67,7 +67,7 @@ void CTorpedoLauncher::FireImpl()
 		startSpeed = weaponDir * weaponDef->startvelocity;
 	}
 
-	new CTorpedoProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect, projectileSpeed,
+	new CTorpedoProjectile(weaponMuzzlePos, startSpeed, owner, damageAreaOfEffect, projectileSpeed,
 		tracking, weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime,
 		targetUnit, weaponDef);
 }

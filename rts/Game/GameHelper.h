@@ -41,7 +41,8 @@ public:
 		CUnit* hitUnit;
 		CFeature* hitFeature;
 
-		float areaOfEffect; // radius
+		float craterAreaOfEffect;
+		float damageAreaOfEffect; // radius
 		float edgeEffectiveness;
 		float explosionSpeed;
 		float gfxMod;
