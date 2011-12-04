@@ -62,7 +62,13 @@ namespace QTPFS {
 	//     with time-sliced execution, {src,tgt,cur,nxt}Node can become
 	//     dangling
 	struct IPathSearch {
-		IPathSearch(unsigned int pathSearchType): searchType(pathSearchType) {}
+		IPathSearch(unsigned int pathSearchType)
+			: searchID(0)
+			, searchTeam(0)
+			, searchType(pathSearchType)
+			, searchState(0)
+			, searchMagic(0)
+			{}
 		virtual ~IPathSearch() {}
 
 		virtual void Initialize(
@@ -98,7 +104,19 @@ namespace QTPFS {
 
 	struct PathSearch: public IPathSearch {
 	public:
-		PathSearch(unsigned int pathSearchType): IPathSearch(pathSearchType) {}
+		PathSearch(unsigned int pathSearchType)
+			: IPathSearch(pathSearchType)
+			, nodeLayer(NULL)
+			, pathCache(NULL)
+			, srcNode(NULL)
+			, tgtNode(NULL)
+			, curNode(NULL)
+			, nxtNode(NULL)
+			, searchExec(NULL)
+			, haveOpenNode(false)
+			, haveFullPath(false)
+			, hCostMult(0.0f)
+			{}
 		~PathSearch() { while (!openNodes.empty()) { openNodes.pop(); } }
 
 		void Initialize(
