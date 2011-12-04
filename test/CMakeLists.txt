@@ -15,7 +15,7 @@ Else  (NOT Boost_FOUND)
 	SET(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
 	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR})
 
-	add_definitions(-DBOOST_TEST_DYN_LINK -DSYNCCHECK)
+	add_definitions(-DBOOST_TEST_DYN_LINK -DSYNCCHECK -DUNIT_TEST)
 
 	Set(test_Log_sources
 			"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"
