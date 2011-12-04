@@ -2439,8 +2439,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			other.buildFacing = unit->buildFacing;
 		} else {
 			Command c = uh->GetBuildCommand(cameraPos, mouseDir);
-			if (c.GetID() < 0) {
-				assert(c.params.size() == 4);
+			if (c.GetID() < 0 && c.params.size() == 4) {
 				other.pos = float3(c.params[0],c.params[1], c.params[2]);
 				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 				other.buildFacing = int(c.params[3]);
