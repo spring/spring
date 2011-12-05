@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+// NOTE structs should not be empty (C90), so add a useless member if needed
+
 /**
  * aliases to keep event-names (though not
  * ID's) consistent, without breaking ABI
