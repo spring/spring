@@ -1582,7 +1582,7 @@ void CUnit::DependentDied(CObject* o)
 	if (o == transporter)  { transporter  = NULL; }
 	if (o == lastAttacker) { lastAttacker = NULL; }
 
-	incomingMissiles.remove((CMissileProjectile*) o);
+	incomingMissiles.remove(static_cast<CMissileProjectile*>(o));
 
 	CSolidObject::DependentDied(o);
 }

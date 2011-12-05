@@ -346,7 +346,7 @@ void CBuilder::Update()
 						}
 						u->health *= 0.05f;
 
-						CBuilderCAI *cai = (CBuilderCAI *)commandAI;
+						CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
 						for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
 							CBuilder *bld = (CBuilder *)*it;
 							if (bld->commandAI->commandQue.empty())
@@ -444,7 +444,7 @@ void CBuilder::SetRepairTarget(CUnit* target)
 
 void CBuilder::SetReclaimTarget(CSolidObject* target)
 {
-	if (dynamic_cast<CFeature*>(target) && !((CFeature*) target)->def->reclaimable) {
+	if (dynamic_cast<CFeature*>(target) && !static_cast<CFeature*>(target)->def->reclaimable) {
 		return;
 	}
 
