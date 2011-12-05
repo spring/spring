@@ -149,8 +149,9 @@ public:
 	int lastSimFrame;
 
 	spring_time frameStartTime;
-	spring_time lastUpdate;
-	spring_time lastMoveUpdate;
+	spring_time lastUpdateTime;
+	spring_time lastSimFrameTime;
+	spring_time lastDrawFrameUpdate;
 	spring_time lastModGameTimeMeasure;
 
 	spring_time lastUpdateRaw;
