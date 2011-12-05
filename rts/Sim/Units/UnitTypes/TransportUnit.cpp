@@ -191,8 +191,8 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 					mt->StartFlying();
 				}
 
-				((AMoveType*) transportee->moveType)->SlowUpdate();
-				(             transportee->moveType)->LeaveTransport();
+				transportee->moveType->SlowUpdate();
+				transportee->moveType->LeaveTransport();
 
 				// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
 				if (unitDef->canfly && transportee->unitDef->canmove) {
@@ -375,8 +375,8 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			// de-stun detaching units in case we are not a fire-platform
 			unit->stunned = (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
 
-			((AMoveType*) unit->moveType)->SlowUpdate();
-			(             unit->moveType)->LeaveTransport();
+			unit->moveType->SlowUpdate();
+			unit->moveType->LeaveTransport();
 
 			if (CBuilding* building = dynamic_cast<CBuilding*>(unit))
 				building->ForcedMove(building->pos, building->buildFacing);

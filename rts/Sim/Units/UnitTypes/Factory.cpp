@@ -52,7 +52,8 @@ CFactory::CFactory():
 	curBuildDef(NULL),
 	curBuild(NULL),
 	nextBuildUnitDefID(-1),
-	lastBuildUpdateFrame(-1000)
+	lastBuildUpdateFrame(-1000),
+	finishedBuildFunc(NULL)
 {
 }
 
@@ -222,7 +223,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	}
 
 	const CCommandAI* bcai = buildee->commandAI;
-	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) && ((CMobileCAI*)bcai)->unimportantMove);
+	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) && static_cast<const CMobileCAI*>(bcai)->unimportantMove);
 
 	if (assignOrders) {
 		AssignBuildeeOrders(buildee);
@@ -320,7 +321,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 }
 
 void CFactory::AssignBuildeeOrders(CUnit* unit) {
-	const CFactoryCAI* facAI = (CFactoryCAI*) commandAI;
+	const CFactoryCAI* facAI = static_cast<CFactoryCAI*>(commandAI);
 	const CCommandQueue& newUnitCmds = facAI->newUnitCommands;
 
 	if (newUnitCmds.empty()) {
