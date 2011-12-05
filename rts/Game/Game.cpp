@@ -192,8 +192,9 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(thisFps),
 	CR_MEMBER(lastSimFrame),
 //	CR_MEMBER(frameStartTime),
-//	CR_MEMBER(lastUpdate),
-//	CR_MEMBER(lastMoveUpdate),
+//	CR_MEMBER(lastUpdateTime),
+//	CR_MEMBER(lastSimFrameTime),
+//	CR_MEMBER(lastDrawFrameUpdate),
 //	CR_MEMBER(lastModGameTimeMeasure),
 //	CR_MEMBER(lastUpdateRaw),
 //	CR_MEMBER(updateDeltaSeconds),
@@ -243,8 +244,10 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, defsParser(NULL)
 	, thisFps(0)
 	, lastSimFrame(-1)
-	, lastUpdate(spring_gettime())
-	, lastMoveUpdate(spring_gettime())
+	, frameStartTime(spring_gettime())
+	, lastUpdateTime(spring_gettime())
+	, lastSimFrameTime(spring_gettime())
+	, lastDrawFrameUpdate(spring_gettime())
 	, lastModGameTimeMeasure(spring_gettime())
 	, lastUpdateRaw(spring_gettime())
 	, updateDeltaSeconds(0.0f)
@@ -702,8 +705,8 @@ void CGame::LoadFinalize()
 
 	lastframe = spring_gettime();
 	lastModGameTimeMeasure = lastframe;
-	lastUpdate = lastframe;
-	lastMoveUpdate = lastframe;
+	lastSimFrameTime = lastframe;
+	lastDrawFrameUpdate = lastframe;
 	lastUpdateRaw = lastframe;
 	lastCpuUsageTime = gu->gameTime;
 	updateDeltaSeconds = 0.0f;
@@ -829,14 +832,14 @@ bool CGame::Update()
 	good_fpu_control_registers("CGame::Update");
 
 	const spring_time timeNow = spring_gettime();
-	const float diffsecs = spring_tomsecs(spring_difftime(timeNow, frameStartTime)) / 1000.0f;
+	const float diffsecs = spring_tomsecs(spring_difftime(timeNow, lastUpdateTime)) / 1000.0f;
 
 	if (diffsecs >= 1.0f) { // do once every second
-		//frameStartTime = timeNow;
+		lastUpdateTime = timeNow;
 
 		// Some netcode stuff
 		if (!gameServer) {
-			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
+			consumeSpeed = GAME_SPEED * gs->speedFactor + leastQue - 2;
 			leastQue = 10000;
 			timeLeft = 0.0f;
 		}
@@ -898,6 +901,7 @@ bool CGame::UpdateUnsynced()
 		if (diff >= 500) // render at 2 FPS
 			return true;
 		skipLastDraw = currentTime;
+
 #if defined(USE_GML) && GML_ENABLE_SIM
 		if (!gmlMultiThreadSim)
 #endif
@@ -912,13 +916,14 @@ bool CGame::UpdateUnsynced()
 
 	updateDeltaSeconds = 0.001f * spring_tomsecs(currentTime - lastUpdateRaw);
 	lastUpdateRaw = spring_gettime();
+
 	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
 		globalRendering->lastFrameStart = spring_gettime();
 		globalRendering->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
-		globalRendering->timeOffset = spring_tomsecs(globalRendering->lastFrameStart - lastUpdate) * globalRendering->weightedSpeedFactor;
+		globalRendering->timeOffset = spring_tomsecs(globalRendering->lastFrameStart - lastSimFrameTime) * globalRendering->weightedSpeedFactor;
 	} else  {
 		globalRendering->timeOffset = 0;
-		lastUpdate = spring_gettime();
+		lastSimFrameTime = spring_gettime();
 	}
 
 	const float diffsecs = spring_tomsecs(spring_difftime(currentTime, frameStartTime)) / 1000.0f;
@@ -1262,8 +1267,8 @@ bool CGame::Draw() {
 	glLoadIdentity();
 
 	const spring_time start = spring_gettime();
-	globalRendering->lastFrameTime = spring_tomsecs(start - lastMoveUpdate) / 1000.f;
-	lastMoveUpdate = start;
+	globalRendering->lastFrameTime = spring_tomsecs(start - lastDrawFrameUpdate) / 1000.f;
+	lastDrawFrameUpdate = start;
 
 	videoCapturing->RenderFrame();
 
@@ -1470,7 +1475,7 @@ void CGame::SimFrame() {
 	teamHandler->GameFrame(gs->frameNum);
 	playerHandler->GameFrame(gs->frameNum);
 
-	lastUpdate = spring_gettime();
+	lastSimFrameTime = spring_gettime();
 
 	DumpState(-1, -1, 1);
 }
