@@ -32,7 +32,7 @@ inline void GetGLdoubleMatrix(const CMatrix44f& m, GLdouble* dm)
 
 
 CCamera::CCamera()
-	: pos(2000.0f, 70.0f, 1800.0f)
+	: pos(0.0f, 0.0f, 0.0f)
 	, rot(0.0f, 0.0f, 0.0f)
 	, forward(1.0f, 0.0f, 0.0f)
 	, up(UpVector)
@@ -45,6 +45,11 @@ CCamera::CCamera()
 	, tanHalfFov(0.0f)
 	, lppScale(0.0f)
 {
+	if (gs) {
+		// center map
+		pos = float3(gs->mapx * 0.5f * SQUARE_SIZE, 1000.f, gs->mapy * 0.5f * SQUARE_SIZE);
+	}
+
 	memset(viewport, 0, 4 * sizeof(int));
 
 	// stuff that will not change can be initialised here,
