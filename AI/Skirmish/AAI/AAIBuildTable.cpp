@@ -3922,8 +3922,13 @@ int AAIBuildTable::DetermineBetterUnit(int unit1, int unit2, float ground_eff, f
 	rating2 = 0.1f + ground_eff * units_static[unit2].efficiency[0] +  air_eff * units_static[unit2].efficiency[1] +  hover_eff * units_static[unit2].efficiency[2] +  sea_eff * units_static[unit2].efficiency[3] + submarine_eff * units_static[unit2].efficiency[4];
 	rating2 /= units_static[unit2].cost;
 
-	if(cost * rating1/rating2 + range * units_static[unit1].range / units_static[unit2].range + speed * unitList[unit1-1]->speed / unitList[unit2-1]->speed  > 0)
+	if (((rating2 == 0.0f) || (units_static[unit2].range == 0.0f) || (unitList[unit2 - 1]->speed == 0.0f))
+			|| ((cost * rating1 / rating2)
+				+ (range * units_static[unit1].range / units_static[unit2].range)
+				+ (speed * unitList[unit1 - 1]->speed / unitList[unit2 - 1]->speed)
+				> 0.0f)) {
 		return unit1;
-	else
+	} else {
 		return unit2;
+	}
 }
