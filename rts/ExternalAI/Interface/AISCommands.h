@@ -13,6 +13,8 @@
 extern "C" {
 #endif
 
+// NOTE structs should not be empty (C90), so add a useless member if needed
+
 #define COMMAND_TO_ID_ENGINE -1
 
 /**
@@ -461,7 +463,8 @@ struct SStartPathDrawerCommand {
 }; //$ COMMAND_DRAWER_PATH_START Map_Drawer_PathDrawer_start
 
 struct SFinishPathDrawerCommand {
-// TODO: FIXME: commands should not be empty, add a useless var if needed
+	// NOTE structs should not be empty (C90), so we add a useless member
+	bool iAmUseless;
 }; //$ COMMAND_DRAWER_PATH_FINISH Map_Drawer_PathDrawer_finish
 
 struct SDrawLinePathDrawerCommand {
