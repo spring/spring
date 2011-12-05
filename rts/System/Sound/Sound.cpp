@@ -386,8 +386,8 @@ void CSound::StartThread(int maxSounds)
 
 	while (!soundThreadQuit) {
 		boost::this_thread::sleep(boost::posix_time::millisec(50)); //! 20Hz
-		Update();
 		Watchdog::ClearTimer(WDT_AUDIO);
+		Update();
 	}
 
 	Watchdog::DeregisterThread(WDT_AUDIO);
