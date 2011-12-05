@@ -110,10 +110,10 @@ CGlobalRendering::CGlobalRendering()
 
 void CGlobalRendering::PostInit() {
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
-	haveARB = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
-	// not enough: we want OpenGL 2.0 core functions
-	// haveGLSL = GL_ARB_vertex_shader && GL_ARB_fragment_shader;
-	haveGLSL = !!GLEW_VERSION_2_0;
+	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
+	haveGLSL  = (!std::string((const char*)glGetString(GL_SHADING_LANGUAGE_VERSION)).empty());
+	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
+	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
 	{
 		const char* glVendor = (const char*) glGetString(GL_VENDOR);
