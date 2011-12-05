@@ -154,7 +154,6 @@ public:
 	spring_time lastDrawFrameUpdate;
 	spring_time lastModGameTimeMeasure;
 
-	spring_time lastUpdateRaw;
 	float updateDeltaSeconds;
 
 	float lastCpuUsageTime;
