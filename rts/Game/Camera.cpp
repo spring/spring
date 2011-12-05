@@ -152,7 +152,7 @@ void CCamera::ComputeViewRange()
 	float wantedViewRange = CGlobalRendering::MAX_VIEW_RANGE;
 
 	// Camera height dependent (i.e. TAB-view)
-	wantedViewRange = std::max(wantedViewRange, (pos.y - readmap->currMinHeight) * 2.4f);
+	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, readmap->currMinHeight)) * 2.4f);
 
 	// View angle dependent (i.e. FPS-view)
 	const float azimuthCos       = forward.dot(UpVector);
