@@ -3,6 +3,8 @@
 #include "System/mmgr.h"
 
 #include "CameraController.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 
 
@@ -19,6 +21,7 @@ CCameraController::CCameraController()
 	fov = 45.0f;
 	pixelSize = 1.0f;
 	enabled = true;
+	pos = float3(gs->mapx * 0.5f * SQUARE_SIZE, 1000.f, gs->mapy * 0.5f * SQUARE_SIZE); // center map
 }
 
 
