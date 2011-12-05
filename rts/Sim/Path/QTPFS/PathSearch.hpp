@@ -36,18 +36,18 @@ namespace QTPFS {
 		};
 
 		struct Execution {
-			Execution(unsigned int f): frame(f) {}
+			Execution(unsigned int f): searchFrame(f) {}
 			~Execution() { iterations.clear(); }
 
 			void AddIteration(const Iteration& iter) { iterations.push_back(iter); }
 			const std::list<Iteration>& GetIterations() const { return iterations; }
 
-			unsigned int GetFrame() const { return frame; }
+			unsigned int GetFrame() const { return searchFrame; }
 		private:
 			std::list<Iteration> iterations;
 
 			// sim-frame at which the search was executed
-			unsigned int frame;
+			unsigned int searchFrame;
 		};
 	};
 
@@ -117,7 +117,7 @@ namespace QTPFS {
 			, haveFullPath(false)
 			, hCostMult(0.0f)
 			{}
-		~PathSearch() { while (!openNodes.empty()) { openNodes.pop(); } }
+		~PathSearch() { openNodes.reset(); }
 
 		void Initialize(
 			NodeLayer* layer,
