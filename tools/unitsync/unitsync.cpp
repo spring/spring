@@ -317,8 +317,7 @@ EXPORT(int) Init(bool isServer, int id)
 		log_filter_section_setMinLevel(LOG_SECTION_UNITSYNC, LOG_LEVEL_INFO);
 #endif
 		if (archiveScanner || vfsHandler){
-			LOG("Unitsync is already initialized, please call UnInit first");
-			UnInit(); //FIXME: add function that allows to scan for new files
+			FileSystemInitializer::Cleanup(); //reinitialize filesystem to detect new files
 		}
 		if (!configHandler) {
 			ConfigHandler::Instantiate(); // use the default config file
