@@ -949,7 +949,7 @@ bool CGame::UpdateUnsynced()
 	const bool newSimFrame = (lastSimFrame != gs->frameNum);
 	lastSimFrame = gs->frameNum;
 
-	//! set camera
+	// set camera
 	camHandler->UpdateCam();
 	camera->Update();
 
@@ -1022,16 +1022,8 @@ bool CGame::UpdateUnsynced()
 		LOG_L(L_ERROR, "===>>>  Please report this error to the forum or mantis with your infolog.txt");
 	}
 
-	// send out new console lines
-	if (infoConsole) {
-		vector<CInfoConsole::RawLine> lines;
-		infoConsole->GetNewRawLines(lines);
-		for (unsigned int i = 0; i < lines.size(); i++) {
-			const CInfoConsole::RawLine& rawLine = lines[i];
-			eventHandler.AddConsoleLine(rawLine.text, rawLine.section, rawLine.level);
-		}
-	}
-
+	assert(infoConsole);
+	infoConsole->PushNewLinesToEventHandler();
 
 	configHandler->Update();
 	mouse->Update();
@@ -1079,7 +1071,6 @@ bool CGame::Draw() {
 		return true;
 	}
 
-	
 	CTeamHighlight::Enable(spring_tomsecs(currentTime));
 
 	if (unitTracker.Enabled()) {
