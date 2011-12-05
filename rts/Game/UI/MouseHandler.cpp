@@ -100,6 +100,10 @@ CMouseHandler::CMouseHandler()
 	, scrollx(0.0f)
 	, scrolly(0.0f)
 {
+	const int2 mousepos = IMouseInput::GetInstance()->GetPos();
+	lastx = mousepos.x;
+	lasty = mousepos.y;
+
 	for (int a = 1; a <= NUM_BUTTONS; a++) {
 		buttons[a].pressed = false;
 		buttons[a].lastRelease = -20;
