@@ -898,7 +898,7 @@ bool CGame::UpdateUnsynced()
 	if (skipping) {
 		const float diff =  spring_tomsecs(currentTime - skipLastDraw);
 
-		if (diff >= 500) // render at 2 FPS
+		if (diff < 500) // render at 2 FPS
 			return true;
 		skipLastDraw = currentTime;
 
