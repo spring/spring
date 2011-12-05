@@ -875,25 +875,8 @@ bool CGame::Update()
 }
 
 
-#if defined(USE_GML) && GML_ENABLE_DRAW
-bool CGame::Draw() {
-	gmlProcessor->Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
-	return true;
-}
-#else
-bool CGame::DrawMT() {
-	return true;
-}
-#endif
-
-
-#if defined(USE_GML) && GML_ENABLE_DRAW
-bool CGame::DrawMT() {
-#else
-bool CGame::Draw() {
-#endif
-	GML_STDMUTEX_LOCK(draw); //Draw
-
+bool CGame::UpdateUnsynced()
+{
 	// timings and frame interpolation
 	const spring_time currentTime = spring_gettime();
 
@@ -908,7 +891,7 @@ bool CGame::Draw() {
 		totalGameTime += dif;
 	}
 
-	// FastForward (=skip) in demo?
+	// FastForwarding
 	if (skipping) {
 		const float diff =  spring_tomsecs(currentTime - skipLastDraw);
 
@@ -962,6 +945,8 @@ bool CGame::Draw() {
 	}
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
+	const bool newSimFrame = (lastSimFrame != gs->frameNum);
+	lastSimFrame = gs->frameNum;
 
 	//! set camera
 	camHandler->UpdateCam();
@@ -969,27 +954,35 @@ bool CGame::Draw() {
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	if (doDrawWorld) {
+		// do as early as possible (give OpenGL time to upload textures etc.)
 		{
 			SCOPED_TIMER("GroundDrawer::Update");
 			gd->Update();
 		}
 
-		if (lastSimFrame != gs->frameNum && !skipping) {
+		if (newSimFrame && !skipping) { //FIXME why not when skipping?
 			projectileDrawer->UpdateTextures();
 			sky->Update();
 			sky->GetLight()->Update();
 			water->Update();
 		}
+
+		CNamedTextures::Update();
+		texturehandlerS3O->Update();
+		modelParser->Update();
+		worldDrawer->Update();
 	}
 
-
-	if (lastSimFrame != gs->frameNum) {
+	if (newSimFrame) {
 		CInputReceiver::CollectGarbage();
+		
+		if (!(gs->frameNum & 31)) {
+			oscStatsSender->Update(gs->frameNum);
+		}
 	}
 
 	//! always update ExtraTexture & SoundListener with <=30Hz (even when paused)
 	if (!skipping) { //FIXME why not when skipping?
-		bool newSimFrame = (lastSimFrame != gs->frameNum);
 		if (newSimFrame || gs->paused) {
 			static spring_time lastUpdate = spring_gettime();
 			const float deltaSec = spring_tomsecs(currentTime - lastUpdate) / 1000.f;
@@ -1008,12 +1001,10 @@ bool CGame::Draw() {
 		}
 	}
 
-	lastSimFrame = gs->frameNum;
-
 	if (!skipping)
 		UpdateUI(true);
 
-	SetDrawMode(gameNormalDraw);
+	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
 	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteUIEventBatch(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
@@ -1040,21 +1031,46 @@ bool CGame::Draw() {
 		}
 	}
 
-	if (!(gs->frameNum & 31)) {
-		oscStatsSender->Update(gs->frameNum);
-	}
 
 	configHandler->Update();
-	CNamedTextures::Update();
-	texturehandlerS3O->Update();
-	modelParser->Update();
-	worldDrawer->Update();
 	mouse->Update();
 	mouse->UpdateCursors();
 	guihandler->Update();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();
+
+	return false;
+}
+
+
+#if defined(USE_GML) && GML_ENABLE_DRAW
+bool CGame::Draw() {
+	gmlProcessor->Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
+	return true;
+}
+#else
+bool CGame::DrawMT() {
+	return true;
+}
+#endif
+
+
+#if defined(USE_GML) && GML_ENABLE_DRAW
+bool CGame::DrawMT() {
+#else
+bool CGame::Draw() {
+#endif
+	GML_STDMUTEX_LOCK(draw); //Draw
+
+	if (UpdateUnsynced())
+		return true;
+
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+
+	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
+	const spring_time currentTime = spring_gettime();
+
 	eventHandler.DrawGenesis();
 
 	if (!globalRendering->active) {
