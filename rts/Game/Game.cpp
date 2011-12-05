@@ -824,43 +824,17 @@ int CGame::KeyReleased(unsigned short k)
 
 bool CGame::Update()
 {
+	//TODO move as much as possible unsynced code out of this function
+
 	good_fpu_control_registers("CGame::Update");
 
 	const spring_time timeNow = spring_gettime();
-
-	const float difTime = spring_tomsecs(timeNow - lastModGameTimeMeasure);
-	const float dif = skipping ? 0.010f : difTime * 0.001f;
-	lastModGameTimeMeasure = timeNow;
-
-	if (!gs->paused) {
-		gu->modGameTime += dif * gs->speedFactor;
-	}
-
-	gu->gameTime += dif;
-
-	if (playing && !gameOver) {
-		totalGameTime += dif;
-	}
-
-	const spring_time now = spring_gettime();
-	const float diffsecs = spring_tomsecs(spring_difftime(now, frameStartTime)) / 1000.0f;
+	const float diffsecs = spring_tomsecs(spring_difftime(timeNow, frameStartTime)) / 1000.0f;
 
 	if (diffsecs >= 1.0f) { // do once every second
-		globalRendering->FPS = thisFps / diffsecs;
-		thisFps = 0;
+		//frameStartTime = timeNow;
 
-		frameStartTime = now;
-#if defined(USE_GML) && GML_ENABLE_SIM
-		extern int backupSize;
-		luaExportSize = backupSize;
-		backupSize = 0;
-		luaLockTime = (int)GML_LOCK_TIME();
-		float amount = (showMTInfo == MT_LUA_DUAL_EXPORT) ? (float)luaExportSize / 1000.0f : (float)luaLockTime / 10.0f;
-		if (amount >= 0.1f) {
-			if ((mtInfoCtrl = std::min(mtInfoCtrl + 1, 9)) == 5) mtInfoCtrl = 9;
-		}
-		else if ((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 4) mtInfoCtrl = 0;
-#endif
+		// Some netcode stuff
 		if (!gameServer) {
 			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
 			leastQue = 10000;
@@ -868,6 +842,7 @@ bool CGame::Update()
 		}
 	}
 
+	//TODO: why? it already gets called with `true` in ::Draw()?
 	if (!skipping)
 	{
 		UpdateUI(false);
@@ -875,12 +850,10 @@ bool CGame::Update()
 
 	net->Update();
 
+	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe
 	if (videoCapturing->IsCapturing() && playing && gameServer) {
 		gameServer->CreateNewFrame(false, true);
 	}
-
-	if (gs->frameNum == 0 || gs->paused)
-		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
 
 	ClientReadNet(); // this can issue new SimFrames()
 
@@ -894,19 +867,9 @@ bool CGame::Update()
 		GameEnd(std::vector<unsigned char>());
 	}
 
-	// send out new console lines
-	if (infoConsole) {
-		vector<CInfoConsole::RawLine> lines;
-		infoConsole->GetNewRawLines(lines);
-		for (unsigned int i = 0; i < lines.size(); i++) {
-			const CInfoConsole::RawLine& rawLine = lines[i];
-			eventHandler.AddConsoleLine(rawLine.text, rawLine.section, rawLine.level);
-		}
-	}
-
-	if (!(gs->frameNum & 31)) {
-		oscStatsSender->Update(gs->frameNum);
-	}
+	//TODO move this to ::Draw()?
+	if (gs->frameNum == 0 || gs->paused)
+		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
 
 	return true;
 }
@@ -934,6 +897,18 @@ bool CGame::Draw() {
 	// timings and frame interpolation
 	const spring_time currentTime = spring_gettime();
 
+	const float difTime = spring_tomsecs(currentTime - lastModGameTimeMeasure);
+	const float dif = skipping ? 0.010f : difTime * 0.001f;
+	lastModGameTimeMeasure = currentTime;
+
+	// Update game times
+	gu->gameTime += dif;
+	gu->modGameTime += (gs->paused) ? 0.0f : dif * gs->speedFactor;
+	if (playing && !gameOver) {
+		totalGameTime += dif;
+	}
+
+	// FastForward (=skip) in demo?
 	if (skipping) {
 		const float diff =  spring_tomsecs(currentTime - skipLastDraw);
 
@@ -959,10 +934,32 @@ bool CGame::Draw() {
 		globalRendering->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
 		globalRendering->timeOffset = spring_tomsecs(globalRendering->lastFrameStart - lastUpdate) * globalRendering->weightedSpeedFactor;
 	} else  {
-		globalRendering->timeOffset=0;
+		globalRendering->timeOffset = 0;
 		lastUpdate = spring_gettime();
 	}
 
+	const float diffsecs = spring_tomsecs(spring_difftime(currentTime, frameStartTime)) / 1000.0f;
+	// do once every second
+	if (diffsecs >= 1.0f) {
+		frameStartTime = currentTime;
+
+		// Update FPS
+		globalRendering->FPS = thisFps / diffsecs;
+		thisFps = 0;
+
+#if defined(USE_GML) && GML_ENABLE_SIM
+		// Update Lua lock time warning
+		extern int backupSize;
+		luaExportSize = backupSize;
+		backupSize = 0;
+		luaLockTime = (int)GML_LOCK_TIME();
+		float amount = (showMTInfo == MT_LUA_DUAL_EXPORT) ? luaExportSize / 1000.0f : luaLockTime / 10.0f;
+		if (amount >= 0.1f) {
+			if ((mtInfoCtrl = std::min(mtInfoCtrl + 1, 9)) == 5) mtInfoCtrl = 9;
+		}
+		else if ((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 4) mtInfoCtrl = 0;
+#endif
+	}
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 
@@ -991,7 +988,7 @@ bool CGame::Draw() {
 	}
 
 	//! always update ExtraTexture & SoundListener with <=30Hz (even when paused)
-	if (!skipping) {
+	if (!skipping) { //FIXME why not when skipping?
 		bool newSimFrame = (lastSimFrame != gs->frameNum);
 		if (newSimFrame || gs->paused) {
 			static spring_time lastUpdate = spring_gettime();
@@ -1018,7 +1015,7 @@ bool CGame::Draw() {
 
 	SetDrawMode(gameNormalDraw);
 
- 	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteUIEventBatch(); }
+	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteUIEventBatch(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
 
@@ -1031,6 +1028,20 @@ bool CGame::Draw() {
 		guihandler->PushLayoutCommand("disable");
 		LOG_L(L_ERROR, "Type '/luaui reload' in the chat to re-enable LuaUI.");
 		LOG_L(L_ERROR, "===>>>  Please report this error to the forum or mantis with your infolog.txt");
+	}
+
+	// send out new console lines
+	if (infoConsole) {
+		vector<CInfoConsole::RawLine> lines;
+		infoConsole->GetNewRawLines(lines);
+		for (unsigned int i = 0; i < lines.size(); i++) {
+			const CInfoConsole::RawLine& rawLine = lines[i];
+			eventHandler.AddConsoleLine(rawLine.text, rawLine.section, rawLine.level);
+		}
+	}
+
+	if (!(gs->frameNum & 31)) {
+		oscStatsSender->Update(gs->frameNum);
 	}
 
 	configHandler->Update();
@@ -1047,7 +1058,7 @@ bool CGame::Draw() {
 	eventHandler.DrawGenesis();
 
 	if (!globalRendering->active) {
-		SDL_Delay(10); // milliseconds
+		spring_sleep(spring_msecs(10));
 		return true;
 	}
 
