@@ -179,7 +179,15 @@ void CGlobalRendering::PostInit() {
 	}
 
 	// print info
-	LOG("GL info: FBO=%i NPOT=%i 24bitDepth=%i ATiHacks=%i", FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers, atiHacks);
+	LOG(
+		"GL info:\n"
+		"\thaveARB: %i, haveGLSL: %i, ATI hacks: %i\n"
+		"\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i\n"
+		"\tmaximum texture size: %i, compress MIP-map textures: %i",
+		haveARB, haveGLSL, atiHacks,
+		FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers,
+		maxTextureSize, compressTextures
+	);
 }
 
 
