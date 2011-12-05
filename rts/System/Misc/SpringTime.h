@@ -87,6 +87,7 @@
 #endif
 
 #define spring_difftime(now, before) (now - before)
+#define spring_diffsecs(now, before) (spring_tomsecs(now - before) * 0.001f)
 
 #endif // SPRINGTIME_H
 

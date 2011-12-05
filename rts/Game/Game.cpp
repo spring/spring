@@ -196,7 +196,6 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(lastSimFrameTime),
 //	CR_MEMBER(lastDrawFrameUpdate),
 //	CR_MEMBER(lastModGameTimeMeasure),
-//	CR_MEMBER(lastUpdateRaw),
 //	CR_MEMBER(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
 	CR_MEMBER(userInputPrefix),
@@ -249,7 +248,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, lastSimFrameTime(spring_gettime())
 	, lastDrawFrameUpdate(spring_gettime())
 	, lastModGameTimeMeasure(spring_gettime())
-	, lastUpdateRaw(spring_gettime())
 	, updateDeltaSeconds(0.0f)
 	, lastCpuUsageTime(0.0f)
 	, totalGameTime(0)
@@ -707,7 +705,6 @@ void CGame::LoadFinalize()
 	lastModGameTimeMeasure = lastframe;
 	lastSimFrameTime = lastframe;
 	lastDrawFrameUpdate = lastframe;
-	lastUpdateRaw = lastframe;
 	lastCpuUsageTime = gu->gameTime;
 	updateDeltaSeconds = 0.0f;
 
@@ -893,10 +890,11 @@ bool CGame::UpdateUnsynced()
 	if (playing && !gameOver) {
 		totalGameTime += dif;
 	}
+	updateDeltaSeconds = dif;
 
 	// FastForwarding
 	if (skipping) {
-		const float diff =  spring_tomsecs(currentTime - skipLastDraw);
+		const float diff = spring_tomsecs(currentTime - skipLastDraw);
 
 		if (diff < 500) // render at 2 FPS
 			return true;
@@ -914,20 +912,18 @@ bool CGame::UpdateUnsynced()
 	thisFps++;
 	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 
-	updateDeltaSeconds = 0.001f * spring_tomsecs(currentTime - lastUpdateRaw);
-	lastUpdateRaw = spring_gettime();
-
+	// Update the interpolation coefficient (globalRendering->timeOffset)
 	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
-		globalRendering->lastFrameStart = spring_gettime();
-		globalRendering->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
+		globalRendering->lastFrameStart = currentTime;
+		globalRendering->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->userSpeedFactor;
 		globalRendering->timeOffset = spring_tomsecs(globalRendering->lastFrameStart - lastSimFrameTime) * globalRendering->weightedSpeedFactor;
 	} else  {
 		globalRendering->timeOffset = 0;
 		lastSimFrameTime = spring_gettime();
 	}
 
-	const float diffsecs = spring_tomsecs(spring_difftime(currentTime, frameStartTime)) / 1000.0f;
 	// do once every second
+	const float diffsecs = spring_diffsecs(currentTime, frameStartTime);
 	if (diffsecs >= 1.0f) {
 		frameStartTime = currentTime;
 
@@ -990,7 +986,7 @@ bool CGame::UpdateUnsynced()
 	if (!skipping) { //FIXME why not when skipping?
 		if (newSimFrame || gs->paused) {
 			static spring_time lastUpdate = spring_gettime();
-			const float deltaSec = spring_tomsecs(currentTime - lastUpdate) / 1000.f;
+			const float deltaSec = spring_diffsecs(currentTime, lastUpdate);
 
 			if (!gs->paused || deltaSec >= (1.0f/GAME_SPEED)) {
 				lastUpdate = currentTime;
