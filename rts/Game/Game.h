@@ -131,6 +131,9 @@ public:
 	void SimFrame();
 	void StartPlaying();
 
+private:
+	bool UpdateUnsynced();
+
 public:
 	volatile bool finishedLoading;
 	bool gameOver;
