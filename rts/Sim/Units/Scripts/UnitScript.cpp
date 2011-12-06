@@ -996,9 +996,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case VETERAN_LEVEL:
 		return int(100 * unit->experience);
 	case CURRENT_SPEED:
-		if (unit->moveType)
-			return int(unit->speed.Length() * COBSCALE);
-		return 0;
+		return int(unit->speed.Length() * COBSCALE);
 	case ON_ROAD:
 		return 0;
 	case IN_WATER:
@@ -1030,17 +1028,13 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 		return 0;
 	}
-	case MAX_SPEED:
-		if (unit->moveType) {
-			return int(unit->moveType->maxSpeed * COBSCALE);
-		}
-		break;
-	case REVERSING:
-		if (unit->moveType) {
-			CGroundMoveType* gmt = dynamic_cast<CGroundMoveType*>(unit->moveType);
-			return ((gmt != NULL)? int(gmt->IsReversing()): 0);
-		}
-		break;
+	case MAX_SPEED: {
+		return int(unit->moveType->maxSpeed * COBSCALE);
+	} break;
+	case REVERSING: {
+		CGroundMoveType* gmt = dynamic_cast<CGroundMoveType*>(unit->moveType);
+		return ((gmt != NULL)? int(gmt->IsReversing()): 0);
+	} break;
 	case CLOAKED:
 		return !!unit->isCloaked;
 	case WANT_CLOAK:
@@ -1530,18 +1524,21 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case MAX_SPEED: {
-			if (unit->moveType && param > 0) {
+			if (param > 0) {
 				// find the first CMD_SET_WANTED_MAX_SPEED and modify it if need be
-				for (CCommandQueue::iterator it = unit->commandAI->commandQue.begin();
-						it != unit->commandAI->commandQue.end(); ++it) {
-					Command &c = *it;
-					if (c.GetID() == CMD_SET_WANTED_MAX_SPEED && c.params[0] == unit->maxSpeed) {
-						c.params[0] = param/(float)COBSCALE;
+				CCommandQueue& queue = unit->commandAI->commandQue;
+				CCommandQueue::iterator it;
+
+				for (it = queue.begin(); it != queue.end(); ++it) {
+					Command& c = *it;
+
+					if (c.GetID() == CMD_SET_WANTED_MAX_SPEED && c.params[0] == unit->moveType->maxSpeed) {
+						c.params[0] = param / (float)COBSCALE;
 						break;
 					}
 				}
-				unit->moveType->SetMaxSpeed(param/(float)COBSCALE);
-				unit->maxSpeed = param/(float)COBSCALE;
+
+				unit->moveType->SetMaxSpeed(param / (float)COBSCALE);
 			}
 			break;
 		}
@@ -1559,10 +1556,9 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case HEADING: {
 			unit->heading = param % COBSCALE;
-			unit->UpdateDirVectors(!unit->upright && unit->maxSpeed > 0.0f);
+			unit->UpdateDirVectors(!unit->upright && unit->moveType->maxSpeed > 0.0f);
 			unit->UpdateMidPos();
-			break;
-		}
+		} break;
 		case LOS_RADIUS: {
 			unit->ChangeLos(param, unit->realAirLosRadius);
 			unit->realLosRadius = param;

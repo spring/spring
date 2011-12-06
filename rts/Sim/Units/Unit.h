@@ -453,11 +453,6 @@ public:
 
 	float currentFuel;
 
-	/// max speed of the unit
-	float maxSpeed;
-	/// max reverse speed (used only by ground units for now)
-	float maxReverseSpeed;
-
 	/// minimum alpha value for a texel to be drawn
 	float alphaThreshold;
 	/// the damage value passed to CEGs spawned by this unit's script

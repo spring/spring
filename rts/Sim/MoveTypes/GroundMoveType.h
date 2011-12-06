@@ -41,8 +41,8 @@ public:
 	void TestNewTerrainSquare();
 	void LeaveTransport();
 
-	void StartSkidding();
-	void StartFlying();
+	void StartSkidding() { skidding = true; }
+	void StartFlying() { skidding = true; flying = true; } // flying requires skidding
 
 	bool IsSkidding() const { return skidding; }
 	bool IsFlying() const { return flying; }

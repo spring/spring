@@ -92,7 +92,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	myGravity(0.8f),
 	maxBank(0.55f),
 	maxPitch(0.35f),
-	maxSpeed(owner->maxSpeed),
+	maxSpeed(0.0f),
 	turnRadius(150),
 	maxAcc(0.006f),
 	maxAileron(0.04f),
@@ -853,7 +853,7 @@ void CStrafeAirMoveType::UpdateLanding()
 		(speedf > 0.0f && maxAcc > 0.0f)?
 		(dist / speedf * 1.8f * maxAcc):
 		0.0f;
-	const float wsf = std::min(owner->maxSpeed, landingSpeed);
+	const float wsf = std::min(maxSpeed, landingSpeed);
 
 	if (dist > 0.0f) {
 		dif /= dist;
@@ -1103,7 +1103,7 @@ void CStrafeAirMoveType::SetMaxSpeed(float speed)
 
 void CStrafeAirMoveType::StartMoving(float3 gpos, float goalRadius)
 {
-	SetWantedMaxSpeed(owner->maxSpeed);
+	SetWantedMaxSpeed(maxSpeed);
 	SetGoal(gpos);
 }
 
