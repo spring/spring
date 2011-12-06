@@ -2508,13 +2508,13 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 		const CHoverAirMoveType* hAMT = dynamic_cast<const CHoverAirMoveType*>(mt);
 		if (hAMT) {
 			HSTR_PUSH_BOOL  (L, "autoland",        hAMT->autoLand);
-			HSTR_PUSH_NUMBER(L, "autorepairlevel", hAMT->repairBelowHealth);
+			HSTR_PUSH_NUMBER(L, "autorepairlevel", hAMT->GetRepairBelowHealth());
 		} else {
 			const CStrafeAirMoveType* sAMT = dynamic_cast<const CStrafeAirMoveType*>(mt);
 			if (sAMT) {
 				HSTR_PUSH_BOOL  (L, "autoland",        sAMT->autoLand);
 				HSTR_PUSH_BOOL  (L, "loopbackattack",  sAMT->loopbackAttack);
-				HSTR_PUSH_NUMBER(L, "autorepairlevel", sAMT->repairBelowHealth);
+				HSTR_PUSH_NUMBER(L, "autorepairlevel", sAMT->GetRepairBelowHealth());
 			}
 		}
 	}
@@ -3379,8 +3379,8 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 	AMoveType* amt = unit->moveType;
 
 	lua_newtable(L);
-	HSTR_PUSH_NUMBER(L, "maxSpeed", amt->maxSpeed * GAME_SPEED);
-	HSTR_PUSH_NUMBER(L, "maxWantedSpeed", amt->maxWantedSpeed * GAME_SPEED);
+	HSTR_PUSH_NUMBER(L, "maxSpeed", amt->GetMaxSpeed() * GAME_SPEED);
+	HSTR_PUSH_NUMBER(L, "maxWantedSpeed", amt->GetMaxWantedSpeed() * GAME_SPEED);
 	HSTR_PUSH_NUMBER(L, "goalx", amt->goalPos.x);
 	HSTR_PUSH_NUMBER(L, "goaly", amt->goalPos.y);
 	HSTR_PUSH_NUMBER(L, "goalz", amt->goalPos.z);
@@ -3418,7 +3418,7 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 
 	if (aamt != NULL) {
 		HSTR_PUSH_NUMBER(L, "padStatus", aamt->GetPadStatus());
-		HSTR_PUSH_NUMBER(L, "repairBelowHealth", aamt->repairBelowHealth);
+		HSTR_PUSH_NUMBER(L, "repairBelowHealth", aamt->GetRepairBelowHealth());
 	}
 
 	const CHoverAirMoveType* hAMT = dynamic_cast<CHoverAirMoveType*>(unit->moveType);

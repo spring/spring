@@ -85,6 +85,22 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	forceHeadingTo(wantedHeading),
 	maxDrift(1)
 {
+	assert(owner != NULL);
+	assert(owner->unitDef != NULL);
+
+	turnRate = owner->unitDef->turnRate;
+	maxSpeed = owner->unitDef->speed / GAME_SPEED;
+	accRate = std::max(0.01f, owner->unitDef->maxAcc);
+	decRate = std::max(0.01f, owner->unitDef->maxDec);
+	wantedHeight = owner->unitDef->wantedHeight + gs->randFloat() * 5.0f;
+	orgWantedHeight = wantedHeight;
+	dontLand = owner->unitDef->DontLand();
+	collide = owner->unitDef->collide;
+	altitudeRate = owner->unitDef->verticalSpeed;
+	bankingAllowed = owner->unitDef->bankingAllowed;
+	useSmoothMesh = owner->unitDef->useSmoothMesh;
+
+	// prevent weapons from being updated and firing while on the ground
 	owner->dontUseWeapons = true;
 }
 
