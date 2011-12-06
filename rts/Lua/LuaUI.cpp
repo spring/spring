@@ -121,7 +121,7 @@ CLuaUI::CLuaUI()
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
 
-	const std::string file = (CFileHandler::FileExists("luaui.lua", SPRING_VFS_ALL) ? "luaui.lua" : "luaui/main.lua");
+	const std::string file = (CFileHandler::FileExists("luaui.lua", SPRING_VFS_ALL) ? "luaui.lua" : "LuaUI/main.lua");
 
 	const string code = LoadFile(file);
 	if (code.empty()) {
