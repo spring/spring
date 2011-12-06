@@ -55,10 +55,12 @@ class CSyncChecker {
 				g_checksum += g_checksum >> 17;
 				break;
 			case 3:
-				//FIXME
-				g_checksum += *(const unsigned int*)(const char*)p;
-				g_checksum ^= g_checksum << 16;
-				g_checksum += g_checksum >> 11;
+				// just here to make the switch statements contiguous (so it can be optimized)
+				for (unsigned i = 0; i < 3; ++i) {
+					g_checksum += *(const unsigned char*)p + i;
+					g_checksum ^= g_checksum << 10;
+					g_checksum += g_checksum >> 1;
+				}
 				break;
 			case 4:
 				g_checksum += *(const unsigned int*)(const char*)p;
