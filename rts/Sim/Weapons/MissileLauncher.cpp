@@ -72,7 +72,7 @@ void CMissileLauncher::FireImpl()
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType))
 		startSpeed += owner->speed;
 
-	new CMissileProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect,
+	new CMissileProjectile(weaponMuzzlePos, startSpeed, owner, damageAreaOfEffect,
 			projectileSpeed,
 			weaponDef->flighttime == 0
                 ? (int) (range / projectileSpeed + 25 * weaponDef->selfExplode)

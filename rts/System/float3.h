@@ -596,6 +596,9 @@ public:
 	/// Check if this vector is in bounds and clamp x and z if not
 	bool CheckInBounds();
 
+	float3  ClampInBounds() const { float3  f = *this; f.CheckInBounds(); return f; }
+	float3& ClampInBounds()       { float3& f = *this; f.CheckInBounds(); return f; }
+
 	float x; ///< x component
 	float y; ///< y component
 	float z; ///< z component

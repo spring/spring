@@ -104,7 +104,6 @@ public:
 
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
-	void SetDirectionFromHeading();
 	void SetHeadingFromDirection();
 
 	void EnableScriptMoveType();
@@ -453,11 +452,6 @@ public:
 	int lastFlareDrop;
 
 	float currentFuel;
-
-	/// max speed of the unit
-	float maxSpeed;
-	/// max reverse speed (used only by ground units for now)
-	float maxReverseSpeed;
 
 	/// minimum alpha value for a texel to be drawn
 	float alphaThreshold;

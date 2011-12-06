@@ -115,7 +115,7 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 
 	pos += offset;
 
-	SetRadius(1.7f);
+	SetRadiusAndHeight(1.7f, 0.0f);
 }
 
 

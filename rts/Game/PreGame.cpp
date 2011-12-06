@@ -157,9 +157,11 @@ bool CPreGame::Draw()
 
 bool CPreGame::Update()
 {
+	ENTER_SYNCED_CODE();
 	good_fpu_control_registers("CPreGame::Update");
 	net->Update();
 	UpdateClientNet();
+	LEAVE_SYNCED_CODE();
 
 	return true;
 }

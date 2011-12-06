@@ -5,6 +5,7 @@
 
 #include <queue>
 #include <vector>
+#include <cstring> // for memset
 
 #include "PathConstants.h"
 #include "System/Vec2.h"
@@ -231,8 +232,8 @@ public:
 		reverse_iterator rend() { return 0; }
 		const_reverse_iterator rbegin() const { return 0; }
 		const_reverse_iterator rend() const { return 0; }
-		PathVector(int, const value_type&): bufPos(-1) { abort(); }
-		PathVector(iterator, iterator): bufPos(-1) { abort(); }
+		PathVector(int, const value_type&): bufPos(-1) { memset(buf, (int)NULL, sizeof(buf)); abort(); }
+		PathVector(iterator, iterator): bufPos(-1) { memset(buf, (int)NULL, sizeof(buf)); abort(); }
 		void insert(iterator, const value_type&) { abort(); }
 		void insert(iterator, const size_type&, const value_type&) { abort(); }
 		void insert(iterator, iterator, iterator) { abort(); }
@@ -242,7 +243,13 @@ public:
 		void swap(PathVector&) { abort(); }
 	// end of concept hax
 
-	PathVector(): bufPos(-1) {}
+	PathVector(): bufPos(-1) {
+#ifdef DEBUG
+		// only do this in DEBUG builds for performance reasons
+		// it could help finding logic errors
+		memset(buf, (int)NULL, sizeof(buf));
+#endif
+	}
 
 	inline void push_back(PathNode* os) { buf[++bufPos] = os; }
 	inline void pop_back() { --bufPos; }

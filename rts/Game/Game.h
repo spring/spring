@@ -9,7 +9,7 @@
 
 #include "GameController.h"
 #include "System/creg/creg_cond.h"
-#include "System/myTime.h"
+#include "System/Misc/SpringTime.h"
 
 class IWater;
 class CConsoleHistory;
@@ -131,6 +131,9 @@ public:
 	void SimFrame();
 	void StartPlaying();
 
+private:
+	bool UpdateUnsynced();
+
 public:
 	volatile bool finishedLoading;
 	bool gameOver;
@@ -146,11 +149,11 @@ public:
 	int lastSimFrame;
 
 	spring_time frameStartTime;
-	spring_time lastUpdate;
-	spring_time lastMoveUpdate;
+	spring_time lastUpdateTime;
+	spring_time lastSimFrameTime;
+	spring_time lastDrawFrameUpdate;
 	spring_time lastModGameTimeMeasure;
 
-	spring_time lastUpdateRaw;
 	float updateDeltaSeconds;
 
 	float lastCpuUsageTime;

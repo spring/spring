@@ -314,7 +314,7 @@ boost::shared_ptr<const RawPacket> UDPConnection::GetData()
 void UDPConnection::Update()
 {
 	spring_time curTime = spring_gettime();
-	outgoing.UpdateTime(curTime);
+	outgoing.UpdateTime(spring_tomsecs(curTime));
 
 	if (!sharedSocket && !closed) {
 		// duplicated code with UDPListener
@@ -340,7 +340,7 @@ void UDPConnection::Update()
 				ProcessRawPacket(data);
 			}
 			// not likely, but make sure we do not get stuck here
-			if ((spring_gettime() - curTime) > 10) {
+			if ((spring_gettime() - curTime) > spring_msecs(10)) {
 				break;
 			}
 		}
@@ -465,9 +465,9 @@ void UDPConnection::Flush(const bool forced)
 	const spring_time curTime = spring_gettime();
 
 	// do not create chunks more than chunksPerSec times per second
-	const bool waitMore = lastChunkCreated >= curTime - spring_msecs(1000 / chunksPerSec);
+	const bool waitMore = lastChunkCreated >= (curTime - spring_msecs(1000 / chunksPerSec));
 	// if the packet is tiny, reduce the send frequency further
-	const int requiredLength = (spring_msecs(200 >> netLossFactor) - (int)(curTime - lastChunkCreated)) / 10;
+	const int requiredLength = spring_tomsecs(spring_msecs(200 >> netLossFactor) - (curTime - lastChunkCreated)) / 10;
 
 	int outgoingLength = 0;
 	if (!waitMore) {

@@ -35,15 +35,12 @@ git describe --tags --candidates 0 --match "*.*" &> /dev/null
 onVersionTag=$(if [ $? -eq "0" ]; then echo "true"; else echo "false"; fi)
 set -e # turn it on again
 
-isRelease=false
-if [ "${branch}" = "master" ]; then
-	if ${onVersionTag}; then
-		isRelease=true
-	else
-		echo "Error: On branch master but not on a version tag." >&2
-		echo "This indicates a tagging, branching or push error." >&2
-		exit 3
-	fi
+isRelease=${onVersionTag}
+
+if [ "${branch}" = "master" -a ! ${onVersionTag} ]; then
+	echo "Error: On branch master but not on a version tag." >&2
+	echo "This indicates a tagging, branching or push error." >&2
+	exit 3
 fi
 
 if ${isRelease}; then

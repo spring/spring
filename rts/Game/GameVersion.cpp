@@ -176,7 +176,8 @@ const std::string& GetBuildEnvironment()
 
 bool IsRelease()
 {
-	return (GetBranch() == "master");
+	static const bool release = SPRING_VERSION_ENGINE_RELEASE;
+	return release;
 }
 
 const std::string& Get()

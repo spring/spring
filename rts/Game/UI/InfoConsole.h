@@ -22,6 +22,7 @@ public:
 
 	void Update();
 	void Draw();
+	void PushNewLinesToEventHandler();
 
 	void RecordLogMessage(const std::string& section, int level,
 			const std::string& text);
@@ -67,7 +68,6 @@ public:
 	};
 
 	int  GetRawLines(std::deque<RawLine>& copy);
-	void GetNewRawLines(std::vector<RawLine>& copy);
 
 private:
 	std::list<float3> lastMsgPositions;

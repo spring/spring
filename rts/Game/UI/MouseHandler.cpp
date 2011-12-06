@@ -18,9 +18,9 @@
 #include "Game/SelectedUnits.h"
 #include "Game/TraceRay.h"
 #include "Game/Camera/CameraController.h"
-#include "Game/UI/LuaUI.h" // FIXME: for GML
 #include "Game/UI/UnitTracker.h"
 #include "Lua/LuaInputReceiver.h"
+#include "Lua/LuaUI.h" // FIXME: for GML
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Rendering/GlobalRendering.h"
@@ -100,6 +100,10 @@ CMouseHandler::CMouseHandler()
 	, scrollx(0.0f)
 	, scrolly(0.0f)
 {
+	const int2 mousepos = IMouseInput::GetInstance()->GetPos();
+	lastx = mousepos.x;
+	lasty = mousepos.y;
+
 	for (int a = 1; a <= NUM_BUTTONS; a++) {
 		buttons[a].pressed = false;
 		buttons[a].lastRelease = -20;

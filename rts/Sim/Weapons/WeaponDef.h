@@ -32,7 +32,8 @@ public:
 		, leadBonus(0.0f)
 		, predictBoost(0.0f)
 		, damages(damages)
-		, areaOfEffect(0.0f)
+		, craterAreaOfEffect(0.0f)
+		, damageAreaOfEffect(0.0f)
 		, noSelfDamage(false)
 		, fireStarter(0.0f)
 		, edgeEffectiveness(0.0f)
@@ -161,7 +162,8 @@ public:
 	float predictBoost;        ///< replaces hardcoded behaviour for burnblow cannons
 
 	DamageArray damages;
-	float areaOfEffect;
+	float craterAreaOfEffect;
+	float damageAreaOfEffect;
 	bool noSelfDamage;
 	float fireStarter;
 	float edgeEffectiveness;

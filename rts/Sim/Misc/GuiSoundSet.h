@@ -26,9 +26,9 @@ struct GuiSoundSet
 	 */
 	int getRandomIdx() const {
 		switch (sounds.size()) {
-			case 0:  { return -1; break; }
-			case 1:  { return  0; break; }
-			default: { return rand() % sounds.size(); }
+			case 0:  { return -1; }
+			case 1:  { return  0; }
+			default: { return (rand() % sounds.size()); }
 		}
 	}
 

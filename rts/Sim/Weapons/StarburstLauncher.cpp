@@ -63,7 +63,7 @@ void CStarburstLauncher::FireImpl()
 
 	CStarburstProjectile* p =
 		new CStarburstProjectile(weaponMuzzlePos + float3(0, 2, 0), speed, owner,
-		targetPos, areaOfEffect, projectileSpeed, tracking, (int) uptime, targetUnit,
+		targetPos, damageAreaOfEffect, projectileSpeed, tracking, (int) uptime, targetUnit,
 		weaponDef, interceptTarget, maxRange, aimError);
 
 	if (weaponDef->targetable)

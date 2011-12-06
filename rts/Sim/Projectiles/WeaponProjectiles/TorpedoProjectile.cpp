@@ -54,7 +54,6 @@ CTorpedoProjectile::CTorpedoProjectile(
 	curSpeed = speed.Length();
 	dir = speed / curSpeed;
 
-	SetRadius(0.0f);
 	drawRadius = maxSpeed * 8;
 
 //	const float3 camDir = (pos - camera->pos).Normalize();

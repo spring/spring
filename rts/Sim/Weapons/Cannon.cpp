@@ -183,7 +183,7 @@ void CCannon::FireImpl(void)
 	}
 
 	new CExplosiveProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		weaponDef, ttl, areaOfEffect, gravity);
+		weaponDef, ttl, damageAreaOfEffect, gravity);
 }
 
 void CCannon::SlowUpdate(void)

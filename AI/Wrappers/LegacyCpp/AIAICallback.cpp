@@ -1088,12 +1088,12 @@ bool springLegacyAI::CAIAICallback::GetValue(int valueId, void *data)
 		}case AIVAL_GUI_CAMERA_DIR:{
 			float pos_cache[3];
 			sAICallback->Gui_Camera_getDirection(skirmishAIId, pos_cache);
-			*(float3*)data = pos_cache;
+			*(static_cast<float3*>(data)) = pos_cache;
 			return true;
 		}case AIVAL_GUI_CAMERA_POS:{
 			float pos_cache[3];
 			sAICallback->Gui_Camera_getPosition(skirmishAIId, pos_cache);
-			*(float3*)data = pos_cache;
+			*(static_cast<float3*>(data)) = pos_cache;
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
 			//sAICallback->File_locateForReading(skirmishAIId, (char*) data);

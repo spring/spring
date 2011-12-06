@@ -51,6 +51,8 @@ const int* CLuaRules::currentCobArgs = NULL;
 
 void CLuaRules::LoadHandler()
 {
+	//FIXME GML: this needs a mutex!!!
+
 	if (luaRules) {
 		return;
 	}
@@ -65,6 +67,7 @@ void CLuaRules::LoadHandler()
 
 void CLuaRules::FreeHandler()
 {
+	//FIXME GML: this needs a mutex!!!
 	delete luaRules;
 }
 

@@ -18,7 +18,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/maindefines.h"
-#include "System/myTime.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
 
@@ -41,7 +41,12 @@ namespace Watchdog
 		{}
 		volatile Threading::NativeThreadHandle thread;
 		volatile Threading::NativeThreadId threadid;
+	#ifdef STATIC_SPRING_TIME
+		// spring_time is a class here, those can't be volatile
+		spring_time timer;
+	#else
 		volatile spring_time timer;
+	#endif
 		volatile unsigned int numreg;
 	};
 	static WatchDogThreadInfo registeredThreadsData[WDT_SIZE];

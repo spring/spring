@@ -36,18 +36,18 @@ namespace QTPFS {
 		};
 
 		struct Execution {
-			Execution(unsigned int f): frame(f) {}
+			Execution(unsigned int f): searchFrame(f) {}
 			~Execution() { iterations.clear(); }
 
 			void AddIteration(const Iteration& iter) { iterations.push_back(iter); }
 			const std::list<Iteration>& GetIterations() const { return iterations; }
 
-			unsigned int GetFrame() const { return frame; }
+			unsigned int GetFrame() const { return searchFrame; }
 		private:
 			std::list<Iteration> iterations;
 
 			// sim-frame at which the search was executed
-			unsigned int frame;
+			unsigned int searchFrame;
 		};
 	};
 
@@ -62,7 +62,13 @@ namespace QTPFS {
 	//     with time-sliced execution, {src,tgt,cur,nxt}Node can become
 	//     dangling
 	struct IPathSearch {
-		IPathSearch(unsigned int pathSearchType): searchType(pathSearchType) {}
+		IPathSearch(unsigned int pathSearchType)
+			: searchID(0)
+			, searchTeam(0)
+			, searchType(pathSearchType)
+			, searchState(0)
+			, searchMagic(0)
+			{}
 		virtual ~IPathSearch() {}
 
 		virtual void Initialize(
@@ -98,8 +104,20 @@ namespace QTPFS {
 
 	struct PathSearch: public IPathSearch {
 	public:
-		PathSearch(unsigned int pathSearchType): IPathSearch(pathSearchType) {}
-		~PathSearch() { while (!openNodes.empty()) { openNodes.pop(); } }
+		PathSearch(unsigned int pathSearchType)
+			: IPathSearch(pathSearchType)
+			, nodeLayer(NULL)
+			, pathCache(NULL)
+			, srcNode(NULL)
+			, tgtNode(NULL)
+			, curNode(NULL)
+			, nxtNode(NULL)
+			, searchExec(NULL)
+			, haveOpenNode(false)
+			, haveFullPath(false)
+			, hCostMult(0.0f)
+			{}
+		~PathSearch() { openNodes.reset(); }
 
 		void Initialize(
 			NodeLayer* layer,

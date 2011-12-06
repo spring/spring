@@ -29,6 +29,9 @@ static const char* SPRING_VERSION_ENGINE_BRANCH     = "@SPRING_VERSION_ENGINE_BR
 /// examples: "what a splendid day, isn't it?"
 static const char* SPRING_VERSION_ENGINE_ADDITIONAL = "@SPRING_VERSION_ENGINE_ADDITIONAL@";
 
+/// examples: true, false
+static bool        SPRING_VERSION_ENGINE_RELEASE    = @SPRING_VERSION_ENGINE_RELEASE@;
+
 #endif // VERSION_GENERATED_H
 
  

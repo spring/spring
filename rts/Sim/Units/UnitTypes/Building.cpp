@@ -49,10 +49,14 @@ void CBuilding::PostInit(const CUnit* builder)
 
 void CBuilding::ForcedMove(const float3& newPos, int facing) {
 	buildFacing = facing;
-	pos = helper->Pos2BuildPos(BuildInfo(unitDef, newPos, buildFacing), true);
 	speed = ZeroVector;
 	heading = GetHeadingFromFacing(buildFacing);
 	frontdir = GetVectorFromHeading(heading);
+
+	Move3D(helper->Pos2BuildPos(BuildInfo(unitDef, newPos, buildFacing), true), false);
+	UpdateMidPos();
+
 	CUnit::ForcedMove(pos);
+
 	unitLoader->FlattenGround(this);
 }

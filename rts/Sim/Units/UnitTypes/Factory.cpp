@@ -52,7 +52,8 @@ CFactory::CFactory():
 	curBuildDef(NULL),
 	curBuild(NULL),
 	nextBuildUnitDefID(-1),
-	lastBuildUpdateFrame(-1000)
+	lastBuildUpdateFrame(-1000),
+	finishedBuildFunc(NULL)
 {
 }
 
@@ -92,8 +93,8 @@ int CFactory::GetBuildPiece()
 float3 CFactory::CalcBuildPos(int buildPiece)
 {
 	const float3 relBuildPos = script->GetPiecePos(buildPiece < 0 ? GetBuildPiece() : buildPiece);
-	const float3 buildPos = pos + frontdir * relBuildPos.z + updir * relBuildPos.y + rightdir * relBuildPos.x;
-	return buildPos;
+	const float3 absBuildPos = pos + frontdir * relBuildPos.z + updir * relBuildPos.y + rightdir * relBuildPos.x;
+	return absBuildPos;
 }
 
 
@@ -186,14 +187,16 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 	const CMatrix44f& mat = script->GetPieceMatrix(buildPiece);
 	const int h = GetHeadingFromVector(mat[2], mat[10]); //! x.z, z.z
 
+	float3 buildeePos = buildPos;
+
 	// rotate unit nanoframe with platform
 	buildee->heading = (-h + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
-	buildee->pos = buildPos;
 
-	if (buildee->unitDef->floatOnWater && (buildPos.y <= 0.0f))
-		buildee->pos.y = -buildee->unitDef->waterline;
+	if (buildee->unitDef->floatOnWater && (buildeePos.y <= 0.0f))
+		buildeePos.y = -buildee->unitDef->waterline;
 
-	buildee->SetDirectionFromHeading();
+	buildee->Move3D(buildeePos, false);
+	buildee->UpdateDirVectors(false);
 	buildee->UpdateMidPos();
 
 	const CCommandQueue& queue = commandAI->commandQue;
@@ -220,7 +223,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	}
 
 	const CCommandAI* bcai = buildee->commandAI;
-	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) && ((CMobileCAI*)bcai)->unimportantMove);
+	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) && static_cast<const CMobileCAI*>(bcai)->unimportantMove);
 
 	if (assignOrders) {
 		AssignBuildeeOrders(buildee);
@@ -318,7 +321,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 }
 
 void CFactory::AssignBuildeeOrders(CUnit* unit) {
-	const CFactoryCAI* facAI = (CFactoryCAI*) commandAI;
+	const CFactoryCAI* facAI = static_cast<CFactoryCAI*>(commandAI);
 	const CCommandQueue& newUnitCmds = facAI->newUnitCommands;
 
 	if (newUnitCmds.empty()) {

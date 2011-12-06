@@ -7,7 +7,6 @@
 #include "CommandColors.h"
 #include "KeyBindings.h"
 #include "KeyCodes.h"
-#include "LuaUI.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
 #include "Game/Camera.h"
@@ -20,6 +19,7 @@
 #include "Lua/LuaTextures.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
+#include "Lua/LuaUI.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -2439,8 +2439,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			other.buildFacing = unit->buildFacing;
 		} else {
 			Command c = uh->GetBuildCommand(cameraPos, mouseDir);
-			if (c.GetID() < 0) {
-				assert(c.params.size() == 4);
+			if (c.GetID() < 0 && c.params.size() == 4) {
 				other.pos = float3(c.params[0],c.params[1], c.params[2]);
 				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 				other.buildFacing = int(c.params[3]);
@@ -3594,7 +3593,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				if (!unitdef->selfDExplosion.empty()) {
 					glColor4fv(cmdColors.rangeSelfDestruct);
 					const WeaponDef* wd = weaponDefHandler->GetWeapon(unitdef->selfDExplosion);
-					glSurfaceCircle(unit->pos, wd->areaOfEffect, 40);
+					glSurfaceCircle(unit->pos, wd->damageAreaOfEffect, 40);
 				}
 			}
 			// draw build distance for immobile builders

@@ -280,18 +280,18 @@ void CHoverAirMoveType::UpdateLanded()
 	if (owner->beingBuilt)
 		return;
 
-	float3& pos = owner->pos;
-	float3& spd = owner->speed;
-
 	if (padStatus == 0) {
 		if (owner->unitDef->canSubmerge) {
-			pos.y = std::max(pos.y, ground->GetHeightReal(pos.x, pos.z));
+			owner->Move1D(std::max(owner->pos.y, ground->GetHeightReal(owner->pos.x, owner->pos.z)), 1, false);
 		} else {
-			pos.y = std::max(pos.y, ground->GetHeightAboveWater(pos.x, pos.z));
+			owner->Move1D(std::max(owner->pos.y, ground->GetHeightAboveWater(owner->pos.x, owner->pos.z)), 1, false);
 		}
 	}
 
-	spd = ZeroVector;
+	// match the terrain normal
+	owner->Move3D(owner->speed = ZeroVector, true);
+	owner->UpdateDirVectors(true);
+	owner->UpdateMidPos();
 
 	if (progressState != AMoveType::Failed)
 		progressState = AMoveType::Done;
@@ -299,7 +299,8 @@ void CHoverAirMoveType::UpdateLanded()
 
 void CHoverAirMoveType::UpdateTakeoff()
 {
-	float3& pos = owner->pos;
+	const float3& pos = owner->pos;
+
 	wantedSpeed = ZeroVector;
 	wantedHeight = orgWantedHeight;
 
@@ -356,8 +357,8 @@ void CHoverAirMoveType::UpdateHovering()
 
 void CHoverAirMoveType::UpdateFlying()
 {
-	float3 &pos = owner->pos;
-	float3 &speed = owner->speed;
+	const float3& pos = owner->pos;
+	const float3& speed = owner->speed;
 
 	// Direction to where we would like to be
 	float3 dir = goalPos - pos;
@@ -469,6 +470,7 @@ void CHoverAirMoveType::UpdateFlying()
 
 	// not there yet, so keep going
 	dir.y = 0;
+
 	float realMax = maxSpeed;
 	float dist = dir.Length() + 0.1f;
 
@@ -502,8 +504,8 @@ void CHoverAirMoveType::UpdateFlying()
 
 void CHoverAirMoveType::UpdateLanding()
 {
-	float3& pos = owner->pos;
-	float3& speed = owner->speed;
+	const float3& pos = owner->pos;
+	const float3& speed = owner->speed;
 
 	// We want to land, and therefore cancel our speed first
 	wantedSpeed = ZeroVector;
@@ -560,8 +562,7 @@ void CHoverAirMoveType::UpdateLanding()
 
 	if (altitude <= 0.0f) {
 		SetState(AIRCRAFT_LANDED);
-
-		pos.y = gh;
+		owner->Move1D(gh, 1, false);
 	}
 }
 
@@ -569,9 +570,8 @@ void CHoverAirMoveType::UpdateLanding()
 
 void CHoverAirMoveType::UpdateHeading()
 {
-	if (aircraftState == AIRCRAFT_TAKEOFF && !owner->unitDef->factoryHeadingTakeoff) {
+	if (aircraftState == AIRCRAFT_TAKEOFF && !owner->unitDef->factoryHeadingTakeoff)
 		return;
-	}
 
 	SyncedSshort& heading = owner->heading;
 	const short deltaHeading = forceHeading?
@@ -584,11 +584,15 @@ void CHoverAirMoveType::UpdateHeading()
 		heading += std::max(deltaHeading, short(-turnRate));
 	}
 
-	owner->UpdateDirVectors(false);
+	owner->UpdateDirVectors(aircraftState == AIRCRAFT_LANDED);
+	owner->UpdateMidPos();
 }
 
 void CHoverAirMoveType::UpdateBanking(bool noBanking)
 {
+	if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_HOVERING)
+		return;
+
 	if (!owner->upright) {
 		float wantedPitch = 0.0f;
 
@@ -635,41 +639,43 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 	rightDir3D = frontDir.cross(upDir);
 
 	owner->SetHeadingFromDirection();
+	owner->UpdateMidPos();
 }
 
 
 void CHoverAirMoveType::UpdateAirPhysics()
 {
-	float3& pos = owner->pos;
-	float3& speed = owner->speed;
+	const float3& pos = owner->pos;
+	      float3& speed = owner->speed;
 
 	if (!((gs->frameNum + owner->id) & 3)) {
 		CheckForCollision();
 	}
 
-	const float yspeed = speed.y;
-	speed.y = 0.0f;
+	const float yspeed = speed.y; speed.y = 0.0f;
 
-	const float3 delta = wantedSpeed - speed;
-	const float deltaDotSpeed = (speed != ZeroVector)? delta.dot(speed): 1.0f;
+	const float3 deltaSpeed = wantedSpeed - speed;
+	const float deltaDotSpeed = (speed != ZeroVector)? deltaSpeed.dot(speed): 1.0f;
 
 	if (deltaDotSpeed == 0.0f) {
 		// we have the wanted speed
 	} else if (deltaDotSpeed > 0.0f) {
 		// accelerate
-		const float sqdl = delta.SqLength();
+		const float sqdl = deltaSpeed.SqLength();
+
 		if (sqdl < Square(accRate)) {
 			speed = wantedSpeed;
 		} else {
-			speed += delta / math::sqrt(sqdl) * accRate;
+			speed += (deltaSpeed / math::sqrt(sqdl) * accRate);
 		}
 	} else {
 		// break
-		const float sqdl = delta.SqLength();
+		const float sqdl = deltaSpeed.SqLength();
+
 		if (sqdl < Square(decRate)) {
 			speed = wantedSpeed;
 		} else {
-			speed += delta / math::sqrt(sqdl) * decRate;
+			speed += (deltaSpeed / math::sqrt(sqdl) * decRate);
 		}
 	}
 
@@ -686,8 +692,9 @@ void CHoverAirMoveType::UpdateAirPhysics()
 			ground->GetHeightAboveWater(pos.x, pos.z);
 	}
 
+	owner->Move1D(std::max(pos.y, minH), 1, false);
+
 	speed.y = yspeed;
-	pos.y = std::max(pos.y, minH);
 	curH = pos.y - minH;
 
 	if (curH < 4.0f) {
@@ -737,7 +744,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	}
 
 	if (modInfo.allowAirPlanesToLeaveMap || (pos + speed).CheckInBounds()) {
-		owner->MovePos(speed);
+		owner->Move3D(speed, true);
 	}
 }
 
@@ -765,8 +772,8 @@ void CHoverAirMoveType::UpdateMoveRate()
 
 bool CHoverAirMoveType::Update()
 {
-	float3& pos = owner->pos;
-	float3& speed = owner->speed;
+	const float3& pos = owner->pos;
+	      float3& speed = owner->speed;
 
 	AAirMoveType::Update();
 
@@ -937,7 +944,7 @@ void CHoverAirMoveType::Takeoff()
 
 bool CHoverAirMoveType::HandleCollisions()
 {
-	float3& pos = owner->pos;
+	const float3& pos = owner->pos;
 
 	if (pos != oldPos) {
 		oldPos = pos;
@@ -967,17 +974,13 @@ bool CHoverAirMoveType::HandleCollisions()
 				const float3 dif = (pos - unit->pos).Normalize();
 
 				if (unit->mass >= CSolidObject::DEFAULT_MASS || unit->immobile) {
-					owner->MovePos(-dif * (dist - totRad));
-					owner->UpdateMidPos();
+					owner->Move3D(-dif * (dist - totRad), true);
 					owner->speed *= 0.99f;
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
 
-					owner->MovePos(-dif * (dist - totRad) * (1.0f - part));
-					owner->UpdateMidPos();
-
-					unit->MovePos(dif * (dist - totRad) * (part));
-					unit->UpdateMidPos();
+					owner->Move3D(-dif * (dist - totRad) * (1.0f - part), true);
+					unit->Move3D(dif * (dist - totRad) * (part), true);
 
 					const float colSpeed = -owner->speed.dot(dif) + unit->speed.dot(dif);
 
@@ -988,19 +991,15 @@ bool CHoverAirMoveType::HandleCollisions()
 		}
 
 		if (pos.x < 0.0f) {
-			pos.x += 0.6f;
-			owner->midPos.x += 0.6f;
+			owner->Move1D(0.6f, 0, true);
 		} else if (pos.x > float3::maxxpos) {
-			pos.x -= 0.6f;
-			owner->midPos.x -= 0.6f;
+			owner->Move1D(-0.6f, 0, true);
 		}
 
 		if (pos.z < 0.0f) {
-			pos.z += 0.6f;
-			owner->midPos.z += 0.6f;
+			owner->Move1D(0.6f, 2, true);
 		} else if (pos.z > float3::maxzpos) {
-			pos.z -= 0.6f;
-			owner->midPos.z -= 0.6f;
+			owner->Move1D(-0.6f, 2, true);
 		}
 
 		return true;

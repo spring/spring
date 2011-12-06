@@ -18,39 +18,42 @@ public:
 		: id(-1)
 		, pos(ZeroVector)
 		, radius(0.0f)
+		, height(0.0f)
 		, sqRadius(0.0f)
 		, drawRadius(0.0f)
 		, useAirLos(false)
 		, alwaysVisible(false)
 		, model(NULL)
 	{}
-	CWorldObject(const float3& pos)
-		: id(-1)
-		, pos(pos)
-		, radius(0.0f)
-		, sqRadius(0.0f)
-		, drawRadius(0.0f)
-		, useAirLos(false)
-		, alwaysVisible(false)
-		, model(NULL)
-	{}
+	CWorldObject(const float3& pos) {
+		*this = CWorldObject();
+		this->pos = pos;
+	}
 
-	virtual ~CWorldObject();
+	virtual ~CWorldObject() {
+	}
 
-	void SetRadius(float radius);
+	void SetRadiusAndHeight(float r, float h)
+	{
+		radius = r;
+		height = h;
+		sqRadius = r * r;
+		drawRadius = r;
+	}
 
 
 public:
 	int id;
 
 	float3 pos;
-	float radius;       ///< used for collisions
-	float sqRadius;
 
-	float drawRadius;   ///< used to see if in los
-	/// if true, the object's visibility is checked against airLosMap[allyteam]
-	bool useAirLos;
-	bool alwaysVisible;
+	float radius;       ///< used for collisions
+	float height;       ///< The height of this object
+	float sqRadius;
+	float drawRadius;   ///< unsynced, used to see if in view etc.
+
+	bool useAirLos;     ///< if true, the object's visibility is checked against airLosMap[allyteam]
+	bool alwaysVisible; ///< if true, object is drawn even if not in LOS
 
 	S3DModel* model;
 };

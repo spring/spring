@@ -8,7 +8,6 @@
 
 class CmdLineParams;
 class CGameController;
-class COffscreenGLContext;
 union SDL_Event;
 
 /**
@@ -41,19 +40,12 @@ protected:
 	static void RestoreWindowPosition();
 	static void SaveWindowPosition();
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	int Sim();                                      //!< Simulation  loop
-	static void Simcb(void *c) {((SpringApp *)c)->Sim();}
-#endif
-
 	/**
 	 * @brief command line
 	 *
 	 * Pointer to instance of commandline parser
 	 */
 	CmdLineParams* cmdline;
-
-	static COffscreenGLContext* ogc;
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);

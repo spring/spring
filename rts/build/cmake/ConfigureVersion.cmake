@@ -28,8 +28,13 @@ Include(UtilVersion)
 FetchSpringVersion(${SOURCE_ROOT} SPRING_ENGINE)
 ParseSpringVersion(SPRING_VERSION_ENGINE "${SPRING_ENGINE_VERSION}")
 
-# We define this, so it may be used in the to-be-configured files
+# We define these, so it may be used in the to-be-configured files
 Set(SPRING_VERSION_ENGINE "${SPRING_ENGINE_VERSION}")
+If     ("${SPRING_VERSION_ENGINE}" MATCHES "^${VERSION_REGEX_RELEASE}$")
+	Set(SPRING_VERSION_ENGINE_RELEASE 1)
+Else   ()
+	Set(SPRING_VERSION_ENGINE_RELEASE 0)
+EndIf  ()
 
 # This is supplied by -DVERSION_ADDITIONAL="abc"
 Set(SPRING_VERSION_ENGINE_ADDITIONAL "${VERSION_ADDITIONAL}")

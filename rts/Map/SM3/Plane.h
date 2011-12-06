@@ -32,7 +32,7 @@ public:
 	void SetVec(const Vector3& v) { a = v.x; b = v.y; c = v.z; }
 	void CalcDist(const Vector3& p) { d = a*p.x + b*p.y + c*p.z; }
 	void copy(Plane* pl) const { pl->a = a; pl->b = b; pl->c = c; pl->d = d; }
-	Vector3& GetVector() { return *(Vector3*)this; }
+	Vector3& GetVector() { return *(reinterpret_cast<Vector3*>(this)); }
 	Vector3 GetCenter() const { return Vector3(a*d, b*d, c*d); }
 };
 

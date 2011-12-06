@@ -153,7 +153,8 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			owner(),
 			NULL,                                             // hitUnit
 			feature,
-			weaponDef->areaOfEffect,
+			weaponDef->craterAreaOfEffect,
+			weaponDef->damageAreaOfEffect,
 			weaponDef->edgeEffectiveness,
 			weaponDef->explosionSpeed,
 			weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
@@ -208,7 +209,8 @@ void CWeaponProjectile::Collision(CUnit* unit)
 			owner(),
 			unit,
 			NULL,                                            // hitFeature
-			weaponDef->areaOfEffect,
+			weaponDef->craterAreaOfEffect,
+			weaponDef->damageAreaOfEffect,
 			weaponDef->edgeEffectiveness,
 			weaponDef->explosionSpeed,
 			weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod

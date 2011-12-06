@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 
-#include "Lua/LuaHandle.h"
+#include "LuaHandle.h"
 
 
 class CUnit;

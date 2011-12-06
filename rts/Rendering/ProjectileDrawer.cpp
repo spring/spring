@@ -445,7 +445,7 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 	const CUnit* owner = pro->owner();
 
 	#if defined(USE_GML) && GML_ENABLE_SIM
-		pro->drawPos = pro->pos + (pro->speed * ((float)globalRendering->lastFrameStart - (float)pro->lastProjUpdate) * globalRendering->weightedSpeedFactor);
+		pro->drawPos = pro->pos + (pro->speed * spring_tomsecs(globalRendering->lastFrameStart - pro->lastProjUpdate) * globalRendering->weightedSpeedFactor);
 	#else
 		pro->drawPos = pro->pos + (pro->speed * globalRendering->timeOffset);
 	#endif

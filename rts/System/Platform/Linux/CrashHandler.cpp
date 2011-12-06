@@ -24,7 +24,7 @@
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
 #include "System/maindefines.h" // for SNPRINTF
-#include "System/myTime.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
