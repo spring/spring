@@ -5,6 +5,9 @@
 
 #include "SyncChecker.h"
 
+
 unsigned CSyncChecker::g_checksum;
+int CSyncChecker::inSyncedCode;
+
 
 #endif // SYNCDEBUG

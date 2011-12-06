@@ -342,6 +342,8 @@ CGame::~CGame()
 	tracefile << "[" << __FUNCTION__ << "]";
 #endif
 
+	ENTER_SYNCED_CODE();
+
 	// Kill all teams that are still alive, in
 	// case the game did not do so through Lua.
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
@@ -430,6 +432,8 @@ CGame::~CGame()
 	SafeDelete(net);
 
 	game = NULL;
+
+	LEAVE_SYNCED_CODE();
 }
 
 
@@ -440,6 +444,7 @@ void CGame::LoadGame(const std::string& mapName)
 #endif
 
 	Watchdog::RegisterThread(WDT_LOAD);
+
 
 	if (!gu->globalQuit) LoadDefs();
 	if (!gu->globalQuit) LoadSimulation(mapName);
@@ -459,6 +464,8 @@ void CGame::LoadGame(const std::string& mapName)
 
 void CGame::LoadDefs()
 {
+	ENTER_SYNCED_CODE();
+
 	{
 		loadscreen->SetLoadMessage("Loading Radar Icons");
 		icon::iconHandler = new icon::CIconHandler();
@@ -509,10 +516,14 @@ void CGame::LoadDefs()
 		sound->LoadSoundDefs("gamedata/sounds.lua");
 		chatSound = sound->GetSoundId("IncomingChat", false);
 	}
+
+	LEAVE_SYNCED_CODE();
 }
 
 void CGame::LoadSimulation(const std::string& mapName)
 {
+	ENTER_SYNCED_CODE();
+
 	// after this, other components are able to register chat action-executors
 	SyncedGameCommands::CreateInstance();
 	UnsyncedGameCommands::CreateInstance();
@@ -582,6 +593,8 @@ void CGame::LoadSimulation(const std::string& mapName)
 
 	syncedGameCommands->AddDefaultActionExecutors();
 	unsyncedGameCommands->AddDefaultActionExecutors();
+
+	LEAVE_SYNCED_CODE();
 }
 
 void CGame::LoadRendering()
@@ -678,6 +691,7 @@ void CGame::LoadInterface()
 void CGame::LoadLua()
 {
 	// Lua components
+	ENTER_SYNCED_CODE();
 	loadscreen->SetLoadMessage("Loading LuaRules");
 	CLuaRules::LoadHandler();
 
@@ -685,6 +699,7 @@ void CGame::LoadLua()
 		loadscreen->SetLoadMessage("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
+	LEAVE_SYNCED_CODE();
 
 	loadscreen->SetLoadMessage("Loading LuaUI");
 	CLuaUI::LoadHandler();
@@ -855,7 +870,8 @@ bool CGame::Update()
 		gameServer->CreateNewFrame(false, true);
 	}
 
-	ClientReadNet(); // this can issue new SimFrames()
+	ENTER_SYNCED_CODE();
+	ClientReadNet(); // this can issue new SimFrame()s
 
 	if (net->NeedsReconnect() && !gameOver) {
 		extern ClientSetup* startsetup;
@@ -866,6 +882,7 @@ bool CGame::Update()
 		LOG_L(L_WARNING, "Lost connection to gameserver");
 		GameEnd(std::vector<unsigned char>());
 	}
+	LEAVE_SYNCED_CODE();
 
 	//TODO move this to ::Draw()?
 	if (gs->frameNum == 0 || gs->paused)
@@ -1408,6 +1425,8 @@ void CGame::StartPlaying()
 
 
 void CGame::SimFrame() {
+	ENTER_SYNCED_CODE();
+
 	ScopedTimer cputimer("Game::SimFrame", true); // SimFrame
 
 	good_fpu_control_registers("CGame::SimFrame");
@@ -1465,6 +1484,8 @@ void CGame::SimFrame() {
 	lastSimFrameTime = spring_gettime();
 
 	DumpState(-1, -1, 1);
+
+	LEAVE_SYNCED_CODE();
 }
 
 
