@@ -30,6 +30,9 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
+#include "Map/SMF/SMFGroundDrawer.h"
+#include "Map/SMF/ROAM/Patch.h"
+#include "Map/SMF/ROAM/RoamMeshDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
@@ -425,11 +428,39 @@ public:
 
 
 
+class RoamActionExecutor : public IUnsyncedActionExecutor {
+public:
+	RoamActionExecutor() : IUnsyncedActionExecutor("roam",
+			"Disables/Enables ROAM mesh rendering: 0=off, 1=on") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readmap->GetGroundDrawer());
+		if (!smfGD)
+			return;
+		
+		if (!action.GetArgs().empty()) {
+			int useRoam = -1;
+			int roamMode = -1;
+			sscanf((action.GetArgs()).c_str(), "%i %i", &useRoam, &roamMode);
+
+			smfGD->SwitchMeshDrawer(useRoam);
+			if (useRoam && roamMode >= 0) {
+				Patch::SwitchRenderMode(roamMode);
+			}
+		} else {
+			smfGD->SwitchMeshDrawer();
+		}
+	}
+};
+
+
+
+
 class ShadowsActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ShadowsActionExecutor() : IUnsyncedActionExecutor("Shadows",
 			"Disables/Enables shadows rendering: -1=disabled, 0=off,"
-			" 1=unit&feature-shadows, 2=+terrain-shadows") {}
+			" 1=full shadows, 2=skip terrain shadows") {}
 
 	void Execute(const UnsyncedAction& action) const {
 		if (shadowHandler->shadowConfig < 0) {
@@ -3009,6 +3040,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new SelectCycleActionExecutor());
 	AddActionExecutor(new DeselectActionExecutor());
 	AddActionExecutor(new ShadowsActionExecutor());
+	AddActionExecutor(new RoamActionExecutor());
 	AddActionExecutor(new WaterActionExecutor());
 	AddActionExecutor(new AdvModelShadingActionExecutor());
 	AddActionExecutor(new AdvMapShadingActionExecutor());
