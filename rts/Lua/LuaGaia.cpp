@@ -39,6 +39,8 @@ static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 
 void CLuaGaia::LoadHandler()
 {
+	//FIXME GML: this needs a mutex!!!
+
 	if (luaGaia) {
 		return;
 	}
@@ -53,6 +55,7 @@ void CLuaGaia::LoadHandler()
 
 void CLuaGaia::FreeHandler()
 {
+	//FIXME GML: this needs a mutex!!!
 	delete luaGaia;
 }
 
