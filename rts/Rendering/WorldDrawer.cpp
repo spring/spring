@@ -119,7 +119,7 @@ void CWorldDrawer::Draw()
 
 	if (globalRendering->drawGround) {
 		SCOPED_TIMER("WorldDrawer::Terrain");
-		gd->Draw();
+		gd->Draw(DrawPass::Normal);
 		smoothHeightMeshDrawer->Draw(1.0f);
 		treeDrawer->DrawGrass();
 		gd->DrawTrees();
