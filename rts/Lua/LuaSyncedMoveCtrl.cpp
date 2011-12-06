@@ -556,9 +556,9 @@ static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, flo
 	// can't set goal here, need a different function that calls mt->SetGoal
 	// FIXME should use setter methods here and in other Set*MoveTypeValue functoins, but they mostly don't exist
 	if (key == "maxSpeed") {
-		if (value > 0)
-			mt->maxSpeed = value / GAME_SPEED;
-		mt->SetMaxSpeed(value / GAME_SPEED); return true;
+		if (value > 0) {
+			mt->SetMaxSpeed(value / GAME_SPEED); return true;
+		}
 	} else if (key == "maxWantedSpeed") {
 		mt->SetWantedMaxSpeed(value / GAME_SPEED); return true;
 	} else if (key == "repairBelowHealth") {
@@ -750,7 +750,7 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 {
 	if (SetGenericMoveTypeValue(mt, key, value)) {
 		if (key == "maxSpeed") {
-			mt->brakeDistance = (mt->maxSpeed * mt->maxSpeed) / mt->decRate;
+			mt->brakeDistance = (mt->GetMaxSpeed() * mt->GetMaxSpeed()) / mt->decRate;
 		}
 		return true;
 	}
@@ -763,7 +763,7 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 		mt->accRate = value; return true;
 	} else if (key == "decRate") {
 		mt->decRate = value;
-		mt->brakeDistance = (mt->maxSpeed * mt->maxSpeed) / mt->decRate;
+		mt->brakeDistance = (mt->GetMaxSpeed() * mt->GetMaxSpeed()) / mt->decRate;
 		return true;
 	} else if (key == "altitudeRate") {
 		mt->altitudeRate = value; return true;

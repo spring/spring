@@ -27,6 +27,10 @@ public:
 	void PostLoad();
 	void DependentDied(CObject* o);
 	inline void SetOrderTarget(CUnit* o);
+
+	void SetScriptMaxSpeed(float speed);
+	void SlowUpdateMaxSpeed();
+
 	virtual void AddDeathDependence(CObject* o, DependenceType dep);
 	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 	void AddCommandDependency(const Command &c);

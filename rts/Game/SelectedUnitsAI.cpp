@@ -55,7 +55,7 @@ inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
 	CCommandAI* cai = unit->commandAI;
 	if (cai->CanSetMaxSpeed()) {
 		Command c(CMD_SET_WANTED_MAX_SPEED, options);
-		c.AddParam(unit->moveType->maxSpeed);
+		c.AddParam(unit->moveType->GetMaxSpeed());
 		cai->GiveCommand(c, false);
 	}
 }
@@ -283,7 +283,8 @@ void CSelectedUnitsAI::CalculateGroupData(int player, bool queueing) {
 			if (unit->commandAI->CanSetMaxSpeed()) {
 				mobileUnits++;
 				mobileSumCoor += unitPos;
-				const float maxSpeed = unit->moveType->maxSpeed;
+
+				const float maxSpeed = unit->moveType->GetMaxSpeed();
 
 				if (maxSpeed < minMaxSpeed) {
 					minMaxSpeed = maxSpeed;

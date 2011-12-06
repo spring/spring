@@ -534,7 +534,7 @@ float CAICallback::GetUnitSpeed(int unitId)
 		if (unit) {
 			const int allyTeam = teamHandler->AllyTeam(team);
 			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
-				speed = unit->moveType->maxSpeed;
+				speed = unit->moveType->GetMaxSpeed();
 			} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
@@ -1724,7 +1724,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 				return true;
 			}
 			case AIVAL_UNIT_MAXSPEED: {
-				(*(float*) data) = unit->moveType->maxSpeed;
+				(*(float*) data) = unit->moveType->GetMaxSpeed();
 				return true;
 			}
 			default:
