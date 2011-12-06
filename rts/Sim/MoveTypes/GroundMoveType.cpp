@@ -533,22 +533,10 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 		deltaSpeed = speedDif * 0.125f;
 	} else if (speedDif > 0.0f) {
 		// we want to accelerate
-		if (speedDif < accRate) {
-			deltaSpeed = speedDif;
-		} else {
-			deltaSpeed = accRate;
-		}
-
-		deltaSpeed = Clamp(deltaSpeed, -accRate, accRate);
+		deltaSpeed = std::min(speedDif, accRate);
 	} else {
 		// we want to decelerate
-		if (speedDif > -10.0f * decRate) {
-			deltaSpeed = speedDif;
-		} else {
-			deltaSpeed = decRate;
-		}
-
-		deltaSpeed = Clamp(deltaSpeed, -decRate, decRate);
+		deltaSpeed = std::max(speedDif, -decRate);
 	}
 
 #ifdef TRACE_SYNC
