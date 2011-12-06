@@ -35,6 +35,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
@@ -533,7 +534,7 @@ float CAICallback::GetUnitSpeed(int unitId)
 		if (unit) {
 			const int allyTeam = teamHandler->AllyTeam(team);
 			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
-				speed = unit->maxSpeed;
+				speed = unit->moveType->maxSpeed;
 			} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
@@ -1723,7 +1724,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 				return true;
 			}
 			case AIVAL_UNIT_MAXSPEED: {
-				(*(float*) data) = unit->maxSpeed;
+				(*(float*) data) = unit->moveType->maxSpeed;
 				return true;
 			}
 			default:

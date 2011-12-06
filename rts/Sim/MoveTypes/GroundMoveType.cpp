@@ -537,7 +537,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 		if (speedDif > -10.0f * decRate) {
 			deltaSpeed = speedDif;
 		} else {
-			deltaSpeed = -10.0f * decRate;
+			deltaSpeed = decRate;
 		}
 
 		deltaSpeed = Clamp(deltaSpeed, -decRate, decRate);
@@ -570,7 +570,7 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 		heading += std::max(deltaHeading, short(-turnRate));
 	}
 
-	owner->UpdateDirVectors(!owner->upright && owner->maxSpeed > 0.0f);
+	owner->UpdateDirVectors(!owner->upright && maxSpeed > 0.0f);
 	owner->UpdateMidPos();
 
 	flatFrontDir = owner->frontdir;
@@ -857,10 +857,6 @@ void CGroundMoveType::CheckCollisionSkid()
 				u->Move3D(-collideeImpactImpulse, true);
 				u->speed -= collideeImpactImpulse;
 
-				if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
-					mt->skidding = true;
-				}
-
 				// damage the collider
 				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0.0f) {
 					owner->DoDamage(DamageArray(colliderImpactDmgMult), NULL, dif * colliderImpactDmgMult);
@@ -978,7 +974,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 			CMoveMath* moveMath = moveData->moveMath;
 			moveData->tempOwner = owner;
 
-			const vector<CSolidObject*> &nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
+			const vector<CSolidObject*>& nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
 
 			for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
 				CSolidObject* o = *oi;
@@ -1844,37 +1840,27 @@ void CGroundMoveType::SetMainHeading() {
 
 void CGroundMoveType::SetMaxSpeed(float speed)
 {
-	maxSpeed        = std::min(speed, owner->maxSpeed);
-	maxReverseSpeed = std::min(speed, owner->maxReverseSpeed);
+	maxSpeed        = std::min(speed, maxSpeed);
+	maxReverseSpeed = std::min(speed, maxReverseSpeed);
 
 	requestedSpeed = speed;
 }
 
 bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 	const UnitDef* ud = owner->unitDef;
-	const float3& mp = owner->midPos;
+	const float3& pos = owner->pos;
 
 	if (ud->slideTolerance < minSlideTolerance) { return false; }
-	if (ud->floatOnWater && owner->inWater) { return false; }
-	if (!mp.IsInBounds()) { return false; }
+	if (owner->unitDef->floatOnWater && owner->inWater) { return false; }
+	if (!pos.IsInBounds()) { return false; }
 
 	// if minSlideTolerance is zero, do not multiply maxSlope by ud->slideTolerance
 	// (otherwise the unit could stop on an invalid path location, and be teleported
 	// back)
-	if (minSlideTolerance <= 0.0f) {
-		return (ground->GetSlope(mp.x, mp.z) > ud->movedata->maxSlope);
-	}
+	const float gSlope = ground->GetSlope(pos.x, pos.z);
+	const float uSlope = ud->movedata->maxSlope * ((minSlideTolerance <= 0.0f)? 1.0f: ud->slideTolerance);
 
-	return (ground->GetSlope(mp.x, mp.z) > (ud->movedata->maxSlope * ud->slideTolerance));
-}
-
-void CGroundMoveType::StartSkidding() {
-	skidding = true;
-}
-
-void CGroundMoveType::StartFlying() {
-	skidding = true; // flying requires skidding
-	flying = true;
+	return (gSlope > uSlope);
 }
 
 
@@ -1997,6 +1983,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		owner->Move3D(speed, true);
 
 		currentSpeed = (speed != ZeroVector)? speedScale: 0.0f;
+		currentSpeed = std::min(currentSpeed, (reversing? maxReverseSpeed: maxSpeed));
 		deltaSpeed = 0.0f;
 
 		assert(math::fabs(currentSpeed) < 1e6f);

@@ -229,8 +229,6 @@ CUnit::CUnit() : CSolidObject(),
 	myTrack(NULL),
 	lastFlareDrop(0),
 	currentFuel(0.0f),
-	maxSpeed(0.0f),
-	maxReverseSpeed(0.0f),
 	alphaThreshold(0.1f),
 	cegDamage(1),
 	luaDraw(false),
@@ -357,6 +355,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 	Move3D(position.ClampInBounds(), false);
 	SetRadiusAndHeight(model->radius, model->height);
+	UpdateDirVectors(!upright);
 	UpdateMidPos();
 
 	uh->AddUnit(this);
@@ -429,9 +428,6 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	if (unitDef->floatOnWater && (pos.y <= 0.0f)) {
 		Move1D(-unitDef->waterline, 1, false);
 	}
-
-	maxSpeed = unitDef->speed / GAME_SPEED;
-	maxReverseSpeed = unitDef->rSpeed / GAME_SPEED;
 
 	flankingBonusMode        = unitDef->flankingBonusMode;
 	flankingBonusDir         = unitDef->flankingBonusDir;
@@ -2334,8 +2330,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(leaveTracks),
 //	CR_MEMBER(isIcon),
 //	CR_MEMBER(iconRadius),
-	CR_MEMBER(maxSpeed),
-	CR_MEMBER(maxReverseSpeed),
 //	CR_MEMBER(weaponHitMod),
 //	CR_MEMBER(luaMats),
 	CR_MEMBER(alphaThreshold),
