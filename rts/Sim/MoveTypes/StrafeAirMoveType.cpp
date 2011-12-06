@@ -101,9 +101,35 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	inefficientAttackTime(0)
 {
 	assert(owner != NULL);
+	assert(owner->unitDef != NULL);
 
 	// force LOS recalculation
 	owner->mapSquare += 1;
+
+	isFighter = (owner->unitDef->IsFighterUnit());
+	collide = owner->unitDef->collide;
+
+	wingAngle = owner->unitDef->wingAngle;
+	crashDrag = 1.0f - owner->unitDef->crashDrag;
+	invDrag = 1.0f - owner->unitDef->drag;
+	frontToSpeed = owner->unitDef->frontToSpeed;
+	speedToFront = owner->unitDef->speedToFront;
+	myGravity = owner->unitDef->myGravity;
+
+	maxBank = owner->unitDef->maxBank;
+	maxPitch = owner->unitDef->maxPitch;
+	turnRadius = owner->unitDef->turnRadius;
+	wantedHeight =
+		(owner->unitDef->wantedHeight * 1.5f) +
+		((gs->randFloat() - 0.3f) * 15.0f * (isFighter? 2.0f: 1.0f));
+
+	// same as {Ground, HoverAir}MoveType::accRate
+	maxAcc = owner->unitDef->maxAcc;
+	maxAileron = owner->unitDef->maxAileron;
+	maxElevator = owner->unitDef->maxElevator;
+	maxRudder = owner->unitDef->maxRudder;
+
+	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
 	// FIXME: WHY ARE THESE RANDOMIZED?
 	maxRudder   *= (0.99f + gs->randFloat() * 0.02f);

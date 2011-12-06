@@ -12,9 +12,7 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
-#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -391,25 +389,13 @@ void CMobileCAI::SlowUpdate()
 		IdleCheck();
 
 		//the attack order could terminate directly and thus cause a loop
-		if(commandQue.empty() || commandQue.front().GetID() == CMD_ATTACK) {
+		if (commandQue.empty() || commandQue.front().GetID() == CMD_ATTACK) {
 			return;
 		}
 	}
 
-	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
-	// to the current command  (and ignore them when it's their turn)
-	if (commandQue.size() >= 2 && !slowGuard) {
-		CCommandQueue::iterator it = commandQue.begin();
-		++it;
-
-		const Command& c = *it;
-
-		if ((c.GetID()== CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
-			const float defMaxSpeed = owner->moveType->maxSpeed;
-			const float newMaxSpeed = std::min(c.params[0], defMaxSpeed);
-			if (newMaxSpeed > 0)
-				owner->moveType->SetMaxSpeed(newMaxSpeed);
-		}
+	if (!slowGuard) {
+		SlowUpdateMaxSpeed();
 	}
 
 	Execute();
@@ -652,14 +638,14 @@ void CMobileCAI::ExecuteGuard(Command &c)
 		const float3 goal = guardee->pos - dif * (guardee->radius + owner->radius + 64.0f);
 		const bool resetGoal =
 			((goalPos - goal).SqLength2D() > 1600.0f) ||
-			(goalPos - owner->pos).SqLength2D() < Square(owner->moveType->maxSpeed * GAME_SPEED + 1 + SQUARE_SIZE * 2);
+			(goalPos - owner->pos).SqLength2D() < Square(owner->moveType->GetMaxSpeed() * GAME_SPEED + 1 + SQUARE_SIZE * 2);
 
 		if (resetGoal) {
 			SetGoal(goal, owner->pos);
 		}
 
 		if ((goal - owner->pos).SqLength2D() < 6400.0f) {
-			StartSlowGuard(guardee->moveType->maxSpeed);
+			StartSlowGuard(guardee->moveType->GetMaxSpeed());
 
 			if ((goal - owner->pos).SqLength2D() < 1800.0f) {
 				StopMove();
@@ -1099,9 +1085,9 @@ void CMobileCAI::StartSlowGuard(float speed) {
 	if (!slowGuard) {
 		slowGuard = true;
 
-		if (owner->moveType->maxSpeed < speed) { return; }
-		if (commandQue.empty()) { return; }
 		if (speed <= 0.0f) { return; }
+		if (commandQue.empty()) { return; }
+		if (owner->moveType->GetMaxSpeed() < speed) { return; }
 
 		if (commandQue.size() <= 1
 			|| commandQue[1].GetID() != CMD_SET_WANTED_MAX_SPEED

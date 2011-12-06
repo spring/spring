@@ -1860,7 +1860,7 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 									 luaL_checkfloat(L, 3),
 									 luaL_checkfloat(L, 4));
 	const float radius = luaL_optfloat(L, 5, 0.0f);
-	const float speed  = luaL_optfloat(L, 6, unit->moveType->maxSpeed * 2.0f);
+	const float speed  = luaL_optfloat(L, 6, unit->moveType->GetMaxSpeed());
 
 	unit->moveType->StartMoving(pos, radius, speed);
 

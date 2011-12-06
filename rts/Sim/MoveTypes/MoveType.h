@@ -46,16 +46,16 @@ public:
 
 	void SetRepairBelowHealth(float rbHealth) { repairBelowHealth = rbHealth; }
 
+	float GetMaxSpeed() const { return maxSpeed; }
+	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
+	float GetRepairBelowHealth() const { return repairBelowHealth; }
+
 public:
 	CUnit* owner;
 
 	float3 goalPos;
 	float3 oldPos;             // owner position at last Update()
 	float3 oldSlowUpdatePos;   // owner position at last SlowUpdate()
-
-	float maxSpeed;
-	float maxWantedSpeed;
-	float repairBelowHealth;
 
 	/// TODO: probably should move the code in CUnit that reads this into the movement classes
 	bool useHeading;
@@ -66,6 +66,11 @@ public:
 		Failed = 2
 	};
 	ProgressState progressState;
+
+protected:
+	float maxSpeed;
+	float maxWantedSpeed;
+	float repairBelowHealth;
 };
 
 #endif // MOVETYPE_H
