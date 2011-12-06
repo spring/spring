@@ -978,7 +978,7 @@ bool CGame::UpdateUnsynced()
 			gd->Update();
 		}
 
-		if (newSimFrame && !skipping) { //FIXME why not when skipping?
+		if (newSimFrame) {
 			projectileDrawer->UpdateTextures();
 			sky->Update();
 			sky->GetLight()->Update();
@@ -991,36 +991,34 @@ bool CGame::UpdateUnsynced()
 		worldDrawer->Update();
 	}
 
+
 	if (newSimFrame) {
 		CInputReceiver::CollectGarbage();
-		
+	
 		if (!(gs->frameNum & 31)) {
 			oscStatsSender->Update(gs->frameNum);
 		}
 	}
 
 	// always update ExtraTexture & SoundListener with <=30Hz (even when paused)
-	if (!skipping) { //FIXME why not when skipping?
-		if (newSimFrame || gs->paused) {
-			static spring_time lastUpdate = spring_gettime();
-			const float deltaSec = spring_diffsecs(currentTime, lastUpdate);
+	if (newSimFrame || gs->paused) {
+		static spring_time lastUpdate = spring_gettime();
+		const float deltaSec = spring_diffsecs(currentTime, lastUpdate);
 
-			if (!gs->paused || deltaSec >= (1.0f/GAME_SPEED)) {
-				lastUpdate = currentTime;
+		if (!gs->paused || deltaSec >= (1.0f/GAME_SPEED)) {
+			lastUpdate = currentTime;
 
-				{
-					SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
-					gd->UpdateExtraTexture();
-				}
-
-				// TODO call only when camera changed
-				sound->UpdateListener(camera->pos, camera->forward, camera->up, deltaSec);
+			{
+				SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
+				gd->UpdateExtraTexture();
 			}
+
+			// TODO call only when camera changed
+			sound->UpdateListener(camera->pos, camera->forward, camera->up, deltaSec);
 		}
 	}
 
-	if (!skipping)
-		UpdateUI(true);
+	UpdateUI(true);
 
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
