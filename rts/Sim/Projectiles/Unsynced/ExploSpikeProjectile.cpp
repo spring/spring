@@ -52,7 +52,8 @@ CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos, const float3& sp
 
 	checkCol  = false;
 	useAirLos = true;
-	SetRadius(length + lengthGrowth * alpha / alphaDecay);
+
+	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
 }
 
 CExploSpikeProjectile::~CExploSpikeProjectile()
@@ -105,5 +106,6 @@ void CExploSpikeProjectile::Init(const float3& pos, CUnit* owner)
 
 	checkCol = false;
 	useAirLos = true;
-	SetRadius(length + lengthGrowth * alpha / alphaDecay);
+
+	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
 }

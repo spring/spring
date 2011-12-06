@@ -86,12 +86,10 @@ CMissileProjectile::CMissileProjectile(
 	dir = (curSpeed > 0.0f) ? speed / curSpeed : ZeroVector;
 	oldDir = dir;
 
-	SetRadius(0.0f);
-
 	if (weaponDef) {
 		model = weaponDef->LoadModel();
 		if (model) {
-			SetRadius(model->radius);
+			SetRadiusAndHeight(model->radius, model->height);
 		}
 	}
 

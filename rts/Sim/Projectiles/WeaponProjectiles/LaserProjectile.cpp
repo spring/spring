@@ -57,7 +57,7 @@ CLaserProjectile::CLaserProjectile(
 	dir = speed / speedf;
 
 	if (weaponDef) {
-		SetRadius(weaponDef->collisionSize);
+		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 
 		midtexx =
 			(weaponDef->visuals.texture2->xstart +

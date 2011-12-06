@@ -33,7 +33,7 @@ CEmgProjectile::CEmgProjectile(
 	projectileType = WEAPON_EMG_PROJECTILE;
 
 	if (weaponDef) {
-		SetRadius(weaponDef->collisionSize);
+		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 	}
 #ifdef TRACE_SYNC

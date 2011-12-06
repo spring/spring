@@ -3006,7 +3006,7 @@ int LuaSyncedRead::GetUnitShieldState(lua_State* L)
 	const int idx = luaL_optint(L, 2, -1);
 
 	if (idx < 0 || idx >= unit->weapons.size()) {
-		shield = (CPlasmaRepulser*) unit->shieldWeapon;
+		shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
 	} else {
 		shield = dynamic_cast<CPlasmaRepulser*>(unit->weapons[idx]);
 	}
@@ -4865,8 +4865,6 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 
 	const S3DModelPiece& op = *localModel->pieces[piece]->original;
 	return ::GetUnitPieceInfo(L, op);
-
-	return 0;
 }
 
 

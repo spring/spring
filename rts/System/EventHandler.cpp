@@ -2,11 +2,11 @@
 
 #include "System/EventHandler.h"
 
-#include "Game/UI/LuaUI.h"  // FIXME -- should be moved
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
 #include "Lua/LuaRules.h"
 #include "Lua/LuaGaia.h"
+#include "Lua/LuaUI.h"  // FIXME -- should be moved
 
 #include "System/Config/ConfigHandler.h"
 #include "System/Platform/Threading.h"

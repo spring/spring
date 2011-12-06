@@ -95,7 +95,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 		middir = (dir1 + dir2).ANormalize();
 		drawSegmented = true;
 	}
-	SetRadius(pos1.distance(pos2));
+	SetRadiusAndHeight(pos1.distance(pos2), 0.0f);
 
 	if ((pos.y - ground->GetApproximateHeight(pos.x, pos.z)) > 10) {
 		useAirLos = true;

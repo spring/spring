@@ -282,10 +282,9 @@ bool CCollisionHandler::Intersect(const CUnit* u, const float3& p0, const float3
 bool CCollisionHandler::Intersect(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q)
 {
 	const CollisionVolume* v = f->collisionVolume;
-	const float3 relMidPos(f->midPos - f->pos);
 
 	CMatrix44f m(f->transMatrix);
-	m.Translate(relMidPos);
+	m.Translate(f->relMidPos);
 	m.Translate(v->GetOffsets());
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);

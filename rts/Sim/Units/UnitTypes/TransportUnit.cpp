@@ -60,6 +60,7 @@ void CTransportUnit::Update()
 		CUnit* transportee = ti->unit;
 
 		float3 relPiecePos;
+		float3 absPiecePos;
 
 		if (ti->piece >= 0) {
 			relPiecePos = script->GetPiecePos(ti->piece);
@@ -67,11 +68,11 @@ void CTransportUnit::Update()
 			relPiecePos = float3(0.0f, -1000.0f, 0.0f);
 		}
 
-		transportee->pos = pos +
+		absPiecePos = pos +
 			(frontdir * relPiecePos.z) +
 			(updir    * relPiecePos.y) +
 			(rightdir * relPiecePos.x);
-		transportee->UpdateMidPos();
+
 		transportee->mapSquare = mapSquare;
 
 		if (unitDef->holdSteady) {
@@ -82,7 +83,6 @@ void CTransportUnit::Update()
 				const CMatrix44f slaveMat = pieceMat * transMat;
 
 				transportee->SetDirVectors(slaveMat);
-				transportee->SetHeadingFromDirection();
 			}
 		} else {
 			// slave transportee orientation to body
@@ -91,6 +91,10 @@ void CTransportUnit::Update()
 			transportee->frontdir = frontdir;
 			transportee->rightdir = rightdir;
 		}
+
+		transportee->Move3D(absPiecePos, false);
+		transportee->UpdateMidPos();
+		transportee->SetHeadingFromDirection();
 	}
 }
 
@@ -179,18 +183,16 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 						pos.y = ground->GetHeightReal(transportee->pos.x, transportee->pos.z);
 
 						if (qf->GetUnitsExact(pos, transportee->radius + 2).empty()) {
-							transportee->pos = pos;
+							transportee->Move3D(pos, false);
 							break;
 						}
 					}
-
-					transportee->UpdateMidPos();
 				} else if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(transportee->moveType)) {
 					mt->StartFlying();
 				}
 
-				((AMoveType*) transportee->moveType)->SlowUpdate();
-				(             transportee->moveType)->LeaveTransport();
+				transportee->moveType->SlowUpdate();
+				transportee->moveType->LeaveTransport();
 
 				// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
 				if (unitDef->canfly && transportee->unitDef->canmove) {
@@ -373,8 +375,8 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			// de-stun detaching units in case we are not a fire-platform
 			unit->stunned = (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
 
-			((AMoveType*) unit->moveType)->SlowUpdate();
-			(             unit->moveType)->LeaveTransport();
+			unit->moveType->SlowUpdate();
+			unit->moveType->LeaveTransport();
 
 			if (CBuilding* building = dynamic_cast<CBuilding*>(unit))
 				building->ForcedMove(building->pos, building->buildFacing);

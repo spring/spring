@@ -229,8 +229,6 @@ CUnit::CUnit() : CSolidObject(),
 	myTrack(NULL),
 	lastFlareDrop(0),
 	currentFuel(0.0f),
-	maxSpeed(0.0f),
-	maxReverseSpeed(0.0f),
 	alphaThreshold(0.1f),
 	cegDamage(1),
 	luaDraw(false),
@@ -340,14 +338,29 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	unitDef = uDef;
 	unitDefID = unitDef->id;
 
-	pos = position;
-	pos.CheckInBounds();
-	mapSquare = ground->GetSquare(pos);
+	// copy the UnitDef volume instance
+	// NOTE: gets deleted in ~CSolidObject
+	model = unitDef->LoadModel();
+	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius);
+	modelParser->CreateLocalModel(this);
 
-	// temporary radius
-	SetRadius(1.2f);
+	relMidPos = model->relMidPos;
+	mapSquare = ground->GetSquare(position.ClampInBounds());
+
+	heading  = GetHeadingFromFacing(facing);
+	frontdir = GetVectorFromHeading(heading);
+	updir    = UpVector;
+	rightdir = frontdir.cross(updir);
+	upright  = unitDef->upright;
+
+	Move3D(position.ClampInBounds(), false);
+	SetRadiusAndHeight(model->radius, model->height);
+	UpdateDirVectors(!upright);
+	UpdateMidPos();
+
 	uh->AddUnit(this);
 	qf->MovedUnit(this);
+
 	hasRadarPos = false;
 
 	losStatus[allyteam] =
@@ -366,12 +379,6 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 #endif
 
 	ASSERT_SYNCED(pos);
-
-	heading  = GetHeadingFromFacing(facing);
-	frontdir = GetVectorFromHeading(heading);
-	updir    = UpVector;
-	rightdir = frontdir.cross(updir);
-	upright  = unitDef->upright;
 
 	buildFacing = std::abs(facing) % NUM_FACINGS;
 	curYardMap = (unitDef->GetYardMap(buildFacing).empty())? NULL: &unitDef->GetYardMap(buildFacing)[0];
@@ -417,11 +424,10 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	decloakDistance = unitDef->decloakDistance;
 	cloakTimeout = unitDef->cloakTimeout;
 
-	if (unitDef->floatOnWater && (pos.y <= 0.0f))
-		pos.y = -unitDef->waterline;
-
-	maxSpeed = unitDef->speed / GAME_SPEED;
-	maxReverseSpeed = unitDef->rSpeed / GAME_SPEED;
+	// <inWater> and friends are still false at this point
+	if (unitDef->floatOnWater && (pos.y <= 0.0f)) {
+		Move1D(-unitDef->waterline, 1, false);
+	}
 
 	flankingBonusMode        = unitDef->flankingBonusMode;
 	flankingBonusDir         = unitDef->flankingBonusDir;
@@ -436,13 +442,6 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 		unitDef->energyMake +
 		unitDef->tidalGenerator * mapInfo->map.tidalStrength;
 
-	ChangeLos(realLosRadius, realAirLosRadius);
-	SetRadius((model = unitDef->LoadModel())->radius);
-	modelParser->CreateLocalModel(this);
-
-	// copy the UnitDef volume instance
-	// NOTE: gets deleted in ~CSolidObject
-	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius);
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
 }
@@ -452,11 +451,6 @@ void CUnit::PostInit(const CUnit* builder)
 	weaponLoader->LoadWeapons(this);
 	// Call initializing script functions
 	script->Create();
-
-	relMidPos = model->relMidPos;
-	height = model->height;
-
-	UpdateMidPos();
 
 	if (unitDef->movedata != NULL) {
 		switch (unitDef->movedata->moveType) {
@@ -555,8 +549,7 @@ void CUnit::ForcedMove(const float3& newPos)
 	if (building)
 		groundDecals->RemoveBuilding(building, NULL);
 
-	pos = newPos;
-	UpdateMidPos();
+	Move3D(newPos - pos, true);
 
 	if (building)
 		groundDecals->AddBuilding(building);
@@ -571,20 +564,10 @@ void CUnit::ForcedMove(const float3& newPos)
 }
 
 
-void CUnit::SetDirectionFromHeading()
-{
-	if (GetTransporter() != NULL) {
-		return;
-	}
-
-	UpdateDirVectors(!upright && maxSpeed > 0.0f);
-}
-
 void CUnit::SetHeadingFromDirection()
 {
 	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
 }
-
 
 void CUnit::SetDirVectors(const CMatrix44f& matrix) {
 	rightdir.x = -matrix[ 0];
@@ -598,14 +581,13 @@ void CUnit::SetDirVectors(const CMatrix44f& matrix) {
 	frontdir.z =  matrix[10];
 }
 
+// NOTE: movetypes call this directly
 void CUnit::UpdateDirVectors(bool useGroundNormal)
 {
 	updir    = useGroundNormal? ground->GetSmoothNormal(pos.x, pos.z): UpVector;
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();
 	frontdir = updir.cross(rightdir);
-
-	UpdateMidPos();
 }
 
 
@@ -615,11 +597,13 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 	// drop unit from position
 	fallSpeed = unitDef->unitFallSpeed > 0 ? unitDef->unitFallSpeed : parent->unitDef->fallSpeed;
 	falling = true;
-	pos.y = parentPos.y - height;
+
+	speed.y = 0.0f;
 	frontdir = parentDir;
 	frontdir.y = 0.0f;
-	speed.y = 0.0f;
 
+	Move1D(parentPos.y - height, 1, false);
+	UpdateMidPos();
 	// start parachute animation
 	script->Falling();
 }
@@ -989,11 +973,6 @@ void CUnit::SlowUpdate()
 			KillUnit(true, false, NULL);
 			return;
 		}
-	}
-
-	// aircraft and ScriptMoveType do not want this
-	if (moveType->useHeading) {
-		SetDirectionFromHeading();
 	}
 
 	SlowUpdateWeapons();
@@ -1599,7 +1578,7 @@ void CUnit::DependentDied(CObject* o)
 	if (o == transporter)  { transporter  = NULL; }
 	if (o == lastAttacker) { lastAttacker = NULL; }
 
-	incomingMissiles.remove((CMissileProjectile*) o);
+	incomingMissiles.remove(static_cast<CMissileProjectile*>(o));
 
 	CSolidObject::DependentDied(o);
 }
@@ -1870,7 +1849,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 				this,                              // owner
 				NULL,                              // hitUnit
 				NULL,                              // hitFeature
-				wd->areaOfEffect,
+				wd->craterAreaOfEffect,
+				wd->damageAreaOfEffect,
 				wd->edgeEffectiveness,
 				wd->explosionSpeed,
 				wd->damages[0] > 500? 1.0f: 2.0f,  // gfxMod
@@ -2080,10 +2060,10 @@ void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
 	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
-
+	model = unitDef->LoadModel();
 	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
 
-	SetRadius((model = unitDef->LoadModel())->radius);
+	SetRadiusAndHeight(model->radius, model->height);
 
 	modelParser->CreateLocalModel(this);
 	// FIXME: how to handle other script types (e.g. Lua) here?
@@ -2350,8 +2330,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(leaveTracks),
 //	CR_MEMBER(isIcon),
 //	CR_MEMBER(iconRadius),
-	CR_MEMBER(maxSpeed),
-	CR_MEMBER(maxReverseSpeed),
 //	CR_MEMBER(weaponHitMod),
 //	CR_MEMBER(luaMats),
 	CR_MEMBER(alphaThreshold),

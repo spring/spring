@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Lua/LuaLobby.h" // ugh, streflop namespace corruption...
+#include "LuaLobby.h" // ugh, streflop namespace corruption...
 
 #include "System/mmgr.h"
 
@@ -8,24 +8,24 @@
 
 #include "LuaInclude.h"
 
-#include "Lua/LuaUnsyncedCtrl.h"
-#include "Lua/LuaCallInCheck.h"
-#include "Lua/LuaConstGL.h"
-#include "Lua/LuaConstCMD.h"
-#include "Lua/LuaConstCMDTYPE.h"
-#include "Lua/LuaConstGame.h"
-#include "Lua/LuaSyncedRead.h"
-#include "Lua/LuaUnsyncedCall.h"
-#include "Lua/LuaUnsyncedRead.h"
-#include "Lua/LuaFeatureDefs.h"
-#include "Lua/LuaUnitDefs.h"
-#include "Lua/LuaWeaponDefs.h"
-#include "Lua/LuaScream.h"
-#include "Lua/LuaOpenGL.h"
-#include "Lua/LuaUtils.h"
-#include "Lua/LuaVFS.h"
-#include "Lua/LuaIO.h"
-#include "Lua/LuaZip.h"
+#include "LuaUnsyncedCtrl.h"
+#include "LuaCallInCheck.h"
+#include "LuaConstGL.h"
+#include "LuaConstCMD.h"
+#include "LuaConstCMDTYPE.h"
+#include "LuaConstGame.h"
+#include "LuaSyncedRead.h"
+#include "LuaUnsyncedCall.h"
+#include "LuaUnsyncedRead.h"
+#include "LuaFeatureDefs.h"
+#include "LuaUnitDefs.h"
+#include "LuaWeaponDefs.h"
+#include "LuaScream.h"
+#include "LuaOpenGL.h"
+#include "LuaUtils.h"
+#include "LuaVFS.h"
+#include "LuaIO.h"
+#include "LuaZip.h"
 #include "Game/Camera.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
@@ -33,15 +33,15 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/PlayerRoster.h"
 #include "Game/SelectedUnits.h"
-#include "CommandColors.h"
-#include "CursorIcons.h"
-#include "GuiHandler.h"
-#include "InfoConsole.h"
-#include "KeyCodes.h"
-#include "KeySet.h"
-#include "KeyBindings.h"
-#include "MiniMap.h"
-#include "MouseHandler.h"
+#include "Game/UI/CommandColors.h"
+#include "Game/UI/CursorIcons.h"
+#include "Game/UI/GuiHandler.h"
+#include "Game/UI/InfoConsole.h"
+#include "Game/UI/KeyCodes.h"
+#include "Game/UI/KeySet.h"
+#include "Game/UI/KeyBindings.h"
+#include "Game/UI/MiniMap.h"
+#include "Game/UI/MouseHandler.h"
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
 #include "System/EventHandler.h"
@@ -121,7 +121,9 @@ CLuaUI::CLuaUI()
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
 
-	const string code = LoadFile("luaui.lua");
+	const std::string file = (CFileHandler::FileExists("luaui.lua", SPRING_VFS_ALL) ? "luaui.lua" : "LuaUI/main.lua");
+
+	const string code = LoadFile(file);
 	if (code.empty()) {
 		KillLua();
 		return;
@@ -192,7 +194,7 @@ CLuaUI::CLuaUI()
 	}
 
 	lua_settop(L, 0);
-	if (!LoadCode(L, code, "luaui.lua")) {
+	if (!LoadCode(L, code, file)) {
 		KillLua();
 		return;
 	}

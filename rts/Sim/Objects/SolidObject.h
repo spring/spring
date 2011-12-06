@@ -27,14 +27,27 @@ public:
 	CSolidObject();
 	virtual ~CSolidObject();
 
-	virtual bool AddBuildPower(float amount, CUnit* builder);
-
+	virtual bool AddBuildPower(float amount, CUnit* builder) { return false; }
 	virtual void DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse) {}
 	virtual void Kill(const float3& impulse, bool crushKill) {}
 	virtual int GetBlockingMapID() const { return -1; }
 
-	void MovePos(const float3& v) { pos += v; }
-	void MoveMidPos(const float3&);
+	void Move3D(const float3& v, bool relative) {
+		const float3& dv = relative? v: (v - pos);
+
+		pos += dv;
+		midPos += dv;
+	}
+
+	void Move1D(const float v, int d, bool relative) {
+		const float dv = relative? v: (v - pos[d]);
+
+		pos[d] += dv;
+		midPos[d] += dv;
+	}
+	// this should be called whenever the direction
+	// vectors are changed (ie. after a rotation) in
+	// eg. movetype code
 	void UpdateMidPos();
 
 	/**
@@ -48,8 +61,8 @@ public:
 	 */
 	void UnBlock();
 
-	int2 GetMapPos();
-	int2 GetMapPos(const float3& position);
+	int2 GetMapPos() const { return (GetMapPos(pos)); }
+	int2 GetMapPos(const float3& position) const;
 
 public:
 	// Static properties
@@ -61,7 +74,6 @@ public:
 
 	int xsize;                                  ///< The x-size of this object, according to its footprint.
 	int zsize;                                  ///< The z-size of this object, according to its footprint.
-	float height;                               ///< The height of this object.
 
 	SyncedSshort heading;                       ///< Contains the same information as frontdir, but in a short signed integer.
 	PhysicalState physicalState;                ///< The current state of the object within the gameworld. I.e Flying or OnGround.
@@ -73,8 +85,8 @@ public:
 	float3 speed;                               ///< current velocity vector (length in elmos/frame)
 	float3 residualImpulse;                     ///< Used to sum up external impulses.
 
-	int allyteam;                               ///< allyteam that this->team is part of
 	int team;                                   ///< team that "owns" this object
+	int allyteam;                               ///< allyteam that this->team is part of
 
 	MoveData* mobility;                         ///< holds information about the mobility and movedata of this object (if NULL, object is either static or aircraft)
 	CollisionVolume* collisionVolume;
@@ -83,9 +95,9 @@ public:
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)
 	SyncedFloat3 updir;                         ///< object-local y-axis (in WS)
 
-	SyncedFloat3 relMidPos;                     ///< set by the model, used to derive midPos = pos + relMidPos
-	SyncedFloat3 midPos;                        ///< center position of the model (pos is at the very bottom of the model). Used as mass center.
-	int2 mapPos;                                ///< Current position on GroundBlockingMap.
+	SyncedFloat3 relMidPos;                     ///< local-space vector from pos to midPos read from model, used to initialize midPos
+	SyncedFloat3 midPos;                        ///< mid-position of model (pos is at the very bottom of the model) in WS, used as center of mass
+	int2 mapPos;                                ///< current position on GroundBlockingObjectMap
 
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)

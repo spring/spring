@@ -7,6 +7,7 @@
 #include "Map/Ground.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
 
 COverviewController::COverviewController()
@@ -34,8 +35,8 @@ void COverviewController::MouseWheelMove(float move)
 float3 COverviewController::GetPos()
 {
 	// map not created when constructor run
-	pos.x = gs->mapx * 4.0f;
-	pos.z = gs->mapy * 4.0f;
+	pos.x = gs->mapx * 0.5f * SQUARE_SIZE;
+	pos.z = gs->mapy * 0.5f * SQUARE_SIZE;
 	const float height = std::max(pos.x / globalRendering->aspectRatio, pos.z);
 	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * height);
 	return pos;

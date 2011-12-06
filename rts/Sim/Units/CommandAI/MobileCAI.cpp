@@ -401,9 +401,11 @@ void CMobileCAI::SlowUpdate()
 	if (commandQue.size() >= 2 && !slowGuard) {
 		CCommandQueue::iterator it = commandQue.begin();
 		++it;
+
 		const Command& c = *it;
+
 		if ((c.GetID()== CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
-			const float defMaxSpeed = owner->maxSpeed;
+			const float defMaxSpeed = owner->moveType->maxSpeed;
 			const float newMaxSpeed = std::min(c.params[0], defMaxSpeed);
 			if (newMaxSpeed > 0)
 				owner->moveType->SetMaxSpeed(newMaxSpeed);
@@ -650,14 +652,14 @@ void CMobileCAI::ExecuteGuard(Command &c)
 		const float3 goal = guardee->pos - dif * (guardee->radius + owner->radius + 64.0f);
 		const bool resetGoal =
 			((goalPos - goal).SqLength2D() > 1600.0f) ||
-			(goalPos - owner->pos).SqLength2D() < Square(owner->maxSpeed * GAME_SPEED + 1 + SQUARE_SIZE * 2);
+			(goalPos - owner->pos).SqLength2D() < Square(owner->moveType->maxSpeed * GAME_SPEED + 1 + SQUARE_SIZE * 2);
 
 		if (resetGoal) {
 			SetGoal(goal, owner->pos);
 		}
 
 		if ((goal - owner->pos).SqLength2D() < 6400.0f) {
-			StartSlowGuard(guardee->maxSpeed);
+			StartSlowGuard(guardee->moveType->maxSpeed);
 
 			if ((goal - owner->pos).SqLength2D() < 1800.0f) {
 				StopMove();
@@ -1090,27 +1092,22 @@ void CMobileCAI::IdleCheck()
 }
 
 void CMobileCAI::StopSlowGuard() {
-	if (slowGuard) {
-		slowGuard = false;
-		if (owner->maxSpeed)
-			owner->moveType->SetMaxSpeed(owner->maxSpeed);
-	}
+	slowGuard = false;
 }
 
-void CMobileCAI::StartSlowGuard(float speed){
+void CMobileCAI::StartSlowGuard(float speed) {
 	if (!slowGuard) {
 		slowGuard = true;
 
-		if (owner->maxSpeed >= speed) {
-			if (!commandQue.empty()) {
-				Command currCommand = commandQue.front();
-				if (commandQue.size() <= 1
-						|| commandQue[1].GetID() != CMD_SET_WANTED_MAX_SPEED
-						|| commandQue[1].params[0] > speed){
-					if (speed > 0)
-						owner->moveType->SetMaxSpeed(speed);
-				}
-			}
+		if (owner->moveType->maxSpeed < speed) { return; }
+		if (commandQue.empty()) { return; }
+		if (speed <= 0.0f) { return; }
+
+		if (commandQue.size() <= 1
+			|| commandQue[1].GetID() != CMD_SET_WANTED_MAX_SPEED
+			|| commandQue[1].params[0] > speed) {
+
+			owner->moveType->SetMaxSpeed(speed);
 		}
 	}
 }

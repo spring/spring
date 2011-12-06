@@ -123,11 +123,11 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	const S3DModel* model = obj->model;
 
 	// make space in the std::vectors
-	if (obj->team >= (int)obj->team) {
-		cache.resize(obj->team);
+	if (obj->team >= (int)cache.size()) {
+		cache.resize(obj->team + 1);
 	}
 	if (model->id >= (int)cache[obj->team].size()) {
-		cache[obj->team].resize(model->id, 0);
+		cache[obj->team].resize(model->id + 1, 0);
 	}
 
 	cache[obj->team][model->id] = -1;
@@ -166,7 +166,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		delete[] oldPixels;
 
 		fbo.Bind();
-		fbo.UnattachAll();
+		fbo.DetachAll();
 
 		glDeleteTextures(1, &farTextureID);
 		farTextureID = newFarTextureID;
@@ -243,7 +243,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	//glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();
 
-	fbo.Unattach(GL_DEPTH_ATTACHMENT_EXT);
+	fbo.Detach(GL_DEPTH_ATTACHMENT_EXT);
 	fbo.Unbind();
 
 	cache[obj->team][model->id] = ++usedFarTextures;

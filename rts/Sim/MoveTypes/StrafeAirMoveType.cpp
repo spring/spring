@@ -92,7 +92,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	myGravity(0.8f),
 	maxBank(0.55f),
 	maxPitch(0.35f),
-	maxSpeed(owner->maxSpeed),
+	maxSpeed(0.0f),
 	turnRadius(150),
 	maxAcc(0.006f),
 	maxAileron(0.04f),
@@ -241,7 +241,7 @@ bool CStrafeAirMoveType::Update()
 
 
 bool CStrafeAirMoveType::HandleCollisions() {
-	float3& pos = owner->pos;
+	const float3& pos = owner->pos;
 
 #ifdef DEBUG_AIRCRAFT
 	if (lastColWarningType == 1) {
@@ -282,8 +282,7 @@ bool CStrafeAirMoveType::HandleCollisions() {
 				const float3 dif = (pos - unit->pos).Normalize();
 
 				if (unit->immobile) {
-					owner->MovePos(-dif * (dist - totRad));
-					owner->UpdateMidPos();
+					owner->Move3D(-dif * (dist - totRad), true);
 					owner->speed *= 0.99f;
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
@@ -294,11 +293,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
 
-					owner->MovePos(-dif * (dist - totRad) * (1 - part));
-					owner->UpdateMidPos();
-
-					unit->MovePos(dif * (dist - totRad) * (part));
-					unit->UpdateMidPos();
+					owner->Move3D(-dif * (dist - totRad) * (1 - part), true);
+					unit->Move3D(dif * (dist - totRad) * (part), true);
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
@@ -322,19 +318,15 @@ bool CStrafeAirMoveType::HandleCollisions() {
 		}
 
 		if (pos.x < 0.0f) {
-			pos.x += 1.5f;
-			owner->midPos.x += 1.5f;
+			owner->Move1D(1.5f, 0, true);
 		} else if (pos.x > float3::maxxpos) {
-			pos.x -= 1.5f;
-			owner->midPos.x -= 1.5f;
+			owner->Move1D(-1.5f, 0, true);
 		}
 
 		if (pos.z < 0.0f) {
-			pos.z += 1.5f;
-			owner->midPos.z += 1.5f;
+			owner->Move1D(1.5f, 2, true);
 		} else if (pos.z > float3::maxzpos) {
-			pos.z -= 1.5f;
-			owner->midPos.z -= 1.5f;
+			owner->Move1D(-1.5f, 2, true);
 		}
 
 		return true;
@@ -359,11 +351,11 @@ void CStrafeAirMoveType::SlowUpdate()
 		// this will teleport the aircraft down *instantly* to
 		// match the new value --> bad
 		if ((posy - gndy) > (wantedHeight * 5.0f + 100.0f)) {
-			owner->pos.y = gndy + (wantedHeight * 5.0f + 100.0f);
+			owner->Move1D(gndy + (wantedHeight * 5.0f + 100.0f), 1, false);
 		}
 		#endif
 
-		owner->pos.y = Clamp(posy, gndy, gndy + owner->unitDef->wantedHeight * 5.0f);
+		owner->Move1D(Clamp(posy, gndy, gndy + owner->unitDef->wantedHeight * 5.0f), 1, false);
 	}
 
 	// note: NOT AAirMoveType::SlowUpdate
@@ -442,11 +434,13 @@ void CStrafeAirMoveType::UpdateManeuver()
 
 void CStrafeAirMoveType::UpdateFighterAttack()
 {
-	float3 &pos = owner->pos;
-	SyncedFloat3 &rightdir = owner->rightdir;
-	SyncedFloat3 &frontdir = owner->frontdir;
-	SyncedFloat3 &updir = owner->updir;
-	float3 &speed = owner->speed;
+	const float3& pos = owner->pos;
+	       float3& speed = owner->speed;
+
+	SyncedFloat3& rightdir = owner->rightdir;
+	SyncedFloat3& frontdir = owner->frontdir;
+	SyncedFloat3& updir    = owner->updir;
+
 
 	const float speedf = owner->speed.Length();
 	if (speedf < 0.01f) {
@@ -620,11 +614,12 @@ void CStrafeAirMoveType::UpdateAttack()
 
 void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 {
-	float3& pos = owner->pos;
+	const float3& pos = owner->pos;
+	      float3& speed = owner->speed;
+
 	SyncedFloat3& rightdir = owner->rightdir;
 	SyncedFloat3& frontdir = owner->frontdir;
-	SyncedFloat3& updir = owner->updir;
-	float3& speed = owner->speed;
+	SyncedFloat3& updir    = owner->updir;
 
 	float speedf = speed.Length();
 	float3 goalDir = (goalPos - pos);
@@ -762,16 +757,18 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 void CStrafeAirMoveType::UpdateLanded()
 {
-	owner->speed = ZeroVector;
+	owner->Move3D(owner->speed = ZeroVector, true);
+	// match the terrain normal
 	owner->UpdateDirVectors(true);
+	owner->UpdateMidPos();
 }
 
 
 
 void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 {
-	float3& pos = owner->pos;
-	float3& speed = owner->speed;
+	const float3& pos = owner->pos;
+	      float3& speed = owner->speed;
 
 	const float h = pos.y - (owner->unitDef->canSubmerge?
 		ground->GetHeightReal(pos.x, pos.z):
@@ -788,22 +785,25 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 	}
 
 	if (h > wantedHeight * 0.4f) {
-		speed += owner->frontdir * maxAcc;
+		speed += (owner->frontdir * maxAcc);
 	}
 
-	owner->MovePos(speed *= invDrag);
+	owner->Move3D(speed *= invDrag, true);
 	owner->UpdateDirVectors(false);
+	owner->UpdateMidPos();
 }
 
 
 
 void CStrafeAirMoveType::UpdateLanding()
 {
-	float3& pos = owner->pos;
+	const float3& pos = owner->pos;
+	      float3& speed = owner->speed;
+
 	SyncedFloat3& rightdir = owner->rightdir;
 	SyncedFloat3& frontdir = owner->frontdir;
-	SyncedFloat3& updir = owner->updir;
-	float3& speed = owner->speed;
+	SyncedFloat3& updir    = owner->updir;
+
 	const float speedf = speed.Length();
 
 	// find a landing spot if we dont have one
@@ -811,13 +811,16 @@ void CStrafeAirMoveType::UpdateLanding()
 		reservedLandingPos = FindLandingPos();
 
 		if (reservedLandingPos.x > 0.0f) {
-			reservedLandingPos.y += wantedHeight;
 			const float3 tp = pos;
-			pos = reservedLandingPos;
+
+			reservedLandingPos.y += wantedHeight;
+
+			owner->Move3D(reservedLandingPos, false);
 			owner->physicalState = CSolidObject::OnGround;
 			owner->Block();
 			owner->physicalState = CSolidObject::Flying;
-			pos = tp;
+
+			owner->Move3D(tp, false);
 			owner->Deactivate();
 			owner->script->StopMoving();
 		} else {
@@ -850,7 +853,7 @@ void CStrafeAirMoveType::UpdateLanding()
 		(speedf > 0.0f && maxAcc > 0.0f)?
 		(dist / speedf * 1.8f * maxAcc):
 		0.0f;
-	const float wsf = std::min(owner->maxSpeed, landingSpeed);
+	const float wsf = std::min(maxSpeed, landingSpeed);
 
 	if (dist > 0.0f) {
 		dif /= dist;
@@ -884,8 +887,9 @@ void CStrafeAirMoveType::UpdateLanding()
 	else if (rightdir.dot(dif) < -0.01f)
 		frontdir -= rightdir * 0.02f;
 
-	owner->MovePos(speed);
+	owner->Move3D(speed, true);
 	owner->UpdateDirVectors(false);
+	owner->UpdateMidPos();
 
 	// see if we are at the reserved (not user-clicked) landing spot
 	if (dist < 1.0f) {
@@ -912,12 +916,12 @@ void CStrafeAirMoveType::UpdateLanding()
 
 void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator, float engine, const float3& engineThrustVector)
 {
-	float3& pos = owner->pos;
-	float3& speed = owner->speed;
+	const float3& pos = owner->pos;
+	      float3& speed = owner->speed;
 
 	SyncedFloat3& rightdir = owner->rightdir;
 	SyncedFloat3& frontdir = owner->frontdir;
-	SyncedFloat3& updir = owner->updir;
+	SyncedFloat3& updir    = owner->updir;
 
 	bool nextPosInBounds = true;
 
@@ -963,7 +967,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	speed += ((frontdir * speedf - speed) * speedToFront);
 
 	if (nextPosInBounds) {
-		owner->MovePos(speed);
+		owner->Move3D(speed, true);
 	}
 
 	// ground collision; bounce away
@@ -972,19 +976,20 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 		const float impactSpeed = -speed.dot(gNormal);
 
 		if (impactSpeed > 0.0f) {
-			pos.y = gHeight + owner->model->radius * 0.2f + 0.01f;
-			speed += (gNormal * impactSpeed * 1.5f);
+			owner->Move1D(gHeight + owner->model->radius * 0.2f + 0.01f, 1, false);
 
 			// fix for mantis #1355
 			// aircraft could get stuck in the ground and never recover (on takeoff
 			// near map edges) where their forward speed wasn't allowed to build up
 			// therefore add a vertical component help get off the ground if |speed|
 			// is below a certain threshold
-			if (speed.SqLength() > (0.09f * owner->unitDef->speed * owner->unitDef->speed))
+			if (speed.SqLength() > (0.09f * owner->unitDef->speed * owner->unitDef->speed)) {
 				speed *= 0.95f;
-			else
+			} else {
 				speed.y += impactSpeed;
+			}
 
+			speed += (gNormal * impactSpeed * 1.5f);
 			updir = (gNormal - frontdir * 0.1f);
 			frontdir = updir.cross(frontdir.cross(updir));
 		}
@@ -1098,7 +1103,7 @@ void CStrafeAirMoveType::SetMaxSpeed(float speed)
 
 void CStrafeAirMoveType::StartMoving(float3 gpos, float goalRadius)
 {
-	SetWantedMaxSpeed(owner->maxSpeed);
+	SetWantedMaxSpeed(maxSpeed);
 	SetGoal(gpos);
 }
 

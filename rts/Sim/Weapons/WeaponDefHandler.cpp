@@ -163,7 +163,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.damages.craterMult    = wdTable.GetFloat("craterMult",    wd.damages.impulseFactor);
 	wd.damages.craterBoost   = wdTable.GetFloat("craterBoost",   0.0f);
 
-	wd.areaOfEffect = wdTable.GetFloat("areaOfEffect", 8.0f) * 0.5f;
+	wd.damageAreaOfEffect = wdTable.GetFloat("areaOfEffect", 8.0f) * 0.5f;
+	wd.craterAreaOfEffect = wdTable.GetFloat("craterAreaOfEffect", wd.damageAreaOfEffect);
 	wd.edgeEffectiveness = wdTable.GetFloat("edgeEffectiveness", 0.0f);
 	// prevent 0/0 division in CGameHelper::Explosion
 	if (wd.edgeEffectiveness > 0.999f) {
@@ -321,8 +322,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		}
 	}
 
-	//2+min(damages[0]*0.0025f,weaponDef->areaOfEffect*0.1f)
-	const float tempsize = 2.0f + min(wd.damages[0] * 0.0025f, wd.areaOfEffect * 0.1f);
+	const float tempsize = 2.0f + std::min(wd.damages[0] * 0.0025f, wd.damageAreaOfEffect * 0.1f);
 	wd.size = wdTable.GetFloat("size", tempsize);
 	wd.sizeGrowth = wdTable.GetFloat("sizeGrowth", 0.2f);
 	wd.collisionSize = wdTable.GetFloat("collisionSize", 0.05f);
@@ -478,7 +478,7 @@ void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd
 
 			soundVolume = hitSoundVolume;
 
-			if (wd.areaOfEffect > 8.0f) {
+			if (wd.damageAreaOfEffect > 8.0f) {
 				soundVolume *= 2.0f;
 			}
 			if (wd.type == "DGun") {

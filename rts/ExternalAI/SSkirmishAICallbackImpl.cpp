@@ -849,7 +849,7 @@ static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int skirmis
 	IAILibraryManager::T_skirmishAIInfos infs = libMan->GetSkirmishAIInfos();
 	IAILibraryManager::T_skirmishAIInfos::const_iterator inf = infs.find(*key);
 	if (inf != infs.end()) {
-		info = (const CSkirmishAILibraryInfo*) inf->second;
+		info = const_cast<const CSkirmishAILibraryInfo*>(inf->second);
 	}
 
 	return info;
@@ -3904,7 +3904,7 @@ EXPORT(int) skirmishAiCallback_WeaponDef_Damage_getTypes(int skirmishAIId, int w
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getAreaOfEffect(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->areaOfEffect;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damageAreaOfEffect;
 }
 
 EXPORT(bool) skirmishAiCallback_WeaponDef_isNoSelfDamage(int skirmishAIId, int weaponDefId) {

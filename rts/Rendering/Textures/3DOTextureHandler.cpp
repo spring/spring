@@ -160,8 +160,9 @@ C3DOTextureHandler::C3DOTextureHandler()
 					cury = maxy;
 					maxy += curtex1->ysize;
 					if (maxy > bigTexY) {
+						delete[] bigtex1;
+						delete[] bigtex2;
 						throw content_error("Too many/large texture in 3do texture-atlas to fit in 2048*2048");
-						break;
 					}
 					thisSub.push_back(int2(0, cury));
 				} else {

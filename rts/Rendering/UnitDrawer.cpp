@@ -641,7 +641,7 @@ static void DrawLuaMatBins(LuaMatType type)
 	for (it = bins.begin(); it != bins.end(); ++it) {
 		LuaMatBin* bin = *it;
 		bin->Execute(*currMat);
-		currMat = (LuaMaterial*)bin;
+		currMat = bin;
 
 		const GML_VECTOR<CUnit*>& units = bin->GetUnits();
 		const int count = (int)units.size();
@@ -2074,10 +2074,11 @@ inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 	const CTransportUnit* trans = u->GetTransporter();
 
 #if defined(USE_GML) && GML_ENABLE_SIM
+	const float time = spring_tomsecs(globalRendering->lastFrameStart - u->lastUnitUpdate) * globalRendering->weightedSpeedFactor;
 	if (trans) {
-		u->drawPos = u->pos + (trans->speed * ((float)globalRendering->lastFrameStart - (float)u->lastUnitUpdate) * globalRendering->weightedSpeedFactor);
+		u->drawPos = u->pos + (trans->speed * time);
 	} else {
-		u->drawPos = u->pos + (u->speed * ((float)globalRendering->lastFrameStart - (float)u->lastUnitUpdate) * globalRendering->weightedSpeedFactor);
+		u->drawPos = u->pos + (u->speed * time);
 	}
 #else
 	if (trans) {

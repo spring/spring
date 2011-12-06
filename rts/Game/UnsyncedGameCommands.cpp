@@ -44,6 +44,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Lua/LuaOpenGL.h"
+#include "Lua/LuaUI.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Groups/GroupHandler.h"
@@ -54,7 +55,6 @@
 #include "UI/InfoConsole.h"
 #include "UI/InputReceiver.h"
 #include "UI/KeyBindings.h"
-#include "UI/LuaUI.h"
 #include "UI/MiniMap.h"
 #include "UI/QuitBox.h"
 #include "UI/ResourceBar.h"
@@ -1502,7 +1502,6 @@ public:
 		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? mtEnabled : gmlMultiThreadSim;
 		SetBoolArg(mtSim, action.GetArgs());
 		gmlMultiThreadSim = mtSim;
-		gmlStartSim = true;
 
 		LogSystemStatus("Simulation threading", gmlMultiThreadSim);
 #	endif // GML_ENABLE_SIM

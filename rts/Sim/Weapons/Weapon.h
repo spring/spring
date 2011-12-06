@@ -67,7 +67,8 @@ public:
 	int weaponNum;							// the weapons order among the owner weapons
 	bool haveUserTarget;
 
-	float areaOfEffect;
+	float craterAreaOfEffect;
+	float damageAreaOfEffect;
 
 	float3 relWeaponPos;					// weaponpos relative to the unit
 	float3 weaponPos;						// absolute weapon pos

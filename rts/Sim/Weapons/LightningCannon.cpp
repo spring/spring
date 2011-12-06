@@ -137,7 +137,8 @@ void CLightningCannon::FireImpl()
 		owner,
 		u,                                                // hitUnit
 		f,                                                // hitFeature
-		areaOfEffect,
+		craterAreaOfEffect,
+		damageAreaOfEffect,
 		weaponDef->edgeEffectiveness,
 		weaponDef->explosionSpeed,
 		0.5f,                                             // gfxMod

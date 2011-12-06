@@ -247,8 +247,7 @@ void CBasicMapDamage::Update()
 
 			CUnit* unit = uh->units[bi->id];
 			if (unit) {
-				unit->pos.y += dif;
-				unit->midPos.y += dif;
+				unit->Move1D(dif, 1, true);
 			}
 		}
 		if (e->ttl == 0) {

@@ -110,10 +110,10 @@ CGlobalRendering::CGlobalRendering()
 
 void CGlobalRendering::PostInit() {
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
-	haveARB = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
-	// not enough: we want OpenGL 2.0 core functions
-	// haveGLSL = GL_ARB_vertex_shader && GL_ARB_fragment_shader;
-	haveGLSL = !!GLEW_VERSION_2_0;
+	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
+	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != NULL);
+	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
+	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
 	{
 		const char* glVendor = (const char*) glGetString(GL_VENDOR);
@@ -179,7 +179,15 @@ void CGlobalRendering::PostInit() {
 	}
 
 	// print info
-	LOG("GL info: FBO=%i NPOT=%i 24bitDepth=%i ATiHacks=%i", FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers, atiHacks);
+	LOG(
+		"GL info:\n"
+		"\thaveARB: %i, haveGLSL: %i, ATI hacks: %i\n"
+		"\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i\n"
+		"\tmaximum texture size: %i, compress MIP-map textures: %i",
+		haveARB, haveGLSL, atiHacks,
+		FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers,
+		maxTextureSize, compressTextures
+	);
 }
 
 

@@ -14,9 +14,9 @@
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Game/InMapDraw.h"
-#include "Game/UI/LuaUI.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaRules.h"
+#include "Lua/LuaUI.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
@@ -35,6 +35,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
@@ -533,7 +534,7 @@ float CAICallback::GetUnitSpeed(int unitId)
 		if (unit) {
 			const int allyTeam = teamHandler->AllyTeam(team);
 			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
-				speed = unit->maxSpeed;
+				speed = unit->moveType->maxSpeed;
 			} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
@@ -1432,10 +1433,10 @@ bool CAICallback::GetValue(int id, void *data)
 			*(float*)data = globalRendering->viewSizeY;
 			return true;
 		}case AIVAL_GUI_CAMERA_DIR:{
-			*(float3*)data = camHandler->GetCurrentController().GetDir();
+			*(static_cast<float3*>(data)) = camHandler->GetCurrentController().GetDir();
 			return true;
 		}case AIVAL_GUI_CAMERA_POS:{
-			*(float3*)data = camHandler->GetCurrentController().GetPos();
+			*(static_cast<float3*>(data)) = camHandler->GetCurrentController().GetPos();
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
 			std::string f((char*) data);
@@ -1723,7 +1724,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 				return true;
 			}
 			case AIVAL_UNIT_MAXSPEED: {
-				(*(float*) data) = unit->maxSpeed;
+				(*(float*) data) = unit->moveType->maxSpeed;
 				return true;
 			}
 			default:
