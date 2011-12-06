@@ -936,7 +936,7 @@ bool CGame::UpdateUnsynced()
 		globalRendering->timeOffset = spring_tomsecs(globalRendering->lastFrameStart - lastSimFrameTime) * globalRendering->weightedSpeedFactor;
 	} else  {
 		globalRendering->timeOffset = 0;
-		lastSimFrameTime = spring_gettime();
+		lastSimFrameTime = currentTime;
 	}
 
 	// do once every second
@@ -999,7 +999,7 @@ bool CGame::UpdateUnsynced()
 		}
 	}
 
-	//! always update ExtraTexture & SoundListener with <=30Hz (even when paused)
+	// always update ExtraTexture & SoundListener with <=30Hz (even when paused)
 	if (!skipping) { //FIXME why not when skipping?
 		if (newSimFrame || gs->paused) {
 			static spring_time lastUpdate = spring_gettime();
