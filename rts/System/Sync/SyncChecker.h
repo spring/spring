@@ -25,7 +25,7 @@ class CSyncChecker {
 
 	public:
 		/**
-		 * Whether one thread (doesn't have to current thread!!!) is currently processing a SimFrame.
+		 * Whether one thread (doesn't have to be the current thread!!!) is currently processing a SimFrame.
 		 */
 		static bool InSyncedCode()    { return (inSyncedCode > 0); }
 		static void EnterSyncedCode() { ++inSyncedCode; }
