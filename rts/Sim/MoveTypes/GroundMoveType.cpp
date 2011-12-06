@@ -165,9 +165,17 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	wantedHeading(0)
 {
 	assert(owner != NULL);
+	assert(owner->unitDef != NULL);
 
 	moveSquareX = owner->pos.x / MIN_WAYPOINT_DISTANCE;
 	moveSquareY = owner->pos.z / MIN_WAYPOINT_DISTANCE;
+
+	maxSpeed = owner->unitDef->speed / GAME_SPEED;
+	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
+	maxWantedSpeed = owner->unitDef->speed / GAME_SPEED;
+	turnRate = owner->unitDef->turnRate;
+	accRate = std::max(0.01f, owner->unitDef->maxAcc);
+	decRate = std::max(0.01f, owner->unitDef->maxDec);
 }
 
 CGroundMoveType::~CGroundMoveType()
@@ -525,22 +533,10 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 		deltaSpeed = speedDif * 0.125f;
 	} else if (speedDif > 0.0f) {
 		// we want to accelerate
-		if (speedDif < accRate) {
-			deltaSpeed = speedDif;
-		} else {
-			deltaSpeed = accRate;
-		}
-
-		deltaSpeed = Clamp(deltaSpeed, -accRate, accRate);
+		deltaSpeed = std::min(speedDif, accRate);
 	} else {
 		// we want to decelerate
-		if (speedDif > -10.0f * decRate) {
-			deltaSpeed = speedDif;
-		} else {
-			deltaSpeed = decRate;
-		}
-
-		deltaSpeed = Clamp(deltaSpeed, -decRate, decRate);
+		deltaSpeed = std::max(speedDif, -decRate);
 	}
 
 #ifdef TRACE_SYNC
@@ -792,11 +788,16 @@ void CGroundMoveType::UpdateControlledDrop()
 
 void CGroundMoveType::CheckCollisionSkid()
 {
-	SyncedFloat3& midPos = owner->midPos;
+	CUnit* collider = owner;
 
-	const UnitDef* ownerUD = owner->unitDef;
-	const vector<CUnit*>& nearUnits = qf->GetUnitsExact(midPos, owner->radius);
-	const vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(midPos, owner->radius);
+	// NOTE:
+	//     the QuadField::Get* functions check o->midPos,
+	//     but the quad(s) that objects are stored in are
+	//     derived from o->pos (!)
+	const float3& pos = collider->pos;
+	const UnitDef* colliderUD = collider->unitDef;
+	const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, collider->radius);
+	const vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(pos, collider->radius);
 
 	// magic number to reduce damage taken from collisions
 	// between a very heavy and a very light CSolidObject
@@ -806,69 +807,70 @@ void CGroundMoveType::CheckCollisionSkid()
 	vector<CFeature*>::const_iterator fi;
 
 	for (ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
-		CUnit* u = (*ui);
-		const UnitDef* unitUD = owner->unitDef;
+		CUnit* collidee = *ui;
+		const UnitDef* collideeUD = collider->unitDef;
 
-		const float sqDist = (midPos - u->midPos).SqLength();
-		const float totRad = owner->radius + u->radius;
+		const float sqDist = (pos - collidee->pos).SqLength();
+		const float totRad = collider->radius + collidee->radius;
 
 		if ((sqDist >= totRad * totRad) || (sqDist <= 0.01f)) {
 			continue;
 		}
 
 		// stop units from reaching escape velocity
-		const float3 dif = (midPos - u->midPos).SafeNormalize();
+		const float3 dif = (pos - collidee->pos).SafeNormalize();
 
-		if (u->mobility == NULL) {
-			const float impactSpeed = -owner->speed.dot(dif);
-			const float impactDamageMult = std::min(impactSpeed * owner->mass * MASS_MULT, MAX_UNIT_SPEED);
+		if (collidee->mobility == NULL) {
+			const float impactSpeed = -collider->speed.dot(dif);
+			const float impactDamageMult = std::min(impactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
 
-			if (impactSpeed > 0.0f) {
-				owner->Move3D(dif * impactSpeed, true);
-				owner->speed += ((dif * impactSpeed) * 1.8f);
+			if (impactSpeed <= 0.0f)
+				continue;
 
-				// damage the collider, no added impulse
-				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0) {
-					owner->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
-				}
-				// damage the (static) collidee based on owner's mass, no added impulse
-				if (impactSpeed > unitUD->minCollisionSpeed && unitUD->minCollisionSpeed >= 0) {
-					u->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
-				}
+			collider->Move3D(dif * impactSpeed, true);
+			collider->speed += ((dif * impactSpeed) * 1.8f);
+
+			// damage the collider, no added impulse
+			if (impactSpeed > colliderUD->minCollisionSpeed && colliderUD->minCollisionSpeed >= 0) {
+				collider->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
+			}
+			// damage the (static) collidee based on collider's mass, no added impulse
+			if (impactSpeed > collideeUD->minCollisionSpeed && collideeUD->minCollisionSpeed >= 0) {
+				collidee->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 			}
 		} else {
 			// don't conserve momentum
-			assert(owner->mass > 0.0f && u->mass > 0.0f);
+			assert(collider->mass > 0.0f && collidee->mass > 0.0f);
 
-			const float ownerRelMass = (owner->mass / (owner->mass + u->mass));
-			const float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
-			const float colliderRelImpactSpeed = impactSpeed * (1.0f - ownerRelMass);
-			const float collideeRelImpactSpeed = impactSpeed * (       ownerRelMass); 
+			const float impactSpeed = (collidee->speed - collider->speed).dot(dif) * 0.5f;
+			const float colliderRelMass = (collider->mass / (collider->mass + collidee->mass));
+			const float colliderRelImpactSpeed = impactSpeed * (1.0f - colliderRelMass);
+			const float collideeRelImpactSpeed = impactSpeed * (       colliderRelMass); 
 
-			const float colliderImpactDmgMult  = std::min(colliderRelImpactSpeed * owner->mass * MASS_MULT, MAX_UNIT_SPEED);
-			const float collideeImpactDmgMult  = std::min(collideeRelImpactSpeed * owner->mass * MASS_MULT, MAX_UNIT_SPEED);
+			const float colliderImpactDmgMult  = std::min(colliderRelImpactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
+			const float collideeImpactDmgMult  = std::min(collideeRelImpactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
 			const float3 colliderImpactImpulse = dif * colliderRelImpactSpeed;
 			const float3 collideeImpactImpulse = dif * collideeRelImpactSpeed;
 
-			if (impactSpeed > 0.0f) {
-				owner->Move3D(colliderImpactImpulse, true);
-				owner->speed += colliderImpactImpulse;
+			if (impactSpeed <= 0.0f)
+				continue;
 
-				u->Move3D(-collideeImpactImpulse, true);
-				u->speed -= collideeImpactImpulse;
+			collider->Move3D(colliderImpactImpulse, true);
+			collidee->Move3D(-collideeImpactImpulse, true);
 
-				// damage the collider
-				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0.0f) {
-					owner->DoDamage(DamageArray(colliderImpactDmgMult), NULL, dif * colliderImpactDmgMult);
-				}
-				// damage the collidee
-				if (impactSpeed > unitUD->minCollisionSpeed && unitUD->minCollisionSpeed >= 0.0f) {
-					u->DoDamage(DamageArray(collideeImpactDmgMult), NULL, dif * -collideeImpactDmgMult);
-				}
-
-				owner->speed *= 0.9f;
-				u->speed *= 0.9f;
+			// damage the collider
+			if (impactSpeed > colliderUD->minCollisionSpeed && colliderUD->minCollisionSpeed >= 0.0f) {
+				collider->DoDamage(DamageArray(colliderImpactDmgMult), NULL, dif * colliderImpactDmgMult);
 			}
+			// damage the collidee
+			if (impactSpeed > collideeUD->minCollisionSpeed && collideeUD->minCollisionSpeed >= 0.0f) {
+				collidee->DoDamage(DamageArray(collideeImpactDmgMult), NULL, dif * -collideeImpactDmgMult);
+			}
+
+			collider->speed += colliderImpactImpulse;
+			collider->speed *= 0.9f;
+			collidee->speed -= collideeImpactImpulse;
+			collidee->speed *= 0.9f;
 		}
 	}
 
@@ -878,33 +880,33 @@ void CGroundMoveType::CheckCollisionSkid()
 		if (!f->blocking)
 			continue;
 
-		const float sqDist = (midPos - f->midPos).SqLength();
-		const float totRad = owner->radius + f->radius;
+		const float sqDist = (pos - f->pos).SqLength();
+		const float totRad = collider->radius + f->radius;
 
-		if ((sqDist >= totRad * totRad) || (sqDist <= 0.01f)) {
+		if ((sqDist >= totRad * totRad) || (sqDist <= 0.01f))
 			continue;
-		}
 
-		const float3 dif = (midPos - f->midPos).SafeNormalize();
-		const float impactSpeed = -owner->speed.dot(dif);
-		const float impactDamageMult = std::min(impactSpeed * owner->mass * MASS_MULT, MAX_UNIT_SPEED);
+		const float3 dif = (pos - f->pos).SafeNormalize();
+		const float impactSpeed = -collider->speed.dot(dif);
+		const float impactDamageMult = std::min(impactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
 		const float3 impactImpulse = dif * impactSpeed;
 
-		if (impactSpeed > 0.0f) {
-			owner->Move3D(impactImpulse, true);
-			owner->speed += (impactImpulse * 1.8f);
+		if (impactSpeed <= 0.0f)
+			continue;
 
-			// damage the collider, no added impulse (!) 
-			if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0) {
-				owner->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
-			}
+		collider->Move3D(impactImpulse, true);
+		collider->speed += (impactImpulse * 1.8f);
 
-			// damage the collidee feature based on owner's mass
-			f->DoDamage(DamageArray(impactDamageMult), -impactImpulse);
+		// damage the collider, no added impulse (!) 
+		if (impactSpeed > colliderUD->minCollisionSpeed && colliderUD->minCollisionSpeed >= 0) {
+			collider->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 		}
+
+		// damage the collidee feature based on collider's mass
+		f->DoDamage(DamageArray(impactDamageMult), -impactImpulse);
 	}
 
-	ASSERT_SANE_OWNER_SPEED(owner->speed);
+	ASSERT_SANE_OWNER_SPEED(collider->speed);
 }
 
 void CGroundMoveType::CalcSkidRot()
@@ -1610,9 +1612,14 @@ void CGroundMoveType::CreateLineTable()
 						math::fabs(xp - start.x) <= math::fabs(to.x - start.x) &&
 						math::fabs(zp - start.z) <= math::fabs(to.z - start.z);
 					int2 pt(int(floor(xp)), int(floor(zp)));
-					if (-(int)(LINETABLE_SIZE / 2) <= pt.x && pt.x <= (int)(LINETABLE_SIZE / 2) &&
-						(-(int)(LINETABLE_SIZE / 2) <= pt.y && pt.y <= (int)(LINETABLE_SIZE / 2)))
-						lineTable[yt][xt].push_back(pt);
+
+					static const int MIN_IDX = -int(LINETABLE_SIZE / 2);
+					static const int MAX_IDX = -MIN_IDX;
+
+					if (MIN_IDX > pt.x || pt.x > MAX_IDX) continue;
+					if (MIN_IDX > pt.y || pt.y > MAX_IDX) continue;
+
+					lineTable[yt][xt].push_back(pt);
 				}
 			}
 		}
@@ -1757,36 +1764,45 @@ void CGroundMoveType::LeaveTransport()
 	oldPos = owner->pos + UpVector * 0.001f;
 }
 
+
+
 void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive) {
 	mainHeadingPos = pos;
 	useMainHeading = aggressive;
 
-	if (useMainHeading && !owner->weapons.empty()) {
-		if (!owner->weapons[0]->weaponDef->waterweapon && mainHeadingPos.y <= 1) {
-			mainHeadingPos.y = 1.0f;
-		}
+	if (!useMainHeading) return;
+	if (owner->weapons.empty()) return;
 
-		float3 dir1 = owner->weapons.front()->mainDir;
-		float3 dir2 = mainHeadingPos - owner->pos;
-		dir1.y = 0.0f;
-		dir1.Normalize();
-		dir2.y = 0.0f;
-		dir2.SafeNormalize();
+	CWeapon* frontWeapon = owner->weapons.front();
 
-		if (dir2 != ZeroVector) {
-			short heading =
-				GetHeadingFromVector(dir2.x, dir2.z) -
-				GetHeadingFromVector(dir1.x, dir1.z);
-			if (owner->heading != heading
-					&& !(owner->weapons.front()->TryTarget(
-					mainHeadingPos, true, 0))) {
-				progressState = Active;
-			}
-		}
+	if (!frontWeapon->weaponDef->waterweapon && mainHeadingPos.y <= 1.0f) {
+		mainHeadingPos.y = 1.0f;
+	}
+
+	float3 dir1 = frontWeapon->mainDir;
+	float3 dir2 = mainHeadingPos - owner->pos;
+
+	dir1.y = 0.0f;
+	dir1.Normalize();
+	dir2.y = 0.0f;
+	dir2.SafeNormalize();
+
+	if (dir2 == ZeroVector)
+		return;
+
+	short heading =
+		GetHeadingFromVector(dir2.x, dir2.z) -
+		GetHeadingFromVector(dir1.x, dir1.z);
+
+	if (owner->heading == heading)
+		return;
+
+	if (!frontWeapon->TryTarget(mainHeadingPos, true, 0)) {
+		progressState = Active;
 	}
 }
 
-void CGroundMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive){
+void CGroundMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive) {
 	//! wrapper
 	KeepPointingTo(unit->pos, distance, aggressive);
 }
@@ -1798,8 +1814,11 @@ void CGroundMoveType::SetMainHeading() {
 	if (!useMainHeading) return;
 	if (owner->weapons.empty()) return;
 
-	float3 dir1 = owner->weapons.front()->mainDir;
+	CWeapon* frontWeapon = owner->weapons.front();
+
+	float3 dir1 = frontWeapon->mainDir;
 	float3 dir2 = mainHeadingPos - owner->pos;
+
 	dir1.y = 0.0f;
 	dir1.Normalize();
 	dir2.y = 0.0f;
@@ -1808,32 +1827,31 @@ void CGroundMoveType::SetMainHeading() {
 	ASSERT_SYNCED(dir1);
 	ASSERT_SYNCED(dir2);
 
-	if (dir2 != ZeroVector) {
-		short heading =
-			GetHeadingFromVector(dir2.x, dir2.z) -
-			GetHeadingFromVector(dir1.x, dir1.z);
+	if (dir2 == ZeroVector)
+		return;
 
-		ASSERT_SYNCED(heading);
+	short heading =
+		GetHeadingFromVector(dir2.x, dir2.z) -
+		GetHeadingFromVector(dir1.x, dir1.z);
 
-		if (progressState == Active && owner->heading == heading) {
+	ASSERT_SYNCED(heading);
+
+	if (progressState == Active) {
+		if (owner->heading == heading) {
 			// stop turning
 			owner->script->StopMoving();
 			progressState = Done;
-		} else if (progressState == Active) {
+		} else {
 			ChangeHeading(heading);
-#ifdef TRACE_SYNC
-			tracefile << "[" << __FUNCTION__ << "][1] test heading: " << heading << ", real heading: " << owner->heading << "\n";
-#endif
-		} else if (progressState != Active
-		  && owner->heading != heading
-		  && !owner->weapons.front()->TryTarget(mainHeadingPos, true, 0)) {
-			// start moving
-			progressState = Active;
-			owner->script->StartMoving();
-			ChangeHeading(heading);
-#ifdef TRACE_SYNC
-			tracefile << "[" << __FUNCTION__ << "][2] test heading: " << heading << ", real heading: " << owner->heading << "\n";
-#endif
+		}
+	} else {
+		if (owner->heading != heading) {
+			if (!frontWeapon->TryTarget(mainHeadingPos, true, 0)) {
+				// start moving
+				progressState = Active;
+				owner->script->StartMoving();
+				ChangeHeading(heading);
+			}
 		}
 	}
 }
