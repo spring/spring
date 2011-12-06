@@ -249,9 +249,9 @@ inline float3 SquareToFloat3(int xSquare, int zSquare) {
 inline float GetVisibleVertexHeight(int idx) {
 
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	static const float* hm = readmap->GetCornerHeightMapUnsynced();
+	const float* hm = readmap->GetCornerHeightMapUnsynced();
 	#else
-	static const float* hm = readmap->GetCornerHeightMapSynced();
+	const float* hm = readmap->GetCornerHeightMapSynced();
 	#endif
 
 	return hm[idx];
