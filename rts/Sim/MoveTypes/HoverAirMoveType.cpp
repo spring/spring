@@ -708,7 +708,8 @@ void CHoverAirMoveType::UpdateAirPhysics()
 			ground->GetHeightAboveWater(pos.x, pos.z);
 	}
 
-	owner->Move1D(std::max(pos.y, minH), 1, false);
+	if (pos.y < minH)
+		owner->Move1D(std::min(minH - pos.y, altitudeRate), 1, true);
 
 	speed.y = yspeed;
 	curH = pos.y - minH;
