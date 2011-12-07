@@ -628,21 +628,10 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 	SyncedFloat3  rightDir2D;
 
 	// pitching does not affect rightdir, but...
-	//
-	// make sure SetHeadingFromDirection does not change our heading
-	// (which might cause transport loading to fail) if forceHeading,
-	// the normalization changes frontdir.xz
-	// FIXME:
-	//     loading code is far too fragile if it fails as soon as
-	//     transporter and transportee headings do not match 100%
-	if (!forceHeading) {
-		frontDir.y = currentPitch;
-		frontDir.Normalize();
-	}
-
+	frontDir.y = currentPitch;
+	frontDir.Normalize();
 	// we want a flat right-vector to calculate wantedBank
 	rightDir2D = frontDir.cross(UpVector);
-	upDir = rightDir2D.cross(frontDir);
 
 	if (!noBanking && bankingAllowed)
 		wantedBank = rightDir2D.dot(deltaSpeed) / accRate * 0.5f;
@@ -660,10 +649,17 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 		currentBank += std::min(0.03f, wantedBank - currentBank);
 	}
 
+
+	upDir = rightDir2D.cross(frontDir);
 	upDir = upDir * math::cos(currentBank) + rightDir2D * math::sin(currentBank);
 	rightDir3D = frontDir.cross(upDir);
 
+	SyncedSshort oldHeading = owner->heading;
 	owner->SetHeadingFromDirection();
+	if (forceHeading && oldHeading != owner->heading) {
+		owner->heading = oldHeading; // if the banking changes the heading, transport loading could fail
+		owner->UpdateDirVectors(aircraftState == AIRCRAFT_LANDED);
+	}
 	owner->UpdateMidPos();
 }
 
