@@ -15,6 +15,13 @@ namespace Shader {
 }
 
 
+enum {
+	SMF_MESHDRAWER_LEGACY = 0,
+	SMF_MESHDRAWER_ROAM,
+	SMF_MESHDRAWER_LAST,
+};
+
+
 /**
  * Map drawer implementation for the CSMFReadMap map system.
  */

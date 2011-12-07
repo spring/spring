@@ -22,6 +22,11 @@
 #include "System/OpenMP_cond.h"
 #include <cfloat>
 
+//FIXME: GML is missing support for glDrawRangeElements so it will fail to compile, also it may missing a few needed mutexes
+#ifdef USE_GML
+	#define glDrawRangeElements(x,y,z,a,b,c) assert(false)
+#endif
+
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
