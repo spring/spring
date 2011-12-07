@@ -1152,6 +1152,8 @@ bool CGame::Draw() {
 
 	glDisable(GL_FOG);
 
+	SCOPED_TIMER("Game::DrawScreen");
+
 	if (doDrawWorld) {
 		eventHandler.DrawScreenEffects();
 	}
