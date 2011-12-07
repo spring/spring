@@ -1584,7 +1584,7 @@ int LuaUnsyncedRead::GetFPS(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 	if (globalRendering) {
-		lua_pushnumber(L, globalRendering->FPS);
+		lua_pushnumber(L, (int)globalRendering->FPS);
 	} else {
 		lua_pushnumber(L, 0);
 	}
