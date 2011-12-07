@@ -138,11 +138,14 @@ void CWorldDrawer::Draw()
 	selectedUnits.Draw();
 	eventHandler.DrawWorldPreUnit();
 
-	DebugColVolDrawer::Draw();
-	unitDrawer->Draw(false);
-	modelDrawer->Draw();
-	featureDrawer->Draw();
-	pathDrawer->DrawAll();
+	{
+		SCOPED_TIMER("WorldDrawer::Models");
+		DebugColVolDrawer::Draw();
+		unitDrawer->Draw(false);
+		modelDrawer->Draw();
+		featureDrawer->Draw();
+		pathDrawer->DrawAll();
+	}
 
 	//! transparent stuff
 	glEnable(GL_BLEND);
@@ -188,7 +191,10 @@ void CWorldDrawer::Draw()
 		glDisable(GL_CLIP_PLANE3);
 	}
 
-	projectileDrawer->Draw(false);
+	{
+		SCOPED_TIMER("WorldDrawer::Projectiles");
+		projectileDrawer->Draw(false);
+	}
 
 	if (globalRendering->drawSky) {
 		sky->DrawSun();
