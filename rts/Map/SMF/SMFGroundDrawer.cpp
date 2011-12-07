@@ -70,11 +70,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	advShading = LoadMapShaders();
 
 	bool useROAM = !!configHandler->GetInt("ROAM");
-	if (useROAM) {
-		meshDrawer = new CRoamMeshDrawer(smfMap, this);
-	} else {
-		meshDrawer = new CLegacyMeshDrawer(smfMap, this);
-	}
+	SwitchMeshDrawer(useROAM ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
 }
 
 
@@ -101,27 +97,35 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 
 void CSMFGroundDrawer::SwitchMeshDrawer(int mode)
 {
-	int curMode = (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) ? 1 : 0);
+	const int curMode = (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
 
+	// mode == -1: toogle modes
 	if (mode < 0) {
 		mode = curMode + 1;
-		mode %= 2;
+		mode %= SMF_MESHDRAWER_LAST;
 	}
 
-	if (curMode == mode)
+#ifdef USE_GML
+	//FIXME: ROAM isn't GML ready yet
+	mode = SMF_MESHDRAWER_LEGACY;
+#endif
+	
+	if ((curMode == mode) && (meshDrawer != NULL))
 		return;
 
 	delete meshDrawer;
 
 	switch (mode) {
-		case 0:
+		case SMF_MESHDRAWER_LEGACY:
 			LOG("Switching to Legacy Mesh Rendering");
 			meshDrawer = new CLegacyMeshDrawer(smfMap, this);
 			break;
+#ifndef USE_GML
 		default:
 			LOG("Switching to ROAM Mesh Rendering");
 			meshDrawer = new CRoamMeshDrawer(smfMap, this);
 			break;
+#endif
 	}
 }
 
