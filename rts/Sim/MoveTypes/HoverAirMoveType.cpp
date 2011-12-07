@@ -654,7 +654,12 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 	upDir = upDir * math::cos(currentBank) + rightDir2D * math::sin(currentBank);
 	rightDir3D = frontDir.cross(upDir);
 
+	SyncedSshort oldHeading = owner->heading;
 	owner->SetHeadingFromDirection();
+	if (forceHeading && oldHeading != owner->heading) {
+		owner->heading = oldHeading; // if the banking changes the heading, transport loading could fail
+		owner->UpdateDirVectors(aircraftState == AIRCRAFT_LANDED);
+	}
 	owner->UpdateMidPos();
 }
 
