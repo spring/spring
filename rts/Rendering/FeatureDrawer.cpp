@@ -172,7 +172,7 @@ void CFeatureDrawer::Update()
 inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
 //#if defined(USE_GML) && GML_ENABLE_SIM
-//	f->drawPos = f->pos + (f->speed * ((float)globalRendering->lastFrameStart - (float)f->lastUnitUpdate) * globalRendering->weightedSpeedFactor);
+//	f->drawPos = f->pos + (f->speed * ((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)spring_tomsecs(f->lastUnitUpdate)) * globalRendering->weightedSpeedFactor);
 //#else
 	f->drawPos = f->pos + (f->speed * globalRendering->timeOffset);
 //#endif

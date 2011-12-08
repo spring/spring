@@ -2074,7 +2074,7 @@ inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 	const CTransportUnit* trans = u->GetTransporter();
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-	const float time = spring_tomsecs(globalRendering->lastFrameStart - u->lastUnitUpdate) * globalRendering->weightedSpeedFactor;
+	const float time = ((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)spring_tomsecs(u->lastUnitUpdate)) * globalRendering->weightedSpeedFactor;
 	if (trans) {
 		u->drawPos = u->pos + (trans->speed * time);
 	} else {
