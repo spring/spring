@@ -287,7 +287,7 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 				const size_t i = indices.front();
 				indices.pop();
 				if (strcmp(line,"??:0\n") != 0) {
-					(*lines)[i] = std::string(line, strlen(line) - 1); // exclude the lineending
+					(*lines)[i] = std::string(line, strlen(line) - 1); // exclude the line-ending
 				}
 			}
 			pclose(cmdOut);
