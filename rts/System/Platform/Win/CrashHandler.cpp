@@ -321,7 +321,7 @@ void OutputStacktrace() {
 	PrepareStacktrace();
 
 	PRINT("Stacktrace:");
-	Stacktrace(NULL,NULL);
+	Stacktrace(NULL, NULL);
 
 	CleanupStacktrace();
 
