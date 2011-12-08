@@ -232,44 +232,28 @@ extern CReadMap* readmap;
  * Inlined functions
  */
 inline const float* CReadMap::GetCornerHeightMap(const bool& synced) {
+	// Note, this doesn't save a branch compared to `(synced) ? SHM : UHM`. Cause static vars always check if they were already initialized.
+	//  But they are only initialized once, so this branch will always fail. And so branch-prediction will have easier going.
 	assert(readmap && readmap->mapChecksum);
-	const float* heightMaps[2] = {
-		readmap->GetCornerHeightMapUnsynced(),
-		readmap->GetCornerHeightMapSynced(),
-	};
-	return heightMaps[int(synced) & 1];
+	return synced ? readmap->GetCornerHeightMapSynced() : readmap->GetCornerHeightMapUnsynced();
 }
 inline const float* CReadMap::GetCenterHeightMap(const bool& synced) {
 	assert(readmap && readmap->mapChecksum);
-	const float* heightMaps[2] = {
-		readmap->GetCenterHeightMapSynced(), // TODO: add unsynced variant
-		readmap->GetCenterHeightMapSynced(),
-	};
-	return heightMaps[int(synced) & 1];
+	// TODO: add unsynced variant
+	return synced ? readmap->GetCenterHeightMapSynced() : readmap->GetCenterHeightMapSynced();
 }
 inline const float3* CReadMap::GetFaceNormals(const bool& synced) {
 	assert(readmap && readmap->mapChecksum);
-	const float3* normalMaps[2] = {
-		readmap->GetFaceNormalsUnsynced(),
-		readmap->GetFaceNormalsSynced(),
-	};
-	return normalMaps[int(synced) & 1];
+	return synced ? readmap->GetFaceNormalsSynced() : readmap->GetFaceNormalsUnsynced();
 }
 inline const float3* CReadMap::GetCenterNormals(const bool& synced) {
 	assert(readmap && readmap->mapChecksum);
-	const float3* normalMaps[2] = {
-		readmap->GetCenterNormalsUnsynced(),
-		readmap->GetCenterNormalsSynced(),
-	};
-	return normalMaps[int(synced) & 1];
+	return synced ? readmap->GetCenterNormalsSynced() : readmap->GetCenterNormalsUnsynced();
 }
 inline const float* CReadMap::GetSlopeMap(const bool& synced) {
 	assert(readmap && readmap->mapChecksum);
-	const float* slopeMaps[2] = {
-		readmap->GetSlopeMapSynced(), // TODO: add unsynced variant (or add a LOS check foreach square access?)
-		readmap->GetSlopeMapSynced(),
-	};
-	return slopeMaps[int(synced) & 1];
+	// TODO: add unsynced variant (or add a LOS check foreach square access?)
+	return synced ? readmap->GetSlopeMapSynced() : readmap->GetSlopeMapSynced();
 }
 
 
