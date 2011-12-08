@@ -630,6 +630,7 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 	// pitching does not affect rightdir, but...
 	frontDir.y = currentPitch;
 	frontDir.Normalize();
+
 	// we want a flat right-vector to calculate wantedBank
 	rightDir2D = frontDir.cross(UpVector);
 
@@ -654,12 +655,19 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 	upDir = upDir * math::cos(currentBank) + rightDir2D * math::sin(currentBank);
 	rightDir3D = frontDir.cross(upDir);
 
-	SyncedSshort oldHeading = owner->heading;
-	owner->SetHeadingFromDirection();
-	if (forceHeading && oldHeading != owner->heading) {
-		owner->heading = oldHeading; // if the banking changes the heading, transport loading could fail
-		owner->UpdateDirVectors(aircraftState == AIRCRAFT_LANDED);
+	// NOTE:
+	//     heading might not be fully in sync with frontDir due to the
+	//     vector<-->heading mapping not being 1:1 (such that heading
+	//     != GetHeadingFromVector(frontDir)), therefore this call can
+	//     cause owner->heading to change --> unwanted if forceHeading
+	//
+	//     it is "safe" to skip because only frontDir.y is manipulated
+	//     above so its xz-direction does not change, but the problem
+	//     should really be fixed elsewhere
+	if (!forceHeading) {
+		owner->SetHeadingFromDirection();
 	}
+
 	owner->UpdateMidPos();
 }
 
