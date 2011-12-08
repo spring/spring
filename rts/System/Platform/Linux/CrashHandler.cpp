@@ -331,6 +331,7 @@ namespace CrashHandler
 			int numLines;
 			if (hThread) {
 				LOG_L(L_ERROR, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
+				LOG_CLEANUP();
 				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    //! stack pointers
 			} else {
 				numLines = backtrace(&buffer[0], buffer.size());    //! stack pointers
@@ -399,6 +400,8 @@ namespace CrashHandler
 				LOG_L(L_ERROR, "This stack trace indicates a problem with a Skirmish AI library.");
 				*keepRunning = true;
 			}
+
+			LOG_CLEANUP();
 		}
 
 		//! Translate it
@@ -409,6 +412,7 @@ namespace CrashHandler
 		for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
 			LOG_L(L_ERROR, "  <%u> %s", numLine++, it->c_str());
 		}
+		LOG_CLEANUP();
 	}
 
 

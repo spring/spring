@@ -336,6 +336,7 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	curLoadMessage = text;
 
 	LOG("%s", text.c_str());
+	LOG_CLEANUP();
 
 	//! Check the FPU state (needed for synced computations),
 	//! some external libraries which get linked during loading might reset those.
