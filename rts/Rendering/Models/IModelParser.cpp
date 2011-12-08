@@ -19,6 +19,7 @@
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
+#include "lib/gml/gml_base.h"
 
 C3DModelLoader* modelParser = NULL;
 
@@ -117,13 +118,11 @@ C3DModelLoader::~C3DModelLoader()
 
 	parsers.clear();
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (!gmlShareLists) {
+	if (GML::SimEnabled() && !GML::ShareLists()) {
 		createLists.clear();
 		fixLocalModels.clear();
 		Update(); // delete remaining local models
 	}
-#endif
 }
 
 
@@ -179,8 +178,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 }
 
 void C3DModelLoader::Update() {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (!gmlShareLists) {
+	if (GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // Update
 
 		for (std::vector<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
@@ -198,7 +196,6 @@ void C3DModelLoader::Update() {
 		}
 		deleteLocalModels.clear();
 	}
-#endif
 }
 
 
@@ -215,32 +212,26 @@ void C3DModelLoader::DeleteChilds(S3DModelPiece* o)
 
 void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (!gmlShareLists) {
+	if (GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // DeleteLocalModel
 
 		fixLocalModels.erase(unit);
 		deleteLocalModels.push_back(unit->localmodel);
 	}
-	else
-#endif
-	{
+	else {
 		delete unit->localmodel;
 	}
 }
 
 void C3DModelLoader::CreateLocalModel(CUnit* unit)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (!gmlShareLists) {
+	if (GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // CreateLocalModel
 
 		unit->localmodel = new LocalModel(unit->model);
 		fixLocalModels.insert(unit);
 	}
-	else
-#endif
-	{
+	else {
 		unit->localmodel = new LocalModel(unit->model);
 		// SetLocalModelPieceDisplayLists(unit);
 	}
@@ -278,11 +269,9 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 
 
 void C3DModelLoader::CreateLists(S3DModelPiece* o) {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (!gmlShareLists)
+	if (GML::SimEnabled() && !GML::ShareLists())
 		createLists.push_back(o);
 	else
-#endif
 		CreateListsNow(o);
 }
 

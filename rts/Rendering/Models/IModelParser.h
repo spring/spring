@@ -42,12 +42,10 @@ private:
 	ModelMap cache;
 	ParserMap parsers;
 
-#if defined(USE_GML) && GML_ENABLE_SIM
 	std::vector<S3DModelPiece*> createLists;
 
 	std::set<CUnit*> fixLocalModels;
 	std::vector<LocalModel*> deleteLocalModels;
-#endif
 
 	void CreateLists(S3DModelPiece* o);
 	void CreateListsNow(S3DModelPiece* o);
