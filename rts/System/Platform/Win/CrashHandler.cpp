@@ -324,6 +324,8 @@ void OutputStacktrace() {
 	Stacktrace(NULL,NULL);
 
 	CleanupStacktrace();
+
+	LOG_CLEANUP();
 }
 
 /** Called by windows if an exception happens. */
