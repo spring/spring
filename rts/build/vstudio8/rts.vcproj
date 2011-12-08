@@ -1476,14 +1476,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\LuaUI.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\LuaUI.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Game\Ui\MiniMap.cpp"
 					>
 				</File>
@@ -8689,6 +8681,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaTextures.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaUI.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaUI.h"
 				>
 			</File>
 			<File
@@ -16352,6 +16352,14 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\gml\gml.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gml_base.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gml_base.h"
 					>
 				</File>
 				<File
