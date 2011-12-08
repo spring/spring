@@ -183,13 +183,8 @@ extern void log_frontend_cleanup();
 #define _LOG_RECORD(section, level, fmt, ...) \
 	log_frontend_record(section, LOG_LEVE##level, fmt, ##__VA_ARGS__)
 
-// TODO get rid of this, once the backend supports section and level
-//#define _LOG_SECTION_EXTENDED(section, level, fmt, ...)
-//	_LOG_RECORD(section, level, "Level:%i Section:\"%s\" " fmt, level, (section ? section : ""), ##__VA_ARGS__)
-
 #define _LOG_FILTERED(section, level, fmt, ...) \
 	_LOG_RECORD(section, level, fmt, ##__VA_ARGS__)
-//	_LOG_SECTION_EXTENDED(section, level, fmt, ##__VA_ARGS__)
 
 // per level compile-time filters
 #if _LOG_IS_ENABLED_LEVEL_STATIC(L_DEBUG)
