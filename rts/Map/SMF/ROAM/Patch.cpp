@@ -134,6 +134,7 @@ Patch::Patch()
 	, m_WorldY(-1)
 	//, minHeight(FLT_MAX)
 	//, maxHeight(FLT_MIN)
+	, vboVerticesUploaded(false)
 	, triList(0)
 	, vertexBuffer(0)
 	, vertexIndexBuffer(0)
@@ -159,8 +160,11 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
 
 	// Create used OpenGL objects
 	triList = glGenLists(1);
-	glGenBuffersARB(1, &vertexBuffer);
-	glGenBuffersARB(1, &vertexIndexBuffer);
+
+	if (GLEW_ARB_vertex_buffer_object) {
+		glGenBuffersARB(1, &vertexBuffer);
+		glGenBuffersARB(1, &vertexIndexBuffer);
+	}
 
 	UpdateHeightMap();
 }
@@ -169,8 +173,11 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
 Patch::~Patch()
 {
 	glDeleteLists(triList, 1);
-	glDeleteBuffersARB(1, &vertexBuffer);
-	glDeleteBuffersARB(1, &vertexIndexBuffer);
+
+	if (GLEW_ARB_vertex_buffer_object) {
+		glDeleteBuffersARB(1, &vertexBuffer);
+		glDeleteBuffersARB(1, &vertexIndexBuffer);
+	}
 }
 
 
@@ -213,22 +220,31 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 		}
 	}
 
-	//FIXME don't do so in DispList mode!
-	// Upload vertexBuffer
-	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
-	glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW_ARB);
-	/*
-	int bufferSize = 0;
-	glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
-	if(index != bufferSize) {
-		glDeleteBuffersARB(1, &vertexBuffer);
-		glDeleteBuffersARB(1, &vertexIndexBuffer);
-		LOG("[createVBO()] Data size is mismatch with input array\n");
-	}
-	*/
-	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-
+	VBOUploadVertices();
 	m_isDirty = true;
+}
+
+
+void Patch::VBOUploadVertices()
+{
+	if (renderMode == VBO) {
+		// Upload vertexBuffer
+		glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
+		glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW_ARB);
+		/*
+		int bufferSize = 0;
+		glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
+		if(index != bufferSize) {
+			glDeleteBuffersARB(1, &vertexBuffer);
+			glDeleteBuffersARB(1, &vertexIndexBuffer);
+			LOG("[createVBO()] Data size is mismatch with input array\n");
+		}
+		*/
+		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+		vboVerticesUploaded = true;
+	} else {
+		vboVerticesUploaded = false;
+	}
 }
 
 
@@ -525,7 +541,7 @@ void Patch::GenerateIndices()
 }
 
 
-void Patch::Upload() const
+void Patch::Upload()
 {
 	switch (renderMode) {
 		case DL:
@@ -538,6 +554,7 @@ void Patch::Upload() const
 			break;
 
 		case VBO:
+			if (!vboVerticesUploaded) VBOUploadVertices();
 			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, vertexIndexBuffer);
 			glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, indices.size() * sizeof(unsigned), &indices[0], GL_DYNAMIC_DRAW_ARB);
 
@@ -568,6 +585,10 @@ void Patch::SwitchRenderMode(int mode)
 	if (mode < 0) {
 		mode = renderMode + 1;
 		mode %= 3;
+	}
+
+	if (!GLEW_ARB_vertex_buffer_object && mode == VBO) {
+		mode = DL;
 	}
 
 	if (mode == renderMode)
