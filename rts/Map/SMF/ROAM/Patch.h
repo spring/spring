@@ -125,7 +125,7 @@ public:
 	void ComputeVariance();
 
 	void GenerateIndices();
-	void Upload() const;
+	void Upload();
 	void Draw();
 
 	void SetSquareTexture() const;
@@ -135,6 +135,9 @@ public:
 
 	//void UpdateVisibility(CCamera*& cam);
 	static void UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int& numPatchesX);
+
+protected:
+	void VBOUploadVertices();
 
 private:
 	// The recursive half of the Patch Class
@@ -169,6 +172,8 @@ protected:
 
 	std::vector<float> vertices; // Why yes, this IS a mind bogglingly wasteful thing to do: TODO: remove this for both the Displaylist and the VBO implementations (only really needed for vertexarrays)
 	std::vector<unsigned int> indices;
+
+	bool vboVerticesUploaded;
 
 	GLuint triList;
 	GLuint vertexBuffer;
