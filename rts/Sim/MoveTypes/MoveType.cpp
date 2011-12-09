@@ -34,12 +34,13 @@ AMoveType::AMoveType(CUnit* owner):
 	oldPos(owner? owner->pos: ZeroVector),
 	oldSlowUpdatePos(oldPos),
 
+	useHeading(true),
+
+	progressState(Done),
+
 	maxSpeed(0.2f),
 	maxWantedSpeed(0.2f),
-	repairBelowHealth(0.3f),
-
-	useHeading(true),
-	progressState(Done)
+	repairBelowHealth(0.3f)
 {
 }
 
