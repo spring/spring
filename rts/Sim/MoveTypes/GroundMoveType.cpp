@@ -83,7 +83,6 @@ CR_REG_METADATA(CGroundMoveType, (
 
 	CR_MEMBER(numIdlingUpdates),
 	CR_MEMBER(numIdlingSlowUpdates),
-	CR_MEMBER(lastAvoid),
 	CR_MEMBER(wantedHeading),
 
 	CR_MEMBER(moveSquareX),
@@ -100,13 +99,13 @@ CR_REG_METADATA(CGroundMoveType, (
 
 	CR_MEMBER(waypointDir),
 	CR_MEMBER(flatFrontDir),
+	CR_MEMBER(lastAvoidanceDir),
+	CR_MEMBER(mainHeadingPos),
 
 	CR_MEMBER(skidRotVector),
 	CR_MEMBER(skidRotSpeed),
 	CR_MEMBER(skidRotAccel),
 	CR_ENUM_MEMBER(oldPhysState),
-
-	CR_MEMBER(mainHeadingPos),
 
 	CR_RESERVED(64),
 	CR_POSTLOAD(PostLoad)
@@ -152,16 +151,15 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	oldPhysState(CSolidObject::OnGround),
 
 	flatFrontDir(0.0f, 0.0, 1.0f),
+	lastAvoidanceDir(ZeroVector),
 	mainHeadingPos(ZeroVector),
 
 	nextObstacleAvoidanceUpdate(0),
-
 	pathRequestDelay(0),
 
 	numIdlingUpdates(0),
 	numIdlingSlowUpdates(0),
 
-	lastAvoid(ZeroVector),
 	wantedHeading(0)
 {
 	assert(owner != NULL);
@@ -947,129 +945,135 @@ void CGroundMoveType::CalcSkidRot()
  * follow the path even when it's not perfect.
  */
 float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
+	#ifdef IGNORE_OBSTACLES
+	return desiredDir;
+	#endif
+
 	// multiplier for how strongly an object should be avoided
 	static const float AVOIDANCE_STRENGTH = 8000.0f;
 
-	// NOTE: based on the requirement that all objects have symetrical footprints.
-	// If this is false, then radius has to be calculated in a different way!
-
 	// Obstacle-avoidance-system only needs to be run if the unit wants to move
-	if (pathId != 0) {
-		float3 avoidanceVec = ZeroVector;
-		float3 avoidanceDir = desiredDir;
+	if (pathId == 0)
+		return ZeroVector;
 
-		// Speed-optimizer. Reduces the times this system is run.
-		if (gs->frameNum >= nextObstacleAvoidanceUpdate) {
-			lastAvoid = desiredDir;
-			nextObstacleAvoidanceUpdate = gs->frameNum + 4;
+	float3 avoidanceVec = ZeroVector;
+	float3 avoidanceDir = desiredDir;
 
-			// now we do the obstacle avoidance proper
-			const float currentDistanceToGoal = owner->pos.distance2D(goalPos);
-			const float currentDistanceToGoalSq = currentDistanceToGoal * currentDistanceToGoal;
-			const float3 rightOfPath = desiredDir.cross(float3(0.0f, 1.0f, 0.0f));
-			const float speedf = owner->speed.Length2D();
+	// Speed-optimizer. Reduces the times this system is run.
+	if (gs->frameNum < nextObstacleAvoidanceUpdate)
+		return lastAvoidanceDir;
 
-			float avoidLeft = 0.0f;
-			float avoidRight = 0.0f;
+	lastAvoidanceDir = desiredDir;
+	nextObstacleAvoidanceUpdate = gs->frameNum + 4;
 
-			MoveData* moveData = owner->mobility;
-			CMoveMath* moveMath = moveData->moveMath;
-			moveData->tempOwner = owner;
+	// now we do the obstacle avoidance proper
+	const float avoidanceRadius = owner->radius * std::max(2.0f, currentSpeed);
+	const float3 rightOfPath = desiredDir.cross(UpVector);
 
-			const vector<CSolidObject*>& nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
+	float avoidLeft = 0.0f;
+	float avoidRight = 0.0f;
 
-			for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
-				CSolidObject* o = *oi;
+	MoveData* moveData = owner->mobility;
+	CMoveMath* moveMath = moveData->moveMath;
+	moveData->tempOwner = owner;
 
-				if (moveMath->IsNonBlocking(*moveData, o)) {
-					// no need to avoid this obstacle
-					continue;
-				}
+	const vector<CSolidObject*>& nearbyObjects = qf->GetSolidsExact(owner->pos, avoidanceRadius);
 
-				// basic blocking-check (test if the obstacle cannot be overrun), also includes objects that are slightly behind us
-				if (o != owner && moveMath->CrushResistant(*moveData, o) && desiredDir.dot(o->pos - owner->pos) + 0.25f > 0) {
-					float3 objectToUnit = (owner->pos - o->pos - o->speed * 30);
-					float distanceToObjectSq = objectToUnit.SqLength();
-					float radiusSum = (owner->xsize + o->xsize) * SQUARE_SIZE / 2;
-					float distanceLimit = speedf * 35 + 10 + radiusSum;
-					float distanceLimitSq = distanceLimit * distanceLimit;
+	for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
+		CSolidObject* object = *oi;
 
-					// if object is close enough
-					if (distanceToObjectSq < distanceLimitSq && distanceToObjectSq < currentDistanceToGoalSq
-							&& distanceToObjectSq > 1.0f) {
-						// Don't divide by zero. (TODO: figure out why this can
-						// actually happen.) Positive value means "to the right".
-						float objectDistToAvoidDirCenter = objectToUnit.dot(rightOfPath);
+		// cases in which there is no need to avoid this obstacle
+		if (object == owner)
+			continue;
+		if (moveMath->IsNonBlocking(*moveData, object))
+			continue;
+		if (!moveMath->CrushResistant(*moveData, object))
+			continue;
+		// ignore objects that are slightly behind us
+		if ((desiredDir.dot(object->pos - owner->pos) + 0.25f) <= 0.0f)
+			continue;
 
-						// If object and unit in relative motion are closing in on one another
-						// (or not yet fully apart), then the object is on the path of the unit
-						// and they are not collided.
-						if (objectToUnit.dot(avoidanceDir) < radiusSum &&
-							math::fabs(objectDistToAvoidDirCenter) < radiusSum &&
-							(o->mobility || Distance2D(owner, o, SQUARE_SIZE) >= 0)) {
+		const float3 objectToUnit = (owner->pos - object->pos - object->speed * GAME_SPEED);
+		const float objectDistSq = objectToUnit.SqLength();
 
-							// Avoid collision by turning the heading to left or right.
-							// Using the object thats needs the most adjustment.
+		// NOTE: use the footprint radii instead?
+		const float radiusSum = owner->radius + object->radius;
+		const float massSum = owner->mass + object->mass;
+		const bool objectMobile = (object->mobility != NULL);
+		const float objectMassScale = (objectMobile)? (object->mass / massSum): 1.0f;
 
-							#if (DEBUG_OUTPUT == 1)
-							GML_RECMUTEX_LOCK(sel); // ObstacleAvoidance
+		if (objectDistSq >= Square(currentSpeed * GAME_SPEED + radiusSum))
+			continue;
+		if (objectDistSq >= Square(owner->pos.distance2D(goalPos)))
+			continue;
 
-							if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
-								geometricObjects->AddLine(owner->pos + UpVector * 20, o->pos + UpVector * 20, 3, 1, 4);
-							#endif
+		// note: positive angle cosines mean object is to our right
+		const float objectDistToAvoidDirCenter = objectToUnit.dot(rightOfPath);
 
-							const float iSqrtObjDist = math::isqrt2(distanceToObjectSq);
-							if (objectDistToAvoidDirCenter > 0.0f) {
-								avoidRight +=
-									(radiusSum - objectDistToAvoidDirCenter) *
-									AVOIDANCE_STRENGTH * iSqrtObjDist * iSqrtObjDist * iSqrtObjDist;
-							} else {
-								avoidLeft +=
-									(radiusSum - math::fabs(objectDistToAvoidDirCenter)) *
-									AVOIDANCE_STRENGTH * iSqrtObjDist * iSqrtObjDist * iSqrtObjDist;
-							}
-						}
-					}
+		if (objectToUnit.dot(avoidanceDir) >= radiusSum)
+			continue;
+		if (math::fabs(objectDistToAvoidDirCenter) >= radiusSum)
+			continue;
 
-				}
-			}
-
-			moveData->tempOwner = NULL;
-
-
-			// Sum up avoidance.
-			avoidanceVec = (desiredDir.cross(UpVector) * (avoidRight - avoidLeft));
-
+		// if object and unit in relative motion are closing in on one another
+		// (or not yet fully apart), then the object is on the path of the unit
+		// and they are not collided
+		if (objectMobile || (Distance2D(owner, object, SQUARE_SIZE) >= 0.0f)) {
 			#if (DEBUG_OUTPUT == 1)
-			GML_RECMUTEX_LOCK(sel); //ObstacleAvoidance
+			{
+				GML_RECMUTEX_LOCK(sel); // ObstacleAvoidance
 
-			if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
-				int a = geometricObjects->AddLine(owner->pos + UpVector * 20, owner->pos + UpVector * 20 + avoidanceVec * 40, 7, 1, 4);
-				geometricObjects->SetColor(a, 1, 0.3f, 0.3f, 0.6f);
-
-				a = geometricObjects->AddLine(owner->pos + UpVector * 20, owner->pos + UpVector * 20 + desiredDir * 40, 7, 1, 4);
-				geometricObjects->SetColor(a, 0.3f, 0.3f, 1, 0.6f);
+				if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
+					geometricObjects->AddLine(owner->pos + UpVector * 20, object->pos + UpVector * 20, 3, 1, 4);
+				}
 			}
 			#endif
-		}
-		else {
-			return lastAvoid;
-		}
 
-		// Return the resulting recommended velocity.
-		avoidanceDir = (desiredDir + avoidanceVec).SafeNormalize();
+			const float iSqrtObjDist = math::isqrt2(objectDistSq);
+			const float avoidScale = (AVOIDANCE_STRENGTH * iSqrtObjDist * iSqrtObjDist * iSqrtObjDist) * objectMassScale;
+
+			// avoid collision by turning either left or right
+			// using the direction thats needs most adjustment
+			if (objectDistToAvoidDirCenter > 0.0f) {
+				avoidRight += ((radiusSum - objectDistToAvoidDirCenter) * avoidScale);
+			} else {
+				avoidLeft += ((radiusSum + objectDistToAvoidDirCenter) * avoidScale);
+			}
+		}
+	}
+
+	moveData->tempOwner = NULL;
+
+
+	// Sum up avoidance.
+	avoidanceVec = (desiredDir.cross(UpVector) * (avoidRight - avoidLeft));
+
+	#if (DEBUG_OUTPUT == 1)
+	{
+		GML_RECMUTEX_LOCK(sel); // ObstacleAvoidance
+
+		if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
+			int a = geometricObjects->AddLine(owner->pos + UpVector * 20, owner->pos + UpVector * 20 + avoidanceVec * 40, 7, 1, 4);
+			geometricObjects->SetColor(a, 1, 0.3f, 0.3f, 0.6f);
+
+			a = geometricObjects->AddLine(owner->pos + UpVector * 20, owner->pos + UpVector * 20 + desiredDir * 40, 7, 1, 4);
+			geometricObjects->SetColor(a, 0.3f, 0.3f, 1, 0.6f);
+		}
+	}
+	#endif
+
+
+	// Return the resulting recommended velocity.
+	avoidanceDir = (desiredDir + avoidanceVec).SafeNormalize();
 
 #ifdef TRACE_SYNC
-		tracefile << "[" << __FUNCTION__ << "] ";
-		tracefile << "avoidanceVec = <" << avoidanceVec.x << " " << avoidanceVec.y << " " << avoidanceVec.z << ">\n";
+	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << "avoidanceVec = <" << avoidanceVec.x << " " << avoidanceVec.y << " " << avoidanceVec.z << ">\n";
 #endif
 
-		lastAvoid = avoidanceDir;
-		return avoidanceDir;
-	} else {
-		return ZeroVector;
-	}
+	return (lastAvoidanceDir = avoidanceDir);
 }
+
 
 
 // Calculates an aproximation of the physical 2D-distance between given two objects.
@@ -1421,10 +1425,10 @@ void CGroundMoveType::HandleUnitCollisions(
 		      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
 
 		if (!collideeMobile) {
-			const float3 colliderNextPos = colliderCurPos + collider->speed;
-			const CMoveMath::BlockType colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
+			const float3 colliderNxtPos = colliderCurPos + collider->speed;
+			const CMoveMath::BlockType colliderNxtPosBits = colliderMM->IsBlocked(*colliderMD, colliderNxtPos);
 
-			if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
+			if ((colliderNxtPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
 				// currentSpeed = 0.0f;
 				// <requestedSpeed> is only reset every SlowUpdate, do not touch it
 				// requestedSpeed = 0.0f;
@@ -1433,14 +1437,13 @@ void CGroundMoveType::HandleUnitCollisions(
 				collider->AddImpulse(sepDirection * std::max(currentSpeed, accRate));
 				collider->Move3D(collider->speed, true);
 			}
-
-			if (colliderMassScale > collideeMassScale) {
-				std::swap(colliderMassScale, collideeMassScale);
-			}
 		}
 
 		const float3 colliderNewPos = colliderCurPos + (colResponseVec * colliderMassScale);
 		const float3 collideeNewPos = collideeCurPos - (colResponseVec * collideeMassScale);
+
+		const CCommandAI* colliderCAI = collider->commandAI;
+		const CCommandAI* collideeCAI = collidee->commandAI;
 
 		// try to prevent both parties from being pushed onto non-traversable squares
 		if (                  (colliderMM->IsBlocked(*colliderMD, colliderNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { colliderMassScale = 0.0f; }
@@ -1448,13 +1451,21 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (                  colliderMM->GetPosSpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { colliderMassScale = 0.0f; }
 		if (collideeMobile && collideeMM->GetPosSpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
 
+		// ignore pushing contributions from idling collidee's
+		if (!colliderCAI->commandQue.empty() && collideeCAI->commandQue.empty()) {
+			colliderMassScale *= ((collideeMobile)? 0.0f: 1.0f);
+		}
+
 		if (pushCollider) { collider->Move3D( colResponseVec * colliderMassScale, true); } else if (colliderMobile) { collider->Move3D(colliderOldPos, false); }
 		if (pushCollidee) { collidee->Move3D(-colResponseVec * collideeMassScale, true); } else if (collideeMobile) { collidee->Move3D(collideeOldPos, false); }
 
-		if (!((gs->frameNum + collider->id) & 31) && !collider->commandAI->unimportantMove) {
+		#if 0
+		if (!((gs->frameNum + collider->id) & 31) && !colliderCAI->unimportantMove) {
 			// if we do not have an internal move order, tell units around us to bugger off
+			// note: this causes too much chaos among the ranks when groups get large
 			helper->BuggerOff(colliderCurPos + collider->frontdir * colliderRadius, colliderRadius, true, false, collider->team, collider);
 		}
+		#endif
 	}
 }
 
@@ -1520,10 +1531,10 @@ void CGroundMoveType::HandleFeatureCollisions(
 		      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
 
 		if (collidee->reachedFinalPos) {
-			const float3 colliderNextPos = colliderCurPos + collider->speed;
-			const CMoveMath::BlockType colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
+			const float3 colliderNxtPos = colliderCurPos + collider->speed;
+			const CMoveMath::BlockType colliderNxtPosBits = colliderMM->IsBlocked(*colliderMD, colliderNxtPos);
 
-			if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
+			if ((colliderNxtPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
 				// currentSpeed = 0.0f;
 				// <requestedSpeed> is only reset every SlowUpdate, do not touch it
 				// requestedSpeed = 0.0f;
@@ -1531,10 +1542,6 @@ void CGroundMoveType::HandleFeatureCollisions(
 				// applied every frame objects are colliding, so be careful
 				collider->AddImpulse(sepDirection * std::max(currentSpeed, accRate));
 				collider->Move3D(collider->speed, true);
-			}
-
-			if (colliderMassScale > collideeMassScale) {
-				std::swap(colliderMassScale, collideeMassScale);
 			}
 		}
 

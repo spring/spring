@@ -141,6 +141,7 @@ protected:
 
 	float3 waypointDir;
 	float3 flatFrontDir;
+	float3 lastAvoidanceDir;
 	float3 mainHeadingPos;
 
 	// number of grid-cells along each dimension; should be an odd number
@@ -158,7 +159,6 @@ protected:
 	int moveSquareX;
 	int moveSquareY;
 
-	float3 lastAvoid;
 	short wantedHeading;
 };
 
