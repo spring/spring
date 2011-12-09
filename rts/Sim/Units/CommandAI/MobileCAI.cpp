@@ -41,8 +41,6 @@ CR_REG_METADATA(CMobileCAI, (
 
 				CR_MEMBER(lastPC),
 
-				CR_MEMBER(maxWantedSpeed),
-
 				CR_MEMBER(lastBuggerOffTime),
 				CR_MEMBER(buggerOffPos),
 				CR_MEMBER(buggerOffRadius),
@@ -66,8 +64,6 @@ CMobileCAI::CMobileCAI():
 	lastIdleCheck(0),
 	tempOrder(false),
 	lastPC(-1),
-//	patrolTime(0),
-	maxWantedSpeed(0),
 	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
@@ -88,8 +84,6 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	lastIdleCheck(0),
 	tempOrder(false),
 	lastPC(-1),
-//	patrolTime(0),
-	maxWantedSpeed(0),
 	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
@@ -1078,23 +1072,31 @@ void CMobileCAI::IdleCheck()
 }
 
 void CMobileCAI::StopSlowGuard() {
+	if (!slowGuard)
+		return;
+
 	slowGuard = false;
+
+	// restore our default maximum speed
+	owner->moveType->SetMaxSpeed(owner->moveType->GetMaxSpeedDef());
 }
 
 void CMobileCAI::StartSlowGuard(float speed) {
-	if (!slowGuard) {
-		slowGuard = true;
+	if (slowGuard)
+		return;
 
-		if (speed <= 0.0f) { return; }
-		if (commandQue.empty()) { return; }
-		if (owner->moveType->GetMaxSpeed() < speed) { return; }
+	slowGuard = true;
 
-		if (commandQue.size() <= 1
-			|| commandQue[1].GetID() != CMD_SET_WANTED_MAX_SPEED
-			|| commandQue[1].params[0] > speed) {
+	if (speed <= 0.0f) { return; }
+	if (commandQue.empty()) { return; }
+	if (owner->moveType->GetMaxSpeed() < speed) { return; }
 
-			owner->moveType->SetMaxSpeed(speed);
-		}
+	const Command& c = (commandQue.size() > 1)? commandQue[1]: Command(CMD_STOP);
+
+	// when guarding, temporarily adopt the maximum
+	// (forward) speed of the guardee unit as our own
+	if ((c.GetID() != CMD_SET_WANTED_MAX_SPEED) || (c.params[0] > speed)) {
+		owner->moveType->SetMaxSpeed(speed);
 	}
 }
 

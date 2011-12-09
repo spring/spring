@@ -1129,8 +1129,7 @@ void CStrafeAirMoveType::SetMaxSpeed(float speed)
 
 void CStrafeAirMoveType::StartMoving(float3 gpos, float goalRadius)
 {
-	SetWantedMaxSpeed(maxSpeed);
-	SetGoal(gpos);
+	StartMoving(gpos, goalRadius, maxSpeed);
 }
 
 void CStrafeAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)

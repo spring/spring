@@ -89,9 +89,9 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	assert(owner->unitDef != NULL);
 
 	turnRate = owner->unitDef->turnRate;
-	maxSpeed = owner->unitDef->speed / GAME_SPEED;
 	accRate = std::max(0.01f, owner->unitDef->maxAcc);
 	decRate = std::max(0.01f, owner->unitDef->maxDec);
+
 	wantedHeight = owner->unitDef->wantedHeight + gs->randFloat() * 5.0f;
 	orgWantedHeight = wantedHeight;
 	dontLand = owner->unitDef->DontLand();

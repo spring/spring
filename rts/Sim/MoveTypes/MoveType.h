@@ -47,6 +47,7 @@ public:
 	void SetRepairBelowHealth(float rbHealth) { repairBelowHealth = rbHealth; }
 
 	float GetMaxSpeed() const { return maxSpeed; }
+	float GetMaxSpeedDef() const { return maxSpeedDef; }
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
 	float GetRepairBelowHealth() const { return repairBelowHealth; }
 
@@ -68,8 +69,10 @@ public:
 	ProgressState progressState;
 
 protected:
-	float maxSpeed;
-	float maxWantedSpeed;
+	float maxSpeed;            // current maximum speed owner is allowed to reach (changes with eg. guard orders)
+	float maxSpeedDef;         // default maximum speed owner can reach (as defined by its UnitDef, never changes)
+	float maxWantedSpeed;      // FIXME: largely redundant / unused except by StrafeAirMoveType
+
 	float repairBelowHealth;
 };
 

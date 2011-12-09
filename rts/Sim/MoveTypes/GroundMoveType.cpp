@@ -168,9 +168,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	moveSquareX = owner->pos.x / MIN_WAYPOINT_DISTANCE;
 	moveSquareY = owner->pos.z / MIN_WAYPOINT_DISTANCE;
 
-	maxSpeed = owner->unitDef->speed / GAME_SPEED;
 	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
-	maxWantedSpeed = owner->unitDef->speed / GAME_SPEED;
+
 	turnRate = owner->unitDef->turnRate;
 	accRate = std::max(0.01f, owner->unitDef->maxAcc);
 	decRate = std::max(0.01f, owner->unitDef->maxDec);
@@ -1865,7 +1864,7 @@ void CGroundMoveType::SetMainHeading() {
 
 void CGroundMoveType::SetMaxSpeed(float speed)
 {
-	maxSpeed        = std::min(speed, maxSpeed);
+	maxSpeed        = std::min(speed, maxSpeedDef);
 	maxReverseSpeed = std::min(speed, maxReverseSpeed);
 
 	requestedSpeed = speed;
