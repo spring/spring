@@ -325,7 +325,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2, plane);
 	drawReflection = true;
 
-	readmap->GetGroundDrawer()->Draw(true);
+	readmap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(true);

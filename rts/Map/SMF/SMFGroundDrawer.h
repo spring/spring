@@ -5,12 +5,22 @@
 
 #include "Map/BaseGroundDrawer.h"
 
-class CVertexArray;
+
 class CSMFReadMap;
+class IMeshDrawer;
+
 
 namespace Shader {
 	struct IProgramObject;
 }
+
+
+enum {
+	SMF_MESHDRAWER_LEGACY = 0,
+	SMF_MESHDRAWER_ROAM,
+	SMF_MESHDRAWER_LAST,
+};
+
 
 /**
  * Map drawer implementation for the CSMFReadMap map system.
@@ -23,7 +33,7 @@ public:
 
 	friend class CSMFReadMap;
 
-	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false);
+	void Draw(const DrawPass::e& drawPass);
 	void DrawShadowPass();
 
 	// for non-GLSL clients
@@ -36,47 +46,38 @@ public:
 
 	void IncreaseDetail();
 	void DecreaseDetail();
+	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
 
 	GL::LightHandler* GetLightHandler() { return &lightHandler; }
 
-private:
-#ifdef USE_GML
-	static void DoDrawGroundRowMT(void* c, int bty);
-	static void DoDrawGroundShadowLODMT(void* c, int nlod);
-#endif
+	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
+	void SwitchMeshDrawer(int mode = -1);
+
+private:
 	bool LoadMapShaders();
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 
-	void FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod);
-	void DoDrawGroundRow(const CCamera* cam, int bty);
-	void DrawVertexAQ(CVertexArray* ma, int x, int y);
-	void DrawVertexAQ(CVertexArray* ma, int x, int y, float height);
-	void EndStripQ(CVertexArray* ma);
-	void DrawGroundVertexArrayQ(CVertexArray*& ma);
-	void DoDrawGroundShadowLOD(int nlod);
-
-	inline bool BigTexSquareRowVisible(const CCamera* cam, int) const;
-	inline void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 	void SetupTextureUnits(bool drawReflection);
 	void ResetTextureUnits(bool drawReflection);
 
+protected:
 	CSMFReadMap* smfMap;
+	IMeshDrawer* meshDrawer;
 
-	int viewRadius;
-	int neededLod;
+	int groundDetail;
 
 	GLuint waterPlaneCamOutDispList;
 	GLuint waterPlaneCamInDispList;
 
-	Shader::IProgramObject* smfShaderBaseARB;   //! default (V+F) SMF ARB shader
-	Shader::IProgramObject* smfShaderReflARB;   //! shader (V+F) for the DynamicWater reflection pass
-	Shader::IProgramObject* smfShaderRefrARB;   //! shader (V+F) for the DynamicWater refraction pass
-	Shader::IProgramObject* smfShaderCurrARB;   //! currently active ARB shader
-	Shader::IProgramObject* smfShaderDefGLSL;   //! GLSL shader used when shadows are on
-	Shader::IProgramObject* smfShaderAdvGLSL;   //! GLSL shader used when shadows are off
-	Shader::IProgramObject* smfShaderCurGLSL;   //! currently active GLSL shader
+	Shader::IProgramObject* smfShaderBaseARB;   // default (V+F) SMF ARB shader
+	Shader::IProgramObject* smfShaderReflARB;   // shader (V+F) for the DynamicWater reflection pass
+	Shader::IProgramObject* smfShaderRefrARB;   // shader (V+F) for the DynamicWater refraction pass
+	Shader::IProgramObject* smfShaderCurrARB;   // currently active ARB shader
+	Shader::IProgramObject* smfShaderDefGLSL;   // GLSL shader used when shadows are on
+	Shader::IProgramObject* smfShaderAdvGLSL;   // GLSL shader used when shadows are off
+	Shader::IProgramObject* smfShaderCurGLSL;   // currently active GLSL shader
 
 	GL::LightHandler lightHandler;
 
