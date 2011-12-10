@@ -8227,7 +8227,15 @@
 				Name="SMF"
 				>
 				<File
+					RelativePath="..\..\Map\SMF\IMeshDrawer.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Map\Smf\mapfile.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SMF\SMFFormat.h"
 					>
 				</File>
 				<File
@@ -8262,6 +8270,110 @@
 					RelativePath="..\..\Map\Smf\SmfReadMap.h"
 					>
 				</File>
+				<Filter
+					Name="ROAM"
+					>
+					<File
+						RelativePath="..\..\Map\SMF\ROAM\Patch.cpp"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="No debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug+MT|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Dedicated Server (Release)|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Dedicated Server (Debug)|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\Map\SMF\ROAM\Patch.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SMF\ROAM\RoamMeshDrawer.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SMF\ROAM\RoamMeshDrawer.h"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Legacy"
+					>
+					<File
+						RelativePath="..\..\Map\SMF\Legacy\LegacyMeshDrawer.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Map\SMF\Legacy\LegacyMeshDrawer.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="SM3"

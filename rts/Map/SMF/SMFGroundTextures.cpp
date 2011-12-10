@@ -473,6 +473,11 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 
 void CSMFGroundTextures::BindSquareTexture(int texSquareX, int texSquareY)
 {
+	assert(texSquareX >= 0);
+	assert(texSquareY >= 0);
+	assert(texSquareX < smfMap->numBigTexX);
+	assert(texSquareY < smfMap->numBigTexY);
+
 	GroundSquare* square = &squares[texSquareY * smfMap->numBigTexX + texSquareX];
 	glBindTexture(GL_TEXTURE_2D, square->textureID);
 

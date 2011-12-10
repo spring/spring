@@ -19,16 +19,17 @@ public:
 	CSM3GroundDrawer(CSM3ReadMap* map);
 	~CSM3GroundDrawer();
 
-	void Draw(bool drawWaterReflection, bool drawUnitReflection);
+	void Draw(const DrawPass::e& drawPass);
 	void DrawShadowPass();
 	void Update();
 	void UpdateSunDir() {}
 
 	void IncreaseDetail();
 	void DecreaseDetail();
+	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
 
 protected:
-	void DrawObjects(bool drawWaterReflection, bool drawUnitReflection);
+	void DrawObjects(const DrawPass::e& drawPass);
 
 	CSM3ReadMap* map;
 
