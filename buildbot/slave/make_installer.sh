@@ -47,7 +47,7 @@ MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portab
 touch ${INSTALLDIR}/springsettings.cfg
 ${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg -x!AI/Skirmish/Shard
 #for ZKL
-(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe ArchiveMover.exe \*.dbg AI/Skirmish/Shard)
+(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe ArchiveMover.exe \*.dbg AI/Skirmish/Shard/\*)
 
 # compress files excluded from portable archive
 for file in spring-dedicated.exe spring-headless.exe ArchiveMover.exe; do
