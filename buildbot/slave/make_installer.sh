@@ -11,6 +11,7 @@ echo "Installing into $DEST"
 
 #Ultra settings, max number of threads taken from commandline.
 SEVENZIP="7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
+ZIP="zip -r9"
 
 MINGWLIBS_PATH=${1}
 MINGW_HOST=i586-mingw32msvc-
@@ -40,10 +41,14 @@ mkdir -p ${TMP_PATH}
 
 #absolute path to the minimal portable (engine, unitsync + ais)
 MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable.7z
+MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable+dedicated.zip
 
 #create portable spring excluding shard (ask AF why its excluded)
 touch ${INSTALLDIR}/springsettings.cfg
 ${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg -x!AI/Skirmish/Shard
+#for ZKL
+${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} ${INSTALLDIR}/* -x spring-headless.exe ArchiveMover.exe \*.dbg AI/Skirmish/Shard
+
 # compress files excluded from portable archive
 for file in spring-dedicated.exe spring-headless.exe ArchiveMover.exe; do
 	name=${file%.*}
@@ -87,6 +92,7 @@ mv ./installer/spring*.exe ${TMP_PATH}
 cd ${TMP_PATH}/..
 ln -sfv ${REV}/*.exe spring_testing.exe
 ln -sfv ${REV}/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
+ln -sfv ${REV}/spring_${VERSION}_minimal-portable+dedicated.zip spring_testing_minimal-portable+dedicated.zip
 ln -sfv ${REV}/${VERSION}_ArchiveMover.7z ArchiveMover_testing.7z
 
 # create a file which contains the latest version of a branch
