@@ -188,9 +188,9 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 
 FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name) const {
 	FeatureDef* fd = new FeatureDef();
-	fd->blocking = 1;
+	fd->blocking = true;
 	fd->burnable = true;
-	fd->destructable = 1;
+	fd->destructable = true;
 	fd->reclaimable = true;
 	fd->drawType = DRAWTYPE_TREE + atoi(name.substr(8).c_str());
 	fd->energy = 250;
@@ -208,9 +208,9 @@ FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name
 
 FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name) const {
 	FeatureDef* fd = new FeatureDef();
-	fd->blocking = 0;
-	fd->burnable = 0;
-	fd->destructable = 0;
+	fd->blocking = false;
+	fd->burnable = false;
+	fd->destructable = false;
 	fd->reclaimable = false;
 	fd->geoThermal = true;
 	// geos are (usually) rendered only as vents baked into
