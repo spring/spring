@@ -1209,8 +1209,9 @@ starting from given speed.
 */
 float CGroundMoveType::BreakingDistance(float speed) const
 {
-	const float time = speed / decRate;
-	const float dist = 0.5f * decRate * time * time;
+	const float rate = reversing? accRate: decRate;
+	const float time = speed / rate;
+	const float dist = 0.5f * rate * time * time;
 	return dist;
 }
 
@@ -1220,7 +1221,10 @@ from current velocity.
 */
 float3 CGroundMoveType::Here()
 {
-	return (owner->pos + (owner->frontdir * BreakingDistance(currentSpeed)));
+	const float dist = BreakingDistance(currentSpeed);
+	const int   sign = int(!reversing) * 2 - 1;
+
+	return (owner->pos + (owner->frontdir * dist * sign));
 }
 
 
@@ -1503,7 +1507,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		const float3 separationVector = colliderCurPos - collideeCurPos;
 		const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
 
-		if ((separationVector.SqLength() - separationMinDist) > 0.01f   && false) { continue; }
+		if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
 		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 
 		if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
@@ -1994,7 +1998,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		const MoveData* md = ud->movedata;
 		const CMoveMath* mm = md->moveMath;
 
-		const int    speedSign = int(!wantReverse) * 2 - 1;
+		const int    speedSign = int(!reversing) * 2 - 1;
 		const float  speedScale = currentSpeed + deltaSpeed;
 		const float3 speedVector = owner->frontdir * speedScale * speedSign;
 
