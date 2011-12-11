@@ -91,8 +91,9 @@ static unsigned int GetSpeedModColor(const float m) {
 		(m >= 1.0f)? 255:
 		(m <= 0.0f)?   0:
 		255 - R;
-	const unsigned char B = 0;
-	const unsigned char A = 0;
+
+	const unsigned char B =   0;
+	const unsigned char A = 255;
 
 	return ((R << 24) | (G << 16) | (B << 8) | (A << 0));
 }
