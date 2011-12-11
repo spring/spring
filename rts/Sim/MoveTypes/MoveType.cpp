@@ -19,6 +19,7 @@ CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(oldSlowUpdatePos),
 
 	CR_MEMBER(maxSpeed),
+	CR_MEMBER(maxSpeedDef),
 	CR_MEMBER(maxWantedSpeed),
 	CR_MEMBER(repairBelowHealth),
 
@@ -34,12 +35,15 @@ AMoveType::AMoveType(CUnit* owner):
 	oldPos(owner? owner->pos: ZeroVector),
 	oldSlowUpdatePos(oldPos),
 
-	maxSpeed(0.2f),
-	maxWantedSpeed(0.2f),
-	repairBelowHealth(0.3f),
-
 	useHeading(true),
-	progressState(Done)
+
+	progressState(Done),
+
+	maxSpeed(owner->unitDef->speed / GAME_SPEED),
+	maxSpeedDef(owner->unitDef->speed / GAME_SPEED),
+	maxWantedSpeed(owner->unitDef->speed / GAME_SPEED),
+
+	repairBelowHealth(0.3f)
 {
 }
 

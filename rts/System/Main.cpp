@@ -38,9 +38,9 @@ void MainFunc(int argc, char** argv, int* ret) {
 		;
 
 #ifdef USE_GML
-	set_threadnum(GML_DRAW_THREAD_NUM);
+	GML::ThreadNumber(GML_DRAW_THREAD_NUM);
   #if GML_ENABLE_TLS_CHECK
-	if (gmlThreadNumber != GML_DRAW_THREAD_NUM) {
+	if (GML::ThreadNumber() != GML_DRAW_THREAD_NUM) {
 		ErrorMessageBox("Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 	}
   #endif

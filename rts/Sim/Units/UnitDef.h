@@ -134,6 +134,7 @@ public:
 	float turnInPlaceSpeedLimit;
 
 	bool upright;
+	bool blocking;
 	bool collide;
 
 	float losHeight;

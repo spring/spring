@@ -145,73 +145,67 @@ bool CMoveMath::IsBlockedStructureZmax(const MoveData& moveData, int xSquare, in
  * objects block iif their mass exceeds the movedata's crush-strength).
  * NOTE: modify for selective blocking
  */
-bool CMoveMath::CrushResistant(const MoveData& moveData, const CSolidObject* object)
+bool CMoveMath::CrushResistant(const MoveData& colliderMD, const CSolidObject* collidee)
 {
-	if (!object->blocking) { return false; }
-	if (dynamic_cast<const CFeature*>(object) == NULL) { return true; }
+	if (!collidee->blocking) { return false; }
+	if (!collidee->crushable) { return true; }
 
-	return (object->mass > moveData.crushStrength);
+	return (collidee->mass > colliderMD.crushStrength);
 }
 
 /*
  * check if an object is NON-blocking for a given MoveData
  * (ex. a submarine's moveDef vs. a surface ship object)
  */
-bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obstacle)
+bool CMoveMath::IsNonBlocking(const MoveData& colliderMD, const CSolidObject* collidee)
 {
-	if (!obstacle->blocking)
+	const CSolidObject* collider = colliderMD.tempOwner;
+
+	if (!collidee->blocking)
 		return true;
 
-	const CSolidObject* unit = moveData.tempOwner;
-
-	if (unit == obstacle)
+	if (collider == collidee)
 		return true;
 
-	// NOTE: only tests ONE square underneath obstacle
-	const int hx = int(obstacle->pos.x / SQUARE_SIZE);
-	const int hz = int(obstacle->pos.z / SQUARE_SIZE);
-	const int hi = (hx >> 1) + (hz >> 1) * gs->hmapx;
-	const int hj = (gs->mapx >> 1) * (gs->mapy >> 1); // sizeof(GetMIPHeightMapSynced(1))
-
-	if (hi < 0 || hi >= hj) {
-		// unit is out of map bounds, so cannot be blocked
+	// if obstacle is out of map bounds, it cannot block us
+	if (!collidee->pos.IsInBounds())
 		return true;
-	}
 
-	if (unit != NULL) {
-		// simple case: if unit and obstacle have non-zero
-		// vertical separation as measured by their (model)
-		// heights, unit can always pass
-		// note: in many cases separation is not sufficient
-		// even when it logically should be (submarines vs.
-		// floating DT in shallow water)
-		const float elevDif = math::fabs(unit->pos.y - obstacle->pos.y);
-		const float hghtSum = math::fabs(unit->height) + math::fabs(obstacle->height);
-
-		if ((elevDif - hghtSum) >= 1.0f) { return true;  }
-		if ( elevDif            <= 1.0f) { return false; }
-	}
-
-	if (moveData.terrainClass == MoveData::Land) {
-		// if unit is restricted to land with > 0 height,
-		// it can not be blocked by underwater obstacles
-		return (obstacle->isUnderWater);
-	}
-
-	const bool unitSub = moveData.subMarine;
-	const bool obstSub = (obstacle->mobility && obstacle->mobility->subMarine);
+	// if unit is restricted to land with height > 0,
+	// it can not be blocked by underwater obstacles
+	if (colliderMD.terrainClass == MoveData::Land)
+		return (collidee->isUnderWater);
 
 	// some objects appear to have negative model heights
-	// (the S3DO parsers allow it for some reason), take
-	// the absolute value to prevent them being regarded
+	// (the model parsers allow it for some reason), take
+	// absolute values to prevent them from being regarded
 	// as non-blocking
-	const float oy = obstacle->pos.y;
-	const float oh = std::max(obstacle->height, -obstacle->height);
-	const float gy = readmap->GetMIPHeightMapSynced(1)[hi];
+	const float colliderMdlHgt = (collider != NULL)? math::fabs(collider->height): 0.0f;
+	const float collideeMdlHgt =                     math::fabs(collidee->height);
+	const float colliderGndAlt = (collider != NULL)? collider->pos.y: 0.0f;
+	const float collideeGndAlt =                     collidee->pos.y;
+
+	if (collider != NULL) {
+		// simple case: if unit and obstacle have non-zero
+		// vertical separation as measured by their (model)
+		// heights, unit can always pass obstacle
+		//
+		// note: in many cases separation is not sufficient
+		// even when it logically should be (submarines vs.
+		// floating DT in shallow water eg.)
+		// note: if unit and obstacle are on a steep slope,
+		// this can return true even when their horizontal
+		// separation points to a collision
+		if (math::fabs(colliderGndAlt - collideeGndAlt) <= 1.0f) return false;
+		if ((colliderGndAlt + colliderMdlHgt) < collideeGndAlt) return true;
+		if ((collideeGndAlt + collideeMdlHgt) < colliderGndAlt) return true;
+
+		return false;
+	}
 
 	// remaining conditions under which obstacle does NOT block unit
 	//   1.
-	//      (unit is ground-following or not currently in water) and
+	//      (unit is ground-following or not currently on water) and
 	//      obstacle's altitude minus its model height leaves a gap
 	//      between it and the ground large enough for unit to pass
 	//   2.
@@ -226,13 +220,17 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 	// clipping, for full 3D accuracy the height of the movedata
 	// owner would need to be accessible (but the path-estimator
 	// defs aren't tied to any)
-	if (moveData.followGround || (gy > 0.0f)) {
-		return ((oy - oh) > ((unit != NULL)? unit->height: gy));
+	//
+	if (colliderMD.followGround || (colliderGndAlt > 0.0f)) {
+		return ((collideeGndAlt - collideeMdlHgt) > colliderMdlHgt);
 	} else {
-		if (unitSub) {
-			return (((oy + oh) >  0.0f) && !obstSub);
+		const bool colliderIsSub = colliderMD.subMarine;
+		const bool collideeIsSub = (collidee->mobility != NULL && collidee->mobility->subMarine);
+
+		if (colliderIsSub) {
+			return (((collideeGndAlt + collideeMdlHgt) >  0.0f) && !collideeIsSub);
 		} else {
-			return (((oy + oh) <= 0.0f) ||  obstSub);
+			return (((collideeGndAlt + collideeMdlHgt) <= 0.0f) ||  collideeIsSub);
 		}
 	}
 

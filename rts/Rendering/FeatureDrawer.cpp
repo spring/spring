@@ -90,10 +90,8 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 	CFeature* f = const_cast<CFeature*>(feature);
 	texturehandlerS3O->UpdateDraw();
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if(!gmlShareLists && f->model && TEX_TYPE(f) < 0)
+	if (GML::SimEnabled() && !GML::ShareLists() && f->model && TEX_TYPE(f) < 0)
 		TEX_TYPE(f) = texturehandlerS3O->LoadS3OTextureNow(f->model);
-#endif
 
 	if (f->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
@@ -171,11 +169,9 @@ void CFeatureDrawer::Update()
 
 inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
-//#if defined(USE_GML) && GML_ENABLE_SIM
-//	f->drawPos = f->pos + (f->speed * ((float)globalRendering->lastFrameStart - (float)f->lastUnitUpdate) * globalRendering->weightedSpeedFactor);
-//#else
-	f->drawPos = f->pos + (f->speed * globalRendering->timeOffset);
-//#endif
+	const float time = /*!GML::SimEnabled() ?*/ globalRendering->timeOffset /*:
+		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)f->lastFeatUpdate) * globalRendering->weightedSpeedFactor*/;
+	f->drawPos = f->pos + (f->speed * time);
 	f->drawMidPos = f->drawPos + f->relMidPos;
 }
 

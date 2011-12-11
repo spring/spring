@@ -300,7 +300,7 @@ void ConfigHandler::Instantiate(string configSource)
 
 	configHandler = new ConfigHandlerImpl(locations);
 
-	assert(configHandler->GetString("test") == "x y z");
+	//assert(configHandler->GetString("test") == "x y z");
 }
 
 void ConfigHandler::Deallocate()

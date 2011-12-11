@@ -67,10 +67,12 @@ public:
 public:
 	// Static properties
 	float mass;                                 ///< the physical mass of this object
+
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
-	bool immobile;                              ///< Immobile objects can not be moved. (Except perhaps along y-axis, to make them stay on ground.)
+	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
+	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make them stay on ground)
 	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
-	bool crushKilled;                           ///< true if this object died by being crushed (currently applies only to features)
+	bool crushKilled;                           ///< true if this object died by being crushed during a collision
 
 	int xsize;                                  ///< The x-size of this object, according to its footprint.
 	int zsize;                                  ///< The z-size of this object, according to its footprint.

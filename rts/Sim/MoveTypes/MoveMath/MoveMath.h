@@ -54,8 +54,8 @@ public:
 	bool IsBlockedStructureZmax(const MoveData& moveData, int xSquare, int zSquare) const;
 	
 	// tells whether a given object is blocking the given movedata
-	static bool CrushResistant(const MoveData& moveData, const CSolidObject* object);
-	static bool IsNonBlocking(const MoveData& moveData, const CSolidObject* object);
+	static bool CrushResistant(const MoveData& colliderMD, const CSolidObject* collidee);
+	static bool IsNonBlocking(const MoveData& colliderMD, const CSolidObject* collidee);
 
 	// returns the block-status of a single quare
 	static BlockType SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare);

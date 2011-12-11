@@ -301,7 +301,7 @@ bool CLoadScreen::Draw()
 		font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
 #ifdef USE_GML
 		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
+			"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), GML::ThreadCount());
 #else
 		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			"Spring %s", SpringVersion::GetFull().c_str());
@@ -336,6 +336,7 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	curLoadMessage = text;
 
 	LOG("%s", text.c_str());
+	LOG_CLEANUP();
 
 	//! Check the FPU state (needed for synced computations),
 	//! some external libraries which get linked during loading might reset those.

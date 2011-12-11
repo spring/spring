@@ -60,8 +60,7 @@ QTPFSPathDrawer::QTPFSPathDrawer() {
 
 void QTPFSPathDrawer::DrawAll() const {
 	// QTPFS::PathManager is not thread-safe
-	#if !defined(USE_GML) || !GML_ENABLE_SIM
-	if (globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
+	if (!GML::SimEnabled() && globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
 
 		const MoveData* md = GetMoveData();
@@ -78,7 +77,6 @@ void QTPFSPathDrawer::DrawAll() const {
 
 		glPopAttrib();
 	}
-	#endif
 }
 
 void QTPFSPathDrawer::DrawNodeTree(const MoveData* md) const {

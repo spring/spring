@@ -439,9 +439,7 @@ CGame::~CGame()
 
 void CGame::LoadGame(const std::string& mapName)
 {
-#ifdef USE_GML
-	set_threadnum(GML_LOAD_THREAD_NUM);
-#endif
+	GML::ThreadNumber(GML_LOAD_THREAD_NUM);
 
 	Watchdog::RegisterThread(WDT_LOAD);
 
@@ -917,10 +915,7 @@ bool CGame::UpdateUnsynced()
 			return true;
 		skipLastDraw = currentTime;
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-		if (!gmlMultiThreadSim)
-#endif
-		{
+		if (!GML::SimEnabled() || !GML::MultiThreadSim()) {
 			DrawSkip();
 			return true;
 		}
@@ -948,18 +943,18 @@ bool CGame::UpdateUnsynced()
 		globalRendering->FPS = thisFps / diffsecs;
 		thisFps = 0;
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-		// Update Lua lock time warning
-		extern int backupSize;
-		luaExportSize = backupSize;
-		backupSize = 0;
-		luaLockTime = (int)GML_LOCK_TIME();
-		float amount = (showMTInfo == MT_LUA_DUAL_EXPORT) ? luaExportSize / 1000.0f : luaLockTime / 10.0f;
-		if (amount >= 0.1f) {
-			if ((mtInfoCtrl = std::min(mtInfoCtrl + 1, 9)) == 5) mtInfoCtrl = 9;
+		if (GML::SimEnabled()) {
+			// Update Lua lock time warning
+			extern int backupSize;
+			luaExportSize = backupSize;
+			backupSize = 0;
+			luaLockTime = (int)GML_LOCK_TIME();
+			float amount = (showMTInfo == MT_LUA_DUAL_EXPORT) ? luaExportSize / 1000.0f : luaLockTime / 10.0f;
+			if (amount >= 0.1f) {
+				if ((mtInfoCtrl = std::min(mtInfoCtrl + 1, 9)) == 5) mtInfoCtrl = 9;
+			}
+			else if ((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 4) mtInfoCtrl = 0;
 		}
-		else if ((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 4) mtInfoCtrl = 0;
-#endif
 	}
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
@@ -1054,7 +1049,7 @@ bool CGame::UpdateUnsynced()
 
 #if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::Draw() {
-	gmlProcessor->Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
+	gmlProcessor->Work(&CGame::DrawMTcb,NULL,NULL,this,GML::ThreadCount(),TRUE,NULL,1,2,2,FALSE);
 	return true;
 }
 #else
@@ -1152,6 +1147,8 @@ bool CGame::Draw() {
 
 	glDisable(GL_FOG);
 
+	SCOPED_TIMER("Game::DrawScreen");
+
 	if (doDrawWorld) {
 		eventHandler.DrawScreenEffects();
 	}
@@ -1239,9 +1236,8 @@ bool CGame::Draw() {
 			smallFont->SetColors(&speedcol, NULL);
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, font_options, buf);
 		}
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-		if (mtInfoCtrl >= 5 && (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT)) {
+		
+		if (GML::SimEnabled() && mtInfoCtrl >= 5 && (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT)) {
 			float pval = (showMTInfo == MT_LUA_DUAL_EXPORT) ? (float)luaExportSize / 1000.0f : (float)luaLockTime / 10.0f;
 			const char *pstr = (showMTInfo == MT_LUA_DUAL_EXPORT) ? "LUA-EXP-SIZE(MT): %2.1fK" : "LUA-SYNC-CPU(MT): %2.1f%%";
 			char buf[40];
@@ -1251,17 +1247,14 @@ bool CGame::Draw() {
 			smallFont->SetColors(&warncol, NULL);
 			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
 		}
-#endif
 
 		CPlayerRosterDrawer::Draw();
 
 		smallFont->End();
 	}
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (skipping)
+	if (GML::SimEnabled() && skipping)
 		DrawSkip(false);
-#endif
 
 	mouse->DrawCursor();
 

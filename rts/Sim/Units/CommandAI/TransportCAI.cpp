@@ -315,7 +315,7 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 			do {
 				delta.x = (gs->randFloat() - 0.5f) * 2;
 				delta.z = (gs->randFloat() - 0.5f) * 2;
-				pos = center + delta * std::min(radius, spread);
+				pos = center + delta * radius;
 
 				badPos = ((delta.SqLength2D() > 1.0f) || !pos.IsInBounds());
 			} while (badPos);

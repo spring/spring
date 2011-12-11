@@ -287,7 +287,7 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 				const size_t i = indices.front();
 				indices.pop();
 				if (strcmp(line,"??:0\n") != 0) {
-					(*lines)[i] = std::string(line, strlen(line) - 1); // exclude the lineending
+					(*lines)[i] = std::string(line, strlen(line) - 1); // exclude the line-ending
 				}
 			}
 			pclose(cmdOut);
@@ -331,6 +331,7 @@ namespace CrashHandler
 			int numLines;
 			if (hThread) {
 				LOG_L(L_ERROR, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
+				LOG_CLEANUP();
 				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    //! stack pointers
 			} else {
 				numLines = backtrace(&buffer[0], buffer.size());    //! stack pointers
@@ -399,6 +400,8 @@ namespace CrashHandler
 				LOG_L(L_ERROR, "This stack trace indicates a problem with a Skirmish AI library.");
 				*keepRunning = true;
 			}
+
+			LOG_CLEANUP();
 		}
 
 		//! Translate it
@@ -409,6 +412,7 @@ namespace CrashHandler
 		for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
 			LOG_L(L_ERROR, "  <%u> %s", numLine++, it->c_str());
 		}
+		LOG_CLEANUP();
 	}
 
 
