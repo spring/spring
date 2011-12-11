@@ -1537,6 +1537,7 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 		unit->Block();
 	}
 
+	unit->crushable = (lua_isboolean(L, 4) && lua_toboolean(L, 4));
 	return 0;
 }
 
