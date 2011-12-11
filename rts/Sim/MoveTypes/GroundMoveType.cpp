@@ -499,7 +499,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			if (haveFinalWaypoint && !atGoal) {
 				// at this point, Update() will no longer call GetNextWayPoint()
 				// and we must slow down to prevent entering an infinite circle
-				// wSpeed = std::min(wSpeed, fastmath::apxsqrt(currWayPointDist * decRate));
+				wSpeed = std::min(wSpeed, fastmath::apxsqrt(currWayPointDist * decRate));
 			}
 
 			if (!ud->turnInPlace) {
