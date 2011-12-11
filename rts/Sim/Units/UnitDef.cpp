@@ -356,7 +356,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	canSelfRepair = udTable.GetBool("canSelfRepair", false);
 
 	canFireControl = !udTable.GetBool("noAutoFire", false);
-	canManualFire = udTable.GetBool("canDGun", false);
+	canManualFire = udTable.GetBool("canManualFire", false);
 
 	fullHealthFactory = udTable.GetBool("fullHealthFactory", false);
 	factoryHeadingTakeoff = udTable.GetBool("factoryHeadingTakeoff", true);
