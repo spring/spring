@@ -74,7 +74,9 @@ CFeature::CFeature() : CSolidObject(),
 	emitSmokeTime(0),
 	solidOnTop(NULL)
 {
+	crushable = true;
 	immobile = true;
+
 	physicalState = OnGround;
 }
 

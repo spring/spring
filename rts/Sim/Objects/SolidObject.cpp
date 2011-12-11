@@ -19,34 +19,46 @@ CR_BIND_DERIVED(CSolidObject, CWorldObject, );
 CR_REG_METADATA(CSolidObject,
 (
 	CR_MEMBER(mass),
+
 	CR_MEMBER(blocking),
-	CR_MEMBER(isUnderWater),
+	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
 	CR_MEMBER(blockHeightChanges),
 	CR_MEMBER(crushKilled),
+
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
+
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
+
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),
 	CR_MEMBER(updir),
+
 	CR_MEMBER(relMidPos),
 	CR_MEMBER(midPos),
-//	CR_MEMBER(drawPos),
-//	CR_MEMBER(drawMidPos),
-	CR_MEMBER(isMoving),
-	CR_MEMBER(residualImpulse),
-	CR_MEMBER(team),
-	CR_MEMBER(allyteam),
-	CR_MEMBER(mobility),
-	CR_MEMBER(collisionVolume),
 	// can not get creg work on templates
 	CR_MEMBER(mapPos.x),
 	CR_MEMBER(mapPos.y),
-	CR_MEMBER(buildFacing),
+
+//	CR_MEMBER(drawPos),
+//	CR_MEMBER(drawMidPos),
+
+	CR_MEMBER(isMoving),
+	CR_MEMBER(isUnderWater),
 	CR_MEMBER(isMarkedOnBlockingMap),
+
 	CR_MEMBER(speed),
+	CR_MEMBER(residualImpulse),
+
+	CR_MEMBER(team),
+	CR_MEMBER(allyteam),
+
+	CR_MEMBER(mobility),
+	CR_MEMBER(collisionVolume),
+
+	CR_MEMBER(buildFacing),
 	CR_RESERVED(16))
 );
 
@@ -54,6 +66,7 @@ CR_REG_METADATA(CSolidObject,
 CSolidObject::CSolidObject():
 	mass(DEFAULT_MASS),
 	blocking(false),
+	crushable(false),
 	immobile(false),
 	blockHeightChanges(false),
 	crushKilled(false),
