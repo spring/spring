@@ -72,7 +72,7 @@ do
 
 		# take write permissions on the bundled lib
 		chmod u+w ${dylib}
-		
+
 		# change the bundled lib's id to relative pathing mode (not necessary but cleaner)
 		install_name_tool -id @loader_path/../${dylib} ${dylib}
 
@@ -108,7 +108,7 @@ do
 
 				echo "---- installing ${requiredlib}"
 				cp ${MACPORTS_BASE}/${requiredlib} lib
-				
+
 				# take write permissions on the bundled lib
 				chmod u+w ${requiredlib}
 
