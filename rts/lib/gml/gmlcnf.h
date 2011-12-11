@@ -51,4 +51,12 @@
 #define GML_DEBUG_MUTEX 0 // debugs the mutex locking order
 //#define BOOST_AC_USE_PTHREADS
 
+namespace GML {
+#ifdef USE_GML
+	inline bool SimEnabled() { return GML_ENABLE_SIM ? true : false; }
+#else
+	inline bool SimEnabled() { return false; }
+#endif
+};
+
 #endif

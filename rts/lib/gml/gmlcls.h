@@ -950,6 +950,9 @@ public:
 	T &operator[](size_t i) {
 		return elements[(front + i) % (msize + 1)];
 	}
+	const T &operator[](size_t i) const {
+		return elements[(front + i) % (msize + 1)];
+	}
 	bool empty() {
 		return csize == 0;
 	}
@@ -964,27 +967,34 @@ public:
 		back = (front + i) % (msize + 1);
 	}
 
-template<class U>
+template<class U, class V, class W>
 	class CQIter {
 		size_t p;
-		gmlCircularQueue *q;
+		W *q;
 	public:
 		CQIter() {} 
-		CQIter(size_t d, gmlCircularQueue *r) {p=d; q=r;}
-		void operator=(const CQIter<U> &i) {p=i.p;}
-		CQIter<U> &operator++() {++p; return *this;} 
-		CQIter<U> operator++(int) {return CQIter<U>(p++);} 
-		int operator!=(const CQIter<U> &i) const {return p<i.p;}
-		U &operator*() {return (*q)[p];}
-		U *operator->() {return &(*q)[p];}
+		CQIter(size_t d, W *r) {p=d; q=r;}
+		void operator=(const CQIter<U,V,W> &i) {p=i.p;}
+		CQIter<U,V,W> &operator++() {++p; return *this;} 
+		CQIter<U,V,W> operator++(int) {return CQIter<U,V,W>(p++);} 
+		int operator!=(const CQIter<U,V,W> &i) const {return p<i.p;}
+		V &operator*() {return (*q)[p];}
+		V *operator->() {return &(*q)[p];}
 	};
-	typedef CQIter<T> iterator;
+	typedef CQIter<T, T, gmlCircularQueue> iterator;
+	typedef CQIter<T, const T, const gmlCircularQueue> const_iterator;
 
 	iterator begin() {
 		return iterator(front, this);
 	}
 	iterator end() {
 		return iterator(front + csize, this);
+	}
+	const_iterator begin() const {
+		return const_iterator(front, this);
+	}
+	const_iterator end() const {
+		return const_iterator(front + csize, this);
 	}
 };
 

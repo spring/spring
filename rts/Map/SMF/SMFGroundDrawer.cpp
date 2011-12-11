@@ -390,7 +390,6 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
-
 			if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
 				glEnable(GL_ALPHA_TEST);
 				glAlphaFunc(GL_GREATER, 0.9f);
@@ -429,10 +428,12 @@ void CSMFGroundDrawer::DrawShadowPass(void)
 	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
+
 	glPolygonOffset(-1.f, -1.f);
 		po->Enable();
 			meshDrawer->DrawMesh(DrawPass::Shadow);
 		po->Disable();
+
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 

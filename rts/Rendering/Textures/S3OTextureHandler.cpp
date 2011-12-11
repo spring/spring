@@ -154,11 +154,9 @@ void CS3OTextureHandler::SetS3oTexture(int num)
 }
 
 void CS3OTextureHandler::UpdateDraw() {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (gmlShareLists) {
+	if (GML::SimEnabled() && GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // UpdateDraw
 
 		DoUpdateDraw();
 	}
-#endif
 }

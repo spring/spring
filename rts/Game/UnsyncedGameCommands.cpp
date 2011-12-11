@@ -1530,11 +1530,11 @@ public:
 		const bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
 
 		// HACK GetInnerAction() should not be used here
-		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? mtEnabled : gmlMultiThreadSim;
+		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? mtEnabled : GML::MultiThreadSim();
 		SetBoolArg(mtSim, action.GetArgs());
-		gmlMultiThreadSim = mtSim;
+		GML::MultiThreadSim(mtSim);
 
-		LogSystemStatus("Simulation threading", gmlMultiThreadSim);
+		LogSystemStatus("Simulation threading", GML::MultiThreadSim());
 #	endif // GML_ENABLE_SIM
 	}
 };
