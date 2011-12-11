@@ -143,12 +143,12 @@ bool CMoveMath::IsBlockedStructureZmax(const MoveData& moveData, int xSquare, in
 /*
  * check if an object is blocking or not for a given MoveData (feature
  * objects block iif their mass exceeds the movedata's crush-strength).
- * NOTE: modify for selective blocking, unit crushing
+ * NOTE: modify for selective blocking
  */
 bool CMoveMath::CrushResistant(const MoveData& colliderMD, const CSolidObject* collidee)
 {
 	if (!collidee->blocking) { return false; }
-	if (dynamic_cast<const CFeature*>(collidee) == NULL) { return true; }
+	if (!collidee->crushable) { return true; }
 
 	return (collidee->mass > colliderMD.crushStrength);
 }

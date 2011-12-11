@@ -1361,6 +1361,9 @@ void CGroundMoveType::HandleUnitCollisions(
 	const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(colliderCurPos, searchRadius);
 	      std::vector<CUnit*>::const_iterator uit;
 
+	// NOTE: probably too large for most units (eg. causes tree falling animations to be skipped)
+	const float3 crushImpulse = collider->speed * ((reversing)? -collider->mass: collider->mass);
+
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 		CUnit* collidee = const_cast<CUnit*>(*uit);
 
@@ -1399,6 +1402,7 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		// don't push either party if the collidee does not block the collider
 		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
+		if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
 		if (!collideeMobile && (colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
 		eventHandler.UnitUnitCollision(collider, collidee);
@@ -1486,6 +1490,8 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(colliderCurPos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
 
+	const float3 crushImpulse = collider->speed * ((reversing)? -collider->mass: collider->mass);
+
 	for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
 		CFeature* collidee = const_cast<CFeature*>(*fit);
 
@@ -1500,9 +1506,6 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 		if ((separationVector.SqLength() - separationMinDist) > 0.01f   && false) { continue; }
 		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
-
-		// NOTE: probably too large for most units (causes animation to be skipped)
-		const float3 crushImpulse = collider->speed * ((reversing)? -collider->mass: collider->mass);
 
 		if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
 		if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
