@@ -471,19 +471,22 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 		const UnitDef* ud = owner->unitDef;
 		const float groundMod = ud->movedata->moveMath->GetPosSpeedMod(*ud->movedata, owner->pos, flatFrontDir);
 
-		wSpeed *= groundMod;
-
 		const float3 goalDifFwd = currWayPoint - owner->pos;
 		const float3 goalDifRev = -goalDifFwd;
-//		const float3 goalPosTmp = owner->pos + goalDifRev;
 
 		const float3 goalDif = reversing? goalDifRev: goalDifFwd;
 		const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
+		// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
+		const bool startBreaking =
+			(owner->commandAI->commandQue.size() <= 2) &&
+			((owner->pos - goalPos).SqLength() <= Square(BreakingDistance(currentSpeed)));
+
+		wSpeed *= groundMod;
+		wSpeed *= ((startBreaking)? 0.0f: 1.0f);
+
 		if (!fpsMode && turnDeltaHeading != 0) {
 			// only auto-adjust speed for turns when not in FPS mode
-			const bool startBreaking = (haveFinalWaypoint && !atGoal);
-
 			const float reqTurnAngle = math::fabs(180.0f * (owner->heading - wantedHeading) / SHORTINT_MAXVALUE);
 			const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
@@ -493,10 +496,10 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 				reducedSpeed *= (maxTurnAngle / reqTurnAngle);
 			}
 
-			if (startBreaking) {
+			if (haveFinalWaypoint && !atGoal) {
 				// at this point, Update() will no longer call GetNextWayPoint()
 				// and we must slow down to prevent entering an infinite circle
-				wSpeed = std::min(wSpeed, fastmath::apxsqrt(currWayPointDist * decRate));
+				// wSpeed = std::min(wSpeed, fastmath::apxsqrt(currWayPointDist * decRate));
 			}
 
 			if (!ud->turnInPlace) {
@@ -1206,7 +1209,9 @@ starting from given speed.
 */
 float CGroundMoveType::BreakingDistance(float speed) const
 {
-	return math::fabs(speed * speed / std::max(decRate, 0.01f));
+	const float time = speed / decRate;
+	const float dist = 0.5f * decRate * time * time;
+	return dist;
 }
 
 /*
@@ -1215,13 +1220,7 @@ from current velocity.
 */
 float3 CGroundMoveType::Here()
 {
-	float3 motionDir = owner->speed;
-	if (motionDir.SqLength2D() < float3::NORMALIZE_EPS) {
-		return owner->midPos;
-	} else {
-		motionDir.Normalize();
-		return owner->midPos + (motionDir * BreakingDistance(owner->speed.Length2D()));
-	}
+	return (owner->pos + (owner->frontdir * BreakingDistance(currentSpeed)));
 }
 
 
