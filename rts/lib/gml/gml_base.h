@@ -13,7 +13,11 @@ namespace GML {
 	bool SimThreadRunning();
 	inline bool IsSimThread() { return gmlThreadNumber == GML_SIM_THREAD_NUM; }
 	inline bool ShareLists() { return gmlShareLists; }
-	inline bool SimEnabled() {	return GML_ENABLE_SIM ? true : false; }
+	inline bool MultiThreadSim() { return gmlMultiThreadSim; }
+	inline void MultiThreadSim(bool mts) { gmlMultiThreadSim = mts; }
+	inline int ThreadNumber() { return gmlThreadNumber; }
+	inline void ThreadNumber(int num) { set_threadnum(num); }
+	inline int ThreadCount() { return gmlThreadCount; }
 };
 #else
 namespace GML {
@@ -23,7 +27,11 @@ namespace GML {
 	inline bool SimThreadRunning() { return false; }
 	inline bool IsSimThread() { return false; }
 	inline bool ShareLists() { return false; }
-	inline bool SimEnabled() {	return false; }
+	inline bool MultiThreadSim() { return false; }
+	inline void MultiThreadSim(bool mts) {}
+	inline int ThreadNumber() { return 0; }
+	inline void ThreadNumber(int num) { }
+	inline int ThreadCount() { return 1; }
 };
 #endif
 

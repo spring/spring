@@ -444,11 +444,9 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 {
 	const CUnit* owner = pro->owner();
 
-	#if defined(USE_GML) && GML_ENABLE_SIM
-		pro->drawPos = pro->pos + (pro->speed * ((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)pro->lastProjUpdate) * globalRendering->weightedSpeedFactor);
-	#else
-		pro->drawPos = pro->pos + (pro->speed * globalRendering->timeOffset);
-	#endif
+	const float time = !GML::SimEnabled() ? globalRendering->timeOffset :
+		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)pro->lastProjUpdate) * globalRendering->weightedSpeedFactor;
+		pro->drawPos = pro->pos + (pro->speed * time);
 
 	if (
 		(gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))

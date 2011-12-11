@@ -105,8 +105,7 @@ DefaultPathDrawer::DefaultPathDrawer() {
 
 void DefaultPathDrawer::DrawAll() const {
 	// CPathManager is not thread-safe
-	#if !defined(USE_GML) || !GML_ENABLE_SIM
-	if (globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
+	if (!GML::SimEnabled() && globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT);
 
 		Draw();
@@ -116,7 +115,6 @@ void DefaultPathDrawer::DrawAll() const {
 
 		glPopAttrib();
 	}
-	#endif
 }
 
 
