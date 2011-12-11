@@ -966,7 +966,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 	nextObstacleAvoidanceUpdate = gs->frameNum + 4;
 
 	// now we do the obstacle avoidance proper
-	const float avoidanceRadius = owner->radius * std::max(2.0f, currentSpeed);
+	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (owner->radius * 2.0f);
 	const float3 rightOfPath = desiredDir.cross(UpVector);
 
 	float avoidLeft = 0.0f;
@@ -1356,7 +1356,9 @@ void CGroundMoveType::HandleUnitCollisions(
 	const MoveData* colliderMD,
 	const CMoveMath* colliderMM
 ) {
-	const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(colliderCurPos, colliderRadius * 2.0f);
+	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 2.0f);
+
+	const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(colliderCurPos, searchRadius);
 	      std::vector<CUnit*>::const_iterator uit;
 
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
@@ -1479,7 +1481,9 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const MoveData* colliderMD,
 	const CMoveMath* colliderMM
 ) {
-	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(colliderCurPos, colliderRadius * 2.0f);
+	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 2.0f);
+
+	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(colliderCurPos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
 
 	for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
