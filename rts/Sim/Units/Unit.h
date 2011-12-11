@@ -376,12 +376,8 @@ public:
 	bool activated;
 
 	inline CTransportUnit* GetTransporter() const {
-#if defined(USE_GML) && GML_ENABLE_SIM
-		// transporter may suddenly be changed to NULL by sim
-		return *(CTransportUnit * volatile *)&transporter;
-#else
-		return transporter;
-#endif
+		// In MT transporter may suddenly be changed to NULL by sim
+		return GML::SimEnabled() ? *(CTransportUnit * volatile *)&transporter : transporter;
 	}
 
 	bool crashing;
@@ -481,10 +477,8 @@ public:
 	int lastDrawFrame;
 	boost::recursive_mutex lodmutex;
 #endif
-#if defined(USE_GML) && GML_ENABLE_SIM
-	unsigned lastUnitUpdate;
-#endif
 
+	unsigned lastUnitUpdate;
 
 protected:
 	void ChangeTeamReset();

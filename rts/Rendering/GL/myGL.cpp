@@ -37,7 +37,7 @@ static CVertexArray* currentVertexArray = NULL;
 CVertexArray* GetVertexArray()
 {
 #ifdef USE_GML // each thread gets its own array to avoid conflicts
-	int thread=gmlThreadNumber;
+	int thread = GML::ThreadNumber();
 	if (currentVertexArrays[thread] == &vertexArrays1[thread]) {
 		currentVertexArrays[thread] = &vertexArrays2[thread];
 	} else {

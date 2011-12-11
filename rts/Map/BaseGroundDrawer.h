@@ -14,6 +14,16 @@ class CHeightLinePalette;
 class CBaseGroundTextures;
 class CCamera;
 
+struct DrawPass {
+	enum e {
+		Normal,
+		Shadow,
+		WaterReflection,
+		WaterRefraction,
+		UnitReflection
+	};
+};
+
 class CBaseGroundDrawer
 {
 public:
@@ -34,21 +44,22 @@ public:
 		drawPathCost,
 	};
 
-	CBaseGroundDrawer(void);
-	virtual ~CBaseGroundDrawer(void);
+	CBaseGroundDrawer();
+	virtual ~CBaseGroundDrawer();
 
-	virtual void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false) = 0;
-	virtual void DrawShadowPass(void);
+	virtual void Draw(const DrawPass::e& drawPass) = 0;
+	virtual void DrawShadowPass();
 
-	virtual void SetupBaseDrawPass(void) {}
-	virtual void SetupReflDrawPass(void) {}
-	virtual void SetupRefrDrawPass(void) {}
+	virtual void SetupBaseDrawPass() {}
+	virtual void SetupReflDrawPass() {}
+	virtual void SetupRefrDrawPass() {}
 
 	virtual void Update() = 0;
 	virtual void UpdateSunDir() = 0;
 
 	virtual void IncreaseDetail() = 0;
 	virtual void DecreaseDetail() = 0;
+	virtual int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const = 0;
 
 	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
 	virtual GL::LightHandler* GetLightHandler() { return NULL; }

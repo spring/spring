@@ -86,6 +86,7 @@ UnitDef::UnitDef()
 , turnInPlace(false)
 , turnInPlaceSpeedLimit(0.0f)
 , upright(false)
+, blocking(true)
 , collide(false)
 , losHeight(0.0f)
 , radarHeight(0.0f)
@@ -355,14 +356,14 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	canSelfRepair = udTable.GetBool("canSelfRepair", false);
 
 	canFireControl = !udTable.GetBool("noAutoFire", false);
-	canManualFire = udTable.GetBool("canDGun", false);
+	canManualFire = udTable.GetBool("canManualFire", false);
 
 	fullHealthFactory = udTable.GetBool("fullHealthFactory", false);
 	factoryHeadingTakeoff = udTable.GetBool("factoryHeadingTakeoff", true);
 
 	upright = udTable.GetBool("upright", false);
+	blocking = udTable.GetBool("blocking", true);
 	collide = udTable.GetBool("collide", true);
-	onoffable = udTable.GetBool("onoffable", false);
 
 	const float maxSlopeDeg = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);
 	const float maxSlopeRad = maxSlopeDeg * (PI / 180.0f);
@@ -632,6 +633,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	}
 
 	activateWhenBuilt = udTable.GetBool("activateWhenBuilt", false);
+	onoffable = udTable.GetBool("onoffable", false);
 
 	// footprint sizes are assumed to be expressed in TA-engine units;
 	// Spring's heightmap resolution is double the footprint (yardmap)

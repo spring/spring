@@ -89,9 +89,9 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	assert(owner->unitDef != NULL);
 
 	turnRate = owner->unitDef->turnRate;
-	maxSpeed = owner->unitDef->speed / GAME_SPEED;
 	accRate = std::max(0.01f, owner->unitDef->maxAcc);
 	decRate = std::max(0.01f, owner->unitDef->maxDec);
+
 	wantedHeight = owner->unitDef->wantedHeight + gs->randFloat() * 5.0f;
 	orgWantedHeight = wantedHeight;
 	dontLand = owner->unitDef->DontLand();
@@ -630,6 +630,7 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 	// pitching does not affect rightdir, but...
 	frontDir.y = currentPitch;
 	frontDir.Normalize();
+
 	// we want a flat right-vector to calculate wantedBank
 	rightDir2D = frontDir.cross(UpVector);
 
@@ -654,7 +655,19 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 	upDir = upDir * math::cos(currentBank) + rightDir2D * math::sin(currentBank);
 	rightDir3D = frontDir.cross(upDir);
 
-	owner->SetHeadingFromDirection();
+	// NOTE:
+	//     heading might not be fully in sync with frontDir due to the
+	//     vector<-->heading mapping not being 1:1 (such that heading
+	//     != GetHeadingFromVector(frontDir)), therefore this call can
+	//     cause owner->heading to change --> unwanted if forceHeading
+	//
+	//     it is "safe" to skip because only frontDir.y is manipulated
+	//     above so its xz-direction does not change, but the problem
+	//     should really be fixed elsewhere
+	if (!forceHeading) {
+		owner->SetHeadingFromDirection();
+	}
+
 	owner->UpdateMidPos();
 }
 
@@ -708,7 +721,8 @@ void CHoverAirMoveType::UpdateAirPhysics()
 			ground->GetHeightAboveWater(pos.x, pos.z);
 	}
 
-	owner->Move1D(std::max(pos.y, minH), 1, false);
+	if (pos.y < minH)
+		owner->Move1D(std::min(minH - pos.y, altitudeRate), 1, true);
 
 	speed.y = yspeed;
 	curH = pos.y - minH;

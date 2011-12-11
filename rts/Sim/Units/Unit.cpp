@@ -470,13 +470,14 @@ void CUnit::PostInit(const CUnit* builder)
 			CSolidObject::OnGround;
 	}
 
-	// all units are blocking (ie. register on the blk-map
-	// when not flying) except mines, since their position
-	// would be given away otherwise by the PF, etc.
-	// NOTE: this does mean that mines can be stacked (an
-	// extra yardmap character is needed to prevent this)
+	// all units are blocking (ie. register on the blocking-map
+	// when not flying) except mines, since their position would
+	// be given away otherwise by the PF, etc.
+	// NOTE: this does mean that mines can be stacked indefinitely
+	// (an extra yardmap character would be needed to prevent this)
 	immobile = unitDef->IsImmobileUnit();
-	blocking = !(immobile && unitDef->canKamikaze);
+	blocking = unitDef->blocking;
+	blocking &= !(immobile && unitDef->canKamikaze);
 
 	if (blocking) {
 		Block();

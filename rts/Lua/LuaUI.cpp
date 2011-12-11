@@ -66,6 +66,20 @@ CLuaUI* luaUI = NULL;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
+static const char* GetVFSMode()
+{
+	const char* accessMode = SPRING_VFS_RAW;
+	if (CFileHandler::FileExists("gamedata/LockLuaUI.txt", SPRING_VFS_MOD)) {
+		if (!CLuaHandle::GetDevMode()) {
+			LOG("This game has locked LuaUI access");
+			accessMode = SPRING_VFS_MOD;
+		} else {
+			LOG("Bypassing this game's LuaUI access lock");
+			accessMode = SPRING_VFS_RAW SPRING_VFS_MOD;
+		}
+	}
+	return accessMode;
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -121,7 +135,8 @@ CLuaUI::CLuaUI()
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
 
-	const std::string file = (CFileHandler::FileExists("luaui.lua", SPRING_VFS_ALL) ? "luaui.lua" : "LuaUI/main.lua");
+	const char* vfsMode = GetVFSMode();
+	const std::string file = (CFileHandler::FileExists("luaui.lua", vfsMode) ? "luaui.lua" : "LuaUI/main.lua");
 
 	const string code = LoadFile(file);
 	if (code.empty()) {
@@ -226,19 +241,8 @@ CLuaUI::~CLuaUI()
 
 string CLuaUI::LoadFile(const string& filename) const
 {
-	const char* accessMode = SPRING_VFS_RAW;
-	CFileHandler lockFile("gamedata/LockLuaUI.txt", SPRING_VFS_MOD);
-	if (lockFile.FileExists()) {
-		if (!CLuaHandle::GetDevMode()) {
-			LOG("This game has locked LuaUI access");
-			accessMode = SPRING_VFS_MOD;
-		} else {
-			LOG("Bypassing this game's LuaUI access lock");
-			accessMode = SPRING_VFS_RAW SPRING_VFS_MOD;
-		}
-	}
-
-	CFileHandler f(filename, accessMode);
+	const char* vfsMode = GetVFSMode();
+	CFileHandler f(filename, vfsMode);
 
 	string code;
 	if (!f.LoadStringData(code)) {

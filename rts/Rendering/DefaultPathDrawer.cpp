@@ -93,8 +93,9 @@ static unsigned int GetSpeedModColor(const float m) {
 		(m >= 1.0f)? 255:
 		(m <= 0.0f)?   0:
 		255 - R;
-	const unsigned char B = 0;
-	const unsigned char A = 0;
+
+	const unsigned char B =   0;
+	const unsigned char A = 255;
 
 	return ((R << 24) | (G << 16) | (B << 8) | (A << 0));
 }
@@ -107,8 +108,7 @@ DefaultPathDrawer::DefaultPathDrawer() {
 
 void DefaultPathDrawer::DrawAll() const {
 	// CPathManager is not thread-safe
-	#if !defined(USE_GML) || !GML_ENABLE_SIM
-	if (globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
+	if (!GML::SimEnabled() && globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT);
 
 		Draw();
@@ -118,7 +118,6 @@ void DefaultPathDrawer::DrawAll() const {
 
 		glPopAttrib();
 	}
-	#endif
 }
 
 

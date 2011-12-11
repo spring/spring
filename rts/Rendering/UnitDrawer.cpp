@@ -55,6 +55,7 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
+#include "System/Platform/Watchdog.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 
@@ -540,9 +541,9 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 		const UnitSet& unitSet = unitBinIt->second;
 #ifdef USE_GML
 		bool mt = GML_PROFILER(multiThreadDrawUnit)
-		if (mt && unitSet.size() >= gmlThreadCount * 4) { // small unitSets will add a significant overhead
+		if (mt && unitSet.size() >= GML::ThreadCount() * 4) { // small unitSets will add a significant overhead
 			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnit
-				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitMT, this, gmlThreadCount,
+				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitMT, this, GML::ThreadCount(),
 				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
 			);
 		}
@@ -868,9 +869,9 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 
 #ifdef USE_GML
 		bool mt = GML_PROFILER(multiThreadDrawUnitShadow)
-		if (mt && unitSet.size() >= gmlThreadCount * 4) { // small unitSets will add a significant overhead
+		if (mt && unitSet.size() >= GML::ThreadCount() * 4) { // small unitSets will add a significant overhead
 			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnitShadow
-				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitShadowMT, this, gmlThreadCount,
+				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitShadowMT, this, GML::ThreadCount(),
 				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
 			);
 		}
@@ -2073,20 +2074,13 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 	const CTransportUnit* trans = u->GetTransporter();
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	const float time = spring_tomsecs(globalRendering->lastFrameStart - u->lastUnitUpdate) * globalRendering->weightedSpeedFactor;
+	const float time = !GML::SimEnabled() ? globalRendering->timeOffset :
+		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)u->lastUnitUpdate) * globalRendering->weightedSpeedFactor;
 	if (trans) {
 		u->drawPos = u->pos + (trans->speed * time);
 	} else {
 		u->drawPos = u->pos + (u->speed * time);
 	}
-#else
-	if (trans) {
-		u->drawPos = u->pos + (trans->speed * globalRendering->timeOffset);
-	} else {
-		u->drawPos = u->pos + (u->speed * globalRendering->timeOffset);
-	}
-#endif
 	u->drawMidPos = u->drawPos + u->relMidPos;
 }
 
@@ -2230,14 +2224,12 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 	texturehandlerS3O->UpdateDraw();
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (!gmlShareLists) {
+	if (GML::SimEnabled() && !GML::ShareLists()) {
 		if (u->model && TEX_TYPE(u) < 0)
 			TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model);
 		if((unsortedUnits.size() % 10) == 0)
 			Watchdog::ClearPrimaryTimers(); // batching can create an avalance of events during /give xxx, triggering hang detection
 	}
-#endif
 
 	if (building)
 		groundDecals->AddBuilding(building);

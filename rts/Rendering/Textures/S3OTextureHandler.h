@@ -8,6 +8,7 @@
 #include <vector>
 #include "Rendering/GL/myGL.h"
 #include "System/Platform/Threading.h"
+#include "lib/gml/gml_base.h"
 
 struct TexFile;
 struct S3DModel;
@@ -36,12 +37,10 @@ public:
 
 private:
 	inline void DoUpdateDraw() {
-#if defined(USE_GML) && GML_ENABLE_SIM
-		if (gmlShareLists) {
+		if (GML::SimEnabled() && GML::ShareLists()) {
 			while (s3oTexturesDraw.size() < s3oTextures.size())
 				s3oTexturesDraw.push_back(s3oTextures[s3oTexturesDraw.size()]);
 		}
-#endif
 	}
 	const S3oTex* DoGetS3oTex(int num, std::vector<S3oTex *>& s3oTex) {
 		if ((num < 0) || (num >= (int)s3oTex.size())) {
@@ -52,17 +51,14 @@ private:
 
 public:
 	const S3oTex* GetS3oTex(int num) {
-#if defined(USE_GML) && GML_ENABLE_SIM
-		if (gmlShareLists) {
-			if (!Threading::IsSimThread())
+		if (GML::SimEnabled() && GML::ShareLists()) {
+			if (!GML::IsSimThread())
 				return DoGetS3oTex(num, s3oTexturesDraw);
 
 			GML_RECMUTEX_LOCK(model); // GetS3oTex
 			return DoGetS3oTex(num, s3oTextures);
 		}
-		else
-#endif
-		{
+		else {
 			return DoGetS3oTex(num, s3oTextures);
 		}
 	}
@@ -72,9 +68,7 @@ public:
 private:
 	std::map<std::string, int> s3oTextureNames;
 	std::vector<S3oTex *> s3oTextures;
-#if defined(USE_GML) && GML_ENABLE_SIM
 	std::vector<S3oTex *> s3oTexturesDraw;
-#endif
 };
 
 extern CS3OTextureHandler* texturehandlerS3O;
