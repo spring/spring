@@ -466,6 +466,7 @@ bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
 	}
 
 	LUA_CALL_IN_CHECK(L);
+	int top = lua_gettop(L);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowFeatureBuildStep");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -484,11 +485,8 @@ bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
 	}
 
 	// get the results
-	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
-		lua_pop(L, 1);
+	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
 		return true;
-	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
