@@ -773,7 +773,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 		speed.y = speed.y * 0.95;
 	}
 
-	if (modInfo.allowAirPlanesToLeaveMap || (pos + speed).CheckInBounds()) {
+	if (modInfo.allowAircraftToLeaveMap || (pos + speed).CheckInBounds()) {
 		owner->Move3D(speed, true);
 	}
 }
