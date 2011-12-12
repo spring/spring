@@ -1133,7 +1133,7 @@ void gmlQueue::ExecuteSynced(void (gmlQueue::*execfun)() ) {
 		while((s=(BYTE *)Sync)==EXEC_RUN) {
 			if(Reloc)
 				Realloc();
-			if((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL)
+			if(!gmlShareLists && ((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL))
 				gmlUpdateServers();
 			if(GetRead()) {
 				(this->*execfun)();
@@ -1175,7 +1175,7 @@ void gmlQueue::ExecuteSynced(void (gmlQueue::*execfun)() ) {
 			while(TRUE) {
 				if(Reloc)
 					e=Realloc(&p);
-				if((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL)
+				if(!gmlShareLists && ((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL))
 					gmlUpdateServers();
 				BYTE *s=(BYTE *)Sync;
 				if(s!=EXEC_RUN) {
