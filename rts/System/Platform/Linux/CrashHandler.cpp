@@ -41,6 +41,9 @@ static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
  */
 static std::string CreateAbsolutePath(const std::string& relativePath)
 {
+	if (relativePath.empty())
+		return relativePath;
+
 	std::string absolutePath;
 
 	if (relativePath.length() > 0 && (relativePath[0] == '/')) {
