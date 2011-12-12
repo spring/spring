@@ -305,7 +305,7 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 }
 
 
-void ForcedExitAfterFiveSecs() {
+static void ForcedExitAfterFiveSecs() {
 	boost::this_thread::sleep(boost::posix_time::seconds(5));
 	exit(-1);
 }
@@ -456,22 +456,20 @@ namespace CrashHandler
 
 		logSinkHandler.SetSinking(false);
 
-		std::string error;
+		std::string error = strsignal(signal);
+		// append the signal name (it seems there is no OS function to map signum to signame :<)
 		if (signal == SIGSEGV) {
-			error = "Segmentation fault (SIGSEGV)";
+			error += " (SIGSEGV)";
 		} else if (signal == SIGILL) {
-			error = "Illegal instruction (SIGILL)";
+			error += " (SIGILL)";
 		} else if (signal == SIGPIPE) {
-			error = "Broken pipe (SIGPIPE)";
+			error += " (SIGPIPE)";
 		} else if (signal == SIGIO) {
-			error = "IO-Error (SIGIO)";
+			error += " (SIGIO)";
 		} else if (signal == SIGABRT) {
-			error = "Aborted (SIGABRT)";
+			error += " (SIGABRT)";
 		} else if (signal == SIGFPE) {
-			error = "FloatingPointException (SIGFPE)";
-		} else {
-			//! we should never get here
-			error = "Unknown signal";
+			error += " (SIGFPE)";
 		}
 		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), SpringVersion::GetFull().c_str());
 
