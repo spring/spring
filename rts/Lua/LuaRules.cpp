@@ -748,7 +748,7 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 11);
+	lua_checkstack(L, 9 + 4);
 
 	const int errfunc = SetupTraceback(L);
 	static const LuaHashString cmdStr("UnitPreDamaged");
@@ -777,7 +777,11 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	}
 
 	// call the routine
-	RunCallInTraceback(cmdStr, argCount, 2, errfunc);
+	const bool success = RunCallInTraceback(cmdStr, argCount, 2, errfunc);
+
+	if (!success) {
+		return false;
+	}
 
 	if (newDamage && lua_isnumber(L, -2)) {
 		*newDamage = lua_tonumber(L, -2);
@@ -812,18 +816,16 @@ bool CLuaRules::ShieldPreDamaged(
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5 + 1);
+	lua_checkstack(L, 5 + 3);
 
 	const int errfunc(SetupTraceback(L));
 	static const LuaHashString cmdStr("ShieldPreDamaged");
-
-	bool ret = false;
 
 	if (!cmdStr.GetGlobalFunc(L)) {
 		if (errfunc) { lua_pop(L, 1); }
 
 		// undefined call-in
-		return ret;
+		return false;
 	}
 
 	// push the call-in arguments
@@ -834,10 +836,14 @@ bool CLuaRules::ShieldPreDamaged(
 	lua_pushboolean(L, bounceProjectile);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 5, 1, errfunc);
+	const bool success = RunCallInTraceback(cmdStr, 5, 1, errfunc);
+
+	if (!success) {
+		return false;
+	}
 
 	// pop the return-value; must be true or false
-	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
+	const bool ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
 	lua_pop(L, -1);
 
 	return ret;
@@ -870,7 +876,11 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 	lua_pushnumber(L, attackerWeaponNum);
 	lua_pushnumber(L, attackerWeaponDefID);
 
-	RunCallInTraceback(cmdStr, 3, 1, errfunc);
+	const bool success = RunCallInTraceback(cmdStr, 3, 1, errfunc);
+
+	if (!success) {
+		return ret;
+	}
 
 	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1))? 1: 0;
 	lua_pop(L, -1);
@@ -907,7 +917,11 @@ int CLuaRules::AllowWeaponTarget(
 	lua_pushnumber(L, attackerWeaponNum);
 	lua_pushnumber(L, attackerWeaponDefID);
 
-	RunCallInTraceback(cmdStr, 4, 2, errfunc);
+	const bool success = RunCallInTraceback(cmdStr, 4, 2, errfunc);
+
+	if (!success) {
+		return ret;
+	}
 
 	ret = (lua_isboolean(L, -2) && lua_toboolean(L, -2))? 1: 0;
 
