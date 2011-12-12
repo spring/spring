@@ -5,7 +5,6 @@
 #include <boost/cstdint.hpp>
 
 #include "System/EventClient.h"
-#include "System/Log/ILog.h"
 //FIXME#include "LuaArrays.h"
 #include "LuaCallInCheck.h"
 #include "LuaShaders.h"
