@@ -336,6 +336,8 @@ class CLuaHandle : public CEventClient
 
 		inline bool IsValid() const { return (L_Sim != NULL) && (L_Draw != NULL); }
 
+		inline bool CheckReturnBool(lua_State *L, int top, const char *func);
+
 	protected:
 
 		lua_State* L_Sim;
@@ -482,6 +484,18 @@ inline bool CLuaHandle::RunCallInUnsynced(const LuaHashString& hs, int inArgs, i
 }
 
 
+inline bool CLuaHandle::CheckReturnBool(lua_State *L, int top, const char *func) {
+	if (lua_gettop(L) <= top) {
+		LOG_L(L_WARNING, "%s() no return value", func);
+		return false;
+	}
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", func);
+		lua_pop(L, 1);
+		return false;
+	}
+	return true;
+}
 
 /******************************************************************************/
 /******************************************************************************/
