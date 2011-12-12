@@ -1381,15 +1381,17 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3& collideeCurPos = collidee->pos;
 		const float3& collideeOldPos = collidee->moveType->oldPos;
 
+		const bool colliderMobile = (collider->mobility != NULL);
 		const bool collideeMobile = (collideeMD != NULL);
+
 		const float collideeSpeed = collidee->speed.Length();
 		const float collideeRadius = collideeMobile?
 			FOOTPRINT_RADIUS(collideeMD->xsize, collideeMD->zsize):
 			FOOTPRINT_RADIUS(collidee  ->xsize, collidee  ->zsize);
 
-		bool colliderMobile = (collider->mobility != NULL);
 		bool pushCollider = colliderMobile;
 		bool pushCollidee = (collideeMobile || collideeUD->canfly);
+		bool crushCollidee = false;
 
 		const float3 separationVector = colliderCurPos - collideeCurPos;
 		const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
@@ -1398,14 +1400,19 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (collidee->usingScriptMoveType) { pushCollidee = false; }
 		if (collideeUD->pushResistant) { pushCollidee = false; }
 
-		if (!modInfo.allowPushingEnemyUnits) {
-			if (!teamHandler->Ally(collider->allyteam, collidee->allyteam)) { pushCollider = false; pushCollidee = false; }
-			if (!teamHandler->Ally(collidee->allyteam, collider->allyteam)) { pushCollider = false; pushCollidee = false; }
-		}
+		// if not an allied collision, neither party is allowed to be pushed (bi-directional)
+		// if an allied collision, only the collidee is allowed to be crushed (uni-directional)
+		const bool alliedCollision =
+			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
+			teamHandler->Ally(collidee->allyteam, collider->allyteam);
 
-		// don't push either party if the collidee does not block the collider
+		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits);
+		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits);
+		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
+
+		// don't push/crush either party if the collidee does not block the collider
 		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
-		if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
+		if (crushCollidee && !colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
 		if (!collideeMobile && (colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
 		eventHandler.UnitUnitCollision(collider, collidee);

@@ -11,8 +11,9 @@ class CModInfo
 public:
 	CModInfo()
 		: allowTeamColors(true)
-		, allowAirPlanesToLeaveMap(true)
+		, allowAircraftToLeaveMap(true)
 		, allowPushingEnemyUnits(false)
+		, allowCrushingAlliedUnits(false)
 		, constructionDecay(true)
 		, constructionDecayTime(1000)
 		, constructionDecaySpeed(1.0f)
@@ -76,8 +77,9 @@ public:
 	bool allowTeamColors;
 
 	// Movement behaviour
-	bool allowAirPlanesToLeaveMap;
-	bool allowPushingEnemyUnits;
+	bool allowAircraftToLeaveMap;    // determines if gunships are allowed to leave map boundaries
+	bool allowPushingEnemyUnits;     // determines if enemy (ground-)units can be pushed during collisions
+	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
 
 	// Build behaviour
 	/// Should constructions without builders decay?
