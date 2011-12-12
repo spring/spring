@@ -727,6 +727,7 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	}
 
 	LUA_CALL_IN_CHECK(L);
+	int top = lua_gettop(L);
 	lua_checkstack(L, 11);
 
 	const int errfunc = SetupTraceback(L);
@@ -758,6 +759,10 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	// call the routine
 	RunCallInTraceback(cmdStr, argCount, 2, errfunc);
 
+	if (lua_gettop(L) - top < 2) {
+		LOG_L(L_WARNING, "%s(): too few return values",	cmdStr.GetString().c_str());
+		return true;
+	}
 	if (newDamage && lua_isnumber(L, -2)) {
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
