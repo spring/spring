@@ -953,8 +953,8 @@ GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF *F) {\
 	GML_UPD_POS()\
 }
 
-#define GML_MEMCOPY()\
-	for(int i=0; i<C; ++i) {\
+#define GML_MEMCOPY(count)\
+	for(int i=0; i<count; ++i) {\
 		BYTE *v2=v;\
 		for(int j=0; j<itemsize; ++j) {\
 			*e=*v2;\
@@ -964,8 +964,8 @@ GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF *F) {\
 		v+=itemstride;\
 	}
 
-#define GML_IDXLOOP(ltype)\
-	for(int i=0; i<B; ++i) {\
+#define GML_IDXLOOP(count,ltype)\
+	for(int i=0; i<count; ++i) {\
 		BYTE *v2=v+(*(ltype *)dt)*itemstride;\
 		dt+=sizeof(ltype);\
 		for(int j=0; j<itemsize; ++j) {\
@@ -975,17 +975,17 @@ GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF *F) {\
 		}\
 	}
 
-#define GML_IDXCOPY()\
-	BYTE *dt=(BYTE *)D;\
-	switch(C) {\
+#define GML_IDXCOPY(count,type,data)\
+	BYTE *dt=(BYTE *)data;\
+	switch(type) {\
 		case GL_UNSIGNED_INT:\
-			GML_IDXLOOP(GLuint)\
+			GML_IDXLOOP(count,GLuint)\
 			break;\
 		case GL_UNSIGNED_SHORT:\
-			GML_IDXLOOP(GLushort)\
+			GML_IDXLOOP(count,GLushort)\
 			break;\
 		case GL_UNSIGNED_BYTE:\
-			GML_IDXLOOP(GLubyte)\
+			GML_IDXLOOP(count,GLubyte)\
 			break;\
 	}
 
@@ -1077,13 +1077,13 @@ GML_FUN(void, name, tA A, tB B, tC C) {\
 	GLenum clientstate=qd->ClientState & ~(qd->ClientState>>16);\
 	p->ClientState=qd->ClientState;\
 	BYTE *e=(BYTE *)(p+1);\
-	GML_MAKESUBFUNDA(name,GL_VERTEX_ARRAY,VP,qd->VPsize*gmlSizeOf(qd->VPtype),p->VPsize=qd->VPsize,p->VPtype=qd->VPtype,B,C,GML_MEMCOPY())\
-	GML_MAKESUBFUNDA(name,GL_COLOR_ARRAY,CP,qd->CPsize*gmlSizeOf(qd->CPtype),p->CPsize=qd->CPsize,p->CPtype=qd->CPtype,B,C,GML_MEMCOPY())\
-	GML_MAKESUBFUNDA(name,GL_TEXTURE_COORD_ARRAY,TCP,qd->TCPsize*gmlSizeOf(qd->TCPtype),p->TCPsize=qd->TCPsize,p->TCPtype=qd->TCPtype,B,C,GML_MEMCOPY())\
-	GML_MAKESUBFUNDA(name,GL_INDEX_ARRAY,IP,gmlSizeOf(qd->IPtype),,p->IPtype=qd->IPtype,B,C,GML_MEMCOPY())\
-	GML_MAKESUBFUNDA(name,GL_NORMAL_ARRAY,NP,3*gmlSizeOf(qd->NPtype),,p->NPtype=qd->NPtype,B,C,GML_MEMCOPY())\
-	GML_MAKESUBFUNDA(name,GL_EDGE_FLAG_ARRAY,EFP,sizeof(GLboolean),,,B,C,GML_MEMCOPY())\
-	GML_MAKESUBFUNVA(name,B,C,GML_MEMCOPY())\
+	GML_MAKESUBFUNDA(name,GL_VERTEX_ARRAY,VP,qd->VPsize*gmlSizeOf(qd->VPtype),p->VPsize=qd->VPsize,p->VPtype=qd->VPtype,B,C,GML_MEMCOPY(C))\
+	GML_MAKESUBFUNDA(name,GL_COLOR_ARRAY,CP,qd->CPsize*gmlSizeOf(qd->CPtype),p->CPsize=qd->CPsize,p->CPtype=qd->CPtype,B,C,GML_MEMCOPY(C))\
+	GML_MAKESUBFUNDA(name,GL_TEXTURE_COORD_ARRAY,TCP,qd->TCPsize*gmlSizeOf(qd->TCPtype),p->TCPsize=qd->TCPsize,p->TCPtype=qd->TCPtype,B,C,GML_MEMCOPY(C))\
+	GML_MAKESUBFUNDA(name,GL_INDEX_ARRAY,IP,gmlSizeOf(qd->IPtype),,p->IPtype=qd->IPtype,B,C,GML_MEMCOPY(C))\
+	GML_MAKESUBFUNDA(name,GL_NORMAL_ARRAY,NP,3*gmlSizeOf(qd->NPtype),,p->NPtype=qd->NPtype,B,C,GML_MEMCOPY(C))\
+	GML_MAKESUBFUNDA(name,GL_EDGE_FLAG_ARRAY,EFP,sizeof(GLboolean),,,B,C,GML_MEMCOPY(C))\
+	GML_MAKESUBFUNVA(name,B,C,GML_MEMCOPY(C))\
 	GML_UPD_SIZE()\
 	GML_UPD_POS()\
 }
@@ -1102,17 +1102,41 @@ GML_FUN(void, name, tA A, tB B, tC C, tD *D) {\
 	p->ClientState=qd->ClientState;\
 	if(qd->ElementArrayBuffer)\
 		p->ClientState |= GML_ELEMENT_ARRAY_BUFFER;\
-	GML_MAKESUBFUNDA(name,GL_VERTEX_ARRAY,VP,qd->VPsize*gmlSizeOf(qd->VPtype),p->VPsize=qd->VPsize,p->VPtype=qd->VPtype,0,B,GML_IDXCOPY())\
-	GML_MAKESUBFUNDA(name,GL_COLOR_ARRAY,CP,qd->CPsize*gmlSizeOf(qd->CPtype),p->CPsize=qd->CPsize,p->CPtype=qd->CPtype,0,B,GML_IDXCOPY())\
-	GML_MAKESUBFUNDA(name,GL_TEXTURE_COORD_ARRAY,TCP,qd->TCPsize*gmlSizeOf(qd->TCPtype),p->TCPsize=qd->TCPsize,p->TCPtype=qd->TCPtype,0,B,GML_IDXCOPY())\
-	GML_MAKESUBFUNDA(name,GL_INDEX_ARRAY,IP,gmlSizeOf(qd->IPtype),,p->IPtype=qd->IPtype,0,B,GML_IDXCOPY())\
-	GML_MAKESUBFUNDA(name,GL_NORMAL_ARRAY,NP,3*gmlSizeOf(qd->NPtype),,p->NPtype=qd->NPtype,0,B,GML_IDXCOPY())\
-	GML_MAKESUBFUNDA(name,GL_EDGE_FLAG_ARRAY,EFP,sizeof(GLboolean),,,0,B,GML_IDXCOPY())\
-	GML_MAKESUBFUNVA(name,0,B,GML_IDXCOPY())\
+	GML_MAKESUBFUNDA(name,GL_VERTEX_ARRAY,VP,qd->VPsize*gmlSizeOf(qd->VPtype),p->VPsize=qd->VPsize,p->VPtype=qd->VPtype,0,B,GML_IDXCOPY(B,C,D))\
+	GML_MAKESUBFUNDA(name,GL_COLOR_ARRAY,CP,qd->CPsize*gmlSizeOf(qd->CPtype),p->CPsize=qd->CPsize,p->CPtype=qd->CPtype,0,B,GML_IDXCOPY(B,C,D))\
+	GML_MAKESUBFUNDA(name,GL_TEXTURE_COORD_ARRAY,TCP,qd->TCPsize*gmlSizeOf(qd->TCPtype),p->TCPsize=qd->TCPsize,p->TCPtype=qd->TCPtype,0,B,GML_IDXCOPY(B,C,D))\
+	GML_MAKESUBFUNDA(name,GL_INDEX_ARRAY,IP,gmlSizeOf(qd->IPtype),,p->IPtype=qd->IPtype,0,B,GML_IDXCOPY(B,C,D))\
+	GML_MAKESUBFUNDA(name,GL_NORMAL_ARRAY,NP,3*gmlSizeOf(qd->NPtype),,p->NPtype=qd->NPtype,0,B,GML_IDXCOPY(B,C,D))\
+	GML_MAKESUBFUNDA(name,GL_EDGE_FLAG_ARRAY,EFP,sizeof(GLboolean),,,0,B,GML_IDXCOPY(B,C,D))\
+	GML_MAKESUBFUNVA(name,0,B,GML_IDXCOPY(B,C,D))\
 	GML_UPD_SIZE()\
 	GML_UPD_POS()\
 }
 
+
+#define GML_MAKEFUN4VDRE(name,tA,tB,tC,tD,tE,tF)\
+	GML_MAKEDATA_F(name,tA,tB,tC,tD,tE,tF *)\
+	GML_MAKEPOINTERDATA()\
+	GML_MAKEVAR_SIZE()\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF *F) {\
+	GML_COND(name,A,B,C,D,E,F)\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_F()\
+	BYTE *e=(BYTE *)(p+1);\
+	GLenum clientstate=qd->ClientState & ~(qd->ClientState>>16);\
+	p->ClientState=qd->ClientState;\
+	if(qd->ElementArrayBuffer)\
+		p->ClientState |= GML_ELEMENT_ARRAY_BUFFER;\
+	GML_MAKESUBFUNDA(name,GL_VERTEX_ARRAY,VP,qd->VPsize*gmlSizeOf(qd->VPtype),p->VPsize=qd->VPsize,p->VPtype=qd->VPtype,0,D,GML_IDXCOPY(D,E,F))\
+	GML_MAKESUBFUNDA(name,GL_COLOR_ARRAY,CP,qd->CPsize*gmlSizeOf(qd->CPtype),p->CPsize=qd->CPsize,p->CPtype=qd->CPtype,0,D,GML_IDXCOPY(D,E,F))\
+	GML_MAKESUBFUNDA(name,GL_TEXTURE_COORD_ARRAY,TCP,qd->TCPsize*gmlSizeOf(qd->TCPtype),p->TCPsize=qd->TCPsize,p->TCPtype=qd->TCPtype,0,D,GML_IDXCOPY(D,E,F))\
+	GML_MAKESUBFUNDA(name,GL_INDEX_ARRAY,IP,gmlSizeOf(qd->IPtype),,p->IPtype=qd->IPtype,0,D,GML_IDXCOPY(D,E,F))\
+	GML_MAKESUBFUNDA(name,GL_NORMAL_ARRAY,NP,3*gmlSizeOf(qd->NPtype),,p->NPtype=qd->NPtype,0,D,GML_IDXCOPY(D,E,F))\
+	GML_MAKESUBFUNDA(name,GL_EDGE_FLAG_ARRAY,EFP,sizeof(GLboolean),,,0,D,GML_IDXCOPY(D,E,F))\
+	GML_MAKESUBFUNVA(name,0,D,GML_IDXCOPY(D,E,F))\
+	GML_UPD_SIZE()\
+	GML_UPD_POS()\
+}
 
 
 const int __FIRSTLINE__=__LINE__;
@@ -1391,5 +1415,6 @@ GML_MAKEFUN3V(Uniform3fv,GLint,GLsizei,const GLfloat,GLfloat,3*B)
 GML_MAKEFUN3V(Uniform4fv,GLint,GLsizei,const GLfloat,GLfloat,4*B)
 GML_MAKEFUN4R(MapBufferRange,GLenum,GLintptr,GLsizeiptr,GLbitfield,GLvoid *)
 GML_MAKEFUN1(PrimitiveRestartIndexNV,GLuint)
+GML_MAKEFUN4VDRE(DrawRangeElements,GLenum,GLuint,GLuint,GLsizei,GLenum,const GLvoid)
 
 #endif // _GML_FUN_H
