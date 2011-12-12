@@ -262,23 +262,32 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 
 	//! Finally translate it
 	for (std::map<std::string,uintptr_t>::const_iterator it = binPath_baseMemAddr.begin(); it != binPath_baseMemAddr.end(); ++it) {
-		const std::string symbolFile = LocateSymbolFile(it->first);
+		const std::string& libName = it->first;
+		const uintptr_t&   libAddr = it->second;
+		const std::string symbolFile = LocateSymbolFile(libName);
+
 		std::ostringstream buf;
 		buf << "addr2line " << "--exe=\"" << symbolFile << "\"";
-		const uintptr_t& baseLibAddr = it->second;
 
-		//! insert requested addresses that should be translated by addr2line
+		// insert requested addresses that should be translated by addr2line
 		std::queue<size_t> indices;
 		for (size_t i = 0; i < paths.size(); ++i) {
 			const std::pair<std::string,uintptr_t>& pt = paths[i];
-			if (pt.first == it->first) {
-				buf << " " << std::hex << (pt.second - baseLibAddr);
+			if (pt.first == libName) {
+				// Put it twice in the queue.
+				// Depending on sys, compilation & lobby settings the libaddr doesn't need to be cut!
+				// The detection of these situations is more complexe than just dropping the line that fails
+				// (likely only one of the addresses will give something unequal to "??:0").
+				buf << " " << std::hex << pt.second;
+				indices.push(i);
+
+				buf << " " << std::hex << (pt.second - libAddr);
 				indices.push(i);
 			}
 		}
 
-		//! execute command addr2line, read stdout and write to log-file
-		buf << " 2>/dev/null"; //! hide error output from spring's pipe
+		// execute command addr2line, read stdout and write to log-file
+		buf << " 2>/dev/null"; // hide error output from spring's pipe
 		FILE* cmdOut = popen(buf.str().c_str(), "r");
 		if (cmdOut != NULL) {
 			const size_t line_sizeMax = 2048;
