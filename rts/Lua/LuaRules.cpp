@@ -252,7 +252,6 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 9);
 	static const LuaHashString cmdStr("CommandFallback");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -267,8 +266,11 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return true;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -285,7 +287,6 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 10);
 	static const LuaHashString cmdStr("AllowCommand");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -302,9 +303,11 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return true;
-
+	}
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
 	return retval;
@@ -319,7 +322,6 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 8);
 	static const LuaHashString cmdStr("AllowUnitCreation");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -341,9 +343,11 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return true;
-
+	}
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
 	return retval;
@@ -358,7 +362,6 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowUnitTransfer");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -377,8 +380,11 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return true;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -394,7 +400,6 @@ bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowUnitBuildStep");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -413,8 +418,11 @@ bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return true;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -430,7 +438,6 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowFeatureCreation");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -449,8 +456,11 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return true;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -501,7 +511,6 @@ bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("AllowResourceLevel");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -518,8 +527,11 @@ bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return true;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -535,7 +547,6 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("AllowResourceTransfer");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -553,8 +564,11 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return true;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -569,7 +583,6 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("AllowDirectUnitControl");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -587,8 +600,11 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return true;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -603,7 +619,6 @@ bool CLuaRules::AllowStartPosition(int playerID, const float3& pos)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 9);
 	static const LuaHashString cmdStr("AllowStartPosition");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -622,9 +637,11 @@ bool CLuaRules::AllowStartPosition(int playerID, const float3& pos)
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return true;
-
+	}
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
 	return retval;
@@ -638,7 +655,6 @@ bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("MoveCtrlNotify");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -657,8 +673,11 @@ bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return false;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -674,7 +693,6 @@ bool CLuaRules::TerraformComplete(const CUnit* unit, const CUnit* build)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 8);
 	static const LuaHashString cmdStr("TerraformComplete");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -697,8 +715,11 @@ bool CLuaRules::TerraformComplete(const CUnit* unit, const CUnit* build)
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return false;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -912,7 +933,6 @@ bool CLuaRules::DrawUnit(int unitID)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("DrawUnit");
 	if (!cmdStr.GetRegistryFunc(L)) {
@@ -933,8 +953,11 @@ bool CLuaRules::DrawUnit(int unitID)
 		return false;
 	}
 
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return false;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -948,7 +971,6 @@ bool CLuaRules::DrawFeature(int featureID)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("DrawFeature");
 	if (!cmdStr.GetRegistryFunc(L)) {
@@ -969,8 +991,11 @@ bool CLuaRules::DrawFeature(int featureID)
 		return false;
 	}
 
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return false;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);

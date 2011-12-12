@@ -1445,7 +1445,6 @@ bool CLuaHandle::Explosion(int weaponDefID, const float3& pos, const CUnit* owne
 
 	LUA_UNIT_BATCH_PUSH(false, UNIT_EXPLOSION, weaponDefID, pos, owner);
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("Explosion");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -1464,8 +1463,11 @@ bool CLuaHandle::Explosion(int weaponDefID, const float3& pos, const CUnit* owne
 	RunCallIn(cmdStr, (owner == NULL) ? 4 : 5, 1);
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
 		return false;
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
@@ -2532,7 +2534,6 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 		return false;
 	}
 	LUA_CALL_IN_CHECK(L);
-	int top = lua_gettop(L);
 	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("CommandNotify");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2564,9 +2565,11 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	}
 
 	// get the results
-	if (!CheckReturnBool(L, top, cmdStr.GetString().c_str()))
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "CommandNotify() bad return value");
+		lua_pop(L, 1);
 		return false;
-
+	}
 
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
