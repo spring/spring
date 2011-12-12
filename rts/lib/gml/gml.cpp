@@ -774,6 +774,22 @@ void gmlQueue::SyncRequest() {
 		GML_CALL(DrawArrays,GML_DATA(name,A),0,GML_DATA(name,B))\
 	GML_NEXT_SIZE(name)
 
+#define GML_MAKEHANDLER4VDRE(name)\
+	GML_CASE(name):\
+	ptr=(BYTE *)(GML_DT(name)+1);\
+	GML_MAKESUBHANDLER4(GL_VERTEX_ARRAY,glVertexPointer,VP,name)\
+	GML_MAKESUBHANDLER4(GL_COLOR_ARRAY,glColorPointer,CP,name)\
+	GML_MAKESUBHANDLER4(GL_TEXTURE_COORD_ARRAY,glTexCoordPointer,TCP,name)\
+	GML_MAKESUBHANDLER3(GL_INDEX_ARRAY,glIndexPointer,IP,name)\
+	GML_MAKESUBHANDLER3(GL_NORMAL_ARRAY,glNormalPointer,NP,name)\
+	GML_MAKESUBHANDLER2(GL_EDGE_FLAG_ARRAY,glEdgeFlagPointer,EFP,name)\
+	GML_MAKESUBHANDLERVA(name)\
+	if(GML_DATA(name,ClientState) & GML_ELEMENT_ARRAY_BUFFER)\
+		GML_CALL(name,GML_DATA(name,A),GML_DATA(name,B),GML_DATA(name,C),GML_DATA(name,D),GML_DATA(name,E),GML_DATA(name,F))\
+	else\
+		GML_CALL(DrawArrays,GML_DATA(name,A),0,GML_DATA(name,D))\
+	GML_NEXT_SIZE(name)
+
 const char *gmlNOPDummy=(gmlFunctionNames[GML_NOP]="gmlNOP");
 #define GML_MAKENAME(name) EXTERN const char *gml##name##Dummy=(gmlFunctionNames[gml##name##Enum]=GML_QUOTE(gml##name));
 #include "gmlfun.h"
@@ -1066,6 +1082,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER3V(Uniform4fv)
 		GML_MAKEHANDLER4R(MapBufferRange)
 		GML_MAKEHANDLER1(PrimitiveRestartIndexNV)
+		GML_MAKEHANDLER4VDRE(DrawRangeElements)
 	}
 }
 
