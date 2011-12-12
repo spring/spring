@@ -143,7 +143,6 @@ C3DOTextureHandler::C3DOTextureHandler()
 
 	int cury = 0;
 	int maxy = 0;
-	int curx = 0;
 	int foundx = 0;
 	int foundy = 0;
 	std::list<int2> nextSub;
@@ -196,13 +195,9 @@ C3DOTextureHandler::C3DOTextureHandler()
 		}
 		for (int y = 0; y < curtex1->ysize; ++y) {
 			for (int x = 0; x < curtex1->xsize; ++x) {
-//				if(curtex1->mem[(y*curtex1->xsize+x)*4]==254 && curtex1->mem[(y*curtex1->xsize+x)*4+1]==0 && curtex1->mem[(y*curtex1->xsize+x)*4+2]==254){
-//					bigtex1[((cury+y)*bigTexX+(curx+x))*4+3] = 0;
-//				} else {
-					for (int col = 0; col < 4; ++col) {
-						bigtex1[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex1->mem[(((y * curtex1->xsize) + x) * 4) + col];
-						bigtex2[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex2->mem[(((y * curtex1->xsize) + x) * 4) + col];
-//					}
+				for (int col = 0; col < 4; ++col) {
+					bigtex1[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex1->mem[(((y * curtex1->xsize) + x) * 4) + col];
+					bigtex2[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex2->mem[(((y * curtex1->xsize) + x) * 4) + col];
 				}
 			}
 		}
@@ -215,7 +210,6 @@ C3DOTextureHandler::C3DOTextureHandler()
 		unittex->yend = (foundy + curtex1->ysize - 0.5f) / (float)bigTexY;
 		textures[texfiles[a]->name] = unittex;
 
-		curx += curtex1->xsize;
 		delete texfiles[a];
 	}
 

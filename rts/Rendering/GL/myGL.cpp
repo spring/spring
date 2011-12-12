@@ -193,7 +193,6 @@ void LoadExtensions()
 	const char* glRenderer = (const char*) glGetString(GL_RENDERER);
 	const char* glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION);
 	const char* glewVersion = (const char*) glewGetString(GLEW_VERSION);
-	const char* glExtensions = (const char*) glGetString(GL_EXTENSIONS);
 
 	char glVidMemStr[64] = "unknown";
 	GLint vidMemBuffer[2] = {0, 0};
@@ -250,9 +249,15 @@ void LoadExtensions()
 	}
 #endif // !defined DEBUG
 
-	std::string s = (glExtensions != NULL)? glExtensions: "";
-	for (unsigned int i = 0; i < s.length(); i++)
-		if (s[i] == ' ') s[i] = '\n';
+	/*{
+		std::string s = (char*)glGetString(GL_EXTENSIONS);
+		for (unsigned int i=0; i<s.length(); i++)
+			if (s[i]==' ') s[i]='\n';
+
+		std::ofstream ofs("ext.txt");
+		if (!ofs.bad() && ofs.is_open())
+			ofs.write(s.c_str(), s.length());
+	}*/
 
 	std::string missingExts = "";
 	if (!GLEW_ARB_multitexture) {
