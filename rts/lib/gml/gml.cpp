@@ -774,7 +774,7 @@ void gmlQueue::SyncRequest() {
 		GML_CALL(DrawArrays,GML_DATA(name,A),0,GML_DATA(name,B))\
 	GML_NEXT_SIZE(name)
 
-#define GML_MAKEHANDLER4VDRE(name)\
+#define GML_MAKEHANDLER6VDRE(name)\
 	GML_CASE(name):\
 	ptr=(BYTE *)(GML_DT(name)+1);\
 	GML_MAKESUBHANDLER4(GL_VERTEX_ARRAY,glVertexPointer,VP,name)\
@@ -1082,7 +1082,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER3V(Uniform4fv)
 		GML_MAKEHANDLER4R(MapBufferRange)
 		GML_MAKEHANDLER1(PrimitiveRestartIndexNV)
-		GML_MAKEHANDLER4VDRE(DrawRangeElements)
+		GML_MAKEHANDLER6VDRE(DrawRangeElements)
 	}
 }
 
