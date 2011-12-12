@@ -24,10 +24,10 @@ public:
 	//! std container funcs
 	typedef std::list<SRectangle>::iterator iterator;
 	typedef std::list<SRectangle>::const_iterator const_iterator;
-	bool empty() {
+	bool empty() const {
 		return rectangles.empty();
 	}
-	size_t size() {
+	size_t size() const {
 		return rectangles.size();
 	}
 	SRectangle& front() {
