@@ -1114,7 +1114,7 @@ GML_FUN(void, name, tA A, tB B, tC C, tD *D) {\
 }
 
 
-#define GML_MAKEFUN4VDRE(name,tA,tB,tC,tD,tE,tF)\
+#define GML_MAKEFUN6VDRE(name,tA,tB,tC,tD,tE,tF)\
 	GML_MAKEDATA_F(name,tA,tB,tC,tD,tE,tF *)\
 	GML_MAKEPOINTERDATA()\
 	GML_MAKEVAR_SIZE()\
@@ -1415,6 +1415,6 @@ GML_MAKEFUN3V(Uniform3fv,GLint,GLsizei,const GLfloat,GLfloat,3*B)
 GML_MAKEFUN3V(Uniform4fv,GLint,GLsizei,const GLfloat,GLfloat,4*B)
 GML_MAKEFUN4R(MapBufferRange,GLenum,GLintptr,GLsizeiptr,GLbitfield,GLvoid *)
 GML_MAKEFUN1(PrimitiveRestartIndexNV,GLuint)
-GML_MAKEFUN4VDRE(DrawRangeElements,GLenum,GLuint,GLuint,GLsizei,GLenum,const GLvoid)
+GML_MAKEFUN6VDRE(DrawRangeElements,GLenum,GLuint,GLuint,GLsizei,GLenum,const GLvoid)
 
 #endif // _GML_FUN_H
