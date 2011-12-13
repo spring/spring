@@ -1018,6 +1018,12 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 		if (math::fabs(objectDistToAvoidDirCenter) >= radiusSum)
 			continue;
 
+		// do not bother steering around idling objects
+		// (collision handling will push them aside, or
+		// us in case of "allied" features)
+		if (!object->isMoving && object->allyteam == owner->allyteam)
+			continue;
+
 		// if object and unit in relative motion are closing in on one another
 		// (or not yet fully apart), then the object is on the path of the unit
 		// and they are not collided
@@ -1454,9 +1460,6 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3 colliderNewPos = colliderCurPos + (colResponseVec * colliderMassScale);
 		const float3 collideeNewPos = collideeCurPos - (colResponseVec * collideeMassScale);
 
-		const CCommandAI* colliderCAI = collider->commandAI;
-		const CCommandAI* collideeCAI = collidee->commandAI;
-
 		// try to prevent both parties from being pushed onto non-traversable squares
 		if (                  (colliderMM->IsBlocked(*colliderMD, colliderNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { colliderMassScale = 0.0f; }
 		if (collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideeNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { collideeMassScale = 0.0f; }
@@ -1464,7 +1467,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (collideeMobile && collideeMM->GetPosSpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
 
 		// ignore pushing contributions from idling collidee's
-		if (!colliderCAI->commandQue.empty() && collideeCAI->commandQue.empty()) {
+		if (collider->isMoving && !collidee->isMoving && alliedCollision) {
 			colliderMassScale *= ((collideeMobile)? 0.0f: 1.0f);
 		}
 
