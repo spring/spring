@@ -14,6 +14,7 @@
 
 #ifdef STATIC_SPRING_TIME
 	// SDL Timers
+	#include <SDL.h>
 	#include <SDL_timer.h>
 	#include "System/creg/creg_cond.h"
 
@@ -24,7 +25,7 @@
 		spring_time() : x(0) {}
 		spring_time(int x_) : x(x_) {}
 
-		spring_time& operator=(const spring_time& v)        { x = v.x; return *this; }
+		spring_time& operator=(const spring_time& v)       { x = v.x; return *this; }
 		spring_time  operator-(const spring_time& v) const { return spring_time(x - v.x); }
 		spring_time  operator+(const spring_time& v) const { return spring_time(x + v.x); }
 		bool         operator<(const spring_time& v) const { return (x < v.x); }
@@ -42,6 +43,7 @@
 	};
 
 	typedef spring_time spring_duration;
+	static const spring_time spring_notime(0);
 
 	#define spring_tomsecs(t) ((t).tomsecs())
 	#define spring_istime(t) ((t).istime())
@@ -49,24 +51,28 @@
 
 	#define spring_msecs(msecs) (spring_time(msecs))
 	#define spring_secs(secs) (spring_time(secs * 1000))
-	#define spring_gettime() (spring_time(SDL_GetTicks()))
+	//inline spring_time spring_gettime() { assert(SDL_WasInit(SDL_INIT_TIMER)); return spring_time(SDL_GetTicks()); };
+	inline spring_time spring_gettime() { return SDL_WasInit(SDL_INIT_TIMER) ? spring_time(SDL_GetTicks()) : spring_notime; };
 
-	static const spring_time spring_notime(0);
+
 
 #elif defined(SPRING_TIME)
 
 	// SDL Timers
+	#include <SDL.h>
 	#include <SDL_timer.h>
 
 	typedef unsigned spring_time;
 	typedef int spring_duration;
-	inline spring_time spring_gettime() { return SDL_GetTicks(); };
+	#define spring_notime 0
+
 	#define spring_tomsecs(time) (time)
-	#define spring_msecs(time) (time)
-	#define spring_secs(time) ((time)*1000)
 	#define spring_istime(time) ((time)>0)
 	#define spring_sleep(time) SDL_Delay(time)
-	#define spring_notime 0
+
+	#define spring_msecs(time) (time)
+	#define spring_secs(time) ((time)*1000)
+	inline spring_time spring_gettime() { return SDL_WasInit(SDL_INIT_TIMER) ? spring_time(SDL_GetTicks()) : spring_notime; };
 
 #else
 
@@ -74,14 +80,18 @@
 	#include <boost/date_time/posix_time/posix_time.hpp>
 	#include <boost/date_time/posix_time/ptime.hpp>
 	using namespace boost::posix_time;
+
 	typedef ptime spring_time;
 	typedef time_duration spring_duration;
+
 	#define spring_tomsecs(time) ((time).total_milliseconds())
-	inline spring_time spring_gettime() { return microsec_clock::local_time(); };
-	#define spring_msecs(time) (milliseconds(time))
-	#define spring_secs(time) (seconds(time))
 	#define spring_istime(time) (!(time).is_not_a_date_time())
 	#define spring_sleep(time) boost::this_thread::sleep(time)
+
+	#define spring_msecs(time) (milliseconds(time))
+	#define spring_secs(time) (seconds(time))
+	inline spring_time spring_gettime() { return microsec_clock::local_time(); };
+
 	#define spring_notime not_a_date_time
 
 #endif
