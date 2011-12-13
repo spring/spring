@@ -525,18 +525,18 @@ void UDPConnection::Flush(const bool forced)
 
 bool UDPConnection::CheckTimeout(int seconds, bool initial) const {
 
-	spring_duration timeout;
+	int timeout;
 	if (seconds == 0) {
-		timeout = spring_secs((dataRecv && !initial)
+		timeout = (dataRecv && !initial)
 				? globalConfig->networkTimeout
-				: globalConfig->initialNetworkTimeout);
+				: globalConfig->initialNetworkTimeout;
 	} else if (seconds > 0) {
-		timeout = spring_secs(seconds);
+		timeout = seconds;
 	} else {
-		timeout = spring_secs(globalConfig->reconnectTimeout);
+		timeout = globalConfig->reconnectTimeout;
 	}
 
-	return (timeout > 0 && (spring_gettime() - lastReceiveTime) > timeout);
+	return (timeout > 0 && (spring_gettime() - lastReceiveTime) > spring_secs(timeout));
 }
 
 bool UDPConnection::NeedsReconnect() {
