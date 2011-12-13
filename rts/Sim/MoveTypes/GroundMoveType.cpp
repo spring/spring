@@ -239,7 +239,16 @@ bool CGroundMoveType::Update()
 
 	ASSERT_SANE_OWNER_SPEED(owner->speed);
 
-	if (owner->pos != oldPos) {
+	if (owner->pos == oldPos) {
+		// note: the float3::== test is not exact, so even if this
+		// evaluates to true the unit might still have an epsilon
+		// speed vector --> nullify it to prevent apparent visual
+		// micro-stuttering (speed is used to extrapolate drawPos)
+		owner->speed = ZeroVector;
+
+		idling = true;
+		hasMoved = false;
+	} else {
 		TestNewTerrainSquare();
 
 		// note: HandleObjectCollisions() may have negated the position set
@@ -255,8 +264,6 @@ bool CGroundMoveType::Update()
 
 		idling = (Square(currWayPointDist - prevWayPointDist) <= (owner->speed.SqLength() * 0.5f));
 		hasMoved = true;
-	} else {
-		idling = true;
 	}
 
 	return hasMoved;
