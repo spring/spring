@@ -1460,7 +1460,8 @@ bool CLuaHandle::Explosion(int weaponDefID, const float3& pos, const CUnit* owne
 	}
 
 	// call the routine
-	RunCallIn(cmdStr, (owner == NULL) ? 4 : 5, 1);
+	if (!RunCallIn(cmdStr, (owner == NULL) ? 4 : 5, 1))
+		return false;
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -2560,13 +2561,12 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	HSTR_PUSH_BOOL(L, "meta",  !!(cmd.options & META_KEY));
 
 	// call the function
-	if (!RunCallInUnsynced(cmdStr, 3, 1)) {
+	if (!RunCallInUnsynced(cmdStr, 3, 1))
 		return false;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "CommandNotify() bad return value");
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return false;
 	}
