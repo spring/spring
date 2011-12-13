@@ -38,8 +38,9 @@ struct FeatureDef
 	float energy;
 	float maxHealth;
 	float reclaimTime;
-	/// used to see if the object can be overrun
+
 	float mass;
+	float crushStrength;
 
 	int drawType;
 	mutable S3DModel* model;
