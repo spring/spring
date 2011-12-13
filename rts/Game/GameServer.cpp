@@ -312,11 +312,7 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 void CGameServer::PostLoad(unsigned newlastTick, int newServerFrameNum)
 {
 	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
-#if SPRING_TIME
-	lastTick = newlastTick;
-#else
-	//lastTick = boost::some_time; FIXME
-#endif
+	lastTick = spring_msecs(newlastTick);
 	serverFrameNum = newServerFrameNum;
 
 	std::vector<GameParticipant>::iterator it;

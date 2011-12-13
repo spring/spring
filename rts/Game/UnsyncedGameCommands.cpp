@@ -1293,7 +1293,7 @@ public:
 			bool newPause = gs->paused;
 			SetBoolArg(newPause, action.GetArgs());
 			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
-			game->lastframe = SDL_GetTicks(); // XXX this required here?
+			game->lastframe = spring_gettime(); // XXX this required here?
 		}
 	}
 

@@ -23,6 +23,7 @@ static struct SDL_RWops stubRWops;
 static Uint8 stubKeyState[0];
 static SDL_version stubVersion;
 static SDL_VideoInfo stubVideo;
+static Uint32 stubSubSystemsInit = 0;
 
 extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
 
@@ -32,8 +33,13 @@ extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
 	stubSurface.h = 512;
 	stubVideo.current_w = 512;
 	stubVideo.current_h = 512;
+	stubSubSystemsInit = SDL_INIT_EVERYTHING;
 
 	return 0;
+}
+
+extern DECLSPEC Uint32 SDLCALL SDL_WasInit(Uint32 flags) {
+	return (stubSubSystemsInit & flags);
 }
 
 extern DECLSPEC int SDLCALL SDL_InitSubSystem(Uint32 flags) {
