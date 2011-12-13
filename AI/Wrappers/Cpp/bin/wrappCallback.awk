@@ -34,7 +34,7 @@ BEGIN {
 	myClassVar = "clb";
 	myWrapClass = "SSkirmishAICallback";
 	myWrapVar = "innerCallback";
-	myBridgePrefix = "bridged__";
+	myBridgePrefix = "bridged_";
 	myAbstractAIClass = "AbstractAI";
 	myAIFactoryClass = "AIFactory";
 
@@ -1402,10 +1402,10 @@ function doWrappMember(fullName_dwm) {
 }
 
 
-#EXPORT(float) bridged__UnitDef_getUpkeep(int _skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+#EXPORT(float) bridged_UnitDef_getUpkeep(int _skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
 function wrappFunctionDef(funcDef, commentEolTot) {
 
-	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)[ \t]+bridged__)|(\\)\\;)");
+	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)[ \t]+bridged_)|(\\)\\;)");
 	# because the empty part after ");" would count as part as well
 	size_funcParts--;
 
