@@ -26,8 +26,11 @@ do
 		EXIT=$?
 		# dump log file at exit, to not mix client + server output
 		# FIXME: this merges stdout + stderr
+		echo "=========== Dump of client log file start"
 		cat $LOG
+		echo "=========== Dump of client log file end"
 		set -e
+		rm -f $LOG
 		exit $EXIT
 	fi
 	# don't use 100% cpu in polling
