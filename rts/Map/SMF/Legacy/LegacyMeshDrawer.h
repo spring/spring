@@ -50,15 +50,15 @@ private:
 	CSMFReadMap* smfReadMap;
 	CSMFGroundDrawer* smfGroundDrawer;
 
-#ifdef USE_GML
-	bool& multiThreadDrawGround;
-	bool& multiThreadDrawGroundShadow;
-#endif
-
 	int viewRadius;
 	int neededLod;
 
 	//bool waterDrawn;
+
+#ifdef USE_GML
+	bool& multiThreadDrawGround;
+	bool& multiThreadDrawGroundShadow;
+#endif
 };
 
 #endif // _LEGACY_MESH_DRAWER_H_
