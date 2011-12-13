@@ -151,11 +151,15 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	allyteam = _allyteam;
 	emitSmokeTime = _smokeTime;
 
+	mass = def->mass;
+	crushStrength = def->crushStrength;
+
 	health   = def->maxHealth;
 	blocking = def->blocking;
+
 	xsize    = ((facing & 1) == 0) ? def->xsize : def->zsize;
 	zsize    = ((facing & 1) == 1) ? def->xsize : def->zsize;
-	mass     = def->mass;
+
 	noSelect = def->noSelect;
 
 	float fRadius = 1.0f;

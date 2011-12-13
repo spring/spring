@@ -465,7 +465,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 	}
 
 	// wanted speed and acceleration
-	float wSpeed = reversing? maxReverseSpeed: maxSpeed;
+	float targetSpeed = wantReverse? maxReverseSpeed: maxSpeed;
 
 	if (wantedSpeed > 0.0f) {
 		const UnitDef* ud = owner->unitDef;
@@ -482,9 +482,6 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			(owner->commandAI->commandQue.size() <= 2) &&
 			((owner->pos - goalPos).SqLength() <= Square(BreakingDistance(currentSpeed)));
 
-		wSpeed *= groundMod;
-		wSpeed *= ((startBreaking)? 0.0f: 1.0f);
-
 		if (!fpsMode && turnDeltaHeading != 0) {
 			// only auto-adjust speed for turns when not in FPS mode
 			const float reqTurnAngle = math::fabs(180.0f * (owner->heading - wantedHeading) / SHORTINT_MAXVALUE);
@@ -499,50 +496,50 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			if (haveFinalWaypoint && !atGoal) {
 				// at this point, Update() will no longer call GetNextWayPoint()
 				// and we must slow down to prevent entering an infinite circle
-				wSpeed = std::min(wSpeed, fastmath::apxsqrt(currWayPointDist * decRate));
+				targetSpeed = fastmath::apxsqrt(currWayPointDist * (reversing? accRate: decRate));
 			}
 
 			if (!ud->turnInPlace) {
 				if (waypointDir.SqLength() > 0.1f) {
 					if (reqTurnAngle > maxTurnAngle) {
-						wSpeed = std::min(wSpeed, std::max(ud->turnInPlaceSpeedLimit, reducedSpeed));
+						targetSpeed = std::max(ud->turnInPlaceSpeedLimit, reducedSpeed);
 					}
 				}
 			} else {
-				wSpeed = reducedSpeed;
+				targetSpeed = reducedSpeed;
 			}
 		}
 
-		wSpeed = std::min(wSpeed, wantedSpeed);
+		targetSpeed *= groundMod;
+		targetSpeed *= ((startBreaking)? 0.0f: 1.0f);
+		targetSpeed = std::min(targetSpeed, wantedSpeed);
 	} else {
-		wSpeed = 0.0f;
+		targetSpeed = 0.0f;
 	}
 
 
-	float speedDif = wSpeed - currentSpeed;
 
-	// make the forward/reverse transitions more fluid
-	// (iff we are already moving in one direction and
-	// want to go the opposite)
-	if ( wantReverse && !reversing) { speedDif = -currentSpeed; }
-	if (!wantReverse &&  reversing) { speedDif = -currentSpeed; }
+	const int targetSpeedSign = int(!wantReverse) * 2 - 1;
+	const int currentSpeedSign = int(!reversing) * 2 - 1;
+	const float speedDiff = (targetSpeed * targetSpeedSign) - (currentSpeed * currentSpeedSign);
 
-	// limit speed change according to acceleration
-	if (math::fabs(speedDif) < 0.05f) {
+	if (math::fabs(speedDiff) < 0.05f) {
 		// we are already going (mostly) how fast we want to go
-		deltaSpeed = speedDif * 0.125f;
-	} else if (speedDif > 0.0f) {
-		// we want to accelerate
-		deltaSpeed = std::min(speedDif, accRate);
-	} else {
-		// we want to decelerate
-		deltaSpeed = std::max(speedDif, -decRate);
+		deltaSpeed = speedDiff * 0.125f;
+		return;
 	}
 
-#ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
-	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << deltaSpeed << " " /*<< wSpeed*/ << " " << owner->id << "\n";
-#endif
+	if (reversing) {
+		// speed-sign in UpdateOwnerPos is negative
+		//   --> to go faster in reverse gear, we need to add +decRate
+		//   --> to go slower in reverse gear, we need to add -accRate
+		deltaSpeed = (speedDiff < 0.0f)?  decRate: -accRate;
+	} else {
+		// speed-sign in UpdateOwnerPos is positive
+		//   --> to go faster in forward gear, we need to add +accRate
+		//   --> to go slower in forward gear, we need to add -decRate
+		deltaSpeed = (speedDiff < 0.0f)? -decRate:  accRate;
+	}
 }
 
 /*
@@ -1444,10 +1441,6 @@ void CGroundMoveType::HandleUnitCollisions(
 			const CMoveMath::BlockType colliderNxtPosBits = colliderMM->IsBlocked(*colliderMD, colliderNxtPos);
 
 			if ((colliderNxtPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
-				// currentSpeed = 0.0f;
-				// <requestedSpeed> is only reset every SlowUpdate, do not touch it
-				// requestedSpeed = 0.0f;
-
 				// applied every frame objects are colliding, so be careful
 				collider->AddImpulse(sepDirection * std::max(currentSpeed, accRate));
 				collider->Move3D(collider->speed, true);
@@ -1551,10 +1544,6 @@ void CGroundMoveType::HandleFeatureCollisions(
 			const CMoveMath::BlockType colliderNxtPosBits = colliderMM->IsBlocked(*colliderMD, colliderNxtPos);
 
 			if ((colliderNxtPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
-				// currentSpeed = 0.0f;
-				// <requestedSpeed> is only reset every SlowUpdate, do not touch it
-				// requestedSpeed = 0.0f;
-
 				// applied every frame objects are colliding, so be careful
 				collider->AddImpulse(sepDirection * std::max(currentSpeed, accRate));
 				collider->Move3D(collider->speed, true);
@@ -2006,25 +1995,22 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		const CMoveMath* mm = md->moveMath;
 
 		const int    speedSign = int(!reversing) * 2 - 1;
-		const float  speedScale = currentSpeed + deltaSpeed;
+		const float  speedScale = std::min(currentSpeed + deltaSpeed, (reversing? maxReverseSpeed: maxSpeed));
 		const float3 speedVector = owner->frontdir * speedScale * speedSign;
 
-		float3& speed = owner->speed;
+		owner->speed = speedVector;
 
-		if (mm->GetPosSpeedMod(*md, owner->pos + speedVector) > 0.01f) {
+		if (mm->GetPosSpeedMod(*md, owner->pos + owner->speed) <= 0.01f) {
 			// never move onto an impassable square (units
 			// can still tunnel across them at high enough
 			// speeds however)
-			speed = speedVector;
+			owner->speed = ZeroVector;
 		} else {
-			speed = ZeroVector;
+			// use the simplest possible Euler integration
+			owner->Move3D(owner->speed, true);
 		}
 
-		// use the simplest possible Euler integration
-		owner->Move3D(speed, true);
-
-		currentSpeed = (speed != ZeroVector)? speedScale: 0.0f;
-		currentSpeed = std::min(currentSpeed, (reversing? maxReverseSpeed: maxSpeed));
+		currentSpeed = (owner->speed != ZeroVector)? speedScale: 0.0f;
 		deltaSpeed = 0.0f;
 
 		assert(math::fabs(currentSpeed) < 1e6f);

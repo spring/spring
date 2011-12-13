@@ -65,12 +65,12 @@ public:
 	int2 GetMapPos(const float3& position) const;
 
 public:
-	// Static properties
-	float mass;                                 ///< the physical mass of this object
+	float mass;                                 ///< the physical mass of this object (run-time constant)
+	float crushStrength;                        ///< how much crushStrength is required to crush this object (run-time constant)
 
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
-	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make them stay on ground)
+	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
 	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 	bool crushKilled;                           ///< true if this object died by being crushed during a collision
 
