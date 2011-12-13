@@ -33,6 +33,10 @@ ulimit -v 1000000
 # max 15 min cpu time
 ulimit -t 900
 
+# FIXME: remove old caching files, the client-script would start immediately when they exist
+# maybe a foreign directory for the client is the cleanest way...
+rm -rf ~/.spring/cache/paths
+
 # start up the client in background
 $RUNCLIENT $1 &
 PID=$!
