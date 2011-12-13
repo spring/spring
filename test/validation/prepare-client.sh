@@ -16,6 +16,6 @@ cat <<EOD
         HostIP=$IP;
         HostPort=$PORT;
         IsHost=0;
-        MyPlayerName=$USER
+        MyPlayerName=$USER;
 }
 EOD

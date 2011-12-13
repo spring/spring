@@ -23,11 +23,12 @@ do
 		echo "Starting $HEADLESS client"
 		set +e
 		$HEADLESS connect.txt >$LOG 2>&1
+		EXIT=$?
 		# dump log file at exit, to not mix client + server output
 		# FIXME: this merges stdout + stderr
 		cat $LOG
 		set -e
-		exit $?
+		exit $EXIT
 	fi
 	# don't use 100% cpu in polling
 	sleep 1
