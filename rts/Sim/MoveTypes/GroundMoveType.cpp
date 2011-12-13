@@ -576,9 +576,6 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 
 void CGroundMoveType::ImpulseAdded(const float3&)
 {
-	const UnitDef* ud = owner->unitDef;
-	const MoveData* md = ud->movedata;
-
 	// NOTE: ships must be able to receive impulse too (for collision handling)
 	if (owner->beingBuilt)
 		return;
@@ -1498,7 +1495,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 	for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
 		CFeature* collidee = const_cast<CFeature*>(*fit);
 
-		const FeatureDef* collideeFD = collidee->def;
+	//	const FeatureDef* collideeFD = collidee->def;
 		const float3& collideeCurPos = collidee->pos;
 
 	//	const float collideeRadius = FOOTPRINT_RADIUS(collideeFD->xsize, collideeFD->zsize);
@@ -1536,8 +1533,8 @@ void CGroundMoveType::HandleFeatureCollisions(
 			s2 = m2 * v2 * c2;
 
 		const float collisionMassSum  = s1 + s2 + 1.0f;
-		      float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
-		      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
+		const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
+	//	const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
 
 		if (collidee->reachedFinalPos) {
 			const float3 colliderNxtPos = colliderCurPos + collider->speed;
