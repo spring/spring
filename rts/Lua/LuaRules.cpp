@@ -298,9 +298,8 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 	lua_pushboolean(L, fromSynced);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 8, 1)) {
+	if (!RunCallIn(cmdStr, 8, 1))
 		return true;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -338,9 +337,8 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 	}
 
 	// call the function
-	if (!RunCallIn(cmdStr, pos ? 6 : 3, 1)) {
+	if (!RunCallIn(cmdStr, pos ? 6 : 3, 1))
 		return true;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -375,9 +373,8 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 	lua_pushboolean(L, capture);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 5, 1)) {
+	if (!RunCallIn(cmdStr, 5, 1))
 		return true;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -413,9 +410,8 @@ bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
 	lua_pushnumber(L, part);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 5, 1)) {
+	if (!RunCallIn(cmdStr, 5, 1))
 		return true;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -451,9 +447,8 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 	lua_pushnumber(L, pos.z);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 5, 1)) {
+	if (!RunCallIn(cmdStr, 5, 1))
 		return true;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -489,9 +484,8 @@ bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
 	lua_pushnumber(L, part);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 5, 1)) {
+	if (!RunCallIn(cmdStr, 5, 1))
 		return true;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -561,9 +555,8 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 	lua_pushnumber(L, amount);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 4, 1)) {
+	if (!RunCallIn(cmdStr, 4, 1))
 		return true;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -597,9 +590,8 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 	lua_pushnumber(L, playerID);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 4, 1)) {
+	if (!RunCallIn(cmdStr, 4, 1))
 		return true;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -634,9 +626,8 @@ bool CLuaRules::AllowStartPosition(int playerID, const float3& pos)
 	lua_pushnumber(L, playerID);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 4, 1)) {
+	if (!RunCallIn(cmdStr, 4, 1))
 		return true;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -670,9 +661,8 @@ bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
 	lua_pushnumber(L, data);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 4, 1)) {
+	if (!RunCallIn(cmdStr, 4, 1))
 		return false;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -712,9 +702,8 @@ bool CLuaRules::TerraformComplete(const CUnit* unit, const CUnit* build)
 	lua_pushnumber(L, build->team);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 6, 1)) {
+	if (!RunCallIn(cmdStr, 6, 1))
 		return false;
-	}
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
@@ -779,9 +768,8 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	// call the routine
 	const bool success = RunCallInTraceback(cmdStr, argCount, 2, errfunc);
 
-	if (!success) {
+	if (!success)
 		return false;
-	}
 
 	if (newDamage && lua_isnumber(L, -2)) {
 		*newDamage = lua_tonumber(L, -2);
@@ -838,9 +826,8 @@ bool CLuaRules::ShieldPreDamaged(
 	// call the routine
 	const bool success = RunCallInTraceback(cmdStr, 5, 1, errfunc);
 
-	if (!success) {
+	if (!success)
 		return false;
-	}
 
 	// pop the return-value; must be true or false
 	const bool ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
@@ -878,9 +865,8 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 
 	const bool success = RunCallInTraceback(cmdStr, 3, 1, errfunc);
 
-	if (!success) {
+	if (!success)
 		return ret;
-	}
 
 	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1))? 1: 0;
 	lua_pop(L, -1);
@@ -919,9 +905,8 @@ int CLuaRules::AllowWeaponTarget(
 
 	const bool success = RunCallInTraceback(cmdStr, 4, 2, errfunc);
 
-	if (!success) {
+	if (!success)
 		return ret;
-	}
 
 	ret = (lua_isboolean(L, -2) && lua_toboolean(L, -2))? 1: 0;
 
@@ -960,9 +945,8 @@ bool CLuaRules::DrawUnit(int unitID)
 
 	LuaOpenGL::SetDrawingEnabled(oldGLState);
 
-	if (!success) {
+	if (!success)
 		return false;
-	}
 
 	if (!lua_isboolean(L, -1)) {
 		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
@@ -998,9 +982,8 @@ bool CLuaRules::DrawFeature(int featureID)
 
 	LuaOpenGL::SetDrawingEnabled(oldGLState);
 
-	if (!success) {
+	if (!success)
 		return false;
-	}
 
 	if (!lua_isboolean(L, -1)) {
 		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
