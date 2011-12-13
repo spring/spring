@@ -880,7 +880,7 @@ bool CGame::Update()
 	}
 
 	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
-		LOG_L(L_WARNING, "Lost connection to gameserver");
+		LOG_L(L_ERROR, "Lost connection to gameserver");
 		GameEnd(std::vector<unsigned char>());
 	}
 	LEAVE_SYNCED_CODE();
