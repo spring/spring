@@ -84,6 +84,7 @@ public:
 public:
 	CTriNodePool(const size_t& poolSize) {
 		pool.resize(poolSize);
+		m_NextTriNode = 0;
 	}
 
 	void Reset();

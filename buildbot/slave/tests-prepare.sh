@@ -85,4 +85,5 @@ makescript "$GAME1" "$MAP" KAIK 0.13
 makescript "$GAME1" "$MAP" RAI 0.601
 makescript "$GAME1" "$MAP" Shard dev
 makescript "$GAME2" "$MAP" CAI ""
+${SOURCEDIR}/test/validation/prepare-client.sh ValidationClient 127.0.0.1 8452 >${CONTENT_DIR}/connect.txt
 

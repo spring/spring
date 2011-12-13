@@ -175,6 +175,7 @@ CONFIG(bool, ShowFPS).defaultValue(false);
 CONFIG(bool, ShowClock).defaultValue(true);
 CONFIG(bool, ShowSpeed).defaultValue(false);
 CONFIG(bool, ShowMTInfo).defaultValue(true);
+CONFIG(float, MTInfoThreshold).defaultValue(0.25f);
 CONFIG(int, ShowPlayerInfo).defaultValue(1);
 CONFIG(float, GuiOpacity).defaultValue(0.8f);
 CONFIG(std::string, InputTextGeo).defaultValue("");
@@ -211,6 +212,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
 	CR_MEMBER(showMTInfo),
+	CR_MEMBER(mtInfoThreshold),
 	CR_MEMBER(mtInfoCtrl),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
@@ -304,6 +306,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	showClock = configHandler->GetBool("ShowClock");
 	showSpeed = configHandler->GetBool("ShowSpeed");
 	showMTInfo = configHandler->GetBool("ShowMTInfo");
+	mtInfoThreshold = configHandler->GetFloat("MTInfoThreshold");
 	mtInfoCtrl = 0;
 
 	speedControl = configHandler->GetInt("SpeedControl");
@@ -877,7 +880,7 @@ bool CGame::Update()
 	}
 
 	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
-		LOG_L(L_WARNING, "Lost connection to gameserver");
+		LOG_L(L_ERROR, "Lost connection to gameserver");
 		GameEnd(std::vector<unsigned char>());
 	}
 	LEAVE_SYNCED_CODE();
@@ -950,7 +953,7 @@ bool CGame::UpdateUnsynced()
 			backupSize = 0;
 			luaLockTime = (int)GML_LOCK_TIME();
 			float amount = (showMTInfo == MT_LUA_DUAL_EXPORT) ? luaExportSize / 1000.0f : luaLockTime / 10.0f;
-			if (amount >= 0.1f) {
+			if (amount >= mtInfoThreshold) {
 				if ((mtInfoCtrl = std::min(mtInfoCtrl + 1, 9)) == 5) mtInfoCtrl = 9;
 			}
 			else if ((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 4) mtInfoCtrl = 0;

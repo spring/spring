@@ -301,10 +301,15 @@ void CEndGameBox::Draw()
 			char values[6][100];
 
 			SNPRINTF(values[0], 100, "%s", p->name.c_str());
-			SNPRINTF(values[1], 100, "%i", int(pStats.mouseClicks * 60 / game->totalGameTime));
-			SNPRINTF(values[2], 100, "%i", int(pStats.mousePixels * 60 / game->totalGameTime));
-			SNPRINTF(values[3], 100, "%i", int(pStats.keyPresses  * 60 / game->totalGameTime));
-			SNPRINTF(values[4], 100, "%i", int(pStats.numCommands * 60 / game->totalGameTime));
+			if (game->totalGameTime>0){ //prevent div zero
+				SNPRINTF(values[1], 100, "%i", int(pStats.mouseClicks * 60 / game->totalGameTime));
+				SNPRINTF(values[2], 100, "%i", int(pStats.mousePixels * 60 / game->totalGameTime));
+				SNPRINTF(values[3], 100, "%i", int(pStats.keyPresses  * 60 / game->totalGameTime));
+				SNPRINTF(values[4], 100, "%i", int(pStats.numCommands * 60 / game->totalGameTime));
+			}else{
+				for(int i=1; i<5; i++)
+					SNPRINTF(values[i], 100, "%i", 0);
+			}
 			SNPRINTF(values[5], 100, "%i",
 				(pStats.numCommands != 0)?
 				(pStats.unitCommands / pStats.numCommands):

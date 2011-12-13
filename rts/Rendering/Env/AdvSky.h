@@ -24,7 +24,7 @@ private:
 	void CreateSkyDomeList();
 	void InitSun();
 	void UpdateSunFlare();
-	void CreateCover(int baseX, int baseY, float* buf);
+	void CreateCover(int baseX, int baseY, float* buf) const;
 	void CreateTransformVectors();
 	void CreateRandMatrix(int** matrix, float mod);
 	void CreateRandDetailMatrix(unsigned char* matrix,int size);
