@@ -2177,9 +2177,9 @@ void AAIMap::SearchMetalSpots()
 	else
 		metalMap = false;
 
-	delete [] MexArrayA;
-	delete [] MexArrayB;
-	delete [] TempAverage;
+	SafeDeleteArray(MexArrayA);
+	SafeDeleteArray(MexArrayB);
+	SafeDeleteArray(TempAverage);
 }
 
 void AAIMap::UpdateRecon()
