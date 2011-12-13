@@ -39,7 +39,7 @@ extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
 }
 
 extern DECLSPEC Uint32 SDLCALL SDL_WasInit(Uint32 flags) {
-	return stubSubSystemsInit;
+	return (stubSubSystemsInit & flags);
 }
 
 extern DECLSPEC int SDLCALL SDL_InitSubSystem(Uint32 flags) {
