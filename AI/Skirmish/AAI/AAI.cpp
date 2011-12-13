@@ -87,6 +87,7 @@ AAI::~AAI()
 	{
 		delete (*task);
 	}
+	build_tasks.clear();
 
 	// save mod learning data
 	bt->SaveBuildTable(brain->GetGamePeriod(), map->map_type);
@@ -99,17 +100,18 @@ AAI::~AAI()
 			(*group)->attack = 0;
 			delete (*group);
 		}
+		group_list[i].clear();
 	}
 
 
-	delete am; am = NULL;
-	delete brain; brain = NULL;
-	delete execute; execute = NULL;
-	delete ut; ut = NULL;
-	delete af; af = NULL;
-	delete map; map = NULL;
-	delete bt; bt = NULL;
-	delete profiler; profiler = NULL;
+	SafeDelete(am);
+	SafeDelete(brain);
+	SafeDelete(execute);
+	SafeDelete(ut);
+	SafeDelete(af);
+	SafeDelete(map);
+	SafeDelete(bt);
+	SafeDelete(profiler);
 
 	fclose(file);
 }
@@ -383,7 +385,7 @@ void AAI::UnitFinished(int unit)
 					ut->units[(*task)->builder_id].cons->ConstructionFinished();
 
 				build_tasks.erase(task);
-				delete build_task;
+				SafeDelete(build_task);
 				break;
 			}
 		}
