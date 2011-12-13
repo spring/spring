@@ -13,6 +13,13 @@ if [ ! -x "$1" ]; then
 	exit 1
 fi
 
+RUNCLIENT=test/validation/run-client.sh
+
+if [ ! -x $RUNCLIENT ]; then
+	echo "$RUNCLIENT doesn't exist, please run from the source-root directory"
+	exit 1
+fi
+
 GDBCMDS=$(mktemp)
 (
 	echo file $1
@@ -27,7 +34,8 @@ ulimit -v 1000000
 ulimit -t 900
 
 # start up the client in background
-#$(pwd)/$(dirname $0)/run-client.sh $1 &
+$RUNCLIENT $1 &
+PID=$!
 
 set +e #temp disable abort on error
 gdb -batch -return-child-result -x $GDBCMDS
@@ -38,7 +46,14 @@ set -e
 # cleanup
 rm -f $GDBCMDS
 
+# get spring client process exit code / wait for exit
+wait $PID
+EXITCHILD=$?
 # wait for client to exit
-#wait
+if [ $EXITCHILD -ne 0 ];
+then
+	echo "Error: Spring-client exited with error code $EXITCHILD"
+	exit $EXITCHILD
+fi
 exit $EXIT
 
