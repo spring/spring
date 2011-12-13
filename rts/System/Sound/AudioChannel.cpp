@@ -99,7 +99,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 		CSoundSource* src = NULL;
 		int prio = INT_MAX;
 		for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end(); ++it) {
-			if (prio < it->first->GetCurrentPriority()) {
+			if (it->first->GetCurrentPriority() < prio) {
 				src  = it->first;
 				prio = it->first->GetCurrentPriority();
 			}
@@ -108,7 +108,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 		if (src && prio <= sndItem->GetPriority()) {
 			src->Stop();
 		} else {
-			LOG_L(L_DEBUG, "CSound::PlaySample: Max sounds reached! Dropping playback!");
+			LOG_L(L_DEBUG, "CSound::PlaySample: Max concurrent sounds in channel reached! Dropping playback!");
 			return;
 		}
 	}
