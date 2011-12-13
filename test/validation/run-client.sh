@@ -22,7 +22,7 @@ do
 		LOG=$(mktemp)
 		echo "Starting $HEADLESS client"
 		set +e
-		$HEADLESS connect.txt >$LOG 2>&1
+		$HEADLESS connect.txt &>$LOG
 		EXIT=$?
 		# dump log file at exit, to not mix client + server output
 		# FIXME: this merges stdout + stderr
