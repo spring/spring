@@ -56,7 +56,11 @@ cat <<EOD
 	[RESTRICT]
 	{
 	}
-
+	[PLAYER1]
+	{
+		Name=ValidationClient;
+		Spectator=1;
+	}
 	[PLAYER2]
 	{
 		Name=TestMonkey;

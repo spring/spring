@@ -174,6 +174,7 @@ public:
 	bool showClock;
 	bool showSpeed;
 	int showMTInfo;
+	float mtInfoThreshold;
 	int mtInfoCtrl;
 
 	/// Prevents spectator msgs from being seen by players

@@ -682,7 +682,7 @@ void CAdvSky::InitSun()
 	delete [] mem;
 }
 
-void CAdvSky::CreateCover(int baseX, int baseY, float *buf)
+void CAdvSky::CreateCover(int baseX, int baseY, float *buf) const
 {
 	static int line[]={
 		5, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5,

@@ -109,7 +109,9 @@ UnitDef::UnitDef()
 , resurrectSpeed(0.0f)
 , captureSpeed(0.0f)
 , terraformSpeed(0.0f)
+
 , mass(0.0f)
+, crushStrength(0.0f)
 
 , canSubmerge(false)
 , canfly(false)
@@ -299,6 +301,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// (do not allow it to be zero or negative in either case)
 	metalCost = std::max(1.0f, udTable.GetFloat("buildCostMetal", 0.0f));
 	mass = Clamp(udTable.GetFloat("mass", metalCost), CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
+	crushStrength = udTable.GetFloat("crushStrength", mass);
 
 	energyCost = udTable.GetFloat("buildCostEnergy", 0.0f);
 	buildTime = std::max(0.1f, udTable.GetFloat("buildTime", 0.0f)); //avoid some nasty divide by 0

@@ -678,7 +678,7 @@ public:
 
 int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 {
-	//! arg 1 - teamID
+	// arg 1 - teamID
 	int teamID = luaL_optint(L, 1, -1);
 	if (teamID == MyUnits) {
 		const int scriptTeamID = CLuaHandle::GetReadTeam(L);
@@ -698,7 +698,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		}
 	}
 
-	//! arg 2 - unit radius
+	// arg 2 - unit radius
 	bool fixedRadius = false;
 	float radius = 30.0f; // value from UnitDrawer.cpp
 	if (lua_israwnumber(L, 2)) {
@@ -709,7 +709,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		}
 	}
 
-	//! arg 3 - noIcons
+	// arg 3 - noIcons
 	const bool noIcons = lua_isboolean(L, 3) && !lua_toboolean(L, 3);
 
 	vector<const CUnitSet*> unitSets;
@@ -725,9 +725,9 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 		lua_createtable(L, quadIter.count, 0);
 
-		//! setup the list of unit sets
+		// setup the list of unit sets
 		if (quadIter.count > uh->activeUnits.size()/3) {
-			//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
+			// if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
 			if (teamID >= 0) {
 				unitSets.push_back(&teamHandler->Team(teamID)->units);
 			} else {
@@ -741,7 +741,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 				}
 			}
 		} else {
-			//! features can exist in multiple quads, so we need to do a duplication check
+			// objects can exist in multiple quads, so we still need to do a duplication check
 			visQuadUnits.clear();
 			std::vector<const std::list<CUnit*>*>::iterator sit;
 			for (sit = quadIter.visunits.begin(); sit != quadIter.visunits.end(); ++sit) {
@@ -790,7 +790,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 				}
 			}
 
-			const float testRadius = fixedRadius ? radius : (unit.radius + radius);
+			const float testRadius = fixedRadius ? radius : (unit.drawRadius + radius);
 			if (!camera->InView(unit.midPos, testRadius)) {
 				continue;
 			}
@@ -891,7 +891,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 			continue;
 		}
 
-		const float testRadius = fixedRadius ? radius : (f.radius + radius);
+		const float testRadius = fixedRadius ? radius : (f.drawRadius + radius);
 		if (!camera->InView(f.midPos, testRadius)) {
 			continue;
 		}
