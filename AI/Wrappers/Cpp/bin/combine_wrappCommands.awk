@@ -32,7 +32,7 @@ BEGIN {
 	}
 
 	nativeBridge = "CombinedCallbackBridge";
-	bridgePrefix = "bridged__";
+	bridgePrefix = "bridged_";
 
 	indent = "	";
 
