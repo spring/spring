@@ -525,27 +525,25 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 	}
 
 
-
 	const int targetSpeedSign = int(!wantReverse) * 2 - 1;
 	const int currentSpeedSign = int(!reversing) * 2 - 1;
-	const float speedDiff = (targetSpeed * targetSpeedSign) - (currentSpeed * currentSpeedSign);
 
-	if (math::fabs(speedDiff) < 0.05f) {
-		// we are already going (mostly) how fast we want to go
-		deltaSpeed = speedDiff * 0.125f;
-		return;
-	}
+	const float rawSpeedDiff = (targetSpeed * targetSpeedSign) - (currentSpeed * currentSpeedSign);
+	const float absSpeedDiff = math::fabs(rawSpeedDiff);
+	// need to clamp, game-supplied values can be much larger than |speedDiff|
+	const float modAccRate = std::min(absSpeedDiff, accRate);
+	const float modDecRate = std::min(absSpeedDiff, decRate);
 
 	if (reversing) {
 		// speed-sign in UpdateOwnerPos is negative
 		//   --> to go faster in reverse gear, we need to add +decRate
 		//   --> to go slower in reverse gear, we need to add -accRate
-		deltaSpeed = (speedDiff < 0.0f)?  decRate: -accRate;
+		deltaSpeed = (rawSpeedDiff < 0.0f)?  modDecRate: -modAccRate;
 	} else {
 		// speed-sign in UpdateOwnerPos is positive
 		//   --> to go faster in forward gear, we need to add +accRate
 		//   --> to go slower in forward gear, we need to add -decRate
-		deltaSpeed = (speedDiff < 0.0f)? -decRate:  accRate;
+		deltaSpeed = (rawSpeedDiff < 0.0f)? -modDecRate:  modAccRate;
 	}
 }
 
@@ -1420,7 +1418,6 @@ void CGroundMoveType::HandleUnitCollisions(
 		// don't push/crush either party if the collidee does not block the collider
 		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 		if (crushCollidee && !colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
-		if (!collideeMobile && (colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
 		eventHandler.UnitUnitCollision(collider, collidee);
 
@@ -1448,7 +1445,11 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		if (!collideeMobile) {
 			const float3 colliderNxtPos = colliderCurPos + collider->speed;
+			const CMoveMath::BlockType colliderCurPosBits = colliderMM->IsBlocked(*colliderMD, colliderCurPos);
 			const CMoveMath::BlockType colliderNxtPosBits = colliderMM->IsBlocked(*colliderMD, colliderNxtPos);
+
+			if ((colliderCurPosBits & CMoveMath::BLOCK_STRUCTURE) == 0)
+				continue;
 
 			if ((colliderNxtPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
 				// applied every frame objects are colliding, so be careful
@@ -1515,10 +1516,9 @@ void CGroundMoveType::HandleFeatureCollisions(
 		const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
 
 		if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
-		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 
+		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 		if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
-		if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
 		eventHandler.UnitFeatureCollision(collider, collidee);
 
@@ -1548,7 +1548,11 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 		if (collidee->reachedFinalPos) {
 			const float3 colliderNxtPos = colliderCurPos + collider->speed;
+			const CMoveMath::BlockType colliderCurPosBits = colliderMM->IsBlocked(*colliderMD, colliderCurPos);
 			const CMoveMath::BlockType colliderNxtPosBits = colliderMM->IsBlocked(*colliderMD, colliderNxtPos);
+
+			if ((colliderCurPosBits & CMoveMath::BLOCK_STRUCTURE) == 0)
+				continue;
 
 			if ((colliderNxtPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
 				// applied every frame objects are colliding, so be careful
