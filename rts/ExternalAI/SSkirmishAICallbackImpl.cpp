@@ -164,7 +164,7 @@ static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 static inline const MoveData* getUnitDefMoveDataById(int skirmishAIId, int unitDefId) {
 
 	const MoveData* moveData = getUnitDefById(skirmishAIId, unitDefId)->movedata;
-	assert(moveData != NULL); // There is a callback method to check whether MKoveData is available, use it.
+	assert(moveData != NULL); // NOTE There is a callback method to check whether MoveData is available, use it.
 	return moveData;
 }
 
@@ -2922,7 +2922,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getCustomParams(int skirmishAIId, int uni
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isMoveDataAvailable(int skirmishAIId, int unitDefId) {
-	// can not use getUnitDefMoveDataById() here, cause it would assert
+	// NOTE We can not use getUnitDefMoveDataById() here, cause it would assert
 	return (getUnitDefById(skirmishAIId, unitDefId)->movedata != NULL);
 }
 
