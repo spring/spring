@@ -23,7 +23,7 @@
 		CR_DECLARE(spring_time);
 	public:
 		spring_time() : x(0) {}
-		spring_time(int x_) : x(x_) {}
+		explicit spring_time(int x_) : x(x_) {}
 
 		spring_time& operator=(const spring_time& v)       { x = v.x; return *this; }
 		spring_time  operator-(const spring_time& v) const { return spring_time(x - v.x); }
