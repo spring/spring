@@ -14,6 +14,7 @@
 #include "System/bitops.h"
 #include "System/TimeProfiler.h"
 #include "System/Vec2.h"
+#include "System/Log/ILog.h"
 
 #ifdef _MSC_VER
 	#include <map>
@@ -126,6 +127,7 @@ namespace CNamedTextures {
 		TexInfo texInfo;
 
 		if (!bitmap.Load(filename)) {
+			LOG_L(L_WARNING, "Couldn't find texture \"%s\"!", filename.c_str());
 			texMap[texName] = texInfo;
 			glBindTexture(GL_TEXTURE_2D, 0);
 			return false;
@@ -225,18 +227,15 @@ namespace CNamedTextures {
 
 		GML_STDMUTEX_LOCK(ntex); // Bind
 
+		// cached
 		TEXMAP::iterator it = texMap.find(texName);
 		if (it != texMap.end()) {
-			const GLuint texID = it->second.id;
-			if (texID == 0) {
-				glBindTexture(GL_TEXTURE_2D, 0);
-				return false;
-			} else {
-				glBindTexture(GL_TEXTURE_2D, texID);
-				return true;
-			}
+			const GLuint& texID = it->second.id;
+			glBindTexture(GL_TEXTURE_2D, texID);
+			return (texID != 0);
 		}
 
+		// load texture
 		GLboolean inListCompile;
 		glGetBooleanv(GL_LIST_INDEX, &inListCompile);
 		if (inListCompile) {
