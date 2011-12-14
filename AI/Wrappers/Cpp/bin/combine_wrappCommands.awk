@@ -212,6 +212,8 @@ function printNativeFP2F() {
 			print("") >> outFile_nc;
 
 			print("\t" "struct S" name "Command commandData;") >> outFile_nc;
+			print("\t" "int internal_ret;") >> outFile_nc;
+
 			for (m=firstMember; m < cmdsNumMembers[cmdIndex]; m++) {
 				memName   = cmdsMembers_name[cmdIndex, m];
 				memType_c = cmdsMembers_type_c[cmdIndex, m];
@@ -224,7 +226,7 @@ function printNativeFP2F() {
 			}
 			print("") >> outFile_nc;
 
-			print("\t" "int internal_ret = id_clb[skirmishAIId]->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
+			print("\t" "internal_ret = id_clb[skirmishAIId]->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
 			print("") >> outFile_nc;
 
 			if (retParam != "") {
