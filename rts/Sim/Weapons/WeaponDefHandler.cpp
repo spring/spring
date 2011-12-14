@@ -399,7 +399,7 @@ void CWeaponDefHandler::ParseWeaponVisuals(const LuaTable& wdTable, WeaponDef& w
 	const std::string& colormap = wdTable.GetString("colormap", "");
 	const LuaTable& texTable = wdTable.SubTable("textures");
 
-	static const float3 defColors[4] = {
+	const float3 defColors[4] = {
 		hs2rgb(color1Hue, color1Sat), // default rgbColor1 for all weapon-types except cannons
 		float3(1.0f, 1.0f, 1.0f),     // default rgbColor2 for all weapon-types
 		float3(1.0f, 0.5f, 0.0f),     // default rgbColor1 for Cannons

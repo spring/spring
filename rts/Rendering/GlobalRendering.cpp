@@ -121,7 +121,7 @@ void CGlobalRendering::PostInit() {
 		const std::string vendor = (glVendor != NULL)? StringToLower(std::string(glVendor)): "";
 		const std::string renderer = (glRenderer != NULL)? StringToLower(std::string(glRenderer)): "";
 
-		haveATI    = (vendor.find("ati ") != std::string::npos);
+		haveATI    = (vendor.find("ati ") != std::string::npos) || (vendor.find("amd ") != std::string::npos);
 		haveMesa   = (renderer.find("mesa ") != std::string::npos);
 		haveIntel  = (vendor.find("intel ") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
