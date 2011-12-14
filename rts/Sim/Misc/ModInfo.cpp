@@ -52,6 +52,7 @@ void CModInfo::Init(const char* modArchive)
 	allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
 	allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);
 	allowCrushingAlliedUnits = movementTbl.GetBool("allowCrushingAlliedUnits", false);
+	allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", false);
 
 	// determine whether the modder allows the user to use team coloured nanospray
 	const LuaTable nanosprayTbl = root.SubTable("nanospray");

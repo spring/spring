@@ -651,6 +651,7 @@ void CGroundMoveType::UpdateSkid()
 			-speed.dot(ground->GetNormal(pos.x, pos.z)):
 			-speed.dot(UpVector);
 		const float impactDamageMult = impactSpeed * owner->mass * 0.02f;
+		const bool doColliderDamage = (modInfo.allowUnitCollisionDamage && impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0.0f);
 
 		if (groundHeight > pos.y) {
 			// ground impact, stop flying
@@ -662,7 +663,7 @@ void CGroundMoveType::UpdateSkid()
 			// TODO:
 			//     bouncing behaves too much like a rubber-ball,
 			//     most impact energy needs to go into the ground
-			if (impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0.0f) {
+			if (doColliderDamage) {
 				owner->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 			}
 
@@ -823,6 +824,9 @@ void CGroundMoveType::CheckCollisionSkid()
 			const float impactSpeed = -collider->speed.dot(dif);
 			const float impactDamageMult = std::min(impactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
 
+			const bool doColliderDamage = (modInfo.allowUnitCollisionDamage && impactSpeed > colliderUD->minCollisionSpeed && colliderUD->minCollisionSpeed >= 0.0f);
+			const bool doCollideeDamage = (modInfo.allowUnitCollisionDamage && impactSpeed > collideeUD->minCollisionSpeed && collideeUD->minCollisionSpeed >= 0.0f);
+
 			if (impactSpeed <= 0.0f)
 				continue;
 
@@ -830,11 +834,11 @@ void CGroundMoveType::CheckCollisionSkid()
 			collider->speed += ((dif * impactSpeed) * 1.8f);
 
 			// damage the collider, no added impulse
-			if (impactSpeed > colliderUD->minCollisionSpeed && colliderUD->minCollisionSpeed >= 0) {
+			if (doColliderDamage) {
 				collider->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 			}
 			// damage the (static) collidee based on collider's mass, no added impulse
-			if (impactSpeed > collideeUD->minCollisionSpeed && collideeUD->minCollisionSpeed >= 0) {
+			if (doCollideeDamage) {
 				collidee->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 			}
 		} else {
@@ -851,6 +855,9 @@ void CGroundMoveType::CheckCollisionSkid()
 			const float3 colliderImpactImpulse = dif * colliderRelImpactSpeed;
 			const float3 collideeImpactImpulse = dif * collideeRelImpactSpeed;
 
+			const bool doColliderDamage = (modInfo.allowUnitCollisionDamage && impactSpeed > colliderUD->minCollisionSpeed && colliderUD->minCollisionSpeed >= 0.0f);
+			const bool doCollideeDamage = (modInfo.allowUnitCollisionDamage && impactSpeed > collideeUD->minCollisionSpeed && collideeUD->minCollisionSpeed >= 0.0f);
+
 			if (impactSpeed <= 0.0f)
 				continue;
 
@@ -858,11 +865,11 @@ void CGroundMoveType::CheckCollisionSkid()
 			collidee->Move3D(-collideeImpactImpulse, true);
 
 			// damage the collider
-			if (impactSpeed > colliderUD->minCollisionSpeed && colliderUD->minCollisionSpeed >= 0.0f) {
+			if (doColliderDamage) {
 				collider->DoDamage(DamageArray(colliderImpactDmgMult), NULL, dif * colliderImpactDmgMult);
 			}
 			// damage the collidee
-			if (impactSpeed > collideeUD->minCollisionSpeed && collideeUD->minCollisionSpeed >= 0.0f) {
+			if (doCollideeDamage) {
 				collidee->DoDamage(DamageArray(collideeImpactDmgMult), NULL, dif * -collideeImpactDmgMult);
 			}
 
@@ -889,6 +896,7 @@ void CGroundMoveType::CheckCollisionSkid()
 		const float impactSpeed = -collider->speed.dot(dif);
 		const float impactDamageMult = std::min(impactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
 		const float3 impactImpulse = dif * impactSpeed;
+		const bool doColliderDamage = (modInfo.allowUnitCollisionDamage && impactSpeed > colliderUD->minCollisionSpeed && colliderUD->minCollisionSpeed >= 0.0f);
 
 		if (impactSpeed <= 0.0f)
 			continue;
@@ -897,7 +905,7 @@ void CGroundMoveType::CheckCollisionSkid()
 		collider->speed += (impactImpulse * 1.8f);
 
 		// damage the collider, no added impulse (!) 
-		if (impactSpeed > colliderUD->minCollisionSpeed && colliderUD->minCollisionSpeed >= 0) {
+		if (doColliderDamage) {
 			collider->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 		}
 
