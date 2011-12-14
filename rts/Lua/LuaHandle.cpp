@@ -2016,7 +2016,8 @@ bool CLuaHandle::DefaultCommand(const CUnit* unit,
 */
 
 	// call the routine
-	RunCallInUnsynced(cmdStr, args, 1);
+	if (!RunCallInUnsynced(cmdStr, args, 1))
+		return false;
 
 	if (!lua_isnumber(L, 1)) {
 		lua_pop(L, 1);
