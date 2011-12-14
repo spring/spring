@@ -14,6 +14,7 @@ public:
 		, allowAircraftToLeaveMap(true)
 		, allowPushingEnemyUnits(false)
 		, allowCrushingAlliedUnits(false)
+		, allowUnitCollisionDamage(false)
 		, constructionDecay(true)
 		, constructionDecayTime(1000)
 		, constructionDecaySpeed(1.0f)
@@ -80,6 +81,7 @@ public:
 	bool allowAircraftToLeaveMap;    // determines if gunships are allowed to leave map boundaries
 	bool allowPushingEnemyUnits;     // determines if enemy (ground-)units can be pushed during collisions
 	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
+	bool allowUnitCollisionDamage;   // determines if units take damage from (skidding) collisions
 
 	// Build behaviour
 	/// Should constructions without builders decay?
