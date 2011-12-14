@@ -6,8 +6,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <hash_map>
-#include <hash_set>
 #include "System/Input/InputHandler.h"
 
 #include "lib/tuio/TuioClient.h"

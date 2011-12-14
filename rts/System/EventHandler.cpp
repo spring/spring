@@ -34,7 +34,7 @@ void CEventHandler::SetupEvent(const string& eName,
 /******************************************************************************/
 /******************************************************************************/
 
-CEventHandler::CEventHandler(): refreshedReceivers()
+CEventHandler::CEventHandler(): activeReceivers(), refreshedReceivers()
 {
 	mouseOwner = NULL;
 
@@ -110,10 +110,10 @@ CEventHandler::CEventHandler(): refreshedReceivers()
 	SETUP_EVENT(MouseRelease,   MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(MouseWheel,     MANAGED_BIT | UNSYNCED_BIT);
 
-	SETUP_EVENT(AddCursor,      MANAGED_BIT | UNSYNCED_BIT);
-	SETUP_EVENT(UpdateCursor,   MANAGED_BIT | UNSYNCED_BIT);
-	SETUP_EVENT(RemoveCursor,   MANAGED_BIT | UNSYNCED_BIT);
-	SETUP_EVENT(RefreshCursors, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(AddTouch,      MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(UpdateTouch,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RemoveTouch,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RefreshTouches, MANAGED_BIT | UNSYNCED_BIT);
 
 	SETUP_EVENT(JoystickEvent,  MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(IsAbove,        MANAGED_BIT | UNSYNCED_BIT);
@@ -706,13 +706,12 @@ bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 
 bool CEventHandler::addTuioCursor(TUIO::TuioCursor *tcur)
 {
+    EVENTHANDLER_CHECK(AddTouch, false);
     // reverse order, user has the override
 
-	const int count = listAddCursor.size();
-
 	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listAddCursor[i];
-		if (ec->AddCursor(tcur)) {
+		CEventClient* ec = listAddTouch[i];
+		if (ec->AddTouch(tcur)) {
 			if (!activeReceivers[tcur->getCursorID()])
 				activeReceivers[tcur->getCursorID()] = ec;
 			return true;
@@ -726,7 +725,7 @@ void CEventHandler::updateTuioCursor(TUIO::TuioCursor *tcur)
     CEventClient* recv = activeReceivers[tcur->getCursorID()];
     if(recv)
     {
-        recv->UpdateCursor(tcur);
+        recv->UpdateTouch(tcur);
     }
 }
 
@@ -735,14 +734,14 @@ void CEventHandler::removeTuioCursor(TUIO::TuioCursor *tcur)
     CEventClient* recv = activeReceivers[tcur->getCursorID()];
     if(recv)
     {
-        recv->RemoveCursor(tcur);
+        recv->RemoveTouch(tcur);
         activeReceivers.erase(tcur->getCursorID());
     }
 }
 
 void CEventHandler::tuioRefresh(TUIO::TuioTime ftime)
 {
-    __gnu_cxx::hash_map<int, CEventClient*>::const_iterator it;
+    std::map<int, CEventClient*>::const_iterator it;
 
     refreshedReceivers.clear();
 
@@ -752,7 +751,7 @@ void CEventHandler::tuioRefresh(TUIO::TuioTime ftime)
 
         if(refreshedReceivers.find(recv) == refreshedReceivers.end())
         {
-            recv->RefreshCursors(ftime);
+            recv->RefreshTouches(ftime);
             refreshedReceivers.insert(recv);
         }
     }

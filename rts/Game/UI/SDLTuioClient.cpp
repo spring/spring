@@ -35,22 +35,22 @@ bool SDLTuioClient::ProcessPacketEvents(const SDL_Event& event)
     {
         if(event.user.data2 == (void*)this)
         {
-            osc::ReceivedPacket *p = (osc::ReceivedPacket*) (event.user.data1);
+            osc::ReceivedPacket p = osc::ReceivedPacket((const char*)event.user.data1, event.user.code);
 
             try
             {
-                if(p->IsBundle())
-                    this->ProcessBundle( osc::ReceivedBundle(*p));
+                if(p.IsBundle())
+                    this->ProcessBundle( osc::ReceivedBundle(p));
                 else
-                    this->ProcessMessage( osc::ReceivedMessage(*p));
+                    this->ProcessMessage( osc::ReceivedMessage(p));
             }
             catch (osc::MalformedBundleException& e)
             {
                 std::cerr << "malformed OSC bundle: " << e.what() << std::endl;
             }
 
-            free((void*)(const_cast< char * >(p->Contents())));
-            delete p;
+            //free((void*)(const_cast< char * >(p->Contents())));
+            free(event.user.data1);
         }
     }
     return false;
@@ -65,10 +65,12 @@ void SDLTuioClient::ProcessPacket( const char *data, int size, const IpEndpointN
 	{
         char *copiedData = (char*) malloc(size);
         memcpy(copiedData,data,size);
-        osc::ReceivedPacket *p = new osc::ReceivedPacket( copiedData, size );
+        //osc::ReceivedPacket *p = new osc::ReceivedPacket( copiedData, size );
 
-        packetEvent.user.data1 = (void*)p;
+        packetEvent.user.data1 = (void*)copiedData;
         packetEvent.user.data2 = (void*)this;
+
+        packetEvent.user.code = size;
 
         packetEvent.user.type = SDL_TUIOEVENT;
 

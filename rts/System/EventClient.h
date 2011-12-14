@@ -169,10 +169,10 @@ class CEventClient
 		virtual int  MouseRelease(int x, int y, int button); // FIXME - bool / void?
 		virtual bool MouseWheel(bool up, float value);
 
-		virtual bool AddCursor(TUIO::TuioCursor* tcur);
-		virtual void UpdateCursor(TUIO::TuioCursor* tcur);
-		virtual void RemoveCursor(TUIO::TuioCursor* tcur);
-		virtual void RefreshCursors(TUIO::TuioTime ftime);
+		virtual bool AddTouch(TUIO::TuioCursor* tcur);
+		virtual void UpdateTouch(TUIO::TuioCursor* tcur);
+		virtual void RemoveTouch(TUIO::TuioCursor* tcur);
+		virtual void RefreshTouches(TUIO::TuioTime ftime);
 
 
 

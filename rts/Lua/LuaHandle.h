@@ -212,10 +212,10 @@ class CLuaHandle : public CEventClient
 		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
 		bool MouseWheel(bool up, float value);
 
-        bool AddCursor(TUIO::TuioCursor* tcur);
-        void UpdateCursor(TUIO::TuioCursor* tcur);
-        void RemoveCursor(TUIO::TuioCursor* tcur);
-        void RefreshCursors(TUIO::TuioTime ftime);
+        bool AddTouch(TUIO::TuioCursor* tcur);
+        void UpdateTouch(TUIO::TuioCursor* tcur);
+        void RemoveTouch(TUIO::TuioCursor* tcur);
+        void RefreshTouches(TUIO::TuioTime ftime);
 
 		bool JoystickEvent(const std::string& event, int val1, int val2);
 		bool IsAbove(int x, int y);
@@ -432,7 +432,7 @@ class CLuaHandle : public CEventClient
 		friend class CLuaUnitScript;
 	private:
 		struct staticLuaContextData {
-			staticLuaContextData() : activeFullRead(false), activeReadAllyTeam(CEventClient::NoAccessTeam), 
+			staticLuaContextData() : activeFullRead(false), activeReadAllyTeam(CEventClient::NoAccessTeam),
 				activeHandle(NULL), drawingEnabled(false) {}
 			bool activeFullRead;
 			int  activeReadAllyTeam;

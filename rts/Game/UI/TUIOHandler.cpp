@@ -137,7 +137,7 @@ void CTuioHandler::refresh(TUIO::TuioTime ftime)
 {
     //logOutput.Print("refresh:");
     refreshedReceivers.clear();
-    __gnu_cxx::hash_map<int, CInputReceiver*>::const_iterator it;
+    std::map<int, CInputReceiver*>::const_iterator it;
 
 
     for(it = activeReceivers.begin(); it != activeReceivers.end(); it++)

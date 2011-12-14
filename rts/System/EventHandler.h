@@ -6,9 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <hash_map>
-#include <hash_set>
-
+#include <set>
 
 #include "System/EventClient.h"
 #include "System/EventBatchHandler.h"
@@ -20,11 +18,11 @@
 class CWeapon;
 struct Command;
 
-struct CEventClient_hash
+struct CEventClient_comp
 {
-    size_t operator()(const CEventClient *p) const
+    bool operator()(const CEventClient *a, const CEventClient *b) const
     {
-        return reinterpret_cast<size_t>(p) ;
+        return a < b;
     }
 };
 
@@ -257,8 +255,8 @@ class CEventHandler
 
 	private:
 		CEventClient* mouseOwner;
-		__gnu_cxx::hash_map<int, CEventClient*> activeReceivers;
-        __gnu_cxx::hash_set<CEventClient*, CEventClient_hash> refreshedReceivers;
+		std::map<int, CEventClient*> activeReceivers;
+        std::set<CEventClient*, CEventClient_comp> refreshedReceivers;
 
 	private:
 		EventMap eventMap;
@@ -350,10 +348,10 @@ class CEventHandler
 		EventClientList listMouseRelease;
 		EventClientList listMouseWheel;
 
-		EventClientList listAddCursor;
-		EventClientList listUpdateCursor;
-		EventClientList listRemoveCursor;
-		EventClientList listRefreshCursors;
+		EventClientList listAddTouch;
+		EventClientList listUpdateTouch;
+		EventClientList listRemoveTouch;
+		EventClientList listRefreshTouches;
 
 		EventClientList listJoystickEvent;
 		EventClientList listIsAbove;
