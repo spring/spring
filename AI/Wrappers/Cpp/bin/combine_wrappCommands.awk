@@ -212,6 +212,8 @@ function printNativeFP2F() {
 			print("") >> outFile_nc;
 
 			print("\t" "struct S" name "Command commandData;") >> outFile_nc;
+			print("\t" "int internal_ret;") >> outFile_nc;
+
 			for (m=firstMember; m < cmdsNumMembers[cmdIndex]; m++) {
 				memName   = cmdsMembers_name[cmdIndex, m];
 				memType_c = cmdsMembers_type_c[cmdIndex, m];
@@ -224,7 +226,7 @@ function printNativeFP2F() {
 			}
 			print("") >> outFile_nc;
 
-			print("\t" "int internal_ret = id_clb[skirmishAIId]->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
+			print("\t" "internal_ret = id_clb[skirmishAIId]->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
 			print("") >> outFile_nc;
 
 			if (retParam != "") {
@@ -251,7 +253,7 @@ function printNativeFP2F() {
 				print("EXPORT(" retType ") " outName "(" paramList_unit ") {" commentEol) >> outFile_nc;
 				print("") >> outFile_nc;
 				print("\t" "const int groupId = -1;") >> outFile_nc;
-				print("\t" "return _" outName "(" paramListNoTypes ");") >> outFile_nc;
+				print("\t" "return internal_" outName "(" paramListNoTypes ");") >> outFile_nc;
 				print("}") >> outFile_nc;
 				print("") >> outFile_nc;
 	
@@ -259,7 +261,7 @@ function printNativeFP2F() {
 				print("EXPORT(" retType ") " outName_group "(" paramList_group ") {" commentEol) >> outFile_nc;
 				print("") >> outFile_nc;
 				print("\t" "const int unitId = -1;") >> outFile_nc;
-				print("\t" "return _" outName "(" paramListNoTypes ");") >> outFile_nc;
+				print("\t" "return internal_" outName "(" paramListNoTypes ");") >> outFile_nc;
 				print("}") >> outFile_nc;
 			}
 		} else {

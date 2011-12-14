@@ -93,15 +93,31 @@ static inline bool StringEndsWith(const std::string& str, const std::string& pos
 }
 
 /**
- * @brief Safely delete object by first setting pointer to NULL and then deleting.
- * This way it is guaranteed other objects can not access the object through the
- * pointer while the object is running it's destructor.
+ * @brief Safe alternative to "delete obj;"
+ * Safely deletes an object, by first setting the pointer to NULL and then
+ * deleting.
+ * This way, it is guaranteed that other objects can not access the object
+ * through the pointer while the object is running its destructor.
  */
 template<class T> void SafeDelete(T& a)
 {
 	T tmp = a;
 	a = NULL;
 	delete tmp;
+}
+
+/**
+ * @brief Safe alternative to "delete [] obj;"
+ * Safely deletes an array object, by first setting the pointer to NULL and then
+ * deleting.
+ * This way, it is guaranteed that other objects can not access the object
+ * through the pointer while the object is running its destructor.
+ */
+template<class T> void SafeDeleteArray(T*& a)
+{
+	T* tmp = a;
+	a = NULL;
+	delete [] tmp;
 }
 
 namespace proc {

@@ -389,18 +389,16 @@ inline bool CLuaUnitScript::RunCallIn(int id, int inArgs, int outArgs)
 
 int CLuaUnitScript::RunQueryCallIn(int fn)
 {
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return -1;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 1);
 
 	PushFunction(fn);
 
-	if (!RunCallIn(fn, 0, 1)) {
+	if (!RunCallIn(fn, 0, 1))
 		return -1;
-	}
 
 	const int scriptNum = (int)PopNumber(fn, 0) - 1;
 
@@ -418,9 +416,8 @@ int CLuaUnitScript::RunQueryCallIn(int fn)
 
 int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
 {
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return -1;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
@@ -428,9 +425,8 @@ int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
 	PushFunction(fn);
 	lua_pushnumber(L, arg1);
 
-	if (!RunCallIn(fn, 1, 1)) {
+	if (!RunCallIn(fn, 1, 1))
 		return -1;
-	}
 
 	const int scriptNum = (int)PopNumber(fn, 0) - 1;
 
@@ -448,9 +444,8 @@ int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
 
 void CLuaUnitScript::Call(int fn, float arg1)
 {
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
@@ -464,9 +459,8 @@ void CLuaUnitScript::Call(int fn, float arg1)
 
 void CLuaUnitScript::Call(int fn, float arg1, float arg2)
 {
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
@@ -481,9 +475,8 @@ void CLuaUnitScript::Call(int fn, float arg1, float arg2)
 
 void CLuaUnitScript::Call(int fn, float arg1, float arg2, float arg3)
 {
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
@@ -526,9 +519,8 @@ void CLuaUnitScript::Killed()
 
 	inKilled = true;
 
-	if (!RunCallIn(fn, 2, 1)) {
+	if (!RunCallIn(fn, 2, 1))
 		return;
-	}
 
 	// If Killed returns an integer, it signals it hasn't started a thread.
 	// In this case the return value is the delayedWreckLevel.
@@ -580,9 +572,8 @@ void CLuaUnitScript::HitByWeapon(const float3& hitDir, int weaponDefId, float& i
 {
 	const int fn = LUAFN_HitByWeapon;
 
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return;
-	}
 
 	//FIXME: change COB to get hitDir in unit space too, instead of world space?
 	const float c = cos(unit->heading * TAANG2RAD);
@@ -600,9 +591,8 @@ void CLuaUnitScript::HitByWeapon(const float3& hitDir, int weaponDefId, float& i
 	lua_pushnumber(L, weaponDefId);
 	lua_pushnumber(L, inout_damage);
 
-	if (!RunCallIn(fn, 4, 1)) {
+	if (!RunCallIn(fn, 4, 1))
 		return;
-	}
 
 	if (lua_israwnumber(L, -1)) {
 		inout_damage = lua_tonumber(L, -1);
@@ -622,9 +612,8 @@ void CLuaUnitScript::SetSFXOccupy(int curTerrainType)
 {
 	const int fn = LUAFN_SetSFXOccupy;
 
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
@@ -640,18 +629,16 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 {
 	const int fn = LUAFN_QueryLandingPads;
 
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
 
 	PushFunction(fn);
 
-	if (!RunCallIn(fn, 0, 1)) {
+	if (!RunCallIn(fn, 0, 1))
 		return;
-	}
 
 	if (lua_istable(L, -1)) {
 		int n = 1;
@@ -699,9 +686,8 @@ void CLuaUnitScript::TransportDrop(const CUnit* unit, const float3& pos)
 {
 	const int fn = LUAFN_TransportDrop;
 
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
@@ -769,9 +755,8 @@ bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool user
 {
 	const int fn = LUAFN_BlockShot;
 
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return false;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
@@ -781,9 +766,8 @@ bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool user
 	PushUnit(targetUnit);
 	lua_pushboolean(L, userTarget);
 
-	if (!RunCallIn(fn, 3, 1)) {
+	if (!RunCallIn(fn, 3, 1))
 		return false;
-	}
 
 	return PopBoolean(fn, false);
 }
@@ -793,9 +777,8 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 {
 	const int fn = LUAFN_TargetWeight;
 
-	if (!HasFunction(fn)) {
+	if (!HasFunction(fn))
 		return 1.0f;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
@@ -804,9 +787,8 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 	lua_pushnumber(L, weaponNum + 1);
 	PushUnit(targetUnit);
 
-	if (!RunCallIn(fn, 2, 1)) {
+	if (!RunCallIn(fn, 2, 1))
 		return 1.0f;
-	}
 
 	return PopNumber(fn, 1.0f);
 }

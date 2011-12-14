@@ -52,7 +52,7 @@ CFactory::CFactory():
 	curBuildDef(NULL),
 	curBuild(NULL),
 	nextBuildUnitDefID(-1),
-	lastBuildUpdateFrame(-1000),
+	lastBuildUpdateFrame(-1),
 	finishedBuildFunc(NULL)
 {
 }
@@ -113,6 +113,10 @@ void CFactory::Update()
 			script->Activate();
 			groundBlockingObjectMap->OpenBlockingYard(this, curYardMap);
 			opening = true;
+
+			// make sure the idle-check does not immediately trigger
+			// (scripts have 7 seconds to set inBuildStance to true)
+			lastBuildUpdateFrame = gs->frameNum;
 		}
 
 		if (inBuildStance && !stunned) {
@@ -125,13 +129,11 @@ void CFactory::Update()
 		FinishBuild(curBuild);
 	}
 
-	const bool idle =
-		(curBuild == NULL) &&
-		(gs->frameNum >= (lastBuildUpdateFrame + 200)) &&
-		groundBlockingObjectMap->CanCloseYard(this);
+	const bool mayClose = (!stunned && opening && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
+	const bool canClose = (curBuild == NULL && groundBlockingObjectMap->CanCloseYard(this));
 
-	if (!stunned && opening && idle) {
-		// close the factory after 200 frames of inactivity
+	if (mayClose && canClose) {
+		// close the factory after inactivity
 		groundBlockingObjectMap->CloseBlockingYard(this, curYardMap);
 		opening = false;
 		script->Deactivate();
@@ -258,13 +260,6 @@ bool CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, Fi
 	finishedBuildCommand = buildCmd;
 	curBuildDef = buildeeDef;
 	nextBuildUnitDefID = buildeeDef->id;
-
-	if (!opening && !stunned) {
-		script->Activate();
-		groundBlockingObjectMap->OpenBlockingYard(this, curYardMap);
-		opening = true;
-	}
-
 	return true;
 }
 

@@ -7,6 +7,9 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
+#ifndef AIDEF_H
+#define AIDEF_H
+
 #include <list>
 #include <vector>
 #include <stdio.h>
@@ -42,9 +45,6 @@ using namespace springLegacyAI;
 void ReplaceExtension(const char *n, char *dst, int s, const char *ext);
 /// Converts a string to one that can be used in a file name (eg. "Abc.123 $%^*" -> "Abc.123_____")
 std::string MakeFileSystemCompatible(const std::string& str);
-
-#ifndef AIDEF_H
-#define AIDEF_H
 
 #define AAI_VERSION aiexport_getVersion()
 #define MAP_CACHE_VERSION "MAP_DATA_0_89"

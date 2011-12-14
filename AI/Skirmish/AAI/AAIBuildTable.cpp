@@ -170,39 +170,39 @@ AAIBuildTable::~AAIBuildTable(void)
 	if(aai_instances == 0)
 	{
 
-		delete [] unitList;
+		SafeDeleteArray(unitList);
 
 		for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
 		{
-			delete [] units_of_category[i];
+			SafeDeleteArray(units_of_category[i]);
 
-			delete [] avg_cost[i];
-			delete [] avg_buildtime[i];
-			delete [] avg_value[i];
-			delete [] max_cost[i];
-			delete [] max_buildtime[i];
-			delete [] max_value[i];
-			delete [] min_cost[i];
-			delete [] min_buildtime[i];
-			delete [] min_value[i];
+			SafeDeleteArray(avg_cost[i]);
+			SafeDeleteArray(avg_buildtime[i]);
+			SafeDeleteArray(avg_value[i]);
+			SafeDeleteArray(max_cost[i]);
+			SafeDeleteArray(max_buildtime[i]);
+			SafeDeleteArray(max_value[i]);
+			SafeDeleteArray(min_cost[i]);
+			SafeDeleteArray(min_buildtime[i]);
+			SafeDeleteArray(min_value[i]);
 		}
 
-		/*delete [] max_builder_buildtime;
-		delete [] max_builder_cost;
-		delete [] max_builder_buildspeed;*/
+		/*SafeDeleteArray(max_builder_buildtime);
+		SafeDeleteArray(max_builder_cost);
+		SafeDeleteArray(max_builder_buildspeed);*/
 
 		for(int i = 0; i < combat_categories; ++i)
 		{
-			delete [] avg_speed[i];
-			delete [] max_speed[i];
-			delete [] min_speed[i];
-			delete [] group_speed[i];
+			SafeDeleteArray(avg_speed[i]);
+			SafeDeleteArray(max_speed[i]);
+			SafeDeleteArray(min_speed[i]);
+			SafeDeleteArray(group_speed[i]);
 		}
 
-		delete [] avg_speed;
-		delete [] max_speed;
-		delete [] min_speed;
-		delete [] group_speed;
+		SafeDeleteArray(avg_speed);
+		SafeDeleteArray(max_speed);
+		SafeDeleteArray(min_speed);
+		SafeDeleteArray(group_speed);
 
 		attacked_by_category_learned.clear();
 		attacked_by_category_current.clear();
