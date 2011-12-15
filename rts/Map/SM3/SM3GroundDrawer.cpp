@@ -18,7 +18,6 @@
 #include "System/Log/ILog.h"
 
 #include <SDL_keysym.h>
-extern unsigned char* keys;
 
 CONFIG(int, SM3TerrainDetail).defaultValue(200);
 
