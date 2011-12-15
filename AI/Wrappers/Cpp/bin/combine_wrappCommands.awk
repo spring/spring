@@ -205,7 +205,7 @@ function printNativeFP2F() {
 			print("") >> outFile_nc;
 			if (match(fullName, /^Unit_/)) {
 				# inner version:
-				print("static " retType " _" outName "(" paramList ") {") >> outFile_nc;
+				print("static " retType " internal_" outName "(" paramList ") {") >> outFile_nc;
 			} else {
 				print("EXPORT(" retType ") " outName "(" paramList ") {") >> outFile_nc;
 			}
