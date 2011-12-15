@@ -127,7 +127,7 @@ void CRoamMeshDrawer::Update()
 	// Check if a retessellation is needed
 #define RETESSELLATE_MODE 1
 	bool retessellate = false;
-	{ SCOPED_TIMER("ROAM::ComputeVariance");
+	{ //SCOPED_TIMER("ROAM::ComputeVariance");
 		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) {
 			Patch& p = m_Patches[i];
 		#if (RETESSELLATE_MODE == 2)
@@ -168,14 +168,14 @@ void CRoamMeshDrawer::Update()
 
 	// Retessellate
 	if (retessellate) {
-		{ SCOPED_TIMER("ROAM::Tessellate");
+		{ //SCOPED_TIMER("ROAM::Tessellate");
 			//FIXME this tessellates with current camera + viewRadius
 			//  so it doesn't retessellate patches that are e.g. only vis. in the shadow frustum
 			Reset();
 			Tessellate(cam->pos, smfGroundDrawer->GetGroundDetail());
 		}
 
-		{ SCOPED_TIMER("ROAM::GenerateIndexArray");
+		{ //SCOPED_TIMER("ROAM::GenerateIndexArray");
 			#pragma omp parallel for
 			for (int i = m_Patches.size() - 1; i >= 0; --i) {
 				Patch* it = &m_Patches[i];
@@ -185,7 +185,7 @@ void CRoamMeshDrawer::Update()
 			}
 		}
 
-		{ SCOPED_TIMER("ROAM::Upload");
+		{ //SCOPED_TIMER("ROAM::Upload");
 			for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
 				if (it->IsVisible()) {
 					it->Upload();
