@@ -835,8 +835,6 @@ void CStrafeAirMoveType::UpdateLanding()
 		if (reservedLandingPos.x > 0.0f) {
 			const float3 originalPos = pos;
 
-			reservedLandingPos.y += wantedHeight;
-
 			owner->Move3D(reservedLandingPos, false);
 			owner->physicalState = CSolidObject::OnGround;
 			owner->Block();
@@ -852,7 +850,7 @@ void CStrafeAirMoveType::UpdateLanding()
 		}
 	}
 
-	// update our speed
+
 	float3 reservedLandingPosDir = reservedLandingPos - pos;
 
 	const float reservedLandingPosDist = reservedLandingPosDir.Length();
@@ -860,21 +858,20 @@ void CStrafeAirMoveType::UpdateLanding()
 		(speedf > 0.0f && maxAcc > 0.0f)?
 		(reservedLandingPosDist / speedf * 1.8f * maxAcc):
 		0.0f;
-	const float wsf = std::min(maxSpeedDef, landingSpeed);
 
-	if (reservedLandingPosDist > 0.0f) {
+	if (reservedLandingPosDist > 0.0f)
 		reservedLandingPosDir /= reservedLandingPosDist;
-	}
 
-	const float3 wantedSpeed = reservedLandingPosDir * wsf;
-	const float3 delta = wantedSpeed - speed;
-	const float dl = delta.Length();
+	const float3 wantedSpeed = reservedLandingPosDir * std::min(maxSpeedDef, landingSpeed);
+	const float3 deltaSpeed = wantedSpeed - speed;
+	const float deltaSpeedScale = deltaSpeed.Length();
 
-	if (dl < maxAcc * 3.0f) {
+	// update our speed
+	if (deltaSpeedScale < (maxAcc * 3.0f)) {
 		speed = wantedSpeed;
 	} else {
-		if (dl > 0.0f && maxAcc > 0.0f) {
-			speed += delta / dl * maxAcc * 3.0f;
+		if (deltaSpeedScale > 0.0f && maxAcc > 0.0f) {
+			speed += ((deltaSpeed / deltaSpeedScale) * (maxAcc * 3.0f));
 		}
 	}
 
