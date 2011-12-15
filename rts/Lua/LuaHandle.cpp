@@ -2194,13 +2194,6 @@ void CLuaHandle::GameProgress(int frameNum )
 /******************************************************************************/
 /******************************************************************************/
 
-static inline bool CheckModUICtrl()
-{
-	return CLuaHandle::GetModUICtrl() ||
-		CLuaHandle::GetActiveHandle()->GetUserMode();
-}
-
-
 
 bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 {

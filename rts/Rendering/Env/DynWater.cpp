@@ -47,7 +47,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DYN_WATER)
 */
 CDynWater::CDynWater()
 	: dwGroundRefractVP(0)
-	, dwGroundReflectIVP(0) 
+	, dwGroundReflectIVP(0)
 	, camPosX(0)
 	, camPosZ(0)
 {
@@ -823,10 +823,6 @@ void CDynWater::DrawHeightTex()
 #define WSQUARE_SIZE W_SIZE
 
 static CVertexArray* va;
-static inline void DrawVertexA(int x, int y)
-{
-	va->AddVertex0(float3(x*WSQUARE_SIZE, 0, y*WSQUARE_SIZE));
-}
 
 static inline void DrawVertexAQ(int x, int y)
 {
