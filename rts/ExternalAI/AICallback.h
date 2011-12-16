@@ -244,7 +244,7 @@ public:
 	// false if a unit cannot currently be created
 	bool CanBuildUnit(int unitDefID);
 
-	virtual const float3* GetStartPos();
+	const float3* GetStartPos();
 
 	// NOTES:
 	// 1. 'data' can be NULL to skip passing in a string

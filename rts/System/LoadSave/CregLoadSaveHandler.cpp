@@ -42,7 +42,7 @@ CCregLoadSaveHandler::~CCregLoadSaveHandler()
 
 class CGameStateCollector
 {
-	CR_DECLARE(CGameStateCollector);
+	CR_DECLARE_STRUCT(CGameStateCollector);
 
 public:
 	CGameStateCollector() {}
