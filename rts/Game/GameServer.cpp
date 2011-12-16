@@ -1731,7 +1731,7 @@ void CGameServer::ServerReadNet()
 
 		std::map<unsigned char, GameParticipant::PlayerLinkData> &pld = player.linkData;
 		boost::shared_ptr<const RawPacket> packet;
-		while (packet = plink->GetData()) {  // relay all the packets to separate connections for the player and AIs
+		while ((packet = plink->GetData())) {  // relay all the packets to separate connections for the player and AIs
 			unsigned char aiID = MAX_AIS;
 			int cID = -1;
 			if (packet->length >= 5) {
