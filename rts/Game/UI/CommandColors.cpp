@@ -341,7 +341,7 @@ const CCommandColors::DrawData*
 		return NULL;
 	} else {
 		return &(it->second);
-	};
+	}
 }
 
 
