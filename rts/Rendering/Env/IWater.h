@@ -7,7 +7,7 @@
 #include "Sim/Projectiles/ExplosionListener.h"
 class CGame;
 
-class IWater : public CExplosionListener
+class IWater : public IExplosionListener
 {
 public:
 	enum {
