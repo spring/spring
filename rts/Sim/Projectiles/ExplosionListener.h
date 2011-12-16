@@ -41,6 +41,8 @@ public:
 	 * @see EventClient#Explosion
 	 */
 	virtual void ExplosionOccurred(const CExplosionEvent& event) = 0;
+protected:
+	~CExplosionListener() {}
 };
 
 

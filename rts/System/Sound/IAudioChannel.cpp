@@ -10,3 +10,7 @@ IAudioChannel::IAudioChannel()
 	, maxConcurrentSources(1024)
 {
 }
+
+IAudioChannel::~IAudioChannel()
+{
+}
