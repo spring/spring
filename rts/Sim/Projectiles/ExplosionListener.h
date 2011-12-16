@@ -33,7 +33,7 @@ private:
 };
 
 
-class CExplosionListener
+class IExplosionListener
 {
 public:
 	/**
@@ -42,7 +42,7 @@ public:
 	 */
 	virtual void ExplosionOccurred(const CExplosionEvent& event) = 0;
 protected:
-	~CExplosionListener() {}
+	~IExplosionListener() {}
 };
 
 
@@ -52,8 +52,8 @@ protected:
 class CExplosionCreator
 {
 public:
-	void AddExplosionListener(CExplosionListener* listener);
-	void RemoveExplosionListener(CExplosionListener* listener);
+	void AddExplosionListener(IExplosionListener* listener);
+	void RemoveExplosionListener(IExplosionListener* listener);
 
 protected:
 	/**
@@ -62,7 +62,7 @@ protected:
 	void FireExplosionEvent(const CExplosionEvent& event);
 
 private:
-	std::set<CExplosionListener*> explosionListeners;
+	std::set<IExplosionListener*> explosionListeners;
 };
 
 #endif /* _EXPLOSION_LISTENER_H */
