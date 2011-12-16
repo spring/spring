@@ -7,19 +7,19 @@
 #include <set>
 
 
-void CExplosionCreator::AddExplosionListener(CExplosionListener* listener)
+void CExplosionCreator::AddExplosionListener(IExplosionListener* listener)
 {
 	explosionListeners.insert(listener);
 }
 
-void CExplosionCreator::RemoveExplosionListener(CExplosionListener* listener)
+void CExplosionCreator::RemoveExplosionListener(IExplosionListener* listener)
 {
 	explosionListeners.erase(listener);
 }
 
 void CExplosionCreator::FireExplosionEvent(const CExplosionEvent& event)
 {
-	std::set<CExplosionListener*>::const_iterator expList;
+	std::set<IExplosionListener*>::const_iterator expList;
 	for (expList = explosionListeners.begin(); expList != explosionListeners.end(); ++expList) {
 		(*expList)->ExplosionOccurred(event);
 	}

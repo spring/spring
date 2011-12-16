@@ -20,6 +20,7 @@ class CWorldObject;
 class IAudioChannel {
 protected:
 	IAudioChannel();
+	virtual ~IAudioChannel();
 
 public:
 	virtual void Enable(bool newState) = 0;
@@ -52,7 +53,7 @@ public:
 
 	/**
 	 * @brief Start playing an ogg-file
-	 * 
+	 *
 	 * NOT threadsafe, unlike the other functions!
 	 * If another file is playing, it will stop it and play the new one instead.
 	 */
@@ -60,7 +61,7 @@ public:
 
 	/**
 	 * @brief Stop playback
-	 * 
+	 *
 	 * Don't call this if you just want to play another file (for performance).
 	 */
 	virtual void StreamStop() = 0;

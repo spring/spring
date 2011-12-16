@@ -28,6 +28,7 @@ CONFIG(int, SM3MaxTextureStages).defaultValue(10);
 
 struct Sm3LoadCB: terrain::ILoadCallback
 {
+	virtual ~Sm3LoadCB() {}
 	void Write(const char* msg) { LOG("%s", msg); }
 };
 

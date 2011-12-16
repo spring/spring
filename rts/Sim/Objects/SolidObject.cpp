@@ -19,7 +19,7 @@ CR_BIND_DERIVED(CSolidObject, CWorldObject, );
 CR_REG_METADATA(CSolidObject,
 (
 	CR_MEMBER(mass),
-	CR_MEMBER(crushStrength),
+	CR_MEMBER(crushImpedance),
 
 	CR_MEMBER(blocking),
 	CR_MEMBER(crushable),
@@ -66,7 +66,7 @@ CR_REG_METADATA(CSolidObject,
 
 CSolidObject::CSolidObject():
 	mass(DEFAULT_MASS),
-	crushStrength(0.0f),
+	crushImpedance(0.0f),
 	blocking(false),
 	crushable(false),
 	immobile(false),

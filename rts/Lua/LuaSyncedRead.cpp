@@ -528,22 +528,6 @@ static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 
 /******************************************************************************/
 
-static inline CPlayer* ParsePlayer(lua_State* L, const char* caller, int index)
-{
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "Bad playerID type in %s()\n", caller);
-	}
-	const int playerID = lua_toint(L, index);
-	if (!playerHandler->IsValidPlayer(playerID)) {
-		luaL_error(L, "Bad playerID in %s\n", caller);
-	}
-	CPlayer* player = playerHandler->Player(playerID);
-	if (player == NULL) {
-		luaL_error(L, "Bad player in %s\n", caller);
-	}
-	return player;
-}
-
 
 static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 {
@@ -555,23 +539,6 @@ static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Bad teamID in %s\n", caller);
 	}
 	return teamHandler->Team(teamID);
-}
-
-
-static inline int ParseTeamID(lua_State* L, const char* caller, int index)
-{
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "Bad teamID type in %s()\n", caller);
-	}
-	const int teamID = lua_toint(L, index);
-	if (!teamHandler->IsValidTeam(teamID)) {
-		luaL_error(L, "Bad teamID in %s\n", caller);
-	}
-	CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
-		luaL_error(L, "Bad teamID in %s\n", caller);
-	}
-	return teamID;
 }
 
 

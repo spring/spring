@@ -148,13 +148,14 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 				owner->physicalState = CSolidObject::OnGround;
 				owner->Block();
 			}
+			break;
 		case AIRCRAFT_LANDING:
 			owner->Deactivate();
 			break;
 		case AIRCRAFT_HOVERING:
 			wantedHeight = orgWantedHeight;
 			wantedSpeed = ZeroVector;
-			// fall through...
+			// fall through
 		default:
 			owner->physicalState = CSolidObject::Flying;
 			owner->UnBlock();
