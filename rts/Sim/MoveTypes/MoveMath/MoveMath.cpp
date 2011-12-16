@@ -223,8 +223,12 @@ bool CMoveMath::IsNonBlocking(const MoveData& colliderMD, const CSolidObject* co
 	// defs aren't tied to any)
 	//
 	if (colliderMD.followGround) {
-		// FIXME: always false, values on RHS are invalid
-		return ((collideeGndAlt - collideeMdlHgt) > (colliderGndAlt + colliderMdlHgt));
+		const float collideeMinHgt = collideeGndAlt - collideeMdlHgt;
+		const float colliderMaxHgt = ground->GetHeightReal(collidee->pos.x, collidee->pos.z) + (SQUARE_SIZE >> 1);
+		// FIXME: would be the correct way, but values are invalid here
+		// const float colliderMaxHgt = colliderGndAlt + colliderMdlHgt;
+
+		return (collideeMinHgt > colliderMaxHgt);
 	} else {
 		const bool colliderIsSub = colliderMD.subMarine;
 		const bool collideeIsSub = (collidee->mobility != NULL && collidee->mobility->subMarine);
