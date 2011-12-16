@@ -150,7 +150,7 @@ bool CMoveMath::CrushResistant(const MoveData& colliderMD, const CSolidObject* c
 	if (!collidee->blocking) { return false; }
 	if (!collidee->crushable) { return true; }
 
-	return (collidee->crushStrength > colliderMD.crushStrength);
+	return (collidee->crushImpedance > colliderMD.crushStrength);
 }
 
 /*
@@ -180,9 +180,9 @@ bool CMoveMath::IsNonBlocking(const MoveData& colliderMD, const CSolidObject* co
 	// (the model parsers allow it for some reason), take
 	// absolute values to prevent them from being regarded
 	// as non-blocking
-	const float colliderMdlHgt = (collider != NULL)? math::fabs(collider->height): 0.0f;
+	const float colliderMdlHgt = (collider != NULL)? math::fabs(collider->height): 1e6;
 	const float collideeMdlHgt =                     math::fabs(collidee->height);
-	const float colliderGndAlt = (collider != NULL)? collider->pos.y: 0.0f;
+	const float colliderGndAlt = (collider != NULL)? collider->pos.y: 1e6f;
 	const float collideeGndAlt =                     collidee->pos.y;
 
 	if (collider != NULL) {
@@ -203,11 +203,12 @@ bool CMoveMath::IsNonBlocking(const MoveData& colliderMD, const CSolidObject* co
 		return false;
 	}
 
+	// (code below is only reachable from stand-alone PE invocations)
 	// remaining conditions under which obstacle does NOT block unit
 	//   1.
-	//      (unit is ground-following or not currently on water) and
-	//      obstacle's altitude minus its model height leaves a gap
-	//      between it and the ground large enough for unit to pass
+	//      unit is ground-following and obstacle's altitude
+	//      minus its model height leaves a gap between it and
+	//      the ground large enough for unit to pass
 	//   2.
 	//      unit is a submarine, obstacle sticks out above-water
 	//      (and not itself flagged as a submarine) *OR* unit is
@@ -221,8 +222,13 @@ bool CMoveMath::IsNonBlocking(const MoveData& colliderMD, const CSolidObject* co
 	// owner would need to be accessible (but the path-estimator
 	// defs aren't tied to any)
 	//
-	if (colliderMD.followGround || (colliderGndAlt > 0.0f)) {
-		return ((collideeGndAlt - collideeMdlHgt) > colliderMdlHgt);
+	if (colliderMD.followGround) {
+		const float collideeMinHgt = collideeGndAlt - collideeMdlHgt;
+		const float colliderMaxHgt = ground->GetHeightReal(collidee->pos.x, collidee->pos.z) + (SQUARE_SIZE >> 1);
+		// FIXME: would be the correct way, but values are invalid here
+		// const float colliderMaxHgt = colliderGndAlt + colliderMdlHgt;
+
+		return (collideeMinHgt > colliderMaxHgt);
 	} else {
 		const bool colliderIsSub = colliderMD.subMarine;
 		const bool collideeIsSub = (collidee->mobility != NULL && collidee->mobility->subMarine);

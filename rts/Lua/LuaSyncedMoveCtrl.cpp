@@ -104,20 +104,6 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 }
 
 
-static inline CUnit* ParseControlledUnit(lua_State* L,
-                                         const char* caller, int index)
-{
-	CUnit* unit = ParseUnit(L, caller, index);
-	if (unit == NULL) {
-		return NULL;
-	}
-	if (!unit->usingScriptMoveType) {
-		return NULL;
-	}
-	return unit;
-}
-
-
 static inline CScriptMoveType* ParseMoveType(lua_State* L,
                                              const char* caller, int index)
 {

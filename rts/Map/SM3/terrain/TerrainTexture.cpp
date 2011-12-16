@@ -20,7 +20,6 @@
 #include <algorithm>
 
 #include <SDL_keysym.h>
-extern unsigned char* keys;
 
 namespace terrain {
 
@@ -608,7 +607,7 @@ namespace terrain {
 #ifndef TERRAINRENDERERLIB_EXPORTS
 	void TerrainTexture::DebugPrint(IFontRenderer* fontRenderer)
 	{
-		if (fontRenderer != NULL) { 
+		if (fontRenderer != NULL) {
 			fontRenderer->printf(0, 75, 16.0f,
 					"Numpasses: %d, curshader=%d, texture units: %d, sundir(%1.3f,%1.3f,%1.3f)",
 					maxPasses, debugShader, shaderHandler->MaxTextureUnits(),

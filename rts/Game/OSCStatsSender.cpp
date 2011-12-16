@@ -148,35 +148,6 @@ unsigned int COSCStatsSender::GetDestinationPort() const {
 }
 
 
-bool COSCStatsSender::SendPropertiesInfo(const char* oscAdress, const char* fmt,
-		void* params[]) {
-
-	if (IsEnabled() && (oscAdress != NULL) && (fmt != NULL)) {
-		(*oscPacker) << osc::BeginBundleImmediate
-				<< osc::BeginMessage(oscAdress);
-		int param_size = strlen(fmt);
-		for (int i=0; i < param_size; ++i) {
-			const char type = fmt[i];
-			const void* param_p = params[i];
-			switch (type) {
-				case 'i': { (*oscPacker) << *((const int*) param_p); }
-				case 'f': { (*oscPacker) << *((const float*) param_p); }
-				case 's': { (*oscPacker) << *((const char**) param_p); }
-				case 'b': { (*oscPacker) << *((const unsigned char**) param_p); }
-				default: {
-					throw "Illegal OSC type used, has to be one of: i, f, s, b";
-				}
-			}
-		}
-		(*oscPacker) << osc::EndMessage << osc::EndBundle;
-
-		return SendOscBuffer();
-	} else {
-		return false;
-	}
-}
-
-
 void COSCStatsSender::UpdateDestination() {
 
 	if (network->destination == NULL) {

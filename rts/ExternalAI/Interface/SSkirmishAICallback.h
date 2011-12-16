@@ -424,12 +424,27 @@ struct SSkirmishAICallback {
 
 
 // BEGINN OBJECT Cheats
+	/**
+	 * Returns whether this AI may use active cheats.
+	 */
 	bool              (CALLING_CONV *Cheats_isEnabled)(int skirmishAIId);
 
+	/**
+	 * Set whether this AI may use active cheats.
+	 */
 	bool              (CALLING_CONV *Cheats_setEnabled)(int skirmishAIId, bool enable);
 
+	/**
+	 * Set whether this AI may receive cheat events.
+	 * When enabled, you would for example get informed when enemy units are
+	 * created, even without sensor coverage.
+	 */
 	bool              (CALLING_CONV *Cheats_setEventsEnabled)(int skirmishAIId, bool enabled);
 
+	/**
+	 * Returns whether cheats will desync if used by an AI.
+	 * @return always true, unless we are both the host and the only client.
+	 */
 	bool              (CALLING_CONV *Cheats_isOnlyPassive)(int skirmishAIId);
 
 // END OBJECT Cheats

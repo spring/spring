@@ -16,6 +16,7 @@ class IModelParser
 {
 public:
 	virtual S3DModel* Load(const std::string& name) = 0;
+	virtual ~IModelParser() {}
 };
 
 

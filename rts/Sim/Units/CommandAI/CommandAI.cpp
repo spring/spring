@@ -415,11 +415,12 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	const CSkirmishAIHandler::ids_t& saids = skirmishAIHandler.GetSkirmishAIsInTeam(owner->team);
 	const bool aiOrder = (!saids.empty());
 	const int& cmd_id = c.GetID();
-	
+
 	switch (cmd_id) {
 		case CMD_MANUALFIRE:
 			if (!ud->canManualFire)
 				return false;
+			// fall through
 
 		case CMD_ATTACK: {
 			if (!IsAttackCapable())
@@ -451,7 +452,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 					//     at positions outside LOS where UHM and SHM do not
 					//     match will not be broken)
 					//
-					
+
 					if (!aiOrder && math::fabs(cPos.y - gHeight) > SQUARE_SIZE) {
 						return false;
 					}

@@ -134,6 +134,8 @@ namespace
 			return instance;
 		}
 
+		virtual ~Filter() {}
+
 		/// Called immediately before the filter is used.
 		virtual void Prepare() {}
 

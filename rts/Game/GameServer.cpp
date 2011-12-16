@@ -1731,7 +1731,7 @@ void CGameServer::ServerReadNet()
 
 		std::map<unsigned char, GameParticipant::PlayerLinkData> &pld = player.linkData;
 		boost::shared_ptr<const RawPacket> packet;
-		while (packet = plink->GetData()) {  // relay all the packets to separate connections for the player and AIs
+		while ((packet = plink->GetData())) {  // relay all the packets to separate connections for the player and AIs
 			unsigned char aiID = MAX_AIS;
 			int cID = -1;
 			if (packet->length >= 5) {
@@ -2046,10 +2046,9 @@ void CGameServer::PushAction(const Action& action)
 				if ( tokens.size() > 3 ) {
 					team = atoi(tokens[3].c_str());
 				}
-				GameParticipant gp;
-					gp.name = name;
 				// note: this must only compare by name
-				std::vector<GameParticipant>::iterator participantIter = std::find(players.begin(), players.end(), gp);
+				std::vector<GameParticipant>::iterator participantIter =
+						std::find_if( players.begin(), players.end(), bind( &GameParticipant::name, _1 ) == name );
 
 				if (participantIter != players.end()) {
 					const GameParticipant::customOpts &opts = participantIter->GetAllValues();
@@ -2224,7 +2223,7 @@ void CGameServer::UpdateLoop()
 {
 	try {
 		Threading::SetThreadName("netcode");
-		
+
 		while (!quitServer) {
 			spring_sleep(spring_msecs(10));
 

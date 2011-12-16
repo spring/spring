@@ -113,7 +113,7 @@ struct BuildingGroundDecal {
 };
 
 
-class CGroundDecalHandler: public CEventClient, public CExplosionListener
+class CGroundDecalHandler: public CEventClient, public IExplosionListener
 {
 public:
 	CGroundDecalHandler();

@@ -551,6 +551,14 @@ void QTPFS::PathManager::ExecuteSearch(
 		#endif
 	}
 
+
+	// FIXME:
+	//     need to do this for IsBlocked* --> SquareIsBlocked --> IsNonBlocking, but
+	//     delayed execution means object handed to QueueSearch might now be dangling
+	// MoveData* md = moveinfo->moveData[pathType];
+	// md->tempOwner = path->GetObject();
+
+
 	// removes path from temp-paths, adds it to live-paths
 	if (search->Execute(searchStateOffset, numTerrainChanges)) {
 		search->Finalize(path);

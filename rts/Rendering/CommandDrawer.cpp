@@ -515,11 +515,11 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 				break;
 			}
 			case CMD_FIGHT: {
-				if (ci->params.size() != 1) {
+				if (ci->params.size() >= 3) {
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.fight);
-					break;
 				}
+				break;
 			}
 			case CMD_ATTACK:
 			case CMD_MANUALFIRE: {

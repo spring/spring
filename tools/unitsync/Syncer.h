@@ -12,7 +12,7 @@ public:
 	CSyncer();
 	~CSyncer();
 
-	virtual int ProcessUnits();
+	int ProcessUnits();
 
 	int GetUnitCount();
 	const std::string& GetUnitName(int unit);

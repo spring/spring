@@ -46,8 +46,6 @@ CLogOutput logOutput;
 static std::ofstream* filelog = NULL;
 static bool initialized = false;
 
-static const int BUFFER_SIZE = 2048;
-
 CLogOutput::CLogOutput()
 	: fileName("")
 	, filePath("")
