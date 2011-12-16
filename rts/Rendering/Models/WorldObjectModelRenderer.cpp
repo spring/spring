@@ -22,11 +22,11 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_WORLD_OBJECT_MODEL_RENDERER)
 IWorldObjectModelRenderer* IWorldObjectModelRenderer::GetInstance(int modelType)
 {
 	switch (modelType) {
-		case MODELTYPE_3DO: { return (new WorldObjectModelRenderer3DO()); } break;
-		case MODELTYPE_S3O: { return (new WorldObjectModelRendererS3O()); } break;
-		case MODELTYPE_OBJ: { return (new WorldObjectModelRendererOBJ()); } break;
-		case MODELTYPE_ASS: { return (new WorldObjectModelRendererASS()); } break;
-		default: { return (new IWorldObjectModelRenderer(MODELTYPE_OTHER)); } break;
+		case MODELTYPE_3DO: return (new WorldObjectModelRenderer3DO());
+		case MODELTYPE_S3O: return (new WorldObjectModelRendererS3O());
+		case MODELTYPE_OBJ: return (new WorldObjectModelRendererOBJ());
+		case MODELTYPE_ASS: return (new WorldObjectModelRendererASS());
+		default: return (new IWorldObjectModelRenderer(MODELTYPE_OTHER));
 	}
 }
 
@@ -78,7 +78,7 @@ void IWorldObjectModelRenderer::Draw()
 
 
 
-void IWorldObjectModelRenderer::DrawModels(const UnitSet& models) 
+void IWorldObjectModelRenderer::DrawModels(const UnitSet& models)
 {
 	for (UnitSetIt uIt = models.begin(); uIt != models.end(); ++uIt) {
 		DrawModel(*uIt);
@@ -150,7 +150,7 @@ void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 			if((*i).second.erase(const_cast<CFeature*>(f)))
 				numFeatures -= 1;
 
-			if ((*i).second.empty()) 
+			if ((*i).second.empty())
 				features.erase(TEX_TYPE(f));
 		}
 	}
@@ -161,7 +161,7 @@ void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 			if((*i).second.erase(const_cast<CFeature*>(f)))
 				numFeaturesSave -= 1;
 
-			if ((*i).second.empty()) 
+			if ((*i).second.empty())
 				featuresSave.erase(TEX_TYPE(f));
 		}
 	}
