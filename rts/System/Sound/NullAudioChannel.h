@@ -8,6 +8,7 @@
 
 class NullAudioChannel : public IAudioChannel {
 public:
+	void Update() {}
 	void Enable(bool newState) {}
 	void SetVolume(float newVolume) {}
 
