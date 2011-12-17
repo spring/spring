@@ -4,6 +4,7 @@
 
 #include "ALShared.h"
 #include "ISound.h"
+#include "SoundChannels.h"
 #include "SoundItem.h"
 #include "SoundLog.h"
 #include "SoundSource.h"
@@ -21,6 +22,29 @@ const size_t AudioChannel::MAX_STREAM_QUEUESIZE = 10;
 AudioChannel::AudioChannel()
 	: curStreamSrc(NULL)
 {
+	Channels::All.insert(this);
+}
+
+
+void AudioChannel::Update() {
+	boost::recursive_mutex::scoped_lock lck(chanMutex);
+
+	for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end();) {
+		CSoundSource* ss = it->first;
+
+		boost::recursive_mutex::scoped_lock lck(ss->sourceMutex);
+
+		if (ss->GetChannel() != this) {
+			SoundSourceFinished(ss);
+			if (ss->GetChannel() != this)
+				it = cur_sources.erase(it);
+			else
+				++it;
+		}
+		else {
+			++it;
+		}
+	}
 }
 
 
@@ -45,22 +69,36 @@ void AudioChannel::Enable(bool newState)
 	}
 }
 
+void AudioChannel::CheckCurrentSoundSourceFinished() {
+	boost::recursive_mutex::scoped_lock lck(chanMutex);
+
+	CSoundSource* ss = curStreamSrc;
+	if (ss != NULL) {
+		boost::recursive_mutex::scoped_lock lck(ss->sourceMutex);
+
+		if (ss->GetChannel() != this) {
+			SoundSourceFinished(ss);
+			if (ss->GetChannel() != this)
+				cur_sources.erase(ss);
+		}
+	}
+}
+
+
 
 void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 {
-	boost::recursive_mutex::scoped_lock lck(chanMutex);
-
 	if (curStreamSrc == sndSource) {
 		if (!streamQueue.empty()) {
+			if (curStreamSrc->GetChannel() != NULL) // (sndSource->GetChannel() != this) is a precondition for calling SoundSourceFinished
+				curStreamSrc = NULL; // release this sound source, it has been allocated by another channel
 			StreamQueueItem& next = streamQueue.back();
 			StreamPlay(next.fileName, next.volume, false);
 			streamQueue.pop_back();
 		} else {
-			curStreamSrc = NULL;
+			curStreamSrc = NULL; // idle
 		}
 	}
-
-	cur_sources.erase(sndSource);
 }
 
 
@@ -71,6 +109,8 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 	if (volume <= 0.0f)
 		return;
+
+	CheckCurrentSoundSourceFinished();
 
 	boost::recursive_mutex::scoped_lock slck(soundMutex);
 
@@ -94,6 +134,8 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 	if (emmitsThisFrame >= emmitsPerFrame)
 		return;
 	emmitsThisFrame++;
+
+	boost::recursive_mutex::scoped_lock lck(chanMutex);
 
 	if (cur_sources.size() >= maxConcurrentSources) {
 		CSoundSource* src = NULL;
@@ -126,8 +168,6 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 		sndSource->Play(this, sndItem, pos, velocity, volume, relative);
 		CheckError("CSound::FindSourceAndPlay");
-
-		boost::recursive_mutex::scoped_lock lck(chanMutex);
 
 		cur_sources[sndSource] = true;
 	}
@@ -183,6 +223,8 @@ void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool en
 {
 	if (!enabled)
 		return;
+
+	CheckCurrentSoundSourceFinished();
 
 	CSoundSource *newStreamSrc = NULL;
 

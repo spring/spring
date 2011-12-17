@@ -15,6 +15,7 @@ class CSoundSource;
 class CUnit;
 class CWorldObject;
 
+
 /**
  * @brief Channel for playing sounds
  *
@@ -25,6 +26,7 @@ class AudioChannel : public IAudioChannel {
 public:
 	AudioChannel();
 
+	void Update();
 	void Enable(bool newState);
 	void SetVolume(float newVolume);
 
@@ -39,6 +41,7 @@ public:
 	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos);
 
 	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false);
+	void CheckCurrentSoundSourceFinished();
 
 	/**
 	 * @brief Stop playback
@@ -53,9 +56,9 @@ public:
 protected:
 	void FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative);
 
-	void SoundSourceFinished(CSoundSource* sndSource);
-
 private:
+	void SoundSourceFinished(CSoundSource* sndSource); // private because of risk for deadlock if invoked externally (e.g. by SoundSource)
+
 	std::map<CSoundSource*, bool> cur_sources;
 
 	//! streams

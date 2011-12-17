@@ -23,6 +23,7 @@ protected:
 	virtual ~IAudioChannel();
 
 public:
+	virtual void Update() = 0;
 	virtual void Enable(bool newState) = 0;
 	bool IsEnabled() const
 	{
