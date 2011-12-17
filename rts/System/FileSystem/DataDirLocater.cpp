@@ -34,6 +34,8 @@ CONFIG(std::string, SpringData).defaultValue("")
 
 
 DataDirLocater dataDirLocater;
+bool DataDirLocater::initToIsolationMode = false;
+
 
 DataDir::DataDir(const std::string& path)
 	: path(path)
@@ -224,7 +226,7 @@ void DataDirLocater::LocateDataDirs()
 	// If this is true, ie the var is present in env, we will only add the dir
 	// where both binary and unitysnc lib reside in Portable mode,
 	// or the parent dir, if it is a versioned data-dir.
-	const bool isolationMode = (getenv("SPRING_ISOLATED") != NULL);
+    const bool isolationMode = (getenv("SPRING_ISOLATED") != NULL) || DataDirLocater::initToIsolationMode;
 
 #if       defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
