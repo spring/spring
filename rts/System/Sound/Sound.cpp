@@ -403,9 +403,16 @@ void CSound::StartThread(int maxSounds)
 
 void CSound::Update()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex); // lock
-	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
-		it->Update();
+	{
+		boost::recursive_mutex::scoped_lock lck(soundMutex); // lock
+
+		for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
+			it->Update();
+	}
+
+	for (std::set<AudioChannel *>::iterator ai = Channels::All.begin(); ai != Channels::All.end(); ++ai)
+		(*ai)->Update();
+
 	CheckError("CSound::Update");
 }
 

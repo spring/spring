@@ -5,6 +5,7 @@
 
 namespace Channels
 {
+	std::set<AudioChannelImpl *> All;
 	AudioChannelImpl BGMusic;
 	AudioChannelImpl General;
 	AudioChannelImpl Battle;

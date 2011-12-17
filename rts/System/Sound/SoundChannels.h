@@ -12,11 +12,12 @@
 
 	typedef AudioChannel AudioChannelImpl;
 #endif
-
+#include <set>
 /**
 * @brief If you want to play a sound, use one of these
 */
 namespace Channels {
+	extern std::set<AudioChannelImpl *> All;
 	extern AudioChannelImpl BGMusic;
 	extern AudioChannelImpl General;
 	extern AudioChannelImpl Battle;
