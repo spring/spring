@@ -4,6 +4,7 @@
 #include "Rendering/GL/myGL.h"
 
 #include <boost/thread.hpp>
+#include <sys/prctl.h>
 #if defined(__APPLE__)
 #elif defined(WIN32)
 	#include <windows.h>
@@ -171,8 +172,8 @@ namespace Threading {
 	void SetThreadName(std::string newname)
 	{
 	#if defined(__USE_GNU) && !defined(WIN32)
-		pthread_setname_np(pthread_self(), newname.c_str());
-		//alternative: prctl(PR_SET_NAME, newname.c_str());
+		//alternative: pthread_setname_np(pthread_self(), newname.c_str());
+		prctl(PR_SET_NAME, newname.c_str());
 	#endif
 	}
 
