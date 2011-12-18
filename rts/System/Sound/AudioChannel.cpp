@@ -94,7 +94,7 @@ void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 			if (curStreamSrc->GetChannel() != NULL) // (sndSource->GetChannel() != this) is a precondition for calling SoundSourceFinished
 				curStreamSrc = NULL; // release this sound source, it has been allocated by another channel
 			StreamQueueItem& next = streamQueue.back();
-			StreamPlay(next.fileName, next.volume, false);
+			StreamPlay(next.fileName, next.volume, false, false);
 			streamQueue.pop_back();
 		} else {
 			curStreamSrc = NULL; // idle
@@ -220,12 +220,13 @@ void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& p
 }
 
 
-void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool enqueue)
+void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool enqueue, bool checkfinish)
 {
 	if (!enabled)
 		return;
 
-	CheckCurrentSoundSourceFinished();
+	if (checkfinish)
+		CheckCurrentSoundSourceFinished();
 
 	CSoundSource *newStreamSrc = NULL;
 
