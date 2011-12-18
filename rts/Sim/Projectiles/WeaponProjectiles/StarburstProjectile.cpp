@@ -124,16 +124,15 @@ CStarburstProjectile::CStarburstProjectile(
 void CStarburstProjectile::Detach()
 {
 	// SYNCED
+	if (curCallback) // this is unsynced, but it prevents some callback crash on exit
+		curCallback->drawCallbacker = 0;
+
 	CProjectile::Detach();
 }
 
 CStarburstProjectile::~CStarburstProjectile()
 {
 	// UNSYNCED
-	if (curCallback) {
-		curCallback->drawCallbacker = 0;
-	}
-
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		tracerParts[a]->ageMods.clear();
 	}

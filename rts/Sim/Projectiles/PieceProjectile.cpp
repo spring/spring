@@ -144,15 +144,15 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 void CPieceProjectile::Detach()
 {
 	// SYNCED
+	if (curCallback) // this is unsynced, but it prevents some callback crash on exit
+		curCallback->drawCallbacker = 0;
+
 	CProjectile::Detach();
 }
 
 CPieceProjectile::~CPieceProjectile()
 {
 	// UNSYNCED
-	if (curCallback)
-		curCallback->drawCallbacker = 0;
-
 	for (int a = 0; a < 8; ++a) {
 		delete oldInfos[a];
 	}
