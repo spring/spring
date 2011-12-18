@@ -22,7 +22,7 @@ public:
 	void PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit) {}
 	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos) {}
 
-	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false) {}
+	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false, bool checkfinish = true) {}
 
 	void StreamStop() {}
 	void StreamPause() {}

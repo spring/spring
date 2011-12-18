@@ -360,7 +360,6 @@ CGame::~CGame()
 	SyncedGameCommands::DestroyInstance();
 
 	IVideoCapturing::FreeInstance();
-	ISound::Shutdown();
 
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
@@ -433,6 +432,7 @@ CGame::~CGame()
 
 	SafeDelete(gameServer);
 	SafeDelete(net);
+	ISound::Shutdown();
 
 	game = NULL;
 
