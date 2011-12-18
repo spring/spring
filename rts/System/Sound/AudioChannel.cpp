@@ -11,6 +11,7 @@
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
+#include "System/Util.h"
 
 #include <climits>
 
@@ -37,7 +38,7 @@ void AudioChannel::Update() {
 		if (ss->GetChannel() != this) {
 			SoundSourceFinished(ss);
 			if (ss->GetChannel() != this)
-				it = cur_sources.erase(it);
+				it = set_erase(cur_sources, it);
 			else
 				++it;
 		}
