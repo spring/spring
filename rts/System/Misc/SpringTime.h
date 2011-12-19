@@ -62,7 +62,8 @@
 	#include <SDL.h>
 	#include <SDL_timer.h>
 
-	typedef unsigned spring_time;
+	//typedef unsigned spring_time; SDL_GetTicks returns an unsigned, but then we (could) run into overflows when subtracting 2 timers
+	typedef int spring_time;
 	typedef int spring_duration;
 	#define spring_notime 0
 
