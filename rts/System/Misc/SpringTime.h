@@ -49,8 +49,8 @@
 	#define spring_istime(t) ((t).istime())
 	#define spring_sleep(t) ((t).sleep())
 
-	#define spring_msecs(msecs) (spring_time(msecs))
-	#define spring_secs(secs) (spring_time(secs * 1000))
+	#define spring_msecs(msecs) spring_time(msecs)
+	#define spring_secs(secs) spring_time((secs) * 1000)
 	//inline spring_time spring_gettime() { assert(SDL_WasInit(SDL_INIT_TIMER)); return spring_time(SDL_GetTicks()); };
 	inline spring_time spring_gettime() { return SDL_WasInit(SDL_INIT_TIMER) ? spring_time(SDL_GetTicks()) : spring_notime; };
 
@@ -68,12 +68,12 @@
 	#define spring_notime 0
 
 	#define spring_tomsecs(time) (time)
-	#define spring_istime(time) ((time)>0)
+	#define spring_istime(time) ((time) > 0)
 	#define spring_sleep(time) SDL_Delay(time)
 
 	#define spring_msecs(time) (time)
-	#define spring_secs(time) ((time)*1000)
-	inline spring_time spring_gettime() { return SDL_WasInit(SDL_INIT_TIMER) ? spring_time(SDL_GetTicks()) : spring_notime; };
+	#define spring_secs(time) ((time) * 1000)
+	inline spring_time spring_gettime() { return SDL_WasInit(SDL_INIT_TIMER) ? SDL_GetTicks() : spring_notime; };
 
 #else
 
