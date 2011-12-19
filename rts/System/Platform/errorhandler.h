@@ -66,6 +66,10 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		catch (const std::exception& e) {                                                       \
 			ErrorMessageBox(e.what(), "Spring: Fatal Error", MBF_OK | MBF_CRASH);           \
 		}                                                                                       \
+		catch (const std::bad_alloc& e)                                                         \
+		{                                                                                       \
+			ErrorMessageBox("Run out of memory!", "Spring: Fatal Error", MBF_OK | MBF_CRASH); \
+		}                                                                                       \
 		catch (const char* e) {                                                                 \
 			ErrorMessageBox(e, "Spring: Fatal Error", MBF_OK | MBF_CRASH);                  \
 		}
