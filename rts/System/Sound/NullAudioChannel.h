@@ -8,7 +8,6 @@
 
 class NullAudioChannel : public IAudioChannel {
 public:
-	void Update() {}
 	void Enable(bool newState) {}
 	void SetVolume(float newVolume) {}
 
@@ -22,7 +21,7 @@ public:
 	void PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit) {}
 	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos) {}
 
-	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false, bool checkfinish = true) {}
+	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false) {}
 
 	void StreamStop() {}
 	void StreamPause() {}

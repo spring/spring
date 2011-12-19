@@ -43,7 +43,6 @@ public:
 	void StreamPause();
 	float GetStreamTime();
 	float GetStreamPlayTime();
-	IAudioChannel* GetChannel() const { return curChannel; }
 
 	static void SetPitch(const float& newPitch)
 	{
@@ -53,8 +52,6 @@ public:
 	{
 		heightRolloffModifier = mod;
 	};
-
-	boost::recursive_mutex sourceMutex;
 
 private:
 	static float referenceDistance;
