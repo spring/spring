@@ -23,7 +23,6 @@ protected:
 	virtual ~IAudioChannel();
 
 public:
-	virtual void Update() = 0;
 	virtual void Enable(bool newState) = 0;
 	bool IsEnabled() const
 	{
@@ -58,7 +57,7 @@ public:
 	 * NOT threadsafe, unlike the other functions!
 	 * If another file is playing, it will stop it and play the new one instead.
 	 */
-	virtual void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false, bool checkfinish = true) = 0;
+	virtual void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false) = 0;
 
 	/**
 	 * @brief Stop playback
