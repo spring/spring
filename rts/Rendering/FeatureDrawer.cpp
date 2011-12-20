@@ -554,11 +554,6 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 		featureDist *= 2.0f;
 	}
 
-	for(int i = 0; i < MODELTYPE_OTHER; ++i) {
-		opaqueModelRenderers[i]->DelAllFeatures();
-		cloakedModelRenderers[i]->DelAllFeatures();
-	}
-
 	CFeatureQuadDrawer drawer;
 	drawer.drawQuads = &drawQuads;
 	drawer.drawQuadsX = drawQuadsX;

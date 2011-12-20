@@ -167,13 +167,6 @@ void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 	}
 }
 
-void IWorldObjectModelRenderer::DelAllFeatures() {
-	features.clear();
-	numFeatures = 0;
-	featuresSave.clear();
-	numFeaturesSave = 0;
-}
-
 void IWorldObjectModelRenderer::SwapFeatures()
 {
 	features.swap(featuresSave);
