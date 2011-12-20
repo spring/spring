@@ -30,7 +30,7 @@ public:
 	DataDirLocater();
 
     //! if non-empty, we go into isolation mode in non-cwd
-    static std::string isolationModeDir;
+    std::string isolationModeDir;
 
 	/**
 	 * @brief locate spring data directories
@@ -46,8 +46,9 @@ public:
 	 * --------------------------
 	 * (descending priority -> first entry is searched first)
 	 *
-     * If "-i isolationDir" is passed via cli _only_ "isolationDir" is added.
-     * If the environment variable SPRING_ISOLATED is present,
+     * If "-i isolationDir" is passed via cli or the environment variable
+     * SPRING_ISOLATED is present, isolation mode is activated. Any valid
+     * path in either of the two is added. If neither conatins a valid path,
 	 * _only_ Platform::GetProcessExecutablePath() (non-UNITSYNC)
 	 *     or Platform::GetModulePath() (UNITSYNC)
 	 * or the relative parent dir, in case of a multi-version engine install,

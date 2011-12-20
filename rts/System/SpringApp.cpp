@@ -726,7 +726,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
 	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
 	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
-    cmdline->AddString('i', "isolationDir",       "go into isolation mode in specified dir");
+	cmdline->AddString('i', "isolationDir",       "go into isolation mode in specified dir");
 
 	try {
 		cmdline->Parse();
@@ -779,9 +779,9 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	}
 
-    if (cmdline->IsSet("isolationDir")) {
-        DataDirLocater::isolationModeDir = cmdline->GetString("isolationDir");
-    }
+	if (cmdline->IsSet("isolationDir")) {
+        dataDirLocater.isolationModeDir = cmdline->GetString("isolationDir");
+	}
 
 #ifdef _DEBUG
 	globalRendering->fullScreen = false;
