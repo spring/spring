@@ -34,7 +34,6 @@ CONFIG(std::string, SpringData).defaultValue("")
 
 
 DataDirLocater dataDirLocater;
-std::string DataDirLocater::isolationModeDir = std::string();
 
 
 DataDir::DataDir(const std::string& path)
@@ -45,7 +44,8 @@ DataDir::DataDir(const std::string& path)
 }
 
 DataDirLocater::DataDirLocater()
-	: writeDir(NULL)
+    : isolationModeDir(std::string())
+    , writeDir(NULL)
 {
 }
 
@@ -217,7 +217,7 @@ void DataDirLocater::LocateDataDirs()
 	// environment variable
 	std::string dd_env = "";
 	{
-		char* env = getenv("SPRING_DATADIR");
+        char* env = getenv("SPRING_DATADIR");
 		if (env && *env) {
 			dd_env = SubstEnvVars(env);
 		}
@@ -284,10 +284,15 @@ void DataDirLocater::LocateDataDirs()
 	// The first dir added will be the writable data dir.
 
 	if (isolationMode) {
-        if (DataDirLocater::isolationModeDir.empty()) {
+        const char* const envIsolationDir = getenv("SPRING_ISOLATED");
+        const bool envIsolationDir_valid = FileSystem::DirExists(envIsolationDir);
+        if (DataDirLocater::isolationModeDir.empty() && !envIsolationDir_valid) {
             AddCwdOrParentDir(dd_curWorkDir, true); // "./" or "../"
         } else {
-            AddDir(DataDirLocater::isolationModeDir);
+            if (FileSystem::DirExists(isolationModeDir))
+                AddDir(isolationModeDir);
+            if (envIsolationDir_valid)
+                AddDir(envIsolationDir);
         }
 	} else {
 		// same on all platforms
