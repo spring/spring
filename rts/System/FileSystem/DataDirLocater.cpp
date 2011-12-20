@@ -44,9 +44,17 @@ DataDir::DataDir(const std::string& path)
 }
 
 DataDirLocater::DataDirLocater()
-    : isolationModeDir(std::string())
-    , writeDir(NULL)
+	: isolationMode(false)
+	, isolationModeDir(std::string())
+	, writeDir(NULL)
 {
+	const char* const envIsolation = getenv("SPRING_ISOLATED");
+	if (envIsolation != NULL) {
+		isolationMode = true;
+		if (FileSystem::DirExists(envIsolation)) {
+			isolationModeDir = envIsolation;
+		}
+	}
 }
 
 const std::vector<DataDir>& DataDirLocater::GetDataDirs() const {
@@ -217,16 +225,11 @@ void DataDirLocater::LocateDataDirs()
 	// environment variable
 	std::string dd_env = "";
 	{
-        char* env = getenv("SPRING_DATADIR");
+		char* env = getenv("SPRING_DATADIR");
 		if (env && *env) {
 			dd_env = SubstEnvVars(env);
 		}
 	}
-
-	// If this is true, ie the var is present in env, we will only add the dir
-	// where both binary and unitysnc lib reside in Portable mode,
-	// or the parent dir, if it is a versioned data-dir.
-    const bool isolationMode = (getenv("SPRING_ISOLATED") != NULL) || ! DataDirLocater::isolationModeDir.empty();
 
 #if       defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
@@ -284,17 +287,16 @@ void DataDirLocater::LocateDataDirs()
 	// The first dir added will be the writable data dir.
 
 	if (isolationMode) {
-        const char* const envIsolationDir = getenv("SPRING_ISOLATED");
-        const bool envIsolationDir_valid = FileSystem::DirExists(envIsolationDir);
-        if (DataDirLocater::isolationModeDir.empty() && !envIsolationDir_valid) {
-            AddCwdOrParentDir(dd_curWorkDir, true); // "./" or "../"
-        } else {
-            if (FileSystem::DirExists(isolationModeDir))
-                AddDir(isolationModeDir);
-            if (envIsolationDir_valid)
-                AddDir(envIsolationDir);
-        }
+		if (isolationModeDir.empty()) {
+			AddCwdOrParentDir(dd_curWorkDir, true); // "./" or "../"
+		} else {
+			AddDir(isolationModeDir);
+		}
 	} else {
+		if (!isolationModeDir.empty()) {
+			LOG_L(L_WARNING, "Isolation directory was specified, but isolation mode is not active.");
+		}
+
 		// same on all platforms
 		AddDirs(dd_env);    // ENV{SPRING_DATADIR}
 		// user defined in spring config handler
