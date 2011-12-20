@@ -35,7 +35,6 @@ public:
 	virtual void DelUnit(const CUnit*);
 	virtual void AddFeature(const CFeature*, float alpha = 0.99f);
 	virtual void DelFeature(const CFeature*);
-	virtual void DelAllFeatures();
 	virtual void SwapFeatures();
 	virtual void AddProjectile(const CProjectile*);
 	virtual void DelProjectile(const CProjectile*);
