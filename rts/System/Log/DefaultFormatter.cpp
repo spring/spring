@@ -133,7 +133,10 @@ static inline void log_formatter_createPrefix(char** buffer, size_t* bufferSize,
  */
 ///@{
 
-/// Formats a log entry into its final string form
+/**
+ * Formats a log entry into its final string form.
+ * @return a string buffer, allocated with new[] -> you have to delete[] it
+ */
 char* log_formatter_format(const char* section, int level, const char* fmt, va_list arguments)
 {
 	size_t bufferSize = 256;
