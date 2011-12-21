@@ -1,5 +1,5 @@
-spring-dedicated(6)
-===================
+spring-headless(6)
+==================
 :man source:  Spring package
 :man manual:  Games
 
