@@ -94,7 +94,7 @@ DATA DIR
 --------
 Data directories are searched for content, and among other things, may contain:
 *cache
-*mods
+*games
 *maps
 *AI
 
