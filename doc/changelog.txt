@@ -26,6 +26,15 @@ Internal:
  - name threads so you can identify them in `htop` (Linux only)
  - some additional time-profilers in rendering code
  - fixed stacktrace translation with some Linux setups
+ - fix crash when specs are cheating in via /team
+ - fix transport loading failure
+ - fix teleport-to-smooth-mesh after unload
+ - prevent units getting stuck when turning around the corner of other units
+
+MultiThreaded (GML):
+ - fix hang/runtime error during pathing
+ - fix Creating unit in gadget:Initialize()
+ - lots of other fixes
 
 Sound:
  - limit UnitReplies to max one concurrent playback
@@ -34,6 +43,12 @@ Lua:
  - fixed Spring.GetTimer/DiffTimers
  - fixed Spring.SetMouseCursor when using hw cursor
  - handle Lua code crashes in some events correctly, so they don't crash the whole Lua enviroment (fixes: "LuaRules::CheckStack top = -1")
+
+Buildbot:
+ - create spring_${VERSION}_minimal-portable+dedicated.zip
+
+UnitSync:
+ - if Init() is called, but we are already initialzied, do a re-initialization
 
 
 -- 84.0 ---------------------------------------------------------
