@@ -11,7 +11,7 @@ spring-headless - An open source RTS game engine - Head-Less Engine
 
 Synopsis
 --------
-*spring-headless* [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-n|--name 'STRING'] [-C|--config 'FILE']
+*spring-headless* [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-i|--isolation] [--isolation-dir 'PATH'] [-n|--name 'STRING'] [-C|--config 'FILE']
 
 *spring-headless* --list-ai-interfaces
 
@@ -65,6 +65,14 @@ Options
 *-p, --projectiledump*::
   Dump projectile class info into projectiles.txt
 
+*-i, --isolation*::
+  Limit the data-dir (games & maps) scanner to one directory
+  (see --isolation-dir and the SPRING_ISOLATED env var)
+
+*--isolation-dir*::'PATH'
+  Specify the isolation-mode data-dir
+  (see --isolation and the SPRING_ISOLATED env var)
+
 *-n, --name*::'NAME'
   Set your player name
 
@@ -90,7 +98,11 @@ Enviroment Variables
   Adds additional directories Spring will search for files (separated by ':').
 
 *SPRING_ISOLATED*
-  If defined Spring will stop searching files outside of the binaries directory.
+  If defined, Spring will stop searching files outside of the binaries
+  directory. If it is set to a valid directory path, it will be used as the
+  isolation directory.
+  See the --isolation and the --isolation-dir options.
+
 
 See also
 --------
