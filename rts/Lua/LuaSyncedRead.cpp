@@ -229,6 +229,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(GetUnitPieceCollisionVolumeData);
 
+	REGISTER_LUA_CFUNC(GetUnitBlocking);
 	REGISTER_LUA_CFUNC(GetUnitMoveTypeData);
 
 	REGISTER_LUA_CFUNC(GetUnitCommands);
@@ -3333,6 +3334,19 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 	HSTR_PUSH_NUMBER(L, "minz",   m.mins.z);
 	HSTR_PUSH_NUMBER(L, "maxz",   m.maxs.z);
 	return 1;
+}
+
+
+int LuaSyncedRead::GetUnitBlocking(lua_State *L)
+{
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	lua_pushboolean(L, unit->blocking);
+	lua_pushboolean(L, unit->crushable);
+	return 2;
 }
 
 
