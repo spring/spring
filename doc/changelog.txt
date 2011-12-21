@@ -1,4 +1,5 @@
-Spring change log
+Spring changelog
+(since 85.0: "!" prefix indicate backward compability broke)
 
 -- 85.0 ---------------------------------------------------------
 Major Changes:
@@ -19,6 +20,7 @@ Rendering:
  - dynamic viewrange handling, so even a 32x32 map can be rendered w/o clipping in low camera angles
  - log available video memory on NVidia/ATi gfx drivers
  - disable GLSL shaders on Mesa/Intel drivers
+ - make F2 colors less ambiguous
 
 Internal:
  - re-added forced log file flushing when handling crashes
@@ -31,6 +33,17 @@ Internal:
  - fix teleport-to-smooth-mesh after unload
  - prevent units getting stuck when turning around the corner of other units
 
+Sim:
+ - make units crushable like features
+
+Pathing/MoveType:
+ - fix units sometimes moving onto impassable squares
+ - fix the mass-clumping unit movement bug
+ - properly restore MoveType::maxSpeed after a guard-order
+
+CEG:
+ - give warning when textures used in SimpleParticles don't exists
+
 MultiThreaded (GML):
  - fix hang/runtime error during pathing
  - fix Creating unit in gadget:Initialize()
@@ -38,17 +51,43 @@ MultiThreaded (GML):
 
 Sound:
  - limit UnitReplies to max one concurrent playback
+ - play most unit sounds (activate, ...) only if unit is in LOS
+
+UnitDef:
+ - added new "blocking" bool tag
+ ! rename "canDGun" to "canManualFire"
+ - added new tag "crushResistance" (defaults to unit's mass)
+
+FeatureDef
+ - added new tag "crushResistance" (defaults to feature's mass)
+
+WeaponDef:
+ - added new "craterAreaOfEffect" float tag (defaults to the value of areaOfEffect)
+
+modrules.lua:
+ - added "movement.allowCrushingAlliedUnits" (default false)
+ - added "movement.allowUnitCollisionDamage" (default false)
+ - added "system.pathFinderSystem" (defaults to 0, 1 is QTPFS)
 
 Lua:
  - fixed Spring.GetTimer/DiffTimers
  - fixed Spring.SetMouseCursor when using hw cursor
  - handle Lua code crashes in some events correctly, so they don't crash the whole Lua enviroment (fixes: "LuaRules::CheckStack top = -1")
+ ! call UnitMoveFailed event only for via Script.SetWatchUnit registered UnitDefs
+ ! renamed WeaponDefs[].areaOfEffect to WeaponDefs[].damageAreaOfEffect
+ ! added new WeaponDefs[].craterAreaOfEffect
+ - extend Spring.SetUnitBlocking with an optional 4th "crashable" bool argument
+ - added new Spring.GetUnitBlocking(unitid) -> blocking, crushable
+
+demo widgets:
+ - minimap_startbox.lua: play sound when start-positions are placed
 
 Buildbot:
  - create spring_${VERSION}_minimal-portable+dedicated.zip
 
 UnitSync:
  - if Init() is called, but we are already initialzied, do a re-initialization
+
 
 
 -- 84.0 ---------------------------------------------------------
