@@ -4,7 +4,12 @@ Spring change log
 CommandLine:
  - updated man-pages
  - added new argument `--sync-version` (i.e. prints "85" for a 85.0 build);
+ - re-added forced log file flushing when handling crashes
+ - allow to build proper release builds without being on branch master
  - added a full set of new arguments to spring-dedicated (you can now also change the config-file)
+ - added --isolation & --isolation-dir arguments
+ - optionally, you may supply a path with SPRING_ISOLATED=<isolation-mode-dir>
+ - made the (new) C++ AI Wrapper VS compatible
 
 Sound:
  - limit UnitReplies to max one concurrent
