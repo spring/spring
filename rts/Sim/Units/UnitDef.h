@@ -81,6 +81,27 @@ public:
 	bool HasBomberWeapon() const;
 	const std::vector<unsigned char>& GetYardMap(unsigned int facing) const { return (yardmaps[facing % /*NUM_FACINGS*/ 4]); }
 
+	// NOTE: deprecated, only used by LuaUnitDefs.cpp
+	const char* GetTypeString() const {
+		if (IsTransportUnit()) { return "Transport"; }
+
+		if (IsBuildingUnit()) {
+			if (IsFactoryUnit()) { return "Factory"; }
+			if (IsExtractorUnit()) { return "MetalExtractor"; }
+			return "Building";
+		}
+
+		if (IsMobileBuilderUnit() || IsStaticBuilderUnit()) { return "Builder"; }
+
+		if (IsGroundUnit()) { return "GroundUnit"; }
+		if (IsAirUnit()) {
+			if (IsFighterUnit()) { return "Fighter"; }
+			if (IsBomberUnit()) { return "Bomber"; }
+			return "Aircraft";
+		}
+
+		return "Unknown";
+	}
 
 	std::string name;
 	std::string humanName;
@@ -235,6 +256,7 @@ public:
 
 	// order-capabilities for CommandAI
 	bool canmove;
+	bool canHover;
 	bool canAttack;
 	bool canFight;
 	bool canPatrol;
