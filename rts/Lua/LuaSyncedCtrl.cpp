@@ -1516,14 +1516,13 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitBlocking()");
-	}
 
-	if (lua_toboolean(L, 2)) {
-		unit->Block();
-	} else {
-		unit->UnBlock();
+	if (lua_isboolean(L, 2)) {
+		if (lua_toboolean(L, 2)) {
+			unit->Block();
+		} else {
+			unit->UnBlock();
+		}
 	}
 
 	if (lua_isboolean(L, 3)) {
@@ -1537,7 +1536,7 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 		unit->Block();
 	}
 
-	unit->crushable = (lua_isboolean(L, 4) && lua_toboolean(L, 4));
+	unit->crushable = luaL_optboolean(L, 4, unit->crushable);
 	return 0;
 }
 
