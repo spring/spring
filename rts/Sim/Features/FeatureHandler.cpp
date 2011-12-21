@@ -178,7 +178,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 	const float defMass = (fd->metal * 0.4f) + (fd->maxHealth * 0.1f);
 
 	fd->mass = Clamp(fdTable.GetFloat("mass", defMass), minMass, maxMass);
-	fd->crushImpedance = fdTable.GetFloat("crushImpedance", fd->mass);
+	fd->crushResistance = fdTable.GetFloat("crushResistance", fd->mass);
 
 	// custom parameters table
 	fdTable.SubTable("customParams").GetMap(fd->customParams);

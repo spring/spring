@@ -162,7 +162,7 @@ public:
 	float terraformSpeed;
 
 	float mass;
-	float crushImpedance;
+	float crushResistance;
 
 	bool canSubmerge;
 	bool canfly;
