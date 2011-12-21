@@ -1,18 +1,40 @@
 Spring change log
 
 -- 85.0 ---------------------------------------------------------
+Major Changes:
+ - ROAM \o/
+ - QTPFS (disabled by default)
+
 CommandLine:
  - updated man-pages
  - added new argument `--sync-version` (i.e. prints "85" for a 85.0 build);
- - re-added forced log file flushing when handling crashes
  - allow to build proper release builds without being on branch master
- - added a full set of new arguments to spring-dedicated (you can now also change the config-file)
+ - added a full set of new arguments to spring-dedicated (see `spring-dedicated --help`)
  - added --isolation & --isolation-dir arguments
  - optionally, you may supply a path with SPRING_ISOLATED=<isolation-mode-dir>
+
+Rendering:
+ - added ROAM. Kudos go to B. Turner (the original author of the code) and Beherith (for integrating it into Spring).
+ - set SmoothLines & SmoothPoints by default on DONT_CARE (so your gfx driver settings decide if it is enabled or not)
+ - dynamic viewrange handling, so even a 32x32 map can be rendered w/o clipping in low camera angles
+ - log available video memory on NVidia/ATi gfx drivers
+ - disable GLSL shaders on Mesa/Intel drivers
+
+Internal:
+ - re-added forced log file flushing when handling crashes
  - made the (new) C++ AI Wrapper VS compatible
+ - name threads so you can identify them in `htop` (Linux only)
+ - some additional time-profilers in rendering code
+ - fixed stacktrace translation with some Linux setups
 
 Sound:
- - limit UnitReplies to max one concurrent
+ - limit UnitReplies to max one concurrent playback
+
+Lua:
+ - fixed Spring.GetTimer/DiffTimers
+ - fixed Spring.SetMouseCursor when using hw cursor
+ - handle Lua code crashes in some events correctly, so they don't crash the whole Lua enviroment (fixes: "LuaRules::CheckStack top = -1")
+
 
 -- 84.0 ---------------------------------------------------------
 Bugfixes & Improvements:
