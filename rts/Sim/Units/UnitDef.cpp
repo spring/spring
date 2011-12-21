@@ -149,6 +149,7 @@ UnitDef::UnitDef()
 , repairable(false)
 
 , canmove(false)
+, canHover(false)
 , canAttack(false)
 , canFight(false)
 , canPatrol(false)
@@ -339,6 +340,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	repairable   = udTable.GetBool("repairable",   true);
 
 	canmove      = udTable.GetBool("canMove",         false);
+	canHover     = udTable.GetBool("canHover",        false);
 	canAttack    = udTable.GetBool("canAttack",       true);
 	canFight     = udTable.GetBool("canFight",        true);
 	canPatrol    = udTable.GetBool("canPatrol",       true);
@@ -521,8 +523,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 	extractSquare = udTable.GetBool("extractSquare", false);
 
-
-	const bool canHover = udTable.GetBool("canHover", false);
 	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 	// modrules transport settings
