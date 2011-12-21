@@ -785,6 +785,7 @@ void SpringApp::ParseCmdLine()
 	}
 
 	if (cmdline->IsSet("isolation-dir")) {
+		dataDirLocater.SetIsolationMode(true);
 		dataDirLocater.SetIsolationModeDir(cmdline->GetString("isolation-dir"));
 	}
 

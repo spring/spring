@@ -45,7 +45,6 @@ DataDir::DataDir(const std::string& path)
 
 DataDirLocater::DataDirLocater()
 	: isolationMode(false)
-	, isolationModeDir(std::string())
 	, writeDir(NULL)
 {
 	const char* const envIsolation = getenv("SPRING_ISOLATED");
@@ -290,7 +289,11 @@ void DataDirLocater::LocateDataDirs()
 		if (isolationModeDir.empty()) {
 			AddCwdOrParentDir(dd_curWorkDir, true); // "./" or "../"
 		} else {
-			AddDir(isolationModeDir);
+			if (FileSystem::DirExists(isolationModeDir)) {
+				AddDir(isolationModeDir);
+			} else {
+				LOG_L(L_FATAL, "The specified isolation-mode directory does not exist: %s", isolationModeDir.c_str());
+			}
 		}
 	} else {
 		if (!isolationModeDir.empty()) {
