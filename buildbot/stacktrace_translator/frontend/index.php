@@ -26,17 +26,19 @@ function limit(){
 /**
 	returns the spring version of the string in filecontents
 	for example
-	Spring 0.82.5.0 (0.82.5)
+	echo getVersion("Spring 85.0\n")."\n";
+	echo getVersion("Spring 84.0.1-567-g3294e6c\n")."\n";
+	echo getVersion("Spring {roam}84.0.1-418-g1455ce1\n")."\n";
 */
 function getVersion($filecontents){
-	$res=preg_match('/Spring [^\(]+ \(([^\)]+)\)/',$filecontents,$matches);
-	if (($res==1) && (strpos($matches[1],"g")===false)){ // g means master version
+	$res=preg_match('/Spring ([0-9]+.[0-9]+)(\n)/',$filecontents,$matches);
+	if (($res==1) && (strpos($matches[1],"g")===false)){
 		$pos=strpos($matches[1]," ");
 		if ($pos===false)
 			return $matches[1];
 		return substr($matches[1],0,$pos);
 	}
-	return "master";
+	return "develop";
 }
 /**
 	returns true if url is valid http:// url
