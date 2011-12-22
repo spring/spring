@@ -124,16 +124,15 @@ CStarburstProjectile::CStarburstProjectile(
 void CStarburstProjectile::Detach()
 {
 	// SYNCED
-	CWeaponProjectile::Detach();
+	if (curCallback) // this is unsynced, but it prevents some callback crash on exit
+		curCallback->drawCallbacker = 0;
+
+	CProjectile::Detach();
 }
 
 CStarburstProjectile::~CStarburstProjectile()
 {
 	// UNSYNCED
-	if (curCallback) {
-		curCallback->drawCallbacker = 0;
-	}
-
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		tracerParts[a]->ageMods.clear();
 	}
@@ -320,11 +319,7 @@ void CStarburstProjectile::Draw()
 	unsigned char col2[4];
 
 	if (weaponDef->visuals.smokeTrail) {
-#if defined(USE_GML) && GML_ENABLE_SIM
-		const int curNumParts = *(volatile int*) &numParts;
-#else
-		const int curNumParts = numParts;
-#endif
+		const int curNumParts = GML::SimEnabled() ? *(volatile int*) &numParts : numParts;
 
 		va->EnlargeArrays(4 + (4 * curNumParts), 0, VA_SIZE_TC);
 
@@ -406,18 +401,13 @@ void CStarburstProjectile::DrawCallback()
 	unsigned char col[4];
 
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-#if defined(USE_GML) && GML_ENABLE_SIM
-		TracerPart* tracerPart = *(TracerPart* volatile*) &tracerParts[a];
-#else
-		const TracerPart* tracerPart = tracerParts[a];
-#endif
-
+		const TracerPart* tracerPart = GML::SimEnabled() ? *(TracerPart* volatile*) &tracerParts[a] : tracerParts[a];
 		const float3& opos = tracerPart->pos;
 		const float3& odir = tracerPart->dir;
 		const float ospeed = tracerPart->speedf;
 		float aa = 0;
 
-		for (AGEMOD_VECTOR_IT ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += 0.15f) {
+		for (AGEMOD_VECTOR::const_iterator ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += 0.15f) {
 			const float ageMod = *ai;
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
 			const float3 interPos = opos - (odir * ((a * 0.5f) + aa));

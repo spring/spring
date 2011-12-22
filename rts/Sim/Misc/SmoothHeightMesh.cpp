@@ -170,7 +170,6 @@ inline static void FindRadialMaximum(
 
 		// find current maximum within radius smoothRadius
 		// (in every column stack) along the current row
-		const float curx = x * resolution;
 		const int startx = std::max(x - intrad, 0);
 		const int endx = std::min(maxx, x + intrad);
 
@@ -182,8 +181,12 @@ inline static void FindRadialMaximum(
 			maxRowHeight = std::max(colsMaxima[i], maxRowHeight);
 		}
 
+#ifndef NDEBUG
+		const float curx = x * resolution;
+		assert(maxRowHeight <= std::max(readmap->currMaxHeight, 0.0f));
+		assert(maxRowHeight >= ground->GetHeightAboveWater(curx, cury));
 
-#if defined(_DEBUG) && defined(SMOOTHMESH_CORRECTNESS_CHECK)
+	#ifdef SMOOTHMESH_CORRECTNESS_CHECK
 		// naive algorithm
 		float maxRowHeightAlt = -std::numeric_limits<float>::max();
 
@@ -194,11 +197,7 @@ inline static void FindRadialMaximum(
 		}
 
 		assert(maxRowHeightAlt == maxRowHeight);
-#endif
-
-#ifndef NDEBUG
-		assert(maxRowHeight <= std::max(readmap->currMaxHeight, 0.0f));
-		assert(maxRowHeight >= ground->GetHeightAboveWater(curx, cury));
+	#endif
 #endif
 
 		mesh[x + y * maxx] = maxRowHeight;

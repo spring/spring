@@ -10,6 +10,7 @@
 #include "IAudioChannel.h"
 #include <boost/thread/recursive_mutex.hpp>
 
+struct GuiSoundSet;
 class CSoundSource;
 class CUnit;
 class CWorldObject;
@@ -33,6 +34,9 @@ public:
 
 	void PlaySample(size_t id, const CUnit* unit, float volume = 1.0f);
 	void PlaySample(size_t id, const CWorldObject* obj, float volume = 1.0f);
+
+	void PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit);
+	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos);
 
 	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false);
 
@@ -68,7 +72,6 @@ private:
 	CSoundSource* curStreamSrc;
 	std::vector<StreamQueueItem> streamQueue;
 	static const size_t MAX_STREAM_QUEUESIZE;
-	boost::recursive_mutex chanMutex;
 };
 
 #endif // AUDIO_CHANNEL_H

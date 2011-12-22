@@ -104,20 +104,6 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 }
 
 
-static inline CUnit* ParseControlledUnit(lua_State* L,
-                                         const char* caller, int index)
-{
-	CUnit* unit = ParseUnit(L, caller, index);
-	if (unit == NULL) {
-		return NULL;
-	}
-	if (!unit->usingScriptMoveType) {
-		return NULL;
-	}
-	return unit;
-}
-
-
 static inline CScriptMoveType* ParseMoveType(lua_State* L,
                                              const char* caller, int index)
 {
@@ -128,7 +114,7 @@ static inline CScriptMoveType* ParseMoveType(lua_State* L,
 	if (!unit->usingScriptMoveType) {
 		return NULL;
 	}
-	return (CScriptMoveType*)unit->moveType;
+	return static_cast<CScriptMoveType*>(unit->moveType);
 }
 
 
@@ -556,9 +542,9 @@ static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, flo
 	// can't set goal here, need a different function that calls mt->SetGoal
 	// FIXME should use setter methods here and in other Set*MoveTypeValue functoins, but they mostly don't exist
 	if (key == "maxSpeed") {
-		if (value > 0)
-			mt->owner->maxSpeed = value / GAME_SPEED;
-		mt->SetMaxSpeed(value / GAME_SPEED); return true;
+		if (value > 0) {
+			mt->SetMaxSpeed(value / GAME_SPEED); return true;
+		}
 	} else if (key == "maxWantedSpeed") {
 		mt->SetWantedMaxSpeed(value / GAME_SPEED); return true;
 	} else if (key == "repairBelowHealth") {
@@ -678,7 +664,6 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 	} else if (key == "maxReverseSpeed") {
 		// use setter?
 		mt->maxReverseSpeed = value / GAME_SPEED;
-		mt->owner->maxReverseSpeed = value / GAME_SPEED;
 		return true;
 	} else if (key == "wantedSpeed") {
 		// use setter?
@@ -751,7 +736,7 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 {
 	if (SetGenericMoveTypeValue(mt, key, value)) {
 		if (key == "maxSpeed") {
-			mt->brakeDistance = (mt->maxSpeed * mt->maxSpeed) / mt->decRate;
+			mt->brakeDistance = (mt->GetMaxSpeed() * mt->GetMaxSpeed()) / mt->decRate;
 		}
 		return true;
 	}
@@ -764,7 +749,7 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 		mt->accRate = value; return true;
 	} else if (key == "decRate") {
 		mt->decRate = value;
-		mt->brakeDistance = (mt->maxSpeed * mt->maxSpeed) / mt->decRate;
+		mt->brakeDistance = (mt->GetMaxSpeed() * mt->GetMaxSpeed()) / mt->decRate;
 		return true;
 	} else if (key == "altitudeRate") {
 		mt->altitudeRate = value; return true;

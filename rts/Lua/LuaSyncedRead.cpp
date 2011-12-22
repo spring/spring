@@ -229,6 +229,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(GetUnitPieceCollisionVolumeData);
 
+	REGISTER_LUA_CFUNC(GetUnitBlocking);
 	REGISTER_LUA_CFUNC(GetUnitMoveTypeData);
 
 	REGISTER_LUA_CFUNC(GetUnitCommands);
@@ -528,22 +529,6 @@ static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 
 /******************************************************************************/
 
-static inline CPlayer* ParsePlayer(lua_State* L, const char* caller, int index)
-{
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "Bad playerID type in %s()\n", caller);
-	}
-	const int playerID = lua_toint(L, index);
-	if (!playerHandler->IsValidPlayer(playerID)) {
-		luaL_error(L, "Bad playerID in %s\n", caller);
-	}
-	CPlayer* player = playerHandler->Player(playerID);
-	if (player == NULL) {
-		luaL_error(L, "Bad player in %s\n", caller);
-	}
-	return player;
-}
-
 
 static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 {
@@ -555,23 +540,6 @@ static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Bad teamID in %s\n", caller);
 	}
 	return teamHandler->Team(teamID);
-}
-
-
-static inline int ParseTeamID(lua_State* L, const char* caller, int index)
-{
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "Bad teamID type in %s()\n", caller);
-	}
-	const int teamID = lua_toint(L, index);
-	if (!teamHandler->IsValidTeam(teamID)) {
-		luaL_error(L, "Bad teamID in %s\n", caller);
-	}
-	CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
-		luaL_error(L, "Bad teamID in %s\n", caller);
-	}
-	return teamID;
 }
 
 
@@ -2508,13 +2476,13 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 		const CHoverAirMoveType* hAMT = dynamic_cast<const CHoverAirMoveType*>(mt);
 		if (hAMT) {
 			HSTR_PUSH_BOOL  (L, "autoland",        hAMT->autoLand);
-			HSTR_PUSH_NUMBER(L, "autorepairlevel", hAMT->repairBelowHealth);
+			HSTR_PUSH_NUMBER(L, "autorepairlevel", hAMT->GetRepairBelowHealth());
 		} else {
 			const CStrafeAirMoveType* sAMT = dynamic_cast<const CStrafeAirMoveType*>(mt);
 			if (sAMT) {
 				HSTR_PUSH_BOOL  (L, "autoland",        sAMT->autoLand);
 				HSTR_PUSH_BOOL  (L, "loopbackattack",  sAMT->loopbackAttack);
-				HSTR_PUSH_NUMBER(L, "autorepairlevel", sAMT->repairBelowHealth);
+				HSTR_PUSH_NUMBER(L, "autorepairlevel", sAMT->GetRepairBelowHealth());
 			}
 		}
 	}
@@ -3006,7 +2974,7 @@ int LuaSyncedRead::GetUnitShieldState(lua_State* L)
 	const int idx = luaL_optint(L, 2, -1);
 
 	if (idx < 0 || idx >= unit->weapons.size()) {
-		shield = (CPlasmaRepulser*) unit->shieldWeapon;
+		shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
 	} else {
 		shield = dynamic_cast<CPlasmaRepulser*>(unit->weapons[idx]);
 	}
@@ -3369,6 +3337,19 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitBlocking(lua_State *L)
+{
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	lua_pushboolean(L, unit->blocking);
+	lua_pushboolean(L, unit->crushable);
+	return 2;
+}
+
+
 int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 {
 	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
@@ -3379,8 +3360,8 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 	AMoveType* amt = unit->moveType;
 
 	lua_newtable(L);
-	HSTR_PUSH_NUMBER(L, "maxSpeed", amt->maxSpeed * GAME_SPEED);
-	HSTR_PUSH_NUMBER(L, "maxWantedSpeed", amt->maxWantedSpeed * GAME_SPEED);
+	HSTR_PUSH_NUMBER(L, "maxSpeed", amt->GetMaxSpeed() * GAME_SPEED);
+	HSTR_PUSH_NUMBER(L, "maxWantedSpeed", amt->GetMaxWantedSpeed() * GAME_SPEED);
 	HSTR_PUSH_NUMBER(L, "goalx", amt->goalPos.x);
 	HSTR_PUSH_NUMBER(L, "goaly", amt->goalPos.y);
 	HSTR_PUSH_NUMBER(L, "goalz", amt->goalPos.z);
@@ -3400,17 +3381,16 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 
 		HSTR_PUSH_NUMBER(L, "goalRadius", groundmt->goalRadius);
 
-		HSTR_PUSH_NUMBER(L, "waypointx", groundmt->waypoint.x);
-		HSTR_PUSH_NUMBER(L, "waypointy", groundmt->waypoint.y);
-		HSTR_PUSH_NUMBER(L, "waypointz", groundmt->waypoint.z);
-		HSTR_PUSH_NUMBER(L, "nextwaypointx", groundmt->nextWaypoint.x);
-		HSTR_PUSH_NUMBER(L, "nextwaypointy", groundmt->nextWaypoint.y);
-		HSTR_PUSH_NUMBER(L, "nextwaypointz", groundmt->nextWaypoint.z);
+		HSTR_PUSH_NUMBER(L, "currwaypointx", groundmt->currWayPoint.x);
+		HSTR_PUSH_NUMBER(L, "currwaypointy", groundmt->currWayPoint.y);
+		HSTR_PUSH_NUMBER(L, "currwaypointz", groundmt->currWayPoint.z);
+		HSTR_PUSH_NUMBER(L, "nextwaypointx", groundmt->nextWayPoint.x);
+		HSTR_PUSH_NUMBER(L, "nextwaypointy", groundmt->nextWayPoint.y);
+		HSTR_PUSH_NUMBER(L, "nextwaypointz", groundmt->nextWayPoint.z);
 
 		HSTR_PUSH_NUMBER(L, "requestedSpeed", groundmt->requestedSpeed);
 
 		HSTR_PUSH_NUMBER(L, "pathFailures", 0);
-		HSTR_PUSH_NUMBER(L, "floatOnWater", unit->floatOnWater);
 
 		return 1;
 	}
@@ -3419,7 +3399,7 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 
 	if (aamt != NULL) {
 		HSTR_PUSH_NUMBER(L, "padStatus", aamt->GetPadStatus());
-		HSTR_PUSH_NUMBER(L, "repairBelowHealth", aamt->repairBelowHealth);
+		HSTR_PUSH_NUMBER(L, "repairBelowHealth", aamt->GetRepairBelowHealth());
 	}
 
 	const CHoverAirMoveType* hAMT = dynamic_cast<CHoverAirMoveType*>(unit->moveType);
@@ -4866,8 +4846,6 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 
 	const S3DModelPiece& op = *localModel->pieces[piece]->original;
 	return ::GetUnitPieceInfo(L, op);
-
-	return 0;
 }
 
 

@@ -1,8 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <string>
-#include <iostream>
-#include <cstdlib>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -15,6 +13,7 @@
 #include "Game/ClientSetup.h"
 #include "Game/GameData.h"
 #include "Game/GameVersion.h"
+#include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -22,6 +21,7 @@
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Log/ILog.h"
 #include "System/LogOutput.h"
+#include "System/Platform/CmdLineParams.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
@@ -50,32 +50,96 @@ extern "C"
 #undef main
 #endif
 
+
+void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
+{
+	#undef  LOG_SECTION_CURRENT
+	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
+
+	std::string binaryname = argv[0];
+	
+	CmdLineParams cmdline(argc, argv);
+	cmdline.SetUsageDescription("Usage: " + binaryname + " [options] path_to_script.txt");
+	cmdline.AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
+	cmdline.AddString('C', "config",             "Configuration file");
+	cmdline.AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
+	cmdline.AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
+	cmdline.AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
+
+	try {
+		cmdline.Parse();
+	} catch (const std::exception& err) {
+		LOG("%s\n", err.what());
+		cmdline.PrintUsage();
+		exit(1);
+	}
+
+	if (cmdline.IsSet("help")) {
+		cmdline.PrintUsage();
+		exit(0);
+	}
+	if (cmdline.IsSet("version")) {
+		LOG("%s", (SpringVersion::GetFull()).c_str());
+		exit(0);
+	}
+	if (cmdline.IsSet("sync-version")) {
+		LOG("%s", (SpringVersion::GetSync()).c_str());
+		exit(0);
+	}
+
+
+	*script_txt = cmdline.GetInputFile();
+	if (script_txt->empty() && !cmdline.IsSet("list-config-vars")) {
+		cmdline.PrintUsage();
+		exit(1);
+	}
+
+	if (cmdline.IsSet("isolation")) {
+		dataDirLocater.SetIsolationMode(true);
+	}
+
+	if (cmdline.IsSet("isolation-dir")) {
+		dataDirLocater.SetIsolationMode(true);
+		dataDirLocater.SetIsolationModeDir(cmdline.GetString("isolation-dir"));
+	}
+
+	
+	std::string configSource = "";
+	if (cmdline.IsSet("config")) {
+		configSource = cmdline.GetString("config");
+	}
+	ConfigHandler::Instantiate(configSource);
+	GlobalConfig::Instantiate();
+
+
+	if (cmdline.IsSet("list-config-vars")) {
+		ConfigVariable::OutputMetaDataMap();
+		GlobalConfig::Deallocate();
+		ConfigHandler::Deallocate();
+		exit(0);
+	}
+
+	#undef  LOG_SECTION_CURRENT
+	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
+}
+
+
+
 int main(int argc, char* argv[])
 {
 #ifdef _WIN32
 	try {
 #endif
+	std::string scriptName;
+	std::string scriptText;
+
+	ParseCmdLine(argc, argv, &scriptName);
+
 	// Initialize crash reporting
 	CrashHandler::Install();
 
-	if (argc != 2) {
-		LOG_L(L_ERROR, "usage: %s <full_path_to_script | --version>", argv[0]);
-		return 1;
-	}
-	if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0) {
-		// we do no want this in the "DedicatedServer" section
-		LOG_S(LOG_SECTION_DEFAULT, "%s", (SpringVersion::GetFull()).c_str());
-		return 0;
-	}
-
 	SDL_Init(SDL_INIT_TIMER);
-
-	ConfigHandler::Instantiate(); // use the default config file
-	GlobalConfig::Instantiate();
 	logOutput.Initialize();
-
-	std::string scriptName(argv[1]);
-	std::string scriptText;
 
 	LOG("report any errors to Mantis or the forums.");
 	LOG("loading script from file: %s", scriptName.c_str());

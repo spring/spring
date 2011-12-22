@@ -18,9 +18,9 @@
 #include "Game/SelectedUnits.h"
 #include "Game/TraceRay.h"
 #include "Game/Camera/CameraController.h"
-#include "Game/UI/LuaUI.h" // FIXME: for GML
 #include "Game/UI/UnitTracker.h"
 #include "Lua/LuaInputReceiver.h"
+#include "Lua/LuaUI.h" // FIXME: for GML
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Rendering/GlobalRendering.h"
@@ -83,23 +83,27 @@ CMouseHandler::CMouseHandler()
 	, locked(false)
 	, doubleClickTime(0.0f)
 	, scrollWheelSpeed(0.0f)
-	, dragScrollThreshold(0.0f)
 	, activeButton(-1)
 	, dir(ZeroVector)
 	, wasLocked(false)
 	, crossSize(0.0f)
 	, crossAlpha(0.0f)
 	, crossMoveScale(0.0f)
-	, cursorScale(1.0f)
 	, cursorText("")
 	, currentCursor(NULL)
+	, cursorScale(1.0f)
 	, hide(true)
 	, hwHide(true)
 	, hardwareCursor(false)
 	, invertMouse(false)
+	, dragScrollThreshold(0.0f)
 	, scrollx(0.0f)
 	, scrolly(0.0f)
 {
+	const int2 mousepos = IMouseInput::GetInstance()->GetPos();
+	lastx = mousepos.x;
+	lasty = mousepos.y;
+
 	for (int a = 1; a <= NUM_BUTTONS; a++) {
 		buttons[a].pressed = false;
 		buttons[a].lastRelease = -20;
@@ -145,37 +149,57 @@ void CMouseHandler::LoadCursors()
 	const CMouseCursor::HotSpot mCenter  = CMouseCursor::Center;
 	const CMouseCursor::HotSpot mTopLeft = CMouseCursor::TopLeft;
 
+	CMouseCursor* nullCursor = CMouseCursor::GetNullCursor();
+	cursorCommandMap["none"] = nullCursor;
+	// Note: we intentionally don't add it there cause GetNullCursor() returns
+	//  a pointer to a static var, so it gets automatically deleted
+	//cursorFileMap["null"] = nullCursor;
+
 	AssignMouseCursor("",             "cursornormal",     mTopLeft, false);
+
 	AssignMouseCursor("Area attack",  "cursorareaattack", mCenter,  false);
 	AssignMouseCursor("Area attack",  "cursorattack",     mCenter,  false); // backup
+
 	AssignMouseCursor("Attack",       "cursorattack",     mCenter,  false);
 	AssignMouseCursor("BuildBad",     "cursorbuildbad",   mCenter,  false);
 	AssignMouseCursor("BuildGood",    "cursorbuildgood",  mCenter,  false);
 	AssignMouseCursor("Capture",      "cursorcapture",    mCenter,  false);
 	AssignMouseCursor("Centroid",     "cursorcentroid",   mCenter,  false);
+
 	AssignMouseCursor("DeathWait",    "cursordwatch",     mCenter,  false);
 	AssignMouseCursor("DeathWait",    "cursorwait",       mCenter,  false); // backup
-	AssignMouseCursor("ManualFire",   "cursordgun",       mCenter,  false); // FIXME
+
+	AssignMouseCursor("ManualFire",   "cursormanfire",    mCenter,  false);
+	AssignMouseCursor("ManualFire",   "cursordgun",       mCenter,  false); // backup (backward compability)
 	AssignMouseCursor("ManualFire",   "cursorattack",     mCenter,  false); // backup
+
 	AssignMouseCursor("Fight",        "cursorfight",      mCenter,  false);
 	AssignMouseCursor("Fight",        "cursorattack",     mCenter,  false); // backup
+
 	AssignMouseCursor("GatherWait",   "cursorgather",     mCenter,  false);
 	AssignMouseCursor("GatherWait",   "cursorwait",       mCenter,  false); // backup
+
 	AssignMouseCursor("Guard",        "cursordefend",     mCenter,  false);
 	AssignMouseCursor("Load units",   "cursorpickup",     mCenter,  false);
 	AssignMouseCursor("Move",         "cursormove",       mCenter,  false);
 	AssignMouseCursor("Patrol",       "cursorpatrol",     mCenter,  false);
 	AssignMouseCursor("Reclaim",      "cursorreclamate",  mCenter,  false);
 	AssignMouseCursor("Repair",       "cursorrepair",     mCenter,  false);
+
 	AssignMouseCursor("Resurrect",    "cursorrevive",     mCenter,  false);
 	AssignMouseCursor("Resurrect",    "cursorrepair",     mCenter,  false); // backup
+
 	AssignMouseCursor("Restore",      "cursorrestore",    mCenter,  false);
 	AssignMouseCursor("Restore",      "cursorrepair",     mCenter,  false); // backup
+
 	AssignMouseCursor("SelfD",        "cursorselfd",      mCenter,  false);
+
 	AssignMouseCursor("SquadWait",    "cursornumber",     mCenter,  false);
 	AssignMouseCursor("SquadWait",    "cursorwait",       mCenter,  false); // backup
+
 	AssignMouseCursor("TimeWait",     "cursortime",       mCenter,  false);
 	AssignMouseCursor("TimeWait",     "cursorwait",       mCenter,  false); // backup
+
 	AssignMouseCursor("Unload units", "cursorunload",     mCenter,  false);
 	AssignMouseCursor("Wait",         "cursorwait",       mCenter,  false);
 
@@ -550,6 +574,8 @@ std::string CMouseHandler::GetCurrentTooltip()
 
 void CMouseHandler::Update()
 {
+	SetCursor(newCursor);
+
 	if (!hide) {
 		return;
 	}
@@ -579,7 +605,7 @@ void CMouseHandler::ShowMouse()
 {
 	if (hide) {
 		hide = false;
-		cursorText = "%none%"; // force hardware cursor rebinding (else we have standard b&w cursor)
+		cursorText = "none"; // force hardware cursor rebinding (else we have standard b&w cursor)
 
 		// I don't use SDL_ShowCursor here 'cos it would cause a flicker with hwCursor
 		// (flicker caused by switching between default cursor and later the really one e.g. `attack`)
@@ -630,11 +656,18 @@ void CMouseHandler::ToggleHwCursor(const bool& enable)
 		mouseInput->SetWMMouseCursor(NULL);
 		SDL_ShowCursor(SDL_DISABLE);
 	}
-	cursorText = "%none%";
+	cursorText = "none";
 }
 
 
 /******************************************************************************/
+
+void CMouseHandler::ChangeCursor(const std::string& cmdName, const float& scale)
+{
+	newCursor = cmdName;
+	cursorScale = scale;
+}
+
 
 void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebind)
 {
@@ -650,7 +683,7 @@ void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebin
 		currentCursor = cursorCommandMap[""];
 	}
 
-	if (hardwareCursor && !hide && currentCursor) {
+	if (hardwareCursor && !hide) {
 		if (currentCursor->hwValid) {
 			hwHide = false;
 			currentCursor->BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
@@ -764,6 +797,8 @@ void CMouseHandler::DrawFPSCursor()
 
 void CMouseHandler::DrawCursor()
 {
+	assert(currentCursor);
+	
 	if (guihandler)
 		guihandler->DrawCentroidCursor();
 
@@ -789,12 +824,11 @@ void CMouseHandler::DrawCursor()
 		return;
 	}
 
-	if (hide || (cursorText == "%none%"))
+	if (hide)
 		return;
 
-	if (!currentCursor || (hardwareCursor && currentCursor->hwValid)) {
+	if (hardwareCursor && currentCursor->hwValid)
 		return;
-	}
 
 	// draw the 'software' cursor
 	if (cursorScale >= 0.0f) {
@@ -823,11 +857,12 @@ bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
                                       bool overwrite)
 {
 	std::map<std::string, CMouseCursor*>::iterator cmdIt;
-	cmdIt = cursorCommandMap.find(cmdName);
-	const bool haveCmd = (cmdIt != cursorCommandMap.end());
-
 	std::map<std::string, CMouseCursor*>::iterator fileIt;
+
+	cmdIt = cursorCommandMap.find(cmdName);
 	fileIt = cursorFileMap.find(fileName);
+
+	const bool haveCmd = (cmdIt != cursorCommandMap.end());
 	const bool haveFile = (fileIt != cursorFileMap.end());
 
 	if (haveCmd && !overwrite) {
@@ -841,18 +876,18 @@ bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
 	}
 
 	CMouseCursor* oldCursor = haveCmd ? cmdIt->second : NULL;
+	CMouseCursor* newCursor = CMouseCursor::New(fileName, hotSpot);
 
-	CMouseCursor* cursor = CMouseCursor::New(fileName, hotSpot);
-	if (cursor == NULL) {
+	if (newCursor == NULL) {
 		return false; // invalid cursor
 	}
-	cursorFileMap[fileName] = cursor;
+
+	cursorFileMap[fileName] = newCursor;
 
 	// assign the new cursor
-	cursorCommandMap[cmdName] = cursor;
+	cursorCommandMap[cmdName] = newCursor;
 
 	SafeDeleteCursor(oldCursor);
-
 	return true;
 }
 
@@ -889,7 +924,6 @@ bool CMouseHandler::ReplaceMouseCursor(const string& oldName,
 	}
 
 	delete oldCursor;
-
 	return true;
 }
 
@@ -911,7 +945,7 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 	}
 
 	if (currentCursor == cursor) {
-		SetCursor("%none%", true);
+		SetCursor("none", true);
 	}
 
 	delete cursor;

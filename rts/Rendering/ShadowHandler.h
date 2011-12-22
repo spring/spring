@@ -35,6 +35,7 @@ public:
 	enum ShadowProjectionMode {
 		SHADOWPROMODE_MAP_CENTER = 0, // use center of map-geometry as projection target (constant res.)
 		SHADOWPROMODE_CAM_CENTER = 1, // use center of camera-frustum as projection target (variable res.)
+		SHADOWPROMODE_MIX_CAMMAP = 2, // use whichever mode maximizes resolution this frame
 	};
 	enum ShadowMapSizes {
 		MIN_SHADOWMAP_SIZE =   512,
@@ -63,6 +64,7 @@ private:
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
 	void SetShadowMapSizeFactors();
+	float GetShadowProjectionRadius(CCamera*, float3&, const float3&) const;
 	float GetOrthoProjectedMapRadius(const float3&, float3&) const;
 	float GetOrthoProjectedFrustumRadius(CCamera*, float3&) const;
 

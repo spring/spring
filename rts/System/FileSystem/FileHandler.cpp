@@ -133,7 +133,8 @@ bool CFileHandler::FileExists(const std::string& filePath, const std::string& mo
 
 	//! Raw
 	if (modes.find(SPRING_VFS_RAW) != string::npos) {
-		fileExists = fileExists || FileSystem::FileExists(filePath);
+		const string rawpath = dataDirsAccess.LocateFile(filePath);
+		fileExists = fileExists || FileSystem::FileExists(rawpath);
 	}
 
 	return fileExists;

@@ -14,6 +14,8 @@
 #error USE_GML_SIM requires USE_GML
 #endif
 
+#include "gmlcnf.h"
+
 #define GML_MUTEX_PROFILER 0 // enables mutex profiler
 
 #ifdef USE_GML
@@ -258,5 +260,7 @@ inline unsigned gmlGetTicks() {
 #define GML_LOCK_TIME() 0
 
 #endif // USE_GML
+
+#include "gml_base.h"
 
 #endif

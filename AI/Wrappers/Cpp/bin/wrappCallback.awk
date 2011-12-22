@@ -34,7 +34,7 @@ BEGIN {
 	myClassVar = "clb";
 	myWrapClass = "SSkirmishAICallback";
 	myWrapVar = "innerCallback";
-	myBridgePrefix = "bridged__";
+	myBridgePrefix = "bridged_";
 	myAbstractAIClass = "AbstractAI";
 	myAIFactoryClass = "AIFactory";
 
@@ -541,30 +541,30 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 			print("\t\t" "}") >> outFile_wrp_cpp_c;
 			print("") >> outFile_wrp_cpp_c;
 		}
-		print("\t\t" myNameSpace"::"clsName_c "* _ret = NULL;") >> outFile_wrp_cpp_c;
+		print("\t\t" myNameSpace"::"clsName_c "* internal_ret = NULL;") >> outFile_wrp_cpp_c;
 		if (_isAvailableMethod == "") {
-			print("\t\t" "_ret = new " myNameSpace"::"clsName_wrp_c "(" ctorParamsNoTypes ");") >> outFile_wrp_cpp_c;
+			print("\t\t" "internal_ret = new " myNameSpace"::"clsName_wrp_c "(" ctorParamsNoTypes ");") >> outFile_wrp_cpp_c;
 		} else {
 			print("\t\t" "bool isAvailable = " myBridgePrefix _isAvailableMethod "(" addIndParsNoTypes_c ");") >> outFile_wrp_cpp_c;
 			print("\t\t" "if (isAvailable) {") >> outFile_wrp_cpp_c;
-			print("\t\t\t" "_ret = new " myNameSpace"::"clsName_wrp_c "(" ctorParamsNoTypes ");") >> outFile_wrp_cpp_c;
+			print("\t\t\t" "internal_ret = new " myNameSpace"::"clsName_wrp_c "(" ctorParamsNoTypes ");") >> outFile_wrp_cpp_c;
 			print("\t\t" "}") >> outFile_wrp_cpp_c;
 		}
 		if (clsIsBuffered_c) {
 			if (_isAvailableMethod == "") {
 				print("\t\t" "{") >> outFile_wrp_cpp_c;
 			} else {
-				print("\t\t" "if (_ret != NULL) {") >> outFile_wrp_cpp_c;
+				print("\t\t" "if (internal_ret != NULL) {") >> outFile_wrp_cpp_c;
 			}
-			print("\t\t\t" "const int indexHash = _ret.HashCode();") >> outFile_wrp_cpp_c;
+			print("\t\t\t" "const int indexHash = internal_ret.HashCode();") >> outFile_wrp_cpp_c;
 			print("\t\t\t" "if (_buffer_instances.containsKey(indexHash)) {") >> outFile_wrp_cpp_c;
-			print("\t\t\t\t" "_ret = _buffer_instances.get(indexHash);") >> outFile_wrp_cpp_c;
+			print("\t\t\t\t" "internal_ret = _buffer_instances.get(indexHash);") >> outFile_wrp_cpp_c;
 			print("\t\t\t" "} else {") >> outFile_wrp_cpp_c;
-			print("\t\t\t\t" "_buffer_instances.put(indexHash, _ret);") >> outFile_wrp_cpp_c;
+			print("\t\t\t\t" "internal_buffer_instances.put(indexHash, internal_ret);") >> outFile_wrp_cpp_c;
 			print("\t\t\t" "}") >> outFile_wrp_cpp_c;
 			print("\t\t" "}") >> outFile_wrp_cpp_c;
 		}
-		print("\t\t" "return _ret;") >> outFile_wrp_cpp_c;
+		print("\t\t" "return internal_ret;") >> outFile_wrp_cpp_c;
 		print("\t" "}") >> outFile_wrp_cpp_c;
 		print("") >> outFile_wrp_cpp_c;
 	}
@@ -648,11 +648,11 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 			print("") >> outFile_abs_cpp_c;
 
 			#if (isClbRootCls_c) {
-			#	print("\t" "int _res = 0;") >> outFile_abs_cpp_c;
+			#	print("\t" "int internal_ret = 0;") >> outFile_abs_cpp_c;
 			#	print("") >> outFile_abs_cpp_c;
-			#	print("\t" "_res += this->GetSkirmishAIId() * 10E8;") >> outFile_abs_cpp_c;
+			#	print("\t" "internal_ret += this->GetSkirmishAIId() * 10E8;") >> outFile_abs_cpp_c;
 			#} else {
-				print("\t" "int _res = 23;") >> outFile_abs_cpp_c;
+				print("\t" "int internal_ret = 23;") >> outFile_abs_cpp_c;
 				print("") >> outFile_abs_cpp_c;
 				# NOTE: This could go wrong if we have more then 7 additional indices
 				# see 10E" (7-ai) below
@@ -664,12 +664,12 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 				for (ai=1; ai <= addInds_size_c; ai++) {
 					addIndName = addInds_c[ai];
 					if ((noInterfaceIndices_c == 0) || (addIndName != noInterfaceIndices_c)) {
-						print("\t" "_res += this->Get" capitalize(addIndName) "() * (int) (10E" (7-ai) ");") >> outFile_abs_cpp_c;
+						print("\t" "internal_ret += this->Get" capitalize(addIndName) "() * (int) (10E" (7-ai) ");") >> outFile_abs_cpp_c;
 					}
 				}
 			#}
 			print("") >> outFile_abs_cpp_c;
-			print("\t" "return _res;") >> outFile_abs_cpp_c;
+			print("\t" "return internal_ret;") >> outFile_abs_cpp_c;
 			print("}") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
 		}
@@ -682,14 +682,14 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 			print("\t" "virtual " "std::string "                                  "ToString()" ";") >> outFile_abs_h_c;
 			print(                "std::string " myNameSpace"::"clsName_abs_c"::" "ToString()" " {") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
-			print("\t" "std::string _res = \"" clsName_c "\";") >> outFile_abs_cpp_c;
+			print("\t" "std::string internal_ret = \"" clsName_c "\";") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
 
 			#if (isClbRootCls_c) { # NO FOLD
-			#	print("\t\t" "_res = _res + \"(skirmishAIId=\" + this->skirmishAIId + \", \";") >> outFile_abs_cpp_c;
+			#	print("\t\t" "internal_ret = internal_ret + \"(skirmishAIId=\" + this->skirmishAIId + \", \";") >> outFile_abs_cpp_c;
 			#} else { # NO FOLD
-			#	print("\t\t" "_res = _res + \"(clbHash=\" + " myBridgePrefix "hashCode() + \", \";") >> outFile_abs_cpp_c;
-			#	print("\t\t" "_res = _res + \"skirmishAIId=\" + " myBridgePrefix "SkirmishAI_getSkirmishAIId() + \", \";") >> outFile_abs_cpp_c;
+			#	print("\t\t" "internal_ret = internal_ret + \"(clbHash=\" + " myBridgePrefix "hashCode() + \", \";") >> outFile_abs_cpp_c;
+			#	print("\t\t" "internal_ret = internal_ret + \"skirmishAIId=\" + " myBridgePrefix "SkirmishAI_getSkirmishAIId() + \", \";") >> outFile_abs_cpp_c;
 				if (addInds_size_c > 0) {
 					print("\t" "char _buff[64];") >> outFile_abs_cpp_c;
 				}
@@ -697,13 +697,13 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 					addIndName = addInds_c[ai];
 					if ((noInterfaceIndices_c == 0) || (addIndName != noInterfaceIndices_c)) {
 						print("\t" "sprintf(_buff, \"" addIndName "=%i, \", this->Get" capitalize(addIndName) "());") >> outFile_abs_cpp_c;
-						print("\t" "_res = _res + _buff;") >> outFile_abs_cpp_c;
+						print("\t" "internal_ret = internal_ret + _buff;") >> outFile_abs_cpp_c;
 					}
 				}
 			#} # NO FOLD
-			print("\t" "_res = _res + \")\";") >> outFile_abs_cpp_c;
+			print("\t" "internal_ret = internal_ret + \")\";") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
-			print("\t" "return _res;") >> outFile_abs_cpp_c;
+			print("\t" "return internal_ret;") >> outFile_abs_cpp_c;
 			print("}") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
 		}
@@ -817,7 +817,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 
 	isVoid_int_m        = (retType_int == "void");
 
-	retVar_int_m        = "_ret_int";   # this is a const var
+	retVar_int_m        = "internal_ret_int";   # this is a const var
 	retVar_out_m        = retVar_int_m; # this may be changed
 	declaredVarsCode    = "";
 	conversionCode_pre  = "";
@@ -943,7 +943,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				if (match(paNa, /_posF3/)) {
 					# convert float[3] to AIFloat3
 					retParamType = myNameSpace "::AIFloat3";
-					retVar_out_m = "_ret";
+					retVar_out_m = "internal_ret";
 					conversionCode_pre  = conversionCode_pre  "\t\t" "float " paNa "[3];" "\n";
 					#conversionCode_post = conversionCode_post "\t\t" retVar_out_m " = new " myNameSpace "::AIFloat3(" paNa "[0], " paNa "[1]," paNa "[2]);" "\n";
 					#declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
@@ -952,7 +952,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					retType = retParamType;
 				} else if (match(paNa, /_colorS3/)) {
 					retParamType = myNameSpace "::AIColor";
-					retVar_out_m = "_ret";
+					retVar_out_m = "internal_ret";
 					conversionCode_pre  = conversionCode_pre  "\t\t" "short " paNa "[3];" "\n";
 					#conversionCode_post = conversionCode_post "\t\t" retVar_out_m " = new " myNameSpace "::AIColor(" paNa "[0], " paNa "[1]," paNa "[2]);" "\n";
 					#declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
@@ -961,7 +961,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					retType = retParamType;
 				} else if (match(paTy, /const char\*/)) {
 					retParamType = "std::string";
-					retVar_out_m = "_ret";
+					retVar_out_m = "internal_ret";
 					conversionCode_pre  = conversionCode_pre  "\t\t" "char " paNa "[10240];" "\n";
 					conversionCode_post = conversionCode_post "\t\t" retParamType " " retVar_out_m "(" paNa ");" "\n";
 					sub("(, )?const char\\* " paNa, "", params);
@@ -1068,15 +1068,16 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		_isFetching = 1;
 		_isRetSize  = 0;
 		_isObj      = 0;
-		_mapVar_size      = "_size";
+		_isNative   = !_isObj;
+		_mapVar_size      = "internal_size";
 		_mapVar_keys      = "keys";
 		_mapVar_values    = "values";
 		_mapType_key      = "const char*";
 		_mapType_value    = "const char*";
 		_mapType_oo_key   = "std::string";
 		_mapType_oo_value = "std::string";
-		_mapVar_oo        = "_map";
-		_mapType_int      = "std::map<"     _mapType_oo_key "," _mapType_oo_value ">";
+		_mapVar_oo        = "internal_map";
+		_mapType_int      = "std::map<" _mapType_oo_key "," _mapType_oo_value ">";
 		_mapType_impl     = "std::map<" _mapType_oo_key "," _mapType_oo_value ">"; # TODO: should be unused, but needs check
 
 		_mapType_key_regexEscaped = regexEscape(_mapType_key);
@@ -1113,8 +1114,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			#conversionCode_pre = conversionCode_pre "\t\t" _mapVar_values " = new " _mapType_value "[" _mapVar_size "];" "\n";
 			#conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_values ";" "\n";
 			#conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_keys ";" "\n";
-			conversionCode_pre = conversionCode_pre "\t\t" _mapType_key   " " _mapVar_keys   "[" _mapVar_size "];" "\n";
-			conversionCode_pre = conversionCode_pre "\t\t" _mapType_value " " _mapVar_values "[" _mapVar_size "];" "\n";
+			# we use "new" here, for VS inflicted C90 compatibility (or C99 incompatibility)
+			conversionCode_pre = conversionCode_pre "\t\t" _mapType_key   "* " _mapVar_keys   " = new " _mapType_key   "[" _mapVar_size "];" "\n";
+			conversionCode_pre = conversionCode_pre "\t\t" _mapType_value "* " _mapVar_values " = new " _mapType_value "[" _mapVar_size "];" "\n";
 		}
 
 		if (_isFetching) {
@@ -1129,9 +1131,18 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo "[" _mapVar_keys "[i]] = " _mapVar_values "[i];" "\n";
 				}
 			} else if (_isNative) {
-				#conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
+				conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo "[" _mapVar_keys "[i]] = " _mapVar_values "[i];" "\n";
+			} else {
+				print("Error: not transfering C to OO type in map transfer code");
+				exit(1);
 			}
 			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
+
+			if (!_isRetSize) {
+				conversionCode_post = conversionCode_post "\n";
+				conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_keys   ";" "\n";
+				conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_values ";" "\n";
+			}
 
 			retParamType = _mapType_int;
 			retVar_out_m = _mapVar_oo;
@@ -1280,6 +1291,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				}
 			} else if (_isNative) {
 				conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".push_back(" _arrayPaNa "[i]);" "\n";
+			} else {
+				print("Error: not transfering C to OO type in array transfer code");
+				exit(1);
 			}
 			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
 
@@ -1299,6 +1313,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar "[i]->Get" _refObj "Id();" "\n";
 			} else if (_isNative) {
 				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar "[i];" "\n";
+			} else {
+				print("Error: not transfering OO to C type in array transfer code");
+				exit(1);
 			}
 			conversionCode_pre = conversionCode_pre "\t\t" "}" "\n";
 		}
@@ -1361,12 +1378,12 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			print(conversionCode_post) >> outFile_wrp_cpp_m;
 		}
 		if (isBuffered_m) {
-			print(indent_m "_buffer_" memName " = " retVar_out_m ";") >> outFile_wrp_cpp_m;
-			print(indent_m "_buffer_isInitialized_" memName " = true;") >> outFile_wrp_cpp_m;
+			print(indent_m "internal_buffer_" memName " = " retVar_out_m ";") >> outFile_wrp_cpp_m;
+			print(indent_m "internal_buffer_isInitialized_" memName " = true;") >> outFile_wrp_cpp_m;
 			sub(/\t/, "", indent_m);
 			print(indent_m "}") >> outFile_wrp_cpp_m;
 			print("") >> outFile_wrp_cpp_m;
-			retVar_out_m = "_buffer_" memName;
+			retVar_out_m = "internal_buffer_" memName;
 		}
 		if (!isVoid_m) {
 			print(indent_m "return " retVar_out_m ";") >> outFile_wrp_cpp_m;
@@ -1385,10 +1402,10 @@ function doWrappMember(fullName_dwm) {
 }
 
 
-#EXPORT(float) bridged__UnitDef_getUpkeep(int _skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+#EXPORT(float) bridged_UnitDef_getUpkeep(int _skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
 function wrappFunctionDef(funcDef, commentEolTot) {
 
-	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)[ \t]+bridged__)|(\\)\\;)");
+	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)[ \t]+bridged_)|(\\)\\;)");
 	# because the empty part after ");" would count as part as well
 	size_funcParts--;
 

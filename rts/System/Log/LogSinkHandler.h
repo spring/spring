@@ -15,6 +15,8 @@ class ILogSink {
 public:
 	virtual void RecordLogMessage(const std::string& section, int level,
 			const std::string& text) = 0;
+protected:
+	~ILogSink() {}
 };
 
 /**

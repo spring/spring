@@ -42,7 +42,6 @@ static const float TEX_LEAF_END_X3   = 0.125f;
 
 static const float PART_MAX_TREE_HEIGHT   = MAX_TREE_HEIGHT * 0.4f;
 static const float HALF_MAX_TREE_HEIGHT   = MAX_TREE_HEIGHT * 0.5f;
-static const float DOUBLE_MAX_TREE_HEIGHT = MAX_TREE_HEIGHT * 2.0f;
 
 
 CAdvTreeDrawer::CAdvTreeDrawer()

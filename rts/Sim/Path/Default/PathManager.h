@@ -30,14 +30,14 @@ public:
 	void DeletePath(unsigned int pathId);
 
 
-	float3 NextWaypoint(
+	float3 NextWayPoint(
 		unsigned int pathId,
 		float3 callerPos,
 		float minDistance = 0.0f,
 		int numRetries = 0,
 		int ownerId = 0,
 		bool synced = true
-	) const;
+	);
 
 	unsigned int RequestPath(
 		const MoveData* moveData,
@@ -49,7 +49,7 @@ public:
 	);
 
 	/**
-	 * Returns current detail path waypoints. For the full path, @see GetEstimatedPath.
+	 * Returns waypoints of the max-resolution path segments.
 	 * @param pathId
 	 *     The path-id returned by RequestPath.
 	 * @param points
@@ -58,7 +58,7 @@ public:
 	void GetDetailedPath(unsigned pathId, std::vector<float3>& points) const;
 
 	/**
-	 * Returns current detail path waypoints as a square list. For the full path, @see GetEstimatedPath.
+	 * Returns waypoints of the max-resolution path segments as a square list.
 	 *
 	 * @param pathId
 	 *     The path-id returned by RequestPath.
@@ -67,7 +67,7 @@ public:
 	 */
 	void GetDetailedPathSquares(unsigned pathId, std::vector<int2>& points) const;
 
-	void GetEstimatedPath(unsigned int pathId, std::vector<float3>& points, std::vector<int>& starts) const;
+	void GetPathWayPoints(unsigned int pathId, std::vector<float3>& points, std::vector<int>& starts) const;
 
 	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
 

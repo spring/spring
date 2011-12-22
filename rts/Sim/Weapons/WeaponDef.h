@@ -32,7 +32,8 @@ public:
 		, leadBonus(0.0f)
 		, predictBoost(0.0f)
 		, damages(damages)
-		, areaOfEffect(0.0f)
+		, craterAreaOfEffect(0.0f)
+		, damageAreaOfEffect(0.0f)
 		, noSelfDamage(false)
 		, fireStarter(0.0f)
 		, edgeEffectiveness(0.0f)
@@ -161,7 +162,8 @@ public:
 	float predictBoost;        ///< replaces hardcoded behaviour for burnblow cannons
 
 	DamageArray damages;
-	float areaOfEffect;
+	float craterAreaOfEffect;
+	float damageAreaOfEffect;
 	bool noSelfDamage;
 	float fireStarter;
 	float edgeEffectiveness;
@@ -207,7 +209,7 @@ public:
 
 	bool noAutoTarget;          ///< cant target stuff (for antinuke,dgun)
 	bool manualfire;            ///< if true, slave us to the ManualFire button
-	int interceptor;            ///< anti nuke
+	int interceptor;            ///< if >= 1, weapon will fire at any interceptable projectiles
 	int targetable;             ///< nuke (can be shot by interceptor)
 	bool stockpile;
 	float coverageRange;        ///< range of anti nuke

@@ -95,7 +95,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 		middir = (dir1 + dir2).ANormalize();
 		drawSegmented = true;
 	}
-	SetRadius(pos1.distance(pos2));
+	SetRadiusAndHeight(pos1.distance(pos2), 0.0f);
 
 	if ((pos.y - ground->GetApproximateHeight(pos.x, pos.z)) > 10) {
 		useAirLos = true;
@@ -198,16 +198,10 @@ void CSmokeTrailProjectile::Draw()
 			#undef st
 		}
 	}
-#if defined(USE_GML) && GML_ENABLE_SIM
-	CProjectile * callbacker = *(CProjectile * volatile *)&drawCallbacker;
+	CProjectile* callbacker = GML::SimEnabled() ? *(CProjectile * volatile *)&drawCallbacker : drawCallbacker;
 	if (callbacker) {
 		callbacker->DrawCallback();
 	}
-#else
-	if (drawCallbacker) {
-		drawCallbacker->DrawCallback();
-	}
-#endif
 }
 
 void CSmokeTrailProjectile::Update()

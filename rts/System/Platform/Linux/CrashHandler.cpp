@@ -24,7 +24,7 @@
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
 #include "System/maindefines.h" // for SNPRINTF
-#include "System/myTime.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
@@ -41,6 +41,9 @@ static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
  */
 static std::string CreateAbsolutePath(const std::string& relativePath)
 {
+	if (relativePath.empty())
+		return relativePath;
+
 	std::string absolutePath;
 
 	if (relativePath.length() > 0 && (relativePath[0] == '/')) {
@@ -60,7 +63,7 @@ static std::string CreateAbsolutePath(const std::string& relativePath)
 
 /**
  * Returns a path to a file that most likely contains the debug symbols
- * for the supplied bianry file.
+ * for the supplied binary file.
  * Always returns an absolute path.
  * Always returns an existing path, may be the input one.
  * precedence (top entries considered first):
@@ -90,21 +93,12 @@ static std::string LocateSymbolFile(const std::string& binaryFile)
 	std::string symbolFile;
 
 	static const std::string debugPath = "/usr/lib/debug";
-	const std::string absBinFile = binaryFile;
 
-	const std::string::size_type lastSlash = absBinFile.find_last_of('/');
-	std::string::size_type lastPoint       = absBinFile.find_last_of('.');
-	if (lastPoint < lastSlash+2) {
-		lastPoint = std::string::npos;
-	}
-	const std::string bin_path = absBinFile.substr(0, lastSlash);                       //! eg: "/usr/lib"
-	const std::string bin_file = absBinFile.substr(lastSlash+1, lastPoint-lastSlash-1); //! eg: "libunitsync"
-	std::string bin_ext        = "";
-	if (lastPoint != std::string::npos) {
-		bin_ext                = absBinFile.substr(lastPoint);                          //! eg: ".so"
-	}
+	const std::string bin_path = FileSystem::GetDirectory(binaryFile);
+	const std::string bin_file = FileSystem::GetFilename(binaryFile);
+	const std::string bin_ext  = FileSystem::GetExtension(binaryFile);
 
-	if (bin_ext.length() > 0) {
+	if (!bin_ext.empty()) {
 		symbolFile = bin_path + '/' + bin_file + bin_ext + ".dbg";
 		if (FileSystem::IsReadableFile(symbolFile)) {
 			return symbolFile;
@@ -121,7 +115,7 @@ static std::string LocateSymbolFile(const std::string& binaryFile)
 		return symbolFile;
 	}
 
-	symbolFile = absBinFile;
+	symbolFile = binaryFile;
 
 	return symbolFile;
 }
@@ -271,23 +265,32 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 
 	//! Finally translate it
 	for (std::map<std::string,uintptr_t>::const_iterator it = binPath_baseMemAddr.begin(); it != binPath_baseMemAddr.end(); ++it) {
-		const std::string symbolFile = LocateSymbolFile(it->first);
+		const std::string& libName = it->first;
+		const uintptr_t&   libAddr = it->second;
+		const std::string symbolFile = LocateSymbolFile(libName);
+
 		std::ostringstream buf;
 		buf << "addr2line " << "--exe=\"" << symbolFile << "\"";
-		const uintptr_t& baseLibAddr = it->second;
 
-		//! insert requested addresses that should be translated by addr2line
+		// insert requested addresses that should be translated by addr2line
 		std::queue<size_t> indices;
 		for (size_t i = 0; i < paths.size(); ++i) {
 			const std::pair<std::string,uintptr_t>& pt = paths[i];
-			if (pt.first == it->first) {
-				buf << " " << std::hex << (pt.second - baseLibAddr);
+			if (pt.first == libName) {
+				// Put it twice in the queue.
+				// Depending on sys, compilation & lobby settings the libaddr doesn't need to be cut!
+				// The detection of these situations is more complexe than just dropping the line that fails
+				// (likely only one of the addresses will give something unequal to "??:0").
+				buf << " " << std::hex << pt.second;
+				indices.push(i);
+
+				buf << " " << std::hex << (pt.second - libAddr);
 				indices.push(i);
 			}
 		}
 
-		//! execute command addr2line, read stdout and write to log-file
-		buf << " 2>/dev/null"; //! hide error output from spring's pipe
+		// execute command addr2line, read stdout and write to log-file
+		buf << " 2>/dev/null"; // hide error output from spring's pipe
 		FILE* cmdOut = popen(buf.str().c_str(), "r");
 		if (cmdOut != NULL) {
 			const size_t line_sizeMax = 2048;
@@ -296,7 +299,7 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 				const size_t i = indices.front();
 				indices.pop();
 				if (strcmp(line,"??:0\n") != 0) {
-					(*lines)[i] = std::string(line, strlen(line) - 1); // exclude the lineending
+					(*lines)[i] = std::string(line, strlen(line) - 1); // exclude the line-ending
 				}
 			}
 			pclose(cmdOut);
@@ -305,7 +308,7 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 }
 
 
-void ForcedExitAfterFiveSecs() {
+static void ForcedExitAfterFiveSecs() {
 	boost::this_thread::sleep(boost::posix_time::seconds(5));
 	exit(-1);
 }
@@ -340,6 +343,7 @@ namespace CrashHandler
 			int numLines;
 			if (hThread) {
 				LOG_L(L_ERROR, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
+				LOG_CLEANUP();
 				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    //! stack pointers
 			} else {
 				numLines = backtrace(&buffer[0], buffer.size());    //! stack pointers
@@ -408,16 +412,19 @@ namespace CrashHandler
 				LOG_L(L_ERROR, "This stack trace indicates a problem with a Skirmish AI library.");
 				*keepRunning = true;
 			}
+
+			LOG_CLEANUP();
 		}
 
 		//! Translate it
 		TranslateStackTrace(&stacktrace, symbols);
 
-		//! Print out the StackTrace
+		//! Print out the translated StackTrace
 		unsigned numLine = 0;
 		for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
 			LOG_L(L_ERROR, "  <%u> %s", numLine++, it->c_str());
 		}
+		LOG_CLEANUP();
 	}
 
 
@@ -452,22 +459,20 @@ namespace CrashHandler
 
 		logSinkHandler.SetSinking(false);
 
-		std::string error;
+		std::string error = strsignal(signal);
+		// append the signal name (it seems there is no OS function to map signum to signame :<)
 		if (signal == SIGSEGV) {
-			error = "Segmentation fault (SIGSEGV)";
+			error += " (SIGSEGV)";
 		} else if (signal == SIGILL) {
-			error = "Illegal instruction (SIGILL)";
+			error += " (SIGILL)";
 		} else if (signal == SIGPIPE) {
-			error = "Broken pipe (SIGPIPE)";
+			error += " (SIGPIPE)";
 		} else if (signal == SIGIO) {
-			error = "IO-Error (SIGIO)";
+			error += " (SIGIO)";
 		} else if (signal == SIGABRT) {
-			error = "Aborted (SIGABRT)";
+			error += " (SIGABRT)";
 		} else if (signal == SIGFPE) {
-			error = "FloatingPointException (SIGFPE)";
-		} else {
-			//! we should never get here
-			error = "Unknown signal";
+			error += " (SIGFPE)";
 		}
 		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), SpringVersion::GetFull().c_str());
 

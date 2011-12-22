@@ -122,8 +122,6 @@ float3 LocalModel::GetRawPieceDirection(int piecenum) const
  * LocalModelPiece
  */
 
-static const float RADTOANG  = 180 / PI;
-
 LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	: numUpdatesSynced(1)
 	, lastMatrixUpdate(0)
@@ -179,7 +177,7 @@ void LocalModelPiece::Draw()
 		for (unsigned int i = 0; i < childs.size(); i++) {
 			childs[i]->Draw();
 		}
-	
+
 	if (!identity) {
 		glPopMatrix();
 	}
@@ -192,7 +190,7 @@ void LocalModelPiece::DrawLOD(unsigned int lod)
 		return;
 
 	CheckUpdateMatrixUnsynced();
-	
+
 	if (!identity) {
 		glPushMatrix();
 		glMultMatrixf(transfMat);
@@ -204,7 +202,7 @@ void LocalModelPiece::DrawLOD(unsigned int lod)
 		for (unsigned int i = 0; i < childs.size(); i++) {
 			childs[i]->DrawLOD(lod);
 		}
-	
+
 	if (!identity) {
 		glPopMatrix();
 	}

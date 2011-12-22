@@ -35,7 +35,7 @@ public:
 		if (locked) {
 			m1 = &m;
 			GML_STDMUTEX_LOCK(lm);
-			std::map<boost::recursive_mutex*, int>& lockmmap = lockmmaps[gmlThreadNumber];
+			std::map<boost::recursive_mutex*, int>& lockmmap = lockmmaps[GML::ThreadNumber()];
 			std::map<boost::recursive_mutex*, int>::iterator locki = lockmmap.find(m1);
 			if (locki == lockmmap.end()) {
 				lockmmap[m1] = 1;
@@ -56,7 +56,7 @@ public:
 #if GML_DEBUG_MUTEX
 		if (m1) {
 			GML_STDMUTEX_LOCK(lm);
-			std::map<boost::recursive_mutex*, int>& lockmmap = lockmmaps[gmlThreadNumber];
+			std::map<boost::recursive_mutex*, int>& lockmmap = lockmmaps[GML::ThreadNumber()];
 			lockmmap[m1] = (*lockmmap.find(m1)).second - 1;
 		}
 #endif

@@ -123,11 +123,11 @@ public:
 	 * Just like adding a float3, but updates this
 	 * float with the new sum.
 	 */
-	void operator+= (const float3& f) {
-
+	float3& operator+= (const float3& f) {
 		x += f.x;
 		y += f.y;
 		z += f.z;
+		return *this;
 	}
 
 	/**
@@ -223,10 +223,11 @@ public:
 	 * Same as multiplying a float, but stores
 	 * the new float3 inside this one.
 	 */
-	void operator*= (const float f) {
+	float3& operator*= (const float f) {
 		x *= f;
 		y *= f;
 		z *= f;
+		return *this;
 	}
 
 	/**
@@ -594,6 +595,9 @@ public:
 	bool IsInBounds() const;
 	/// Check if this vector is in bounds and clamp x and z if not
 	bool CheckInBounds();
+
+	float3  ClampInBounds() const { float3  f = *this; f.CheckInBounds(); return f; }
+	float3& ClampInBounds()       { float3& f = *this; f.CheckInBounds(); return f; }
 
 	float x; ///< x component
 	float y; ///< y component

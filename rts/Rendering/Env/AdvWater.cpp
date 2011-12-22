@@ -325,7 +325,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2, plane);
 	drawReflection = true;
 
-	readmap->GetGroundDrawer()->Draw(true);
+	readmap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(true);
@@ -346,7 +346,7 @@ void CAdvWater::UpdateWater(CGame* game)
 //	delete camera;
 //	camera = realCam;
 	camera->~CCamera();
-	new (camera) CCamera(*(CCamera*)realCam);
+	new (camera) CCamera(*(reinterpret_cast<CCamera*>(realCam)));
 
 	camera->Update();
 	glPopAttrib();

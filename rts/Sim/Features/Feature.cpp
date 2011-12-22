@@ -74,7 +74,9 @@ CFeature::CFeature() : CSolidObject(),
 	emitSmokeTime(0),
 	solidOnTop(NULL)
 {
+	crushable = true;
 	immobile = true;
+
 	physicalState = OnGround;
 }
 
@@ -104,19 +106,24 @@ void CFeature::PostLoad()
 {
 	def = featureHandler->GetFeatureDef(defName);
 
+	float fRadius = 1.0f;
+	float fHeight = 0.0f;
+
 	//FIXME is this really needed (aren't all those tags saved via creg?)
 	if (def->drawType == DRAWTYPE_MODEL) {
 		model = def->LoadModel();
-		height = model->height;
-		SetRadius(model->radius);
+
 		relMidPos = model->relMidPos;
+		fRadius = model->radius;
+		fHeight = model->height;
 	} else if (def->drawType >= DRAWTYPE_TREE) {
 		relMidPos = UpVector * TREE_RADIUS;
-		height = 2 * TREE_RADIUS;
-	} else {
-		relMidPos = ZeroVector;
+		fRadius = TREE_RADIUS;
+		fHeight = fRadius * 2.0f;
 	}
-	midPos = pos + relMidPos;
+
+	SetRadiusAndHeight(fRadius, fHeight);
+	UpdateMidPos();
 }
 
 
@@ -135,7 +142,6 @@ void CFeature::ChangeTeam(int newTeam)
 void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int _heading,
 	int facing, int _team, int _allyteam, const UnitDef* _udef, const float3& speed, int _smokeTime)
 {
-	pos = _pos;
 	def = _def;
 	udef = _udef;
 	defName = def->myName;
@@ -145,52 +151,54 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	allyteam = _allyteam;
 	emitSmokeTime = _smokeTime;
 
-	ChangeTeam(team); // maybe should not be here, but it prevents crashes caused by team = -1
-
-	pos.CheckInBounds();
+	mass = def->mass;
+	crushResistance = def->crushResistance;
 
 	health   = def->maxHealth;
 	blocking = def->blocking;
+
 	xsize    = ((facing & 1) == 0) ? def->xsize : def->zsize;
 	zsize    = ((facing & 1) == 1) ? def->xsize : def->zsize;
-	mass     = def->mass;
+
 	noSelect = def->noSelect;
+
+	float fRadius = 1.0f;
+	float fHeight = 0.0f;
 
 	if (def->drawType == DRAWTYPE_MODEL) {
 		model = def->LoadModel();
+
 		if (!model) {
 			LOG_L(L_ERROR, "Features: Couldn't load model for %s", defName.c_str());
-			SetRadius(0.0f);
-			relMidPos = ZeroVector;
 		} else {
-			height = model->height;
-			SetRadius(model->radius);
 			relMidPos = model->relMidPos;
+			fRadius = model->radius;
+			fHeight = model->height;
 
 			// note: gets deleted in ~CSolidObject
-			collisionVolume = new CollisionVolume(def->collisionVolume, model->radius);
+			collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
 		}
 	}
 	else if (def->drawType >= DRAWTYPE_TREE) {
-		SetRadius(TREE_RADIUS);
 		relMidPos = UpVector * TREE_RADIUS;
-		height = 2 * TREE_RADIUS;
+		fRadius = TREE_RADIUS;
+		fHeight = fRadius * 2.0f;
 
 		// LoadFeaturesFromMap() doesn't set a scale for trees
 		// note: gets deleted in ~CSolidObject
-		collisionVolume = new CollisionVolume(def->collisionVolume, TREE_RADIUS);
+		collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
 	}
-	else {
-		// geothermal (no collision volume)
-		SetRadius(0.0f);
-		relMidPos = ZeroVector;
-	}
-	midPos = pos + relMidPos;
+
+	Move3D(_pos.ClampInBounds(), false);
+	SetRadiusAndHeight(fRadius, fHeight);
+	UpdateMidPos();
+	CalculateTransform();
 
 	featureHandler->AddFeature(this);
 	qf->AddFeature(this);
 
-	CalculateTransform();
+	// maybe should not be here, but it prevents crashes caused by team = -1
+	ChangeTeam(team);
 
 	if (blocking) {
 		Block();
@@ -422,8 +430,7 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 		treeDrawer->DeleteTree(pos);
 	}
 
-	pos = newPos;
-
+	Move3D(pos, false);
 	eventHandler.FeatureMoved(this);
 
 	// setup finalHeight
@@ -436,9 +443,6 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 	} else {
 		finalHeight = newPos.y;
 	}
-
-	// setup midPos
-	midPos = pos + relMidPos;
 
 	// setup the visual transformation matrix
 	CalculateTransform();
@@ -485,8 +489,7 @@ bool CFeature::UpdatePosition()
 
 				// update our forward speed (and quadfield
 				// position) if it is still greater than 0
-				pos += deathSpeed;
-				midPos += deathSpeed;
+				Move3D(deathSpeed, true);
 
 				qf->AddFeature(this);
 				Block();
@@ -510,16 +513,14 @@ bool CFeature::UpdatePosition()
 					deathSpeed.y = mapInfo->map.gravity;
 				}
 
-				pos.y += deathSpeed.y;
-				midPos.y += deathSpeed.y;
+				Move1D(deathSpeed.y, 1, true);
 			} else {
 				deathSpeed.y = 0.0f;
 
 				// last Update() may have sunk us into
 				// ground if pos.y was only marginally
 				// larger than ground height, correct
-				pos.y = realGroundHeight;
-				midPos.y = pos.y + model->relMidPos.y;
+				Move1D(realGroundHeight, 1, false);
 			}
 
 			reachedFinalPos = (deathSpeed == ZeroVector);
@@ -532,41 +533,44 @@ bool CFeature::UpdatePosition()
 			}
 
 			eventHandler.FeatureMoved(this);
-
 			CalculateTransform();
 		}
 	} else {
 		if (pos.y > finalHeight) {
-			//! feature is falling
-			if (def->drawType >= DRAWTYPE_TREE)
+			// feature is falling (note: gravity is negative)
+			if (def->drawType >= DRAWTYPE_TREE) {
 				treeDrawer->DeleteTree(pos);
+			}
 
 			if (pos.y > 0.0f) {
-				speed.y += mapInfo->map.gravity; //! gravity is negative
-			} else { //! fall slower in water
+				speed.y += mapInfo->map.gravity;
+			} else {
+				// fall slower in water
 				speed.y += mapInfo->map.gravity * 0.5;
 			}
-			pos.y += speed.y;
-			midPos.y += speed.y;
+
 			transMatrix[13] += speed.y;
+			Move1D(speed.y, 1, true);
 
-			if (def->drawType >= DRAWTYPE_TREE)
+			if (def->drawType >= DRAWTYPE_TREE) {
 				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
+			}
 		} else if (pos.y < finalHeight) {
-			//! if ground is restored, make sure feature does not get buried
-			if (def->drawType >= DRAWTYPE_TREE)
+			// if ground is restored, make sure feature does not get buried
+			if (def->drawType >= DRAWTYPE_TREE) {
 				treeDrawer->DeleteTree(pos);
+			}
 
-			const float diff = finalHeight - pos.y;
+			const float dy = finalHeight - pos.y;
 
-			pos.y = finalHeight;
 			speed.y = 0.0f;
+			transMatrix[13] += dy;
 
-			midPos = pos + relMidPos;
-			transMatrix[13] += diff;
+			Move1D(dy, 1, true);
 
-			if (def->drawType >= DRAWTYPE_TREE)
+			if (def->drawType >= DRAWTYPE_TREE) {
 				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
+			}
 		}
 
 		reachedFinalPos = (pos.y == finalHeight);

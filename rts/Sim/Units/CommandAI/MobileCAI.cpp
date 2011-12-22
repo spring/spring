@@ -12,9 +12,7 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
-#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -43,8 +41,6 @@ CR_REG_METADATA(CMobileCAI, (
 
 				CR_MEMBER(lastPC),
 
-				CR_MEMBER(maxWantedSpeed),
-
 				CR_MEMBER(lastBuggerOffTime),
 				CR_MEMBER(buggerOffPos),
 				CR_MEMBER(buggerOffRadius),
@@ -68,8 +64,6 @@ CMobileCAI::CMobileCAI():
 	lastIdleCheck(0),
 	tempOrder(false),
 	lastPC(-1),
-//	patrolTime(0),
-	maxWantedSpeed(0),
 	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
@@ -90,8 +84,6 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	lastIdleCheck(0),
 	tempOrder(false),
 	lastPC(-1),
-//	patrolTime(0),
-	maxWantedSpeed(0),
 	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
@@ -391,23 +383,13 @@ void CMobileCAI::SlowUpdate()
 		IdleCheck();
 
 		//the attack order could terminate directly and thus cause a loop
-		if(commandQue.empty() || commandQue.front().GetID() == CMD_ATTACK) {
+		if (commandQue.empty() || commandQue.front().GetID() == CMD_ATTACK) {
 			return;
 		}
 	}
 
-	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
-	// to the current command  (and ignore them when it's their turn)
-	if (commandQue.size() >= 2 && !slowGuard) {
-		CCommandQueue::iterator it = commandQue.begin();
-		++it;
-		const Command& c = *it;
-		if ((c.GetID()== CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
-			const float defMaxSpeed = owner->maxSpeed;
-			const float newMaxSpeed = std::min(c.params[0], defMaxSpeed);
-			if (newMaxSpeed > 0)
-				owner->moveType->SetMaxSpeed(newMaxSpeed);
-		}
+	if (!slowGuard) {
+		SlowUpdateMaxSpeed();
 	}
 
 	Execute();
@@ -650,14 +632,14 @@ void CMobileCAI::ExecuteGuard(Command &c)
 		const float3 goal = guardee->pos - dif * (guardee->radius + owner->radius + 64.0f);
 		const bool resetGoal =
 			((goalPos - goal).SqLength2D() > 1600.0f) ||
-			(goalPos - owner->pos).SqLength2D() < Square(owner->maxSpeed * GAME_SPEED + 1 + SQUARE_SIZE * 2);
+			(goalPos - owner->pos).SqLength2D() < Square(owner->moveType->GetMaxSpeed() * GAME_SPEED + 1 + SQUARE_SIZE * 2);
 
 		if (resetGoal) {
 			SetGoal(goal, owner->pos);
 		}
 
 		if ((goal - owner->pos).SqLength2D() < 6400.0f) {
-			StartSlowGuard(guardee->maxSpeed);
+			StartSlowGuard(guardee->moveType->GetMaxSpeed());
 
 			if ((goal - owner->pos).SqLength2D() < 1800.0f) {
 				StopMove();
@@ -1090,28 +1072,31 @@ void CMobileCAI::IdleCheck()
 }
 
 void CMobileCAI::StopSlowGuard() {
-	if (slowGuard) {
-		slowGuard = false;
-		if (owner->maxSpeed)
-			owner->moveType->SetMaxSpeed(owner->maxSpeed);
-	}
+	if (!slowGuard)
+		return;
+
+	slowGuard = false;
+
+	// restore our default maximum speed
+	owner->moveType->SetMaxSpeed(owner->moveType->GetMaxSpeedDef());
 }
 
-void CMobileCAI::StartSlowGuard(float speed){
-	if (!slowGuard) {
-		slowGuard = true;
+void CMobileCAI::StartSlowGuard(float speed) {
+	if (slowGuard)
+		return;
 
-		if (owner->maxSpeed >= speed) {
-			if (!commandQue.empty()) {
-				Command currCommand = commandQue.front();
-				if (commandQue.size() <= 1
-						|| commandQue[1].GetID() != CMD_SET_WANTED_MAX_SPEED
-						|| commandQue[1].params[0] > speed){
-					if (speed > 0)
-						owner->moveType->SetMaxSpeed(speed);
-				}
-			}
-		}
+	slowGuard = true;
+
+	if (speed <= 0.0f) { return; }
+	if (commandQue.empty()) { return; }
+	if (owner->moveType->GetMaxSpeed() < speed) { return; }
+
+	const Command& c = (commandQue.size() > 1)? commandQue[1]: Command(CMD_STOP);
+
+	// when guarding, temporarily adopt the maximum
+	// (forward) speed of the guardee unit as our own
+	if ((c.GetID() != CMD_SET_WANTED_MAX_SPEED) || (c.params[0] > speed)) {
+		owner->moveType->SetMaxSpeed(speed);
 	}
 }
 

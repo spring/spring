@@ -294,22 +294,26 @@ void CEndGameBox::Draw()
 			xpos += 0.1f;
 		}
 
-		float ypos=0.5f;
+		float ypos = 0.5f;
 		for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-			if (playerHandler->Player(a)->currentStats.mousePixels == 0) {
-				continue;
-			}
+			const CPlayer* p = playerHandler->Player(a);
+			const PlayerStatistics& pStats = p->currentStats;
 			char values[6][100];
 
-			sprintf(values[0], "%s",	playerHandler->Player(a)->name.c_str());
-			sprintf(values[1], "%i", (int)(playerHandler->Player(a)->currentStats.mouseClicks * 60 / game->totalGameTime));
-			sprintf(values[2], "%i", (int)(playerHandler->Player(a)->currentStats.mousePixels * 60 / game->totalGameTime));
-			sprintf(values[3], "%i", (int)(playerHandler->Player(a)->currentStats.keyPresses  * 60 / game->totalGameTime));
-			sprintf(values[4], "%i", (int)(playerHandler->Player(a)->currentStats.numCommands * 60 / game->totalGameTime));
-			sprintf(values[5], "%i", (int)
-				( playerHandler->Player(a)->currentStats.numCommands != 0 ) ?
-				( playerHandler->Player(a)->currentStats.unitCommands/playerHandler->Player(a)->currentStats.numCommands) :
-				( 0 ));
+			SNPRINTF(values[0], 100, "%s", p->name.c_str());
+			if (game->totalGameTime>0){ //prevent div zero
+				SNPRINTF(values[1], 100, "%i", int(pStats.mouseClicks * 60 / game->totalGameTime));
+				SNPRINTF(values[2], 100, "%i", int(pStats.mousePixels * 60 / game->totalGameTime));
+				SNPRINTF(values[3], 100, "%i", int(pStats.keyPresses  * 60 / game->totalGameTime));
+				SNPRINTF(values[4], 100, "%i", int(pStats.numCommands * 60 / game->totalGameTime));
+			}else{
+				for(int i=1; i<5; i++)
+					SNPRINTF(values[i], 100, "%i", 0);
+			}
+			SNPRINTF(values[5], 100, "%i",
+				(pStats.numCommands != 0)?
+				(pStats.unitCommands / pStats.numCommands):
+				(0));
 
 			float xpos = 0.01f;
 			for (int a = 0; a < 6; ++a) {

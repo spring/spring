@@ -16,6 +16,7 @@ class IModelParser
 {
 public:
 	virtual S3DModel* Load(const std::string& name) = 0;
+	virtual ~IModelParser() {}
 };
 
 
@@ -42,12 +43,10 @@ private:
 	ModelMap cache;
 	ParserMap parsers;
 
-#if defined(USE_GML) && GML_ENABLE_SIM
 	std::vector<S3DModelPiece*> createLists;
 
 	std::set<CUnit*> fixLocalModels;
 	std::vector<LocalModel*> deleteLocalModels;
-#endif
 
 	void CreateLists(S3DModelPiece* o);
 	void CreateListsNow(S3DModelPiece* o);

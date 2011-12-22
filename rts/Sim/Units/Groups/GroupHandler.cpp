@@ -17,6 +17,7 @@
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/EventHandler.h"
 
 std::vector<CGroupHandler*> grouphandlers;
 
@@ -51,10 +52,29 @@ CGroupHandler::~CGroupHandler()
 
 void CGroupHandler::Update()
 {
-	for (std::vector<CGroup*>::iterator gi = groups.begin(); gi != groups.end(); ++gi) {
-		if ((*gi) != NULL) {
-			(*gi)->Update();
+	{
+		GML_RECMUTEX_LOCK(group); // Update
+
+		for (std::vector<CGroup*>::iterator gi = groups.begin(); gi != groups.end(); ++gi) {
+			if ((*gi) != NULL) {
+				// Update may invoke RemoveGroup, but this will only NULL the element, so there will be no iterator invalidation here
+				(*gi)->Update();
+			}
 		}
+	}
+
+	std::set<int> grpChg;
+	{
+		GML_STDMUTEX_LOCK(grpchg); // Update
+
+		if (changedGroups.empty())
+			return;
+
+		changedGroups.swap(grpChg);
+	}
+	// this batching mechanism is to prevent lua related readlocks for MT
+	for (std::set<int>::iterator i = grpChg.begin(); i != grpChg.end(); ++i) {
+		eventHandler.GroupChanged(*i);
 	}
 }
 
@@ -165,3 +185,11 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 	freeGroups.push_back(group->id);
 	delete group;
 }
+
+void CGroupHandler::PushGroupChange(int id)
+{
+	GML_STDMUTEX_LOCK(grpchg); // PushGroupChange
+
+	changedGroups.insert(id);
+}
+

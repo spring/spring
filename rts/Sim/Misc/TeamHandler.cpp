@@ -5,7 +5,6 @@
 #include <cstring>
 
 #include "Game/GameSetup.h"
-#include "Lua/LuaGaia.h"
 #include "System/mmgr.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -46,6 +45,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	assert(setup->teamStartingData.size() <= MAX_TEAMS);
 	assert(setup->allyStartingData.size() <= MAX_TEAMS);
 
+	teams.reserve(setup->teamStartingData.size() + 1); // +1 for Gaia
 	teams.resize(setup->teamStartingData.size());
 	allyTeams = setup->allyStartingData;
 

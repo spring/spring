@@ -74,13 +74,6 @@ public:
 	float crashElevator;
 	float crashRudder;
 
-	struct DrawLine {
-		CR_DECLARE_STRUCT(DrawLine);
-		float3 pos1, pos2;
-		float3 color;
-	};
-	std::vector<DrawLine> lines;
-
 	struct RudderInfo{
 		CR_DECLARE_STRUCT(RudderInfo);
 		RudderInfo() : rotation(0.f) {}

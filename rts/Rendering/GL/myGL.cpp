@@ -37,7 +37,7 @@ static CVertexArray* currentVertexArray = NULL;
 CVertexArray* GetVertexArray()
 {
 #ifdef USE_GML // each thread gets its own array to avoid conflicts
-	int thread=gmlThreadNumber;
+	int thread = GML::ThreadNumber();
 	if (currentVertexArrays[thread] == &vertexArrays1[thread]) {
 		currentVertexArrays[thread] = &vertexArrays2[thread];
 	} else {
@@ -158,27 +158,62 @@ void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 }
 #endif // GL_ARB_debug_output
 
+
+static bool GetAvailableVideoRAM(GLint* memory)
+{
+#if defined(HEADLESS) || !defined(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX) || !defined(GL_TEXTURE_FREE_MEMORY_ATI)
+	return false;
+#else
+	// check free video ram (all values in kB)
+	if (GLEW_NVX_gpu_memory_info) {
+		glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &memory[0]);
+		glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &memory[1]);
+	}
+	if (GLEW_ATI_meminfo) {
+		GLint texMemInfo[4];
+		glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, texMemInfo);
+
+		memory[0] = texMemInfo[1];
+		memory[1] = texMemInfo[0];
+	}
+
+	return true;
+#endif
+}
+
+
+
 void LoadExtensions()
 {
 	glewInit();
 
+	const SDL_version* sdlVersion = SDL_Linked_Version();
 	const char* glVersion = (const char*) glGetString(GL_VERSION);
 	const char* glVendor = (const char*) glGetString(GL_VENDOR);
 	const char* glRenderer = (const char*) glGetString(GL_RENDERER);
 	const char* glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION);
 	const char* glewVersion = (const char*) glewGetString(GLEW_VERSION);
-	const char* glExtensions = (const char*) glGetString(GL_EXTENSIONS);
 
+	char glVidMemStr[64] = "unknown";
+	GLint vidMemBuffer[2] = {0, 0};
+
+	if (GetAvailableVideoRAM(vidMemBuffer)) {
+		const char* memFmtStr = "total %iMB, available %iMB";
+		const GLint totalMemMB = vidMemBuffer[0] / 1024;
+		const GLint availMemMB = vidMemBuffer[1] / 1024;
+
+		if (totalMemMB > 0 && availMemMB > 0)
+			SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
+	}
+	
 	// log some useful version info
-	LOG("SDL:  %d.%d.%d",
-		SDL_Linked_Version()->major,
-		SDL_Linked_Version()->minor,
-		SDL_Linked_Version()->patch);
+	LOG("SDL version:  %d.%d.%d", sdlVersion->major, sdlVersion->minor, sdlVersion->patch);
 	LOG("GL version:   %s", glVersion);
 	LOG("GL vendor:    %s", glVendor);
 	LOG("GL renderer:  %s", glRenderer);
-	LOG("GLSL version: %s", glslVersion); // only non-NULL as of OpenGL 2.0
+	LOG("GLSL version: %s", glslVersion);
 	LOG("GLEW version: %s", glewVersion);
+	LOG("Video RAM:    %s", glVidMemStr);
 
 #if       !defined DEBUG
 	{
@@ -214,9 +249,15 @@ void LoadExtensions()
 	}
 #endif // !defined DEBUG
 
-	std::string s = (glExtensions != NULL)? glExtensions: "";
-	for (unsigned int i = 0; i < s.length(); i++)
-		if (s[i] == ' ') s[i] = '\n';
+	/*{
+		std::string s = (char*)glGetString(GL_EXTENSIONS);
+		for (unsigned int i=0; i<s.length(); i++)
+			if (s[i]==' ') s[i]='\n';
+
+		std::ofstream ofs("ext.txt");
+		if (!ofs.bad() && ofs.is_open())
+			ofs.write(s.c_str(), s.length());
+	}*/
 
 	std::string missingExts = "";
 	if (!GLEW_ARB_multitexture) {

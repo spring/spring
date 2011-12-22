@@ -346,7 +346,7 @@ void CBuilder::Update()
 						}
 						u->health *= 0.05f;
 
-						CBuilderCAI *cai = (CBuilderCAI *)commandAI;
+						CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
 						for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
 							CBuilder *bld = (CBuilder *)*it;
 							if (bld->commandAI->commandQue.empty())
@@ -444,7 +444,7 @@ void CBuilder::SetRepairTarget(CUnit* target)
 
 void CBuilder::SetReclaimTarget(CSolidObject* target)
 {
-	if (dynamic_cast<CFeature*>(target) && !((CFeature*) target)->def->reclaimable) {
+	if (dynamic_cast<CFeature*>(target) && !static_cast<CFeature*>(target)->def->reclaimable) {
 		return;
 	}
 
@@ -610,7 +610,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 
 	// floating structures don't terraform the seabed
 	const float groundheight = ground->GetHeightReal(b->pos.x, b->pos.z);
-	const bool onWater = (unitDef->floater && groundheight <= 0.0f);
+	const bool onWater = (unitDef->floatOnWater && groundheight <= 0.0f);
 
 	if (mapDamage->disabled || !unitDef->levelGround || onWater ||
 	    (unitDef->canmove && (unitDef->speed > 0.0f))) {
@@ -721,11 +721,8 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 	}
 
 	#if (PLAY_SOUNDS == 1)
-	const int soundIdx = unitDef->sounds.build.getRandomIdx();
-	if (soundIdx >= 0) {
-		Channels::UnitReply.PlaySample(
-			unitDef->sounds.build.getID(soundIdx), pos,
-			unitDef->sounds.build.getVolume(soundIdx));
+	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+		Channels::General.PlayRandomSample(unitDef->sounds.build, pos);
 	}
 	#endif
 }

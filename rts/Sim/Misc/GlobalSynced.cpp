@@ -7,9 +7,6 @@
 
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/GameSetup.h"
-#include "Lua/LuaGaia.h"
-#include "Lua/LuaRules.h"
-#include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Util.h"

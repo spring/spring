@@ -5,14 +5,12 @@
 #include "System/mmgr.h"
 
 #include "InfoConsole.h"
+#include "InputReceiver.h"
 #include "GuiHandler.h"
 #include "Rendering/glFont.h"
-
-#include "System/Sync/SyncTracer.h"
+#include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/EventClient.h"
 #include "System/Log/LogSinkHandler.h"
-#include "InputReceiver.h"
 
 #include <fstream>
 
@@ -54,11 +52,13 @@ CInfoConsole::CInfoConsole()
 	fontSize = fontScale * smallFont->GetSize();
 
 	logSinkHandler.AddSink(this);
+	eventHandler.AddClient(this);
 }
 
 CInfoConsole::~CInfoConsole()
 {
 	logSinkHandler.RemoveSink(this);
+	eventHandler.RemoveClient(this);
 }
 
 void CInfoConsole::Draw()
@@ -117,6 +117,31 @@ void CInfoConsole::Update()
 	}
 }
 
+void CInfoConsole::PushNewLinesToEventHandler()
+{
+	if (newLines == 0)
+		return;
+
+	std::deque<RawLine> newRawLines;
+
+	{
+		boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+
+		const int count = (int)rawData.size();
+		const int start = count - newLines;
+		for (int i = start; i < count; i++) {
+			const RawLine& rawLine = rawData[i];
+			newRawLines.push_back(rawLine);
+		}
+		newLines = 0;
+	}
+
+	for (std::deque<RawLine>::iterator it = newRawLines.begin(); it != newRawLines.end(); ++it) {
+		const RawLine& rawLine = (*it);
+		eventHandler.AddConsoleLine(rawLine.text, rawLine.section, rawLine.level);
+	}
+}
+
 
 int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 {
@@ -128,18 +153,6 @@ int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 		newLines = 0;
 	}
 	return tmp;
-}
-
-
-void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
-{
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
-	const int count = (int)rawData.size();
-	const int start = count - newLines;
-	for (int i = start; i < count; i++) {
-		lines.push_back(rawData[i]);
-	}
-	newLines = 0;
 }
 
 

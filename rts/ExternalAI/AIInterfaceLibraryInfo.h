@@ -13,7 +13,7 @@ class CAIInterfaceLibraryInfo {
 public:
 	CAIInterfaceLibraryInfo(const CAIInterfaceLibraryInfo& interfaceInfo);
 	CAIInterfaceLibraryInfo(const std::string& interfaceInfoFile);
-	~CAIInterfaceLibraryInfo();
+	virtual ~CAIInterfaceLibraryInfo();
 
 	//virtual LevelOfSupport GetLevelOfSupportForCurrentEngine() const;
 

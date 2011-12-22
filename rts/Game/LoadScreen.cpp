@@ -37,7 +37,7 @@
 
 #include <vector>
 
-CONFIG(bool, LoadingMT).defaultValue(true);
+CONFIG(int, LoadingMT).defaultValue(-1);
 
 CLoadScreen* CLoadScreen::singleton = NULL;
 
@@ -70,7 +70,11 @@ void CLoadScreen::Init()
 #ifdef HEADLESS
 	mt_loading = false;
 #else
-	mt_loading = configHandler->GetBool("LoadingMT");
+	const int mtCfg = configHandler->GetInt("LoadingMT");
+	// user override
+	mt_loading = (mtCfg > 0);
+	// runtime detect. disable for intel/mesa drivers, they crash at multithreaded OpenGL (date: Nov. 2011)
+	mt_loading |= (mtCfg < 0) && !globalRendering->haveMesa && !globalRendering->haveIntel;
 #endif
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
@@ -107,6 +111,7 @@ void CLoadScreen::Init()
 	}
 
 	if (!mt_loading) {
+		LOG("LoadingScreen: single-threaded");
 		game->LoadGame(mapName);
 	}
 }
@@ -296,7 +301,7 @@ bool CLoadScreen::Draw()
 		font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
 #ifdef USE_GML
 		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
+			"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), GML::ThreadCount());
 #else
 		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			"Spring %s", SpringVersion::GetFull().c_str());
@@ -331,6 +336,7 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	curLoadMessage = text;
 
 	LOG("%s", text.c_str());
+	LOG_CLEANUP();
 
 	//! Check the FPU state (needed for synced computations),
 	//! some external libraries which get linked during loading might reset those.

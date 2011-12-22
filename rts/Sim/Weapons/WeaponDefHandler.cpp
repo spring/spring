@@ -163,7 +163,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.damages.craterMult    = wdTable.GetFloat("craterMult",    wd.damages.impulseFactor);
 	wd.damages.craterBoost   = wdTable.GetFloat("craterBoost",   0.0f);
 
-	wd.areaOfEffect = wdTable.GetFloat("areaOfEffect", 8.0f) * 0.5f;
+	wd.damageAreaOfEffect = wdTable.GetFloat("areaOfEffect", 8.0f) * 0.5f;
+	wd.craterAreaOfEffect = wdTable.GetFloat("craterAreaOfEffect", wd.damageAreaOfEffect);
 	wd.edgeEffectiveness = wdTable.GetFloat("edgeEffectiveness", 0.0f);
 	// prevent 0/0 division in CGameHelper::Explosion
 	if (wd.edgeEffectiveness > 0.999f) {
@@ -321,8 +322,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		}
 	}
 
-	//2+min(damages[0]*0.0025f,weaponDef->areaOfEffect*0.1f)
-	const float tempsize = 2.0f + min(wd.damages[0] * 0.0025f, wd.areaOfEffect * 0.1f);
+	const float tempsize = 2.0f + std::min(wd.damages[0] * 0.0025f, wd.damageAreaOfEffect * 0.1f);
 	wd.size = wdTable.GetFloat("size", tempsize);
 	wd.sizeGrowth = wdTable.GetFloat("sizeGrowth", 0.2f);
 	wd.collisionSize = wdTable.GetFloat("collisionSize", 0.05f);
@@ -393,12 +393,18 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 }
 
 void CWeaponDefHandler::ParseWeaponVisuals(const LuaTable& wdTable, WeaponDef& wd) {
-	const int color  = wdTable.GetInt("color",  0);
-	const int color2 = wdTable.GetInt("color2", 0);
-	const std::string& colormap = wdTable.GetString("colormap", "");
+	const float color1Hue = wdTable.GetInt("color",  0) / 255.0f;
+	const float color1Sat = wdTable.GetInt("color2", 0) / 255.0f;
 
+	const std::string& colormap = wdTable.GetString("colormap", "");
 	const LuaTable& texTable = wdTable.SubTable("textures");
-	const float3 rgbcol = hs2rgb(color / float(255), color2 / float(255));
+
+	const float3 defColors[4] = {
+		hs2rgb(color1Hue, color1Sat), // default rgbColor1 for all weapon-types except cannons
+		float3(1.0f, 1.0f, 1.0f),     // default rgbColor2 for all weapon-types
+		float3(1.0f, 0.5f, 0.0f),     // default rgbColor1 for Cannons
+		float3(0.9f, 0.9f, 0.2f),     // default rgbColor1 for EMGCannons
+	};
 
 	WeaponDef::Visuals& visuals = wd.visuals;
 
@@ -416,15 +422,15 @@ void CWeaponDefHandler::ParseWeaponVisuals(const LuaTable& wdTable, WeaponDef& w
 	visuals.corethickness  = wdTable.GetFloat("coreThickness",  0.25f);
 	visuals.laserflaresize = wdTable.GetFloat("laserFlareSize", 15.0f);
 
-	visuals.tilelength      = wdTable.GetFloat("tileLength", 200.0f);
-	visuals.scrollspeed     = wdTable.GetFloat("scrollSpeed",  5.0f);
-	visuals.pulseSpeed      = wdTable.GetFloat("pulseSpeed",   1.0f);
-	visuals.beamdecay       = wdTable.GetFloat("beamDecay",    1.0f);
-	visuals.color           = wdTable.GetFloat3("rgbColor",  rgbcol);
-	visuals.color2          = wdTable.GetFloat3("rgbColor2", float3(1.0f, 1.0f, 1.0f));
+	visuals.tilelength     = wdTable.GetFloat("tileLength", 200.0f);
+	visuals.scrollspeed    = wdTable.GetFloat("scrollSpeed",  5.0f);
+	visuals.pulseSpeed     = wdTable.GetFloat("pulseSpeed",   1.0f);
+	visuals.beamdecay      = wdTable.GetFloat("beamDecay",    1.0f);
+	visuals.color          = wdTable.GetFloat3("rgbColor",  defColors[0]);
+	visuals.color2         = wdTable.GetFloat3("rgbColor2", defColors[1]);
 
-	if (wd.type ==    "Cannon") { visuals.color = float3(1.0f, 0.5f, 0.0f); }
-	if (wd.type == "EmgCannon") { visuals.color = float3(0.9f, 0.9f, 0.2f); }
+	if (wd.type ==    "Cannon") { visuals.color = wdTable.GetFloat3("rgbColor", defColors[2]); }
+	if (wd.type == "EmgCannon") { visuals.color = wdTable.GetFloat3("rgbColor", defColors[3]); }
 
 	visuals.texNames[0]     = texTable.GetString(1, wdTable.GetString("texture1", ""));
 	visuals.texNames[1]     = texTable.GetString(2, wdTable.GetString("texture2", ""));
@@ -472,7 +478,7 @@ void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd
 
 			soundVolume = hitSoundVolume;
 
-			if (wd.areaOfEffect > 8.0f) {
+			if (wd.damageAreaOfEffect > 8.0f) {
 				soundVolume *= 2.0f;
 			}
 			if (wd.type == "DGun") {

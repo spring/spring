@@ -32,6 +32,7 @@
 #include "System/Util.h"
 
 #define DRAW_QUAD_SIZE 32
+#define FEATURE_DIST 3000.0f
 
 CONFIG(bool, ShowRezBars).defaultValue(true);
 
@@ -90,10 +91,8 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 	CFeature* f = const_cast<CFeature*>(feature);
 	texturehandlerS3O->UpdateDraw();
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if(!gmlShareLists && f->model && TEX_TYPE(f) < 0)
+	if (GML::SimEnabled() && !GML::ShareLists() && f->model && TEX_TYPE(f) < 0)
 		TEX_TYPE(f) = texturehandlerS3O->LoadS3OTextureNow(f->model);
-#endif
 
 	if (f->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
@@ -171,11 +170,9 @@ void CFeatureDrawer::Update()
 
 inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
-//#if defined(USE_GML) && GML_ENABLE_SIM
-//	f->drawPos = f->pos + (f->speed * ((float)globalRendering->lastFrameStart - (float)f->lastUnitUpdate) * globalRendering->weightedSpeedFactor);
-//#else
-	f->drawPos = f->pos + (f->speed * globalRendering->timeOffset);
-//#endif
+	const float time = /*!GML::SimEnabled() ?*/ globalRendering->timeOffset /*:
+		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)f->lastFeatUpdate) * globalRendering->weightedSpeedFactor*/;
+	f->drawPos = f->pos + (f->speed * time);
 	f->drawMidPos = f->drawPos + f->relMidPos;
 }
 
@@ -200,7 +197,7 @@ void CFeatureDrawer::Draw()
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-
+	unitDrawDistSq = unitDrawer->unitDrawDist * unitDrawer->unitDrawDist;
 	unitDrawer->SetupForUnitDrawing();
 	GetVisibleFeatures(0, true);
 
@@ -308,6 +305,10 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 {
 	if (!camera->InView(feature->pos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
+	const float sqDist = (feature->pos - camera->pos).SqLength();
+	const float farLength = feature->sqRadius * unitDrawDistSq;
+	const float sqFadeDistEnd = (FEATURE_DIST * 2.0f) * (FEATURE_DIST * 2.0f);
+	if (sqDist >= std::min(farLength, sqFadeDistEnd)) return false;
 
 	glPushMatrix();
 	glMultMatrixf(feature->transMatrix.m);
@@ -467,7 +468,6 @@ class CFeatureQuadDrawer : public CReadMap::IQuadDrawer {
 public:
 	int drawQuadsX;
 	bool drawReflection, drawRefraction;
-	float unitDrawDist;
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
 	bool farFeatures;
@@ -511,7 +511,7 @@ public:
 				}
 
 				const float sqDist = (f->pos - camera->pos).SqLength();
-				const float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
+				const float farLength = f->sqRadius * featureDrawer->unitDrawDistSq;
 #ifdef USE_GML
 				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
 					statFeatures->push_back(f);
@@ -551,7 +551,7 @@ public:
 
 void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 {
-	float featureDist = 3000.0f;
+	float featureDist = FEATURE_DIST;
 
 	if (extraSize == 0) {
 		// far-features are not drawn during shadowpass anyway
@@ -563,7 +563,6 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	drawer.drawQuadsX = drawQuadsX;
 	drawer.drawReflection = water->IsDrawReflection();
 	drawer.drawRefraction = water->IsDrawRefraction();
-	drawer.unitDrawDist = unitDrawer->unitDrawDist;
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
 	drawer.farFeatures = drawFar;

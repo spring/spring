@@ -83,8 +83,8 @@ CTestTestfile.cmake
 # ???
 progress.make
 
-#buildbot generated dirs
-/build-*
+#buildbot generated dir
+/build
 
 #installer downloaded/generated stuff
 /installer/Springlobby/

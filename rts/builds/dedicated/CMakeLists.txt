@@ -19,7 +19,7 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
 ### Assemble libraries
-LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
 LIST(APPEND engineDedicatedLibraries 7zip ${SPRING_MINIZIP_LIBRARY} lua)
 LIST(APPEND engineDedicatedLibraries headlessStubs)
 IF    (UNIX)
@@ -79,7 +79,9 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/CRC
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading
 	${ENGINE_SRC_ROOT_DIR}/System/TdfParser
 	${ENGINE_SRC_ROOT_DIR}/System/GlobalConfig
 	${ENGINE_SRC_ROOT_DIR}/System/Info
@@ -101,6 +103,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Log/LogSinkHandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/LogUtil.c
 	${ENGINE_SRC_ROOT_DIR}/System/Log/ConsoleSink.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Misc/SpringTime.cpp
 	)
 IF    (WIN32)
 	LIST(APPEND system_files ${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/WinVersion)

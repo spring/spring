@@ -18,7 +18,6 @@
 #include "System/Log/ILog.h"
 
 #include <SDL_keysym.h>
-extern unsigned char* keys;
 
 CONFIG(int, SM3TerrainDetail).defaultValue(200);
 
@@ -68,7 +67,7 @@ void CSM3GroundDrawer::Update()
 	tr->CacheTextures();
 }
 
-void CSM3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
+void CSM3GroundDrawer::Draw(const DrawPass::e& drawPass)
 {
 	if (wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -169,7 +168,7 @@ void CSM3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 
 	glColor3ub(255, 255, 255);
 
-	DrawObjects(drawWaterReflection, drawUnitReflection);
+	DrawObjects(drawPass);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glDisable(GL_TEXTURE_2D);
@@ -209,7 +208,7 @@ void CSM3GroundDrawer::DrawShadowPass()
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
-void CSM3GroundDrawer::DrawObjects(bool drawWaterReflection, bool drawUnitReflection)
+void CSM3GroundDrawer::DrawObjects(const DrawPass::e& drawPass)
 {
 /*	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
@@ -220,7 +219,7 @@ void CSM3GroundDrawer::DrawObjects(bool drawWaterReflection, bool drawUnitReflec
 //	if(drawWaterReflection)
 //		treeDistance*=0.5f;
 
-	if (!(drawWaterReflection || drawUnitReflection)) {
+	if (drawPass == DrawPass::Normal) {
 		groundDecals->Draw();
 		projectileDrawer->DrawGroundFlashes();
 	}
@@ -245,3 +244,7 @@ void CSM3GroundDrawer::DecreaseDetail()
 	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
+int CSM3GroundDrawer::GetGroundDetail(const DrawPass::e& drawPass) const
+{
+	return 100 * tr->config.detailMod;
+}

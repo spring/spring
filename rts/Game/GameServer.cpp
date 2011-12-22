@@ -58,6 +58,7 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoReader.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Platform/Threading.h"
 
 
 #define PKTCACHE_VECSIZE 1000
@@ -224,8 +225,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	commandBlacklist = std::set<std::string>(commands, commands+numCommands);
 
 #ifdef DEDICATED
-	demoRecorder.reset(new CDemoRecorder());
-	demoRecorder->SetName(setup->mapName, setup->modName);
+	demoRecorder.reset(new CDemoRecorder(setup->mapName, setup->modName));
 	demoRecorder->WriteSetupText(gameData->GetSetup());
 	const netcode::RawPacket* ret = gameData->Pack();
 	demoRecorder->SaveToDemo(ret->data, ret->length, GetDemoTime());
@@ -312,11 +312,7 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 void CGameServer::PostLoad(unsigned newlastTick, int newServerFrameNum)
 {
 	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
-#if SPRING_TIME
-	lastTick = newlastTick;
-#else
-	//lastTick = boost::some_time; FIXME
-#endif
+	lastTick = spring_msecs(newlastTick);
 	serverFrameNum = newServerFrameNum;
 
 	std::vector<GameParticipant>::iterator it;
@@ -738,7 +734,7 @@ float CGameServer::GetDemoTime() const {
 
 void CGameServer::Update()
 {
-	const float tdif = float(spring_tomsecs(spring_gettime() - lastUpdate)) * 0.001f;
+	const float tdif = spring_tomsecs(spring_gettime() - lastUpdate) * 0.001f;
 
 	gameTime += tdif;
 	lastUpdate = spring_gettime();
@@ -1714,7 +1710,7 @@ void CGameServer::ServerReadNet()
 		}
 	}
 
-	const float updateBandwidth = (float)(spring_gettime() - lastBandwidthUpdate) / (float)playerBandwidthInterval;
+	const float updateBandwidth = spring_tomsecs(spring_gettime() - lastBandwidthUpdate) / (float)playerBandwidthInterval;
 	if (updateBandwidth >= 1.0f)
 		lastBandwidthUpdate = spring_gettime();
 
@@ -1735,7 +1731,7 @@ void CGameServer::ServerReadNet()
 
 		std::map<unsigned char, GameParticipant::PlayerLinkData> &pld = player.linkData;
 		boost::shared_ptr<const RawPacket> packet;
-		while (packet = plink->GetData()) {  // relay all the packets to separate connections for the player and AIs
+		while ((packet = plink->GetData())) {  // relay all the packets to separate connections for the player and AIs
 			unsigned char aiID = MAX_AIS;
 			int cID = -1;
 			if (packet->length >= 5) {
@@ -1880,7 +1876,7 @@ void CGameServer::StartGame()
 		packetCache.clear(); // free memory
 
 	if (UDPNet && !canReconnect && !allowAdditionalPlayers)
-		UDPNet->Listen(false); // don't accept new connections
+		UDPNet->SetAcceptingConnections(false); // do not accept new connections
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
 	UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
@@ -2050,10 +2046,9 @@ void CGameServer::PushAction(const Action& action)
 				if ( tokens.size() > 3 ) {
 					team = atoi(tokens[3].c_str());
 				}
-				GameParticipant gp;
-					gp.name = name;
 				// note: this must only compare by name
-				std::vector<GameParticipant>::iterator participantIter = std::find(players.begin(), players.end(), gp);
+				std::vector<GameParticipant>::iterator participantIter =
+						std::find_if( players.begin(), players.end(), bind( &GameParticipant::name, _1 ) == name );
 
 				if (participantIter != players.end()) {
 					const GameParticipant::customOpts &opts = participantIter->GetAllValues();
@@ -2227,6 +2222,8 @@ std::string CGameServer::SpeedControlToString(int speedCtrl) {
 void CGameServer::UpdateLoop()
 {
 	try {
+		Threading::SetThreadName("netcode");
+
 		while (!quitServer) {
 			spring_sleep(spring_msecs(10));
 
@@ -2254,7 +2251,7 @@ void CGameServer::UpdateLoop()
 
 bool CGameServer::WaitsOnCon() const
 {
-	return (UDPNet && UDPNet->Listen());
+	return (UDPNet && UDPNet->IsAcceptingConnections());
 }
 
 void CGameServer::KickPlayer(const int playerNum)

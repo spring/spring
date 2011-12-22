@@ -20,7 +20,7 @@ class TeamController;
  */
 class CInMapDrawModel
 {
-	CR_DECLARE(CInMapDrawModel);
+	CR_DECLARE_STRUCT(CInMapDrawModel);
 	CR_DECLARE_SUB(MapDrawPrimitive);
 	CR_DECLARE_SUB(MapPoint);
 	CR_DECLARE_SUB(MapLine);

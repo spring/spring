@@ -18,11 +18,11 @@ void CStaticMoveType::SlowUpdate()
 	//     static buildings don't have any unitDef->moveData, hence we need
 	//     to get the ground height instead of calling ->moveMath->yLevel()
 	// FIXME: intercept heightmapUpdate events and update buildings y-pos only on-demand!
-	owner->pos.y = ground->GetHeightReal(owner->pos.x, owner->pos.z);
+	const UnitDef* ud = owner->unitDef;
 
-	if (owner->floatOnWater && owner->pos.y < -owner->unitDef->waterline) {
-		owner->pos.y = -owner->unitDef->waterline;
+	if (ud->floatOnWater && (owner->pos.y <= 0.0f)) {
+		owner->Move1D(-ud->waterline, 1, false);
+	} else {
+		owner->Move1D(ground->GetHeightReal(owner->pos.x, owner->pos.z), 1, false);
 	}
-
-	owner->midPos.y = owner->pos.y + owner->relMidPos.y;
 }

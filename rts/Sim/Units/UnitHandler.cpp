@@ -167,9 +167,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			delTeam = delUnit->team;
 			delType = delUnit->unitDef->id;
 
-			#if defined(USE_GML) && GML_ENABLE_SIM
 			GML_STDMUTEX_LOCK(dque); // DeleteUnitNow
-			#endif
 
 			int delID = delUnit->id;
 			activeUnits.erase(usi);
@@ -515,9 +513,9 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 
 	const float groundHeight = ground->GetHeightReal(pos.x, pos.z, synced);
 
-	if (!unitdef->floater || groundHeight > 0.0f) {
+	if (!unitdef->floatOnWater || groundHeight > 0.0f) {
 		// if we are capable of floating, only test local
-		// height difference if terrain is above sea-level
+		// height difference IF terrain is above sea-level
 		const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
 		const float* curHeightMap = readmap->GetCornerHeightMapSynced();
 

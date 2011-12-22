@@ -3,13 +3,13 @@
 #ifndef _GAME_H
 #define _GAME_H
 
-#include <time.h>
 #include <string>
 #include <map>
 #include <set>
 
 #include "GameController.h"
 #include "System/creg/creg_cond.h"
+#include "System/Misc/SpringTime.h"
 
 class IWater;
 class CConsoleHistory;
@@ -32,6 +32,21 @@ private:
 	CR_DECLARE(CGame);	// Do not use CGame pointer in CR_MEMBER()!!!
 
 public:
+	enum GameDrawMode {
+		gameNotDrawing     = 0,
+		gameNormalDraw     = 1,
+		gameShadowDraw     = 2,
+		gameReflectionDraw = 3,
+		gameRefractionDraw = 4
+	};
+
+	struct PlayerTrafficInfo {
+		PlayerTrafficInfo() : total(0) {}
+		int total;
+		std::map<int, int> packets;
+	};
+
+public:
 	void LoadGame(const std::string& mapName);
 	void SetupRenderingParams();
 
@@ -51,7 +66,7 @@ public:
 	bool Draw();
 	bool DrawMT();
 
-	static void DrawMTcb(void* c) { ((CGame *)c)->DrawMT(); }
+	static void DrawMTcb(void* c) { static_cast<CGame*>(c)->DrawMT(); }
 	bool Update();
 	/// Called when a key is released by the user
 	int KeyReleased(unsigned short k);
@@ -71,65 +86,11 @@ public:
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams);
 
-
-	enum GameDrawMode {
-		gameNotDrawing     = 0,
-		gameNormalDraw     = 1,
-		gameShadowDraw     = 2,
-		gameReflectionDraw = 3,
-		gameRefractionDraw = 4
-	};
-	GameDrawMode gameDrawMode;
-
-	inline void         SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
-	inline GameDrawMode GetDrawMode() const { return gameDrawMode; }
-
-	LuaParser* defsParser;
-
-	unsigned int fps;
-	unsigned int thisFps;
-
-	int lastSimFrame;
-
-	time_t fpstimer, starttime;
-	unsigned lastUpdate;
-	unsigned lastMoveUpdate;
-	unsigned lastModGameTimeMeasure;
-
-	unsigned lastUpdateRaw;
-	float updateDeltaSeconds;
-
-	/// Time in seconds, stops at game end
-	float totalGameTime;
-
-	std::string userInputPrefix;
-
-	int lastTick;
-	int chatSound;
-
-	bool camMove[8];
-	bool camRot[4];
-	bool hideInterface;
-	bool gameOver;
-	bool windowedEdgeMove;
-	bool fullscreenEdgeMove;
-	bool showFPS;
-	bool showClock;
-	bool showSpeed;
-	int showMTInfo;
-	int mtInfoCtrl;
-	/// Prevents spectator msgs from being seen by players
-	bool noSpectatorChat;
-	volatile bool finishedLoading;
-
-	unsigned char gameID[16];
-
-	CInfoConsole* infoConsole;
-	CConsoleHistory* consoleHistory;
+	void         SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
+	GameDrawMode GetDrawMode() const { return gameDrawMode; }
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
-public:
 	/// Save the game state to file.
 	void SaveGame(const std::string& filename, bool overwrite);
 	void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod);
@@ -152,7 +113,6 @@ public:
 
 	void ReColorTeams();
 
-public:
 	void ReloadCOB(const std::string& msg, int player);
 	void ReloadCEGs(const std::string& tag);
 
@@ -160,33 +120,10 @@ public:
 	void DrawSkip(bool blackscreen = true);
 	void EndSkip();
 
-public:
-	std::string hotBinding;
-	float inputTextPosX;
-	float inputTextPosY;
-	float inputTextSizeX;
-	float inputTextSizeY;
-	float lastCpuUsageTime;
-	bool skipping;
-	bool playing;
-	bool chatting;
-
-	unsigned lastFrameTime;
-
-public:
-	struct PlayerTrafficInfo {
-		PlayerTrafficInfo() : total(0) {}
-		int total;
-		std::map<int, int> packets;
-	};
 	const std::map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
 		return playerTraffic;
 	}
-
-public:
 	void AddTraffic(int playerID, int packetCode, int length);
-	// <playerID, <packetCode, total bytes> >
-	std::map<int, PlayerTrafficInfo> playerTraffic;
 
 	void ClientReadNet();
 	void UpdateUI(bool cam);
@@ -194,11 +131,75 @@ public:
 	void SimFrame();
 	void StartPlaying();
 
+private:
+	bool UpdateUnsynced();
+
+public:
+	volatile bool finishedLoading;
+	bool gameOver;
+
+	GameDrawMode gameDrawMode;
+
+	unsigned char gameID[16];
+
+	LuaParser* defsParser;
+
+	unsigned int thisFps;
+
+	int lastSimFrame;
+
+	spring_time frameStartTime;
+	spring_time lastUpdateTime;
+	spring_time lastSimFrameTime;
+	spring_time lastDrawFrameUpdate;
+	spring_time lastModGameTimeMeasure;
+
+	float updateDeltaSeconds;
+
+	float lastCpuUsageTime;
+
+	/// Time in seconds, stops at game end
+	float totalGameTime;
+
+	int lastTick;
+	int chatSound;
+
+	bool camMove[8];
+	bool camRot[4];
+	bool windowedEdgeMove;
+	bool fullscreenEdgeMove;
+
+	bool hideInterface;
+	bool showFPS;
+	bool showClock;
+	bool showSpeed;
+	int showMTInfo;
+	float mtInfoThreshold;
+	int mtInfoCtrl;
+
+	/// Prevents spectator msgs from being seen by players
+	bool noSpectatorChat;
+
+	std::string hotBinding;
+	float inputTextPosX;
+	float inputTextPosY;
+	float inputTextSizeX;
+	float inputTextSizeY;
+	bool skipping;
+	bool playing;
+	bool chatting;
+	std::string userInputPrefix;
+
+	spring_time lastFrameTime;
+
+	/// <playerID, <packetCode, total bytes> >
+	std::map<int, PlayerTrafficInfo> playerTraffic;
+
 	// to smooth out SimFrame calls
-	int leastQue;       ///< Lowest value of que in the past second.
-	float timeLeft;     ///< How many SimFrame() calls we still may do.
-	float consumeSpeed; ///< How fast we should eat NETMSG_NEWFRAMEs.
-	unsigned lastframe; ///< SDL_GetTicks() in previous ClientReadNet() call.
+	int leastQue;          ///< Lowest value of que in the past second.
+	float timeLeft;        ///< How many SimFrame() calls we still may do.
+	float consumeSpeed;    ///< How fast we should eat NETMSG_NEWFRAMEs.
+	spring_time lastframe; ///< time of previous ClientReadNet() call.
 
 	int skipStartFrame;
 	int skipEndFrame;
@@ -207,7 +208,7 @@ public:
 	bool skipSoundmute;
 	float skipOldSpeed;
 	float skipOldUserSpeed;
-	unsigned skipLastDraw;
+	spring_time skipLastDraw;
 
 	/**
 	 * @see CGameServer#speedControl
@@ -216,9 +217,11 @@ public:
 	int luaLockTime;
 	int luaExportSize;
 
-
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;
+
+	CInfoConsole* infoConsole;
+	CConsoleHistory* consoleHistory;
 
 private:
 	CWorldDrawer* worldDrawer;

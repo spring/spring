@@ -363,9 +363,9 @@ void FBO::AttachRenderBuffer(const GLuint rboId, const GLenum attachment)
 
 
 /**
- * Deattaches an attachment from the framebuffer
+ * Detaches an attachment from the framebuffer
  */
-void FBO::Unattach(const GLenum attachment)
+void FBO::Detach(const GLenum attachment)
 {
 	GLuint target;
 	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment,
@@ -395,15 +395,15 @@ void FBO::Unattach(const GLenum attachment)
 
 
 /**
- * Unattaches any attachments from the framebuffer
+ * Detaches any attachments from the framebuffer
  */
-void FBO::UnattachAll()
+void FBO::DetachAll()
 {
 	for(int i = 0; i < 15; ++i) {
-		Unattach(GL_COLOR_ATTACHMENT0_EXT + i);
+		Detach(GL_COLOR_ATTACHMENT0_EXT + i);
 	}
-	Unattach(GL_DEPTH_ATTACHMENT_EXT);
-	Unattach(GL_STENCIL_ATTACHMENT_EXT);
+	Detach(GL_DEPTH_ATTACHMENT_EXT);
+	Detach(GL_STENCIL_ATTACHMENT_EXT);
 }
 
 

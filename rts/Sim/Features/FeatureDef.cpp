@@ -16,6 +16,7 @@ CR_REG_METADATA(FeatureDef, (
 	CR_MEMBER(maxHealth),
 	CR_MEMBER(reclaimTime),
 	CR_MEMBER(mass),
+	CR_MEMBER(crushResistance),
 	CR_MEMBER(upright),
 	CR_MEMBER(drawType),
 	//CR_MEMBER(model), FIXME
@@ -39,7 +40,8 @@ FeatureDef::FeatureDef()
 	, energy(0)
 	, maxHealth(0)
 	, reclaimTime(0)
-	, mass(0)
+	, mass(0.0f)
+	, crushResistance(0.0f)
 	, drawType(0)
 	, model(NULL)
 	, resurrectable(false)

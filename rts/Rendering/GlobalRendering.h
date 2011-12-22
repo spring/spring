@@ -4,6 +4,7 @@
 #define _GLOBAL_RENDERING_H
 
 #include "System/creg/creg_cond.h"
+#include "System/Misc/SpringTime.h"
 
 /**
  * @brief Globally accessible unsynced, rendering related data
@@ -40,7 +41,7 @@ public:
 	float lastFrameTime;
 
 	/// the starting time in tick for last draw frame
-	unsigned lastFrameStart;
+	spring_time lastFrameStart;
 
 	/// 0.001f * GAME_SPEED * gs->speedFactor, used for rendering
 	float weightedSpeedFactor;
@@ -48,6 +49,8 @@ public:
 	/// the draw frame number (never 0)
 	unsigned int drawFrame;
 
+	/// Frames Per Second
+	float FPS;
 
 	/// the window state (0=normal,1=maximized,2=minimized)
 	int winState;
@@ -88,6 +91,7 @@ public:
 	 *
 	 * Player's view range
 	 */
+	float zNear;
 	float viewRange;
 
 
@@ -153,11 +157,21 @@ public:
 	bool compressTextures;
 
 	/**
+	 * @brief GPU driver's vendor
+	 *
+	 * These can be used to enable workarounds for bugs in their drivers.
+	 * Note, you should always give the user the possiblity to override such workarounds via config-tags.
+	 */
+	bool haveATI;
+	bool haveMesa;
+	bool haveIntel;
+	bool haveNvidia;
+
+	/**
 	 * @brief collection of some ATI bugfixes
 	 *
 	 * enables some ATI bugfixes
 	 */
-	bool haveATI;
 	bool atiHacks;
 
 	/**

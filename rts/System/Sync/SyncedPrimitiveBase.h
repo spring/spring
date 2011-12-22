@@ -11,6 +11,9 @@
 	#include "SyncDebugger.h"
 #endif
 
+#include <assert.h>
+
+
 // NOTE: lowercase sync clashes with extern void sync(...) from unistd.h
 namespace Sync {
 
@@ -28,6 +31,7 @@ namespace Sync {
 		CSyncDebugger::GetInstance()->Sync(p, size, msg);
 #endif
 #ifdef SYNCCHECK
+		assert(CSyncChecker::InSyncedCode());
 		CSyncChecker::Sync(p, size);
 	#ifdef TRACE_SYNC_HEAVY
 		tracefile << "Sync " << msg << " " << CSyncChecker::GetChecksum() << "\n";
@@ -44,6 +48,14 @@ namespace Sync {
 	}
 
 }
+
+#ifndef NDEBUG
+#  define ENTER_SYNCED_CODE() CSyncChecker::EnterSyncedCode()
+#  define LEAVE_SYNCED_CODE() CSyncChecker::LeaveSyncedCode()
+#else
+#  define ENTER_SYNCED_CODE()
+#  define LEAVE_SYNCED_CODE()
+#endif
 
 #ifdef SYNCDEBUG
 #  define ASSERT_SYNCED(x) Sync::Assert(x)

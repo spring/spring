@@ -1,5 +1,5 @@
-spring-dedicated(6)
-===================
+spring-multithreaded(6)
+=======================
 :man source:  Spring package
 :man manual:  Games
 
@@ -11,13 +11,17 @@ spring-multithreaded - An open source RTS game engine - Multi-Threaded Engine
 
 Synopsis
 --------
-*spring-multithreaded* [-f|--fullscreen] [-w|--window] [-x|--xresolution 'SIZE'] [-y|--yresolution 'SIZE'] [-m|--minimise] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-t|--textureatlas] [-n|--name 'STRING'] [-C|--config 'FILE']
+*spring-multithreaded* [-f|--fullscreen] [-w|--window] [-x|--xresolution 'SIZE'] [-y|--yresolution 'SIZE'] [-m|--minimise] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-t|--textureatlas] [-i|--isolation] [--isolation-dir 'PATH'] [-n|--name 'STRING'] [-C|--config 'FILE']
 
 *spring-multithreaded* --list-ai-interfaces
 
 *spring-multithreaded* --list-skirmish-ais
 
+*spring-multithreaded* --list-config-vars
+
 *spring-multithreaded* [-h|--help]
+
+*spring-multithreaded* --sync-version
 
 *spring-multithreaded* [-V|--version]
 
@@ -46,6 +50,9 @@ Options
 *-V, --version*::
   Display program version and exit
 
+*--sync-version*::
+  Display program sync version (for online gaming) and exit
+
 *-f, --fullscreen*::
   Run in fullscreen mode
 
@@ -73,6 +80,14 @@ Options
 *-t, --textureatlas*::
   Dump each finalised textureatlas into textureatlasN.tga
 
+*-i, --isolation*::
+  Limit the data-dir (games & maps) scanner to one directory
+  (see --isolation-dir and the SPRING_ISOLATED env var)
+
+*--isolation-dir*::'PATH'
+  Specify the isolation-mode data-dir
+  (see --isolation and the SPRING_ISOLATED env var)
+
 *-n, --name*::'NAME'
   Set your player name
 
@@ -84,6 +99,25 @@ Options
 
 *--list-skirmish-ais*::
   Dump a list of available Skirmish AIs to STDOUT
+
+*--list-config-vars*::
+  Dump all default config vars in JSON-format to STDOUT
+
+Enviroment Variables
+--------------------
+
+*SPRING_LOG_SECTIONS*
+  Selective functionality to change the verbosity (separated by ',').
+
+*SPRING_DATADIR*
+  Adds additional directories Spring will search for files (separated by ':').
+
+*SPRING_ISOLATED*
+  If defined, Spring will stop searching files outside of the binaries
+  directory. If it is set to a valid directory path, it will be used as the
+  isolation directory.
+  See the --isolation and the --isolation-dir options.
+
 
 See also
 --------

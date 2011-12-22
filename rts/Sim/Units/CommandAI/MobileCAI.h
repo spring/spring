@@ -61,10 +61,6 @@ public:
 	/// helps avoid infinate loops
 	int lastPC;
 
-//	unsigned int patrolTime;
-
-	float maxWantedSpeed;
-
 	int lastBuggerOffTime;
 	float3 buggerOffPos;
 	float buggerOffRadius;

@@ -191,7 +191,7 @@ function printAIFactoryHeader(outFile) {
 	print("") >> outFile;
 	print("	int HandleEvent(int skirmishAIId, int topic, const void* event) {") >> outFile;
 	print("") >> outFile;
-	print("		int _ret = -1;") >> outFile;
+	print("		int internal_ret = -1;") >> outFile;
 	print("") >> outFile;
 	print("		AI* ai = GetAI(skirmishAIId);") >> outFile;
 	print("		AICallback* clb = GetAICallback(skirmishAIId);") >> outFile;
@@ -204,15 +204,15 @@ function printAIFactoryHeader(outFile) {
 function printAIFactoryEnd(outFile) {
 
 	print("					default: {") >> outFile;
-	print("						_ret = 1;") >> outFile;
+	print("						internal_ret = 1;") >> outFile;
 	print("					}") >> outFile;
 	print("				}") >> outFile;
 	print("			} catch (Throwable t) { // TODO: this works?") >> outFile;
-	print("				_ret = 2;") >> outFile;
+	print("				internal_ret = 2;") >> outFile;
 	print("			}") >> outFile;
 	print("		}") >> outFile;
 	print("") >> outFile;
-	print("		return _ret;") >> outFile;
+	print("		return internal_ret;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
 	print("	virtual AI* CreateAI(int skirmishAIId, Properties info, Properties options) = 0;") >> outFile;
@@ -288,7 +288,7 @@ function printEventOO(evtIndex) {
 		print("\t\t\t\t\t\t" "}") >> myAIFactoryFile_h;
 		print("\t\t\t\t\t\t" "AICommand command = AICommandWrapper.wrapp(evt.commandTopic, evt.commandData);") >> myAIFactoryFile_h;
 	}
-	print("\t\t\t\t\t\t" "_ret = ai." eName "(" paramsEvt ");") >> myAIFactoryFile_h;
+	print("\t\t\t\t\t\t" "internal_ret = ai." eName "(" paramsEvt ");") >> myAIFactoryFile_h;
 	print("\t\t\t\t\t\t" "break;") >> myAIFactoryFile_h;
 	print("\t\t\t\t\t" "}") >> myAIFactoryFile_h;
 }

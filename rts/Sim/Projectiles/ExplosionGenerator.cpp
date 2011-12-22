@@ -832,10 +832,10 @@ void CCustomExplosionGenerator::Reload(CExplosionGeneratorHandler* handler, cons
 	} else {
 		// reload a single CEG
 		const std::map<std::string, unsigned int>::const_iterator it = explosionIDs.find(tag);
-		const char* fmt = "[%s][generatorID=%u] unknown CEG-tag \"%s\"";
 
 		if (it == explosionIDs.end()) {
-			// LOG_L(L_WARNING, fmt, __FUNCTION__, generatorID, tag.c_str());
+			//LOG_L(L_WARNING, "[%s][generatorID=%u] unknown CEG-tag \"%s\"",
+			//		__FUNCTION__, generatorID, tag.c_str());
 			return;
 		}
 

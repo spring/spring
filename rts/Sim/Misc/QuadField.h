@@ -21,19 +21,22 @@ class CQuadField : boost::noncopyable
 	CR_DECLARE(CQuadField);
 	CR_DECLARE_SUB(Quad);
 
-	const static int QUAD_SIZE = 256;
-
 public:
 	CQuadField();
 	~CQuadField();
 
-	std::vector<int> GetQuadsOnRay(const float3& start, float3 dir, float length);
 	std::vector<int> GetQuads(float3 pos, float radius) const;
-	std::vector<int> GetQuadsRectangle(const float3& pos, const float3& pos2) const;
+	std::vector<int> GetQuadsRectangle(const float3& pos1, const float3& pos2) const;
 
 	// optimized functions, somewhat less userfriendly
-	void GetQuads(float3 pos, float radius, int*& dst) const;
-	void GetQuadsOnRay(float3 start, float3 dir, float length, int*& dst);
+	//
+	// when calling these, <begQuad> and <endQuad> are both expected
+	// to point to the *start* of an array of int's of size at least
+	// numQuadsX * numQuadsZ (eg. tempQuads) -- GetQuadsOnRay ensures
+	// this by itself, for GetQuads the callers take care of it
+	//
+	unsigned int GetQuads(float3 pos, float radius, int*& begQuad, int*& endQuad) const;
+	unsigned int GetQuadsOnRay(float3 start, float3 dir, float length, int*& begQuad, int*& endQuad);
 	void GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature);
 
 	/**
@@ -101,16 +104,20 @@ public:
 	const Quad& GetQuadAt(int x, int z) const {
 		return baseQuads[numQuadsX * z + x];
 	}
+
 	int GetNumQuadsX() const { return numQuadsX; }
 	int GetNumQuadsZ() const { return numQuadsZ; }
+
+	const static int QUAD_SIZE = 256;
+	const static int NUM_TEMP_QUADS = 1024;
 
 private:
 	void Serialize(creg::ISerializer& s);
 
 	std::vector<Quad> baseQuads;
+	std::vector<int> tempQuads;
 	int numQuadsX;
 	int numQuadsZ;
-	int* tempQuads;
 };
 
 extern CQuadField* qf;
