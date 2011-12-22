@@ -22,7 +22,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/BranchPrediction.h"
-#include "System/myTime.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Util.h"
 
 LuaParser* LuaParser::currentParser = NULL;

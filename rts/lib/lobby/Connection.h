@@ -18,7 +18,7 @@ struct ClientStatus
 	, moderator(false)
 	, bot(false)
 	{}
-	
+
 	bool ingame;
 	bool away;
 	int rank;
@@ -30,7 +30,7 @@ class Connection
 {
 public:
 	Connection();
-	~Connection();
+	virtual ~Connection();
 
 	void Connect(const std::string& server, int port);
 	void Disconnect();
@@ -106,7 +106,7 @@ private:
 	void ReceiveCallback(const boost::system::error_code& error, size_t bytes);
 	void SendCallback(const boost::system::error_code& error);
 	static std::string RTFToPlain(const std::string& rich);
-	
+
 	boost::asio::io_service netservice;
 	std::string aggreementbuf;
 	std::string inMutelistChannel;

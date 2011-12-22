@@ -291,7 +291,7 @@ CSMFReadMap::~CSMFReadMap()
 
 
 void CSMFReadMap::NewGroundDrawer() { groundDrawer = new CSMFGroundDrawer(this); }
-CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
+CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return groundDrawer; }
 
 
 
@@ -550,6 +550,7 @@ float3 CSMFReadMap::GetLightValue(const int& x, const int& y) const
 	float3 light =
 		mapInfo->light.groundAmbientColor +
 		mapInfo->light.groundSunColor * DiffuseSunCoeff(x, y);
+	light *= (210.0f / 255.0f); // reduce overblending (also makes the picture less bright)
 
 	for (int a = 0; a < 3; ++a) {
 		if (light[a] > 1.0f) {

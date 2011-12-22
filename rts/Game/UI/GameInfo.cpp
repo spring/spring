@@ -174,7 +174,7 @@ void CGameInfo::Draw()
 
 #ifdef USE_GML
 	labels.push_back("MT Threads:");
-	values.push_back(IntToString(gmlThreadCount));
+	values.push_back(IntToString(GML::ThreadCount()));
 #endif
 
 	labels.push_back("Game Speed:");

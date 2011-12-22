@@ -85,7 +85,6 @@ public:
 
 	virtual void Update() {}
 	virtual void UpdateShadingTexture() {}
-	virtual void Explosion(float x, float y, float strength) {}
 
 	virtual void NewGroundDrawer() = 0;
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
@@ -235,43 +234,25 @@ inline const float* CReadMap::GetCornerHeightMap(const bool& synced) {
 	// Note, this doesn't save a branch compared to `(synced) ? SHM : UHM`. Cause static vars always check if they were already initialized.
 	//  But they are only initialized once, so this branch will always fail. And so branch-prediction will have easier going.
 	assert(readmap && readmap->mapChecksum);
-	static const float* heightMaps[2] = {
-		readmap->GetCornerHeightMapUnsynced(),
-		readmap->GetCornerHeightMapSynced(),
-	};
-	return heightMaps[int(synced) & 1];
+	return synced ? readmap->GetCornerHeightMapSynced() : readmap->GetCornerHeightMapUnsynced();
 }
 inline const float* CReadMap::GetCenterHeightMap(const bool& synced) {
 	assert(readmap && readmap->mapChecksum);
-	static const float* heightMaps[2] = {
-		readmap->GetCenterHeightMapSynced(), // TODO: add unsynced variant
-		readmap->GetCenterHeightMapSynced(),
-	};
-	return heightMaps[int(synced) & 1];
+	// TODO: add unsynced variant
+	return synced ? readmap->GetCenterHeightMapSynced() : readmap->GetCenterHeightMapSynced();
 }
 inline const float3* CReadMap::GetFaceNormals(const bool& synced) {
 	assert(readmap && readmap->mapChecksum);
-	static const float3* normalMaps[2] = {
-		readmap->GetFaceNormalsUnsynced(),
-		readmap->GetFaceNormalsSynced(),
-	};
-	return normalMaps[int(synced) & 1];
+	return synced ? readmap->GetFaceNormalsSynced() : readmap->GetFaceNormalsUnsynced();
 }
 inline const float3* CReadMap::GetCenterNormals(const bool& synced) {
 	assert(readmap && readmap->mapChecksum);
-	static const float3* normalMaps[2] = {
-		readmap->GetCenterNormalsUnsynced(),
-		readmap->GetCenterNormalsSynced(),
-	};
-	return normalMaps[int(synced) & 1];
+	return synced ? readmap->GetCenterNormalsSynced() : readmap->GetCenterNormalsUnsynced();
 }
 inline const float* CReadMap::GetSlopeMap(const bool& synced) {
 	assert(readmap && readmap->mapChecksum);
-	static const float* slopeMaps[2] = {
-		readmap->GetSlopeMapSynced(), // TODO: add unsynced variant (or add a LOS check foreach square access?)
-		readmap->GetSlopeMapSynced(),
-	};
-	return slopeMaps[int(synced) & 1];
+	// TODO: add unsynced variant (or add a LOS check foreach square access?)
+	return synced ? readmap->GetSlopeMapSynced() : readmap->GetSlopeMapSynced();
 }
 
 
@@ -281,7 +262,7 @@ inline const float* CReadMap::GetSlopeMap(const bool& synced) {
 
 /// if you modify the heightmap through these, call UpdateHeightMapSynced
 inline void CReadMap::SetHeight(const int& idx, const float& h) {
-	static float* hm = const_cast<float*>(GetCornerHeightMapSynced());
+	float* hm = const_cast<float*>(GetCornerHeightMapSynced());
 
 	hm[idx] = h;
 	currMinHeight = std::min(h, currMinHeight);
@@ -289,7 +270,7 @@ inline void CReadMap::SetHeight(const int& idx, const float& h) {
 }
 
 inline void CReadMap::AddHeight(const int& idx, const float& a) {
-	static float* hm = const_cast<float*>(GetCornerHeightMapSynced());
+	float* hm = const_cast<float*>(GetCornerHeightMapSynced());
 
 	hm[idx] += a;
 	currMinHeight = std::min(hm[idx], currMinHeight);
@@ -309,7 +290,7 @@ inline float3 SquareToFloat3(int xSquare, int zSquare) {
 
 /// TODO: use in SM3 renderer also
 inline float GetVisibleVertexHeight(int idx) {
-	static const float* hm = readmap->GetCornerHeightMapUnsynced();
+	const float* hm = readmap->GetCornerHeightMapUnsynced();
 	return hm[idx];
 }
 

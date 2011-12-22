@@ -29,9 +29,9 @@ void Button::DrawSelf()
 {
 	const float opacity = Opacity();
 	glColor4f(0.8f, 0.8f, 0.8f, opacity);
-	
+
 	DrawBox(GL_QUADS);
-	
+
 	glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
 	if (clicked) {
 		glBlendFunc(GL_ONE, GL_ONE); // additive blending
@@ -85,6 +85,7 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 				clicked = false;
 				return true;
 			}
+			break;
 		}
 		case SDL_MOUSEMOTION: {
 			if (MouseOver(ev.motion.x, ev.motion.y)

@@ -22,26 +22,26 @@ std::string option_getDefString(const Option& option) {
 	std::string def = "";
 
 	switch (option.typeCode) {
-		case opt_bool: {
+		case opt_bool:
 			def = option.boolDef ? "true" : "false";
 			break;
-		} case opt_list: {
+		case opt_list:
 			def = option.listDef;
 			break;
-		} case opt_number: {
+		case opt_number: {
 			static const size_t fltString_sizeMax = 32;
 			char fltString[fltString_sizeMax];
 			SNPRINTF(fltString, fltString_sizeMax, "%f", option.numberDef);
 			def += fltString;
 			break;
-		} case opt_string: {
+		}
+		case opt_string:
 			def = option.stringDef;
 			break;
-		} case opt_error: {
-		} case opt_section: {
-		} default: {
+		case opt_error:
+		case opt_section:
+		default:
 			break;
-		}
 	}
 
 	return def;
@@ -237,7 +237,7 @@ void option_parseMapOptions(
 		throw "Could not determine config-file name from the map name '" + mapName + "'!";
 
 	luaParser.GetTable("Map");
-	luaParser.AddString("name",     mapName);	
+	luaParser.AddString("name",     mapName);
 	luaParser.AddString("fileName", FileSystem::GetFilename(mapFile));
 	luaParser.AddString("fullName", mapFile);
 	luaParser.AddString("configFile", configName);

@@ -10,7 +10,7 @@
 #include <list>
 
 #include "Connection.h"
-#include "System/myTime.h"
+#include "System/Misc/SpringTime.h"
 
 class CRC;
 

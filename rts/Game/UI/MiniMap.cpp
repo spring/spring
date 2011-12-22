@@ -21,9 +21,9 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/LuaUI.h" // FIXME: for GML
 #include "Game/UI/UnitTracker.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Lua/LuaUI.h" // FIXME: for GML
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -54,8 +54,6 @@
 #include "System/Sound/SoundChannels.h"
 
 #include <boost/cstdint.hpp>
-
-#define PLAY_SOUNDS 1
 
 CONFIG(std::string, MiniMapGeometry).defaultValue("2 2 200 200");
 CONFIG(bool, MiniMapFullProxy).defaultValue(true);

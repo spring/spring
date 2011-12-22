@@ -79,6 +79,11 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 
 #undef FORMAT_STRING
 
+/**
+ * @see LOG_CLEANUP
+ */
+extern void log_frontend_cleanup();
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -178,13 +183,8 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 #define _LOG_RECORD(section, level, fmt, ...) \
 	log_frontend_record(section, LOG_LEVE##level, fmt, ##__VA_ARGS__)
 
-// TODO get rid of this, once the backend supports section and level
-//#define _LOG_SECTION_EXTENDED(section, level, fmt, ...)
-//	_LOG_RECORD(section, level, "Level:%i Section:\"%s\" " fmt, level, (section ? section : ""), ##__VA_ARGS__)
-
 #define _LOG_FILTERED(section, level, fmt, ...) \
 	_LOG_RECORD(section, level, fmt, ##__VA_ARGS__)
-//	_LOG_SECTION_EXTENDED(section, level, fmt, ##__VA_ARGS__)
 
 // per level compile-time filters
 #if _LOG_IS_ENABLED_LEVEL_STATIC(L_DEBUG)
@@ -247,6 +247,10 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 #define _LOG_IS_ENABLED(level) \
 	_LOG_IS_ENABLED_S(LOG_SECTION_CURRENT, level)
 
+
+/// Redirect to runtime processing
+#define _LOG_CLEANUP() \
+	log_frontend_cleanup()
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -380,6 +384,16 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
  */
 #define LOG_SL(section, level, fmt, ...) \
 	_LOG_SECTION(section, level, fmt, ##__VA_ARGS__)
+
+
+/**
+ * Informs all registered sinks to cleanup their state,
+ * to be ready for a shutdown.
+ * NOTE This is not a general way to cleanup the log sinks, but to be used in
+ * exceptional occasions only, for example while handling a graceful crash.
+ */
+#define LOG_CLEANUP() \
+	_LOG_CLEANUP()
 
 ///@}
 

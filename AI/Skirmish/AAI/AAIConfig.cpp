@@ -104,12 +104,12 @@ AAIConfig::~AAIConfig(void)
 {
 	for(int i = 0; i < SIDES; i++)
 	{
-		delete [] START_UNITS[i];
-		delete [] SIDE_NAMES[i];
+		SafeDeleteArray(START_UNITS[i]);
+		SafeDeleteArray(SIDE_NAMES[i]);
 	}
 
-	delete [] START_UNITS;
-	delete [] SIDE_NAMES;
+	SafeDeleteArray(START_UNITS);
+	SafeDeleteArray(SIDE_NAMES);
 }
 
 void AAIConfig::LoadConfig(AAI *ai)

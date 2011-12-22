@@ -8,6 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/GameSetup.h"
+#include "SelectedUnits.h"
 #include "System/mmgr.h"
 
 CR_BIND(CPlayerHandler,);
@@ -112,6 +113,7 @@ void CPlayerHandler::AddPlayer(const CPlayer& player)
 			stub->team = 0;
 			stub->playerNum = (int)i;
 			players.push_back(stub);
+			selectedUnits.netSelected.push_back(std::vector<int>());
 		}
 
 		CPlayer* newPlayer = players[player.playerNum];

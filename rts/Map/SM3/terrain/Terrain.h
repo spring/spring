@@ -21,7 +21,7 @@ namespace terrain {
 	struct Heightmap;
 	struct QuadMap;
 	struct IndexTable;
-	
+
 	class QuadRenderData;
 	class TerrainTexture;
 	class RenderDataManager;
@@ -54,7 +54,7 @@ namespace terrain {
 		Vector3 up;
 		Vector3 right;
 		CMatrix44f mat;
-		
+
 		float fov;
 		float aspect;
 	};
@@ -63,6 +63,8 @@ namespace terrain {
 	struct IFontRenderer
 	{
 		virtual void printf(int x, int y, float size, const char* fmt, ...) = 0;
+	protected:
+		~IFontRenderer() {}
 	};
 
 	struct Config
@@ -79,7 +81,7 @@ namespace terrain {
 		float detailMod; // acceptable range is 0.25f - 4
 
 		// (Only in case of terrainNormalMaps=true)
-		// heightmap level from which detail normal maps are generated, 
+		// heightmap level from which detail normal maps are generated,
 		// Normal maps are generated from heightmap[x+node.depth]
 		// 0 disables normal map detail-preservation
 		int normalMapLevel;
@@ -105,7 +107,7 @@ namespace terrain {
 		int cacheTextureSize;
 		int renderDataSize;
 	};
-	
+
     class RenderContext;
 
 	struct LightingInfo
@@ -202,7 +204,7 @@ namespace terrain {
 
 		// Heightmap loading using DevIL
 		Heightmap* LoadHeightmapFromImage(const std::string& file, ILoadCallback* cb);
-		// RAW 16 bit heightmap loading 
+		// RAW 16 bit heightmap loading
 		Heightmap* LoadHeightmapFromRAW(const std::string& file, ILoadCallback* cb);
 
 		bool IsShadowed(int x, int y);

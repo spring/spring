@@ -85,6 +85,7 @@ private:
 	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
 
 	friend class CFeatureQuadDrawer;
+	float unitDrawDistSq;
 };
 
 extern CFeatureDrawer* featureDrawer;

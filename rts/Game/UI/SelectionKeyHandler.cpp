@@ -134,6 +134,8 @@ namespace
 			return instance;
 		}
 
+		virtual ~Filter() {}
+
 		/// Called immediately before the filter is used.
 		virtual void Prepare() {}
 
@@ -172,7 +174,6 @@ namespace
 
 	DECLARE_FILTER(Builder, unit->unitDef->buildSpeed > 0);
 	DECLARE_FILTER(Building, dynamic_cast<const CBuilding*>(unit) != NULL);
-	DECLARE_FILTER(Commander, unit->unitDef->isCommander);
 	DECLARE_FILTER(Transport, unit->unitDef->transportCapacity > 0);
 	DECLARE_FILTER(Aircraft, unit->unitDef->canfly);
 	DECLARE_FILTER(Weapons, !unit->weapons.empty());
@@ -181,6 +182,7 @@ namespace
 	               (unit->commandAI->commandQue.front().GetID() == CMD_WAIT));
 	DECLARE_FILTER(InHotkeyGroup, unit->group != NULL);
 	DECLARE_FILTER(Radar, unit->radarRadius || unit->sonarRadius || unit->jammerRadius);
+	DECLARE_FILTER(ManualFireUnit, unit->unitDef->canManualFire);
 
 	DECLARE_FILTER_EX(WeaponRange, 1, unit->maxRange > minRange,
 		float minRange;

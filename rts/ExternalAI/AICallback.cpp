@@ -14,9 +14,9 @@
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Game/InMapDraw.h"
-#include "Game/UI/LuaUI.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaRules.h"
+#include "Lua/LuaUI.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
@@ -35,6 +35,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
@@ -312,12 +313,16 @@ void CAICallback::ReleasedSharedMemArea(char* name)
 
 int CAICallback::CreateGroup()
 {
+	GML_RECMUTEX_LOCK(group); // CreateGroup
+
 	const CGroup* g = gh->CreateNewGroup();
 	return g->id;
 }
 
 void CAICallback::EraseGroup(int groupId)
 {
+	GML_RECMUTEX_LOCK(group); // EraseGroup
+
 	if (CHECK_GROUPID(groupId)) {
 		if (gh->groups[groupId]) {
 			gh->RemoveGroup(gh->groups[groupId]);
@@ -330,8 +335,12 @@ bool CAICallback::AddUnitToGroup(int unitId, int groupId)
 	bool added = false;
 
 	CUnit* unit = GetMyTeamUnit(unitId);
-	if (unit && CHECK_GROUPID(groupId) && gh->groups[groupId]) {
-		added = unit->SetGroup(gh->groups[groupId]);
+	if (unit) {
+		GML_RECMUTEX_LOCK(group); // AddUnitToGroup
+
+		if (CHECK_GROUPID(groupId) && gh->groups[groupId]) {
+			added = unit->SetGroup(gh->groups[groupId]);
+		}
 	}
 
 	return added;
@@ -525,7 +534,7 @@ float CAICallback::GetUnitSpeed(int unitId)
 		if (unit) {
 			const int allyTeam = teamHandler->AllyTeam(team);
 			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
-				speed = unit->maxSpeed;
+				speed = unit->moveType->GetMaxSpeed();
 			} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
@@ -733,7 +742,7 @@ int CAICallback::InitPath(const float3& start, const float3& end, int pathType, 
 
 float3 CAICallback::GetNextWaypoint(int pathId)
 {
-	return pathManager->NextWaypoint(pathId, ZeroVector, 0.0f, 0, 0, false);
+	return pathManager->NextWayPoint(pathId, ZeroVector, 0.0f, 0, 0, false);
 }
 
 void CAICallback::FreePath(int pathId)
@@ -753,7 +762,7 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType, float g
 	std::vector<float3> points;
 	std::vector<int>    lengths;
 
-	pathManager->GetEstimatedPath(pathID, points, lengths);
+	pathManager->GetPathWayPoints(pathID, points, lengths);
 
 	if (points.empty()) {
 		return 0.0f;
@@ -1424,10 +1433,10 @@ bool CAICallback::GetValue(int id, void *data)
 			*(float*)data = globalRendering->viewSizeY;
 			return true;
 		}case AIVAL_GUI_CAMERA_DIR:{
-			*(float3*)data = camHandler->GetCurrentController().GetDir();
+			*(static_cast<float3*>(data)) = camHandler->GetCurrentController().GetDir();
 			return true;
 		}case AIVAL_GUI_CAMERA_POS:{
-			*(float3*)data = camHandler->GetCurrentController().GetPos();
+			*(static_cast<float3*>(data)) = camHandler->GetCurrentController().GetPos();
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
 			std::string f((char*) data);
@@ -1715,7 +1724,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 				return true;
 			}
 			case AIVAL_UNIT_MAXSPEED: {
-				(*(float*) data) = unit->maxSpeed;
+				(*(float*) data) = unit->moveType->GetMaxSpeed();
 				return true;
 			}
 			default:

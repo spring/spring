@@ -27,7 +27,7 @@ CTracerProjectile::CTracerProjectile(const float3& pos, const float3& speed, con
 	, length(range)
 	, drawLength(0.0f)
 {
-	SetRadius(1);
+	SetRadiusAndHeight(1.0f, 0.0f);
 	checkCol = false;
 
 	speedf = this->speed.Length();

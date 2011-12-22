@@ -16,6 +16,9 @@ namespace terrain {
 		void PrintMsg(const char* fmt, ...);
 
 		virtual void Write(const char* msg) = 0;
+
+	protected:
+		~ILoadCallback() {}
 	};
 
 }

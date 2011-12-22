@@ -28,7 +28,7 @@ public:
 
 public:
 	/// @see ConfigHandler::ConfigNotifyCallback
-	virtual void ConfigNotify(const std::string& key, const std::string& value);
+	void ConfigNotify(const std::string& key, const std::string& value);
 
 	void SetAirAbsorptionFactor(ALfloat value);
 	ALfloat GetAirAbsorptionFactor() const { return airAbsorptionFactor; }

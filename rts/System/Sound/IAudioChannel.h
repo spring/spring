@@ -6,6 +6,7 @@
 #include <string.h>
 #include "System/float3.h"
 
+struct GuiSoundSet;
 class CSoundSource;
 class CUnit;
 class CWorldObject;
@@ -19,6 +20,7 @@ class CWorldObject;
 class IAudioChannel {
 protected:
 	IAudioChannel();
+	virtual ~IAudioChannel();
 
 public:
 	virtual void Enable(bool newState) = 0;
@@ -46,9 +48,12 @@ public:
 	virtual void PlaySample(size_t id, const CUnit* u, float volume = 1.0f) = 0;
 	virtual void PlaySample(size_t id, const CWorldObject* p, float volume = 1.0f) = 0;
 
+	virtual void PlayRandomSample(const GuiSoundSet& soundSet, const CUnit* unit) = 0;
+	virtual void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos) = 0;
+
 	/**
 	 * @brief Start playing an ogg-file
-	 * 
+	 *
 	 * NOT threadsafe, unlike the other functions!
 	 * If another file is playing, it will stop it and play the new one instead.
 	 */
@@ -56,7 +61,7 @@ public:
 
 	/**
 	 * @brief Stop playback
-	 * 
+	 *
 	 * Don't call this if you just want to play another file (for performance).
 	 */
 	virtual void StreamStop() = 0;

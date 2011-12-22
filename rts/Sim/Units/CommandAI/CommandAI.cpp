@@ -16,6 +16,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
@@ -414,11 +415,12 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	const CSkirmishAIHandler::ids_t& saids = skirmishAIHandler.GetSkirmishAIsInTeam(owner->team);
 	const bool aiOrder = (!saids.empty());
 	const int& cmd_id = c.GetID();
-	
+
 	switch (cmd_id) {
 		case CMD_MANUALFIRE:
 			if (!ud->canManualFire)
 				return false;
+			// fall through
 
 		case CMD_ATTACK: {
 			if (!IsAttackCapable())
@@ -450,7 +452,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 					//     at positions outside LOS where UHM and SHM do not
 					//     match will not be broken)
 					//
-					
+
 					if (!aiOrder && math::fabs(cPos.y - gHeight) > SQUARE_SIZE) {
 						return false;
 					}
@@ -1606,3 +1608,48 @@ void CCommandAI::StopAttackingAllyTeam(int ally)
 		commandQue.erase(commandQue.begin() + *it);
 	}
 }
+
+
+
+void CCommandAI::SetScriptMaxSpeed(float speed) {
+	// find the first CMD_SET_WANTED_MAX_SPEED and modify it if need be
+	CCommandQueue::iterator it;
+
+	for (it = commandQue.begin(); it != commandQue.end(); ++it) {
+		Command& c = *it;
+
+		if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
+			continue;
+		if (c.params[0] != owner->moveType->GetMaxSpeed())
+			continue;
+
+		c.params[0] = speed;
+		break;
+	}
+
+	owner->moveType->SetMaxSpeed(speed);
+}
+
+void CCommandAI::SlowUpdateMaxSpeed() {
+	if (commandQue.size() < 2)
+		return;
+
+	// grab the second command
+	CCommandQueue::const_iterator it = commandQue.begin(); ++it;
+	const Command& c = *it;
+
+	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
+	// to the current command (and ignore them when it's their turn)
+	if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
+		return;
+	if (c.params.empty())
+		return;
+
+	const float defMaxSpeed = owner->moveType->GetMaxSpeed();
+	const float newMaxSpeed = std::min(c.params[0], defMaxSpeed);
+
+	if (newMaxSpeed > 0.0f) {
+		owner->moveType->SetMaxSpeed(newMaxSpeed);
+	}
+}
+

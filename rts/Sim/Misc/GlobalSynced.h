@@ -23,6 +23,7 @@ class CGlobalSynced
 {
 public:
 	CR_DECLARE(CGlobalSynced);
+
 	CGlobalSynced();  //!< Constructor
 	~CGlobalSynced(); //!< Destructor
 	void LoadFromSetup(const CGameSetup*);
@@ -38,6 +39,7 @@ public:
 	unsigned int GetRandSeed()     const { return randSeed; }
 	unsigned int GetInitRandSeed() const { return initRandSeed; }
 
+public:
 	/**
 	* @brief frame number
 	*

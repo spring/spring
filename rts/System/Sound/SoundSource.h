@@ -66,7 +66,6 @@ private:
 	SoundItem* curPlaying;
 	IAudioChannel* curChannel;
 	COggStream* curStream;
-	boost::recursive_mutex streamMutex;
 	float curVolume;
 	unsigned loopStop;
 	bool in3D;

@@ -1516,14 +1516,13 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitBlocking()");
-	}
 
-	if (lua_toboolean(L, 2)) {
-		unit->Block();
-	} else {
-		unit->UnBlock();
+	if (lua_isboolean(L, 2)) {
+		if (lua_toboolean(L, 2)) {
+			unit->Block();
+		} else {
+			unit->UnBlock();
+		}
 	}
 
 	if (lua_isboolean(L, 3)) {
@@ -1537,6 +1536,7 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 		unit->Block();
 	}
 
+	unit->crushable = luaL_optboolean(L, 4, unit->crushable);
 	return 0;
 }
 
@@ -1578,7 +1578,7 @@ int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
 	int args = lua_gettop(L);
 	int arg = 2;
 
-	CPlasmaRepulser* shield = (CPlasmaRepulser*) unit->shieldWeapon;
+	CPlasmaRepulser* shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
 	if (lua_isnumber(L, 2) && args > 2) {
 		arg++;
 		const int idx = luaL_optint(L, 2, -1);
@@ -1860,7 +1860,7 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 									 luaL_checkfloat(L, 3),
 									 luaL_checkfloat(L, 4));
 	const float radius = luaL_optfloat(L, 5, 0.0f);
-	const float speed  = luaL_optfloat(L, 6, unit->maxSpeed * 2.0f);
+	const float speed  = luaL_optfloat(L, 6, unit->moveType->GetMaxSpeed());
 
 	unit->moveType->StartMoving(pos, radius, speed);
 
@@ -1874,15 +1874,19 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	float3& pos = unit->pos;
+
+	float3  pos;
+	float3  rot;
+	float3& vel = unit->speed;
+
 	pos.x = luaL_checknumber(L, 2);
 	pos.y = luaL_checknumber(L, 3);
 	pos.z = luaL_checknumber(L, 4);
-	float3& vel = unit->speed;
+
 	vel.x = luaL_checknumber(L, 5);
 	vel.y = luaL_checknumber(L, 6);
 	vel.z = luaL_checknumber(L, 7);
-	float3  rot;
+
 	rot.x = luaL_checknumber(L, 8);
 	rot.y = luaL_checknumber(L, 9);
 	rot.z = luaL_checknumber(L, 10);
@@ -1891,16 +1895,10 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 	matrix.RotateZ(rot.z);
 	matrix.RotateX(rot.x);
 	matrix.RotateY(rot.y);
-	unit->rightdir.x = matrix[ 0];
-	unit->rightdir.y = matrix[ 1];
-	unit->rightdir.z = matrix[ 2];
-	unit->updir.x    = matrix[ 4];
-	unit->updir.y    = matrix[ 5];
-	unit->updir.z    = matrix[ 6];
-	unit->frontdir.x = matrix[ 8];
-	unit->frontdir.y = matrix[ 9];
-	unit->frontdir.z = matrix[10];
 
+	unit->Move3D(pos, false);
+	unit->SetDirVectors(matrix);
+	unit->UpdateMidPos();
 	unit->SetHeadingFromDirection();
 	unit->ForcedMove(pos);
 	return 0;
@@ -1953,9 +1951,9 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	matrix.RotateY(rot.y);
 
 	unit->SetDirVectors(matrix);
+	unit->UpdateMidPos();
 	unit->SetHeadingFromDirection();
 	unit->ForcedMove(unit->pos);
-
 	return 0;
 }
 

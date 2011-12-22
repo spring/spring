@@ -104,7 +104,6 @@ public:
 
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
-	void SetDirectionFromHeading();
 	void SetHeadingFromDirection();
 
 	void EnableScriptMoveType();
@@ -143,8 +142,6 @@ public:
 
 	void SetDirVectors(const CMatrix44f&);
 	void UpdateDirVectors(bool);
-	void UpdateMidPos();
-	void MoveMidPos(const float3&);
 
 	bool IsNeutral() const {
 		return neutral;
@@ -177,10 +174,6 @@ public:
 	LuaRulesParams::Params  modParams;
 	LuaRulesParams::HashMap modParamsMap; ///< name map for mod parameters
 
-	/// the forward direction of the unit
-	SyncedFloat3 frontdir;
-	SyncedFloat3 rightdir;
-	SyncedFloat3 updir;
 	/// if the updir is straight up or align to the ground vector
 	bool upright;
 
@@ -383,12 +376,8 @@ public:
 	bool activated;
 
 	inline CTransportUnit* GetTransporter() const {
-#if defined(USE_GML) && GML_ENABLE_SIM
-		// transporter may suddenly be changed to NULL by sim
-		return *(CTransportUnit * volatile *)&transporter;
-#else
-		return transporter;
-#endif
+		// In MT transporter may suddenly be changed to NULL by sim
+		return GML::SimEnabled() ? *(CTransportUnit * volatile *)&transporter : transporter;
 	}
 
 	bool crashing;
@@ -460,11 +449,6 @@ public:
 
 	float currentFuel;
 
-	/// max speed of the unit
-	float maxSpeed;
-	/// max reverse speed (used only by ground units for now)
-	float maxReverseSpeed;
-
 	/// minimum alpha value for a texel to be drawn
 	float alphaThreshold;
 	/// the damage value passed to CEGs spawned by this unit's script
@@ -493,10 +477,8 @@ public:
 	int lastDrawFrame;
 	boost::recursive_mutex lodmutex;
 #endif
-#if defined(USE_GML) && GML_ENABLE_SIM
-	unsigned lastUnitUpdate;
-#endif
 
+	unsigned lastUnitUpdate;
 
 protected:
 	void ChangeTeamReset();

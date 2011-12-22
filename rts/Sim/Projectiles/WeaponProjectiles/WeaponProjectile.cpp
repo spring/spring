@@ -106,6 +106,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 
 	if (weaponDef->interceptedByShieldType) {
 		// this needs a valid projectile id set
+		assert(id >= 0);
 		interceptHandler.AddShieldInterceptableProjectile(this);
 	}
 }
@@ -152,7 +153,8 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			owner(),
 			NULL,                                             // hitUnit
 			feature,
-			weaponDef->areaOfEffect,
+			weaponDef->craterAreaOfEffect,
+			weaponDef->damageAreaOfEffect,
 			weaponDef->edgeEffectiveness,
 			weaponDef->explosionSpeed,
 			weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
@@ -207,7 +209,8 @@ void CWeaponProjectile::Collision(CUnit* unit)
 			owner(),
 			unit,
 			NULL,                                            // hitFeature
-			weaponDef->areaOfEffect,
+			weaponDef->craterAreaOfEffect,
+			weaponDef->damageAreaOfEffect,
 			weaponDef->edgeEffectiveness,
 			weaponDef->explosionSpeed,
 			weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod

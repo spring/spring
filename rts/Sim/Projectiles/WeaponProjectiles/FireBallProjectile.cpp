@@ -39,7 +39,7 @@ CFireBallProjectile::CFireBallProjectile(
 	projectileType = WEAPON_FIREBALL_PROJECTILE;
 
 	if (weaponDef) {
-		SetRadius(weaponDef->collisionSize);
+		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 	}
 

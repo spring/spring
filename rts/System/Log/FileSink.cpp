@@ -136,7 +136,27 @@ namespace {
 	}
 
 	/**
-	 * Flushes the content of the buffer to all the currently registered log
+	 * Flushes the buffer of a single log file.
+	 */
+	void log_file_flushFile(FILE* outStream) {
+		fflush(outStream);
+	}
+
+	/**
+	 * Flushes the buffers of the individual log files.
+	 */
+	void log_file_flushFiles() {
+		const logFiles_t& logFiles = log_file_getLogFiles();
+		logFiles_t::const_iterator lfi;
+		for (lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
+			if (lfi->second.GetOutStream() != NULL) {
+				log_file_flushFile(lfi->second.GetOutStream());
+			}
+		}
+	}
+
+	/**
+	 * Writes the content of the buffer to all the currently registered log
 	 * files.
 	 */
 	void log_file_writeBufferToFiles() {
@@ -233,6 +253,14 @@ static void log_sink_record_file(const char* section, int level,
 	}
 }
 
+/// Cleans up all log streams, by flushing them.
+static void log_sink_cleanup_file() {
+	if (log_file_isActivelyLogging()) {
+		// flush the log buffers to files
+		log_file_flushFiles();
+	}
+}
+
 ///@}
 
 
@@ -241,6 +269,7 @@ namespace {
 	struct FileSinkRegistrator {
 		FileSinkRegistrator() {
 			log_backend_registerSink(&log_sink_record_file);
+			log_backend_registerCleanup(&log_sink_cleanup_file);
 		}
 	} fileSinkRegistrator;
 }

@@ -381,12 +381,13 @@ void CSound::StartThread(int maxSounds)
 	}
 	configHandler->Set("MaxSounds", maxSounds);
 
+	Threading::SetThreadName("audio");
 	Watchdog::RegisterThread(WDT_AUDIO);
 
 	while (!soundThreadQuit) {
 		boost::this_thread::sleep(boost::posix_time::millisec(50)); //! 20Hz
-		Update();
 		Watchdog::ClearTimer(WDT_AUDIO);
+		Update();
 	}
 
 	Watchdog::DeregisterThread(WDT_AUDIO);

@@ -48,9 +48,10 @@ CR_REG_METADATA(CGlobalRendering, (
 CGlobalRendering::CGlobalRendering()
 	: timeOffset(0.0f)
 	, lastFrameTime(0.0f)
-	, lastFrameStart(0)
+	, lastFrameStart(spring_gettime())
 	, weightedSpeedFactor(0.0f)
 	, drawFrame(1)
+	, FPS(30.0f)
 
 	, winState(0)
 	, screenSizeX(1)
@@ -74,6 +75,7 @@ CGlobalRendering::CGlobalRendering()
 
 	, aspectRatio(1.0f)
 
+	, zNear(NEAR_PLANE)
 	, viewRange(MAX_VIEW_RANGE)
 	, FSAA(0)
 	, depthBufferBits(0)
@@ -91,6 +93,9 @@ CGlobalRendering::CGlobalRendering()
 	, active(true)
 	, compressTextures(false)
 	, haveATI(false)
+	, haveMesa(false)
+	, haveIntel(false)
+	, haveNvidia(false)
 	, atiHacks(false)
 	, supportNPOTs(false)
 	, support24bitDepthBuffers(false)
@@ -105,10 +110,10 @@ CGlobalRendering::CGlobalRendering()
 
 void CGlobalRendering::PostInit() {
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
-	haveARB = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
-	// not enough: we want OpenGL 2.0 core functions
-	// haveGLSL = GL_ARB_vertex_shader && GL_ARB_fragment_shader;
-	haveGLSL = !!GLEW_VERSION_2_0;
+	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
+	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != NULL);
+	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
+	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
 	{
 		const char* glVendor = (const char*) glGetString(GL_VENDOR);
@@ -116,7 +121,14 @@ void CGlobalRendering::PostInit() {
 		const std::string vendor = (glVendor != NULL)? StringToLower(std::string(glVendor)): "";
 		const std::string renderer = (glRenderer != NULL)? StringToLower(std::string(glRenderer)): "";
 
-		haveATI = (vendor.find("ati ") != std::string::npos);
+		haveATI    = (vendor.find("ati ") != std::string::npos) || (vendor.find("amd ") != std::string::npos);
+		haveMesa   = (renderer.find("mesa ") != std::string::npos);
+		haveIntel  = (vendor.find("intel ") != std::string::npos);
+		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
+
+		//FIXME Neither Intel's nor Mesa's GLSL implementation seem to be in a workable state atm (date: Nov. 2011)
+		haveGLSL &= !haveIntel;
+		haveGLSL &= !haveMesa;
 
 		if (haveATI) {
 			// x-series doesn't support NPOTs (but hd-series does)
@@ -167,7 +179,15 @@ void CGlobalRendering::PostInit() {
 	}
 
 	// print info
-	LOG("GL info: FBO=%i NPOT=%i 24bitDepth=%i ATiHacks=%i", FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers, atiHacks);
+	LOG(
+		"GL info:\n"
+		"\thaveARB: %i, haveGLSL: %i, ATI hacks: %i\n"
+		"\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i\n"
+		"\tmaximum texture size: %i, compress MIP-map textures: %i",
+		haveARB, haveGLSL, atiHacks,
+		FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers,
+		maxTextureSize, compressTextures
+	);
 }
 
 

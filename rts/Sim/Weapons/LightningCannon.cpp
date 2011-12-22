@@ -66,10 +66,10 @@ bool CLightningCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
 	}
-	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, owner)) {
+	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, true, false, false, owner)) {
 		return false;
 	}
-	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner)) {
+	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, false, true, false, owner)) {
 		return false;
 	}
 
@@ -137,7 +137,8 @@ void CLightningCannon::FireImpl()
 		owner,
 		u,                                                // hitUnit
 		f,                                                // hitFeature
-		areaOfEffect,
+		craterAreaOfEffect,
+		damageAreaOfEffect,
 		weaponDef->edgeEffectiveness,
 		weaponDef->explosionSpeed,
 		0.5f,                                             // gfxMod

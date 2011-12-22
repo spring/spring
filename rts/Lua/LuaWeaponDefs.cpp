@@ -474,12 +474,15 @@ static bool InitParamMap()
 
 	ADD_BOOL("noSelfDamage",  wd.noSelfDamage);
 	ADD_BOOL("impactOnly",    wd.impactOnly);
-	ADD_FLOAT("areaOfEffect", wd.areaOfEffect);
-	ADD_FLOAT("fireStarter",  wd.fireStarter);
-	ADD_FLOAT("size",          wd.size);
-	ADD_FLOAT("sizeGrowth",    wd.sizeGrowth);
-	ADD_FLOAT("collisionSize", wd.collisionSize);
-	ADD_FLOAT("edgeEffectiveness", wd.edgeEffectiveness);
+
+	ADD_FLOAT("craterAreaOfEffect", wd.craterAreaOfEffect);
+	ADD_FLOAT("damageAreaOfEffect", wd.damageAreaOfEffect);
+	ADD_FLOAT("areaOfEffect",       wd.damageAreaOfEffect); // backward compability (TODO: find a way to print a warning when used!)
+	ADD_FLOAT("edgeEffectiveness",  wd.edgeEffectiveness);
+	ADD_FLOAT("fireStarter",        wd.fireStarter);
+	ADD_FLOAT("size",               wd.size);
+	ADD_FLOAT("sizeGrowth",         wd.sizeGrowth);
+	ADD_FLOAT("collisionSize",      wd.collisionSize);
 
 	ADD_INT("salvoSize",    wd.salvosize);
 	ADD_INT("projectiles",  wd.projectilespershot);

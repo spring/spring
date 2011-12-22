@@ -119,17 +119,17 @@ bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		return false;
 	}
 
-	float3 flatdir(dif.x, 0, dif.z);
-	float flatlength = flatdir.Length();
-	if (flatlength == 0) {
+	float3 flatDir(dif.x, 0, dif.z);
+	float flatLength = flatDir.Length();
+	if (flatLength == 0) {
 		return true;
 	}
-	flatdir /= flatlength;
+	flatDir /= flatLength;
 
 	const float linear = dir.y;
 	const float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
 	const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
-		ground->TrajectoryGroundCol(weaponMuzzlePos, flatdir, flatlength - 10, linear, quadratic):
+		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 10, linear, quadratic):
 		-1.0f;
 
 	if (gc > 0.0f) {
@@ -139,13 +139,18 @@ bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	const float spread =
 		((accuracy + sprayAngle) * 0.6f) *
 		((1.0f - owner->limExperience * weaponDef->ownerExpAccWeight) * 0.9f);
+	const float modFlatLength = flatLength - 30.0f;
 
-	if (avoidFriendly && TraceRay::TestTrajectoryAllyCone(weaponMuzzlePos, flatdir,
-		flatlength - 30, dir.y, quadratic, spread, 3, owner->allyteam, owner)) {
+	if (avoidFriendly && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+		dir.y, quadratic, spread, 3, owner->allyteam, true, false, false, owner)) {
 		return false;
 	}
-	if (avoidNeutral && TraceRay::TestTrajectoryNeutralCone(weaponMuzzlePos, flatdir,
-		flatlength - 30, dir.y, quadratic, spread, 3, owner)) {
+	if (avoidNeutral && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+		dir.y, quadratic, spread, 3, owner->allyteam, false, true, false, owner )) {
+		return false;
+	}
+	if (avoidFeature && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+		dir.y, quadratic, spread, 3, owner->allyteam, false, false, true, owner)) {
 		return false;
 	}
 
@@ -178,7 +183,7 @@ void CCannon::FireImpl(void)
 	}
 
 	new CExplosiveProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		weaponDef, ttl, areaOfEffect, gravity);
+		weaponDef, ttl, damageAreaOfEffect, gravity);
 }
 
 void CCannon::SlowUpdate(void)

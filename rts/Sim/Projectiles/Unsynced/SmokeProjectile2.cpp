@@ -109,7 +109,7 @@ void CSmokeProjectile2::Update()
 	if (size < startSize) {
 		size += (startSize - size) * 0.2f;
 	}
-	SetRadius(size);
+	SetRadiusAndHeight(size, 0.0f);
 	if (age > 1) {
 		age = 1;
 		deleteMe = true;

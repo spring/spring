@@ -16,6 +16,7 @@
 #include "System/Util.h"
 #include "System/Vec2.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/SimpleParser.h"
 
 
@@ -61,11 +62,8 @@ C3DOTextureHandler::C3DOTextureHandler()
 
 	std::set<string> usedNames;
 	for (std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
-		std::string s = std::string(*fi);
-		std::string s2 = s;
-
-		s2.erase(0, s2.find_last_of('/') + 1);
-		s2 = StringToLower(s2.substr(0, s2.find_last_of('.')));
+		const std::string& s = *fi;
+		const std::string s2 = StringToLower(FileSystem::GetBasename(s));
 
 		// avoid duplicate names and give tga images priority
 		if (usedNames.find(s2) != usedNames.end()) {
@@ -145,7 +143,6 @@ C3DOTextureHandler::C3DOTextureHandler()
 
 	int cury = 0;
 	int maxy = 0;
-	int curx = 0;
 	int foundx = 0;
 	int foundy = 0;
 	std::list<int2> nextSub;
@@ -162,8 +159,9 @@ C3DOTextureHandler::C3DOTextureHandler()
 					cury = maxy;
 					maxy += curtex1->ysize;
 					if (maxy > bigTexY) {
+						delete[] bigtex1;
+						delete[] bigtex2;
 						throw content_error("Too many/large texture in 3do texture-atlas to fit in 2048*2048");
-						break;
 					}
 					thisSub.push_back(int2(0, cury));
 				} else {
@@ -197,13 +195,9 @@ C3DOTextureHandler::C3DOTextureHandler()
 		}
 		for (int y = 0; y < curtex1->ysize; ++y) {
 			for (int x = 0; x < curtex1->xsize; ++x) {
-//				if(curtex1->mem[(y*curtex1->xsize+x)*4]==254 && curtex1->mem[(y*curtex1->xsize+x)*4+1]==0 && curtex1->mem[(y*curtex1->xsize+x)*4+2]==254){
-//					bigtex1[((cury+y)*bigTexX+(curx+x))*4+3] = 0;
-//				} else {
-					for (int col = 0; col < 4; ++col) {
-						bigtex1[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex1->mem[(((y * curtex1->xsize) + x) * 4) + col];
-						bigtex2[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex2->mem[(((y * curtex1->xsize) + x) * 4) + col];
-//					}
+				for (int col = 0; col < 4; ++col) {
+					bigtex1[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex1->mem[(((y * curtex1->xsize) + x) * 4) + col];
+					bigtex2[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex2->mem[(((y * curtex1->xsize) + x) * 4) + col];
 				}
 			}
 		}
@@ -216,7 +210,6 @@ C3DOTextureHandler::C3DOTextureHandler()
 		unittex->yend = (foundy + curtex1->ysize - 0.5f) / (float)bigTexY;
 		textures[texfiles[a]->name] = unittex;
 
-		curx += curtex1->xsize;
 		delete texfiles[a];
 	}
 

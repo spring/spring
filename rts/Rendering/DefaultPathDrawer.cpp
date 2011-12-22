@@ -31,24 +31,91 @@
 #include "Rendering/GL/glExtra.h"
 #include "System/myMath.h"
 
+static CPathManager* pm = NULL;
+
+static const MoveData* GetMoveData() {
+	const MoveData* md = NULL;
+	const CUnitSet& unitSet = selectedUnits.selectedUnits;
+
+	if (moveinfo->moveData.empty()) {
+		return md;
+	}
+
+	md = moveinfo->moveData[0];
+
+	if (!unitSet.empty()) {
+		const CUnit* unit = *(unitSet.begin());
+		const UnitDef* unitDef = unit->unitDef;
+
+		if (unitDef->movedata != NULL) {
+			md = unitDef->movedata;
+		}
+	}
+
+	return md;
+}
+
+static float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx, int sqy) {
+	float m = 0.0f;
+
+	#if 0
+	const int hmIdx = sqy * gs->mapxp1 + sqx;
+	const int cnIdx = sqy * gs->mapx   + sqx;
+
+	const float height = hm[hmIdx];
+	const float slope = 1.0f - cn[cnIdx].y;
+
+	if (md->moveFamily == MoveData::Ship) {
+		// only check water depth
+		m = (height >= (-md->depth))? 0.0f: m;
+	} else {
+		// check depth and slope (if hover, only over land)
+		m = std::max(0.0f, 1.0f - (slope / (md->maxSlope + 0.1f)));
+		m = (height < (-md->depth))? 0.0f: m;
+		m = (height <= 0.0f && md->moveFamily == MoveData::Hover)? 1.0f: m;
+	}
+	#else
+	// NOTE: these values are not necessarily in [0, 1]
+	m = mm->GetPosSpeedMod(md, sqx, sqy);
+	#endif
+
+	return m;
+}
+
+static unsigned int GetSpeedModColor(const float m) {
+	const unsigned char R =
+		(m >= 1.0f)?   0:
+		(m <= 0.0f)? 255:
+		255 - ((m * 0.5f + 0.25f) * 255);
+	const unsigned char G =
+		(m >= 1.0f)? 255:
+		(m <= 0.0f)?   0:
+		255 - R;
+
+	const unsigned char B =   0;
+	const unsigned char A = 255;
+
+	return ((R << 24) | (G << 16) | (B << 8) | (A << 0));
+}
+
+
+
 DefaultPathDrawer::DefaultPathDrawer() {
 	pm = dynamic_cast<CPathManager*>(pathManager);
 }
 
-void DefaultPathDrawer::Draw() const {
+void DefaultPathDrawer::DrawAll() const {
 	// CPathManager is not thread-safe
-	#if !defined(USE_GML) || !GML_ENABLE_SIM
-	if (globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
+	if (!GML::SimEnabled() && globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT);
 
-		Draw(pm);
+		Draw();
 		Draw(pm->maxResPF);
 		Draw(pm->medResPE);
 		Draw(pm->lowResPE);
 
 		glPopAttrib();
 	}
-	#endif
 }
 
 
@@ -131,51 +198,24 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						const int sqx = (tx << 1);
 						const int sqy = (ty << 1);
 						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-						const int hmIdx = sqy * gs->mapxp1 + sqx;
-						const int cnIdx = sqy * gs->mapx   + sqx;
 
 						if (md != NULL) {
-							float m = 1.0f;
-
-							#if 0
-							const float height = hm[hmIdx];
-							const float slope = 1.0f - cn[cnIdx].y;
-
-							if (md->moveFamily == MoveData::Ship) {
-								// only check water depth
-								m = (height >= (-md->depth))? 0.0f: m;
-							} else {
-								// check depth and slope (if hover, only over land)
-								m = std::max(0.0f, 1.0f - (slope / (md->maxSlope + 0.1f)));
-								m = (height < (-md->depth))? 0.0f: m;
-								m = (height <= 0.0f && md->moveFamily == MoveData::Hover)? 1.0f: m;
-							}
-							#else
-							m = mm->GetPosSpeedMod(md, sqx, sqy);
-							#endif
-
-							m = Clamp(m, 0.0f, 1.0f);
-							m *= 255;
+							float s = 1.0f;
 
 							if (los || loshandler->InLos(sqx, sqy, gu->myAllyTeam)) {
-								float fact = 1.0f;
-
-								if (mm->IsBlocked(*md, sqx,     sqy    ) & CMoveMath::BLOCK_STRUCTURE)
-									fact -= 0.25f;
-								if (mm->IsBlocked(*md, sqx + 1, sqy    ) & CMoveMath::BLOCK_STRUCTURE)
-									fact -= 0.25f;
-								if (mm->IsBlocked(*md, sqx,     sqy + 1) & CMoveMath::BLOCK_STRUCTURE)
-									fact -= 0.25f;
-								if (mm->IsBlocked(*md, sqx + 1, sqy + 1) & CMoveMath::BLOCK_STRUCTURE)
-									fact -= 0.25f;
-
-								m *= fact;
+								if (mm->IsBlocked(*md, sqx,     sqy    ) & CMoveMath::BLOCK_STRUCTURE) { s -= 0.25f; }
+								if (mm->IsBlocked(*md, sqx + 1, sqy    ) & CMoveMath::BLOCK_STRUCTURE) { s -= 0.25f; }
+								if (mm->IsBlocked(*md, sqx,     sqy + 1) & CMoveMath::BLOCK_STRUCTURE) { s -= 0.25f; }
+								if (mm->IsBlocked(*md, sqx + 1, sqy + 1) & CMoveMath::BLOCK_STRUCTURE) { s -= 0.25f; }
 							}
 
-							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 255 - m;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = m;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 0;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+							const float m = GetSpeedMod(md, mm, sqx, sqy);
+							const unsigned int c = GetSpeedModColor(m * s);
+
+							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (c >> 24) & 255;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (c >> 16) & 255;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (c >>  8) & 255;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = (c >>  0) & 255;
 						} else {
 							// we have nothing to show
 							// -> draw a dark red overlay
@@ -259,7 +299,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 
 
-void DefaultPathDrawer::Draw(const CPathManager* pm) const {
+void DefaultPathDrawer::Draw() const {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glLineWidth(3);
@@ -350,21 +390,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	GML_RECMUTEX_LOCK(sel); // Draw
 
-	MoveData* md = NULL;
-
-	if (!moveinfo->moveData.empty()) {
-		md = moveinfo->moveData[0];
-	} else {
-		return;
-	}
-
-	if (!selectedUnits.selectedUnits.empty()) {
-		const CUnit* unit = (*selectedUnits.selectedUnits.begin());
-
-		if (unit->unitDef->movedata) {
-			md = unit->unitDef->movedata;
-		}
-	}
+	const MoveData* md = GetMoveData();
 
 	glDisable(GL_TEXTURE_2D);
 	glColor3f(1.0f, 1.0f, 0.0f);

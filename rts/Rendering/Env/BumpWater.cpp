@@ -933,7 +933,7 @@ void CBumpWater::UpdateCoastmap()
 		glPopMatrix();
 
 	blurShader->Disable();
-	coastFBO.Unattach(GL_COLOR_ATTACHMENT1_EXT);
+	coastFBO.Detach(GL_COLOR_ATTACHMENT1_EXT);
 	//coastFBO.Unbind();
 
 	//! generate mipmaps
@@ -1151,7 +1151,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	const double plane[4] = {0, -1, 0, 5};
 	glClipPlane(GL_CLIP_PLANE2, plane);
 
-	readmap->GetGroundDrawer()->Draw();
+	readmap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
 	unitDrawer->Draw(false, true);
 	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits();
@@ -1196,7 +1196,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	drawReflection = true;
 
 	if (reflection > 1) {
-		readmap->GetGroundDrawer()->Draw(true);
+		readmap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 	}
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();
@@ -1212,7 +1212,7 @@ void CBumpWater::DrawReflection(CGame* game)
 //	delete camera;
 //	camera = realCam;
 	camera->~CCamera();
-	new (camera) CCamera(*(CCamera*)realCam);
+	new (camera) CCamera(*(reinterpret_cast<CCamera*>(realCam)));
 	camera->Update();
 }
 

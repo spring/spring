@@ -11,7 +11,7 @@
 /// \#include "Rendering/GL/myGL.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/OffscreenGLContext.h"
-#include "System/myTime.h"
+#include "System/Misc/SpringTime.h"
 
 
 class CLoadScreen : public CGameController

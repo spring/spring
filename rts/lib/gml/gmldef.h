@@ -296,6 +296,7 @@
 #undef glUniform4fv
 #undef glMapBufferRange
 #undef glPrimitiveRestartIndexNV
+#undef glDrawRangeElements
 
 // #####################################################################
 
@@ -590,3 +591,4 @@
 #define glUniform4fv gmlUniform4fv
 #define glMapBufferRange gmlMapBufferRange
 #define glPrimitiveRestartIndexNV gmlPrimitiveRestartIndexNV
+#define glDrawRangeElements gmlDrawRangeElements

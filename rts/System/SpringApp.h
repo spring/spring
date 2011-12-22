@@ -8,7 +8,6 @@
 
 class CmdLineParams;
 class CGameController;
-class COffscreenGLContext;
 union SDL_Event;
 
 /**
@@ -31,10 +30,8 @@ protected:
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
 	bool InitWindow(const char* title);             //!< Initializes window
 	static void InitOpenGL();                       //!< Initializes OpenGL
-	static void UpdateOldConfigs();                 //!< Forces an update to new config defaults
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
 	static bool SetSDLVideoMode();                  //!< Sets SDL video mode
-	static void SetProcessAffinity(int);
 	int Update();                                   //!< Run simulation and draw
 	bool UpdateSim(CGameController *ac);
 
@@ -43,11 +40,6 @@ protected:
 	static void RestoreWindowPosition();
 	static void SaveWindowPosition();
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	int Sim();                                      //!< Simulation  loop
-	static void Simcb(void *c) {((SpringApp *)c)->Sim();}
-#endif
-
 	/**
 	 * @brief command line
 	 *
@@ -55,17 +47,11 @@ protected:
 	 */
 	CmdLineParams* cmdline;
 
-	/**
-	 * @brief last required draw
-	 *
-	 * sim frame after which the last required draw was conducted
-	 */
-	int lastRequiredDraw;
-
-	static COffscreenGLContext* ogc;
-
 private:
 	bool MainEventHandler(const SDL_Event& ev);
+
+private:
+	std::string binaryName;
 };
 
 /**

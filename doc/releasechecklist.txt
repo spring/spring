@@ -42,9 +42,9 @@ Release Time
 		git merge release --no-ff
 5)  Tag the develop branch:
 		git tag -a -m "dev version after the 83.0 release" 83.0.1
-7)  POINT OF NO RETURN: Push to the main repo:
-		git push --tags origin master develop
-9)  Force build of the master branch on hte windows and the OS-X buildbots.
+7)  POINT OF NO RETURN: Push to the main repo (and delete the release branch):
+		git push --tags origin develop :release master
+9)  Force build of the master branch on the windows and the OS-X buildbots.
     The later will take long to compleete, one hour or more!
 10) Write the news post for the springrts.com frontpage, while waiting for the
     buildbot to compile the master branch.
@@ -75,11 +75,10 @@ Enforcing on server
 This only needs to be done if it is a sync relevant change.
 
 1) Ask aegis or a lobby admin to enforce the new version.
-2) Update the version templates on the Wiki.
-	This also changes the download page.
-		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
-		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit
-		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Patchset&action=edit
+2) Update download page by chaning the version templates on the Wiki.
+	http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
+	http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit
+	http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:ReleaseDate&action=edit
 3) Update the default downloads for each platform on SF.
 	Installer .exe for Windows, .tar.gz for all other platforms.
 	Do so through the file(s) properties on this page:

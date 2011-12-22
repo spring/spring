@@ -26,23 +26,23 @@
 //////////////////////////////////////////////////////////////////////
 
 /**
- * helper for TestAllyCone and TestNeutralCone
- * @return true if the unit u is in the firing cone, false otherwise
+ * helper for TestCone
+ * @return true if object <o> is in the firing cone, false otherwise
  */
 inline bool TestConeHelper(const float3& from, const float3& weaponDir, float length, float spread, const CSolidObject* obj)
 {
 	// account for any offset, since we want to know if our shots might hit
-	const float3 unitDir = (obj->midPos + obj->collisionVolume->GetOffsets()) - from;
+	const float3 objDir = (obj->midPos + obj->collisionVolume->GetOffsets()) - from;
 
 	// weaponDir defines the center of the cone
-	float closeLength = unitDir.dot(weaponDir);
+	float closeLength = objDir.dot(weaponDir);
 
 	if (closeLength <= 0)
 		return false;
 	if (closeLength > length)
 		closeLength = length;
 
-	const float3 closeVect = unitDir - weaponDir * closeLength;
+	const float3 closeVect = objDir - weaponDir * closeLength;
 
 	// NOTE: same caveat wrt. use of volumeBoundingRadius
 	// as for ::Explosion(), this will result in somewhat
@@ -52,15 +52,22 @@ inline bool TestConeHelper(const float3& from, const float3& weaponDir, float le
 	return (closeVect.SqLength() < r * r);
 }
 
-
 /**
- * helper for TestTrajectoryAllyCone and TestTrajectoryNeutralCone
- * @return true if the unit u is in the firing trajectory, false otherwise
+ * helper for TestTrajectoryCone
+ * @return true if object <o> is in the firing trajectory, false otherwise
  */
-inline bool TestTrajectoryConeHelper(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, const CUnit* u)
+inline bool TestTrajectoryConeHelper(
+	const float3& from,
+	const float3& flatdir,
+	float length,
+	float linear,
+	float quadratic,
+	float spread,
+	float baseSize,
+	const CSolidObject* o)
 {
-	const CollisionVolume* cv = u->collisionVolume;
-	float3 dif = (u->midPos + cv->GetOffsets()) - from;
+	const CollisionVolume* cv = o->collisionVolume;
+	float3 dif = (o->midPos + cv->GetOffsets()) - from;
 	const float3 flatdif(dif.x, 0, dif.z);
 	float closeFlatLength = flatdif.dot(flatdir);
 
@@ -86,7 +93,7 @@ inline bool TestTrajectoryConeHelper(const float3& from, const float3& flatdir, 
 		dir.y = linear + quadratic * closeFlatLength;
 		dir.Normalize();
 
-		dif = (u->midPos + cv->GetOffsets()) - newfrom;
+		dif = (o->midPos + cv->GetOffsets()) - newfrom;
 		const float closeLength = dif.dot(dir);
 
 		// NOTE: overly conservative for non-spherical volumes
@@ -98,6 +105,8 @@ inline bool TestTrajectoryConeHelper(const float3& from, const float3& flatdir, 
 	}
 	return false;
 }
+
+
 
 //////////////////////////////////////////////////////////////////////
 // Raytracing
@@ -127,17 +136,20 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 		GML_RECMUTEX_LOCK(quad); // TraceRay
 		CollisionQuery cq;
 
-		const vector<int>& quads = qf->GetQuadsOnRay(start, dir, length);
+		int* begQuad = NULL;
+		int* endQuad = NULL;
+
+		qf->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
 
 		//! feature intersection
 		if (!ignoreFeatures) {
-			for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-				const CQuadField::Quad& quad = qf->GetQuad(*qi);
+			for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+				const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 				for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 					CFeature* f = *ui;
 
-					if (!f->blocking || !f->collisionVolume) {
+					if (!f->blocking || f->collisionVolume == NULL) {
 						//! NOTE: why check the blocking property?
 						continue;
 					}
@@ -158,8 +170,8 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 
 		//! unit intersection
 		if (!ignoreUnits) {
-			for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-				const CQuadField::Quad& quad = qf->GetQuad(*qi);
+			for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+				const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 				for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 					CUnit* u = *ui;
@@ -219,12 +231,16 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 	{
 		GML_RECMUTEX_LOCK(quad); //! GuiTraceRay
 
-		const vector<int> &quads = qf->GetQuadsOnRay(start, dir, length);
+		int* begQuad = NULL;
+		int* endQuad = NULL;
+
+		qf->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
+
 		std::list<CUnit*>::const_iterator ui;
 		std::list<CFeature*>::const_iterator fi;
 
-		for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-			const CQuadField::Quad& quad = qf->GetQuad(*qi);
+		for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+			const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 			//! Unit Intersection
 			for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
@@ -276,7 +292,7 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 			for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 				CFeature* f = *fi;
 
-				if (!f->collisionVolume) {
+				if (f->collisionVolume == NULL) {
 					continue;
 				}
 				//FIXME add useradar?
@@ -330,18 +346,22 @@ bool LineFeatureCol(const float3& start, const float3& dir, float length)
 {
 	GML_RECMUTEX_LOCK(quad); // GuiTraceRayFeature
 
-	const std::vector<int> &quads = qf->GetQuadsOnRay(start, dir, length);
+	int* begQuad = NULL;
+	int* endQuad = NULL;
+
+	if (qf->GetQuadsOnRay(start, dir, length, begQuad, endQuad) == 0)
+		return false;
 
 	CollisionQuery cq;
 
-	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
+	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 		for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 			CFeature* f = *ui;
 			CollisionVolume* cv = f->collisionVolume;
 
-			if (!f->blocking || !cv) {
+			if (!f->blocking || cv == NULL) {
 				// NOTE: why check the blocking property?
 				continue;
 			}
@@ -351,99 +371,160 @@ bool LineFeatureCol(const float3& start, const float3& dir, float length)
 			}
 		}
 	}
+
 	return false;
 }
 
 
-bool TestAllyCone(const float3& from, const float3& weaponDir, float length, float spread, int allyteam, CUnit* owner)
+
+bool TestCone(
+	const float3& from,
+	const float3& dir,
+	float length,
+	float spread,
+	int allyteam,
+	bool testFriendly,
+	bool testNeutral,
+	bool testFeatures,
+	CUnit* owner)
 {
-	int quads[1000];
-	int* endQuad = quads;
-	qf->GetQuadsOnRay(from, weaponDir, length, endQuad);
+	int* begQuad = NULL;
+	int* endQuad = NULL;
 
-	for (int* qi = quads; qi != endQuad; ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (std::list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
-			CUnit* u = *ui;
+	if (qf->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
+		return true;
 
-			if (u == owner)
-				continue;
+	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
-			if (TestConeHelper(from, weaponDir, length, spread, u))
-				return true;
+		if (testFriendly) {
+			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
+			      std::list<CUnit*>::const_iterator unitsIt;
+
+			for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
+				const CUnit* u = *unitsIt;
+
+				if (u == owner)
+					continue;
+
+				if (TestConeHelper(from, dir, length, spread, u))
+					return true;
+			}
 		}
-	}
-	return false;
-}
 
-bool TestNeutralCone(const float3& from, const float3& weaponDir, float length, float spread, CUnit* owner)
-{
-	int quads[1000];
-	int* endQuad = quads;
-	qf->GetQuadsOnRay(from, weaponDir, length, endQuad);
+		if (testNeutral) {
+			const std::list<CUnit*>& units = quad.units;
+			      std::list<CUnit*>::const_iterator unitsIt;
 
-	for (int* qi = quads; qi != endQuad; ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
+			for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
+				const CUnit* u = *unitsIt;
 
-		for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			CUnit* u = *ui;
+				if (u == owner)
+					continue;
+				if (!u->IsNeutral())
+					continue;
 
-			if (u == owner)
-				continue;
+				if (TestConeHelper(from, dir, length, spread, u))
+					return true;
+			}
+		}
 
-			if (u->IsNeutral()) {
-				if (TestConeHelper(from, weaponDir, length, spread, u))
+		if (testFeatures) {
+			const std::list<CFeature*>& features = quad.features;
+			      std::list<CFeature*>::const_iterator featuresIt;
+
+			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
+				const CFeature* f = *featuresIt;
+
+				if (f->collisionVolume == NULL)
+					continue;
+				if (TestConeHelper(from, dir, length, spread, f))
 					return true;
 			}
 		}
 	}
+
 	return false;
 }
 
 
-bool TestTrajectoryAllyCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, int allyteam, CUnit* owner)
+
+bool TestTrajectoryCone(
+	const float3& from,
+	const float3& dir,
+	float length,
+	float linear,
+	float quadratic,
+	float spread,
+	float baseSize,
+	int allyteam,
+	bool testFriendly,
+	bool testNeutral,
+	bool testFeatures,
+	CUnit* owner)
 {
-	int quads[1000];
-	int* endQuad = quads;
-	qf->GetQuadsOnRay(from, flatdir, length, endQuad);
+	int* begQuad = NULL;
+	int* endQuad = NULL;
 
-	for (int* qi = quads; qi != endQuad; ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (std::list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
-			CUnit* u = *ui;
+	if (qf->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
+		return true;
 
-			if (u == owner)
-				continue;
+	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
-			if (TestTrajectoryConeHelper(from, flatdir, length, linear, quadratic, spread, baseSize, u))
-				return true;
+		// friendly units in this quad
+		if (testFriendly) {
+			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
+			      std::list<CUnit*>::const_iterator unitsIt;
+
+			for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
+				const CUnit* u = *unitsIt;
+
+				if (u == owner)
+					continue;
+
+				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, baseSize, u))
+					return true;
+			}
 		}
-	}
-	return false;
-}
 
-bool TestTrajectoryNeutralCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, CUnit* owner)
-{
-	int quads[1000];
-	int* endQuad = quads;
-	qf->GetQuadsOnRay(from, flatdir, length, endQuad); // FIXME we need a version with `spread`
+		// neutral units in this quad
+		if (testNeutral) {
+			const std::list<CUnit*>& units = quad.units;
+			      std::list<CUnit*>::const_iterator unitsIt;
 
-	for (int* qi = quads; qi != endQuad; ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			CUnit* u = *ui;
+			for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
+				const CUnit* u = *unitsIt;
 
-			if (u == owner)
-				continue;
+				if (u == owner)
+					continue;
+				if (!u->IsNeutral())
+					continue;
 
-			if (u->IsNeutral()) {
-				if (TestTrajectoryConeHelper(from, flatdir, length, linear, quadratic, spread, baseSize, u))
+				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, baseSize, u))
+					return true;
+			}
+		}
+
+		// features in this quad
+		if (testFeatures) {
+			const std::list<CFeature*>& features = quad.features;
+			      std::list<CFeature*>::const_iterator featuresIt;
+
+			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
+				const CFeature* f = *featuresIt;
+
+				if (f->collisionVolume == NULL)
+					continue;
+				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, baseSize, f))
 					return true;
 			}
 		}
 	}
+
 	return false;
 }
+
 
 
 } //namespace TraceRay

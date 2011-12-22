@@ -13,6 +13,8 @@
 extern "C" {
 #endif
 
+// NOTE structs should not be empty (C90), so add a useless member if needed
+
 #define COMMAND_TO_ID_ENGINE -1
 
 /**
@@ -261,7 +263,7 @@ enum UnitCommandOptions {
 
 /**
  * Allows one to give an income (dis-)advantage to the team
- * controlled by the Skimrish AI.
+ * controlled by the Skirmish AI.
  * This value can also be set through the GameSetup script,
  * with the difference that it causes an instant desync when set here.
  */
@@ -461,7 +463,8 @@ struct SStartPathDrawerCommand {
 }; //$ COMMAND_DRAWER_PATH_START Map_Drawer_PathDrawer_start
 
 struct SFinishPathDrawerCommand {
-// TODO: FIXME: commands should not be empty, add a useless var if needed
+	// NOTE structs should not be empty (C90), so we add a useless member
+	bool iAmUseless;
 }; //$ COMMAND_DRAWER_PATH_FINISH Map_Drawer_PathDrawer_finish
 
 struct SDrawLinePathDrawerCommand {

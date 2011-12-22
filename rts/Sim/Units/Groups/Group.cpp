@@ -51,9 +51,9 @@ bool CGroup::AddUnit(CUnit* unit)
 {
 	GML_RECMUTEX_LOCK(group); // AddUnit
 
-	eventHandler.GroupChanged(id);
-
 	units.insert(unit);
+	handler->PushGroupChange(id);
+
 	return true;
 }
 
@@ -61,8 +61,8 @@ void CGroup::RemoveUnit(CUnit* unit)
 {
 	GML_RECMUTEX_LOCK(group); // RemoveUnit
 
-	eventHandler.GroupChanged(id);
 	units.erase(unit);
+	handler->PushGroupChange(id);
 }
 
 void CGroup::RemoveIfEmptySpecialGroup()
@@ -85,10 +85,10 @@ void CGroup::ClearUnits()
 {
 	GML_RECMUTEX_LOCK(group); // ClearUnits
 
-	eventHandler.GroupChanged(id);
 	while (!units.empty()) {
 		(*units.begin())->SetGroup(0);
 	}
+	handler->PushGroupChange(id);
 }
 
 float3 CGroup::CalculateCenter() const

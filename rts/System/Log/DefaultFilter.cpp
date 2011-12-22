@@ -20,8 +20,11 @@ extern "C" {
 
 bool log_frontend_isEnabled(const char* section, int level);
 
+
 extern void log_backend_record(const char* section, int level,
 		const char* fmt, va_list arguments);
+
+extern void log_backend_cleanup();
 
 
 struct log_filter_section_compare {
@@ -188,6 +191,10 @@ void log_frontend_record(const char* section, int level, const char* fmt,
 	va_start(arguments, fmt);
 	log_filter_record(section, level, fmt, arguments);
 	va_end(arguments);
+}
+
+void log_frontend_cleanup() {
+	log_backend_cleanup();
 }
 
 ///@}

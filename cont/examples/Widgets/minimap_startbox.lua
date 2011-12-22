@@ -60,6 +60,7 @@ local startboxDListColor = 0
 local gaiaTeamID
 local gaiaAllyTeamID
 
+local teamStartPositions = {}
 local startTimer = Spring.GetTimer()
 
 local texName = LUAUI_DIRNAME .. 'Images/highlight_strip.png'
@@ -301,12 +302,29 @@ function widget:DrawWorld()
     local _,leader = Spring.GetTeamInfo(teamID)
     local _,_,spec = Spring.GetPlayerInfo(leader)
     if ((not spec) and (teamID ~= gaiaTeamID)) then
-      local x, y, z = Spring.GetTeamStartPosition(teamID)
-      if (x ~= nil and x > 0 and z > 0 and y > -500) then
+      local newx, newy, newz = Spring.GetTeamStartPosition(teamID)
+
+      if (teamStartPositions[teamID] == nil) then
+        teamStartPositions[teamID] = {newx, newy, newz}
+      end
+
+      local oldx, oldy, oldz =
+        teamStartPositions[teamID][1],
+        teamStartPositions[teamID][2],
+        teamStartPositions[teamID][3]
+
+      if (newx ~= oldx or newy ~= oldy or newz ~= oldz) then
+        Spring.PlaySoundFile("MapPoint")
+        teamStartPositions[teamID][1] = newx
+        teamStartPositions[teamID][2] = newy
+        teamStartPositions[teamID][3] = newz
+      end
+
+      if (newx ~= nil and newx ~= 0 and newz ~= 0 and newy > -500.0) then
         local color = GetTeamColor(teamID)
         local alpha = 0.5 + math.abs(((time * 3) % 1) - 0.5)
         gl.PushMatrix()
-        gl.Translate(x, y, z)
+        gl.Translate(newx, newy, newz)
         gl.Color(color[1], color[2], color[3], alpha)
         gl.CallList(coneList)
         gl.PopMatrix()

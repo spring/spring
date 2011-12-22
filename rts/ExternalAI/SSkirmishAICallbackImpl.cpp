@@ -164,7 +164,7 @@ static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 static inline const MoveData* getUnitDefMoveDataById(int skirmishAIId, int unitDefId) {
 
 	const MoveData* moveData = getUnitDefById(skirmishAIId, unitDefId)->movedata;
-	assert(moveData != NULL); // There is a callback method to check whether MKoveData is available, use it.
+	assert(moveData != NULL); // NOTE There is a callback method to check whether MoveData is available, use it.
 	return moveData;
 }
 
@@ -849,7 +849,7 @@ static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int skirmis
 	IAILibraryManager::T_skirmishAIInfos infs = libMan->GetSkirmishAIInfos();
 	IAILibraryManager::T_skirmishAIInfos::const_iterator inf = infs.find(*key);
 	if (inf != infs.end()) {
-		info = (const CSkirmishAILibraryInfo*) inf->second;
+		info = const_cast<const CSkirmishAILibraryInfo*>(inf->second);
 	}
 
 	return info;
@@ -2407,11 +2407,14 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToMove(int skirmishAIId, int unitD
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToHover(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->canhover;
+	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
+	const MoveData* md = ud->movedata;
+ 
+	return ((md != NULL)? (md->moveType == MoveData::Hover_Move): false);
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isFloater(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->floater;
+	return getUnitDefById(skirmishAIId, unitDefId)->floatOnWater;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isBuilder(int skirmishAIId, int unitDefId) {
@@ -2725,8 +2728,9 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isHideDamage(int skirmishAIId, int unitD
 	return getUnitDefById(skirmishAIId, unitDefId)->hideDamage;
 }
 
+// DEPRECATED
 EXPORT(bool) skirmishAiCallback_UnitDef_isCommander(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->isCommander;
+	return false;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isShowPlayerName(int skirmishAIId, int unitDefId) {
@@ -2918,7 +2922,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getCustomParams(int skirmishAIId, int uni
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isMoveDataAvailable(int skirmishAIId, int unitDefId) {
-	// can not use getUnitDefMoveDataById() here, cause it would assert
+	// NOTE We can not use getUnitDefMoveDataById() here, cause it would assert
 	return (getUnitDefById(skirmishAIId, unitDefId)->movedata != NULL);
 }
 
@@ -3900,7 +3904,7 @@ EXPORT(int) skirmishAiCallback_WeaponDef_Damage_getTypes(int skirmishAIId, int w
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getAreaOfEffect(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->areaOfEffect;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damageAreaOfEffect;
 }
 
 EXPORT(bool) skirmishAiCallback_WeaponDef_isNoSelfDamage(int skirmishAIId, int weaponDefId) {
@@ -4364,6 +4368,7 @@ EXPORT(bool) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int skirmishAIId) {
 }
 
 EXPORT(int) skirmishAiCallback_getGroups(int skirmishAIId, int* groupIds, int groupIds_sizeMax) {
+	GML_RECMUTEX_LOCK(group); // skirmishAiCallback_getGroups
 
 	const std::vector<CGroup*>& gs = grouphandlers[skirmishAIId_teamId[skirmishAIId]]->groups;
 	const int groupIds_sizeReal = gs.size();

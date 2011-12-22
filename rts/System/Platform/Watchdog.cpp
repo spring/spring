@@ -18,7 +18,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/maindefines.h"
-#include "System/myTime.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
 
@@ -41,7 +41,12 @@ namespace Watchdog
 		{}
 		volatile Threading::NativeThreadHandle thread;
 		volatile Threading::NativeThreadId threadid;
+	#ifdef STATIC_SPRING_TIME
+		// spring_time is a class here, those can't be volatile
+		spring_time timer;
+	#else
 		volatile spring_time timer;
+	#endif
 		volatile unsigned int numreg;
 	};
 	static WatchDogThreadInfo registeredThreadsData[WDT_SIZE];
@@ -81,6 +86,8 @@ namespace Watchdog
 
 	static void HangDetectorLoop()
 	{
+		Threading::SetThreadName("watchdog");
+
 		while (!hangDetectorThreadInterrupted) {
 			spring_time curtime = spring_gettime();
 			bool hangDetected = false;
@@ -96,7 +103,7 @@ namespace Watchdog
 					if (!hangDetected) {
 						LOG_L(L_WARNING, "[Watchdog] Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
 #ifdef USE_GML
-						LOG_L(L_WARNING, "MT with %d threads.", gmlThreadCount);
+						LOG_L(L_WARNING, "MT with %d threads.", GML::ThreadCount());
 #endif
 					}
 					LOG_L(L_WARNING, "  (in thread: %s)", threadNames[i]);
@@ -115,6 +122,7 @@ namespace Watchdog
 
 					WatchDogThreadInfo* th_info = registeredThreads[i];
 					CrashHandler::Stacktrace(th_info->thread, threadNames[i]);
+					LOG_CLEANUP();
 				}
 
 				CrashHandler::CleanupStacktrace();
@@ -153,6 +161,9 @@ namespace Watchdog
 			return;
 		}
 		registeredThreads[num] = &registeredThreadsData[i];
+
+		// set threadname
+		//Threading::SetThreadName(threadNames[num]);
 
 		WatchDogThreadInfo* th_info = registeredThreads[num];
 		th_info->thread = thread;

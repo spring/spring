@@ -314,7 +314,7 @@ boost::shared_ptr<const RawPacket> UDPConnection::GetData()
 void UDPConnection::Update()
 {
 	spring_time curTime = spring_gettime();
-	outgoing.UpdateTime(curTime);
+	outgoing.UpdateTime(spring_tomsecs(curTime));
 
 	if (!sharedSocket && !closed) {
 		// duplicated code with UDPListener
@@ -340,7 +340,7 @@ void UDPConnection::Update()
 				ProcessRawPacket(data);
 			}
 			// not likely, but make sure we do not get stuck here
-			if ((spring_gettime() - curTime) > 10) {
+			if ((spring_gettime() - curTime) > spring_msecs(10)) {
 				break;
 			}
 		}
@@ -465,9 +465,9 @@ void UDPConnection::Flush(const bool forced)
 	const spring_time curTime = spring_gettime();
 
 	// do not create chunks more than chunksPerSec times per second
-	const bool waitMore = lastChunkCreated >= curTime - spring_msecs(1000 / chunksPerSec);
+	const bool waitMore = (lastChunkCreated >= (curTime - spring_msecs(1000 / chunksPerSec)));
 	// if the packet is tiny, reduce the send frequency further
-	const int requiredLength = (spring_msecs(200 >> netLossFactor) - (int)(curTime - lastChunkCreated)) / 10;
+	const int requiredLength = ((200 >> netLossFactor) - spring_tomsecs(curTime - lastChunkCreated)) / 10;
 
 	int outgoingLength = 0;
 	if (!waitMore) {
@@ -525,18 +525,18 @@ void UDPConnection::Flush(const bool forced)
 
 bool UDPConnection::CheckTimeout(int seconds, bool initial) const {
 
-	spring_duration timeout;
+	int timeout;
 	if (seconds == 0) {
-		timeout = spring_secs((dataRecv && !initial)
+		timeout = (dataRecv && !initial)
 				? globalConfig->networkTimeout
-				: globalConfig->initialNetworkTimeout);
+				: globalConfig->initialNetworkTimeout;
 	} else if (seconds > 0) {
-		timeout = spring_secs(seconds);
+		timeout = seconds;
 	} else {
-		timeout = spring_secs(globalConfig->reconnectTimeout);
+		timeout = globalConfig->reconnectTimeout;
 	}
 
-	return (timeout > 0 && (spring_gettime() - lastReceiveTime) > timeout);
+	return (timeout > 0 && (spring_gettime() - lastReceiveTime) > spring_secs(timeout));
 }
 
 bool UDPConnection::NeedsReconnect() {

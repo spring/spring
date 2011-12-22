@@ -38,7 +38,7 @@ public:
 	BitwiseEnum() : v(0) {}
 
 	//! fixes http://code.google.com/p/mili/issues/detail?id=40
-	operator int() { return v; }
+	operator int() const { return v; }
 
 
 	// We use c++ default ones

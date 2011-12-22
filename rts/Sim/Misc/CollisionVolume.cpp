@@ -196,7 +196,7 @@ void CollisionVolume::Init(const float3& scales, const float3& offsets, int vTyp
 		} break;
 	}
 
-	SetAxisScales(adjScales.x,adjScales.y,adjScales.z);
+	SetAxisScales(adjScales.x, adjScales.y, adjScales.z);
 }
 
 

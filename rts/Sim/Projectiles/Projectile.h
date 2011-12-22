@@ -3,7 +3,7 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include "lib/gml/gml.h" // for GML_ENABLE_SIM
+#include "lib/gml/gml.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)
@@ -44,12 +44,8 @@ public:
 	inline CUnit* owner() const {
 		// Note: this death dependency optimization using "ownerId" is logically flawed,
 		//  since ids are being reused it could return a unit that is not the original owner
-#if defined(USE_GML) && GML_ENABLE_SIM
 		CUnit* unit = uh->GetUnit(ownerId);
-		return *(CUnit* volatile*)&unit; // make volatile
-#else
-		return uh->GetUnit(ownerId); //returns NULL when we are outside of valid unitID range (e.g. for -1)
-#endif
+		return GML::SimEnabled() ? *(CUnit* volatile*)&unit : unit; // make volatile
 	}
 
 	int GetOwnerID() const {
@@ -80,9 +76,7 @@ public:
 	bool deleteMe;
 	bool castShadow;
 
-#if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastProjUpdate;
-#endif
 
 	float3 dir;
 	float3 speed;

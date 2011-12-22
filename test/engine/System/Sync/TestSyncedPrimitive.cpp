@@ -10,6 +10,8 @@ BOOST_AUTO_TEST_CASE(ImplicitConversions)
 {
 	// NOTE: this is a compile time test only
 
+	ENTER_SYNCED_CODE();
+
 	SyncedSshort ss = 4;
 	SyncedSlong sl = 3;
 
@@ -33,4 +35,6 @@ BOOST_AUTO_TEST_CASE(ImplicitConversions)
 	std::min<float>(sf, si);
 	std::max<int>(si, 18);
 	std::max<int>(si, si2);
+
+	LEAVE_SYNCED_CODE();
 }

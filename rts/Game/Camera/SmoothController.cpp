@@ -25,18 +25,24 @@ CONFIG(float, SmoothFOV).defaultValue(45.0f);
 SmoothController::SmoothController()
 	: flipped(false)
 	, zscale(0.5f)
-	, height(500)
-	, oldAltHeight(500)
+	, height(1500)
+	, oldAltHeight(1500)
 	, changeAltHeight(true)
 	, maxHeight(10000)
 	, speedFactor(1)
 {
 	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
-	scrollSpeed = configHandler->GetInt("SmoothScrollSpeed")*0.1f;
+	scrollSpeed = configHandler->GetInt("SmoothScrollSpeed") * 0.1f;
 	tiltSpeed = configHandler->GetFloat("SmoothTiltSpeed");
 	enabled = configHandler->GetBool("SmoothEnabled");
 	fov = configHandler->GetFloat("SmoothFOV");
 	lastSource = Noone;
+
+	if (ground && globalRendering) {
+		// make whole map visible
+		const float h = std::max(pos.x / globalRendering->aspectRatio, pos.z);
+		height = ground->GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
+	}
 }
 
 void SmoothController::KeyMove(float3 move)

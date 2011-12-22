@@ -67,11 +67,11 @@ AAIExecute::~AAIExecute(void)
 //		for(int i = 0; i < numOfFactories; ++i)
 //			buildques[i].clear();
 
-//		delete [] buildques;
+//		SafeDeleteArray(buildques);
 //	}
 
 //	if(factory_table)
-//		delete [] factory_table;
+//		SafeDeleteArray(factory_table);
 }
 
 

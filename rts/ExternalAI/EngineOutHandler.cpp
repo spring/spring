@@ -44,7 +44,7 @@ static inline bool IsUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int all
 	//     we check for globalLOS because the LOS-state of a
 	//     new unit has not yet been set when it is created
 	//     (thus UnitCreated will not produce EnemyCreated,
-	//     etc. without this even when globalLOS is enabled
+	//     etc. without this, even when globalLOS is enabled
 	//     (for non-cheating AI's))
 	return (gs->globalLOS || unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR));
 }

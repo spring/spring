@@ -7,7 +7,6 @@
 #include "CommandColors.h"
 #include "KeyBindings.h"
 #include "KeyCodes.h"
-#include "LuaUI.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
 #include "Game/Camera.h"
@@ -20,6 +19,7 @@
 #include "Lua/LuaTextures.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
+#include "Lua/LuaUI.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -982,19 +982,19 @@ void CGuiHandler::Update()
 void CGuiHandler::SetCursorIcon() const
 {
 	string newCursor = "cursornormal";
-	mouse->cursorScale = 1.0f;
+	float cursorScale = 1.0f;
 
 	CInputReceiver* ir = NULL;
 	if (!game->hideInterface)
 		ir = GetReceiverAt(mouse->lastx, mouse->lasty);
 
 	if ((ir != NULL) && (ir != minimap)) {
-		mouse->SetCursor(newCursor);
+		mouse->ChangeCursor(newCursor, cursorScale);
 		return;
 	}
 
 	if (ir == minimap)
-		mouse->cursorScale = minimap->CursorScale();
+		cursorScale = minimap->CursorScale();
 
 	const bool useMinimap = (minimap->ProxyMode() || ((activeReceiver != this) && (ir == minimap)));
 
@@ -1047,7 +1047,7 @@ void CGuiHandler::SetCursorIcon() const
 		newCursor = "GatherWait";
 	}
 
-	mouse->SetCursor(newCursor);
+	mouse->ChangeCursor(newCursor, cursorScale);
 }
 
 
@@ -2439,8 +2439,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			other.buildFacing = unit->buildFacing;
 		} else {
 			Command c = uh->GetBuildCommand(cameraPos, mouseDir);
-			if (c.GetID() < 0) {
-				assert(c.params.size() == 4);
+			if (c.GetID() < 0 && c.params.size() == 4) {
 				other.pos = float3(c.params[0],c.params[1], c.params[2]);
 				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 				other.buildFacing = int(c.params[3]);
@@ -3594,7 +3593,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				if (!unitdef->selfDExplosion.empty()) {
 					glColor4fv(cmdColors.rangeSelfDestruct);
 					const WeaponDef* wd = weaponDefHandler->GetWeapon(unitdef->selfDExplosion);
-					glSurfaceCircle(unit->pos, wd->areaOfEffect, 40);
+					glSurfaceCircle(unit->pos, wd->damageAreaOfEffect, 40);
 				}
 			}
 			// draw build distance for immobile builders
@@ -3893,15 +3892,11 @@ void CGuiHandler::DrawCentroidCursor()
 	pos /= (float)selUnits.size();
 	const float3 winPos = camera->CalcWindowCoordinates(pos);
 	if (winPos.z <= 1.0f) {
-		std::map<std::string, CMouseCursor*>::const_iterator mcit;
-		mcit = mouse->cursorCommandMap.find("Centroid");
-		if (mcit != mouse->cursorCommandMap.end()) {
-			CMouseCursor* mc = mcit->second;
-			if (mc != NULL) {
-				glDisable(GL_DEPTH_TEST);
-				mc->Draw((int)winPos.x, globalRendering->viewSizeY - (int)winPos.y, 1.0f);
-				glEnable(GL_DEPTH_TEST);
-			}
+		const CMouseCursor* mc = mouse->FindCursor("Centroid");
+		if (mc != NULL) {
+			glDisable(GL_DEPTH_TEST);
+			mc->Draw((int)winPos.x, globalRendering->viewSizeY - (int)winPos.y, 1.0f);
+			glEnable(GL_DEPTH_TEST);
 		}
 	}
 }
@@ -4297,20 +4292,19 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 
 void CGuiHandler::PushLayoutCommand(const std::string& cmd, bool luaCmd) {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	GML_RECMUTEX_LOCK(laycmd); // PushLayoutCommand
+	if (GML::SimEnabled()) {
+		GML_RECMUTEX_LOCK(laycmd); // PushLayoutCommand
 
-	layoutCommands.push_back(cmd);
-	if(luaCmd)
-		hasLuaUILayoutCommands = true;
-#else
-	RunLayoutCommand(cmd);
-#endif
+		layoutCommands.push_back(cmd);
+		if(luaCmd)
+			hasLuaUILayoutCommands = true;
+	} else {
+		RunLayoutCommand(cmd);
+	}
 }
 
 void CGuiHandler::RunLayoutCommands() {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (layoutCommands.empty())
+	if (!GML::SimEnabled() || layoutCommands.empty())
 		return;
 
 	bool luaCmd;
@@ -4334,5 +4328,4 @@ void CGuiHandler::RunLayoutCommands() {
 			RunLayoutCommand(*cit);
 		}
 	}
-#endif
 }

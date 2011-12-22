@@ -27,7 +27,7 @@ public:
 	CSkirmishAILibraryInfo(const std::map<std::string, std::string>& aiInfo,
 			const std::string& aiOptionLua = "");
 
-	~CSkirmishAILibraryInfo();
+	virtual ~CSkirmishAILibraryInfo();
 
 	virtual size_t size() const;
 	virtual const std::string& GetKeyAt(size_t index) const;

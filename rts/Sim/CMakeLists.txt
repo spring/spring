@@ -53,6 +53,11 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathFinder.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathFinderDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathManager.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Path/QTPFS/Node.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Path/QTPFS/NodeLayer.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Path/QTPFS/PathCache.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Path/QTPFS/PathSearch.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Path/QTPFS/PathManager.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/IPathManager.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ExpGenSpawner.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ExplosionListener.cpp"
@@ -145,6 +150,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/Weapon.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponDefHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponLoader.cpp"
 	)
 
 MakeGlobal(sources_engine_Sim)

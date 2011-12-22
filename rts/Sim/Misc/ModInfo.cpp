@@ -47,10 +47,12 @@ void CModInfo::Init(const char* modArchive)
 	}
 	const LuaTable root = parser.GetRoot();
 
-	// determine if bombers are allowed to leave map boundaries
+	// movement
 	const LuaTable movementTbl = root.SubTable("movement");
-	allowAirPlanesToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
+	allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
 	allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);
+	allowCrushingAlliedUnits = movementTbl.GetBool("allowCrushingAlliedUnits", false);
+	allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", false);
 
 	// determine whether the modder allows the user to use team coloured nanospray
 	const LuaTable nanosprayTbl = root.SubTable("nanospray");
@@ -146,4 +148,6 @@ void CModInfo::Init(const char* modArchive)
 
 	const LuaTable system = root.SubTable("system");
 	luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
+	pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 }
+

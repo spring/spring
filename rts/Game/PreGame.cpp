@@ -55,11 +55,13 @@ CONFIG(bool, DemoFromDemo).defaultValue(false);
 CPreGame* pregame = NULL;
 
 CPreGame::CPreGame(const ClientSetup* setup) :
-		settings(setup),
-		savefile(NULL)
+	settings(setup),
+	savefile(NULL),
+	timer(0),
+	wantDemo(true)
 {
 	net = new CNetProtocol();
-	activeController=this;
+	activeController = this;
 
 	if (!settings->isHost) {
 		net->InitClient(settings->hostIP.c_str(), settings->hostPort, settings->myPlayerName, settings->myPasswd, SpringVersion::GetFull());
@@ -87,8 +89,10 @@ void CPreGame::LoadSetupscript(const std::string& script)
 void CPreGame::LoadDemo(const std::string& demo)
 {
 	assert(settings->isHost);
+
 	if (!configHandler->GetBool("DemoFromDemo"))
-		net->DisableDemoRecording();
+		wantDemo = false;
+
 	ReadDataFromDemo(demo);
 }
 
@@ -153,9 +157,11 @@ bool CPreGame::Draw()
 
 bool CPreGame::Update()
 {
+	ENTER_SYNCED_CODE();
 	good_fpu_control_registers("CPreGame::Update");
 	net->Update();
 	UpdateClientNet();
+	LEAVE_SYNCED_CODE();
 
 	return true;
 }
@@ -400,9 +406,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	ScopedOnceTimer startserver("PreGame::GameDataReceived");
 
 	try {
-		GameData *data = new GameData(packet);
-
-		gameData.reset(data);
+		gameData.reset(new GameData(packet));
 	} catch (const netcode::UnpackPacketException& ex) {
 		throw content_error(std::string("Server sent us invalid GameData: ") + ex.what());
 	}
@@ -453,14 +457,23 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
 	modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
 	LOG("Using game archive: %s", modArchive.c_str());
+
 	try {
 		archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
 	} catch (const content_error& ex) {
 		LOG_L(L_WARNING, "Incompatible game-checksum: %s", ex.what());
 	}
 
-	if (net && net->GetDemoRecorder()) {
-		net->GetDemoRecorder()->SetName(gameSetup->mapName, gameSetup->modName);
-		LOG("recording demo: %s", net->GetDemoRecorder()->GetName().c_str());
+
+	if (net != NULL && wantDemo) {
+		assert(net->GetDemoRecorder() == NULL);
+
+		CDemoRecorder* recorder = new CDemoRecorder(gameSetup->mapName, gameSetup->modName);
+		recorder->WriteSetupText(gameData->GetSetup());
+		recorder->SaveToDemo(packet->data, packet->length, net->GetPacketTime(gs->frameNum));
+		net->SetDemoRecorder(recorder);
+
+		LOG("recording demo: %s", (recorder->GetName()).c_str());
 	}
 }
+

@@ -26,10 +26,6 @@ public:
 		team(0),
 		name("no name") {}
 
-	virtual bool operator == (const TeamController& tc) const {
-		return (name == tc.name);
-	}
-
 	/**
 	 * Id of the controlled team.
 	 */

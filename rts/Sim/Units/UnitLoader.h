@@ -17,6 +17,8 @@ struct WeaponDef;
 class CUnitLoader
 {
 public:
+	static CUnitLoader* GetInstance();
+
 	/// @param builder may be NULL
 	CUnit* LoadUnit(const std::string& name, const float3& pos, int team, bool build, int facing, const CUnit* builder);
 	/// @param builder may be NULL
@@ -34,6 +36,6 @@ protected:
 	void LoadSound(GuiSoundSet& sound);
 };
 
-extern CUnitLoader* unitLoader;
+#define unitLoader (CUnitLoader::GetInstance())
 
 #endif /* UNIT_LOADER_H */

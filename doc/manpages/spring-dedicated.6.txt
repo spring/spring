@@ -11,8 +11,15 @@ spring-dedicated - An open source RTS game engine - Dedicated Server
 
 Synopsis
 --------
-*spring-dedicated* SCRIPT
+*spring-dedicated* [-i|--isolation] [--isolation-dir 'PATH'] [-C|--config 'FILE'] SCRIPT
 
+*spring-dedicated* --list-config-vars
+
+*spring-dedicated* [-h|--help]
+
+*spring-dedicated* --sync-version
+
+*spring-dedicated* [-V|--version]
 
 Description
 -----------
@@ -34,6 +41,47 @@ runs a full blown simulation of the game.
 For more details, please reffer to:
 
   man spring
+
+Options
+-------
+*-h, --help*::
+  Print the options help message and exit
+
+*-V, --version*::
+  Display program version and exit
+
+*--sync-version*::
+  Display program sync version (for online gaming) and exit
+
+*-i, --isolation*::
+  Limit the data-dir (games & maps) scanner to one directory
+  (see --isolation-dir and the SPRING_ISOLATED env var)
+
+*--isolation-dir*::'PATH'
+  Specify the isolation-mode data-dir
+  (see --isolation and the SPRING_ISOLATED env var)
+
+ *-C, --config*::'FILE'
+  Configuration file
+
+*--list-config-vars*::
+  Dump all default config vars in JSON-format to STDOUT
+
+Enviroment Variables
+--------------------
+
+*SPRING_LOG_SECTIONS*
+  Selective functionality to change the verbosity (separated by ',').
+
+*SPRING_DATADIR*
+  Adds additional directories Spring will search for files (separated by ':').
+
+*SPRING_ISOLATED*
+  If defined, Spring will stop searching files outside of the binaries
+  directory. If it is set to a valid directory path, it will be used as the
+  isolation directory.
+  See the --isolation and the --isolation-dir options.
+
 
 See also
 --------

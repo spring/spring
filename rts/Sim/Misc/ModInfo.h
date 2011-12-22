@@ -4,14 +4,17 @@
 #define MOD_INFO_H
 
 #include <string>
+#include "Sim/Path/PFSTypes.h"
 
 class CModInfo
 {
 public:
 	CModInfo()
 		: allowTeamColors(true)
-		, allowAirPlanesToLeaveMap(true)
+		, allowAircraftToLeaveMap(true)
 		, allowPushingEnemyUnits(false)
+		, allowCrushingAlliedUnits(false)
+		, allowUnitCollisionDamage(false)
 		, constructionDecay(true)
 		, constructionDecayTime(1000)
 		, constructionDecaySpeed(1.0f)
@@ -41,8 +44,9 @@ public:
 		, requireSonarUnderWater(true)
 		, featureVisibility(FEATURELOS_NONE)
 		, luaThreadingModel(2)
+		, pathFinderSystem(PFS_TYPE_DEFAULT)
 	{}
-	~CModInfo() {}
+
 
 	void Init(const char* modArchive);
 
@@ -74,8 +78,10 @@ public:
 	bool allowTeamColors;
 
 	// Movement behaviour
-	bool allowAirPlanesToLeaveMap;
-	bool allowPushingEnemyUnits;
+	bool allowAircraftToLeaveMap;    // determines if gunships are allowed to leave map boundaries
+	bool allowPushingEnemyUnits;     // determines if enemy (ground-)units can be pushed during collisions
+	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
+	bool allowUnitCollisionDamage;   // determines if units take damage from (skidding) collisions
 
 	// Build behaviour
 	/// Should constructions without builders decay?
@@ -158,8 +164,12 @@ public:
 	int featureVisibility;
 	// Lua threading model: Controls which Lua MT optimizations the mod will use by default (see LuaConfig.h for details)
 	int luaThreadingModel;
+
+	// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
+	int pathFinderSystem;
 };
 
 extern CModInfo modInfo;
 
 #endif // MOD_INFO_H
+

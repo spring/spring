@@ -25,16 +25,22 @@ CONFIG(float, OverheadFOV).defaultValue(45.0f);
 COverheadController::COverheadController()
 	: flipped(false)
 	, zscale(0.5f)
-	, height(500)
-	, oldAltHeight(500)
+	, height(1500)
+	, oldAltHeight(1500)
 	, changeAltHeight(true)
 	, maxHeight(10000)
 {
 	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
-	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed")*0.1f;
+	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed") * 0.1f;
 	tiltSpeed = configHandler->GetFloat("OverheadTiltSpeed");
 	enabled = configHandler->GetBool("OverheadEnabled");
 	fov = configHandler->GetFloat("OverheadFOV");
+
+	if (ground && globalRendering) {
+		// make whole map visible
+		const float h = std::max(pos.x / globalRendering->aspectRatio, pos.z);
+		height = ground->GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
+	}
 }
 
 void COverheadController::KeyMove(float3 move)

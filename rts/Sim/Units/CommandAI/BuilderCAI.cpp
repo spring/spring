@@ -772,7 +772,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 	if (f3SqLen(guardee->pos - curPos) <
 			(builder->buildDistance * 0.9f + guardee->radius) *
 			(builder->buildDistance * 0.9f + guardee->radius)) {
-		StartSlowGuard(guardee->maxSpeed);
+		StartSlowGuard(guardee->moveType->GetMaxSpeed());
 		StopMove();
 
 		owner->moveType->KeepPointingTo(guardee->pos,
@@ -800,7 +800,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 		const float da = f3SqLen(goalPos - goal);
 		const float db = f3SqLen(goalPos - owner->pos);
 
-		if (da > 4000.0f || db < Square(owner->maxSpeed * GAME_SPEED + 1 + SQUARE_SIZE * 2)) {
+		if (da > 4000.0f || db < Square(owner->moveType->GetMaxSpeed() * GAME_SPEED + 1 + SQUARE_SIZE * 2)) {
 			SetGoal(goal, curPos);
 		}
 	}

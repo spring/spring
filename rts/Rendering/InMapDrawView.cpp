@@ -210,7 +210,7 @@ void CInMapDrawView::Draw()
 	glEnable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	readmap->GridVisibility(camera, CInMapDrawModel::DRAW_QUAD_SIZE, 3000.0f, &drawer);
+	readmap->GridVisibility(camera, CInMapDrawModel::DRAW_QUAD_SIZE, 1e9, &drawer);
 
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3.f);

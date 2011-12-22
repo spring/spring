@@ -149,6 +149,15 @@ void CBitmap::Alloc(int w, int h)
 	memset(mem, 0, size);
 }
 
+void CBitmap::AllocDummy()
+{
+	channels = 4;
+	Alloc(1, 1);
+	mem[0] = 255; // Red allows us to easily see textures that failed to load
+	mem[1] = 0;
+	mem[2] = 0;
+	mem[3] = 255; // Non Transparent
+}
 
 bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 {
@@ -166,9 +175,9 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 #endif // !BITMAP_NO_OPENGL
 
 	if (filename.find(".dds") != std::string::npos) {
+#ifndef BITMAP_NO_OPENGL
 		bool status = false;
 
-#ifndef BITMAP_NO_OPENGL
 		type = BitmapTypeDDS;
 		xsize = 0;
 		ysize = 0;
@@ -196,8 +205,11 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 					break;
 			}
 		}
-#endif // !BITMAP_NO_OPENGL
 		return status;
+#else // !BITMAP_NO_OPENGL
+		AllocDummy(); //allocate a dummy texture, as dds aren't supported in headless
+		return true;
+#endif // !BITMAP_NO_OPENGL
 	}
 
 	type = BitmapTypeStandardRGBA;
@@ -205,7 +217,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 	CFileHandler file(filename);
 	if (file.FileExists() == false) {
-		Alloc(1, 1);
+		AllocDummy();
 		return false;
 	}
 
@@ -225,13 +237,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	delete[] buffer;
 
 	if (success == false) {
-		xsize = 1;
-		ysize = 1;
-		mem = new unsigned char[4];
-		mem[0] = 255; // Red allows us to easily see textures that failed to load
-		mem[1] = 0;
-		mem[2] = 0;
-		mem[3] = 255; // Non Transparent
+		AllocDummy();
 		return false;
 	}
 
@@ -501,8 +507,8 @@ void CBitmap::SetTransparent(const SColor& c, const SColor& trans)
 	static const uint32_t RGB = 0x00FFFFFF;
 
 	uint32_t* mem_i = reinterpret_cast<uint32_t*>(mem);
-	for (unsigned int y = 0; y < ysize; ++y) {
-		for (unsigned int x = 0; x < xsize; ++x) {
+	for (int y = 0; y < ysize; ++y) {
+		for (int x = 0; x < xsize; ++x) {
 			if ((*mem_i & RGB) == (c.i & RGB))
 				*mem_i = trans.i;
 			mem_i++;
@@ -632,9 +638,9 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height) const
 }
 
 
-void CBitmap::CopySubImage(const CBitmap& src, unsigned int xpos, unsigned int ypos)
+void CBitmap::CopySubImage(const CBitmap& src, int xpos, int ypos)
 {
-	if (xpos + src.xsize >= xsize || ypos + src.ysize >= ysize) {
+	if (xpos + src.xsize > xsize || ypos + src.ysize > ysize) {
 		LOG_L(L_WARNING, "CBitmap::CopySubImage src image does not fit into dst");
 		return;
 	}

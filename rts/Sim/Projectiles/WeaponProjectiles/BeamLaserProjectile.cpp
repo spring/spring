@@ -47,7 +47,7 @@ CBeamLaserProjectile::CBeamLaserProjectile(
 	checkCol = false;
 	useAirLos = true;
 
-	SetRadius(pos.distance(endPos));
+	SetRadiusAndHeight(pos.distance(endPos), 0.0f);
 
 	if (weaponDef) {
 		midtexx =
@@ -81,10 +81,11 @@ CBeamLaserProjectile::CBeamLaserProjectile(
 
 void CBeamLaserProjectile::Update()
 {
+	ttl--;
+
 	if (ttl <= 0) {
 		deleteMe = true;
 	} else {
-		ttl--;
 		for (int i = 0; i < 3; i++) {
 			corecolstart[i] = (corecolstart[i] * decay);
 			corecolend[i] = (corecolend[i] * decay);

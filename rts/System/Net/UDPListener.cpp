@@ -29,6 +29,7 @@ namespace netcode
 using namespace boost::asio;
 
 UDPListener::UDPListener(int port, const std::string& ip)
+	: acceptNewConnections(false)
 {
 	SocketPtr socket;
 
@@ -37,13 +38,13 @@ UDPListener::UDPListener(int port, const std::string& ip)
 		socket->io_control(socketCommand);
 
 		mySocket = socket;
-		acceptNewConnections = true;
+		SetAcceptingConnections(true);
 	}
 
-	if (!acceptNewConnections) {
-		handleerror(NULL, "[UDPListener] error: unable to bind UDP port, see log for details.", "Network error", MBF_OK | MBF_EXCL);
-	} else {
+	if (IsAcceptingConnections()) {
 		LOG("[UDPListener] successfully bound socket on port %i", port);
+	} else {
+		handleerror(NULL, "[UDPListener] error: unable to bind UDP port, see log for details.", "Network error", MBF_OK | MBF_EXCL);
 	}
 }
 
@@ -179,13 +180,12 @@ boost::shared_ptr<UDPConnection> UDPListener::SpawnConnection(const std::string&
 	return newConn;
 }
 
-bool UDPListener::Listen(const bool state)
+void UDPListener::SetAcceptingConnections(const bool enable)
 {
-	acceptNewConnections = state;
-	return acceptNewConnections;
+	acceptNewConnections = enable;
 }
 
-bool UDPListener::Listen() const
+bool UDPListener::IsAcceptingConnections() const
 {
 	return acceptNewConnections;
 }

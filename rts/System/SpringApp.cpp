@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
+#include <sstream>
 #include <iostream>
 
 #include <SDL.h>
@@ -40,7 +40,6 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
@@ -48,7 +47,7 @@
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/OffscreenGLContext.h"
+#include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "System/FileSystem/DataDirLocater.h"
@@ -71,29 +70,22 @@
 #elif defined(HEADLESS)
 #else
 	#include <X11/Xlib.h>
-	#include <sched.h>
 	#include "System/Platform/Linux/myX11.h"
 #endif
 
 #undef KeyPress
 #undef KeyRelease
 
-#ifdef USE_GML
-	#include "lib/gml/gmlsrv.h"
-	extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
-#endif
+#include "lib/gml/gml_base.h"
 
-
-CONFIG(int, SetCoreAffinity).defaultValue(0);
+CONFIG(unsigned, SetCoreAffinity).defaultValue(0).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(int, DepthBufferBits).defaultValue(24);
 CONFIG(int, StencilBufferBits).defaultValue(8);
 CONFIG(int, FSAALevel).defaultValue(0);
-CONFIG(int, SmoothLines).defaultValue(0); //! FSAA ? 0 : 3;  // until a few things get fixed
-CONFIG(int, SmoothPoints).defaultValue(0); //! FSAA ? 0 : 3;
+CONFIG(int, SmoothLines).defaultValue(2).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
+CONFIG(int, SmoothPoints).defaultValue(2).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
 CONFIG(float, TextureLODBias).defaultValue(0.0f);
 CONFIG(bool, FixAltTab).defaultValue(false);
-CONFIG(int, Version).defaultValue(0);
-CONFIG(bool, FSAA).defaultValue(false);
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf");
 CONFIG(int, FontSize).defaultValue(23);
@@ -110,14 +102,10 @@ CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false);
 CONFIG(int, HardwareThreadCount).defaultValue(0);
-CONFIG(bool, MultiThreadShareLists).defaultValue(true);
-CONFIG(int, MultiThreadSim).defaultValue(1);
 CONFIG(std::string, name).defaultValue("UnnamedPlayer");
 
 
 ClientSetup* startsetup = NULL;
-COffscreenGLContext* SpringApp::ogc = NULL;
-
 
 
 /**
@@ -145,9 +133,8 @@ static bool MultisampleVerify()
  * Initializes SpringApp variables
  */
 SpringApp::SpringApp()
+	: cmdline(NULL)
 {
-	cmdline = NULL;
-	lastRequiredDraw = 0;
 }
 
 /**
@@ -198,10 +185,6 @@ bool SpringApp::Initialize()
 	CMyMath::Init();
 	good_fpu_control_registers("::Run");
 
-	Watchdog::Install();
-	//! register (this) mainthread
-	Watchdog::RegisterThread(WDT_MAIN, true);
-
 	// log OS version
 	LOG("OS: %s", Platform::GetOS().c_str());
 	if (Platform::Is64Bit())
@@ -211,10 +194,30 @@ bool SpringApp::Initialize()
 	else
 		LOG("OS: 32bit native mode");
 
+	// Rename Threads
+	// We give the process itself the name `unknown`, htop & co. will still show the binary's name.
+	// But all child threads copy by default the name of their parent, so all threads that don't set
+	// their name themselves will show up as 'unknown'.
+	Threading::SetThreadName("unknown");
+#ifdef _OPENMP
+	#pragma omp parallel
+	{
+		int i = omp_get_thread_num();
+		if (i != 0) { // 0 is the source thread
+			std::ostringstream buf;
+			buf << "omp" << i;
+			Threading::SetThreadName(buf.str().c_str());
+		}
+	}
+#endif
+
+	// Install Watchdog
+	Watchdog::Install();
+	Watchdog::RegisterThread(WDT_MAIN, true);
+
 	FileSystemInitializer::Initialize();
 
-	UpdateOldConfigs();
-
+	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
 		SDL_Quit();
 		return false;
@@ -247,78 +250,31 @@ bool SpringApp::Initialize()
 	// Initialize Lua GL
 	LuaOpenGL::Init();
 
-	// Sound
+	// Sound & Input
 	ISound::Initialize();
 	InitJoystick();
 
-	SetProcessAffinity(configHandler->GetInt("SetCoreAffinity"));
+	// Multithreading & Affinity
+	LOG("CPU Cores: %d", Threading::GetAvailableCores());
+	const uint32_t affinity = configHandler->GetUnsigned("SetCoreAffinity");
+	const uint32_t cpuMask  = Threading::SetAffinity(affinity);
+	if (cpuMask == 0xFFFFFF) {
+		LOG("CPU affinity not set");
+	}
+	else if (cpuMask != affinity) {
+		LOG("CPU affinity mask set: %d (config is %d)", cpuMask, affinity);
+	}
+	else if (cpuMask == 0) {
+		LOG_L(L_ERROR, "Failed to CPU affinity mask <%d>", affinity);
+	}
+	else {
+		LOG("CPU affinity mask set: %d", cpuMask);
+	}
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
 
 	return true;
-}
-
-void SpringApp::SetProcessAffinity(int affinity)
-{
-#ifdef WIN32
-	if (affinity > 0) {
-		//! Get the available cores
-		DWORD curMask;
-		DWORD cores = 0;
-		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cores);
-
-		DWORD_PTR wantedCore = 0xff;
-
-		//! Find an useable core
-		while ((wantedCore & cores) == 0 ) {
-			wantedCore >>= 1;
-		}
-
-		//! Set the affinity
-		HANDLE thread = GetCurrentThread();
-		DWORD_PTR result = 0;
-		if (affinity == 1) {
-			result = SetThreadIdealProcessor(thread, (DWORD)wantedCore);
-		} else if (affinity >= 2) {
-			result = SetThreadAffinityMask(thread, wantedCore);
-		}
-
-		if (result > 0) {
-			LOG("CPU: affinity set (%d)", affinity);
-		} else {
-			LOG("CPU: affinity failed");
-		}
-	}
-#elif defined(__APPLE__)
-	// no-op
-#elif defined(HEADLESS)
-	// no-op
-#else
-	if (affinity > 0) {
-		cpu_set_t cpusSystem; CPU_ZERO(&cpusSystem);
-		cpu_set_t cpusWanted; CPU_ZERO(&cpusWanted);
-
-		// use pid of calling process (0)
-		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
-
-		// interpret <affinity> as a bit-mask indicating
-		// on which of the available system CPU's (which
-		// are numbered logically from 0 to N-1) we want
-		// to run
-		// note that this approach will fail when N > 32
-		LOG("[SetProcessAffinity(%d)] available system CPU's: %d", affinity, CPU_COUNT(&cpusSystem));
-
-		// add the available system CPU's to the wanted set
-		for (int n = CPU_COUNT(&cpusSystem) - 1; n >= 0; n--) {
-			if ((affinity & (1 << n)) != 0 && CPU_ISSET(n, &cpusSystem)) {
-				CPU_SET(n, &cpusWanted);
-			}
-		}
-
-		sched_setaffinity(0, sizeof(cpu_set_t), &cpusWanted);
-	}
-#endif
 }
 
 
@@ -600,6 +556,10 @@ bool SpringApp::GetDisplayGeometry()
  */
 void SpringApp::RestoreWindowPosition()
 {
+	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
+	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
+	globalRendering->winState = configHandler->GetInt("WindowState");
+
 #ifndef HEADLESS
 	if (!globalRendering->fullScreen) {
 		SDL_SysWMinfo info;
@@ -701,41 +661,6 @@ void SpringApp::InitOpenGL()
 }
 
 
-void SpringApp::UpdateOldConfigs()
-{
-	const int cfgVersion = configHandler->GetInt("Version");
-	if (cfgVersion < 2) {
-		// force an update to new defaults
-		configHandler->Delete("FontFile");
-		configHandler->Delete("FontSize");
-		configHandler->Delete("SmallFontSize");
-		configHandler->Delete("StencilBufferBits"); //! update to 8 bits
-		configHandler->Delete("DepthBufferBits"); //! update to 24bits
-		configHandler->Set("Version",2);
-	}
-	if (cfgVersion < 3) {
-		configHandler->Delete("AtiHacks"); //! new runtime detection with -1
-		configHandler->Set("Version",3);
-	}
-	if (cfgVersion < 4) {
-		const bool fsaaEnabled = configHandler->GetBool("FSAA");
-		if (!fsaaEnabled)
-			configHandler->Set("FSAALevel", 0);
-		configHandler->Delete("FSAA");
-		configHandler->Set("Version",4);
-	}
-	if (cfgVersion < 5) {
-		const int xres = configHandler->GetInt("XResolution");
-		const int yres = configHandler->GetInt("YResolution");
-		if ((xres == 1024) && (yres == 768)) { //! old default res (use desktop res now by default)
-			configHandler->Delete("XResolution");
-			configHandler->Delete("YResolution");
-		}
-		configHandler->Set("Version",5);
-	}
-}
-
-
 void SpringApp::LoadFonts()
 {
 	// Initialize font
@@ -785,6 +710,8 @@ void SpringApp::LoadFonts()
  */
 void SpringApp::ParseCmdLine()
 {
+	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf]");
+	cmdline->AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
 	cmdline->AddSwitch('f', "fullscreen",         "Run in fullscreen mode");
 	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
 	cmdline->AddInt(   'x', "xresolution",        "Set X resolution");
@@ -799,33 +726,41 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
 	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
 	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
+	cmdline->AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
+	cmdline->AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
 
 	try {
 		cmdline->Parse();
 	} catch (const std::exception& err) {
 		std::cerr << err.what() << std::endl << std::endl;
-		cmdline->PrintUsage("Spring", SpringVersion::GetFull());
+		cmdline->PrintUsage();
 		exit(1);
 	}
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->IsSet("help")) {
-		cmdline->PrintUsage("Spring",SpringVersion::GetFull());
+		cmdline->PrintUsage();
 		exit(0);
-	} else if (cmdline->IsSet("version")) {
+	}
+	if (cmdline->IsSet("version")) {
 		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
 		exit(0);
-	} else if (cmdline->IsSet("projectiledump")) {
+	}
+	if (cmdline->IsSet("sync-version")) {
+		// Note, the missing "Spring " is intentionally to make it compatible with `spring-dedicated --sync-version`
+		std::cout << SpringVersion::GetSync() << std::endl;
+		exit(0);
+	}
+	if (cmdline->IsSet("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
 		exit(0);
 	}
 
+	string configSource = "";
 	if (cmdline->IsSet("config")) {
-		string configSource = cmdline->GetString("config");
-		ConfigHandler::Instantiate(configSource);
-	} else {
-		ConfigHandler::Instantiate();
+		configSource = cmdline->GetString("config");
 	}
+	ConfigHandler::Instantiate(configSource);
 	GlobalConfig::Instantiate();
 
 	// mutually exclusive options that cause spring to quit immediately
@@ -843,6 +778,15 @@ void SpringApp::ParseCmdLine()
 	else if (cmdline->IsSet("list-config-vars")) {
 		ConfigVariable::OutputMetaDataMap();
 		exit(0);
+	}
+
+	if (cmdline->IsSet("isolation")) {
+		dataDirLocater.SetIsolationMode(true);
+	}
+
+	if (cmdline->IsSet("isolation-dir")) {
+		dataDirLocater.SetIsolationMode(true);
+		dataDirLocater.SetIsolationModeDir(cmdline->GetString("isolation-dir"));
 	}
 
 #ifdef _DEBUG
@@ -875,23 +819,6 @@ void SpringApp::ParseCmdLine()
 	globalRendering->viewSizeY = configHandler->GetInt("YResolution");
 	if (cmdline->IsSet("yresolution"))
 		globalRendering->viewSizeY = std::max(cmdline->GetInt("yresolution"), 480);
-
-	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
-	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
-	globalRendering->winState = configHandler->GetInt("WindowState");
-
-#ifdef USE_GML
-	gmlShareLists = configHandler->GetBool("MultiThreadShareLists");
-	if (!gmlShareLists) {
-		gmlMaxServerThreadNum = GML_LOAD_THREAD_NUM;
-		gmlNoGLThreadNum = GML_SIM_THREAD_NUM;
-	}
-	gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
-	gmlThreadCount=GML_CPU_COUNT;
-#if GML_ENABLE_SIM
-	gmlMultiThreadSim = configHandler->GetInt("MultiThreadSim");
-#endif
-#endif
 }
 
 
@@ -980,58 +907,6 @@ void SpringApp::Startup()
 	}
 }
 
-bool SpringApp::UpdateSim(CGameController *ac)
-{
-	GML_MSTMUTEX_LOCK(sim); // UpdateSim
-
-	Threading::SetSimThread(true);
-	bool ret = ac->Update();
-	Threading::SetSimThread(false);
-	return ret;
-}
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-
-int SpringApp::Sim()
-{
-	try {
-		if(gmlShareLists)
-			ogc->WorkerThreadPost();
-
-		Watchdog::ClearTimer(WDT_SIM, true);
-
-		while(gmlKeepRunning && !gmlStartSim)
-			SDL_Delay(100);
-
-		Watchdog::ClearTimer(WDT_SIM);
-
-		while(gmlKeepRunning) {
-			if(!gmlMultiThreadSim) {
-				Watchdog::ClearTimer(WDT_SIM, true);
-				while(!gmlMultiThreadSim && gmlKeepRunning)
-					SDL_Delay(200);
-			}
-			else if (activeController) {
-				Watchdog::ClearTimer(WDT_SIM);
-				gmlProcessor->ExpandAuxQueue();
-
-				if(!UpdateSim(activeController))
-					return 0;
-
-				gmlProcessor->GetQueue();
-			}
-			boost::thread::yield();
-		}
-
-		if(gmlShareLists)
-			ogc->WorkerThreadFree();
-	} CATCH_SPRING_ERRORS
-
-	return 1;
-}
-#endif
-
-
 
 /**
  * @return return code of activecontroller draw function
@@ -1048,40 +923,14 @@ int SpringApp::Update()
 	if (activeController) {
 		Watchdog::ClearTimer(WDT_MAIN);
 
-		bool updateSim = true;
-#if defined(USE_GML) && GML_ENABLE_SIM
-		updateSim = !gmlStartSim; // runs in a thread?
-#endif
-
-		if (updateSim) {
-			ret = UpdateSim(activeController);
-#if defined(USE_GML) && GML_ENABLE_SIM
-			if (gmlMultiThreadSim && gs->frameNum > 0) {
-				gmlStartSim = true;
-			}
-#endif
+		if (!GML::SimThreadRunning()) {
+			ret = activeController->Update();
 		}
 
-
 		if (ret) {
-			globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
-
-			bool updateDrawFrameTimer = ((gs->frameNum - lastRequiredDraw) >= (GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor));
-#if defined(USE_GML) && GML_ENABLE_SIM
-			updateDrawFrameTimer &= !gmlMultiThreadSim;
-#endif
-
-			if (updateDrawFrameTimer) {
-				ScopedTimer cputimer("GameController::Draw"); // Update
-
-				ret = activeController->Draw();
-				lastRequiredDraw = gs->frameNum;
-			} else {
-				ret = activeController->Draw();
-			}
-#if defined(USE_GML) && GML_ENABLE_SIM
-			gmlProcessor->PumpAux();
-#endif
+			ScopedTimer cputimer("GameController::Draw");
+			ret = activeController->Draw();
+			GML::PumpAux();
 		}
 	}
 
@@ -1137,21 +986,12 @@ static void ResetScreenSaverTimeout()
 int SpringApp::Run(int argc, char *argv[])
 {
 	cmdline = new CmdLineParams(argc, argv);
+	binaryName = argv[0];
 
 	if (!Initialize())
 		return -1;
 
-#ifdef USE_GML
-	gmlProcessor = new gmlClientServer<void, int, CUnit*>;
-#	if GML_ENABLE_SIM
-	gmlKeepRunning = true;
-	gmlStartSim = false;
-
-	if (gmlShareLists)
-		ogc = new COffscreenGLContext();
-	gmlProcessor->AuxWork(&SpringApp::Simcb, this); // start sim thread
-#	endif
-#endif
+	GML::Init();
 
 	while (!gu->globalQuit) {
 		ResetScreenSaverTimeout();
@@ -1187,19 +1027,7 @@ void SpringApp::Shutdown()
 
 #define DeleteAndNull(x) delete x; x = NULL;
 
-#ifdef USE_GML
-	if(gmlProcessor) {
-#if GML_ENABLE_SIM
-		gmlKeepRunning = false; // wait for sim to finish
-		while(!gmlProcessor->PumpAux())
-			boost::thread::yield();
-		if(gmlShareLists)
-			DeleteAndNull(ogc);
-#endif
-		DeleteAndNull(gmlProcessor);
-	}
-#endif
-
+	GML::Exit();
 	DeleteAndNull(pregame);
 	DeleteAndNull(game);
 	DeleteAndNull(gameServer);

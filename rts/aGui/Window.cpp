@@ -31,7 +31,7 @@ void Window::DrawSelf()
 	const float opacity = Opacity();
 	glColor4f(0.0f,0.0f,0.0f, opacity);
 	DrawBox(GL_QUADS);
-	
+
 	glColor4f(0.7f,0.7f,0.7f, opacity);
 	glBegin(GL_QUADS);
 	glVertex2f(pos[0], pos[1]+size[1]-titleHeight);
@@ -39,7 +39,7 @@ void Window::DrawSelf()
 	glVertex2f(pos[0]+size[0], pos[1]+size[1]);
 	glVertex2f(pos[0]+size[0], pos[1]+size[1]-titleHeight);
 	glEnd();
-	
+
 	glLineWidth(2.0f);
 	glColor4f(1.0f,1.0f,1.0f, opacity);
 	DrawBox(GL_LINE_LOOP);
@@ -48,7 +48,7 @@ void Window::DrawSelf()
 	glVertex2f(pos[0], pos[1]-titleHeight);
 	glVertex2f(pos[0]+size[1], pos[1]-titleHeight);
 	glEnd();*/
-	
+
 	font->Begin();
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity);
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
@@ -79,6 +79,7 @@ bool Window::HandleEventSelf(const SDL_Event& ev)
 				dragging = false;
 				return true;
 			}
+			break;
 		}
 		case SDL_MOUSEMOTION: {
 			if (dragging)

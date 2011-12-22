@@ -94,6 +94,7 @@ inline void CScriptMoveType::CalcDirections()
 	matrix.RotateZ(-rot.z);
 
 	owner->SetDirVectors(matrix);
+	owner->UpdateMidPos();
 	owner->SetHeadingFromDirection();
 }
 
@@ -103,7 +104,7 @@ void CScriptMoveType::CheckNotify()
 {
 	if (scriptNotify) {
 		if (luaRules && luaRules->MoveCtrlNotify(owner, scriptNotify)) {
-			//! deletes \<this\>
+			// NOTE: deletes \<this\>
 			owner->DisableScriptMoveType();
 		} else {
 			scriptNotify = 0;
@@ -119,28 +120,34 @@ bool CScriptMoveType::Update()
 		CalcDirections();
 	}
 
-	owner->speed = vel;
+	float3& speed = vel;
+	speed = vel;
+
 	if (extrapolate) {
 		if (drag != 0.0f) {
 			vel *= (1.0f - drag); // quadratic drag does not work well here
 		}
+
 		if (useRelVel) {
 			const float3 rVel = (owner->frontdir *  relVel.z) +
 			                    (owner->updir    *  relVel.y) +
 			                    (owner->rightdir * -relVel.x); // x is left
-			owner->speed += rVel;
+			speed += rVel;
 		}
-		vel.y        += mapInfo->map.gravity * gravityFactor;
-		owner->speed += (wind.GetCurrentWind() * windFactor);
-		owner->pos   += owner->speed;
+
+		vel.y += (mapInfo->map.gravity * gravityFactor);
+		speed += (wind.GetCurrentWind() * windFactor);
+
+		owner->Move3D(speed, true);
 	}
 
 	if (trackGround) {
 		const float gndMin = ground->GetHeightReal(owner->pos.x, owner->pos.z) + groundOffset;
 
 		if (owner->pos.y <= gndMin) {
-			owner->pos.y = gndMin;
+			owner->Move1D(gndMin, 1, false);
 			owner->speed.y = 0.0f;
+
 			if (gndStop) {
 				vel    = ZeroVector;
 				relVel = ZeroVector;
@@ -155,9 +162,8 @@ bool CScriptMoveType::Update()
 
 	if (trackSlope) {
 		owner->UpdateDirVectors(true);
+		owner->UpdateMidPos();
 	}
-
-	owner->UpdateMidPos();
 
 	// don't need the rest if the pos hasn't changed
 	if (oldPos == owner->pos) {
@@ -184,6 +190,8 @@ void CScriptMoveType::CheckLimits()
 	if (owner->pos.y > maxs.y) { owner->pos.y = maxs.y; owner->speed.y = 0.0f; }
 	if (owner->pos.z < mins.z) { owner->pos.z = mins.z; owner->speed.z = 0.0f; }
 	if (owner->pos.z > maxs.z) { owner->pos.z = maxs.z; owner->speed.z = 0.0f; }
+
+	owner->UpdateMidPos();
 }
 
 
@@ -193,30 +201,20 @@ void CScriptMoveType::SetPhysics(const float3& pos,
 {
 	owner->pos = pos;
 	owner->speed = vel;
+
 	SetRotation(rot);
-	return;
 }
 
 
-void CScriptMoveType::SetPosition(const float3& pos)
-{
-	owner->pos = pos;
-	return;
-}
+void CScriptMoveType::SetPosition(const float3& pos) { owner->pos = pos; }
+void CScriptMoveType::SetVelocity(const float3& _vel) { vel = _vel; }
 
-
-void CScriptMoveType::SetVelocity(const float3& _vel)
-{
-	vel = _vel;
-	return;
-}
 
 
 void CScriptMoveType::SetRelativeVelocity(const float3& _relVel)
 {
 	relVel = _relVel;
 	useRelVel = ((relVel.x != 0.0f) || (relVel.y != 0.0f) || (relVel.z != 0.0f));
-	return;
 }
 
 
@@ -231,7 +229,6 @@ void CScriptMoveType::SetRotationVelocity(const float3& rvel)
 {
 	rotVel = rvel;
 	useRotVel = ((rotVel.x != 0.0f) || (rotVel.y != 0.0f) || (rotVel.z != 0.0f));
-	return;
 }
 
 
@@ -241,6 +238,7 @@ void CScriptMoveType::SetHeading(short heading)
 
 	if (!trackSlope) {
 		owner->UpdateDirVectors(false);
+		owner->UpdateMidPos();
 	}
 }
 

@@ -27,6 +27,10 @@ public:
 	void PostLoad();
 	void DependentDied(CObject* o);
 	inline void SetOrderTarget(CUnit* o);
+
+	void SetScriptMaxSpeed(float speed);
+	void SlowUpdateMaxSpeed();
+
 	virtual void AddDeathDependence(CObject* o, DependenceType dep);
 	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 	void AddCommandDependency(const Command &c);
@@ -130,7 +134,7 @@ protected:
 	void DrawDefaultCommand(const Command& c) const;
 
 private:
-	std::set<CObject *> commandDeathDependences;
+	std::set<CObject*> commandDeathDependences;
 	/**
 	 * continuously set to some non-zero value while target is in radar
 	 * decremented by 1 every SlowUpdate (!), command is canceled when

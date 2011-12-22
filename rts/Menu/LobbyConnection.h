@@ -11,7 +11,7 @@ class LobbyConnection : public Connection
 {
 public:
 	LobbyConnection();
-	~LobbyConnection();
+	virtual ~LobbyConnection();
 
 	void ConnectDialog(bool show);
 	bool WantClose() const;

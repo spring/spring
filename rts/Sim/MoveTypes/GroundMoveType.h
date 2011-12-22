@@ -6,7 +6,9 @@
 #include "MoveType.h"
 #include "Sim/Objects/SolidObject.h"
 
+struct UnitDef;
 struct MoveData;
+class CMoveMath;
 
 class CGroundMoveType : public AMoveType
 {
@@ -39,8 +41,8 @@ public:
 	void TestNewTerrainSquare();
 	void LeaveTransport();
 
-	void StartSkidding();
-	void StartFlying();
+	void StartSkidding() { skidding = true; }
+	void StartFlying() { skidding = true; flying = true; } // flying requires skidding
 
 	bool IsSkidding() const { return skidding; }
 	bool IsFlying() const { return flying; }
@@ -63,15 +65,15 @@ public:
 	unsigned int pathId;
 	float goalRadius;
 
-	SyncedFloat3 waypoint;
-	SyncedFloat3 nextWaypoint;
+	SyncedFloat3 currWayPoint;
+	SyncedFloat3 nextWayPoint;
 
 protected:
 	float3 ObstacleAvoidance(const float3& desiredDir);
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
 	void GetNewPath();
-	void GetNextWaypoint();
+	void GetNextWayPoint();
 
 	float BreakingDistance(float speed) const;
 	float3 Here();
@@ -82,6 +84,26 @@ protected:
 	void Arrived();
 	void Fail();
 	void HandleObjectCollisions();
+	void HandleUnitCollisions(
+		CUnit* collider,
+		const float3& colliderCurPos,
+		const float3& colliderOldPos,
+		const float colliderSpeed,
+		const float colliderRadius,
+		const float3& sepDirMask,
+		const UnitDef* colliderUD,
+		const MoveData* colliderMD,
+		const CMoveMath* colliderMM);
+	void HandleFeatureCollisions(
+		CUnit* collider,
+		const float3& colliderCurPos,
+		const float3& colliderOldPos,
+		const float colliderSpeed,
+		const float colliderRadius,
+		const float3& sepDirMask,
+		const UnitDef* colliderUD,
+		const MoveData* colliderMD,
+		const CMoveMath* colliderMM);
 
 	void SetMainHeading();
 	void ChangeHeading(short newHeading);
@@ -95,6 +117,7 @@ protected:
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();
 	void UpdateOwnerPos(bool);
+	bool FollowPath();
 	bool WantReverse(const float3&) const;
 
 
@@ -111,22 +134,21 @@ protected:
 	bool useMainHeading;
 
 	float3 skidRotVector;  /// vector orthogonal to skidDir
-	float skidRotAccel;    /// rotational acceleration when skidding
-	float skidRotSpeed;    /// rotational speed when skidding
+	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
+	float skidRotAccel;    /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
 
 	CSolidObject::PhysicalState oldPhysState;
 
 	float3 waypointDir;
 	float3 flatFrontDir;
+	float3 lastAvoidanceDir;
 	float3 mainHeadingPos;
 
 	// number of grid-cells along each dimension; should be an odd number
 	static const int LINETABLE_SIZE = 11;
 	static std::vector<int2> lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
 
-	unsigned int nextDeltaSpeedUpdate;
 	unsigned int nextObstacleAvoidanceUpdate;
-
 	unsigned int pathRequestDelay;
 
 	/// {in, de}creased every Update if idling is true/false and pathId != 0
@@ -137,7 +159,6 @@ protected:
 	int moveSquareX;
 	int moveSquareY;
 
-	float3 lastAvoid;
 	short wantedHeading;
 };
 

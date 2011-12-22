@@ -14,6 +14,7 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 
 #include "assimp.hpp"
 #include "aiDefines.h"
@@ -89,10 +90,8 @@ public:
 S3DModel* CAssParser::Load(const std::string& modelFilePath)
 {
 	LOG_S(LOG_SECTION_MODEL, "Loading model: %s", modelFilePath.c_str() );
-	std::string modelPath = modelFilePath.substr(0, modelFilePath.find_last_of('/'));
-	std::string modelFileNameNoPath = modelFilePath.substr(modelPath.length()+1, modelFilePath.length());
-	std::string modelName = modelFileNameNoPath.substr(0, modelFileNameNoPath.find_last_of('.'));
-	std::string modelExt = modelFileNameNoPath.substr(modelFileNameNoPath.find_last_of('.'), modelFilePath.length());
+	const std::string modelPath  = FileSystem::GetDirectory(modelFilePath);
+	const std::string modelName  = FileSystem::GetBasename(modelFilePath);
 
 	//! LOAD METADATA
 	//! Load the lua metafile. This contains properties unique to Spring models and must return a table
@@ -178,8 +177,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 		//! Search for a texture
 		std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + ".*");
 		for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
-			std::string texPath = std::string(*fi);
-			model->tex1 = texPath.substr(texPath.find('/')+1, texPath.length());
+			model->tex1 = FileSystem::GetFilename(*fi);
 			break; //! there can be only one!
 		}
 	}
@@ -189,8 +187,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 		//! Search for a texture
 		std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + "2.*");
 		for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
-			std::string texPath = std::string(*fi);
-			model->tex2 = texPath.substr(texPath.find('/')+1, texPath.length());
+			model->tex2 = FileSystem::GetFilename(*fi);
 			break; //! there can be only one!
 		}
 	}
