@@ -175,7 +175,7 @@ namespace Threading {
 	{
 	#if defined(__USE_GNU) && !defined(WIN32)
 		//alternative: pthread_setname_np(pthread_self(), newname.c_str());
-		prctl(PR_SET_NAME, newname.c_str(), 0,0,0);
+		prctl(PR_SET_NAME, newname.c_str(), 0, 0, 0);
 	#endif
 	}
 

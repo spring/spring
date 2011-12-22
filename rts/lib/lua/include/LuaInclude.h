@@ -68,6 +68,11 @@ inline float luaL_optfloat(lua_State* L, int idx, float def)
   return (float)luaL_optnumber(L, idx, def);
 }
 
+inline bool luaL_optboolean(lua_State* L, int idx, bool def)
+{
+  return lua_isboolean(L, idx) ? lua_toboolean(L, idx) : def;
+}
+
 struct luaContextData;
 extern boost::recursive_mutex* getLuaMutex(bool userMode, bool primary);
 
