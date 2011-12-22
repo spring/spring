@@ -66,7 +66,7 @@ public:
 
 public:
 	float mass;                                 ///< the physical mass of this object (run-time constant)
-	float crushImpedance;                       ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
+	float crushResistance;                       ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
 
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object

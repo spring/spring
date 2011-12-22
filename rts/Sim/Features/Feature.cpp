@@ -152,7 +152,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	emitSmokeTime = _smokeTime;
 
 	mass = def->mass;
-	crushImpedance = def->crushImpedance;
+	crushResistance = def->crushResistance;
 
 	health   = def->maxHealth;
 	blocking = def->blocking;

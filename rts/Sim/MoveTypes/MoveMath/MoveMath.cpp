@@ -150,7 +150,7 @@ bool CMoveMath::CrushResistant(const MoveData& colliderMD, const CSolidObject* c
 	if (!collidee->blocking) { return false; }
 	if (!collidee->crushable) { return true; }
 
-	return (collidee->crushImpedance > colliderMD.crushStrength);
+	return (collidee->crushResistance > colliderMD.crushStrength);
 }
 
 /*

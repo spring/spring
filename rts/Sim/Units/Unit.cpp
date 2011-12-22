@@ -387,7 +387,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 	beingBuilt = build;
 	mass = (beingBuilt)? mass: unitDef->mass;
-	crushImpedance = unitDef->crushImpedance;
+	crushResistance = unitDef->crushResistance;
 	power = unitDef->power;
 	maxHealth = unitDef->health;
 	health = beingBuilt? 0.1f: unitDef->health;

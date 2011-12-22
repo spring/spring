@@ -170,6 +170,7 @@ void CMouseHandler::LoadCursors()
 	AssignMouseCursor("DeathWait",    "cursorwait",       mCenter,  false); // backup
 
 	AssignMouseCursor("ManualFire",   "cursormanfire",    mCenter,  false);
+	AssignMouseCursor("ManualFire",   "cursordgun",       mCenter,  false); // backup (backward compability)
 	AssignMouseCursor("ManualFire",   "cursorattack",     mCenter,  false); // backup
 
 	AssignMouseCursor("Fight",        "cursorfight",      mCenter,  false);

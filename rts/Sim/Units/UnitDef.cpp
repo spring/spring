@@ -111,7 +111,7 @@ UnitDef::UnitDef()
 , terraformSpeed(0.0f)
 
 , mass(0.0f)
-, crushImpedance(0.0f)
+, crushResistance(0.0f)
 
 , canSubmerge(false)
 , canfly(false)
@@ -149,6 +149,7 @@ UnitDef::UnitDef()
 , repairable(false)
 
 , canmove(false)
+, canHover(false)
 , canAttack(false)
 , canFight(false)
 , canPatrol(false)
@@ -301,7 +302,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// (do not allow it to be zero or negative in either case)
 	metalCost = std::max(1.0f, udTable.GetFloat("buildCostMetal", 0.0f));
 	mass = Clamp(udTable.GetFloat("mass", metalCost), CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
-	crushImpedance = udTable.GetFloat("crushImpedance", mass);
+	crushResistance = udTable.GetFloat("crushResistance", mass);
 
 	energyCost = udTable.GetFloat("buildCostEnergy", 0.0f);
 	buildTime = std::max(0.1f, udTable.GetFloat("buildTime", 0.0f)); //avoid some nasty divide by 0
@@ -339,6 +340,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	repairable   = udTable.GetBool("repairable",   true);
 
 	canmove      = udTable.GetBool("canMove",         false);
+	canHover     = udTable.GetBool("canHover",        false);
 	canAttack    = udTable.GetBool("canAttack",       true);
 	canFight     = udTable.GetBool("canFight",        true);
 	canPatrol    = udTable.GetBool("canPatrol",       true);
@@ -359,7 +361,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	canSelfRepair = udTable.GetBool("canSelfRepair", false);
 
 	canFireControl = !udTable.GetBool("noAutoFire", false);
-	canManualFire = udTable.GetBool("canManualFire", false);
+	canManualFire = udTable.GetBool("canManualFire", udTable.GetBool("canDGun", false));
 
 	fullHealthFactory = udTable.GetBool("fullHealthFactory", false);
 	factoryHeadingTakeoff = udTable.GetBool("factoryHeadingTakeoff", true);
@@ -521,8 +523,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 	extractSquare = udTable.GetBool("extractSquare", false);
 
-
-	const bool canHover = udTable.GetBool("canHover", false);
 	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 	// modrules transport settings
