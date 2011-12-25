@@ -34,7 +34,10 @@ MARK_AS_ADVANCED(MARKDOWN_BIN)
 
 If    (MARKDOWN_FOUND)
 	Macro    (Markdown_MdToHtml var_command fileSrc fileDst)
+		# There are at least two compleetly different versions of markdown.
+		# The one on gentoo suports a lot of cmd-line switches,
+		# the one on Ubuntu not. This should work with both:
 		Set("${var_command}"
-				${MARKDOWN_BIN} "${fileSrc}" -f "${fileDst}")
+				${MARKDOWN_BIN} "${fileSrc}" > "${fileDst}")
 	EndMacro (Markdown_MdToHtml)
 EndIf (MARKDOWN_FOUND)
