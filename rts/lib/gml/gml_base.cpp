@@ -40,18 +40,15 @@ static void gmlSimLoop(void*)
 			if (gmlShareLists)
 				ogc->WorkerThreadPost();
 
-			Threading::SetSimThread(true);
 			//Threading::SetAffinity(3);
 
 			Watchdog::ClearTimer(WDT_SIM);
 
 			while(gmlKeepRunning) {
 				if(!gmlMultiThreadSim) {
-					Threading::SetSimThread(false);
 					Watchdog::ClearTimer(WDT_SIM, true);
 					while(!gmlMultiThreadSim && gmlKeepRunning)
 						SDL_Delay(500);
-					Threading::SetSimThread(true);
 				}
 
 				//FIXME activeController could change while processing this branch. Better make it safe with a mutex?
@@ -59,19 +56,14 @@ static void gmlSimLoop(void*)
 					Watchdog::ClearTimer(WDT_SIM); 
 					gmlProcessor->ExpandAuxQueue();
 
-					{
-						GML_MSTMUTEX_LOCK(sim); // UpdateSim
-						if(!activeController->Update())
-							gmlKeepRunning = false;
-					}
+					if(!GML::UpdateSim(activeController))
+						gmlKeepRunning = false;
 
 					gmlProcessor->GetQueue();
 				}
 
 				boost::thread::yield();
 			}
-
-			Threading::SetSimThread(false);
 
 			if(gmlShareLists)
 				ogc->WorkerThreadFree();
@@ -82,6 +74,16 @@ static void gmlSimLoop(void*)
 #endif
 
 namespace GML {
+
+	bool UpdateSim(CGameController *ac) {
+		GML_MSTMUTEX_LOCK(sim); // UpdateSim
+
+		Threading::SetSimThread(true);
+		bool ret = ac->Update();
+		Threading::SetSimThread(false);
+		return ret;
+	}
+
 	void Init()
 	{
 		gmlShareLists = configHandler->GetBool("MultiThreadShareLists");

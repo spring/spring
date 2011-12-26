@@ -924,7 +924,7 @@ int SpringApp::Update()
 		Watchdog::ClearTimer(WDT_MAIN);
 
 		if (!GML::SimThreadRunning()) {
-			ret = activeController->Update();
+			ret = GML::UpdateSim(activeController);
 		}
 
 		if (ret) {
