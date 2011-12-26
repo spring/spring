@@ -27,6 +27,7 @@ public:
 	void UpdateBuild(CUnit* buildee);
 	void FinishBuild(CUnit* buildee);
 	void StopBuild();
+	/// @return whether the to-be-built unit is enqueued
 	bool QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, FinishBuildCallBackFunc buildCB);
 
 	void Update();

@@ -5,15 +5,15 @@
 
 #include "Weapon.h"
 
-class CFlameThrower :
-	public CWeapon
+class CFlameThrower : public CWeapon
 {
 	CR_DECLARE(CFlameThrower);
 public:
 	CFlameThrower(CUnit* owner);
-	~CFlameThrower(void);
-	bool TryTarget(const float3 &pos,bool userTarget,CUnit* unit);
-	void Update(void);
+	~CFlameThrower();
+	bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
+	void Update();
+
 	float3 color;
 	float3 color2;
 
