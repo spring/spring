@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __SMOOTH_CONTROLLER_H__
-#define __SMOOTH_CONTROLLER_H__
+#ifndef _SMOOTH_CONTROLLER_H
+#define _SMOOTH_CONTROLLER_H
 
 #include "CameraController.h"
 
@@ -66,4 +66,4 @@ private:
 	static const unsigned maxSpeedFactor = 300;
 };
 
-#endif
+#endif // _SMOOTH_CONTROLLER_H

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FACTORY_H__
-#define __FACTORY_H__
+#ifndef _FACTORY_H
+#define _FACTORY_H
 
 #include "Building.h"
 #include "Sim/Units/CommandAI/Command.h"
@@ -60,4 +60,4 @@ private:
 	Command finishedBuildCommand;
 };
 
-#endif // __FACTORY_H__
+#endif // _FACTORY_H

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FREE_CONTROLLER_H__
-#define __FREE_CONTROLLER_H__
+#ifndef _FREE_CONTROLLER_H
+#define _FREE_CONTROLLER_H
 
 #include "CameraController.h"
 
@@ -62,4 +62,4 @@ private:
 	bool goForward;
 };
 
-#endif
+#endif // _FREE_CONTROLLER_H

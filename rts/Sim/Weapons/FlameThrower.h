@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FLAME_THROWER_H__
-#define __FLAME_THROWER_H__
+#ifndef _FLAME_THROWER_H
+#define _FLAME_THROWER_H
 
 #include "Weapon.h"
 
@@ -21,4 +21,4 @@ private:
 	virtual void FireImpl();
 };
 
-#endif // __FLAME_THROWER_H__
+#endif // _FLAME_THROWER_H

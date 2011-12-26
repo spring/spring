@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __OVERHEAD_CONTROLLER_H__
-#define __OVERHEAD_CONTROLLER_H__
+#ifndef _OVERHEAD_CONTROLLER_H
+#define _OVERHEAD_CONTROLLER_H
 
 #include "CameraController.h"
 
@@ -43,4 +43,4 @@ private:
 	float tiltSpeed;
 };
 
-#endif
+#endif // _OVERHEAD_CONTROLLER_H

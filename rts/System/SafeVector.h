@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __SAFE_VECTOR_H__
-#define __SAFE_VECTOR_H__
+#ifndef _SAFE_VECTOR_H
+#define _SAFE_VECTOR_H
 
 #include <vector>
 
@@ -55,4 +55,4 @@ private:
 #define safe_vector std::vector
 #endif
 
-#endif
+#endif // _SAFE_VECTOR_H

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __DAMAGE_ARRAY_HANDLER_H__
-#define __DAMAGE_ARRAY_HANDLER_H__
+#ifndef _DAMAGE_ARRAY_HANDLER_H
+#define _DAMAGE_ARRAY_HANDLER_H
 
 #include <string>
 #include <vector>
@@ -29,4 +29,4 @@ private:
 
 extern CDamageArrayHandler* damageArrayHandler;
 
-#endif // __DAMAGE_ARRAY_HANDLER_H__
+#endif // _DAMAGE_ARRAY_HANDLER_H

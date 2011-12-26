@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __GL_LIGHT_H__
-#define __GL_LIGHT_H__
+#ifndef _GL_LIGHT_H
+#define _GL_LIGHT_H
 
 #include "System/Object.h"
 #include "System/float3.h"
@@ -154,4 +154,4 @@ namespace GL {
 	};
 };
 
-#endif
+#endif // _GL_LIGHT_H

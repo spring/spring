@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __ADV_TREE_GENERATOR_H__
-#define __ADV_TREE_GENERATOR_H__
+#ifndef _ADV_TREE_GENERATOR_H
+#define _ADV_TREE_GENERATOR_H
 
 #include "Rendering/GL/myGL.h"
 
@@ -49,5 +49,5 @@ private:
 
 extern CAdvTreeGenerator* treeGen;
 
-#endif // __ADV_TREE_GENERATOR_H__
+#endif // _ADV_TREE_GENERATOR_H
 

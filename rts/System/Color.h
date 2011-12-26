@@ -1,8 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __COLOR_H__
-#define __COLOR_H__
+#ifndef _COLOR_H
+#define _COLOR_H
+
 #include <boost/cstdint.hpp>
+
 union SColor
 {
 	SColor(const boost::uint8_t& r_, const boost::uint8_t& g_, const boost::uint8_t& b_, const boost::uint8_t& a_ = 255) : r(r_), g(g_), b(b_), a(a_) {};
@@ -19,4 +21,4 @@ union SColor
 	boost::uint32_t i;
 };
 
-#endif // __COLOR_H__
+#endif // _COLOR_H

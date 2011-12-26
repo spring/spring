@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __GL_LIGHTHANDLER_H__
-#define __GL_LIGHTHANDLER_H__
+#ifndef _GL_LIGHTHANDLER_H
+#define _GL_LIGHTHANDLER_H
 
 #include <list>
 #include <map>
@@ -41,4 +41,4 @@ namespace GL {
 	};
 };
 
-#endif
+#endif // _GL_LIGHTHANDLER_H

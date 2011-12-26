@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __COMMAND_COLORS_H__
-#define __COMMAND_COLORS_H__
+#ifndef _COMMAND_COLORS_H
+#define _COMMAND_COLORS_H
 
 #include <map>
 #include <string>
@@ -188,4 +188,4 @@ class CCommandColors {
 extern CCommandColors cmdColors;
 
 
-#endif // __COMMAND_COLORS_H__
+#endif // _COMMAND_COLORS_H
