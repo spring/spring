@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __CANNON_H__
-#define __CANNON_H__
+#ifndef _CANNON_H
+#define _CANNON_H
 
 #include "Weapon.h"
 
@@ -46,4 +46,4 @@ private:
 	void FireImpl();
 };
 
-#endif // __CANNON_H__
+#endif // _CANNON_H

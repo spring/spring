@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FPS_CONTROLLER_H__
-#define __FPS_CONTROLLER_H__
+#ifndef _FPS_CONTROLLER_H
+#define _FPS_CONTROLLER_H
 
 #include "CameraController.h"
 
@@ -36,4 +36,4 @@ private:
 	float3 dir;
 };
 
-#endif
+#endif // _FPS_CONTROLLER_H

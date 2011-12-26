@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BASE_GROUND_DRAWER_H__
-#define __BASE_GROUND_DRAWER_H__
+#ifndef _BASE_GROUND_DRAWER_H
+#define _BASE_GROUND_DRAWER_H
 
 #include <map>
 #include "Rendering/GL/myGL.h"
@@ -125,4 +125,4 @@ public:
 	CBaseGroundTextures* groundTextures;
 };
 
-#endif // __BASE_GROUND_DRAWER__
+#endif // _BASE_GROUND_DRAWER_H

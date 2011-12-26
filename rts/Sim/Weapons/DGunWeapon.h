@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __DGUN_WEAPON_H__
-#define __DGUN_WEAPON_H__
+#ifndef _DGUN_WEAPON_H
+#define _DGUN_WEAPON_H
 
 #include "Weapon.h"
 
@@ -20,5 +20,5 @@ private:
 	virtual void FireImpl();
 };
 
-#endif // __DGUN_WEAPON_H__
+#endif // _DGUN_WEAPON_H
 

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __COMMAND_AI_H__
-#define __COMMAND_AI_H__
+#ifndef _COMMAND_AI_H
+#define _COMMAND_AI_H
 
 #include <vector>
 #include <set>
@@ -151,4 +151,4 @@ inline void CCommandAI::SetOrderTarget(CUnit* o) {
 		AddDeathDependence((CObject*)orderTarget, DEPENDENCE_ORDERTARGET);
 }
 
-#endif // __COMMAND_AI_H__
+#endif // _COMMAND_AI_H

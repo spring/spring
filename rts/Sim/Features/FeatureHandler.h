@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FEATURE_HANDLER_H__
-#define __FEATURE_HANDLER_H__
+#ifndef _FEATURE_HANDLER_H
+#define _FEATURE_HANDLER_H
 
 #include <string>
 #include <list>
@@ -68,4 +68,4 @@ private:
 extern CFeatureHandler* featureHandler;
 
 
-#endif // __FEATURE_HANDLER_H__
+#endif // _FEATURE_HANDLER_H

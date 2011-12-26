@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __TW_CONTROLLER_H__
-#define __TW_CONTROLLER_H__
+#ifndef _TW_CONTROLLER_H
+#define _TW_CONTROLLER_H
 
 #include "CameraController.h"
 
@@ -30,4 +30,4 @@ public:
 	bool SetState(const StateMap& sm);
 };
 
-#endif
+#endif // _TW_CONTROLLER_H

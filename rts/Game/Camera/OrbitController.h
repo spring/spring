@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __ORBIT_CONTROLLER_H__
-#define __ORBIT_CONTROLLER_H__
+#ifndef _ORBIT_CONTROLLER_H
+#define _ORBIT_CONTROLLER_H
 
 #include "CameraController.h"
 
@@ -56,4 +56,4 @@ class COrbitController: public CCameraController {
 		enum States {None, Orbiting, Panning, Zooming};
 };
 
-#endif
+#endif // _ORBIT_CONTROLLER_H
