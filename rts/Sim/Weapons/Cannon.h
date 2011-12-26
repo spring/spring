@@ -20,12 +20,16 @@ public:
 	CCannon(CUnit* owner);
 	~CCannon();
 
-	void Init(void);
+	void Init();
 	void UpdateRange(float val);
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
+	bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
 	void Update();
-	bool AttackGround(float3 pos,bool userTarget);
+	bool AttackGround(float3 pos, bool userTarget);
 	float GetRange2D(float yDiff) const;
+
+	void SlowUpdate();
+	/// tells where to point the gun to hit the point at pos+diff
+	float3 GetWantedDir(const float3& diff);
 
 	/// unused?
 	float maxPredict;
@@ -37,10 +41,6 @@ public:
 	bool selfExplode;
 	/// projectile gravity
 	float gravity;
-
-	void SlowUpdate(void);
-	/// tells where to point the gun to hit the point at pos+diff
-	float3 GetWantedDir(const float3& diff);
 
 private:
 	void FireImpl();

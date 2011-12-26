@@ -5,16 +5,15 @@
 
 #include "Weapon.h"
 
-class CDGunWeapon :
-	public CWeapon
+class CDGunWeapon : public CWeapon
 {
 	CR_DECLARE(CDGunWeapon);
 public:
 	CDGunWeapon(CUnit* owner);
-	~CDGunWeapon(void);
-	void Fire(void);
-	void Update(void);
-	void Init(void);
+	~CDGunWeapon();
+	void Fire();
+	void Update();
+	void Init();
 
 private:
 	virtual void FireImpl();

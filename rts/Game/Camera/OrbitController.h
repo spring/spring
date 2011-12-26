@@ -15,8 +15,8 @@ class COrbitController: public CCameraController {
 		const std::string GetName() const { return "OrbitController"; }
 
 		void KeyMove(float3 move);
-		void MousePress(int, int, int);
-		void MouseRelease(int, int, int);
+		void MousePress(int x, int y, int button);
+		void MouseRelease(int x, int y, int button);
 		void MouseMove(float3 move);
 		void ScreenEdgeMove(float3 move);
 		void MouseWheelMove(float move);
