@@ -51,6 +51,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "lib/luasocket/src/luasocket.h"
 
 #include <stdio.h>
 #include <set>
@@ -151,8 +152,11 @@ CLuaUI::CLuaUI()
 	LUA_OPEN_LIB(L, luaopen_math);
 	LUA_OPEN_LIB(L, luaopen_table);
 	LUA_OPEN_LIB(L, luaopen_string);
-	//LUA_OPEN_LIB(L, luaopen_package);
 	LUA_OPEN_LIB(L, luaopen_debug);
+
+	//initialize luasocket
+	LUA_OPEN_LIB(L, luaopen_package); //FIXME: remove this (allows to use insecure require())
+	InitLuaSocket(L);
 
 	// setup the lua IO access check functions
 	lua_set_fopen(L, LuaIO::fopen);
@@ -238,6 +242,19 @@ CLuaUI::~CLuaUI()
 	luaUI = NULL;
 }
 
+void CLuaUI::InitLuaSocket(lua_State* L) {
+	std::string code;
+	std::string filename="socket.lua";
+	CFileHandler f(filename);
+
+	LUA_OPEN_LIB(L,luaopen_socket_core);
+
+	if (f.LoadStringData(code)){
+		LoadCode(L, code.c_str(), filename.c_str());
+	} else {
+		LOG_L(L_ERROR, "Error loading %s", filename.c_str());
+	}
+}
 
 string CLuaUI::LoadFile(const string& filename) const
 {
