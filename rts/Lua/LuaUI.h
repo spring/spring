@@ -104,6 +104,10 @@ class CLuaUI : public CLuaHandle
 		static int SetShockFrontFactors(lua_State* L);
 
 		int UpdateUnsyncedXCalls(lua_State* L);
+		/**
+		*	initialize luasocket
+		*/
+		void InitLuaSocket(lua_State* L);
 		std::set<std::string> unsyncedXCalls;
 		std::vector<LuaUIEvent> luaUIEventBatch;
 };

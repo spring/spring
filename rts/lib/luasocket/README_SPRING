@@ -1,0 +1,4 @@
+Changes done to luasocket:
+
+1. rename *.c into *.cpp in src/
+2. rename luaL_openlib into luaI_openlib
