@@ -60,6 +60,8 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 
+CONFIG(bool, LuaSocketEnabled).defaultValue(false).description("Enable LuaSocket support, allows a lua-widget to make TCP/UDP Connections");
+
 using std::max;
 
 
@@ -136,6 +138,9 @@ CLuaUI::CLuaUI()
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
 
+	const bool luaSocketEnabled = configHandler->GetBool("LuaSocketEnabled");
+	LOG("LuaSocketEnabled: %s", (luaSocketEnabled ? "yes": "no" ));
+
 	const char* vfsMode = GetVFSMode();
 	const std::string file = (CFileHandler::FileExists("luaui.lua", vfsMode) ? "luaui.lua" : "LuaUI/main.lua");
 
@@ -155,8 +160,10 @@ CLuaUI::CLuaUI()
 	LUA_OPEN_LIB(L, luaopen_debug);
 
 	//initialize luasocket
-	LUA_OPEN_LIB(L, luaopen_package); //FIXME: remove this (allows to use insecure require())
-	InitLuaSocket(L);
+	if (luaSocketEnabled){
+		LUA_OPEN_LIB(L, luaopen_package); //FIXME: remove this (allows to use insecure require())
+		InitLuaSocket(L);
+	}
 
 	// setup the lua IO access check functions
 	lua_set_fopen(L, LuaIO::fopen);
