@@ -12,6 +12,8 @@
 	#ifndef SHGFP_TYPE_CURRENT
 		#define SHGFP_TYPE_CURRENT 0
 	#endif
+#else
+	#include <wordexp.h>
 #endif
 
 #include "System/Platform/Win/win32.h"
@@ -64,38 +66,21 @@ const std::vector<DataDir>& DataDirLocater::GetDataDirs() const {
 
 std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 {
-	bool escape = false;
-	std::ostringstream out;
-	for (std::string::const_iterator ch = in.begin(); ch != in.end(); ++ch) {
-		if (escape) {
-			escape = false;
-			out << *ch;
-		} else {
-			switch (*ch) {
-#ifndef _WIN32
-				case '\\': {
-					escape = true;
-					break;
-				}
-#endif
-				case '$': {
-					std::ostringstream envvar;
-					for (++ch; ch != in.end() && (isalnum(*ch) || *ch == '_'); ++ch)
-						envvar << *ch;
-					--ch;
-					char* subst = getenv(envvar.str().c_str());
-					if (subst && *subst)
-						out << subst;
-					break;
-				}
-				default: {
-					out << *ch;
-					break;
-				}
-			}
-		}
+	std::string out;
+#ifdef _WIN32
+	const size_t maxSize = 32 * 1024;
+	char out_c[maxSize];
+	ExpandEnvironmentStrings(in.c_str(), out_c, maxSize); // expands %HOME% etc.
+	out = out_c;
+#else
+	wordexp_t pwordexp;
+	wordexp(in.c_str(), &pwordexp, WRDE_NOCMD); // expands $FOO, ${FOO}, ~/, etc.
+	if (pwordexp.we_wordc > 0) {
+		out = pwordexp.we_wordv[0];
 	}
-	return out.str();
+	wordfree(&pwordexp);
+#endif
+	return out;
 }
 
 void DataDirLocater::AddDirs(const std::string& dirs)
