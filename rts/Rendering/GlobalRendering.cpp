@@ -123,7 +123,7 @@ void CGlobalRendering::PostInit() {
 
 		haveATI    = (vendor.find("ati ") != std::string::npos) || (vendor.find("amd ") != std::string::npos);
 		haveMesa   = (renderer.find("mesa ") != std::string::npos);
-		haveIntel  = (vendor.find("intel ") != std::string::npos);
+		haveIntel  = (vendor.find("intel") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
 		//FIXME Neither Intel's nor Mesa's GLSL implementation seem to be in a workable state atm (date: Nov. 2011)
