@@ -220,22 +220,13 @@ void DataDirLocater::AddCwdOrParentDir(const std::string& curWorkDir, bool force
 void DataDirLocater::LocateDataDirs()
 {
 	// Prepare the data-dirs defined in different places
-
-	// environment variable
-	std::string dd_env = "";
-	{
-		char* env = getenv("SPRING_DATADIR");
-		if (env && *env) {
-			dd_env = SubstEnvVars(env);
-		}
-	}
-
 #if       defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
 #else  // defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
 #endif // defined(UNITSYNC)
 
+	// Detect some useful dirs
 #if    defined(WIN32)
 	// fetch my documents path
 	TCHAR pathMyDocsC[MAX_PATH];
@@ -282,8 +273,8 @@ void DataDirLocater::LocateDataDirs()
 #endif // defined(WIN32), defined(MACOSX_BUNDLE), else
 
 	// Construct the list of dataDirs from various sources.
+	// Note: The first dir added will be the writable data dir!
 	dataDirs.clear();
-	// The first dir added will be the writable data dir.
 
 	if (isolationMode) {
 		if (isolationModeDir.empty()) {
@@ -295,16 +286,21 @@ void DataDirLocater::LocateDataDirs()
 				LOG_L(L_FATAL, "The specified isolation-mode directory does not exist: %s", isolationModeDir.c_str());
 			}
 		}
-	} else {
+	}
+
+	// Same on all platforms
+	{
+		const char* env = getenv("SPRING_DATADIR");
+		if (env && *env) {
+			AddDirs(SubstEnvVars(env)); // ENV{SPRING_DATADIR}
+		}
+	}
+	AddDirs(SubstEnvVars(configHandler->GetString("SpringData"))); // user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+
+	if (!isolationMode) {
 		if (!isolationModeDir.empty()) {
 			LOG_L(L_WARNING, "Isolation directory was specified, but isolation mode is not active.");
 		}
-
-		// same on all platforms
-		AddDirs(dd_env);    // ENV{SPRING_DATADIR}
-		// user defined in spring config handler
-		// (Linux: ~/.springrc, Windows: .\springsettings.cfg)
-		AddDirs(SubstEnvVars(configHandler->GetString("SpringData")));
 
 #ifdef WIN32
 		// All MS Windows variants
@@ -333,20 +329,23 @@ void DataDirLocater::LocateDataDirs()
 		// might not be writable by the user starting the game
 		AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
 		AddDirs(dd_curWorkDirData);             // "Spring.app/Contents/Resources/share/games/spring"
-		AddDirs(dd_etc);                        // from /etc/spring/datadir
+		AddDirs(dd_etc);                        // from /etc/spring/datadir FIXME add in IsolatedMode too?
 
 #else
 		// Linux, FreeBSD, Solaris, Apple non-bundle
 
 		AddCwdOrParentDir(dd_curWorkDir); // "./" or "../"
 		AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
-		AddDirs(dd_etc);            // from /etc/spring/datadir
+		AddDirs(dd_etc);            // from /etc/spring/datadir FIXME add in IsolatedMode too?
 #endif
 
+
 #ifdef SPRING_DATADIR
+		//Note: using the defineflag SPRING_DATADIR & "SPRING_DATADIR" as string works fine, the preprocessor won't touch the 2nd
 		AddDirs(SubstEnvVars(SPRING_DATADIR)); // from -DSPRING_DATADIR
-#endif
+#endif 
 	}
+
 
 	// Figure out permissions of all dataDirs
 	DeterminePermissions();
@@ -372,10 +371,11 @@ void DataDirLocater::LocateDataDirs()
 	FileSystem::ChDir(GetWriteDir()->path.c_str());
 
 	// Initialize the log. Only after this moment log will be written to file.
-	logOutput.Initialize();
-	// Logging MAY NOT start before the chdir, otherwise the logfile ends up
-	// in the wrong directory.
+	// Note: Logging MAY NOT start before the chdir, otherwise the logfile ends up
+	//       in the wrong directory.
 	// Update: now it actually may start before, log has preInitLog.
+	logOutput.Initialize();
+
 	for (std::vector<DataDir>::const_iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
 		if (d->writable) {
 			LOG("Using read-write data directory: %s", d->path.c_str());
