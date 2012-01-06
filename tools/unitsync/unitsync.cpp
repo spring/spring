@@ -181,6 +181,9 @@ static void _SetLastError(const std::string& err)
 	_SetLastError(std::string(__FUNCTION__) + ": " + (str))
 
 #define UNITSYNC_CATCH_BLOCKS \
+	catch (const user_error& ex) { \
+		SetLastError(ex.what()); \
+	} \
 	catch (const std::exception& ex) { \
 		SetLastError(ex.what()); \
 	} \

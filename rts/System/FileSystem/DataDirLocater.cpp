@@ -268,7 +268,7 @@ void DataDirLocater::LocateDataDirs()
 			if (FileSystem::DirExists(isolationModeDir)) {
 				AddDir(isolationModeDir);
 			} else {
-				LOG_L(L_FATAL, "The specified isolation-mode directory does not exist: %s", isolationModeDir.c_str());
+				throw user_error(std::string("The specified isolation-mode directory does not exist: ") + isolationModeDir);
 			}
 		}
 	}

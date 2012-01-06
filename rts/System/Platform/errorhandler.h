@@ -44,6 +44,9 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		}                                                                                       \
 		catch (const opengl_error& e) {                                                         \
 			ErrorMessageBox(e.what(), "Spring: OpenGL content", MBF_OK | MBF_CRASH);        \
+		}                                                                                       \
+		catch (const user_error& e) {                                                           \
+			ErrorMessageBox(e.what(), "Spring: Fatal Error", MBF_OK | MBF_EXCL);            \
 		}
 #else
 	#define CATCH_SPRING_ERRORS \
@@ -52,6 +55,9 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		}                                                                                       \
 		catch (const opengl_error& e) {                                                         \
 			ErrorMessageBox(e.what(), "Spring: OpenGL content", MBF_OK | MBF_CRASH);        \
+		}                                                                                       \
+		catch (const user_error& e) {                                                           \
+			ErrorMessageBox(e.what(), "Spring: Fatal Error", MBF_OK | MBF_EXCL);            \
 		}                                                                                       \
 		catch (const boost::system::system_error& e) {                                          \
 			std::ostringstream ss;                                                          \
