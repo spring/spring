@@ -841,7 +841,8 @@ void CGameServer::Update()
 		}
 	}
 
-	if (spring_gettime() > serverStartTime + spring_secs(globalConfig->initialNetworkTimeout) || gameHasStarted) {
+	const bool pregameTimeoutReached = (spring_gettime() > serverStartTime + spring_secs(globalConfig->initialNetworkTimeout));
+	if (pregameTimeoutReached || gameHasStarted) {
 		bool hasPlayers = false;
 		for (size_t i = 0; i < players.size(); ++i) {
 			if (players[i].link) {
