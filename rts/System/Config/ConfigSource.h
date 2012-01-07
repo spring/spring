@@ -82,7 +82,7 @@ private:
 class DefaultConfigSource : public ReadOnlyConfigSource
 {
 public:
-	DefaultConfigSource();
+	DefaultConfigSource(const bool safemode);
 };
 
 #endif // CONFIG_SOURCE_H

@@ -33,7 +33,7 @@ ConfigHandler* configHandler = NULL;
 class ConfigHandlerImpl : public ConfigHandler
 {
 public:
-	ConfigHandlerImpl(const vector<string>& locations);
+	ConfigHandlerImpl(const vector<string>& locations, const bool safemode);
 	~ConfigHandlerImpl();
 
 	void SetString(const string& key, const string& value, bool useOverlay);
@@ -76,7 +76,7 @@ private:
  * First there is the overlay, then one or more file sources, and the last
  * source(s) specify default values.
  */
-ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
+ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool safemode)
 {
 	overlay = new OverlayConfigSource();
 	writableSource = new FileConfigSource(locations.front());
@@ -94,7 +94,7 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 	// TODO: Add extra sets of defaults here.
 	// E.g., a `template' with safe settings for a certain brand video card.
 
-	sources.push_back(new DefaultConfigSource());
+	sources.push_back(new DefaultConfigSource(safemode));
 
 	// Perform migrations that need to happen on every load.
 	RemoveDefaults();
@@ -278,7 +278,7 @@ void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer) {
 
 /******************************************************************************/
 
-void ConfigHandler::Instantiate(string configSource)
+void ConfigHandler::Instantiate(const std::string configSource, const bool safemode)
 {
 	Deallocate();
 
@@ -298,7 +298,7 @@ void ConfigHandler::Instantiate(string configSource)
 		LOG("Using additional configuration source: \"%s\"", loc->c_str());
 	}
 
-	configHandler = new ConfigHandlerImpl(locations);
+	configHandler = new ConfigHandlerImpl(locations, safemode);
 
 	//assert(configHandler->GetString("test") == "x y z");
 }
