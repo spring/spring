@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ORIG_DIR=$(pwd)
 
