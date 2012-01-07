@@ -723,6 +723,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch('t', "textureatlas",       "Dump each finalized textureatlas in textureatlasN.tga");
 	cmdline->AddString('n', "name",               "Set your player name");
 	cmdline->AddString('C', "config",             "Configuration file");
+	cmdline->AddSwitch(0,   "safemode",           "Turns off many things that are known to cause problems (i.e. on PC/Mac's with lower-end graphic cards)");
 	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
 	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
 	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
@@ -756,11 +757,10 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	}
 
-	string configSource = "";
-	if (cmdline->IsSet("config")) {
-		configSource = cmdline->GetString("config");
-	}
-	ConfigHandler::Instantiate(configSource);
+	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
+	const bool safemode = cmdline->IsSet("safemode");
+
+	ConfigHandler::Instantiate(configSource, safemode);
 	GlobalConfig::Instantiate();
 
 	// mutually exclusive options that cause spring to quit immediately
