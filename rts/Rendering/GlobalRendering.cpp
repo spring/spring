@@ -129,6 +129,7 @@ void CGlobalRendering::PostInit() {
 		//FIXME Neither Intel's nor Mesa's GLSL implementation seem to be in a workable state atm (date: Nov. 2011)
 		haveGLSL &= !haveIntel;
 		haveGLSL &= !haveMesa;
+		//FIXME add an user config to force enable it!
 
 		if (haveATI) {
 			// x-series doesn't support NPOTs (but hd-series does)
