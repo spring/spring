@@ -78,7 +78,7 @@
 
 #include "lib/gml/gml_base.h"
 
-CONFIG(unsigned, SetCoreAffinity).defaultValue(0).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
+CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(int, DepthBufferBits).defaultValue(24);
 CONFIG(int, StencilBufferBits).defaultValue(8);
 CONFIG(int, FSAALevel).defaultValue(0);
@@ -101,7 +101,7 @@ CONFIG(int, WindowPosX).defaultValue(32);
 CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false);
-CONFIG(int, HardwareThreadCount).defaultValue(0);
+CONFIG(int, HardwareThreadCount).defaultValue(0).safemodeValue(1);
 CONFIG(std::string, name).defaultValue("UnnamedPlayer");
 
 
