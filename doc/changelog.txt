@@ -1,6 +1,12 @@
 Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 
+-- 85.1 ---------------------------------------------------------
+Changes:
+ - fixed Intel GPU detection under Windows
+ - IsolationMode: scan ENV{SPRING_DATADIR} & config's SpringData as readonly datadirs FIXME document IsolationMode in man-page?
+ - added a new commandline argument "--safemode". It turns off all features that are known to cause problems on some system.
+
 -- 85.0 ---------------------------------------------------------
 Major Changes:
  - ROAM \o/
