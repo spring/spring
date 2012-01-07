@@ -33,10 +33,11 @@ CONFIG(int, MaxDynamicMapLights)
 	.defaultValue(1)
 	.minimumValue(0);
 
-CONFIG(int, AdvMapShading).defaultValue(1);
+CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false);
 
 CONFIG(int, ROAM)
 	.defaultValue(VBO)
+	.safemodeValue(DL)
 	.description("Use ROAM for terrain mesh rendering. 1=VBO mode, 2=DL mode, 3=VA mode");
 
 
@@ -142,7 +143,7 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 	smfShaderAdvGLSL = NULL;
 	smfShaderCurGLSL = NULL;
 
-	if (configHandler->GetInt("AdvMapShading") == 0) {
+	if (!configHandler->GetBool("AdvMapShading")) {
 		// not allowed to do shader-based map rendering
 		return false;
 	}

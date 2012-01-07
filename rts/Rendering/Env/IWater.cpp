@@ -14,7 +14,7 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
-CONFIG(int, ReflectiveWater).defaultValue(IWater::WATER_RENDERER_REFLECTIVE);
+CONFIG(int, ReflectiveWater).defaultValue(IWater::WATER_RENDERER_REFLECTIVE).safemodeValue(IWater::WATER_RENDERER_BASIC);
 
 IWater* water = NULL;
 static std::vector<int> waterModes;
