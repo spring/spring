@@ -39,6 +39,7 @@ public:
 	void SetString(const string& key, const string& value, bool useOverlay);
 	string GetString(const string& key) const;
 	bool IsSet(const string& key) const;
+	bool IsReadOnly(const string& key) const;
 	void Delete(const string& key);
 	string GetConfigFile() const;
 	const StringMap GetData() const;
@@ -167,6 +168,15 @@ bool ConfigHandlerImpl::IsSet(const string& key) const
 	return false;
 }
 
+bool ConfigHandlerImpl::IsReadOnly(const string& key) const
+{
+	const ConfigVariableMetaData* meta = ConfigVariable::GetMetaData(key);
+	if (meta==NULL) {
+		return false;
+	}
+	return meta->GetReadOnly().Get();
+}
+
 string ConfigHandlerImpl::GetString(const string& key) const
 {
 	const ConfigVariableMetaData* meta = ConfigVariable::GetMetaData(key);
@@ -188,11 +198,12 @@ string ConfigHandlerImpl::GetString(const string& key) const
  * @brief Sets a config string
  *
  * This does:
- * 1) Lock file.
- * 2) Read file (in case another program modified something)
- * 3) Set data[key] = value.
- * 4) Write file (so we keep the settings in the event of a crash or error)
- * 5) Unlock file.
+ * 1) Check if variable isn't readonly
+ * 2) Lock file.
+ * 3) Read file (in case another program modified something)
+ * 4) Set data[key] = value.
+ * 5) Write file (so we keep the settings in the event of a crash or error)
+ * 6) Unlock file.
  *
  * We do not want conflicts when multiple instances are running
  * at the same time (which would cause data loss).
@@ -201,6 +212,14 @@ string ConfigHandlerImpl::GetString(const string& key) const
  */
 void ConfigHandlerImpl::SetString(const string& key, const string& value, bool useOverlay)
 {
+//unitsync is allowed to set readonly variables
+#ifndef UNITSYNC
+	// don't allow to change a read-only variable
+	if (IsReadOnly(key)) {
+		LOG_L(L_ERROR, "tried to set readonly variable %s to %s", key.c_str(), value.c_str());
+		return;
+	}
+#endif
 	// if we set something to be persisted,
 	// we do want to override the overlay value
 	if (!useOverlay) {
