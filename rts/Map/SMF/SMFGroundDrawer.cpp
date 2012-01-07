@@ -27,7 +27,7 @@
 #include "System/Util.h"
 
 
-CONFIG(int, GroundDetail).defaultValue(40);
+CONFIG(int, GroundDetail).defaultValue(60);
 
 CONFIG(int, MaxDynamicMapLights)
 	.defaultValue(1)
