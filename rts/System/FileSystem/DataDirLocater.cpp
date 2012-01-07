@@ -30,7 +30,8 @@
 #include "System/Platform/Misc.h"
 
 CONFIG(std::string, SpringData).defaultValue("")
-		.description("List of addidional data-directories, separated by ';' on windows, ':' on other OSs");
+		.description("List of addidional data-directories, separated by ';' on windows, ':' on other OSs")
+		.readOnly(true);
 
 
 DataDirLocater dataDirLocater;

@@ -111,6 +111,7 @@ public:
 	const OptionalString& GetDeclarationFile() const { return declarationFile; }
 	const OptionalInt& GetDeclarationLine() const { return declarationLine; }
 	const OptionalString& GetDescription() const { return description; }
+	const OptionalInt& GetReadOnly() const { return readOnly; }
 
 protected:
 	const char* key;
@@ -118,6 +119,7 @@ protected:
 	OptionalString declarationFile;
 	OptionalInt declarationLine;
 	OptionalString description;
+	OptionalInt readOnly;
 
 	template<typename F> friend class ConfigVariableBuilder;
 };
@@ -181,7 +183,8 @@ protected:
  *   .defaultValue(6)
  *   .minimumValue(1)
  *   .maximumValue(10)
- *   .description("This is an example");
+ *   .description("This is an example")
+ *   .readOnly(true);
  */
 template<typename T>
 class ConfigVariableBuilder : public boost::noncopyable
@@ -199,6 +202,7 @@ public:
 	MAKE_CHAIN_METHOD(declarationFile, const char*);
 	MAKE_CHAIN_METHOD(declarationLine, int);
 	MAKE_CHAIN_METHOD(description, std::string);
+	MAKE_CHAIN_METHOD(readOnly, bool);
 	MAKE_CHAIN_METHOD(defaultValue, T);
 	MAKE_CHAIN_METHOD(minimumValue, T);
 	MAKE_CHAIN_METHOD(maximumValue, T);

@@ -60,7 +60,11 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 
-CONFIG(bool, LuaSocketEnabled).defaultValue(false).description("Enable LuaSocket support, allows a lua-widget to make TCP/UDP Connections");
+CONFIG(bool, LuaSocketEnabled)
+	.defaultValue(false)
+	.description("Enable LuaSocket support, allows a lua-widget to make TCP/UDP Connections")
+	.readOnly(true)
+;
 
 using std::max;
 
