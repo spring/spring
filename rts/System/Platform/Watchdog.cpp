@@ -122,7 +122,6 @@ namespace Watchdog
 
 					WatchDogThreadInfo* th_info = registeredThreads[i];
 					CrashHandler::Stacktrace(th_info->thread, threadNames[i]);
-					LOG_CLEANUP();
 				}
 
 				CrashHandler::CleanupStacktrace();

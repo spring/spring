@@ -424,7 +424,6 @@ namespace CrashHandler
 		for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
 			LOG_L(L_ERROR, "  <%u> %s", numLine++, it->c_str());
 		}
-		LOG_CLEANUP();
 	}
 
 
@@ -439,7 +438,10 @@ namespace CrashHandler
 	}
 
 	void PrepareStacktrace() {}
-	void CleanupStacktrace() {}
+
+	void CleanupStacktrace() {
+		LOG_CLEANUP();
+	}
 
 	void HandleSignal(int signal)
 	{
@@ -478,7 +480,10 @@ namespace CrashHandler
 
 		//! print stacktrace
 		bool keepRunning = false;
+
+		PrepareStacktrace();
 		Stacktrace(&keepRunning);
+		CleanupStacktrace();
 
 		//! don't try to keep on running after these signals
 		if (keepRunning &&
@@ -548,6 +553,8 @@ namespace CrashHandler
 
 	void OutputStacktrace() {
 		bool keepRunning = true;
+		PrepareStacktrace();
 		Stacktrace(&keepRunning);
+		CleanupStacktrace();
 	}
 };
