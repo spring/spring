@@ -319,6 +319,7 @@ EXPORT(int) Init(bool isServer, int id)
 #ifndef DEBUG
 		log_filter_section_setMinLevel(LOG_SECTION_UNITSYNC, LOG_LEVEL_INFO);
 #endif
+		//FIXME add IsolateMode support! (important!)
 		if (archiveScanner || vfsHandler){
 			FileSystemInitializer::Cleanup(); //reinitialize filesystem to detect new files
 		}
