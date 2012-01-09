@@ -893,7 +893,7 @@ void CGuiHandler::GiveCommandsNow() {
 	for(std::vector< std::pair<Command, bool> >::iterator i = commandsToGiveTemp.begin(); i != commandsToGiveTemp.end(); ++i) {
 		const Command& cmd = (*i).first;
 		if (eventHandler.CommandNotify(cmd)) {
-			return;
+			continue;
 		}
 
 		selectedUnits.GiveCommand(cmd, (*i).second);

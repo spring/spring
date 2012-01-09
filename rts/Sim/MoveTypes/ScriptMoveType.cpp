@@ -17,13 +17,13 @@ CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL));
 CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(tag),
 	CR_MEMBER(extrapolate),
+	CR_MEMBER(useRelVel),
+	CR_MEMBER(useRotVel),
 	CR_MEMBER(drag),
 	CR_MEMBER(vel),
 	CR_MEMBER(relVel),
-	CR_MEMBER(useRelVel),
 	CR_MEMBER(rot),
 	CR_MEMBER(rotVel),
-	CR_MEMBER(useRotVel),
 	CR_MEMBER(trackSlope),
 	CR_MEMBER(trackGround),
 	CR_MEMBER(groundOffset),
@@ -45,13 +45,13 @@ CScriptMoveType::CScriptMoveType(CUnit* owner):
 	AMoveType(owner),
 	tag(0),
 	extrapolate(true),
-	drag(0.0f),
-	vel(0.0f, 0.0f, 0.0f),
-	relVel(0.0f, 0.0f, 0.0f),
 	useRelVel(false),
-	rot(0.0f, 0.0f, 0.0f),
-	rotVel(0.0f, 0.0f, 0.0f),
 	useRotVel(false),
+	drag(0.0f),
+	vel(ZeroVector),
+	relVel(ZeroVector),
+	rot(ZeroVector),
+	rotVel(ZeroVector),
 	trackSlope(false),
 	trackGround(false),
 	groundOffset(0.0f),
@@ -120,25 +120,26 @@ bool CScriptMoveType::Update()
 		CalcDirections();
 	}
 
-	float3& speed = vel;
-	speed = vel;
+	// keep speed updated for when we switch back to owner->prevMoveType
+	owner->speed = vel;
 
 	if (extrapolate) {
-		if (drag != 0.0f) {
-			vel *= (1.0f - drag); // quadratic drag does not work well here
-		}
+		// quadratic drag does not work well here
+		// NOTE: also affects speed gained through gravity
+		vel *= (1.0f - drag);
 
 		if (useRelVel) {
-			const float3 rVel = (owner->frontdir *  relVel.z) +
-			                    (owner->updir    *  relVel.y) +
-			                    (owner->rightdir * -relVel.x); // x is left
-			speed += rVel;
+			// add the speed terms relative to the unit (if any)
+			vel += (owner->frontdir *  relVel.z);
+			vel += (owner->updir    *  relVel.y);
+			vel += (owner->rightdir * -relVel.x); // x is left
 		}
 
+		// NOTE: strong wind plus low gravity can cause substantial position drift
 		vel.y += (mapInfo->map.gravity * gravityFactor);
-		speed += (wind.GetCurrentWind() * windFactor);
+		vel += (wind.GetCurrentWind() * windFactor);
 
-		owner->Move3D(speed, true);
+		owner->Move3D(vel, true);
 	}
 
 	if (trackGround) {
