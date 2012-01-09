@@ -757,6 +757,15 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	}
 
+	if (cmdline->IsSet("isolation")) {
+		dataDirLocater.SetIsolationMode(true);
+	}
+
+	if (cmdline->IsSet("isolation-dir")) {
+		dataDirLocater.SetIsolationMode(true);
+		dataDirLocater.SetIsolationModeDir(cmdline->GetString("isolation-dir"));
+	}
+
 	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
 	const bool safemode = cmdline->IsSet("safemode");
 
@@ -778,15 +787,6 @@ void SpringApp::ParseCmdLine()
 	else if (cmdline->IsSet("list-config-vars")) {
 		ConfigVariable::OutputMetaDataMap();
 		exit(0);
-	}
-
-	if (cmdline->IsSet("isolation")) {
-		dataDirLocater.SetIsolationMode(true);
-	}
-
-	if (cmdline->IsSet("isolation-dir")) {
-		dataDirLocater.SetIsolationMode(true);
-		dataDirLocater.SetIsolationModeDir(cmdline->GetString("isolation-dir"));
 	}
 
 #ifdef _DEBUG
