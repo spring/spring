@@ -1410,7 +1410,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
 
 		if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
-		if (collidee->usingScriptMoveType) { pushCollidee = false; }
+		if (collidee->usingScriptMoveType && !collidee->inAir) { pushCollidee = false; }
 		if (collideeUD->pushResistant) { pushCollidee = false; }
 
 		// if not an allied collision, neither party is allowed to be pushed (bi-directional)
@@ -1419,9 +1419,10 @@ void CGroundMoveType::HandleUnitCollisions(
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
 
-		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits);
-		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits);
+		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || collider->inAir);
+		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || collidee->inAir);
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
+		crushCollidee &= (collider->speed != ZeroVector);
 
 		// don't push/crush either party if the collidee does not block the collider
 		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
@@ -1458,11 +1459,15 @@ void CGroundMoveType::HandleUnitCollisions(
 
 			if ((colliderCurPosBits & CMoveMath::BLOCK_STRUCTURE) == 0)
 				continue;
+			if (colliderNxtPos == colliderCurPos)
+				continue;
 
 			if ((colliderNxtPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
 				// applied every frame objects are colliding, so be careful
-				collider->AddImpulse(sepDirection * std::max(currentSpeed, accRate));
-				collider->Move3D(collider->speed, true);
+				collider->AddImpulse(sepDirection * sepDirMask);
+
+				currentSpeed = 0.0f;
+				deltaSpeed = 0.0f;
 			}
 		}
 
@@ -1480,8 +1485,10 @@ void CGroundMoveType::HandleUnitCollisions(
 			colliderMassScale *= ((collideeMobile)? 0.0f: 1.0f);
 		}
 
-		if (pushCollider) { collider->Move3D( colResponseVec * colliderMassScale, true); } else if (colliderMobile) { collider->Move3D(colliderOldPos, false); }
-		if (pushCollidee) { collidee->Move3D(-colResponseVec * collideeMassScale, true); } else if (collideeMobile) { collidee->Move3D(collideeOldPos, false); }
+		     if (  pushCollider) { collider->Move3D( colResponseVec * colliderMassScale, true); }
+		else if (colliderMobile) { collider->Move3D(colliderOldPos, false); }
+		     if (  pushCollidee) { collidee->Move3D(-colResponseVec * collideeMassScale, true); }
+		else if (collideeMobile) { collidee->Move3D(collideeOldPos, false); }
 
 		#if 0
 		if (!((gs->frameNum + collider->id) & 31) && !colliderCAI->unimportantMove) {
@@ -1561,11 +1568,15 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 			if ((colliderCurPosBits & CMoveMath::BLOCK_STRUCTURE) == 0)
 				continue;
+			if (colliderNxtPos == colliderCurPos)
+				continue;
 
 			if ((colliderNxtPosBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
 				// applied every frame objects are colliding, so be careful
-				collider->AddImpulse(sepDirection * std::max(currentSpeed, accRate));
-				collider->Move3D(collider->speed, true);
+				collider->AddImpulse(sepDirection * sepDirMask);
+
+				currentSpeed = 0.0f;
+				deltaSpeed = 0.0f;
 			}
 		}
 
