@@ -138,11 +138,14 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable)
 
 	const std::string& name = GetName();
 	const std::string& version = GetVersion();
-	if ((name.find(version) == std::string::npos) && !version.empty()) {
-		SetInfoItemValueString("name", name + " " + version);
+	if (!version.empty()) {
+		if (name.find(version) == std::string::npos) {
+			SetInfoItemValueString("name", name + " " + version);
+		} else {
+			LOG_L(L_WARNING, "Invalid Name detected, please contact the author of the archive to remove the Version from the Name: %s, Version: %s", name.c_str(), version.c_str());
+		}
 	}
 }
-
 
 std::string CArchiveScanner::ArchiveData::GetKeyDescription(const std::string& keyLower)
 {
