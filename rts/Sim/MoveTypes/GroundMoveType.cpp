@@ -1419,8 +1419,8 @@ void CGroundMoveType::HandleUnitCollisions(
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
 
-		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || collider->inAir);
-		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || collidee->inAir);
+		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || (collider->inAir && !colliderUD->IsAirUnit()));
+		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || (collidee->inAir && !collideeUD->IsAirUnit()));
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= (collider->speed != ZeroVector);
 
