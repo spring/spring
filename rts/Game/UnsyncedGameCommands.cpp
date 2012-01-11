@@ -1078,7 +1078,7 @@ public:
 			"Lets the local user give up controll over a team, and start spectating") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!gu->spectating)
+		if (gu->spectating)
 			return false;
 
 		net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
@@ -1996,13 +1996,12 @@ public:
 			" resources to other players") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
 		if (gu->spectating)
 			return false;
 
 		// already shown?
 		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-		if (!inputReceivers.empty() && (dynamic_cast<CShareBox*>(inputReceivers.front()) != NULL))
+		if (inputReceivers.empty() || (dynamic_cast<CShareBox*>(inputReceivers.front()) == NULL))
 			return false;
 
 		new CShareBox();
