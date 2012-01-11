@@ -18,7 +18,7 @@ fi
 
 #install
 cd ${BUILDDIR}
-make install-spring-headless DESTDIR=${TESTDIR}
+make install-spring-headless demotool DESTDIR=${TESTDIR}
 
 # HACK/FIXME force spring to detect install dir as read-only
 chmod 555 ${TESTDIR}/usr/local/share/games/spring
