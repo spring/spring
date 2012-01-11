@@ -272,7 +272,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		}
 
 		if (targetBorder > 0) {
-			actualRange += hitUnit->radius * targetBorder;
+			actualRange += (hitUnit->radius * targetBorder);
 		}
 	}
 
