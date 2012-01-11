@@ -154,7 +154,7 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 						continue;
 					}
 
-					if (CCollisionHandler::Intersect(f, start, start + dir * length, &cq)) {
+					if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
 						const float3& intPos = (cq.b0)? cq.p0: cq.p1;
 						const float len = (intPos - start).dot(dir); //! same as (intPos - start).Length()
 
@@ -185,7 +185,7 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 					if (ignoreEnemies && u->allyteam != owner->allyteam)
 						continue;
 
-					if (CCollisionHandler::Intersect(u, start, start + dir * length, &cq)) {
+					if (CCollisionHandler::DetectHit(u, start, start + dir * length, &cq, true)) {
 						const float3& intPos = (cq.b0)? cq.p0: cq.p1;
 						const float len = (intPos - start).dot(dir); //! same as (intPos - start).Length()
 
@@ -303,7 +303,7 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 					continue;
 				}
 
-				if (CCollisionHandler::Intersect(f, start, start + dir * length, &cq)) {
+				if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
 					const float3& intPos = (cq.b0)? cq.p0 : cq.p1;
 					const float len = (intPos - start).dot(dir); //! same as (intPos - start).Length()
 
@@ -366,7 +366,7 @@ bool LineFeatureCol(const float3& start, const float3& dir, float length)
 				continue;
 			}
 
-			if (CCollisionHandler::Intersect(f, start, start + dir * length, &cq)) {
+			if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
 				return true;
 			}
 		}
