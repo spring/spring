@@ -229,7 +229,7 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 	CollisionQuery cq;
 
 	{
-		GML_RECMUTEX_LOCK(quad); //! GuiTraceRay
+		GML_RECMUTEX_LOCK(quad); // GuiTraceRay
 
 		int* begQuad = NULL;
 		int* endQuad = NULL;
@@ -344,7 +344,7 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 // called by CWeapon::TryTarget()
 bool LineFeatureCol(const float3& start, const float3& dir, float length)
 {
-	GML_RECMUTEX_LOCK(quad); // GuiTraceRayFeature
+	GML_RECMUTEX_LOCK(quad); // LineFeatureCol
 
 	int* begQuad = NULL;
 	int* endQuad = NULL;
@@ -388,6 +388,8 @@ bool TestCone(
 	bool testFeatures,
 	CUnit* owner)
 {
+	GML_RECMUTEX_LOCK(quad); // TestCone
+
 	int* begQuad = NULL;
 	int* endQuad = NULL;
 
@@ -463,6 +465,8 @@ bool TestTrajectoryCone(
 	bool testFeatures,
 	CUnit* owner)
 {
+	GML_RECMUTEX_LOCK(quad); // TestTrajectoryCone
+
 	int* begQuad = NULL;
 	int* endQuad = NULL;
 
