@@ -2000,8 +2000,8 @@ public:
 			return false;
 
 		// already shown?
-		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-		if (inputReceivers.empty() || (dynamic_cast<CShareBox*>(inputReceivers.front()) == NULL))
+		const std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+		if (inputReceivers.empty() || (dynamic_cast<CShareBox*>(inputReceivers.front()) != NULL))
 			return false;
 
 		new CShareBox();
