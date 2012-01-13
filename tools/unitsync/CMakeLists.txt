@@ -95,4 +95,7 @@ FixLibName(unitsync)
 install (TARGETS unitsync DESTINATION ${LIBDIR})
 
 Add_Subdirectory(test)
-Add_Subdirectory(python)
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/python" )
+	#only add this if the submodule is present
+	Add_Subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/python")
+endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/python")
