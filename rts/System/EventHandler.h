@@ -22,7 +22,7 @@ struct CEventClient_comp
 {
     bool operator()(const CEventClient *a, const CEventClient *b) const
     {
-        return a < b;
+        return a->GetOrder() < b->GetOrder();
     }
 };
 
