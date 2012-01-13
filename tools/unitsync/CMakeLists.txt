@@ -84,7 +84,7 @@ set(unitsync_files
 	${CMAKE_CURRENT_SOURCE_DIR}/Syncer.cpp
 	)
 
-ADD_LIBRARY(unitsync MODULE ${unitsync_files})
+ADD_LIBRARY(unitsync SHARED ${unitsync_files})
 Add_Dependencies(unitsync generateVersionFiles)
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
 if (MINGW)
@@ -95,3 +95,4 @@ FixLibName(unitsync)
 install (TARGETS unitsync DESTINATION ${LIBDIR})
 
 Add_Subdirectory(test)
+Add_Subdirectory(python)
