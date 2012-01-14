@@ -122,7 +122,7 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 		}
 		default: {
 			CMatrix44f m(f->transMatrix);
-			m.Translate(f->relMidPos);
+			m.Translate(f->relMidPos * float3(-1.0f, 1.0f, 1.0f));
 			m.Translate(v->GetOffsets());
 
 			return CCollisionHandler::Collision(v, m, p);
@@ -299,7 +299,7 @@ bool CCollisionHandler::Intersect(const CFeature* f, const float3& p0, const flo
 	const CollisionVolume* v = f->collisionVolume;
 
 	CMatrix44f m(f->transMatrix);
-	m.Translate(f->relMidPos);
+	m.Translate(f->relMidPos * float3(-1.0f, 1.0f, 1.0f));
 	m.Translate(v->GetOffsets());
 
 	numIntersectionTests += 1;
