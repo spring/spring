@@ -713,13 +713,17 @@ void CTransportCAI::UnloadLand(Command& c)
 
 void CTransportCAI::UnloadDrop(Command& c)
 {
+	CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
+
 	// fly over and drop unit
 	if (inCommand) {
 		if (!owner->script->IsBusy()) {
 			FinishCommand();
 		}
 	} else {
-		if (static_cast<CTransportUnit*>(owner)->GetTransportedUnits().empty()) {
+		const std::list<CTransportUnit::TransportedUnit>& transportees = transport->GetTransportedUnits();
+
+		if (transportees.empty() || dropSpots.empty()) {
 			FinishCommand();
 			return;
 		}
@@ -733,29 +737,32 @@ void CTransportCAI::UnloadDrop(Command& c)
 			lastDropPos = pos;
 		}
 
-		if (CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
+		CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
+		CUnit* transportee = (transportees.front()).unit;
 
+		if (am != NULL) {
 			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
-			CUnit* unit = static_cast<CTransportUnit*>(owner)->GetTransportedUnits().front().unit;
 			am->maxDrift = 1;
 
 			// if near target or have past it accidentally- drop unit
 			if (owner->pos.SqDistance2D(pos) < 1600 || (((pos - owner->pos).Normalize()).SqDistance(owner->frontdir.Normalize()) > 0.25 && owner->pos.SqDistance2D(pos)< (205*205))) {
 				am->dontLand = true;
-				owner->script->EndTransport(); // test
-				static_cast<CTransportUnit*>(owner)->DetachUnitFromAir(unit, pos);
+
+				owner->script->EndTransport();
+				transport->DetachUnitFromAir(transportee, pos);
+
 				dropSpots.pop_back();
 
 				if (dropSpots.empty()) {
-					float3 fix = owner->pos + owner->frontdir * 200;
-					SetGoal(fix, owner->pos); // move the transport away after last drop
+					SetGoal(owner->pos + owner->frontdir * 200, owner->pos); // move the transport away after last drop
 				}
+
 				FinishCommand();
 			}
 		} else {
 			inCommand = true;
 			StopMove();
-			owner->script->TransportDrop(static_cast<CTransportUnit*>(owner)->GetTransportedUnits().front().unit, pos);
+			owner->script->TransportDrop(transportee, pos);
 		}
 	}
 }
