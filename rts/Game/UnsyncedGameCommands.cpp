@@ -1593,7 +1593,7 @@ public:
 
 	static bool IsMTEnabled() {
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		// XXX does this make sense? why would we need a random 2 of these 3?
+		// find out if most of the MT stuff is on or off so we can toggle based on that
 		return
 				((gd->multiThreadDrawGround ? 1 : 0)
 				+ (unitDrawer->multiThreadDrawUnit ? 1 : 0)
@@ -1606,20 +1606,21 @@ public:
 
 class MultiThreadSimActionExecutor : public IUnsyncedActionExecutor {
 public:
-	MultiThreadSimActionExecutor() : IUnsyncedActionExecutor("MultiThreadSim",
-			"Enable/Disable simulation multi threading") {} // FIXME misleading description
+	MultiThreadSimActionExecutor(bool inv = false) : IUnsyncedActionExecutor("MultiThreadSim",
+			"Enable/Disable separate simulation thread"), inverse(inv) {}
 
+	bool inverse;
 	bool Execute(const UnsyncedAction& action) const {
 
 #	if GML_ENABLE_SIM
-		const bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
+		bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
 
 		// HACK GetInnerAction() should not be used here
-		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? mtEnabled : GML::MultiThreadSim();
+		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? ((inverse && action.GetArgs().empty()) ? !mtEnabled : mtEnabled) : GML::MultiThreadSim();
 		SetBoolArg(mtSim, action.GetArgs());
 		GML::MultiThreadSim(mtSim);
 
-		LogSystemStatus("Simulation threading", GML::MultiThreadSim());
+		LogSystemStatus("Separate simulation thread", GML::MultiThreadSim());
 #	endif // GML_ENABLE_SIM
 		return true;
 	}
@@ -1631,7 +1632,7 @@ class MultiThreadActionExecutor : public SequentialActionExecutor {
 public:
 	MultiThreadActionExecutor() : SequentialActionExecutor("MultiThread") {
 		AddExecutor(new MultiThreadDrawActionExecutor());
-		AddExecutor(new MultiThreadSimActionExecutor());
+		AddExecutor(new MultiThreadSimActionExecutor(true));
 	}
 };
 #endif // USE_GML
