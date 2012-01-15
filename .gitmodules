@@ -15,4 +15,4 @@
 	url = git://github.com/Kaylewt/KAIK.git
 [submodule "tools/unitsync/python"]
 	path = tools/unitsync/python
-	url = https://github.com/spring/pyunitsync
+	url = git://github.com/spring/pyunitsync.git
