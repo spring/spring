@@ -130,6 +130,8 @@
 
 
 	<target name="compile" depends="generate-src">
+		<copy file="${spring.ai.interface.src.generated.dir}/${java.pkg.dir}/Enumerations.java" todir="${src.generated.java}/${java.pkg.oo.dir}"/>
+		<replace file="${src.generated.java}/${java.pkg.oo.dir}/Enumerations.java" token="com.springrts.ai;" value="com.springrts.ai.oo;"/>
 		<javac destdir="${classes.dir}">
 			<src refid="source.path.id"/>
 			<classpath refid="class.path.id"/>

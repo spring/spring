@@ -148,10 +148,29 @@
 
 			<arg value="${spring.ai.interface.home}/AISEvents.h"/>
 		</exec>
+    </target>
+
+
+	<target name="generate-src-commands" depends="generate-init">
+		<exec dir="${bin.dir}" executable="${awk.bin}"
+				failonerror="true" resolveexecutable="true" searchpath="true">
+			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src.java}"/>
+			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
+			<arg value="-v"/><arg value="NATIVE_GENERATED_SOURCE_DIR=${src.generated.native}"/>
+			<arg value="-v"/><arg value="JAVA_GENERATED_SOURCE_DIR=${src.generated.java}"/>
+
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
+
+			<arg value="-f"/><arg value="jni_wrappCommands.awk"/>
+
+			<arg value="${spring.ai.interface.home}/AISCommands.h"/>
+		</exec>
 	</target>
 
 	<target name="generate-src"
-			depends="generate-src-events, generate-src-callback"/>
+			depends="generate-src-events, generate-src-callback, generate-src-commands"/>
 
 
 	<target name="compile" depends="generate-src">
