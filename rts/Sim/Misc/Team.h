@@ -90,6 +90,12 @@ public:
 	float metalReceived;
 	float energySent;
 	float energyReceived;
+	float prevMetalSent;
+	float prevMetalReceived;
+	float prevMetalExcess;
+	float prevEnergySent;
+	float prevEnergyReceived;
+	float prevEnergyExcess;
 
 	int nextHistoryEntry;
 	TeamStatistics* currentStats;
