@@ -9,6 +9,7 @@
  * Defines the size of 1 heightmap square as 8 elmos.
  */
 const int SQUARE_SIZE = 8;
+const float SQUARE_SIZE_RECIPROCAL = 1.0f / SQUARE_SIZE;
 
 /**
  * conversion factor from elmos to meters
