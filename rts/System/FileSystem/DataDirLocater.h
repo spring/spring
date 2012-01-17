@@ -151,6 +151,11 @@ public:
 private:
 
 	/**
+	 * @brief reads envvar to detect if we should run in isolated mode
+	 */
+	void UpdateIsolationModeByEnvVar();
+
+	/**
 	 * Adds either the CWD "./", its parent dir "../" or none of the two as a
 	 * data dir.
 	 * If ../ seems to be a multi-version data-dir, it is added.

@@ -49,10 +49,19 @@ DataDirLocater::DataDirLocater()
 	: isolationMode(false)
 	, writeDir(NULL)
 {
+	UpdateIsolationModeByEnvVar();
+}
+
+
+void DataDirLocater::UpdateIsolationModeByEnvVar()
+{
+	isolationMode = false;
+	isolationModeDir = "";
+
 	const char* const envIsolation = getenv("SPRING_ISOLATED");
 	if (envIsolation != NULL) {
 		isolationMode = true;
-		if (FileSystem::DirExists(envIsolation)) {
+		if (FileSystem::DirExists(SubstEnvVars(envIsolation))) {
 			isolationModeDir = envIsolation;
 		}
 	}
