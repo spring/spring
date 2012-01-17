@@ -17,21 +17,21 @@
 
 static inline float InterpolateHeight(float x, float y, const float* heightmap)
 {
-	//! NOTE:
-	//! This isn't a bilinear interpolation. Instead it interpolates
-	//! on the 2 triangles that form the ground quad:
-	//!
-	//! TL __________ TR
-	//!    |        /|
-	//!    | dx+dy / |
-	//!    | \<1  /  |
-	//!    |     /   |
-	//!    |    /    |
-	//!    |   /     |
-	//!    |  / dx+dy|
-	//!    | /  \>=1 |
-	//!    |/        |
-	//! BL ---------- BR
+	// NOTE:
+	// This isn't a bilinear interpolation. Instead it interpolates
+	// on the 2 triangles that form the ground quad:
+	//
+	// TL __________ TR
+	//    |        /|
+	//    | dx+dy / |
+	//    | \<1  /  |
+	//    |     /   |
+	//    |    /    |
+	//    |   /     |
+	//    |  / dx+dy|
+	//    | /  \>=1 |
+	//    |/        |
+	// BL ---------- BR
 
 	x = Clamp(x, 0.f, float3::maxxpos) / SQUARE_SIZE;
 	y = Clamp(y, 0.f, float3::maxzpos) / SQUARE_SIZE;
@@ -43,17 +43,17 @@ static inline float InterpolateHeight(float x, float y, const float* heightmap)
 	const int hs = isx + isy * gs->mapxp1;
 
 	if (dx + dy < 1.0f) {
-		//! top left triangle
-		const float h00 = heightmap[hs                     ];
-		const float h10 = heightmap[hs + 1                 ];
+		// top left triangle
+		const float h00 = heightmap[hs                 ];
+		const float h10 = heightmap[hs + 1             ];
 		const float h01 = heightmap[hs     + gs->mapxp1];
 		const float xdif = (dx) * (h10 - h00);
 		const float ydif = (dy) * (h01 - h00);
 
 		return h00 + xdif + ydif;
 	} else {
-		//! bottom right triangle
-		const float h10 = heightmap[hs + 1                 ];
+		// bottom right triangle
+		const float h10 = heightmap[hs + 1             ];
 		const float h11 = heightmap[hs + 1 + gs->mapxp1];
 		const float h01 = heightmap[hs     + gs->mapxp1];
 		const float xdif = (1.0f - dx) * (h01 - h11);
@@ -67,12 +67,12 @@ static inline float InterpolateHeight(float x, float y, const float* heightmap)
 
 
 static inline float LineGroundSquareCol(
-	const float* heightmap,
-	const float3* normalmap,
+	const float*& heightmap,
+	const float3*& normalmap,
 	const float3& from,
 	const float3& to,
-	int xs,
-	int ys)
+	const int& xs,
+	const int& ys)
 {
 	if ((xs < 0) || (ys < 0) || (xs >= gs->mapxm1) || (ys >= gs->mapym1))
 		return -1.0f;
