@@ -203,6 +203,8 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 	// ray, hence we save the distance along it that got skipped
 	ClampLineInMap(from, to);
 
+//	const float3 dir = (to - from).SafeNormalize();
+
 	const float skippedDist = (pfrom - from).Length();
 	const float dx = to.x - from.x;
 	const float dz = to.z - from.z;
@@ -213,114 +215,104 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 	const float* hm  = readmap->GetCornerHeightMap(synced);
 	const float3* nm = readmap->GetFaceNormals(synced);
 
-	const int fsx = int(from.x / SQUARE_SIZE); // a>=0: int(a):=floor(a)
-	const int fsz = int(from.z / SQUARE_SIZE);
-	const int tsx = int(to.x / SQUARE_SIZE);
-	const int tsz = int(to.z / SQUARE_SIZE);
-
-	if ((fsx == tsx) && (fsz == tsz)) {
+	if ((floor(from.x / SQUARE_SIZE) == floor(to.x / SQUARE_SIZE)) && (floor(from.z / SQUARE_SIZE) == floor(to.z / SQUARE_SIZE))) {
 		// <from> and <to> are the same
-		ret = LineGroundSquareCol(hm, nm,  from, to,  fsx, fsz);
+		ret = LineGroundSquareCol(hm, nm,  from, to,  floor(from.x / SQUARE_SIZE), floor(from.z / SQUARE_SIZE));
 
 		if (ret >= 0.0f) {
 			return ret;
 		}
-	} else if (fsx == tsx) {
+	} else if (floor(from.x / SQUARE_SIZE) == floor(to.x / SQUARE_SIZE)) {
 		// ray is parallel to z-axis
-		int zp = fsz;
+		float zp = from.z / SQUARE_SIZE;
+		int xp = floor(from.x / SQUARE_SIZE);
 
 		while (keepgoing) {
-			ret = LineGroundSquareCol(hm, nm,  from, to,  fsx, zp);
+			ret = LineGroundSquareCol(hm, nm,  from, to,  xp, floor(zp));
 
 			if (ret >= 0.0f) {
 				return ret + skippedDist;
 			}
 
-			keepgoing = (zp != tsz);
+			keepgoing = (fabs(zp * SQUARE_SIZE - from.z) < fabs(dz));
 
 			if (dz > 0)
-				zp++;
+				zp += 1.0f;
 			else
-				zp--;
+				zp -= 1.0f;
 		}
-	} else if (fsz == tsz) {
+	} else if (floor(from.z / SQUARE_SIZE) == floor(to.z / SQUARE_SIZE)) {
 		// ray is parallel to x-axis
-		int xp = fsx;
+		float xp = from.x / SQUARE_SIZE;
+		int zp = floor(from.z / SQUARE_SIZE);
 
 		while (keepgoing) {
-			ret = LineGroundSquareCol(hm, nm,  from, to,  xp, fsz);
+			ret = LineGroundSquareCol(hm, nm,  from, to,  floor(xp), zp);
 
 			if (ret >= 0.0f) {
 				return ret + skippedDist;
 			}
 
-			keepgoing = (xp != tsx);
+			keepgoing = (fabs(xp * SQUARE_SIZE - from.x) < fabs(dx));
 
 			if (dx > 0.0f)
-				xp++;
+				xp += 1.0f;
 			else
-				xp--;
+				xp -= 1.0f;
 		}
 	} else {
 		// general case
-		assert(fabs(dx)>0);
-		assert(fabs(dz)>0);
-		const float rdx = 1.0f / dx;
-		const float rdz = 1.0f / dz;
-
-		float pos_relative = 0.0f;
-		int lastxs = -1, lastzs = -1;
+		float xp = from.x;
+		float zp = from.z;
 
 		while (keepgoing) {
-			// Get next square to check for collision
-			int xs, zs;
-			do {
-				const float xp = from.x + pos_relative * dx;
-				const float zp = from.z + pos_relative * dz;
+			float xn, zn;
+			float xs, zs;
 
-				// current square
-				xs = int(xp * SQUARE_SIZE_RECIPROCAL);
-				zs = int(zp * SQUARE_SIZE_RECIPROCAL);
-
-				keepgoing = (xs != tsx && zs != tsz);
-				if (!keepgoing)
-					 break;
-
-				// calculate the `step` needed to reach the next x-/z-square
-				float xn, zn;
-				if (dx > 0.0f) {
-					xn = (xs * SQUARE_SIZE + SQUARE_SIZE - from.x) * rdx;
-				} else {
-					xn = (xs * SQUARE_SIZE - SQUARE_SIZE - from.x) * rdx;
-				}
-				if (dz > 0.0f) {
-					zn = (zs * SQUARE_SIZE + SQUARE_SIZE - from.z) * rdz;
-				} else {
-					zn = (zs * SQUARE_SIZE - SQUARE_SIZE - from.z) * rdz;
-				}
-
-				// xn and zn are always positive, minus signs are divided out above
-				assert((xn>0) || (zn>0));
-
-				// go either a step into x and/or z direction depending on which is more near
-				if (xn < zn) {
-					assert(pos_relative < xn);
-					pos_relative = xn;
-				} else {
-					assert(pos_relative < zn);
-					pos_relative = zn;
-				}
-			} while (lastxs == xs && lastzs == zs);
-
-			assert(lastxs != xs || lastzs != zs); // we don't want to check squares twice
-			assert((lastxs < 0) || (lastzs < 0) || ((xs - lastxs <= 1) && (zs - lastzs <= 1))); // check if we skipped a square
-			lastxs = xs;
-			lastzs = zs;
+			// Push value just over the edge of the square
+			// This is the best accuracy we can get with floats:
+			// add one digit and (xp*constant) reduces to xp itself
+			// This accuracy means that at (16384,16384) (lower right of 32x32 map)
+			// 1 in every 1/(16384*1e-7f/8)=4883 clicks on the map will be ignored.
+			if (dx > 0.0f) xs = floor(xp * 1.0000001f / SQUARE_SIZE);
+			else           xs = floor(xp * 0.9999999f / SQUARE_SIZE);
+			if (dz > 0.0f) zs = floor(zp * 1.0000001f / SQUARE_SIZE);
+			else           zs = floor(zp * 0.9999999f / SQUARE_SIZE);
 
 			ret = LineGroundSquareCol(hm, nm,  from, to,  xs, zs);
 
 			if (ret >= 0.0f) {
 				return ret + skippedDist;
+			}
+
+			keepgoing =
+				(fabs(xp - from.x) < fabs(dx)) &&
+				(fabs(zp - from.z) < fabs(dz));
+
+			if (dx > 0.0f) {
+				// distance xp to right edge of square (xs,zs) divided by dx, xp += xn*dx puts xp on the right edge
+				xn = (xs * SQUARE_SIZE + SQUARE_SIZE - xp) / dx;
+			} else {
+				// distance xp to left edge of square (xs,zs) divided by dx, xp += xn*dx puts xp on the left edge
+				xn = (xs * SQUARE_SIZE - xp) / dx;
+			}
+
+			if (dz > 0.0f) {
+				// distance zp to bottom edge of square (xs,zs) divided by dz, zp += zn*dz puts zp on the bottom edge
+				zn = (zs * SQUARE_SIZE + SQUARE_SIZE - zp) / dz;
+			} else {
+				// distance zp to top edge of square (xs,zs) divided by dz, zp += zn*dz puts zp on the top edge
+				zn = (zs * SQUARE_SIZE - zp) / dz;
+			}
+			// xn and zn are always positive, minus signs are divided out above
+
+			// this puts (xp,zp) exactly on the first edge you see if you look from (xp,zp) in the (dx,dz) direction
+			if (xn < zn) {
+				xp += xn * dx;
+				zp += xn * dz;
+			} else {
+				xp += zn * dx;
+				zp += zn * dz;
 			}
 		}
 	}
