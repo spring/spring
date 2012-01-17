@@ -1,11 +1,18 @@
 Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 
--- 85.1 ---------------------------------------------------------
+-- 86.0 ---------------------------------------------------------
 Changes:
- - fixed Intel GPU detection under Windows
- - IsolationMode: scan ENV{SPRING_DATADIR} & config's SpringData as readonly datadirs FIXME document IsolationMode in man-page?
+ - using now OS functions to expand special paths in spring's include dirs (config's SpringData, ENV{SPRING_DATADIR}, ...)
+  ! Windows: now uses windows syntax ("$HOME/foo/bar" is now "%HOME%/foo/bar") (see msdn's ExpandEnvironmentStrings documentation)
+  - Linux: now supports full bash path syntax ("~/", "${HOME}/.spring/", "/foo/../bar/", etc.) (see manpage of wordexp)
+ - IsolationMode: scan ENV{SPRING_DATADIR} & config's SpringData as readonly datadirs
  - added a new commandline argument "--safemode". It turns off all features that are known to cause problems on some system.
+
+Bugfixes:
+ - fixed Intel GPU detection under Windows
+ - fixed handling of duplicated used hotkeys (i.e. unit groups & specteam switching)
+
 
 -- 85.0 ---------------------------------------------------------
 Major Changes:
