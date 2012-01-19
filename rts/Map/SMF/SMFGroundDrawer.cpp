@@ -173,7 +173,7 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 			smfShaderCurGLSL = smfShaderDefGLSL;
 
 			std::string extraDefs;
-				extraDefs += (smfMap->HaveSpecularLighting())?
+				extraDefs += (smfMap->HaveSpecularTexture())?
 					"#define SMF_ARB_LIGHTING 0\n":
 					"#define SMF_ARB_LIGHTING 1\n";
 				extraDefs += (smfMap->HaveSplatTexture())?
@@ -191,6 +191,9 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 				extraDefs += (smfMap->GetLightEmissionTexture() != 0)?
 					"#define SMF_LIGHT_EMISSION 1\n":
 					"#define SMF_LIGHT_EMISSION 0\n";
+				extraDefs += (smfMap->GetParallaxHeightTexture() != 0)?
+					"#define SMF_PARALLAX_MAPPING 1\n":
+					"#define SMF_PARALLAX_MAPPING 0\n";
 				extraDefs +=
 					("#define BASE_DYNAMIC_MAP_LIGHT " + IntToString(lightHandler.GetBaseLight()) + "\n") +
 					("#define MAX_DYNAMIC_MAP_LIGHTS " + IntToString(lightHandler.GetMaxLights()) + "\n");
@@ -218,7 +221,7 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniformLocation("mapSizePO2");          // idx  5
 				smfShaders[i]->SetUniformLocation("mapSize");             // idx  6
 				smfShaders[i]->SetUniformLocation("texSquare");           // idx  7
-				smfShaders[i]->SetUniformLocation("$UNUSED$");            // idx  8
+				smfShaders[i]->SetUniformLocation("mapHeights");          // idx  8
 				smfShaders[i]->SetUniformLocation("lightDir");            // idx  9
 				smfShaders[i]->SetUniformLocation("cameraPos");           // idx 10
 				smfShaders[i]->SetUniformLocation("$UNUSED$");            // idx 11
@@ -239,9 +242,10 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniformLocation("skyReflectModTex");    // idx 26
 				smfShaders[i]->SetUniformLocation("detailNormalTex");     // idx 27
 				smfShaders[i]->SetUniformLocation("lightEmissionTex");    // idx 28
-				smfShaders[i]->SetUniformLocation("numMapDynLights");     // idx 29
-				smfShaders[i]->SetUniformLocation("normalTexGen");        // idx 30
-				smfShaders[i]->SetUniformLocation("specularTexGen");      // idx 31
+				smfShaders[i]->SetUniformLocation("parallaxHeightTex");   // idx 29
+				smfShaders[i]->SetUniformLocation("numMapDynLights");     // idx 30
+				smfShaders[i]->SetUniformLocation("normalTexGen");        // idx 31
+				smfShaders[i]->SetUniformLocation("specularTexGen");      // idx 32
 
 				smfShaders[i]->Enable();
 				smfShaders[i]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -267,9 +271,10 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniform1i(26, 10); // skyReflectModTex (idx 26, texunit 10)
 				smfShaders[i]->SetUniform1i(27, 11); // detailNormalTex (idx 27, texunit 11)
 				smfShaders[i]->SetUniform1i(28, 12); // lightEmisionTex (idx 28, texunit 12)
-				smfShaders[i]->SetUniform1i(29,  0); // numMapDynLights (unused)
-				smfShaders[i]->SetUniform2f(30, 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
-				smfShaders[i]->SetUniform2f(31, 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
+				smfShaders[i]->SetUniform1i(29, 13); // parallaxHeightTex (idx 29, texunit 13)
+				smfShaders[i]->SetUniform1i(30,  0); // numMapDynLights (unused)
+				smfShaders[i]->SetUniform2f(31, 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
+				smfShaders[i]->SetUniform2f(32, 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
 				smfShaders[i]->Disable();
 				smfShaders[i]->Validate();
 			}
@@ -540,6 +545,7 @@ void CSMFGroundDrawer::SetupTextureUnits(bool drawReflection)
 
 			if (smfShaderCurGLSL != NULL) {
 				smfShaderCurGLSL->Enable();
+				smfShaderCurGLSL->SetUniform2f(8, readmap->currMinHeight, readmap->currMaxHeight);
 				smfShaderCurGLSL->SetUniform3fv(10, &camera->pos[0]);
 				smfShaderCurGLSL->SetUniformMatrix4fv(12, false, shadowHandler->shadowMatrix);
 				smfShaderCurGLSL->SetUniform4fv(13, &(shadowHandler->GetShadowParams().x));
@@ -557,6 +563,7 @@ void CSMFGroundDrawer::SetupTextureUnits(bool drawReflection)
 				glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, smfMap->GetSkyReflectModTexture());
 				glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailNormalTexture());
 				glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, smfMap->GetLightEmissionTexture());
+				glActiveTexture(GL_TEXTURE13); glBindTexture(GL_TEXTURE_2D, smfMap->GetParallaxHeightTexture());
 
 				// setup for shadow2DProj
 				glActiveTexture(GL_TEXTURE4);
@@ -692,6 +699,7 @@ void CSMFGroundDrawer::ResetTextureUnits(bool drawReflection)
 		glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE13); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE0);
 
 		if (smfShaderCurGLSL != NULL) {

@@ -97,26 +97,28 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 
 
-	haveSpecularLighting = !(mapInfo->smf.specularTexName.empty());
+	haveSpecularTexture = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 
 
-	detailTex        = 0;
-	shadingTex       = 0;
-	normalsTex       = 0;
-	minimapTex       = 0;
-	specularTex      = 0;
-	splatDetailTex   = 0;
-	splatDistrTex    = 0;
-	skyReflectModTex = 0;
-	detailNormalTex  = 0;
-	lightEmissionTex = 0;
+	detailTex         = 0;
+	shadingTex        = 0;
+	normalsTex        = 0;
+	minimapTex        = 0;
+	specularTex       = 0;
+	splatDetailTex    = 0;
+	splatDistrTex     = 0;
+	skyReflectModTex  = 0;
+	detailNormalTex   = 0;
+	lightEmissionTex  = 0;
+	parallaxHeightTex = 0;
 
-	if (haveSpecularLighting) {
+	if (haveSpecularTexture) {
 		CBitmap specularTexBM;
 		CBitmap skyReflectModTexBM;
 		CBitmap detailNormalTexBM;
 		CBitmap lightEmissionTexBM;
+		CBitmap parallaxHeightTexBM;
 
 		if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 			// maps wants specular lighting, but no moderation
@@ -133,7 +135,8 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 		if (haveSplatTexture) {
 			CBitmap splatDistrTexBM;
 			CBitmap splatDetailTexBM;
-			// if the map supplies an intensity- and a distribution-texture for
+
+			// if the map supplies an intensity- AND a distribution-texture for
 			// detail-splat blending, the regular detail-texture is not used
 			if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
 				// default detail-texture should be all-grey
@@ -169,6 +172,10 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 		if (lightEmissionTexBM.Load(mapInfo->smf.lightEmissionTexName)) {
 			lightEmissionTex = lightEmissionTexBM.CreateTexture(false);
+		}
+
+		if (parallaxHeightTexBM.Load(mapInfo->smf.parallaxHeightTexName)) {
+			parallaxHeightTex = parallaxHeightTexBM.CreateTexture(false);
 		}
 	}
 
@@ -276,17 +283,18 @@ CSMFReadMap::~CSMFReadMap()
 {
 	delete groundDrawer;
 
-	glDeleteTextures(1, &detailTex       );
-	glDeleteTextures(1, &specularTex     );
-	glDeleteTextures(1, &minimapTex      );
-	glDeleteTextures(1, &shadingTex      );
-	glDeleteTextures(1, &normalsTex      );
-	glDeleteTextures(1, &splatDetailTex  );
-	glDeleteTextures(1, &splatDistrTex   );
-	glDeleteTextures(1, &grassShadingTex );
-	glDeleteTextures(1, &skyReflectModTex);
-	glDeleteTextures(1, &detailNormalTex );
-	glDeleteTextures(1, &lightEmissionTex);
+	glDeleteTextures(1, &detailTex        );
+	glDeleteTextures(1, &specularTex      );
+	glDeleteTextures(1, &minimapTex       );
+	glDeleteTextures(1, &shadingTex       );
+	glDeleteTextures(1, &normalsTex       );
+	glDeleteTextures(1, &splatDetailTex   );
+	glDeleteTextures(1, &splatDistrTex    );
+	glDeleteTextures(1, &grassShadingTex  );
+	glDeleteTextures(1, &skyReflectModTex );
+	glDeleteTextures(1, &detailNormalTex  );
+	glDeleteTextures(1, &lightEmissionTex );
+	glDeleteTextures(1, &parallaxHeightTex);
 }
 
 

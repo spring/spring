@@ -41,6 +41,7 @@ public:
 	unsigned int GetSkyReflectModTexture() const { return skyReflectModTex; }
 	unsigned int GetDetailNormalTexture() const { return detailNormalTex; }
 	unsigned int GetLightEmissionTexture() const { return lightEmissionTex; }
+	unsigned int GetParallaxHeightTexture() const { return parallaxHeightTex; }
 
 	void DrawMinimap() const;
 	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
@@ -66,7 +67,7 @@ public:
 	void ConfigureAnisotropy();
 	float GetAnisotropy() const { return anisotropy; }
 
-	bool HaveSpecularLighting() const { return haveSpecularLighting; }
+	bool HaveSpecularTexture() const { return haveSpecularTexture; }
 	bool HaveSplatTexture() const { return haveSplatTexture; }
 
 private:
@@ -101,19 +102,20 @@ public:
 protected:
 	CSMFMapFile file;
 
-	unsigned int detailTex;        // supplied by the map
-	unsigned int specularTex;      // supplied by the map, moderates specular contribution
-	unsigned int shadingTex;       // holds precomputed dot(lightDir, vertexNormal) values
-	unsigned int normalsTex;       // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
-	unsigned int minimapTex;       // supplied by the map
-	unsigned int splatDetailTex;   // contains per-channel separate greyscale detail-textures (overrides detailTex)
-	unsigned int splatDistrTex;    // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
-	unsigned int grassShadingTex;  // specifies grass-blade modulation color (defaults to minimapTex)
-	unsigned int skyReflectModTex; // modulates sky-reflection RGB intensities (must be the same size as specularTex)
-	unsigned int detailNormalTex;  // tangent-space offset normals
+	unsigned int detailTex;         // supplied by the map
+	unsigned int specularTex;       // supplied by the map, moderates specular contribution
+	unsigned int shadingTex;        // holds precomputed dot(lightDir, vertexNormal) values
+	unsigned int normalsTex;        // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
+	unsigned int minimapTex;        // supplied by the map
+	unsigned int splatDetailTex;    // contains per-channel separate greyscale detail-textures (overrides detailTex)
+	unsigned int splatDistrTex;     // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
+	unsigned int grassShadingTex;   // specifies grass-blade modulation color (defaults to minimapTex)
+	unsigned int skyReflectModTex;  // modulates sky-reflection RGB intensities (must be the same size as specularTex)
+	unsigned int detailNormalTex;   // tangent-space offset normals
 	unsigned int lightEmissionTex;
+	unsigned int parallaxHeightTex;
 
-	bool haveSpecularLighting;
+	bool haveSpecularTexture;
 	bool haveSplatTexture;
 
 	unsigned char waterHeightColors[1024 * 4];
