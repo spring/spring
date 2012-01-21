@@ -89,7 +89,7 @@ do
 	manFile_src=${BUILD_DIR}/spring.6.txt
 
 	# strip off the extension
-	manFile="${BUILD_DIR}/${binary}"
+	manFile="${BUILD_DIR}/${binary}.6"
 	manFile_xml=${manFile}.xml
 	manFile_man=${manFile}
 	manFile_cmp=${manFile}.gz
