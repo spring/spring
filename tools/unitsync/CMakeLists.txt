@@ -84,6 +84,9 @@ set(unitsync_files
 	${CMAKE_CURRENT_SOURCE_DIR}/Syncer.cpp
 	)
 
+# HACK unitsync should actually be MODULE (not SHARED),
+#   but the python bindings need it as SHARED,
+#   to be able to link to it
 ADD_LIBRARY(unitsync SHARED ${unitsync_files})
 Add_Dependencies(unitsync generateVersionFiles)
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
@@ -95,7 +98,7 @@ FixLibName(unitsync)
 install (TARGETS unitsync DESTINATION ${LIBDIR})
 
 Add_Subdirectory(test)
-if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/python" )
-	#only add this if the submodule is present
+If     (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/python/CMakeLists.txt" )
+	# only add this if the submodule is present
 	Add_Subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/python")
-endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/python")
+EndIf  (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/python/CMakeLists.txt")
