@@ -124,20 +124,18 @@ bool CScriptMoveType::Update()
 	owner->speed = vel;
 
 	if (extrapolate) {
-		// quadratic drag does not work well here
-		// NOTE: also affects speed gained through gravity
-		vel *= (1.0f - drag);
-
 		if (useRelVel) {
-			// add the speed terms relative to the unit (if any)
-			vel += (owner->frontdir *  relVel.z);
-			vel += (owner->updir    *  relVel.y);
-			vel += (owner->rightdir * -relVel.x); // x is left
+			// apply the speed terms relative to the unit (if any)
+			owner->Move3D(owner->frontdir *  relVel.z, true);
+			owner->Move3D(owner->updir    *  relVel.y, true);
+			owner->Move3D(owner->rightdir * -relVel.x, true); // x is left
 		}
 
-		// NOTE: strong wind plus low gravity can cause substantial position drift
+		// NOTE: strong wind plus low gravity can cause substantial drift
 		vel.y += (mapInfo->map.gravity * gravityFactor);
 		vel += (wind.GetCurrentWind() * windFactor);
+		// quadratic drag does not work well here
+		vel *= (1.0f - drag);
 
 		owner->Move3D(vel, true);
 	}
