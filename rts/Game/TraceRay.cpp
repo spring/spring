@@ -225,6 +225,9 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 		return -1.0f;
 	}
 
+	float origlength = length;
+	float length2 = length;
+
 	bool hover_factory = false;
 	CollisionQuery cq;
 
@@ -262,25 +265,22 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 						cv.Init(unit->iconRadius);
 					}
 
-					if (CCollisionHandler::MouseHit(unit, start, start + dir * length, &cv, &cq)) {
+					if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {
 						//! get the distance to the ray-volume ingress point
 						const float3& intPos = (cq.b0)? cq.p0 : cq.p1;
 						const float len = (intPos - start).dot(dir); //! same as (intPos - start).Length()
 						const bool isfactory = dynamic_cast<CFactory*>(unit);
+						const float3& intPos2 = (cq.b0 && cq.b1) ? cq.p1 : cq.p0;
+						const float len2 = (intPos2 - start).dot(dir); //! same as (intPos2 - start).Length()
 
-						if (len < length) {
-							if (!isfactory || !hitUnit || hover_factory) {
+						if (!hitUnit || //! give an unit in a factory a higher priority than the factory itself
+							(isfactory && ((hover_factory && len < length) || (!hover_factory && len2 < length))) ||
+							(!isfactory && ((hover_factory && len < length2) || (!hover_factory && len < length)))) {
 								hover_factory = isfactory;
 								length = len;
+								length2 = len2;
 								hitUnit = unit;
 								hitFeature = NULL;
-							}
-						} else if (!isfactory && hover_factory) { // FIXME still check if the unit is BEHIND (and not IN) the factory!
-							//! give an unit in a factory a higher priority than the factory itself
-							hover_factory = isfactory;
-							length = len;
-							hitUnit = unit;
-							hitFeature = NULL;
 						}
 					}
 				}
@@ -303,18 +303,13 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 					continue;
 				}
 
-				if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
+				if (CCollisionHandler::DetectHit(f, start, start + dir * origlength, &cq, true)) {
 					const float3& intPos = (cq.b0)? cq.p0 : cq.p1;
 					const float len = (intPos - start).dot(dir); //! same as (intPos - start).Length()
 
 					//! we want the closest feature (intersection point) on the ray
-					if (len < length) {
-						hover_factory = false;
-						length = len;
-						hitFeature = f;
-						hitUnit = NULL;
-					} else if (hover_factory) { // FIXME still check if the unit is BEHIND (and not IN) the factory!
-						//! give features in a factory a higher priority than the factory itself
+					if (!hitUnit || //! give features in a factory a higher priority than the factory itself
+						((hover_factory && len < length2) || (!hover_factory && len < length))) {
 						hover_factory = false;
 						length = len;
 						hitFeature = f;
@@ -326,7 +321,7 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 	}
 
 	//! ground intersection
-	float groundLen = ground->LineGroundCol(start, start + dir * length, false);
+	float groundLen = ground->LineGroundCol(start, start + dir * origlength, false);
 	if (groundLen > 0.0f) {
 		if ((groundLen + 200.0f) < length) {
 			length     = groundLen;
