@@ -78,6 +78,7 @@ class CLuaRules : public CLuaHandleSynced
 		// unsynced
 		bool DrawUnit(int unitID);
 		bool DrawFeature(int featureID);
+		bool DrawShield(int unitID, int weaponID);
 
 	private:
 		CLuaRules();
@@ -113,6 +114,7 @@ class CLuaRules : public CLuaHandleSynced
 
 		bool haveDrawUnit;
 		bool haveDrawFeature;
+		bool haveDrawShield;
 
 	private:
 		static const int* currentCobArgs;

@@ -92,7 +92,6 @@ CProjectileHandler::CProjectileHandler()
 	currentNanoParticles   = 0;
 	particleSaturation     = 0.0f;
 	nanoParticleSaturation = 0.0f;
-	numPerlinProjectiles   = 0;
 
 	// preload some IDs
 	for (int i = 0; i < 16384; i++) {

@@ -79,7 +79,6 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/HeatCloudProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/MuzzleFlame.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/RepulseGfx.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/ShieldPartProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/SimpleParticleSystem.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/SmokeProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/SmokeProjectile2.cpp"

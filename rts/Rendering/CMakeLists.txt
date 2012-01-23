@@ -43,6 +43,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/IconHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/InMapDrawView.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LineDrawer.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/ShieldDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SmoothHeightMeshDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/3DModel.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/3DOParser.cpp"
