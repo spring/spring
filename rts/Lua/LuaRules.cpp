@@ -120,9 +120,11 @@ CLuaRules::CLuaRules()
 
 	haveDrawUnit    = HasCallIn(L, "DrawUnit");
 	haveDrawFeature = HasCallIn(L, "DrawFeature");
+	haveDrawShield  = HasCallIn(L, "DrawShield");
 
 	SetupUnsyncedFunction(L, "DrawUnit");
 	SetupUnsyncedFunction(L, "DrawFeature");
+	SetupUnsyncedFunction(L, "DrawShield");
 	SetupUnsyncedFunction(L, "RecvSkirmishAIMessage");
 
 	END_ITERATE_LUA_STATES();
@@ -209,6 +211,7 @@ bool CLuaRules::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 {
 	     if (name == "DrawUnit"   ) { haveDrawUnit    = HasCallIn(L, "DrawUnit"   ); }
 	else if (name == "DrawFeature") { haveDrawFeature = HasCallIn(L, "DrawFeature"); }
+	else if (name == "DrawShield" ) { haveDrawShield  = HasCallIn(L, "DrawShield" ); }
 
 	return CLuaHandleSynced::UnsyncedUpdateCallIn(L, name);
 }
@@ -899,25 +902,25 @@ bool CLuaRules::DrawUnit(int unitID)
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
+
 	static const LuaHashString cmdStr("DrawUnit");
+
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
 
-	const bool oldGLState = LuaOpenGL::IsDrawingEnabled();
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled();
 	LuaOpenGL::SetDrawingEnabled(true);
 
 	lua_pushnumber(L, unitID);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 2, 1);
-
-	LuaOpenGL::SetDrawingEnabled(oldGLState);
+	LuaOpenGL::SetDrawingEnabled(oldDrawState);
 
 	if (!success)
 		return false;
-
 	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", (cmdStr.GetString()).c_str(), lua_typename(L, lua_type(L, -1)));
 		lua_pop(L, 1);
 		return false;
 	}
@@ -934,25 +937,61 @@ bool CLuaRules::DrawFeature(int featureID)
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
+
 	static const LuaHashString cmdStr("DrawFeature");
+
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
 
-	const bool oldGLState = LuaOpenGL::IsDrawingEnabled();
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled();
 	LuaOpenGL::SetDrawingEnabled(true);
 
 	lua_pushnumber(L, featureID);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 2, 1);
-
-	LuaOpenGL::SetDrawingEnabled(oldGLState);
+	LuaOpenGL::SetDrawingEnabled(oldDrawState);
 
 	if (!success)
 		return false;
-
 	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", (cmdStr.GetString()).c_str(), lua_typename(L, lua_type(L, -1)));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+bool CLuaRules::DrawShield(int unitID, int weaponID)
+{
+	if (!haveDrawShield)
+		return false;
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
+
+	static const LuaHashString cmdStr("DrawShield");
+
+	if (!cmdStr.GetRegistryFunc(L))
+		return false;
+
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled();
+	LuaOpenGL::SetDrawingEnabled(true);
+
+	lua_pushnumber(L, unitID);
+	lua_pushnumber(L, weaponID);
+	lua_pushnumber(L, game->GetDrawMode());
+
+	const bool success = RunCallIn(cmdStr, 3, 1);
+	LuaOpenGL::SetDrawingEnabled(oldDrawState);
+
+	if (!success)
+		return false;
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", (cmdStr.GetString()).c_str(), lua_typename(L, lua_type(L, -1)));
 		lua_pop(L, 1);
 		return false;
 	}
