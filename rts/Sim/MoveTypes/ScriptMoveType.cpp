@@ -208,7 +208,7 @@ void CScriptMoveType::SetPhysics(const float3& pos,
 
 
 void CScriptMoveType::SetPosition(const float3& pos) { owner->pos = pos; }
-void CScriptMoveType::SetVelocity(const float3& _vel) { vel = _vel; }
+void CScriptMoveType::SetVelocity(const float3& _vel) { owner->speed = (vel = _vel); }
 
 
 
