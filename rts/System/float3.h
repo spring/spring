@@ -609,6 +609,8 @@ public:
 	 *
 	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
+	 * @deprecated  use ClampInMap instead, but see the note!
+	 * @see #ClampInMap
 	 */
 	void ClampInBounds();
 
