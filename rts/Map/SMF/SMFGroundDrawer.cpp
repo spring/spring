@@ -369,7 +369,8 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 
 inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	if (!drawWaterReflection) {
-		glCallList(camera->pos.IsInBounds()? waterPlaneCamInDispList: waterPlaneCamOutDispList);
+		const bool skipUnderground = (camera->pos.IsInBounds() && !mapInfo->map.voidWater);
+		glCallList(skipUnderground ? waterPlaneCamInDispList: waterPlaneCamOutDispList);
 	}
 }
 
