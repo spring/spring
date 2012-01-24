@@ -191,6 +191,23 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 }
 */
 
+inline static bool ClampInMapHeight(float3& from, float3& to)
+{
+	const float heightAboveMapMax = from.y - readmap->currMaxHeight;
+	if (heightAboveMapMax <= 0)
+		return false;
+
+	const float3 dir = (to - from);
+	if (dir.y > 0) {
+		// both `from` & `to` are above map's height
+		from = float3(-1.0f, -1.0f, -1.0f);
+		to   = float3(-1.0f, -1.0f, -1.0f);
+		return true;
+	}
+
+	from += dir * (-heightAboveMapMax / dir.y);
+	return true;
+}
 
 
 float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
@@ -199,6 +216,10 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 	const float3* nm = readmap->GetFaceNormals(synced);
 
 	const float3 pfrom = from;
+
+	// only for performance -> skip part that can impossibly collide
+	// with the terrain, cause it is above map's current max height
+	ClampInMapHeight(from, to);
 
 	// handle special cases where the ray origin is out of bounds:
 	// need to move <from> to the closest map-edge along the ray
