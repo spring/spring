@@ -332,6 +332,9 @@ void CUnit::SetEnergyStorage(float newStorage)
 
 void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& position, bool build)
 {
+	float3 posInMap = position;
+	posInMap.ClampInMap();
+
 	team = uTeam;
 	allyteam = teamHandler->AllyTeam(uTeam);
 
@@ -345,7 +348,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	modelParser->CreateLocalModel(this);
 
 	relMidPos = model->relMidPos;
-	mapSquare = ground->GetSquare(position.ClampInBounds());
+	mapSquare = ground->GetSquare(posInMap);
 
 	heading  = GetHeadingFromFacing(facing);
 	frontdir = GetVectorFromHeading(heading);
@@ -353,7 +356,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	rightdir = frontdir.cross(updir);
 	upright  = unitDef->upright;
 
-	Move3D(position.ClampInBounds(), false);
+	Move3D(posInMap, false);
 	SetRadiusAndHeight(model->radius, model->height);
 	UpdateDirVectors(!upright);
 	UpdateMidPos();

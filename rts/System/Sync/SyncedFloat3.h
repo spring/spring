@@ -570,14 +570,23 @@ public:
 		return (float)(dx*dx + dz*dz);
 	}
 
-	/// Check if this vector is in bounds without clamping x and z
-	bool IsInBounds() const;
-	/// Check if this vector is in bounds and clamp x and z if not
-	bool CheckInBounds();
 
-	SyncedFloat x; ///< x component
-	SyncedFloat y; ///< y component
-	SyncedFloat z; ///< z component
+	/**
+	 * @brief Check against FaceHeightmap bounds
+	 *
+	 * Check if this vector is in bounds [0 .. gs->mapxy-1]
+	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
+	 */
+	bool IsInBounds() const;
+
+	/**
+	 * @brief Clamps to FaceHeightmap
+	 *
+	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1]
+	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
+	 */
+	void ClampInBounds();
+
 
 	/**
 	 * @brief cast operator
@@ -585,6 +594,11 @@ public:
 	 * @return a float3 with the same x/y/z components as this float3
 	 */
 	operator float3() const { return float3(x, y, z); }
+
+public:
+	SyncedFloat x; ///< x component
+	SyncedFloat y; ///< y component
+	SyncedFloat z; ///< z component
 };
 
 #else // SYNCDEBUG || SYNCCHECK

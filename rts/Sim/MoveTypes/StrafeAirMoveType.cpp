@@ -844,7 +844,7 @@ void CStrafeAirMoveType::UpdateLanding()
 			owner->Deactivate();
 			owner->script->StopMoving();
 		} else {
-			goalPos.CheckInBounds();
+			goalPos.ClampInBounds();
 			UpdateFlying(wantedHeight, 1);
 			return;
 		}
@@ -940,7 +940,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 			engine = std::max(0.0f, std::min(engine, 1 - (pos.y - gHeight - wantedHeight * 1.2f) / wantedHeight));
 		}
 		// check next position given current (unadjusted) pos and speed
-		nextPosInBounds = (pos + speed).CheckInBounds();
+		nextPosInBounds = (pos + speed).IsInBounds();
 	}
 
 
@@ -1065,7 +1065,7 @@ float3 CStrafeAirMoveType::FindLandingPos() const
 		return ret;
 	}
 
-	tryPos.CheckInBounds();
+	tryPos.ClampInBounds();
 
 	const int2 mp = owner->GetMapPos(tryPos);
 

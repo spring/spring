@@ -548,7 +548,7 @@ void CHoverAirMoveType::UpdateLanding()
 		} else {
 			if (goalPos.SqDistance2D(pos) < 900) {
 				goalPos = goalPos + gs->randVector() * 300;
-				goalPos.CheckInBounds();
+				goalPos.ClampInBounds();
 				progressState = AMoveType::Failed; // exact landing pos failed, make sure finishcommand is called anyway
 			}
 			flyState = FLY_LANDING;
@@ -774,7 +774,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 		speed.y = speed.y * 0.95;
 	}
 
-	if (modInfo.allowAircraftToLeaveMap || (pos + speed).CheckInBounds()) {
+	if (modInfo.allowAircraftToLeaveMap || (pos + speed).IsInBounds()) {
 		owner->Move3D(speed, true);
 	}
 }

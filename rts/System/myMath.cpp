@@ -203,8 +203,8 @@ bool ClampLineInMap(float3& start, float3& end)
 		start = start + dir * std::max(near, 0.0f);
 
 		//! precision of near,far are limited, so better clamp it afterwards
-		end.CheckInBounds();
-		start.CheckInBounds();
+		end.ClampInBounds();
+		start.ClampInBounds();
 		return true;
 	}
 	return false;
@@ -228,7 +228,7 @@ bool ClampRayInMap(const float3& start, float3& end)
 		end = start + dir * std::min(far, 1.0f);
 
 		//! precision of near,far are limited, so better clamp it afterwards
-		end.CheckInBounds();
+		end.ClampInBounds();
 		return true;
 	}
 	return false;
