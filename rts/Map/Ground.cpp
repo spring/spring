@@ -74,7 +74,9 @@ static inline float LineGroundSquareCol(
 	const int& xs,
 	const int& ys)
 {
-	if ((xs < 0) || (ys < 0) || (xs >= gs->mapxm1) || (ys >= gs->mapym1))
+	const bool inMap = (xs >= 0) && (ys >= 0) && (xs <= gs->mapx) && (ys <= gs->mapy);
+	assert(inMap);
+	if (!inMap)
 		return -1.0f;
 
 	const float3& faceNormalTL = normalmap[(ys * gs->mapx + xs) * 2    ];
@@ -193,6 +195,9 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 
 float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 {
+	const float* hm  = readmap->GetCornerHeightMap(synced);
+	const float3* nm = readmap->GetFaceNormals(synced);
+
 	const float3 pfrom = from;
 
 	// handle special cases where the ray origin is out of bounds:
@@ -208,112 +213,125 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 	const float skippedDist = (pfrom - from).Length();
 	const float dx = to.x - from.x;
 	const float dz = to.z - from.z;
-	float ret;
+	const int dirx = (dx > 0.0f) ? 1 : -1;
+	const int dirz = (dz > 0.0f) ? 1 : -1;
 
+	const float ffsx = from.x / SQUARE_SIZE;
+	const float ffsz = from.z / SQUARE_SIZE;
+	const float ttsx = to.x / SQUARE_SIZE;
+	const float ttsz = to.z / SQUARE_SIZE;
+	const int fsx = ffsx; // a>=0: int(a):=floor(a)
+	const int fsz = ffsz;
+	const int tsx = ttsx;
+	const int tsz = ttsz;
 	bool keepgoing = true;
 
-	const float* hm  = readmap->GetCornerHeightMap(synced);
-	const float3* nm = readmap->GetFaceNormals(synced);
-
-	if ((floor(from.x / SQUARE_SIZE) == floor(to.x / SQUARE_SIZE)) && (floor(from.z / SQUARE_SIZE) == floor(to.z / SQUARE_SIZE))) {
+	if ((fsx == tsx) && (fsz == tsz)) {
 		// <from> and <to> are the same
-		ret = LineGroundSquareCol(hm, nm,  from, to,  floor(from.x / SQUARE_SIZE), floor(from.z / SQUARE_SIZE));
-
+		const float ret = LineGroundSquareCol(hm, nm,  from, to,  fsx, fsz);
 		if (ret >= 0.0f) {
 			return ret;
 		}
-	} else if (floor(from.x / SQUARE_SIZE) == floor(to.x / SQUARE_SIZE)) {
+	} else if (fsx == tsx) {
 		// ray is parallel to z-axis
-		float zp = from.z / SQUARE_SIZE;
-		int xp = floor(from.x / SQUARE_SIZE);
+		int zp = fsz;
 
 		while (keepgoing) {
-			ret = LineGroundSquareCol(hm, nm,  from, to,  xp, floor(zp));
-
+			const float ret = LineGroundSquareCol(hm, nm,  from, to,  fsx, zp);
 			if (ret >= 0.0f) {
 				return ret + skippedDist;
 			}
 
-			keepgoing = (fabs(zp * SQUARE_SIZE - from.z) < fabs(dz));
+			keepgoing = (zp != tsz);
 
-			if (dz > 0)
-				zp += 1.0f;
-			else
-				zp -= 1.0f;
+			zp += dirz;
 		}
-	} else if (floor(from.z / SQUARE_SIZE) == floor(to.z / SQUARE_SIZE)) {
+	} else if (fsz == tsz) {
 		// ray is parallel to x-axis
-		float xp = from.x / SQUARE_SIZE;
-		int zp = floor(from.z / SQUARE_SIZE);
+		int xp = fsx;
 
 		while (keepgoing) {
-			ret = LineGroundSquareCol(hm, nm,  from, to,  floor(xp), zp);
-
+			const float ret = LineGroundSquareCol(hm, nm,  from, to,  xp, fsz);
 			if (ret >= 0.0f) {
 				return ret + skippedDist;
 			}
 
-			keepgoing = (fabs(xp * SQUARE_SIZE - from.x) < fabs(dx));
+			keepgoing = (xp != tsx);
 
-			if (dx > 0.0f)
-				xp += 1.0f;
-			else
-				xp -= 1.0f;
+			xp += dirx;
 		}
 	} else {
 		// general case
-		float xp = from.x;
-		float zp = from.z;
+		const float rdsx = SQUARE_SIZE / dx; // := 1 / (dx / SQUARE_SIZE)
+		const float rdsz = SQUARE_SIZE / dz;
+
+		// we need to shift the `test`-point in case of negative directions
+		// case: dir<0
+		//  ___________
+		// |   |   |   |
+		// |___|___|___|
+		//     ^cur
+		// ^cur + dir
+		// >   < range of int(cur + dir)
+		//     ^wanted test point := cur - epsilon
+		// you can set epsilon=0 and then handle the `beyond end`-case (xn >= 1.0f && zn >= 1.0f) separate
+		// (we already need to do so cause of floating point precision limits, so skipping epsilon doesn't add
+		// any additional performance cost nor precision issue)
+		//
+		// case : dir>0
+		// in case of `dir>0` the wanted test point is idential with `cur + dir`
+		const float testposx = (dx > 0.0f) ? 0.0f : 1.0f;
+		const float testposz = (dz > 0.0f) ? 0.0f : 1.0f;
+
+		int curx = fsx;
+		int curz = fsz;
 
 		while (keepgoing) {
-			float xn, zn;
-			float xs, zs;
-
-			// Push value just over the edge of the square
-			// This is the best accuracy we can get with floats:
-			// add one digit and (xp*constant) reduces to xp itself
-			// This accuracy means that at (16384,16384) (lower right of 32x32 map)
-			// 1 in every 1/(16384*1e-7f/8)=4883 clicks on the map will be ignored.
-			if (dx > 0.0f) xs = floor(xp * 1.0000001f / SQUARE_SIZE);
-			else           xs = floor(xp * 0.9999999f / SQUARE_SIZE);
-			if (dz > 0.0f) zs = floor(zp * 1.0000001f / SQUARE_SIZE);
-			else           zs = floor(zp * 0.9999999f / SQUARE_SIZE);
-
-			ret = LineGroundSquareCol(hm, nm,  from, to,  xs, zs);
-
+			// do the collision test with the squares triangles
+			const float ret = LineGroundSquareCol(hm, nm,  from, to,  curx, curz);
 			if (ret >= 0.0f) {
 				return ret + skippedDist;
 			}
 
-			keepgoing =
-				(fabs(xp - from.x) < fabs(dx)) &&
-				(fabs(zp - from.z) < fabs(dz));
+			// check if we reached the end already and need to stop the loop
+			const bool endReached = (curx == tsx && curz == tsz);
+			const bool beyondEnd = ((curx - tsx) * dirx > 0) || ((curz - tsz) * dirz > 0);
+			assert(!beyondEnd);
+			keepgoing = !endReached && !beyondEnd;
+			if (!keepgoing)
+				 break;
 
-			if (dx > 0.0f) {
-				// distance xp to right edge of square (xs,zs) divided by dx, xp += xn*dx puts xp on the right edge
-				xn = (xs * SQUARE_SIZE + SQUARE_SIZE - xp) / dx;
+			// calculate the `normalized position` of the next edge in x & z direction
+			//  `normalized position`:=n :   x = from.x + n * (to.x - from.x)   (with 0<= n <=1)
+			int nextx = curx + dirx;
+			int nextz = curz + dirz;
+			float xn = (nextx + testposx - ffsx) * rdsx;
+			float zn = (nextz + testposz - ffsz) * rdsz;
+
+			// handles the following 2 case:
+			// case1: (floor(to.x) == to.x) && (to.x < from.x)
+			//   In this case we calculate xn at to.x but set curx = to.x - 1,
+			//   and so we would be beyond the end of the ray.
+			// case2: floating point precision issues
+			if ((nextx - tsx) * dirx > 0) { xn=1337.0f; nextx=tsx; }
+			if ((nextz - tsz) * dirz > 0) { zn=1337.0f; nextz=tsz; }
+
+			// advance to the next nearest edge in either x or z dir, or in the case we reached the end make sure
+			// we set it to the exact square positions (floating point precision sometimes hinders us to hit it)
+			if (xn >= 1.0f && zn >= 1.0f) {
+				assert(curx != nextx || curz != nextz);
+				curx = nextx;
+				curz = nextz;
+			} else if (xn < zn) {
+				assert(curx != nextx);
+				curx = nextx;
 			} else {
-				// distance xp to left edge of square (xs,zs) divided by dx, xp += xn*dx puts xp on the left edge
-				xn = (xs * SQUARE_SIZE - xp) / dx;
+				assert(curz != nextz);
+				curz = nextz;
 			}
 
-			if (dz > 0.0f) {
-				// distance zp to bottom edge of square (xs,zs) divided by dz, zp += zn*dz puts zp on the bottom edge
-				zn = (zs * SQUARE_SIZE + SQUARE_SIZE - zp) / dz;
-			} else {
-				// distance zp to top edge of square (xs,zs) divided by dz, zp += zn*dz puts zp on the top edge
-				zn = (zs * SQUARE_SIZE - zp) / dz;
-			}
-			// xn and zn are always positive, minus signs are divided out above
-
-			// this puts (xp,zp) exactly on the first edge you see if you look from (xp,zp) in the (dx,dz) direction
-			if (xn < zn) {
-				xp += xn * dx;
-				zp += xn * dz;
-			} else {
-				xp += zn * dx;
-				zp += zn * dz;
-			}
+			const bool beyondEnd_ = ((curx - tsx) * dirx > 0) || ((curz - tsz) * dirz > 0);
+			assert(!beyondEnd_);
 		}
 	}
 
