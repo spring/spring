@@ -618,7 +618,7 @@ void CAirCAI::ExecuteGuard(Command& c)
 		} else {
 			float3 clampedGuardeePos = guardee->pos;
 
-			clampedGuardeePos.CheckInBounds();
+			clampedGuardeePos.ClampInBounds();
 
 			c2.params.push_back(clampedGuardeePos.x);
 			c2.params.push_back(clampedGuardeePos.y);

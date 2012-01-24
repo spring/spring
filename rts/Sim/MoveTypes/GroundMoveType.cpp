@@ -315,8 +315,10 @@ void CGroundMoveType::SlowUpdate()
 	if (!flying) {
 		// move us into the map, and update <oldPos>
 		// to prevent any extreme changes in <speed>
-		if (!owner->pos.CheckInBounds())
+		if (!owner->pos.IsInBounds()) {
+			owner->pos.ClampInBounds();
 			oldPos = owner->pos;
+		}
 	}
 
 	AMoveType::SlowUpdate();
@@ -1977,7 +1979,7 @@ bool CGroundMoveType::UpdateDirectControl()
 
 	currWayPoint = owner->pos;
 	currWayPoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
-	currWayPoint.CheckInBounds();
+	currWayPoint.ClampInBounds();
 
 	if (unitCon.forward) {
 		SetDeltaSpeed(maxSpeed, wantReverse, true);
