@@ -435,6 +435,9 @@ bool TestCone(
 
 				if (f->collisionVolume == NULL)
 					continue;
+				if (!f->blocking)
+					continue;
+
 				if (TestConeHelper(from, dir, length, spread, f))
 					return true;
 			}
@@ -513,8 +516,11 @@ bool TestTrajectoryCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
-				if (!f->blocking || f->collisionVolume == NULL)
+				if (f->collisionVolume == NULL)
 					continue;
+				if (!f->blocking)
+					continue;
+
 				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, baseSize, f))
 					return true;
 			}
