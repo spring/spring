@@ -208,7 +208,11 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 	// ray, hence we save the distance along it that got skipped
 	ClampLineInMap(from, to);
 
-//	const float3 dir = (to - from).SafeNormalize();
+	if (from == to) {
+		// ClampLineInMap & ClampInMapHeight set `from == to == vec(-1,-1,-1)`
+		// in case the line is outside of the map
+		return -1.0f;
+	}
 
 	const float skippedDist = (pfrom - from).Length();
 	const float dx = to.x - from.x;
@@ -224,6 +228,15 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 	const int fsz = ffsz;
 	const int tsx = ttsx;
 	const int tsz = ttsz;
+	
+	if (synced) { //TODO do this in unsynced too once the map border rendering is finished?
+		// check if our start position is underground (assume ground is unpassable for cannons etc.)
+		const float& h = hm[fsz * gs->mapxp1 + fsx];
+		if (from.y <= h) {
+			return 0.0f + skippedDist;
+		}
+	}
+	
 	bool keepgoing = true;
 
 	if ((fsx == tsx) && (fsz == tsz)) {
