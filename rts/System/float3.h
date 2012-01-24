@@ -605,6 +605,13 @@ public:
 	 */
 	void ClampInBounds();
 
+	/**
+	 * @brief Clamps to VertexHeightmap
+	 *
+	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. gs->mapxy]
+	 * @note USE THIS!
+	 */
+	void ClampInMap();
 
 public:
 	float x; ///< x component
