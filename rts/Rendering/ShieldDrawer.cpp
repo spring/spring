@@ -103,6 +103,8 @@ void PushShieldDrawState() {
 	glEnable(GL_ALPHA_TEST);
 	glDepthMask(GL_FALSE);
 	glEnable(GL_TEXTURE_2D);
+
+	projectileDrawer->textureAtlas->BindTexture();
 }
 
 void PopShieldDrawState() {
@@ -166,9 +168,7 @@ void ShieldDrawer::DrawUnitShield(CPlasmaRepulser* shield, CVertexArray* va) {
 	if (shieldSegs.empty())
 		return;
 
-	// TODO: skip this if no segments are textured, z-sort the segments?
-	projectileDrawer->textureAtlas->BindTexture();
-
+	// TODO: z-sort the segments?
 	for (shieldSegsIt = shieldSegs.begin(); shieldSegsIt != shieldSegs.end(); ++shieldSegsIt) {
 		(*shieldSegsIt)->Draw(shield, va);
 	}
