@@ -120,24 +120,26 @@ bool CScriptMoveType::Update()
 		CalcDirections();
 	}
 
-	// keep speed updated for when we switch back to owner->prevMoveType
-	owner->speed = vel;
-
 	if (extrapolate) {
-		if (useRelVel) {
-			// apply the speed terms relative to the unit (if any)
-			owner->Move3D(owner->frontdir *  relVel.z, true);
-			owner->Move3D(owner->updir    *  relVel.y, true);
-			owner->Move3D(owner->rightdir * -relVel.x, true); // x is left
-		}
-
+		// NOTE: only gravitational acc. is allowed to build up velocity
 		// NOTE: strong wind plus low gravity can cause substantial drift
-		vel.y += (mapInfo->map.gravity * gravityFactor);
-		vel += (wind.GetCurrentWind() * windFactor);
+		const float3 gravVec = UpVector * (mapInfo->map.gravity * gravityFactor);
+		const float3 windVec =            (wind.GetCurrentWind() * windFactor);
+		const float3 unitVec = useRelVel?
+			(owner->frontdir *  relVel.z) +
+			(owner->updir    *  relVel.y) +
+			(owner->rightdir * -relVel.x):
+			ZeroVector;
+
+		owner->Move3D(gravVec + vel, true);
+		owner->Move3D(windVec,       true);
+		owner->Move3D(unitVec,       true);
+
 		// quadratic drag does not work well here
+		vel += gravVec;
 		vel *= (1.0f - drag);
 
-		owner->Move3D(vel, true);
+		owner->speed = vel;
 	}
 
 	if (trackGround) {
