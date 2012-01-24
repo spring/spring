@@ -31,3 +31,12 @@ void float3::ClampInBounds()
 	x = Clamp(x, 0.0f, maxxpos);
 	z = Clamp(z, 0.0f, maxzpos);
 }
+
+
+void float3::ClampInMap()
+{
+	assert(maxxpos > 0.0f); // check if initialized
+
+	x = Clamp(x, 0.0f, maxxpos + 1);
+	z = Clamp(z, 0.0f, maxzpos + 1);
+}
