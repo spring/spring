@@ -53,9 +53,9 @@ CEFX::CEFX(ALCdevice* device)
 
 	if (!supported) {
 		if(!hasExtension)
-			LOG_L(L_WARNING, "  EFX Supported: no");
+			LOG("  EFX Supported: no");
 		else
-			LOG_L(L_WARNING, "  EFX is supported but software does not seem to work properly");
+			LOG("  EFX is supported but software does not seem to work properly");
 		return;
 	}
 
