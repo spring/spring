@@ -59,6 +59,11 @@ COffscreenGLContext::COffscreenGLContext()
 }
 
 
+COffscreenGLContext::~COffscreenGLContext() {
+	if(!wglDeleteContext(offscreenRC))
+		throw opengl_error("Could not delete off-screen rendering context");
+}
+
 void COffscreenGLContext::WorkerThreadPost()
 {
 	//! activate the offscreen GL context in the worker thread
@@ -72,8 +77,6 @@ void COffscreenGLContext::WorkerThreadFree()
 	//! must run in the same thread as the offscreen GL context!
 	if(!wglMakeCurrent(NULL, NULL))
 		throw opengl_error("Could not deactivate worker rendering context");
-	if(!wglDeleteContext(offscreenRC))
-		throw opengl_error("Could not delete off-screen rendering context");
 }
 
 
@@ -109,6 +112,11 @@ COffscreenGLContext::COffscreenGLContext()
 }
 
 
+COffscreenGLContext::~COffscreenGLContext() {
+	CGLDestroyContext(cglWorkerCtx);
+}
+
+
 void COffscreenGLContext::WorkerThreadPost()
 {
 	CGLSetCurrentContext(cglWorkerCtx);
@@ -118,7 +126,6 @@ void COffscreenGLContext::WorkerThreadPost()
 void COffscreenGLContext::WorkerThreadFree()
 {
 	CGLSetCurrentContext(NULL);
-	CGLDestroyContext(cglWorkerCtx);
 }
 
 #else
@@ -185,6 +192,12 @@ COffscreenGLContext::COffscreenGLContext()
 }
 
 
+COffscreenGLContext::~COffscreenGLContext() {
+	glXDestroyContext(display, workerCtx);
+	glXDestroyPbuffer(display, pbuf);
+}
+
+
 void COffscreenGLContext::WorkerThreadPost()
 {
 	glXMakeCurrent(display, pbuf, workerCtx);
@@ -194,8 +207,6 @@ void COffscreenGLContext::WorkerThreadPost()
 void COffscreenGLContext::WorkerThreadFree()
 {
 	glXMakeCurrent(display, None, NULL);
-	glXDestroyContext(display, workerCtx);
-	glXDestroyPbuffer(display, pbuf);
 }
 
 #endif
