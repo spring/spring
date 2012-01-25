@@ -514,7 +514,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x502"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="DEBUG;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM"
+				PreprocessorDefinitions="DEBUG;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM;SYNCCHECK"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -2409,6 +2409,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\ShieldDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\ShieldDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\SmoothHeightMeshDrawer.cpp"
 				>
 			</File>
@@ -3700,14 +3708,6 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Projectiles\Unsynced\RepulseGfx.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\Unsynced\ShieldPartProjectile.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Projectiles\Unsynced\ShieldPartProjectile.h"
 						>
 					</File>
 					<File
@@ -7995,11 +7995,23 @@
 				Name="Misc"
 				>
 				<File
+					RelativePath="..\..\System\Misc\BitwiseEnum.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Misc\RectangleOptimizer.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\System\Misc\RectangleOptimizer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Misc\SpringTime.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Misc\SpringTime.h"
 					>
 				</File>
 			</Filter>
