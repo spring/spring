@@ -15,14 +15,13 @@
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
 
-CONFIG(int, HardwareThreadCount).defaultValue(0);
 CONFIG(bool, MultiThreadShareLists).defaultValue(true);
 CONFIG(bool, MultiThreadSim).defaultValue(true);
 
 
 extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 
-static COffscreenGLContext* ogc = NULL;
+COffscreenGLContext* ogc[GML_MAX_NUM_THREADS] = { NULL };
 
 
 
@@ -38,7 +37,7 @@ static void gmlSimLoop(void*)
 
 		if (gmlKeepRunning) {
 			if (gmlShareLists)
-				ogc->WorkerThreadPost();
+				ogc[0]->WorkerThreadPost();
 
 			//Threading::SetAffinity(3);
 
@@ -66,7 +65,7 @@ static void gmlSimLoop(void*)
 			}
 
 			if(gmlShareLists)
-				ogc->WorkerThreadFree();
+				ogc[0]->WorkerThreadFree();
 		}
 	} CATCH_SPRING_ERRORS
 }
@@ -89,10 +88,16 @@ namespace GML {
 		gmlShareLists = configHandler->GetBool("MultiThreadShareLists");
 		if (!gmlShareLists) {
 			gmlMaxServerThreadNum = GML_LOAD_THREAD_NUM;
+			gmlMaxShareThreadNum = GML_LOAD_THREAD_NUM;
 			gmlNoGLThreadNum = GML_SIM_THREAD_NUM;
 		}
 		gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
 		gmlThreadCount = GML_CPU_COUNT;
+
+		if (gmlShareLists) { // create offscreen OpenGL contexts
+			for (int i = 0; i < gmlThreadCount; ++i)
+				ogc[i] = new COffscreenGLContext();
+		}
 
 		gmlProcessor = new gmlClientServer<void, int, CUnit*>;
 	#if GML_ENABLE_SIM
@@ -100,10 +105,6 @@ namespace GML {
 
 		gmlKeepRunning = true;
 		gmlStartSim = false;
-
-		// create offscreen OpenGL context
-		if (gmlShareLists)
-			ogc = new COffscreenGLContext();
 
 		// start sim thread
 		gmlProcessor->AuxWork(&gmlSimLoop, NULL);
@@ -117,13 +118,16 @@ namespace GML {
 			gmlKeepRunning = false; // wait for sim to finish
 			while(!gmlProcessor->PumpAux())
 				boost::thread::yield();
-			if(gmlShareLists) {
-				delete ogc;
-				ogc = NULL;
-			}
 	#endif
 			delete gmlProcessor;
 			gmlProcessor = NULL;
+
+			if(gmlShareLists) {
+				for (int i = 0; i < gmlThreadCount; ++i) {
+					delete ogc[i];
+					ogc[i] = NULL;
+				}
+			}
 		}
 	}
 
