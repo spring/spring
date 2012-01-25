@@ -13,6 +13,7 @@
 //! Headless
 
 COffscreenGLContext::COffscreenGLContext() {}
+COffscreenGLContext::~COffscreenGLContext() {}
 void COffscreenGLContext::WorkerThreadPost() {}
 void COffscreenGLContext::WorkerThreadFree() {}
 
