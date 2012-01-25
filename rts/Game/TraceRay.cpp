@@ -268,10 +268,10 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 
 					if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {
 						// get the distance to the ray-volume ingress point
-						const float3& intPos = (cq.b0)? cq.p0 : cq.p1;
+						const float3& intPos = (cq.b0) ? cq.p0 : cq.p1;
 						const float len = (intPos - start).dot(dir); // same as (intPos - start).Length()
 						const bool isfactory = dynamic_cast<CFactory*>(unit);
-						const float3& intPos2 = (cq.b0 && cq.b1) ? cq.p1 : cq.p0;
+						const float3& intPos2 = (cq.b1) ? cq.p1 : cq.p0;
 						const float len2 = (intPos2 - start).dot(dir); // same as (intPos2 - start).Length()
 
 						// give units in a factory a higher priority than the factory itself
