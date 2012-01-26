@@ -7,14 +7,13 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Unsynced/ShieldProjectile.h"
 #include "Sim/Projectiles/Unsynced/RepulseGfx.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "System/mmgr.h"
 #include "System/myMath.h"
 
@@ -48,6 +47,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 CPlasmaRepulser::~CPlasmaRepulser(void)
 {
 	interceptHandler.RemovePlasmaRepulser(this);
+	shieldProjectile->PreDelete();
 }
 
 
@@ -62,6 +62,9 @@ void CPlasmaRepulser::Init()
 		curPower = weaponDef->shieldStartingPower;
 
 	CWeapon::Init();
+
+	// deleted by ProjectileHandler
+	shieldProjectile = new ShieldProjectile(this);
 }
 
 

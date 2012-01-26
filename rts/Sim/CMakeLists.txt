@@ -80,6 +80,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/MuzzleFlame.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/RepulseGfx.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/SimpleParticleSystem.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/ShieldProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/SmokeProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/SmokeProjectile2.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/SmokeTrailProjectile.cpp"

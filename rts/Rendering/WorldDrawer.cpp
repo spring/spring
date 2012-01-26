@@ -17,7 +17,6 @@
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/IPathDrawer.h"
-#include "Rendering/ShieldDrawer.h"
 #include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/InMapDrawView.h"
 #include "Rendering/ShadowHandler.h"
@@ -69,7 +68,6 @@ CWorldDrawer::CWorldDrawer()
 	// FIXME: see CGame::LoadSimulation (we only delete it)
 	// featureDrawer = new CFeatureDrawer();
 	modelDrawer = IModelDrawer::GetInstance();
-	shieldDrawer = new ShieldDrawer();
 
 	loadscreen->SetLoadMessage("Creating Water");
 	water = IWater::GetWater(NULL, -1);
@@ -86,7 +84,6 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(shadowHandler);
 	SafeDelete(inMapDrawerView);
 
-	SafeDelete(shieldDrawer);
 	SafeDelete(featureDrawer);
 	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler, groundDecals
 	SafeDelete(projectileDrawer);
@@ -198,7 +195,6 @@ void CWorldDrawer::Draw()
 	{
 		SCOPED_TIMER("WorldDrawer::Projectiles");
 		projectileDrawer->Draw(false);
-		shieldDrawer->Draw();
 	}
 
 	if (globalRendering->drawSky) {

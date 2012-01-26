@@ -7,9 +7,8 @@
 #include <list>
 #include <set>
 
-class CProjectile;
+class ShieldProjectile;
 class CRepulseGfx;
-struct ShieldSegment;
 
 class CPlasmaRepulser :
 	public CWeapon
@@ -28,10 +27,6 @@ public:
 	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);
 	bool BeamIntercepted(CWeapon* emitter, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
 
-	void AddShieldSegment(ShieldSegment* ss) { shieldSegments.push_back(ss); }
-	const std::list<ShieldSegment*>& GetShieldSegments() const { return shieldSegments; }
-	      std::list<ShieldSegment*>& GetShieldSegments()       { return shieldSegments; }
-
 public:
 	float curPower;
 
@@ -48,8 +43,8 @@ private:
 
 private:
 	// these are strictly unsynced
+	ShieldProjectile* shieldProjectile;
 	std::set<CWeaponProjectile*> hasGfx;
-	std::list<ShieldSegment*> shieldSegments;
 };
 
 #endif
