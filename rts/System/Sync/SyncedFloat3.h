@@ -594,6 +594,7 @@ public:
 	 * @note USE THIS!
 	 */
 	void ClampInMap();
+	float3 cClampInMap() const { SyncedFloat3 f = *this; f.ClampInMap(); return f; }
 
 	/**
 	 * @brief cast operator

@@ -162,9 +162,6 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 	noSelect = def->noSelect;
 
-	float3 posClamped = _pos;
-	posClamped.ClampInBounds();
-
 	float fRadius = 1.0f;
 	float fHeight = 0.0f;
 
@@ -192,7 +189,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
 	}
 
-	Move3D(posClamped, false);
+	Move3D(_pos.cClampInMap(), false);
 	SetRadiusAndHeight(fRadius, fHeight);
 	UpdateMidPos();
 	CalculateTransform();
@@ -529,11 +526,11 @@ bool CFeature::UpdatePosition()
 			reachedFinalPos = (deathSpeed == ZeroVector);
 
 			if (!pos.IsInBounds()) {
+				pos.ClampInBounds();
 				// ensure that no more forward-speed updates are done
 				// (prevents wrecks floating in mid-air at edge of map
 				// due to gravity no longer being applied either)
 				deathSpeed = ZeroVector;
-				pos.ClampInBounds();
 			}
 
 			eventHandler.FeatureMoved(this);
