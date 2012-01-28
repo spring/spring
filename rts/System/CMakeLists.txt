@@ -145,7 +145,18 @@ SET(sources_engine_System_Platform_Windows
 	)
 
 ### only use the target platform related directory
-IF     (UNIX)
+IF     (APPLE)
+	SET(sources_engine_System
+			${sources_engine_System_common}
+			${sources_engine_System_creg}
+			${sources_engine_System_FileSystem}
+			${sources_engine_System_Log}
+			${sources_engine_System_Log_sinkConsole}
+			${sources_engine_System_Log_sinkFile}
+			${sources_engine_System_Net}
+			${sources_engine_System_Platform_Mac}
+		)
+ELSEIF (UNIX)
 	SET(sources_engine_System
 			${sources_engine_System_common}
 			${sources_engine_System_creg}
