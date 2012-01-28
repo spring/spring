@@ -103,8 +103,8 @@ static inline float LineGroundSquareCol(
 		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalTL);
 
 		if (fromFacePlaneDist != toFacePlaneDist) {
-			const float alpha = fromFacePlaneDist / toFacePlaneDist;
-			const float3 col = from * alpha + to * (1.0f - alpha);
+			const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
+			const float3 col = from * (1.0f - alpha) + to * alpha;
 
 			if ((col.x >= cornerVertex.x) && (col.z >= cornerVertex.z) && (col.x + col.z <= cornerVertex.x + cornerVertex.z + SQUARE_SIZE)) {
 				//! point of intersection is inside the TL triangle
@@ -127,8 +127,8 @@ static inline float LineGroundSquareCol(
 		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalBR);
 
 		if (fromFacePlaneDist != toFacePlaneDist) {
-			const float alpha = fromFacePlaneDist / toFacePlaneDist;
-			const float3 col = from * alpha + to * (1.0f - alpha);
+			const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
+			const float3 col = from * (1.0f - alpha) + to * alpha;
 
 			if ((col.x <= cornerVertex.x) && (col.z <= cornerVertex.z) && (col.x + col.z >= cornerVertex.x + cornerVertex.z - SQUARE_SIZE)) {
 				//! point of intersection is inside the BR triangle
