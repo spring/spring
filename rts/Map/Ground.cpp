@@ -74,7 +74,7 @@ static inline float LineGroundSquareCol(
 	const int& xs,
 	const int& ys)
 {
-	const bool inMap = (xs >= 0) && (ys >= 0) && (xs <= gs->mapx) && (ys <= gs->mapy);
+	const bool inMap = (xs >= 0) && (ys >= 0) && (xs <= gs->mapxm1) && (ys <= gs->mapym1);
 	assert(inMap);
 	if (!inMap)
 		return -1.0f;
@@ -103,8 +103,8 @@ static inline float LineGroundSquareCol(
 		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalTL);
 
 		if (fromFacePlaneDist != toFacePlaneDist) {
-			const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
-			const float3 col = from * (1.0f - alpha) + (to * alpha);
+			const float alpha = fromFacePlaneDist / toFacePlaneDist;
+			const float3 col = from * alpha + to * (1.0f - alpha);
 
 			if ((col.x >= cornerVertex.x) && (col.z >= cornerVertex.z) && (col.x + col.z <= cornerVertex.x + cornerVertex.z + SQUARE_SIZE)) {
 				//! point of intersection is inside the TL triangle
@@ -127,8 +127,8 @@ static inline float LineGroundSquareCol(
 		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalBR);
 
 		if (fromFacePlaneDist != toFacePlaneDist) {
-			const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
-			const float3 col = from * (1.0f - alpha) + (to * alpha);
+			const float alpha = fromFacePlaneDist / toFacePlaneDist;
+			const float3 col = from * alpha + to * (1.0f - alpha);
 
 			if ((col.x <= cornerVertex.x) && (col.z <= cornerVertex.z) && (col.x + col.z >= cornerVertex.x + cornerVertex.z - SQUARE_SIZE)) {
 				//! point of intersection is inside the BR triangle
@@ -198,7 +198,7 @@ inline static bool ClampInMapHeight(float3& from, float3& to)
 		return false;
 
 	const float3 dir = (to - from);
-	if (dir.y > 0) {
+	if (dir.y >= 0.0f) {
 		// both `from` & `to` are above map's height
 		from = float3(-1.0f, -1.0f, -1.0f);
 		to   = float3(-1.0f, -1.0f, -1.0f);
@@ -236,28 +236,33 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 	}
 
 	const float skippedDist = (pfrom - from).Length();
+
+	if (synced) { //TODO do this in unsynced too once the map border rendering is finished?
+		// check if our start position is underground (assume ground is unpassable for cannons etc.)
+		const int sx = from.x / SQUARE_SIZE;
+		const int sz = from.z / SQUARE_SIZE;
+		const float& h = hm[sz * gs->mapxp1 + sx];
+		if (from.y <= h) {
+			return 0.0f + skippedDist;
+		}
+	}
+
 	const float dx = to.x - from.x;
 	const float dz = to.z - from.z;
 	const int dirx = (dx > 0.0f) ? 1 : -1;
 	const int dirz = (dz > 0.0f) ? 1 : -1;
 
-	const float ffsx = from.x / SQUARE_SIZE;
-	const float ffsz = from.z / SQUARE_SIZE;
-	const float ttsx = to.x / SQUARE_SIZE;
-	const float ttsz = to.z / SQUARE_SIZE;
+	// Claming is done cause LineGroundSquareCol() operates on the 2 triangles faces each heightmap
+	// square is formed of.
+	const float ffsx = Clamp(from.x / SQUARE_SIZE, 0.0f, (float)gs->mapxm1);
+	const float ffsz = Clamp(from.z / SQUARE_SIZE, 0.0f, (float)gs->mapym1);
+	const float ttsx = Clamp(to.x / SQUARE_SIZE, 0.0f, (float)gs->mapxm1);
+	const float ttsz = Clamp(to.z / SQUARE_SIZE, 0.0f, (float)gs->mapym1);
 	const int fsx = ffsx; // a>=0: int(a):=floor(a)
 	const int fsz = ffsz;
 	const int tsx = ttsx;
 	const int tsz = ttsz;
-	
-	if (synced) { //TODO do this in unsynced too once the map border rendering is finished?
-		// check if our start position is underground (assume ground is unpassable for cannons etc.)
-		const float& h = hm[fsz * gs->mapxp1 + fsx];
-		if (from.y <= h) {
-			return 0.0f + skippedDist;
-		}
-	}
-	
+
 	bool keepgoing = true;
 
 	if ((fsx == tsx) && (fsz == tsz)) {
