@@ -482,6 +482,8 @@ namespace CrashHandler
 			error += " (SIGABRT)";
 		} else if (signal == SIGFPE) {
 			error += " (SIGFPE)";
+		} else if (signal == SIGBUS) {
+			error += " (SIGBUS)";
 		}
 		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), SpringVersion::GetFull().c_str());
 
@@ -497,7 +499,8 @@ namespace CrashHandler
 		    (signal != SIGSEGV) &&
 		    (signal != SIGILL) &&
 		    (signal != SIGPIPE) &&
-		    (signal != SIGABRT)) {
+		    (signal != SIGABRT) &&
+		    (signal != SIGBUS)) {
 			keepRunning = false;
 		}
 
@@ -539,7 +542,6 @@ namespace CrashHandler
 	}
 
 	void Install() {
-		LOG("Installed CrashHandler");
 		signal(SIGSEGV, HandleSignal); //! segmentation fault
 		signal(SIGILL,  HandleSignal); //! illegal instruction
 		signal(SIGPIPE, HandleSignal); //! maybe some network error
