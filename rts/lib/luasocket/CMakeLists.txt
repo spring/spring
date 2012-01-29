@@ -15,6 +15,7 @@ SET(luaSocketSources
 	src/tcp.cpp
 	src/timeout.cpp
 	src/udp.cpp
+	src/restrictions.cpp
 )
 
 IF(WIN32)

@@ -11,6 +11,9 @@
 #include "lauxlib.h"
 
 #include "inet.h"
+//spring includes
+#include "restrictions.h"
+#include "System/Log/ILog.h"
 
 /*=========================================================================*\
 * Internal function prototypes.
@@ -83,6 +86,12 @@ static int inet_global_tohostname(lua_State *L) {
 static int inet_global_toip(lua_State *L)
 {
     const char *address = luaL_checkstring(L, 1);
+    if (!luaSocketRestrictions->isAllowedHost(CLuaSocketRestrictions::ALL_RULES, address)) {
+        lua_pushnil(L);
+        LOG_L(L_ERROR, "Access to '%s' denied", address);
+        lua_pushstring(L, "hostname not in allowed list");
+        return 2;
+    }
     struct hostent *hp = NULL; 
     int err = inet_gethost(address, &hp);
     if (err != IO_DONE) {
@@ -103,6 +112,12 @@ static int inet_global_gethostname(lua_State *L)
 {
     char name[257];
     name[256] = '\0';
+    if (!luaSocketRestrictions->isAllowedHost(CLuaSocketRestrictions::ALL_RULES, name)) {
+        lua_pushnil(L);
+        LOG_L(L_ERROR, "Resolving '%s' denied", name);
+        lua_pushstring(L, "hostname not in allowed list");
+        return 2;
+    }
     if (gethostname(name, 256) < 0) {
         lua_pushnil(L);
         lua_pushstring(L, "gethostname failed");
@@ -202,12 +217,36 @@ const char *inet_trycreate(p_socket ps, int type) {
     return socket_strerror(socket_create(ps, AF_INET, type, 0));
 }
 
+
+bool isAllowed(p_socket ps, const char *address, unsigned short port){
+    int rawtype;
+    socklen_t len=sizeof(rawtype);
+    CLuaSocketRestrictions::RestrictType type;
+    int res=getsockopt(*ps, SOL_SOCKET, SO_TYPE, &rawtype, &len);
+    if (res!=0) {
+         LOG_L(L_ERROR, "Socket already closed");
+         return false;
+    }
+    if (rawtype==SOCK_STREAM)
+        type=CLuaSocketRestrictions::TCP_CONNECT;
+    else //SOCK_DGRAM
+        type=CLuaSocketRestrictions::UDP_CONNECT;
+    if (!luaSocketRestrictions->isAllowed(type, address, port)) {
+        LOG_L(L_ERROR, "Access to '%s:%d' denied", address, port);
+        return false;
+    }
+    return true;
+}
+
 /*-------------------------------------------------------------------------*\
 * Tries to connect to remote address (address, port)
 \*-------------------------------------------------------------------------*/
 const char *inet_tryconnect(p_socket ps, const char *address, 
         unsigned short port, p_timeout tm)
 {
+    if (!isAllowed(ps, address, port))
+	return "conect denied";
+
     struct sockaddr_in remote;
     int err;
     memset(&remote, 0, sizeof(remote));
@@ -232,6 +271,9 @@ const char *inet_tryconnect(p_socket ps, const char *address,
 \*-------------------------------------------------------------------------*/
 const char *inet_trybind(p_socket ps, const char *address, unsigned short port)
 {
+    if (!isAllowed(ps, address, port))
+	return "bind denied";
+
     struct sockaddr_in local;
     int err;
     memset(&local, 0, sizeof(local));
