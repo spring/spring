@@ -208,16 +208,30 @@ void FileConfigSource::Write(FILE* file)
 /**
  * @brief Fill with default values of declared configuration variables.
  */
-DefaultConfigSource::DefaultConfigSource(const bool safemode)
+DefaultConfigSource::DefaultConfigSource()
 {
 	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
 
 	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
 		const ConfigVariableMetaData* metadata = it->second;
-		if (safemode && metadata->GetSafemodeValue().IsSet()) {
-			data[metadata->GetKey()] = metadata->GetSafemodeValue().ToString();
-		}else if (metadata->GetDefaultValue().IsSet()) {
+		if (metadata->GetDefaultValue().IsSet()) {
 			data[metadata->GetKey()] = metadata->GetDefaultValue().ToString();
+		}
+	}
+}
+
+
+/**
+ * @brief Fill with safemode values of declared configuration variables.
+ */
+SafemodeConfigSource::SafemodeConfigSource()
+{
+	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
+
+	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
+		const ConfigVariableMetaData* metadata = it->second;
+		if (metadata->GetSafemodeValue().IsSet()) {
+			data[metadata->GetKey()] = metadata->GetSafemodeValue().ToString();
 		}
 	}
 }
