@@ -105,9 +105,9 @@ CTeam::CTeam() :
 	delayedEnergyShare(0.0f),
 	metalSent(0.0f),      prevMetalSent(0.0f),
 	metalReceived(0.0f),  prevMetalReceived(0.0f),
-	prevMetalExcess(0.0f),
 	energySent(0.0f),     prevEnergySent(0.0f),
 	energyReceived(0.0f), prevEnergyReceived(0.0f),
+	prevMetalExcess(0.0f),
 	prevEnergyExcess(0.0f),
 	nextHistoryEntry(0),
 	highlight(0.0f)
