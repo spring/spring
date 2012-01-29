@@ -17,25 +17,12 @@
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/Util.h"
+#include "X_MessageBox.h"
 
 #if !defined(DEDICATED) || defined(_MSC_VER)
 	#include "System/SpringApp.h"
 	#include "System/Platform/Threading.h"
 	#include "System/Platform/Watchdog.h"
-
-	#ifndef HEADLESS
-		#ifdef WIN32
-			#include <windows.h>
-		#else
-			#ifdef __APPLE__
-			//FIXME: move to Mac/ + implement me
-			static void X_MessageBox(const char*msg, const char* caption, unsigned int flags){}
-			#else
-			// from X_MessageBox.cpp:
-			void X_MessageBox(const char* msg, const char* caption, unsigned int flags);
-			#endif
-		#endif
-	#endif // ifndef HEADLESS
 #endif // ifndef DEDICATED
 
 
@@ -50,21 +37,8 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 	if (!forced) {
 	#if defined(DEDICATED) || defined(HEADLESS)
 		// no op
-
-	#elif defined(WIN32)
-		//! Windows implementation, using MessageBox.
-		// Translate spring flags to corresponding win32 dialog flags
-		unsigned int winFlags = MB_TOPMOST;
-		// MB_OK is default (0)
-		if (flags & MBF_EXCL)  winFlags |= MB_ICONEXCLAMATION;
-		if (flags & MBF_INFO)  winFlags |= MB_ICONINFORMATION;
-		if (flags & MBF_CRASH) winFlags |= MB_ICONERROR;
-		MessageBox(GetActiveWindow(), msg.c_str(), caption.c_str(), winFlags);
-
-	#else  // ifdef WIN32
-		// X implementation
+	#else
 		X_MessageBox(msg.c_str(), caption.c_str(), flags);
-
 	#endif
 	}
 
