@@ -17,13 +17,15 @@
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/Util.h"
-#include "X_MessageBox.h"
 
 #if !defined(DEDICATED) || defined(_MSC_VER)
 	#include "System/SpringApp.h"
 	#include "System/Platform/Threading.h"
 	#include "System/Platform/Watchdog.h"
-#endif // ifndef DEDICATED
+#endif
+#if !defined(DEDICATED) && !defined(HEADLESS)
+	#include "System/Platform/MessageBox.h"
+#endif
 
 
 static void ExitMessage(const std::string& msg, const std::string& caption, unsigned int flags, bool forced)
@@ -35,10 +37,10 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 	LOG_L(L_ERROR, "%s %s", caption.c_str(), msg.c_str());
 	
 	if (!forced) {
-	#if defined(DEDICATED) || defined(HEADLESS)
-		// no op
+	#if !defined(DEDICATED) && !defined(HEADLESS)
+		Platform::MessageBox(msg, caption, flags);
 	#else
-		X_MessageBox(msg.c_str(), caption.c_str(), flags);
+		// no op
 	#endif
 	}
 

@@ -134,18 +134,18 @@ SET(sources_engine_System_Platform_Linux
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/X_MessageBox.cpp"
 	)
 SET(sources_engine_System_Platform_Mac
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/CrashHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/X_MessageBox.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/thread_backtrace.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/MessageBox.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/CrashHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/thread_backtrace.cpp"
 	)
 SET(sources_engine_System_Platform_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/DllLib.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/seh.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WinVersion.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/wsdl.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/X_MessageBox.cpp"
 	)
 
 ### only use the target platform related directory
