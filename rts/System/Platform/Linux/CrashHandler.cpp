@@ -321,6 +321,17 @@ static void ForcedExitAfterFiveSecs() {
 }
 
 
+typedef struct sigaction sigaction_t;
+
+static sigaction_t& GetSigAction(void (*s_hand)(int))
+{
+	static sigaction_t sa;
+	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = s_hand;
+	return sa;
+}
+
 
 namespace CrashHandler
 {
@@ -542,25 +553,29 @@ namespace CrashHandler
 	}
 
 	void Install() {
-		signal(SIGSEGV, HandleSignal); //! segmentation fault
-		signal(SIGILL,  HandleSignal); //! illegal instruction
-		signal(SIGPIPE, HandleSignal); //! maybe some network error
-		signal(SIGIO,   HandleSignal); //! who knows?
-		signal(SIGFPE,  HandleSignal); //! div0 and more
-		signal(SIGABRT, HandleSignal);
-		signal(SIGINT,  HandleSignal);
-		signal(SIGBUS,  HandleSignal); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
+		const sigaction_t& sa = GetSigAction(&HandleSignal);
+
+		sigaction(SIGSEGV, &sa, NULL); // segmentation fault
+		sigaction(SIGILL,  &sa, NULL); // illegal instruction
+		sigaction(SIGPIPE, &sa, NULL); // maybe some network error
+		sigaction(SIGIO,   &sa, NULL); // who knows?
+		sigaction(SIGFPE,  &sa, NULL); // div0 and more
+		sigaction(SIGABRT, &sa, NULL);
+		sigaction(SIGINT,  &sa, NULL);
+		sigaction(SIGBUS,  &sa, NULL); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
 	}
 
 	void Remove() {
-		signal(SIGSEGV, SIG_DFL);
-		signal(SIGILL,  SIG_DFL);
-		signal(SIGPIPE, SIG_DFL);
-		signal(SIGIO,   SIG_DFL);
-		signal(SIGFPE,  SIG_DFL);
-		signal(SIGABRT, SIG_DFL);
-		signal(SIGINT,  SIG_DFL);
-		signal(SIGBUS,  SIG_DFL);
+		const sigaction_t& sa = GetSigAction(SIG_DFL);
+
+		sigaction(SIGSEGV, &sa, NULL); // segmentation fault
+		sigaction(SIGILL,  &sa, NULL); // illegal instruction
+		sigaction(SIGPIPE, &sa, NULL); // maybe some network error
+		sigaction(SIGIO,   &sa, NULL); // who knows?
+		sigaction(SIGFPE,  &sa, NULL); // div0 and more
+		sigaction(SIGABRT, &sa, NULL);
+		sigaction(SIGINT,  &sa, NULL);
+		sigaction(SIGBUS,  &sa, NULL); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
 	}
 
 	void OutputStacktrace() {
