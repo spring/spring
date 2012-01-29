@@ -86,15 +86,12 @@ public:
 	float metalShare, energyShare;
 	SyncedFloat delayedMetalShare, delayedEnergyShare; // excess that might be shared next SlowUpdate
 
-	float metalSent;
-	float metalReceived;
-	float energySent;
-	float energyReceived;
-	float prevMetalSent;
-	float prevMetalReceived;
+	float metalSent,      prevMetalSent;
+	float metalReceived,  prevMetalReceived;
+	float energySent,     prevEnergySent;
+	float energyReceived, prevEnergyReceived;
+
 	float prevMetalExcess;
-	float prevEnergySent;
-	float prevEnergyReceived;
 	float prevEnergyExcess;
 
 	int nextHistoryEntry;
