@@ -30,6 +30,13 @@
 #include "System/Platform/Threading.h"
 
 
+#ifdef __APPLE__
+#define ADDR2LINE "gaddr2line"
+#else
+#define ADDR2LINE "addr2line"
+#endif
+
+
 static const int MAX_STACKTRACE_DEPTH = 10;
 static const std::string INVALID_LINE_INDICATOR = "#####";
 static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
@@ -243,7 +250,7 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 	static int addr2line_found = -1;
 	if (addr2line_found < 0)
 	{
-		FILE* cmdOut = popen("addr2line --help", "r");
+		FILE* cmdOut = popen(ADDR2LINE " --help", "r");
 		if (cmdOut == NULL) {
 			addr2line_found = false;
 		} else {
@@ -270,7 +277,7 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 		const std::string symbolFile = LocateSymbolFile(libName);
 
 		std::ostringstream buf;
-		buf << "addr2line " << "--exe=\"" << symbolFile << "\"";
+		buf << ADDR2LINE << " --exe=\"" << symbolFile << "\"";
 
 		// insert requested addresses that should be translated by addr2line
 		std::queue<size_t> indices;
@@ -532,6 +539,7 @@ namespace CrashHandler
 	}
 
 	void Install() {
+		LOG("Installed CrashHandler");
 		signal(SIGSEGV, HandleSignal); //! segmentation fault
 		signal(SIGILL,  HandleSignal); //! illegal instruction
 		signal(SIGPIPE, HandleSignal); //! maybe some network error
@@ -539,6 +547,7 @@ namespace CrashHandler
 		signal(SIGFPE,  HandleSignal); //! div0 and more
 		signal(SIGABRT, HandleSignal);
 		signal(SIGINT,  HandleSignal);
+		signal(SIGBUS,  HandleSignal); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
 	}
 
 	void Remove() {
@@ -549,6 +558,7 @@ namespace CrashHandler
 		signal(SIGFPE,  SIG_DFL);
 		signal(SIGABRT, SIG_DFL);
 		signal(SIGINT,  SIG_DFL);
+		signal(SIGBUS,  SIG_DFL);
 	}
 
 	void OutputStacktrace() {
