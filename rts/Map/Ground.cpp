@@ -83,23 +83,23 @@ static inline float LineGroundSquareCol(
 	const float3& faceNormalBR = normalmap[(ys * gs->mapx + xs) * 2 + 1];
 	float3 cornerVertex;
 
-	//! The terrain grid is "composed" of two right-isosceles triangles
-	//! per square, so we have to check both faces (triangles) whether an
-	//! intersection exists
-	//! for each triangle, we pick one representative vertex
+	// The terrain grid is "composed" of two right-isosceles triangles
+	// per square, so we have to check both faces (triangles) whether an
+	// intersection exists
+	// for each triangle, we pick one representative vertex
 
-	//! top-left corner vertex
+	// top-left corner vertex
 	cornerVertex.x = xs * SQUARE_SIZE;
 	cornerVertex.z = ys * SQUARE_SIZE;
 	cornerVertex.y = heightmap[ys * gs->mapxp1 + xs];
 
-	//! project \<to - cornerVertex\> vector onto the TL-normal
-	//! if \<to\> lies below the terrain, this will be negative
+	// project \<to - cornerVertex\> vector onto the TL-normal
+	// if \<to\> lies below the terrain, this will be negative
 	float toFacePlaneDist = (to - cornerVertex).dot(faceNormalTL);
 	float fromFacePlaneDist = 0.0f;
 
 	if (toFacePlaneDist <= 0.0f) {
-		//! project \<from - cornerVertex\> onto the TL-normal
+		// project \<from - cornerVertex\> onto the TL-normal
 		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalTL);
 
 		if (fromFacePlaneDist != toFacePlaneDist) {
@@ -107,23 +107,23 @@ static inline float LineGroundSquareCol(
 			const float3 col = from * (1.0f - alpha) + to * alpha;
 
 			if ((col.x >= cornerVertex.x) && (col.z >= cornerVertex.z) && (col.x + col.z <= cornerVertex.x + cornerVertex.z + SQUARE_SIZE)) {
-				//! point of intersection is inside the TL triangle
+				// point of intersection is inside the TL triangle
 				return col.distance(from);
 			}
 		}
 	}
 
-	//! bottom-right corner vertex
+	// bottom-right corner vertex
 	cornerVertex.x += SQUARE_SIZE;
 	cornerVertex.z += SQUARE_SIZE;
 	cornerVertex.y = heightmap[(ys + 1) * gs->mapxp1 + (xs + 1)];
 
-	//! project \<to - cornerVertex\> vector onto the TL-normal
-	//! if \<to\> lies below the terrain, this will be negative
+	// project \<to - cornerVertex\> vector onto the TL-normal
+	// if \<to\> lies below the terrain, this will be negative
 	toFacePlaneDist = (to - cornerVertex).dot(faceNormalBR);
 
 	if (toFacePlaneDist <= 0.0f) {
-		//! project \<from - cornerVertex\> onto the BR-normal
+		// project \<from - cornerVertex\> onto the BR-normal
 		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalBR);
 
 		if (fromFacePlaneDist != toFacePlaneDist) {
@@ -131,7 +131,7 @@ static inline float LineGroundSquareCol(
 			const float3 col = from * (1.0f - alpha) + to * alpha;
 
 			if ((col.x <= cornerVertex.x) && (col.z <= cornerVertex.z) && (col.x + col.z >= cornerVertex.x + cornerVertex.z - SQUARE_SIZE)) {
-				//! point of intersection is inside the BR triangle
+				// point of intersection is inside the BR triangle
 				return col.distance(from);
 			}
 		}
@@ -488,10 +488,10 @@ float CGround::TrajectoryGroundCol(float3 from, const float3& flatdir, float len
 {
 	float3 dir(flatdir.x, linear, flatdir.z);
 
-	//! limit the checking to the `in map part` of the line
+	// limit the checking to the `in map part` of the line
 	std::pair<float,float> near_far = GetMapBoundaryIntersectionPoints(from, dir*length);
 
-	//! outside of map
+	// outside of map
 	if (near_far.second < 0.0f)
 		return -1.0;
 
