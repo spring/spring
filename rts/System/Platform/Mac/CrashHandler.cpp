@@ -2,7 +2,7 @@
 
 #include "System/Platform/CrashHandler.h"
 
-#if !defined(__APPLE__) || (MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4)
+#if defined(__APPLE__) 
 // ### Unix(compliant) CrashHandler START
 
 #include <AvailabilityMacros.h>
