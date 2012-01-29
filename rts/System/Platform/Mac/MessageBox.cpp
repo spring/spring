@@ -2,9 +2,9 @@
 
 #include "System/Platform/MessageBox.h"
 
-#include <CFBase.h>
-#include <CFString.h>
-#include <CFUserNotification.h>
+#include <CoreFoundation/CFBase.h>
+#include <CoreFoundation/CFString.h>
+#include <CoreFoundation/CFUserNotification.h>
 
 namespace Platform {
 
