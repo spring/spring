@@ -13,14 +13,13 @@
 // ### Fallback CrashHandler (old Apple) START
 
 namespace CrashHandler {
-	void HandleSignal(int signal) {}
 	void Install() {}
 	void Remove() {}
-	void InstallHangHandler() {}
-	void UninstallHangHandler() {}
-	void ClearDrawWDT(bool disable) {}
-	void ClearSimWDT(bool disable) {}
-	void GameLoading(bool) {}
+
+	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName) {}
+	void PrepareStacktrace() {}
+	void CleanupStacktrace() {}
+
 	void OutputStacktrace() {}
 };
 
