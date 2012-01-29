@@ -4,6 +4,7 @@
 #define _MESSAGEBOX_H_
 
 #include <string>
+#include "System/Platform/errorhandler.h" // MBF_OK, etc.
 
 namespace Platform {
 	/**
