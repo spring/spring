@@ -81,8 +81,17 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 	overlay = new OverlayConfigSource();
 	writableSource = new FileConfigSource(locations.front());
 
-	sources.reserve(3 + locations.size());
+	size_t sources_num = 3;
+	sources_num += (safemode) ? 1 : 0;
+	sources_num += locations.size() - 1;
+	sources.reserve(sources_num);
+
 	sources.push_back(overlay);
+
+	if (safemode) {
+		sources.push_back(new SafemodeConfigSource());
+	}
+
 	sources.push_back(writableSource);
 
 	vector<string>::const_iterator loc = locations.begin();
@@ -91,10 +100,9 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 		sources.push_back(new FileConfigSource(*loc));
 	}
 
-	// TODO: Add extra sets of defaults here.
-	// E.g., a `template' with safe settings for a certain brand video card.
+	sources.push_back(new DefaultConfigSource());
 
-	sources.push_back(new DefaultConfigSource(safemode));
+	assert(sources.size() <= sources_num);
 
 	// Perform migrations that need to happen on every load.
 	RemoveDefaults();
