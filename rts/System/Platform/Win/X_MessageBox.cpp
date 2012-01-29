@@ -2,6 +2,8 @@
 
 #include <windows.h>
 
+#include "System/Platform/errorhandler.h"
+
 void X_MessageBox(const char *msg, const char *caption, unsigned int flags)
 {
 	// Translate spring flags to corresponding win32 dialog flags
