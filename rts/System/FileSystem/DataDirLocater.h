@@ -148,12 +148,14 @@ public:
 	 */
 	void SetIsolationModeDir(const std::string& dir) { isolationModeDir = dir; }
 
-private:
 
 	/**
 	 * @brief reads envvar to detect if we should run in isolated mode
+	 * used by unitsync.cpp
 	 */
 	void UpdateIsolationModeByEnvVar();
+
+private:
 
 	/**
 	 * Adds either the CWD "./", its parent dir "../" or none of the two as a
