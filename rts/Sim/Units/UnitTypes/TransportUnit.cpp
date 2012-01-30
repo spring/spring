@@ -335,7 +335,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	//
 	// for NON-stunned transportees, QF position is kept
 	// up-to-date by MoveType::SlowUpdate, otherwise by
-	// ::Udate
+	// ::Update
 	//
 	// qf->RemoveUnit(unit);
 
