@@ -439,11 +439,13 @@ void CProjectileHandler::CheckFeatureCollisions(
 	const float3& ppos0,
 	const float3& ppos1)
 {
-	CollisionQuery q;
-
-	if (p->GetCollisionFlags() & Collision::NOFEATURES) {
+	if (!p->checkCol) // already collided with unit?
 		return;
-	}
+
+	if ((p->GetCollisionFlags() & Collision::NOFEATURES) != 0)
+		return;
+
+	CollisionQuery q;
 
 	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
 		CFeature* feature = *fi;
@@ -489,8 +491,7 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 			qf->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
 
 			CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
-			if (p->checkCol) // already collided with unit?
-				CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
+			CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
 		}
 	}
 }
