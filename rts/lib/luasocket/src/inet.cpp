@@ -219,7 +219,7 @@ const char *inet_trycreate(p_socket ps, int type) {
 
 
 bool isAllowed(p_socket ps, const char *address, unsigned short port){
-    int rawtype;
+    char rawtype;
     socklen_t len=sizeof(rawtype);
     CLuaSocketRestrictions::RestrictType type;
     int res=getsockopt(*ps, SOL_SOCKET, SO_TYPE, &rawtype, &len);
