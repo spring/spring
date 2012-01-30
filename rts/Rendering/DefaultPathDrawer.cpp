@@ -84,10 +84,10 @@ static inline float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx
 }
 
 static inline SColor GetSpeedModColor(const float& m) {
-	SColor col(120,0,80);
+	SColor col(120, 0, 80);
 
 	if (m > 0.0f) {
-		col.r = 255 - ((m<=1.0f) ? (m * 255) : 255);
+		col.r = 255 - ((m <= 1.0f) ? (m * 255) : 255);
 		col.g = 255 - col.r;
 		col.b =   0;
 	}
@@ -103,18 +103,12 @@ enum BuildSquareStatus {
 	TERRAINBLOCKED = 3,
 };
 
-static const SColor      noLosCol(138, 138, 138);
-static const SColor       freeCol(  0, 210,   0);
-static const SColor objBlockedCol(190, 180,   0);
-static const SColor    blockedCol(210,   0,   0);
-static const SColor buildColors[] = {noLosCol, freeCol, objBlockedCol, blockedCol};
-/* c++0x style
 static const SColor buildColors[] = {
-	{138, 138, 138}, // nolos
-	{  0, 210,   0}, // free
-	{190, 180,   0}, // objblocked
-	{210,   0,   0}, // terrainblocked
-};*/
+	SColor(138, 138, 138), // nolos
+	SColor(  0, 210,   0), // free
+	SColor(190, 180,   0), // objblocked
+	SColor(210,   0,   0), // terrainblocked
+};
 
 static inline const SColor& GetBuildColor(const BuildSquareStatus& status) {
 	return buildColors[status];

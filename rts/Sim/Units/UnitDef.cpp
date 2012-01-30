@@ -25,30 +25,46 @@
 /******************************************************************************/
 
 UnitDefWeapon::UnitDefWeapon()
-: name("NOWEAPON")
-, def(NULL)
+: def(NULL)
 , slavedTo(0)
-, mainDir(0, 0, 1)
-, maxAngleDif(-1)
-, fuelUsage(0)
+, mainDir(0.0f, 0.0f, 1.0f)
+, maxAngleDif(-1.0f)
+, fuelUsage(0.0f)
 , badTargetCat(0)
 , onlyTargetCat(0)
 {
 }
 
-UnitDefWeapon::UnitDefWeapon(
-	std::string name, const WeaponDef* def, int slavedTo, float3 mainDir, float maxAngleDif,
-	unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse)
-: name(name)
-, def(def)
-, slavedTo(slavedTo)
-, mainDir(mainDir)
-, maxAngleDif(maxAngleDif)
-, fuelUsage(fuelUse)
-, badTargetCat(badTargetCat)
-, onlyTargetCat(onlyTargetCat)
-{
+UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef) {
+	*this = UnitDefWeapon();
+	this->def = weaponDef;
 }
+
+UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponTable) {
+	*this = UnitDefWeapon();
+	this->def = weaponDef;
+
+	this->slavedTo = weaponTable.GetInt("slaveTo", 0);
+	this->fuelUsage = weaponTable.GetFloat("fuelUsage", 0.0f);
+
+	this->mainDir = weaponTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f));
+	this->mainDir.SafeNormalize();
+	this->maxAngleDif = math::cos(weaponTable.GetFloat("maxAngleDif", 360.0f) * (PI / 360.0f));
+
+	const string& badTarget = weaponTable.GetString("badTargetCategory", "");
+	const string& onlyTarget = weaponTable.GetString("onlyTargetCategory", "");
+
+	unsigned int btc = CCategoryHandler::Instance()->GetCategories(badTarget);
+	unsigned int otc = 0xffffffff;
+
+	if (!onlyTarget.empty()) {
+		otc = CCategoryHandler::Instance()->GetCategories(onlyTarget);
+	}
+
+	this->badTargetCat = btc;
+	this->onlyTargetCat = otc;
+}
+
 
 
 /******************************************************************************/
@@ -783,14 +799,17 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 	for (int w = 0; w < MAX_WEAPONS_PER_UNIT; w++) {
 		LuaTable wTable;
 		string name = weaponsTable.GetString(w + 1, "");
+
 		if (name.empty()) {
 			wTable = weaponsTable.SubTable(w + 1);
 			name = wTable.GetString("name", "");
 		}
+
 		const WeaponDef* wd = NULL;
 		if (!name.empty()) {
 			wd = weaponDefHandler->GetWeapon(name);
 		}
+
 		if (wd == NULL) {
 			if (w <= 3) {
 				continue; // allow empty weapons among the first 3
@@ -805,30 +824,11 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 						"to be present as a placeholder for missing weapons");
 				break;
 			} else {
-				weapons.push_back(UnitDefWeapon());
-				weapons.back().def = noWeaponDef;
+				weapons.push_back(UnitDefWeapon(noWeaponDef));
 			}
 		}
 
-		const string& badTarget = wTable.GetString("badTargetCategory", "");
-		const string& onlyTarget = wTable.GetString("onlyTargetCategory", "");
-
-		unsigned int btc = CCategoryHandler::Instance()->GetCategories(badTarget);
-		unsigned int otc = 0xffffffff;
-
-		if (!onlyTarget.empty()) {
-			otc = CCategoryHandler::Instance()->GetCategories(onlyTarget);
-		}
-
-		const unsigned int slaveTo = wTable.GetInt("slaveTo", 0);
-
-		const float3 mainDir = wTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f)).SafeNormalize();
-		const float angleDif = cos(wTable.GetFloat("maxAngleDif", 360.0f) * (PI / 360.0f));
-
-		const float fuelUse = wTable.GetFloat("fuelUsage", 0.0f);
-
-		UnitDefWeapon weapon(name, wd, slaveTo, mainDir, angleDif, btc, otc, fuelUse);
-		weapons.push_back(weapon);
+		weapons.push_back(UnitDefWeapon(wd, wTable));
 
 		maxWeaponRange = std::max(maxWeaponRange, wd->range);
 
