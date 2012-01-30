@@ -1387,8 +1387,8 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 		return; // the call is not defined
 
 	lua_pushnumber(L, p->id);
-	lua_pushnumber(L, (owner != NULL? owner->id: -1));
-	lua_pushnumber(L, (wd != NULL? wd->id: -1));
+	lua_pushnumber(L, ((owner != NULL)? owner->id: -1));
+	lua_pushnumber(L, ((wd != NULL)? wd->id: -1));
 
 	// call the routine
 	RunCallIn(cmdStr, 3, 0);

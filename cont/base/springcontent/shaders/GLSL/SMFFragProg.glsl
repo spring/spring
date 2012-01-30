@@ -111,7 +111,7 @@ vec3 GetFragmentNormal(vec2 uv) {
 	return normal;
 }
 
-vec4 GetDetailTextureColor() {
+vec4 GetDetailTextureColor(vec2 uv) {
 	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0)
 		vec4 detailCol = (texture2D(detailTex, gl_TexCoord[0].st) * 2.0) - 1.0;
 	#else
@@ -122,7 +122,7 @@ vec4 GetDetailTextureColor() {
 			splatDetails.a = texture2D(splatDetailTex, gl_TexCoord[1].pq).a;
 			splatDetails   = (splatDetails * 2.0) - 1.0;
 
-		vec4 splatCofac = texture2D(splatDistrTex, specTexCoords) * splatTexMults;
+		vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
 		vec4 detailCol = vec4(dot(splatDetails, splatCofac));
 	#endif
 
@@ -186,7 +186,7 @@ void main() {
 
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
 	vec4 specularCol = texture2D(specularTex, specTexCoords);
-	vec4 detailCol = GetDetailTextureColor();
+	vec4 detailCol = GetDetailTextureColor(specTexCoords);
 
 	#if (SMF_SKY_REFLECTIONS == 1)
 	{
