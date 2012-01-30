@@ -30,6 +30,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "System/myMath.h"
+#include "System/Color.h"
 
 static CPathManager* pm = NULL;
 
@@ -55,7 +56,7 @@ static const MoveData* GetMoveData() {
 	return md;
 }
 
-static float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx, int sqy) {
+static inline float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx, int sqy) {
 	float m = 0.0f;
 
 	#if 0
@@ -82,20 +83,16 @@ static float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx, int s
 	return m;
 }
 
-static unsigned int GetSpeedModColor(const float m) {
-	const unsigned char R =
-		(m >= 1.0f)?   0:
-		(m <= 0.0f)? 255:
-		255 - ((m * 0.5f + 0.25f) * 255);
-	const unsigned char G =
-		(m >= 1.0f)? 255:
-		(m <= 0.0f)?   0:
-		255 - R;
+static inline SColor GetSpeedModColor(const float& m) {
+	SColor col(120,0,80);
 
-	const unsigned char B =   0;
-	const unsigned char A = 255;
+	if (m > 0.0f) {
+		col.r = 255 - ((m<=1.0f) ? (m * 255) : 255);
+		col.g = 255 - col.r;
+		col.b =   0;
+	}
 
-	return ((R << 24) | (G << 16) | (B << 8) | (A << 0));
+	return col;
 }
 
 
@@ -176,9 +173,6 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 				const CMoveMath* mm = NULL;
 				const bool los = (gs->cheatEnabled || gu->spectating);
 
-				const float* hm = readmap->GetCornerHeightMapUnsynced();
-				const float3* cn = readmap->GetCenterNormalsUnsynced();
-
 				{
 					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
 
@@ -209,13 +203,13 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 								if (mm->IsBlocked(*md, sqx + 1, sqy + 1) & CMoveMath::BLOCK_STRUCTURE) { s -= 0.25f; }
 							}
 
-							const float m = GetSpeedMod(md, mm, sqx, sqy);
-							const unsigned int c = GetSpeedModColor(m * s);
+							const float& m  = GetSpeedMod(md, mm, sqx, sqy);
+							const SColor& c = GetSpeedModColor(m * s);
 
-							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (c >> 24) & 255;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (c >> 16) & 255;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (c >>  8) & 255;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = (c >>  0) & 255;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = c.r;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = c.g;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = c.b;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = c.a;
 						} else {
 							// we have nothing to show
 							// -> draw a dark red overlay
