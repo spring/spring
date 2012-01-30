@@ -96,6 +96,32 @@ static inline SColor GetSpeedModColor(const float& m) {
 }
 
 
+enum BuildSquareStatus {
+	NOLOS          = 0,
+	FREE           = 1,
+	OBJECTBLOCKED  = 2,
+	TERRAINBLOCKED = 3,
+};
+
+static const SColor      noLosCol(138, 138, 138);
+static const SColor       freeCol(  0, 210,   0);
+static const SColor objBlockedCol(190, 180,   0);
+static const SColor    blockedCol(210,   0,   0);
+static const SColor buildColors[] = {noLosCol, freeCol, objBlockedCol, blockedCol};
+/* c++0x style
+static const SColor buildColors[] = {
+	{138, 138, 138}, // nolos
+	{  0, 210,   0}, // free
+	{190, 180,   0}, // objblocked
+	{210,   0,   0}, // terrainblocked
+};*/
+
+static inline const SColor& GetBuildColor(const BuildSquareStatus& status) {
+	return buildColors[status];
+}
+
+
+
 
 DefaultPathDrawer::DefaultPathDrawer() {
 	pm = dynamic_cast<CPathManager*>(pathManager);
@@ -137,10 +163,11 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					for (int tx = 0; tx < gs->hmapx; ++tx) {
 						const float3 pos(tx * (SQUARE_SIZE << 1) + SQUARE_SIZE, 0.0f, ty * (SQUARE_SIZE << 1) + SQUARE_SIZE);
 						const int idx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-						float m = 0.0f;
+
+						BuildSquareStatus status = FREE;
 
 						if (!loshandler->InLos(pos, gu->myAllyTeam)) {
-							m = 0.25f;
+							status = NOLOS;
 						} else {
 							const UnitDef* ud = unitDefHandler->GetUnitDefByID(-guihandler->commands[guihandler->inCommand].id);
 							const BuildInfo bi(ud, pos, guihandler->buildFacing);
@@ -151,21 +178,18 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 							if (uh->TestUnitBuildSquare(bi, f, gu->myAllyTeam, false)) {
 								if (f != NULL) {
-									m = 0.5f;
-								} else {
-									m = 1.0f;
+									status = OBJECTBLOCKED;
 								}
 							} else {
-								m = 0.0f;
+								status = TERRAINBLOCKED;
 							}
 						}
 
-						m = int(m * 255.0f);
-
-						texMem[idx + CBaseGroundDrawer::COLOR_R] = 255 - m;
-						texMem[idx + CBaseGroundDrawer::COLOR_G] = m;
-						texMem[idx + CBaseGroundDrawer::COLOR_B] = 0;
-						texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+						const SColor& col = GetBuildColor(status);
+						texMem[idx + CBaseGroundDrawer::COLOR_R] = col.r;
+						texMem[idx + CBaseGroundDrawer::COLOR_G] = col.g;
+						texMem[idx + CBaseGroundDrawer::COLOR_B] = col.b;
+						texMem[idx + CBaseGroundDrawer::COLOR_A] = col.a;
 					}
 				}
 			} else {
