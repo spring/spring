@@ -8,10 +8,19 @@ Changes:
   - Linux: now supports full bash path syntax ("~/", "${HOME}/.spring/", "/foo/../bar/", etc.) (see manpage of wordexp)
  - IsolationMode: scan ENV{SPRING_DATADIR} & config's SpringData as readonly datadirs
  - added a new commandline argument "--safemode". It turns off all features that are known to cause problems on some system.
+ ! ignore features with `blocking=false` in all RayTracing/Aiming functions (other code still checks them!!!)
+
+unitsync:
+ - reload IsolatedMode & Dir via the EnvVar on Init() calls 
+
+MacOSX:
+ - fix signal handling
+ - use native DialogBoxes
 
 Bugfixes:
  - fixed Intel GPU detection under Windows
  - fixed handling of duplicated used hotkeys (i.e. unit groups & specteam switching)
+ - fixed minor issues with ground collision RayTracing
 
 
 -- 85.0 ---------------------------------------------------------
