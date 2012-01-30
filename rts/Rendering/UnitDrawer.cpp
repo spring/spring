@@ -2144,9 +2144,9 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	);
 
 	if (canBuild) {
-		glColor4f(0, 0.8f, 0.0f, 1.0f);
+		glColor4f(0, 0.9f, 0.0f, 1.0f);
 	} else {
-		glColor4f(0.5f, 0.5f, 0.0f, 1.0f);
+		glColor4f(0.9f, 0.8f, 0.0f, 1.0f);
 	}
 
 	va->Initialize();
@@ -2161,7 +2161,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	va->DrawArray0(GL_QUADS);
 
 
-	glColor4f(0.5f, 0.5f, 0.0f, 1.0f);
+	glColor4f(0.9f, 0.8f, 0.0f, 1.0f);
 	va->Initialize();
 	va->EnlargeArrays(featureSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -2174,7 +2174,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	va->DrawArray0(GL_QUADS);
 
 
-	glColor4f(0.8f, 0.0f, 0.0f, 1.0f);
+	glColor4f(0.9f, 0.0f, 0.0f, 1.0f);
 	va->Initialize();
 	va->EnlargeArrays(illegalSquares.size() * 4, 0, VA_SIZE_0);
 
