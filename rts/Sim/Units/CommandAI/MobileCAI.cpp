@@ -666,11 +666,11 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 	// limit how far away we fly based on our movestate
 	if (tempOrder && orderTarget) {
-		const float3 blaPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
-		const float blaDist = LinePointDist(blaPos, commandPos2, orderTarget->pos);
-		const float maxDist = (500 * owner->moveState + owner->maxRange);
+		const float3& closestPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+		const float curTargetDist = LinePointDist(closestPos, commandPos2, orderTarget->pos);
+		const float maxTargetDist = (500 * owner->moveState + owner->maxRange);
 
-		if (owner->moveState < MOVESTATE_ROAM && blaDist > maxDist) {
+		if (owner->moveState < MOVESTATE_ROAM && curTargetDist > maxTargetDist) {
 			StopMove();
 			FinishCommand();
 			return;
