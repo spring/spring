@@ -24,35 +24,41 @@ static float Interpolate(float x, float y, int maxx, int maxy, float res, const 
 	x = Clamp(x, 0.0f, float3::maxxpos);
 	y = Clamp(y, 0.0f, float3::maxzpos);
 
-	const float invres = 1.0f / res;
+	const float invRes = 1.0f / res;
+	const int maxIdx = ((maxx + 1) * (maxy + 1)) - 1;
 
-	const int sx = x * invres;
-	const int sy = y * invres;
-	const float dx = (x - sx * res) * invres;
-	const float dy = (y - sy * res) * invres;
-	const int hs = sx + sy * (maxx);
+	const int sx = x * invRes;
+	const int sy = y * invRes;
+	const int hs = sx + sy * maxx;
+
+	const float dx = (x - sx * res) * invRes;
+	const float dy = (y - sy * res) * invRes;
+
+	float h = 0.0f;
 
 	if ((dx + dy) < 1.0f) {
-		if (hs >= (maxx * maxy)) {
-			return 0;
-		}
+		// top-left triangle; sample top-left, top-right, and bottom-left vertices
+		const int itl = std::min(hs       , maxIdx);
+		const int itr = std::min(hs +    1, maxIdx);
+		const int ibl = std::min(hs + maxx, maxIdx);
 
-		const float xdif = (dx) * (heightmap[hs +    1] - heightmap[hs]);
-		const float ydif = (dy) * (heightmap[hs + maxx] - heightmap[hs]);
+		const float xdif = (dx) * (heightmap[itr] - heightmap[itl]);
+		const float ydif = (dy) * (heightmap[ibl] - heightmap[itl]);
 
-		return (heightmap[hs] + xdif + ydif);
+		h = (heightmap[itl] + xdif + ydif);
 	} else {
-		if ((hs + 1) >= (maxx * maxy)) {
-			return 0;
-		}
+		// bottom-right triangle; sample bottom-left, top-right, and bottom-right vertices
+		const int ibl = std::min(hs + maxx    , maxIdx);
+		const int itr = std::min(hs +        1, maxIdx);
+		const int ibr = std::min(hs + maxx + 1, maxIdx);
 
-		const float xdif = (1.0f - dx) * (heightmap[hs + maxx] - heightmap[hs + 1 + maxx]);
-		const float ydif = (1.0f - dy) * (heightmap[hs    + 1] - heightmap[hs + 1 + maxx]);
+		const float xdif = (1.0f - dx) * (heightmap[ibl] - heightmap[ibr]);
+		const float ydif = (1.0f - dy) * (heightmap[itr] - heightmap[ibr]);
 
-		return (heightmap[hs + 1 + maxx] + xdif + ydif);
+		h = (heightmap[ibr] + xdif + ydif);
 	}
 
-	return 0.0f; // can not be reached
+	return h;
 }
 
 SmoothHeightMesh::SmoothHeightMesh(const CGround* ground, float mx, float my, float res, float smoothRad)
@@ -406,15 +412,31 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 {
 	ScopedOnceTimer timer("SmoothHeightMesh::MakeSmoothMesh");
 
+	// info:
+	//   height-value array has size <maxx + 1> * <maxy + 1>
+	//   and represents a grid of <maxx> cols by <maxy> rows
+	//   maximum legal index is ((maxx + 1) * (maxy + 1)) - 1
+	//
+	//   row-width (number of height-value corners per row) is (maxx + 1)
+	//   col-height (number of height-value corners per col) is (maxy + 1)
+	//
+	//   1st row has indices [maxx*(  0) + (  0), maxx*(1) + (  0)] inclusive
+	//   2nd row has indices [maxx*(  1) + (  1), maxx*(2) + (  1)] inclusive
+	//   3rd row has indices [maxx*(  2) + (  2), maxx*(3) + (  2)] inclusive
+	//   ...
+	//   Nth row has indices [maxx*(N-1) + (N-1), maxx*(N) + (N-1)] inclusive
+	//
 	const size_t size = (this->maxx + 1) * (this->maxy + 1);
 	// use sliding window of maximums to reduce computational complexity
 	const int intrad = smoothRadius / resolution;
+	const int smoothrad = 3;
 
 	assert(mesh.empty());
 	mesh.resize(size);
 
 	std::vector<float> colsMaxima(maxx + 1, -std::numeric_limits<float>::max());
 	std::vector<int> maximaRows(maxx + 1, -1);
+	std::vector<float> smoothed(size);
 	
 	FindMaximumColumnHeights(maxx, maxy, intrad, resolution, colsMaxima, maximaRows);
 
@@ -429,17 +451,12 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 	}
 
 	// actually smooth with approximate Gaussian blur passes
-	const int smoothrad = 3;
-	std::vector<float> smoothed(size);
 	for (int numBlurs = 3; numBlurs > 0; --numBlurs) {
-		BlurHorizontal(maxx, maxy, smoothrad, resolution, mesh, smoothed);
-			mesh.swap(smoothed);
-		BlurVertical(maxx, maxy, smoothrad, resolution, mesh, smoothed);
-			mesh.swap(smoothed);
+		BlurHorizontal(maxx, maxy, smoothrad, resolution, mesh, smoothed); mesh.swap(smoothed);
+		BlurVertical(maxx, maxy, smoothrad, resolution, mesh, smoothed); mesh.swap(smoothed);
 	}
 
-	// `mesh` now contains the smoothed heightmap
-	// backup it in origMesh
+	// `mesh` now contains the smoothed heightmap, save it in origMesh
 	origMesh.resize(size);
 	std::copy(mesh.begin(), mesh.end(), origMesh.begin());
 }

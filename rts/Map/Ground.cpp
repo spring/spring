@@ -36,33 +36,35 @@ static inline float InterpolateHeight(float x, float y, const float* heightmap)
 	x = Clamp(x, 0.f, float3::maxxpos) / SQUARE_SIZE;
 	y = Clamp(y, 0.f, float3::maxzpos) / SQUARE_SIZE;
 
-	const int isx = int(x);
-	const int isy = int(y);
+	const int isx = x;
+	const int isy = y;
 	const float dx = x - isx;
 	const float dy = y - isy;
 	const int hs = isx + isy * gs->mapxp1;
 
+	float h = 0.0f;
+
 	if (dx + dy < 1.0f) {
-		// top left triangle
+		// top-left triangle
 		const float h00 = heightmap[hs                 ];
 		const float h10 = heightmap[hs + 1             ];
 		const float h01 = heightmap[hs     + gs->mapxp1];
 		const float xdif = (dx) * (h10 - h00);
 		const float ydif = (dy) * (h01 - h00);
 
-		return h00 + xdif + ydif;
+		h = h00 + xdif + ydif;
 	} else {
-		// bottom right triangle
+		// bottom-right triangle
 		const float h10 = heightmap[hs + 1             ];
 		const float h11 = heightmap[hs + 1 + gs->mapxp1];
 		const float h01 = heightmap[hs     + gs->mapxp1];
 		const float xdif = (1.0f - dx) * (h01 - h11);
 		const float ydif = (1.0f - dy) * (h10 - h11);
 
-		return h11 + xdif + ydif;
+		h = h11 + xdif + ydif;
 	}
 
-	return 0.0f; // can not be reached
+	return h;
 }
 
 
