@@ -27,53 +27,20 @@ static float Interpolate(float x, float y, const int& maxx, const int& maxy, con
 	const int sy = y;
 	const float dx = (x - sx);
 	const float dy = (y - sy);
-	
-	const int xeq0 = (dx == 0.0f) ? 1 : 0;
-	const int yeq0 = (dy == 0.0f) ? 1 : 0;
-	const int c = xeq0 + (yeq0 << 1);
 
-	const size_t hs = sx + sy * maxx;
-	
-	switch(c) {
-		case 0: {
-			// dx != 0.0f && dy != 0.0f
-			assert(hs + 1 + maxx < maxx * maxy);
-			const float& h1 = heightmap[hs           ];
-			const float& h2 = heightmap[hs + 1       ];
-			const float& h3 = heightmap[hs +     maxx];
-			const float& h4 = heightmap[hs + 1 + maxx];
+	const int sxp1 = std::min(sx + 1, maxx - 1);
+	const int syp1 = std::min(sy + 1, maxy - 1);
 
-			const float hi1 = mix(h1, h2, dx);
-			const float hi2 = mix(h3, h4, dx);
-			return mix(hi1, hi2, dy);
-		}
+	const float& h1 = heightmap[sx   + sy   * maxx];
+	const float& h2 = heightmap[sxp1 + sy   * maxx];
+	const float& h3 = heightmap[sx   + syp1 * maxx];
+	const float& h4 = heightmap[sxp1 + syp1 * maxx];
 
-		case 1: {
-			// dx == 0.0f
-			assert(hs + maxx < maxx * maxy);
-			const float& h1 = heightmap[hs];
-			const float& h2 = heightmap[hs + maxx];
-			return mix(h1, h2, dy);
-		}
-
-		case 2: {
-			// dy == 0.0f
-			assert(hs + 1 < maxx * maxy);
-			const float& h1 = heightmap[hs];
-			const float& h2 = heightmap[hs + 1];
-			return mix(h1, h2, dx);
-		}
-
-		default: {
-			// dx == 0.0f && dy == 0.0f
-			assert(hs < maxx * maxy);
-			return heightmap[hs];
-		}
-	}
-
-	assert(false);
-	return -1.0f;
+	const float hi1 = mix(h1, h2, dx);
+	const float hi2 = mix(h3, h4, dx);
+	return mix(hi1, hi2, dy);
 }
+
 
 SmoothHeightMesh::SmoothHeightMesh(const CGround* ground, float mx, float my, float res, float smoothRad)
 	: maxx((mx / res) + 1)
