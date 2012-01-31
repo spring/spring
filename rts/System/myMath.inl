@@ -132,6 +132,13 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 }
 
 
+template<class T>
+inline T mix(const T& v1, const T& v2, const float& a)
+{
+	//return v1 * a + v2 * (1.0f - a);
+	return v2 + (v1 - v2) * a;
+}
+
 inline float Square(const float x)
 {
 	return x * x;

@@ -18,47 +18,61 @@
 
 SmoothHeightMesh* smoothGround = NULL;
 
-/// lifted from Ground.cpp
-static float Interpolate(float x, float y, int maxx, int maxy, float res, const float* heightmap)
+
+static float Interpolate(float x, float y, const int& maxx, const int& maxy, const float& res, const float* heightmap)
 {
-	x = Clamp(x, 0.0f, float3::maxxpos);
-	y = Clamp(y, 0.0f, float3::maxzpos);
+	x = Clamp(x / res, 0.0f, maxx - 1.0f);
+	y = Clamp(y / res, 0.0f, maxy - 1.0f);
+	const int sx = x;
+	const int sy = y;
+	const float dx = (x - sx);
+	const float dy = (y - sy);
+	
+	const int xeq0 = (dx == 0.0f) ? 1 : 0;
+	const int yeq0 = (dy == 0.0f) ? 1 : 0;
+	const int c = xeq0 + (yeq0 << 1);
 
-	const float invRes = 1.0f / res;
-	const int maxIdx = ((maxx + 1) * (maxy + 1)) - 1;
+	const size_t hs = sx + sy * maxx;
+	
+	switch(c) {
+		case 0: {
+			// dx != 0.0f && dy != 0.0f
+			assert(hs + 1 + maxx < maxx * maxy);
+			const float& h1 = heightmap[hs           ];
+			const float& h2 = heightmap[hs + 1       ];
+			const float& h3 = heightmap[hs +     maxx];
+			const float& h4 = heightmap[hs + 1 + maxx];
 
-	const int sx = x * invRes;
-	const int sy = y * invRes;
-	const int hs = sx + sy * maxx;
+			const float hi1 = mix(h1, h2, dx);
+			const float hi2 = mix(h3, h4, dx);
+			return mix(hi1, hi2, dy);
+		}
 
-	const float dx = (x - sx * res) * invRes;
-	const float dy = (y - sy * res) * invRes;
+		case 1: {
+			// dx == 0.0f
+			assert(hs + maxx < maxx * maxy);
+			const float& h1 = heightmap[hs];
+			const float& h2 = heightmap[hs + maxx];
+			return mix(h1, h2, dy);
+		}
 
-	float h = 0.0f;
+		case 2: {
+			// dy == 0.0f
+			assert(hs + 1 < maxx * maxy);
+			const float& h1 = heightmap[hs];
+			const float& h2 = heightmap[hs + 1];
+			return mix(h1, h2, dx);
+		}
 
-	if ((dx + dy) < 1.0f) {
-		// top-left triangle; sample top-left, top-right, and bottom-left vertices
-		const int itl = std::min(hs       , maxIdx);
-		const int itr = std::min(hs +    1, maxIdx);
-		const int ibl = std::min(hs + maxx, maxIdx);
-
-		const float xdif = (dx) * (heightmap[itr] - heightmap[itl]);
-		const float ydif = (dy) * (heightmap[ibl] - heightmap[itl]);
-
-		h = (heightmap[itl] + xdif + ydif);
-	} else {
-		// bottom-right triangle; sample bottom-left, top-right, and bottom-right vertices
-		const int ibl = std::min(hs + maxx    , maxIdx);
-		const int itr = std::min(hs +        1, maxIdx);
-		const int ibr = std::min(hs + maxx + 1, maxIdx);
-
-		const float xdif = (1.0f - dx) * (heightmap[ibl] - heightmap[ibr]);
-		const float ydif = (1.0f - dy) * (heightmap[itr] - heightmap[ibr]);
-
-		h = (heightmap[ibr] + xdif + ydif);
+		default: {
+			// dx == 0.0f && dy == 0.0f
+			assert(hs < maxx * maxy);
+			return heightmap[hs];
+		}
 	}
 
-	return h;
+	assert(false);
+	return -1.0f;
 }
 
 SmoothHeightMesh::SmoothHeightMesh(const CGround* ground, float mx, float my, float res, float smoothRad)
