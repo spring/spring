@@ -27,6 +27,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -312,13 +313,13 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 
 
 bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
-                                  const CUnit* builder, const float3* pos)
+                                  const CUnit* builder, const BuildInfo* buildInfo)
 {
 	if (!haveAllowUnitCreation)
 		return true; // the call is not defined
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 8);
+	lua_checkstack(L, 9);
 	static const LuaHashString cmdStr("AllowUnitCreation");
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
@@ -326,14 +327,16 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 	lua_pushnumber(L, unitDef->id);
 	lua_pushnumber(L, builder->id);
 	lua_pushnumber(L, builder->team);
-	if (pos) {
-		lua_pushnumber(L, pos->x);
-		lua_pushnumber(L, pos->y);
-		lua_pushnumber(L, pos->z);
+
+	if (buildInfo != NULL) {
+		lua_pushnumber(L, buildInfo->pos.x);
+		lua_pushnumber(L, buildInfo->pos.y);
+		lua_pushnumber(L, buildInfo->pos.z);
+		lua_pushnumber(L, buildInfo->buildFacing);
 	}
 
 	// call the function
-	if (!RunCallIn(cmdStr, pos ? 6 : 3, 1))
+	if (!RunCallIn(cmdStr, (buildInfo != NULL)? 7 : 3, 1))
 		return true;
 
 	// get the results

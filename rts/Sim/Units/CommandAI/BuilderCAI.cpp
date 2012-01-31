@@ -413,7 +413,7 @@ void CBuilderCAI::SlowUpdate()
 						(!owner->unitDef->canmove && (sqdist <= Square(builder->buildDistance + radius - 8.0f)))) {
 						StopMove();
 
-						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
+						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
 							FinishCommand();
 						}
 						else if (!teamHandler->Team(owner->team)->AtUnitLimit()) {

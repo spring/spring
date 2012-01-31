@@ -22,6 +22,7 @@ class CWeapon;
 struct UnitDef;
 struct FeatureDef;
 struct Command;
+struct BuildInfo;
 struct lua_State;
 
 
@@ -38,7 +39,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool CommandFallback(const CUnit* unit, const Command& cmd);
 		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
 		bool AllowUnitCreation(const UnitDef* unitDef,
-		                       const CUnit* builder, const float3* pos);
+		                       const CUnit* builder, const BuildInfo* buildInfo);
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
 		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
 		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID,
