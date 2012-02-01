@@ -71,6 +71,11 @@ public:
 	bool HaveSplatTexture() const { return haveSplatTexture; }
 
 private:
+	void UpdateVertexNormals(const HeightMapUpdate& update);
+	void UpdateFaceNormals(const HeightMapUpdate& update);
+	void UpdateNormalTexture(const HeightMapUpdate& update);
+	void UpdateShadingTexture(const HeightMapUpdate& update);
+
 	inline void UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) const;
 	inline CBaseGroundDrawer* GetGroundDrawer();
 
