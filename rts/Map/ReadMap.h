@@ -177,6 +177,11 @@ public:
 
 	unsigned int mapChecksum;
 
+private:
+	void UpdateCenterHeightmap(const int x1, const int z1, const int x2, const int z2);
+	void UpdateMipHeightmaps(const int x1, const int z1, const int x2, const int z2);
+	void UpdateFaceNormals(int x1, int z1, int x2, int z2);
+	void UpdateSlopemap(const int x1, const int z1, const int x2, const int z2);
 
 protected:
 	std::vector<float> originalHeightMap;    /// size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, does NOT update on terrain deformation]
