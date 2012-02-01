@@ -395,7 +395,7 @@ void CReadMap::UpdateSlopemap(const int x1, const int z1, const int x2, const in
 
 			// smooth it a bit, so small holes don't block huge tanks
 			const float lerp = maxslope / avgslope;
-			const float slope = mix(avgslope, maxslope, lerp);
+			const float slope = mix(maxslope, avgslope, lerp);
 
 			slopeMap[y * gs->hmapx + x] = 1.0f - slope;
 		}
