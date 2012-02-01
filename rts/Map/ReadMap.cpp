@@ -318,33 +318,44 @@ void CReadMap::UpdateFaceNormals(int x1, int z1, int x2, int z2)
 	z2 = std::min(gs->mapym1, z2 + 1);
 	x2 = std::min(gs->mapxm1, x2 + 1);
 
-	// create the surface normals
-	for (int y = z1; y <= z2; y++) {
+	float3 e1( SQUARE_SIZE, 0,           0);
+	float3 e2(           0, 0, SQUARE_SIZE);
+	float3 e3(-SQUARE_SIZE, 0,           0);
+	float3 e4(           0, 0,-SQUARE_SIZE);
+
+	int y;
+	#pragma omp parallel for private(y, e1, e2, e3, e4)
+	for (y = z1; y <= z2; y++) {
 		for (int x = x1; x <= x2; x++) {
 			const int idxTL = (y    ) * gs->mapxp1 + x; // TL
 			const int idxBL = (y + 1) * gs->mapxp1 + x; // BL
+
+			const float& hTL = heightmapSynced[idxTL    ];
+			const float& hTR = heightmapSynced[idxTL + 1];
+			const float& hBL = heightmapSynced[idxBL    ];
+			const float& hBR = heightmapSynced[idxBL + 1];
 
 			//  *---> e1
 			//  |
 			//  |
 			//  v
 			//  e2
-			float3 e1( SQUARE_SIZE, heightmapSynced[idxTL + 1] - heightmapSynced[idxTL],            0);
-			float3 e2(           0, heightmapSynced[idxBL    ] - heightmapSynced[idxTL],  SQUARE_SIZE);
+			e1.y = hTR - hTL;
+			e2.y = hBL - hTL;
 
 			// normal of top-left triangle (face) in square
 			const float3 fnTL = (e2.cross(e1)).Normalize();
 
-			//         e1
+			//         e3
 			//         ^
 			//         |
 			//         |
-			//  e2 <---*
-			e1 = float3(-SQUARE_SIZE, heightmapSynced[idxBL    ] - heightmapSynced[idxBL + 1],            0);
-			e2 = float3(           0, heightmapSynced[idxTL + 1] - heightmapSynced[idxBL + 1], -SQUARE_SIZE);
+			//  e4 <---*
+			e3.y = hBL - hBR;
+			e4.y = hTR - hBR;
 
 			// normal of bottom-right triangle (face) in square
-			const float3 fnBR = (e2.cross(e1)).Normalize();
+			const float3 fnBR = (e4.cross(e3)).Normalize();
 
 			faceNormalsSynced[(y * gs->mapx + x) * 2    ] = fnTL;
 			faceNormalsSynced[(y * gs->mapx + x) * 2 + 1] = fnBR;
@@ -372,7 +383,7 @@ void CReadMap::UpdateSlopemap(const int x1, const int z1, const int x2, const in
 			avgslope += faceNormalsSynced[(idx1    ) * 2 + 1].y;
 			avgslope += faceNormalsSynced[(idx1 + 1) * 2    ].y;
 			avgslope += faceNormalsSynced[(idx1 + 1) * 2 + 1].y;
-			avgslope /= 8.0f;
+			avgslope *= 0.125f;
 
 			float maxslope =              faceNormalsSynced[(idx0    ) * 2    ].y;
 			maxslope = std::min(maxslope, faceNormalsSynced[(idx0    ) * 2 + 1].y);
@@ -383,13 +394,14 @@ void CReadMap::UpdateSlopemap(const int x1, const int z1, const int x2, const in
 			maxslope = std::min(maxslope, faceNormalsSynced[(idx1 + 1) * 2    ].y);
 			maxslope = std::min(maxslope, faceNormalsSynced[(idx1 + 1) * 2 + 1].y);
 
-			//! smooth it a bit, so small holes don't block huge tanks
+			// smooth it a bit, so small holes don't block huge tanks
 			const float lerp = maxslope / avgslope;
-			const float slope = maxslope * (1.0f - lerp) + avgslope * lerp;
+			const float slope = mix(avgslope, maxslope, lerp);
 
 			slopeMap[y * gs->hmapx + x] = 1.0f - slope;
 		}
 	}
+
 }
 
 
