@@ -390,19 +390,19 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 				// update the visible vertex/face height/normal
 				uhm[vIdxTL] = shm[vIdxTL];
 				vvn[vIdxTL] = vn.ANormalize();
-			
 			}
 		}
 
+		int idx0, idx1;
+		const int maxx_ = std::min(maxx, gs->mapxm1);
 		for (z = minz; z <= std::min(maxz, gs->mapym1); z++) {
-			for (int x = minx; x <= std::min(maxx, gs->mapxm1); x++) {
-				const int fIdxTL = (z * gs->mapx + x) * 2    ;
-				const int fIdxBR = (z * gs->mapx + x) * 2 + 1;
+			idx0  = (z * gs->mapx + minx ) * 2    ;
+			idx1  = (z * gs->mapx + maxx_) * 2 + 1;
+			memcpy(&ufn[idx0], &sfn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
 
-				ufn[fIdxTL    ] = sfn[fIdxTL    ];
-				ufn[fIdxBR    ] = sfn[fIdxBR    ];
-				ucn[fIdxTL / 2] = scn[fIdxTL / 2];
-			}
+			idx0  = (z * gs->mapx + minx );
+			idx1  = (z * gs->mapx + maxx_);
+			memcpy(&ucn[idx0], &scn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
 		}
 	}
 	#endif
