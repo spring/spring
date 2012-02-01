@@ -259,7 +259,6 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 
 	UpdateCenterHeightmap(x1, z1, x2, z2);
 	UpdateMipHeightmaps(x1, z1, x2, z2);
-
 	UpdateFaceNormals(x1, z1, x2, z2);
 	UpdateSlopemap(x1, z1, x2, z2); // must happen after UpdateFaceNormals()!
 
@@ -318,14 +317,14 @@ void CReadMap::UpdateFaceNormals(int x1, int z1, int x2, int z2)
 	z2 = std::min(gs->mapym1, z2 + 1);
 	x2 = std::min(gs->mapxm1, x2 + 1);
 
-	float3 e1( SQUARE_SIZE, 0,           0);
-	float3 e2(           0, 0, SQUARE_SIZE);
-	float3 e3(-SQUARE_SIZE, 0,           0);
-	float3 e4(           0, 0,-SQUARE_SIZE);
-
 	int y;
-	#pragma omp parallel for private(y, e1, e2, e3, e4)
+	#pragma omp parallel for private(y)
 	for (y = z1; y <= z2; y++) {
+		float3 e1( SQUARE_SIZE, 0,           0);
+		float3 e2(           0, 0, SQUARE_SIZE);
+		float3 e3(-SQUARE_SIZE, 0,           0);
+		float3 e4(           0, 0,-SQUARE_SIZE);
+
 		for (int x = x1; x <= x2; x++) {
 			const int idxTL = (y    ) * gs->mapxp1 + x; // TL
 			const int idxBL = (y + 1) * gs->mapxp1 + x; // BL
