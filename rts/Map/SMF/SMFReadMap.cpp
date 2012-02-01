@@ -311,11 +311,10 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 	int x2 = update.x2, y2 = update.y2;
 
 	// update the visible (LOS) heights and normals
-	{
-		static const float*  shm = &cornerHeightMapSynced[0];
 	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (update.los) {
+		static const float*  shm = &cornerHeightMapSynced[0];
 		static       float*  uhm = &cornerHeightMapUnsynced[0];
-	#endif
 		static const float3* sfn = &faceNormalsSynced[0];
 		static       float3* ufn = &faceNormalsUnsynced[0];
 		static const float3* scn = &centerNormalsSynced[0];
@@ -338,61 +337,75 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		for (z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
 				const int vIdxTL = (z    ) * W + x;
-				//const int vIdxBL = (z + 1) * W + x;
-				const int fIdxTL = (z * (W - 1) + x) * 2    ;
-				const int fIdxBR = (z * (W - 1) + x) * 2 + 1;
 
-				const bool hasNgbL = (x >     0); const int xOffL = hasNgbL? 1: 0;
-				const bool hasNgbR = (x < W - 1); const int xOffR = hasNgbR? 1: 0;
-				const bool hasNgbT = (z >     0); const int zOffT = hasNgbT? 1: 0;
-				const bool hasNgbB = (z < H - 1); const int zOffB = hasNgbB? 1: 0;
+				const int xOffL = (x >     0)? 1: 0;
+				const int xOffR = (x < W - 1)? 1: 0;
+				const int zOffT = (z >     0)? 1: 0;
+				const int zOffB = (z < H - 1)? 1: 0;
+
+				const float sxm1 = (x - 1) * SS;
+				const float sx   =       x * SS;
+				const float sxp1 = (x + 1) * SS;
+
+				const float szm1 = (z - 1) * SS;
+				const float sz   =       z * SS;
+				const float szp1 = (z + 1) * SS;
+
+				const int shxm1 = x - xOffL;
+				const int& shx  = x;
+				const int shxp1 = x + xOffR;
+
+				const int shzm1 = (z - zOffT) * W;
+				const int shz   =           z * W;
+				const int shzp1 = (z + zOffB) * W;
 
 				// pretend there are 8 incident triangle faces per vertex
 				// for each these triangles, calculate the surface normal,
 				// then average the 8 normals (this stays closest to the
 				// heightmap data)
 				// if edge vertex, don't add virtual neighbor normals to vn
-				const float3 vtl = float3((x - 1) * SS,  shm[((z - zOffT) * W) + (x - xOffL)],  (z - 1) * SS);
-				const float3 vtm = float3((x    ) * SS,  shm[((z - zOffT) * W) + (x        )],  (z - 1) * SS);
-				const float3 vtr = float3((x + 1) * SS,  shm[((z - zOffT) * W) + (x + xOffR)],  (z - 1) * SS);
+				const float3 vmm = float3(sx  ,  shm[shz   + shx  ],  sz  );
 
-				const float3 vml = float3((x - 1) * SS,  shm[((z        ) * W) + (x - xOffL)],  (z    ) * SS);
-				const float3 vmm = float3((x    ) * SS,  shm[((z        ) * W) + (x        )],  (z    ) * SS);
-				const float3 vmr = float3((x + 1) * SS,  shm[((z        ) * W) + (x + xOffR)],  (z    ) * SS);
+				const float3 vtl = float3(sxm1,  shm[shzm1 + shxm1],  szm1) - vmm;
+				const float3 vtm = float3(sx  ,  shm[shzm1 + shx  ],  szm1) - vmm;
+				const float3 vtr = float3(sxp1,  shm[shzm1 + shxp1],  szm1) - vmm;
 
-				const float3 vbl = float3((x - 1) * SS,  shm[((z + zOffB) * W) + (x - xOffL)],  (z + 1) * SS);
-				const float3 vbm = float3((x    ) * SS,  shm[((z + zOffB) * W) + (x        )],  (z + 1) * SS);
-				const float3 vbr = float3((x + 1) * SS,  shm[((z + zOffB) * W) + (x + xOffR)],  (z + 1) * SS);
+				const float3 vml = float3(sxm1,  shm[shz   + shxm1],  sz  ) - vmm;
+				const float3 vmr = float3(sxp1,  shm[shz   + shxp1],  sz  ) - vmm;
 
-				float3 vn = ZeroVector;
-				float3 tn = ZeroVector;
-					tn = (hasNgbT && hasNgbL)? (vtl - vmm).cross((vtm - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbT           )? (vtm - vmm).cross((vtr - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbT && hasNgbR)? (vtr - vmm).cross((vmr - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbR           )? (vmr - vmm).cross((vbr - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbB && hasNgbR)? (vbr - vmm).cross((vbm - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbB           )? (vbm - vmm).cross((vbl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbB && hasNgbL)? (vbl - vmm).cross((vml - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbL           )? (vml - vmm).cross((vtl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+				const float3 vbl = float3(sxm1,  shm[shzp1 + shxm1],  szp1) - vmm;
+				const float3 vbm = float3(sx  ,  shm[shzp1 + shx  ],  szp1) - vmm;
+				const float3 vbr = float3(sxp1,  shm[shzp1 + shxp1],  szp1) - vmm;
 
-			#ifdef USE_UNSYNCED_HEIGHTMAP
-				if (update.los) {
-					// update the visible vertex/face height/normal
-					uhm[vIdxTL] = shm[vIdxTL];
-					vvn[vIdxTL] = vn.ANormalize();
+				float3 vn(0.0f, 0.0f, 0.0f);
+				vn += vtm.cross(vtl) * (zOffT & xOffL); assert(vtm.cross(vtl).y >= 0.0f);
+				vn += vtr.cross(vtm) * (zOffT        ); assert(vtr.cross(vtm).y >= 0.0f);
+				vn += vmr.cross(vtr) * (zOffT & xOffR); assert(vmr.cross(vtr).y >= 0.0f);
+				vn += vbr.cross(vmr) * (        xOffR); assert(vbr.cross(vmr).y >= 0.0f);
+				vn += vtl.cross(vml) * (        xOffL); assert(vtl.cross(vml).y >= 0.0f);
+				vn += vbm.cross(vbr) * (zOffB & xOffR); assert(vbm.cross(vbr).y >= 0.0f);
+				vn += vbl.cross(vbm) * (zOffB        ); assert(vbl.cross(vbm).y >= 0.0f);
+				vn += vml.cross(vbl) * (zOffB & xOffL); assert(vml.cross(vbl).y >= 0.0f);
 
-					if (hasNgbR && hasNgbB) {
-						// x == maxx and z == maxz are illegal indices for these
-						ufn[fIdxTL    ] = sfn[fIdxTL    ];
-						ufn[fIdxBR    ] = sfn[fIdxBR    ];
-						ucn[fIdxTL / 2] = scn[fIdxTL / 2];
-					}
-				}
-			#endif
+				// update the visible vertex/face height/normal
+				uhm[vIdxTL] = shm[vIdxTL];
+				vvn[vIdxTL] = vn.ANormalize();
+			
+			}
+		}
+
+		for (z = minz; z <= std::min(maxz, gs->mapym1); z++) {
+			for (int x = minx; x <= std::min(maxx, gs->mapxm1); x++) {
+				const int fIdxTL = (z * gs->mapx + x) * 2    ;
+				const int fIdxBR = (z * gs->mapx + x) * 2 + 1;
+
+				ufn[fIdxTL    ] = sfn[fIdxTL    ];
+				ufn[fIdxBR    ] = sfn[fIdxBR    ];
+				ucn[fIdxTL / 2] = scn[fIdxTL / 2];
 			}
 		}
 	}
-
+	#endif
 
 	// Update VertexNormalsTexture (not used by ARB shaders)
 	if (globalRendering->haveGLSL) {
