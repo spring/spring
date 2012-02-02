@@ -69,7 +69,7 @@ void CBeamLaser::Update(void)
 	}
 	CWeapon::Update();
 
-	if (lastFireFrame > gs->frameNum - 18 && lastFireFrame != gs->frameNum  && weaponDef->sweepFire) {
+	if (lastFireFrame > gs->frameNum - 18 && lastFireFrame != gs->frameNum && weaponDef->sweepFire) {
 		if (teamHandler->Team(owner->team)->metal >= metalFireCost &&
 			teamHandler->Team(owner->team)->energy >= energyFireCost) {
 
@@ -199,6 +199,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 
 	float3 curPos = weaponMuzzlePos;
 	float3 hitPos;
+	float3 newDir;
 
 	dir +=
 		((gs->randVector() * sprayAngle *
@@ -234,16 +235,25 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 
 		if (hitUnit && teamHandler->AlliedTeams(hitUnit->team, owner->team) && sweepFire) {
 			// never damage friendlies with sweepfire
-			lastFireFrame = 0;
-			return;
+			lastFireFrame = 0; continue;
 		}
 
-		float3 newDir;
+		// if the beam gets intercepted, this modifies newDir
+		//
+		// we do more than one trace-iteration and set dir to
+		// newDir only in the case there is a shield in our way
 		const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, dir, length, newDir, hitShield);
 
 		if (shieldLength < length) {
 			length = shieldLength;
 			tryAgain = hitShield->BeamIntercepted(this, damageMul); // repulsed
+		}
+
+		if (!weaponDef->waterweapon) {
+			// terminate beam at water surface if necessary
+			if ((dir.y < 0.0f) && ((curPos.y + dir.y * length) <= 0.0f)) {
+				length = curPos.y / -dir.y;
+			}
 		}
 
 		hitPos = curPos + dir * length;
