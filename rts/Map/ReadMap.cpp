@@ -320,10 +320,8 @@ void CReadMap::UpdateFaceNormals(int x1, int z1, int x2, int z2)
 	int y;
 	#pragma omp parallel for private(y)
 	for (y = z1; y <= z2; y++) {
-		float3 e1( SQUARE_SIZE, 0,           0);
-		float3 e2(           0, 0, SQUARE_SIZE);
-		float3 e3(-SQUARE_SIZE, 0,           0);
-		float3 e4(           0, 0,-SQUARE_SIZE);
+		float3 fnTL;
+		float3 fnBR;
 
 		for (int x = x1; x <= x2; x++) {
 			const int idxTL = (y    ) * gs->mapxp1 + x; // TL
@@ -334,27 +332,35 @@ void CReadMap::UpdateFaceNormals(int x1, int z1, int x2, int z2)
 			const float& hBL = heightmapSynced[idxBL    ];
 			const float& hBR = heightmapSynced[idxBL + 1];
 
+			// normal of top-left triangle (face) in square
+			//
 			//  *---> e1
 			//  |
 			//  |
 			//  v
 			//  e2
-			e1.y = hTR - hTL;
-			e2.y = hBL - hTL;
+			//const float3 e1( SQUARE_SIZE, hTR - hTL,           0);
+			//const float3 e2(           0, hBL - hTL, SQUARE_SIZE);
+			//const float3 fnTL = (e2.cross(e1)).Normalize();
+			fnTL.y = SQUARE_SIZE;
+			fnTL.x = - (hTR - hTL);
+			fnTL.z = - (hBL - hTL);
+			fnTL.Normalize();
 
-			// normal of top-left triangle (face) in square
-			const float3 fnTL = (e2.cross(e1)).Normalize();
-
+			// normal of bottom-right triangle (face) in square
+			//
 			//         e3
 			//         ^
 			//         |
 			//         |
 			//  e4 <---*
-			e3.y = hBL - hBR;
-			e4.y = hTR - hBR;
-
-			// normal of bottom-right triangle (face) in square
-			const float3 fnBR = (e4.cross(e3)).Normalize();
+			//const float3 e3(-SQUARE_SIZE, hBL - hBR,           0);
+			//const float3 e4(           0, hTR - hBR,-SQUARE_SIZE);
+			//const float3 fnBR = (e4.cross(e3)).Normalize();
+			fnBR.y = SQUARE_SIZE;
+			fnBR.x = (hBL - hBR);
+			fnBR.z = (hTR - hBR);
+			fnBR.Normalize();
 
 			faceNormalsSynced[(y * gs->mapx + x) * 2    ] = fnTL;
 			faceNormalsSynced[(y * gs->mapx + x) * 2 + 1] = fnBR;
