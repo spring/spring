@@ -15,7 +15,7 @@ namespace Platform {
  *
  * MacOSX clone of the Windows' MessageBox() function.
  */
-void MessageBox(const std::string& message, const std::string& caption, const unsigned int& flags)
+void MsgBox(const std::string& message, const std::string& caption, const unsigned int& flags)
 {
 #if !defined(DEDICATED) && !defined(HEADLESS)
 	CFStringRef cf_caption = CFStringCreateWithCString(NULL, caption.c_str(), caption.size());

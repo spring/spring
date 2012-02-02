@@ -38,7 +38,7 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 	
 	if (!forced) {
 	#if !defined(DEDICATED) && !defined(HEADLESS)
-		Platform::MessageBox(msg, caption, flags);
+		Platform::MsgBox(msg, caption, flags);
 	#else
 		// no op
 	#endif

@@ -13,7 +13,7 @@ namespace Platform {
 	 * @param  caption will appear in the title bar of the error window
 	 * @param  flags   @see errorhandler.h
 	 */
-	void MessageBox(const std::string& message, const std::string& caption, const unsigned int& flags);
+	void MsgBox(const std::string& message, const std::string& caption, const unsigned int& flags);
 };
 
 #endif // _MESSAGEBOX_H_

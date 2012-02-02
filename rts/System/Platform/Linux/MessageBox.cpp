@@ -27,7 +27,7 @@ namespace Platform {
  * could be found, or the used program returned an error) the message is
  * written to stderr.
  */
-void MessageBox(const std::string& message, const std::string& caption, const unsigned int& flags)
+void MsgBox(const std::string& message, const std::string& caption, const unsigned int& flags)
 {
 	char caption2[100];
 	char msg2[1000];
