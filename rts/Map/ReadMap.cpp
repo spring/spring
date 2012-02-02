@@ -147,7 +147,7 @@ void CReadMap::Initialize()
 			((( gs->mapxp1)   * gs->mapyp1  *         sizeof(float))         / 1024) +   // originalHeightMap
 			((  gs->mapx      * gs->mapy    * 2 * 2 * sizeof(float3))        / 1024) +   // faceNormals{Synced, Unsynced}
 			((  gs->mapx      * gs->mapy    * 2     * sizeof(float3))        / 1024) +   // centerNormals{Synced, Unsynced}
-			((( gs->mapxp1)   * gs->mapyp1  * 2     * sizeof(float3))        / 1024) +   // {raw, vis}VertexNormals
+			((( gs->mapxp1)   * gs->mapyp1          * sizeof(float3))        / 1024) +   // VisVertexNormals
 			((  gs->mapx      * gs->mapy            * sizeof(float))         / 1024) +   // centerHeightMap
 			((  gs->hmapx     * gs->hmapy           * sizeof(float))         / 1024) +   // slopeMap
 			((  gs->hmapx     * gs->hmapy           * sizeof(float))         / 1024) +   // MetalMap::extractionMap
