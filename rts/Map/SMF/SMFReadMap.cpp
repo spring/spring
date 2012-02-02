@@ -318,20 +318,20 @@ void CSMFReadMap::UpdateVertexNormals(const HeightMapUpdate& update)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	if (update.los) {
-		static const float*  shm = &cornerHeightMapSynced[0];
-		static       float*  uhm = &cornerHeightMapUnsynced[0];
-		static       float3* vvn = &visVertexNormals[0];
+		const float*  shm = &cornerHeightMapSynced[0];
+		      float*  uhm = &cornerHeightMapUnsynced[0];
+		      float3* vvn = &visVertexNormals[0];
 
-		static const int W = gs->mapxp1;
-		static const int H = gs->mapyp1;
+		const int W = gs->mapxp1;
+		const int H = gs->mapyp1;
 		static const int SS = SQUARE_SIZE;
 
 		// a heightmap update over (x1, y1) - (x2, y2) implies the
 		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
-		const int minx = std::max((update.x1 - 1),     0);
-		const int minz = std::max((update.y1 - 1),     0);
-		const int maxx = std::min((update.x2 + 1), W - 1);
-		const int maxz = std::min((update.y2 + 1), H - 1);
+		const int minx = std::max(update.x1 - 1,     0);
+		const int minz = std::max(update.y1 - 1,     0);
+		const int maxx = std::min(update.x2 + 1, W - 1);
+		const int maxz = std::min(update.y2 + 1, H - 1);
 
 		int z;
 		#pragma omp parallel for private(z)
@@ -402,30 +402,26 @@ void CSMFReadMap::UpdateFaceNormals(const HeightMapUpdate& update)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	if (update.los) {
-		static const float3* sfn = &faceNormalsSynced[0];
-		static       float3* ufn = &faceNormalsUnsynced[0];
-		static const float3* scn = &centerNormalsSynced[0];
-		static       float3* ucn = &centerNormalsUnsynced[0];
-
-		static const int W = gs->mapxp1;
-		static const int H = gs->mapyp1;
+		const float3* sfn = &faceNormalsSynced[0];
+		      float3* ufn = &faceNormalsUnsynced[0];
+		const float3* scn = &centerNormalsSynced[0];
+		      float3* ucn = &centerNormalsUnsynced[0];
 
 		// a heightmap update over (x1, y1) - (x2, y2) implies the
 		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
-		const int minx = std::max((update.x1 - 1),     0);
-		const int minz = std::max((update.y1 - 1),     0);
-		const int maxx = std::min((update.x2 + 1), W - 1);
-		const int maxz = std::min((update.y2 + 1), H - 1);
+		const int minx = std::max(update.x1 - 1,          0);
+		const int minz = std::max(update.y1 - 1,          0);
+		const int maxx = std::min(update.x2 + 1, gs->mapxm1);
+		const int maxz = std::min(update.y2 + 1, gs->mapym1);
 
 		int idx0, idx1;
-		const int maxx_ = std::min(maxx, gs->mapxm1);
-		for (int z = minz; z <= std::min(maxz, gs->mapym1); z++) {
-			idx0  = (z * gs->mapx + minx ) * 2    ;
-			idx1  = (z * gs->mapx + maxx_) * 2 + 1;
+		for (int z = minz; z <= maxz; z++) {
+			idx0  = (z * gs->mapx + minx) * 2    ;
+			idx1  = (z * gs->mapx + maxx) * 2 + 1;
 			memcpy(&ufn[idx0], &sfn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
 
-			idx0  = (z * gs->mapx + minx );
-			idx1  = (z * gs->mapx + maxx_);
+			idx0  = (z * gs->mapx + minx);
+			idx1  = (z * gs->mapx + maxx);
 			memcpy(&ucn[idx0], &scn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
 		}
 	}
@@ -439,17 +435,14 @@ void CSMFReadMap::UpdateNormalTexture(const HeightMapUpdate& update)
 	if (globalRendering->haveGLSL) {
 		// texture space is [0 .. gs->mapx] x [0 .. gs->mapy] (NPOT; vertex-aligned)
 
-		static float3* vvn = &visVertexNormals[0];
-
-		static const int W = gs->mapxp1;
-		static const int H = gs->mapyp1;
+		float3* vvn = &visVertexNormals[0];
 
 		// a heightmap update over (x1, y1) - (x2, y2) implies the
 		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
-		const int minx = std::max((update.x1 - 1),     0);
-		const int minz = std::max((update.y1 - 1),     0);
-		const int maxx = std::min((update.x2 + 1), W - 1);
-		const int maxz = std::min((update.y2 + 1), H - 1);
+		const int minx = std::max(update.x1 - 1,        0);
+		const int minz = std::max(update.y1 - 1,        0);
+		const int maxx = std::min(update.x2 + 1, gs->mapx);
+		const int maxz = std::min(update.y2 + 1, gs->mapy);
 
 		const int xsize = (maxx - minx) + 1;
 		const int zsize = (maxz - minz) + 1;
@@ -464,7 +457,7 @@ void CSMFReadMap::UpdateNormalTexture(const HeightMapUpdate& update)
 
 		for (int z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
-				const float3& vertNormal = vvn[z * W + x];
+				const float3& vertNormal = vvn[z * gs->mapxp1 + x];
 
 			#if (SSMF_UNCOMPRESSED_NORMALS == 1)
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = vertNormal.x;
@@ -500,8 +493,8 @@ void CSMFReadMap::UpdateShadingTexture(const HeightMapUpdate& update)
 		// texture space is [0 .. gs->mapxm1] x [0 .. gs->mapym1]
 
 		// enlarge rect by 1pixel in all directions (cause we use center normals and not corner ones)
-		const int x1 = std::max(update.x1 - 1, 0);
-		const int y1 = std::max(update.y1 - 1, 0);
+		const int x1 = std::max(update.x1 - 1,          0);
+		const int y1 = std::max(update.y1 - 1,          0);
 		const int x2 = std::min(update.x2 + 1, gs->mapxm1);
 		const int y2 = std::min(update.y2 + 1, gs->mapym1);
 
