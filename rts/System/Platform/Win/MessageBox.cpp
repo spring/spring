@@ -9,7 +9,7 @@ namespace Platform {
 /**
  * @brief message box function
  */
-void MessageBox(const std::string& message, const std::string& caption, const unsigned int& flags)
+void MsgBox(const std::string& message, const std::string& caption, const unsigned int& flags)
 {
 	// Translate spring flags to corresponding win32 dialog flags
 	unsigned int winFlags = MB_TOPMOST | MB_OK;
