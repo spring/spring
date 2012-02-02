@@ -499,7 +499,7 @@ void CHoverAirMoveType::UpdateFlying()
 		goalVec = circlingPos - pos;
 	} else {
 		const bool b0 = (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands()));
-		const bool b1 = (goalDist < 120.0f) && ((goalVec.Normalize()).SqDistance(goalVec) > 1.0f);
+		const bool b1 = (goalDist < 120.0f) && ((goalVec.SafeNormalize()).SqDistance(goalVec) > 1.0f);
 
 		if (b0 && b1) {
 			goalVec = owner->frontdir;
