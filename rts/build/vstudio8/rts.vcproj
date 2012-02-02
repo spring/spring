@@ -2409,14 +2409,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\ShieldDrawer.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Rendering\ShieldDrawer.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Rendering\SmoothHeightMeshDrawer.cpp"
 				>
 			</File>
@@ -3708,6 +3700,14 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Projectiles\Unsynced\RepulseGfx.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\Unsynced\ShieldProjectile.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\Unsynced\ShieldProjectile.h"
 						>
 					</File>
 					<File
@@ -5045,6 +5045,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -5123,26 +5143,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -6178,6 +6178,10 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\DllLib.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\Platform\Win\MessageBox.cpp"
 						>
 					</File>
 					<File
@@ -8280,6 +8284,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Map\Smf\SmfReadMap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SMF\SMFRenderState.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SMF\SMFRenderState.h"
 					>
 				</File>
 				<Filter
