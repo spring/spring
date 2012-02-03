@@ -67,7 +67,9 @@ CMoveInfo* moveinfo;
 
 static float DegreesToMaxSlope(float degrees)
 {
-	static const float degToRad = PI / 180.0f; // Prevent MSVC from inlining stuff that would break the PE checksum compatibility between debug and release
+	// Prevent MSVC from inlining stuff that would break the
+	// PE checksum compatibility between debug and release
+	static const float degToRad = PI / 180.0f;
 
 	const float deg = Clamp(degrees, 0.0f, 60.0f) * 1.5f;
 	const float rad = deg * degToRad;
@@ -298,32 +300,29 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 }
 
 float MoveData::GetDepthMod(const float height) const {
-	float depthMod = 1.0f;
+	// [DEPTHMOD_{MIN, MAX}_HEIGHT] are always >= 0,
+	// so we return early for positive height values
+	// only negative heights ("depths") are allowed
+	if (height > -depthModParams[DEPTHMOD_MIN_HEIGHT]) { return 1.0f; }
+	if (height < -depthModParams[DEPTHMOD_MAX_HEIGHT]) { return 1.0f; }
 
-	const float depthModMinHeight = depthModParams[DEPTHMOD_MIN_HEIGHT];
-	const float depthModMaxHeight = depthModParams[DEPTHMOD_MAX_HEIGHT];
+	const float a = depthModParams[DEPTHMOD_QUA_COEFF];
+	const float b = depthModParams[DEPTHMOD_LIN_COEFF];
+	const float c = depthModParams[DEPTHMOD_CON_COEFF];
 
-	if (height <= -depthModMinHeight && height >= -depthModMaxHeight) {
-		const float a = depthModParams[DEPTHMOD_QUA_COEFF];
-		const float b = depthModParams[DEPTHMOD_LIN_COEFF];
-		const float c = depthModParams[DEPTHMOD_CON_COEFF];
+	const float minScale = 0.01f;
+	const float maxScale = depthModParams[DEPTHMOD_MAX_VALUE];
 
-		const float depth = -height;
-		const float scale = a * depth * depth + b * depth + c;
+	const float depth = -height;
+	const float scale = Clamp((a * depth * depth + b * depth + c), minScale, maxScale);
 
-		const float lowerLimit = 0.01f;
-		const float upperLimit = depthModParams[DEPTHMOD_MAX_VALUE];
-
-		// NOTE:
-		//   <upperLimit> is guaranteed to be >= 0.01, so the
-		//   depth-mod range is [1.0 / 0.01, 1.0 / +infinity]
-		//
-		//   if lower <= scale <    1.0, speedup
-		//   if   1.0 <  scale <= upper, slowdown
-		depthMod /= Clamp(scale, lowerLimit, upperLimit);
-	}
-
-	return depthMod;
+	// NOTE:
+	//   <maxScale> is guaranteed to be >= 0.01, so the
+	//   depth-mod range is [1.0 / 0.01, 1.0 / +infinity]
+	//
+	//   if minScale <= scale <       1.0, speedup
+	//   if      1.0 <  scale <= maxScale, slowdown
+	return (1.0f / scale);
 }
 
 unsigned int MoveData::GetCheckSum() const {
