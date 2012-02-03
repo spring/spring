@@ -105,15 +105,17 @@ void CReadMap::Serialize(creg::ISerializer& s)
 }
 
 
-CReadMap::CReadMap():
-	metalMap(NULL),
-	width(0),
-	height(0),
-	initMinHeight(0.0f),
-	initMaxHeight(0.0f),
-	currMinHeight(0.0f),
-	currMaxHeight(0.0f),
-	mapChecksum(0)
+CReadMap::CReadMap()
+	: metalMap(NULL)
+	, width(0)
+	, height(0)
+	, initMinHeight(0.0f)
+	, initMaxHeight(0.0f)
+	, currMinHeight(0.0f)
+	, currMaxHeight(0.0f)
+	, mapChecksum(0)
+	, heightMapSynced(NULL)
+	, heightMapUnsynced(NULL)
 {
 }
 
@@ -183,6 +185,9 @@ void CReadMap::Initialize()
 
 	slopeMap.resize(gs->hmapx * gs->hmapy);
 	visVertexNormals.resize(gs->mapxp1 * gs->mapyp1);
+
+	assert(heightMapSynced != NULL);
+	assert(heightMapUnsynced != NULL);
 
 	CalcHeightmapChecksum();
 	UpdateHeightMapSynced(0, 0, gs->mapx, gs->mapy);
