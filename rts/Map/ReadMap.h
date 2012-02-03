@@ -161,8 +161,8 @@ public:
 	static const float* GetSlopeMap(const bool& synced);
 
 	/// if you modify the heightmap through these, call UpdateHeightMapSynced
-	void SetHeight(const int& idx, const float& h);
-	void AddHeight(const int& idx, const float& a);
+	float SetHeight(const int& idx, const float& h);
+	float AddHeight(const int& idx, const float& a);
 
 public:
 	/// number of heightmap mipmaps, including full resolution
@@ -268,15 +268,14 @@ inline const float* CReadMap::GetSlopeMap(const bool& synced) {
 
 
 /// if you modify the heightmap through these, call UpdateHeightMapSynced
-inline void CReadMap::SetHeight(const int& idx, const float& h) {
-	(*heightMapSynced)[idx] = h;
+inline float CReadMap::SetHeight(const int& idx, const float& h) {
 	currMinHeight = std::min(h, currMinHeight);
 	currMaxHeight = std::max(h, currMaxHeight);
+	return ((*heightMapSynced)[idx] = h);
 }
 
-inline void CReadMap::AddHeight(const int& idx, const float& a) {
-	const float h = (*heightMapSynced)[idx];
-	SetHeight(idx, h + a);
+inline float CReadMap::AddHeight(const int& idx, const float& a) {
+	return SetHeight(idx, (*heightMapSynced)[idx] + a);
 }
 
 
