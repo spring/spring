@@ -2017,7 +2017,6 @@ int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 	return 1;
 }
 
-
 int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 {
 	if (!CheckModUICtrl()) {
@@ -2026,10 +2025,14 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 	const string name = luaL_checkstring(L, 1);
 	const int value   = luaL_checkint(L, 2);
 	const bool useOverlay = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : false;
+	// don't allow to change a read-only variable
+	if (configHandler->IsReadOnly(name)) {
+		LOG_L(L_ERROR, "tried to set readonly (int) %s = %d", name.c_str(), value);
+		return 0;
+	}
 	configHandler->Set(name, value, useOverlay);
 	return 0;
 }
-
 
 int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 {
@@ -2053,6 +2056,11 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 	const string name  = luaL_checkstring(L, 1);
 	const string value = luaL_checkstring(L, 2);
 	const bool useOverlay = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : false;
+	// don't allow to change a read-only variable
+	if (configHandler->IsReadOnly(name)) {
+		LOG_L(L_ERROR, "tried to set readonly (string) %s = %s", name.c_str(), value.c_str());
+		return 0;
+	}
 	configHandler->SetString(name, value, useOverlay);
 	return 0;
 }
