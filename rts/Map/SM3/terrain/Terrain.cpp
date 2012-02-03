@@ -939,7 +939,7 @@ namespace terrain {
 			heightmap = LoadHeightmapFromImage(heightMapName, cb);
 		}
 
-		if (heightmap->dataSynced == NULL) {
+		if (heightmap->dataSynced.empty()) {
 			throw content_error("Failed to load heightmap " + heightMapName);
 		}
 
@@ -1130,8 +1130,8 @@ namespace terrain {
 		CacheTextures();
 	}
 
-	const float* Terrain::GetCornerHeightMapSynced() const { return heightmap->dataSynced; }
-	      float* Terrain::GetCornerHeightMapUnsynced()     { return heightmap->dataUnsynced; }
+	std::vector<float>* Terrain::GetCornerHeightMapSynced()   { return &heightmap->dataSynced; }
+	std::vector<float>* Terrain::GetCornerHeightMapUnsynced() { return &heightmap->dataUnsynced; }
 
 
 	void Terrain::SetShadowParams(ShadowMapParams* smp)

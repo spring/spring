@@ -76,9 +76,11 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	cornerHeightMapUnsynced.resize((width + 1) * (height + 1));
 	#endif
 
+	heightMapSynced   = &cornerHeightMapSynced;
+	heightMapUnsynced = &cornerHeightMapUnsynced;
+
 	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;
 	const float maxH = smf.maxHeightOverride ? smf.maxHeight : header.maxHeight;
-
 	float* cornerHeightMapSyncedData = (cornerHeightMapSynced.empty())? NULL: &cornerHeightMapSynced[0];
 	float* cornerHeightMapUnsyncedData = (cornerHeightMapUnsynced.empty())? NULL: &cornerHeightMapUnsynced[0];
 
