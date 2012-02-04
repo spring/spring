@@ -170,7 +170,7 @@ MoveData::MoveData() {
 
 	depthModParams[DEPTHMOD_MIN_HEIGHT] = 0.0f;
 	depthModParams[DEPTHMOD_MAX_HEIGHT] = std::numeric_limits<float>::max();
-	depthModParams[DEPTHMOD_MAX_VALUE ] = std::numeric_limits<float>::max();
+	depthModParams[DEPTHMOD_MAX_SCALE ] = std::numeric_limits<float>::max();
 	depthModParams[DEPTHMOD_QUA_COEFF ] = 0.0f;
 	depthModParams[DEPTHMOD_LIN_COEFF ] = 0.1f;
 	depthModParams[DEPTHMOD_CON_COEFF ] = 1.0f;
@@ -223,7 +223,7 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 
 		depthModParams[DEPTHMOD_MIN_HEIGHT] = std::max(0.00f, moveTable.GetFloat("depthModMinHeight",                                     0.0f ));
 		depthModParams[DEPTHMOD_MAX_HEIGHT] =         (       moveTable.GetFloat("depthModMaxHeight",        std::numeric_limits<float>::max() ));
-		depthModParams[DEPTHMOD_MAX_VALUE ] = std::max(0.01f, moveTable.GetFloat("depthModMaxValue",         std::numeric_limits<float>::max() ));
+		depthModParams[DEPTHMOD_MAX_SCALE ] = std::max(0.01f, moveTable.GetFloat("depthModMaxScale",         std::numeric_limits<float>::max() ));
 		depthModParams[DEPTHMOD_QUA_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModQuadraticCoeff",                                0.0f ));
 		depthModParams[DEPTHMOD_LIN_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModLinearCoeff",    moveTable.GetFloat("depthMod", 0.1f)));
 		depthModParams[DEPTHMOD_CON_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModConstantCoeff",                                 1.0f ));
@@ -304,14 +304,14 @@ float MoveData::GetDepthMod(const float height) const {
 	// so we return early for positive height values
 	// only negative heights ("depths") are allowed
 	if (height > -depthModParams[DEPTHMOD_MIN_HEIGHT]) { return 1.0f; }
-	if (height < -depthModParams[DEPTHMOD_MAX_HEIGHT]) { return 1.0f; }
+	if (height < -depthModParams[DEPTHMOD_MAX_HEIGHT]) { return 0.0f; }
 
 	const float a = depthModParams[DEPTHMOD_QUA_COEFF];
 	const float b = depthModParams[DEPTHMOD_LIN_COEFF];
 	const float c = depthModParams[DEPTHMOD_CON_COEFF];
 
 	const float minScale = 0.01f;
-	const float maxScale = depthModParams[DEPTHMOD_MAX_VALUE];
+	const float maxScale = depthModParams[DEPTHMOD_MAX_SCALE];
 
 	const float depth = -height;
 	const float scale = Clamp((a * depth * depth + b * depth + c), minScale, maxScale);
@@ -332,7 +332,7 @@ unsigned int MoveData::GetCheckSum() const {
 	const unsigned char* bytes = reinterpret_cast<const unsigned char*>(this);
 
 	for (unsigned int n = 0; n < sizeof(*this); n++) {
-		sum ^= bytes[n];
+		sum ^= ((n + 1) * bytes[n]);
 	}
 
 	return sum;
