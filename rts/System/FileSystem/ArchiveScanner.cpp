@@ -77,7 +77,7 @@ const KnownInfoTag knownTags[] = {
 /*
  * CArchiveScanner::ArchiveData
  */
-CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable)
+CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable, bool fromCache)
 {
 	if (!archiveTable.IsValid()) {
 		return;
@@ -138,11 +138,14 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable)
 
 	const std::string& name = GetName();
 	const std::string& version = GetVersion();
-	if ((name.find(version) == std::string::npos) && !version.empty()) {
-		SetInfoItemValueString("name", name + " " + version);
+	if (!version.empty()) {
+		if (name.find(version) == std::string::npos) {
+			SetInfoItemValueString("name", name + " " + version);
+		} else if (!fromCache) {
+			LOG_L(L_WARNING, "Invalid Name detected, please contact the author of the archive to remove the Version from the Name: %s, Version: %s", name.c_str(), version.c_str());
+		}
 	}
 }
-
 
 std::string CArchiveScanner::ArchiveData::GetKeyDescription(const std::string& keyLower)
 {
@@ -638,7 +641,7 @@ bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, 
 	}
 	const LuaTable archiveTable = p.GetRoot();
 	try {
-		ai.archiveData = CArchiveScanner::ArchiveData(archiveTable);
+		ai.archiveData = CArchiveScanner::ArchiveData(archiveTable, false);
 
 		if (!ai.archiveData.IsValid(err)) {
 			err = "Error in " + fileName + ": " + err;
@@ -798,7 +801,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		ai.checksum = strtoul(curArchive.GetString("checksum", "0").c_str(), 0, 10);
 		ai.updated = false;
 
-		ai.archiveData = CArchiveScanner::ArchiveData(archived);
+		ai.archiveData = CArchiveScanner::ArchiveData(archived, true);
 		if (ai.archiveData.GetModType() == modtype::map) {
 			AddDependency(ai.archiveData.GetDependencies(), "Map Helper v1");
 		} else if (ai.archiveData.GetModType() == modtype::primary) {

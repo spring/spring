@@ -4,6 +4,7 @@
 #define _BASE_GROUND_DRAWER_H
 
 #include <map>
+#include "MapDrawPassTypes.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/GL/PBO.h"
@@ -13,16 +14,6 @@ class CMetalMap;
 class CHeightLinePalette;
 class CBaseGroundTextures;
 class CCamera;
-
-struct DrawPass {
-	enum e {
-		Normal,
-		Shadow,
-		WaterReflection,
-		WaterRefraction,
-		UnitReflection
-	};
-};
 
 class CBaseGroundDrawer
 {

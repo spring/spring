@@ -53,8 +53,6 @@ private:
 	int viewRadius;
 	int neededLod;
 
-	//bool waterDrawn;
-
 #ifdef USE_GML
 	bool& multiThreadDrawGround;
 	bool& multiThreadDrawGroundShadow;

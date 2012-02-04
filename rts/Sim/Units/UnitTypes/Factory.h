@@ -28,7 +28,7 @@ public:
 	void FinishBuild(CUnit* buildee);
 	void StopBuild();
 	/// @return whether the to-be-built unit is enqueued
-	bool QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, FinishBuildCallBackFunc buildCB);
+	unsigned int QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, FinishBuildCallBackFunc buildCB);
 
 	void Update();
 	void SlowUpdate();
@@ -49,6 +49,12 @@ public:
 
 	const UnitDef* curBuildDef;
 	CUnit* curBuild;
+
+	enum {
+		FACTORY_SKIP_BUILD_ORDER = 0,
+		FACTORY_KEEP_BUILD_ORDER = 1,
+		FACTORY_NEXT_BUILD_ORDER = 2,
+	};
 
 private:
 	void SendToEmptySpot(CUnit* unit);

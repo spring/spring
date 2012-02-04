@@ -108,17 +108,6 @@ CSolidObject::~CSolidObject() {
 
 
 
-void CSolidObject::UpdateMidPos()
-{
-	const float3 dz = (frontdir * relMidPos.z);
-	const float3 dy = (updir    * relMidPos.y);
-	const float3 dx = (rightdir * relMidPos.x);
-
-	midPos = pos + dz + dy + dx;
-}
-
-
-
 void CSolidObject::UnBlock() {
 	if (isMarkedOnBlockingMap) {
 		groundBlockingObjectMap->RemoveGroundBlockingObject(this);

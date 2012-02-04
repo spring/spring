@@ -484,7 +484,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 	unsigned int maxSearchedBlocks,
 	bool synced
 ) {
-	start.CheckInBounds();
+	start.ClampInBounds();
 
 	// clear the path
 	path.path.clear();

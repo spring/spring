@@ -105,8 +105,6 @@ public:
 	float particleSaturation;      // currentParticles / maxParticles ratio
 	float nanoParticleSaturation;
 
-	int numPerlinProjectiles;      // unsynced
-
 private:
 	int maxUsedSyncedID;
 	int maxUsedUnsyncedID;

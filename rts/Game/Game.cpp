@@ -804,6 +804,13 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 		}
 	}
 
+	// maybe a widget is interested?
+	if (guihandler != NULL) {
+		for (unsigned int i = 0; i < actionList.size(); ++i) {
+			guihandler->PushLayoutCommand(actionList[i].rawline, false);
+		}
+	}
+
 	return 0;
 }
 
@@ -2299,8 +2306,9 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	if (executor != NULL) {
 		// an executor for that action was found
 		UnsyncedAction unsyncedAction(action, key, isRepeat);
-		executor->ExecuteAction(unsyncedAction);
-		return true; // XXX catch exceptions thrown in ExecuteAction to deside what to return here?
+		if (executor->ExecuteAction(unsyncedAction)) {
+			return true;
+		}
 	}
 
 	static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
@@ -2313,9 +2321,6 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	if (Console::Instance().ExecuteAction(action)) {
 		return true;
 	}
-
-	if (guihandler != NULL) // maybe a widget is interested?
-		guihandler->PushLayoutCommand(action.rawline, false);
 
 	return false;
 }

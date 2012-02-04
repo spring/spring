@@ -36,10 +36,13 @@ struct UnitModelDef
 
 struct UnitDefWeapon {
 	UnitDefWeapon();
-	UnitDefWeapon(std::string name, const WeaponDef* def, int slavedTo,
-	              float3 mainDir, float maxAngleDif, unsigned int badTargetCat,
-	              unsigned int onlyTargetCat, float fuelUse);
+	UnitDefWeapon(const WeaponDef* weaponDef);
+	UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponTable);
+	UnitDefWeapon(const UnitDefWeapon& udw) { *this = udw; }
+
+	// unused
 	std::string name;
+
 	const WeaponDef* def;
 	int slavedTo;
 	float3 mainDir;

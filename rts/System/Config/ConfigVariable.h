@@ -102,6 +102,9 @@ public:
 	/// @brief Get the maximum value of this config variable.
 	virtual const StringConvertibleOptionalValue& GetMaximumValue() const = 0;
 
+	/// @brief Get the safemode value of this config variable.
+	virtual const StringConvertibleOptionalValue& GetSafemodeValue() const = 0;
+
 	/// @brief Clamp a value using the declared minimum and maximum value.
 	virtual std::string Clamp(const std::string& value) const = 0;
 
@@ -139,6 +142,7 @@ public:
 	const StringConvertibleOptionalValue& GetDefaultValue() const { return defaultValue; }
 	const StringConvertibleOptionalValue& GetMinimumValue() const { return minimumValue; }
 	const StringConvertibleOptionalValue& GetMaximumValue() const { return maximumValue; }
+	const StringConvertibleOptionalValue& GetSafemodeValue() const { return safemodeValue; }
 
 	/**
 	 * @brief Clamp a value using the declared minimum and maximum value.
@@ -170,6 +174,7 @@ protected:
 	TypedStringConvertibleOptionalValue<T> defaultValue;
 	TypedStringConvertibleOptionalValue<T> minimumValue;
 	TypedStringConvertibleOptionalValue<T> maximumValue;
+	TypedStringConvertibleOptionalValue<T> safemodeValue;
 
 	template<typename F> friend class ConfigVariableBuilder;
 };
@@ -206,6 +211,7 @@ public:
 	MAKE_CHAIN_METHOD(defaultValue, T);
 	MAKE_CHAIN_METHOD(minimumValue, T);
 	MAKE_CHAIN_METHOD(maximumValue, T);
+	MAKE_CHAIN_METHOD(safemodeValue, T);
 
 #undef MAKE_CHAIN_METHOD
 

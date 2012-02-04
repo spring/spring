@@ -59,8 +59,8 @@ unsigned int CPathManager::RequestPath(
 	CSolidObject* caller,
 	bool synced
 ) {
-	float3 sp(startPos); sp.CheckInBounds();
-	float3 gp(goalPos); gp.CheckInBounds();
+	float3 sp(startPos); sp.ClampInBounds();
+	float3 gp(goalPos); gp.ClampInBounds();
 
 	// Create an estimator definition.
 	CRangedGoalWithCircularConstraint* pfDef = new CRangedGoalWithCircularConstraint(sp, gp, goalRadius, 3.0f, 2000);

@@ -24,12 +24,8 @@ float CGroundMoveMath::SpeedMod(const MoveData& moveData, float height, float sl
 
 	// slope-mod
 	speedMod = 1.0f / (1.0f + slope * moveData.slopeMod);
-
-	// depth-mod
-	if (height < 0.0f) {
-		speedMod /= std::max(0.01f, 1.0f + (-height * moveData.depthMod));
-		speedMod *= waterDamageCost;
-	}
+	speedMod *= ((height < 0.0f)? waterDamageCost: 1.0f);
+	speedMod *= moveData.GetDepthMod(height);
 
 	return speedMod;
 }
@@ -46,12 +42,8 @@ float CGroundMoveMath::SpeedMod(const MoveData& moveData, float height, float sl
 
 	// slope-mod
 	speedMod = 1.0f / (1.0f + std::max(0.0f, slope * moveSlope) * moveData.slopeMod);
-
-	// depth-mod
-	if (height < 0.0f) {
-		speedMod /= std::max(0.01f, 1.0f + (-height * moveData.depthMod));
-		speedMod *= waterDamageCost;
-	}
+	speedMod *= ((height < 0.0f)? waterDamageCost: 1.0f);
+	speedMod *= moveData.GetDepthMod(height);
 
 	return speedMod;
 }

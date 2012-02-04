@@ -7,9 +7,8 @@
 #include <list>
 #include <set>
 
-class CProjectile;
+class ShieldProjectile;
 class CRepulseGfx;
-class CShieldPartProjectile;
 
 class CPlasmaRepulser :
 	public CWeapon
@@ -38,15 +37,14 @@ public:
 	int rechargeDelay;
 
 	bool isEnabled;
-	bool wasDrawn;
-	bool startShowingShield;
 
 private:
-	virtual void FireImpl() {};
+	void FireImpl() {}
 
 private:
+	// these are strictly unsynced
+	ShieldProjectile* shieldProjectile;
 	std::set<CWeaponProjectile*> hasGfx;
-	std::list<CShieldPartProjectile*> visibleShieldParts;
 };
 
 #endif

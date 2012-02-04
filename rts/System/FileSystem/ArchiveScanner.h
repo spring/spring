@@ -38,7 +38,7 @@ public:
 	{
 	public:
 		ArchiveData() {};
-		ArchiveData(const LuaTable& archiveTable);
+		ArchiveData(const LuaTable& archiveTable, bool fromCache);
 
 		/*
 		 * These methods are only here for convenience and compile time checks.

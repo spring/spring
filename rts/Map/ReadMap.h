@@ -138,12 +138,12 @@ public:
 
 	/// both
 	/// synced versions
-	virtual const float* GetCornerHeightMapSynced()   const = 0;
-	const float3* GetFaceNormalsSynced()   const { return &faceNormalsSynced[0]; }
-	const float3* GetCenterNormalsSynced() const { return &centerNormalsSynced[0]; }
+	const float* GetCornerHeightMapSynced() const { return &(*heightMapSynced)[0]; }
+	const float3* GetFaceNormalsSynced()    const { return &faceNormalsSynced[0]; }
+	const float3* GetCenterNormalsSynced()  const { return &centerNormalsSynced[0]; }
 	/// unsynced versions
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	virtual const float* GetCornerHeightMapUnsynced() const = 0;
+	const float* GetCornerHeightMapUnsynced() const { return &(*heightMapUnsynced)[0]; }
 	const float3* GetFaceNormalsUnsynced()   const { return &faceNormalsUnsynced[0]; }
 	const float3* GetCenterNormalsUnsynced() const { return &centerNormalsUnsynced[0]; }
 #else
@@ -161,8 +161,8 @@ public:
 	static const float* GetSlopeMap(const bool& synced);
 
 	/// if you modify the heightmap through these, call UpdateHeightMapSynced
-	void SetHeight(const int& idx, const float& h);
-	void AddHeight(const int& idx, const float& a);
+	float SetHeight(const int& idx, const float& h);
+	float AddHeight(const int& idx, const float& a);
 
 public:
 	/// number of heightmap mipmaps, including full resolution
@@ -177,8 +177,15 @@ public:
 
 	unsigned int mapChecksum;
 
+private:
+	void UpdateCenterHeightmap(const int x1, const int z1, const int x2, const int z2);
+	void UpdateMipHeightmaps(const int x1, const int z1, const int x2, const int z2);
+	void UpdateFaceNormals(int x1, int z1, int x2, int z2);
+	void UpdateSlopemap(const int x1, const int z1, const int x2, const int z2);
 
 protected:
+	std::vector<float>* heightMapSynced;      /// size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
+	std::vector<float>* heightMapUnsynced;    /// size: (mapx+1)*(mapy+1) (per vertex) [UNSYNCED]
 	std::vector<float> originalHeightMap;    /// size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, does NOT update on terrain deformation]
 	std::vector<float> centerHeightMap;      /// size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
 	std::vector< std::vector<float> > mipCenterHeightMaps;
@@ -261,20 +268,14 @@ inline const float* CReadMap::GetSlopeMap(const bool& synced) {
 
 
 /// if you modify the heightmap through these, call UpdateHeightMapSynced
-inline void CReadMap::SetHeight(const int& idx, const float& h) {
-	float* hm = const_cast<float*>(GetCornerHeightMapSynced());
-
-	hm[idx] = h;
+inline float CReadMap::SetHeight(const int& idx, const float& h) {
 	currMinHeight = std::min(h, currMinHeight);
 	currMaxHeight = std::max(h, currMaxHeight);
+	return ((*heightMapSynced)[idx] = h);
 }
 
-inline void CReadMap::AddHeight(const int& idx, const float& a) {
-	float* hm = const_cast<float*>(GetCornerHeightMapSynced());
-
-	hm[idx] += a;
-	currMinHeight = std::min(hm[idx], currMinHeight);
-	currMaxHeight = std::max(hm[idx], currMaxHeight);
+inline float CReadMap::AddHeight(const int& idx, const float& a) {
+	return SetHeight(idx, (*heightMapSynced)[idx] + a);
 }
 
 

@@ -171,6 +171,7 @@ public:
 		std::string skyReflectModTexName;
 		std::string detailNormalTexName;
 		std::string lightEmissionTexName;
+		std::string parallaxHeightTexName;
 
 		float minHeight;
 		bool  minHeightOverride;

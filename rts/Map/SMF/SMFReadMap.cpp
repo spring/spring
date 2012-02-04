@@ -76,9 +76,11 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	cornerHeightMapUnsynced.resize((width + 1) * (height + 1));
 	#endif
 
+	heightMapSynced   = &cornerHeightMapSynced;
+	heightMapUnsynced = &cornerHeightMapUnsynced;
+
 	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;
 	const float maxH = smf.maxHeightOverride ? smf.maxHeight : header.maxHeight;
-
 	float* cornerHeightMapSyncedData = (cornerHeightMapSynced.empty())? NULL: &cornerHeightMapSynced[0];
 	float* cornerHeightMapUnsyncedData = (cornerHeightMapUnsynced.empty())? NULL: &cornerHeightMapUnsynced[0];
 
@@ -97,26 +99,28 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 
 
-	haveSpecularLighting = !(mapInfo->smf.specularTexName.empty());
+	haveSpecularTexture = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 
 
-	detailTex        = 0;
-	shadingTex       = 0;
-	normalsTex       = 0;
-	minimapTex       = 0;
-	specularTex      = 0;
-	splatDetailTex   = 0;
-	splatDistrTex    = 0;
-	skyReflectModTex = 0;
-	detailNormalTex  = 0;
-	lightEmissionTex = 0;
+	detailTex         = 0;
+	shadingTex        = 0;
+	normalsTex        = 0;
+	minimapTex        = 0;
+	specularTex       = 0;
+	splatDetailTex    = 0;
+	splatDistrTex     = 0;
+	skyReflectModTex  = 0;
+	detailNormalTex   = 0;
+	lightEmissionTex  = 0;
+	parallaxHeightTex = 0;
 
-	if (haveSpecularLighting) {
+	if (haveSpecularTexture) {
 		CBitmap specularTexBM;
 		CBitmap skyReflectModTexBM;
 		CBitmap detailNormalTexBM;
 		CBitmap lightEmissionTexBM;
+		CBitmap parallaxHeightTexBM;
 
 		if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 			// maps wants specular lighting, but no moderation
@@ -133,7 +137,8 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 		if (haveSplatTexture) {
 			CBitmap splatDistrTexBM;
 			CBitmap splatDetailTexBM;
-			// if the map supplies an intensity- and a distribution-texture for
+
+			// if the map supplies an intensity- AND a distribution-texture for
 			// detail-splat blending, the regular detail-texture is not used
 			if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
 				// default detail-texture should be all-grey
@@ -169,6 +174,10 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 		if (lightEmissionTexBM.Load(mapInfo->smf.lightEmissionTexName)) {
 			lightEmissionTex = lightEmissionTexBM.CreateTexture(false);
+		}
+
+		if (parallaxHeightTexBM.Load(mapInfo->smf.parallaxHeightTexName)) {
+			parallaxHeightTex = parallaxHeightTexBM.CreateTexture(false);
 		}
 	}
 
@@ -276,17 +285,18 @@ CSMFReadMap::~CSMFReadMap()
 {
 	delete groundDrawer;
 
-	glDeleteTextures(1, &detailTex       );
-	glDeleteTextures(1, &specularTex     );
-	glDeleteTextures(1, &minimapTex      );
-	glDeleteTextures(1, &shadingTex      );
-	glDeleteTextures(1, &normalsTex      );
-	glDeleteTextures(1, &splatDetailTex  );
-	glDeleteTextures(1, &splatDistrTex   );
-	glDeleteTextures(1, &grassShadingTex );
-	glDeleteTextures(1, &skyReflectModTex);
-	glDeleteTextures(1, &detailNormalTex );
-	glDeleteTextures(1, &lightEmissionTex);
+	glDeleteTextures(1, &detailTex        );
+	glDeleteTextures(1, &specularTex      );
+	glDeleteTextures(1, &minimapTex       );
+	glDeleteTextures(1, &shadingTex       );
+	glDeleteTextures(1, &normalsTex       );
+	glDeleteTextures(1, &splatDetailTex   );
+	glDeleteTextures(1, &splatDistrTex    );
+	glDeleteTextures(1, &grassShadingTex  );
+	glDeleteTextures(1, &skyReflectModTex );
+	glDeleteTextures(1, &detailNormalTex  );
+	glDeleteTextures(1, &lightEmissionTex );
+	glDeleteTextures(1, &parallaxHeightTex);
 }
 
 
@@ -299,108 +309,142 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 {
 	// ReadMap::UpdateHeightMapSynced clamps to [0, gs->mapx - 1]
 
-	int x1 = update.x1, y1 = update.y1;
-	int x2 = update.x2, y2 = update.y2;
+	UpdateVertexNormals(update);
+	UpdateFaceNormals(update);
+	UpdateNormalTexture(update);
+	UpdateShadingTexture(update);
+}
 
-	// update the visible (LOS) heights and normals
-	{
-		static const float*  shm = &cornerHeightMapSynced[0];
+
+void CSMFReadMap::UpdateVertexNormals(const HeightMapUpdate& update)
+{
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-		static       float*  uhm = &cornerHeightMapUnsynced[0];
-	#endif
-		static const float3* sfn = &faceNormalsSynced[0];
-		static       float3* ufn = &faceNormalsUnsynced[0];
-		static const float3* scn = &centerNormalsSynced[0];
-		static       float3* ucn = &centerNormalsUnsynced[0];
-		static       float3* vvn = &visVertexNormals[0];
+	if (update.los) {
+		const float*  shm = &cornerHeightMapSynced[0];
+		      float*  uhm = &cornerHeightMapUnsynced[0];
+		      float3* vvn = &visVertexNormals[0];
 
-		static const int W = gs->mapxp1;
-		static const int H = gs->mapyp1;
+		const int W = gs->mapxp1;
+		const int H = gs->mapyp1;
 		static const int SS = SQUARE_SIZE;
 
 		// a heightmap update over (x1, y1) - (x2, y2) implies the
 		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
-		const int minx = std::max((x1 - 1),     0);
-		const int minz = std::max((y1 - 1),     0);
-		const int maxx = std::min((x2 + 1), W - 1);
-		const int maxz = std::min((y2 + 1), H - 1);
+		const int minx = std::max(update.x1 - 1,     0);
+		const int minz = std::max(update.y1 - 1,     0);
+		const int maxx = std::min(update.x2 + 1, W - 1);
+		const int maxz = std::min(update.y2 + 1, H - 1);
 
 		int z;
 		#pragma omp parallel for private(z)
 		for (z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
 				const int vIdxTL = (z    ) * W + x;
-				//const int vIdxBL = (z + 1) * W + x;
-				const int fIdxTL = (z * (W - 1) + x) * 2    ;
-				const int fIdxBR = (z * (W - 1) + x) * 2 + 1;
 
-				const bool hasNgbL = (x >     0); const int xOffL = hasNgbL? 1: 0;
-				const bool hasNgbR = (x < W - 1); const int xOffR = hasNgbR? 1: 0;
-				const bool hasNgbT = (z >     0); const int zOffT = hasNgbT? 1: 0;
-				const bool hasNgbB = (z < H - 1); const int zOffB = hasNgbB? 1: 0;
+				const int xOffL = (x >     0)? 1: 0;
+				const int xOffR = (x < W - 1)? 1: 0;
+				const int zOffT = (z >     0)? 1: 0;
+				const int zOffB = (z < H - 1)? 1: 0;
+
+				const float sxm1 = (x - 1) * SS;
+				const float sx   =       x * SS;
+				const float sxp1 = (x + 1) * SS;
+
+				const float szm1 = (z - 1) * SS;
+				const float sz   =       z * SS;
+				const float szp1 = (z + 1) * SS;
+
+				const int shxm1 = x - xOffL;
+				const int shx   = x;
+				const int shxp1 = x + xOffR;
+
+				const int shzm1 = (z - zOffT) * W;
+				const int shz   =           z * W;
+				const int shzp1 = (z + zOffB) * W;
 
 				// pretend there are 8 incident triangle faces per vertex
 				// for each these triangles, calculate the surface normal,
 				// then average the 8 normals (this stays closest to the
 				// heightmap data)
 				// if edge vertex, don't add virtual neighbor normals to vn
-				const float3 vtl = float3((x - 1) * SS,  shm[((z - zOffT) * W) + (x - xOffL)],  (z - 1) * SS);
-				const float3 vtm = float3((x    ) * SS,  shm[((z - zOffT) * W) + (x        )],  (z - 1) * SS);
-				const float3 vtr = float3((x + 1) * SS,  shm[((z - zOffT) * W) + (x + xOffR)],  (z - 1) * SS);
+				const float3 vmm = float3(sx  ,  shm[shz   + shx  ],  sz  );
 
-				const float3 vml = float3((x - 1) * SS,  shm[((z        ) * W) + (x - xOffL)],  (z    ) * SS);
-				const float3 vmm = float3((x    ) * SS,  shm[((z        ) * W) + (x        )],  (z    ) * SS);
-				const float3 vmr = float3((x + 1) * SS,  shm[((z        ) * W) + (x + xOffR)],  (z    ) * SS);
+				const float3 vtl = float3(sxm1,  shm[shzm1 + shxm1],  szm1) - vmm;
+				const float3 vtm = float3(sx  ,  shm[shzm1 + shx  ],  szm1) - vmm;
+				const float3 vtr = float3(sxp1,  shm[shzm1 + shxp1],  szm1) - vmm;
 
-				const float3 vbl = float3((x - 1) * SS,  shm[((z + zOffB) * W) + (x - xOffL)],  (z + 1) * SS);
-				const float3 vbm = float3((x    ) * SS,  shm[((z + zOffB) * W) + (x        )],  (z + 1) * SS);
-				const float3 vbr = float3((x + 1) * SS,  shm[((z + zOffB) * W) + (x + xOffR)],  (z + 1) * SS);
+				const float3 vml = float3(sxm1,  shm[shz   + shxm1],  sz  ) - vmm;
+				const float3 vmr = float3(sxp1,  shm[shz   + shxp1],  sz  ) - vmm;
 
-				float3 vn = ZeroVector;
-				float3 tn = ZeroVector;
-					tn = (hasNgbT && hasNgbL)? (vtl - vmm).cross((vtm - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbT           )? (vtm - vmm).cross((vtr - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbT && hasNgbR)? (vtr - vmm).cross((vmr - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbR           )? (vmr - vmm).cross((vbr - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbB && hasNgbR)? (vbr - vmm).cross((vbm - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbB           )? (vbm - vmm).cross((vbl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbB && hasNgbL)? (vbl - vmm).cross((vml - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (hasNgbL           )? (vml - vmm).cross((vtl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+				const float3 vbl = float3(sxm1,  shm[shzp1 + shxm1],  szp1) - vmm;
+				const float3 vbm = float3(sx  ,  shm[shzp1 + shx  ],  szp1) - vmm;
+				const float3 vbr = float3(sxp1,  shm[shzp1 + shxp1],  szp1) - vmm;
 
-			#ifdef USE_UNSYNCED_HEIGHTMAP
-				if (update.los) {
-					// update the visible vertex/face height/normal
-					uhm[vIdxTL] = shm[vIdxTL];
-					vvn[vIdxTL] = vn.ANormalize();
+				float3 vn(0.0f, 0.0f, 0.0f);
+				vn += vtm.cross(vtl) * (zOffT & xOffL); assert(vtm.cross(vtl).y >= 0.0f);
+				vn += vtr.cross(vtm) * (zOffT        ); assert(vtr.cross(vtm).y >= 0.0f);
+				vn += vmr.cross(vtr) * (zOffT & xOffR); assert(vmr.cross(vtr).y >= 0.0f);
+				vn += vbr.cross(vmr) * (        xOffR); assert(vbr.cross(vmr).y >= 0.0f);
+				vn += vtl.cross(vml) * (        xOffL); assert(vtl.cross(vml).y >= 0.0f);
+				vn += vbm.cross(vbr) * (zOffB & xOffR); assert(vbm.cross(vbr).y >= 0.0f);
+				vn += vbl.cross(vbm) * (zOffB        ); assert(vbl.cross(vbm).y >= 0.0f);
+				vn += vml.cross(vbl) * (zOffB & xOffL); assert(vml.cross(vbl).y >= 0.0f);
 
-					if (hasNgbR && hasNgbB) {
-						// x == maxx and z == maxz are illegal indices for these
-						ufn[fIdxTL    ] = sfn[fIdxTL    ];
-						ufn[fIdxBR    ] = sfn[fIdxBR    ];
-						ucn[fIdxTL / 2] = scn[fIdxTL / 2];
-					}
-				}
-			#endif
+				// update the visible vertex/face height/normal
+				uhm[vIdxTL] = shm[vIdxTL];
+				vvn[vIdxTL] = vn.ANormalize();
 			}
 		}
 	}
+	#endif
+}
 
 
+void CSMFReadMap::UpdateFaceNormals(const HeightMapUpdate& update)
+{
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (update.los) {
+		const float3* sfn = &faceNormalsSynced[0];
+		      float3* ufn = &faceNormalsUnsynced[0];
+		const float3* scn = &centerNormalsSynced[0];
+		      float3* ucn = &centerNormalsUnsynced[0];
+
+		// a heightmap update over (x1, y1) - (x2, y2) implies the
+		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
+		const int minx = std::max(update.x1 - 1,          0);
+		const int minz = std::max(update.y1 - 1,          0);
+		const int maxx = std::min(update.x2 + 1, gs->mapxm1);
+		const int maxz = std::min(update.y2 + 1, gs->mapym1);
+
+		int idx0, idx1;
+		for (int z = minz; z <= maxz; z++) {
+			idx0  = (z * gs->mapx + minx) * 2    ;
+			idx1  = (z * gs->mapx + maxx) * 2 + 1;
+			memcpy(&ufn[idx0], &sfn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
+
+			idx0  = (z * gs->mapx + minx);
+			idx1  = (z * gs->mapx + maxx);
+			memcpy(&ucn[idx0], &scn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
+		}
+	}
+	#endif
+}
+
+
+void CSMFReadMap::UpdateNormalTexture(const HeightMapUpdate& update)
+{
 	// Update VertexNormalsTexture (not used by ARB shaders)
 	if (globalRendering->haveGLSL) {
 		// texture space is [0 .. gs->mapx] x [0 .. gs->mapy] (NPOT; vertex-aligned)
 
-		static float3* vvn = &visVertexNormals[0];
-
-		static const int W = gs->mapxp1;
-		static const int H = gs->mapyp1;
+		float3* vvn = &visVertexNormals[0];
 
 		// a heightmap update over (x1, y1) - (x2, y2) implies the
 		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
-		const int minx = std::max((x1 - 1),     0);
-		const int minz = std::max((y1 - 1),     0);
-		const int maxx = std::min((x2 + 1), W - 1);
-		const int maxz = std::min((y2 + 1), H - 1);
+		const int minx = std::max(update.x1 - 1,        0);
+		const int minz = std::max(update.y1 - 1,        0);
+		const int maxx = std::min(update.x2 + 1, gs->mapx);
+		const int maxz = std::min(update.y2 + 1, gs->mapy);
 
 		const int xsize = (maxx - minx) + 1;
 		const int zsize = (maxz - minz) + 1;
@@ -415,7 +459,7 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 
 		for (int z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
-				const float3& vertNormal = vvn[z * W + x];
+				const float3& vertNormal = vvn[z * gs->mapxp1 + x];
 
 			#if (SSMF_UNCOMPRESSED_NORMALS == 1)
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = vertNormal.x;
@@ -439,8 +483,11 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
 	#endif
 	}
+}
 
 
+void CSMFReadMap::UpdateShadingTexture(const HeightMapUpdate& update)
+{
 	// update the shading texture (even if the map has specular
 	// lighting, we still need it to modulate the minimap image)
 	// this can be done for diffuse lighting only
@@ -448,10 +495,10 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		// texture space is [0 .. gs->mapxm1] x [0 .. gs->mapym1]
 
 		// enlarge rect by 1pixel in all directions (cause we use center normals and not corner ones)
-		x1 = std::max(x1 - 1, 0);
-		y1 = std::max(y1 - 1, 0);
-		x2 = std::min(x2 + 1, gs->mapx - 1);
-		y2 = std::min(y2 + 1, gs->mapy - 1);
+		const int x1 = std::max(update.x1 - 1,          0);
+		const int y1 = std::max(update.y1 - 1,          0);
+		const int x2 = std::min(update.x2 + 1, gs->mapxm1);
+		const int y2 = std::min(update.y2 + 1, gs->mapym1);
 
 		const int xsize = (x2 - x1) + 1; // +1 cause we iterate:
 		const int ysize = (y2 - y1) + 1; // x1 <= xi <= x2  (not!  x1 <= xi < x2)

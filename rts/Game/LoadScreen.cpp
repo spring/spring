@@ -37,7 +37,7 @@
 
 #include <vector>
 
-CONFIG(int, LoadingMT).defaultValue(-1);
+CONFIG(int, LoadingMT).defaultValue(-1).safemodeValue(0);
 
 CLoadScreen* CLoadScreen::singleton = NULL;
 
