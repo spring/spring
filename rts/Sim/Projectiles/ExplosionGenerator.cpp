@@ -557,11 +557,17 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 
 void CCustomExplosionGenerator::ParseExplosionCode(
 	CCustomExplosionGenerator::ProjectileSpawnInfo* psi,
-	int offset,
-	boost::shared_ptr<creg::IType> type,
+	const int offset,
+	const boost::shared_ptr<creg::IType> type,
 	const string& script,
 	string& code)
 {
+	// strtod&co expect C-style strings with NULLs,
+	// c_str() is guaranteed to be NULL-terminated
+	// (whether .data() == .c_str() depends on the
+	// implementation of std::string)
+	const char* scriptStr = script.c_str();
+
 	string::size_type end = script.find(';', 0);
 	string vastr = script.substr(0, end);
 
@@ -610,7 +616,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
 			else {
 				const char* fmt = "[CCEG::ParseExplosionCode] unknown op-code \"%c\" in \"%s\" at index %d";
-				LOG_L(L_WARNING, fmt, c, script.c_str(), p);
+				LOG_L(L_WARNING, fmt, c, scriptStr, p);
 				continue;
 			}
 
@@ -621,15 +627,15 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			char* endp = NULL;
 
 			if (!useInt) {
-				const float v = (float)strtod(&script[p], &endp);
+				const float v = (float)strtod(&scriptStr[p], &endp);
 
-				p += (endp - &script[p]);
+				p += (endp - &scriptStr[p]);
 				code += opcode;
 				code.append((char*) &v, ((char*) &v) + 4);
 			} else {
-				const int v = std::max(0, std::min(16, (int)strtol(&script[p], &endp, 10)));
+				const int v = std::max(0, std::min(16, (int)strtol(&scriptStr[p], &endp, 10)));
 
-				p += (endp - &script[p]);
+				p += (endp - &scriptStr[p]);
 				code += opcode;
 				code.append((char*) &v, ((char*) &v) + 4);
 			}
