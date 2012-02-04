@@ -48,7 +48,7 @@ void CLuaSocketRestrictions::addRules(RestrictType type, const std::string& conf
 	char ch;
 	std::string rule;
 
-	while(ch=configstr[i++]) {
+	while((ch=configstr[i++])) {
 		if ((isspace(ch)) && (!rule.empty())) {
 			addRule(type, rule);
 			rule = "";
