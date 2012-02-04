@@ -144,6 +144,7 @@ void CWorldDrawer::Draw()
 		unitDrawer->Draw(false);
 		modelDrawer->Draw();
 		featureDrawer->Draw();
+
 		pathDrawer->DrawAll();
 	}
 

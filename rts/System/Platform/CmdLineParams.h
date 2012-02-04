@@ -3,9 +3,6 @@
 #ifndef _CMD_LINE_PARAMS_H
 #define _CMD_LINE_PARAMS_H
 
-#ifdef __APPLE__
-#pragma GCC visibility push(default)
-#endif
 
 #include <vector>
 #include <string>
@@ -111,6 +108,3 @@ protected:
 
 #endif // _CMD_LINE_PARAMS_H
 
-#ifdef __APPLE__
-#pragma GCC visibility pop
-#endif

@@ -16,7 +16,7 @@
 /******************************************************************************/
 
 CONFIG(float, snd_airAbsorption).defaultValue(0.1f);
-CONFIG(bool, UseEFX).defaultValue(true);
+CONFIG(bool, UseEFX).defaultValue(true).safemodeValue(false);
 
 static std::string default_preset = "outdoors_valley";//"bathroom";
 
@@ -53,9 +53,9 @@ CEFX::CEFX(ALCdevice* device)
 
 	if (!supported) {
 		if(!hasExtension)
-			LOG_L(L_WARNING, "  EFX Supported: no");
+			LOG("  EFX Supported: no");
 		else
-			LOG_L(L_WARNING, "  EFX is supported but software does not seem to work properly");
+			LOG("  EFX is supported but software does not seem to work properly");
 		return;
 	}
 

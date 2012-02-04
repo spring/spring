@@ -47,10 +47,6 @@ public:
 
 	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
 
-	const float* GetCornerHeightMapSynced()   const { return renderer->GetCornerHeightMapSynced(); }
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	const float* GetCornerHeightMapUnsynced() const { return renderer->GetCornerHeightMapUnsynced(); }
-#endif
 
 protected:
 	CSM3GroundDrawer* groundDrawer;

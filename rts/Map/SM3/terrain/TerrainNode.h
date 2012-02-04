@@ -5,6 +5,7 @@
 
 #include "TerrainVertexBuffer.h"
 #include "Map/SM3/Vector3.h"
+#include <vector>
 
 class Frustum;
 struct Sm3VisibilityNode;
@@ -199,8 +200,8 @@ namespace terrain
 		const uchar* GetNormal(int x, int y) const { return &normalData[3 * (y * w + x)]; }
 
 		int w, h;
-		float* dataSynced;
-		float* dataUnsynced;
+		std::vector<float> dataSynced;
+		std::vector<float> dataUnsynced;
 		// float scale, offset;
 		float squareSize;
 

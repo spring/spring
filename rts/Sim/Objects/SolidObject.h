@@ -45,10 +45,17 @@ public:
 		pos[d] += dv;
 		midPos[d] += dv;
 	}
+
 	// this should be called whenever the direction
 	// vectors are changed (ie. after a rotation) in
 	// eg. movetype code
-	void UpdateMidPos();
+	void UpdateMidPos() {
+		const float3 dz = (frontdir * relMidPos.z);
+		const float3 dy = (updir    * relMidPos.y);
+		const float3 dx = (rightdir * relMidPos.x);
+
+		midPos = pos + dz + dy + dx;
+	}
 
 	/**
 	 * Adds this object to the GroundBlockingMap if and only if its collidable

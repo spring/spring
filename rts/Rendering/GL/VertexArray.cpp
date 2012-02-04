@@ -415,6 +415,7 @@ void CVertexArray::EnlargeDrawArray()
 	memcpy(tempArray, drawArray, oldsize * sizeof(float));
 
 	delete[] drawArray;
+
 	drawArray = tempArray;
 	drawArraySize = drawArray + newsize;
 	drawArrayPos = drawArray + pos;
@@ -430,6 +431,7 @@ void CVertexArray::EnlargeStripArray()
 	memcpy(tempArray,stripArray, oldsize * sizeof(unsigned int));
 
 	delete[] stripArray;
+
 	stripArray = tempArray;
 	stripArraySize = stripArray + newsize;
 	stripArrayPos = stripArray + pos;

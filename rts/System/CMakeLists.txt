@@ -128,24 +128,39 @@ SET(sources_engine_System_Net
 	)
 SET(sources_engine_System_Platform_Linux
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/CrashHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/X_MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/myX11.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/thread_backtrace.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/MessageBox.cpp"
 	)
 SET(sources_engine_System_Platform_Mac
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/CrashHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/thread_backtrace.cpp"
 	)
 SET(sources_engine_System_Platform_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/DllLib.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WinVersion.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/seh.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WinVersion.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/wsdl.cpp"
 	)
 
 ### only use the target platform related directory
-IF     (UNIX)
+IF     (APPLE)
+	SET(sources_engine_System
+			${sources_engine_System_common}
+			${sources_engine_System_creg}
+			${sources_engine_System_FileSystem}
+			${sources_engine_System_Log}
+			${sources_engine_System_Log_sinkConsole}
+			${sources_engine_System_Log_sinkFile}
+			${sources_engine_System_Net}
+			${sources_engine_System_Platform_Mac}
+		)
+ELSEIF (UNIX)
 	SET(sources_engine_System
 			${sources_engine_System_common}
 			${sources_engine_System_creg}

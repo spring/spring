@@ -14,7 +14,7 @@
 
 #include <string>
 
-CONFIG(bool, CompressTextures).defaultValue(false);
+CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true); // in safemode enabled, cause it ways more likely the gpu runs out of memory than this extension cause crashes!
 CONFIG(int, AtiHacks).defaultValue(-1);
 CONFIG(bool, DualScreenMode).defaultValue(false);
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false);
@@ -123,12 +123,13 @@ void CGlobalRendering::PostInit() {
 
 		haveATI    = (vendor.find("ati ") != std::string::npos) || (vendor.find("amd ") != std::string::npos);
 		haveMesa   = (renderer.find("mesa ") != std::string::npos);
-		haveIntel  = (vendor.find("intel ") != std::string::npos);
+		haveIntel  = (vendor.find("intel") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
 		//FIXME Neither Intel's nor Mesa's GLSL implementation seem to be in a workable state atm (date: Nov. 2011)
 		haveGLSL &= !haveIntel;
 		haveGLSL &= !haveMesa;
+		//FIXME add an user config to force enable it!
 
 		if (haveATI) {
 			// x-series doesn't support NPOTs (but hd-series does)

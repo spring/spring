@@ -182,7 +182,7 @@ protected:
 	 */
 	std::vector<IExplosionGenerator*> spawnExplGens;
 
-	void ParseExplosionCode(ProjectileSpawnInfo* psi, int baseOffset, boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
+	void ParseExplosionCode(ProjectileSpawnInfo* psi, const int offset, const boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
 	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir, bool synced);
 
 public:

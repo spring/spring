@@ -85,4 +85,15 @@ public:
 	DefaultConfigSource();
 };
 
+/**
+ * @brief Configuration source that holds safemode values
+ *
+ * Used when spring was started with "--safemode" param
+ */
+class SafemodeConfigSource : public ReadOnlyConfigSource
+{
+public:
+	SafemodeConfigSource();
+};
+
 #endif // CONFIG_SOURCE_H

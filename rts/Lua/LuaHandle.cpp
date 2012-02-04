@@ -1368,30 +1368,30 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 
 	if (!p->synced) return;
 	if (!p->weapon && !p->piece) return;
-	if (p->weapon) {
-		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
-		const WeaponDef* wd = wp->weaponDef;
 
-		// if this weapon-type is not being watched, bail
-		if (wd == NULL || !watchWeaponDefs[wd->id])	return;
-	}
+	const CUnit* owner = p->owner();
+	const CWeaponProjectile* wp = p->weapon? static_cast<const CWeaponProjectile*>(p): NULL;
+	const WeaponDef* wd = p->weapon? wp->weaponDef: NULL;
+
+	// if this weapon-type is not being watched, bail
+	if (p->weapon && (wd == NULL || !watchWeaponDefs[wd->id]))
+		return;
 
 	LUA_PROJ_BATCH_PUSH(PROJ_CREATED, p);
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	lua_checkstack(L, 5);
 
 	static const LuaHashString cmdStr("ProjectileCreated");
 
 	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
 
-	const CUnit* owner = p->owner();
-
 	lua_pushnumber(L, p->id);
-	lua_pushnumber(L, (owner? owner->id: -1));
+	lua_pushnumber(L, ((owner != NULL)? owner->id: -1));
+	lua_pushnumber(L, ((wd != NULL)? wd->id: -1));
 
 	// call the routine
-	RunCallIn(cmdStr, 2, 0);
+	RunCallIn(cmdStr, 3, 0);
 }
 
 

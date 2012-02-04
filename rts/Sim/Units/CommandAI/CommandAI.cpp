@@ -1635,7 +1635,7 @@ void CCommandAI::SlowUpdateMaxSpeed() {
 		return;
 
 	// grab the second command
-	CCommandQueue::const_iterator it = commandQue.begin(); ++it;
+	const CCommandQueue::const_iterator it = ++(commandQue.begin());
 	const Command& c = *it;
 
 	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
@@ -1645,7 +1645,8 @@ void CCommandAI::SlowUpdateMaxSpeed() {
 	if (c.params.empty())
 		return;
 
-	const float defMaxSpeed = owner->moveType->GetMaxSpeed();
+	// always clamp the command parameter
+	const float defMaxSpeed = owner->moveType->GetMaxSpeedDef();
 	const float newMaxSpeed = std::min(c.params[0], defMaxSpeed);
 
 	if (newMaxSpeed > 0.0f) {

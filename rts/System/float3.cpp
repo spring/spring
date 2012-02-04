@@ -2,6 +2,7 @@
 
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
+#include "System/myMath.h"
 
 CR_BIND(float3, );
 CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
@@ -22,36 +23,20 @@ bool float3::IsInBounds() const
 	return ((x >= 0.0f && x <= maxxpos) && (z >= 0.0f && z <= maxzpos));
 }
 
-/**
- * @return whether or not it's in bounds
- *
- * Tests whether this vector is in the
- * bounds of the maximum x and z positions.
- */
-bool float3::CheckInBounds()
+
+void float3::ClampInBounds()
 {
 	assert(maxxpos > 0.0f); // check if initialized
 
-	bool in = true;
-
-	if (x < 0.0f) {
-		x = 0.0f;
-		in = false;
-	}
-	if (z < 0.0f) {
-		z = 0.0f;
-		in = false;
-	}
-
-	if (x > maxxpos) {
-		x = maxxpos;
-		in = false;
-	}
-	if (z > maxzpos) {
-		z = maxzpos;
-		in = false;
-	}
-
-	return in;
+	x = Clamp(x, 0.0f, maxxpos);
+	z = Clamp(z, 0.0f, maxzpos);
 }
 
+
+void float3::ClampInMap()
+{
+	assert(maxxpos > 0.0f); // check if initialized
+
+	x = Clamp(x, 0.0f, maxxpos + 1);
+	z = Clamp(z, 0.0f, maxzpos + 1);
+}

@@ -20,7 +20,7 @@ If    (MARKDOWN_BIN)
 EndIf (MARKDOWN_BIN)
 
 find_program(MARKDOWN_BIN
-		NAMES markdown
+		NAMES markdown markdown_py
 		HINTS "${MINGWDIR}" "${CMAKE_SOURCE_DIR}/installer"
 		PATH_SUFFIXES bin
 		DOC "Markdown executable"

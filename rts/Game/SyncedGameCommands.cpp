@@ -41,9 +41,10 @@ public:
 			"Enables/Disables cheating, which is required for a lot of other"
 			" commands to be usable") {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->cheatEnabled, action.GetArgs());
 		LogSystemStatus("Cheating", gs->cheatEnabled);
+		return true;
 	}
 };
 
@@ -53,10 +54,11 @@ public:
 	NoHelpActionExecutor() : ISyncedActionExecutor("NoHelp",
 			"Enables/Disables widgets (LuaUI control)") {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->noHelperAIs, action.GetArgs());
 		selectedUnits.PossibleCommandChange(NULL);
 		LogSystemStatus("LuaUI control", gs->noHelperAIs);
+		return true;
 	}
 };
 
@@ -66,10 +68,11 @@ public:
 	NoSpecDrawActionExecutor() : ISyncedActionExecutor("NoSpecDraw",
 			"Allows/Disallows spectators to draw on the map") {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		bool buf;
 		SetBoolArg(buf, action.GetArgs());
 		inMapDrawer->SetSpecMapDrawingAllowed(buf);
+		return true;
 	}
 };
 
@@ -80,11 +83,12 @@ public:
 			"Enables/Disables god-mode, which allows all players"
 			" (even spectators) to control all units", true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->godMode, action.GetArgs());
 		CLuaUI::UpdateTeams();
 		LogSystemStatus("God-Mode", gs->godMode);
 		CPlayer::UpdateControlledTeams();
+		return true;
 	}
 };
 
@@ -95,9 +99,10 @@ public:
 			"Enables/Disables global line-of-sight, which makes the whole map"
 			" permanently visible to everyone", true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->globalLOS, action.GetArgs());
 		LogSystemStatus("Global LOS", gs->globalLOS);
+		return true;
 	}
 };
 
@@ -108,10 +113,11 @@ public:
 			"Enables/Disables everything-for-free, which allows everyone"
 			" to build everything for zero resource costs", true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		const bool isFree = unitDefHandler->ToggleNoCost();
 		LogSystemStatus("Everything-for-free (no resource costs for building)",
 				isFree);
+		return true;
 	}
 };
 
@@ -122,9 +128,10 @@ public:
 			"Places one or multiple units of a single or multiple types on the"
 			" map, instantly; by default to your own team", true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		const std::vector<std::string>& parsedArgs = CSimpleParser::Tokenize(action.GetArgs(), 0);
 		unitLoader->ParseAndExecuteGiveUnitsCommand(parsedArgs, playerHandler->Player(action.GetPlayerID())->team);
+		return true;
 	}
 };
 
@@ -134,7 +141,7 @@ public:
 	DestroyActionExecutor() : ISyncedActionExecutor("Destroy",
 			"Destroys one or multiple units by unit-ID, instantly", true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		std::stringstream argsStream(action.GetArgs());
 		LOG("Killing units: %s", action.GetArgs().c_str());
 
@@ -150,8 +157,12 @@ public:
 
 			if (unit != NULL) {
 				unit->KillUnit(false, false, 0);
+			} else {
+				LOG("Wrong unitID: %i", unitId);
 			}
 		} while (true);
+
+		return true;
 	}
 };
 
@@ -161,9 +172,10 @@ public:
 	NoSpectatorChatActionExecutor() : ISyncedActionExecutor("NoSpectatorChat",
 			"Enables/Disables spectators to use the chat") {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		SetBoolArg(game->noSpectatorChat, action.GetArgs());
 		LogSystemStatus("Spectators chat", !game->noSpectatorChat);
+		return true;
 	}
 };
 
@@ -173,8 +185,9 @@ public:
 	ReloadCobActionExecutor() : ISyncedActionExecutor("ReloadCOB",
 			"Reloads COB scripts", true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		game->ReloadCOB(action.GetArgs(), action.GetPlayerID());
+		return true;
 	}
 };
 
@@ -184,8 +197,9 @@ public:
 	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCEGs",
 			"Reloads CEG scripts", true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		explGenHandler->ReloadGenerators(action.GetArgs());
+		return true;
 	}
 };
 
@@ -196,11 +210,12 @@ public:
 			"Enables/Disables Lua dev-mode (can cause desyncs if enabled)",
 			true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		bool devMode = CLuaHandle::GetDevMode();
 		SetBoolArg(devMode, action.GetArgs());
 		CLuaHandle::SetDevMode(devMode);
 		LogSystemStatus("Lua dev-mode (can cause desyncs if enabled)", devMode);
+		return true;
 	}
 };
 
@@ -211,10 +226,11 @@ public:
 			"Allows/Disallows editing of unit-, feature- and weapon-defs"
 			" through Lua", true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->editDefsEnabled, action.GetArgs());
 		LogSystemStatus("Unit-, Feature- & Weapon-Def editing",
 				gs->editDefsEnabled);
+		return true;
 	}
 };
 
@@ -225,8 +241,8 @@ public:
 			"Allows one to reload or disable Lua-rules, or alternatively to send"
 			" a chat message to Lua-rules") {}
 
-	void Execute(const SyncedAction& action) const {
-		if (gs->frameNum > 1) {
+	bool Execute(const SyncedAction& action) const {
+		if (gs->frameNum > 1) { //TODO still needed???
 			if ((action.GetArgs() == "reload") && (action.GetPlayerID() == 0)) {
 				if (!gs->cheatEnabled) {
 					LOG_L(L_WARNING, "Cheating required to reload synced scripts");
@@ -249,7 +265,10 @@ public:
 			} else {
 				if (luaRules) luaRules->GotChatMsg(action.GetArgs(), action.GetPlayerID());
 			}
+		} else {
+			LOG_L(L_WARNING, "/%s: cannot be called before gameframe #1", GetCommand().c_str());
 		}
+		return true;
 	}
 };
 
@@ -260,8 +279,8 @@ public:
 			"Allows one to reload or disable Lua-Gaia, or alternatively to send"
 			" a chat message to Lua-Gaia") {}
 
-	void Execute(const SyncedAction& action) const {
-		if (gs->frameNum > 1) {
+	bool Execute(const SyncedAction& action) const {
+		if (gs->frameNum > 1) { //TODO still needed???
 			if (gs->useLuaGaia) {
 				if ((action.GetArgs() == "reload") && (action.GetPlayerID() == 0)) {
 					if (!gs->cheatEnabled) {
@@ -288,7 +307,10 @@ public:
 					LOG("LuaGaia disabled");
 				}
 			}
+		} else {
+			LOG_L(L_WARNING, "/%s: cannot be called before gameframe #1", GetCommand().c_str());
 		}
+		return true;
 	}
 };
 
@@ -300,7 +322,7 @@ public:
 			"Allows one to create an artificial desync of the local client with"
 			" the rest of the participating hosts", true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		ASSERT_SYNCED(gu->myPlayerNum * 123.0f);
 		ASSERT_SYNCED(gu->myPlayerNum * 123);
 		ASSERT_SYNCED((short)(gu->myPlayerNum * 123 + 123));
@@ -321,6 +343,7 @@ public:
 			}
 		}
 		LOG_L(L_ERROR, "Desyncing in frame %d.", gs->frameNum);
+		return true;
 	}
 };
 #endif // defined DEBUG
@@ -332,10 +355,11 @@ public:
 			"Gives 1000 metal and 1000 energy to the issuing players team",
 			true) {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		const int team = playerHandler->Player(action.GetPlayerID())->team;
 		teamHandler->Team(team)->AddMetal(1000);
 		teamHandler->Team(team)->AddEnergy(1000);
+		return true;
 	}
 };
 
@@ -346,12 +370,15 @@ public:
 			"Transfers all units of allied teams without any "
 			"active players to the team of the issuing player") {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		const CPlayer* actionPlayer = playerHandler->Player(action.GetPlayerID());
-		const bool allowAction = (game->playing && (!actionPlayer->spectator || gs->cheatEnabled));
 
-		if (!allowAction) {
-			return;
+		if (actionPlayer->spectator && !gs->cheatEnabled) {
+			return false;
+		}
+
+		if (!game->playing) {
+			return true;
 		}
 
 		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
@@ -376,6 +403,8 @@ public:
 				teamHandler->Team(a)->GiveEverythingTo(actionPlayer->team);
 			}
 		}
+
+		return true;
 	}
 };
 
@@ -385,7 +414,7 @@ public:
 	SkipActionExecutor() : ISyncedActionExecutor("Skip",
 			"Fast-forwards to a given frame, or stops fast-forwarding") {}
 
-	void Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const {
 		if (action.GetArgs().find_first_of("start") == 0) {
 			std::istringstream buf(action.GetArgs().substr(6));
 			int targetFrame;
@@ -394,7 +423,10 @@ public:
 		}
 		else if (action.GetArgs() == "end") {
 			game->EndSkip();
+		} else {
+			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 		}
+		return true;
 	}
 };
 

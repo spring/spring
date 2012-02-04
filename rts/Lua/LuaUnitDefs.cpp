@@ -522,7 +522,7 @@ static int MoveDataTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "depth",         md->depth);
 	HSTR_PUSH_NUMBER(L, "maxSlope",      md->maxSlope);
 	HSTR_PUSH_NUMBER(L, "slopeMod",      md->slopeMod);
-	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthMod);
+	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthModParams[MoveData::DEPTHMOD_LIN_COEFF]);
 	HSTR_PUSH_NUMBER(L, "crushStrength", md->crushStrength);
 
 	HSTR_PUSH_BOOL(L, "heatMapping",     md->heatMapping);

@@ -68,7 +68,7 @@ public:
 	 * Executes one instance of an action of this type.
 	 * Does a few checks internally, and then calls Execute(args).
 	 */
-	void ExecuteAction(const action_t& action) const;
+	bool ExecuteAction(const action_t& action) const;
 
 protected:
 	void SetDescription(const std::string& description) {
@@ -93,7 +93,7 @@ private:
 	/**
 	 * Executes one instance of an action of this type.
 	 */
-	virtual void Execute(const action_t& action) const = 0;
+	virtual bool Execute(const action_t& action) const = 0;
 
 	std::string command;
 	std::string description;
@@ -108,15 +108,16 @@ private:
  */
 
 template<class action_t, bool synced_v>
-void IActionExecutor<action_t, synced_v>::ExecuteAction(const action_t& action) const {
+bool IActionExecutor<action_t, synced_v>::ExecuteAction(const action_t& action) const {
 	//assert(action.GetAction().command == GetCommand());
 
 	if (IsCheatRequired() && !gs->cheatEnabled) {
-		LOG_L(L_WARNING, "Chat command /%s (%s) requires /cheat",
+		LOG_L(L_WARNING, "Chat command /%s (%s) cannot be executed (cheats required)!",
 				GetCommand().c_str(),
 				(IsSynced() ? "synced" : "unsynced"));
+		return false;
 	} else {
-		Execute(action);
+		return Execute(action);
 	}
 }
 

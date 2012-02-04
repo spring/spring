@@ -30,6 +30,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "System/myMath.h"
+#include "System/Color.h"
 
 static CPathManager* pm = NULL;
 
@@ -55,7 +56,7 @@ static const MoveData* GetMoveData() {
 	return md;
 }
 
-static float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx, int sqy) {
+static inline float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx, int sqy) {
 	float m = 0.0f;
 
 	#if 0
@@ -82,21 +83,37 @@ static float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx, int s
 	return m;
 }
 
-static unsigned int GetSpeedModColor(const float m) {
-	const unsigned char R =
-		(m >= 1.0f)?   0:
-		(m <= 0.0f)? 255:
-		255 - ((m * 0.5f + 0.25f) * 255);
-	const unsigned char G =
-		(m >= 1.0f)? 255:
-		(m <= 0.0f)?   0:
-		255 - R;
+static inline SColor GetSpeedModColor(const float& m) {
+	SColor col(120, 0, 80);
 
-	const unsigned char B =   0;
-	const unsigned char A = 255;
+	if (m > 0.0f) {
+		col.r = 255 - ((m <= 1.0f) ? (m * 255) : 255);
+		col.g = 255 - col.r;
+		col.b =   0;
+	}
 
-	return ((R << 24) | (G << 16) | (B << 8) | (A << 0));
+	return col;
 }
+
+
+enum BuildSquareStatus {
+	NOLOS          = 0,
+	FREE           = 1,
+	OBJECTBLOCKED  = 2,
+	TERRAINBLOCKED = 3,
+};
+
+static const SColor buildColors[] = {
+	SColor(138, 138, 138), // nolos
+	SColor(  0, 210,   0), // free
+	SColor(190, 180,   0), // objblocked
+	SColor(210,   0,   0), // terrainblocked
+};
+
+static inline const SColor& GetBuildColor(const BuildSquareStatus& status) {
+	return buildColors[status];
+}
+
 
 
 
@@ -140,10 +157,11 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					for (int tx = 0; tx < gs->hmapx; ++tx) {
 						const float3 pos(tx * (SQUARE_SIZE << 1) + SQUARE_SIZE, 0.0f, ty * (SQUARE_SIZE << 1) + SQUARE_SIZE);
 						const int idx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-						float m = 0.0f;
+
+						BuildSquareStatus status = FREE;
 
 						if (!loshandler->InLos(pos, gu->myAllyTeam)) {
-							m = 0.25f;
+							status = NOLOS;
 						} else {
 							const UnitDef* ud = unitDefHandler->GetUnitDefByID(-guihandler->commands[guihandler->inCommand].id);
 							const BuildInfo bi(ud, pos, guihandler->buildFacing);
@@ -154,30 +172,24 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 							if (uh->TestUnitBuildSquare(bi, f, gu->myAllyTeam, false)) {
 								if (f != NULL) {
-									m = 0.5f;
-								} else {
-									m = 1.0f;
+									status = OBJECTBLOCKED;
 								}
 							} else {
-								m = 0.0f;
+								status = TERRAINBLOCKED;
 							}
 						}
 
-						m = int(m * 255.0f);
-
-						texMem[idx + CBaseGroundDrawer::COLOR_R] = 255 - m;
-						texMem[idx + CBaseGroundDrawer::COLOR_G] = m;
-						texMem[idx + CBaseGroundDrawer::COLOR_B] = 0;
-						texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+						const SColor& col = GetBuildColor(status);
+						texMem[idx + CBaseGroundDrawer::COLOR_R] = col.r;
+						texMem[idx + CBaseGroundDrawer::COLOR_G] = col.g;
+						texMem[idx + CBaseGroundDrawer::COLOR_B] = col.b;
+						texMem[idx + CBaseGroundDrawer::COLOR_A] = col.a;
 					}
 				}
 			} else {
 				const MoveData* md = NULL;
 				const CMoveMath* mm = NULL;
 				const bool los = (gs->cheatEnabled || gu->spectating);
-
-				const float* hm = readmap->GetCornerHeightMapUnsynced();
-				const float3* cn = readmap->GetCenterNormalsUnsynced();
 
 				{
 					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
@@ -209,13 +221,13 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 								if (mm->IsBlocked(*md, sqx + 1, sqy + 1) & CMoveMath::BLOCK_STRUCTURE) { s -= 0.25f; }
 							}
 
-							const float m = GetSpeedMod(md, mm, sqx, sqy);
-							const unsigned int c = GetSpeedModColor(m * s);
+							const float& m  = GetSpeedMod(md, mm, sqx, sqy);
+							const SColor& c = GetSpeedModColor(m * s);
 
-							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (c >> 24) & 255;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (c >> 16) & 255;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (c >>  8) & 255;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = (c >>  0) & 255;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = c.r;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = c.g;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = c.b;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = c.a;
 						} else {
 							// we have nothing to show
 							// -> draw a dark red overlay

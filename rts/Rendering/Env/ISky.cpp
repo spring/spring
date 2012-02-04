@@ -13,7 +13,7 @@
 #include "System/Log/ILog.h"
 
 CONFIG(bool, DynamicSun).defaultValue(false);
-CONFIG(bool, AdvSky).defaultValue(true);
+CONFIG(bool, AdvSky).defaultValue(true).defaultValue(false);
 
 ISky* sky = NULL;
 

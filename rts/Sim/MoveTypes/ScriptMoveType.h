@@ -47,6 +47,8 @@ class CScriptMoveType : public AMoveType
 		int tag;
 		
 		bool extrapolate;
+		bool useRotVel;
+		bool useRelVel;
 
 		float drag;
 
@@ -54,13 +56,11 @@ class CScriptMoveType : public AMoveType
 		float3 vel;
 		/// relative velocity (to current direction)
 		float3 relVel;
-		bool useRelVel;
 
 		/// angular position
 		float3 rot;
 		/// angular velocity
 		float3 rotVel;
-		bool useRotVel;
 
 		bool trackSlope;
 		bool trackGround;

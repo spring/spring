@@ -7,15 +7,13 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Unsynced/ShieldProjectile.h"
 #include "Sim/Projectiles/Unsynced/RepulseGfx.h"
-#include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "System/mmgr.h"
 #include "System/myMath.h"
 
@@ -28,9 +26,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(hitFrames),
 	CR_MEMBER(rechargeDelay),
 	CR_MEMBER(isEnabled),
-	CR_MEMBER(wasDrawn),
 	CR_MEMBER(hasGfx),
-	CR_MEMBER(visibleShieldParts),
 	CR_RESERVED(8)
 ));
 
@@ -42,9 +38,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 	sqRadius(0),
 	hitFrames(0),
 	rechargeDelay(0),
-	isEnabled(true),
-	wasDrawn(true),
-	startShowingShield(true)
+	isEnabled(true)
 {
 	interceptHandler.AddPlasmaRepulser(this);
 }
@@ -53,87 +47,46 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 CPlasmaRepulser::~CPlasmaRepulser(void)
 {
 	interceptHandler.RemovePlasmaRepulser(this);
-
-	for(std::list<CShieldPartProjectile*>::iterator si=visibleShieldParts.begin();si!=visibleShieldParts.end();++si){
-		(*si)->deleteMe=true;
-	}
+	shieldProjectile->PreDelete();
 }
 
 
 void CPlasmaRepulser::Init()
 {
-	radius=weaponDef->shieldRadius;
-	sqRadius=radius*radius;
+	radius = weaponDef->shieldRadius;
+	sqRadius = radius * radius;
 
-	if(weaponDef->shieldPower==0)
-		curPower=99999999999.0f;
+	if (weaponDef->shieldPower == 0)
+		curPower = 99999999999.0f;
 	else
-		curPower=weaponDef->shieldStartingPower;
+		curPower = weaponDef->shieldStartingPower;
 
 	CWeapon::Init();
+
+	// deleted by ProjectileHandler
+	shieldProjectile = new ShieldProjectile(this);
 }
 
 
 void CPlasmaRepulser::Update()
 {
 	const int defHitFrames = weaponDef->visibleShieldHitFrames;
-	const bool couldBeVisible = (weaponDef->visibleShield || (defHitFrames > 0));
 	const int defRechargeDelay = weaponDef->shieldRechargeDelay;
 
 	rechargeDelay -= (rechargeDelay > 0) ? 1 : 0;
-
-	if (startShowingShield) {
-		// one-time iteration when shield first goes online
-		// (adds the projectile parts, this assumes owner is
-		// not mobile)
-		startShowingShield = false;
-		if (couldBeVisible) {
-			// 32 parts
-			for (int y = 0; y < 16; y += 4) {
-				for (int x = 0; x < 32; x += 4) {
-					visibleShieldParts.push_back(
-						new CShieldPartProjectile(owner->pos, x, y, radius,
-						                               weaponDef->shieldBadColor,
-						                               weaponDef->shieldAlpha,
-						                               weaponDef->visuals.texture1, owner)
-					);
-				}
-			}
-		}
-	}
 
 	if (isEnabled && (curPower < weaponDef->shieldPower) && rechargeDelay <= 0) {
 		if (owner->UseEnergy(weaponDef->shieldPowerRegenEnergy * (1.0f / GAME_SPEED))) {
 			curPower += weaponDef->shieldPowerRegen * (1.0f / GAME_SPEED);
 		}
 	}
+
+	if (hitFrames > 0)
+		hitFrames--;
+
 	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
 	                       + (owner->updir    * relWeaponPos.y)
 	                       + (owner->rightdir * relWeaponPos.x);
-
-	if (couldBeVisible) {
-		float drawAlpha = 0.0f;
-		if ((hitFrames > 0) && (defHitFrames > 0)) {
-			drawAlpha += float(hitFrames) / float(defHitFrames);
-			hitFrames--;
-		}
-		if (weaponDef->visibleShield) {
-			drawAlpha += 1.0f;
-		}
-		drawAlpha = std::min(1.0f, drawAlpha * weaponDef->shieldAlpha);
-		const bool drawMe = (drawAlpha > 0.0f);
-
-		if (drawMe || wasDrawn) {
-			const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
-			const float3 color = (weaponDef->shieldGoodColor * colorMix)
-					+ (weaponDef->shieldBadColor * (1.0f - colorMix));
-			std::list<CShieldPartProjectile*>::iterator si;
-			for (si = visibleShieldParts.begin(); si != visibleShieldParts.end(); ++si) {
-				(*si)->Actualize(weaponPos, color, isEnabled ? drawAlpha : 0.0f);
-			}
-		}
-		wasDrawn = drawMe;
-	}
 
 	if (!isEnabled) {
 		return;
@@ -144,7 +97,6 @@ void CPlasmaRepulser::Update()
 
 		CWeaponProjectile* pro = pi->second;
 		const WeaponDef* proWd = pro->weaponDef;
-		assert(proWd);
 
 		if (!pro->checkCol) {
 			continue;
