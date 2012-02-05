@@ -277,14 +277,10 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					const unsigned int hx = tx << 1;
 					const unsigned int hy = ty << 1;
 
-					const PathNodeState& maxResNode = maxResStates[hy * gs->mapx + hx];
-					const PathNodeState& medResNode = medResStates[(hy / medResBlockSize) * medResBlocksX + (hx / medResBlockSize)];
-					const PathNodeState& lowResNode = lowResStates[(hy / lowResBlockSize) * lowResBlocksX + (hx / lowResBlockSize)];
-
 					float gCost[3] = {
-						maxResNode.gCost,
-						medResNode.gCost,
-						lowResNode.gCost,
+						maxResStates.gCost[hy * gs->mapx + hx],
+						medResStates.gCost[(hy / medResBlockSize) * medResBlocksX + (hx / medResBlockSize)],
+						lowResStates.gCost[(hy / lowResBlockSize) * lowResBlocksX + (hx / lowResBlockSize)],
 					};
 
 					if (math::isinf(gCost[0])) { gCost[0] = gCostMax[0]; }
@@ -370,7 +366,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		const int2 sqr = os->nodePos;
 		const int square = os->nodeNum;
 
-		if (pf->squareStates[square].nodeMask & PATHOPT_START)
+		if (pf->squareStates.nodeMask[square] & PATHOPT_START)
 			continue;
 
 		float3 p1;
@@ -379,7 +375,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 			p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 15;
 		float3 p2;
 
-		const int dir = pf->squareStates[square].nodeMask & PATHOPT_DIRECTION;
+		const int dir = pf->squareStates.nodeMask[square] & PATHOPT_DIRECTION;
 		const int obx = sqr.x - pf->directionVector[dir].x;
 		const int obz = sqr.y - pf->directionVector[dir].y;
 		const int obsquare =  obz * gs->mapx + obx;
@@ -499,18 +495,18 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 		const int blocknr = ob->nodeNum;
 
 		float3 p1;
-			p1.x = (pe->blockStates[blocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
-			p1.z = (pe->blockStates[blocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
+			p1.x = (pe->blockStates.nodeOffsets[blocknr][md->pathType].x) * SQUARE_SIZE;
+			p1.z = (pe->blockStates.nodeOffsets[blocknr][md->pathType].y) * SQUARE_SIZE;
 			p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 15;
 		float3 p2;
 
-		const int obx = pe->blockStates[ob->nodeNum].parentNodePos.x;
-		const int obz = pe->blockStates[ob->nodeNum].parentNodePos.y;
+		const int obx = pe->blockStates.parentNodePos[ob->nodeNum].x;
+		const int obz = pe->blockStates.parentNodePos[ob->nodeNum].y;
 		const int obblocknr = obz * pe->nbrOfBlocksX + obx;
 
 		if (obblocknr >= 0) {
-			p2.x = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
-			p2.z = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
+			p2.x = (pe->blockStates.nodeOffsets[obblocknr][md->pathType].x) * SQUARE_SIZE;
+			p2.z = (pe->blockStates.nodeOffsets[obblocknr][md->pathType].y) * SQUARE_SIZE;
 			p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 15;
 
 			glVertexf3(p1);
