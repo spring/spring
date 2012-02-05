@@ -232,7 +232,7 @@
 //  bind          Any+shift  movefast
 //  bind           Any+ctrl  moveslow
 //
-//  bind                  1  specteam 0  
+//  bind                  1  specteam 0
 //  bind                  2  specteam 1
 //  bind                  3  specteam 2
 //  bind                  4  specteam 3
@@ -329,7 +329,14 @@
 //  bind            Any+f11  screenshot
 //  bind            Any+f12  screenshot
 //
-
+//  bind             Ctrl+a  select AllMap++_ClearSelection_SelectAll+
+//  bind             Ctrl+b  select AllMap+_Builder_Idle+_ClearSelection_SelectOne+
+//  bind             Ctrl+c  select AllMap+_ManualFireUnit+_ClearSelection_SelectOne+
+//  bind             Ctrl+r  select AllMap+_Radar+_ClearSelection_SelectAll+
+//  bind             Ctrl+v  select AllMap+_Not_Builder_Not_Commander_InPrevSel_Not_InHotkeyGroup+_SelectAll+
+//  bind             Ctrl+w  select AllMap+_Not_Aircraft_Weapons+_ClearSelection_SelectAll+
+//  bind             Ctrl+x  select AllMap+_InPrevSel_Not_InHotkeyGroup+_SelectAll+
+//  bind             Ctrl+z  select AllMap+_InPrevSel+_ClearSelection_SelectAll+
 
 //  Key Symbol    Key Code
 //  ----------    --------
