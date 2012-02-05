@@ -108,6 +108,7 @@ struct PathNodeStateBuffer {
 	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes): fCostMax(0.0f), gCostMax(0.0f) {
 		extraCostsSynced = NULL;
 		extraCostsUnsynced = NULL;
+		mr = mapRes;
 
 		br.x = bufRes.x; ps.x = mapRes.x / bufRes.x;
 		br.y = bufRes.y; ps.y = mapRes.y / bufRes.y;
