@@ -74,7 +74,6 @@ CPathFinder::CPathFinder()
 CPathFinder::~CPathFinder()
 {
 	ResetSearch();
-	squareStates.Clear();
 }
 
 

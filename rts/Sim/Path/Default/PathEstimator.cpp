@@ -120,13 +120,7 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::s
 
 CPathEstimator::~CPathEstimator()
 {
-	for (int i = 0; i < blockStates.GetSize(); i++)
-		blockStates[i].nodeOffsets.clear();
-
 	delete pathCache;
-
-	blockStates.Clear();
-	vertices.clear();
 }
 
 
