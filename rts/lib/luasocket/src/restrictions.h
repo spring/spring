@@ -18,14 +18,10 @@ public:
 
 	CLuaSocketRestrictions();
 	/**
-	* check if host & port is in the list for type of allowed
+	* check if host & port is in the list for type of allowed, if port is -1, it is ignored
 	*/
-	bool isAllowed(RestrictType type, const char* hostname, int port);
+	bool isAllowed(RestrictType type, const char* hostname, int port=-1);
 
-	/**
-	* check if host is allowed
-	*/
-	bool isAllowedHost(RestrictType type, const char* hostname);
 private:
 	/**
 	* parses and adds a rules string

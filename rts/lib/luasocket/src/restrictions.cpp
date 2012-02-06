@@ -85,27 +85,11 @@ bool CLuaSocketRestrictions::isAllowed(RestrictType type, const char* hostname, 
 		if (it ==restrictions[i].end()) //check if host / ip exists in array
 			continue;
 		const int rport = (*it).second;
-		if (rport==port)
+		if (port==-1) { // port ignored
 			return true;
-	}
-	return false;
-}
-
-bool CLuaSocketRestrictions::isAllowedHost(RestrictType type, const char* hostname){
-	int start, end;
-	if (type!=ALL_RULES) {
-		start = type;
-		end = start+1;
-	} else {
-		start = 0;
-		end = ALL_RULES;
-	}
-	for (int i=start; i<end; i++) {
-		TStrIntMap::iterator it = restrictions[i].find(hostname);
-		if (it != restrictions[i].end()) //check if host / ip exists in array
-			continue;
-		else
+		} else if (rport==port) {
 			return true;
+		}
 	}
 	return false;
 }

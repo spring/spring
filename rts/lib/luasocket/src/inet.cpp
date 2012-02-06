@@ -86,7 +86,7 @@ static int inet_global_tohostname(lua_State *L) {
 static int inet_global_toip(lua_State *L)
 {
     const char *address = luaL_checkstring(L, 1);
-    if (!luaSocketRestrictions->isAllowedHost(CLuaSocketRestrictions::ALL_RULES, address)) {
+    if (!luaSocketRestrictions->isAllowed(CLuaSocketRestrictions::ALL_RULES, address)) {
         lua_pushnil(L);
         LOG_L(L_ERROR, "Access to '%s' denied", address);
         lua_pushstring(L, "hostname not in allowed list");
@@ -112,7 +112,7 @@ static int inet_global_gethostname(lua_State *L)
 {
     char name[257];
     name[256] = '\0';
-    if (!luaSocketRestrictions->isAllowedHost(CLuaSocketRestrictions::ALL_RULES, name)) {
+    if (!luaSocketRestrictions->isAllowed(CLuaSocketRestrictions::ALL_RULES, name)) {
         lua_pushnil(L);
         LOG_L(L_ERROR, "Resolving '%s' denied", name);
         lua_pushstring(L, "hostname not in allowed list");
