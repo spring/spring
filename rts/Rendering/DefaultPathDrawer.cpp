@@ -465,7 +465,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 					const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
 					const int vertexNr =
 						md->pathType * peNumBlocks * PATH_DIRECTION_VERTICES +
-						blockNr * PATH_DIRECTION_VERTICES + PathDir2PathOpt(dir); // ??
+						blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, pe->nbrOfBlocksX);
 					const float cost = pe->vertexCosts[vertexNr] / pe->BLOCK_SIZE;
 
 					float3 p2;
@@ -503,7 +503,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 					const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
 					const int vertexNr =
 						md->pathType * peNumBlocks * PATH_DIRECTION_VERTICES +
-						blockNr * PATH_DIRECTION_VERTICES + PathDir2PathOpt(dir); // ??
+						blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, pe->nbrOfBlocksX);
 					const float cost = pe->vertexCosts[vertexNr] / pe->BLOCK_SIZE;
 
 					float3 p2;
