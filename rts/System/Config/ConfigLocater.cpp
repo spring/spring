@@ -10,9 +10,11 @@
 	#include <windows.h>
 #endif
 #include <stdlib.h>
-#include "Game/GameVersion.h"
-#include "System/Platform/Misc.h"
+
 #include "ConfigLocater.h"
+#include "Game/GameVersion.h"
+#include "System/FileSystem/DataDirLocater.h"
+#include "System/Platform/Misc.h"
 
 
 using std::string;
@@ -20,14 +22,27 @@ using std::vector;
 
 static void GetPortableLocations(vector<string>& locations)
 {
-	string binaryPath = Platform::GetProcessExecutablePath() + "/";
-	string portableConfPath = binaryPath + "springsettings.cfg";
-	// lets see if the file is writable
-	// (otherwise it can fail/segfault/end up in virtualstore...)
-	// _access modes: 0 - exists; 2 - write; 4 - read; 6 - r/w
-	// doesn't work on directories (precisely, mode is always 0)
-	if (access(portableConfPath.c_str(), 6) != -1) {
-		locations.push_back(portableConfPath);
+#ifndef _WIN32
+	const std::string cfgName = ".springrc";
+#else
+	const std::string cfgName = "springsettings.cfg";
+#endif
+
+	if (dataDirLocater.IsIsolationMode()) {
+		// Search in IsolatedModeDir
+		const std::string confPath = dataDirLocater.GetIsolationModeDir() + "/" + cfgName;
+		locations.push_back(confPath);
+	} else {
+		// Search in binary dir
+		const std::string confPath = Platform::GetProcessExecutablePath() + "/" + cfgName;
+
+		// lets see if the file exists & is writable
+		// (otherwise it can fail/segfault/end up in virtualstore...)
+		// _access modes: 0 - exists; 2 - write; 4 - read; 6 - r/w
+		// doesn't work on directories (precisely, mode is always 0)
+		if (access(confPath.c_str(), 6) != -1) {
+			locations.push_back(confPath);
+		}
 	}
 }
 
@@ -39,23 +54,19 @@ static void GetPlatformLocations(vector<string>& locations)
 
 	const string defCfg = home + "/" + base;
 	const string verCfg = defCfg + "-" + SpringVersion::Get();
-
-	struct stat st;
-	if (stat(verCfg.c_str(), &st) == 0) { // check if file exists
-		locations.push_back(verCfg); // use the versionned config file
-	}
-	locations.push_back(defCfg); // use the default config file
 #else
 	// e.g. "C:\Users\USER\AppData\Local"
 	const string userDir = Platform::GetUserDir();
 
-	const string verConfigPath = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
-	if (_access(verConfigPath.c_str(), 6) != -1) { // check for read & write access
-		locations.push_back(verConfigPath);
+	const string defCfg = userDir + "\\springsettings.cfg";
+	const string verCfg = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
+#endif
+
+	if (access(verCfg.c_str(), 6) != -1) { // check for read & write access
+		locations.push_back(verCfg);
 	}
 
-	locations.push_back(userDir + "\\springsettings.cfg");
-#endif
+	locations.push_back(defCfg);
 }
 
 /**

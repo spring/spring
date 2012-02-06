@@ -40,7 +40,7 @@ struct FeatureDef
 	float reclaimTime;
 
 	float mass;
-	float crushImpedance;
+	float crushResistance;
 
 	int drawType;
 	mutable S3DModel* model;

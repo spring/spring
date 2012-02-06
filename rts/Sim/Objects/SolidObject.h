@@ -45,10 +45,17 @@ public:
 		pos[d] += dv;
 		midPos[d] += dv;
 	}
+
 	// this should be called whenever the direction
 	// vectors are changed (ie. after a rotation) in
 	// eg. movetype code
-	void UpdateMidPos();
+	void UpdateMidPos() {
+		const float3 dz = (frontdir * relMidPos.z);
+		const float3 dy = (updir    * relMidPos.y);
+		const float3 dx = (rightdir * relMidPos.x);
+
+		midPos = pos + dz + dy + dx;
+	}
 
 	/**
 	 * Adds this object to the GroundBlockingMap if and only if its collidable
@@ -66,7 +73,7 @@ public:
 
 public:
 	float mass;                                 ///< the physical mass of this object (run-time constant)
-	float crushImpedance;                       ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
+	float crushResistance;                       ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
 
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object

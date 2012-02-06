@@ -72,7 +72,6 @@ private:
 	CSoundSource* curStreamSrc;
 	std::vector<StreamQueueItem> streamQueue;
 	static const size_t MAX_STREAM_QUEUESIZE;
-	boost::recursive_mutex chanMutex;
 };
 
 #endif // AUDIO_CHANNEL_H

@@ -300,11 +300,11 @@ void PrepareStacktrace() {
 }
 
 void CleanupStacktrace() {
+	LOG_CLEANUP();
 	// Unintialize IMAGEHLP.DLL
 	SymCleanup(GetCurrentProcess());
 
 	LeaveCriticalSection( &stackLock );
-
 }
 
 void OutputStacktrace() {
@@ -319,8 +319,6 @@ void OutputStacktrace() {
 	Stacktrace(NULL, NULL);
 
 	CleanupStacktrace();
-
-	LOG_CLEANUP();
 }
 
 /** Called by windows if an exception happens. */

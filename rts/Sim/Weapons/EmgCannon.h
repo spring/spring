@@ -1,26 +1,25 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __EMG_CANNON_H__
-#define __EMG_CANNON_H__
+#ifndef _EMG_CANNON_H
+#define _EMG_CANNON_H
 
 #include "Weapon.h"
 
-class CEmgCannon :
-	public CWeapon
+class CEmgCannon : public CWeapon
 {
 	CR_DECLARE(CEmgCannon);
 public:
 	CEmgCannon(CUnit* owner);
-	~CEmgCannon(void);
+	~CEmgCannon();
 
-	void Update(void);
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
+	void Update();
+	bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
 
-	void Init(void);
+	void Init();
 
 private:
 	virtual void FireImpl();
 };
 
-#endif // __EMG_CANNON_H__
+#endif // _EMG_CANNON_H
 

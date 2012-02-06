@@ -18,42 +18,29 @@
 
 SmoothHeightMesh* smoothGround = NULL;
 
-/// lifted from Ground.cpp
-static float Interpolate(float x, float y, int maxx, int maxy, float res, const float* heightmap)
+
+static float Interpolate(float x, float y, const int& maxx, const int& maxy, const float& res, const float* heightmap)
 {
-	x = Clamp(x, 0.0f, float3::maxxpos);
-	y = Clamp(y, 0.0f, float3::maxzpos);
+	x = Clamp(x / res, 0.0f, maxx - 1.0f);
+	y = Clamp(y / res, 0.0f, maxy - 1.0f);
+	const int sx = x;
+	const int sy = y;
+	const float dx = (x - sx);
+	const float dy = (y - sy);
 
-	const float invres = 1.0f / res;
+	const int sxp1 = std::min(sx + 1, maxx - 1);
+	const int syp1 = std::min(sy + 1, maxy - 1);
 
-	const int sx = x * invres;
-	const int sy = y * invres;
-	const float dx = (x - sx * res) * invres;
-	const float dy = (y - sy * res) * invres;
-	const int hs = sx + sy * (maxx);
+	const float& h1 = heightmap[sx   + sy   * maxx];
+	const float& h2 = heightmap[sxp1 + sy   * maxx];
+	const float& h3 = heightmap[sx   + syp1 * maxx];
+	const float& h4 = heightmap[sxp1 + syp1 * maxx];
 
-	if ((dx + dy) < 1.0f) {
-		if (hs >= (maxx * maxy)) {
-			return 0;
-		}
-
-		const float xdif = (dx) * (heightmap[hs +    1] - heightmap[hs]);
-		const float ydif = (dy) * (heightmap[hs + maxx] - heightmap[hs]);
-
-		return (heightmap[hs] + xdif + ydif);
-	} else {
-		if ((hs + 1) >= (maxx * maxy)) {
-			return 0;
-		}
-
-		const float xdif = (1.0f - dx) * (heightmap[hs + maxx] - heightmap[hs + 1 + maxx]);
-		const float ydif = (1.0f - dy) * (heightmap[hs    + 1] - heightmap[hs + 1 + maxx]);
-
-		return (heightmap[hs + 1 + maxx] + xdif + ydif);
-	}
-
-	return 0.0f; // can not be reached
+	const float hi1 = mix(h1, h2, dx);
+	const float hi2 = mix(h3, h4, dx);
+	return mix(hi1, hi2, dy);
 }
+
 
 SmoothHeightMesh::SmoothHeightMesh(const CGround* ground, float mx, float my, float res, float smoothRad)
 	: maxx((mx / res) + 1)
@@ -406,15 +393,31 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 {
 	ScopedOnceTimer timer("SmoothHeightMesh::MakeSmoothMesh");
 
+	// info:
+	//   height-value array has size <maxx + 1> * <maxy + 1>
+	//   and represents a grid of <maxx> cols by <maxy> rows
+	//   maximum legal index is ((maxx + 1) * (maxy + 1)) - 1
+	//
+	//   row-width (number of height-value corners per row) is (maxx + 1)
+	//   col-height (number of height-value corners per col) is (maxy + 1)
+	//
+	//   1st row has indices [maxx*(  0) + (  0), maxx*(1) + (  0)] inclusive
+	//   2nd row has indices [maxx*(  1) + (  1), maxx*(2) + (  1)] inclusive
+	//   3rd row has indices [maxx*(  2) + (  2), maxx*(3) + (  2)] inclusive
+	//   ...
+	//   Nth row has indices [maxx*(N-1) + (N-1), maxx*(N) + (N-1)] inclusive
+	//
 	const size_t size = (this->maxx + 1) * (this->maxy + 1);
 	// use sliding window of maximums to reduce computational complexity
 	const int intrad = smoothRadius / resolution;
+	const int smoothrad = 3;
 
 	assert(mesh.empty());
 	mesh.resize(size);
 
 	std::vector<float> colsMaxima(maxx + 1, -std::numeric_limits<float>::max());
 	std::vector<int> maximaRows(maxx + 1, -1);
+	std::vector<float> smoothed(size);
 	
 	FindMaximumColumnHeights(maxx, maxy, intrad, resolution, colsMaxima, maximaRows);
 
@@ -429,17 +432,12 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 	}
 
 	// actually smooth with approximate Gaussian blur passes
-	const int smoothrad = 3;
-	std::vector<float> smoothed(size);
 	for (int numBlurs = 3; numBlurs > 0; --numBlurs) {
-		BlurHorizontal(maxx, maxy, smoothrad, resolution, mesh, smoothed);
-			mesh.swap(smoothed);
-		BlurVertical(maxx, maxy, smoothrad, resolution, mesh, smoothed);
-			mesh.swap(smoothed);
+		BlurHorizontal(maxx, maxy, smoothrad, resolution, mesh, smoothed); mesh.swap(smoothed);
+		BlurVertical(maxx, maxy, smoothrad, resolution, mesh, smoothed); mesh.swap(smoothed);
 	}
 
-	// `mesh` now contains the smoothed heightmap
-	// backup it in origMesh
+	// `mesh` now contains the smoothed heightmap, save it in origMesh
 	origMesh.resize(size);
 	std::copy(mesh.begin(), mesh.end(), origMesh.begin());
 }

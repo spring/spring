@@ -80,7 +80,6 @@ void CSoundSource::Update()
 
 	if (curStream)
 	{
-		boost::recursive_mutex::scoped_lock lock(streamMutex);
 		if (curStream->IsFinished()) {
 			Stop();
 		}
@@ -126,7 +125,6 @@ void CSoundSource::Stop()
 		curPlaying = NULL;
 	}
 	if (curStream) {
-		boost::recursive_mutex::scoped_lock lock(streamMutex);
 		delete curStream;
 		curStream = NULL;
 	}
@@ -217,8 +215,6 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 
 void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, float volume)
 {
-	boost::recursive_mutex::scoped_lock lock(streamMutex);
-
 	//! stop any current playback
 	Stop();
 
@@ -250,40 +246,28 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 
 void CSoundSource::StreamStop()
 {
-	if (!curStream)
-		return;
-
-	Stop();
+	if (curStream)
+		Stop();
 }
 
 void CSoundSource::StreamPause()
 {
-	if (!curStream)
-		return;
-
-	boost::recursive_mutex::scoped_lock lock(streamMutex);
-	if (curStream->TogglePause())
-		alSourcePause(id);
-	else
-		alSourcePlay(id);
+	if (curStream) {
+		if (curStream->TogglePause())
+			alSourcePause(id);
+		else
+			alSourcePlay(id);
+	}
 }
 
 float CSoundSource::GetStreamTime()
 {
-	if (!curStream)
-		return 0;
-
-	boost::recursive_mutex::scoped_lock lock(streamMutex);
-	return curStream->GetTotalTime();
+	return curStream ? curStream->GetTotalTime() : 0;
 }
 
 float CSoundSource::GetStreamPlayTime()
 {
-	if (!curStream)
-		return 0;
-
-	boost::recursive_mutex::scoped_lock lock(streamMutex);
-	return curStream->GetPlayTime();
+	return curStream ? curStream->GetPlayTime() : 0;
 }
 
 void CSoundSource::UpdateVolume()

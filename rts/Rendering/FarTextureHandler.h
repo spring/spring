@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#ifndef __FARTEXTURE_HANDLER_H__
-#define __FARTEXTURE_HANDLER_H__
+#ifndef _FARTEXTURE_HANDLER_H
+#define _FARTEXTURE_HANDLER_H
 
 #include <vector>
 #include "System/Vec2.h"
@@ -47,4 +47,4 @@ private:
 
 extern CFarTextureHandler* farTextureHandler;
 
-#endif // __FARTEXTURE_HANDLER_H__
+#endif // _FARTEXTURE_HANDLER_H

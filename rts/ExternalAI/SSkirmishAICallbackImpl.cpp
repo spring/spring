@@ -2963,7 +2963,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getSlopeMod(int skirmishAIId, 
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getDepthMod(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->depthMod;
+	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->depthModParams[MoveData::DEPTHMOD_LIN_COEFF];
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getPathType(int skirmishAIId, int unitDefId) {

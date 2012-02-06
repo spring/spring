@@ -124,7 +124,7 @@ void CProjectile::Update()
 	if (!luaMoveCtrl) {
 		speed.y += mygravity;
 		pos += speed;
-		dir = speed; dir.Normalize();
+		dir = speed; dir.SafeNormalize();
 	}
 }
 

@@ -522,7 +522,7 @@ static int MoveDataTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "depth",         md->depth);
 	HSTR_PUSH_NUMBER(L, "maxSlope",      md->maxSlope);
 	HSTR_PUSH_NUMBER(L, "slopeMod",      md->slopeMod);
-	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthMod);
+	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthModParams[MoveData::DEPTHMOD_LIN_COEFF]);
 	HSTR_PUSH_NUMBER(L, "crushStrength", md->crushStrength);
 
 	HSTR_PUSH_BOOL(L, "heatMapping",     md->heatMapping);
@@ -558,6 +558,7 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 		return 1;                                       \
 	}
 
+TYPE_FUNC(GetTypeString, string);
 TYPE_FUNC(IsBuildingUnit, boolean);
 TYPE_FUNC(IsFactoryUnit, boolean);
 TYPE_FUNC(IsFighterUnit, boolean);
@@ -586,6 +587,14 @@ TYPE_MODEL_FUNC(ModelMaxy,   maxs.y);
 TYPE_MODEL_FUNC(ModelMinz,   mins.z);
 TYPE_MODEL_FUNC(ModelMidz,   relMidPos.z);
 TYPE_MODEL_FUNC(ModelMaxz,   maxs.z);
+
+
+
+static int ReturnFalse(lua_State* L, const void* data)
+{
+	lua_pushboolean(L, false);
+	return 1;
+}
 
 
 /******************************************************************************/
@@ -627,6 +636,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
 
+	ADD_FUNCTION("type",         ud, GetTypeString); // backward compability (TODO: find a way to print a warning when used!)
 	ADD_FUNCTION("isBuilding",   ud, IsBuildingUnit);
 	ADD_FUNCTION("isFactory",    ud, IsFactoryUnit);
 	ADD_FUNCTION("isFighter",    ud, IsFighterUnit);
@@ -715,6 +725,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_FLOAT("mass", ud.mass);
 
+	ADD_FLOAT("maxSlope",      ud.maxHeightDif); // backward compability (TODO: find a way to print a warning when used!)
 	ADD_FLOAT("maxHeightDif",  ud.maxHeightDif);
 	ADD_FLOAT("minWaterDepth", ud.minWaterDepth);
 	ADD_FLOAT("waterline",     ud.waterline);
@@ -749,8 +760,11 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_BOOL("canSubmerge",       ud.canSubmerge);
 	ADD_BOOL("floatOnWater",      ud.floatOnWater);
+	ADD_BOOL("floater",           ud.floatOnWater);  // backward compability (TODO: find a way to print a warning when used!)
 	ADD_BOOL("canFly",            ud.canfly);
 	ADD_BOOL("canMove",           ud.canmove);
+	ADD_BOOL("canHover",          ud.canHover);
+	ADD_BOOL("isBuilder",         ud.builder);  // backward compability (TODO: find a way to print a warning when used!)
 	ADD_BOOL("builder",           ud.builder);
 	ADD_BOOL("onOffable",         ud.onoffable);
 	ADD_BOOL("activateWhenBuilt", ud.activateWhenBuilt);
@@ -759,6 +773,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("capturable",  ud.capturable);
 	ADD_BOOL("repairable",  ud.repairable);
 
+	ADD_BOOL("canDGun",               ud.canManualFire);  // backward compability (TODO: find a way to print a warning when used!)
 	ADD_BOOL("canManualFire",         ud.canManualFire);
 	ADD_BOOL("canCloak",              ud.canCloak);
 	ADD_BOOL("canRestore",            ud.canRestore);
@@ -775,6 +790,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canCapture",            ud.canCapture);
 	ADD_BOOL("canResurrect",          ud.canResurrect);
 	ADD_BOOL("canLoopbackAttack",     ud.canLoopbackAttack);
+	ADD_BOOL("canCrash",              ud.canLoopbackAttack);  // backward compability (TODO: find a way to print a warning when used!)
 	ADD_BOOL("canFireControl",        ud.canFireControl);
 	ADD_INT( "fireState",             ud.fireState);
 	ADD_INT( "moveState",             ud.moveState);
@@ -855,6 +871,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_BOOL("needGeo",   ud.needGeo);
 	ADD_BOOL("isFeature", ud.isFeature);
+
+	ADD_FUNCTION("isCommander", ud, ReturnFalse);  // backward compability (TODO: find a way to print a warning when used!)
 
 	ADD_BOOL("hideDamage",     ud.hideDamage);
 	ADD_BOOL("showPlayerName", ud.showPlayerName);

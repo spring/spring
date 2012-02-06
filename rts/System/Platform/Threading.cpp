@@ -8,6 +8,9 @@
 #elif defined(WIN32)
 	#include <windows.h>
 #else
+	#if defined(__USE_GNU)
+		#include <sys/prctl.h>
+	#endif
 	#include <sched.h>
 #endif
 
@@ -171,8 +174,8 @@ namespace Threading {
 	void SetThreadName(std::string newname)
 	{
 	#if defined(__USE_GNU) && !defined(WIN32)
-		pthread_setname_np(pthread_self(), newname.c_str());
-		//alternative: prctl(PR_SET_NAME, newname.c_str());
+		//alternative: pthread_setname_np(pthread_self(), newname.c_str());
+		prctl(PR_SET_NAME, newname.c_str(), 0, 0, 0);
 	#endif
 	}
 

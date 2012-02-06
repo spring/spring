@@ -590,16 +590,27 @@ bool CLuaHandleSynced::HasCallIn(lua_State *L, const string& name)
 		return false;
 	}
 
-	int tableIndex;
-	if ((name != "DrawUnit") &&
-	    (name != "DrawFeature") &&
-	    (name != "RecvSkirmishAIMessage") &&
-	    (name != "RecvFromSynced") &&
-	    !eventHandler.IsUnsynced(name)) {
-		tableIndex = LUA_GLOBALSINDEX;  // synced call-ins in GLOBAL
-	} else {
-		tableIndex = LUA_REGISTRYINDEX; // unsynced call-ins in REGISTRY
+	static const std::string unsyncedNames[] = {
+		"DrawUnit",
+		"DrawFeature",
+		"DrawShield",
+		"RecvSkirmishAIMessage",
+		"RecvFromSynced",
+	};
+
+	// unsynced call-ins in REGISTRY
+	int tableIndex = LUA_REGISTRYINDEX;
+	bool unsynced = false;
+
+	for (unsigned int n = 0; n < (sizeof(unsyncedNames) / sizeof(std::string)); n++) {
+		if (name == unsyncedNames[n]) {
+			unsynced = true; break;
+		}
 	}
+
+	// synced call-ins in GLOBAL
+	if (!unsynced && !eventHandler.IsUnsynced(name))
+		tableIndex = LUA_GLOBALSINDEX;
 
 	bool haveFunc = true;
 	lua_settop(L, 0);

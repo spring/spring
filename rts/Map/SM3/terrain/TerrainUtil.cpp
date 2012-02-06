@@ -19,16 +19,12 @@ namespace terrain {
 	Heightmap::Heightmap()
 	{ 
 		w = h = 0;
-		dataSynced = 0;
-		dataUnsynced = 0;
 		lowDetail = highDetail = 0;
 		normalData = 0;
 		squareSize = 0.0f; 
 	}
 	Heightmap::~Heightmap()
 	{ 
-		delete[] dataSynced;
-		delete[] dataUnsynced;
 		delete[] normalData;
 	}
 
@@ -36,8 +32,8 @@ namespace terrain {
 	{
 		w = W;
 		h = H;
-		dataSynced = new float[w * h];
-		dataUnsynced = new float[w * h];
+		dataSynced.resize(w * h);
+		dataUnsynced.resize(w * h);
 	}
 
 	void Heightmap::LodScaleDown(Heightmap* dst)

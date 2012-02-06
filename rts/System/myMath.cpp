@@ -163,17 +163,20 @@ std::pair<float, float> GetMapBoundaryIntersectionPoints(const float3& start, co
 	const float rcpdirz = (dir.z != 0.0f)? (1.0f / dir.z): 10000.0f;
 	float l1, l2, far, near;
 
+	const float& mapwidth  = float3::maxxpos + 1;
+	const float& mapheight = float3::maxzpos + 1;
+
 	//! x component
-	l1 = (           0.0f - start.x) * rcpdirx;
-	l2 = (float3::maxxpos - start.x) * rcpdirx;
+	l1 = (    0.0f - start.x) * rcpdirx;
+	l2 = (mapwidth - start.x) * rcpdirx;
 	near = std::min(l1, l2);
-	far = std::max(l1, l2);
+	far  = std::max(l1, l2);
 
 	//! z component
-	l1 = (           0.0f - start.z) * rcpdirz;
-	l2 = (float3::maxzpos - start.z) * rcpdirz;
+	l1 = (     0.0f - start.z) * rcpdirz;
+	l2 = (mapheight - start.z) * rcpdirz;
 	near = std::max(std::min(l1, l2), near);
-	far = std::min(std::max(l1, l2), far);
+	far  = std::min(std::max(l1, l2), far);
 
 	if (far < 0.0f || far < near) {
 		//! outside of boundary
@@ -203,8 +206,8 @@ bool ClampLineInMap(float3& start, float3& end)
 		start = start + dir * std::max(near, 0.0f);
 
 		//! precision of near,far are limited, so better clamp it afterwards
-		end.CheckInBounds();
-		start.CheckInBounds();
+		end.ClampInMap();
+		start.ClampInMap();
 		return true;
 	}
 	return false;
@@ -228,7 +231,7 @@ bool ClampRayInMap(const float3& start, float3& end)
 		end = start + dir * std::min(far, 1.0f);
 
 		//! precision of near,far are limited, so better clamp it afterwards
-		end.CheckInBounds();
+		end.ClampInMap();
 		return true;
 	}
 	return false;

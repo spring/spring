@@ -1,13 +1,129 @@
-Spring change log
+Spring changelog
+(since 85.0: "!" prefix indicate backward compability broke)
+
+-- 86.0 ---------------------------------------------------------
+Changes:
+ - using now OS functions to expand special paths in spring's include dirs (config's SpringData, ENV{SPRING_DATADIR}, ...)
+  ! Windows: now uses windows syntax ("$HOME/foo/bar" is now "%HOME%/foo/bar") (see msdn's ExpandEnvironmentStrings documentation)
+  - Linux: now supports full bash path syntax ("~/", "${HOME}/.spring/", "/foo/../bar/", etc.) (see manpage of wordexp)
+ - IsolationMode: scan ENV{SPRING_DATADIR} & config's SpringData as readonly datadirs
+ - added a new commandline argument "--safemode". It turns off all features that are known to cause problems on some system.
+ ! ignore features with `blocking=false` in all RayTracing/Aiming functions (other code still checks them!!!)
+
+unitsync:
+ - reload IsolatedMode & Dir via the EnvVar on Init() calls 
+
+MacOSX:
+ - fix signal handling
+ - use native DialogBoxes
+
+Bugfixes:
+ - fixed Intel GPU detection under Windows
+ - fixed handling of duplicated used hotkeys (i.e. unit groups & specteam switching)
+ - fixed minor issues with ground collision RayTracing
+
 
 -- 85.0 ---------------------------------------------------------
+Major Changes:
+ - ROAM \o/
+ - QTPFS (disabled by default)
+
 CommandLine:
  - updated man-pages
- - added new argument `--sync-version` (i.e. prints "85" for a 85.0 build);
- - added a full set of new arguments to spring-dedicated (you can now also change the config-file)
+ - added new argument `--sync-version` (i.e. prints "85" for a 85.0 build or "84.0.1-567-g69ef7a3 develop" for a dev build)
+ - allow to build proper release builds without being on branch master
+ - added a full set of new arguments to spring-dedicated (see `spring-dedicated --help`)
+ - added --isolation & --isolation-dir arguments
+ - optionally, you may supply a path with SPRING_ISOLATED=<isolation-mode-dir>
+
+Rendering:
+ - added ROAM. Kudos go to B. Turner (the original author of the code) and Beherith (for integrating it into Spring).
+ - set SmoothLines & SmoothPoints by default on DONT_CARE (so your gfx driver settings decide if it is enabled or not)
+ - dynamic viewrange handling, so even a 32x32 map can be rendered w/o clipping in low camera angles
+ - log available video memory on NVidia/ATi gfx drivers
+ - disable GLSL shaders on Mesa/Intel drivers
+
+Internal/Bugfixes:
+ - re-added forced log file flushing when handling crashes
+ - made the (new) C++ AI Wrapper VS compatible
+ - name threads so you can identify them in `htop` (Linux only)
+ - some additional time-profilers in rendering code
+ ! hide "(Headless)" in dedicated's returned version name
+ - fixed stacktrace translation with some Linux setups
+ - fix crash when specs are cheating in via /team
+ - fix transport loading failure
+
+(G)UI:
+ - fix keyshortcuts (handle F3 OR any+F3 but not both at once!)
+ - fix EndGameBox
+ - make F2 colors less ambiguous
+ - the ManualFire action now expects a cursor "cursormanfire"
+
+Sim:
+ - make units crushable like features
+ - implement avoidFeature for Cannons and MissileLaunchers
+ - fix extremely fast unit rotations after being hit
+ - fix FPS-mode range exploit
+ - fix teleport-to-smooth-mesh after unloading
+
+Pathing/MoveType:
+ - fix units sometimes moving onto impassable squares
+ - fix the mass-clumping unit movement bug
+ - properly restore MoveType::maxSpeed after a guard-order
+ - prevent units getting stuck when turning around the corner of other units
+
+CEG:
+ - give warning when textures used in SimpleParticles don't exists
+ - really fix default projectile colors
+
+MultiThreaded (GML):
+ - fix hang/runtime error during pathing
+ - fix Creating unit in gadget:Initialize()
+ - lots of other fixes
 
 Sound:
- - limit UnitReplies to max one concurrent
+ - limit UnitReplies to max one concurrent playback
+ - play most unit sounds (activate, ...) only if unit is in LOS
+
+UnitDef:
+ ! removed "commander" tag (The Commander selectkeys filter is now defunct (ctrl+c hotkey). Lua it, or add a new one that looks for any canManualFire units.)
+ - added new "blocking" bool tag
+ ! "canDGun" is now a synonym for "canManualFire"
+ - added new tag "crushResistance" (defaults to unit's mass)
+ ! make the default cloakCost* values 0 instead of -1,
+ ! added new "canCloak" bool tag (If an unit can receive user cloak commands. Before, canCloak was auto set to true if cloakCost >= 0.)
+
+FeatureDef
+ - added new tag "crushResistance" (defaults to feature's mass)
+
+WeaponDef:
+ - added new "craterAreaOfEffect" float tag (defaults to the value of areaOfEffect)
+
+modrules.lua:
+ - added "movement.allowCrushingAlliedUnits" (default false)
+ - added "movement.allowUnitCollisionDamage" (default false)
+ - added "system.pathFinderSystem" (defaults to 0, 1 is QTPFS)
+
+Lua:
+ ! UnitDef[].isCommander returns now false
+ - fixed Spring.GetTimer/DiffTimers
+ - fixed Spring.SetMouseCursor when using hw cursor
+ - handle Lua code crashes in some events correctly, so they don't crash the whole Lua enviroment (fixes: "LuaRules::CheckStack top = -1")
+ ! call UnitMoveFailed event only for via Script.SetWatchUnit registered UnitDefs
+ ! added new WeaponDefs[].craterAreaOfEffect
+ - extend Spring.SetUnitBlocking with an optional 4th "crashable" bool argument
+ - added new Spring.GetUnitBlocking(unitid) -> blocking, crushable
+
+demo widgets:
+ - minimap_startbox.lua: play sound when start-positions are placed
+
+Buildbot:
+ - create spring_${VERSION}_minimal-portable+dedicated.zip
+
+UnitSync:
+ - if Init() is called, but we are already initialzied, do a re-initialization
+
+
 
 -- 84.0 ---------------------------------------------------------
 Bugfixes & Improvements:

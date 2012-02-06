@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __COMMAND_QUEUE_H__
-#define __COMMAND_QUEUE_H__
+#ifndef _COMMAND_QUEUE_H
+#define _COMMAND_QUEUE_H
 
 #include "lib/gml/gmlmut.h"
 
@@ -154,4 +154,4 @@ inline CCommandQueue::iterator CCommandQueue::insert(iterator pos,
 }
 
 
-#endif // __COMMAND_QUEUE_H__
+#endif // _COMMAND_QUEUE_H

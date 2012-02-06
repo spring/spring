@@ -306,14 +306,25 @@ bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 }
 
 
-void CFactoryCAI::DecreaseQueueCount(const Command& c, BuildOption& buildOption)
+void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& buildOption)
 {
-	if (!repeatOrders || (c.options & DONT_REPEAT)) {
-		buildOption.numQued--;
-	}
+	const Command frontCommand = commandQue.front();
 
-	UpdateIconName(c.GetID(), buildOption);
+	if (!repeatOrders || (buildCommand.options & DONT_REPEAT))
+		buildOption.numQued--;
+
+	UpdateIconName(buildCommand.GetID(), buildOption);
+
+	// if true, factory was set to wait and its buildee
+	// could only have been finished by assisting units
+	// --> make sure not to cancel the wait-order
+	if (frontCommand.GetID() == CMD_WAIT)
+		commandQue.pop_front();
+
 	FinishCommand();
+
+	if (frontCommand.GetID() == CMD_WAIT)
+		commandQue.push_front(frontCommand);
 }
 
 
@@ -322,9 +333,7 @@ void CFactoryCAI::DecreaseQueueCount(const Command& c, BuildOption& buildOption)
 // QueueBuild(); hence we need a callback or listen for an event to
 // detect when the build-process actually finished
 //
-// if fac->QueueBuild() returned false, this will NOT be called (so
-// when eg. the unit-limit is reached, build commands will remain in
-// the queue)
+// NOTE: only called if Factory::QueueBuild returned FACTORY_NEXT_BUILD_ORDER
 void FactoryFinishBuildCallBack(CFactory* factory, const Command& command) {
 	CFactoryCAI* cai = dynamic_cast<CFactoryCAI*>(factory->commandAI);
 	CFactoryCAI::BuildOption& bo = cai->buildOptions[command.GetID()];
@@ -337,44 +346,51 @@ void CFactoryCAI::SlowUpdate()
 	// Commands issued may invoke SlowUpdate when paused
 	if (gs->paused)
 		return;
-	if (commandQue.empty() || owner->beingBuilt) {
+	if (commandQue.empty() || owner->beingBuilt)
 		return;
-	}
 
 	CFactory* fac = (CFactory*) owner;
-	unsigned int oldSize = 0;
 
-	do {
+	while (!commandQue.empty()) {
 		Command& c = commandQue.front();
-		oldSize = commandQue.size();
-		map<int, BuildOption>::iterator boi;
 
-		if ((boi = buildOptions.find(c.GetID())) != buildOptions.end()) {
-			fac->QueueBuild(unitDefHandler->GetUnitDefByID(-c.GetID()), c, &FactoryFinishBuildCallBack);
+		const size_t oldQueueSize = commandQue.size();
+		const std::map<int, BuildOption>::iterator buildOptIt = buildOptions.find(c.GetID());
+
+		if (buildOptIt != buildOptions.end()) {
+			// build-order
+			switch (fac->QueueBuild(unitDefHandler->GetUnitDefByID(-c.GetID()), c, &FactoryFinishBuildCallBack)) {
+				case CFactory::FACTORY_SKIP_BUILD_ORDER: {
+					// order rejected and we want to skip it permanently
+					DecreaseQueueCount(c, buildOptions[c.GetID()]);
+				} break;
+			}
 		} else {
+			// regular order (move/wait/etc)
 			switch (c.GetID()) {
 				case CMD_STOP: {
 					ExecuteStop(c);
 				} break;
 				default: {
 					CCommandAI::SlowUpdate();
-					return;
+					break;
 				}
 			}
 		}
-	} while ((oldSize != commandQue.size()) && !commandQue.empty());
 
-	return;
+		// exit if no command was consumed
+		if (oldQueueSize == commandQue.size())
+			break;
+	}
 }
 
 
-void CFactoryCAI::ExecuteStop(Command &c)
+void CFactoryCAI::ExecuteStop(Command& c)
 {
 	CFactory* fac = (CFactory*) owner;
 	fac->StopBuild();
 
 	commandQue.pop_front();
-	return;
 }
 
 

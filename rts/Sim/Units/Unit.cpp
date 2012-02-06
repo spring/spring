@@ -345,7 +345,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	modelParser->CreateLocalModel(this);
 
 	relMidPos = model->relMidPos;
-	mapSquare = ground->GetSquare(position.ClampInBounds());
+	mapSquare = ground->GetSquare(position.cClampInMap());
 
 	heading  = GetHeadingFromFacing(facing);
 	frontdir = GetVectorFromHeading(heading);
@@ -353,7 +353,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	rightdir = frontdir.cross(updir);
 	upright  = unitDef->upright;
 
-	Move3D(position.ClampInBounds(), false);
+	Move3D(position.cClampInMap(), false);
 	SetRadiusAndHeight(model->radius, model->height);
 	UpdateDirVectors(!upright);
 	UpdateMidPos();
@@ -387,7 +387,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 	beingBuilt = build;
 	mass = (beingBuilt)? mass: unitDef->mass;
-	crushImpedance = unitDef->crushImpedance;
+	crushResistance = unitDef->crushResistance;
 	power = unitDef->power;
 	maxHealth = unitDef->health;
 	health = beingBuilt? 0.1f: unitDef->health;

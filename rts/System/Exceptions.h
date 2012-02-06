@@ -15,6 +15,17 @@
 
 
 /**
+ * user_error
+ *   thrown when a enduser config is broken/invalid.
+ */
+class user_error : public std::runtime_error
+{
+public:
+	user_error(const std::string& msg) : std::runtime_error(msg) {};
+};
+
+
+/**
  * content_error
  *   thrown when content couldn't be found/loaded.
  *   any other type of exception will cause a crashreport box appearing

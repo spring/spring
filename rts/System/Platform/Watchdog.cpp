@@ -122,7 +122,6 @@ namespace Watchdog
 
 					WatchDogThreadInfo* th_info = registeredThreads[i];
 					CrashHandler::Stacktrace(th_info->thread, threadNames[i]);
-					LOG_CLEANUP();
 				}
 
 				CrashHandler::CleanupStacktrace();
@@ -305,7 +304,7 @@ namespace Watchdog
 		//! start the watchdog thread
 		hangDetectorThread = new boost::thread(&HangDetectorLoop);
 
-		LOG("[Watchdog] Installed (timeout: %isec)", hangTimeoutSecs);
+		LOG("[Watchdog] Installed (HangTimeout: %isec)", hangTimeoutSecs);
 	}
 
 

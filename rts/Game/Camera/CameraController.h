@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __CAMERA_CONTROLLER_H__
-#define __CAMERA_CONTROLLER_H__
+#ifndef _CAMERA_CONTROLLER_H
+#define _CAMERA_CONTROLLER_H
 
 #include <string>
 #include <vector>
@@ -84,4 +84,4 @@ protected:
 };
 
 
-#endif // __CAMERA_CONTROLLER_H__
+#endif // _CAMERA_CONTROLLER_H

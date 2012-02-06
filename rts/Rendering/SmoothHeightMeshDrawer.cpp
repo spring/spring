@@ -16,9 +16,10 @@ public:
 	AirMeshActionExecutor() : IUnsyncedActionExecutor(COMMAND_NAME,
 			"Show/Hide the smooth air-mesh map overlay") {}
 
-	void Execute(const UnsyncedAction& action) const {
+	bool Execute(const UnsyncedAction& action) const {
 		SetBoolArg(smoothHeightMeshDrawer->DrawEnabled(), action.GetArgs());
 		LogSystemStatus("smooth air-mesh map overlay", smoothHeightMeshDrawer->DrawEnabled());
+		return true;
 	}
 };
 

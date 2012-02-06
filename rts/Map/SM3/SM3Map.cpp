@@ -57,8 +57,9 @@ CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 		}
 	}
 
-
 	renderer = new terrain::Terrain();
+	heightMapSynced   = renderer->GetCornerHeightMapSynced();
+	heightMapUnsynced = renderer->GetCornerHeightMapUnsynced();
 
 	{
 		// load the heightmap in advance

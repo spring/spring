@@ -360,7 +360,6 @@ CGame::~CGame()
 	SyncedGameCommands::DestroyInstance();
 
 	IVideoCapturing::FreeInstance();
-	ISound::Shutdown();
 
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
@@ -433,6 +432,7 @@ CGame::~CGame()
 
 	SafeDelete(gameServer);
 	SafeDelete(net);
+	ISound::Shutdown();
 
 	game = NULL;
 
@@ -801,6 +801,13 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 	for (unsigned int i = 0; i < actionList.size(); ++i) {
 		if (ActionPressed(key, actionList[i], isRepeat)) {
 			return 0;
+		}
+	}
+
+	// maybe a widget is interested?
+	if (guihandler != NULL) {
+		for (unsigned int i = 0; i < actionList.size(); ++i) {
+			guihandler->PushLayoutCommand(actionList[i].rawline, false);
 		}
 	}
 
@@ -2299,8 +2306,9 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	if (executor != NULL) {
 		// an executor for that action was found
 		UnsyncedAction unsyncedAction(action, key, isRepeat);
-		executor->ExecuteAction(unsyncedAction);
-		return true; // XXX catch exceptions thrown in ExecuteAction to deside what to return here?
+		if (executor->ExecuteAction(unsyncedAction)) {
+			return true;
+		}
 	}
 
 	static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
@@ -2313,9 +2321,6 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	if (Console::Instance().ExecuteAction(action)) {
 		return true;
 	}
-
-	if (guihandler != NULL) // maybe a widget is interested?
-		guihandler->PushLayoutCommand(action.rawline, false);
 
 	return false;
 }

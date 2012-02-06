@@ -19,7 +19,7 @@ CR_BIND_DERIVED(CSolidObject, CWorldObject, );
 CR_REG_METADATA(CSolidObject,
 (
 	CR_MEMBER(mass),
-	CR_MEMBER(crushImpedance),
+	CR_MEMBER(crushResistance),
 
 	CR_MEMBER(blocking),
 	CR_MEMBER(crushable),
@@ -66,7 +66,7 @@ CR_REG_METADATA(CSolidObject,
 
 CSolidObject::CSolidObject():
 	mass(DEFAULT_MASS),
-	crushImpedance(0.0f),
+	crushResistance(0.0f),
 	blocking(false),
 	crushable(false),
 	immobile(false),
@@ -104,17 +104,6 @@ CSolidObject::~CSolidObject() {
 
 	delete collisionVolume;
 	collisionVolume = NULL;
-}
-
-
-
-void CSolidObject::UpdateMidPos()
-{
-	const float3 dz = (frontdir * relMidPos.z);
-	const float3 dy = (updir    * relMidPos.y);
-	const float3 dx = (rightdir * relMidPos.x);
-
-	midPos = pos + dz + dy + dx;
 }
 
 

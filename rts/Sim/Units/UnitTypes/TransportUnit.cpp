@@ -95,6 +95,11 @@ void CTransportUnit::Update()
 		transportee->Move3D(absPiecePos, false);
 		transportee->UpdateMidPos();
 		transportee->SetHeadingFromDirection();
+
+		// see ::AttachUnit
+		if (transportee->stunned) {
+			qf->MovedUnit(transportee);
+		}
 	}
 }
 
@@ -323,9 +328,18 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	unit->UnBlock();
 	loshandler->FreeInstance(unit->los);
-	unit->los = 0;
 	radarhandler->RemoveUnit(unit);
-	qf->RemoveUnit(unit);
+
+	// do not remove unit from QF, otherwise projectiles
+	// will not be able to connect with (ie. damage) it
+	//
+	// for NON-stunned transportees, QF position is kept
+	// up-to-date by MoveType::SlowUpdate, otherwise by
+	// ::Update
+	//
+	// qf->RemoveUnit(unit);
+
+	unit->los = NULL;
 
 	if (CBuilding* building = dynamic_cast<CBuilding*>(unit)) {
 		unitLoader->RestoreGround(unit);

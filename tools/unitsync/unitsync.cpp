@@ -181,6 +181,9 @@ static void _SetLastError(const std::string& err)
 	_SetLastError(std::string(__FUNCTION__) + ": " + (str))
 
 #define UNITSYNC_CATCH_BLOCKS \
+	catch (const user_error& ex) { \
+		SetLastError(ex.what()); \
+	} \
 	catch (const std::exception& ex) { \
 		SetLastError(ex.what()); \
 	} \
@@ -307,44 +310,59 @@ static void _Cleanup()
 	}
 }
 
+
+static void CheckForImportantFilesInVFS()
+{
+	std::vector<std::string> filesToCheck;
+	filesToCheck.push_back("base/springcontent.sdz");
+	filesToCheck.push_back("base/maphelper.sdz");
+	filesToCheck.push_back("base/spring/bitmaps.sdz");
+	filesToCheck.push_back("base/cursors.sdz");
+
+	for (std::vector<std::string>::const_iterator it = filesToCheck.begin(); it != filesToCheck.end(); ++it) {
+		if (!CFileHandler::FileExists(*it, SPRING_VFS_RAW)) {
+			throw content_error("Required base file '" + *it + "' does not exist.");
+		}
+	}
+}
+
+
+
 EXPORT(int) Init(bool isServer, int id)
 {
 	try {
+		// Cleanup data from previous Init() calls
+		_Cleanup();
+
+		// LogSystem 1
 		if (!logOutputInitialised) {
 			logOutput.SetFileName("unitsync.log");
 		}
 #ifndef DEBUG
 		log_filter_section_setMinLevel(LOG_SECTION_UNITSYNC, LOG_LEVEL_INFO);
 #endif
+
+		// VFS
 		if (archiveScanner || vfsHandler){
 			FileSystemInitializer::Cleanup(); //reinitialize filesystem to detect new files
 		}
 		if (!configHandler) {
 			ConfigHandler::Instantiate(); // use the default config file
 		}
+		dataDirLocater.UpdateIsolationModeByEnvVar();
 		FileSystemInitializer::Initialize();
 
+		// LogSystem 2
 		if (!logOutputInitialised) {
 			logOutput.Initialize();
 			logOutputInitialised = true;
 		}
 		LOG("loaded, %s", SpringVersion::GetFull().c_str());
 
-		_Cleanup();
+		// check if VFS is okay
+		CheckForImportantFilesInVFS();
 
-		std::vector<std::string> filesToCheck;
-		filesToCheck.push_back("base/springcontent.sdz");
-		filesToCheck.push_back("base/maphelper.sdz");
-		filesToCheck.push_back("base/spring/bitmaps.sdz");
-		filesToCheck.push_back("base/cursors.sdz");
-
-		for (std::vector<std::string>::const_iterator it = filesToCheck.begin(); it != filesToCheck.end(); ++it) {
-			CFileHandler f(*it, SPRING_VFS_RAW);
-			if (!f.FileExists()) {
-				throw content_error("Required base file '" + *it + "' does not exist.");
-			}
-		}
-
+		// Finish
 		syncer = new CSyncer();
 		LOG("initialized, %s", SpringVersion::GetFull().c_str());
 		LOG("%s", (isServer ? "hosting" : "joining"));
