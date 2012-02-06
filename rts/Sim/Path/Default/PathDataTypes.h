@@ -81,34 +81,36 @@ struct PathNodeStateBuffer {
 
 		// Note: Full resolution buffer does not need those!
 		if (bufRes.x != mapRes.x || bufRes.y != mapRes.y) {
-			parentNodePos.resize(br.x * br.y, int2(-1, -1));
-			nodeOffsets.resize(br.x * br.y);
+			peParentNodePos.resize(br.x * br.y, int2(-1, -1));
+			peNodeOffsets.resize(br.x * br.y);
 		}
 	}
 
 	unsigned int GetSize() const { return fCost.size(); }
 
 	void ClearSquare(int idx) {
-		//assert(idx>0 && idx<fCost.size());
+		//assert(idx>=0 && idx<fCost.size());
 		fCost[idx] = PATHCOST_INFINITY;
 		gCost[idx] = PATHCOST_INFINITY;
 		nodeMask[idx] &= PATHOPT_OBSOLETE;
-		parentNodePos[idx] = int2(-1, -1);
+		peParentNodePos[idx] = int2(-1, -1);
 	}
 	
 
 	/// size of the memory-region we hold allocated (excluding sizeof(*this))
 	unsigned int GetMemFootPrint() const {
-		unsigned int nodeOffsetsSize = 0;
-		if (!nodeOffsets.empty()) {
-			nodeOffsetsSize = sizeof(std::vector<int2>) + nodeOffsets[0].size() * sizeof(int2);
+		unsigned int memFootPrint = 0;
+
+		if (!peNodeOffsets.empty()) {
+			memFootPrint += (peNodeOffsets.size() * (sizeof(std::vector<int2>) + peNodeOffsets[0].size() * sizeof(int2)));
 		}
 
-		return
-			sizeof(float) * (fCost.size() + gCost.size() + extraCostSynced.size() + extraCostUnsynced.size())
-			+ nodeMask.size() * sizeof(unsigned int)
-			+ parentNodePos.size() * sizeof(int2)
-			+ nodeOffsets.size() * nodeOffsetsSize;
+		memFootPrint += (nodeMask.size() * sizeof(unsigned int));
+		memFootPrint += (peParentNodePos.size() * sizeof(int2));
+		memFootPrint += ((fCost.size() + gCost.size()) * sizeof(float));
+		memFootPrint += ((extraCostSynced.size() + extraCostUnsynced.size()) * sizeof(float));
+
+		return memFootPrint;
 	}
 
 	void SetMaxFCost(float c) { fCostMax = c; }
@@ -149,10 +151,14 @@ struct PathNodeStateBuffer {
 
 	void SetNodeExtraCost(unsigned int xhm, unsigned int zhm, float cost, bool synced) {
 		if (synced) {
-			if (extraCostSynced.empty()) { extraCostSynced.resize(br.x * br.y, 0.0f); } // alloc on-demand
+			if (extraCostSynced.empty())
+				extraCostSynced.resize(br.x * br.y, 0.0f); // alloc on-demand
+
 			extraCostSynced[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ] = cost;
 		} else {
-			if (extraCostUnsynced.empty()) { extraCostUnsynced.resize(br.x * br.y, 0.0f); } // alloc on-demand
+			if (extraCostUnsynced.empty())
+				extraCostUnsynced.resize(br.x * br.y, 0.0f); // alloc on-demand
+
 			extraCostUnsynced[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ] = cost;
 		}
 	}
@@ -179,12 +185,12 @@ public:
 	std::vector<unsigned int> nodeMask;
 
 	/// needed for the PE to back-track path to goal
-	std::vector<int2> parentNodePos;
+	std::vector<int2> peParentNodePos;
 
 	/// for the PE, each node (block) maintains the
 	/// best accessible offset (from its own center
 	/// position) with respect to each movetype
-	std::vector< std::vector<int2> > nodeOffsets;
+	std::vector< std::vector<int2> > peNodeOffsets;
 
 private:
 	// overlay-cost modifiers for nodes (when non-zero, these
