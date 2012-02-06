@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FILE_HANDLER_H__
-#define __FILE_HANDLER_H__
+#ifndef _FILE_HANDLER_H
+#define _FILE_HANDLER_H
 
 #include <set>
 #include <vector>
@@ -76,4 +76,4 @@ private:
 	int fileSize;
 };
 
-#endif // __FILE_HANDLER_H__
+#endif // _FILE_HANDLER_H

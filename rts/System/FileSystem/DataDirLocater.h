@@ -43,7 +43,9 @@ public:
 	 * --------------------------
 	 * (descending priority -> first entry is searched first)
 	 *
-	 * If the environment variable SPRING_ISOLATED is present
+	 * If "-i isolationDir" is passed via cli or the environment variable
+	 * SPRING_ISOLATED is present, isolation mode is activated. Any valid
+	 * path in either of the two is added. If neither conatins a valid path,
 	 * _only_ Platform::GetProcessExecutablePath() (non-UNITSYNC)
 	 *     or Platform::GetModulePath() (UNITSYNC)
 	 * or the relative parent dir, in case of a multi-version engine install,
@@ -110,6 +112,48 @@ public:
 	 */
 	std::string GetWriteDirPath() const;
 	std::vector<std::string> GetDataDirPaths() const;
+
+	/**
+	 * Returns whether isolation-mode is enabled.
+	 * In isolation-mode, we will only use a singel data-dir.
+	 * This defaults to false, but can be set to true by setting the env var
+	 * SPRING_ISOLATED.
+	 * @see #GetIsolationModeDir
+	 */
+	bool IsIsolationMode() const { return isolationMode; }
+
+	/**
+	 * Sets whether isolation-mode is enabled.
+	 * @see #IsIsolationMode
+	 * @see #SetIsolationModeDir
+	 */
+	void SetIsolationMode(bool enabled) { isolationMode = enabled; }
+
+	/**
+	 * Returns the isolation-mode directory, or "", if the default one is used.
+	 * The default one is CWD or CWD/.., in case of a versioned data-dir.
+	 * If the env var SPRING_ISOLATED is set to a valid directory,
+	 * it replaced the above mentioned default.
+	 * This is only relevant if isolation-mode is active.
+	 * @see #IsIsolationMode
+	 */
+	std::string GetIsolationModeDir() const { return isolationModeDir; }
+
+	/**
+	 * Sets the isolation-mode directory.
+	 * If set to "", we use the default one, which is is CWD or CWD/..,
+	 * in case of a versioned data-dir.
+	 * This is only relevant if isolation-mode is active.
+	 * @see #SetIsolationMode
+	 */
+	void SetIsolationModeDir(const std::string& dir) { isolationModeDir = dir; }
+
+
+	/**
+	 * @brief reads envvar to detect if we should run in isolated mode
+	 * used by unitsync.cpp
+	 */
+	void UpdateIsolationModeByEnvVar();
 
 private:
 
@@ -182,6 +226,9 @@ private:
 	 * @returns whether dirPath may be a data-dir for multiple engine versions.
 	 */
 	static bool LooksLikeMultiVersionDataDir(const std::string& dirPath);
+
+	bool isolationMode;
+	std::string isolationModeDir;
 
 	std::vector<DataDir> dataDirs;
 	const DataDir* writeDir;

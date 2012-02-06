@@ -9,9 +9,13 @@
 
 #ifdef __GNUC__
 	#define _const __attribute__((const))
+	#define _warn_unused_result __attribute__((warn_unused_result))
 #else
 	#define _const
+	#define _warn_unused_result
 #endif
+
+
 
 static const float INVPI  = 1.0f / PI;
 static const float TWOPI  = 2.0f * PI;
@@ -90,12 +94,16 @@ bool ClampLineInMap(float3& start, float3& end);
 bool ClampRayInMap(const float3& start, float3& end);
 
 
-float smoothstep(const float edge0, const float edge1, const float value);
-float3 smoothstep(const float edge0, const float edge1, float3 vec);
+float smoothstep(const float edge0, const float edge1, const float value) _warn_unused_result;
+float3 smoothstep(const float edge0, const float edge1, float3 vec) _warn_unused_result;
 
-float Square(const float x) _const;
-int Round(const float f) _const;
-template<class T> T Clamp(const T& v, const T& min, const T& max);
+template<class T> T mix(const T& v1, const T& v2, const float& a) _warn_unused_result;
+template<class T> T Blend(const T& v1, const T& v2, const float& a) _warn_unused_result;
+template<class T> inline T Blend(const T& v1, const T& v2, const float& a) { return mix(v1, v2, a); }
+
+float Square(const float x) _const _warn_unused_result;
+int Round(const float f) _const _warn_unused_result;
+template<class T> T Clamp(const T& v, const T& min, const T& max) _warn_unused_result;
 
 
 /**

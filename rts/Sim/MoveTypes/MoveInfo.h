@@ -9,45 +9,20 @@
 #include "System/creg/creg_cond.h"
 #include "Sim/Misc/GlobalConstants.h"
 
+class CMoveInfo;
 class CMoveMath;
 class CSolidObject;
+class LuaTable;
 
 struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
 
-	MoveData(const MoveData* unitDefMD) {
-		name            = unitDefMD? unitDefMD->name:            "";
+	MoveData();
+	MoveData(const MoveData* unitDefMD);
+	MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID);
 
-		moveType        = unitDefMD? unitDefMD->moveType:        MoveData::Ground_Move;
-		moveFamily      = unitDefMD? unitDefMD->moveFamily:      MoveData::Tank;
-		terrainClass    = unitDefMD? unitDefMD->terrainClass:    MoveData::Mixed;
-
-		xsize           = unitDefMD? unitDefMD->xsize:           0;
-		zsize           = unitDefMD? unitDefMD->zsize:           0;
-		xsizeh          = unitDefMD? unitDefMD->xsizeh:          0;
-		zsizeh          = unitDefMD? unitDefMD->zsizeh:          0;
-
-		depth           = unitDefMD? unitDefMD->depth:           0.0f;
-		maxSlope        = unitDefMD? unitDefMD->maxSlope:        1.0f;
-		slopeMod        = unitDefMD? unitDefMD->slopeMod:        0.0f;
-		depthMod        = unitDefMD? unitDefMD->depthMod:        0.0f;
-		crushStrength   = unitDefMD? unitDefMD->crushStrength:   0.0f;
-
-		pathType        = unitDefMD? unitDefMD->pathType:        0;
-		unitDefRefCount = unitDefMD? unitDefMD->unitDefRefCount: 0;
-
-		followGround    = unitDefMD? unitDefMD->followGround:    true;
-		subMarine       = unitDefMD? unitDefMD->subMarine:       false;
-
-		heatMapping     = unitDefMD? unitDefMD->heatMapping:     true;
-		heatMod         = unitDefMD? unitDefMD->heatMod:         0.05f;
-		heatProduced    = unitDefMD? unitDefMD->heatProduced:    30;
-		flowMapping     = unitDefMD? unitDefMD->flowMapping:     true;
-		flowMod         = unitDefMD? unitDefMD->flowMod:         1.0f;
-
-		moveMath        = unitDefMD? unitDefMD->moveMath:        NULL;
-		tempOwner       = NULL;
-	}
+	float GetDepthMod(const float height) const;
+	unsigned int GetCheckSum() const;
 
 	enum MoveType {
 		Ground_Move = 0,
@@ -68,6 +43,15 @@ struct MoveData {
 		/// we can exist at heights both greater and smaller than 0
 		Mixed = 2
 	};
+	enum DepthModParam {
+		DEPTHMOD_MIN_HEIGHT = 0,
+		DEPTHMOD_MAX_HEIGHT = 1,
+		DEPTHMOD_MAX_SCALE  = 2,
+		DEPTHMOD_QUA_COEFF  = 3,
+		DEPTHMOD_LIN_COEFF  = 4,
+		DEPTHMOD_CON_COEFF  = 5,
+		DEPTHMOD_NUM_PARAMS = 6,
+	};
 
 	std::string name;
 
@@ -82,9 +66,9 @@ struct MoveData {
 
 	/// minWaterDepth for ships, maxWaterDepth otherwise
 	float depth;
+	float depthModParams[DEPTHMOD_NUM_PARAMS];
 	float maxSlope;
 	float slopeMod;
-	float depthMod;
 	float crushStrength;
 
 	unsigned int pathType;
@@ -123,6 +107,10 @@ public:
 
 	MoveData* GetMoveDataFromName(const std::string& name);
 	unsigned int moveInfoChecksum;
+
+	CMoveMath* GetGroundMoveMath() { return groundMoveMath; }
+	CMoveMath* GetHoverMoveMath() { return hoverMoveMath; }
+	CMoveMath* GetSeaMoveMath() { return seaMoveMath; }
 
 private:
 	CMoveMath* groundMoveMath;

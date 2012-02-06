@@ -8,13 +8,6 @@
 #include <SDL_timer.h>
 #include <boost/bind.hpp>
 #include <sstream>
-#ifndef _WIN32
-	#include <unistd.h>
-	#define EXECLP execlp
-#else
-	#include <process.h>
-	#define EXECLP _execlp
-#endif
 #include <stack>
 #include <boost/cstdint.hpp>
 
@@ -52,12 +45,6 @@ using agui::HorizontalLayout;
 CONFIG(std::string, address).defaultValue("");
 CONFIG(bool, NoHelperAIs).defaultValue(false);
 CONFIG(std::string, LastSelectedSetting).defaultValue("");
-
-#ifdef WIN32
-	CONFIG(std::string, DefaultLobby).defaultValue("springlobby.exe");
-#else
-	CONFIG(std::string, DefaultLobby).defaultValue("springlobby");
-#endif
 
 class ConnectWindow : public agui::Window
 {
@@ -226,17 +213,12 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 		/*agui::TextElement* title = */new agui::TextElement("Spring", menu); // will be deleted in menu
 		Button* single = new Button("Test the Game", menu);
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
-		Button* multi = new Button("Start the Lobby", menu);
-		multi->Clicked.connect(boost::bind(&SelectMenu::Multi, this));
 		Button* update = new Button("Lobby connect (WIP)", menu);
 		update->Clicked.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, true));
 
 		userSetting = configHandler->GetString("LastSelectedSetting");
 		Button* editsettings = new Button("Edit settings", menu);
 		editsettings->Clicked.connect(boost::bind(&SelectMenu::ShowSettingsList, this));
-
-		Button* settings = new Button("Start SpringSettings", menu);
-		settings->Clicked.connect(boost::bind(&SelectMenu::Settings, this));
 
 		Button* direct = new Button("Direct connect", menu);
 		direct->Clicked.connect(boost::bind(&SelectMenu::ShowConnectWindow, this, true));
@@ -309,22 +291,6 @@ void SelectMenu::Single()
 		agui::gui->RmElement(this);
 		//delete this;
 	}
-}
-
-void SelectMenu::Settings()
-{
-#ifdef __unix__
-	const std::string settingsProgram = "springsettings";
-#else
-	const std::string settingsProgram = "springsettings.exe";
-#endif
-	EXECLP(settingsProgram.c_str(), Quote(settingsProgram).c_str(), NULL);
-}
-
-void SelectMenu::Multi()
-{
-	const std::string defLobby = configHandler->GetString("DefaultLobby");
-	EXECLP(defLobby.c_str(), Quote(defLobby).c_str(), NULL);
 }
 
 void SelectMenu::Quit()

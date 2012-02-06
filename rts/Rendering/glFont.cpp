@@ -1699,7 +1699,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	const float lineHeight_ = scaleY * lineHeight;
 	unsigned int length = (unsigned int)str.length();
 
-	va->EnlargeArrays(length * 16 * sizeof(float), 0);
+	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
 	bool endOfString, colorChanged;
@@ -1751,8 +1751,8 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	const float lineHeight_ = scaleY * lineHeight;
 	unsigned int length = (unsigned int)str.length();
 
-	va->EnlargeArrays(length * 16 * sizeof(float), 0);
-	va2->EnlargeArrays(length * 16 * sizeof(float), 0);
+	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va2->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
 	bool endOfString, colorChanged;
@@ -1813,8 +1813,8 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	const float lineHeight_ = scaleY * lineHeight;
 	unsigned int length = (unsigned int)str.length();
 
-	va->EnlargeArrays(length * 16 * sizeof(float), 0);
-	va2->EnlargeArrays(length * 16 * sizeof(float), 0);
+	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va2->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
 	bool endOfString, colorChanged;

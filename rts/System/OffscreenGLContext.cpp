@@ -13,6 +13,7 @@
 //! Headless
 
 COffscreenGLContext::COffscreenGLContext() {}
+COffscreenGLContext::~COffscreenGLContext() {}
 void COffscreenGLContext::WorkerThreadPost() {}
 void COffscreenGLContext::WorkerThreadFree() {}
 
@@ -59,6 +60,11 @@ COffscreenGLContext::COffscreenGLContext()
 }
 
 
+COffscreenGLContext::~COffscreenGLContext() {
+	if(!wglDeleteContext(offscreenRC))
+		throw opengl_error("Could not delete off-screen rendering context");
+}
+
 void COffscreenGLContext::WorkerThreadPost()
 {
 	//! activate the offscreen GL context in the worker thread
@@ -72,8 +78,6 @@ void COffscreenGLContext::WorkerThreadFree()
 	//! must run in the same thread as the offscreen GL context!
 	if(!wglMakeCurrent(NULL, NULL))
 		throw opengl_error("Could not deactivate worker rendering context");
-	if(!wglDeleteContext(offscreenRC))
-		throw opengl_error("Could not delete off-screen rendering context");
 }
 
 
@@ -109,6 +113,11 @@ COffscreenGLContext::COffscreenGLContext()
 }
 
 
+COffscreenGLContext::~COffscreenGLContext() {
+	CGLDestroyContext(cglWorkerCtx);
+}
+
+
 void COffscreenGLContext::WorkerThreadPost()
 {
 	CGLSetCurrentContext(cglWorkerCtx);
@@ -118,7 +127,6 @@ void COffscreenGLContext::WorkerThreadPost()
 void COffscreenGLContext::WorkerThreadFree()
 {
 	CGLSetCurrentContext(NULL);
-	CGLDestroyContext(cglWorkerCtx);
 }
 
 #else
@@ -132,26 +140,19 @@ COffscreenGLContext::COffscreenGLContext()
 {
 	//! Get MainCtx & X11-Display
 	GLXContext mainCtx = glXGetCurrentContext();
+	display = glXGetCurrentDisplay();
 	//GLXDrawable mainDrawable = glXGetCurrentDrawable();
 	if(!mainCtx)
 		throw opengl_error("Couldn't create an offscreen GL context: glXGetCurrentContext failed!");
 
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-	if(!SDL_GetWMInfo(&info))
-		throw opengl_error("Couldn't create an offscreen GL context: SDL_GetWMInfo failed!");
-
-	info.info.x11.lock_func();
-		display = info.info.x11.display;
-		int scrnum = XDefaultScreen(display);
-	info.info.x11.unlock_func();
 	if (!display)
 		throw opengl_error("Couldn't create an offscreen GL context: Couldn't determine display!");
 
+	int scrnum = XDefaultScreen(display);
 
 	//! Create a FBConfig
 	int nelements = 0;
-	const int fbattrib[] = {
+	const int fbattribs[] = {
 		GLX_RENDER_TYPE, GLX_RGBA_BIT,
 		GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
 		GLX_BUFFER_SIZE, 32,
@@ -159,29 +160,48 @@ COffscreenGLContext::COffscreenGLContext()
 		GLX_STENCIL_SIZE, 8,
 		None
 	};
-	GLXFBConfig* fbcfg = glXChooseFBConfig(display, scrnum, (const int*)fbattrib, &nelements);
+	GLXFBConfig* fbcfg = glXChooseFBConfig(display, scrnum, (const int*)fbattribs, &nelements);
 	if (!fbcfg || (nelements == 0))
 		throw opengl_error("Couldn't create an offscreen GL context: glXChooseFBConfig failed!");
 
 
 	//! Create a pbuffer (each render context needs a drawable)
-	const int pbuf_attrib[] = {
+	const int pbuf_attribs[] = {
 		GLX_PBUFFER_WIDTH, 1,
 		GLX_PBUFFER_HEIGHT, 1,
 		GLX_PRESERVED_CONTENTS, false,
 		None
 	};
-	pbuf = glXCreatePbuffer(display, *fbcfg, (const int*)pbuf_attrib);
+	pbuf = glXCreatePbuffer(display, fbcfg[0], (const int*)pbuf_attribs);
 	if (!pbuf)
 		throw opengl_error("Couldn't create an offscreen GL context: glXCreatePbuffer failed!");
 
+/*
+	//Create a GL 3.0 context
+	const int ctx_attribs[] = {
+		//GLX_CONTEXT_MAJOR_VERSION_ARB, 2,
+		//GLX_CONTEXT_MINOR_VERSION_ARB, 0,
+		GLX_CONTEXT_FLAGS_ARB,
+			GLX_CONTEXT_DEBUG_BIT_ARB,
+			//GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+		None
+	};
+
+	workerCtx = glXCreateContextAttribsARB(display, fbcfg[0], mainCtx, true, ctx_attribs);
+*/
 
 	//! Create render context
-	workerCtx = glXCreateNewContext(display, *fbcfg, GLX_RGBA_TYPE, mainCtx, true);
+	workerCtx = glXCreateNewContext(display, fbcfg[0], GLX_RGBA_TYPE, mainCtx, true);
 	if (!workerCtx)
 		throw opengl_error("Couldn't create an offscreen GL context: glXCreateNewContext failed!");
 
 	XFree(fbcfg);
+}
+
+
+COffscreenGLContext::~COffscreenGLContext() {
+	glXDestroyContext(display, workerCtx);
+	glXDestroyPbuffer(display, pbuf);
 }
 
 
@@ -194,8 +214,6 @@ void COffscreenGLContext::WorkerThreadPost()
 void COffscreenGLContext::WorkerThreadFree()
 {
 	glXMakeCurrent(display, None, NULL);
-	glXDestroyContext(display, workerCtx);
-	glXDestroyPbuffer(display, pbuf);
 }
 
 #endif

@@ -4,6 +4,7 @@
 
 #include "System/mmgr.h"
 
+#include "System/Exceptions.h"
 #include "System/Net/RawPacket.h"
 #include "Game/GameVersion.h"
 
@@ -18,7 +19,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 
 	if (!playbackDemo.is_open()) {
 		// file not found -> exception
-		throw std::runtime_error(std::string("Demofile not found: ")+filename);
+		throw user_error(std::string("Demofile not found: ")+filename);
 	}
 
 	playbackDemo.read((char*)&fileHeader, sizeof(fileHeader));

@@ -32,6 +32,7 @@
 #include "System/Util.h"
 
 #define DRAW_QUAD_SIZE 32
+#define FEATURE_DIST 3000.0f
 
 CONFIG(bool, ShowRezBars).defaultValue(true);
 
@@ -196,7 +197,6 @@ void CFeatureDrawer::Draw()
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-
 	unitDrawer->SetupForUnitDrawing();
 	GetVisibleFeatures(0, true);
 
@@ -302,8 +302,14 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 {
-	if (!camera->InView(feature->pos, feature->drawRadius)) { return false; }
+	if (!camera->InView(feature->drawMidPos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
+
+	const float sqDist = (feature->pos - camera->pos).SqLength();
+	const float farLength = feature->sqRadius * unitDrawer->unitDrawDistSqr;
+	const float sqFadeDistEnd = (FEATURE_DIST * 2.0f) * (FEATURE_DIST * 2.0f);
+
+	if (sqDist >= std::min(farLength, sqFadeDistEnd)) return false;
 
 	glPushMatrix();
 	glMultMatrixf(feature->transMatrix.m);
@@ -463,7 +469,6 @@ class CFeatureQuadDrawer : public CReadMap::IQuadDrawer {
 public:
 	int drawQuadsX;
 	bool drawReflection, drawRefraction;
-	float unitDrawDist;
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
 	bool farFeatures;
@@ -507,7 +512,7 @@ public:
 				}
 
 				const float sqDist = (f->pos - camera->pos).SqLength();
-				const float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
+				const float farLength = f->sqRadius * unitDrawer->unitDrawDistSqr;
 #ifdef USE_GML
 				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
 					statFeatures->push_back(f);
@@ -547,7 +552,7 @@ public:
 
 void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 {
-	float featureDist = 3000.0f;
+	float featureDist = FEATURE_DIST;
 
 	if (extraSize == 0) {
 		// far-features are not drawn during shadowpass anyway
@@ -559,7 +564,6 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	drawer.drawQuadsX = drawQuadsX;
 	drawer.drawReflection = water->IsDrawReflection();
 	drawer.drawRefraction = water->IsDrawRefraction();
-	drawer.unitDrawDist = unitDrawer->unitDrawDist;
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
 	drawer.farFeatures = drawFar;

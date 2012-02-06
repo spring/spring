@@ -36,10 +36,13 @@ struct UnitModelDef
 
 struct UnitDefWeapon {
 	UnitDefWeapon();
-	UnitDefWeapon(std::string name, const WeaponDef* def, int slavedTo,
-	              float3 mainDir, float maxAngleDif, unsigned int badTargetCat,
-	              unsigned int onlyTargetCat, float fuelUse);
+	UnitDefWeapon(const WeaponDef* weaponDef);
+	UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponTable);
+	UnitDefWeapon(const UnitDefWeapon& udw) { *this = udw; }
+
+	// unused
 	std::string name;
+
 	const WeaponDef* def;
 	int slavedTo;
 	float3 mainDir;
@@ -81,6 +84,27 @@ public:
 	bool HasBomberWeapon() const;
 	const std::vector<unsigned char>& GetYardMap(unsigned int facing) const { return (yardmaps[facing % /*NUM_FACINGS*/ 4]); }
 
+	// NOTE: deprecated, only used by LuaUnitDefs.cpp
+	const char* GetTypeString() const {
+		if (IsTransportUnit()) { return "Transport"; }
+
+		if (IsBuildingUnit()) {
+			if (IsFactoryUnit()) { return "Factory"; }
+			if (IsExtractorUnit()) { return "MetalExtractor"; }
+			return "Building";
+		}
+
+		if (IsMobileBuilderUnit() || IsStaticBuilderUnit()) { return "Builder"; }
+
+		if (IsGroundUnit()) { return "GroundUnit"; }
+		if (IsAirUnit()) {
+			if (IsFighterUnit()) { return "Fighter"; }
+			if (IsBomberUnit()) { return "Bomber"; }
+			return "Aircraft";
+		}
+
+		return "Unknown";
+	}
 
 	std::string name;
 	std::string humanName;
@@ -162,7 +186,7 @@ public:
 	float terraformSpeed;
 
 	float mass;
-	float crushImpedance;
+	float crushResistance;
 
 	bool canSubmerge;
 	bool canfly;
@@ -235,6 +259,7 @@ public:
 
 	// order-capabilities for CommandAI
 	bool canmove;
+	bool canHover;
 	bool canAttack;
 	bool canFight;
 	bool canPatrol;

@@ -893,7 +893,7 @@ void CGuiHandler::GiveCommandsNow() {
 	for(std::vector< std::pair<Command, bool> >::iterator i = commandsToGiveTemp.begin(); i != commandsToGiveTemp.end(); ++i) {
 		const Command& cmd = (*i).first;
 		if (eventHandler.CommandNotify(cmd)) {
-			return;
+			continue;
 		}
 
 		selectedUnits.GiveCommand(cmd, (*i).second);
@@ -3590,9 +3590,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			if (unitdef->kamikazeDist > 0) {
 				glColor4fv(cmdColors.rangeKamikaze);
 				glSurfaceCircle(unit->pos, unitdef->kamikazeDist, 40);
-				if (!unitdef->selfDExplosion.empty()) {
+
+				const WeaponDef* wd = weaponDefHandler->GetWeapon(unitdef->selfDExplosion);
+
+				if (wd != NULL) {
 					glColor4fv(cmdColors.rangeSelfDestruct);
-					const WeaponDef* wd = weaponDefHandler->GetWeapon(unitdef->selfDExplosion);
 					glSurfaceCircle(unit->pos, wd->damageAreaOfEffect, 40);
 				}
 			}

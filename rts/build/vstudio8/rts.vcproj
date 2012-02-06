@@ -514,7 +514,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x502"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="DEBUG;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM"
+				PreprocessorDefinitions="DEBUG;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM;SYNCCHECK"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -3703,11 +3703,11 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\Unsynced\ShieldPartProjectile.cpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\ShieldProjectile.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\Unsynced\ShieldPartProjectile.h"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\ShieldProjectile.h"
 						>
 					</File>
 					<File
@@ -5045,6 +5045,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -5123,26 +5143,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -6178,6 +6178,10 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\DllLib.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\Platform\Win\MessageBox.cpp"
 						>
 					</File>
 					<File
@@ -7995,11 +7999,23 @@
 				Name="Misc"
 				>
 				<File
+					RelativePath="..\..\System\Misc\BitwiseEnum.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Misc\RectangleOptimizer.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\System\Misc\RectangleOptimizer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Misc\SpringTime.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Misc\SpringTime.h"
 					>
 				</File>
 			</Filter>
@@ -8268,6 +8284,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Map\Smf\SmfReadMap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SMF\SMFRenderState.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SMF\SMFRenderState.h"
 					>
 				</File>
 				<Filter

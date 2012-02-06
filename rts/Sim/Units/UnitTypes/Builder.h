@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BUILDER_H__
-#define __BUILDER_H__
+#ifndef _BUILDER_H
+#define _BUILDER_H
 
 #include <string>
 
@@ -87,4 +87,4 @@ public:
 	float terraformRadius;
 };
 
-#endif // __BUILDER_H__
+#endif // _BUILDER_H

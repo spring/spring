@@ -65,6 +65,12 @@ CR_REG_METADATA(CTeam, (
 	CR_MEMBER(metalReceived),
 	CR_MEMBER(energySent),
 	CR_MEMBER(energyReceived),
+	CR_MEMBER(prevMetalSent),
+	CR_MEMBER(prevMetalReceived),
+	CR_MEMBER(prevMetalExcess),
+	CR_MEMBER(prevEnergySent),
+	CR_MEMBER(prevEnergyReceived),
+	CR_MEMBER(prevEnergyExcess),
 	//CR_MEMBER(currentStats),
 	CR_MEMBER(nextHistoryEntry),
 	//CR_MEMBER(statHistory),
@@ -97,10 +103,12 @@ CTeam::CTeam() :
 	energyShare(0.95f),
 	delayedMetalShare(0.0f),
 	delayedEnergyShare(0.0f),
-	metalSent(0.0f),
-	metalReceived(0.0f),
-	energySent(0.0f),
-	energyReceived(0.0f),
+	metalSent(0.0f),      prevMetalSent(0.0f),
+	metalReceived(0.0f),  prevMetalReceived(0.0f),
+	energySent(0.0f),     prevEnergySent(0.0f),
+	energyReceived(0.0f), prevEnergyReceived(0.0f),
+	prevMetalExcess(0.0f),
+	prevEnergyExcess(0.0f),
 	nextHistoryEntry(0),
 	highlight(0.0f)
 {
@@ -266,8 +274,10 @@ void CTeam::ResetResourceState()
 	prevEnergyExpense = energyExpense; energyExpense = 0.0f;
 
 	// reset the sharing accumulators
-	metalSent = 0.0f; metalReceived = 0.0f;
-	energySent = 0.0f; energyReceived = 0.0f;
+	prevMetalSent = metalSent; metalSent = 0.0f;
+	prevMetalReceived = metalReceived; metalReceived = 0.0f;
+	prevEnergySent = energySent; energySent = 0.0f;
+	prevEnergyReceived = energyReceived; energyReceived = 0.0f;
 }
 
 void CTeam::SlowUpdate()
@@ -329,12 +339,18 @@ void CTeam::SlowUpdate()
 
 	// clamp resource levels to storage capacity
 	if (metal > metalStorage) {
-		currentStats->metalExcess += (metal - metalStorage);
+		prevMetalExcess = (metal - metalStorage);
+		currentStats->metalExcess += prevMetalExcess;
 		metal = metalStorage;
+	} else {
+		prevMetalExcess = 0;
 	}
 	if (energy > energyStorage) {
-		currentStats->energyExcess += (energy - energyStorage);
+		prevEnergyExcess = (energy - energyStorage);
+		currentStats->energyExcess += prevEnergyExcess;
 		energy = energyStorage;
+	} else {
+		prevEnergyExcess = 0;
 	}
 
 	//! make sure the stats update is always in a SlowUpdate

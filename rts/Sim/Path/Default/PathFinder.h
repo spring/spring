@@ -113,9 +113,9 @@ private:
 
 	unsigned int startxSqr;
 	unsigned int startzSqr;
-	unsigned int startSquareIdx;
-	unsigned int goalSquareIdx;                     ///< set during each search as the square closest to the goal
-	float goalHeuristic;                            ///< heuristic value of goalSquareIdx
+	unsigned int mStartSquareIdx;
+	unsigned int mGoalSquareIdx;                     ///< set during each search as the square closest to the goal
+	float mGoalHeuristic;                            ///< heuristic value of goalSquareIdx
 
 	bool exactPath;
 	bool testMobile;

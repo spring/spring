@@ -189,7 +189,7 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int mapSquare, bool topMos
 		return NULL;
 	}
 
-	return GroundBlockedUnsafe(mapSquare);
+	return GroundBlockedUnsafe(mapSquare, topMost);
 }
 
 CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos, bool topMost) {

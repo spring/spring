@@ -1516,14 +1516,13 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (!lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitBlocking()");
-	}
 
-	if (lua_toboolean(L, 2)) {
-		unit->Block();
-	} else {
-		unit->UnBlock();
+	if (lua_isboolean(L, 2)) {
+		if (lua_toboolean(L, 2)) {
+			unit->Block();
+		} else {
+			unit->UnBlock();
+		}
 	}
 
 	if (lua_isboolean(L, 3)) {
@@ -1537,7 +1536,7 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 		unit->Block();
 	}
 
-	unit->crushable = (lua_isboolean(L, 4) && lua_toboolean(L, 4));
+	unit->crushable = luaL_optboolean(L, 4, unit->crushable);
 	return 0;
 }
 
@@ -1550,21 +1549,24 @@ int LuaSyncedCtrl::SetUnitCrashing(lua_State* L) {
 	}
 
 	AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
+	bool ret = false;
 
 	if (amt != NULL) {
-		const bool crash = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
-		const AAirMoveType::AircraftState state = crash?
-			AAirMoveType::AIRCRAFT_CRASHING:
-			AAirMoveType::AIRCRAFT_FLYING;
+		const bool wantCrash = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
+		const AAirMoveType::AircraftState aircraftState = amt->aircraftState;
 
-		// note: this really only makes sense to call
-		// once, passing true for the second argument
-		amt->SetState(state);
-		lua_pushboolean(L, true);
-	} else {
-		lua_pushboolean(L, false);
+		// for simplicity, this can only set a flying aircraft to
+		// start crashing, or a crashing aircraft to start flying
+		if ( wantCrash && (aircraftState == AAirMoveType::AIRCRAFT_FLYING))
+			amt->SetState(AAirMoveType::AIRCRAFT_CRASHING);
+
+		if (!wantCrash && (aircraftState == AAirMoveType::AIRCRAFT_CRASHING))
+			amt->SetState(AAirMoveType::AIRCRAFT_FLYING);
+
+		ret = (amt->aircraftState != aircraftState);
 	}
 
+	lua_pushboolean(L, ret);
 	return 1;
 }
 
@@ -2134,7 +2136,7 @@ int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 int LuaSyncedCtrl::AddGrass(lua_State* L)
 {
 	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
-	pos.CheckInBounds();
+	pos.ClampInBounds();
 
 	treeDrawer->AddGrass(pos);
 	return 0;
@@ -2144,7 +2146,7 @@ int LuaSyncedCtrl::AddGrass(lua_State* L)
 int LuaSyncedCtrl::RemoveGrass(lua_State* L)
 {
 	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
-	pos.CheckInBounds();
+	pos.ClampInBounds();
 
 	treeDrawer->RemoveGrass((int)pos.x,(int)pos.z);
 	return 0;

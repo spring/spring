@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __LOADSCREEN_H__
-#define __LOADSCREEN_H__
+#ifndef _LOAD_SCREEN_H
+#define _LOAD_SCREEN_H
 
 #include <string>
 #include <boost/thread/thread.hpp>
@@ -73,4 +73,4 @@ private:
 #define loadscreen CLoadScreen::GetInstance()
 
 
-#endif // __LOADSCREEN_H__
+#endif // _LOAD_SCREEN_H

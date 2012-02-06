@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __ORBIT_CONTROLLER_H__
-#define __ORBIT_CONTROLLER_H__
+#ifndef _ORBIT_CONTROLLER_H
+#define _ORBIT_CONTROLLER_H
 
 #include "CameraController.h"
 
@@ -15,8 +15,8 @@ class COrbitController: public CCameraController {
 		const std::string GetName() const { return "OrbitController"; }
 
 		void KeyMove(float3 move);
-		void MousePress(int, int, int);
-		void MouseRelease(int, int, int);
+		void MousePress(int x, int y, int button);
+		void MouseRelease(int x, int y, int button);
 		void MouseMove(float3 move);
 		void ScreenEdgeMove(float3 move);
 		void MouseWheelMove(float move);
@@ -56,4 +56,4 @@ class COrbitController: public CCameraController {
 		enum States {None, Orbiting, Panning, Zooming};
 };
 
-#endif
+#endif // _ORBIT_CONTROLLER_H

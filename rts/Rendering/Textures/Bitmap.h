@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BITMAP_H__
-#define __BITMAP_H__
+#ifndef _BITMAP_H
+#define _BITMAP_H
 
 #include <string>
 #ifndef BITMAP_NO_OPENGL
@@ -91,4 +91,4 @@ private:
 	void AllocDummy();
 };
 
-#endif // __BITMAP_H__
+#endif // _BITMAP_H

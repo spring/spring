@@ -500,16 +500,9 @@ void CMiniMap::UpdateGeometry()
 
 void CMiniMap::MoveView(int x, int y)
 {
-	const float3& pos = camera->pos;
-	const float3& dir = camera->forward;
-	float dist = ground->LineGroundCol(pos, pos + (dir * globalRendering->viewRange * 1.4f), false);
-	float3 dif(0,0,0);
-	if (dist > 0) {
-		dif = dir * dist;
-	}
 	float3 clickPos;
-	clickPos.x = (float(x - xpos)) / width * gs->mapx * 8;
-	clickPos.z = (float(y - (globalRendering->viewSizeY - ypos - height))) / height * gs->mapy * 8;
+	clickPos.x = ((float(x -                               xpos          )) /  width) * (gs->mapx * SQUARE_SIZE);
+	clickPos.z = ((float(y - (globalRendering->viewSizeY - ypos - height))) / height) * (gs->mapy * SQUARE_SIZE);
 	camHandler->GetCurrentController().SetPos(clickPos);
 	unitTracker.Disable();
 }

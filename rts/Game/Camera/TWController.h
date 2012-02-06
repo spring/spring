@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __TW_CONTROLLER_H__
-#define __TW_CONTROLLER_H__
+#ifndef _TW_CONTROLLER_H
+#define _TW_CONTROLLER_H
 
 #include "CameraController.h"
 
@@ -13,8 +13,8 @@ public:
 	const std::string GetName() const { return "tw"; }
 
 	void KeyMove(float3 move);
-	void MousePress(int, int, int) { /* empty */ }
-	void MouseRelease(int, int, int) { /* empty */ }
+	void MousePress(int x, int y, int button) { /* empty */ }
+	void MouseRelease(int x, int y, int button) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
@@ -30,4 +30,4 @@ public:
 	bool SetState(const StateMap& sm);
 };
 
-#endif
+#endif // _TW_CONTROLLER_H

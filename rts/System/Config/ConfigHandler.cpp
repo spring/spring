@@ -33,7 +33,7 @@ ConfigHandler* configHandler = NULL;
 class ConfigHandlerImpl : public ConfigHandler
 {
 public:
-	ConfigHandlerImpl(const vector<string>& locations);
+	ConfigHandlerImpl(const vector<string>& locations, const bool safemode);
 	~ConfigHandlerImpl();
 
 	void SetString(const string& key, const string& value, bool useOverlay);
@@ -76,13 +76,22 @@ private:
  * First there is the overlay, then one or more file sources, and the last
  * source(s) specify default values.
  */
-ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
+ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool safemode)
 {
 	overlay = new OverlayConfigSource();
 	writableSource = new FileConfigSource(locations.front());
 
-	sources.reserve(3 + locations.size());
+	size_t sources_num = 3;
+	sources_num += (safemode) ? 1 : 0;
+	sources_num += locations.size() - 1;
+	sources.reserve(sources_num);
+
 	sources.push_back(overlay);
+
+	if (safemode) {
+		sources.push_back(new SafemodeConfigSource());
+	}
+
 	sources.push_back(writableSource);
 
 	vector<string>::const_iterator loc = locations.begin();
@@ -91,10 +100,9 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 		sources.push_back(new FileConfigSource(*loc));
 	}
 
-	// TODO: Add extra sets of defaults here.
-	// E.g., a `template' with safe settings for a certain brand video card.
-
 	sources.push_back(new DefaultConfigSource());
+
+	assert(sources.size() <= sources_num);
 
 	// Perform migrations that need to happen on every load.
 	RemoveDefaults();
@@ -278,7 +286,7 @@ void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer) {
 
 /******************************************************************************/
 
-void ConfigHandler::Instantiate(string configSource)
+void ConfigHandler::Instantiate(const std::string configSource, const bool safemode)
 {
 	Deallocate();
 
@@ -298,7 +306,7 @@ void ConfigHandler::Instantiate(string configSource)
 		LOG("Using additional configuration source: \"%s\"", loc->c_str());
 	}
 
-	configHandler = new ConfigHandlerImpl(locations);
+	configHandler = new ConfigHandlerImpl(locations, safemode);
 
 	//assert(configHandler->GetString("test") == "x y z");
 }

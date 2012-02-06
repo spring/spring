@@ -13,6 +13,7 @@
 #include "Game/ClientSetup.h"
 #include "Game/GameData.h"
 #include "Game/GameVersion.h"
+#include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -62,6 +63,8 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 	cmdline.AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
 	cmdline.AddString('C', "config",             "Configuration file");
 	cmdline.AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
+	cmdline.AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
+	cmdline.AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
 
 	try {
 		cmdline.Parse();
@@ -89,6 +92,15 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 	if (script_txt->empty() && !cmdline.IsSet("list-config-vars")) {
 		cmdline.PrintUsage();
 		exit(1);
+	}
+
+	if (cmdline.IsSet("isolation")) {
+		dataDirLocater.SetIsolationMode(true);
+	}
+
+	if (cmdline.IsSet("isolation-dir")) {
+		dataDirLocater.SetIsolationMode(true);
+		dataDirLocater.SetIsolationModeDir(cmdline.GetString("isolation-dir"));
 	}
 
 	

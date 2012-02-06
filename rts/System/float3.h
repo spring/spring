@@ -576,8 +576,7 @@ public:
 	/**
 	 * @brief max x pos
 	 *
-	 * Static value containing the maximum
-	 * x position
+	 * Static value containing the maximum x position (:= gs->mapx-1)
 	 * @note maxxpos is set after loading the map.
 	 */
 	static float maxxpos;
@@ -585,20 +584,37 @@ public:
 	/**
 	 * @brief max z pos
 	 *
-	 * Static value containing the maximum
-	 * z position
+	 * Static value containing the maximum z position (:= gs->mapy-1)
 	 * @note maxzpos is set after loading the map.
 	 */
 	static float maxzpos;
 
-	/// Check if this vector is in bounds without clamping x and z
+	/**
+	 * @brief Check against FaceHeightmap bounds
+	 *
+	 * Check if this vector is in bounds [0 .. gs->mapxy-1]
+	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
+	 */
 	bool IsInBounds() const;
-	/// Check if this vector is in bounds and clamp x and z if not
-	bool CheckInBounds();
 
-	float3  ClampInBounds() const { float3  f = *this; f.CheckInBounds(); return f; }
-	float3& ClampInBounds()       { float3& f = *this; f.CheckInBounds(); return f; }
+	/**
+	 * @brief Clamps to FaceHeightmap
+	 *
+	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1]
+	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
+	 */
+	void ClampInBounds();
 
+	/**
+	 * @brief Clamps to VertexHeightmap
+	 *
+	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. gs->mapxy]
+	 * @note USE THIS!
+	 */
+	void ClampInMap();
+	float3 cClampInMap() const { float3 f = *this; f.ClampInMap(); return f; }
+
+public:
 	float x; ///< x component
 	float y; ///< y component
 	float z; ///< z component

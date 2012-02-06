@@ -6,12 +6,15 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "System/Platform/MessageBox.h"
 #include "System/Platform/errorhandler.h"
+
+namespace Platform {
 
 /**
  * @brief X message box function
  *
- * X clone of the Windows MessageBox() function, using the commandline
+ * X clone of the Windows' MessageBox() function, using the commandline
  * dialog creation tools zenity, kdialog or xmessage as a workhorse.
  *
  * If DESKTOP_SESSION is set to "gnome" or "kde", it attempts to use
@@ -24,15 +27,15 @@
  * could be found, or the used program returned an error) the message is
  * written to stderr.
  */
-void X_MessageBox(const char *msg, const char *caption, unsigned int flags)
+void MsgBox(const std::string& message, const std::string& caption, const unsigned int& flags)
 {
 	char caption2[100];
 	char msg2[1000];
 	pid_t pid;
 	int status, len;
 
-	strncpy(caption2, caption, sizeof(caption2) - 2);
-	strncpy(msg2, msg, sizeof(msg2) - 2);
+	strncpy(caption2, caption.c_str(), sizeof(caption2) - 2);
+	strncpy(msg2, message.c_str(), sizeof(msg2) - 2);
 
 	caption2[sizeof(caption2) - 2] = 0;
 	msg2[sizeof(msg2) - 2] = 0;
@@ -122,3 +125,5 @@ void X_MessageBox(const char *msg, const char *caption, unsigned int flags)
 		}
 	}
 }
+
+}; //namespace Platform

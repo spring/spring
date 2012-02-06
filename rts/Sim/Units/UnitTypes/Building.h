@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BUILDING_H__
-#define __BUILDING_H__
+#ifndef _BUILDING_H
+#define _BUILDING_H
 
 #include "Sim/Units/Unit.h"
 #include "System/float3.h"
@@ -24,4 +24,4 @@ public:
 	BuildingGroundDecal* buildingDecal;
 };
 
-#endif // __BUILDING_H__
+#endif // _BUILDING_H
