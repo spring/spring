@@ -18,7 +18,7 @@ end
 
 --VFS.Include(LUAUI_DIRNAME .. "Widgets/socket/socket.lua")
 
-local socket=require("socket")
+local socket = socket
 
 local client
 local set
