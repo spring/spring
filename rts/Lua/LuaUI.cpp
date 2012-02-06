@@ -167,7 +167,6 @@ CLuaUI::CLuaUI()
 	//initialize luasocket
 	if (luaSocketEnabled){
 		InitLuaSocket(L);
-		LUA_OPEN_LIB(L, luaopen_package); //FIXME: remove this (allows to use insecure require())
 	}
 
 	// setup the lua IO access check functions
