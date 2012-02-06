@@ -91,7 +91,7 @@ function widget:DrawScreen(n)
 	end
 	for __, input in ipairs(readable) do
 		local s, status, partial = input:receive('*a') --try to read all data
-		if status == "timeout" then
+		if status == "timeout" or status == nil then
 			Spring.Echo(s or partial)
 		elseif status == "closed" then
 			Spring.Echo("closed connection")
