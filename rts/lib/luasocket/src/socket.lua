@@ -9,14 +9,10 @@
 -----------------------------------------------------------------------------
 local base = _G
 
-socket = require("socket")
-
-module("socket")
-
 -----------------------------------------------------------------------------
 -- Exported auxiliar functions
 -----------------------------------------------------------------------------
-function connect(address, port, laddress, lport)
+function socket.connect(address, port, laddress, lport)
     local sock, err = socket.tcp()
     if not sock then return nil, err end
     if laddress then
@@ -28,7 +24,7 @@ function connect(address, port, laddress, lport)
     return sock
 end
 
-function bind(host, port, backlog)
+function socket.bind(host, port, backlog)
     local sock, err = socket.tcp()
     if not sock then return nil, err end
     sock:setoption("reuseaddr", true)
@@ -39,9 +35,9 @@ function bind(host, port, backlog)
     return sock
 end
 
-try = newtry()
+try = socket.newtry()
 
-function choose(table)
+function socket.choose(table)
     return function(name, opt1, opt2)
         if base.type(name) ~= "string" then
             name, opt1, opt2 = "default", name, opt1
@@ -89,7 +85,7 @@ end
 
 sinkt["default"] = sinkt["keep-open"]
 
-sink = choose(sinkt)
+sink = socket.choose(sinkt)
 
 sourcet["by-length"] = function(sock, length)
     return base.setmetatable({
@@ -129,5 +125,6 @@ end
 
 sourcet["default"] = sourcet["until-closed"]
 
-source = choose(sourcet)
+source = socket.choose(sourcet)
+
 
