@@ -101,7 +101,7 @@ bool CLuaSocketRestrictions::isAllowedHost(RestrictType type, const char* hostna
 		end = ALL_RULES;
 	}
 	for (int i=start; i<end; i++) {
-		TStrIntMap::iterator it = restrictions[type].find(hostname);
+		TStrIntMap::iterator it = restrictions[i].find(hostname);
 		if (it != restrictions[i].end()) //check if host / ip exists in array
 			continue;
 		else
