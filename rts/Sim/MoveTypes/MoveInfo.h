@@ -105,10 +105,6 @@ public:
 	MoveData* GetMoveDataFromName(const std::string& name);
 	unsigned int moveInfoChecksum;
 
-	CMoveMath* GetGroundMoveMath() { return groundMoveMath; }
-	CMoveMath* GetHoverMoveMath() { return hoverMoveMath; }
-	CMoveMath* GetSeaMoveMath() { return seaMoveMath; }
-
 private:
 	CMoveMath* groundMoveMath;
 	CMoveMath* hoverMoveMath;

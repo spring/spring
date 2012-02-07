@@ -25,12 +25,16 @@
 #include "Sim/Path/Default/PathManager.h"
 #undef private
 
+#include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "System/myMath.h"
 #include "System/Color.h"
+#include "System/Util.h"
+
+#define PE_EXTRA_DEBUG_OVERLAYS 1
 
 static CPathManager* pm = NULL;
 
@@ -96,12 +100,6 @@ static inline SColor GetSpeedModColor(const float& m) {
 }
 
 
-enum BuildSquareStatus {
-	NOLOS          = 0,
-	FREE           = 1,
-	OBJECTBLOCKED  = 2,
-	TERRAINBLOCKED = 3,
-};
 
 static const SColor buildColors[] = {
 	SColor(138, 138, 138), // nolos
@@ -110,7 +108,7 @@ static const SColor buildColors[] = {
 	SColor(210,   0,   0), // terrainblocked
 };
 
-static inline const SColor& GetBuildColor(const BuildSquareStatus& status) {
+static inline const SColor& GetBuildColor(const DefaultPathDrawer::BuildSquareStatus& status) {
 	return buildColors[status];
 }
 
@@ -277,14 +275,10 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					const unsigned int hx = tx << 1;
 					const unsigned int hy = ty << 1;
 
-					const PathNodeState& maxResNode = maxResStates[hy * gs->mapx + hx];
-					const PathNodeState& medResNode = medResStates[(hy / medResBlockSize) * medResBlocksX + (hx / medResBlockSize)];
-					const PathNodeState& lowResNode = lowResStates[(hy / lowResBlockSize) * lowResBlocksX + (hx / lowResBlockSize)];
-
 					float gCost[3] = {
-						maxResNode.gCost,
-						medResNode.gCost,
-						lowResNode.gCost,
+						maxResStates.gCost[hy * gs->mapx + hx],
+						medResStates.gCost[(hy / medResBlockSize) * medResBlocksX + (hx / medResBlockSize)],
+						lowResStates.gCost[(hy / lowResBlockSize) * lowResBlocksX + (hx / lowResBlockSize)],
 					};
 
 					if (math::isinf(gCost[0])) { gCost[0] = gCostMax[0]; }
@@ -326,19 +320,19 @@ void DefaultPathDrawer::Draw() const {
 
 			typedef IPath::path_list_type::const_iterator PathIt;
 
-			// draw estimatePath2 (green)
+			// draw low-res segments of <path> (green)
 			glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
 			for (PathIt pvi = path->lowResPath.path.begin(); pvi != path->lowResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
-			// draw estimatePath (blue)
+			// draw med-res segments of <path> (blue)
 			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
 			for (PathIt pvi = path->medResPath.path.begin(); pvi != path->medResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
-			// draw detailPath (red)
+			// draw max-res segments of <path> (red)
 			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
 			for (PathIt pvi = path->maxResPath.path.begin(); pvi != path->maxResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
@@ -370,7 +364,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		const int2 sqr = os->nodePos;
 		const int square = os->nodeNum;
 
-		if (pf->squareStates[square].nodeMask & PATHOPT_START)
+		if (pf->squareStates.nodeMask[square] & PATHOPT_START)
 			continue;
 
 		float3 p1;
@@ -379,7 +373,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 			p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 15;
 		float3 p2;
 
-		const int dir = pf->squareStates[square].nodeMask & PATHOPT_DIRECTION;
+		const int dir = pf->squareStates.nodeMask[square] & PATHOPT_DIRECTION;
 		const int obx = sqr.x - pf->directionVector[dir].x;
 		const int obz = sqr.y - pf->directionVector[dir].y;
 		const int obsquare =  obz * gs->mapx + obx;
@@ -403,141 +397,167 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	GML_RECMUTEX_LOCK(sel); // Draw
 
 	const MoveData* md = GetMoveData();
+	const PathNodeStateBuffer& blockStates = pe->blockStates;
 
 	glDisable(GL_TEXTURE_2D);
 	glColor3f(1.0f, 1.0f, 0.0f);
 
-	/*
-	float blue = BLOCK_SIZE == 32? 1: 0;
-	glBegin(GL_LINES);
-	for (int z = 0; z < nbrOfBlocksZ; z++) {
-		for (int x = 0; x < nbrOfBlocksX; x++) {
-			int blocknr = z * nbrOfBlocksX + x;
-			float3 p1;
-			p1.x = (blockState[blocknr].sqrCenter[md->pathType].x) * 8;
-			p1.z = (blockState[blocknr].sqrCenter[md->pathType].y) * 8;
-			p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 10;
+	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)
+	const int overlayPeriod = GAME_SPEED * 5;
+	const int overlayNumber = (gs->frameNum % (overlayPeriod * 3)) / overlayPeriod;
+	const bool extraOverlay =
+		(overlayNumber == 0 && pe == pm->medResPE) ||
+		(overlayNumber == 1 && pe == pm->lowResPE);
+	const int peNumBlocks = pe->nbrOfBlocksX * pe->nbrOfBlocksZ;
+	const float peBlueValue = (pe == pm->lowResPE)? 1.0f: 0.0f;
 
-			glColor3f(1, 1, blue);
-			glVertexf3(p1);
-			glVertexf3(p1 - UpVector * 10);
-			for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
-				int obx = x + directionVector[dir].x;
-				int obz = z + directionVector[dir].y;
+	// alternate between the extra debug-overlays
+	// (normally TMI, but useful to keep the code
+	// compiling)
+	if (extraOverlay && false) {
+		glBegin(GL_LINES);
 
-				if (obx >= 0 && obz >= 0 && obx < nbrOfBlocksX && obz < nbrOfBlocksZ) {
+		for (int z = 0; z < pe->nbrOfBlocksZ; z++) {
+			for (int x = 0; x < pe->nbrOfBlocksX; x++) {
+				const int blockNr = z * pe->nbrOfBlocksX + x;
+
+				float3 p1;
+					p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
+					p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
+					p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 10.0f;
+
+				glColor3f(1.0f, 1.0f, peBlueValue);
+				glVertexf3(p1);
+				glVertexf3(p1 - UpVector * 10.0f);
+
+				for (int dir = 0; dir < CPathEstimator::PATH_DIRECTION_VERTICES; dir++) {
+					const int obx = x + pe->directionVector[dir].x;
+					const int obz = z + pe->directionVector[dir].y;
+
+					if (obx <                 0) continue;
+					if (obz <                 0) continue;
+					if (obx >= pe->nbrOfBlocksX) continue;
+					if (obz >= pe->nbrOfBlocksZ) continue;
+
+					const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
+					const int vertexNr =
+						md->pathType * (peNumBlocks) * CPathEstimator::PATH_DIRECTION_VERTICES +
+						blockNr * CPathEstimator::PATH_DIRECTION_VERTICES + pe->directionVertex[dir];
+					const float cost = pe->vertices[vertexNr] / pe->BLOCK_SIZE;
+
 					float3 p2;
-					int obblocknr = obz * nbrOfBlocksX + obx;
+						p2.x = (blockStates.peNodeOffsets[obBlockNr][md->pathType].x) * SQUARE_SIZE;
+						p2.z = (blockStates.peNodeOffsets[obBlockNr][md->pathType].y) * SQUARE_SIZE;
+						p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					p2.x = (blockState[obblocknr].sqrCenter[md->pathType].x) * 8;
-					p2.z = (blockState[obblocknr].sqrCenter[md->pathType].y) * 8;
-					p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 10;
-
-					int vertexNbr = md->pathType * nbrOfBlocks * PATH_DIRECTION_VERTICES + blocknr * PATH_DIRECTION_VERTICES + directionVertex[dir];
-					float cost = vertex[vertexNbr];
-
-					glColor3f(1 / (sqrt(cost/BLOCK_SIZE)), 1 / (cost/BLOCK_SIZE), blue);
+					glColor3f(1.0f / math::sqrtf(cost), 1.0f / cost, peBlueValue);
 					glVertexf3(p1);
 					glVertexf3(p2);
 				}
 			}
 		}
 
-	}
-	glEnd();
+		glEnd();
 
+		for (int z = 0; z < pe->nbrOfBlocksZ; z++) {
+			for (int x = 0; x < pe->nbrOfBlocksX; x++) {
+				const int blockNr = z * pe->nbrOfBlocksX + x;
 
-	glEnable(GL_TEXTURE_2D);
-	for (int z = 0; z < nbrOfBlocksZ; z++) {
-		for (int x = 0; x < nbrOfBlocksX; x++) {
-			int blocknr = z * nbrOfBlocksX + x;
-			float3 p1;
-			p1.x = (blockState[blocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-			p1.z = (blockState[blocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
-			p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 10;
+				float3 p1;
+					p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
+					p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
+					p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 10.0f;
 
-			glColor3f(1, 1, blue);
-			for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
-				int obx = x + directionVector[dir].x;
-				int obz = z + directionVector[dir].y;
+				for (int dir = 0; dir < CPathEstimator::PATH_DIRECTION_VERTICES; dir++) {
+					const int obx = x + pe->directionVector[dir].x;
+					const int obz = z + pe->directionVector[dir].y;
 
-				if (obx >= 0 && obz >= 0 && obx < nbrOfBlocksX && obz < nbrOfBlocksZ) {
+					if (obx <                 0) continue;
+					if (obz <                 0) continue;
+					if (obx >= pe->nbrOfBlocksX) continue;
+					if (obz >= pe->nbrOfBlocksZ) continue;
+
+					const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
+					const int vertexNr =
+						md->pathType * (peNumBlocks) * CPathEstimator::PATH_DIRECTION_VERTICES +
+						blockNr * CPathEstimator::PATH_DIRECTION_VERTICES + pe->directionVertex[dir];
+					const float cost = pe->vertices[vertexNr] / pe->BLOCK_SIZE;
+
 					float3 p2;
-					int obblocknr = obz * nbrOfBlocksX + obx;
+						p2.x = (blockStates.peNodeOffsets[obBlockNr][md->pathType].x) * SQUARE_SIZE;
+						p2.z = (blockStates.peNodeOffsets[obBlockNr][md->pathType].y) * SQUARE_SIZE;
+						p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					p2.x = (blockState[obblocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-					p2.z = (blockState[obblocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
-					p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 10;
+					p2 = (p1 + p2) / 2.0f;
 
-					int vertexNbr = md->pathType * nbrOfBlocks * PATH_DIRECTION_VERTICES + blocknr * PATH_DIRECTION_VERTICES + directionVertex[dir];
-					float cost = vertex[vertexNbr];
+					if (camera->pos.SqDistance(p2) >= 16000000.0f)
+						continue;
 
-					glColor3f(1, 1 / (cost/BLOCK_SIZE), blue);
-
-					p2 = (p1 + p2) / 2;
-					if (camera->pos.SqDistance(p2) < 250000) {
-						font->glWorldPrint(p2,5,"%.0f", cost);
-					}
+					font->SetTextColor(1.0f, 1.0f / cost, peBlueValue, 1.0f);
+					font->glWorldPrint(p2, 5.0f, FloatToString(cost, "f(%.2f)"));
 				}
 			}
 		}
 	}
-	*/
+	#endif
 
 
-	if (pe->BLOCK_SIZE == 8) {
+	if (pe == pm->medResPE) {
 		glColor3f(0.2f, 0.7f, 0.2f);
 	} else {
 		glColor3f(0.2f, 0.2f, 0.7f);
 	}
 
-	glDisable(GL_TEXTURE_2D);
-	glBegin(GL_LINES);
+	{
+		glBegin(GL_LINES);
+		for (unsigned int idx = 0; idx < pe->openBlockBuffer.GetSize(); idx++) {
+			const PathNode* ob = pe->openBlockBuffer.GetNode(idx);
+			const int blockNr = ob->nodeNum;
 
-	for (unsigned int idx = 0; idx < pe->openBlockBuffer.GetSize(); idx++) {
-		const PathNode* ob = pe->openBlockBuffer.GetNode(idx);
-		const int blocknr = ob->nodeNum;
+			const int obx = blockStates.peParentNodePos[ob->nodeNum].x;
+			const int obz = blockStates.peParentNodePos[ob->nodeNum].y;
+			const int obBlockNr = obz * pe->nbrOfBlocksX + obx;
 
-		float3 p1;
-			p1.x = (pe->blockStates[blocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
-			p1.z = (pe->blockStates[blocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
-			p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 15;
-		float3 p2;
+			if (obBlockNr < 0)
+				continue;
 
-		const int obx = pe->blockStates[ob->nodeNum].parentNodePos.x;
-		const int obz = pe->blockStates[ob->nodeNum].parentNodePos.y;
-		const int obblocknr = obz * pe->nbrOfBlocksX + obx;
-
-		if (obblocknr >= 0) {
-			p2.x = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
-			p2.z = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
-			p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 15;
+			float3 p1;
+				p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
+				p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
+				p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 15.0f;
+			float3 p2;
+				p2.x = (blockStates.peNodeOffsets[obBlockNr][md->pathType].x) * SQUARE_SIZE;
+				p2.z = (blockStates.peNodeOffsets[obBlockNr][md->pathType].y) * SQUARE_SIZE;
+				p2.y = ground->GetHeightAboveWater(p2.x, p2.z, false) + 15.0f;
 
 			glVertexf3(p1);
 			glVertexf3(p2);
 		}
+		glEnd();
 	}
 
-	glEnd();
+	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)
+	if (extraOverlay && false) {
+		const PathNodeBuffer& openBlockBuffer = pe->openBlockBuffer;
+		char blockCostsStr[32];
 
+		for (unsigned int blockIdx = 0; blockIdx < openBlockBuffer.GetSize(); blockIdx++) {
+			const PathNode* ob = openBlockBuffer.GetNode(blockIdx);
+			const int blockNr = ob->nodeNum;
 
-	/*
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glColor4f(1,0, blue, 0.7f);
-	glAlphaFunc(GL_GREATER, 0.05f);
+			float3 p1;
+				p1.x = (blockStates.peNodeOffsets[blockNr][md->pathType].x) * SQUARE_SIZE;
+				p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
+				p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 35.0f;
 
-	for (const CPathEstimator::OpenBlock* ob = pe->openBlockBuffer; ob != pe->openBlockBufferPointer; ++ob) {
-		const int blocknr = ob->blocknr;
-		float3 p1;
-			p1.x = (ob->block.x * BLOCK_SIZE + pe->blockState[blocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-			p1.z = (ob->block.y * BLOCK_SIZE + pe->blockState[blocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
-			p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 15;
+			if (camera->pos.SqDistance(p1) >= 16000000.0f)
+				continue;
 
-		if (camera->pos.SqDistance(p1) < 250000) {
-			font->glWorldPrint(p1, 5, "%.0f %.0f", ob->cost, ob->currentCost);
+			snprintf(blockCostsStr, sizeof(blockCostsStr), "f(%.2f) g(%.2f)", ob->fCost, ob->gCost);
+			font->SetTextColor(1.0f, 0.7f, peBlueValue, 1.0f);
+			font->glWorldPrint(p1, 5.0f, blockCostsStr);
 		}
 	}
-	glDisable(GL_BLEND);
-	*/
+	#endif
 }
+
