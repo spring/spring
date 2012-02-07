@@ -108,13 +108,19 @@ CMoveInfo::CMoveInfo()
 		moveData.push_back(md);
 		name2moveData[md->name] = md->pathType;
 
+		switch (md->moveType) {
+			case MoveData::Ship_Move: { md->moveMath = seaMoveMath; } break;
+			case MoveData::Hover_Move: { md->moveMath = hoverMoveMath; } break;
+			case MoveData::Ground_Move: { md->moveMath = groundMoveMath; } break;
+		}
+
 		crc << md->GetCheckSum();
 	}
 
 
 	// FIXME: do something with these magic numbers
 	if (mapInfo->water.damage >= 1000.0f) {
-		CGroundMoveMath::waterDamageCost = 0.0f; //! block water
+		CGroundMoveMath::waterDamageCost = 0.0f; // block water
 	} else {
 		CGroundMoveMath::waterDamageCost = 1.0f / (1.0f + mapInfo->water.damage * 0.1f);
 	}
@@ -210,13 +216,11 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		moveType   = MoveData::Ship_Move;
 		depth      = minWaterDepth;
 		moveFamily = MoveData::Ship;
-		moveMath   = moveInfo->GetSeaMoveMath();
 		subMarine  = moveTable.GetBool("subMarine", 0);
 	} else if (name.find("hover") != string::npos) {
 		moveType   = MoveData::Hover_Move;
 		maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 		moveFamily = MoveData::Hover;
-		moveMath   = moveInfo->GetHoverMoveMath();
 	} else {
 		moveType = MoveData::Ground_Move;
 		depth    = maxWaterDepth;
@@ -232,7 +236,6 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		depthModParams[DEPTHMOD_MAX_HEIGHT] = std::max(depthModParams[DEPTHMOD_MIN_HEIGHT], depthModParams[DEPTHMOD_MAX_HEIGHT]);
 
 		maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
-		moveMath = moveInfo->GetGroundMoveMath();
 
 		if (name.find("tank") != string::npos) {
 			moveFamily = MoveData::Tank;
@@ -328,10 +331,21 @@ float MoveData::GetDepthMod(const float height) const {
 unsigned int MoveData::GetCheckSum() const {
 	unsigned int sum = 0;
 
-	// NOTE: safe so long as MoveData has no virtuals
+	// NOTE:
+	//   safe so long as MoveData has no virtuals and we
+	//   make sure we do not checksum the pointer-members
 	const unsigned char* bytes = reinterpret_cast<const unsigned char*>(this);
+	const unsigned char* ptrs[3] = {
+		reinterpret_cast<const unsigned char*>(&this->name),
+		reinterpret_cast<const unsigned char*>(&this->moveMath),
+		reinterpret_cast<const unsigned char*>(&this->tempOwner),
+	};
 
 	for (unsigned int n = 0; n < sizeof(*this); n++) {
+		if (&bytes[n] == ptrs[0]) { n += sizeof(std::string);   continue; }
+		if (&bytes[n] == ptrs[1]) { n += sizeof(CMoveMath*);    continue; }
+		if (&bytes[n] == ptrs[2]) { n += sizeof(CSolidObject*); continue; }
+
 		sum ^= ((n + 1) * bytes[n]);
 	}
 
