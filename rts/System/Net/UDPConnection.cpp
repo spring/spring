@@ -735,8 +735,10 @@ void UDPConnection::SendIfNecessary(bool flushed)
 			while (true) {
 				bool canResend = maxResend > 0 && ((buf.GetSize() + resIter->second->GetSize()) <= mtu);
 				bool canSendNew = !newChunks.empty() && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu);
-				if (!canResend && !canSendNew)
+				if (!canResend && !canSendNew) {
+					todo = false;
 					break;
+				}
 				resend = !resend; // alternate between send and resend to make sure none is starved
 				if (resend && canResend) {
 					if (netLossFactor == MIN_LOSS_FACTOR) {
