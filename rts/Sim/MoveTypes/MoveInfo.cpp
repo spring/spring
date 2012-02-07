@@ -108,8 +108,6 @@ CMoveInfo::CMoveInfo()
 		moveData.push_back(md);
 		name2moveData[md->name] = md->pathType;
 
-		printf("[MoveInfo] MOVEDEF=%lu CHECKSUM=%u\n", num, md->GetCheckSum());
-
 		switch (md->moveType) {
 			case MoveData::Ship_Move: { md->moveMath = seaMoveMath; } break;
 			case MoveData::Hover_Move: { md->moveMath = hoverMoveMath; } break;
@@ -302,32 +300,6 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 	zsizeh = zsize >> 1;
 	assert((xsize & 1) == 1);
 	assert((zsize & 1) == 1);
-
-		printf("name=%s\n", name.c_str());
-		printf("pathType=%d\n", pathType);
-		printf("crushStrength=%f\n", crushStrength);
-		printf("depth=%f\n", depth);
-		printf("maxSlope=%f\n", maxSlope);
-		printf("moveType=%d\n", moveType);
-		printf("moveFamily=%d\n", moveFamily);
-		printf("terrainClass=%d\n", terrainClass);
-		printf("subMarine=%d\n", subMarine);
-		for (unsigned int n = 0; n < 6; n++)
-			printf("depthModParams[n=%u]=%f\n", n, depthModParams[n]);
-
-		printf("heatMapping=%d\n", heatMapping);
-		printf("heatMod=%f\n", heatMod);
-		printf("heatProduced=%d\n", heatProduced);
-
-		printf("slopeMod=%f\n", slopeMod);
-		printf("followGround=%d\n", followGround);
-		printf("b0,b1,b2=%d,%d,%d\n", b0, b1, b2);
-
-		printf("xsize=%d, xsizeh=%d\n", xsize, xsizeh);
-		printf("zsize=%d, zsizeh=%d\n", zsize, zsizeh);
-
-		printf("moveMath=%p tempOwner=%p\n", moveMath, tempOwner);
-
 }
 
 float MoveData::GetDepthMod(const float height) const {
