@@ -283,8 +283,6 @@ bool CMobileCAI::RefuelIfNeeded()
 
 	if (owner->currentFuel <= 0.0f) {
 		// we're completely out of fuel
-		StopMove();
-
 		owner->userAttackGround = false;
 		owner->SetUserTarget(NULL);
 		inCommand = false;
@@ -306,7 +304,7 @@ bool CMobileCAI::RefuelIfNeeded()
 				// so don't call it
 				SetGoal(landingPos, owner->pos);
 			} else {
-				owner->moveType->StopMoving();
+				StopMove();
 			}
 		}
 		return true;

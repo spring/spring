@@ -11,6 +11,8 @@
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
 
+#include <limits>
+
 CAirBaseHandler* airBaseHandler = NULL;
 
 CR_BIND(CAirBaseHandler, )
@@ -74,9 +76,11 @@ void CAirBaseHandler::RegisterAirBase(CUnit* owner)
 	// FIXME: use a set to avoid multiple bases per piece?
 	for (unsigned int p = 0; p < args.size(); p++) {
 		const int piece = args[p];
+
 		if (!owner->script->PieceExists(piece)) {
 			continue;
 		}
+
 		LandingPad* pad = new LandingPad(piece, owner, ab);
 
 		ab->pads.push_back(pad);
@@ -120,7 +124,7 @@ void CAirBaseHandler::DeregisterAirBase(CUnit* base)
 
 CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float minPower)
 {
-	float minDist = 1e30f;
+	float minDist = std::numeric_limits<float>::max();
 
 	PadLstIt foundPadIt;
 	AirBaseLstIt foundBaseIt = freeBases[unit->allyteam].end();
@@ -140,11 +144,11 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 			continue;
 		}
 
-		minDist = baseUnit->pos.SqDistance(unit->pos);
-
 		if ((*bi)->freePads.empty()) {
 			continue;
 		}
+
+		minDist = baseUnit->pos.SqDistance(unit->pos);
 
 		foundPadIt = (*bi)->freePads.begin();
 		foundBaseIt = bi;
@@ -170,7 +174,8 @@ void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 
 float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 {
-	float minDist = 1e30f;
+	float minDist = std::numeric_limits<float>::max();
+
 	AirBaseLstIt foundBaseIt = freeBases[unit->allyteam].end();
 
 	for (AirBaseLstIt bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
