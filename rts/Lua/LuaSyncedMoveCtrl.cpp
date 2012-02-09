@@ -542,9 +542,7 @@ static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, flo
 	// can't set goal here, need a different function that calls mt->SetGoal
 	// FIXME should use setter methods here and in other Set*MoveTypeValue functoins, but they mostly don't exist
 	if (key == "maxSpeed") {
-		if (value > 0) {
-			mt->SetMaxSpeed(value / GAME_SPEED); return true;
-		}
+		mt->SetMaxSpeed(value / GAME_SPEED); return true;
 	} else if (key == "maxWantedSpeed") {
 		mt->SetWantedMaxSpeed(value / GAME_SPEED); return true;
 	} else if (key == "repairBelowHealth") {
@@ -561,7 +559,6 @@ static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, boo
 
 /******************************************************************************/
 /* CStrafeAirMoveType handling */
-
 
 static inline bool SetAirMoveTypeValue(CStrafeAirMoveType* mt, const string& key, float value)
 {
@@ -603,20 +600,19 @@ static inline bool SetAirMoveTypeValue(CStrafeAirMoveType* mt, const string& key
 }
 
 
-static inline void SetSingleAirMoveTypeValue(lua_State *L, int keyidx, int validx, CStrafeAirMoveType *moveType)
+static inline void SetSingleAirMoveTypeValue(lua_State* L, int keyidx, int validx, CStrafeAirMoveType* moveType)
 {
 	const string key = lua_tostring(L, keyidx);
-	bool failedToAssign = false;
+	bool assigned = true;
+
 	if (lua_isnumber(L, validx)) {
-		const float value = lua_tofloat(L, validx);
-		failedToAssign = !SetAirMoveTypeValue(moveType, key, value);
+		assigned = SetAirMoveTypeValue(moveType, key, lua_tofloat(L, validx));
 	} else if (lua_isboolean(L, validx)) {
-		bool value = lua_toboolean(L, validx);
-		failedToAssign = !SetAirMoveTypeValue(moveType, key, value);
+		assigned = SetAirMoveTypeValue(moveType, key, lua_toboolean(L, validx));
 	}
-	if (failedToAssign) {
-		LOG_L(L_WARNING, "Can not assign key \"%s\" to AirMoveType",
-				key.c_str());
+
+	if (!assigned) {
+		LOG_L(L_WARNING, "Can not assign key \"%s\" to AirMoveType", key.c_str());
 	}
 }
 
@@ -648,7 +644,6 @@ int LuaSyncedMoveCtrl::SetAirMoveTypeData(lua_State *L)
 
 /******************************************************************************/
 /* CGroundMoveType handling */
-
 
 static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key, float value)
 {
@@ -683,20 +678,19 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 	return false;
 }
 
-static inline void SetSingleGroundMoveTypeValue(lua_State *L, int keyidx, int validx, CGroundMoveType *moveType)
+static inline void SetSingleGroundMoveTypeValue(lua_State* L, int keyidx, int validx, CGroundMoveType* moveType)
 {
 	const string key = lua_tostring(L, keyidx);
-	bool failedToAssign = false;
+	bool assigned = true;
+
 	if (lua_isnumber(L, validx)) {
-		const float value = lua_tofloat(L, validx);
-		failedToAssign = !SetGroundMoveTypeValue(moveType, key, value);
+		assigned = SetGroundMoveTypeValue(moveType, key, lua_tofloat(L, validx));
 	} else if (lua_isboolean(L, validx)) {
-		bool value = lua_toboolean(L, validx);
-		failedToAssign = !SetGroundMoveTypeValue(moveType, key, value);
+		assigned = SetGroundMoveTypeValue(moveType, key, lua_toboolean(L, validx));
 	}
-	if (failedToAssign) {
-		LOG_L(L_WARNING, "Can not assign key \"%s\" to GroundMoveType",
-				key.c_str());
+
+	if (!assigned) {
+		LOG_L(L_WARNING, "Can not assign key \"%s\" to GroundMoveType", key.c_str());
 	}
 }
 
@@ -729,8 +723,6 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State *L)
 
 /******************************************************************************/
 /* CHoverAirMoveType handling */
-
-
 
 static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string& key, float value)
 {
