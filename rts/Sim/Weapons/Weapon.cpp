@@ -475,8 +475,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 	if (!userTarget && weaponDef->noAutoTarget) {
 		return false;
 	}
-	if (weaponDef->interceptor || !weaponDef->canAttackGround ||
-	    (weaponDef->onlyTargetCategory != 0xffffffff)) {
+	if (weaponDef->interceptor || !weaponDef->canAttackGround) {
 		return false;
 	}
 
@@ -1010,8 +1009,7 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 	if (!userTarget && weaponDef->noAutoTarget) {
 		return false;
 	}
-	if (weaponDef->interceptor || !weaponDef->canAttackGround ||
-	    (weaponDef->onlyTargetCategory != 0xffffffff)) {
+	if (weaponDef->interceptor || !weaponDef->canAttackGround) {
 		return false;
 	}
 
