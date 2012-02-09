@@ -570,13 +570,11 @@ void CKeyBindings::PushAction(const Action& action)
 {
 	if (action.command == "keyload") {
 		Load("uikeys.txt");
-		selectionKeys->LoadSelectionKeys();
 	}
 	else if (action.command == "keyreload") {
 		ExecuteCommand("unbindall");
 		ExecuteCommand("unbind enter chat");
 		Load("uikeys.txt");
-		selectionKeys->LoadSelectionKeys();
 	}
 	else if (action.command == "keysave") {
 		if (Save("uikeys.tmp")) {  // tmp, not txt
