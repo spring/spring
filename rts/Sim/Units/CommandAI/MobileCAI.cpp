@@ -240,17 +240,23 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 	}
 
 	if (owner->unitDef->canfly && c.GetID() == CMD_IDLEMODE) {
-		if (c.params.empty()) {
-			return;
-		}
-		AAirMoveType* airMT = GetAirMoveType<AAirMoveType>(owner);
-		if (!airMT)
+		if (c.params.empty())
 			return;
 
+		AAirMoveType* airMT = GetAirMoveType<AAirMoveType>(owner);
+
+		if (airMT == NULL)
+			return;
+
+		// toggle between the "land" and "fly" idle-modes
 		switch ((int) c.params[0]) {
-			case 0: { airMT->autoLand = false; if (!airMT->owner->beingBuilt) airMT->Takeoff(); break; }
+			case 0: { airMT->autoLand = false; break; }
 			case 1: { airMT->autoLand = true; break; }
 		}
+
+		if (!airMT->autoLand && !airMT->owner->beingBuilt)
+			airMT->Takeoff();
+
 		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi) {
 			if (cdi->id == CMD_IDLEMODE) {
