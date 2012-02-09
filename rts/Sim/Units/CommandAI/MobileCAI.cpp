@@ -248,7 +248,7 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 			return;
 
 		switch ((int) c.params[0]) {
-			case 0: { airMT->autoLand = false; airMT->Takeoff(); break; }
+			case 0: { airMT->autoLand = false; if (!airMT->owner->beingBuilt) airMT->Takeoff(); break; }
 			case 1: { airMT->autoLand = true; break; }
 		}
 		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
