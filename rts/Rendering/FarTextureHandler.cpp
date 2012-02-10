@@ -237,8 +237,10 @@ void CFarTextureHandler::Draw()
 	{
 		// check if there is enough free space in the atlas, if not try resizing
 		// it (as many times as the number of models queued for iconification)
+		unsigned int maxNewIcons = 0;
+
 		for (unsigned int n = 0; n < queuedForRender.size(); n++) {
-			if (!CheckResizeAtlas()) { return; }
+			if (!CheckResizeAtlas(n + 1)) { break; } maxNewIcons++;
 		}
 
 		// now create the new far-icons
@@ -248,7 +250,11 @@ void CFarTextureHandler::Draw()
 		//    and will not track later state-changes
 		unitDrawer->SetupForUnitDrawing();
 
-		for (GML_VECTOR<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
+		GML_VECTOR<const CSolidObject*>::const_iterator it;
+
+		for (it = queuedForRender.begin(); it != queuedForRender.end() && maxNewIcons > 0; ++it) {
+			maxNewIcons--;
+
 			const CSolidObject* obj = *it;
 			const S3DModel* mdl = obj->model;
 
@@ -294,10 +300,10 @@ void CFarTextureHandler::Draw()
 
 
 
-bool CFarTextureHandler::CheckResizeAtlas() {
+bool CFarTextureHandler::CheckResizeAtlas(unsigned int newNumTextures) {
 	const unsigned int maxSprites = ((texSizeX / iconSizeX) * (texSizeY / iconSizeY) / numOrientations) - 1;
 
-	if (usedFarTextures < maxSprites)
+	if ((usedFarTextures + newNumTextures) < maxSprites)
 		return true;
 
 	const int oldTexSizeY = texSizeY;
