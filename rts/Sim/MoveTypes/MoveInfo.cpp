@@ -216,21 +216,23 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		moveType   = MoveData::Ship_Move;
 		depth      = minWaterDepth;
 		moveFamily = MoveData::Ship;
-		subMarine  = moveTable.GetBool("subMarine", 0);
+		subMarine  = moveTable.GetBool("subMarine", false);
 	} else if (name.find("hover") != string::npos) {
 		moveType   = MoveData::Hover_Move;
 		maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 		moveFamily = MoveData::Hover;
 	} else {
+		const LuaTable& depthModTable = moveTable.SubTable("depthModParams");
+
 		moveType = MoveData::Ground_Move;
 		depth    = maxWaterDepth;
 
-		depthModParams[DEPTHMOD_MIN_HEIGHT] = std::max(0.00f, moveTable.GetFloat("depthModMinHeight",                                     0.0f ));
-		depthModParams[DEPTHMOD_MAX_HEIGHT] =         (       moveTable.GetFloat("depthModMaxHeight",        std::numeric_limits<float>::max() ));
-		depthModParams[DEPTHMOD_MAX_SCALE ] = std::max(0.01f, moveTable.GetFloat("depthModMaxScale",         std::numeric_limits<float>::max() ));
-		depthModParams[DEPTHMOD_QUA_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModQuadraticCoeff",                                0.0f ));
-		depthModParams[DEPTHMOD_LIN_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModLinearCoeff",    moveTable.GetFloat("depthMod", 0.1f)));
-		depthModParams[DEPTHMOD_CON_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModConstantCoeff",                                 1.0f ));
+		depthModParams[DEPTHMOD_MIN_HEIGHT] = std::max(0.00f, depthModTable.GetFloat("minHeight",                                     0.0f ));
+		depthModParams[DEPTHMOD_MAX_HEIGHT] =         (       depthModTable.GetFloat("maxHeight",        std::numeric_limits<float>::max() ));
+		depthModParams[DEPTHMOD_MAX_SCALE ] = std::max(0.01f, depthModTable.GetFloat("maxScale",         std::numeric_limits<float>::max() ));
+		depthModParams[DEPTHMOD_QUA_COEFF ] = std::max(0.00f, depthModTable.GetFloat("quadraticCoeff",                                0.0f ));
+		depthModParams[DEPTHMOD_LIN_COEFF ] = std::max(0.00f, depthModTable.GetFloat("linearCoeff",    moveTable.GetFloat("depthMod", 0.1f)));
+		depthModParams[DEPTHMOD_CON_COEFF ] = std::max(0.00f, depthModTable.GetFloat("constantCoeff",                                 1.0f ));
 
 		// ensure [depthModMinHeight, depthModMaxHeight] is a valid range
 		depthModParams[DEPTHMOD_MAX_HEIGHT] = std::max(depthModParams[DEPTHMOD_MIN_HEIGHT], depthModParams[DEPTHMOD_MAX_HEIGHT]);
