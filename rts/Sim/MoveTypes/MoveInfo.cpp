@@ -346,7 +346,6 @@ unsigned int MoveData::GetCheckSum() const {
 		reinterpret_cast<const unsigned char*>(&this->tempOwner),
 	};
 
-	// FIXME: padding bytes because struct is not aligned
 	for (unsigned int n = 0; n < sizeof(*this); ) {
 		if (&bytes[n] == ptrs[0]) { n += sizeof(std::string);   continue; }
 		if (&bytes[n] == ptrs[1]) { n += sizeof(CMoveMath*);    continue; }
