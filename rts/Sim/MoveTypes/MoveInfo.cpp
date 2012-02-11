@@ -351,7 +351,8 @@ unsigned int MoveData::GetCheckSum() const {
 		if (&bytes[n] == ptrs[1]) { n += sizeof(CMoveMath*);    continue; }
 		if (&bytes[n] == ptrs[2]) { n += sizeof(CSolidObject*); continue; }
 
-		sum ^= (((n + 1) << 8) * bytes[n++]);
+		sum ^= (((n + 1) << 8) * bytes[n]);
+		n += 1;
 	}
 
 	return sum;
