@@ -100,6 +100,7 @@ CMoveInfo::CMoveInfo()
 
 	for (size_t num = 1; /* no test */; num++) {
 		const LuaTable moveTable = rootTable.SubTable(num);
+
 		if (!moveTable.IsValid()) {
 			break;
 		}
@@ -186,6 +187,8 @@ MoveData::MoveData() {
 	pathType          = 0;
 	unitDefRefCount   = 0;
 
+	dummyPadding      = false;
+
 	followGround      = true;
 	subMarine         = false;
 
@@ -248,7 +251,7 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 
 	heatMapping = moveTable.GetBool("heatMapping", false);
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
-	heatProduced = moveTable.GetInt("heatProduced", 60);
+	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
 
 	//  <maxSlope> ranges from 0.0 to 60 * 1.5 degrees, ie. from 0.0 to
 	//  0.5 * PI radians, ie. from 1.0 - cos(0.0) to 1.0 - cos(0.5 * PI)
@@ -343,12 +346,13 @@ unsigned int MoveData::GetCheckSum() const {
 		reinterpret_cast<const unsigned char*>(&this->tempOwner),
 	};
 
-	for (unsigned int n = 0; n < sizeof(*this); n++) {
+	// FIXME: padding bytes because struct is not aligned
+	for (unsigned int n = 0; n < sizeof(*this); ) {
 		if (&bytes[n] == ptrs[0]) { n += sizeof(std::string);   continue; }
 		if (&bytes[n] == ptrs[1]) { n += sizeof(CMoveMath*);    continue; }
 		if (&bytes[n] == ptrs[2]) { n += sizeof(CSolidObject*); continue; }
 
-		sum ^= ((n + 1) * bytes[n]);
+		sum ^= (((n + 1) << 8) * bytes[n++]);
 	}
 
 	return sum;
