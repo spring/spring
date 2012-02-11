@@ -250,7 +250,7 @@ void CFarTextureHandler::Draw()
 		//    and will not track later state-changes
 		unitDrawer->SetupForUnitDrawing();
 
-		GML_VECTOR<const CSolidObject*>::const_iterator it;
+		GML_VECTOR<const CSolidObject*>::iterator it;
 
 		for (it = queuedForRender.begin(); it != queuedForRender.end() && maxNewIcons > 0; ++it) {
 			maxNewIcons--;
