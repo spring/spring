@@ -117,7 +117,7 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 	// any units that changed position between enabling and disabling of
 	// globalLOS and *stopped* will continue to provide LOS at their old
 	// square *after* it is disabled (until they are moved again)
-	if (gs->globalLOS) { return; }
+	if (gs->globalLOS[unit->allyteam]) { return; }
 	if (unit->losRadius <= 0 && unit->airLosRadius <= 0) {
 		return;
 	}

@@ -7,6 +7,7 @@
 
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
+#include "GlobalConstants.h"
 
 
 class CGameSetup;
@@ -145,9 +146,10 @@ public:
 	/**
 	* @brief global line-of-sight
 	*
-	* Whether everything on the map is visible at all times
+	* Whether everything on the map is visible at all times to a given ALLYteam
+	* There can never be more allyteams than teams, hence the size is MAX_TEAMS
 	*/
-	bool globalLOS;
+	bool globalLOS[MAX_TEAMS];
 
 	/**
 	* @brief cheat enabled
