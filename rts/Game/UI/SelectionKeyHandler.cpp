@@ -29,68 +29,10 @@ CSelectionKeyHandler* selectionKeys;
 
 CSelectionKeyHandler::CSelectionKeyHandler()
 {
-	LoadSelectionKeys();
 }
 
 CSelectionKeyHandler::~CSelectionKeyHandler()
 {
-}
-
-void CSelectionKeyHandler::LoadSelectionKeys()
-{
-	std::ifstream ifs(dataDirsAccess.LocateFile("selectkeys.txt").c_str());
-
-	selectNumber = 0;
-
-	while (ifs.peek() != EOF && !ifs.eof()) {
-		std::string key, sel;
-		ifs >> key;
-
-		if (ifs.peek() == EOF || ifs.eof())
-			break;
-
-		ifs >> sel;
-
-		bool shift=false;
-		bool control=false;
-		bool alt=false;
-		unsigned char keyname=0;
-
-		while(true){
-			std::string s=ReadToken(key);
-
-			if(s=="Shift"){
-				shift=true;
-			} else if (s=="Control"){
-				control=true;
-			} else if (s=="Alt"){
-				alt=true;
-			} else {
-				char c=s[0];
-				if(c>='A' && c<='Z')
-					keyname=SDLK_a + (c - 'A');
-
-				if(c>='0' && c<='9')
-					keyname=SDLK_0 + (c -'0');
-
-				break;
-			}
-			ReadDelimiter(key);
-		}
-		std::string keybindstring;
-		if ( alt ) keybindstring += "Alt";
-		if ( control ) {
-			if ( keybindstring.size() != 0 ) keybindstring += "+";
-			keybindstring += "Ctrl";
-		}
-		if ( shift ) {
-			if ( keybindstring.size() != 0 ) keybindstring += "+";
-			keybindstring += "Shift";
-		}
-		if ( keybindstring.size() != 0 ) keybindstring += "+";
-		keybindstring += keyname;
-		keyBindings->ExecuteCommand( "bind " + keybindstring + " select " + sel );
-	}
 }
 
 std::string CSelectionKeyHandler::ReadToken(std::string& str)

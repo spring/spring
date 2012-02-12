@@ -80,6 +80,13 @@ struct MoveData {
 	/// are we supposed to be a purely sub-surface ship?
 	bool subMarine;
 
+	/// do we try to pathfind around squares blocked by mobile units?
+	///
+	/// this also serves as a padding byte for alignment so compiler
+	/// does not insert it (GetCheckSum would need to skip such bytes
+	/// otherwise, since they are never initialized)
+	bool avoidMobileBlockedSquares;
+
 	/// heatmap this unit
 	bool heatMapping;
 	/// heatmap path-cost modifier
@@ -107,10 +114,6 @@ public:
 
 	MoveData* GetMoveDataFromName(const std::string& name);
 	unsigned int moveInfoChecksum;
-
-	CMoveMath* GetGroundMoveMath() { return groundMoveMath; }
-	CMoveMath* GetHoverMoveMath() { return hoverMoveMath; }
-	CMoveMath* GetSeaMoveMath() { return seaMoveMath; }
 
 private:
 	CMoveMath* groundMoveMath;

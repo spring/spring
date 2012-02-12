@@ -47,7 +47,7 @@ CFarTextureHandler::CFarTextureHandler()
 	const int maxTexSize = std::min(globalRendering->maxTextureSize, 4096);
 
 	texSizeX = maxTexSize;
-	texSizeY = std::max(iconSizeY, 4 * numOrientations * iconSizeX * iconSizeY / texSizeX); //! minimum space for 4 icons
+	texSizeY = std::max(iconSizeY, 4 * numOrientations * iconSizeX * iconSizeY / texSizeX); // minimum space for 4 icons
 	texSizeY = next_power_of_2(texSizeY);
 
 	if (!fbo.IsValid()) {
@@ -132,49 +132,6 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 
 	cache[obj->team][model->id] = -1;
 
-	//! check if there is enough free space in the atlas, if not try to resize it
-	const unsigned int maxSprites = ((texSizeX / iconSizeX) * (texSizeY / iconSizeY) / numOrientations) - 1;
-
-	if (usedFarTextures >= maxSprites) {
-		const int oldTexSizeY = texSizeY;
-
-		if (globalRendering->supportNPOTs) {
-			texSizeY += std::max(iconSizeY,  4 * numOrientations * iconSizeX * iconSizeY / texSizeX); //! minimum additional space for 4 icons
-		} else {
-			texSizeY <<= 1;
-		}
-
-		if (texSizeY > globalRendering->maxTextureSize) {
-			LOG_L(L_DEBUG, "Out of farTextures"); 
-			texSizeY = oldTexSizeY;
-			return;
-		}
-
-		unsigned char* oldPixels = new unsigned char[texSizeX*texSizeY*4];
-		glBindTexture(GL_TEXTURE_2D, farTextureID);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, oldPixels);
-		memset(oldPixels + texSizeX*oldTexSizeY*4, 0, texSizeX*(texSizeY - oldTexSizeY)*4);
-
-		GLuint newFarTextureID;
-		glGenTextures(1, &newFarTextureID);
-		glBindTexture(GL_TEXTURE_2D, newFarTextureID);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texSizeX, texSizeY, 0, GL_RGBA, GL_UNSIGNED_BYTE, oldPixels);
-		delete[] oldPixels;
-
-		fbo.Bind();
-		fbo.DetachAll();
-
-		glDeleteTextures(1, &farTextureID);
-		farTextureID = newFarTextureID;
-
-		fbo.AttachTexture(farTextureID);
-		fbo.CheckStatus("FARTEXTURE");
-		fbo.Unbind();
-	}
 
 	if (!fbo.IsValid()) {
 		LOG_L(L_DEBUG, "framebuffer not valid!");
@@ -182,65 +139,46 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	}
 
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX, texSizeY); //! delete it after finished rendering to the texture
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX, texSizeY);
 	fbo.CheckStatus("FARTEXTURE");
+
+
+	// overwrite the matrices set by SetupForUnitDrawing
+	// RTT with a top-down view; the view-matrix must be
+	// on the PROJECTION stack for the model shaders
+	glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(-model->radius, model->radius, -model->radius, model->radius, -model->radius * 1.5f, model->radius * 1.5f);
+
+		glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+	glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
 
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glDisable(GL_BLEND);
 
-	unitDrawer->SetupForUnitDrawing();
-	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
-
-	if (model->type != MODELTYPE_3DO) {
-		// FIXME: for some strange reason we need to invert the culling, why?
-		if (model->type == MODELTYPE_S3O) {
-			glCullFace(GL_FRONT);
-		}
-		texturehandlerS3O->SetS3oTexture(model->textureType);
-	}
-
-	unitDrawer->SetTeamColour(obj->team);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-	glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(-model->radius, model->radius, -model->radius, model->radius, -model->radius*1.5f, model->radius*1.5f);
-	glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glScalef(-1.0f, 1.0f, 1.0f);
-
-	glRotatef(45.0f, 1.0f, 0.0f, 0.0f);
-
-	// light the far-textures from straight above, we do
-	// not care much about the actual sun direction here
-	static const float4 sunDir = UpVector;
-
-	glLightfv(GL_LIGHT1, GL_POSITION, &sunDir.x);
-
-	// draw the model in 8 different orientations
 	for (int orient = 0; orient < numOrientations; ++orient) {
-		//! setup viewport
-		int2 pos = GetTextureCoordsInt(usedFarTextures, orient);
-		glViewport(pos.x * iconSizeX, pos.y * iconSizeY, iconSizeX, iconSizeY);
+		// setup viewport
+		const int2 pos = GetTextureCoordsInt(usedFarTextures, orient);
 
+		glViewport(pos.x * iconSizeX, pos.y * iconSizeY, iconSizeX, iconSizeY);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		glPushMatrix();
-		glTranslatef(0, -model->height * 0.5f, 0);
+		glTranslatef(0.0f, -model->height * 0.5f, 0.0f);
 
-		//! draw the model to a temporary buffer
+		// draw the model to a temporary buffer
 		model->DrawStatic();
 
 		glPopMatrix();
 
-		//! rotate by 45 degrees for the next orientation
-		glRotatef(-360.0f / numOrientations, 0, 1, 0);
+		// rotate by 360 / numOrientations degrees for the next orientation
+		glRotatef(360.0f / numOrientations, 0.0f, 1.0f, 0.0f);
 	}
 
-	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
-	unitDrawer->CleanUpUnitDrawing();
 
-	//glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();
 
 	fbo.Detach(GL_DEPTH_ATTACHMENT_EXT);
@@ -254,21 +192,21 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* va) {
 	const int farTextureNum = cache[obj->team][obj->model->id];
 
-	//! not found in the atlas
+	// not found in the atlas
 	if (farTextureNum <= 0)
 		return;
 
 	const float3 interPos = obj->drawPos + UpVector * obj->model->height * 0.5f;
 
-	//! indicates the orientation to draw
+	// indicates the orientation to draw
 	static const int USHRT_MAX_ = (1 << 16);
 	const int orient_step = USHRT_MAX_ / numOrientations;
 
 	int orient = GetHeadingFromVector(-camera->forward.x, -camera->forward.z) - obj->heading;
-		orient += USHRT_MAX_;          //! make it positive only
-		orient += (orient_step >> 1);  //! we want that frontdir is from -orient_step/2 upto orient_step/2
-		orient %= USHRT_MAX_;          //! we have an angle so it's periodical
-		orient /= orient_step;         //! get the final direction index
+		orient += USHRT_MAX_;          // make it positive only
+		orient += (orient_step >> 1);  // we want that frontdir is from -orient_step/2 upto orient_step/2
+		orient %= USHRT_MAX_;          // we have an angle so it's periodical
+		orient /= orient_step;         // get the final direction index
 
 	const float iconSizeX = float(this->iconSizeX) / texSizeX;
 	const float iconSizeY = float(this->iconSizeY) / texSizeY;
@@ -296,12 +234,45 @@ void CFarTextureHandler::Draw()
 		return;
 	}
 
-	// create new faricons
-	for (GML_VECTOR<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
-		const CSolidObject& obj = **it;
-		if ((int)cache.size() <= obj.team || (int)cache[obj.team].size() <= obj.model->id || !cache[obj.team][obj.model->id]) {
-			CreateFarTexture(*it);
+	{
+		// check if there is enough free space in the atlas, if not try resizing
+		// it (as many times as the number of models queued for iconification)
+		unsigned int maxNewIcons = 0;
+
+		for (unsigned int n = 0; n < queuedForRender.size(); n++) {
+			if (!CheckResizeAtlas(n + 1)) { break; } maxNewIcons++;
 		}
+
+		// now create the new far-icons
+		// NOTE:
+		//    the icons are RTT'ed using a snapshot of the
+		//    current state (advModelShading, sunDir, etc)
+		//    and will not track later state-changes
+		unitDrawer->SetupForUnitDrawing();
+
+		GML_VECTOR<const CSolidObject*>::iterator it;
+
+		for (it = queuedForRender.begin(); it != queuedForRender.end() && maxNewIcons > 0; ++it) {
+			maxNewIcons--;
+
+			const CSolidObject* obj = *it;
+			const S3DModel* mdl = obj->model;
+
+			unitDrawer->GetOpaqueModelRenderer(mdl->type)->PushRenderState();
+			unitDrawer->SetTeamColour(obj->team);
+
+			if (mdl->type != MODELTYPE_3DO) {
+				texturehandlerS3O->SetS3oTexture(mdl->textureType);
+			}
+
+			if ((int)cache.size() <= obj->team || (int)cache[obj->team].size() <= mdl->id || !cache[obj->team][mdl->id]) {
+				CreateFarTexture(obj);
+			}
+
+			unitDrawer->GetOpaqueModelRenderer(mdl->type)->PopRenderState();
+		}
+
+		unitDrawer->CleanUpUnitDrawing();
 	}
 
 	glEnable(GL_ALPHA_TEST);
@@ -326,3 +297,54 @@ void CFarTextureHandler::Draw()
 
 	queuedForRender.clear();
 }
+
+
+
+bool CFarTextureHandler::CheckResizeAtlas(unsigned int newNumTextures) {
+	const unsigned int maxSprites = ((texSizeX / iconSizeX) * (texSizeY / iconSizeY) / numOrientations) - 1;
+
+	if ((usedFarTextures + newNumTextures) < maxSprites)
+		return true;
+
+	const int oldTexSizeY = texSizeY;
+
+	if (globalRendering->supportNPOTs) {
+		texSizeY += std::max(iconSizeY,  4 * numOrientations * iconSizeX * iconSizeY / texSizeX); // minimum additional space for 4 icons
+	} else {
+		texSizeY <<= 1;
+	}
+
+	if (texSizeY > globalRendering->maxTextureSize) {
+		LOG_L(L_DEBUG, "Out of farTextures"); 
+		texSizeY = oldTexSizeY;
+		return false;
+	}
+
+	unsigned char* oldPixels = new unsigned char[texSizeX*texSizeY*4];
+	glBindTexture(GL_TEXTURE_2D, farTextureID);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, oldPixels);
+	memset(oldPixels + texSizeX*oldTexSizeY*4, 0, texSizeX*(texSizeY - oldTexSizeY)*4);
+
+	GLuint newFarTextureID;
+	glGenTextures(1, &newFarTextureID);
+	glBindTexture(GL_TEXTURE_2D, newFarTextureID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texSizeX, texSizeY, 0, GL_RGBA, GL_UNSIGNED_BYTE, oldPixels);
+	delete[] oldPixels;
+
+	fbo.Bind();
+	fbo.DetachAll();
+
+	glDeleteTextures(1, &farTextureID);
+	farTextureID = newFarTextureID;
+
+	fbo.AttachTexture(farTextureID);
+	fbo.CheckStatus("FARTEXTURE");
+	fbo.Unbind();
+
+	return true;
+}
+
