@@ -14,6 +14,7 @@
 #include "inet.h"
 #include "options.h"
 #include "udp.h"
+#include "restrictions.h"
 
 /* min and max macros */
 #ifndef MIN
@@ -144,6 +145,11 @@ static int meth_sendto(lua_State *L) {
     memset(&addr, 0, sizeof(addr));
     if (!inet_aton(ip, &addr.sin_addr)) 
         luaL_argerror(L, 3, "invalid ip address");
+    if (!luaSocketRestrictions->isAllowed(CLuaSocketRestrictions::UDP_CONNECT, ip, port)){
+        lua_pushnil(L);
+        lua_pushstring(L, "sendto: access not allowed");
+        return 2;
+    }
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     timeout_markstart(tm);
