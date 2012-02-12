@@ -9,7 +9,7 @@ return {
 	name    = "Test-Widget for luasocket",
 	desc    = "a simple test widget to show capabilities of luasocket",
 	author  = "abma",
-	date    = "Jul. 2011",
+	date    = "Feb. 2012",
 	license = "GNU GPL, v2 or later",
 	layer   = 0,
 	enabled = true,
