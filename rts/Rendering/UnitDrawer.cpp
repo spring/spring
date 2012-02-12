@@ -1754,7 +1754,7 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 {
 	if (shadowHandler->inShadowPass) {
-		if (unit->buildProgress > 0.66f) {
+		if (unit->buildProgress > (2.0f / 3.0f)) {
 			DrawUnitModel(unit);
 		}
 		return;
@@ -1812,7 +1812,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	}
 
 	// Flat-colored model
-	if (unit->buildProgress > 0.33f) {
+	if (unit->buildProgress > (1.0f / 3.0f)) {
 		glColorf3(fc * (1.5f - col));
 		const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress * 3 - 1)};
 		const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 3 - 2)};
@@ -1834,7 +1834,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	// XXX FIXME
 	// ATI has issues with textures, clip planes and shader programs at once - very low performance
 	// FIXME: This may work now I added OPTION ARB_position_invariant to the ARB programs.
-	if (unit->buildProgress > 0.66f) {
+	if (unit->buildProgress > (2.0f / 3.0f)) {
 		if (globalRendering->atiHacks) {
 			glDisable(GL_CLIP_PLANE0);
 

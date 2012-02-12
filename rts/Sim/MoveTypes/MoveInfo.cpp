@@ -45,6 +45,7 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(followGround),
 	CR_MEMBER(subMarine),
 
+	CR_MEMBER(avoidMobileBlockedSquares),
 	CR_MEMBER(heatMapping),
 	CR_MEMBER(heatMod),
 	CR_MEMBER(heatProduced),
@@ -102,6 +103,7 @@ CMoveInfo::CMoveInfo()
 
 	for (size_t num = 1; /* no test */; num++) {
 		const LuaTable moveTable = rootTable.SubTable(num);
+
 		if (!moveTable.IsValid()) {
 			break;
 		}
@@ -111,13 +113,19 @@ CMoveInfo::CMoveInfo()
 		moveData.push_back(md);
 		name2moveData[md->name] = md->pathType;
 
+		switch (md->moveType) {
+			case MoveData::Ship_Move: { md->moveMath = seaMoveMath; } break;
+			case MoveData::Hover_Move: { md->moveMath = hoverMoveMath; } break;
+			case MoveData::Ground_Move: { md->moveMath = groundMoveMath; } break;
+		}
+
 		crc << md->GetCheckSum();
 	}
 
 
 	// FIXME: do something with these magic numbers
 	if (mapInfo->water.damage >= 1000.0f) {
-		CGroundMoveMath::waterDamageCost = 0.0f; //! block water
+		CGroundMoveMath::waterDamageCost = 0.0f; // block water
 	} else {
 		CGroundMoveMath::waterDamageCost = 1.0f / (1.0f + mapInfo->water.damage * 0.1f);
 	}
@@ -186,6 +194,8 @@ MoveData::MoveData() {
 	followGround      = true;
 	subMarine         = false;
 
+	avoidMobileBlockedSquares = true;
+
 	heatMapping       = true;
 	heatMod           = 0.05f;
 	heatProduced      = GAME_SPEED;
@@ -215,29 +225,28 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		moveType   = MoveData::Ship_Move;
 		depth      = minWaterDepth;
 		moveFamily = MoveData::Ship;
-		moveMath   = moveInfo->GetSeaMoveMath();
-		subMarine  = moveTable.GetBool("subMarine", 0);
+		subMarine  = moveTable.GetBool("subMarine", false);
 	} else if (name.find("hover") != string::npos) {
 		moveType   = MoveData::Hover_Move;
 		maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 		moveFamily = MoveData::Hover;
-		moveMath   = moveInfo->GetHoverMoveMath();
 	} else {
+		const LuaTable& depthModTable = moveTable.SubTable("depthModParams");
+
 		moveType = MoveData::Ground_Move;
 		depth    = maxWaterDepth;
 
-		depthModParams[DEPTHMOD_MIN_HEIGHT] = std::max(0.00f, moveTable.GetFloat("depthModMinHeight",                                     0.0f ));
-		depthModParams[DEPTHMOD_MAX_HEIGHT] =         (       moveTable.GetFloat("depthModMaxHeight",        std::numeric_limits<float>::max() ));
-		depthModParams[DEPTHMOD_MAX_SCALE ] = std::max(0.01f, moveTable.GetFloat("depthModMaxScale",         std::numeric_limits<float>::max() ));
-		depthModParams[DEPTHMOD_QUA_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModQuadraticCoeff",                                0.0f ));
-		depthModParams[DEPTHMOD_LIN_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModLinearCoeff",    moveTable.GetFloat("depthMod", 0.1f)));
-		depthModParams[DEPTHMOD_CON_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModConstantCoeff",                                 1.0f ));
+		depthModParams[DEPTHMOD_MIN_HEIGHT] = std::max(0.00f, depthModTable.GetFloat("minHeight",                                     0.0f ));
+		depthModParams[DEPTHMOD_MAX_HEIGHT] =         (       depthModTable.GetFloat("maxHeight",        std::numeric_limits<float>::max() ));
+		depthModParams[DEPTHMOD_MAX_SCALE ] = std::max(0.01f, depthModTable.GetFloat("maxScale",         std::numeric_limits<float>::max() ));
+		depthModParams[DEPTHMOD_QUA_COEFF ] = std::max(0.00f, depthModTable.GetFloat("quadraticCoeff",                                0.0f ));
+		depthModParams[DEPTHMOD_LIN_COEFF ] = std::max(0.00f, depthModTable.GetFloat("linearCoeff",    moveTable.GetFloat("depthMod", 0.1f)));
+		depthModParams[DEPTHMOD_CON_COEFF ] = std::max(0.00f, depthModTable.GetFloat("constantCoeff",                                 1.0f ));
 
 		// ensure [depthModMinHeight, depthModMaxHeight] is a valid range
 		depthModParams[DEPTHMOD_MAX_HEIGHT] = std::max(depthModParams[DEPTHMOD_MIN_HEIGHT], depthModParams[DEPTHMOD_MAX_HEIGHT]);
 
 		maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
-		moveMath = moveInfo->GetGroundMoveMath();
 
 		if (name.find("tank") != string::npos) {
 			moveFamily = MoveData::Tank;
@@ -246,9 +255,11 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		}
 	}
 
+	avoidMobileBlockedSquares = moveTable.GetBool("avoidMobileBlockedSquares", true);
 	heatMapping = moveTable.GetBool("heatMapping", false);
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
-	heatProduced = moveTable.GetInt("heatProduced", 60);
+
+	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
 	flowMapping  = moveTable.GetBool("flowMapping", true);
 	flowMod      = moveTable.GetFloat("flowMod", 1.0f);
 
@@ -335,11 +346,23 @@ float MoveData::GetDepthMod(const float height) const {
 unsigned int MoveData::GetCheckSum() const {
 	unsigned int sum = 0;
 
-	// NOTE: safe so long as MoveData has no virtuals
+	// NOTE:
+	//   safe so long as MoveData has no virtuals and we
+	//   make sure we do not checksum the pointer-members
 	const unsigned char* bytes = reinterpret_cast<const unsigned char*>(this);
+	const unsigned char* ptrs[3] = {
+		reinterpret_cast<const unsigned char*>(&this->name),
+		reinterpret_cast<const unsigned char*>(&this->moveMath),
+		reinterpret_cast<const unsigned char*>(&this->tempOwner),
+	};
 
-	for (unsigned int n = 0; n < sizeof(*this); n++) {
-		sum ^= ((n + 1) * bytes[n]);
+	for (unsigned int n = 0; n < sizeof(*this); ) {
+		if (&bytes[n] == ptrs[0]) { n += sizeof(std::string);   continue; }
+		if (&bytes[n] == ptrs[1]) { n += sizeof(CMoveMath*);    continue; }
+		if (&bytes[n] == ptrs[2]) { n += sizeof(CSolidObject*); continue; }
+
+		sum ^= (((n + 1) << 8) * bytes[n]);
+		n += 1;
 	}
 
 	return sum;

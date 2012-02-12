@@ -97,12 +97,31 @@ class GlobalLosActionExecutor : public ISyncedActionExecutor {
 public:
 	GlobalLosActionExecutor() : ISyncedActionExecutor("GlobalLOS",
 			"Enables/Disables global line-of-sight, which makes the whole map"
-			" permanently visible to everyone", true) {}
+			" permanently visible to everyone or to a specific allyteam", true) {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(gs->globalLOS, action.GetArgs());
-		LogSystemStatus("Global LOS", gs->globalLOS);
-		return true;
+		const std::string& args = action.GetArgs();
+		const unsigned int argAllyTeam = atoi(args.c_str());
+		const unsigned int maxAllyTeam = teamHandler->ActiveAllyTeams();
+		// const unsigned int maxAllyTeams = sizeof(gs->globalLOS) / sizeof(gs->globalLOS[0]);
+
+		if (args.empty()) {
+			for (unsigned int n = 0; n < maxAllyTeam; n++) {
+				gs->globalLOS[n] = !gs->globalLOS[n];
+			}
+
+			LOG("[GlobalLosActionExecutor] global LOS toggled for all allyteams");
+			return true;
+		}
+		if (argAllyTeam < maxAllyTeam) {
+			gs->globalLOS[argAllyTeam] = !gs->globalLOS[argAllyTeam];
+
+			LOG("[GlobalLosActionExecutor] global LOS toggled for allyteam %u", argAllyTeam);
+			return true;
+		}
+
+		LOG("[GlobalLosActionExecutor] bad allyteam %u", argAllyTeam);
+		return false;
 	}
 };
 

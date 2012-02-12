@@ -110,7 +110,7 @@ public:
 	void FreeInstance(LosInstance* instance);
 
 	inline bool InLos(const CWorldObject* object, int allyTeam) const {
-		if (object->alwaysVisible || gs->globalLOS) {
+		if (object->alwaysVisible || gs->globalLOS[allyTeam]) {
 			return true;
 		} else if (object->useAirLos) {
 			return (InAirLos(object->pos, allyTeam));
@@ -124,7 +124,7 @@ public:
 		//       1. they can be cloaked
 		//       2. when underwater, they only get LOS if they also have sonar
 		//          (when the requireSonarUnderWater variable is enabled)
-		if (unit->alwaysVisible || gs->globalLOS) {
+		if (unit->alwaysVisible || gs->globalLOS[allyTeam]) {
 			return true;
 		} else if (unit->isCloaked) {
 			return false;
@@ -140,14 +140,14 @@ public:
 	}
 
 	inline bool InLos(const float3& pos, int allyTeam) const {
-		if (gs->globalLOS) { return true; }
+		if (gs->globalLOS[allyTeam]) { return true; }
 		const int gx = pos.x * invLosDiv;
 		const int gz = pos.z * invLosDiv;
 		return !!losMaps[allyTeam].At(gx, gz);
 	}
 
 	inline bool InAirLos(const float3& pos, int allyTeam) const {
-		if (gs->globalLOS) { return true; }
+		if (gs->globalLOS[allyTeam]) { return true; }
 		const int gx = pos.x * invAirDiv;
 		const int gz = pos.z * invAirDiv;
 		return !!airLosMaps[allyTeam].At(gx, gz);
@@ -155,13 +155,13 @@ public:
 
 
 	inline bool InLos(int hmx, int hmz, int allyTeam) const {
-		if (gs->globalLOS) { return true; }
+		if (gs->globalLOS[allyTeam]) { return true; }
 		const int gx = hmx * SQUARE_SIZE * invLosDiv;
 		const int gz = hmz * SQUARE_SIZE * invLosDiv;
 		return !!losMaps[allyTeam].At(gx, gz);
 	}
 	inline bool InAirLos(int hmx, int hmz, int allyTeam) const {
-		if (gs->globalLOS) { return true; }
+		if (gs->globalLOS[allyTeam]) { return true; }
 		const int gx = hmx * SQUARE_SIZE * invAirDiv;
 		const int gz = hmz * SQUARE_SIZE * invAirDiv;
 		return !!airLosMaps[allyTeam].At(gx, gz);

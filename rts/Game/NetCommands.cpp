@@ -350,7 +350,7 @@ void CGame::ClientReadNet()
 					if (playerCheckSum != localCheckSum) {
 						LOG_L(L_WARNING, // XXX maybe use a "Desync" section here?
 								"[DESYNC WARNING] path-checksum %08x for player %d (%s)"
-								"does not match local checksum %08x; stale PathEstimator-cache?",
+								" does not match local checksum %08x; stale PathEstimator-cache?",
 								playerCheckSum, playerNum, player->name.c_str(), localCheckSum);
 					}
 				}

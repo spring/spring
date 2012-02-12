@@ -1225,7 +1225,7 @@ starting from given speed.
 float CGroundMoveType::BreakingDistance(float speed) const
 {
 	const float rate = reversing? accRate: decRate;
-	const float time = speed / rate;
+	const float time = speed / std::max(rate, 0.001f);
 	const float dist = 0.5f * rate * time * time;
 	return dist;
 }
@@ -1470,6 +1470,13 @@ void CGroundMoveType::HandleUnitCollisions(
 
 				currentSpeed = 0.0f;
 				deltaSpeed = 0.0f;
+
+				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir) >= 0.5f)) {
+					// repath iff obstacle is within 60-degree cone; we do this
+					// because the GNWP lookahead (for non-TIP units) can cause
+					// corners to be cut across statically blocked squares
+					StartMoving(goalPos, goalRadius, 0.0f);
+				}
 			}
 		}
 
@@ -1579,6 +1586,10 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 				currentSpeed = 0.0f;
 				deltaSpeed = 0.0f;
+
+				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir) >= 0.5f)) {
+					StartMoving(goalPos, goalRadius, 0.0f);
+				}
 			}
 		}
 
@@ -2055,15 +2066,17 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 {
-	if (!canReverse) {
+	if (!canReverse)
 		return false;
-	}
 
-	assert(math::fabs(decRate) > 0.0f);
-	assert(math::fabs(accRate) > 0.0f);
-	assert(math::fabs(maxSpeed) > 0.0f);
-	assert(math::fabs(turnRate) > 0.0f);
-	assert(math::fabs(maxReverseSpeed) > 0.0f);
+	// these values are normally non-0, but LuaMoveCtrl
+	// can override them and we do not want any div0's
+	if (maxReverseSpeed <= 0.0f) return false;
+	if (maxSpeed <= 0.0f) return true;
+
+	if (accRate <= 0.0f) return false;
+	if (decRate <= 0.0f) return false;
+	if (turnRate <= 0.0f) return false;
 
 	const float3 waypointDif  = goalPos - owner->pos;                                           // use final WP for ETA
 	const float waypointDist  = waypointDif.Length();                                           // in elmos
