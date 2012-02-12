@@ -311,7 +311,9 @@ EXPORT(int) Init(bool isServer, int id)
 {
 	try {
 		if (!logOutputInitialised) {
-			logOutput.SetFileName("unitsync.log");
+			string fname = getenv("HOME");
+			fname += "/.spring/unitsync.log";
+			logOutput.SetFileName(fname.c_str());
 		}
 #ifndef DEBUG
 		log_filter_section_setMinLevel(LOG_SECTION_UNITSYNC, LOG_LEVEL_INFO);
