@@ -72,13 +72,13 @@ CGlobalSynced::CGlobalSynced()
 	userSpeedFactor = 1;
 	paused = false;
 	godMode = false;
-	globalLOS = false;
 	cheatEnabled = false;
 	noHelperAIs = false;
 	editDefsEnabled = false;
 	tempNum = 2;
 	useLuaGaia = true;
 
+	memset(globalLOS, 0, sizeof(globalLOS));
 	log_framePrefixer_setFrameNumReference(&frameNum);
 
 	teamHandler = new CTeamHandler();
