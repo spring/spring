@@ -75,15 +75,17 @@ struct MoveData {
 	/// number of UnitDef types that refer to this MoveData class
 	unsigned int unitDefRefCount;
 
-	/// add a padding byte for alignment so compiler does not
-	/// (GetCheckSum would need to skip such bytes otherwise,
-	/// since they are never initialized)
-	bool dummyPadding;
-
 	/// do we stick to the ground when in water?
 	bool followGround;
 	/// are we supposed to be a purely sub-surface ship?
 	bool subMarine;
+
+	/// do we try to pathfind around squares blocked by mobile units?
+	///
+	/// this also serves as a padding byte for alignment so compiler
+	/// does not insert it (GetCheckSum would need to skip such bytes
+	/// otherwise, since they are never initialized)
+	bool avoidMobileBlockedSquares;
 
 	/// heatmap this unit
 	bool heatMapping;
