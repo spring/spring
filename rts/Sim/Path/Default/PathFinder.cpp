@@ -21,7 +21,7 @@ void* CPathFinder::operator new(size_t size) { return PathAllocator::Alloc(size)
 void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p, size); }
 #endif
 
-const CMoveMath::BlockType testSquareBlockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
+const CMoveMath::BlockType squareMobileBlockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 CPathFinder::CPathFinder()
 	: heatMapOffset(0)
@@ -292,25 +292,27 @@ bool CPathFinder::TestSquare(
 	// Evaluate this square.
 	float squareSpeedMod = moveData.moveMath->GetPosSpeedMod(moveData, square.x, square.y);
 
-	if (squareSpeedMod == 0) {
+	if (squareSpeedMod == 0.0f) {
 		squareStates.nodeMask[sqrIdx] |= PATHOPT_FORBIDDEN;
 		dirtySquares.push_back(sqrIdx);
 		return false;
 	}
 
-	if (testMobile && (blockStatus & testSquareBlockBits)) {
-		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY)
+	if (testMobile && moveData.avoidMobileBlockedSquares && (blockStatus & squareMobileBlockBits)) {
+		// TODO: move these constants to moveData.mobile{Idle,Busy,Moving}SquareSpeedMult?
+		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY) {
 			squareSpeedMod *= 0.10f;
-		else if (blockStatus & CMoveMath::BLOCK_MOBILE)
+		} else if (blockStatus & CMoveMath::BLOCK_MOBILE) {
 			squareSpeedMod *= 0.35f;
-		else //CMoveMath::BLOCK_MOVING
+		} else { // (blockStatus & CMoveMath::BLOCK_MOVING)
 			squareSpeedMod *= 0.65f;
+		}
 	}
 
 	// Include heatmap cost adjustment.
 	float heatCostMod = 1.0f;
 	if (heatMapping && moveData.heatMapping && GetHeatOwner(square.x, square.y) != ownerId) {
-		heatCostMod += (moveData.heatMod * GetHeatValue(square.x,square.y));
+		heatCostMod += (moveData.heatMod * GetHeatValue(square.x, square.y));
 	}
 
 

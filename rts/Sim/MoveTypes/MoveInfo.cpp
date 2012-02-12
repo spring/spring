@@ -45,6 +45,7 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(followGround),
 	CR_MEMBER(subMarine),
 
+	CR_MEMBER(avoidMobileBlockedSquares),
 	CR_MEMBER(heatMapping),
 	CR_MEMBER(heatMod),
 	CR_MEMBER(heatProduced),
@@ -187,10 +188,10 @@ MoveData::MoveData() {
 	pathType          = 0;
 	unitDefRefCount   = 0;
 
-	dummyPadding      = false;
-
 	followGround      = true;
 	subMarine         = false;
+
+	avoidMobileBlockedSquares = true;
 
 	heatMapping       = true;
 	heatMod           = 0.05f;
@@ -249,6 +250,7 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		}
 	}
 
+	avoidMobileBlockedSquares = moveTable.GetBool("avoidMobileBlockedSquares", true);
 	heatMapping = moveTable.GetBool("heatMapping", false);
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
 	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
