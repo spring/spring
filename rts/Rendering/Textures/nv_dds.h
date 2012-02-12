@@ -10,6 +10,7 @@
 
 #include <string>
 #include <deque>
+#include <cstdio>
 #include <assert.h>
 
 namespace nv_dds
