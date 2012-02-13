@@ -218,19 +218,25 @@ const char *inet_trycreate(p_socket ps, int type) {
 }
 
 
-bool isAllowed(p_socket ps, const char *address, unsigned short port){
+bool isAllowed(p_socket ps, const char *address, unsigned short port, bool connect){
     char rawtype;
-    socklen_t len=sizeof(rawtype);
+    socklen_t len = sizeof(rawtype);
     CLuaSocketRestrictions::RestrictType type;
-    int res=getsockopt(*ps, SOL_SOCKET, SO_TYPE, &rawtype, &len);
+    int res = getsockopt(*ps, SOL_SOCKET, SO_TYPE, &rawtype, &len);
     if (res!=0) {
          LOG_L(L_ERROR, "Socket already closed");
          return false;
     }
     if (rawtype==SOCK_STREAM)
-        type=CLuaSocketRestrictions::TCP_CONNECT;
+	if (connect)
+            type = CLuaSocketRestrictions::TCP_CONNECT;
+        else
+            type = CLuaSocketRestrictions::TCP_LISTEN;
     else //SOCK_DGRAM
-        type=CLuaSocketRestrictions::UDP_CONNECT;
+        if (connect)
+            type = CLuaSocketRestrictions::UDP_CONNECT;
+        else
+            type = CLuaSocketRestrictions::UDP_LISTEN;
     if (!luaSocketRestrictions->isAllowed(type, address, port)) {
         LOG_L(L_ERROR, "Access to '%s:%d' denied", address, port);
         return false;
@@ -244,7 +250,7 @@ bool isAllowed(p_socket ps, const char *address, unsigned short port){
 const char *inet_tryconnect(p_socket ps, const char *address, 
         unsigned short port, p_timeout tm)
 {
-    if (!isAllowed(ps, address, port))
+    if (!isAllowed(ps, address, port, true))
 	return "conect denied";
 
     struct sockaddr_in remote;
@@ -271,7 +277,7 @@ const char *inet_tryconnect(p_socket ps, const char *address,
 \*-------------------------------------------------------------------------*/
 const char *inet_trybind(p_socket ps, const char *address, unsigned short port)
 {
-    if (!isAllowed(ps, address, port))
+    if (!isAllowed(ps, address, port, false))
 	return "bind denied";
 
     struct sockaddr_in local;
