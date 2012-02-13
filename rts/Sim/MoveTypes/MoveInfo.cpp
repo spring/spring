@@ -187,6 +187,7 @@ MoveData::MoveData() {
 	speedModMults[SPEEDMOD_MOBILE_BUSY_MULT] = 0.10f;
 	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = 0.35f;
 	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = 0.65f;
+	speedModMults[SPEEDMOD_MOBILE_NUM_MULTS] = 0.0f;
 
 	crushStrength     = 0.0f;
 
