@@ -288,14 +288,13 @@ bool CPathFinder::TestSquare(
 		return false;
 	}
 
-	if (testMobile && moveData.avoidMobileBlockedSquares && (blockStatus & squareMobileBlockBits)) {
-		// TODO: move these constants to moveData.mobile{Idle,Busy,Moving}SquareSpeedMult?
+	if (testMobile && moveData.avoidMobilesOnPath && (blockStatus & squareMobileBlockBits)) {
 		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY) {
-			squareSpeedMod *= 0.10f;
+			squareSpeedMod *= moveData.speedModMults[MoveData::SPEEDMOD_MOBILE_BUSY_MULT];
 		} else if (blockStatus & CMoveMath::BLOCK_MOBILE) {
-			squareSpeedMod *= 0.35f;
+			squareSpeedMod *= moveData.speedModMults[MoveData::SPEEDMOD_MOBILE_IDLE_MULT];
 		} else { // (blockStatus & CMoveMath::BLOCK_MOVING)
-			squareSpeedMod *= 0.65f;
+			squareSpeedMod *= moveData.speedModMults[MoveData::SPEEDMOD_MOBILE_MOVE_MULT];
 		}
 	}
 
