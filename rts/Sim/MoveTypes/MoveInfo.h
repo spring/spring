@@ -80,7 +80,10 @@ struct MoveData {
 	// PF speedmod-multipliers for squares blocked by mobile units
 	// (which can respectively be "idle" == non-moving and have no
 	// orders, "busy" == non-moving but have orders, or "moving")
-	float speedModMults[SPEEDMOD_MOBILE_NUM_MULTS];
+	// NOTE:
+	//     includes one extra padding element to make the moveMath
+	//     member start on an 8-byte boundary for 64-bit platforms
+	float speedModMults[SPEEDMOD_MOBILE_NUM_MULTS + 1];
 
 	unsigned int pathType;
 	/// number of UnitDef types that refer to this MoveData class
