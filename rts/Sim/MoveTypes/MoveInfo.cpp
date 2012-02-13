@@ -38,6 +38,7 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(maxSlope),
 	CR_MEMBER(slopeMod),
 	CR_MEMBER(crushStrength),
+	CR_MEMBER(speedModMults),
 
 	CR_MEMBER(pathType),
 	CR_MEMBER(unitDefRefCount),
@@ -45,7 +46,7 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(followGround),
 	CR_MEMBER(subMarine),
 
-	CR_MEMBER(avoidMobileBlockedSquares),
+	CR_MEMBER(avoidMobilesOnPath),
 	CR_MEMBER(heatMapping),
 	CR_MEMBER(heatMod),
 	CR_MEMBER(heatProduced),
@@ -183,6 +184,10 @@ MoveData::MoveData() {
 	depthModParams[DEPTHMOD_LIN_COEFF ] = 0.1f;
 	depthModParams[DEPTHMOD_CON_COEFF ] = 1.0f;
 
+	speedModMults[SPEEDMOD_MOBILE_BUSY_MULT] = 0.10f;
+	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = 0.35f;
+	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = 0.65f;
+
 	crushStrength     = 0.0f;
 
 	pathType          = 0;
@@ -191,7 +196,7 @@ MoveData::MoveData() {
 	followGround      = true;
 	subMarine         = false;
 
-	avoidMobileBlockedSquares = true;
+	avoidMobilesOnPath = true;
 
 	heatMapping       = true;
 	heatMod           = 0.05f;
@@ -201,16 +206,15 @@ MoveData::MoveData() {
 	tempOwner         = NULL;
 }
 
-MoveData::MoveData(const MoveData* unitDefMD) {
-	*this = *unitDefMD;
-}
-
 MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID) {
 	*this = MoveData();
 
 	name          = StringToLower(moveTable.GetString("name", ""));
 	pathType      = moveDefID - 1;
 	crushStrength = moveTable.GetFloat("crushStrength", 10.0f);
+
+	const LuaTable& depthModTable = moveTable.SubTable("depthModParams");
+	const LuaTable& speedModMultsTable = moveTable.SubTable("speedModMults");
 
 	const float minWaterDepth = moveTable.GetFloat("minWaterDepth", 10.0f);
 	const float maxWaterDepth = moveTable.GetFloat("maxWaterDepth", 0.0f);
@@ -226,8 +230,6 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 		moveFamily = MoveData::Hover;
 	} else {
-		const LuaTable& depthModTable = moveTable.SubTable("depthModParams");
-
 		moveType = MoveData::Ground_Move;
 		depth    = maxWaterDepth;
 
@@ -250,7 +252,11 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		}
 	}
 
-	avoidMobileBlockedSquares = moveTable.GetBool("avoidMobileBlockedSquares", true);
+	speedModMults[SPEEDMOD_MOBILE_BUSY_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileBusyMult", 0.10f));
+	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileIdleMult", 0.35f));
+	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 0.65f));
+
+	avoidMobilesOnPath = speedModMultsTable.GetBool("avoidMobilesOnPath", true);
 	heatMapping = moveTable.GetBool("heatMapping", false);
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
 	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
