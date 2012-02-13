@@ -291,6 +291,7 @@ bool CPathFinder::TestSquare(
 
 	// Evaluate this square.
 	float squareSpeedMod = moveData.moveMath->GetPosSpeedMod(moveData, square.x, square.y);
+	float heatCostMod = 1.0f;
 
 	if (squareSpeedMod == 0.0f) {
 		squareStates.nodeMask[sqrIdx] |= PATHOPT_FORBIDDEN;
@@ -298,19 +299,17 @@ bool CPathFinder::TestSquare(
 		return false;
 	}
 
-	if (testMobile && moveData.avoidMobileBlockedSquares && (blockStatus & squareMobileBlockBits)) {
-		// TODO: move these constants to moveData.mobile{Idle,Busy,Moving}SquareSpeedMult?
+	if (testMobile && moveData.avoidMobilesOnPath && (blockStatus & squareMobileBlockBits)) {
 		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY) {
-			squareSpeedMod *= 0.10f;
+			squareSpeedMod *= moveData.speedModMults[MoveData::SPEEDMOD_MOBILE_BUSY_MULT];
 		} else if (blockStatus & CMoveMath::BLOCK_MOBILE) {
-			squareSpeedMod *= 0.35f;
+			squareSpeedMod *= moveData.speedModMults[MoveData::SPEEDMOD_MOBILE_IDLE_MULT];
 		} else { // (blockStatus & CMoveMath::BLOCK_MOVING)
-			squareSpeedMod *= 0.65f;
+			squareSpeedMod *= moveData.speedModMults[MoveData::SPEEDMOD_MOBILE_MOVE_MULT];
 		}
 	}
 
 	// Include heatmap cost adjustment.
-	float heatCostMod = 1.0f;
 	if (heatMapping && moveData.heatMapping && GetHeatOwner(square.x, square.y) != ownerId) {
 		heatCostMod += (moveData.heatMod * GetHeatValue(square.x, square.y));
 	}

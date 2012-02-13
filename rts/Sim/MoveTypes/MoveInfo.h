@@ -18,7 +18,7 @@ struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
 
 	MoveData();
-	MoveData(const MoveData* unitDefMD);
+	MoveData(const MoveData* unitDefMD) { *this = *unitDefMD; }
 	MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID);
 
 	float GetDepthMod(const float height) const;
@@ -43,7 +43,7 @@ struct MoveData {
 		/// we can exist at heights both greater and smaller than 0
 		Mixed = 2
 	};
-	enum DepthModParam {
+	enum DepthModParams {
 		DEPTHMOD_MIN_HEIGHT = 0,
 		DEPTHMOD_MAX_HEIGHT = 1,
 		DEPTHMOD_MAX_SCALE  = 2,
@@ -51,6 +51,12 @@ struct MoveData {
 		DEPTHMOD_LIN_COEFF  = 4,
 		DEPTHMOD_CON_COEFF  = 5,
 		DEPTHMOD_NUM_PARAMS = 6,
+	};
+	enum SpeedModMults {
+		SPEEDMOD_MOBILE_IDLE_MULT = 0,
+		SPEEDMOD_MOBILE_BUSY_MULT = 1,
+		SPEEDMOD_MOBILE_MOVE_MULT = 2,
+		SPEEDMOD_MOBILE_NUM_MULTS = 3,
 	};
 
 	std::string name;
@@ -71,6 +77,11 @@ struct MoveData {
 	float slopeMod;
 	float crushStrength;
 
+	// PF speedmod-multipliers for squares blocked by mobile units
+	// (which can respectively be "idle" == non-moving and have no
+	// orders, "busy" == non-moving but have orders, or "moving")
+	float speedModMults[SPEEDMOD_MOBILE_NUM_MULTS];
+
 	unsigned int pathType;
 	/// number of UnitDef types that refer to this MoveData class
 	unsigned int unitDefRefCount;
@@ -85,7 +96,7 @@ struct MoveData {
 	/// this also serves as a padding byte for alignment so compiler
 	/// does not insert it (GetCheckSum would need to skip such bytes
 	/// otherwise, since they are never initialized)
-	bool avoidMobileBlockedSquares;
+	bool avoidMobilesOnPath;
 
 	/// heatmap this unit
 	bool heatMapping;
