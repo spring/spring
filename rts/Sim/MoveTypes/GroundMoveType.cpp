@@ -1404,25 +1404,33 @@ void CGroundMoveType::HandleUnitCollisions(
 			FOOTPRINT_RADIUS(collideeMD->xsize, collideeMD->zsize):
 			FOOTPRINT_RADIUS(collidee  ->xsize, collidee  ->zsize);
 
+		const float3 separationVector   = colliderCurPos - collideeCurPos;
+		const float separationMinDistSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
+
+		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
+			continue;
+
+		// NOTE:
+		//    we exclude aircraft (which have NULL mobility) landed
+		//    on the ground, since they would just stack when pushed
 		bool pushCollider = colliderMobile;
-		bool pushCollidee = (collideeMobile || collideeUD->canfly);
+		bool pushCollidee = collideeMobile;
 		bool crushCollidee = false;
 
-		const float3 separationVector = colliderCurPos - collideeCurPos;
-		const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
-
-		if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
-		if (collidee->usingScriptMoveType && !collidee->inAir) { pushCollidee = false; }
-		if (collideeUD->pushResistant) { pushCollidee = false; }
-
-		// if not an allied collision, neither party is allowed to be pushed (bi-directional)
-		// if an allied collision, only the collidee is allowed to be crushed (uni-directional)
+		// if not an allied collision, neither party is allowed to be pushed (bi-directional) and both stop
+		// if an allied collision, only the collidee is allowed to be crushed (uni-directional) and neither stop
+		//
+		// first rule can be ignored at will by either party (only through Lua) such that it is not stopped
+		// however neither party can override its pushResistant gene: if collider has it set then collidee's
+		// pushing contribution is always ignored, if collidee has it set then collidee is always stopped (!)
 		const bool alliedCollision =
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
 
-		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || (collider->inAir && !colliderUD->IsAirUnit()));
-		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || (collidee->inAir && !collideeUD->IsAirUnit()));
+		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
+		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
+		pushCollidee &= (!collidee->usingScriptMoveType && !collideeUD->pushResistant);
+
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= (collider->speed != ZeroVector);
 
@@ -1432,7 +1440,7 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		eventHandler.UnitUnitCollision(collider, collidee);
 
-		const float  sepDistance    = (separationVector.Length() + 0.01f);
+		const float  sepDistance    = separationVector.Length() + 0.01f;
 		const float  penDistance    = std::max((colliderRadius + collideeRadius) - sepDistance, 1.0f);
 		const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
 
@@ -1483,17 +1491,21 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3 colliderNewPos = colliderCurPos + (colResponseVec * colliderMassScale);
 		const float3 collideeNewPos = collideeCurPos - (colResponseVec * collideeMassScale);
 
-		// try to prevent both parties from being pushed onto non-traversable squares
+		// try to prevent both parties from being pushed onto non-traversable
+		// squares (without stopping them dead in their tracks, which is worse)
 		if (                  (colliderMM->IsBlocked(*colliderMD, colliderNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { colliderMassScale = 0.0f; }
 		if (collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideeNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { collideeMassScale = 0.0f; }
 		if (                  colliderMM->GetPosSpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { colliderMassScale = 0.0f; }
 		if (collideeMobile && collideeMM->GetPosSpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
 
-		// ignore pushing contributions from idling collidee's
-		if (collider->isMoving && !collidee->isMoving && alliedCollision) {
+		// ignore pushing contributions from idling friendly collidee's
+		// (or if we are resistant to them); this will only take effect
+		// if pushCollider is still true
+		if (((collider->isMoving && !collidee->isMoving) && alliedCollision) || colliderUD->pushResistant) {
 			colliderMassScale *= ((collideeMobile)? 0.0f: 1.0f);
 		}
 
+		// either both parties are pushed, or only one party is pushed and the other is stopped, or both are stopped
 		     if (  pushCollider) { collider->Move3D( colResponseVec * colliderMassScale, true); }
 		else if (colliderMobile) { collider->Move3D(colliderOldPos, false); }
 		     if (  pushCollidee) { collidee->Move3D(-colResponseVec * collideeMassScale, true); }
@@ -1536,17 +1548,18 @@ void CGroundMoveType::HandleFeatureCollisions(
 	//	const float collideeRadius = FOOTPRINT_RADIUS(collideeFD->xsize, collideeFD->zsize);
 		const float collideeRadius = FOOTPRINT_RADIUS(collidee  ->xsize, collidee  ->zsize);
 
-		const float3 separationVector = colliderCurPos - collideeCurPos;
-		const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
+		const float3 separationVector   = colliderCurPos - collideeCurPos;
+		const float separationMinDistSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
 
-		if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
+		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
+			continue;
 
 		if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 		if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
 
 		eventHandler.UnitFeatureCollision(collider, collidee);
 
-		const float  sepDistance    = (separationVector.Length() + 0.01f);
+		const float  sepDistance    = separationVector.Length() + 0.01f;
 		const float  penDistance    = std::max((colliderRadius + collideeRadius) - sepDistance, 1.0f);
 		const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
 
