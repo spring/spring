@@ -150,12 +150,12 @@ public:
 	float turnRate;
 	bool turnInPlace;
 
-	/**
-	 * units below this speed will turn in place regardless of their
-	 * turnInPlace setting, units above this speed will slow down to
-	 * it when turning
-	 */
+	///< for units with turnInPlace=false, defines the
+	///< minimum speed to slow down to while turning
 	float turnInPlaceSpeedLimit;
+	///< for units with turnInPlace=true, defines the
+	///< maximum angle of a turn without slowing down
+	float turnInPlaceAngleLimit;
 
 	bool upright;
 	bool blocking;
