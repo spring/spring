@@ -1537,6 +1537,8 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 	}
 
 	unit->crushable = luaL_optboolean(L, 4, unit->crushable);
+	unit->blockEnemyPushing = luaL_optboolean(L, 5, unit->blockEnemyPushing);
+	unit->blockHeightChanges = luaL_optboolean(L, 6, unit->blockHeightChanges);
 	return 0;
 }
 
