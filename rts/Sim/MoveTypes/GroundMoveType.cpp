@@ -508,14 +508,14 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 				targetSpeed = fastmath::apxsqrt(currWayPointDist * (reversing? accRate: decRate));
 			}
 
-			if (!ud->turnInPlace) {
-				if (waypointDir.SqLength() > 0.1f) {
-					if (reqTurnAngle > maxTurnAngle) {
-						targetSpeed = std::max(ud->turnInPlaceSpeedLimit, reducedSpeed);
+			if (waypointDir.SqLength() > 0.1f) {
+				if (!ud->turnInPlace) {
+					targetSpeed = std::max(ud->turnInPlaceSpeedLimit, reducedSpeed);
+				} else {
+					if (reqTurnAngle > ud->turnInPlaceAngleLimit) {
+						targetSpeed = reducedSpeed;
 					}
 				}
-			} else {
-				targetSpeed = reducedSpeed;
 			}
 		}
 
