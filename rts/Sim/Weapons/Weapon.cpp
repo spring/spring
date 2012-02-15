@@ -1111,13 +1111,24 @@ void CWeapon::CheckIntercept(void)
 	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
 		CWeaponProjectile* p = pi->second;
 
+		// set by CWeaponProjectile's ctor when the interceptor fires
 		if (p->targeted)
 			continue;
 
-		targetType = Target_Intercept;
-		interceptTarget = p;
-		targetPos = p->pos;
+		// NOTE:
+		//     <incomingProjectiles> is sorted by increasing projectile ID
+		//     however projectiles launched later in time (which are still
+		//     likely out of range) can be assigned *lower* ID's than older
+		//     projectiles (which might be almost in range already), so if
+		//     we already have an interception target we should not replace
+		//     it unless another incoming projectile <p> is closer
+		if ((interceptTarget != NULL) && ((p->pos - weaponPos).SqLength() >= (interceptTarget->pos - weaponPos).SqLength()))
+			continue;
 
+		// keep targetPos in sync with the incoming projectile's position
+		interceptTarget = p;
+		targetType = Target_Intercept;
+		targetPos = p->pos;
 		break;
 	}
 }
