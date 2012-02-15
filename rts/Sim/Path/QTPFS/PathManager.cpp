@@ -450,11 +450,9 @@ void QTPFS::PathManager::Update() {
 
 	// NOTE:
 	//     for a mod with N move-types, a unit will be waiting
-	//     <numUpdates> sim-frames before its request executes
-	//     (at a minimum)
-	static const unsigned int numPathTypeUpdates =
-		std::max(1U, static_cast<unsigned int>(nodeLayers.size() / MAX_UPDATE_DELAY));
-
+	//     (N / MAX_UPDATE_DELAY) sim-frames before its request
+	//     executes at a minimum
+	static const unsigned int numPathTypeUpdates = std::max(1U, static_cast<unsigned int>(nodeLayers.size() / MAX_UPDATE_DELAY));
 	static unsigned int minPathTypeUpdate = 0;
 	static unsigned int maxPathTypeUpdate = numPathTypeUpdates;
 
@@ -721,9 +719,10 @@ float3 QTPFS::PathManager::NextWayPoint(
 
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 
-	// dangling ID after re-request failure or regular deletion
+	// dangling ID after a re-request failure or regular deletion
+	// return an error-vector so GMT knows it should stop the unit
 	if (pathTypeIt == pathTypes.end())
-		return point;
+		return float3(-1.0f, -1.0f, -1.0f);
 
 	IPath* tempPath = pathCaches[pathTypeIt->second].GetTempPath(pathID);
 	IPath* livePath = pathCaches[pathTypeIt->second].GetLivePath(pathID);
@@ -740,9 +739,6 @@ float3 QTPFS::PathManager::NextWayPoint(
 		//     never switch to its live-path even after it becomes available
 		//     (because NextWayPoint is not called again until U gets close
 		//     to P), so always keep it a fixed small distance in front
-		//
-		//     if the queued search fails, the next call to us should make
-		//     the unit stop
 		const float3& sourcePoint = point;
 		const float3& targetPoint = tempPath->GetTargetPoint();
 		const float3  targetDirec = (targetPoint - sourcePoint).SafeNormalize();

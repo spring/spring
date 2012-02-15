@@ -38,6 +38,7 @@ void QTPFS::PathSearch::Initialize(
 	tgtNode = nodeLayer->GetNode(tgtPoint.x / SQUARE_SIZE, tgtPoint.z / SQUARE_SIZE);
 	curNode = NULL;
 	nxtNode = NULL;
+	minNode = srcNode;
 }
 
 bool QTPFS::PathSearch::Execute(
@@ -47,9 +48,12 @@ bool QTPFS::PathSearch::Execute(
 	searchState = searchStateOffset;
 	searchMagic = searchMagicNumber;
 
-	haveOpenNode = true;
 	haveFullPath = (srcNode == tgtNode);
-//	haveFullPath = ((srcNode == tgtNode) || (curNode->GetDistance(tgtNode, NODE_DIST_EUCLIDEAN) <= radius));
+	havePartPath = false;
+
+	// early-out
+	if (haveFullPath)
+		return true;
 
 	std::vector<INode*>& allNodes = nodeLayer->GetNodes();
 	std::vector<INode*> ngbNodes;
@@ -61,28 +65,42 @@ bool QTPFS::PathSearch::Execute(
 	switch (searchType) {
 		case PATH_SEARCH_ASTAR:    { hCostMult = 1.0f; } break;
 		case PATH_SEARCH_DIJKSTRA: { hCostMult = 0.0f; } break;
-
-		default: {
-			assert(false);
-		} break;
+		default:                   {    assert(false); } break;
 	}
 
-	if (!haveFullPath) {
+	{
 		openNodes.reset();
 		openNodes.push(srcNode);
+
 		UpdateNode(srcNode, NULL, 0.0f, (tgtPoint - srcPoint).Length() * hCostMult, srcNode->GetMoveCost());
 	}
 
-	while ((haveOpenNode = !openNodes.empty()) && !(haveFullPath = (curNode == tgtNode))) {
+	while (!openNodes.empty()) {
 		IterateSearch(allNodes, ngbNodes);
 
 		#ifdef QTPFS_TRACE_PATH_SEARCHES
 		searchExec->AddIteration(searchIter);
 		searchIter.Clear();
 		#endif
+
+		haveFullPath = (curNode == tgtNode);
+		havePartPath = (minNode != srcNode);
+
+		if (haveFullPath) {
+			openNodes.reset();
+		}
 	}
 
-	return haveFullPath;
+	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
+	// adjust the target-point if we only got a partial result
+	if (!haveFullPath && havePartPath) {
+		tgtNode    = minNode;
+		tgtPoint.x = minNode->xmid() * SQUARE_SIZE;
+		tgtPoint.z = minNode->zmid() * SQUARE_SIZE;
+	}
+	#endif
+
+	return (haveFullPath || havePartPath);
 }
 
 
@@ -137,6 +155,12 @@ void QTPFS::PathSearch::IterateSearch(
 		return;
 	if (curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
 		return;
+
+	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
+	// remember the node with lowest h-cost in case the search fails to reach tgtNode
+	if (curNode->GetPathCost(NODE_PATH_COST_H) < minNode->GetPathCost(NODE_PATH_COST_H))
+		minNode = curNode;
+	#endif
 
 
 	#ifdef QTPFS_COPY_NEIGHBOR_NODES
