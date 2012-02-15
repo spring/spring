@@ -154,7 +154,8 @@ public:
 	///< minimum speed to slow down to while turning
 	float turnInPlaceSpeedLimit;
 	///< for units with turnInPlace=true, defines the
-	///< maximum angle of a turn without slowing down
+	///< maximum angle of a turn that can be entered
+	///< without slowing down
 	float turnInPlaceAngleLimit;
 
 	bool upright;
