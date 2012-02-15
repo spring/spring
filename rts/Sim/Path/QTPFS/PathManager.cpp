@@ -755,25 +755,43 @@ float3 QTPFS::PathManager::NextWayPoint(
 		return point;
 	}
 
-	const float minRadiusSq = std::max(float(SQUARE_SIZE * SQUARE_SIZE), radius * radius);
+	const float minRadiusSq = radius * radius;
 	      float curRadiusSq = QTPFS_POSITIVE_INFINITY;
 
 	unsigned int minPointIdx =  0;
 	unsigned int nxtPointIdx = -1U;
 
-	// find the point furthest along the path within
-	// distance <rad> of <pos>, as well as the point
-	// closest to us
+	// find the next waypoint (ie. the node that is
+	// furthest along the path *and* within distance
+	// <radius> of <point>), as well as the waypoint
+	// that is closest to <point>
 	//
 	// a path can change while a unit is following
 	// it, so we always check each and every point
 	for (unsigned int i = 0; i < (livePath->NumPoints() - 1); i++) {
 		const float radiusSq = (point - livePath->GetPoint(i)).SqLength();
 
+		#if 1
+		// find waypoints <p0> and <p1> such that <point> is
+		// "in front" of p0 and "behind" p1 (ie. in between)
+		//
+		// we do this rather than the radius-based search
+		// since depending on the value of <radius> we may
+		// or may not find a "next" node (even though one
+		// always exists)
+		const float3& p0 = livePath->GetPoint(i    ), v0 = (p0 - point);
+		const float3& p1 = livePath->GetPoint(i + 1), v1 = (p1 - point);
+
+		if (v0.dot(v1) <= 0.01f) {
+			nxtPointIdx = i + 1;
+		}
+		#else
 		if (radiusSq < minRadiusSq) {
 			nxtPointIdx = i + 1;
 		}
-		if (radiusSq > 1.0f && radiusSq < curRadiusSq) {
+		#endif
+
+		if (radiusSq < curRadiusSq) {
 			curRadiusSq = radiusSq;
 			minPointIdx = i + 0;
 		}
