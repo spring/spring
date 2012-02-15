@@ -1187,11 +1187,6 @@ void CGroundMoveType::GetNextWayPoint()
 	if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
 		// trigger Arrived on the next Update
 		haveFinalWaypoint = true;
-	}
-
-	haveFinalWaypoint = haveFinalWaypoint || (nextWayPoint.x == -1.0f);
-
-	if (haveFinalWaypoint) {
 		currWayPoint = goalPos;
 		nextWayPoint = goalPos;
 		return;
@@ -1211,6 +1206,10 @@ void CGroundMoveType::GetNextWayPoint()
 
 		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
 			currWayPoint = goalPos;
+		}
+
+		if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
+			Fail();
 		}
 	}
 }

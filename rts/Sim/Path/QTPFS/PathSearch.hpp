@@ -112,9 +112,10 @@ namespace QTPFS {
 			, tgtNode(NULL)
 			, curNode(NULL)
 			, nxtNode(NULL)
+			, minNode(NULL)
 			, searchExec(NULL)
-			, haveOpenNode(false)
 			, haveFullPath(false)
+			, havePartPath(false)
 			, hCostMult(0.0f)
 			{}
 		~PathSearch() { openNodes.reset(); }
@@ -162,6 +163,7 @@ namespace QTPFS {
 
 		INode *srcNode, *tgtNode;
 		INode *curNode, *nxtNode;
+		INode *minNode;
 
 		// not used unless QTPFS_TRACE_PATH_SEARCHES is defined
 		PathSearchTrace::Execution* searchExec;
@@ -171,8 +173,8 @@ namespace QTPFS {
 		// this relies on INode::operator< to sort the INode*'s by increasing f-cost
 		static binary_heap<INode*> openNodes;
 
-		bool haveOpenNode;
 		bool haveFullPath;
+		bool havePartPath;
 
 		float hCostMult;
 	};
