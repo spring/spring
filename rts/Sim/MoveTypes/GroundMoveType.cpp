@@ -1160,10 +1160,11 @@ void CGroundMoveType::GetNextWayPoint()
 	{
 		#if (DEBUG_OUTPUT == 1)
 		// plot the vector to currWayPoint
-		const int figGroupID =
-			geometricObjects->AddLine(owner->pos + UpVector * 20, currWayPoint + UpVector * 20, 8.0f, 1, 4);
+		const int cwpFigGroupID = geometricObjects->AddLine(owner->pos + UpVector * 20, currWayPoint + UpVector * 20, 8.0f, 1, 4);
+		const int nwpFigGroupID = geometricObjects->AddLine(owner->pos + UpVector * 20, nextWayPoint + UpVector * 20, 8.0f, 1, 4);
 
-		geometricObjects->SetColor(figGroupID, 1, 0.3f, 0.3f, 0.6f);
+		geometricObjects->SetColor(cwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+		geometricObjects->SetColor(nwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
 		#endif
 
 		// perform a turn-radius check: if the waypoint
@@ -1182,7 +1183,6 @@ void CGroundMoveType::GetNextWayPoint()
 			return;
 		}
 	}
-
 
 	if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
 		// trigger Arrived on the next Update
