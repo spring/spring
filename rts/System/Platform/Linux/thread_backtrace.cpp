@@ -8,6 +8,9 @@
 #include <stdint.h>
 #include <string.h> // memcpy
 
+#if defined(__FreeBSD__)
+#include <pthread_np.h> // pthread_attr_get_np
+#endif
 
 #define FP_OFFSET 1 //! in sizeof(void*)
 
@@ -32,7 +35,14 @@ static void internal_pthread_backtrace(pthread_t thread, void** buffer, size_t m
 	uint8_t* stackbot;
 	size_t stack_size; //! in bytes
 	size_t guard_size; //! in bytes
-#ifdef __APPLE__
+#if defined(__FreeBSD__)
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_get_np(thread, &attr);
+	pthread_attr_getstack(&attr, (void**)&stackbot, &stack_size);
+	pthread_attr_getguardsize(&attr, &guard_size);
+	pthread_attr_destroy(&attr);
+#elif defined(__APPLE__)
 	stackbot = (uint8_t*)pthread_get_stackaddr_np(thread);
 	stack_size = pthread_get_stacksize_np(thread);
 	guard_size = 0; //FIXME anyway to get that?

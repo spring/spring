@@ -966,7 +966,7 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 		// x = (180.0f / PI), 2 * x = (360.0f / PI) -->
 		// ((A * x) > (B * 2 * x)) == (A > (B * 2))
 		const float mainDirCurAngle = math::acosf(modMainDir.dot(targetNormDir));
-		const float mainDirMaxAngle = math::acosf(           maxMainDirAngleDif) * 2.0f;
+		const float mainDirMaxAngle = math::acosf(Clamp(maxMainDirAngleDif, -1.0f, 1.0f)) * 2.0f;
 
 		if (mainDirCurAngle > mainDirMaxAngle)
 			return false;
