@@ -8,6 +8,7 @@
 #define RAI_LOGFILE_H
 
 #include <string>
+#include <cstdio>
 
 using std::string;
 namespace springLegacyAI {

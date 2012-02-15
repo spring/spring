@@ -73,13 +73,14 @@ public:
 
 public:
 	float mass;                                 ///< the physical mass of this object (run-time constant)
-	float crushResistance;                       ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
+	float crushResistance;                      ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
 
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
 	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
-	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 	bool crushKilled;                           ///< true if this object died by being crushed during a collision
+	bool blockEnemyPushing;                     ///< if false, object can be pushed during enemy collisions even when modrules forbid it
+	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 
 	int xsize;                                  ///< The x-size of this object, according to its footprint.
 	int zsize;                                  ///< The z-size of this object, according to its footprint.
