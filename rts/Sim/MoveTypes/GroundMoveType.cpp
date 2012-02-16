@@ -239,7 +239,13 @@ bool CGroundMoveType::Update()
 
 	ASSERT_SANE_OWNER_SPEED(owner->speed);
 
-	if (owner->pos == oldPos) {
+	// <dif> is normally equal to owner->speed (if no collisions)
+	// we need more precision (less tolerance) in the y-dimension
+	// for all-terrain units that are slowed down a lot on cliffs
+	const float3 dif = owner->pos - oldPos;
+	const float3 eps = float3(float3::CMP_EPS, float3::CMP_EPS * 1e-2f, float3::CMP_EPS);
+
+	if (owner->pos.equals(oldPos, eps)) {
 		// note: the float3::== test is not exact, so even if this
 		// evaluates to true the unit might still have an epsilon
 		// speed vector --> nullify it to prevent apparent visual
@@ -262,7 +268,9 @@ bool CGroundMoveType::Update()
 		// too many false positives: many slow units cannot even manage 1 elmo/frame
 		//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
 
-		idling = (Square(currWayPointDist - prevWayPointDist) <= (owner->speed.SqLength() * 0.5f));
+		idling = true;
+		idling &= (math::fabs(dif.y) < math::fabs(eps.y * owner->pos.y));
+		idling &= (Square(currWayPointDist - prevWayPointDist) <= (dif.SqLength() * 0.5f));
 		hasMoved = true;
 	}
 
@@ -1106,8 +1114,8 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 	} else {
 		// Pytagorean sum of the x and z distance.
 		float3 distVec;
-		float xdiff = math::fabs(object1->midPos.x - object2->midPos.x);
-		float zdiff = math::fabs(object1->midPos.z - object2->midPos.z);
+		const float xdiff = math::fabs(object1->midPos.x - object2->midPos.x);
+		const float zdiff = math::fabs(object1->midPos.z - object2->midPos.z);
 
 		distVec.x = xdiff - (object1->xsize + object2->xsize) * SQUARE_SIZE / 2 + 2 * marginal;
 		distVec.z = zdiff - (object1->zsize + object2->zsize) * SQUARE_SIZE / 2 + 2 * marginal;
