@@ -242,10 +242,10 @@ bool CGroundMoveType::Update()
 	// <dif> is normally equal to owner->speed (if no collisions)
 	// we need more precision (less tolerance) in the y-dimension
 	// for all-terrain units that are slowed down a lot on cliffs
-	const float3 dif = owner->pos - oldPos;
-	const float3 eps = float3(float3::CMP_EPS, float3::CMP_EPS * 1e-2f, float3::CMP_EPS);
+	const float3 posDif = owner->pos - oldPos;
+	const float3 cmpEps = float3(float3::CMP_EPS, float3::CMP_EPS * 1e-2f, float3::CMP_EPS);
 
-	if (owner->pos.equals(oldPos, eps)) {
+	if (posDif.equals(ZeroVector, cmpEps)) {
 		// note: the float3::== test is not exact, so even if this
 		// evaluates to true the unit might still have an epsilon
 		// speed vector --> nullify it to prevent apparent visual
@@ -269,8 +269,8 @@ bool CGroundMoveType::Update()
 		//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
 
 		idling = true;
-		idling &= (math::fabs(dif.y) < math::fabs(eps.y * owner->pos.y));
-		idling &= (Square(currWayPointDist - prevWayPointDist) <= (dif.SqLength() * 0.5f));
+		idling &= (math::fabs(posDif.y) < math::fabs(cmpEps.y * owner->pos.y));
+		idling &= (Square(currWayPointDist - prevWayPointDist) <= (posDif.SqLength() * 0.5f));
 		hasMoved = true;
 	}
 

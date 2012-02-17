@@ -277,8 +277,10 @@ void CWeapon::Update()
 	}
 
 	if (weaponDef->interceptor) {
-		CheckIntercept();
+		// keep track of the closest projectile heading our way (if any)
+		UpdateInterceptTarget();
 	}
+
 	if (targetType != Target_None) {
 		if (onlyForward) {
 			const float3 goalDir = (targetPos - owner->pos).Normalize();
@@ -1104,7 +1106,7 @@ void CWeapon::Fire()
 		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
-void CWeapon::CheckIntercept(void)
+void CWeapon::UpdateInterceptTarget(void)
 {
 	targetType = Target_None;
 
