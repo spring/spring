@@ -767,10 +767,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 void CStrafeAirMoveType::UpdateLanded()
 {
-	owner->Move3D(owner->speed = ZeroVector, true);
-	// match the terrain normal
-	owner->UpdateDirVectors(true);
-	owner->UpdateMidPos();
+	AAirMoveType::UpdateLanded();
 }
 
 

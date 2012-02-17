@@ -30,6 +30,7 @@ public:
 	virtual ~AAirMoveType();
 
 	virtual bool Update();
+	virtual void UpdateLanded();
 	virtual bool IsFighter() const = 0;
 	virtual void Takeoff() {}
 	virtual void SetState(AircraftState state) {}

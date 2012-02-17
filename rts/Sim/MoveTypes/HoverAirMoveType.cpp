@@ -5,7 +5,6 @@
 #include "HoverAirMoveType.h"
 #include "Game/Player.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
@@ -295,40 +294,7 @@ void CHoverAirMoveType::StopMoving()
 
 void CHoverAirMoveType::UpdateLanded()
 {
-	// while an aircraft is being built we do not adjust its
-	// position, because the builder might be a tall platform
-	// we also do nothing if the aircraft is preparing to land
-	// or has already landed on a repair-pad
-	if (owner->beingBuilt)
-		return;
-	if (padStatus != 0)
-		return;
-
-	// when an aircraft transitions to the landed state it
-	// is on the ground, but the terrain can be raised (or
-	// lowered) later and we do not want to end up hovering
-	// in mid-air or sink below it
-	// let gravity do the job instead of teleporting
-	const float minHeight = owner->unitDef->canSubmerge?
-		ground->GetHeightReal(owner->pos.x, owner->pos.z):
-		ground->GetHeightAboveWater(owner->pos.x, owner->pos.z);
-	const float curHeight = owner->pos.y;
-
-	if (curHeight > minHeight) {
-		if (curHeight > 0.0f) {
-			owner->speed.y += mapInfo->map.gravity;
-		} else {
-			owner->speed.y = mapInfo->map.gravity;
-		}
-	} else {
-		owner->speed.y = 0.0f;
-	}
-
-	owner->Move1D(std::max(curHeight, minHeight), 1, false);
-	owner->Move3D(owner->speed, true);
-	// match the terrain normal
-	owner->UpdateDirVectors(true);
-	owner->UpdateMidPos();
+	AAirMoveType::UpdateLanded();
 
 	if (progressState != AMoveType::Failed)
 		progressState = AMoveType::Done;
