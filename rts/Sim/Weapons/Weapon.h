@@ -137,7 +137,7 @@ public:
 	float buildPercent;						// how far we have come on building current missile if stockpiling
 	int numStockpiled;						// how many missiles we have stockpiled
 	int numStockpileQued;					// how many weapons the user have added to our que
-	void CheckIntercept(void);
+	void UpdateInterceptTarget();
 
 	float3 errorVector;
 	float3 errorVectorAdd;
