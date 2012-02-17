@@ -153,7 +153,11 @@ void QTPFS::PathSearch::IterateSearch(
 		curPoint = curNode->GetNeighborEdgeMidPoint(curNode->GetPrevNode());
 	if (curNode == tgtNode)
 		return;
-	if (curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
+
+	// allow the search to start from an impassable node (because single
+	// nodes can represent many terrain squares, some of which can still
+	// be passable and allow a unit to move within a node)
+	if (curNode != srcNode && curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
 		return;
 
 	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
