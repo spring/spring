@@ -284,15 +284,13 @@ public:
 	/**
 	 * @brief operator ==
 	 * @param f float3 to test
-	 * @return whether float3s are equal
+	 * @return whether float3s are equal under default CMP_EPS tolerance in x/y/z
 	 *
 	 * Tests if this float3 is equal to another, by
 	 * checking each x/y/z component individually.
 	 */
 	bool operator== (const float3& f) const {
-		return math::fabs(x - f.x) <= math::fabs(float3::CMP_EPS * x)
-			&& math::fabs(y - f.y) <= math::fabs(float3::CMP_EPS * y)
-			&& math::fabs(z - f.z) <= math::fabs(float3::CMP_EPS * z);
+		return (equals(f));
 	}
 
 	/**
@@ -304,7 +302,7 @@ public:
 	 * checking each x/y/z component individually.
 	 */
 	bool operator!= (const float3& f) const {
-		return !(*this == f);
+		return (!equals(f));
 	}
 
 	/**
@@ -320,7 +318,7 @@ public:
 	}
 
 	/**
-	 * @brief operator [] const
+	 * @brief operator[] const
 	 * @param t index in xyz array
 	 * @return const float component at index
 	 *
@@ -329,6 +327,15 @@ public:
 	 */
 	const SyncedFloat& operator[] (const int t) const {
 		return (&x)[t];
+	}
+
+	/**
+	 * @see operator==
+	 */
+	bool equals(const float3& f, const float3& eps = float3(float3::CMP_EPS, float3::CMP_EPS, float3::CMP_EPS)) const {
+		return math::fabs(x - f.x) <= math::fabs(eps.x * x)
+			&& math::fabs(y - f.y) <= math::fabs(eps.y * y)
+			&& math::fabs(z - f.z) <= math::fabs(eps.z * z);
 	}
 
 	/**

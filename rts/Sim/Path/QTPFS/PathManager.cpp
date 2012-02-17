@@ -793,6 +793,11 @@ float3 QTPFS::PathManager::NextWayPoint(
 		}
 	}
 
+	// handle a corner-case in which a unit is at the start of its path
+	// and the goal is in front of it, but on the other side of a cliff
+	if ((livePath->GetPointID() == 0) && (nxtPointIdx == (livePath->NumPoints() - 1)))
+		nxtPointIdx = 1;
+
 	if (nxtPointIdx != -1U) {
 		// if close enough to at least one waypoint <i>,
 		// switch to the point immediately following it

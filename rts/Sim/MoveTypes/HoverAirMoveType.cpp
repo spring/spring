@@ -294,21 +294,7 @@ void CHoverAirMoveType::StopMoving()
 
 void CHoverAirMoveType::UpdateLanded()
 {
-	if (owner->beingBuilt)
-		return;
-
-	if (padStatus == 0) {
-		if (owner->unitDef->canSubmerge) {
-			owner->Move1D(std::max(owner->pos.y, ground->GetHeightReal(owner->pos.x, owner->pos.z)), 1, false);
-		} else {
-			owner->Move1D(std::max(owner->pos.y, ground->GetHeightAboveWater(owner->pos.x, owner->pos.z)), 1, false);
-		}
-	}
-
-	// match the terrain normal
-	owner->Move3D(owner->speed = ZeroVector, true);
-	owner->UpdateDirVectors(true);
-	owner->UpdateMidPos();
+	AAirMoveType::UpdateLanded();
 
 	if (progressState != AMoveType::Failed)
 		progressState = AMoveType::Done;
