@@ -55,6 +55,8 @@ bool QTPFS::PathSearch::Execute(
 	if (haveFullPath)
 		return true;
 
+	const bool srcBlocked = (srcNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY);
+
 	std::vector<INode*>& allNodes = nodeLayer->GetNodes();
 	std::vector<INode*> ngbNodes;
 
@@ -66,6 +68,14 @@ bool QTPFS::PathSearch::Execute(
 		case PATH_SEARCH_ASTAR:    { hCostMult = 1.0f; } break;
 		case PATH_SEARCH_DIJKSTRA: { hCostMult = 0.0f; } break;
 		default:                   {    assert(false); } break;
+	}
+
+	// allow the search to start from an impassable node (because single
+	// nodes can represent many terrain squares, some of which can still
+	// be passable and allow a unit to move within a node)
+	// NOTE: we have to make sure such paths do not have infinite cost!
+	if (srcBlocked) {
+		srcNode->SetMoveCost(0.0f);
 	}
 
 	{
@@ -90,6 +100,11 @@ bool QTPFS::PathSearch::Execute(
 			openNodes.reset();
 		}
 	}
+
+	if (srcBlocked) {
+		srcNode->SetMoveCost(QTPFS_POSITIVE_INFINITY);
+	}
+		
 
 	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
 	// adjust the target-point if we only got a partial result
@@ -153,11 +168,7 @@ void QTPFS::PathSearch::IterateSearch(
 		curPoint = curNode->GetNeighborEdgeMidPoint(curNode->GetPrevNode());
 	if (curNode == tgtNode)
 		return;
-
-	// allow the search to start from an impassable node (because single
-	// nodes can represent many terrain squares, some of which can still
-	// be passable and allow a unit to move within a node)
-	if (curNode != srcNode && curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
+	if (curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
 		return;
 
 	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
