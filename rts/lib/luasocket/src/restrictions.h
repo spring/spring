@@ -1,9 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <map>
+#include <list>
 #include <string>
+#include <utility>
 
-typedef std::map<std::string, int> TStrIntMap;
+typedef std::pair<std::string, unsigned int> TIpPort;
+typedef std::list<TIpPort> TStrIntMap;
 
 class CLuaSocketRestrictions {
 public:
@@ -21,7 +23,10 @@ public:
 	* check if host & port is in the list for type of allowed, if port is -1, it is ignored
 	*/
 	bool isAllowed(RestrictType type, const char* hostname, int port=-1);
-
+	/**
+	* add resolved ip to the rules where the hostname is used
+	*/
+	void addIP(const char* hostname, const char* ip);
 private:
 	/**
 	* parses and adds a rules string
@@ -36,6 +41,10 @@ private:
 	*     hostname:port
 	*/
 	void addRule(RestrictType type, const std::string& rule);
+	/**
+	* add a rule
+	*/
+	void addRawRule(RestrictType type, const std::string& hostname, int port);
 
 	TStrIntMap restrictions[ALL_RULES];
 

@@ -69,6 +69,7 @@ static int inet_global_tohostname(lua_State *L) {
     const char *address = luaL_checkstring(L, 1);
     struct hostent *hp = NULL; 
     int err = inet_gethost(address, &hp);
+    luaSocketRestrictions->addIP(address, hp->h_name); //add resolved ip to rules
     if (err != IO_DONE) {
         lua_pushnil(L);
         lua_pushstring(L, socket_hoststrerror(err));
@@ -99,7 +100,9 @@ static int inet_global_toip(lua_State *L)
         lua_pushstring(L, socket_hoststrerror(err));
         return 2;
     }
-    lua_pushstring(L, inet_ntoa(*((struct in_addr *) hp->h_addr)));
+    const char* ip = inet_ntoa(*((struct in_addr *) hp->h_addr));
+    luaSocketRestrictions->addIP(address, ip);
+    lua_pushstring(L, ip);
     inet_pushresolved(L, hp);
     return 2;
 }
@@ -112,12 +115,6 @@ static int inet_global_gethostname(lua_State *L)
 {
     char name[257];
     name[256] = '\0';
-    if (!luaSocketRestrictions->isAllowed(CLuaSocketRestrictions::ALL_RULES, name)) {
-        lua_pushnil(L);
-        LOG_L(L_ERROR, "Resolving '%s' denied", name);
-        lua_pushstring(L, "hostname not in allowed list");
-        return 2;
-    }
     if (gethostname(name, 256) < 0) {
         lua_pushnil(L);
         lua_pushstring(L, "gethostname failed");
@@ -266,6 +263,7 @@ const char *inet_tryconnect(p_socket ps, const char *address,
             if (err != IO_DONE) return socket_hoststrerror(err);
             addr = (struct in_addr **) hp->h_addr_list;
             memcpy(&remote.sin_addr, *addr, sizeof(struct in_addr));
+            luaSocketRestrictions->addIP(address, inet_ntoa(**addr));
         }
     } else remote.sin_family = AF_UNSPEC;
     err = socket_connect(ps, (SA *) &remote, sizeof(remote), tm);
@@ -294,6 +292,7 @@ const char *inet_trybind(p_socket ps, const char *address, unsigned short port)
         if (err != IO_DONE) return socket_hoststrerror(err);
         addr = (struct in_addr **) hp->h_addr_list;
         memcpy(&local.sin_addr, *addr, sizeof(struct in_addr));
+        luaSocketRestrictions->addIP(address, inet_ntoa(**addr));
     }
     err = socket_bind(ps, (SA *) &local, sizeof(local));
     if (err != IO_DONE) socket_destroy(ps);
