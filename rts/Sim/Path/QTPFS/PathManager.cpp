@@ -718,11 +718,12 @@ float3 QTPFS::PathManager::NextWayPoint(
 	SCOPED_TIMER("PathManager::NextWayPoint");
 
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
+	const float3 noPathPoint = float3(-1.0f, 0.0f, -1.0f);
 
 	// dangling ID after a re-request failure or regular deletion
 	// return an error-vector so GMT knows it should stop the unit
 	if (pathTypeIt == pathTypes.end())
-		return float3(-1.0f, -1.0f, -1.0f);
+		return noPathPoint;
 
 	IPath* tempPath = pathCaches[pathTypeIt->second].GetTempPath(pathID);
 	IPath* livePath = pathCaches[pathTypeIt->second].GetLivePath(pathID);
@@ -739,10 +740,13 @@ float3 QTPFS::PathManager::NextWayPoint(
 		//     never switch to its live-path even after it becomes available
 		//     (because NextWayPoint is not called again until U gets close
 		//     to P), so always keep it a fixed small distance in front
+		//
+		//     make the y-coordinate -1 to indicate these are temporary
+		//     waypoints to GMT and should not be followed religiously
 		const float3& sourcePoint = point;
 		const float3& targetPoint = tempPath->GetTargetPoint();
-		const float3  targetDirec = (targetPoint - sourcePoint).SafeNormalize();
-		return (sourcePoint + targetDirec * SQUARE_SIZE);
+		const float3  targetDirec = (targetPoint - sourcePoint).SafeNormalize() * SQUARE_SIZE;
+		return float3(sourcePoint.x + targetDirec.x, -1.0f, sourcePoint.z + targetDirec.z);
 	}
 	if (livePath->GetID() == 0) {
 		// the request WAS processed but then immediately undone by a
@@ -754,8 +758,8 @@ float3 QTPFS::PathManager::NextWayPoint(
 	const float minRadiusSq = radius * radius;
 	      float curRadiusSq = QTPFS_POSITIVE_INFINITY;
 
-	unsigned int minPointIdx =  0;
-	unsigned int nxtPointIdx = -1U;
+	unsigned int minPointIdx = 0;
+	unsigned int nxtPointIdx = 1; // -1U
 
 	// find the next waypoint (ie. the node that is
 	// furthest along the path *and* within distance
@@ -765,7 +769,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 	// a path can change while a unit is following
 	// it, so we always check each and every point
 	for (unsigned int i = 0; i < (livePath->NumPoints() - 1); i++) {
-		const float radiusSq = (point - livePath->GetPoint(i)).SqLength();
+		const float radiusSq = (point - livePath->GetPoint(i)).SqLength2D();
 
 		#if 1
 		// find waypoints <p0> and <p1> such that <point> is
@@ -775,8 +779,8 @@ float3 QTPFS::PathManager::NextWayPoint(
 		// since depending on the value of <radius> we may
 		// or may not find a "next" node (even though one
 		// always exists)
-		const float3& p0 = livePath->GetPoint(i    ), v0 = (p0 - point);
-		const float3& p1 = livePath->GetPoint(i + 1), v1 = (p1 - point);
+		const float3& p0 = livePath->GetPoint(i    ), v0 = float3(p0.x - point.x, 0.0f, p0.z - point.z);
+		const float3& p1 = livePath->GetPoint(i + 1), v1 = float3(p1.x - point.x, 0.0f, p1.z - point.z);
 
 		if (v0.dot(v1) <= 0.01f) {
 			nxtPointIdx = i + 1;

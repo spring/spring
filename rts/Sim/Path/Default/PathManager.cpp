@@ -300,18 +300,20 @@ float3 CPathManager::NextWayPoint(
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");
 
+	const float3 noPathPoint = float3(-1.0f, 0.0f, -1.0f);
+
 	// 0 indicates a no-path id
 	if (pathId == 0)
-		return float3(-1.0f, -1.0f, -1.0f);
+		return noPathPoint;
 
 	if (numRetries > 4)
-		return float3(-1.0f, -1.0f, -1.0f);
+		return noPathPoint;
 
 	// Find corresponding multipath.
 	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
 
 	if (pi == pathMap.end())
-		return float3(-1.0f, -1.0f, -1.0f);
+		return noPathPoint;
 
 	MultiPath* multiPath = pi->second;
 
@@ -355,7 +357,7 @@ float3 CPathManager::NextWayPoint(
 				if (multiPath->searchResult == IPath::Ok) {
 					return multiPath->finalGoal;
 				} else {
-					return float3(-1.0f, -1.0f, -1.0f);
+					return noPathPoint;
 				}
 			} else {
 				return NextWayPoint(pathId, callerPos, minDistance, numRetries + 1, ownerId, synced);
