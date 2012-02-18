@@ -24,6 +24,16 @@ CLuaSocketRestrictions::CLuaSocketRestrictions()
 	addRules(UDP_LISTEN,  configHandler->GetString("UDPAllowListen"));
 }
 
+void CLuaSocketRestrictions::addRawRule(RestrictType type, const std::string& hostname, int port)
+{
+	if ((port<=0) || (port>65535)){
+		LOG_L(L_ERROR, "Invalid port specified: %d", port);
+		return;
+	}
+	LOG_L(L_WARNING, "Adding rule %d %s:%d",type, hostname.c_str(), port);
+	restrictions[type].push_back(TIpPort(hostname, port));
+}
+
 void CLuaSocketRestrictions::addRule(RestrictType type, const std::string& rule)
 {
 	size_t delimpos = rule.find(":");
@@ -32,15 +42,9 @@ void CLuaSocketRestrictions::addRule(RestrictType type, const std::string& rule)
 		return;
 	}
 	const std::string strport = rule.substr(delimpos+1, delimpos-rule.length());
-	int port = atoi(strport.c_str());
-	if ((port<=0) || (port>65535)){
-		LOG_L(L_ERROR, "Invalid port specified: %s", strport.c_str());
-		return;
-	}
-	LOG_L(L_WARNING, "Adding rule %d %s:%d",type, rule.substr(0, delimpos).c_str(), port);
-	restrictions[type][rule.substr(0, delimpos)] = port;
+	const int port = atoi(strport.c_str());
+	addRawRule(type, rule.substr(0, delimpos), port);
 }
-
 
 void CLuaSocketRestrictions::addRules(RestrictType type, const std::string& configstr)
 {
@@ -81,16 +85,31 @@ bool CLuaSocketRestrictions::isAllowed(RestrictType type, const char* hostname, 
 		end = ALL_RULES;
 	}
 	for (int i=start; i<end; i++) {
-		TStrIntMap::iterator it = restrictions[type].find(hostname);
-		if (it ==restrictions[i].end()) //check if host / ip exists in array
-			continue;
-		const int rport = (*it).second;
-		if (port==-1) { // port ignored
-			return true;
-		} else if (rport==port) {
-			return true;
+		TStrIntMap::iterator it;
+		for(it = restrictions[i].begin(); it != restrictions[i].end(); ++it){
+			if (hostname == (*it).first) {
+				const int rport = (*it).second;
+				if (port==-1) { // port ignored
+					return true;
+				} else if (rport==port) {
+					return true;
+				}
+			}
 		}
 	}
 	return false;
+}
+
+void CLuaSocketRestrictions::addIP(const char* hostname, const char* ip)
+{
+	for(int i=0; i<ALL_RULES; i++){
+		TStrIntMap::iterator it;
+		for(it = restrictions[i].begin(); it != restrictions[i].end(); ++it){
+			const int port = (*it).second;
+			if(!isAllowed((RestrictType)i, ip, port)) { //check if rule already exists, if not, add it
+				addRawRule((RestrictType)i, ip, port);
+			}
+		}
+	}
 }
 
