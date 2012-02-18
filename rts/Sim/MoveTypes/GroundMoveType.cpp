@@ -252,7 +252,13 @@ bool CGroundMoveType::Update()
 		// micro-stuttering (speed is used to extrapolate drawPos)
 		owner->speed = ZeroVector;
 
-		idling = true;
+		// negative y-coordinates indicate temporary waypoints that
+		// only exist while we are still waiting for the pathfinder
+		// (so we want to avoid being considered "idle", since that
+		// will cause our path to be re-requested and again give us
+		// a temporary waypoint, etc.)
+		// NOTE: this is only relevant for QTPFS
+		idling = (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f);
 		hasMoved = false;
 	} else {
 		TestNewTerrainSquare();
@@ -356,7 +362,9 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 	}
 
 	// set the new goal
-	goalPos = moveGoalPos;
+	goalPos.x = moveGoalPos.x;
+	goalPos.z = moveGoalPos.z;
+	goalPos.y = 0.0f;
 	goalRadius = _goalRadius;
 	requestedSpeed = speed;
 	atGoal = false;
@@ -433,14 +441,15 @@ bool CGroundMoveType::FollowPath()
 		}
 
 		// set direction to waypoint AFTER requesting it
-		waypointDir = currWayPoint - owner->pos;
+		waypointDir.x = currWayPoint.x - owner->pos.x;
+		waypointDir.z = currWayPoint.z - owner->pos.z;
 		waypointDir.y = 0.0f;
 		waypointDir.SafeNormalize();
 
 		ASSERT_SYNCED(waypointDir);
 
 		const float3 wpDirInv = -waypointDir;
-	//	const float3 wpPosTmp = owner->pos + wpDirInv;
+	//	const float3 wpPosTmp = owner->pos.xz + wpDirInv;
 		const bool   wpBehind = (waypointDir.dot(flatFrontDir) < 0.0f);
 
 		if (wpBehind) {
@@ -488,8 +497,8 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 		const UnitDef* ud = owner->unitDef;
 		const float groundMod = ud->movedata->moveMath->GetPosSpeedMod(*ud->movedata, owner->pos, flatFrontDir);
 
-		const float3 goalDifFwd = currWayPoint - owner->pos;
-		const float3 goalDifRev = -goalDifFwd;
+		const float3& goalDifFwd = waypointDir;
+		const float3  goalDifRev = -goalDifFwd;
 
 		const float3 goalDif = reversing? goalDifRev: goalDifFwd;
 		const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
@@ -497,7 +506,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 		// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
 		const bool startBreaking =
 			(owner->commandAI->commandQue.size() <= 2) &&
-			((owner->pos - goalPos).SqLength() <= Square(BreakingDistance(currentSpeed)));
+			((owner->pos - goalPos).SqLength2D() <= Square(BreakingDistance(currentSpeed)));
 
 		if (!fpsMode && turnDeltaHeading != 0) {
 			// only auto-adjust speed for turns when not in FPS mode
@@ -1023,7 +1032,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 
 		if (objectDistSq >= Square(currentSpeed * GAME_SPEED + radiusSum))
 			continue;
-		if (objectDistSq >= Square(owner->pos.distance2D(goalPos)))
+		if (objectDistSq >= owner->pos.SqDistance2D(goalPos))
 			continue;
 
 		// note: positive angle cosines mean object is to our right
@@ -1165,9 +1174,9 @@ void CGroundMoveType::GetNextWayPoint()
 		return;
 	}
 
-	{
+	if (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f) {
 		#if (DEBUG_OUTPUT == 1)
-		// plot the vector to currWayPoint
+		// plot the vectors to {curr, next}WayPoint
 		const int cwpFigGroupID = geometricObjects->AddLine(owner->pos + UpVector * 20, currWayPoint + UpVector * 20, 8.0f, 1, 4);
 		const int nwpFigGroupID = geometricObjects->AddLine(owner->pos + UpVector * 20, nextWayPoint + UpVector * 20, 8.0f, 1, 4);
 
@@ -1195,8 +1204,11 @@ void CGroundMoveType::GetNextWayPoint()
 	if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
 		// trigger Arrived on the next Update
 		haveFinalWaypoint = true;
-		currWayPoint = goalPos;
-		nextWayPoint = goalPos;
+
+		currWayPoint.x = goalPos.x;
+		currWayPoint.z = goalPos.z;
+		nextWayPoint.x = goalPos.x;
+		nextWayPoint.z = goalPos.z;
 		return;
 	}
 
@@ -1213,7 +1225,8 @@ void CGroundMoveType::GetNextWayPoint()
 		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
 		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
-			currWayPoint = goalPos;
+			currWayPoint.x = goalPos.x;
+			currWayPoint.z = goalPos.z;
 		}
 
 		if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
@@ -1246,7 +1259,10 @@ float3 CGroundMoveType::Here()
 	const float dist = BreakingDistance(currentSpeed);
 	const int   sign = int(!reversing) * 2 - 1;
 
-	return (owner->pos + (owner->frontdir * dist * sign));
+	const float3 pos2D = float3(owner->pos.x, 0.0f, owner->pos.z);
+	const float3 dir2D = flatFrontDir * dist * sign;
+
+	return (pos2D + dir2D);
 }
 
 
@@ -2008,8 +2024,8 @@ bool CGroundMoveType::UpdateDirectControl()
 	const bool wantReverse = (unitCon.back && !unitCon.forward);
 	float turnSign = 0.0f;
 
-	currWayPoint = owner->pos;
-	currWayPoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
+	currWayPoint.x = owner->pos.x + owner->frontdir.x * (wantReverse)? -100.0f: 100.0f;
+	currWayPoint.z = owner->pos.z + owner->frontdir.z * (wantReverse)? -100.0f: 100.0f;
 	currWayPoint.ClampInBounds();
 
 	if (unitCon.forward) {
@@ -2098,15 +2114,15 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 	if (decRate <= 0.0f) return false;
 	if (turnRate <= 0.0f) return false;
 
-	const float3 waypointDif  = goalPos - owner->pos;                                           // use final WP for ETA
-	const float waypointDist  = waypointDif.Length();                                           // in elmos
-	const float waypointFETA  = (waypointDist / maxSpeed);                                      // in frames (simplistic)
-	const float waypointRETA  = (waypointDist / maxReverseSpeed);                               // in frames (simplistic)
+	const float3 waypointDif  = float3(goalPos.x - owner->pos.x, 0.0f, goalPos.z - owner->pos.z); // use final WP for ETA
+	const float waypointDist  = waypointDif.Length();                                             // in elmos
+	const float waypointFETA  = (waypointDist / maxSpeed);                                        // in frames (simplistic)
+	const float waypointRETA  = (waypointDist / maxReverseSpeed);                                 // in frames (simplistic)
 	const float waypointDirDP = waypointDir2D.dot(owner->frontdir);
-	const float waypointAngle = Clamp(waypointDirDP, -1.0f, 1.0f);                              // prevent NaN's
-	const float turnAngleDeg  = math::acosf(waypointAngle) * RAD2DEG;                           // in degrees
-	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;                   // in "headings"
-	const float revAngleSpr   = SHORTINT_MAXVALUE - turnAngleSpr;                               // 180 deg - angle
+	const float waypointAngle = Clamp(waypointDirDP, -1.0f, 1.0f);                                // prevent NaN's
+	const float turnAngleDeg  = math::acosf(waypointAngle) * RAD2DEG;                             // in degrees
+	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;                     // in "headings"
+	const float revAngleSpr   = SHORTINT_MAXVALUE - turnAngleSpr;                                 // 180 deg - angle
 
 	// units start accelerating before finishing the turn, so subtract something
 	const float turnTimeMod   = 5.0f;
