@@ -73,7 +73,7 @@ bool QTPFS::PathSearch::Execute(
 	// allow the search to start from an impassable node (because single
 	// nodes can represent many terrain squares, some of which can still
 	// be passable and allow a unit to move within a node)
-	// NOTE: we have to make sure such paths do not have infinite cost!
+	// NOTE: we need to make sure such paths do not have infinite cost!
 	if (srcBlocked) {
 		srcNode->SetMoveCost(0.0f);
 	}
