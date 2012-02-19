@@ -53,6 +53,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE)
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
+#define WAIT_FOR_PATH 1
 #define PLAY_SOUNDS 1
 
 
@@ -493,56 +494,65 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 	// wanted speed and acceleration
 	float targetSpeed = wantReverse? maxReverseSpeed: maxSpeed;
 
-	if (wantedSpeed > 0.0f) {
-		const UnitDef* ud = owner->unitDef;
-		const float groundMod = ud->movedata->moveMath->GetPosSpeedMod(*ud->movedata, owner->pos, flatFrontDir);
+	#if (WAIT_FOR_PATH == 1)
+	// don't move until we have an actual path, trying to hide queuing
+	// lag is too dangerous since units can blindly drive into objects,
+	// cliffs, etc. (requires the QTPFS idle-check in Update)
+	if (currWayPoint.y == -1.0f && nextWayPoint.y == -1.0f) {
+		targetSpeed = 0.0f;
+	} else
+	#endif
+	{
+		if (wantedSpeed > 0.0f) {
+			const UnitDef* ud = owner->unitDef;
+			const float groundMod = ud->movedata->moveMath->GetPosSpeedMod(*ud->movedata, owner->pos, flatFrontDir);
 
-		const float3& goalDifFwd = waypointDir;
-		const float3  goalDifRev = -goalDifFwd;
+			const float3& goalDifFwd = waypointDir;
+			const float3  goalDifRev = -goalDifFwd;
 
-		const float3 goalDif = reversing? goalDifRev: goalDifFwd;
-		const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
+			const float3 goalDif = reversing? goalDifRev: goalDifFwd;
+			const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
-		// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
-		const bool startBreaking =
-			(owner->commandAI->commandQue.size() <= 2) &&
-			((owner->pos - goalPos).SqLength2D() <= Square(BreakingDistance(currentSpeed)));
+			// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
+			const bool startBreaking =
+				(owner->commandAI->commandQue.size() <= 2) &&
+				((owner->pos - goalPos).SqLength2D() <= Square(BreakingDistance(currentSpeed)));
 
-		if (!fpsMode && turnDeltaHeading != 0) {
-			// only auto-adjust speed for turns when not in FPS mode
-			const float reqTurnAngle = math::fabs(180.0f * (owner->heading - wantedHeading) / SHORTINT_MAXVALUE);
-			const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
+			if (!fpsMode && turnDeltaHeading != 0) {
+				// only auto-adjust speed for turns when not in FPS mode
+				const float reqTurnAngle = math::fabs(180.0f * (owner->heading - wantedHeading) / SHORTINT_MAXVALUE);
+				const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
-			float reducedSpeed = (reversing)? maxReverseSpeed: maxSpeed;
+				float reducedSpeed = (reversing)? maxReverseSpeed: maxSpeed;
 
-			if (reqTurnAngle != 0.0f) {
-				reducedSpeed *= (maxTurnAngle / reqTurnAngle);
-			}
+				if (reqTurnAngle != 0.0f) {
+					reducedSpeed *= (maxTurnAngle / reqTurnAngle);
+				}
 
-			if (haveFinalWaypoint && !atGoal) {
-				// at this point, Update() will no longer call GetNextWayPoint()
-				// and we must slow down to prevent entering an infinite circle
-				targetSpeed = fastmath::apxsqrt(currWayPointDist * (reversing? accRate: decRate));
-			}
+				if (haveFinalWaypoint && !atGoal) {
+					// at this point, Update() will no longer call GetNextWayPoint()
+					// and we must slow down to prevent entering an infinite circle
+					targetSpeed = fastmath::apxsqrt(currWayPointDist * (reversing? accRate: decRate));
+				}
 
-			if (waypointDir.SqLength() > 0.1f) {
-				if (!ud->turnInPlace) {
-					targetSpeed = std::max(ud->turnInPlaceSpeedLimit, reducedSpeed);
-				} else {
-					if (reqTurnAngle > ud->turnInPlaceAngleLimit) {
-						targetSpeed = reducedSpeed;
+				if (waypointDir.SqLength() > 0.1f) {
+					if (!ud->turnInPlace) {
+						targetSpeed = std::max(ud->turnInPlaceSpeedLimit, reducedSpeed);
+					} else {
+						if (reqTurnAngle > ud->turnInPlaceAngleLimit) {
+							targetSpeed = reducedSpeed;
+						}
 					}
 				}
 			}
+
+			targetSpeed *= groundMod;
+			targetSpeed *= ((startBreaking)? 0.0f: 1.0f);
+			targetSpeed = std::min(targetSpeed, wantedSpeed);
+		} else {
+			targetSpeed = 0.0f;
 		}
-
-		targetSpeed *= groundMod;
-		targetSpeed *= ((startBreaking)? 0.0f: 1.0f);
-		targetSpeed = std::min(targetSpeed, wantedSpeed);
-	} else {
-		targetSpeed = 0.0f;
 	}
-
 
 	const int targetSpeedSign = int(!wantReverse) * 2 - 1;
 	const int currentSpeedSign = int(!reversing) * 2 - 1;
@@ -1177,8 +1187,12 @@ void CGroundMoveType::GetNextWayPoint()
 	if (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f) {
 		#if (DEBUG_OUTPUT == 1)
 		// plot the vectors to {curr, next}WayPoint
-		const int cwpFigGroupID = geometricObjects->AddLine(owner->pos + UpVector * 20, currWayPoint + UpVector * 20, 8.0f, 1, 4);
-		const int nwpFigGroupID = geometricObjects->AddLine(owner->pos + UpVector * 20, nextWayPoint + UpVector * 20, 8.0f, 1, 4);
+		const float3& pos = owner->pos;
+		const float3  cwp = float3(currWayPoint.x, 0.0f, currWayPoint.z);
+		const float3  nwp = float3(nextWayPoint.x, 0.0f, nextWayPoint.z);
+
+		const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
+		const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
 
 		geometricObjects->SetColor(cwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
 		geometricObjects->SetColor(nwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);

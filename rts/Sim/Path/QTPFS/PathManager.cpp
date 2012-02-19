@@ -730,7 +730,8 @@ float3 QTPFS::PathManager::NextWayPoint(
 
 	if (tempPath->GetID() != 0) {
 		// path-request has not yet been processed (so ID still maps to
-		// a temporary path); just set the unit off toward its target
+		// a temporary path); just set the unit off toward its target to
+		// hide latency
 		//
 		// <curPoint> is initially the position of the unit requesting a
 		// path, but later changes to the subsequent values returned here
