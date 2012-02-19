@@ -221,6 +221,8 @@ bool CGroundMoveType::Update()
 	bool hasMoved = false;
 	bool wantReverse = false;
 
+	const short heading = owner->heading;
+
 	if (owner->stunned || owner->beingBuilt) {
 		owner->script->StopMoving();
 		SetDeltaSpeed(0.0f, false);
@@ -259,7 +261,11 @@ bool CGroundMoveType::Update()
 		// will cause our path to be re-requested and again give us
 		// a temporary waypoint, etc.)
 		// NOTE: this is only relevant for QTPFS
+		// if the unit is just turning in-place over several frames
+		// (eg. to maneuver around an obstacle), do not consider it
+		// as "idling"
 		idling = (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f);
+		idling &= (std::abs(owner->heading - heading) < turnRate);
 		hasMoved = false;
 	} else {
 		TestNewTerrainSquare();
@@ -302,7 +308,6 @@ void CGroundMoveType::SlowUpdate()
 
 			if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
 				// case A: we have a path but are not moving
-				// FIXME: triggers during 180-degree turns
 				LOG_L(L_DEBUG,
 						"SlowUpdate: unit %i has pathID %i but %i ETA failures",
 						owner->id, pathId, numIdlingUpdates);
@@ -425,10 +430,6 @@ bool CGroundMoveType::FollowPath()
 			if (!idling) {
 				numIdlingUpdates = std::max(0, int(numIdlingUpdates - 1));
 			} else {
-				// note: the unit could just be turning in-place
-				// over several frames (eg. to maneuver around an
-				// obstacle), which unlike actual immobilization
-				// should be ignored
 				numIdlingUpdates = std::min(SHORTINT_MAXVALUE, int(numIdlingUpdates + 1));
 			}
 		}
