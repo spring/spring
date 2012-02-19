@@ -1188,8 +1188,8 @@ void CGroundMoveType::GetNextWayPoint()
 		#if (DEBUG_OUTPUT == 1)
 		// plot the vectors to {curr, next}WayPoint
 		const float3& pos = owner->pos;
-		const float3  cwp = float3(currWayPoint.x, 0.0f, currWayPoint.z);
-		const float3  nwp = float3(nextWayPoint.x, 0.0f, nextWayPoint.z);
+		const float3& cwp = currWayPoint;
+		const float3& nwp = nextWayPoint;
 
 		const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
 		const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);

@@ -203,10 +203,9 @@ public:
 	 * - note that the pathfinder calculates the waypoints as needed so do not
 	 *   retrieve them until they are needed
 	 * - the waypoint's x and z coordinates are returned in x and z while y is
-	 *   used for error codes
-	 * y >= 0: worked ok
-	 * y = -2: still thinking, call again
-	 * y = -1: end of path reached or invalid path
+	 *   used for status codes
+	 * y =  0: legal path waypoint IFF x >= 0 and z >= 0
+	 * y = -1: temporary waypoint, path not yet available
 	 */
 	virtual int InitPath(float3 start, float3 end, int pathType, float goalRadius = 8) = 0;
 	virtual float3 GetNextWaypoint(int pathId) = 0;
