@@ -37,11 +37,6 @@ if [ ! -s spring_testing_minimal-portable.7z ]; then
 	$WGET http://springrts.com/dl/buildbot/default/master/spring_testing_minimal-portable.7z
 fi
 
-if [ ! -s ArchiveMover_testing.7z ]; then
-	echo "Warning: ArchiveMover_testing.7z didn't exist, downloading..." >&2
-	$WGET http://springrts.com/dl/buildbot/default/master/ArchiveMover_testing.7z
-fi
-
 cd ..
 rm -rf Springlobby
 mkdir -p Springlobby
@@ -62,13 +57,11 @@ cd ../..
 #create uninstall.nsh
 installer/make_uninstall_nsh.py \
 installer/downloads/spring_testing_minimal-portable.7z \
-installer/downloads/ArchiveMover_testing.7z \
 installer/downloads/rapid-spring-latest-win32.7z:rapid\\ >installer/downloads/uninstall.nsh
 
 
 makensis -V3 $NSISDEFINES $@ -DNSI_UNINSTALL_FILES=downloads/uninstall.nsh \
 -DRAPID_ARCHIVE=downloads/rapid-spring-latest-win32.7z \
 -DMIN_PORTABLE_ARCHIVE=downloads/spring_testing_minimal-portable.7z \
--DARCHIVEMOVER=downloads/ArchiveMover_testing.7z \
  installer/spring.nsi
 
