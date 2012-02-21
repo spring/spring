@@ -178,6 +178,12 @@ void QTPFS::PathSearch::IterateSearch(
 	#endif
 
 
+	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
+	const float hWeight = math::sqrtf(curNode->GetPathCost(NODE_PATH_COST_M) / (curNode->GetNumPrevNodes() + 1));
+	#else
+	const float hWeight = 2.0f;
+	#endif
+
 	#ifdef QTPFS_COPY_NEIGHBOR_NODES
 	const unsigned int numNgbs = curNode->GetNeighbors(allNodes, ngbNodes);
 	#else
@@ -220,12 +226,6 @@ void QTPFS::PathSearch::IterateSearch(
 
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
 		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
-
-		#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-		const float hWeight = curNode->GetPathCost(NODE_PATH_COST_M) / (curNode->GetNumPrevNodes() + 1);
-		#else
-		const float hWeight = 2.0f;
-		#endif
 
 		const float mCost = curNode->GetPathCost(NODE_PATH_COST_M) + curNode->GetMoveCost();
 		const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + curNode->GetMoveCost() * (nxtPoint - curPoint).Length();
