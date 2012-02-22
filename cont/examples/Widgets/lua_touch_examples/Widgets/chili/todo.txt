@@ -1,0 +1,18 @@
+- add ctrl.visible
+- fix fixedRatio 1 pixel jumping
+
+- check all listeners if they use chili objects (doing so might break the garbage collection), if so replace them with weaklinks (debug.getupvalue & debug.setupvalue)
+
+- tooltip
+- self:Resize(), OnResize
+- enter,leave (mouse events)
+- RenderToTexture
+- masks for HitTest (depending on linked textures-> alpha channel)
+- more different window controls -> background textures
+- use matrices for clientspace transformations
+- mousewheel support
+- theme & layout handler
+
+controls:
+- combobox
+- editbox

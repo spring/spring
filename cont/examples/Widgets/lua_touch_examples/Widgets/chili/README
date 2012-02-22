@@ -1,0 +1,20 @@
+object
+|_screen
+|_control
+  |_window
+  |_button
+    |_image
+  |_checkbox
+  |_label
+  |_textbox
+  |_trackbar
+  |_colorbars
+
+  |_scrollpanel
+
+  |_selectionbox
+
+  |_layoutpanel
+    |_imagelistview
+    |_grid
+    |_stackpanel

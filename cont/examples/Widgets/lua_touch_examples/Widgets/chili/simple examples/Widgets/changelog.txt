@@ -1,0 +1,12 @@
+ * grid panel uses margin now
+ * added colorbars control
+ * added trackbar control
+---------------------------------------------------------------------------------
+ * added checkbox control
+ * fixed a bug with doubled counted child controls (->grid panel)
+---------------------------------------------------------------------------------
+ * all controls are now topleft aligned (not opengl's bottomleft)
+ * `fixed` GridPanel
+ * all mouse events now first do a HitTest, so you can apply mask in the future (round buttons etc.)
+ * added many point-translation functions like ClientToScreen, ParentToClient, ...
+ * renamed alignment: centered -> center

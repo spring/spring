@@ -1,0 +1,22 @@
+object
+|_font
+|_screen
+|_control
+  |_button
+    |_image
+  |_checkbox
+  |_colorbars
+  |_label
+  |_layoutpanel
+    |_imagelistview
+    |_grid
+    |_stackpanel
+    |_treeview
+  |_panel
+  |_progressbar
+  |_scrollpanel
+  |_textbox
+  |_trackbar
+  |_treeview
+  (|_treeviewnode)
+  |_window
