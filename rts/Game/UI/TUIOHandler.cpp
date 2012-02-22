@@ -177,7 +177,7 @@ shortint2 toWindowSpace(TUIO::TuioPoint *point)
     int ny = point->getScreenY(globalRendering->screenSizeY);
 
     nx -= globalRendering->winPosX;
-    ny -= (globalRendering->screenSizeY - globalRendering->winPosY - globalRendering->winSizeY);
+    ny -= globalRendering->winPosY;
 
     shortint2 pnt;
     pnt.x = nx;
