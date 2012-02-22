@@ -68,17 +68,14 @@ CTuioHandler::~CTuioHandler()
 
  void CTuioHandler::addTuioObject(TUIO::TuioObject *tobj)
 {
-    LOG("Add Object:");
 }
 
 void CTuioHandler::updateTuioObject(TUIO::TuioObject *tobj)
 {
-    LOG("Update Object:");
 }
 
 void CTuioHandler::removeTuioObject(TUIO::TuioObject *tobj)
 {
-    LOG("Remove Object:");
 }
 
 void CTuioHandler::addTuioCursor(TUIO::TuioCursor *tcur)
@@ -112,8 +109,6 @@ void CTuioHandler::addTuioCursor(TUIO::TuioCursor *tcur)
 
 void CTuioHandler::updateTuioCursor(TUIO::TuioCursor *tcur)
 {
-    //logOutput.Print("Update Curser:");
-
     CInputReceiver* recv = activeReceivers[tcur->getCursorID()];
     if(recv)
     {
@@ -123,8 +118,6 @@ void CTuioHandler::updateTuioCursor(TUIO::TuioCursor *tcur)
 
 void CTuioHandler::removeTuioCursor(TUIO::TuioCursor *tcur)
 {
-    //logOutput.Print("Remove Curser:");
-
     CInputReceiver* recv = activeReceivers[tcur->getCursorID()];
     if(recv)
     {
@@ -135,7 +128,6 @@ void CTuioHandler::removeTuioCursor(TUIO::TuioCursor *tcur)
 
 void CTuioHandler::refresh(TUIO::TuioTime ftime)
 {
-    //logOutput.Print("refresh:");
     refreshedReceivers.clear();
     std::map<int, CInputReceiver*>::const_iterator it;
 
