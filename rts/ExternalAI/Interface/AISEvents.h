@@ -141,7 +141,6 @@ struct SMessageEvent {
  */
 struct SLuaMessageEvent {
 	const char* inData;
-	const char** outData;
 }; //$ EVENT_LUA_MESSAGE
 
 /**
