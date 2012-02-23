@@ -1214,17 +1214,16 @@ void CGroundMoveType::GetNextWayPoint()
 		if (currWayPointDist > MIN_WAYPOINT_DISTANCE && waypointDir.dot(flatFrontDir) >= 0.995f) {
 			return;
 		}
-	}
 
-	if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
-		// trigger Arrived on the next Update
-		haveFinalWaypoint = true;
+		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
+			// trigger Arrived on the next Update (but
+			// only if we have non-temporary waypoints)
+			haveFinalWaypoint = true;
 
-		currWayPoint.x = goalPos.x;
-		currWayPoint.z = goalPos.z;
-		nextWayPoint.x = goalPos.x;
-		nextWayPoint.z = goalPos.z;
-		return;
+			currWayPoint = goalPos;
+			nextWayPoint = goalPos;
+			return;
+		}
 	}
 
 	// TODO-QTPFS:
@@ -1238,11 +1237,6 @@ void CGroundMoveType::GetNextWayPoint()
 	if ((nextWayPoint - currWayPoint).SqLength2D() > 0.01f) {
 		currWayPoint = nextWayPoint;
 		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
-
-		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
-			currWayPoint.x = goalPos.x;
-			currWayPoint.z = goalPos.z;
-		}
 
 		if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
 			Fail();
