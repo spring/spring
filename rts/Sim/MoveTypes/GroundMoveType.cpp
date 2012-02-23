@@ -1412,7 +1412,8 @@ void CGroundMoveType::HandleUnitCollisions(
 	      std::vector<CUnit*>::const_iterator uit;
 
 	// NOTE: probably too large for most units (eg. causes tree falling animations to be skipped)
-	const float3 crushImpulse = collider->speed * ((reversing)? -collider->mass: collider->mass);
+	const int dirSign = int(!reversing) * 2 - 1;
+	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 		CUnit* collidee = const_cast<CUnit*>(*uit);
@@ -1511,7 +1512,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				currentSpeed = 0.0f;
 				deltaSpeed = 0.0f;
 
-				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir) >= 0.5f)) {
+				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
 					// repath iff obstacle is within 60-degree cone; we do this
 					// because the GNWP lookahead (for non-TIP units) can cause
 					// corners to be cut across statically blocked squares
@@ -1569,7 +1570,8 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(colliderCurPos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
 
-	const float3 crushImpulse = collider->speed * ((reversing)? -collider->mass: collider->mass);
+	const int dirSign = int(!reversing) * 2 - 1;
+	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
 	for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
 		CFeature* collidee = const_cast<CFeature*>(*fit);
@@ -1632,7 +1634,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 				currentSpeed = 0.0f;
 				deltaSpeed = 0.0f;
 
-				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir) >= 0.5f)) {
+				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
 					StartMoving(goalPos, goalRadius, 0.0f);
 				}
 			}
