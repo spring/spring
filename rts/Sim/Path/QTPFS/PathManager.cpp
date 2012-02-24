@@ -348,6 +348,14 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 	if (md->unitDefRefCount == 0)
 		return;
 
+	// FIXME?
+	//     needed for IsBlocked* --> SquareIsBlocked --> IsNonBlocking
+	//     no point doing this in ExecuteSearch because the IsBlocked*
+	//     calls are only made from here, no point doing it here since
+	//     we are independent of a specific path --> requires redesign
+	//
+	// md->tempOwner = const_cast<CSolidObject*>(path->GetOwner());
+
 	// adjust the borders so we are not left with "rims" of
 	// impassable squares when eg. a structure is reclaimed
 	SRectangle mr = SRectangle(r);
@@ -505,6 +513,7 @@ void QTPFS::PathManager::ExecuteSearch(
 ) {
 	IPathSearch* search = *searchesIt;
 	IPath* path = pathCache.GetTempPath(search->GetID());
+	MoveData* md = moveinfo->moveData[pathType];
 
 	assert(search != NULL);
 	assert(path != NULL);
@@ -548,14 +557,6 @@ void QTPFS::PathManager::ExecuteSearch(
 		numCurrExecutedSearches[search->GetTeam()] += 1;
 		#endif
 	}
-
-
-	// FIXME:
-	//     need to do this for IsBlocked* --> SquareIsBlocked --> IsNonBlocking, but
-	//     delayed execution means object handed to QueueSearch might now be dangling
-	// MoveData* md = moveinfo->moveData[pathType];
-	// md->tempOwner = path->GetObject();
-
 
 	// removes path from temp-paths, adds it to live-paths
 	if (search->Execute(searchStateOffset, numTerrainChanges)) {
@@ -610,6 +611,11 @@ unsigned int QTPFS::PathManager::QueueSearch(
 	// NOTE:
 	//     all paths get deleted by the cache they are in;
 	//     all searches get deleted by subsequent Update's
+	// NOTE:
+	//     the path-owner object handed to us can never become
+	//     dangling (even with delayed execution) because ~GMT
+	//     calls DeletePath, which ensures any path is removed
+	//     from its cache before we get to ExecuteSearch
 	IPath* newPath = new IPath();
 	IPathSearch* newSearch = new PathSearch(PATH_SEARCH_ASTAR);
 
@@ -618,6 +624,15 @@ unsigned int QTPFS::PathManager::QueueSearch(
 
 	if (oldPath != NULL) {
 		assert(oldPath->GetID() != 0);
+		// argument values are unused in this case
+		assert(object == NULL);
+		assert(sourcePoint == ZeroVector);
+		assert(targetPoint == ZeroVector);
+		assert(radius == -1.0f);
+		assert(!synced);
+
+		const CSolidObject* obj = oldPath->GetOwner();
+		const float3& pos = (obj != NULL)? obj->pos: oldPath->GetSourcePoint();
 
 		newPath->SetID(oldPath->GetID());
 		newPath->SetRadius(oldPath->GetRadius());
@@ -627,8 +642,8 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		// along the path, not the original source
 		// (oldPath->GetSourcePoint())
 		newPath->AllocPoints(2);
-		newPath->SetObjectPoint(oldPath->GetObjectPoint());
-		newPath->SetSourcePoint(oldPath->GetObjectPoint());
+		newPath->SetOwner(oldPath->GetOwner());
+		newPath->SetSourcePoint(pos);
 		newPath->SetTargetPoint(oldPath->GetTargetPoint());
 		newSearch->SetID(oldPath->GetID());
 		newSearch->SetTeam(teamHandler->ActiveTeams());
@@ -640,7 +655,7 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		newPath->SetRadius(radius);
 		newPath->SetSynced(synced);
 		newPath->AllocPoints(2);
-		newPath->SetObjectPoint((object != NULL)? object->pos: sourcePoint);
+		newPath->SetOwner(object);
 		newPath->SetSourcePoint(sourcePoint);
 		newPath->SetTargetPoint(targetPoint);
 		newSearch->SetID(newPath->GetID());
@@ -671,7 +686,7 @@ void QTPFS::PathManager::UpdatePath(const CSolidObject* owner, unsigned int path
 		IPath* livePath = pathCache.GetLivePath(pathID);
 
 		if (livePath->GetID() != 0) {
-			livePath->SetObjectPoint(owner->pos);
+			assert(owner == livePath->GetOwner());
 		}
 	}
 }
@@ -730,7 +745,8 @@ float3 QTPFS::PathManager::NextWayPoint(
 
 	if (tempPath->GetID() != 0) {
 		// path-request has not yet been processed (so ID still maps to
-		// a temporary path); just set the unit off toward its target
+		// a temporary path); just set the unit off toward its target to
+		// hide latency
 		//
 		// <curPoint> is initially the position of the unit requesting a
 		// path, but later changes to the subsequent values returned here
