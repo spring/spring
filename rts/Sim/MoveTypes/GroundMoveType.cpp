@@ -53,6 +53,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE)
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
+#define WAIT_FOR_PATH 1
 #define PLAY_SOUNDS 1
 
 
@@ -220,6 +221,8 @@ bool CGroundMoveType::Update()
 	bool hasMoved = false;
 	bool wantReverse = false;
 
+	const short heading = owner->heading;
+
 	if (owner->stunned || owner->beingBuilt) {
 		owner->script->StopMoving();
 		SetDeltaSpeed(0.0f, false);
@@ -258,7 +261,11 @@ bool CGroundMoveType::Update()
 		// will cause our path to be re-requested and again give us
 		// a temporary waypoint, etc.)
 		// NOTE: this is only relevant for QTPFS
+		// if the unit is just turning in-place over several frames
+		// (eg. to maneuver around an obstacle), do not consider it
+		// as "idling"
 		idling = (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f);
+		idling &= (std::abs(owner->heading - heading) < turnRate);
 		hasMoved = false;
 	} else {
 		TestNewTerrainSquare();
@@ -301,7 +308,6 @@ void CGroundMoveType::SlowUpdate()
 
 			if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
 				// case A: we have a path but are not moving
-				// FIXME: triggers during 180-degree turns
 				LOG_L(L_DEBUG,
 						"SlowUpdate: unit %i has pathID %i but %i ETA failures",
 						owner->id, pathId, numIdlingUpdates);
@@ -424,10 +430,6 @@ bool CGroundMoveType::FollowPath()
 			if (!idling) {
 				numIdlingUpdates = std::max(0, int(numIdlingUpdates - 1));
 			} else {
-				// note: the unit could just be turning in-place
-				// over several frames (eg. to maneuver around an
-				// obstacle), which unlike actual immobilization
-				// should be ignored
 				numIdlingUpdates = std::min(SHORTINT_MAXVALUE, int(numIdlingUpdates + 1));
 			}
 		}
@@ -493,56 +495,65 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 	// wanted speed and acceleration
 	float targetSpeed = wantReverse? maxReverseSpeed: maxSpeed;
 
-	if (wantedSpeed > 0.0f) {
-		const UnitDef* ud = owner->unitDef;
-		const float groundMod = ud->movedata->moveMath->GetPosSpeedMod(*ud->movedata, owner->pos, flatFrontDir);
+	#if (WAIT_FOR_PATH == 1)
+	// don't move until we have an actual path, trying to hide queuing
+	// lag is too dangerous since units can blindly drive into objects,
+	// cliffs, etc. (requires the QTPFS idle-check in Update)
+	if (currWayPoint.y == -1.0f && nextWayPoint.y == -1.0f) {
+		targetSpeed = 0.0f;
+	} else
+	#endif
+	{
+		if (wantedSpeed > 0.0f) {
+			const UnitDef* ud = owner->unitDef;
+			const float groundMod = ud->movedata->moveMath->GetPosSpeedMod(*ud->movedata, owner->pos, flatFrontDir);
 
-		const float3& goalDifFwd = waypointDir;
-		const float3  goalDifRev = -goalDifFwd;
+			const float3& goalDifFwd = waypointDir;
+			const float3  goalDifRev = -goalDifFwd;
 
-		const float3 goalDif = reversing? goalDifRev: goalDifFwd;
-		const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
+			const float3 goalDif = reversing? goalDifRev: goalDifFwd;
+			const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
-		// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
-		const bool startBreaking =
-			(owner->commandAI->commandQue.size() <= 2) &&
-			((owner->pos - goalPos).SqLength2D() <= Square(BreakingDistance(currentSpeed)));
+			// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
+			const bool startBreaking =
+				(owner->commandAI->commandQue.size() <= 2) &&
+				((owner->pos - goalPos).SqLength2D() <= Square(BreakingDistance(currentSpeed)));
 
-		if (!fpsMode && turnDeltaHeading != 0) {
-			// only auto-adjust speed for turns when not in FPS mode
-			const float reqTurnAngle = math::fabs(180.0f * (owner->heading - wantedHeading) / SHORTINT_MAXVALUE);
-			const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
+			if (!fpsMode && turnDeltaHeading != 0) {
+				// only auto-adjust speed for turns when not in FPS mode
+				const float reqTurnAngle = math::fabs(180.0f * (owner->heading - wantedHeading) / SHORTINT_MAXVALUE);
+				const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
-			float reducedSpeed = (reversing)? maxReverseSpeed: maxSpeed;
+				float reducedSpeed = (reversing)? maxReverseSpeed: maxSpeed;
 
-			if (reqTurnAngle != 0.0f) {
-				reducedSpeed *= (maxTurnAngle / reqTurnAngle);
-			}
+				if (reqTurnAngle != 0.0f) {
+					reducedSpeed *= (maxTurnAngle / reqTurnAngle);
+				}
 
-			if (haveFinalWaypoint && !atGoal) {
-				// at this point, Update() will no longer call GetNextWayPoint()
-				// and we must slow down to prevent entering an infinite circle
-				targetSpeed = fastmath::apxsqrt(currWayPointDist * (reversing? accRate: decRate));
-			}
+				if (haveFinalWaypoint && !atGoal) {
+					// at this point, Update() will no longer call GetNextWayPoint()
+					// and we must slow down to prevent entering an infinite circle
+					targetSpeed = fastmath::apxsqrt(currWayPointDist * (reversing? accRate: decRate));
+				}
 
-			if (waypointDir.SqLength() > 0.1f) {
-				if (!ud->turnInPlace) {
-					targetSpeed = std::max(ud->turnInPlaceSpeedLimit, reducedSpeed);
-				} else {
-					if (reqTurnAngle > ud->turnInPlaceAngleLimit) {
-						targetSpeed = reducedSpeed;
+				if (waypointDir.SqLength() > 0.1f) {
+					if (!ud->turnInPlace) {
+						targetSpeed = std::max(ud->turnInPlaceSpeedLimit, reducedSpeed);
+					} else {
+						if (reqTurnAngle > ud->turnInPlaceAngleLimit) {
+							targetSpeed = reducedSpeed;
+						}
 					}
 				}
 			}
+
+			targetSpeed *= groundMod;
+			targetSpeed *= ((startBreaking)? 0.0f: 1.0f);
+			targetSpeed = std::min(targetSpeed, wantedSpeed);
+		} else {
+			targetSpeed = 0.0f;
 		}
-
-		targetSpeed *= groundMod;
-		targetSpeed *= ((startBreaking)? 0.0f: 1.0f);
-		targetSpeed = std::min(targetSpeed, wantedSpeed);
-	} else {
-		targetSpeed = 0.0f;
 	}
-
 
 	const int targetSpeedSign = int(!wantReverse) * 2 - 1;
 	const int currentSpeedSign = int(!reversing) * 2 - 1;
@@ -1177,8 +1188,12 @@ void CGroundMoveType::GetNextWayPoint()
 	if (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f) {
 		#if (DEBUG_OUTPUT == 1)
 		// plot the vectors to {curr, next}WayPoint
-		const int cwpFigGroupID = geometricObjects->AddLine(owner->pos + UpVector * 20, currWayPoint + UpVector * 20, 8.0f, 1, 4);
-		const int nwpFigGroupID = geometricObjects->AddLine(owner->pos + UpVector * 20, nextWayPoint + UpVector * 20, 8.0f, 1, 4);
+		const float3& pos = owner->pos;
+		const float3& cwp = currWayPoint;
+		const float3& nwp = nextWayPoint;
+
+		const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
+		const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
 
 		geometricObjects->SetColor(cwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
 		geometricObjects->SetColor(nwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
@@ -1192,24 +1207,24 @@ void CGroundMoveType::GetNextWayPoint()
 		// to prevent sine-like "snaking" trajectories
 		const float turnFrames = SPRING_CIRCLE_DIVS / turnRate;
 		const float turnRadius = (owner->speed.Length() * turnFrames) / (PI + PI);
+		const int dirSign = int(!reversing) * 2 - 1;
 
 		if (currWayPointDist > (turnRadius * 2.0f)) {
 			return;
 		}
-		if (currWayPointDist > MIN_WAYPOINT_DISTANCE && waypointDir.dot(flatFrontDir) >= 0.995f) {
+		if (currWayPointDist > MIN_WAYPOINT_DISTANCE && waypointDir.dot(flatFrontDir * dirSign) >= 0.995f) {
 			return;
 		}
-	}
 
-	if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
-		// trigger Arrived on the next Update
-		haveFinalWaypoint = true;
+		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
+			// trigger Arrived on the next Update (but
+			// only if we have non-temporary waypoints)
+			haveFinalWaypoint = true;
 
-		currWayPoint.x = goalPos.x;
-		currWayPoint.z = goalPos.z;
-		nextWayPoint.x = goalPos.x;
-		nextWayPoint.z = goalPos.z;
-		return;
+			currWayPoint = goalPos;
+			nextWayPoint = goalPos;
+			return;
+		}
 	}
 
 	// TODO-QTPFS:
@@ -1223,11 +1238,6 @@ void CGroundMoveType::GetNextWayPoint()
 	if ((nextWayPoint - currWayPoint).SqLength2D() > 0.01f) {
 		currWayPoint = nextWayPoint;
 		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
-
-		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
-			currWayPoint.x = goalPos.x;
-			currWayPoint.z = goalPos.z;
-		}
 
 		if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
 			Fail();
@@ -1403,7 +1413,8 @@ void CGroundMoveType::HandleUnitCollisions(
 	      std::vector<CUnit*>::const_iterator uit;
 
 	// NOTE: probably too large for most units (eg. causes tree falling animations to be skipped)
-	const float3 crushImpulse = collider->speed * ((reversing)? -collider->mass: collider->mass);
+	const int dirSign = int(!reversing) * 2 - 1;
+	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 		CUnit* collidee = const_cast<CUnit*>(*uit);
@@ -1502,7 +1513,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				currentSpeed = 0.0f;
 				deltaSpeed = 0.0f;
 
-				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir) >= 0.5f)) {
+				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
 					// repath iff obstacle is within 60-degree cone; we do this
 					// because the GNWP lookahead (for non-TIP units) can cause
 					// corners to be cut across statically blocked squares
@@ -1560,7 +1571,8 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(colliderCurPos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
 
-	const float3 crushImpulse = collider->speed * ((reversing)? -collider->mass: collider->mass);
+	const int dirSign = int(!reversing) * 2 - 1;
+	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
 	for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
 		CFeature* collidee = const_cast<CFeature*>(*fit);
@@ -1623,7 +1635,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 				currentSpeed = 0.0f;
 				deltaSpeed = 0.0f;
 
-				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir) >= 0.5f)) {
+				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
 					StartMoving(goalPos, goalRadius, 0.0f);
 				}
 			}
