@@ -44,11 +44,10 @@ public:
 	 * @return true if reclaimed
 	 */
 	bool AddBuildPower(float amount, CUnit* builder);
-	void DoDamage(const DamageArray& damages, const float3& impulse);
-	void Kill(const float3& impulse, bool crushKill);
+	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID);
 	void ForcedMove(const float3& newPos, bool snapToGround = true);
 	void ForcedSpin(const float3& newDir);
-	virtual bool Update(void);
+	bool Update(void);
 	bool UpdatePosition(void);
 	void StartFire(void);
 	float RemainingResource(float res) const;
@@ -86,9 +85,8 @@ public:
 	 * until the corpse has been fully 'repaired'.
 	 */
 	bool isRepairingBeforeResurrect;
-	float resurrectProgress;
 
-	float health;
+	float resurrectProgress;
 	float reclaimLeft;
 
 	bool luaDraw;
