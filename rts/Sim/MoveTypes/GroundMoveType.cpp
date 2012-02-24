@@ -694,7 +694,7 @@ void CGroundMoveType::UpdateSkid()
 			//     bouncing behaves too much like a rubber-ball,
 			//     most impact energy needs to go into the ground
 			if (doColliderDamage) {
-				owner->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
+				owner->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_GROUND);
 			}
 
 			skidRotSpeed = 0.0f;
@@ -865,11 +865,11 @@ void CGroundMoveType::CheckCollisionSkid()
 
 			// damage the collider, no added impulse
 			if (doColliderDamage) {
-				collider->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
+				collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 			}
 			// damage the (static) collidee based on collider's mass, no added impulse
 			if (doCollideeDamage) {
-				collidee->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
+				collidee->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 			}
 		} else {
 			// don't conserve momentum
@@ -896,11 +896,11 @@ void CGroundMoveType::CheckCollisionSkid()
 
 			// damage the collider
 			if (doColliderDamage) {
-				collider->DoDamage(DamageArray(colliderImpactDmgMult), NULL, dif * colliderImpactDmgMult);
+				collider->DoDamage(DamageArray(colliderImpactDmgMult), dif * colliderImpactDmgMult, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 			}
 			// damage the collidee
 			if (doCollideeDamage) {
-				collidee->DoDamage(DamageArray(collideeImpactDmgMult), NULL, dif * -collideeImpactDmgMult);
+				collidee->DoDamage(DamageArray(collideeImpactDmgMult), dif * -collideeImpactDmgMult, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 			}
 
 			collider->speed += colliderImpactImpulse;
@@ -936,11 +936,11 @@ void CGroundMoveType::CheckCollisionSkid()
 
 		// damage the collider, no added impulse (!) 
 		if (doColliderDamage) {
-			collider->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
+			collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 		}
 
 		// damage the collidee feature based on collider's mass
-		f->DoDamage(DamageArray(impactDamageMult), -impactImpulse);
+		f->DoDamage(DamageArray(impactDamageMult), -impactImpulse, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 	}
 
 	ASSERT_SANE_OWNER_SPEED(collider->speed);

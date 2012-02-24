@@ -168,7 +168,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			if (!unitDef->releaseHeld) {
 				if (!selfDestruct) {
 					// we don't want it to leave a corpse
-					transportee->DoDamage(DamageArray(1e6f), 0, ZeroVector);
+					transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED);
 				}
 
 				transportee->KillUnit(selfDestruct, reclaimed, attacker);

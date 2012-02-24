@@ -108,7 +108,7 @@ void CFireProjectile::Update()
 			}
 			const std::vector<CUnit*>& units = qf->GetUnitsExact(emitPos + wind.GetCurrentWind()*0.7f, emitRadius * 2);
 			for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-				(*ui)->DoDamage(DamageArray(30), 0, ZeroVector);
+				(*ui)->DoDamage(DamageArray(30), ZeroVector, NULL, -CSolidObject::DAMAGE_EXTSOURCE_INFIRE);
 			}
 		}
 	}

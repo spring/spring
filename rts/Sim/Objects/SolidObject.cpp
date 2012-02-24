@@ -6,6 +6,7 @@
 #include "Map/ReadMap.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "System/myMath.h"
@@ -18,6 +19,7 @@ const float CSolidObject::MAXIMUM_MASS = 1e6f;
 CR_BIND_DERIVED(CSolidObject, CWorldObject, );
 CR_REG_METADATA(CSolidObject,
 (
+	CR_MEMBER(health),
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
 
@@ -65,6 +67,7 @@ CR_REG_METADATA(CSolidObject,
 
 
 CSolidObject::CSolidObject():
+	health(0.0f),
 	mass(DEFAULT_MASS),
 	crushResistance(0.0f),
 	blocking(false),
@@ -151,3 +154,13 @@ int2 CSolidObject::GetMapPos(const float3& position) const
 
 	return mp;
 }
+
+
+
+void CSolidObject::Kill(const float3& impulse, bool crushKill) {
+	crushKilled = crushKill;
+
+	DamageArray damage;
+	DoDamage(damage * (health + 1.0f), impulse, NULL, -DAMAGE_EXTSOURCE_KILLED);
+}
+

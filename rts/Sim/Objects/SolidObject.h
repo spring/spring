@@ -23,13 +23,21 @@ public:
 		Hovering,
 		Flying,
 	};
+	enum DamageType {
+		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
+		DAMAGE_EXPLOSION_DEBRIS = 1, // piece-projectile that triggered GameHelper::Explosion (weaponDefID < 0)
+		DAMAGE_COLLISION_GROUND = 2, // ground collision
+		DAMAGE_COLLISION_OBJECT = 3, // object collision
+		DAMAGE_EXTSOURCE_INFIRE = 4,
+		DAMAGE_EXTSOURCE_KILLED = 5,
+	};
 
 	CSolidObject();
 	virtual ~CSolidObject();
 
 	virtual bool AddBuildPower(float amount, CUnit* builder) { return false; }
-	virtual void DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse) {}
-	virtual void Kill(const float3& impulse, bool crushKill) {}
+	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID) {}
+	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }
 
 	void Move3D(const float3& v, bool relative) {
@@ -72,6 +80,7 @@ public:
 	int2 GetMapPos(const float3& position) const;
 
 public:
+	float health;
 	float mass;                                 ///< the physical mass of this object (run-time constant)
 	float crushResistance;                      ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
 
