@@ -1207,11 +1207,12 @@ void CGroundMoveType::GetNextWayPoint()
 		// to prevent sine-like "snaking" trajectories
 		const float turnFrames = SPRING_CIRCLE_DIVS / turnRate;
 		const float turnRadius = (owner->speed.Length() * turnFrames) / (PI + PI);
+		const int dirSign = int(!reversing) * 2 - 1;
 
 		if (currWayPointDist > (turnRadius * 2.0f)) {
 			return;
 		}
-		if (currWayPointDist > MIN_WAYPOINT_DISTANCE && waypointDir.dot(flatFrontDir) >= 0.995f) {
+		if (currWayPointDist > MIN_WAYPOINT_DISTANCE && waypointDir.dot(flatFrontDir * dirSign) >= 0.995f) {
 			return;
 		}
 
