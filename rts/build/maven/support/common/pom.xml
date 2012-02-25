@@ -25,7 +25,7 @@
 	<packaging>pom</packaging>
 
 	<prerequisites>
-		<maven>2.1</maven>
+		<maven>2.2.1</maven>
 	</prerequisites>
 
 	<name>CommonSpringParent</name>
