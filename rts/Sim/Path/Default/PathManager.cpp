@@ -292,18 +292,20 @@ float3 CPathManager::NextWayPoint(
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");
 
+	const float3 noPathPoint = float3(-1.0f, 0.0f, -1.0f);
+
 	// 0 indicates a no-path id
 	if (pathId == 0)
-		return float3(-1.0f, -1.0f, -1.0f);
+		return noPathPoint;
 
 	if (numRetries > 4)
-		return float3(-1.0f, -1.0f, -1.0f);
+		return noPathPoint;
 
 	// Find corresponding multipath.
 	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
 
 	if (pi == pathMap.end())
-		return float3(-1.0f, -1.0f, -1.0f);
+		return noPathPoint;
 
 	MultiPath* multiPath = pi->second;
 
@@ -336,27 +338,35 @@ float3 CPathManager::NextWayPoint(
 	}
 
 	float3 waypoint;
+
 	do {
 		// get the next waypoint from the high-res path
 		//
 		// if this is not possible, then either we are
 		// at the goal OR the path could not reach all
 		// the way to it (ie. a GoalOutOfRange result)
+		// OR we are stuck on an impassable square
 		if (multiPath->maxResPath.path.empty()) {
 			if (multiPath->lowResPath.path.empty() && multiPath->medResPath.path.empty()) {
 				if (multiPath->searchResult == IPath::Ok) {
-					return multiPath->finalGoal;
+					waypoint = multiPath->finalGoal; break;
 				} else {
-					return float3(-1.0f, -1.0f, -1.0f);
+					// note: unreachable?
+					waypoint = noPathPoint; break;
 				}
 			} else {
-				return NextWayPoint(pathId, callerPos, minDistance, numRetries + 1, ownerId, synced);
+				waypoint = NextWayPoint(pathId, callerPos, minDistance, numRetries + 1, ownerId, synced);
+				break;
 			}
 		} else {
 			waypoint = multiPath->maxResPath.path.back();
 			multiPath->maxResPath.path.pop_back();
 		}
 	} while (callerPos.SqDistance2D(waypoint) < Square(minDistance) && waypoint != multiPath->maxResPath.pathGoal);
+
+	// indicate this is not a temporary waypoint
+	// (the default PFS does not queue requests)
+	waypoint.y = 0.0f;
 
 	return waypoint;
 }

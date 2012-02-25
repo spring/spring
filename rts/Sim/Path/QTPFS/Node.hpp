@@ -51,6 +51,7 @@ namespace QTPFS {
 		virtual unsigned int xsize() const = 0;
 		virtual unsigned int zsize() const = 0;
 
+		virtual void SetMoveCost(float cost) = 0;
 		virtual float GetMoveCost() const = 0;
 
 		virtual void SetSearchState(unsigned int) = 0;
@@ -118,6 +119,8 @@ namespace QTPFS {
 		unsigned int GetMaxNumNeighbors() const;
 		unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&);
 		const std::vector<INode*>& GetNeighbors(const std::vector<INode*>&);
+
+		void SetMoveCost(float cost) { moveCostAvg = cost; }
 		float GetMoveCost() const { return moveCostAvg; }
 
 		unsigned int xmin() const { return _xmin; }

@@ -348,6 +348,14 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 	if (md->unitDefRefCount == 0)
 		return;
 
+	// FIXME?
+	//     needed for IsBlocked* --> SquareIsBlocked --> IsNonBlocking
+	//     no point doing this in ExecuteSearch because the IsBlocked*
+	//     calls are only made from here, no point doing it here since
+	//     we are independent of a specific path --> requires redesign
+	//
+	// md->tempOwner = const_cast<CSolidObject*>(path->GetOwner());
+
 	// adjust the borders so we are not left with "rims" of
 	// impassable squares when eg. a structure is reclaimed
 	SRectangle mr = SRectangle(r);
@@ -450,11 +458,9 @@ void QTPFS::PathManager::Update() {
 
 	// NOTE:
 	//     for a mod with N move-types, a unit will be waiting
-	//     <numUpdates> sim-frames before its request executes
-	//     (at a minimum)
-	static const unsigned int numPathTypeUpdates =
-		std::max(1U, static_cast<unsigned int>(nodeLayers.size() / MAX_UPDATE_DELAY));
-
+	//     (N / MAX_UPDATE_DELAY) sim-frames before its request
+	//     executes at a minimum
+	static const unsigned int numPathTypeUpdates = std::max(1U, static_cast<unsigned int>(nodeLayers.size() / MAX_UPDATE_DELAY));
 	static unsigned int minPathTypeUpdate = 0;
 	static unsigned int maxPathTypeUpdate = numPathTypeUpdates;
 
@@ -507,6 +513,7 @@ void QTPFS::PathManager::ExecuteSearch(
 ) {
 	IPathSearch* search = *searchesIt;
 	IPath* path = pathCache.GetTempPath(search->GetID());
+	MoveData* md = moveinfo->moveData[pathType];
 
 	assert(search != NULL);
 	assert(path != NULL);
@@ -550,14 +557,6 @@ void QTPFS::PathManager::ExecuteSearch(
 		numCurrExecutedSearches[search->GetTeam()] += 1;
 		#endif
 	}
-
-
-	// FIXME:
-	//     need to do this for IsBlocked* --> SquareIsBlocked --> IsNonBlocking, but
-	//     delayed execution means object handed to QueueSearch might now be dangling
-	// MoveData* md = moveinfo->moveData[pathType];
-	// md->tempOwner = path->GetObject();
-
 
 	// removes path from temp-paths, adds it to live-paths
 	if (search->Execute(searchStateOffset, numTerrainChanges)) {
@@ -612,6 +611,11 @@ unsigned int QTPFS::PathManager::QueueSearch(
 	// NOTE:
 	//     all paths get deleted by the cache they are in;
 	//     all searches get deleted by subsequent Update's
+	// NOTE:
+	//     the path-owner object handed to us can never become
+	//     dangling (even with delayed execution) because ~GMT
+	//     calls DeletePath, which ensures any path is removed
+	//     from its cache before we get to ExecuteSearch
 	IPath* newPath = new IPath();
 	IPathSearch* newSearch = new PathSearch(PATH_SEARCH_ASTAR);
 
@@ -620,6 +624,15 @@ unsigned int QTPFS::PathManager::QueueSearch(
 
 	if (oldPath != NULL) {
 		assert(oldPath->GetID() != 0);
+		// argument values are unused in this case
+		assert(object == NULL);
+		assert(sourcePoint == ZeroVector);
+		assert(targetPoint == ZeroVector);
+		assert(radius == -1.0f);
+		assert(!synced);
+
+		const CSolidObject* obj = oldPath->GetOwner();
+		const float3& pos = (obj != NULL)? obj->pos: oldPath->GetSourcePoint();
 
 		newPath->SetID(oldPath->GetID());
 		newPath->SetRadius(oldPath->GetRadius());
@@ -629,8 +642,8 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		// along the path, not the original source
 		// (oldPath->GetSourcePoint())
 		newPath->AllocPoints(2);
-		newPath->SetObjectPoint(oldPath->GetObjectPoint());
-		newPath->SetSourcePoint(oldPath->GetObjectPoint());
+		newPath->SetOwner(oldPath->GetOwner());
+		newPath->SetSourcePoint(pos);
 		newPath->SetTargetPoint(oldPath->GetTargetPoint());
 		newSearch->SetID(oldPath->GetID());
 		newSearch->SetTeam(teamHandler->ActiveTeams());
@@ -642,7 +655,7 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		newPath->SetRadius(radius);
 		newPath->SetSynced(synced);
 		newPath->AllocPoints(2);
-		newPath->SetObjectPoint((object != NULL)? object->pos: sourcePoint);
+		newPath->SetOwner(object);
 		newPath->SetSourcePoint(sourcePoint);
 		newPath->SetTargetPoint(targetPoint);
 		newSearch->SetID(newPath->GetID());
@@ -673,7 +686,7 @@ void QTPFS::PathManager::UpdatePath(const CSolidObject* owner, unsigned int path
 		IPath* livePath = pathCache.GetLivePath(pathID);
 
 		if (livePath->GetID() != 0) {
-			livePath->SetObjectPoint(owner->pos);
+			assert(owner == livePath->GetOwner());
 		}
 	}
 }
@@ -720,17 +733,20 @@ float3 QTPFS::PathManager::NextWayPoint(
 	SCOPED_TIMER("PathManager::NextWayPoint");
 
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
+	const float3 noPathPoint = float3(-1.0f, 0.0f, -1.0f);
 
-	// dangling ID after re-request failure or regular deletion
+	// dangling ID after a re-request failure or regular deletion
+	// return an error-vector so GMT knows it should stop the unit
 	if (pathTypeIt == pathTypes.end())
-		return point;
+		return noPathPoint;
 
 	IPath* tempPath = pathCaches[pathTypeIt->second].GetTempPath(pathID);
 	IPath* livePath = pathCaches[pathTypeIt->second].GetLivePath(pathID);
 
 	if (tempPath->GetID() != 0) {
 		// path-request has not yet been processed (so ID still maps to
-		// a temporary path); just set the unit off toward its target
+		// a temporary path); just set the unit off toward its target to
+		// hide latency
 		//
 		// <curPoint> is initially the position of the unit requesting a
 		// path, but later changes to the subsequent values returned here
@@ -741,12 +757,12 @@ float3 QTPFS::PathManager::NextWayPoint(
 		//     (because NextWayPoint is not called again until U gets close
 		//     to P), so always keep it a fixed small distance in front
 		//
-		//     if the queued search fails, the next call to us should make
-		//     the unit stop
+		//     make the y-coordinate -1 to indicate these are temporary
+		//     waypoints to GMT and should not be followed religiously
 		const float3& sourcePoint = point;
 		const float3& targetPoint = tempPath->GetTargetPoint();
-		const float3  targetDirec = (targetPoint - sourcePoint).SafeNormalize();
-		return (sourcePoint + targetDirec * SQUARE_SIZE);
+		const float3  targetDirec = (targetPoint - sourcePoint).SafeNormalize() * SQUARE_SIZE;
+		return float3(sourcePoint.x + targetDirec.x, -1.0f, sourcePoint.z + targetDirec.z);
 	}
 	if (livePath->GetID() == 0) {
 		// the request WAS processed but then immediately undone by a
@@ -755,29 +771,52 @@ float3 QTPFS::PathManager::NextWayPoint(
 		return point;
 	}
 
-	const float minRadiusSq = std::max(float(SQUARE_SIZE * SQUARE_SIZE), radius * radius);
+	const float minRadiusSq = radius * radius;
 	      float curRadiusSq = QTPFS_POSITIVE_INFINITY;
 
-	unsigned int minPointIdx =  0;
-	unsigned int nxtPointIdx = -1U;
+	unsigned int minPointIdx = 0;
+	unsigned int nxtPointIdx = 1; // -1U
 
-	// find the point furthest along the path within
-	// distance <rad> of <pos>, as well as the point
-	// closest to us
+	// find the next waypoint (ie. the node that is
+	// furthest along the path *and* within distance
+	// <radius> of <point>), as well as the waypoint
+	// that is closest to <point>
 	//
 	// a path can change while a unit is following
 	// it, so we always check each and every point
 	for (unsigned int i = 0; i < (livePath->NumPoints() - 1); i++) {
-		const float radiusSq = (point - livePath->GetPoint(i)).SqLength();
+		const float radiusSq = (point - livePath->GetPoint(i)).SqLength2D();
 
+		#if 1
+		// find waypoints <p0> and <p1> such that <point> is
+		// "in front" of p0 and "behind" p1 (ie. in between)
+		//
+		// we do this rather than the radius-based search
+		// since depending on the value of <radius> we may
+		// or may not find a "next" node (even though one
+		// always exists)
+		const float3& p0 = livePath->GetPoint(i    ), v0 = float3(p0.x - point.x, 0.0f, p0.z - point.z);
+		const float3& p1 = livePath->GetPoint(i + 1), v1 = float3(p1.x - point.x, 0.0f, p1.z - point.z);
+
+		if (v0.dot(v1) <= 0.01f) {
+			nxtPointIdx = i + 1;
+		}
+		#else
 		if (radiusSq < minRadiusSq) {
 			nxtPointIdx = i + 1;
 		}
-		if (radiusSq > 1.0f && radiusSq < curRadiusSq) {
+		#endif
+
+		if (radiusSq < curRadiusSq) {
 			curRadiusSq = radiusSq;
 			minPointIdx = i + 0;
 		}
 	}
+
+	// handle a corner-case in which a unit is at the start of its path
+	// and the goal is in front of it, but on the other side of a cliff
+	if ((livePath->GetPointID() == 0) && (nxtPointIdx == (livePath->NumPoints() - 1)))
+		nxtPointIdx = 1;
 
 	if (nxtPointIdx != -1U) {
 		// if close enough to at least one waypoint <i>,

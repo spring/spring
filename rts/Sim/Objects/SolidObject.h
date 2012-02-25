@@ -23,13 +23,21 @@ public:
 		Hovering,
 		Flying,
 	};
+	enum DamageType {
+		DAMAGE_EXPLOSION_WEAPON = 0, // weapon-projectile that triggered GameHelper::Explosion (weaponDefID >= 0)
+		DAMAGE_EXPLOSION_DEBRIS = 1, // piece-projectile that triggered GameHelper::Explosion (weaponDefID < 0)
+		DAMAGE_COLLISION_GROUND = 2, // ground collision
+		DAMAGE_COLLISION_OBJECT = 3, // object collision
+		DAMAGE_EXTSOURCE_INFIRE = 4,
+		DAMAGE_EXTSOURCE_KILLED = 5,
+	};
 
 	CSolidObject();
 	virtual ~CSolidObject();
 
 	virtual bool AddBuildPower(float amount, CUnit* builder) { return false; }
-	virtual void DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse) {}
-	virtual void Kill(const float3& impulse, bool crushKill) {}
+	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID) {}
+	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }
 
 	void Move3D(const float3& v, bool relative) {
@@ -72,14 +80,16 @@ public:
 	int2 GetMapPos(const float3& position) const;
 
 public:
+	float health;
 	float mass;                                 ///< the physical mass of this object (run-time constant)
-	float crushResistance;                       ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
+	float crushResistance;                      ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
 
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
 	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
-	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 	bool crushKilled;                           ///< true if this object died by being crushed during a collision
+	bool blockEnemyPushing;                     ///< if false, object can be pushed during enemy collisions even when modrules forbid it
+	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 
 	int xsize;                                  ///< The x-size of this object, according to its footprint.
 	int zsize;                                  ///< The z-size of this object, according to its footprint.

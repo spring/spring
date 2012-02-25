@@ -124,30 +124,25 @@ void CWeaponProjectile::Collision(CFeature* feature)
 		feature->StartFire();
 	}
 
-	if (/* !weaponDef->noExplode || gs->frameNum & 1 */ true) {
-		// don't do damage only on odd-numbered frames
-		// for noExplode projectiles (it breaks coldet)
+	{
 		float3 impactDir = speed;
-		impactDir.SafeNormalize();
 
-		// Dynamic Damage
-		DamageArray damageArray;
-		if (weaponDef->dynDamageExp > 0) {
-			damageArray = weaponDefHandler->DynamicDamages(
+		const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
+			weaponDef->damages:
+			weaponDefHandler->DynamicDamages(
 				weaponDef->damages,
-				startpos, pos,
-				(weaponDef->dynDamageRange > 0)
-					? weaponDef->dynDamageRange
-					: weaponDef->range,
+				startpos,
+				pos,
+				(weaponDef->dynDamageRange > 0.0f)?
+					weaponDef->dynDamageRange:
+					weaponDef->range,
 				weaponDef->dynDamageExp, weaponDef->dynDamageMin,
-				weaponDef->dynDamageInverted);
-		} else {
-			damageArray = weaponDef->damages;
-		}
+				weaponDef->dynDamageInverted
+			);
 
-		CGameHelper::ExplosionParams params = {
+		const CGameHelper::ExplosionParams params = {
 			pos,
-			impactDir,
+			impactDir.SafeNormalize(),
 			damageArray,
 			weaponDef,
 			owner(),
@@ -162,6 +157,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
 			true                                              // damgeGround
 		};
+
 		helper->Explosion(params);
 	}
 
@@ -180,30 +176,25 @@ void CWeaponProjectile::Collision(CFeature* feature)
 
 void CWeaponProjectile::Collision(CUnit* unit)
 {
-	if (/* !weaponDef->noExplode || gs->frameNum & 1 */ true) {
-		// don't do damage only on odd-numbered frames
-		// for noExplode projectiles (it breaks coldet)
+	{
 		float3 impactDir = speed;
-		impactDir.SafeNormalize();
 
-		// Dynamic Damage
-		DamageArray damageArray;
-		if (weaponDef->dynDamageExp > 0) {
-			damageArray = weaponDefHandler->DynamicDamages(
+		const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
+			weaponDef->damages:
+			weaponDefHandler->DynamicDamages(
 				weaponDef->damages,
-				startpos, pos,
-				weaponDef->dynDamageRange > 0?
+				startpos,
+				pos,
+				(weaponDef->dynDamageRange > 0.0f)?
 					weaponDef->dynDamageRange:
 					weaponDef->range,
 				weaponDef->dynDamageExp, weaponDef->dynDamageMin,
-				weaponDef->dynDamageInverted);
-		} else {
-			damageArray = weaponDef->damages;
-		}
+				weaponDef->dynDamageInverted
+			);
 
-		CGameHelper::ExplosionParams params = {
+		const CGameHelper::ExplosionParams params = {
 			pos,
-			impactDir,
+			impactDir.SafeNormalize(),
 			damageArray,
 			weaponDef,
 			owner(),
@@ -218,6 +209,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
 			true                                              // damageGround
 		};
+
 		helper->Explosion(params);
 	}
 

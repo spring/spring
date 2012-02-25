@@ -490,7 +490,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					p2 = (p1 + p2) / 2.0f;
 
-					if (camera->pos.SqDistance(p2) >= 16000000.0f)
+					if (camera->pos.SqDistance(p2) >= (4000.0f * 4000.0f))
 						continue;
 
 					font->SetTextColor(1.0f, 1.0f / cost, peBlueValue, 1.0f);
@@ -550,7 +550,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
 				p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 35.0f;
 
-			if (camera->pos.SqDistance(p1) >= 16000000.0f)
+			if (camera->pos.SqDistance(p1) >= (4000.0f * 4000.0f))
 				continue;
 
 			SNPRINTF(blockCostsStr, sizeof(blockCostsStr), "f(%.2f) g(%.2f)", ob->fCost, ob->gCost);

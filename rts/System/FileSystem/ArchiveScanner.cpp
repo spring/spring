@@ -1033,12 +1033,7 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 	std::string lcname = StringToLower(ArchiveFromName(root));
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.find(lcname);
 	if (aii == archiveInfos.end()) {
-		//! unresolved dep
-		if (!ret.empty()) {
-			//! add anyway so we get propper error-handling (only when it is not the main-archive!)
-			ret.push_back(lcname);
-		}
-		return ret;
+		throw content_error("Archive \"" + lcname + "\" not found");
 	}
 
 	//! Check if this archive has been replaced

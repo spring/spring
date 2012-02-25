@@ -38,6 +38,7 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(maxSlope),
 	CR_MEMBER(slopeMod),
 	CR_MEMBER(crushStrength),
+	CR_MEMBER(speedModMults),
 
 	CR_MEMBER(pathType),
 	CR_MEMBER(unitDefRefCount),
@@ -45,6 +46,7 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(followGround),
 	CR_MEMBER(subMarine),
 
+	CR_MEMBER(avoidMobilesOnPath),
 	CR_MEMBER(heatMapping),
 	CR_MEMBER(heatMod),
 	CR_MEMBER(heatProduced),
@@ -100,6 +102,7 @@ CMoveInfo::CMoveInfo()
 
 	for (size_t num = 1; /* no test */; num++) {
 		const LuaTable moveTable = rootTable.SubTable(num);
+
 		if (!moveTable.IsValid()) {
 			break;
 		}
@@ -181,6 +184,11 @@ MoveData::MoveData() {
 	depthModParams[DEPTHMOD_LIN_COEFF ] = 0.1f;
 	depthModParams[DEPTHMOD_CON_COEFF ] = 1.0f;
 
+	speedModMults[SPEEDMOD_MOBILE_BUSY_MULT] = 0.10f;
+	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = 0.35f;
+	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = 0.65f;
+	speedModMults[SPEEDMOD_MOBILE_NUM_MULTS] = 0.0f;
+
 	crushStrength     = 0.0f;
 
 	pathType          = 0;
@@ -188,6 +196,8 @@ MoveData::MoveData() {
 
 	followGround      = true;
 	subMarine         = false;
+
+	avoidMobilesOnPath = true;
 
 	heatMapping       = true;
 	heatMod           = 0.05f;
@@ -197,16 +207,15 @@ MoveData::MoveData() {
 	tempOwner         = NULL;
 }
 
-MoveData::MoveData(const MoveData* unitDefMD) {
-	*this = *unitDefMD;
-}
-
 MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID) {
 	*this = MoveData();
 
 	name          = StringToLower(moveTable.GetString("name", ""));
 	pathType      = moveDefID - 1;
 	crushStrength = moveTable.GetFloat("crushStrength", 10.0f);
+
+	const LuaTable& depthModTable = moveTable.SubTable("depthModParams");
+	const LuaTable& speedModMultsTable = moveTable.SubTable("speedModMults");
 
 	const float minWaterDepth = moveTable.GetFloat("minWaterDepth", 10.0f);
 	const float maxWaterDepth = moveTable.GetFloat("maxWaterDepth", 0.0f);
@@ -216,7 +225,7 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		moveType   = MoveData::Ship_Move;
 		depth      = minWaterDepth;
 		moveFamily = MoveData::Ship;
-		subMarine  = moveTable.GetBool("subMarine", 0);
+		subMarine  = moveTable.GetBool("subMarine", false);
 	} else if (name.find("hover") != string::npos) {
 		moveType   = MoveData::Hover_Move;
 		maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
@@ -225,12 +234,12 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		moveType = MoveData::Ground_Move;
 		depth    = maxWaterDepth;
 
-		depthModParams[DEPTHMOD_MIN_HEIGHT] = std::max(0.00f, moveTable.GetFloat("depthModMinHeight",                                     0.0f ));
-		depthModParams[DEPTHMOD_MAX_HEIGHT] =         (       moveTable.GetFloat("depthModMaxHeight",        std::numeric_limits<float>::max() ));
-		depthModParams[DEPTHMOD_MAX_SCALE ] = std::max(0.01f, moveTable.GetFloat("depthModMaxScale",         std::numeric_limits<float>::max() ));
-		depthModParams[DEPTHMOD_QUA_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModQuadraticCoeff",                                0.0f ));
-		depthModParams[DEPTHMOD_LIN_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModLinearCoeff",    moveTable.GetFloat("depthMod", 0.1f)));
-		depthModParams[DEPTHMOD_CON_COEFF ] = std::max(0.00f, moveTable.GetFloat("depthModConstantCoeff",                                 1.0f ));
+		depthModParams[DEPTHMOD_MIN_HEIGHT] = std::max(0.00f, depthModTable.GetFloat("minHeight",                                     0.0f ));
+		depthModParams[DEPTHMOD_MAX_HEIGHT] =         (       depthModTable.GetFloat("maxHeight",        std::numeric_limits<float>::max() ));
+		depthModParams[DEPTHMOD_MAX_SCALE ] = std::max(0.01f, depthModTable.GetFloat("maxScale",         std::numeric_limits<float>::max() ));
+		depthModParams[DEPTHMOD_QUA_COEFF ] = std::max(0.00f, depthModTable.GetFloat("quadraticCoeff",                                0.0f ));
+		depthModParams[DEPTHMOD_LIN_COEFF ] = std::max(0.00f, depthModTable.GetFloat("linearCoeff",    moveTable.GetFloat("depthMod", 0.1f)));
+		depthModParams[DEPTHMOD_CON_COEFF ] = std::max(0.00f, depthModTable.GetFloat("constantCoeff",                                 1.0f ));
 
 		// ensure [depthModMinHeight, depthModMaxHeight] is a valid range
 		depthModParams[DEPTHMOD_MAX_HEIGHT] = std::max(depthModParams[DEPTHMOD_MIN_HEIGHT], depthModParams[DEPTHMOD_MAX_HEIGHT]);
@@ -244,9 +253,14 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		}
 	}
 
+	speedModMults[SPEEDMOD_MOBILE_BUSY_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileBusyMult", 0.10f));
+	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileIdleMult", 0.35f));
+	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 0.65f));
+
+	avoidMobilesOnPath = speedModMultsTable.GetBool("avoidMobilesOnPath", true);
 	heatMapping = moveTable.GetBool("heatMapping", false);
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
-	heatProduced = moveTable.GetInt("heatProduced", 60);
+	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
 
 	//  <maxSlope> ranges from 0.0 to 60 * 1.5 degrees, ie. from 0.0 to
 	//  0.5 * PI radians, ie. from 1.0 - cos(0.0) to 1.0 - cos(0.5 * PI)
@@ -341,12 +355,13 @@ unsigned int MoveData::GetCheckSum() const {
 		reinterpret_cast<const unsigned char*>(&this->tempOwner),
 	};
 
-	for (unsigned int n = 0; n < sizeof(*this); n++) {
+	for (unsigned int n = 0; n < sizeof(*this); ) {
 		if (&bytes[n] == ptrs[0]) { n += sizeof(std::string);   continue; }
 		if (&bytes[n] == ptrs[1]) { n += sizeof(CMoveMath*);    continue; }
 		if (&bytes[n] == ptrs[2]) { n += sizeof(CSolidObject*); continue; }
 
-		sum ^= ((n + 1) * bytes[n]);
+		sum ^= (((n + 1) << 8) * bytes[n]);
+		n += 1;
 	}
 
 	return sum;

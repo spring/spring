@@ -77,8 +77,8 @@ public:
 	void Update();
 	void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets);
 
-	void DoExplosionDamage(CUnit* unit, CUnit* owner, const float3& expPos, float expRad, float expSpeed, bool ignoreOwner, float edgeEffectiveness, const DamageArray& damages, int weaponDefID);
-	void DoExplosionDamage(CFeature* feature, const float3& expPos, float expRad, const DamageArray& damages);
+	void DoExplosionDamage(CUnit* unit, CUnit* owner, const float3& expPos, float expRad, float expSpeed, float edgeEffectiveness, bool ignoreOwner, const DamageArray& damages, const int weaponDefID);
+	void DoExplosionDamage(CFeature* feature, const float3& expPos, float expRad, const DamageArray& damages, const int weaponDefID);
 
 	void Explosion(const ExplosionParams& params);
 

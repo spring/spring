@@ -47,8 +47,8 @@ class CScriptMoveType : public AMoveType
 		int tag;
 		
 		bool extrapolate;
-		bool useRotVel;
 		bool useRelVel;
+		bool useRotVel;
 
 		float drag;
 
