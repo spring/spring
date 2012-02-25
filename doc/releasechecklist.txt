@@ -31,7 +31,7 @@ Release Time
 		git tag -a -m "${REL_VERS} release [changed APIs: Lua]" ${REL_VERS}
     Make sure it looks correct:
 		gitk master develop release &
-3)  Create the source-packages:
+3)  Create the source-packages (note: this even works if you got unindexed files in your repo, it creates a repo clone to gen the package):
 		./installer/make_source_package.sh
 4)  Merge the release branch into develop:
 		git checkout develop
@@ -52,7 +52,7 @@ Release Time
 11) Once the windows buildbot is finnished, create the portable archive:
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}.exe
 		./installer/make_portable_archive.sh spring_${REL_VERS}.exe
-12) Once the OS-X buildbot is finnished, fetch archive:
+12) Once the OS-X buildbot is finished, fetch archive:
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/Spring_${REL_VERS}-MacOSX-10.6-SnowLeopard.zip
 		mv Spring_${REL_VERS}-MacOSX-10.6-SnowLeopard.zip spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
 13) you should now have these files:
@@ -62,7 +62,7 @@ Release Time
 	* spring_${REL_VERS}_src.tar.gz
 	* spring_${REL_VERS}_src.tar.lzma
 	Upload them to SF (replace USER with your SF account name):
-		rsync -e ssh spring_${REL_VERS}* ue0,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
+		rsync --progress -h -e ssh spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
 14) Post the news post.
 15) download page mirror links:
     Ask someone with access to http://springrts.com/dl/ to put spring_${REL_VERS}* stuff there.
