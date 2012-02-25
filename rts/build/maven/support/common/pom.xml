@@ -11,16 +11,16 @@
 		<project.build.resourceEncoding>${project.build.encoding}</project.build.resourceEncoding>
 	</properties>
 
-	<groupId>com.springrts</groupId>
-	<artifactId>common</artifactId>
-	<version>1.0</version>
-
 	<!-- This is a requirement to be able to sync to Maven central -->
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
 		<artifactId>oss-parent</artifactId>
 		<version>7</version>
 	</parent>
+
+	<groupId>com.springrts</groupId>
+	<artifactId>common</artifactId>
+	<version>1.0</version>
 
 	<packaging>pom</packaging>
 
