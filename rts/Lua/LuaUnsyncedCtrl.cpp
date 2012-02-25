@@ -2107,7 +2107,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 		scriptfile << script;
 		scriptfile.close();
 
-		processArgs.push_back(Quote(scriptFullName));
+		processArgs.push_back(scriptFullName);
 	}
 
 #ifdef _WIN32
