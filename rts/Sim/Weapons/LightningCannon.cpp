@@ -111,25 +111,22 @@ void CLightningCannon::FireImpl()
 		}
 	}
 
-	// Dynamic Damage
-	DamageArray damageArray;
-	if (weaponDef->dynDamageExp > 0) {
-		damageArray = weaponDefHandler->DynamicDamages(
+
+	const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
+		weaponDef->damages:
+		weaponDefHandler->DynamicDamages(
 			weaponDef->damages,
 			weaponMuzzlePos,
 			targetPos,
-			weaponDef->dynDamageRange > 0?
+			(weaponDef->dynDamageRange > 0.0f)?
 				weaponDef->dynDamageRange:
 				weaponDef->range,
 			weaponDef->dynDamageExp,
 			weaponDef->dynDamageMin,
 			weaponDef->dynDamageInverted
 		);
-	} else {
-		damageArray = weaponDef->damages;
-	}
 
-	CGameHelper::ExplosionParams params = {
+	const CGameHelper::ExplosionParams params = {
 		weaponMuzzlePos + dir * r,
 		dir,
 		damageArray,
