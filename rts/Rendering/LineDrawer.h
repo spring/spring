@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __LINE_DRAWER_H__
-#define __LINE_DRAWER_H__
+#ifndef _LINE_DRAWER_H
+#define _LINE_DRAWER_H
 
 #include <vector>
 
@@ -200,4 +200,4 @@ inline void CLineDrawer::DrawIconAtLastPos(int cmdID)
 }
 
 
-#endif // __LINE_DRAWER_H__
+#endif // _LINE_DRAWER_H

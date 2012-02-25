@@ -12,8 +12,6 @@ public:
 	CSelectionKeyHandler();
 	~CSelectionKeyHandler();
 
-	void LoadSelectionKeys();
-
 	void DoSelection(std::string selectString);
 
 private:

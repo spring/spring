@@ -242,25 +242,25 @@ void CFactory::FinishBuild(CUnit* buildee) {
 
 
 
-bool CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, FinishBuildCallBackFunc buildFunc)
+unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, FinishBuildCallBackFunc buildFunc)
 {
 	assert(!beingBuilt);
 	assert(buildeeDef != NULL);
 
 	if (uh->unitsByDefs[team][buildeeDef->id].size() >= buildeeDef->maxThisUnit)
-		return false;
+		return FACTORY_SKIP_BUILD_ORDER;
 	if (teamHandler->Team(team)->AtUnitLimit())
-		return false;
+		return FACTORY_KEEP_BUILD_ORDER;
 	if (luaRules && !luaRules->AllowUnitCreation(buildeeDef, this, NULL))
-		return false;
+		return FACTORY_SKIP_BUILD_ORDER;
 	if (curBuild != NULL)
-		return false;
+		return FACTORY_KEEP_BUILD_ORDER;
 
 	finishedBuildFunc = buildFunc;
 	finishedBuildCommand = buildCmd;
 	curBuildDef = buildeeDef;
 	nextBuildUnitDefID = buildeeDef->id;
-	return true;
+	return FACTORY_NEXT_BUILD_ORDER;
 }
 
 void CFactory::StopBuild()

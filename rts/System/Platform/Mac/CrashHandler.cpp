@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#if !defined(__APPLE__) || (MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4)
+#include "System/Platform/CrashHandler.h"
+
+#if defined(__APPLE__) 
 // ### Unix(compliant) CrashHandler START
 
 #include <AvailabilityMacros.h>
@@ -13,14 +15,13 @@
 // ### Fallback CrashHandler (old Apple) START
 
 namespace CrashHandler {
-	void HandleSignal(int signal) {}
 	void Install() {}
 	void Remove() {}
-	void InstallHangHandler() {}
-	void UninstallHangHandler() {}
-	void ClearDrawWDT(bool disable) {}
-	void ClearSimWDT(bool disable) {}
-	void GameLoading(bool) {}
+
+	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName) {}
+	void PrepareStacktrace() {}
+	void CleanupStacktrace() {}
+
 	void OutputStacktrace() {}
 };
 

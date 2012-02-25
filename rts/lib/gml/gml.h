@@ -20,8 +20,9 @@
 
 #ifdef USE_GML
 
-extern bool gmlShareLists; // use glShareLists to allow opengl calls in sim thread, unfortunately this may reduce the FPS a bit
+extern bool gmlShareLists; // use glShareLists to allow certain opengl calls in sim and rendering helper threads, unfortunately this may reduce the FPS a bit
 extern int gmlMaxServerThreadNum;
+extern int gmlMaxShareThreadNum;
 extern int gmlNoGLThreadNum;
 extern volatile bool gmlMultiThreadSim;
 extern volatile bool gmlStartSim;
@@ -94,7 +95,7 @@ extern void gmlInit();
 
 #define GML_IF_NONCLIENT_THREAD(name,...)\
 	int threadnum = gmlThreadNumber;\
-	GML_IF_SERVER_THREAD(threadnum) {\
+	GML_IF_SHARE_THREAD(threadnum) {\
 		name(__VA_ARGS__);\
 		return;\
 	}\
@@ -102,7 +103,7 @@ extern void gmlInit();
 
 #define GML_IF_NONCLIENT_THREAD_RET(ret,name,...)\
 	int threadnum = gmlThreadNumber;\
-	GML_IF_SERVER_THREAD(threadnum) {\
+	GML_IF_SHARE_THREAD(threadnum) {\
 		return name(__VA_ARGS__);\
 	}\
 	GML_ITEMSERVER_CHECK_RET(threadnum,ret);

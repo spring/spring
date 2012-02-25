@@ -99,12 +99,13 @@ void CRifle::FireImpl()
 
 	CUnit* hitUnit;
 	CFeature* hitFeature;
-	float length = TraceRay::TraceRay(weaponMuzzlePos, dir, range, 0, owner, hitUnit, hitFeature);
+	const float length = TraceRay::TraceRay(weaponMuzzlePos, dir, range, 0, owner, hitUnit, hitFeature);
 
 	if (hitUnit) {
-		hitUnit->DoDamage(weaponDef->damages, owner, ZeroVector, weaponDef->id);
-		new CHeatCloudProjectile(weaponMuzzlePos + dir*length, hitUnit->speed*0.9f, 30, 1, owner);
+		hitUnit->DoDamage(weaponDef->damages, ZeroVector, owner, weaponDef->id);
+		new CHeatCloudProjectile(weaponMuzzlePos + dir*length, hitUnit->speed * 0.9f, 30, 1, owner);
 	}
+
 	new CTracerProjectile(weaponMuzzlePos, dir*projectileSpeed, length, owner);
 	new CSmokeProjectile(weaponMuzzlePos, float3(0,0,0), 70, 0.1f, 0.02f, owner, 0.6f);
 }

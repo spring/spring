@@ -116,7 +116,6 @@ private:
 	void ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet);
 	void CheckSync();
 	void ServerReadNet();
-	void CheckForGameEnd();
 
 	/** @brief Generate a unique game identifier and send it to all clients. */
 	void GenerateAndSendGameID();

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FACTORY_H__
-#define __FACTORY_H__
+#ifndef _FACTORY_H
+#define _FACTORY_H
 
 #include "Building.h"
 #include "Sim/Units/CommandAI/Command.h"
@@ -27,7 +27,8 @@ public:
 	void UpdateBuild(CUnit* buildee);
 	void FinishBuild(CUnit* buildee);
 	void StopBuild();
-	bool QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, FinishBuildCallBackFunc buildCB);
+	/// @return whether the to-be-built unit is enqueued
+	unsigned int QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, FinishBuildCallBackFunc buildCB);
 
 	void Update();
 	void SlowUpdate();
@@ -49,6 +50,12 @@ public:
 	const UnitDef* curBuildDef;
 	CUnit* curBuild;
 
+	enum {
+		FACTORY_SKIP_BUILD_ORDER = 0,
+		FACTORY_KEEP_BUILD_ORDER = 1,
+		FACTORY_NEXT_BUILD_ORDER = 2,
+	};
+
 private:
 	void SendToEmptySpot(CUnit* unit);
 	void AssignBuildeeOrders(CUnit* unit);
@@ -60,4 +67,4 @@ private:
 	Command finishedBuildCommand;
 };
 
-#endif // __FACTORY_H__
+#endif // _FACTORY_H

@@ -4,6 +4,7 @@
 #define GML_BASE_H_
 
 #include "gml.h"
+#include "Game/GameController.h"
 
 #ifdef USE_GML
 namespace GML {
@@ -18,6 +19,7 @@ namespace GML {
 	inline int ThreadNumber() { return gmlThreadNumber; }
 	inline void ThreadNumber(int num) { set_threadnum(num); }
 	inline int ThreadCount() { return gmlThreadCount; }
+	bool UpdateSim(CGameController *ac);
 };
 #else
 namespace GML {
@@ -32,6 +34,7 @@ namespace GML {
 	inline int ThreadNumber() { return 0; }
 	inline void ThreadNumber(int num) { }
 	inline int ThreadCount() { return 1; }
+	inline bool UpdateSim(CGameController *ac) { return ac->Update(); }
 };
 #endif
 

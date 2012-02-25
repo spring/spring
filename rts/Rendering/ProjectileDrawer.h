@@ -58,6 +58,10 @@ public:
 	void RenderProjectileCreated(const CProjectile* projectile);
 	void RenderProjectileDestroyed(const CProjectile* projectile);
 
+	void IncPerlinTexObjectCount() { perlinTexObjects++; }
+	void DecPerlinTexObjectCount() { perlinTexObjects--; }
+
+
 	CTextureAtlas* textureAtlas;  ///< texture atlas for projectiles
 	CTextureAtlas* groundFXAtlas; ///< texture atlas for ground fx
 
@@ -117,6 +121,7 @@ private:
 	GLuint perlinTex[8];
 	float perlinBlend[4];
 	FBO perlinFB;
+	int perlinTexObjects;
 	bool drawPerlinTex;
 
 	/// projectiles without a model

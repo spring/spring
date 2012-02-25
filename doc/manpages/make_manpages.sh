@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ORIG_DIR=$(pwd)
 
@@ -75,18 +75,35 @@ cd ${BUILD_DIR}
 # copy sources to build dir
 cp ${SRC_DIR}/*.6.txt ${BUILD_DIR}
 
-for manFile_src in ${BUILD_DIR}/*.6.txt
+MANPAGES[0]="spring";               MANPAGES_ATTRIBUTES[0]="-a DEFAULT"
+MANPAGES[1]="spring-multithreaded"; MANPAGES_ATTRIBUTES[1]="-a MULTITHREADED"
+MANPAGES[2]="spring-headless";      MANPAGES_ATTRIBUTES[2]="-a HEADLESS -a GUILESS"
+MANPAGES[3]="spring-dedicated";     MANPAGES_ATTRIBUTES[3]="-a DEDICATED -a GUILESS"
+
+COUNT=${#MANPAGES[@]}
+
+for (( i=0; i<${COUNT}; i++ ));
 do
+	binary=${MANPAGES[i]}
+	attributes=${MANPAGES_ATTRIBUTES[i]}
+	manFile_src=${BUILD_DIR}/spring.6.txt
+
 	# strip off the extension
-	manFile=${manFile_src%.*}
+	manFile="${BUILD_DIR}/${binary}.6"
 	manFile_xml=${manFile}.xml
 	manFile_man=${manFile}
 	manFile_cmp=${manFile}.gz
 
 	# compile
-	${EXEC_ASCIIDOC} --doctype=manpage --backend=docbook --out-file="${manFile_xml}" - < "${manFile_src}" > /dev/null
+	${EXEC_ASCIIDOC} -a "BINARY=${binary}" ${attributes} --doctype=manpage --backend=docbook --out-file="${manFile_xml}" - < "${manFile_src}" > /dev/null
+
 	# format
-	${EXEC_XSLTPROC} --output "${manFile_man}" "${XSL_DOCBOOK}" "${manFile_xml}" > /dev/null
+	# workaround: xsltproc ignores `--output` for xml/manpages, instead it reads refname from the xml file itself and uses that.
+	#  But asciidoc fails to set it when we use macros in the NAME section, so we have to do it ourself
+	sed -e "s/<refnamediv>/<refnamediv><refname>${binary}<\/refname>/" "${manFile_xml}" > "${manFile_xml}.new"
+	mv "${manFile_xml}.new" "${manFile_xml}"
+	${EXEC_XSLTPROC} --output "${manFile_man}" "${XSL_DOCBOOK}" "${manFile_xml}"
+
 	# archive
 	${EXEC_7Z} a -tgzip "${manFile_cmp}" "${manFile_man}" > /dev/null
 done

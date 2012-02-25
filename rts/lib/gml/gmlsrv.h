@@ -11,7 +11,7 @@
 #define GMLSRV_H
 
 #ifdef USE_GML
-
+#include "System/OffscreenGLContext.h"
 #include <boost/thread/thread.hpp>
 #include <boost/thread/barrier.hpp>
 #include <boost/bind.hpp>
@@ -21,6 +21,8 @@
 #if !defined(_MSC_VER) && defined(_WIN32)
 #	include "System/Platform/Win/win32.h"
 #endif
+
+extern COffscreenGLContext* ogc[GML_MAX_NUM_THREADS];
 
 EXTERN inline void gmlUpdateServers() {
 	gmlItemsConsumed=0;
@@ -353,10 +355,17 @@ public:
 	}
 
 	void gmlClient() {
-		set_threadnum(++threadcnt + 2);
+		long thr = ++threadcnt;
+		set_threadnum(thr + 2);
+		if (gmlShareLists) {
+			ogc[thr]->WorkerThreadPost();
+		}
 		streflop_init<streflop::Simple>();
 		while(dorun) {
 			gmlClientSub();
+		}
+		if (gmlShareLists) {
+			ogc[thr]->WorkerThreadFree();
 		}
 	}
 

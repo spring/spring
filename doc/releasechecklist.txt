@@ -27,7 +27,8 @@ Release Time
 		git reset --hard origin/master
 		git merge release --no-ff
 2)  Tag the release:
-		git tag -a -m "83.0 release [changed APIs: AI, Lua, unitsync]" 83.0
+		export REL_VERS=85.0
+		git tag -a -m "${REL_VERS} release [changed APIs: Lua]" ${REL_VERS}
     Make sure it looks correct:
 		gitk master develop release &
 3)  Create the source-packages:
@@ -41,7 +42,7 @@ Release Time
 		git rebase origin/develop
 		git merge release --no-ff
 5)  Tag the develop branch:
-		git tag -a -m "dev version after the 83.0 release" 83.0.1
+		git tag -a -m "dev version after the ${REL_VERS} release" ${REL_VERS}.1
 7)  POINT OF NO RETURN: Push to the main repo (and delete the release branch):
 		git push --tags origin develop :release master
 9)  Force build of the master branch on the windows and the OS-X buildbots.
@@ -49,22 +50,22 @@ Release Time
 10) Write the news post for the springrts.com frontpage, while waiting for the
     buildbot to compile the master branch.
 11) Once the windows buildbot is finnished, create the portable archive:
-		wget http://springrts.com/dl/buildbot/default/master/83.0/spring_83.0.exe
-		./installer/make_portable_archive.sh spring_83.0.exe
+		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}.exe
+		./installer/make_portable_archive.sh spring_${REL_VERS}.exe
 12) Once the OS-X buildbot is finnished, fetch archive:
-		wget http://springrts.com/dl/buildbot/default/master/83.0/Spring_83.0-MacOSX-10.6-SnowLeopard.zip
-		mv Spring_83.0-MacOSX-10.6-SnowLeopard.zip spring_83.0_MacOSX-10.6-SnowLeopard.zip
+		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/Spring_${REL_VERS}-MacOSX-10.6-SnowLeopard.zip
+		mv Spring_${REL_VERS}-MacOSX-10.6-SnowLeopard.zip spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
 13) you should now have these files:
-	* spring_83.0.exe
-	* spring_83.0_MacOSX-10.6-SnowLeopard.zip
-	* spring_83.0_portable.7z
-	* spring_83.0_src.tar.gz
-	* spring_83.0_src.tar.lzma
+	* spring_${REL_VERS}.exe
+	* spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
+	* spring_${REL_VERS}_portable.7z
+	* spring_${REL_VERS}_src.tar.gz
+	* spring_${REL_VERS}_src.tar.lzma
 	Upload them to SF (replace USER with your SF account name):
-		rsync -e ssh spring_83.0* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-83.0/
+		rsync -e ssh spring_${REL_VERS}* ue0,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
 14) Post the news post.
 15) download page mirror links:
-    Ask someone with access to http://springrts.com/dl/ to put spring_83.0* stuff there.
+    Ask someone with access to http://springrts.com/dl/ to put spring_${REL_VERS}* stuff there.
 
 16) After 1 or 2 days, enforce it on the server, if it is a sync relevant change.
 
@@ -82,7 +83,7 @@ This only needs to be done if it is a sync relevant change.
 3) Update the default downloads for each platform on SF.
 	Installer .exe for Windows, .tar.gz for all other platforms.
 	Do so through the file(s) properties on this page:
-		https://sourceforge.net/projects/springrts/files/springrts/spring-83.0/
+		https://sourceforge.net/projects/springrts/files/springrts/spring-${REL_VERS}/
 
 
 

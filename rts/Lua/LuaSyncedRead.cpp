@@ -1087,9 +1087,10 @@ int LuaSyncedRead::GetTeamResources(lua_State* L)
 		lua_pushnumber(L, team->prevMetalIncome);
 		lua_pushnumber(L, team->prevMetalExpense);
 		lua_pushnumber(L, team->metalShare);
-		lua_pushnumber(L, team->metalSent);
-		lua_pushnumber(L, team->metalReceived);
-		return 8;
+		lua_pushnumber(L, team->prevMetalSent);
+		lua_pushnumber(L, team->prevMetalReceived);
+		lua_pushnumber(L, team->prevMetalExcess);
+		return 9;
 	}
 	else if (type == "energy") {
 		lua_pushnumber(L, team->energy);
@@ -1098,9 +1099,10 @@ int LuaSyncedRead::GetTeamResources(lua_State* L)
 		lua_pushnumber(L, team->prevEnergyIncome);
 		lua_pushnumber(L, team->prevEnergyExpense);
 		lua_pushnumber(L, team->energyShare);
-		lua_pushnumber(L, team->energySent);
-		lua_pushnumber(L, team->energyReceived);
-		return 8;
+		lua_pushnumber(L, team->prevEnergySent);
+		lua_pushnumber(L, team->prevEnergyReceived);
+		lua_pushnumber(L, team->prevEnergyExcess);
+		return 9;
 	}
 
 	return 0;

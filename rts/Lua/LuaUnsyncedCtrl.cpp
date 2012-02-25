@@ -2107,7 +2107,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 		scriptfile << script;
 		scriptfile.close();
 
-		processArgs.push_back(Quote(scriptFullName));
+		processArgs.push_back(scriptFullName);
 	}
 
 #ifdef _WIN32
@@ -2904,15 +2904,18 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 
 	std::vector<const char*> outData;
 
-	lua_checkstack(L, outData.size() + 1);
+	lua_checkstack(L, 2);
 	lua_pushboolean(L, eoh->SendLuaMessages(aiTeam, inData, outData));
+	lua_createtable(L, outData.size(), 0);
 
-	// push the response(s)
+	// push the AI response(s)
 	for (unsigned int n = 0; n < outData.size(); n++) {
+		lua_pushnumber(L, n + 1);
 		lua_pushstring(L, outData[n]);
+		lua_rawset(L, -3);
 	}
 
-	return (outData.size() + 1);
+	return 2;
 }
 
 /******************************************************************************/

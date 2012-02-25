@@ -1754,7 +1754,7 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 {
 	if (shadowHandler->inShadowPass) {
-		if (unit->buildProgress > 0.66f) {
+		if (unit->buildProgress > (2.0f / 3.0f)) {
 			DrawUnitModel(unit);
 		}
 		return;
@@ -1812,7 +1812,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	}
 
 	// Flat-colored model
-	if (unit->buildProgress > 0.33f) {
+	if (unit->buildProgress > (1.0f / 3.0f)) {
 		glColorf3(fc * (1.5f - col));
 		const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress * 3 - 1)};
 		const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 3 - 2)};
@@ -1834,7 +1834,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	// XXX FIXME
 	// ATI has issues with textures, clip planes and shader programs at once - very low performance
 	// FIXME: This may work now I added OPTION ARB_position_invariant to the ARB programs.
-	if (unit->buildProgress > 0.66f) {
+	if (unit->buildProgress > (2.0f / 3.0f)) {
 		if (globalRendering->atiHacks) {
 			glDisable(GL_CLIP_PLANE0);
 
@@ -2112,23 +2112,24 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo)
 
 int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands)
 {
-	glDisable(GL_DEPTH_TEST );
+	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_TEXTURE_2D);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	CFeature* feature = NULL;
+	CVertexArray* va = GetVertexArray();
 
-	std::vector<float3> canbuildpos;
-	std::vector<float3> featurepos;
-	std::vector<float3> nobuildpos;
+	std::vector<float3> buildableSquares; // buildable squares
+	std::vector<float3> featureSquares; // occupied squares
+	std::vector<float3> illegalSquares; // non-buildable squares
 
 	const float3& pos = buildInfo.pos;
-	const int x1 = (int) (pos.x - (buildInfo.GetXSize() * 0.5f * SQUARE_SIZE));
-	const int x2 = x1 + (buildInfo.GetXSize() * SQUARE_SIZE);
-	const int z1 = (int) (pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE));
-	const int z2 = z1 + (buildInfo.GetZSize() * SQUARE_SIZE);
+	const int x1 = pos.x - (buildInfo.GetXSize() * 0.5f * SQUARE_SIZE);
+	const int x2 =    x1 + (buildInfo.GetXSize() *        SQUARE_SIZE);
+	const int z1 = pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE);
+	const int z2 =    z1 + (buildInfo.GetZSize() *        SQUARE_SIZE);
 	const float h = uh->GetBuildHeight(pos, buildInfo.def, false);
 
 	const int canBuild = uh->TestUnitBuildSquare(
@@ -2136,53 +2137,52 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 		feature,
 		-1,
 		false,
-		&canbuildpos,
-		&featurepos,
-		&nobuildpos,
+		&buildableSquares,
+		&featureSquares,
+		&illegalSquares,
 		&commands
 	);
 
 	if (canBuild) {
-		glColor4f(0, 0.8f, 0.0f, 1.0f);
+		glColor4f(0, 0.9f, 0.0f, 1.0f);
 	} else {
-		glColor4f(0.5f, 0.5f, 0.0f, 1.0f);
+		glColor4f(0.9f, 0.8f, 0.0f, 1.0f);
 	}
 
-	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-	va->EnlargeArrays(canbuildpos.size() * 4, 0, VA_SIZE_0);
+	va->EnlargeArrays(buildableSquares.size() * 4, 0, VA_SIZE_0);
 
-	for (unsigned int i = 0; i < canbuildpos.size(); i++) {
-		va->AddVertexQ0(canbuildpos[i]                                      );
-		va->AddVertexQ0(canbuildpos[i] + float3(SQUARE_SIZE, 0,           0));
-		va->AddVertexQ0(canbuildpos[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
-		va->AddVertexQ0(canbuildpos[i] + float3(          0, 0, SQUARE_SIZE));
-	}
-	va->DrawArray0(GL_QUADS);
-
-
-	glColor4f(0.5f, 0.5f, 0.0f, 1.0f);
-	va->Initialize();
-	va->EnlargeArrays(featurepos.size() * 4, 0, VA_SIZE_0);
-
-	for (unsigned int i = 0; i < featurepos.size(); i++) {
-		va->AddVertexQ0(featurepos[i]                                      );
-		va->AddVertexQ0(featurepos[i] + float3(SQUARE_SIZE, 0,           0));
-		va->AddVertexQ0(featurepos[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
-		va->AddVertexQ0(featurepos[i] + float3(          0, 0, SQUARE_SIZE));
+	for (unsigned int i = 0; i < buildableSquares.size(); i++) {
+		va->AddVertexQ0(buildableSquares[i]                                      );
+		va->AddVertexQ0(buildableSquares[i] + float3(SQUARE_SIZE, 0,           0));
+		va->AddVertexQ0(buildableSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
+		va->AddVertexQ0(buildableSquares[i] + float3(          0, 0, SQUARE_SIZE));
 	}
 	va->DrawArray0(GL_QUADS);
 
 
-	glColor4f(0.8f, 0.0f, 0.0f, 1.0f);
+	glColor4f(0.9f, 0.8f, 0.0f, 1.0f);
 	va->Initialize();
-	va->EnlargeArrays(nobuildpos.size(), 0, VA_SIZE_0);
+	va->EnlargeArrays(featureSquares.size() * 4, 0, VA_SIZE_0);
 
-	for (unsigned int i = 0; i < nobuildpos.size(); i++) {
-		va->AddVertexQ0(nobuildpos[i]);
-		va->AddVertexQ0(nobuildpos[i]+float3(SQUARE_SIZE, 0,           0));
-		va->AddVertexQ0(nobuildpos[i]+float3(SQUARE_SIZE, 0, SQUARE_SIZE));
-		va->AddVertexQ0(nobuildpos[i]+float3(          0, 0, SQUARE_SIZE));
+	for (unsigned int i = 0; i < featureSquares.size(); i++) {
+		va->AddVertexQ0(featureSquares[i]                                      );
+		va->AddVertexQ0(featureSquares[i] + float3(SQUARE_SIZE, 0,           0));
+		va->AddVertexQ0(featureSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
+		va->AddVertexQ0(featureSquares[i] + float3(          0, 0, SQUARE_SIZE));
+	}
+	va->DrawArray0(GL_QUADS);
+
+
+	glColor4f(0.9f, 0.0f, 0.0f, 1.0f);
+	va->Initialize();
+	va->EnlargeArrays(illegalSquares.size() * 4, 0, VA_SIZE_0);
+
+	for (unsigned int i = 0; i < illegalSquares.size(); i++) {
+		va->AddVertexQ0(illegalSquares[i]);
+		va->AddVertexQ0(illegalSquares[i] + float3(SQUARE_SIZE, 0,           0));
+		va->AddVertexQ0(illegalSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
+		va->AddVertexQ0(illegalSquares[i] + float3(          0, 0, SQUARE_SIZE));
 	}
 	va->DrawArray0(GL_QUADS);
 

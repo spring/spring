@@ -355,12 +355,10 @@ struct SEraseGroupCommand {
  * - note that the pathfinder calculates the waypoints as needed,
  *   so do not retrieve them until they are needed
  * - the waypoint's x and z coordinates are returned in x and z,
- *   while y is used for error codes:
- *   y >= 0: worked ok
- *   y = -2: still thinking, call again
- *   y = -1: end of path reached or path is invalid
- * - for pathType {Ground_Move=0, Hover_Move=1, Ship_Move=2},
- *   @see UnitDef_MoveData_getMoveType()
+ *   while y is used for status codes:
+ *   y =  0: legal path waypoint IFF x >= 0 and z >= 0
+ *   y = -1: temporary waypoint, path not yet available
+ * - for pathType, @see UnitDef_MoveData_getPathType()
  * - goalRadius defines a goal area within which any square could be accepted as
  *   path target. If a singular goal position is wanted, use 0.0f.
  *   default: 8.0f

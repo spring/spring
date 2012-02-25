@@ -41,9 +41,6 @@ if    (UNIX)
 		set(MAN_DEST_DIR   "${MANDIR}/man6")
 
 		Set(man_src
-				"${MAN_SOURCE_DIR}/spring-dedicated.6.txt"
-				"${MAN_SOURCE_DIR}/spring-headless.6.txt"
-				"${MAN_SOURCE_DIR}/spring-multithreaded.6.txt"
 				"${MAN_SOURCE_DIR}/spring.6.txt")
 		Set(man_dst
 				"${MAN_BUILD_DIR}/spring-dedicated.6.gz"

@@ -26,6 +26,11 @@ IF    (UNIX)
 	LIST(APPEND engineLibraries ${X11_X11_LIB} ${X11_Xcursor_LIB})
 ENDIF (UNIX)
 
+IF (APPLE)
+	FIND_LIBRARY(COREFOUNDATION_LIBRARY Foundation)
+	LIST(APPEND engineLibraries ${COREFOUNDATION_LIBRARY})
+ENDIF (APPLE)
+
 LIST(APPEND engineLibraries ${sound-impl})
 
 LIST(APPEND engineLibraries ${engineCommonLibraries})

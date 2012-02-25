@@ -51,6 +51,7 @@ CPoolArchive::CPoolArchive(const std::string& name)
 	unsigned char c_md5[16];
 	unsigned char c_crc32[4];
 	unsigned char c_size[4];
+	unsigned char length;
 
 	gzFile in = gzopen(name.c_str(), "rb");
 	if (in == NULL) {
@@ -64,9 +65,7 @@ CPoolArchive::CPoolArchive(const std::string& name)
 			break;
 		}
 
-		int length = gzgetc(in);
-		if (length == -1) break;
-
+		if (!gz_really_read(in, &length, 1)) break;
 		if (!gz_really_read(in, &c_name, length)) break;
 		if (!gz_really_read(in, &c_md5, 16)) break;
 		if (!gz_really_read(in, &c_crc32, 4)) break;

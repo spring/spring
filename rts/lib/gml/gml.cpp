@@ -54,6 +54,7 @@ int gmlProcNumLoop = 25;
 int gmlProcInterval = 8;
 bool gmlShareLists = true;
 int gmlMaxServerThreadNum = GML_SIM_THREAD_NUM;
+int gmlMaxShareThreadNum = GML_MAX_NUM_THREADS;
 int gmlNoGLThreadNum = GML_NO_THREAD_NUM;
 volatile bool gmlMultiThreadSim = true;
 volatile bool gmlStartSim = false;

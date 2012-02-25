@@ -18,7 +18,7 @@ fi
 
 #install
 cd ${BUILDDIR}
-make install-spring-headless DESTDIR=${TESTDIR}
+make install-spring-headless demotool DESTDIR=${TESTDIR}
 
 # HACK/FIXME force spring to detect install dir as read-only
 chmod 555 ${TESTDIR}/usr/local/share/games/spring
@@ -47,10 +47,10 @@ function makescript {
 	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
 }
 
-GAME1="Balanced Annihilation V7.60"
-GAME1_FILENAME="ba760.sdz"
-GAME2="Zero-K v0.9.1"
-GAME2_FILENAME="zk-v0.9.1.sdz"
+GAME1="Balanced Annihilation V7.63"
+GAME1_FILENAME="ba763.sdz"
+GAME2="Zero-K v0.9.8.12"
+GAME2_FILENAME="zk-v0.9.8.12.sdz"
 MAP="Altair_Crossing-V1"
 MAP_FILENAME="Altair_Crossing.sd7"
 
