@@ -105,11 +105,6 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int mode)
 		mode %= SMF_MESHDRAWER_LAST;
 	}
 
-#ifdef USE_GML
-	// FIXME: ROAM isn't GML ready yet
-	mode = SMF_MESHDRAWER_LEGACY;
-#endif
-	
 	if ((curMode == mode) && (meshDrawer != NULL))
 		return meshDrawer;
 
@@ -120,12 +115,10 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int mode)
 			LOG("Switching to Legacy Mesh Rendering");
 			meshDrawer = new CLegacyMeshDrawer(smfMap, this);
 			break;
-#ifndef USE_GML
 		default:
 			LOG("Switching to ROAM Mesh Rendering");
 			meshDrawer = new CRoamMeshDrawer(smfMap, this);
 			break;
-#endif
 	}
 
 	return meshDrawer;
