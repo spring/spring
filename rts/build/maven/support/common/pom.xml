@@ -83,6 +83,7 @@
 					<sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
 					<minimumTokens>50</minimumTokens>
 					<targetJdk>1.5</targetJdk>
+					<aggregate>true</aggregate>
 				</configuration>
 			</plugin>
 
