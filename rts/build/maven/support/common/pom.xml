@@ -29,7 +29,10 @@
 	</prerequisites>
 
 	<name>CommonSpringParent</name>
-	<description>Project parent for all Maven projects related to the Spring RTS game engine, including 3rd party plugins (eg. Skirmish AIs)</description>
+	<description>
+		Parent for all Maven projects related to the Spring RTS game engine,
+		including 3rd party plugins (eg. Skirmish AIs)
+	</description>
 	<inceptionYear>2011</inceptionYear>
 
 
