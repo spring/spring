@@ -10,9 +10,15 @@ Changes:
  - using now OS functions to expand special paths in spring's include dirs (config's SpringData, ENV{SPRING_DATADIR}, ...)
   ! Windows: now uses windows syntax ("$HOME/foo/bar" is now "%HOME%/foo/bar") (see msdn's ExpandEnvironmentStrings documentation)
   - Linux: now supports full bash path syntax ("~/", "${HOME}/.spring/", "/foo/../bar/", etc.) (see manpage of wordexp)
+ - remove "Start SpringSettings" and "Start the Lobby" from the test/develop menu
+ ! remove support for selectionkeys.txt
+ - add internal_pthread_backtrace for freebsd
+ - update mingwlibs (fixes rotated textures)
 
 unitsync:
  - reload IsolatedMode & Dir via the EnvVar on Init() calls
+ - warn about invalid version numbers
+ - add python bindings for unitsync
 
 MacOSX:
  - fix signal handling
@@ -23,6 +29,9 @@ Bugfixes:
  - fixed handling of duplicated used hotkeys (i.e. unit groups & specteam switching)
  - fixed minor issues with ground collision RayTracing
  - fixed compilation with boost >=1.48
+ - fixed Spring.Restart
+ - open logfiles on win32 with commit flag set
+ ! don't allow spring to start when a depend file is missing
 
 
 -- 85.0 ---------------------------------------------------------
