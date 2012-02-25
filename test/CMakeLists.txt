@@ -55,6 +55,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
 			${SDL_LIBRARY}
+			${WS2_32_LIBRARY}
 			7zip
 		)
 
