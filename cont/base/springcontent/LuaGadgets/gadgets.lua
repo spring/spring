@@ -890,21 +890,18 @@ end
 
 
 function gadgetHandler:RegisterCMDID(gadget, id)
-  if (id < 30000) then
+  if (id <= 1000) then
     Spring.Echo('Gadget (' .. gadget.ghInfo.name .. ') ' ..
-                'tried to register a CMD_ID < 30000')
-    Script.Kill('Bad CMD_ID code: ' .. id)
+                'tried to register a reserved CMD_ID')
+    Script.Kill('Reserved CMD_ID code: ' .. id)
   end
-  if (id >= 40000) then
-    Spring.Echo('Gadget (' .. gadget.ghInfo.name .. ') ' ..
-                'tried to register a CMD_ID >= 40000')
-    Script.Kill('Bad CMD_ID code: ' .. id)
-  end
+
   if (self.CMDIDs[id] ~= nil) then
     Spring.Echo('Gadget (' .. gadget.ghInfo.name .. ') ' ..
-                'tried to register a CMD_ID >= 40000')
+                'tried to register a duplicated CMD_ID')
     Script.Kill('Duplicate CMD_ID code: ' .. id)
   end
+
   self.CMDIDs[id] = gadget
 end
 

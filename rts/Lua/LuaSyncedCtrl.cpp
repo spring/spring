@@ -1537,6 +1537,8 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 	}
 
 	unit->crushable = luaL_optboolean(L, 4, unit->crushable);
+	unit->blockEnemyPushing = luaL_optboolean(L, 5, unit->blockEnemyPushing);
+	unit->blockHeightChanges = luaL_optboolean(L, 6, unit->blockHeightChanges);
 	return 0;
 }
 
@@ -1983,13 +1985,13 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const float damage   = luaL_checkfloat(L, 2);
-	const int paralyze   = luaL_optint(L, 3, 0);
-	const int attackerID = luaL_optint(L, 4, -1);
-	const int weaponID   = luaL_optint(L, 5, -1);
-	const float3 impulse = float3(Clamp(luaL_optfloat(L, 6, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
-	                              Clamp(luaL_optfloat(L, 7, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
-	                              Clamp(luaL_optfloat(L, 8, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE));
+	const float damage    = luaL_checkfloat(L, 2);
+	const int paralyze    = luaL_optint(L, 3, 0);
+	const int attackerID  = luaL_optint(L, 4, -1);
+	const int weaponDefID = luaL_optint(L, 5, -1);
+	const float3 impulse  = float3(Clamp(luaL_optfloat(L, 6, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
+	                               Clamp(luaL_optfloat(L, 7, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
+	                               Clamp(luaL_optfloat(L, 8, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE));
 
 	CUnit* attacker = NULL;
 	if (attackerID >= 0) {
@@ -1999,7 +2001,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		attacker = uh->units[attackerID];
 	}
 
-	if (weaponID >= weaponDefHandler->numWeaponDefs) {
+	if (weaponDefID >= weaponDefHandler->numWeaponDefs) {
 		return 0;
 	}
 
@@ -2009,7 +2011,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		damages.paralyzeDamageTime = paralyze;
 	}
 
-	unit->DoDamage(damages, attacker, impulse, weaponID);
+	unit->DoDamage(damages, impulse, attacker, weaponDefID);
 	return 0;
 }
 

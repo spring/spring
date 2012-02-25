@@ -414,7 +414,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 					for (int y = starty; y < endy; ++y) {
 						for (int x = 0; x < endx; ++x) {
 							int totalLos = 255;
-							if (!gs->globalLOS) {
+							if (!gs->globalLOS[gu->myAllyTeam]) {
 								const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel, 128, x, y);
 								const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel, 128, x, y);
 								totalLos = inLos + inAir;
