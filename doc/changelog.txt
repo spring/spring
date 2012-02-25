@@ -3,15 +3,16 @@ Spring changelog
 
 -- 86.0 ---------------------------------------------------------
 Changes:
+ - new commandline argument "--safemode": It turns off all features that are known to cause problems on some system.
+ ! ignore features with `blocking=false` in all RayTracing/Aiming functions (other code still checks them!!!)
+ - enable ROAM in spring-mt
+ - IsolationMode: scan ENV{SPRING_DATADIR} & config's SpringData as readonly datadirs
  - using now OS functions to expand special paths in spring's include dirs (config's SpringData, ENV{SPRING_DATADIR}, ...)
   ! Windows: now uses windows syntax ("$HOME/foo/bar" is now "%HOME%/foo/bar") (see msdn's ExpandEnvironmentStrings documentation)
   - Linux: now supports full bash path syntax ("~/", "${HOME}/.spring/", "/foo/../bar/", etc.) (see manpage of wordexp)
- - IsolationMode: scan ENV{SPRING_DATADIR} & config's SpringData as readonly datadirs
- - added a new commandline argument "--safemode". It turns off all features that are known to cause problems on some system.
- ! ignore features with `blocking=false` in all RayTracing/Aiming functions (other code still checks them!!!)
 
 unitsync:
- - reload IsolatedMode & Dir via the EnvVar on Init() calls 
+ - reload IsolatedMode & Dir via the EnvVar on Init() calls
 
 MacOSX:
  - fix signal handling
@@ -21,6 +22,7 @@ Bugfixes:
  - fixed Intel GPU detection under Windows
  - fixed handling of duplicated used hotkeys (i.e. unit groups & specteam switching)
  - fixed minor issues with ground collision RayTracing
+ - fixed compilation with boost >=1.48
 
 
 -- 85.0 ---------------------------------------------------------
