@@ -7,12 +7,23 @@
 
 #include "System/float3.h"
 
+class CSolidObject;
+
 namespace QTPFS {
 	struct IPath {
-		IPath(): pathID(0), pointID(0), hash(-1U), radius(0.0f), synced(true) {}
+		IPath() {
+			pathID  = 0;
+			pointID = 0;
+
+			hash   = -1U;
+			radius = 0.0f;
+			synced = true;
+
+			owner = NULL;
+		}
 		IPath(const IPath& p) { *this = p; }
 		IPath& operator = (const IPath& p) {
-			pathID = p.GetID();
+			pathID  = p.GetID();
 			pointID = p.GetPointID();
 
 			hash   = p.GetHash();
@@ -23,7 +34,7 @@ namespace QTPFS {
 			boundingBoxMins = p.GetBoundingBoxMins();
 			boundingBoxMaxs = p.GetBoundingBoxMaxs();
 
-			objectPoint = p.GetObjectPoint();
+			owner = p.GetOwner();
 			return *this;
 		}
 		~IPath() { points.clear(); }
@@ -64,8 +75,8 @@ namespace QTPFS {
 		const float3& GetSourcePoint() const { return points[                0]; }
 		const float3& GetTargetPoint() const { return points[points.size() - 1]; }
 
-		void SetObjectPoint(const float3& p) { objectPoint = p; }
-		const float3& GetObjectPoint() const { return objectPoint; }
+		void SetOwner(const CSolidObject* o) { owner = o; }
+		const CSolidObject* GetOwner() const { return owner; }
 
 		unsigned int NumPoints() const { return (points.size()); }
 		void AllocPoints(unsigned int n) {
@@ -96,9 +107,8 @@ namespace QTPFS {
 		float3 boundingBoxMins;
 		float3 boundingBoxMaxs;
 
-		// where on the map our owner (CSolidObject*) currently is
-		// (normally lies roughly between two consecutive waypoints)
-		float3 objectPoint;
+		// object that requested this path (NULL if none)
+		const CSolidObject* owner;
 	};
 };
 

@@ -11,7 +11,6 @@ class CBeamLaser :
 	CR_DECLARE(CBeamLaser);
 public:
 	CBeamLaser(CUnit* owner);
-	~CBeamLaser(void);
 
 	void Update(void);
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);

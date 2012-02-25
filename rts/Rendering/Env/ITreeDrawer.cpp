@@ -19,7 +19,7 @@ CONFIG(int, TreeRadius)
 	.defaultValue((int) (5.5f * 256))
 	.minimumValue(0);
 
-CONFIG(bool, 3DTrees).defaultValue(true);
+CONFIG(bool, 3DTrees).defaultValue(true).safemodeValue(false);
 
 ITreeDrawer* treeDrawer = NULL;
 

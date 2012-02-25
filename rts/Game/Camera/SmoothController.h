@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __SMOOTH_CONTROLLER_H__
-#define __SMOOTH_CONTROLLER_H__
+#ifndef _SMOOTH_CONTROLLER_H
+#define _SMOOTH_CONTROLLER_H
 
 #include "CameraController.h"
 
@@ -18,8 +18,8 @@ public:
 	const std::string GetName() const { return "sm"; }
 
 	void KeyMove(float3 move);
-	void MousePress(int, int, int) { /* empty */ }
-	void MouseRelease(int, int, int) { /* empty */ }
+	void MousePress(int x, int y, int button) { /* empty */ }
+	void MouseRelease(int x, int y, int button) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
@@ -66,4 +66,4 @@ private:
 	static const unsigned maxSpeedFactor = 300;
 };
 
-#endif
+#endif // _SMOOTH_CONTROLLER_H

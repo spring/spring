@@ -21,7 +21,7 @@
 		<groupId>com.springrts</groupId>
 		<artifactId>common-spring</artifactId>
 		<version>1.0</version>
-		<relativePath>../../Interfaces/Java/support/common/spring/pom.xml</relativePath>
+		<relativePath>../../../rts/build/maven/support/common/spring/pom.xml</relativePath>
 	</parent>
 
 	<groupId>com.springrts</groupId>

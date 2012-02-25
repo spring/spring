@@ -197,7 +197,6 @@ void CFeatureDrawer::Draw()
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	unitDrawDistSq = unitDrawer->unitDrawDist * unitDrawer->unitDrawDist;
 	unitDrawer->SetupForUnitDrawing();
 	GetVisibleFeatures(0, true);
 
@@ -303,11 +302,13 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 {
-	if (!camera->InView(feature->pos, feature->drawRadius)) { return false; }
+	if (!camera->InView(feature->drawMidPos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
+
 	const float sqDist = (feature->pos - camera->pos).SqLength();
-	const float farLength = feature->sqRadius * unitDrawDistSq;
+	const float farLength = feature->sqRadius * unitDrawer->unitDrawDistSqr;
 	const float sqFadeDistEnd = (FEATURE_DIST * 2.0f) * (FEATURE_DIST * 2.0f);
+
 	if (sqDist >= std::min(farLength, sqFadeDistEnd)) return false;
 
 	glPushMatrix();
@@ -511,7 +512,7 @@ public:
 				}
 
 				const float sqDist = (f->pos - camera->pos).SqLength();
-				const float farLength = f->sqRadius * featureDrawer->unitDrawDistSq;
+				const float farLength = f->sqRadius * unitDrawer->unitDrawDistSqr;
 #ifdef USE_GML
 				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
 					statFeatures->push_back(f);

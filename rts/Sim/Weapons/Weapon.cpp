@@ -277,8 +277,10 @@ void CWeapon::Update()
 	}
 
 	if (weaponDef->interceptor) {
-		CheckIntercept();
+		// keep track of the closest projectile heading our way (if any)
+		UpdateInterceptTarget();
 	}
+
 	if (targetType != Target_None) {
 		if (onlyForward) {
 			const float3 goalDir = (targetPos - owner->pos).Normalize();
@@ -475,8 +477,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 	if (!userTarget && weaponDef->noAutoTarget) {
 		return false;
 	}
-	if (weaponDef->interceptor || !weaponDef->canAttackGround ||
-	    (weaponDef->onlyTargetCategory != 0xffffffff)) {
+	if (weaponDef->interceptor || !weaponDef->canAttackGround) {
 		return false;
 	}
 
@@ -915,7 +916,6 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 	if (targetUnit && !(onlyTargetCategory & targetUnit->category)) {
 		return false;
 	}
-
 	if (targetUnit && ((targetUnit->isDead   && (modInfo.fireAtKilled   == 0)) ||
 	                   (targetUnit->crashing && (modInfo.fireAtCrashing == 0)))) {
 		return false;
@@ -954,13 +954,23 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 		return false;
 
 	if (maxMainDirAngleDif > -0.999f) {
+		// NOTE:
+		//     <maxMainDirAngleDif> maps the range [-1, 1] onto [360, 0], *not* onto [180, 0] (so
+		//     "if maxMainDirAngleDif > -0.999f" is equal to "if maxMainDirAngleDif < 360 degrees")
+		//     mainDir is in unit-space, modMainDir is in world-space
+		//
 		const float3 targetNormDir = targetDirNormalized? targetDir: targetDir.SafeNormalize();
 		const float3 modMainDir =
 			owner->frontdir * mainDir.z +
 			owner->rightdir * mainDir.x +
 			owner->updir    * mainDir.y;
 
-		if (modMainDir.dot(targetNormDir) < maxMainDirAngleDif)
+		// x = (180.0f / PI), 2 * x = (360.0f / PI) -->
+		// ((A * x) > (B * 2 * x)) == (A > (B * 2))
+		const float mainDirCurAngle = math::acosf(modMainDir.dot(targetNormDir));
+		const float mainDirMaxAngle = math::acosf(Clamp(maxMainDirAngleDif, -1.0f, 1.0f)) * 2.0f;
+
+		if (mainDirCurAngle > mainDirMaxAngle)
 			return false;
 	}
 
@@ -991,18 +1001,17 @@ bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
 		tempTargetPos.y = appHeight;
 	}
 
-	const short weaponHeadding = GetHeadingFromVector(mainDir.x, mainDir.z);
-	const short enemyHeadding = GetHeadingFromVector(tempTargetPos.x - weaponPos.x, tempTargetPos.z - weaponPos.z);
+	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
+	const short enemyHeading = GetHeadingFromVector(tempTargetPos.x - weaponPos.x, tempTargetPos.z - weaponPos.z);
 
-	return TryTargetHeading(enemyHeadding - weaponHeadding, tempTargetPos, userTarget, unit);
+	return TryTargetHeading(enemyHeading - weaponHeading, tempTargetPos, userTarget, unit);
 }
 
 bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 	if (!userTarget && weaponDef->noAutoTarget) {
 		return false;
 	}
-	if (weaponDef->interceptor || !weaponDef->canAttackGround ||
-	    (weaponDef->onlyTargetCategory != 0xffffffff)) {
+	if (weaponDef->interceptor || !weaponDef->canAttackGround) {
 		return false;
 	}
 
@@ -1010,28 +1019,46 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 		pos.y = 1;
 	}
 
-	short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
-	short enemyHeading = GetHeadingFromVector(
+	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
+	const short enemyHeading = GetHeadingFromVector(
 		pos.x - weaponPos.x, pos.z - weaponPos.z);
 
 	return TryTargetHeading(enemyHeading - weaponHeading, pos, userTarget, 0);
 }
 
 bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit* unit) {
-	float3 tempfrontdir(owner->frontdir);
-	float3 temprightdir(owner->rightdir);
-	short tempHeadding = owner->heading;
+	const float3 tempfrontdir(owner->frontdir);
+	const float3 temprightdir(owner->rightdir);
+	const short tempHeading = owner->heading;
+
 	owner->heading = heading;
 	owner->frontdir = GetVectorFromHeading(owner->heading);
 	owner->rightdir = owner->frontdir.cross(owner->updir);
-	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-	bool val = TryTarget(pos, userTarget, unit);
+
+	weaponPos = owner->pos +
+		owner->frontdir * relWeaponPos.z +
+		owner->updir    * relWeaponPos.y +
+		owner->rightdir * relWeaponPos.x;
+	weaponMuzzlePos = owner->pos +
+		owner->frontdir * relWeaponMuzzlePos.z +
+		owner->updir    * relWeaponMuzzlePos.y +
+		owner->rightdir * relWeaponMuzzlePos.x;
+
+	const bool val = TryTarget(pos, userTarget, unit);
+
 	owner->frontdir = tempfrontdir;
 	owner->rightdir = temprightdir;
-	owner->heading = tempHeadding;
-	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
+	owner->heading = tempHeading;
+
+	weaponPos = owner->pos +
+		owner->frontdir * relWeaponPos.z +
+		owner->updir    * relWeaponPos.y +
+		owner->rightdir * relWeaponPos.x;
+	weaponMuzzlePos = owner->pos +
+		owner->frontdir * relWeaponMuzzlePos.z +
+		owner->updir    * relWeaponMuzzlePos.y +
+		owner->rightdir * relWeaponMuzzlePos.x;
+
 	return val;
 
 }
@@ -1079,21 +1106,41 @@ void CWeapon::Fire()
 		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
-void CWeapon::CheckIntercept(void)
+void CWeapon::UpdateInterceptTarget(void)
 {
 	targetType = Target_None;
+
+	float minInterceptTargetDistSq = std::numeric_limits<float>::max();
+	float curInterceptTargetDistSq = std::numeric_limits<float>::min();
 
 	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
 		CWeaponProjectile* p = pi->second;
 
+		// set by CWeaponProjectile's ctor when the interceptor fires
 		if (p->targeted)
 			continue;
+		if ((curInterceptTargetDistSq = (p->pos - weaponPos).SqLength()) >= minInterceptTargetDistSq)
+			continue;
 
-		targetType = Target_Intercept;
+		minInterceptTargetDistSq = curInterceptTargetDistSq;
+
+		// NOTE:
+		//     <incomingProjectiles> is sorted by increasing projectile ID
+		//     however projectiles launched later in time (which are still
+		//     likely out of range) can be assigned *lower* ID's than older
+		//     projectiles (which might be almost in range already), so if
+		//     we already have an interception target we should not replace
+		//     it unless another incoming projectile <p> is closer
+		//
+		//     this is still not optimal (closer projectiles should receive
+		//     higher priority), so just always look for the overall closest
+		// if ((interceptTarget != NULL) && ((p->pos - weaponPos).SqLength() >= (interceptTarget->pos - weaponPos).SqLength()))
+		//     continue;
+
+		// keep targetPos in sync with the incoming projectile's position
 		interceptTarget = p;
+		targetType = Target_Intercept;
 		targetPos = p->pos;
-
-		break;
 	}
 }
 

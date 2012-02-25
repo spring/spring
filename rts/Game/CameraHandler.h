@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __CAMERAHANDLER_H__
-#define __CAMERAHANDLER_H__
+#ifndef _CAMERA_HANDLER_H
+#define _CAMERA_HANDLER_H
 
 #include <vector>
 #include <map>
@@ -85,4 +85,4 @@ private:
 
 extern CCameraHandler* camHandler;
 
-#endif // __CAMERAHANDLER_H__
+#endif // _CAMERA_HANDLER_H

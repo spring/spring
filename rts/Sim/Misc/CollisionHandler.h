@@ -44,16 +44,19 @@ class CCollisionHandler {
 		CCollisionHandler() {}
 		~CCollisionHandler() {}
 
-		static bool DetectHit(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q = NULL);
-		static bool DetectHit(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q = NULL);
+		static bool DetectHit(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q = NULL, bool forceTrace = false);
+		static bool DetectHit(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q = NULL, bool forceTrace = false);
 		static bool MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q);
 
+	private:
+		// HITTEST_DISC helpers for DetectHit
+		static bool Collision(const CUnit* u, const float3& p);
+		static bool Collision(const CFeature* f, const float3& p);
+		// HITTEST_CONT helpers for DetectHit
 		static bool Intersect(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q);
 		static bool Intersect(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q);
 
 	private:
-		static bool Collision(const CUnit* u, const float3& p);
-		static bool Collision(const CFeature* f, const float3& p);
 		/**
 		 * Test if a point lies inside a volume.
 		 * @param v volume

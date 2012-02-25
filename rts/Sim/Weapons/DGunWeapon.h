@@ -1,24 +1,23 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __DGUN_WEAPON_H__
-#define __DGUN_WEAPON_H__
+#ifndef _DGUN_WEAPON_H
+#define _DGUN_WEAPON_H
 
 #include "Weapon.h"
 
-class CDGunWeapon :
-	public CWeapon
+class CDGunWeapon : public CWeapon
 {
 	CR_DECLARE(CDGunWeapon);
 public:
 	CDGunWeapon(CUnit* owner);
-	~CDGunWeapon(void);
-	void Fire(void);
-	void Update(void);
-	void Init(void);
+	~CDGunWeapon();
+	void Fire();
+	void Update();
+	void Init();
 
 private:
 	virtual void FireImpl();
 };
 
-#endif // __DGUN_WEAPON_H__
+#endif // _DGUN_WEAPON_H
 

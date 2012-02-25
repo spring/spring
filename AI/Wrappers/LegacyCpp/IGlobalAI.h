@@ -98,7 +98,8 @@ public:
 	virtual void RecvChatMessage(const char* message, int player) { GotChatMsg(message, player); }
 
 	/// called when a Lua widget or unsynced gadget sends a message to this AI
-	virtual void RecvLuaMessage(const char* inData, const char** outData) { *outData = inData; }
+	/// do not use outData, it is always NULL for interface-technical reasons
+	virtual void RecvLuaMessage(const char* inData, const char** outData) { /* *outData = inData; */ }
 
 
 	/// called when one of your units are damaged

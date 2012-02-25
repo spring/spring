@@ -229,7 +229,18 @@ defaultBindings[] = {
 	{    "Any+ctrl",     "moveslow"     },
 	{ "Up+Any+ctrl",     "moveslow"     },
 	{    "Any+shift",    "movefast"     },
-	{ "Up+Any+shift",    "movefast"     }
+	{ "Up+Any+shift",    "movefast"     },
+
+
+	// selection keys
+	{ "Ctrl+a",    "select AllMap++_ClearSelection_SelectAll+"                                         },
+	{ "Ctrl+b",    "select AllMap+_Builder_Idle+_ClearSelection_SelectOne+"                            },
+	{ "Ctrl+c",    "select AllMap+_ManualFireUnit+_ClearSelection_SelectOne+"                          },
+	{ "Ctrl+r",    "select AllMap+_Radar+_ClearSelection_SelectAll+"                                   },
+	{ "Ctrl+v",    "select AllMap+_Not_Builder_Not_Commander_InPrevSel_Not_InHotkeyGroup+_SelectAll+"  },
+	{ "Ctrl+w",    "select AllMap+_Not_Aircraft_Weapons+_ClearSelection_SelectAll+"                    },
+	{ "Ctrl+x",    "select AllMap+_InPrevSel_Not_InHotkeyGroup+_SelectAll+"                            },
+	{ "Ctrl+z",    "select AllMap+_InPrevSel+_ClearSelection_SelectAll+"                               }
 };
 
 
@@ -559,13 +570,11 @@ void CKeyBindings::PushAction(const Action& action)
 {
 	if (action.command == "keyload") {
 		Load("uikeys.txt");
-		selectionKeys->LoadSelectionKeys();
 	}
 	else if (action.command == "keyreload") {
 		ExecuteCommand("unbindall");
 		ExecuteCommand("unbind enter chat");
 		Load("uikeys.txt");
-		selectionKeys->LoadSelectionKeys();
 	}
 	else if (action.command == "keysave") {
 		if (Save("uikeys.tmp")) {  // tmp, not txt

@@ -709,6 +709,8 @@ if    (BUILD_${myName}_AIINTERFACE)
 		# This is required because the local Maven install does not create a
 		# file (whichs path we could know), and thus we would not be able to
 		# create a nice dependency chain without this.
+		set(myMavenDir_global                   "${CMAKE_SOURCE_DIR}/rts/build/maven")
+		set(myMavenDir_globalCommon             "${myMavenDir_global}/support/common")
 		set(myMavenInstallStubFile_common       "${myBuildDir}/mavenInstallStub_common.txt")
 		set(myMavenInstallStubFile_commonSpring "${myBuildDir}/mavenInstallStub_commonSpring.txt")
 		set(myMavenInstallStubFile_interface    "${myBuildDir}/mavenInstallStub_interface.txt")
@@ -724,9 +726,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 			COMMAND "${CMAKE_COMMAND}"
 				"-E" "touch" "${myMavenInstallStubFile_common}"
 			DEPENDS
-				"${myDir}/support/common/pom.xml"
+				"${myMavenDir_globalCommon}/pom.xml"
 			WORKING_DIRECTORY
-				"${myDir}/support/common/"
+				"${myMavenDir_globalCommon}"
 			COMMENT
 				"  ${myTarget}: Installing to local maven repository (common)" VERBATIM
 			)
@@ -738,9 +740,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 				"-E" "touch" "${myMavenInstallStubFile_commonSpring}"
 			DEPENDS
 				"${myMavenInstallStubFile_common}"
-				"${myDir}/support/common/spring/pom.xml"
+				"${myMavenDir_globalCommon}/spring/pom.xml"
 			WORKING_DIRECTORY
-				"${myDir}/support/common/spring"
+				"${myMavenDir_globalCommon}/spring"
 			COMMENT
 				"  ${myTarget}: Installing to local maven repository (common-spring)" VERBATIM
 			)

@@ -279,10 +279,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 	if (pos != oldPos) {
 		oldPos = pos;
 
-		const bool checkCollisions =
-			collide &&
-			(!owner->beingBuilt) &&
-			(aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_CRASHING);
+		// check for collisions if not on a pad, not being built, or not taking off
+		const bool checkCollisions = collide && !owner->beingBuilt && (padStatus == 0) && (aircraftState != AIRCRAFT_TAKEOFF);
 
 		if (checkCollisions) {
 			bool hitBuilding = false;
@@ -306,8 +304,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-					owner->DoDamage(DamageArray(damage), 0, ZeroVector);
-					unit->DoDamage(DamageArray(damage), 0, ZeroVector);
+					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
+					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 					hitBuilding = true;
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
@@ -317,8 +315,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-					owner->DoDamage(DamageArray(damage), 0, ZeroVector);
-					unit->DoDamage(DamageArray(damage), 0, ZeroVector);
+					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
+					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 
 					owner->speed *= 0.99f;
 				}
@@ -409,7 +407,7 @@ void CStrafeAirMoveType::UpdateManeuver()
 			if ((owner->updir.y < 0.0f && owner->frontdir.y < 0.0f) || speedf < 0.8f) {
 				maneuver = 0;
 			}
-			// some seem to report that the "unlimited altitude" thing is because of these maneuvers
+			// [?] some seem to report that the "unlimited altitude" thing is because of these maneuvers
 			if (owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z) > wantedHeight * 4.0f) {
 				maneuver = 0;
 			}
@@ -769,10 +767,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 void CStrafeAirMoveType::UpdateLanded()
 {
-	owner->Move3D(owner->speed = ZeroVector, true);
-	// match the terrain normal
-	owner->UpdateDirVectors(true);
-	owner->UpdateMidPos();
+	AAirMoveType::UpdateLanded();
 }
 
 
@@ -844,7 +839,7 @@ void CStrafeAirMoveType::UpdateLanding()
 			owner->Deactivate();
 			owner->script->StopMoving();
 		} else {
-			goalPos.CheckInBounds();
+			goalPos.ClampInBounds();
 			UpdateFlying(wantedHeight, 1);
 			return;
 		}
@@ -890,23 +885,21 @@ void CStrafeAirMoveType::UpdateLanding()
 	owner->UpdateMidPos();
 
 	// see if we are at the reserved (not user-clicked) landing spot
-	if (reservedLandingPosDist < 1.0f) {
-		const float gh = ground->GetHeightAboveWater(pos.x, pos.z);
-		const float gah = ground->GetHeightReal(pos.x, pos.z);
-		float alt = 0.0f;
+	const float gh = ground->GetHeightAboveWater(pos.x, pos.z);
+	const float gah = ground->GetHeightReal(pos.x, pos.z);
+	float altitude = 0.0f;
 
-		// can we submerge and are we still above water?
-		if ((owner->unitDef->canSubmerge) && (gah < 0)) {
-			alt = pos.y - gah;
-			reservedLandingPos.y = gah;
-		} else {
-			alt = pos.y - gh;
-			reservedLandingPos.y = gh;
-		}
+	// can we submerge and are we still above water?
+	if ((owner->unitDef->canSubmerge) && (gah < 0.0f)) {
+		altitude = pos.y - gah;
+		reservedLandingPos.y = gah;
+	} else {
+		altitude = pos.y - gh;
+		reservedLandingPos.y = gh;
+	}
 
-		if (alt <= 1.0f) {
-			SetState(AIRCRAFT_LANDED);
-		}
+	if (altitude <= 1.0f) {
+		SetState(AIRCRAFT_LANDED);
 	}
 }
 
@@ -940,7 +933,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 			engine = std::max(0.0f, std::min(engine, 1 - (pos.y - gHeight - wantedHeight * 1.2f) / wantedHeight));
 		}
 		// check next position given current (unadjusted) pos and speed
-		nextPosInBounds = (pos + speed).CheckInBounds();
+		nextPosInBounds = (pos + speed).IsInBounds();
 	}
 
 
@@ -1065,7 +1058,7 @@ float3 CStrafeAirMoveType::FindLandingPos() const
 		return ret;
 	}
 
-	tryPos.CheckInBounds();
+	tryPos.ClampInBounds();
 
 	const int2 mp = owner->GetMapPos(tryPos);
 

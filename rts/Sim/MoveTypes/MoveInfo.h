@@ -9,43 +9,20 @@
 #include "System/creg/creg_cond.h"
 #include "Sim/Misc/GlobalConstants.h"
 
+class CMoveInfo;
 class CMoveMath;
 class CSolidObject;
+class LuaTable;
 
 struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
 
-	MoveData(const MoveData* unitDefMD) {
-		name            = unitDefMD? unitDefMD->name:            "";
+	MoveData();
+	MoveData(const MoveData* unitDefMD) { *this = *unitDefMD; }
+	MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID);
 
-		moveType        = unitDefMD? unitDefMD->moveType:        MoveData::Ground_Move;
-		moveFamily      = unitDefMD? unitDefMD->moveFamily:      MoveData::Tank;
-		terrainClass    = unitDefMD? unitDefMD->terrainClass:    MoveData::Mixed;
-
-		xsize           = unitDefMD? unitDefMD->xsize:           0;
-		zsize           = unitDefMD? unitDefMD->zsize:           0;
-		xsizeh          = unitDefMD? unitDefMD->xsizeh:          0;
-		zsizeh          = unitDefMD? unitDefMD->zsizeh:          0;
-
-		depth           = unitDefMD? unitDefMD->depth:           0.0f;
-		maxSlope        = unitDefMD? unitDefMD->maxSlope:        1.0f;
-		slopeMod        = unitDefMD? unitDefMD->slopeMod:        0.0f;
-		depthMod        = unitDefMD? unitDefMD->depthMod:        0.0f;
-		crushStrength   = unitDefMD? unitDefMD->crushStrength:   0.0f;
-
-		pathType        = unitDefMD? unitDefMD->pathType:        0;
-		unitDefRefCount = unitDefMD? unitDefMD->unitDefRefCount: 0;
-
-		followGround    = unitDefMD? unitDefMD->followGround:    true;
-		subMarine       = unitDefMD? unitDefMD->subMarine:       false;
-
-		heatMapping     = unitDefMD? unitDefMD->heatMapping:     true;
-		heatMod         = unitDefMD? unitDefMD->heatMod:         0.05f;
-		heatProduced    = unitDefMD? unitDefMD->heatProduced:    30;
-
-		moveMath        = unitDefMD? unitDefMD->moveMath:        NULL;
-		tempOwner       = NULL;
-	}
+	float GetDepthMod(const float height) const;
+	unsigned int GetCheckSum() const;
 
 	enum MoveType {
 		Ground_Move = 0,
@@ -66,6 +43,21 @@ struct MoveData {
 		/// we can exist at heights both greater and smaller than 0
 		Mixed = 2
 	};
+	enum DepthModParams {
+		DEPTHMOD_MIN_HEIGHT = 0,
+		DEPTHMOD_MAX_HEIGHT = 1,
+		DEPTHMOD_MAX_SCALE  = 2,
+		DEPTHMOD_QUA_COEFF  = 3,
+		DEPTHMOD_LIN_COEFF  = 4,
+		DEPTHMOD_CON_COEFF  = 5,
+		DEPTHMOD_NUM_PARAMS = 6,
+	};
+	enum SpeedModMults {
+		SPEEDMOD_MOBILE_IDLE_MULT = 0,
+		SPEEDMOD_MOBILE_BUSY_MULT = 1,
+		SPEEDMOD_MOBILE_MOVE_MULT = 2,
+		SPEEDMOD_MOBILE_NUM_MULTS = 3,
+	};
 
 	std::string name;
 
@@ -80,10 +72,18 @@ struct MoveData {
 
 	/// minWaterDepth for ships, maxWaterDepth otherwise
 	float depth;
+	float depthModParams[DEPTHMOD_NUM_PARAMS];
 	float maxSlope;
 	float slopeMod;
-	float depthMod;
 	float crushStrength;
+
+	// PF speedmod-multipliers for squares blocked by mobile units
+	// (which can respectively be "idle" == non-moving and have no
+	// orders, "busy" == non-moving but have orders, or "moving")
+	// NOTE:
+	//     includes one extra padding element to make the moveMath
+	//     member start on an 8-byte boundary for 64-bit platforms
+	float speedModMults[SPEEDMOD_MOBILE_NUM_MULTS + 1];
 
 	unsigned int pathType;
 	/// number of UnitDef types that refer to this MoveData class
@@ -94,8 +94,16 @@ struct MoveData {
 	/// are we supposed to be a purely sub-surface ship?
 	bool subMarine;
 
+	/// do we try to pathfind around squares blocked by mobile units?
+	///
+	/// this also serves as a padding byte for alignment so compiler
+	/// does not insert it (GetCheckSum would need to skip such bytes
+	/// otherwise, since they are never initialized)
+	bool avoidMobilesOnPath;
+
 	/// heatmap this unit
 	bool heatMapping;
+
 	/// heatmap path cost modifier
 	float heatMod;
 	/// heat produced by a path

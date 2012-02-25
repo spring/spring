@@ -17,13 +17,13 @@ CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL));
 CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(tag),
 	CR_MEMBER(extrapolate),
+	CR_MEMBER(useRelVel),
+	CR_MEMBER(useRotVel),
 	CR_MEMBER(drag),
 	CR_MEMBER(vel),
 	CR_MEMBER(relVel),
-	CR_MEMBER(useRelVel),
 	CR_MEMBER(rot),
 	CR_MEMBER(rotVel),
-	CR_MEMBER(useRotVel),
 	CR_MEMBER(trackSlope),
 	CR_MEMBER(trackGround),
 	CR_MEMBER(groundOffset),
@@ -45,13 +45,13 @@ CScriptMoveType::CScriptMoveType(CUnit* owner):
 	AMoveType(owner),
 	tag(0),
 	extrapolate(true),
-	drag(0.0f),
-	vel(0.0f, 0.0f, 0.0f),
-	relVel(0.0f, 0.0f, 0.0f),
 	useRelVel(false),
-	rot(0.0f, 0.0f, 0.0f),
-	rotVel(0.0f, 0.0f, 0.0f),
 	useRotVel(false),
+	drag(0.0f),
+	vel(ZeroVector),
+	relVel(ZeroVector),
+	rot(ZeroVector),
+	rotVel(ZeroVector),
 	trackSlope(false),
 	trackGround(false),
 	groundOffset(0.0f),
@@ -120,25 +120,26 @@ bool CScriptMoveType::Update()
 		CalcDirections();
 	}
 
-	float3& speed = vel;
-	speed = vel;
-
 	if (extrapolate) {
-		if (drag != 0.0f) {
-			vel *= (1.0f - drag); // quadratic drag does not work well here
-		}
+		// NOTE: only gravitational acc. is allowed to build up velocity
+		// NOTE: strong wind plus low gravity can cause substantial drift
+		const float3 gravVec = UpVector * (mapInfo->map.gravity * gravityFactor);
+		const float3 windVec =            (wind.GetCurrentWind() * windFactor);
+		const float3 unitVec = useRelVel?
+			(owner->frontdir *  relVel.z) +
+			(owner->updir    *  relVel.y) +
+			(owner->rightdir * -relVel.x):
+			ZeroVector;
 
-		if (useRelVel) {
-			const float3 rVel = (owner->frontdir *  relVel.z) +
-			                    (owner->updir    *  relVel.y) +
-			                    (owner->rightdir * -relVel.x); // x is left
-			speed += rVel;
-		}
+		owner->Move3D(gravVec + vel, true);
+		owner->Move3D(windVec,       true);
+		owner->Move3D(unitVec,       true);
 
-		vel.y += (mapInfo->map.gravity * gravityFactor);
-		speed += (wind.GetCurrentWind() * windFactor);
+		// quadratic drag does not work well here
+		vel += gravVec;
+		vel *= (1.0f - drag);
 
-		owner->Move3D(speed, true);
+		owner->speed = vel;
 	}
 
 	if (trackGround) {
@@ -207,7 +208,7 @@ void CScriptMoveType::SetPhysics(const float3& pos,
 
 
 void CScriptMoveType::SetPosition(const float3& pos) { owner->pos = pos; }
-void CScriptMoveType::SetVelocity(const float3& _vel) { vel = _vel; }
+void CScriptMoveType::SetVelocity(const float3& _vel) { owner->speed = (vel = _vel); }
 
 
 

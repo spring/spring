@@ -24,8 +24,8 @@ void QTPFS::PathSearch::Initialize(
 	const float3& sourcePoint,
 	const float3& targetPoint
 ) {
-	srcPoint = sourcePoint; srcPoint.CheckInBounds();
-	tgtPoint = targetPoint; tgtPoint.CheckInBounds();
+	srcPoint = sourcePoint; srcPoint.ClampInBounds();
+	tgtPoint = targetPoint; tgtPoint.ClampInBounds();
 	curPoint = srcPoint;
 	nxtPoint = tgtPoint;
 
@@ -38,6 +38,7 @@ void QTPFS::PathSearch::Initialize(
 	tgtNode = nodeLayer->GetNode(tgtPoint.x / SQUARE_SIZE, tgtPoint.z / SQUARE_SIZE);
 	curNode = NULL;
 	nxtNode = NULL;
+	minNode = srcNode;
 }
 
 bool QTPFS::PathSearch::Execute(
@@ -47,9 +48,14 @@ bool QTPFS::PathSearch::Execute(
 	searchState = searchStateOffset;
 	searchMagic = searchMagicNumber;
 
-	haveOpenNode = true;
 	haveFullPath = (srcNode == tgtNode);
-//	haveFullPath = ((srcNode == tgtNode) || (curNode->GetDistance(tgtNode, NODE_DIST_EUCLIDEAN) <= radius));
+	havePartPath = false;
+
+	// early-out
+	if (haveFullPath)
+		return true;
+
+	const bool srcBlocked = (srcNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY);
 
 	std::vector<INode*>& allNodes = nodeLayer->GetNodes();
 	std::vector<INode*> ngbNodes;
@@ -61,28 +67,55 @@ bool QTPFS::PathSearch::Execute(
 	switch (searchType) {
 		case PATH_SEARCH_ASTAR:    { hCostMult = 1.0f; } break;
 		case PATH_SEARCH_DIJKSTRA: { hCostMult = 0.0f; } break;
-
-		default: {
-			assert(false);
-		} break;
+		default:                   {    assert(false); } break;
 	}
 
-	if (!haveFullPath) {
+	// allow the search to start from an impassable node (because single
+	// nodes can represent many terrain squares, some of which can still
+	// be passable and allow a unit to move within a node)
+	// NOTE: we need to make sure such paths do not have infinite cost!
+	if (srcBlocked) {
+		srcNode->SetMoveCost(0.0f);
+	}
+
+	{
 		openNodes.reset();
 		openNodes.push(srcNode);
+
 		UpdateNode(srcNode, NULL, 0.0f, (tgtPoint - srcPoint).Length() * hCostMult, srcNode->GetMoveCost());
 	}
 
-	while ((haveOpenNode = !openNodes.empty()) && !(haveFullPath = (curNode == tgtNode))) {
+	while (!openNodes.empty()) {
 		IterateSearch(allNodes, ngbNodes);
 
 		#ifdef QTPFS_TRACE_PATH_SEARCHES
 		searchExec->AddIteration(searchIter);
 		searchIter.Clear();
 		#endif
+
+		haveFullPath = (curNode == tgtNode);
+		havePartPath = (minNode != srcNode);
+
+		if (haveFullPath) {
+			openNodes.reset();
+		}
 	}
 
-	return haveFullPath;
+	if (srcBlocked) {
+		srcNode->SetMoveCost(QTPFS_POSITIVE_INFINITY);
+	}
+		
+
+	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
+	// adjust the target-point if we only got a partial result
+	if (!haveFullPath && havePartPath) {
+		tgtNode    = minNode;
+		tgtPoint.x = minNode->xmid() * SQUARE_SIZE;
+		tgtPoint.z = minNode->zmid() * SQUARE_SIZE;
+	}
+	#endif
+
+	return (haveFullPath || havePartPath);
 }
 
 
@@ -138,6 +171,18 @@ void QTPFS::PathSearch::IterateSearch(
 	if (curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
 		return;
 
+	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
+	// remember the node with lowest h-cost in case the search fails to reach tgtNode
+	if (curNode->GetPathCost(NODE_PATH_COST_H) < minNode->GetPathCost(NODE_PATH_COST_H))
+		minNode = curNode;
+	#endif
+
+
+	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
+	const float hWeight = math::sqrtf(curNode->GetPathCost(NODE_PATH_COST_M) / (curNode->GetNumPrevNodes() + 1));
+	#else
+	const float hWeight = 2.0f;
+	#endif
 
 	#ifdef QTPFS_COPY_NEIGHBOR_NODES
 	const unsigned int numNgbs = curNode->GetNeighbors(allNodes, ngbNodes);
@@ -181,12 +226,6 @@ void QTPFS::PathSearch::IterateSearch(
 
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
 		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
-
-		#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-		const float hWeight = curNode->GetPathCost(NODE_PATH_COST_M) / (curNode->GetNumPrevNodes() + 1);
-		#else
-		const float hWeight = 2.0f;
-		#endif
 
 		const float mCost = curNode->GetPathCost(NODE_PATH_COST_M) + curNode->GetMoveCost();
 		const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + curNode->GetMoveCost() * (nxtPoint - curPoint).Length();

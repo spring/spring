@@ -36,10 +36,13 @@ struct UnitModelDef
 
 struct UnitDefWeapon {
 	UnitDefWeapon();
-	UnitDefWeapon(std::string name, const WeaponDef* def, int slavedTo,
-	              float3 mainDir, float maxAngleDif, unsigned int badTargetCat,
-	              unsigned int onlyTargetCat, float fuelUse);
+	UnitDefWeapon(const WeaponDef* weaponDef);
+	UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponTable);
+	UnitDefWeapon(const UnitDefWeapon& udw) { *this = udw; }
+
+	// unused
 	std::string name;
+
 	const WeaponDef* def;
 	int slavedTo;
 	float3 mainDir;
@@ -147,12 +150,13 @@ public:
 	float turnRate;
 	bool turnInPlace;
 
-	/**
-	 * units below this speed will turn in place regardless of their
-	 * turnInPlace setting, units above this speed will slow down to
-	 * it when turning
-	 */
+	///< for units with turnInPlace=false, defines the
+	///< minimum speed to slow down to while turning
 	float turnInPlaceSpeedLimit;
+	///< for units with turnInPlace=true, defines the
+	///< maximum angle of a turn that can be entered
+	///< without slowing down
+	float turnInPlaceAngleLimit;
 
 	bool upright;
 	bool blocking;

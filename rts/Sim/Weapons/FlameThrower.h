@@ -1,19 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FLAME_THROWER_H__
-#define __FLAME_THROWER_H__
+#ifndef _FLAME_THROWER_H
+#define _FLAME_THROWER_H
 
 #include "Weapon.h"
 
-class CFlameThrower :
-	public CWeapon
+class CFlameThrower : public CWeapon
 {
 	CR_DECLARE(CFlameThrower);
 public:
 	CFlameThrower(CUnit* owner);
-	~CFlameThrower(void);
-	bool TryTarget(const float3 &pos,bool userTarget,CUnit* unit);
-	void Update(void);
+	~CFlameThrower();
+	bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
+	void Update();
+
 	float3 color;
 	float3 color2;
 
@@ -21,4 +21,4 @@ private:
 	virtual void FireImpl();
 };
 
-#endif // __FLAME_THROWER_H__
+#endif // _FLAME_THROWER_H

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __GAME_SETUP_H__
-#define __GAME_SETUP_H__
+#ifndef _GAME_SETUP_H
+#define _GAME_SETUP_H
 
 #include <string>
 #include <map>
@@ -152,4 +152,4 @@ private:
 
 extern const CGameSetup* gameSetup;
 
-#endif // __GAME_SETUP_H__
+#endif // _GAME_SETUP_H

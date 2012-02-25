@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <algorithm> // std::min/max
+
 //                  F(N=2) = H(-32768 / 32767)
 //
 //                         ^
@@ -129,6 +131,13 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 	return res;
 }
 
+
+template<class T>
+inline T mix(const T& v1, const T& v2, const float& a)
+{
+	//return v1 * (1.0f - a) + v2 * a;
+	return v1 + (v2 - v1) * a;
+}
 
 inline float Square(const float x)
 {

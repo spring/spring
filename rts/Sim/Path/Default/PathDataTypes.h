@@ -30,49 +30,6 @@ struct PathNode {
 	inline bool operator == (const PathNode& pn) const { return (nodeNum == pn.nodeNum); }
 };
 
-struct PathNodeState {
-	PathNodeState()
-		: fCost(PATHCOST_INFINITY)
-		, gCost(PATHCOST_INFINITY)
-		, extraCostSynced(0.0f)
-		, extraCostUnsynced(0.0f)
-		, nodeMask(0)
-		, parentNodePos(-1, -1)
-	{}
-
-	/// size of the memory-region we hold allocated (excluding sizeof(*this))
-	unsigned int GetMemFootPrint() const { return (nodeOffsets.size() * sizeof(int2)); }
-
-	float fCost;
-	float gCost;
-
-	// overlay-cost modifiers for nodes (when non-zero, these
-	// modify the behavior of GetPath() and GetNextWaypoint())
-	//
-	// <extraCostUnsynced> may not be read in synced context,
-	// because AI's and unsynced Lua have write-access to it
-	// <extraCostSynced> may not be written in unsynced context
-	//
-	// NOTE: if more than one local AI instance is active,
-	// each must undo its changes or they will be visible
-	// to the other AI's
-	float extraCostSynced;
-	float extraCostUnsynced;
-
-	/// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
-	unsigned int nodeMask;
-
-	/// needed for the PE to back-track path to goal
-	int2 parentNodePos;
-	/**
-	 * for the PE, each node (block) maintains the
-	 * best accessible offset (from its own center
-	 * position) with respect to each movetype
-	 */
-	std::vector<int2> nodeOffsets;
-};
-
-
 
 /// functor to define node priority
 struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
@@ -80,7 +37,6 @@ struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
 		return (x->fCost > y->fCost);
 	}
 };
-
 
 
 struct PathNodeBuffer {
@@ -104,28 +60,58 @@ private:
 	PathNode buffer[MAX_SEARCHED_NODES];
 };
 
+
 struct PathNodeStateBuffer {
 	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes): fCostMax(0.0f), gCostMax(0.0f) {
-		extraCostsSynced = NULL;
-		extraCostsUnsynced = NULL;
+		extraCostsOverlaySynced = NULL;
+		extraCostsOverlayUnsynced = NULL;
 
-		br.x = bufRes.x; ps.x = mapRes.x / bufRes.x;
-		br.y = bufRes.y; ps.y = mapRes.y / bufRes.y;
+		mr = mapRes;
+		br = bufRes;
+		ps.x = mapRes.x / bufRes.x;
+		ps.y = mapRes.y / bufRes.y;
 
-		buffer.resize(br.x * br.y, PathNodeState());
+		fCost.resize(br.x * br.y, PATHCOST_INFINITY);
+		gCost.resize(br.x * br.y, PATHCOST_INFINITY);
+		nodeMask.resize(br.x * br.y, 0);
+
+		// create on-demand
+		//extraCostSynced.resize(br.x * br.y, 0.0f);
+		//extraCostUnsynced.resize(br.x * br.y, 0.0f);
+
+		// Note: Full resolution buffer does not need those!
+		if (bufRes.x != mapRes.x || bufRes.y != mapRes.y) {
+			peParentNodePos.resize(br.x * br.y, int2(-1, -1));
+			peNodeOffsets.resize(br.x * br.y);
+		}
 	}
 
-	void Clear() { buffer.clear(); }
-	unsigned int GetSize() const { return buffer.size(); }
+	unsigned int GetSize() const { return fCost.size(); }
+
+	void ClearSquare(int idx) {
+		//assert(idx>=0 && idx<fCost.size());
+		fCost[idx] = PATHCOST_INFINITY;
+		gCost[idx] = PATHCOST_INFINITY;
+		nodeMask[idx] &= PATHOPT_OBSOLETE;
+		peParentNodePos[idx] = int2(-1, -1);
+	}
+	
 
 	/// size of the memory-region we hold allocated (excluding sizeof(*this))
-	unsigned int GetMemFootPrint() const { return (GetSize() * (sizeof(PathNodeState) + buffer[0].GetMemFootPrint())); }
+	unsigned int GetMemFootPrint() const {
+		unsigned int memFootPrint = 0;
 
-	const std::vector<PathNodeState>& GetBuffer() const { return buffer; }
-	      std::vector<PathNodeState>& GetBuffer()       { return buffer; }
+		if (!peNodeOffsets.empty()) {
+			memFootPrint += (peNodeOffsets.size() * (sizeof(std::vector<int2>) + peNodeOffsets[0].size() * sizeof(int2)));
+		}
 
-	const PathNodeState& operator [] (unsigned int idx) const { return buffer[idx]; }
-	      PathNodeState& operator [] (unsigned int idx)       { return buffer[idx]; }
+		memFootPrint += (nodeMask.size() * sizeof(unsigned int));
+		memFootPrint += (peParentNodePos.size() * sizeof(int2));
+		memFootPrint += ((fCost.size() + gCost.size()) * sizeof(float));
+		memFootPrint += ((extraCostSynced.size() + extraCostUnsynced.size()) * sizeof(float));
+
+		return memFootPrint;
+	}
 
 	void SetMaxFCost(float c) { fCostMax = c; }
 	void SetMaxGCost(float c) { gCostMax = c; }
@@ -137,18 +123,18 @@ struct PathNodeStateBuffer {
 		float c = 0.0f;
 
 		if (synced) {
-			if (extraCostsSynced != NULL) {
+			if (extraCostsOverlaySynced != NULL) {
 				// (mr / sr) is the synced downsample-factor
-				c = extraCostsSynced[ (zhm / (mr.y / sr.y)) * sr.x  +  (xhm / (mr.x / sr.x)) ];
-			} else {
-				c = buffer[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ].extraCostSynced;
+				c = extraCostsOverlaySynced[ (zhm / (mr.y / sr.y)) * sr.x  +  (xhm / (mr.x / sr.x)) ];
+			} else if (!extraCostSynced.empty()) {
+				c = extraCostSynced[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ];
 			}
 		} else {
-			if (extraCostsUnsynced != NULL) {
+			if (extraCostsOverlayUnsynced != NULL) {
 				// (mr / ur) is the unsynced downsample-factor
-				c = extraCostsUnsynced[ (zhm / (mr.y / ur.y)) * ur.x  +  (xhm / (mr.x / ur.x)) ];
-			} else {
-				c = buffer[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ].extraCostUnsynced;
+				c = extraCostsOverlayUnsynced[ (zhm / (mr.y / ur.y)) * ur.x  +  (xhm / (mr.x / ur.x)) ];
+			} else if (!extraCostUnsynced.empty()) {
+				c = extraCostUnsynced[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ];
 			}
 		}
 
@@ -157,44 +143,78 @@ struct PathNodeStateBuffer {
 
 	const float* GetNodeExtraCosts(bool synced) const {
 		if (synced) {
-			return extraCostsSynced;
+			return extraCostsOverlaySynced;
 		} else {
-			return extraCostsUnsynced;
+			return extraCostsOverlayUnsynced;
 		}
 	}
 
 	void SetNodeExtraCost(unsigned int xhm, unsigned int zhm, float cost, bool synced) {
 		if (synced) {
-			buffer[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ].extraCostSynced = cost;
+			if (extraCostSynced.empty())
+				extraCostSynced.resize(br.x * br.y, 0.0f); // alloc on-demand
+
+			extraCostSynced[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ] = cost;
 		} else {
-			buffer[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ].extraCostUnsynced = cost;
+			if (extraCostUnsynced.empty())
+				extraCostUnsynced.resize(br.x * br.y, 0.0f); // alloc on-demand
+
+			extraCostUnsynced[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ] = cost;
 		}
 	}
 
 	void SetNodeExtraCosts(const float* costs, unsigned int sx, unsigned int sz, bool synced) {
 		if (synced) {
-			extraCostsSynced = costs;
+			extraCostsOverlaySynced = costs;
 
 			sr.x = sx;
 			sr.y = sz;
 		} else {
-			extraCostsUnsynced = costs;
+			extraCostsOverlayUnsynced = costs;
 
 			ur.x = sx;
 			ur.y = sz;
 		}
 	}
 
-private:
-	std::vector<PathNodeState> buffer;
+public:
+	std::vector<float> fCost;
+	std::vector<float> gCost;
 
-	float fCostMax;
-	float gCostMax;
+	/// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
+	std::vector<unsigned int> nodeMask;
+
+	/// needed for the PE to back-track path to goal
+	std::vector<int2> peParentNodePos;
+
+	/// for the PE, each node (block) maintains the
+	/// best accessible offset (from its own center
+	/// position) with respect to each movetype
+	std::vector< std::vector<int2> > peNodeOffsets;
+
+private:
+	// overlay-cost modifiers for nodes (when non-zero, these
+	// modify the behavior of GetPath() and GetNextWaypoint())
+	//
+	// <extraCostUnsynced> may not be read in synced context,
+	// because AI's and unsynced Lua have write-access to it
+	// <extraCostSynced> may not be written in unsynced context
+	//
+	// NOTE: if more than one local AI instance is active,
+	// each must undo its changes or they will be visible
+	// to the other AI's
+	// NOTE: don't make public cause we create those on-demand
+	std::vector<float> extraCostSynced;
+	std::vector<float> extraCostUnsynced;
 
 	// if non-NULL, these override PathNodeState::extraCost{Synced, Unsynced}
 	// (NOTE: they can have arbitrary resolutions between 1 and gs->map{x,y})
-	const float* extraCostsSynced;
-	const float* extraCostsUnsynced;
+	const float* extraCostsOverlaySynced;
+	const float* extraCostsOverlayUnsynced;
+
+private:
+	float fCostMax;
+	float gCostMax;
 
 	int2 ps; ///< patch size (eg. 1 for PF, BLOCK_SIZE for PE); ignored when extraCosts != NULL
 	int2 br; ///< buffer resolution (equal to mr / ps); ignored when extraCosts != NULL
@@ -270,6 +290,7 @@ private:
 
 	PathNode* buf[MAX_SEARCHED_NODES];
 };
+
 
 class PathPriorityQueue: public std::priority_queue<PathNode*, PathVector, lessCost> {
 public:

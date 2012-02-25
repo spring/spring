@@ -19,6 +19,7 @@
 		<name>Spring RTS Community</name>
 		<url>http://springrts.com</url>
 	</organization>
+	<name>InternalSpringParent</name>
 	<description>Project parent for engine supplied Maven projects for the Spring RTS game engine, excluding 3rd party plugins</description>
 	<url>http://springrts.com</url>
 	<inceptionYear>2011</inceptionYear>

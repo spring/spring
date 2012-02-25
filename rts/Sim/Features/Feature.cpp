@@ -33,7 +33,6 @@ CR_REG_METADATA(CFeature, (
 	// CR_MEMBER(model),
 	CR_MEMBER(isRepairingBeforeResurrect),
 	CR_MEMBER(resurrectProgress),
-	CR_MEMBER(health),
 	CR_MEMBER(reclaimLeft),
 	CR_MEMBER(luaDraw),
 	CR_MEMBER(noSelect),
@@ -57,7 +56,6 @@ CR_REG_METADATA(CFeature, (
 CFeature::CFeature() : CSolidObject(),
 	isRepairingBeforeResurrect(false),
 	resurrectProgress(0.0f),
-	health(0.0f),
 	reclaimLeft(1.0f),
 	luaDraw(false),
 	noSelect(false),
@@ -189,7 +187,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
 	}
 
-	Move3D(_pos.ClampInBounds(), false);
+	Move3D(_pos.cClampInMap(), false);
 	SetRadiusAndHeight(fRadius, fHeight);
 	UpdateMidPos();
 	CalculateTransform();
@@ -367,7 +365,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 }
 
 
-void CFeature::DoDamage(const DamageArray& damages, const float3& impulse)
+void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit*, int)
 {
 	if (damages.paralyzeDamageTime) {
 		return; // paralyzers do not damage features
@@ -400,13 +398,6 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse)
 	}
 }
 
-
-void CFeature::Kill(const float3& impulse, bool crushKill) {
-	crushKilled = crushKill;
-
-	DamageArray damage;
-	DoDamage(damage * (health + 1.0f), impulse);
-}
 
 
 void CFeature::DependentDied(CObject *o)
@@ -525,7 +516,8 @@ bool CFeature::UpdatePosition()
 
 			reachedFinalPos = (deathSpeed == ZeroVector);
 
-			if (!pos.CheckInBounds()) {
+			if (!pos.IsInBounds()) {
+				pos.ClampInBounds();
 				// ensure that no more forward-speed updates are done
 				// (prevents wrecks floating in mid-air at edge of map
 				// due to gravity no longer being applied either)

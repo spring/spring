@@ -29,7 +29,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/Unsynced/FlyingPiece.h"
-#include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -239,6 +238,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		}
 	}
 
+	perlinTexObjects = 0;
 	drawPerlinTex = false;
 
 	if (perlinFB.IsValid()) {
@@ -452,21 +452,6 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 		(gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))
 		&& camera->InView(pro->pos, pro->drawRadius)
 	) {
-
-		const bool stunned = owner ? owner->stunned : false;
-
-		if (stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
-			// if the unit that fired this projectile is stunned and the projectile
-			// forms part of a shield (ie., the unit has a CPlasmaRepulser weapon but
-			// cannot fire it), prevent the projectile (shield segment) from being drawn
-			//
-			// also prevents shields being drawn at unit's pre-pickup position
-			// (since CPlasmaRepulser::Update() is responsible for updating
-			// CShieldPartProjectile::centerPos) if the unit is in a non-fireplatform
-			// transport
-			return;
-		}
-
 		if (drawReflection) {
 			if (pro->pos.y < -pro->drawRadius) {
 				return;
@@ -939,7 +924,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 
 
 void CProjectileDrawer::UpdateTextures() {
-	if (ph->numPerlinProjectiles > 0 && drawPerlinTex)
+	if (perlinTexObjects > 0 && drawPerlinTex)
 		UpdatePerlin();
 }
 

@@ -148,6 +148,13 @@ public:
 	 */
 	void SetIsolationModeDir(const std::string& dir) { isolationModeDir = dir; }
 
+
+	/**
+	 * @brief reads envvar to detect if we should run in isolated mode
+	 * used by unitsync.cpp
+	 */
+	void UpdateIsolationModeByEnvVar();
+
 private:
 
 	/**

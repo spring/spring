@@ -152,7 +152,7 @@ float3 CInMapDraw::GetMouseMapPos() // TODO move to some more global place?
 		return float3(-1.0f, 1.0f, -1.0f);
 	}
 	float3 pos = camera->pos + (mouse->dir * dist);
-	pos.CheckInBounds();
+	pos.ClampInBounds();
 	return pos;
 }
 

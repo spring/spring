@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FREE_CONTROLLER_H__
-#define __FREE_CONTROLLER_H__
+#ifndef _FREE_CONTROLLER_H
+#define _FREE_CONTROLLER_H
 
 #include "CameraController.h"
 
@@ -14,8 +14,8 @@ public:
 	void Move(const float3& move, bool tilt, bool strafe, bool upDown);
 
 	void KeyMove(float3 move);
-	void MousePress(int, int, int) { /* empty */ }
-	void MouseRelease(int, int, int) { /* empty */ }
+	void MousePress(int x, int y, int button) { /* empty */ }
+	void MouseRelease(int x, int y, int button) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
@@ -62,4 +62,4 @@ private:
 	bool goForward;
 };
 
-#endif
+#endif // _FREE_CONTROLLER_H
