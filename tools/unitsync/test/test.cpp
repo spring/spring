@@ -200,10 +200,10 @@ int main(int argc, char** argv)
     const int skirmishAIInfoCount = GetSkirmishAIInfoCount(i);
     printf("    %i:\n", i);
     for (int j = 0; j < skirmishAIInfoCount; j++) {
-      const char* key = GetInfoKey(j);
+      const string key = GetInfoKey(j);
       if ((key == SKIRMISH_AI_PROPERTY_SHORT_NAME) || (key == SKIRMISH_AI_PROPERTY_VERSION)) {
-        const char* value = GetInfoValueString(j);
-        printf("        %s = %s\n", key, value);
+        const string value = GetInfoValueString(j);
+        printf("        %s = %s\n", key.c_str(), value.c_str());
       }
     }
   }
