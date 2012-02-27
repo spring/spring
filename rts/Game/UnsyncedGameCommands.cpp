@@ -113,7 +113,7 @@ bool CGame::ProcessCommandText(unsigned int key, const std::string& command) {
 		const string actionLine = command.substr(1); // strip the '/'
 
 		Action fakeAction(actionLine);
-		ActionPressed(key, fakeAction, false);
+		ProcessAction(fakeAction, key, false);
 		return true;
 	}
 

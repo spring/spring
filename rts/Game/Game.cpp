@@ -2284,6 +2284,20 @@ void CGame::ReloadGame()
 }
 
 
+bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
+{
+	if (ActionPressed(key, action, isRepeat)) {
+		return true;
+	}
+
+	// maybe a widget is interested?
+	if (guihandler != NULL) {
+		guihandler->PushLayoutCommand(action.rawline, false); //FIXME add return argument!
+	}
+
+	return false;
+}
+
 
 void CGame::ActionReceived(const Action& action, int playerID)
 {
