@@ -3344,7 +3344,6 @@ static void DrawWeaponCone(const float3& pos,
 
 static inline void DrawWeaponArc(const CUnit* unit)
 {
-	return; // FIXME: disabled
 	if (unit->weapons.empty()) {
 		return;
 	}
@@ -3368,7 +3367,7 @@ static inline void DrawWeaponArc(const CUnit* unit)
 		pos = interPos + (UpVector * 10.0f);
 	}
 
-	const float hrads   = acos(w->maxAngleDif);
+	const float hrads   = acos(w->maxForwardAngleDif);
 	const float heading = atan2(-dir.z, dir.x);
 	const float pitch   = asin(dir.y);
 	DrawWeaponCone(pos, w->range, hrads, heading, pitch);
@@ -3781,7 +3780,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unit->maxRange,
 				                  unit->weapons.front(), 40);
-				if (!onMinimap && gs->cheatEnabled) {
+				if (!onMinimap && gs->cheatEnabled && globalRendering->drawdebug) {
 					DrawWeaponArc(unit);
 				}
 			}

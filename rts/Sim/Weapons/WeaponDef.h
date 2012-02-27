@@ -90,7 +90,6 @@ public:
 		, turnrate(0.0f)
 		, projectilespeed(0.0f)
 		, explosionSpeed(0.0f)
-		, onlyTargetCategory(0)
 		, wobble(0.0f)
 		, dance(0.0f)
 		, trajectoryHeight(0.0f)
@@ -238,8 +237,6 @@ public:
 
 	float projectilespeed;
 	float explosionSpeed;
-
-	unsigned int onlyTargetCategory;
 
 	float wobble;             ///< how much the missile will wobble around its course
 	float dance;              ///< how much the missile will dance
