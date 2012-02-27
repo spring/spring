@@ -77,6 +77,7 @@ public:
 
 	bool ProcessCommandText(unsigned int key, const std::string& command);
 	bool ProcessKeyPressAction(unsigned int key, const Action& action);
+	bool ProcessAction(const Action& action, unsigned int key = -1, bool isRepeat = false);
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
@@ -100,8 +101,6 @@ public:
 	void         SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
 	GameDrawMode GetDrawMode() const { return gameDrawMode; }
 
-	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
-
 private:
 	bool Draw();
 	bool DrawMT();
@@ -121,6 +120,7 @@ private:
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
 	int KeyPressed(unsigned short k, bool isRepeat);
 
+	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
 	bool ActionReleased(const Action& action);
 	/// synced actions (received from server) go in here
 	void ActionReceived(const Action& action, int playerID);

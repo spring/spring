@@ -1444,7 +1444,7 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 
 				Action action(copy);
 				if (!ProcessLocalActions(action)) {
-					game->ActionPressed(-1, action, false /*isRepeat*/);
+					game->ProcessAction(action);
 				}
 
 				keyInput->SetKeyState(SDLK_LALT,   tmpAlt);
