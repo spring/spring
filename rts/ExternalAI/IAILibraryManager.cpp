@@ -68,7 +68,7 @@ SkirmishAIKey IAILibraryManager::ResolveSkirmishAIKey(
 		bestVersion = NULL;
 		return fittingKeys[bestIndex];
 	} else {
-		return SkirmishAIKey();
+		return skirmishAIKey;
 	}
 }
 
