@@ -21,9 +21,8 @@ public:
 	ShieldProjectile(const CPlasmaRepulser*);
 	~ShieldProjectile();
 
-	void Draw();
 	void Update();
-	bool AllowDrawing() const { return allowDrawing; }
+	bool AllowDrawing();
 
 	void PreDelete() {
 		deleteMe = true;
@@ -37,6 +36,7 @@ private:
 	const CPlasmaRepulser* shield;
 	const AtlasedTexture* shieldTexture;
 
+	unsigned int lastAllowDrawingUpdate;
 	bool allowDrawing;
 
 	// NOTE: these are also registered in ProjectileHandler
@@ -49,7 +49,7 @@ class ShieldSegmentProjectile: public CProjectile {
 	CR_DECLARE(ShieldSegmentProjectile);
 public:
 	ShieldSegmentProjectile(
-		const ShieldProjectile* shieldProjectile,
+		ShieldProjectile* shieldProjectile,
 		const WeaponDef* shieldWeaponDef,
 		const float3& shieldSegmentPos,
 		const int xpart,
@@ -65,7 +65,7 @@ public:
 	}
 
 private:
-	const ShieldProjectile* shieldProjectile;
+	ShieldProjectile* shieldProjectile;
 
 	float3 segmentPos;
 	float3 segmentColor;

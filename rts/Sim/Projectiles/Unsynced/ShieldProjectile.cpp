@@ -3,6 +3,7 @@
 #include "ShieldProjectile.h"
 #include "Game/Camera.h"
 #include "Lua/LuaRules.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -36,7 +37,8 @@ ShieldProjectile::ShieldProjectile(const CPlasmaRepulser* shield_)
 	deleteMe      = false;
 	alwaysVisible = false;
 	useAirLos     = true;
-	
+
+	lastAllowDrawingUpdate = -1;
 	allowDrawing = false;
 
 	drawRadius = 1.0f;
@@ -72,16 +74,21 @@ void ShieldProjectile::Update() {
 	pos = shield->weaponPos;
 }
 
-void ShieldProjectile::Draw() {
+bool ShieldProjectile::AllowDrawing() {
+	// call luaRules->DrawShield only once per shield & frame
+	if (lastAllowDrawingUpdate == globalRendering->drawFrame)
+		return allowDrawing;
+
+	lastAllowDrawingUpdate = globalRendering->drawFrame;
 	allowDrawing = false;
 
 	if (shield == NULL)
-		return;
+		return allowDrawing;
 	if (shield->owner == NULL)
-		return;
+		return allowDrawing;
 
 	if (luaRules && luaRules->DrawShield(shield->owner->id, shield->weaponNum))
-		return;
+		return allowDrawing;
 
 	// interpolate shield position for drawing
 	const CUnit* owner = shield->owner;
@@ -94,14 +101,15 @@ void ShieldProjectile::Draw() {
 	// yet finished, prevent the shield segments from being
 	// drawn
 	if (shield->owner->stunned || shield->owner->beingBuilt)
-		return;
+		return allowDrawing;
 	if (shieldSegments.empty())
-		return;
+		return allowDrawing;
 	if (!camera->InView(pos, shield->weaponDef->shieldRadius * 2.0f))
-		return;
+		return allowDrawing;
 
 	// signal the ShieldSegmentProjectile's they can draw
 	allowDrawing = true;
+	return allowDrawing;
 }
 
 
@@ -113,7 +121,7 @@ void ShieldProjectile::Draw() {
 #define NUM_VERTICES_Y 5
 
 ShieldSegmentProjectile::ShieldSegmentProjectile(
-	const ShieldProjectile* shieldProjectile_,
+	ShieldProjectile* shieldProjectile_,
 	const WeaponDef* shieldWeaponDef,
 	const float3& shieldSegmentPos,
 	const int xpart,
