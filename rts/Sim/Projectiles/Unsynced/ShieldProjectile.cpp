@@ -36,6 +36,8 @@ ShieldProjectile::ShieldProjectile(
 	deleteMe      = false;
 	alwaysVisible = false;
 	useAirLos     = true;
+	
+	allowDrawing = false;
 
 	drawRadius = 1.0f;
 	mygravity = 0.0f;
@@ -61,6 +63,13 @@ ShieldProjectile::~ShieldProjectile() {
 	for (shieldSegsIt = shieldSegments.begin(); shieldSegsIt != shieldSegments.end(); ++shieldSegsIt) {
 		(*shieldSegsIt)->PreDelete();
 	}
+}
+
+void ShieldProjectile::Update() {
+	if (shield == NULL)
+		return;
+
+	pos = shield->weaponPos;
 }
 
 void ShieldProjectile::Draw() {
@@ -166,10 +175,20 @@ ShieldSegmentProjectile::~ShieldSegmentProjectile()
 	}
 }
 
-void ShieldSegmentProjectile::Draw() {
+void ShieldSegmentProjectile::Update() {
+	if (shieldProjectile == NULL)
+		return;
+
+	const CPlasmaRepulser* shield = shieldProjectile->GetShield();
+
+	//FIXME use interpolated unit->drawPos for segmentPos!
+	segmentPos = shield->weaponPos;
+
 	// use the "middle" vertex for z-ordering
 	pos = segmentPos + vertices[(NUM_VERTICES_X * NUM_VERTICES_Y) >> 1] * segmentSize;
+}
 
+void ShieldSegmentProjectile::Draw() {
 	if (shieldProjectile == NULL)
 		return;
 	if (!shieldProjectile->AllowDrawing())
@@ -181,7 +200,6 @@ void ShieldSegmentProjectile::Draw() {
 	// lerp between badColor and goodColor based on shield's current power
 	const float colorMix = std::min(1.0f, shield->curPower / std::max(1.0f, shieldDef->shieldPower));
 
-	segmentPos = shield->weaponPos;
 	segmentColor = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
 	segmentAlpha = shieldDef->shieldAlpha;
 
