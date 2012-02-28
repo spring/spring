@@ -16,6 +16,10 @@ CR_BIND_DERIVED(ShieldProjectile, CProjectile, (NULL));
 CR_BIND_DERIVED(ShieldSegmentProjectile, CProjectile, (NULL, NULL, ZeroVector, 0, 0));
 
 
+static std::vector<float3> spherevertices;
+static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
+
+
 
 #define NUM_SEGMENTS_X 8
 #define NUM_SEGMENTS_Y 4
@@ -51,8 +55,8 @@ ShieldProjectile::ShieldProjectile(const CPlasmaRepulser* shield_)
 		shieldTexture = wd->visuals.texture1;
 
 		// Y*X segments, deleted by ProjectileHandler
-		for (int y = 0; y < (NUM_SEGMENTS_Y * 4); y += 4) {
-			for (int x = 0; x < (NUM_SEGMENTS_X * 4); x += 4) {
+		for (int y = 0; y < NUM_SEGMENTS_Y; ++y) {
+			for (int x = 0; x < NUM_SEGMENTS_X; ++x) {
 				shieldSegments.push_back(new ShieldSegmentProjectile(this, wd, u->pos, x, y));
 			}
 		}
@@ -153,27 +157,8 @@ ShieldSegmentProjectile::ShieldSegmentProjectile(
 	#define texture shieldProjectile->GetShieldTexture()
 	usePerlinTex = (texture == projectileDrawer->perlintex);
 
-	if (texture != NULL) {
-		const float xscale = (texture->xend - texture->xstart) * 0.25f, xmid = (texture->xstart + texture->xend) * 0.5f;
-		const float yscale = (texture->yend - texture->ystart) * 0.25f, ymid = (texture->ystart + texture->yend) * 0.5f;
-
-		// N*N vertices, (N-1)*(N-1) quads (a segment is not planar)
-		for (int y = 0; y < NUM_VERTICES_Y; ++y) {
-			const float yp = (y + ypart) / float(NUM_SEGMENTS_Y * 4) * PI - PI / 2;
-
-			for (int x = 0; x < NUM_VERTICES_X; ++x) {
-				const float xp = (x + xpart) / float(NUM_SEGMENTS_X * 4) * 2 * PI;
-				const unsigned int vIdx = y * NUM_VERTICES_X + x;
-
-				vertices[vIdx].x = sin(xp) * cos(yp);
-				vertices[vIdx].y = sin(yp);
-				vertices[vIdx].z = cos(xp) * cos(yp);
-				texCoors[vIdx].x = (vertices[vIdx].x * (2 - fabs(vertices[vIdx].y))) * xscale + xmid;
-				texCoors[vIdx].y = (vertices[vIdx].z * (2 - fabs(vertices[vIdx].y))) * yscale + ymid;
-			}
-		}
-
-	}
+	vertices = GetSegmentVertices(xpart, ypart);
+	texCoors = GetSegmentTexCoords(texture, xpart, ypart);
 
 	// ProjectileDrawer needs to know if any segments use the Perlin-noise texture
 	if (projectileDrawer != NULL && usePerlinTex) {
@@ -188,6 +173,72 @@ ShieldSegmentProjectile::~ShieldSegmentProjectile()
 	if (projectileDrawer != NULL && usePerlinTex) {
 		projectileDrawer->DecPerlinTexObjectCount();
 	}
+}
+
+
+const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const int ypart)
+{
+	static bool init = false;
+	if (!init) {
+		init = true;
+
+		spherevertices.resize(NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
+
+		// NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X vertices
+		for (int ypart_ = 0; ypart_ < NUM_SEGMENTS_Y; ++ypart_) {
+			for (int xpart_ = 0; xpart_ < NUM_SEGMENTS_X; ++xpart_) {
+				const int segmentIdx = (xpart_ + ypart_ * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
+				for (int y = 0; y < NUM_VERTICES_Y; ++y) {
+					const float yp = (y + ypart_ * 4) / float(NUM_SEGMENTS_Y * 4) * PI - PI / 2;
+					for (int x = 0; x < NUM_VERTICES_X; ++x) {
+						const float xp = (x + xpart_ * 4) / float(NUM_SEGMENTS_X * 4) * 2 * PI;
+						const size_t vIdx = segmentIdx + y * NUM_VERTICES_X + x;
+
+						spherevertices[vIdx].x = sin(xp) * cos(yp);
+						spherevertices[vIdx].y = sin(yp);
+						spherevertices[vIdx].z = cos(xp) * cos(yp);
+					}
+				}
+			}
+		}
+	}
+
+	const int segmentIdx = (xpart + ypart * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
+	return &spherevertices[segmentIdx];
+}
+
+const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart)
+{
+	std::map<const AtlasedTexture*, std::vector<float2> >::iterator fit = spheretexcoords.find(texture);
+	if (fit == spheretexcoords.end()) {
+		std::vector<float2>& texcoords = spheretexcoords[texture];
+		texcoords.resize(NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
+
+		const float xscale = (texture == NULL)? 0.0f: (texture->xend - texture->xstart) * 0.25f;
+		const float yscale = (texture == NULL)? 0.0f: (texture->yend - texture->ystart) * 0.25f;
+		const float xmid = (texture == NULL)? 0.0f: (texture->xstart + texture->xend) * 0.5f;
+		const float ymid = (texture == NULL)? 0.0f: (texture->ystart + texture->yend) * 0.5f;
+
+		for (int ypart_ = 0; ypart_ < NUM_SEGMENTS_Y; ++ypart_) {
+			for (int xpart_ = 0; xpart_ < NUM_SEGMENTS_X; ++xpart_) {
+				const int segmentIdx = (xpart_ + ypart_ * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
+				for (int y = 0; y < NUM_VERTICES_Y; ++y) {
+					const float yp = (y + ypart_ * 4) / float(NUM_SEGMENTS_Y * 4) * PI - PI / 2;
+					for (int x = 0; x < NUM_VERTICES_X; ++x) {
+						const size_t vIdx = segmentIdx + y * NUM_VERTICES_X + x;
+
+						texcoords[vIdx].x = (spherevertices[vIdx].x * (2 - fabs(spherevertices[vIdx].y))) * xscale + xmid;
+						texcoords[vIdx].y = (spherevertices[vIdx].z * (2 - fabs(spherevertices[vIdx].y))) * yscale + ymid;
+					}
+				}
+			}
+		}
+
+		fit = spheretexcoords.find(texture);
+	}
+
+	const int segmentIdx = (xpart + ypart * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
+	return &fit->second[segmentIdx];
 }
 
 void ShieldSegmentProjectile::Update() {
