@@ -91,6 +91,9 @@ bool ShieldProjectile::AllowDrawing() {
 	if (shield->owner == NULL)
 		return allowDrawing;
 
+	//FIXME if Lua wants to draw the shield itself, we should draw all GL_QUADS in the `va` vertexArray first.
+	// but doing so for each shield might reduce the performance.
+	// so might use a branch-prediciton? -> save last return value and if it is true draw `va` before calling luaRules->DrawShield()
 	if (luaRules && luaRules->DrawShield(shield->owner->id, shield->weaponNum))
 		return allowDrawing;
 
