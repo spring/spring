@@ -22,6 +22,7 @@ public:
 	~ShieldProjectile();
 
 	void Draw();
+	void Update();
 	bool AllowDrawing() const { return allowDrawing; }
 
 	void PreDelete() {
@@ -57,6 +58,7 @@ public:
 	~ShieldSegmentProjectile();
 
 	void Draw();
+	void Update();
 	void PreDelete() {
 		deleteMe = true;
 		shieldProjectile = NULL;
