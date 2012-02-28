@@ -19,16 +19,16 @@ CR_BIND_DERIVED(ShieldSegmentProjectile, CProjectile, (NULL, NULL, ZeroVector, 0
 #define NUM_SEGMENTS_X 8
 #define NUM_SEGMENTS_Y 4
 
-ShieldProjectile::ShieldProjectile(
-	const CPlasmaRepulser* shield_
-): CProjectile(
-	ZeroVector,
-	ZeroVector,
-	shield_->owner,
-	false,
-	false,
-	false
-) {
+ShieldProjectile::ShieldProjectile(const CPlasmaRepulser* shield_)
+	: CProjectile(
+		shield_->weaponPos, // pos
+		ZeroVector, // speed
+		shield_->owner, // owner
+		false, // isSynced
+		false, // isWeapon
+		false  // isPiece
+	)
+{
 	shield = shield_;
 	shieldTexture = NULL;
 
@@ -68,8 +68,15 @@ ShieldProjectile::~ShieldProjectile() {
 void ShieldProjectile::Update() {
 	if (shield == NULL)
 		return;
+	if (shield->owner == NULL)
+		return;
 
-	pos = shield->weaponPos;
+	const CUnit* owner = shield->owner;
+
+	pos = owner->drawPos +
+		owner->frontdir * shield->relWeaponPos.z +
+		owner->updir    * shield->relWeaponPos.y +
+		owner->rightdir * shield->relWeaponPos.x;
 }
 
 void ShieldProjectile::Draw() {
@@ -179,10 +186,7 @@ void ShieldSegmentProjectile::Update() {
 	if (shieldProjectile == NULL)
 		return;
 
-	const CPlasmaRepulser* shield = shieldProjectile->GetShield();
-
-	//FIXME use interpolated unit->drawPos for segmentPos!
-	segmentPos = shield->weaponPos;
+	segmentPos = shieldProjectile->pos;
 
 	// use the "middle" vertex for z-ordering
 	pos = segmentPos + vertices[(NUM_VERTICES_X * NUM_VERTICES_Y) >> 1] * segmentSize;
