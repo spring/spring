@@ -19,16 +19,16 @@ CR_BIND_DERIVED(ShieldSegmentProjectile, CProjectile, (NULL, NULL, ZeroVector, 0
 #define NUM_SEGMENTS_X 8
 #define NUM_SEGMENTS_Y 4
 
-ShieldProjectile::ShieldProjectile(
-	const CPlasmaRepulser* shield_
-): CProjectile(
-	ZeroVector,
-	ZeroVector,
-	shield_->owner,
-	false,
-	false,
-	false
-) {
+ShieldProjectile::ShieldProjectile(const CPlasmaRepulser* shield_)
+	: CProjectile(
+		shield_->weaponPos, // pos
+		ZeroVector, // speed
+		shield_->owner, // owner
+		false, // isSynced
+		false, // isWeapon
+		false  // isPiece
+	)
+{
 	shield = shield_;
 	shieldTexture = NULL;
 
@@ -83,6 +83,13 @@ void ShieldProjectile::Draw() {
 	if (luaRules && luaRules->DrawShield(shield->owner->id, shield->weaponNum))
 		return;
 
+	// interpolate shield position for drawing
+	const CUnit* owner = shield->owner;
+	pos = owner->drawPos +
+		owner->frontdir * shield->relWeaponPos.z +
+		owner->updir    * shield->relWeaponPos.y +
+		owner->rightdir * shield->relWeaponPos.x;
+
 	// if the unit that emits this shield is stunned or not
 	// yet finished, prevent the shield segments from being
 	// drawn
@@ -90,7 +97,7 @@ void ShieldProjectile::Draw() {
 		return;
 	if (shieldSegments.empty())
 		return;
-	if (!camera->InView(shield->weaponPos, shield->weaponDef->shieldRadius * 2.0f))
+	if (!camera->InView(pos, shield->weaponDef->shieldRadius * 2.0f))
 		return;
 
 	// signal the ShieldSegmentProjectile's they can draw
@@ -179,13 +186,8 @@ void ShieldSegmentProjectile::Update() {
 	if (shieldProjectile == NULL)
 		return;
 
-	const CPlasmaRepulser* shield = shieldProjectile->GetShield();
-
-	//FIXME use interpolated unit->drawPos for segmentPos!
-	segmentPos = shield->weaponPos;
-
 	// use the "middle" vertex for z-ordering
-	pos = segmentPos + vertices[(NUM_VERTICES_X * NUM_VERTICES_Y) >> 1] * segmentSize;
+	pos = shieldProjectile->pos + vertices[(NUM_VERTICES_X * NUM_VERTICES_Y) >> 1] * segmentSize;
 }
 
 void ShieldSegmentProjectile::Draw() {
@@ -200,6 +202,7 @@ void ShieldSegmentProjectile::Draw() {
 	// lerp between badColor and goodColor based on shield's current power
 	const float colorMix = std::min(1.0f, shield->curPower / std::max(1.0f, shieldDef->shieldPower));
 
+	segmentPos   = shieldProjectile->pos;
 	segmentColor = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
 	segmentAlpha = shieldDef->shieldAlpha;
 
