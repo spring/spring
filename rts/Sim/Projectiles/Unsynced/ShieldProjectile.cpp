@@ -3,6 +3,7 @@
 #include "ShieldProjectile.h"
 #include "Game/Camera.h"
 #include "Lua/LuaRules.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -13,6 +14,10 @@
 
 CR_BIND_DERIVED(ShieldProjectile, CProjectile, (NULL));
 CR_BIND_DERIVED(ShieldSegmentProjectile, CProjectile, (NULL, NULL, ZeroVector, 0, 0));
+
+
+static std::vector<float3> spherevertices;
+static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
 
 
 
@@ -36,7 +41,8 @@ ShieldProjectile::ShieldProjectile(const CPlasmaRepulser* shield_)
 	deleteMe      = false;
 	alwaysVisible = false;
 	useAirLos     = true;
-	
+
+	lastAllowDrawingUpdate = -1;
 	allowDrawing = false;
 
 	drawRadius = 1.0f;
@@ -49,8 +55,8 @@ ShieldProjectile::ShieldProjectile(const CPlasmaRepulser* shield_)
 		shieldTexture = wd->visuals.texture1;
 
 		// Y*X segments, deleted by ProjectileHandler
-		for (int y = 0; y < (NUM_SEGMENTS_Y * 4); y += 4) {
-			for (int x = 0; x < (NUM_SEGMENTS_X * 4); x += 4) {
+		for (int y = 0; y < NUM_SEGMENTS_Y; ++y) {
+			for (int x = 0; x < NUM_SEGMENTS_X; ++x) {
 				shieldSegments.push_back(new ShieldSegmentProjectile(this, wd, u->pos, x, y));
 			}
 		}
@@ -79,29 +85,45 @@ void ShieldProjectile::Update() {
 		owner->rightdir * shield->relWeaponPos.x;
 }
 
-void ShieldProjectile::Draw() {
+bool ShieldProjectile::AllowDrawing() {
+	// call luaRules->DrawShield only once per shield & frame
+	if (lastAllowDrawingUpdate == globalRendering->drawFrame)
+		return allowDrawing;
+
+	lastAllowDrawingUpdate = globalRendering->drawFrame;
 	allowDrawing = false;
 
 	if (shield == NULL)
-		return;
+		return allowDrawing;
 	if (shield->owner == NULL)
-		return;
+		return allowDrawing;
 
+	//FIXME if Lua wants to draw the shield itself, we should draw all GL_QUADS in the `va` vertexArray first.
+	// but doing so for each shield might reduce the performance.
+	// so might use a branch-prediciton? -> save last return value and if it is true draw `va` before calling luaRules->DrawShield()
 	if (luaRules && luaRules->DrawShield(shield->owner->id, shield->weaponNum))
-		return;
+		return allowDrawing;
+
+	// interpolate shield position for drawing
+	const CUnit* owner = shield->owner;
+	pos = owner->drawPos +
+		owner->frontdir * shield->relWeaponPos.z +
+		owner->updir    * shield->relWeaponPos.y +
+		owner->rightdir * shield->relWeaponPos.x;
 
 	// if the unit that emits this shield is stunned or not
 	// yet finished, prevent the shield segments from being
 	// drawn
 	if (shield->owner->stunned || shield->owner->beingBuilt)
-		return;
+		return allowDrawing;
 	if (shieldSegments.empty())
-		return;
-	if (!camera->InView(shield->weaponPos, shield->weaponDef->shieldRadius * 2.0f))
-		return;
+		return allowDrawing;
+	if (!camera->InView(pos, shield->weaponDef->shieldRadius * 2.0f))
+		return allowDrawing;
 
 	// signal the ShieldSegmentProjectile's they can draw
 	allowDrawing = true;
+	return allowDrawing;
 }
 
 
@@ -113,7 +135,7 @@ void ShieldProjectile::Draw() {
 #define NUM_VERTICES_Y 5
 
 ShieldSegmentProjectile::ShieldSegmentProjectile(
-	const ShieldProjectile* shieldProjectile_,
+	ShieldProjectile* shieldProjectile_,
 	const WeaponDef* shieldWeaponDef,
 	const float3& shieldSegmentPos,
 	const int xpart,
@@ -145,27 +167,8 @@ ShieldSegmentProjectile::ShieldSegmentProjectile(
 	#define texture shieldProjectile->GetShieldTexture()
 	usePerlinTex = (texture == projectileDrawer->perlintex);
 
-	if (texture != NULL) {
-		const float xscale = (texture->xend - texture->xstart) * 0.25f, xmid = (texture->xstart + texture->xend) * 0.5f;
-		const float yscale = (texture->yend - texture->ystart) * 0.25f, ymid = (texture->ystart + texture->yend) * 0.5f;
-
-		// N*N vertices, (N-1)*(N-1) quads (a segment is not planar)
-		for (int y = 0; y < NUM_VERTICES_Y; ++y) {
-			const float yp = (y + ypart) / float(NUM_SEGMENTS_Y * 4) * PI - PI / 2;
-
-			for (int x = 0; x < NUM_VERTICES_X; ++x) {
-				const float xp = (x + xpart) / float(NUM_SEGMENTS_X * 4) * 2 * PI;
-				const unsigned int vIdx = y * NUM_VERTICES_X + x;
-
-				vertices[vIdx].x = sin(xp) * cos(yp);
-				vertices[vIdx].y = sin(yp);
-				vertices[vIdx].z = cos(xp) * cos(yp);
-				texCoors[vIdx].x = (vertices[vIdx].x * (2 - fabs(vertices[vIdx].y))) * xscale + xmid;
-				texCoors[vIdx].y = (vertices[vIdx].z * (2 - fabs(vertices[vIdx].y))) * yscale + ymid;
-			}
-		}
-
-	}
+	vertices = GetSegmentVertices(xpart, ypart);
+	texCoors = GetSegmentTexCoords(texture, xpart, ypart);
 
 	// ProjectileDrawer needs to know if any segments use the Perlin-noise texture
 	if (projectileDrawer != NULL && usePerlinTex) {
@@ -182,14 +185,78 @@ ShieldSegmentProjectile::~ShieldSegmentProjectile()
 	}
 }
 
+
+const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const int ypart)
+{
+	static bool init = false;
+	if (!init) {
+		init = true;
+
+		spherevertices.resize(NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
+
+		// NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X vertices
+		for (int ypart_ = 0; ypart_ < NUM_SEGMENTS_Y; ++ypart_) {
+			for (int xpart_ = 0; xpart_ < NUM_SEGMENTS_X; ++xpart_) {
+				const int segmentIdx = (xpart_ + ypart_ * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
+				for (int y = 0; y < NUM_VERTICES_Y; ++y) {
+					const float yp = (y + ypart_ * 4) / float(NUM_SEGMENTS_Y * 4) * PI - PI / 2;
+					for (int x = 0; x < NUM_VERTICES_X; ++x) {
+						const float xp = (x + xpart_ * 4) / float(NUM_SEGMENTS_X * 4) * 2 * PI;
+						const size_t vIdx = segmentIdx + y * NUM_VERTICES_X + x;
+
+						spherevertices[vIdx].x = sin(xp) * cos(yp);
+						spherevertices[vIdx].y = sin(yp);
+						spherevertices[vIdx].z = cos(xp) * cos(yp);
+					}
+				}
+			}
+		}
+	}
+
+	const int segmentIdx = (xpart + ypart * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
+	return &spherevertices[segmentIdx];
+}
+
+const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart)
+{
+	std::map<const AtlasedTexture*, std::vector<float2> >::iterator fit = spheretexcoords.find(texture);
+	if (fit == spheretexcoords.end()) {
+		std::vector<float2>& texcoords = spheretexcoords[texture];
+		texcoords.resize(NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
+
+		const float xscale = (texture == NULL)? 0.0f: (texture->xend - texture->xstart) * 0.25f;
+		const float yscale = (texture == NULL)? 0.0f: (texture->yend - texture->ystart) * 0.25f;
+		const float xmid = (texture == NULL)? 0.0f: (texture->xstart + texture->xend) * 0.5f;
+		const float ymid = (texture == NULL)? 0.0f: (texture->ystart + texture->yend) * 0.5f;
+
+		for (int ypart_ = 0; ypart_ < NUM_SEGMENTS_Y; ++ypart_) {
+			for (int xpart_ = 0; xpart_ < NUM_SEGMENTS_X; ++xpart_) {
+				const int segmentIdx = (xpart_ + ypart_ * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
+				for (int y = 0; y < NUM_VERTICES_Y; ++y) {
+					const float yp = (y + ypart_ * 4) / float(NUM_SEGMENTS_Y * 4) * PI - PI / 2;
+					for (int x = 0; x < NUM_VERTICES_X; ++x) {
+						const size_t vIdx = segmentIdx + y * NUM_VERTICES_X + x;
+
+						texcoords[vIdx].x = (spherevertices[vIdx].x * (2 - fabs(spherevertices[vIdx].y))) * xscale + xmid;
+						texcoords[vIdx].y = (spherevertices[vIdx].z * (2 - fabs(spherevertices[vIdx].y))) * yscale + ymid;
+					}
+				}
+			}
+		}
+
+		fit = spheretexcoords.find(texture);
+	}
+
+	const int segmentIdx = (xpart + ypart * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
+	return &fit->second[segmentIdx];
+}
+
 void ShieldSegmentProjectile::Update() {
 	if (shieldProjectile == NULL)
 		return;
 
-	segmentPos = shieldProjectile->pos;
-
 	// use the "middle" vertex for z-ordering
-	pos = segmentPos + vertices[(NUM_VERTICES_X * NUM_VERTICES_Y) >> 1] * segmentSize;
+	pos = shieldProjectile->pos + vertices[(NUM_VERTICES_X * NUM_VERTICES_Y) >> 1] * segmentSize;
 }
 
 void ShieldSegmentProjectile::Draw() {
@@ -204,6 +271,7 @@ void ShieldSegmentProjectile::Draw() {
 	// lerp between badColor and goodColor based on shield's current power
 	const float colorMix = std::min(1.0f, shield->curPower / std::max(1.0f, shieldDef->shieldPower));
 
+	segmentPos   = shieldProjectile->pos;
 	segmentColor = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
 	segmentAlpha = shieldDef->shieldAlpha;
 
