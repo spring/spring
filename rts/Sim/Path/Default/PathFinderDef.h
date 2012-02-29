@@ -10,7 +10,7 @@
 struct MoveData;
 class CPathFinderDef {
 public:
-	CPathFinderDef(const float3& goalCenter, float goalRadius);
+	CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance);
 	virtual ~CPathFinderDef() {}
 
 	virtual bool WithinConstraints(int xSquare, int Square) const { return true; }
@@ -23,6 +23,7 @@ public:
 
 	float3 goal;
 	float sqGoalRadius;
+	float startInGoalRadius;
 	int goalSquareX;
 	int goalSquareZ;
 };

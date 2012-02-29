@@ -5,7 +5,7 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
 
-CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius):
+CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance):
 goal(goalCenter),
 sqGoalRadius(goalRadius * goalRadius)
 {
@@ -13,14 +13,15 @@ sqGoalRadius(goalRadius * goalRadius)
 	if (sqGoalRadius < (SQUARE_SIZE * SQUARE_SIZE * 2))
 		sqGoalRadius = (SQUARE_SIZE * SQUARE_SIZE * 2);
 
+	startInGoalRadius = sqGoalRadius >= sqGoalDistance;
+
 	goalSquareX = int(goalCenter.x / SQUARE_SIZE);
 	goalSquareZ = int(goalCenter.z / SQUARE_SIZE);
 }
 
-
 // returns true when the goal is within our defined range
 bool CPathFinderDef::IsGoal(int xSquare, int zSquare) const {
-	return ((SquareToFloat3(xSquare, zSquare) - goal).SqLength2D() <= sqGoalRadius);
+	return (SquareToFloat3(xSquare, zSquare).SqDistance2D(goal) <= sqGoalRadius);
 }
 
 // returns distance to goal center in mapsquares
@@ -57,7 +58,7 @@ int2 CPathFinderDef::GoalSquareOffset(int blockSize) const {
 
 
 CRangedGoalWithCircularConstraint::CRangedGoalWithCircularConstraint(const float3& start, const float3& goal, float goalRadius, float searchSize, int extraSize):
-CPathFinderDef(goal, goalRadius)
+CPathFinderDef(goal, goalRadius, start.SqDistance2D(goal))
 {
 	disabled = false;
 
