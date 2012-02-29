@@ -1455,15 +1455,20 @@ void CGroundMoveType::HandleUnitCollisions(
 		// if an allied collision, only the collidee is allowed to be crushed (uni-directional) and neither stop
 		//
 		// first rule can be ignored at will by either party (only through Lua) such that it is not stopped
-		// however neither party can override its pushResistant gene: if collider has it set then collidee's
-		// pushing contribution is always ignored, if collidee has it set then collidee is always stopped (!)
+		// however neither party can override its pushResistant gene: the party that has it set will ignore
+		// pushing contributions from the other WITHOUT being forcibly stopped, unless *both* happen to be
+		// push-resistant (then both are stopped)
 		const bool alliedCollision =
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
+		const bool yield2Collider = (collider->isMoving && !collidee->isMoving);
+		const bool ignoreCollidee = ((yield2Collider && alliedCollision) || colliderUD->pushResistant);
+		const bool disablePushing = (colliderUD->pushResistant && collideeUD->pushResistant);
 
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
-		pushCollidee &= (!collidee->usingScriptMoveType && !collideeUD->pushResistant);
+		pushCollider &= (!disablePushing && !collidee->usingScriptMoveType);
+		pushCollidee &= (!disablePushing && !collider->usingScriptMoveType);
 
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= (collider->speed != ZeroVector);
@@ -1533,9 +1538,9 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (collideeMobile && collideeMM->GetPosSpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
 
 		// ignore pushing contributions from idling friendly collidee's
-		// (or if we are resistant to them); this will only take effect
-		// if pushCollider is still true
-		if (((collider->isMoving && !collidee->isMoving) && alliedCollision) || colliderUD->pushResistant) {
+		// (or if we are resistant to them) without stopping; this will
+		// ONLY take effect if pushCollider is still true
+		if (ignoreCollidee) {
 			colliderMassScale *= ((collideeMobile)? 0.0f: 1.0f);
 		}
 
