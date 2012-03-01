@@ -98,6 +98,8 @@ class LuaUnsyncedCtrl {
 		static int SetUnitDefIcon(lua_State* L);
 		static int SetUnitDefImage(lua_State* L);
 
+        static int SetModKeyStateHack(lua_State* L);
+
 		static int SetActiveCommand(lua_State* L);
 
 		static int ForceLayoutUpdate(lua_State* L);
