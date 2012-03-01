@@ -59,18 +59,13 @@ int2 CPathFinderDef::GoalSquareOffset(unsigned int blockSize) const {
 
 
 
-<<<<<<< HEAD
 CRangedGoalWithCircularConstraint::CRangedGoalWithCircularConstraint(
 	const float3& start,
 	const float3& goal,
 	float goalRadius,
 	float searchSize,
 	unsigned int extraSize):
-	CPathFinderDef(goal, goalRadius)
-=======
-CRangedGoalWithCircularConstraint::CRangedGoalWithCircularConstraint(const float3& start, const float3& goal, float goalRadius, float searchSize, int extraSize):
-CPathFinderDef(goal, goalRadius, start.SqDistance2D(goal))
->>>>>>> develop
+	CPathFinderDef(goal, goalRadius, start.SqDistance2D(goal))
 {
 	disabled = false;
 
