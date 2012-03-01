@@ -141,6 +141,10 @@ void QTPFS::PathSearch::UpdateNode(
 	nxt->SetPathCost(NODE_PATH_COST_F, gCost + (hCost * hCostMult));
 	nxt->SetPathCost(NODE_PATH_COST_M, mCost);
 
+	#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+	nxt->SetEdgeTransitionPoint(nxtPoint);
+	#endif
+
 	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
 	nxt->SetNumPrevNodes((cur != NULL)? (cur->GetNumPrevNodes() + 1): 0);
 	#endif
@@ -164,10 +168,10 @@ void QTPFS::PathSearch::IterateSearch(
 	searchIter.SetPoppedNodeIdx(curNode->zmin() * gs->mapx + curNode->xmin());
 	#endif
 
-	if (curNode != srcNode)
-		curPoint = curNode->GetNeighborEdgeTransitionPoint(curNode->GetPrevNode(), curPoint);
 	if (curNode == tgtNode)
 		return;
+	if (curNode != srcNode)
+		curPoint = curNode->GetNeighborEdgeTransitionPoint(curNode->GetPrevNode(), curPoint);
 	if (curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
 		return;
 
@@ -295,7 +299,11 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 		INode* oldNode = tmpNode->GetPrevNode();
 
 		while ((oldNode != NULL) && (tmpNode != srcNode)) {
-			const float3& point = tmpNode->GetNeighborEdgeTransitionPoint(oldNode, nxtPoint);
+			#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+			const float3& point = tmpNode->GetEdgeTransitionPoint();
+			#else
+			const float3& point = tmpNode->GetNeighborEdgeTransitionPoint(oldNode, ZeroVector);
+			#endif
 
 			assert(!math::isinf(point.x) && !math::isinf(point.z));
 			assert(!math::isnan(point.x) && !math::isnan(point.z));
@@ -309,8 +317,6 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 
 			tmpNode = oldNode;
 			oldNode = tmpNode->GetPrevNode();
-
-			nxtPoint = point;
 		}
 	}
 
