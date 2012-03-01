@@ -51,7 +51,10 @@ public:
 	 * This can be used for issueing warnings.
 	 */
 	virtual const T_dupSkirm& GetDuplicateSkirmishAIInfos() const = 0;
-
+	/**
+	 * Returns a resolved aikey
+	 * @see SkirmishAIKey::IsUnspecified()
+	 */
 	SkirmishAIKey ResolveSkirmishAIKey(const SkirmishAIKey& skirmishAIKey)
 			const;
 

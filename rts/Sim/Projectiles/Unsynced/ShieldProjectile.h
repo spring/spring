@@ -5,6 +5,7 @@
 
 #include "Sim/Projectiles/Projectile.h"
 #include "System/float3.h"
+#include "System/Vec2.h"
 
 class CUnit;
 class CPlasmaRepulser;
@@ -21,8 +22,8 @@ public:
 	ShieldProjectile(const CPlasmaRepulser*);
 	~ShieldProjectile();
 
-	void Draw();
-	bool AllowDrawing() const { return allowDrawing; }
+	void Update();
+	bool AllowDrawing();
 
 	void PreDelete() {
 		deleteMe = true;
@@ -36,6 +37,7 @@ private:
 	const CPlasmaRepulser* shield;
 	const AtlasedTexture* shieldTexture;
 
+	unsigned int lastAllowDrawingUpdate;
 	bool allowDrawing;
 
 	// NOTE: these are also registered in ProjectileHandler
@@ -48,7 +50,7 @@ class ShieldSegmentProjectile: public CProjectile {
 	CR_DECLARE(ShieldSegmentProjectile);
 public:
 	ShieldSegmentProjectile(
-		const ShieldProjectile* shieldProjectile,
+		ShieldProjectile* shieldProjectile,
 		const WeaponDef* shieldWeaponDef,
 		const float3& shieldSegmentPos,
 		const int xpart,
@@ -57,19 +59,24 @@ public:
 	~ShieldSegmentProjectile();
 
 	void Draw();
+	void Update();
 	void PreDelete() {
 		deleteMe = true;
 		shieldProjectile = NULL;
 	}
 
 private:
-	const ShieldProjectile* shieldProjectile;
+	static const float3* GetSegmentVertices(const int xpart, const int ypart);
+	static const float2* GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart);
+
+private:
+	ShieldProjectile* shieldProjectile;
 
 	float3 segmentPos;
 	float3 segmentColor;
 
-	float3 vertices[25];
-	float3 texCoors[25];
+	const float3* vertices;
+	const float2* texCoors;
 
 	float segmentSize;
 	float segmentAlpha;

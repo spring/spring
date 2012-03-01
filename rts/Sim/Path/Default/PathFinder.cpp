@@ -137,8 +137,10 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 	if (startxSqr >= gs->mapx) { startxSqr = gs->mapxm1; }
 	if (startzSqr >= gs->mapy) { startzSqr = gs->mapym1; }
 
-	// If the starting position is a goal position, then no search need to be performed.
-	if (pfDef.IsGoal(startxSqr, startzSqr))
+	const bool isStartGoal = pfDef.IsGoal(startxSqr, startzSqr);
+	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
+	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
+	if (isStartGoal && pfDef.startInGoalRadius)
 		return IPath::CantGetCloser;
 
 	// Clear the system from last search.
@@ -172,7 +174,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 	IPath::SearchResult result = DoSearch(moveData, pfDef, ownerId, synced);
 
 	// if no improvements are found, then return CantGetCloser instead
-	if (mGoalSquareIdx == mStartSquareIdx || mGoalSquareIdx == 0) {
+	if ((mGoalSquareIdx == mStartSquareIdx && (!isStartGoal || pfDef.startInGoalRadius)) || mGoalSquareIdx == 0) {
 		return IPath::CantGetCloser;
 	}
 

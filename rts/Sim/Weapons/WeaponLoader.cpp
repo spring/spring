@@ -153,10 +153,12 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->fireSoundVolume = weaponDef->firesound.getVolume(0);
 
 	weapon->onlyForward = weaponDef->onlyForward;
-	weapon->maxAngleDif = math::cos(DEG2RAD(weaponDef->maxAngle));
+	weapon->maxForwardAngleDif = math::cos(DEG2RAD(weaponDef->maxAngle));
+	weapon->maxMainDirAngleDif = defWeapon->maxMainDirAngleDif;
+	weapon->mainDir = defWeapon->mainDir;
 
 	weapon->badTargetCategory = defWeapon->badTargetCat;
-	weapon->onlyTargetCategory = weaponDef->onlyTargetCategory & defWeapon->onlyTargetCat;
+	weapon->onlyTargetCategory = defWeapon->onlyTargetCat;
 
 	if (defWeapon->slavedTo) {
 		const int index = (defWeapon->slavedTo - 1);
@@ -168,9 +170,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 
 		weapon->slavedTo = owner->weapons[index];
 	}
-
-	weapon->mainDir = defWeapon->mainDir;
-	weapon->maxMainDirAngleDif = defWeapon->maxAngleDif;
 
 	weapon->fuelUsage = defWeapon->fuelUsage;
 	weapon->avoidFriendly = weaponDef->avoidFriendly;

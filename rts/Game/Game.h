@@ -32,6 +32,10 @@ private:
 	CR_DECLARE(CGame);	// Do not use CGame pointer in CR_MEMBER()!!!
 
 public:
+	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
+	virtual ~CGame();
+
+public:
 	enum GameDrawMode {
 		gameNotDrawing     = 0,
 		gameNormalDraw     = 1,
@@ -48,7 +52,9 @@ public:
 
 public:
 	void LoadGame(const std::string& mapName);
-	void SetupRenderingParams();
+
+	/// show GameEnd-window, calculate mouse movement etc.
+	void GameEnd(const std::vector<unsigned char>& winningAllyTeams);
 
 private:
 	void LoadDefs();
@@ -60,79 +66,71 @@ private:
 	void PostLoad();
 
 public:
-	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
-	virtual ~CGame();
-
-	bool Draw();
-	bool DrawMT();
-
-	static void DrawMTcb(void* c) { static_cast<CGame*>(c)->DrawMT(); }
-	bool Update();
-	/// Called when a key is released by the user
-	int KeyReleased(unsigned short k);
-	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(unsigned short k, bool isRepeat);
-	void ResizeEvent();
-
-
-	bool ProcessCommandText(unsigned int key, const std::string& command);
-	bool ProcessKeyPressAction(unsigned int key, const Action& action);
-
-	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
-	bool ActionReleased(const Action& action);
-
 	bool HasLag() const;
-
-	/// show GameEnd-window, calculate mouse movement etc.
-	void GameEnd(const std::vector<unsigned char>& winningAllyTeams);
-
-	void         SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
-	GameDrawMode GetDrawMode() const { return gameDrawMode; }
-
-	void SetHotBinding(const std::string& action) { hotBinding = action; }
-
-	/// Save the game state to file.
-	void SaveGame(const std::string& filename, bool overwrite);
-	void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod);
-
-	/// Re-load the game.
-	void ReloadGame();
-	/// Send a message to other players (allows prefixed messages with e.g. "a:...")
-	void SendNetChat(std::string message, int destination = -1);
-	/// Format and display a chat message received over network
-	void HandleChatMsg(const ChatMessage& msg);
-
-	/// synced actions (received from server) go in here
-	void ActionReceived(const Action& action, int playerID);
-
-	void DrawInputText();
-	void ParseInputTextGeometry(const std::string& geo);
-
-	void SelectUnits(const std::string& line);
-	void SelectCycle(const std::string& command);
-
-	void ReColorTeams();
-
-	void ReloadCOB(const std::string& msg, int player);
-	void ReloadCEGs(const std::string& tag);
-
-	void StartSkip(int toFrame);
-	void DrawSkip(bool blackscreen = true);
-	void EndSkip();
-
 	const std::map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
 		return playerTraffic;
 	}
 	void AddTraffic(int playerID, int packetCode, int length);
 
-	void ClientReadNet();
-	void UpdateUI(bool cam);
+	/// Send a message to other players (allows prefixed messages with e.g. "a:...")
+	void SendNetChat(std::string message, int destination = -1);
 
-	void SimFrame();
-	void StartPlaying();
+	bool ProcessCommandText(unsigned int key, const std::string& command);
+	bool ProcessKeyPressAction(unsigned int key, const Action& action);
+	bool ProcessAction(const Action& action, unsigned int key = -1, bool isRepeat = false);
+
+	void SetHotBinding(const std::string& action) { hotBinding = action; }
+
+	void SelectUnits(const std::string& line);
+	void SelectCycle(const std::string& command);
+
+	void ReloadCOB(const std::string& msg, int player);
+	void ReloadCEGs(const std::string& tag);
+
+	void StartSkip(int toFrame);
+	void EndSkip();
+
+	void ParseInputTextGeometry(const std::string& geo);
+
+	void ReloadGame();
+	void SaveGame(const std::string& filename, bool overwrite);
+	void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod);
+
+	void ResizeEvent();
+	void SetupRenderingParams();
+	void         SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
+	GameDrawMode GetDrawMode() const { return gameDrawMode; }
 
 private:
+	bool Draw();
+	bool DrawMT();
+
+	static void DrawMTcb(void* c) { static_cast<CGame*>(c)->DrawMT(); }
 	bool UpdateUnsynced();
+
+	void DrawSkip(bool blackscreen = true);
+	void DrawInputText();
+	void UpdateUI(bool cam);
+	
+	/// Format and display a chat message received over network
+	void HandleChatMsg(const ChatMessage& msg);
+
+	/// Called when a key is released by the user
+	int KeyReleased(unsigned short k);
+	/// Called when the key is pressed by the user (can be called several times due to key repeat)
+	int KeyPressed(unsigned short k, bool isRepeat);
+
+	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
+	bool ActionReleased(const Action& action);
+	/// synced actions (received from server) go in here
+	void ActionReceived(const Action& action, int playerID);
+
+	void ReColorTeams();
+
+	void ClientReadNet();
+	void SimFrame();
+	void StartPlaying();
+	bool Update();
 
 public:
 	volatile bool finishedLoading;

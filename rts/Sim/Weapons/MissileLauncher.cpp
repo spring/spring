@@ -137,7 +137,7 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		} else {
 			float3 goaldir = pos - owner->pos;
 			goaldir.SafeNormalize();
-			if (owner->frontdir.dot(goaldir) < maxAngleDif)
+			if (owner->frontdir.dot(goaldir) < maxForwardAngleDif)
 				return false;
 		}
 

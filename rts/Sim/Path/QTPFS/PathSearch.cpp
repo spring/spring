@@ -165,7 +165,7 @@ void QTPFS::PathSearch::IterateSearch(
 	#endif
 
 	if (curNode != srcNode)
-		curPoint = curNode->GetNeighborEdgeMidPoint(curNode->GetPrevNode());
+		curPoint = curNode->GetNeighborEdgeTransitionPoint(curNode->GetPrevNode(), curPoint);
 	if (curNode == tgtNode)
 		return;
 	if (curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
@@ -216,13 +216,15 @@ void QTPFS::PathSearch::IterateSearch(
 		//     nightmare)
 		#ifdef QTPFS_COPY_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
-		nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
+		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#else
 		nxtNode = nxtNodes[i];
-		nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
+		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#endif
 
-		assert(curNode->GetNeighborEdgeMidPoint(nxtNode) == nxtNode->GetNeighborEdgeMidPoint(curNode));
+		#ifndef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+		assert(curNode->GetNeighborEdgeTransitionPoint(nxtNode, nxtPoint) == nxtNode->GetNeighborEdgeTransitionPoint(curNode, nxtPoint));
+		#endif
 
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
 		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
@@ -293,7 +295,7 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 		INode* oldNode = tmpNode->GetPrevNode();
 
 		while ((oldNode != NULL) && (tmpNode != srcNode)) {
-			const float3& point = tmpNode->GetNeighborEdgeMidPoint(oldNode);
+			const float3& point = tmpNode->GetNeighborEdgeTransitionPoint(oldNode, nxtPoint);
 
 			assert(!math::isinf(point.x) && !math::isinf(point.z));
 			assert(!math::isnan(point.x) && !math::isnan(point.z));
@@ -307,6 +309,8 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 
 			tmpNode = oldNode;
 			oldNode = tmpNode->GetPrevNode();
+
+			nxtPoint = point;
 		}
 	}
 

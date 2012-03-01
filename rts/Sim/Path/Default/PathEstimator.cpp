@@ -536,7 +536,10 @@ IPath::SearchResult CPathEstimator::GetPath(
 IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const CPathFinderDef& peDef, bool synced) {
 	const int2 square = blockStates.peNodeOffsets[mStartBlockIdx][moveData.pathType];
 
-	if (peDef.IsGoal(square.x, square.y)) {
+	const bool isStartGoal = peDef.IsGoal(square.x, square.y);
+	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
+	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
+	if (isStartGoal && peDef.startInGoalRadius)
 		return IPath::CantGetCloser;
 	}
 
@@ -572,7 +575,7 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const C
 	IPath::SearchResult result = DoSearch(moveData, peDef, synced);
 
 	// if no improvements are found, then return CantGetCloser instead
-	if (mGoalBlock.x == mStartBlock.x && mGoalBlock.y == mStartBlock.y) {
+	if (mGoalBlock.x == mStartBlock.x && mGoalBlock.y == mStartBlock.y && (!isStartGoal || peDef.startInGoalRadius)) {
 		return IPath::CantGetCloser;
 	}
 

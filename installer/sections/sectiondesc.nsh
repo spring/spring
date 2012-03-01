@@ -8,7 +8,6 @@
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_DESKTOP} "This creates a shortcut on the desktop to the multiplayer battleroom for quick access to multiplayer games."
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_SPRINGLOBBY} "The default, cross-platform battleroom used to set up single- and multiplayer games and finding opponents.$\n$\nNote: You have to install at least one Lobby to play."
 
-	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_ARCHIVEMOVER} "The tool and the necessary file associations (for sd7 and sdz files) to ease installation of new content."
 !ifdef RAPID_ARCHIVE
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_RAPID} "Simple spring-rapid downloader to get latest game versions easily, with console- and GUI-frontend."
 !endif

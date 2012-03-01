@@ -3021,7 +3021,7 @@ EXPORT(void) skirmishAiCallback_UnitDef_WeaponMount_getMainDir(int skirmishAIId,
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_WeaponMount_getMaxAngleDif(int skirmishAIId, int unitDefId, int weaponMountId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->weapons.at(weaponMountId).maxAngleDif;
+	return getUnitDefById(skirmishAIId, unitDefId)->weapons.at(weaponMountId).maxMainDirAngleDif;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_WeaponMount_getFuelUsage(int skirmishAIId, int unitDefId, int weaponMountId) {
@@ -4160,7 +4160,7 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getExplosionSpeed(int skirmishAIId, i
 }
 
 EXPORT(int) skirmishAiCallback_WeaponDef_getOnlyTargetCategory(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->onlyTargetCategory;
+	return 0xFFFFFFFF;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getWobble(int skirmishAIId, int weaponDefId) {
