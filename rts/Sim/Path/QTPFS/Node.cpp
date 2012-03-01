@@ -101,7 +101,6 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 	if ((rel & REL_NGB_EDGE_B) != 0) { p.x = WS(Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx)); p.z = WS(midz); return p; }
 	if ((rel & REL_NGB_EDGE_R) != 0) { p.z = WS(Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz)); p.x = WS(midx); return p; }
 	if ((rel & REL_NGB_EDGE_L) != 0) { p.z = WS(Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz)); p.x = WS(midx); return p; }
-	return p;
 	#undef CAST
 	#else
 	switch (rel) {
