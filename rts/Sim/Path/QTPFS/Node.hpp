@@ -60,6 +60,11 @@ namespace QTPFS {
 		virtual void SetMagicNumber(unsigned int) = 0;
 		virtual unsigned int GetMagicNumber() const = 0;
 
+		#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+		virtual const float3& GetEdgeTransitionPoint() const = 0;
+		virtual void SetEdgeTransitionPoint(const float3& point) = 0;
+		#endif
+
 		void SetPathCost(unsigned int type, float cost);
 		float GetPathCost(unsigned int type) const;
 
@@ -139,6 +144,11 @@ namespace QTPFS {
 		void SetMagicNumber(unsigned int number) { currMagicNum = number; }
 		unsigned int GetMagicNumber() const { return currMagicNum; }
 
+		#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+		const float3& GetEdgeTransitionPoint() const { return edgeTransitionPoint; }
+		void SetEdgeTransitionPoint(const float3& point) { edgeTransitionPoint = point; }
+		#endif
+
 		static const unsigned int CHILD_COUNT = 4;
 		static const unsigned int MIN_SIZE_X = 2;
 		static const unsigned int MIN_SIZE_Z = 2;
@@ -168,6 +178,13 @@ namespace QTPFS {
 
 		std::vector<QTNode*> children;
 		std::vector<INode*> neighbors;
+
+		#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+		// need these as well as the back-pointers
+		// since we cannot exactly reconstruct the
+		// found path otherwise
+		float3 edgeTransitionPoint;
+		#endif
 	};
 };
 
