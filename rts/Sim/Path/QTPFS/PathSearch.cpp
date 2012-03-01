@@ -223,7 +223,7 @@ void QTPFS::PathSearch::IterateSearch(
 		#endif
 
 		#ifndef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
-		assert(curNode->GetNeighborEdgeTransitionPoint(nxtNode) == nxtNode->GetNeighborEdgeTransitionPoint(curNode));
+		assert(curNode->GetNeighborEdgeTransitionPoint(nxtNode, nxtPoint) == nxtNode->GetNeighborEdgeTransitionPoint(curNode, nxtPoint));
 		#endif
 
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
