@@ -149,7 +149,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 	if (startzSqr <         0) { startzSqr =            0; }
 	if (startzSqr >= gs->mapy) { startzSqr = gs->mapym1; }
 
-	bool isStartGoal = pfDef.IsGoal(startxSqr, startzSqr);
+	const bool isStartGoal = pfDef.IsGoal(startxSqr, startzSqr);
 	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
 	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
 	if (isStartGoal && pfDef.startInGoalRadius)

@@ -536,7 +536,7 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const C
 	// is starting square inside goal area?
 	const int2 square = blockStates.peNodeOffsets[startBlocknr][moveData.pathType];
 
-	bool isStartGoal = peDef.IsGoal(square.x, square.y);
+	const bool isStartGoal = peDef.IsGoal(square.x, square.y);
 	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
 	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
 	if (isStartGoal && peDef.startInGoalRadius)

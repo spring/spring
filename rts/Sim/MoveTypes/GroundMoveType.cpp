@@ -1074,7 +1074,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 			}
 			#endif
 
-			const float iSqrtObjDist = math::isqrt2(objectDistSq);
+			const float iSqrtObjDist = (objectDistSq <= 1e-4f)? 1e-2f: math::isqrt2(objectDistSq);
 			const float avoidScale = (AVOIDANCE_STRENGTH * iSqrtObjDist * iSqrtObjDist * iSqrtObjDist) * objectMassScale;
 
 			// avoid collision by turning either left or right
@@ -1461,8 +1461,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		const bool alliedCollision =
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
-		const bool yield2Collider = (collider->isMoving && !collidee->isMoving);
-		const bool ignoreCollidee = ((yield2Collider && alliedCollision) || colliderUD->pushResistant);
+		const bool collideeYields = (collider->isMoving && !collidee->isMoving);
+		const bool ignoreCollidee = ((collideeYields && alliedCollision) || colliderUD->pushResistant);
 		const bool disablePushing = (colliderUD->pushResistant && collideeUD->pushResistant);
 
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
