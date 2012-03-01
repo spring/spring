@@ -27,11 +27,11 @@
 UnitDefWeapon::UnitDefWeapon()
 : def(NULL)
 , slavedTo(0)
-, mainDir(0.0f, 0.0f, 1.0f)
-, maxAngleDif(-1.0f)
 , fuelUsage(0.0f)
+, maxMainDirAngleDif(-1.0f)
 , badTargetCat(0)
 , onlyTargetCat(0)
+, mainDir(0.0f, 0.0f, 1.0f)
 {
 }
 
@@ -47,22 +47,20 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	this->slavedTo = weaponTable.GetInt("slaveTo", 0);
 	this->fuelUsage = weaponTable.GetFloat("fuelUsage", 0.0f);
 
+	// NOTE:
+	//     <maxAngleDif> specifies the full-width arc,
+	//     but we want the half-width arc internally
+	//     (arcs are always symmetric around mainDir)
+	this->maxMainDirAngleDif = math::cos((weaponTable.GetFloat("maxAngleDif", 360.0f) * 0.5f) * (PI / 180.0f));
+
+	const string& btcString = weaponTable.GetString("badTargetCategory", "");
+	const string& otcString = weaponTable.GetString("onlyTargetCategory", "");
+
+	this->badTargetCat =                                   CCategoryHandler::Instance()->GetCategories(btcString);
+	this->onlyTargetCat = (otcString.empty())? 0xffffffff: CCategoryHandler::Instance()->GetCategories(otcString);
+
 	this->mainDir = weaponTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f));
 	this->mainDir.SafeNormalize();
-	this->maxAngleDif = math::cos(weaponTable.GetFloat("maxAngleDif", 360.0f) * (PI / 360.0f));
-
-	const string& badTarget = weaponTable.GetString("badTargetCategory", "");
-	const string& onlyTarget = weaponTable.GetString("onlyTargetCategory", "");
-
-	unsigned int btc = CCategoryHandler::Instance()->GetCategories(badTarget);
-	unsigned int otc = 0xffffffff;
-
-	if (!onlyTarget.empty()) {
-		otc = CCategoryHandler::Instance()->GetCategories(onlyTarget);
-	}
-
-	this->badTargetCat = btc;
-	this->onlyTargetCat = otc;
 }
 
 

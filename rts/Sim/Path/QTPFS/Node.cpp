@@ -12,6 +12,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Rectangle.h"
+#include "System/myMath.h"
 
 
 
@@ -79,7 +80,7 @@ unsigned int QTPFS::INode::GetRectangleRelation(const SRectangle& r) const {
 	return REL_NODE_OVERLAPS_RECT;
 }
 
-float3 QTPFS::INode::GetNeighborEdgeMidPoint(const INode* ngb) const {
+float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos) const {
 	float3 p = ZeroVector;
 
 	const unsigned int
@@ -91,24 +92,35 @@ float3 QTPFS::INode::GetNeighborEdgeMidPoint(const INode* ngb) const {
 	const unsigned int
 		midx = (maxx + minx) >> 1,
 		midz = (maxz + minz) >> 1;
+	const unsigned int rel = GetNeighborRelation(ngb);
 
-	switch (GetNeighborRelation(ngb)) {
+	#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+	#define CAST static_cast<unsigned int>
+	// clamp <pos> (assumed to be inside <this>) to the shared-edge bounds and ortho-project it
+	if ((rel & REL_NGB_EDGE_T) != 0) { p.x = WS(Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx)); p.z = WS(midz); return p; }
+	if ((rel & REL_NGB_EDGE_B) != 0) { p.x = WS(Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx)); p.z = WS(midz); return p; }
+	if ((rel & REL_NGB_EDGE_R) != 0) { p.z = WS(Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz)); p.x = WS(midx); return p; }
+	if ((rel & REL_NGB_EDGE_L) != 0) { p.z = WS(Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz)); p.x = WS(midx); return p; }
+	#undef CAST
+	#else
+	switch (rel) {
 		// corners
 		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = WS(xmin());  p.z = WS(zmin()); } break;
 		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = WS(xmax());  p.z = WS(zmin()); } break;
 		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = WS(xmax());  p.z = WS(zmax()); } break;
 		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = WS(xmin());  p.z = WS(zmax()); } break;
 		// edges
-		case REL_NGB_EDGE_T: { p.x = WS(midx  );  p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_R: { p.x = WS(xmax());  p.z = WS(midz  ); } break;
-		case REL_NGB_EDGE_B: { p.x = WS(midx  );  p.z = WS(zmax()); } break;
-		case REL_NGB_EDGE_L: { p.x = WS(xmin());  p.z = WS(midz  ); } break;
+		case REL_NGB_EDGE_T:                  { p.x = WS(midx  );  p.z = WS(zmin()); } break;
+		case REL_NGB_EDGE_R:                  { p.x = WS(xmax());  p.z = WS(midz  ); } break;
+		case REL_NGB_EDGE_B:                  { p.x = WS(midx  );  p.z = WS(zmax()); } break;
+		case REL_NGB_EDGE_L:                  { p.x = WS(xmin());  p.z = WS(midz  ); } break;
 
 		case 0: {
 			// <ngb> had better be an actual neighbor
 			assert(false);
 		} break;
 	}
+	#endif
 
 	return p;
 }

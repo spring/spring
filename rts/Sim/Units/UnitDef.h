@@ -45,11 +45,14 @@ struct UnitDefWeapon {
 
 	const WeaponDef* def;
 	int slavedTo;
-	float3 mainDir;
-	float maxAngleDif;
+
 	float fuelUsage; /// How many seconds of fuel it costs for the owning unit to fire this weapon
+	float maxMainDirAngleDif;
+
 	unsigned int badTargetCat;
 	unsigned int onlyTargetCat;
+
+	float3 mainDir;
 };
 
 

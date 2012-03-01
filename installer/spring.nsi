@@ -98,12 +98,6 @@ ${!echonow} "Base dir:   <engine-source-root>/installer/"
 	${!echonow} "Using MIN_PORTABLE_ARCHIVE: ${MIN_PORTABLE_ARCHIVE}"
 !endif
 
-!ifndef ARCHIVEMOVER
-	!warning "ARCHIVEMOVER not defined"
-!else
-	${!echonow} "Using ARCHIVEMOVER:         ${ARCHIVEMOVER}"
-!endif
-
 !ifndef RAPID_ARCHIVE
 	!warning "RAPID_ARCHIVE not defined"
 !else
@@ -168,12 +162,6 @@ Section "Desktop shortcuts" SEC_DESKTOP
 SectionEnd
 
 SectionGroup "Tools"
-	Section "Easy content installation" SEC_ARCHIVEMOVER
-		!define INSTALL
-			${!echonow} "Processing: archivemover"
-			!include "sections\archivemover.nsh"
-		!undef INSTALL
-	SectionEnd
 !ifdef RAPID_ARCHIVE
 	Section "Simple spring-rapid downloader" SEC_RAPID
 		!define INSTALL
@@ -262,7 +250,6 @@ Section Uninstall
 
 	!include "sections\shortcuts_startMenu.nsh"
 	!include "sections\shortcuts_desktop.nsh"
-	!include "sections\archivemover.nsh"
 	!include "sections\portable.nsh"
 	!include "sections\zeroK.nsh"
 	!include "sections\tasServer.nsh"
