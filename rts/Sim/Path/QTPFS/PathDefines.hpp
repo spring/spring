@@ -15,6 +15,7 @@
 // #define QTPFS_COPY_NEIGHBOR_NODES
 // #define QTPFS_SLOW_ACCURATE_TESSELATION
 // #define QTPFS_OPENMP_ENABLED
+// #define QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
 
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
 #define WS(p) ((p) * SQUARE_SIZE)
