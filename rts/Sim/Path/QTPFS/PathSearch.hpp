@@ -10,6 +10,7 @@
 #include "PathDefines.hpp"
 #include "PathDataTypes.hpp"
 #include "System/float3.h"
+#include "System/Rectangle.h"
 
 namespace QTPFS {
 	struct PathCache;
@@ -75,7 +76,8 @@ namespace QTPFS {
 			NodeLayer* layer,
 			PathCache* cache,
 			const float3& sourcePoint,
-			const float3& targetPoint
+			const float3& targetPoint,
+			const SRectangle& searchArea
 		) = 0;
 		virtual bool Execute(
 			unsigned int searchStateOffset = 0,
@@ -124,7 +126,8 @@ namespace QTPFS {
 			NodeLayer* layer,
 			PathCache* cache,
 			const float3& sourcePoint,
-			const float3& targetPoint
+			const float3& targetPoint,
+			const SRectangle& searchArea
 		);
 		bool Execute(
 			unsigned int searchStateOffset = 0,
@@ -168,6 +171,8 @@ namespace QTPFS {
 		// not used unless QTPFS_TRACE_PATH_SEARCHES is defined
 		PathSearchTrace::Execution* searchExec;
 		PathSearchTrace::Iteration searchIter;
+
+		SRectangle searchRect;
 
 		// global queue: allocated once, re-used by all searches without clear()'s
 		// this relies on INode::operator< to sort the INode*'s by increasing f-cost
