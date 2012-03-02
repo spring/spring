@@ -12,6 +12,8 @@ Bugfixes:
  - fix crash on start when invalid ai is in script.txt
  - fix multiple pathing & collision issues
  - some Maven (Java) updates
+ ! removed ArchiveMover
+ - fix compile for "make tests" on win32
 
 
 -- 86.0 ---------------------------------------------------------
