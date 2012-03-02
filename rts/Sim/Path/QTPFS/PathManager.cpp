@@ -28,6 +28,9 @@
 #undef GetTempPathA
 #endif
 
+#define NUL_RECTANGLE SRectangle(0, 0,         0,        0)
+#define MAP_RECTANGLE SRectangle(0, 0,  gs->mapx, gs->mapy)
+
 namespace QTPFS {
 	const float PathManager::MIN_SPEEDMOD_VALUE = 0.0f;
 	const float PathManager::MAX_SPEEDMOD_VALUE = 2.0f;
@@ -164,7 +167,7 @@ void QTPFS::PathManager::Load() {
 		const std::string& cacheDirName = GetCacheDirName(mapCheckSum, modCheckSum);
 		const bool haveCacheDir = FileSystem::DirExists(cacheDirName);
 
-		InitNodeLayersThreaded(SRectangle(0, 0,  gs->mapx, gs->mapy), haveCacheDir);
+		InitNodeLayersThreaded(MAP_RECTANGLE, haveCacheDir);
 		Serialize(cacheDirName);
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
@@ -530,7 +533,7 @@ void QTPFS::PathManager::ExecuteSearch(
 	assert(search->GetID() != 0);
 	assert(path->GetID() == search->GetID());
 
-	search->Initialize(&nodeLayer, &pathCache, path->GetSourcePoint(), path->GetTargetPoint());
+	search->Initialize(&nodeLayer, &pathCache, path->GetSourcePoint(), path->GetTargetPoint(), MAP_RECTANGLE);
 	path->SetHash(search->GetHash(gs->mapx * gs->mapy, pathType));
 
 	{
