@@ -162,6 +162,9 @@ void QTPFSPathDrawer::DrawPaths(const MoveData* md) const {
 
 		if (typeIt == pm->pathTypes.end() || traceIt == pm->pathTraces.end())
 			continue;
+		// this only happens if source-node was equal to target-node
+		if (traceIt->second == NULL)
+			continue;
 
 		DrawSearchExecution(typeIt->second, traceIt->second);
 		#endif

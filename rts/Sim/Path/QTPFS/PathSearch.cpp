@@ -141,10 +141,6 @@ void QTPFS::PathSearch::UpdateNode(
 	nxt->SetPathCost(NODE_PATH_COST_F, gCost + (hCost * hCostMult));
 	nxt->SetPathCost(NODE_PATH_COST_M, mCost);
 
-	#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
-	nxt->SetEdgeTransitionPoint(nxtPoint);
-	#endif
-
 	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
 	nxt->SetNumPrevNodes((cur != NULL)? (cur->GetNumPrevNodes() + 1): 0);
 	#endif
@@ -220,14 +216,14 @@ void QTPFS::PathSearch::IterateSearch(
 		//     nightmare)
 		#ifdef QTPFS_COPY_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
-		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
+		nxtPoint = (nxtNode == tgtNode)? tgtPoint: curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#else
 		nxtNode = nxtNodes[i];
-		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
+		nxtPoint = (nxtNode == tgtNode)? tgtPoint: curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#endif
 
 		#ifndef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
-		assert(curNode->GetNeighborEdgeTransitionPoint(nxtNode, nxtPoint) == nxtNode->GetNeighborEdgeTransitionPoint(curNode, nxtPoint));
+		assert(curNode->GetNeighborEdgeTransitionPoint(nxtNode, ZeroVector) == nxtNode->GetNeighborEdgeTransitionPoint(curNode, ZeroVector));
 		#endif
 
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
@@ -298,16 +294,14 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 		INode* tmpNode = tgtNode;
 		INode* oldNode = tmpNode->GetPrevNode();
 
-		while ((oldNode != NULL) && (tmpNode != srcNode)) {
-			#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
-			const float3& point = tmpNode->GetEdgeTransitionPoint();
-			#else
-			const float3& point = tmpNode->GetNeighborEdgeTransitionPoint(oldNode, ZeroVector);
-			#endif
+		float3 oldPoint = tgtPoint;
 
-			assert(!math::isinf(point.x) && !math::isinf(point.z));
-			assert(!math::isnan(point.x) && !math::isnan(point.z));
-			points.push_front(point);
+		while ((oldNode != NULL) && (tmpNode != srcNode)) {
+			const float3& tmpPoint = tmpNode->GetNeighborEdgeTransitionPoint(oldNode, oldPoint);
+
+			assert(!math::isinf(tmpPoint.x) && !math::isinf(tmpPoint.z));
+			assert(!math::isnan(tmpPoint.x) && !math::isnan(tmpPoint.z));
+			points.push_front(tmpPoint);
 
 			#ifndef QTPFS_SMOOTH_PATHS
 			// make sure these can never become dangling
@@ -315,6 +309,7 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 			tmpNode->SetPrevNode(NULL);
 			#endif
 
+			oldPoint = tmpPoint;
 			tmpNode = oldNode;
 			oldNode = tmpNode->GetPrevNode();
 		}
