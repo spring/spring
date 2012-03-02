@@ -164,10 +164,10 @@ void QTPFS::PathSearch::IterateSearch(
 	searchIter.SetPoppedNodeIdx(curNode->zmin() * gs->mapx + curNode->xmin());
 	#endif
 
-	if (curNode != srcNode)
-		curPoint = curNode->GetNeighborEdgeTransitionPoint(curNode->GetPrevNode(), curPoint);
 	if (curNode == tgtNode)
 		return;
+	if (curNode != srcNode)
+		curPoint = curNode->GetNeighborEdgeTransitionPoint(curNode->GetPrevNode(), curPoint);
 	if (curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
 		return;
 
@@ -216,14 +216,14 @@ void QTPFS::PathSearch::IterateSearch(
 		//     nightmare)
 		#ifdef QTPFS_COPY_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
-		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
+		nxtPoint = (nxtNode == tgtNode)? tgtPoint: curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#else
 		nxtNode = nxtNodes[i];
-		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
+		nxtPoint = (nxtNode == tgtNode)? tgtPoint: curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#endif
 
 		#ifndef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
-		assert(curNode->GetNeighborEdgeTransitionPoint(nxtNode, nxtPoint) == nxtNode->GetNeighborEdgeTransitionPoint(curNode, nxtPoint));
+		assert(curNode->GetNeighborEdgeTransitionPoint(nxtNode, ZeroVector) == nxtNode->GetNeighborEdgeTransitionPoint(curNode, ZeroVector));
 		#endif
 
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
@@ -294,12 +294,14 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 		INode* tmpNode = tgtNode;
 		INode* oldNode = tmpNode->GetPrevNode();
 
-		while ((oldNode != NULL) && (tmpNode != srcNode)) {
-			const float3& point = tmpNode->GetNeighborEdgeTransitionPoint(oldNode, nxtPoint);
+		float3 oldPoint = tgtPoint;
 
-			assert(!math::isinf(point.x) && !math::isinf(point.z));
-			assert(!math::isnan(point.x) && !math::isnan(point.z));
-			points.push_front(point);
+		while ((oldNode != NULL) && (tmpNode != srcNode)) {
+			const float3& tmpPoint = tmpNode->GetNeighborEdgeTransitionPoint(oldNode, oldPoint);
+
+			assert(!math::isinf(tmpPoint.x) && !math::isinf(tmpPoint.z));
+			assert(!math::isnan(tmpPoint.x) && !math::isnan(tmpPoint.z));
+			points.push_front(tmpPoint);
 
 			#ifndef QTPFS_SMOOTH_PATHS
 			// make sure these can never become dangling
@@ -307,10 +309,9 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 			tmpNode->SetPrevNode(NULL);
 			#endif
 
+			oldPoint = tmpPoint;
 			tmpNode = oldNode;
 			oldNode = tmpNode->GetPrevNode();
-
-			nxtPoint = point;
 		}
 	}
 
