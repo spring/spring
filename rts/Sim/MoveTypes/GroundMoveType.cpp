@@ -50,7 +50,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < (MAX_UNIT_SPEED * MAX_UNIT_SPEED * 1e2));
 
 #define RAD2DEG (180.0f / PI)
-#define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE)
+#define MIN_WAYPOINT_DISTANCE SQUARE_SIZE
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
 #define WAIT_FOR_PATH 1
@@ -424,7 +424,9 @@ bool CGroundMoveType::FollowPath()
 
 		prevWayPointDist = currWayPointDist;
 		currWayPointDist = owner->pos.distance2D(currWayPoint);
-		atGoal = ((owner->pos - goalPos).SqLength2D() < Square(MIN_WAYPOINT_DISTANCE));
+
+		// NOTE: uses owner->pos instead of currWayPoint (ie. not the same as haveFinalWaypoint)
+		atGoal = ((owner->pos - goalPos).SqLength2D() < Square(goalRadius * (numIdlingSlowUpdates + 1)));
 
 		if (!atGoal) {
 			if (!idling) {
@@ -1216,7 +1218,7 @@ void CGroundMoveType::GetNextWayPoint()
 			return;
 		}
 
-		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
+		if (currWayPoint.SqDistance2D(goalPos) < Square(goalRadius * (numIdlingSlowUpdates + 1))) {
 			// trigger Arrived on the next Update (but
 			// only if we have non-temporary waypoints)
 			haveFinalWaypoint = true;
