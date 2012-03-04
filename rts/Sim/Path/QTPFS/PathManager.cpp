@@ -159,10 +159,6 @@ void QTPFS::PathManager::Load() {
 		//     make it depend on the tesselation code specifics
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
 
-		#ifdef SYNCDEBUG
-		{ SyncedUint tmp(pfsCheckSum); }
-		#endif
-
 		const std::string& cacheDirName = GetCacheDirName(mapCheckSum, modCheckSum);
 		const bool haveCacheDir = FileSystem::DirExists(cacheDirName);
 
