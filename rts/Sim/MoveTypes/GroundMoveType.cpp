@@ -425,8 +425,20 @@ bool CGroundMoveType::FollowPath()
 		prevWayPointDist = currWayPointDist;
 		currWayPointDist = owner->pos.distance2D(currWayPoint);
 
-		// NOTE: uses owner->pos instead of currWayPoint (ie. not the same as haveFinalWaypoint)
-		atGoal = ((owner->pos - goalPos).SqLength2D() < Square(goalRadius * (numIdlingSlowUpdates + 1)));
+		{
+			// NOTE:
+			//     uses owner->pos instead of currWayPoint (ie. not the same as haveFinalWaypoint)
+			//
+			//     if our first command is a build-order, then goalRadius is set to our build-range
+			//     and we cannot increase tolerance safely (otherwise the unit might stop when still
+			//     outside its range and fail to start construction)
+			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
+			const float minGoalDistSq = (!owner->commandAI->commandQue.empty() && owner->commandAI->commandQue[0].GetID() < 0)?
+				Square(goalRadius                             ):
+				Square(goalRadius * (numIdlingSlowUpdates + 1));
+
+			atGoal |= (curGoalDistSq < minGoalDistSq);
+		}
 
 		if (!atGoal) {
 			if (!idling) {
@@ -1218,11 +1230,18 @@ void CGroundMoveType::GetNextWayPoint()
 			return;
 		}
 
-		if (currWayPoint.SqDistance2D(goalPos) < Square(goalRadius * (numIdlingSlowUpdates + 1))) {
+		{
+			const float curGoalDistSq = (currWayPoint - goalPos).SqLength2D();
+			const float minGoalDistSq = (!owner->commandAI->commandQue.empty() && owner->commandAI->commandQue[0].GetID() < 0)?
+				Square(goalRadius                             ):
+				Square(goalRadius * (numIdlingSlowUpdates + 1));
+
 			// trigger Arrived on the next Update (but
 			// only if we have non-temporary waypoints)
-			haveFinalWaypoint = true;
+			haveFinalWaypoint |= (curGoalDistSq < minGoalDistSq);
+		}
 
+		if (haveFinalWaypoint) {
 			currWayPoint = goalPos;
 			nextWayPoint = goalPos;
 			return;
