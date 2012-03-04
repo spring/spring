@@ -104,6 +104,7 @@ namespace QTPFS {
 		unsigned int GetParentID() const { return ((nodeNumber - 1) >> 2); }
 
 		boost::uint64_t GetMemFootPrint() const;
+		boost::uint64_t GetCheckSum() const;
 
 		void Delete();
 		void PreTesselate(NodeLayer& nl, const SRectangle& r);

@@ -170,22 +170,26 @@ QTPFS::QTNode::QTNode(
 ) {
 	nodeNumber = nn;
 	heapIndex = -1U;
-	searchState = 0;
 
-	currMagicNum =  0;
+	searchState  =   0;
+	currMagicNum =   0;
 	prevMagicNum = -1U;
+
+	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
+	numPrevNodes = 0;
+	#endif
 
 	_xmin = x1; _xmax = x2;
 	_zmin = z1; _zmax = z2;
+	_depth = (parent != NULL)? parent->depth() + 1: 0;
 
 	assert(xsize() != 0);
 	assert(zsize() != 0);
 
-	_depth = (parent != NULL)? parent->depth() + 1: 0;
-
 	fCost = 0.0f;
 	gCost = 0.0f;
 	hCost = 0.0f;
+	mCost = 0.0f;
 
 	speedModSum =  0.0f;
 	speedModAvg =  0.0f;
@@ -226,6 +230,46 @@ boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
 	}
 
 	return memFootPrint;
+}
+
+boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
+	boost::uint64_t sum = 0;
+
+	{
+		#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&this->nodeNumber);
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&this->numPrevNodes) + sizeof(unsigned int);
+		#else
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&this->nodeNumber);
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&this->mCost) + sizeof(float);
+		#endif
+
+		assert(minByte < maxByte);
+
+		// INode bytes (unpadded)
+		for (const unsigned char* byte = minByte; byte != maxByte; byte++) {
+			sum ^= ((((byte + 1) - minByte) << 8) * (*byte));
+		}
+	}
+	{
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&this->_xmin);
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&this->prevMagicNum) + sizeof(unsigned int);
+
+		assert(minByte < maxByte);
+
+		// QTNode bytes (unpadded)
+		for (const unsigned char* byte = minByte; byte != maxByte; byte++) {
+			sum ^= ((((byte + 1) - minByte) << 8) * (*byte));
+		}
+	}
+
+	if (!IsLeaf()) {
+		for (unsigned int n = 0; n < children.size(); n++) {
+			sum ^= (((nodeNumber << 8) + 1) * children[n]->GetCheckSum());
+		}
+	}
+
+	return sum;
 }
 
 
