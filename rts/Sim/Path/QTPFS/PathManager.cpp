@@ -136,7 +136,7 @@ void QTPFS::PathManager::Load() {
 	searchStateOffset = NODE_STATE_OFFSET;
 	numTerrainChanges = 0;
 	numPathRequests   = 0;
-	maxNumLayerNodes  = 0;
+	maxNumLeafNodes   = 0;
 
 	nodeTrees.resize(moveinfo->moveData.size(), NULL);
 	nodeLayers.resize(moveinfo->moveData.size());
@@ -155,9 +155,8 @@ void QTPFS::PathManager::Load() {
 		//     should be sufficient in theory, because if either
 		//     the map or the mod changes then the checksum does
 		//     (should!) as well and we get a cache-miss
-		//     this value can still be combined with the tree-sums
-		//     to make it depend on the tesselation code specifics,
-		//     which are also subject to change (TODO)
+		//     this value is also combined with the tree-sums to
+		//     make it depend on the tesselation code specifics
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
 
 		#ifdef SYNCDEBUG
@@ -171,10 +170,15 @@ void QTPFS::PathManager::Load() {
 		Serialize(cacheDirName);
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-			maxNumLayerNodes = std::max(nodeLayers[layerNum].GetNumLeafNodes(), maxNumLayerNodes);
+			pfsCheckSum ^= nodeTrees[layerNum]->GetCheckSum();
+			maxNumLeafNodes = std::max(nodeLayers[layerNum].GetNumLeafNodes(), maxNumLeafNodes);
 		}
 
-		PathSearch::InitGlobalQueue(maxNumLayerNodes);
+		#ifdef SYNCDEBUG
+		{ SyncedUint tmp(pfsCheckSum); }
+		#endif
+
+		PathSearch::InitGlobalQueue(maxNumLeafNodes);
 	}
 
 	{
