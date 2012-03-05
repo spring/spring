@@ -23,7 +23,7 @@ public:
 
 	float3 goal;
 	float sqGoalRadius;
-	float startInGoalRadius;
+	bool startInGoalRadius;
 	int goalSquareX;
 	int goalSquareZ;
 };
