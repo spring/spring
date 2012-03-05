@@ -159,6 +159,7 @@ local callInLists = {
 	-- unsynced
 	"DrawUnit",
 	"DrawFeature",
+	"DrawShield",
 	"RecvSkirmishAIMessage",
 
 	-- COB CallIn  (FIXME?)
@@ -1075,6 +1076,15 @@ function gadgetHandler:DrawFeature(featureID, drawMode)
   return false
 end
 
+function gadgetHandler:DrawShield(unitID, weaponID, drawMode)
+  for _,g in ipairs(self.DrawShieldList) do
+    if (g:DrawShield(unitID, weaponID, drawMode)) then
+      return true
+    end
+  end
+  return false
+end
+
 function gadgetHandler:RecvSkirmishAIMessage(aiTeam, dataStr)
   for _,g in ipairs(self.RecvSkirmishAIMessageList) do
     local dataRet = g:RecvSkirmishAIMessage(aiTeam, dataStr)
@@ -1110,11 +1120,9 @@ function gadgetHandler:AllowCommand(unitID, unitDefID, unitTeam,
 end
 
 
-function gadgetHandler:AllowUnitCreation(unitDefID, builderID,
-                                         builderTeam, x, y, z)
+function gadgetHandler:AllowUnitCreation(unitDefID, builderID, builderTeam, x, y, z, facing)
   for _,g in ipairs(self.AllowUnitCreationList) do
-    if (not g:AllowUnitCreation(unitDefID, builderID,
-                                builderTeam, x, y, z)) then
+    if (not g:AllowUnitCreation(unitDefID, builderID, builderTeam, x, y, z, facing)) then
       return false
     end
   end

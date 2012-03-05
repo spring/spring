@@ -50,7 +50,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < (MAX_UNIT_SPEED * MAX_UNIT_SPEED * 1e2));
 
 #define RAD2DEG (180.0f / PI)
-#define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE)
+#define MIN_WAYPOINT_DISTANCE SQUARE_SIZE
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
 #define WAIT_FOR_PATH 1
@@ -424,7 +424,21 @@ bool CGroundMoveType::FollowPath()
 
 		prevWayPointDist = currWayPointDist;
 		currWayPointDist = owner->pos.distance2D(currWayPoint);
-		atGoal = ((owner->pos - goalPos).SqLength2D() < Square(MIN_WAYPOINT_DISTANCE));
+
+		{
+			// NOTE:
+			//     uses owner->pos instead of currWayPoint (ie. not the same as haveFinalWaypoint)
+			//
+			//     if our first command is a build-order, then goalRadius is set to our build-range
+			//     and we cannot increase tolerance safely (otherwise the unit might stop when still
+			//     outside its range and fail to start construction)
+			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
+			const float minGoalDistSq = (!owner->commandAI->commandQue.empty() && owner->commandAI->commandQue[0].GetID() < 0)?
+				Square(goalRadius                             ):
+				Square(goalRadius * (numIdlingSlowUpdates + 1));
+
+			atGoal |= (curGoalDistSq < minGoalDistSq);
+		}
 
 		if (!atGoal) {
 			if (!idling) {
@@ -1216,11 +1230,18 @@ void CGroundMoveType::GetNextWayPoint()
 			return;
 		}
 
-		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
+		{
+			const float curGoalDistSq = (currWayPoint - goalPos).SqLength2D();
+			const float minGoalDistSq = (!owner->commandAI->commandQue.empty() && owner->commandAI->commandQue[0].GetID() < 0)?
+				Square(goalRadius                             ):
+				Square(goalRadius * (numIdlingSlowUpdates + 1));
+
 			// trigger Arrived on the next Update (but
 			// only if we have non-temporary waypoints)
-			haveFinalWaypoint = true;
+			haveFinalWaypoint |= (curGoalDistSq < minGoalDistSq);
+		}
 
+		if (haveFinalWaypoint) {
 			currWayPoint = goalPos;
 			nextWayPoint = goalPos;
 			return;

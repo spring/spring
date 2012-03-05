@@ -1,6 +1,21 @@
 Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 
+
+-- 87.0 ---------------------------------------------------------
+Bugfixes:
+ ! restore pre86.0 maxAngleDif arcs
+ ! remove the following Lua consts: wdef[id].areaOfEffect, wdef[id].maxVelocity &  wdef[id].onlyTargetCategories
+ - fix "LuaUI didn't got unprocessed /xyz commands" (mantis 2982)
+ - fix shield rendering
+ - support for zlib 1.2.6 (thx sirmaverick)
+ - fix crash on start when invalid ai is in script.txt
+ - fix multiple pathing & collision issues
+ - some Maven (Java) updates
+ ! removed ArchiveMover
+ - fix compile for "make tests" on win32
+
+
 -- 86.0 ---------------------------------------------------------
 Changes:
  - new commandline argument "--safemode": It turns off all features that are known to cause problems on some system.
