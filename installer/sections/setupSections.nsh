@@ -37,9 +37,6 @@ ${toggleSection} "NOTASSERVER" ${SEC_TASSERVER}
 ${toggleSection} "NODESKTOPLINK" ${SEC_DESKTOP}
 
 ; tools
-!ifdef ARCHIVEMOVER
-${toggleSection} "NOARCHIVEMOVER" ${SEC_ARCHIVEMOVER}
-!endif
 !ifdef RAPID_ARCHIVE
 ${toggleSection} "NORAPID" ${SEC_RAPID}
 !endif

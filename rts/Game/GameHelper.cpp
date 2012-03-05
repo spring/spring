@@ -216,7 +216,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	// if weaponDef is NULL, this is a piece-explosion
 	// (implicit damage-type -DAMAGE_EXPLOSION_DEBRIS)
 	const WeaponDef* weaponDef = params.weaponDef;
-	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -1;
+	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -CSolidObject::DAMAGE_EXPLOSION_DEBRIS;
 
 	const float3 expPos = pos;
 

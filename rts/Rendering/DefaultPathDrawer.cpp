@@ -553,7 +553,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			if (camera->pos.SqDistance(p1) >= (4000.0f * 4000.0f))
 				continue;
 
-			snprintf(blockCostsStr, sizeof(blockCostsStr), "f(%.2f) g(%.2f)", ob->fCost, ob->gCost);
+			SNPRINTF(blockCostsStr, sizeof(blockCostsStr), "f(%.2f) g(%.2f)", ob->fCost, ob->gCost);
 			font->SetTextColor(1.0f, 0.7f, peBlueValue, 1.0f);
 			font->glWorldPrint(p1, 5.0f, blockCostsStr);
 		}

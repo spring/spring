@@ -50,7 +50,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < (MAX_UNIT_SPEED * MAX_UNIT_SPEED * 1e2));
 
 #define RAD2DEG (180.0f / PI)
-#define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE)
+#define MIN_WAYPOINT_DISTANCE SQUARE_SIZE
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
 #define WAIT_FOR_PATH 1
@@ -424,7 +424,21 @@ bool CGroundMoveType::FollowPath()
 
 		prevWayPointDist = currWayPointDist;
 		currWayPointDist = owner->pos.distance2D(currWayPoint);
-		atGoal = ((owner->pos - goalPos).SqLength2D() < Square(MIN_WAYPOINT_DISTANCE));
+
+		{
+			// NOTE:
+			//     uses owner->pos instead of currWayPoint (ie. not the same as haveFinalWaypoint)
+			//
+			//     if our first command is a build-order, then goalRadius is set to our build-range
+			//     and we cannot increase tolerance safely (otherwise the unit might stop when still
+			//     outside its range and fail to start construction)
+			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
+			const float minGoalDistSq = (!owner->commandAI->commandQue.empty() && owner->commandAI->commandQue[0].GetID() < 0)?
+				Square(goalRadius                             ):
+				Square(goalRadius * (numIdlingSlowUpdates + 1));
+
+			atGoal |= (curGoalDistSq < minGoalDistSq);
+		}
 
 		if (!atGoal) {
 			if (!idling) {
@@ -1074,7 +1088,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 			}
 			#endif
 
-			const float iSqrtObjDist = math::isqrt2(objectDistSq);
+			const float iSqrtObjDist = (objectDistSq <= 1e-4f)? 1e-2f: math::isqrt2(objectDistSq);
 			const float avoidScale = (AVOIDANCE_STRENGTH * iSqrtObjDist * iSqrtObjDist * iSqrtObjDist) * objectMassScale;
 
 			// avoid collision by turning either left or right
@@ -1216,11 +1230,18 @@ void CGroundMoveType::GetNextWayPoint()
 			return;
 		}
 
-		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
+		{
+			const float curGoalDistSq = (currWayPoint - goalPos).SqLength2D();
+			const float minGoalDistSq = (!owner->commandAI->commandQue.empty() && owner->commandAI->commandQue[0].GetID() < 0)?
+				Square(goalRadius                             ):
+				Square(goalRadius * (numIdlingSlowUpdates + 1));
+
 			// trigger Arrived on the next Update (but
 			// only if we have non-temporary waypoints)
-			haveFinalWaypoint = true;
+			haveFinalWaypoint |= (curGoalDistSq < minGoalDistSq);
+		}
 
+		if (haveFinalWaypoint) {
 			currWayPoint = goalPos;
 			nextWayPoint = goalPos;
 			return;
@@ -1455,15 +1476,20 @@ void CGroundMoveType::HandleUnitCollisions(
 		// if an allied collision, only the collidee is allowed to be crushed (uni-directional) and neither stop
 		//
 		// first rule can be ignored at will by either party (only through Lua) such that it is not stopped
-		// however neither party can override its pushResistant gene: if collider has it set then collidee's
-		// pushing contribution is always ignored, if collidee has it set then collidee is always stopped (!)
+		// however neither party can override its pushResistant gene: the party that has it set will ignore
+		// pushing contributions from the other WITHOUT being forcibly stopped, unless *both* happen to be
+		// push-resistant (then both are stopped)
 		const bool alliedCollision =
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
+		const bool collideeYields = (collider->isMoving && !collidee->isMoving);
+		const bool ignoreCollidee = ((collideeYields && alliedCollision) || colliderUD->pushResistant);
+		const bool disablePushing = (colliderUD->pushResistant && collideeUD->pushResistant);
 
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
-		pushCollidee &= (!collidee->usingScriptMoveType && !collideeUD->pushResistant);
+		pushCollider &= (!disablePushing && !collidee->usingScriptMoveType);
+		pushCollidee &= (!disablePushing && !collider->usingScriptMoveType);
 
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= (collider->speed != ZeroVector);
@@ -1533,9 +1559,9 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (collideeMobile && collideeMM->GetPosSpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
 
 		// ignore pushing contributions from idling friendly collidee's
-		// (or if we are resistant to them); this will only take effect
-		// if pushCollider is still true
-		if (((collider->isMoving && !collidee->isMoving) && alliedCollision) || colliderUD->pushResistant) {
+		// (or if we are resistant to them) without stopping; this will
+		// ONLY take effect if pushCollider is still true
+		if (ignoreCollidee) {
 			colliderMassScale *= ((collideeMobile)? 0.0f: 1.0f);
 		}
 

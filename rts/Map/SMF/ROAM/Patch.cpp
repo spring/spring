@@ -88,10 +88,11 @@ CTriNodePool* CTriNodePool::GetPool()
 
 void CTriNodePool::Reset()
 {
+	// reinit all entries to NULL
+	// this saves use calling TriTreeNode's ctor which is slower than a memset
+	if (m_NextTriNode > 0)
+		memset(&pool[0], 0, sizeof(TriTreeNode) * m_NextTriNode);
 	m_NextTriNode = 0;
-	const size_t s = pool.size();
-	pool.clear();
-	pool.resize(s);
 }
 
 
