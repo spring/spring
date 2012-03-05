@@ -21,7 +21,7 @@ make install DESTDIR=${DEST}
 
 #strip symbols and archive them
 cd ${INSTALLDIR}
-EXECUTABLES="spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll ArchiveMover.exe springserver.dll $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll)"
+EXECUTABLES="spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll springserver.dll $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll)"
 for tostripfile in ${EXECUTABLES}; do
 	if [ -f ${tostripfile} ]; then
 		# dont strip binaries that we processed earlier
@@ -45,12 +45,12 @@ MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portab
 
 #create portable spring excluding shard (ask AF why its excluded)
 touch ${INSTALLDIR}/springsettings.cfg
-${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg -x!AI/Skirmish/Shard
+${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -xr!*.dbg -x!AI/Skirmish/Shard
 #for ZKL
-(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe ArchiveMover.exe \*.dbg AI/Skirmish/Shard/\*)
+(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg AI/Skirmish/Shard/\*)
 
 # compress files excluded from portable archive
-for file in spring-dedicated.exe spring-headless.exe ArchiveMover.exe; do
+for file in spring-dedicated.exe spring-headless.exe; do
 	name=${file%.*}
 	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file}
 done
@@ -79,9 +79,6 @@ rm -f ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
 mkdir -p ${SOURCEDIR}/installer/downloads/
 ln -sv ${MIN_PORTABLE_ARCHIVE} ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
 
-rm -f  ${SOURCEDIR}/installer/downloads/ArchiveMover_testing.7z
-ln -sv ${TMP_PATH}/${VERSION}_ArchiveMover.7z ${SOURCEDIR}/installer/downloads/ArchiveMover_testing.7z
-
 # create installer
 ./installer/make_installer.sh
 
@@ -93,7 +90,6 @@ cd ${TMP_PATH}/..
 ln -sfv ${REV}/*.exe spring_testing.exe
 ln -sfv ${REV}/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
 ln -sfv ${REV}/spring_${VERSION}_minimal-portable+dedicated.zip spring_testing_minimal-portable+dedicated.zip
-ln -sfv ${REV}/${VERSION}_ArchiveMover.7z ArchiveMover_testing.7z
 
 # create a file which contains the latest version of a branch
 echo ${VERSION} > LATEST

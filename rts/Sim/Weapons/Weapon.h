@@ -35,7 +35,7 @@ public:
 	bool TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit) const;
 	bool HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const;
 	bool AdjustTargetVectorLength(CUnit*, float3&, float3&, float3&) const;
-	virtual bool TryTarget(const float3& pos, bool userTarget,CUnit* unit);
+	virtual bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
 	bool TryTarget(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(float3 pos, bool userTarget);
@@ -70,13 +70,6 @@ public:
 	float craterAreaOfEffect;
 	float damageAreaOfEffect;
 
-	float3 relWeaponPos;					// weaponpos relative to the unit
-	float3 weaponPos;						// absolute weapon pos
-
-	float3 relWeaponMuzzlePos;				// position of the firepoint
-	float3 weaponMuzzlePos;
-	float3 weaponDir;
-
 	float muzzleFlareSize;					// size of muzzle flare if drawn
 	int useWeaponPosForAim;					// sometimes weapon pos is better to use than aimpos
 	bool hasCloseTarget;					// might need to update weapon pos more often when enemy is near
@@ -96,12 +89,9 @@ public:
 	int projectilesPerShot;					// number of projectiles per shot
 	int nextSalvo;							// when the next shot in the current salvo will fire
 	int salvoLeft;							// number of shots left in current salvo
-	float3 salvoError;						// error vector for the whole salvo
 
 	TargetType targetType;					// indicated if we have a target and what type
 	CUnit* targetUnit;						// the targeted unit if targettype=unit
-	float3 targetPos;						// the position of the target (even if targettype=unit)
-	int lastTargetRetry;					// when we last recalculated target selection
 
 	float predict;							// how long time we predict it take for a projectile to reach target
 	float predictSpeedMod;					// how the weapon predicts the speed of the units goes -> 1 when experience increases
@@ -119,11 +109,6 @@ public:
 	bool subClassReady;						// set to false if the subclassed weapon cant fire for some reason
 	bool onlyForward;						// can only fire in the forward direction of the unit (for aircrafts mostly?)
 
-	float maxAngleDif;						// max dotproduct between wanted and actual angle to fire
-	float3 wantedDir;						// the angle we want to aim in,set by the weapon subclass
-	float3 lastRequestedDir;				// last angle we called the script with
-	int lastRequest;						// when the last script call was done
-
 	unsigned int badTargetCategory;			// targets in this category get a lot lower targetting priority
 	unsigned int onlyTargetCategory;		// only targets in this category can be targeted (default 0xffffffff)
 
@@ -139,14 +124,14 @@ public:
 	int numStockpileQued;					// how many weapons the user have added to our que
 	void UpdateInterceptTarget();
 
-	float3 errorVector;
-	float3 errorVectorAdd;
+	int lastRequest;						// when the last script call was done
+	int lastTargetRetry;					// when we last recalculated target selection
 	int lastErrorVectorUpdate;
 
 	CWeapon* slavedTo;						// use this weapon to choose target
 
-	float3 mainDir;							// main aim dir of weapon
-	float maxMainDirAngleDif;				// how far away from main aim dir the weapon can aim at something (as an acos value)
+	float maxForwardAngleDif;				// for onlyForward weapons, maximum allowed angle between owner->frontdir and (targetPos - owner->pos)
+	float maxMainDirAngleDif;				// how far away from <mainDir> the weapon can aim at something (as an acos value)
 
 	bool avoidFriendly;						// if true, try to avoid friendly units while aiming
 	bool avoidFeature;      				// if true, try to avoid features while aiming
@@ -160,6 +145,19 @@ public:
 	unsigned int collisionFlags;
 
 	float fuelUsage;
+
+	float3 relWeaponPos;					// weaponpos relative to the unit
+	float3 weaponPos;						// absolute weapon pos
+	float3 relWeaponMuzzlePos;				// position of the firepoint
+	float3 weaponMuzzlePos;
+	float3 weaponDir;
+	float3 mainDir;							// main aiming-direction of weapon
+	float3 wantedDir;						// the angle we want to aim in, set by the weapon subclass
+	float3 lastRequestedDir;				// last angle we called the script with
+	float3 salvoError;						// error vector for the whole salvo
+	float3 errorVector;
+	float3 errorVectorAdd;
+	float3 targetPos;						// the position of the target (even if targettype=unit)
 
 private:
 	virtual void FireImpl() {};

@@ -39,7 +39,7 @@ namespace QTPFS {
 		unsigned int GetNeighborRelation(const INode* ngb) const;
 		unsigned int GetRectangleRelation(const SRectangle& r) const;
 		float GetDistance(const INode* n, unsigned int type) const;
-		float3 GetNeighborEdgeMidPoint(const INode* ngb) const;
+		float3 GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos) const;
 		SRectangle ClipRectangle(const SRectangle& r) const;
 
 		virtual unsigned int xmin() const = 0;
@@ -104,6 +104,7 @@ namespace QTPFS {
 		unsigned int GetParentID() const { return ((nodeNumber - 1) >> 2); }
 
 		boost::uint64_t GetMemFootPrint() const;
+		boost::uint64_t GetCheckSum() const;
 
 		void Delete();
 		void PreTesselate(NodeLayer& nl, const SRectangle& r);

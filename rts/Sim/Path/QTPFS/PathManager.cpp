@@ -28,6 +28,9 @@
 #undef GetTempPathA
 #endif
 
+#define NUL_RECTANGLE SRectangle(0, 0,         0,        0)
+#define MAP_RECTANGLE SRectangle(0, 0,  gs->mapx, gs->mapy)
+
 namespace QTPFS {
 	const float PathManager::MIN_SPEEDMOD_VALUE = 0.0f;
 	const float PathManager::MAX_SPEEDMOD_VALUE = 2.0f;
@@ -133,7 +136,7 @@ void QTPFS::PathManager::Load() {
 	searchStateOffset = NODE_STATE_OFFSET;
 	numTerrainChanges = 0;
 	numPathRequests   = 0;
-	maxNumLayerNodes  = 0;
+	maxNumLeafNodes   = 0;
 
 	nodeTrees.resize(moveinfo->moveData.size(), NULL);
 	nodeLayers.resize(moveinfo->moveData.size());
@@ -152,26 +155,26 @@ void QTPFS::PathManager::Load() {
 		//     should be sufficient in theory, because if either
 		//     the map or the mod changes then the checksum does
 		//     (should!) as well and we get a cache-miss
-		//     this value can still be combined with the tree-sums
-		//     to make it depend on the tesselation code specifics,
-		//     which are also subject to change (TODO)
+		//     this value is also combined with the tree-sums to
+		//     make it depend on the tesselation code specifics
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
+
+		const std::string& cacheDirName = GetCacheDirName(mapCheckSum, modCheckSum);
+		const bool haveCacheDir = FileSystem::DirExists(cacheDirName);
+
+		InitNodeLayersThreaded(MAP_RECTANGLE, haveCacheDir);
+		Serialize(cacheDirName);
+
+		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+			pfsCheckSum ^= nodeTrees[layerNum]->GetCheckSum();
+			maxNumLeafNodes = std::max(nodeLayers[layerNum].GetNumLeafNodes(), maxNumLeafNodes);
+		}
 
 		#ifdef SYNCDEBUG
 		{ SyncedUint tmp(pfsCheckSum); }
 		#endif
 
-		const std::string& cacheDirName = GetCacheDirName(mapCheckSum, modCheckSum);
-		const bool haveCacheDir = FileSystem::DirExists(cacheDirName);
-
-		InitNodeLayersThreaded(SRectangle(0, 0,  gs->mapx, gs->mapy), haveCacheDir);
-		Serialize(cacheDirName);
-
-		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-			maxNumLayerNodes = std::max(nodeLayers[layerNum].GetNumLeafNodes(), maxNumLayerNodes);
-		}
-
-		PathSearch::InitGlobalQueue(maxNumLayerNodes);
+		PathSearch::InitGlobalQueue(maxNumLeafNodes);
 	}
 
 	{
@@ -530,7 +533,7 @@ void QTPFS::PathManager::ExecuteSearch(
 	assert(search->GetID() != 0);
 	assert(path->GetID() == search->GetID());
 
-	search->Initialize(&nodeLayer, &pathCache, path->GetSourcePoint(), path->GetTargetPoint());
+	search->Initialize(&nodeLayer, &pathCache, path->GetSourcePoint(), path->GetTargetPoint(), MAP_RECTANGLE);
 	path->SetHash(search->GetHash(gs->mapx * gs->mapy, pathType));
 
 	{

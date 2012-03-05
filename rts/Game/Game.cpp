@@ -175,7 +175,7 @@ CONFIG(bool, ShowFPS).defaultValue(false);
 CONFIG(bool, ShowClock).defaultValue(true);
 CONFIG(bool, ShowSpeed).defaultValue(false);
 CONFIG(bool, ShowMTInfo).defaultValue(true);
-CONFIG(float, MTInfoThreshold).defaultValue(0.25f);
+CONFIG(float, MTInfoThreshold).defaultValue(1.0f);
 CONFIG(int, ShowPlayerInfo).defaultValue(1);
 CONFIG(float, GuiOpacity).defaultValue(0.8f);
 CONFIG(std::string, InputTextGeo).defaultValue("");
@@ -2283,6 +2283,20 @@ void CGame::ReloadGame()
 	}
 }
 
+
+bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
+{
+	if (ActionPressed(key, action, isRepeat)) {
+		return true;
+	}
+
+	// maybe a widget is interested?
+	if (guihandler != NULL) {
+		guihandler->PushLayoutCommand(action.rawline, false); //FIXME add return argument!
+	}
+
+	return false;
+}
 
 
 void CGame::ActionReceived(const Action& action, int playerID)

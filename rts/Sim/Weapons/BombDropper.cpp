@@ -138,7 +138,7 @@ void CBombDropper::FireImpl()
 void CBombDropper::Init()
 {
 	CWeapon::Init();
-	maxAngleDif = -1;
+	maxForwardAngleDif = -1.0f;
 }
 
 /** @see #SlowUpdate */

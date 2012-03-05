@@ -287,8 +287,6 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.trajectoryHeight = wdTable.GetFloat("trajectoryHeight", 0.0f);
 
 	wd.noAutoTarget = (wd.manualfire || wd.interceptor || wd.isShield);
-	wd.onlyTargetCategory = 0xffffffff;
-
 	wd.largeBeamLaser = wdTable.GetBool("largeBeamLaser", false);
 
 	if (wd.type == "Cannon") {

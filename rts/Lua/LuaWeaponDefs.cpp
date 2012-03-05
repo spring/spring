@@ -50,7 +50,6 @@ static int DamagesArray(lua_State* L, const void* data);
 static int CustomParamsTable(lua_State* L, const void* data);
 static int GuiSoundSetTable(lua_State* L, const void* data);
 static int CategorySetFromBits(lua_State* L, const void* data);
-//static int CategorySetFromString(lua_State* L, const void* data);
 
 
 /******************************************************************************/
@@ -447,9 +446,10 @@ static bool InitParamMap()
 	ADD_FUNCTION("noFeatureCollide",     wd.collisionFlags, NoFeatureCollide);
 	ADD_FUNCTION("noNeutralCollide",     wd.collisionFlags, NoNeutralCollide);
 	ADD_FUNCTION("noGroundCollide",      wd.collisionFlags, NoGroundCollide);
-	ADD_FUNCTION("onlyTargetCategories", wd.onlyTargetCategory, CategorySetFromBits);
 
-	ADD_FUNCTION("maxVelocity", wd.projectilespeed, DeprecatedMaxVelocity); // NOTE: deprecated (needs to be linked via _FUNCTION, else it would be writable)
+	paramMap["onlyTargetCategories"] = DataElement(); // NOTE: deprecated, will generate ERROR_TYPE if indexed
+	paramMap["maxVelocity"] = DataElement(); // NOTE: deprecated, will generate ERROR_TYPE if indexed
+	paramMap["areaOfEffect"] = DataElement(); // NOTE: deprecated, will generate ERROR_TYPE if indexed
 
 	ADD_INT("id", wd.id);
 
@@ -477,7 +477,6 @@ static bool InitParamMap()
 
 	ADD_FLOAT("craterAreaOfEffect", wd.craterAreaOfEffect);
 	ADD_FLOAT("damageAreaOfEffect", wd.damageAreaOfEffect);
-	ADD_FLOAT("areaOfEffect",       wd.damageAreaOfEffect); // backward compability (TODO: find a way to print a warning when used!)
 	ADD_FLOAT("edgeEffectiveness",  wd.edgeEffectiveness);
 	ADD_FLOAT("fireStarter",        wd.fireStarter);
 	ADD_FLOAT("size",               wd.size);
