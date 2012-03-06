@@ -106,18 +106,14 @@ private:
 	const std::string message;
 };
 
-#ifdef DEBUG
-	#define DEPRECATED \
-		static CMessageOnce msg( \
-				"The deprecated unitsync function " \
-				+ std::string(__FUNCTION__) + " was called." \
-				" Please update your lobby client"); \
-		msg.print(); \
-		SetLastError("deprecated unitsync function called: " \
-				+ std::string(__FUNCTION__))
-#else
-	#define DEPRECATED
-#endif
+#define DEPRECATED \
+	static CMessageOnce msg( \
+			"The deprecated unitsync function " \
+			+ std::string(__FUNCTION__) + " was called." \
+			" Please update your lobby client"); \
+	msg.print(); \
+	SetLastError("deprecated unitsync function called: " \
+			+ std::string(__FUNCTION__))
 
 
 //////////////////////////
