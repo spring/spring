@@ -172,14 +172,6 @@ EXPORT(const char* ) GetDataDirectory(int index);
  */
 EXPORT(int         ) ProcessUnits();
 /**
- * Identical to ProcessUnits().
- * Neither generates checksum anymore.
- * @see ProcessUnits
- * @deprecated in June 2011
- */
-EXPORT(int         ) ProcessUnitsNoChecksum();
-
-/**
  * @brief Get the number of units
  * @return negative integer (< 0) on error;
  *   the number of units available (>= 0) on success
@@ -254,55 +246,6 @@ EXPORT(unsigned int) GetArchiveChecksum(const char* archiveName);
  * @return NULL on error; a path to the archive on success
  */
 EXPORT(const char* ) GetArchivePath(const char* archiveName);
-
-#if       !defined(PLAIN_API_STRUCTURE)
-/**
- * @brief Retrieve map info
- * @param mapName name of the map, e.g. "SmallDivide"
- * @param outInfo pointer to structure which is filled with map info
- * @param version this determines which fields of the MapInfo structure are
- *   filled
- * @return Zero on error; non-zero on success
- * @deprecated
- * @see GetMapCount
- *
- * If version >= 1, then the author field is filled.
- *
- * Important: the description and author fields must point to a valid, and
- * sufficiently long buffer to store their contents.
- * Description is max 255 chars, and author is max 200 chars.
- * (including terminating zero byte).
- *
- * If an error occurs (return value 0), the description is set to an error
- * message. However, using GetNextError() is the recommended way to get the
- * error message.
- *
- * Example:
- *		@code
- *		char description[255];
- *		char author[200];
- *		MapInfo mi;
- *		mi.description = description;
- *		mi.author = author;
- *		if (GetMapInfoEx("somemap.smf", &mi, 1)) {
- *			// now mi contains map data
- *		} else {
- *			// handle the error
- *		}
- *		@endcode
- */
-EXPORT(int         ) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version);
-/**
- * @brief Retrieve map info, equivalent to GetMapInfoEx(name, outInfo, 0)
- * @param mapName name of the map, e.g. "SmallDivide"
- * @param outInfo pointer to structure which is filled with map info
- * @return Zero on error; non-zero on success
- * @deprecated
- * @see GetMapCount
- */
-EXPORT(int         ) GetMapInfo(const char* mapName, MapInfo* outInfo);
-#endif // !defined(PLAIN_API_STRUCTURE)
-
 /**
  * @brief Get the number of maps available
  * @return negative integer (< 0) on error;
@@ -571,19 +514,6 @@ EXPORT(const char* ) GetInfoKey(int index);
  */
 EXPORT(const char* ) GetInfoType(int index);
 /**
- * @brief Retrieves an info item's value as string
- * @param index info item index/id
- * @return NULL on error; the info item's value as string on success
- * @see GetSkirmishAIInfoCount
- * @see GetInfoType
- * @see GetInfoValueString
- * @see GetInfoValueInteger
- * @see GetInfoValueFloat
- * @see GetInfoValueBool
- * @deprecated use GetInfoValue* instead
- */
-EXPORT(const char* ) GetInfoValue(int index);
-/**
  * @brief Retrieves an info item's value of type string
  * @param index info item index/id
  * @return NULL on error; the info item's value on success
@@ -667,101 +597,6 @@ EXPORT(int         ) GetPrimaryModCount();
  * Be sure you have made a call to GetPrimaryModCount() prior to using this.
  */
 EXPORT(int         ) GetPrimaryModInfoCount(int index);
-/**
- * @brief Retrieves the human readable name of this mod
- * @param index The mods index/id
- * @return NULL on error; The mods name on success
- *
- * Returns the name of the mod usually found in ModInfo.lua.
- * Be sure you have made a call to GetPrimaryModCount() prior to using this.
- *
- * @deprecated use the mod info item with key "name" instead
- * @see GetPrimaryModInfoCount
- * @see GetInfoKey
- */
-EXPORT(const char* ) GetPrimaryModName(int index);
-/**
- * @brief Retrieves the shortened name of this mod
- * @param index The mods index/id
- * @return NULL on error; The mods abbrieviated name on success
- *
- * Returns the shortened name of the mod usually found in ModInfo.lua.
- * Be sure you have made a call GetPrimaryModCount() prior to using this.
- *
- * @deprecated use the mod info item with key "shortName" instead
- * @see GetPrimaryModInfoCount
- * @see GetInfoKey
- */
-EXPORT(const char* ) GetPrimaryModShortName(int index);
-/**
- * @brief Retrieves the version string of this mod
- * @param index The mods index/id
- * @return NULL on error; The mods version string on success
- *
- * Returns value of the mutator tag for the specified mod usually found in
- * ModInfo.lua.
- * Be sure you have made a call to GetPrimaryModCount() prior to using this.
- *
- * @deprecated use the mod info item with key "version" instead
- * @see GetPrimaryModInfoCount
- * @see GetInfoKey
- */
-EXPORT(const char* ) GetPrimaryModVersion(int index);
-/**
- * @brief Retrieves the mutator name of this mod
- * @param index The mods index/id
- * @return NULL on error; The mods mutator name on success
- *
- * Returns value of the mutator tag for the specified mod usually found in
- * ModInfo.lua.
- * Be sure you have made a call to GetPrimaryModCount() prior to using this.
- *
- * @deprecated use the mod info item with key "mutator" instead
- * @see GetPrimaryModInfoCount
- * @see GetInfoKey
- */
-EXPORT(const char* ) GetPrimaryModMutator(int index);
-/**
- * @brief Retrieves the game name of this mod
- * @param index The mods index/id
- * @return NULL on error; The mods game name on success
- *
- * Returns the name of the game this mod belongs to usually found in
- * ModInfo.lua.
- * Be sure you have made a call to GetPrimaryModCount() prior to using this.
- *
- * @deprecated use the mod info item with key "game" instead
- * @see GetPrimaryModInfoCount
- * @see GetInfoKey
- */
-EXPORT(const char* ) GetPrimaryModGame(int index);
-/**
- * @brief Retrieves the short game name of this mod
- * @param index The mods index/id
- * @return NULL on error; The mods abbrieviated game name on success
- *
- * Returns the abbrieviated name of the game this mod belongs to usually found
- * in ModInfo.lua.
- * Be sure you have made a call to GetPrimaryModCount() prior to using this.
- *
- * @deprecated use the mod info item with key "shortGame" instead
- * @see GetPrimaryModInfoCount
- * @see GetInfoKey
- */
-EXPORT(const char* ) GetPrimaryModShortGame(int index);
-/**
- * @brief Retrieves the description of this mod
- * @param index The mods index/id
- * @return NULL on error; The mods description on success
- *
- * Returns a description for the specified mod usually found in ModInfo.lua.
- * Be sure you have made a call to GetPrimaryModCount() prior to using this.
- *
- * @deprecated use the mod info item with key "description" instead
- * @see GetPrimaryModInfoCount
- * @see GetInfoKey
- */
-EXPORT(const char* ) GetPrimaryModDescription(int index);
 /**
  * @brief Retrieves the mod's first/primary archive
  * @param index The mods index/id
@@ -1240,25 +1075,6 @@ EXPORT(int         ) FindFilesVFS(int file, char* nameBuf, int size);
  */
 EXPORT(int         ) OpenArchive(const char* name);
 /**
- * @brief Open an archive
- * @param name the name of the archive
- *   (*.sd7, *.sdz, *.sdd, *.ccx, *.hpi, *.ufo, *.gp3, *.gp4, *.swx)
- * @param type the type of the archive
- *   (sd7, 7z, sdz, zip, sdd, dir, ccx, hpi, ufo, gp3, gp4, swx)
- * @return Zero on error; a non-zero archive handle on success.
- * @sa OpenArchive
- *
- * The list of supported types and recognized extensions may change at any time,
- * but this list will always be the same as the file types recognized by the
- * engine.
- *
- * FIXME This function is pointless, because OpenArchive() does the same and
- * automatically detects the file type based on its extension.
- * Who added it anyway?
- * @deprecated
- */
-EXPORT(int         ) OpenArchiveType(const char* name, const char* type);
-/**
  * @brief Close an archive in the VFS
  * @param archive the archive handle as returned by OpenArchive()
  */
@@ -1409,6 +1225,58 @@ EXPORT(float      ) lpGetIntKeyFloatVal(int key, float defValue);
 EXPORT(float      ) lpGetStrKeyFloatVal(const char* key, float defValue);
 EXPORT(const char*) lpGetIntKeyStrVal(int key, const char* defValue);
 EXPORT(const char*) lpGetStrKeyStrVal(const char* key, const char* defValue);
+
+/* deprecated functions */
+/**
+ * @deprecated in June 2011, use ProcessUnits() instead
+ */
+EXPORT(int         ) ProcessUnitsNoChecksum();
+#if       !defined(PLAIN_API_STRUCTURE)
+/**
+ * @deprecated use GetMapCount instead
+ */
+EXPORT(int         ) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version);
+/**
+ * @deprecated use GetMapCount instead
+ */
+EXPORT(int         ) GetMapInfo(const char* mapName, MapInfo* outInfo);
+#endif // !defined(PLAIN_API_STRUCTURE)
+/**
+ * @deprecated use GetInfoValue* instead
+ */
+EXPORT(const char* ) GetInfoValue(int index);
+/**
+ * @deprecated use the mod info item with key "name" instead, see GetPrimaryModInfoCount / GetInfoKey
+ */
+EXPORT(const char* ) GetPrimaryModName(int index);
+/**
+ * @deprecated use the mod info item with key "shortName" instead, see GetPrimaryModInfoCount / GetInfoKey
+ */
+EXPORT(const char* ) GetPrimaryModShortName(int index);
+/**
+ * @deprecated use the mod info item with key "version" instead, see GetPrimaryModInfoCount / GetInfoKey
+ */
+EXPORT(const char* ) GetPrimaryModVersion(int index);
+/**
+ * @deprecated use the mod info item with key "mutator" instead, see GetPrimaryModInfoCount / GetInfoKey
+ */
+EXPORT(const char* ) GetPrimaryModMutator(int index);
+/**
+ * @deprecated use the mod info item with key "game" instead, see GetPrimaryModInfoCount / GetInfoKey
+ */
+EXPORT(const char* ) GetPrimaryModGame(int index);
+/**
+ * @deprecated use the mod info item with key "shortGame" instead, see GetPrimaryModInfoCount / GetInfoKey
+ */
+EXPORT(const char* ) GetPrimaryModShortGame(int index);
+/**
+ * @deprecated use the mod info item with key "description" instead, see GetPrimaryModInfoCount / GetInfoKey
+ */
+EXPORT(const char* ) GetPrimaryModDescription(int index);
+/**
+ * @deprecated use OpenArchive instead
+ */
+EXPORT(int         ) OpenArchiveType(const char* name, const char* type);
 
 /** @} */
 
