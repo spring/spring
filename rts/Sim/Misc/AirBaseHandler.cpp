@@ -119,7 +119,7 @@ void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 
 
 
-CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float minPower, bool checkEmpty)
+CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float minPower, bool wantFreePad)
 {
 	float minDist = std::numeric_limits<float>::max();
 
@@ -142,7 +142,7 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 			continue;
 		}
 
-		if (checkEmpty && base->freePads.empty()) {
+		if (wantFreePad && base->freePads.empty()) {
 			continue;
 		}
 
@@ -156,7 +156,7 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 		AirBase* foundBase = *foundBaseIt;
 		LandingPad* foundPad = *foundPadIt;
 
-		if (checkEmpty) {
+		if (wantFreePad) {
 			foundBase->freePads.erase(foundPadIt);
 		}
 
