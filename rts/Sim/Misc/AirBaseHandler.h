@@ -66,7 +66,7 @@ public:
 	 * It is the callers responsibility to detect if the base dies
 	 * while its reserved.
 	 */
-	LandingPad* FindAirBase(CUnit* unit, float minPower, bool checkEmpty);
+	LandingPad* FindAirBase(CUnit* unit, float minPower, bool wantFreePad);
 
 	/** @brief Try to find the closest airbase even if it's reserved */
 	float3 FindClosestAirBasePos(CUnit* unit, float minPower);
