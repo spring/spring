@@ -55,6 +55,8 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define DEBUG_OUTPUT 0
 #define WAIT_FOR_PATH 1
 #define PLAY_SOUNDS 1
+#define CMD_QUEUE owner->commandAI->commandQue
+
 
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -433,9 +435,9 @@ bool CGroundMoveType::FollowPath()
 			//     and we cannot increase tolerance safely (otherwise the unit might stop when still
 			//     outside its range and fail to start construction)
 			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
-			const float minGoalDistSq = (!owner->commandAI->commandQue.empty() && owner->commandAI->commandQue[0].GetID() < 0)?
-				Square(goalRadius                             ):
-				Square(goalRadius * (numIdlingSlowUpdates + 1));
+			const float minGoalDistSq = (CMD_QUEUE.empty() || CMD_QUEUE[0].GetID() == CMD_MOVE)?
+				Square(goalRadius * (numIdlingSlowUpdates + 1)):
+				Square(goalRadius                             );
 
 			atGoal |= (curGoalDistSq < minGoalDistSq);
 		}
@@ -521,6 +523,8 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 		if (wantedSpeed > 0.0f) {
 			const UnitDef* ud = owner->unitDef;
 			const float groundMod = ud->movedata->moveMath->GetPosSpeedMod(*ud->movedata, owner->pos, flatFrontDir);
+			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
+			const float minGoalDistSq = Square(BreakingDistance(currentSpeed));
 
 			const float3& goalDifFwd = waypointDir;
 			const float3  goalDifRev = -goalDifFwd;
@@ -529,9 +533,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
 			// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
-			const bool startBreaking =
-				(owner->commandAI->commandQue.size() <= 2) &&
-				((owner->pos - goalPos).SqLength2D() <= Square(BreakingDistance(currentSpeed)));
+			const bool startBreaking = (CMD_QUEUE.size() <= 2 && curGoalDistSq <= minGoalDistSq);
 
 			if (!fpsMode && turnDeltaHeading != 0) {
 				// only auto-adjust speed for turns when not in FPS mode
@@ -1232,9 +1234,9 @@ void CGroundMoveType::GetNextWayPoint()
 
 		{
 			const float curGoalDistSq = (currWayPoint - goalPos).SqLength2D();
-			const float minGoalDistSq = (!owner->commandAI->commandQue.empty() && owner->commandAI->commandQue[0].GetID() < 0)?
-				Square(goalRadius                             ):
-				Square(goalRadius * (numIdlingSlowUpdates + 1));
+			const float minGoalDistSq = (CMD_QUEUE.empty() || CMD_QUEUE[0].GetID() == CMD_MOVE)?
+				Square(goalRadius * (numIdlingSlowUpdates + 1)):
+				Square(goalRadius                             );
 
 			// trigger Arrived on the next Update (but
 			// only if we have non-temporary waypoints)
@@ -1319,7 +1321,6 @@ void CGroundMoveType::StartEngine() {
 }
 
 void CGroundMoveType::StopEngine() {
-
 	if (pathId != 0) {
 		pathManager->DeletePath(pathId);
 		pathId = 0;
