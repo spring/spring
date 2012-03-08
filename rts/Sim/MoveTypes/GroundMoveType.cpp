@@ -1544,7 +1544,18 @@ void CGroundMoveType::HandleUnitCollisions(
 					// repath iff obstacle is within 60-degree cone; we do this
 					// because the GNWP lookahead (for non-TIP units) can cause
 					// corners to be cut across statically blocked squares
-					StartMoving(goalPos, goalRadius, 0.0f);
+					//
+					// NOTE:
+					//   we want an initial speed of 0 to avoid ramming into the
+					//   obstacle again right after the push, but if our leading
+					//   command is not a CMD_MOVE then SetMaxSpeed will not get
+					//   called later and 0 will immobilize us
+					//
+					if (CMD_QUEUE.empty() || CMD_QUEUE[0].GetID() == CMD_MOVE) {
+						StartMoving(goalPos, goalRadius, 0.0f);
+					} else {
+						StartMoving(goalPos, goalRadius);
+					}
 				}
 			}
 		}
@@ -1663,7 +1674,11 @@ void CGroundMoveType::HandleFeatureCollisions(
 				deltaSpeed = 0.0f;
 
 				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
-					StartMoving(goalPos, goalRadius, 0.0f);
+					if (CMD_QUEUE.empty() || CMD_QUEUE[0].GetID() == CMD_MOVE) {
+						StartMoving(goalPos, goalRadius, 0.0f);
+					} else {
+						StartMoving(goalPos, goalRadius);
+					}
 				}
 			}
 		}
