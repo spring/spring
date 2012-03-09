@@ -21,6 +21,7 @@ struct MoveData {
 	MoveData(const MoveData* unitDefMD) { *this = *unitDefMD; }
 	MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID);
 
+	bool TestMoveSquare(const int hmx, const int hmz) const;
 	float GetDepthMod(const float height) const;
 	unsigned int GetCheckSum() const;
 
