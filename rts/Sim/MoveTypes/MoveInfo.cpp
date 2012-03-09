@@ -316,6 +316,23 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 	assert((zsize & 1) == 1);
 }
 
+bool MoveData::TestMoveSquare(const int hmx, const int hmz) const {
+	bool ret = true;
+
+	// test the entire footprint
+	for (int i = hmx - xsizeh; i <= hmx + xsizeh; i++) {
+		for (int j = hmz - zsizeh; j <= hmz + zsizeh; j++) {
+			const float speedMod = moveMath->GetPosSpeedMod(*this, hmx + i, hmz + j);
+			const CMoveMath::BlockType blockBits = moveMath->IsBlocked(*this, hmx + i, hmz + j);
+
+			// check both terrain and the blocking-map
+			ret &= ((speedMod > 0.0f) && ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0));
+		}
+	}
+
+	return ret;
+}
+
 float MoveData::GetDepthMod(const float height) const {
 	// [DEPTHMOD_{MIN, MAX}_HEIGHT] are always >= 0,
 	// so we return early for positive height values
