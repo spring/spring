@@ -123,6 +123,7 @@ protected:
 
 	bool atGoal;
 	bool haveFinalWaypoint;
+
 	float currWayPointDist;
 	float prevWayPointDist;
 

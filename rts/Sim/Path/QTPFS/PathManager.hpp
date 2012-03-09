@@ -145,7 +145,7 @@ namespace QTPFS {
 		unsigned int searchStateOffset;
 		unsigned int numTerrainChanges;
 		unsigned int numPathRequests;
-		unsigned int maxNumLayerNodes;
+		unsigned int maxNumLeafNodes;
 
 		boost::uint32_t pfsCheckSum;
 	};
