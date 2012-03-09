@@ -55,7 +55,9 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define DEBUG_OUTPUT 0
 #define WAIT_FOR_PATH 1
 #define PLAY_SOUNDS 1
-#define CMD_QUEUE owner->commandAI->commandQue
+
+#define OWNER_CMD_QUE owner->commandAI->commandQue
+#define OWNER_MOVE_CMD() (OWNER_CMD_QUE.empty() || OWNER_CMD_QUE[0].GetID() == CMD_MOVE)
 
 
 
@@ -79,6 +81,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(nextWayPoint),
 	CR_MEMBER(atGoal),
 	CR_MEMBER(haveFinalWaypoint),
+
 	CR_MEMBER(currWayPointDist),
 	CR_MEMBER(prevWayPointDist),
 
@@ -137,6 +140,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	nextWayPoint(ZeroVector),
 	atGoal(false),
 	haveFinalWaypoint(false),
+
 	currWayPointDist(0.0f),
 	prevWayPointDist(0.0f),
 
@@ -376,6 +380,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 	goalRadius = _goalRadius;
 	requestedSpeed = speed;
 	atGoal = false;
+
 	useMainHeading = false;
 	progressState = Active;
 
@@ -435,7 +440,7 @@ bool CGroundMoveType::FollowPath()
 			//     and we cannot increase tolerance safely (otherwise the unit might stop when still
 			//     outside its range and fail to start construction)
 			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
-			const float minGoalDistSq = (CMD_QUEUE.empty() || CMD_QUEUE[0].GetID() == CMD_MOVE)?
+			const float minGoalDistSq = (OWNER_MOVE_CMD())?
 				Square(goalRadius * (numIdlingSlowUpdates + 1)):
 				Square(goalRadius                             );
 
@@ -533,7 +538,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
 			// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
-			const bool startBreaking = (CMD_QUEUE.size() <= 2 && curGoalDistSq <= minGoalDistSq);
+			const bool startBreaking = (OWNER_CMD_QUE.size() <= 2 && curGoalDistSq <= minGoalDistSq);
 
 			if (!fpsMode && turnDeltaHeading != 0) {
 				// only auto-adjust speed for turns when not in FPS mode
@@ -1234,7 +1239,7 @@ void CGroundMoveType::GetNextWayPoint()
 
 		{
 			const float curGoalDistSq = (currWayPoint - goalPos).SqLength2D();
-			const float minGoalDistSq = (CMD_QUEUE.empty() || CMD_QUEUE[0].GetID() == CMD_MOVE)?
+			const float minGoalDistSq = (OWNER_MOVE_CMD())?
 				Square(goalRadius * (numIdlingSlowUpdates + 1)):
 				Square(goalRadius                             );
 
@@ -1551,7 +1556,7 @@ void CGroundMoveType::HandleUnitCollisions(
 					//   command is not a CMD_MOVE then SetMaxSpeed will not get
 					//   called later and 0 will immobilize us
 					//
-					if (CMD_QUEUE.empty() || CMD_QUEUE[0].GetID() == CMD_MOVE) {
+					if (OWNER_MOVE_CMD()) {
 						StartMoving(goalPos, goalRadius, 0.0f);
 					} else {
 						StartMoving(goalPos, goalRadius);
@@ -1674,7 +1679,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 				deltaSpeed = 0.0f;
 
 				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
-					if (CMD_QUEUE.empty() || CMD_QUEUE[0].GetID() == CMD_MOVE) {
+					if (OWNER_MOVE_CMD()) {
 						StartMoving(goalPos, goalRadius, 0.0f);
 					} else {
 						StartMoving(goalPos, goalRadius);
