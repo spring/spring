@@ -4576,7 +4576,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 
 	if (unitDef == NULL) {
-		lua_pushboolean(L, false);
+		lua_pushnumber(L, 0);
 		return 1;
 	}
 
