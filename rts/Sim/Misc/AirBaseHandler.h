@@ -57,6 +57,7 @@ public:
 
 	void RegisterAirBase(CUnit* base);
 	void DeregisterAirBase(CUnit* base);
+	void LeaveLandingPad(LandingPad* pad);
 
 	/**
 	 * @brief Try to find an airbase and reserve it if one can be found
@@ -65,11 +66,12 @@ public:
 	 * It is the callers responsibility to detect if the base dies
 	 * while its reserved.
 	 */
-	LandingPad* FindAirBase(CUnit* unit, float minPower);
-	void LeaveLandingPad(LandingPad* pad);
+	LandingPad* FindAirBase(CUnit* unit, float minPower, bool wantFreePad);
 
 	/** @brief Try to find the closest airbase even if it's reserved */
 	float3 FindClosestAirBasePos(CUnit* unit, float minPower);
+
+	bool HaveAirBase(int allyTeam) const { return (!bases[allyTeam].empty()); }
 
 private:
 	typedef std::list<AirBase*> AirBaseLst;
@@ -77,7 +79,6 @@ private:
 	typedef std::list<LandingPad*> PadLst;
 	typedef std::list<LandingPad*>::iterator PadLstIt;
 
-	std::vector<AirBaseLst> freeBases;
 	std::vector<AirBaseLst> bases;
 
 	// IDs of units registered as airbases

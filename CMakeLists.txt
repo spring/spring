@@ -195,7 +195,7 @@ if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set (MARCH_FLAG CACHE STRING "CPU optimization (use i686 for generic optimization)")
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	message (STATUS "Building Spring for 32bit environment")
-	set (MARCH_FLAG "i686" CACHE STRING "CPU optimization (use i686 for generic optimization)")
+	set (MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
 if    ($ENV{CXX} MATCHES "icpc")

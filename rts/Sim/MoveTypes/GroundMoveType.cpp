@@ -50,11 +50,15 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < (MAX_UNIT_SPEED * MAX_UNIT_SPEED * 1e2));
 
 #define RAD2DEG (180.0f / PI)
-#define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE)
+#define MIN_WAYPOINT_DISTANCE SQUARE_SIZE
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
 #define WAIT_FOR_PATH 1
 #define PLAY_SOUNDS 1
+
+#define OWNER_CMD_QUE owner->commandAI->commandQue
+#define OWNER_MOVE_CMD() (OWNER_CMD_QUE.empty() || OWNER_CMD_QUE[0].GetID() == CMD_MOVE)
+
 
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -77,6 +81,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(nextWayPoint),
 	CR_MEMBER(atGoal),
 	CR_MEMBER(haveFinalWaypoint),
+
 	CR_MEMBER(currWayPointDist),
 	CR_MEMBER(prevWayPointDist),
 
@@ -135,6 +140,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	nextWayPoint(ZeroVector),
 	atGoal(false),
 	haveFinalWaypoint(false),
+
 	currWayPointDist(0.0f),
 	prevWayPointDist(0.0f),
 
@@ -374,6 +380,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 	goalRadius = _goalRadius;
 	requestedSpeed = speed;
 	atGoal = false;
+
 	useMainHeading = false;
 	progressState = Active;
 
@@ -424,7 +431,21 @@ bool CGroundMoveType::FollowPath()
 
 		prevWayPointDist = currWayPointDist;
 		currWayPointDist = owner->pos.distance2D(currWayPoint);
-		atGoal = ((owner->pos - goalPos).SqLength2D() < Square(MIN_WAYPOINT_DISTANCE));
+
+		{
+			// NOTE:
+			//     uses owner->pos instead of currWayPoint (ie. not the same as haveFinalWaypoint)
+			//
+			//     if our first command is a build-order, then goalRadius is set to our build-range
+			//     and we cannot increase tolerance safely (otherwise the unit might stop when still
+			//     outside its range and fail to start construction)
+			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
+			const float minGoalDistSq = (OWNER_MOVE_CMD())?
+				Square(goalRadius * (numIdlingSlowUpdates + 1)):
+				Square(goalRadius                             );
+
+			atGoal |= (curGoalDistSq < minGoalDistSq);
+		}
 
 		if (!atGoal) {
 			if (!idling) {
@@ -507,6 +528,8 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 		if (wantedSpeed > 0.0f) {
 			const UnitDef* ud = owner->unitDef;
 			const float groundMod = ud->movedata->moveMath->GetPosSpeedMod(*ud->movedata, owner->pos, flatFrontDir);
+			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
+			const float minGoalDistSq = Square(BreakingDistance(currentSpeed));
 
 			const float3& goalDifFwd = waypointDir;
 			const float3  goalDifRev = -goalDifFwd;
@@ -515,9 +538,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
 			// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
-			const bool startBreaking =
-				(owner->commandAI->commandQue.size() <= 2) &&
-				((owner->pos - goalPos).SqLength2D() <= Square(BreakingDistance(currentSpeed)));
+			const bool startBreaking = (OWNER_CMD_QUE.size() <= 2 && curGoalDistSq <= minGoalDistSq);
 
 			if (!fpsMode && turnDeltaHeading != 0) {
 				// only auto-adjust speed for turns when not in FPS mode
@@ -1216,11 +1237,18 @@ void CGroundMoveType::GetNextWayPoint()
 			return;
 		}
 
-		if (currWayPoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
+		{
+			const float curGoalDistSq = (currWayPoint - goalPos).SqLength2D();
+			const float minGoalDistSq = (OWNER_MOVE_CMD())?
+				Square(goalRadius * (numIdlingSlowUpdates + 1)):
+				Square(goalRadius                             );
+
 			// trigger Arrived on the next Update (but
 			// only if we have non-temporary waypoints)
-			haveFinalWaypoint = true;
+			haveFinalWaypoint |= (curGoalDistSq < minGoalDistSq);
+		}
 
+		if (haveFinalWaypoint) {
 			currWayPoint = goalPos;
 			nextWayPoint = goalPos;
 			return;
@@ -1298,7 +1326,6 @@ void CGroundMoveType::StartEngine() {
 }
 
 void CGroundMoveType::StopEngine() {
-
 	if (pathId != 0) {
 		pathManager->DeletePath(pathId);
 		pathId = 0;
@@ -1522,7 +1549,18 @@ void CGroundMoveType::HandleUnitCollisions(
 					// repath iff obstacle is within 60-degree cone; we do this
 					// because the GNWP lookahead (for non-TIP units) can cause
 					// corners to be cut across statically blocked squares
-					StartMoving(goalPos, goalRadius, 0.0f);
+					//
+					// NOTE:
+					//   we want an initial speed of 0 to avoid ramming into the
+					//   obstacle again right after the push, but if our leading
+					//   command is not a CMD_MOVE then SetMaxSpeed will not get
+					//   called later and 0 will immobilize us
+					//
+					if (OWNER_MOVE_CMD()) {
+						StartMoving(goalPos, goalRadius, 0.0f);
+					} else {
+						StartMoving(goalPos, goalRadius);
+					}
 				}
 			}
 		}
@@ -1641,7 +1679,11 @@ void CGroundMoveType::HandleFeatureCollisions(
 				deltaSpeed = 0.0f;
 
 				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
-					StartMoving(goalPos, goalRadius, 0.0f);
+					if (OWNER_MOVE_CMD()) {
+						StartMoving(goalPos, goalRadius, 0.0f);
+					} else {
+						StartMoving(goalPos, goalRadius);
+					}
 				}
 			}
 		}
