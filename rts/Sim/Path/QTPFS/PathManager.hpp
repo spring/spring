@@ -59,6 +59,7 @@ namespace QTPFS {
 		static const unsigned int MAX_UPDATE_DELAY = 10;
 		static const unsigned int MAX_TEAM_SEARCHES = 10;
 		static const unsigned int NUM_SPEEDMOD_BINS = 20;
+
 		static const float MIN_SPEEDMOD_VALUE;
 		static const float MAX_SPEEDMOD_VALUE;
 
