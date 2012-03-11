@@ -403,9 +403,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 	char loadMsg[512] = {'\0'};
 	const char* fmtString = "[PathManager::%s] serializing node-tree %u (%s)";
 
-	// TODO:
-	//     calculate checksum over each tree
-	//     also compress the tree cache-files?
+	// TODO: compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveinfo->moveData[i]->name;
 		fileStreams[i] = new std::fstream();
