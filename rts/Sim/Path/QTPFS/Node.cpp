@@ -237,11 +237,11 @@ boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
 
 	{
 		#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&this->nodeNumber);
-		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&this->numPrevNodes) + sizeof(unsigned int);
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&numPrevNodes) + sizeof(numPrevNodes);
 		#else
-		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&this->nodeNumber);
-		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&this->mCost) + sizeof(float);
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&mCost) + sizeof(mCost);
 		#endif
 
 		assert(minByte < maxByte);
@@ -252,8 +252,8 @@ boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
 		}
 	}
 	{
-		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&this->_xmin);
-		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&this->prevMagicNum) + sizeof(unsigned int);
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&_xmin);
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&prevMagicNum) + sizeof(prevMagicNum);
 
 		assert(minByte < maxByte);
 
