@@ -362,23 +362,16 @@ float MoveData::GetDepthMod(const float height) const {
 unsigned int MoveData::GetCheckSum() const {
 	unsigned int sum = 0;
 
+	const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&moveType);
+	const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&heatProduced) + sizeof(heatProduced);
+
+	assert(minByte < maxByte);
+
 	// NOTE:
 	//   safe so long as MoveData has no virtuals and we
 	//   make sure we do not checksum the pointer-members
-	const unsigned char* bytes = reinterpret_cast<const unsigned char*>(this);
-	const unsigned char* ptrs[3] = {
-		reinterpret_cast<const unsigned char*>(&this->name),
-		reinterpret_cast<const unsigned char*>(&this->moveMath),
-		reinterpret_cast<const unsigned char*>(&this->tempOwner),
-	};
-
-	for (unsigned int n = 0; n < sizeof(*this); ) {
-		if (&bytes[n] == ptrs[0]) { n += sizeof(std::string);   continue; }
-		if (&bytes[n] == ptrs[1]) { n += sizeof(CMoveMath*);    continue; }
-		if (&bytes[n] == ptrs[2]) { n += sizeof(CSolidObject*); continue; }
-
-		sum ^= (((n + 1) << 8) * bytes[n]);
-		n += 1;
+	for (const unsigned char* byte = minByte; byte != maxByte; byte++) {
+		sum ^= ((((byte + 1) - minByte) << 8) * (*byte));
 	}
 
 	return sum;
