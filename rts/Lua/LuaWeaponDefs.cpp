@@ -445,9 +445,9 @@ static bool InitParamMap()
 	ADD_FUNCTION("noNeutralCollide",     wd.collisionFlags, NoNeutralCollide);
 	ADD_FUNCTION("noGroundCollide",      wd.collisionFlags, NoGroundCollide);
 
-	paramMap["onlyTargetCategories"] = DataElement(); // NOTE: deprecated, will generate ERROR_TYPE if indexed
-	paramMap["maxVelocity"] = DataElement(); // NOTE: deprecated, will generate ERROR_TYPE if indexed
-	paramMap["areaOfEffect"] = DataElement(); // NOTE: deprecated, will generate ERROR_TYPE if indexed
+	ADD_DEPRECATED_LUADEF_KEY("areaOfEffect");
+	ADD_DEPRECATED_LUADEF_KEY("maxVelocity");
+	ADD_DEPRECATED_LUADEF_KEY("onlyTargetCategories");
 
 	ADD_INT("id", wd.id);
 
