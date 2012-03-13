@@ -48,7 +48,9 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 	smfRenderStateSSP = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	smfRenderStateFFP = ISMFRenderState::GetInstance(                   false,                     false);
-	smfRenderState     = NULL;
+
+	// set in ::Draw, but UpdateSunDir can be called first if DynamicSun is enabled
+	smfRenderState = smfRenderStateFFP;
 
 	// LH must be initialized before LoadMapShaders is called
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
