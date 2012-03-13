@@ -187,7 +187,7 @@ static int UnitDefIndex(lua_State* L)
 			return elem.func(L, p);
 		}
 		case ERROR_TYPE: {
-			printf("[%s] ERROR_TYPE for key \"%s\" in UnitDefs __index", __FUNCTION__, name);
+			printf("[%s] ERROR_TYPE for key \"%s\" in UnitDefs __index\n", __FUNCTION__, name);
 			lua_pushnil(L);
 			return 1;
 		}
@@ -250,7 +250,7 @@ static int UnitDefNewIndex(lua_State* L)
 			return 0;
 		}
 		case ERROR_TYPE: {
-			printf("[%s] ERROR_TYPE for key \"%s\" in UnitDefs __newindex", __FUNCTION__, name);
+			printf("[%s] ERROR_TYPE for key \"%s\" in UnitDefs __newindex\n", __FUNCTION__, name);
 			lua_pushnil(L);
 			return 1;
 		}
