@@ -234,6 +234,10 @@ void CFarTextureHandler::Draw()
 		return;
 	}
 
+	if (!fbo.IsValid()) {
+		return;
+	}
+
 	{
 		// check if there is enough free space in the atlas, if not try resizing
 		// it (as many times as the number of models queued for iconification)

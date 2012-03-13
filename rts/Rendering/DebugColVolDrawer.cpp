@@ -189,10 +189,12 @@ public:
 
 namespace DebugColVolDrawer
 {
+	bool enable = false;
+
 	void Draw()
 	{
 #ifndef USE_GML // DebugColVolDrawer is not thread-safe
-		if (!globalRendering->drawdebug)
+		if (!enable)
 #endif
 			return;
 
