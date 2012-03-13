@@ -33,6 +33,7 @@
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Map/SMF/ROAM/Patch.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
+#include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
@@ -2829,6 +2830,20 @@ public:
 
 
 
+class DebugColVolActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugColVolActionExecutor()
+		: IUnsyncedActionExecutor("DebugColVol",
+			"Enable/Disable drawing of collision volumes for units & features.") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		SetBoolArg(DebugColVolDrawer::enable, action.GetArgs());
+		return true;
+	}
+};
+
+
+
 class SetGammaActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SetGammaActionExecutor() : IUnsyncedActionExecutor("SetGamma",
@@ -3304,6 +3319,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ShowRezurectionBarsActionExecutor()); // MT only
 	AddActionExecutor(new PauseActionExecutor());
 	AddActionExecutor(new DebugActionExecutor());
+	AddActionExecutor(new DebugColVolActionExecutor());
 	AddActionExecutor(new NoSoundActionExecutor());
 	AddActionExecutor(new SoundChannelEnableActionExecutor());
 	AddActionExecutor(new CreateVideoActionExecutor());
