@@ -193,10 +193,13 @@ static int FeatureDefIndex(lua_State* L)
 		case FUNCTION_TYPE: {
 			return elem.func(L, p);
 		}
-		case ERROR_TYPE:{
-			luaL_error(L, "ERROR_TYPE in FeatureDefs __index");
+		case ERROR_TYPE: {
+			printf("[%s] ERROR_TYPE for key \"%s\" in FeatureDefs __index", __FUNCTION__, name);
+			lua_pushnil(L);
+			return 1;
 		}
 	}
+
 	return 0;
 }
 
@@ -253,8 +256,10 @@ static int FeatureDefNewIndex(lua_State* L)
 			*((string*)p) = lua_tostring(L, -1);
 			return 0;
 		}
-		case ERROR_TYPE:{
-			luaL_error(L, "ERROR_TYPE in FeatureDefs __newindex");
+		case ERROR_TYPE: {
+			printf("[%s] ERROR_TYPE for key \"%s\" in FeatureDefs __newindex", __FUNCTION__, name);
+			lua_pushnil(L);
+			return 1;
 		}
 	}
 

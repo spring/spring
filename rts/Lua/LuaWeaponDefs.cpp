@@ -154,10 +154,13 @@ static int WeaponDefIndex(lua_State* L)
 		case FUNCTION_TYPE: {
 			return elem.func(L, p);
 		}
-		case ERROR_TYPE:{
-			luaL_error(L, "ERROR_TYPE in WeaponDefs __index");
+		case ERROR_TYPE: {
+			printf("[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __index", __FUNCTION__, name);
+			lua_pushnil(L);
+			return 1;
 		}
 	}
+
 	return 0;
 }
 
@@ -214,8 +217,10 @@ static int WeaponDefNewIndex(lua_State* L)
 			*((string*)p) = lua_tostring(L, -1);
 			return 0;
 		}
-		case ERROR_TYPE:{
-			luaL_error(L, "ERROR_TYPE in WeaponDefs __newindex");
+		case ERROR_TYPE: {
+			printf("[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __newindex", __FUNCTION__, name);
+			lua_pushnil(L);
+			return 1;
 		}
 	}
 
@@ -414,13 +419,6 @@ static int GuiSoundSetTable(lua_State* L, const void* data)
 	return 1;
 }
 
-
-static int DeprecatedMaxVelocity(lua_State* L, const void* data)
-{
-	const float projspeed = *((const float*) data);
-	lua_pushnumber(L, projspeed * GAME_SPEED);
-	return 1;
-}
 
 
 /******************************************************************************/
