@@ -109,11 +109,12 @@ void CGame::ClientReadNet()
 
 	// balance the time spend in simulation & drawing (esp. when reconnecting)
 	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
-	const float curSimFPS = gs->userSpeedFactor * GAME_SPEED;
-	const float msPerDrawFrame = 1000.0f * profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS);
-	const float msPerSimFrame = 1000.0f * profiler.GetPercent("Game::SimFrame") / std::max(1.0f, curSimFPS);
-	const float wantedDrawFPS = (msPerSimFrame * gu->simDrawBalance) / std::max(1.0f, msPerDrawFrame);
-	const float wantedFPS = std::max(float(gu->minFPS), wantedDrawFPS);
+	//const float curSimFPS = gs->userSpeedFactor * GAME_SPEED; FIXME this returns incorrect data when reconnecting
+	//const float msPerDrawFrame = 1000.0f * profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS); FIXME this returns incorrect data when reconnecting (>60ms per frame during reconnect, and <6ms normally)
+	//const float msPerSimFrame = 1000.0f * profiler.GetPercent("Game::SimFrame") / std::max(1.0f, curSimFPS);
+	//const float wantedDrawFPS = (msPerSimFrame * gu->simDrawBalance) / std::max(1.0f, msPerDrawFrame);
+	//const float wantedFPS = std::max(float(gu->minFPS), wantedDrawFPS);
+	const float wantedFPS = gu->minFPS;
 
 	// really process the messages
 	while (
