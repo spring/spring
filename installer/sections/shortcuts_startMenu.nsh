@@ -22,7 +22,7 @@
 	!ifdef SEC_GML
 		${If} ${SectionIsSelected} ${SEC_GML}
 			CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk" "$INSTDIR\spring-multithreaded.exe"
-			CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT (safemode).lnk" "$INSTDIR\spring-multithreaded.exe --safemode"
+			CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT (safemode).lnk" "$INSTDIR\spring-multithreaded.exe" "--safemode"
 		${EndIf}
 	!endif
 
