@@ -45,11 +45,11 @@ public:
 	 * for simulation is minimum spend for
 	 * drawing.
 	 * This is important when reconnecting,
-	 * i.e. it means that 15% of the total
-	 * cpu time is spend for drawing and 85%
+	 * i.e. it means that 20% of the total
+	 * cpu time is spend for drawing and 80%
 	 * for reconnecting/simulation.
 	 */
-	static const float simDrawBalance = 0.15f;
+	static const float simDrawBalance = 0.2f;
 
 	/**
 	 * @brief mod game time
