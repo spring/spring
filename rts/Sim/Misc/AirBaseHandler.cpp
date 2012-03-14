@@ -146,21 +146,19 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 		}
 
 		minDist = baseUnit->pos.SqDistance(unit->pos);
-
 		foundBaseIt = bi;
 	}
 
 	if (foundBaseIt != bases[unit->allyteam].end()) {
 		AirBase* foundBase = *foundBaseIt;
+
 		if (wantFreePad) {
 			LandingPad* foundPad = foundBase->freePads.front();
 			foundBase->freePads.pop_front();
 			return foundPad;
-		}
-		else {
-			if (foundBase->pads.empty())
-				return NULL;
-			return foundBase->pads.front();
+		} else {
+			if (!foundBase->pads.empty())
+				return foundBase->pads.front();
 		}
 	}
 
