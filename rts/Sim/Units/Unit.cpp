@@ -646,34 +646,35 @@ void CUnit::Update()
 
 	posErrorVector += posErrorDelta;
 
-	if (beingBuilt) {
-		return;
+	{
+		const bool oldInAir   = inAir;
+		const bool oldInWater = inWater;
+
+		inWater = (pos.y <= 0.0f);
+		inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x,pos.z)) > 1.0f);
+		isUnderWater = ((pos.y + ((mobility != NULL && mobility->subMarine)? 0.0f: model->height)) < 0.0f);
+
+		if (inAir != oldInAir) {
+			if (inAir) {
+				eventHandler.UnitEnteredAir(this);
+			} else {
+				eventHandler.UnitLeftAir(this);
+			}
+		}
+		if (inWater != oldInWater) {
+			if (inWater) {
+				eventHandler.UnitEnteredWater(this);
+			} else {
+				eventHandler.UnitLeftWater(this);
+			}
+		}
 	}
+
+	if (beingBuilt)
+		return;
 
 	// 0.968 ** 16 is slightly less than 0.6, which was the old value used in SlowUpdate
 	residualImpulse *= 0.968f;
-
-	const bool oldInAir   = inAir;
-	const bool oldInWater = inWater;
-
-	inWater = (pos.y <= 0.0f);
-	inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x,pos.z)) > 1.0f);
-	isUnderWater = ((pos.y + ((mobility != NULL && mobility->subMarine)? 0.0f: model->height)) < 0.0f);
-
-	if (inAir != oldInAir) {
-		if (inAir) {
-			eventHandler.UnitEnteredAir(this);
-		} else {
-			eventHandler.UnitLeftAir(this);
-		}
-	}
-	if (inWater != oldInWater) {
-		if (inWater) {
-			eventHandler.UnitEnteredWater(this);
-		} else {
-			eventHandler.UnitLeftWater(this);
-		}
-	}
 
 	if (travelPeriod != 0.0f) {
 		travel += speed.Length();
