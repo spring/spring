@@ -27,10 +27,8 @@ AAIConstructor::AAIConstructor(AAI *ai, int unit_id, int def_id, bool factory, b
 	build_pos = ZeroVector;
 
 	this->factory = factory;
-	this->builder = (buildspeed > 0) && builder;
+	this->builder = builder;
 	this->assistant = assistant;
-
-	assert(builder && (buildspeed > 0));
 
 	buildque = ai->execute->GetBuildqueueOfFactory(def_id);
 }
@@ -235,8 +233,11 @@ void AAIConstructor::CheckAssistance()
 		{
 			bool assist = false;
 
-			//FIXME why use *1/30 here? below there is exactly the same code w/o it, so what's the correct one?
-			const float buildtime = bt->unitList[construction_def_id-1]->buildTime/(30.0f * buildspeed);
+			float buildtime = 1e6;
+			if (buildspeed > 0) {
+				//FIXME why use *1/30 here? below there is exactly the same code w/o it, so what's the correct one?
+				buildtime = bt->unitList[construction_def_id-1]->buildTime / (30.0f * buildspeed);
+			}
 
 			if(buildque->size() > 2)
 				assist = true;
@@ -277,7 +278,10 @@ void AAIConstructor::CheckAssistance()
 				return;
 		}
 
-		const float buildtime = ai->bt->unitList[construction_def_id-1]->buildTime / buildspeed;
+		float buildtime = 1e6;
+		if (buildspeed > 0) {
+			buildtime = bt->unitList[construction_def_id-1]->buildTime / buildspeed;
+		}
 
 		if((buildtime > cfg->MIN_ASSISTANCE_BUILDTIME) && (assistants.size() < cfg->MAX_ASSISTANTS))
 		{
