@@ -23,6 +23,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "Sim/Misc/GlobalSynced.h"
 
@@ -155,7 +156,7 @@ static int WeaponDefIndex(lua_State* L)
 			return elem.func(L, p);
 		}
 		case ERROR_TYPE: {
-			printf("[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __index\n", __FUNCTION__, name);
+			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __index", __FUNCTION__, name);
 			lua_pushnil(L);
 			return 1;
 		}
@@ -218,7 +219,7 @@ static int WeaponDefNewIndex(lua_State* L)
 			return 0;
 		}
 		case ERROR_TYPE: {
-			printf("[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __newindex\n", __FUNCTION__, name);
+			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __newindex", __FUNCTION__, name);
 			lua_pushnil(L);
 			return 1;
 		}
