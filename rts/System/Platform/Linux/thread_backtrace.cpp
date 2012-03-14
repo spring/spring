@@ -17,6 +17,9 @@
 #define MAX(a,b) (a>b)?a:b
 #define INSTACK(a)  ((a) >= stack_buffer && (a) <= (stack_buffer + stack_size))
 
+//TODO Our custom thread_backtrace() only works on the mainthread.
+//     Use to gdb's libthread_db to get the stacktraces of all threads.
+//     note, the stacktrace of non-mainthreads is disabled in CrashHandler.cpp:450 (date: 2012-03)
 
 static uint8_t* TranslateStackAddrToBufferAddr(uint8_t* p, uint8_t* stackbot, uint8_t* stack_buffer)
 {

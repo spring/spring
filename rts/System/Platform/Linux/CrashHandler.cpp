@@ -447,6 +447,8 @@ namespace CrashHandler
 
 	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName)
 	{
+		//TODO Our custom thread_backtrace() only works on the mainthread.
+		//     Use to gdb's libthread_db to get the stacktraces of all threads.
 		if (!Threading::IsMainThread(thread)) {
 			LOG_L(L_ERROR, "Stacktrace (%s):", threadName.c_str());
 			LOG_L(L_ERROR, "  No Stacktraces for non-MainThread.");
