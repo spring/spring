@@ -501,16 +501,16 @@ void LuaUtils::PrintStack(lua_State* L)
 {
 	const int top = lua_gettop(L);
 	for (int i = 1; i <= top; i++) {
-		printf("  %i: type = %s (%p)", i, luaL_typename(L, i), lua_topointer(L, i));
+		LOG_L(L_ERROR, "  %i: type = %s (%p)", i, luaL_typename(L, i), lua_topointer(L, i));
 		const int type = lua_type(L, i);
 		if (type == LUA_TSTRING) {
-			printf("\t\t%s\n", lua_tostring(L, i));
+			LOG_L(L_ERROR, "\t\t%s\n", lua_tostring(L, i));
 		} else if (type == LUA_TNUMBER) {
-			printf("\t\t%f\n", lua_tonumber(L, i));
+			LOG_L(L_ERROR, "\t\t%f\n", lua_tonumber(L, i));
 		} else if (type == LUA_TBOOLEAN) {
-			printf("\t\t%s\n", lua_toboolean(L, i) ? "true" : "false");
+			LOG_L(L_ERROR, "\t\t%s\n", lua_toboolean(L, i) ? "true" : "false");
 		} else {
-			printf("\n");
+			LOG_L(L_ERROR, "\n");
 		}
 	}
 }
