@@ -51,7 +51,10 @@ public:
 	/**
 	* @brief speed factor
 	*
-	* Contains the actual gamespeed used by the game
+	* Contains the actual gamespeed factor
+	* used by the game. The total simframes
+	* per second calculate as follow:
+	* simFPS = speedFactor * GAME_SPEED;
 	*/
 	float speedFactor;
 

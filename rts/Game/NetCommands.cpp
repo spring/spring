@@ -109,15 +109,16 @@ void CGame::ClientReadNet()
 
 	// balance the time spend in simulation & drawing (esp. when reconnecting)
 	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
+	const float curSimFPS = gs->userSpeedFactor * GAME_SPEED;
 	const float msPerDrawFrame = 1000.0f * profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS);
-	const float msPerSimFrame = 1000.0f * profiler.GetPercent("Game::SimFrame") / std::max(1.0f, globalRendering->FPS);
-	const float wantedDrawFPS = (msPerSimFrame * gu->simDrawBalance) / msPerDrawFrame;
-	const float wantedSimFPS = std::max(float(gu->minFPS), wantedDrawFPS);
+	const float msPerSimFrame = 1000.0f * profiler.GetPercent("Game::SimFrame") / std::max(1.0f, curSimFPS);
+	const float wantedDrawFPS = (msPerSimFrame * gu->simDrawBalance) / std::max(1.0f, msPerDrawFrame);
+	const float wantedFPS = std::max(float(gu->minFPS), wantedDrawFPS);
 
 	// really process the messages
 	while (
 		timeLeft > 0.0f // smooths simframes across the full second
-		&& spring_tomsecs(spring_gettime() - procstarttime) < (1000.0f / wantedSimFPS) // balance the time spend in sim & drawing
+		&& spring_tomsecs(spring_gettime() - procstarttime) < (1000.0f / wantedFPS) // balance the time spend in sim & drawing
 		&& (packet = net->GetData(gs->frameNum)) // get netpacket from the stack
 	){
 		const unsigned char* inbuf = packet->data;
