@@ -83,10 +83,12 @@ static inline void DrawFeatureColVol(const CFeature* f)
 			GLUquadricObj* q = gluNewQuadric();
 			{
 				// draw the centerpos
+				glDisable(GL_DEPTH_TEST);
 				glColor3f(1.0f, 0.0f, 1.0f);
 				gluQuadricDrawStyle(q, GLU_FILL);
 				gluSphere(q, 2.0f, 5, 5);
 				glColorf3(defaultColVolColor);
+				glEnable(GL_DEPTH_TEST);
 			}
 			gluDeleteQuadric(q);
 
@@ -138,10 +140,12 @@ static inline void DrawUnitColVol(const CUnit* unit)
 		GLUquadricObj* q = gluNewQuadric();
 		{
 			// draw the aimpoint
+			glDisable(GL_DEPTH_TEST);
 			glColor3f(1.0f, 0.0f, 1.0f);
 			gluQuadricDrawStyle(q, GLU_FILL);
 			gluSphere(q, 2.0f, 5, 5);
 			glColorf3(defaultColVolColor);
+			glEnable(GL_DEPTH_TEST);
 		}
 		gluDeleteQuadric(q);
 
