@@ -19,7 +19,7 @@ class ShieldSegmentProjectile;
 class ShieldProjectile: public CProjectile {
 	CR_DECLARE(ShieldProjectile);
 public:
-	ShieldProjectile(const CPlasmaRepulser*);
+	ShieldProjectile(CPlasmaRepulser*);
 	~ShieldProjectile();
 
 	void Update();
@@ -30,11 +30,11 @@ public:
 		shield = NULL;
 	}
 
-	const CPlasmaRepulser* GetShield() const { return shield; }
+	inline CPlasmaRepulser* GetShield() const { return GML::SimEnabled() ? *(CPlasmaRepulser* volatile*)&shield : shield; }
 	const AtlasedTexture* GetShieldTexture() const { return shieldTexture; }
 
 private:
-	const CPlasmaRepulser* shield;
+	CPlasmaRepulser* shield;
 	const AtlasedTexture* shieldTexture;
 
 	unsigned int lastAllowDrawingUpdate;
