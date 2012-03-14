@@ -22,7 +22,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
 
-CONFIG(int, HangTimeout).defaultValue(10)
+CONFIG(int, HangTimeout).defaultValue(10).minimumValue(-1).maximumValue(600)
 		.description("Number of seconds that, if spent in the same code segment, indicate a hang; -1 to disable.");
 
 namespace Watchdog
