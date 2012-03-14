@@ -525,6 +525,7 @@ static bool InitParamMap()
 
 	ADD_BOOL("selfExplode", wd.selfExplode);
 	ADD_BOOL("gravityAffected", wd.gravityAffected);
+	ADD_FLOAT("myGravity", wd.myGravity);
 	ADD_BOOL("noExplode", wd.noExplode);
 	ADD_FLOAT("startvelocity", wd.startvelocity);
 	ADD_FLOAT("weaponAcceleration", wd.weaponacceleration);
