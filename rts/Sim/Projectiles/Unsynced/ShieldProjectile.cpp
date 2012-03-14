@@ -24,7 +24,7 @@ static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
 #define NUM_SEGMENTS_X 8
 #define NUM_SEGMENTS_Y 4
 
-ShieldProjectile::ShieldProjectile(const CPlasmaRepulser* shield_)
+ShieldProjectile::ShieldProjectile(CPlasmaRepulser* shield_)
 	: CProjectile(
 		shield_->weaponPos, // pos
 		ZeroVector, // speed
@@ -266,6 +266,8 @@ void ShieldSegmentProjectile::Draw() {
 		return;
 
 	const CPlasmaRepulser* shield = shieldProjectile->GetShield();
+	if (shield == NULL)
+		return;
 	const WeaponDef* shieldDef = shield->weaponDef;
 
 	// lerp between badColor and goodColor based on shield's current power
