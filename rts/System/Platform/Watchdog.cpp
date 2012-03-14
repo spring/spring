@@ -22,7 +22,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
 
-CONFIG(int, HangTimeout).defaultValue(0)
+CONFIG(int, HangTimeout).defaultValue(10)
 		.description("Number of seconds that, if spent in the same code segment, indicate a hang; -1 to disable.");
 
 namespace Watchdog
@@ -275,7 +275,7 @@ namespace Watchdog
 		memset(threadSlots, 0, sizeof(threadSlots));
 
 	#ifndef _WIN32
-		//! disable if gdb is running
+		// disable if gdb is running
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "/proc/%d/cmdline", getppid());
 		std::ifstream f(buf);
@@ -289,19 +289,17 @@ namespace Watchdog
 			}
 		}
 	#endif
-		int hangTimeoutSecs = configHandler->GetInt("HangTimeout");
+		const int hangTimeoutSecs = configHandler->GetInt("HangTimeout");
 
-		//! HangTimeout = -1 to force disable hang detection
-		if (hangTimeoutSecs < 0) {
+		// HangTimeout = -1 to force disable hang detection
+		if (hangTimeoutSecs <= 0) {
 			LOG("[Watchdog] disabled");
 			return;
 		}
-		if (hangTimeoutSecs == 0)
-			hangTimeoutSecs = 10;
 
 		hangTimeout = spring_secs(hangTimeoutSecs);
 
-		//! start the watchdog thread
+		// start the watchdog thread
 		hangDetectorThread = new boost::thread(&HangDetectorLoop);
 
 		LOG("[Watchdog] Installed (HangTimeout: %isec)", hangTimeoutSecs);
