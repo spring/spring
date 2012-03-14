@@ -39,6 +39,19 @@ public:
 	static const int minFPS = 2;
 
 	/**
+	 * @brief simulation drawing balance
+	 *
+	 * Defines how much percent of the time
+	 * for simulation is minimum spend for
+	 * drawing.
+	 * This is important when reconnecting,
+	 * i.e. it means that 15% of the total
+	 * cpu time is spend for drawing and 85%
+	 * for reconnecting/simulation.
+	 */
+	static const float simDrawBalance = 0.15f;
+
+	/**
 	 * @brief mod game time
 	 *
 	 * How long the game has been going on
