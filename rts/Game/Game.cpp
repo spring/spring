@@ -229,7 +229,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(playing),
 //	CR_MEMBER(lastFrameTime),
 //	CR_MEMBER(leastQue),
-//	CR_MEMBER(timeLeft),
+//	CR_MEMBER(msgProcTimeLeft),
 //	CR_MEMBER(consumeSpeed),
 //	CR_MEMBER(lastframe),
 //	CR_MEMBER(leastQue),
@@ -260,7 +260,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, playing(false)
 	, chatting(false)
 	, leastQue(0)
-	, timeLeft(0.0f)
+	, msgProcTimeLeft(0.0f)
 	, consumeSpeed(1.0f)
 	, lastframe(spring_gettime())
 	, skipStartFrame(0)
@@ -862,7 +862,7 @@ bool CGame::Update()
 		if (!gameServer) {
 			consumeSpeed = GAME_SPEED * gs->speedFactor + leastQue - 2;
 			leastQue = 10000;
-			timeLeft = 0.0f;
+			msgProcTimeLeft = 0.0f;
 		}
 	}
 

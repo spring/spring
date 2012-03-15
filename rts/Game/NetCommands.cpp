@@ -58,16 +58,17 @@ void CGame::ClientReadNet()
 
 	boost::shared_ptr<const netcode::RawPacket> packet;
 
-	// compute new timeLeft to "smooth" out SimFrame() calls
+	// compute new msgProcTimeLeft to "smooth" out SimFrame() calls
 	if (!gameServer) {
 		const spring_time currentFrame = spring_gettime();
 
 		if (skipping) {
-			timeLeft = 0.01f;
+			msgProcTimeLeft = 0.01f;
 		} else {
-			if (timeLeft > 1.0f)
-				timeLeft -= 1.0f;
-			timeLeft += consumeSpeed * (spring_tomsecs(currentFrame - lastframe) / 1000.0f);
+			if (msgProcTimeLeft > 1.0f)
+				msgProcTimeLeft -= 1.0f;
+
+			msgProcTimeLeft += consumeSpeed * (spring_tomsecs(currentFrame - lastframe) / 1000.0f);
 		}
 
 		lastframe = currentFrame;
@@ -97,31 +98,34 @@ void CGame::ClientReadNet()
 
 		if (que < leastQue)
 			leastQue = que;
-	}
-	else
-	{
+	} else {
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
-		timeLeft = GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor;
+		msgProcTimeLeft = GAME_SPEED / float(gu->minFPS) * gs->userSpeedFactor;
 	}
 
-	const spring_time procstarttime = spring_gettime();
+	const spring_time msgProcStartTime = spring_gettime();
 
-	// balance the time spend in simulation & drawing (esp. when reconnecting)
+	// balance the time spent in simulation & drawing (esp. when reconnecting)
 	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
 	// else use the following algo: i.e. with gu->reconnectSimDrawBalance = 0.2f
 	//  -> try to spend minimum 20% of the time in drawing
 	//  -> use remaining 80% for reconnecting
 	const float maxSimFPS  = (1.0f - gu->reconnectSimDrawBalance) * 1000.0f / std::max(0.01f, gu->avgSimFrameTime);
 	const float minDrawFPS =         gu->reconnectSimDrawBalance  * 1000.0f / std::max(0.01f, gu->avgDrawFrameTime);
-	const float drawMinimumEachMS = std::min(1000.0f / gu->minFPS, (maxSimFPS / minDrawFPS) * gu->avgSimFrameTime);
+	const float msgProcTimeLimit = std::min(1000.0f / gu->minFPS, (maxSimFPS / minDrawFPS) * gu->avgSimFrameTime);
 
 	// really process the messages
-	while (
-		timeLeft > 0.0f // smooths simframes across the full second
-		&& spring_tomsecs(spring_gettime() - procstarttime) < drawMinimumEachMS // balance the time spend in sim & drawing
-		&& (packet = net->GetData(gs->frameNum)) // get netpacket from the stack
-	){
+	while (true) {
+		const spring_time msgProcTimeSpent = spring_tomsecs(spring_gettime() - msgProcStartTime);
+		const bool processMessages =
+			(msgProcTimeLeft  >              0.0f) && // smooths simframes across the full second
+			(msgProcTimeSpent <= msgProcTimeLimit) && // balance the time spent in sim & drawing
+			((packet = net->GetData(gs->frameNum)));  // get netpacket from the queue
+
+		if (!processMessages)
+			break;
+
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
 		const unsigned char packetCode = inbuf[0];
@@ -378,7 +382,7 @@ void CGame::ClientReadNet()
 				// Fall-through
 			}
 			case NETMSG_NEWFRAME: {
-				timeLeft -= 1.0f;
+				msgProcTimeLeft -= 1.0f;
 				SimFrame();
 				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 #ifdef SYNCCHECK
