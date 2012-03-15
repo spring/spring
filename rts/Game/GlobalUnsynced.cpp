@@ -52,6 +52,8 @@ CGlobalUnsynced::CGlobalUnsynced()
 {
 	usRandSeed = time(NULL) % ((SDL_GetTicks() + 1) * 9007);
 
+	simFPS = 0.0f;
+
 	modGameTime = 0;
 	gameTime = 0;
 	startTime = 0;

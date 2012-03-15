@@ -917,6 +917,19 @@ bool CGame::UpdateUnsynced()
 	}
 	updateDeltaSeconds = dif;
 
+	// Update simFPS
+	{
+		const bool newSimFrame_ = (lastSimFrame != gs->frameNum);
+		static int lsf = gs->frameNum;
+		static spring_time lsft = currentTime;
+		const float diffsecs_ = spring_diffsecs(currentTime, lsft);
+		if (diffsecs_ >= 1.0f) {
+			gu->simFPS = (gs->frameNum - lsf) / diffsecs_;
+			lsft = currentTime;
+			lsf = gs->frameNum;
+		}
+	}
+
 	// FastForwarding
 	if (skipping) {
 		const float diff = spring_tomsecs(currentTime - skipLastDraw);
