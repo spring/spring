@@ -109,17 +109,17 @@ void CGame::ClientReadNet()
 
 	// balance the time spend in simulation & drawing (esp. when reconnecting)
 	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
-	//const float curSimFPS = gs->userSpeedFactor * GAME_SPEED; FIXME this returns incorrect data when reconnecting
-	//const float msPerDrawFrame = 1000.0f * profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS); FIXME this returns incorrect data when reconnecting (>60ms per frame during reconnect, and <6ms normally)
-	//const float msPerSimFrame = 1000.0f * profiler.GetPercent("Game::SimFrame") / std::max(1.0f, curSimFPS);
-	//const float wantedDrawFPS = (msPerSimFrame * gu->simDrawBalance) / std::max(1.0f, msPerDrawFrame);
-	//const float wantedFPS = std::max(float(gu->minFPS), wantedDrawFPS);
-	const float wantedFPS = gu->minFPS;
+	// else use the following algo: i.e. with gu->reconnectSimDrawBalance = 0.2f
+	//  -> try to spend minimum 20% of the time in drawing
+	//  -> use remaining 80% for reconnecting
+	const float maxSimFPS  = (1.0f - gu->reconnectSimDrawBalance) * 1000.0f / std::max(0.01f, gu->avgSimFrameTime);
+	const float minDrawFPS =         gu->reconnectSimDrawBalance  * 1000.0f / std::max(0.01f, gu->avgDrawFrameTime);
+	const float drawMinimumEachMS = std::min(1000.0f / gu->minFPS, (maxSimFPS / minDrawFPS) * gu->avgSimFrameTime);
 
 	// really process the messages
 	while (
 		timeLeft > 0.0f // smooths simframes across the full second
-		&& spring_tomsecs(spring_gettime() - procstarttime) < (1000.0f / wantedFPS) // balance the time spend in sim & drawing
+		&& spring_tomsecs(spring_gettime() - procstarttime) < drawMinimumEachMS // balance the time spend in sim & drawing
 		&& (packet = net->GetData(gs->frameNum)) // get netpacket from the stack
 	){
 		const unsigned char* inbuf = packet->data;
