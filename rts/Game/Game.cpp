@@ -1020,6 +1020,8 @@ bool CGame::UpdateUnsynced()
 
 			// TODO call only when camera changed
 			sound->UpdateListener(camera->pos, camera->forward, camera->up, deltaSec);
+
+			profiler.Update();
 		}
 	}
 
@@ -1455,7 +1457,6 @@ void CGame::SimFrame() {
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
 		}
-		profiler.Update();
 
 		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(camMove);
 
