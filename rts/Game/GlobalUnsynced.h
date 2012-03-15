@@ -52,6 +52,15 @@ public:
 	static const float simDrawBalance = 0.2f;
 
 	/**
+	 * @brief simulation frames per second
+	 * 
+	 * Should normally be:
+	 * simFPS ~= GAME_SPEED * gs->userSpeedFactor;
+	 * Only differs if the client lags or reconnects.
+	 */
+	float simFPS;
+
+	/**
 	 * @brief mod game time
 	 *
 	 * How long the game has been going on
