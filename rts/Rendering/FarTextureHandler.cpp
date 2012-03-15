@@ -224,6 +224,10 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 
 void CFarTextureHandler::Queue(const CSolidObject* obj)
 {
+	if (!fbo.IsValid()) {
+		return;
+	}
+
 	queuedForRender.push_back(obj);
 }
 
