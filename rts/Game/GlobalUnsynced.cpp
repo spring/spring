@@ -54,6 +54,9 @@ CGlobalUnsynced::CGlobalUnsynced()
 
 	simFPS = 0.0f;
 
+	avgSimFrameTime = 0.0f;
+	avgDrawFrameTime = 0.0f;
+
 	modGameTime = 0;
 	gameTime = 0;
 	startTime = 0;

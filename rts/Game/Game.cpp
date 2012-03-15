@@ -139,6 +139,7 @@
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/GlobalConfig.h"
+#include "System/myMath.h"
 #include "System/NetProtocol.h"
 #include "System/SpringApp.h"
 #include "System/Util.h"
@@ -919,7 +920,6 @@ bool CGame::UpdateUnsynced()
 
 	// Update simFPS
 	{
-		const bool newSimFrame_ = (lastSimFrame != gs->frameNum);
 		static int lsf = gs->frameNum;
 		static spring_time lsft = currentTime;
 		const float diffsecs_ = spring_diffsecs(currentTime, lsft);
@@ -1296,6 +1296,8 @@ bool CGame::Draw() {
 
 	CTeamHighlight::Disable();
 
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(spring_gettime() - currentTime)), 0.1f);
+
 	return true;
 }
 
@@ -1499,6 +1501,8 @@ void CGame::SimFrame() {
 	lastSimFrameTime = spring_gettime();
 
 	DumpState(-1, -1, 1);
+
+	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(spring_gettime() - lastFrameTime)), 0.1f);
 
 	LEAVE_SYNCED_CODE();
 }
