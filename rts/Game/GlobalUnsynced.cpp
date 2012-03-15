@@ -30,6 +30,7 @@
  */
 CGlobalUnsynced* gu;
 
+const float CGlobalUnsynced::reconnectSimDrawBalance = 0.15f;
 
 CR_BIND(CGlobalUnsynced, );
 

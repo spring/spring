@@ -49,7 +49,7 @@ public:
 	 * cpu time is spend for drawing and 85%
 	 * for reconnecting/simulation.
 	 */
-	static const float reconnectSimDrawBalance = 0.15f;
+	static const float reconnectSimDrawBalance;
 
 	/**
 	 * @brief simulation frames per second
