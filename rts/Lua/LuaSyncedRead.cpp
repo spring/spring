@@ -4593,13 +4593,19 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	CFeature* feature;
 
 	// negative allyTeam values have full visibility in TestUnitBuildSquare()
-	// 0 - blocked
-	// 1 - mobile unit in the way
-	// 2 - free (or if feature is != 0 then with a
-	//           blocking feature that can be reclaimed)
-	const int retval = uh->TestUnitBuildSquare(bi, feature, ActiveReadAllyTeam(), CLuaHandle::GetSynced(L));
+	// 0 = BUILDSQUARE_BLOCKED
+	// 1 = BUILDSQUARE_OCCUPIED
+	// 2 = BUILDSQUARE_RECLAIMABLE
+	// 3 = BUILDSQUARE_OPEN
+	int retval = uh->TestUnitBuildSquare(bi, feature, ActiveReadAllyTeam(), CLuaHandle::GetSynced(L));
 
-	if ((feature == NULL) || !IsFeatureVisible(feature)) {
+	// output of TestUnitBuildSquare was changed after this lua function was writen
+	// keep backward-compability by mapping:
+	// BUILDSQUARE_OPEN = BUILDSQUARE_RECLAIMABLE = 2
+	if (retval == BUILDSQUARE_OPEN)
+		retval = 2;
+
+	if (feature == NULL) {
 		lua_pushnumber(L, retval);
 		return 1;
 	}
