@@ -1056,12 +1056,12 @@ float CUnit::GetFlankingDamageBonus(const float3& attackDir)
 
 void CUnit::DoWaterDamage()
 {
-	if (mapInfo->water.damage <= 0.0f) {
+	if (mapInfo->water.damage <= 0.0f)
 		return;
-	}
-	if (!pos.IsInBounds()) {
+	if (!pos.IsInBounds())
 		return;
-	}
+	if (pos.y > 0.0f)
+		return;
 
 	const int  px            = pos.x / (SQUARE_SIZE * 2);
 	const int  pz            = pos.z / (SQUARE_SIZE * 2);
@@ -1069,9 +1069,12 @@ void CUnit::DoWaterDamage()
 	const bool onGround      = (physicalState == CSolidObject::OnGround);
 	const bool isWaterSquare = (readmap->GetMIPHeightMapSynced(1)[pz * gs->hmapx + px] <= 0.0f);
 
-	if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
-		DoDamage(DamageArray(mapInfo->water.damage), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED);
-	}
+	if (!isWaterSquare)
+		return;
+	if (!isFloating && !onGround)
+		return;
+
+	DoDamage(DamageArray(mapInfo->water.damage), ZeroVector, NULL, -DAMAGE_EXTSOURCE_WATER);
 }
 
 void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID)
