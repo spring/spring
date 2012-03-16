@@ -113,18 +113,23 @@ void CGame::ClientReadNet()
 	//  -> use remaining 80% for reconnecting
 	const float maxSimFPS  = (1.0f - gu->reconnectSimDrawBalance) * 1000.0f / std::max(0.01f, gu->avgSimFrameTime);
 	const float minDrawFPS =         gu->reconnectSimDrawBalance  * 1000.0f / std::max(0.01f, gu->avgDrawFrameTime);
-	const float msgProcTimeLimit = std::min(1000.0f / gu->minFPS, (maxSimFPS / minDrawFPS) * gu->avgSimFrameTime);
+	const float desiredSimFramesPerDrawFrame = maxSimFPS / minDrawFPS;
+	const float msgProcTimeLimit = Clamp(desiredSimFramesPerDrawFrame * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
 
 	// really process the messages
 	while (true) {
-		const spring_time msgProcTimeSpent = spring_tomsecs(spring_gettime() - msgProcStartTime);
-		const bool processMessages =
+		const float msgProcTimeSpent = spring_tomsecs(spring_gettime() - msgProcStartTime);
+		const bool suspend =
 			(msgProcTimeLeft  >              0.0f) && // smooths simframes across the full second
-			(msgProcTimeSpent <= msgProcTimeLimit) && // balance the time spent in sim & drawing
-			((packet = net->GetData(gs->frameNum)));  // get netpacket from the queue
+			(msgProcTimeSpent <= msgProcTimeLimit);   // balance the time spent in sim & drawing
 
-		if (!processMessages)
+		if (!suspend)
 			break;
+
+		// get netpacket from the queue
+		packet = net->GetData(gs->frameNum);
+		if (!packet)
+			break;;
 
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
