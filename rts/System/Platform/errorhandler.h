@@ -46,7 +46,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 			ErrorMessageBox(e.what(), "Spring: OpenGL content", MBF_OK | MBF_CRASH);        \
 		}                                                                                       \
 		catch (const user_error& e) {                                                           \
-			ErrorMessageBox(e.what(), "Spring: Fatal Error", MBF_OK | MBF_EXCL);            \
+			ErrorMessageBox(e.what(), "Spring: Fatal Error (user)", MBF_OK | MBF_EXCL);     \
 		}
 #else
 	#define CATCH_SPRING_ERRORS \
@@ -57,23 +57,23 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 			ErrorMessageBox(e.what(), "Spring: OpenGL content", MBF_OK | MBF_CRASH);        \
 		}                                                                                       \
 		catch (const user_error& e) {                                                           \
-			ErrorMessageBox(e.what(), "Spring: Fatal Error", MBF_OK | MBF_EXCL);            \
+			ErrorMessageBox(e.what(), "Spring: Fatal Error (user)", MBF_OK | MBF_EXCL);     \
 		}                                                                                       \
 		catch (const boost::system::system_error& e) {                                          \
 			std::ostringstream ss;                                                          \
 			ss << e.code().value() << ": " << e.what();                                     \
-			ErrorMessageBox(ss.str(), "Spring: Fatal Error", MBF_OK | MBF_CRASH);           \
+			ErrorMessageBox(ss.str(), "Spring: Fatal Error (boost)", MBF_OK | MBF_CRASH);    \
 		}                                                                                       \
 		catch (const boost::lock_error& e) {                                                          \
 			std::ostringstream ss;                                                          \
 			ss << e.native_error() << ": " << e.what();                                     \
-			ErrorMessageBox(ss.str(), "Spring: Fatal Error", MBF_OK | MBF_CRASH);           \
+			ErrorMessageBox(ss.str(), "Spring: Fatal Error (boost-lock)", MBF_OK | MBF_CRASH); \
 		}                                                                                       \
 		catch (const std::exception& e) {                                                       \
-			ErrorMessageBox(e.what(), "Spring: Fatal Error", MBF_OK | MBF_CRASH);           \
+			ErrorMessageBox(e.what(), "Spring: Fatal Error (general)", MBF_OK | MBF_CRASH);           \
 		}                                                                                       \
 		catch (const char* e) {                                                                 \
-			ErrorMessageBox(e, "Spring: Fatal Error", MBF_OK | MBF_CRASH);                  \
+			ErrorMessageBox(e, "Spring: Fatal Error (legacy)", MBF_OK | MBF_CRASH);         \
 		}
 #endif
 
