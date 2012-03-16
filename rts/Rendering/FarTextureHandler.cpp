@@ -86,7 +86,7 @@ CFarTextureHandler::~CFarTextureHandler()
 /**
  * @brief Returns the (row, column) pair of a FarTexture in the TextureAtlas.
  */
-int2 CFarTextureHandler::GetTextureCoordsInt(const int& farTextureNum, const int& orientation)
+int2 CFarTextureHandler::GetTextureCoordsInt(const int& farTextureNum, const int& orientation) const
 {
 	const int texnum = (farTextureNum * numOrientations) + orientation;
 
@@ -99,7 +99,7 @@ int2 CFarTextureHandler::GetTextureCoordsInt(const int& farTextureNum, const int
 /**
  * @brief Returns the TexCoords of a FarTexture in the TextureAtlas.
  */
-float2 CFarTextureHandler::GetTextureCoords(const int& farTextureNum, const int& orientation)
+float2 CFarTextureHandler::GetTextureCoords(const int& farTextureNum, const int& orientation) const
 {
 	float2 texcoords;
 
@@ -112,6 +112,16 @@ float2 CFarTextureHandler::GetTextureCoords(const int& farTextureNum, const int&
 	texcoords.y = (float(iconSizeY) / texSizeY) * row;
 
 	return texcoords;
+}
+
+
+bool CFarTextureHandler::HaveFarIcon(const CSolidObject* obj) const
+{
+	return (
+		   (cache.size() > obj->team)
+		&& (cache[obj->team].size() > obj->model->id)
+		&& (cache[obj->team][obj->model->id] != 0)
+	);
 }
 
 
@@ -132,31 +142,55 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 
 	cache[obj->team][model->id] = -1;
 
-
-	if (!fbo.IsValid()) {
-		LOG_L(L_DEBUG, "framebuffer not valid!");
+	// enough free space in the atlas?
+	if (!CheckResizeAtlas()) {
 		return;
 	}
+
+	// NOTE:
+	//    the icons are RTT'ed using a snapshot of the
+	//    current state (advModelShading, sunDir, etc)
+	//    and will not track later state-changes
 
 	fbo.Bind();
 	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX, texSizeY);
 	fbo.CheckStatus("FARTEXTURE");
 
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+	glDisable(GL_BLEND);
+	glFrontFace(GL_CW);
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glFogi(GL_FOG_MODE,   GL_LINEAR);
+	glFogf(GL_FOG_START,  0.0f);
+	glFogf(GL_FOG_END,    1e6);
+	glFogf(GL_FOG_DENSITY, 1.0f);
+
+	unitDrawer->SetupForUnitDrawing();
+	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
+	unitDrawer->SetTeamColour(obj->team);
+
+	if (model->type != MODELTYPE_3DO) {
+		texturehandlerS3O->SetS3oTexture(model->textureType);
+	}
+
+	//const float xs = std::max(math::fabs(model->relMidPos.x + model->maxs.x), math::fabs(model->relMidPos.x + model->mins.x));
+	//const float ys = std::max(math::fabs(model->relMidPos.y + model->maxs.y), math::fabs(model->relMidPos.y + model->mins.y));
+	//const float zs = std::max(math::fabs(model->relMidPos.z + model->maxs.z), math::fabs(model->relMidPos.z + model->mins.z));
+	//const float modelradius = std::max(xs, std::max(ys, zs));*/
+	const float modelradius = 1.15f * model->radius;
 
 	// overwrite the matrices set by SetupForUnitDrawing
 	// RTT with a top-down view; the view-matrix must be
 	// on the PROJECTION stack for the model shaders
 	glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(-model->radius, model->radius, -model->radius, model->radius, -model->radius * 1.5f, model->radius * 1.5f);
+		glOrtho(-modelradius, modelradius, -modelradius, modelradius, -modelradius, modelradius);
+		glRotatef(45.0f, 1.0f, 0.0f, 0.0f);
+		glScalef(-1.0f, 1.0f, 1.0f);
 
-		glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
 	glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-
-
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glDisable(GL_BLEND);
 
 	for (int orient = 0; orient < numOrientations; ++orient) {
 		// setup viewport
@@ -168,15 +202,17 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		glPushMatrix();
 		glTranslatef(0.0f, -model->height * 0.5f, 0.0f);
 
-		// draw the model to a temporary buffer
+		// draw model
 		model->DrawStatic();
 
 		glPopMatrix();
 
 		// rotate by 360 / numOrientations degrees for the next orientation
-		glRotatef(360.0f / numOrientations, 0.0f, 1.0f, 0.0f);
+		glRotatef(-360.0f / numOrientations, 0.0f, 1.0f, 0.0f);
 	}
 
+	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
+	unitDrawer->CleanUpUnitDrawing();
 
 	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();
@@ -188,8 +224,8 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 }
 
 
-
-void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* va) {
+void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* va)
+{
 	const int farTextureNum = cache[obj->team][obj->model->id];
 
 	// not found in the atlas
@@ -224,10 +260,6 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 
 void CFarTextureHandler::Queue(const CSolidObject* obj)
 {
-	if (!fbo.IsValid()) {
-		return;
-	}
-
 	queuedForRender.push_back(obj);
 }
 
@@ -239,85 +271,57 @@ void CFarTextureHandler::Draw()
 	}
 
 	if (!fbo.IsValid()) {
+		queuedForRender.clear();
 		return;
 	}
 
-	{
-		// check if there is enough free space in the atlas, if not try resizing
-		// it (as many times as the number of models queued for iconification)
-		unsigned int maxNewIcons = 0;
-
-		for (unsigned int n = 0; n < queuedForRender.size(); n++) {
-			if (!CheckResizeAtlas(n + 1)) { break; } maxNewIcons++;
-		}
-
-		// now create the new far-icons
-		// NOTE:
-		//    the icons are RTT'ed using a snapshot of the
-		//    current state (advModelShading, sunDir, etc)
-		//    and will not track later state-changes
-		unitDrawer->SetupForUnitDrawing();
-
-		GML_VECTOR<const CSolidObject*>::iterator it;
-
-		for (it = queuedForRender.begin(); it != queuedForRender.end() && maxNewIcons > 0; ++it) {
-			maxNewIcons--;
-
-			const CSolidObject* obj = *it;
-			const S3DModel* mdl = obj->model;
-
-			unitDrawer->GetOpaqueModelRenderer(mdl->type)->PushRenderState();
-			unitDrawer->SetTeamColour(obj->team);
-
-			if (mdl->type != MODELTYPE_3DO) {
-				texturehandlerS3O->SetS3oTexture(mdl->textureType);
-			}
-
-			if ((int)cache.size() <= obj->team || (int)cache[obj->team].size() <= mdl->id || !cache[obj->team][mdl->id]) {
-				CreateFarTexture(obj);
-			}
-
-			unitDrawer->GetOpaqueModelRenderer(mdl->type)->PopRenderState();
-		}
-
-		unitDrawer->CleanUpUnitDrawing();
-	}
-
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, farTextureID);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glNormal3fv((const GLfloat*) &unitDrawer->camNorm.x);
-
-	ISky::SetupFog();
-
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(queuedForRender.size() * 4, 0, VA_SIZE_T);
+	// create new far-icons
 	for (GML_VECTOR<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
-		DrawFarTexture(*it, va);
+		const CSolidObject* obj = *it;
+		if (!HaveFarIcon(obj)) {
+			CreateFarTexture(obj);
+		}
 	}
 
-	va->DrawArrayT(GL_QUADS);
-	glDisable(GL_ALPHA_TEST);
+	// render current queued far icons on the screen
+	{
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.5f);
+		glActiveTexture(GL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, farTextureID);
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		glNormal3fv((const GLfloat*) &unitDrawer->camNorm.x);
+
+		ISky::SetupFog();
+
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(queuedForRender.size() * 4, 0, VA_SIZE_T);
+		for (GML_VECTOR<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
+			DrawFarTexture(*it, va);
+		}
+
+		va->DrawArrayT(GL_QUADS);
+		glDisable(GL_ALPHA_TEST);
+	}
 
 	queuedForRender.clear();
 }
 
 
 
-bool CFarTextureHandler::CheckResizeAtlas(unsigned int newNumTextures) {
+bool CFarTextureHandler::CheckResizeAtlas()
+{
 	const unsigned int maxSprites = ((texSizeX / iconSizeX) * (texSizeY / iconSizeY) / numOrientations) - 1;
 
-	if ((usedFarTextures + newNumTextures) < maxSprites)
+	if (usedFarTextures + 1 <= maxSprites)
 		return true;
 
 	const int oldTexSizeY = texSizeY;
 
 	if (globalRendering->supportNPOTs) {
-		texSizeY += std::max(iconSizeY,  4 * numOrientations * iconSizeX * iconSizeY / texSizeX); // minimum additional space for 4 icons
+		texSizeY += std::max(iconSizeY,  4 * numOrientations * iconSizeX * iconSizeY / texSizeX); // make space for minimum 4 additional icons
 	} else {
 		texSizeY <<= 1;
 	}
@@ -330,7 +334,7 @@ bool CFarTextureHandler::CheckResizeAtlas(unsigned int newNumTextures) {
 
 	unsigned char* oldPixels = new unsigned char[texSizeX*texSizeY*4];
 	glBindTexture(GL_TEXTURE_2D, farTextureID);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, oldPixels);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, oldPixels); //TODO use the FBO?
 	memset(oldPixels + texSizeX*oldTexSizeY*4, 0, texSizeX*(texSizeY - oldTexSizeY)*4);
 
 	GLuint newFarTextureID;
