@@ -308,7 +308,8 @@ bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 
 void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& buildOption)
 {
-	const Command frontCommand = commandQue.front();
+	// copy in case we get pop'ed
+	const Command frontCommand = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
 	if (!repeatOrders || (buildCommand.options & DONT_REPEAT))
 		buildOption.numQued--;
