@@ -67,6 +67,10 @@ CR_REG_METADATA(CMoveInfo, (
 
 CMoveInfo* moveinfo;
 
+// FIXME: do something with these magic numbers
+static const float MAX_ALLOWED_WATER_DAMAGE_GMM = 1e3f;
+static const float MAX_ALLOWED_WATER_DAMAGE_HMM = 1e4f;
+
 static float DegreesToMaxSlope(float degrees)
 {
 	// Prevent MSVC from inlining stuff that would break the
@@ -120,15 +124,9 @@ CMoveInfo::CMoveInfo()
 		crc << md->GetCheckSum();
 	}
 
-
-	// FIXME: do something with these magic numbers
-	if (mapInfo->water.damage >= 1000.0f) {
-		CGroundMoveMath::waterDamageCost = 0.0f; // block water
-	} else {
-		CGroundMoveMath::waterDamageCost = 1.0f / (1.0f + mapInfo->water.damage * 0.1f);
-	}
-
-	CHoverMoveMath::noWaterMove = (mapInfo->water.damage >= 10000.0f);
+	CHoverMoveMath::noWaterMove = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_HMM);
+	CGroundMoveMath::waterDamageCost = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_GMM)?
+		0.0f: (1.0f / (1.0f + mapInfo->water.damage * 0.1f));
 
 	crc << CGroundMoveMath::waterDamageCost;
 	crc << CHoverMoveMath::noWaterMove;

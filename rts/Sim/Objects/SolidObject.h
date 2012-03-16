@@ -28,8 +28,9 @@ public:
 		DAMAGE_EXPLOSION_DEBRIS = 1, // piece-projectile that triggered GameHelper::Explosion (weaponDefID < 0)
 		DAMAGE_COLLISION_GROUND = 2, // ground collision
 		DAMAGE_COLLISION_OBJECT = 3, // object collision
-		DAMAGE_EXTSOURCE_INFIRE = 4,
-		DAMAGE_EXTSOURCE_KILLED = 5,
+		DAMAGE_EXTSOURCE_FIRE   = 4,
+		DAMAGE_EXTSOURCE_WATER  = 5, // lava/acid/etc
+		DAMAGE_EXTSOURCE_KILLED = 6,
 	};
 
 	CSolidObject();
