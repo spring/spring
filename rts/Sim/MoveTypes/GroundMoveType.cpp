@@ -1502,7 +1502,9 @@ void CGroundMoveType::HandleUnitCollisions(
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
 		const bool collideeYields = (collider->isMoving && !collidee->isMoving);
 		const bool ignoreCollidee = ((collideeYields && alliedCollision) || colliderUD->pushResistant);
-		const bool disablePushing = (colliderUD->pushResistant && collideeUD->pushResistant);
+		const bool disablePushing =
+			(colliderUD->pushResistant && !collider->beingBuilt) &&
+			(collideeUD->pushResistant && !collidee->beingBuilt);
 
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
