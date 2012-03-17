@@ -601,6 +601,7 @@ public:
 	 *
 	 * Check if this vector is in bounds [0 .. gs->mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
+	 * @see #IsInMap
 	 */
 	bool IsInBounds() const;
 
@@ -609,8 +610,18 @@ public:
 	 *
 	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
+	 * @deprecated  use ClampInMap instead, but see the note!
+	 * @see #ClampInMap
 	 */
 	void ClampInBounds();
+
+	/**
+	 * @brief Check against FaceHeightmap bounds
+	 *
+	 * Check if this vector is in map [0 .. gs->mapxy]
+	 * @note USE THIS!
+	 */
+	bool IsInMap() const;
 
 	/**
 	 * @brief Clamps to VertexHeightmap

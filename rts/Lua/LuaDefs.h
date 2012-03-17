@@ -73,6 +73,11 @@ template<> static DataType GetDataType(string) { return STRING_TYPE; }
 #define ADD_FUNCTION(lua, cpp, func) \
 	paramMap[lua] = DataElement(FUNCTION_TYPE, ADDRESS(cpp) - start, func)
 
+// keys added through this macro will generate
+// (non-fatal) ERROR_TYPE warnings if indexed
+#define ADD_DEPRECATED_LUADEF_KEY(lua) \
+	paramMap[lua] = DataElement();
+
 
 
 

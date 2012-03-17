@@ -233,10 +233,19 @@ void AAIConstructor::CheckAssistance()
 		{
 			bool assist = false;
 
+
 			if(buildque->size() > 2)
 				assist = true;
-			else if(construction_def_id && (bt->unitList[construction_def_id-1]->buildTime/(30.0f * bt->unitList[def_id-1]->buildSpeed) > cfg->MIN_ASSISTANCE_BUILDTIME))
-				assist = true;
+			else if(construction_def_id) {
+				float buildtime = 1e6;
+				if (construction_def_id && buildspeed > 0) {
+					//FIXME why use *1/30 here? below there is exactly the same code w/o it, so what's the correct one?
+					buildtime = bt->unitList[construction_def_id-1]->buildTime / (30.0f * buildspeed);
+				}
+
+				if (buildtime > cfg->MIN_ASSISTANCE_BUILDTIME)
+					assist = true;
+			}
 
 			if(assist)
 			{
@@ -272,9 +281,12 @@ void AAIConstructor::CheckAssistance()
 				return;
 		}
 
-		float buildtime = ai->bt->unitList[construction_def_id-1]->buildTime / ai->bt->unitList[def_id-1]->buildSpeed;
+		float buildtime = 1e6;
+		if (buildspeed > 0) {
+			buildtime = bt->unitList[construction_def_id-1]->buildTime / buildspeed;
+		}
 
-		if(buildtime > cfg->MIN_ASSISTANCE_BUILDTIME && assistants.size() < cfg->MAX_ASSISTANTS)
+		if((buildtime > cfg->MIN_ASSISTANCE_BUILDTIME) && (assistants.size() < cfg->MAX_ASSISTANTS))
 		{
 			// com only allowed if buildpos is inside the base
 			bool commander = false;

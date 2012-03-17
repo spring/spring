@@ -145,6 +145,7 @@ defaultBindings[] = {
 	{        "Alt+a", "areaattack"   },
 	{  "Alt+Shift+a", "areaattack"   },
 	{        "Alt+b", "debug"        },
+	{        "Alt+v", "debugcolvol"  },
 	{            "d", "manualfire"   },
 	{      "Shift+d", "manualfire"   },
 	{       "Ctrl+d", "selfd"        },

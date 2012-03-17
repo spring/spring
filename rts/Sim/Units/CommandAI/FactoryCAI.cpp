@@ -308,7 +308,9 @@ bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 
 void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& buildOption)
 {
-	const Command frontCommand = commandQue.front();
+	// copy in case we get pop'ed
+	// NOTE: the queue should not be empty at this point!
+	const Command frontCommand = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
 	if (!repeatOrders || (buildCommand.options & DONT_REPEAT))
 		buildOption.numQued--;
@@ -321,7 +323,11 @@ void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& b
 	if (frontCommand.GetID() == CMD_WAIT)
 		commandQue.pop_front();
 
-	FinishCommand();
+	// can only finish the real build-command command if
+	// we still have it in our queue (FinishCommand also
+	// asserts this)
+	if (!commandQue.empty())
+		FinishCommand();
 
 	if (frontCommand.GetID() == CMD_WAIT)
 		commandQue.push_front(frontCommand);

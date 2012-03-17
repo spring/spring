@@ -110,10 +110,21 @@ QTPFS::PathManager::PathManager() {
 }
 
 QTPFS::PathManager::~PathManager() {
+	std::list<IPathSearch*>::const_iterator searchesIt;
+	std::map<unsigned int, PathSearchTrace::Execution*>::const_iterator tracesIt;
+
 	for (unsigned int i = 0; i < nodeLayers.size(); i++) {
 		nodeTrees[i]->Delete();
 		nodeLayers[i].Clear();
-		pathSearches[i].clear(); // TODO: delete values in pathSearches[i]
+
+		for (searchesIt = pathSearches[i].begin(); searchesIt != pathSearches[i].end(); ++searchesIt) {
+			delete (*searchesIt);
+		}
+
+		pathSearches[i].clear();
+	}
+	for (tracesIt = pathTraces.begin(); tracesIt != pathTraces.end(); ++tracesIt) {
+		delete (tracesIt->second);
 	}
 
 	nodeTrees.clear();
@@ -121,7 +132,7 @@ QTPFS::PathManager::~PathManager() {
 	pathCaches.clear();
 	pathSearches.clear();
 	pathTypes.clear();
-	pathTraces.clear(); // TODO: delete values
+	pathTraces.clear();
 
 	numCurrExecutedSearches.clear();
 	numPrevExecutedSearches.clear();
@@ -376,8 +387,8 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 
 
 std::string QTPFS::PathManager::GetCacheDirName(boost::uint32_t mapCheckSum, boost::uint32_t modCheckSum) const {
-	static const std::string dir =
-		"cache/PathNodeTrees/" +
+	static const std::string ver = IntToString(QTPFS_CACHE_VERSION, "%04x");
+	static const std::string dir = QTPFS_CACHE_BASEDIR + ver + "/" +
 		IntToString(mapCheckSum, "%08x") + "-" +
 		IntToString(modCheckSum, "%08x") + "/";
 
@@ -403,9 +414,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 	char loadMsg[512] = {'\0'};
 	const char* fmtString = "[PathManager::%s] serializing node-tree %u (%s)";
 
-	// TODO:
-	//     calculate checksum over each tree
-	//     also compress the tree cache-files?
+	// TODO: compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveinfo->moveData[i]->name;
 		fileStreams[i] = new std::fstream();

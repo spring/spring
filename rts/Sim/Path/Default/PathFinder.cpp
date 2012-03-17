@@ -43,14 +43,40 @@ CPathFinder::CPathFinder()
 	static const int   dirScale = 2;
 	static const float dirCost  = math::sqrt(2.0f);
 
-	directionVectors[PATHOPT_LEFT                ] = int2(+1 * dirScale,  0           );
-	directionVectors[PATHOPT_RIGHT               ] = int2(-1 * dirScale,  0           );
-	directionVectors[PATHOPT_UP                  ] = int2( 0,            +1 * dirScale);
-	directionVectors[PATHOPT_DOWN                ] = int2( 0,            -1 * dirScale);
-	directionVectors[PATHOPT_LEFT  | PATHOPT_UP  ] = int2(directionVectors[PATHOPT_LEFT ].x, directionVectors[PATHOPT_UP   ].y);
-	directionVectors[PATHOPT_RIGHT | PATHOPT_UP  ] = int2(directionVectors[PATHOPT_RIGHT].x, directionVectors[PATHOPT_UP   ].y);
-	directionVectors[PATHOPT_RIGHT | PATHOPT_DOWN] = int2(directionVectors[PATHOPT_RIGHT].x, directionVectors[PATHOPT_DOWN ].y);
-	directionVectors[PATHOPT_LEFT  | PATHOPT_DOWN] = int2(directionVectors[PATHOPT_LEFT ].x, directionVectors[PATHOPT_DOWN ].y);
+	directionVectors2D[PATHOPT_LEFT                ] = int2(+1 * dirScale,  0           );
+	directionVectors2D[PATHOPT_RIGHT               ] = int2(-1 * dirScale,  0           );
+	directionVectors2D[PATHOPT_UP                  ] = int2( 0,            +1 * dirScale);
+	directionVectors2D[PATHOPT_DOWN                ] = int2( 0,            -1 * dirScale);
+	directionVectors2D[PATHOPT_LEFT  | PATHOPT_UP  ] = int2(directionVectors2D[PATHOPT_LEFT ].x, directionVectors2D[PATHOPT_UP   ].y);
+	directionVectors2D[PATHOPT_RIGHT | PATHOPT_UP  ] = int2(directionVectors2D[PATHOPT_RIGHT].x, directionVectors2D[PATHOPT_UP   ].y);
+	directionVectors2D[PATHOPT_RIGHT | PATHOPT_DOWN] = int2(directionVectors2D[PATHOPT_RIGHT].x, directionVectors2D[PATHOPT_DOWN ].y);
+	directionVectors2D[PATHOPT_LEFT  | PATHOPT_DOWN] = int2(directionVectors2D[PATHOPT_LEFT ].x, directionVectors2D[PATHOPT_DOWN ].y);
+
+	directionVectors3D[PATHOPT_RIGHT               ].x = directionVectors2D[PATHOPT_RIGHT               ].x;
+	directionVectors3D[PATHOPT_RIGHT               ].z = directionVectors2D[PATHOPT_RIGHT               ].y;
+	directionVectors3D[PATHOPT_LEFT                ].x = directionVectors2D[PATHOPT_LEFT                ].x;
+	directionVectors3D[PATHOPT_LEFT                ].z = directionVectors2D[PATHOPT_LEFT                ].y;
+	directionVectors3D[PATHOPT_UP                  ].x = directionVectors2D[PATHOPT_UP                  ].x;
+	directionVectors3D[PATHOPT_UP                  ].z = directionVectors2D[PATHOPT_UP                  ].y;
+	directionVectors3D[PATHOPT_DOWN                ].x = directionVectors2D[PATHOPT_DOWN                ].x;
+	directionVectors3D[PATHOPT_DOWN                ].z = directionVectors2D[PATHOPT_DOWN                ].y;
+	directionVectors3D[PATHOPT_RIGHT | PATHOPT_UP  ].x = directionVectors2D[PATHOPT_RIGHT | PATHOPT_UP  ].x;
+	directionVectors3D[PATHOPT_RIGHT | PATHOPT_UP  ].z = directionVectors2D[PATHOPT_RIGHT | PATHOPT_UP  ].y;
+	directionVectors3D[PATHOPT_LEFT  | PATHOPT_UP  ].x = directionVectors2D[PATHOPT_LEFT  | PATHOPT_UP  ].x;
+	directionVectors3D[PATHOPT_LEFT  | PATHOPT_UP  ].z = directionVectors2D[PATHOPT_LEFT  | PATHOPT_UP  ].y;
+	directionVectors3D[PATHOPT_RIGHT | PATHOPT_DOWN].x = directionVectors2D[PATHOPT_RIGHT | PATHOPT_DOWN].x;
+	directionVectors3D[PATHOPT_RIGHT | PATHOPT_DOWN].z = directionVectors2D[PATHOPT_RIGHT | PATHOPT_DOWN].y;
+	directionVectors3D[PATHOPT_LEFT  | PATHOPT_DOWN].x = directionVectors2D[PATHOPT_LEFT  | PATHOPT_DOWN].x;
+	directionVectors3D[PATHOPT_LEFT  | PATHOPT_DOWN].z = directionVectors2D[PATHOPT_LEFT  | PATHOPT_DOWN].y;
+
+	directionVectors3D[PATHOPT_RIGHT               ].ANormalize();
+	directionVectors3D[PATHOPT_LEFT                ].ANormalize();
+	directionVectors3D[PATHOPT_UP                  ].ANormalize();
+	directionVectors3D[PATHOPT_DOWN                ].ANormalize();
+	directionVectors3D[PATHOPT_RIGHT | PATHOPT_UP  ].ANormalize();
+	directionVectors3D[PATHOPT_LEFT  | PATHOPT_UP  ].ANormalize();
+	directionVectors3D[PATHOPT_RIGHT | PATHOPT_DOWN].ANormalize();
+	directionVectors3D[PATHOPT_LEFT  | PATHOPT_DOWN].ANormalize();
 
 	directionCosts[PATHOPT_LEFT                ] =    1.0f * dirScale;
 	directionCosts[PATHOPT_RIGHT               ] =    1.0f * dirScale;
@@ -250,10 +276,13 @@ bool CPathFinder::TestSquare(
 ) {
 	testedNodes++;
 
+	const int2& dirVec2D = directionVectors2D[pathOpt];
+	const float3& dirVec3D = directionVectors3D[pathOpt];
+
 	// Calculate the new square.
 	int2 square;
-		square.x = parentOpenSquare->nodePos.x + directionVectors[pathOpt].x;
-		square.y = parentOpenSquare->nodePos.y + directionVectors[pathOpt].y;
+		square.x = parentOpenSquare->nodePos.x + dirVec2D.x;
+		square.y = parentOpenSquare->nodePos.y + dirVec2D.y;
 
 	// Inside map?
 	if (square.x < 0 || square.y < 0 || square.x >= gs->mapx || square.y >= gs->mapy) {
@@ -282,7 +311,7 @@ bool CPathFinder::TestSquare(
 	}
 
 	// Evaluate this square.
-	float squareSpeedMod = moveData.moveMath->GetPosSpeedMod(moveData, square.x, square.y);
+	float squareSpeedMod = moveData.moveMath->GetPosSpeedMod(moveData, square.x, square.y, dirVec3D);
 
 	if (squareSpeedMod == 0.0f) {
 		squareStates.nodeMask[sqrIdx] |= PATHOPT_FORBIDDEN;
@@ -390,8 +419,13 @@ void CPathFinder::FinishSearch(const MoveData& moveData, IPath::Path& foundPath)
 				oldSquare.x = square.x;
 				oldSquare.y = square.y;
 
+<<<<<<< HEAD
 			square.x -= directionVectors[squareStates.nodeMask[sqrIdx] & PATHOPT_AXIS_DIRS].x;
 			square.y -= directionVectors[squareStates.nodeMask[sqrIdx] & PATHOPT_AXIS_DIRS].y;
+=======
+			square.x -= dirVectors2D[squareStates.nodeMask[sqrIdx] & PATHOPT_DIRECTION].x;
+			square.y -= dirVectors2D[squareStates.nodeMask[sqrIdx] & PATHOPT_DIRECTION].y;
+>>>>>>> develop
 		}
 
 		if (!foundPath.path.empty()) {

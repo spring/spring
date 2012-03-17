@@ -260,6 +260,8 @@ unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buil
 	finishedBuildCommand = buildCmd;
 	curBuildDef = buildeeDef;
 	nextBuildUnitDefID = buildeeDef->id;
+
+	// signal that the build-order was accepted (queued)
 	return FACTORY_NEXT_BUILD_ORDER;
 }
 
