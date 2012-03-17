@@ -110,6 +110,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	lua_rawset(L, -3)
 
 	REGISTER_LUA_CFUNC(Echo);
+	REGISTER_LUA_CFUNC(Log);
 
 	REGISTER_LUA_CFUNC(SendMessage);
 	REGISTER_LUA_CFUNC(SendMessageToPlayer);
@@ -232,7 +233,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SendSkirmishAIMessage);
 
 	REGISTER_LUA_CFUNC(ClearWatchDogTimer);
-	REGISTER_LUA_CFUNC(Log);
 
 	return true;
 }
@@ -422,6 +422,11 @@ void LuaUnsyncedCtrl::ClearUnitCommandQueues()
 int LuaUnsyncedCtrl::Echo(lua_State* L)
 {
 	return LuaUtils::Echo(L);
+}
+
+int LuaUnsyncedCtrl::Log(lua_State* L)
+{
+	return LuaUtils::Log(L);
 }
 
 static string ParseMessage(lua_State* L, const string& msg)
@@ -2936,37 +2941,3 @@ int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 
 	return 0;
 }
-
-
-/*-
-	Logs a msg to the logfile / console
-	@param msg string to be logged
-	@param loglevel loglevel that will be used for the message, defaults to LOG_LEVEL_WARNING
-	@fn Spring.Log(string msg)
-	@fn Spring.Log(string msg, int loglevel)
-*/
-int LuaUnsyncedCtrl::Log(lua_State* L) {
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 1)
-		return 0;
-	const char* s = lua_tostring(L, 1);  // get result
-	if (s == NULL) {
-		return luaL_error(L, "param1 has to be a string");
-	}
-	int loglevel; //TODO: add lua-constants for that (see System/Log/Level.h)
-	if (args > 1) {
-		if (!lua_isnumber(L, 2)) {
-			return luaL_error(L, "loglevel has to be a number");
-		}
-		loglevel = lua_tonumber(L, 2);
-	} else {
-		loglevel = LOG_LEVEL_WARNING;
-	}
-	if (loglevel > LOG_LEVEL_WARNING) {
-		LOG_L(L_ERROR, "%s", s);
-	} else {
-		LOG_L(L_WARNING, "%s", s);
-	}
-	return 0;
-}
-

@@ -385,6 +385,40 @@ extern void log_frontend_cleanup();
 #define LOG_SL(section, level, fmt, ...) \
 	_LOG_SECTION(section, level, fmt, ##__VA_ARGS__)
 
+/**
+ * Registers a log message with a specifiable integer level.
+ * Usage example:
+ * <code>
+ * LOG_I(LOG_LEVEL_DEBUG, "my age is %i", 21);
+ * LOG_I(20, "my age is %i", 21);
+ * </code>
+ * @see LOG()
+ * @see LOG_L()
+ */
+#define LOG_I(level, fmt, ...) \
+{ \
+	if (level >= _LOG_LEVEL_MIN) { \
+		log_frontend_record(LOG_SECTION_CURRENT, level, fmt, ##__VA_ARGS__); \
+	} \
+}
+
+/**
+ * Registers a log message with a specifiable section and integer level.
+ * Usage example:
+ * <code>
+ * LOG_SI("one-time-section", 20, "my age is %i", 21);
+ * </code>
+ * @see LOG_I()
+ * @see LOG_L()
+ * @see LOG_S()
+ * @see LOG_SECTION
+ */
+#define LOG_SI(section, level, fmt, ...) \
+{ \
+	if (level >= _LOG_LEVEL_MIN) { \
+		log_frontend_record(section, level, fmt, ##__VA_ARGS__); \
+	} \
+}
 
 /**
  * Informs all registered sinks to cleanup their state,
