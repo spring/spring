@@ -121,7 +121,8 @@ void LuaParser::SetupEnv()
 	AddFunc("DontMessWithMyCase", DontMessWithMyCase);
 
 	GetTable("Spring");
-	AddFunc("Echo", Echo);
+	AddFunc("Echo", LuaUtils::Echo);
+	AddFunc("Log", LuaUtils::Log);
 	AddFunc("TimeCheck", TimeCheck);
 	EndTable();
 
@@ -416,12 +417,6 @@ void LuaParser::AddString(int key, const string& value)
 //
 //  call-outs
 //
-
-int LuaParser::Echo(lua_State* L)
-{
-	return LuaUtils::Echo(L);
-}
-
 
 int LuaParser::TimeCheck(lua_State* L)
 {
