@@ -156,7 +156,8 @@ private:
 	int heatMapOffset;                 ///< heatmap values are relative to this
 	bool heatMapping;
 
-	int2 directionVector[16];          ///< Unit square-movement in given direction.
+	int2 dirVectors2D[16];             ///< Unit square-movement in given direction.
+	float3 dirVectors3D[16];
 	float moveCost[16];                ///< The cost of moving in given direction.
 
 	float3 start;
