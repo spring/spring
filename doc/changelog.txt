@@ -2,6 +2,45 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 
 
+-- 88.0 ---------------------------------------------------------
+Changes:
+ ! showing collision volumes has now its own command (`/debugcolvol` & `alt+v`)
+ ! use footprint (not model) radii for obstacle avoidance
+ - improve reconnecting sim/draw balance
+ - disable line/point smoothing in safemode
+ - time profiler updates now even when paused
+ ! MoveInfo read "avoidMobilesOnPath" from correct table and disable it by default (before it was default enabled)
+
+Unitsync:
+ ! allow to list files with unsolveable depends
+ - warn about usage of deprecated functions in unitsync
+
+Lua:
+ - added new Spring.TestMoveOrder(unitDefID, worldx, worldy, worldz) -> boolean
+ - added new Spring.Log()
+  - same as Spring.Echo, but passes a LOG_LEVEL to the logsystem (LOG.DEBUG is by default hidden for release builds)
+  - Spring.Log(int loglevel, ...)     (with loglevel either: LOG.DEBUG, LOG.INFO, LOG.WARNING, LOG.ERROR, LOG.FATAL)
+  - Spring.Log(string loglevel, ...)  (with either: "debug", "info", "warning", "error", "fatal" [lower-/uppercase doesn't matter])
+ - fixed WeaponDefs[123].pairs()
+ - added myGravity tag to WeaponDefs[] table (thx DeadnightWarrior)
+ ! distinguish water-damage in Unit{Pre}Damaged
+  - water damage has index -5
+  ! kill damage was -5 before and is now -6
+
+Bugfixes:
+ - fixed multiple crashes
+ - fixed SPRING_ISOLATED=1
+ - fixed gcc i686 march flag
+ - fixed an aircraft refueling bug
+ - fixed multiple pathing bugs/issues
+ - fixed crash at startup when DynamicSun=1
+ - fixed 'Nanoframe targeting and water' (3017)
+ - fixed desync _warning_ between 32- & 64-bit systems
+ - fixed FarTextures with GPU/drivers that don't support FBOs
+ - fixed spring-mt & spring-safemode links in window's startmenu
+ - fixed incorrect drawMidPos (e.g. used for command line drawing)
+
+
 -- 87.0 ---------------------------------------------------------
 Bugfixes:
  ! restore pre86.0 maxAngleDif arcs
