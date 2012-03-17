@@ -17,6 +17,9 @@
 // #define QTPFS_OPENMP_ENABLED
 // #define QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
 
+#define QTPFS_CACHE_VERSION 1
+#define QTPFS_CACHE_BASEDIR "cache/PathNodeTrees/"
+
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
 #define WS(p) ((p) * SQUARE_SIZE)
 

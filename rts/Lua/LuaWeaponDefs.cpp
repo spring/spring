@@ -23,6 +23,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "Sim/Misc/GlobalSynced.h"
 
@@ -154,10 +155,13 @@ static int WeaponDefIndex(lua_State* L)
 		case FUNCTION_TYPE: {
 			return elem.func(L, p);
 		}
-		case ERROR_TYPE:{
-			luaL_error(L, "ERROR_TYPE in WeaponDefs __index");
+		case ERROR_TYPE: {
+			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __index", __FUNCTION__, name);
+			lua_pushnil(L);
+			return 1;
 		}
 	}
+
 	return 0;
 }
 
@@ -214,8 +218,10 @@ static int WeaponDefNewIndex(lua_State* L)
 			*((string*)p) = lua_tostring(L, -1);
 			return 0;
 		}
-		case ERROR_TYPE:{
-			luaL_error(L, "ERROR_TYPE in WeaponDefs __newindex");
+		case ERROR_TYPE: {
+			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in WeaponDefs __newindex", __FUNCTION__, name);
+			lua_pushnil(L);
+			return 1;
 		}
 	}
 
@@ -415,13 +421,6 @@ static int GuiSoundSetTable(lua_State* L, const void* data)
 }
 
 
-static int DeprecatedMaxVelocity(lua_State* L, const void* data)
-{
-	const float projspeed = *((const float*) data);
-	lua_pushnumber(L, projspeed * GAME_SPEED);
-	return 1;
-}
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -447,9 +446,9 @@ static bool InitParamMap()
 	ADD_FUNCTION("noNeutralCollide",     wd.collisionFlags, NoNeutralCollide);
 	ADD_FUNCTION("noGroundCollide",      wd.collisionFlags, NoGroundCollide);
 
-	paramMap["onlyTargetCategories"] = DataElement(); // NOTE: deprecated, will generate ERROR_TYPE if indexed
-	paramMap["maxVelocity"] = DataElement(); // NOTE: deprecated, will generate ERROR_TYPE if indexed
-	paramMap["areaOfEffect"] = DataElement(); // NOTE: deprecated, will generate ERROR_TYPE if indexed
+	ADD_DEPRECATED_LUADEF_KEY("areaOfEffect");
+	ADD_DEPRECATED_LUADEF_KEY("maxVelocity");
+	ADD_DEPRECATED_LUADEF_KEY("onlyTargetCategories");
 
 	ADD_INT("id", wd.id);
 
@@ -527,6 +526,7 @@ static bool InitParamMap()
 
 	ADD_BOOL("selfExplode", wd.selfExplode);
 	ADD_BOOL("gravityAffected", wd.gravityAffected);
+	ADD_FLOAT("myGravity", wd.myGravity);
 	ADD_BOOL("noExplode", wd.noExplode);
 	ADD_FLOAT("startvelocity", wd.startvelocity);
 	ADD_FLOAT("weaponAcceleration", wd.weaponacceleration);

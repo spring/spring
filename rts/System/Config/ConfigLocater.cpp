@@ -14,6 +14,7 @@
 #include "ConfigLocater.h"
 #include "Game/GameVersion.h"
 #include "System/FileSystem/DataDirLocater.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Misc.h"
 
 
@@ -30,11 +31,11 @@ static void GetPortableLocations(vector<string>& locations)
 
 	if (dataDirLocater.IsIsolationMode()) {
 		// Search in IsolatedModeDir
-		const std::string confPath = dataDirLocater.GetIsolationModeDir() + "/" + cfgName;
+		const std::string confPath = FileSystem::EnsurePathSepAtEnd(dataDirLocater.GetIsolationModeDir()) + cfgName;
 		locations.push_back(confPath);
 	} else {
 		// Search in binary dir
-		const std::string confPath = Platform::GetProcessExecutablePath() + "/" + cfgName;
+		const std::string confPath = FileSystem::EnsurePathSepAtEnd(Platform::GetProcessExecutablePath()) + cfgName;
 
 		// lets see if the file exists & is writable
 		// (otherwise it can fail/segfault/end up in virtualstore...)
@@ -50,16 +51,16 @@ static void GetPlatformLocations(vector<string>& locations)
 {
 #ifndef _WIN32
 	const string base = ".springrc";
-	const string home = Platform::GetUserDir();
+	const string home = FileSystem::EnsurePathSepAtEnd(Platform::GetUserDir());
 
-	const string defCfg = home + "/" + base;
+	const string defCfg = home + base;
 	const string verCfg = defCfg + "-" + SpringVersion::Get();
 #else
 	// e.g. "C:\Users\USER\AppData\Local"
-	const string userDir = Platform::GetUserDir();
+	const string userDir = FileSystem::EnsurePathSepAtEnd(Platform::GetUserDir());
 
-	const string defCfg = userDir + "\\springsettings.cfg";
-	const string verCfg = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
+	const string defCfg = userDir + "springsettings.cfg";
+	const string verCfg = userDir + "springsettings-" + SpringVersion::Get() + ".cfg";
 #endif
 
 	if (access(verCfg.c_str(), 6) != -1) { // check for read & write access

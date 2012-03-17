@@ -397,8 +397,8 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		float3 p2;
 
 		const unsigned int dir = pf->squareStates.nodeMask[square] & PATHOPT_AXIS_DIRS;
-		const unsigned int obx = sqr.x - pf->directionVectors[dir].x;
-		const unsigned int obz = sqr.y - pf->directionVectors[dir].y;
+		const unsigned int obx = sqr.x - pf->directionVectors2D[dir].x;
+		const unsigned int obz = sqr.y - pf->directionVectors2D[dir].y;
 		const unsigned int obsquare =  obz * gs->mapx + obx;
 
 		if (obsquare >= 0) {

@@ -179,7 +179,6 @@ class LuaParser {
 		static int DontMessWithMyCase(lua_State* L);
 
 		// Spring call-outs
-		static int Echo(lua_State* L);
 		static int TimeCheck(lua_State* L);
 
 		// VFS call-outs

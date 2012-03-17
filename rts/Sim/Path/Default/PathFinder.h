@@ -106,7 +106,8 @@ private:
 	);
 
 
-	int2 directionVectors[PATH_DIRECTIONS << 1];
+	int2 directionVectors2D[PATH_DIRECTIONS << 1];
+	float3 directionsVectors3D[PATH_DIRECTIONS << 1];
 	float directionCosts[PATH_DIRECTIONS << 1];
 
 	float3 start;

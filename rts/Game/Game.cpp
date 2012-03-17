@@ -139,6 +139,7 @@
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/GlobalConfig.h"
+#include "System/myMath.h"
 #include "System/NetProtocol.h"
 #include "System/SpringApp.h"
 #include "System/Util.h"
@@ -228,7 +229,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(playing),
 //	CR_MEMBER(lastFrameTime),
 //	CR_MEMBER(leastQue),
-//	CR_MEMBER(timeLeft),
+//	CR_MEMBER(msgProcTimeLeft),
 //	CR_MEMBER(consumeSpeed),
 //	CR_MEMBER(lastframe),
 //	CR_MEMBER(leastQue),
@@ -259,7 +260,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, playing(false)
 	, chatting(false)
 	, leastQue(0)
-	, timeLeft(0.0f)
+	, msgProcTimeLeft(0.0f)
 	, consumeSpeed(1.0f)
 	, lastframe(spring_gettime())
 	, skipStartFrame(0)
@@ -861,7 +862,7 @@ bool CGame::Update()
 		if (!gameServer) {
 			consumeSpeed = GAME_SPEED * gs->speedFactor + leastQue - 2;
 			leastQue = 10000;
-			timeLeft = 0.0f;
+			msgProcTimeLeft = 0.0f;
 		}
 	}
 
@@ -916,6 +917,18 @@ bool CGame::UpdateUnsynced()
 		totalGameTime += dif;
 	}
 	updateDeltaSeconds = dif;
+
+	// Update simFPS
+	{
+		static int lsf = gs->frameNum;
+		static spring_time lsft = currentTime;
+		const float diffsecs_ = spring_diffsecs(currentTime, lsft);
+		if (diffsecs_ >= 1.0f) {
+			gu->simFPS = (gs->frameNum - lsf) / diffsecs_;
+			lsft = currentTime;
+			lsf = gs->frameNum;
+		}
+	}
 
 	// FastForwarding
 	if (skipping) {
@@ -1020,6 +1033,8 @@ bool CGame::UpdateUnsynced()
 
 			// TODO call only when camera changed
 			sound->UpdateListener(camera->pos, camera->forward, camera->up, deltaSec);
+
+			profiler.Update();
 		}
 	}
 
@@ -1281,6 +1296,8 @@ bool CGame::Draw() {
 
 	CTeamHighlight::Disable();
 
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(spring_gettime() - currentTime)), 0.1f);
+
 	return true;
 }
 
@@ -1455,7 +1472,6 @@ void CGame::SimFrame() {
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
 		}
-		profiler.Update();
 
 		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(camMove);
 
@@ -1485,6 +1501,8 @@ void CGame::SimFrame() {
 	lastSimFrameTime = spring_gettime();
 
 	DumpState(-1, -1, 1);
+
+	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(spring_gettime() - lastFrameTime)), 0.1f);
 
 	LEAVE_SYNCED_CODE();
 }

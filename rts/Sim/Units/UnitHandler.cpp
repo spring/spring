@@ -205,17 +205,17 @@ void CUnitHandler::Update()
 		if (!unitsToBeRemoved.empty()) {
 			GML_RECMUTEX_LOCK(obj); // Update
 
-			eventHandler.DeleteSyncedObjects();
-
-			GML_RECMUTEX_LOCK(unit); // Update
-
-			eventHandler.DeleteSyncedUnits();
-
-			GML_RECMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
-			GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
-			GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
-
 			while (!unitsToBeRemoved.empty()) {
+				eventHandler.DeleteSyncedObjects(); // the unit destructor may invoke eventHandler, so we need to call these for every unit to clear invaild references from the batching systems
+
+				GML_RECMUTEX_LOCK(unit); // Update
+
+				eventHandler.DeleteSyncedUnits();
+
+				GML_RECMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
+				GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
+				GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
+
 				CUnit* delUnit = unitsToBeRemoved.back();
 				unitsToBeRemoved.pop_back();
 
@@ -389,7 +389,7 @@ float CUnitHandler::GetBuildHeight(const float3& pos, const UnitDef* unitdef, bo
 }
 
 
-int CUnitHandler::TestUnitBuildSquare(
+BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 	const BuildInfo& buildInfo,
 	CFeature*& feature,
 	int allyteam,
@@ -411,10 +411,10 @@ int CUnitHandler::TestUnitBuildSquare(
 	const int x2 = x1 + xsize * SQUARE_SIZE;
 	const float bh = GetBuildHeight(pos, buildInfo.def, synced);
 
-	int canBuild = 2;
+	BuildSquareStatus canBuild = BUILDSQUARE_OPEN;
 
 	if (buildInfo.def->needGeo) {
-		canBuild = 0;
+		canBuild = BUILDSQUARE_BLOCKED;
 		const std::vector<CFeature*>& features = qf->GetFeaturesExact(pos, std::max(xsize, zsize) * 6);
 
 		// look for a nearby geothermal feature if we need one
@@ -422,56 +422,56 @@ int CUnitHandler::TestUnitBuildSquare(
 			if ((*fi)->def->geoThermal
 				&& fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
 				&& fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)) {
-				canBuild = 2;
+				canBuild = BUILDSQUARE_OPEN;
 				break;
 			}
 		}
 	}
 
 	if (commands != NULL) {
-		//! this is only called in unsynced context (ShowUnitBuildSquare)
+		// this is only called in unsynced context (ShowUnitBuildSquare)
 		assert(!synced);
 
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
 			for (int z = z1; z < z2; z += SQUARE_SIZE) {
-				int tbs = TestBuildSquare(float3(x, pos.y, z), buildInfo.def, feature, gu->myAllyTeam, synced);
+				BuildSquareStatus tbs = TestBuildSquare(float3(x, pos.y, z), buildInfo.def, feature, gu->myAllyTeam, synced);
 
-				if (tbs) {
-					std::vector<Command>::const_iterator ci = commands->begin();
-
-					for (; ci != commands->end() && tbs; ++ci) {
+				if (tbs != BUILDSQUARE_BLOCKED) {
+					//??? what does this do?
+					for (std::vector<Command>::const_iterator ci = commands->begin(); ci != commands->end(); ++ci) {
 						BuildInfo bc(*ci);
-
 						if (std::max(bc.pos.x - x - SQUARE_SIZE, x - bc.pos.x) * 2 < bc.GetXSize() * SQUARE_SIZE &&
 							std::max(bc.pos.z - z - SQUARE_SIZE, z - bc.pos.z) * 2 < bc.GetZSize() * SQUARE_SIZE) {
-							tbs = 0;
+							tbs = BUILDSQUARE_BLOCKED;
+							break;
 						}
 					}
-
-					if (!tbs) {
-						nobuildpos->push_back(float3(x, bh, z));
-						canBuild = 0;
-					} else if (feature || tbs == 1) {
-						featurepos->push_back(float3(x, bh, z));
-					} else {
-						canbuildpos->push_back(float3(x, bh, z));
-					}
-
-					canBuild = std::min(canBuild, tbs);
-				} else {
-					nobuildpos->push_back(float3(x, bh, z));
-					canBuild = 0;
 				}
+
+				switch (tbs) {
+					case BUILDSQUARE_OPEN:
+						canbuildpos->push_back(float3(x, bh, z));
+						break;
+					case BUILDSQUARE_RECLAIMABLE:
+					case BUILDSQUARE_OCCUPIED:
+						featurepos->push_back(float3(x, bh, z));
+						break;
+					case BUILDSQUARE_BLOCKED:
+						nobuildpos->push_back(float3(x, bh, z));
+						break;
+				}
+
+				canBuild = std::min(canBuild, tbs);
 			}
 		}
 	} else {
-		//! this can be called in either context
+		// this can be called in either context
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
 			for (int z = z1; z < z2; z += SQUARE_SIZE) {
 				canBuild = std::min(canBuild, TestBuildSquare(float3(x, bh, z), buildInfo.def, feature, allyteam, synced));
 
-				if (canBuild == 0) {
-					return 0;
+				if (canBuild == BUILDSQUARE_BLOCKED) {
+					return BUILDSQUARE_BLOCKED;
 				}
 			}
 		}
@@ -481,15 +481,16 @@ int CUnitHandler::TestUnitBuildSquare(
 }
 
 
-int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFeature*& feature, int allyteam, bool synced)
+
+BuildSquareStatus CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFeature*& feature, int allyteam, bool synced)
 {
-	if (pos.x < 0 || pos.x >= gs->mapx * SQUARE_SIZE || pos.z < 0 || pos.z >= gs->mapy * SQUARE_SIZE) {
-		return 0;
+	if (!pos.IsInMap()) {
+		return BUILDSQUARE_BLOCKED;
 	}
 
-	int ret = 2;
-	int yardxpos = int(pos.x + 4) / SQUARE_SIZE;
-	int yardypos = int(pos.z + 4) / SQUARE_SIZE;
+	BuildSquareStatus ret = BUILDSQUARE_OPEN;
+	const int yardxpos = int(pos.x + 4) / SQUARE_SIZE;
+	const int yardypos = int(pos.z + 4) / SQUARE_SIZE;
 	CSolidObject* s;
 
 	if ((s = groundBlockingObjectMap->GroundBlocked(yardypos * gs->mapx + yardxpos))) {
@@ -497,16 +498,17 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		if ((f = dynamic_cast<CFeature*>(s))) {
 			if ((allyteam < 0) || f->IsInLosForAllyTeam(allyteam)) {
 				if (!f->def->reclaimable) {
-					return 0;
+					return BUILDSQUARE_BLOCKED;
 				}
+				ret = BUILDSQUARE_RECLAIMABLE;
 				feature = f;
 			}
 		} else if (!dynamic_cast<CUnit*>(s) || (allyteam < 0) ||
 			(((CUnit*) s)->losStatus[allyteam] & LOS_INLOS)) {
 			if (s->immobile) {
-				return 0;
+				return BUILDSQUARE_BLOCKED;
 			} else {
-				ret = 1;
+				ret = BUILDSQUARE_OCCUPIED;
 			}
 		}
 	}
@@ -532,12 +534,12 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		const float curH = curHeightMap[sqz * gs->mapxp1 + sqx];
 		const float difH = unitdef->maxHeightDif;
 
-		if (pos.y > std::max(orgH + difH, curH + difH)) { return 0; }
-		if (pos.y < std::min(orgH - difH, curH - difH)) { return 0; }
+		if (pos.y > std::max(orgH + difH, curH + difH)) { return BUILDSQUARE_BLOCKED; }
+		if (pos.y < std::min(orgH - difH, curH - difH)) { return BUILDSQUARE_BLOCKED; }
 	}
 
 	if (!unitdef->IsAllowedTerrainHeight(groundHeight))
-		ret = 0;
+		ret = BUILDSQUARE_BLOCKED;
 
 	return ret;
 }

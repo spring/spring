@@ -124,7 +124,6 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 	float minDist = std::numeric_limits<float>::max();
 
 	AirBaseLstIt foundBaseIt = bases[unit->allyteam].end();
-	PadLstIt foundPadIt;
 
 	for (AirBaseLstIt bi = bases[unit->allyteam].begin(); bi != bases[unit->allyteam].end(); ++bi) {
 		AirBase* base = *bi;
@@ -147,20 +146,20 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 		}
 
 		minDist = baseUnit->pos.SqDistance(unit->pos);
-
 		foundBaseIt = bi;
-		foundPadIt = base->freePads.begin();
 	}
 
 	if (foundBaseIt != bases[unit->allyteam].end()) {
 		AirBase* foundBase = *foundBaseIt;
-		LandingPad* foundPad = *foundPadIt;
 
 		if (wantFreePad) {
-			foundBase->freePads.erase(foundPadIt);
+			LandingPad* foundPad = foundBase->freePads.front();
+			foundBase->freePads.pop_front();
+			return foundPad;
+		} else {
+			if (!foundBase->pads.empty())
+				return foundBase->pads.front();
 		}
-
-		return foundPad;
 	}
 
 	return NULL;
