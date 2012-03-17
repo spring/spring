@@ -242,7 +242,9 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const strin
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
 	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
 	    !AddEntriesToTable(L, "COB",         LuaConstCOB::PushEntries)     ||
-	    !AddEntriesToTable(L, "SFX",         LuaConstSFX::PushEntries)) {
+	    !AddEntriesToTable(L, "SFX",         LuaConstSFX::PushEntries)     ||
+	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)
+	) {
 		KillLua();
 		return false;
 	}
@@ -312,7 +314,9 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const str
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
-	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)) {
+	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
+	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)
+	) {
 		KillLua();
 		return false;
 	}

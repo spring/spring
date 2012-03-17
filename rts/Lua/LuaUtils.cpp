@@ -777,6 +777,18 @@ int LuaUtils::Echo(lua_State* L)
 }
 
 
+bool LuaUtils::PushLogEntries(lua_State* L)
+{
+#define PUSH_LOG_LEVEL(cmd) LuaPushNamedNumber(L, #cmd, LOG_LEVEL ## cmd)
+	PUSH_LOG_LEVEL(DEBUG);
+	PUSH_LOG_LEVEL(INFO);
+	PUSH_LOG_LEVEL(WARNING);
+	PUSH_LOG_LEVEL(ERROR);
+	PUSH_LOG_LEVEL(FATAL);
+	return true;
+}
+
+
 /*-
 	Logs a msg to the logfile / console
 	@param loglevel loglevel that will be used for the message
