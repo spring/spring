@@ -255,7 +255,7 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileIdleMult", 0.35f));
 	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 0.65f));
 
-	avoidMobilesOnPath = speedModMultsTable.GetBool("avoidMobilesOnPath", true);
+	avoidMobilesOnPath = moveTable.GetBool("avoidMobilesOnPath", false);
 	heatMapping = moveTable.GetBool("heatMapping", false);
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
 	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
