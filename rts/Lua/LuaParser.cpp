@@ -133,6 +133,10 @@ void LuaParser::SetupEnv()
 	AddFunc("LoadFile",   LoadFile);
 	AddFunc("FileExists", FileExists);
 	EndTable();
+
+	GetTable("LOG");
+	LuaUtils::PushLogEntries(L);
+	EndTable();
 }
 
 

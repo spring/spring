@@ -203,7 +203,9 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
-	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)) {
+	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
+	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)
+	) {
 		KillLua();
 		return;
 	}
