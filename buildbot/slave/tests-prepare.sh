@@ -47,10 +47,10 @@ function makescript {
 	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
 }
 
-GAME1="Balanced Annihilation V7.63"
-GAME1_FILENAME="ba763.sdz"
-GAME2="Zero-K v0.9.8.12"
-GAME2_FILENAME="zk-v0.9.8.12.sdz"
+GAME1="Balanced Annihilation V7.65"
+GAME1_FILENAME="balanced_annihilation-v7.65.sdz"
+GAME2="Zero-K v1.0.3.8"
+GAME2_FILENAME="zero-k-v1.0.3.8.sdz"
 MAP="Altair_Crossing-V1"
 MAP_FILENAME="Altair_Crossing.sd7"
 
