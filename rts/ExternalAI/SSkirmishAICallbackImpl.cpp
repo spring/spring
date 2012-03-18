@@ -161,11 +161,11 @@ static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 	return unitDef;
 }
 
-static inline const MoveData* getUnitDefMoveDataById(int skirmishAIId, int unitDefId) {
+static inline const MoveDef* getUnitDefMoveDefById(int skirmishAIId, int unitDefId) {
 
-	const MoveData* moveData = getUnitDefById(skirmishAIId, unitDefId)->movedata;
-	assert(moveData != NULL); // NOTE There is a callback method to check whether MoveData is available, use it.
-	return moveData;
+	const MoveDef* moveDef = getUnitDefById(skirmishAIId, unitDefId)->moveDef;
+	assert(moveDef != NULL); // NOTE There is a callback method to check whether MoveData is available, use it.
+	return moveDef;
 }
 
 static inline const WeaponDef* getWeaponDefById(int skirmishAIId, int weaponDefId) {
@@ -2408,9 +2408,9 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToMove(int skirmishAIId, int unitD
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToHover(int skirmishAIId, int unitDefId) {
 	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
-	const MoveData* md = ud->movedata;
+	const MoveDef* md = ud->moveDef;
  
-	return ((md != NULL)? (md->moveType == MoveData::Hover_Move): false);
+	return ((md != NULL)? (md->moveType == MoveDef::Hover_Move): false);
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isFloater(int skirmishAIId, int unitDefId) {
@@ -2922,8 +2922,8 @@ EXPORT(int) skirmishAiCallback_UnitDef_getCustomParams(int skirmishAIId, int uni
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isMoveDataAvailable(int skirmishAIId, int unitDefId) {
-	// NOTE We can not use getUnitDefMoveDataById() here, cause it would assert
-	return (getUnitDefById(skirmishAIId, unitDefId)->movedata != NULL);
+	// NOTE We can not use getUnitDefMoveDefById() here, cause it would assert
+	return (getUnitDefById(skirmishAIId, unitDefId)->moveDef != NULL);
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getMaxAcceleration(int skirmishAIId, int unitDefId) {
@@ -2943,59 +2943,59 @@ EXPORT(short) skirmishAiCallback_UnitDef_MoveData_getMaxTurnRate(int skirmishAII
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getXSize(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->xsize;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->xsize;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getZSize(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->zsize;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->zsize;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getDepth(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->depth;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->depth;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getMaxSlope(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->maxSlope;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->maxSlope;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getSlopeMod(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->slopeMod;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->slopeMod;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getDepthMod(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->depthModParams[MoveData::DEPTHMOD_LIN_COEFF];
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->depthModParams[MoveDef::DEPTHMOD_LIN_COEFF];
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getPathType(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->pathType;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->pathType;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getCrushStrength(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->crushStrength;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->crushStrength;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getMoveType(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->moveType;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->moveType;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getMoveFamily(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->moveFamily;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->moveFamily;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getTerrainClass(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->terrainClass;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->terrainClass;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_MoveData_getFollowGround(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->followGround;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->followGround;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_MoveData_isSubMarine(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->subMarine;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->subMarine;
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_MoveData_getName(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->name.c_str();
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->name.c_str();
 }
 
 

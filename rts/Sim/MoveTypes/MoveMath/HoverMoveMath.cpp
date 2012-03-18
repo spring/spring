@@ -13,29 +13,29 @@ bool CHoverMoveMath::noWaterMove = false;
 /*
 Calculate speed-multiplier for given height and slope data.
 */
-float CHoverMoveMath::SpeedMod(const MoveData& moveData, float height, float slope) const
+float CHoverMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope) const
 {
 	// no speed-penalty if on water (unless noWaterMove)
 	if (height < 0.0f) {
 		return (noWaterMove? 0.0f: 1.0f);
 	}
 
-	if (slope > moveData.maxSlope)
+	if (slope > moveDef.maxSlope)
 		return 0.0f;
 
-	return (1.0f / (1.0f + slope * moveData.slopeMod));
+	return (1.0f / (1.0f + slope * moveDef.slopeMod));
 }
 
-float CHoverMoveMath::SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const
+float CHoverMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const
 {
 	// no speed-penalty if on water
 	if (height < 0.0f)
 		return 1.0f;
 
-	if ((slope * moveSlope) > moveData.maxSlope)
+	if ((slope * moveSlope) > moveDef.maxSlope)
 		return 0.0f;
 
-	return (1.0f / (1.0f + std::max(0.0f, slope * moveSlope) * moveData.slopeMod));
+	return (1.0f / (1.0f + std::max(0.0f, slope * moveSlope) * moveDef.slopeMod));
 }
 
 

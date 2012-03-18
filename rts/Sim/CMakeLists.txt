@@ -58,6 +58,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/QTPFS/PathCache.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/QTPFS/PathSearch.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/QTPFS/PathManager.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Path/IPathController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/IPathManager.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ExpGenSpawner.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ExplosionListener.cpp"

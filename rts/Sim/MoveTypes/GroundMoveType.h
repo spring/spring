@@ -7,8 +7,9 @@
 #include "Sim/Objects/SolidObject.h"
 
 struct UnitDef;
-struct MoveData;
+struct MoveDef;
 class CMoveMath;
+class IPathController;
 
 class CGroundMoveType : public AMoveType
 {
@@ -22,8 +23,6 @@ public:
 
 	bool Update();
 	void SlowUpdate();
-
-	void SetDeltaSpeed(float, bool, bool = false);
 
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
@@ -52,22 +51,6 @@ public:
 	static void DeleteLineTable();
 
 
-	float turnRate;
-	float accRate;
-	float decRate;
-
-	float maxReverseSpeed;
-	float wantedSpeed;
-	float currentSpeed;
-	float requestedSpeed;
-	float deltaSpeed;
-
-	unsigned int pathId;
-	float goalRadius;
-
-	SyncedFloat3 currWayPoint;
-	SyncedFloat3 nextWayPoint;
-
 protected:
 	float3 ObstacleAvoidance(const float3& desiredDir);
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
@@ -92,7 +75,7 @@ protected:
 		const float colliderRadius,
 		const float3& sepDirMask,
 		const UnitDef* colliderUD,
-		const MoveData* colliderMD,
+		const MoveDef* colliderMD,
 		const CMoveMath* colliderMM);
 	void HandleFeatureCollisions(
 		CUnit* collider,
@@ -102,10 +85,11 @@ protected:
 		const float colliderRadius,
 		const float3& sepDirMask,
 		const UnitDef* colliderUD,
-		const MoveData* colliderMD,
+		const MoveDef* colliderMD,
 		const CMoveMath* colliderMM);
 
 	void SetMainHeading();
+	void ChangeSpeed(float, bool, bool = false);
 	void ChangeHeading(short newHeading);
 
 	void UpdateSkid();
@@ -121,6 +105,26 @@ protected:
 	bool WantReverse(const float3&) const;
 
 
+	IPathController* pathController;
+
+public:
+	float turnRate;
+	float accRate;
+	float decRate;
+
+	float maxReverseSpeed;
+	float wantedSpeed;
+	float currentSpeed;
+	float requestedSpeed;
+	float deltaSpeed;
+
+	unsigned int pathId;
+	float goalRadius;
+
+	SyncedFloat3 currWayPoint;
+	SyncedFloat3 nextWayPoint;
+
+protected:
 	bool atGoal;
 	bool haveFinalWaypoint;
 
@@ -164,3 +168,4 @@ protected:
 };
 
 #endif // GROUNDMOVETYPE_H
+

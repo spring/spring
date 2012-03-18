@@ -13,7 +13,7 @@
 
 
 struct Command;
-struct MoveData;
+struct MoveDef;
 struct WeaponDef;
 struct S3DModel;
 struct UnitDefImage;
@@ -71,19 +71,19 @@ public:
 	bool IsAllowedTerrainHeight(float rawHeight, float* clampedHeight = NULL) const;
 
 	bool IsTransportUnit()      const { return (transportCapacity > 0 && transportMass > 0.0f); }
-	bool IsImmobileUnit()       const { return (movedata == NULL && !canfly && speed <= 0.0f); }
+	bool IsImmobileUnit()       const { return (moveDef == NULL && !canfly && speed <= 0.0f); }
 	bool IsBuildingUnit()       const { return (IsImmobileUnit() && !yardmaps[0].empty()); }
 	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
 	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
 	bool IsFactoryUnit()        const { return (builder &&  IsBuildingUnit()); }
 	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f); }
-	bool IsGroundUnit()         const { return (movedata != NULL && !canfly); }
-	bool IsAirUnit()            const { return (movedata == NULL &&  canfly); }
+	bool IsGroundUnit()         const { return (moveDef != NULL && !canfly); }
+	bool IsAirUnit()            const { return (moveDef == NULL &&  canfly); }
 	bool IsNonHoveringAirUnit() const { return (IsAirUnit() && !hoverAttack); }
 	bool IsFighterUnit()        const { return (IsNonHoveringAirUnit() && !HasBomberWeapon()); }
 	bool IsBomberUnit()         const { return (IsNonHoveringAirUnit() &&  HasBomberWeapon()); }
 
-	bool WantsMoveData() const { return (canmove && speed > 0.0f && !canfly); }
+	bool WantsMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
 	bool HasBomberWeapon() const;
 	const std::vector<unsigned char>& GetYardMap(unsigned int facing) const { return (yardmaps[facing % /*NUM_FACINGS*/ 4]); }
 
@@ -316,7 +316,7 @@ public:
 	float maxRudder;
 	float crashDrag;
 
-	MoveData* movedata;
+	MoveDef* moveDef;
 
 	///< Iterations of the yardmap for building rotation
 	///< (only non-mobile ground units can have these)

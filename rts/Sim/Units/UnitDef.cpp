@@ -211,7 +211,7 @@ UnitDef::UnitDef()
 , maxElevator(0.0f)
 , maxRudder(0.0f)
 , crashDrag(0.0f)
-, movedata(NULL)
+, moveDef(NULL)
 , xsize(0)
 , zsize(0)
 , loadingRadius(0.0f)
@@ -490,7 +490,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	holdSteady        = udTable.GetBool("holdSteady",        false);
 	releaseHeld       = udTable.GetBool("releaseHeld",       false);
-	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveData());
+	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveDef());
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
 	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
@@ -544,7 +544,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 	// modrules transport settings
-	// FIXME: do we want to check moveData->moveType for these?
+	// FIXME: do we want to check moveDef->moveType for these?
 	if ((!modInfo.transportAir    && canfly)   ||
 		(!modInfo.transportShip   && canFloat) ||
 		(!modInfo.transportHover  && canHover) ||
@@ -552,35 +552,35 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
  		cantBeTransported = true;
 	}
 
-	// aircraft have MoveTypes but no MoveData;
+	// aircraft have MoveTypes but no MoveDef;
 	// static structures have no use for either
 	// (but get StaticMoveType instances)
-	if (WantsMoveData()) {
+	if (WantsMoveDef()) {
 		const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 		const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
-		if ((movedata = moveinfo->GetMoveDataFromName(moveClass)) == NULL) {
+		if ((moveDef = moveDefHandler->GetMoveDefFromName(moveClass)) == NULL) {
 			throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 		}
 
-		movedata->unitDefRefCount += 1;
+		moveDef->unitDefRefCount += 1;
 
 		if (LOG_IS_ENABLED(L_WARNING)) {
 			const char* typeStr = NULL;
 			const char* wantedTypeStr = NULL;
 
 			if (canHover) {
-				if (movedata->moveType != MoveData::Hover_Move) {
+				if (moveDef->moveType != MoveDef::Hover_Move) {
 					typeStr       = "canHover";
 					wantedTypeStr = "hover";
 				}
 			} else if (canFloat) {
-				if (movedata->moveType != MoveData::Ship_Move) {
+				if (moveDef->moveType != MoveDef::Ship_Move) {
 					typeStr       = "canFloat";
 					wantedTypeStr = "ship";
 				}
 			} else {
-				if (movedata->moveType != MoveData::Ground_Move) {
+				if (moveDef->moveType != MoveDef::Ground_Move) {
 					typeStr       = "!(canHover || canFloat)";
 					wantedTypeStr = "ground";
 				}
@@ -589,22 +589,22 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 				LOG_L(L_WARNING,
 						"[%s] inconsistent path-type %i for \"%s\" "
 						"(move-class \"%s\"): %s, but not a %s-based movetype",
-						__FUNCTION__, movedata->pathType, name.c_str(),
+						__FUNCTION__, moveDef->pathType, name.c_str(),
 						moveClass.c_str(), typeStr, wantedTypeStr);
 			}
 		}
 	}
 
-	if (movedata == NULL) {
+	if (moveDef == NULL) {
 		upright = upright || !canfly;
 		floatOnWater = canFloat;
 	} else {
 		upright = upright ||
-			(movedata->moveType == MoveData::Hover_Move) ||
-			(movedata->moveType == MoveData::Ship_Move);
+			(moveDef->moveType == MoveDef::Hover_Move) ||
+			(moveDef->moveType == MoveDef::Ship_Move);
 		floatOnWater =
-			(movedata->moveType == MoveData::Hover_Move) ||
-			(movedata->moveType == MoveData::Ship_Move);
+			(moveDef->moveType == MoveDef::Hover_Move) ||
+			(moveDef->moveType == MoveDef::Ship_Move);
 	}
 
 	if (IsAirUnit()) {
@@ -660,7 +660,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// Spring's heightmap resolution is double the footprint (yardmap)
 	// resolution, so we scale the values (which are not allowed to be
 	// 0)
-	// NOTE that this is done for the FeatureDef and MoveData footprints
+	// NOTE that this is done for the FeatureDef and MoveDef footprints
 	// as well
 	xsize = std::max(1 * 2, (udTable.GetInt("footprintX", 1) * 2));
 	zsize = std::max(1 * 2, (udTable.GetInt("footprintZ", 1) * 2));
@@ -945,12 +945,12 @@ bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) cons
 	float maxDepth = this->maxWaterDepth;
 	float minDepth = this->minWaterDepth;
 
-	if (movedata != NULL) {
+	if (moveDef != NULL) {
 		// we are a mobile ground-unit
-		if (movedata->moveType == MoveData::Ship_Move) {
-			minDepth = movedata->depth;
+		if (moveDef->moveType == MoveDef::Ship_Move) {
+			minDepth = moveDef->depth;
 		} else {
-			maxDepth = movedata->depth;
+			maxDepth = moveDef->depth;
 		}
 	}
 

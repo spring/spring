@@ -4544,7 +4544,7 @@ int LuaSyncedRead::TestMoveOrder(lua_State* L)
 		return 1;
 	}
 
-	const MoveData* moveDef = unitDef->movedata;
+	const MoveDef* moveDef = unitDef->moveDef;
 
 	if (moveDef == NULL) {
 		lua_pushboolean(L, !unitDef->IsImmobileUnit());

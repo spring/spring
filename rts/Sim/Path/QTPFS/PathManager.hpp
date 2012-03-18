@@ -12,7 +12,7 @@
 #include "PathCache.hpp"
 #include "PathSearch.hpp"
 
-struct MoveData;
+struct MoveDef;
 struct SRectangle;
 class CSolidObject;
 
@@ -31,7 +31,7 @@ namespace QTPFS {
 		void DeletePath(unsigned int pathID);
 
 		unsigned int RequestPath(
-			const MoveData* moveData,
+			const MoveDef* moveDef,
 			const float3& sourcePos,
 			const float3& targetPos,
 			float radius,
@@ -108,7 +108,7 @@ namespace QTPFS {
 		unsigned int QueueSearch(
 			const IPath* oldPath,
 			const CSolidObject* object,
-			const MoveData* moveData,
+			const MoveDef* moveDef,
 			const float3& sourcePoint,
 			const float3& targetPoint,
 			const float radius,
