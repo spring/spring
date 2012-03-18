@@ -866,6 +866,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 	FILE* out = fopen(filename.c_str(), "wt");
 	if (!out) {
+		LOG_L(L_ERROR, "Failed to write to \"%s\"!", filename.c_str());
 		return;
 	}
 
@@ -966,7 +967,8 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	fprintf(out, "}\n\n"); // close 'archiveCache'
 	fprintf(out, "return archiveCache\n");
 
-	fclose(out);
+	if (fclose(out) == EOF) 
+		LOG_L(L_ERROR, "Failed to write to \"%s\"!", filename.c_str());
 
 	isDirty = false;
 }
