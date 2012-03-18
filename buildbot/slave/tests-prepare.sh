@@ -54,7 +54,7 @@ GAME2_FILENAME="zero-k-v1.0.3.8.sdz"
 MAP="Altair_Crossing-V1"
 MAP_FILENAME="Altair_Crossing.sd7"
 
-download_file $DOWNLOADDIR/$GAME1_FILENAME http://springfiles.com/sites/default/files/downloads/spring/games/$GAME1_FILENAME
+download_file $DOWNLOADDIR/$GAME1_FILENAME http://api.springfiles.com/files/games/$GAME1_FILENAME
 download_file $DOWNLOADDIR/$GAME2_FILENAME http://packages.springrts.com/builds/$GAME2_FILENAME
 download_file $DOWNLOADDIR/$MAP_FILENAME http://springfiles.com/sites/default/files/downloads/spring/spring-maps/$MAP_FILENAME
 
