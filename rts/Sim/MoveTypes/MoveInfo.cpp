@@ -111,7 +111,7 @@ MoveDefHandler::MoveDefHandler()
 			break;
 		}
 
-		MoveDef* md = new MoveDef(this, moveTable, num);
+		MoveDef* md = new MoveDef(moveTable, num);
 		moveDefs.push_back(md);
 		name2moveDef[md->name] = md->pathType;
 
