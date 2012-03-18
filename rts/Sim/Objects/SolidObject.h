@@ -11,7 +11,7 @@
 class CUnit;
 struct DamageArray;
 struct CollisionVolume;
-struct MoveData;
+struct MoveDef;
 
 class CSolidObject: public CWorldObject {
 public:
@@ -83,7 +83,7 @@ public:
 public:
 	float health;
 	float mass;                                 ///< the physical mass of this object (run-time constant)
-	float crushResistance;                      ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
+	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
 
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
@@ -108,7 +108,7 @@ public:
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
 
-	MoveData* mobility;                         ///< holds information about the mobility and movedata of this object (if NULL, object is either static or aircraft)
+	MoveDef* mobility;                         ///< holds information about the mobility of this object (if NULL, object is either static or aircraft)
 	CollisionVolume* collisionVolume;
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)

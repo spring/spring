@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef MOVEINFO_H
-#define MOVEINFO_H
+#ifndef MOVEDEF_HANDLER_H
+#define MOVEDEF_HANDLER_H
 
 #include <vector>
 #include <map>
@@ -9,17 +9,17 @@
 #include "System/creg/creg_cond.h"
 #include "Sim/Misc/GlobalConstants.h"
 
-class CMoveInfo;
+class MoveDefHandler;
 class CMoveMath;
 class CSolidObject;
 class LuaTable;
 
-struct MoveData {
-	CR_DECLARE_STRUCT(MoveData);
+struct MoveDef {
+	CR_DECLARE_STRUCT(MoveDef);
 
-	MoveData();
-	MoveData(const MoveData* unitDefMD) { *this = *unitDefMD; }
-	MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID);
+	MoveDef();
+	MoveDef(const MoveDef* unitDefMD) { *this = *unitDefMD; }
+	MoveDef(const LuaTable& moveTable, int moveDefID);
 
 	bool TestMoveSquare(const int hmx, const int hmz) const;
 	float GetDepthMod(const float height) const;
@@ -87,7 +87,7 @@ struct MoveData {
 	float speedModMults[SPEEDMOD_MOBILE_NUM_MULTS + 1];
 
 	unsigned int pathType;
-	/// number of UnitDef types that refer to this MoveData class
+	/// number of UnitDef types that refer to this MoveDef class
 	unsigned int unitDefRefCount;
 
 	/// do we stick to the ground when in water?
@@ -115,25 +115,28 @@ struct MoveData {
 };
 
 
-class CMoveInfo
+class MoveDefHandler
 {
-	CR_DECLARE(CMoveInfo);
+	CR_DECLARE(MoveDefHandler);
 public:
-	CMoveInfo();
-	~CMoveInfo();
+	MoveDefHandler();
+	~MoveDefHandler();
 
-	std::vector<MoveData*> moveData;
-	std::map<std::string, int> name2moveData;
+	std::vector<MoveDef*> moveDefs;
+	std::map<std::string, int> name2moveDef;
 
-	MoveData* GetMoveDataFromName(const std::string& name);
-	unsigned int moveInfoChecksum;
+	MoveDef* GetMoveDefFromName(const std::string& name);
+	unsigned int GetCheckSum() const { return checksum; }
 
 private:
 	CMoveMath* groundMoveMath;
 	CMoveMath* hoverMoveMath;
 	CMoveMath* seaMoveMath;
+
+	unsigned int checksum;
 };
 
-extern CMoveInfo* moveinfo;
+extern MoveDefHandler* moveDefHandler;
 
-#endif // MOVEINFO_H
+#endif // MOVEDEF_HANDLER_H
+
