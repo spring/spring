@@ -18,7 +18,7 @@ local os_clock = os.clock
 local lastcheck = math.floor(os_clock())
 
 function widget:GameFrame(n)
-	if n==0 and not Spring.GetSpectatingState() then -- set gamespeed at start of game
+	if n==0 then -- set gamespeed at start of game
 		Spring.SendCommands("setmaxspeed " .. 1000,
 			"setminspeed " .. initialspeed,
 			"setminspeed 1")
@@ -27,7 +27,7 @@ function widget:GameFrame(n)
 	if n==maxframes then
 		Spring.Echo("Tests run long enough, quitting...")
 		Spring.SendCommands("quit")
-	elseif (n>100) and (now > lastcheck) and not Spring.GetSpectatingState() then -- adjust fps only once a second
+	elseif (n>100) and (now > lastcheck) then -- adjust fps only once a second
 		lastcheck = now
 		fps = Spring.GetFPS()
 		if (fps<minfps) then
