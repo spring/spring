@@ -823,9 +823,6 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 
 void CCommandAI::GiveWaitCommand(const Command& c)
 {
-	printf("[CCommandAI::GiveWaitCommand][1][f=%d] commandQue.size()=%lu frontCmd=%d\n",
-		gs->frameNum, commandQue.size(), (commandQue.front()).GetID());
-
 	if (commandQue.empty()) {
 		commandQue.push_back(c);
 		return;
