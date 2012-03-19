@@ -18,7 +18,7 @@
 #include <boost/thread/barrier.hpp>
 #include <boost/cstdint.hpp>
 
-struct MoveData;
+struct MoveDef;
 class CPathFinder;
 class CPathEstimatorDef;
 class CPathFinderDef;
@@ -58,7 +58,7 @@ public:
 	 * SearchResult::OutOfRange.
 	 * Only if no position closer to the goal than the starting location itself
 	 * could be found, no path and SearchResult::CantGetCloser is returned.
-	 * @param moveData
+	 * @param moveDef
 	 *   Defining the footprint of the unit to use the path.
 	 *
 	 * @param start
@@ -77,7 +77,7 @@ public:
 	 *   critical.
 	 */
 	IPath::SearchResult GetPath(
-		const MoveData& moveData,
+		const MoveDef& moveDef,
 		float3 start,
 		const CPathFinderDef& peDef,
 		IPath::Path& path,
@@ -121,17 +121,17 @@ private:
 
 	struct SingleBlock {
 		int2 blockPos;
-		const MoveData* moveData;
+		const MoveDef* moveDef;
 	};
 
-	void FindOffset(const MoveData&, unsigned int, unsigned int);
-	void CalculateVertices(const MoveData&, unsigned int, unsigned int, unsigned int threadNum = 0);
-	void CalculateVertex(const MoveData&, unsigned int, unsigned int, unsigned int, unsigned int threadNum = 0);
+	void FindOffset(const MoveDef&, unsigned int, unsigned int);
+	void CalculateVertices(const MoveDef&, unsigned int, unsigned int, unsigned int threadNum = 0);
+	void CalculateVertex(const MoveDef&, unsigned int, unsigned int, unsigned int, unsigned int threadNum = 0);
 
-	IPath::SearchResult InitSearch(const MoveData&, const CPathFinderDef&, bool);
-	IPath::SearchResult DoSearch(const MoveData&, const CPathFinderDef&, bool);
-	void TestBlock(const MoveData&, const CPathFinderDef&, PathNode&, unsigned int pathDir, bool synced);
-	void FinishSearch(const MoveData& moveData, IPath::Path& path);
+	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, bool);
+	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, bool);
+	void TestBlock(const MoveDef&, const CPathFinderDef&, PathNode&, unsigned int pathDir, bool synced);
+	void FinishSearch(const MoveDef& moveDef, IPath::Path& path);
 	void ResetSearch();
 
 	bool ReadFile(const std::string& cacheFileName, const std::string& map);

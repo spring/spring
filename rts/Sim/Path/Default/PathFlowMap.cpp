@@ -232,7 +232,7 @@ const float3& PathFlowMap::GetFlowVec(unsigned int hmx, unsigned int hmz) const 
 	return (fCells[fCellIdx].flowVector);
 }
 
-float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveData& md, unsigned int pathOpt) const {
+float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveDef& md, unsigned int pathOpt) const {
 	const float3& flowVec = GetFlowVec(x, z);
 	const float3& pathDir = pathOptDirs[pathOpt];
 

@@ -19,10 +19,10 @@
 #include "System/myMath.h"
 #include "System/Util.h"
 
-CR_BIND(MoveData, (0));
-CR_BIND(CMoveInfo, );
+CR_BIND(MoveDef, (0));
+CR_BIND(MoveDefHandler, );
 
-CR_REG_METADATA(MoveData, (
+CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
 
 	CR_ENUM_MEMBER(moveType),
@@ -59,15 +59,15 @@ CR_REG_METADATA(MoveData, (
 	CR_RESERVED(16)
 ));
 
-CR_REG_METADATA(CMoveInfo, (
-	CR_MEMBER(moveData),
-	CR_MEMBER(name2moveData),
-	CR_MEMBER(moveInfoChecksum),
+CR_REG_METADATA(MoveDefHandler, (
+	CR_MEMBER(moveDefs),
+	CR_MEMBER(name2moveDef),
+	CR_MEMBER(checksum),
 	CR_RESERVED(16)
 ));
 
 
-CMoveInfo* moveinfo;
+MoveDefHandler* moveDefHandler;
 
 // FIXME: do something with these magic numbers
 static const float MAX_ALLOWED_WATER_DAMAGE_GMM = 1e3f;
@@ -86,7 +86,7 @@ static float DegreesToMaxSlope(float degrees)
 }
 
 
-CMoveInfo::CMoveInfo()
+MoveDefHandler::MoveDefHandler()
 {
 	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("MoveDefs");
 	if (!rootTable.IsValid()) {
@@ -113,15 +113,14 @@ CMoveInfo::CMoveInfo()
 			break;
 		}
 
-		MoveData* md = new MoveData(this, moveTable, num);
-
-		moveData.push_back(md);
-		name2moveData[md->name] = md->pathType;
+		MoveDef* md = new MoveDef(moveTable, num);
+		moveDefs.push_back(md);
+		name2moveDef[md->name] = md->pathType;
 
 		switch (md->moveType) {
-			case MoveData::Ship_Move: { md->moveMath = seaMoveMath; } break;
-			case MoveData::Hover_Move: { md->moveMath = hoverMoveMath; } break;
-			case MoveData::Ground_Move: { md->moveMath = groundMoveMath; } break;
+			case MoveDef::Ship_Move: { md->moveMath = seaMoveMath; } break;
+			case MoveDef::Hover_Move: { md->moveMath = hoverMoveMath; } break;
+			case MoveDef::Ground_Move: { md->moveMath = groundMoveMath; } break;
 		}
 
 		crc << md->GetCheckSum();
@@ -134,15 +133,15 @@ CMoveInfo::CMoveInfo()
 	crc << CGroundMoveMath::waterDamageCost;
 	crc << CHoverMoveMath::noWaterMove;
 
-	moveInfoChecksum = crc.GetDigest();
+	checksum = crc.GetDigest();
 }
 
 
-CMoveInfo::~CMoveInfo()
+MoveDefHandler::~MoveDefHandler()
 {
-	while (!moveData.empty()) {
-		delete moveData.back();
-		moveData.pop_back();
+	while (!moveDefs.empty()) {
+		delete moveDefs.back();
+		moveDefs.pop_back();
 	}
 
 	delete groundMoveMath;
@@ -151,23 +150,23 @@ CMoveInfo::~CMoveInfo()
 }
 
 
-MoveData* CMoveInfo::GetMoveDataFromName(const std::string& name)
+MoveDef* MoveDefHandler::GetMoveDefFromName(const std::string& name)
 {
-	map<string, int>::const_iterator it = name2moveData.find(name);
-	if (it == name2moveData.end()) {
+	map<string, int>::const_iterator it = name2moveDef.find(name);
+	if (it == name2moveDef.end()) {
 		return NULL;
 	}
-	return moveData[it->second];
+	return moveDefs[it->second];
 }
 
 
 
-MoveData::MoveData() {
+MoveDef::MoveDef() {
 	name              = "";
 
-	moveType          = MoveData::Ground_Move;
-	moveFamily        = MoveData::Tank;
-	terrainClass      = MoveData::Mixed;
+	moveType          = MoveDef::Ground_Move;
+	moveFamily        = MoveDef::Tank;
+	terrainClass      = MoveDef::Mixed;
 
 	xsize             = 0;
 	zsize             = 0;
@@ -210,8 +209,8 @@ MoveData::MoveData() {
 	tempOwner         = NULL;
 }
 
-MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID) {
-	*this = MoveData();
+MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
+	*this = MoveDef();
 
 	name          = StringToLower(moveTable.GetString("name", ""));
 	pathType      = moveDefID - 1;
@@ -225,16 +224,16 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 
 	if ((name.find("boat") != string::npos) ||
 	    (name.find("ship") != string::npos)) {
-		moveType   = MoveData::Ship_Move;
+		moveType   = MoveDef::Ship_Move;
 		depth      = minWaterDepth;
-		moveFamily = MoveData::Ship;
+		moveFamily = MoveDef::Ship;
 		subMarine  = moveTable.GetBool("subMarine", false);
 	} else if (name.find("hover") != string::npos) {
-		moveType   = MoveData::Hover_Move;
+		moveType   = MoveDef::Hover_Move;
 		maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
-		moveFamily = MoveData::Hover;
+		moveFamily = MoveDef::Hover;
 	} else {
-		moveType = MoveData::Ground_Move;
+		moveType = MoveDef::Ground_Move;
 		depth    = maxWaterDepth;
 
 		depthModParams[DEPTHMOD_MIN_HEIGHT] = std::max(0.00f, depthModTable.GetFloat("minHeight",                                     0.0f ));
@@ -250,9 +249,9 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 		maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
 
 		if (name.find("tank") != string::npos) {
-			moveFamily = MoveData::Tank;
+			moveFamily = MoveDef::Tank;
 		} else {
-			moveFamily = MoveData::KBot;
+			moveFamily = MoveDef::KBot;
 		}
 	}
 
@@ -284,25 +283,25 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 	// ground units hug the ocean floor when in water,
 	// ships stay at a "fixed" level (their waterline)
 	followGround =
-		(moveFamily == MoveData::Tank ||
-		 moveFamily == MoveData::KBot);
+		(moveFamily == MoveDef::Tank ||
+		 moveFamily == MoveDef::KBot);
 
 	// tank or bot that cannot get its threads / feet
 	// wet, or hovercraft (which doesn't touch ground
 	// or water)
-	const bool b0 = ((followGround && maxWaterDepth <= 0.0) || moveFamily == MoveData::Hover);
+	const bool b0 = ((followGround && maxWaterDepth <= 0.0) || moveFamily == MoveDef::Hover);
 
 	// ship (or sub) that cannot crawl onto shore, OR tank or
 	// kbot restricted to snorkling (strange but possible)
-	const bool b1 = ((moveFamily == MoveData::Ship && minWaterDepth > 0.0) || ((followGround) && minWaterDepth > 0.0));
+	const bool b1 = ((moveFamily == MoveDef::Ship && minWaterDepth > 0.0) || ((followGround) && minWaterDepth > 0.0));
 
 	// tank or kbot that CAN go skinny-dipping (amph.),
 	// or ship that CAN sprout legs when at the beach
-	const bool b2 = ((followGround) && maxWaterDepth > 0.0) || (moveFamily == MoveData::Ship && minWaterDepth < 0.0);
+	const bool b2 = ((followGround) && maxWaterDepth > 0.0) || (moveFamily == MoveDef::Ship && minWaterDepth < 0.0);
 
-	if (b0) { terrainClass = MoveData::Land;  }
-	if (b1) { terrainClass = MoveData::Water; }
-	if (b2) { terrainClass = MoveData::Mixed; }
+	if (b0) { terrainClass = MoveDef::Land;  }
+	if (b1) { terrainClass = MoveDef::Water; }
+	if (b2) { terrainClass = MoveDef::Mixed; }
 
 	const int xsizeDef = std::max(1, moveTable.GetInt("footprintX",        1));
 	const int zsizeDef = std::max(1, moveTable.GetInt("footprintZ", xsizeDef));
@@ -322,7 +321,7 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 	assert((zsize & 1) == 1);
 }
 
-bool MoveData::TestMoveSquare(const int hmx, const int hmz) const {
+bool MoveDef::TestMoveSquare(const int hmx, const int hmz) const {
 	bool ret = true;
 
 	// test the entire footprint
@@ -339,7 +338,7 @@ bool MoveData::TestMoveSquare(const int hmx, const int hmz) const {
 	return ret;
 }
 
-float MoveData::GetDepthMod(const float height) const {
+float MoveDef::GetDepthMod(const float height) const {
 	// [DEPTHMOD_{MIN, MAX}_HEIGHT] are always >= 0,
 	// so we return early for positive height values
 	// only negative heights ("depths") are allowed
@@ -365,7 +364,7 @@ float MoveData::GetDepthMod(const float height) const {
 	return (1.0f / scale);
 }
 
-unsigned int MoveData::GetCheckSum() const {
+unsigned int MoveDef::GetCheckSum() const {
 	unsigned int sum = 0;
 
 	const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&moveType);
@@ -374,7 +373,7 @@ unsigned int MoveData::GetCheckSum() const {
 	assert(minByte < maxByte);
 
 	// NOTE:
-	//   safe so long as MoveData has no virtuals and we
+	//   safe so long as MoveDef has no virtuals and we
 	//   make sure we do not checksum the pointer-members
 	for (const unsigned char* byte = minByte; byte != maxByte; byte++) {
 		sum ^= ((((byte + 1) - minByte) << 8) * (*byte));

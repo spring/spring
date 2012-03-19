@@ -5,7 +5,7 @@
 
 #include <vector>
 
-struct MoveData;
+struct MoveDef;
 
 /**
  * Heat mapping makes the pathfinder favor unused paths more. 
@@ -33,7 +33,7 @@ public:
 		return (heatMapOffset >= val)? 0: (val - heatMapOffset);
 	}
 
-	float GetHeatCost(unsigned int x, unsigned int z, const MoveData&, unsigned int ownerID) const;
+	float GetHeatCost(unsigned int x, unsigned int z, const MoveDef&, unsigned int ownerID) const;
 
 private:
 	struct HeatCell {

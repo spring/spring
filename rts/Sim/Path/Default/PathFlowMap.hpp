@@ -9,7 +9,7 @@
 #include "System/Vec2.h"
 #include "System/float3.h"
 
-struct MoveData;
+struct MoveDef;
 class CSolidObject;
 class PathFlowMap {
 public:
@@ -33,7 +33,7 @@ public:
 	void AddFlow(const CSolidObject*);
 
 	const float3& GetFlowVec(unsigned int hmx, unsigned int hmz) const;
-	float GetFlowCost(unsigned int x, unsigned int z, const MoveData&, unsigned int opt) const;
+	float GetFlowCost(unsigned int x, unsigned int z, const MoveDef&, unsigned int opt) const;
 	float GetMaxFlow() const { return maxFlow[fBufferIdx]; }
 
 	unsigned int GetFrontBufferIdx() const { return fBufferIdx; }

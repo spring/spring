@@ -411,7 +411,7 @@ CGame::~CGame()
 	SafeDelete(loshandler);
 	SafeDelete(mapDamage);
 	SafeDelete(qf);
-	SafeDelete(moveinfo);
+	SafeDelete(moveDefHandler);
 	SafeDelete(unitDefHandler);
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
@@ -545,7 +545,7 @@ void CGame::LoadSimulation(const std::string& mapName)
 	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
-	moveinfo = new CMoveInfo();
+	moveDefHandler = new MoveDefHandler();
 	qf = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();

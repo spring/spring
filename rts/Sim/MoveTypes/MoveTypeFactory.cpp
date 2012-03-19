@@ -13,10 +13,10 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 	if (ud->IsGroundUnit()) {
 		// mobile ground-unit
 		assert(!ud->canfly);
-		assert(ud->movedata != NULL);
+		assert(ud->moveDef != NULL);
 		assert(unit->mobility == NULL);
 
-		unit->mobility = new MoveData(ud->movedata);
+		unit->mobility = new MoveDef(ud->moveDef);
 		CGroundMoveType* gmt = new CGroundMoveType(unit);
 		return gmt;
 	}
@@ -24,7 +24,7 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 	if (ud->IsAirUnit()) {
 		// mobile air-unit
 		assert(ud->canfly);
-		assert(ud->movedata == NULL);
+		assert(ud->moveDef == NULL);
 
 		if (!ud->builder && !ud->IsTransportUnit() && ud->IsNonHoveringAirUnit()) {
 			CStrafeAirMoveType* sAMT = new CStrafeAirMoveType(unit);

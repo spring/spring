@@ -149,10 +149,10 @@ void QTPFS::PathManager::Load() {
 	numPathRequests   = 0;
 	maxNumLeafNodes   = 0;
 
-	nodeTrees.resize(moveinfo->moveData.size(), NULL);
-	nodeLayers.resize(moveinfo->moveData.size());
-	pathCaches.resize(moveinfo->moveData.size());
-	pathSearches.resize(moveinfo->moveData.size());
+	nodeTrees.resize(moveDefHandler->moveDefs.size(), NULL);
+	nodeLayers.resize(moveDefHandler->moveDefs.size());
+	pathCaches.resize(moveDefHandler->moveDefs.size());
+	pathSearches.resize(moveDefHandler->moveDefs.size());
 
 	// add one extra element for object-less requests
 	numCurrExecutedSearches.resize(teamHandler->ActiveTeams() + 1, 0);
@@ -356,7 +356,7 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 }
 
 void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r, bool wantTesselation) {
-	const MoveData*  md = moveinfo->moveData[layerNum];
+	const MoveDef*  md = moveDefHandler->moveDefs[layerNum];
 	const CMoveMath* mm = md->moveMath;
 
 	if (md->unitDefRefCount == 0)
@@ -416,7 +416,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 	// TODO: compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
-		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveinfo->moveData[i]->name;
+		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveDefHandler->moveDefs[i]->name;
 		fileStreams[i] = new std::fstream();
 
 		if (FileSystem::FileExists(fileNames[i])) {
@@ -430,7 +430,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::out | std::ios::binary);
 		}
 
-		sprintf(loadMsg, fmtString, __FUNCTION__, i, moveinfo->moveData[i]->name.c_str());
+		sprintf(loadMsg, fmtString, __FUNCTION__, i, moveDefHandler->moveDefs[i]->name.c_str());
 		pmLoadScreen.AddLoadMessage(loadMsg);
 
 		serializingNodeLayer = &nodeLayers[i];
@@ -525,7 +525,7 @@ void QTPFS::PathManager::ExecuteSearch(
 ) {
 	IPathSearch* search = *searchesIt;
 	IPath* path = pathCache.GetTempPath(search->GetID());
-	MoveData* md = moveinfo->moveData[pathType];
+	MoveDef* md = moveDefHandler->moveDefs[pathType];
 
 	assert(search != NULL);
 	assert(path != NULL);
@@ -598,12 +598,12 @@ void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
 	PathCache::PathMap::const_iterator deadPathsIt;
 
 	const PathCache::PathMap& deadPaths = pathCache.GetDeadPaths();
-	const MoveData* moveData = moveinfo->moveData[pathType];
+	const MoveDef* moveDef = moveDefHandler->moveDefs[pathType];
 
 	if (!deadPaths.empty()) {
 		// re-request LIVE paths that were marked as DEAD by TerrainChange
 		for (deadPathsIt = deadPaths.begin(); deadPathsIt != deadPaths.end(); ++deadPathsIt) {
-			QueueSearch(deadPathsIt->second, NULL, moveData, ZeroVector, ZeroVector, -1.0f, false);
+			QueueSearch(deadPathsIt->second, NULL, moveDef, ZeroVector, ZeroVector, -1.0f, false);
 		}
 
 		pathCache.KillDeadPaths();
@@ -614,7 +614,7 @@ void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
 unsigned int QTPFS::PathManager::QueueSearch(
 	const IPath* oldPath,
 	const CSolidObject* object,
-	const MoveData* moveData,
+	const MoveDef* moveDef,
 	const float3& sourcePoint,
 	const float3& targetPoint,
 	const float radius,
@@ -674,16 +674,16 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		newSearch->SetTeam((object != NULL)? object->team: teamHandler->ActiveTeams());
 	}
 
-	assert((pathCaches[moveData->pathType].GetTempPath(newPath->GetID()))->GetID() == 0);
+	assert((pathCaches[moveDef->pathType].GetTempPath(newPath->GetID()))->GetID() == 0);
 
 	// TODO:
 	//     introduce synced and unsynced path-caches;
 	//     somehow support extra-cost overlays again
 	//
 	// map the path-ID to the index of the cache that stores it
-	pathTypes[newPath->GetID()] = moveData->pathType;
-	pathSearches[moveData->pathType].push_back(newSearch);
-	pathCaches[moveData->pathType].AddTempPath(newPath);
+	pathTypes[newPath->GetID()] = moveDef->pathType;
+	pathSearches[moveDef->pathType].push_back(newSearch);
+	pathCaches[moveDef->pathType].AddTempPath(newPath);
 
 	return (newPath->GetID());
 }
@@ -721,7 +721,7 @@ void QTPFS::PathManager::DeletePath(unsigned int pathID) {
 }
 
 unsigned int QTPFS::PathManager::RequestPath(
-	const MoveData* moveData,
+	const MoveDef* moveDef,
 	const float3& sourcePoint,
 	const float3& targetPoint,
 	float radius,
@@ -729,7 +729,7 @@ unsigned int QTPFS::PathManager::RequestPath(
 	bool synced)
 {
 	SCOPED_TIMER("PathManager::RequestPath");
-	return (QueueSearch(NULL, object, moveData, sourcePoint, targetPoint, radius, synced));
+	return (QueueSearch(NULL, object, moveDef, sourcePoint, targetPoint, radius, synced));
 }
 
 

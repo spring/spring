@@ -10,17 +10,17 @@ CR_BIND_DERIVED(CShipMoveMath, CMoveMath, );
 /*
 Calculate speed-multiplier for given height and slope data.
 */
-float CShipMoveMath::SpeedMod(const MoveData& moveData, float height, float slope) const
+float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope) const
 {
-	if (-height < moveData.depth)
+	if (-height < moveDef.depth)
 		return 0.0f;
 
 	return 1.0f;
 }
 
-float CShipMoveMath::SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const
+float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const
 {
-	if (-height < moveData.depth && moveSlope > 0.0f)
+	if (-height < moveDef.depth && moveSlope > 0.0f)
 		return 0.0f;
 
 	return 1.0f;

@@ -54,7 +54,7 @@ void PathHeatMap::UpdateHeatValue(unsigned int x, unsigned int y, unsigned int v
 	}
 }
 
-float PathHeatMap::GetHeatCost(unsigned int x, unsigned int z, const MoveData& md, unsigned int ownerID) const {
+float PathHeatMap::GetHeatCost(unsigned int x, unsigned int z, const MoveDef& md, unsigned int ownerID) const {
 	float c = 0.0f;
 
 	if (!enabled) { return c; }
