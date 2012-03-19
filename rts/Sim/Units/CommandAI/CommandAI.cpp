@@ -823,6 +823,9 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 
 void CCommandAI::GiveWaitCommand(const Command& c)
 {
+	printf("[CCommandAI::GiveWaitCommand][1][f=%d] commandQue.size()=%lu frontCmd=%d\n",
+		gs->frameNum, commandQue.size(), (commandQue.front()).GetID());
+
 	if (commandQue.empty()) {
 		commandQue.push_back(c);
 		return;
@@ -836,9 +839,10 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 			return;
 		}
 	}
-	else if (commandQue.front().GetID()== CMD_WAIT) {
+	else if (commandQue.front().GetID() == CMD_WAIT) {
 		waitCommandsAI.RemoveWaitCommand(owner, commandQue.front());
 		commandQue.pop_front();
+		return;
 	}
 	else {
 		// shutdown the current order
@@ -856,12 +860,9 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 			eoh->UnitIdle(*owner);
 		}
 		eventHandler.UnitIdle(owner);
-	}
-	else {
+	} else {
 		SlowUpdate();
 	}
-
-	return;
 }
 
 
@@ -1414,7 +1415,8 @@ void CCommandAI::FinishCommand()
 		eventHandler.UnitIdle(owner);
 	}
 
-	if (lastFinishCommand != gs->frameNum) {	//avoid infinite loops
+	// avoid infinite loops
+	if (lastFinishCommand != gs->frameNum) {
 		lastFinishCommand = gs->frameNum;
 		if (!owner->stunned) {
 			SlowUpdate();
