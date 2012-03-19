@@ -123,7 +123,7 @@ if    (WIN32)
 	endif (NOT WINDOWS_CONSOLE)
 endif (WIN32)
 
-set(OPENMP FALSE CACHE BOOL "Enable local multithreading")
+set(OPENMP TRUE CACHE BOOL "Enable local multithreading")
 if    (OPENMP)
 	include(FindOpenMP)
 	if(OPENMP_FOUND)
