@@ -1,6 +1,6 @@
 !ifdef INSTALL
-	File ${VCREDIST}
-	ExecWait '"${VCREDIST}" /q:a'
+	File /oname=vcredist_x86.exe ${VCREDIST}
+	ExecWait '"$INSTDIR\vcredist_x86.exe" /q'
 !else
-	Delete ${VCREDIST}
+	Delete "$INSTDIR\vcredist_x86.exe"
 !endif
