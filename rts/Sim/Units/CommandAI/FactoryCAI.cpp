@@ -306,7 +306,7 @@ bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 }
 
 
-void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& buildOption)
+void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& buildOption, bool)
 {
 	// copy in case we get pop'ed
 	// NOTE: the queue should not be empty at this point!
@@ -339,12 +339,14 @@ void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& b
 // QueueBuild(); hence we need a callback or listen for an event to
 // detect when the build-process actually finished
 //
-// NOTE: only called if Factory::QueueBuild returned FACTORY_NEXT_BUILD_ORDER
+// NOTE:
+//   only called if Factory::QueueBuild returned FACTORY_NEXT_BUILD_ORDER
+//   (meaning the order was not rejected and the callback was installed)
 void FactoryFinishBuildCallBack(CFactory* factory, const Command& command) {
 	CFactoryCAI* cai = dynamic_cast<CFactoryCAI*>(factory->commandAI);
 	CFactoryCAI::BuildOption& bo = cai->buildOptions[command.GetID()];
 
-	cai->DecreaseQueueCount(command, bo);
+	cai->DecreaseQueueCount(command, bo, true);
 }
 
 void CFactoryCAI::SlowUpdate()
@@ -368,7 +370,7 @@ void CFactoryCAI::SlowUpdate()
 			switch (fac->QueueBuild(unitDefHandler->GetUnitDefByID(-c.GetID()), c, &FactoryFinishBuildCallBack)) {
 				case CFactory::FACTORY_SKIP_BUILD_ORDER: {
 					// order rejected and we want to skip it permanently
-					DecreaseQueueCount(c, buildOptions[c.GetID()]);
+					DecreaseQueueCount(c, buildOptions[c.GetID()], false);
 				} break;
 			}
 		} else {
