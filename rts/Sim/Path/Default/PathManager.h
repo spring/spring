@@ -16,7 +16,7 @@ class CPathEstimator;
 class PathFlowMap;
 class PathHeatMap;
 class CPathFinderDef;
-struct MoveData;
+struct MoveDef;
 class CMoveMath;
 
 class CPathManager: public IPathManager {
@@ -41,7 +41,7 @@ public:
 	);
 
 	unsigned int RequestPath(
-		const MoveData* moveData,
+		const MoveDef* moveDef,
 		const float3& startPos,
 		const float3& goalPos,
 		float goalRadius = 8.0f,
@@ -79,7 +79,7 @@ public:
 
 private:
 	unsigned int RequestPath(
-		const MoveData* moveData,
+		const MoveDef* moveDef,
 		const float3& startPos,
 		const float3& goalPos,
 		CPathFinderDef* peDef,
@@ -88,11 +88,11 @@ private:
 	);
 
 	struct MultiPath {
-		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveData* moveData)
+		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveDef* moveDef)
 			: searchResult(IPath::Error)
 			, start(pos)
 			, peDef(def)
-			, moveData(moveData)
+			, moveDef(moveDef)
 			, finalGoal(ZeroVector)
 			, caller(NULL)
 		{}
@@ -108,7 +108,7 @@ private:
 		// Request definition
 		const float3 start;
 		const CPathFinderDef* peDef;
-		const MoveData* moveData;
+		const MoveDef* moveDef;
 
 		// Additional information.
 		float3 finalGoal;

@@ -290,7 +290,7 @@ bool CTransportCAI::CanTransport(const CUnit* unit)
 bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spread, float3& found, const CUnit* unitToUnload)
 {
 	const CTransportUnit* ownerTrans = static_cast<CTransportUnit*>(owner);
-	const MoveData* moveData = unitToUnload->unitDef->movedata;
+	const MoveDef* moveDef = unitToUnload->unitDef->moveDef;
 
 	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
 		// Boundary checking.  If we are too close to the edge of the map, we will get stuck
@@ -327,7 +327,7 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 				continue;
 
 			// don't unload unit on too-steep slopes
-			if (moveData != NULL && ground->GetSlope(pos.x, pos.z) > moveData->maxSlope)
+			if (moveDef != NULL && ground->GetSlope(pos.x, pos.z) > moveDef->maxSlope)
 				continue;
 
 			const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, spread + SQUARE_SIZE);
@@ -361,7 +361,7 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 					continue;
 
 				// don't unload unit on too-steep slopes
-				if (moveData != NULL && ground->GetSlope(x, z) > moveData->maxSlope)
+				if (moveDef != NULL && ground->GetSlope(x, z) > moveDef->maxSlope)
 					continue;
 
 				if (!qf->GetUnitsExact(pos, spread + SQUARE_SIZE).empty())
@@ -382,7 +382,7 @@ bool CTransportCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 	if (!static_cast<CTransportUnit*>(owner)->CanLoadUnloadAtPos(pos, unitToUnload)) {
 		return false;
 	}
-	if (unitToUnload->unitDef->movedata && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope) {
+	if (unitToUnload->unitDef->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->moveDef->maxSlope) {
 		return false;
 	}
 	if (!qf->GetUnitsExact(pos,unitToUnload->radius + 8).empty()) {
@@ -398,7 +398,7 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 	if (!static_cast<CTransportUnit*>(owner)->CanLoadUnloadAtPos(pos, unitToUnload)) {
 		return false;
 	}
-	if (unitToUnload->unitDef->movedata && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope) {
+	if (unitToUnload->unitDef->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->moveDef->maxSlope) {
 		return false;
 	}
 

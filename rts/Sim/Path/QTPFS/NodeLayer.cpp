@@ -61,7 +61,7 @@ void QTPFS::NodeLayer::Clear() {
 	curSpeedBins.clear();
 }
 
-bool QTPFS::NodeLayer::Update(const SRectangle& r, const MoveData* md, const CMoveMath* mm) {
+bool QTPFS::NodeLayer::Update(const SRectangle& r, const MoveDef* md, const CMoveMath* mm) {
 	// NOTE:
 	//   we need a fixed range that does not become wider / narrower
 	//   during terrain deformations (otherwise the bins would change

@@ -32,11 +32,11 @@
 
 static QTPFS::PathManager* pm = NULL;
 
-static const MoveData* GetMoveData() {
-	const MoveData* md = NULL;
+static const MoveDef* GetMoveDef() {
+	const MoveDef* md = NULL;
 	const CUnitSet& unitSet = selectedUnits.selectedUnits;
 
-	if (moveinfo->moveData.empty()) {
+	if (moveDefHandler->moveDefs.empty()) {
 		return md;
 	}
 
@@ -44,8 +44,8 @@ static const MoveData* GetMoveData() {
 		const CUnit* unit = *(unitSet.begin());
 		const UnitDef* unitDef = unit->unitDef;
 
-		if (unitDef->movedata != NULL) {
-			md = unitDef->movedata;
+		if (unitDef->moveDef != NULL) {
+			md = unitDef->moveDef;
 		}
 	}
 
@@ -63,7 +63,7 @@ void QTPFSPathDrawer::DrawAll() const {
 	if (!GML::SimEnabled() && globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
 
-		const MoveData* md = GetMoveData();
+		const MoveDef* md = GetMoveDef();
 
 		if (md != NULL) {
 			glDisable(GL_TEXTURE_2D);
@@ -79,7 +79,7 @@ void QTPFSPathDrawer::DrawAll() const {
 	}
 }
 
-void QTPFSPathDrawer::DrawNodeTree(const MoveData* md) const {
+void QTPFSPathDrawer::DrawNodeTree(const MoveDef* md) const {
 	QTPFS::QTNode* nt = pm->nodeTrees[md->pathType];
 	CVertexArray* va = GetVertexArray();
 
@@ -104,7 +104,7 @@ void QTPFSPathDrawer::DrawNodeTree(const MoveData* md) const {
 
 void QTPFSPathDrawer::DrawNodeTreeRec(
 	const QTPFS::QTNode* nt,
-	const MoveData* md,
+	const MoveDef* md,
 	const CMoveMath* mm,
 	CVertexArray* va
 ) const {
@@ -143,7 +143,7 @@ void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, std::list<const Q
 
 
 
-void QTPFSPathDrawer::DrawPaths(const MoveData* md) const {
+void QTPFSPathDrawer::DrawPaths(const MoveDef* md) const {
 	const QTPFS::PathCache& pathCache = pm->pathCaches[md->pathType];
 	const QTPFS::PathCache::PathMap& paths = pathCache.GetLivePaths();
 
@@ -264,7 +264,7 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list
 
 void QTPFSPathDrawer::DrawNode(
 	const QTPFS::QTNode* node,
-	const MoveData* md,
+	const MoveDef* md,
 	const CMoveMath* mm,
 	CVertexArray* va,
 	bool fillQuad,
@@ -369,7 +369,7 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
 		case CBaseGroundDrawer::drawPathTraversability: {
-			const MoveData* md = GetMoveData();
+			const MoveDef* md = GetMoveDef();
 
 			if (md == NULL)
 				return;
