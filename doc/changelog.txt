@@ -18,9 +18,10 @@ Unitsync:
 Lua:
  - added new Spring.TestMoveOrder(unitDefID, worldx, worldy, worldz) -> boolean
  - added new Spring.Log()
-  - same as Spring.Echo, but passes a LOG_LEVEL to the logsystem (LOG.DEBUG is by default hidden for release builds)
-  - Spring.Log(int loglevel, ...)     (with loglevel either: LOG.DEBUG, LOG.INFO, LOG.WARNING, LOG.ERROR, LOG.FATAL)
-  - Spring.Log(string loglevel, ...)  (with either: "debug", "info", "warning", "error", "fatal" [lower-/uppercase doesn't matter])
+  - same as Spring.Echo, but passes metadata to the logsystem
+  ! to be able to use LOG.XYZ you need to update your system.lua
+  - Spring.Log(string logsection, int loglevel, ...)     (with loglevel either: LOG.DEBUG, LOG.INFO, LOG.WARNING, LOG.ERROR, LOG.FATAL)
+  - Spring.Log(string logsection, string loglevel, ...)  (with either: "debug", "info", "warning", "error", "fatal" [lower-/uppercase doesn't matter])
  - fixed WeaponDefs[123].pairs()
  - added myGravity tag to WeaponDefs[] table (thx DeadnightWarrior)
  ! distinguish water-damage in Unit{Pre}Damaged

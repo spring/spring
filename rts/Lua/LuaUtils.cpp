@@ -793,23 +793,25 @@ bool LuaUtils::PushLogEntries(lua_State* L)
 	Logs a msg to the logfile / console
 	@param loglevel loglevel that will be used for the message
 	@param msg string to be logged
-	@fn Spring.Log(int loglevel, ...)
-	@fn Spring.Log(string loglevel, ...)
+	@fn Spring.Log(string logsection, int loglevel, ...)
+	@fn Spring.Log(string logsection, string loglevel, ...)
 */
 int LuaUtils::Log(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if (args < 1)
-		return luaL_error(L, "Incorrect arguments to Spring.Log(loglevel, ...)");
 	if (args < 2)
+		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
+	if (args < 3)
 		return 0;
 
+	const std::string section = luaL_checkstring(L, 1);
+
 	int loglevel;
-	if (lua_israwnumber(L, 1)) {
-		loglevel = lua_tonumber(L, 1);
+	if (lua_israwnumber(L, 2)) {
+		loglevel = lua_tonumber(L, 2);
 	}
-	else if (lua_israwstring(L, 1)) {
-		std::string loglvlstr = lua_tostring(L, 1);
+	else if (lua_israwstring(L, 2)) {
+		std::string loglvlstr = lua_tostring(L, 2);
 		StringToLowerInPlace(loglvlstr);
 		if (loglvlstr == "debug") {
 			loglevel = LOG_LEVEL_DEBUG;
@@ -827,15 +829,15 @@ int LuaUtils::Log(lua_State* L)
 			loglevel = LOG_LEVEL_FATAL;
 		}
 		else {
-			return luaL_error(L, "Incorrect arguments to Spring.Log(loglevel, ...)");
+			return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
 		}
 	}
 	else {
-		return luaL_error(L, "Incorrect arguments to Spring.Log(loglevel, ...)");
+		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
 	}
 
-	const std::string msg = getprintf_msg(L, 2);
-	LOG_I(loglevel, msg.c_str());
+	const std::string msg = getprintf_msg(L, 3);
+	LOG_SI(section.c_str(), loglevel, msg.c_str());
 	return 0;
 }
 

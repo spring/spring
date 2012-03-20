@@ -110,6 +110,12 @@ ${!echonow} "Base dir:   <engine-source-root>/installer/"
 	${!echonow} "Using NSI_UNINSTALL_FILES:  ${NSI_UNINSTALL_FILES}"
 !endif
 
+!ifndef VCREDIST
+	!error "VCREDIST not defined"
+!else
+	${!echonow} "Using VCREDIST:             ${VCREDIST}"
+!endif
+
 
 Section "Engine" SEC_MAIN
 	; make this section read-only -> user can not deselect it
@@ -122,6 +128,8 @@ Section "Engine" SEC_MAIN
 		!include "sections\springsettings.nsh"
 		${!echonow} "Processing: deprecated"
 	        !include "sections\deprecated.nsh"
+		${!echonow} "Processing: vcredist"
+		!include "sections\vcredist.nsh"
 	!undef INSTALL
 SectionEnd
 
