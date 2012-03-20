@@ -41,6 +41,9 @@ Bugfixes:
  - fixed spring-mt & spring-safemode links in window's startmenu
  - fixed incorrect drawMidPos (e.g. used for command line drawing)
 
+Installer:
+ ! add vcredist_x86.exe to the installer / remove MSVCR71.dll from mingwlibs
+ - fixed safemode shortcuts
 
 -- 87.0 ---------------------------------------------------------
 Bugfixes:
