@@ -6,6 +6,8 @@
 
 namespace DebugColVolDrawer
 {
+	extern bool enable;
+
 	void Draw();
 };
 

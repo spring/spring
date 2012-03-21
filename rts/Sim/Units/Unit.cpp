@@ -646,34 +646,35 @@ void CUnit::Update()
 
 	posErrorVector += posErrorDelta;
 
-	if (beingBuilt) {
-		return;
+	{
+		const bool oldInAir   = inAir;
+		const bool oldInWater = inWater;
+
+		inWater = (pos.y <= 0.0f);
+		inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x,pos.z)) > 1.0f);
+		isUnderWater = ((pos.y + ((mobility != NULL && mobility->subMarine)? 0.0f: model->height)) < 0.0f);
+
+		if (inAir != oldInAir) {
+			if (inAir) {
+				eventHandler.UnitEnteredAir(this);
+			} else {
+				eventHandler.UnitLeftAir(this);
+			}
+		}
+		if (inWater != oldInWater) {
+			if (inWater) {
+				eventHandler.UnitEnteredWater(this);
+			} else {
+				eventHandler.UnitLeftWater(this);
+			}
+		}
 	}
+
+	if (beingBuilt)
+		return;
 
 	// 0.968 ** 16 is slightly less than 0.6, which was the old value used in SlowUpdate
 	residualImpulse *= 0.968f;
-
-	const bool oldInAir   = inAir;
-	const bool oldInWater = inWater;
-
-	inWater = (pos.y <= 0.0f);
-	inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x,pos.z)) > 1.0f);
-	isUnderWater = ((pos.y + ((mobility != NULL && mobility->subMarine)? 0.0f: model->height)) < 0.0f);
-
-	if (inAir != oldInAir) {
-		if (inAir) {
-			eventHandler.UnitEnteredAir(this);
-		} else {
-			eventHandler.UnitLeftAir(this);
-		}
-	}
-	if (inWater != oldInWater) {
-		if (inWater) {
-			eventHandler.UnitEnteredWater(this);
-		} else {
-			eventHandler.UnitLeftWater(this);
-		}
-	}
 
 	if (travelPeriod != 0.0f) {
 		travel += speed.Length();
@@ -1055,12 +1056,12 @@ float CUnit::GetFlankingDamageBonus(const float3& attackDir)
 
 void CUnit::DoWaterDamage()
 {
-	if (mapInfo->water.damage <= 0.0f) {
+	if (mapInfo->water.damage <= 0.0f)
 		return;
-	}
-	if (!pos.IsInBounds()) {
+	if (!pos.IsInBounds())
 		return;
-	}
+	if (pos.y > 0.0f)
+		return;
 
 	const int  px            = pos.x / (SQUARE_SIZE * 2);
 	const int  pz            = pos.z / (SQUARE_SIZE * 2);
@@ -1068,9 +1069,12 @@ void CUnit::DoWaterDamage()
 	const bool onGround      = (physicalState == CSolidObject::OnGround);
 	const bool isWaterSquare = (readmap->GetMIPHeightMapSynced(1)[pz * gs->hmapx + px] <= 0.0f);
 
-	if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
-		DoDamage(DamageArray(mapInfo->water.damage), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED);
-	}
+	if (!isWaterSquare)
+		return;
+	if (!isFloating && !onGround)
+		return;
+
+	DoDamage(DamageArray(mapInfo->water.damage), ZeroVector, NULL, -DAMAGE_EXTSOURCE_WATER);
 }
 
 void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID)

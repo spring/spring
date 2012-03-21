@@ -367,7 +367,7 @@ void FBO::AttachRenderBuffer(const GLuint rboId, const GLenum attachment)
  */
 void FBO::Detach(const GLenum attachment)
 {
-	GLuint target;
+	GLuint target = 0;
 	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment,
 		GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT,
 		(GLint*)&target);

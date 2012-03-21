@@ -368,10 +368,10 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 
 			// clamp the update rect to the patch constraints
 			SRectangle prect(
-				std::max(rect.x1 - p.m_WorldX, 0),
-				std::max(rect.z1 - p.m_WorldY, 0),
-				std::min(rect.x2 - p.m_WorldX, PATCH_SIZE),
-				std::min(rect.z2 - p.m_WorldY, PATCH_SIZE)
+				std::max(rect.x1 - 1 - p.m_WorldX, 0),
+				std::max(rect.z1 - 1 - p.m_WorldY, 0),
+				std::min(rect.x2 + 1 - p.m_WorldX, PATCH_SIZE),
+				std::min(rect.z2 + 1 - p.m_WorldY, PATCH_SIZE)
 			);
 
 			p.UpdateHeightMap(prect);

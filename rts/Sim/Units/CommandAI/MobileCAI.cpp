@@ -294,7 +294,7 @@ bool CMobileCAI::RefuelIfNeeded()
 		inCommand = false;
 
 		CAirBaseHandler::LandingPad* lp =
-			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
 
 		if (lp != NULL) {
 			// found a pad
@@ -313,22 +313,22 @@ bool CMobileCAI::RefuelIfNeeded()
 				StopMove();
 			}
 		}
+
 		return true;
-	} else if (owner->moveType->WantsRefuel() && true
-		/* (commandQue.empty() || commandQue.front().id == CMD_PATROL || commandQue.front().id == CMD_FIGHT) */) {
+	} else if (owner->moveType->WantsRefuel()) {
 		// current fuel level is below our bingo threshold
 		// note: force the refuel attempt (irrespective of
 		// what our currently active command is)
 
 		CAirBaseHandler::LandingPad* lp =
-			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
 
 		if (lp != NULL) {
 			StopMove();
 			owner->userAttackGround = false;
 			owner->SetUserTarget(NULL);
-			inCommand = false;
 			owner->moveType->ReservePad(lp);
+			inCommand = false;
 			return true;
 		}
 	}
@@ -347,7 +347,7 @@ bool CMobileCAI::LandRepairIfNeeded()
 
 	// we're damaged, just seek a pad for repairs
 	CAirBaseHandler::LandingPad* lp =
-		airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+		airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
 
 	if (lp != NULL) {
 		owner->moveType->ReservePad(lp);

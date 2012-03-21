@@ -67,6 +67,10 @@ CR_REG_METADATA(CMoveInfo, (
 
 CMoveInfo* moveinfo;
 
+// FIXME: do something with these magic numbers
+static const float MAX_ALLOWED_WATER_DAMAGE_GMM = 1e3f;
+static const float MAX_ALLOWED_WATER_DAMAGE_HMM = 1e4f;
+
 static float DegreesToMaxSlope(float degrees)
 {
 	// Prevent MSVC from inlining stuff that would break the
@@ -120,15 +124,9 @@ CMoveInfo::CMoveInfo()
 		crc << md->GetCheckSum();
 	}
 
-
-	// FIXME: do something with these magic numbers
-	if (mapInfo->water.damage >= 1000.0f) {
-		CGroundMoveMath::waterDamageCost = 0.0f; // block water
-	} else {
-		CGroundMoveMath::waterDamageCost = 1.0f / (1.0f + mapInfo->water.damage * 0.1f);
-	}
-
-	CHoverMoveMath::noWaterMove = (mapInfo->water.damage >= 10000.0f);
+	CHoverMoveMath::noWaterMove = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_HMM);
+	CGroundMoveMath::waterDamageCost = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_GMM)?
+		0.0f: (1.0f / (1.0f + mapInfo->water.damage * 0.1f));
 
 	crc << CGroundMoveMath::waterDamageCost;
 	crc << CHoverMoveMath::noWaterMove;
@@ -257,7 +255,7 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileIdleMult", 0.35f));
 	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 0.65f));
 
-	avoidMobilesOnPath = speedModMultsTable.GetBool("avoidMobilesOnPath", true);
+	avoidMobilesOnPath = moveTable.GetBool("avoidMobilesOnPath", false);
 	heatMapping = moveTable.GetBool("heatMapping", false);
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
 	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
@@ -316,6 +314,23 @@ MoveData::MoveData(CMoveInfo* moveInfo, const LuaTable& moveTable, int moveDefID
 	assert((zsize & 1) == 1);
 }
 
+bool MoveData::TestMoveSquare(const int hmx, const int hmz) const {
+	bool ret = true;
+
+	// test the entire footprint
+	for (int i = hmx - xsizeh; i <= hmx + xsizeh; i++) {
+		for (int j = hmz - zsizeh; j <= hmz + zsizeh; j++) {
+			const float speedMod = moveMath->GetPosSpeedMod(*this, hmx + i, hmz + j);
+			const CMoveMath::BlockType blockBits = moveMath->IsBlocked(*this, hmx + i, hmz + j);
+
+			// check both terrain and the blocking-map
+			ret &= ((speedMod > 0.0f) && ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0));
+		}
+	}
+
+	return ret;
+}
+
 float MoveData::GetDepthMod(const float height) const {
 	// [DEPTHMOD_{MIN, MAX}_HEIGHT] are always >= 0,
 	// so we return early for positive height values
@@ -345,23 +360,16 @@ float MoveData::GetDepthMod(const float height) const {
 unsigned int MoveData::GetCheckSum() const {
 	unsigned int sum = 0;
 
+	const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&moveType);
+	const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&heatProduced) + sizeof(heatProduced);
+
+	assert(minByte < maxByte);
+
 	// NOTE:
 	//   safe so long as MoveData has no virtuals and we
 	//   make sure we do not checksum the pointer-members
-	const unsigned char* bytes = reinterpret_cast<const unsigned char*>(this);
-	const unsigned char* ptrs[3] = {
-		reinterpret_cast<const unsigned char*>(&this->name),
-		reinterpret_cast<const unsigned char*>(&this->moveMath),
-		reinterpret_cast<const unsigned char*>(&this->tempOwner),
-	};
-
-	for (unsigned int n = 0; n < sizeof(*this); ) {
-		if (&bytes[n] == ptrs[0]) { n += sizeof(std::string);   continue; }
-		if (&bytes[n] == ptrs[1]) { n += sizeof(CMoveMath*);    continue; }
-		if (&bytes[n] == ptrs[2]) { n += sizeof(CSolidObject*); continue; }
-
-		sum ^= (((n + 1) << 8) * bytes[n]);
-		n += 1;
+	for (const unsigned char* byte = minByte; byte != maxByte; byte++) {
+		sum ^= ((((byte + 1) - minByte) << 8) * (*byte));
 	}
 
 	return sum;

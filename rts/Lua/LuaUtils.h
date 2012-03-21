@@ -76,6 +76,8 @@ class LuaUtils {
 		// from LuaParser.cpp / LuaUnsyncedCtrl.cpp
 		// (implementation copied from lua/src/lib/lbaselib.c)
 		static int Echo(lua_State* L);
+		static int Log(lua_State* L);
+		static bool PushLogEntries(lua_State* L);
 
 		static int ZlibCompress(lua_State* L);
 		static int ZlibDecompress(lua_State* L);

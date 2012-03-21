@@ -16,6 +16,15 @@ class CFeature;
 class CLoadSaveInterface;
 struct BuildInfo;
 
+
+enum BuildSquareStatus {
+	BUILDSQUARE_BLOCKED     = 0,
+	BUILDSQUARE_OCCUPIED    = 1,
+	BUILDSQUARE_RECLAIMABLE = 2,
+	BUILDSQUARE_OPEN        = 3
+};
+
+
 class CUnitHandler
 {
 	CR_DECLARE(CUnitHandler)
@@ -34,11 +43,7 @@ public:
 	unsigned int MaxUnits() const { return maxUnits; }
 
 	///< test if a unit can be built at specified position
-	///<   return values for the following is
-	///<   0 blocked
-	///<   1 mobile unit in the way
-	///<   2 free (or if feature is != 0 then with a blocking feature that can be reclaimed)
-	int TestUnitBuildSquare(
+	BuildSquareStatus TestUnitBuildSquare(
 		const BuildInfo&,
 		CFeature*&,
 		int allyteam,
@@ -48,9 +53,6 @@ public:
 		std::vector<float3>* nobuildpos = NULL,
 		const std::vector<Command>* commands = NULL
 	);
-	///< test a single mapsquare for build possibility
-	int TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature, int allyteam, bool synced);
-
 	/// Returns true if a unit of type unitID can be built, false otherwise
 	bool CanBuildUnit(const UnitDef* unitdef, int team) const;
 
@@ -70,10 +72,14 @@ public:
 
 	std::list<CUnit*> activeUnits;                    ///< used to get all active units
 	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
-	std::list<CBuilderCAI*> builderCAIs; //FIXME use std::set?
+	std::list<CBuilderCAI*> builderCAIs; //FIXME use std::set? (std::set is ingeneral not syncsafe, but when using a custom compare func it can)
 
 	float maxUnitRadius;                              ///< largest radius of any unit added so far
 	bool morphUnitToFeature;
+
+private:
+	///< test a single mapsquare for build possibility
+	BuildSquareStatus TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature, int allyteam, bool synced);
 
 private:
 	std::list<unsigned int> freeUnitIDs;
