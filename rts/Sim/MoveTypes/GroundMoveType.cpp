@@ -1520,8 +1520,12 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		eventHandler.UnitUnitCollision(collider, collidee);
 
+		const float colliderRelRadius = colliderRadius / (colliderRadius + collideeRadius);
+		const float collideeRelRadius = collideeRadius / (colliderRadius + collideeRadius);
+		const float collisionRadiusSum = (colliderRadius * colliderRelRadius + collideeRadius * collideeRelRadius);
+
 		const float  sepDistance    = separationVector.Length() + 0.01f;
-		const float  penDistance    = std::max((colliderRadius + collideeRadius) - sepDistance, 1.0f);
+		const float  penDistance    = std::max(collisionRadiusSum - sepDistance, 1.0f);
 		const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
 
 		const float3 sepDirection   = (separationVector / sepDistance);
@@ -1535,12 +1539,27 @@ void CGroundMoveType::HandleUnitCollisions(
 			c1 = 1.0f + (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
 			c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
 			s1 = m1 * v1 * c1,
-			s2 = m2 * v2 * c2;
+			s2 = m2 * v2 * c2,
+ 			r1 = s1 / (s1 + s2 + 1.0f),
+ 			r2 = s2 / (s1 + s2 + 1.0f);
 
 		// far from a realistic treatment, but works
 		const float collisionMassSum  = s1 + s2 + 1.0f;
-		      float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
-		      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
+		      float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r1));
+		      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r2));
+
+		if (collider->isMoving && collidee->isMoving) {
+			#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
+			// push collider and collidee laterally in opposite directions
+			const int colliderSign = SIGN( separationVector.dot(collider->rightdir));
+			const int collideeSign = SIGN(-separationVector.dot(collidee->rightdir));
+			const float3 colliderSlideVec = collider->rightdir * colliderSign * (1.0f / penDistance);
+			const float3 collideeSlideVec = collidee->rightdir * collideeSign * (1.0f / penDistance);
+ 
+			if (pushCollider) { collider->Move3D(colliderSlideVec * r2, true); }
+			if (pushCollidee) { collidee->Move3D(collideeSlideVec * r1, true); }
+			#undef SIGN
+		}
 
 		if (!collideeMobile) {
 			const float3 colliderNxtPos = colliderCurPos + collider->speed;
