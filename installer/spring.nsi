@@ -231,7 +231,7 @@ Function .onInit
 	skiprunchecks:
 
 	; enable/disable sections depending on parameters
-	!include "sections/SetupSections.nsh"
+	!include "sections/setupSections.nsh"
 FunctionEnd
 
 Function un.onUninstSuccess
