@@ -69,8 +69,6 @@ protected:
 	void HandleObjectCollisions();
 	void HandleUnitCollisions(
 		CUnit* collider,
-		const float3& colliderCurPos,
-		const float3& colliderOldPos,
 		const float colliderSpeed,
 		const float colliderRadius,
 		const float3& sepDirMask,
@@ -79,8 +77,6 @@ protected:
 		const CMoveMath* colliderMM);
 	void HandleFeatureCollisions(
 		CUnit* collider,
-		const float3& colliderCurPos,
-		const float3& colliderOldPos,
 		const float colliderSpeed,
 		const float colliderRadius,
 		const float3& sepDirMask,
