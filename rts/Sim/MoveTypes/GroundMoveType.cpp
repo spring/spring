@@ -56,7 +56,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define DEBUG_OUTPUT 0
 #define WAIT_FOR_PATH 1
 #define IGNORE_OBSTACLES 0
-#define FIX_EQUAL_MOMENTUM_COLLISIONS 1
 #define PLAY_SOUNDS 1
 
 #define OWNER_CMD_QUE owner->commandAI->commandQue
@@ -1511,46 +1510,14 @@ void CGroundMoveType::HandleUnitCollisions(
 			v1 = std::max(1.0f, colliderSpeed), // TODO: precalculate
 			v2 = std::max(1.0f, collideeSpeed), // TODO: precalculate
 			c1 = 1.0f + (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
-			c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f;
-		float
+			c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
 			s1 = m1 * v1 * c1,
 			s2 = m2 * v2 * c2;
-		float
-			r1 = s1 / (s1 + s2 + 1.0f),
-			r2 = s2 / (s1 + s2 + 1.0f);
-
-
-		#if (FIX_EQUAL_MOMENTUM_COLLISIONS == 1)
-		#define HAS_ROW(p, v, mx, mz)                                     \
-			(p.x < mx && p.z < mz && (v.x >=  0.01f || v.z >=  0.01f)) || \
-			(p.x > mx && p.z < mz && (v.x <  -0.01f || v.z >=  0.01f)) || \
-			(p.x < mx && p.z > mz && (v.x >=  0.01f || v.z <  -0.01f)) || \
-			(p.x > mx && p.z > mz && (v.x <  -0.01f || v.z <  -0.01f))
-
-		if (collider->isMoving && collidee->isMoving) {
-			// if both parties are moving and have roughly equal momentum,
-			// give right-of-way based on quadrant and movement direction
-			if (0.45f <= r1 && r1 <= 0.55f) {
-				if (HAS_ROW(collider->pos, collider->speed, float3::maxxpos * 0.5f, float3::maxzpos * 0.5f)) {
-					s1 *= 1e+1f;
-					s2 *= 1e-1f;
-				} else {
-					s2 *= 1e+1f;
-					s1 *= 1e-1f;
-				}
-
-				r1 = s1 / (s1 + s2 + 1.0f);
-				r2 = s2 / (s1 + s2 + 1.0f);
-			}
-		}
-
-		#undef COLLIDER_ROW
-		#endif
-
 
 		// far from a realistic treatment, but works
-		float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r1));
-		float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r2));
+		const float collisionMassSum  = s1 + s2 + 1.0f;
+		      float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
+		      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
 
 		if (!collideeMobile) {
 			const float3 colliderNxtPos = colliderCurPos + collider->speed;
@@ -1683,12 +1650,11 @@ void CGroundMoveType::HandleFeatureCollisions(
 			c1 = (1.0f - math::fabs( collider->frontdir.dot(-sepDirection))) * 5.0f,
 			c2 = (1.0f - math::fabs(-collider->frontdir.dot( sepDirection))) * 5.0f,
 			s1 = m1 * v1 * c1,
-			s2 = m2 * v2 * c2,
-			r1 = s1 / (s1 + s2 + 1.0f),
-			r2 = s2 / (s1 + s2 + 1.0f);
+			s2 = m2 * v2 * c2;
 
-		const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r1));
-	//	const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r2));
+		const float collisionMassSum  = s1 + s2 + 1.0f;
+		const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
+	//	const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
 
 		if (collidee->reachedFinalPos) {
 			const float3 colliderNxtPos = colliderCurPos + collider->speed;
