@@ -143,7 +143,7 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 	// Do animations
 	switch (aircraftState) {
 		case AIRCRAFT_LANDED:
-			if (padStatus == 0) {
+			if (padStatus == PAD_STATUS_FLYING) {
 				// set us on ground if we are not on a pad
 				owner->physicalState = CSolidObject::OnGround;
 				owner->Block();
@@ -838,7 +838,7 @@ bool CHoverAirMoveType::Update()
 		if (reservedPad != NULL) {
 			MoveToRepairPad();
 
-			if (padStatus >= 1) {
+			if (padStatus >= PAD_STATUS_LANDING) {
 				flyState = FLY_LANDING;
 			}
 		}
@@ -885,7 +885,7 @@ void CHoverAirMoveType::SlowUpdate()
 	// but only MobileCAI's reserve pads so we need to do
 	// this for ourselves
 	if (reservedPad == NULL && aircraftState == AIRCRAFT_FLYING && WantsRepair()) {
-		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
 
 		if (lp != NULL) {
 			AAirMoveType::ReservePad(lp);
@@ -967,7 +967,7 @@ bool CHoverAirMoveType::HandleCollisions()
 
 		// check for collisions if not on a pad, not being built, or not taking off
 		// includes an extra condition for transports, which are exempt while loading
-		const bool checkCollisions = collide && !owner->beingBuilt && (padStatus == 0) && (aircraftState != AIRCRAFT_TAKEOFF);
+		const bool checkCollisions = collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF);
 
 		if (!loadingUnits && checkCollisions) {
 			const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);

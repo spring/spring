@@ -195,7 +195,7 @@ public:
 
 	// to smooth out SimFrame calls
 	int leastQue;          ///< Lowest value of que in the past second.
-	float timeLeft;        ///< How many SimFrame() calls we still may do.
+	float msgProcTimeLeft; ///< How many SimFrame() calls we still may do.
 	float consumeSpeed;    ///< How fast we should eat NETMSG_NEWFRAMEs.
 	spring_time lastframe; ///< time of previous ClientReadNet() call.
 

@@ -866,6 +866,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 	FILE* out = fopen(filename.c_str(), "wt");
 	if (!out) {
+		LOG_L(L_ERROR, "Failed to write to \"%s\"!", filename.c_str());
 		return;
 	}
 
@@ -966,7 +967,8 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	fprintf(out, "}\n\n"); // close 'archiveCache'
 	fprintf(out, "return archiveCache\n");
 
-	fclose(out);
+	if (fclose(out) == EOF) 
+		LOG_L(L_ERROR, "Failed to write to \"%s\"!", filename.c_str());
 
 	isDirty = false;
 }
@@ -1033,7 +1035,15 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 	std::string lcname = StringToLower(ArchiveFromName(root));
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.find(lcname);
 	if (aii == archiveInfos.end()) {
+#ifdef UNITSYNC
+		// unresolved dep, add it, so unitsync still shows this file
+		if (!ret.empty()) {
+			ret.push_back(lcname);
+		}
+		return ret;
+#else
 		throw content_error("Archive \"" + lcname + "\" not found");
+#endif
 	}
 
 	//! Check if this archive has been replaced

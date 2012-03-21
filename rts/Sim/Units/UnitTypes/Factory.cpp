@@ -247,19 +247,23 @@ unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buil
 	assert(!beingBuilt);
 	assert(buildeeDef != NULL);
 
+	if (finishedBuildFunc != NULL)
+		return FACTORY_KEEP_BUILD_ORDER;
+	if (curBuild != NULL)
+		return FACTORY_KEEP_BUILD_ORDER;
 	if (uh->unitsByDefs[team][buildeeDef->id].size() >= buildeeDef->maxThisUnit)
 		return FACTORY_SKIP_BUILD_ORDER;
 	if (teamHandler->Team(team)->AtUnitLimit())
 		return FACTORY_KEEP_BUILD_ORDER;
 	if (luaRules && !luaRules->AllowUnitCreation(buildeeDef, this, NULL))
 		return FACTORY_SKIP_BUILD_ORDER;
-	if (curBuild != NULL)
-		return FACTORY_KEEP_BUILD_ORDER;
 
 	finishedBuildFunc = buildFunc;
 	finishedBuildCommand = buildCmd;
 	curBuildDef = buildeeDef;
 	nextBuildUnitDefID = buildeeDef->id;
+
+	// signal that the build-order was accepted (queued)
 	return FACTORY_NEXT_BUILD_ORDER;
 }
 
