@@ -128,11 +128,8 @@ Section "Engine" SEC_MAIN
 		!include "sections\springsettings.nsh"
 		${!echonow} "Processing: deprecated"
 	        !include "sections\deprecated.nsh"
-		${!echonow} "Processing: vcredist"
-		!include "sections\vcredist.nsh"
 	!undef INSTALL
 SectionEnd
-
 
 SectionGroup "Multiplayer battlerooms"
 	Section "SpringLobby" SEC_SPRINGLOBBY
@@ -196,6 +193,12 @@ Section /o "Portable" SEC_PORTABLE
 	!undef INSTALL
 SectionEnd
 
+Section "" SEC_VCREDIST
+	!define INSTALL
+		${!echonow} "Processing: vcredist"
+		!include "sections\vcredist.nsh"
+	!undef INSTALL
+SectionEnd
 
 !include "sections\sectiondesc.nsh"
 
@@ -231,7 +234,7 @@ Function .onInit
 	skiprunchecks:
 
 	; enable/disable sections depending on parameters
-	!include "sections/SetupSections.nsh"
+	!include "sections/setupSections.nsh"
 FunctionEnd
 
 Function un.onUninstSuccess
