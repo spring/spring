@@ -8,7 +8,7 @@ If    (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pr-downloader/CMakeLists.txt")
 	If (CURL_FOUND)
 		Add_Subdirectory(pr-downloader)
 	Else(CURL_FOUND)
-		MESSAGE(WARNING "libcurl not found, pr-downloader disabled")
+		MESSAGE(STATUS "pr-downloader will NOT be generated/installed; libcurl not found")
 	EndIf(CURL_FOUND)
 EndIf (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pr-downloader/CMakeLists.txt")
 
