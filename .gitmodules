@@ -16,3 +16,6 @@
 [submodule "tools/unitsync/python"]
 	path = tools/unitsync/python
 	url = git://github.com/spring/pyunitsync.git
+[submodule "tools/pr-downloader"]
+	path = tools/pr-downloader
+	url = git://github.com/abma/pr-downloader.git
