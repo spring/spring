@@ -39,6 +39,9 @@ public:
 	// same as GroundBlocked(), but does not bounds-check mapSquare
 	CSolidObject* GroundBlockedUnsafe(int mapSquare, bool topMost = true);
 
+	bool GroundBlocked(int x, int z, CSolidObject* ignoreObj) const;
+	bool GroundBlocked(const float3& pos, CSolidObject* ignoreObj) const;
+
 	// for full thread safety, access via GetCell would need to be mutexed, but it appears only sim thread uses it
 	const BlockingMapCell& GetCell(int mapSquare) const {
 		return groundBlockingMap[mapSquare];

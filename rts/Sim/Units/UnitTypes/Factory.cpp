@@ -145,11 +145,11 @@ void CFactory::Update()
 
 
 void CFactory::StartBuild(const UnitDef* buildeeDef) {
-	const float3        buildPos = CalcBuildPos();
-	const CSolidObject* solidObj = groundBlockingObjectMap->GroundBlocked(buildPos, true);
+	const float3 buildPos = CalcBuildPos();
+	const bool   blocked  = groundBlockingObjectMap->GroundBlocked(buildPos, this);
 
 	// wait until buildPos is no longer blocked (eg. by a previous buildee)
-	if (solidObj == NULL || solidObj == this) {
+	if (!blocked) {
 		CUnit* b = unitLoader->LoadUnit(buildeeDef, buildPos, team, true, buildFacing, this);
 
 		if (!unitDef->canBeAssisted) {
