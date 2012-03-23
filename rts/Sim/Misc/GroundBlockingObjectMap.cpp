@@ -164,7 +164,7 @@ void CGroundBlockingObjectMap::MoveGroundBlockingObject(CSolidObject* object, fl
   * If it's not blocked (empty), then NULL is returned. Otherwise, a
   * pointer to the top-most / bottom-most blocking object is returned.
   */
-CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare, bool topMost) {
+CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare) const {
 	GML_STDMUTEX_LOCK(block); // GroundBlockedUnsafe
 
 	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
@@ -173,36 +173,22 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare, bool 
 		return NULL;
 	}
 
-	BlockingMapCellIt it = cell.begin();
-	CSolidObject* p = it->second;
-	CSolidObject* q = it->second;
-	++it;
-
-	for (; it != cell.end(); ++it) {
-		CSolidObject* obj = it->second;
-		if (obj->pos.y > p->pos.y) { p = obj; }
-		if (obj->pos.y < q->pos.y) { q = obj; }
-	}
-
-	return ((topMost)? p: q);
+	return cell.begin()->second;
 }
 
-CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int mapSquare, bool topMost) {
-	if (mapSquare < 0 || mapSquare >= gs->mapSquares) {
-		return NULL;
-	}
 
-	return GroundBlockedUnsafe(mapSquare, topMost);
+CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int x, int z) const {
+	if (x < 0 || x >= gs->mapx || z < 0 || z >= gs->mapy)
+		return NULL;
+
+	return GroundBlockedUnsafe(x + z * gs->mapx);
 }
 
-CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos, bool topMost) {
-	if (!pos.IsInBounds()) {
-		return NULL;
-	}
 
+CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos) const {
 	const int xSqr = int(pos.x / SQUARE_SIZE);
 	const int zSqr = int(pos.z / SQUARE_SIZE);
-	return GroundBlocked(xSqr + zSqr * gs->mapx, topMost);
+	return GroundBlocked(xSqr, zSqr);
 }
 
 
@@ -250,6 +236,7 @@ bool CGroundBlockingObjectMap::GroundBlocked(const float3& pos, CSolidObject* ig
 	const int zSqr = int(pos.z / SQUARE_SIZE);
 	return GroundBlocked(xSqr, zSqr, ignoreObj);
 }
+
 
 
 /**

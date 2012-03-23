@@ -491,9 +491,9 @@ BuildSquareStatus CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef
 	BuildSquareStatus ret = BUILDSQUARE_OPEN;
 	const int yardxpos = int(pos.x + 4) / SQUARE_SIZE;
 	const int yardypos = int(pos.z + 4) / SQUARE_SIZE;
-	CSolidObject* s;
+	CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
 
-	if ((s = groundBlockingObjectMap->GroundBlocked(yardypos * gs->mapx + yardxpos))) {
+	if (s != NULL) {
 		CFeature* f;
 		if ((f = dynamic_cast<CFeature*>(s))) {
 			if ((allyteam < 0) || f->IsInLosForAllyTeam(allyteam)) {

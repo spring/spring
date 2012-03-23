@@ -328,7 +328,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				int yardypos=int(bi.pos.z+4)/SQUARE_SIZE;
 				CSolidObject* s;
 				CUnit* u;
-				if((s=groundBlockingObjectMap->GroundBlocked(yardypos*gs->mapx+yardxpos)) &&
+				if((s=groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos)) &&
 				   (u=dynamic_cast<CUnit*>(s)) &&
 				   u->beingBuilt && (u->buildProgress == 0.0f) &&
 				   (!u->soloBuilder || (u->soloBuilder == owner)))
