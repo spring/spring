@@ -24,11 +24,20 @@ public:
 	virtual void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 	virtual void StopMoving() = 0;
 	virtual void ImpulseAdded(const float3&) {}
+	virtual void LeaveTransport() {}
 
 	virtual void SetGoal(const float3& pos) { goalPos = pos; }
-	virtual void SetMaxSpeed(float speed);
-	virtual void SetWantedMaxSpeed(float speed);
-	virtual void LeaveTransport() {}
+
+	// NOTE:
+	//     SetMaxSpeed is ONLY called by LuaSyncedMoveCtrl now
+	//     other code (CommandAI) modifies a unit's speed only
+	//     through SetMaxWantedSpeed, via SET_WANTED_MAX_SPEED
+	//     commands
+	// NOTE:
+	//     clamped because too much code in the derived
+	//     MoveType classes expects maxSpeed to be != 0
+	virtual void SetMaxSpeed(float speed) { maxSpeed = std::max(0.001f, speed); }
+	virtual void SetWantedMaxSpeed(float speed) { maxWantedSpeed = speed; }
 
 	virtual bool Update() = 0;
 	virtual void SlowUpdate();
@@ -71,7 +80,7 @@ public:
 protected:
 	float maxSpeed;            // current maximum speed owner is allowed to reach (changes with eg. guard orders)
 	float maxSpeedDef;         // default maximum speed owner can reach (as defined by its UnitDef, never changes)
-	float maxWantedSpeed;      // FIXME: largely redundant / unused except by StrafeAirMoveType
+	float maxWantedSpeed;      // maximum speed (temporarily) set by a CMD_SET_WANTED_MAX_SPEED modifier command
 
 	float repairBelowHealth;
 };

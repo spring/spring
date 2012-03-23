@@ -75,7 +75,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(maxReverseSpeed),
 	CR_MEMBER(wantedSpeed),
 	CR_MEMBER(currentSpeed),
-	CR_MEMBER(requestedSpeed),
 	CR_MEMBER(deltaSpeed),
 
 	CR_MEMBER(pathId),
@@ -135,7 +134,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	maxReverseSpeed(0.0f),
 	wantedSpeed(0.0f),
 	currentSpeed(0.0f),
-	requestedSpeed(0.0f),
 	deltaSpeed(0.0f),
 
 	pathId(0),
@@ -180,6 +178,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	moveSquareX = owner->pos.x / MIN_WAYPOINT_DISTANCE;
 	moveSquareY = owner->pos.z / MIN_WAYPOINT_DISTANCE;
 
+	// maxSpeed is set in AMoveType's ctor
 	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
 
 	turnRate = owner->unitDef->turnRate;
@@ -385,7 +384,6 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 	goalPos.z = moveGoalPos.z;
 	goalPos.y = 0.0f;
 	goalRadius = _goalRadius;
-	requestedSpeed = speed;
 	atGoal = false;
 
 	useMainHeading = false;
@@ -489,7 +487,7 @@ bool CGroundMoveType::FollowPath()
 		ASSERT_SYNCED(wantedDir);
 
 		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
-		ChangeSpeed(requestedSpeed, wantReverse);
+		ChangeSpeed(maxWantedSpeed, wantReverse);
 	}
 
 	pathManager->UpdatePath(owner, pathId);
@@ -507,7 +505,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 		return;
 	}
 
-	// wanted speed and acceleration
+	// first calculate the "unrestricted" speed and acceleration
 	float targetSpeed = wantReverse? maxReverseSpeed: maxSpeed;
 
 	#if (WAIT_FOR_PATH == 1)
@@ -562,6 +560,11 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 				}
 			}
 
+			// now apply the terrain and command restrictions
+			// NOTE:
+			//     if wantedSpeed > targetSpeed, the unit will
+			//     not accelerate to speed > targetSpeed unless
+			//     its actual max{Reverse}Speed is also changed
 			targetSpeed *= groundMod;
 			targetSpeed *= ((startBreaking)? 0.0f: 1.0f);
 			targetSpeed = std::min(targetSpeed, wantedSpeed);
@@ -2018,14 +2021,6 @@ void CGroundMoveType::SetMainHeading() {
 			}
 		}
 	}
-}
-
-void CGroundMoveType::SetMaxSpeed(float speed)
-{
-	maxSpeed        = std::min(speed, maxSpeedDef);
-	maxReverseSpeed = std::min(speed, maxReverseSpeed);
-
-	requestedSpeed = speed;
 }
 
 bool CGroundMoveType::OnSlope(float minSlideTolerance) {

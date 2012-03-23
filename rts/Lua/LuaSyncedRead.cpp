@@ -3392,7 +3392,7 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		HSTR_PUSH_NUMBER(L, "nextwaypointy", groundmt->nextWayPoint.y);
 		HSTR_PUSH_NUMBER(L, "nextwaypointz", groundmt->nextWayPoint.z);
 
-		HSTR_PUSH_NUMBER(L, "requestedSpeed", groundmt->requestedSpeed);
+		HSTR_PUSH_NUMBER(L, "requestedSpeed", 0.0f);
 
 		HSTR_PUSH_NUMBER(L, "pathFailures", 0);
 

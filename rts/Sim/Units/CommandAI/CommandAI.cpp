@@ -1611,7 +1611,11 @@ void CCommandAI::StopAttackingAllyTeam(int ally)
 
 
 void CCommandAI::SetScriptMaxSpeed(float speed) {
-	// find the first CMD_SET_WANTED_MAX_SPEED and modify it if need be
+	// find the first CMD_SET_WANTED_MAX_SPEED and modify it
+	// NOTE:
+	//     this has no effect if the unit does not already have
+	//     such an order, and only lasts until a new move-order
+	//     is given
 	CCommandQueue::iterator it;
 
 	for (it = commandQue.begin(); it != commandQue.end(); ++it) {
@@ -1619,14 +1623,10 @@ void CCommandAI::SetScriptMaxSpeed(float speed) {
 
 		if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
 			continue;
-		if (c.params[0] != owner->moveType->GetMaxSpeed())
-			continue;
 
-		c.params[0] = speed;
+		owner->moveType->SetWantedMaxSpeed(c.params[0] = speed);
 		break;
 	}
-
-	owner->moveType->SetMaxSpeed(speed);
 }
 
 void CCommandAI::SlowUpdateMaxSpeed() {
@@ -1641,15 +1641,8 @@ void CCommandAI::SlowUpdateMaxSpeed() {
 	// to the current command (and ignore them when it's their turn)
 	if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
 		return;
-	if (c.params.empty())
-		return;
 
-	// always clamp the command parameter
-	const float defMaxSpeed = owner->moveType->GetMaxSpeedDef();
-	const float newMaxSpeed = std::min(c.params[0], defMaxSpeed);
-
-	if (newMaxSpeed > 0.0f) {
-		owner->moveType->SetMaxSpeed(newMaxSpeed);
-	}
+	assert(!c.params.empty());
+	owner->moveType->SetWantedMaxSpeed(c.params[0]);
 }
 

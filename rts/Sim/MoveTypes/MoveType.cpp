@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
+
 #include "System/mmgr.h"
 
 #include "MoveType.h"
@@ -9,7 +11,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include <cassert>
+#include "System/myMath.h"
 
 CR_BIND_DERIVED_INTERFACE(AMoveType, CObject);
 CR_REG_METADATA(AMoveType, (
@@ -48,22 +50,6 @@ AMoveType::AMoveType(CUnit* owner):
 }
 
 
-void AMoveType::SetMaxSpeed(float speed)
-{
-	assert(speed > 0.0f);
-	maxSpeed = speed;
-}
-
-void AMoveType::SetWantedMaxSpeed(float speed)
-{
-	if (speed > maxSpeed) {
-		maxWantedSpeed = maxSpeed;
-	} else if (speed < 0.001f) {
-		maxWantedSpeed = 0;
-	} else {
-		maxWantedSpeed = speed;
-	}
-}
 
 void AMoveType::SlowUpdate()
 {
@@ -106,3 +92,4 @@ void AMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)
 
 bool AMoveType::WantsRepair() const { return (owner->health      < (repairBelowHealth * owner->maxHealth)); }
 bool AMoveType::WantsRefuel() const { return (owner->currentFuel < (repairBelowHealth * owner->unitDef->maxFuel)); }
+
