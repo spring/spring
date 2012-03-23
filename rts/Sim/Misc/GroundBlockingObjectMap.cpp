@@ -206,6 +206,52 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos, bool to
 }
 
 
+bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreObj) const
+{
+	if (x < 0 || x >= gs->mapx || z < 0 || z >= gs->mapy)
+		return NULL;
+
+	const int mapSquare = x + z * gs->mapx;
+
+	GML_STDMUTEX_LOCK(block); // GroundBlockedUnsafe
+
+	if (groundBlockingMap[mapSquare].empty()) {
+		return false;
+	}
+
+	const int objID = GetObjectID(ignoreObj);
+
+	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
+	BlockingMapCellIt it = cell.find(objID);
+
+	if (it == cell.end()) {
+		// we are non-blocking in this part of
+		// our yardmap footprint, but something
+		// might be inside us
+		if (cell.size() >= 1) {
+			return true;
+		}
+	} else {
+		// this part of our yardmap is blocking, we
+		// can't close if something else present on
+		// it besides us
+		if (cell.size() >= 2) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+bool CGroundBlockingObjectMap::GroundBlocked(const float3& pos, CSolidObject* ignoreObj) const
+{
+	const int xSqr = int(pos.x / SQUARE_SIZE);
+	const int zSqr = int(pos.z / SQUARE_SIZE);
+	return GroundBlocked(xSqr, zSqr, ignoreObj);
+}
+
+
 /**
   * Opens up a yard in a blocked area.
   * When a factory opens up, for example.
@@ -228,30 +274,10 @@ bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yard)
 {
 	GML_STDMUTEX_LOCK(block); // CanCloseYard
 
-	const int objID = GetObjectID(yard);
-
 	for (int z = yard->mapPos.y; z < yard->mapPos.y + yard->zsize; ++z) {
 		for (int x = yard->mapPos.x; x < yard->mapPos.x + yard->xsize; ++x) {
-			const int idx = z * gs->mapx + x;
-
-			BlockingMapCell& cell = groundBlockingMap[idx];
-			BlockingMapCellIt it = cell.find(objID);
-
-			if (it == cell.end()) {
-				// we are non-blocking in this part of
-				// our yardmap footprint, but something
-				// might be inside us
-				if (cell.size() >= 1) {
-					return false;
-				}
-			} else {
-				// this part of our yardmap is blocking, we
-				// can't close if something else present on
-				// it besides us
-				if (cell.size() >= 2) {
-					return false;
-				}
-			}
+			if (GroundBlocked(x, z, yard))
+				return false;
 		}
 	}
 
