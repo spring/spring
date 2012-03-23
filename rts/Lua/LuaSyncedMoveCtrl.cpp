@@ -663,8 +663,6 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 	} else if (key == "wantedSpeed") {
 		// use setter?
 		mt->wantedSpeed = value / GAME_SPEED; return true;
-	} else if (key == "requestedSpeed") {
-		mt->requestedSpeed = value / GAME_SPEED; return true;
 	}
 
 	return false;
