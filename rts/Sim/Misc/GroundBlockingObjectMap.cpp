@@ -30,7 +30,6 @@ inline static const int GetObjectID(CSolidObject* obj)
 }
 
 
-
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 {
 	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
@@ -93,14 +92,16 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 		for (int x = 0; minXSqr + x < maxXSqr; x++) {
 			// unit yardmaps always contain sx=UnitDef::xsize * sz=UnitDef::zsize
 			// cells (the unit->mobility footprint can have different dimensions)
-			const int idx = minXSqr + x + (minZSqr + z) * gs->mapx;
 			const int off = x + z * sx;
+			if (yardMap[off] & mask) {
+				const int idx = minXSqr + x + (minZSqr + z) * gs->mapx;
 
-			BlockingMapCell& cell = groundBlockingMap[idx];
-			BlockingMapCellIt it = cell.find(objID);
+				BlockingMapCell& cell = groundBlockingMap[idx];
+				BlockingMapCellIt it = cell.find(objID);
 
-			if ((it == cell.end()) && (yardMap[off] & mask)) {
-				cell[objID] = object;
+				if (it == cell.end()) {
+					cell[objID] = object;
+				}
 			}
 		}
 	}
@@ -127,7 +128,8 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {
-			int idx = x + z * gs->mapx;
+			const int idx = x + z * gs->mapx;
+
 			BlockingMapCell& cell = groundBlockingMap[idx];
 			BlockingMapCellIt it = cell.find(objID);
 
@@ -165,11 +167,12 @@ void CGroundBlockingObjectMap::MoveGroundBlockingObject(CSolidObject* object, fl
 CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare, bool topMost) {
 	GML_STDMUTEX_LOCK(block); // GroundBlockedUnsafe
 
-	if (groundBlockingMap[mapSquare].empty()) {
+	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
+
+	if (cell.empty()) {
 		return NULL;
 	}
 
-	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
 	BlockingMapCellIt it = cell.begin();
 	CSolidObject* p = it->second;
 	CSolidObject* q = it->second;
