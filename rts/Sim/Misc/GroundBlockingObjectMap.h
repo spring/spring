@@ -8,17 +8,21 @@
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 
+
 class CSolidObject;
 typedef std::map<int, CSolidObject*> BlockingMapCell;
 typedef BlockingMapCell::const_iterator BlockingMapCellIt;
 typedef std::vector<BlockingMapCell> BlockingMap;
+
 
 class CGroundBlockingObjectMap
 {
 	CR_DECLARE(CGroundBlockingObjectMap);
 
 public:
-	CGroundBlockingObjectMap(int numSquares) { groundBlockingMap.resize(numSquares); }
+	CGroundBlockingObjectMap(int numSquares) {
+		groundBlockingMap.resize(numSquares);
+	}
 
 	void AddGroundBlockingObject(CSolidObject* object);
 	void AddGroundBlockingObject(CSolidObject* object, const unsigned char* yardMap, unsigned char mask);
@@ -36,7 +40,9 @@ public:
 	CSolidObject* GroundBlockedUnsafe(int mapSquare, bool topMost = true);
 
 	// for full thread safety, access via GetCell would need to be mutexed, but it appears only sim thread uses it
-	const BlockingMapCell& GetCell(int mapSquare) const { return groundBlockingMap[mapSquare]; }
+	const BlockingMapCell& GetCell(int mapSquare) const {
+		return groundBlockingMap[mapSquare];
+	}
 
 private:
 	BlockingMap groundBlockingMap;
