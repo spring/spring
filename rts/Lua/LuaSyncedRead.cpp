@@ -4460,10 +4460,10 @@ static void ParseMapCoords(lua_State* L, const char* caller,
 	}
 
 	// quantize and clamp
-	tx1 = (int)max(0 , min(gs->mapxm1, (int)(fx1 / SQUARE_SIZE)));
-	tx2 = (int)max(0 , min(gs->mapxm1, (int)(fx2 / SQUARE_SIZE)));
-	tz1 = (int)max(0 , min(gs->mapym1, (int)(fz1 / SQUARE_SIZE)));
-	tz2 = (int)max(0 , min(gs->mapym1, (int)(fz2 / SQUARE_SIZE)));
+	tx1 = Clamp((int)(fx1 / SQUARE_SIZE), 0, gs->mapxm1);
+	tx2 = Clamp((int)(fx2 / SQUARE_SIZE), 0, gs->mapxm1);
+	tz1 = Clamp((int)(fz1 / SQUARE_SIZE), 0, gs->mapym1);
+	tz2 = Clamp((int)(fz2 / SQUARE_SIZE), 0, gs->mapym1);
 
 	return;
 }

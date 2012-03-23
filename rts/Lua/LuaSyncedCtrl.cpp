@@ -2787,10 +2787,11 @@ static void ParseParams(lua_State* L, const char* caller, float& factor,
 	}
 
 	// quantize and clamp
-	x1 = (int)max(0 , min(maxX, (int)(fx1 / resolution)));
-	z1 = (int)max(0 , min(maxZ, (int)(fz1 / resolution)));
-	x2 = (int)max(0 , min(maxX, (int)(fx2 / resolution)));
-	z2 = (int)max(0 , min(maxZ, (int)(fz2 / resolution)));
+	x1 = Clamp((int)(fx1 / resolution), 0, maxX);
+	x2 = Clamp((int)(fx2 / resolution), 0, maxX);
+	z1 = Clamp((int)(fz1 / resolution), 0, maxZ);
+	z2 = Clamp((int)(fz2 / resolution), 0, maxZ);
+
 }
 
 static inline void ParseMapParams(lua_State* L, const char* caller,
