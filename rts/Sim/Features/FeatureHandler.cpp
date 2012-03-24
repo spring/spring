@@ -144,7 +144,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 
 	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
-	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_MODEL);
+	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_NONE);
 	fd->modelname = fdTable.GetString("object", "");
 	if (!fd->modelname.empty()) {
 		if (fd->modelname.find(".") == string::npos) {
