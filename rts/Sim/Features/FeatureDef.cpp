@@ -8,7 +8,7 @@
 CR_BIND(FeatureDef, );
 
 CR_REG_METADATA(FeatureDef, (
-	CR_MEMBER(myName),
+	CR_MEMBER(name),
 	CR_MEMBER(description),
 	CR_MEMBER(metal),
 	CR_MEMBER(id),
@@ -42,7 +42,7 @@ FeatureDef::FeatureDef()
 	, reclaimTime(0)
 	, mass(0.0f)
 	, crushResistance(0.0f)
-	, drawType(0)
+	, drawType(DRAWTYPE_NONE)
 	, model(NULL)
 	, resurrectable(false)
 	, smokeTime(0)

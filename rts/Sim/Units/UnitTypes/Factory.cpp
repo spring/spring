@@ -145,11 +145,11 @@ void CFactory::Update()
 
 
 void CFactory::StartBuild(const UnitDef* buildeeDef) {
-	const float3        buildPos = CalcBuildPos();
-	const CSolidObject* solidObj = groundBlockingObjectMap->GroundBlocked(buildPos, true);
+	const float3 buildPos = CalcBuildPos();
+	const bool   blocked  = groundBlockingObjectMap->GroundBlocked(buildPos, this);
 
 	// wait until buildPos is no longer blocked (eg. by a previous buildee)
-	if (solidObj == NULL || solidObj == this) {
+	if (!blocked) {
 		CUnit* b = unitLoader->LoadUnit(buildeeDef, buildPos, team, true, buildFacing, this);
 
 		if (!unitDef->canBeAssisted) {
@@ -247,14 +247,16 @@ unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buil
 	assert(!beingBuilt);
 	assert(buildeeDef != NULL);
 
+	if (finishedBuildFunc != NULL)
+		return FACTORY_KEEP_BUILD_ORDER;
+	if (curBuild != NULL)
+		return FACTORY_KEEP_BUILD_ORDER;
 	if (uh->unitsByDefs[team][buildeeDef->id].size() >= buildeeDef->maxThisUnit)
 		return FACTORY_SKIP_BUILD_ORDER;
 	if (teamHandler->Team(team)->AtUnitLimit())
 		return FACTORY_KEEP_BUILD_ORDER;
 	if (luaRules && !luaRules->AllowUnitCreation(buildeeDef, this, NULL))
 		return FACTORY_SKIP_BUILD_ORDER;
-	if (curBuild != NULL)
-		return FACTORY_KEEP_BUILD_ORDER;
 
 	finishedBuildFunc = buildFunc;
 	finishedBuildCommand = buildCmd;

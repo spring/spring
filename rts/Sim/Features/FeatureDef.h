@@ -29,8 +29,11 @@ struct FeatureDef
 	S3DModel* LoadModel() const;
 	CollisionVolume* collisionVolume;
 
-	std::string myName;
+	std::string name;
 	std::string description;
+	std::string modelname;
+	/// name of feature that this turn into when killed (not reclaimed)
+	std::string deathFeature;
 
 	int id;
 
@@ -44,7 +47,6 @@ struct FeatureDef
 
 	int drawType;
 	mutable S3DModel* model;
-	std::string modelname;
 
 	/// -1 := only if it is the 1st wreckage of the unitdef (default), 0 := no it isn't, 1 := yes it is
 	int resurrectable;
@@ -60,9 +62,6 @@ struct FeatureDef
 	bool noSelect;
 	bool geoThermal;
 	bool upright;
-
-	/// name of feature that this turn into when killed (not reclaimed)
-	std::string deathFeature;
 
 	/// each size is SQUARE_SIZE units
 	int xsize;

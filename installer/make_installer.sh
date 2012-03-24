@@ -31,6 +31,9 @@ $WGET http://springrts.com/dl/TASServer.jar
 $WGET http://zero-k.info/lobby/setup.exe
 $WGET http://zero-k.info/lobby/setup_icon.ico
 $WGET http://www.springlobby.info/windows/latest.zip
+if ! [ -s vcredist_x86.exe ]; then
+	$WGET http://download.microsoft.com/download/e/1/c/e1c773de-73ba-494a-a5ba-f24906ecf088/vcredist_x86.exe
+fi
 
 if [ ! -s spring_testing_minimal-portable.7z ]; then
 	echo "Warning: spring_testing_minimal-portable.7z didn't exist, downloading..." >&2
@@ -63,5 +66,6 @@ installer/downloads/rapid-spring-latest-win32.7z:rapid\\ >installer/downloads/un
 makensis -V3 $NSISDEFINES $@ -DNSI_UNINSTALL_FILES=downloads/uninstall.nsh \
 -DRAPID_ARCHIVE=downloads/rapid-spring-latest-win32.7z \
 -DMIN_PORTABLE_ARCHIVE=downloads/spring_testing_minimal-portable.7z \
+-DVCREDIST=downloads/vcredist_x86.exe \
  installer/spring.nsi
 

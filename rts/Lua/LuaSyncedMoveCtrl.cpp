@@ -540,11 +540,9 @@ int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, float value)
 {
 	// can't set goal here, need a different function that calls mt->SetGoal
-	// FIXME should use setter methods here and in other Set*MoveTypeValue functoins, but they mostly don't exist
+	// FIXME should use setter methods in all Set*MoveTypeValue functions, but they mostly don't exist
 	if (key == "maxSpeed") {
 		mt->SetMaxSpeed(value / GAME_SPEED); return true;
-	} else if (key == "maxWantedSpeed") {
-		mt->SetWantedMaxSpeed(value / GAME_SPEED); return true;
 	} else if (key == "repairBelowHealth") {
 		mt->SetRepairBelowHealth(value); return true;
 	}
@@ -660,11 +658,6 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 		// use setter?
 		mt->maxReverseSpeed = value / GAME_SPEED;
 		return true;
-	} else if (key == "wantedSpeed") {
-		// use setter?
-		mt->wantedSpeed = value / GAME_SPEED; return true;
-	} else if (key == "requestedSpeed") {
-		mt->requestedSpeed = value / GAME_SPEED; return true;
 	}
 
 	return false;

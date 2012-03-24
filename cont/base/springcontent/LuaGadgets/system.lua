@@ -27,6 +27,7 @@ if (System == nil) then
     COB = COB,
     SFX = SFX,
     VFS = VFS,
+    LOG = LOG,
 
     UnitDefs        = UnitDefs,
     UnitDefNames    = UnitDefNames,

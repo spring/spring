@@ -1069,7 +1069,7 @@ float3 CStrafeAirMoveType::FindLandingPos() const
 
 	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
-			if (groundBlockingObjectMap->GroundBlockedUnsafe(z * gs->mapx + x)) {
+			if (groundBlockingObjectMap->GroundBlocked(x, z, owner)) {
 				return ret;
 			}
 		}
