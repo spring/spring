@@ -1519,8 +1519,8 @@ void CGroundMoveType::HandleUnitCollisions(
  			r2 = s2 / (s1 + s2 + 1.0f);
 
 		// far from a realistic treatment, but works
-		float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r1));
-		float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r2));
+		float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r1)) * (1.0f / colliderRelRadius);
+		float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r2)) * (1.0f / collideeRelRadius);
 
 		if (collider->isMoving && collidee->isMoving) {
 			#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
