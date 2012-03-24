@@ -351,12 +351,14 @@ void CBuilder::Update()
 							CBuilder *bld = (CBuilder *)*it;
 							if (bld->commandAI->commandQue.empty())
 								continue;
-							const Command& c = bld->commandAI->commandQue.front();
+							Command& c = bld->commandAI->commandQue.front();
 							if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
 								continue;
 							const int cmdFeatureId = (int)c.params[0];
-							if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam))
+							if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam)) {
 								bld->lastResurrected = u->id; // all units that were rezzing shall assist the repair too
+								c.params[0] = INT_MAX / 2; // prevent FinishCommand from removing this command when the feature is deleted, since it is needed to start the repair
+							}
 						}
 
 						curResurrect->resurrectProgress=0;

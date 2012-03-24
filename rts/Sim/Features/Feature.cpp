@@ -31,6 +31,7 @@ CR_BIND_DERIVED(CFeature, CSolidObject, )
 
 CR_REG_METADATA(CFeature, (
 	// CR_MEMBER(model),
+	CR_MEMBER(defID),
 	CR_MEMBER(isRepairingBeforeResurrect),
 	CR_MEMBER(resurrectProgress),
 	CR_MEMBER(reclaimLeft),
@@ -40,7 +41,6 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(lastReclaim),
 	// CR_MEMBER(def),
 	// CR_MEMBER(udef),
-	CR_MEMBER(defName),
 	CR_MEMBER(transMatrix),
 	CR_MEMBER(inUpdateQue),
 	CR_MEMBER(drawQuad),
@@ -54,6 +54,7 @@ CR_REG_METADATA(CFeature, (
 
 
 CFeature::CFeature() : CSolidObject(),
+	defID(-1),
 	isRepairingBeforeResurrect(false),
 	resurrectProgress(0.0f),
 	reclaimLeft(1.0f),
@@ -102,7 +103,7 @@ CFeature::~CFeature()
 
 void CFeature::PostLoad()
 {
-	def = featureHandler->GetFeatureDef(defName);
+	def = featureHandler->GetFeatureDefByID(defID);
 
 	float fRadius = 1.0f;
 	float fHeight = 0.0f;
@@ -142,7 +143,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 {
 	def = _def;
 	udef = _udef;
-	defName = def->myName;
+	defID = def->id;
 	heading = _heading;
 	buildFacing = facing;
 	team = _team;
@@ -167,7 +168,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		model = def->LoadModel();
 
 		if (!model) {
-			LOG_L(L_ERROR, "Features: Couldn't load model for %s", defName.c_str());
+			LOG_L(L_ERROR, "Features: Couldn't load model for %s", def->name.c_str());
 		} else {
 			relMidPos = model->relMidPos;
 			fRadius = model->radius;

@@ -53,8 +53,7 @@ Release Time
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}.exe
 		./installer/make_portable_archive.sh spring_${REL_VERS}.exe
 12) Once the OS-X buildbot is finished, fetch archive:
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/Spring_${REL_VERS}-MacOSX-10.6-SnowLeopard.zip
-		mv Spring_${REL_VERS}-MacOSX-10.6-SnowLeopard.zip spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
+		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}-MacOSX-10.6-SnowLeopard.zip
 13) you should now have these files:
 	* spring_${REL_VERS}.exe
 	* spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip

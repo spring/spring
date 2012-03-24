@@ -393,6 +393,7 @@ void CMobileCAI::SlowUpdate()
 	}
 
 	if (!slowGuard) {
+		// when slow-guarding, regulate speed through {Start,Stop}SlowGuard
 		SlowUpdateMaxSpeed();
 	}
 
@@ -1078,14 +1079,18 @@ void CMobileCAI::IdleCheck()
 	}
 }
 
+
+
 void CMobileCAI::StopSlowGuard() {
 	if (!slowGuard)
 		return;
 
 	slowGuard = false;
 
-	// restore our default maximum speed
-	owner->moveType->SetMaxSpeed(owner->moveType->GetMaxSpeedDef());
+	// restore maxWantedSpeed to our current maxSpeed
+	// (StartSlowGuard modifies maxWantedSpeed, so we
+	// do not know its old value here)
+	owner->moveType->SetWantedMaxSpeed(owner->moveType->GetMaxSpeed());
 }
 
 void CMobileCAI::StartSlowGuard(float speed) {
@@ -1102,10 +1107,12 @@ void CMobileCAI::StartSlowGuard(float speed) {
 
 	// when guarding, temporarily adopt the maximum
 	// (forward) speed of the guardee unit as our own
-	if ((c.GetID() != CMD_SET_WANTED_MAX_SPEED) || (c.params[0] > speed)) {
-		owner->moveType->SetMaxSpeed(speed);
+	// WANTED maximum
+	if (c.GetID() == CMD_SET_WANTED_MAX_SPEED) {
+		owner->moveType->SetWantedMaxSpeed(speed);
 	}
 }
+
 
 
 void CMobileCAI::CalculateCancelDistance()

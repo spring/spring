@@ -110,6 +110,12 @@ ${!echonow} "Base dir:   <engine-source-root>/installer/"
 	${!echonow} "Using NSI_UNINSTALL_FILES:  ${NSI_UNINSTALL_FILES}"
 !endif
 
+!ifndef VCREDIST
+	!error "VCREDIST not defined"
+!else
+	${!echonow} "Using VCREDIST:             ${VCREDIST}"
+!endif
+
 
 Section "Engine" SEC_MAIN
 	; make this section read-only -> user can not deselect it
@@ -124,7 +130,6 @@ Section "Engine" SEC_MAIN
 	        !include "sections\deprecated.nsh"
 	!undef INSTALL
 SectionEnd
-
 
 SectionGroup "Multiplayer battlerooms"
 	Section "SpringLobby" SEC_SPRINGLOBBY
@@ -188,6 +193,12 @@ Section /o "Portable" SEC_PORTABLE
 	!undef INSTALL
 SectionEnd
 
+Section "" SEC_VCREDIST
+	!define INSTALL
+		${!echonow} "Processing: vcredist"
+		!include "sections\vcredist.nsh"
+	!undef INSTALL
+SectionEnd
 
 !include "sections\sectiondesc.nsh"
 
@@ -223,7 +234,7 @@ Function .onInit
 	skiprunchecks:
 
 	; enable/disable sections depending on parameters
-	!include "sections/SetupSections.nsh"
+	!include "sections/setupSections.nsh"
 FunctionEnd
 
 Function un.onUninstSuccess

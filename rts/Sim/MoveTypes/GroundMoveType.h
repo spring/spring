@@ -28,8 +28,6 @@ public:
 	void StartMoving(float3 pos, float goalRadius, float speed);
 	void StopMoving();
 
-	void SetMaxSpeed(float speed);
-
 	void ImpulseAdded(const float3&);
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
@@ -69,8 +67,6 @@ protected:
 	void HandleObjectCollisions();
 	void HandleUnitCollisions(
 		CUnit* collider,
-		const float3& colliderCurPos,
-		const float3& colliderOldPos,
 		const float colliderSpeed,
 		const float colliderRadius,
 		const float3& sepDirMask,
@@ -79,8 +75,6 @@ protected:
 		const CMoveMath* colliderMM);
 	void HandleFeatureCollisions(
 		CUnit* collider,
-		const float3& colliderCurPos,
-		const float3& colliderOldPos,
 		const float colliderSpeed,
 		const float colliderRadius,
 		const float3& sepDirMask,
@@ -115,7 +109,6 @@ public:
 	float maxReverseSpeed;
 	float wantedSpeed;
 	float currentSpeed;
-	float requestedSpeed;
 	float deltaSpeed;
 
 	unsigned int pathId;
