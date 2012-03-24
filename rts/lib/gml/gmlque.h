@@ -105,6 +105,7 @@ struct gmlQueue {
 	void Execute();
 	void ExecuteSynced(void (gmlQueue::*execfun)() =&gmlQueue::Execute);
 	void ExecuteDebug();
+	inline bool Empty(int q = 3) { return (!(q & 1) || *(BYTE * volatile *)&Pos1 == Queue1) && (!(q & 2) || *(BYTE * volatile *)&Pos2 == Queue2); }
 };
 
 #endif
