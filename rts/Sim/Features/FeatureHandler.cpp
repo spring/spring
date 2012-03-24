@@ -146,11 +146,13 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 
 	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_NONE);
 	fd->modelname = fdTable.GetString("object", "");
+
 	if (!fd->modelname.empty()) {
 		if (fd->modelname.find(".") == string::npos) {
 			fd->modelname += ".3do";
 		}
-		fd->modelname = string("objects3d/") + fd->modelname;
+		fd->modelname = "objects3d/" + fd->modelname;
+		fd->drawType = DRAWTYPE_MODEL;
 	}
 
 
