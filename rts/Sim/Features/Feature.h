@@ -77,6 +77,8 @@ public:
 	}
 
 public:
+	int defID;
+
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
 	 * a unit back and forth across a chunk boundary to get unlimited resources.
@@ -97,8 +99,6 @@ public:
 
 	const FeatureDef* def;
 	const UnitDef* udef; /// type of unit this feature should be resurrected to
-
-	std::string defName;
 
 	CMatrix44f transMatrix;
 

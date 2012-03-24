@@ -1816,7 +1816,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 	for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 		const CFeature* f = *featuresIt;
 
-		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->myName << ")\n";
+		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->name << ")\n";
 		file << "\t\t\tpos: <" << f->pos.x << ", " << f->pos.y << ", " << f->pos.z << ">\n";
 		file << "\t\t\thealth: " << f->health << ", reclaimLeft: " << f->reclaimLeft << "\n";
 	}
