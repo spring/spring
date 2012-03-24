@@ -2145,10 +2145,9 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		const float  speedScale = currentSpeed + deltaSpeed;
 		const float3 speedVector = owner->frontdir * speedScale * speedSign;
 
+		// NOTE: don't check for structure blockage, coldet handles that
 		const bool terrainIgnored = pathController->IgnoreTerrain(*md, owner->pos + speedVector);
-		const bool terrainBlocked =
-			((mm->IsBlocked(*md, owner->pos + speedVector) & CMoveMath::BLOCK_STRUCTURE) != 0 ||
-			(mm->GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f));
+		const bool terrainBlocked = (mm->GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
 
 		if (terrainBlocked && !terrainIgnored) {
 			// never move onto an impassable square (units
