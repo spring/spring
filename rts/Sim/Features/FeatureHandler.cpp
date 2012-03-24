@@ -116,7 +116,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 
 	FeatureDef* fd = new FeatureDef();
 
-	fd->myName = name;
+	fd->name = name;
 	fd->description = fdTable.GetString("description", "");
 
 	fd->blocking      =  fdTable.GetBool("blocking",        true);
@@ -202,7 +202,7 @@ FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name
 	fd->maxHealth = 5;
 	fd->xsize = 2;
 	fd->zsize = 2;
-	fd->myName = name;
+	fd->name = name;
 	fd->description = "Tree";
 	fd->mass = 20;
 	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, CollisionVolume::COLVOL_HITTEST_DISC);
@@ -225,7 +225,7 @@ FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name)
 	fd->maxHealth = 0;
 	fd->xsize = 0;
 	fd->zsize = 0;
-	fd->myName = name;
+	fd->name = name;
 	fd->mass = CSolidObject::DEFAULT_MASS;
 	// geothermals have no collision volume at all
 	fd->collisionVolume = NULL;

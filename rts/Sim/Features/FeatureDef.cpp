@@ -8,7 +8,7 @@
 CR_BIND(FeatureDef, );
 
 CR_REG_METADATA(FeatureDef, (
-	CR_MEMBER(myName),
+	CR_MEMBER(name),
 	CR_MEMBER(description),
 	CR_MEMBER(metal),
 	CR_MEMBER(id),

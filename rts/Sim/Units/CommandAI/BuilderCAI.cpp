@@ -419,14 +419,14 @@ void CBuilderCAI::SlowUpdate()
 						else if (!teamHandler->Team(owner->team)->AtUnitLimit()) {
 							// unit-limit not yet reached
 							CFeature* f = NULL;
-							buildRetries++;
+
 							owner->moveType->KeepPointingTo(build.pos, builder->buildDistance * 0.7f + radius, false);
 
 							bool waitstance = false;
-							if (builder->StartBuild(build, f, waitstance) || (buildRetries > 30)) {
+							if (builder->StartBuild(build, f, waitstance) || (++buildRetries > 30)) {
 								building = true;
 							}
-							else if (f) {
+							else if (f != NULL && (!ud->isFeature || ud->wreckName != f->def->name)) {
 								inCommand = false;
 								ReclaimFeature(f);
 							}
@@ -452,7 +452,8 @@ void CBuilderCAI::SlowUpdate()
 					}
 				}
 			}
-		} else {		//!inCommand
+		} else {
+			// !inCommand
 			BuildInfo bi;
 			bi.pos.x = floor(c.params[0] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
 			bi.pos.z = floor(c.params[2] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
@@ -466,10 +467,14 @@ void CBuilderCAI::SlowUpdate()
 			CFeature* f = 0;
 			uh->TestUnitBuildSquare(bi, f, owner->allyteam, true);
 
-			if (f) {
-				ReclaimFeature(f);
+			if (f != NULL) {
+				if (!bi.def->isFeature || bi.def->wreckName != f->def->name) {
+					ReclaimFeature(f);
+				} else {
+					FinishCommand();
+				}
 			} else {
-				inCommand=true;
+				inCommand = true;
 				SlowUpdate();
 			}
 		}
