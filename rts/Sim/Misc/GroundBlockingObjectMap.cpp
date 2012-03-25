@@ -54,11 +54,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 			const int idx = xSqr + zSqr * gs->mapx;
 
 			BlockingMapCell& cell = groundBlockingMap[idx];
-			BlockingMapCellIt it = cell.find(objID);
-
-			if (it == cell.end()) {
-				cell[objID] = object;
-			}
+			cell[objID] = object;
 		}
 	}
 
@@ -97,11 +93,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 				const int idx = minXSqr + x + (minZSqr + z) * gs->mapx;
 
 				BlockingMapCell& cell = groundBlockingMap[idx];
-				BlockingMapCellIt it = cell.find(objID);
-
-				if (it == cell.end()) {
-					cell[objID] = object;
-				}
+				cell[objID] = object;
 			}
 		}
 	}
@@ -131,11 +123,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 			const int idx = x + z * gs->mapx;
 
 			BlockingMapCell& cell = groundBlockingMap[idx];
-			BlockingMapCellIt it = cell.find(objID);
-
-			if (it != cell.end()) {
-				cell.erase(objID);
-			}
+			cell.erase(objID);
 		}
 	}
 
@@ -144,19 +132,6 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 		pathManager->TerrainChange(bx, bz, bx + sx, bz + sz);
 	}
 }
-
-
-/**
-  * Moves a ground blocking object from old position to the current on map.
-  * No longer used, functionality is handled by CSolidObject::{Un}Block()
-  */
-/*
-void CGroundBlockingObjectMap::MoveGroundBlockingObject(CSolidObject* object, float3 oldPos) {
-	RemoveGroundBlockingObject(object);
-	AddGroundBlockingObject(object);
-}
-*/
-
 
 
 /**
@@ -208,21 +183,14 @@ bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreO
 	const int objID = GetObjectID(ignoreObj);
 
 	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
-	BlockingMapCellIt it = cell.find(objID);
-
-	if (it == cell.end()) {
-		// we are non-blocking in this part of
-		// our yardmap footprint, but something
-		// might be inside us
-		if (cell.size() >= 1) {
+	BlockingMapCellIt it = cell.begin();
+	if (it != cell.end()) {
+		if (it->first != objID) {
+			// there are other objects blocking the square
 			return true;
-		}
-	} else {
-		// this part of our yardmap is blocking, we
-		// can't close if something else present on
-		// it besides us
-		if (cell.size() >= 2) {
-			return true;
+		} else {
+			// ignoreObj is in the square. Check if there are other objects, too
+			return (cell.size() >= 2);
 		}
 	}
 
@@ -259,7 +227,7 @@ void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* yard, const unsig
 
 bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yard)
 {
-	GML_STDMUTEX_LOCK(block); // CanCloseYard
+	//GML_STDMUTEX_LOCK(block); // CanCloseYard
 
 	for (int z = yard->mapPos.y; z < yard->mapPos.y + yard->zsize; ++z) {
 		for (int x = yard->mapPos.x; x < yard->mapPos.x + yard->xsize; ++x) {
