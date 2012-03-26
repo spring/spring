@@ -1555,8 +1555,8 @@ void CGroundMoveType::HandleUnitCollisions(
 				currentSpeed = 0.0f;
 				deltaSpeed = 0.0f;
 
-				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
-					// repath iff obstacle is within 60-degree cone; we do this
+				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.0f)) {
+					// repath iff obstacle is within 90-degree cone; we do this
 					// because the GNWP lookahead (for non-TIP units) can cause
 					// corners to be cut across statically blocked squares
 					//
@@ -1697,7 +1697,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 				currentSpeed = 0.0f;
 				deltaSpeed = 0.0f;
 
-				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
+				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.0f)) {
 					if (OWNER_MOVE_CMD()) {
 						StartMoving(goalPos, goalRadius, 0.0f);
 					} else {
