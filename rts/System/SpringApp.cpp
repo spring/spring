@@ -256,6 +256,7 @@ bool SpringApp::Initialize()
 
 	// Multithreading & Affinity
 	LOG("CPU Cores: %d", Threading::GetAvailableCores());
+	Threading::SetThreadScheduler();
 	const uint32_t affinity = configHandler->GetUnsigned("SetCoreAffinity");
 	const uint32_t cpuMask  = Threading::SetAffinity(affinity);
 	if (cpuMask == 0xFFFFFF) {
