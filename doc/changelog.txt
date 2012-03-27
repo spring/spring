@@ -2,6 +2,11 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 
 
+-- 89.0 ---------------------------------------------------------
+Changes:
+ ! some config values are now write protected (Spring.SetConfig*)
+ - added luasocket support for widgets, see http://springrts.com/wiki/LuaSocket
+
 -- 88.0 ---------------------------------------------------------
 Changes:
  ! showing collision volumes has now its own command (`/debugcolvol` & `alt+v`)

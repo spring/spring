@@ -77,6 +77,7 @@
 #undef KeyRelease
 
 #include "lib/gml/gml_base.h"
+#include "lib/luasocket/src/restrictions.h"
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(int, DepthBufferBits).defaultValue(24);
@@ -253,6 +254,9 @@ bool SpringApp::Initialize()
 	// Sound & Input
 	ISound::Initialize();
 	InitJoystick();
+
+	// Lua socket restrictions
+	luaSocketRestrictions = new CLuaSocketRestrictions();
 
 	// Multithreading & Affinity
 	LOG("CPU Cores: %d", Threading::GetAvailableCores());
@@ -1056,6 +1060,7 @@ void SpringApp::Shutdown()
 	DeleteAndNull(gu);
 	DeleteAndNull(globalRendering);
 	DeleteAndNull(startsetup);
+	DeleteAndNull(luaSocketRestrictions);
 
 	FileSystemInitializer::Cleanup();
 

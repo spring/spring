@@ -31,6 +31,7 @@ public:
 
 
 	CLuaSocketRestrictions();
+	~CLuaSocketRestrictions();
 	/**
 	* check if host & port is in the list for type of allowed, if port is -1, it is ignored
 	*/
@@ -43,6 +44,7 @@ public:
 	* add a rule
 	*/
 	void addRule(RestrictType type, const std::string& hostname, int port, bool allowed);
+
 private:
 	/**
 	* parses and adds a rules string

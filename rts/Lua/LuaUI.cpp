@@ -52,7 +52,6 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 #include "lib/luasocket/src/luasocket.h"
-#include "lib/luasocket/src/restrictions.h"
 
 #include <stdio.h>
 #include <set>
@@ -253,14 +252,9 @@ CLuaUI::~CLuaUI()
 		KillLua();
 	}
 	luaUI = NULL;
-	if (luaSocketRestrictions!=NULL){
-		delete luaSocketRestrictions;
-		luaSocketRestrictions=NULL;
-	}
 }
 
 void CLuaUI::InitLuaSocket(lua_State* L) {
-	luaSocketRestrictions = new CLuaSocketRestrictions();
 	std::string code;
 	std::string filename="socket.lua";
 	CFileHandler f(filename);
