@@ -351,12 +351,14 @@ void CBuilder::Update()
 							CBuilder *bld = (CBuilder *)*it;
 							if (bld->commandAI->commandQue.empty())
 								continue;
-							const Command& c = bld->commandAI->commandQue.front();
+							Command& c = bld->commandAI->commandQue.front();
 							if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
 								continue;
 							const int cmdFeatureId = (int)c.params[0];
-							if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam))
+							if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam)) {
 								bld->lastResurrected = u->id; // all units that were rezzing shall assist the repair too
+								c.params[0] = INT_MAX / 2; // prevent FinishCommand from removing this command when the feature is deleted, since it is needed to start the repair
+							}
 						}
 
 						curResurrect->resurrectProgress=0;
@@ -563,39 +565,46 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 
 	// Pass -1 as allyteam to behave like we have maphack.
 	// This is needed to prevent building on top of cloaked stuff.
-	const int canBuild = uh->TestUnitBuildSquare(buildInfo, feature, -1, true);
+	const BuildSquareStatus tbs = uh->TestUnitBuildSquare(buildInfo, feature, -1, true);
 
-	if (canBuild < 2) {
-		// the ground is blocked at the position we want
-		// to build at; check if the blocking object is
-		// of the same type as our buildee (which means
-		// another builder has already started it)
-		// note: even if construction has already started,
-		// the buildee is *not* guaranteed to be the unit
-		// closest to us
-		CSolidObject* o = groundBlockingObjectMap->GroundBlocked(buildInfo.pos);
-		CUnit* u = NULL;
+	switch (tbs) {
+		case BUILDSQUARE_OPEN:
+			break;
 
-		if (o != NULL) {
-			u = dynamic_cast<CUnit*>(o);
-		} else {
-			// <pos> might map to a non-blocking portion
-			// of the buildee's yardmap, fallback check
-			u = helper->GetClosestFriendlyUnit(buildInfo.pos, buildDistance, allyteam);
+		case BUILDSQUARE_BLOCKED:
+		case BUILDSQUARE_OCCUPIED: {
+			// the ground is blocked at the position we want
+			// to build at; check if the blocking object is
+			// of the same type as our buildee (which means
+			// another builder has already started it)
+			// note: even if construction has already started,
+			// the buildee is *not* guaranteed to be the unit
+			// closest to us
+			CSolidObject* o = groundBlockingObjectMap->GroundBlocked(buildInfo.pos);
+			CUnit* u = NULL;
+
+			if (o != NULL) {
+				u = dynamic_cast<CUnit*>(o);
+			} else {
+				// <pos> might map to a non-blocking portion
+				// of the buildee's yardmap, fallback check
+				u = helper->GetClosestFriendlyUnit(buildInfo.pos, buildDistance, allyteam);
+			}
+
+			if (u != NULL && u->unitDef == buildInfo.def && unitDef->canAssist) {
+				curBuild = u;
+				AddDeathDependence(u, DEPENDENCE_BUILD);
+				SetBuildStanceToward(buildInfo.pos);
+				return true;
+			}
+
+			return false;
 		}
 
-		if (u != NULL && u->unitDef == buildInfo.def && unitDef->canAssist) {
-			curBuild = u;
-			AddDeathDependence(u, DEPENDENCE_BUILD);
-			SetBuildStanceToward(buildInfo.pos);
-			return true;
-		}
-
-		return false;
+		case BUILDSQUARE_RECLAIMABLE:
+			// caller should handle this
+			return false;
 	}
-
-	if (feature)
-		return false;
 
 	const UnitDef* unitDef = buildInfo.def;
 	SetBuildStanceToward(buildInfo.pos);

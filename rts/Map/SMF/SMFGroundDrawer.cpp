@@ -48,7 +48,9 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 	smfRenderStateSSP = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	smfRenderStateFFP = ISMFRenderState::GetInstance(                   false,                     false);
-	smfRenderState     = NULL;
+
+	// set in ::Draw, but UpdateSunDir can be called first if DynamicSun is enabled
+	smfRenderState = smfRenderStateFFP;
 
 	// LH must be initialized before LoadMapShaders is called
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
@@ -105,11 +107,6 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int mode)
 		mode %= SMF_MESHDRAWER_LAST;
 	}
 
-#ifdef USE_GML
-	// FIXME: ROAM isn't GML ready yet
-	mode = SMF_MESHDRAWER_LEGACY;
-#endif
-	
 	if ((curMode == mode) && (meshDrawer != NULL))
 		return meshDrawer;
 
@@ -120,12 +117,10 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int mode)
 			LOG("Switching to Legacy Mesh Rendering");
 			meshDrawer = new CLegacyMeshDrawer(smfMap, this);
 			break;
-#ifndef USE_GML
 		default:
 			LOG("Switching to ROAM Mesh Rendering");
 			meshDrawer = new CRoamMeshDrawer(smfMap, this);
 			break;
-#endif
 	}
 
 	return meshDrawer;

@@ -240,17 +240,23 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 	}
 
 	if (owner->unitDef->canfly && c.GetID() == CMD_IDLEMODE) {
-		if (c.params.empty()) {
-			return;
-		}
-		AAirMoveType* airMT = GetAirMoveType<AAirMoveType>(owner);
-		if (!airMT)
+		if (c.params.empty())
 			return;
 
+		AAirMoveType* airMT = GetAirMoveType<AAirMoveType>(owner);
+
+		if (airMT == NULL)
+			return;
+
+		// toggle between the "land" and "fly" idle-modes
 		switch ((int) c.params[0]) {
-			case 0: { airMT->autoLand = false; airMT->Takeoff(); break; }
+			case 0: { airMT->autoLand = false; break; }
 			case 1: { airMT->autoLand = true; break; }
 		}
+
+		if (!airMT->autoLand && !airMT->owner->beingBuilt)
+			airMT->Takeoff();
+
 		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi) {
 			if (cdi->id == CMD_IDLEMODE) {
@@ -283,14 +289,12 @@ bool CMobileCAI::RefuelIfNeeded()
 
 	if (owner->currentFuel <= 0.0f) {
 		// we're completely out of fuel
-		StopMove();
-
 		owner->userAttackGround = false;
 		owner->SetUserTarget(NULL);
 		inCommand = false;
 
 		CAirBaseHandler::LandingPad* lp =
-			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
 
 		if (lp != NULL) {
 			// found a pad
@@ -306,25 +310,25 @@ bool CMobileCAI::RefuelIfNeeded()
 				// so don't call it
 				SetGoal(landingPos, owner->pos);
 			} else {
-				owner->moveType->StopMoving();
+				StopMove();
 			}
 		}
+
 		return true;
-	} else if (owner->moveType->WantsRefuel() && true
-		/* (commandQue.empty() || commandQue.front().id == CMD_PATROL || commandQue.front().id == CMD_FIGHT) */) {
+	} else if (owner->moveType->WantsRefuel()) {
 		// current fuel level is below our bingo threshold
 		// note: force the refuel attempt (irrespective of
 		// what our currently active command is)
 
 		CAirBaseHandler::LandingPad* lp =
-			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
 
 		if (lp != NULL) {
 			StopMove();
 			owner->userAttackGround = false;
 			owner->SetUserTarget(NULL);
-			inCommand = false;
 			owner->moveType->ReservePad(lp);
+			inCommand = false;
 			return true;
 		}
 	}
@@ -343,7 +347,7 @@ bool CMobileCAI::LandRepairIfNeeded()
 
 	// we're damaged, just seek a pad for repairs
 	CAirBaseHandler::LandingPad* lp =
-		airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+		airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
 
 	if (lp != NULL) {
 		owner->moveType->ReservePad(lp);
@@ -389,6 +393,7 @@ void CMobileCAI::SlowUpdate()
 	}
 
 	if (!slowGuard) {
+		// when slow-guarding, regulate speed through {Start,Stop}SlowGuard
 		SlowUpdateMaxSpeed();
 	}
 
@@ -1074,14 +1079,18 @@ void CMobileCAI::IdleCheck()
 	}
 }
 
+
+
 void CMobileCAI::StopSlowGuard() {
 	if (!slowGuard)
 		return;
 
 	slowGuard = false;
 
-	// restore our default maximum speed
-	owner->moveType->SetMaxSpeed(owner->moveType->GetMaxSpeedDef());
+	// restore maxWantedSpeed to our current maxSpeed
+	// (StartSlowGuard modifies maxWantedSpeed, so we
+	// do not know its old value here)
+	owner->moveType->SetWantedMaxSpeed(owner->moveType->GetMaxSpeed());
 }
 
 void CMobileCAI::StartSlowGuard(float speed) {
@@ -1098,10 +1107,12 @@ void CMobileCAI::StartSlowGuard(float speed) {
 
 	// when guarding, temporarily adopt the maximum
 	// (forward) speed of the guardee unit as our own
-	if ((c.GetID() != CMD_SET_WANTED_MAX_SPEED) || (c.params[0] > speed)) {
-		owner->moveType->SetMaxSpeed(speed);
+	// WANTED maximum
+	if (c.GetID() == CMD_SET_WANTED_MAX_SPEED) {
+		owner->moveType->SetWantedMaxSpeed(speed);
 	}
 }
+
 
 
 void CMobileCAI::CalculateCancelDistance()

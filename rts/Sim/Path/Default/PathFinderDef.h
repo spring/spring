@@ -7,10 +7,10 @@
 #include "System/float3.h"
 #include "System/Vec2.h"
 
-struct MoveData;
+struct MoveDef;
 class CPathFinderDef {
 public:
-	CPathFinderDef(const float3& goalCenter, float goalRadius);
+	CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance);
 	virtual ~CPathFinderDef() {}
 
 	virtual bool WithinConstraints(int xSquare, int Square) const { return true; }
@@ -18,11 +18,12 @@ public:
 
 	bool IsGoal(int xSquare, int zSquare) const;
 	float Heuristic(int xSquare, int zSquare) const;
-	bool GoalIsBlocked(const MoveData& moveData, const CMoveMath::BlockType& moveMathOptions) const;
+	bool GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& moveMathOptions) const;
 	int2 GoalSquareOffset(int blockSize) const;
 
 	float3 goal;
 	float sqGoalRadius;
+	bool startInGoalRadius;
 	int goalSquareX;
 	int goalSquareZ;
 };

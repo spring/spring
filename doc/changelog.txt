@@ -1,26 +1,197 @@
 Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 
+
+-- 88.0 ---------------------------------------------------------
+Changes:
+ ! showing collision volumes has now its own command (`/debugcolvol` & `alt+v`)
+ ! use footprint (not model) radii for obstacle avoidance
+ - improve reconnecting sim/draw balance
+ - disable line/point smoothing in safemode
+ - time profiler updates now even when paused
+ ! MoveInfo read "avoidMobilesOnPath" from correct table and disable it by default (before it was default enabled)
+
+Unitsync:
+ ! allow to list files with unsolveable depends
+ - warn about usage of deprecated functions in unitsync
+
+Lua:
+ - added new Spring.TestMoveOrder(unitDefID, worldx, worldy, worldz) -> boolean
+ - added new Spring.Log()
+  - same as Spring.Echo, but passes metadata to the logsystem
+  ! to be able to use LOG.XYZ you need to update your system.lua
+  - Spring.Log(string logsection, int loglevel, ...)     (with loglevel either: LOG.DEBUG, LOG.INFO, LOG.WARNING, LOG.ERROR, LOG.FATAL)
+  - Spring.Log(string logsection, string loglevel, ...)  (with either: "debug", "info", "warning", "error", "fatal" [lower-/uppercase doesn't matter])
+ - fixed WeaponDefs[123].pairs()
+ - added myGravity tag to WeaponDefs[] table (thx DeadnightWarrior)
+ ! distinguish water-damage in Unit{Pre}Damaged
+  - water damage has index -5
+  ! kill damage was -5 before and is now -6
+
+Bugfixes:
+ - fixed multiple crashes
+ - fixed SPRING_ISOLATED=1
+ - fixed gcc i686 march flag
+ - fixed an aircraft refueling bug
+ - fixed multiple pathing bugs/issues
+ - fixed crash at startup when DynamicSun=1
+ - fixed 'Nanoframe targeting and water' (3017)
+ - fixed desync _warning_ between 32- & 64-bit systems
+ - fixed FarTextures with GPU/drivers that don't support FBOs
+ - fixed spring-mt & spring-safemode links in window's startmenu
+ - fixed incorrect drawMidPos (e.g. used for command line drawing)
+
+Installer:
+ ! add vcredist_x86.exe to the installer / remove MSVCR71.dll from mingwlibs
+ - fixed safemode shortcuts
+
+-- 87.0 ---------------------------------------------------------
+Bugfixes:
+ ! restore pre86.0 maxAngleDif arcs
+ ! remove the following Lua consts: wdef[id].areaOfEffect, wdef[id].maxVelocity &  wdef[id].onlyTargetCategories
+ - fix "LuaUI didn't got unprocessed /xyz commands" (mantis 2982)
+ - fix shield rendering
+ - support for zlib 1.2.6 (thx sirmaverick)
+ - fix crash on start when invalid ai is in script.txt
+ - fix multiple pathing & collision issues
+ - some Maven (Java) updates
+ ! removed ArchiveMover
+ - fix compile for "make tests" on win32
+
+
 -- 86.0 ---------------------------------------------------------
 Changes:
+ - new commandline argument "--safemode": It turns off all features that are known to cause problems on some system.
+ ! ignore features with `blocking=false` in all RayTracing/Aiming functions (other code still checks them!!!)
+ - enable ROAM in spring-mt
+ - IsolationMode: scan ENV{SPRING_DATADIR} & config's SpringData as readonly datadirs
  - using now OS functions to expand special paths in spring's include dirs (config's SpringData, ENV{SPRING_DATADIR}, ...)
   ! Windows: now uses windows syntax ("$HOME/foo/bar" is now "%HOME%/foo/bar") (see msdn's ExpandEnvironmentStrings documentation)
   - Linux: now supports full bash path syntax ("~/", "${HOME}/.spring/", "/foo/../bar/", etc.) (see manpage of wordexp)
- - IsolationMode: scan ENV{SPRING_DATADIR} & config's SpringData as readonly datadirs
- - added a new commandline argument "--safemode". It turns off all features that are known to cause problems on some system.
- ! ignore features with `blocking=false` in all RayTracing/Aiming functions (other code still checks them!!!)
+ - remove "Start SpringSettings" and "Start the Lobby" from the test/develop menu
+ ! remove support for selectionkeys.txt
+ - add internal_pthread_backtrace for freebsd
+ - update mingwlibs (fixes rotated textures)
+
+Simulation:
+ - make globalLOS a per-allyteam variable
+   /globallos <n> --> toggle for allyteam <n>, no argument --> toggle for all
+
+Pathing:
+ - QTPFS:
+     fix several minor issues and corner cases
+     support partial searches, allow search to start from blocked nodes
+     tweak heuristic so it overestimates less on non-flat terrain
+     do not let units move before path-request is processed
+ - UnitDef: add turnInPlaceAngleLimit tag
+     for a unit with turnInPlace=true, defines the
+     maximum angle of a turn above which it starts
+     to brake (defaults to 0.0, values in degrees)
+ - MoveDef:
+     unhardcode default pathfinder cost-adjustment and
+     speed-multipliers for squares blocked by *mobile*
+     units:
+
+       avoidMobilesOnPath = boolean,
+       speedModMults = {
+         mobileBusyMult = number,
+         mobileIdleMult = number,
+         mobileMoveMult = number,
+       }
+
+     unhardcode the DepthMod equation:
+       depthModParams = {
+         minHeight      = number,
+         maxHeight      = number,
+         maxScale       = number,
+         quadraticCoeff = number,
+         linearCoeff    = number, -- deprecates "depthMod"
+         constantCoeff  = number,
+       }
+
+       new formula is given by
+         if h < depthModParams.minHeight: 1.0
+         if h > depthModParams.maxHeight: 0.0
+         else:
+           depthScale = MAX(0.01, MIN(depthModParams.maxScale, (a * h * h) + (b * h) + c))
+           depthMod = 1 / depthScale
+       where
+         h = unit's absolute height below water surface
+         a = depthModParams.quadraticCoeff
+         b = depthModParams.linearCoeff
+         c = depthModParams.constantCoeff
+
 
 unitsync:
- - reload IsolatedMode & Dir via the EnvVar on Init() calls 
+ - reload IsolatedMode & Dir via the EnvVar on Init() calls
+ - warn about invalid version numbers
+ - add python bindings for unitsync
 
 MacOSX:
  - fix signal handling
  - use native DialogBoxes
 
+Rendering:
+ - cleanup and extend SSMF shader, now includes a parallax-mapping stage
+
+Lua:
+ - add LuaRules callin `DrawShield(number unitID, number weaponID) --> boolean`
+   (true skips Spring's own drawing of shield <weaponID> owned by unit <unitID>)
+ - make LuaUnsyncedCtrl::SendSkirmishAIMessage return a table, not N loose strings
+   (but note there is nothing in this table due to "limitations" of the AI interface)
+ - add weaponDefID parameter to ProjectileCreated
+ - add facing parameter to AllowUnitCreation
+ - remove most range-checks in default gadget-handler for registering commands (2930+2952)
+ - distinguish damage-types for Unit{Pre}Damaged when weaponDefID < 0 (2966)
+     weaponDefID -1 --> debris collision
+     weaponDefID -2 --> ground collision
+     weaponDefID -3 --> object collision
+     weaponDefID -4 --> fire damage
+     weaponDefID -5 --> kill damage
+
 Bugfixes:
  - fixed Intel GPU detection under Windows
  - fixed handling of duplicated used hotkeys (i.e. unit groups & specteam switching)
  - fixed minor issues with ground collision RayTracing
+ - fixed compilation with boost >=1.48
+ - fixed Spring.Restart
+ - open logfiles on win32 with commit flag set
+ ! don't allow spring to start when a depend file is missing
+
+ - "Rapid unit ejection from factory" (2864)
+ - "Units walk in circles on their way to a far awar move goal" (2866)
+ - "Excessive movement bouncing off buildings and wreckages" (2865)
+ - "armpw stuck in air while pathing around solars" (2854)
+ - "Enemied units can get stuck in each other with movectrl" (2832)
+ - "A factory set to wait continues the queue" (2868)
+ - "Change in Factory Behaviour wrt AllowUnitCreation" (2873)
+ - "Building with Meta-Key pressed does not work" (2764)
+ - "'Move at slowest speed of group' move order (ctrl+alt) semi-permanently changes unit maxvelocity." (2880)
+ - BeamLasers could hit but not damage units using per-piece colvols
+ - heap corruption in UnitDrawer::ShowUnitBuildSquare (2903)
+ - heap corruption in TransportCAI::UnloadDrop (2911)
+ - mismatched feature colvol matrices
+ - MoveCtrl.SetRelativeVelocity
+ - bug in TestTrajectoryCone for ballistic weapons
+ - transported units being unhittable (2875, 2934)
+ - SetUnitCrashing inconsistency, caused "Aircraft crashing while landed results in irregular behavior" (2924)
+ - obscure targetting bug, caused "Gunship jams when on hold fire" (2406)
+ - deprecate / remove the 'toAirWeapon' WeaponDef tag
+   (use "onlyTargetCategory = VTOL" for the same effect)
+ - 'airmesh is 0 at x >= width or z >= height' (2938)
+ - GuiHandler crash when unit has no valid selfDExplosion (2852)
+ - <canSubmerge=false, floater=true> aircraft landing on sea floor (2856)
+ - 'waterweapon=false BeamLaser can fire into water' (2857)
+ - the units-humping-obstacles syndrome (forward and reverse)
+ - silly aircraft refueling bugs
+ - 'Warning message on SetGroundMoveTypeData(unitID, "maxSpeed", 0)' (and some related possible div0's)
+ - weird inability of weapons with a non-default onlyTargetCategory to attack the ground
+ - 'Unit LOD billboards are too dark' (2948)
+ - rare antinuke bug (2956)
+ - typo in setting of default turnInPlaceSpeedLimit
+ - "All terrain units move commands are removed when climbing cliffs" (2958)
+ - 'Landed gunships do not follow height reduction' (2823)
+
 
 
 -- 85.0 ---------------------------------------------------------

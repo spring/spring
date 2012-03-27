@@ -39,6 +39,7 @@
 #include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/MoveTypes/ScriptMoveType.h"
 #include "Sim/MoveTypes/StaticMoveType.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -279,6 +280,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetSmoothMeshHeight);
 
+	REGISTER_LUA_CFUNC(TestMoveOrder);
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(Pos2BuildPos);
 	REGISTER_LUA_CFUNC(GetPositionLosState);
@@ -3390,7 +3392,7 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		HSTR_PUSH_NUMBER(L, "nextwaypointy", groundmt->nextWayPoint.y);
 		HSTR_PUSH_NUMBER(L, "nextwaypointz", groundmt->nextWayPoint.z);
 
-		HSTR_PUSH_NUMBER(L, "requestedSpeed", groundmt->requestedSpeed);
+		HSTR_PUSH_NUMBER(L, "requestedSpeed", 0.0f);
 
 		HSTR_PUSH_NUMBER(L, "pathFailures", 0);
 
@@ -4458,10 +4460,10 @@ static void ParseMapCoords(lua_State* L, const char* caller,
 	}
 
 	// quantize and clamp
-	tx1 = (int)max(0 , min(gs->mapxm1, (int)(fx1 / SQUARE_SIZE)));
-	tx2 = (int)max(0 , min(gs->mapxm1, (int)(fx2 / SQUARE_SIZE)));
-	tz1 = (int)max(0 , min(gs->mapym1, (int)(fz1 / SQUARE_SIZE)));
-	tz2 = (int)max(0 , min(gs->mapym1, (int)(fz2 / SQUARE_SIZE)));
+	tx1 = Clamp((int)(fx1 / SQUARE_SIZE), 0, gs->mapxm1);
+	tx2 = Clamp((int)(fx2 / SQUARE_SIZE), 0, gs->mapxm1);
+	tz1 = Clamp((int)(fz1 / SQUARE_SIZE), 0, gs->mapym1);
+	tz2 = Clamp((int)(fz2 / SQUARE_SIZE), 0, gs->mapym1);
 
 	return;
 }
@@ -4478,7 +4480,7 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 
 	for(int z = tz1; z <= tz2; z++){
 		for(int x = tx1; x <= tx2; x++){
-			const CSolidObject* s = groundBlockingObjectMap->GroundBlocked((z * gs->mapx) + x);
+			const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(x, z);
 
 			const CFeature* feature = dynamic_cast<const CFeature*>(s);
 			if (feature) {
@@ -4532,12 +4534,49 @@ int LuaSyncedRead::GetSmoothMeshHeight(lua_State *L)
 /******************************************************************************/
 
 
+int LuaSyncedRead::TestMoveOrder(lua_State* L)
+{
+	const int unitDefID = luaL_checkint(L, 1);
+	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
+
+	if (unitDef == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const MoveDef* moveDef = unitDef->moveDef;
+
+	if (moveDef == NULL) {
+		lua_pushboolean(L, !unitDef->IsImmobileUnit());
+		return 1;
+	}
+
+	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+
+	bool los = false;
+	bool ret = false;
+
+	if (ActiveReadAllyTeam() < 0) {
+		los = ActiveFullRead();
+	} else {
+		los = loshandler->InLos(pos, ActiveReadAllyTeam());
+	}
+
+	if (los) {
+		ret = moveDef->TestMoveSquare(pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE);
+	}
+
+	lua_pushboolean(L, ret);
+	return 1;
+}
+
 int LuaSyncedRead::TestBuildOrder(lua_State* L)
 {
 	const int unitDefID = luaL_checkint(L, 1);
 	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
+
 	if (unitDef == NULL) {
-		lua_pushboolean(L, 0);
+		lua_pushnumber(L, 0);
 		return 1;
 	}
 
@@ -4552,13 +4591,21 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	bi.pos = pos;
 	bi.pos = helper->Pos2BuildPos(bi, CLuaHandle::GetSynced(L));
 	CFeature* feature;
+
 	// negative allyTeam values have full visibility in TestUnitBuildSquare()
-	const int retval = uh->TestUnitBuildSquare(bi, feature, ActiveReadAllyTeam(), CLuaHandle::GetSynced(L));
-	// 0 - blocked
-	// 1 - mobile unit in the way
-	// 2 - free  (or if feature is != 0 then with a
-	//            blocking feature that can be reclaimed)
-	if ((feature == NULL) || !IsFeatureVisible(feature)) {
+	// 0 = BUILDSQUARE_BLOCKED
+	// 1 = BUILDSQUARE_OCCUPIED
+	// 2 = BUILDSQUARE_RECLAIMABLE
+	// 3 = BUILDSQUARE_OPEN
+	int retval = uh->TestUnitBuildSquare(bi, feature, ActiveReadAllyTeam(), CLuaHandle::GetSynced(L));
+
+	// output of TestUnitBuildSquare was changed after this lua function was writen
+	// keep backward-compability by mapping:
+	// BUILDSQUARE_OPEN = BUILDSQUARE_RECLAIMABLE = 2
+	if (retval == BUILDSQUARE_OPEN)
+		retval = 2;
+
+	if (feature == NULL) {
 		lua_pushnumber(L, retval);
 		return 1;
 	}

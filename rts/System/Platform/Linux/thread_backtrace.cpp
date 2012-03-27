@@ -8,12 +8,18 @@
 #include <stdint.h>
 #include <string.h> // memcpy
 
+#if defined(__FreeBSD__)
+#include <pthread_np.h> // pthread_attr_get_np
+#endif
 
 #define FP_OFFSET 1 //! in sizeof(void*)
 
 #define MAX(a,b) (a>b)?a:b
 #define INSTACK(a)  ((a) >= stack_buffer && (a) <= (stack_buffer + stack_size))
 
+//TODO Our custom thread_backtrace() only works on the mainthread.
+//     Use to gdb's libthread_db to get the stacktraces of all threads.
+//     note, the stacktrace of non-mainthreads is disabled in CrashHandler.cpp:450 (date: 2012-03)
 
 static uint8_t* TranslateStackAddrToBufferAddr(uint8_t* p, uint8_t* stackbot, uint8_t* stack_buffer)
 {
@@ -32,7 +38,14 @@ static void internal_pthread_backtrace(pthread_t thread, void** buffer, size_t m
 	uint8_t* stackbot;
 	size_t stack_size; //! in bytes
 	size_t guard_size; //! in bytes
-#ifdef __APPLE__
+#if defined(__FreeBSD__)
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_get_np(thread, &attr);
+	pthread_attr_getstack(&attr, (void**)&stackbot, &stack_size);
+	pthread_attr_getguardsize(&attr, &guard_size);
+	pthread_attr_destroy(&attr);
+#elif defined(__APPLE__)
 	stackbot = (uint8_t*)pthread_get_stackaddr_np(thread);
 	stack_size = pthread_get_stacksize_np(thread);
 	guard_size = 0; //FIXME anyway to get that?

@@ -11,7 +11,7 @@
 #include "PathConstants.h"
 #include "PathDataTypes.h"
 
-struct MoveData;
+struct MoveDef;
 class CPathFinderDef;
 
 
@@ -34,7 +34,7 @@ public:
 	 * found no path is created, and SearchResult::CantGetCloser is returned.
 	 * Path resolution: 2*SQUARE_SIZE
 	 *
-	 * @param moveData defining the footprint of the unit requesting the path.
+	 * @param moveDef defining the footprint of the unit requesting the path.
 	 * @param startPos The starting location of the path. (Projected onto (x,z))
 	 * @param pfDef Object defining the target/goal of the search.
 	 *   Could also be used to put constraints on the searchspace used.
@@ -49,7 +49,7 @@ public:
 	 *   CPU-consumption are critical.
 	 */
 	IPath::SearchResult GetPath(
-		const MoveData& moveData,
+		const MoveDef& moveDef,
 		const float3& startPos,
 		const CPathFinderDef& pfDef,
 		IPath::Path& path,
@@ -110,15 +110,15 @@ private:
 	 */
 	void ResetSearch();
 	/// Set up the starting point of the search.
-	IPath::SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId, bool synced);
+	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, int ownerId, bool synced);
 	/// Performs the actual search.
-	IPath::SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId, bool synced);
+	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, int ownerId, bool synced);
 	/**
 	 * Test the availability and value of a square,
 	 * and possibly add it to the queue of open squares.
 	 */
 	bool TestSquare(
-		const MoveData& moveData,
+		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,
 		const PathNode* parentOpenSquare,
 		unsigned int enterDirection,
@@ -131,12 +131,12 @@ private:
 	 *
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
-	void FinishSearch(const MoveData&, IPath::Path&);
+	void FinishSearch(const MoveDef&, IPath::Path&);
 	/**
 	 * Adjusts the found path to cut corners where possible.
 	 */
 	void AdjustFoundPath(
-		const MoveData&,
+		const MoveDef&,
 		IPath::Path&,
 		float3& nextPoint,
 		std::deque<int2>& previous,
@@ -156,7 +156,8 @@ private:
 	int heatMapOffset;                 ///< heatmap values are relative to this
 	bool heatMapping;
 
-	int2 directionVector[16];          ///< Unit square-movement in given direction.
+	int2 dirVectors2D[16];             ///< Unit square-movement in given direction.
+	float3 dirVectors3D[16];
 	float moveCost[16];                ///< The cost of moving in given direction.
 
 	float3 start;

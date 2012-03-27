@@ -68,8 +68,11 @@ AAI::~AAI()
 	fprintf(file, "Unit production rate: %i\n\n", execute->unitProductionRate);
 
 	fprintf(file, "Requested constructors:\n");
-	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].end(); ++fac)
+	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].end(); ++fac) {
+		assert((*fac-1) < bt->numOfUnits);
+		assert((*fac)   < bt->units_dynamic.size());
 		fprintf(file, "%-24s: %i\n", bt->unitList[*fac-1]->humanName.c_str(), bt->units_dynamic[*fac].requested);
+	}
 	for(list<int>::iterator fac = bt->units_of_category[MOBILE_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[MOBILE_CONSTRUCTOR][side-1].end(); ++fac)
 		fprintf(file, "%-24s: %i\n", bt->unitList[*fac-1]->humanName.c_str(), bt->units_dynamic[*fac].requested);
 
@@ -113,6 +116,7 @@ AAI::~AAI()
 	SafeDelete(bt);
 	SafeDelete(profiler);
 
+	initialized = false;
 	fclose(file);
 }
 

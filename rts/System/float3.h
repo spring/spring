@@ -286,15 +286,13 @@ public:
 	/**
 	 * @brief operator ==
 	 * @param f float3 to test
-	 * @return whether float3s are equal
+	 * @return whether float3s are equal under default CMP_EPS tolerance in x/y/z
 	 *
 	 * Tests if this float3 is equal to another, by
 	 * checking each x/y/z component individually.
 	 */
 	bool operator== (const float3& f) const {
-		return math::fabs(x - f.x) <= math::fabs(CMP_EPS * x)
-			&& math::fabs(y - f.y) <= math::fabs(CMP_EPS * y)
-			&& math::fabs(z - f.z) <= math::fabs(CMP_EPS * z);
+		return (equals(f));
 	}
 
 	/**
@@ -306,7 +304,7 @@ public:
 	 * checking each x/y/z component individually.
 	 */
 	bool operator!= (const float3& f) const {
-		return !(*this == f);
+		return (!equals(f));
 	}
 
 	/**
@@ -322,7 +320,7 @@ public:
 	}
 
 	/**
-	 * @brief operator [] const
+	 * @brief operator[] const
 	 * @param t index in xyz array
 	 * @return const float component at index
 	 *
@@ -331,6 +329,15 @@ public:
 	 */
 	const float& operator[] (const int t) const {
 		return (&x)[t];
+	}
+
+	/**
+	 * @see operator==
+	 */
+	bool equals(const float3& f, const float3& eps = float3(CMP_EPS, CMP_EPS, CMP_EPS)) const {
+		return math::fabs(x - f.x) <= math::fabs(eps.x * x)
+			&& math::fabs(y - f.y) <= math::fabs(eps.y * y)
+			&& math::fabs(z - f.z) <= math::fabs(eps.z * z);
 	}
 
 	/**
@@ -594,6 +601,7 @@ public:
 	 *
 	 * Check if this vector is in bounds [0 .. gs->mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
+	 * @see #IsInMap
 	 */
 	bool IsInBounds() const;
 
@@ -602,8 +610,18 @@ public:
 	 *
 	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
+	 * @deprecated  use ClampInMap instead, but see the note!
+	 * @see #ClampInMap
 	 */
 	void ClampInBounds();
+
+	/**
+	 * @brief Check against FaceHeightmap bounds
+	 *
+	 * Check if this vector is in map [0 .. gs->mapxy]
+	 * @note USE THIS!
+	 */
+	bool IsInMap() const;
 
 	/**
 	 * @brief Clamps to VertexHeightmap

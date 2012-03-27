@@ -170,8 +170,8 @@ bool CStrafeAirMoveType::Update()
 
 			if (con.forward) { elevator -= 1; }
 			if (con.back   ) { elevator += 1; }
-			if (con.right  ) { aileron += 1; }
-			if (con.left   ) { aileron -= 1; }
+			if (con.right  ) { aileron  += 1; }
+			if (con.left   ) { aileron  -= 1; }
 
 			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
 			maneuver = 0;
@@ -180,16 +180,27 @@ bool CStrafeAirMoveType::Update()
 		}
 	}
 
+	// somewhat hackish, but planes that have attack orders
+	// while no pad is available would otherwise continue
+	// attacking even if out of fuel
+	const bool outOfFuel = (owner->currentFuel <= 0.0f && owner->unitDef->maxFuel > 0.0f);
+	const bool continueAttack = (reservedPad == NULL && !outOfFuel);
+
 	if (aircraftState != AIRCRAFT_CRASHING) {
 		if (reservedPad != NULL) {
 			MoveToRepairPad();
 		} else {
-			if (owner->unitDef->maxFuel > 0.0f && owner->currentFuel <= 0.0f) {
-				if (padStatus == 0 && maxWantedSpeed > 0.0f) {
-					// out of fuel, keep us in the air to reach our landing
-					// goalPos (which is hopefully in the vicinity of a pad)
-					SetState(AIRCRAFT_FLYING);
-				}
+			if (outOfFuel && airBaseHandler->HaveAirBase(owner->allyteam)) {
+				// out of fuel, keep us in the air to reach our landing
+				// goalPos (which is/will be set to a pad's position by
+				// MobileCAI) so long as there is at least one friendly
+				// base
+				//
+				// NOTE:
+				//     technically need to pass minAirBasePower as well,
+				//     otherwise aircraft might keep flying and never be
+				//     serviced
+				SetState(AIRCRAFT_FLYING);
 			}
 		}
 	}
@@ -197,12 +208,6 @@ bool CStrafeAirMoveType::Update()
 	switch (aircraftState) {
 		case AIRCRAFT_FLYING: {
 			owner->restTime = 0;
-
-			// somewhat hackish, but planes that have attack orders
-			// while no pad is available would otherwise continue
-			// attacking even if out of fuel
-			const bool continueAttack =
-				(reservedPad == NULL && ((owner->currentFuel > 0.0f) || owner->unitDef->maxFuel <= 0.0f));
 
 			if (continueAttack && ((owner->userTarget && !owner->userTarget->isDead) || owner->userAttackGround)) {
 				inefficientAttackTime = std::min(inefficientAttackTime, float(gs->frameNum) - owner->lastFireWeapon);
@@ -280,7 +285,7 @@ bool CStrafeAirMoveType::HandleCollisions() {
 		oldPos = pos;
 
 		// check for collisions if not on a pad, not being built, or not taking off
-		const bool checkCollisions = collide && !owner->beingBuilt && (padStatus == 0) && (aircraftState != AIRCRAFT_TAKEOFF);
+		const bool checkCollisions = collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF);
 
 		if (checkCollisions) {
 			bool hitBuilding = false;
@@ -304,8 +309,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-					owner->DoDamage(DamageArray(damage), 0, ZeroVector);
-					unit->DoDamage(DamageArray(damage), 0, ZeroVector);
+					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
+					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 					hitBuilding = true;
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
@@ -315,8 +320,8 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-					owner->DoDamage(DamageArray(damage), 0, ZeroVector);
-					unit->DoDamage(DamageArray(damage), 0, ZeroVector);
+					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
+					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 
 					owner->speed *= 0.99f;
 				}
@@ -767,10 +772,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 void CStrafeAirMoveType::UpdateLanded()
 {
-	owner->Move3D(owner->speed = ZeroVector, true);
-	// match the terrain normal
-	owner->UpdateDirVectors(true);
-	owner->UpdateMidPos();
+	AAirMoveType::UpdateLanded();
 }
 
 
@@ -1067,7 +1069,7 @@ float3 CStrafeAirMoveType::FindLandingPos() const
 
 	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
-			if (groundBlockingObjectMap->GroundBlockedUnsafe(z * gs->mapx + x)) {
+			if (groundBlockingObjectMap->GroundBlocked(x, z, owner)) {
 				return ret;
 			}
 		}

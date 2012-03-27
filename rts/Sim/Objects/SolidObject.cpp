@@ -6,6 +6,7 @@
 #include "Map/ReadMap.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "System/myMath.h"
@@ -18,14 +19,16 @@ const float CSolidObject::MAXIMUM_MASS = 1e6f;
 CR_BIND_DERIVED(CSolidObject, CWorldObject, );
 CR_REG_METADATA(CSolidObject,
 (
+	CR_MEMBER(health),
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
 
 	CR_MEMBER(blocking),
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
-	CR_MEMBER(blockHeightChanges),
 	CR_MEMBER(crushKilled),
+	CR_MEMBER(blockEnemyPushing),
+	CR_MEMBER(blockHeightChanges),
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
@@ -40,8 +43,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(relMidPos),
 	CR_MEMBER(midPos),
 	// can not get creg work on templates
-	CR_MEMBER(mapPos.x),
-	CR_MEMBER(mapPos.y),
+	CR_MEMBER(mapPos),
 
 //	CR_MEMBER(drawPos),
 //	CR_MEMBER(drawMidPos),
@@ -65,13 +67,15 @@ CR_REG_METADATA(CSolidObject,
 
 
 CSolidObject::CSolidObject():
+	health(0.0f),
 	mass(DEFAULT_MASS),
 	crushResistance(0.0f),
 	blocking(false),
 	crushable(false),
 	immobile(false),
-	blockHeightChanges(false),
 	crushKilled(false),
+	blockEnemyPushing(true),
+	blockHeightChanges(false),
 	xsize(1),
 	zsize(1),
 	heading(0),
@@ -111,8 +115,9 @@ CSolidObject::~CSolidObject() {
 void CSolidObject::UnBlock() {
 	if (isMarkedOnBlockingMap) {
 		groundBlockingObjectMap->RemoveGroundBlockingObject(this);
-		// isMarkedOnBlockingMap is now false
 	}
+
+	assert(!isMarkedOnBlockingMap);
 }
 
 void CSolidObject::Block() {
@@ -132,7 +137,7 @@ void CSolidObject::Block() {
 		groundBlockingObjectMap->AddGroundBlockingObject(this);
 	}
 
-	// isMarkedOnBlockingMap is now true
+	assert(isMarkedOnBlockingMap);
 }
 
 
@@ -141,13 +146,21 @@ void CSolidObject::Block() {
 int2 CSolidObject::GetMapPos(const float3& position) const
 {
 	int2 mp;
+
 	mp.x = (int(position.x + SQUARE_SIZE / 2) / SQUARE_SIZE) - (xsize / 2);
 	mp.y = (int(position.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - (zsize / 2);
-
-	if (mp.x <                0) { mp.x =                0; }
-	if (mp.y <                0) { mp.y =                0; }
-	if (mp.x > gs->mapx - xsize) { mp.x = gs->mapx - xsize; }
-	if (mp.y > gs->mapy - zsize) { mp.y = gs->mapy - zsize; }
+	mp.x = Clamp(mp.x, 0, gs->mapx - xsize);
+	mp.y = Clamp(mp.y, 0, gs->mapy - zsize);
 
 	return mp;
 }
+
+
+
+void CSolidObject::Kill(const float3& impulse, bool crushKill) {
+	crushKilled = crushKill;
+
+	DamageArray damage;
+	DoDamage(damage * (health + 1.0f), impulse, NULL, -DAMAGE_EXTSOURCE_KILLED);
+}
+

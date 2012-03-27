@@ -183,40 +183,37 @@ extern void log_frontend_cleanup();
 #define _LOG_RECORD(section, level, fmt, ...) \
 	log_frontend_record(section, LOG_LEVE##level, fmt, ##__VA_ARGS__)
 
-#define _LOG_FILTERED(section, level, fmt, ...) \
-	_LOG_RECORD(section, level, fmt, ##__VA_ARGS__)
-
 // per level compile-time filters
 #if _LOG_IS_ENABLED_LEVEL_STATIC(L_DEBUG)
 	#define _LOG_FILTER_L_DEBUG(section, fmt, ...) \
-		_LOG_FILTERED(section, L_DEBUG, fmt, ##__VA_ARGS__)
+		_LOG_RECORD(section, L_DEBUG, fmt, ##__VA_ARGS__)
 #else
 	#define _LOG_FILTER_L_DEBUG(section, fmt, ...)
 #endif
 #if _LOG_IS_ENABLED_LEVEL_STATIC(L_INFO)
 	#define _LOG_FILTER_L_INFO(section, fmt, ...) \
-		_LOG_FILTERED(section, L_INFO, fmt, ##__VA_ARGS__)
+		_LOG_RECORD(section, L_INFO, fmt, ##__VA_ARGS__)
 #else
 	#define _LOG_FILTER_L_INFO(section, fmt,...)
 	#warning log messages of level INFO are not compiled into the binary
 #endif
 #if _LOG_IS_ENABLED_LEVEL_STATIC(L_WARNING)
 	#define _LOG_FILTER_L_WARNING(section, fmt, ...) \
-		_LOG_FILTERED(section, L_WARNING, fmt, ##__VA_ARGS__)
+		_LOG_RECORD(section, L_WARNING, fmt, ##__VA_ARGS__)
 #else
 	#define _LOG_FILTER_L_WARNING(section, fmt, ...)
 	#warning log messages of level WARNING are not compiled into the binary
 #endif
 #if _LOG_IS_ENABLED_LEVEL_STATIC(L_ERROR)
 	#define _LOG_FILTER_L_ERROR(section, fmt, ...) \
-		_LOG_FILTERED(section, L_ERROR, fmt, ##__VA_ARGS__)
+		_LOG_RECORD(section, L_ERROR, fmt, ##__VA_ARGS__)
 #else
 	#define _LOG_FILTER_L_ERROR(section, fmt, ##__VA_ARGS__)
 	#warning log messages of level ERROR are not compiled into the binary
 #endif
 #if _LOG_IS_ENABLED_LEVEL_STATIC(L_FATAL)
 	#define _LOG_FILTER_L_FATAL(section, fmt, ...) \
-		_LOG_FILTERED(section, L_FATAL, fmt, ##__VA_ARGS__)
+		_LOG_RECORD(section, L_FATAL, fmt, ##__VA_ARGS__)
 #else
 	#define _LOG_FILTER_L_FATAL(section, fmt, ...)
 	#warning log messages of level FATAL are not compiled into the binary
@@ -385,6 +382,40 @@ extern void log_frontend_cleanup();
 #define LOG_SL(section, level, fmt, ...) \
 	_LOG_SECTION(section, level, fmt, ##__VA_ARGS__)
 
+/**
+ * Registers a log message with a specifiable integer level.
+ * Usage example:
+ * <code>
+ * LOG_I(LOG_LEVEL_DEBUG, "my age is %i", 21);
+ * LOG_I(20, "my age is %i", 21);
+ * </code>
+ * @see LOG()
+ * @see LOG_L()
+ */
+#define LOG_I(level, fmt, ...) \
+{ \
+	if (level >= _LOG_LEVEL_MIN) { \
+		log_frontend_record(LOG_SECTION_CURRENT, level, fmt, ##__VA_ARGS__); \
+	} \
+}
+
+/**
+ * Registers a log message with a specifiable section and integer level.
+ * Usage example:
+ * <code>
+ * LOG_SI("one-time-section", 20, "my age is %i", 21);
+ * </code>
+ * @see LOG_I()
+ * @see LOG_L()
+ * @see LOG_S()
+ * @see LOG_SECTION
+ */
+#define LOG_SI(section, level, fmt, ...) \
+{ \
+	if (level >= _LOG_LEVEL_MIN) { \
+		log_frontend_record(section, level, fmt, ##__VA_ARGS__); \
+	} \
+}
 
 /**
  * Informs all registered sinks to cleanup their state,

@@ -1754,7 +1754,7 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 {
 	if (shadowHandler->inShadowPass) {
-		if (unit->buildProgress > 0.66f) {
+		if (unit->buildProgress > (2.0f / 3.0f)) {
 			DrawUnitModel(unit);
 		}
 		return;
@@ -1812,7 +1812,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	}
 
 	// Flat-colored model
-	if (unit->buildProgress > 0.33f) {
+	if (unit->buildProgress > (1.0f / 3.0f)) {
 		glColorf3(fc * (1.5f - col));
 		const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress * 3 - 1)};
 		const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 3 - 2)};
@@ -1834,7 +1834,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	// XXX FIXME
 	// ATI has issues with textures, clip planes and shader programs at once - very low performance
 	// FIXME: This may work now I added OPTION ARB_position_invariant to the ARB programs.
-	if (unit->buildProgress > 0.66f) {
+	if (unit->buildProgress > (2.0f / 3.0f)) {
 		if (globalRendering->atiHacks) {
 			glDisable(GL_CLIP_PLANE0);
 
@@ -2081,7 +2081,7 @@ inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 	} else {
 		u->drawPos = u->pos + (u->speed * time);
 	}
-	u->drawMidPos = u->drawPos + u->relMidPos;
+	u->drawMidPos = u->drawPos + (u->midPos - u->pos);
 }
 
 
@@ -2105,13 +2105,14 @@ bool CUnitDrawer::DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const
 
 
 //! visualize if a unit can be built at specified position
-int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo)
+bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo)
 {
 	return ShowUnitBuildSquare(buildInfo, std::vector<Command>());
 }
 
-int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands)
+bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands)
 {
+	//TODO: make this a lua callin!
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2132,7 +2133,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	const int z2 =    z1 + (buildInfo.GetZSize() *        SQUARE_SIZE);
 	const float h = uh->GetBuildHeight(pos, buildInfo.def, false);
 
-	const int canBuild = uh->TestUnitBuildSquare(
+	const bool canBuild = !!uh->TestUnitBuildSquare(
 		buildInfo,
 		feature,
 		-1,
@@ -2144,9 +2145,9 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	);
 
 	if (canBuild) {
-		glColor4f(0, 0.9f, 0.0f, 1.0f);
+		glColor4f(0.0f, 0.9f, 0.0f, 0.7f);
 	} else {
-		glColor4f(0.9f, 0.8f, 0.0f, 1.0f);
+		glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
 	}
 
 	va->Initialize();
@@ -2161,7 +2162,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	va->DrawArray0(GL_QUADS);
 
 
-	glColor4f(0.9f, 0.8f, 0.0f, 1.0f);
+	glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
 	va->Initialize();
 	va->EnlargeArrays(featureSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -2174,7 +2175,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	va->DrawArray0(GL_QUADS);
 
 
-	glColor4f(0.9f, 0.0f, 0.0f, 1.0f);
+	glColor4f(0.9f, 0.0f, 0.0f, 0.7f);
 	va->Initialize();
 	va->EnlargeArrays(illegalSquares.size() * 4, 0, VA_SIZE_0);
 

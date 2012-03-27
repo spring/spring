@@ -123,7 +123,7 @@ if    (WIN32)
 	endif (NOT WINDOWS_CONSOLE)
 endif (WIN32)
 
-set(OPENMP FALSE CACHE BOOL "Enable local multithreading")
+set(OPENMP TRUE CACHE BOOL "Enable local multithreading")
 if    (OPENMP)
 	include(FindOpenMP)
 	if(OPENMP_FOUND)
@@ -132,6 +132,7 @@ if    (OPENMP)
 		# Currently FindOpenMP fails and doesn't give _any_ linker flags
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp -lgomp")
 		set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fopenmp -lgomp")
+		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fopenmp -lgomp")
 	endif(OPENMP_FOUND)
 endif (OPENMP)
 
@@ -195,7 +196,7 @@ if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set (MARCH_FLAG CACHE STRING "CPU optimization (use i686 for generic optimization)")
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	message (STATUS "Building Spring for 32bit environment")
-	set (MARCH_FLAG "i686" CACHE STRING "CPU optimization (use i686 for generic optimization)")
+	set (MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
 if    ($ENV{CXX} MATCHES "icpc")
@@ -245,6 +246,7 @@ set(DEBUG_WARNINGS "-Wall -Wno-sign-compare ${COMMON_WARNINGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IEEE_FP_FLAG} -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
 add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
+add_definitions(-DBOOST_NO_FENV_H) # streflop overrides fenv.h
 if (UNIX)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif (UNIX)

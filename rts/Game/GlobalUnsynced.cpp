@@ -30,6 +30,7 @@
  */
 CGlobalUnsynced* gu;
 
+const float CGlobalUnsynced::reconnectSimDrawBalance = 0.15f;
 
 CR_BIND(CGlobalUnsynced, );
 
@@ -51,6 +52,11 @@ CR_REG_METADATA(CGlobalUnsynced, (
 CGlobalUnsynced::CGlobalUnsynced()
 {
 	usRandSeed = time(NULL) % ((SDL_GetTicks() + 1) * 9007);
+
+	simFPS = 0.0f;
+
+	avgSimFrameTime = 0.0f;
+	avgDrawFrameTime = 0.0f;
 
 	modGameTime = 0;
 	gameTime = 0;

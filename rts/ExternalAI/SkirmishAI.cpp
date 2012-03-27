@@ -40,7 +40,7 @@ CSkirmishAI::~CSkirmishAI() {
 
 void CSkirmishAI::Init() {
 
-	if (callback != NULL) {
+	if ((callback != NULL) && !dieing) {
 		initOk  = library->Init(skirmishAIId, callback);
 		callback = NULL;
 	}

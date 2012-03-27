@@ -935,6 +935,9 @@ bool java_initStatic(int _interfaceId,
 				"Failed locating a JRE installation"
 				", you may specify the JAVA_HOME env var.");
 		return false;
+	} else {
+		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
+				"Using JRE (can be changed with JAVA_HOME): %s", jrePath);
 	}
 	FREE(jreLocationFile);
 

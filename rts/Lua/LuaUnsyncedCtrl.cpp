@@ -110,6 +110,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	lua_rawset(L, -3)
 
 	REGISTER_LUA_CFUNC(Echo);
+	REGISTER_LUA_CFUNC(Log);
 
 	REGISTER_LUA_CFUNC(SendMessage);
 	REGISTER_LUA_CFUNC(SendMessageToPlayer);
@@ -421,6 +422,11 @@ void LuaUnsyncedCtrl::ClearUnitCommandQueues()
 int LuaUnsyncedCtrl::Echo(lua_State* L)
 {
 	return LuaUtils::Echo(L);
+}
+
+int LuaUnsyncedCtrl::Log(lua_State* L)
+{
+	return LuaUtils::Log(L);
 }
 
 static string ParseMessage(lua_State* L, const string& msg)
@@ -2115,7 +2121,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 		scriptfile << script;
 		scriptfile.close();
 
-		processArgs.push_back(Quote(scriptFullName));
+		processArgs.push_back(scriptFullName);
 	}
 
 #ifdef _WIN32
@@ -2943,4 +2949,3 @@ int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 
 	return 0;
 }
-

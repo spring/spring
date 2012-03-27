@@ -98,12 +98,6 @@ ${!echonow} "Base dir:   <engine-source-root>/installer/"
 	${!echonow} "Using MIN_PORTABLE_ARCHIVE: ${MIN_PORTABLE_ARCHIVE}"
 !endif
 
-!ifndef ARCHIVEMOVER
-	!warning "ARCHIVEMOVER not defined"
-!else
-	${!echonow} "Using ARCHIVEMOVER:         ${ARCHIVEMOVER}"
-!endif
-
 !ifndef RAPID_ARCHIVE
 	!warning "RAPID_ARCHIVE not defined"
 !else
@@ -114,6 +108,12 @@ ${!echonow} "Base dir:   <engine-source-root>/installer/"
 	!warning "NSI_UNINSTALL_FILES not defined"
 !else
 	${!echonow} "Using NSI_UNINSTALL_FILES:  ${NSI_UNINSTALL_FILES}"
+!endif
+
+!ifndef VCREDIST
+	!error "VCREDIST not defined"
+!else
+	${!echonow} "Using VCREDIST:             ${VCREDIST}"
 !endif
 
 
@@ -130,7 +130,6 @@ Section "Engine" SEC_MAIN
 	        !include "sections\deprecated.nsh"
 	!undef INSTALL
 SectionEnd
-
 
 SectionGroup "Multiplayer battlerooms"
 	Section "SpringLobby" SEC_SPRINGLOBBY
@@ -168,12 +167,6 @@ Section "Desktop shortcuts" SEC_DESKTOP
 SectionEnd
 
 SectionGroup "Tools"
-	Section "Easy content installation" SEC_ARCHIVEMOVER
-		!define INSTALL
-			${!echonow} "Processing: archivemover"
-			!include "sections\archivemover.nsh"
-		!undef INSTALL
-	SectionEnd
 !ifdef RAPID_ARCHIVE
 	Section "Simple spring-rapid downloader" SEC_RAPID
 		!define INSTALL
@@ -200,6 +193,12 @@ Section /o "Portable" SEC_PORTABLE
 	!undef INSTALL
 SectionEnd
 
+Section "" SEC_VCREDIST
+	!define INSTALL
+		${!echonow} "Processing: vcredist"
+		!include "sections\vcredist.nsh"
+	!undef INSTALL
+SectionEnd
 
 !include "sections\sectiondesc.nsh"
 
@@ -235,7 +234,7 @@ Function .onInit
 	skiprunchecks:
 
 	; enable/disable sections depending on parameters
-	!include "sections/SetupSections.nsh"
+	!include "sections/setupSections.nsh"
 FunctionEnd
 
 Function un.onUninstSuccess
@@ -262,7 +261,6 @@ Section Uninstall
 
 	!include "sections\shortcuts_startMenu.nsh"
 	!include "sections\shortcuts_desktop.nsh"
-	!include "sections\archivemover.nsh"
 	!include "sections\portable.nsh"
 	!include "sections\zeroK.nsh"
 	!include "sections\tasServer.nsh"

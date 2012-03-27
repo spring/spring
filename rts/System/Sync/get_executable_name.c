@@ -75,7 +75,9 @@ static int _find_executable_file(const char *filename, char *output, int size)
 			int len;
 
 			/* Prepend current directory */
-			getcwd(output, size);
+			const char* result = getcwd(output, size);
+			if (!result) output[0] = 0;
+
 			len = strlen(output);
 			output[len] = '/';
 			strncpy(output+len+1, filename, size-len-1);
@@ -214,7 +216,8 @@ void get_executable_name(char *output, int size)
 	pipe = popen(filename, "r");
 	if (pipe) {
 		/* The first line of output is a header */
-		fgets(linkname, sizeof(linkname), pipe);
+		const char* result = fgets(linkname, sizeof(linkname), pipe);
+		if (!result) linkname[0] = 0;
 
 		/* The information we want is in the last column; find it */
 		len = strlen(linkname);
@@ -222,7 +225,8 @@ void get_executable_name(char *output, int size)
 			len--;
 
 		/* The second line contains the info we want */
-		fgets(linkname, sizeof(linkname), pipe);
+		result = fgets(linkname, sizeof(linkname), pipe);
+		if (!result) { linkname[0] = 0; len = 0; }
 		pclose(pipe);
 
 		/* Treat special cases: filename between [] and - for login shell */
@@ -239,7 +243,7 @@ void get_executable_name(char *output, int size)
 		strncpy(output, filename, size);
 		output[size - 1] = 0;
 		return;
-   }
+	}
 
 #ifdef ALLEGRO_WITH_MAGIC_MAIN
 	/* Try the captured argv[0] */
