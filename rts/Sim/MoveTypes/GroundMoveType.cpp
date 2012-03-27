@@ -1419,7 +1419,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	const MoveDef* colliderMD,
 	const CMoveMath* colliderMM
 ) {
-	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 2.0f);
+	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
 
 	const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(collider->pos, searchRadius);
 	      std::vector<CUnit*>::const_iterator uit;
@@ -1555,8 +1555,8 @@ void CGroundMoveType::HandleUnitCollisions(
 				currentSpeed = 0.0f;
 				deltaSpeed = 0.0f;
 
-				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
-					// repath iff obstacle is within 60-degree cone; we do this
+				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.0f)) {
+					// repath iff obstacle is within 90-degree cone; we do this
 					// because the GNWP lookahead (for non-TIP units) can cause
 					// corners to be cut across statically blocked squares
 					//
@@ -1622,7 +1622,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const MoveDef* colliderMD,
 	const CMoveMath* colliderMM
 ) {
-	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 2.0f);
+	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
 
 	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(collider->pos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
@@ -1697,7 +1697,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 				currentSpeed = 0.0f;
 				deltaSpeed = 0.0f;
 
-				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.5f)) {
+				if ((gs->frameNum > pathRequestDelay) && ((-sepDirection).dot(owner->frontdir * dirSign) >= 0.0f)) {
 					if (OWNER_MOVE_CMD()) {
 						StartMoving(goalPos, goalRadius, 0.0f);
 					} else {

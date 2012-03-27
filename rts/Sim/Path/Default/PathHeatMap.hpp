@@ -5,6 +5,7 @@
 
 #include <vector>
 
+class CPathManager;
 struct MoveDef;
 
 /**
@@ -24,6 +25,7 @@ public:
 
 	unsigned int GetHeatMapIndex(unsigned int x, unsigned int y) const;
 
+	void AddHeat(const CSolidObject* owner, const CPathManager* pm, unsigned int pathID);
 	void UpdateHeatValue(unsigned int x, unsigned int y, unsigned int value, unsigned int ownerID);
 
 	const int GetHeatValue(unsigned int x, unsigned int y) const {
