@@ -102,7 +102,7 @@ struct MoveDef {
 	/// otherwise, since they are never initialized)
 	bool avoidMobilesOnPath;
 
-	/// heatmap this unit
+	/// do we leave heat and avoid any left by others?
 	bool heatMapping;
 
 	/// heatmap path cost modifier
