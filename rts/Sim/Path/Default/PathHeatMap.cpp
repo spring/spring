@@ -48,6 +48,8 @@ unsigned int PathHeatMap::GetHeatMapIndex(unsigned int hmx, unsigned int hmz) co
 }
 
 void PathHeatMap::AddHeat(const CSolidObject* owner, const CPathManager* pm, unsigned int pathID) {
+	if (pathID == 0)
+		return;
 	if (!owner->mobility->heatMapping)
 		return;
 
