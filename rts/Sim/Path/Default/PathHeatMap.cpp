@@ -2,8 +2,10 @@
 
 #include "PathHeatMap.hpp"
 #include "PathConstants.h"
+#include "PathManager.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/Objects/SolidObject.h"
 
 PathHeatMap* PathHeatMap::GetInstance() {
 	static PathHeatMap* phm = NULL;
@@ -43,6 +45,33 @@ unsigned int PathHeatMap::GetHeatMapIndex(unsigned int hmx, unsigned int hmz) co
 	hmz >>= zscale;
 
 	return (hmz * xsize + hmx);
+}
+
+void PathHeatMap::AddHeat(const CSolidObject* owner, const CPathManager* pm, unsigned int pathID) {
+	if (!owner->mobility->heatMapping)
+		return;
+
+	#ifndef USE_GML
+	static std::vector<int2> points;
+	#else
+	std::vector<int2> points;
+	#endif
+
+	pm->GetDetailedPathSquares(pathID, points);
+
+	if (!points.empty()) {
+		const float scale = 1.0f / points.size();
+		const float heat = scale * owner->mobility->heatProduced;
+
+		unsigned int i = points.size();
+
+		for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
+			UpdateHeatValue(it->x, it->y, i * heat, owner->id);
+
+			// decrease contribution from further-away points
+			i--;
+		}
+	}
 }
 
 void PathHeatMap::UpdateHeatValue(unsigned int x, unsigned int y, unsigned int value, unsigned int ownerID) {

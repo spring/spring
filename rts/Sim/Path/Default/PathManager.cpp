@@ -422,31 +422,10 @@ void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathId)
 {
 	pathFlowMap->AddFlow(owner);
 
-	if (pathId == 0) {
+	if (pathId == 0)
 		return;
-	}
 
-	#ifndef USE_GML
-	static std::vector<int2> points;
-	#else
-	std::vector<int2> points;
-	#endif
-
-	GetDetailedPathSquares(pathId, points);
-
-	if (!points.empty()) {
-		const float scale = 1.0f / points.size();
-		const float heat = scale * owner->mobility->heatProduced;
-
-		unsigned int i = points.size();
-
-		for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
-			pathHeatMap->UpdateHeatValue(it->x, it->y, i * heat, owner->id);
-
-			// decrease contribution from further-away points
-			i--;
-		}
-	}
+	pathHeatMap->AddHeat(owner, this, pathId);
 }
 
 
