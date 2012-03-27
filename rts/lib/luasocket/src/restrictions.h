@@ -4,8 +4,20 @@
 #include <string>
 #include <utility>
 
-typedef std::pair<std::string, unsigned int> TIpPort;
-typedef std::list<TIpPort> TStrIntMap;
+class TSocketRule {
+
+public:
+	std::string hostname;
+	unsigned int port;
+	bool allowed;
+	TSocketRule(std::string hostname, unsigned int port, bool allowed = true) {
+		this->hostname = hostname;
+		this->port = port;
+		this->allowed = allowed;
+	}
+};
+
+typedef std::list<TSocketRule> TStrIntMap;
 
 class CLuaSocketRestrictions {
 public:
@@ -27,6 +39,10 @@ public:
 	* add resolved ip to the rules where the hostname is used
 	*/
 	void addIP(const char* hostname, const char* ip);
+	/**
+	* add a rule
+	*/
+	void addRule(RestrictType type, const std::string& hostname, int port, bool allowed);
 private:
 	/**
 	* parses and adds a rules string
@@ -42,9 +58,10 @@ private:
 	*/
 	void addRule(RestrictType type, const std::string& rule);
 	/**
-	* add a rule
+	* searches a rule, returns NULL if no matching rule is found
 	*/
-	void addRawRule(RestrictType type, const std::string& hostname, int port);
+	const TSocketRule* getRule(RestrictType type, const char* hostname, int port);
+
 
 	TStrIntMap restrictions[ALL_RULES];
 
