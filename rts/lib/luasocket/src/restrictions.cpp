@@ -8,6 +8,12 @@
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 
+#define LOG_SECTION_LUASOCKET "LuaSocket"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_LUASOCKET)
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_LUASOCKET
 
 CONFIG(std::string, TCPAllowConnect).defaultValue("").readOnly(true);
 CONFIG(std::string, TCPAllowListen).defaultValue("").readOnly(true);
