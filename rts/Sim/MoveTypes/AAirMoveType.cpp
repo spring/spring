@@ -297,6 +297,7 @@ bool AAirMoveType::MoveToRepairPad() {
 
 			if ((owner->pos.SqDistance(absPadPos) < SQUARE_SIZE * SQUARE_SIZE) || aircraftState == AIRCRAFT_LANDED) {
 				padStatus = PAD_STATUS_ARRIVED;
+				owner->speed = ZeroVector;
 			}
 		} else {
 			// taking off from pad
