@@ -1419,7 +1419,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	const MoveDef* colliderMD,
 	const CMoveMath* colliderMM
 ) {
-	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 2.0f);
+	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
 
 	const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(collider->pos, searchRadius);
 	      std::vector<CUnit*>::const_iterator uit;
@@ -1622,7 +1622,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const MoveDef* colliderMD,
 	const CMoveMath* colliderMM
 ) {
-	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 2.0f);
+	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
 
 	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(collider->pos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
