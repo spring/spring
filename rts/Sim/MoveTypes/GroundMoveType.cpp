@@ -83,7 +83,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(currWayPoint),
 	CR_MEMBER(nextWayPoint),
 	CR_MEMBER(atGoal),
-	CR_MEMBER(haveFinalWaypoint),
+	CR_MEMBER(atEndOfPath),
 
 	CR_MEMBER(currWayPointDist),
 	CR_MEMBER(prevWayPointDist),
@@ -142,7 +142,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	currWayPoint(ZeroVector),
 	nextWayPoint(ZeroVector),
 	atGoal(false),
-	haveFinalWaypoint(false),
+	atEndOfPath(false),
 
 	currWayPointDist(0.0f),
 	prevWayPointDist(0.0f),
@@ -272,11 +272,12 @@ bool CGroundMoveType::Update()
 		// (so we want to avoid being considered "idle", since that
 		// will cause our path to be re-requested and again give us
 		// a temporary waypoint, etc.)
-		// NOTE: this is only relevant for QTPFS
+		// NOTE: this is only relevant for QTPFS (at present)
 		// if the unit is just turning in-place over several frames
 		// (eg. to maneuver around an obstacle), do not consider it
 		// as "idling"
-		idling = (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f);
+		idling = true;
+		idling &= (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f);
 		idling &= (std::abs(owner->heading - heading) < turnRate);
 		hasMoved = false;
 	} else {
@@ -284,18 +285,22 @@ bool CGroundMoveType::Update()
 
 		// note: HandleObjectCollisions() may have negated the position set
 		// by UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
+		// note: the idling-check can only succeed if we are oriented in the
+		// direction of our waypoint, which compensates for the fact distance
+		// decreases much less quickly when moving orthogonal to <waypointDir>
 		oldPos = owner->pos;
 
 		// too many false negatives: speed is unreliable if stuck behind an obstacle
 		//   idling = (owner->speed.SqLength() < (accRate * accRate));
+		//   idling &= (Square(currWayPointDist - prevWayPointDist) <= (accRate * accRate));
 		// too many false positives: waypoint-distance delta and speed vary too much
 		//   idling = (Square(currWayPointDist - prevWayPointDist) < owner->speed.SqLength());
 		// too many false positives: many slow units cannot even manage 1 elmo/frame
 		//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
-
 		idling = true;
 		idling &= (math::fabs(posDif.y) < math::fabs(cmpEps.y * owner->pos.y));
-		idling &= (Square(currWayPointDist - prevWayPointDist) <= (posDif.SqLength() * 0.5f));
+		idling &= (Square(currWayPointDist - prevWayPointDist) <= (posDif.SqLength() * 0.5));
+		idling &= (flatFrontDir.dot(waypointDir * ((int(!reversing) * 2) - 1)) >= 0.5f);
 		hasMoved = true;
 	}
 
@@ -439,7 +444,7 @@ bool CGroundMoveType::FollowPath()
 
 		{
 			// NOTE:
-			//     uses owner->pos instead of currWayPoint (ie. not the same as haveFinalWaypoint)
+			//     uses owner->pos instead of currWayPoint (ie. not the same as atEndOfPath)
 			//
 			//     if our first command is a build-order, then goalRadius is set to our build-range
 			//     and we cannot increase tolerance safely (otherwise the unit might stop when still
@@ -460,7 +465,7 @@ bool CGroundMoveType::FollowPath()
 			}
 		}
 
-		if (!haveFinalWaypoint) {
+		if (!atEndOfPath) {
 			GetNextWayPoint();
 		} else {
 			if (atGoal) {
@@ -537,26 +542,26 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 				const float reqTurnAngle = math::fabs(180.0f * (owner->heading - wantedHeading) / SHORTINT_MAXVALUE);
 				const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
-				float reducedSpeed = (reversing)? maxReverseSpeed: maxSpeed;
+				float turnSpeed = (reversing)? maxReverseSpeed: maxSpeed;
 
 				if (reqTurnAngle != 0.0f) {
-					reducedSpeed *= (maxTurnAngle / reqTurnAngle);
-				}
-
-				if (haveFinalWaypoint && !atGoal) {
-					// at this point, Update() will no longer call GetNextWayPoint()
-					// and we must slow down to prevent entering an infinite circle
-					targetSpeed = fastmath::apxsqrt(currWayPointDist * (reversing? accRate: decRate));
+					turnSpeed *= (maxTurnAngle / reqTurnAngle);
 				}
 
 				if (waypointDir.SqLength() > 0.1f) {
 					if (!ud->turnInPlace) {
-						targetSpeed = std::max(ud->turnInPlaceSpeedLimit, reducedSpeed);
+						targetSpeed = std::max(ud->turnInPlaceSpeedLimit, turnSpeed);
 					} else {
 						if (reqTurnAngle > ud->turnInPlaceAngleLimit) {
-							targetSpeed = reducedSpeed;
+							targetSpeed = turnSpeed;
 						}
 					}
+				}
+
+				if (atEndOfPath) {
+					// at this point, Update() will no longer call GetNextWayPoint()
+					// and we must slow down to prevent entering an infinite circle
+					targetSpeed = std::min(targetSpeed, (currWayPointDist * PI) / (SPRING_CIRCLE_DIVS / turnRate));
 				}
 			}
 
@@ -565,6 +570,11 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 			//     if wantedSpeed > targetSpeed, the unit will
 			//     not accelerate to speed > targetSpeed unless
 			//     its actual max{Reverse}Speed is also changed
+			//
+			//     raise wantedSpeed iff the terrain-modifier is
+			//     larger than 1 (so units still get their speed
+			//     bonus correctly), otherwise leave it untouched
+			wantedSpeed *= std::max(groundMod, 1.0f);
 			targetSpeed *= groundMod;
 			targetSpeed *= ((startBreaking)? 0.0f: 1.0f);
 			targetSpeed = std::min(targetSpeed, wantedSpeed);
@@ -575,7 +585,6 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 
 	deltaSpeed = pathController->GetDeltaSpeed(
 		pathId,
-		wantedSpeed,
 		targetSpeed,
 		currentSpeed,
 		accRate,
@@ -1172,7 +1181,7 @@ void CGroundMoveType::GetNewPath()
 	// if new path received, can't be at waypoint
 	if (pathId != 0) {
 		atGoal = false;
-		haveFinalWaypoint = false;
+		atEndOfPath = false;
 
 		currWayPoint = pathManager->NextWayPoint(pathId, owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id);
 		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
@@ -1237,10 +1246,11 @@ void CGroundMoveType::GetNextWayPoint()
 
 			// trigger Arrived on the next Update (but
 			// only if we have non-temporary waypoints)
-			haveFinalWaypoint |= (curGoalDistSq < minGoalDistSq);
+			// atEndOfPath |= (currWayPoint == nextWayPoint);
+			atEndOfPath |= (curGoalDistSq < minGoalDistSq);
 		}
 
-		if (haveFinalWaypoint) {
+		if (atEndOfPath) {
 			currWayPoint = goalPos;
 			nextWayPoint = goalPos;
 			return;
@@ -1894,7 +1904,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 				CMoveMath::BLOCK_MOBILE |
 				CMoveMath::BLOCK_MOBILE_BUSY;
 
-			while ((nwsx * nwsx + nwsy * nwsy) < LINETABLE_SIZE && !haveFinalWaypoint && pathId != 0) {
+			while ((nwsx * nwsx + nwsy * nwsy) < LINETABLE_SIZE && !atEndOfPath && pathId != 0) {
 				const int ltx = nwsx + LINETABLE_SIZE / 2;
 				const int lty = nwsy + LINETABLE_SIZE / 2;
 				bool wpOk = true;

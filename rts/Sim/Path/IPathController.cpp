@@ -14,7 +14,6 @@ void IPathController::FreeInstance(IPathController* instance) {
 
 float GMTDefaultPathController::GetDeltaSpeed(
 	unsigned int pathID,
-	float wantedSpeed,
 	float targetSpeed,
 	float currentSpeed,
 	float maxAccRate,
