@@ -12,11 +12,6 @@ public:
 	CSelectionKeyHandler();
 	~CSelectionKeyHandler();
 
-	/**
-	 * @deprecated selectionkeys.txt is deprecated, use uikeys.txt instead (Feb. 2012)
-	 */
-	void LoadSelectionKeys();
-
 	void DoSelection(std::string selectString);
 
 private:

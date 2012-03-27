@@ -86,7 +86,6 @@ static inline void test_log_sl(int line, output_test_stream& logStream,
 #define TLOG(fmt, ...) \
 	TLOG_SL(LOG_SECTION_DEFAULT, L_INFO, fmt, ##__VA_ARGS__)
 
-
 namespace {
 	class PrePostMainLogTest {
 	public:
@@ -163,10 +162,25 @@ BOOST_AUTO_TEST_CASE(IsSingleInstruction)
 }
 
 
+static bool TestDefaultSection1()
+{
+	return (LOG_SECTION_EQUAL("", LOG_SECTION_DEFAULT));
+}
+
+static bool TestDefaultSection2()
+{
+	const std::string foo = "";
+	return (LOG_SECTION_EQUAL(foo.c_str(), LOG_SECTION_DEFAULT));
+}
+
+
 BOOST_AUTO_TEST_CASE(Sections)
 {
 	LOG( "Testing logging section: <default> (level: default)");
 	TLOG("Testing logging section: <default> (level: default)");
+
+	BOOST_CHECK(TestDefaultSection1());
+	BOOST_CHECK(TestDefaultSection2());
 
 	LOG_L( L_INFO, "Testing logging section: <default> (level: info)");
 	TLOG_L(L_INFO, "Testing logging section: <default> (level: info)");

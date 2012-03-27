@@ -39,9 +39,11 @@ private:
 	unsigned int farTextureID;
 	unsigned int usedFarTextures;
 
-	float2 GetTextureCoords(const int& farTextureNum, const int& orientation);
+	bool HaveFarIcon(const CSolidObject* obj) const;
+	bool CheckResizeAtlas();
+	float2 GetTextureCoords(const int& farTextureNum, const int& orientation) const;
 	void DrawFarTexture(const CSolidObject* obj, CVertexArray*);
-	int2 GetTextureCoordsInt(const int& farTextureNum, const int& orientation);
+	int2 GetTextureCoordsInt(const int& farTextureNum, const int& orientation) const;
 	void CreateFarTexture(const CSolidObject* obj);
 };
 

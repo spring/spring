@@ -196,6 +196,7 @@ static void CUnitKilledCB(int retCode, void* p1, void* p2)
 void CCobInstance::Killed()
 {
 	vector<int> args;
+	args.reserve(2);
 	args.push_back((int) (unit->recentDamage / unit->maxHealth * 100));
 	args.push_back(0);
 	Call(COBFN_Killed, args, &CUnitKilledCB, unit, NULL);
@@ -221,10 +222,11 @@ void CCobInstance::ExtractionRateChanged(float speed)
 
 void CCobInstance::RockUnit(const float3& rockDir)
 {
-	vector<int> rockAngles;
-	rockAngles.push_back((int)(500 * rockDir.z));
-	rockAngles.push_back((int)(500 * rockDir.x));
-	Call(COBFN_RockUnit, rockAngles);
+	vector<int> args;
+	args.reserve(2);
+	args.push_back((int)(500 * rockDir.z));
+	args.push_back((int)(500 * rockDir.x));
+	Call(COBFN_RockUnit, args);
 }
 
 
@@ -236,17 +238,14 @@ static void hitByWeaponIdCallback(int retCode, void* p1, void* p2) { weaponHitMo
 void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage)
 {
 	vector<int> args;
+	args.reserve(4);
 
 	args.push_back((int)(500 * hitDir.z));
 	args.push_back((int)(500 * hitDir.x));
 
 	if (HasFunction(COBFN_HitByWeaponId)) {
-		if (weaponDefId != -1) {
-			args.push_back(weaponDefHandler->weaponDefs[weaponDefId].tdfId);
-		} else {
-			args.push_back(-1);
-		}
-
+		const WeaponDef* wd = weaponDefHandler->GetWeaponById(weaponDefId);
+		args.push_back(wd ? wd->tdfId : -1);
 		args.push_back((int)(100 * inout_damage));
 
 		weaponHitMod = 1.0f;
@@ -294,6 +293,7 @@ void CCobInstance::BeginTransport(const CUnit* unit)
 int CCobInstance::QueryTransport(const CUnit* unit)
 {
 	vector<int> args;
+	args.reserve(2);
 	args.push_back(0);
 	args.push_back((int)(unit->model->height*65536));
 	Call(COBFN_QueryTransport, args);
@@ -311,6 +311,7 @@ void CCobInstance::TransportPickup(const CUnit* unit)
 void CCobInstance::TransportDrop(const CUnit* unit, const float3& pos)
 {
 	vector<int> args;
+	args.reserve(2);
 	args.push_back(unit->id);
 	args.push_back(PACKXZ(pos.x, pos.z));
 	Call(COBFN_TransportDrop, args);
@@ -320,6 +321,7 @@ void CCobInstance::TransportDrop(const CUnit* unit, const float3& pos)
 void CCobInstance::StartBuilding(float heading, float pitch)
 {
 	vector<int> args;
+	args.reserve(2);
 	args.push_back(short(heading * RAD2TAANG));
 	args.push_back(short(pitch * RAD2TAANG));
 	Call(COBFN_StartBuilding, args);
@@ -359,6 +361,7 @@ static void ScriptCallback(int retCode, void* p1, void* p2)
 void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 {
 	vector<int> args;
+	args.reserve(2);
 	args.push_back(short(heading * RAD2TAANG));
 	args.push_back(short(pitch * RAD2TAANG));
 	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weaponNum, args, ScriptCallback, unit->weapons[weaponNum], NULL);
@@ -374,6 +377,7 @@ static void ShieldScriptCallback(int retCode, void* p1, void* p2)
 void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 {
 	vector<int> args;
+	args.reserve(2);
 	args.push_back(0); // compat with AimWeapon (same script is called)
 	args.push_back(0);
 	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weapon->weaponNum, args, ShieldScriptCallback, weapon, 0);
@@ -399,6 +403,7 @@ bool CCobInstance::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTa
 	const int unitID = targetUnit ? targetUnit->id : 0;
 
 	vector<int> args;
+	args.reserve(3);
 
 	args.push_back(unitID);
 	args.push_back(0); // arg[1], for the return value
@@ -416,6 +421,7 @@ float CCobInstance::TargetWeight(int weaponNum, const CUnit* targetUnit)
 	const int unitID = targetUnit ? targetUnit->id : 0;
 
 	vector<int> args;
+	args.reserve(2);
 
 	args.push_back(unitID);
 	args.push_back(COBSCALE); // arg[1], for the return value
@@ -513,6 +519,7 @@ int CCobInstance::Call(const std::string& fname, std::vector<int>& args)
 int CCobInstance::Call(const std::string& fname, int p1)
 {
 	vector<int> x;
+	x.reserve(1);
 	x.push_back(p1);
 	return Call(fname, x, NULL, NULL, NULL);
 }
@@ -538,6 +545,7 @@ int CCobInstance::Call(int id)
 int CCobInstance::Call(int id, int p1)
 {
 	vector<int> x;
+	x.reserve(1);
 	x.push_back(p1);
 	return Call(id, x, NULL, NULL, NULL);
 }

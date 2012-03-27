@@ -97,7 +97,7 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::s
 	goalSqrOffset.x = BLOCK_SIZE / 2;
 	goalSqrOffset.y = BLOCK_SIZE / 2;
 
-	vertices.resize(moveinfo->moveData.size() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, 0.0f);
+	vertices.resize(moveDefHandler->moveDefs.size() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, 0.0f);
 
 	// load precalculated data if it exists
 	InitEstimator(cacheFileName, map);
@@ -194,7 +194,7 @@ void CPathEstimator::InitBlocks() {
 		const int z = idx / nbrOfBlocksX;
 		const int blockNr = z * nbrOfBlocksX + x;
 
-		blockStates.peNodeOffsets[blockNr].resize(moveinfo->moveData.size());
+		blockStates.peNodeOffsets[blockNr].resize(moveDefHandler->moveDefs.size());
 	}
 }
 
@@ -230,7 +230,7 @@ void CPathEstimator::CalculateBlockOffsets(int idx, int thread)
 		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (idx << 8)));
 	}
 
-	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); ++mi) {
+	for (vector<MoveDef*>::iterator mi = moveDefHandler->moveDefs.begin(); mi != moveDefHandler->moveDefs.end(); ++mi) {
 		if ((*mi)->unitDefRefCount > 0) {
 			FindOffset(**mi, x, z);
 		}
@@ -249,7 +249,7 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 		loadscreen->SetLoadMessage(calcMsg, (idx != 0));
 	}
 
-	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); ++mi) {
+	for (vector<MoveDef*>::iterator mi = moveDefHandler->moveDefs.begin(); mi != moveDefHandler->moveDefs.end(); ++mi) {
 		if ((*mi)->unitDefRefCount > 0) {
 			CalculateVertices(**mi, x, z, thread);
 		}
@@ -262,9 +262,9 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 
 
 /**
- * Finds a square accessable by the given movedata within the given block
+ * Finds a square accessable by the given MoveDef within the given block
  */
-void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ) {
+void CPathEstimator::FindOffset(const MoveDef& moveDef, int blockX, int blockZ) {
 	//! lower corner position of block
 	const int lowerX = blockX * BLOCK_SIZE;
 	const int lowerZ = blockZ * BLOCK_SIZE;
@@ -274,10 +274,10 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 	unsigned int bestPosZ = BLOCK_SIZE >> 1;
 
 	float bestCost = std::numeric_limits<float>::max();
-	const CMoveMath& moveMath = *(moveData.moveMath);
+	const CMoveMath& moveMath = *(moveDef.moveMath);
 
-	float speedMod = moveMath.GetPosSpeedMod(moveData, lowerX, lowerZ);
-	bool curblock = (speedMod == 0.0f) || moveMath.IsBlockedStructure(moveData, lowerX, lowerZ);
+	float speedMod = moveMath.GetPosSpeedMod(moveDef, lowerX, lowerZ);
+	bool curblock = (speedMod == 0.0f) || moveMath.IsBlockedStructure(moveDef, lowerX, lowerZ);
 	// search for an accessible position
 	unsigned int z = 0;
 	while (true) {
@@ -299,19 +299,19 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 			if (++x >= BLOCK_SIZE)
 				break;
 			// if last position was not blocked, then we do not need to check the entire square
-			speedMod = moveMath.GetPosSpeedMod(moveData, lowerX + x, lowerZ + z);
-			curblock = (speedMod == 0.0f) || (curblock ? moveMath.IsBlockedStructure(moveData, lowerX + x, lowerZ + z) :
-						moveMath.IsBlockedStructureXmax(moveData, lowerX + x, lowerZ + z));
+			speedMod = moveMath.GetPosSpeedMod(moveDef, lowerX + x, lowerZ + z);
+			curblock = (speedMod == 0.0f) || (curblock ? moveMath.IsBlockedStructure(moveDef, lowerX + x, lowerZ + z) :
+						moveMath.IsBlockedStructureXmax(moveDef, lowerX + x, lowerZ + z));
 		}
 		if (++z >= BLOCK_SIZE)
 			break;
-		speedMod = moveMath.GetPosSpeedMod(moveData, lowerX, lowerZ + z);
-		curblock = (speedMod == 0.0f) || (zcurblock ? moveMath.IsBlockedStructure(moveData, lowerX, lowerZ + z) :
-						moveMath.IsBlockedStructureZmax(moveData, lowerX, lowerZ + z));
+		speedMod = moveMath.GetPosSpeedMod(moveDef, lowerX, lowerZ + z);
+		curblock = (speedMod == 0.0f) || (zcurblock ? moveMath.IsBlockedStructure(moveDef, lowerX, lowerZ + z) :
+						moveMath.IsBlockedStructureZmax(moveDef, lowerX, lowerZ + z));
 	}
 
 	// store the offset found
-	blockStates.peNodeOffsets[blockZ * nbrOfBlocksX + blockX][moveData.pathType] = int2(blockX * BLOCK_SIZE + bestPosX, blockZ * BLOCK_SIZE + bestPosZ);
+	blockStates.peNodeOffsets[blockZ * nbrOfBlocksX + blockX][moveDef.pathType] = int2(blockX * BLOCK_SIZE + bestPosX, blockZ * BLOCK_SIZE + bestPosZ);
 }
 
 
@@ -319,21 +319,21 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
  * Calculate all vertices connected from the given block
  * (always 4 out of 8 vertices connected to the block)
  */
-void CPathEstimator::CalculateVertices(const MoveData& moveData, int blockX, int blockZ, int thread) {
+void CPathEstimator::CalculateVertices(const MoveDef& moveDef, int blockX, int blockZ, int thread) {
 	for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++)
-		CalculateVertex(moveData, blockX, blockZ, dir, thread);
+		CalculateVertex(moveDef, blockX, blockZ, dir, thread);
 }
 
 
 /**
  * Calculate requested vertex
  */
-void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX, int parentBlockZ, unsigned int direction, int thread) {
+void CPathEstimator::CalculateVertex(const MoveDef& moveDef, int parentBlockX, int parentBlockZ, unsigned int direction, int thread) {
 	// initial calculations
 	const int parentBlocknr = parentBlockZ * nbrOfBlocksX + parentBlockX;
 	const int childBlockX = parentBlockX + directionVector[direction].x;
 	const int childBlockZ = parentBlockZ + directionVector[direction].y;
-	const int vertexNbr = moveData.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES + parentBlocknr * PATH_DIRECTION_VERTICES + direction;
+	const int vertexNbr = moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES + parentBlocknr * PATH_DIRECTION_VERTICES + direction;
 
 	// outside map?
 	if (childBlockX < 0 || childBlockZ < 0 ||
@@ -343,12 +343,12 @@ void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX,
 	}
 
 	// start position
-	const int2 parentSquare = blockStates.peNodeOffsets[parentBlocknr][moveData.pathType];
+	const int2 parentSquare = blockStates.peNodeOffsets[parentBlocknr][moveDef.pathType];
 	const float3 startPos = SquareToFloat3(parentSquare.x, parentSquare.y);
 
 	// goal position
 	const int childBlocknr = childBlockZ * nbrOfBlocksX + childBlockX;
-	const int2 childSquare = blockStates.peNodeOffsets[childBlocknr][moveData.pathType];
+	const int2 childSquare = blockStates.peNodeOffsets[childBlocknr][moveDef.pathType];
 	const float3 goalPos = SquareToFloat3(childSquare.x, childSquare.y);
 
 	// PathFinder definition
@@ -362,7 +362,7 @@ void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX,
 	// use this thread's "private" CPathFinder instance
 	// (rather than locking pathFinder->GetPath()) if we
 	// are in one
-	result = pathFinders[thread]->GetPath(moveData, startPos, pfDef, path, false, true, MAX_SEARCHED_NODES_PF >> 2, false, 0, true);
+	result = pathFinders[thread]->GetPath(moveDef, startPos, pfDef, path, false, true, MAX_SEARCHED_NODES_PF >> 2, false, 0, true);
 
 	// store the result
 	if (result == IPath::Ok)
@@ -406,14 +406,14 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 	for (int z = upperZ; z >= lowerZ; z--) {
 		for (int x = upperX; x >= lowerX; x--) {
 			if (!(blockStates.nodeMask[z * nbrOfBlocksX + x] & PATHOPT_OBSOLETE)) {
-				vector<MoveData*>::iterator mi;
+				vector<MoveDef*>::iterator mi;
 
-				for (mi = moveinfo->moveData.begin(); mi < moveinfo->moveData.end(); ++mi) {
+				for (mi = moveDefHandler->moveDefs.begin(); mi < moveDefHandler->moveDefs.end(); ++mi) {
 					if ((*mi)->unitDefRefCount > 0) {
 						SingleBlock sb;
 							sb.block.x = x;
 							sb.block.y = z;
-							sb.moveData = *mi;
+							sb.moveDef = *mi;
 						needUpdate.push_back(sb);
 						blockStates.nodeMask[z * nbrOfBlocksX + x] |= PATHOPT_OBSOLETE;
 					}
@@ -442,14 +442,14 @@ void CPathEstimator::Update() {
 
 		// check if it's not already updated
 		if (blockStates.nodeMask[blockN] & PATHOPT_OBSOLETE) {
-			const MoveData* currBlockMD = sb.moveData;
-			const MoveData* nextBlockMD = (needUpdate.empty())? NULL: (needUpdate.front()).moveData;
+			const MoveDef* currBlockMD = sb.moveDef;
+			const MoveDef* nextBlockMD = (needUpdate.empty())? NULL: (needUpdate.front()).moveDef;
 
 			// no, update the block
 			FindOffset(*currBlockMD, blockX, blockZ);
 			CalculateVertices(*currBlockMD, blockX, blockZ);
 
-			// each MapChanged() call adds AT MOST <moveData.size()> SingleBlock's
+			// each MapChanged() call adds AT MOST <moveDefs.size()> SingleBlock's
 			// in ascending pathType order per (x, z) PE-block, therefore when the
 			// next SingleBlock's pathType is less or equal to the current we know
 			// that all have been processed (for one PE-block)
@@ -468,7 +468,7 @@ void CPathEstimator::Update() {
  * Stores data and does some top-administration
  */
 IPath::SearchResult CPathEstimator::GetPath(
-	const MoveData& moveData,
+	const MoveDef& moveDef,
 	float3 start,
 	const CPathFinderDef& peDef,
 	IPath::Path& path,
@@ -492,7 +492,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 	goalBlock.y = peDef.goalSquareZ / BLOCK_SIZE;
 
 	if (synced) {
-		CPathCache::CacheItem* ci = pathCache->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveData.pathType);
+		CPathCache::CacheItem* ci = pathCache->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
 		if (ci) {
 			// use a cached path if we have one (NOTE: only when in synced context)
 			path = ci->path;
@@ -501,15 +501,15 @@ IPath::SearchResult CPathEstimator::GetPath(
 	}
 
 	// oterhwise search
-	IPath::SearchResult result = InitSearch(moveData, peDef, synced);
+	IPath::SearchResult result = InitSearch(moveDef, peDef, synced);
 
 	// if search successful, generate new path
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-		FinishSearch(moveData, path);
+		FinishSearch(moveDef, path);
 
 		if (synced && result == IPath::Ok) {
 			// add succesful paths to the cache (NOTE: only when in synced context)
-			pathCache->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveData.pathType);
+			pathCache->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveDef.pathType);
 		}
 
 		if (LOG_IS_ENABLED(L_DEBUG)) {
@@ -532,11 +532,14 @@ IPath::SearchResult CPathEstimator::GetPath(
 
 
 // set up the starting point of the search
-IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const CPathFinderDef& peDef, bool synced) {
+IPath::SearchResult CPathEstimator::InitSearch(const MoveDef& moveDef, const CPathFinderDef& peDef, bool synced) {
 	// is starting square inside goal area?
-	const int2 square = blockStates.peNodeOffsets[startBlocknr][moveData.pathType];
+	const int2 square = blockStates.peNodeOffsets[startBlocknr][moveDef.pathType];
 
-	if (peDef.IsGoal(square.x, square.y))
+	const bool isStartGoal = peDef.IsGoal(square.x, square.y);
+	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
+	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
+	if (isStartGoal && peDef.startInGoalRadius)
 		return IPath::CantGetCloser;
 
 	// no, clean the system from last search
@@ -568,10 +571,10 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const C
 	goalSqrOffset = peDef.GoalSquareOffset(BLOCK_SIZE);
 
 	// perform the search
-	IPath::SearchResult result = DoSearch(moveData, peDef, synced);
+	IPath::SearchResult result = DoSearch(moveDef, peDef, synced);
 
 	// if no improvements are found, then return CantGetCloser instead
-	if (goalBlock.x == startBlock.x && goalBlock.y == startBlock.y) {
+	if (goalBlock.x == startBlock.x && goalBlock.y == startBlock.y && (!isStartGoal || peDef.startInGoalRadius)) {
 		return IPath::CantGetCloser;
 	}
 
@@ -582,7 +585,7 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const C
 /**
  * Performs the actual search.
  */
-IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPathFinderDef& peDef, bool synced) {
+IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPathFinderDef& peDef, bool synced) {
 	bool foundGoal = false;
 
 	while (!openBlocks.empty() && (openBlockBuffer.GetSize() < maxBlocksToBeSearched)) {
@@ -595,8 +598,8 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 			continue;
 
 		// no, check if the goal is already reached
-		const int xBSquare = blockStates.peNodeOffsets[ob->nodeNum][moveData.pathType].x;
-		const int zBSquare = blockStates.peNodeOffsets[ob->nodeNum][moveData.pathType].y;
+		const int xBSquare = blockStates.peNodeOffsets[ob->nodeNum][moveDef.pathType].x;
+		const int zBSquare = blockStates.peNodeOffsets[ob->nodeNum][moveDef.pathType].y;
 		const int xGSquare = ob->nodePos.x * BLOCK_SIZE + goalSqrOffset.x;
 		const int zGSquare = ob->nodePos.y * BLOCK_SIZE + goalSqrOffset.y;
 
@@ -610,14 +613,14 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 		// no, test the 8 surrounding blocks
 		// NOTE: each of these calls increments openBlockBuffer.idx by 1, so
 		// maxBlocksToBeSearched is always less than <MAX_SEARCHED_NODES_PE - 8>
-		TestBlock(moveData, peDef, *ob, PATHDIR_LEFT,       synced);
-		TestBlock(moveData, peDef, *ob, PATHDIR_LEFT_UP,    synced);
-		TestBlock(moveData, peDef, *ob, PATHDIR_UP,         synced);
-		TestBlock(moveData, peDef, *ob, PATHDIR_RIGHT_UP,   synced);
-		TestBlock(moveData, peDef, *ob, PATHDIR_RIGHT,      synced);
-		TestBlock(moveData, peDef, *ob, PATHDIR_RIGHT_DOWN, synced);
-		TestBlock(moveData, peDef, *ob, PATHDIR_DOWN,       synced);
-		TestBlock(moveData, peDef, *ob, PATHDIR_LEFT_DOWN,  synced);
+		TestBlock(moveDef, peDef, *ob, PATHDIR_LEFT,       synced);
+		TestBlock(moveDef, peDef, *ob, PATHDIR_LEFT_UP,    synced);
+		TestBlock(moveDef, peDef, *ob, PATHDIR_UP,         synced);
+		TestBlock(moveDef, peDef, *ob, PATHDIR_RIGHT_UP,   synced);
+		TestBlock(moveDef, peDef, *ob, PATHDIR_RIGHT,      synced);
+		TestBlock(moveDef, peDef, *ob, PATHDIR_RIGHT_DOWN, synced);
+		TestBlock(moveDef, peDef, *ob, PATHDIR_DOWN,       synced);
+		TestBlock(moveDef, peDef, *ob, PATHDIR_LEFT_DOWN,  synced);
 
 		// mark this block as closed
 		blockStates.nodeMask[ob->nodeNum] |= PATHOPT_CLOSED;
@@ -646,7 +649,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
  * possibly also add it to the open-blocks pqueue.
  */
 void CPathEstimator::TestBlock(
-	const MoveData& moveData,
+	const MoveDef& moveDef,
 	const CPathFinderDef& peDef,
 	PathNode& parentOpenBlock,
 	unsigned int direction,
@@ -659,7 +662,7 @@ void CPathEstimator::TestBlock(
 		block.x = parentOpenBlock.nodePos.x + directionVector[direction].x;
 		block.y = parentOpenBlock.nodePos.y + directionVector[direction].y;
 	const int vertexIdx =
-		moveData.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
+		moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
 		parentOpenBlock.nodeNum * PATH_DIRECTION_VERTICES +
 		directionVertex[direction];
 	const int blockIdx = block.y * nbrOfBlocksX + block.x;
@@ -679,7 +682,7 @@ void CPathEstimator::TestBlock(
 	if (blockStates.nodeMask[blockIdx] & (PATHOPT_FORBIDDEN | PATHOPT_BLOCKED | PATHOPT_CLOSED))
 		return;
 
-	const int2 square = blockStates.peNodeOffsets[blockIdx][moveData.pathType];
+	const int2 square = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
 
 	// check if the block is blocked or out of constraints
 	if (!peDef.WithinConstraints(square.x, square.y)) {
@@ -738,7 +741,7 @@ void CPathEstimator::TestBlock(
 /**
  * Recreate the path taken to the goal
  */
-void CPathEstimator::FinishSearch(const MoveData& moveData, IPath::Path& foundPath) {
+void CPathEstimator::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) {
 	int2 block = goalBlock;
 
 	while (block.x != startBlock.x || block.y != startBlock.y) {
@@ -746,8 +749,8 @@ void CPathEstimator::FinishSearch(const MoveData& moveData, IPath::Path& foundPa
 
 		{
 			// use offset defined by the block
-			const int xBSquare = blockStates.peNodeOffsets[blockIdx][moveData.pathType].x;
-			const int zBSquare = blockStates.peNodeOffsets[blockIdx][moveData.pathType].y;
+			const int xBSquare = blockStates.peNodeOffsets[blockIdx][moveDef.pathType].x;
+			const int zBSquare = blockStates.peNodeOffsets[blockIdx][moveDef.pathType].y;
 			const float3& pos = SquareToFloat3(xBSquare, zBSquare);
 
 			foundPath.path.push_back(pos);
@@ -827,7 +830,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 		unsigned pos = sizeof(unsigned);
 
 		// Read block-center-offset data.
-		const unsigned blockSize = moveinfo->moveData.size() * sizeof(int2);
+		const unsigned blockSize = moveDefHandler->moveDefs.size() * sizeof(int2);
 		if (buffer.size() < pos + blockSize * blockStates.GetSize())
 			return false;
 
@@ -877,7 +880,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 
 		// Write block-center-offsets.
 		for (int blocknr = 0; blocknr < blockStates.GetSize(); blocknr++)
-			zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[blocknr][0], moveinfo->moveData.size() * sizeof(int2));
+			zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[blocknr][0], moveDefHandler->moveDefs.size() * sizeof(int2));
 
 		// Write vertices.
 		zipWriteInFileInZip(file, &vertices[0], vertices.size() * sizeof(float));
@@ -909,5 +912,5 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
  */
 unsigned int CPathEstimator::Hash() const
 {
-	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + PATHESTIMATOR_VERSION);
+	return (readmap->mapChecksum + moveDefHandler->GetCheckSum() + BLOCK_SIZE + PATHESTIMATOR_VERSION);
 }

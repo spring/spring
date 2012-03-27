@@ -82,8 +82,8 @@ CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("
 CONFIG(int, DepthBufferBits).defaultValue(24);
 CONFIG(int, StencilBufferBits).defaultValue(8);
 CONFIG(int, FSAALevel).defaultValue(0);
-CONFIG(int, SmoothLines).defaultValue(2).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
-CONFIG(int, SmoothPoints).defaultValue(2).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
+CONFIG(int, SmoothLines).defaultValue(2).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
+CONFIG(int, SmoothPoints).defaultValue(2).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
 CONFIG(float, TextureLODBias).defaultValue(0.0f);
 CONFIG(bool, FixAltTab).defaultValue(false);
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf");
@@ -256,6 +256,7 @@ bool SpringApp::Initialize()
 
 	// Multithreading & Affinity
 	LOG("CPU Cores: %d", Threading::GetAvailableCores());
+	Threading::SetThreadScheduler();
 	const uint32_t affinity = configHandler->GetUnsigned("SetCoreAffinity");
 	const uint32_t cpuMask  = Threading::SetAffinity(affinity);
 	if (cpuMask == 0xFFFFFF) {

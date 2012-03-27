@@ -6,7 +6,7 @@
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
 #include "System/float3.h"
 
-struct MoveData;
+struct MoveDef;
 class CSolidObject;
 
 class IPathManager {
@@ -92,7 +92,7 @@ public:
 	 * If no complete path from startPos to goalPos could be found,
 	 * then a path getting as "close" as possible to target is generated.
 	 *
-	 * @param moveData
+	 * @param moveDef
 	 *     Defines the move details of the unit to use the path.
 	 * @param startPos
 	 *     The starting location of the requested path.
@@ -115,7 +115,7 @@ public:
 	 *     could be found
 	 */
 	virtual unsigned int RequestPath(
-		const MoveData* moveData,
+		const MoveDef* moveDef,
 		const float3& startPos,
 		const float3& goalPos,
 		float goalRadius = 8.0f,

@@ -501,16 +501,16 @@ void LuaUtils::PrintStack(lua_State* L)
 {
 	const int top = lua_gettop(L);
 	for (int i = 1; i <= top; i++) {
-		printf("  %i: type = %s (%p)", i, luaL_typename(L, i), lua_topointer(L, i));
+		LOG_L(L_ERROR, "  %i: type = %s (%p)", i, luaL_typename(L, i), lua_topointer(L, i));
 		const int type = lua_type(L, i);
 		if (type == LUA_TSTRING) {
-			printf("\t\t%s\n", lua_tostring(L, i));
+			LOG_L(L_ERROR, "\t\t%s\n", lua_tostring(L, i));
 		} else if (type == LUA_TNUMBER) {
-			printf("\t\t%f\n", lua_tonumber(L, i));
+			LOG_L(L_ERROR, "\t\t%f\n", lua_tonumber(L, i));
 		} else if (type == LUA_TBOOLEAN) {
-			printf("\t\t%s\n", lua_toboolean(L, i) ? "true" : "false");
+			LOG_L(L_ERROR, "\t\t%s\n", lua_toboolean(L, i) ? "true" : "false");
 		} else {
-			printf("\n");
+			LOG_L(L_ERROR, "\n");
 		}
 	}
 }
@@ -721,8 +721,7 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-
-int LuaUtils::Echo(lua_State* L)
+static std::string getprintf_msg(lua_State* L, int index)
 {
 	// copied from lua/src/lib/lbaselib.c
 	string msg = "";
@@ -730,41 +729,33 @@ int LuaUtils::Echo(lua_State* L)
 
 	lua_getglobal(L, "tostring");
 
-	for (int i = 1; i <= args; i++) {
+	for (int i = index; i <= args; i++) {
 		const char* s;
 		lua_pushvalue(L, -1);     // function to be called
 		lua_pushvalue(L, i);      // value to print
 		lua_call(L, 1, 1);
 		s = lua_tostring(L, -1);  // get result
-		if (s == NULL) {
-			return luaL_error(L, "`tostring' must return a string to `print'");
-		}
-		if (i > 1) {
+		if (i > index) {
 			msg += ", ";
 		}
 		msg += s;
 		lua_pop(L, 1);            // pop result
 	}
-	LOG("%s", msg.c_str());
 
-	if ((args != 1) || !lua_istable(L, 1)) {
-		return 0;
+	if ((args != index) || !lua_istable(L, index)) {
+		return msg;
 	}
 
 	// print solo tables (array style)
 	msg = "TABLE: ";
 	bool first = true;
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+	for (lua_pushnil(L); lua_next(L, index) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {  // only numeric keys
 			const char *s;
-			lua_pushvalue(L, -3);     // function to be called
-			lua_pushvalue(L, -2	);    // value to print
+			lua_pushvalue(L, -3);    // function to be called
+			lua_pushvalue(L, -2);    // value to print
 			lua_call(L, 1, 1);
 			s = lua_tostring(L, -1);  // get result
-			if (s == NULL) {
-				return luaL_error(L, "`tostring' must return a string to `print'");
-			}
 			if (!first) {
 				msg += ", ";
 			}
@@ -773,10 +764,87 @@ int LuaUtils::Echo(lua_State* L)
 			lua_pop(L, 1);            // pop result
 		}
 	}
-	LOG("%s", msg.c_str());
 
+	return msg;
+}
+
+
+int LuaUtils::Echo(lua_State* L)
+{
+	const std::string msg = getprintf_msg(L, 1);
+	LOG(msg.c_str());
 	return 0;
 }
+
+
+bool LuaUtils::PushLogEntries(lua_State* L)
+{
+#define PUSH_LOG_LEVEL(cmd) LuaPushNamedNumber(L, #cmd, LOG_LEVEL_ ## cmd)
+	PUSH_LOG_LEVEL(DEBUG);
+	PUSH_LOG_LEVEL(INFO);
+	PUSH_LOG_LEVEL(WARNING);
+	PUSH_LOG_LEVEL(ERROR);
+	PUSH_LOG_LEVEL(FATAL);
+	return true;
+}
+
+
+/*-
+	Logs a msg to the logfile / console
+	@param loglevel loglevel that will be used for the message
+	@param msg string to be logged
+	@fn Spring.Log(string logsection, int loglevel, ...)
+	@fn Spring.Log(string logsection, string loglevel, ...)
+*/
+int LuaUtils::Log(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args < 2)
+		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
+	if (args < 3)
+		return 0;
+
+	const std::string section = luaL_checkstring(L, 1);
+
+	int loglevel;
+	if (lua_israwnumber(L, 2)) {
+		loglevel = lua_tonumber(L, 2);
+	}
+	else if (lua_israwstring(L, 2)) {
+		std::string loglvlstr = lua_tostring(L, 2);
+		StringToLowerInPlace(loglvlstr);
+		if (loglvlstr == "debug") {
+			loglevel = LOG_LEVEL_DEBUG;
+		}
+		else if (loglvlstr == "info") {
+			loglevel = LOG_LEVEL_INFO;
+		}
+		else if (loglvlstr == "warning") {
+			loglevel = LOG_LEVEL_WARNING;
+		}
+		else if (loglvlstr == "error") {
+			loglevel = LOG_LEVEL_ERROR;
+		}
+		else if (loglvlstr == "fatal") {
+			loglevel = LOG_LEVEL_FATAL;
+		}
+		else {
+			return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
+		}
+	}
+	else {
+		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
+	}
+
+	const std::string msg = getprintf_msg(L, 3);
+	LOG_SI(section.c_str(), loglevel, msg.c_str());
+	return 0;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
 
 int LuaUtils::ZlibCompress(lua_State* L)
 {

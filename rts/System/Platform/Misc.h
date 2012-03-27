@@ -76,7 +76,7 @@ bool Is64Bit();
 bool Is32BitEmulation();
 
 /**
- * Executes a native binary.
+ * Executes a native binary, file and args have to be not escaped!
  * http://linux.die.net/man/3/execvp
  * @param  file path to an executable, eg. "/usr/bin/games/spring"
  * @param  args arguments to the executable, eg. {"-f". "/tmp/test.txt"}

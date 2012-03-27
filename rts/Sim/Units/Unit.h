@@ -81,10 +81,8 @@ public:
 	virtual void SlowUpdateWeapons();
 	virtual void Update();
 
-	virtual void DoDamage(const DamageArray& damages, CUnit* attacker,
-	                      const float3& impulse, int weaponId = -1);
+	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID);
 	virtual void DoWaterDamage();
-	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual void AddImpulse(const float3&);
 	virtual void FinishedBuilding(bool postInit);
 
@@ -188,7 +186,6 @@ public:
 	float power;
 
 	float maxHealth;
-	float health;
 	/// if health-this is negative the unit is stunned
 	float paralyzeDamage;
 	/// how close this unit is to being captured
@@ -484,6 +481,7 @@ protected:
 	void ChangeTeamReset();
 	void UpdateResources();
 	void UpdateLosStatus(int allyTeam);
+	float GetFlankingDamageBonus(const float3& attackDir);
 
 public:
 	virtual void KillUnit(bool SelfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence = true);

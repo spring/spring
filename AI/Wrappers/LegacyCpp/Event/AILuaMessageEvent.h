@@ -14,7 +14,7 @@ public:
 	~CAILuaMessageEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
-		ai.RecvLuaMessage(event.inData, event.outData);
+		ai.RecvLuaMessage(event.inData, NULL /*event.outData*/);
 	}
 
 private:

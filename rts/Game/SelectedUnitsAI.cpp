@@ -51,14 +51,17 @@ CSelectedUnitsAI::CSelectedUnitsAI()
 inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
                                                         unsigned char options)
 {
-	// sets the wanted speed of this unit (via the
-	// CommandAI --> MoveType chain) to its maximum
-	// theoretical speed
+	// this sets the WANTED maximum speed of <unit>
+	// (via the CommandAI --> MoveType chain) to be
+	// equal to its current ACTUAL maximum (not the
+	// UnitDef maximum, which can be overridden by
+	// scripts)
 	CCommandAI* cai = unit->commandAI;
 
 	if (cai->CanSetMaxSpeed()) {
 		Command c(CMD_SET_WANTED_MAX_SPEED, options);
-		c.AddParam(unit->moveType->GetMaxSpeedDef());
+		c.AddParam(unit->moveType->GetMaxSpeed());
+
 		cai->GiveCommand(c, false);
 	}
 }
@@ -74,6 +77,7 @@ inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
 	if (cai->CanSetMaxSpeed()) {
 		Command c(CMD_SET_WANTED_MAX_SPEED, options);
 		c.AddParam(minMaxSpeed);
+
 		cai->GiveCommand(c, false);
 	}
 }

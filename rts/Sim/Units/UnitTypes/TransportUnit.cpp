@@ -168,7 +168,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			if (!unitDef->releaseHeld) {
 				if (!selfDestruct) {
 					// we don't want it to leave a corpse
-					transportee->DoDamage(DamageArray(1e6f), 0, ZeroVector);
+					transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED);
 				}
 
 				transportee->KillUnit(selfDestruct, reclaimed, attacker);
@@ -476,7 +476,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	float clampedHeight = wantedHeight;
 
 	const UnitDef* unitDef = unit->unitDef;
-	const MoveData* moveData = unitDef->movedata;
+	const MoveDef* moveDef = unitDef->moveDef;
 
 	if (unit->transporter != NULL) {
 		// unit is being transported, set <clampedHeight> to
@@ -485,13 +485,13 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 		isAllowedHeight = unitDef->IsAllowedTerrainHeight(wantedHeight, &clampedHeight);
 
 		if (isAllowedHeight) {
-			if (moveData != NULL) {
-				switch (moveData->moveType) {
-					case MoveData::Ship_Move: {
+			if (moveDef != NULL) {
+				switch (moveDef->moveType) {
+					case MoveDef::Ship_Move: {
 						wantedHeight = std::max(-unitDef->waterline, wantedHeight);
 						clampedHeight = wantedHeight;
 					} break;
-					case MoveData::Hover_Move: {
+					case MoveDef::Hover_Move: {
 						wantedHeight = std::max(0.0f, wantedHeight);
 						clampedHeight = wantedHeight;
 					} break;

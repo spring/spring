@@ -187,6 +187,7 @@ class LuaSyncedRead {
 
 		static int GetSmoothMeshHeight(lua_State* L);
 
+		static int TestMoveOrder(lua_State* L);
 		static int TestBuildOrder(lua_State* L);
 		static int Pos2BuildPos(lua_State* L);
 

@@ -1124,13 +1124,13 @@ void CDynWater::AddShipWakes()
 		for (std::set<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* unit = *ui;
 			const UnitDef* unitDef = unit->unitDef;
-			const MoveData* moveData = unitDef->movedata;
+			const MoveDef* moveDef = unitDef->moveDef;
 
-			if (moveData == NULL) {
+			if (moveDef == NULL) {
 				continue;
 			}
 
-			if (moveData->moveType == MoveData::Hover_Move) {
+			if (moveDef->moveType == MoveDef::Hover_Move) {
 				// hovercraft
 				const float3& pos = unit->pos;
 
@@ -1154,7 +1154,7 @@ void CDynWater::AddShipWakes()
 					va2->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
 					va2->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
 				}
-			} else if (moveData->moveType == MoveData::Ship_Move) {
+			} else if (moveDef->moveType == MoveDef::Ship_Move) {
 				// surface ship
 				const float speedf = unit->speed.Length2D();
 				const float3& pos = unit->pos;

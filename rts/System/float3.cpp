@@ -33,6 +33,14 @@ void float3::ClampInBounds()
 }
 
 
+bool float3::IsInMap() const
+{
+	assert(maxxpos > 0.0f); // check if initialized
+
+	return ((x >= 0.0f && x <= maxxpos + 1) && (z >= 0.0f && z <= maxzpos + 1));
+}
+
+
 void float3::ClampInMap()
 {
 	assert(maxxpos > 0.0f); // check if initialized

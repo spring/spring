@@ -47,6 +47,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 
 
@@ -186,10 +187,13 @@ static int UnitDefIndex(lua_State* L)
 		case FUNCTION_TYPE: {
 			return elem.func(L, p);
 		}
-		case ERROR_TYPE:{
-			luaL_error(L, "ERROR_TYPE in UnitDefs __index");
+		case ERROR_TYPE: {
+			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in UnitDefs __index", __FUNCTION__, name);
+			lua_pushnil(L);
+			return 1;
 		}
 	}
+
 	return 0;
 }
 
@@ -246,8 +250,10 @@ static int UnitDefNewIndex(lua_State* L)
 			*((string*)p) = lua_tostring(L, -1);
 			return 0;
 		}
-		case ERROR_TYPE:{
-			luaL_error(L, "ERROR_TYPE in UnitDefs __newindex");
+		case ERROR_TYPE: {
+			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in UnitDefs __newindex", __FUNCTION__, name);
+			lua_pushnil(L);
+			return 1;
 		}
 	}
 
@@ -401,8 +407,8 @@ static int WeaponsTable(lua_State* L, const void* data)
 		lua_newtable(L); {
 			HSTR_PUSH_NUMBER(L, "weaponDef",   weapon->id);
 			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo);
-			HSTR_PUSH_NUMBER(L, "maxAngleDif", udw.maxAngleDif);
 			HSTR_PUSH_NUMBER(L, "fuelUsage",   udw.fuelUsage);
+			HSTR_PUSH_NUMBER(L, "maxAngleDif", udw.maxMainDirAngleDif);
 			HSTR_PUSH_NUMBER(L, "mainDirX",    udw.mainDir.x);
 			HSTR_PUSH_NUMBER(L, "mainDirY",    udw.mainDir.y);
 			HSTR_PUSH_NUMBER(L, "mainDirZ",    udw.mainDir.z);
@@ -488,9 +494,9 @@ static int ModelDefTable(lua_State* L, const void* data) {
 }
 
 
-static int MoveDataTable(lua_State* L, const void* data)
+static int MoveDefTable(lua_State* L, const void* data)
 {
-	const MoveData* md = *((const MoveData**)data);
+	const MoveDef* md = *((const MoveDef**)data);
 	lua_newtable(L);
 	if (md == NULL) {
 		return 1;
@@ -498,9 +504,9 @@ static int MoveDataTable(lua_State* L, const void* data)
 
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);
 
-	const int Ship_Move   = MoveData::Ship_Move;
-	const int Hover_Move  = MoveData::Hover_Move;
-	const int Ground_Move = MoveData::Ground_Move;
+	const int Ship_Move   = MoveDef::Ship_Move;
+	const int Hover_Move  = MoveDef::Hover_Move;
+	const int Ground_Move = MoveDef::Ground_Move;
 
 	switch (md->moveType) {
 		case Ship_Move:   { HSTR_PUSH_STRING(L, "type", "ship");   break; }
@@ -522,7 +528,7 @@ static int MoveDataTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "depth",         md->depth);
 	HSTR_PUSH_NUMBER(L, "maxSlope",      md->maxSlope);
 	HSTR_PUSH_NUMBER(L, "slopeMod",      md->slopeMod);
-	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthModParams[MoveData::DEPTHMOD_LIN_COEFF]);
+	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthModParams[MoveDef::DEPTHMOD_LIN_COEFF]);
 	HSTR_PUSH_NUMBER(L, "crushStrength", md->crushStrength);
 
 	HSTR_PUSH_BOOL(L, "heatMapping",     md->heatMapping);
@@ -631,12 +637,13 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("weapons",            ud.weapons,            WeaponsTable);
 	ADD_FUNCTION("sounds",             ud.sounds,             SoundsTable);
 	ADD_FUNCTION("model",              ud.modelDef,           ModelDefTable);
-	ADD_FUNCTION("moveData",           ud.movedata,           MoveDataTable);
+	ADD_FUNCTION("moveData",           ud.moveDef,            MoveDefTable); // backward compatibility
+	ADD_FUNCTION("moveDef",            ud.moveDef,            MoveDefTable);
 	ADD_FUNCTION("shieldWeaponDef",    ud.shieldWeaponDef,    WeaponDefToID);
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
 
-	ADD_FUNCTION("type",         ud, GetTypeString); // backward compability (TODO: find a way to print a warning when used!)
+	ADD_FUNCTION("type",         ud, GetTypeString); // backward compatibility (TODO: find a way to print a warning when used!)
 	ADD_FUNCTION("isBuilding",   ud, IsBuildingUnit);
 	ADD_FUNCTION("isFactory",    ud, IsFactoryUnit);
 	ADD_FUNCTION("isFighter",    ud, IsFighterUnit);
@@ -833,7 +840,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_FLOAT("minAirBasePower", ud.minAirBasePower);
 
-//	MoveData* movedata;
 //	unsigned char* yardmapLevels[6];
 //	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
 

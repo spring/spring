@@ -81,8 +81,8 @@ public:
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
 
-	int ShowUnitBuildSquare(const BuildInfo& buildInfo);
-	int ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
+	bool ShowUnitBuildSquare(const BuildInfo& buildInfo);
+	bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
 
 	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
 

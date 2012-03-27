@@ -1,6 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<properties>
@@ -13,10 +11,6 @@
 		<project.build.resourceEncoding>${project.build.encoding}</project.build.resourceEncoding>
 	</properties>
 
-	<groupId>com.springrts</groupId>
-	<artifactId>common</artifactId>
-	<version>1.0</version>
-
 	<!-- This is a requirement to be able to sync to Maven central -->
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
@@ -24,14 +18,21 @@
 		<version>7</version>
 	</parent>
 
+	<groupId>com.springrts</groupId>
+	<artifactId>common</artifactId>
+	<version>1.0</version>
+
 	<packaging>pom</packaging>
 
 	<prerequisites>
-		<maven>2.1</maven>
+		<maven>2.2.1</maven>
 	</prerequisites>
 
 	<name>CommonSpringParent</name>
-	<description>Project parent for all Maven projects related to the Spring RTS game engine, including 3rd party plugins (eg. Skirmish AIs)</description>
+	<description>
+		Parent for all Maven projects related to the Spring RTS game engine,
+		including 3rd party plugins (eg. Skirmish AIs)
+	</description>
 	<inceptionYear>2011</inceptionYear>
 
 
@@ -82,6 +83,7 @@
 					<sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
 					<minimumTokens>50</minimumTokens>
 					<targetJdk>1.5</targetJdk>
+					<aggregate>true</aggregate>
 				</configuration>
 			</plugin>
 

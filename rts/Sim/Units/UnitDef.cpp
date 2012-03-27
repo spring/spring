@@ -27,11 +27,11 @@
 UnitDefWeapon::UnitDefWeapon()
 : def(NULL)
 , slavedTo(0)
-, mainDir(0.0f, 0.0f, 1.0f)
-, maxAngleDif(-1.0f)
 , fuelUsage(0.0f)
+, maxMainDirAngleDif(-1.0f)
 , badTargetCat(0)
 , onlyTargetCat(0)
+, mainDir(0.0f, 0.0f, 1.0f)
 {
 }
 
@@ -47,22 +47,20 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	this->slavedTo = weaponTable.GetInt("slaveTo", 0);
 	this->fuelUsage = weaponTable.GetFloat("fuelUsage", 0.0f);
 
+	// NOTE:
+	//     <maxAngleDif> specifies the full-width arc,
+	//     but we want the half-width arc internally
+	//     (arcs are always symmetric around mainDir)
+	this->maxMainDirAngleDif = math::cos((weaponTable.GetFloat("maxAngleDif", 360.0f) * 0.5f) * (PI / 180.0f));
+
+	const string& btcString = weaponTable.GetString("badTargetCategory", "");
+	const string& otcString = weaponTable.GetString("onlyTargetCategory", "");
+
+	this->badTargetCat =                                   CCategoryHandler::Instance()->GetCategories(btcString);
+	this->onlyTargetCat = (otcString.empty())? 0xffffffff: CCategoryHandler::Instance()->GetCategories(otcString);
+
 	this->mainDir = weaponTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f));
 	this->mainDir.SafeNormalize();
-	this->maxAngleDif = math::cos(weaponTable.GetFloat("maxAngleDif", 360.0f) * (PI / 360.0f));
-
-	const string& badTarget = weaponTable.GetString("badTargetCategory", "");
-	const string& onlyTarget = weaponTable.GetString("onlyTargetCategory", "");
-
-	unsigned int btc = CCategoryHandler::Instance()->GetCategories(badTarget);
-	unsigned int otc = 0xffffffff;
-
-	if (!onlyTarget.empty()) {
-		otc = CCategoryHandler::Instance()->GetCategories(onlyTarget);
-	}
-
-	this->badTargetCat = btc;
-	this->onlyTargetCat = otc;
 }
 
 
@@ -101,6 +99,7 @@ UnitDef::UnitDef()
 , turnRate(0.0f)
 , turnInPlace(false)
 , turnInPlaceSpeedLimit(0.0f)
+, turnInPlaceAngleLimit(0.0f)
 , upright(false)
 , blocking(true)
 , collide(false)
@@ -212,7 +211,7 @@ UnitDef::UnitDef()
 , maxElevator(0.0f)
 , maxRudder(0.0f)
 , crashDrag(0.0f)
-, movedata(NULL)
+, moveDef(NULL)
 , xsize(0)
 , zsize(0)
 , loadingRadius(0.0f)
@@ -473,8 +472,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	turnRate    = udTable.GetFloat("turnRate", 0.0f);
 	turnInPlace = udTable.GetBool("turnInPlace", true);
-	turnInPlaceSpeedLimit = ((turnRate / SPRING_CIRCLE_DIVS) * ((PI + PI) * SQUARE_SIZE)) * (speed / GAME_SPEED);
+	turnInPlaceSpeedLimit = turnRate / SPRING_CIRCLE_DIVS;
+	turnInPlaceSpeedLimit *= ((PI + PI) * SQUARE_SIZE);
+	turnInPlaceSpeedLimit /= std::max(speed / GAME_SPEED, 1.0f);
 	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
+	turnInPlaceAngleLimit = udTable.GetFloat("turnInPlaceAngleLimit", 0.0f);
 
 
 	transportSize     = udTable.GetInt("transportSize",      0);
@@ -488,7 +490,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	holdSteady        = udTable.GetBool("holdSteady",        false);
 	releaseHeld       = udTable.GetBool("releaseHeld",       false);
-	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveData());
+	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveDef());
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
 	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
@@ -542,7 +544,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 	// modrules transport settings
-	// FIXME: do we want to check moveData->moveType for these?
+	// FIXME: do we want to check moveDef->moveType for these?
 	if ((!modInfo.transportAir    && canfly)   ||
 		(!modInfo.transportShip   && canFloat) ||
 		(!modInfo.transportHover  && canHover) ||
@@ -550,35 +552,35 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
  		cantBeTransported = true;
 	}
 
-	// aircraft have MoveTypes but no MoveData;
+	// aircraft have MoveTypes but no MoveDef;
 	// static structures have no use for either
 	// (but get StaticMoveType instances)
-	if (WantsMoveData()) {
+	if (WantsMoveDef()) {
 		const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 		const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
-		if ((movedata = moveinfo->GetMoveDataFromName(moveClass)) == NULL) {
+		if ((moveDef = moveDefHandler->GetMoveDefFromName(moveClass)) == NULL) {
 			throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 		}
 
-		movedata->unitDefRefCount += 1;
+		moveDef->unitDefRefCount += 1;
 
 		if (LOG_IS_ENABLED(L_WARNING)) {
 			const char* typeStr = NULL;
 			const char* wantedTypeStr = NULL;
 
 			if (canHover) {
-				if (movedata->moveType != MoveData::Hover_Move) {
+				if (moveDef->moveType != MoveDef::Hover_Move) {
 					typeStr       = "canHover";
 					wantedTypeStr = "hover";
 				}
 			} else if (canFloat) {
-				if (movedata->moveType != MoveData::Ship_Move) {
+				if (moveDef->moveType != MoveDef::Ship_Move) {
 					typeStr       = "canFloat";
 					wantedTypeStr = "ship";
 				}
 			} else {
-				if (movedata->moveType != MoveData::Ground_Move) {
+				if (moveDef->moveType != MoveDef::Ground_Move) {
 					typeStr       = "!(canHover || canFloat)";
 					wantedTypeStr = "ground";
 				}
@@ -587,22 +589,22 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 				LOG_L(L_WARNING,
 						"[%s] inconsistent path-type %i for \"%s\" "
 						"(move-class \"%s\"): %s, but not a %s-based movetype",
-						__FUNCTION__, movedata->pathType, name.c_str(),
+						__FUNCTION__, moveDef->pathType, name.c_str(),
 						moveClass.c_str(), typeStr, wantedTypeStr);
 			}
 		}
 	}
 
-	if (movedata == NULL) {
+	if (moveDef == NULL) {
 		upright = upright || !canfly;
 		floatOnWater = canFloat;
 	} else {
 		upright = upright ||
-			(movedata->moveType == MoveData::Hover_Move) ||
-			(movedata->moveType == MoveData::Ship_Move);
+			(moveDef->moveType == MoveDef::Hover_Move) ||
+			(moveDef->moveType == MoveDef::Ship_Move);
 		floatOnWater =
-			(movedata->moveType == MoveData::Hover_Move) ||
-			(movedata->moveType == MoveData::Ship_Move);
+			(moveDef->moveType == MoveDef::Hover_Move) ||
+			(moveDef->moveType == MoveDef::Ship_Move);
 	}
 
 	if (IsAirUnit()) {
@@ -658,7 +660,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// Spring's heightmap resolution is double the footprint (yardmap)
 	// resolution, so we scale the values (which are not allowed to be
 	// 0)
-	// NOTE that this is done for the FeatureDef and MoveData footprints
+	// NOTE that this is done for the FeatureDef and MoveDef footprints
 	// as well
 	xsize = std::max(1 * 2, (udTable.GetInt("footprintX", 1) * 2));
 	zsize = std::max(1 * 2, (udTable.GetInt("footprintZ", 1) * 2));
@@ -943,12 +945,12 @@ bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) cons
 	float maxDepth = this->maxWaterDepth;
 	float minDepth = this->minWaterDepth;
 
-	if (movedata != NULL) {
+	if (moveDef != NULL) {
 		// we are a mobile ground-unit
-		if (movedata->moveType == MoveData::Ship_Move) {
-			minDepth = movedata->depth;
+		if (moveDef->moveType == MoveDef::Ship_Move) {
+			minDepth = moveDef->depth;
 		} else {
-			maxDepth = movedata->depth;
+			maxDepth = moveDef->depth;
 		}
 	}
 

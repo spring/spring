@@ -26,10 +26,17 @@ public:
 		AIRCRAFT_HOVERING
 	} aircraftState;
 
+	enum LandingPadState {
+		PAD_STATUS_FLYING  = 0,
+		PAD_STATUS_LANDING = 1,
+		PAD_STATUS_ARRIVED = 2,
+	} padStatus;
+
 	AAirMoveType(CUnit* unit);
 	virtual ~AAirMoveType();
 
 	virtual bool Update();
+	virtual void UpdateLanded();
 	virtual bool IsFighter() const = 0;
 	virtual void Takeoff() {}
 	virtual void SetState(AircraftState state) {}
@@ -71,8 +78,6 @@ protected:
 	/// 1=generally forward of us, 2=directly in path
 	int lastColWarningType;
 	int lastFuelUpdateFrame;
-	/// 0: moving toward, 1: landing at, 2: arrived
-	int padStatus;
 };
 
 #endif // A_AIR_MOVE_TYPE_H_

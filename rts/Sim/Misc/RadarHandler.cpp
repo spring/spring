@@ -88,7 +88,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 {
 	SCOPED_TIMER("RadarHandler::MoveUnit");
 
-	if (gs->globalLOS) { return; }
+	if (gs->globalLOS[unit->allyteam]) { return; }
 	if (!unit->hasRadarCapacity || !unit->activated) {
 		return;
 	}

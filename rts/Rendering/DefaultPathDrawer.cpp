@@ -38,29 +38,29 @@
 
 static CPathManager* pm = NULL;
 
-static const MoveData* GetMoveData() {
-	const MoveData* md = NULL;
+static const MoveDef* GetMoveDef() {
+	const MoveDef* md = NULL;
 	const CUnitSet& unitSet = selectedUnits.selectedUnits;
 
-	if (moveinfo->moveData.empty()) {
+	if (moveDefHandler->moveDefs.empty()) {
 		return md;
 	}
 
-	md = moveinfo->moveData[0];
+	md = moveDefHandler->moveDefs[0];
 
 	if (!unitSet.empty()) {
 		const CUnit* unit = *(unitSet.begin());
 		const UnitDef* unitDef = unit->unitDef;
 
-		if (unitDef->movedata != NULL) {
-			md = unitDef->movedata;
+		if (unitDef->moveDef != NULL) {
+			md = unitDef->moveDef;
 		}
 	}
 
 	return md;
 }
 
-static inline float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx, int sqy) {
+static inline float GetSpeedMod(const MoveDef* md, const CMoveMath* mm, int sqx, int sqy) {
 	float m = 0.0f;
 
 	#if 0
@@ -70,14 +70,14 @@ static inline float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx
 	const float height = hm[hmIdx];
 	const float slope = 1.0f - cn[cnIdx].y;
 
-	if (md->moveFamily == MoveData::Ship) {
+	if (md->moveFamily == MoveDef::Ship) {
 		// only check water depth
 		m = (height >= (-md->depth))? 0.0f: m;
 	} else {
 		// check depth and slope (if hover, only over land)
 		m = std::max(0.0f, 1.0f - (slope / (md->maxSlope + 0.1f)));
 		m = (height < (-md->depth))? 0.0f: m;
-		m = (height <= 0.0f && md->moveFamily == MoveData::Hover)? 1.0f: m;
+		m = (height <= 0.0f && md->moveFamily == MoveDef::Hover)? 1.0f: m;
 	}
 	#else
 	// NOTE: these values are not necessarily in [0, 1]
@@ -185,7 +185,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					}
 				}
 			} else {
-				const MoveData* md = NULL;
+				const MoveDef* md = NULL;
 				const CMoveMath* mm = NULL;
 				const bool los = (gs->cheatEnabled || gu->spectating);
 
@@ -198,7 +198,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					// use the first selected unit, if it has the ability to move
 					if (!selUnits.empty()) {
 						selUnit = *selUnits.begin();
-						md = selUnit->unitDef->movedata;
+						md = selUnit->unitDef->moveDef;
 						mm = (md != NULL)? md->moveMath: NULL;
 					}
 				}
@@ -374,8 +374,8 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		float3 p2;
 
 		const int dir = pf->squareStates.nodeMask[square] & PATHOPT_DIRECTION;
-		const int obx = sqr.x - pf->directionVector[dir].x;
-		const int obz = sqr.y - pf->directionVector[dir].y;
+		const int obx = sqr.x - pf->dirVectors2D[dir].x;
+		const int obz = sqr.y - pf->dirVectors2D[dir].y;
 		const int obsquare =  obz * gs->mapx + obx;
 
 		if (obsquare >= 0) {
@@ -396,7 +396,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	GML_RECMUTEX_LOCK(sel); // Draw
 
-	const MoveData* md = GetMoveData();
+	const MoveDef* md = GetMoveDef();
 	const PathNodeStateBuffer& blockStates = pe->blockStates;
 
 	glDisable(GL_TEXTURE_2D);
@@ -490,7 +490,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					p2 = (p1 + p2) / 2.0f;
 
-					if (camera->pos.SqDistance(p2) >= 16000000.0f)
+					if (camera->pos.SqDistance(p2) >= (4000.0f * 4000.0f))
 						continue;
 
 					font->SetTextColor(1.0f, 1.0f / cost, peBlueValue, 1.0f);
@@ -550,10 +550,10 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				p1.z = (blockStates.peNodeOffsets[blockNr][md->pathType].y) * SQUARE_SIZE;
 				p1.y = ground->GetHeightAboveWater(p1.x, p1.z, false) + 35.0f;
 
-			if (camera->pos.SqDistance(p1) >= 16000000.0f)
+			if (camera->pos.SqDistance(p1) >= (4000.0f * 4000.0f))
 				continue;
 
-			snprintf(blockCostsStr, sizeof(blockCostsStr), "f(%.2f) g(%.2f)", ob->fCost, ob->gCost);
+			SNPRINTF(blockCostsStr, sizeof(blockCostsStr), "f(%.2f) g(%.2f)", ob->fCost, ob->gCost);
 			font->SetTextColor(1.0f, 0.7f, peBlueValue, 1.0f);
 			font->glWorldPrint(p1, 5.0f, blockCostsStr);
 		}

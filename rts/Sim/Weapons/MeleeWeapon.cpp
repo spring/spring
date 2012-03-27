@@ -28,24 +28,32 @@ CMeleeWeapon::~CMeleeWeapon()
 
 void CMeleeWeapon::Update()
 {
-	if(targetType!=Target_None){
-		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-		if(!onlyForward){
-			wantedDir=targetPos-weaponPos;
+	if (targetType != Target_None) {
+		weaponPos = owner->pos +
+			owner->frontdir * relWeaponPos.z +
+			owner->updir    * relWeaponPos.y +
+			owner->rightdir * relWeaponPos.x;
+		weaponMuzzlePos = owner->pos +
+			owner->frontdir * relWeaponMuzzlePos.z +
+			owner->updir    * relWeaponMuzzlePos.y +
+			owner->rightdir * relWeaponMuzzlePos.x;
+
+		if (!onlyForward) {
+			wantedDir = targetPos - weaponPos;
 			wantedDir.Normalize();
 		}
-//		predict=(targetPos-weaponPos).Length()/projectileSpeed;
 	}
+
 	CWeapon::Update();
 }
 
 void CMeleeWeapon::FireImpl()
 {
-	if(targetType==Target_Unit){
-		float3 impulseDir = targetUnit->pos-weaponMuzzlePos;
-		impulseDir.Normalize();
+	if (targetType == Target_Unit) {
+		const float3 impulseDir = (targetUnit->pos - weaponMuzzlePos).Normalize();
+		const float3 impulseVec = impulseDir * owner->mass * weaponDef->damages.impulseFactor;
+
 		// the heavier the unit, the more impulse it does
-		targetUnit->DoDamage(weaponDef->damages, owner, impulseDir * owner->mass * weaponDef->damages.impulseFactor, weaponDef->id);
+		targetUnit->DoDamage(weaponDef->damages, impulseVec, owner, weaponDef->id);
 	}
 }

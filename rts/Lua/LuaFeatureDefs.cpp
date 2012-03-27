@@ -20,6 +20,7 @@
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "System/Log/ILog.h"
 
 
 static ParamMap paramMap;
@@ -193,10 +194,13 @@ static int FeatureDefIndex(lua_State* L)
 		case FUNCTION_TYPE: {
 			return elem.func(L, p);
 		}
-		case ERROR_TYPE:{
-			luaL_error(L, "ERROR_TYPE in FeatureDefs __index");
+		case ERROR_TYPE: {
+			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in FeatureDefs __index", __FUNCTION__, name);
+			lua_pushnil(L);
+			return 1;
 		}
 	}
+
 	return 0;
 }
 
@@ -253,8 +257,10 @@ static int FeatureDefNewIndex(lua_State* L)
 			*((string*)p) = lua_tostring(L, -1);
 			return 0;
 		}
-		case ERROR_TYPE:{
-			luaL_error(L, "ERROR_TYPE in FeatureDefs __newindex");
+		case ERROR_TYPE: {
+			LOG_L(L_ERROR, "[%s] ERROR_TYPE for key \"%s\" in FeatureDefs __newindex", __FUNCTION__, name);
+			lua_pushnil(L);
+			return 1;
 		}
 	}
 
@@ -440,7 +446,7 @@ static bool InitParamMap()
 
 	ADD_INT("id", fd.id);
 
-	ADD_STRING("name",     fd.myName);
+	ADD_STRING("name",     fd.name);
 	ADD_STRING("tooltip",  fd.description);
 
 	ADD_FLOAT("metal",       fd.metal);

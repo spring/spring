@@ -139,6 +139,7 @@
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/GlobalConfig.h"
+#include "System/myMath.h"
 #include "System/NetProtocol.h"
 #include "System/SpringApp.h"
 #include "System/Util.h"
@@ -175,7 +176,7 @@ CONFIG(bool, ShowFPS).defaultValue(false);
 CONFIG(bool, ShowClock).defaultValue(true);
 CONFIG(bool, ShowSpeed).defaultValue(false);
 CONFIG(bool, ShowMTInfo).defaultValue(true);
-CONFIG(float, MTInfoThreshold).defaultValue(0.25f);
+CONFIG(float, MTInfoThreshold).defaultValue(1.0f);
 CONFIG(int, ShowPlayerInfo).defaultValue(1);
 CONFIG(float, GuiOpacity).defaultValue(0.8f);
 CONFIG(std::string, InputTextGeo).defaultValue("");
@@ -228,7 +229,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(playing),
 //	CR_MEMBER(lastFrameTime),
 //	CR_MEMBER(leastQue),
-//	CR_MEMBER(timeLeft),
+//	CR_MEMBER(msgProcTimeLeft),
 //	CR_MEMBER(consumeSpeed),
 //	CR_MEMBER(lastframe),
 //	CR_MEMBER(leastQue),
@@ -259,7 +260,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, playing(false)
 	, chatting(false)
 	, leastQue(0)
-	, timeLeft(0.0f)
+	, msgProcTimeLeft(0.0f)
 	, consumeSpeed(1.0f)
 	, lastframe(spring_gettime())
 	, skipStartFrame(0)
@@ -410,7 +411,7 @@ CGame::~CGame()
 	SafeDelete(loshandler);
 	SafeDelete(mapDamage);
 	SafeDelete(qf);
-	SafeDelete(moveinfo);
+	SafeDelete(moveDefHandler);
 	SafeDelete(unitDefHandler);
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
@@ -544,7 +545,7 @@ void CGame::LoadSimulation(const std::string& mapName)
 	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
-	moveinfo = new CMoveInfo();
+	moveDefHandler = new MoveDefHandler();
 	qf = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
@@ -861,7 +862,7 @@ bool CGame::Update()
 		if (!gameServer) {
 			consumeSpeed = GAME_SPEED * gs->speedFactor + leastQue - 2;
 			leastQue = 10000;
-			timeLeft = 0.0f;
+			msgProcTimeLeft = 0.0f;
 		}
 	}
 
@@ -916,6 +917,18 @@ bool CGame::UpdateUnsynced()
 		totalGameTime += dif;
 	}
 	updateDeltaSeconds = dif;
+
+	// Update simFPS
+	{
+		static int lsf = gs->frameNum;
+		static spring_time lsft = currentTime;
+		const float diffsecs_ = spring_diffsecs(currentTime, lsft);
+		if (diffsecs_ >= 1.0f) {
+			gu->simFPS = (gs->frameNum - lsf) / diffsecs_;
+			lsft = currentTime;
+			lsf = gs->frameNum;
+		}
+	}
 
 	// FastForwarding
 	if (skipping) {
@@ -1020,6 +1033,8 @@ bool CGame::UpdateUnsynced()
 
 			// TODO call only when camera changed
 			sound->UpdateListener(camera->pos, camera->forward, camera->up, deltaSec);
+
+			profiler.Update();
 		}
 	}
 
@@ -1281,6 +1296,8 @@ bool CGame::Draw() {
 
 	CTeamHighlight::Disable();
 
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(spring_gettime() - currentTime)), 0.1f);
+
 	return true;
 }
 
@@ -1455,7 +1472,6 @@ void CGame::SimFrame() {
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
 		}
-		profiler.Update();
 
 		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(camMove);
 
@@ -1485,6 +1501,8 @@ void CGame::SimFrame() {
 	lastSimFrameTime = spring_gettime();
 
 	DumpState(-1, -1, 1);
+
+	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(spring_gettime() - lastFrameTime)), 0.1f);
 
 	LEAVE_SYNCED_CODE();
 }
@@ -1798,7 +1816,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 	for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 		const CFeature* f = *featuresIt;
 
-		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->myName << ")\n";
+		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->name << ")\n";
 		file << "\t\t\tpos: <" << f->pos.x << ", " << f->pos.y << ", " << f->pos.z << ">\n";
 		file << "\t\t\thealth: " << f->health << ", reclaimLeft: " << f->reclaimLeft << "\n";
 	}
@@ -2283,6 +2301,20 @@ void CGame::ReloadGame()
 	}
 }
 
+
+bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
+{
+	if (ActionPressed(key, action, isRepeat)) {
+		return true;
+	}
+
+	// maybe a widget is interested?
+	if (guihandler != NULL) {
+		guihandler->PushLayoutCommand(action.rawline, false); //FIXME add return argument!
+	}
+
+	return false;
+}
 
 
 void CGame::ActionReceived(const Action& action, int playerID)

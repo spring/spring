@@ -159,6 +159,7 @@ local callInLists = {
 	-- unsynced
 	"DrawUnit",
 	"DrawFeature",
+	"DrawShield",
 	"RecvSkirmishAIMessage",
 
 	-- COB CallIn  (FIXME?)
@@ -890,21 +891,18 @@ end
 
 
 function gadgetHandler:RegisterCMDID(gadget, id)
-  if (id < 30000) then
+  if (id <= 1000) then
     Spring.Echo('Gadget (' .. gadget.ghInfo.name .. ') ' ..
-                'tried to register a CMD_ID < 30000')
-    Script.Kill('Bad CMD_ID code: ' .. id)
+                'tried to register a reserved CMD_ID')
+    Script.Kill('Reserved CMD_ID code: ' .. id)
   end
-  if (id >= 40000) then
-    Spring.Echo('Gadget (' .. gadget.ghInfo.name .. ') ' ..
-                'tried to register a CMD_ID >= 40000')
-    Script.Kill('Bad CMD_ID code: ' .. id)
-  end
+
   if (self.CMDIDs[id] ~= nil) then
     Spring.Echo('Gadget (' .. gadget.ghInfo.name .. ') ' ..
-                'tried to register a CMD_ID >= 40000')
+                'tried to register a duplicated CMD_ID')
     Script.Kill('Duplicate CMD_ID code: ' .. id)
   end
+
   self.CMDIDs[id] = gadget
 end
 
@@ -1078,6 +1076,15 @@ function gadgetHandler:DrawFeature(featureID, drawMode)
   return false
 end
 
+function gadgetHandler:DrawShield(unitID, weaponID, drawMode)
+  for _,g in ipairs(self.DrawShieldList) do
+    if (g:DrawShield(unitID, weaponID, drawMode)) then
+      return true
+    end
+  end
+  return false
+end
+
 function gadgetHandler:RecvSkirmishAIMessage(aiTeam, dataStr)
   for _,g in ipairs(self.RecvSkirmishAIMessageList) do
     local dataRet = g:RecvSkirmishAIMessage(aiTeam, dataStr)
@@ -1113,11 +1120,9 @@ function gadgetHandler:AllowCommand(unitID, unitDefID, unitTeam,
 end
 
 
-function gadgetHandler:AllowUnitCreation(unitDefID, builderID,
-                                         builderTeam, x, y, z)
+function gadgetHandler:AllowUnitCreation(unitDefID, builderID, builderTeam, x, y, z, facing)
   for _,g in ipairs(self.AllowUnitCreationList) do
-    if (not g:AllowUnitCreation(unitDefID, builderID,
-                                builderTeam, x, y, z)) then
+    if (not g:AllowUnitCreation(unitDefID, builderID, builderTeam, x, y, z, facing)) then
       return false
     end
   end

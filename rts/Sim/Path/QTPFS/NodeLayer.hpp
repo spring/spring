@@ -7,7 +7,7 @@
 #include <boost/cstdint.hpp>
 
 struct SRectangle;
-struct MoveData;
+struct MoveDef;
 struct CMoveMath;
 
 namespace QTPFS {
@@ -21,7 +21,7 @@ namespace QTPFS {
 			, zsize(0)
 			{}
 		void Init(unsigned int n);
-		bool Update(const SRectangle& r, const MoveData* md, const CMoveMath* mm);
+		bool Update(const SRectangle& r, const MoveDef* md, const CMoveMath* mm);
 		void Clear();
 
 		float GetNodeRatio() const { return (numLeafNodes / float(xsize * zsize)); }

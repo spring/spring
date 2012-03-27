@@ -12,6 +12,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Rectangle.h"
+#include "System/myMath.h"
 
 
 
@@ -79,7 +80,7 @@ unsigned int QTPFS::INode::GetRectangleRelation(const SRectangle& r) const {
 	return REL_NODE_OVERLAPS_RECT;
 }
 
-float3 QTPFS::INode::GetNeighborEdgeMidPoint(const INode* ngb) const {
+float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos) const {
 	float3 p = ZeroVector;
 
 	const unsigned int
@@ -91,24 +92,45 @@ float3 QTPFS::INode::GetNeighborEdgeMidPoint(const INode* ngb) const {
 	const unsigned int
 		midx = (maxx + minx) >> 1,
 		midz = (maxz + minz) >> 1;
+	const unsigned int rel = GetNeighborRelation(ngb);
 
-	switch (GetNeighborRelation(ngb)) {
+	#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+	#define CAST static_cast<unsigned int>
+	switch (rel) {
 		// corners
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = WS(xmin());  p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = WS(xmax());  p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = WS(xmax());  p.z = WS(zmax()); } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = WS(xmin());  p.z = WS(zmax()); } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmin()); } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmin()); } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmax()); } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmax()); } break;
 		// edges
-		case REL_NGB_EDGE_T: { p.x = WS(midx  );  p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_R: { p.x = WS(xmax());  p.z = WS(midz  ); } break;
-		case REL_NGB_EDGE_B: { p.x = WS(midx  );  p.z = WS(zmax()); } break;
-		case REL_NGB_EDGE_L: { p.x = WS(xmin());  p.z = WS(midz  ); } break;
+		// clamp <pos> (assumed to be inside <this>) to
+		// the shared-edge bounds and ortho-project it
+		case REL_NGB_EDGE_T: { p.x = WS(Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx)); p.z = WS(minz); } break;
+		case REL_NGB_EDGE_B: { p.x = WS(Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx)); p.z = WS(maxz); } break;
+		case REL_NGB_EDGE_R: { p.z = WS(Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz)); p.x = WS(maxx); } break;
+		case REL_NGB_EDGE_L: { p.z = WS(Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz)); p.x = WS(minx); } break;
 
-		case 0: {
-			// <ngb> had better be an actual neighbor
-			assert(false);
-		} break;
+		// <ngb> had better be an actual neighbor
+		case 0: { assert(false); } break;
 	}
+	#undef CAST
+	#else
+	switch (rel) {
+		// corners
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmin()); } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmin()); } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmax()); } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmax()); } break;
+		// edges
+		case REL_NGB_EDGE_T:                  { p.x = WS(midx  ); p.z = WS(zmin()); } break;
+		case REL_NGB_EDGE_R:                  { p.x = WS(xmax()); p.z = WS(midz  ); } break;
+		case REL_NGB_EDGE_B:                  { p.x = WS(midx  ); p.z = WS(zmax()); } break;
+		case REL_NGB_EDGE_L:                  { p.x = WS(xmin()); p.z = WS(midz  ); } break;
+
+		// <ngb> had better be an actual neighbor
+		case 0: { assert(false); } break;
+	}
+	#endif
 
 	return p;
 }
@@ -148,22 +170,26 @@ QTPFS::QTNode::QTNode(
 ) {
 	nodeNumber = nn;
 	heapIndex = -1U;
-	searchState = 0;
 
-	currMagicNum =  0;
+	searchState  =   0;
+	currMagicNum =   0;
 	prevMagicNum = -1U;
+
+	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
+	numPrevNodes = 0;
+	#endif
 
 	_xmin = x1; _xmax = x2;
 	_zmin = z1; _zmax = z2;
+	_depth = (parent != NULL)? parent->depth() + 1: 0;
 
 	assert(xsize() != 0);
 	assert(zsize() != 0);
 
-	_depth = (parent != NULL)? parent->depth() + 1: 0;
-
 	fCost = 0.0f;
 	gCost = 0.0f;
 	hCost = 0.0f;
+	mCost = 0.0f;
 
 	speedModSum =  0.0f;
 	speedModAvg =  0.0f;
@@ -204,6 +230,46 @@ boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
 	}
 
 	return memFootPrint;
+}
+
+boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
+	boost::uint64_t sum = 0;
+
+	{
+		#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&numPrevNodes) + sizeof(numPrevNodes);
+		#else
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&mCost) + sizeof(mCost);
+		#endif
+
+		assert(minByte < maxByte);
+
+		// INode bytes (unpadded)
+		for (const unsigned char* byte = minByte; byte != maxByte; byte++) {
+			sum ^= ((((byte + 1) - minByte) << 8) * (*byte));
+		}
+	}
+	{
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&_xmin);
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&prevMagicNum) + sizeof(prevMagicNum);
+
+		assert(minByte < maxByte);
+
+		// QTNode bytes (unpadded)
+		for (const unsigned char* byte = minByte; byte != maxByte; byte++) {
+			sum ^= ((((byte + 1) - minByte) << 8) * (*byte));
+		}
+	}
+
+	if (!IsLeaf()) {
+		for (unsigned int n = 0; n < children.size(); n++) {
+			sum ^= (((nodeNumber << 8) + 1) * children[n]->GetCheckSum());
+		}
+	}
+
+	return sum;
 }
 
 

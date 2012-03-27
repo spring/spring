@@ -93,7 +93,6 @@ CUnit::CUnit() : CSolidObject(),
 	travelPeriod(0.0f),
 	power(100.0f),
 	maxHealth(100.0f),
-	health(100.0f),
 	paralyzeDamage(0.0f),
 	captureProgress(0.0f),
 	experience(0.0f),
@@ -453,12 +452,12 @@ void CUnit::PostInit(const CUnit* builder)
 	// Call initializing script functions
 	script->Create();
 
-	if (unitDef->movedata != NULL) {
-		switch (unitDef->movedata->moveType) {
-			case MoveData::Hover_Move: {
+	if (unitDef->moveDef != NULL) {
+		switch (unitDef->moveDef->moveType) {
+			case MoveDef::Hover_Move: {
 				physicalState = CSolidObject::Hovering;
 			} break;
-			case MoveData::Ship_Move: {
+			case MoveDef::Ship_Move: {
 				physicalState = CSolidObject::Floating;
 			} break;
 			default: {
@@ -647,34 +646,35 @@ void CUnit::Update()
 
 	posErrorVector += posErrorDelta;
 
-	if (beingBuilt) {
-		return;
+	{
+		const bool oldInAir   = inAir;
+		const bool oldInWater = inWater;
+
+		inWater = (pos.y <= 0.0f);
+		inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x,pos.z)) > 1.0f);
+		isUnderWater = ((pos.y + ((mobility != NULL && mobility->subMarine)? 0.0f: model->height)) < 0.0f);
+
+		if (inAir != oldInAir) {
+			if (inAir) {
+				eventHandler.UnitEnteredAir(this);
+			} else {
+				eventHandler.UnitLeftAir(this);
+			}
+		}
+		if (inWater != oldInWater) {
+			if (inWater) {
+				eventHandler.UnitEnteredWater(this);
+			} else {
+				eventHandler.UnitLeftWater(this);
+			}
+		}
 	}
+
+	if (beingBuilt)
+		return;
 
 	// 0.968 ** 16 is slightly less than 0.6, which was the old value used in SlowUpdate
 	residualImpulse *= 0.968f;
-
-	const bool oldInAir   = inAir;
-	const bool oldInWater = inWater;
-
-	inWater = (pos.y <= 0.0f);
-	inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x,pos.z)) > 1.0f);
-	isUnderWater = ((pos.y + ((mobility != NULL && mobility->subMarine)? 0.0f: model->height)) < 0.0f);
-
-	if (inAir != oldInAir) {
-		if (inAir) {
-			eventHandler.UnitEnteredAir(this);
-		} else {
-			eventHandler.UnitLeftAir(this);
-		}
-	}
-	if (inWater != oldInWater) {
-		if (inWater) {
-			eventHandler.UnitEnteredWater(this);
-		} else {
-			eventHandler.UnitLeftWater(this);
-		}
-	}
 
 	if (travelPeriod != 0.0f) {
 		travel += speed.Length();
@@ -1021,14 +1021,47 @@ void CUnit::SlowUpdateWeapons() {
 
 
 
+float CUnit::GetFlankingDamageBonus(const float3& attackDir)
+{
+	float flankingBonus = 1.0f;
+
+	if (flankingBonusMode <= 0)
+		return flankingBonus;
+
+	if (flankingBonusMode == 1) {
+		// mode 1 = global coordinates, mobile
+		flankingBonusDir += (attackDir * flankingBonusMobility);
+		flankingBonusDir.Normalize();
+		flankingBonusMobility = 0.0f;
+		flankingBonus = (flankingBonusAvgDamage - attackDir.dot(flankingBonusDir) * flankingBonusDifDamage);
+	} else {
+		float3 adirRelative;
+		adirRelative.x = attackDir.dot(rightdir);
+		adirRelative.y = attackDir.dot(updir);
+		adirRelative.z = attackDir.dot(frontdir);
+
+		if (flankingBonusMode == 2) {
+			// mode 2 = unit coordinates, mobile
+			flankingBonusDir += (adirRelative * flankingBonusMobility);
+			flankingBonusDir.Normalize();
+			flankingBonusMobility = 0.0f;
+		}
+
+		// modes 2 and 3 both use this; 3 is unit coordinates, immobile
+		flankingBonus = (flankingBonusAvgDamage - adirRelative.dot(flankingBonusDir) * flankingBonusDifDamage);
+	}
+
+	return flankingBonus;
+}
+
 void CUnit::DoWaterDamage()
 {
-	if (mapInfo->water.damage <= 0.0f) {
+	if (mapInfo->water.damage <= 0.0f)
 		return;
-	}
-	if (!pos.IsInBounds()) {
+	if (!pos.IsInBounds())
 		return;
-	}
+	if (pos.y > 0.0f)
+		return;
 
 	const int  px            = pos.x / (SQUARE_SIZE * 2);
 	const int  pz            = pos.z / (SQUARE_SIZE * 2);
@@ -1036,12 +1069,15 @@ void CUnit::DoWaterDamage()
 	const bool onGround      = (physicalState == CSolidObject::OnGround);
 	const bool isWaterSquare = (readmap->GetMIPHeightMapSynced(1)[pz * gs->hmapx + px] <= 0.0f);
 
-	if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
-		DoDamage(DamageArray(mapInfo->water.damage), 0, ZeroVector, -1);
-	}
+	if (!isWaterSquare)
+		return;
+	if (!isFloating && !onGround)
+		return;
+
+	DoDamage(DamageArray(mapInfo->water.damage), ZeroVector, NULL, -DAMAGE_EXTSOURCE_WATER);
 }
 
-void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse, int weaponDefId)
+void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID)
 {
 	if (isDead) {
 		return;
@@ -1053,30 +1089,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 		if (attacker) {
 			SetLastAttacker(attacker);
 
-			if (flankingBonusMode) {
-				const float3 adir = (attacker->pos - pos).SafeNormalize(); // FIXME -- not the impulse direction?
-
-				if (flankingBonusMode == 1) {
-					// mode 1 = global coordinates, mobile
-					flankingBonusDir += adir * flankingBonusMobility;
-					flankingBonusDir.Normalize();
-					flankingBonusMobility = 0.0f;
-					damage *= flankingBonusAvgDamage - adir.dot(flankingBonusDir) * flankingBonusDifDamage;
-				} else {
-					float3 adirRelative;
-					adirRelative.x = adir.dot(rightdir);
-					adirRelative.y = adir.dot(updir);
-					adirRelative.z = adir.dot(frontdir);
-
-					if (flankingBonusMode == 2) {	// mode 2 = unit coordinates, mobile
-						flankingBonusDir += adirRelative * flankingBonusMobility;
-						flankingBonusDir.Normalize();
-						flankingBonusMobility = 0.0f;
-					}
-					// modes 2 and 3 both use this; 3 is unit coordinates, immobile
-					damage *= flankingBonusAvgDamage - adirRelative.dot(flankingBonusDir) * flankingBonusDifDamage;
-				}
-			}
+			// FIXME -- not the impulse direction?
+			damage *= GetFlankingDamageBonus((attacker->pos - pos).SafeNormalize());
 		}
 
 		damage *= curArmorMultiple;
@@ -1087,21 +1101,22 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 	hitDir.y = 0.0f;
 	hitDir.SafeNormalize();
 
-	script->HitByWeapon(hitDir, weaponDefId, /*inout*/ damage);
+	script->HitByWeapon(hitDir, weaponDefID, /*inout*/ damage);
 
 	float experienceMod = expMultiplier;
-	const int paralyzeTime = damages.paralyzeDamageTime;
 	float newDamage = damage;
 	float impulseMult = 1.0f;
 
-	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponDefId,
-			!!paralyzeTime, &newDamage, &impulseMult)) {
+	const int paralyzeTime = damages.paralyzeDamageTime;
+	const bool isParalyzer = (paralyzeTime != 0);
+
+	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponDefID, isParalyzer, &newDamage, &impulseMult)) {
 		damage = newDamage;
 	}
 
 	AddImpulse((impulse * impulseMult) / mass);
 
-	if (paralyzeTime == 0) { // real damage
+	if (!isParalyzer) { // real damage
 		if (damage > 0.0f) {
 			// Do not log overkill damage (so nukes etc do not inflate values)
 			const float statsdamage = std::max(0.0f, std::min(maxHealth - health, damage));
@@ -1110,8 +1125,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 			}
 			teamHandler->Team(team)->currentStats->damageReceived += statsdamage;
 			health -= damage;
-		}
-		else { // healing
+		} else { // healing
 			health -= damage;
 			if (health > maxHealth) {
 				health = maxHealth;
@@ -1176,8 +1190,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 		}
 	}
 
-	eventHandler.UnitDamaged(this, attacker, damage, weaponDefId, !!damages.paralyzeDamageTime);
-	eoh->UnitDamaged(*this, attacker, damage, weaponDefId, !!damages.paralyzeDamageTime);
+	eventHandler.UnitDamaged(this, attacker, damage, weaponDefID, isParalyzer);
+	eoh->UnitDamaged(*this, attacker, damage, weaponDefID, isParalyzer);
 
 #ifdef TRACE_SYNC
 	tracefile << "Damage: ";
@@ -1199,13 +1213,6 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 }
 
 
-
-void CUnit::Kill(const float3& impulse, bool crushKill) {
-	crushKilled = crushKill;
-
-	DamageArray damage;
-	DoDamage(damage * (health + 1.0f), NULL, impulse, -1);
-}
 
 void CUnit::AddImpulse(const float3& addedImpulse) {
 	residualImpulse += addedImpulse;
@@ -2180,7 +2187,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(paralyzeDamage),
 	CR_MEMBER(captureProgress),
 	CR_MEMBER(maxHealth),
-	CR_MEMBER(health),
 	CR_MEMBER(experience),
 	CR_MEMBER(limExperience),
 	CR_MEMBER(neutral),

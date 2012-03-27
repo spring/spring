@@ -203,19 +203,19 @@ static void CreatePathMetatable(lua_State* L)
 
 int LuaPathFinder::RequestPath(lua_State* L)
 {
-	const MoveData* moveData = NULL;
+	const MoveDef* moveDef = NULL;
 	
 	if (lua_israwstring(L, 1)) {
-		moveData = moveinfo->GetMoveDataFromName(lua_tostring(L, 1));
+		moveDef = moveDefHandler->GetMoveDefFromName(lua_tostring(L, 1));
 	} else {
 		const int moveID = luaL_checkint(L, 1);
-		if ((moveID < 0) || ((size_t)moveID >= moveinfo->moveData.size())) {
+		if ((moveID < 0) || ((size_t)moveID >= moveDefHandler->moveDefs.size())) {
 			luaL_error(L, "Invalid moveID passed to RequestPath");
 		}
-		moveData = moveinfo->moveData[moveID];
+		moveDef = moveDefHandler->moveDefs[moveID];
 	}
 
-	if (moveData == NULL) {
+	if (moveDef == NULL) {
 		return 0;
 	}
 
@@ -230,7 +230,7 @@ int LuaPathFinder::RequestPath(lua_State* L)
 	const float radius = luaL_optfloat(L, 8, 8.0f);
 
 	const bool synced = CLuaHandle::GetSynced(L);
-	const int pathID = pathManager->RequestPath(moveData, start, end, radius, NULL, synced);
+	const int pathID = pathManager->RequestPath(moveDef, start, end, radius, NULL, synced);
 
 	if (pathID == 0) {
 		return 0;

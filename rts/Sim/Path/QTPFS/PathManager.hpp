@@ -12,7 +12,7 @@
 #include "PathCache.hpp"
 #include "PathSearch.hpp"
 
-struct MoveData;
+struct MoveDef;
 struct SRectangle;
 class CSolidObject;
 
@@ -31,7 +31,7 @@ namespace QTPFS {
 		void DeletePath(unsigned int pathID);
 
 		unsigned int RequestPath(
-			const MoveData* moveData,
+			const MoveDef* moveDef,
 			const float3& sourcePos,
 			const float3& targetPos,
 			float radius,
@@ -59,6 +59,7 @@ namespace QTPFS {
 		static const unsigned int MAX_UPDATE_DELAY = 10;
 		static const unsigned int MAX_TEAM_SEARCHES = 10;
 		static const unsigned int NUM_SPEEDMOD_BINS = 20;
+
 		static const float MIN_SPEEDMOD_VALUE;
 		static const float MAX_SPEEDMOD_VALUE;
 
@@ -107,7 +108,7 @@ namespace QTPFS {
 		unsigned int QueueSearch(
 			const IPath* oldPath,
 			const CSolidObject* object,
-			const MoveData* moveData,
+			const MoveDef* moveDef,
 			const float3& sourcePoint,
 			const float3& targetPoint,
 			const float radius,
@@ -145,7 +146,7 @@ namespace QTPFS {
 		unsigned int searchStateOffset;
 		unsigned int numTerrainChanges;
 		unsigned int numPathRequests;
-		unsigned int maxNumLayerNodes;
+		unsigned int maxNumLeafNodes;
 
 		boost::uint32_t pfsCheckSum;
 	};
