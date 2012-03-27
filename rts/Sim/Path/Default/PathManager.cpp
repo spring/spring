@@ -409,9 +409,10 @@ void CPathManager::Update()
 // used to deposit heat on the heat-map as a unit moves along its path
 void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathId)
 {
-	if (!pathId) {
+	if (pathId == 0)
 		return;
-	}
+	if (!owner->mobility->heatMapping)
+		return;
 
 #ifndef USE_GML
 	static std::vector<int2> points;
