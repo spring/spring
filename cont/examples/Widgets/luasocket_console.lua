@@ -7,7 +7,7 @@ end
 function widget:GetInfo()
 return {
 	name    = "ip console for spring",
-	desc    = "opens a telnet console on localhost:8201"
+	desc    = "opens a telnet console on localhost:8201",
 	author  = "abma",
 	date    = "Feb. 2012",
 	license = "GNU GPL, v2 or later",
