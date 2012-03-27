@@ -7,8 +7,6 @@
 
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
-#include <boost/asio.hpp>
-//#include "System/Net.h"
 
 #define LOG_SECTION_LUASOCKET "LuaSocket"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_LUASOCKET)
@@ -31,12 +29,6 @@ CLuaSocketRestrictions::CLuaSocketRestrictions()
 	addRules(UDP_CONNECT, configHandler->GetString("UDPAllowConnect"));
 	addRules(UDP_LISTEN,  configHandler->GetString("UDPAllowListen"));
 
-	const std::string autohostip = configHandler->GetString("AutohostIP");
-	const int port = configHandler->GetInt("AutohostPort");
-
-	if (( port > 0 ) && (port < 65535) and (!autohostip.empty())) {
-		addRule(UDP_CONNECT, autohostip, port, false);
-	}
 }
 
 void CLuaSocketRestrictions::addRule(RestrictType type, const std::string& hostname, int port, bool allowed)
@@ -143,5 +135,18 @@ void CLuaSocketRestrictions::addIP(const char* hostname, const char* ip)
 			}
 		}
 	}
+}
+
+CLuaSocketRestrictions::~CLuaSocketRestrictions()
+{
+	//FIXME: dump rules only in debug build if luasockets has become more stable
+	for(int i=0; i<ALL_RULES; i++) {
+		TStrIntMap::iterator it;
+		for(it = restrictions[i].begin(); it != restrictions[i].end(); ++it) {
+			TSocketRule &rule = *it;
+			LOG_L(L_WARNING, "%d %s %d %d", i, rule.hostname.c_str(), rule.port, rule.allowed);
+		}
+	}
+
 }
 

@@ -46,6 +46,7 @@
 #include "System/Net/RawPacket.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/Platform/errorhandler.h"
+#include "lib/luasocket/src/restrictions.h"
 
 using netcode::RawPacket;
 using std::string;
@@ -64,6 +65,8 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 	activeController = this;
 
 	if (!settings->isHost) {
+		//don't allow luasocket to connect to the host
+		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, settings->hostIP, settings->hostPort, false);
 		net->InitClient(settings->hostIP.c_str(), settings->hostPort, settings->myPlayerName, settings->myPasswd, SpringVersion::GetFull());
 		timer = SDL_GetTicks();
 	} else {
