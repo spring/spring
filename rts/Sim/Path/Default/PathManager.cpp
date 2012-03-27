@@ -421,10 +421,6 @@ void CPathManager::Update()
 void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathId)
 {
 	pathFlowMap->AddFlow(owner);
-
-	if (pathId == 0)
-		return;
-
 	pathHeatMap->AddHeat(owner, this, pathId);
 }
 
