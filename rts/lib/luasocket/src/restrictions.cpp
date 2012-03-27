@@ -7,6 +7,8 @@
 
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
+#include <boost/asio.hpp>
+//#include "System/Net.h"
 
 #define LOG_SECTION_LUASOCKET "LuaSocket"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_LUASOCKET)
@@ -28,16 +30,31 @@ CLuaSocketRestrictions::CLuaSocketRestrictions()
 	addRules(TCP_LISTEN,  configHandler->GetString("TCPAllowListen"));
 	addRules(UDP_CONNECT, configHandler->GetString("UDPAllowConnect"));
 	addRules(UDP_LISTEN,  configHandler->GetString("UDPAllowListen"));
+
+	const std::string autohostip = configHandler->GetString("AutohostIP");
+	const int port = configHandler->GetInt("AutohostPort");
+
+	if (( port > 0 ) && (port < 65535) and (!autohostip.empty())) {
+		addRule(UDP_CONNECT, autohostip, port, false);
+	}
 }
 
-void CLuaSocketRestrictions::addRawRule(RestrictType type, const std::string& hostname, int port)
+void CLuaSocketRestrictions::addRule(RestrictType type, const std::string& hostname, int port, bool allowed)
 {
 	if ((port<=0) || (port>65535)){
 		LOG_L(L_ERROR, "Invalid port specified: %d", port);
 		return;
 	}
+	if (getRule(type, hostname.c_str(), port)!=NULL) {
+		LOG_L(L_ERROR, "Rule already exists: %s %d", hostname.c_str(), port);
+		return;
+	}
 	LOG_L(L_WARNING, "Adding rule %d %s:%d",type, hostname.c_str(), port);
-	restrictions[type].push_back(TIpPort(hostname, port));
+	if (!allowed) { //add deny rules to the front of the list
+		restrictions[type].push_front(TSocketRule(hostname, port, allowed));
+	} else {
+		restrictions[type].push_back(TSocketRule(hostname, port, allowed));
+	}
 }
 
 void CLuaSocketRestrictions::addRule(RestrictType type, const std::string& rule)
@@ -49,7 +66,7 @@ void CLuaSocketRestrictions::addRule(RestrictType type, const std::string& rule)
 	}
 	const std::string strport = rule.substr(delimpos+1, delimpos-rule.length());
 	const int port = atoi(strport.c_str());
-	addRawRule(type, rule.substr(0, delimpos), port);
+	addRule(type, rule.substr(0, delimpos), port, true);
 }
 
 void CLuaSocketRestrictions::addRules(RestrictType type, const std::string& configstr)
@@ -80,10 +97,18 @@ bool isValidIpAddress(char *ipAddress)
 }
 */
 
-bool CLuaSocketRestrictions::isAllowed(RestrictType type, const char* hostname, int port)
+bool CLuaSocketRestrictions::isAllowed(RestrictType type, const char* hostname, int port) {
+	const TSocketRule* rule = getRule(type, hostname, port);
+	if (rule==NULL) {
+		return false;
+	}
+	return rule->allowed;
+}
+
+const TSocketRule* CLuaSocketRestrictions::getRule(RestrictType type, const char* hostname, int port) {
 {
 	int start, end;
-	if (type!=ALL_RULES) {
+	if (type != ALL_RULES) {
 		start = type;
 		end = start+1;
 	} else {
@@ -92,28 +117,29 @@ bool CLuaSocketRestrictions::isAllowed(RestrictType type, const char* hostname, 
 	}
 	for (int i=start; i<end; i++) {
 		TStrIntMap::iterator it;
-		for(it = restrictions[i].begin(); it != restrictions[i].end(); ++it){
-			if (hostname == (*it).first) {
-				const int rport = (*it).second;
-				if (port==-1) { // port ignored
-					return true;
-				} else if (rport==port) {
-					return true;
+		for(it = restrictions[i].begin(); it != restrictions[i].end(); ++it) {
+			TSocketRule &rule = *it;
+			if (hostname == rule.hostname) {
+				if (rule.port==-1) { // port ignored
+					return &rule;
+				} else if (rule.port==port) {
+					return &rule;
 				}
 			}
 		}
 	}
-	return false;
+	return NULL;
+	}
 }
 
 void CLuaSocketRestrictions::addIP(const char* hostname, const char* ip)
 {
-	for(int i=0; i<ALL_RULES; i++){
+	for(int i=0; i<ALL_RULES; i++) {
 		TStrIntMap::iterator it;
-		for(it = restrictions[i].begin(); it != restrictions[i].end(); ++it){
-			const int port = (*it).second;
-			if(!isAllowed((RestrictType)i, ip, port)) { //check if rule already exists, if not, add it
-				addRawRule((RestrictType)i, ip, port);
+		for(it = restrictions[i].begin(); it != restrictions[i].end(); ++it) {
+			const TSocketRule &rule = *it;
+			if ((rule.hostname == hostname)  && (getRule((RestrictType)i, ip, rule.port) == NULL)) { //add rule with ip, when not exisitng
+				addRule((RestrictType)i, ip, rule.port, rule.allowed);
 			}
 		}
 	}
