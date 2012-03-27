@@ -137,6 +137,7 @@
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="1"
 				TreatWChar_tAsBuiltInType="true"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
@@ -812,6 +813,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\ExternalAI\AILegacySupport.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\ExternalAI\AILibraryManager.cpp"
 				>
 			</File>
@@ -861,6 +866,10 @@
 			</File>
 			<File
 				RelativePath="..\..\ExternalAI\SkirmishAI.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\SkirmishAIBase.h"
 				>
 			</File>
 			<File
@@ -919,6 +928,42 @@
 				RelativePath="..\..\ExternalAI\SSkirmishAICallbackImpl.h"
 				>
 			</File>
+			<Filter
+				Name="Interface"
+				>
+				<File
+					RelativePath="..\..\ExternalAI\Interface\aidefines.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\Interface\AISCommands.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\Interface\AISEvents.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\Interface\ELevelOfSupport.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\Interface\SAIInterfaceCallback.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\Interface\SAIInterfaceLibrary.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\Interface\SSkirmishAICallback.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ExternalAI\Interface\SSkirmishAILibrary.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Game"
@@ -1077,6 +1122,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\GlobalUnsynced.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\IActionExecutor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\IGameCommands.h"
 				>
 			</File>
 			<File
@@ -1276,7 +1329,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\SyncedActionExecutor.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\SyncedGameCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\SyncedGameCommands.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\TeamController.h"
 				>
 			</File>
 			<File
@@ -1288,7 +1353,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\UnsyncedActionExecutor.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\UnsyncedGameCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\UnsyncedGameCommands.h"
 				>
 			</File>
 			<File
@@ -1460,6 +1533,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\Ui\KeyBindings.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\KeyBindingsLog.h"
 					>
 				</File>
 				<File
@@ -2231,6 +2308,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Game\Server\GameSkirmishAI.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Game\Server\MsgStrings.h"
 					>
 				</File>
@@ -2451,10 +2532,6 @@
 				RelativePath="..\..\Rendering\WorldDrawer.h"
 				>
 			</File>
-			<Filter
-				Name="Unit Models"
-				>
-			</Filter>
 			<Filter
 				Name="Env"
 				>
@@ -2680,6 +2757,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Gl\IFramebuffer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\GL\Light.h"
 					>
 				</File>
 				<File
@@ -2960,6 +3041,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Models\3DModel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\3DModelLog.h"
 					>
 				</File>
 				<File
@@ -3287,6 +3372,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Units\UnitDefImage.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Units\UnitHandler.cpp"
 					>
 				</File>
@@ -3310,10 +3399,6 @@
 					RelativePath="..\..\Sim\Units\UnitSet.h"
 					>
 				</File>
-				<Filter
-					Name="COB"
-					>
-				</Filter>
 				<Filter
 					Name="UnitTypes"
 					>
@@ -3535,6 +3620,10 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Units\Scripts\UnitScriptFactory.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\UnitScriptLog.h"
 						>
 					</File>
 				</Filter>
@@ -3883,6 +3972,134 @@
 				Name="Weapons"
 				>
 				<File
+					RelativePath="..\..\Sim\Weapons\BeamLaser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\BeamLaser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\BombDropper.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\BombDropper.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\Cannon.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\Cannon.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\DGunWeapon.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\DGunWeapon.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\EmgCannon.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\EmgCannon.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\FlameThrower.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\FlameThrower.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\LaserCannon.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\LaserCannon.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\LightningCannon.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\LightningCannon.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\MeleeWeapon.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\MeleeWeapon.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\MissileLauncher.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\MissileLauncher.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\NoWeapon.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\NoWeapon.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\PlasmaRepulser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\PlasmaRepulser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\Rifle.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\Rifle.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\StarburstLauncher.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\StarburstLauncher.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\TorpedoLauncher.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\TorpedoLauncher.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\Weapon.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\Weapon.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Weapons\WeaponDef.cpp"
 					>
 				</File>
@@ -3906,148 +4123,28 @@
 					RelativePath="..\..\Sim\Weapons\WeaponLoader.h"
 					>
 				</File>
-				<Filter
-					Name="Classes"
-					>
-					<File
-						RelativePath="..\..\Sim\Weapons\BeamLaser.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\BeamLaser.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\BombDropper.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\BombDropper.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\Cannon.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\Cannon.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\DGunWeapon.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\DGunWeapon.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\EmgCannon.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\EmgCannon.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\FlameThrower.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\FlameThrower.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\LaserCannon.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\LaserCannon.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\LightningCannon.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\LightningCannon.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\MeleeWeapon.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\MeleeWeapon.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\MissileLauncher.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\MissileLauncher.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\NoWeapon.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\NoWeapon.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\PlasmaRepulser.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\PlasmaRepulser.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\Rifle.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\Rifle.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\StarburstLauncher.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\StarburstLauncher.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\TorpedoLauncher.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\TorpedoLauncher.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\Weapon.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Weapons\Weapon.h"
-						>
-					</File>
-				</Filter>
 			</Filter>
 			<Filter
 				Name="Path"
 				>
+				<File
+					RelativePath="..\..\Sim\Path\IPathController.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Path\IPathController.hpp"
+					>
+				</File>
 				<File
 					RelativePath="..\..\Sim\Path\IPathManager.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\Sim\Path\IPathManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Path\PFSTypes.h"
 					>
 				</File>
 				<Filter
@@ -4175,6 +4272,10 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Path\Default\PathFinderDef.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathLog.h"
 						>
 					</File>
 					<File
@@ -4675,6 +4776,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\GuiSoundSet.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\InterceptHandler.cpp"
 					>
 				</File>
@@ -4828,6 +4933,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Features\FeatureHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Features\FeatureSet.h"
 					>
 				</File>
 			</Filter>
@@ -4984,6 +5093,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\booldefines.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\BranchPrediction.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Color.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\CRC.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\CRC.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\demofile.h"
 				>
 			</File>
@@ -5012,11 +5141,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Exceptions.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\exportdefines.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\FastMath.h"
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\float3.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\float3.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\float4.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\float4.h"
 				>
 			</File>
 			<File
@@ -5150,6 +5299,26 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\System\maindefines.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Matrix44f.cpp"
+				>
+				<FileConfiguration
+					Name="No debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AssemblerOutput="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Matrix44f.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\MemPool.cpp"
 				>
 			</File>
@@ -5163,6 +5332,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\mmgr.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\myMath.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\myMath.h"
 				>
 			</File>
 			<File
@@ -5254,11 +5431,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\OpenMP_cond.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\Option.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\System\Option.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Rectangle.h"
 				>
 			</File>
 			<File
@@ -5469,6 +5654,10 @@
 				RelativePath="..\..\System\Vec2.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\System\VersionGenerated.h"
+				>
+			</File>
 			<Filter
 				Name="FileSystem"
 				>
@@ -5570,78 +5759,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\CacheDir.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\CRC.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\CRC.h"
 					>
 				</File>
 				<File
@@ -5964,10 +6081,6 @@
 					RelativePath="..\..\System\FileSystem\ZipArchive.h"
 					>
 				</File>
-				<Filter
-					Name="Libraries"
-					>
-				</Filter>
 			</Filter>
 			<Filter
 				Name="Platform"
@@ -6220,162 +6333,6 @@
 						>
 					</File>
 				</Filter>
-			</Filter>
-			<Filter
-				Name="Math"
-				>
-				<File
-					RelativePath="..\..\System\float3.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\float3.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Matrix44f.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\Matrix44f.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\myMath.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\myMath.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="LoadSave"
@@ -6757,6 +6714,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\creg\creg_cond.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\creg\cregex.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\creg\ISerializer.h"
 					>
 				</File>
@@ -6902,14 +6867,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sound\NullEffectChannel.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sound\NullMusicChannel.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Sound\NullSound.cpp"
 					>
 				</File>
@@ -6958,6 +6915,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Sound\SoundLog.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sound\SoundSource.cpp"
 					>
 				</File>
@@ -6973,10 +6934,6 @@
 					RelativePath="..\..\System\Sound\VorbisShared.h"
 					>
 				</File>
-			</Filter>
-			<Filter
-				Name="Script"
-				>
 			</Filter>
 			<Filter
 				Name="Sync"
@@ -8262,10 +8219,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Map\Smf\mapfile.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Map\SMF\SMFFormat.h"
 					>
 				</File>
@@ -8575,6 +8528,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Lua\LuaConfig.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Lua\LuaConstCMD.cpp"
 				>
 			</File>
@@ -8676,6 +8633,10 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaHashString.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaHelper.h"
 				>
 			</File>
 			<File
@@ -14361,2142 +14322,230 @@
 			<Filter
 				Name="lua"
 				>
-				<File
-					RelativePath="..\..\lib\lua\src\lapi.cpp"
+				<Filter
+					Name="include"
 					>
-					<FileConfiguration
-						Name="Debug|Win32"
+					<File
+						RelativePath="..\..\lib\lua\include\lauxlib.h"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\include\lua.h"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\include\luaconf.h"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\include\LuaInclude.h"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\include\lualib.h"
 						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lapi.h"
+					</File>
+				</Filter>
+				<Filter
+					Name="src"
 					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lauxlib.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\include\lauxlib.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lbaselib.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lcode.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lcode.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ldblib.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ldebug.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ldebug.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ldo.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ldo.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ldump.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lfunc.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lfunc.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lgc.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lgc.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\linit.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\liolib.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\llex.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\llex.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\llimits.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lmathlib.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lmem.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lmem.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\loadlib.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lobject.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lobject.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lopcodes.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lopcodes.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\loslib.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lparser.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lparser.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lstate.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lstate.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lstring.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lstring.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lstrlib.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ltable.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ltable.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ltablib.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ltm.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\ltm.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\include\lua.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\include\luaconf.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\include\LuaInclude.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\include\lualib.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lundump.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lundump.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lvm.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lvm.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lzio.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\lzio.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lua\src\print.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lapi.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lapi.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lauxlib.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lbaselib.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lcode.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lcode.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ldblib.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ldebug.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ldebug.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ldo.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ldo.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ldump.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lfunc.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lfunc.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lgc.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lgc.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\linit.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\liolib.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\llex.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\llex.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\llimits.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lmathlib.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lmem.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lmem.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\loadlib.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lobject.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lobject.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lopcodes.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lopcodes.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\loslib.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lparser.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lparser.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lstate.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lstate.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lstring.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lstring.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lstrlib.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ltable.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ltable.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ltablib.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ltm.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\ltm.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lundump.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lundump.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lvm.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lvm.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lzio.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\lzio.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\lua\src\print.cpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="gml"
@@ -16551,6 +14600,14 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\gml\gmlsrv.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\speedy-tls.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\speedy-tls.h"
 					>
 				</File>
 				<File
