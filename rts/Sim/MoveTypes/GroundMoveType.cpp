@@ -290,6 +290,9 @@ bool CGroundMoveType::Update()
 		// decreases much less quickly when moving orthogonal to <waypointDir>
 		oldPos = owner->pos;
 
+		const float3 ffd = flatFrontDir * posDif.SqLength() * 0.5f;
+		const float3 wpd = waypointDir * ((int(!reversing) * 2) - 1);
+
 		// too many false negatives: speed is unreliable if stuck behind an obstacle
 		//   idling = (owner->speed.SqLength() < (accRate * accRate));
 		//   idling &= (Square(currWayPointDist - prevWayPointDist) <= (accRate * accRate));
@@ -299,8 +302,7 @@ bool CGroundMoveType::Update()
 		//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
 		idling = true;
 		idling &= (math::fabs(posDif.y) < math::fabs(cmpEps.y * owner->pos.y));
-		idling &= (Square(currWayPointDist - prevWayPointDist) <= (posDif.SqLength() * 0.5));
-		idling &= (flatFrontDir.dot(waypointDir * ((int(!reversing) * 2) - 1)) >= 0.5f);
+		idling &= (Square(currWayPointDist - prevWayPointDist) < ffd.dot(wpd));
 		hasMoved = true;
 	}
 
