@@ -1202,14 +1202,17 @@ bool CGame::Draw() {
 
 	if (globalRendering->drawdebug) {
 		//print some infos (fps,gameframe,particles)
-		glColor4f(1,1,0.5f,0.8f);
-		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %0.1f Frame: %d Particles: %d (%d)",
-		    globalRendering->FPS, gs->frameNum, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
+		font->Begin();
+		font->SetTextColor(1,1,0.5f,0.8f);
 
-		if (playing) {
-			font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",
-			    camera->pos.x, camera->pos.y, camera->pos.z, gs->speedFactor);
-		}
+		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %0.1f Frame: %d Speed: %2.2f Particles: %d (%d)",
+		    globalRendering->FPS, gs->frameNum, gs->speedFactor, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
+
+		// 16ms := 60fps := 30simFPS + 30drawFPS
+		font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM, "avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
+		   (gu->avgDrawFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime, (gu->avgSimFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime);
+
+		font->End();
 	}
 
 	if (userWriting) {
@@ -1296,7 +1299,7 @@ bool CGame::Draw() {
 
 	CTeamHighlight::Disable();
 
-	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(spring_gettime() - currentTime)), 0.1f);
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(spring_gettime() - currentTime)), 0.05f);
 
 	return true;
 }
@@ -1502,7 +1505,7 @@ void CGame::SimFrame() {
 
 	DumpState(-1, -1, 1);
 
-	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(spring_gettime() - lastFrameTime)), 0.1f);
+	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(spring_gettime() - lastFrameTime)), 0.05f);
 
 	LEAVE_SYNCED_CODE();
 }
