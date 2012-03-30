@@ -39,7 +39,7 @@ GAME1="Balanced Annihilation V7.65"
 GAME2="Zero-K v1.0.3.8"
 MAP="Altair_Crossing-V1"
 
-PRDL="${TESTDIR}/pr-downloader --filesystem-write-path=$DOWNLOADDIR"
+PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-write-path=$DOWNLOADDIR"
 
 $PRDL --download-game $GAME1
 $PRDL --download-game $GAME2
