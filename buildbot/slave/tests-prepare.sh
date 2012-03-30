@@ -41,9 +41,9 @@ MAP="Altair_Crossing-V1"
 
 PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 
-$PRDL --download-game $GAME1
-$PRDL --download-game $GAME2
-$PRDL --download-map $MAP
+$PRDL --download-game "$GAME1"
+$PRDL --download-game "$GAME2"
+$PRDL --download-map "$MAP"
 
 #install required files into spring dir
 cd ${SOURCEDIR}
