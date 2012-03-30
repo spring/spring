@@ -6,11 +6,11 @@ If    (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pr-downloader/CMakeLists.txt")
 	# only add this if the submodule is present
 	find_package(CURL)
 	If (CURL_FOUND)
+		set(CMAKE_BUILD_TYPE "RELEASE")
 		Add_Subdirectory(pr-downloader)
-		Set(myInstallDeps
-			pr-downloader)
-		Set(myInstallDirs
-			"tools/pr-downloader")
+		# add install-pr-downloader target
+		Set(myInstallDeps pr-downloader)
+		Set(myInstallDirs "tools/pr-downloader")
 		CreateInstallTarget("pr-downloader" myInstallDeps myInstallDirs)
 
 	Else(CURL_FOUND)
