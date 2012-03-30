@@ -1215,6 +1215,11 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 
 
 void CUnit::AddImpulse(const float3& addedImpulse) {
+	if (GetTransporter() != NULL) {
+		// or apply impulse to the transporter?
+		return;
+	}
+
 	residualImpulse += addedImpulse;
 
 	if (addedImpulse.SqLength() >= 0.01f) {
