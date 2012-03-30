@@ -7,6 +7,12 @@ If    (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pr-downloader/CMakeLists.txt")
 	find_package(CURL)
 	If (CURL_FOUND)
 		Add_Subdirectory(pr-downloader)
+		Set(myInstallDeps
+			pr-downloader)
+		Set(myInstallDirs
+			"tools/pr-downloader")
+		CreateInstallTarget("pr-downloader" myInstallDeps myInstallDirs)
+
 	Else(CURL_FOUND)
 		MESSAGE(STATUS "pr-downloader will NOT be generated/installed; libcurl not found")
 	EndIf(CURL_FOUND)
