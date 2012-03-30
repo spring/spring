@@ -47,11 +47,13 @@ $PRDL --download-map "$MAP"
 
 #install required files into spring dir
 cd ${SOURCEDIR}
-mkdir -p ${CONTENT_DIR}/games ${CONTENT_DIR}/maps ${CONTENT_DIR}/LuaUI/Widgets ${CONTENT_DIR}/LuaUI/Config
+mkdir -p ${CONTENT_DIR}/LuaUI/Widgets ${CONTENT_DIR}/LuaUI/Config
 
 #symlink files into into destination dir
 for i in games maps pool packages;
 do
+	# delete existing destination dir
+	rm -rf ${CONTENT_DIR}/$i
 	ln -sfv ${DOWNLOADDIR}/$i ${CONTENT_DIR}/$i
 done
 
