@@ -772,7 +772,7 @@ static std::string getprintf_msg(lua_State* L, int index)
 int LuaUtils::Echo(lua_State* L)
 {
 	const std::string msg = getprintf_msg(L, 1);
-	LOG(msg.c_str());
+	LOG("%s", msg.c_str());
 	return 0;
 }
 
