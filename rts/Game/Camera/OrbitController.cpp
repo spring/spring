@@ -14,9 +14,9 @@
 #include "System/Input/KeyInput.h"
 
 CONFIG(bool, OrbitControllerEnabled).defaultValue(true);
-CONFIG(float, OrbitControllerOrbitSpeed).defaultValue(0.25f);
-CONFIG(float, OrbitControllerPanSpeed).defaultValue(2.00f);
-CONFIG(float, OrbitControllerZoomSpeed).defaultValue(5.00f);
+CONFIG(float, OrbitControllerOrbitSpeed).defaultValue(0.25f).minimumValue(0.1f).maximumValue(10.0f);
+CONFIG(float, OrbitControllerPanSpeed).defaultValue(2.00f).minimumValue(0.1f).maximumValue(10.0f);
+CONFIG(float, OrbitControllerZoomSpeed).defaultValue(5.00f).minimumValue(0.1f).maximumValue(10.0f);
 
 #define DEG2RAD(a) ((a) * (3.141592653f / 180.0f))
 #define RAD2DEG(a) ((a) * (180.0f / 3.141592653f))
@@ -36,10 +36,6 @@ COrbitController::COrbitController():
 	orbitSpeedFact = configHandler->GetFloat("OrbitControllerOrbitSpeed");
 	panSpeedFact   = configHandler->GetFloat("OrbitControllerPanSpeed");
 	zoomSpeedFact  = configHandler->GetFloat("OrbitControllerZoomSpeed");
-
-	orbitSpeedFact = std::max(0.1f, std::min(10.0f, orbitSpeedFact));
-	panSpeedFact   = std::max(0.1f, std::min(10.0f, panSpeedFact));
-	zoomSpeedFact  = std::max(0.1f, std::min(10.0f, zoomSpeedFact));
 }
 
 void COrbitController::Init(const float3& p, const float3& tar)
