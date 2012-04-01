@@ -525,7 +525,7 @@ void QTPFS::PathManager::ExecuteSearch(
 ) {
 	IPathSearch* search = *searchesIt;
 	IPath* path = pathCache.GetTempPath(search->GetID());
-	MoveDef* md = moveDefHandler->moveDefs[pathType];
+//	MoveDef* md = moveDefHandler->moveDefs[pathType];
 
 	assert(search != NULL);
 	assert(path != NULL);
@@ -783,7 +783,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 		return point;
 	}
 
-	const float minRadiusSq = radius * radius;
+//	const float minRadiusSq = radius * radius;
 	      float curRadiusSq = QTPFS_POSITIVE_INFINITY;
 
 	unsigned int minPointIdx = 0;

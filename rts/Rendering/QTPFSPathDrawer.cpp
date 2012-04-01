@@ -375,6 +375,7 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 				return;
 
 			// TODO
+/*
 			for (int ty = starty; ty < endy; ++ty) {
 				for (int tx = 0; tx < gs->hmapx; ++tx) {
 					const int sqx = (tx << 1);
@@ -383,6 +384,8 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 					const int mapIdx = sqz * gs->mapxp1 + sqx;
 				}
 			}
+*/
+
 		} break;
 
 		case CBaseGroundDrawer::drawPathCost: {

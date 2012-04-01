@@ -528,6 +528,8 @@ void SMFRenderStateARB::SetCurrentShader(const DrawPass::e& drawPass) {
 		case DrawPass::Normal:          { smfShaderCurrARB = smfShaderBaseARB; } break;
 		case DrawPass::WaterReflection: { smfShaderCurrARB = smfShaderReflARB; } break;
 		case DrawPass::WaterRefraction: { smfShaderCurrARB = smfShaderRefrARB; } break;
+		case DrawPass::Shadow:
+		case DrawPass::UnitReflection: break;
 	}
 }
 
