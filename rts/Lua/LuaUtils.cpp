@@ -837,7 +837,7 @@ int LuaUtils::Log(lua_State* L)
 	}
 
 	const std::string msg = getprintf_msg(L, 3);
-	LOG_SI(section.c_str(), loglevel, msg.c_str());
+	LOG_SI(section.c_str(), loglevel, "%s", msg.c_str());
 	return 0;
 }
 
