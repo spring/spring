@@ -755,10 +755,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 UnitDef::~UnitDef()
 {
-	for (int u = 0; u < NUM_FACINGS; u++) {
-		yardmaps[u].clear();
-	}
-
 	if (buildPic) {
 		buildPic->Free();
 		delete buildPic;
@@ -876,34 +872,54 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 	const unsigned int hxsize = xsize >> 1;
 	const unsigned int hzsize = zsize >> 1;
 
-	std::vector<unsigned char> yardMap(hxsize * hzsize, 255);
+	std::vector<YardmapStatus> yardMap(hxsize * hzsize, YARDMAP_BLOCKED);
 
 	unsigned int x = 0;
 	unsigned int z = 0;
+	std::string foundUnknownChars;
 
 	for (unsigned int n = 0; n < yardMapStr.size(); n++) {
 		const unsigned char c = yardMapStr[n];
 
-		if (c == ' ') { continue; }
-		if (c == 'g') { needGeo = true; continue; }
-		if (c == 'c') { yardMap[x + z * hxsize] = 1; }   // blocking (not walkable, not buildable)
-		if (c == 'y') { yardMap[x + z * hxsize] = 0; }   // non-blocking (walkable, buildable)
-	//	if (c == 'o') { yardMap[x + z * hxsize] = 2; }   // walkable, not buildable?
-	//	if (c == 'w') { yardMap[x + z * hxsize] = 3; }   // not walkable, buildable?
+		if (isspace(c))
+			continue;
+
+		if (z >= hzsize) {
+			LOG_L(L_WARNING, "%s: yardmap/blockmap contains too many chars!", name.c_str());
+			break;
+		}
+
+		YardmapStatus ys = YARDMAP_BLOCKED;
+
+		switch (c) {
+			case 'g': ys = YARDMAP_GEO; needGeo = true; break;
+			case 'y': ys = YARDMAP_OPEN;    break;
+			case 'c': ys = YARDMAP_YARD;    break;
+			case 'i': ys = YARDMAP_YARDINV; break;
+			//case 'w': { ys = YARDMAP_WALKABLE; } break; //FIXME
+			case 'w':
+			case 'x':
+			case 'f':
+			case 'o': ys = YARDMAP_BLOCKED; break;
+			default:
+				if (foundUnknownChars.find_first_of(c) == std::string::npos)
+					foundUnknownChars += c;
+		}
+
+		yardMap[x + z * hxsize] = ys;
 
 		x += 1;
 		z += ((x == hxsize)? 1: 0);
 		x %= hxsize;
-
-		if (z >= hzsize) {
-			break;
-		}
 	}
+
+	if (!foundUnknownChars.empty())
+		LOG_L(L_WARNING, "%s: Unknown char(s) in yardmap/blockmap \"%s\"!", name.c_str(), foundUnknownChars.c_str());
 
 	for (unsigned int z = 0; z < zsize; z++) {
 		for (unsigned int x = 0; x < xsize; x++) {
 			const unsigned int yardMapIdx = (x >> 1) + ((z >> 1) * hxsize);
-			const unsigned char yardMapChar = yardMap[yardMapIdx];
+			const YardmapStatus yardMapChar = yardMap[yardMapIdx];
 
 			yardmaps[FACING_SOUTH][                  (x + z * xsize)                ] = yardMapChar;
 			yardmaps[FACING_EAST ][(xsize * zsize) - (zsize * (x + 1) - (z + 1) + 1)] = yardMapChar;

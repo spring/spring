@@ -4,12 +4,12 @@
 #define GROUNDBLOCKINGOBJECTMAP_H
 
 #include <map>
-
 #include "System/creg/creg_cond.h"
+
+#include "Sim/Objects/SolidObject.h"
 #include "System/float3.h"
 
 
-class CSolidObject;
 typedef std::map<int, CSolidObject*> BlockingMapCell;
 typedef BlockingMapCell::const_iterator BlockingMapCellIt;
 typedef std::vector<BlockingMapCell> BlockingMap;
@@ -25,11 +25,11 @@ public:
 	}
 
 	void AddGroundBlockingObject(CSolidObject* object);
-	void AddGroundBlockingObject(CSolidObject* object, const unsigned char* yardMap, unsigned char mask);
+	void AddGroundBlockingObject(CSolidObject* object, const YardmapStatus* yardMap, const YardmapStatus mask);
 	void RemoveGroundBlockingObject(CSolidObject* object);
 
-	void OpenBlockingYard(CSolidObject* yard, const unsigned char* yardMap);
-	void CloseBlockingYard(CSolidObject* yard, const unsigned char* yardMap);
+	void OpenBlockingYard(CSolidObject* yard, const YardmapStatus* yardMap);
+	void CloseBlockingYard(CSolidObject* yard, const YardmapStatus* yardMap);
 	bool CanCloseYard(CSolidObject* object);
 
 	// these retrieve either the top-most or the bottom-most

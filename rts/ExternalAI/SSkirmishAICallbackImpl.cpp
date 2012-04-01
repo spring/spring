@@ -2585,7 +2585,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_getMaxRudder(int skirmishAIId, int unit
 EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax) {
 
 	const UnitDef* unitDef = getUnitDefById(skirmishAIId, unitDefId);
-	const std::vector<unsigned char>& yardMapInternal = unitDef->GetYardMap(facing);
+	const std::vector<YardmapStatus>& yardMapInternal = unitDef->GetYardMap(facing);
 
 	int yardMapSize = yardMapInternal.size();
 

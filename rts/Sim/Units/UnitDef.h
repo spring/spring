@@ -9,6 +9,7 @@
 
 #include "Rendering/Icon.h"
 #include "Sim/Misc/GuiSoundSet.h"
+#include "Sim/Objects/SolidObject.h"
 #include "System/float3.h"
 
 
@@ -85,7 +86,7 @@ public:
 
 	bool WantsMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
 	bool HasBomberWeapon() const;
-	const std::vector<unsigned char>& GetYardMap(unsigned int facing) const { return (yardmaps[facing % /*NUM_FACINGS*/ 4]); }
+	const std::vector<YardmapStatus>& GetYardMap(unsigned int facing) const { return (yardmaps[facing % /*NUM_FACINGS*/ 4]); }
 
 	// NOTE: deprecated, only used by LuaUnitDefs.cpp
 	const char* GetTypeString() const {
@@ -320,7 +321,7 @@ public:
 
 	///< Iterations of the yardmap for building rotation
 	///< (only non-mobile ground units can have these)
-	std::vector<unsigned char> yardmaps[/*NUM_FACINGS*/ 4];
+	std::vector<YardmapStatus> yardmaps[/*NUM_FACINGS*/ 4];
 
 	///< both sizes expressed in heightmap coordinates; M x N
 	///< footprint covers M*SQUARE_SIZE x N*SQUARE_SIZE elmos

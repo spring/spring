@@ -5,6 +5,7 @@
 
 #include "WorldObject.h"
 #include "System/Vec2.h"
+#include "System/Misc/BitwiseEnum.h"
 #include "System/Sync/SyncedFloat3.h"
 #include "System/Sync/SyncedPrimitive.h"
 
@@ -12,6 +13,22 @@ class CUnit;
 struct DamageArray;
 struct CollisionVolume;
 struct MoveDef;
+
+
+enum YardmapStati {
+	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
+	YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
+	YARDMAP_YARD        = 1,    // walkable when yard is open
+	YARDMAP_YARDINV     = 2,    // walkable when yard is closed
+	YARDMAP_BLOCKED     = 0xFF & ~YARDMAP_YARDINV, // always block     (not walkable, not buildable)
+
+	// helpers
+	YARDMAP_YARDBLOCKED = YARDMAP_YARD,
+	YARDMAP_YARDFREE    = ~YARDMAP_YARD,
+	YARDMAP_GEO         = YARDMAP_BLOCKED,
+};
+typedef BitwiseEnum<YardmapStati> YardmapStatus;
+
 
 class CSolidObject: public CWorldObject {
 public:
@@ -122,7 +139,7 @@ public:
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
-	const unsigned char* curYardMap;            ///< Current active yardmap of this object. 0 means no active yardmap => all blocked.
+	const YardmapStatus* curYardMap;            ///< Current active yardmap of this object. 0 means no active yardmap => all blocked.
 	int buildFacing;                            ///< Orientation of footprint, 4 different states
 
 	static const float DEFAULT_MASS;
