@@ -131,8 +131,8 @@ void CSolidObject::Block() {
 	}
 
 	// use the object's current yardmap if available
-	if (curYardMap != 0) {
-		groundBlockingObjectMap->AddGroundBlockingObject(this, curYardMap, 255);
+	if (curYardMap != NULL) {
+		groundBlockingObjectMap->AddGroundBlockingObject(this, curYardMap, YARDMAP_BLOCKED);
 	} else {
 		groundBlockingObjectMap->AddGroundBlockingObject(this);
 	}
