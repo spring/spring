@@ -251,11 +251,11 @@ void CUnitTracker::SetCam()
 	}
 
 	if (timeOut > 0) {
-		//! Transition between 2 targets
+		// Transition between 2 targets
 		timeOut++;
 		camera->forward = oldCamDir;
 		camera->pos = oldCamPos;
-		if (camHandler->GetCurrentControllerNum() == 0) {
+		if (camHandler->GetCurrentControllerNum() == CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 			CFPSController& fpsCamera = dynamic_cast<CFPSController&>(camHandler->GetCurrentController());
 			fpsCamera.SetDir(oldCamDir);
 			fpsCamera.SetPos(oldCamPos);
@@ -266,8 +266,8 @@ void CUnitTracker::SetCam()
 		camHandler->UpdateCam();
 		camera->Update();
 
-	} else if (camHandler->GetCurrentControllerNum() != 0) {
-		//! non-FPS camera modes  (immediate positional tracking)
+	} else if (camHandler->GetCurrentControllerNum() != CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
+		// non-FPS camera modes  (immediate positional tracking)
 		float3 pos;
 		switch (trackMode) {
 			case TrackAverage: {
@@ -288,7 +288,7 @@ void CUnitTracker::SetCam()
 		camera->Update();
 
 	} else {
-		//! FPS Camera
+		// FPS Camera
 		const float deltaTime = gs->frameNum + globalRendering->timeOffset - lastUpdateTime;
 		lastUpdateTime = gs->frameNum + globalRendering->timeOffset;
 
