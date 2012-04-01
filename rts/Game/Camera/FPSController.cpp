@@ -66,13 +66,13 @@ float3 CFPSController::GetPos()
 		const float xMax = (float)(gs->mapx * SQUARE_SIZE) - margin;
 		const float zMax = (float)(gs->mapy * SQUARE_SIZE) - margin;
 
-		pos.x = max(xMin, min(xMax, pos.x));
-		pos.z = max(zMin, min(zMax, pos.z));
+		pos.x = Clamp(pos.x, xMin, xMax);
+		pos.z = Clamp(pos.z, zMin, zMax);
 
 		const float gndHeight = ground->GetHeightAboveWater(pos.x, pos.z, false);
 		const float yMin = gndHeight + 5.0f;
 		const float yMax = 9000.0f;
-		pos.y = max(yMin, min(yMax, pos.y));
+		pos.y = Clamp(pos.y, yMin, yMax);
 		oldHeight = pos.y - gndHeight;
 	}
 

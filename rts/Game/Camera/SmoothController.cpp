@@ -183,9 +183,8 @@ float3 SmoothController::GetPos()
 
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
-	height = Clamp(height, 60.0f, maxHeight);
-
 	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	height = Clamp(height, 60.0f, maxHeight);
 	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 
 	float3 cpos = pos - dir * height;
@@ -256,7 +255,7 @@ void SmoothController::Move(const float3& move, const unsigned timeDiff)
 		if (speedFactor > maxSpeedFactor)
 			speedFactor = maxSpeedFactor; // don't know why, but std::min produces undefined references here
 		lastMove = move;
-		pos += move*static_cast<float>(speedFactor)/static_cast<float>(maxSpeedFactor);
+		pos += move * float(speedFactor) / maxSpeedFactor;
 	}
 	else if ((move.x == 0 || move.z == 0) && speedFactor > 1)
 	{
@@ -265,7 +264,7 @@ void SmoothController::Move(const float3& move, const unsigned timeDiff)
 			speedFactor = 0;
 		else
 			speedFactor -= timeDiff;
-		pos += lastMove*static_cast<float>(speedFactor)/static_cast<float>(maxSpeedFactor);
+		pos += lastMove * float(speedFactor) / maxSpeedFactor;
 	}
 	else
 	{

@@ -19,10 +19,10 @@ CONFIG(float, RotOverheadFOV).defaultValue(45.0f);
 CRotOverheadController::CRotOverheadController()
 	: oldHeight(500)
 {
-	mouseScale = configHandler->GetFloat("RotOverheadMouseScale");
+	mouseScale  = configHandler->GetFloat("RotOverheadMouseScale");
 	scrollSpeed = configHandler->GetInt("RotOverheadScrollSpeed")*0.1f;
-	enabled=configHandler->GetBool("RotOverheadEnabled");
-	fov = configHandler->GetFloat("RotOverheadFOV");
+	enabled     = configHandler->GetBool("RotOverheadEnabled");
+	fov         = configHandler->GetFloat("RotOverheadFOV");
 }
 
 
@@ -80,9 +80,9 @@ float3 CRotOverheadController::GetPos()
 
 float3 CRotOverheadController::GetDir()
 {
-	dir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
+	dir.x=(float)(sin(camera->rot.y) * cos(camera->rot.x));
 	dir.y=(float)(sin(camera->rot.x));
-	dir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
+	dir.z=(float)(cos(camera->rot.y) * cos(camera->rot.x));
 	dir.ANormalize();
 	return dir;
 }
