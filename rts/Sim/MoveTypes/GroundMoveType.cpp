@@ -1402,6 +1402,9 @@ void CGroundMoveType::HandleObjectCollisions()
 	CUnit* collider = owner;
 	collider->mobility->tempOwner = collider;
 
+	// handle collisions for even-numbered objects on even-numbered frames and vv.
+	// (temporal resolution is still high enough to not compromise accuracy much?)
+	// if ((collider->id & 1) == (gs->frameNum & 1)) {
 	{
 		const UnitDef*   colliderUD = collider->unitDef;
 		const MoveDef*   colliderMD = collider->mobility;
@@ -1480,20 +1483,18 @@ void CGroundMoveType::HandleUnitCollisions(
 		// first rule can be ignored at will by either party (only through Lua) such that it is not stopped
 		// however neither party can override its pushResistant gene: the party that has it set will ignore
 		// pushing contributions from the other WITHOUT being forcibly stopped, unless *both* happen to be
-		// push-resistant (then both are stopped)
+		// push-resistant (then both are stopped) --> technically correct but produces deadlocked units, so
+		// this is NOT enforced
 		const bool alliedCollision =
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
 		const bool collideeYields = (collider->isMoving && !collidee->isMoving);
 		const bool ignoreCollidee = ((collideeYields && alliedCollision) || colliderUD->pushResistant);
-		const bool disablePushing =
-			(colliderUD->pushResistant && !collider->beingBuilt) &&
-			(collideeUD->pushResistant && !collidee->beingBuilt);
 
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
-		pushCollider &= (!disablePushing && !collidee->usingScriptMoveType);
-		pushCollidee &= (!disablePushing && !collider->usingScriptMoveType);
+		pushCollider &= (!collider->beingBuilt && !collidee->usingScriptMoveType);
+		pushCollidee &= (!collidee->beingBuilt && !collider->usingScriptMoveType);
 
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= (collider->speed != ZeroVector);
@@ -1506,6 +1507,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			continue;
 
 		eventHandler.UnitUnitCollision(collider, collidee);
+
 
 		const float colliderRelRadius = colliderRadius / (colliderRadius + collideeRadius);
 		const float collideeRelRadius = collideeRadius / (colliderRadius + collideeRadius);
@@ -1521,8 +1523,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float
 			m1 = collider->mass,
 			m2 = collidee->mass,
-			v1 = std::max(1.0f, colliderSpeed), // TODO: precalculate
-			v2 = std::max(1.0f, collideeSpeed), // TODO: precalculate
+			v1 = std::max(1.0f, colliderSpeed),
+			v2 = std::max(1.0f, collideeSpeed),
 			c1 = 1.0f + (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
 			c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
 			s1 = m1 * v1 * c1,
@@ -1531,23 +1533,11 @@ void CGroundMoveType::HandleUnitCollisions(
  			r2 = s2 / (s1 + s2 + 1.0f);
 
 		// far from a realistic treatment, but works
-		float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r1)) * (1.0f / colliderRelRadius);
-		float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r2)) * (1.0f / collideeRelRadius);
-
-		if (collider->isMoving && collidee->isMoving) {
-			#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
-			// push collider and collidee laterally in opposite directions
-			const int colliderSign = SIGN( separationVector.dot(collider->rightdir));
-			const int collideeSign = SIGN(-separationVector.dot(collidee->rightdir));
-			const float3 colliderSlideVec = collider->rightdir * colliderSign * (1.0f / penDistance);
-			const float3 collideeSlideVec = collidee->rightdir * collideeSign * (1.0f / penDistance);
- 
-			if (pushCollider) { collider->Move3D(colliderSlideVec * r2, true); }
-			if (pushCollidee) { collidee->Move3D(collideeSlideVec * r1, true); }
-			#undef SIGN
-		}
+		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f) * (1.0f / colliderRelRadius) * int(!ignoreCollidee);
+		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f) * (1.0f / collideeRelRadius);
 
 		if (!collideeMobile) {
+			// building
 			CMoveMath::BlockType posBits;
 
 			if (collider->speed == ZeroVector)
@@ -1585,7 +1575,10 @@ void CGroundMoveType::HandleUnitCollisions(
 					}
 				}
 			}
+
+			continue;
 		}
+
 
 		const float3 colliderPushPos = collider->pos + (colResponseVec * colliderMassScale);
 		const float3 collideePushPos = collidee->pos - (colResponseVec * collideeMassScale);
@@ -1594,34 +1587,47 @@ void CGroundMoveType::HandleUnitCollisions(
 			((colliderMM->IsBlocked(*colliderMD, colliderPushPos) & CMoveMath::BLOCK_STRUCTURE) != 0) ||
 			((colliderMM->GetPosSpeedMod(*colliderMD, colliderPushPos) <= 0.01f));
 		const bool cancelCollideePush =
-			(collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideePushPos) & CMoveMath::BLOCK_STRUCTURE) != 0) ||
-			(collideeMobile && (collideeMM->GetPosSpeedMod(*collideeMD, collideePushPos) <= 0.01f));
+			((collideeMM->IsBlocked(*collideeMD, collideePushPos) & CMoveMath::BLOCK_STRUCTURE) != 0) ||
+			((collideeMM->GetPosSpeedMod(*collideeMD, collideePushPos) <= 0.01f));
 
 		// try to prevent both parties from being pushed onto non-traversable
 		// squares (without stopping them dead in their tracks, which is worse)
-		if (cancelColliderPush) { colliderMassScale = 0.0f; }
-		if (cancelCollideePush) { collideeMassScale = 0.0f; }
-
+		//
 		// ignore pushing contributions from idling friendly collidee's
 		// (or if we are resistant to them) without stopping; this will
 		// ONLY take effect if pushCollider is still true
-		if (ignoreCollidee) {
-			colliderMassScale *= ((collideeMobile)? 0.0f: 1.0f);
+		//
+		// either both parties are pushed, or only one party is
+		// pushed and the other is stopped, or both are stopped
+	    if (pushCollider) {
+			if (!cancelColliderPush && (!colliderUD->pushResistant || collideeUD->pushResistant)) {
+				collider->Move3D(colliderPushPos, false);
+			}
+		} else {
+			// NOTE: potentially undoes earlier push-moves made this frame
+			collider->Move3D(collider->moveType->oldPos, false);
 		}
 
-		// either both parties are pushed, or only one party is pushed and the other is stopped, or both are stopped
-		     if (  pushCollider) { collider->Move3D( colResponseVec * colliderMassScale, true); }
-		else if (colliderMobile) { collider->Move3D(collider->moveType->oldPos, false); }
-		     if (  pushCollidee) { collidee->Move3D(-colResponseVec * collideeMassScale, true); }
-		else if (collideeMobile) { collidee->Move3D(collidee->moveType->oldPos, false); }
-
-		#if 0
-		if (!((gs->frameNum + collider->id) & 31) && !colliderCAI->unimportantMove) {
-			// if we do not have an internal move order, tell units around us to bugger off
-			// note: this causes too much chaos among the ranks when groups get large
-			helper->BuggerOff(collider->pos + collider->frontdir * colliderRadius, colliderRadius, true, false, collider->team, collider);
+		if (pushCollidee) {
+			if (!cancelCollideePush && (!collideeUD->pushResistant || colliderUD->pushResistant)) {
+				collidee->Move3D(collideePushPos, false);
+			}
+		} else {
+			collidee->Move3D(collidee->moveType->oldPos, false);
 		}
-		#endif
+
+		if (collider->isMoving && collidee->isMoving) {
+			#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
+			// also push collider and collidee laterally in opposite directions
+			const int colliderSign = SIGN( separationVector.dot(collider->rightdir));
+			const int collideeSign = SIGN(-separationVector.dot(collidee->rightdir));
+			const float3 colliderSlideVec = collider->rightdir * colliderSign * (1.0f / penDistance);
+			const float3 collideeSlideVec = collidee->rightdir * collideeSign * (1.0f / penDistance);
+ 
+			if (pushCollider) { collider->Move3D(colliderSlideVec * r2, true); }
+			if (pushCollidee) { collidee->Move3D(collideeSlideVec * r1, true); }
+			#undef SIGN
+		}
 	}
 }
 
@@ -1664,6 +1670,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 		eventHandler.UnitFeatureCollision(collider, collidee);
 
+
 		const float  sepDistance    = separationVector.Length() + 0.01f;
 		const float  penDistance    = std::max((colliderRadius + collideeRadius) - sepDistance, 1.0f);
 		const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
@@ -1686,8 +1693,8 @@ void CGroundMoveType::HandleFeatureCollisions(
  			r1 = s1 / (s1 + s2 + 1.0f),
  			r2 = s2 / (s1 + s2 + 1.0f);
 
-		const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r1));
-	//	const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r2));
+		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f);
+		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f);
 
 		if (collidee->reachedFinalPos) {
 			CMoveMath::BlockType posBits;
@@ -1717,9 +1724,12 @@ void CGroundMoveType::HandleFeatureCollisions(
 					}
 				}
 			}
+
+			continue;
 		}
 
-		collider->Move3D(colResponseVec * colliderMassScale, true);
+		collider->Move3D( colResponseVec * colliderMassScale, true);
+		collidee->Move3D(-colResponseVec * collideeMassScale, true);
 	}
 }
 
@@ -1896,6 +1906,9 @@ void CGroundMoveType::TestNewTerrainSquare()
 			moveSquareX = newMoveSquareX;
 			moveSquareY = newMoveSquareY;
 
+			if (pathId == 0)
+				return;
+
 			// if we have moved, check if we can get to the next waypoint
 			int nwsx = (int) nextWayPoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
 			int nwsy = (int) nextWayPoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
@@ -1906,7 +1919,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 				CMoveMath::BLOCK_MOBILE |
 				CMoveMath::BLOCK_MOBILE_BUSY;
 
-			while ((nwsx * nwsx + nwsy * nwsy) < LINETABLE_SIZE && !atEndOfPath && pathId != 0) {
+			while ((nwsx * nwsx + nwsy * nwsy) < LINETABLE_SIZE && !atEndOfPath) {
 				const int ltx = nwsx + LINETABLE_SIZE / 2;
 				const int lty = nwsy + LINETABLE_SIZE / 2;
 				bool wpOk = true;
