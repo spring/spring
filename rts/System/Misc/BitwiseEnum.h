@@ -38,7 +38,8 @@ public:
 	BitwiseEnum() : v(0) {}
 
 	//! fixes http://code.google.com/p/mili/issues/detail?id=40
-	operator int() const { return v; }
+	//operator int() const { return v; }
+	operator Enum() const { return Enum(v); }
 
 
 	// We use c++ default ones
@@ -175,7 +176,6 @@ inline BitwiseEnum<Enum> operator | (Enum a, Enum b)
 {
 	return BitwiseEnum<Enum>(a) | BitwiseEnum<Enum>(b);
 }
-
 
 
 /* WE DO NOT NEED THESE (I ASSUME)
