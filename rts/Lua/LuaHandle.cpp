@@ -199,7 +199,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 	// do not signal floating point exceptions in user Lua code
 	streflop::fpenv_t fenv;
 	streflop::fegetenv(&fenv);
-	streflop::feclearexcept(streflop::FPU_Exceptions::FE_INVALID | streflop::FPU_Exceptions::FE_DIVBYZERO | streflop::FPU_Exceptions::FE_OVERFLOW);
+	streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 
 	int loadError = 0;
