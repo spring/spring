@@ -220,6 +220,13 @@ void IMouseInput::SetPos(int2 pos)
 	}
 
 	mousepos = pos;
+	int2 curpos;
+	SDL_GetMouseState(&curpos.x, &curpos.y);
+	if (!(pos.x != curpos.x || pos.y != curpos.y)) {
+		// calling SDL_WarpMouse at 300fps eats ~5% cpu usage, so only update when needed
+		return;
+	}
+
 #ifdef WIN32
 	wsdl::SDL_WarpMouse(pos.x, pos.y);
 #else
