@@ -8,6 +8,7 @@
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 
+#ifndef TEST
 #define LOG_SECTION_LUASOCKET "LuaSocket"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_LUASOCKET)
 #ifdef LOG_SECTION_CURRENT
@@ -19,16 +20,18 @@ CONFIG(std::string, TCPAllowConnect).defaultValue("").readOnly(true);
 CONFIG(std::string, TCPAllowListen).defaultValue("").readOnly(true);
 CONFIG(std::string, UDPAllowConnect).defaultValue("").readOnly(true);
 CONFIG(std::string, UDPAllowListen).defaultValue("").readOnly(true);
+#endif
 
 CLuaSocketRestrictions* luaSocketRestrictions=0;
 
 CLuaSocketRestrictions::CLuaSocketRestrictions()
 {
+#ifndef TEST
 	addRules(TCP_CONNECT, configHandler->GetString("TCPAllowConnect"));
 	addRules(TCP_LISTEN,  configHandler->GetString("TCPAllowListen"));
 	addRules(UDP_CONNECT, configHandler->GetString("UDPAllowConnect"));
 	addRules(UDP_LISTEN,  configHandler->GetString("UDPAllowListen"));
-
+#endif
 }
 
 void CLuaSocketRestrictions::addRule(RestrictType type, const std::string& hostname, int port, bool allowed)
@@ -112,7 +115,7 @@ const TSocketRule* CLuaSocketRestrictions::getRule(RestrictType type, const char
 		for(it = restrictions[i].begin(); it != restrictions[i].end(); ++it) {
 			TSocketRule &rule = *it;
 			if (hostname == rule.hostname) {
-				if (rule.port==-1) { // port ignored
+				if ((rule.port==-1) || (port == -1)) { // port ignored
 					return &rule;
 				} else if (rule.port==port) {
 					return &rule;
