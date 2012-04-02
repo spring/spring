@@ -548,7 +548,7 @@ void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, c
 
 	//BUG: Nvidia drivers take the current texcoord into account when TexGen is used!
 	// You MUST reset the coords before using TexGen!
-	//glMultiTexCoord4f(target, 0,0,0,0);
+	//glMultiTexCoord4f(target, 1.0f,1.0f,1.0f,1.0f);
 
 	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
 	glTexGenfv(GL_S, GL_EYE_PLANE, planeX);

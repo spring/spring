@@ -679,7 +679,7 @@ void CGroundDecalHandler::Draw()
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 
-		glMultiTexCoord4f(GL_TEXTURE1_ARB, 0.0f,0.0f,0.0f,0.0f); // workaround a nvidia bug with TexGen
+		glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 
 	if (gd->DrawExtraTex()) {
@@ -691,7 +691,7 @@ void CGroundDecalHandler::Draw()
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 
-		glMultiTexCoord4f(GL_TEXTURE3_ARB, 0.0f,0.0f,0.0f,0.0f); // workaround a nvidia bug with TexGen
+		glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 
 		glBindTexture(GL_TEXTURE_2D, gd->infoTex);
