@@ -841,7 +841,7 @@ void cBuilderPlacement::EResourceEnterLOS(int enemy, EnemyInfo *E)
 	}
 }
 
-bool cBuilderPlacement::NeedResourceSite(const UnitDef* bd)
+bool cBuilderPlacement::NeedResourceSite(const UnitDef* bd) const
 {
 	if( !bd->needGeo && bd->extractsMetal==0 )
 		return false;

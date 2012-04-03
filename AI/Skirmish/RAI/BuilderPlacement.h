@@ -61,7 +61,7 @@ public:
 	void UResourceDestroyed(int unit, UnitInfo *U);
 	void EResourceEnterLOS(int enemy, EnemyInfo *E);
 
-	bool NeedResourceSite(const UnitDef* bd);
+	bool NeedResourceSite(const UnitDef* bd) const;
 	ResourceSiteExt* FindResourceSite(float3& pos, const UnitDef* bd, TerrainMapArea* BuilderMA); // called when a builder has been assigned
 	float3 FindBuildPosition(sBuildQuarry *BQ);
 	void CheckBlockedRList( map<int,ResourceSiteExt*> *RL = 0 ); // CheckBlocked for all resource sites on this list
