@@ -1378,8 +1378,9 @@ EXPORT(const char*) skirmishAiCallback_Mod_getDescription(int skirmishAIId) {
 	return modInfo.description.c_str();
 }
 
+// DEPRECATED
 EXPORT(bool) skirmishAiCallback_Mod_getAllowTeamColors(int skirmishAIId) {
-	return modInfo.allowTeamColors;
+	return true;
 }
 
 EXPORT(bool) skirmishAiCallback_Mod_getConstructionDecay(int skirmishAIId) {
