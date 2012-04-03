@@ -745,7 +745,8 @@ GlobalResourceMap::~GlobalResourceMap()
 	{
 		FILE* resourceFile_w = NULL;
 		if (resourceFileName_w.empty()) {
-			throw 12;
+			*l<< "Error: resourceFileName_w is empty!";
+			return;
 		} else {
 			resourceFile_w = fopen(resourceFileName_w.c_str(), "wb");
 		}
