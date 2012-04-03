@@ -10,13 +10,10 @@
 #include "Lua/LuaSyncedRead.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Builder.h"
-#include "Rendering/GlobalRendering.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
-
-CONFIG(bool, TeamNanoSpray).defaultValue(true);
 
 CModInfo modInfo;
 
@@ -53,14 +50,6 @@ void CModInfo::Init(const char* modArchive)
 	allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);
 	allowCrushingAlliedUnits = movementTbl.GetBool("allowCrushingAlliedUnits", false);
 	allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", false);
-
-	// determine whether the modder allows the user to use team coloured nanospray
-	const LuaTable nanosprayTbl = root.SubTable("nanospray");
-	allowTeamColors = nanosprayTbl.GetBool("allow_team_colors", true);
-	if (allowTeamColors) {
-		// Load the users preference for team coloured nanospray
-		globalRendering->teamNanospray = configHandler->GetBool("TeamNanoSpray");
-	}
 
 	// constructions
 	const LuaTable constructionTbl = root.SubTable("construction");
