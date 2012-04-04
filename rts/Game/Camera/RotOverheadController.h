@@ -19,11 +19,8 @@ public:
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
 
-	void Update();
-	float3 GetPos();
-	float3 GetDir();
-
 	void SetPos(const float3& newPos);
+
 	float3 SwitchFrom() const;
 	void SwitchTo(bool showText);
 
@@ -31,9 +28,11 @@ public:
 	bool SetState(const StateMap& sm);
 
 private:
+	void UpdateVectors();
+
+private:
 	float mouseScale;
 	float oldHeight;
-	float3 dir;
 };
 
 #endif // _ROTOH_CONTROLLER_H

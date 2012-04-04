@@ -23,10 +23,8 @@ public:
 	bool DisableTrackingByKey() { return false; }
 
 	void Update();
-
-	float3 GetPos();
-	float3 GetDir();
-
+	float3 GetDir() const;
+	
 	void SetPos(const float3& newPos);
 	void SetTrackingInfo(const float3& pos, float radius);
 	float3 SwitchFrom() const;
@@ -36,7 +34,6 @@ public:
 	bool SetState(const StateMap& sm);
 
 private:
-	float3 dir;
 	float3 vel;      // velocity
 	float3 avel;     // angular velocity
 	float3 prevVel;  // previous velocity

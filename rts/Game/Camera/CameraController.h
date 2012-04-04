@@ -29,13 +29,13 @@ public:
 
 	virtual void Update() {}
 
-	virtual float3 GetPos() = 0;
-	virtual float3 GetDir() = 0;
-
 	/// In degree!
-	float GetFOV() const { return fov; };
+	        float  GetFOV() const { return fov; }
+	virtual float3 GetPos() const { return pos; }
+	virtual float3 GetDir() const { return dir; }
 
-	virtual void SetPos(const float3& newPos) { pos = newPos; };
+	virtual void SetPos(const float3& newPos) { pos = newPos; }
+	virtual void SetDir(const float3& newDir) { dir = newDir; }
 	virtual bool DisableTrackingByKey() { return true; }
 
 	// return the position to send to new controllers SetPos
@@ -61,8 +61,10 @@ protected:
 	bool SetStateBool(const StateMap& sm, const std::string& name, bool& var);
 	bool SetStateFloat(const StateMap& sm, const std::string& name, float& var);
 
+
 	float fov;
 	float3 pos;
+	float3 dir;
 
 	/**
 	* @brief scrollSpeed
