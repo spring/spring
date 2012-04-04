@@ -19,10 +19,8 @@ public:
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
 
-	float3 GetPos();
-	float3 GetDir();
-
 	void SetPos(const float3& newPos);
+	void SetDir(const float3& newDir);
 	float3 SwitchFrom() const;
 	void SwitchTo(bool showText);
 

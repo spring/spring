@@ -146,7 +146,17 @@ void COrbitController::MyMouseMove(int dx, int dy, int rdx, int rdy, int button)
 	}
 }
 
+float3 COrbitController::GetPos() const
+{
+	return camera->pos;
+}
 
+float3 COrbitController::GetDir() const
+{
+	float3 dir = cen - camera->pos;
+	dir.ANormalize();
+	return dir;
+}
 
 void COrbitController::Orbit()
 {
@@ -210,13 +220,6 @@ void COrbitController::MouseWheelMove(float move)
 {
 }
 
-
-
-float3 COrbitController::GetPos()
-{
-	return camera->pos;
-}
-
 void COrbitController::SetPos(const float3& newPos)
 {
 	if (keyInput->IsKeyPressed(SDLK_LMETA)) {
@@ -235,11 +238,6 @@ void COrbitController::SetPos(const float3& newPos)
 	camera->pos.z += dz;
 
 	Init(camera->pos, cen);
-}
-
-float3 COrbitController::GetDir()
-{
-	return (cen - camera->pos).ANormalize();
 }
 
 float3 COrbitController::GetOrbitPos() const

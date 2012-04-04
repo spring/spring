@@ -41,6 +41,9 @@ COverheadController::COverheadController()
 		const float h = std::max(pos.x / globalRendering->aspectRatio, pos.z);
 		height = ground->GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
 	}
+
+	maxHeight = 9.5f * std::max(gs->mapx, gs->mapy);
+	UpdateVectors();
 }
 
 void COverheadController::KeyMove(float3 move)
@@ -53,6 +56,7 @@ void COverheadController::KeyMove(float3 move)
 
 	pos.x += move.x * pixelSize * 2.0f * scrollSpeed;
 	pos.z -= move.y * pixelSize * 2.0f * scrollSpeed;
+	UpdateVectors();
 }
 
 void COverheadController::MouseMove(float3 move)
@@ -65,6 +69,7 @@ void COverheadController::MouseMove(float3 move)
 
 	pos.x += move.x * pixelSize * (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * scrollSpeed;
 	pos.z += move.y * pixelSize * (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * scrollSpeed;
+	UpdateVectors();
 }
 
 void COverheadController::ScreenEdgeMove(float3 move)
@@ -126,6 +131,17 @@ void COverheadController::MouseWheelMove(float move)
 			changeAltHeight = true;
 		}
 	}
+
+	UpdateVectors();
+}
+
+void COverheadController::UpdateVectors()
+{
+	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
+	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
+	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	height = Clamp(height, 60.0f, maxHeight);
+	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 }
 
 void COverheadController::Update()
@@ -133,23 +149,16 @@ void COverheadController::Update()
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }
 
-float3 COverheadController::GetPos()
+float3 COverheadController::GetPos() const
 {
-	maxHeight = 9.5f * std::max(gs->mapx, gs->mapy);	//map not created when constructor run
-
-	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
-	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
-	height = Clamp(height, 60.0f, maxHeight);
-	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
-
 	float3 cpos = pos - dir * height;
 	return cpos;
 }
 
-float3 COverheadController::GetDir()
+void COverheadController::SetPos(const float3& newPos)
 {
-	return dir;
+	pos = newPos;
+	UpdateVectors();
 }
 
 float3 COverheadController::SwitchFrom() const

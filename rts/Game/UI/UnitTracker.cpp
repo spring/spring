@@ -256,9 +256,8 @@ void CUnitTracker::SetCam()
 		camera->forward = oldCamDir;
 		camera->pos = oldCamPos;
 		if (camHandler->GetCurrentControllerNum() == CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
-			CFPSController& fpsCamera = dynamic_cast<CFPSController&>(camHandler->GetCurrentController());
-			fpsCamera.SetDir(oldCamDir);
-			fpsCamera.SetPos(oldCamPos);
+			camHandler->GetCurrentController().SetDir(oldCamDir);
+			camHandler->GetCurrentController().SetPos(oldCamPos);
 		}
 		if (timeOut > 15) {
 			timeOut = 0;
