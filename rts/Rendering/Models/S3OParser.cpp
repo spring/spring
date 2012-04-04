@@ -14,6 +14,7 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/Vec2.h"
+#include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
 
@@ -51,6 +52,18 @@ S3DModel* CS3OParser::Load(const std::string& name)
 
 	model->relMidPos = float3(header.midx, header.midy, header.midz);
 	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f); // ?
+
+	// Warn about models with null normals (they break lighting and appear black)
+	for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != model->pieces.end(); ++it) {
+		const SS3OPiece* mpiece = static_cast<const SS3OPiece*>(it->second);
+		if (mpiece->GetVertexCount() == 0)
+			continue;
+
+		if (mpiece->vertices[0].normal.SqLength() < 0.5f) {
+			LOG_L(L_WARNING, "[S3OParser] Model-file \"%s\" (piece \"%s\") has no normals! It will appear black!", name.c_str(), it->first.c_str());
+			break;
+		}
+	}
 
 	delete[] fileBuf;
 	return model;

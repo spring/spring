@@ -109,7 +109,7 @@ struct S3DModel
 	S3DModelPiece* GetRootPiece() const { return rootPiece; }
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
 	void DrawStatic() const { rootPiece->DrawStatic(); }
-	S3DModelPiece* FindPiece(std::string name);
+	S3DModelPiece* FindPiece(const std::string& name) const;
 
 public:
 	std::string name;
