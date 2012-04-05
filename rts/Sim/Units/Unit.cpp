@@ -1874,13 +1874,6 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 			};
 
 			helper->Explosion(params);
-
-			#if (PLAY_SOUNDS == 1)
-			// play explosion sound
-			if (wd->soundhit.getID(0) > 0) {
-				Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, wd->soundhit.getVolume(0));
-			}
-			#endif
 		}
 
 		if (selfDestruct) {

@@ -146,8 +146,8 @@ public:
 	std::string description;
 	std::string cegTag;        ///< tag of CEG that projectiles fired by this weapon should use
 
-	GuiSoundSet firesound;
-	GuiSoundSet soundhit;
+	GuiSoundSet fireSound;
+	GuiSoundSet hitSound;
 
 	float range;
 	float heightmod;

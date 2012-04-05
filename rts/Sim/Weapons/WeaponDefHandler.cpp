@@ -439,46 +439,46 @@ void CWeaponDefHandler::ParseWeaponVisuals(const LuaTable& wdTable, WeaponDef& w
 }
 
 void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd) {
-	LoadSound(wdTable, wd.firesound, "start");
-	LoadSound(wdTable, wd.soundhit,  "hit");
+	LoadSound(wdTable, wd.fireSound, "start");
+	LoadSound(wdTable, wd.hitSound, "hitDry"); // idx 0
+	LoadSound(wdTable, wd.hitSound, "hitWet"); // idx 1
 
-	if ((wd.firesound.getVolume(0) == -1.0f) ||
-	    (wd.soundhit.getVolume(0)  == -1.0f)) {
-		// no volume (-1.0f) read from weapon definition, set it dynamically here
+	// FIXME: do we still want or need any of this?
+	const bool forceSetVolume =
+		(wd.fireSound.getVolume(0) == -1.0f) ||
+		(wd.hitSound.getVolume(0) == -1.0f)  ||
+		(wd.hitSound.getVolume(1) == -1.0f);
+
+	if (forceSetVolume) {
 		if (wd.damages[0] <= 50.0f) {
-			wd.soundhit.setVolume(0, 5.0f);
-			wd.firesound.setVolume(0, 5.0f);
-		}
-		else {
-			float soundVolume = sqrt(wd.damages[0] * 0.5f);
+			wd.fireSound.setVolume(0, 5.0f);
+			wd.hitSound.setVolume(0, 5.0f);
+			wd.hitSound.setVolume(1, 5.0f);
+		} else {
+			float fireSoundVolume = sqrt(wd.damages[0] * 0.5f);
 
 			if (wd.type == "LaserCannon") {
-				soundVolume *= 0.5f;
+				fireSoundVolume *= 0.5f;
 			}
 
-			float hitSoundVolume = soundVolume;
+			float hitSoundVolume = fireSoundVolume;
 
-			if ((soundVolume > 100.0f) &&
+			if ((fireSoundVolume > 100.0f) &&
 			    ((wd.type == "MissileLauncher") ||
 			     (wd.type == "StarburstLauncher"))) {
-				soundVolume = 10.0f * sqrt(soundVolume);
+				fireSoundVolume = 10.0f * sqrt(hitSoundVolume);
 			}
-
-			if (wd.firesound.getVolume(0) == -1.0f) {
-				wd.firesound.setVolume(0, soundVolume);
-			}
-
-			soundVolume = hitSoundVolume;
 
 			if (wd.damageAreaOfEffect > 8.0f) {
-				soundVolume *= 2.0f;
+				hitSoundVolume *= 2.0f;
 			}
 			if (wd.type == "DGun") {
-				soundVolume *= 0.15f;
+				hitSoundVolume *= 0.15f;
 			}
-			if (wd.soundhit.getVolume(0) == -1.0f) {
-				wd.soundhit.setVolume(0, soundVolume);
-			}
+
+			if (wd.fireSound.getVolume(0) == -1.0f) { wd.fireSound.setVolume(0, fireSoundVolume); }
+			if (wd.hitSound.getVolume(0) == -1.0f) { wd.hitSound.setVolume(0, hitSoundVolume); }
+			if (wd.hitSound.getVolume(1) == -1.0f) { wd.hitSound.setVolume(1, hitSoundVolume); }
 		}
 	}
 }
@@ -495,18 +495,21 @@ void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
 		name   = wdTable.GetString("soundStart", "");
 		volume = wdTable.GetFloat("soundStartVolume", -1.0f);
 	}
-	else if (soundCat == "hit") {
-		name   = wdTable.GetString("soundHit", "");
-		volume = wdTable.GetFloat("soundHitVolume", -1.0f);
+	else if (soundCat == "hitDry") {
+		name   = wdTable.GetString("soundHitDry", wdTable.GetString("soundHit", ""));
+		volume = wdTable.GetFloat("soundHitDryVolume", wdTable.GetFloat("soundHitVolume", -1.0f));
+	}
+	else if (soundCat == "hitWet") {
+		name   = wdTable.GetString("soundHitWet", wdTable.GetString("soundHit", ""));
+		volume = wdTable.GetFloat("soundHitWetVolume", wdTable.GetFloat("soundHitVolume", -1.0f));
 	}
 
-	if (name != "") {
+	if (!name.empty()) {
 		const int id = LoadSoundFile(name);
-		if (id > 0)
-		{
-			GuiSoundSet::Data soundData(name, 0, volume);
-			gsound.sounds.push_back(soundData);
-			gsound.setID(0, id);
+		const int num = gsound.sounds.size();
+
+		if (id > 0) {
+			gsound.sounds.push_back(GuiSoundSet::Data(name, id, volume));
 		}
 	}
 }

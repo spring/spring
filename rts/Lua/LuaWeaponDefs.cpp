@@ -434,10 +434,11 @@ static bool InitParamMap()
 	const WeaponDef wd;
 	const char* start = ADDRESS(wd);
 
-	ADD_FUNCTION("damages",   wd.damages,   DamagesArray);
-	ADD_FUNCTION("visuals",   wd.visuals,   VisualsTable);
-	ADD_FUNCTION("hitSound",  wd.soundhit,  GuiSoundSetTable);
-	ADD_FUNCTION("fireSound", wd.firesound, GuiSoundSetTable);
+	ADD_FUNCTION("damages",      wd.damages,   DamagesArray);
+	ADD_FUNCTION("visuals",      wd.visuals,   VisualsTable);
+
+	ADD_FUNCTION("hitSound",     wd.hitSound,  GuiSoundSetTable);
+	ADD_FUNCTION("fireSound",    wd.fireSound, GuiSoundSetTable);
 
 	ADD_FUNCTION("customParams",         wd.customParams,   CustomParamsTable);
 	ADD_FUNCTION("noEnemyCollide",       wd.collisionFlags, NoEnemyCollide);
