@@ -673,10 +673,6 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				// detonate weapon from piece
 				const WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
 
-				if (weaponDef->soundhit.getID(0) > 0) {
-					Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
-				}
-
 				CGameHelper::ExplosionParams params = {
 					pos,
 					ZeroVector,

@@ -11,8 +11,7 @@ struct GuiSoundSet
 {
 	struct Data {
 		Data() : name(""), id(0), volume(0.0f) {}
-		Data(const std::string& n, int i, float v)
-				: name(n), id(i), volume(v) {}
+		Data(const std::string& n, int i, float v): name(n), id(i), volume(v) {}
 
 		std::string name;
 		int id;
