@@ -506,7 +506,6 @@ void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
 
 	if (!name.empty()) {
 		const int id = LoadSoundFile(name);
-		const int num = gsound.sounds.size();
 
 		if (id > 0) {
 			gsound.sounds.push_back(GuiSoundSet::Data(name, id, volume));

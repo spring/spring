@@ -328,10 +328,11 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	#if (PLAY_SOUNDS == 1)
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
-		const int soundSetID = soundSet.getID(int(expPos.y < 0.0f));
+		const int soundNum = (expPos.y < 0.0f);
+		const int soundID = soundSet.getID(soundNum);
 
-		if (soundSetID > 0) {
-			Channels::Battle.PlaySample(soundSetID, expPos, soundSet.getVolume(0));
+		if (soundID > 0) {
+			Channels::Battle.PlaySample(soundID, expPos, soundSet.getVolume(soundNum));
 		}
 	}
 	#endif
