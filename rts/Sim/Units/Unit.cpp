@@ -1672,10 +1672,6 @@ bool CUnit::SetGroup(CGroup* newGroup)
 
 bool CUnit::AddBuildPower(float amount, CUnit* builder)
 {
-	const float part = amount / buildTime;
-	const float metalUse  = (metalCost  * part);
-	const float energyUse = (energyCost * part);
-
 	if (amount >= 0.0f) { //  build / repair
 		if (!beingBuilt && (health >= maxHealth)) {
 			return false;
@@ -1684,11 +1680,18 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		lastNanoAdd = gs->frameNum;
 
 		if (beingBuilt) { //build
+			float part = amount / buildTime;
+			part = std::min(part, 1.0f - buildProgress);
+			const float metalUse  = (metalCost  * part);
+			const float energyUse = (energyCost * part);
+
 			if ((teamHandler->Team(builder->team)->metal  >= metalUse) &&
 			    (teamHandler->Team(builder->team)->energy >= energyUse) &&
 			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
 				if (builder->UseMetal(metalUse)) {
 					// just because we checked doesn't mean they were deducted since upkeep can prevent deduction
+					// FIXME luaRules->AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
+					// TODO add a builder->UseResources(SResources(metalUse, energyUse))
 					if (builder->UseEnergy(energyUse)) {
 						health += (maxHealth * part);
 						health = std::min(health, maxHealth);
@@ -1710,7 +1713,10 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			}
 			return false;
 		}
-		else { //repair
+		else if (health < maxHealth) { //repair
+			float part = amount / buildTime;
+			part = std::min(part, 1.0f - (health / maxHealth));
+			const float energyUse = (energyCost * part);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
 	  		if (!builder->UseEnergy(energyUseScaled)) {
@@ -1718,21 +1724,23 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 				return false;
 			}
 
-			if (health < maxHealth) {
-				repairAmount += amount;
-				health += maxHealth * part;
-				if (health > maxHealth) {
-					health = maxHealth;
-				}
-				return true;
+			repairAmount += amount;
+			health += maxHealth * part;
+			if (health > maxHealth) {
+				health = maxHealth;
 			}
-			return false;
+			return true;
 		}
 	}
 	else { // reclaim
 		if (isDead) {
 			return false;
 		}
+
+		float part = amount / buildTime;
+		part = std::min(part, -buildProgress);
+		const float energyUse = (energyCost * part);
+		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
 
 		if (luaRules && !luaRules->AllowUnitBuildStep(builder, this, part)) {
 			return false;
@@ -1744,8 +1752,6 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			builder->DependentDied(this);
 			return false;
 		}
-
-		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
 
 		if (!builder->UseEnergy(-energyUseScaled)) {
 			teamHandler->Team(builder->team)->energyPull += energyUseScaled;
@@ -1768,6 +1774,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			}
 		} else {
 			if (health < 0) {
+				// in case of reclaiming of living units add the whole metal with the last nano particle to the storage
 				builder->AddMetal(metalCost * modInfo.reclaimUnitEfficiency, false);
 				KillUnit(false, true, NULL);
 				return false;
