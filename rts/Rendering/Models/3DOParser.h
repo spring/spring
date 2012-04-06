@@ -17,14 +17,21 @@ class CFileHandler;
 
 struct S3DOVertex {
 	float3 pos;
+
+	// summed over the primNormal's of all primitives we share
 	float3 normal;
+
 	std::vector<int> prims;
 };
 
 struct S3DOPrimitive {
 	std::vector<int> vertices;
-	std::vector<float3> normals; ///< normals per vertex
-	float3 normal;
+	std::vector<float3> vnormals; ///< per-vertex normals
+
+	// the raw normal for this primitive (-v0v1.cross(v0v2))
+	// used iff we have less than 3 or more than 4 vertices
+	float3 primNormal;
+
 	int numVertex;
 	C3DOTextureHandler::UnitTexture* texture;
 };
@@ -36,6 +43,8 @@ struct S3DOPiece: public S3DModelPiece {
 	void SetMinMaxExtends();
 	int GetVertexCount() const { return vertices.size(); }
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
+	const float3& GetNormal(int idx) const { return vertices[idx].normal; }
+
 	float3 GetPosOffset() const {
 		//FIXME merge into float3 offset???
 		float3 p = ZeroVector;

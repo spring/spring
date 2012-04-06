@@ -127,19 +127,47 @@ C3DModelLoader::~C3DModelLoader()
 
 
 
+void CheckModelNormals(const S3DModel* model) {
+	const char* modelName = model->name.c_str();
+	const char* formatStr =
+		"[%s] piece \"%s\" of model \"%s\" has %u (of %u) null-normals!"
+		"It will either be rendered fully black or with black splotches!";
+
+	// Warn about models with null normals (they break lighting and appear black)
+	for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != model->pieces.end(); ++it) {
+		const S3DModelPiece* modelPiece = it->second;
+		const char* pieceName = it->first.c_str();
+
+		if (modelPiece->GetVertexCount() == 0)
+			continue;
+
+		unsigned int numNullNormals = 0;
+
+		for (unsigned int n = 0; n < modelPiece->GetVertexCount(); n++) {
+			numNullNormals += (modelPiece->GetNormal(n).SqLength() < 0.5f);
+		}
+
+		if (numNullNormals > 0) {
+			LOG_L(L_WARNING, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
+		}
+	}
+}
+
+
+
 S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffset)
 {
 	GML_RECMUTEX_LOCK(model); // Load3DModel
 
 	StringToLowerInPlace(name);
 
-	//! search in cache first
+	// search in cache first
 	ModelMap::iterator ci;
 	if ((ci = cache.find(name)) != cache.end()) {
 		return ci->second;
 	}
 
-	//! not found in cache, create the model and cache it
+	// not found in cache, create the model and cache it
 	const std::string& fileExt = FileSystem::GetExtension(name);
 	const ParserMap::iterator pi = parsers.find(fileExt);
 
@@ -159,21 +187,22 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 			model->SetRootPiece(ModelTypeToModelPiece(model->type));
 			model->GetRootPiece()->SetCollisionVolume(new CollisionVolume("box", UpVector * -1.0f, ZeroVector, CollisionVolume::COLVOL_HITTEST_CONT));
 
-			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)",
-					name.c_str(), ex.what());
+			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
 		}
 
 		if ((root = model->GetRootPiece()) != NULL) {
 			CreateLists(root);
 		}
 
-		cache[name] = model;    //! cache the model
-		model->id = cache.size(); //! IDs start with 1
+		cache[name] = model; // cache the model
+		model->id = cache.size(); // IDs start with 1
+
+		CheckModelNormals(model);
+
 		return model;
 	}
 
-	LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)",
-			name.c_str());
+	LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
 	return NULL;
 }
 
