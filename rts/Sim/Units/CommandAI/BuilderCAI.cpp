@@ -575,12 +575,14 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 
 		// do not consider units under construction irreparable
 		// even if they can be repaired
-		if ((unit->beingBuilt || unit->unitDef->repairable)
-		    && (unit->health < unit->maxHealth) &&
+		if ((
+			(unit->beingBuilt) || (unit->unitDef->repairable && (unit->health < unit->maxHealth))
+		    ) &&
 		    ((unit != owner) || owner->unitDef->canSelfRepair) &&
 		    (!unit->soloBuilder || (unit->soloBuilder == owner)) &&
 			(!(c.options & INTERNAL_ORDER) || (c.options & CONTROL_KEY) || !IsUnitBeingReclaimed(unit, owner)) &&
-		    UpdateTargetLostTimer(unit->id)) {
+		    UpdateTargetLostTimer(unit->id)
+		) {
 
 			if (f3SqDist(unit->pos, builder->pos) < Square(builder->buildDistance + unit->radius - 8.0f)) {
 				StopMove();
@@ -1154,11 +1156,19 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 			}
 		} else {
 			CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
-			if ((pointed->health < pointed->maxHealth) &&
-			    (pointed->unitDef->repairable) &&
-			    (!pointed->soloBuilder || (pointed->soloBuilder == owner)) &&
-			    (( pointed->beingBuilt && owner->unitDef->canAssist) ||
-			     (!pointed->beingBuilt && owner->unitDef->canRepair))) {
+
+			if (
+				owner->unitDef->canAssist &&
+					pointed->beingBuilt &&
+					(!pointed->soloBuilder || (pointed->soloBuilder == owner))
+			) {
+				return CMD_REPAIR;
+			} else if (
+				owner->unitDef->canRepair &&
+					!pointed->beingBuilt &&
+					pointed->unitDef->repairable &&
+					(pointed->health < pointed->maxHealth)
+			) {
 				return CMD_REPAIR;
 			} else if (tran && tran->CanTransport(owner)) {
 				return CMD_LOAD_ONTO;
