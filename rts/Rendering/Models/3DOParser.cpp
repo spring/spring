@@ -209,7 +209,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 			continue;
 
 		sp.vertices.reserve(sp.numVertex);
-		sp.normals.reserve(sp.numVertex);
+		sp.vnormals.reserve(sp.numVertex);
 
 		curOffset=p.OffsetToVertexIndexArray;
 		boost::uint16_t w;
@@ -249,10 +249,15 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		}
 
 
-		float3 n = -(obj->vertices[sp.vertices[1]].pos - obj->vertices[sp.vertices[0]].pos).cross(obj->vertices[sp.vertices[2]].pos - obj->vertices[sp.vertices[0]].pos);
-		n.SafeNormalize();
-		sp.normal = n;
-		sp.normals.insert(sp.normals.begin(), sp.numVertex, n);
+		const float3 v0v1 = (obj->vertices[sp.vertices[1]].pos - obj->vertices[sp.vertices[0]].pos);
+		const float3 v0v2 = (obj->vertices[sp.vertices[2]].pos - obj->vertices[sp.vertices[0]].pos);
+
+		float3 n = (-v0v1.cross(v0v2)).SafeNormalize();
+
+		// set the primitive-normal and copy it <numVertex>
+		// times (vnormals get overwritten by CalcNormals())
+		sp.primNormal = n;
+		sp.vnormals.insert(sp.vnormals.begin(), sp.numVertex, n);
 
 		// sometimes there are more than one selection primitive (??)
 		if (n.dot(DownVector) > 0.99f) {
@@ -261,8 +266,9 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 			if(sp.numVertex!=4) {
 				ignore=false;
 			} else {
-				float3 s1=obj->vertices[sp.vertices[0]].pos-obj->vertices[sp.vertices[1]].pos;
-				float3 s2=obj->vertices[sp.vertices[1]].pos-obj->vertices[sp.vertices[2]].pos;
+				const float3 s1 = obj->vertices[sp.vertices[0]].pos - obj->vertices[sp.vertices[1]].pos;
+				const float3 s2 = obj->vertices[sp.vertices[1]].pos - obj->vertices[sp.vertices[2]].pos;
+
 				if(s1.SqLength()<900 || s2.SqLength()<900)
 					ignore=false;
 
@@ -304,18 +310,25 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 void C3DOParser::CalcNormals(S3DOPiece* o) const
 {
 	for (std::vector<S3DOPrimitive>::iterator ps = o->prims.begin(); ps != o->prims.end(); ++ps) {
-		for (int a = 0; a < ps->numVertex; ++a) {
-			S3DOVertex* vertex = &o->vertices[ps->vertices[a]];
-			float3 vnormal(0.0f, 0.0f, 0.0f);
+		S3DOPrimitive* prim = &(*ps);
 
+		for (int a = 0; a < prim->numVertex; ++a) {
+			S3DOVertex* vertex = &o->vertices[prim->vertices[a]];
+			vertex->normal = ZeroVector;
+
+			// visit all primitives shared by this vertex, Gouraud-style
 			for (std::vector<int>::iterator pi = vertex->prims.begin(); pi != vertex->prims.end(); ++pi) {
-				if (ps->normal.dot(o->prims[*pi].normal) > 0.45f) {
-					vnormal += o->prims[*pi].normal;
+				const float3& primNormal = o->prims[*pi].primNormal;
+
+				// consider two primitives part of the same surface if
+				// angle between their normals is less than ~63 degrees
+				if (prim->primNormal.dot(primNormal) > 0.45f) {
+					vertex->normal += primNormal;
 				}
 			}
 
-			vnormal.SafeNormalize();
-			ps->normals[a] = vnormal;
+			// now make the normal for vertex <a> equal the smoothed normal
+			prim->vnormals[a] = vertex->normal.SafeNormalize();
 		}
 	}
 }
@@ -433,23 +446,23 @@ void S3DOPiece::DrawForList() const
 		C3DOTextureHandler::UnitTexture* tex = ps->texture;
 
 		if (ps->numVertex == 4) {
-			va1->AddVertexTN(vertices[ps->vertices[0]].pos, tex->xstart, tex->ystart, ps->normals[0]);
-			va1->AddVertexTN(vertices[ps->vertices[1]].pos, tex->xend,   tex->ystart, ps->normals[1]);
-			va1->AddVertexTN(vertices[ps->vertices[2]].pos, tex->xend,   tex->yend,   ps->normals[2]);
-			va1->AddVertexTN(vertices[ps->vertices[3]].pos, tex->xstart, tex->yend,   ps->normals[3]);
+			va1->AddVertexTN(vertices[ps->vertices[0]].pos, tex->xstart, tex->ystart, ps->vnormals[0]);
+			va1->AddVertexTN(vertices[ps->vertices[1]].pos, tex->xend,   tex->ystart, ps->vnormals[1]);
+			va1->AddVertexTN(vertices[ps->vertices[2]].pos, tex->xend,   tex->yend,   ps->vnormals[2]);
+			va1->AddVertexTN(vertices[ps->vertices[3]].pos, tex->xstart, tex->yend,   ps->vnormals[3]);
 		} else if (ps->numVertex == 3) {
-			va2->AddVertexTN(vertices[ps->vertices[0]].pos, tex->xstart, tex->ystart, ps->normals[0]);
-			va2->AddVertexTN(vertices[ps->vertices[1]].pos, tex->xend,   tex->ystart, ps->normals[1]);
-			va2->AddVertexTN(vertices[ps->vertices[2]].pos, tex->xend,   tex->yend,   ps->normals[2]);
+			va2->AddVertexTN(vertices[ps->vertices[0]].pos, tex->xstart, tex->ystart, ps->vnormals[0]);
+			va2->AddVertexTN(vertices[ps->vertices[1]].pos, tex->xend,   tex->ystart, ps->vnormals[1]);
+			va2->AddVertexTN(vertices[ps->vertices[2]].pos, tex->xend,   tex->yend,   ps->vnormals[2]);
 		} else {
-			glNormal3f(ps->normal.x, ps->normal.y, ps->normal.z);
+			glNormal3f(ps->primNormal.x, ps->primNormal.y, ps->primNormal.z);
 			glBegin(GL_TRIANGLE_FAN);
 			glTexCoord2f(tex->xstart, tex->ystart);
 
 			for (std::vector<int>::const_iterator fi = ps->vertices.begin(); fi != ps->vertices.end(); ++fi) {
 				const float3& t = vertices[(*fi)].pos;
 
-				glNormalf3(ps->normal);
+				glNormalf3(ps->primNormal);
 				glVertex3f(t.x, t.y, t.z);
 			}
 			glEnd();
