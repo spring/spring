@@ -1680,8 +1680,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		lastNanoAdd = gs->frameNum;
 
 		if (beingBuilt) { //build
-			float part = amount / buildTime;
-			part = std::min(part, 1.0f - buildProgress);
+			const float part = std::min(amount / buildTime, 1.0f - buildProgress);
 			const float metalUse  = (metalCost  * part);
 			const float energyUse = (energyCost * part);
 
@@ -1714,8 +1713,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			return false;
 		}
 		else if (health < maxHealth) { //repair
-			float part = amount / buildTime;
-			part = std::min(part, 1.0f - (health / maxHealth));
+			const float part = std::min(amount / buildTime, 1.0f - (health / maxHealth));
 			const float energyUse = (energyCost * part);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
@@ -1737,8 +1735,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			return false;
 		}
 
-		float part = amount / buildTime;
-		part = std::min(part, -buildProgress);
+		const float part = std::min(amount / buildTime, -buildProgress);
 		const float energyUse = (energyCost * part);
 		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
 

@@ -575,15 +575,14 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 
 		// do not consider units under construction irreparable
 		// even if they can be repaired
-		if ((
-			(unit->beingBuilt) || (unit->unitDef->repairable && (unit->health < unit->maxHealth))
-		    ) &&
-		    ((unit != owner) || owner->unitDef->canSelfRepair) &&
-		    (!unit->soloBuilder || (unit->soloBuilder == owner)) &&
-			(!(c.options & INTERNAL_ORDER) || (c.options & CONTROL_KEY) || !IsUnitBeingReclaimed(unit, owner)) &&
-		    UpdateTargetLostTimer(unit->id)
-		) {
+		bool canRepairUnit = true;
+		canRepairUnit &= ((unit->beingBuilt) || (unit->unitDef->repairable && (unit->health < unit->maxHealth)));
+		canRepairUnit &= ((unit != owner) || owner->unitDef->canSelfRepair);
+		canRepairUnit &= (!unit->soloBuilder || (unit->soloBuilder == owner));
+		canRepairUnit &= (!(c.options & INTERNAL_ORDER) || (c.options & CONTROL_KEY) || !IsUnitBeingReclaimed(unit, owner));
+		canRepairUnit &= (UpdateTargetLostTimer(unit->id) != 0);
 
+		if (canRepairUnit) {
 			if (f3SqDist(unit->pos, builder->pos) < Square(builder->buildDistance + unit->radius - 8.0f)) {
 				StopMove();
 				builder->SetRepairTarget(unit);
@@ -1155,20 +1154,18 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 				return CMD_RECLAIM;
 			}
 		} else {
-			CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
+			const CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
 
-			if (
-				owner->unitDef->canAssist &&
-					pointed->beingBuilt &&
-					(!pointed->soloBuilder || (pointed->soloBuilder == owner))
-			) {
+			const bool canAssistPointed =
+				(owner->unitDef->canAssist && pointed->beingBuilt) &&
+				(!pointed->soloBuilder || (pointed->soloBuilder == owner));
+			const bool canRepairPointed =
+				(owner->unitDef->canRepair && !pointed->beingBuilt) &&
+				pointed->unitDef->repairable && (pointed->health < pointed->maxHealth);
+
+			if (canAssistPointed) {
 				return CMD_REPAIR;
-			} else if (
-				owner->unitDef->canRepair &&
-					!pointed->beingBuilt &&
-					pointed->unitDef->repairable &&
-					(pointed->health < pointed->maxHealth)
-			) {
+			} else if (canRepairPointed) {
 				return CMD_REPAIR;
 			} else if (tran && tran->CanTransport(owner)) {
 				return CMD_LOAD_ONTO;

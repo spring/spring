@@ -279,7 +279,7 @@ void CTransportCAI::ExecuteUnloadUnit(Command& c)
 }
 
 
-bool CTransportCAI::CanTransport(const CUnit* unit)
+bool CTransportCAI::CanTransport(const CUnit* unit) const
 {
 	const CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
 

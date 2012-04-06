@@ -29,7 +29,7 @@ public:
 
 	void SlowUpdate();
 
-	bool CanTransport(const CUnit* unit);
+	bool CanTransport(const CUnit* unit) const;
 	bool FindEmptySpot(const float3& center, float radius, float spread, float3& found, const CUnit* unitToUnload);
 	bool FindEmptyDropSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots);
 	bool FindEmptyFloodSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots, std::vector<float3> exitDirs);
