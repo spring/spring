@@ -2599,27 +2599,32 @@ EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefI
 		int2 xdir(1,0);
 		int2 zdir(0,1);
 		int row_width = xsize;
+		int startidx = 0; // position of yardMapInternal[0] in the new destination array
 		
 		switch (facing) {
 			case FACING_SOUTH:
 				xdir = int2( 1, 0);
 				zdir = int2( 0, 1);
 				row_width = xsize;
+				startidx  = 0; // topleft
 				break;
 			case FACING_NORTH:
 				xdir = int2(-1, 0);
 				zdir = int2( 0,-1);
 				row_width = xsize;
+				startidx  = (xsize * zsize) - 1; // bottomright
 				break;
 			case FACING_EAST:
 				xdir = int2( 0,-1);
 				zdir = int2( 1, 0);
 				row_width = zsize;
+				startidx  = (xsize - 1) * zsize; // bottomleft
 				break;
 			case FACING_WEST:
 				xdir = int2( 0, 1);
 				zdir = int2(-1, 0);
 				row_width = zsize;
+				startidx  = zsize - 1;  // topright
 				break;
 			default:
 				assert(false);
@@ -2630,7 +2635,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefI
 			for (int x = 0; x < xsize; ++x) {
 				const int xt = xdir.x * x + xdir.y * z;
 				const int zt = zdir.x * x + zdir.y * z;
-				const int idx = xt + zt * row_width;
+				const int idx = startidx + xt + zt * row_width;
 				yardMap[idx] = (short) yardMapInternal[x + z * xsize];
 			}
 		}
