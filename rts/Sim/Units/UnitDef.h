@@ -73,7 +73,7 @@ public:
 
 	bool IsTransportUnit()      const { return (transportCapacity > 0 && transportMass > 0.0f); }
 	bool IsImmobileUnit()       const { return (moveDef == NULL && !canfly && speed <= 0.0f); }
-	bool IsBuildingUnit()       const { return (IsImmobileUnit() && !yardmaps[0].empty()); }
+	bool IsBuildingUnit()       const { return (IsImmobileUnit() && !yardmap.empty()); }
 	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
 	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
 	bool IsFactoryUnit()        const { return (builder &&  IsBuildingUnit()); }
@@ -86,7 +86,7 @@ public:
 
 	bool WantsMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
 	bool HasBomberWeapon() const;
-	const std::vector<YardmapStatus>& GetYardMap(unsigned int facing) const { return (yardmaps[facing % /*NUM_FACINGS*/ 4]); }
+	const std::vector<YardmapStatus>& GetYardMap() const { return yardmap; }
 
 	// NOTE: deprecated, only used by LuaUnitDefs.cpp
 	const char* GetTypeString() const {
@@ -319,9 +319,9 @@ public:
 
 	MoveDef* moveDef;
 
-	///< Iterations of the yardmap for building rotation
+	///< The unrotated yardmap for buildings
 	///< (only non-mobile ground units can have these)
-	std::vector<YardmapStatus> yardmaps[/*NUM_FACINGS*/ 4];
+	std::vector<YardmapStatus> yardmap;
 
 	///< both sizes expressed in heightmap coordinates; M x N
 	///< footprint covers M*SQUARE_SIZE x N*SQUARE_SIZE elmos

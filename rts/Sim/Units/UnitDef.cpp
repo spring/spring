@@ -862,13 +862,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 
 	StringToLowerInPlace(yardMapStr);
 
-	// create the yardmaps for each build-facing
-	// (xsize and zsize are in heightmap units at
-	// this point)
-	for (int u = 0; u < NUM_FACINGS; u++) {
-		yardmaps[u].resize(xsize * zsize);
-	}
-
+	// read the yardmap in half resolution from the LuaDef string
 	const unsigned int hxsize = xsize >> 1;
 	const unsigned int hzsize = zsize >> 1;
 
@@ -916,15 +910,13 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 	if (!foundUnknownChars.empty())
 		LOG_L(L_WARNING, "%s: Unknown char(s) in yardmap/blockmap \"%s\"!", name.c_str(), foundUnknownChars.c_str());
 
+	// write in doubled resolution to final unitdef tag
+	yardmap.resize(xsize * zsize);
 	for (unsigned int z = 0; z < zsize; z++) {
 		for (unsigned int x = 0; x < xsize; x++) {
 			const unsigned int yardMapIdx = (x >> 1) + ((z >> 1) * hxsize);
 			const YardmapStatus yardMapChar = yardMap[yardMapIdx];
-
-			yardmaps[FACING_SOUTH][                  (x + z * xsize)                ] = yardMapChar;
-			yardmaps[FACING_EAST ][(xsize * zsize) - (zsize * (x + 1) - (z + 1) + 1)] = yardMapChar;
-			yardmaps[FACING_NORTH][(xsize * zsize) - (x + z * xsize + 1)            ] = yardMapChar;
-			yardmaps[FACING_WEST ][                   zsize * (x + 1) - (z + 1)     ] = yardMapChar;
+			yardmap[x + z * xsize] = yardMapChar;
 		}
 	}
 }

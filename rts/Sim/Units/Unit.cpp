@@ -380,7 +380,9 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	ASSERT_SYNCED(pos);
 
 	buildFacing = std::abs(facing) % NUM_FACINGS;
-	curYardMap = (unitDef->GetYardMap(buildFacing).empty())? NULL: &unitDef->GetYardMap(buildFacing)[0];
+	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
+
+	footprint = int2(unitDef->xsize, unitDef->zsize);
 	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
 	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 
@@ -445,6 +447,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
 }
+
 
 void CUnit::PostInit(const CUnit* builder)
 {
@@ -1762,6 +1765,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		health += maxHealth * part;
 
 		if (beingBuilt) {
+			// progressive metal reclaiming
 			builder->AddMetal(-metalUse * modInfo.reclaimUnitEfficiency, false);
 			buildProgress += part;
 
@@ -2072,7 +2076,7 @@ void CUnit::PostLoad()
 	//HACK:Initializing after load
 	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	model = unitDef->LoadModel();
-	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
+	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
 	SetRadiusAndHeight(model->radius, model->height);
 

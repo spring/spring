@@ -32,6 +32,11 @@ inline static const int GetObjectID(CSolidObject* obj)
 
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 {
+	if (object->blockMap) {
+		AddGroundBlockingObject(object, YARDMAP_BLOCKED);
+		return;
+	}
+	
 	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
 
 	const int objID = GetObjectID(object);
@@ -65,7 +70,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 }
 
 
-void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, const YardmapStatus* yardMap, const YardmapStatus mask)
+void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, const YardmapStatus mask)
 {
 	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
 
@@ -84,13 +89,13 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 	const int minXSqr = bx, maxXSqr = bx + sx;
 	const int minZSqr = bz, maxZSqr = bz + sz;
 
-	for (int z = 0; minZSqr + z < maxZSqr; z++) {
-		for (int x = 0; minXSqr + x < maxXSqr; x++) {
+	for (int z = minZSqr; z < maxZSqr; z++) {
+		for (int x = minXSqr; x < maxXSqr; x++) {
 			// unit yardmaps always contain sx=UnitDef::xsize * sz=UnitDef::zsize
 			// cells (the unit->mobility footprint can have different dimensions)
-			const int off = x + z * sx;
-			if (yardMap[off] & mask) {
-				const int idx = minXSqr + x + (minZSqr + z) * gs->mapx;
+			const float3 testPos = float3(x, 0.0f, z) * SQUARE_SIZE;
+			if (object->GetGroundBlockingAtPos(testPos) & mask) {
+				const int idx = x + (z) * gs->mapx;
 
 				BlockingMapCell& cell = groundBlockingMap[idx];
 				cell[objID] = object;
@@ -211,21 +216,21 @@ bool CGroundBlockingObjectMap::GroundBlocked(const float3& pos, CSolidObject* ig
   * Opens up a yard in a blocked area.
   * When a factory opens up, for example.
   */
-void CGroundBlockingObjectMap::OpenBlockingYard(CSolidObject* yard, const YardmapStatus* yardMap) {
-	RemoveGroundBlockingObject(yard);
-	AddGroundBlockingObject(yard, yardMap, YARDMAP_YARDFREE);
+void CGroundBlockingObjectMap::OpenBlockingYard(CSolidObject* object) {
+	RemoveGroundBlockingObject(object);
+	AddGroundBlockingObject(object, YARDMAP_YARDFREE);
 }
 
 /**
   * Closes a yard, blocking the area.
   * When a factory closes, for example.
   */
-void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* yard, const YardmapStatus* yardMap) {
-	RemoveGroundBlockingObject(yard);
-	AddGroundBlockingObject(yard, yardMap, YARDMAP_YARDBLOCKED);
+void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* object) {
+	RemoveGroundBlockingObject(object);
+	AddGroundBlockingObject(object, YARDMAP_YARDBLOCKED);
 }
 
-bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yard)
+bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yardUnit)
 {
 	//GML_STDMUTEX_LOCK(block); //done in GroundBlocked
 
