@@ -1738,7 +1738,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			return false;
 		}
 
-		const float part = std::min(amount / buildTime, -buildProgress);
+		const float part = std::max(amount / buildTime, -buildProgress);
 		const float energyUse = (energyCost * part);
 		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
 
