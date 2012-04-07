@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "AssimpPCH.h"
-#include "../include/aiVersion.h"
+#include "../include/assimp/version.h"
 
 // ------------------------------------------------------------------------------------------------
 /* Uncomment this line to prevent Assimp from catching unknown exceptions.
@@ -528,26 +528,34 @@ void WriteLogOpening(const std::string& file)
 		<< "." 
 		<< aiGetVersionRevision()
 
-#if defined(ASSIMP_BUILD_X86_32BIT_ARCHITECTURE)
-		<< " x86"
-#elif defined(ASSIMP_BUILD_X86_64BIT_ARCHITECTURE)
-		<< " amd64"
-#elif defined(ASSIMP_BUILD_IA_64BIT_ARCHITECTURE)
-		<< " itanium"
-#elif defined(ASSIMP_BUILD_PPC_32BIT_ARCHITECTURE)
-		<< " ppc32"
-#elif defined(ASSIMP_BUILD_ARM_32BIT_ARCHITECTURE)
-		<< " arm"
+		<< " "
+#if defined(ASSIMP_BUILD_ARCHITECTURE)
+		<< ASSIMP_BUILD_ARCHITECTURE
+#elif defined(_M_IX86) || defined(__x86_32__) || defined(__i386__)
+		<< "x86"
+#elif defined(_M_X64) || defined(__x86_64__) 
+		<< "amd64"
+#elif defined(_M_IA64) || defined(__ia64__)
+		<< "itanium"
+#elif defined(__ppc__) || defined(__powerpc__)
+		<< "ppc32"
+#elif defined(__powerpc64__)
+		<< "ppc64"
+#elif defined(__arm__)
+		<< "arm"
 #else
-#	error unknown architecture
+	<< "<unknown architecture>"
 #endif
 
-#if defined(_MSC_VER)
-		<< " msvc"
+		<< " "
+#if defined(ASSIMP_BUILD_COMPILER)
+		<< ASSIMP_BUILD_COMPILER
+#elif defined(_MSC_VER)
+		<< "msvc"
 #elif defined(__GNUC__)
-		<< " gcc"
+		<< "gcc"
 #else
-#	error unknown compiler
+		<< "<unknown compiler>"
 #endif
 
 #ifndef NDEBUG

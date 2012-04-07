@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -47,7 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ASSIMP_BUILD_NO_MD5_IMPORTER
 
 // internal headers
-#include "MaterialSystem.h"
 #include "RemoveComments.h"
 #include "MD5Loader.h"
 #include "StringComparison.h"
@@ -507,7 +506,7 @@ void MD5Importer::LoadMD5MeshFile ()
 		}
 
 		// generate a material for the mesh
-		MaterialHelper* mat = new MaterialHelper();
+		aiMaterial* mat = new aiMaterial();
 		pScene->mMaterials[n] = mat;
 
 		// insert the typical doom3 textures:

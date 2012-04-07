@@ -1,8 +1,8 @@
 /*
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -18,10 +18,10 @@ following conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -55,7 +55,7 @@ namespace Assimp
 // ------------------------------------------------------------------------------------------------
 /** Helper class to export a given scene to an OBJ file. */
 // ------------------------------------------------------------------------------------------------
-class ASSIMP_API ObjExporter
+class ObjExporter
 {
 public:
 	/// Constructor for a specific scene to export
@@ -86,6 +86,7 @@ private:
 	};
 
 	struct Face {
+		char kind;
 		std::vector<FaceVertex> indices;
 	};
 

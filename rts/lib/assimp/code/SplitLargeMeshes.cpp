@@ -1,8 +1,8 @@
 /*
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -18,10 +18,10 @@ following conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -84,7 +84,7 @@ void SplitLargeMeshesProcess_Triangle::Execute( aiScene* pScene)
 
 	if (avList.size() != pScene->mNumMeshes)
 	{
-		// it seems something has been splitted. rebuild the mesh list
+		// it seems something has been split. rebuild the mesh list
 		delete[] pScene->mMeshes;
 		pScene->mNumMeshes = (unsigned int)avList.size();
 		pScene->mMeshes = new aiMesh*[avList.size()];
@@ -94,7 +94,7 @@ void SplitLargeMeshesProcess_Triangle::Execute( aiScene* pScene)
 
 		// now we need to update all nodes
 		this->UpdateNode(pScene->mRootNode,avList);
-		DefaultLogger::get()->info("SplitLargeMeshesProcess_Triangle finished. Meshes have been splitted");
+		DefaultLogger::get()->info("SplitLargeMeshesProcess_Triangle finished. Meshes have been split");
 	}
 	else DefaultLogger::get()->debug("SplitLargeMeshesProcess_Triangle finished. There was nothing to do");
 	return;
@@ -227,7 +227,7 @@ void SplitLargeMeshesProcess_Triangle::SplitMesh(
 				pcMesh->mBones = new aiBone*[pMesh->mNumBones];
 
 				// iterate through all bones of the mesh and find those which
-				// need to be copied to the splitted mesh
+				// need to be copied to the split mesh
 				std::vector<aiVertexWeight> avTempWeights;
 				for (unsigned int p = 0; p < pcMesh->mNumBones;++p)
 				{
@@ -382,7 +382,7 @@ void SplitLargeMeshesProcess_Vertex::Execute( aiScene* pScene)
 
 	if (avList.size() != pScene->mNumMeshes)
 	{
-		// it seems something has been splitted. rebuild the mesh list
+		// it seems something has been split. rebuild the mesh list
 		delete[] pScene->mMeshes;
 		pScene->mNumMeshes = (unsigned int)avList.size();
 		pScene->mMeshes = new aiMesh*[avList.size()];
@@ -392,7 +392,7 @@ void SplitLargeMeshesProcess_Vertex::Execute( aiScene* pScene)
 
 		// now we need to update all nodes
 		SplitLargeMeshesProcess_Triangle::UpdateNode(pScene->mRootNode,avList);
-		DefaultLogger::get()->info("SplitLargeMeshesProcess_Vertex finished. Meshes have been splitted");
+		DefaultLogger::get()->info("SplitLargeMeshesProcess_Vertex finished. Meshes have been split");
 	}
 	else DefaultLogger::get()->debug("SplitLargeMeshesProcess_Vertex finished. There was nothing to do");
 	return;

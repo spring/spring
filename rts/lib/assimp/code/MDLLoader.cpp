@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -191,7 +191,7 @@ void MDLImporter::InternReadFile( const std::string& pFile,
 		iGSFileVersion = 7;
 		InternReadFile_3DGS_MDL7();
 	}
-	// IDST/IDSQ Format (CS:S/HL², etc ...)
+	// IDST/IDSQ Format (CS:S/HL^2, etc ...)
 	else if (AI_MDL_MAGIC_NUMBER_BE_HL2a == iMagicWord || AI_MDL_MAGIC_NUMBER_LE_HL2a == iMagicWord ||
 		AI_MDL_MAGIC_NUMBER_BE_HL2b == iMagicWord || AI_MDL_MAGIC_NUMBER_LE_HL2b == iMagicWord)
 	{
@@ -494,12 +494,12 @@ void MDLImporter::SetupMaterialProperties_3DGS_MDL5_Quake1( )
 
 	// allocate ONE material
 	pScene->mMaterials    = new aiMaterial*[1];
-	pScene->mMaterials[0] = new MaterialHelper();
+	pScene->mMaterials[0] = new aiMaterial();
 	pScene->mNumMaterials = 1;
 
 	// setup the material's properties
 	const int iMode = (int)aiShadingMode_Gouraud;
-	MaterialHelper* const pcHelper = (MaterialHelper*)pScene->mMaterials[0];
+	aiMaterial* const pcHelper = (aiMaterial*)pScene->mMaterials[0];
 	pcHelper->AddProperty<int>(&iMode, 1, AI_MATKEY_SHADING_MODEL);
 
 	aiColor4D clr;
@@ -970,7 +970,7 @@ void MDLImporter::ReadFaces_3DGS_MDL7(const MDL::IntGroupInfo_MDL7& groupInfo,
 	MDL::IntGroupData_MDL7& groupData)
 {
 	const MDL::Header_MDL7 *pcHeader = (const MDL::Header_MDL7*)this->mBuffer; 
-	BE_NCONST MDL::Triangle_MDL7* pcGroupTris = groupInfo.pcGroupTris;
+	MDL::Triangle_MDL7* pcGroupTris = groupInfo.pcGroupTris;
 
 	// iterate through all triangles and build valid display lists
 	unsigned int iOutIndex = 0;
@@ -986,7 +986,7 @@ void MDLImporter::ReadFaces_3DGS_MDL7(const MDL::IntGroupInfo_MDL7& groupInfo,
 			unsigned int iIndex = pcGroupTris->v_index[c];
 			if(iIndex > (unsigned int)groupInfo.pcGroup->numverts)	{
 				// (we might need to read this section a second time - to process frame vertices correctly)
-				const_cast<MDL::Triangle_MDL7*>(pcGroupTris)->v_index[c] = iIndex = groupInfo.pcGroup->numverts-1;
+				pcGroupTris->v_index[c] = iIndex = groupInfo.pcGroup->numverts-1;
 				DefaultLogger::get()->warn("Index overflow in MDL7 vertex list");
 			}
 
@@ -1083,7 +1083,7 @@ void MDLImporter::ReadFaces_3DGS_MDL7(const MDL::IntGroupInfo_MDL7& groupInfo,
 			}
 		}
 		// get the next triangle in the list
-		pcGroupTris = (BE_NCONST MDL::Triangle_MDL7*)((const char*)pcGroupTris + pcHeader->triangle_stc_size);
+		pcGroupTris = (MDL::Triangle_MDL7*)((const char*)pcGroupTris + pcHeader->triangle_stc_size);
 	}
 }
 
@@ -1193,32 +1193,32 @@ bool MDLImporter::ProcessFrames_3DGS_MDL7(const MDL::IntGroupInfo_MDL7& groupInf
 void MDLImporter::SortByMaterials_3DGS_MDL7(
 	const MDL::IntGroupInfo_MDL7&   groupInfo,
 	MDL::IntGroupData_MDL7&         groupData,
-	MDL::IntSplittedGroupData_MDL7& splittedGroupData)
+	MDL::IntSplitGroupData_MDL7& splitGroupData)
 {
-	const unsigned int iNumMaterials = (unsigned int)splittedGroupData.shared.pcMats.size();
+	const unsigned int iNumMaterials = (unsigned int)splitGroupData.shared.pcMats.size();
 	if (!groupData.bNeed2UV)	{
 		// if we don't need a second set of texture coordinates there is no reason to keep it in memory ...
 		groupData.vTextureCoords2.clear();
 
 		// allocate the array
-		splittedGroupData.aiSplit = new std::vector<unsigned int>*[iNumMaterials];
+		splitGroupData.aiSplit = new std::vector<unsigned int>*[iNumMaterials];
 
 		for (unsigned int m = 0; m < iNumMaterials;++m)
-			splittedGroupData.aiSplit[m] = new std::vector<unsigned int>();
+			splitGroupData.aiSplit[m] = new std::vector<unsigned int>();
 
 		// iterate through all faces and sort by material
 		for (unsigned int iFace = 0; iFace < (unsigned int)groupInfo.pcGroup->numtris;++iFace)	{
 			// check range
 			if (groupData.pcFaces[iFace].iMatIndex[0] >= iNumMaterials)	{
 				// use the last material instead
-				splittedGroupData.aiSplit[iNumMaterials-1]->push_back(iFace);
+				splitGroupData.aiSplit[iNumMaterials-1]->push_back(iFace);
 
 				// sometimes MED writes -1, but normally only if there is only
 				// one skin assigned. No warning in this case
 				if(0xFFFFFFFF != groupData.pcFaces[iFace].iMatIndex[0])
 					DefaultLogger::get()->warn("Index overflow in MDL7 material list [#0]");
 			}
-			else splittedGroupData.aiSplit[groupData.pcFaces[iFace].
+			else splitGroupData.aiSplit[groupData.pcFaces[iFace].
 				iMatIndex[0]]->push_back(iFace);
 		}
 	}
@@ -1268,11 +1268,11 @@ void MDLImporter::SortByMaterials_3DGS_MDL7(
 				if (!bFound)	{
 					//  build a new material ...
 					MDL::IntMaterial_MDL7 sHelper;
-					sHelper.pcMat = new MaterialHelper();
+					sHelper.pcMat = new aiMaterial();
 					sHelper.iOldMatIndices[0] = iMatIndex;
 					sHelper.iOldMatIndices[1] = iMatIndex2;
-					JoinSkins_3DGS_MDL7(splittedGroupData.shared.pcMats[iMatIndex],
-						splittedGroupData.shared.pcMats[iMatIndex2],sHelper.pcMat);
+					JoinSkins_3DGS_MDL7(splitGroupData.shared.pcMats[iMatIndex],
+						splitGroupData.shared.pcMats[iMatIndex2],sHelper.pcMat);
 
 					// and add it to the list
 					avMats.push_back(sHelper);
@@ -1288,21 +1288,21 @@ void MDLImporter::SortByMaterials_3DGS_MDL7(
 
 		// now add the newly created materials to the old list
 		if (0 == groupInfo.iIndex)	{
-			splittedGroupData.shared.pcMats.resize(avMats.size());
+			splitGroupData.shared.pcMats.resize(avMats.size());
 			for (unsigned int o = 0; o < avMats.size();++o)
-				splittedGroupData.shared.pcMats[o] = avMats[o].pcMat;
+				splitGroupData.shared.pcMats[o] = avMats[o].pcMat;
 		}
 		else	{
 			// This might result in redundant materials ...
-			splittedGroupData.shared.pcMats.resize(iNumMaterials + avMats.size());
+			splitGroupData.shared.pcMats.resize(iNumMaterials + avMats.size());
 			for (unsigned int o = iNumMaterials; o < avMats.size();++o)
-				splittedGroupData.shared.pcMats[o] = avMats[o].pcMat;
+				splitGroupData.shared.pcMats[o] = avMats[o].pcMat;
 		}
 
 		// and build the final face-to-material array
-		splittedGroupData.aiSplit = new std::vector<unsigned int>*[aiTempSplit.size()];
+		splitGroupData.aiSplit = new std::vector<unsigned int>*[aiTempSplit.size()];
 		for (unsigned int m = 0; m < iNumMaterials;++m)
-			splittedGroupData.aiSplit[m] = aiTempSplit[m];
+			splitGroupData.aiSplit[m] = aiTempSplit[m];
 	}
 }
 
@@ -1394,8 +1394,8 @@ void MDLImporter::InternReadFile_3DGS_MDL7( )
 		// if we have absolutely no skin loaded we need to generate a default material
 		if (sharedData.pcMats.empty())	{
 			const int iMode = (int)aiShadingMode_Gouraud;
-			sharedData.pcMats.push_back(new MaterialHelper());
-			MaterialHelper* pcHelper = (MaterialHelper*)sharedData.pcMats[0];
+			sharedData.pcMats.push_back(new aiMaterial());
+			aiMaterial* pcHelper = (aiMaterial*)sharedData.pcMats[0];
 			pcHelper->AddProperty<int>(&iMode, 1, AI_MATKEY_SHADING_MODEL);
 
 			aiColor3D clr;
@@ -1422,7 +1422,7 @@ void MDLImporter::InternReadFile_3DGS_MDL7( )
 		szCurrent += pcHeader->skinpoint_stc_size * groupInfo.pcGroup->num_stpts;
 
 		// now get a pointer to all triangle in the group
-		groupInfo.pcGroupTris = (BE_NCONST MDL::Triangle_MDL7*)szCurrent;
+		groupInfo.pcGroupTris = (Triangle_MDL7*)szCurrent;
 		szCurrent += pcHeader->triangle_stc_size * groupInfo.pcGroup->numtris;
 
 		// now get a pointer to all vertices in the group
@@ -1438,7 +1438,7 @@ void MDLImporter::InternReadFile_3DGS_MDL7( )
 		szCurrent += pcHeader->mainvertex_stc_size * groupInfo.pcGroup->numverts;
 		VALIDATE_FILE_SIZE(szCurrent);
 
-		MDL::IntSplittedGroupData_MDL7 splittedGroupData(sharedData,avOutList[iGroup]);
+		MDL::IntSplitGroupData_MDL7 splitGroupData(sharedData,avOutList[iGroup]);
 		MDL::IntGroupData_MDL7 groupData;
 		if (groupInfo.pcGroup->numtris && groupInfo.pcGroup->numverts)
 		{
@@ -1467,10 +1467,10 @@ void MDLImporter::InternReadFile_3DGS_MDL7( )
 
 			// sort by materials
 			SortByMaterials_3DGS_MDL7(groupInfo, groupData,
-				splittedGroupData);
+				splitGroupData);
 
 			for (unsigned int qq = 0; qq < sharedData.pcMats.size();++qq)	{
-				if (!splittedGroupData.aiSplit[qq]->empty())
+				if (!splitGroupData.aiSplit[qq]->empty())
 					sharedData.abNeedMaterials[qq] = true;
 			}
 		}
@@ -1479,7 +1479,7 @@ void MDLImporter::InternReadFile_3DGS_MDL7( )
 
 		// process all frames and generate output meshes
 		ProcessFrames_3DGS_MDL7(groupInfo,groupData, sharedData,szCurrent,&szCurrent);
-		GenerateOutputMeshes_3DGS_MDL7(groupData,splittedGroupData);
+		GenerateOutputMeshes_3DGS_MDL7(groupData,splitGroupData);
 	}
 
 	// generate a nodegraph and subnodes for each group
@@ -1773,16 +1773,16 @@ void MDLImporter::AddAnimationBoneTrafoKey_3DGS_MDL7(unsigned int iTrafo,
 // Construct output meshes
 void MDLImporter::GenerateOutputMeshes_3DGS_MDL7(
 	MDL::IntGroupData_MDL7& groupData,
-	MDL::IntSplittedGroupData_MDL7& splittedGroupData)
+	MDL::IntSplitGroupData_MDL7& splitGroupData)
 {
-	const MDL::IntSharedData_MDL7& shared = splittedGroupData.shared;
+	const MDL::IntSharedData_MDL7& shared = splitGroupData.shared;
 
 	// get a pointer to the header ...
 	const MDL::Header_MDL7* const pcHeader = (const MDL::Header_MDL7*)this->mBuffer;
 	const unsigned int iNumOutBones = pcHeader->bones_num;
 
-	for (std::vector<MaterialHelper*>::size_type i = 0; i < shared.pcMats.size();++i)	{
-		if (!splittedGroupData.aiSplit[i]->empty())	{
+	for (std::vector<aiMaterial*>::size_type i = 0; i < shared.pcMats.size();++i)	{
+		if (!splitGroupData.aiSplit[i]->empty())	{
 
 			// allocate the output mesh
 			aiMesh* pcMesh = new aiMesh();
@@ -1791,7 +1791,7 @@ void MDLImporter::GenerateOutputMeshes_3DGS_MDL7(
 			pcMesh->mMaterialIndex = (unsigned int)i;
 
 			// allocate output storage
-			pcMesh->mNumFaces = (unsigned int)splittedGroupData.aiSplit[i]->size();
+			pcMesh->mNumFaces = (unsigned int)splitGroupData.aiSplit[i]->size();
 			pcMesh->mFaces = new aiFace[pcMesh->mNumFaces];
 
 			pcMesh->mNumVertices = pcMesh->mNumFaces*3;
@@ -1813,7 +1813,7 @@ void MDLImporter::GenerateOutputMeshes_3DGS_MDL7(
 				pcMesh->mFaces[iFace].mNumIndices = 3;
 				pcMesh->mFaces[iFace].mIndices = new unsigned int[3];
 
-				unsigned int iSrcFace = splittedGroupData.aiSplit[i]->operator[](iFace);
+				unsigned int iSrcFace = splitGroupData.aiSplit[i]->operator[](iFace);
 				const MDL::IntFace_MDL7& oldFace = groupData.pcFaces[iSrcFace];
 
 				// iterate through all face indices
@@ -1841,7 +1841,7 @@ void MDLImporter::GenerateOutputMeshes_3DGS_MDL7(
 
 				int iCurrent = 0;
 				for (unsigned int iFace = 0; iFace < pcMesh->mNumFaces;++iFace)	{
-					unsigned int iSrcFace = splittedGroupData.aiSplit[i]->operator[](iFace);
+					unsigned int iSrcFace = splitGroupData.aiSplit[i]->operator[](iFace);
 					const MDL::IntFace_MDL7& oldFace = groupData.pcFaces[iSrcFace];
 
 					// iterate through all face indices
@@ -1887,7 +1887,7 @@ void MDLImporter::GenerateOutputMeshes_3DGS_MDL7(
 				}
 			}
 			// add the mesh to the list of output meshes
-			splittedGroupData.avOutList.push_back(pcMesh);
+			splitGroupData.avOutList.push_back(pcMesh);
 		}
 	}
 }
@@ -1895,15 +1895,15 @@ void MDLImporter::GenerateOutputMeshes_3DGS_MDL7(
 // ------------------------------------------------------------------------------------------------
 // Join to materials
 void MDLImporter::JoinSkins_3DGS_MDL7(
-	MaterialHelper* pcMat1,
-	MaterialHelper* pcMat2,
-	MaterialHelper* pcMatOut)
+	aiMaterial* pcMat1,
+	aiMaterial* pcMat2,
+	aiMaterial* pcMatOut)
 {
 	ai_assert(NULL != pcMat1 && NULL != pcMat2 && NULL != pcMatOut);
 
 	// first create a full copy of the first skin property set
 	// and assign it to the output material
-	MaterialHelper::CopyPropertyList(pcMatOut,pcMat1);
+	aiMaterial::CopyPropertyList(pcMatOut,pcMat1);
 
 	int iVal = 0;
 	pcMatOut->AddProperty<int>(&iVal,1,AI_MATKEY_UVWSRC_DIFFUSE(0));

@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -45,7 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ASSIMP_BUILD_NO_HMP_IMPORTER
 
 // internal headers
-#include "MaterialSystem.h"
 #include "HMPLoader.h"
 #include "MD2FileData.h"
 
@@ -339,7 +338,7 @@ void HMPImporter::CreateMaterial(const unsigned char* szCurrent,
 	{
 		// generate a default material
 		const int iMode = (int)aiShadingMode_Gouraud;
-		MaterialHelper* pcHelper = new MaterialHelper();
+		aiMaterial* pcHelper = new aiMaterial();
 		pcHelper->AddProperty<int>(&iMode, 1, AI_MATKEY_SHADING_MODEL);
 
 		aiColor3D clr;
@@ -447,7 +446,7 @@ void HMPImporter::ReadFirstSkin(unsigned int iNumSkins, const unsigned char* szC
 	uint32_t iHeight = *((uint32_t*)szCursor); szCursor += sizeof(uint32_t);
 
 	// allocate an output material
-	MaterialHelper* pcMat = new MaterialHelper();
+	aiMaterial* pcMat = new aiMaterial();
 
 	// read the skin, this works exactly as for MDL7
 	ParseSkinLump_3DGS_MDL7(szCursor,&szCursor,

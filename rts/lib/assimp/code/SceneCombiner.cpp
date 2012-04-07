@@ -1,8 +1,8 @@
 /*
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -18,10 +18,10 @@ following conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -245,7 +245,6 @@ void SceneCombiner::MergeScenes(aiScene** _dest, aiScene* master,
 	// if _dest points to NULL allocate a new scene. Otherwise clear the old and reuse it
 	if (srcList.empty())	{
 		if (*_dest)	{
-			(*_dest)->~aiScene();
 			SceneCombiner::CopySceneFlat(_dest,master);
 		}
 		else *_dest = master;
@@ -253,6 +252,7 @@ void SceneCombiner::MergeScenes(aiScene** _dest, aiScene* master,
 	}
 	if (*_dest) {
 		(*_dest)->~aiScene();
+		new (*_dest) aiScene();
 	}
 	else *_dest = new aiScene();
 
@@ -910,18 +910,25 @@ inline void GetArrayCopy (Type*& dest, unsigned int num )
 void SceneCombiner::CopySceneFlat(aiScene** _dest,const aiScene* src)
 {
 	// reuse the old scene or allocate a new?
-	if (*_dest)(*_dest)->~aiScene();
+	if (*_dest) {
+		(*_dest)->~aiScene();
+		new (*_dest) aiScene();
+	}
 	else *_dest = new aiScene();
 
 	::memcpy(*_dest,src,sizeof(aiScene));
 }
 
 // ------------------------------------------------------------------------------------------------
-void SceneCombiner::CopyScene(aiScene** _dest,const aiScene* src)
+void SceneCombiner::CopyScene(aiScene** _dest,const aiScene* src,bool allocate)
 {
 	ai_assert(NULL != _dest && NULL != src);
 
-	aiScene* dest = *_dest = new aiScene();
+	if (allocate) {
+		*_dest = new aiScene();
+	}
+	aiScene* dest = *_dest; 
+	ai_assert(dest);
 
 	// copy animations
 	dest->mNumAnimations = src->mNumAnimations;
@@ -958,6 +965,9 @@ void SceneCombiner::CopyScene(aiScene** _dest,const aiScene* src)
 
 	// and keep the flags ...
 	dest->mFlags = src->mFlags;
+
+	// source private data might be NULL if the scene is user-allocated (i.e. for use with the export API)
+	ScenePriv(dest)->mPPStepsApplied = ScenePriv(src) ? ScenePriv(src)->mPPStepsApplied : 0;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1001,7 +1011,7 @@ void SceneCombiner::Copy (aiMaterial** _dest, const aiMaterial* src)
 {
 	ai_assert(NULL != _dest && NULL != src);
 
-	MaterialHelper* dest = (MaterialHelper*) ( *_dest = new MaterialHelper() );
+	aiMaterial* dest = (aiMaterial*) ( *_dest = new aiMaterial() );
 	dest->mNumAllocated  =  src->mNumAllocated;
 	dest->mNumProperties =  src->mNumProperties;
 	dest->mProperties    =  new aiMaterialProperty* [dest->mNumAllocated];
