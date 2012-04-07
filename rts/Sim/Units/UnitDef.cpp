@@ -868,8 +868,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 
 	std::vector<YardmapStatus> yardMap(hxsize * hzsize, YARDMAP_BLOCKED);
 
-	unsigned int x = 0;
-	unsigned int z = 0;
+	unsigned int idx = 0;
 	std::string foundUnknownChars;
 
 	for (unsigned int n = 0; n < yardMapStr.size(); n++) {
@@ -877,11 +876,6 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 
 		if (isspace(c))
 			continue;
-
-		if (z >= hzsize) {
-			LOG_L(L_WARNING, "%s: yardmap/blockmap contains too many chars!", name.c_str());
-			break;
-		}
 
 		YardmapStatus ys = YARDMAP_BLOCKED;
 
@@ -900,12 +894,18 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 					foundUnknownChars += c;
 		}
 
-		yardMap[x + z * hxsize] = ys;
-
-		x += 1;
-		z += ((x == hxsize)? 1: 0);
-		x %= hxsize;
+		if (idx < hxsize * hzsize) {
+			yardMap[idx] = ys;
+		}
+		idx++;
 	}
+
+	// print warnings
+	if (idx > yardMap.size())
+		LOG_L(L_WARNING, "%s: Given yardmap/blockmap contains %i char(s) too many!", name.c_str(), idx - yardMap.size());
+
+	if (idx > 0 && idx < yardMap.size())
+		LOG_L(L_WARNING, "%s: Given yardmap/blockmap contains %i char(s) too less!", name.c_str(), yardMap.size() - idx);
 
 	if (!foundUnknownChars.empty())
 		LOG_L(L_WARNING, "%s: Unknown char(s) in yardmap/blockmap \"%s\"!", name.c_str(), foundUnknownChars.c_str());
