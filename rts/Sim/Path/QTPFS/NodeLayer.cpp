@@ -90,7 +90,9 @@ bool QTPFS::NodeLayer::Update(const SRectangle& r, const MoveDef* md, const CMov
 			const unsigned int smz = hmz;
 			#endif
 
-			// NOTE: GetPosSpeedMod only checks terrain (height/slope/type), not the blocking-map
+			// NOTE:
+			//     GetPosSpeedMod only checks the terrain (height/slope/type), not the blocking-map
+			//     IsBlockedNoSpeedModCheck scans entire footprint, GetPosSpeedMod just one square
 			const CMoveMath::BlockType blockBits = mm->IsBlockedNoSpeedModCheck(*md, smx, smz);
 
 			const float rawAbsSpeedMod = mm->GetPosSpeedMod(*md, smx, smz);
