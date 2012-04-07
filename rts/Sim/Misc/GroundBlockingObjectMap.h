@@ -30,7 +30,8 @@ public:
 
 	void OpenBlockingYard(CSolidObject* object);
 	void CloseBlockingYard(CSolidObject* object);
-	bool CanCloseYard(CSolidObject* object);
+	bool CanOpenYard(CSolidObject* object) const;
+	bool CanCloseYard(CSolidObject* object) const;
 
 	// these retrieve either the top-most or the bottom-most
 	// object in a given cell, or NULL if the cell is empty
@@ -47,6 +48,9 @@ public:
 	const BlockingMapCell& GetCell(int mapSquare) const {
 		return groundBlockingMap[mapSquare];
 	}
+
+private:
+	bool CheckYard(CSolidObject* yardUnit, const YardmapStatus mask) const;
 
 private:
 	BlockingMap groundBlockingMap;

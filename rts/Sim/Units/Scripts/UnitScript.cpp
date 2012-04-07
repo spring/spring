@@ -1500,8 +1500,10 @@ void CUnitScript::SetUnitVal(int val, int param)
 						yardOpen = false;
 					}
 				} else {
-					groundBlockingObjectMap->OpenBlockingYard(unit);
-					yardOpen = true;
+					if (groundBlockingObjectMap->CanOpenYard(unit)) {
+						groundBlockingObjectMap->OpenBlockingYard(unit);
+						yardOpen = true;
+					}
 				}
 			}
 			break;
