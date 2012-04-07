@@ -168,6 +168,9 @@ QTPFS::QTNode::QTNode(
 	unsigned int x1, unsigned int z1,
 	unsigned int x2, unsigned int z2
 ) {
+	assert(MIN_SIZE_X > 0);
+	assert(MIN_SIZE_Z > 0);
+
 	nodeNumber = nn;
 	heapIndex = -1U;
 
@@ -284,10 +287,21 @@ bool QTPFS::QTNode::IsLeaf() const {
 }
 
 bool QTPFS::QTNode::CanSplit() const {
-	// NOTE: caller must additionally check IsLeaf()
+	// NOTE: caller must additionally check IsLeaf() before calling Split()
+	if (depth() >= MAX_DEPTH) { return false; }
+
+	#ifdef QTPFS_CONSERVATIVE_NODE_SPLITS
 	if (xsize() <= MIN_SIZE_X) { return false; }
 	if (zsize() <= MIN_SIZE_Z) { return false; }
-	if (depth() >= MAX_DEPTH) { return false; }
+	#else
+	// aggressive splitting, important with respect to yardmaps
+	// (one yardmap square represents four 1x1 heightmap squares
+	// and the minimum node size is 2 heightmap squares for both
+	// dimensions)
+	if (((xsize() >> 1) ==          0) || ((zsize() >> 1) ==          0)) { return false; }
+	if (( xsize()       <= MIN_SIZE_X) && ( zsize()       <= MIN_SIZE_Z)) { return false; }
+	#endif
+
 	return true;
 }
 
