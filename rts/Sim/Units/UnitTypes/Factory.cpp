@@ -111,7 +111,7 @@ void CFactory::Update()
 	if (curBuildDef != NULL) {
 		if (!opening && !stunned) {
 			script->Activate();
-			groundBlockingObjectMap->OpenBlockingYard(this, curYardMap);
+			groundBlockingObjectMap->OpenBlockingYard(this);
 			opening = true;
 
 			// make sure the idle-check does not immediately trigger
@@ -134,7 +134,7 @@ void CFactory::Update()
 
 	if (mayClose && canClose) {
 		// close the factory after inactivity
-		groundBlockingObjectMap->CloseBlockingYard(this, curYardMap);
+		groundBlockingObjectMap->CloseBlockingYard(this);
 		opening = false;
 		script->Deactivate();
 	}

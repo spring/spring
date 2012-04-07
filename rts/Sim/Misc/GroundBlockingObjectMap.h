@@ -25,11 +25,11 @@ public:
 	}
 
 	void AddGroundBlockingObject(CSolidObject* object);
-	void AddGroundBlockingObject(CSolidObject* object, const YardmapStatus* yardMap, const YardmapStatus mask);
+	void AddGroundBlockingObject(CSolidObject* object, const YardmapStatus mask);
 	void RemoveGroundBlockingObject(CSolidObject* object);
 
-	void OpenBlockingYard(CSolidObject* yard, const YardmapStatus* yardMap);
-	void CloseBlockingYard(CSolidObject* yard, const YardmapStatus* yardMap);
+	void OpenBlockingYard(CSolidObject* object);
+	void CloseBlockingYard(CSolidObject* object);
 	bool CanCloseYard(CSolidObject* object);
 
 	// these retrieve either the top-most or the bottom-most

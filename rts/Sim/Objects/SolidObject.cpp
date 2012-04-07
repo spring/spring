@@ -32,6 +32,7 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
+ 	CR_MEMBER(footprint),
 
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
@@ -62,6 +63,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(collisionVolume),
 
 	CR_MEMBER(buildFacing),
+
 	CR_RESERVED(16))
 );
 
@@ -78,6 +80,7 @@ CSolidObject::CSolidObject():
 	blockHeightChanges(false),
 	xsize(1),
 	zsize(1),
+	footprint(1,1),
 	heading(0),
 	physicalState(OnGround),
 	isMoving(false),
@@ -95,7 +98,7 @@ CSolidObject::CSolidObject():
 	relMidPos(ZeroVector),
 	midPos(pos),
 	mapPos(GetMapPos()),
-	curYardMap(NULL),
+	blockMap(NULL),
 	buildFacing(0)
 {
 }
@@ -130,16 +133,70 @@ void CSolidObject::Block() {
 		return;
 	}
 
-	// use the object's current yardmap if available
-	if (curYardMap != NULL) {
-		groundBlockingObjectMap->AddGroundBlockingObject(this, curYardMap, YARDMAP_BLOCKED);
-	} else {
-		groundBlockingObjectMap->AddGroundBlockingObject(this);
-	}
+	groundBlockingObjectMap->AddGroundBlockingObject(this);
 
 	assert(isMarkedOnBlockingMap);
 }
 
+
+YardmapStatus CSolidObject::GetGroundBlockingAtPos(float3 gpos) const
+{
+	if (!blockMap)
+		return YARDMAP_OPEN;
+
+	const int hxsize = footprint.x >> 1;
+	const int hzsize = footprint.y >> 1;
+
+	float3 frontv;
+	float3 rightv;
+
+	if (true) {
+		// use continuous floating-point space
+		gpos   -= pos;
+		gpos.x += SQUARE_SIZE / 2; //??? needed to move to SQUARE-center? (possibly current input is wrong)
+		gpos.z += SQUARE_SIZE / 2;
+
+		frontv =  frontdir;
+		rightv = -rightdir; //??? spring's unit-rightdir is in real the LEFT vector :x
+	} else {
+		// use old fixed space (4 facing dirs & ints for unit positions)
+
+		// form the rotated axis vectors
+		static float3 up   ( 0.0f, 0.0f, -1.0f);
+		static float3 down ( 0.0f, 0.0f,  1.0f);
+		static float3 left (-1.0f, 0.0f,  0.0f);
+		static float3 right( 1.0f, 0.0f,  0.0f);
+		static float3 fronts[] = {down, right, up, left};
+		static float3 rights[] = {right, up, left, down};
+
+		// get used axis vectors
+		frontv = fronts[buildFacing];
+		rightv = rights[buildFacing];
+
+		gpos   -= float3(mapPos.x * SQUARE_SIZE, 0.0f, mapPos.y * SQUARE_SIZE);
+
+		// need to revert some of the transformations of CSolidObject::GetMapPos()
+		gpos.x += SQUARE_SIZE / 2 - (this->xsize >> 1) * SQUARE_SIZE; 
+		gpos.z += SQUARE_SIZE / 2 - (this->zsize >> 1) * SQUARE_SIZE;
+	}
+
+	// transform worldspace pos to unit rotation dependent `centered blockmap space` [-hxsize .. +hxsize] x [-hzsize .. +hzsize]
+	float by = frontv.dot(gpos) / SQUARE_SIZE;
+	float bx = rightv.dot(gpos) / SQUARE_SIZE;
+
+	// outside of `blockmap space`?
+	if ((math::fabsf(bx) >= hxsize) || (math::fabsf(by) >= hzsize))
+		return YARDMAP_OPEN;
+
+	// transform: [(-hxsize + eps) .. (+hxsize - eps)] x [(-hzsize + eps) .. (+hzsize - eps)] -> [0 .. (xsize - 1)] x [0 .. (zsize - 1)]
+	bx += hxsize;
+	by += hzsize;
+	assert(int(bx) >= 0 && int(bx) < footprint.x);
+	assert(int(by) >= 0 && int(by) < footprint.y);
+
+	// read from blockmap
+	return blockMap[int(bx) + int(by) * footprint.x];
+}
 
 
 // FIXME move somewhere else?
