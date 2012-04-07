@@ -12,7 +12,6 @@
 #include "S3OParser.h"
 #include "OBJParser.h"
 #include "AssParser.h"
-#include "assimp.hpp"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/Unit.h"
 #include "System/FileSystem/FileSystem.h"
@@ -20,6 +19,7 @@
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "lib/gml/gml_base.h"
+#include "lib/assimp/include/assimp/Importer.hpp"
 
 C3DModelLoader* modelParser = NULL;
 

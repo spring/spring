@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -48,7 +48,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // internal headers
 #include "ASELoader.h"
-#include "MaterialSystem.h"
 #include "StringComparison.h"
 #include "SkeletonMeshBuilder.h"
 #include "TargetAnimation.h"
@@ -788,7 +787,7 @@ void ASEImporter::BuildUniqueRepresentation(ASE::Mesh& mesh)	{
 
 // ------------------------------------------------------------------------------------------------
 // Copy a texture from the ASE structs to the output material
-void CopyASETexture(MaterialHelper& mat, ASE::Texture& texture, aiTextureType type)
+void CopyASETexture(aiMaterial& mat, ASE::Texture& texture, aiTextureType type)
 {
 	// Setup the texture name
 	aiString tex;
@@ -810,7 +809,7 @@ void ASEImporter::ConvertMaterial(ASE::Material& mat)
 	// LARGE TODO: Much code her is copied from 3DS ... join them maybe?
 
 	// Allocate the output material
-	mat.pcInstance = new MaterialHelper();
+	mat.pcInstance = new aiMaterial();
 
 	// At first add the base ambient color of the
 	// scene to	the material
@@ -1153,7 +1152,7 @@ void ASEImporter::ConvertMeshes(ASE::Mesh& mesh, std::vector<aiMesh*>& avOutMesh
 
 		// copy vertex bones
 		if (!mesh.mBones.empty() && !mesh.mBoneVertices.empty())	{
-			std::vector<aiVertexWeight>* avBonesOut = new std::vector<aiVertexWeight>[mesh.mBones.size()];
+			std::vector<std::vector<aiVertexWeight> > avBonesOut( mesh.mBones.size() );
 
 			// find all vertex weights for this bone
 			unsigned int quak = 0;
@@ -1189,9 +1188,6 @@ void ASEImporter::ConvertMeshes(ASE::Mesh& mesh, std::vector<aiMesh*>& avOutMesh
 					++pcBone;
 				}
 			}
-
-			// delete allocated storage
-			delete[] avBonesOut;
 		}
 	}
 }

@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -143,7 +143,7 @@ void STLImporter::InternReadFile( const std::string& pFile,
 	}
 
 	// create a single default material - everything white, as we have vertex colors
-	MaterialHelper* pcMat = new MaterialHelper();
+	aiMaterial* pcMat = new aiMaterial();
 	aiString s;
 	s.Set(AI_DEFAULT_MATERIAL_NAME);
 	pcMat->AddProperty(&s, AI_MATKEY_NAME);
@@ -186,7 +186,7 @@ void STLImporter::LoadASCIIFile()
 
 	// try to guess how many vertices we could have
 	// assume we'll need 160 bytes for each face
-	pMesh->mNumVertices = ( pMesh->mNumFaces = fileSize / 160 ) * 3;
+	pMesh->mNumVertices = ( pMesh->mNumFaces = std::max(1u,fileSize / 160u )) * 3;
 	pMesh->mVertices = new aiVector3D[pMesh->mNumVertices];
 	pMesh->mNormals  = new aiVector3D[pMesh->mNumVertices];
 	
@@ -207,6 +207,8 @@ void STLImporter::LoadASCIIFile()
 				DefaultLogger::get()->warn("STL: A new facet begins but the old is not yet complete");
 			}
 			if (pMesh->mNumFaces == curFace)	{
+				ai_assert(pMesh->mNumFaces != 0);
+
 				// need to resize the arrays, our size estimate was wrong
 				unsigned int iNeededSize = (unsigned int)(sz-mBuffer) / pMesh->mNumFaces;
 				if (iNeededSize <= 160)iNeededSize >>= 1; // prevent endless looping
@@ -237,11 +239,11 @@ void STLImporter::LoadASCIIFile()
 			{
 				sz += 7;
 				SkipSpaces(&sz);
-				sz = fast_atof_move(sz, (float&)vn->x ); 
+				sz = fast_atoreal_move<float>(sz, (float&)vn->x ); 
 				SkipSpaces(&sz);
-				sz = fast_atof_move(sz, (float&)vn->y ); 
+				sz = fast_atoreal_move<float>(sz, (float&)vn->y ); 
 				SkipSpaces(&sz);
-				sz = fast_atof_move(sz, (float&)vn->z ); 
+				sz = fast_atoreal_move<float>(sz, (float&)vn->z ); 
 				*(vn+1) = *vn;
 				*(vn+2) = *vn;
 			}
@@ -257,11 +259,11 @@ void STLImporter::LoadASCIIFile()
 				sz += 7;
 				SkipSpaces(&sz);
 				aiVector3D* vn = &pMesh->mVertices[(curFace-1)*3 + curVertex++];
-				sz = fast_atof_move(sz, (float&)vn->x ); 
+				sz = fast_atoreal_move<float>(sz, (float&)vn->x ); 
 				SkipSpaces(&sz);
-				sz = fast_atof_move(sz, (float&)vn->y ); 
+				sz = fast_atoreal_move<float>(sz, (float&)vn->y ); 
 				SkipSpaces(&sz);
-				sz = fast_atof_move(sz, (float&)vn->z ); 
+				sz = fast_atoreal_move<float>(sz, (float&)vn->z ); 
 			}
 		}
 		else if (!::strncmp(sz,"endsolid",8))	{

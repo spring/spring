@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -47,6 +47,7 @@ Assimp C export interface. See Exporter.cpp for some notes.
 
 #ifndef ASSIMP_BUILD_NO_EXPORT
 #include "CInterfaceIOWrapper.h" 
+#include "SceneCombiner.h"
 
 using namespace Assimp;
 
@@ -63,6 +64,15 @@ ASSIMP_API const aiExportFormatDesc* aiGetExportFormatDescription( size_t pIndex
 	return Exporter().GetExportFormatDescription(pIndex);
 }
 
+// ------------------------------------------------------------------------------------------------
+ASSIMP_API void aiCopyScene(const aiScene* pIn, aiScene** pOut)
+{
+	if (!pOut || !pIn) {
+		return;
+	}
+
+	SceneCombiner::CopyScene(pOut,pIn,true);
+}
 
 // ------------------------------------------------------------------------------------------------
 ASSIMP_API aiReturn aiExportScene( const aiScene* pScene, const char* pFormatId, const char* pFileName, unsigned int pPreprocessing )
@@ -97,7 +107,7 @@ ASSIMP_API const C_STRUCT aiExportDataBlob* aiExportSceneToBlob( const aiScene* 
 }
 
 // ------------------------------------------------------------------------------------------------
-ASSIMP_API C_STRUCT void aiReleaseExportData( const aiExportDataBlob* pData )
+ASSIMP_API C_STRUCT void aiReleaseExportBlob( const aiExportDataBlob* pData )
 {
 	delete pData;
 }
