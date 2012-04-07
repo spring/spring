@@ -230,16 +230,29 @@ void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* object) {
 	AddGroundBlockingObject(object, YARDMAP_YARDBLOCKED);
 }
 
-bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yardUnit)
+
+inline bool CGroundBlockingObjectMap::CheckYard(CSolidObject* yardUnit, const YardmapStatus mask) const
 {
 	//GML_STDMUTEX_LOCK(block); //done in GroundBlocked
 
-	for (int z = yard->mapPos.y; z < yard->mapPos.y + yard->zsize; ++z) {
-		for (int x = yard->mapPos.x; x < yard->mapPos.x + yard->xsize; ++x) {
-			if (GroundBlocked(x, z, yard))
-				return false;
+	for (int z = yardUnit->mapPos.y; z < yardUnit->mapPos.y + yardUnit->zsize; ++z) {
+		for (int x = yardUnit->mapPos.x; x < yardUnit->mapPos.x + yardUnit->xsize; ++x) {
+			if (yardUnit->GetGroundBlockingAtPos(float3(x * SQUARE_SIZE, 0.0f, z * SQUARE_SIZE)) & mask)
+				if (GroundBlocked(x, z, yardUnit))
+					return false;
 		}
 	}
 
 	return true;
+}
+
+
+bool CGroundBlockingObjectMap::CanOpenYard(CSolidObject* yardUnit) const
+{
+	return CheckYard(yardUnit, YARDMAP_YARDINV);
+}
+
+bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yardUnit) const
+{
+	return CheckYard(yardUnit, YARDMAP_YARD);
 }
