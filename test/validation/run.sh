@@ -46,7 +46,7 @@ gdb -batch -return-child-result -x $GDBCMDS &
 PID_HOST=$!
 
 # auto kill host after 15mins
-sleep 900 && kill -9 $PID_HOST &
+#sleep 900 && kill -9 $PID_HOST &
 
 # store exit code
 wait $PID_HOST
