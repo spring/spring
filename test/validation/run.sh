@@ -42,7 +42,9 @@ $RUNCLIENT $1 &
 PID=$!
 
 # kill process after 15mins
+echo "foo"
 sleep 900 && kill -9 $PID &
+echo "bar"
 
 set +e #temp disable abort on error
 gdb -batch -return-child-result -x $GDBCMDS
