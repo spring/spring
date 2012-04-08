@@ -105,9 +105,10 @@ public:
 	static CUnitSet resurrecters;
 
 private:
+	bool IsInBuildRange(const CWorldObject* obj) const;
+	bool IsInBuildRange(const float3& pos, const float radius = 0.0f) const;
 
 	void CancelRestrictedUnit(const std::string& buildOption);
-	bool ObjInBuildRange(const CWorldObject* obj) const;
 	bool OutOfImmobileRange(const Command& cmd) const;
 	/// add a command to reclaim a feature that is blocking our build-site
 	void ReclaimFeature(CFeature* f);
