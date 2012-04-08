@@ -39,15 +39,17 @@ rm -rf ~/.spring/cache/paths
 
 # start up the client in background
 $RUNCLIENT $1 &
-PID=$!
-
-# kill process after 15mins
-sleep 900 && kill -9 $PID &
-PID_KILLTHREAD=$!
+PID_CLIENT=$!
 
 set +e #temp disable abort on error
-gdb -batch -return-child-result -x $GDBCMDS
+gdb -batch -return-child-result -x $GDBCMDS &
+PID_HOST=$!
+
+# auto kill host after 15mins
+sleep 900 && kill -9 $PID_HOST &
+
 # store exit code
+wait $PID_HOST
 EXIT=$?
 set -e
 
@@ -55,9 +57,8 @@ set -e
 rm -f $GDBCMDS
 
 # get spring client process exit code / wait for exit
-wait $PID
+wait $PID_CLIENT
 EXITCHILD=$?
-kill -9 $PID_KILLTHREAD
 # wait for client to exit
 if [ $EXITCHILD -ne 0 ];
 then
