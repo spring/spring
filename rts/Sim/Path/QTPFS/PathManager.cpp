@@ -525,7 +525,6 @@ void QTPFS::PathManager::ExecuteSearch(
 ) {
 	IPathSearch* search = *searchesIt;
 	IPath* path = pathCache.GetTempPath(search->GetID());
-//	MoveDef* md = moveDefHandler->moveDefs[pathType];
 
 	assert(search != NULL);
 	assert(path != NULL);
