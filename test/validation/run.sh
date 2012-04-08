@@ -42,9 +42,8 @@ $RUNCLIENT $1 &
 PID=$!
 
 # kill process after 15mins
-echo "foo"
 sleep 900 && kill -9 $PID &
-echo "bar"
+PID_KILLTHREAD=$!
 
 set +e #temp disable abort on error
 gdb -batch -return-child-result -x $GDBCMDS
@@ -58,6 +57,7 @@ rm -f $GDBCMDS
 # get spring client process exit code / wait for exit
 wait $PID
 EXITCHILD=$?
+kill -9 $PID_KILLTHREAD
 # wait for client to exit
 if [ $EXITCHILD -ne 0 ];
 then
