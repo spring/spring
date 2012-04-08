@@ -411,10 +411,8 @@ void CBuilderCAI::SlowUpdate()
 					StopMove();
 				} else {
 					build.pos = helper->Pos2BuildPos(build, true);
-					const float sqdist = f3SqDist(build.pos, builder->pos);
 
-					if ((sqdist < Square(builder->buildDistance * 0.6f + radius)) ||
-						(!owner->unitDef->canmove && (sqdist <= Square(builder->buildDistance + radius - 8.0f)))) {
+					if (IsInBuildRange(build.pos, radius)) {
 						StopMove();
 
 						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
@@ -702,8 +700,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 
 	if (CBuilder* b = dynamic_cast<CBuilder*>(guardee)) {
 		if (b->terraforming) {
-			if (f3SqDist(builder->pos, b->terraformCenter) <
-					Square((builder->buildDistance * 0.8f) + (b->terraformRadius * 0.7f))) {
+			if (IsInBuildRange(b->terraformCenter, b->terraformRadius * 0.7f)) {
 				StopMove();
 				owner->moveType->KeepPointingTo(b->terraformCenter, builder->buildDistance * 0.9f, false);
 				builder->HelpTerraform(b);
@@ -1135,7 +1132,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 		const float3 pos(c.params[0], ground->GetHeightReal(c.params[0], c.params[2]), c.params[2]);
 		const float radius = std::min(c.params[3], 200.0f);
 
-		if (f3SqDist(builder->pos, pos) < Square(builder->buildDistance - 1.0f)) {
+		if (IsInBuildRange(pos, radius * 0.7f)) {
 			StopMove();
 			builder->StartRestore(pos, radius);
 			owner->moveType->KeepPointingTo(pos, builder->buildDistance * 0.9f, false);
