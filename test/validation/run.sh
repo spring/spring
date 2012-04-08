@@ -37,6 +37,8 @@ ulimit -t 900
 # maybe a foreign directory for the client is the cleanest way...
 rm -rf ~/.spring/cache/paths
 
+killall -9 $1
+
 # start up the client in background
 $RUNCLIENT $1 &
 PID=$!
