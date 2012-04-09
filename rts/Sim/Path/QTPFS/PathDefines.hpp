@@ -22,7 +22,6 @@
 #define QTPFS_CACHE_BASEDIR "cache/PathNodeTrees/"
 
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
-#define WS(p) ((p) * SQUARE_SIZE)
 
 #endif
 

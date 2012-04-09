@@ -47,8 +47,8 @@ bool QTPFS::PathSearch::Execute(
 	unsigned int searchStateOffset,
 	unsigned int searchMagicNumber
 ) {
-	searchState = searchStateOffset;
-	searchMagic = searchMagicNumber;
+	searchState = searchStateOffset; // starts at NODE_STATE_OFFSET
+	searchMagic = searchMagicNumber; // starts at numTerrainChanges
 
 	haveFullPath = (srcNode == tgtNode);
 	havePartPath = false;
@@ -157,10 +157,7 @@ void QTPFS::PathSearch::IterateSearch(
 	curNode->SetMagicNumber(searchMagic);
 
 	openNodes.pop();
-
-	#ifdef QTPFS_DEBUG_QUEUE
 	openNodes.check_heap_property(0);
-	#endif
 
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
 	searchIter.SetPoppedNodeIdx(curNode->zmin() * gs->mapx + curNode->xmin());
@@ -223,58 +220,57 @@ void QTPFS::PathSearch::IterateSearch(
 		//     nightmare)
 		#ifdef QTPFS_COPY_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
-		nxtPoint = (nxtNode == tgtNode)? tgtPoint: curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
+		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#else
 		nxtNode = nxtNodes[i];
-		nxtPoint = (nxtNode == tgtNode)? tgtPoint: curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
-		#endif
-
-		#ifndef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
-		assert(curNode->GetNeighborEdgeTransitionPoint(nxtNode, ZeroVector) == nxtNode->GetNeighborEdgeTransitionPoint(curNode, ZeroVector));
+		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#endif
 
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
 		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
+		const bool isTarget = (nxtNode == tgtNode);
 
-		const float mCost = curNode->GetPathCost(NODE_PATH_COST_M) + curNode->GetMoveCost();
-		const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + curNode->GetMoveCost() * (nxtPoint - curPoint).Length();
-		const float hCost = (tgtPoint - nxtPoint).Length() * hWeight;
+		const float gDist = (nxtPoint - curPoint).Length();
+		const float hDist = (tgtPoint - nxtPoint).Length();
+
+		const float mCost =
+			curNode->GetPathCost(NODE_PATH_COST_M) +
+			curNode->GetMoveCost() +
+			nxtNode->GetMoveCost() * int(isTarget);
+		const float gCost =
+			curNode->GetPathCost(NODE_PATH_COST_G) +
+			curNode->GetMoveCost() * gDist +
+			nxtNode->GetMoveCost() * hDist * int(isTarget);
+		const float hCost = hWeight * hDist * int(!isTarget);
 
 		if (!isCurrent) {
-			// at this point, we know that <nxtNode> is either
-			// not from the current search (!current) or (if it
-			// is) already placed in the open queue
 			UpdateNode(nxtNode, curNode, gCost, hCost, mCost);
+
+			openNodes.push(nxtNode);
+			openNodes.check_heap_property(0);
 
 			#ifdef QTPFS_TRACE_PATH_SEARCHES
 			searchIter.AddPushedNodeIdx(nxtNode->zmin() * gs->mapx + nxtNode->xmin());
 			#endif
 
-			openNodes.push(nxtNode);
-
-			#ifdef QTPFS_DEBUG_QUEUE
-			openNodes.check_heap_property(0);
-			#endif
 			continue;
 		}
 
-		if (isClosed)
-			continue;
 		if (gCost >= nxtNode->GetPathCost(NODE_PATH_COST_G))
 			continue;
+		if (isClosed)
+			openNodes.push(nxtNode);
+
 
 		UpdateNode(nxtNode, curNode, gCost, hCost, mCost);
 
-		// nxtNode was already marked open, restore ordering
+		// restore ordering in case nxtNode was already open
 		// (changing the f-cost of an OPEN node messes up the
 		// queue's internal consistency; a pushed node remains
 		// OPEN until it gets popped)
 		openNodes.resort(nxtNode);
+		openNodes.check_heap_property(0);
 	}
-
-	#ifdef QTPFS_DEBUG_QUEUE
-	openNodes.check_heap_property(0);
-	#endif
 }
 
 void QTPFS::PathSearch::Finalize(IPath* path) {
