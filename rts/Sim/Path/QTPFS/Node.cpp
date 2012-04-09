@@ -40,8 +40,8 @@ float QTPFS::INode::GetPathCost(unsigned int type) const {
 }
 
 float QTPFS::INode::GetDistance(const INode* n, unsigned int type) const {
-	const float dx = float(WS(xmid())) - float(WS(n->xmid()));
-	const float dz = float(WS(zmid())) - float(WS(n->zmid()));
+	const float dx = float(xmid() * SQUARE_SIZE) - float(n->xmid() * SQUARE_SIZE);
+	const float dz = float(zmid() * SQUARE_SIZE) - float(n->zmid() * SQUARE_SIZE);
 
 	switch (type) {
 		case NODE_DIST_EUCLIDEAN: { return math::sqrt((dx * dx) + (dz * dz)); } break;
@@ -98,17 +98,17 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 	#define CAST static_cast<unsigned int>
 	switch (rel) {
 		// corners
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmax()); } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmax()); } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
 		// edges
 		// clamp <pos> (assumed to be inside <this>) to
 		// the shared-edge bounds and ortho-project it
-		case REL_NGB_EDGE_T: { p.x = WS(Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx)); p.z = WS(minz); } break;
-		case REL_NGB_EDGE_B: { p.x = WS(Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx)); p.z = WS(maxz); } break;
-		case REL_NGB_EDGE_R: { p.z = WS(Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz)); p.x = WS(maxx); } break;
-		case REL_NGB_EDGE_L: { p.z = WS(Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz)); p.x = WS(minx); } break;
+		case REL_NGB_EDGE_T: { p.x = Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx) * SQUARE_SIZE; p.z = minz * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B: { p.x = Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx) * SQUARE_SIZE; p.z = maxz * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_R: { p.z = Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz) * SQUARE_SIZE; p.x = maxx * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_L: { p.z = Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz) * SQUARE_SIZE; p.x = minx * SQUARE_SIZE; } break;
 
 		// <ngb> had better be an actual neighbor
 		case 0: { assert(false); } break;
@@ -117,15 +117,15 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 	#else
 	switch (rel) {
 		// corners
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmax()); } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmax()); } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
 		// edges
-		case REL_NGB_EDGE_T:                  { p.x = WS(midx  ); p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_R:                  { p.x = WS(xmax()); p.z = WS(midz  ); } break;
-		case REL_NGB_EDGE_B:                  { p.x = WS(midx  ); p.z = WS(zmax()); } break;
-		case REL_NGB_EDGE_L:                  { p.x = WS(xmin()); p.z = WS(midz  ); } break;
+		case REL_NGB_EDGE_T:                  { p.x = midx   * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_R:                  { p.x = xmax() * SQUARE_SIZE; p.z = midz   * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B:                  { p.x = midx   * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_L:                  { p.x = xmin() * SQUARE_SIZE; p.z = midz   * SQUARE_SIZE; } break;
 
 		// <ngb> had better be an actual neighbor
 		case 0: { assert(false); } break;
