@@ -10,6 +10,7 @@
 #define QTPFS_SMOOTH_PATHS
 #define QTPFS_WEIGHTED_HEURISTIC_COST
 #define QTPFS_IGNORE_MAP_EDGES
+// #define QTPFS_CONSERVATIVE_NODE_SPLITS
 // #define QTPFS_DEBUG_QUEUE
 // #define QTPFS_CORNER_CONNECTED_NODES
 // #define QTPFS_COPY_NEIGHBOR_NODES
@@ -21,7 +22,6 @@
 #define QTPFS_CACHE_BASEDIR "cache/PathNodeTrees/"
 
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
-#define WS(p) ((p) * SQUARE_SIZE)
 
 #endif
 

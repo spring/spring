@@ -18,6 +18,7 @@ CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true); // in sa
 CONFIG(int, AtiHacks).defaultValue(-1);
 CONFIG(bool, DualScreenMode).defaultValue(false);
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false);
+CONFIG(bool, TeamNanoSpray).defaultValue(true);
 
 /**
  * @brief global rendering
@@ -89,7 +90,7 @@ CGlobalRendering::CGlobalRendering()
 	, drawFog(true)
 	, drawdebug(false)
 
-	, teamNanospray(false)
+	, teamNanospray(true)
 	, active(true)
 	, compressTextures(false)
 	, haveATI(false)
@@ -189,6 +190,8 @@ void CGlobalRendering::PostInit() {
 		FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers,
 		maxTextureSize, compressTextures
 	);
+
+	teamNanospray = configHandler->GetBool("TeamNanoSpray");
 }
 
 

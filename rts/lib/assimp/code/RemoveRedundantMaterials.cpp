@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -47,6 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RemoveRedundantMaterials.h"
 #include "ParsingUtils.h"
 #include "ProcessHelper.h"
+#include "MaterialSystem.h"
 
 using namespace Assimp;
 
@@ -114,7 +115,7 @@ void RemoveRedundantMatsProcess::Execute( aiScene* pScene)
 						// Our brilliant 'salt': A single material property with ~ as first
 						// character to mark it as internal and temporary.
 						const int dummy = 1;
-						((MaterialHelper*)mat)->AddProperty(&dummy,1,"~RRM.UniqueMaterial",0,0);
+						((aiMaterial*)mat)->AddProperty(&dummy,1,"~RRM.UniqueMaterial",0,0);
 
 						// Keep this material even if no mesh references it
 						abReferenced[i] = true;
@@ -144,7 +145,7 @@ void RemoveRedundantMatsProcess::Execute( aiScene* pScene)
 				continue;
 			}
 
-			uint32_t me = aiHashes[i] = ((MaterialHelper*)pScene->mMaterials[i])->ComputeHash();
+			uint32_t me = aiHashes[i] = ComputeMaterialHash(pScene->mMaterials[i]);
 			for (unsigned int a = 0; a < i;++a)
 			{
 				if (abReferenced[a] && me == aiHashes[a]) {
@@ -175,7 +176,7 @@ void RemoveRedundantMatsProcess::Execute( aiScene* pScene)
 				{
 					aiString sz;
 					sz.length = ::sprintf(sz.data,"JoinedMaterial_#%i",p);
-					((MaterialHelper*)ppcMaterials[idx])->AddProperty(&sz,AI_MATKEY_NAME);
+					((aiMaterial*)ppcMaterials[idx])->AddProperty(&sz,AI_MATKEY_NAME);
 				}
 				else ppcMaterials[idx] = pScene->mMaterials[p];
 			}

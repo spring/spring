@@ -9,7 +9,6 @@ class COrbitController: public CCameraController {
 	public:
 		COrbitController();
 
-		void Init(const float3& p, const float3& tar = ZeroVector);
 		void Update();
 
 		const std::string GetName() const { return "OrbitController"; }
@@ -21,8 +20,8 @@ class COrbitController: public CCameraController {
 		void ScreenEdgeMove(float3 move);
 		void MouseWheelMove(float move);
 
-		float3 GetPos();
-		float3 GetDir();
+		float3 GetPos() const;
+		float3 GetDir() const;
 
 		void SetPos(const float3& newPos);
 		float3 SwitchFrom() const;
@@ -32,6 +31,7 @@ class COrbitController: public CCameraController {
 		bool SetState(const StateMap& sm);
 
 	private:
+		void Init(const float3& p, const float3& tar = ZeroVector);
 		void MyMouseMove(int, int, int, int, int);
 		void Orbit();
 		void Pan(int, int);
@@ -39,6 +39,7 @@ class COrbitController: public CCameraController {
 
 		float3 GetOrbitPos() const;
 
+	private:
 		int lastMouseMoveX;
 		int lastMouseMoveY;
 		int lastMousePressX; // x-coor of last button press

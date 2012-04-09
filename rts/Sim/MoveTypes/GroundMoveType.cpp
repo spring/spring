@@ -83,7 +83,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(currWayPoint),
 	CR_MEMBER(nextWayPoint),
 	CR_MEMBER(atGoal),
-	CR_MEMBER(haveFinalWaypoint),
+	CR_MEMBER(atEndOfPath),
 
 	CR_MEMBER(currWayPointDist),
 	CR_MEMBER(prevWayPointDist),
@@ -142,7 +142,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	currWayPoint(ZeroVector),
 	nextWayPoint(ZeroVector),
 	atGoal(false),
-	haveFinalWaypoint(false),
+	atEndOfPath(false),
 
 	currWayPointDist(0.0f),
 	prevWayPointDist(0.0f),
@@ -272,11 +272,12 @@ bool CGroundMoveType::Update()
 		// (so we want to avoid being considered "idle", since that
 		// will cause our path to be re-requested and again give us
 		// a temporary waypoint, etc.)
-		// NOTE: this is only relevant for QTPFS
+		// NOTE: this is only relevant for QTPFS (at present)
 		// if the unit is just turning in-place over several frames
 		// (eg. to maneuver around an obstacle), do not consider it
 		// as "idling"
-		idling = (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f);
+		idling = true;
+		idling &= (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f);
 		idling &= (std::abs(owner->heading - heading) < turnRate);
 		hasMoved = false;
 	} else {
@@ -284,18 +285,24 @@ bool CGroundMoveType::Update()
 
 		// note: HandleObjectCollisions() may have negated the position set
 		// by UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
+		// note: the idling-check can only succeed if we are oriented in the
+		// direction of our waypoint, which compensates for the fact distance
+		// decreases much less quickly when moving orthogonal to <waypointDir>
 		oldPos = owner->pos;
+
+		const float3 ffd = flatFrontDir * posDif.SqLength() * 0.5f;
+		const float3 wpd = waypointDir * ((int(!reversing) * 2) - 1);
 
 		// too many false negatives: speed is unreliable if stuck behind an obstacle
 		//   idling = (owner->speed.SqLength() < (accRate * accRate));
+		//   idling &= (Square(currWayPointDist - prevWayPointDist) <= (accRate * accRate));
 		// too many false positives: waypoint-distance delta and speed vary too much
 		//   idling = (Square(currWayPointDist - prevWayPointDist) < owner->speed.SqLength());
 		// too many false positives: many slow units cannot even manage 1 elmo/frame
 		//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
-
 		idling = true;
 		idling &= (math::fabs(posDif.y) < math::fabs(cmpEps.y * owner->pos.y));
-		idling &= (Square(currWayPointDist - prevWayPointDist) <= (posDif.SqLength() * 0.5f));
+		idling &= (Square(currWayPointDist - prevWayPointDist) < ffd.dot(wpd));
 		hasMoved = true;
 	}
 
@@ -439,7 +446,7 @@ bool CGroundMoveType::FollowPath()
 
 		{
 			// NOTE:
-			//     uses owner->pos instead of currWayPoint (ie. not the same as haveFinalWaypoint)
+			//     uses owner->pos instead of currWayPoint (ie. not the same as atEndOfPath)
 			//
 			//     if our first command is a build-order, then goalRadius is set to our build-range
 			//     and we cannot increase tolerance safely (otherwise the unit might stop when still
@@ -460,7 +467,7 @@ bool CGroundMoveType::FollowPath()
 			}
 		}
 
-		if (!haveFinalWaypoint) {
+		if (!atEndOfPath) {
 			GetNextWayPoint();
 		} else {
 			if (atGoal) {
@@ -537,26 +544,26 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 				const float reqTurnAngle = math::fabs(180.0f * (owner->heading - wantedHeading) / SHORTINT_MAXVALUE);
 				const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
-				float reducedSpeed = (reversing)? maxReverseSpeed: maxSpeed;
+				float turnSpeed = (reversing)? maxReverseSpeed: maxSpeed;
 
 				if (reqTurnAngle != 0.0f) {
-					reducedSpeed *= (maxTurnAngle / reqTurnAngle);
-				}
-
-				if (haveFinalWaypoint && !atGoal) {
-					// at this point, Update() will no longer call GetNextWayPoint()
-					// and we must slow down to prevent entering an infinite circle
-					targetSpeed = fastmath::apxsqrt(currWayPointDist * (reversing? accRate: decRate));
+					turnSpeed *= (maxTurnAngle / reqTurnAngle);
 				}
 
 				if (waypointDir.SqLength() > 0.1f) {
 					if (!ud->turnInPlace) {
-						targetSpeed = std::max(ud->turnInPlaceSpeedLimit, reducedSpeed);
+						targetSpeed = std::max(ud->turnInPlaceSpeedLimit, turnSpeed);
 					} else {
 						if (reqTurnAngle > ud->turnInPlaceAngleLimit) {
-							targetSpeed = reducedSpeed;
+							targetSpeed = turnSpeed;
 						}
 					}
+				}
+
+				if (atEndOfPath) {
+					// at this point, Update() will no longer call GetNextWayPoint()
+					// and we must slow down to prevent entering an infinite circle
+					targetSpeed = std::min(targetSpeed, (currWayPointDist * PI) / (SPRING_CIRCLE_DIVS / turnRate));
 				}
 			}
 
@@ -565,6 +572,11 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 			//     if wantedSpeed > targetSpeed, the unit will
 			//     not accelerate to speed > targetSpeed unless
 			//     its actual max{Reverse}Speed is also changed
+			//
+			//     raise wantedSpeed iff the terrain-modifier is
+			//     larger than 1 (so units still get their speed
+			//     bonus correctly), otherwise leave it untouched
+			wantedSpeed *= std::max(groundMod, 1.0f);
 			targetSpeed *= groundMod;
 			targetSpeed *= ((startBreaking)? 0.0f: 1.0f);
 			targetSpeed = std::min(targetSpeed, wantedSpeed);
@@ -575,7 +587,6 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 
 	deltaSpeed = pathController->GetDeltaSpeed(
 		pathId,
-		wantedSpeed,
 		targetSpeed,
 		currentSpeed,
 		accRate,
@@ -1172,7 +1183,7 @@ void CGroundMoveType::GetNewPath()
 	// if new path received, can't be at waypoint
 	if (pathId != 0) {
 		atGoal = false;
-		haveFinalWaypoint = false;
+		atEndOfPath = false;
 
 		currWayPoint = pathManager->NextWayPoint(pathId, owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id);
 		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
@@ -1237,10 +1248,11 @@ void CGroundMoveType::GetNextWayPoint()
 
 			// trigger Arrived on the next Update (but
 			// only if we have non-temporary waypoints)
-			haveFinalWaypoint |= (curGoalDistSq < minGoalDistSq);
+			// atEndOfPath |= (currWayPoint == nextWayPoint);
+			atEndOfPath |= (curGoalDistSq < minGoalDistSq);
 		}
 
-		if (haveFinalWaypoint) {
+		if (atEndOfPath) {
 			currWayPoint = goalPos;
 			nextWayPoint = goalPos;
 			return;
@@ -1390,6 +1402,9 @@ void CGroundMoveType::HandleObjectCollisions()
 	CUnit* collider = owner;
 	collider->mobility->tempOwner = collider;
 
+	// handle collisions for even-numbered objects on even-numbered frames and vv.
+	// (temporal resolution is still high enough to not compromise accuracy much?)
+	// if ((collider->id & 1) == (gs->frameNum & 1)) {
 	{
 		const UnitDef*   colliderUD = collider->unitDef;
 		const MoveDef*   colliderMD = collider->mobility;
@@ -1468,20 +1483,18 @@ void CGroundMoveType::HandleUnitCollisions(
 		// first rule can be ignored at will by either party (only through Lua) such that it is not stopped
 		// however neither party can override its pushResistant gene: the party that has it set will ignore
 		// pushing contributions from the other WITHOUT being forcibly stopped, unless *both* happen to be
-		// push-resistant (then both are stopped)
+		// push-resistant (then both are stopped) --> technically correct but produces deadlocked units, so
+		// this is NOT enforced
 		const bool alliedCollision =
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
 		const bool collideeYields = (collider->isMoving && !collidee->isMoving);
 		const bool ignoreCollidee = ((collideeYields && alliedCollision) || colliderUD->pushResistant);
-		const bool disablePushing =
-			(colliderUD->pushResistant && !collider->beingBuilt) &&
-			(collideeUD->pushResistant && !collidee->beingBuilt);
 
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
-		pushCollider &= (!disablePushing && !collidee->usingScriptMoveType);
-		pushCollidee &= (!disablePushing && !collider->usingScriptMoveType);
+		pushCollider &= (!collider->beingBuilt && !collidee->usingScriptMoveType);
+		pushCollidee &= (!collidee->beingBuilt && !collider->usingScriptMoveType);
 
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= (collider->speed != ZeroVector);
@@ -1494,6 +1507,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			continue;
 
 		eventHandler.UnitUnitCollision(collider, collidee);
+
 
 		const float colliderRelRadius = colliderRadius / (colliderRadius + collideeRadius);
 		const float collideeRelRadius = collideeRadius / (colliderRadius + collideeRadius);
@@ -1509,8 +1523,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float
 			m1 = collider->mass,
 			m2 = collidee->mass,
-			v1 = std::max(1.0f, colliderSpeed), // TODO: precalculate
-			v2 = std::max(1.0f, collideeSpeed), // TODO: precalculate
+			v1 = std::max(1.0f, colliderSpeed),
+			v2 = std::max(1.0f, collideeSpeed),
 			c1 = 1.0f + (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
 			c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
 			s1 = m1 * v1 * c1,
@@ -1519,23 +1533,11 @@ void CGroundMoveType::HandleUnitCollisions(
  			r2 = s2 / (s1 + s2 + 1.0f);
 
 		// far from a realistic treatment, but works
-		float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r1)) * (1.0f / colliderRelRadius);
-		float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r2)) * (1.0f / collideeRelRadius);
-
-		if (collider->isMoving && collidee->isMoving) {
-			#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
-			// push collider and collidee laterally in opposite directions
-			const int colliderSign = SIGN( separationVector.dot(collider->rightdir));
-			const int collideeSign = SIGN(-separationVector.dot(collidee->rightdir));
-			const float3 colliderSlideVec = collider->rightdir * colliderSign * (1.0f / penDistance);
-			const float3 collideeSlideVec = collidee->rightdir * collideeSign * (1.0f / penDistance);
- 
-			if (pushCollider) { collider->Move3D(colliderSlideVec * r2, true); }
-			if (pushCollidee) { collidee->Move3D(collideeSlideVec * r1, true); }
-			#undef SIGN
-		}
+		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f) * (1.0f / colliderRelRadius) * int(!ignoreCollidee);
+		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f) * (1.0f / collideeRelRadius);
 
 		if (!collideeMobile) {
+			// building
 			CMoveMath::BlockType posBits;
 
 			if (collider->speed == ZeroVector)
@@ -1573,7 +1575,10 @@ void CGroundMoveType::HandleUnitCollisions(
 					}
 				}
 			}
+
+			continue;
 		}
+
 
 		const float3 colliderPushPos = collider->pos + (colResponseVec * colliderMassScale);
 		const float3 collideePushPos = collidee->pos - (colResponseVec * collideeMassScale);
@@ -1582,34 +1587,47 @@ void CGroundMoveType::HandleUnitCollisions(
 			((colliderMM->IsBlocked(*colliderMD, colliderPushPos) & CMoveMath::BLOCK_STRUCTURE) != 0) ||
 			((colliderMM->GetPosSpeedMod(*colliderMD, colliderPushPos) <= 0.01f));
 		const bool cancelCollideePush =
-			(collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideePushPos) & CMoveMath::BLOCK_STRUCTURE) != 0) ||
-			(collideeMobile && (collideeMM->GetPosSpeedMod(*collideeMD, collideePushPos) <= 0.01f));
+			((collideeMM->IsBlocked(*collideeMD, collideePushPos) & CMoveMath::BLOCK_STRUCTURE) != 0) ||
+			((collideeMM->GetPosSpeedMod(*collideeMD, collideePushPos) <= 0.01f));
 
 		// try to prevent both parties from being pushed onto non-traversable
 		// squares (without stopping them dead in their tracks, which is worse)
-		if (cancelColliderPush) { colliderMassScale = 0.0f; }
-		if (cancelCollideePush) { collideeMassScale = 0.0f; }
-
+		//
 		// ignore pushing contributions from idling friendly collidee's
 		// (or if we are resistant to them) without stopping; this will
 		// ONLY take effect if pushCollider is still true
-		if (ignoreCollidee) {
-			colliderMassScale *= ((collideeMobile)? 0.0f: 1.0f);
+		//
+		// either both parties are pushed, or only one party is
+		// pushed and the other is stopped, or both are stopped
+	    if (pushCollider) {
+			if (!cancelColliderPush && (!colliderUD->pushResistant || collideeUD->pushResistant)) {
+				collider->Move3D(colliderPushPos, false);
+			}
+		} else {
+			// NOTE: potentially undoes earlier push-moves made this frame
+			collider->Move3D(collider->moveType->oldPos, false);
 		}
 
-		// either both parties are pushed, or only one party is pushed and the other is stopped, or both are stopped
-		     if (  pushCollider) { collider->Move3D( colResponseVec * colliderMassScale, true); }
-		else if (colliderMobile) { collider->Move3D(collider->moveType->oldPos, false); }
-		     if (  pushCollidee) { collidee->Move3D(-colResponseVec * collideeMassScale, true); }
-		else if (collideeMobile) { collidee->Move3D(collidee->moveType->oldPos, false); }
-
-		#if 0
-		if (!((gs->frameNum + collider->id) & 31) && !colliderCAI->unimportantMove) {
-			// if we do not have an internal move order, tell units around us to bugger off
-			// note: this causes too much chaos among the ranks when groups get large
-			helper->BuggerOff(collider->pos + collider->frontdir * colliderRadius, colliderRadius, true, false, collider->team, collider);
+		if (pushCollidee) {
+			if (!cancelCollideePush && (!collideeUD->pushResistant || colliderUD->pushResistant)) {
+				collidee->Move3D(collideePushPos, false);
+			}
+		} else {
+			collidee->Move3D(collidee->moveType->oldPos, false);
 		}
-		#endif
+
+		if (collider->isMoving && collidee->isMoving) {
+			#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
+			// also push collider and collidee laterally in opposite directions
+			const int colliderSign = SIGN( separationVector.dot(collider->rightdir));
+			const int collideeSign = SIGN(-separationVector.dot(collidee->rightdir));
+			const float3 colliderSlideVec = collider->rightdir * colliderSign * (1.0f / penDistance);
+			const float3 collideeSlideVec = collidee->rightdir * collideeSign * (1.0f / penDistance);
+ 
+			if (pushCollider) { collider->Move3D(colliderSlideVec * r2, true); }
+			if (pushCollidee) { collidee->Move3D(collideeSlideVec * r1, true); }
+			#undef SIGN
+		}
 	}
 }
 
@@ -1652,6 +1670,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 		eventHandler.UnitFeatureCollision(collider, collidee);
 
+
 		const float  sepDistance    = separationVector.Length() + 0.01f;
 		const float  penDistance    = std::max((colliderRadius + collideeRadius) - sepDistance, 1.0f);
 		const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
@@ -1674,8 +1693,8 @@ void CGroundMoveType::HandleFeatureCollisions(
  			r1 = s1 / (s1 + s2 + 1.0f),
  			r2 = s2 / (s1 + s2 + 1.0f);
 
-		const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r1));
-	//	const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - r2));
+		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f);
+		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f);
 
 		if (collidee->reachedFinalPos) {
 			CMoveMath::BlockType posBits;
@@ -1705,9 +1724,12 @@ void CGroundMoveType::HandleFeatureCollisions(
 					}
 				}
 			}
+
+			continue;
 		}
 
-		collider->Move3D(colResponseVec * colliderMassScale, true);
+		collider->Move3D( colResponseVec * colliderMassScale, true);
+		collidee->Move3D(-colResponseVec * collideeMassScale, true);
 	}
 }
 
@@ -1884,6 +1906,9 @@ void CGroundMoveType::TestNewTerrainSquare()
 			moveSquareX = newMoveSquareX;
 			moveSquareY = newMoveSquareY;
 
+			if (pathId == 0)
+				return;
+
 			// if we have moved, check if we can get to the next waypoint
 			int nwsx = (int) nextWayPoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
 			int nwsy = (int) nextWayPoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
@@ -1894,7 +1919,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 				CMoveMath::BLOCK_MOBILE |
 				CMoveMath::BLOCK_MOBILE_BUSY;
 
-			while ((nwsx * nwsx + nwsy * nwsy) < LINETABLE_SIZE && !haveFinalWaypoint && pathId != 0) {
+			while ((nwsx * nwsx + nwsy * nwsy) < LINETABLE_SIZE && !atEndOfPath) {
 				const int ltx = nwsx + LINETABLE_SIZE / 2;
 				const int lty = nwsy + LINETABLE_SIZE / 2;
 				bool wpOk = true;

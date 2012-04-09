@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ copyright notice, this list of conditions and the
 following disclaimer in the documentation and/or other
 materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
 contributors may be used to endorse or promote products
 derived from this software without specific prior
-written permission of the ASSIMP Development Team.
+written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -158,7 +158,7 @@ void XFileImporter::CreateDataRepresentationFromImport( aiScene* pScene, const X
 	{
 		pScene->mNumMaterials = 1;
 		// create the Material
-		Assimp::MaterialHelper* mat = new Assimp::MaterialHelper;
+		aiMaterial* mat = new aiMaterial;
 		int shadeMode = (int) aiShadingMode_Gouraud;
 		mat->AddProperty<int>( &shadeMode, 1, AI_MATKEY_SHADING_MODEL);
 		// material colours
@@ -567,7 +567,7 @@ void XFileImporter::ConvertMaterials( aiScene* pScene, const std::vector<XFile::
 		if( oldMat.mIsReference)
 			continue;
 
-		Assimp::MaterialHelper* mat = new Assimp::MaterialHelper;
+		aiMaterial* mat = new aiMaterial;
 		aiString name;
 		name.Set( oldMat.mName);
 		mat->AddProperty( &name, AI_MATKEY_NAME);

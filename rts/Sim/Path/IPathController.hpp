@@ -24,7 +24,6 @@ public:
 	// being built, etc) this gets called every sim-frame
 	virtual float GetDeltaSpeed(
 		unsigned int pathID,
-		float wantedSpeed,  // max. speed <owner> WANTS to be moving at
 		float targetSpeed,  // max. speed <owner> is ALLOWED to be moving at
 		float currentSpeed, // speed <owner> is currently moving at
 		float maxAccRate,
@@ -65,7 +64,6 @@ public:
 
 	float GetDeltaSpeed(
 		unsigned int pathID,
-		float wantedSpeed,
 		float targetSpeed,
 		float currentSpeed,
 		float maxAccRate,

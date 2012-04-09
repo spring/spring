@@ -165,8 +165,27 @@ Else  (NOT Boost_FOUND)
 	Add_Dependencies(tests test_FileSystem)
 
 
+################################################################################
+### LuaSocketRestrictions
+	add_definitions("-DTEST")
+	Set(test_LuaSocketRestrictions_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/lib/luasocket/TestRestriction.cpp"
+			"${ENGINE_SOURCE_DIR}/lib/luasocket/src/restrictions.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_LuaSocketRestrictions ${test_LuaSocketRestrictions_src})
+	TARGET_LINK_LIBRARIES(test_LuaSocketRestrictions
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_REGEX_LIBRARY}
+		)
+
+	ADD_TEST(NAME LuaSocketRestrictions COMMAND test_LuaSocketRestrictions)
+	Add_Dependencies(tests test_LuaSocketRestrictions)
+
 
 ################################################################################
 
 
 EndIf (NOT Boost_FOUND)
+

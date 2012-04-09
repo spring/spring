@@ -233,7 +233,7 @@ const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture*
 			for (int xpart_ = 0; xpart_ < NUM_SEGMENTS_X; ++xpart_) {
 				const int segmentIdx = (xpart_ + ypart_ * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
 				for (int y = 0; y < NUM_VERTICES_Y; ++y) {
-					const float yp = (y + ypart_ * 4) / float(NUM_SEGMENTS_Y * 4) * PI - PI / 2;
+//					const float yp = (y + ypart_ * 4) / float(NUM_SEGMENTS_Y * 4) * PI - PI / 2;
 					for (int x = 0; x < NUM_VERTICES_X; ++x) {
 						const size_t vIdx = segmentIdx + y * NUM_VERTICES_X + x;
 

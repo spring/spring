@@ -58,7 +58,7 @@ struct basicArray
 
 	basicArrayType *elementList;
 	int elementIndex;	// essentially a built-in iterator
-	int size() { return elementSize; };
+	int size() const { return elementSize; };
 	int elementSize;	// the amount of elements in use
 };
 

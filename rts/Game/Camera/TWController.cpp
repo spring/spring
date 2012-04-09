@@ -25,6 +25,7 @@ CTWController::CTWController()
 	scrollSpeed = configHandler->GetInt("TWScrollSpeed") * 0.1f;
 	enabled = configHandler->GetBool("TWEnabled");
 	fov = configHandler->GetFloat("TWFOV");
+	UpdateVectors();
 }
 
 
@@ -36,6 +37,7 @@ void CTWController::KeyMove(float3 move)
 
 	move *= sqrt(move.z) * 200;
 	pos  += (camera->right * move.x + flatForward * move.y) * scrollSpeed;
+	UpdateVectors();
 }
 
 
@@ -48,6 +50,7 @@ void CTWController::MouseMove(float3 move)
 	flatForward.ANormalize();
 
 	pos += (camera->right * move.x - flatForward * move.y) * scrollSpeed;
+	UpdateVectors();
 }
 
 
@@ -64,27 +67,33 @@ void CTWController::ScreenEdgeMove(float3 move)
 void CTWController::MouseWheelMove(float move)
 {
 	camera->rot.x-=move*0.001f;
+	UpdateVectors();
 }
+
+
+void CTWController::UpdateVectors()
+{
+	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
+	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
+	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
+
+	camera->rot.x = Clamp(camera->rot.x, -PI * 0.4f, -0.1f);
+
+	dir.x = sin(camera->rot.y) * cos(camera->rot.x);
+	dir.y = sin(camera->rot.x);
+	dir.z = cos(camera->rot.y) * cos(camera->rot.x);
+	dir.ANormalize();
+}
+
 
 void CTWController::Update()
 {
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * (-camera->rot.x * 1500) * 2.0f;
 }
 
-float3 CTWController::GetPos()
+
+float3 CTWController::GetPos() const
 {
-	pos.x = Clamp(pos.x, 0.01f, gs->mapx*SQUARE_SIZE-0.01f);
-	pos.z = Clamp(pos.z, 0.01f, gs->mapy*SQUARE_SIZE-0.01f);
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
-
-	camera->rot.x = Clamp(camera->rot.x, -PI*0.4f, -0.1f);
-
-	float3 dir;
-	dir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
-	dir.y=(float)(sin(camera->rot.x));
-	dir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
-	dir.ANormalize();
-
 	float dist = -camera->rot.x * 1500;
 
 	float3 cpos = pos - dir * dist;
@@ -95,14 +104,10 @@ float3 CTWController::GetPos()
 }
 
 
-float3 CTWController::GetDir()
+void CTWController::SetPos(const float3& newPos)
 {
-	float3 dir;
-	dir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
-	dir.y=(float)(sin(camera->rot.x));
-	dir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
-	dir.ANormalize();
-	return dir;
+	pos = newPos;
+	UpdateVectors();
 }
 
 

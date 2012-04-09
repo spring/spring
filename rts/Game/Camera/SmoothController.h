@@ -25,8 +25,7 @@ public:
 	void MouseWheelMove(float move);
 
 	void Update();
-	float3 GetPos();
-	float3 GetDir();
+	float3 GetPos() const;
 
 	float3 SwitchFrom() const;
 	void SwitchTo(bool showText);
@@ -37,11 +36,12 @@ public:
 	bool flipped;
 
 private:
+	void UpdateVectors();
 	void Move(const float3& move, const unsigned timeDiff);
-	
+
+private:
 	float middleClickScrollSpeed;
 	float zscale;
-	float3 dir;
 	float height;
 	float oldAltHeight;
 	bool changeAltHeight;
@@ -51,17 +51,17 @@ private:
 	
 	/// The source of the last move command by the user
 	MoveSource lastSource;
-	
+
+	/// the last move order > 0 given by the user
+	float3 lastMove;
+
 	/**
 	@brief the current speed factor
 	
 	If this is maxSpeedFactor, the camera has its full speed. Otherwise the camera moves with (speedFactor/maxSpeedFactor)
 	*/
 	unsigned speedFactor;
-	
-	/// the last move order > 0 given by the user
-	float3 lastMove;
-	
+
 	/// the time in ms needed to accelerate to full speed
 	static const unsigned maxSpeedFactor = 300;
 };

@@ -5,6 +5,7 @@
 
 #include "WorldObject.h"
 #include "System/Vec2.h"
+#include "System/Misc/BitwiseEnum.h"
 #include "System/Sync/SyncedFloat3.h"
 #include "System/Sync/SyncedPrimitive.h"
 
@@ -12,6 +13,23 @@ class CUnit;
 struct DamageArray;
 struct CollisionVolume;
 struct MoveDef;
+
+
+enum YardmapStati {
+	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
+	//YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
+	YARDMAP_YARD        = 1,    // walkable when yard is open
+	YARDMAP_YARDINV     = 2,    // walkable when yard is closed
+	YARDMAP_BLOCKED     = 0xFF & ~YARDMAP_YARDINV, // always block     (not walkable, not buildable)
+
+	// helpers
+	YARDMAP_YARDBLOCKED = YARDMAP_YARD,
+	YARDMAP_YARDFREE    = ~YARDMAP_YARD,
+	YARDMAP_GEO         = YARDMAP_BLOCKED,
+};
+typedef BitwiseEnum<YardmapStati> YardmapStatus;
+
+
 
 class CSolidObject: public CWorldObject {
 public:
@@ -80,6 +98,8 @@ public:
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
+	YardmapStatus GetGroundBlockingAtPos(float3 gpos) const;
+
 public:
 	float health;
 	float mass;                                 ///< the physical mass of this object (run-time constant)
@@ -92,8 +112,9 @@ public:
 	bool blockEnemyPushing;                     ///< if false, object can be pushed during enemy collisions even when modrules forbid it
 	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 
-	int xsize;                                  ///< The x-size of this object, according to its footprint.
-	int zsize;                                  ///< The z-size of this object, according to its footprint.
+	int xsize;                                  ///< The x-size of this object, according to its footprint. (Note: this is rotated depending on buildFacing!!!)
+	int zsize;                                  ///< The z-size of this object, according to its footprint. (Note: this is rotated depending on buildFacing!!!)
+	int2 footprint;                             ///< The unrotated x-/z-size of this object, according to its footprint.
 
 	SyncedSshort heading;                       ///< Contains the same information as frontdir, but in a short signed integer.
 	PhysicalState physicalState;                ///< The current state of the object within the gameworld. I.e Flying or OnGround.
@@ -122,7 +143,7 @@ public:
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
-	const unsigned char* curYardMap;            ///< Current active yardmap of this object. 0 means no active yardmap => all blocked.
+	const YardmapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
 	int buildFacing;                            ///< Orientation of footprint, 4 different states
 
 	static const float DEFAULT_MASS;
