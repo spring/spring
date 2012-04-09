@@ -34,9 +34,12 @@ static bool IsSafePath(const string& path)
 	    ((path.size() >= 2) && (path[1] == ':'))) {
 		return false;
 	}
-	if (path.find("..") != string::npos) {
+	if ((path.find("..") != string::npos) ||
+		(path.find("springsettings.cfg") != string::npos) || //don't allow to change config file
+		(path.find(".springrc") != string::npos)) {
 		return false;
 	}
+
 	return true;
 }
 
@@ -139,7 +142,8 @@ int LuaIO::system(lua_State* L, const char* command)
 
 int LuaIO::remove(lua_State* L, const char* pathname)
 {
-	if (!SafeWritePath(pathname)) {
+	if (!SafeWritePath(pathname)
+		|| !IsSafePath(pathname)) {
 		errno = EPERM; //EACCESS?
 		return -1;
 	}
@@ -149,7 +153,8 @@ int LuaIO::remove(lua_State* L, const char* pathname)
 
 int LuaIO::rename(lua_State* L, const char* oldpath, const char* newpath)
 {
-	if (!SafeWritePath(oldpath) || !SafeWritePath(newpath)) {
+	if (!SafeWritePath(oldpath) || !SafeWritePath(newpath)
+		|| !IsSafePath(oldpath) || !IsSafePath(newpath)) {
 		errno = EPERM; //EACCESS?
 		return -1;
 	}

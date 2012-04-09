@@ -59,6 +59,9 @@
 #include "System/LoadSave/DemoReader.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
+#ifndef DEDICATED
+#include "lib/luasocket/src/restrictions.h"
+#endif
 
 
 #define PKTCACHE_VECSIZE 1000
@@ -168,7 +171,6 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 		autohostip = "127.0.0.1";
 	}
 	const int autohostport = configHandler->GetInt("AutohostPort");
-
 	if (autohostport > 0) {
 		AddAutohostInterface(autohostip, autohostport);
 	}
@@ -292,6 +294,10 @@ void CGameServer::AddLocalClient(const std::string& myName, const std::string& m
 
 void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int autohostPort)
 {
+#ifndef DEDICATED
+	//disallow luasockets access to autohost interface
+	luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, autohostIP.c_str(), autohostPort, false);
+#endif
 	if (!hostif) {
 		hostif.reset(new AutohostInterface(autohostIP, autohostPort));
 		if (hostif->IsInitialized()) {

@@ -380,7 +380,9 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	ASSERT_SYNCED(pos);
 
 	buildFacing = std::abs(facing) % NUM_FACINGS;
-	curYardMap = (unitDef->GetYardMap(buildFacing).empty())? NULL: &unitDef->GetYardMap(buildFacing)[0];
+	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
+
+	footprint = int2(unitDef->xsize, unitDef->zsize);
 	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
 	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 
@@ -445,6 +447,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
 }
+
 
 void CUnit::PostInit(const CUnit* builder)
 {
@@ -1215,6 +1218,11 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 
 
 void CUnit::AddImpulse(const float3& addedImpulse) {
+	if (GetTransporter() != NULL) {
+		// or apply impulse to the transporter?
+		return;
+	}
+
 	residualImpulse += addedImpulse;
 
 	if (addedImpulse.SqLength() >= 0.01f) {
@@ -1667,10 +1675,6 @@ bool CUnit::SetGroup(CGroup* newGroup)
 
 bool CUnit::AddBuildPower(float amount, CUnit* builder)
 {
-	const float part = amount / buildTime;
-	const float metalUse  = (metalCost  * part);
-	const float energyUse = (energyCost * part);
-
 	if (amount >= 0.0f) { //  build / repair
 		if (!beingBuilt && (health >= maxHealth)) {
 			return false;
@@ -1679,11 +1683,17 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		lastNanoAdd = gs->frameNum;
 
 		if (beingBuilt) { //build
+			const float part = std::min(amount / buildTime, 1.0f - buildProgress);
+			const float metalUse  = (metalCost  * part);
+			const float energyUse = (energyCost * part);
+
 			if ((teamHandler->Team(builder->team)->metal  >= metalUse) &&
 			    (teamHandler->Team(builder->team)->energy >= energyUse) &&
 			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
 				if (builder->UseMetal(metalUse)) {
 					// just because we checked doesn't mean they were deducted since upkeep can prevent deduction
+					// FIXME luaRules->AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
+					// TODO add a builder->UseResources(SResources(metalUse, energyUse))
 					if (builder->UseEnergy(energyUse)) {
 						health += (maxHealth * part);
 						health = std::min(health, maxHealth);
@@ -1705,7 +1715,9 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			}
 			return false;
 		}
-		else { //repair
+		else if (health < maxHealth) { //repair
+			const float part = std::min(amount / buildTime, 1.0f - (health / maxHealth));
+			const float energyUse = (energyCost * part);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
 	  		if (!builder->UseEnergy(energyUseScaled)) {
@@ -1713,21 +1725,22 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 				return false;
 			}
 
-			if (health < maxHealth) {
-				repairAmount += amount;
-				health += maxHealth * part;
-				if (health > maxHealth) {
-					health = maxHealth;
-				}
-				return true;
+			repairAmount += amount;
+			health += maxHealth * part;
+			if (health > maxHealth) {
+				health = maxHealth;
 			}
-			return false;
+			return true;
 		}
 	}
 	else { // reclaim
 		if (isDead) {
 			return false;
 		}
+
+		const float part = std::max(amount / buildTime, -buildProgress);
+		const float energyUse = (energyCost * part);
+		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
 
 		if (luaRules && !luaRules->AllowUnitBuildStep(builder, this, part)) {
 			return false;
@@ -1739,8 +1752,6 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			builder->DependentDied(this);
 			return false;
 		}
-
-		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
 
 		if (!builder->UseEnergy(-energyUseScaled)) {
 			teamHandler->Team(builder->team)->energyPull += energyUseScaled;
@@ -1754,6 +1765,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		health += maxHealth * part;
 
 		if (beingBuilt) {
+			// progressive metal reclaiming
 			builder->AddMetal(-metalUse * modInfo.reclaimUnitEfficiency, false);
 			buildProgress += part;
 
@@ -1763,6 +1775,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			}
 		} else {
 			if (health < 0) {
+				// in case of reclaiming of living units add the whole metal with the last nano particle to the storage
 				builder->AddMetal(metalCost * modInfo.reclaimUnitEfficiency, false);
 				KillUnit(false, true, NULL);
 				return false;
@@ -1869,13 +1882,6 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 			};
 
 			helper->Explosion(params);
-
-			#if (PLAY_SOUNDS == 1)
-			// play explosion sound
-			if (wd->soundhit.getID(0) > 0) {
-				Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, wd->soundhit.getVolume(0));
-			}
-			#endif
 		}
 
 		if (selfDestruct) {
@@ -2070,7 +2076,7 @@ void CUnit::PostLoad()
 	//HACK:Initializing after load
 	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	model = unitDef->LoadModel();
-	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
+	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
 	SetRadiusAndHeight(model->radius, model->height);
 

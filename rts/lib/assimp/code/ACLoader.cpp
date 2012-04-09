@@ -1,10 +1,10 @@
 
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -21,10 +21,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -100,7 +100,7 @@ using namespace Assimp;
 	for (unsigned int i = 0; i < num;++i) \
 	{ \
 		AI_AC_SKIP_TO_NEXT_TOKEN(); \
-		buffer = fast_atof_move(buffer,((float*)out)[i]); \
+		buffer = fast_atoreal_move<float>(buffer,((float*)out)[i]); \
 	}
 
 
@@ -375,7 +375,7 @@ void AC3DImporter::LoadObjectSection(std::vector<Object>& objects)
 // Convert a material from AC3DImporter::Material to aiMaterial
 void AC3DImporter::ConvertMaterial(const Object& object,
 	const Material& matSrc,
-	MaterialHelper& matDest)
+	aiMaterial& matDest)
 {
 	aiString s;
 
@@ -422,7 +422,7 @@ void AC3DImporter::ConvertMaterial(const Object& object,
 // Converts the loaded data to the internal verbose representation
 aiNode* AC3DImporter::ConvertObjectSection(Object& object,
 	std::vector<aiMesh*>& meshes,
-	std::vector<MaterialHelper*>& outMaterials,
+	std::vector<aiMaterial*>& outMaterials,
 	const std::vector<Material>& materials,
 	aiNode* parent)
 {
@@ -463,7 +463,7 @@ aiNode* AC3DImporter::ConvertObjectSection(Object& object,
 			// default material if all objects of the file contain points
 			// and no faces.
 			mesh->mMaterialIndex = 0;
-			outMaterials.push_back(new MaterialHelper());
+			outMaterials.push_back(new aiMaterial());
 			ConvertMaterial(object, materials[0], *outMaterials.back());
 		}
 		else
@@ -548,7 +548,7 @@ aiNode* AC3DImporter::ConvertObjectSection(Object& object,
 				meshes.push_back(mesh);
 
 				mesh->mMaterialIndex = (unsigned int)outMaterials.size();
-				outMaterials.push_back(new MaterialHelper());
+				outMaterials.push_back(new aiMaterial());
 				ConvertMaterial(object, materials[mat], *outMaterials.back());
 
 				// allocate storage for vertices and normals
@@ -811,7 +811,7 @@ void AC3DImporter::InternReadFile( const std::string& pFile,
 	std::vector<aiMesh*> meshes;
 	meshes.reserve(mNumMeshes);
 
-	std::vector<MaterialHelper*> omaterials;
+	std::vector<aiMaterial*> omaterials;
 	materials.reserve(mNumMeshes);
 
 	// generate a dummy root if there are multiple objects on the top layer

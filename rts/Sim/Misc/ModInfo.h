@@ -10,8 +10,7 @@ class CModInfo
 {
 public:
 	CModInfo()
-		: allowTeamColors(true)
-		, allowAircraftToLeaveMap(true)
+		: allowAircraftToLeaveMap(true)
 		, allowPushingEnemyUnits(false)
 		, allowCrushingAlliedUnits(false)
 		, allowUnitCollisionDamage(false)
@@ -74,8 +73,6 @@ public:
 	std::string version;
 	std::string mutator;
 	std::string description;
-
-	bool allowTeamColors;
 
 	// Movement behaviour
 	bool allowAircraftToLeaveMap;    // determines if gunships are allowed to leave map boundaries

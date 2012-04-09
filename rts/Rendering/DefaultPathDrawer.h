@@ -9,6 +9,7 @@ class CPathManager;
 class CPathFinderDef;
 class CPathFinder;
 class CPathEstimator;
+struct UnitDef;
 
 struct DefaultPathDrawer: public IPathDrawer {
 public:

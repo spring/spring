@@ -126,7 +126,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "modMutator",      modInfo.mutator);
 	LuaPushNamedString(L, "modDesc",         modInfo.description);
 
-	LuaPushNamedBool(L,   "allowTeamColors", modInfo.allowTeamColors);
+	LuaPushNamedBool(L,   "allowTeamColors", true);
 
 	LuaPushNamedBool(L,   "constructionDecay",      modInfo.constructionDecay);
 	LuaPushNamedNumber(L, "constructionDecayTime",  modInfo.constructionDecayTime);

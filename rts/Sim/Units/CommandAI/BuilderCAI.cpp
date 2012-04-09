@@ -212,11 +212,17 @@ void CBuilderCAI::PostLoad()
 }
 
 
-inline bool CBuilderCAI::ObjInBuildRange(const CWorldObject* obj) const
+inline bool CBuilderCAI::IsInBuildRange(const CWorldObject* obj) const
+{
+	return IsInBuildRange(obj->pos, obj->radius);
+}
+
+
+inline bool CBuilderCAI::IsInBuildRange(const float3& pos, const float radius) const
 {
 	const CBuilder* builder = (CBuilder*)owner;
-	const float immDistSqr = f3SqLen(owner->pos - obj->pos);
-	const float buildDist = builder->buildDistance + obj->radius - 9.0f;
+	const float immDistSqr = f3SqLen(owner->pos - pos);
+	const float buildDist = (builder->buildDistance + radius) - 9.0f;
 	return (immDistSqr < (buildDist * buildDist));
 }
 
@@ -247,7 +253,7 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 		case CMD_RECLAIM:
 		case CMD_RESURRECT:
 		case CMD_CAPTURE: {
-			if (!ObjInBuildRange(obj)) {
+			if (!IsInBuildRange(obj)) {
 				return true;
 			}
 			break;
@@ -314,10 +320,8 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		bi.pos = helper->Pos2BuildPos(bi, true);
 
 		if (!owner->unitDef->canmove) {
-			const CBuilder* builder = (CBuilder*)owner;
-			const float dist = f3Len(builder->pos - bi.pos);
 			const float radius = GetBuildOptionRadius(bi.def, c.GetID());
-			if (dist > (builder->buildDistance + radius - 8.0f)) {
+			if (!IsInBuildRange(bi.pos, radius)) {
 				return;
 			}
 		}
@@ -374,8 +378,8 @@ void CBuilderCAI::SlowUpdate()
 
 		if (inCommand) {
 			if (building) {
-				if (f3SqDist(build.pos, builder->pos) > Square(builder->buildDistance + radius - 8.0f)) {
-					owner->moveType->StartMoving(build.pos, builder->buildDistance * 0.5f + radius);
+				if (!IsInBuildRange(build.pos, radius)) {
+					owner->moveType->StartMoving(build.pos, (builder->buildDistance + radius) * 0.95f);
 				} else {
 					StopMove();
 					// needed since above startmoving cancels this
@@ -407,10 +411,8 @@ void CBuilderCAI::SlowUpdate()
 					StopMove();
 				} else {
 					build.pos = helper->Pos2BuildPos(build, true);
-					const float sqdist = f3SqDist(build.pos, builder->pos);
 
-					if ((sqdist < Square(builder->buildDistance * 0.6f + radius)) ||
-						(!owner->unitDef->canmove && (sqdist <= Square(builder->buildDistance + radius - 8.0f)))) {
+					if (IsInBuildRange(build.pos, radius)) {
 						StopMove();
 
 						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
@@ -566,7 +568,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			const float radius = c.params[4] + 100.0f; // do not walk too far outside repair area
 
 			if (((pos - unit->pos).SqLength2D() > radius * radius ||
-				(builder->curBuild == unit && unit->isMoving && !ObjInBuildRange(unit)))) {
+				(builder->curBuild == unit && unit->isMoving && !IsInBuildRange(unit)))) {
 				StopMove();
 				FinishCommand();
 				return;
@@ -575,14 +577,15 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 
 		// do not consider units under construction irreparable
 		// even if they can be repaired
-		if ((unit->beingBuilt || unit->unitDef->repairable)
-		    && (unit->health < unit->maxHealth) &&
-		    ((unit != owner) || owner->unitDef->canSelfRepair) &&
-		    (!unit->soloBuilder || (unit->soloBuilder == owner)) &&
-			(!(c.options & INTERNAL_ORDER) || (c.options & CONTROL_KEY) || !IsUnitBeingReclaimed(unit, owner)) &&
-		    UpdateTargetLostTimer(unit->id)) {
+		bool canRepairUnit = true;
+		canRepairUnit &= ((unit->beingBuilt) || (unit->unitDef->repairable && (unit->health < unit->maxHealth)));
+		canRepairUnit &= ((unit != owner) || owner->unitDef->canSelfRepair);
+		canRepairUnit &= (!unit->soloBuilder || (unit->soloBuilder == owner));
+		canRepairUnit &= (!(c.options & INTERNAL_ORDER) || (c.options & CONTROL_KEY) || !IsUnitBeingReclaimed(unit, owner));
+		canRepairUnit &= (UpdateTargetLostTimer(unit->id) != 0);
 
-			if (f3SqDist(unit->pos, builder->pos) < Square(builder->buildDistance + unit->radius - 8.0f)) {
+		if (canRepairUnit) {
+			if (IsInBuildRange(unit)){
 				StopMove();
 				builder->SetRepairTarget(unit);
 				owner->moveType->KeepPointingTo(unit->pos, builder->buildDistance * 0.9f + unit->radius, false);
@@ -638,7 +641,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 			const float radius = c.params[4] + 100; // do not walk too far outside capture area
 
 			if (((pos - unit->pos).SqLength2D() > (radius * radius) ||
-				(builder->curCapture == unit && unit->isMoving && !ObjInBuildRange(unit)))) {
+				(builder->curCapture == unit && unit->isMoving && !IsInBuildRange(unit)))) {
 				StopMove();
 				FinishCommand();
 				return;
@@ -646,7 +649,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		}
 
 		if (unit->unitDef->capturable && unit->team != owner->team && UpdateTargetLostTimer(unit->id)) {
-			if (f3SqDist(unit->pos, builder->pos) < Square(builder->buildDistance + unit->radius - 8.0f)) {
+			if (IsInBuildRange(unit)) {
 				StopMove();
 				builder->SetCaptureTarget(unit);
 				owner->moveType->KeepPointingTo(unit->pos, builder->buildDistance * 0.9f + unit->radius, false);
@@ -697,8 +700,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 
 	if (CBuilder* b = dynamic_cast<CBuilder*>(guardee)) {
 		if (b->terraforming) {
-			if (f3SqDist(builder->pos, b->terraformCenter) <
-					Square((builder->buildDistance * 0.8f) + (b->terraformRadius * 0.7f))) {
+			if (IsInBuildRange(b->terraformCenter, b->terraformRadius * 0.7f)) {
 				StopMove();
 				owner->moveType->KeepPointingTo(b->terraformCenter, builder->buildDistance * 0.9f, false);
 				builder->HelpTerraform(b);
@@ -857,7 +859,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 				const bool outOfReclaimRange =
 					((pos - unit->pos).SqLength2D() > radius * radius) ||
-					(builder->curReclaim == unit && unit->isMoving && !ObjInBuildRange(unit));
+					(builder->curReclaim == unit && unit->isMoving && !IsInBuildRange(unit));
 				const bool busyAlliedBuilder =
 					unit->unitDef->builder &&
 					!unit->commandAI->commandQue.empty() &&
@@ -918,7 +920,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 bool CBuilderCAI::ResurrectObject(CFeature *feature) {
 	CBuilder* builder = (CBuilder*) owner;
 
-	if (f3SqDist(feature->pos, builder->pos) < Square(builder->buildDistance + feature->radius - 1.0f)) {
+	if (IsInBuildRange(feature)) {
 		StopMove();
 		owner->moveType->KeepPointingTo(feature->pos, builder->buildDistance * 0.9f + feature->radius, false);
 		builder->SetResurrectTarget(feature);
@@ -1127,10 +1129,10 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 			FinishCommand();
 		}
 	} else if (owner->unitDef->canRestore) {
-		float3 pos(c.params[0], ground->GetHeightReal(c.params[0], c.params[2]), c.params[2]);
+		const float3 pos(c.params[0], ground->GetHeightReal(c.params[0], c.params[2]), c.params[2]);
 		const float radius = std::min(c.params[3], 200.0f);
 
-		if (f3SqDist(builder->pos, pos) < Square(builder->buildDistance - 1.0f)) {
+		if (IsInBuildRange(pos, radius * 0.7f)) {
 			StopMove();
 			builder->StartRestore(pos, radius);
 			owner->moveType->KeepPointingTo(pos, builder->buildDistance * 0.9f, false);
@@ -1153,12 +1155,18 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 				return CMD_RECLAIM;
 			}
 		} else {
-			CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
-			if ((pointed->health < pointed->maxHealth) &&
-			    (pointed->unitDef->repairable) &&
-			    (!pointed->soloBuilder || (pointed->soloBuilder == owner)) &&
-			    (( pointed->beingBuilt && owner->unitDef->canAssist) ||
-			     (!pointed->beingBuilt && owner->unitDef->canRepair))) {
+			const CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
+
+			const bool canAssistPointed =
+				(owner->unitDef->canAssist && pointed->beingBuilt) &&
+				(!pointed->soloBuilder || (pointed->soloBuilder == owner));
+			const bool canRepairPointed =
+				(owner->unitDef->canRepair && !pointed->beingBuilt) &&
+				pointed->unitDef->repairable && (pointed->health < pointed->maxHealth);
+
+			if (canAssistPointed) {
+				return CMD_REPAIR;
+			} else if (canRepairPointed) {
 				return CMD_REPAIR;
 			} else if (tran && tran->CanTransport(owner)) {
 				return CMD_LOAD_ONTO;
@@ -1306,7 +1314,7 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 bool CBuilderCAI::ReclaimObject(CSolidObject* object) {
 	CBuilder* builder = (CBuilder*) owner;
 
-	if (f3SqDist(object->pos, builder->pos) < Square(builder->buildDistance + object->radius - 1.0f)) {
+	if (IsInBuildRange(object)) {
 		StopMove();
 		owner->moveType->KeepPointingTo(object->pos, builder->buildDistance * 0.9f + object->radius, false);
 		builder->SetReclaimTarget(object);
@@ -1360,7 +1368,7 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 					}
 					const float dist = f3SqLen(u->pos - owner->pos);
 					if(dist < bestDist || (!stationary && !u->isMoving)) {
-						if (!owner->unitDef->canmove && !ObjInBuildRange(u)) {
+						if (!owner->unitDef->canmove && !IsInBuildRange(u)) {
 							continue;
 						}
 						if(!stationary && !u->isMoving) {
@@ -1395,7 +1403,7 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 					if (!f->IsInLosForAllyTeam(owner->allyteam)) {
 						continue;
 					}
-					if (!owner->unitDef->canmove && !ObjInBuildRange(f)) {
+					if (!owner->unitDef->canmove && !IsInBuildRange(f)) {
 						continue;
 					}
 					if(!(options & CONTROL_KEY) && IsFeatureBeingResurrected(f->id, owner)) {
@@ -1455,7 +1463,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 			float dist = f3SqLen(f->pos - owner->pos);
 			if (dist < bestDist) {
 				// dont lock-on to units outside of our reach (for immobile builders)
-				if (!owner->unitDef->canmove && !ObjInBuildRange(f)) {
+				if (!owner->unitDef->canmove && !IsInBuildRange(f)) {
 					continue;
 				}
 				if(!(options & CONTROL_KEY) && IsFeatureBeingReclaimed(f->id, owner)) {
@@ -1504,7 +1512,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 			}
 			float dist = f3SqLen(unit->pos - owner->pos);
 			if(dist < bestDist || (!stationary && !unit->isMoving)) {
-				if (!owner->unitDef->canmove && !ObjInBuildRange(unit)) {
+				if (!owner->unitDef->canmove && !IsInBuildRange(unit)) {
 					continue;
 				}
 				if(!stationary && !unit->isMoving) {
@@ -1577,7 +1585,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				float dist = f3SqLen(unit->pos - owner->pos);
 				if (dist < bestDist || (!stationary && !unit->isMoving)) {
 					// dont lock-on to units outside of our reach (for immobile builders)
-					if (!owner->unitDef->canmove && !ObjInBuildRange(unit)) {
+					if (!owner->unitDef->canmove && !IsInBuildRange(unit)) {
 						continue;
 					}
 					// don't repair stuff that's being reclaimed

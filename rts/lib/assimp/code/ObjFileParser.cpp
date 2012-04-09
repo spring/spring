@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -46,8 +46,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ObjFileMtlImporter.h"
 #include "ObjTools.h"
 #include "ObjFileData.h"
-#include "fast_atof.h"
-#include "../include/aiTypes.h"
+#include "ParsingUtils.h"
+#include "../include/assimp/types.h"
 #include "DefaultIOSystem.h"
 
 namespace Assimp	
@@ -55,7 +55,6 @@ namespace Assimp
 
 // -------------------------------------------------------------------
 const std::string ObjFileParser::DEFAULT_MATERIAL = AI_DEFAULT_MATERIAL_NAME; 
-// fix: changed that to our standard default name
 
 // -------------------------------------------------------------------
 //	Constructor with loaded data and directories.
@@ -82,11 +81,11 @@ ObjFileParser::ObjFileParser(std::vector<char> &Data,const std::string &strModel
 }
 
 // -------------------------------------------------------------------
-//	Destrcutor.
+//	Destructor
 ObjFileParser::~ObjFileParser()
 {
-	delete m_pModel->m_pDefaultMaterial;
-	m_pModel->m_pDefaultMaterial = NULL;
+	/*delete m_pModel->m_pDefaultMaterial;
+	m_pModel->m_pDefaultMaterial = NULL;*/
 
 	delete m_pModel;
 	m_pModel = NULL;
@@ -133,9 +132,12 @@ void ObjFileParser::parseFile()
 			}
 			break;
 
-		case 'f': // Parse a face
+		case 'p': // Parse a face, line or point statement
+		case 'l':
+		case 'f':
 			{
-				getFace();
+				getFace(*m_DataIt == 'f' ? aiPrimitiveType_POLYGON : (*m_DataIt == 'l' 
+					? aiPrimitiveType_LINE : aiPrimitiveType_POINT));
 			}
 			break;
 
@@ -255,7 +257,7 @@ void ObjFileParser::getVector2( std::vector<aiVector2D> &point2d_array )
 
 // -------------------------------------------------------------------
 //	Get values for a new face instance
-void ObjFileParser::getFace()
+void ObjFileParser::getFace(aiPrimitiveType type)
 {
 	copyNextLine(m_buffer, BUFFERSIZE);
 	if (m_DataIt == m_DataItEnd)
@@ -272,23 +274,24 @@ void ObjFileParser::getFace()
 	std::vector<unsigned int> *pNormalID = new std::vector<unsigned int>;
 	bool hasNormal = false;
 
-	bool vt = (!m_pModel->m_TextureCoord.empty());
-	bool vn = (!m_pModel->m_Normals.empty());
+	const bool vt = (!m_pModel->m_TextureCoord.empty());
+	const bool vn = (!m_pModel->m_Normals.empty());
 	int iStep = 0, iPos = 0;
 	while (pPtr != pEnd)
 	{
 		iStep = 1;
-		if (*pPtr == '\0')
-			break;
 
-		if (*pPtr=='\r' || *pPtr=='\n')
+		if (IsLineEnd(*pPtr))
 			break;
 
 		if (*pPtr=='/' )
 		{
+			if (type == aiPrimitiveType_POINT) {
+				DefaultLogger::get()->error("Obj: Separator unexpected in point statement");
+			}
 			if (iPos == 0)
 			{
-				//if there are no texturecoordinates in the obj file but normals
+				//if there are no texture coordinates in the file, but normals
 				if (!vt && vn) {
 					iPos = 1;
 					iStep++;
@@ -330,11 +333,17 @@ void ObjFileParser::getFace()
 				}
 			}
 		}
-		for ( int i=0; i<iStep; i++ )
-			++pPtr;
+		pPtr += iStep;
 	}
 
-	ObjFile::Face *face = new ObjFile::Face( pIndices, pNormalID, pTexID );
+	if ( pIndices->empty() ) 
+	{
+		DefaultLogger::get()->error("Obj: Ignoring empty face");
+		m_DataIt = skipLine<DataArrayIt>( m_DataIt, m_DataItEnd, m_uiLine );
+		return;
+	}
+
+	ObjFile::Face *face = new ObjFile::Face( pIndices, pNormalID, pTexID, type );
 	
 	// Set active material, if one set
 	if (NULL != m_pModel->m_pCurrentMaterial) 
@@ -342,7 +351,7 @@ void ObjFileParser::getFace()
 	else 
 		face->m_pMaterial = m_pModel->m_pDefaultMaterial;
 
-	// Create a default object, if nothing there
+	// Create a default object, if nothing is there
 	if ( NULL == m_pModel->m_pCurrent )
 		createObject( "defaultobject" );
 	
@@ -368,6 +377,15 @@ void ObjFileParser::getFace()
 //	Get values for a new material description
 void ObjFileParser::getMaterialDesc()
 {
+	// Each material request a new object.
+	// Sometimes the object is already created (see 'o' tag by example), but it is not initialized !
+	// So, we create a new object only if the current on is already initialized !
+	if (m_pModel->m_pCurrent != NULL &&
+		(	m_pModel->m_pCurrent->m_Meshes.size() > 1 ||
+			(m_pModel->m_pCurrent->m_Meshes.size() == 1 && m_pModel->m_Meshes[m_pModel->m_pCurrent->m_Meshes[0]]->m_Faces.size() != 0)	)
+		)
+		m_pModel->m_pCurrent = NULL;
+
 	// Get next data for material data
 	m_DataIt = getNextToken<DataArrayIt>(m_DataIt, m_DataItEnd);
 	if (m_DataIt == m_DataItEnd)
@@ -516,11 +534,11 @@ void ObjFileParser::getGroupName()
 	if ( isEndOfBuffer( m_DataIt, m_DataItEnd ) )
 		return;
 
-	// Store groupname in group library 
+	// Store the group name in the group library 
 	char *pStart = &(*m_DataIt);
 	while ( m_DataIt != m_DataItEnd && !isSeparator(*m_DataIt) )
 		m_DataIt++;
-	std::string strGroupName(pStart, &(*m_DataIt));
+	std::string strGroupName( pStart, &(*m_DataIt) );
 
 	// Change active group, if necessary
 	if ( m_pModel->m_strActiveGroup != strGroupName )

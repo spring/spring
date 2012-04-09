@@ -18,24 +18,12 @@ fi
 
 #install
 cd ${BUILDDIR}
-make install-spring-headless demotool DESTDIR=${TESTDIR}
+make install-spring-headless demotool install-pr-downloader DESTDIR=${TESTDIR}
 
 # HACK/FIXME force spring to detect install dir as read-only
 chmod 555 ${TESTDIR}/usr/local/share/games/spring
 
 cd ${SOURCEDIR}
-
-function download_file {
-	OUTPUT=$1
-	URL=$2
-	OUTPUTDIR=$(dirname $OUTPUT)
-	if [ ! -d $OUTPUTDIR ]; then
-		mkdir -p $OUTPUTDIR
-	fi
-	if [ ! -s $OUTPUT ]; then
-		wget -N -P $OUTPUTDIR $URL || ( rm -rf ${OUTPUTDIR} && exit 1 )
-	fi
-}
 
 function makescript {
 	GAME=$1
@@ -47,25 +35,27 @@ function makescript {
 	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
 }
 
-GAME1="Balanced Annihilation V7.65"
-GAME1_FILENAME="balanced_annihilation-v7.65.sdz"
-GAME2="Zero-K v1.0.3.8"
-GAME2_FILENAME="zero-k-v1.0.3.8.sdz"
+GAME1="Balanced Annihilation V7.68"
+GAME2="Zero-K v1.0.4.0"
 MAP="Altair_Crossing-V1"
-MAP_FILENAME="Altair_Crossing.sd7"
 
-download_file $DOWNLOADDIR/$GAME1_FILENAME http://api.springfiles.com/files/games/$GAME1_FILENAME
-download_file $DOWNLOADDIR/$GAME2_FILENAME http://api.springfiles.com/files/games/$GAME2_FILENAME
-download_file $DOWNLOADDIR/$MAP_FILENAME http://springfiles.com/sites/default/files/downloads/spring/spring-maps/$MAP_FILENAME
+PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
+
+$PRDL --download-game "$GAME1"
+$PRDL --download-game "$GAME2"
+$PRDL --download-map "$MAP"
 
 #install required files into spring dir
 cd ${SOURCEDIR}
-mkdir -p ${CONTENT_DIR}/games ${CONTENT_DIR}/maps ${CONTENT_DIR}/LuaUI/Widgets ${CONTENT_DIR}/LuaUI/Config
+mkdir -p ${CONTENT_DIR}/LuaUI/Widgets ${CONTENT_DIR}/LuaUI/Config
 
 #symlink files into into destination dir
-cp -suv ${DOWNLOADDIR}/$GAME1_FILENAME ${CONTENT_DIR}/games/$GAME1_FILENAME
-cp -suv ${DOWNLOADDIR}/$GAME2_FILENAME ${CONTENT_DIR}/games/$GAME2_FILENAME
-cp -suv ${DOWNLOADDIR}/$MAP_FILENAME ${CONTENT_DIR}/maps/$MAP_FILENAME
+for i in games maps pool packages;
+do
+	# delete existing destination dir
+	rm -rf ${CONTENT_DIR}/$i
+	ln -sfv ${DOWNLOADDIR}/$i ${CONTENT_DIR}/$i
+done
 
 #copy widget + config
 cp -suv ${SOURCEDIR}/test/validation/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
@@ -76,8 +66,6 @@ cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${TESTDIR}/.springrc
 
 #set data directory to test directory
 echo "SpringData = ${TESTDIR}/usr/local/share/games/spring" >> ${TESTDIR}/.springrc
-
-
 
 makescript "$GAME1" "$MAP" AAI 0.9
 makescript "$GAME1" "$MAP" E323AI 3.25.0

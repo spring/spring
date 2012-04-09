@@ -232,9 +232,20 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
+#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+	// do not signal floating point exceptions in devil library
+	streflop::fpenv_t fenv;
+	streflop::fegetenv(&fenv);
+	streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+#endif
+
 	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
 	ilDisable(IL_ORIGIN_SET);
 	delete[] buffer;
+
+#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+	streflop::fesetenv(&fenv);
+#endif
 
 	if (success == false) {
 		AllocDummy();

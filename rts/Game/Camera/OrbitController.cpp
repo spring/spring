@@ -14,9 +14,9 @@
 #include "System/Input/KeyInput.h"
 
 CONFIG(bool, OrbitControllerEnabled).defaultValue(true);
-CONFIG(float, OrbitControllerOrbitSpeed).defaultValue(0.25f);
-CONFIG(float, OrbitControllerPanSpeed).defaultValue(2.00f);
-CONFIG(float, OrbitControllerZoomSpeed).defaultValue(5.00f);
+CONFIG(float, OrbitControllerOrbitSpeed).defaultValue(0.25f).minimumValue(0.1f).maximumValue(10.0f);
+CONFIG(float, OrbitControllerPanSpeed).defaultValue(2.00f).minimumValue(0.1f).maximumValue(10.0f);
+CONFIG(float, OrbitControllerZoomSpeed).defaultValue(5.00f).minimumValue(0.1f).maximumValue(10.0f);
 
 #define DEG2RAD(a) ((a) * (3.141592653f / 180.0f))
 #define RAD2DEG(a) ((a) * (180.0f / 3.141592653f))
@@ -36,10 +36,6 @@ COrbitController::COrbitController():
 	orbitSpeedFact = configHandler->GetFloat("OrbitControllerOrbitSpeed");
 	panSpeedFact   = configHandler->GetFloat("OrbitControllerPanSpeed");
 	zoomSpeedFact  = configHandler->GetFloat("OrbitControllerZoomSpeed");
-
-	orbitSpeedFact = std::max(0.1f, std::min(10.0f, orbitSpeedFact));
-	panSpeedFact   = std::max(0.1f, std::min(10.0f, panSpeedFact));
-	zoomSpeedFact  = std::max(0.1f, std::min(10.0f, zoomSpeedFact));
 }
 
 void COrbitController::Init(const float3& p, const float3& tar)
@@ -150,7 +146,17 @@ void COrbitController::MyMouseMove(int dx, int dy, int rdx, int rdy, int button)
 	}
 }
 
+float3 COrbitController::GetPos() const
+{
+	return camera->pos;
+}
 
+float3 COrbitController::GetDir() const
+{
+	float3 dir = cen - camera->pos;
+	dir.ANormalize();
+	return dir;
+}
 
 void COrbitController::Orbit()
 {
@@ -214,13 +220,6 @@ void COrbitController::MouseWheelMove(float move)
 {
 }
 
-
-
-float3 COrbitController::GetPos()
-{
-	return camera->pos;
-}
-
 void COrbitController::SetPos(const float3& newPos)
 {
 	if (keyInput->IsKeyPressed(SDLK_LMETA)) {
@@ -239,11 +238,6 @@ void COrbitController::SetPos(const float3& newPos)
 	camera->pos.z += dz;
 
 	Init(camera->pos, cen);
-}
-
-float3 COrbitController::GetDir()
-{
-	return (cen - camera->pos).ANormalize();
 }
 
 float3 COrbitController::GetOrbitPos() const

@@ -119,7 +119,7 @@ public:
 
 protected:
 	bool atGoal;
-	bool haveFinalWaypoint;
+	bool atEndOfPath;
 
 	float currWayPointDist;
 	float prevWayPointDist;

@@ -21,8 +21,8 @@ public:
 	void MouseWheelMove(float move);
 
 	void Update();
-	float3 GetPos();
-	float3 GetDir();
+	float3 GetPos() const;
+	void SetPos(const float3& newPos);
 
 	float3 SwitchFrom() const;
 	void SwitchTo(bool showText);
@@ -33,9 +33,11 @@ public:
 	bool flipped;
 
 private:
+	void UpdateVectors();
+
+private:
 	float middleClickScrollSpeed;
 	float zscale;
-	float3 dir;
 	float height;
 	float oldAltHeight;
 	bool changeAltHeight;

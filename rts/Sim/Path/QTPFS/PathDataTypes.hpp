@@ -4,12 +4,16 @@
 #define QTPFS_PATH_DATA_TYPES_HDR
 
 #include <vector>
+#include "PathDefines.hpp"
 
 #define NODE_CMP_EQ(a, b) (a->operator==(b))
 #define NODE_CMP_LT(a, b) (a->operator< (b))
 #define NODE_CMP_LE(a, b) (a->operator<=(b))
 #define NODE_CMP_GT(a, b) (a->operator> (b))
 #define NODE_CMP_GE(a, b) (a->operator>=(b))
+
+// #define __HEAP_DEBUG__
+// #define __HEAP_DEBUG_PRINT__
 
 namespace QTPFS {
 	template<class TNode> class binary_heap {
@@ -135,12 +139,14 @@ namespace QTPFS {
 
 
 		void check_heap_property(size_t idx) const {
+			#ifdef QTPFS_DEBUG_QUEUE
 			if (valid_idx(idx)) {
 				assert(is_sorted(idx) == 0);
 
 				check_heap_property(l_child_idx(idx));
 				check_heap_property(r_child_idx(idx));
 			}
+			#endif
 		}
 
 		#ifdef __HEAP_DEBUG_PRINT__

@@ -39,6 +39,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h" // for qf->GetFeaturesExact(pos, radius)
 #include "System/SafeCStrings.h"
+#include "System/myMath.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Log/ILog.h"
 
@@ -1378,8 +1379,9 @@ EXPORT(const char*) skirmishAiCallback_Mod_getDescription(int skirmishAIId) {
 	return modInfo.description.c_str();
 }
 
+// DEPRECATED
 EXPORT(bool) skirmishAiCallback_Mod_getAllowTeamColors(int skirmishAIId) {
-	return modInfo.allowTeamColors;
+	return true;
 }
 
 EXPORT(bool) skirmishAiCallback_Mod_getConstructionDecay(int skirmishAIId) {
@@ -2585,15 +2587,58 @@ EXPORT(float) skirmishAiCallback_UnitDef_getMaxRudder(int skirmishAIId, int unit
 EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax) {
 
 	const UnitDef* unitDef = getUnitDefById(skirmishAIId, unitDefId);
-	const std::vector<unsigned char>& yardMapInternal = unitDef->GetYardMap(facing);
+	const std::vector<YardmapStatus>& yardMapInternal = unitDef->GetYardMap();
 
 	int yardMapSize = yardMapInternal.size();
 
 	if ((yardMap != NULL) && !yardMapInternal.empty()) {
 		yardMapSize = min(yardMapInternal.size(), yardMap_sizeMax);
 
-		for (int i = 0; i < yardMapSize; ++i) {
-			yardMap[i] = (short) yardMapInternal[i];
+		const int xsize = unitDef->xsize;
+		const int zsize = unitDef->zsize;
+		int2 xdir(1,0);
+		int2 zdir(0,1);
+		int row_width = xsize;
+		int startidx = 0; // position of yardMapInternal[0] in the new destination array
+		
+		switch (facing) {
+			case FACING_SOUTH:
+				xdir = int2( 1, 0);
+				zdir = int2( 0, 1);
+				row_width = xsize;
+				startidx  = 0; // topleft
+				break;
+			case FACING_NORTH:
+				xdir = int2(-1, 0);
+				zdir = int2( 0,-1);
+				row_width = xsize;
+				startidx  = (xsize * zsize) - 1; // bottomright
+				break;
+			case FACING_EAST:
+				xdir = int2( 0, 1);
+				zdir = int2(-1, 0);
+				row_width = zsize;
+				startidx  = (xsize - 1) * zsize; // bottomleft
+				break;
+			case FACING_WEST:
+				xdir = int2( 0,-1);
+				zdir = int2( 1, 0);
+				row_width = zsize;
+				startidx  = zsize - 1;  // topright
+				break;
+			default:
+				assert(false);
+		}
+
+		// rotate yardmap for backward compatibility
+		for (int z = 0; z < zsize; ++z) {
+			for (int x = 0; x < xsize; ++x) {
+				const int xt = xdir.x * x + xdir.y * z;
+				const int zt = zdir.x * x + zdir.y * z;
+				const int idx = startidx + xt + zt * row_width;
+				assert(idx >= 0 && idx < yardMapSize);
+				yardMap[idx] = (short) yardMapInternal[x + z * xsize];
+			}
 		}
 	}
 

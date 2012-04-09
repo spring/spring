@@ -8,7 +8,7 @@ SET( LIBRARY_SOVERSION "2" )
 # 3) Add libassimp using the file lists (eliminates duplication of file names between
 #    source groups and library command)
 #
-SET( HEADER_PATH ../include )
+SET( HEADER_PATH ../include/assimp )
 
 SET( COMPILER_HEADERS
 	${HEADER_PATH}/Compiler/pushpack1.h
@@ -18,42 +18,44 @@ SET( COMPILER_HEADERS
 SOURCE_GROUP( Compiler FILES ${COMPILER_HEADERS})
 
 SET( PUBLIC_HEADERS
-	${HEADER_PATH}/aiAnim.h
-	${HEADER_PATH}/aiAssert.h
-	${HEADER_PATH}/aiCamera.h
-	${HEADER_PATH}/aiColor4D.h
-	${HEADER_PATH}/aiColor4D.inl
-	${HEADER_PATH}/aiConfig.h
-	${HEADER_PATH}/aiDefines.h
-	${HEADER_PATH}/aiFileIO.h
-	${HEADER_PATH}/aiLight.h
-	${HEADER_PATH}/aiMaterial.h
-	${HEADER_PATH}/aiMaterial.inl
-	${HEADER_PATH}/aiMatrix3x3.h
-	${HEADER_PATH}/aiMatrix3x3.inl
-	${HEADER_PATH}/aiMatrix4x4.h
-	${HEADER_PATH}/aiMatrix4x4.inl
-	${HEADER_PATH}/aiMesh.h
-	${HEADER_PATH}/aiPostProcess.h
-	${HEADER_PATH}/aiQuaternion.h
-	${HEADER_PATH}/aiScene.h
-	${HEADER_PATH}/aiTexture.h
-	${HEADER_PATH}/aiTypes.h
-	${HEADER_PATH}/aiVector2D.h
-	${HEADER_PATH}/aiVector3D.h
-	${HEADER_PATH}/aiVector3D.inl
-	${HEADER_PATH}/aiVersion.h
-	${HEADER_PATH}/assimp.h
-	${HEADER_PATH}/assimp.hpp
-	${HEADER_PATH}/DefaultLogger.h
-	${HEADER_PATH}/ProgressHandler.h
-	${HEADER_PATH}/IOStream.h
-	${HEADER_PATH}/IOSystem.h
-	${HEADER_PATH}/Logger.h
-	${HEADER_PATH}/LogStream.h
-	${HEADER_PATH}/NullLogger.h
-	${HEADER_PATH}/export.h
-	${HEADER_PATH}/export.hpp
+	${HEADER_PATH}/anim.h
+	${HEADER_PATH}/assert.h
+	${HEADER_PATH}/camera.h
+	${HEADER_PATH}/color4.h
+	${HEADER_PATH}/color4.inl
+	${HEADER_PATH}/config.h
+	${HEADER_PATH}/defs.h
+	${HEADER_PATH}/cfileio.h
+	${HEADER_PATH}/light.h
+	${HEADER_PATH}/material.h
+	${HEADER_PATH}/material.inl
+	${HEADER_PATH}/matrix3x3.h
+	${HEADER_PATH}/matrix3x3.inl
+	${HEADER_PATH}/matrix4x4.h
+	${HEADER_PATH}/matrix4x4.inl
+	${HEADER_PATH}/mesh.h
+	${HEADER_PATH}/postprocess.h
+	${HEADER_PATH}/quaternion.h
+	${HEADER_PATH}/quaternion.inl
+	${HEADER_PATH}/scene.h
+	${HEADER_PATH}/texture.h
+	${HEADER_PATH}/types.h
+	${HEADER_PATH}/vector2.h
+	${HEADER_PATH}/vector2.inl
+	${HEADER_PATH}/vector3.h
+	${HEADER_PATH}/vector3.inl
+	${HEADER_PATH}/version.h
+	${HEADER_PATH}/cimport.h
+	${HEADER_PATH}/Importer.hpp
+	${HEADER_PATH}/DefaultLogger.hpp
+	${HEADER_PATH}/ProgressHandler.hpp
+	${HEADER_PATH}/IOStream.hpp
+	${HEADER_PATH}/IOSystem.hpp
+	${HEADER_PATH}/Logger.hpp
+	${HEADER_PATH}/LogStream.hpp
+	${HEADER_PATH}/NullLogger.hpp
+	${HEADER_PATH}/cexport.h
+	${HEADER_PATH}/Exporter.hpp
 )
 
 SET( Core_SRCS
@@ -77,11 +79,11 @@ SET( Boost_SRCS
 SOURCE_GROUP(Boost FILES ${Boost_SRCS})
 
 SET( Logging_SRCS
-	${HEADER_PATH}/DefaultLogger.h
-	${HEADER_PATH}/IOStream.h
-	${HEADER_PATH}/LogStream.h
-	${HEADER_PATH}/Logger.h
-	${HEADER_PATH}/NullLogger.h
+	${HEADER_PATH}/DefaultLogger.hpp
+	${HEADER_PATH}/IOStream.hpp
+	${HEADER_PATH}/LogStream.hpp
+	${HEADER_PATH}/Logger.hpp
+	${HEADER_PATH}/NullLogger.hpp
 	Win32DebugLogStream.h
 	DefaultLogger.cpp
 	FileLogStream.h
@@ -324,9 +326,12 @@ SET( Obj_SRCS
 SOURCE_GROUP( Obj FILES ${Obj_SRCS})
 
 SET( Ogre_SRCS
-	OgreImporter.h
+	OgreImporter.hpp
+	OgreXmlHelper.hpp
 	OgreImporter.cpp
-	OgreImporterMaterial.cpp
+	OgreMaterial.cpp
+	OgreMesh.cpp
+	OgreSkeleton.cpp
 )
 SOURCE_GROUP( Ogre FILES ${Ogre_SRCS})
 
@@ -335,6 +340,8 @@ SET( Ply_SRCS
 	PlyLoader.h
 	PlyParser.cpp
 	PlyParser.h
+	PlyExporter.cpp
+	PlyExporter.h
 )
 SOURCE_GROUP( Ply FILES ${Ply_SRCS})
 
@@ -382,6 +389,13 @@ SET(IFC_SRCS
 	STEPFileReader.cpp
 )
 SOURCE_GROUP( IFC FILES ${IFC_SRCS})
+
+SET( XGL_SRCS
+	XGLLoader.cpp
+	XGLLoader.h
+)
+SOURCE_GROUP( XGL FILES ${XGL_SRCS})
+
 
 SET( PostProcessing_SRCS
 	CalcTangentsProcess.cpp
@@ -435,6 +449,8 @@ SET( PostProcessing_SRCS
 	ProcessHelper.h
 	ProcessHelper.cpp
 	PolyTools.h
+	MakeVerboseFormat.cpp
+	MakeVerboseFormat.h
 )
 SOURCE_GROUP( PostProcessing FILES ${PostProcessing_SRCS})
 
@@ -470,6 +486,8 @@ SOURCE_GROUP( SMD FILES ${SMD_SRCS})
 SET( STL_SRCS
 	STLLoader.cpp
 	STLLoader.h
+	STLExporter.h
+	STLExporter.cpp
 )
 SOURCE_GROUP( STL FILES ${STL_SRCS})
 
@@ -496,8 +514,6 @@ SET( Exporter_SRCS
 SOURCE_GROUP( Exporter FILES ${Exporter_SRCS})
 
 SET( Extra_SRCS
-	MakeVerboseFormat.cpp
-	MakeVerboseFormat.h
 	MD4FileData.h
 )
 SOURCE_GROUP( Extra FILES ${Extra_SRCS})
@@ -520,6 +536,28 @@ SET( ConvertUTF_SRCS
 )
 SOURCE_GROUP( ConvertUTF FILES ${ConvertUTF_SRCS})
 
+SET( Clipper_SRCS 
+	../contrib/clipper/clipper.hpp
+	../contrib/clipper/clipper.cpp
+)
+SOURCE_GROUP( Clipper FILES ${Clipper_SRCS})
+
+
+SET( Poly2Tri_SRCS 
+	../contrib/poly2tri/poly2tri/common/shapes.cc
+	../contrib/poly2tri/poly2tri/common/shapes.h
+	../contrib/poly2tri/poly2tri/common/utils.h
+	../contrib/poly2tri/poly2tri/sweep/advancing_front.h
+	../contrib/poly2tri/poly2tri/sweep/advancing_front.cc
+	../contrib/poly2tri/poly2tri/sweep/cdt.cc
+	../contrib/poly2tri/poly2tri/sweep/cdt.h
+	../contrib/poly2tri/poly2tri/sweep/sweep.cc
+	../contrib/poly2tri/poly2tri/sweep/sweep.h
+	../contrib/poly2tri/poly2tri/sweep/sweep_context.cc
+	../contrib/poly2tri/poly2tri/sweep/sweep_context.h
+)
+SOURCE_GROUP( Poly2Tri FILES ${Poly2Tri_SRCS})
+
 SET( unzip_SRCS
 	../contrib/unzip/crypt.h
 	../contrib/unzip/ioapi.c
@@ -528,6 +566,13 @@ SET( unzip_SRCS
 	../contrib/unzip/unzip.h
 )
 SOURCE_GROUP( unzip FILES ${unzip_SRCS})
+
+
+# VC2010 fixes
+OPTION( VC10_STDINT_FIX "Fix for VC10 Compiler regarding pstdint.h redefinition errors" OFF )
+if( VC10_STDINT_FIX )
+	ADD_DEFINITIONS( -D_STDINT )
+endif( VC10_STDINT_FIX )
 
 ADD_DEFINITIONS( -DASSIMP_BUILD_DLL_EXPORT )
 
@@ -542,6 +587,7 @@ else (UNZIP_FOUND)
 	SET (unzip_compile_SRCS ${unzip_SRCS})
 endif (UNZIP_FOUND)
 
+IF ( BUILD_STATIC_LIB )
 ADD_LIBRARY( assimp STATIC
 	# Assimp Files
 	${Core_SRCS}
@@ -588,17 +634,84 @@ ADD_LIBRARY( assimp STATIC
 	${BLENDER_SRCS}
 	${NDO_SRCS}
 	${IFC_SRCS}
+	${XGL_SRCS}
 	
 	# Third-party libraries
 	${IrrXML_SRCS}
 	${ConvertUTF_SRCS}
 	${unzip_compile_SRCS}
+	${Poly2Tri_SRCS}
+	${Clipper_SRCS}
 	# Necessary to show the headers in the project when using the VC++ generator:
 	${Boost_SRCS}
 
 	${PUBLIC_HEADERS}
 	${COMPILER_HEADERS}
 )
+ELSE ( BUILD_STATIC_LIB )
+ADD_LIBRARY( assimp SHARED
+	# Assimp Files
+	${Core_SRCS}
+	${Common_SRCS}
+	${Logging_SRCS}
+	${Exporter_SRCS}
+	${PostProcessing_SRCS}
+
+	# Model Support
+	${3DS_SRCS}
+	${AC_SRCS}
+	${ASE_SRCS}
+	${B3D_SRCS}
+	${BVH_SRCS}
+	${Collada_SRCS}
+	${DXF_SRCS}
+	${CSM_SRCS}
+	${HMP_SRCS}
+	${Irr_SRCS}
+	${LWO_SRCS}
+	${LWS_SRCS}
+	${M3_SRCS}
+	${MD2_SRCS}
+	${MD3_SRCS}
+	${MD5_SRCS}
+	${MDC_SRCS}
+	${MDL_SRCS}
+	${MaterialSystem_SRCS}
+	${NFF_SRCS}
+	${OFFFormat_SRCS}
+	${Obj_SRCS}
+	${Ogre_SRCS}
+	${Ply_SRCS}
+	${Q3D_SRCS}
+	${Q3BSP_SRCS}
+	${Raw_SRCS}
+	${SMD_SRCS}
+	${STL_SRCS}
+	${Unreal_SRCS}
+	${XFile_SRCS}
+	${Extra_SRCS}
+	${MS3D_SRCS}
+	${COB_SRCS}
+	${BLENDER_SRCS}
+	${NDO_SRCS}
+	${IFC_SRCS}
+	${XGL_SRCS}
+	
+	# Third-party libraries
+	${IrrXML_SRCS}
+	${ConvertUTF_SRCS}
+	${unzip_compile_SRCS}
+	${Poly2Tri_SRCS}
+	${Clipper_SRCS}
+	# Necessary to show the headers in the project when using the VC++ generator:
+	${Boost_SRCS}
+
+	${PUBLIC_HEADERS}
+	${COMPILER_HEADERS}
+)
+ENDIF ( BUILD_STATIC_LIB )
+
+SET_PROPERTY(TARGET assimp PROPERTY DEBUG_POSTFIX ${DEBUG_POSTFIX})
 
 TARGET_LINK_LIBRARIES(assimp ${ZLIB_LIBRARIES})
 SET_TARGET_PROPERTIES( assimp PROPERTIES

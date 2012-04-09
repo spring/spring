@@ -36,7 +36,10 @@
 #include "System/EventHandler.h"
 #include "System/mmgr.h"
 #include "System/myMath.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
+
+#define PLAY_SOUNDS 1
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -321,6 +324,18 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 	CExplosionEvent explosionEvent(expPos, damages.GetDefaultDamage(), damageAOE, weaponDef);
 	FireExplosionEvent(explosionEvent);
+
+	#if (PLAY_SOUNDS == 1)
+	if (weaponDef != NULL) {
+		const GuiSoundSet& soundSet = weaponDef->hitSound;
+		const int soundNum = (expPos.y < 0.0f);
+		const int soundID = soundSet.getID(soundNum);
+
+		if (soundID > 0) {
+			Channels::Battle.PlaySample(soundID, expPos, soundSet.getVolume(soundNum));
+		}
+	}
+	#endif
 }
 
 

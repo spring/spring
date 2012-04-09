@@ -19,9 +19,6 @@ public:
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
 
-	float3 GetPos();
-	float3 GetDir();
-
 	void SetPos(const float3& newPos);
 	void SetDir(const float3& newDir);
 	float3 SwitchFrom() const;
@@ -31,9 +28,11 @@ public:
 	bool SetState(const StateMap& sm);
 
 private:
+	void UpdateVectors();
+
+private:
 	float mouseScale;
 	float oldHeight;
-	float3 dir;
 };
 
 #endif // _FPS_CONTROLLER_H

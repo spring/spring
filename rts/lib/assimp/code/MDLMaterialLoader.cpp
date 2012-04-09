@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -63,9 +63,9 @@ void MDLImporter::SearchPalette(const unsigned char** pszColorMap)
 	{
 		if (pcStream->FileSize() >= 768)
 		{
-			szColorMap = new unsigned char[256*3];
-			pcStream->Read(const_cast<unsigned char*>(szColorMap),256*3,1);
-
+			unsigned char* colorMap = new unsigned char[256*3];
+			szColorMap = colorMap;
+			pcStream->Read(colorMap,256*3,1);
 			DefaultLogger::get()->info("Found valid colormap.lmp in directory. "
 				"It will be used to decode embedded textures in palletized formats.");
 		}
@@ -475,7 +475,7 @@ void MDLImporter::CreateTexture_3DGS_MDL5(const unsigned char* szData,
 void MDLImporter::ParseSkinLump_3DGS_MDL7(
 	const unsigned char* szCurrent,
 	const unsigned char** szCurrentOut,
-	MaterialHelper* pcMatOut,
+	aiMaterial* pcMatOut,
 	unsigned int iType,
 	unsigned int iWidth,
 	unsigned int iHeight)
@@ -791,7 +791,7 @@ void MDLImporter::SkipSkinLump_3DGS_MDL7(
 void MDLImporter::ParseSkinLump_3DGS_MDL7(
 	const unsigned char* szCurrent,
 	const unsigned char** szCurrentOut,
-	std::vector<MaterialHelper*>& pcMats)
+	std::vector<aiMaterial*>& pcMats)
 {
 	ai_assert(NULL != szCurrent);
 	ai_assert(NULL != szCurrentOut);
@@ -803,7 +803,7 @@ void MDLImporter::ParseSkinLump_3DGS_MDL7(
 	szCurrent += 12;
 
 	// allocate an output material
-	MaterialHelper* pcMatOut = new MaterialHelper();
+	aiMaterial* pcMatOut = new aiMaterial();
 	pcMats.push_back(pcMatOut);
 
 	// skip length of file name

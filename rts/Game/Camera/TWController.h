@@ -20,14 +20,17 @@ public:
 	void MouseWheelMove(float move);
 
 	void Update();
-	float3 GetPos();
-	float3 GetDir();
+	float3 GetPos() const;
+	void SetPos(const float3& newPos);
 
 	float3 SwitchFrom() const;
 	void SwitchTo(bool showText);
 
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);
+
+private:
+	void UpdateVectors();
 };
 
 #endif // _TW_CONTROLLER_H

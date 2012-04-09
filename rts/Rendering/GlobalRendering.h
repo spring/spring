@@ -137,7 +137,7 @@ public:
 
 
 	/**
-	 * Does the user want team colored nanospray if the mod allows it?
+	 * Does the user want team colored nanospray?
 	 */
 	bool teamNanospray;
 

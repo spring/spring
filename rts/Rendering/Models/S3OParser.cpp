@@ -14,6 +14,7 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/Vec2.h"
+#include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
 

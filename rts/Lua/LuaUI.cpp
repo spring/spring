@@ -51,6 +51,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "lib/luasocket/src/luasocket.h"
 
 #include <stdio.h>
 #include <set>
@@ -58,6 +59,12 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
+
+CONFIG(bool, LuaSocketEnabled)
+	.defaultValue(false)
+	.description("Enable LuaSocket support, allows a lua-widget to make TCP/UDP Connections")
+	.readOnly(true)
+;
 
 using std::max;
 
@@ -135,6 +142,9 @@ CLuaUI::CLuaUI()
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
 
+	const bool luaSocketEnabled = configHandler->GetBool("LuaSocketEnabled");
+	LOG("LuaSocketEnabled: %s", (luaSocketEnabled ? "yes": "no" ));
+
 	const char* vfsMode = GetVFSMode();
 	const std::string file = (CFileHandler::FileExists("luaui.lua", vfsMode) ? "luaui.lua" : "LuaUI/main.lua");
 
@@ -151,8 +161,12 @@ CLuaUI::CLuaUI()
 	LUA_OPEN_LIB(L, luaopen_math);
 	LUA_OPEN_LIB(L, luaopen_table);
 	LUA_OPEN_LIB(L, luaopen_string);
-	//LUA_OPEN_LIB(L, luaopen_package);
 	LUA_OPEN_LIB(L, luaopen_debug);
+
+	//initialize luasocket
+	if (luaSocketEnabled){
+		InitLuaSocket(L);
+	}
 
 	// setup the lua IO access check functions
 	lua_set_fopen(L, LuaIO::fopen);
@@ -240,6 +254,19 @@ CLuaUI::~CLuaUI()
 	luaUI = NULL;
 }
 
+void CLuaUI::InitLuaSocket(lua_State* L) {
+	std::string code;
+	std::string filename="socket.lua";
+	CFileHandler f(filename);
+
+	LUA_OPEN_LIB(L,luaopen_socket_core);
+
+	if (f.LoadStringData(code)){
+		LoadCode(L, code.c_str(), filename.c_str());
+	} else {
+		LOG_L(L_ERROR, "Error loading %s", filename.c_str());
+	}
+}
 
 string CLuaUI::LoadFile(const string& filename) const
 {
