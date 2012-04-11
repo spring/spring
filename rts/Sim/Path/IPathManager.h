@@ -4,6 +4,8 @@
 #define I_PATH_MANAGER_H
 
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
+
+#include "PFSTypes.h"
 #include "System/float3.h"
 
 struct MoveDef;
@@ -15,6 +17,7 @@ public:
 
 	virtual ~IPathManager() {}
 
+	virtual unsigned int GetType() const = 0;
 	virtual boost::uint32_t GetPathCheckSum() const { return 0; }
 
 	virtual void Update() {}

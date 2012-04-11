@@ -150,7 +150,10 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 
 		// figure out if <path> has at least one edge crossing <r>
 		// we only care about the segments we have not yet visited
-		for (unsigned int i = path->GetPointID(); i < (path->NumPoints() - 1); i++) {
+		const unsigned int minIdx = std::max(path->GetPointID(), 2U) - 2;
+		const unsigned int maxIdx = std::max(path->NumPoints(), 1U) - 1;
+
+		for (unsigned int i = minIdx; i < maxIdx; i++) {
 			const float3& p0 = path->GetPoint(i    );
 			const float3& p1 = path->GetPoint(i + 1);
 
@@ -167,13 +170,13 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 			//     in world-space so we must inv-transform them first
 			//     (p0 --> p0 - rm, p1 --> p1 - rm)
 			const bool
-				xrangeInRect = (p0.x >= (r.x1 * SQUARE_SIZE) && p1.x <  (r.x2 * SQUARE_SIZE)),
-				xrangeExRect = (p0.x <  (r.x1 * SQUARE_SIZE) && p1.x >= (r.x2 * SQUARE_SIZE)),
-				zrangeInRect = (p0.z >= (r.z1 * SQUARE_SIZE) && p1.z <  (r.z2 * SQUARE_SIZE)),
-				zrangeExRect = (p0.z <  (r.z1 * SQUARE_SIZE) && p1.z >= (r.z2 * SQUARE_SIZE));
+				xRangeInRect = (p0.x >= (r.x1 * SQUARE_SIZE) && p1.x <  (r.x2 * SQUARE_SIZE)),
+				xRangeExRect = (p0.x <  (r.x1 * SQUARE_SIZE) && p1.x >= (r.x2 * SQUARE_SIZE)),
+				zRangeInRect = (p0.z >= (r.z1 * SQUARE_SIZE) && p1.z <  (r.z2 * SQUARE_SIZE)),
+				zRangeExRect = (p0.z <  (r.z1 * SQUARE_SIZE) && p1.z >= (r.z2 * SQUARE_SIZE));
 			const bool edgeCrossesRect =
-				(xrangeExRect && zrangeInRect) ||
-				(xrangeInRect && zrangeExRect) ||
+				(xRangeExRect && zRangeInRect) ||
+				(xRangeInRect && zRangeExRect) ||
 				CCollisionHandler::IntersectBox(&rv, p0 - rm, p1 - rm, NULL);
 
 			// remember the ID of each path affected by the deformation
