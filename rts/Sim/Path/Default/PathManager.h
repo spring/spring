@@ -22,6 +22,7 @@ public:
 	CPathManager();
 	~CPathManager();
 
+	unsigned int GetType() const { return PFS_TYPE_DEFAULT; }
 	boost::uint32_t GetPathCheckSum() const;
 
 	void Update();

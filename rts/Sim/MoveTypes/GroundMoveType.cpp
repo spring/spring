@@ -1185,7 +1185,7 @@ void CGroundMoveType::GetNewPath()
 		atGoal = false;
 		atEndOfPath = false;
 
-		currWayPoint = pathManager->NextWayPoint(pathId, owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id);
+		currWayPoint = pathManager->NextWayPoint(pathId,   owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id);
 		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
 		pathController->SetRealGoalPosition(pathId, goalPos);
@@ -1209,13 +1209,32 @@ void CGroundMoveType::GetNextWayPoint()
 	if (!pathController->AllowSetTempGoalPosition(pathId, nextWayPoint))
 		return;
 
+
 	if (currWayPoint.y != -1.0f && nextWayPoint.y != -1.0f) {
+		const float3& pos = owner->pos;
+		      float3& cwp = (float3&) currWayPoint;
+		      float3& nwp = (float3&) nextWayPoint;
+
+		if ((gs->frameNum % 5) == 0 && (pathManager->GetType() == PFS_TYPE_QTPFS)) {
+			const float3& tmp = pathManager->NextWayPoint(pathId, cwp, 1.25f * SQUARE_SIZE, 0, owner->id);
+
+			if (tmp != nwp) {
+				// path changed while we were following it (eg. due
+				// to terrain deformation) in between two waypoints
+				// but still has the same ID; in this case (which is
+				// specific to QTPFS) we don't go through GetNewPath
+				//
+				// NOTE:
+				//     for the default PFS, calling NextWayPoint will
+				//     always *modify* the path so we must check which
+				//     PFS is used
+				cwp = pathManager->NextWayPoint(pathId, pos, 1.25f * SQUARE_SIZE, 0, owner->id);
+				nwp = pathManager->NextWayPoint(pathId, cwp, 1.25f * SQUARE_SIZE, 0, owner->id);
+			}
+		}
+
 		#if (DEBUG_OUTPUT == 1)
 		// plot the vectors to {curr, next}WayPoint
-		const float3& pos = owner->pos;
-		const float3& cwp = currWayPoint;
-		const float3& nwp = nextWayPoint;
-
 		const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
 		const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
 
@@ -1259,14 +1278,6 @@ void CGroundMoveType::GetNextWayPoint()
 		}
 	}
 
-	// TODO-QTPFS:
-	//     regularly check if a terrain-change modified our path by comparing
-	//     NextWayPoint(pathId, owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id)
-	//     and waypoint, eg. every 15 frames
-	//     if we do not and a terrain-change area happened to contain <waypoint>
-	//     (the immediate next destination), then the unit will keep heading for
-	//     it and might possibly get stuck
-	//
 	if ((nextWayPoint - currWayPoint).SqLength2D() > 0.01f) {
 		pathController->SetTempGoalPosition(pathId, nextWayPoint);
 
