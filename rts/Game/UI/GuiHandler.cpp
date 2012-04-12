@@ -3598,7 +3598,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				}
 			}
 			// draw build distance for immobile builders
-			if (unitdef->builder && !unitdef->canmove) {
+			if (unitdef->builder) {
 				const float radius = unitdef->buildDistance;
 				if (radius > 0.0f) {
 					glColor4fv(cmdColors.rangeBuild);
@@ -3606,7 +3606,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				}
 			}
 			// draw shield range for immobile units
-			if (unitdef->shieldWeaponDef && !unitdef->canmove) {
+			if (unitdef->shieldWeaponDef) {
 				glColor4fv(cmdColors.rangeShield);
 				glSurfaceCircle(unit->pos, unitdef->shieldWeaponDef->shieldRadius, 40);
 			}
@@ -3651,7 +3651,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					continue;
 				}
 				const UnitDef* unitdef = unit->unitDef;
-				if (unitdef->builder && !unitdef->canmove) {
+				if (unitdef->builder && (!unitdef->canmove || selectedUnits.IsSelected(unit))) {
 					const float radius = unitdef->buildDistance;
 					if (radius > 0.0f) {
 						glDisable(GL_TEXTURE_2D);
@@ -3700,7 +3700,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						}
 					}
 					// draw build range for immobile builders
-					if (unitdef->builder && !unitdef->canmove) {
+					if (unitdef->builder) {
 						const float radius = unitdef->buildDistance;
 						if (radius > 0.0f) {
 							glColor4fv(cmdColors.rangeBuild);
@@ -3708,7 +3708,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						}
 					}
 					// draw shield range for immobile units
-					if (unitdef->shieldWeaponDef && !unitdef->canmove) {
+					if (unitdef->shieldWeaponDef) {
 						glColor4fv(cmdColors.rangeShield);
 						glSurfaceCircle(buildpos, unitdef->shieldWeaponDef->shieldRadius, 40);
 					}
