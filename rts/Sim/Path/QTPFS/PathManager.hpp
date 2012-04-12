@@ -23,6 +23,7 @@ namespace QTPFS {
 		PathManager();
 		~PathManager();
 
+		unsigned int GetType() const { return PFS_TYPE_QTPFS; }
 		boost::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
 
 		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2);

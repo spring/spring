@@ -601,6 +601,7 @@ void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
 
 	if (!deadPaths.empty()) {
 		// re-request LIVE paths that were marked as DEAD by TerrainChange
+		// for each of these now-dead paths, reset the active point-ID to 0
 		for (deadPathsIt = deadPaths.begin(); deadPathsIt != deadPaths.end(); ++deadPathsIt) {
 			QueueSearch(deadPathsIt->second, NULL, moveDef, ZeroVector, ZeroVector, -1.0f, false);
 		}
@@ -646,6 +647,7 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		const float3& pos = (obj != NULL)? obj->pos: oldPath->GetSourcePoint();
 
 		newPath->SetID(oldPath->GetID());
+		newPath->SetPointID(0);
 		newPath->SetRadius(oldPath->GetRadius());
 		newPath->SetSynced(oldPath->GetSynced());
 
@@ -736,7 +738,7 @@ unsigned int QTPFS::PathManager::RequestPath(
 float3 QTPFS::PathManager::NextWayPoint(
 	unsigned int pathID,
 	float3 point,
-	float radius,
+	float, // radius,
 	int, // numRetries
 	int, // ownerID
 	bool // synced
@@ -782,23 +784,14 @@ float3 QTPFS::PathManager::NextWayPoint(
 		return point;
 	}
 
-//	const float minRadiusSq = radius * radius;
-	      float curRadiusSq = QTPFS_POSITIVE_INFINITY;
+	float minRadiusSq = QTPFS_POSITIVE_INFINITY;
 
 	unsigned int minPointIdx = 0;
-	unsigned int nxtPointIdx = 1; // -1U
+	unsigned int nxtPointIdx = 1;
 
-	// find the next waypoint (ie. the node that is
-	// furthest along the path *and* within distance
-	// <radius> of <point>), as well as the waypoint
-	// that is closest to <point>
-	//
-	// a path can change while a unit is following
-	// it, so we always check each and every point
-	for (unsigned int i = 0; i < (livePath->NumPoints() - 1); i++) {
+	for (unsigned int i = (livePath->GetPointID() * 1); i < (livePath->NumPoints() - 1); i++) {
 		const float radiusSq = (point - livePath->GetPoint(i)).SqLength2D();
 
-		#if 1
 		// find waypoints <p0> and <p1> such that <point> is
 		// "in front" of p0 and "behind" p1 (ie. in between)
 		//
@@ -809,17 +802,17 @@ float3 QTPFS::PathManager::NextWayPoint(
 		const float3& p0 = livePath->GetPoint(i    ), v0 = float3(p0.x - point.x, 0.0f, p0.z - point.z);
 		const float3& p1 = livePath->GetPoint(i + 1), v1 = float3(p1.x - point.x, 0.0f, p1.z - point.z);
 
-		if (v0.dot(v1) <= 0.01f) {
-			nxtPointIdx = i + 1;
-		}
-		#else
-		if (radiusSq < minRadiusSq) {
-			nxtPointIdx = i + 1;
-		}
-		#endif
+		// NOTE:
+		//     either v0 or v1 can be a zero-vector (p0 == point or p1 == point)
+		//     in those two cases the dot-product is meaningless so we skip them
+		//     vectors are NOT normalized, so it can happen that NO case matches
+		//     and we must fall back to the radius-based closest point
+		if (v0.SqLength() < 0.1f) { nxtPointIdx = i + 1; break; }
+		if (v1.SqLength() < 0.1f) { nxtPointIdx = i + 2; break; }
+		if (v0.dot(v1) <= -0.01f) { nxtPointIdx = i + 1;        }
 
-		if (radiusSq < curRadiusSq) {
-			curRadiusSq = radiusSq;
+		if (radiusSq < minRadiusSq) {
+			minRadiusSq = radiusSq;
 			minPointIdx = i + 0;
 		}
 	}
@@ -829,7 +822,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 	if ((livePath->GetPointID() == 0) && (nxtPointIdx == (livePath->NumPoints() - 1)))
 		nxtPointIdx = 1;
 
-	if (nxtPointIdx != -1U) {
+	if (minPointIdx < nxtPointIdx) {
 		// if close enough to at least one waypoint <i>,
 		// switch to the point immediately following it
 		livePath->SetPointID(nxtPointIdx);
