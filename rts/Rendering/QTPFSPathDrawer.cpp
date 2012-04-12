@@ -37,21 +37,21 @@ QTPFSPathDrawer::QTPFSPathDrawer() {
 }
 
 void QTPFSPathDrawer::DrawAll() const {
+	const MoveDef* md = GetSelectedMoveDef();
+
+	if (md == NULL)
+		return;
+
 	// QTPFS::PathManager is not thread-safe
 	if (!GML::SimEnabled() && globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
 
-		const MoveDef* md = GetSelectedMoveDef();
-
-		if (md != NULL) {
-			glDisable(GL_TEXTURE_2D);
-			glDisable(GL_LIGHTING);
-			glDisable(GL_DEPTH_TEST);
-			glEnable(GL_BLEND);
-
-			DrawNodeTree(md);
-			DrawPaths(md);
-		}
+		DrawNodeTree(md);
+		DrawPaths(md);
 
 		glPopAttrib();
 	}

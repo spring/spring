@@ -326,6 +326,9 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	const MoveDef* md = GetSelectedMoveDef();
 	const PathNodeStateBuffer& blockStates = pe->blockStates;
 
+	if (md == NULL)
+		return;
+
 	glDisable(GL_TEXTURE_2D);
 	glColor3f(1.0f, 1.0f, 0.0f);
 
