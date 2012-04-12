@@ -738,7 +738,7 @@ unsigned int QTPFS::PathManager::RequestPath(
 float3 QTPFS::PathManager::NextWayPoint(
 	unsigned int pathID,
 	float3 point,
-	float radius,
+	float, // radius,
 	int, // numRetries
 	int, // ownerID
 	bool // synced
@@ -789,11 +789,6 @@ float3 QTPFS::PathManager::NextWayPoint(
 	unsigned int minPointIdx = 0;
 	unsigned int nxtPointIdx = 1;
 
-	// find the next waypoint (ie. the node that is
-	// furthest along the path *and* within distance
-	// <radius> of <point>), as well as the waypoint
-	// that is closest to <point>
-	//
 	for (unsigned int i = (livePath->GetPointID() * 1); i < (livePath->NumPoints() - 1); i++) {
 		const float radiusSq = (point - livePath->GetPoint(i)).SqLength2D();
 
