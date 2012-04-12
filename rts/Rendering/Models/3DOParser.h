@@ -42,8 +42,8 @@ struct S3DOPiece: public S3DModelPiece {
 	void DrawForList() const;
 	void SetMinMaxExtends();
 	int GetVertexCount() const { return vertices.size(); }
-	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
-	const float3& GetNormal(int idx) const { return vertices[idx].normal; }
+	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
+	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
 
 	float3 GetPosOffset() const {
 		//FIXME merge into float3 offset???

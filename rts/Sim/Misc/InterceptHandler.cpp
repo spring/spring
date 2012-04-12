@@ -152,15 +152,20 @@ float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const floa
 
 	for (std::list<CPlasmaRepulser*>::iterator wi = repulsors.begin(); wi != repulsors.end(); ++wi) {
 		CPlasmaRepulser* shield = *wi;
-		if(shield->weaponDef->shieldInterceptType & emitter->weaponDef->interceptedByShieldType){
-			float dist = shield->NewBeam(emitter, start, dir, length, tempDir);
-			if ((dist > 0) && (dist < minRange)) {
-				minRange = dist;
-				newDir = tempDir;
-				repulsedBy = shield;
-			}
-		}
+
+		if ((shield->weaponDef->shieldInterceptType & emitter->weaponDef->interceptedByShieldType) == 0)
+			continue;
+
+		const float dist = shield->NewBeam(emitter, start, dir, length, tempDir);
+
+		if (dist <=     0.0f) continue;
+		if (dist >= minRange) continue;
+
+		minRange = dist;
+		newDir = tempDir;
+		repulsedBy = shield;
 	}
+
 	return minRange;
 }
 
