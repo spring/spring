@@ -22,9 +22,10 @@ public:
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius, float speed);
 	virtual void BuggerOff(const float3& pos, float radius);
+	void StopMove();
+	void StopMoveAndKeepPointing();
 
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
-	void StopMove();
 	void SlowUpdate();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void NonMoving();
@@ -52,6 +53,7 @@ public:
 	virtual bool IsValidTarget(const CUnit* enemy) const;
 
 	float3 goalPos;
+	float  goalRadius;
 	float3 lastBuggerGoalPos;
 	float3 lastUserGoal;
 
