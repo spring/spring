@@ -30,6 +30,9 @@ private:
 	void Draw(const CPathFinderDef*) const;
 	void Draw(const CPathFinder*) const;
 	void Draw(const CPathEstimator*) const;
+
+private:
+	CPathManager* pm;
 };
 
 #endif

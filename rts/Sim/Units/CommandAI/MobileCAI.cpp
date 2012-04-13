@@ -33,6 +33,7 @@ CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
 
 CR_REG_METADATA(CMobileCAI, (
 				CR_MEMBER(goalPos),
+				CR_MEMBER(goalRadius),
 				CR_MEMBER(lastBuggerGoalPos),
 				CR_MEMBER(lastUserGoal),
 
@@ -59,6 +60,7 @@ CR_REG_METADATA(CMobileCAI, (
 CMobileCAI::CMobileCAI():
 	CCommandAI(),
 	goalPos(-1,-1,-1),
+	goalRadius(0.0f),
 	lastBuggerGoalPos(-1,0,-1),
 	lastUserGoal(0,0,0),
 	lastIdleCheck(0),
@@ -928,6 +930,7 @@ void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadi
 	if (pos == goalPos)
 		return;
 	goalPos = pos;
+	this->goalRadius = goalRadius;
 	owner->moveType->StartMoving(pos, goalRadius);
 }
 
@@ -936,6 +939,7 @@ void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadi
 	if (pos == goalPos)
 		return;
 	goalPos = pos;
+	this->goalRadius = goalRadius;
 	owner->moveType->StartMoving(pos, goalRadius, speed);
 }
 
@@ -943,9 +947,16 @@ void CMobileCAI::StopMove()
 {
 	owner->moveType->StopMoving();
 	goalPos = owner->pos;
+	goalRadius = 0.f;
 }
 
-
+void CMobileCAI::StopMoveAndKeepPointing()
+{
+	const float3 goalPos    = this->goalPos;
+	const float  goalRadius = this->goalRadius;
+	StopMove();
+	owner->moveType->KeepPointingTo(goalPos, goalRadius, false);
+}
 
 void CMobileCAI::BuggerOff(const float3& pos, float radius)
 {

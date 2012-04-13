@@ -17,24 +17,31 @@ public:
 
 	virtual ~IPathManager() {}
 
-	virtual unsigned int GetType() const = 0;
+	virtual unsigned int GetPathType() const = 0;
 	virtual boost::uint32_t GetPathCheckSum() const { return 0; }
 
+	/**
+	 * returns if a path was changed after RequestPath returned its pathID
+	 * this can happen eg. if a PathManager reacts to TerrainChange events
+	 * (by re-requesting affected paths without changing their ID's)
+	 */
+	virtual bool PathUpdated(unsigned int pathID) { return false; }
+
 	virtual void Update() {}
-	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathId) {}
+	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathID) {}
 
 	/**
 	 * When a path is no longer used, call this function to release it from
 	 * memory.
-	 * @param pathId
+	 * @param pathID
 	 *     The path-id returned by RequestPath.
 	 */
-	virtual void DeletePath(unsigned int pathId) {}
+	virtual void DeletePath(unsigned int pathID) {}
 
 	/**
 	 * Returns the next waypoint of the path.
 	 *
-	 * @param pathId
+	 * @param pathID
 	 *     The path-id returned by RequestPath.
 	 * @param callerPos
 	 *     The current position of the user of the path.
@@ -57,7 +64,7 @@ public:
 	 *     waypoint could be found.
 	 */
 	virtual float3 NextWayPoint(
-		unsigned int pathId,
+		unsigned int pathID,
 		float3 callerPos,
 		float minDistance = 0.0f,
 		int numRetries = 0,
@@ -75,7 +82,7 @@ public:
 	 * the latter case ALL waypoints (of the i-th resolution PATH) are stored
 	 * between points[starts[i]] and points[starts[i + 1]]
 	 *
-	 * @param pathId
+	 * @param pathID
 	 *     The path-id returned by RequestPath.
 	 * @param points
 	 *     The list of waypoints.
@@ -83,7 +90,7 @@ public:
 	 *     The list of starting indices for the different resolutions
 	 */
 	virtual void GetPathWayPoints(
-		unsigned int pathId,
+		unsigned int pathID,
 		std::vector<float3>& points,
 		std::vector<int>& starts
 	) const {}
