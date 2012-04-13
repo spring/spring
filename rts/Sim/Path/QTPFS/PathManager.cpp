@@ -362,11 +362,11 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 	if (md->unitDefRefCount == 0)
 		return;
 
-	// FIXME?
-	//     needed for IsBlocked* --> SquareIsBlocked --> IsNonBlocking
-	//     no point doing this in ExecuteSearch because the IsBlocked*
-	//     calls are only made from here, no point doing it here since
-	//     we are independent of a specific path --> requires redesign
+	// NOTE:
+	//     this is needed for IsBlocked* --> SquareIsBlocked --> IsNonBlocking
+	//     but no point doing it in ExecuteSearch because the IsBlocked* calls
+	//     are only made from NodeLayer::Update and also no point doing it here
+	//     since we are independent of a specific path --> requires redesign
 	//
 	// md->tempOwner = const_cast<CSolidObject*>(path->GetOwner());
 
@@ -832,6 +832,8 @@ float3 QTPFS::PathManager::NextWayPoint(
 		//     in those two cases the dot-product is meaningless so we skip them
 		//     vectors are NOT normalized, so it can happen that NO case matches
 		//     and we must fall back to the radius-based closest point
+		// FIXME: two consecutive waypoints should NEVER have identical coors (!)
+		if (p0 == p1) { continue; }
 		if (v0.SqLength() < 0.1f) { nxtPointIdx = i + 1; break; }
 		if (v1.SqLength() < 0.1f) { nxtPointIdx = i + 2; break; }
 		if (v0.dot(v1) <= -0.01f) { nxtPointIdx = i + 1;        }
