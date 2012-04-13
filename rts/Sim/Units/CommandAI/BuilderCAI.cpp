@@ -233,8 +233,13 @@ inline bool CBuilderCAI::MoveInBuildRange(const CWorldObject* obj, const bool ch
 }
 
 
-bool CBuilderCAI::MoveInBuildRange(const float3& pos, const float radius, const bool checkMoveTypeForFailed)
+bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed)
 {
+	// only use `buildDistance + radius` iff radius > buildDistance,
+	// and so it would be impossible to get in buildrange (collision detection with units/features)
+	const CBuilder* builder = (CBuilder*)owner;
+	radius = std::max(radius - builder->buildDistance, 0.0f);
+
 	if (!IsInBuildRange(pos, radius)) {
 		if (
 			checkMoveTypeForFailed &&
@@ -246,7 +251,6 @@ bool CBuilderCAI::MoveInBuildRange(const float3& pos, const float radius, const 
 		}
 
 		// too far away start a move command
-		const CBuilder* builder = (CBuilder*)owner;
 		SetGoal(pos, owner->pos, (builder->buildDistance + radius) - 9.0f);
 		return false;
 	}
