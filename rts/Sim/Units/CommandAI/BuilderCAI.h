@@ -109,7 +109,7 @@ private:
 	bool IsInBuildRange(const float3& pos, const float radius) const;
 
 	bool MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed = false);
-	bool MoveInBuildRange(const float3& pos, const float radius, const bool checkMoveTypeForFailed = false);
+	bool MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed = false);
 
 	void CancelRestrictedUnit(const std::string& buildOption);
 	bool OutOfImmobileRange(const Command& cmd) const;
