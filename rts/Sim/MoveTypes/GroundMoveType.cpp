@@ -1215,22 +1215,14 @@ void CGroundMoveType::GetNextWayPoint()
 		      float3& cwp = (float3&) currWayPoint;
 		      float3& nwp = (float3&) nextWayPoint;
 
-		if ((gs->frameNum % 5) == 0 && (pathManager->GetType() == PFS_TYPE_QTPFS)) {
-			const float3& tmp = pathManager->NextWayPoint(pathId, cwp, 1.25f * SQUARE_SIZE, 0, owner->id);
-
-			if (tmp != nwp) {
-				// path changed while we were following it (eg. due
-				// to terrain deformation) in between two waypoints
-				// but still has the same ID; in this case (which is
-				// specific to QTPFS) we don't go through GetNewPath
-				//
-				// NOTE:
-				//     for the default PFS, calling NextWayPoint will
-				//     always *modify* the path so we must check which
-				//     PFS is used
-				cwp = pathManager->NextWayPoint(pathId, pos, 1.25f * SQUARE_SIZE, 0, owner->id);
-				nwp = pathManager->NextWayPoint(pathId, cwp, 1.25f * SQUARE_SIZE, 0, owner->id);
-			}
+		if (pathManager->PathUpdated(pathId)) {
+			// path changed while we were following it (eg. due
+			// to terrain deformation) in between two waypoints
+			// but still has the same ID; in this case (which is
+			// specific to QTPFS) we don't go through GetNewPath
+			//
+			cwp = pathManager->NextWayPoint(pathId, pos, 1.25f * SQUARE_SIZE, 0, owner->id);
+			nwp = pathManager->NextWayPoint(pathId, cwp, 1.25f * SQUARE_SIZE, 0, owner->id);
 		}
 
 		#if (DEBUG_OUTPUT == 1)

@@ -13,7 +13,9 @@ namespace QTPFS {
 	struct IPath {
 		IPath() {
 			pathID  = 0;
-			pointID = 0;
+
+			nextPointIndex = 0;
+			numPathUpdates = 0;
 
 			hash   = -1U;
 			radius = 0.0f;
@@ -23,8 +25,10 @@ namespace QTPFS {
 		}
 		IPath(const IPath& p) { *this = p; }
 		IPath& operator = (const IPath& p) {
-			pathID  = p.GetID();
-			pointID = p.GetPointID();
+			pathID = p.GetID();
+
+			nextPointIndex = p.GetNextPointIndex();
+			numPathUpdates = p.GetNumPathUpdates();
 
 			hash   = p.GetHash();
 			radius = p.GetRadius();
@@ -40,9 +44,12 @@ namespace QTPFS {
 		~IPath() { points.clear(); }
 
 		void SetID(unsigned int pathID) { this->pathID = pathID; }
-		void SetPointID(unsigned int pointID) { this->pointID = pointID; }
 		unsigned int GetID() const { return pathID; }
-		unsigned int GetPointID() const { return pointID; }
+
+		void SetNextPointIndex(unsigned int nextPointIndex) { this->nextPointIndex = nextPointIndex; }
+		void SetNumPathUpdates(unsigned int numPathUpdates) { this->numPathUpdates = numPathUpdates; }
+		unsigned int GetNextPointIndex() const { return nextPointIndex; }
+		unsigned int GetNumPathUpdates() const { return numPathUpdates; }
 
 		void SetHash(boost::uint64_t hash) { this->hash = hash; }
 		void SetRadius(float radius) { this->radius = radius; }
@@ -95,7 +102,9 @@ namespace QTPFS {
 
 	protected:
 		unsigned int pathID;
-		unsigned int pointID; // ID (index) of the next waypoint to be visited
+
+		unsigned int nextPointIndex; // index of the next waypoint to be visited
+		unsigned int numPathUpdates; // number of times this path was invalidated
 
 		boost::uint64_t hash;
 		float radius;

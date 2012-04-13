@@ -28,10 +28,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "System/Util.h"
 
-static QTPFS::PathManager* pm = NULL;
-
-
-
 QTPFSPathDrawer::QTPFSPathDrawer() {
 	pm = dynamic_cast<QTPFS::PathManager*>(pathManager);
 }

@@ -11,6 +11,8 @@ class CMoveMath;
 class CVertexArray;
 
 namespace QTPFS {
+	class PathManager;
+
 	struct QTNode;
 	struct IPath;
 	struct PathSearch;
@@ -58,6 +60,9 @@ private:
 		bool batchDraw
 	) const;
 	void DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, CVertexArray* va) const;
+
+private:
+	QTPFS::PathManager* pm;
 };
 
 #endif

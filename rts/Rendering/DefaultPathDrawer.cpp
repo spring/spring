@@ -32,8 +32,6 @@
 
 #define PE_EXTRA_DEBUG_OVERLAYS 1
 
-static CPathManager* pm = NULL;
-
 static const SColor buildColors[] = {
 	SColor(138, 138, 138), // nolos
 	SColor(  0, 210,   0), // free
