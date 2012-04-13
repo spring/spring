@@ -80,11 +80,10 @@ bool CSelectedUnits::IsSelected(const CUnit* unit) const
 	return (selectedUnits.find(const_cast<CUnit*>(unit)) != selectedUnits.end());
 }
 
-
 bool CSelectedUnits::IsSelected(const int unitID) const
 {
 	const CUnit* u = uh->GetUnit(unitID);
-	return (u) ? IsSelected(u) : false;
+	return (u != NULL && IsSelected(u));
 }
 
 

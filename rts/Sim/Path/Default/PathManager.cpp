@@ -20,7 +20,7 @@
 
 
 
-CPathManager::CPathManager(): nextPathId(0)
+CPathManager::CPathManager(): nextPathID(0)
 {
 	maxResPF = new CPathFinder();
 	medResPE = new CPathEstimator(maxResPF,  8, "pe",  mapInfo->map.name);
@@ -181,8 +181,8 @@ Store a new multipath into the pathmap.
 */
 unsigned int CPathManager::Store(MultiPath* path)
 {
-	pathMap[++nextPathId] = path;
-	return nextPathId;
+	pathMap[++nextPathID] = path;
+	return nextPathID;
 }
 
 
@@ -283,7 +283,7 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, i
 Removes and return the next waypoint in the multipath corresponding to given id.
 */
 float3 CPathManager::NextWayPoint(
-	unsigned int pathId,
+	unsigned int pathID,
 	float3 callerPos,
 	float minDistance,
 	int numRetries,
@@ -295,14 +295,14 @@ float3 CPathManager::NextWayPoint(
 	const float3 noPathPoint = float3(-1.0f, 0.0f, -1.0f);
 
 	// 0 indicates a no-path id
-	if (pathId == 0)
+	if (pathID == 0)
 		return noPathPoint;
 
 	if (numRetries > 4)
 		return noPathPoint;
 
 	// Find corresponding multipath.
-	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
+	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
 
 	if (pi == pathMap.end())
 		return noPathPoint;
@@ -355,7 +355,7 @@ float3 CPathManager::NextWayPoint(
 					waypoint = noPathPoint; break;
 				}
 			} else {
-				waypoint = NextWayPoint(pathId, callerPos, minDistance, numRetries + 1, ownerId, synced);
+				waypoint = NextWayPoint(pathID, callerPos, minDistance, numRetries + 1, ownerId, synced);
 				break;
 			}
 		} else {
@@ -373,18 +373,18 @@ float3 CPathManager::NextWayPoint(
 
 
 // Delete a given multipath from the collection.
-void CPathManager::DeletePath(unsigned int pathId) {
+void CPathManager::DeletePath(unsigned int pathID) {
 	// 0 indicate a no-path id.
-	if (pathId == 0)
+	if (pathID == 0)
 		return;
 
-	const std::map<unsigned int, MultiPath*>::iterator pi = pathMap.find(pathId);
+	const std::map<unsigned int, MultiPath*>::iterator pi = pathMap.find(pathID);
 	if (pi == pathMap.end())
 		return;
 
 	const MultiPath* multiPath = pi->second;
 
-	pathMap.erase(pathId);
+	pathMap.erase(pathID);
 	delete multiPath;
 }
 
@@ -407,9 +407,9 @@ void CPathManager::Update()
 }
 
 // used to deposit heat on the heat-map as a unit moves along its path
-void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathId)
+void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
 {
-	if (pathId == 0)
+	if (pathID == 0)
 		return;
 	if (!owner->mobility->heatMapping)
 		return;
@@ -420,7 +420,7 @@ void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathId)
 	std::vector<int2> points;
 #endif
 
-	GetDetailedPathSquares(pathId, points);
+	GetDetailedPathSquares(pathID, points);
 
 	if (!points.empty()) {
 		float scale = 1.0f / points.size();
@@ -443,11 +443,11 @@ const int CPathManager::GetHeatOnSquare(int x, int y) { return maxResPF->GetHeat
 
 
 // get the waypoints in world-coordinates
-void CPathManager::GetDetailedPath(unsigned pathId, std::vector<float3>& points) const
+void CPathManager::GetDetailedPath(unsigned pathID, std::vector<float3>& points) const
 {
 	points.clear();
 
-	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
+	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
 	if (pi == pathMap.end()) {
 		return;
 	}
@@ -462,11 +462,11 @@ void CPathManager::GetDetailedPath(unsigned pathId, std::vector<float3>& points)
 	}
 }
 
-void CPathManager::GetDetailedPathSquares(unsigned pathId, std::vector<int2>& points) const
+void CPathManager::GetDetailedPathSquares(unsigned pathID, std::vector<int2>& points) const
 {
 	points.clear();
 
-	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
+	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
 	if (pi == pathMap.end()) {
 		return;
 	}
@@ -484,14 +484,14 @@ void CPathManager::GetDetailedPathSquares(unsigned pathId, std::vector<int2>& po
 
 
 void CPathManager::GetPathWayPoints(
-	unsigned int pathId,
+	unsigned int pathID,
 	std::vector<float3>& points,
 	std::vector<int>& starts
 ) const {
 	points.clear();
 	starts.clear();
 
-	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
+	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
 	if (pi == pathMap.end()) {
 		return;
 	}

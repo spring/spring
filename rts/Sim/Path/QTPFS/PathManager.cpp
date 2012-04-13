@@ -446,6 +446,9 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 
 
+
+
+
 // NOTE:
 //     all layers *must* be updated on the same frame
 //
@@ -600,8 +603,8 @@ void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
 	const MoveDef* moveDef = moveDefHandler->moveDefs[pathType];
 
 	if (!deadPaths.empty()) {
-		// re-request LIVE paths that were marked as DEAD by TerrainChange
-		// for each of these now-dead paths, reset the active point-ID to 0
+		// re-request LIVE paths that were marked as DEAD by a TerrainChange
+		// for each of these now-dead paths, reset the active point-idx to 0
 		for (deadPathsIt = deadPaths.begin(); deadPathsIt != deadPaths.end(); ++deadPathsIt) {
 			QueueSearch(deadPathsIt->second, NULL, moveDef, ZeroVector, ZeroVector, -1.0f, false);
 		}
@@ -647,7 +650,8 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		const float3& pos = (obj != NULL)? obj->pos: oldPath->GetSourcePoint();
 
 		newPath->SetID(oldPath->GetID());
-		newPath->SetPointID(0);
+		newPath->SetNextPointIndex(0);
+		newPath->SetNumPathUpdates(oldPath->GetNumPathUpdates() + 1);
 		newPath->SetRadius(oldPath->GetRadius());
 		newPath->SetSynced(oldPath->GetSynced());
 
@@ -735,6 +739,27 @@ unsigned int QTPFS::PathManager::RequestPath(
 
 
 
+bool QTPFS::PathManager::PathUpdated(unsigned int pathID) {
+	const PathTypeMapIt pathTypeIt = pathTypes.find(pathID);
+
+	if (pathTypeIt == pathTypes.end())
+		return false;
+
+	PathCache& pathCache = pathCaches[pathTypeIt->second];
+	IPath* livePath = pathCache.GetLivePath(pathID);
+
+	if (livePath->GetID() == 0)
+		return false;
+
+	if (livePath->GetNumPathUpdates() == 0)
+		return false;
+
+	livePath->SetNumPathUpdates(livePath->GetNumPathUpdates() - 1);
+	return true;
+}
+
+
+
 float3 QTPFS::PathManager::NextWayPoint(
 	unsigned int pathID,
 	float3 point,
@@ -789,7 +814,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 	unsigned int minPointIdx = 0;
 	unsigned int nxtPointIdx = 1;
 
-	for (unsigned int i = (livePath->GetPointID() * 1); i < (livePath->NumPoints() - 1); i++) {
+	for (unsigned int i = (livePath->GetNextPointIndex() * 1); i < (livePath->NumPoints() - 1); i++) {
 		const float radiusSq = (point - livePath->GetPoint(i)).SqLength2D();
 
 		// find waypoints <p0> and <p1> such that <point> is
@@ -819,19 +844,19 @@ float3 QTPFS::PathManager::NextWayPoint(
 
 	// handle a corner-case in which a unit is at the start of its path
 	// and the goal is in front of it, but on the other side of a cliff
-	if ((livePath->GetPointID() == 0) && (nxtPointIdx == (livePath->NumPoints() - 1)))
+	if ((livePath->GetNextPointIndex() == 0) && (nxtPointIdx == (livePath->NumPoints() - 1)))
 		nxtPointIdx = 1;
 
 	if (minPointIdx < nxtPointIdx) {
 		// if close enough to at least one waypoint <i>,
 		// switch to the point immediately following it
-		livePath->SetPointID(nxtPointIdx);
+		livePath->SetNextPointIndex(nxtPointIdx);
 	} else {
 		// otherwise just pick the closest point
-		livePath->SetPointID(minPointIdx);
+		livePath->SetNextPointIndex(minPointIdx);
 	}
 
-	return (livePath->GetPoint(livePath->GetPointID()));
+	return (livePath->GetPoint(livePath->GetNextPointIndex()));
 }
 
 

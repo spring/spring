@@ -150,7 +150,7 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 
 		// figure out if <path> has at least one edge crossing <r>
 		// we only care about the segments we have not yet visited
-		const unsigned int minIdx = std::max(path->GetPointID(), 2U) - 2;
+		const unsigned int minIdx = std::max(path->GetNextPointIndex(), 2U) - 2;
 		const unsigned int maxIdx = std::max(path->NumPoints(), 1U) - 1;
 
 		for (unsigned int i = minIdx; i < maxIdx; i++) {
