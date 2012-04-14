@@ -89,14 +89,22 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 	const unsigned int
 		minz = std::max(zmin(), ngb->zmin()),
 		maxz = std::min(zmax(), ngb->zmax());
-	const unsigned int
-		midx = (maxx + minx) >> 1,
-		midz = (maxz + minz) >> 1;
-	const unsigned int rel = GetNeighborRelation(ngb);
 
-	#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
-	#define CAST static_cast<unsigned int>
-	switch (rel) {
+	// NOTE:
+	//     do not use integer arithmetic for the mid-points,
+	//     the path-backtrace expects all waypoints to have
+	//     unique world-space coordinates (ortho-projection
+	//     mode is broken in that regard) and this would not
+	//     hold for a path through multiple neighboring nodes
+	//     with xsize and/or zsize equal to 1 heightmap square
+	const float
+		midx = (maxx + minx) * 0.5f,
+		midz = (maxz + minz) * 0.5f;
+
+	switch (GetNeighborRelation(ngb)) {
+		#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+		#define CAST static_cast<unsigned int>
+
 		// corners
 		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
 		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
@@ -112,10 +120,10 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 
 		// <ngb> had better be an actual neighbor
 		case 0: { assert(false); } break;
-	}
-	#undef CAST
-	#else
-	switch (rel) {
+
+		#undef CAST
+		#else
+
 		// corners
 		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
 		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
@@ -129,8 +137,9 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 
 		// <ngb> had better be an actual neighbor
 		case 0: { assert(false); } break;
+
+		#endif
 	}
-	#endif
 
 	return p;
 }
