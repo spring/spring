@@ -295,26 +295,31 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 
 	if (srcNode != tgtNode) {
 		INode* tmpNode = tgtNode;
-		INode* oldNode = tmpNode->GetPrevNode();
+		INode* prvNode = tmpNode->GetPrevNode();
 
-		float3 oldPoint = tgtPoint;
+		float3 prvPoint = tgtPoint;
 
-		while ((oldNode != NULL) && (tmpNode != srcNode)) {
-			const float3& tmpPoint = tmpNode->GetNeighborEdgeTransitionPoint(oldNode, oldPoint);
+		while ((prvNode != NULL) && (tmpNode != srcNode)) {
+			const float3& tmpPoint = tmpNode->GetNeighborEdgeTransitionPoint(prvNode, prvPoint);
 
 			assert(!math::isinf(tmpPoint.x) && !math::isinf(tmpPoint.z));
 			assert(!math::isnan(tmpPoint.x) && !math::isnan(tmpPoint.z));
+			// NOTE: waypoints should NEVER have identical coordinates
+			assert(tmpPoint.x != prvPoint.x);
+			assert(tmpPoint.z != prvPoint.z);
+
 			points.push_front(tmpPoint);
 
 			#ifndef QTPFS_SMOOTH_PATHS
-			// make sure these can never become dangling
-			// (if we smooth, we do this in SmoothPath())
+			// make sure the back-pointers can never become dangling
+			// if smoothing IS enabled, we delay this until we reach
+			// SmoothPath() because we still need them there
 			tmpNode->SetPrevNode(NULL);
 			#endif
 
-			oldPoint = tmpPoint;
-			tmpNode = oldNode;
-			oldNode = tmpNode->GetPrevNode();
+			prvPoint = tmpPoint;
+			tmpNode = prvNode;
+			prvNode = tmpNode->GetPrevNode();
 		}
 	}
 
