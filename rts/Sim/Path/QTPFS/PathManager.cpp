@@ -832,8 +832,6 @@ float3 QTPFS::PathManager::NextWayPoint(
 		//     in those two cases the dot-product is meaningless so we skip them
 		//     vectors are NOT normalized, so it can happen that NO case matches
 		//     and we must fall back to the radius-based closest point
-		// FIXME: two consecutive waypoints should NEVER have identical coors (!)
-		if (p0 == p1) { continue; }
 		if (v0.SqLength() < 0.1f) { nxtPointIdx = i + 1; break; }
 		if (v1.SqLength() < 0.1f) { nxtPointIdx = i + 2; break; }
 		if (v0.dot(v1) <= -0.01f) { nxtPointIdx = i + 1;        }
