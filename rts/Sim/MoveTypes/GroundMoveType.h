@@ -95,6 +95,9 @@ private:
 	bool FollowPath();
 	bool WantReverse(const float3&) const;
 
+private:
+	IPathController* pathController;
+
 public:
 	float turnRate;
 	float accRate;
@@ -112,8 +115,6 @@ public:
 	SyncedFloat3 nextWayPoint;
 
 private:
-	IPathController* pathController;
-
 	bool atGoal;
 	bool atEndOfPath;
 
