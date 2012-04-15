@@ -28,19 +28,17 @@ public:
 	void StartMoving(float3 pos, float goalRadius, float speed);
 	void StopMoving();
 
-	void ImpulseAdded(const float3&);
-
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 
-	bool OnSlope(float minSlideTolerance);
-
 	void TestNewTerrainSquare();
+	void ImpulseAdded(const float3&);
 	void LeaveTransport();
 
 	void StartSkidding() { skidding = true; }
 	void StartFlying() { skidding = true; flying = true; } // flying requires skidding
 
+	bool OnSlope(float minSlideTolerance);
 	bool IsSkidding() const { return skidding; }
 	bool IsFlying() const { return flying; }
 	bool IsReversing() const { return reversing; }
@@ -48,8 +46,7 @@ public:
 	static void CreateLineTable();
 	static void DeleteLineTable();
 
-
-protected:
+private:
 	float3 ObstacleAvoidance(const float3& desiredDir);
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
@@ -98,9 +95,6 @@ protected:
 	bool FollowPath();
 	bool WantReverse(const float3&) const;
 
-
-	IPathController* pathController;
-
 public:
 	float turnRate;
 	float accRate;
@@ -117,7 +111,9 @@ public:
 	SyncedFloat3 currWayPoint;
 	SyncedFloat3 nextWayPoint;
 
-protected:
+private:
+	IPathController* pathController;
+
 	bool atGoal;
 	bool atEndOfPath;
 

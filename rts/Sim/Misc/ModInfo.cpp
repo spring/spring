@@ -50,6 +50,7 @@ void CModInfo::Init(const char* modArchive)
 	allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);
 	allowCrushingAlliedUnits = movementTbl.GetBool("allowCrushingAlliedUnits", false);
 	allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", false);
+	useClassicGroundMoveType = movementTbl.GetBool("useClassicGroundMoveType", false);
 
 	// constructions
 	const LuaTable constructionTbl = root.SubTable("construction");
