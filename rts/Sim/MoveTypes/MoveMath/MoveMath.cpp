@@ -231,7 +231,7 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 		return (collideeMinHgt > colliderMaxHgt);
 	} else {
 		const bool colliderIsSub = colliderMD.subMarine;
-		const bool collideeIsSub = (collidee->mobility != NULL && collidee->mobility->subMarine);
+		const bool collideeIsSub = (collidee->moveDef != NULL && collidee->moveDef->subMarine);
 
 		if (colliderIsSub) {
 			return (((collideeGndAlt + collideeMdlHgt) >  0.0f) && !collideeIsSub);

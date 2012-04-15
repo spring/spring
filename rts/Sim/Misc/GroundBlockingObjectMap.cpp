@@ -64,7 +64,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->mobility == NULL && pathManager) {
+	if (object->moveDef == NULL && pathManager) {
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
 	}
 }
@@ -92,7 +92,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 	for (int z = minZSqr; z < maxZSqr; z++) {
 		for (int x = minXSqr; x < maxXSqr; x++) {
 			// unit yardmaps always contain sx=UnitDef::xsize * sz=UnitDef::zsize
-			// cells (the unit->mobility footprint can have different dimensions)
+			// cells (the unit->moveDef footprint can have different dimensions)
 			const float3 testPos = float3(x, 0.0f, z) * SQUARE_SIZE;
 			if (object->GetGroundBlockingAtPos(testPos) & mask) {
 				const int idx = x + (z) * gs->mapx;
@@ -104,7 +104,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->mobility == NULL && pathManager) {
+	if (object->moveDef == NULL && pathManager) {
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
 	}
 }
@@ -133,7 +133,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->mobility == NULL && pathManager) {
+	if (object->moveDef == NULL && pathManager) {
 		pathManager->TerrainChange(bx, bz, bx + sx, bz + sz);
 	}
 }
