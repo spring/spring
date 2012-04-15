@@ -162,7 +162,7 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	if (!o->pos.IsInBounds()) {
 		return;
 	}
-	if (!o->mobility->flowMapping) {
+	if (!o->moveDef->flowMapping) {
 		return;
 	}
 
@@ -177,7 +177,7 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 
 	bCell.flowVector.x += (flowVec.x);
 	bCell.flowVector.z += (flowVec.z);
-	bCell.flowVector.y += (o->mass * o->mobility->flowMod);
+	bCell.flowVector.y += (o->mass * o->moveDef->flowMod);
 	bCell.numObjects   += 1;
 
 	bIndices.insert(cellIdx);
@@ -207,9 +207,9 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 		else if (halfSpaces[1] && halfSpaces[2]) {  i = ((z - 1) * xsize + (x + 1));  bIndices.insert(i);  ngbs[2] = &bCells[i];  }
 		else if (halfSpaces[1] && halfSpaces[3]) {  i = ((z + 1) * xsize + (x + 1));  bIndices.insert(i);  ngbs[2] = &bCells[i];  }
 
-		if (ngbs[0] != NULL) {  ngbs[0]->flowVector += float3(flowVec.x, o->mass * o->mobility->flowMod * 0.666f, flowVec.z);  ngbs[0]->numObjects += 1;  }
-		if (ngbs[1] != NULL) {  ngbs[1]->flowVector += float3(flowVec.x, o->mass * o->mobility->flowMod * 0.666f, flowVec.z);  ngbs[1]->numObjects += 1;  }
-		if (ngbs[2] != NULL) {  ngbs[2]->flowVector += float3(flowVec.x, o->mass * o->mobility->flowMod * 0.333f, flowVec.z);  ngbs[2]->numObjects += 1;  }
+		if (ngbs[0] != NULL) {  ngbs[0]->flowVector += float3(flowVec.x, o->mass * o->moveDef->flowMod * 0.666f, flowVec.z);  ngbs[0]->numObjects += 1;  }
+		if (ngbs[1] != NULL) {  ngbs[1]->flowVector += float3(flowVec.x, o->mass * o->moveDef->flowMod * 0.666f, flowVec.z);  ngbs[1]->numObjects += 1;  }
+		if (ngbs[2] != NULL) {  ngbs[2]->flowVector += float3(flowVec.x, o->mass * o->moveDef->flowMod * 0.333f, flowVec.z);  ngbs[2]->numObjects += 1;  }
 	}
 	#endif
 

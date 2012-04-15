@@ -50,7 +50,7 @@ unsigned int PathHeatMap::GetHeatMapIndex(unsigned int hmx, unsigned int hmz) co
 void PathHeatMap::AddHeat(const CSolidObject* owner, const CPathManager* pm, unsigned int pathID) {
 	if (pathID == 0)
 		return;
-	if (!owner->mobility->heatMapping)
+	if (!owner->moveDef->heatMapping)
 		return;
 
 	#ifndef USE_GML
@@ -63,7 +63,7 @@ void PathHeatMap::AddHeat(const CSolidObject* owner, const CPathManager* pm, uns
 
 	if (!points.empty()) {
 		const float scale = 1.0f / points.size();
-		const float heat = scale * owner->mobility->heatProduced;
+		const float heat = scale * owner->moveDef->heatProduced;
 
 		unsigned int i = points.size();
 
