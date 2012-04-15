@@ -305,8 +305,7 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 			assert(!math::isinf(tmpPoint.x) && !math::isinf(tmpPoint.z));
 			assert(!math::isnan(tmpPoint.x) && !math::isnan(tmpPoint.z));
 			// NOTE: waypoints should NEVER have identical coordinates
-			assert(tmpPoint.x != prvPoint.x);
-			assert(tmpPoint.z != prvPoint.z);
+			assert(tmpPoint != prvPoint);
 
 			points.push_front(tmpPoint);
 
