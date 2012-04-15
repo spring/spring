@@ -129,7 +129,7 @@ public:
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
 
-	MoveDef* mobility;                         ///< holds information about the mobility of this object (if NULL, object is either static or aircraft)
+	MoveDef* moveDef;                           ///< holds information about the mobility of this object (if NULL, object is either static or aircraft)
 	CollisionVolume* collisionVolume;
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)

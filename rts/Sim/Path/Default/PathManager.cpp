@@ -411,7 +411,7 @@ void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
 {
 	if (pathID == 0)
 		return;
-	if (!owner->mobility->heatMapping)
+	if (!owner->moveDef->heatMapping)
 		return;
 
 #ifndef USE_GML
@@ -427,7 +427,7 @@ void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
 		unsigned int i = points.size();
 
 		for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
-			SetHeatOnSquare(it->x, it->y, i * scale * owner->mobility->heatProduced, owner->id); i--;
+			SetHeatOnSquare(it->x, it->y, i * scale * owner->moveDef->heatProduced, owner->id); i--;
 		}
 	}
 }

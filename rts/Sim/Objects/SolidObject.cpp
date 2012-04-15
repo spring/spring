@@ -59,7 +59,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
 
-	CR_MEMBER(mobility),
+	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
 
 	CR_MEMBER(buildFacing),
@@ -90,7 +90,7 @@ CSolidObject::CSolidObject():
 	residualImpulse(ZeroVector),
 	team(0),
 	allyteam(0),
-	mobility(NULL),
+	moveDef(NULL),
 	collisionVolume(NULL),
 	frontdir(0.0f, 0.0f, 1.0f),
 	rightdir(-1.0f, 0.0f, 0.0f),
@@ -106,8 +106,8 @@ CSolidObject::CSolidObject():
 CSolidObject::~CSolidObject() {
 	blocking = false;
 
-	delete mobility;
-	mobility = NULL;
+	delete moveDef;
+	moveDef = NULL;
 
 	delete collisionVolume;
 	collisionVolume = NULL;

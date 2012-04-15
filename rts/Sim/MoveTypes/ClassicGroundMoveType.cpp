@@ -136,7 +136,8 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	accRate = std::max(0.01f, owner->unitDef->maxAcc);
 	decRate = std::max(0.01f, owner->unitDef->maxDec);
 
-	owner->mobility->avoidMobilesOnPath = true;
+	owner->unitDef->moveDef->avoidMobilesOnPath = true;
+	owner->moveDef->avoidMobilesOnPath = true;
 }
 
 CClassicGroundMoveType::~CClassicGroundMoveType()
@@ -676,7 +677,7 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 			float3 dif = midPos - u->midPos;
 			dif /= std::max(dist, 1.f);
 
-			if (!u->mobility) {
+			if (!u->moveDef) {
 				float impactSpeed = -owner->speed.dot(dif);
 
 				if (impactSpeed > 0) {
@@ -832,7 +833,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			float3 rightOfAvoid = rightOfPath;
 
 
-			MoveDef* moveDef = owner->mobility;
+			MoveDef* moveDef = owner->moveDef;
 			moveDef->tempOwner = owner;
 
 			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
@@ -860,7 +861,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 						if (objectToUnit.dot(avoidanceDir) < radiusSum &&
 							fabs(objectDistToAvoidDirCenter) < radiusSum &&
-							(o->mobility || Distance2D(owner, o) >= 0)) {
+							(o->moveDef || Distance2D(owner, o) >= 0)) {
 
 							if (objectDistToAvoidDirCenter > 0.0f) {
 								avoidRight +=
@@ -947,7 +948,7 @@ void CClassicGroundMoveType::GetNewPath()
 	}
 
 	pathManager->DeletePath(pathId);
-	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+	pathId = pathManager->RequestPath(owner->moveDef, owner->pos, goalPos, goalRadius, owner);
 
 	nextWaypoint = owner->pos;
 
@@ -1135,7 +1136,7 @@ void CClassicGroundMoveType::CheckCollision()
 
 bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTestX)
 {
-	MoveDef* m = owner->mobility;
+	MoveDef* m = owner->moveDef;
 	m->tempOwner = owner;
 
 	bool ret = false;
@@ -1161,7 +1162,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 			} else {
 				blocked = true;
 
-				if (obj->mobility != NULL) {
+				if (obj->moveDef != NULL) {
 					float part = owner->mass / (owner->mass + obj->mass * 2.0f);
 					float3 dif = obj->pos - owner->pos;
 					float dl = dif.Length();
@@ -1215,7 +1216,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 
 bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTestY)
 {
-	MoveDef* m = owner->mobility;
+	MoveDef* m = owner->moveDef;
 	m->tempOwner = owner;
 
 	bool ret = false;
@@ -1241,7 +1242,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 			} else {
 				blocked = true;
 
-				if (obj->mobility != NULL) {
+				if (obj->moveDef != NULL) {
 					float part = owner->mass / (owner->mass + obj->mass * 2.0f);
 					float3 dif = obj->pos - owner->pos;
 					float dl = dif.Length();

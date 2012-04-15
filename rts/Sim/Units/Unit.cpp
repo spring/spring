@@ -655,7 +655,7 @@ void CUnit::Update()
 
 		inWater = (pos.y <= 0.0f);
 		inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x,pos.z)) > 1.0f);
-		isUnderWater = ((pos.y + ((mobility != NULL && mobility->subMarine)? 0.0f: model->height)) < 0.0f);
+		isUnderWater = ((pos.y + ((moveDef != NULL && moveDef->subMarine)? 0.0f: model->height)) < 0.0f);
 
 		if (inAir != oldInAir) {
 			if (inAir) {

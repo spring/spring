@@ -16,9 +16,9 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 		// mobile ground-unit
 		assert(!ud->canfly);
 		assert(ud->moveDef != NULL);
-		assert(unit->mobility == NULL);
+		assert(unit->moveDef == NULL);
 
-		unit->mobility = new MoveDef(ud->moveDef);
+		unit->moveDef = new MoveDef(ud->moveDef);
 
 		if (modInfo.useClassicGroundMoveType) {
 			return (new CClassicGroundMoveType(unit));
