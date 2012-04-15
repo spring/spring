@@ -130,12 +130,13 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	moveSquareX = owner->pos.x / (SQUARE_SIZE * 2);
 	moveSquareY = owner->pos.z / (SQUARE_SIZE * 2);
 
-	// maxSpeed is set in AMoveType's ctor
 	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
 
 	turnRate = owner->unitDef->turnRate;
 	accRate = std::max(0.01f, owner->unitDef->maxAcc);
 	decRate = std::max(0.01f, owner->unitDef->maxDec);
+
+	owner->mobility->avoidMobilesOnPath = true;
 }
 
 CClassicGroundMoveType::~CClassicGroundMoveType()
