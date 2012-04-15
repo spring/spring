@@ -818,8 +818,7 @@ void CGroundMoveType::UpdateControlledDrop()
 
 	if (wh > pos.y) {
 		// ground impact
-		owner->falling = false;
-		owner->Move1D(wh, 1, false);
+		owner->Move1D(wh, 1, (owner->falling = false));
 		owner->script->Landed(); //stop parachute animation
 	}
 }
@@ -1896,8 +1895,9 @@ void CGroundMoveType::TestNewTerrainSquare()
 				}
 			}
 		}
-		// do not teleport units. if the unit is too far away from old position,
-		// reset the pathfinder instead of teleporting it.
+
+		// if the unit is too far away from old position,
+		// reset the pathfinder instead of teleporting it
 		if (newpos.SqDistance2D(owner->pos) > (MIN_WAYPOINT_DISTANCE * MIN_WAYPOINT_DISTANCE)) {
 			newMoveSquareX = (int) owner->pos.x / (MIN_WAYPOINT_DISTANCE);
 			newMoveSquareY = (int) owner->pos.z / (MIN_WAYPOINT_DISTANCE);
