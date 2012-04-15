@@ -1536,7 +1536,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 					continue;
 				}                
 				// don't help factories produce units when set on hold pos                
-				if (unit->beingBuilt && unit->mobility && (owner->moveState == MOVESTATE_HOLDPOS)) {
+				if (unit->beingBuilt && unit->moveDef && (owner->moveState == MOVESTATE_HOLDPOS)) {
 					continue;
 				}
 				// don't repair stuff that can't be repaired

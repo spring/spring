@@ -199,7 +199,7 @@ void CGroundMoveType::PostLoad()
 {
 	// HACK: re-initialize path after load
 	if (pathId != 0) {
-		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+		pathId = pathManager->RequestPath(owner->moveDef, owner->pos, goalPos, goalRadius, owner);
 	}
 }
 
@@ -857,7 +857,7 @@ void CGroundMoveType::CheckCollisionSkid()
 		// stop units from reaching escape velocity
 		const float3 dif = (pos - collidee->pos).SafeNormalize();
 
-		if (collidee->mobility == NULL) {
+		if (collidee->moveDef == NULL) {
 			const float impactSpeed = -collider->speed.dot(dif);
 			const float impactDamageMult = std::min(impactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
 
@@ -1013,7 +1013,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 	nextObstacleAvoidanceUpdate = gs->frameNum + 4;
 
 	CUnit* avoider = owner;
-	MoveDef* avoiderMD = avoider->mobility;
+	MoveDef* avoiderMD = avoider->moveDef;
 	CMoveMath* avoiderMM = avoiderMD->moveMath;
 
 	avoiderMD->tempOwner = avoider;
@@ -1032,7 +1032,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 
 	for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
 		CSolidObject* avoidee = *oi;
-		MoveDef* avoideeMD = avoidee->mobility;
+		MoveDef* avoideeMD = avoidee->moveDef;
 
 		// cases in which there is no need to avoid this obstacle
 		if (avoidee == owner)
@@ -1177,7 +1177,7 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 void CGroundMoveType::GetNewPath()
 {
 	assert(pathId == 0);
-	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+	pathId = pathManager->RequestPath(owner->moveDef, owner->pos, goalPos, goalRadius, owner);
 
 	// if new path received, can't be at waypoint
 	if (pathId != 0) {
@@ -1402,14 +1402,14 @@ void CGroundMoveType::HandleObjectCollisions()
 	static const float3 sepDirMask = float3(1.0f, 0.0f, 1.0f);
 
 	CUnit* collider = owner;
-	collider->mobility->tempOwner = collider;
+	collider->moveDef->tempOwner = collider;
 
 	// handle collisions for even-numbered objects on even-numbered frames and vv.
 	// (temporal resolution is still high enough to not compromise accuracy much?)
 	// if ((collider->id & 1) == (gs->frameNum & 1)) {
 	{
 		const UnitDef*   colliderUD = collider->unitDef;
-		const MoveDef*   colliderMD = collider->mobility;
+		const MoveDef*   colliderMD = collider->moveDef;
 		const CMoveMath* colliderMM = colliderMD->moveMath;
 
 		// collider always uses its never-rotated MoveDef footprint
@@ -1423,7 +1423,7 @@ void CGroundMoveType::HandleObjectCollisions()
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD, colliderMM);
 	}
 
-	collider->mobility->tempOwner = NULL;
+	collider->moveDef->tempOwner = NULL;
 	collider->Block();
 }
 
@@ -1452,11 +1452,11 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (collidee->moveType->IsSkidding()) { continue; }
 		if (collidee->moveType->IsFlying()) { continue; }
 
-		const bool colliderMobile = (collider->mobility != NULL);
-		const bool collideeMobile = (collidee->mobility != NULL);
+		const bool colliderMobile = (collider->moveDef != NULL);
+		const bool collideeMobile = (collidee->moveDef != NULL);
 
 		const UnitDef*   collideeUD = collidee->unitDef;
-		const MoveDef*   collideeMD = collidee->mobility;
+		const MoveDef*   collideeMD = collidee->moveDef;
 		const CMoveMath* collideeMM = (collideeMobile)? collideeMD->moveMath: NULL;
 
 		// use the collidee's MoveDef footprint if it is mobile
@@ -1473,7 +1473,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			continue;
 
 		// NOTE:
-		//    we exclude aircraft (which have NULL mobility) landed
+		//    we exclude aircraft (which have NULL moveDef's) landed
 		//    on the ground, since they would just stack when pushed
 		bool pushCollider = colliderMobile;
 		bool pushCollidee = collideeMobile;
