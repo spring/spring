@@ -71,7 +71,6 @@ std::vector<int2> CClassicGroundMoveType::lineTable[LINETABLE_SIZE][LINETABLE_SI
 CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	AMoveType(owner),
 
-	maxReverseSpeed(0.0f),
 	wantedSpeed(0.0f),
 	currentSpeed(0.0f),
 	deltaSpeed(0.0f),
@@ -97,7 +96,6 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 
 	skidding(false),
 	flying(false),
-	reversing(false),
 
 	turnRate(0.1f),
 	accRate(0.01f),
@@ -129,8 +127,6 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 
 	moveSquareX = owner->pos.x / (SQUARE_SIZE * 2);
 	moveSquareY = owner->pos.z / (SQUARE_SIZE * 2);
-
-	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
 
 	turnRate = owner->unitDef->turnRate;
 	accRate = std::max(0.01f, owner->unitDef->maxAcc);
@@ -176,14 +172,13 @@ bool CClassicGroundMoveType::Update()
 	ASSERT_SYNCED(owner->pos);
 
 	bool hasMoved = false;
-	bool wantReverse = false;
 
 	if (owner->stunned || owner->beingBuilt) {
 		owner->script->StopMoving();
 		owner->speed = ZeroVector;
 	} else {
 		if (owner->fpsControlPlayer != NULL) {
-			wantReverse = UpdateDirectControl();
+			UpdateDirectControl();
 			ChangeHeading(owner->heading + deltaHeading);
 		} else {
 			if (pathId != 0 || currentSpeed != 0.0f) {
@@ -211,16 +206,8 @@ bool CClassicGroundMoveType::Update()
 				waypointDir.y = 0;
 				waypointDir.SafeNormalize();
 
-				const float3 wpDirInv = -waypointDir;
-				const float3 wpPosTmp = owner->pos + wpDirInv;
-				const bool   wpBehind = (waypointDir.dot(owner->frontdir) < 0.0f);
-
 				if (pathId != 0 && !atGoal && haveFinalWaypoint && currentDistanceToWaypoint < SQUARE_SIZE * 2) {
 					Arrived();
-				} else {
-					if (wpBehind) {
-						wantReverse = WantReverse(waypointDir);
-					}
 				}
 
 				const float3 avoidVec = ObstacleAvoidance(waypointDir);
@@ -228,11 +215,7 @@ bool CClassicGroundMoveType::Update()
 				ASSERT_SYNCED(avoidVec);
 
 				if (avoidVec != ZeroVector) {
-					if (wantReverse) {
-						ChangeHeading(GetHeadingFromVector(wpDirInv.x, wpDirInv.z));
-					} else {
-						ChangeHeading(GetHeadingFromVector(avoidVec.x, avoidVec.z));
-					}
+					ChangeHeading(GetHeadingFromVector(avoidVec.x, avoidVec.z));
 				} else {
 					SetMainHeading();
 				}
@@ -241,21 +224,12 @@ bool CClassicGroundMoveType::Update()
 				if (nextDeltaSpeedUpdate <= gs->frameNum) {
 					wantedSpeed = (pathId != 0)? requestedSpeed: 0.0f;
 
-					const bool moreCommands = owner->commandAI->HasMoreMoveCommands();
-
-					if (!moreCommands && currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
+					if (!owner->commandAI->HasMoreMoveCommands() && currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
 						wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * -decRate));
 					}
 
-					if (owner->unitDef->turnInPlace) {
-						if (wantReverse) {
-							wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidVec.dot(-owner->frontdir) + 0.1f));
-						} else {
-							wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidVec.dot( owner->frontdir) + 0.1f));
-						}
-					}
-
-					ChangeSpeed(wantReverse);
+					wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidVec.dot(owner->frontdir) + 0.1f));
+					ChangeSpeed();
 				}
 			} else {
 				SetMainHeading();
@@ -264,7 +238,7 @@ bool CClassicGroundMoveType::Update()
 			pathManager->UpdatePath(owner, pathId);
 		}
 
-		UpdateOwnerPos(wantReverse);
+		UpdateOwnerPos();
 	}
 
 	if (owner->pos != oldPos) {
@@ -345,7 +319,7 @@ void CClassicGroundMoveType::SlowUpdate()
 
 
 void CClassicGroundMoveType::StartMoving(float3 pos, float goalRadius) {
-	StartMoving(pos, goalRadius, (reversing? maxReverseSpeed * 2: maxSpeed * 2));
+	StartMoving(pos, goalRadius, maxSpeed * 2);
 }
 
 void CClassicGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius, float speed)
@@ -377,7 +351,7 @@ void CClassicGroundMoveType::StopMoving() {
 
 
 
-void CClassicGroundMoveType::ChangeSpeed(bool wantReverse)
+void CClassicGroundMoveType::ChangeSpeed()
 {
 	if (wantedSpeed == 0.0f && currentSpeed < 0.01f) {
 		currentSpeed = 0.0f;
@@ -385,39 +359,21 @@ void CClassicGroundMoveType::ChangeSpeed(bool wantReverse)
 		return;
 	}
 
-	float wSpeed = reversing? maxReverseSpeed: maxSpeed;
+	float wSpeed = maxSpeed;
 
 	if (wantedSpeed > 0.0f) {
 		const float groundMod = owner->unitDef->moveDef->moveMath->GetPosSpeedMod(*owner->unitDef->moveDef, owner->pos, flatFrontDir);
+		const float3 goalDif = waypoint - owner->pos;
+		const short turn = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
 		wSpeed *= groundMod;
 
-		const float3 goalDifFwd = waypoint - owner->pos;
-		const float3 goalDifRev = -goalDifFwd;
-		const float3 goalPosTmp = owner->pos + goalDifRev;
-
-		const float3 goalDif = reversing? goalDifRev: goalDifFwd;
-		const short turn = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
-
 		if (turn != 0) {
 			const float goalLength = goalDif.Length();
-			const float turnSpeed = (goalLength + 8.0f) / (abs(turn) / turnRate) * 0.5f;
+			const float turnSpeed = (goalLength + 8.0f) / (std::abs(turn) / turnRate) * 0.5f;
 
 			if (turnSpeed < wSpeed) {
-				const float finalGoalSqDist = owner->pos.SqDistance2D(goalPos);
-				const float tipSqDist = 350.0f * 350.0f;
-				const bool turnInPlace = (owner->unitDef->turnInPlace && tipSqDist > finalGoalSqDist);
-
-				if (turnInPlace || currentSpeed < owner->unitDef->turnInPlaceSpeedLimit) {
-					wSpeed = turnSpeed;
-				} else {
-					if (haveFinalWaypoint && goalLength < ((reversing? maxReverseSpeed * GAME_SPEED: maxSpeed * GAME_SPEED))) {
-						wSpeed = std::max(turnSpeed, (turnSpeed + wSpeed) * 0.2f);
-					} else {
-						GetNextWayPoint();
-						wSpeed = (turnSpeed + wSpeed) * 0.625f;
-					}
-				}
+				wSpeed = turnSpeed;
 			}
 		}
 
@@ -428,11 +384,7 @@ void CClassicGroundMoveType::ChangeSpeed(bool wantReverse)
 		wSpeed = 0.0f;
 	}
 
-
-	float dif = wSpeed - currentSpeed;
-
-	if ( wantReverse && !reversing) { dif = -currentSpeed; }
-	if (!wantReverse &&  reversing) { dif = -currentSpeed; }
+	const float dif = wSpeed - currentSpeed;
 
 	if (fabs(dif) < 0.05f) {
 		deltaSpeed = dif * 0.125f;
@@ -1607,9 +1559,7 @@ void CClassicGroundMoveType::SetMainHeading() {
 
 void CClassicGroundMoveType::SetMaxSpeed(float speed)
 {
-	maxSpeed        = std::min(speed, maxSpeed);
-	maxReverseSpeed = std::min(speed, maxReverseSpeed);
-
+	maxSpeed = std::min(speed, maxSpeed);
 	requestedSpeed = speed * 2.0f;
 }
 
@@ -1647,25 +1597,24 @@ bool CClassicGroundMoveType::UpdateDirectControl()
 	const CPlayer* myPlayer = gu->GetMyPlayer();
 	const FPSUnitController& selfCon = myPlayer->fpsController;
 	const FPSUnitController& unitCon = owner->fpsControlPlayer->fpsController;
-	const bool wantReverse = (unitCon.back && !unitCon.forward);
 	float turnSign = 0.0f;
 
-	waypoint.x = owner->pos.x + owner->frontdir.x * (wantReverse)? -100.0f: 100.0f;
-	waypoint.z = owner->pos.z + owner->frontdir.z * (wantReverse)? -100.0f: 100.0f;
+	waypoint.x = owner->pos.x + owner->frontdir.x * 100.0f;
+	waypoint.z = owner->pos.z + owner->frontdir.z * 100.0f;
 	waypoint.ClampInBounds();
 
 	if (unitCon.forward) {
-		ChangeSpeed(true);
+		ChangeSpeed();
 
 		owner->isMoving = true;
 		owner->script->StartMoving();
 	} else if (unitCon.back) {
-		ChangeSpeed(true);
+		ChangeSpeed();
 
 		owner->isMoving = true;
 		owner->script->StartMoving();
 	} else {
-		ChangeSpeed(true);
+		ChangeSpeed();
 
 		owner->isMoving = false;
 		owner->script->StopMoving();
@@ -1678,65 +1627,17 @@ bool CClassicGroundMoveType::UpdateDirectControl()
 		camera->rot.y += (turnRate * turnSign * TAANG2RAD);
 	}
 
-	return wantReverse;
+	return false;
 }
 
-void CClassicGroundMoveType::UpdateOwnerPos(bool wantReverse)
+void CClassicGroundMoveType::UpdateOwnerPos()
 {
 	if (wantedSpeed > 0.0f || currentSpeed != 0.0f) {
-		if (wantReverse) {
-			if (!reversing) {
-				reversing = (currentSpeed <= 0.0f);
-			}
-		} else {
-			if (reversing) {
-				reversing = (currentSpeed > 0.0f);
-			}
-		}
-
 		currentSpeed += deltaSpeed;
-		owner->Move3D((flatFrontDir * currentSpeed * (reversing? -1.0f: 1.0f)), true);
+		owner->Move3D(flatFrontDir * currentSpeed, true);
 
 		AdjustPosToWaterLine();
 	}
-
-	if (!wantReverse && currentSpeed == 0.0f) {
-		reversing = false;
-	}
-}
-
-bool CClassicGroundMoveType::WantReverse(const float3& waypointDir) const
-{
-	if (owner->unitDef->rSpeed <= 0.0f) {
-		return false;
-	}
-
-	const float3 waypointDif  = goalPos - owner->pos;
-	const float waypointDist  = waypointDif.Length();
-	const float waypointFETA  = (waypointDist / maxSpeed);
-	const float waypointRETA  = (waypointDist / maxReverseSpeed);
-	const float waypointDirDP = waypointDir.dot(owner->frontdir);
-	const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));
-	const float turnAngleDeg  = math::acosf(waypointAngle) * (180.0f / PI);
-	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;
-	const float revAngleSpr   = 32768.0f - turnAngleSpr;
-
-	const float turnTimeMod   = 5.0f;
-	const float turnAngleTime = std::max(0.0f, (turnAngleSpr / owner->unitDef->turnRate) - turnTimeMod);
-	const float revAngleTime  = std::max(0.0f, (revAngleSpr  / owner->unitDef->turnRate) - turnTimeMod);
-
-	const float apxSpeedAfterTurn  = std::max(0.f, currentSpeed - 0.125f * (turnAngleTime * decRate));
-	const float apxRevSpdAfterTurn = std::max(0.f, currentSpeed - 0.125f * (revAngleTime  * decRate));
-	const float decTime       = ( reversing * apxSpeedAfterTurn)  / decRate;
-	const float revDecTime    = (!reversing * apxRevSpdAfterTurn) / decRate;
-	const float accTime       = (maxSpeed        - !reversing * apxSpeedAfterTurn)  / accRate;
-	const float revAccTime    = (maxReverseSpeed -  reversing * apxRevSpdAfterTurn) / accRate;
-	const float revAccDecTime = revDecTime + revAccTime;
-
-	const float fwdETA = waypointFETA + turnAngleTime + accTime + decTime;
-	const float revETA = waypointRETA + revAngleTime + revAccDecTime;
-
-	return (fwdETA > revETA);
 }
 
 #endif
