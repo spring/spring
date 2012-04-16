@@ -33,7 +33,6 @@ public:
 
 	bool IsSkidding() const { return skidding; }
 	bool IsFlying() const { return flying; }
-	bool IsReversing() const { return reversing; }
 
 private:
 	float BreakingDistance(float speed);
@@ -46,7 +45,7 @@ private:
 	void Fail();
 	void CheckCollision();
 
-	void ChangeSpeed(bool);
+	void ChangeSpeed();
 	void ChangeHeading(short wantedHeading);
 
 	void UpdateSkid();
@@ -57,8 +56,7 @@ private:
 
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();
-	void UpdateOwnerPos(bool);
-	bool WantReverse(const float3&) const;
+	void UpdateOwnerPos();
 
 	bool OnSlope();
 	void TestNewTerrainSquare();
@@ -89,7 +87,6 @@ private:
 
 	bool skidding;
 	bool flying;
-	bool reversing;
 
 	float turnRate;
 	float accRate;
@@ -110,7 +107,6 @@ private:
 	bool useMainHeading;
 	short int deltaHeading;
 
-	float maxReverseSpeed;
 	float wantedSpeed;
 	float currentSpeed;
 	float requestedSpeed;
