@@ -125,6 +125,14 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 
 
 
+void zzz(unsigned int secs) {
+#ifdef _WIN32
+	Sleep(secs * 1000);
+#else
+	sleep(secs);
+#endif
+}
+
 int main(int argc, char* argv[])
 {
 #ifdef _WIN32
@@ -207,6 +215,8 @@ int main(int argc, char* argv[])
 		if (server->HasFinished()) {
 			break;
 		}
+
+		zzz(1);
 	}
 
 	while (!server->HasFinished()) {
@@ -225,11 +235,7 @@ int main(int argc, char* argv[])
 		}
 
 		// wait 1 second between checks
-#ifdef _WIN32
-		Sleep(1000);
-#else
-		sleep(1);
-#endif
+		zzz(1);
 	}
 
 	delete server;
