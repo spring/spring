@@ -467,7 +467,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 				SRectangle cr = cn->ClipRectangle(r);
 
 				cn->Tesselate(nl, cr, false, true);
-				assert(cn->moveCostAvg != -1.0f);
+				assert(cn->GetMoveCost() != -1.0f);
 			}
 		}
 	}
