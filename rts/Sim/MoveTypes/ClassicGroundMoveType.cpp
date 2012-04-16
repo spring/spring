@@ -225,7 +225,7 @@ bool CClassicGroundMoveType::Update()
 					wantedSpeed = (pathId != 0)? requestedSpeed: 0.0f;
 
 					if (!owner->commandAI->HasMoreMoveCommands() && currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
-						wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * -decRate));
+						wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * decRate));
 					}
 
 					wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidVec.dot(owner->frontdir) + 0.1f));
