@@ -475,7 +475,8 @@ void QTPFS::PathManager::Update() {
 	//     for a mod with N move-types, any unit will be waiting
 	//     (N / LAYERS_PER_UPDATE) sim-frames before its request
 	//     executes at a minimum
-	static const unsigned int numPathTypeUpdates = std::max(1U, static_cast<unsigned int>(nodeLayers.size() / LAYERS_PER_UPDATE));
+	static const unsigned int numPathTypeUpdates = std::min(static_cast<unsigned int>(nodeLayers.size()), LAYERS_PER_UPDATE);
+
 	static unsigned int minPathTypeUpdate = 0;
 	static unsigned int maxPathTypeUpdate = numPathTypeUpdates;
 
