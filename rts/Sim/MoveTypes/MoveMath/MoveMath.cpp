@@ -40,6 +40,7 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 		case MoveDef::Ship:  { return (SpeedMod(moveDef, height, slope) * tt.shipSpeed ); } break;
 		default: {} break;
 	}
+
 	return 0.0f;
 }
 

@@ -185,6 +185,12 @@ void QTPFS::PathSearch::IterateSearch(
 	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
 	const float hWeight = math::sqrtf(curNode->GetPathCost(NODE_PATH_COST_M) / (curNode->GetNumPrevNodes() + 1));
 	#else
+	// the default speedmod on flat terrain (assuming no typemaps) is 1.0
+	// this value lies halfway between the minimum and the maximum of the
+	// speedmod range (2.0), so a node covering such terrain will receive
+	// a *relative* (average) speedmod of 0.5 --> the average move-cost of
+	// a "virtual node" containing nxtPoint and tgtPoint is the inverse of
+	// 0.5, making our "admissable" heuristic distance-weight 2.0 (1.0/0.5)
 	const float hWeight = 2.0f;
 	#endif
 
@@ -225,6 +231,9 @@ void QTPFS::PathSearch::IterateSearch(
 		nxtNode = nxtNodes[i];
 		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#endif
+
+		if (nxtNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
+			continue;
 
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
 		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
