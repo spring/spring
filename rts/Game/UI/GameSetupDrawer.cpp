@@ -109,9 +109,12 @@ void GameSetupDrawer::Draw()
 	//! not the most efficent way to do this, but who cares?
 	std::map<int, std::string> playerStates;
 	for (int a = 0; a < numPlayers; a++) {
-		if (!playerHandler->Player(a)->readyToStart) {
+		const CPlayer* player = playerHandler->Player(a);
+
+		if (!player->active) {
+			// player does not become active until we receive NETMSG_PLAYERNAME
 			playerStates[a] = "missing";
-		} else if (!playerHandler->Player(a)->spectator && !playerHandler->Player(a)->readyToStart) {
+		} else if (!player->spectator && !player->readyToStart) {
 			playerStates[a] = "notready";
 		} else {
 			playerStates[a] = "ready";
@@ -120,6 +123,7 @@ void GameSetupDrawer::Draw()
 
 	CStartPosSelecter* selector = CStartPosSelecter::selector;
 	bool ready = (selector == NULL);
+
 	if (eventHandler.GameSetup(state, ready, playerStates)) {
 		if (selector) {
 			selector->ShowReady(false);
@@ -129,6 +133,7 @@ void GameSetupDrawer::Draw()
 		}
 		return; //! LuaUI says it will do the rendering
 	}
+
 	if (selector) {
 		selector->ShowReady(true);
 	}
