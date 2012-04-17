@@ -998,9 +998,9 @@ int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
-	const float r = max(0.0f, min(1.0f, luaL_checknumber(L, 2)));
-	const float g = max(0.0f, min(1.0f, luaL_checknumber(L, 3)));
-	const float b = max(0.0f, min(1.0f, luaL_checknumber(L, 4)));
+	const float r = max(0.0f, min(1.0f, luaL_checkfloat(L, 2)));
+	const float g = max(0.0f, min(1.0f, luaL_checkfloat(L, 3)));
+	const float b = max(0.0f, min(1.0f, luaL_checkfloat(L, 4)));
 	team->color[0] = (unsigned char)(r * 255.0f);
 	team->color[1] = (unsigned char)(g * 255.0f);
 	team->color[2] = (unsigned char)(b * 255.0f);
@@ -1314,13 +1314,13 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 
 			else if (lua_isnumber(L, -1)) {
 				if (key == "radius") {
-					light.SetRadius(std::max(1.0f, lua_tonumber(L, -1)));
+					light.SetRadius(std::max(1.0f, lua_tofloat(L, -1)));
 				} else if (key == "fov") {
-					light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tonumber(L, -1))));
+					light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tofloat(L, -1))));
 				} else if (key == "ttl") {
-					light.SetTTL(lua_tonumber(L, -1));
+					light.SetTTL(lua_tofloat(L, -1));
 				} else if (key == "priority") {
-					light.SetPriority(lua_tonumber(L, -1));
+					light.SetPriority(lua_tofloat(L, -1));
 				}
 			}
 		}
