@@ -41,7 +41,7 @@ SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
 
 
 ### Assemble common incude dirs
-INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
+INCLUDE_DIRECTORIES(${SPRING_LUAJIT_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/AL)
 INCLUDE_DIRECTORIES(${SPRING_MINIZIP_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
@@ -57,7 +57,7 @@ LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
 ### Find include directories and add platform specific libraries
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 
-LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
+LIST(APPEND engineCommonLibraries ${SPRING_LUAJIT_LIBRARY} luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
 
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
