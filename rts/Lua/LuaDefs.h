@@ -85,8 +85,18 @@ template<> static DataType GetDataType(string) { return STRING_TYPE; }
 #  define LUA_OPEN_LIB(L, lib) lib(L)
 #else
 #  define LUA_OPEN_LIB(L, lib) \
-     lua_pushcfunction((L), lib); \
-     lua_pcall((L), 0, 0, 0);
+	{ \
+		const int errfuncIdx = LuaUtils::PushDebugTraceback(L); \
+		lua_pushcfunction((L), lib); \
+		const int error = lua_pcall(L, 0, 0, errfuncIdx); \
+		if (error != 0) { \
+			LOG_L(L_ERROR, "LUA_OPEN_LIB(%s): %s", #lib, lua_tostring(L, -1)); \
+			lua_pop(L, 1); \
+		} \
+		if (errfuncIdx != 0) { \
+			lua_remove(L, errfuncIdx); \
+		} \
+	}
 #endif
 
 
