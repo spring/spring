@@ -9,6 +9,9 @@
 #ifndef lua_h
 #define lua_h
 
+//SPRING
+#define SPRING_LUA
+
 #include <stdarg.h>
 #include <stddef.h>
 
