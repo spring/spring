@@ -59,6 +59,8 @@ inline float luaL_checkfloat(lua_State* L, int idx)
 	return (float)luaL_checknumber(L, idx);
 }
 
+#define lua_toboolean(L,v) ((bool)lua_toboolean(L,v))
+
 
 inline float luaL_optfloat(lua_State* L, int idx, float def)
 {
