@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <map>
 using std::string;
 using std::vector;
 using std::set;
@@ -44,8 +45,8 @@ struct lua_State;
 class CLuaHandle;
 
 
-struct luaContextData {
-	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
+struct SLuaContextData {
+	SLuaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
 		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false), owner(NULL) {}
 	bool fullCtrl;
 	bool fullRead;
@@ -64,6 +65,9 @@ struct luaContextData {
 	CLuaHandle *owner;
 };
 
+extern std::map<const lua_State*, SLuaContextData> luaContextData;
+
+
 class CLuaHandle : public CEventClient
 {
 	public:
@@ -72,10 +76,10 @@ class CLuaHandle : public CEventClient
 		void ResetCallinErrors() { callinErrors = 0; }
 
 	public:
-#define GET_CONTEXT_DATA(v) ((L ? L : GetActiveState())->lcd->v)
-#define GET_ACTIVE_CONTEXT_DATA(v) (GetActiveState()->lcd->v)
-#define GET_HANDLE_CONTEXT_DATA(v) (L->lcd->v)
-#define SET_ACTIVE_CONTEXT_DATA(v) if(all) { D_Sim.v = _##v; D_Draw.v = _##v; } else GET_ACTIVE_CONTEXT_DATA(v) = _##v
+#define GET_CONTEXT_DATA(v) (luaContextData[L ? L : GetActiveState()].v)
+#define GET_ACTIVE_CONTEXT_DATA(v) (luaContextData[GetActiveState()].v)
+#define GET_HANDLE_CONTEXT_DATA(v) (luaContextData[L].v)
+#define SET_ACTIVE_CONTEXT_DATA(v) if(all) { luaContextData[L_Sim].v = _##v; luaContextData[L_Draw].v = _##v; } else GET_ACTIVE_CONTEXT_DATA(v) = _##v
 #define SET_HANDLE_CONTEXT_DATA(v) GET_HANDLE_CONTEXT_DATA(v) = _##v
 
 
@@ -344,9 +348,6 @@ class CLuaHandle : public CEventClient
 		lua_State* L_Sim;
 		lua_State* L_Draw;
 
-		luaContextData D_Sim;
-		luaContextData D_Draw;
-
 		bool killMe;
 		string killMsg;
 
@@ -387,13 +388,13 @@ class CLuaHandle : public CEventClient
 		static const int GetActiveReadAllyTeam() { return GetStaticLuaContextData().activeReadAllyTeam; }
 		static void SetActiveReadAllyTeam(int rat) { GetStaticLuaContextData().activeReadAllyTeam = rat; }
 
-//FIXME		static LuaArrays& GetActiveArrays(lua_State *L)   { return L->lcd->arrays; }
-		static inline LuaShaders& GetActiveShaders(lua_State *L)  { return L->lcd->shaders; }
-		static inline LuaTextures& GetActiveTextures(lua_State *L) { return L->lcd->textures; }
-//FIXME		static LuaVBOs& GetActiveVBOs(lua_State *L)     { return L->lcd->vbos; }
-		static inline LuaFBOs& GetActiveFBOs(lua_State *L) { return L->lcd->fbos; }
-		static inline LuaRBOs& GetActiveRBOs(lua_State *L)     { return L->lcd->rbos; }
-		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State *L) { return L->lcd->displayLists; }
+//FIXME		static LuaArrays& GetActiveArrays(lua_State *L)   { return GET_HANDLE_CONTEXT_DATA(arrays); }
+		static inline LuaShaders& GetActiveShaders(lua_State *L)  { return GET_HANDLE_CONTEXT_DATA(shaders); }
+		static inline LuaTextures& GetActiveTextures(lua_State *L) { return GET_HANDLE_CONTEXT_DATA(textures); }
+//FIXME		static LuaVBOs& GetActiveVBOs(lua_State *L)     { return GET_HANDLE_CONTEXT_DATA(vbos); }
+		static inline LuaFBOs& GetActiveFBOs(lua_State *L) { return GET_HANDLE_CONTEXT_DATA(fbos); }
+		static inline LuaRBOs& GetActiveRBOs(lua_State *L)     { return GET_HANDLE_CONTEXT_DATA(rbos); }
+		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State *L) { return GET_HANDLE_CONTEXT_DATA(displayLists); }
 
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
@@ -452,7 +453,7 @@ inline void CLuaHandle::SetActiveHandle()
 
 inline void CLuaHandle::SetActiveHandle(CLuaHandle* lh)
 {
-	staticLuaContextData &slcd = GetStaticLuaContextData();
+	staticLuaContextData& slcd = GetStaticLuaContextData();
 	slcd.activeHandle = lh;
 	if (lh) {
 		slcd.activeFullRead = lh->GetFullRead();
@@ -462,8 +463,8 @@ inline void CLuaHandle::SetActiveHandle(CLuaHandle* lh)
 
 inline void CLuaHandle::SetActiveHandle(lua_State *L)
 {
-	staticLuaContextData &slcd = GetStaticLuaContextData();
-	CLuaHandle* lh = slcd.activeHandle = L->lcd->owner;
+	staticLuaContextData& slcd = GetStaticLuaContextData();
+	CLuaHandle* lh = slcd.activeHandle = luaContextData[L].owner;
 	if (lh) {
 		slcd.activeFullRead = lh->GetFullRead(L);
 		slcd.activeReadAllyTeam = lh->GetReadAllyTeam(L);

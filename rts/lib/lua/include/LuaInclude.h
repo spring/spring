@@ -73,7 +73,7 @@ inline bool luaL_optboolean(lua_State* L, int idx, bool def)
 	return lua_isboolean(L, idx) ? lua_toboolean(L, idx) : def;
 }
 
-struct luaContextData;
+/*struct luaContextData;
 extern boost::recursive_mutex* getLuaMutex(bool userMode, bool primary);
 
 inline lua_State *LUA_OPEN(luaContextData* lcd = NULL, bool userMode = true, bool primary = true) {
@@ -87,6 +87,6 @@ inline void LUA_CLOSE(lua_State *L_Old) {
 	if(L_Old->luamutex != getLuaMutex(false, false) && L_Old->luamutex != getLuaMutex(false, true))
 		delete L_Old->luamutex;
 	lua_close(L_Old);
-}
+}*/
 
 #endif // SPRING_LUA_INCLUDE

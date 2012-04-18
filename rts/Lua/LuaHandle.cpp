@@ -47,9 +47,10 @@
 
 #include <string>
 
-
+std::map<const lua_State*, SLuaContextData> luaContextData;
 CLuaHandle::staticLuaContextData CLuaHandle::S_Sim;
 CLuaHandle::staticLuaContextData CLuaHandle::S_Draw;
+
 
 bool CLuaHandle::devMode = false;
 bool CLuaHandle::modUICtrl = true;
@@ -71,13 +72,15 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
   callinErrors(0)
 {
 	UpdateThreading();
-
 	SetSynced(false, true);
-	D_Sim.owner = this;
-	L_Sim = LUA_OPEN(&D_Sim, GetUserMode(), true);
+
+	L_Sim = lua_open(); //LUA_OPEN(GetUserMode(), true);
+	luaContextData[L_Sim].owner = this;
 	LUA_OPEN_LIB(L_Sim, luaopen_debug);
-	D_Draw.owner = this;
-	L_Draw = LUA_OPEN(&D_Draw, GetUserMode(), false);
+
+	L_Draw = NULL;
+	L_Draw = lua_open(); //LUA_OPEN(GetUserMode(), false);
+	luaContextData[L_Draw].owner = this;
 	LUA_OPEN_LIB(L_Draw, luaopen_debug);
 }
 
@@ -125,7 +128,7 @@ void CLuaHandle::KillLua()
 		L_Sim = L_Draw;
 		CLuaHandle* orig = GetActiveHandle();
 		SetActiveHandle(L_Draw);
-		LUA_CLOSE(L_Draw);
+		lua_close(L_Draw);
 		SetActiveHandle((orig == this) ? NULL : orig);
 		L_Draw = NULL;
 		L_Sim = L_Old;
@@ -135,7 +138,7 @@ void CLuaHandle::KillLua()
 		L_Draw = L_Sim;
 		CLuaHandle* orig = GetActiveHandle();
 		SetActiveHandle(L_Sim);
-		LUA_CLOSE(L_Sim);
+		lua_close(L_Sim);
 		SetActiveHandle((orig == this) ? NULL : orig);
 		L_Sim = NULL;
 		L_Draw = L_Old;

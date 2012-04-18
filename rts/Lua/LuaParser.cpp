@@ -48,7 +48,7 @@ LuaParser::LuaParser(const string& _fileName,
   lowerKeys(true),
   lowerCppKeys(true)
 {
-	L = LUA_OPEN();
+	L = lua_open();
 
 	if (L != NULL) {
 		SetupEnv();
@@ -69,7 +69,7 @@ LuaParser::LuaParser(const string& _textChunk,
   lowerKeys(true),
   lowerCppKeys(true)
 {
-	L = LUA_OPEN();
+	L = lua_open();
 
 	if (L != NULL) {
 		SetupEnv();
@@ -80,7 +80,7 @@ LuaParser::LuaParser(const string& _textChunk,
 LuaParser::~LuaParser()
 {
 	if (L != NULL) {
-		LUA_CLOSE(L); L = NULL;
+		lua_close(L); L = NULL;
 	}
 	set<LuaTable*>::iterator it;
 	for (it = tables.begin(); it != tables.end(); ++it) {
@@ -165,14 +165,14 @@ bool LuaParser::Execute()
 		CFileHandler fh(fileName, fileModes);
 		if (!fh.LoadStringData(code)) {
 			errorLog = "could not open file: " + fileName;
-			LUA_CLOSE(L);
+			lua_close(L);
 			L = NULL;
 			return false;
 		}
 	}
 	else {
 		errorLog = "invalid format or empty file";
-		LUA_CLOSE(L);
+		lua_close(L);
 		L = NULL;
 		return false;
 	}
@@ -183,7 +183,7 @@ bool LuaParser::Execute()
 		errorLog = lua_tostring(L, -1);
 		LOG_L(L_ERROR, "%i, %s, %s",
 		                error, codeLabel.c_str(), errorLog.c_str());
-		LUA_CLOSE(L);
+		lua_close(L);
 		L = NULL;
 		return false;
 	}
@@ -209,7 +209,7 @@ bool LuaParser::Execute()
 		errorLog = lua_tostring(L, -1);
 		LOG_L(L_ERROR, "%i, %s, %s",
 		                error, fileName.c_str(), errorLog.c_str());
-		LUA_CLOSE(L);
+		lua_close(L);
 		L = NULL;
 		return false;
 	}
@@ -217,7 +217,7 @@ bool LuaParser::Execute()
 	if (!lua_istable(L, 1)) {
 		errorLog = "missing return table from " + fileName;
 		LOG_L(L_ERROR, "missing return table from %s", fileName.c_str());
-		LUA_CLOSE(L);
+		lua_close(L);
 		L = NULL;
 		return false;
 	}
