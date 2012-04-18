@@ -6,8 +6,6 @@
 \*=========================================================================*/
 #include <string.h>
 
-#include "lua.h"
-#include "lauxlib.h"
 
 #include "socket.h"
 #include "timeout.h"

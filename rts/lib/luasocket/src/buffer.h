@@ -17,7 +17,8 @@
 *
 * RCS ID: $Id: buffer.h,v 1.12 2005/10/07 04:40:59 diego Exp $
 \*=========================================================================*/
-#include "lua.h"
+
+#include <lua.hpp>
 
 #include "io.h"
 #include "timeout.h"

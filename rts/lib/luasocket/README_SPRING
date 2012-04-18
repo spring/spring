@@ -4,3 +4,4 @@ Changes done to luasocket:
 2. rename luaL_openlib into luaI_openlib
 3. added restrictions.cpp + restrictions.h
 4. integrated restrictions into inet.cpp and udp.cpp
+5. removed any lua #includes and replaced them with "#include <lua.hpp>" (which defines "extern C" when linking to the shared lib)
