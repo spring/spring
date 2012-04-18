@@ -1,5 +1,6 @@
 # Spring supplied CMake build file
 
+INCLUDE_DIRECTORIES(BEFORE ${SPRING_LUAJIT_INCLUDE_DIR})
 
 SET(luaSocketSources
 	src/auxiliar.cpp
