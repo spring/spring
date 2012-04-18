@@ -2,10 +2,7 @@
 #define SPRING_LUA_INCLUDE
 
 #include <string>
-#include "lua.h"
-#include "lib/lua/src/lstate.h"
-#include "lualib.h"
-#include "lauxlib.h"
+#include <lua.hpp>
 #include "lib/streflop/streflop_cond.h"
 #include <boost/thread/recursive_mutex.hpp>
 
