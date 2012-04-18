@@ -9,7 +9,7 @@ using std::string;
 using std::vector;
 
 #include "LuaHashString.h"
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 #include "LuaDefs.h"
 #include "Sim/Units/CommandAI/Command.h"
 

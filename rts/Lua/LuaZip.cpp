@@ -26,7 +26,7 @@
  */
 
 #include "LuaZip.h"
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 #include "LuaHashString.h"
 #include "System/FileSystem/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"

@@ -39,7 +39,7 @@
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>

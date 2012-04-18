@@ -4,7 +4,7 @@
 
 #include "LuaConstGL.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "LuaUtils.h"
 #include "Rendering/GL/myGL.h"

@@ -10,7 +10,7 @@
 
 #include "LuaSyncedTable.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "LuaHashString.h"
 #include "LuaUtils.h"

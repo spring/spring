@@ -317,7 +317,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 #endif
 
 #if GML_CALL_DEBUG
-#include "lib/lua/include/lauxlib.h"
+#include "lib/lua/include/LuaInclude.h"
 extern unsigned gmlLockTime;
 extern lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS];
 class gmlCallDebugger {

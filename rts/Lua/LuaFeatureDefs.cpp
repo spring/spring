@@ -11,7 +11,7 @@
 
 #include "LuaFeatureDefs.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "Sim/Misc/GlobalSynced.h"
 #include "LuaDefs.h"

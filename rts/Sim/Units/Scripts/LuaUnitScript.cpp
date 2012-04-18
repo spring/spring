@@ -3,10 +3,10 @@
 #define LUA_SYNCED_ONLY
 
 #include "LuaUnitScript.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "CobInstance.h"
 #include "UnitScriptLog.h"
-#include "LuaInclude.h"
 #include "NullUnitScript.h"
 #include "LuaScriptNames.h"
 #include "Lua/LuaCallInCheck.h"

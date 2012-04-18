@@ -4,7 +4,7 @@
 
 #include "LuaUnsyncedCall.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "LuaHandle.h"
 #include "LuaGaia.h"

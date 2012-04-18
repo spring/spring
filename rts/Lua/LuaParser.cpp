@@ -12,7 +12,7 @@
 
 #include "System/float3.h"
 #include "System/float4.h"
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "LuaIO.h"
 #include "LuaUtils.h"

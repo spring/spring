@@ -5,7 +5,7 @@
 #include "LuaUnitRendering.h"
 #include "LuaMaterial.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "LuaHandle.h"
 #include "LuaHashString.h"

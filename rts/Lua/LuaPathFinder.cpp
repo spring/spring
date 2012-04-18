@@ -4,7 +4,7 @@
 #include "System/mmgr.h"
 
 #include "LuaPathFinder.h"
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Sim/Path/IPathManager.h"

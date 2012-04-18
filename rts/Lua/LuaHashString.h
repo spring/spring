@@ -7,7 +7,7 @@
 using std::string;
 
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 
 struct LuaHashString {

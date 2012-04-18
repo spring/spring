@@ -2,7 +2,7 @@
 
 #include "LuaUnsyncedRead.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaUtils.h"

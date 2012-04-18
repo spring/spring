@@ -4,7 +4,7 @@
 
 #include "LuaConstCMD.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "LuaUtils.h"
 #include "Sim/Units/CommandAI/Command.h"

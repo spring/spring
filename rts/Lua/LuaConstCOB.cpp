@@ -4,7 +4,7 @@
 
 #include "System/mmgr.h"
 #include "LuaConstCOB.h"
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 #include "LuaUtils.h"
 #include "Sim/Units/Scripts/CobDefines.h"
 #include "Sim/Projectiles/PieceProjectile.h"

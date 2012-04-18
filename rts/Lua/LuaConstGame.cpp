@@ -4,7 +4,7 @@
 
 #include "LuaConstGame.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "LuaUtils.h"
 #include "Game/Game.h"

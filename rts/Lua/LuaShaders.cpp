@@ -5,7 +5,7 @@
 
 #include "LuaShaders.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "LuaHashString.h"
 #include "LuaHandle.h"

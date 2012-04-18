@@ -4,7 +4,7 @@
 #include <string>
 #include <lua.hpp>
 #include "lib/streflop/streflop_cond.h"
-#include <boost/thread/recursive_mutex.hpp>
+//#include <boost/thread/recursive_mutex.hpp>
 
 
 inline void lua_pushsstring(lua_State* L, const std::string& str)

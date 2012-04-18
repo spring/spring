@@ -3,7 +3,7 @@
 #include "System/mmgr.h"
 
 #include "LuaCallInCheck.h"
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 #include "System/Log/ILog.h"
 
 

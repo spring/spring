@@ -5,7 +5,7 @@
 
 #include "KeyAutoBinder.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "KeyBindings.h"
 #include "KeyBindingsLog.h"

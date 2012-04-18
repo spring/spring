@@ -11,7 +11,7 @@
 
 #include "LuaWeaponDefs.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "LuaDefs.h"
 #include "LuaHandle.h"

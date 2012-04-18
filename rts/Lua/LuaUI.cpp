@@ -6,7 +6,7 @@
 
 #include "LuaUI.h"
 
-#include "LuaInclude.h"
+#include "lib/lua/include/LuaInclude.h"
 
 #include "LuaUnsyncedCtrl.h"
 #include "LuaCallInCheck.h"

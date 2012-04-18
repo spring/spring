@@ -5,7 +5,7 @@
 
 #include <string>
 
-//#include "LuaInclude.h"
+//#include "lib/lua/include/LuaInclude.h"
 
 class CMatrix44f;
 
