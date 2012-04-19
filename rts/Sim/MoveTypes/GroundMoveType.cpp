@@ -281,7 +281,8 @@ bool CGroundMoveType::Update()
 		idling &= (std::abs(owner->heading - heading) < turnRate);
 		hasMoved = false;
 	} else {
-		TestNewTerrainSquare();
+		// the terrain-test is done (differently) in UpdateOwnerPos instead
+		// TestNewTerrainSquare();
 
 		// note: HandleObjectCollisions() may have negated the position set
 		// by UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
@@ -1239,16 +1240,26 @@ void CGroundMoveType::GetNextWayPoint()
 		// and pass it without slowing down)
 		// note that we take the DIAMETER of the circle
 		// to prevent sine-like "snaking" trajectories
+		const int dirSign = int(!reversing) * 2 - 1;
 		const float turnFrames = SPRING_CIRCLE_DIVS / turnRate;
 		const float turnRadius = (owner->speed.Length() * turnFrames) / (PI + PI);
-		const int dirSign = int(!reversing) * 2 - 1;
+		const float waypointDot = Clamp(waypointDir.dot(flatFrontDir * dirSign), -1.0f, 1.0f);
 
 		if (currWayPointDist > (turnRadius * 2.0f)) {
 			return;
 		}
-		if (currWayPointDist > MIN_WAYPOINT_DISTANCE && waypointDir.dot(flatFrontDir * dirSign) >= 0.995f) {
+		#if 0
+		if (currWayPointDist > MIN_WAYPOINT_DISTANCE && waypointDot >= 0.995f) {
 			return;
 		}
+		#else
+		if (math::acosf(waypointDot) < ((turnRate / SPRING_CIRCLE_DIVS) * (PI + PI))) {
+			return;
+		}
+		if ((currWayPointDist > (turnRadius * 1.0f)) && (waypointDot < 0.0f)) {
+			return;
+		}
+		#endif
 
 		{
 			const float curGoalDistSq = (currWayPoint - goalPos).SqLength2D();
@@ -1932,8 +1943,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 						const int x = (moveSquareX + li->x);
 						const int y = (moveSquareY + li->y);
 
-						if ((movemath->IsBlocked(md, x, y) & blockBits) ||
-							movemath->GetPosSpeedMod(md, x, y) <= 0.01f) {
+						if ((movemath->IsBlocked(md, x, y) & blockBits) || movemath->GetPosSpeedMod(md, x, y) <= 0.01f) {
 							wpOk = false;
 							break;
 						}
