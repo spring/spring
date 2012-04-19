@@ -1245,18 +1245,21 @@ void CGroundMoveType::GetNextWayPoint()
 		const float turnRadius = (owner->speed.Length() * turnFrames) / (PI + PI);
 		const float waypointDot = Clamp(waypointDir.dot(flatFrontDir * dirSign), -1.0f, 1.0f);
 
+		#if 1
 		if (currWayPointDist > (turnRadius * 2.0f)) {
 			return;
 		}
-		#if 0
 		if (currWayPointDist > MIN_WAYPOINT_DISTANCE && waypointDot >= 0.995f) {
 			return;
 		}
 		#else
-		if (math::acosf(waypointDot) < ((turnRate / SPRING_CIRCLE_DIVS) * (PI + PI))) {
+		if ((currWayPointDist > std::max(turnRadius * 2.0f, 1.0f * SQUARE_SIZE)) && (waypointDot >= 0.0f)) {
 			return;
 		}
-		if ((currWayPointDist > (turnRadius * 1.0f)) && (waypointDot < 0.0f)) {
+		if ((currWayPointDist > std::max(turnRadius * 1.0f, 1.0f * SQUARE_SIZE)) && (waypointDot <  0.0f)) {
+			return;
+		}
+		if (math::acosf(waypointDot) < ((turnRate / SPRING_CIRCLE_DIVS) * (PI + PI))) {
 			return;
 		}
 		#endif
@@ -1280,9 +1283,10 @@ void CGroundMoveType::GetNextWayPoint()
 		}
 	}
 
-	if ((nextWayPoint - currWayPoint).SqLength2D() > 0.01f) {
+	{
 		pathController->SetTempGoalPosition(pathId, nextWayPoint);
 
+		// NOTE: pathfinder implementation should ensure waypoints are not equal
 		currWayPoint = nextWayPoint;
 		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
