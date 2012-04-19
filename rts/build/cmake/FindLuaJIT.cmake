@@ -15,10 +15,23 @@ IF(LUAJIT_INCLUDE_DIR AND LUAJIT_LIBRARY)
 	SET(LUAJIT_FIND_QUIETLY TRUE)
 ENDIF(LUAJIT_INCLUDE_DIR AND LUAJIT_LIBRARY)
 
-FIND_PATH(LUAJIT_INCLUDE_DIR lua.h)
+FIND_PATH(LUAJIT_INCLUDE_DIR lua.h
+	HINTS
+	$ENV{LUAJIT_DIR}
+	PATH_SUFFIXES include/luajit51 include/luajit5.1 include/luajit-2.0
+	PATHS
+	~/Library/Frameworks
+	/Library/Frameworks
+	/usr/local
+	/usr
+	/sw # Fink
+	/opt/local # DarwinPorts
+	/opt/csw # Blastwave
+	/opt
+)
 
 # the "lua" causes that system installed lua library is still preferred to Spring's internal synced Lua
-SET(LUAJIT_NAMES luajit luajit luajit-5.1 lua)
+SET(LUAJIT_NAMES luajit luajit-5.1 lua lua51)
 FIND_LIBRARY(LUAJIT_LIBRARY NAMES ${LUAJIT_NAMES})
 
 IF(LUAJIT_INCLUDE_DIR AND LUAJIT_LIBRARY)
