@@ -238,10 +238,11 @@ CUnit::CUnit() : CSolidObject(),
 	isIcon(false),
 	iconRadius(0.0f),
 	lodCount(0),
-	currentLOD(0)
+	currentLOD(0),
 #ifdef USE_GML
-	, lastDrawFrame(-30)
+	lastDrawFrame(-30),
 #endif
+	lastUnitUpdate(0)
 {
 	GML_GET_TICKS(lastUnitUpdate);
 }

@@ -6,6 +6,9 @@ Spring changelog
 Changes:
  ! some config values are now write protected (Spring.SetConfig*)
  - added luasocket support for widgets, see http://springrts.com/wiki/LuaSocket
+ - added Shard to the windows installer
+ - added pr-downloader as submodule (only compiled if libcurldev is available)
+ - update assimp to svn rev 1231
 
 -- 88.0 ---------------------------------------------------------
 Changes:
