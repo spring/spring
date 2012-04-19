@@ -81,6 +81,7 @@ CMobileCAI::CMobileCAI():
 CMobileCAI::CMobileCAI(CUnit* owner):
 	CCommandAI(owner),
 	goalPos(-1,-1,-1),
+	goalRadius(0.0f),
 	lastBuggerGoalPos(-1,0,-1),
 	lastUserGoal(owner->pos),
 	lastIdleCheck(0),
