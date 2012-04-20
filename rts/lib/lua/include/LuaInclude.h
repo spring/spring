@@ -7,6 +7,40 @@
 //#include <boost/thread/recursive_mutex.hpp>
 
 
+inline void PUSH_LUAJIT()
+{
+#if defined(STREFLOP_X87) || defined(STREFLOP_SSE) || defined(STREFLOP_SOFT)
+	streflop::fpenv_t fenv;
+	streflop::fegetenv(&fenv);
+	fenv.x87_mode |= 0x0300; // 80 bits internal operations
+	streflop::fesetenv(&fenv);
+#endif
+}
+
+
+inline void POP_LUAJIT()
+{
+#if defined(STREFLOP_X87) || defined(STREFLOP_SSE) || defined(STREFLOP_SOFT)
+	streflop::fpenv_t fenv;
+	streflop::fegetenv(&fenv);
+	fenv.x87_mode &= 0xFCFF; // 32 bits internal operations
+	streflop::fesetenv(&fenv);
+#endif
+}
+
+class LuaJIT_FPU {
+	LuaJIT_FPU()  { PUSH_LUAJIT(); }
+	~LuaJIT_FPU() { POP_LUAJIT(); }
+};
+
+
+//FIXME this is just for testing/dev'ing!!!
+#define lua_checkstack(L, i) \
+	LuaJIT_FPU luaJitFPUSettings(); \
+	lua_checkstack(L, i);
+
+
+
 inline void lua_pushsstring(lua_State* L, const std::string& str)
 {
 	lua_pushlstring(L, str.data(), str.size());

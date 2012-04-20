@@ -48,11 +48,13 @@ LuaParser::LuaParser(const string& _fileName,
   lowerKeys(true),
   lowerCppKeys(true)
 {
+	PUSH_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 	L = lua_open();
 
 	if (L != NULL) {
 		SetupEnv();
 	}
+	POP_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 }
 
 
@@ -69,11 +71,13 @@ LuaParser::LuaParser(const string& _textChunk,
   lowerKeys(true),
   lowerCppKeys(true)
 {
+	PUSH_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 	L = lua_open();
 
 	if (L != NULL) {
 		SetupEnv();
 	}
+	POP_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 }
 
 
@@ -144,8 +148,10 @@ void LuaParser::SetupEnv()
 
 bool LuaParser::Execute()
 {
+	PUSH_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 	if (!IsValid()) {
 		errorLog = "could not initialize LUA library";
+		POP_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 		return false;
 	}
 
@@ -167,6 +173,7 @@ bool LuaParser::Execute()
 			errorLog = "could not open file: " + fileName;
 			lua_close(L);
 			L = NULL;
+			POP_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 			return false;
 		}
 	}
@@ -174,6 +181,7 @@ bool LuaParser::Execute()
 		errorLog = "invalid format or empty file";
 		lua_close(L);
 		L = NULL;
+		POP_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 		return false;
 	}
 
@@ -185,6 +193,7 @@ bool LuaParser::Execute()
 		                error, codeLabel.c_str(), errorLog.c_str());
 		lua_close(L);
 		L = NULL;
+		POP_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 		return false;
 	}
 
@@ -211,6 +220,7 @@ bool LuaParser::Execute()
 		                error, fileName.c_str(), errorLog.c_str());
 		lua_close(L);
 		L = NULL;
+		POP_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 		return false;
 	}
 
@@ -219,6 +229,7 @@ bool LuaParser::Execute()
 		LOG_L(L_ERROR, "missing return table from %s", fileName.c_str());
 		lua_close(L);
 		L = NULL;
+		POP_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 		return false;
 	}
 
@@ -232,6 +243,7 @@ bool LuaParser::Execute()
 
 	valid = true;
 
+	POP_LUAJIT(); //FIXME just for testing, LuaParser should never use LuaJIT in final
 	return true;
 }
 
