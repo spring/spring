@@ -244,13 +244,17 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 			pmLoadScreen.AddLoadMessage(loadMsg);
 		}
 
+		#ifndef NDEBUG
 		const char* preFmtStr = "  initializing node-layer %u (thread %u)";
 		const char* pstFmtStr = "  initialized node-layer %u (%u MB, %u leafs, ratio %f)";
+		#endif
 
 		#pragma omp parallel for private(loadMsg)
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+			#ifndef NDEBUG
 			sprintf(loadMsg, preFmtStr, layerNum, omp_get_thread_num());
 			pmLoadScreen.AddLoadMessage(loadMsg);
+			#endif
 
 			// construct each tree from scratch IFF no cache-dir exists
 			// (if it does, we only need to initialize speed{Mods, Bins})
@@ -261,8 +265,10 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 			const NodeLayer& layer = nodeLayers[layerNum];
 			const unsigned int mem = (tree->GetMemFootPrint() + layer.GetMemFootPrint()) / (1024 * 1024);
 
+			#ifndef NDEBUG
 			sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
 			pmLoadScreen.AddLoadMessage(loadMsg);
+			#endif
 		}
 	}
 	#else
@@ -290,13 +296,17 @@ void QTPFS::PathManager::InitNodeLayersThread(
 	const unsigned int minLayer = threadNum * layersPerThread;
 	const unsigned int maxLayer = minLayer + layersPerThread + numExcessLayers;
 
+	#ifndef NDEBUG
 	char loadMsg[512] = {'\0'};
 	const char* preFmtStr = "  initializing node-layer %u (thread %u)";
 	const char* pstFmtStr = "  initialized node-layer %u (%u MB, %u leafs, ratio %f)";
+	#endif
 
 	for (unsigned int layerNum = minLayer; layerNum < maxLayer; layerNum++) {
+		#ifndef NDEBUG
 		sprintf(loadMsg, preFmtStr, layerNum, threadNum);
 		pmLoadScreen.AddLoadMessage(loadMsg);
+		#endif
 
 		InitNodeLayer(layerNum, rect);
 		UpdateNodeLayer(layerNum, rect, !haveCacheDir);
@@ -305,8 +315,10 @@ void QTPFS::PathManager::InitNodeLayersThread(
 		const NodeLayer& layer = nodeLayers[layerNum];
 		const unsigned int mem = (tree->GetMemFootPrint() + layer.GetMemFootPrint()) / (1024 * 1024);
 
+		#ifndef NDEBUG
 		sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
 		pmLoadScreen.AddLoadMessage(loadMsg);
+		#endif
 	}
 }
 
@@ -378,7 +390,9 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 	mr.x2 = std::min(int(r.x2) + (md->xsizeh), gs->mapx);
 	mr.z2 = std::min(int(r.z2) + (md->zsizeh), gs->mapy);
 
-	if (nodeLayers[layerNum].Update(mr, md, mm) && wantTesselation) {
+	const bool needTesselation = nodeLayers[layerNum].Update(mr, md, mm);
+
+	if (needTesselation && wantTesselation) {
 		nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr);
 		pathCaches[layerNum].MarkDeadPaths(mr);
 	}
@@ -410,31 +424,34 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		assert(FileSystem::DirExists(cacheFileDir));
 	}
 
-	bool read = false;
+	bool readMode = false;
+
+	#ifndef NDEBUG
 	char loadMsg[512] = {'\0'};
 	const char* fmtString = "[PathManager::%s] serializing node-tree %u (%s)";
+	#endif
 
 	// TODO: compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveDefHandler->moveDefs[i]->name;
 		fileStreams[i] = new std::fstream();
 
-		if (FileSystem::FileExists(fileNames[i])) {
-			// read the i-th tree
-			read = true;
+		if ((readMode = FileSystem::FileExists(fileNames[i]))) {
+			// read fileNames[i] into nodeTrees[i]
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::in | std::ios::binary);
 			assert(nodeTrees[i]->IsLeaf());
 		} else {
-			// write the i-th tree
-			read = false;
+			// write nodeTrees[i] into fileNames[i]
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::out | std::ios::binary);
 		}
 
+		#ifndef NDEBUG
 		sprintf(loadMsg, fmtString, __FUNCTION__, i, moveDefHandler->moveDefs[i]->name.c_str());
 		pmLoadScreen.AddLoadMessage(loadMsg);
+		#endif
 
 		serializingNodeLayer = &nodeLayers[i];
-		nodeTrees[i]->Serialize(*fileStreams[i], read);
+		nodeTrees[i]->Serialize(*fileStreams[i], readMode);
 		serializingNodeLayer = NULL;
 
 		fileStreams[i]->flush();
