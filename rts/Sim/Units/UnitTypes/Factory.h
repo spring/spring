@@ -31,7 +31,7 @@ public:
 	unsigned int QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, FinishBuildCallBackFunc buildCB);
 
 	void Update();
-	void SlowUpdate();
+
 	void DependentDied(CObject* o);
 	void CreateNanoParticle(bool highPriority = false);
 
