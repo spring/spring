@@ -934,16 +934,26 @@ void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const 
 	}
 
 	unsigned totalParams = 0;
+	int sameCmdID = commands[0].GetID();
+	unsigned char sameCmdOpt = commands[0].options;
+	int sameCmdParamSize = commands[0].params.size();
 	for (unsigned c = 0; c < commandCount; c++) {
 		totalParams += commands[c].params.size();
+		if (sameCmdID != 0 && sameCmdID != commands[c].GetID())
+			sameCmdID = 0;
+		if (sameCmdOpt != 0xFF && sameCmdOpt != commands[c].options)
+			sameCmdOpt = 0xFF;
+		if (sameCmdParamSize != 0xFFFF && sameCmdParamSize != commands[c].params.size())
+			sameCmdParamSize = 0xFFFF;
 	}
 
 	unsigned msgLen = 0;
-	msgLen += (1 + 2 + 1 + 1 + 1); // msg type, msg size, player ID, AI ID, pairwise
+	msgLen += (1 + 2 + 1 + 1 + 1 + 4 + 1 + 2); // msg type, msg size, player ID, AI ID, pairwise, sameCmdID, sameCmdOpt, sameCmdParamSize
 	msgLen += 2; // unitID count
 	msgLen += unitIDCount * 2;
 	msgLen += 2; // command count
-	msgLen += commandCount * (4 + 1 + 2); // id, options, params size
+	int psize = ((sameCmdID == 0) ? 4 : 0) + ((sameCmdOpt == 0xFF) ? 1 : 0) + ((sameCmdParamSize == 0xFFFF) ? 2 : 0);
+	msgLen += commandCount * psize; // id, options, params size
 	msgLen += totalParams * 4;
 	if (msgLen > 8192) {
 		LOG_L(L_WARNING, "Discarded oversized NETMSG_AICOMMANDS packet: %i",
@@ -955,7 +965,10 @@ void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const 
 	        << static_cast<unsigned short>(msgLen)
 	        << static_cast<unsigned char>(gu->myPlayerNum)
 	        << skirmishAIHandler.GetCurrentAIID()
-	        << static_cast<unsigned char>(pairwise);
+	        << static_cast<unsigned char>(pairwise)
+	        << static_cast<unsigned int>(sameCmdID)
+	        << static_cast<unsigned char>(sameCmdOpt)
+	        << static_cast<unsigned short>(sameCmdParamSize);
 
 	*packet << static_cast<unsigned short>(unitIDCount);
 	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it)
@@ -964,11 +977,16 @@ void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const 
 	}
 
 	*packet << static_cast<unsigned short>(commandCount);
+
 	for (unsigned i = 0; i < commandCount; ++i) {
 		const Command& cmd = commands[i];
-		*packet << static_cast<unsigned int>(cmd.GetID())
-		        << cmd.options
-		        << static_cast<unsigned short>(cmd.params.size()) << cmd.params;
+		if (sameCmdID == 0)
+			*packet << static_cast<unsigned int>(cmd.GetID());
+		if (sameCmdOpt == 0xFF)
+			*packet << cmd.options;
+		if (sameCmdParamSize == 0xFFFF)
+			*packet << static_cast<unsigned short>(cmd.params.size());
+		*packet << cmd.params;
 	}
 
 	net->Send(boost::shared_ptr<netcode::RawPacket>(packet));
