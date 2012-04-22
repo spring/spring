@@ -2513,6 +2513,8 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 		return 1;
 	}
 
+	const int args = lua_gettop(L); // number of arguments
+
 	// unitIDs
 	vector<int> unitIDs;
 	ParseUnitArray(L, __FUNCTION__, 1, unitIDs);
@@ -2521,12 +2523,16 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	vector<Command> commands;
 	LuaUtils::ParseCommandArray(L, __FUNCTION__, 2, commands);
 
+	bool pairwise = false;
+	if (args >= 3)
+		pairwise = lua_toboolean(L, 3);
+
 	if ((unitIDs.size() <= 0) || (commands.size() <= 0)) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	selectedUnits.SendCommandsToUnits(unitIDs, commands);
+	selectedUnits.SendCommandsToUnits(unitIDs, commands, pairwise);
 
 	lua_pushboolean(L, true);
 	return 1;
