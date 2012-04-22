@@ -47,7 +47,7 @@ enum NETMSG {
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
 
 	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; uchar aiID; short unitID; int id; uchar options; std::vector<float> params;
-	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum; uchar aiID;
+	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum; uchar aiID; uchar pairwise;
 	                              // short unitIDCount;  unitIDCount * short(unitID)
 	                              // short commandCount; commandCount * { int id; uchar options; std::vector<float> params }
 	NETMSG_AISHARE          = 16, // uchar myPlayerNum, uchar aiID, uchar sourceTeam, uchar destTeam, float metal, float energy, std::vector<short> unitIDs

@@ -918,7 +918,7 @@ void CSelectedUnits::SendCommand(const Command& c)
 }
 
 
-void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands)
+void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands, bool pairwise)
 {
 	// NOTE: does not check for invalid unitIDs
 
@@ -939,7 +939,7 @@ void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const 
 	}
 
 	unsigned msgLen = 0;
-	msgLen += (1 + 2 + 1 + 1); // msg type, msg size, player ID, AI ID
+	msgLen += (1 + 2 + 1 + 1 + 1); // msg type, msg size, player ID, AI ID, pairwise
 	msgLen += 2; // unitID count
 	msgLen += unitIDCount * 2;
 	msgLen += 2; // command count
@@ -954,7 +954,8 @@ void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const 
 	*packet << static_cast<unsigned char>(NETMSG_AICOMMANDS)
 	        << static_cast<unsigned short>(msgLen)
 	        << static_cast<unsigned char>(gu->myPlayerNum)
-	        << skirmishAIHandler.GetCurrentAIID();
+	        << skirmishAIHandler.GetCurrentAIID()
+	        << static_cast<unsigned char>(pairwise);
 
 	*packet << static_cast<unsigned short>(unitIDCount);
 	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it)
