@@ -8,6 +8,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/mmgr.h"
 #include "System/Util.h"
+#include "System/Vec2.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/creg/creg_cond.h"
@@ -102,6 +103,12 @@ CGlobalRendering::CGlobalRendering()
 	, support24bitDepthBuffers(false)
 	, haveARB(false)
 	, haveGLSL(false)
+	, maxSmoothPointSize(1.0f)
+	, glslMaxVaryings(0)
+	, glslMaxAttributes(0)
+	, glslMaxDrawBuffers(0)
+	, glslMaxRecommendedIndices(0)
+	, glslMaxRecommendedVertices(0)
 
 	, dualScreenMode(false)
 	, dualScreenMiniMapOnLeft(false)
@@ -155,6 +162,22 @@ void CGlobalRendering::PostInit() {
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 	}
 
+	// retrieve maximu smoothed PointSize
+	float2 aliasedPointSizeRange, smoothPointSizeRange;
+	glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, (GLfloat*)&aliasedPointSizeRange);
+	glGetFloatv(GL_SMOOTH_POINT_SIZE_RANGE,  (GLfloat*)&smoothPointSizeRange);
+	maxSmoothPointSize = std::min(aliasedPointSizeRange.y, smoothPointSizeRange.y);
+
+	// some GLSL relevant information
+	{
+		glGetIntegerv(GL_MAX_VARYING_FLOATS,    &glslMaxVaryings);
+		glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,    &glslMaxAttributes);
+		glGetIntegerv(GL_MAX_DRAW_BUFFERS,      &glslMaxDrawBuffers);
+		glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &glslMaxRecommendedIndices);
+		glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &glslMaxRecommendedVertices);
+		glslMaxVaryings /= 4; // GL_MAX_VARYING_FLOATS returns max individual floats, we want float4
+	}
+
 	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
 	{
 		// ATI seems to support GL_DEPTH_COMPONENT24 for static textures, but you can't render to them
@@ -185,10 +208,14 @@ void CGlobalRendering::PostInit() {
 		"GL info:\n"
 		"\thaveARB: %i, haveGLSL: %i, ATI hacks: %i\n"
 		"\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i\n"
-		"\tmaximum texture size: %i, compress MIP-map textures: %i",
+		"\tmaximum texture size: %i, compress MIP-map textures: %i\n"
+		"\tmaximum SmoothPointSize: %0.0f, maximum vec4 varying/attributes: %i/%i\n"
+		"\tmaximum drawbuffers: %i, maximum recommended indices/vertices: %i/%i",
 		haveARB, haveGLSL, atiHacks,
 		FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers,
-		maxTextureSize, compressTextures
+		maxTextureSize, compressTextures, maxSmoothPointSize,
+		glslMaxVaryings, glslMaxAttributes, glslMaxDrawBuffers,
+		glslMaxRecommendedIndices, glslMaxRecommendedVertices
 	);
 
 	teamNanospray = configHandler->GetBool("TeamNanoSpray");
