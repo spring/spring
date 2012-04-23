@@ -194,6 +194,21 @@ public:
 	bool haveARB;
 	bool haveGLSL;
 
+	/**
+	 * @brief maxSmoothPointSize
+	 *
+	 * maximum smooth point size (driver might fallback in software rendering if larger)
+	 */
+	float maxSmoothPointSize;
+
+	/**
+	 * Shader capabilities
+	 */
+	int glslMaxVaryings;
+	int glslMaxAttributes;
+	int glslMaxDrawBuffers;
+	int glslMaxRecommendedIndices;
+	int glslMaxRecommendedVertices;
 
 	/**
 	 * @brief dual screen mode
