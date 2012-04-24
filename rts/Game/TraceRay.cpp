@@ -328,7 +328,7 @@ float GuiTraceRay(
 				if (!hitUnit ||
 					((hitFactory && ingressDist < length2) || (!hitFactory && ingressDist < length))) {
 					hitFactory = false;
-					length = len;
+					length = ingressDist;
 					hitFeature = f;
 					hitUnit = NULL;
 				}
