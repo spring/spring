@@ -115,8 +115,15 @@ inline bool TestTrajectoryConeHelper(
 namespace TraceRay {
 
 // called by {CRifle, CBeamLaser, CLightningCannon}::Fire(), CWeapon::HaveFreeLineOfFire(), and Skirmish AIs
-float TraceRay(const float3& start, const float3& dir, float length, int collisionFlags, const CUnit* owner, CUnit*& hitUnit, CFeature*& hitFeature)
-{
+float TraceRay(
+	const float3& start,
+	const float3& dir,
+	float length,
+	int collisionFlags,
+	const CUnit* owner,
+	CUnit*& hitUnit,
+	CFeature*& hitFeature
+) {
 	const bool ignoreEnemies  = ((collisionFlags & Collision::NOENEMIES   ) != 0);
 	const bool ignoreAllies   = ((collisionFlags & Collision::NOFRIENDLIES) != 0);
 	const bool ignoreFeatures = ((collisionFlags & Collision::NOFEATURES  ) != 0);
@@ -217,120 +224,122 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 }
 
 
-float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool useRadar, const CUnit* exclude, CUnit*& hitUnit, CFeature*& hitFeature)
-{
+float GuiTraceRay(
+	const float3& start,
+	const float3& dir,
+	float length,
+	bool useRadar,
+	const CUnit* exclude,
+	CUnit*& hitUnit,
+	CFeature*& hitFeature,
+	bool groundOnly
+) {
 	hitUnit = NULL;
 	hitFeature = NULL;
 
-	if (dir == ZeroVector) {
+	if (dir == ZeroVector)
 		return -1.0f;
-	}
-
-	float origlength = length;
-	float length2 = length;
-
-	bool hover_factory = false;
-	CollisionQuery cq;
-
-	{
-		GML_RECMUTEX_LOCK(quad); // GuiTraceRay
-
-		int* begQuad = NULL;
-		int* endQuad = NULL;
-
-		qf->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
-
-		std::list<CUnit*>::const_iterator ui;
-		std::list<CFeature*>::const_iterator fi;
-
-		for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-			const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
-
-			// Unit Intersection
-			for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-				CUnit* unit = *ui;
-				if (unit == exclude) {
-					continue;
-				}
-
-				if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView ||
-					(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) ||
-					(useRadar && radarhandler->InRadar(unit, gu->myAllyTeam)))
-				{
-
-					CollisionVolume cv(unit->collisionVolume);
-
-					if (unit->isIcon) {
-						// for iconified units, just pretend the collision
-						// volume is a sphere of radius <unit->IconRadius>
-						cv.Init(unit->iconRadius);
-					}
-
-					if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {
-						// get the distance to the ray-volume ingress point
-						const float3& intPos = (cq.b0) ? cq.p0 : cq.p1;
-						const float len = (intPos - start).dot(dir); // same as (intPos - start).Length()
-						const bool isfactory = dynamic_cast<CFactory*>(unit);
-						const float3& intPos2 = (cq.b1) ? cq.p1 : cq.p0;
-						const float len2 = (intPos2 - start).dot(dir); // same as (intPos2 - start).Length()
-
-						// give units in a factory a higher priority than the factory itself
-						if (!hitUnit ||
-							(isfactory && ((hover_factory && len < length) || (!hover_factory && len2 < length))) ||
-							(!isfactory && ((hover_factory && len < length2) || (!hover_factory && len < length)))) {
-								hover_factory = isfactory;
-								length = len;
-								length2 = len2;
-								hitUnit = unit;
-								hitFeature = NULL;
-						}
-					}
-				}
-			}
-
-			// Feature Intersection
-			// NOTE: switch this to custom volumes fully?
-			// (not used for any LOF checks, maybe wasteful)
-			for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
-				CFeature* f = *fi;
-
-				if (f->collisionVolume == NULL) {
-					continue;
-				}
-				//FIXME add useradar?
-				if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam)) {
-					continue;
-				}
-				if (f->noSelect) {
-					continue;
-				}
-
-				if (CCollisionHandler::DetectHit(f, start, start + dir * origlength, &cq, true)) {
-					const float3& intPos = (cq.b0)? cq.p0 : cq.p1;
-					const float len = (intPos - start).dot(dir); // same as (intPos - start).Length()
-
-					// we want the closest feature (intersection point) on the ray
-					// give features in a factory (?) a higher priority than the factory itself
-					if (!hitUnit ||
-						((hover_factory && len < length2) || (!hover_factory && len < length))) {
-						hover_factory = false;
-						length = len;
-						hitFeature = f;
-						hitUnit = NULL;
-					}
-				}
-			}
-		}
-	}
 
 	// ground intersection
-	float groundLen = ground->LineGroundCol(start, start + dir * origlength, false);
-	if (groundLen > 0.0f) {
-		if ((groundLen + 200.0f) < length) {
-			length     = groundLen;
-			hitUnit    = NULL;
-			hitFeature = NULL;
+	const float origlength = length;
+	const float groundLength = ground->LineGroundCol(start, start + dir * origlength, false);
+	float length2 = length;
+
+	if (groundOnly)
+		return groundLength;
+
+	GML_RECMUTEX_LOCK(quad); // GuiTraceRay
+
+	int* begQuad = NULL;
+	int* endQuad = NULL;
+	bool hitFactory = false;
+	CollisionQuery cq;
+
+	qf->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
+
+	std::list<CUnit*>::const_iterator ui;
+	std::list<CFeature*>::const_iterator fi;
+
+	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
+		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
+
+		// Unit Intersection
+		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
+			CUnit* unit = *ui;
+
+			if (unit == exclude)
+				continue;
+
+			if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView ||
+				(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) ||
+				(useRadar && radarhandler->InRadar(unit, gu->myAllyTeam)))
+			{
+
+				CollisionVolume cv(unit->collisionVolume);
+
+				if (unit->isIcon) {
+					// for iconified units, just pretend the collision
+					// volume is a sphere of radius <unit->IconRadius>
+					cv.Init(unit->iconRadius);
+				}
+
+				if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {
+					// get the distance to the ray-volume ingress point
+					const float3& ingressPos = (cq.b0)? cq.p0 : cq.p1;
+					const float3&  egressPos = (cq.b1)? cq.p1 : cq.p0;
+					const float ingressDist  = (ingressPos - start).dot(dir); // same as (intPos  - start).Length()
+					const float  egressDist  = ( egressPos - start).dot(dir); // same as (intPos2 - start).Length()
+					const bool isFactory = unit->unitDef->IsFactoryUnit();
+
+					// give units in a factory higher priority than the factory itself
+					if (!hitUnit ||
+						(isFactory && ((hitFactory && ingressDist < length) || (!hitFactory && egressDist < length))) ||
+						(!isFactory && ((hitFactory && ingressDist < length2) || (!hitFactory && ingressDist < length)))) {
+							hitFactory = isFactory;
+							length = ingressDist;
+							length2 = egressDist;
+							hitUnit = unit;
+							hitFeature = NULL;
+					}
+				}
+			}
 		}
+
+		// Feature Intersection
+		// NOTE: switch this to custom volumes fully?
+		// (not used for any LOF checks, maybe wasteful)
+		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
+			CFeature* f = *fi;
+
+			if (f->collisionVolume == NULL)
+				continue;
+			// FIXME add useradar?
+			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
+				continue;
+			if (f->noSelect)
+				continue;
+
+			if (CCollisionHandler::DetectHit(f, start, start + dir * origlength, &cq, true)) {
+				const float3& ingressPos = (cq.b0)? cq.p0 : cq.p1;
+				const float ingressDist = (ingressPos - start).dot(dir); // same as (intPos - start).Length()
+
+				// we want the closest feature (intersection point) on the ray
+				// give features in a factory (?) higher priority than the factory itself
+				if (!hitUnit ||
+					((hitFactory && ingressDist < length2) || (!hitFactory && ingressDist < length))) {
+					hitFactory = false;
+					length = len;
+					hitFeature = f;
+					hitUnit = NULL;
+				}
+			}
+		}
+	}
+
+	if ((groundLength > 0.0f) && ((groundLength + 200.0f) < length)) {
+		length     = groundLength;
+		hitUnit    = NULL;
+		hitFeature = NULL;
 	}
 
 	return length;
