@@ -133,9 +133,7 @@ void QTPFS::PathSearch::UpdateNode(
 	//     the heuristic must never over-estimate the distance,
 	//     but this is *impossible* to achieve on a non-regular
 	//     grid on which any node only has an average move-cost
-	//     associated with it (and these costs can even be less
-	//     than 1) --> paths will not be optimal, but they could
-	//     not be anyway
+	//     associated with it --> paths will be "nearly optimal"
 	nxt->SetSearchState(searchState | NODE_STATE_OPEN);
 	nxt->SetPrevNode(cur);
 	nxt->SetPathCost(NODE_PATH_COST_G, gCost);

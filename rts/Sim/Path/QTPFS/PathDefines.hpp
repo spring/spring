@@ -17,9 +17,10 @@
 // #define QTPFS_SLOW_ACCURATE_TESSELATION
 // #define QTPFS_OPENMP_ENABLED
 // #define QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+#define QTPFS_STAGGERED_LAYER_UPDATES
 
 #define QTPFS_CACHE_VERSION 1
-#define QTPFS_CACHE_BASEDIR "cache/PathNodeTrees/"
+#define QTPFS_CACHE_BASEDIR "cache/QTPFS/"
 
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
 

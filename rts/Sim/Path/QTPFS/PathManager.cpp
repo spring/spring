@@ -113,15 +113,15 @@ QTPFS::PathManager::~PathManager() {
 	std::list<IPathSearch*>::const_iterator searchesIt;
 	std::map<unsigned int, PathSearchTrace::Execution*>::const_iterator tracesIt;
 
-	for (unsigned int i = 0; i < nodeLayers.size(); i++) {
-		nodeTrees[i]->Delete();
-		nodeLayers[i].Clear();
+	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+		nodeTrees[layerNum]->Delete();
+		nodeLayers[layerNum].Clear();
 
-		for (searchesIt = pathSearches[i].begin(); searchesIt != pathSearches[i].end(); ++searchesIt) {
+		for (searchesIt = pathSearches[layerNum].begin(); searchesIt != pathSearches[layerNum].end(); ++searchesIt) {
 			delete (*searchesIt);
 		}
 
-		pathSearches[i].clear();
+		pathSearches[layerNum].clear();
 	}
 	for (tracesIt = pathTraces.begin(); tracesIt != pathTraces.end(); ++tracesIt) {
 		delete (tracesIt->second);
@@ -159,8 +159,19 @@ void QTPFS::PathManager::Load() {
 	numPrevExecutedSearches.resize(teamHandler->ActiveTeams() + 1, 0);
 
 	{
-		static const boost::uint32_t mapCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName);
-		static const boost::uint32_t modCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->modName);
+		const boost::uint32_t mapCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName);
+		const boost::uint32_t modCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->modName);
+		const std::string& cacheDirName = GetCacheDirName(mapCheckSum, modCheckSum);
+
+		{
+			layersInited = false;
+			haveCacheDir = FileSystem::DirExists(cacheDirName);
+
+			InitNodeLayersThreaded(MAP_RECTANGLE);
+			Serialize(cacheDirName);
+
+			layersInited = true;
+		}
 
 		// NOTE:
 		//     should be sufficient in theory, because if either
@@ -169,12 +180,6 @@ void QTPFS::PathManager::Load() {
 		//     this value is also combined with the tree-sums to
 		//     make it depend on the tesselation code specifics
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
-
-		const std::string& cacheDirName = GetCacheDirName(mapCheckSum, modCheckSum);
-		const bool haveCacheDir = FileSystem::DirExists(cacheDirName);
-
-		InitNodeLayersThreaded(MAP_RECTANGLE, haveCacheDir);
-		Serialize(cacheDirName);
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 			pfsCheckSum ^= nodeTrees[layerNum]->GetCheckSum();
@@ -210,11 +215,11 @@ boost::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
 
 
 
-void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const SRectangle& r, bool b) {
+void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const SRectangle& r) {
 	static std::vector<boost::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
 
 	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
-		threads[threadNum] = new boost::thread(boost::bind(f, this, threadNum, threads.size(), r, b));
+		threads[threadNum] = new boost::thread(boost::bind(f, this, threadNum, threads.size(), r));
 	}
 
 	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
@@ -224,7 +229,7 @@ void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const SRectangle& r, bo
 
 
 
-void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool haveCacheDir) {
+void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 	streflop_init<streflop::Simple>();
 
 	char loadMsg[512] = {'\0'};
@@ -257,9 +262,13 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 			#endif
 
 			// construct each tree from scratch IFF no cache-dir exists
-			// (if it does, we only need to initialize speed{Mods, Bins})
+			// (if it does, we only need to initialize speed{Mods, Bins}
+			// since Serialize will fill in the branches)
+			// NOTE:
+			//     silently assumes trees either ALL exist or ALL do not
+			//     (if >= 1 are missing for some player in MP, we desync)
 			InitNodeLayer(layerNum, rect);
-			UpdateNodeLayer(layerNum, rect, !haveCacheDir);
+			UpdateNodeLayer(layerNum, rect);
 
 			const QTNode* tree = nodeTrees[layerNum];
 			const NodeLayer& layer = nodeLayers[layerNum];
@@ -276,7 +285,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 		sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
 		pmLoadScreen.AddLoadMessage(loadMsg);
 
-		SpawnBoostThreads(&PathManager::InitNodeLayersThread, rect, haveCacheDir);
+		SpawnBoostThreads(&PathManager::InitNodeLayersThread, rect);
 	}
 	#endif
 
@@ -286,8 +295,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 void QTPFS::PathManager::InitNodeLayersThread(
 	unsigned int threadNum,
 	unsigned int numThreads,
-	const SRectangle& rect,
-	bool haveCacheDir
+	const SRectangle& rect
 ) {
 	const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
 	const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
@@ -309,7 +317,7 @@ void QTPFS::PathManager::InitNodeLayersThread(
 		#endif
 
 		InitNodeLayer(layerNum, rect);
-		UpdateNodeLayer(layerNum, rect, !haveCacheDir);
+		UpdateNodeLayer(layerNum, rect);
 
 		const QTNode* tree = nodeTrees[layerNum];
 		const NodeLayer& layer = nodeLayers[layerNum];
@@ -337,12 +345,12 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 	{
 		#pragma omp parallel for
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-			UpdateNodeLayer(layerNum, rect, true);
+			UpdateNodeLayer(layerNum, rect);
 		}
 	}
 	#else
 	{
-		SpawnBoostThreads(&PathManager::UpdateNodeLayersThread, rect, true);
+		SpawnBoostThreads(&PathManager::UpdateNodeLayersThread, rect);
 	}
 	#endif
 
@@ -352,8 +360,7 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 void QTPFS::PathManager::UpdateNodeLayersThread(
 	unsigned int threadNum,
 	unsigned int numThreads,
-	const SRectangle& rect,
-	bool wantTesselation
+	const SRectangle& rect
 ) {
 	const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
 	const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
@@ -363,12 +370,12 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 	const unsigned int maxLayer = minLayer + layersPerThread + numExcessLayers;
 
 	for (unsigned int layerNum = minLayer; layerNum < maxLayer; layerNum++) {
-		UpdateNodeLayer(layerNum, rect, wantTesselation);
+		UpdateNodeLayer(layerNum, rect);
 	}
 }
 
-void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r, bool wantTesselation) {
-	const MoveDef*  md = moveDefHandler->moveDefs[layerNum];
+void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r) {
+	const MoveDef* md = moveDefHandler->moveDefs[layerNum];
 	const CMoveMath* mm = md->moveMath;
 
 	if (md->unitDefRefCount == 0)
@@ -385,11 +392,12 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 	// adjust the borders so we are not left with "rims" of
 	// impassable squares when eg. a structure is reclaimed
 	SRectangle mr = SRectangle(r);
-	mr.x1 = std::max(int(r.x1) - (md->xsizeh),        0);
-	mr.z1 = std::max(int(r.z1) - (md->zsizeh),        0);
-	mr.x2 = std::min(int(r.x2) + (md->xsizeh), gs->mapx);
-	mr.z2 = std::min(int(r.z2) + (md->zsizeh), gs->mapy);
+	mr.x1 = std::max(r.x1 - md->xsizeh,        0);
+	mr.z1 = std::max(r.z1 - md->zsizeh,        0);
+	mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
+	mr.z2 = std::min(r.z2 + md->zsizeh, gs->mapy);
 
+	const bool wantTesselation = (layersInited || !haveCacheDir);
 	const bool needTesselation = nodeLayers[layerNum].Update(mr, md, mm);
 
 	if (needTesselation && wantTesselation) {
@@ -397,6 +405,48 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 		pathCaches[layerNum].MarkDeadPaths(mr);
 	}
 }
+
+
+
+#ifdef QTPFS_STAGGERED_LAYER_UPDATES
+void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
+	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+		const MoveDef* md = moveDefHandler->moveDefs[layerNum];
+		const CMoveMath* mm = md->moveMath;
+
+		if (md->unitDefRefCount == 0)
+			continue;
+
+		nodeLayers[layerNum].QueueUpdate(r, md, mm);
+	}
+}
+
+void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum) {
+	const SRectangle& r = nodeLayers[layerNum].GetQueuedUpdateRectangle();
+	const MoveDef* md = moveDefHandler->moveDefs[layerNum];
+
+	SRectangle mr = SRectangle(r);
+	mr.x1 = std::max(r.x1 - md->xsizeh,        0);
+	mr.z1 = std::max(r.z1 - md->zsizeh,        0);
+	mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
+	mr.z2 = std::min(r.z2 + md->zsizeh, gs->mapy);
+
+	// flush this layer's entire update-queue if necessary
+	// called at run-time only, not load-time so we always
+	// *want* tesselation here
+	while (nodeLayers[layerNum].HaveQueuedUpdate()) {
+		if (nodeLayers[layerNum].ExecQueuedUpdate()) {
+			nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr);
+			pathCaches[layerNum].MarkDeadPaths(mr);
+		}
+
+		if (pathSearches[layerNum].empty()) {
+			// no pending searches this frame, stop flushing
+			break;
+		}
+	}
+}
+#endif
 
 
 
@@ -467,8 +517,6 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 
 // NOTE:
-//     all layers *must* be updated on the same frame
-//
 //     map-features added during loading do NOT trigger
 //     this event (because map and features are already
 //     present when PathManager gets instantiated)
@@ -476,7 +524,16 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2) {
 	SCOPED_TIMER("PathManager::TerrainChange");
 
+	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
+	// defer layer-updates to ::Update so we can stagger them
+	// this may or may not be more efficient than updating all
+	// layers right away, depends on many factors
+	QueueNodeLayerUpdates(SRectangle(x1, z1,  x2, z2));
+	#else
+	// update all layers right now for this change-event
 	UpdateNodeLayersThreaded(SRectangle(x1, z1,  x2, z2));
+	#endif
+
 	numTerrainChanges += 1;
 }
 
@@ -501,7 +558,15 @@ void QTPFS::PathManager::Update() {
 	sharedPaths.clear();
 
 	for (unsigned int pathTypeUpdate = minPathTypeUpdate; pathTypeUpdate < maxPathTypeUpdate; pathTypeUpdate++) {
+		#ifndef QTPFS_IGNORE_DEAD_PATHS
 		QueueDeadPathSearches(pathTypeUpdate);
+		#endif
+
+		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
+		// NOTE: this *must* be called after QueueDeadPathSearches
+		ExecQueuedNodeLayerUpdates(pathTypeUpdate);
+		#endif
+
 		ExecuteQueuedSearches(pathTypeUpdate);
 	}
 
@@ -614,7 +679,6 @@ void QTPFS::PathManager::ExecuteSearch(
 }
 
 void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
-	#ifndef IGNORE_DEAD_PATHS
 	PathCache& pathCache = pathCaches[pathType];
 	PathCache::PathMap::const_iterator deadPathsIt;
 
@@ -630,7 +694,6 @@ void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
 
 		pathCache.KillDeadPaths();
 	}
-	#endif
 }
 
 unsigned int QTPFS::PathManager::QueueSearch(
