@@ -1311,17 +1311,19 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 	CUnit* unit = NULL;
 	CFeature* feature = NULL;
+
 	const float range = globalRendering->viewRange * 1.4f;
+	const float badRange = range - 300.0f;
+
 	const float3& pos = camera->pos;
 	const float3 dir = camera->CalcPixelDir(wx, wy);
 
 
 // FIXME	const int origAllyTeam = gu->myAllyTeam;
 //	gu->myAllyTeam = readAllyTeam;
-	const float dist = TraceRay::GuiTraceRay(pos, dir, range, true, NULL, unit, feature);
+	const float dist = TraceRay::GuiTraceRay(pos, dir, range, true, NULL, unit, feature, onlyCoords);
 //	gu->myAllyTeam = origAllyTeam;
 
-	const float badRange = range - 300.0f;
 	if ((dist > badRange) && !unit && !feature) {
 		if (includeSky) {
 			lua_pushliteral(L, "sky");

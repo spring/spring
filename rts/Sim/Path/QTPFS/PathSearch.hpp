@@ -6,9 +6,9 @@
 #include <map>
 #include <vector>
 
-#include "Node.hpp"
 #include "PathDefines.hpp"
-#include "PathDataTypes.hpp"
+#include "Node.hpp"
+#include "NodeHeap.hpp"
 #include "System/float3.h"
 #include "System/Rectangle.h"
 

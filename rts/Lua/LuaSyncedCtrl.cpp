@@ -2715,6 +2715,8 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 
+	const int args = lua_gettop(L); // number of arguments
+
 	// units
 	vector<CUnit*> units;
 	ParseUnitArray(L, __FUNCTION__, 1, units);
@@ -2724,6 +2726,10 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	vector<Command> commands;
 	LuaUtils::ParseCommandArray(L, __FUNCTION__, 2, commands);
 	const int commandCount = (int)commands.size();
+
+	bool pairwise = false;
+	if (args >= 3)
+		pairwise = lua_toboolean(L, 3);
 
 	if ((unitCount <= 0) || (commandCount <= 0)) {
 		lua_pushnumber(L, 0);
@@ -2736,13 +2742,24 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	inGiveOrder = true;
 
 	int count = 0;
-	for (int u = 0; u < unitCount; u++) {
-		CUnit* unit = units[u];
-		if (CanControlUnit(L, unit)) {
-			for (int c = 0; c < commandCount; c++) {
-				unit->commandAI->GiveCommand(commands[c]);
+	if (pairwise) {
+		for (int x = 0; x < std::min(unitCount, commandCount); ++x) {
+			CUnit* unit = units[x];
+			if (CanControlUnit(L, unit)) {
+				unit->commandAI->GiveCommand(commands[x]);
+				count++;
 			}
-			count++;
+		}
+	}
+	else {
+		for (int u = 0; u < unitCount; u++) {
+			CUnit* unit = units[u];
+			if (CanControlUnit(L, unit)) {
+				for (int c = 0; c < commandCount; c++) {
+					unit->commandAI->GiveCommand(commands[c]);
+				}
+				count++;
+			}
 		}
 	}
 	inGiveOrder = false;

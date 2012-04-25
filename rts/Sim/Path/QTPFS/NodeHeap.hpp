@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef QTPFS_PATH_DATA_TYPES_HDR
-#define QTPFS_PATH_DATA_TYPES_HDR
+#ifndef QTPFS_NODEHEAP_HDR
+#define QTPFS_NODEHEAP_HDR
 
 #include <vector>
 #include "PathDefines.hpp"
