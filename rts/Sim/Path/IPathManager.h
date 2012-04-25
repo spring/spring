@@ -17,7 +17,7 @@ public:
 
 	virtual ~IPathManager() {}
 
-	virtual unsigned int GetPathType() const = 0;
+	virtual unsigned int GetPathFinderType() const = 0;
 	virtual boost::uint32_t GetPathCheckSum() const { return 0; }
 
 	/**
