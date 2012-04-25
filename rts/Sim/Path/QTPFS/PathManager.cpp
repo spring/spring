@@ -563,7 +563,7 @@ void QTPFS::PathManager::Update() {
 		#endif
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		// NOTE: this *must* be called after QueueDeadPathSearches
+		// NOTE: *must* be called between QueueDeadPathSearches and ExecuteQueuedSearches
 		ExecQueuedNodeLayerUpdates(pathTypeUpdate);
 		#endif
 

@@ -23,7 +23,7 @@ namespace QTPFS {
 		PathManager();
 		~PathManager();
 
-		unsigned int GetPathType() const { return PFS_TYPE_QTPFS; }
+		unsigned int GetPathFinderType() const { return PFS_TYPE_QTPFS; }
 		boost::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
 
 		bool PathUpdated(unsigned int pathID);
@@ -60,7 +60,7 @@ namespace QTPFS {
 		static NodeLayer* GetSerializingNodeLayer() { return serializingNodeLayer; }
 
 		static const unsigned int LAYERS_PER_UPDATE =  5;
-		static const unsigned int MAX_TEAM_SEARCHES = 10;
+		static const unsigned int MAX_TEAM_SEARCHES = 50;
 		static const unsigned int NUM_SPEEDMOD_BINS = 20;
 
 		static const float MIN_SPEEDMOD_VALUE;
