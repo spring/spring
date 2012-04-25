@@ -74,8 +74,7 @@ namespace QTPFS {
 		typedef void (PathManager::*MemberFunc)(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const SRectangle& rect,
-			bool wantTesselation
+			const SRectangle& rect
 		);
 		typedef std::map<unsigned int, unsigned int> PathTypeMap;
 		typedef std::map<unsigned int, unsigned int>::iterator PathTypeMapIt;
@@ -86,24 +85,27 @@ namespace QTPFS {
 		typedef std::list<IPathSearch*> PathSearchList;
 		typedef std::list<IPathSearch*>::iterator PathSearchListIt;
 
-		void SpawnBoostThreads(MemberFunc f, const SRectangle& r, bool b);
+		void SpawnBoostThreads(MemberFunc f, const SRectangle& r);
 
-		void InitNodeLayersThreaded(const SRectangle& rect, bool haveCacheDir);
+		void InitNodeLayersThreaded(const SRectangle& rect);
 		void UpdateNodeLayersThreaded(const SRectangle& rect);
 		void InitNodeLayersThread(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const SRectangle& rect,
-			bool haveCacheDir
+			const SRectangle& rect
 		);
 		void UpdateNodeLayersThread(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const SRectangle& rect,
-			bool wantTesselation
+			const SRectangle& rect
 		);
 		void InitNodeLayer(unsigned int layerNum, const SRectangle& rect);
-		void UpdateNodeLayer(unsigned int layerNum, const SRectangle& r, bool wantTesselation);
+		void UpdateNodeLayer(unsigned int layerNum, const SRectangle& r);
+
+		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
+		void QueueNodeLayerUpdates(const SRectangle& r);
+		void ExecQueuedNodeLayerUpdates(unsigned int layerNum);
+		#endif
 
 		void ExecuteQueuedSearches(unsigned int pathType);
 		void QueueDeadPathSearches(unsigned int pathType);
@@ -152,6 +154,9 @@ namespace QTPFS {
 		unsigned int maxNumLeafNodes;
 
 		boost::uint32_t pfsCheckSum;
+
+		bool layersInited;
+		bool haveCacheDir;
 	};
 };
 

@@ -16,8 +16,12 @@
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Platform/MessageBox.h"
 
+
+CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false);
 
 
 static CVertexArray* vertexArray1 = NULL;
@@ -182,7 +186,7 @@ static bool GetAvailableVideoRAM(GLint* memory)
 }
 
 
-
+//FIXME move most of this to globalRendering's ctor?
 void LoadExtensions()
 {
 	glewInit();
@@ -245,6 +249,26 @@ void LoadExtensions()
 			LOG_L(L_WARNING, "(in case you are not using a horribly wrong driver).");
 			LOG_L(L_WARNING, "If the game crashes, looks ugly or runs slow, buy a better card!");
 			LOG_L(L_WARNING, ".");
+		}
+
+		if (!configHandler->GetBool("DisableCrappyGPUWarning")) {
+			if (gfxCardIsCrap) {
+				std::string msg =
+					"Warning!\n"
+					"Your graphics card is insufficient to play Spring.\n\n"
+					"If the game crashes, looks ugly or runs slow, buy a better card!\n"
+					"You may try \"spring --safemode\" to test if some of your issues are related to wrong settings.\n"
+					"\nHint: You can disable this MessageBox by appending \"DisableCrappyGPUWarning = 1\" to \"" + configHandler->GetConfigFile() + "\".";
+				Platform::MsgBox(msg, "Warning: Your GPU is not supported", MBF_EXCL);
+			} else if (globalRendering->haveMesa) {
+				std::string mesa_msg =
+					"Warning!\n"
+					"OpenSource graphics card drivers detected.\n"
+					"MesaGL/Gallium drivers are not able to run Spring. Try to switch to proprietary drivers.\n\n"
+					"You may try \"spring --safemode\".\n"
+					"\nHint: You can disable this MessageBox by appending \"DisableCrappyGPUWarning = 1\" to \"" + configHandler->GetConfigFile() + "\".";
+				Platform::MsgBox(mesa_msg, "Warning: Your GPU driver is not supported", MBF_EXCL);
+			}
 		}
 	}
 #endif // !defined DEBUG

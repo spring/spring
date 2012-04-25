@@ -21,8 +21,23 @@ namespace Collision {
 }
 
 namespace TraceRay {
-	float TraceRay(const float3& start, const float3& dir, float length, int collisionFlags, const CUnit* owner, CUnit*& hitUnit, CFeature*& hitFeature);
-	float GuiTraceRay(const float3& start, const float3& dir, float length, bool useRadar, const CUnit* exclude, CUnit*& hitUnit, CFeature*& hitFeature);
+	float TraceRay(
+		const float3& start,
+		const float3& dir,
+		float length,
+		int collisionFlags,
+		const CUnit* owner,
+		CUnit*& hitUnit,
+		CFeature*& hitFeature);
+	float GuiTraceRay(
+		const float3& start,
+		const float3& dir,
+		float length,
+		bool useRadar,
+		const CUnit* exclude,
+		CUnit*& hitUnit,
+		CFeature*& hitFeature,
+		bool groundOnly = false);
 
 	bool LineFeatureCol(const float3& start, const float3& dir, float length);
 

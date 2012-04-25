@@ -144,37 +144,56 @@ void CFactory::Update()
 	CBuilding::Update();
 }
 
+/*
+void CFactory::SlowUpdate(void)
+{
+	// this (ancient) code was intended to keep vicinity around factories clear
+	// so units could exit more easily among crowds of assisting builders, etc.
+	// it is unneeded now that units can flow / push through a non-moving crowd
+	// (so we no longer have to override CBuilding::SlowUpdate either)
+	if (transporter == NULL) {
+		helper->BuggerOff(pos - float3(0.01f, 0, 0.02f), radius, true, true, team, NULL);
+	}
+
+	CBuilding::SlowUpdate();
+}
+*/
+
 
 
 void CFactory::StartBuild(const UnitDef* buildeeDef) {
-	const float3 buildPos = CalcBuildPos();
-	const bool   blocked  = groundBlockingObjectMap->GroundBlocked(buildPos, this);
+	const float3& buildPos = CalcBuildPos();
+	const bool blocked = groundBlockingObjectMap->GroundBlocked(buildPos, this);
 
 	// wait until buildPos is no longer blocked (eg. by a previous buildee)
-	if (!blocked) {
-		CUnit* b = unitLoader->LoadUnit(buildeeDef, buildPos, team, true, buildFacing, this);
+	//
+	// it might rarely be the case that a unit got stuck inside the factory
+	// or died right after completion and left some wreckage, but that is up
+	// to players to fix (we no longer broadcast BuggerOff directives, since
+	// those are indiscriminate and ineffective)
+	if (blocked)
+		return;
 
-		if (!unitDef->canBeAssisted) {
-			b->soloBuilder = this;
-			b->AddDeathDependence(this, DEPENDENCE_BUILDER);
-		}
+	CUnit* b = unitLoader->LoadUnit(buildeeDef, buildPos, team, true, buildFacing, this);
 
-		AddDeathDependence(b, DEPENDENCE_BUILD);
-		script->StartBuilding();
-
-		// set curBuildDef to NULL to indicate construction
-		// has started, otherwise we would keep being called
-		curBuild = b;
-		curBuildDef = NULL;
-
-		#if (PLAY_SOUNDS == 1)
-		if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-			Channels::General.PlayRandomSample(unitDef->sounds.build, buildPos);
-		}
-		#endif
-	} else {
-		helper->BuggerOff(buildPos, radius + 8, true, true, team, NULL);
+	if (!unitDef->canBeAssisted) {
+		b->soloBuilder = this;
+		b->AddDeathDependence(this, DEPENDENCE_BUILDER);
 	}
+
+	AddDeathDependence(b, DEPENDENCE_BUILD);
+	script->StartBuilding();
+
+	// set curBuildDef to NULL to indicate construction
+	// has started, otherwise we would keep being called
+	curBuild = b;
+	curBuildDef = NULL;
+
+	#if (PLAY_SOUNDS == 1)
+	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+		Channels::General.PlayRandomSample(unitDef->sounds.build, buildPos);
+	}
+	#endif
 }
 
 void CFactory::UpdateBuild(CUnit* buildee) {
@@ -371,14 +390,6 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 }
 
 
-
-void CFactory::SlowUpdate(void)
-{
-	if (!transporter)
-		helper->BuggerOff(pos - float3(0.01f, 0, 0.02f), radius, true, true, team, NULL);
-
-	CBuilding::SlowUpdate();
-}
 
 bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 {

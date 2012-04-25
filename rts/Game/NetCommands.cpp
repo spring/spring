@@ -564,6 +564,14 @@ void CGame::ClientReadNet()
 						throw netcode::UnpackPacketException("Invalid player number");
 					unsigned char aiID;
 					pckt >> aiID;
+					unsigned char pairwise;
+					pckt >> pairwise;
+					unsigned int sameCmdID;
+					pckt >> sameCmdID;
+					unsigned char sameCmdOpt;
+					pckt >> sameCmdOpt;
+					unsigned short sameCmdParamSize;
+					pckt >> sameCmdParamSize;
 					// parse the unit list
 					vector<int> unitIDs;
 					short int unitCount;
@@ -580,12 +588,21 @@ void CGame::ClientReadNet()
 					for (int c = 0; c < commandCount; c++) {
 						int cmd_id;
 						unsigned char cmd_opt;
-						pckt >> cmd_id;
-						pckt >> cmd_opt;
+						if (sameCmdID == 0)
+							pckt >> cmd_id;
+						else
+							cmd_id = sameCmdID;
+						if (sameCmdOpt == 0xFF)
+							pckt >> cmd_opt;
+						else
+							cmd_opt = sameCmdOpt;
 
 						Command cmd(cmd_id, cmd_opt);
 						short int paramCount;
-						pckt >> paramCount;
+						if (sameCmdParamSize == 0xFFFF)
+							pckt >> paramCount;
+						else
+							paramCount = sameCmdParamSize;
 						for (int p = 0; p < paramCount; p++) {
 							float param;
 							pckt >> param;
@@ -594,9 +611,16 @@ void CGame::ClientReadNet()
 						commands.push_back(cmd);
 					}
 					// apply the commands
-					for (int c = 0; c < commandCount; c++) {
-						for (int u = 0; u < unitCount; u++) {
-							selectedUnits.AiOrder(unitIDs[u], commands[c], player);
+					if (pairwise) {
+						for (int x = 0; x < std::min(unitCount, commandCount); ++x) {
+							selectedUnits.AiOrder(unitIDs[x], commands[x], player);
+						}
+					}
+					else {
+						for (int c = 0; c < commandCount; c++) {
+							for (int u = 0; u < unitCount; u++) {
+								selectedUnits.AiOrder(unitIDs[u], commands[c], player);
+							}
 						}
 					}
 					AddTraffic(player, packetCode, dataLength);
