@@ -731,7 +731,7 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
-	if (GetFullRead(L)) {
+	if (GetHandleFullRead(L)) {
 		lua_pushnumber(L, weaponID);
 		argCount += 1;
 		if (attacker != NULL) {

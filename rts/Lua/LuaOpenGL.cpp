@@ -1320,7 +1320,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		return NULL;
 	}
 
-	const int readAllyTeam = CLuaHandle::GetReadAllyTeam(L);
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
 	if (readAllyTeam < 0) {
 		if (readAllyTeam == CEventClient::NoAccessTeam) {
 			return NULL;
@@ -1577,7 +1577,7 @@ static inline bool IsFeatureVisible(const lua_State *L, const CFeature* feature)
 	if (ActiveFullRead())
 		return true;
 
-	const int readAllyTeam = CLuaHandle::GetReadAllyTeam(L);
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
 	if (readAllyTeam < 0) {
 		return (readAllyTeam == CEventClient::AllAccessTeam);
 	}

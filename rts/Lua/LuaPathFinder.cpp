@@ -126,7 +126,7 @@ static int path_next(lua_State* L)
 
 	const float minDist = luaL_optfloat(L, 5, 0.0f);
 
-	const bool synced = CLuaHandle::GetSynced(L);
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 	const float3 point = pathManager->NextWayPoint(pathID, callerPos, minDist, 0, 0, synced);
 
 	if ((point.x == -1.0f) &&
@@ -229,7 +229,7 @@ int LuaPathFinder::RequestPath(lua_State* L)
 
 	const float radius = luaL_optfloat(L, 8, 8.0f);
 
-	const bool synced = CLuaHandle::GetSynced(L);
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 	const int pathID = pathManager->RequestPath(moveDef, start, end, radius, NULL, synced);
 
 	if (pathID == 0) {
@@ -361,7 +361,7 @@ int LuaPathFinder::GetPathNodeCost(lua_State* L)
 {
 	const unsigned int hmx = luaL_checkint(L, 1);
 	const unsigned int hmz = luaL_checkint(L, 2);
-	const bool synced = CLuaHandle::GetSynced(L);
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
 	// reads from overlay if PathNodeStateBuffer::extraCosts != NULL
 	const float cost = pathManager->GetNodeExtraCost(hmx, hmz, synced);

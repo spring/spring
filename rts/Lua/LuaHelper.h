@@ -13,13 +13,13 @@
 
 static inline bool FullCtrl(const lua_State *L)
 {
-	return CLuaHandle::GetFullCtrl(L);
+	return CLuaHandle::GetHandleFullCtrl(L);
 }
 
 
 static inline int CtrlTeam(const lua_State *L)
 {
-	return CLuaHandle::GetCtrlTeam(L);
+	return CLuaHandle::GetHandleCtrlTeam(L);
 }
 
 
