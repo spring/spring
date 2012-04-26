@@ -790,13 +790,13 @@ void CLuaHandleSynced::RecvFromSynced(lua_State *srcState, int args)
 
 	// call the routine
 	SetAllowChanges(false);
-	SetSynced(L, false);
+	SetHandleSynced(L, false);
 
 	lua_State* L_Prev = ForceUnsyncedState();
 	RunCallIn(cmdStr, args, 0);
 	RestoreState(L_Prev);
 
-	SetSynced(L, true);
+	SetHandleSynced(L, true);
 	SetAllowChanges(true);
 }
 
@@ -937,11 +937,11 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 
 	GML_DRCMUTEX_LOCK(lua); // UnsyncedXCall
 
-	const bool prevSynced = GetSynced(L);
-	SetSynced(L, false);
+	const bool prevSynced = GetHandleSynced(L);
+	SetHandleSynced(L, false);
 	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
 	const int retval = XCall(L, srcState, funcName);
-	SetSynced(L, prevSynced);
+	SetHandleSynced(L, prevSynced);
 	return retval;
 }
 
@@ -1017,12 +1017,12 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 	}
 
 	// save the current access
-	const bool prevFullCtrl    = GetFullCtrl(L);
-	const bool prevFullRead    = GetFullRead(L);
-	const int prevCtrlTeam     = GetCtrlTeam(L);
-	const int prevReadTeam     = GetReadTeam(L);
-	const int prevReadAllyTeam = GetReadAllyTeam(L);
-	const int prevSelectTeam   = GetSelectTeam(L);
+	const bool prevFullCtrl    = GetHandleFullCtrl(L);
+	const bool prevFullRead    = GetHandleFullRead(L);
+	const int prevCtrlTeam     = GetHandleCtrlTeam(L);
+	const int prevReadTeam     = GetHandleReadTeam(L);
+	const int prevReadAllyTeam = GetHandleReadAllyTeam(L);
+	const int prevSelectTeam   = GetHandleSelectTeam(L);
 
 	// parse the new access
 	if (lua_isnumber(L, 1)) {
@@ -1031,16 +1031,16 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 			luaL_error(L, "Bad teamID in SetCtrlTeam");
 		}
 		// ctrl
-		SetCtrlTeam(L, teamID);
-		SetFullCtrl(L, GetCtrlTeam(L) == CEventClient::AllAccessTeam);
+		SetHandleCtrlTeam(L, teamID);
+		SetHandleFullCtrl(L, GetHandleCtrlTeam(L) == CEventClient::AllAccessTeam);
 		// read
-		SetReadTeam(L, teamID);
-		SetReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID));
-		SetFullRead(L, GetReadAllyTeam(L) == CEventClient::AllAccessTeam);
-		SetActiveFullRead(GetFullRead(L));
-		SetActiveReadAllyTeam(GetReadAllyTeam(L));
+		SetHandleReadTeam(L, teamID);
+		SetHandleReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID));
+		SetHandleFullRead(L, GetHandleReadAllyTeam(L) == CEventClient::AllAccessTeam);
+		SetActiveFullRead(GetHandleFullRead(L));
+		SetActiveReadAllyTeam(GetHandleReadAllyTeam(L));
 		// select
-		SetSelectTeam(L, teamID);
+		SetHandleSelectTeam(L, teamID);
 	}
 	else if (lua_istable(L, 1)) {
 		const int table = 1;
@@ -1055,18 +1055,18 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 			}
 
 			if (key == "ctrl") {
-				SetCtrlTeam(L, teamID);
-				SetFullCtrl(L, GetCtrlTeam(L) == CEventClient::AllAccessTeam);
+				SetHandleCtrlTeam(L, teamID);
+				SetHandleFullCtrl(L, GetHandleCtrlTeam(L) == CEventClient::AllAccessTeam);
 			}
 			else if (key == "read") {
-				SetReadTeam(L, teamID);
-				SetReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID));
-				SetFullRead(L, GetReadAllyTeam(L) == CEventClient::AllAccessTeam);
-				SetActiveFullRead(GetFullRead(L));
-				SetActiveReadAllyTeam(GetReadAllyTeam(L));
+				SetHandleReadTeam(L, teamID);
+				SetHandleReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID));
+				SetHandleFullRead(L, GetHandleReadAllyTeam(L) == CEventClient::AllAccessTeam);
+				SetActiveFullRead(GetHandleFullRead(L));
+				SetActiveReadAllyTeam(GetHandleReadAllyTeam(L));
 			}
 			else if (key == "select") {
-				SetSelectTeam(L, teamID);
+				SetHandleSelectTeam(L, teamID);
 			}
 		}
 	}
@@ -1081,12 +1081,12 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 	const int error = lua_pcall(lhs->GetActiveState(), funcArgs, LUA_MULTRET, 0);
 
 	// revert the permissions
-	SetFullCtrl(L, prevFullCtrl);
-	SetFullRead(L, prevFullRead);
-	SetCtrlTeam(L, prevCtrlTeam);
-	SetReadTeam(L, prevReadTeam);
-	SetReadAllyTeam(L, prevReadAllyTeam);
-	SetSelectTeam(L, prevSelectTeam);
+	SetHandleFullCtrl(L, prevFullCtrl);
+	SetHandleFullRead(L, prevFullRead);
+	SetHandleCtrlTeam(L, prevCtrlTeam);
+	SetHandleReadTeam(L, prevReadTeam);
+	SetHandleReadAllyTeam(L, prevReadAllyTeam);
+	SetHandleSelectTeam(L, prevSelectTeam);
 	SetActiveFullRead(prevFullRead);
 	SetActiveReadAllyTeam(prevReadAllyTeam);
 

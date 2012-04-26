@@ -328,7 +328,7 @@ static inline CUnit* ParseSelectUnit(lua_State* L,
 	if (unit == NULL || unit->noSelect) {
 		return NULL;
 	}
-	const int selectTeam = CLuaHandle::GetSelectTeam(L);
+	const int selectTeam = CLuaHandle::GetHandleSelectTeam(L);
 	if (selectTeam < 0) {
 		return (selectTeam == CEventClient::AllAccessTeam) ? unit : NULL;
 	}
@@ -542,7 +542,7 @@ int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 	const string soundFile = lua_tostring(L, 1);
 	bool success = sound->LoadSoundDefs(soundFile);
 
-	if (!CLuaHandle::GetSynced(L)) {
+	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, success);
 		return 1;
 	} else {
@@ -623,7 +623,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		success = true;
 	}
 
-	if (!CLuaHandle::GetSynced(L)) {
+	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, success);
 		return 1;
 	} else {
@@ -646,7 +646,7 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
-	if (!CLuaHandle::GetSynced(L)) {
+	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, true);
 		return 1;
 	} else {
@@ -922,7 +922,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	lua_pushboolean(L, camHandler->SetState(camState));
 	camHandler->CameraTransition(camTime);
 
-	if (!CLuaHandle::GetSynced(L)) {
+	if (!CLuaHandle::GetHandleSynced(L)) {
 		return 1;
 	} else {
 		return 0;
@@ -1034,7 +1034,7 @@ int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 
 	const bool worked = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite);
 
-	if (!CLuaHandle::GetSynced(L)) {
+	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, worked);
 		return 1;
 	}
@@ -1062,7 +1062,7 @@ int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 
 	const bool worked = mouse->ReplaceMouseCursor(oldName, newName, hotSpot);
 
-	if (!CLuaHandle::GetSynced(L)) {
+	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, worked);
 		return 1;
 	}
@@ -1331,7 +1331,7 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 
 int LuaUnsyncedCtrl::AddMapLight(lua_State* L)
 {
-	if (CLuaHandle::GetSynced(L) || !CLuaHandle::GetFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
 		return 0;
 	}
 
@@ -1352,7 +1352,7 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L)
 
 int LuaUnsyncedCtrl::AddModelLight(lua_State* L)
 {
-	if (CLuaHandle::GetSynced(L) || !CLuaHandle::GetFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
 		return 0;
 	}
 
@@ -1376,7 +1376,7 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L)
 {
 	const unsigned int lightHandle = luaL_checkint(L, 1);
 
-	if (CLuaHandle::GetSynced(L) || !CLuaHandle::GetFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
 		return 0;
 	}
 
@@ -1396,7 +1396,7 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L)
 {
 	const unsigned int lightHandle = luaL_checkint(L, 1);
 
-	if (CLuaHandle::GetSynced(L) || !CLuaHandle::GetFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
 		return 0;
 	}
 
@@ -1473,7 +1473,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 // the position of a moving object (unit or projectile)
 int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 {
-	if (CLuaHandle::GetSynced(L) || !CLuaHandle::GetFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
 		return 0;
 	}
 	if (!lua_isnumber(L, 2)) {
@@ -1501,7 +1501,7 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 // the position of a moving object (unit or projectile)
 int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L)
 {
-	if (CLuaHandle::GetSynced(L) || !CLuaHandle::GetFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
 		return 0;
 	}
 	if (!lua_isnumber(L, 2)) {
@@ -1530,7 +1530,7 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L)
 
 int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 {
-	if (CLuaHandle::GetSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L)) {
 		return 0;
 	}
 
@@ -1586,7 +1586,7 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 {
-	if (CLuaHandle::GetUserMode(L)) {
+	if (CLuaHandle::GetHandleUserMode(L)) {
 		return 0;
 	}
 	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
@@ -1605,7 +1605,7 @@ int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 {
-	if (CLuaHandle::GetUserMode(L)) {
+	if (CLuaHandle::GetHandleUserMode(L)) {
 		return 0;
 	}
 	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
@@ -1626,7 +1626,7 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
 	GML_RECMUTEX_LOCK(sel); // SetUnitNoSelect
 
-	if (CLuaHandle::GetUserMode(L)) {
+	if (CLuaHandle::GetHandleUserMode(L)) {
 		return 0;
 	}
 	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
@@ -1667,7 +1667,7 @@ int LuaUnsyncedCtrl::SetUnitLeaveTracks(lua_State* L)
 
 int LuaUnsyncedCtrl::AddUnitIcon(lua_State* L)
 {
-	if (CLuaHandle::GetSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L)) {
 		return 0;
 	}
 	const string iconName  = luaL_checkstring(L, 1);
@@ -1683,7 +1683,7 @@ int LuaUnsyncedCtrl::AddUnitIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::FreeUnitIcon(lua_State* L)
 {
-	if (CLuaHandle::GetSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L)) {
 		return 0;
 	}
 	const string iconName  = luaL_checkstring(L, 1);
@@ -2358,7 +2358,7 @@ static bool CanGiveOrders(const lua_State *L)
 	if (gu->spectating) {
 		return false;
 	}
-	const int ctrlTeam = CLuaHandle::GetCtrlTeam(L);
+	const int ctrlTeam = CLuaHandle::GetHandleCtrlTeam(L);
 	// FIXME ? (correct? warning / error?)
 	if ((ctrlTeam != gu->myTeam) || (ctrlTeam < 0)) {
 		return false;
@@ -2912,7 +2912,7 @@ int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
-	if (CLuaHandle::GetSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L)) {
 		return 0;
 	}
 	if (lua_gettop(L) != 2) {
