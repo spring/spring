@@ -1183,7 +1183,7 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 	if (IsAlliedTeam(team->teamNum) || game->gameOver) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
+	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetHandleReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 
@@ -1206,7 +1206,7 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 	if (IsAlliedTeam(team->teamNum) || game->gameOver) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
+	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetHandleReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 
@@ -1411,7 +1411,7 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	numVals += 3;
 
 	// no unsynced Skirmish AI info for synchronized scripts
-	if (CLuaHandle::GetSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L)) {
 		HSTR_PUSH(L, "SYNCED_NOSHORTNAME");
 		HSTR_PUSH(L, "SYNCED_NOVERSION");
 		lua_newtable(L);
@@ -1993,7 +1993,7 @@ int LuaSyncedRead::GetUnitsInRectangle(lua_State* L)
 		}
 	}
 	else if (allegiance == MyUnits) {
-		const int readTeam = CLuaHandle::GetReadTeam(L);
+		const int readTeam = CLuaHandle::GetHandleReadTeam(L);
 		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, RECTANGLE_TEST);
 	}
 	else if (allegiance == AllyUnits) {
@@ -2044,7 +2044,7 @@ int LuaSyncedRead::GetUnitsInBox(lua_State* L)
 		}
 	}
 	else if (allegiance == MyUnits) {
-		const int readTeam = CLuaHandle::GetReadTeam(L);
+		const int readTeam = CLuaHandle::GetHandleReadTeam(L);
 		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, BOX_TEST);
 	}
 	else if (allegiance == AllyUnits) {
@@ -2096,7 +2096,7 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 		}
 	}
 	else if (allegiance == MyUnits) {
-		const int readTeam = CLuaHandle::GetReadTeam(L);
+		const int readTeam = CLuaHandle::GetHandleReadTeam(L);
 		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, CYLINDER_TEST);
 	}
 	else if (allegiance == AllyUnits) {
@@ -2152,7 +2152,7 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 		}
 	}
 	else if (allegiance == MyUnits) {
-		const int readTeam = CLuaHandle::GetReadTeam(L);
+		const int readTeam = CLuaHandle::GetHandleReadTeam(L);
 		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, SPHERE_TEST);
 	}
 	else if (allegiance == AllyUnits) {
@@ -2216,7 +2216,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 		endTeam = allegiance;
 	}
 	else if (allegiance == MyUnits) {
-		const int readTeam = CLuaHandle::GetReadTeam(L);
+		const int readTeam = CLuaHandle::GetHandleReadTeam(L);
 		startTeam = readTeam;
 		endTeam = readTeam;
 	}
@@ -2233,7 +2233,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	lua_newtable(L);
 	int count = 0;
 
-	const int readTeam = CLuaHandle::GetReadTeam(L);
+	const int readTeam = CLuaHandle::GetHandleReadTeam(L);
 
 	for (int team = startTeam; team <= endTeam; team++) {
 		const CUnitSet& units = teamHandler->Team(team)->units;
@@ -3909,7 +3909,7 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 	if (IsAllyUnit(unit) || game->gameOver) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
+	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 	else if (ActiveReadAllyTeam() < 0) {
@@ -3941,7 +3941,7 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 	if (IsAllyUnit(unit) || game->gameOver) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
+	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 	else if (ActiveReadAllyTeam() < 0) {
@@ -4385,7 +4385,7 @@ int LuaSyncedRead::GetGroundHeight(lua_State* L)
 {
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
-	lua_pushnumber(L, ground->GetHeightReal(x, z, CLuaHandle::GetSynced(L)));
+	lua_pushnumber(L, ground->GetHeightReal(x, z, CLuaHandle::GetHandleSynced(L)));
 	return 1;
 }
 
@@ -4403,7 +4403,7 @@ int LuaSyncedRead::GetGroundNormal(lua_State* L)
 {
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
-	const float3 normal = ground->GetSmoothNormal(x, z, CLuaHandle::GetSynced(L));
+	const float3 normal = ground->GetSmoothNormal(x, z, CLuaHandle::GetHandleSynced(L));
 	lua_pushnumber(L, normal.x);
 	lua_pushnumber(L, normal.y);
 	lua_pushnumber(L, normal.z);
@@ -4589,7 +4589,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	bi.buildFacing = facing;
 	bi.def = unitDef;
 	bi.pos = pos;
-	bi.pos = helper->Pos2BuildPos(bi, CLuaHandle::GetSynced(L));
+	bi.pos = helper->Pos2BuildPos(bi, CLuaHandle::GetHandleSynced(L));
 	CFeature* feature;
 
 	// negative allyTeam values have full visibility in TestUnitBuildSquare()
@@ -4597,7 +4597,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	// 1 = BUILDSQUARE_OCCUPIED
 	// 2 = BUILDSQUARE_RECLAIMABLE
 	// 3 = BUILDSQUARE_OPEN
-	int retval = uh->TestUnitBuildSquare(bi, feature, ActiveReadAllyTeam(), CLuaHandle::GetSynced(L));
+	int retval = uh->TestUnitBuildSquare(bi, feature, ActiveReadAllyTeam(), CLuaHandle::GetHandleSynced(L));
 
 	// output of TestUnitBuildSquare was changed after this lua function was writen
 	// keep backward-compability by mapping:
@@ -4629,7 +4629,7 @@ int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 	const int facing = luaL_optint(L, 5, FACING_SOUTH);
 
 	const BuildInfo buildInfo(ud, pos, facing);
-	const float3 buildPos = helper->Pos2BuildPos(buildInfo, CLuaHandle::GetSynced(L));
+	const float3 buildPos = helper->Pos2BuildPos(buildInfo, CLuaHandle::GetHandleSynced(L));
 
 	lua_pushnumber(L, buildPos.x);
 	lua_pushnumber(L, buildPos.y);
