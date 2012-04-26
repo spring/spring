@@ -381,7 +381,7 @@ int LuaVFS::UseArchive(lua_State* L)
 	}
 
 	int funcIndex = 2;
-	if (CLuaHandle::GetSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L)) {
 		return 0;
 	}
 
@@ -413,7 +413,7 @@ int LuaVFS::UseArchive(lua_State* L)
 
 int LuaVFS::MapArchive(lua_State* L)
 {
-	if (CLuaHandle::GetSynced(L)) // only from unsynced
+	if (CLuaHandle::GetHandleSynced(L)) // only from unsynced
 	{
 		return 0;
 	}

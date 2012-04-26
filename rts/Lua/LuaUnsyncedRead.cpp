@@ -681,7 +681,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	// arg 1 - teamID
 	int teamID = luaL_optint(L, 1, -1);
 	if (teamID == MyUnits) {
-		const int scriptTeamID = CLuaHandle::GetReadTeam(L);
+		const int scriptTeamID = CLuaHandle::GetHandleReadTeam(L);
 		if (scriptTeamID >= 0) {
 			teamID = scriptTeamID;
 		} else {
@@ -817,7 +817,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	if (allyTeamID < 0) {
 		allyTeamID = -1;
 		if (!ActiveFullRead()) {
-			allyTeamID = CLuaHandle::GetReadAllyTeam(L);
+			allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
 		}
 	}
 
@@ -1115,7 +1115,7 @@ int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 
 int LuaUnsyncedRead::GetMapSquareTexture(lua_State* L)
 {
-	if (CLuaHandle::GetSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L)) {
 		return 0;
 	}
 

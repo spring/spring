@@ -30,13 +30,13 @@ class CLuaHandleSynced : public CLuaHandle
 		inline void SetAllowChanges(bool ac, bool all = false) { if (all) allowChangesDraw = allowChanges = ac; else if (IsDrawCallIn()) allowChangesDraw = ac; else allowChanges = ac; }
 
 	public: // call-ins
-		bool HasCallIn(lua_State *L, const string& name);
-		virtual bool SyncedUpdateCallIn(lua_State *L, const string& name);
-		virtual bool UnsyncedUpdateCallIn(lua_State *L, const string& name);
+		bool HasCallIn(lua_State* L, const string& name);
+		virtual bool SyncedUpdateCallIn(lua_State* L, const string& name);
+		virtual bool UnsyncedUpdateCallIn(lua_State* L, const string& name);
 
 		bool GotChatMsg(const string& msg, int playerID);
 		bool RecvLuaMsg(const string& msg, int playerID);
-		virtual void RecvFromSynced(lua_State *srcState, int args); // not an engine call-in
+		virtual void RecvFromSynced(lua_State* srcState, int args); // not an engine call-in
 
 		bool SyncedActionFallback(const string& line, int playerID);
 
@@ -53,28 +53,28 @@ class CLuaHandleSynced : public CLuaHandle
 		void Init(const string& syncedFile,
 		          const string& unsyncedFile,
 		          const string& modes);
-		bool SetupSynced(lua_State *L, const string& code, const string& filename);
-		bool SetupUnsynced(lua_State *L, const string& code, const string& filename);
+		bool SetupSynced(lua_State* L, const string& code, const string& filename);
+		bool SetupUnsynced(lua_State* L, const string& code, const string& filename);
 
 		// hooks to add code during initialization
-		virtual bool AddSyncedCode(lua_State *L) = 0;
-		virtual bool AddUnsyncedCode(lua_State *L) = 0;
+		virtual bool AddSyncedCode(lua_State* L) = 0;
+		virtual bool AddUnsyncedCode(lua_State* L) = 0;
 
 		string LoadFile(const string& filename, const string& modes) const;
 
-		bool CopyGlobalToUnsynced(lua_State *L, const char* name);
-		bool SetupUnsyncedFunction(lua_State *L, const char* funcName);
-		bool LoadUnsyncedCode(lua_State *L, const string& code, const string& debug);
-		bool SyncifyRandomFuncs(lua_State *L);
-		bool CopyRealRandomFuncs(lua_State *L);
-		bool LightCopyTable(lua_State *L, int dstIndex, int srcIndex);
+		bool CopyGlobalToUnsynced(lua_State* L, const char* name);
+		bool SetupUnsyncedFunction(lua_State* L, const char* funcName);
+		bool LoadUnsyncedCode(lua_State* L, const string& code, const string& debug);
+		bool SyncifyRandomFuncs(lua_State* L);
+		bool CopyRealRandomFuncs(lua_State* L);
+		bool LightCopyTable(lua_State* L, int dstIndex, int srcIndex);
 
 	protected:
 		static CLuaHandleSynced* GetActiveHandle() {
 			assert(dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle()));
 			return static_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle());
 		}
-		static CLuaHandleSynced* GetActiveHandle(lua_State *L) {
+		static CLuaHandleSynced* GetActiveHandle(lua_State* L) {
 			assert(dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle(L)));
 			return static_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle(L));
 		}
