@@ -88,7 +88,7 @@ bool QTPFS::PathSearch::Execute(
 	}
 
 	while (!openNodes.empty()) {
-		IterateSearch(allNodes, ngbNodes);
+		Iterate(allNodes, ngbNodes);
 
 		#ifdef QTPFS_TRACE_PATH_SEARCHES
 		searchExec->AddIteration(searchIter);
@@ -146,7 +146,7 @@ void QTPFS::PathSearch::UpdateNode(
 	#endif
 }
 
-void QTPFS::PathSearch::IterateSearch(
+void QTPFS::PathSearch::Iterate(
 	const std::vector<INode*>& allNodes,
 	      std::vector<INode*>& ngbNodes
 ) {
@@ -224,9 +224,13 @@ void QTPFS::PathSearch::IterateSearch(
 		//     nightmare)
 		#ifdef QTPFS_COPY_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
-		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#else
 		nxtNode = nxtNodes[i];
+		#endif
+
+		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(i);
+		#else
 		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#endif
 
@@ -237,6 +241,8 @@ void QTPFS::PathSearch::IterateSearch(
 		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
 		const bool isTarget = (nxtNode == tgtNode);
 
+		// cannot use squared-distances because that will bias paths
+		// towards smaller nodes (eg. 1^2 + 1^2 + 1^2 + 1^2 != 4^2)
 		const float gDist = (nxtPoint - curPoint).Length();
 		const float hDist = (tgtPoint - nxtPoint).Length();
 

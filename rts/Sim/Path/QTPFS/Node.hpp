@@ -11,11 +11,16 @@
 #include "PathDefines.hpp"
 #include "System/float3.h"
 
+#ifndef QTPFS_VIRTUAL_NODE_FUNCTIONS
+#define QTNode INode
+#endif
+
 struct SRectangle;
 
 namespace QTPFS {
 	struct NodeLayer;
 	struct INode {
+	public:
 		void SetNodeNumber(unsigned int n) { nodeNumber = n; }
 		void SetHeapIndex(unsigned int n) { heapIndex = n; }
 		unsigned int GetNodeNumber() const { return nodeNumber; }
@@ -32,9 +37,15 @@ namespace QTPFS {
 		bool operator <= (const INode* n) const { return (fCost <= n->fCost); }
 		bool operator >= (const INode* n) const { return (fCost >= n->fCost); }
 
+		#ifdef QTPFS_VIRTUAL_NODE_FUNCTIONS
 		virtual void Serialize(std::fstream&, bool) = 0;
 		virtual unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&) = 0;
 		virtual const std::vector<INode*>& GetNeighbors(const std::vector<INode*>& v) = 0;
+
+		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+		virtual const float3& GetNeighborEdgeTransitionPoint(unsigned int ngbIdx) const = 0;
+		#endif
+		#endif
 
 		unsigned int GetNeighborRelation(const INode* ngb) const;
 		unsigned int GetRectangleRelation(const SRectangle& r) const;
@@ -42,6 +53,7 @@ namespace QTPFS {
 		float3 GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos) const;
 		SRectangle ClipRectangle(const SRectangle& r) const;
 
+		#ifdef QTPFS_VIRTUAL_NODE_FUNCTIONS
 		virtual unsigned int xmin() const = 0;
 		virtual unsigned int zmin() const = 0;
 		virtual unsigned int xmax() const = 0;
@@ -59,6 +71,7 @@ namespace QTPFS {
 
 		virtual void SetMagicNumber(unsigned int) = 0;
 		virtual unsigned int GetMagicNumber() const = 0;
+		#endif
 
 		void SetPathCost(unsigned int type, float cost);
 		float GetPathCost(unsigned int type) const;
@@ -84,11 +97,17 @@ namespace QTPFS {
 
 		// points back to previous node in path
 		INode* prevNode;
+
+	#ifdef QTPFS_VIRTUAL_NODE_FUNCTIONS
 	};
+	#endif
 
 
 
+	#ifdef QTPFS_VIRTUAL_NODE_FUNCTIONS
 	struct QTNode: public INode {
+	#endif
+	public:
 		QTNode(
 			const QTNode* parent,
 			unsigned int nn,
@@ -120,6 +139,10 @@ namespace QTPFS {
 		unsigned int GetMaxNumNeighbors() const;
 		unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&);
 		const std::vector<INode*>& GetNeighbors(const std::vector<INode*>&);
+
+		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+		const float3& GetNeighborEdgeTransitionPoint(unsigned int ngbIdx) const { return etp_cache[ngbIdx]; }
+		#endif
 
 		void SetMoveCost(float cost) { moveCostAvg = cost; }
 		float GetMoveCost() const { return moveCostAvg; }
@@ -169,6 +192,10 @@ namespace QTPFS {
 
 		std::vector<QTNode*> children;
 		std::vector<INode*> neighbors;
+
+		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+		std::vector<float3> etp_cache;
+		#endif
 	};
 };
 
