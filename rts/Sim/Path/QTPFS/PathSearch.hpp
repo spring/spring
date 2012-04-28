@@ -143,7 +143,7 @@ namespace QTPFS {
 		static void FreeGlobalQueue() { openNodes.clear(); }
 
 	private:
-		void IterateSearch(
+		void Iterate(
 			const std::vector<INode*>& allNodes,
 			      std::vector<INode*>& ngbNodes
 		);
