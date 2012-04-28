@@ -12,9 +12,6 @@
 #define NODE_CMP_GT(a, b) (a->operator> (b))
 #define NODE_CMP_GE(a, b) (a->operator>=(b))
 
-// #define __HEAP_DEBUG__
-// #define __HEAP_DEBUG_PRINT__
-
 namespace QTPFS {
 	template<class TNode> class binary_heap {
 	public:
@@ -24,7 +21,7 @@ namespace QTPFS {
 
 		// interface functions
 		void push(TNode n) {
-			#ifdef __HEAP_DEBUG__
+			#ifdef QTPFS_DEBUG_NODE_HEAP
 			check_heap_property(0);
 			#endif
 
@@ -44,13 +41,13 @@ namespace QTPFS {
 			if (size() > 1)
 				inc_heap(cur_idx - 1);
 
-			#ifdef __HEAP_DEBUG__
+			#ifdef QTPFS_DEBUG_NODE_HEAP
 			check_heap_property(0);
 			#endif
 		}
 
 		void pop() {
-			#ifdef __HEAP_DEBUG__
+			#ifdef QTPFS_DEBUG_NODE_HEAP
 			check_heap_property(0);
 			#endif
 
@@ -72,7 +69,7 @@ namespace QTPFS {
 			if (size() > 1)
 				dec_heap(0);
 
-			#ifdef __HEAP_DEBUG__
+			#ifdef QTPFS_DEBUG_NODE_HEAP
 			check_heap_property(0);
 			#endif
 		}
@@ -132,14 +129,14 @@ namespace QTPFS {
 				}
 			}
 
-			#ifdef __HEAP_DEBUG__
+			#ifdef QTPFS_DEBUG_NODE_HEAP
 			check_heap_property(0);
 			#endif
 		}
 
 
 		void check_heap_property(size_t idx) const {
-			#ifdef QTPFS_DEBUG_QUEUE
+			#ifdef QTPFS_DEBUG_NODE_HEAP
 			if (valid_idx(idx)) {
 				assert(is_sorted(idx) == 0);
 
@@ -149,7 +146,7 @@ namespace QTPFS {
 			#endif
 		}
 
-		#ifdef __HEAP_DEBUG_PRINT__
+		#ifdef QTPFS_DEBUG_PRINT_NODE_HEAP
 		void debug_print(size_t idx, size_t calls, const std::string& tabs) const {
 			if (calls == 0)
 				return;
