@@ -20,7 +20,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Game/GameSetup.h"
 
 #include <string>
 #include <set>
