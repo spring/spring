@@ -453,9 +453,7 @@ public:
 
 
 	// unsynced vars
-	bool luaDraw;
 	bool noDraw;
-	bool noSelect;
 	bool noMinimap;
 	bool leaveTracks;
 
