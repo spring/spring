@@ -100,12 +100,12 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	//! LOAD METADATA
 	//! Load the lua metafile. This contains properties unique to Spring models and must return a table
 	std::string metaFileName = modelFilePath + ".lua";
-	if (!FileSystem::FileExists(metaFileName)) {
+	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP)) {
 		//! Try again without the model file extension
 		metaFileName = modelPath + '/' + modelName + ".lua";
 	}
 	LuaParser metaFileParser(metaFileName, SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!FileSystem::FileExists(metaFileName)) {
+	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP)) {
 		LOG_S(LOG_SECTION_MODEL, "No meta-file '%s'. Using defaults.", metaFileName.c_str());
 	} else if (!metaFileParser.Execute()) {
 		LOG_SL(LOG_SECTION_MODEL, L_ERROR, "'%s': %s. Using defaults.", metaFileName.c_str(), metaFileParser.GetErrorLog().c_str());

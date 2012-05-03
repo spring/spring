@@ -91,9 +91,6 @@ public:
 	float resurrectProgress;
 	float reclaimLeft;
 
-	bool luaDraw;
-	bool noSelect;
-
 	int tempNum;
 	int lastReclaim;
 

@@ -9,7 +9,6 @@
 
 #include "KeyBindings.h"
 #include "KeyBindingsLog.h"
-#include "Game/GameSetup.h"
 #include "Sim/Misc/Team.h"
 #include "Lua/LuaDefs.h"
 #include "Lua/LuaCallInCheck.h"
