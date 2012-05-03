@@ -9,7 +9,6 @@
 #include "UnitDefHandler.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/Command.h"
-#include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"

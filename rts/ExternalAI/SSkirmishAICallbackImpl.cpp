@@ -11,7 +11,6 @@
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "Game/GlobalUnsynced.h" // for myTeam
-#include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
