@@ -153,7 +153,10 @@ bool CStrafeAirMoveType::Update()
 {
 	AAirMoveType::Update();
 
-	if (owner->stunned || owner->beingBuilt) {
+	// need to additionally check that we are not crashing,
+	// otherwise we might fall through the map when stunned
+	// (the kill-on-impact code is not reached in that case)
+	if ((owner->stunned && !owner->crashing) || owner->beingBuilt) {
 		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
 		return (HandleCollisions());
 	}
@@ -242,10 +245,10 @@ bool CStrafeAirMoveType::Update()
 			UpdateLanding();
 			break;
 		case AIRCRAFT_CRASHING: {
-			// note: the crashing-state can only be set by scripts
+			// NOTE: the crashing-state can only be set (and unset) by scripts
 			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
 
-			if (!(gs->frameNum & 3) && (ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
+			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
 				owner->crashing = false; owner->KillUnit(true, false, 0);
 			}
 
@@ -967,7 +970,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	}
 
 	// bounce away on ground collisions
-	if (gHeight > (owner->pos.y - owner->model->radius * 0.2f) && !owner->crashing) {
+	if (gHeight > (owner->pos.y - owner->model->radius * 0.2f)) {
 		const float3& gNormal = ground->GetNormal(pos.x, pos.z);
 		const float impactSpeed = -speed.dot(gNormal);
 
