@@ -30,6 +30,9 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
 
+	CR_MEMBER(luaDraw),
+	CR_MEMBER(noSelect),
+
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
  	CR_MEMBER(footprint),
@@ -78,6 +81,10 @@ CSolidObject::CSolidObject():
 	crushKilled(false),
 	blockEnemyPushing(true),
 	blockHeightChanges(false),
+
+	luaDraw(false),
+	noSelect(false),
+
 	xsize(1),
 	zsize(1),
 	footprint(1,1),
