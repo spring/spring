@@ -11,7 +11,6 @@
 #include "UnitDef.h"
 #include "UnitDefImage.h"
 #include "Game/Game.h"
-#include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"

@@ -230,9 +230,7 @@ CUnit::CUnit() : CSolidObject(),
 	currentFuel(0.0f),
 	alphaThreshold(0.1f),
 	cegDamage(1),
-	luaDraw(false),
 	noDraw(false),
-	noSelect(false),
 	noMinimap(false),
 	leaveTracks(false),
 	isIcon(false),
@@ -655,7 +653,7 @@ void CUnit::Update()
 		const bool oldInWater = inWater;
 
 		inWater = (pos.y <= 0.0f);
-		inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x,pos.z)) > 1.0f);
+		inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x, pos.z)) > 1.0f);
 		isUnderWater = ((pos.y + ((moveDef != NULL && moveDef->subMarine)? 0.0f: model->height)) < 0.0f);
 
 		if (inAir != oldInAir) {
@@ -2338,9 +2336,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(incomingMissiles),
 	CR_MEMBER(lastFlareDrop),
 	CR_MEMBER(currentFuel),
-	CR_MEMBER(luaDraw),
 	CR_MEMBER(noDraw),
-	CR_MEMBER(noSelect),
 	CR_MEMBER(noMinimap),
 	CR_MEMBER(leaveTracks),
 //	CR_MEMBER(isIcon),

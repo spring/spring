@@ -35,8 +35,6 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(isRepairingBeforeResurrect),
 	CR_MEMBER(resurrectProgress),
 	CR_MEMBER(reclaimLeft),
-	CR_MEMBER(luaDraw),
-	CR_MEMBER(noSelect),
 	CR_MEMBER(tempNum),
 	CR_MEMBER(lastReclaim),
 	// CR_MEMBER(def),
@@ -58,8 +56,6 @@ CFeature::CFeature() : CSolidObject(),
 	isRepairingBeforeResurrect(false),
 	resurrectProgress(0.0f),
 	reclaimLeft(1.0f),
-	luaDraw(false),
-	noSelect(false),
 	tempNum(0),
 	lastReclaim(0),
 	def(NULL),
@@ -471,9 +467,15 @@ bool CFeature::UpdatePosition()
 	if (udef != NULL) {
 		// we are a wreck of a dead unit
 		if (!reachedFinalPos) {
+			// def->floating is unreliable (true for land unit wrecks),
+			// just assume wrecks always sink even if their "owner" was
+			// a floating object (as is the case for ships anyway)
+			const float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
+			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
+
 			// NOTE: apply more drag if we were a tank or bot?
 			// (would require passing extra data to Initialize())
-			deathSpeed *= 0.95f;
+			deathSpeed *= ((reachedGround)? 0.95f: 0.9999f);
 
 			if (deathSpeed.SqLength2D() > 0.01f) {
 				UnBlock();
@@ -489,12 +491,6 @@ bool CFeature::UpdatePosition()
 				deathSpeed.x = 0.0f;
 				deathSpeed.z = 0.0f;
 			}
-
-			// def->floating is unreliable (true for land unit wrecks),
-			// just assume wrecks always sink even if their "owner" was
-			// a floating object (as is the case for ships anyway)
-			const float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
-			const bool reachedGround = (pos.y <= realGroundHeight);
 
 			if (!reachedGround) {
 				if (pos.y > 0.0f) {
@@ -538,16 +534,16 @@ bool CFeature::UpdatePosition()
 			if (pos.y > 0.0f) {
 				speed.y += mapInfo->map.gravity;
 			} else {
-				// fall slower in water
-				speed.y += mapInfo->map.gravity * 0.5;
+				speed.y = mapInfo->map.gravity;
 			}
 
-			transMatrix[13] += speed.y;
 			Move1D(speed.y, 1, true);
 
 			if (def->drawType >= DRAWTYPE_TREE) {
 				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 			}
+
+			transMatrix[13] += speed.y;
 		} else if (pos.y < finalHeight) {
 			// if ground is restored, make sure feature does not get buried
 			if (def->drawType >= DRAWTYPE_TREE) {

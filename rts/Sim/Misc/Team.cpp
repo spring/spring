@@ -7,7 +7,6 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
-#include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Messages.h"
 #include "Lua/LuaRules.h"

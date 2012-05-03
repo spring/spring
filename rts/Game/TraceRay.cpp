@@ -3,7 +3,6 @@
 #include "System/mmgr.h"
 
 #include "Camera.h"
-#include "GameSetup.h"
 #include "GlobalUnsynced.h"
 #include "TraceRay.h"
 #include "Map/Ground.h"
