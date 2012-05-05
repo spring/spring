@@ -76,9 +76,14 @@ public:
 	void UpdateCurrentShader(const ISkyLight* skyLight) const;
 
 private:
-	Shader::IProgramObject* smfShaderDefGLSL;   // GLSL shader used when shadows are on
-	Shader::IProgramObject* smfShaderAdvGLSL;   // GLSL shader used when shadows are off
-	Shader::IProgramObject* smfShaderCurGLSL;   // currently active GLSL shader
+	enum {
+		SMF_SHADOWS_OPT_BIT = (1 << 0),
+		SMF_INFOTEX_OPT_BIT = (1 << 1),
+		SMF_MAX_OPT_BIT_VAL = (1 << 2),
+	};
+
+	Shader::IProgramObject* smfShadersGLSL[SMF_MAX_OPT_BIT_VAL];
+	Shader::IProgramObject* smfShaderGLSL; // currently active GLSL shader
 };
 
 #endif
