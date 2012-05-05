@@ -1113,8 +1113,7 @@ bool CGame::Draw() {
 	}
 
 	if (doDrawWorld) {
-		if (shadowHandler->shadowsLoaded && (gd->drawMode != CBaseGroundDrawer::drawLos)) {
-			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
+		if (shadowHandler->shadowsLoaded) {
 			SCOPED_TIMER("ShadowHandler::CreateShadows");
 			SetDrawMode(gameShadowDraw);
 			shadowHandler->CreateShadows();
