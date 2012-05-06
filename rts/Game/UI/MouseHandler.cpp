@@ -760,6 +760,7 @@ void CMouseHandler::DrawScrollCursor()
 
 	glEnable(GL_POINT_SMOOTH);
 
+	WorkaroundATIPointSizeBug();
 	glPointSize(crossSize * 0.6f);
 	glBegin(GL_POINTS);
 		glColor4f(1.0f, 1.0f, 1.0f, 1.2f * crossAlpha);
