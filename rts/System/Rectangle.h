@@ -3,6 +3,9 @@
 #ifndef RECTANGLE_H
 #define RECTANGLE_H
 
+#include "Vec2.h"
+#include "myMath.h"
+
 struct SRectangle {
 	SRectangle()
 		: x1(0)
@@ -20,6 +23,11 @@ struct SRectangle {
 	int GetWidth() const { return x2 - x1; }
 	int GetHeight() const { return z2 - z1; }
 	int GetArea() const { return (GetWidth() * GetHeight()); }
+
+	void ClampPos(int2* pos) const {
+		pos->x = Clamp(pos->x, x1, x2);
+		pos->y = Clamp(pos->y, y1, y2);
+	}
 
 	bool operator< (const SRectangle& other) {
 		if (x1 == other.x1) {

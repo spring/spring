@@ -16,6 +16,7 @@
 #include "Lua/LuaRulesParams.h"
 #include "System/Sync/SyncedPrimitive.h" //! SyncedFloat
 
+
 class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shallow copying of Teams, contains pointers
 {
 	CR_DECLARE(CTeam);
@@ -37,6 +38,7 @@ public:
 	void AddPlayer(int playerNum);
 	void KillAIs();
 
+	void ClampStartPosInStartBox(float3* pos) const;
 	void StartposMessage(const float3& pos) { startPos = pos; }
 
 	CTeam& operator=(const TeamBase& base);
