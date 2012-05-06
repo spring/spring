@@ -1036,6 +1036,8 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 	// draw the projectiles
 	if (drawProjectiles) {
+		glPointSize(1.0f);
+		WorkaroundATIPointSizeBug();
 		projectileDrawer->DrawProjectilesMiniMap();
 	}
 

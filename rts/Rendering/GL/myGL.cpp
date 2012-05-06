@@ -329,6 +329,21 @@ void UnloadExtensions()
 	vertexArray2 = NULL;
 }
 
+/******************************************************************************/
+
+void WorkaroundATIPointSizeBug()
+{
+	if (globalRendering->atiHacks && globalRendering->haveGLSL) {
+		GLboolean pointSpritesEnabled = false;
+		glGetBooleanv(GL_POINT_SPRITE, &pointSpritesEnabled);
+		if (pointSpritesEnabled)
+			return;
+
+		const GLfloat atten[3] = { 1.0f, 1.0f, 1.0f };
+		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
+		glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
+	}
+}
 
 /******************************************************************************/
 

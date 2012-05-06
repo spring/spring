@@ -2054,6 +2054,10 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 	}
 	const GLuint primMode = (GLuint)lua_tonumber(L, 1);
 
+	if (primMode == GL_POINTS) {
+		WorkaroundATIPointSizeBug();
+	}
+
 	// call the function
 	glBegin(primMode);
 	const int error = lua_pcall(L, (args - 2), 0, 0);
