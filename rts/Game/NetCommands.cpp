@@ -319,6 +319,7 @@ void CGame::ClientReadNet()
 					float3 pos(*(float*)&inbuf[4],
 					           *(float*)&inbuf[8],
 					           *(float*)&inbuf[12]);
+					teamHandler->Team(team)->ClampStartPosInStartBox(&pos);
 					if (!luaRules || luaRules->AllowStartPosition(player, pos)) {
 						teamHandler->Team(team)->StartposMessage(pos);
 						if (inbuf[3] != 2 && player != SERVER_PLAYER)
