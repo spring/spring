@@ -2719,7 +2719,7 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 	                 lua_tofloat(L, 2),
 	                 lua_tofloat(L, 3));
 	const string text = luaL_optstring(L, 4, "");
-	const bool onlyLocal = bool(luaL_optnumber(L, 5, 1));
+	const bool onlyLocal = (lua_isnumber(L, 5)) ? bool(luaL_optnumber(L, 5, 1)) : luaL_optboolean(L, 5, true);
 
 	if (onlyLocal) {
 		inMapDrawerModel->AddPoint(pos, text, gu->myPlayerNum);
@@ -2753,7 +2753,7 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 	const float3 pos2(lua_tofloat(L, 4),
 	                  lua_tofloat(L, 5),
 	                  lua_tofloat(L, 6));
-	const bool onlyLocal = bool(luaL_optnumber(L, 7, 0));
+	const bool onlyLocal = (lua_isnumber(L, 7)) ? bool(luaL_optnumber(L, 7, 0)) : luaL_optboolean(L, 7, false);
 
 	if (onlyLocal) {
 		inMapDrawerModel->AddLine(pos1, pos2, gu->myPlayerNum);

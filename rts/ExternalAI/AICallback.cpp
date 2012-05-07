@@ -138,18 +138,6 @@ CAICallback::~CAICallback()
 
 void CAICallback::SendStartPos(bool ready, float3 startPos)
 {
-	if (startPos.z < gameSetup->allyStartingData[gu->myAllyTeam].startRectTop * gs->mapy * SQUARE_SIZE)
-		startPos.z = gameSetup->allyStartingData[gu->myAllyTeam].startRectTop * gs->mapy * SQUARE_SIZE;
-
-	if (startPos.z > gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom * gs->mapy * SQUARE_SIZE)
-		startPos.z = gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom * gs->mapy * SQUARE_SIZE;
-
-	if (startPos.x < gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft * gs->mapx * SQUARE_SIZE)
-		startPos.x = gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft * gs->mapx * SQUARE_SIZE;
-
-	if (startPos.x > gameSetup->allyStartingData[gu->myAllyTeam].startRectRight * gs->mapx * SQUARE_SIZE)
-		startPos.x = gameSetup->allyStartingData[gu->myAllyTeam].startRectRight * gs->mapx * SQUARE_SIZE;
-
 	unsigned char readyness = ready? 1: 0;
 	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, readyness, startPos.x, startPos.y, startPos.z));
 }
