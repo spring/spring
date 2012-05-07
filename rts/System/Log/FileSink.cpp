@@ -200,10 +200,13 @@ void log_file_addLogFile(const char* filePath, const char* sections, int minLeve
 #else
 	FILE* tmpStream = fopen(filePath, "w");
 #endif
+
 	if (tmpStream == NULL) {
 		LOG_L(L_ERROR, "Failed to open log file for writing: %s", filePath);
 		return;
 	}
+
+	setvbuf(tmpStream, NULL, _IOFBF, (BUFSIZ < 8192) ? BUFSIZ : 8192); // limit buffer to 8kB
 
 	const std::string sectionsStr = (sections == NULL) ? "" : sections;
 	logFiles[filePathStr] = LogFileDetails(tmpStream, sectionsStr, minLevel);
