@@ -633,12 +633,13 @@ public:
 }; // end of namespace Query
 }; // end of namespace
 
-
+// Use this instead of unit->tempNum here, because it requires a mutex lock that will deadlock if luaRules is invoked simultaneously.
+// Not the cleanest solution, but faster than e.g. a std::set, and this function is called quite frequently.
+static int tempTargetUnits[MAX_UNITS] = {0};
+static int targetTempNum = 2;
 
 void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets)
 {
-	GML_RECMUTEX_LOCK(qnum); // GenerateTargets
-
 	const CUnit* attacker = weapon->owner;
 	const float radius    = weapon->range;
 	const float3& pos     = attacker->pos;
@@ -651,7 +652,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 	const std::vector<int>& quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->initMinHeight)) * heightMod);
 
-	const int tempNum = gs->tempNum++;
+	const int tempNum = targetTempNum++;
 
 	typedef std::vector<int>::const_iterator VectorIt;
 	typedef std::list<CUnit*>::const_iterator ListIt;
@@ -681,8 +682,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				}
 
 
-				if (targetUnit->tempNum != tempNum && (targetUnit->category & weapon->onlyTargetCategory)) {
-					targetUnit->tempNum = tempNum;
+				if (tempTargetUnits[targetUnit->id] != tempNum && (targetUnit->category & weapon->onlyTargetCategory)) {
+					tempTargetUnits[targetUnit->id] = tempNum;
 
 					if (targetUnit->isUnderWater && !weapon->weaponDef->waterweapon) {
 						continue;
