@@ -626,7 +626,7 @@ void CLuaHandle::GameFrame(int frameNum)
 
 	LUA_FRAME_BATCH_PUSH(frameNum);
 	LUA_CALL_IN_CHECK(L);
-	if(CopyExportTable())
+	if (CopyExportTable())
 		DelayRecvFromSynced(L, 0); // Copy _G.EXPORT --> SYNCED.EXPORT once a game frame
 	lua_checkstack(L, 4);
 
@@ -643,6 +643,27 @@ void CLuaHandle::GameFrame(int frameNum)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 1, 0, errfunc);
+}
+
+
+void CLuaHandle::GameID(const unsigned char* gameID, unsigned int numBytes)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+
+	const LuaHashString cmdStr("GameID");
+	const int errFunc = SetupTraceback(L);
+
+	if (!cmdStr.GetGlobalFunc(L)) {
+		if (errFunc != 0) {
+			lua_pop(L, 1);
+		}
+		return;
+	}
+
+	lua_pushlstring(L, reinterpret_cast<const char*>(gameID), numBytes);
+
+	RunCallInTraceback(cmdStr, 1, 0, errFunc);
 }
 
 

@@ -126,8 +126,9 @@ class CLuaHandle : public CEventClient
 		CLuaDisplayLists& GetDisplayLists(const lua_State* L = NULL) { return GET_CONTEXT_DATA(displayLists); }
 
 	public: // call-ins
-		virtual bool HasCallIn(lua_State* L, const string& name) { return false; } // FIXME
 		bool WantsEvent(const string& name)  { return HasCallIn(GetActiveState(), name); } // FIXME
+
+		virtual bool HasCallIn(lua_State* L, const string& name) { return false; } // FIXME
 		virtual bool SyncedUpdateCallIn(lua_State* L, const string& name) { return false; }
 		virtual bool UnsyncedUpdateCallIn(lua_State* L, const string& name) { return false; }
 
@@ -140,6 +141,8 @@ class CLuaHandle : public CEventClient
 		void GameOver(const std::vector<unsigned char>& winningAllyTeams);
 		void GamePaused(int playerID, bool paused);
 		void GameFrame(int frameNum);
+		void GameID(const unsigned char* gameID, unsigned int numBytes);
+
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);
 		void PlayerChanged(int playerID);
@@ -248,8 +251,6 @@ class CLuaHandle : public CEventClient
 		void DrawScreen();
 		void DrawInMiniMap();
 
-		/// @brief this UNSYNCED event is generated every gameProgressFrameInterval ( defined in gameserver.cpp ), skips network queuing and caching and it's useful
-		/// to calculate the current fast-forwarding % compared to the real game
 		void GameProgress(int frameNum);
 
 	public: // custom call-in  (inter-script calls)

@@ -30,6 +30,7 @@ CallInsList = {
 	"GamePreload",
 	"GameStart",
 	"GameOver",
+	"GameID",
 	"TeamDied",
 
 	"UnitCreated",
