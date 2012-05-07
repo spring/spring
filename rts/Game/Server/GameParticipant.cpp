@@ -30,6 +30,7 @@ void GameParticipant::Connected(boost::shared_ptr<netcode::CConnection> _link, b
 	linkData[MAX_AIS].link.reset(new netcode::CLoopbackConnection());
 	isLocal = local;
 	myState = CONNECTED;
+	lastFrameResponse = 0;
 }
 
 void GameParticipant::Kill(const std::string& reason)
