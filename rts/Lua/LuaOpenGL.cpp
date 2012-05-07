@@ -404,7 +404,7 @@ void LuaOpenGL::ResetGLState()
 		glDisable(GL_POINT_SPRITE);
 	}
 	if (globalRendering->haveGLSL) {
-		GLfloat atten[3] = { 1.0f, 1.0f, 1.0f };
+		GLfloat atten[3] = { 1.0f, 0.0f, 0.0f };
 		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
 		glPointParameterf(GL_POINT_SIZE_MIN, 0.0f);
 		glPointParameterf(GL_POINT_SIZE_MAX, 1.0e9f); // FIXME?

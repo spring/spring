@@ -339,7 +339,7 @@ void WorkaroundATIPointSizeBug()
 		if (pointSpritesEnabled)
 			return;
 
-		const GLfloat atten[3] = { 1.0f, 1.0f, 1.0f };
+		const GLfloat atten[3] = { 1.0f, 0.0f, 0.0f };
 		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
 		glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
 	}
