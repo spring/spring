@@ -90,6 +90,7 @@ local callInLists = {
 	"GamePreload",
 	"GameStart",
 	"GameOver",
+	"GameID",
 	"TeamDied",
 
 	"GameFrame",
@@ -1040,6 +1041,13 @@ end
 function gadgetHandler:GameOver()
   for _,g in ipairs(self.GameOverList) do
     g:GameOver()
+  end
+  return
+end
+
+function gadgetHandler:GameID(gameID)
+  for _,g in ipairs(self.GameIDList) do
+    g:GameID(gameID)
   end
   return
 end

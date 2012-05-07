@@ -20,7 +20,6 @@
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Lua/LuaRules.h"
-#include "Lua/LuaUI.h"
 #include "UI/GameSetupDrawer.h"
 #include "UI/MouseHandler.h"
 #include "Rendering/GlobalRendering.h"
@@ -350,6 +349,7 @@ void CGame::ClientReadNet()
 						p[ 0], p[ 1], p[ 2], p[ 3], p[ 4], p[ 5], p[ 6], p[ 7],
 						p[ 8], p[ 9], p[10], p[11], p[12], p[13], p[14], p[15]);
 				AddTraffic(-1, packetCode, dataLength);
+				eventHandler.GameID(gameID, sizeof(gameID));
 				break;
 			}
 

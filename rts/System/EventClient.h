@@ -80,6 +80,7 @@ class CEventClient
 		virtual void GameOver(const std::vector<unsigned char>& winningAllyTeams) {}
 		virtual void GamePaused(int playerID, bool paused) {}
 		virtual void GameFrame(int gameFrame) {}
+		virtual void GameID(const unsigned char* gameID, unsigned int numBytes) {}
 
 		virtual void TeamDied(int teamID) {}
 		virtual void TeamChanged(int teamID) {}
