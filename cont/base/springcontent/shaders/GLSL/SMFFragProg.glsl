@@ -317,7 +317,9 @@ void main() {
 	gl_FragColor.a = min(diffuseCol.a, (vertexWorldPos.y * 0.1) + 1.0);
 
 	#if (HAVE_INFOTEX == 1)
-	gl_FragColor.rgb += texture2D(infoTex, infoTexCoords).rgb;
+	// increase contrast and brightness for the overlays
+	gl_FragColor.rgb -= vec3(0.5);
+	gl_FragColor.rgb += (texture2D(infoTex, infoTexCoords).rgb * 2.0);
 	#endif
 }
 
