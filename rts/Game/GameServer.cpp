@@ -1647,6 +1647,10 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				}
 
 				if (hostif)
+#ifdef DEDICATED
+					hostif->SetDemoName(demoRecorder->GetName());
+#endif
+					hostif->SetGameID(gameID.charArray);
 					hostif->SendGameOver(playerNum, winningAllyTeams);
 				Broadcast(CBaseNetProtocol::Get().SendGameOver(playerNum, winningAllyTeams));
 
@@ -1811,10 +1815,10 @@ void CGameServer::ServerReadNet()
 void CGameServer::GenerateAndSendGameID()
 {
 	// This is where we'll store the ID temporarily.
-	union {
+/*	union {
 		unsigned char charArray[16];
 		unsigned int intArray[4];
-	} gameID;
+	} gameID;*/
 
 	// First and second dword are time based (current time and load time).
 	gameID.intArray[0] = (unsigned) time(NULL);

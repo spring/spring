@@ -100,6 +100,7 @@ using namespace boost::asio;
 AutohostInterface::AutohostInterface(const std::string& remoteIP, int remotePort, const std::string& localIP, int localPort)
 		: autohost(netcode::netservice)
 		, initialized(false)
+		, demoName("")
 {
 	std::string errorMsg = AutohostInterface::TryBindSocket(autohost, remoteIP, remotePort, localIP, localPort);
 
@@ -201,7 +202,17 @@ void AutohostInterface::SendStartPlaying()
 
 void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
 {
-	const unsigned char msgsize = 1 + 1 + 1 + (winningAllyTeams.size() * sizeof(uchar));
+	/*
+	 * 0 [1] = SERVER_GAMEOVER
+	 * 1 [1] = msgsize == 3+winner.size+16+1+demoName.size()
+	 * 2 [1] = playerNum
+	 * 3 [winner.size] = winningAllyTeams
+	 * 3+winner.size [16] = gameID
+	 * 3+winner.size+16 [1] = demoName.size()
+	 * 3+winner.size+16+1 [demoName.size] = demoName
+	 */
+
+	const unsigned char msgsize = 1 + 1 + 1 + (winningAllyTeams.size() * sizeof(uchar)) + 16 * sizeof(boost::uint8_t) + 1 + demoName.size();
 	std::vector<boost::uint8_t> buffer(msgsize);
 	buffer[0] = SERVER_GAMEOVER;
 	buffer[1] = msgsize;
@@ -210,13 +221,28 @@ void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& 
 	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
 		buffer[3 + i] = winningAllyTeams[i];
 	}
+
+	for (unsigned int i = 0; i < 16; i++) {
+		buffer[1 + 1 + 1 + winningAllyTeams.size() * sizeof(uchar) +i] = gameID[i];
+	}
+
+	buffer[1 + 1 + 1 + winningAllyTeams.size() * sizeof(uchar) + 16] = demoName.size();
+	if (demoName.size() > 0) {
+			strncpy((char*)(1 + 1 + 1 + (winningAllyTeams.size() * sizeof(uchar)) + 16 * sizeof(boost::uint8_t) +1), demoName.c_str(), demoName.size());
+	}
+
+	LOG("*** SendGameOver() buffer (size=%i):", int(buffer.size()));
+	for (unsigned int i = 0; i < buffer.size(); i++) {
+		LOG("***    buffer[%i]=%c", i, buffer[i]);
+	}
+
 	Send(boost::asio::buffer(buffer));
 }
 
 void AutohostInterface::SendPlayerJoined(uchar playerNum, const std::string& name)
 {
 	if (autohost.is_open()) {
-		unsigned msgsize = 2 * sizeof(uchar) + name.size();
+		const unsigned msgsize = 2 * sizeof(uchar) + name.size();
 		std::vector<boost::uint8_t> buffer(msgsize);
 		buffer[0] = PLAYER_JOINED;
 		buffer[1] = playerNum;
@@ -333,4 +359,14 @@ void AutohostInterface::Send(boost::asio::mutable_buffers_1 buffer)
 					e.what());
 		}
 	}
+}
+
+void AutohostInterface::SetDemoName(const std::string& demoname)
+{
+	demoName = std::string(demoname);
+}
+
+void AutohostInterface::SetGameID(const unsigned char* gameid)
+{
+	memcpy(gameID, gameid, sizeof(gameID));
 }
