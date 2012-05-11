@@ -2709,15 +2709,9 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 	if (inMapDrawer == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2)  || !lua_isnumber(L, 3) ||
-	    ((args >= 4) && !lua_isstring(L, 4))) {
-		luaL_error(L, "Incorrect arguments to MarkerAddPoint(x, y, z[, text, local ])");
-	}
-	const float3 pos(lua_tofloat(L, 1),
-	                 lua_tofloat(L, 2),
-	                 lua_tofloat(L, 3));
+	const float3 pos(luaL_checkfloat(L, 1),
+	                 luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3));
 	const string text = luaL_optstring(L, 4, "");
 	const bool onlyLocal = (lua_isnumber(L, 5)) ? bool(luaL_optnumber(L, 5, 1)) : luaL_optboolean(L, 5, true);
 
@@ -2739,26 +2733,18 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 	if (inMapDrawer == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 6) ||
-	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) ||
-	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
-	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
-		luaL_error(L,
-			"Incorrect arguments to MarkerAddLine(x1, y1, z1, x2, y2, z2[, local ])");
-	}
-	const float3 pos1(lua_tofloat(L, 1),
-	                  lua_tofloat(L, 2),
-	                  lua_tofloat(L, 3));
-	const float3 pos2(lua_tofloat(L, 4),
-	                  lua_tofloat(L, 5),
-	                  lua_tofloat(L, 6));
+	const float3 pos1(luaL_checkfloat(L, 1),
+	                  luaL_checkfloat(L, 2),
+	                  luaL_checkfloat(L, 3));
+	const float3 pos2(luaL_checkfloat(L, 4),
+	                  luaL_checkfloat(L, 5),
+	                  luaL_checkfloat(L, 6));
 	const bool onlyLocal = (lua_isnumber(L, 7)) ? bool(luaL_optnumber(L, 7, 0)) : luaL_optboolean(L, 7, false);
 
 	if (onlyLocal) {
 		inMapDrawerModel->AddLine(pos1, pos2, gu->myPlayerNum);
 	} else {
-		inMapDrawerModel->AddLine(pos1, pos2, true);
+		inMapDrawer->SendLine(pos1, pos2, true);
 	}
 
 	return 0;
@@ -2773,14 +2759,9 @@ int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 	if (inMapDrawer == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) ||
-	    !lua_isstring(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to MarkerDeletePositionl(x, y, z)");
-	}
-	const float3 pos(lua_tofloat(L, 1),
-	                 lua_tofloat(L, 2),
-	                 lua_tofloat(L, 3));
+	const float3 pos(luaL_checkfloat(L, 1),
+	                 luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3));
 
 	inMapDrawer->SendErase(pos);
 
