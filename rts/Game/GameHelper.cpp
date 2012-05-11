@@ -669,18 +669,6 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				CUnit* targetUnit = *ui;
 				float targetPriority = 1.0f;
 
-				if (luaRules != NULL) {
-					const int targetAllowed = luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weapon->weaponDef->id, &targetPriority);
-
-					if (targetAllowed >= 0) {
-						if (targetAllowed > 0) {
-							targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
-						}
-
-						continue;
-					}
-				}
-
 				if (!(targetUnit->category & weapon->onlyTargetCategory)) {
 					continue;
 				}
@@ -748,6 +736,13 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 					}
 					if (targetUnit->crashing) {
 						targetPriority *= 1000.0f;
+					}
+				}
+
+				if (luaRules != NULL) {
+					const bool targetAllowed = luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weapon->weaponDef->id, &targetPriority);
+					if (!targetAllowed) {
+						continue;
 					}
 				}
 
