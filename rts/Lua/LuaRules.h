@@ -63,7 +63,7 @@ class CLuaRules : public CLuaHandleSynced
 			unsigned int attackerID,
 			unsigned int attackerWeaponNum,
 			unsigned int attackerWeaponDefID);
-		int AllowWeaponTarget(
+		bool AllowWeaponTarget(
 			unsigned int attackerID,
 			unsigned int targetID,
 			unsigned int attackerWeaponNum,
