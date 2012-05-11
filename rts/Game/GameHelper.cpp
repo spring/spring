@@ -681,70 +681,77 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 					}
 				}
 
+				if (!(targetUnit->category & weapon->onlyTargetCategory)) {
+					continue;
+				}
 
-				if (tempTargetUnits[targetUnit->id] != tempNum && (targetUnit->category & weapon->onlyTargetCategory)) {
-					tempTargetUnits[targetUnit->id] = tempNum;
+				if (tempTargetUnits[targetUnit->id] == tempNum) {
+					continue;
+				}
 
-					if (targetUnit->isUnderWater && !weapon->weaponDef->waterweapon) {
-						continue;
+				tempTargetUnits[targetUnit->id] = tempNum;
+
+				if (targetUnit->isUnderWater && !weapon->weaponDef->waterweapon) {
+					continue;
+				}
+				if (targetUnit->isDead) {
+					continue;
+				}
+
+				float3 targPos;
+				const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
+
+				if (targetLOSState & LOS_INLOS) {
+					targPos = targetUnit->midPos;
+				} else if (targetLOSState & LOS_INRADAR) {
+					targPos = targetUnit->midPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
+					targetPriority *= 10.0f;
+				} else {
+					continue;
+				}
+
+				const float modRange = radius + (aHeight - targPos.y) * heightMod;
+
+				if ((pos - targPos).SqLength2D() > modRange * modRange) {
+					continue;
+				}
+
+				const float dist2D = (pos - targPos).Length2D();
+				const float rangeMul = (dist2D * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
+				const float damageMul = weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
+
+				targetPriority *= rangeMul;
+
+				if (targetLOSState & LOS_INLOS) {
+					targetPriority *= (secDamage + targetUnit->health);
+
+					if (targetUnit == lastTargetUnit) {
+						targetPriority *= weapon->avoidTarget ? 10.0f : 0.4f;
 					}
-					if (targetUnit->isDead) {
-						continue;
+
+					if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
+						targetPriority *= 4.0f;
 					}
 
-					float3 targPos;
-					const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
-
-					if (targetLOSState & LOS_INLOS) {
-						targPos = targetUnit->midPos;
-					} else if (targetLOSState & LOS_INRADAR) {
-						targPos = targetUnit->midPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
-						targetPriority *= 10.0f;
-					} else {
-						continue;
+					if (weapon->hasTargetWeight) {
+						targetPriority *= weapon->TargetWeight(targetUnit);
 					}
+				} else {
+					targetPriority *= (secDamage + 10000.0f);
+				}
 
-					const float modRange = radius + (aHeight - targPos.y) * heightMod;
+				if (targetLOSState & LOS_PREVLOS) {
+					targetPriority /= (damageMul * targetUnit->power * (0.7f + gs->randFloat() * 0.6f));
 
-					if ((pos - targPos).SqLength2D() <= modRange * modRange) {
-						const float dist2D = (pos - targPos).Length2D();
-						const float rangeMul = (dist2D * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
-						const float damageMul = weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
-
-						targetPriority *= rangeMul;
-
-						if (targetLOSState & LOS_INLOS) {
-							targetPriority *= (secDamage + targetUnit->health);
-
-							if (targetUnit == lastTargetUnit) {
-								targetPriority *= weapon->avoidTarget ? 10.0f : 0.4f;
-							}
-
-							if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
-								targetPriority *= 4.0f;
-							}
-
-							if (weapon->hasTargetWeight) {
-								targetPriority *= weapon->TargetWeight(targetUnit);
-							}
-						} else {
-							targetPriority *= (secDamage + 10000.0f);
-						}
-
-						if (targetLOSState & LOS_PREVLOS) {
-							targetPriority /= (damageMul * targetUnit->power * (0.7f + gs->randFloat() * 0.6f));
-
-							if (targetUnit->category & weapon->badTargetCategory) {
-								targetPriority *= 100.0f;
-							}
-							if (targetUnit->crashing) {
-								targetPriority *= 1000.0f;
-							}
-						}
-
-						targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
+					if (targetUnit->category & weapon->badTargetCategory) {
+						targetPriority *= 100.0f;
+					}
+					if (targetUnit->crashing) {
+						targetPriority *= 1000.0f;
 					}
 				}
+
+				targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
 			}
 		}
 	}
