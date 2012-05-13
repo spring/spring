@@ -88,10 +88,18 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 {
 	SCOPED_TIMER("RadarHandler::MoveUnit");
 
-	if (gs->globalLOS[unit->allyteam]) { return; }
-	if (!unit->hasRadarCapacity || !unit->activated) {
+	if (gs->globalLOS[unit->allyteam])
 		return;
-	}
+	if (!unit->hasRadarCapacity)
+		return;
+	// NOTE:
+	//   when stunned, we are not called during Unit::SlowUpdate's
+	//   but units can in principle still be given on/off commands
+	//   this creates an exploit via Unit::Activate if the unit is
+	//   a transported radar/jammer and leaves a detached coverage
+	//   zone behind
+	if (!unit->activated || unit->stunned)
+		return;
 
 	int2 newPos;
 	newPos.x = (int) (unit->pos.x * invRadarDiv);
