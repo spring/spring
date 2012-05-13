@@ -358,8 +358,8 @@ static inline bool IsEnemyUnit(const CUnit* unit)
 
 static inline bool IsUnitVisible(const CUnit* unit)
 {
-	if (ActiveReadAllyTeam() < 0) {
-		return ActiveFullRead();
+	if (IsAllyUnit(unit)) {
+		return true;
 	}
 	return !!(unit->losStatus[ActiveReadAllyTeam()] & (LOS_INLOS | LOS_INRADAR));
 }
@@ -367,8 +367,8 @@ static inline bool IsUnitVisible(const CUnit* unit)
 
 static inline bool IsUnitInLos(const CUnit* unit)
 {
-	if (ActiveReadAllyTeam() < 0) {
-		return ActiveFullRead();
+	if (IsAllyUnit(unit)) {
+		return true;
 	}
 	return (unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS);
 }
@@ -376,8 +376,8 @@ static inline bool IsUnitInLos(const CUnit* unit)
 
 static inline bool IsUnitTyped(const CUnit* unit)
 {
-	if (ActiveReadAllyTeam() < 0) {
-		return ActiveFullRead();
+	if (IsAllyUnit(unit)) {
+		return true;
 	}
 	const unsigned short losStatus = unit->losStatus[ActiveReadAllyTeam()];
 	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
@@ -2590,7 +2590,7 @@ int LuaSyncedRead::GetUnitSensorRadius(lua_State* L)
 
 int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -2637,10 +2637,7 @@ int LuaSyncedRead::GetUnitDefID(lua_State* L)
 		lua_pushnumber(L, unit->unitDef->id);
 	}
 	else {
-		const int losStatus = unit->losStatus[ActiveReadAllyTeam()];
-		const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-		if (((losStatus & LOS_INLOS) == 0) &&
-				((losStatus & prevMask) != prevMask)) {
+		if (!IsUnitTyped(unit)) {
 			return 0;
 		}
 		lua_pushnumber(L, EffectiveUnitDef(unit)->id);
@@ -2930,7 +2927,7 @@ int LuaSyncedRead::GetUnitIsBuilding(lua_State* L)
 
 int LuaSyncedRead::GetUnitTransporter(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -3206,7 +3203,7 @@ int LuaSyncedRead::GetUnitLastAttackedPiece(lua_State* L)
 
 int LuaSyncedRead::GetUnitCollisionVolumeData(lua_State* L)
 {
-	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -3216,7 +3213,7 @@ int LuaSyncedRead::GetUnitCollisionVolumeData(lua_State* L)
 
 int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
 {
-	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -3343,7 +3340,7 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 
 int LuaSyncedRead::GetUnitBlocking(lua_State *L)
 {
-	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -3965,7 +3962,7 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 
 int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -4000,7 +3997,7 @@ int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 
 int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -4800,7 +4797,7 @@ int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 
 int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -4818,7 +4815,7 @@ int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
 
 int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -4882,7 +4879,7 @@ static int GetUnitPieceInfo(lua_State* L, const ModelType& op)
 
 int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -4900,7 +4897,7 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 
 int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -4922,7 +4919,7 @@ int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
 
 int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -4955,7 +4952,7 @@ int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 
 int LuaSyncedRead::GetUnitPieceDirection(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -4977,7 +4974,7 @@ int LuaSyncedRead::GetUnitPieceDirection(lua_State* L)
 
 int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -4999,7 +4996,7 @@ int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 
 int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
@@ -5032,7 +5029,7 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 
 int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}

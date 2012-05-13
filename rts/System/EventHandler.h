@@ -47,6 +47,7 @@ class CEventHandler
 		void GameOver(const std::vector<unsigned char>& winningAllyTeams);
 		void GamePaused(int playerID, bool paused);
 		void GameFrame(int gameFrame);
+		void GameID(const unsigned char* gameID, unsigned int numBytes);
 
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);
@@ -192,8 +193,9 @@ class CEventHandler
 		void DrawScreen();
 		void DrawInMiniMap();
 
-		/// @brief this UNSYNCED event is generated every gameProgressFrameInterval ( defined in gameserver.cpp ), skips network queuing and caching and it's useful
-		/// to calculate the current fast-forwarding % compared to the real game
+		/// @brief this UNSYNCED event is generated every GameServer::gameProgressFrameInterval
+		/// it skips network queuing and caching and can be used to calculate the current catchup
+		/// percentage when reconnecting to a running game
 		void GameProgress(int gameFrame);
 		/// @}
 
@@ -250,6 +252,7 @@ class CEventHandler
 		EventClientList listGameOver;
 		EventClientList listGamePaused;
 		EventClientList listGameFrame;
+		EventClientList listGameID;
 		EventClientList listTeamDied;
 		EventClientList listTeamChanged;
 		EventClientList listPlayerChanged;
