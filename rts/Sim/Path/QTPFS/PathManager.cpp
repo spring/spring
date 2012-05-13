@@ -893,7 +893,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 
 	float minRadiusSq = QTPFS_POSITIVE_INFINITY;
 
-	unsigned int minPointIdx = 0;
+	unsigned int minPointIdx = livePath->GetNextPointIndex();
 	unsigned int nxtPointIdx = 1;
 
 	for (unsigned int i = (livePath->GetNextPointIndex() * 1); i < (livePath->NumPoints() - 1); i++) {
