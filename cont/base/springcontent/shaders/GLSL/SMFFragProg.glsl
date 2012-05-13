@@ -318,8 +318,8 @@ void main() {
 
 	#if (HAVE_INFOTEX == 1)
 	// increase contrast and brightness for the overlays
-	gl_FragColor.rgb -= vec3(0.5);
-	gl_FragColor.rgb += (texture2D(infoTex, infoTexCoords).rgb * 2.0);
+	gl_FragColor.rgb += (texture2D(infoTex, infoTexCoords).rgb * (2.0 - dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114))));
+	gl_FragColor.rgb -= vec3(0.5, 0.5, 0.5);
 	#endif
 }
 
