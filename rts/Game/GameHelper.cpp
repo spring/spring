@@ -633,12 +633,13 @@ public:
 }; // end of namespace Query
 }; // end of namespace
 
-
+// Use this instead of unit->tempNum here, because it requires a mutex lock that will deadlock if luaRules is invoked simultaneously.
+// Not the cleanest solution, but faster than e.g. a std::set, and this function is called quite frequently.
+static int tempTargetUnits[MAX_UNITS] = {0};
+static int targetTempNum = 2;
 
 void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets)
 {
-	GML_RECMUTEX_LOCK(qnum); // GenerateTargets
-
 	const CUnit* attacker = weapon->owner;
 	const float radius    = weapon->range;
 	const float3& pos     = attacker->pos;
@@ -651,7 +652,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 	const std::vector<int>& quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->initMinHeight)) * heightMod);
 
-	const int tempNum = gs->tempNum++;
+	const int tempNum = targetTempNum++;
 
 	typedef std::vector<int>::const_iterator VectorIt;
 	typedef std::list<CUnit*>::const_iterator ListIt;
@@ -668,82 +669,84 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				CUnit* targetUnit = *ui;
 				float targetPriority = 1.0f;
 
+				if (!(targetUnit->category & weapon->onlyTargetCategory)) {
+					continue;
+				}
+
+				if (tempTargetUnits[targetUnit->id] == tempNum) {
+					continue;
+				}
+
+				tempTargetUnits[targetUnit->id] = tempNum;
+
+				if (targetUnit->isUnderWater && !weapon->weaponDef->waterweapon) {
+					continue;
+				}
+				if (targetUnit->isDead) {
+					continue;
+				}
+
+				float3 targPos;
+				const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
+
+				if (targetLOSState & LOS_INLOS) {
+					targPos = targetUnit->midPos;
+				} else if (targetLOSState & LOS_INRADAR) {
+					targPos = targetUnit->midPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
+					targetPriority *= 10.0f;
+				} else {
+					continue;
+				}
+
+				const float modRange = radius + (aHeight - targPos.y) * heightMod;
+
+				if ((pos - targPos).SqLength2D() > modRange * modRange) {
+					continue;
+				}
+
+				const float dist2D = (pos - targPos).Length2D();
+				const float rangeMul = (dist2D * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
+				const float damageMul = weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
+
+				targetPriority *= rangeMul;
+
+				if (targetLOSState & LOS_INLOS) {
+					targetPriority *= (secDamage + targetUnit->health);
+
+					if (targetUnit == lastTargetUnit) {
+						targetPriority *= weapon->avoidTarget ? 10.0f : 0.4f;
+					}
+
+					if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
+						targetPriority *= 4.0f;
+					}
+
+					if (weapon->hasTargetWeight) {
+						targetPriority *= weapon->TargetWeight(targetUnit);
+					}
+				} else {
+					targetPriority *= (secDamage + 10000.0f);
+				}
+
+				if (targetLOSState & LOS_PREVLOS) {
+					targetPriority /= (damageMul * targetUnit->power * (0.7f + gs->randFloat() * 0.6f));
+
+					if (targetUnit->category & weapon->badTargetCategory) {
+						targetPriority *= 100.0f;
+					}
+					if (targetUnit->crashing) {
+						targetPriority *= 1000.0f;
+					}
+				}
+
 				if (luaRules != NULL) {
-					const int targetAllowed = luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weapon->weaponDef->id, &targetPriority);
-
-					if (targetAllowed >= 0) {
-						if (targetAllowed > 0) {
-							targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
-						}
-
+					const bool targetAllowed = luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weapon->weaponDef->id, &targetPriority);
+					if (!targetAllowed) {
 						continue;
 					}
 				}
 
-
-				if (targetUnit->tempNum != tempNum && (targetUnit->category & weapon->onlyTargetCategory)) {
-					targetUnit->tempNum = tempNum;
-
-					if (targetUnit->isUnderWater && !weapon->weaponDef->waterweapon) {
-						continue;
-					}
-					if (targetUnit->isDead) {
-						continue;
-					}
-
-					float3 targPos;
-					const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
-
-					if (targetLOSState & LOS_INLOS) {
-						targPos = targetUnit->midPos;
-					} else if (targetLOSState & LOS_INRADAR) {
-						targPos = targetUnit->midPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
-						targetPriority *= 10.0f;
-					} else {
-						continue;
-					}
-
-					const float modRange = radius + (aHeight - targPos.y) * heightMod;
-
-					if ((pos - targPos).SqLength2D() <= modRange * modRange) {
-						const float dist2D = (pos - targPos).Length2D();
-						const float rangeMul = (dist2D * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
-						const float damageMul = weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
-
-						targetPriority *= rangeMul;
-
-						if (targetLOSState & LOS_INLOS) {
-							targetPriority *= (secDamage + targetUnit->health);
-
-							if (targetUnit == lastTargetUnit) {
-								targetPriority *= weapon->avoidTarget ? 10.0f : 0.4f;
-							}
-
-							if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
-								targetPriority *= 4.0f;
-							}
-
-							if (weapon->hasTargetWeight) {
-								targetPriority *= weapon->TargetWeight(targetUnit);
-							}
-						} else {
-							targetPriority *= (secDamage + 10000.0f);
-						}
-
-						if (targetLOSState & LOS_PREVLOS) {
-							targetPriority /= (damageMul * targetUnit->power * (0.7f + gs->randFloat() * 0.6f));
-
-							if (targetUnit->category & weapon->badTargetCategory) {
-								targetPriority *= 100.0f;
-							}
-							if (targetUnit->crashing) {
-								targetPriority *= 1000.0f;
-							}
-						}
-
-						targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
-					}
-				}
+				targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
 			}
 		}
 	}

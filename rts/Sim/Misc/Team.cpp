@@ -7,6 +7,7 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
+#include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Messages.h"
 #include "Lua/LuaRules.h"
@@ -18,6 +19,7 @@
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/mmgr.h"
+#include "System/Rectangle.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
@@ -120,6 +122,21 @@ CTeam::CTeam() :
 	currentStats = &statHistory.back();
 }
 
+
+void CTeam::ClampStartPosInStartBox(float3* pos) const
+{
+	const SRectangle rect(
+		gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft   * gs->mapx * SQUARE_SIZE,
+		gameSetup->allyStartingData[gu->myAllyTeam].startRectTop    * gs->mapy * SQUARE_SIZE,
+		gameSetup->allyStartingData[gu->myAllyTeam].startRectRight  * gs->mapx * SQUARE_SIZE,
+		gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom * gs->mapy * SQUARE_SIZE
+	);
+
+	int2 ipos(pos->x, pos->z);
+	rect.ClampPos(&ipos);
+	pos->x = ipos.x;
+	pos->z = ipos.y;
+}
 
 
 bool CTeam::UseMetal(float amount)

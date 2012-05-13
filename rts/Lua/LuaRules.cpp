@@ -850,23 +850,25 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 	return ret;
 }
 
-int CLuaRules::AllowWeaponTarget(
+bool CLuaRules::AllowWeaponTarget(
 	unsigned int attackerID,
 	unsigned int targetID,
 	unsigned int attackerWeaponNum,
 	unsigned int attackerWeaponDefID,
 	float* targetPriority)
 {
+	assert(targetPriority != NULL);
+
+	bool ret = true;
+
 	if (!haveAllowWeaponTarget)
-		return -1;
+		return ret;
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4 + 2);
+	lua_checkstack(L, 5 + 2);
 
 	const int errfunc(SetupTraceback(L));
 	static const LuaHashString cmdStr("AllowWeaponTarget");
-
-	int ret = -1;
 
 	if (!cmdStr.GetGlobalFunc(L)) {
 		if (errfunc)
@@ -878,15 +880,16 @@ int CLuaRules::AllowWeaponTarget(
 	lua_pushnumber(L, targetID);
 	lua_pushnumber(L, attackerWeaponNum);
 	lua_pushnumber(L, attackerWeaponDefID);
+	lua_pushnumber(L, *targetPriority);
 
-	const bool success = RunCallInTraceback(cmdStr, 4, 2, errfunc);
+	const bool success = RunCallInTraceback(cmdStr, 5, 2, errfunc);
 
 	if (!success)
 		return ret;
 
-	ret = (lua_isboolean(L, -2) && lua_toboolean(L, -2))? 1: 0;
+	ret = lua_toboolean(L, -2);
 
-	if (targetPriority && lua_isnumber(L, -1)) {
+	if (lua_isnumber(L, -1)) {
 		*targetPriority = lua_tonumber(L, -1);
 	}
 

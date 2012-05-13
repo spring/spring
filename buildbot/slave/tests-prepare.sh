@@ -35,11 +35,12 @@ function makescript {
 	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
 }
 
-GAME1="Balanced Annihilation V7.68"
-GAME2="Zero-K v1.0.4.0"
+PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
+# get the name of the latest versions
+GAME1=$($PRDL --rapid-search ba:latest |egrep -o 'Filename: (.*) Size:'|sed 's/Filename: \(.*\) Size:/\1/')
+GAME2=$($PRDL --rapid-search zk:stable |egrep -o 'Filename: (.*) Size:'|sed 's/Filename: \(.*\) Size:/\1/')
 MAP="Altair_Crossing-V1"
 
-PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 
 $PRDL --download-game "$GAME1"
 $PRDL --download-game "$GAME2"

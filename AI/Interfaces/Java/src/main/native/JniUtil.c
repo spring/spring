@@ -21,9 +21,15 @@ const char* jniUtil_getJniRetValDescription(const jint retVal) {
 		case JNI_ERR:       { return "JNI_ERR - unknown error"; break; }
 		case JNI_EDETACHED: { return "JNI_EDETACHED - thread detached from the VM"; break; }
 		case JNI_EVERSION:  { return "JNI_EVERSION - JNI version error"; break; }
+#ifdef    JNI_ENOMEM
 		case JNI_ENOMEM:    { return "JNI_ENOMEM - not enough (contiguous) memory"; break; }
+#endif // JNI_ENOMEM
+#ifdef    JNI_EEXIST
 		case JNI_EEXIST:    { return "JNI_EEXIST - VM already created"; break; }
+#endif // JNI_EEXIST
+#ifdef    JNI_EINVAL
 		case JNI_EINVAL:    { return "JNI_EINVAL - invalid arguments"; break; }
+#endif // JNI_EINVAL
 		default:            { return "UNKNOWN - unknown/invalid JNI return value"; break; }
 	}
 }
