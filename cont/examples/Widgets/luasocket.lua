@@ -16,8 +16,6 @@ return {
 }
 end
 
---VFS.Include(LUAUI_DIRNAME .. "Widgets/socket/socket.lua")
-
 local socket = socket
 
 local client

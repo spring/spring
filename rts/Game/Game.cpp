@@ -1094,7 +1094,7 @@ bool CGame::Draw() {
 	if (UpdateUnsynced())
 		return true;
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+//	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 	const spring_time currentTime = spring_gettime();
