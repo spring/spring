@@ -124,6 +124,7 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 
 	// Perform cob animation
 	if (aircraftState == AIRCRAFT_LANDED) {
+		assert(newState != AIRCRAFT_LANDING); // redundant SetState() call, we already landed and get command to switch into landing
 		owner->script->StartMoving();
 	}
 	if (newState == AIRCRAFT_LANDED) {

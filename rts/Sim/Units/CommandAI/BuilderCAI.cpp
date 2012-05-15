@@ -327,11 +327,14 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	if (!AllowedCommand(c, fromSynced))
 		return;
 
+	// don't guard yourself
 	if ((c.GetID() == CMD_GUARD) &&
 	    (c.params.size() == 1) && ((int)c.params[0] == owner->id)) {
 		return;
 	}
 
+	// stop current build if the new command is a not queued and replaces the current buidcmd
+	//FIXME should happen just before CMobileCAI::GiveCommandReal? (the new cmd can still be skipped!)
 	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()
 			&& c.GetID() != CMD_WAIT) {
 		building = false;
@@ -353,12 +356,16 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		bi.def = unitDefHandler->GetUnitDefByName(boi->second);
 		bi.pos = helper->Pos2BuildPos(bi, true);
 
+		// We are a static building, check if the buildcmd is in range
 		if (!owner->unitDef->canmove) {
 			const float radius = GetBuildOptionRadius(bi.def, c.GetID());
 			if (!IsInBuildRange(bi.pos, radius)) {
 				return;
 			}
 		}
+
+		// check if the buildpos is blocked if it is a nanoframe help to finish it
+		//FIXME finish it just if it is of the same unitdef?
 		CFeature* feature = NULL;
 		if (!uh->TestUnitBuildSquare(bi, feature, owner->allyteam, true)) {
 			if (!feature && owner->unitDef->canAssist) {
