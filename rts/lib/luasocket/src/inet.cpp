@@ -220,11 +220,18 @@ bool isAllowed(p_socket ps, const char *address, unsigned short port, bool conne
     socklen_t len = sizeof(rawtype);
     CLuaSocketRestrictions::RestrictType type;
     int res = getsockopt(*ps, SOL_SOCKET, SO_TYPE, &rawtype, &len);
-    if (res!=0) {
-         LOG_L(L_ERROR, "Socket already closed");
-         return false;
+    #ifdef WIN32
+    if (res == SOCKET_ERROR) {
+	LOG_L(L_ERROR, "Socket error (%d): %s", res, socket_strerror(WSAGetLastError()));
+        return false;
     }
-    if (rawtype==SOCK_STREAM)
+    #else
+    if (res != 0) {
+        LOG_L(L_ERROR, "Socket error (%d): %s", res, socket_strerror(errno));
+        return false;
+    }
+    #endif
+    if (rawtype == SOCK_STREAM)
 	if (connect)
             type = CLuaSocketRestrictions::TCP_CONNECT;
         else
