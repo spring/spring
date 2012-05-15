@@ -127,9 +127,6 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		assert(newState != AIRCRAFT_LANDING); // redundant SetState() call, we already landed and get command to switch into landing
 		owner->script->StartMoving();
 	}
-	if (newState == AIRCRAFT_LANDED) {
-		owner->script->StopMoving();
-	}
 
 	if (newState == AIRCRAFT_LANDED) {
 		owner->dontUseWeapons = true;
@@ -144,6 +141,9 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 	// Do animations
 	switch (aircraftState) {
 		case AIRCRAFT_LANDED:
+			//FIXME already inform commandAI in AIRCRAFT_LANDING!
+			//FIXME Problem is StopMove() also calls owner->script->StopMoving() what should only be called when landed. Also see CStrafeAirMoveType::SetState().
+			owner->commandAI->StopMove();
 			if (padStatus == PAD_STATUS_FLYING) {
 				// set us on ground if we are not on a pad
 				owner->physicalState = CSolidObject::OnGround;

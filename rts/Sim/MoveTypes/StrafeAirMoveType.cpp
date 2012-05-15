@@ -14,6 +14,7 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
 
@@ -1017,32 +1018,45 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		return;
 	}
 
-	owner->physicalState = (newState == AIRCRAFT_LANDED)?
-		CSolidObject::OnGround:
-		CSolidObject::Flying;
-	owner->useAirLos = (newState != AIRCRAFT_LANDED);
-	owner->crashing = (newState == AIRCRAFT_CRASHING);
-
-	// this checks our physicalState, and blocks only
-	// if not flying (otherwise unblocks and returns)
-	owner->Block();
-
-	if (newState == AIRCRAFT_FLYING) {
-		owner->Activate();
-		owner->script->StartMoving();
-	}
-
-	if (newState != AIRCRAFT_LANDING) {
-		// don't need a reserved position anymore
-		reservedLandingPos.x = -1.0f;
-	}
-
 	// make sure we only go into takeoff mode when landed
 	if (aircraftState == AIRCRAFT_LANDED) {
+		//assert(newState == AIRCRAFT_TAKEOFF);
 		aircraftState = AIRCRAFT_TAKEOFF;
 	} else {
 		aircraftState = newState;
 	}
+
+	owner->physicalState = CSolidObject::Flying;
+	owner->useAirLos = true;
+
+	switch (aircraftState) {
+		case AIRCRAFT_CRASHING:
+			owner->crashing = true;
+			break;
+		case AIRCRAFT_FLYING:
+			owner->Activate();
+			owner->script->StartMoving();
+			break;
+		case AIRCRAFT_LANDED:
+			owner->useAirLos = false;
+			owner->physicalState = CSolidObject::OnGround;
+			
+			//FIXME already inform commandAI in AIRCRAFT_LANDING!
+			//FIXME Problem is StopMove() also calls owner->script->StopMoving() what should only be called when landed. Also see CHoverAirMoveType::SetState().
+			owner->commandAI->StopMove();
+			break;
+		default:
+			break;
+	}
+
+	if (aircraftState != AIRCRAFT_LANDING) {
+		// don't need a reserved position anymore
+		reservedLandingPos.x = -1.0f;
+	}
+
+	// this checks our physicalState, and blocks only
+	// if not flying (otherwise unblocks and returns)
+	owner->Block();
 }
 
 
