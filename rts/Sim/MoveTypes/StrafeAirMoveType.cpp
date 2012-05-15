@@ -1010,6 +1010,9 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 	// this state is only used by CHoverAirMoveType, so we should never enter it
 	assert(newState != AIRCRAFT_HOVERING);
 
+	// once in crashing, we should never change back into another state
+	assert(aircraftState != AIRCRAFT_CRASHING || newState == AIRCRAFT_CRASHING);
+
 	if (newState == aircraftState) {
 		return;
 	}
