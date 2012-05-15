@@ -387,9 +387,11 @@ void CHoverAirMoveType::UpdateFlying()
 	if (closeToGoal) {
 		switch (flyState) {
 			case FLY_CRUISING: {
-				const bool trans = (dynamic_cast<CTransportUnit*>(owner) != NULL);
-				const bool noland = dontLand || !autoLand;
+				const bool hasMoreMoveCmds = owner->commandAI->HasMoreMoveCommands();
+				const bool noland = dontLand || !autoLand || hasMoreMoveCmds;
+
 				// NOTE: should CMD_LOAD_ONTO be here?
+				const bool trans = (dynamic_cast<CTransportUnit*>(owner) != NULL);
 				const bool hasLoadCmds = trans &&
 					!owner->commandAI->commandQue.empty() &&
 					(owner->commandAI->commandQue.front().GetID() == CMD_LOAD_ONTO ||
@@ -406,7 +408,7 @@ void CHoverAirMoveType::UpdateFlying()
 						}
 					} else {
 						wantedSpeed = ZeroVector;
-						if (!owner->commandAI->HasMoreMoveCommands())
+						if (!hasMoreMoveCmds)
 							wantToStop = true;
 						SetState(AIRCRAFT_HOVERING);
 					}
