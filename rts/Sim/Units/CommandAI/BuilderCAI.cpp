@@ -369,15 +369,15 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		CFeature* feature = NULL;
 		if (!uh->TestUnitBuildSquare(bi, feature, owner->allyteam, true)) {
 			if (!feature && owner->unitDef->canAssist) {
-				int yardxpos=int(bi.pos.x+4)/SQUARE_SIZE;
-				int yardypos=int(bi.pos.z+4)/SQUARE_SIZE;
-				CSolidObject* s;
-				CUnit* u;
-				if((s=groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos)) &&
-				   (u=dynamic_cast<CUnit*>(s)) &&
-				   u->beingBuilt && (u->buildProgress == 0.0f) &&
-				   (!u->soloBuilder || (u->soloBuilder == owner)))
-				{
+				const int yardxpos = int(bi.pos.x + 4) / SQUARE_SIZE;
+				const int yardypos = int(bi.pos.z + 4) / SQUARE_SIZE;
+				const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
+				const CUnit* u = dynamic_cast<const CUnit*>(s);
+				if (
+					   (u != NULL)
+					&& u->beingBuilt && (u->buildProgress == 0.0f)
+					&& (!u->soloBuilder || (u->soloBuilder == owner))
+				) {
 					Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER);
 					c2.params.push_back(u->id);
 					CMobileCAI::GiveCommandReal(c2);
@@ -414,10 +414,10 @@ void CBuilderCAI::SlowUpdate()
 
 	map<int, string>::iterator boi = buildOptions.find(c.GetID());
 	if (!owner->beingBuilt && boi != buildOptions.end()) {
-		const UnitDef* ud = unitDefHandler->GetUnitDefByName(boi->second);
-		const float radius = GetBuildOptionRadius(ud, c.GetID());
 
 		if (inCommand) {
+			assert(build.def);
+			const float radius = GetBuildOptionRadius(build.def, c.GetID());
 			if (building) {
 				MoveInBuildRange(build.pos, radius);
 
@@ -435,8 +435,6 @@ void CBuilderCAI::SlowUpdate()
 					CancelRestrictedUnit(boi->second);
 				}
 			} else {
-				build.Parse(c);
-
 				if (uh->unitsByDefs[owner->team][build.def->id].size() >= build.def->maxThisUnit) {
 					// unit restricted, don't bother moving all the way
 					// to the construction site first before telling us
@@ -461,12 +459,12 @@ void CBuilderCAI::SlowUpdate()
 							if (builder->StartBuild(build, f, waitstance) || (++buildRetries > 30)) {
 								building = true;
 							}
-							else if (f != NULL && (!ud->isFeature || ud->wreckName != f->def->name)) {
+							else if (f != NULL && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
 								inCommand = false;
 								ReclaimFeature(f);
 							}
 							else if (!waitstance) {
-								const float fpSqRadius = (ud->xsize * ud->xsize + ud->zsize * ud->zsize);
+								const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
 								const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
 
 								// tell everything within the radius of the soon-to-be buildee
@@ -509,6 +507,7 @@ void CBuilderCAI::SlowUpdate()
 				}
 			} else {
 				inCommand = true;
+				build.Parse(c);
 				SlowUpdate();
 			}
 		}
