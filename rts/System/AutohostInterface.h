@@ -79,7 +79,7 @@ private:
 
 	boost::asio::ip::udp::socket autohost;
 	bool initialized;
-	boost::uint8_t *gameID;
+	boost::uint8_t gameID[16];
 	std::string demoName;
 };
 

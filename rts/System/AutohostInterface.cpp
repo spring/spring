@@ -202,40 +202,36 @@ void AutohostInterface::SendStartPlaying()
 
 void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
 {
-	/*
-	 * 0 [1] = SERVER_GAMEOVER
-	 * 1 [1] = msgsize == 3+winner.size+16+1+demoName.size()
-	 * 2 [1] = playerNum
-	 * 3 [winner.size] = winningAllyTeams
-	 * 3+winner.size [16] = gameID
-	 * 3+winner.size+16 [1] = demoName.size()
-	 * 3+winner.size+16+1 [demoName.size] = demoName
-	 */
+	const unsigned char msgsize =
+			1                                            // SERVER_GAMEOVER
+			+ 1                                          // msgsize
+			+ 1                                          // playerNum
+			+ winningAllyTeams.size() * sizeof(uchar)    // winningAllyTeams
+			+ 16 * sizeof(boost::uint8_t)                // gameID
+			+ 1                                          // demoName.size()
+			+ demoName.size();                           // demoName
 
-	const unsigned char msgsize = 1 + 1 + 1 + (winningAllyTeams.size() * sizeof(uchar)) + 16 * sizeof(boost::uint8_t) + 1 + demoName.size();
 	std::vector<boost::uint8_t> buffer(msgsize);
-	buffer[0] = SERVER_GAMEOVER;
-	buffer[1] = msgsize;
-	buffer[2] = playerNum;
+	unsigned int pos = 0;
+
+	buffer[pos++] = SERVER_GAMEOVER;
+	buffer[pos++] = msgsize;
+	buffer[pos++] = playerNum;
 
 	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
-		buffer[3 + i] = winningAllyTeams[i];
+		buffer[pos++] = winningAllyTeams[i];
 	}
 
 	for (unsigned int i = 0; i < 16; i++) {
-		buffer[1 + 1 + 1 + winningAllyTeams.size() * sizeof(uchar) +i] = gameID[i];
+		buffer[pos++] = gameID[i];
 	}
 
-	buffer[1 + 1 + 1 + winningAllyTeams.size() * sizeof(uchar) + 16] = demoName.size();
+	buffer[pos++] = demoName.size();
 	if (demoName.size() > 0) {
-			strncpy((char*)(1 + 1 + 1 + (winningAllyTeams.size() * sizeof(uchar)) + 16 * sizeof(boost::uint8_t) +1), demoName.c_str(), demoName.size());
+			strncpy((char*)(&buffer[pos]), demoName.c_str(), demoName.size());
 	}
 
-	LOG("*** SendGameOver() buffer (size=%i):", int(buffer.size()));
-	for (unsigned int i = 0; i < buffer.size(); i++) {
-		LOG("***    buffer[%i]=%c", i, buffer[i]);
-	}
-
+	assert(int(pos+demoName.size()) == int(msgsize));
 	Send(boost::asio::buffer(buffer));
 }
 
