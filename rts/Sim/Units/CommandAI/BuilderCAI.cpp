@@ -533,43 +533,44 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			// case where limit reached while builder en-route)
 			CancelRestrictedUnit(boi->second);
 			StopMove();
+			return;
+		}
+
+		build.pos = helper->Pos2BuildPos(build, true);
+
+		if (MoveInBuildRange(build.pos, radius, true)) {
+			if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
+				StopMove(); // cancel KeepPointingTo
+				FinishCommand();
+			}
+			else if (!teamHandler->Team(owner->team)->AtUnitLimit()) {
+				// unit-limit not yet reached
+				CFeature* f = NULL;
+
+				bool waitstance = false;
+				if (builder->StartBuild(build, f, waitstance) || (++buildRetries > 30)) {
+					building = true;
+				}
+				else if (f != NULL && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
+					inCommand = false;
+					ReclaimFeature(f);
+				}
+				else if (!waitstance) {
+					const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
+					const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+
+					// tell everything within the radius of the soon-to-be buildee
+					// to get out of the way; using the model radius is not correct
+					// because this can be shorter than half the footprint diagonal
+					helper->BuggerOff(build.pos, std::max(radius, fpRadius), false, true, owner->team, NULL);
+					NonMoving();
+				}
+			}
 		} else {
-			build.pos = helper->Pos2BuildPos(build, true);
-
-			if (MoveInBuildRange(build.pos, radius, true)) {
-				if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
-					StopMove(); // cancel KeepPointingTo
+			if (owner->moveType->progressState == AMoveType::Failed) {
+				if (++buildRetries > 5) {
+					StopMove();
 					FinishCommand();
-				}
-				else if (!teamHandler->Team(owner->team)->AtUnitLimit()) {
-					// unit-limit not yet reached
-					CFeature* f = NULL;
-
-					bool waitstance = false;
-					if (builder->StartBuild(build, f, waitstance) || (++buildRetries > 30)) {
-						building = true;
-					}
-					else if (f != NULL && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
-						inCommand = false;
-						ReclaimFeature(f);
-					}
-					else if (!waitstance) {
-						const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
-						const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
-
-						// tell everything within the radius of the soon-to-be buildee
-						// to get out of the way; using the model radius is not correct
-						// because this can be shorter than half the footprint diagonal
-						helper->BuggerOff(build.pos, std::max(radius, fpRadius), false, true, owner->team, NULL);
-						NonMoving();
-					}
-				}
-			} else {
-				if (owner->moveType->progressState == AMoveType::Failed) {
-					if (++buildRetries > 5) {
-						StopMove();
-						FinishCommand();
-					}
 				}
 			}
 		}
