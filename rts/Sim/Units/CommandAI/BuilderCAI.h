@@ -57,6 +57,7 @@ public:
 	 */
 	bool FindCaptureTargetAndCapture(const float3& pos, float radius, unsigned char options, bool healthyOnly);
 
+	void ExecuteBuildCmd(Command& c);
 	void ExecutePatrol(Command& c);
 	void ExecuteFight(Command& c);
 	void ExecuteGuard(Command& c);
