@@ -401,7 +401,7 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
-	if (owner->stunned) {
+	if (owner->beingBuilt || owner->stunned) {
 		return;
 	}
 
@@ -473,10 +473,6 @@ void CBuilderCAI::ExecuteStop(Command& c)
 void CBuilderCAI::ExecuteBuildCmd(Command& c)
 {
 	CBuilder* builder = (CBuilder*) owner;
-
-	if (owner->beingBuilt) {
-		return;
-	}
 
 	map<int, string>::iterator boi = buildOptions.find(c.GetID());
 	if (boi == buildOptions.end())
