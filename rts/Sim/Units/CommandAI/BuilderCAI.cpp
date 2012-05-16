@@ -538,6 +538,32 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 		build.pos = helper->Pos2BuildPos(build, true);
 
+		// we are on the way to the buildpos, meanwhile it can happen
+		// that another builder already finished our buildcmd or blocked
+		// the buildpos with another building (skip our buildcmd then)
+		//FIXME might be time intensive? call it in intervals?
+		CFeature* feature = NULL;
+		if (!uh->TestUnitBuildSquare(build, feature, owner->allyteam, true)) {
+			if (!feature) {
+				const int yardxpos = int(build.pos.x + 4) / SQUARE_SIZE;
+				const int yardypos = int(build.pos.z + 4) / SQUARE_SIZE;
+				const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
+				const CUnit* u = dynamic_cast<const CUnit*>(s);
+				if (u != NULL) {
+					const bool canAssist =
+						   u->beingBuilt
+						&& owner->unitDef->canAssist
+						&& (!u->soloBuilder || (u->soloBuilder == owner));
+
+					if ((u->unitDef != build.def) || !canAssist) {
+						StopMove();
+						FinishCommand();
+						return;
+					}
+				}
+			}
+		}
+
 		if (MoveInBuildRange(build.pos, radius, true)) {
 			if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
 				StopMove(); // cancel KeepPointingTo
