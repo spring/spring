@@ -404,13 +404,74 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
-	CBuilder* builder = (CBuilder*) owner;
 	Command& c = commandQue.front();
 
 	if (OutOfImmobileRange(c)) {
 		FinishCommand();
 		return;
 	}
+
+	switch (c.GetID()) {
+		case CMD_STOP:      { ExecuteStop(c);      return; }
+		case CMD_REPAIR:    { ExecuteRepair(c);    return; }
+		case CMD_CAPTURE:   { ExecuteCapture(c);   return; }
+		case CMD_GUARD:     { ExecuteGuard(c);     return; }
+		case CMD_RECLAIM:   { ExecuteReclaim(c);   return; }
+		case CMD_RESURRECT: { ExecuteResurrect(c); return; }
+		case CMD_PATROL:    { ExecutePatrol(c);    return; }
+		case CMD_FIGHT:     { ExecuteFight(c);     return; }
+		case CMD_RESTORE:   { ExecuteRestore(c);   return; }
+		default: {
+			if (c.GetID() < 0) {
+				ExecuteBuildCmd(c);
+			} else {
+				CMobileCAI::SlowUpdate();
+			}
+			return;
+		}
+	}
+}
+
+
+void CBuilderCAI::ReclaimFeature(CFeature* f)
+{
+	if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
+		// FIXME user shouldn't be able to queue buildings on top of features
+		// in the first place (in this case).
+		StopMove();
+		FinishCommand();
+	} else {
+		Command c2(CMD_RECLAIM);
+		c2.params.push_back(f->id + uh->MaxUnits());
+		commandQue.push_front(c2);
+		// this assumes that the reclaim command can never return directly
+		// without having reclaimed the target
+		SlowUpdate();
+	}
+}
+
+
+void CBuilderCAI::FinishCommand()
+{
+	if (commandQue.front().timeOut == INT_MAX) {
+		buildRetries = 0;
+	}
+	CMobileCAI::FinishCommand();
+}
+
+
+void CBuilderCAI::ExecuteStop(Command& c)
+{
+	CBuilder* builder = (CBuilder*) owner;
+	building = false;
+	builder->StopBuild();
+	CMobileCAI::ExecuteStop(c);
+}
+
+
+void CBuilderCAI::ExecuteBuildCmd(Command& c)
+{
+	CBuilder* builder = (CBuilder*) owner;
 
 	map<int, string>::iterator boi = buildOptions.find(c.GetID());
 	if (!owner->beingBuilt && boi != buildOptions.end()) {
@@ -511,60 +572,7 @@ void CBuilderCAI::SlowUpdate()
 				SlowUpdate();
 			}
 		}
-		return;
 	}
-
-	switch (c.GetID()) {
-		case CMD_STOP:      { ExecuteStop(c);      return; }
-		case CMD_REPAIR:    { ExecuteRepair(c);    return; }
-		case CMD_CAPTURE:   { ExecuteCapture(c);   return; }
-		case CMD_GUARD:     { ExecuteGuard(c);     return; }
-		case CMD_RECLAIM:   { ExecuteReclaim(c);   return; }
-		case CMD_RESURRECT: { ExecuteResurrect(c); return; }
-		case CMD_PATROL:    { ExecutePatrol(c);    return; }
-		case CMD_FIGHT:     { ExecuteFight(c);     return; }
-		case CMD_RESTORE:   { ExecuteRestore(c);   return; }
-		default: {
-			CMobileCAI::SlowUpdate();
-			return;
-		}
-	}
-}
-
-
-void CBuilderCAI::ReclaimFeature(CFeature* f)
-{
-	if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
-		// FIXME user shouldn't be able to queue buildings on top of features
-		// in the first place (in this case).
-		StopMove();
-		FinishCommand();
-	} else {
-		Command c2(CMD_RECLAIM);
-		c2.params.push_back(f->id + uh->MaxUnits());
-		commandQue.push_front(c2);
-		// this assumes that the reclaim command can never return directly
-		// without having reclaimed the target
-		SlowUpdate();
-	}
-}
-
-
-void CBuilderCAI::FinishCommand()
-{
-	if (commandQue.front().timeOut == INT_MAX) {
-		buildRetries = 0;
-	}
-	CMobileCAI::FinishCommand();
-}
-
-
-void CBuilderCAI::ExecuteStop(Command& c)
-{
-	CBuilder* builder = (CBuilder*) owner;
-	building = false;
-	builder->StopBuild();
-	CMobileCAI::ExecuteStop(c);
 }
 
 
