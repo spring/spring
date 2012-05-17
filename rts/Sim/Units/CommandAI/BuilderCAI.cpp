@@ -871,8 +871,10 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 			CFeature* feature = featureHandler->GetFeature(uid - uh->MaxUnits());
 
 			if (feature != NULL) {
-				if (((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingResurrected(feature->id, owner)) ||
-					!ReclaimObject(feature)) {
+				bool featureBeingResurrected = IsFeatureBeingResurrected(feature->id, owner);
+				featureBeingResurrected &= (c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY);
+
+				if (featureBeingResurrected || !ReclaimObject(feature)) {
 					StopMove();
 					FinishCommand();
 					RemoveUnitFromFeatureReclaimers(owner);
@@ -884,16 +886,17 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 				FinishCommand();
 				RemoveUnitFromFeatureReclaimers(owner);
 			}
+
 			RemoveUnitFromReclaimers(owner);
 		} else { // reclaim unit
-			CUnit* unit = uh->GetUnitUnsafe(uid);
+			CUnit* unit = uh->GetUnit(uid);
 
 			if (unit != NULL && c.params.size() == 5) {
 				const float3 pos(c.params[1], c.params[2], c.params[3]);
 				const float radius = c.params[4] + 100.0f; // do not walk too far outside reclaim area
 
 				const bool outOfReclaimRange =
-					((pos - unit->pos).SqLength2D() > radius * radius) ||
+					pos.SqDistance2D(unit->pos) > radius * radius) ||
 					(builder->curReclaim == unit && unit->isMoving && !IsInBuildRange(unit));
 				const bool busyAlliedBuilder =
 					unit->unitDef->builder &&
