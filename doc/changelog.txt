@@ -3,12 +3,53 @@ Spring changelog
 
 
 -- 89.0 ---------------------------------------------------------
+Major Changes:
+ - LuaSocket
+ - MessageBox for unsupported GPUs (+drivers)
+ - fixed ATi PointSize bug
+
 Changes:
- ! some config values are now write protected (Spring.SetConfig*)
- - added luasocket support for widgets, see http://springrts.com/wiki/LuaSocket
  - added Shard to the windows installer
  - added pr-downloader as submodule (only compiled if libcurldev is available)
+ - limit infolog.txt buffer to 8kB
+ - open a MessageBox on systems with unsupported GPUs (+drivers) on engine start (suppressible with a config-tag)
+
+Simulation:
+ - fixed bug: unfinished units with 100% hp can't be finished
+ - YardMap changes:
+  - more verbose yardmap parsing
+  - ignore any whitespaces in yardmap strings (esp. newlines)
+  - new "i" yardmap code (inverse of "c")
+ ! remove TA-ism in buildrange code:
+  ! make buildrange not immobile dependent
+  ! changed terraform range check a little
+  ! make terrain restore range check consistent with new terraform one
+  ! don't add target's radius to the builder's builddistance, only do so if the target is bigger than the builddistance (mostly only true for terraform)
+    -> from now on the to be built unit's centerpos has to be in buildrange not its border!
+ - improved behaviour of builder masses
+ - make StartBox clamping of StartPositions synced
+
+Lua:
+ ! some config values are now write protected (Spring.SetConfig*)
+ - added luasocket support for widgets, see http://springrts.com/wiki/LuaSocket
+ - fixed params of Spring.MarkerAddPoint & Spring.MarkerAddLine
+ - call AllowWeaponTarget at the end of the queue, so lua only gets those units which are _not_ filtered by the engine
+ - LuaSyncedRead: better hide enemy radarblobs unit-info
+
+Rendering:
+ - fixed ATi PointSize bug
  - update assimp to svn rev 1231
+ - fixed assimp lua metafiles
+ - warn about null normals in models
+
+UI:
+ - display average draw & sim frame time in debugview
+ - draw buildRange for mobile selected units too & always render them on shift hover (also for shield range)
+
+Linux:
+ - on multicore systems set scheduler to SCHED_BATCH (semi-solves the core hoping issue)
+ - call SDL_WarpMouse only when needed (fixes massive FPS-drop in middle-click-scrolling)
+ 
 
 -- 88.0 ---------------------------------------------------------
 Changes:
