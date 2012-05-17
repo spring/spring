@@ -896,7 +896,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 				const float radius = c.params[4] + 100.0f; // do not walk too far outside reclaim area
 
 				const bool outOfReclaimRange =
-					pos.SqDistance2D(unit->pos) > radius * radius) ||
+					(pos.SqDistance2D(unit->pos) > radius * radius) ||
 					(builder->curReclaim == unit && unit->isMoving && !IsInBuildRange(unit));
 				const bool busyAlliedBuilder =
 					unit->unitDef->builder &&
