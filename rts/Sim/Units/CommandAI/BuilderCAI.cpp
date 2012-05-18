@@ -867,6 +867,40 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 		const unsigned int uid = signedId;
 
+		//FIXME add a per-unit solution to better balance the load?
+		const bool checkForBetterTarget = (gs->frameNum % (5 * UNIT_SLOWUPDATE_RATE)) < UNIT_SLOWUPDATE_RATE;
+		if (checkForBetterTarget && (c.options & INTERNAL_ORDER) && (c.params.size() >= 5)) {
+			// regular check if there is a closer reclaim target
+			CSolidObject* obj;
+			if (uid >= uh->MaxUnits()) {
+				obj = featureHandler->GetFeature(uid - uh->MaxUnits());
+			} else {
+				obj = uh->GetUnit(uid);
+			}
+			if (obj) {
+				const float3 pos(c.params[1], c.params[2], c.params[3]);
+				const float radius = c.params[4];
+				const float curdist = pos.SqDistance2D(obj->pos);
+
+				const bool recUnits = !!(c.options & META_KEY);
+				const bool recEnemyOnly = (c.options & META_KEY) && (c.options & CONTROL_KEY);
+				const bool recSpecial = !!(c.options & CONTROL_KEY);
+
+				ReclaimOption recopt = REC_NORESCHECK;
+				if (recUnits)     recopt |= REC_UNITS;
+				if (recEnemyOnly) recopt |= REC_ENEMYONLY;
+				if (recSpecial)   recopt |= REC_SPECIAL;
+				
+				const int rid = FindReclaimTarget(pos, radius, c.options, recopt, curdist);
+				if ((rid > 0) && (rid != uid)) {
+					FinishCommand();
+					RemoveUnitFromReclaimers(owner);
+					RemoveUnitFromFeatureReclaimers(owner);
+					return;
+				}
+			}
+		}
+
 		if (uid >= uh->MaxUnits()) { // reclaim feature
 			CFeature* feature = featureHandler->GetFeature(uid - uh->MaxUnits());
 
