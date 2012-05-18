@@ -541,9 +541,9 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		// we are on the way to the buildpos, meanwhile it can happen
 		// that another builder already finished our buildcmd or blocked
 		// the buildpos with another building (skip our buildcmd then)
-		//FIXME might be time intensive? call it in intervals?
+		const bool checkBuildPos = (gs->frameNum % (5 * UNIT_SLOWUPDATE_RATE)) < UNIT_SLOWUPDATE_RATE; //FIXME add a per-unit solution to better balance the load?
 		CFeature* feature = NULL;
-		if (!uh->TestUnitBuildSquare(build, feature, owner->allyteam, true)) {
+		if (checkBuildPos && !uh->TestUnitBuildSquare(build, feature, owner->allyteam, true)) {
 			if (!feature) {
 				const int yardxpos = int(build.pos.x + 4) / SQUARE_SIZE;
 				const int yardypos = int(build.pos.z + 4) / SQUARE_SIZE;
