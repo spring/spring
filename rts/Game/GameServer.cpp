@@ -1641,7 +1641,9 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				}
 
 				if (hostif) {
+#ifdef DEDICATED
 					hostif->SetDemoName(demoRecorder->GetName());
+#endif
 					hostif->SetGameID(gameID.charArray);
 					hostif->SendGameOver(playerNum, winningAllyTeams);
 				}
