@@ -195,18 +195,9 @@ void AutohostInterface::SendQuit()
 
 void AutohostInterface::SendStartPlaying()
 {
-	uchar msg = SERVER_STARTPLAYING;
-
-	Send(boost::asio::buffer(&msg, sizeof(uchar)));
-}
-
-void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
-{
 	const unsigned char msgsize =
-			1                                            // SERVER_GAMEOVER
+			1                                            // SERVER_STARTPLAYING
 			+ 1                                          // msgsize
-			+ 1                                          // playerNum
-			+ winningAllyTeams.size() * sizeof(uchar)    // winningAllyTeams
 			+ 16 * sizeof(boost::uint8_t)                // gameID
 			+ 1                                          // demoName.size()
 			+ demoName.size();                           // demoName
@@ -214,13 +205,8 @@ void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& 
 	std::vector<boost::uint8_t> buffer(msgsize);
 	unsigned int pos = 0;
 
-	buffer[pos++] = SERVER_GAMEOVER;
+	buffer[pos++] = SERVER_STARTPLAYING;
 	buffer[pos++] = msgsize;
-	buffer[pos++] = playerNum;
-
-	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
-		buffer[pos++] = winningAllyTeams[i];
-	}
 
 	for (unsigned int i = 0; i < 16; i++) {
 		buffer[pos++] = gameID[i];
@@ -232,6 +218,20 @@ void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& 
 	}
 
 	assert(int(pos+demoName.size()) == int(msgsize));
+	Send(boost::asio::buffer(buffer));
+}
+
+void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
+{
+	const unsigned char msgsize = 1 + 1 + 1 + (winningAllyTeams.size() * sizeof(uchar));
+	std::vector<boost::uint8_t> buffer(msgsize);
+	buffer[0] = SERVER_GAMEOVER;
+	buffer[1] = msgsize;
+	buffer[2] = playerNum;
+
+	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
+		buffer[3 + i] = winningAllyTeams[i];
+	}
 	Send(boost::asio::buffer(buffer));
 }
 
