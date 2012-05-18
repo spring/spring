@@ -1640,13 +1640,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					pckt >> winningAllyTeams;
 				}
 
-				if (hostif) {
-#ifdef DEDICATED
-					hostif->SetDemoName(demoRecorder->GetName());
-#endif
-					hostif->SetGameID(gameID.charArray);
+				if (hostif)
 					hostif->SendGameOver(playerNum, winningAllyTeams);
-				}
 				Broadcast(CBaseNetProtocol::Get().SendGameOver(playerNum, winningAllyTeams));
 
 				gameEndTime = spring_gettime();
@@ -1833,7 +1828,7 @@ void CGameServer::GenerateAndSendGameID()
 #ifdef DEDICATED
 	demoRecorder->SetGameID(gameID.charArray);
 #endif
-
+	hostif->SetGameID(gameID.charArray);
 	generatedGameID = true;
 }
 
@@ -1895,6 +1890,10 @@ void CGameServer::StartGame()
 	}
 
 	GenerateAndSendGameID();
+
+#ifdef DEDICATED
+	hostif->SetDemoName(demoRecorder->GetName());
+#endif
 
 	std::vector<bool> teamStartPosSent(teams.size(), false);
 
