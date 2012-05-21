@@ -29,6 +29,7 @@ public:
 
 	void UpdateHeightMapUnsynced(const HeightMapUpdate& hmu);
 
+	unsigned int GetMiniMapTexture() const { return minimapTexture; }
 	unsigned int GetShadingTexture() const { return 0; }
 	void DrawMinimap() const; // draw the minimap in a quad (with extends: (0,0)-(1,1))
 

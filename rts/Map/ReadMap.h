@@ -89,6 +89,7 @@ public:
 	virtual void NewGroundDrawer() = 0;
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
 
+	virtual unsigned int GetMiniMapTexture() const { return 0; }
 	virtual unsigned int GetGrassShadingTexture() const { return 0; }
 	/**
 	 * a texture with RGB for shading and A for height

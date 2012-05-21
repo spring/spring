@@ -3520,6 +3520,11 @@ int LuaOpenGL::Texture(lua_State* L)
 				lua_pushboolean(L, true);
 			}
 		}
+		else if (texture == "$minimap") {
+			glBindTexture(GL_TEXTURE_2D, readmap->GetMiniMapTexture());
+			glEnable(GL_TEXTURE_2D);
+			lua_pushboolean(L, true);
+		}
 		else if (texture == "$shading") {
 			glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
 			glEnable(GL_TEXTURE_2D);
