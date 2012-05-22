@@ -11,6 +11,8 @@ struct lua_State;
 #undef SendMessage
 
 class LuaUnsyncedCtrl {
+	friend class CLuaLoadScreen;
+
 	public:
 		static bool PushEntries(lua_State* L);
 

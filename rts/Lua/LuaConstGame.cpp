@@ -40,6 +40,9 @@ static void LuaPushNamedColor(lua_State* L,
 
 bool LuaConstGame::PushEntries(lua_State* L)
 {
+	assert(mapInfo);
+	assert(gameSetup);
+	
 	// FIXME  --  this is getting silly, convert to userdata?
 
 	const float gravity = -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED);
@@ -48,7 +51,9 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	LuaPushNamedString(L, "version",       SpringVersion::GetFull());
 
-	LuaPushNamedNumber(L, "maxUnits",      uh->MaxUnits());
+	if (uh) {
+		LuaPushNamedNumber(L, "maxUnits",      uh->MaxUnits());
+	}
 	LuaPushNamedNumber(L, "maxTeams",      MAX_TEAMS);
 	LuaPushNamedNumber(L, "maxPlayers",    MAX_PLAYERS);
 	LuaPushNamedNumber(L, "gameSpeed",     GAME_SPEED);
@@ -58,17 +63,22 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
 
-	LuaPushNamedBool(L,   "mapDamage",           !mapDamage->disabled);
+	if (mapDamage) {
+		LuaPushNamedBool(L,   "mapDamage",           !mapDamage->disabled);
+	}
 	LuaPushNamedNumber(L, "gravity",             gravity);
 	LuaPushNamedNumber(L, "windMin",             wind.GetMinWind());
 	LuaPushNamedNumber(L, "windMax",             wind.GetMaxWind());
 	LuaPushNamedString(L, "mapName",             mapInfo->map.name);
 	LuaPushNamedString(L, "mapHumanName",        mapInfo->map.description); //! deprecated
 	LuaPushNamedString(L, "mapDescription",      mapInfo->map.description);
-	LuaPushNamedNumber(L, "mapX",                readmap->width  / 64);
-	LuaPushNamedNumber(L, "mapY",                readmap->height / 64);
-	LuaPushNamedNumber(L, "mapSizeX",            readmap->width  * SQUARE_SIZE);
-	LuaPushNamedNumber(L, "mapSizeZ",            readmap->height * SQUARE_SIZE);
+	if (readmap) {
+		//FIXME make this available in LoadScreen already!
+		LuaPushNamedNumber(L, "mapX",                readmap->width  / 64);
+		LuaPushNamedNumber(L, "mapY",                readmap->height / 64);
+		LuaPushNamedNumber(L, "mapSizeX",            readmap->width  * SQUARE_SIZE);
+		LuaPushNamedNumber(L, "mapSizeZ",            readmap->height * SQUARE_SIZE);
+	}
 	LuaPushNamedNumber(L, "extractorRadius",     mapInfo->map.extractorRadius);
 	LuaPushNamedNumber(L, "tidal",               mapInfo->map.tidalStrength);
 
@@ -113,13 +123,13 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	}
 	lua_rawset(L, -3);
 
+	LuaPushNamedBool(L,   "allowTeamColors", true);
+
 	LuaPushNamedString(L, "modName",         modInfo.humanName);
 	LuaPushNamedString(L, "modShortName",    modInfo.shortName);
 	LuaPushNamedString(L, "modVersion",      modInfo.version);
 	LuaPushNamedString(L, "modMutator",      modInfo.mutator);
 	LuaPushNamedString(L, "modDesc",         modInfo.description);
-
-	LuaPushNamedBool(L,   "allowTeamColors", true);
 
 	LuaPushNamedBool(L,   "constructionDecay",      modInfo.constructionDecay);
 	LuaPushNamedNumber(L, "constructionDecayTime",  modInfo.constructionDecayTime);
@@ -165,16 +175,18 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	lua_pushliteral(L, "armorTypes");
 	lua_newtable(L);
-	const std::vector<std::string>& typeList = damageArrayHandler->GetTypeList();
-	const int typeCount = (int)typeList.size();
-	for (int i = 0; i < typeCount; i++) {
-		// bidirectional map
-		lua_pushsstring(L, typeList[i]);
-		lua_pushnumber(L, i);
-		lua_rawset(L, -3);
-		lua_pushnumber(L, i);
-		lua_pushsstring(L, typeList[i]);
-		lua_rawset(L, -3);
+	if (damageArrayHandler) {
+		const std::vector<std::string>& typeList = damageArrayHandler->GetTypeList();
+		const int typeCount = (int)typeList.size();
+		for (int i = 0; i < typeCount; i++) {
+			// bidirectional map
+			lua_pushsstring(L, typeList[i]);
+			lua_pushnumber(L, i);
+			lua_rawset(L, -3);
+			lua_pushnumber(L, i);
+			lua_pushsstring(L, typeList[i]);
+			lua_rawset(L, -3);
+		}
 	}
 	lua_rawset(L, -3);
 
