@@ -436,7 +436,7 @@ const GLbitfield AttribBits =
 	GL_VIEWPORT_BIT;
 
 
-inline void LuaOpenGL::EnableCommon(DrawMode mode)
+void LuaOpenGL::EnableCommon(DrawMode mode)
 {
 	assert(drawMode == DRAW_NONE);
 	drawMode = mode;
@@ -451,7 +451,7 @@ inline void LuaOpenGL::EnableCommon(DrawMode mode)
 }
 
 
-inline void LuaOpenGL::DisableCommon(DrawMode mode)
+void LuaOpenGL::DisableCommon(DrawMode mode)
 {
 	assert(drawMode == mode);
 	// FIXME  --  not needed by shadow or minimap
