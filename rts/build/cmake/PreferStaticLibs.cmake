@@ -12,6 +12,8 @@ IF    (PREFER_STATIC_LIBS)
 		Message(FATAL_ERROR "You cannot toggle `static linked` once you run cmake! You have to use a cmake `toolchain` file to enable this flag!")
 	ENDIF (WARN_STATIC_LINK_SWITCH)
 
+	Message(STATUS "Prefer static-linking!")
+
 	SET(Boost_USE_STATIC_LIBS TRUE)
 	MARK_AS_ADVANCED(Boost_USE_STATIC_LIBS)
 
