@@ -70,6 +70,12 @@ LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY}
 
 LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
 
+IF    (PREFER_STATIC_LIBS)
+	# dependency of minizip
+	FIND_PACKAGE_STATIC(ZLIB REQUIRED)
+	LIST(APPEND engineCommonLibraries ${ZLIB_LIBRARY})
+ENDIF (PREFER_STATIC_LIBS)
+
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineCommonLibraries dl)

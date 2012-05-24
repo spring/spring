@@ -7,12 +7,8 @@ If     (MINIZIP_FOUND)
 	# Use the system supplied MiniZip library
 	Message(STATUS "Using minizip library: ${MINIZIP_LIBRARY}")
 
-	IF    (PREFER_STATIC_LIBS)
-		FIND_PACKAGE_STATIC(ZLIB REQUIRED)
-	ENDIF (PREFER_STATIC_LIBS)
-
 	SetGlobal(SPRING_MINIZIP_INCLUDE_DIR "${MINIZIP_INCLUDE_DIR}")
-	SetGlobal(SPRING_MINIZIP_LIBRARY ${ZLIB_LIBRARY} ${MINIZIP_LIBRARY})
+	SetGlobal(SPRING_MINIZIP_LIBRARY "${MINIZIP_LIBRARY}")
 Else   (MINIZIP_FOUND)
 	# Build our own minizip library
 	SET(miniZipSources
