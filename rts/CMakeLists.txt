@@ -97,15 +97,4 @@ SET(engineSources
 file(GLOB_RECURSE engineHeaders "*.h" "*.hpp")
 
 
-### Add icon and manifest to exe using windres
-IF    (WIN32)
-	SET(ENGINE_ICON_DIR "${ENGINE_SRC_ROOT_DIR}")
-	SET(ENGINE_ICON_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-	SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-	CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
-ELSE  (WIN32)
-	SET(ENGINE_ICON "")
-ENDIF (WIN32)
-
-
 Add_Subdirectory(builds)
