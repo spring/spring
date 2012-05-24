@@ -30,6 +30,7 @@ Else  ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 	Set(DEBUG_BUILD FALSE)
 EndIf ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 
+
 # Tell windows to pass arguments around in @response files
 # (32k arg limit workaround)
 if    (WIN32)
@@ -45,6 +46,7 @@ if    (APPLE)
 else  (APPLE)
 	set(MACOSX_BUNDLE FALSE)
 endif (APPLE)
+
 
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
 if    (UNIX AND NOT MINGW)
@@ -123,19 +125,6 @@ if    (WIN32)
 	endif (NOT WINDOWS_CONSOLE)
 endif (WIN32)
 
-set(OPENMP TRUE CACHE BOOL "Enable local multithreading")
-if    (OPENMP)
-	include(FindOpenMP)
-	if(OPENMP_FOUND)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-		# Currently FindOpenMP fails and doesn't give _any_ linker flags
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp -lgomp")
-		set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fopenmp -lgomp")
-		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fopenmp -lgomp")
-	endif(OPENMP_FOUND)
-endif (OPENMP)
-
 set(BUILTIN_DATADIRS "")
 if    (NOT MINGW AND NOT MACOSX_BUNDLE)
 	set (SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
@@ -160,11 +149,8 @@ if    (NOT "${AI_DATA_DIR}" STREQUAL "${DATADIR}" AND NOT "${AI_DATA_DIR}" STREQ
 endif (NOT "${AI_DATA_DIR}" STREQUAL "${DATADIR}" AND NOT "${AI_DATA_DIR}" STREQUAL "${AI_LIBS_DIR}")
 add_definitions(-DSPRING_DATADIR="${BUILTIN_DATADIRS}")
 
-set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
-if    (CUSTOM_COMPILER_DEFINITIONS)
-	add_definitions(${CUSTOM_COMPILER_DEFINITIONS})
-endif (CUSTOM_COMPILER_DEFINITIONS)
 
+## external libs
 if    (MINGW)
 	set(SDL_INCLUDE_DIR "${MINGWLIBS}/include/SDL")
 endif (MINGW)
@@ -176,8 +162,10 @@ FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex program_options system signals
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 FIND_PACKAGE(DevIL REQUIRED)
+IF (MINGW)
+	FIND_PACKAGE(Win32Libs REQUIRED)
+ENDIF (MINGW)
 
-### mingwlibs
 if     (MINGW)
 	set(CMAKE_SHARED_LIBRARY_PREFIX "")
 	set(CMAKE_SHARED_MODULE_PREFIX "")
@@ -188,6 +176,7 @@ else   (UNIX)
 	FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation)
 	INCLUDE_DIRECTORIES("${COREFOUNDATION_LIBRARY}/Headers")
 endif  (MINGW)
+
 
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXFlags)
@@ -221,10 +210,29 @@ Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
 Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
 Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
 
+set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
+if    (CUSTOM_COMPILER_DEFINITIONS)
+	add_definitions(${CUSTOM_COMPILER_DEFINITIONS})
+endif (CUSTOM_COMPILER_DEFINITIONS)
+
+set(OPENMP TRUE CACHE BOOL "Enable local multithreading")
+if    (OPENMP)
+	include(FindOpenMP)
+	if(OPENMP_FOUND)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+		# Currently FindOpenMP fails and doesn't give _any_ linker flags
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp -lgomp")
+		set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fopenmp -lgomp")
+		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fopenmp -lgomp")
+	endif(OPENMP_FOUND)
+endif (OPENMP)
+
 set(SIGNAL_NANS ${DEBUG_BUILD} CACHE BOOL "Enable NaN-Signalling")
 if (SIGNAL_NANS)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
 endif(SIGNAL_NANS)
+
 
 # set the default build type
 if    (NOT CMAKE_BUILD_TYPE)
@@ -233,6 +241,8 @@ if    (NOT CMAKE_BUILD_TYPE)
 		FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
 
+
+# GCC Warnings
 set(COMMON_WARNINGS "")
 if    (NOT OPENMP)
 	# disable warnings about unknown pragmas because of:
@@ -274,9 +284,6 @@ if     (MINGW)
 	set (CMAKE_EXE_LINKER_FLAGS "-Wl,--enable-auto-import")
 endif  (MINGW)
 
-IF (MINGW)
-	FIND_PACKAGE(Win32Libs REQUIRED)
-ENDIF (MINGW)
 
 # Sub-parts of the build system may add dependencies to this target
 add_custom_target(generateSources)
