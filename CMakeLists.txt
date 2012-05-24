@@ -19,8 +19,10 @@ cmake_minimum_required(VERSION ${MIN_CMAKE_VERSION})
 SET(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
 
-# includes rts/build/cmake/Util.cmake
+
+# includes rts/build/cmake/Util.cmake & rts/build/cmake/PreferStaticLibs.cmake
 INCLUDE(Util)
+INCLUDE(PreferStaticLibs)
 
 CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
 
@@ -161,7 +163,6 @@ endif (WIN32)
 FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex program_options system signals REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
-FIND_PACKAGE(DevIL REQUIRED)
 IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 ENDIF (MINGW)
