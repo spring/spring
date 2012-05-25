@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 BINARY=${1:-build/default/spring}
 LIBRARY=${2}
