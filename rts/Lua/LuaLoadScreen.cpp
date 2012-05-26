@@ -145,6 +145,33 @@ CLuaLoadScreen::CLuaLoadScreen()
 		return;
 	}
 
+	RemoveSomeOpenGLFunctions(L);
+
+	lua_settop(L, 0);
+	if (!LoadCode(L, code, file)) {
+		KillLua();
+		return;
+	}
+
+	lua_settop(L, 0);
+
+	// register for call-ins
+	eventHandler.AddClient(this);
+}
+
+
+CLuaLoadScreen::~CLuaLoadScreen()
+{
+	if (L_Sim != NULL || L_Draw != NULL) {
+		Shutdown();
+		KillLua();
+	}
+	luaLoadScreen = NULL;
+}
+
+
+bool CLuaLoadScreen::RemoveSomeOpenGLFunctions(lua_State *L)
+{
 	// remove some spring opengl functions that don't work preloading
 	lua_getglobal(L, "gl"); {
 		#define PUSHNIL(x) lua_pushliteral(L, #x); lua_pushnil(L); lua_rawset(L, -3)
@@ -172,27 +199,7 @@ CLuaLoadScreen::CLuaLoadScreen()
 		PUSHNIL(GetShadowMapParams);
 	}
 	lua_pop(L, 1); // gl
-
-	lua_settop(L, 0);
-	if (!LoadCode(L, code, file)) {
-		KillLua();
-		return;
-	}
-
-	lua_settop(L, 0);
-
-	// register for call-ins
-	eventHandler.AddClient(this);
-}
-
-
-CLuaLoadScreen::~CLuaLoadScreen()
-{
-	if (L_Sim != NULL || L_Draw != NULL) {
-		Shutdown();
-		KillLua();
-	}
-	luaLoadScreen = NULL;
+	return true;
 }
 
 

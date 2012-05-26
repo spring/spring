@@ -33,6 +33,7 @@ class CLuaLoadScreen : public CLuaHandle
 		static bool LoadUnsyncedCtrlFunctions(lua_State *L);
 		static bool LoadUnsyncedReadFunctions(lua_State *L);
 		static bool LoadSyncedReadFunctions(lua_State *L);
+		static bool RemoveSomeOpenGLFunctions(lua_State *L);
 };
 
 
