@@ -52,6 +52,7 @@ private:
 
 	void GetNewPath();
 	void GetNextWayPoint();
+	bool CanGetNextWayPoint();
 
 	float BreakingDistance(float speed) const;
 	float3 Here();
@@ -61,7 +62,13 @@ private:
 
 	void Arrived();
 	void Fail();
+
 	void HandleObjectCollisions();
+	void HandleBuildingCollision(
+		CUnit* collider,
+		const MoveDef* colliderMD,
+		const CMoveMath* colliderMM,
+		bool repath);
 	void HandleUnitCollisions(
 		CUnit* collider,
 		const float colliderSpeed,
