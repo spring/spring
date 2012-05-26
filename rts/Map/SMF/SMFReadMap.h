@@ -68,6 +68,17 @@ public:
 	bool HaveSplatTexture() const { return haveSplatTexture; }
 
 private:
+	void ParseHeader();
+	void LoadHeightMap();
+	void LoadMinimap();
+	void InitializeWaterHeightColors();
+	void CreateSpecularTex();
+	void CreateSplatDetailTextures();
+	void CreateGrassTex();
+	void CreateDetailTex();
+	void CreateShadingTex();
+	void CreateNormalTex();
+
 	void UpdateVertexNormals(const HeightMapUpdate& update);
 	void UpdateFaceNormals(const HeightMapUpdate& update);
 	void UpdateNormalTexture(const HeightMapUpdate& update);
