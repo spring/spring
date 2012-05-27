@@ -49,11 +49,10 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	, groundDrawer(NULL)
 {
 	loadscreen->SetLoadMessage("Loading SMF");
+	eventHandler.AddClient(this);
 
 	haveSpecularTexture = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
-
-	eventHandler.AddClient(this);
 
 	ParseHeader();
 	LoadHeightMap();

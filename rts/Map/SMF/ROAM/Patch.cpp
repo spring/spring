@@ -389,11 +389,13 @@ float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const flo
 		const int& rightX, const int& rightY, const float& rightZ,
 		const int& apexX, const int& apexY, const float& apexZ, const int& node)
 {
-	//        /|\
-	//      /  |  \
-	//    /    |    \
-	//  /      |      \
-	//  ~~~~~~~*~~~~~~~  <-- Compute the X and Y coordinates of '*'
+	/*
+	 *       /|\
+	 *     /  |  \
+	 *   /    |    \
+	 * /      |      \
+	 * ~~~~~~~*~~~~~~~  <-- Compute the X and Y coordinates of '*'
+	 */
 
 	int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
 	int centerY = (leftY + rightY) >> 1; // Compute Y coord...
