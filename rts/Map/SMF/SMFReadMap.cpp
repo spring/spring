@@ -58,11 +58,6 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	LoadHeightMap();
 	CReadMap::Initialize();
 
-	for (unsigned int a = 0; a < mapname.size(); ++a) {
-		mapChecksum += mapname[a];
-		mapChecksum *= mapname[a];
-	}
-
 	LoadMinimap();
 
 	ConfigureAnisotropy();
