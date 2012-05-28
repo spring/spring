@@ -35,9 +35,10 @@
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
 #include "lib/gml/gmlmut.h"
+#include "Map/BaseGroundDrawer.h"
+#include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Map/HeightMapTexture.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
@@ -3532,6 +3533,11 @@ int LuaOpenGL::Texture(lua_State* L)
 		}
 		else if (texture == "$grass") {
 			glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
+			glEnable(GL_TEXTURE_2D);
+			lua_pushboolean(L, true);
+		}
+		else if (texture == "$extra") {
+			glBindTexture(GL_TEXTURE_2D, readmap->GetGroundDrawer()->infoTex);
 			glEnable(GL_TEXTURE_2D);
 			lua_pushboolean(L, true);
 		}
