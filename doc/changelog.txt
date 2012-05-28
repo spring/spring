@@ -14,8 +14,24 @@ Changes:
  - limit infolog.txt buffer to 8kB
  - open a MessageBox on systems with unsupported GPUs (+drivers) on engine start (suppressible with a config-tag)
 
+Bugfixes:
+ - dedicated server no longer consumes 100% CPU while waiting for gameID
+ - fix  some orders are discarded when issuing commands to landed planes
+ - fix  unfinished units with 100% hp can't be finished
+ - fix 'crash when getting LOS of a feature without 3d object and drawType!=-1' (3032)
+ - fix "changing unit speed does not work anymore" (2877/3016)
+   (scripts can now arbitrarily override the UnitDef values, which are only used for initialization)
+ - fix 'LightningCannon can fire into water' (3057)
+ - fix GameSetupDrawer player-state string (3064)
+ - fix 'Con/com gets weird move order after stop command is given' (3069)
+   (was intended to keep factories clear, any side-effects are up to players to deal with)
+ - fix stunned=true crashing=true airplanes falling into the void (3078)
+ - fix zombie coverage from sensor-units (if activated while in a transport, exploit)
+ - fix crash in unit_script.lua
+ - fix 'Units stuck in factory' QTPFS bug (3055)
+ - fix units moving (being pushed) through factory walls
+
 Simulation:
- - fixed bug: unfinished units with 100% hp can't be finished
  - YardMap changes:
   - more verbose yardmap parsing
   - ignore any whitespaces in yardmap strings (esp. newlines)
@@ -28,6 +44,22 @@ Simulation:
     -> from now on the to be built unit's centerpos has to be in buildrange not its border!
  - improved behaviour of builder masses
  - make StartBox clamping of StartPositions synced
+ - don't reclaim in-the-way features when the buildee is going to morph into a feature of the same type
+   (fixes the ancient bug where ordering a row of features with N > 1 builders causes each to be reclaimed and then immediately rebuilt)
+ - do not apply impulse to units being transported
+ - WeaponDef: support 'soundHitWet{Volume}' keys for in-water explosion sounds
+   (the 'soundHit' key is now deprecated in favor of 'soundHitDry')
+ - make falling wreckage (from aircraft) not lose all its forward speed
+ - make ground units consume waypoints less aggressively
+ - remove special treatment for collisions between mutually-pushResistant objects for 3031
+ - add 'allowUnitCollisionOverlap' (def=true) and 'useClassicGroundMoveType' (def=false) ModInfo keys
+   the former allows unit movement like www.youtube.com/watch?v=mRtePUdVk2o at the cost of more clumping (learn to use ctrl+lmb formation orders)
+   the latter is a ticket back to unit movement circa 2009: no reversing, no turninplace=false, no smooth collision handling, no nothing (figure it out)
+
+Pathing:
+ - QTPFS: less loadscreen spam, make F2 functional, enable corner-connected node topology, use staggered layer-updates, speedups and tweaks
+ - QTPFS: increase MAX_TEAM_SEARCHES, decrease LAYERS_PER_UPDATE (more units can request paths per frame, units get paths back more quickly)
+
 
 Lua:
  ! some config values are now write protected (Spring.SetConfig*)
@@ -35,15 +67,24 @@ Lua:
  - fixed params of Spring.MarkerAddPoint & Spring.MarkerAddLine
  - call AllowWeaponTarget at the end of the queue, so lua only gets those units which are _not_ filtered by the engine
  - LuaSyncedRead: better hide enemy radarblobs unit-info
+
+ ! MoveCtrl: remove SetGroundMoveTypeData(unitID, "wantedSpeed", v) and SetGroundMoveTypeData(unitID, "maxWantedSpeed", v)
+   (the preferred way for gadgets to change a unit's speed is by calling SetGroundMoveTypeData(unitID, "maxSpeed", v))
+ ! replace Game.gameID by synced callin GameID(string gameID)
+ - fix TraceScreenRay never returning "sky" when includeSky=true
+ - fix TraceScreenRay coordinate offset when onlyCoords=true
+ - add extra parameter 'defPriority' to AllowWeaponTarget (what the engine thinks the target priority should be)
+
+Rendering:
  - add new gl.Texture("$minimap")
  - add new gl.Texture("$extra")
  - remove gl.SelectBuffer and co.
-
-Rendering:
  - fixed ATi PointSize bug
  - update assimp to svn rev 1231
  - fixed assimp lua metafiles
  - warn about null normals in models
+ - add visualization of default object radii (used for AOE calculations, etc) to alt+v
+ - SMF: render the info-texture through GLSL (noob translation: shadows in LOS-view)
 
 UI:
  - display average draw & sim frame time in debugview
