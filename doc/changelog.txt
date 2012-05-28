@@ -35,6 +35,9 @@ Lua:
  - fixed params of Spring.MarkerAddPoint & Spring.MarkerAddLine
  - call AllowWeaponTarget at the end of the queue, so lua only gets those units which are _not_ filtered by the engine
  - LuaSyncedRead: better hide enemy radarblobs unit-info
+ - add new gl.Texture("$minimap")
+ - add new gl.Texture("$extra")
+ - remove gl.SelectBuffer and co.
 
 Rendering:
  - fixed ATi PointSize bug
