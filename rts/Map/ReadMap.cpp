@@ -212,6 +212,11 @@ void CReadMap::CalcHeightmapChecksum()
 		mapChecksum ^= *(unsigned int*) &heightmap[i];
 	}
 
+	for (unsigned int a = 0; a < mapInfo->map.name.size(); ++a) {
+		mapChecksum += mapInfo->map.name[a];
+		mapChecksum *= mapInfo->map.name[a];
+	}
+
 	currMinHeight = initMinHeight;
 	currMaxHeight = initMaxHeight;
 }
