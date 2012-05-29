@@ -1646,13 +1646,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					pckt >> winningAllyTeams;
 				}
 
-				if (hostif) {
-#ifdef DEDICATED
-					hostif->SetDemoName(demoRecorder->GetName());
-#endif
+				if (hostif)
 					hostif->SetGameID(gameID.charArray);
-					hostif->SendGameOver(playerNum, winningAllyTeams);
-				}
 				Broadcast(CBaseNetProtocol::Get().SendGameOver(playerNum, winningAllyTeams));
 
 				gameEndTime = spring_gettime();
