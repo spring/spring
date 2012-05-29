@@ -1810,12 +1810,6 @@ void CGameServer::ServerReadNet()
 
 void CGameServer::GenerateAndSendGameID()
 {
-	// This is where we'll store the ID temporarily.
-	union {
-		unsigned char charArray[16];
-		unsigned int intArray[4];
-	} gameID;
-
 	// First and second dword are time based (current time and load time).
 	gameID.intArray[0] = (unsigned) time(NULL);
 	for (int i = 4; i < 12; ++i)
@@ -1836,6 +1830,8 @@ void CGameServer::GenerateAndSendGameID()
 #endif
 
 	generatedGameID = true;
+
+	hostif->SetGameID(gameID.charArray);
 }
 
 void CGameServer::CheckForGameStart(bool forced)
@@ -1896,6 +1892,10 @@ void CGameServer::StartGame()
 	}
 
 	GenerateAndSendGameID();
+
+#ifdef DEDICATED
+	hostif->SetDemoName(demoRecorder->GetName());
+#endif
 
 	std::vector<bool> teamStartPosSent(teams.size(), false);
 

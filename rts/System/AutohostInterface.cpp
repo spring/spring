@@ -100,6 +100,7 @@ using namespace boost::asio;
 AutohostInterface::AutohostInterface(const std::string& remoteIP, int remotePort, const std::string& localIP, int localPort)
 		: autohost(netcode::netservice)
 		, initialized(false)
+		, demoName("")
 {
 	std::string errorMsg = AutohostInterface::TryBindSocket(autohost, remoteIP, remotePort, localIP, localPort);
 
@@ -194,9 +195,30 @@ void AutohostInterface::SendQuit()
 
 void AutohostInterface::SendStartPlaying()
 {
-	uchar msg = SERVER_STARTPLAYING;
+	const unsigned char msgsize =
+			1                                            // SERVER_STARTPLAYING
+			+ 1                                          // msgsize
+			+ 16 * sizeof(boost::uint8_t)                // gameID
+			+ 1                                          // demoName.size()
+			+ demoName.size();                           // demoName
 
-	Send(boost::asio::buffer(&msg, sizeof(uchar)));
+	std::vector<boost::uint8_t> buffer(msgsize);
+	unsigned int pos = 0;
+
+	buffer[pos++] = SERVER_STARTPLAYING;
+	buffer[pos++] = msgsize;
+
+	for (unsigned int i = 0; i < 16; i++) {
+		buffer[pos++] = gameID[i];
+	}
+
+	buffer[pos++] = demoName.size();
+	if (demoName.size() > 0) {
+			strncpy((char*)(&buffer[pos]), demoName.c_str(), demoName.size());
+	}
+
+	assert(int(pos+demoName.size()) == int(msgsize));
+	Send(boost::asio::buffer(buffer));
 }
 
 void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
@@ -333,4 +355,14 @@ void AutohostInterface::Send(boost::asio::mutable_buffers_1 buffer)
 					e.what());
 		}
 	}
+}
+
+void AutohostInterface::SetDemoName(const std::string& demoname)
+{
+	demoName = std::string(demoname);
+}
+
+void AutohostInterface::SetGameID(const unsigned char* gameid)
+{
+	memcpy(gameID, gameid, sizeof(gameID));
 }

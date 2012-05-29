@@ -56,6 +56,9 @@ public:
 	 */
 	std::string GetChatMessage();
 
+	void SetDemoName(const std::string& demoName);
+	void SetGameID(const unsigned char* gameid);
+
 private:
 	void Send(boost::asio::mutable_buffers_1 sendBuffer);
 
@@ -77,6 +80,9 @@ private:
 
 	boost::asio::ip::udp::socket autohost;
 	bool initialized;
+
+	boost::uint8_t gameID[16];
+	std::string demoName;
 };
 
 #endif // AUTOHOST_INTERFACE_H
