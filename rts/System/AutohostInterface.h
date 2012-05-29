@@ -51,6 +51,7 @@ public:
 
 	void SetDemoName(const std::string& demoName);
 	void SetGameID(const unsigned char* gameid);
+
 	/**
 	 * @brief Receive a chat message from the autohost
 	 * There should be only 1 message per UDP-Packet, and it will use the hosts
@@ -79,6 +80,7 @@ private:
 
 	boost::asio::ip::udp::socket autohost;
 	bool initialized;
+
 	boost::uint8_t gameID[16];
 	std::string demoName;
 };

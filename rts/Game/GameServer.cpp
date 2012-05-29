@@ -1834,6 +1834,8 @@ void CGameServer::GenerateAndSendGameID()
 	demoRecorder->SetGameID(gameID.charArray);
 #endif
 
+	hostif->SetGameID(gameID.charArray);
+
 	generatedGameID = true;
 }
 
@@ -1895,6 +1897,10 @@ void CGameServer::StartGame()
 	}
 
 	GenerateAndSendGameID();
+
+#ifdef DEDICATED
+	hostif->SetDemoName(demoRecorder->GetName());
+#endif
 
 	std::vector<bool> teamStartPosSent(teams.size(), false);
 
