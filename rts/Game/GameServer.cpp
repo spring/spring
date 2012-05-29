@@ -1830,8 +1830,8 @@ void CGameServer::GenerateAndSendGameID()
 #endif
 
 	generatedGameID = true;
-
-	hostif->SetGameID(gameID.charArray);
+	if (hostif)
+		hostif->SetGameID(gameID.charArray);
 }
 
 void CGameServer::CheckForGameStart(bool forced)
