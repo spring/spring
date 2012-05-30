@@ -1,10 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "System/mmgr.h"
 #include "AutohostInterface.h"
 
-#include "System/Net/Socket.h"
-#include "System/mmgr.h"
+#include "System/BaseNetProtocol.h"
 #include "System/Log/ILog.h"
+#include "System/Net/Socket.h"
 
 #include <string.h>
 #include <vector>
@@ -91,7 +92,7 @@ enum EVENT
 	 * @see CTeam::Statistics for a reference of how to read them
 	 * (uchar teamnumber), CTeam::Statistics(in binary form)
 	 */
-	GAME_TEAMSTAT = 60
+	GAME_TEAMSTAT = NETMSG_TEAMSTAT, // should be 60
 };
 }
 
