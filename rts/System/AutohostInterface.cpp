@@ -195,24 +195,32 @@ void AutohostInterface::SendQuit()
 
 void AutohostInterface::SendStartPlaying()
 {
-	const unsigned char msgsize =
+	if (demoName.size() > std::numeric_limits<uint32_t>::max() - 30)
+		throw std::runtime_error("Path to demofile to long.");
+
+	const boost::uint32_t msgsize =
 			1                                            // SERVER_STARTPLAYING
-			+ 1                                          // msgsize
+			+ sizeof(boost::uint32_t)                    // msgsize
 			+ 16 * sizeof(boost::uint8_t)                // gameID
-			+ 1                                          // demoName.size()
+			+ sizeof(demoName.size())                    // some uint
 			+ demoName.size();                           // demoName
 
 	std::vector<boost::uint8_t> buffer(msgsize);
 	unsigned int pos = 0;
 
 	buffer[pos++] = SERVER_STARTPLAYING;
-	buffer[pos++] = msgsize;
+
+	memcpy(&buffer[pos], &msgsize, sizeof(msgsize));
+	pos+=sizeof(msgsize);
 
 	for (unsigned int i = 0; i < 16; i++) {
 		buffer[pos++] = gameID[i];
 	}
 
-	buffer[pos++] = demoName.size();
+	const boost::uint32_t demoNamesize = demoName.size();
+	memcpy(&buffer[pos], &demoNamesize, sizeof(demoNamesize));
+	pos+=sizeof(demoNamesize);
+
 	if (demoName.size() > 0) {
 			strncpy((char*)(&buffer[pos]), demoName.c_str(), demoName.size());
 	}
