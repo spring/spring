@@ -102,6 +102,8 @@ class LuaUnsyncedCtrl {
 
 		static int SetActiveCommand(lua_State* L);
 
+		static int LoadCmdColorsConfig(lua_State* L);
+		static int LoadCtrlPanelConfig(lua_State* L);
 		static int ForceLayoutUpdate(lua_State* L);
 
 		static int SetLosViewColors(lua_State* L);

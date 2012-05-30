@@ -21,6 +21,7 @@ public:
 	static std::vector<std::string> Split(const std::string& str, const std::string& delimitters);
 
 	CSimpleParser(CFileHandler& fh);
+	CSimpleParser(const std::string& filecontent);
 
 	/** Returns the current line number. */
 	int GetLineNumber() const;
@@ -30,7 +31,8 @@ public:
 	std::string GetCleanLine();
 
 private:
-	CFileHandler& file;
+	std::string file;
+	std::string::size_type curPos;
 	int lineNumber;
 	bool inComment;
 };
