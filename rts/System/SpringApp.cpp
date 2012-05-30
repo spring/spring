@@ -493,7 +493,7 @@ bool SpringApp::GetDisplayGeometry()
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
 
 	// GetClientRect doesn't do the right thing for restoring window position
-	if (globalRendering->fullScreen) {
+	if (!globalRendering->fullScreen) {
 		GetWindowRect(info.window, &rect);
 	}
 
