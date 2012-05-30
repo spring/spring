@@ -631,7 +631,7 @@ void CGame::LoadInterface()
 
 	// interface components
 	ReColorTeams();
-	cmdColors.LoadConfig("cmdcolors.txt");
+	cmdColors.LoadConfigFromFile("cmdcolors.txt");
 
 	{
 		ScopedOnceTimer timer("Game::LoadInterface (Console)");
