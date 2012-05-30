@@ -3536,7 +3536,7 @@ int LuaOpenGL::Texture(lua_State* L)
 			glEnable(GL_TEXTURE_2D);
 			lua_pushboolean(L, true);
 		}
-		else if (texture == "$extra") {
+		else if (texture == "$info") {
 			glBindTexture(GL_TEXTURE_2D, readmap->GetGroundDrawer()->infoTex);
 			glEnable(GL_TEXTURE_2D);
 			lua_pushboolean(L, true);
