@@ -30,6 +30,10 @@ public:
 	/** Returns the next non-blank line (without newlines or comments). */
 	std::string GetCleanLine();
 
+	bool Eof() const {
+		return (curPos >= file.size());
+	}
+
 private:
 	std::string file;
 	std::string::size_type curPos;

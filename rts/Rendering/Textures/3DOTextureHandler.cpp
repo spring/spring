@@ -47,7 +47,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 	CSimpleParser parser(teamTexFile);
 
 	std::set<std::string> teamTexes;
-	while (!teamTexFile.Eof()) {
+	while (!parser.Eof()) {
 		teamTexes.insert(StringToLower(parser.GetCleanLine()));
 	}
 

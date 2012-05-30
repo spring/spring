@@ -115,8 +115,8 @@ C3DOParser::C3DOParser()
 	CFileHandler file("unittextures/tatex/teamtex.txt");
 	CSimpleParser parser(file);
 
-	while (!file.Eof()) {
-		teamtex.insert(StringToLower(parser.GetLine()));
+	while (!parser.Eof()) {
+		teamtex.insert(StringToLower(parser.GetCleanLine()));
 	}
 
 	curOffset = 0;
