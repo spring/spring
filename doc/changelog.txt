@@ -66,19 +66,19 @@ Lua:
  - added luasocket support for widgets, see http://springrts.com/wiki/LuaSocket
  - fixed params of Spring.MarkerAddPoint & Spring.MarkerAddLine
  - call AllowWeaponTarget at the end of the queue, so lua only gets those units which are _not_ filtered by the engine
- - LuaSyncedRead: better hide enemy radarblobs unit-info
-
+ ! LuaSyncedRead: better hide enemy radarblobs unit-info
  ! MoveCtrl: remove SetGroundMoveTypeData(unitID, "wantedSpeed", v) and SetGroundMoveTypeData(unitID, "maxWantedSpeed", v)
    (the preferred way for gadgets to change a unit's speed is by calling SetGroundMoveTypeData(unitID, "maxSpeed", v))
  ! replace Game.gameID by synced callin GameID(string gameID)
  - fix TraceScreenRay never returning "sky" when includeSky=true
  - fix TraceScreenRay coordinate offset when onlyCoords=true
  - add extra parameter 'defPriority' to AllowWeaponTarget (what the engine thinks the target priority should be)
+ - add new gl.Texture("$minimap")
+ - add new gl.Texture("$info")
+ ! remove gl.SelectBuffer and co.
+ - new Spring.LoadCmdColorsConfig(configStr) & Spring.LoadCtrlPanelConfig(configStr)
 
 Rendering:
- - add new gl.Texture("$minimap")
- - add new gl.Texture("$extra")
- - remove gl.SelectBuffer and co.
  - fixed ATi PointSize bug
  - update assimp to svn rev 1231
  - fixed assimp lua metafiles
