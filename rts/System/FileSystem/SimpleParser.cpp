@@ -49,7 +49,7 @@ std::string CSimpleParser::GetCleanLine()
 {
 	std::string::size_type pos;
 	while (true) {
-		if (curPos == file.size()) {
+		if (curPos >= file.size()) {
 			return ""; // end of file
 		}
 		std::string line = GetLine();
