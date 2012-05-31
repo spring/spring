@@ -1830,8 +1830,6 @@ void CGameServer::GenerateAndSendGameID()
 #endif
 
 	generatedGameID = true;
-	if (hostif)
-		hostif->SetGameID(gameID.charArray);
 }
 
 void CGameServer::CheckForGameStart(bool forced)
@@ -1893,10 +1891,6 @@ void CGameServer::StartGame()
 
 	GenerateAndSendGameID();
 
-#ifdef DEDICATED
-	hostif->SetDemoName(demoRecorder->GetName());
-#endif
-
 	std::vector<bool> teamStartPosSent(teams.size(), false);
 
 	// send start position for player controlled teams
@@ -1919,7 +1913,11 @@ void CGameServer::StartGame()
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
 	if (hostif)
-		hostif->SendStartPlaying();
+#ifdef DEDICATED
+		hostif->SendStartPlaying(gameID.charArray, demoRecorder->GetName());
+#else
+		hostif->SendStartPlaying(gameID.charArray, "");
+#endif
 	timeLeft=0;
 	lastTick = spring_gettime() - spring_msecs(1);
 	CreateNewFrame(true, false);
