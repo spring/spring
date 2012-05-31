@@ -100,7 +100,6 @@ using namespace boost::asio;
 AutohostInterface::AutohostInterface(const std::string& remoteIP, int remotePort, const std::string& localIP, int localPort)
 		: autohost(netcode::netservice)
 		, initialized(false)
-		, demoName("")
 {
 	std::string errorMsg = AutohostInterface::TryBindSocket(autohost, remoteIP, remotePort, localIP, localPort);
 
@@ -193,17 +192,15 @@ void AutohostInterface::SendQuit()
 	Send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
-void AutohostInterface::SendStartPlaying()
+void AutohostInterface::SendStartPlaying(unsigned char* gameID, std::string demoName)
 {
 	if (demoName.size() > std::numeric_limits<uint32_t>::max() - 30)
 		throw std::runtime_error("Path to demofile to long.");
-
 	const boost::uint32_t msgsize =
 			1                                            // SERVER_STARTPLAYING
 			+ sizeof(boost::uint32_t)                    // msgsize
 			+ 16 * sizeof(boost::uint8_t)                // gameID
-			+ sizeof(demoName.size())                    // some uint
-			+ demoName.size();                           // demoName
+			+ demoName.size();                           // is 0, if demo recording is off!
 
 	std::vector<boost::uint8_t> buffer(msgsize);
 	unsigned int pos = 0;
@@ -217,13 +214,7 @@ void AutohostInterface::SendStartPlaying()
 		buffer[pos++] = gameID[i];
 	}
 
-	const boost::uint32_t demoNamesize = demoName.size();
-	memcpy(&buffer[pos], &demoNamesize, sizeof(demoNamesize));
-	pos+=sizeof(demoNamesize);
-
-	if (demoName.size() > 0) {
-			strncpy((char*)(&buffer[pos]), demoName.c_str(), demoName.size());
-	}
+	strncpy((char*)(&buffer[pos]), demoName.c_str(), demoName.size());
 
 	assert(int(pos+demoName.size()) == int(msgsize));
 	Send(boost::asio::buffer(buffer));
@@ -363,14 +354,4 @@ void AutohostInterface::Send(boost::asio::mutable_buffers_1 buffer)
 					e.what());
 		}
 	}
-}
-
-void AutohostInterface::SetDemoName(const std::string& demoname)
-{
-	demoName = std::string(demoname);
-}
-
-void AutohostInterface::SetGameID(const unsigned char* gameid)
-{
-	memcpy(gameID, gameid, sizeof(gameID));
 }

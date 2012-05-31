@@ -34,7 +34,7 @@ public:
 
 	void SendStart();
 	void SendQuit();
-	void SendStartPlaying();
+	void SendStartPlaying(unsigned char* gameID, std::string demoName);
 	void SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams);
 
 	void SendPlayerJoined(uchar playerNum, const std::string& name);
@@ -55,9 +55,6 @@ public:
 	 * playernumber to inject this message
 	 */
 	std::string GetChatMessage();
-
-	void SetDemoName(const std::string& demoName);
-	void SetGameID(const unsigned char* gameid);
 
 private:
 	void Send(boost::asio::mutable_buffers_1 sendBuffer);
@@ -80,9 +77,6 @@ private:
 
 	boost::asio::ip::udp::socket autohost;
 	bool initialized;
-
-	boost::uint8_t gameID[16];
-	std::string demoName;
 };
 
 #endif // AUTOHOST_INTERFACE_H
