@@ -192,9 +192,11 @@ INCLUDE(TestCXXFlags)
 if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	message (STATUS "Building Spring for 64bit environment")
 	set (MARCH_FLAG CACHE STRING "CPU optimization (use i686 for generic optimization)")
+	set (MARCH_BITS 64 INTERNAL)
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	message (STATUS "Building Spring for 32bit environment")
 	set (MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
+	set (MARCH_BITS 32 INTERNAL)
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
 if    ($ENV{CXX} MATCHES "icpc")
@@ -290,7 +292,13 @@ else  (STABS_DEBUG_SYMBOLS)
 endif (STABS_DEBUG_SYMBOLS)
 
 if     (MINGW)
-	set (CMAKE_EXE_LINKER_FLAGS "-Wl,--enable-auto-import")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--enable-auto-import")
+	if    (MARCH_BITS EQUAL 32)
+		# Increase memory limit from 2GB to 3GB on 32bit Windows and 2GB->4GB on 64bit Windows (assuming spring.exe is 32bit)
+		# http://msdn.microsoft.com/en-us/library/windows/desktop/aa366778(v=vs.85).aspx
+		Message(STATUS "Enable PAE")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --large-address-aware")
+	endif (MARCH_BITS EQUAL 32)
 endif  (MINGW)
 
 
