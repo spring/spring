@@ -34,7 +34,7 @@ public:
 
 	void SendStart();
 	void SendQuit();
-	void SendStartPlaying();
+	void SendStartPlaying(unsigned char* gameID, std::string demoName);
 	void SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams);
 
 	void SendPlayerJoined(uchar playerNum, const std::string& name);
