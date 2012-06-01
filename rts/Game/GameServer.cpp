@@ -1810,12 +1810,6 @@ void CGameServer::ServerReadNet()
 
 void CGameServer::GenerateAndSendGameID()
 {
-	// This is where we'll store the ID temporarily.
-	union {
-		unsigned char charArray[16];
-		unsigned int intArray[4];
-	} gameID;
-
 	// First and second dword are time based (current time and load time).
 	gameID.intArray[0] = (unsigned) time(NULL);
 	for (int i = 4; i < 12; ++i)
@@ -1919,7 +1913,11 @@ void CGameServer::StartGame()
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
 	if (hostif)
-		hostif->SendStartPlaying();
+#ifdef DEDICATED
+		hostif->SendStartPlaying(gameID.charArray, demoRecorder->GetName());
+#else
+		hostif->SendStartPlaying(gameID.charArray, "");
+#endif
 	timeLeft=0;
 	lastTick = spring_gettime() - spring_msecs(1);
 	CreateNewFrame(true, false);

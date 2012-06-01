@@ -193,11 +193,32 @@ void AutohostInterface::SendQuit()
 	Send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
-void AutohostInterface::SendStartPlaying()
+void AutohostInterface::SendStartPlaying(unsigned char* gameID, std::string demoName)
 {
-	uchar msg = SERVER_STARTPLAYING;
+	if (demoName.size() > std::numeric_limits<uint32_t>::max() - 30)
+		throw std::runtime_error("Path to demofile to long.");
+	const boost::uint32_t msgsize =
+			1                                            // SERVER_STARTPLAYING
+			+ sizeof(boost::uint32_t)                    // msgsize
+			+ 16 * sizeof(boost::uint8_t)                // gameID
+			+ demoName.size();                           // is 0, if demo recording is off!
 
-	Send(boost::asio::buffer(&msg, sizeof(uchar)));
+	std::vector<boost::uint8_t> buffer(msgsize);
+	unsigned int pos = 0;
+
+	buffer[pos++] = SERVER_STARTPLAYING;
+
+	memcpy(&buffer[pos], &msgsize, sizeof(msgsize));
+	pos+=sizeof(msgsize);
+
+	for (unsigned int i = 0; i < 16; i++) {
+		buffer[pos++] = gameID[i];
+	}
+
+	strncpy((char*)(&buffer[pos]), demoName.c_str(), demoName.size());
+
+	assert(int(pos+demoName.size()) == int(msgsize));
+	Send(boost::asio::buffer(buffer));
 }
 
 void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
