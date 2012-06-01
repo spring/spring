@@ -193,10 +193,11 @@ void AutohostInterface::SendQuit()
 	Send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
-void AutohostInterface::SendStartPlaying(unsigned char* gameID, std::string demoName)
+void AutohostInterface::SendStartPlaying(const unsigned char* gameID, const std::string& demoName)
 {
 	if (demoName.size() > std::numeric_limits<uint32_t>::max() - 30)
-		throw std::runtime_error("Path to demofile to long.");
+		throw std::runtime_error("Path to demofile too long.");
+
 	const boost::uint32_t msgsize =
 			1                                            // SERVER_STARTPLAYING
 			+ sizeof(boost::uint32_t)                    // msgsize
@@ -209,15 +210,15 @@ void AutohostInterface::SendStartPlaying(unsigned char* gameID, std::string demo
 	buffer[pos++] = SERVER_STARTPLAYING;
 
 	memcpy(&buffer[pos], &msgsize, sizeof(msgsize));
-	pos+=sizeof(msgsize);
+	pos += sizeof(msgsize);
 
 	for (unsigned int i = 0; i < 16; i++) {
 		buffer[pos++] = gameID[i];
 	}
 
 	strncpy((char*)(&buffer[pos]), demoName.c_str(), demoName.size());
+	assert(int(pos + demoName.size()) == int(msgsize));
 
-	assert(int(pos+demoName.size()) == int(msgsize));
 	Send(boost::asio::buffer(buffer));
 }
 
