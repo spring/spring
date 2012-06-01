@@ -877,7 +877,7 @@ void UDPConnection::Close(bool flush) {
 			mySocket->shutdown(boost::asio::ip::udp::socket::shutdown_both);
 			mySocket->close();
 		} catch (const boost::system::system_error& ex) {
-			LOG_L(L_ERROR, "Failed closing UDP conection: %s", ex.what());
+			LOG_L(L_ERROR, "Failed closing UDP connection: %s", ex.what());
 		}
 	}
 	closed = true;
