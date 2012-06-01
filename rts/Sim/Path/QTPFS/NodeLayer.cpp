@@ -112,7 +112,6 @@ bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 	const std::vector<int>* blockBits = &layerUpdate.blockBits;
 	const bool ret = Update(rectangle, NULL, NULL, speedMods, blockBits);
 
-	layerUpdates.pop_front();
 	return ret;
 }
 #endif

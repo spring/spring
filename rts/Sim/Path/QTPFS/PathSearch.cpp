@@ -110,6 +110,10 @@ bool QTPFS::PathSearch::Execute(
 
 	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
 	// adjust the target-point if we only got a partial result
+	// NOTE:
+	//   should adjust GMT::goalPos accordingly, otherwise
+	//   units will end up spinning in-place over the last
+	//   waypoint (since "atGoal" can never become true)
 	if (!haveFullPath && havePartPath) {
 		tgtNode    = minNode;
 		tgtPoint.x = minNode->xmid() * SQUARE_SIZE;
