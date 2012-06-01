@@ -2252,7 +2252,7 @@ void CGameServer::UpdateLoop()
 			if (players[i].link)
 				players[i].link->Flush();
 		}
-		spring_sleep(spring_msecs(1000)); // now let clients close their connections
+		spring_sleep(spring_msecs(3000)); // now let clients close their connections
 	} CATCH_SPRING_ERRORS
 }
 

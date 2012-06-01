@@ -207,6 +207,9 @@ class CEventClient
 		virtual void DrawInMiniMap();
 
 		virtual void GameProgress(int gameFrame) {}
+
+		virtual void DrawLoadScreen() {}
+		virtual void LoadProgress(const std::string& msg, const bool replace_lastline) {}
 		/// @}
 };
 

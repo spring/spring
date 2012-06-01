@@ -124,10 +124,8 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 
 	// Perform cob animation
 	if (aircraftState == AIRCRAFT_LANDED) {
+		assert(newState != AIRCRAFT_LANDING); // redundant SetState() call, we already landed and get command to switch into landing
 		owner->script->StartMoving();
-	}
-	if (newState == AIRCRAFT_LANDED) {
-		owner->script->StopMoving();
 	}
 
 	if (newState == AIRCRAFT_LANDED) {
@@ -143,6 +141,9 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 	// Do animations
 	switch (aircraftState) {
 		case AIRCRAFT_LANDED:
+			//FIXME already inform commandAI in AIRCRAFT_LANDING!
+			//FIXME Problem is StopMove() also calls owner->script->StopMoving() what should only be called when landed. Also see CStrafeAirMoveType::SetState().
+			owner->commandAI->StopMove();
 			if (padStatus == PAD_STATUS_FLYING) {
 				// set us on ground if we are not on a pad
 				owner->physicalState = CSolidObject::OnGround;
@@ -386,9 +387,11 @@ void CHoverAirMoveType::UpdateFlying()
 	if (closeToGoal) {
 		switch (flyState) {
 			case FLY_CRUISING: {
-				const bool trans = (dynamic_cast<CTransportUnit*>(owner) != NULL);
-				const bool noland = dontLand || !autoLand;
+				const bool hasMoreMoveCmds = owner->commandAI->HasMoreMoveCommands();
+				const bool noland = dontLand || !autoLand || hasMoreMoveCmds;
+
 				// NOTE: should CMD_LOAD_ONTO be here?
+				const bool trans = (dynamic_cast<CTransportUnit*>(owner) != NULL);
 				const bool hasLoadCmds = trans &&
 					!owner->commandAI->commandQue.empty() &&
 					(owner->commandAI->commandQue.front().GetID() == CMD_LOAD_ONTO ||
@@ -405,7 +408,7 @@ void CHoverAirMoveType::UpdateFlying()
 						}
 					} else {
 						wantedSpeed = ZeroVector;
-						if (!owner->commandAI->HasMoreMoveCommands())
+						if (!hasMoreMoveCmds)
 							wantToStop = true;
 						SetState(AIRCRAFT_HOVERING);
 					}

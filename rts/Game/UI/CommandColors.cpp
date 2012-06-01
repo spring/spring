@@ -201,10 +201,18 @@ static bool SafeAtoI(unsigned int& var, const string& value)
 }
 
 
-bool CCommandColors::LoadConfig(const string& filename)
+bool CCommandColors::LoadConfigFromFile(const string& filename)
 {
 	CFileHandler ifs(filename);
-	CSimpleParser parser(ifs);
+	std::string cfg;
+	ifs.LoadStringData(cfg);
+	return LoadConfigFromString(cfg);
+}
+
+
+bool CCommandColors::LoadConfigFromString(const string& cfg)
+{
+	CSimpleParser parser(cfg);
 
 	while (true) {
 		const string line = parser.GetCleanLine();

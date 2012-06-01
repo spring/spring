@@ -42,10 +42,6 @@ LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 
 
-### Assemble external incude dirs
-INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
-
-
 ### Add icon and manifest to exe using windres
 IF    (MINGW)
 	SET(ENGINE_ICON_HL_DIR "${ENGINE_SRC_ROOT_DIR}")

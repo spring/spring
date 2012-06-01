@@ -9,11 +9,21 @@
 
 
 CSimpleParser::CSimpleParser(CFileHandler& fh)
-	: file(fh)
+	: curPos(0)
 	, lineNumber(0)
 	, inComment(false) // /* text */ comments are not implemented
 {
+	fh.LoadStringData(file);
 }
+
+CSimpleParser::CSimpleParser(const std::string& filecontent)
+	: curPos(0)
+	, lineNumber(0)
+	, inComment(false) // /* text */ comments are not implemented
+{
+	file = filecontent;
+}
+
 
 
 int CSimpleParser::GetLineNumber() const
@@ -26,9 +36,8 @@ std::string CSimpleParser::GetLine()
 {
 	lineNumber++;
 	std::stringstream s;
-	while (!file.Eof()) {
-		char a = '\n'; // break if this is not overwritten
-		file.Read(&a, 1);
+	while (curPos < file.size()) {
+		char& a = file[curPos++];
 		if (a == '\n') { break; }
 		if (a != '\r') { s << a; }
 	}
@@ -40,7 +49,7 @@ std::string CSimpleParser::GetCleanLine()
 {
 	std::string::size_type pos;
 	while (true) {
-		if (file.Eof()) {
+		if (curPos >= file.size()) {
 			return ""; // end of file
 		}
 		std::string line = GetLine();

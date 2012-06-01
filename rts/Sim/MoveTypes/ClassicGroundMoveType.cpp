@@ -71,25 +71,11 @@ std::vector<int2> CClassicGroundMoveType::lineTable[LINETABLE_SIZE][LINETABLE_SI
 CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	AMoveType(owner),
 
-	wantedSpeed(0.0f),
-	currentSpeed(0.0f),
-	deltaSpeed(0.0f),
-	terrainSpeed(1.0f),
-	requestedSpeed(0.0f),
-	currentDistanceToWaypoint(0),
-
-	flatFrontDir(1, 0, 0),
-	mainHeadingPos(0.0f, 0.0f, 0.0f),
-	lastGetPathPos(0.0f, 0.0f, 0.0f),
-
-	useMainHeading(false),
-	deltaHeading(0),
+	waypoint(0.0f, 0.0f, 0.0f),
+	nextWaypoint(0.0f, 0.0f, 0.0f),
 
 	pathId(0),
 	goalRadius(0),
-
-	waypoint(0.0f, 0.0f, 0.0f),
-	nextWaypoint(0.0f, 0.0f, 0.0f),
 
 	atGoal(false),
 	haveFinalWaypoint(false),
@@ -108,6 +94,20 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	skidRotVector(UpVector),
 	skidRotSpeed2(0.0f),
 	skidRotPos2(0.0f),
+	
+	flatFrontDir(1, 0, 0),
+	mainHeadingPos(0.0f, 0.0f, 0.0f),
+	lastGetPathPos(0.0f, 0.0f, 0.0f),
+
+	useMainHeading(false),
+	deltaHeading(0),
+
+	wantedSpeed(0.0f),
+	currentSpeed(0.0f),
+	requestedSpeed(0.0f),
+	deltaSpeed(0.0f),
+	terrainSpeed(1.0f),
+	currentDistanceToWaypoint(0),
 
 	etaWaypoint(0),
 	etaWaypoint2(0),

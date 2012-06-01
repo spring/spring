@@ -35,9 +35,10 @@
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
 #include "lib/gml/gmlmut.h"
+#include "Map/BaseGroundDrawer.h"
+#include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Map/HeightMapTexture.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
@@ -311,14 +312,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 //FIXME		LuaVBOs::PushEntries(L);
 
-	REGISTER_LUA_CFUNC(RenderMode);
-	REGISTER_LUA_CFUNC(SelectBuffer);
-	REGISTER_LUA_CFUNC(SelectBufferData);
-	REGISTER_LUA_CFUNC(InitNames);
-	REGISTER_LUA_CFUNC(PushName);
-	REGISTER_LUA_CFUNC(PopName);
-	REGISTER_LUA_CFUNC(LoadName);
-
 	return true;
 }
 
@@ -444,7 +437,7 @@ const GLbitfield AttribBits =
 	GL_VIEWPORT_BIT;
 
 
-inline void LuaOpenGL::EnableCommon(DrawMode mode)
+void LuaOpenGL::EnableCommon(DrawMode mode)
 {
 	assert(drawMode == DRAW_NONE);
 	drawMode = mode;
@@ -459,7 +452,7 @@ inline void LuaOpenGL::EnableCommon(DrawMode mode)
 }
 
 
-inline void LuaOpenGL::DisableCommon(DrawMode mode)
+void LuaOpenGL::DisableCommon(DrawMode mode)
 {
 	assert(drawMode == mode);
 	// FIXME  --  not needed by shadow or minimap
@@ -3528,6 +3521,11 @@ int LuaOpenGL::Texture(lua_State* L)
 				lua_pushboolean(L, true);
 			}
 		}
+		else if (texture == "$minimap") {
+			glBindTexture(GL_TEXTURE_2D, readmap->GetMiniMapTexture());
+			glEnable(GL_TEXTURE_2D);
+			lua_pushboolean(L, true);
+		}
 		else if (texture == "$shading") {
 			glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
 			glEnable(GL_TEXTURE_2D);
@@ -3535,6 +3533,11 @@ int LuaOpenGL::Texture(lua_State* L)
 		}
 		else if (texture == "$grass") {
 			glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
+			glEnable(GL_TEXTURE_2D);
+			lua_pushboolean(L, true);
+		}
+		else if (texture == "$info") {
+			glBindTexture(GL_TEXTURE_2D, readmap->GetGroundDrawer()->infoTex);
 			glEnable(GL_TEXTURE_2D);
 			lua_pushboolean(L, true);
 		}
@@ -5076,130 +5079,6 @@ int LuaOpenGL::GetSun(lua_State* L)
 
 	return 0;
 }
-
-/******************************************************************************/
-/******************************************************************************/
-
-class SelectBuffer {
-	public:
-		static const GLsizei maxSize = (1 << 24); // float integer range
-		static const GLsizei defSize = (256 * 1024);
-
-		SelectBuffer() : size(0), buffer(NULL) {}
-		~SelectBuffer() { delete[] buffer; }
-
-		inline GLuint* GetBuffer() const { return buffer; }
-
-		inline bool ValidIndex(int index) const {
-			return ((index >= 0) && (index < size));
-		}
-
-		inline GLuint operator[](int index) const {
-			return ValidIndex(index) ? buffer[index] : 0;
-		}
-
-		inline GLsizei Resize(GLsizei c) {
-			c = (c < maxSize) ? c : maxSize;
-			if (c != size) {
-				delete[] buffer;
-				buffer = new GLuint[c];
-			}
-			size = c;
-			return size;
-		}
-
-	private:
-		GLsizei size;
-		GLuint* buffer;
-};
-
-static SelectBuffer selectBuffer;
-
-
-/******************************************************************************/
-
-int LuaOpenGL::RenderMode(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-
-	const GLenum mode = (GLenum)luaL_checkint(L, 1);
-	if (!lua_isfunction(L, 2)) {
-		luaL_error(L, "Incorrect arguments to gl.RenderMode(mode, func, ...)");
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-
-	// call the function
-	glRenderMode(mode);
-	const int error = lua_pcall(L, (args - 2), 0, 0);
-	const GLint count2 = glRenderMode(GL_RENDER);
-
-	if (error != 0) {
-		LOG_L(L_ERROR, "gl.RenderMode: error(%i) = %s",
-				error, lua_tostring(L, -1));
-		lua_error(L);
-	}
-
-	lua_pushnumber(L, count2);
-	return 1;
-}
-
-
-int LuaOpenGL::SelectBuffer(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	GLsizei selCount = (GLsizei)luaL_optint(L, 1, SelectBuffer::defSize);
-	selCount = selectBuffer.Resize(selCount);
-	glSelectBuffer(selCount, selectBuffer.GetBuffer());
-	lua_pushnumber(L, selCount);
-	return 1;
-}
-
-
-int LuaOpenGL::SelectBufferData(lua_State* L)
-{
-	const int index = luaL_checkint(L, 1);
-	if (!selectBuffer.ValidIndex(index)) {
-		return 0;
-	}
-	lua_pushnumber(L, selectBuffer[index]);
-	return 1;
-}
-
-
-int LuaOpenGL::InitNames(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	glInitNames();
-	return 0;
-}
-
-
-int LuaOpenGL::LoadName(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLuint name = (GLenum)luaL_checkint(L, 1);
-	glLoadName(name);
-	return 0;
-}
-
-
-int LuaOpenGL::PushName(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLuint name = (GLenum)luaL_checkint(L, 1);
-	glPushName(name);
-	return 0;
-}
-
-
-int LuaOpenGL::PopName(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	glPopName();
-	return 0;
-}
-
 
 /******************************************************************************/
 /******************************************************************************/

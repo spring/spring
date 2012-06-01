@@ -30,6 +30,7 @@ namespace QTPFS {
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 		void QueueUpdate(const SRectangle& r, const MoveDef* md, const CMoveMath* mm);
+		void PopQueuedUpdate() { layerUpdates.pop_front(); }
 		bool ExecQueuedUpdate();
 		bool HaveQueuedUpdate() const { return (!layerUpdates.empty()); }
 		const SRectangle& GetQueuedUpdateRectangle() const { return ((layerUpdates.front()).rectangle); }

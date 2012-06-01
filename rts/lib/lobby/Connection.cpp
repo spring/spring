@@ -31,6 +31,7 @@ Connection::~Connection()
 	if (sock.is_open()) {
 		SendData("EXIT\n");
 	}
+	sock.shutdown(boost::asio::ip::udp::socket::shutdown_both);
 	sock.close();
 	netservice.poll();
 	netservice.reset();

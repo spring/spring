@@ -115,12 +115,12 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 	// NOTE: under normal circumstances, this only gets called if a unit
 	// has moved to a new map square since its last SlowUpdate cycle, so
 	// any units that changed position between enabling and disabling of
-	// globalLOS and *stopped* will continue to provide LOS at their old
-	// square *after* it is disabled (until they are moved again)
-	if (gs->globalLOS[unit->allyteam]) { return; }
-	if (unit->losRadius <= 0 && unit->airLosRadius <= 0) {
+	// globalLOS and *stopped moving* will still provide LOS at their old
+	// square *after* it is disabled (until they start moving again)
+	if (gs->globalLOS[unit->allyteam])
 		return;
-	}
+	if (unit->losRadius <= 0 && unit->airLosRadius <= 0)
+		return;
 
 	unit->lastLosUpdate = gs->frameNum;
 

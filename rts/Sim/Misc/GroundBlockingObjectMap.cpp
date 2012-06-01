@@ -70,7 +70,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 }
 
 
-void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, const YardmapStatus mask)
+void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, const YardmapStatus& mask)
 {
 	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
 
@@ -231,7 +231,7 @@ void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* object) {
 }
 
 
-inline bool CGroundBlockingObjectMap::CheckYard(CSolidObject* yardUnit, const YardmapStatus mask) const
+inline bool CGroundBlockingObjectMap::CheckYard(CSolidObject* yardUnit, const YardmapStatus& mask) const
 {
 	//GML_STDMUTEX_LOCK(block); //done in GroundBlocked
 
