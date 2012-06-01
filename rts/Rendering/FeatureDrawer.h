@@ -80,6 +80,8 @@ private:
 	int drawQuadsY;
 
 	float farDist;
+	float featureDrawDistance;
+	float featureFadeDistance;
 
 	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
 	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;

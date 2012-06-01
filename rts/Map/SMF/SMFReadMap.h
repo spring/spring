@@ -32,6 +32,7 @@ public:
 	void UpdateHeightMapUnsynced(const HeightMapUpdate&);
 
 	unsigned int GetDetailTexture() const { return detailTex; }
+	unsigned int GetMiniMapTexture() const { return minimapTex; }
 	unsigned int GetShadingTexture() const { return shadingTex; }
 	unsigned int GetNormalsTexture() const { return normalsTex; }
 	unsigned int GetSpecularTexture() const { return specularTex; }
@@ -67,6 +68,17 @@ public:
 	bool HaveSplatTexture() const { return haveSplatTexture; }
 
 private:
+	void ParseHeader();
+	void LoadHeightMap();
+	void LoadMinimap();
+	void InitializeWaterHeightColors();
+	void CreateSpecularTex();
+	void CreateSplatDetailTextures();
+	void CreateGrassTex();
+	void CreateDetailTex();
+	void CreateShadingTex();
+	void CreateNormalTex();
+
 	void UpdateVertexNormals(const HeightMapUpdate& update);
 	void UpdateFaceNormals(const HeightMapUpdate& update);
 	void UpdateNormalTexture(const HeightMapUpdate& update);

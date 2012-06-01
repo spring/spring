@@ -417,28 +417,30 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 		if (md->unitDefRefCount == 0)
 			continue;
 
-		nodeLayers[layerNum].QueueUpdate(r, md, mm);
+		SRectangle mr = SRectangle(r);
+		mr.x1 = std::max(r.x1 - md->xsizeh,        0);
+		mr.z1 = std::max(r.z1 - md->zsizeh,        0);
+		mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
+		mr.z2 = std::min(r.z2 + md->zsizeh, gs->mapy);
+
+		nodeLayers[layerNum].QueueUpdate(mr, md, mm);
 	}
 }
 
 void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum) {
-	const SRectangle& r = nodeLayers[layerNum].GetQueuedUpdateRectangle();
-	const MoveDef* md = moveDefHandler->moveDefs[layerNum];
-
-	SRectangle mr = SRectangle(r);
-	mr.x1 = std::max(r.x1 - md->xsizeh,        0);
-	mr.z1 = std::max(r.z1 - md->zsizeh,        0);
-	mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
-	mr.z2 = std::min(r.z2 + md->zsizeh, gs->mapy);
-
 	// flush this layer's entire update-queue if necessary
 	// called at run-time only, not load-time so we always
 	// *want* tesselation here
 	while (nodeLayers[layerNum].HaveQueuedUpdate()) {
+		const NodeLayer& nl = nodeLayers[layerNum];
+		const SRectangle& r = nl.GetQueuedUpdateRectangle();
+
 		if (nodeLayers[layerNum].ExecQueuedUpdate()) {
-			nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr);
-			pathCaches[layerNum].MarkDeadPaths(mr);
+			nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], r);
+			pathCaches[layerNum].MarkDeadPaths(r);
 		}
+
+		nodeLayers[layerNum].PopQueuedUpdate();
 
 		if (pathSearches[layerNum].empty()) {
 			// no pending searches this frame, stop flushing

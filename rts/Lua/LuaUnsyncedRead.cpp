@@ -1324,7 +1324,8 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	const float dist = TraceRay::GuiTraceRay(pos, dir, range, true, NULL, unit, feature, onlyCoords);
 //	gu->myAllyTeam = origAllyTeam;
 
-	if ((dist > badRange) && !unit && !feature) {
+	if ((dist < 0.0f || dist > badRange) && unit == NULL && feature == NULL) {
+		// ray went into the void (or started too far above terrain)
 		if (includeSky) {
 			lua_pushliteral(L, "sky");
 		} else {
@@ -1332,13 +1333,13 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		}
 	} else {
 		if (!onlyCoords) {
-			if (unit) {
+			if (unit != NULL) {
 				lua_pushliteral(L, "unit");
 				lua_pushnumber(L, unit->id);
 				return 2;
 			}
 	
-			if (feature) {
+			if (feature != NULL) {
 				lua_pushliteral(L, "feature");
 				lua_pushnumber(L, feature->id);
 				return 2;

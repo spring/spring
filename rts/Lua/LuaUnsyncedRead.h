@@ -7,6 +7,8 @@ struct lua_State;
 
 
 class LuaUnsyncedRead {
+	friend class CLuaLoadScreen;
+
 	public:
 		static bool PushEntries(lua_State* L);
 

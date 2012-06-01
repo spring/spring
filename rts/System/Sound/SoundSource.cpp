@@ -125,8 +125,7 @@ void CSoundSource::Stop()
 		curPlaying = NULL;
 	}
 	if (curStream) {
-		delete curStream;
-		curStream = NULL;
+		SafeDelete(curStream);
 	}
 	if (curChannel) {
 		curChannel->SoundSourceFinished(this);

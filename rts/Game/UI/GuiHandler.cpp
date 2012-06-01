@@ -182,10 +182,9 @@ static bool SafeAtoF(float& var, const std::string& value)
 }
 
 
-bool CGuiHandler::LoadConfig(const std::string& fileName)
+bool CGuiHandler::LoadConfig(const std::string& cfg)
 {
-	CFileHandler ifs(fileName);
-	CSimpleParser parser(ifs);
+	CSimpleParser parser(cfg);
 
 	std::string deadStr = "";
 	std::string prevStr = "";
@@ -413,9 +412,18 @@ int CGuiHandler::ParseIconSlot(const std::string& text) const
 }
 
 
-bool CGuiHandler::ReloadConfig(const std::string& fileName)
+bool CGuiHandler::ReloadConfigFromFile(const std::string& fileName)
 {
-	LoadConfig(fileName);
+	CFileHandler ifs(fileName);
+	std::string cfg;
+	ifs.LoadStringData(cfg);
+	return ReloadConfigFromString(cfg);
+}
+
+
+bool CGuiHandler::ReloadConfigFromString(const std::string& cfg)
+{
+	LoadConfig(cfg);
 	activePage = 0;
 	selectedUnits.SetCommandPage(activePage);
 	LayoutIcons(false);

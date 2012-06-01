@@ -21,6 +21,7 @@ public:
 	static std::vector<std::string> Split(const std::string& str, const std::string& delimitters);
 
 	CSimpleParser(CFileHandler& fh);
+	CSimpleParser(const std::string& filecontent);
 
 	/** Returns the current line number. */
 	int GetLineNumber() const;
@@ -29,8 +30,13 @@ public:
 	/** Returns the next non-blank line (without newlines or comments). */
 	std::string GetCleanLine();
 
+	bool Eof() const {
+		return (curPos >= file.size());
+	}
+
 private:
-	CFileHandler& file;
+	std::string file;
+	std::string::size_type curPos;
 	int lineNumber;
 	bool inComment;
 };

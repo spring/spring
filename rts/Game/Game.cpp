@@ -631,7 +631,7 @@ void CGame::LoadInterface()
 
 	// interface components
 	ReColorTeams();
-	cmdColors.LoadConfig("cmdcolors.txt");
+	cmdColors.LoadConfigFromFile("cmdcolors.txt");
 
 	{
 		ScopedOnceTimer timer("Game::LoadInterface (Console)");
@@ -1093,8 +1093,6 @@ bool CGame::Draw() {
 
 	if (UpdateUnsynced())
 		return true;
-
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 	const spring_time currentTime = spring_gettime();
@@ -1907,7 +1905,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams)
 			for (int i = 0; i < numTeams; ++i) {
 				record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
 				netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
-				*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
+				*buf << (uint8_t)teamHandler->Team(i)->teamNum << *(teamHandler->Team(i)->currentStats);
 				net->Send(buf);
 			}
 		}

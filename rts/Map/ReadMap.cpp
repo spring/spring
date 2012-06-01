@@ -33,7 +33,7 @@
 //////////////////////////////////////////////////////////////////////
 
 // assigned to in CGame::CGame ("readmap = CReadMap::LoadMap(mapname)")
-CReadMap* readmap = 0;
+CReadMap* readmap = NULL;
 
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
@@ -43,12 +43,12 @@ CR_REG_METADATA(CReadMap, (
 
 CReadMap* CReadMap::LoadMap(const std::string& mapname)
 {
-	if (mapname.length() < 3)
-		throw content_error("CReadMap::LoadMap(): mapname '" + mapname + "' too short");
-
 	const std::string extension = FileSystem::GetExtension(mapname);
-
 	CReadMap* rm = NULL;
+
+	if (extension.empty()) {
+		throw content_error("CReadMap::LoadMap(): missing file extension in mapname '" + mapname + "'");
+	}
 
 	if (extension == "sm3") {
 		rm = new CSM3ReadMap(mapname);
@@ -210,6 +210,11 @@ void CReadMap::CalcHeightmapChecksum()
 		if (heightmap[i] > initMaxHeight) { initMaxHeight = heightmap[i]; }
 		mapChecksum +=  (unsigned int) (heightmap[i] * 100);
 		mapChecksum ^= *(unsigned int*) &heightmap[i];
+	}
+
+	for (unsigned int a = 0; a < mapInfo->map.name.size(); ++a) {
+		mapChecksum += mapInfo->map.name[a];
+		mapChecksum *= mapInfo->map.name[a];
 	}
 
 	currMinHeight = initMinHeight;

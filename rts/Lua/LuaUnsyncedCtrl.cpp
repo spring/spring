@@ -192,8 +192,10 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SendLuaGaiaMsg);
 	REGISTER_LUA_CFUNC(SendLuaRulesMsg);
 
-	REGISTER_LUA_CFUNC(SetActiveCommand);
+	REGISTER_LUA_CFUNC(LoadCmdColorsConfig);
+	REGISTER_LUA_CFUNC(LoadCtrlPanelConfig);
 
+	REGISTER_LUA_CFUNC(SetActiveCommand);
 	REGISTER_LUA_CFUNC(ForceLayoutUpdate);
 
 	REGISTER_LUA_CFUNC(SetMouseCursor);
@@ -1896,6 +1898,31 @@ int LuaUnsyncedCtrl::SetActiveCommand(lua_State* L)
 		return SetActiveCommandByAction(L);
 	}
 	luaL_error(L, "Incorrect arguments to SetActiveCommand()");
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::LoadCmdColorsConfig(lua_State* L)
+{
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+	const string cfg = luaL_checkstring(L, 1);
+	cmdColors.LoadConfigFromString(cfg);
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::LoadCtrlPanelConfig(lua_State* L)
+{
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+	if (guihandler == NULL) {
+		return 0;
+	}
+	const string cfg = luaL_checkstring(L, 1);
+	guihandler->ReloadConfigFromString(cfg);
 	return 0;
 }
 

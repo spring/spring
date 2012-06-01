@@ -255,6 +255,7 @@ bool COggStream::UpdateBuffers()
 		if (active)
 			alSourceQueueBuffers(source, 1, &buffer); CheckError("COggStream::UpdateBuffers");
 	}
+	CheckError("COggStream::UpdateBuffers");
 
 	return active;
 }

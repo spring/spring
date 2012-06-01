@@ -32,9 +32,16 @@
 #include "System/Util.h"
 
 #define DRAW_QUAD_SIZE 32
-#define FEATURE_DIST 3000.0f
 
 CONFIG(bool, ShowRezBars).defaultValue(true);
+
+CONFIG(float, FeatureDrawDistance)
+.defaultValue(6000.0f)
+.minimumValue(0.0f);
+
+CONFIG(float, FeatureFadeDistance)
+.defaultValue(4500.0f)
+.minimumValue(0.0f);
 
 CFeatureDrawer* featureDrawer = NULL;
 
@@ -61,6 +68,8 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 #ifdef USE_GML
 	showRezBars = configHandler->GetBool("ShowRezBars");
 #endif
+	featureDrawDistance = configHandler->GetFloat("FeatureDrawDistance");
+	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
 	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
 	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);
 
@@ -308,7 +317,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 
 	const float sqDist = (feature->pos - camera->pos).SqLength();
 	const float farLength = feature->sqRadius * unitDrawer->unitDrawDistSqr;
-	const float sqFadeDistEnd = (FEATURE_DIST * 2.0f) * (FEATURE_DIST * 2.0f);
+	const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 
 	if (sqDist >= std::min(farLength, sqFadeDistEnd)) return false;
 
@@ -525,7 +534,7 @@ public:
 
 					if (farLength < sqFadeDistEnd) {
 						sqFadeDistE = farLength;
-						sqFadeDistB = farLength * 0.75f * 0.75f;
+						sqFadeDistB = farLength * sqFadeDistBegin / sqFadeDistEnd;
 					} else {
 						sqFadeDistE = sqFadeDistEnd;
 						sqFadeDistB = sqFadeDistBegin;
@@ -553,26 +562,19 @@ public:
 
 void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 {
-	float featureDist = FEATURE_DIST;
-
-	if (extraSize == 0) {
-		// far-features are not drawn during shadowpass anyway
-		featureDist *= 2.0f;
-	}
-
 	CFeatureQuadDrawer drawer;
 	drawer.drawQuads = &drawQuads;
 	drawer.drawQuadsX = drawQuadsX;
 	drawer.drawReflection = water->IsDrawReflection();
 	drawer.drawRefraction = water->IsDrawRefraction();
-	drawer.sqFadeDistEnd = featureDist * featureDist;
-	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
+	drawer.sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
+	drawer.sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
 	drawer.farFeatures = drawFar;
 #ifdef USE_GML
 	drawer.statFeatures = showRezBars ? &drawStat : NULL;
 #endif
 
-	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
+	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
 }
 
 void CFeatureDrawer::SwapFeatures() {

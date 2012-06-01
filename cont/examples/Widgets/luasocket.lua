@@ -16,17 +16,15 @@ return {
 }
 end
 
---VFS.Include(LUAUI_DIRNAME .. "Widgets/socket/socket.lua")
-
 local socket = socket
 
 local client
 local set
 local headersent
 
-local host = "localhost"
+local host = "springrts.com"
 local port = 80
-local file = "/"
+local file = "/dl/buildbot/default/master/LATEST"
 
 local function dumpConfig()
 	-- dump all luasocket related config settings to console

@@ -13,6 +13,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Game/UI/InputReceiver.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Lua/LuaLoadScreen.h"
 #include "Map/MapInfo.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
@@ -82,8 +83,11 @@ void CLoadScreen::Init()
 
 	game = new CGame(mapName, modName, saveFile);
 
-	//FIXME: remove when LuaLoadScreen was added
-	{
+	// new stuff
+	CLuaLoadScreen::LoadHandler();
+
+	// old stuff
+	if (!luaLoadScreen) {
 		const CTeam* team = teamHandler->Team(gu->myTeam);
 		assert(team);
 		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
@@ -131,6 +135,16 @@ CLoadScreen::~CLoadScreen()
 		netHeartbeatThread->join();
 	delete netHeartbeatThread; netHeartbeatThread = NULL;
 
+	if (!gu->globalQuit)
+		activeController = game;
+	
+	if (activeController == this)
+		activeController = NULL;
+
+	if (luaLoadScreen)
+		luaLoadScreen->Shutdown();
+	CLuaLoadScreen::FreeHandler();
+
 	if (!gu->globalQuit) {
 		//! sending your playername to the server indicates that you are finished loading
 		const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
@@ -149,14 +163,9 @@ CLoadScreen::~CLoadScreen()
 		}
 #endif
 		game->SetupRenderingParams();
-
-		activeController = game;
 	}
 
 	UnloadStartPicture();
-
-	if (activeController == this)
-		activeController = NULL;
 
 	singleton = NULL;
 }
@@ -189,21 +198,16 @@ void CLoadScreen::DeleteInstance()
 
 void CLoadScreen::ResizeEvent()
 {
-	//eventHandler.ViewResize();
+	if (luaLoadScreen)
+		luaLoadScreen->ViewResize();
 }
 
 
 int CLoadScreen::KeyPressed(unsigned short k, bool isRepeat)
 {
-	//! try the input receivers
-	/*std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
-	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		CInputReceiver* recv = *ri;
-		if (recv && recv->KeyPressed(k, isRepeat)) {
-			return 0;
-		}
-	}*/
+	//FIXME add mouse events
+	if (luaLoadScreen)
+		luaLoadScreen->KeyPress(k, isRepeat);
 
 	return 0;
 }
@@ -211,15 +215,8 @@ int CLoadScreen::KeyPressed(unsigned short k, bool isRepeat)
 
 int CLoadScreen::KeyReleased(unsigned short k)
 {
-	//! try the input receivers
-	/*std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
-	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		CInputReceiver* recv = *ri;
-		if (recv && recv->KeyReleased(k)) {
-			return 0;
-		}
-	}*/
+	if (luaLoadScreen)
+		luaLoadScreen->KeyRelease(k);
 
 	return 0;
 }
@@ -248,7 +245,8 @@ bool CLoadScreen::Draw()
 	if (mt_loading) {
 		spring_time now = spring_gettime();
 		unsigned diff_ms = spring_tomsecs(now - last_draw);
-		static unsigned min_frame_time = 40; //! 40ms = 25FPS
+		static const unsigned wantedFPS = 50;
+		static const unsigned min_frame_time = 1000 / wantedFPS;
 		if (diff_ms < min_frame_time) {
 			spring_time nap = spring_msecs(min_frame_time - diff_ms);
 			spring_sleep(nap);
@@ -261,42 +259,47 @@ bool CLoadScreen::Draw()
 
 	ClearScreen();
 
-	float xDiv = 0.0f;
-	float yDiv = 0.0f;
-	const float ratioComp = globalRendering->aspectRatio / aspectRatio;
-	if (fabs(ratioComp - 1.0f) < 0.01f) { //! ~= 1
-		//! show Load-Screen full screen
-		//! nothing to do
-	} else if (ratioComp > 1.0f) {
-		//! show Load-Screen on part of the screens X-Axis only
-		xDiv = (1.0f - (1.0f / ratioComp)) * 0.5f;
+	if (luaLoadScreen) {
+		luaLoadScreen->DrawLoadScreen();
 	} else {
-		//! show Load-Screen on part of the screens Y-Axis only
-		yDiv = (1.0f - ratioComp) * 0.5f;
-	}
+		float xDiv = 0.0f;
+		float yDiv = 0.0f;
+		const float ratioComp = globalRendering->aspectRatio / aspectRatio;
+		if (fabs(ratioComp - 1.0f) < 0.01f) { //! ~= 1
+			//! show Load-Screen full screen
+			//! nothing to do
+		} else if (ratioComp > 1.0f) {
+			//! show Load-Screen on part of the screens X-Axis only
+			xDiv = (1.0f - (1.0f / ratioComp)) * 0.5f;
+		} else {
+			//! show Load-Screen on part of the screens Y-Axis only
+			yDiv = (1.0f - ratioComp) * 0.5f;
+		}
 
-	//! Draw loading screen & print load msg.
-	if (startupTexture) {
-		glBindTexture(GL_TEXTURE_2D,startupTexture);
-		glBegin(GL_QUADS);
-			glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f + xDiv, 0.0f + yDiv);
-			glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f + xDiv, 1.0f - yDiv);
-			glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f - xDiv, 1.0f - yDiv);
-			glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f - xDiv, 0.0f + yDiv);
-		glEnd();
+		//! Draw loading screen & print load msg.
+		if (startupTexture) {
+			glBindTexture(GL_TEXTURE_2D,startupTexture);
+			glBegin(GL_QUADS);
+				glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f + xDiv, 0.0f + yDiv);
+				glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f + xDiv, 1.0f - yDiv);
+				glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f - xDiv, 1.0f - yDiv);
+				glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f - xDiv, 0.0f + yDiv);
+			glEnd();
+		}
+
+		font->Begin();
+			font->SetTextColor(0.5f,0.5f,0.5f,0.9f);
+			font->glPrint(0.1f,0.9f,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
+				oldLoadMessages);
+
+			font->SetTextColor(0.9f,0.9f,0.9f,0.9f);
+			float posy = font->GetTextNumLines(oldLoadMessages) * font->GetLineHeight() * globalRendering->viewSizeY / 35.0f;
+			font->glPrint(0.1f,0.9f - posy * globalRendering->pixelY,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
+				curLoadMessage);
+		font->End();
 	}
 
 	font->Begin();
-		font->SetTextColor(0.5f,0.5f,0.5f,0.9f);
-		font->glPrint(0.1f,0.9f,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
-			oldLoadMessages);
-
-		font->SetTextColor(0.9f,0.9f,0.9f,0.9f);
-		float posy = font->GetTextNumLines(oldLoadMessages) * font->GetLineHeight() * globalRendering->viewSizeY / 35.0f;
-		font->glPrint(0.1f,0.9f - posy * globalRendering->pixelY,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
-			curLoadMessage);
-
-
 		font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
 		font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
 #ifdef USE_GML
@@ -337,6 +340,9 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 
 	LOG("%s", text.c_str());
 	LOG_CLEANUP();
+
+	if (luaLoadScreen)
+		luaLoadScreen->LoadProgress(text, replace_lastline);
 
 	//! Check the FPU state (needed for synced computations),
 	//! some external libraries which get linked during loading might reset those.
