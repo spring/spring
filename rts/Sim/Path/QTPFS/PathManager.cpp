@@ -428,17 +428,19 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 }
 
 void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum) {
-	const NodeLayer& nl = nodeLayers[layerNum];
-	const SRectangle& r = nl.GetQueuedUpdateRectangle();
-
 	// flush this layer's entire update-queue if necessary
 	// called at run-time only, not load-time so we always
 	// *want* tesselation here
 	while (nodeLayers[layerNum].HaveQueuedUpdate()) {
+		const NodeLayer& nl = nodeLayers[layerNum];
+		const SRectangle& r = nl.GetQueuedUpdateRectangle();
+
 		if (nodeLayers[layerNum].ExecQueuedUpdate()) {
 			nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], r);
 			pathCaches[layerNum].MarkDeadPaths(r);
 		}
+
+		nodeLayers[layerNum].PopQueuedUpdate();
 
 		if (pathSearches[layerNum].empty()) {
 			// no pending searches this frame, stop flushing
