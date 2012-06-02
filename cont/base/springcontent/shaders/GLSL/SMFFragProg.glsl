@@ -206,7 +206,7 @@ void main() {
 	// increase contrast and brightness for the overlays
 	// TODO: make the multiplier configurable by users?
 	diffuseCol.rgb += (texture2D(infoTex, infoTexCoords).rgb * infoTexIntensityMul);
-	diffuseCol.rgb -= vec3(0.5, 0.5, 0.5);
+	diffuseCol.rgb -= (vec3(0.5, 0.5, 0.5) * int(infoTexIntensityMul == 1));
 	#endif
 
 
