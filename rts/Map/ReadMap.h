@@ -72,6 +72,7 @@ public:
 	 */
 	void UpdateHeightMapSynced(SRectangle rect, bool initialize = false);
 	void UpdateLOS(const SRectangle& rect);
+	void BecomeSpectator();
 	void UpdateDraw();
 
 	virtual ~CReadMap();

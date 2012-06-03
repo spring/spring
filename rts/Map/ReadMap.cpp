@@ -546,3 +546,11 @@ void CReadMap::UpdateLOS(const SRectangle& rect)
 	HeightMapUpdateLOSCheck(rect);
 #endif
 }
+
+
+void CReadMap::BecomeSpectator()
+{
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	HeightMapUpdateLOSCheck(SRectangle(0, 0, gs->mapx, gs->mapy));
+#endif
+}
