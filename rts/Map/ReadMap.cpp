@@ -238,7 +238,7 @@ void CReadMap::UpdateDraw()
 		static bool first = true;
 		if (!first) {
 			unsyncedHeightMapUpdates.Optimize();
-			int updateArea = unsyncedHeightMapUpdates.GetArea() * 0.0625f + (50 * 50);
+			int updateArea = unsyncedHeightMapUpdates.GetTotalArea() * 0.0625f + (50 * 50);
 
 			while (updateArea > 0 && !unsyncedHeightMapUpdates.empty()) {
 				const SRectangle& rect = unsyncedHeightMapUpdates.front();
