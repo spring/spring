@@ -146,8 +146,8 @@ public:
 	const float3* GetCenterNormalsUnsynced()  const { return GetCenterNormalsSynced(); }
 #endif
 
-	// shared interface
-	// Use when code is shared between synced & unsynced, in such cases these functions will have a better branch-prediciton behavior.
+	/// shared interface
+	/// Use when code is shared between synced & unsynced, in such cases these functions will have a better branch-prediciton behavior.
 	static const float* GetCornerHeightMap(const bool& synced);
 	static const float* GetCenterHeightMap(const bool& synced);
 	static const float3* GetFaceNormals(const bool& synced);
@@ -166,8 +166,8 @@ public:
 	CMetalMap* metalMap;
 
 	int width, height;
-	float initMinHeight, initMaxHeight; //! initial minimum- and maximum-height (before any deformations)
-	float currMinHeight, currMaxHeight; //! current minimum- and maximum-height 
+	float initMinHeight, initMaxHeight; //< initial minimum- and maximum-height (before any deformations)
+	float currMinHeight, currMaxHeight; //< current minimum- and maximum-height 
 
 	unsigned int mapChecksum;
 
@@ -182,10 +182,10 @@ private:
 	inline void InitHeightMapDigestsVectors();
 
 protected:
-	std::vector<float>* heightMapSynced;      /// size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
-	std::vector<float>* heightMapUnsynced;    /// size: (mapx+1)*(mapy+1) (per vertex) [UNSYNCED]
-	std::vector<float> originalHeightMap;    /// size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, does NOT update on terrain deformation]
-	std::vector<float> centerHeightMap;      /// size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+	std::vector<float>* heightMapSynced;      //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
+	std::vector<float>* heightMapUnsynced;    //< size: (mapx+1)*(mapy+1) (per vertex) [UNSYNCED]
+	std::vector<float> originalHeightMap;    //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, does NOT update on terrain deformation]
+	std::vector<float> centerHeightMap;      //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
 	std::vector< std::vector<float> > mipCenterHeightMaps;
 
 	/**
@@ -195,13 +195,13 @@ protected:
 	 */
 	std::vector< float* > mipPointerHeightMaps;
 
-	std::vector<float3> visVertexNormals;      /// size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
-	std::vector<float3> faceNormalsSynced;     /// size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
-	std::vector<float3> faceNormalsUnsynced;   /// size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [UNSYNCED]
-	std::vector<float3> centerNormalsSynced;   /// size:   mapx      *  mapy     , contains 1 interpolated normal per quad, same as (facenormal0+facenormal1).Normalize()) [SYNCED]
+	std::vector<float3> visVertexNormals;      //< size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
+	std::vector<float3> faceNormalsSynced;     //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
+	std::vector<float3> faceNormalsUnsynced;   //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [UNSYNCED]
+	std::vector<float3> centerNormalsSynced;   //< size:   mapx      *  mapy     , contains 1 interpolated normal per quad, same as (facenormal0+facenormal1).Normalize()) [SYNCED]
 	std::vector<float3> centerNormalsUnsynced;
 
-	std::vector<float> slopeMap;               /// size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
+	std::vector<float> slopeMap;               //< size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
 	std::vector<unsigned char> typeMap;
 
 	CRectangleOptimizer unsyncedHeightMapUpdates;
