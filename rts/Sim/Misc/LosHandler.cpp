@@ -89,8 +89,8 @@ CLosHandler::CLosHandler() :
 	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readmap->GetMIPHeightMapSynced(losMipLevel))
 {
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		losMaps[a].SetSize(losSizeX, losSizeY);
-		airLosMaps[a].SetSize(airSizeX, airSizeY);
+		losMaps[a].SetSize(losSizeX, losSizeY, true);
+		airLosMaps[a].SetSize(airSizeX, airSizeY, false);
 	}
 }
 
