@@ -15,6 +15,7 @@
 #include "Game/UI/UnitTracker.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
@@ -112,8 +113,10 @@ void CPlayer::StartSpectating()
 		gu->spectatingFullView   = true;
 		gu->spectatingFullSelect = true;
 
+		//FIXME use eventHandler?
 		CLuaUI::UpdateTeams();
 		selectedUnits.ClearSelected();
+		readmap->BecomeSpectator();
 		unitTracker.Disable();
 	}
 
