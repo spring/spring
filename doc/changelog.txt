@@ -13,6 +13,7 @@ Changes:
  - added pr-downloader as submodule (only compiled if libcurldev is available)
  - limit infolog.txt buffer to 8kB
  - open a MessageBox on systems with unsupported GPUs (+drivers) on engine start (suppressible with a config-tag)
+ ! remove selectkeys.txt support (use uikeys.txt instead)
 
 Bugfixes:
  - dedicated server no longer consumes 100% CPU while waiting for gameID
