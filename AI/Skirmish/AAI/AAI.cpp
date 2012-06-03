@@ -118,6 +118,7 @@ AAI::~AAI()
 
 	initialized = false;
 	fclose(file);
+	file = NULL;
 }
 
 
