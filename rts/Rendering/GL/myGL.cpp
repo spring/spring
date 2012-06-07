@@ -172,13 +172,17 @@ static bool GetAvailableVideoRAM(GLint* memory)
 	if (GLEW_NVX_gpu_memory_info) {
 		glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &memory[0]);
 		glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &memory[1]);
-	}
+	} else
 	if (GLEW_ATI_meminfo) {
 		GLint texMemInfo[4];
 		glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, texMemInfo);
 
 		memory[0] = texMemInfo[1];
 		memory[1] = texMemInfo[0];
+	} else
+	{
+		memory[0] = SDL_GetVideoInfo()->video_mem;
+		memory[1] = memory[0]; // not available
 	}
 
 	return true;
