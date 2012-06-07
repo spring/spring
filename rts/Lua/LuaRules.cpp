@@ -914,14 +914,14 @@ bool CLuaRules::DrawUnit(int unitID)
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
 
-	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled();
-	LuaOpenGL::SetDrawingEnabled(true);
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	lua_pushnumber(L, unitID);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 2, 1);
-	LuaOpenGL::SetDrawingEnabled(oldDrawState);
+	LuaOpenGL::SetDrawingEnabled(L, oldDrawState);
 
 	if (!success)
 		return false;
@@ -949,14 +949,14 @@ bool CLuaRules::DrawFeature(int featureID)
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
 
-	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled();
-	LuaOpenGL::SetDrawingEnabled(true);
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	lua_pushnumber(L, featureID);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 2, 1);
-	LuaOpenGL::SetDrawingEnabled(oldDrawState);
+	LuaOpenGL::SetDrawingEnabled(L, oldDrawState);
 
 	if (!success)
 		return false;
@@ -984,15 +984,15 @@ bool CLuaRules::DrawShield(int unitID, int weaponID)
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
 
-	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled();
-	LuaOpenGL::SetDrawingEnabled(true);
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	lua_pushnumber(L, unitID);
 	lua_pushnumber(L, weaponID);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 3, 1);
-	LuaOpenGL::SetDrawingEnabled(oldDrawState);
+	LuaOpenGL::SetDrawingEnabled(L, oldDrawState);
 
 	if (!success)
 		return false;

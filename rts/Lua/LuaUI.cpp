@@ -911,11 +911,15 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 		const int srcCount = lua_gettop(srcState);
 
 		LuaUtils::CopyData(L, srcState, srcCount);
+		const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+		LuaOpenGL::SetDrawingEnabled(L, LuaOpenGL::IsDrawingEnabled(srcState));
 
 		// call the function
 		if (!RunCallIn(funcHash, srcCount, LUA_MULTRET)) {
+			LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
 			return 0;
 		}
+		LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
 		retCount = lua_gettop(L) - top;
 
 		lua_settop(srcState, 0);
