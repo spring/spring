@@ -2062,8 +2062,12 @@ void CLuaHandle::DrawGenesis()
 		return;
 	}
 
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
 
@@ -2076,8 +2080,12 @@ void CLuaHandle::DrawWorld()
 		return;
 	}
 
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
 
@@ -2090,8 +2098,12 @@ void CLuaHandle::DrawWorldPreUnit()
 		return;
 	}
 
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
 
@@ -2104,8 +2116,12 @@ void CLuaHandle::DrawWorldShadow()
 		return;
 	}
 
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
 
@@ -2118,8 +2134,12 @@ void CLuaHandle::DrawWorldReflection()
 		return;
 	}
 
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
 
@@ -2132,8 +2152,12 @@ void CLuaHandle::DrawWorldRefraction()
 		return;
 	}
 
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
 
@@ -2149,8 +2173,12 @@ void CLuaHandle::DrawScreen()
 	lua_pushnumber(L, globalRendering->viewSizeX);
 	lua_pushnumber(L, globalRendering->viewSizeY);
 
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
 	// call the routine
 	RunCallInUnsynced(cmdStr, 2, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
 
@@ -2166,8 +2194,12 @@ void CLuaHandle::DrawScreenEffects()
 	lua_pushnumber(L, globalRendering->viewSizeX);
 	lua_pushnumber(L, globalRendering->viewSizeY);
 
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
 	// call the routine
 	RunCallInUnsynced(cmdStr, 2, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
 
@@ -2191,8 +2223,13 @@ void CLuaHandle::DrawInMiniMap()
 	lua_pushnumber(L, xSize);
 	lua_pushnumber(L, ySize);
 
+	const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
 	// call the routine
 	RunCallInUnsynced(cmdStr, 2, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
 }
 
 

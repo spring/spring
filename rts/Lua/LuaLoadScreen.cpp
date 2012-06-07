@@ -414,16 +414,18 @@ void CLuaLoadScreen::DrawLoadScreen()
 	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("DrawLoadScreen");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
+		//LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
 		return; // the call is not defined
 	}
-	
+
+	LuaOpenGL::SetDrawingEnabled(L, true);
 	LuaOpenGL::EnableCommon(LuaOpenGL::DRAW_SCREEN);
 
 	// call the routine
 	RunCallIn(cmdStr, 0, 0);
 	
 	LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
+	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
 
