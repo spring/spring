@@ -86,7 +86,7 @@ bool LuaFonts::CreateMetatable(lua_State* L)
 
 inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 {
-	if (!LuaOpenGL::IsDrawingEnabled()) {
+	if (!LuaOpenGL::IsDrawingEnabled(L)) {
 		luaL_error(L, "%s(): OpenGL calls can only be used in Draw() "
 		              "call-ins, or while creating display lists", caller);
 	}
