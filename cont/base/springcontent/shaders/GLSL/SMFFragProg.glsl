@@ -203,10 +203,10 @@ void main() {
 	}
 	#endif
 	#if (HAVE_INFOTEX == 1)
-	// increase contrast and brightness for the overlays
-	// TODO: make the multiplier configurable by users?
-	diffuseCol.rgb += (texture2D(infoTex, infoTexCoords).rgb * infoTexIntensityMul);
-	diffuseCol.rgb -= (vec3(0.5, 0.5, 0.5) * float(infoTexIntensityMul == 1));
+		// increase contrast and brightness for the overlays
+		// TODO: make the multiplier configurable by users?
+		diffuseCol.rgb += (texture2D(infoTex, infoTexCoords).rgb * infoTexIntensityMul);
+		diffuseCol.rgb -= (vec3(0.5, 0.5, 0.5) * float(infoTexIntensityMul == 1));
 	#endif
 
 
