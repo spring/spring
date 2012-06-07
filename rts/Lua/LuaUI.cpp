@@ -859,13 +859,8 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 
 			LuaUtils::ShallowDataDump sdd;
 			sdd.type = LUA_TSTRING;
-
-			size_t len = funcName.length();
 			sdd.data.str = new std::string;
-			if (len > 0) {
-				sdd.data.str->resize(len);
-				memcpy(&(*sdd.data.str)[0], funcName.c_str(), len);
-			}
+			*sdd.data.str = funcName;
 
 			ddmp.data.push_back(sdd);
 
