@@ -50,6 +50,7 @@ void main() {
 
 	// transform vertex pos
 	gl_Position = gl_ModelViewMatrix * gl_Vertex;
+	gl_ClipVertex = gl_Position;
 	float fogCoord = length(gl_Position.xyz);
 	gl_Position = gl_ProjectionMatrix * gl_Position;
 
