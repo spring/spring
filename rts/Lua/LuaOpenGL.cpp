@@ -441,7 +441,6 @@ void LuaOpenGL::EnableCommon(DrawMode mode)
 {
 	assert(drawMode == DRAW_NONE);
 	drawMode = mode;
-	SetDrawingEnabled(true);
 	if (safeMode) {
 		glPushAttrib(AttribBits);
 		glCallList(resetStateList);
@@ -458,7 +457,6 @@ void LuaOpenGL::DisableCommon(DrawMode mode)
 	// FIXME  --  not needed by shadow or minimap
 	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 	drawMode = DRAW_NONE;
-	SetDrawingEnabled(false);
 	if (safeMode) {
 		glPopAttrib();
 	}
@@ -1016,7 +1014,7 @@ static inline bool CheckModUICtrl()
 
 inline void LuaOpenGL::CheckDrawingEnabled(lua_State* L, const char* caller)
 {
-	if (!IsDrawingEnabled()) {
+	if (!IsDrawingEnabled(L)) {
 		luaL_error(L, "%s(): OpenGL calls can only be used in Draw() "
 		              "call-ins, or while creating display lists", caller);
 	}
@@ -4639,8 +4637,8 @@ int LuaOpenGL::CreateList(lua_State* L)
 	}
 
 	// save the current state
-	const bool origDrawingEnabled = IsDrawingEnabled();
-	SetDrawingEnabled(true);
+	const bool origDrawingEnabled = IsDrawingEnabled(L);
+	SetDrawingEnabled(L, true);
 
 	// build the list with the specified lua call/args
 	glNewList(list, GL_COMPILE);
@@ -4660,7 +4658,7 @@ int LuaOpenGL::CreateList(lua_State* L)
 	}
 
 	// restore the state
-	SetDrawingEnabled(origDrawingEnabled);
+	SetDrawingEnabled(L, origDrawingEnabled);
 
 	return 1;
 }

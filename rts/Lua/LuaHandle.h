@@ -46,7 +46,7 @@ class CLuaHandle;
 
 struct luaContextData {
 	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
-		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false), owner(NULL) {}
+		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false), owner(NULL), drawingEnabled(false) {}
 	bool fullCtrl;
 	bool fullRead;
 	int  ctrlTeam;
@@ -62,6 +62,7 @@ struct luaContextData {
 	CLuaDisplayLists displayLists;
 	bool synced;
 	CLuaHandle *owner;
+	bool drawingEnabled;
 };
 
 class CLuaHandle : public CEventClient
@@ -426,12 +427,11 @@ class CLuaHandle : public CEventClient
 		friend class CLuaUnitScript;
 	private:
 		struct staticLuaContextData {
-			staticLuaContextData() : activeFullRead(false), activeReadAllyTeam(CEventClient::NoAccessTeam), 
-				activeHandle(NULL), drawingEnabled(false) {}
+			staticLuaContextData() : activeFullRead(false), activeReadAllyTeam(CEventClient::NoAccessTeam),
+				activeHandle(NULL) {}
 			bool activeFullRead;
 			int  activeReadAllyTeam;
 			CLuaHandle* activeHandle;
-			bool drawingEnabled;
 		};
 		static staticLuaContextData S_Sim;
 		static staticLuaContextData S_Draw;
