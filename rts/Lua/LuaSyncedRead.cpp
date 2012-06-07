@@ -2885,7 +2885,7 @@ int LuaSyncedRead::GetUnitVelocity(lua_State* L)
 	lua_pushnumber(L, unit->speed.y);
 	lua_pushnumber(L, unit->speed.z);
 
-	if (lua_isboolean(L, 1) && lua_toboolean(L, 1)) {
+	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
 		lua_pushnumber(L, unit->speed.Length());
 		return 4;
 	}
