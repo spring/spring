@@ -147,16 +147,6 @@ SectionGroup "Multiplayer battlerooms"
 	SectionEnd
 SectionGroupEnd
 
-
-SectionGroup "Multiplayer lobby servers"
-	Section "TASServer" SEC_TASSERVER
-		!define INSTALL
-			${!echonow} "Processing: TASServer"
-			!include "sections\tasServer.nsh"
-		!undef INSTALL
-	SectionEnd
-SectionGroupEnd
-
 Section "Desktop shortcuts" SEC_DESKTOP
 	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
 		!define INSTALL
@@ -263,7 +253,6 @@ Section Uninstall
 	!include "sections\shortcuts_desktop.nsh"
 	!include "sections\portable.nsh"
 	!include "sections\zeroK.nsh"
-	!include "sections\tasServer.nsh"
 	!ifdef NSI_UNINSTALL_FILES
 	!include "${NSI_UNINSTALL_FILES}"
 	!endif
