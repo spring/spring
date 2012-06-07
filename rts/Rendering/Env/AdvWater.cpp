@@ -87,7 +87,6 @@ CAdvWater::CAdvWater(bool loadShader)
 	delete[] scrap;
 
 	if (loadShader) {
-		// NOTE: needs a VP with OPTION ARB_position_invariant for clipping if !haveGLSL
 		waterFP = LoadFragmentProgram("ARB/water.fp");
 	}
 
