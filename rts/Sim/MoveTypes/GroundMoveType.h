@@ -54,7 +54,7 @@ private:
 	void GetNextWayPoint();
 	bool CanGetNextWayPoint();
 
-	float BreakingDistance(float speed) const;
+	float BrakingDistance(float speed) const;
 	float3 Here();
 
 	void StartEngine();
@@ -64,11 +64,20 @@ private:
 	void Fail();
 
 	void HandleObjectCollisions();
-	void HandleBuildingCollision(
+	void HandleStaticObjectCollisionYM(
 		CUnit* collider,
+		CSolidObject* collidee,
 		const MoveDef* colliderMD,
 		const CMoveMath* colliderMM,
 		bool repath);
+	void HandleStaticObjectCollision(
+		CUnit* collider,
+		CSolidObject* collidee,
+		const MoveDef* colliderMD,
+		const CMoveMath* colliderMM,
+		const float3& collisionImpulse,
+		bool repath);
+
 	void HandleUnitCollisions(
 		CUnit* collider,
 		const float colliderSpeed,
