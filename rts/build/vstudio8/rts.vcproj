@@ -5085,7 +5085,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\builds\DS\main.cpp"
+				RelativePath="..\..\builds\dedicated\main.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
