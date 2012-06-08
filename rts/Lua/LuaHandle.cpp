@@ -148,7 +148,7 @@ void CLuaHandle::KillLua()
 
 int CLuaHandle::KillActiveHandle(lua_State* L)
 {
-	CLuaHandle* ah = GetActiveHandle();
+	CLuaHandle* ah = GetHandle(L);
 	if (ah) {
 		const int args = lua_gettop(L);
 		if ((args >= 1) && lua_isstring(L, 1)) {
@@ -325,7 +325,7 @@ int CLuaHandle::SendToUnsynced(lua_State* L)
 			luaL_error(L, "Incorrect data type for SendToUnsynced(), arg %d", i);
 		}
 	}
-	CLuaHandle* lh = GetActiveHandle(L);
+	CLuaHandle* lh = GetHandle(L);
 	lh->RecvFromSynced(L, args);
 
 	return 0;
@@ -2894,7 +2894,7 @@ bool CLuaHandle::AddBasicCalls(lua_State *L)
 
 int CLuaHandle::CallOutGetName(lua_State* L)
 {
-	lua_pushsstring(L, GetActiveHandle(L)->GetName());
+	lua_pushsstring(L, GetHandle(L)->GetName());
 	return 1;
 }
 
@@ -2998,7 +2998,7 @@ int CLuaHandle::CallOutSyncedUpdateCallIn(lua_State* L)
 		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
 	}
 	const string name = lua_tostring(L, 1);
-	CLuaHandle *lh = GetActiveHandle(L);
+	CLuaHandle* lh = GetHandle(L);
 	lh->SyncedUpdateCallIn(lh->GetActiveState(), name);
 	return 0;
 }
@@ -3013,7 +3013,7 @@ int CLuaHandle::CallOutUnsyncedUpdateCallIn(lua_State* L)
 		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
 	}
 	const string name = lua_tostring(L, 1);
-	CLuaHandle *lh = GetActiveHandle(L);
+	CLuaHandle* lh = GetHandle(L);
 	lh->UnsyncedUpdateCallIn(lh->GetActiveState(), name);
 	return 0;
 }

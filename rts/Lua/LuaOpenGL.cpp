@@ -1655,12 +1655,13 @@ static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (ActiveReadAllyTeam() < 0) {
-		if (!ActiveFullRead()) {
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+	if (readAllyTeam < 0) {
+		if (!CLuaHandle::GetHandleFullRead(L)) {
 			return NULL;
 		}
 	} else {
-		if ((unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS) == 0) {
+		if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
 			return NULL;
 		}
 	}
