@@ -542,11 +542,13 @@ public:
 
 					if (sqDist < sqFadeDistB) {
 						cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
-						opaqueModelRenderers[MDL_TYPE(f)]->AddFeature(f);
+						if (camera->InView(f->drawMidPos, f->drawRadius))
+							opaqueModelRenderers[MDL_TYPE(f)]->AddFeature(f);
 					} else if (sqDist < sqFadeDistE) {
 						const float falpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
 						opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
-						cloakedModelRenderers[MDL_TYPE(f)]->AddFeature(f, falpha);
+						if (camera->InView(f->drawMidPos, f->drawRadius))
+							cloakedModelRenderers[MDL_TYPE(f)]->AddFeature(f, falpha);
 					}
 				} else {
 					if (farFeatures) {
