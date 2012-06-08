@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <vector>
+#include <boost/cstdint.hpp>
 
 
 #define LOG_SECTION_AUTOHOST_INTERFACE "AutohostInterface"
@@ -195,7 +196,7 @@ void AutohostInterface::SendQuit()
 
 void AutohostInterface::SendStartPlaying(const unsigned char* gameID, const std::string& demoName)
 {
-	if (demoName.size() > std::numeric_limits<uint32_t>::max() - 30)
+	if (demoName.size() > std::numeric_limits<boost::uint32_t>::max() - 30)
 		throw std::runtime_error("Path to demofile too long.");
 
 	const boost::uint32_t msgsize =
