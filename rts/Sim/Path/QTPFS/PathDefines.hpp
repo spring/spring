@@ -26,6 +26,7 @@
 #define QTPFS_CACHE_BASEDIR "cache/QTPFS/"
 
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
+#define QTPFS_CLOSED_NODE_COST (1 << 24)
 
 #endif
 
