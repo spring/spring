@@ -50,6 +50,8 @@ private:
 	static const unsigned int BUFFER_SIZE = (512 * 1024); // 512KB
 	static const unsigned int NUM_BUFFERS = 2;
 
+	char pcmDecodeBuffer[BUFFER_SIZE];
+
 	ALuint buffers[NUM_BUFFERS];
 	ALuint source;
 	ALenum format;
