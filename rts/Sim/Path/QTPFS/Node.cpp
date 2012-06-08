@@ -565,7 +565,24 @@ void QTPFS::QTNode::UpdateMoveCost(
 	// if we are not going to tesselate this node further
 	// and there is at least one impassable square inside
 	// it, make sure the pathfinder will not pick us
-	moveCostAvg = QTPFS_POSITIVE_INFINITY;
+	//
+	// HACK:
+	//   set the cost for *!PARTIALLY!* closed nodes to a
+	//   non-infinite value since these are often created
+	//   along factory exit lanes (most on non-square maps
+	//   or when MIN_SIZE_X > 1 or MIN_SIZE_Z > 1), but do
+	//   ensure their cost is still high enough so they get
+	//   expanded only when absolutely necessary
+	//
+	//   units with footprint dimensions equal to the size
+	//   of a lane would otherwise be unable to find a path
+	//   out of their factories
+	//
+	if (numClosedSquares < (xsize() * zsize())) {
+		moveCostAvg = QTPFS_CLOSED_NODE_COST * (numClosedSquares / float(xsize() * xsize()));
+	} else {
+		moveCostAvg = QTPFS_POSITIVE_INFINITY;
+	}
 }
 
 
