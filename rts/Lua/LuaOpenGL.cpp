@@ -1005,12 +1005,6 @@ void LuaOpenGL::ResetMiniMapMatrices()
 /******************************************************************************/
 /******************************************************************************/
 
-static inline bool CheckModUICtrl()
-{
-	return CLuaHandle::GetModUICtrl() ||
-	       ActiveHandle()->GetUserMode();
-}
-
 
 inline void LuaOpenGL::CheckDrawingEnabled(lua_State* L, const char* caller)
 {
@@ -1565,7 +1559,7 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 
 static inline bool IsFeatureVisible(const lua_State *L, const CFeature* feature)
 {
-	if (ActiveFullRead())
+	if (CLuaHandle::GetHandleFullRead(L))
 		return true;
 
 	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
@@ -4833,7 +4827,7 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 
 int LuaOpenGL::SaveImage(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const GLint x = (GLint)luaL_checknumber(L, 1);

@@ -243,20 +243,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 //
-//  Access helpers
-//
-
-
-static inline bool CheckModUICtrl()
-{
-	return CLuaHandle::GetModUICtrl() ||
-	       ActiveHandle()->GetUserMode();
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-//
 //  Parsing helpers
 //
 
@@ -1699,7 +1685,7 @@ int LuaUnsyncedCtrl::FreeUnitIcon(lua_State* L)
 // TODO: move this to LuaVFS?
 int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 
@@ -1771,7 +1757,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 
 int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if ((guihandler == NULL) || gs->noHelperAIs) {
@@ -1817,7 +1803,7 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 
 static int SetActiveCommandByIndex(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (guihandler == NULL) {
@@ -1859,7 +1845,7 @@ static int SetActiveCommandByIndex(lua_State* L)
 
 static int SetActiveCommandByAction(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (guihandler == NULL) {
@@ -1881,7 +1867,7 @@ static int SetActiveCommandByAction(lua_State* L)
 
 int LuaUnsyncedCtrl::SetActiveCommand(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (guihandler == NULL) {
@@ -1904,7 +1890,7 @@ int LuaUnsyncedCtrl::SetActiveCommand(lua_State* L)
 
 int LuaUnsyncedCtrl::LoadCmdColorsConfig(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const string cfg = luaL_checkstring(L, 1);
@@ -1915,7 +1901,7 @@ int LuaUnsyncedCtrl::LoadCmdColorsConfig(lua_State* L)
 
 int LuaUnsyncedCtrl::LoadCtrlPanelConfig(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (guihandler == NULL) {
@@ -1929,7 +1915,7 @@ int LuaUnsyncedCtrl::LoadCtrlPanelConfig(lua_State* L)
 
 int LuaUnsyncedCtrl::ForceLayoutUpdate(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (guihandler == NULL) {
@@ -1944,7 +1930,7 @@ int LuaUnsyncedCtrl::ForceLayoutUpdate(lua_State* L)
 
 int LuaUnsyncedCtrl::WarpMouse(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
@@ -1960,7 +1946,7 @@ int LuaUnsyncedCtrl::WarpMouse(lua_State* L)
 
 int LuaUnsyncedCtrl::SetMouseCursor(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 
@@ -1977,7 +1963,7 @@ int LuaUnsyncedCtrl::SetMouseCursor(lua_State* L)
 
 int LuaUnsyncedCtrl::SetCameraOffset(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (camera == NULL) {
@@ -2039,7 +2025,7 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 
 int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const string name = luaL_checkstring(L, 1);
@@ -2052,7 +2038,7 @@ int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 
 int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const string name = luaL_checkstring(L, 1);
@@ -2069,7 +2055,7 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 
 int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const string name = luaL_checkstring(L, 1);
@@ -2083,7 +2069,7 @@ int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 
 int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const string name  = luaL_checkstring(L, 1);
@@ -2103,7 +2089,7 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 
 int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const string dir = luaL_checkstring(L, 1);
@@ -2216,7 +2202,7 @@ int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
@@ -2256,7 +2242,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 
@@ -2297,7 +2283,7 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
 	GML_RECMUTEX_LOCK(group); // SetUnitGroup - this mutex is already locked (lua)
 
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (gs->noHelperAIs) {
@@ -2396,7 +2382,7 @@ static bool CanGiveOrders(const lua_State *L)
 
 int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (!CanGiveOrders(L)) {
@@ -2415,7 +2401,7 @@ int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (!CanGiveOrders(L)) {
@@ -2440,7 +2426,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (!CanGiveOrders(L)) {
@@ -2471,7 +2457,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (!CanGiveOrders(L)) {
@@ -2502,7 +2488,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (!CanGiveOrders(L)) {
@@ -2532,7 +2518,7 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (!CanGiveOrders(L)) {
@@ -2582,7 +2568,7 @@ static string GetRawMsg(lua_State* L, const char* caller, int index)
 
 int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
@@ -2606,7 +2592,7 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
@@ -2619,7 +2605,7 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
@@ -2634,7 +2620,7 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
@@ -2664,7 +2650,7 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 
 int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
@@ -2730,7 +2716,7 @@ int LuaUnsyncedCtrl::SetLastMessagePosition(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (inMapDrawer == NULL) {
@@ -2754,7 +2740,7 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (inMapDrawer == NULL) {
@@ -2780,7 +2766,7 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	if (inMapDrawer == NULL) {
@@ -2801,7 +2787,7 @@ int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 
@@ -2822,7 +2808,7 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 
 int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 
@@ -2839,7 +2825,7 @@ int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
 
 int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 
