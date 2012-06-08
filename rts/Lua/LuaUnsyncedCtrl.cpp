@@ -291,10 +291,10 @@ static inline CUnit* ParseAllyUnit(lua_State* L, const char* caller, int index)
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (ActiveReadAllyTeam() < 0) {
-		return ActiveFullRead() ? unit : NULL;
+	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
+		return CLuaHandle::GetHandleFullRead(L) ? unit : NULL;
 	}
-	return (unit->allyteam == ActiveReadAllyTeam()) ? unit : NULL;
+	return (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L)) ? unit : NULL;
 }
 
 

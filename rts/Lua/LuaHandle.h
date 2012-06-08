@@ -79,7 +79,6 @@ class CLuaHandle : public CEventClient
 #define SET_ACTIVE_CONTEXT_DATA(v) if(all) { D_Sim.v = _##v; D_Draw.v = _##v; } else GET_ACTIVE_CONTEXT_DATA(v) = _##v
 #define SET_HANDLE_CONTEXT_DATA(v) GET_HANDLE_CONTEXT_DATA(v) = _##v
 
-
 		void SetFullRead(bool _fullRead, bool all = false) { SET_ACTIVE_CONTEXT_DATA(fullRead); }
 		bool GetFullRead() const { return GET_ACTIVE_CONTEXT_DATA(fullRead); } // virtual function in CEventClient
 		static void SetHandleFullRead(const lua_State* L, bool _fullRead) { SET_HANDLE_CONTEXT_DATA(fullRead); }
@@ -114,6 +113,8 @@ class CLuaHandle : public CEventClient
 		bool GetSynced() const { return GET_ACTIVE_CONTEXT_DATA(synced); }
 		static void SetHandleSynced(const lua_State* L, bool _synced) { SET_HANDLE_CONTEXT_DATA(synced); }
 		static bool GetHandleSynced(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(synced); }
+
+		static CLuaHandle* GetHandle(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(owner); }
 
 		static bool GetHandleUserMode(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(owner->GetUserMode()); }
 		bool GetUserMode()     const { return userMode; }
