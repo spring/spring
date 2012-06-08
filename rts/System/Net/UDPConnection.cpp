@@ -732,11 +732,14 @@ void UDPConnection::SendIfNecessary(bool flushed)
 					nak = 0; // 1 request is enough, unless high loss
 			}
 
+			bool first = true;
 			while (true) {
-				bool canResend = maxResend > 0 && ((buf.GetSize() + resIter->second->GetSize()) <= mtu);
+				bool canResend = maxResend > 0 && ((buf.GetSize() + (((netLossFactor == MIN_LOSS_FACTOR) || (rev == 0)) ? resIter->second->GetSize() : 
+					((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize()))) <= mtu);
 				bool canSendNew = !newChunks.empty() && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu);
 				if (!canResend && !canSendNew) {
-					todo = false;
+					if (first)
+						todo = false;
 					break;
 				}
 				resend = !resend; // alternate between send and resend to make sure none is starved
@@ -770,10 +773,12 @@ void UDPConnection::SendIfNecessary(bool flushed)
 					}
 					++resentChunks;
 					--maxResend;
+					first = false;
 				} else if (!resend && canSendNew) {
 					buf.chunks.push_back(newChunks[0]);
 					unackedChunks.push_back(newChunks[0]);
 					newChunks.pop_front();
+					first = false;
 				}
 			}
 
