@@ -334,123 +334,83 @@ void CEventHandler::ListRemove(EventClientList& ecList, CEventClient* ec)
 /******************************************************************************/
 /******************************************************************************/
 
+#define ITERATE_EVENTCLIENTLIST(name, ...) \
+	for (int i = 0; i < list##name.size(); ) { \
+		CEventClient* ec = list##name[i]; \
+		ec->name(__VA_ARGS__); \
+		if (i < list##name.size() && ec == list##name[i]) \
+			++i; /* the call-in may remove itself from the list */ \
+	}
+
 void CEventHandler::Save(zipFile archive)
 {
-	const int count = listSave.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listSave[i];
-		ec->Save(archive);
-	}
+	ITERATE_EVENTCLIENTLIST(Save, archive);
 }
 
 
 void CEventHandler::GamePreload()
 {
-	const int count = listGamePreload.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listGamePreload[i];
-		ec->GamePreload();
-	}
+	ITERATE_EVENTCLIENTLIST(GamePreload);
 }
 
 
 void CEventHandler::GameStart()
 {
-	const int count = listGameStart.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listGameStart[i];
-		ec->GameStart();
-	}
+	ITERATE_EVENTCLIENTLIST(GameStart);
 }
 
 
 void CEventHandler::GameOver(const std::vector<unsigned char>& winningAllyTeams)
 {
-	const int count = listGameOver.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listGameOver[i];
-		ec->GameOver(winningAllyTeams);
-	}
+	ITERATE_EVENTCLIENTLIST(GameOver, winningAllyTeams);
 }
 
 
 void CEventHandler::GamePaused(int playerID, bool paused)
 {
-	const int count = listGamePaused.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listGamePaused[i];
-		ec->GamePaused(playerID, paused);
-	}
+	ITERATE_EVENTCLIENTLIST(GamePaused, playerID, paused);
 }
 
 
 void CEventHandler::GameFrame(int gameFrame)
 {
-	const int count = listGameFrame.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listGameFrame[i];
-		ec->GameFrame(gameFrame);
-	}
+	ITERATE_EVENTCLIENTLIST(GameFrame, gameFrame);
 }
 
 
 void CEventHandler::GameID(const unsigned char* gameID, unsigned int numBytes)
 {
-	const int count = listGameID.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listGameID[i];
-		ec->GameID(gameID, numBytes);
-	}
+	ITERATE_EVENTCLIENTLIST(GameID, gameID, numBytes);
 }
 
 
 void CEventHandler::TeamDied(int teamID)
 {
-	const int count = listTeamDied.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listTeamDied[i];
-		ec->TeamDied(teamID);
-	}
+	ITERATE_EVENTCLIENTLIST(TeamDied, teamID);
 }
 
 
 void CEventHandler::TeamChanged(int teamID)
 {
-	const int count = listTeamChanged.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listTeamChanged[i];
-		ec->TeamChanged(teamID);
-	}
+	ITERATE_EVENTCLIENTLIST(TeamChanged, teamID);
 }
 
 
 void CEventHandler::PlayerChanged(int playerID)
 {
-	const int count = listPlayerChanged.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listPlayerChanged[i];
-		ec->PlayerChanged(playerID);
-	}
+	ITERATE_EVENTCLIENTLIST(PlayerChanged, playerID);
 }
 
 
 void CEventHandler::PlayerAdded(int playerID)
 {
-	const int count = listPlayerAdded.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listPlayerAdded[i];
-		ec->PlayerAdded(playerID);
-	}
+	ITERATE_EVENTCLIENTLIST(PlayerAdded, playerID);
 }
 
 
 void CEventHandler::PlayerRemoved(int playerID, int reason)
 {
-	const int count = listPlayerRemoved.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listPlayerRemoved[i];
-		ec->PlayerRemoved(playerID, reason);
-	}
+	ITERATE_EVENTCLIENTLIST(PlayerRemoved, playerID, reason);
 }
 
 
@@ -459,15 +419,7 @@ void CEventHandler::PlayerRemoved(int playerID, int reason)
 
 void CEventHandler::Load(IArchive* archive)
 {
-	const int count = listLoad.size();
-
-	if (count <= 0)
-		return;
-
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listLoad[i];
-		ec->Load(archive);
-	}
+	ITERATE_EVENTCLIENTLIST(Load, archive);
 }
 
 
@@ -496,10 +448,7 @@ void CEventHandler::Update()
 
 	EVENTHANDLER_CHECK(Update);
 
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listUpdate[i];
-		ec->Update();
-	}
+	ITERATE_EVENTCLIENTLIST(Update);
 }
 
 
@@ -564,30 +513,20 @@ void CEventHandler::SunChanged(const float3& sunDir)
 {
 	EVENTHANDLER_CHECK(SunChanged);
 
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listSunChanged[i];
-		ec->SunChanged(sunDir);
-	}
+	ITERATE_EVENTCLIENTLIST(SunChanged, sunDir);
 }
 
 void CEventHandler::ViewResize()
 {
 	EVENTHANDLER_CHECK(ViewResize);
 
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listViewResize[i];
-		ec->ViewResize();
-	}
+	ITERATE_EVENTCLIENTLIST(ViewResize);
 }
 
 
 void CEventHandler::GameProgress(int gameFrame)
 {
-	const int count = listGameProgress.size();
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listGameProgress[i];
-		ec->GameProgress(gameFrame);
-	}
+	ITERATE_EVENTCLIENTLIST(GameProgress, gameFrame);
 }
 
 
@@ -595,16 +534,18 @@ void CEventHandler::GameProgress(int gameFrame)
   void CEventHandler:: Draw ## name ()            \
   {                                               \
     GML_DRAW_CALLIN_SELECTOR();                   \
-		                                              \
+		                                          \
     EVENTHANDLER_CHECK(Draw ## name);             \
                                                   \
     LuaOpenGL::EnableDraw ## name ();             \
     listDraw ## name [0]->Draw ## name ();        \
                                                   \
-    for (int i = 1; i < count; i++) {             \
+    for (int i = 1; i < listDraw ## name.size(); ) { \
       LuaOpenGL::ResetDraw ## name ();            \
       CEventClient* ec = listDraw ## name [i];    \
       ec-> Draw ## name ();                       \
+      if (i < listDraw ## name.size() && ec == listDraw ## name [i]) \
+	    ++i;                                      \
     }                                             \
                                                   \
     LuaOpenGL::DisableDraw ## name ();            \
@@ -777,10 +718,8 @@ bool CEventHandler::AddConsoleLine(const std::string& msg, const std::string& se
 {
 	EVENTHANDLER_CHECK(AddConsoleLine, false);
 
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listAddConsoleLine[i];
-		ec->AddConsoleLine(msg, section, level);
-	}
+	ITERATE_EVENTCLIENTLIST(AddConsoleLine, msg, section, level);
+
 	return true;
 }
 
@@ -789,11 +728,7 @@ void CEventHandler::LastMessagePosition(const float3& pos)
 {
 	EVENTHANDLER_CHECK(LastMessagePosition);
 	//GML_STDMUTEX_LOCK(log); // LastMessagePosition FIXME would this be required?
-
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listLastMessagePosition[i];
-		ec->LastMessagePosition(pos);
-	}
+	ITERATE_EVENTCLIENTLIST(LastMessagePosition, pos);
 }
 
 
@@ -801,10 +736,8 @@ bool CEventHandler::GroupChanged(int groupID)
 {
 	EVENTHANDLER_CHECK(GroupChanged, false);
 
-	for (int i = 0; i < count; i++) {
-		CEventClient* ec = listGroupChanged[i];
-		ec->GroupChanged(groupID);
-	}
+	ITERATE_EVENTCLIENTLIST(GroupChanged, groupID);
+
 	return false;
 }
 
