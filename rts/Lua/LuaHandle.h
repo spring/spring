@@ -415,23 +415,8 @@ class CLuaHandle : public CEventClient
 		std::vector<int> luaFrameEventBatch;
 		std::vector<LuaLogEvent> luaLogEventBatch;
 
-		// FIXME: because CLuaUnitScript needs to access RunCallIn / activeHandle
+		// FIXME: because CLuaUnitScript needs to access RunCallIn
 		friend class CLuaUnitScript;
-	private:
-		struct staticLuaContextData {
-			staticLuaContextData() : activeFullRead(false), activeReadAllyTeam(CEventClient::NoAccessTeam),
-				activeHandle(NULL) {}
-			bool activeFullRead;
-			int  activeReadAllyTeam;
-			CLuaHandle* activeHandle;
-		};
-		static staticLuaContextData S_Sim;
-		static staticLuaContextData S_Draw;
-
-	protected:
-		static staticLuaContextData &GetStaticLuaContextData(bool draw = IsDrawCallIn()) { return draw ? S_Draw : S_Sim; }
-
-		friend class LuaOpenGL; // to access staticLuaContextData::drawingEnabled
 };
 
 

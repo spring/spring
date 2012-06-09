@@ -48,9 +48,6 @@
 #include <string>
 
 
-CLuaHandle::staticLuaContextData CLuaHandle::S_Sim;
-CLuaHandle::staticLuaContextData CLuaHandle::S_Draw;
-
 bool CLuaHandle::devMode = false;
 bool CLuaHandle::modUICtrl = true;
 bool CLuaHandle::useDualStates = false;
@@ -90,17 +87,10 @@ CLuaHandle::~CLuaHandle()
 	// free the lua state
 	KillLua();
 
-	if (this == GetStaticLuaContextData(false).activeHandle) {
-		GetStaticLuaContextData(false).activeHandle = NULL;
-	}
-	if (this == GetStaticLuaContextData(true).activeHandle) {
-		GetStaticLuaContextData(true).activeHandle = NULL;
-	}
-
 	for(int i = 0; i < delayedCallsFromSynced.size(); ++i) {
-		DelayDataDump &ddp = delayedCallsFromSynced[i];
+		DelayDataDump& ddp = delayedCallsFromSynced[i];
 		for(int d = 0; d < ddp.data.size(); ++d) {
-			LuaUtils::ShallowDataDump &sdd = ddp.data[d];
+			LuaUtils::ShallowDataDump& sdd = ddp.data[d];
 			if(sdd.type == LUA_TSTRING)
 				delete sdd.data.str;
 		}
