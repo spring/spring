@@ -734,14 +734,21 @@ void UDPConnection::SendIfNecessary(bool flushed)
 
 			bool first = true;
 			while (true) {
-				bool canResend = maxResend > 0 && ((buf.GetSize() + (((netLossFactor == MIN_LOSS_FACTOR) || (rev == 0)) ? resIter->second->GetSize() : 
-					((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize()))) <= mtu);
-				bool canSendNew = !newChunks.empty() && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu);
+				size_t foo = resMidIter->second->GetSize(); //FIXME give me a name
+				if ((rev == 0) || (netLossFactor == MIN_LOSS_FACTOR)) {
+					foo = resIter->second->GetSize();
+				} else if (rev == 1) {
+					foo = resRevIter->second->GetSize();
+				}
+
+				const bool canResend  = (maxResend > 0) && ((buf.GetSize() + foo) <= mtu);
+				const bool canSendNew = (!newChunks.empty()) && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu);
 				if (!canResend && !canSendNew) {
 					if (first)
 						todo = false;
 					break;
 				}
+
 				resend = !resend; // alternate between send and resend to make sure none is starved
 				if (resend && canResend) {
 					if (netLossFactor == MIN_LOSS_FACTOR) {
