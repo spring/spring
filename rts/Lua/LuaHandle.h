@@ -117,9 +117,10 @@ class CLuaHandle : public CEventClient
 		static CLuaHandle* GetHandle(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(owner); }
 
 		static bool GetHandleUserMode(const lua_State* L) { return GET_HANDLE_CONTEXT_DATA(owner->GetUserMode()); }
-		bool GetUserMode()     const { return userMode; }
+		bool GetUserMode() const { return userMode; }
 
 		static bool CheckModUICtrl(lua_State* L) { return GetModUICtrl() || GetHandleUserMode(L); }
+		bool CheckModUICtrl() const { return GetModUICtrl() || GetUserMode(); }
 
 //FIXME		LuaArrays& GetArrays(const lua_State* L = NULL) { return GET_CONTEXT_DATA(arrays); }
 		LuaShaders& GetShaders(const lua_State* L = NULL) { return GET_CONTEXT_DATA(shaders); }
@@ -289,11 +290,32 @@ class CLuaHandle : public CEventClient
 
 		void KillLua();
 
+		bool AddBasicCalls(lua_State* L);
+		bool LoadCode(lua_State* L, const string& code, const string& debug);
+		bool AddEntriesToTable(lua_State* L, const char* name, bool (*entriesFunc)(lua_State*));
+
+		/// returns stack index of traceback function
+		int SetupTraceback(lua_State* L);
+		/// returns error code and sets traceback on error
+		int  RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, std::string& traceback);
+		/// returns false and prints message to log on error
+		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex);
+		/// returns error code and sets errormessage on error
+		int  RunCallIn(int inArgs, int outArgs, std::string& errormessage);
+		/// returns false and prints message to log on error
+		bool RunCallIn(const LuaHashString& hs, int inArgs, int outArgs);
+		bool RunCallInUnsynced(const LuaHashString& hs, int inArgs, int outArgs);
+
+		void LosCallIn(const LuaHashString& hs, const CUnit* unit, int allyTeam);
+		void UnitCallIn(const LuaHashString& hs, const CUnit* unit);
+		bool PushUnsyncedCallIn(lua_State* L, const LuaHashString& hs);
+
+	protected:
+		// MT stuff
 		inline void SetActiveHandle();
 		inline void SetActiveHandle(CLuaHandle* lh);
 		inline void SetActiveHandle(lua_State* L);
 
-		bool userMode;
 		bool singleState;
 		// LUA_MT_OPT inserted below mainly so that compiler can optimize code
 		bool SingleState() const { return !(LUA_MT_OPT & LUA_STATE) || singleState; } // Is this handle using a single Lua state?
@@ -316,33 +338,11 @@ class CLuaHandle : public CEventClient
 			return (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;
 		}
 
-		bool AddBasicCalls(lua_State* L);
-		bool LoadCode(lua_State* L, const string& code, const string& debug);
-		bool AddEntriesToTable(lua_State* L, const char* name,
-		                       bool (*entriesFunc)(lua_State*));
-
-		/// returns stack index of traceback function
-		int SetupTraceback(lua_State* L);
-		/// returns error code and sets traceback on error
-		int  RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, std::string& traceback);
-		/// returns false and prints message to log on error
-		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex);
-		/// returns error code and sets errormessage on error
-		int  RunCallIn(int inArgs, int outArgs, std::string& errormessage);
-		/// returns false and prints message to log on error
-		bool RunCallIn(const LuaHashString& hs, int inArgs, int outArgs);
-		bool RunCallInUnsynced(const LuaHashString& hs, int inArgs, int outArgs);
-
-		void LosCallIn(const LuaHashString& hs, const CUnit* unit, int allyTeam);
-		void UnitCallIn(const LuaHashString& hs, const CUnit* unit);
-		bool PushUnsyncedCallIn(lua_State* L, const LuaHashString& hs);
-
-		bool CheckModUICtrl() { return GetModUICtrl() || GetUserMode(); }
-
 		bool IsValid() const { return (L_Sim != NULL) && (L_Draw != NULL); }
 
 	protected:
-
+		bool userMode;
+		
 		lua_State* L_Sim;
 		lua_State* L_Draw;
 
