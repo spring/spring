@@ -1664,9 +1664,10 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 
 void CGuiHandler::RunLayoutCommand(const std::string& command)
 {
-	if (command == "reload" || ((LUA_MT_OPT & LUA_STATE) && (globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL || 
-								globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_UNMANAGED) && command == "update")) {
-		if (CLuaHandle::GetActiveHandle() != NULL) {
+	const bool dualStates = (LUA_MT_OPT & LUA_STATE) && (globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL || globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_UNMANAGED);
+
+	if (command == "reload" || (dualStates && command == "update")) {
+		if (luaUI && luaUI->IsRunning()) {
 			// NOTE: causes a SEGV through RunCallIn()
 			LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
 			return;
@@ -1690,7 +1691,7 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 		LayoutIcons(false);
 	}
 	else if (command == "disable") {
-		if (CLuaHandle::GetActiveHandle() != NULL) {
+		if (luaUI && luaUI->IsRunning()) {
 			// NOTE: might cause a SEGV through RunCallIn()
 			LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
 			return;

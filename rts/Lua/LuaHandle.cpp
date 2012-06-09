@@ -60,15 +60,16 @@ bool CLuaHandle::useDualStates = false;
 /******************************************************************************/
 
 CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
-: CEventClient(_name, _order, false), // FIXME
-  userMode   (_userMode),
-  killMe     (false),
+	: CEventClient(_name, _order, false) // FIXME
+	, userMode   (_userMode)
+	, running    (0)
+	, killMe     (false)
 #ifdef DEBUG
-  printTracebacks(true),
+	, printTracebacks(true)
 #else
-  printTracebacks(false),
+	, printTracebacks(false)
 #endif
-  callinErrors(0)
+	, callinErrors(0)
 {
 	UpdateThreading();
 
@@ -123,20 +124,18 @@ void CLuaHandle::KillLua()
 	if (L_Draw != NULL) {
 		lua_State* L_Old = L_Sim;
 		L_Sim = L_Draw;
-		CLuaHandle* orig = GetActiveHandle();
-		SetActiveHandle(L_Draw);
+		SetRunning(true);
 		LUA_CLOSE(L_Draw);
-		SetActiveHandle((orig == this) ? NULL : orig);
+		SetRunning(false);
 		L_Draw = NULL;
 		L_Sim = L_Old;
 	}
 	if (L_Sim != NULL) {
 		lua_State* L_Old = L_Draw;
 		L_Draw = L_Sim;
-		CLuaHandle* orig = GetActiveHandle();
-		SetActiveHandle(L_Sim);
+		SetRunning(true);
 		LUA_CLOSE(L_Sim);
-		SetActiveHandle((orig == this) ? NULL : orig);
+		SetRunning(false);
 		L_Sim = NULL;
 		L_Draw = L_Old;
 	}
@@ -207,8 +206,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 	bool ret = true;
 
 	if ((loadError = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str())) == 0) {
-		CLuaHandle* orig = GetActiveHandle();
-		SetActiveHandle(L);
+		SetRunning(true);
 
 		if ((callError = lua_pcall(L, 0, 0, 0)) != 0) {
 			LOG_L(L_ERROR, "Lua LoadCode pcall error = %i, %s, %s", loadError, debug.c_str(), lua_tostring(L, -1));
@@ -216,7 +214,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 			ret = false;
 		}
 
-		SetActiveHandle(orig);
+		SetRunning(false);
 	} else {
 		LOG_L(L_ERROR, "Lua LoadCode loadbuffer error = %i, %s, %s", callError, debug.c_str(), lua_tostring(L, -1));
 		lua_pop(L, 1);
@@ -437,15 +435,12 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 #endif
 
 	SELECT_LUA_STATE();
-	CLuaHandle* orig = GetActiveHandle();
-	SetActiveHandle(L);
-	//! limit gc just to the time the correct ActiveHandle is bound,
-	//! because some object could use __gc and try to access the ActiveHandle
-	//! outside of SetActiveHandle this can be an incorrect enviroment or even null -> crash
-	lua_gc(L,LUA_GCRESTART,0);
+	SetRunning(true);
+	// disable GC outside of this scope to prevent sync errors and similar
+	lua_gc(L, LUA_GCRESTART, 0);
 	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
-	lua_gc(L,LUA_GCSTOP,0);
-	SetActiveHandle(orig);
+	lua_gc(L, LUA_GCSTOP, 0);
+	SetRunning(false);
 
 	if (error == 0) {
 		// pop the error handler
