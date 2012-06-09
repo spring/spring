@@ -70,13 +70,9 @@ class CLuaHandleSynced : public CLuaHandle
 		bool LightCopyTable(lua_State* L, int dstIndex, int srcIndex);
 
 	protected:
-		static CLuaHandleSynced* GetActiveHandle() {
-			assert(dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle()));
-			return static_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle());
-		}
-		static CLuaHandleSynced* GetActiveHandle(lua_State* L) {
-			assert(dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle(L)));
-			return static_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle(L));
+		static CLuaHandleSynced* GetSyncedHandle(lua_State* L) {
+			assert(dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetHandle(L)));
+			return static_cast<CLuaHandleSynced*>(CLuaHandle::GetHandle(L));
 		}
 
 	private:
