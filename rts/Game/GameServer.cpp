@@ -2264,7 +2264,7 @@ void CGameServer::KickPlayer(const int playerNum)
 	if (players[playerNum].link) { // only kick connected players
 		Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
-		players[playerNum].Kill("Kicked from the battle");
+		players[playerNum].Kill("Kicked from the battle", true);
 		UpdateSpeedControl(speedControl);
 		if (hostif)
 			hostif->SendPlayerLeft(playerNum, 2);
