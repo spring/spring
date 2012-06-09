@@ -5,6 +5,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Net/Connection.h"
 #include "System/BaseNetProtocol.h"
+#include "System/Misc/SpringTime.h"
 
 GameParticipant::GameParticipant()
 : myState(UNCONNECTED)
@@ -33,11 +34,13 @@ void GameParticipant::Connected(boost::shared_ptr<netcode::CConnection> _link, b
 	lastFrameResponse = 0;
 }
 
-void GameParticipant::Kill(const std::string& reason)
+void GameParticipant::Kill(const std::string& reason, const bool flush)
 {
 	if (link)
 	{
 		link->SendData(CBaseNetProtocol::Get().SendQuit(reason));
+		if (flush) // make sure the Flush() performed by Close() has any effect (forced flushes are undesirable)
+			spring_sleep(spring_msecs(1000)); // it will cause a slight lag in the game server during kick, but not a big deal
 		link->Close();
 		link.reset();
 	}

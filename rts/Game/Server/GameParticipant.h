@@ -22,7 +22,7 @@ public:
 	void SendData(boost::shared_ptr<const netcode::RawPacket> packet);
 
 	void Connected(boost::shared_ptr<netcode::CConnection> link, bool local);
-	void Kill(const std::string& reason);
+	void Kill(const std::string& reason, const bool flush = false);
 
 	GameParticipant& operator=(const PlayerBase& base) { PlayerBase::operator=(base); return *this; };
 
