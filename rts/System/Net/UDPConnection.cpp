@@ -734,8 +734,10 @@ void UDPConnection::SendIfNecessary(bool flushed)
 
 			bool first = true;
 			while (true) {
-				bool canResend = maxResend > 0 && ((buf.GetSize() + (((netLossFactor == MIN_LOSS_FACTOR) || (rev == 0)) ? resIter->second->GetSize() : 
-					((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize()))) <= mtu);
+				bool canResend = maxResend > 0 &&
+					((buf.GetSize() +
+					(((netLossFactor == MIN_LOSS_FACTOR) || (rev == 0)) ? resIter->second->GetSize() : ((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize()) // resend chunk size
+					)) <= mtu);
 				bool canSendNew = !newChunks.empty() && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu);
 				if (!canResend && !canSendNew) {
 					if (first)
