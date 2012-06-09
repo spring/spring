@@ -436,10 +436,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	cloakCost = udTable.GetFloat("cloakCost", 0.0f);
 	cloakCostMoving = udTable.GetFloat("cloakCostMoving", 0.0f);
 
-	if (cloakCostMoving < 0.0f) {
-		cloakCostMoving = cloakCost;
-	}
-
 	startCloaked     = udTable.GetBool("initCloaked", false);
 	decloakDistance  = udTable.GetFloat("minCloakDistance", 0.0f);
 	decloakSpherical = udTable.GetBool("decloakSpherical", true);
