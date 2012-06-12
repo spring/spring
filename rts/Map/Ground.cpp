@@ -256,10 +256,10 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 
 	// Claming is done cause LineGroundSquareCol() operates on the 2 triangles faces each heightmap
 	// square is formed of.
-	const float ffsx = Clamp(from.x / SQUARE_SIZE, 0.0f, (float)gs->mapxm1);
-	const float ffsz = Clamp(from.z / SQUARE_SIZE, 0.0f, (float)gs->mapym1);
-	const float ttsx = Clamp(to.x / SQUARE_SIZE, 0.0f, (float)gs->mapxm1);
-	const float ttsz = Clamp(to.z / SQUARE_SIZE, 0.0f, (float)gs->mapym1);
+	const float ffsx = Clamp(from.x / SQUARE_SIZE, 0.0f, (float)gs->mapx);
+	const float ffsz = Clamp(from.z / SQUARE_SIZE, 0.0f, (float)gs->mapy);
+	const float ttsx = Clamp(to.x / SQUARE_SIZE, 0.0f, (float)gs->mapx);
+	const float ttsz = Clamp(to.z / SQUARE_SIZE, 0.0f, (float)gs->mapy);
 	const int fsx = ffsx; // a>=0: int(a):=floor(a)
 	const int fsz = ffsz;
 	const int tsx = ttsx;
