@@ -1,16 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "System/mmgr.h"
+
+#include "VerticalSync.h"
+#include "GL/myGL.h"
+#include "System/Config/ConfigHandler.h"
+
 #if defined HEADLESS
 #elif defined WIN32
 	#include <GL/wglew.h>
 #else
 	#include <GL/glxew.h>
 #endif
-#include "System/mmgr.h"
-
-#include "VerticalSync.h"
-#include "GL/myGL.h"
-#include "System/Config/ConfigHandler.h"
 
 CONFIG(int, VSync).defaultValue(0).minimumValue(0).description("Vertical synchronization, update render frames in monitor's refresh rate.\n <=0: off\n 1: enabled \n x: render with monitor-Hz/x FPS");
 
@@ -71,7 +72,7 @@ void CVerticalSync::SetInterval(int i)
 		interval = 0; // disable
 	}
 
-#elifdef WIN32
+#elif defined WIN32
 	if (WGLEW_EXT_swap_control) {
 		wglSwapIntervalEXT(interval);
 	}
