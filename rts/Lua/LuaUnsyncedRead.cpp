@@ -878,11 +878,8 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	for (CFeatureSet::const_iterator featureIt = featureSet.begin(); featureIt != featureSet.end(); ++featureIt) {
 		const CFeature& f = **featureIt;
 
-		if (noGeos) {
-			if (f.def->geoThermal) {
-				continue;
-			}
-		}
+		if (noGeos && f.def->geoThermal)
+			continue;
 
 		if (noIcons) {
 			float sqDist = (f.pos - camera->pos).SqLength2D();
