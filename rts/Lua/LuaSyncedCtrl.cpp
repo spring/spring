@@ -2368,9 +2368,6 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	if (feature->collisionVolume == NULL) {
-		return 0;
-	}
 
 	const float xs = luaL_checkfloat(L, 2);
 	const float ys = luaL_checkfloat(L, 3);
