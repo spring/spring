@@ -77,7 +77,7 @@ static inline float LineGroundSquareCol(
 	const int& ys)
 {
 	const bool inMap = (xs >= 0) && (ys >= 0) && (xs <= gs->mapxm1) && (ys <= gs->mapym1);
-	assert(inMap);
+//	assert(inMap);
 	if (!inMap)
 		return -1.0f;
 
