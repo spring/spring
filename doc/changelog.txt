@@ -7,6 +7,7 @@ Major Changes:
  - LuaSocket
  - MessageBox for unsupported GPUs (+drivers)
  - fixed ATi PointSize bug
+ - LOS et al. are rendered now through the GLSL terrain shader (-> shadows in LOS-view)
 
 Changes:
  - added Shard to the windows installer
@@ -15,6 +16,7 @@ Changes:
  - open a MessageBox on systems with unsupported GPUs (+drivers) on engine start (suppressible with a config-tag)
  ! remove selectkeys.txt support (use uikeys.txt instead)
  ! remove TASServer.jar (outdated, use http://springrts.com/wiki/Spring_on_a_LAN )
+ ! send gameID and SDF filename with SERVER_STARTPLAYING to autohost
 
 Bugfixes:
  - dedicated server no longer consumes 100% CPU while waiting for gameID
@@ -62,7 +64,6 @@ Pathing:
  - QTPFS: less loadscreen spam, make F2 functional, enable corner-connected node topology, use staggered layer-updates, speedups and tweaks
  - QTPFS: increase MAX_TEAM_SEARCHES, decrease LAYERS_PER_UPDATE (more units can request paths per frame, units get paths back more quickly)
 
-
 Lua:
  ! some config values are now write protected (Spring.SetConfig*)
  - added luasocket support for widgets, see http://springrts.com/wiki/LuaSocket
@@ -75,10 +76,12 @@ Lua:
  - fix TraceScreenRay never returning "sky" when includeSky=true
  - fix TraceScreenRay coordinate offset when onlyCoords=true
  - add extra parameter 'defPriority' to AllowWeaponTarget (what the engine thinks the target priority should be)
+ - add bool FeatureDefs[xyz].autoreclaim
  - add new gl.Texture("$minimap")
  - add new gl.Texture("$info")
  ! remove gl.SelectBuffer and co.
  - new Spring.LoadCmdColorsConfig(configStr) & Spring.LoadCtrlPanelConfig(configStr)
+ - add new 3 param 'pairwise' to Spring.GiveOrderArrayToUnitArray(), used to send multiple units a single individual command
 
 Rendering:
  - fixed ATi PointSize bug
@@ -87,6 +90,8 @@ Rendering:
  - warn about null normals in models
  - add visualization of default object radii (used for AOE calculations, etc) to alt+v
  - SMF: render the info-texture through GLSL (noob translation: shadows in LOS-view)
+ - improved VSync under Linux (with support for AdaptiveVSync)
+ - added FeatureFadeDistance & FeatureDrawDistance config tags
 
 UI:
  - display average draw & sim frame time in debugview

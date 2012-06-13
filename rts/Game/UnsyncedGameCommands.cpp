@@ -2364,9 +2364,9 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().empty()) {
-			VSync.SetFrames((VSync.GetFrames() <= 0) ? 1 : 0);
+			VSync.SetInterval((VSync.GetInterval() <= 0) ? 1 : 0);
 		} else {
-			VSync.SetFrames(atoi(action.GetArgs().c_str()));
+			VSync.SetInterval(atoi(action.GetArgs().c_str()));
 		}
 		return true;
 	}
