@@ -34,6 +34,11 @@ Bugfixes:
  - fix crash in unit_script.lua
  - fix 'Units stuck in factory' QTPFS bug (3055)
  - fix units moving (being pushed) through factory walls
+ - fix game does not end properly for a player that is being kicked
+ - fix problem to build near map edges
+ - fix ping display after mid-game (re-)join + try to reduce lag after mid-game join
+ - fix missing stack trace if out-of-memory occurs
+ - fix resurrecting an individual wreck results in the resurrector not healing it
 
 Simulation:
  - YardMap changes:
@@ -82,6 +87,7 @@ Lua:
  ! remove gl.SelectBuffer and co.
  - new Spring.LoadCmdColorsConfig(configStr) & Spring.LoadCtrlPanelConfig(configStr)
  - add new 3 param 'pairwise' to Spring.GiveOrderArrayToUnitArray(), used to send multiple units a single individual command
+ - fix crash due to UpdateCallIn removing the current event client from list being iterated
 
 Rendering:
  - fixed ATi PointSize bug
@@ -92,6 +98,8 @@ Rendering:
  - SMF: render the info-texture through GLSL (noob translation: shadows in LOS-view)
  - improved VSync under Linux (with support for AdaptiveVSync)
  - added FeatureFadeDistance & FeatureDrawDistance config tags
+ - fixed vibrating planes (again)
+ - fix spring_multithreaded hangs
 
 UI:
  - display average draw & sim frame time in debugview
