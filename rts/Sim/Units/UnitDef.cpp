@@ -898,10 +898,10 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 
 	// print warnings
 	if (idx > yardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap/blockmap contains %u excess char(s)!", name.c_str(), idx - yardMap.size());
+		LOG_L(L_WARNING, "%s: Given yardmap/blockmap contains %lu excess char(s)!", name.c_str(), idx - yardMap.size());
 
 	if (idx > 0 && idx < yardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap/blockmap requires %u extra char(s)!", name.c_str(), yardMap.size() - idx);
+		LOG_L(L_WARNING, "%s: Given yardmap/blockmap requires %lu extra char(s)!", name.c_str(), yardMap.size() - idx);
 
 	if (!foundUnknownChars.empty())
 		LOG_L(L_WARNING, "%s: Unknown char(s) in yardmap/blockmap \"%s\"!", name.c_str(), foundUnknownChars.c_str());
