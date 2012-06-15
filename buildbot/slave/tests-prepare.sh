@@ -39,11 +39,13 @@ PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR
 # get the name of the latest versions
 GAME1=$($PRDL --rapid-search ba:latest |egrep -o 'Filename: (.*) Size:'|sed 's/Filename: \(.*\) Size:/\1/')
 GAME2=$($PRDL --rapid-search zk:stable |egrep -o 'Filename: (.*) Size:'|sed 's/Filename: \(.*\) Size:/\1/')
+GAME3=$($PRDL --rapid-search bar:test |egrep -o 'Filename: (.*) Size:'|sed 's/Filename: \(.*\) Size:/\1/')
 MAP="Altair_Crossing-V1"
 
 
 $PRDL --download-game "$GAME1"
 $PRDL --download-game "$GAME2"
+$PRDL --download-game "$GAME3"
 $PRDL --download-map "$MAP"
 
 #install required files into spring dir
@@ -74,5 +76,6 @@ makescript "$GAME1" "$MAP" KAIK 0.13
 makescript "$GAME1" "$MAP" RAI 0.601
 makescript "$GAME1" "$MAP" Shard dev
 makescript "$GAME2" "$MAP" CAI ""
+makescript "$GAME3" "$MAP" KAIK 0.13
 ${SOURCEDIR}/test/validation/prepare-client.sh ValidationClient 127.0.0.1 8452 >${CONTENT_DIR}/connect.txt
 
