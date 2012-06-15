@@ -876,9 +876,9 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 }
 
 
-void CLuaHandle::UnitTaken(const CUnit* unit, int newTeam)
+void CLuaHandle::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_TAKEN, unit, newTeam);
+	LUA_UNIT_BATCH_PUSH(,UNIT_TAKEN, unit, oldTeam, newTeam);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 	int errfunc = SetupTraceback(L);
@@ -892,7 +892,7 @@ void CLuaHandle::UnitTaken(const CUnit* unit, int newTeam)
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, oldTeam);
 	lua_pushnumber(L, newTeam);
 
 	// call the routine
@@ -900,9 +900,9 @@ void CLuaHandle::UnitTaken(const CUnit* unit, int newTeam)
 }
 
 
-void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam)
+void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam, int newTeam)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_GIVEN, unit, oldTeam);
+	LUA_UNIT_BATCH_PUSH(,UNIT_GIVEN, unit, oldTeam, newTeam);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 	int errfunc = SetupTraceback(L);
@@ -916,7 +916,7 @@ void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam)
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, newTeam);
 	lua_pushnumber(L, oldTeam);
 
 	// call the routine
@@ -1537,10 +1537,10 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitDestroyed(e.unit1, e.unit2);
 				break;
 			case UNIT_TAKEN:
-				UnitTaken(e.unit1, e.int1);
+				UnitTaken(e.unit1, e.int1, e.int2);
 				break;
 			case UNIT_GIVEN:
-				UnitGiven(e.unit1, e.int1);
+				UnitGiven(e.unit1, e.int1, e.int2);
 				break;
 			case UNIT_IDLE:
 				UnitIdle(e.unit1);
