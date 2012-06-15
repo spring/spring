@@ -1663,7 +1663,7 @@ bool CUnit::SetGroup(CGroup* newGroup)
 			group = NULL; // group ai did not accept us
 			return false;
 		} else { // add us to selected units, if group is selected
-			if (selectedUnits.selectedGroup == group->id) {
+			if (selectedUnits.AutoAddUnitsToSelectedGroup() && selectedUnits.IsGroupSelected(group->id)) {
 				selectedUnits.AddUnit(this);
 			}
 		}

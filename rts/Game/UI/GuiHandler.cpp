@@ -3129,8 +3129,8 @@ void CGuiHandler::DrawSelectionInfo()
 	if (!selectedUnits.selectedUnits.empty()) {
 		std::ostringstream buf;
 
-		if(selectedUnits.selectedGroup!=-1){
-			buf << "Selected units " << selectedUnits.selectedUnits.size() << " [Group " << selectedUnits.selectedGroup << "]";
+		if (selectedUnits.GetSelectedGroup() != -1) {
+			buf << "Selected units " << selectedUnits.selectedUnits.size() << " [Group " << selectedUnits.GetSelectedGroup() << "]";
 		} else {
 			buf << "Selected units " << selectedUnits.selectedUnits.size();
 		}
@@ -3660,7 +3660,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					continue;
 				}
 				const UnitDef* unitdef = unit->unitDef;
-				if (unitdef->builder && (!unitdef->canmove || selectedUnits.IsSelected(unit))) {
+				if (unitdef->builder && (!unitdef->canmove || selectedUnits.IsUnitSelected(unit))) {
 					const float radius = unitdef->buildDistance;
 					if (radius > 0.0f) {
 						glDisable(GL_TEXTURE_2D);
