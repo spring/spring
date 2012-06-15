@@ -5,11 +5,10 @@
 
 #include <list>
 
+#include "System/creg/creg_cond.h"
+#include "System/float3.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/float3.h"
-#include "System/creg/creg_cond.h"
-#include "System/Misc/RectangleOptimizer.h"
 
 #define USE_UNSYNCED_HEIGHTMAP
 
@@ -41,6 +40,14 @@ struct MapBitmapInfo
 	int height;
 };
 
+struct HeightMapUpdate {
+	HeightMapUpdate(int tlx, int brx,  int tly, int bry, bool inLOS = false): x1(tlx), x2(brx), y1(tly), y2(bry), los(inLOS) {
+	}
+
+	int x1, x2;
+	int y1, y2;
+	bool los;
+};
 
 
 class CReadMap
@@ -52,7 +59,7 @@ protected:
 	void Initialize();
 	void CalcHeightmapChecksum();
 
-	virtual void UpdateHeightMapUnsynced(const SRectangle&) = 0;
+	virtual void UpdateHeightMapUnsynced(const HeightMapUpdate&) = 0;
 
 public:
 	CR_DECLARE(CReadMap);
@@ -70,9 +77,8 @@ public:
 	 * calculates derived heightmap information
 	 * such as normals, centerheightmap and slopemap
 	 */
-	void UpdateHeightMapSynced(SRectangle rect, bool initialize = false);
-	void UpdateLOS(const SRectangle& rect);
-	void BecomeSpectator();
+	void UpdateHeightMapSynced(int x1, int z1, int x2, int z2);
+	void PushVisibleHeightMapUpdate(int x1, int z1, int x2, int z2, bool);
 	void UpdateDraw();
 
 	virtual ~CReadMap();
@@ -173,14 +179,10 @@ public:
 	unsigned int mapChecksum;
 
 private:
-	void UpdateCenterHeightmap(const SRectangle& rect);
-	void UpdateMipHeightmaps(const SRectangle& rect);
-	void UpdateFaceNormals(const SRectangle& rect);
-	void UpdateSlopemap(const SRectangle& rect);
-	
-	inline void HeightMapUpdateLOSCheck(const SRectangle& rect);
-	inline bool HasHeightMapChanged(const int lmx, const int lmy);
-	inline void InitHeightMapDigestsVectors();
+	void UpdateCenterHeightmap(const int x1, const int z1, const int x2, const int z2);
+	void UpdateMipHeightmaps(const int x1, const int z1, const int x2, const int z2);
+	void UpdateFaceNormals(int x1, int z1, int x2, int z2);
+	void UpdateSlopemap(const int x1, const int z1, const int x2, const int z2);
 
 protected:
 	std::vector<float>* heightMapSynced;      //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
@@ -205,13 +207,27 @@ protected:
 	std::vector<float> slopeMap;               //< size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
 	std::vector<unsigned char> typeMap;
 
-	CRectangleOptimizer unsyncedHeightMapUpdates;
+	std::list<HeightMapUpdate> unsyncedHeightMapUpdates;
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	/// used to filer LOS updates (so only update UHM on LOS updates when the heightmap was changed beforehand)
-	/// size: in LOS resolution
-	std::vector<unsigned char>   syncedHeightMapDigests;
-	std::vector<unsigned char> unsyncedHeightMapDigests;
+	struct HeightMapUpdateFilter {
+		HeightMapUpdateFilter(bool upd = false) : minx(0), maxx(0), miny(0), maxy(0), update(upd) {}
+		HeightMapUpdateFilter(int mnx, int mxx, int mny, int mxy, bool upd = false) : minx(mnx), maxx(mxx), miny(mny), maxy(mxy), update(upd) {}
+
+		void Expand(const HeightMapUpdateFilter& fnew) {
+			minx = std::min(minx, fnew.minx);
+			maxx = std::max(maxx, fnew.maxx);
+			miny = std::min(miny, fnew.miny);
+			maxy = std::max(maxy, fnew.maxy);
+			update = fnew.update;
+		}
+
+		int minx;
+		int maxx;
+		int miny;
+		int maxy;
+		bool update;
+	};
 #endif
 };
 

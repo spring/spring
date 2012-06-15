@@ -456,19 +456,15 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 	// technically required whenever numRefBinSquares is zero, ie.
 	// when ALL squares in <r> changed bins in unison
 	//
-	UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares);
+	if (UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares) && Split(nl)) {
+		registerNode = false;
 
-	if (numDifBinSquares > 0) {
-		if (Split(nl)) {
-			registerNode = false;
+		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
+			QTNode* cn = children[i];
+			SRectangle cr = cn->ClipRectangle(r);
 
-			for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-				QTNode* cn = children[i];
-				SRectangle cr = cn->ClipRectangle(r);
-
-				cn->Tesselate(nl, cr, false, true);
-				assert(cn->GetMoveCost() != -1.0f);
-			}
+			cn->Tesselate(nl, cr, false, true);
+			assert(cn->GetMoveCost() != -1.0f);
 		}
 	}
 
@@ -477,7 +473,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 	}
 }
 
-void QTPFS::QTNode::UpdateMoveCost(
+bool QTPFS::QTNode::UpdateMoveCost(
 	const NodeLayer& nl,
 	const SRectangle& r,
 	unsigned int& numNewBinSquares,
@@ -557,10 +553,8 @@ void QTPFS::QTNode::UpdateMoveCost(
 
 	assert(moveCostAvg > 0.0f);
 
-	if (numClosedSquares == 0)
-		return;
 	if (numDifBinSquares > 0 && CanSplit())
-		return;
+		return true;
 
 	// if we are not going to tesselate this node further
 	// and there is at least one impassable square inside
@@ -578,11 +572,15 @@ void QTPFS::QTNode::UpdateMoveCost(
 	//   of a lane would otherwise be unable to find a path
 	//   out of their factories
 	//
-	if (numClosedSquares < (xsize() * zsize())) {
-		moveCostAvg = QTPFS_CLOSED_NODE_COST * (numClosedSquares / float(xsize() * xsize()));
-	} else {
-		moveCostAvg = QTPFS_POSITIVE_INFINITY;
+	if (numClosedSquares > 0) {
+		if (numClosedSquares < (xsize() * zsize())) {
+			moveCostAvg = QTPFS_CLOSED_NODE_COST * (numClosedSquares / float(xsize() * xsize()));
+		} else {
+			moveCostAvg = QTPFS_POSITIVE_INFINITY;
+		}
 	}
+
+	return false;
 }
 
 

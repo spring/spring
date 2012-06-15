@@ -169,7 +169,7 @@ namespace QTPFS {
 		static const unsigned int MAX_DEPTH = 16;
 
 	private:
-		void UpdateMoveCost(
+		bool UpdateMoveCost(
 			const NodeLayer& nl,
 			const SRectangle& r,
 			unsigned int& numNewBinSquares,

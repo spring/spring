@@ -169,20 +169,17 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 			relMidPos = model->relMidPos;
 			fRadius = model->radius;
 			fHeight = model->height;
-
-			// note: gets deleted in ~CSolidObject
-			collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
 		}
 	}
 	else if (def->drawType >= DRAWTYPE_TREE) {
+		// LoadFeaturesFromMap() doesn't set a scale for trees
 		relMidPos = UpVector * TREE_RADIUS;
 		fRadius = TREE_RADIUS;
 		fHeight = fRadius * 2.0f;
-
-		// LoadFeaturesFromMap() doesn't set a scale for trees
-		// note: gets deleted in ~CSolidObject
-		collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
 	}
+
+	// note: gets deleted in ~CSolidObject
+	collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
 
 	Move3D(_pos.cClampInMap(), false);
 	SetRadiusAndHeight(fRadius, fHeight);

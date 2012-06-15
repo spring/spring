@@ -69,20 +69,11 @@ CollisionVolume::CollisionVolume(const CollisionVolume* v, float defaultRadius)
 	disabled               = v->disabled;
 	defaultScale           = v->defaultScale;
 
-	if (defaultScale) {
-		if (volumeBoundingRadius <= 60.0f) {
-			// COLVOL_HITTEST_DISC fails too easily in
-			// practice; many objects are too small to
-			// make interval-based testing reliable
-			testType = COLVOL_HITTEST_CONT;
-		}
-
+	if (defaultScale && defaultRadius > 0.0f) {
 		// if the volume being copied was not given
 		// explicit scales, convert the clone into a
 		// sphere if provided with a non-zero radius
-		if (defaultRadius > 0.0f) {
-			Init(defaultRadius);
-		}
+		Init(defaultRadius);
 	}
 }
 
