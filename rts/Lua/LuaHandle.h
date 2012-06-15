@@ -162,8 +162,8 @@ class CLuaHandle : public CEventClient
 		void UnitFromFactory(const CUnit* unit, const CUnit* factory,
 		                     bool userOrders);
 		void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
-		void UnitTaken(const CUnit* unit, int newTeam);
-		void UnitGiven(const CUnit* unit, int oldTeam);
+		void UnitTaken(const CUnit* unit, int oldTeam, int newTeam);
+		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam);
 
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);

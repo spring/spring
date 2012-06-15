@@ -1362,8 +1362,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	selectedUnits.RemoveUnit(this);
 	SetGroup(NULL);
 
-	eventHandler.UnitTaken(this, newteam);
-	eoh->UnitCaptured(*this, newteam);
+	eventHandler.UnitTaken(this, oldteam, newteam);
+	eoh->UnitCaptured(*this, oldteam, newteam);
 
 	qf->RemoveUnit(this);
 	quads.clear();
@@ -1412,8 +1412,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		airBaseHandler->RegisterAirBase(this);
 	}
 
-	eventHandler.UnitGiven(this, oldteam);
-	eoh->UnitGiven(*this, oldteam);
+	eventHandler.UnitGiven(this, oldteam, newteam);
+	eoh->UnitGiven(*this, oldteam, newteam);
 
 	// reset states and clear the queues
 	if (!teamHandler->AlliedTeams(oldteam, newteam))
