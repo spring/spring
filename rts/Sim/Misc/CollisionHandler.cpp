@@ -385,10 +385,12 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 	const float rSq = 1.0f;
 
 	if (pii0.dot(pii0) <= rSq /* && pii1.dot(pii1) <= rSq */) {
-		// terminate early in the special case
-		// that shot originated within volume
-		q->b0 = true; q->p0 = ZVEC;
-		q->b1 = true; q->p1 = ZVEC;
+		if (q != NULL) {
+			// terminate early in the special case
+			// that shot originated within volume
+			q->b0 = true; q->p0 = ZVEC;
+			q->b1 = true; q->p1 = ZVEC;
+		}
 		return true;
 	}
 
@@ -476,10 +478,12 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		((pi0[sAx1] * pi0[sAx1]) / ahsq[sAx1]);
 
 	if ((pi0[pAx] > -ahs[pAx] && pi0[pAx] < ahs[pAx]) && ratio <= 1.0f) {
-		// terminate early in the special case
-		// that shot originated within volume
-		q->b0 = true; q->p0 = ZVEC;
-		q->b1 = true; q->p1 = ZVEC;
+		if (q != NULL) {
+			// terminate early in the special case
+			// that shot originated within volume
+			q->b0 = true; q->p0 = ZVEC;
+			q->b1 = true; q->p1 = ZVEC;
+		}
 		return true;
 	}
 

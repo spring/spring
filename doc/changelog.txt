@@ -34,6 +34,12 @@ Bugfixes:
  - fix crash in unit_script.lua
  - fix 'Units stuck in factory' QTPFS bug (3055)
  - fix units moving (being pushed) through factory walls
+ - fix terrain water reflections
+ - fix game does not end properly for a player that is being kicked
+ - fix problem to build near map edges
+ - fix ping display after mid-game (re-)join + try to reduce lag after mid-game join
+ - fix missing stack trace if out-of-memory occurs
+ - fix resurrecting an individual wreck results in the resurrector not healing it
 
 Simulation:
  - YardMap changes:
@@ -46,6 +52,7 @@ Simulation:
   ! make terrain restore range check consistent with new terraform one
   ! don't add target's radius to the builder's builddistance, only do so if the target is bigger than the builddistance (mostly only true for terraform)
     -> from now on the to be built unit's centerpos has to be in buildrange not its border!
+ ! remove obsolete default dependence of cloakCostMoving on cloakCost
  - improved behaviour of builder masses
  - make StartBox clamping of StartPositions synced
  - don't reclaim in-the-way features when the buildee is going to morph into a feature of the same type
@@ -75,6 +82,7 @@ Lua:
  ! replace Game.gameID by synced callin GameID(string gameID)
  - fix TraceScreenRay never returning "sky" when includeSky=true
  - fix TraceScreenRay coordinate offset when onlyCoords=true
+ - fix typo in Spring.GetUnitVelocity
  - add extra parameter 'defPriority' to AllowWeaponTarget (what the engine thinks the target priority should be)
  - add bool FeatureDefs[xyz].autoreclaim
  - add new gl.Texture("$minimap")
@@ -82,6 +90,7 @@ Lua:
  ! remove gl.SelectBuffer and co.
  - new Spring.LoadCmdColorsConfig(configStr) & Spring.LoadCtrlPanelConfig(configStr)
  - add new 3 param 'pairwise' to Spring.GiveOrderArrayToUnitArray(), used to send multiple units a single individual command
+ - fix crash due to UpdateCallIn removing the current event client from list being iterated
 
 Rendering:
  - fixed ATi PointSize bug
@@ -89,9 +98,11 @@ Rendering:
  - fixed assimp lua metafiles
  - warn about null normals in models
  - add visualization of default object radii (used for AOE calculations, etc) to alt+v
- - SMF: render the info-texture through GLSL (noob translation: shadows in LOS-view)
+ - SMF: render the info-texture through GLSL (noob translation -> shadows in LOS-view)
  - improved VSync under Linux (with support for AdaptiveVSync)
  - added FeatureFadeDistance & FeatureDrawDistance config tags
+ - fixed vibrating planes (again)
+ - fix spring_multithreaded hangs
 
 UI:
  - display average draw & sim frame time in debugview
@@ -100,7 +111,10 @@ UI:
 Linux:
  - on multicore systems set scheduler to SCHED_BATCH (semi-solves the core hoping issue)
  - call SDL_WarpMouse only when needed (fixes massive FPS-drop in middle-click-scrolling)
- 
+
+OSX:
+ - fix stack corruption in sound code
+
 
 -- 88.0 ---------------------------------------------------------
 Changes:

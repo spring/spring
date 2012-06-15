@@ -158,7 +158,7 @@ float TraceRay(
 					// NOTE:
 					//     if f is non-blocking, ProjectileHandler will not test
 					//     for collisions with projectiles so we can skip it here
-					if (!f->blocking || f->collisionVolume == NULL)
+					if (!f->blocking)
 						continue;
 
 					if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
@@ -310,8 +310,6 @@ float GuiTraceRay(
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 			CFeature* f = *fi;
 
-			if (f->collisionVolume == NULL)
-				continue;
 			// FIXME add useradar?
 			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
@@ -366,7 +364,7 @@ bool LineFeatureCol(const float3& start, const float3& dir, float length)
 		for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 			const CFeature* f = *ui;
 
-			if (!f->blocking || f->collisionVolume == NULL)
+			if (!f->blocking)
 				continue;
 
 			if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
@@ -441,8 +439,6 @@ bool TestCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
-				if (f->collisionVolume == NULL)
-					continue;
 				if (!f->blocking)
 					continue;
 
@@ -524,8 +520,6 @@ bool TestTrajectoryCone(
 			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 				const CFeature* f = *featuresIt;
 
-				if (f->collisionVolume == NULL)
-					continue;
 				if (!f->blocking)
 					continue;
 

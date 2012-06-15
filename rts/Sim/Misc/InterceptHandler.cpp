@@ -147,7 +147,7 @@ void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
 
 float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy)
 {
-	float minRange = 99999999;
+	float minRange = std::numeric_limits<float>::max();
 	float3 tempDir;
 
 	for (std::list<CPlasmaRepulser*>::iterator wi = repulsors.begin(); wi != repulsors.end(); ++wi) {
