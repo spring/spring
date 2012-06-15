@@ -4535,7 +4535,7 @@ EXPORT(bool) skirmishAiCallback_Group_isSelected(int skirmishAIId, int groupId) 
 
 	if (!isControlledByLocalPlayer(skirmishAIId)) return false;
 
-	return selectedUnits.selectedGroup == groupId;
+	return (selectedUnits.IsGroupSelected(groupId));
 }
 
 //##############################################################################
