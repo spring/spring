@@ -17,6 +17,8 @@ Changes:
  ! remove selectkeys.txt support (use uikeys.txt instead)
  ! remove TASServer.jar (outdated, use http://springrts.com/wiki/Spring_on_a_LAN )
  ! send gameID and SDF filename with SERVER_STARTPLAYING to autohost
+ ! remove deprecated LogSubsystems config var
+ - add LogFlush config var for instant writes (disabled as default)
 
 Bugfixes:
  - dedicated server no longer consumes 100% CPU while waiting for gameID
