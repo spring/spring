@@ -127,6 +127,7 @@ void CLuaUI::FreeHandler()
 CLuaUI::CLuaUI()
 : CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true)
 {
+	GML::SetLuaUIState(L_Sim);
 	luaUI = this;
 
 	BEGIN_ITERATE_LUA_STATES();
@@ -252,6 +253,7 @@ CLuaUI::~CLuaUI()
 		KillLua();
 	}
 	luaUI = NULL;
+	GML::SetLuaUIState(NULL);
 }
 
 void CLuaUI::InitLuaSocket(lua_State* L) {
@@ -377,7 +379,7 @@ void CLuaUI::Shutdown()
 
 bool CLuaUI::ConfigCommand(const string& command)
 {
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -528,7 +530,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	GML_THRMUTEX_LOCK(feat, GML_DRAW); // LayoutButtons
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // LayoutButtons
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 6);
 	const int top = lua_gettop(L);
 
@@ -882,7 +884,7 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 	}
 #endif
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, 0);
 	const LuaHashString funcHash(funcName);
 	if (!funcHash.GetGlobalFunc(L)) {
 		return 0;

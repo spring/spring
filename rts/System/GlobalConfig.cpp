@@ -96,6 +96,7 @@ GlobalConfig::GlobalConfig()
 #if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
 	multiThreadLua = configHandler->GetInt("MultiThreadLua");
 #endif
+	GML::SetCheckCallChain(GetMultiThreadLua() == MT_LUA_SINGLE_BATCH);
 }
 
 

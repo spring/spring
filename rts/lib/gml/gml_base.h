@@ -20,6 +20,9 @@ namespace GML {
 	inline void ThreadNumber(int num) { set_threadnum(num); }
 	inline int ThreadCount() { return gmlThreadCount; }
 	bool UpdateSim(CGameController *ac);
+	inline void SetLuaUIState(lua_State *L) { gmlLuaUIState = L; }
+	inline void SetCheckCallChain(bool cc) { gmlCheckCallChain = cc; }
+	inline void EnableCallChainWarnings(bool cw) { gmlCallChainWarning = (cw ? 0 : GML_MAX_CALL_CHAIN_WARNINGS); }
 };
 #else
 namespace GML {
@@ -35,6 +38,9 @@ namespace GML {
 	inline void ThreadNumber(int num) { }
 	inline int ThreadCount() { return 1; }
 	inline bool UpdateSim(CGameController *ac) { return ac->Update(); }
+	inline void SetLuaUIState(void *L) {}
+	inline void SetCheckCallChain(bool cc) {}
+	inline void EnableCallChainWarnings(bool cw) {}
 };
 #endif
 

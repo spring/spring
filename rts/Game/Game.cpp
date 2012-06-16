@@ -307,6 +307,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	showClock = configHandler->GetBool("ShowClock");
 	showSpeed = configHandler->GetBool("ShowSpeed");
 	showMTInfo = configHandler->GetBool("ShowMTInfo");
+	if (!showMTInfo)
+		GML::EnableCallChainWarnings(false);
 	mtInfoThreshold = configHandler->GetFloat("MTInfoThreshold");
 	mtInfoCtrl = 0;
 
