@@ -2042,7 +2042,7 @@ void CGameServer::PushAction(const Action& action)
 
 			if (tokens.size() > 1) {
 				const std::string& name = tokens[0];
-				const std::string& password = tokens[1];
+				const std::string& pwd = tokens[1];
 				int team = 0;
 				bool spectator = true;
 				if ( tokens.size() > 2 ) {
@@ -2063,22 +2063,27 @@ void CGameServer::PushAction(const Action& action)
 						if(it != opts.end())
 							participantIter->SetValue("origpass", it->second);
 					}
-					participantIter->SetValue("password", password);
-					LOG("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+					participantIter->SetValue("password", pwd);
+					LOG("[%s] changed player/spectator password: \"%s\" \"%s\"", __FUNCTION__, name.c_str(), pwd.c_str());
 				} else {
-					AddAdditionalUser(name, password, false, spectator, team);
-					std::string logstring = "Added ";
-					if ( spectator ) logstring = logstring + "spectator";
-					else logstring = logstring + "player";
-					logstring = logstring + " \"%s\" with password \"%s\", to team %d";
-					LOG(logstring.c_str(), name.c_str(), password.c_str(),team);
+					AddAdditionalUser(name, pwd, false, spectator, team);
+
+					LOG(
+						"[%s] added client \"%s\" with password \"%s\" to team %d (as a %s)",
+						__FUNCTION__, name.c_str(), pwd.c_str(), team, (spectator? "spectator": "player")
+					);
 				}
 			} else {
-				LOG_L(L_WARNING, "Failed to add player/spectator password. usage: /adduser <player-name> <password> [spectator] [team]");
+				LOG_L(L_WARNING,
+					"[%s] failed to add player/spectator password. usage: "
+					"/adduser <player-name> <password> [spectator] [team]",
+					__FUNCTION__
+				);
 			}
 		}
 	}
 	else if (action.command == "kill") {
+		LOG("[%s] server killed", __FUNCTION__);
 		quitServer = true;
 	}
 	else if (action.command == "pause") {
