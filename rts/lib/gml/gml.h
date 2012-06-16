@@ -43,6 +43,10 @@ extern gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 
 #include "gmlfun.h"
 
+extern lua_State *gmlLuaUIState;
+extern bool gmlCheckCallChain;
+extern int gmlCallChainWarning;
+
 #if GML_PROC_PROFILER
 	extern int gmlProcNumLoop;
 	extern int gmlProcInterval;

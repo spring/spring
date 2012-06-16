@@ -667,7 +667,7 @@ bool CLuaHandleSynced::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 
 bool CLuaHandleSynced::Initialize(const string& syncData)
 {
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 3);
 	static const LuaHashString cmdStr("Initialize");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -699,7 +699,7 @@ string CLuaHandleSynced::GetSyncData()
 {
 	string syncData;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, syncData);
 	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("GetSyncData");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -745,7 +745,7 @@ bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)
 
 bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 {
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("GotChatMsg");
 	if (!cmdStr.GetGlobalFunc(L)) {
