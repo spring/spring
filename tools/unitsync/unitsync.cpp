@@ -46,7 +46,6 @@
 #endif
 
 // unitsync only:
-#include "LuaParserAPI.h"
 #include "Syncer.h"
 
 //////////////////////////
