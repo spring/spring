@@ -36,7 +36,7 @@ namespace {
 					|| (sections.find("," + std::string(section) + ",")
 					!= std::string::npos)));
 		}
-		bool IsFlush() const{
+		bool FlushOnWrite() const {
 			return flush;
 		}
 
@@ -133,7 +133,7 @@ namespace {
 			if (lfi->second.IsLogging(section, level)
 					&& (lfi->second.GetOutStream() != NULL))
 			{
-				log_file_writeToFile(lfi->second.GetOutStream(), record, lfi->second.IsFlush());
+				log_file_writeToFile(lfi->second.GetOutStream(), record, lfi->second.FlushOnWrite());
 			}
 		}
 	}

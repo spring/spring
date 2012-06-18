@@ -241,7 +241,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 		GML_RECMUTEX_LOCK(group); // FinishBuild
 
 		if (group && buildee->group == 0) {
-			buildee->SetGroup(group);
+			buildee->SetGroup(group, true);
 		}
 	}
 

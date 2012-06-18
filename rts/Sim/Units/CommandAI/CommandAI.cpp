@@ -45,35 +45,34 @@ static const int TARGET_LOST_TIMER = 15;
 
 CR_BIND(CCommandQueue, );
 CR_REG_METADATA(CCommandQueue, (
-				CR_MEMBER(queue),
-				CR_ENUM_MEMBER(queueType),
-				CR_MEMBER(tagCounter)
-				));
+	CR_MEMBER(queue),
+	CR_ENUM_MEMBER(queueType),
+	CR_MEMBER(tagCounter)
+));
 
 CR_BIND_DERIVED(CCommandAI, CObject, );
 CR_REG_METADATA(CCommandAI, (
-				CR_MEMBER(stockpileWeapon),
+	CR_MEMBER(stockpileWeapon),
 
-				CR_MEMBER(possibleCommands),
-				CR_MEMBER(commandQue),
-				CR_MEMBER(nonQueingCommands),
-				CR_MEMBER(lastUserCommand),
-				CR_MEMBER(selfDCountdown),
-				CR_MEMBER(lastFinishCommand),
+	CR_MEMBER(possibleCommands),
+	CR_MEMBER(commandQue),
+	CR_MEMBER(nonQueingCommands),
+	CR_MEMBER(lastUserCommand),
+	CR_MEMBER(selfDCountdown),
+	CR_MEMBER(lastFinishCommand),
 
-				CR_MEMBER(owner),
+	CR_MEMBER(owner),
 
-				CR_MEMBER(orderTarget),
-				CR_MEMBER(targetDied),
-				CR_MEMBER(inCommand),
-				CR_MEMBER(selected),
-				CR_MEMBER(repeatOrders),
-				CR_MEMBER(lastSelectedCommandPage),
-				CR_MEMBER(unimportantMove),
-				CR_MEMBER(targetLostTimer),
-				CR_RESERVED(64),
-				CR_POSTLOAD(PostLoad)
-				));
+	CR_MEMBER(orderTarget),
+	CR_MEMBER(targetDied),
+	CR_MEMBER(inCommand),
+	CR_MEMBER(repeatOrders),
+	CR_MEMBER(lastSelectedCommandPage),
+	CR_MEMBER(unimportantMove),
+	CR_MEMBER(targetLostTimer),
+	CR_RESERVED(64),
+	CR_POSTLOAD(PostLoad)
+));
 
 CCommandAI::CCommandAI():
 	stockpileWeapon(0),
@@ -84,7 +83,6 @@ CCommandAI::CCommandAI():
 	orderTarget(0),
 	targetDied(false),
 	inCommand(false),
-	selected(false),
 	repeatOrders(false),
 	lastSelectedCommandPage(0),
 	unimportantMove(false),
@@ -100,7 +98,6 @@ CCommandAI::CCommandAI(CUnit* owner):
 	orderTarget(0),
 	targetDied(false),
 	inCommand(false),
-	selected(false),
 	repeatOrders(false),
 	lastSelectedCommandPage(0),
 	unimportantMove(false),
@@ -334,11 +331,6 @@ void CCommandAI::AddCommandDependency(const Command &c) {
 		if (ref)
 			AddDeathDependence(ref, DEPENDENCE_COMMANDQUE);
 	}
-}
-
-void CCommandAI::PostLoad()
-{
-	selected = false; // FIXME: HACK: selected list is not serialized
 }
 
 vector<CommandDescription>& CCommandAI::GetPossibleCommands()

@@ -233,6 +233,7 @@ CUnit::CUnit() : CSolidObject(),
 	noDraw(false),
 	noMinimap(false),
 	leaveTracks(false),
+	isSelected(false),
 	isIcon(false),
 	iconRadius(0.0f),
 	lodCount(0),
@@ -1649,25 +1650,38 @@ void CUnit::CalculateTerrainType()
 }
 
 
-bool CUnit::SetGroup(CGroup* newGroup)
+bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 {
 	GML_RECMUTEX_LOCK(grpsel); // SetGroup
+
+	// factory is not necessarily selected
+	if (fromFactory && !selectedUnits.AutoAddBuiltUnitsToFactoryGroup())
+		return false;
 
 	if (group != NULL) {
 		group->RemoveUnit(this);
 	}
+
 	group = newGroup;
 
 	if (group) {
 		if (!group->AddUnit(this)){
-			group = NULL; // group ai did not accept us
+			// group did not accept us
+			group = NULL;
 			return false;
-		} else { // add us to selected units, if group is selected
-			if (selectedUnits.AutoAddUnitsToSelectedGroup() && selectedUnits.IsGroupSelected(group->id)) {
+		} else {
+			// add us to the set of selected units iff:
+			//   the unit is newly built and user wants those to be auto-selected
+			//   the unit is not newly built and its new group is already selected
+			if (fromFactory && selectedUnits.AutoAddBuiltUnitsToSelectedGroup()) {
+				selectedUnits.AddUnit(this);
+			}
+			if (!fromFactory && selectedUnits.IsGroupSelected(group->id)) {
 				selectedUnits.AddUnit(this);
 			}
 		}
 	}
+
 	return true;
 }
 
@@ -2339,6 +2353,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(noDraw),
 	CR_MEMBER(noMinimap),
 	CR_MEMBER(leaveTracks),
+//	CR_MEMBER(isSelected),
 //	CR_MEMBER(isIcon),
 //	CR_MEMBER(iconRadius),
 //	CR_MEMBER(weaponHitMod),

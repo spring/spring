@@ -1441,10 +1441,9 @@ void CMiniMap::DrawUnit(const CUnit* unit)
 	}
 
 	// set the color
-	if (unit->commandAI->selected) {
+	if (unit->isSelected) {
 		glColor3f(1.0f, 1.0f, 1.0f);
-	}
-	else {
+	} else {
 		if (simpleColors) {
 			if (unit->team == gu->myTeam) {
 				glColor3ubv(myColor);
