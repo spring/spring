@@ -100,33 +100,36 @@ CLuaRules::CLuaRules()
 
 	BEGIN_ITERATE_LUA_STATES();
 
-	haveCommandFallback        = HasCallIn(L, "CommandFallback");
-	haveAllowCommand           = HasCallIn(L, "AllowCommand");
-	haveAllowUnitCreation      = HasCallIn(L, "AllowUnitCreation");
-	haveAllowUnitTransfer      = HasCallIn(L, "AllowUnitTransfer");
-	haveAllowUnitBuildStep     = HasCallIn(L, "AllowUnitBuildStep");
-	haveAllowFeatureCreation   = HasCallIn(L, "AllowFeatureCreation");
-	haveAllowFeatureBuildStep  = HasCallIn(L, "AllowFeatureBuildStep");
-	haveAllowResourceLevel     = HasCallIn(L, "AllowResourceLevel");
-	haveAllowResourceTransfer  = HasCallIn(L, "AllowResourceTransfer");
-	haveAllowDirectUnitControl = HasCallIn(L, "AllowDirectUnitControl");
-	haveAllowStartPosition     = HasCallIn(L, "AllowStartPosition");
+	if (SingleState() || L == L_Sim) {
+		haveCommandFallback        = HasCallIn(L, "CommandFallback");
+		haveAllowCommand           = HasCallIn(L, "AllowCommand");
+		haveAllowUnitCreation      = HasCallIn(L, "AllowUnitCreation");
+		haveAllowUnitTransfer      = HasCallIn(L, "AllowUnitTransfer");
+		haveAllowUnitBuildStep     = HasCallIn(L, "AllowUnitBuildStep");
+		haveAllowFeatureCreation   = HasCallIn(L, "AllowFeatureCreation");
+		haveAllowFeatureBuildStep  = HasCallIn(L, "AllowFeatureBuildStep");
+		haveAllowResourceLevel     = HasCallIn(L, "AllowResourceLevel");
+		haveAllowResourceTransfer  = HasCallIn(L, "AllowResourceTransfer");
+		haveAllowDirectUnitControl = HasCallIn(L, "AllowDirectUnitControl");
+		haveAllowStartPosition     = HasCallIn(L, "AllowStartPosition");
 
-	haveMoveCtrlNotify         = HasCallIn(L, "MoveCtrlNotify");
-	haveTerraformComplete      = HasCallIn(L, "TerraformComplete");
-	haveAllowWeaponTargetCheck = HasCallIn(L, "AllowWeaponTargetCheck");
-	haveAllowWeaponTarget      = HasCallIn(L, "AllowWeaponTarget");
-	haveUnitPreDamaged         = HasCallIn(L, "UnitPreDamaged");
-	haveShieldPreDamaged       = HasCallIn(L, "ShieldPreDamaged");
+		haveMoveCtrlNotify         = HasCallIn(L, "MoveCtrlNotify");
+		haveTerraformComplete      = HasCallIn(L, "TerraformComplete");
+		haveAllowWeaponTargetCheck = HasCallIn(L, "AllowWeaponTargetCheck");
+		haveAllowWeaponTarget      = HasCallIn(L, "AllowWeaponTarget");
+		haveUnitPreDamaged         = HasCallIn(L, "UnitPreDamaged");
+		haveShieldPreDamaged       = HasCallIn(L, "ShieldPreDamaged");
+	}
+	if (SingleState() || L == L_Draw) {
+		haveDrawUnit    = HasCallIn(L, "DrawUnit");
+		haveDrawFeature = HasCallIn(L, "DrawFeature");
+		haveDrawShield  = HasCallIn(L, "DrawShield");
 
-	haveDrawUnit    = HasCallIn(L, "DrawUnit");
-	haveDrawFeature = HasCallIn(L, "DrawFeature");
-	haveDrawShield  = HasCallIn(L, "DrawShield");
-
-	SetupUnsyncedFunction(L, "DrawUnit");
-	SetupUnsyncedFunction(L, "DrawFeature");
-	SetupUnsyncedFunction(L, "DrawShield");
-	SetupUnsyncedFunction(L, "RecvSkirmishAIMessage");
+		SetupUnsyncedFunction(L, "DrawUnit");
+		SetupUnsyncedFunction(L, "DrawFeature");
+		SetupUnsyncedFunction(L, "DrawShield");
+		SetupUnsyncedFunction(L, "RecvSkirmishAIMessage");
+	}
 
 	END_ITERATE_LUA_STATES();
 }

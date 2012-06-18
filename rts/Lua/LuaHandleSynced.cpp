@@ -154,7 +154,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	SetAllowChanges(true, true);
 	SetSynced(true, true);
 
-	const bool haveSynced = SetupSynced(L, syncedCode, syncedFile);
+	const bool haveSynced = (SingleState() || L == L_Sim) && SetupSynced(L, syncedCode, syncedFile);
 	if (!IsValid()) {
 		SetRunning(false);
 		return;
@@ -163,10 +163,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	SetAllowChanges(false, true);
 	SetSynced(false, true);
 
-	// FIXME: for the split lua state, we currently add synced AND unsynced code to both states
-	// to make sure HasCallIn et al do not return different results depending on active state.
-	// The problem is that synchronization is needed if HasCallIn would query both states.
-	const bool haveUnsynced = SetupUnsynced(L, unsyncedCode, unsyncedFile);
+	const bool haveUnsynced = (SingleState() || L == L_Draw) && SetupUnsynced(L, unsyncedCode, unsyncedFile);
 	if (!IsValid()) {
 		SetRunning(false);
 		return;

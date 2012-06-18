@@ -134,7 +134,17 @@ class CLuaHandle : public CEventClient
 		CLuaDisplayLists& GetDisplayLists(const lua_State* L = NULL) { return GET_CONTEXT_DATA(displayLists); }
 
 	public: // call-ins
-		bool WantsEvent(const string& name)  { return HasCallIn(GetActiveState(), name); } // FIXME
+		bool WantsEvent(const string& name)  {
+			BEGIN_ITERATE_LUA_STATES();
+			{
+				GML_DRCMUTEX_LOCK(lua); // WantsEvent
+
+				if (HasCallIn(L, name))
+					return true;
+			}
+			END_ITERATE_LUA_STATES();
+			return false;
+		}
 
 		virtual bool HasCallIn(lua_State* L, const string& name) { return false; } // FIXME
 		virtual bool SyncedUpdateCallIn(lua_State* L, const string& name) { return false; }
