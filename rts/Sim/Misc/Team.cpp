@@ -125,9 +125,9 @@ CTeam::CTeam() :
 
 void CTeam::ClampStartPosInStartBox(float3* pos) const
 {
-	int allyTeam = teamHandler->AllyTeam(teamNum);
+	const int allyTeam = teamHandler->AllyTeam(teamNum);
 	if (allyTeam < 0 || allyTeam >= gameSetup->allyStartingData.size()) {
-		LOG_L(L_ERROR, "ClampStartPosInStartBox: Invalid AllyStartingData");
+		LOG_L(L_ERROR, "%s: invalid AllyStartingData (team %d)", __FUNCTION__, teamNum);
 		return;
 	}
 	const AllyTeam& at = gameSetup->allyStartingData[allyTeam];
