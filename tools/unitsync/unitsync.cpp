@@ -1232,14 +1232,14 @@ EXPORT(int) GetInfoMapSize(const char* mapName, const char* name, int* width, in
 		*width = bmInfo.width;
 		*height = bmInfo.height;
 
-		return bmInfo.width > 0;
+		return bmInfo.width * bmInfo.height;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	if (width)  *width  = 0;
 	if (height) *height = 0;
 
-	return 0;
+	return -1;
 }
 
 
