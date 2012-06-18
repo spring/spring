@@ -57,16 +57,17 @@ CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 	}
 
 	renderer = new terrain::Terrain();
-	heightMapSynced   = renderer->GetCornerHeightMapSynced();
-	heightMapUnsynced = renderer->GetCornerHeightMapUnsynced();
 
 	{
 		// load the heightmap in advance
 		Sm3LoadCB cb;
 		renderer->LoadHeightMap(GetMapDefParser(), &cb);
 
+		heightMapSynced   = renderer->GetCornerHeightMapSynced();
+		heightMapUnsynced = renderer->GetCornerHeightMapUnsynced();
+
 		width  = renderer->GetHeightmapWidth() - 1;
-		height = renderer->GetHeightmapWidth() - 1; // note: not height (sm3 only support square maps!)
+		height = renderer->GetHeightmapWidth() - 1; // note: not height (SM3 only supports square maps!)
 	}
 
 	CReadMap::Initialize();
