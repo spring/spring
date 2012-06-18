@@ -19,6 +19,10 @@ Changes:
  ! send gameID and SDF filename with SERVER_STARTPLAYING to autohost
  ! remove deprecated LogSubsystems config var
  - add LogFlush config var for instant writes (disabled as default)
+ - add UI config-variables AutoAddBuiltUnitsToFactoryGroup (def: false) and AutoAddBuiltUnitsToSelectedGroup (def: false)
+   if the first variable is true, new units auto-inherit their group number from the factory that built them
+   if the first AND second are true, new units are auto-selected if their factory group is currently selected
+
 
 Bugfixes:
  - dedicated server no longer consumes 100% CPU while waiting for gameID

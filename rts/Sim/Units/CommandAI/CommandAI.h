@@ -24,7 +24,7 @@ public:
 	CCommandAI(CUnit* owner);
 	CCommandAI();
 	virtual ~CCommandAI();
-	void PostLoad();
+	void PostLoad() {}
 	void DependentDied(CObject* o);
 	inline void SetOrderTarget(CUnit* o);
 
@@ -112,7 +112,6 @@ public:
 
 	bool targetDied;
 	bool inCommand;
-	bool selected;
 	bool repeatOrders;
 	int lastSelectedCommandPage;
 	bool unimportantMove;

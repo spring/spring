@@ -16,7 +16,6 @@ class CSelectedUnits : public CObject
 {
 public:
 	CSelectedUnits();
-	virtual ~CSelectedUnits();
 
 	void Init(unsigned numPlayers);
 	void SelectGroup(int num);
@@ -55,7 +54,8 @@ public:
 
 	bool IsUnitSelected(const CUnit* unit) const;
 	bool IsUnitSelected(const int unitID) const;
-	bool AutoAddUnitsToSelectedGroup() const { return autoAddUnitsToSelectedGroup; }
+	bool AutoAddBuiltUnitsToFactoryGroup() const { return autoAddBuiltUnitsToFactoryGroup; }
+	bool AutoAddBuiltUnitsToSelectedGroup() const { return autoAddBuiltUnitsToSelectedGroup; }
 	bool IsGroupSelected(int groupID) const { return (selectedGroup == groupID); }
 	int GetSelectedGroup() const { return selectedGroup; }
 
@@ -71,7 +71,8 @@ private:
 	int selectedGroup;
 	int soundMultiselID;
 
-	bool autoAddUnitsToSelectedGroup;
+	bool autoAddBuiltUnitsToFactoryGroup;
+	bool autoAddBuiltUnitsToSelectedGroup;
 	bool buildIconsFirst;
 };
 

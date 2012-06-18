@@ -119,7 +119,7 @@ public:
 	void DependentDied(CObject* o);
 
 	void SetUserTarget(CUnit* target);
-	bool SetGroup(CGroup* group);
+	bool SetGroup(CGroup* group, bool fromFactory = false);
 
 	bool AllowedReclaim(CUnit* builder) const;
 	bool UseMetal(float metal);
@@ -457,6 +457,7 @@ public:
 	bool noMinimap;
 	bool leaveTracks;
 
+	bool isSelected;
 	bool isIcon;
 	float iconRadius;
 

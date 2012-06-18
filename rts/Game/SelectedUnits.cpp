@@ -48,7 +48,8 @@
 #define PLAY_SOUNDS 1
 
 CONFIG(bool, BuildIconsFirst).defaultValue(false);
-CONFIG(bool, AutoAddUnitsToSelectedGroup).defaultValue(false);
+CONFIG(bool, AutoAddBuiltUnitsToFactoryGroup).defaultValue(false);
+CONFIG(bool, AutoAddBuiltUnitsToSelectedGroup).defaultValue(false);
 
 CSelectedUnits selectedUnits;
 
@@ -57,23 +58,21 @@ CSelectedUnits::CSelectedUnits()
 	: selectionChanged(false)
 	, possibleCommandsChanged(true)
 	, buildIconsFirst(false)
-	, autoAddUnitsToSelectedGroup(false)
+	, autoAddBuiltUnitsToSelectedGroup(false)
+	, autoAddBuiltUnitsToFactoryGroup(false)
 	, selectedGroup(-1)
 	, soundMultiselID(0)
 {
 }
 
 
-CSelectedUnits::~CSelectedUnits()
-{
-}
-
 
 void CSelectedUnits::Init(unsigned numPlayers)
 {
 	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 	buildIconsFirst = configHandler->GetBool("BuildIconsFirst");
-	autoAddUnitsToSelectedGroup = configHandler->GetBool("AutoAddUnitsToSelectedGroup");
+	autoAddBuiltUnitsToFactoryGroup = configHandler->GetBool("AutoAddBuiltUnitsToFactoryGroup");
+	autoAddBuiltUnitsToSelectedGroup = configHandler->GetBool("AutoAddBuiltUnitsToSelectedGroup");
 	netSelected.resize(numPlayers);
 }
 
@@ -394,7 +393,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 		selectedGroup = -1;
 	}
 
-	unit->commandAI->selected = true;
+	unit->isSelected = true;
 }
 
 
@@ -407,7 +406,7 @@ void CSelectedUnits::RemoveUnit(CUnit* unit)
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 	selectedGroup = -1;
-	unit->commandAI->selected = false;
+	unit->isSelected = false;
 }
 
 
@@ -417,7 +416,7 @@ void CSelectedUnits::ClearSelected()
 
 	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		(*ui)->commandAI->selected = false;
+		(*ui)->isSelected = false;
 		DeleteDeathDependence(*ui, DEPENDENCE_SELECTED);
 	}
 
@@ -439,7 +438,7 @@ void CSelectedUnits::SelectGroup(int num)
 	CUnitSet::iterator ui;
 	for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
 		if (!(*ui)->noSelect) {
-			(*ui)->commandAI->selected = true;
+			(*ui)->isSelected = true;
 			selectedUnits.insert(*ui);
 			AddDeathDependence(*ui, DEPENDENCE_SELECTED);
 		}
@@ -465,8 +464,8 @@ void CSelectedUnits::Draw()
 	if (cmdColors.unitBox[3] > 0.05f) {
 		const CUnitSet* unitSet;
 		if (selectedGroup != -1) {
-			// note: units in this set are not necessarily all selected themselves
-			// (if autoAddUnitsToSelectedGroup is true), so we check IsUnitSelected
+			// note: units in this set are not necessarily all selected themselves, eg.
+			// if autoAddBuiltUnitsToSelectedGroup is true, so we check IsUnitSelected
 			// for each
 			unitSet = &grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
 		} else {
