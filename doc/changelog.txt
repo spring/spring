@@ -32,6 +32,7 @@ Bugfixes:
  - fix "changing unit speed does not work anymore" (2877/3016)
    (scripts can now arbitrarily override the UnitDef values, which are only used for initialization)
  - fix 'LightningCannon can fire into water' (3057)
+ - fix BeamLasers and LightningCannons not ignoring stunned shields
  - fix GameSetupDrawer player-state string (3064)
  - fix 'Con/com gets weird move order after stop command is given' (3069)
    (was intended to keep factories clear, any side-effects are up to players to deal with)
@@ -46,6 +47,7 @@ Bugfixes:
  - fix ping display after mid-game (re-)join + try to reduce lag after mid-game join
  - fix missing stack trace if out-of-memory occurs
  - fix resurrecting an individual wreck results in the resurrector not healing it
+ - fix /godmode and /{luarules,luagaia} {reload,disable} not working in demos
 
 Simulation:
  - YardMap changes:
