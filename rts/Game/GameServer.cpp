@@ -64,6 +64,7 @@
 #endif
 
 
+#define ALLOW_DEMO_GODMODE
 #define PKTCACHE_VECSIZE 1000
 
 using netcode::RawPacket;
@@ -1097,8 +1098,13 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
 					break;
 				}
+
+				#ifndef ALLOW_DEMO_GODMODE
 				if (!demoReader)
+				#endif
+				{
 					Broadcast(packet); //forward data
+				}
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format("Player %s sent invalid Command: %s") %players[a].name %ex.what()));
 			}
@@ -1113,8 +1119,13 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
 					break;
 				}
+
+				#ifndef ALLOW_DEMO_GODMODE
 				if (!demoReader)
+				#endif
+				{
 					Broadcast(packet); //forward data
+				}
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format("Player %s sent invalid Select: %s") %players[a].name %ex.what()));
 			}
