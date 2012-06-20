@@ -12,10 +12,10 @@
 class CLosMap
 {
 public:
-	CLosMap() : size(0, 0) {}
+	CLosMap() : size(0, 0), sendReadmapEvents(false) {}
 
-	void SetSize(int2 size);
-	void SetSize(int w, int h) { SetSize(int2(w, h)); }
+	void SetSize(int2 size, bool sendReadmapEvents);
+	void SetSize(int w, int h, bool sendReadmapEvents) { SetSize(int2(w, h), sendReadmapEvents); }
 
 	/// circular area, for airLosMap, circular radar maps, jammer maps, ...
 	void AddMapArea(int2 pos, int allyteam, int radius, int amount);
@@ -35,9 +35,9 @@ public:
 	unsigned short& front() { return map.front(); }
 
 protected:
-
 	int2 size;
 	std::vector<unsigned short> map;
+	bool sendReadmapEvents;
 };
 
 
