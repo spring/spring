@@ -473,22 +473,41 @@ void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& rect)
 	const int losSqSize = loshandler->losDiv / SQUARE_SIZE; // size of LOS square in heightmap coords
 	const SRectangle& lm = rect * (SQUARE_SIZE * loshandler->invLosDiv); // LOS space
 
-	for (int lmx = lm.x1; lmx <= lm.x2; ++lmx) {
-		const int hmx = lmx * losSqSize;
-		for (int lmz = lm.z1; lmz <= lm.z2; ++lmz) {
-			const int hmz = lmz * losSqSize;
+	for (int lmz = lm.z1; lmz <= lm.z2; ++lmz) {
+		const int hmz = lmz * losSqSize;
+		      int hmx = lm.x1 * losSqSize;
+
+		SRectangle subrect(hmx, hmz, hmx, hmz + losSqSize);
+		#define PUSH_RECT \
+			if (subrect.GetArea() > 0) { \
+				subrect.ClampIn(rect); \
+				unsyncedHeightMapUpdates.push_back(subrect); \
+				subrect = SRectangle(hmx + losSqSize, hmz, hmx + losSqSize, hmz + losSqSize); \
+			} else { \
+				subrect.x1 = hmx + losSqSize; \
+				subrect.x2 = hmx + losSqSize; \
+			}
+
+		for (int lmx = lm.x1; lmx <= lm.x2; ++lmx) {
+			hmx = lmx * losSqSize;
+
 			const bool inlos = (gu->spectatingFullView || loshandler->InLos(hmx, hmz, gu->myAllyTeam));
-			if (!inlos)
+			if (!inlos) {
+				PUSH_RECT
 				continue;
+			}
 
 			const bool heightmapChanged = HasHeightMapChanged(lmx, lmz);
-			if (!heightmapChanged)
+			if (!heightmapChanged) {
+				PUSH_RECT
 				continue;
+			}
 
-			SRectangle subrect(hmx, hmz, hmx + losSqSize, hmz + losSqSize);
-			subrect.ClampIn(rect);
-			unsyncedHeightMapUpdates.push_back(subrect);
+			// update rectangle size
+			subrect.x2 = hmx + losSqSize;
 		}
+
+		PUSH_RECT
 	}
 }
 
