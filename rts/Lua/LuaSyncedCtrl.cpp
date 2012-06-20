@@ -1733,7 +1733,7 @@ int LuaSyncedCtrl::SetUnitMidAndAimPos(lua_State* L)
 		qf->RemoveUnit(unit);
 	}
 
-	unit->SetMidAndAimPos(newMidPos, newAimPos);
+	unit->SetMidAndAimPos(newMidPos, newAimPos, false);
 
 	if (updateQuads) {
 		qf->MovedUnit(unit);
@@ -2454,7 +2454,7 @@ int LuaSyncedCtrl::SetFeatureMidAndAimPos(lua_State* L)
 		qf->RemoveFeature(feature);
 	}
 
-	feature->SetMidAndAimPos(newMidPos, newAimPos);
+	feature->SetMidAndAimPos(newMidPos, newAimPos, false);
 
 	if (updateQuads) {
 		qf->AddFeature(feature);

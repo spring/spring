@@ -858,7 +858,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 	const unsigned int hxsize = xsize >> 1;
 	const unsigned int hzsize = zsize >> 1;
 
-	std::vector<YardmapStatus> yardMap(hxsize * hzsize, YARDMAP_BLOCKED);
+	std::vector<YardMapStatus> yardMap(hxsize * hzsize, YARDMAP_BLOCKED);
 	std::string foundUnknownChars;
 
 	unsigned int idx = 0;
@@ -869,7 +869,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 		if (isspace(c))
 			continue;
 
-		YardmapStatus ys = YARDMAP_BLOCKED;
+		YardMapStatus ys = YARDMAP_BLOCKED;
 
 		switch (c) {
 			case 'g': ys = YARDMAP_GEO; needGeo = true; break;
@@ -907,7 +907,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 	for (unsigned int z = 0; z < zsize; z++) {
 		for (unsigned int x = 0; x < xsize; x++) {
 			const unsigned int yardMapIdx = (x >> 1) + ((z >> 1) * hxsize);
-			const YardmapStatus yardMapChar = yardMap[yardMapIdx];
+			const YardMapStatus yardMapChar = yardMap[yardMapIdx];
 			yardmap[x + z * xsize] = yardMapChar;
 		}
 	}
