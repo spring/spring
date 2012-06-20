@@ -113,9 +113,10 @@ void CPlayer::StartSpectating()
 		gu->spectatingFullView   = true;
 		gu->spectatingFullSelect = true;
 
+		//FIXME use eventHandler?
 		CLuaUI::UpdateTeams();
 		selectedUnits.ClearSelected();
-		readmap->PushVisibleHeightMapUpdate(0, 0, gs->mapxm1, gs->mapym1, false);
+		readmap->BecomeSpectator();
 		unitTracker.Disable();
 	}
 
