@@ -175,7 +175,7 @@ void UDPListener::Update() {
 
 	for (ConnMap::iterator i = conn.begin(); i != conn.end(); ) {
 		if (i->second.expired()) {
-			LOG_L(L_DEBUG, "Connection closed: [%s]:%i", i->first.address().to_string().c_str(), i->first.c_str());
+			LOG_L(L_DEBUG, "Connection closed: [%s]:%i", i->first.address().to_string().c_str(), i->first.port());
 			i = set_erase(conn, i);
 			continue;
 		}
