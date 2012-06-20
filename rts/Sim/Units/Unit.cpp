@@ -1670,13 +1670,9 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 			group = NULL;
 			return false;
 		} else {
-			// add us to the set of selected units iff:
-			//   the unit is newly built and user wants those to be auto-selected
-			//   the unit is not newly built and its new group is already selected
-			if (fromFactory && selectedUnits.AutoAddBuiltUnitsToSelectedGroup()) {
-				selectedUnits.AddUnit(this);
-			}
-			if (!fromFactory && selectedUnits.IsGroupSelected(group->id)) {
+			// add unit to the set of selected units iff its new group is already selected
+			// and (user wants the unit to be auto-selected or the unit is not newly built)
+			if (selectedUnits.IsGroupSelected(group->id) && (selectedUnits.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
 				selectedUnits.AddUnit(this);
 			}
 		}
