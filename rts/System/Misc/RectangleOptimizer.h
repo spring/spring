@@ -65,6 +65,10 @@ public:
 	int maxAreaPerRect;
 
 private:
+	void StageMerge();
+	void StageOverlap();
+	void StageSplitTooLarge();
+
 	bool HandleMerge(SRectangle& rect1, SRectangle& rect2);
 	int HandleOverlapping(SRectangle* rect1, SRectangle* rect2);
 	static std::bitset<4> GetEdgesInRect(const SRectangle& rect1, const SRectangle& rect2);
