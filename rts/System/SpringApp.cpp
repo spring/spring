@@ -1021,7 +1021,7 @@ int SpringApp::Run(int argc, char *argv[])
 
 	// Shutdown
 	Shutdown();
-	return 0;
+	return GetExitCode();
 }
 
 

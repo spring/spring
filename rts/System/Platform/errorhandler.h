@@ -33,6 +33,17 @@
  */
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags = MBF_OK);
 
+/**
+ * sets springs exit code
+ * @param code that will be returned by the executable
+ * TODO: add enum / use it
+ */
+void SetExitCode(int code);
+
+/**
+ * returns the exit code
+ */
+int GetExitCode();
 
 /**
  * Spring's common exception handler.
