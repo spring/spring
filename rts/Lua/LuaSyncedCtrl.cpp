@@ -1717,11 +1717,12 @@ int LuaSyncedCtrl::SetUnitMidAndAimPos(lua_State* L)
 		return 1;
 	}
 
-	#define MID_POS_DIM(idx, dim) luaL_optfloat(L, idx, unit->midPos.dim)
-	#define AIM_POS_DIM(idx, dim) luaL_optfloat(L, idx, unit->aimPos.dim)
+	#define MID_POS_DIM(idx, dim) luaL_checkfloat(L, idx, unit->midPos.dim)
+	#define AIM_POS_DIM(idx, dim) luaL_checkfloat(L, idx, unit->aimPos.dim)
 
-	const float3 newMidPos = float3(MID_POS_DIM(2, x), MID_POS_DIM(3, y), MID_POS_DIM(4, z));
-	const float3 newAimPos = float3(AIM_POS_DIM(5, x), AIM_POS_DIM(6, y), AIM_POS_DIM(7, z));
+	const int argc = lua_gettop(L) - 1;
+	const float3 newMidPos = (argc >= 3)? float3(MID_POS_DIM(2, x), MID_POS_DIM(3, y), MID_POS_DIM(4, z)): unit->midPos;
+	const float3 newAimPos = (argc >= 6)? float3(AIM_POS_DIM(5, x), AIM_POS_DIM(6, y), AIM_POS_DIM(7, z)): unit->aimPos;
 	const bool updateQuads = (newMidPos != unit->midPos);
 
 	#undef MID_POS_DIM
@@ -2438,11 +2439,12 @@ int LuaSyncedCtrl::SetFeatureMidAndAimPos(lua_State* L)
 		return 1;
 	}
 
-	#define MID_POS_DIM(idx, dim) luaL_optfloat(L, idx, feature->midPos.dim)
-	#define AIM_POS_DIM(idx, dim) luaL_optfloat(L, idx, feature->aimPos.dim)
+	#define MID_POS_DIM(idx, dim) luaL_checkfloat(L, idx, feature->midPos.dim)
+	#define AIM_POS_DIM(idx, dim) luaL_checkfloat(L, idx, feature->aimPos.dim)
 
-	const float3 newMidPos = float3(MID_POS_DIM(2, x), MID_POS_DIM(3, y), MID_POS_DIM(4, z));
-	const float3 newAimPos = float3(AIM_POS_DIM(5, x), AIM_POS_DIM(6, y), AIM_POS_DIM(7, z));
+	const int argc = lua_gettop(L) - 1;
+	const float3 newMidPos = (argc >= 3)? float3(MID_POS_DIM(2, x), MID_POS_DIM(3, y), MID_POS_DIM(4, z)): feature->midPos;
+	const float3 newAimPos = (argc >= 6)? float3(AIM_POS_DIM(5, x), AIM_POS_DIM(6, y), AIM_POS_DIM(7, z)): feature->aimPos;
 	const bool updateQuads = (newMidPos != feature->midPos);
 
 	#undef MID_POS_DIM
