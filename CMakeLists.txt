@@ -35,6 +35,16 @@ Else  ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 EndIf ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
 
 
+### Strip C[XX]_FLAGS
+set(CUSTOM_CFLAGS FALSE CACHE BOOL "If false all C[XX]_FLAGS are cleared (more reliable to sync/safer for online play).")
+if    (CUSTOM_CFLAGS)
+	Message(WARNING "Using custom CXX_FLAGS! this build will very likely not sync in online mode!")
+else  (CUSTOM_CFLAGS)
+	set(CMAKE_C_FLAGS "")
+	set(CMAKE_CXX_FLAGS "")
+endif (CUSTOM_CFLAGS)
+
+
 set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
 if    (CUSTOM_COMPILER_DEFINITIONS)
 	add_definitions(${CUSTOM_COMPILER_DEFINITIONS})
@@ -218,14 +228,16 @@ endif  (MINGW)
 
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXFlags)
+
+## 32bit or 64bit?
 if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	message (STATUS "Building Spring for 64bit environment")
-	set (MARCH_FLAG CACHE STRING "CPU optimization (use i686 for generic optimization)")
-	set (MARCH_BITS 64 INTERNAL)
+	set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
+	set(MARCH_BITS 64 INTERNAL)
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	message (STATUS "Building Spring for 32bit environment")
-	set (MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
-	set (MARCH_BITS 32 INTERNAL)
+	set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
+	set(MARCH_BITS 32 INTERNAL)
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
 
@@ -278,10 +290,10 @@ if    ($ENV{CXX} MATCHES "icpc")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axK") # SSE1
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
-	if    (MARCH_FLAG)
+	if    (NOT CUSTOM_CFLAGS AND MARCH_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
 		Message(STATUS "using march=${MARCH_FLAG}")
-	endif (MARCH_FLAG)
+	endif (NOT CUSTOM_CFLAGS AND MARCH_FLAG)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
 else  (CMAKE_COMPILER_IS_GNUCXX)
 	Message(FATAL_ERROR "unknown compiler")
