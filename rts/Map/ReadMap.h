@@ -206,6 +206,7 @@ protected:
 	std::vector<unsigned char> typeMap;
 
 	CRectangleOptimizer unsyncedHeightMapUpdates;
+	CRectangleOptimizer unsyncedHeightMapUpdatesTemp;
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	/// used to filer LOS updates (so only update UHM on LOS updates when the heightmap was changed beforehand)
