@@ -99,6 +99,7 @@ Lua:
  - new Spring.LoadCmdColorsConfig(configStr) & Spring.LoadCtrlPanelConfig(configStr)
  - add new 3 param 'pairwise' to Spring.GiveOrderArrayToUnitArray(), used to send multiple units a single individual command
  - fix crash due to UpdateCallIn removing the current event client from list being iterated
+ - add new synced callouts Set{Unit,Feature}RadiusAndHeight(number radius, number height) --> boolean
 
 Rendering:
  - fixed ATi PointSize bug
