@@ -1718,9 +1718,10 @@ int LuaSyncedCtrl::SetUnitRadiusAndHeight(lua_State* L)
 	const float newRadius = std::max(1.0f, luaL_optfloat(L, 2, unit->radius));
 	const float newHeight = std::max(1.0f, luaL_optfloat(L, 3, unit->height));
 
+	// safety, possibly just need MovedUnit
 	qf->RemoveUnit(unit);
 	unit->SetRadiusAndHeight(newRadius, newHeight);
-	qf->AddUnit(unit);
+	qf->MovedUnit(unit);
 
 	lua_pushboolean(L, true);
 	return 1;
