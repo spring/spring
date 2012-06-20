@@ -64,6 +64,7 @@ public:
 
 		pos += dv;
 		midPos += dv;
+		aimPos += dv;
 	}
 
 	void Move1D(const float v, int d, bool relative) {
@@ -71,17 +72,19 @@ public:
 
 		pos[d] += dv;
 		midPos[d] += dv;
+		aimPos[d] += dv;
 	}
 
 	// this should be called whenever the direction
 	// vectors are changed (ie. after a rotation) in
 	// eg. movetype code
-	void UpdateMidPos() {
-		const float3 dz = (frontdir * relMidPos.z);
-		const float3 dy = (updir    * relMidPos.y);
-		const float3 dx = (rightdir * relMidPos.x);
-
-		midPos = pos + dz + dy + dx;
+	void UpdateMidAndAimPos() {
+		UpdateMidPos();
+		UpdateAimPos();
+	}
+	void SetMidAndAimPos(const float3& mp, const float3& ap) {
+		SetMidPos(mp);
+		SetAimPos(ap);
 	}
 
 	/**
@@ -99,6 +102,25 @@ public:
 	int2 GetMapPos(const float3& position) const;
 
 	YardmapStatus GetGroundBlockingAtPos(float3 gpos) const;
+
+private:
+	void SetMidPos(const float3& p) { midPos = p; relMidPos = pos - midPos; }
+	void SetAimPos(const float3& p) { aimPos = p; relAimPos = pos - aimPos; }
+
+	void UpdateMidPos() {
+		const float3 dz = (frontdir * relMidPos.z);
+		const float3 dy = (updir    * relMidPos.y);
+		const float3 dx = (rightdir * relMidPos.x);
+
+		midPos = pos + dz + dy + dx;
+	}
+	void UpdateAimPos() {
+		const float3 dz = (frontdir * relAimPos.z);
+		const float3 dy = (updir    * relAimPos.y);
+		const float3 dx = (rightdir * relAimPos.x);
+
+		aimPos = pos + dz + dy + dx;
+	}
 
 public:
 	float health;
@@ -139,8 +161,10 @@ public:
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)
 	SyncedFloat3 updir;                         ///< object-local y-axis (in WS)
 
-	SyncedFloat3 relMidPos;                     ///< local-space vector from pos to midPos read from model, used to initialize midPos
-	SyncedFloat3 midPos;                        ///< mid-position of model (pos is at the very bottom of the model) in WS, used as center of mass
+	SyncedFloat3 relMidPos;                     ///< local-space vector from pos to midPos (read from model, used to initialize midPos)
+	SyncedFloat3 relAimPos;                     ///< local-space vector from pos to aimPos (read from model, used to initialize aimPos)
+	SyncedFloat3 midPos;                        ///< mid-position of model in WS, used as center of mass (and many other things)
+	SyncedFloat3 aimPos;                        ///< used as aiming position by weapons
 	int2 mapPos;                                ///< current position on GroundBlockingObjectMap
 
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)

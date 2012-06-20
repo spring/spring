@@ -54,7 +54,7 @@ void CBuilding::ForcedMove(const float3& newPos, int facing) {
 	frontdir = GetVectorFromHeading(heading);
 
 	Move3D(helper->Pos2BuildPos(BuildInfo(unitDef, newPos, buildFacing), true), false);
-	UpdateMidPos();
+	UpdateMidAndAimPos();
 
 	CUnit::ForcedMove(pos);
 

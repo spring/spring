@@ -247,7 +247,7 @@ bool CClassicGroundMoveType::Update()
 		AdjustPosToWaterLine();
 
 		owner->speed = owner->pos - oldPos;
-		owner->UpdateMidPos();
+		owner->UpdateMidAndAimPos();
 
 		oldPos = owner->pos;
 
@@ -1131,7 +1131,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 
 					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
 						u->Move3D((dif * part), true);
-						u->UpdateMidPos();
+						u->UpdateMidAndAimPos();
 					}
 				}
 
@@ -1211,7 +1211,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 
 					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
 						u->Move3D((dif * part), true);
-						u->UpdateMidPos();
+						u->UpdateMidAndAimPos();
 					}
 				}
 

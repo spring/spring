@@ -74,6 +74,7 @@ Simulation:
  - add 'allowUnitCollisionOverlap' (def=true) and 'useClassicGroundMoveType' (def=false) ModInfo keys
    the former allows unit movement like www.youtube.com/watch?v=mRtePUdVk2o at the cost of more clumping (learn to use ctrl+lmb formation orders)
    the latter is a ticket back to unit movement circa 2009: no reversing, no turninplace=false, no smooth collision handling, no nothing (figure it out)
+ - introduce an independent Lua-controllable aim-position (defaults to mid-position) for units and features, used by weapons as their aiming/target point
 
 Pathing:
  - QTPFS: less loadscreen spam, make F2 functional, enable corner-connected node topology, use staggered layer-updates, speedups and tweaks
@@ -99,7 +100,8 @@ Lua:
  - new Spring.LoadCmdColorsConfig(configStr) & Spring.LoadCtrlPanelConfig(configStr)
  - add new 3 param 'pairwise' to Spring.GiveOrderArrayToUnitArray(), used to send multiple units a single individual command
  - fix crash due to UpdateCallIn removing the current event client from list being iterated
- - add new synced callouts Set{Unit,Feature}RadiusAndHeight(number radius, number height) --> boolean
+ - add new synced callouts Set{Unit,Feature}RadiusAndHeight(number id, number radius, number height) --> boolean
+ - add new synced callouts Set{Unit,Feature}MidAndAimPos(number id, number mpx, number mpy, number mpz, number apx, number apy, number apz) --> boolean
 
 Rendering:
  - fixed ATi PointSize bug

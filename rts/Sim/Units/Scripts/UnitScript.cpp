@@ -1548,7 +1548,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		case HEADING: {
 			unit->heading = param % COBSCALE;
 			unit->UpdateDirVectors(!unit->upright && unit->moveType->GetMaxSpeed() > 0.0f);
-			unit->UpdateMidPos();
+			unit->UpdateMidAndAimPos();
 		} break;
 		case LOS_RADIUS: {
 			unit->ChangeLos(param, unit->realAirLosRadius);

@@ -584,7 +584,7 @@ void CHoverAirMoveType::UpdateHeading()
 	}
 
 	owner->UpdateDirVectors(aircraftState == AIRCRAFT_LANDED);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 }
 
 void CHoverAirMoveType::UpdateBanking(bool noBanking)
@@ -651,7 +651,7 @@ void CHoverAirMoveType::UpdateBanking(bool noBanking)
 		owner->SetHeadingFromDirection();
 	}
 
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 }
 
 

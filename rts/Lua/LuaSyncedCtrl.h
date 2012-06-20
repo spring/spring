@@ -79,6 +79,7 @@ class LuaSyncedCtrl
 		static int SetUnitMoveGoal(lua_State* L);
 		static int SetUnitNeutral(lua_State* L);
 		static int SetUnitTarget(lua_State* L);
+		static int SetUnitMidAndAimPos(lua_State* L);
 		static int SetUnitRadiusAndHeight(lua_State* L);
 		static int SetUnitCollisionVolumeData(lua_State* L);
 		static int SetUnitPieceCollisionVolumeData(lua_State* L);
@@ -107,6 +108,7 @@ class LuaSyncedCtrl
 		static int SetFeaturePosition(lua_State* L);
 		static int SetFeatureDirection(lua_State* L);
 		static int SetFeatureNoSelect(lua_State* L);
+		static int SetFeatureMidAndAimPos(lua_State* L);
 		static int SetFeatureRadiusAndHeight(lua_State* L);
 		static int SetFeatureCollisionVolumeData(lua_State* L);
 

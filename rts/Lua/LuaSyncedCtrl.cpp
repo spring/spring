@@ -163,6 +163,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
+	REGISTER_LUA_CFUNC(SetUnitMidAndAimPos);
 	REGISTER_LUA_CFUNC(SetUnitRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
@@ -191,6 +192,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
 	REGISTER_LUA_CFUNC(SetFeatureDirection);
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
+	REGISTER_LUA_CFUNC(SetFeatureMidAndAimPos);
 	REGISTER_LUA_CFUNC(SetFeatureRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 
@@ -1706,6 +1708,40 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 
 
 
+int LuaSyncedCtrl::SetUnitMidAndAimPos(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	#define MID_POS_DIM(idx, dim) luaL_optfloat(L, idx, unit->midPos.dim)
+	#define AIM_POS_DIM(idx, dim) luaL_optfloat(L, idx, unit->aimPos.dim)
+
+	const float3 newMidPos = float3(MID_POS_DIM(2, x), MID_POS_DIM(3, y), MID_POS_DIM(4, z));
+	const float3 newAimPos = float3(AIM_POS_DIM(5, x), AIM_POS_DIM(6, y), AIM_POS_DIM(7, z));
+	const bool updateQuads = (newMidPos != unit->midPos);
+
+	#undef MID_POS_DIM
+	#undef AIM_POS_DIM
+
+	if (updateQuads) {
+		// safety, possibly just need MovedUnit
+		qf->RemoveUnit(unit);
+	}
+
+	unit->SetMidAndAimPos(newMidPos, newAimPos);
+
+	if (updateQuads) {
+		qf->MovedUnit(unit);
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
 int LuaSyncedCtrl::SetUnitRadiusAndHeight(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1717,11 +1753,18 @@ int LuaSyncedCtrl::SetUnitRadiusAndHeight(lua_State* L)
 
 	const float newRadius = std::max(1.0f, luaL_optfloat(L, 2, unit->radius));
 	const float newHeight = std::max(1.0f, luaL_optfloat(L, 3, unit->height));
+	const bool updateQuads = (newRadius != unit->radius);
 
-	// safety, possibly just need MovedUnit
-	qf->RemoveUnit(unit);
+	if (updateQuads) {
+		// safety, possibly just need MovedUnit
+		qf->RemoveUnit(unit);
+	}
+
 	unit->SetRadiusAndHeight(newRadius, newHeight);
-	qf->MovedUnit(unit);
+
+	if (updateQuads) {
+		qf->MovedUnit(unit);
+	}
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -1926,7 +1969,7 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 
 	unit->Move3D(pos, false);
 	unit->SetDirVectors(matrix);
-	unit->UpdateMidPos();
+	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
 	unit->ForcedMove(pos);
 	return 0;
@@ -1979,7 +2022,7 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	matrix.RotateY(rot.y);
 
 	unit->SetDirVectors(matrix);
-	unit->UpdateMidPos();
+	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
 	unit->ForcedMove(unit->pos);
 	return 0;
@@ -2386,6 +2429,39 @@ int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
 
 
 
+int LuaSyncedCtrl::SetFeatureMidAndAimPos(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	#define MID_POS_DIM(idx, dim) luaL_optfloat(L, idx, feature->midPos.dim)
+	#define AIM_POS_DIM(idx, dim) luaL_optfloat(L, idx, feature->aimPos.dim)
+
+	const float3 newMidPos = float3(MID_POS_DIM(2, x), MID_POS_DIM(3, y), MID_POS_DIM(4, z));
+	const float3 newAimPos = float3(AIM_POS_DIM(5, x), AIM_POS_DIM(6, y), AIM_POS_DIM(7, z));
+	const bool updateQuads = (newMidPos != feature->midPos);
+
+	#undef MID_POS_DIM
+	#undef AIM_POS_DIM
+
+	if (updateQuads) {
+		qf->RemoveFeature(feature);
+	}
+
+	feature->SetMidAndAimPos(newMidPos, newAimPos);
+
+	if (updateQuads) {
+		qf->AddFeature(feature);
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
 int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
@@ -2397,10 +2473,17 @@ int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
 
 	const float newRadius = std::max(1.0f, luaL_optfloat(L, 2, feature->radius));
 	const float newHeight = std::max(1.0f, luaL_optfloat(L, 3, feature->height));
+	const bool updateQuads = (newRadius != feature->radius);
 
-	qf->RemoveFeature(feature);
+	if (updateQuads) {
+		qf->RemoveFeature(feature);
+	}
+
 	feature->SetRadiusAndHeight(newRadius, newHeight);
-	qf->AddFeature(feature);
+
+	if (updateQuads) {
+		qf->AddFeature(feature);
+	}
 
 	lua_pushboolean(L, true);
 	return 1;

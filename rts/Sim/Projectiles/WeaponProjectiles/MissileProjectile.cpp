@@ -179,10 +179,10 @@ void CMissileProjectile::Update()
 				} else {
 					targSpeed = target->speed;
 
-					if ((target->physicalState == CSolidObject::Flying && (target->midPos - pos).SqLength() < 150 * 150) || !owner()) {
-						targPos = target->midPos;
+					if ((target->physicalState == CSolidObject::Flying && (target->aimPos - pos).SqLength() < 150 * 150) || !owner()) {
+						targPos = target->aimPoss;
 					} else {
-						targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
+						targPos = helper->GetUnitErrorPos(target, owner()->allyteam, true);
 					}
 				}
 			}
