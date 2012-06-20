@@ -13,9 +13,9 @@
 #include "System/FastMath.h"
 #include "System/Matrix44f.h"
 
-#define ZVEC ZeroVector
-
 CR_BIND(CCollisionHandler, );
+
+static const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
 
 unsigned int CCollisionHandler::numCollisionTests = 0;
 unsigned int CCollisionHandler::numIntersectionTests = 0;
@@ -94,7 +94,7 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 			// (which is where the collision volume gets drawn) because
 			// GetTransformMatrix() only uses pos
 			CMatrix44f m = u->GetTransformMatrix(true);
-			m.Translate(u->relMidPos * float3(-1.0f, 1.0f, 1.0f));
+			m.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 			m.Translate(v->GetOffsets());
 
 			return CCollisionHandler::Collision(v, m, p);
@@ -122,7 +122,7 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 		}
 		default: {
 			CMatrix44f m(f->transMatrix);
-			m.Translate(f->relMidPos * float3(-1.0f, 1.0f, 1.0f));
+			m.Translate(f->relMidPos * WORLD_TO_OBJECT_SPACE);
 			m.Translate(v->GetOffsets());
 
 			return CCollisionHandler::Collision(v, m, p);
@@ -210,7 +210,7 @@ bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3&
 {
 	// note: hit the piece tree if usePieceCollisionVolumes?
 	CMatrix44f m = u->GetTransformMatrix(false, true);
-	m.Translate(u->relMidPos * float3(-1.0f, 1.0f, 1.0f));
+	m.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 	m.Translate(v->GetOffsets());
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);
@@ -287,7 +287,7 @@ bool CCollisionHandler::Intersect(const CUnit* u, const float3& p0, const float3
 	const CollisionVolume* v = u->collisionVolume;
 
 	CMatrix44f m = u->GetTransformMatrix(true);
-	m.Translate(u->relMidPos * float3(-1.0f, 1.0f, 1.0f));
+	m.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 	m.Translate(v->GetOffsets());
 
 	numIntersectionTests += 1;
@@ -299,7 +299,7 @@ bool CCollisionHandler::Intersect(const CFeature* f, const float3& p0, const flo
 	const CollisionVolume* v = f->collisionVolume;
 
 	CMatrix44f m(f->transMatrix);
-	m.Translate(f->relMidPos * float3(-1.0f, 1.0f, 1.0f));
+	m.Translate(f->relMidPos * WORLD_TO_OBJECT_SPACE);
 	m.Translate(v->GetOffsets());
 
 	numIntersectionTests += 1;
@@ -327,8 +327,8 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 {
 	if (q) {
 		// reset the query
-		q->b0 = false; q->t0 = 0.0f; q->p0 = ZVEC;
-		q->b1 = false; q->t1 = 0.0f; q->p1 = ZVEC;
+		q->b0 = false; q->t0 = 0.0f; q->p0 = ZeroVector;
+		q->b1 = false; q->t1 = 0.0f; q->p1 = ZeroVector;
 	}
 
 	CMatrix44f mInv = m.Invert();
@@ -388,8 +388,8 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 		if (q != NULL) {
 			// terminate early in the special case
 			// that shot originated within volume
-			q->b0 = true; q->p0 = ZVEC;
-			q->b1 = true; q->p1 = ZVEC;
+			q->b0 = true; q->p0 = ZeroVector;
+			q->b1 = true; q->p1 = ZeroVector;
 		}
 		return true;
 	}
@@ -429,7 +429,7 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			if (q) {
 				q->b0 = b0; q->b1 = false;
 				q->t0 = t0; q->t1 = 0.0f;
-				q->p0 = p0; q->p1 = ZVEC;
+				q->p0 = p0; q->p1 = ZeroVector;
 			}
 
 			return b0;
@@ -481,8 +481,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		if (q != NULL) {
 			// terminate early in the special case
 			// that shot originated within volume
-			q->b0 = true; q->p0 = ZVEC;
-			q->b1 = true; q->p1 = ZVEC;
+			q->b0 = true; q->p0 = ZeroVector;
+			q->b1 = true; q->p1 = ZeroVector;
 		}
 		return true;
 	}
@@ -491,15 +491,15 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	const float3 dir = (pi1 - pi0).SafeNormalize();
 
 	// ray direction in (unit) cylinder-space
-	float3 diir = ZVEC;
+	float3 diir = ZeroVector;
 
 	// ray terminals in (unit) cylinder-space
 	float3 pii0 = pi0;
 	float3 pii1 = pi1;
 
 	// end-cap plane normals in volume-space
-	float3 n0 = ZVEC;
-	float3 n1 = ZVEC;
+	float3 n0 = ZeroVector;
+	float3 n1 = ZeroVector;
 
 	// (unit) cylinder-space to volume-space transformation
 	float3 inv(1.0f, 1.0f, 1.0f);
@@ -567,8 +567,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	}
 
 	// volume-space intersection points
-	float3 p0 = ZVEC;
-	float3 p1 = ZVEC;
+	float3 p0 = ZeroVector;
+	float3 p1 = ZeroVector;
 
 	bool b0 = false;
 	bool b1 = false;
@@ -665,8 +665,8 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 		// terminate early in the special case
 		// that shot originated within volume
 		if (q != NULL) {
-			q->b0 = true; q->p0 = ZVEC;
-			q->b1 = true; q->p1 = ZVEC;
+			q->b0 = true; q->p0 = ZeroVector;
+			q->b1 = true; q->p1 = ZeroVector;
 		}
 
 		return true;
