@@ -119,7 +119,7 @@ private:
 		}
 	}
 
-	float3& UpdateMidPos() {
+	SyncedFloat3& UpdateMidPos() {
 		const float3 dz = (frontdir * relMidPos.z);
 		const float3 dy = (updir    * relMidPos.y);
 		const float3 dx = (rightdir * relMidPos.x);
@@ -127,7 +127,7 @@ private:
 		midPos = pos + dz + dy + dx;
 		return midPos;
 	}
-	float3& UpdateAimPos() {
+	SyncedFloat3& UpdateAimPos() {
 		const float3 dz = (frontdir * relAimPos.z);
 		const float3 dy = (updir    * relAimPos.y);
 		const float3 dx = (rightdir * relAimPos.x);
