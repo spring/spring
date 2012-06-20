@@ -225,7 +225,6 @@ public:
 	std::string scriptPath;     ///< the path of the unit's script, e.g. "scripts/armjeth.cob"
 
 	mutable UnitModelDef modelDef;
-	mutable float3 modelCenterOffset;	///< offset from the unit model's default center point
 
 	bool usePieceCollisionVolumes;		///< if true, projectile collisions are checked per-piece
 

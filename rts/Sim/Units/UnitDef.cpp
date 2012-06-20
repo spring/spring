@@ -146,7 +146,6 @@ UnitDef::UnitDef()
 , flankingBonusMax(0.0f)
 , flankingBonusMin(0.0f)
 , flankingBonusMobilityAdd(0.0f)
-, modelCenterOffset(ZeroVector)
 , usePieceCollisionVolumes(false)
 , shieldWeaponDef(NULL)
 , stockpileWeaponDef(NULL)
@@ -692,9 +691,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	strafeToAttack = udTable.GetBool("strafeToAttack", false);
 
 
-	modelCenterOffset = udTable.GetFloat3("modelCenterOffset", ZeroVector);
-	usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false);
-
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
 	collisionVolume = new CollisionVolume(
@@ -704,7 +700,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		udTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_DISC)
 	);
 
-	if (usePieceCollisionVolumes) {
+	if ((usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false))) {
 		collisionVolume->Disable();
 	}
 
@@ -770,7 +766,7 @@ UnitDef::~UnitDef()
 S3DModel* UnitDef::LoadModel() const
 {
 	if (this->modelDef.model == NULL) {
-		this->modelDef.model = modelParser->Load3DModel(this->modelDef.modelPath, this->modelCenterOffset);
+		this->modelDef.model = modelParser->Load3DModel(this->modelDef.modelPath);
 		this->modelDef.modelTextures["tex1"] = this->modelDef.model->tex1;
 		this->modelDef.modelTextures["tex2"] = this->modelDef.model->tex2;
 	} else {
