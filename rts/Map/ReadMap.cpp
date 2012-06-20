@@ -233,23 +233,36 @@ void CReadMap::UpdateDraw()
 	{
 		GML_STDMUTEX_LOCK(map); // UpdateDraw
 
+		unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp);
+	}
+	{
+
 		SCOPED_TIMER("ReadMap::UpdateHeightMapOptimize");
 
 		static bool first = true;
 		if (!first) {
-			unsyncedHeightMapUpdates.Optimize();
-			int updateArea = unsyncedHeightMapUpdates.GetTotalArea() * 0.0625f + (50 * 50);
+			unsyncedHeightMapUpdatesTemp.Optimize();
+			int updateArea = unsyncedHeightMapUpdatesTemp.GetTotalArea() * 0.0625f + (50 * 50);
 
-			while (updateArea > 0 && !unsyncedHeightMapUpdates.empty()) {
-				const SRectangle& rect = unsyncedHeightMapUpdates.front();
+			while (updateArea > 0 && !unsyncedHeightMapUpdatesTemp.empty()) {
+				const SRectangle& rect = unsyncedHeightMapUpdatesTemp.front();
 				updateArea -= rect.GetArea();
 				ushmu.push_back(rect);
-				unsyncedHeightMapUpdates.pop_front();
+				unsyncedHeightMapUpdatesTemp.pop_front();
 			}
 		} else {
 			// first update is full map
-			unsyncedHeightMapUpdates.swap(ushmu);
+			unsyncedHeightMapUpdatesTemp.swap(ushmu);
 			first = false;
+		}
+	}
+	if (!unsyncedHeightMapUpdatesTemp.empty()) {
+		GML_STDMUTEX_LOCK(map); // UpdateDraw
+
+		unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp);
+		while (!unsyncedHeightMapUpdatesTemp.empty()) {
+			unsyncedHeightMapUpdates.push_back(unsyncedHeightMapUpdatesTemp.front());
+			unsyncedHeightMapUpdatesTemp.pop_front();
 		}
 	}
 

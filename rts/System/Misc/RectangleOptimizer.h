@@ -38,6 +38,11 @@ public:
 	void pop_front() {
 		return rectangles.pop_front();
 	}
+	void swap(CRectangleOptimizer &other) {
+		rectangles.swap(other.rectangles);
+		std::swap(needsUpdate, other.needsUpdate);
+		other.maxAreaPerRect = maxAreaPerRect; // intentional one-way copy here
+	}
 	void clear() {
 		needsUpdate = false;
 		return rectangles.clear();
