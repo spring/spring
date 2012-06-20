@@ -104,7 +104,7 @@ IF    (NOT DEFINED MARCH)
 		CHECK_CXX_ACCEPTS_FLAG("-march=amd64" HAS_AMD64_FLAG_)
 		IF    (HAS_AMD64_FLAG_)
 			Set(MARCH "amd64")
-		EndIf (HAS_I686_FLAG_)
+		EndIf (HAS_AMD64_FLAG_)
 	endif ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (NOT MARCH))
 
 	# no compatible arch found
