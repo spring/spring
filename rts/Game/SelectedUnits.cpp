@@ -199,7 +199,6 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 {
 	GML_RECMUTEX_LOCK(grpsel); // GiveCommand
 
-//	LOG_L(L_DEBUG, "Command given %i", c.id);
 	if ((gu->spectating && !gs->godMode) || selectedUnits.empty()) {
 		return;
 	}

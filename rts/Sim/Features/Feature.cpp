@@ -101,23 +101,23 @@ void CFeature::PostLoad()
 {
 	def = featureHandler->GetFeatureDefByID(defID);
 
-	float fRadius = 1.0f;
-	float fHeight = 0.0f;
+	float newRadius = 1.0f;
+	float newHeight = 1.0f;
 
 	//FIXME is this really needed (aren't all those tags saved via creg?)
 	if (def->drawType == DRAWTYPE_MODEL) {
 		model = def->LoadModel();
 
 		relMidPos = model->relMidPos;
-		fRadius = model->radius;
-		fHeight = model->height;
+		newRadius = model->radius;
+		newHeight = model->height;
 	} else if (def->drawType >= DRAWTYPE_TREE) {
 		relMidPos = UpVector * TREE_RADIUS;
-		fRadius = TREE_RADIUS;
-		fHeight = fRadius * 2.0f;
+		newRadius = TREE_RADIUS;
+		newHeight = fRadius * 2.0f;
 	}
 
-	SetRadiusAndHeight(fRadius, fHeight);
+	SetRadiusAndHeight(newRadius, newHeight);
 	UpdateMidPos();
 }
 
@@ -157,8 +157,8 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 	noSelect = def->noSelect;
 
-	float fRadius = 1.0f;
-	float fHeight = 0.0f;
+	float newRadius = 1.0f;
+	float newHeight = 1.0f;
 
 	if (def->drawType == DRAWTYPE_MODEL) {
 		model = def->LoadModel();
@@ -167,22 +167,22 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 			LOG_L(L_ERROR, "Features: Couldn't load model for %s", def->name.c_str());
 		} else {
 			relMidPos = model->relMidPos;
-			fRadius = model->radius;
-			fHeight = model->height;
+			newRadius = model->radius;
+			newHeight = model->height;
 		}
 	}
 	else if (def->drawType >= DRAWTYPE_TREE) {
 		// LoadFeaturesFromMap() doesn't set a scale for trees
 		relMidPos = UpVector * TREE_RADIUS;
-		fRadius = TREE_RADIUS;
-		fHeight = fRadius * 2.0f;
+		newRadius = TREE_RADIUS;
+		newHeight = newRadius * 2.0f;
 	}
 
 	// note: gets deleted in ~CSolidObject
 	collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
 
 	Move3D(_pos.cClampInMap(), false);
-	SetRadiusAndHeight(fRadius, fHeight);
+	SetRadiusAndHeight(newRadius, newHeight);
 	UpdateMidPos();
 	CalculateTransform();
 

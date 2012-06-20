@@ -163,6 +163,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
+	REGISTER_LUA_CFUNC(SetUnitRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
@@ -190,6 +191,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
 	REGISTER_LUA_CFUNC(SetFeatureDirection);
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
+	REGISTER_LUA_CFUNC(SetFeatureRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 
 
@@ -1704,6 +1706,26 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 
 
 
+int LuaSyncedCtrl::SetUnitRadiusAndHeight(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const float newRadius = std::max(1.0f, luaL_optfloat(L, 2, unit->radius));
+	const float newHeight = std::max(1.0f, luaL_optfloat(L, 3, unit->height));
+
+	qf->RemoveUnit(unit);
+	unit->SetRadiusAndHeight(newRadius, newHeight);
+	qf->AddUnit(unit);
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
 int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -2361,6 +2383,27 @@ int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
 	return 0;
 }
 
+
+
+int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const float newRadius = std::max(1.0f, luaL_optfloat(L, 2, feature->radius));
+	const float newHeight = std::max(1.0f, luaL_optfloat(L, 3, feature->height));
+
+	qf->RemoveFeature(feature);
+	feature->SetRadiusAndHeight(newRadius, newHeight);
+	qf->AddFeature(feature);
+
+	lua_pushboolean(L, true);
+	return 1;
+}
 
 int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 {
