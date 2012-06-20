@@ -352,7 +352,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	upright  = unitDef->upright;
 
 	Move3D(position.cClampInMap(), false);
-	SetMidPosAndAimPos(model->relMidPos, model->relMidPos, true);
+	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model->radius, model->height);
 	UpdateDirVectors(!upright);
 	UpdateMidAndAimPos();
