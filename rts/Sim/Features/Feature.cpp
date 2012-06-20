@@ -114,7 +114,7 @@ void CFeature::PostLoad()
 	} else if (def->drawType >= DRAWTYPE_TREE) {
 		relMidPos = UpVector * TREE_RADIUS;
 		newRadius = TREE_RADIUS;
-		newHeight = fRadius * 2.0f;
+		newHeight = newRadius * 2.0f;
 	}
 
 	SetRadiusAndHeight(newRadius, newHeight);
@@ -179,7 +179,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	}
 
 	// note: gets deleted in ~CSolidObject
-	collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
+	collisionVolume = new CollisionVolume(def->collisionVolume, newRadius);
 
 	Move3D(_pos.cClampInMap(), false);
 	SetRadiusAndHeight(newRadius, newHeight);
