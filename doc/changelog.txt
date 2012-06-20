@@ -61,6 +61,7 @@ Simulation:
   ! don't add target's radius to the builder's builddistance, only do so if the target is bigger than the builddistance (mostly only true for terraform)
     -> from now on the to be built unit's centerpos has to be in buildrange not its border!
  ! remove obsolete default dependence of cloakCostMoving on cloakCost
+ ! remove modelCenterOffset tag (can now be dynamically set with Lua)
  - improved behaviour of builder masses
  - make StartBox clamping of StartPositions synced
  - don't reclaim in-the-way features when the buildee is going to morph into a feature of the same type
