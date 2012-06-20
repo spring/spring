@@ -110,6 +110,7 @@ Rendering:
  - SMF: render the info-texture through GLSL (noob translation -> shadows in LOS-view)
  - improved VSync under Linux (with support for AdaptiveVSync)
  - added FeatureFadeDistance & FeatureDrawDistance config tags
+ - more failsafe shadow FBO creation
  - fixed vibrating planes (again)
  - fix spring_multithreaded hangs
 
@@ -118,8 +119,11 @@ UI:
  - draw buildRange for mobile selected units too & always render them on shift hover (also for shield range)
 
 Linux:
+ ! strip CXX_FLAGS & C_FLAGS in build process to prevent sync incompabilities (can be turned off with a new CUSTOM_CFLAGS cmake flag)
+ - use march=amd64 on 64bit systems
  - on multicore systems set scheduler to SCHED_BATCH (semi-solves the core hoping issue)
  - call SDL_WarpMouse only when needed (fixes massive FPS-drop in middle-click-scrolling)
+ - use a non-locking vsync mechanism & add support for nvidia's `adaptive vsync`
 
 OSX:
  - fix stack corruption in sound code
