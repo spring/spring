@@ -57,11 +57,11 @@ CSelectedUnits selectedUnits;
 CSelectedUnits::CSelectedUnits()
 	: selectionChanged(false)
 	, possibleCommandsChanged(true)
-	, buildIconsFirst(false)
-	, autoAddBuiltUnitsToSelectedGroup(false)
-	, autoAddBuiltUnitsToFactoryGroup(false)
 	, selectedGroup(-1)
 	, soundMultiselID(0)
+	, autoAddBuiltUnitsToFactoryGroup(false)
+	, autoAddBuiltUnitsToSelectedGroup(false)
+	, buildIconsFirst(false)
 {
 }
 
