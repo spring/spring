@@ -15,7 +15,7 @@ struct CollisionVolume;
 struct MoveDef;
 
 
-enum YardmapStati {
+enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
 	//YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
 	YARDMAP_YARD        = 1,    // walkable when yard is open
@@ -27,7 +27,7 @@ enum YardmapStati {
 	YARDMAP_YARDFREE    = ~YARDMAP_YARD,
 	YARDMAP_GEO         = YARDMAP_BLOCKED,
 };
-typedef BitwiseEnum<YardmapStati> YardmapStatus;
+typedef BitwiseEnum<YardmapStates> YardMapStatus;
 
 
 
@@ -82,9 +82,9 @@ public:
 		UpdateMidPos();
 		UpdateAimPos();
 	}
-	void SetMidAndAimPos(const float3& mp, const float3& ap) {
-		SetMidPos(mp);
-		SetAimPos(ap);
+	void SetMidAndAimPos(const float3& mp, const float3& ap, bool relative) {
+		SetMidPos(mp, relative);
+		SetAimPos(ap, relative);
 	}
 
 	/**
@@ -101,25 +101,39 @@ public:
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
-	YardmapStatus GetGroundBlockingAtPos(float3 gpos) const;
+	YardMapStatus GetGroundBlockingAtPos(float3 gpos) const;
 
 private:
-	void SetMidPos(const float3& p) { midPos = p; relMidPos = pos - midPos; }
-	void SetAimPos(const float3& p) { aimPos = p; relAimPos = pos - aimPos; }
+	void SetMidPos(const float3& mp, bool relative) {
+		if (relative) {
+			relMidPos = mp; midPos = UpdateMidPos();
+		} else {
+			midPos = mp; relMidPos = pos - midPos;
+		}
+	}
+	void SetAimPos(const float3& ap, bool relative) {
+		if (relative) {
+			relAimPos = ap; aimPos = UpdateAimPos();
+		} else {
+			aimPos = ap; relAimPos = pos - aimPos;
+		}
+	}
 
-	void UpdateMidPos() {
+	float3& UpdateMidPos() {
 		const float3 dz = (frontdir * relMidPos.z);
 		const float3 dy = (updir    * relMidPos.y);
 		const float3 dx = (rightdir * relMidPos.x);
 
 		midPos = pos + dz + dy + dx;
+		return midPos;
 	}
-	void UpdateAimPos() {
+	float3& UpdateAimPos() {
 		const float3 dz = (frontdir * relAimPos.z);
 		const float3 dy = (updir    * relAimPos.y);
 		const float3 dx = (rightdir * relAimPos.x);
 
 		aimPos = pos + dz + dy + dx;
+		return aimPos;
 	}
 
 public:
@@ -170,7 +184,7 @@ public:
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
-	const YardmapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
+	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
 	int buildFacing;                            ///< Orientation of footprint, 4 different states
 
 	static const float DEFAULT_MASS;
