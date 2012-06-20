@@ -607,7 +607,7 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 	owner->heading += pathController->GetDeltaHeading(pathId, (wantedHeading = newHeading), owner->heading, turnRate);
 
 	owner->UpdateDirVectors(!owner->upright && maxSpeed > 0.0f);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 
 	flatFrontDir = owner->frontdir;
 	flatFrontDir.y = 0.0f;
@@ -980,7 +980,7 @@ void CGroundMoveType::CalcSkidRot()
 	owner->rightdir = r1 + r2;
 	owner->updir    = u1 + u2;
 
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 }
 
 

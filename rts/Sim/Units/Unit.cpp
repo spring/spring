@@ -344,6 +344,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	modelParser->CreateLocalModel(this);
 
 	relMidPos = model->relMidPos;
+	relAimPos = model->relMidPos;
 	mapSquare = ground->GetSquare(position.cClampInMap());
 
 	heading  = GetHeadingFromFacing(facing);
@@ -355,7 +356,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	Move3D(position.cClampInMap(), false);
 	SetRadiusAndHeight(model->radius, model->height);
 	UpdateDirVectors(!upright);
-	UpdateMidPos();
+	UpdateMidAndAimPos();
 
 	uh->AddUnit(this);
 	qf->MovedUnit(this);
@@ -607,7 +608,7 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 	frontdir.y = 0.0f;
 
 	Move1D(parentPos.y - height, 1, false);
-	UpdateMidPos();
+	UpdateMidAndAimPos();
 	// start parachute animation
 	script->Falling();
 }

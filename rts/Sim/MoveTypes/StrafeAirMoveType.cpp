@@ -814,7 +814,7 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 
 	owner->Move3D(speed *= invDrag, true);
 	owner->UpdateDirVectors(false);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 }
 
 
@@ -891,7 +891,7 @@ void CStrafeAirMoveType::UpdateLanding()
 
 	owner->Move3D(speed, true);
 	owner->UpdateDirVectors(false);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 
 	// see if we are at the reserved (not user-clicked) landing spot
 	const float gh = ground->GetHeightAboveWater(pos.x, pos.z);
@@ -1000,7 +1000,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	rightdir.Normalize();
 	updir = rightdir.cross(frontdir);
 
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 	owner->SetHeadingFromDirection();
 }
 

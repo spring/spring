@@ -109,16 +109,18 @@ void CFeature::PostLoad()
 		model = def->LoadModel();
 
 		relMidPos = model->relMidPos;
+		relAimPos = model->relMidPos;
 		newRadius = model->radius;
 		newHeight = model->height;
 	} else if (def->drawType >= DRAWTYPE_TREE) {
 		relMidPos = UpVector * TREE_RADIUS;
+		relAimPos = UpVector * TREE_RADIUS;
 		newRadius = TREE_RADIUS;
 		newHeight = newRadius * 2.0f;
 	}
 
 	SetRadiusAndHeight(newRadius, newHeight);
-	UpdateMidPos();
+	UpdateMidAndAimPos();
 }
 
 
@@ -167,6 +169,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 			LOG_L(L_ERROR, "Features: Couldn't load model for %s", def->name.c_str());
 		} else {
 			relMidPos = model->relMidPos;
+			relAimPos = model->relMidPos;
 			newRadius = model->radius;
 			newHeight = model->height;
 		}
@@ -174,6 +177,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	else if (def->drawType >= DRAWTYPE_TREE) {
 		// LoadFeaturesFromMap() doesn't set a scale for trees
 		relMidPos = UpVector * TREE_RADIUS;
+		relAimPos = UpVector * TREE_RADIUS;
 		newRadius = TREE_RADIUS;
 		newHeight = newRadius * 2.0f;
 	}
@@ -183,7 +187,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 	Move3D(_pos.cClampInMap(), false);
 	SetRadiusAndHeight(newRadius, newHeight);
-	UpdateMidPos();
+	UpdateMidAndAimPos();
 	CalculateTransform();
 
 	featureHandler->AddFeature(this);

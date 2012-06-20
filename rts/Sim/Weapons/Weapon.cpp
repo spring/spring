@@ -273,7 +273,7 @@ void CWeapon::Update()
 		}
 
 		targetPos =
-			helper->GetUnitErrorPos(targetUnit, owner->allyteam) + lead +
+			helper->GetUnitErrorPos(targetUnit, owner->allyteam, true) + lead +
 			errorVector * (weaponDef->targetMoveError * GAME_SPEED * targetUnit->speed.Length() * (1.0f - owner->limExperience));
 
 		const float appHeight = ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f;
@@ -553,7 +553,7 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 	}
 
 	float3 tempTargetPos =
-		helper->GetUnitErrorPos(unit, owner->allyteam) +
+		helper->GetUnitErrorPos(unit, owner->allyteam, true) +
 		errorVector * (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
 
 	const float appHeight = ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f;
@@ -713,7 +713,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 		if (slavedTo->targetType == Target_Unit) {
 			const float3 tp =
-				helper->GetUnitErrorPos(slavedTo->targetUnit, owner->allyteam) +
+				helper->GetUnitErrorPos(slavedTo->targetUnit, owner->allyteam, true) +
 				errorVector * (weaponDef->targetMoveError * GAME_SPEED * slavedTo->targetUnit->speed.Length() * (1.0f - owner->limExperience));
 
 			if (TryTarget(tp, false, slavedTo->targetUnit)) {
@@ -764,7 +764,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 			const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTargetUnit->speed.Length();
 			const float weaponError = weaponLead * (1.0f - owner->limExperience);
 
-			float3 nextTargetPos = nextTargetUnit->midPos + (errorVector * weaponError);
+			float3 nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
 
 			const float appHeight = ground->GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
 
@@ -979,7 +979,7 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 
 bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
 	float3 tempTargetPos =
-		helper->GetUnitErrorPos(unit, owner->allyteam) +
+		helper->GetUnitErrorPos(unit, owner->allyteam, true) +
 		errorVector * (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
 
 	const float appHeight = ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f;
@@ -992,7 +992,7 @@ bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
 
 bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
 	float3 tempTargetPos =
-		helper->GetUnitErrorPos(unit, owner->allyteam) +
+		helper->GetUnitErrorPos(unit, owner->allyteam, true) +
 		errorVector * (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
 
 	const float appHeight = ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f;
