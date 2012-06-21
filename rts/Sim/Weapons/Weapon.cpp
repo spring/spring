@@ -736,6 +736,9 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	if (!noAutoTargetOverride && AllowWeaponTargetCheck()) {
 		lastTargetRetry = gs->frameNum;
 
+		std::multimap<float, CUnit*> targets;
+		std::multimap<float, CUnit*>::const_iterator targetsIt;
+
 		// NOTE:
 		//   sorts by INCREASING order of priority, so lower equals better
 		//   <targets> can contain duplicates if a unit covers multiple quads
