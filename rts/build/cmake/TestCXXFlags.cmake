@@ -99,16 +99,23 @@ IF    (NOT DEFINED MARCH)
 
 	# 64bit
 	if    ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (NOT MARCH))
-		# march=amd64 supports the whole 64bit family (including Intels!)
-		# it's similar to the i686 flag and should sync between 32bit & 64bit (other 64bit march's enable SSE3 etc. and won't sync!)
-		CHECK_CXX_ACCEPTS_FLAG("-march=amd64" HAS_AMD64_FLAG_)
-		IF    (HAS_AMD64_FLAG_)
-			Set(MARCH "amd64")
-		EndIf (HAS_AMD64_FLAG_)
+		# always syncs with 32bit
+		CHECK_CXX_ACCEPTS_FLAG("-march=x86_64" HAS_X86_64_FLAG_)
+		IF    (HAS_X86_64_FLAG_)
+			Set(MARCH "x86_64")
+		EndIf (HAS_X86_64_FLAG_)
+
+		if    (NOT MARCH)
+			# _should_ sync with 32bit
+			CHECK_CXX_ACCEPTS_FLAG("-march=k8" HAS_K8_FLAG_)
+			IF    (HAS_K8_FLAG_)
+				Set(MARCH "k8")
+			EndIf (HAS_K8_FLAG_)
+		endif (NOT MARCH)
 	endif ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (NOT MARCH))
 
 	# no compatible arch found
 	if    (NOT MARCH)
-		Message(WARNING "Neither i686 nor amd64 are accepted by the compiler! (`march=native` _may_ cause sync errors!)")
+		Message(WARNING "Neither i686, x86_64 nor k8 are accepted by the compiler! (`march=native` _may_ cause sync errors!)")
 	endif (NOT MARCH)
 EndIf (NOT DEFINED MARCH)
