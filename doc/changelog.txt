@@ -48,6 +48,7 @@ Bugfixes:
  - fix missing stack trace if out-of-memory occurs
  - fix resurrecting an individual wreck results in the resurrector not healing it
  - fix /godmode and /{luarules,luagaia} {reload,disable} not working in demos
+ - fix targetting bug (weapons sometimes failing to fire at badTargetCategory units) as a result of AllowWeaponTarget misuse
 
 Simulation:
  - YardMap changes:
@@ -103,6 +104,7 @@ Lua:
  - fix crash due to UpdateCallIn removing the current event client from list being iterated
  - add new synced callouts Set{Unit,Feature}RadiusAndHeight(number id, number radius, number height) --> boolean
  - add new synced callouts Set{Unit,Feature}MidAndAimPos(number id, number mpx, number mpy, number mpz, number apx, number apy, number apz) --> boolean
+ - add optional 2nd (boolean midPos) and 3rd (boolean aimPos) arguments to Spring.Get{Unit,Feature}Position to go with the above four callouts
 
 Rendering:
  - fixed ATi PointSize bug
