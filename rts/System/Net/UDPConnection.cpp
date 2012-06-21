@@ -734,11 +734,10 @@ void UDPConnection::SendIfNecessary(bool flushed)
 
 			bool first = true;
 			while (true) {
-				const size_t resendChunkSize = (((netLossFactor == MIN_LOSS_FACTOR) || (rev == 0)) ? resIter->second->GetSize() : ((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize())); // resend chunk size
+				//FIXME const size_t resendChunkSize = (((netLossFactor == MIN_LOSS_FACTOR) || (rev == 0)) ? resIter->second->GetSize() : ((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize())); // resend chunk size
+				const size_t resendChunkSize = resIter->second->GetSize();
 				bool canResend  = maxResend > 0      && ((buf.GetSize() + resendChunkSize) <= mtu);
 				bool canSendNew = !newChunks.empty() && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu);
-
-				canResend = true; //FIXME DEBUG
 
 				if (!canResend && !canSendNew) {
 					//FIXME if (first)
