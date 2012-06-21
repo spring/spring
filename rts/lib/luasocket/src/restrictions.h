@@ -64,6 +64,10 @@ private:
 	*/
 	const TSocketRule* getRule(RestrictType type, const char* hostname, int port);
 
+	/**
+	* returns the human readable name of a restrictiontype
+	*/
+	const char* ruleToStr(RestrictType type);
 
 	TStrIntMap restrictions[ALL_RULES];
 
