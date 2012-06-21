@@ -736,35 +736,32 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	if (!noAutoTargetOverride && AllowWeaponTargetCheck()) {
 		lastTargetRetry = gs->frameNum;
 
-		std::multimap<float, CUnit*> targets;
-		std::multimap<float, CUnit*>::const_iterator nextTargetIt;
-		std::multimap<float, CUnit*>::const_iterator lastTargetIt;
-
+		// NOTE:
+		//   sorts by INCREASING order of priority, so lower equals better
+		//   <targets> can contain duplicates if a unit covers multiple quads
+		//   <targets> is normally sorted such that all bad TC units are at the
+		//   end, but Lua can mess with the ordering arbitrarily
 		helper->GenerateWeaponTargets(this, targetUnit, targets);
 
-		if (!targets.empty())
-			lastTargetIt = --targets.end();
+		CUnit* prevTargetUnit = NULL;
+		CUnit* goodTargetUnit = NULL;
+		CUnit* badTargetUnit = NULL;
 
-		for (nextTargetIt = targets.begin(); nextTargetIt != targets.end(); ++nextTargetIt) {
-			CUnit* nextTargetUnit = nextTargetIt->second;
+		float3 nextTargetPos = ZeroVector;
 
-			if (nextTargetUnit->neutral && (owner->fireState <= FIRESTATE_FIREATWILL)) {
+		for (targetsIt = targets.begin(); targetsIt != targets.end(); ++targetsIt) {
+			CUnit* nextTargetUnit = targetsIt->second;
+
+			if (nextTargetUnit == prevTargetUnit)
+				continue; // filter consecutive duplicates
+			if (nextTargetUnit->neutral && (owner->fireState <= FIRESTATE_FIREATWILL))
 				continue;
-			}
-
-			// when only one target is available, <nextTarget> can equal <targetUnit>
-			// and we want to attack whether it is in our bad target category or not
-			// (if only bad targets are available and this is the last, just pick it)
-			if (nextTargetUnit != targetUnit && (nextTargetUnit->category & badTargetCategory)) {
-				if (nextTargetIt != lastTargetIt) {
-					continue;
-				}
-			}
 
 			const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTargetUnit->speed.Length();
 			const float weaponError = weaponLead * (1.0f - owner->limExperience);
 
-			float3 nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
+			prevTargetUnit = nextTargetUnit;
+			nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
 
 			const float appHeight = ground->GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
 
@@ -772,18 +769,34 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 				nextTargetPos.y = appHeight;
 			}
 
-			if (TryTarget(nextTargetPos, false, nextTargetUnit)) {
-				if (targetUnit) {
-					DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-				}
+			if (!TryTarget(nextTargetPos, false, nextTargetUnit))
+				continue;
 
-				targetType = Target_Unit;
-				targetUnit = nextTargetUnit;
-				targetPos = nextTargetPos;
+			if ((nextTargetUnit->category & badTargetCategory) != 0) {
+				// save the "best" bad target in case we have no other
+				// good targets (of higher priority) left in <targets>
+				if (badTargetUnit != NULL)
+					continue;
 
-				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+				badTargetUnit = nextTargetUnit;
+			} else {
+				goodTargetUnit = nextTargetUnit;
 				break;
 			}
+		}
+
+		if (goodTargetUnit != NULL || badTargetUnit != NULL) {
+			if (targetUnit != NULL) {
+				// delete our old target dependence
+				DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+			}
+
+			// pick our new target
+			targetType = Target_Unit;
+			targetUnit = (goodTargetUnit != NULL)? goodTargetUnit: badTargetUnit;
+			targetPos = nextTargetPos;
+
+			AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		}
 	}
 
