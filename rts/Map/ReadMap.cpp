@@ -233,7 +233,7 @@ void CReadMap::UpdateDraw()
 	{
 		GML_STDMUTEX_LOCK(map); // UpdateDraw
 
-		unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp);
+		unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap to avoid Optimize() inside a mutex
 	}
 	{
 
@@ -259,11 +259,8 @@ void CReadMap::UpdateDraw()
 	if (!unsyncedHeightMapUpdatesTemp.empty()) {
 		GML_STDMUTEX_LOCK(map); // UpdateDraw
 
-		unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp);
-		while (!unsyncedHeightMapUpdatesTemp.empty()) {
-			unsyncedHeightMapUpdates.push_back(unsyncedHeightMapUpdatesTemp.front());
-			unsyncedHeightMapUpdatesTemp.pop_front();
-		}
+		unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap back
+		unsyncedHeightMapUpdates.splice(unsyncedHeightMapUpdates.end(), unsyncedHeightMapUpdatesTemp);
 	}
 
 	SCOPED_TIMER("ReadMap::UpdateHeightMapUnsynced");

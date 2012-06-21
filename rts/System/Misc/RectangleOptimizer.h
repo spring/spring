@@ -43,6 +43,9 @@ public:
 		std::swap(needsUpdate, other.needsUpdate);
 		other.maxAreaPerRect = maxAreaPerRect; // intentional one-way copy here
 	}
+	void splice(iterator pos, CRectangleOptimizer &other) {
+		rectangles.splice(pos, other.rectangles);
+	}
 	void clear() {
 		needsUpdate = false;
 		return rectangles.clear();
