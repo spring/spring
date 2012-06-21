@@ -75,7 +75,16 @@ Build dependencies for Linux build:
 
 	apt-get install libboost-all-dev libdevil-dev libfreetype6-dev libopenal-dev \
 		libogg-dev libvorbis-dev libglew-dev libsdl-dev libxcursor-dev \
-		cppcheck
+		p7zip-full
+
+Build dependencies for validation test:
+	apt-get install gdb libcurl4-gnutls-dev
+
+Build dependencies for doxygen:
+	apt-get install doxygen
+
+Build dependencies for cppcheck:
+	apt-get install cppcheck
 
 ## Recompile MinGW package with dwarf2 exceptions instead of sjlj exceptions (as root)
 
