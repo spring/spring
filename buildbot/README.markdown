@@ -86,6 +86,9 @@ Build dependencies for doxygen:
 Build dependencies for cppcheck:
 	apt-get install cppcheck
 
+Speed up linking:
+	apt-get install binutils-gold
+
 ## Recompile MinGW package with dwarf2 exceptions instead of sjlj exceptions (as root)
 
 First recompile the compiler itself:
