@@ -233,10 +233,18 @@ namespace Shader {
 	void GLSLProgramObject::SetUniformMatrix2fv(int idx, bool transp, const float* v) const { glUniformMatrix2fv(uniformLocs[idx], 1, transp, v); }
 	void GLSLProgramObject::SetUniformMatrix3fv(int idx, bool transp, const float* v) const { glUniformMatrix3fv(uniformLocs[idx], 1, transp, v); }
 	void GLSLProgramObject::SetUniformMatrix4fv(int idx, bool transp, const float* v) const { glUniformMatrix4fv(uniformLocs[idx], 1, transp, v); }
+	#ifdef glUniformMatrix2dv
 	void GLSLProgramObject::SetUniformMatrix2dv(int idx, bool transp, const double* v) const { glUniformMatrix2dv(uniformLocs[idx], 1, transp, v); }
+	#endif
+	#ifdef glUniformMatrix3dv
 	void GLSLProgramObject::SetUniformMatrix3dv(int idx, bool transp, const double* v) const { glUniformMatrix3dv(uniformLocs[idx], 1, transp, v); }
+	#endif
+	#ifdef glUniformMatrix4dv
 	void GLSLProgramObject::SetUniformMatrix4dv(int idx, bool transp, const double* v) const { glUniformMatrix4dv(uniformLocs[idx], 1, transp, v); }
+	#endif
 
 	void GLSLProgramObject::SetUniformMatrixArray4fv(int idx, int count, bool transp, const float* v) const { glUniformMatrix4fv(uniformLocs[idx], count, transp, v); }
+	#ifdef glUniformMatrix4dv
 	void GLSLProgramObject::SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v) const { glUniformMatrix4dv(uniformLocs[idx], count, transp, v); }
+	#endif
 }
