@@ -79,8 +79,8 @@ public:
 	// vectors are changed (ie. after a rotation) in
 	// eg. movetype code
 	void UpdateMidAndAimPos() {
-		UpdateMidPos();
-		UpdateAimPos();
+		midPos = GetMidPos();
+		aimPos = GetAimPos();
 	}
 	void SetMidAndAimPos(const float3& mp, const float3& ap, bool relative) {
 		SetMidPos(mp, relative);
@@ -106,34 +106,32 @@ public:
 private:
 	void SetMidPos(const float3& mp, bool relative) {
 		if (relative) {
-			relMidPos = mp; midPos = UpdateMidPos();
+			relMidPos = mp; midPos = GetMidPos();
 		} else {
 			midPos = mp; relMidPos = pos - midPos;
 		}
 	}
 	void SetAimPos(const float3& ap, bool relative) {
 		if (relative) {
-			relAimPos = ap; aimPos = UpdateAimPos();
+			relAimPos = ap; aimPos = GetAimPos();
 		} else {
 			aimPos = ap; relAimPos = pos - aimPos;
 		}
 	}
 
-	SyncedFloat3& UpdateMidPos() {
+	float3 GetMidPos() const {
 		const float3 dz = (frontdir * relMidPos.z);
 		const float3 dy = (updir    * relMidPos.y);
 		const float3 dx = (rightdir * relMidPos.x);
 
-		midPos = pos + dz + dy + dx;
-		return midPos;
+		return (pos + dz + dy + dx);
 	}
-	SyncedFloat3& UpdateAimPos() {
+	float3 GetAimPos() const {
 		const float3 dz = (frontdir * relAimPos.z);
 		const float3 dy = (updir    * relAimPos.y);
 		const float3 dx = (rightdir * relAimPos.x);
 
-		aimPos = pos + dz + dy + dx;
-		return aimPos;
+		return (pos + dz + dy + dx);
 	}
 
 public:
