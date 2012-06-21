@@ -656,7 +656,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 	typedef std::vector<int>::const_iterator VectorIt;
 	typedef std::list<CUnit*>::const_iterator ListIt;
-	
+
 	for (VectorIt qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
 			if (teamHandler->Ally(attacker->allyteam, t)) {
