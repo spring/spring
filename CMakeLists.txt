@@ -290,11 +290,13 @@ if    ($ENV{CXX} MATCHES "icpc")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axK") # SSE1
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
-	if    (NOT CUSTOM_CFLAGS AND MARCH_FLAG)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
-		Message(STATUS "using march=${MARCH_FLAG}")
-	endif (NOT CUSTOM_CFLAGS AND MARCH_FLAG)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
+	if    (NOT CUSTOM_CFLAGS)
+		if    (MARCH_FLAG)
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
+			Message(STATUS "using march=${MARCH_FLAG}")
+		endif (MARCH_FLAG)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
+	endif (NOT CUSTOM_CFLAGS)
 else  (CMAKE_COMPILER_IS_GNUCXX)
 	Message(FATAL_ERROR "unknown compiler")
 endif ($ENV{CXX} MATCHES "icpc")

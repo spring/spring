@@ -42,7 +42,13 @@ EndIf (NOT DEFINED VISIBILITY_INLINES_HIDDEN)
 If    (NOT DEFINED SSE_FLAGS)
 	CHECK_CXX_ACCEPTS_FLAG("-msse -mfpmath=sse" HAS_SSE_FLAGS)
 	If    (HAS_SSE_FLAGS)
-		Set(SSE_FLAGS "-msse -mfpmath=sse")
+		# activate SSE1 only
+		Set(SSE_FLAGS "-mmmx -msse -mfpmath=sse")
+
+		# disable rest
+		#Set(SSE_FLAGS "${SSE_FLAGS} -mno-3dnow") tests showed it might sync 
+		Set(SSE_FLAGS "${SSE_FLAGS} -mno-sse2 -mno-sse3 -mno-ssse3 -mno-sse4.1 -mno-sse4.2 -mno-sse4 -mno-sse4a")
+		Set(SSE_FLAGS "${SSE_FLAGS} -mno-avx -mno-avx2 -mno-fma -mno-fma4 -mno-xop -mno-lwp")
 	Else  (HAS_SSE_FLAGS)
 		Set(SSE_FLAGS "-DDEDICATED_NOSSE")
 		Message(WARNING "SSE1 support is missing, online play is highly discouraged with this build")
