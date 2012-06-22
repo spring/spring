@@ -780,7 +780,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 					sent = true;
 				}
 			}
-			if (!sent)
+			if (!sent || (maxResend == 0 && newChunks.empty()))
 				todo = false;
 			buf.checksum = buf.GetChecksum();
 			EMULATE_PACKET_CORRUPTION(buf.checksum);
