@@ -26,10 +26,11 @@ extern "C" {
  * @param filePath the path to the log file
  * @param sections A list of comma separated sections to log to the file or
  *   NULL to log everything. To include the default section, you have to include
+ * @param flush instantly flush the logfile after data was written, will cause a slowdown
  *   ",,".
  */
 void log_file_addLogFile(const char* filePath, const char* sections = NULL,
-		int minLevel = LOG_LEVEL_ALL);
+		int minLevel = LOG_LEVEL_ALL, bool flush = false);
 
 void log_file_removeLogFile(const char* filePath);
 

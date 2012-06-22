@@ -15,7 +15,8 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
 
-static float3 defaultColVolColor(0.45f, 0.0f, 0.45f);
+static const float3 DEFAULT_VOLUME_COLOR = float3(0.45f, 0.0f, 0.45f);
+static const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
 static unsigned int volumeDisplayListIDs[3] = {0, 0, 0};
 
 static inline void DrawCollisionVolume(const CollisionVolume* vol)
@@ -73,6 +74,36 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 }
 
 
+
+static inline void DrawObjectMidPosAndAimPos(const CSolidObject* o)
+{
+	GLUquadricObj* q = gluNewQuadric();
+	glDisable(GL_DEPTH_TEST);
+
+	if (o->aimPos != o->midPos) {
+		// draw the aim-point
+		glPushMatrix();
+		glTranslatef3(o->relAimPos * WORLD_TO_OBJECT_SPACE);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		gluQuadricDrawStyle(q, GLU_FILL);
+		gluSphere(q, 2.0f, 5, 5);
+		glPopMatrix();
+	}
+
+	{
+		// draw the mid-point, keep this transform on the stack
+		glTranslatef3(o->relMidPos * WORLD_TO_OBJECT_SPACE);
+		glColor3f(1.0f, 0.0f, 1.0f);
+		gluQuadricDrawStyle(q, GLU_FILL);
+		gluSphere(q, 2.0f, 5, 5);
+		glColorf3(DEFAULT_VOLUME_COLOR);
+	}
+
+	glEnable(GL_DEPTH_TEST);
+	gluDeleteQuadric(q);
+}
+
+
 static inline void DrawFeatureColVol(const CFeature* f)
 {
 	if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) return;
@@ -84,19 +115,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 
 	glPushMatrix();
 		glMultMatrixf(f->transMatrix.m);
-		glTranslatef3(f->relMidPos * float3(-1.0f, 1.0f, 1.0f));
-
-		GLUquadricObj* q = gluNewQuadric();
-		{
-			// draw the centerpos
-			glDisable(GL_DEPTH_TEST);
-			glColor3f(1.0f, 0.0f, 1.0f);
-			gluQuadricDrawStyle(q, GLU_FILL);
-			gluSphere(q, 2.0f, 5, 5);
-			glColorf3(defaultColVolColor);
-			glEnable(GL_DEPTH_TEST);
-		}
-		gluDeleteQuadric(q);
+		DrawObjectMidPosAndAimPos(f);
 
 		if (v != NULL) {
 			if (!v->IsDisabled()) {
@@ -133,7 +152,7 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 			DrawCollisionVolume(p->GetCollisionVolume());
 
 			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
-				glColorf3(defaultColVolColor);
+				glColorf3(DEFAULT_VOLUME_COLOR);
 			}
 		}
 	glPopMatrix();
@@ -155,19 +174,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 
 	glPushMatrix();
 		glMultMatrixf(u->GetTransformMatrix());
-		glTranslatef3(u->relMidPos * float3(-1.0f, 1.0f, 1.0f));
-
-		GLUquadricObj* q = gluNewQuadric();
-		{
-			// draw the aimpoint
-			glDisable(GL_DEPTH_TEST);
-			glColor3f(1.0f, 0.0f, 1.0f);
-			gluQuadricDrawStyle(q, GLU_FILL);
-			gluSphere(q, 2.0f, 5, 5);
-			glColorf3(defaultColVolColor);
-			glEnable(GL_DEPTH_TEST);
-		}
-		gluDeleteQuadric(q);
+		DrawObjectMidPosAndAimPos(u);
 
 		if (u->unitDef->usePieceCollisionVolumes) {
 			// draw only the piece volumes for less clutter
@@ -183,7 +190,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 				DrawCollisionVolume(v);
 
 				if (u->lastAttack > 0 && ((gs->frameNum - u->lastAttack) < 150)) {
-					glColorf3(defaultColVolColor);
+					glColorf3(DEFAULT_VOLUME_COLOR);
 				}
 			}
 		}

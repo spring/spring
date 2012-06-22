@@ -2046,7 +2046,7 @@ int LuaUnsyncedRead::GetGroupList(lua_State* L)
 int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, selectedUnits.selectedGroup);
+	lua_pushnumber(L, selectedUnits.GetSelectedGroup());
 	return 1;
 }
 

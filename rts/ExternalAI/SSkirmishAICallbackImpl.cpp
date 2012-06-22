@@ -2586,7 +2586,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_getMaxRudder(int skirmishAIId, int unit
 EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax) {
 
 	const UnitDef* unitDef = getUnitDefById(skirmishAIId, unitDefId);
-	const std::vector<YardmapStatus>& yardMapInternal = unitDef->GetYardMap();
+	const std::vector<YardMapStatus>& yardMapInternal = unitDef->GetYardMap();
 
 	int yardMapSize = yardMapInternal.size();
 
@@ -4535,7 +4535,7 @@ EXPORT(bool) skirmishAiCallback_Group_isSelected(int skirmishAIId, int groupId) 
 
 	if (!isControlledByLocalPlayer(skirmishAIId)) return false;
 
-	return selectedUnits.selectedGroup == groupId;
+	return (selectedUnits.IsGroupSelected(groupId));
 }
 
 //##############################################################################

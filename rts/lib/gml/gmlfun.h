@@ -318,6 +318,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 
 #if GML_CALL_DEBUG
 #include "lib/lua/include/lauxlib.h"
+extern void gmlPrintCallChainWarning(const char *func);
 extern unsigned gmlLockTime;
 extern lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS];
 class gmlCallDebugger {
@@ -350,6 +351,21 @@ public:
 	if(currentLuaState)\
 		luaL_error(currentLuaState, "Invalid call");\
 	ret
+#if GML_CALL_DEBUG
+#define GML_CHECK_CALL_CHAIN(luastate, ...)\
+	if (gmlCheckCallChain) {\
+		lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
+		if (currentLuaState != NULL && currentLuaState != gmlLuaUIState && luastate == gmlLuaUIState) {\
+			if (gmlCallChainWarning < GML_MAX_CALL_CHAIN_WARNINGS) {\
+				++gmlCallChainWarning;\
+				gmlPrintCallChainWarning(GML_FUNCTION);\
+			}\
+			return __VA_ARGS__;\
+		}\
+	}
+#else
+#define GML_CHECK_CALL_CHAIN(luastate, ...)
+#endif
 #define GML_ITEMLOG_PRINT() GML_THREAD_ERROR(GML_FUNCTION,)
 #define GML_DUMMYRET() return;
 #define GML_DUMMYRETVAL(rettype)\

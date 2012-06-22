@@ -125,11 +125,17 @@ CTeam::CTeam() :
 
 void CTeam::ClampStartPosInStartBox(float3* pos) const
 {
+	const int allyTeam = teamHandler->AllyTeam(teamNum);
+	if (allyTeam < 0 || allyTeam >= gameSetup->allyStartingData.size()) {
+		LOG_L(L_ERROR, "%s: invalid AllyStartingData (team %d)", __FUNCTION__, teamNum);
+		return;
+	}
+	const AllyTeam& at = gameSetup->allyStartingData[allyTeam];
 	const SRectangle rect(
-		gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft   * gs->mapx * SQUARE_SIZE,
-		gameSetup->allyStartingData[gu->myAllyTeam].startRectTop    * gs->mapy * SQUARE_SIZE,
-		gameSetup->allyStartingData[gu->myAllyTeam].startRectRight  * gs->mapx * SQUARE_SIZE,
-		gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom * gs->mapy * SQUARE_SIZE
+		at.startRectLeft   * gs->mapx * SQUARE_SIZE,
+		at.startRectTop    * gs->mapy * SQUARE_SIZE,
+		at.startRectRight  * gs->mapx * SQUARE_SIZE,
+		at.startRectBottom * gs->mapy * SQUARE_SIZE
 	);
 
 	int2 ipos(pos->x, pos->z);

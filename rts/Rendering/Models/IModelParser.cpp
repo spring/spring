@@ -158,7 +158,7 @@ void CheckModelNormals(const S3DModel* model) {
 
 
 
-S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffset)
+S3DModel* C3DModelLoader::Load3DModel(std::string name)
 {
 	GML_RECMUTEX_LOCK(model); // Load3DModel
 
@@ -181,7 +181,6 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 
 		try {
 			model = p->Load(name);
-			model->relMidPos += centerOffset;
 		} catch (const content_error& ex) {
 			// crash-dummy
 			model = new S3DModel();

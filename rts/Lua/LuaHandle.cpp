@@ -876,9 +876,9 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 }
 
 
-void CLuaHandle::UnitTaken(const CUnit* unit, int newTeam)
+void CLuaHandle::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_TAKEN, unit, newTeam);
+	LUA_UNIT_BATCH_PUSH(,UNIT_TAKEN, unit, oldTeam, newTeam);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 	int errfunc = SetupTraceback(L);
@@ -892,7 +892,7 @@ void CLuaHandle::UnitTaken(const CUnit* unit, int newTeam)
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, oldTeam);
 	lua_pushnumber(L, newTeam);
 
 	// call the routine
@@ -900,9 +900,9 @@ void CLuaHandle::UnitTaken(const CUnit* unit, int newTeam)
 }
 
 
-void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam)
+void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam, int newTeam)
 {
-	LUA_UNIT_BATCH_PUSH(,UNIT_GIVEN, unit, oldTeam);
+	LUA_UNIT_BATCH_PUSH(,UNIT_GIVEN, unit, oldTeam, newTeam);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 	int errfunc = SetupTraceback(L);
@@ -916,7 +916,7 @@ void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam)
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, newTeam);
 	lua_pushnumber(L, oldTeam);
 
 	// call the routine
@@ -1444,7 +1444,7 @@ bool CLuaHandle::Explosion(int weaponDefID, const float3& pos, const CUnit* owne
 	if (!watchWeaponDefs[weaponDefID]) return false;
 
 	LUA_UNIT_BATCH_PUSH(false, UNIT_EXPLOSION, weaponDefID, pos, owner);
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("Explosion");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -1537,10 +1537,10 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitDestroyed(e.unit1, e.unit2);
 				break;
 			case UNIT_TAKEN:
-				UnitTaken(e.unit1, e.int1);
+				UnitTaken(e.unit1, e.int1, e.int2);
 				break;
 			case UNIT_GIVEN:
-				UnitGiven(e.unit1, e.int1);
+				UnitGiven(e.unit1, e.int1, e.int2);
 				break;
 			case UNIT_IDLE:
 				UnitIdle(e.unit1);
@@ -1815,7 +1815,7 @@ void CLuaHandle::ExecuteLogEventBatch() {
 
 bool CLuaHandle::RecvLuaMsg(const string& msg, int playerID)
 {
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 8);
 	static const LuaHashString cmdStr("RecvLuaMsg");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -1989,7 +1989,7 @@ void CLuaHandle::ViewResize()
 bool CLuaHandle::DefaultCommand(const CUnit* unit,
                                 const CFeature* feature, int& cmd)
 {
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("DefaultCommand");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2243,7 +2243,7 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("KeyPress");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2285,7 +2285,7 @@ bool CLuaHandle::KeyRelease(unsigned short key)
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("KeyRelease");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2324,7 +2324,7 @@ bool CLuaHandle::MousePress(int x, int y, int button)
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("MousePress");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2354,7 +2354,7 @@ int CLuaHandle::MouseRelease(int x, int y, int button)
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("MouseRelease");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2384,7 +2384,7 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("MouseMove");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2416,7 +2416,7 @@ bool CLuaHandle::MouseWheel(bool up, float value)
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("MouseWheel");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2444,7 +2444,7 @@ bool CLuaHandle::JoystickEvent(const std::string& event, int val1, int val2)
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 4);
 	const LuaHashString cmdStr(event);
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2472,7 +2472,7 @@ bool CLuaHandle::IsAbove(int x, int y)
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("IsAbove");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2501,7 +2501,7 @@ string CLuaHandle::GetTooltip(int x, int y)
 	if (!CheckModUICtrl()) {
 		return "";
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, "");
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("GetTooltip");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2530,7 +2530,7 @@ bool CLuaHandle::ConfigCommand(const string& command)
 	if (!CheckModUICtrl()) {
 		return true; // FIXME ?
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2552,7 +2552,7 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("CommandNotify");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2601,7 +2601,7 @@ bool CLuaHandle::AddConsoleLine(const string& msg, const string& section, int le
 		return true; // FIXME?
 	}
 	LUA_LOG_BATCH_PUSH(true, ADD_CONSOLE_LINE, msg, level, section);
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("AddConsoleLine");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2626,7 +2626,7 @@ bool CLuaHandle::GroupChanged(int groupID)
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 3);
 	static const LuaHashString cmdStr("GroupChanged");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2651,7 +2651,7 @@ string CLuaHandle::WorldTooltip(const CUnit* unit,
 	if (!CheckModUICtrl()) {
 		return "";
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, "");
 	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("WorldTooltip");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2703,7 +2703,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 9);
 	static const LuaHashString cmdStr("MapDrawCmd");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2767,7 +2767,7 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 	if (!CheckModUICtrl()) {
 		return false;
 	}
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("GameSetup");
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
@@ -2807,7 +2807,7 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 
 const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, int inSize)
 {
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, NULL);
 	lua_checkstack(L, 4);
 
 	static const LuaHashString cmdStr("RecvSkirmishAIMessage");

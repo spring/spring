@@ -41,8 +41,22 @@ EndIf (NOT DEFINED VISIBILITY_INLINES_HIDDEN)
 
 If    (NOT DEFINED SSE_FLAGS)
 	CHECK_CXX_ACCEPTS_FLAG("-msse -mfpmath=sse" HAS_SSE_FLAGS)
+	CHECK_CXX_ACCEPTS_FLAG("-mno-avx" HAS_AVX_FLAGS)
+	CHECK_CXX_ACCEPTS_FLAG("-mno-avx2" HAS_AVX2_FLAGS)
 	If    (HAS_SSE_FLAGS)
+		# activate SSE1 only
 		Set(SSE_FLAGS "-msse -mfpmath=sse")
+		#Set(SSE_FLAGS "${SSE_FLAGS} -mmmx")
+
+		# disable rest
+		#Set(SSE_FLAGS "${SSE_FLAGS} -mno-3dnow") tests showed it might sync
+		Set(SSE_FLAGS "${SSE_FLAGS} -mno-sse2 -mno-sse3 -mno-ssse3 -mno-sse4.1 -mno-sse4.2 -mno-sse4 -mno-sse4a")
+		If    (HAS_AVX_FLAGS)
+			Set(SSE_FLAGS "${SSE_FLAGS} -mno-avx -mno-fma -mno-fma4 -mno-xop -mno-lwp")
+		EndIf (HAS_AVX_FLAGS)
+		If    (HAS_AVX2_FLAGS)
+			Set(SSE_FLAGS "${SSE_FLAGS} -mno-avx2")
+		EndIf (HAS_AVX2_FLAGS)
 	Else  (HAS_SSE_FLAGS)
 		Set(SSE_FLAGS "-DDEDICATED_NOSSE")
 		Message(WARNING "SSE1 support is missing, online play is highly discouraged with this build")
@@ -89,11 +103,33 @@ EndIf (NOT DEFINED LTO_FLAGS)
 
 
 IF    (NOT DEFINED MARCH)
+	Set(MARCH "")
+
+	# 32bit
 	CHECK_CXX_ACCEPTS_FLAG("-march=i686" HAS_I686_FLAG_)
 	IF    (HAS_I686_FLAG_)
 		Set(MARCH "i686")
-	Else  (HAS_I686_FLAG_)
-		Message(INFO "-march=i686 flag not accepted")
-		Set(MARCH "")
 	EndIf (HAS_I686_FLAG_)
+
+	# 64bit
+	if    ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (NOT MARCH))
+		# always syncs with 32bit
+		CHECK_CXX_ACCEPTS_FLAG("-march=x86_64" HAS_X86_64_FLAG_)
+		IF    (HAS_X86_64_FLAG_)
+			Set(MARCH "x86_64")
+		EndIf (HAS_X86_64_FLAG_)
+
+		if    (NOT MARCH)
+			# _should_ sync with 32bit
+			CHECK_CXX_ACCEPTS_FLAG("-march=k8" HAS_K8_FLAG_)
+			IF    (HAS_K8_FLAG_)
+				Set(MARCH "k8")
+			EndIf (HAS_K8_FLAG_)
+		endif (NOT MARCH)
+	endif ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (NOT MARCH))
+
+	# no compatible arch found
+	if    (NOT MARCH)
+		Message(WARNING "Neither i686, x86_64 nor k8 are accepted by the compiler! (`march=native` _may_ cause sync errors!)")
+	endif (NOT MARCH)
 EndIf (NOT DEFINED MARCH)

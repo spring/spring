@@ -145,7 +145,7 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		return;
 	}
 
-	if ((selectedUnits.selectedGroup == num) && !group->units.empty()) {
+	if ((selectedUnits.IsGroupSelected(num)) && !group->units.empty()) {
 		const float3 groupCenter = group->CalculateCenter();
 		camHandler->GetCurrentController().SetPos(groupCenter);
 	}
@@ -178,7 +178,7 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 		LOG_L(L_WARNING, "Trying to remove hot-key group %i", group->id);
 		return;
 	}
-	if (selectedUnits.selectedGroup == group->id) {
+	if (selectedUnits.IsGroupSelected(group->id)) {
 		selectedUnits.ClearSelected();
 	}
 	groups[group->id] = NULL;

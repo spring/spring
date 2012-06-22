@@ -45,35 +45,34 @@ static const int TARGET_LOST_TIMER = 15;
 
 CR_BIND(CCommandQueue, );
 CR_REG_METADATA(CCommandQueue, (
-				CR_MEMBER(queue),
-				CR_ENUM_MEMBER(queueType),
-				CR_MEMBER(tagCounter)
-				));
+	CR_MEMBER(queue),
+	CR_ENUM_MEMBER(queueType),
+	CR_MEMBER(tagCounter)
+));
 
 CR_BIND_DERIVED(CCommandAI, CObject, );
 CR_REG_METADATA(CCommandAI, (
-				CR_MEMBER(stockpileWeapon),
+	CR_MEMBER(stockpileWeapon),
 
-				CR_MEMBER(possibleCommands),
-				CR_MEMBER(commandQue),
-				CR_MEMBER(nonQueingCommands),
-				CR_MEMBER(lastUserCommand),
-				CR_MEMBER(selfDCountdown),
-				CR_MEMBER(lastFinishCommand),
+	CR_MEMBER(possibleCommands),
+	CR_MEMBER(commandQue),
+	CR_MEMBER(nonQueingCommands),
+	CR_MEMBER(lastUserCommand),
+	CR_MEMBER(selfDCountdown),
+	CR_MEMBER(lastFinishCommand),
 
-				CR_MEMBER(owner),
+	CR_MEMBER(owner),
 
-				CR_MEMBER(orderTarget),
-				CR_MEMBER(targetDied),
-				CR_MEMBER(inCommand),
-				CR_MEMBER(selected),
-				CR_MEMBER(repeatOrders),
-				CR_MEMBER(lastSelectedCommandPage),
-				CR_MEMBER(unimportantMove),
-				CR_MEMBER(targetLostTimer),
-				CR_RESERVED(64),
-				CR_POSTLOAD(PostLoad)
-				));
+	CR_MEMBER(orderTarget),
+	CR_MEMBER(targetDied),
+	CR_MEMBER(inCommand),
+	CR_MEMBER(repeatOrders),
+	CR_MEMBER(lastSelectedCommandPage),
+	CR_MEMBER(unimportantMove),
+	CR_MEMBER(targetLostTimer),
+	CR_RESERVED(64),
+	CR_POSTLOAD(PostLoad)
+));
 
 CCommandAI::CCommandAI():
 	stockpileWeapon(0),
@@ -84,7 +83,6 @@ CCommandAI::CCommandAI():
 	orderTarget(0),
 	targetDied(false),
 	inCommand(false),
-	selected(false),
 	repeatOrders(false),
 	lastSelectedCommandPage(0),
 	unimportantMove(false),
@@ -100,7 +98,6 @@ CCommandAI::CCommandAI(CUnit* owner):
 	orderTarget(0),
 	targetDied(false),
 	inCommand(false),
-	selected(false),
 	repeatOrders(false),
 	lastSelectedCommandPage(0),
 	unimportantMove(false),
@@ -334,11 +331,6 @@ void CCommandAI::AddCommandDependency(const Command &c) {
 		if (ref)
 			AddDeathDependence(ref, DEPENDENCE_COMMANDQUE);
 	}
-}
-
-void CCommandAI::PostLoad()
-{
-	selected = false; // FIXME: HACK: selected list is not serialized
 }
 
 vector<CommandDescription>& CCommandAI::GetPossibleCommands()
@@ -737,18 +729,17 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 	// flush the queue for immediate commands
 	if (!(c.options & SHIFT_KEY)) {
 		if (!commandQue.empty()) {
-			const int& cmd_id = commandQue.front().GetID();
-			if ((cmd_id == CMD_MANUALFIRE) ||
-			    (cmd_id == CMD_ATTACK)     ||
-			    (cmd_id == CMD_AREA_ATTACK)) {
-				owner->AttackUnit(0,true);
-			}
 			waitCommandsAI.ClearUnitQueue(owner, commandQue);
 			ClearCommandDependencies();
 			commandQue.clear();
 		}
-		inCommand=false;
+
+		// if c is an attack command, the actual order-target
+		// gets set via ExecuteAttack (called from SlowUpdate
+		// at the end of this function)
+		assert(commandQue.empty());
 		SetOrderTarget(NULL);
+		inCommand = false;
 	}
 
 	AddCommandDependency(c);
@@ -806,7 +797,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 
 	if (c.GetID() == CMD_ATTACK) {
 		// avoid weaponless units moving to 0 distance when given attack order
-		if (owner->weapons.empty() && (owner->unitDef->canKamikaze == false)) {
+		if (owner->weapons.empty() && (!owner->unitDef->canKamikaze)) {
 			Command c2(CMD_STOP);
 			commandQue.push_back(c2);
 			return;
@@ -1269,7 +1260,7 @@ void CCommandAI::ExecuteStop(Command &c)
 
 void CCommandAI::SlowUpdate()
 {
-	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+	if (gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 	if (commandQue.empty()) {
 		return;

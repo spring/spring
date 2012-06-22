@@ -93,7 +93,7 @@ void CTransportUnit::Update()
 		}
 
 		transportee->Move3D(absPiecePos, false);
-		transportee->UpdateMidPos();
+		transportee->UpdateMidAndAimPos();
 		transportee->SetHeadingFromDirection();
 
 		// see ::AttachUnit

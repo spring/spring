@@ -25,7 +25,7 @@ public:
 	}
 
 	void AddGroundBlockingObject(CSolidObject* object);
-	void AddGroundBlockingObject(CSolidObject* object, const YardmapStatus& mask);
+	void AddGroundBlockingObject(CSolidObject* object, const YardMapStatus& mask);
 	void RemoveGroundBlockingObject(CSolidObject* object);
 
 	void OpenBlockingYard(CSolidObject* object);
@@ -50,7 +50,7 @@ public:
 	}
 
 private:
-	bool CheckYard(CSolidObject* yardUnit, const YardmapStatus& mask) const;
+	bool CheckYard(CSolidObject* yardUnit, const YardMapStatus& mask) const;
 
 private:
 	BlockingMap groundBlockingMap;

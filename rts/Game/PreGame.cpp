@@ -211,6 +211,7 @@ void CPreGame::UpdateClientNet()
 {
 	if (net->CheckTimeout(0, true)) {
 		LOG_L(L_WARNING, "Server not reachable");
+		SetExitCode(1);
 		gu->globalQuit = true;
 		return;
 	}

@@ -17,6 +17,12 @@ Changes:
  ! remove selectkeys.txt support (use uikeys.txt instead)
  ! remove TASServer.jar (outdated, use http://springrts.com/wiki/Spring_on_a_LAN )
  ! send gameID and SDF filename with SERVER_STARTPLAYING to autohost
+ ! remove deprecated LogSubsystems config var
+ - add LogFlush config var for instant writes (disabled as default)
+ - add UI config-variables AutoAddBuiltUnitsToFactoryGroup (def: false) and AutoAddBuiltUnitsToSelectedGroup (def: false)
+   if the first variable is true, new units auto-inherit their group number from the factory that built them
+   if the first AND second are true, new units are auto-selected if their factory group is currently selected
+
 
 Bugfixes:
  - dedicated server no longer consumes 100% CPU while waiting for gameID
@@ -26,6 +32,7 @@ Bugfixes:
  - fix "changing unit speed does not work anymore" (2877/3016)
    (scripts can now arbitrarily override the UnitDef values, which are only used for initialization)
  - fix 'LightningCannon can fire into water' (3057)
+ - fix BeamLasers and LightningCannons not ignoring stunned shields
  - fix GameSetupDrawer player-state string (3064)
  - fix 'Con/com gets weird move order after stop command is given' (3069)
    (was intended to keep factories clear, any side-effects are up to players to deal with)
@@ -40,6 +47,9 @@ Bugfixes:
  - fix ping display after mid-game (re-)join + try to reduce lag after mid-game join
  - fix missing stack trace if out-of-memory occurs
  - fix resurrecting an individual wreck results in the resurrector not healing it
+ - fix /godmode and /{luarules,luagaia} {reload,disable} not working in demos
+ - fix targetting bug (weapons sometimes failing to fire at badTargetCategory units) as a result of AllowWeaponTarget misuse
+ - fix kamikaze units not self-d'ing when given an attack order while on hold-fire 
 
 Simulation:
  - YardMap changes:
@@ -53,6 +63,7 @@ Simulation:
   ! don't add target's radius to the builder's builddistance, only do so if the target is bigger than the builddistance (mostly only true for terraform)
     -> from now on the to be built unit's centerpos has to be in buildrange not its border!
  ! remove obsolete default dependence of cloakCostMoving on cloakCost
+ ! remove modelCenterOffset tag (can now be dynamically set with Lua)
  - improved behaviour of builder masses
  - make StartBox clamping of StartPositions synced
  - don't reclaim in-the-way features when the buildee is going to morph into a feature of the same type
@@ -66,6 +77,7 @@ Simulation:
  - add 'allowUnitCollisionOverlap' (def=true) and 'useClassicGroundMoveType' (def=false) ModInfo keys
    the former allows unit movement like www.youtube.com/watch?v=mRtePUdVk2o at the cost of more clumping (learn to use ctrl+lmb formation orders)
    the latter is a ticket back to unit movement circa 2009: no reversing, no turninplace=false, no smooth collision handling, no nothing (figure it out)
+ - introduce an independent Lua-controllable aim-position (defaults to mid-position) for units and features, used by weapons as their aiming/target point
 
 Pathing:
  - QTPFS: less loadscreen spam, make F2 functional, enable corner-connected node topology, use staggered layer-updates, speedups and tweaks
@@ -91,6 +103,9 @@ Lua:
  - new Spring.LoadCmdColorsConfig(configStr) & Spring.LoadCtrlPanelConfig(configStr)
  - add new 3 param 'pairwise' to Spring.GiveOrderArrayToUnitArray(), used to send multiple units a single individual command
  - fix crash due to UpdateCallIn removing the current event client from list being iterated
+ - add new synced callouts Set{Unit,Feature}RadiusAndHeight(number id, number radius, number height) --> boolean
+ - add new synced callouts Set{Unit,Feature}MidAndAimPos(number id, number mpx, number mpy, number mpz, number apx, number apy, number apz) --> boolean
+ - add optional 2nd (boolean midPos) and 3rd (boolean aimPos) arguments to Spring.Get{Unit,Feature}Position to go with the above four callouts
 
 Rendering:
  - fixed ATi PointSize bug
@@ -101,6 +116,7 @@ Rendering:
  - SMF: render the info-texture through GLSL (noob translation -> shadows in LOS-view)
  - improved VSync under Linux (with support for AdaptiveVSync)
  - added FeatureFadeDistance & FeatureDrawDistance config tags
+ - more failsafe shadow FBO creation
  - fixed vibrating planes (again)
  - fix spring_multithreaded hangs
 
@@ -109,8 +125,11 @@ UI:
  - draw buildRange for mobile selected units too & always render them on shift hover (also for shield range)
 
 Linux:
+ ! strip CXX_FLAGS & C_FLAGS in build process to prevent sync incompabilities (can be turned off with a new CUSTOM_CFLAGS cmake flag)
+ - use march=amd64 on 64bit systems
  - on multicore systems set scheduler to SCHED_BATCH (semi-solves the core hoping issue)
  - call SDL_WarpMouse only when needed (fixes massive FPS-drop in middle-click-scrolling)
+ - use a non-locking vsync mechanism & add support for nvidia's `adaptive vsync`
 
 OSX:
  - fix stack corruption in sound code

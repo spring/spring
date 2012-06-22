@@ -814,7 +814,7 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 
 	owner->Move3D(speed *= invDrag, true);
 	owner->UpdateDirVectors(false);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 }
 
 
@@ -891,7 +891,7 @@ void CStrafeAirMoveType::UpdateLanding()
 
 	owner->Move3D(speed, true);
 	owner->UpdateDirVectors(false);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 
 	// see if we are at the reserved (not user-clicked) landing spot
 	const float gh = ground->GetHeightAboveWater(pos.x, pos.z);
@@ -971,12 +971,12 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	}
 
 	// bounce away on ground collisions
-	if (gHeight > (owner->pos.y - owner->model->radius * 0.2f)) {
+	if (gHeight > (owner->pos.y - owner->radius * 0.2f)) {
 		const float3& gNormal = ground->GetNormal(pos.x, pos.z);
 		const float impactSpeed = -speed.dot(gNormal);
 
 		if (impactSpeed > 0.0f) {
-			owner->Move1D(gHeight + owner->model->radius * 0.2f + 0.01f, 1, false);
+			owner->Move1D(gHeight + owner->radius * 0.2f + 0.01f, 1, false);
 
 			// fix for mantis #1355
 			// aircraft could get stuck in the ground and never recover (on takeoff
@@ -1000,7 +1000,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	rightdir.Normalize();
 	updir = rightdir.cross(frontdir);
 
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 	owner->SetHeadingFromDirection();
 }
 

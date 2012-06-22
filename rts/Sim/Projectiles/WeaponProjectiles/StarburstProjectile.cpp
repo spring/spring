@@ -169,7 +169,7 @@ void CStarburstProjectile::Update()
 	missileAge++;
 
 	if (target && weaponDef->tracks && owner()) {
-		targetPos = helper->GetUnitErrorPos(target, owner()->allyteam);
+		targetPos = helper->GetUnitErrorPos(target, owner()->allyteam, true);
 	}
 	if (interceptTarget) {
 		targetPos = interceptTarget->pos;

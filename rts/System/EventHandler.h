@@ -60,8 +60,8 @@ class CEventHandler
 		void UnitFromFactory(const CUnit* unit, const CUnit* factory,
 		                     bool userOrders);
 		void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
-		void UnitTaken(const CUnit* unit, int newTeam);
-		void UnitGiven(const CUnit* unit, int oldTeam);
+		void UnitTaken(const CUnit* unit, int oldTeam, int newTeam);
+		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam);
 
 		void RenderUnitCreated(const CUnit* unit, int cloaked);
 		void RenderUnitDestroyed(const CUnit* unit);
@@ -411,21 +411,21 @@ UNIT_CALLIN_NO_PARAM(UnitLeftAir)
 
 
 
-#define UNIT_CALLIN_INT_PARAM(name)                                       \
-	inline void CEventHandler:: Unit ## name (const CUnit* unit, int p)   \
+#define UNIT_CALLIN_INT_PARAMS(name)                                       \
+	inline void CEventHandler:: Unit ## name (const CUnit* unit, int p1, int p2)   \
 	{                                                                     \
 		const int unitAllyTeam = unit->allyteam;                          \
 		const int count = listUnit ## name.size();                        \
 		for (int i = 0; i < count; i++) {                                 \
 			CEventClient* ec = listUnit ## name [i];                      \
 			if (ec->CanReadAllyTeam(unitAllyTeam)) {                      \
-				ec-> Unit ## name (unit, p);                              \
+				ec-> Unit ## name (unit, p1, p2);                              \
 			}                                                             \
 		}                                                                 \
 	}
 
-UNIT_CALLIN_INT_PARAM(Taken)
-UNIT_CALLIN_INT_PARAM(Given)
+UNIT_CALLIN_INT_PARAMS(Taken)
+UNIT_CALLIN_INT_PARAMS(Given)
 
 
 

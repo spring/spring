@@ -27,7 +27,7 @@ CONFIG(int, ReconnectTimeout)
 
 CONFIG(int, MaximumTransmissionUnit)
 	.defaultValue(1400)
-	.minimumValue(300);
+	.minimumValue(400);
 
 CONFIG(int, LinkOutgoingBandwidth)
 	.defaultValue(64 * 1024)
@@ -96,6 +96,7 @@ GlobalConfig::GlobalConfig()
 #if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
 	multiThreadLua = configHandler->GetInt("MultiThreadLua");
 #endif
+	GML::SetCheckCallChain(GetMultiThreadLua() == MT_LUA_SINGLE_BATCH);
 }
 
 

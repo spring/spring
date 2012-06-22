@@ -197,7 +197,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		smfShadersGLSL[i]->SetUniform1i(28, 11); // detailNormalTex (idx 28, texunit 11)
 		smfShadersGLSL[i]->SetUniform1i(29, 12); // lightEmisionTex (idx 29, texunit 12)
 		smfShadersGLSL[i]->SetUniform1i(30, 13); // parallaxHeightTex (idx 30, texunit 13)
-		smfShadersGLSL[i]->SetUniform1i(31,  1); // infoTexIntensityMul
+		smfShadersGLSL[i]->SetUniform1f(31, 1.0f); // infoTexIntensityMul
 		smfShadersGLSL[i]->SetUniform2f(32, 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
 		smfShadersGLSL[i]->SetUniform2f(33, 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
 		smfShadersGLSL[i]->SetUniform2f(34, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
@@ -448,7 +448,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	smfShaderGLSL->SetUniform3fv(11, &camera->pos[0]);
 	smfShaderGLSL->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
 	smfShaderGLSL->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
-	smfShaderGLSL->SetUniform1i(31, int(smfGroundDrawer->drawMode == CBaseGroundDrawer::drawMetal) + 1);
+	smfShaderGLSL->SetUniform1f(31, float(smfGroundDrawer->drawMode == CBaseGroundDrawer::drawMetal) + 1.0f);
 
 	// already on the MV stack at this point
 	glLoadIdentity();

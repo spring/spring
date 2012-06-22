@@ -57,8 +57,8 @@ public:
 	void UnitDestroyed(const CUnit& destroyed, const CUnit* attacker);
 	void UnitDamaged(const CUnit& damaged, const CUnit* attacker, float damage, int weaponId, bool paralyzer);
 	void UnitMoveFailed(const CUnit& unit);
-	void UnitCaptured(const CUnit& unit, int newTeamId);
-	void UnitGiven(const CUnit& unit, int oldTeamId);
+	void UnitCaptured(const CUnit& unit, int oldTeam, int newTeam);
+	void UnitGiven(const CUnit& unit, int oldTeam, int newTeam);
 
 	void SeismicPing(int allyTeamId, const CUnit& unit, const float3& pos, float strength);
 	void WeaponFired(const CUnit& unit, const WeaponDef& def);
