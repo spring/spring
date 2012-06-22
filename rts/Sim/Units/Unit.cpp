@@ -948,7 +948,7 @@ void CUnit::SlowUpdate()
 
 	SlowUpdateCloak(false);
 
-	if (unitDef->canKamikaze && (fireState >= FIRESTATE_FIREATWILL || userTarget || userAttackGround)) {
+	if (unitDef->canKamikaze) {
 		if (fireState >= FIRESTATE_FIREATWILL) {
 			std::vector<int> nearbyUnits;
 			if (unitDef->kamikazeUseLOS) {
@@ -1579,8 +1579,9 @@ void CUnit::SetUserTarget(CUnit* target)
 		DeleteDeathDependence(userTarget, DEPENDENCE_TARGET);
 
 	userTarget = target;
+
 	for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-		(*wi)->haveUserTarget = false; // should be (target != NULL)?
+		(*wi)->haveUserTarget = (target != NULL);
 	}
 
 	if (target) {

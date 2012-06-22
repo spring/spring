@@ -522,7 +522,7 @@ void CMobileCAI::ExecutePatrol(Command &c)
 void CMobileCAI::ExecuteFight(Command &c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
-	if(c.params.size() == 1) {
+	if (c.params.size() == 1) {
 		if(orderTarget && !owner->weapons.empty()
 				&& !owner->weapons.front()->AttackUnit(orderTarget, false)) {
 			CUnit* newTarget = helper->GetClosestValidTarget(
@@ -703,6 +703,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 			SetGoal(fix - diff * targetUnit->radius, owner->pos);
 			SetOrderTarget(targetUnit);
+			owner->AttackUnit(targetUnit, c.GetID() == CMD_MANUALFIRE);
 
 			inCommand = true;
 		}
@@ -790,6 +791,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 								owner->maxRange * 0.9f), true);
 				}
 			}
+
 			owner->AttackUnit(orderTarget, c.GetID() == CMD_MANUALFIRE);
 		}
 

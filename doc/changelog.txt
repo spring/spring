@@ -49,6 +49,7 @@ Bugfixes:
  - fix resurrecting an individual wreck results in the resurrector not healing it
  - fix /godmode and /{luarules,luagaia} {reload,disable} not working in demos
  - fix targetting bug (weapons sometimes failing to fire at badTargetCategory units) as a result of AllowWeaponTarget misuse
+ - fix kamikaze units not self-d'ing when given an attack order while on hold-fire 
 
 Simulation:
  - YardMap changes:
