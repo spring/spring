@@ -729,18 +729,17 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 	// flush the queue for immediate commands
 	if (!(c.options & SHIFT_KEY)) {
 		if (!commandQue.empty()) {
-			const int& cmd_id = commandQue.front().GetID();
-			if ((cmd_id == CMD_MANUALFIRE) ||
-			    (cmd_id == CMD_ATTACK)     ||
-			    (cmd_id == CMD_AREA_ATTACK)) {
-				owner->AttackUnit(0,true);
-			}
 			waitCommandsAI.ClearUnitQueue(owner, commandQue);
 			ClearCommandDependencies();
 			commandQue.clear();
 		}
-		inCommand=false;
+
+		// if c is an attack command, the actual order-target
+		// gets set via ExecuteAttack (called from SlowUpdate
+		// at the end of this function)
+		assert(commandQue.empty());
 		SetOrderTarget(NULL);
+		inCommand = false;
 	}
 
 	AddCommandDependency(c);
@@ -798,7 +797,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 
 	if (c.GetID() == CMD_ATTACK) {
 		// avoid weaponless units moving to 0 distance when given attack order
-		if (owner->weapons.empty() && (owner->unitDef->canKamikaze == false)) {
+		if (owner->weapons.empty() && (!owner->unitDef->canKamikaze)) {
 			Command c2(CMD_STOP);
 			commandQue.push_back(c2);
 			return;
@@ -1261,7 +1260,7 @@ void CCommandAI::ExecuteStop(Command &c)
 
 void CCommandAI::SlowUpdate()
 {
-	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+	if (gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 	if (commandQue.empty()) {
 		return;
