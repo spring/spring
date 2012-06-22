@@ -732,17 +732,15 @@ void UDPConnection::SendIfNecessary(bool flushed)
 					nak = 0; // 1 request is enough, unless high loss
 			}
 
-			bool first = true;
+			bool sent = false;
 			while (true) {
-				//FIXME (((netLossFactor == MIN_LOSS_FACTOR) || (rev == 0)) ? resIter->second->GetSize() : ((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize())); // resend chunk size
-				bool canResend  = maxResend > 0      && ((buf.GetSize() + resIter->second->GetSize()) <= mtu);
+				bool canResend = maxResend > 0 &&
+					((buf.GetSize() +
+					(((netLossFactor == MIN_LOSS_FACTOR) || (rev == 0)) ? resIter->second->GetSize() : ((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize())) // resend chunk size
+					) <= mtu);
 				bool canSendNew = !newChunks.empty() && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu);
-
-				if (!canResend && !canSendNew) {
-					//FIXME if (first)
-						todo = false;
+				if (!canResend && !canSendNew)
 					break;
-				}
 				resend = !resend; // alternate between send and resend to make sure none is starved
 				if (resend && canResend) {
 					if (netLossFactor == MIN_LOSS_FACTOR) {
@@ -774,22 +772,20 @@ void UDPConnection::SendIfNecessary(bool flushed)
 					}
 					++resentChunks;
 					--maxResend;
-					first = false;
+					sent = true;
 				} else if (!resend && canSendNew) {
 					buf.chunks.push_back(newChunks[0]);
 					unackedChunks.push_back(newChunks[0]);
 					newChunks.pop_front();
-					first = false;
+					sent = true;
 				}
 			}
-
+			if (!sent)
+				todo = false;
 			buf.checksum = buf.GetChecksum();
 			EMULATE_PACKET_CORRUPTION(buf.checksum);
 
 			SendPacket(buf);
-			if (maxResend == 0 && newChunks.empty()) {
-				todo = false;
-			}
 		}
 		if (netLossFactor != MIN_LOSS_FACTOR) { // on a lossy connection the packet will be sent multiple times
 			for (int i = unackPrevSize; i < unackedChunks.size(); ++i)

@@ -27,7 +27,7 @@ CONFIG(int, ReconnectTimeout)
 
 CONFIG(int, MaximumTransmissionUnit)
 	.defaultValue(1400)
-	.minimumValue(300);
+	.minimumValue(400);
 
 CONFIG(int, LinkOutgoingBandwidth)
 	.defaultValue(64 * 1024)
