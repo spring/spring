@@ -20,10 +20,11 @@ namespace {
 
 	struct LogFileDetails {
 		LogFileDetails(FILE* outStream = NULL, const std::string& sections = "",
-				int minLevel = LOG_LEVEL_ALL)
+				int minLevel = LOG_LEVEL_ALL, bool flush = true)
 			: outStream(outStream)
 			, sections(sections)
 			, minLevel(minLevel)
+			, flush(flush)
 		{}
 
 		FILE* GetOutStream() const {
@@ -35,11 +36,15 @@ namespace {
 					|| (sections.find("," + std::string(section) + ",")
 					!= std::string::npos)));
 		}
+		bool FlushOnWrite() const {
+			return flush;
+		}
 
 	private:
 		FILE* outStream;
 		std::string sections;
 		int minLevel;
+		bool flush;
 	};
 	typedef std::map<std::string, LogFileDetails> logFiles_t;
 
@@ -105,17 +110,15 @@ namespace {
 		return (!log_file_getLogFiles().empty());
 	}
 
-	void log_file_writeToFile(FILE* outStream, const char* record) {
+	void log_file_writeToFile(FILE* outStream, const char* record, bool flush) {
 
 		char framePrefix[128] = {'\0'};
 		log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));
 
 		FPRINTF(outStream, "%s%s\n", framePrefix, record);
 
-		// We never flush, but only close the stream before process exit.
-		// This decision was made in two engine dev meetings, the last one was
-		// at 26. September 2011.
-		//fflush(outStream);
+		if (flush)
+			fflush(outStream);
 	}
 
 	/**
@@ -130,7 +133,7 @@ namespace {
 			if (lfi->second.IsLogging(section, level)
 					&& (lfi->second.GetOutStream() != NULL))
 			{
-				log_file_writeToFile(lfi->second.GetOutStream(), record);
+				log_file_writeToFile(lfi->second.GetOutStream(), record, lfi->second.FlushOnWrite());
 			}
 		}
 	}
@@ -182,7 +185,7 @@ namespace {
 extern "C" {
 #endif
 
-void log_file_addLogFile(const char* filePath, const char* sections, int minLevel) {
+void log_file_addLogFile(const char* filePath, const char* sections, int minLevel, bool flush) {
 
 	assert(filePath != NULL);
 
@@ -209,7 +212,7 @@ void log_file_addLogFile(const char* filePath, const char* sections, int minLeve
 	setvbuf(tmpStream, NULL, _IOFBF, (BUFSIZ < 8192) ? BUFSIZ : 8192); // limit buffer to 8kB
 
 	const std::string sectionsStr = (sections == NULL) ? "" : sections;
-	logFiles[filePathStr] = LogFileDetails(tmpStream, sectionsStr, minLevel);
+	logFiles[filePathStr] = LogFileDetails(tmpStream, sectionsStr, minLevel, flush);
 }
 
 void log_file_removeLogFile(const char* filePath) {

@@ -9,7 +9,6 @@
 unsigned CRectangleOptimizer::statsTotalSize = 0;
 unsigned CRectangleOptimizer::statsOptSize   = 0;
 
-
 CRectangleOptimizer::CRectangleOptimizer()
 	: maxAreaPerRect(500 * 500) // FIXME auto adjust this in HeightMapUpdate!
 	, needsUpdate(false)
@@ -45,46 +44,62 @@ void CRectangleOptimizer::Optimize()
 		return;
 	}
 
-	CRectangleOptimizer::iterator it;
-	CRectangleOptimizer::iterator jt;
-
 	//TODO this is not fully correct, when there was still rectangles
 	//     left from the last update we shouldn't count them twice!
 	statsTotalSize += GetTotalArea();
 
+	StageMerge();
+	StageOverlap();
+	StageMerge();
+	StageSplitTooLarge();
+	
+	statsOptSize += GetTotalArea();
+}
+
+void CRectangleOptimizer::StageMerge()
+{
+	CRectangleOptimizer::iterator it;
+	CRectangleOptimizer::iterator jt;
+
+	rectangles.sort();
+	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
+		for (jt = it, ++jt; jt != rectangles.end(); ++jt) {
+			const bool del = HandleMerge(*it, *jt);
+			if (del) {
+				it = rectangles.erase(it);
+				jt = it;
+			}
+		}
+	}
+}
+
+
+void CRectangleOptimizer::StageOverlap()
+{
+	CRectangleOptimizer::iterator it;
+	CRectangleOptimizer::iterator jt;
+
 	//! Fix Overlap
 	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
-		for (jt = it, ++jt; jt != rectangles.end(); ) {
-			int del = HandleOverlapping(&(*it), &(*jt));
+		for (jt = it, ++jt; jt != rectangles.end(); ++jt) {
+			const int del = HandleOverlapping(&(*it), &(*jt));
 			if (del < 0) {
 				it = rectangles.erase(it);
-				jt = it; ++jt;
+				jt = it;
 			} else if (del > 0) {
 				//jt = rectangles.erase(jt);
 				std::swap(*it, *jt);
 				it = rectangles.erase(it);
-				jt = it; ++jt;
-			} else {
-				++jt;
+				jt = it;
 			}
 		}
 	}
+}
 
-	statsOptSize += GetTotalArea();
 
-	//! Merge when possible
-	rectangles.sort();
-	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
-		for (jt = it, ++jt; jt != rectangles.end(); ) {
-			bool del = HandleMerge(*it, *jt);
-			if (del) {
-				it = rectangles.erase(it);
-				jt = it; ++jt;
-			} else {
-				++jt;
-			}
-		}
-	}
+void CRectangleOptimizer::StageSplitTooLarge()
+{
+	CRectangleOptimizer::iterator it;
 
 	//! Split too large
 	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
@@ -159,8 +174,8 @@ inline bool CRectangleOptimizer::AreMergable(const SRectangle& rect1, const SRec
 	const bool touchX = (boundRect.GetWidth() <= (rect1.GetWidth() + rect2.GetWidth()));
 	const bool touchZ = (boundRect.GetHeight() <= (rect1.GetHeight() + rect2.GetHeight()));
 
-	const bool mergableX = ((rect1.GetHeight() == rect2.GetHeight()) && (boundRect.GetHeight() == rect2.GetHeight()) && touchX);
-	const bool mergableZ = ((rect1.GetWidth() == rect2.GetWidth()) && (boundRect.GetWidth() == rect2.GetWidth()) && touchZ);
+	const bool mergableX = (touchX && (rect1.GetHeight() == rect2.GetHeight()) && (boundRect.GetHeight() == rect2.GetHeight()));
+	const bool mergableZ = (touchZ && (rect1.GetWidth() == rect2.GetWidth()) && (boundRect.GetWidth() == rect2.GetWidth()));
 	return mergableX || mergableZ;
 }
 

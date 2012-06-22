@@ -86,7 +86,7 @@ public:
 
 	bool WantsMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
 	bool HasBomberWeapon() const;
-	const std::vector<YardmapStatus>& GetYardMap() const { return yardmap; }
+	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
 	// NOTE: deprecated, only used by LuaUnitDefs.cpp
 	const char* GetTypeString() const {
@@ -225,7 +225,6 @@ public:
 	std::string scriptPath;     ///< the path of the unit's script, e.g. "scripts/armjeth.cob"
 
 	mutable UnitModelDef modelDef;
-	mutable float3 modelCenterOffset;	///< offset from the unit model's default center point
 
 	bool usePieceCollisionVolumes;		///< if true, projectile collisions are checked per-piece
 
@@ -321,7 +320,7 @@ public:
 
 	///< The unrotated yardmap for buildings
 	///< (only non-mobile ground units can have these)
-	std::vector<YardmapStatus> yardmap;
+	std::vector<YardMapStatus> yardmap;
 
 	///< both sizes expressed in heightmap coordinates; M x N
 	///< footprint covers M*SQUARE_SIZE x N*SQUARE_SIZE elmos

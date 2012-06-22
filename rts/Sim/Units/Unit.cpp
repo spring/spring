@@ -233,6 +233,7 @@ CUnit::CUnit() : CSolidObject(),
 	noDraw(false),
 	noMinimap(false),
 	leaveTracks(false),
+	isSelected(false),
 	isIcon(false),
 	iconRadius(0.0f),
 	lodCount(0),
@@ -342,7 +343,6 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius);
 	modelParser->CreateLocalModel(this);
 
-	relMidPos = model->relMidPos;
 	mapSquare = ground->GetSquare(position.cClampInMap());
 
 	heading  = GetHeadingFromFacing(facing);
@@ -352,9 +352,10 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	upright  = unitDef->upright;
 
 	Move3D(position.cClampInMap(), false);
+	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model->radius, model->height);
 	UpdateDirVectors(!upright);
-	UpdateMidPos();
+	UpdateMidAndAimPos();
 
 	uh->AddUnit(this);
 	qf->MovedUnit(this);
@@ -606,7 +607,7 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 	frontdir.y = 0.0f;
 
 	Move1D(parentPos.y - height, 1, false);
-	UpdateMidPos();
+	UpdateMidAndAimPos();
 	// start parachute animation
 	script->Falling();
 }
@@ -947,7 +948,7 @@ void CUnit::SlowUpdate()
 
 	SlowUpdateCloak(false);
 
-	if (unitDef->canKamikaze && (fireState >= FIRESTATE_FIREATWILL || userTarget || userAttackGround)) {
+	if (unitDef->canKamikaze) {
 		if (fireState >= FIRESTATE_FIREATWILL) {
 			std::vector<int> nearbyUnits;
 			if (unitDef->kamikazeUseLOS) {
@@ -1362,8 +1363,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	selectedUnits.RemoveUnit(this);
 	SetGroup(NULL);
 
-	eventHandler.UnitTaken(this, newteam);
-	eoh->UnitCaptured(*this, newteam);
+	eventHandler.UnitTaken(this, oldteam, newteam);
+	eoh->UnitCaptured(*this, oldteam, newteam);
 
 	qf->RemoveUnit(this);
 	quads.clear();
@@ -1412,8 +1413,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		airBaseHandler->RegisterAirBase(this);
 	}
 
-	eventHandler.UnitGiven(this, oldteam);
-	eoh->UnitGiven(*this, oldteam);
+	eventHandler.UnitGiven(this, oldteam, newteam);
+	eoh->UnitGiven(*this, oldteam, newteam);
 
 	// reset states and clear the queues
 	if (!teamHandler->AlliedTeams(oldteam, newteam))
@@ -1578,8 +1579,9 @@ void CUnit::SetUserTarget(CUnit* target)
 		DeleteDeathDependence(userTarget, DEPENDENCE_TARGET);
 
 	userTarget = target;
+
 	for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-		(*wi)->haveUserTarget = false; // should be (target != NULL)?
+		(*wi)->haveUserTarget = (target != NULL);
 	}
 
 	if (target) {
@@ -1649,25 +1651,34 @@ void CUnit::CalculateTerrainType()
 }
 
 
-bool CUnit::SetGroup(CGroup* newGroup)
+bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 {
 	GML_RECMUTEX_LOCK(grpsel); // SetGroup
+
+	// factory is not necessarily selected
+	if (fromFactory && !selectedUnits.AutoAddBuiltUnitsToFactoryGroup())
+		return false;
 
 	if (group != NULL) {
 		group->RemoveUnit(this);
 	}
+
 	group = newGroup;
 
 	if (group) {
 		if (!group->AddUnit(this)){
-			group = NULL; // group ai did not accept us
+			// group did not accept us
+			group = NULL;
 			return false;
-		} else { // add us to selected units, if group is selected
-			if (selectedUnits.selectedGroup == group->id) {
+		} else {
+			// add unit to the set of selected units iff its new group is already selected
+			// and (user wants the unit to be auto-selected or the unit is not newly built)
+			if (selectedUnits.IsGroupSelected(group->id) && (selectedUnits.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
 				selectedUnits.AddUnit(this);
 			}
 		}
 	}
+
 	return true;
 }
 
@@ -2339,6 +2350,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(noDraw),
 	CR_MEMBER(noMinimap),
 	CR_MEMBER(leaveTracks),
+//	CR_MEMBER(isSelected),
 //	CR_MEMBER(isIcon),
 //	CR_MEMBER(iconRadius),
 //	CR_MEMBER(weaponHitMod),

@@ -85,6 +85,8 @@ int gmlItemsConsumed=0;
 
 int gmlNextTickUpdate=0;
 unsigned gmlCurrentTicks;
+bool gmlCheckCallChain=false;
+int gmlCallChainWarning=0;
 
 std::set<Threading::NativeThreadId> threadnums;
 
@@ -310,6 +312,10 @@ void PrintMTStartupMessage(int showMTInfo) {
 			LOG("A high LUA-EXP-SIZE(MT) value in the upper right corner could indicate a problem\n");
 		}
 	}
+}
+
+void gmlPrintCallChainWarning(const char *func) {
+	LOG_SL("GML", L_WARNING, "(%d/%d) Invalid attempt to invoke LuaUI (%s) from another Lua environment, this game is using engine features that may require LuaThreadingModel > 2 to work properly with Spring MT.", gmlCallChainWarning, GML_MAX_CALL_CHAIN_WARNINGS, func);
 }
 
 #endif
@@ -799,6 +805,7 @@ gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlLis
 
 #if GML_CALL_DEBUG
 lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS] = { NULL };
+lua_State *gmlLuaUIState=NULL;
 #endif
 
 // queue handler - exequtes one GL command from queue (pointed to by p)

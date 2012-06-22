@@ -2794,20 +2794,39 @@ int LuaSyncedRead::GetUnitRadius(lua_State* L)
 
 int LuaSyncedRead::GetUnitPosition(lua_State* L)
 {
+	int argc = 0;
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
 	if (unit == NULL) {
-		return 0;
+		return argc;
 	}
-	float3 pos;
-	if (IsAllyUnit(L, unit)) {
-		pos = unit->midPos;
-	} else {
-		pos = helper->GetUnitErrorPos(unit, CLuaHandle::GetHandleReadAllyTeam(L));
+
+	float3 err = ZeroVector;
+
+	if (!IsAllyUnit(L, unit)) {
+		err += helper->GetUnitErrorPos(unit, CLuaHandle::GetHandleReadAllyTeam(L));
+		err -= unit->midPos;
 	}
-	lua_pushnumber(L, pos.x);
-	lua_pushnumber(L, pos.y);
-	lua_pushnumber(L, pos.z);
-	return 3;
+
+	lua_pushnumber(L, unit->pos.x + err.x);
+	lua_pushnumber(L, unit->pos.y + err.y);
+	lua_pushnumber(L, unit->pos.z + err.z);
+	argc += 3;
+
+	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
+		lua_pushnumber(L, unit->midPos.x + err.x);
+		lua_pushnumber(L, unit->midPos.y + err.y);
+		lua_pushnumber(L, unit->midPos.z + err.z);
+		argc += 3;
+	}
+	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
+		lua_pushnumber(L, unit->aimPos.x + err.x);
+		lua_pushnumber(L, unit->aimPos.y + err.y);
+		lua_pushnumber(L, unit->aimPos.z + err.z);
+		argc += 3;
+	}
+
+	return argc;
 }
 
 
@@ -4151,14 +4170,32 @@ int LuaSyncedRead::GetFeatureRadius(lua_State* L)
 
 int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 {
+	int argc = 0;
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
 	if (feature == NULL || !IsFeatureVisible(L, feature)) {
-		return 0;
+		return argc;
 	}
+
 	lua_pushnumber(L, feature->pos.x);
 	lua_pushnumber(L, feature->pos.y);
 	lua_pushnumber(L, feature->pos.z);
-	return 3;
+	argc += 3;
+
+	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
+		lua_pushnumber(L, feature->midPos.x);
+		lua_pushnumber(L, feature->midPos.y);
+		lua_pushnumber(L, feature->midPos.z);
+		argc += 3;
+	}
+	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
+		lua_pushnumber(L, feature->aimPos.x);
+		lua_pushnumber(L, feature->aimPos.y);
+		lua_pushnumber(L, feature->aimPos.z);
+		argc += 3;
+	}
+
+	return argc;
 }
 
 

@@ -656,7 +656,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 	typedef std::vector<int>::const_iterator VectorIt;
 	typedef std::list<CUnit*>::const_iterator ListIt;
-	
+
 	for (VectorIt qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
 			if (teamHandler->Ally(attacker->allyteam, t)) {
@@ -690,9 +690,9 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
 
 				if (targetLOSState & LOS_INLOS) {
-					targPos = targetUnit->midPos;
+					targPos = targetUnit->aimPos;
 				} else if (targetLOSState & LOS_INRADAR) {
-					targPos = targetUnit->midPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
+					targPos = targetUnit->aimPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
 					targetPriority *= 10.0f;
 				} else {
 					continue;
@@ -833,18 +833,25 @@ void CGameHelper::GetEnemyUnitsNoLosTest(const float3 &pos, float searchRadius, 
 // Miscellaneous (i.e. not yet categorized)
 //////////////////////////////////////////////////////////////////////
 
-float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
+float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming)
 {
-	float3 pos = unit->midPos;
-	if (teamHandler->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
+	float3 pos = aiming? unit->aimPos: unit->midPos;
+
+	if (teamHandler->Ally(allyteam, unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
 		// ^ it's one of our own, or it's in LOS, so don't add an error ^
-	} else if ((!gameSetup || gameSetup->ghostedBuildings) && (unit->losStatus[allyteam] & LOS_PREVLOS) && !unit->moveDef) {
-		// ^ this is a ghosted building, so don't add an error ^
-	} else if ((unit->losStatus[allyteam] & LOS_INRADAR)) {
-		pos += unit->posErrorVector * radarhandler->radarErrorSize[allyteam];
-	} else {
-		pos += unit->posErrorVector * radarhandler->baseRadarErrorSize * 2;
+		return pos;
 	}
+	if (gameSetup->ghostedBuildings && (unit->losStatus[allyteam] & LOS_PREVLOS) && !unit->moveDef) {
+		// ^ this is a ghosted building, so don't add an error ^
+		return pos;
+	}
+
+	if ((unit->losStatus[allyteam] & LOS_INRADAR) != 0) {
+		pos += (unit->posErrorVector * radarhandler->radarErrorSize[allyteam]);
+	} else {
+		pos += (unit->posErrorVector * radarhandler->baseRadarErrorSize * 2);
+	}
+
 	return pos;
 }
 

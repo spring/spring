@@ -294,10 +294,9 @@ void CEngineOutHandler::UnitMoveFailed(const CUnit& unit) {
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitMoveFailed(unitId), teamId);
 }
 
-void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam) {
+void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam, int newTeam) {
 	AI_EVT_MTH();
 
-	const int newTeam       = unit.team;
 	const int unitId        = unit.id;
 	const int newAllyTeamId = unit.allyteam;
 	const int oldAllyTeamId = teamHandler->AllyTeam(oldTeam);
@@ -325,10 +324,9 @@ void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam) {
 	}
 }
 
-void CEngineOutHandler::UnitCaptured(const CUnit& unit, int newTeam) {
+void CEngineOutHandler::UnitCaptured(const CUnit& unit, int oldTeam, int newTeam) {
 	AI_EVT_MTH();
 
-	const int oldTeam       = unit.team;
 	const int unitId        = unit.id;
 	const int newAllyTeamId = unit.allyteam;
 	const int oldAllyTeamId = teamHandler->AllyTeam(oldTeam);

@@ -146,7 +146,6 @@ UnitDef::UnitDef()
 , flankingBonusMax(0.0f)
 , flankingBonusMin(0.0f)
 , flankingBonusMobilityAdd(0.0f)
-, modelCenterOffset(ZeroVector)
 , usePieceCollisionVolumes(false)
 , shieldWeaponDef(NULL)
 , stockpileWeaponDef(NULL)
@@ -692,9 +691,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	strafeToAttack = udTable.GetBool("strafeToAttack", false);
 
 
-	modelCenterOffset = udTable.GetFloat3("modelCenterOffset", ZeroVector);
-	usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false);
-
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
 	collisionVolume = new CollisionVolume(
@@ -704,7 +700,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		udTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_DISC)
 	);
 
-	if (usePieceCollisionVolumes) {
+	if ((usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false))) {
 		collisionVolume->Disable();
 	}
 
@@ -770,7 +766,7 @@ UnitDef::~UnitDef()
 S3DModel* UnitDef::LoadModel() const
 {
 	if (this->modelDef.model == NULL) {
-		this->modelDef.model = modelParser->Load3DModel(this->modelDef.modelPath, this->modelCenterOffset);
+		this->modelDef.model = modelParser->Load3DModel(this->modelDef.modelPath);
 		this->modelDef.modelTextures["tex1"] = this->modelDef.model->tex1;
 		this->modelDef.modelTextures["tex2"] = this->modelDef.model->tex2;
 	} else {
@@ -862,7 +858,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 	const unsigned int hxsize = xsize >> 1;
 	const unsigned int hzsize = zsize >> 1;
 
-	std::vector<YardmapStatus> yardMap(hxsize * hzsize, YARDMAP_BLOCKED);
+	std::vector<YardMapStatus> yardMap(hxsize * hzsize, YARDMAP_BLOCKED);
 	std::string foundUnknownChars;
 
 	unsigned int idx = 0;
@@ -873,7 +869,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 		if (isspace(c))
 			continue;
 
-		YardmapStatus ys = YARDMAP_BLOCKED;
+		YardMapStatus ys = YARDMAP_BLOCKED;
 
 		switch (c) {
 			case 'g': ys = YARDMAP_GEO; needGeo = true; break;
@@ -911,7 +907,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 	for (unsigned int z = 0; z < zsize; z++) {
 		for (unsigned int x = 0; x < xsize; x++) {
 			const unsigned int yardMapIdx = (x >> 1) + ((z >> 1) * hxsize);
-			const YardmapStatus yardMapChar = yardMap[yardMapIdx];
+			const YardMapStatus yardMapChar = yardMap[yardMapIdx];
 			yardmap[x + z * xsize] = yardMapChar;
 		}
 	}

@@ -42,7 +42,9 @@ $RUNCLIENT $1 &
 PID_CLIENT=$!
 
 set +e #temp disable abort on error
-gdb -batch -return-child-result -x $GDBCMDS &
+#gdb -batch -return-child-result -x $GDBCMDS &
+$@ &
+
 PID_HOST=$!
 
 # auto kill host after 15mins

@@ -220,7 +220,7 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 
 	buildee->Move3D(buildeePos, false);
 	buildee->UpdateDirVectors(false);
-	buildee->UpdateMidPos();
+	buildee->UpdateMidAndAimPos();
 
 	const CCommandQueue& queue = commandAI->commandQue;
 
@@ -241,7 +241,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 		GML_RECMUTEX_LOCK(group); // FinishBuild
 
 		if (group && buildee->group == 0) {
-			buildee->SetGroup(group);
+			buildee->SetGroup(group, true);
 		}
 	}
 

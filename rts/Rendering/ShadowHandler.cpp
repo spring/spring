@@ -111,6 +111,10 @@ void CShadowHandler::Init()
 
 
 	if (!InitDepthTarget()) {
+		// free any resources allocated by InitDepthTarget()
+		if (fb.IsValid()) fb.DetachAll();
+		glDeleteTextures(1, &shadowTexture    );
+		glDeleteTextures(1, &dummyColorTexture);
 		LOG_L(L_ERROR, "[%s] failed to initialize depth-texture FBO", __FUNCTION__);
 		return;
 	}
@@ -121,8 +125,9 @@ void CShadowHandler::Init()
 
 	if (shadowConfig == 0) {
 		// free any resources allocated by InitDepthTarget()
-		glDeleteTextures(1, &shadowTexture    ); shadowTexture     = 0;
-		glDeleteTextures(1, &dummyColorTexture); dummyColorTexture = 0;
+		if (fb.IsValid()) fb.DetachAll();
+		glDeleteTextures(1, &shadowTexture    );
+		glDeleteTextures(1, &dummyColorTexture);
 		// shadowsLoaded is still false
 		return;
 	}
@@ -132,10 +137,8 @@ void CShadowHandler::Init()
 
 void CShadowHandler::Kill()
 {
-	if (shadowsLoaded) {
-		glDeleteTextures(1, &shadowTexture);
-		glDeleteTextures(1, &dummyColorTexture);
-	}
+	glDeleteTextures(1, &shadowTexture);
+	glDeleteTextures(1, &dummyColorTexture);
 
 	shaderHandler->ReleaseProgramObjects("[ShadowHandler]");
 	shadowGenProgs.clear();
@@ -219,52 +222,92 @@ bool CShadowHandler::InitDepthTarget()
 		LOG_L(L_ERROR, "[%s] framebuffer not valid", __FUNCTION__);
 		return false;
 	}
-	glGenTextures(1, &shadowTexture);
 
+	fb.Bind();
+
+	glGenTextures(1, &shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-	float one[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	const float one[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, one);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // shadowtex linear sampling is for-free on NVidias
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	if (useColorTexture) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	} else {
-		const GLint texFormat = globalRendering->support24bitDepthBuffers ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT16;
-		
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	}
-
-	glGenTextures(1, &dummyColorTexture);
-	if (globalRendering->atiHacks) {
-		// ATI shadows fail without an attached color texture
-		glBindTexture(GL_TEXTURE_2D, dummyColorTexture);
-		// this dummy should be as small as possible not to waste memory
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA4, shadowMapSize, shadowMapSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, NULL);
-	}
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-	fb.Bind();
-
-	if (useColorTexture) {
 		fb.AttachTexture(shadowTexture);
 	} else {
-		if (globalRendering->atiHacks)
-			fb.AttachTexture(dummyColorTexture);
+		const GLint texFormat = globalRendering->support24bitDepthBuffers ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT16;
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
 	}
 
-	const int buffer = (useColorTexture || globalRendering->atiHacks) ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE;
-	glDrawBuffer(buffer);
-	glReadBuffer(buffer);
-	const bool status = fb.CheckStatus("SHADOW");
+	// test the FBO
+	glDrawBuffer(useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE);
+	glDrawBuffer(useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE);
+	bool status = fb.CheckStatus("SHADOW");
+	if (!status && !useColorTexture) {
+		status = WorkaroundUnsupportedFboRenderTargets();
+	}
 	fb.Unbind();
 	return status;
 }
+
+
+bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
+{
+	bool status = false;
+
+	// some drivers/GPUs fail to render to GL_CLAMP_TO_BORDER (and GL_LINEAR may cause a drop in performance for them, too)
+	{
+		fb.Detach(GL_DEPTH_ATTACHMENT_EXT);
+		glDeleteTextures(1, &shadowTexture);
+
+		glGenTextures(1, &shadowTexture);
+		glBindTexture(GL_TEXTURE_2D, shadowTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		const GLint texFormat = globalRendering->support24bitDepthBuffers ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT16;
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
+		status = fb.CheckStatus("SHADOW-GL_CLAMP_TO_EDGE");
+		if (status)
+			return true;
+	}
+
+
+	// ATI sometimes fails without an attached color texture, so check a few formats (not all supported texture formats are renderable)
+	{
+		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+
+		// 1st: try the smallest unsupported format (4bit per pixel)
+		glGenTextures(1, &dummyColorTexture);
+		glBindTexture(GL_TEXTURE_2D, dummyColorTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA4, shadowMapSize, shadowMapSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, NULL);
+		fb.AttachTexture(dummyColorTexture);
+		status = fb.CheckStatus("SHADOW-GL_ALPHA4");
+		if (status)
+			return true;
+
+		// failed revert changes of 1st attempt
+		fb.Detach(GL_COLOR_ATTACHMENT0_EXT);
+		glDeleteTextures(1, &dummyColorTexture);
+
+		// 2nd: try smallest standard format that must be renderable for OGL3
+		fb.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RED, shadowMapSize, shadowMapSize);
+		status = fb.CheckStatus("SHADOW-GL_RED");
+		if (status)
+			return true;
+	}
+
+	return status;
+}
+
 
 void CShadowHandler::DrawShadowPasses()
 {

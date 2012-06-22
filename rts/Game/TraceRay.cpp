@@ -279,7 +279,10 @@ float GuiTraceRay(
 				if (unit->isIcon) {
 					// for iconified units, just pretend the collision
 					// volume is a sphere of radius <unit->IconRadius>
-					cv.Init(unit->iconRadius);
+					// randomize it (by scaling up to a factor of 4) so
+					// unit size cannot be determined by hovering mouse
+					// over radar blips
+					cv.Init(unit->iconRadius * (1.0f + (gu->usRandFloat() * 3.0f)));
 				}
 
 				if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {
