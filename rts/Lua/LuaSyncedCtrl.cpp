@@ -1717,23 +1717,24 @@ int LuaSyncedCtrl::SetUnitMidAndAimPos(lua_State* L)
 		return 1;
 	}
 
-	#define MID_POS_DIM(idx, dim) luaL_checkfloat(L, idx)
-	#define AIM_POS_DIM(idx, dim) luaL_checkfloat(L, idx)
+	#define FLOAT(i) luaL_checkfloat(L, i)
+	#define FLOAT3(i, j, k) float3(FLOAT(i), FLOAT(j), FLOAT(k))
 
-	const int argc = lua_gettop(L) - 1;
-	const float3 newMidPos = (argc >= 3)? float3(MID_POS_DIM(2, x), MID_POS_DIM(3, y), MID_POS_DIM(4, z)): float3(unit->midPos);
-	const float3 newAimPos = (argc >= 6)? float3(AIM_POS_DIM(5, x), AIM_POS_DIM(6, y), AIM_POS_DIM(7, z)): float3(unit->aimPos);
+	const int argc = lua_gettop(L);
+	const float3 newMidPos = (argc >= 4)? FLOAT3(2, 3, 4): float3(unit->midPos);
+	const float3 newAimPos = (argc >= 7)? FLOAT3(5, 6, 7): float3(unit->aimPos);
+	const bool setRelative = (argc == 8 && lua_isboolean(L, 8) && lua_toboolean(L, 8));
 	const bool updateQuads = (newMidPos != unit->midPos);
 
-	#undef MID_POS_DIM
-	#undef AIM_POS_DIM
+	#undef FLOAT3
+	#undef FLOAT
 
 	if (updateQuads) {
 		// safety, possibly just need MovedUnit
 		qf->RemoveUnit(unit);
 	}
 
-	unit->SetMidAndAimPos(newMidPos, newAimPos, false);
+	unit->SetMidAndAimPos(newMidPos, newAimPos, setRelative);
 
 	if (updateQuads) {
 		qf->MovedUnit(unit);
@@ -2439,22 +2440,23 @@ int LuaSyncedCtrl::SetFeatureMidAndAimPos(lua_State* L)
 		return 1;
 	}
 
-	#define MID_POS_DIM(idx, dim) luaL_checkfloat(L, idx)
-	#define AIM_POS_DIM(idx, dim) luaL_checkfloat(L, idx)
+	#define FLOAT(i) luaL_checkfloat(L, i)
+	#define FLOAT3(i, j, k) float3(FLOAT(i), FLOAT(j), FLOAT(k))
 
-	const int argc = lua_gettop(L) - 1;
-	const float3 newMidPos = (argc >= 3)? float3(MID_POS_DIM(2, x), MID_POS_DIM(3, y), MID_POS_DIM(4, z)): float3(feature->midPos);
-	const float3 newAimPos = (argc >= 6)? float3(AIM_POS_DIM(5, x), AIM_POS_DIM(6, y), AIM_POS_DIM(7, z)): float3(feature->aimPos);
+	const int argc = lua_gettop(L);
+	const float3 newMidPos = (argc >= 4)? FLOAT3(2, 3, 4): float3(feature->midPos);
+	const float3 newAimPos = (argc >= 7)? FLOAT3(5, 6, 7): float3(feature->aimPos);
+	const bool setRelative = (argc == 8 && lua_isboolean(L, 8) && lua_toboolean(L, 8));
 	const bool updateQuads = (newMidPos != feature->midPos);
 
-	#undef MID_POS_DIM
-	#undef AIM_POS_DIM
+	#undef FLOAT3
+	#undef FLOAT
 
 	if (updateQuads) {
 		qf->RemoveFeature(feature);
 	}
 
-	feature->SetMidAndAimPos(newMidPos, newAimPos, false);
+	feature->SetMidAndAimPos(newMidPos, newAimPos, setRelative);
 
 	if (updateQuads) {
 		qf->AddFeature(feature);

@@ -50,7 +50,7 @@ CEventHandler::CEventHandler()
 
 	SETUP_EVENT(TeamDied,      MANAGED_BIT);
 	SETUP_EVENT(TeamChanged,   MANAGED_BIT);
-	SETUP_EVENT(PlayerChanged, MANAGED_BIT);
+	SETUP_EVENT(PlayerChanged, MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(PlayerAdded,   MANAGED_BIT);
 	SETUP_EVENT(PlayerRemoved, MANAGED_BIT);
 
