@@ -32,6 +32,11 @@ CallInsList = {
 	"GameOver",
 	"GameID",
 	"TeamDied",
+	"TeamChanged",
+
+	"PlayerChanged",
+	"PlayerAdded",
+	"PlayerRemoved",
 
 	"UnitCreated",
 	"UnitFinished",

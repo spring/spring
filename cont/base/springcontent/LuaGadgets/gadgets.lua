@@ -1060,6 +1060,37 @@ function gadgetHandler:TeamDied(teamID)
   return
 end
 
+function gadgetHandler:TeamChanged(teamID)
+  for _,g in ipairs(self.TeamChangedList) do
+    g:TeamChanged(teamID)
+  end
+  return
+end
+
+
+function gadgetHandler:PlayerChanged(playerID)
+  for _,g in ipairs(self.PlayerChangedList) do
+    g:PlayerChanged(playerID)
+  end
+  return
+end
+
+
+function gadgetHandler:PlayerAdded(playerID)
+  for _,g in ipairs(self.PlayerAddedList) do
+    g:PlayerAdded(playerID)
+  end
+  return
+end
+
+
+function gadgetHandler:PlayerRemoved(playerID, reason)
+  for _,g in ipairs(self.PlayerRemovedList) do
+    g:PlayerRemoved(playerID, reason)
+  end
+  return
+end
+
 
 --------------------------------------------------------------------------------
 --
