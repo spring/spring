@@ -108,14 +108,14 @@ private:
 		if (relative) {
 			relMidPos = mp; midPos = GetMidPos();
 		} else {
-			midPos = mp; relMidPos = pos - midPos;
+			midPos = mp; relMidPos = midPos - pos;
 		}
 	}
 	void SetAimPos(const float3& ap, bool relative) {
 		if (relative) {
 			relAimPos = ap; aimPos = GetAimPos();
 		} else {
-			aimPos = ap; relAimPos = pos - aimPos;
+			aimPos = ap; relAimPos = aimPos - pos;
 		}
 	}
 
