@@ -213,7 +213,8 @@ bool CStrafeAirMoveType::Update()
 		case AIRCRAFT_FLYING: {
 			owner->restTime = 0;
 
-			if (continueAttack && ((owner->userTarget && !owner->userTarget->isDead) || owner->userAttackGround)) {
+			const CCommandQueue &cque = owner->commandAI->commandQue;
+			if (!cque.empty() && cque.front().GetID() == CMD_ATTACK && continueAttack && ((owner->userTarget && !owner->userTarget->isDead) || owner->userAttackGround)) {
 				inefficientAttackTime = std::min(inefficientAttackTime, float(gs->frameNum) - owner->lastFireWeapon);
 
 				if (owner->userTarget) {
