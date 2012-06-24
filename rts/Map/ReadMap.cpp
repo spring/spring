@@ -232,8 +232,9 @@ void CReadMap::UpdateDraw()
 
 	{
 		GML_STDMUTEX_LOCK(map); // UpdateDraw
-
-		unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap to avoid Optimize() inside a mutex
+		
+		if (!unsyncedHeightMapUpdates.empty())
+			unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap to avoid Optimize() inside a mutex
 	}
 	{
 
@@ -241,14 +242,16 @@ void CReadMap::UpdateDraw()
 
 		static bool first = true;
 		if (!first) {
-			unsyncedHeightMapUpdatesTemp.Optimize();
-			int updateArea = unsyncedHeightMapUpdatesTemp.GetTotalArea() * 0.0625f + (50 * 50);
+			if (!unsyncedHeightMapUpdatesTemp.empty()) {
+				unsyncedHeightMapUpdatesTemp.Optimize();
+				int updateArea = unsyncedHeightMapUpdatesTemp.GetTotalArea() * 0.0625f + (50 * 50);
 
-			while (updateArea > 0 && !unsyncedHeightMapUpdatesTemp.empty()) {
-				const SRectangle& rect = unsyncedHeightMapUpdatesTemp.front();
-				updateArea -= rect.GetArea();
-				ushmu.push_back(rect);
-				unsyncedHeightMapUpdatesTemp.pop_front();
+				while (updateArea > 0 && !unsyncedHeightMapUpdatesTemp.empty()) {
+					const SRectangle& rect = unsyncedHeightMapUpdatesTemp.front();
+					updateArea -= rect.GetArea();
+					ushmu.push_back(rect);
+					unsyncedHeightMapUpdatesTemp.pop_front();
+				}
 			}
 		} else {
 			// first update is full map
@@ -259,9 +262,9 @@ void CReadMap::UpdateDraw()
 	if (!unsyncedHeightMapUpdatesTemp.empty()) {
 		GML_STDMUTEX_LOCK(map); // UpdateDraw
 
-		unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap back
 		unsyncedHeightMapUpdates.splice(unsyncedHeightMapUpdates.end(), unsyncedHeightMapUpdatesTemp);
 	}
+	// unsyncedHeightMapUpdatesTemp is now guaranteed empty
 
 	SCOPED_TIMER("ReadMap::UpdateHeightMapUnsynced");
 
