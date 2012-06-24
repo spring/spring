@@ -152,18 +152,8 @@ inline bool CRectangleOptimizer::AreMergable(const SRectangle& rect1, const SRec
 	if (!rect1.CheckOverlap(rect2))
 		return false;
 
-	SRectangle boundRect(rect1);
-	if (rect2.x1 < rect1.x1) boundRect.x1 = rect2.x1;
-	if (rect2.x2 > rect1.x2) boundRect.x2 = rect2.x2;
-	if (rect2.z1 < rect1.z1) boundRect.z1 = rect2.z1;
-	if (rect2.z2 > rect1.z2) boundRect.z2 = rect2.z2;
+	return (rect1.x1 == rect2.x1 && rect1.x2 == rect2.x2) || (rect1.z1 == rect2.z1 && rect1.z2 == rect2.z2);
 
-	const bool touchX = (boundRect.GetWidth() <= (rect1.GetWidth() + rect2.GetWidth()));
-	const bool touchZ = (boundRect.GetHeight() <= (rect1.GetHeight() + rect2.GetHeight()));
-
-	const bool mergableX = (touchX && (rect1.GetHeight() == rect2.GetHeight()) && (boundRect.GetHeight() == rect2.GetHeight()));
-	const bool mergableZ = (touchZ && (rect1.GetWidth() == rect2.GetWidth()) && (boundRect.GetWidth() == rect2.GetWidth()));
-	return mergableX || mergableZ;
 }
 
 
