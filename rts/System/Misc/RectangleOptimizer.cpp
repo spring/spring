@@ -40,9 +40,8 @@ unsigned CRectangleOptimizer::GetTotalArea() const
 
 void CRectangleOptimizer::Optimize()
 {
-	if (!needsUpdate) {
+	if (!needsUpdate)
 		return;
-	}
 
 	//TODO this is not fully correct, when there was still rectangles
 	//     left from the last update we shouldn't count them twice!
@@ -54,6 +53,8 @@ void CRectangleOptimizer::Optimize()
 	StageSplitTooLarge();
 	
 	statsOptSize += GetTotalArea();
+
+	needsUpdate = false;
 }
 
 void CRectangleOptimizer::StageMerge()
