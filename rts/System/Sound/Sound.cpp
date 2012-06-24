@@ -526,7 +526,7 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 					continue;
 				}
 
-				if (buf.KeyExists("file")) {
+				if (!buf.KeyExists("file")) {
 					// no file, drop
 					LOG_L(L_WARNING, "Sound %s is missing file tag (ignoring)", name.c_str());
 					continue;
