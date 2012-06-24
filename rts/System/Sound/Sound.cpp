@@ -26,6 +26,7 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/myMath.h"
+#include "System/Util.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Watchdog.h"
 
@@ -104,7 +105,7 @@ bool CSound::HasSoundItem(const std::string& name) const
 	}
 	else
 	{
-		soundItemDefMap::const_iterator it = soundItemDefs.find(name);
+		soundItemDefMap::const_iterator it = soundItemDefs.find(StringToLower(name));
 		if (it != soundItemDefs.end())
 			return true;
 		else
@@ -127,7 +128,7 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	}
 	else
 	{
-		soundItemDefMap::const_iterator itemDefIt = soundItemDefs.find(name);
+		soundItemDefMap::const_iterator itemDefIt = soundItemDefs.find(StringToLower(name));
 		if (itemDefIt != soundItemDefs.end())
 		{
 			return MakeItemFromDef(itemDefIt->second);
@@ -486,8 +487,6 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 
 	LuaParser parser(fileName, SPRING_VFS_MOD, SPRING_VFS_ZIP);
-	parser.SetLowerKeys(false);
-	parser.SetLowerCppKeys(false);
 	parser.Execute();
 	if (!parser.IsValid())
 	{
@@ -510,18 +509,27 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 			soundItemTable.GetKeys(keys);
 			for (std::vector<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it)
 			{
-				const std::string name(*it);
+				std::string name(*it);
+
 				soundItemDef bufmap;
-				const LuaTable buf(soundItemTable.SubTable(*it));
+				const LuaTable buf(soundItemTable.SubTable(name));
 				buf.GetMap(bufmap);
 				bufmap["name"] = name;
 				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
 				if (sit != soundItemDefs.end())
 					LOG_L(L_WARNING, "Sound %s gets overwritten by %s", name.c_str(), fileName.c_str());
 
-				soundItemDef::const_iterator inspec = bufmap.find("file");
-				if (inspec == bufmap.end()) {	// no file, drop
+				if (name == "default") {
+					defaultItem = bufmap;
+					defaultItem.erase("name"); //must be empty for default item
+					defaultItem.erase("file");
+					continue;
+				}
+
+				if (buf.KeyExists("file")) {
+					// no file, drop
 					LOG_L(L_WARNING, "Sound %s is missing file tag (ignoring)", name.c_str());
+					continue;
 				} else {
 					soundItemDefs[name] = bufmap;
 				}
@@ -533,6 +541,18 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 			LOG(" parsed %i sounds from %s", (int)keys.size(), fileName.c_str());
 		}
 	}
+
+	//FIXME why do sounds w/o an own soundItemDef create (!=pointer) a new one from the defaultItem?
+	for (soundItemDefMap::iterator it = soundItemDefs.begin(); it != soundItemDefs.end(); ++it) {
+		soundItemDef& snddef = it->second;
+		if (snddef.find("name") == snddef.end()) {
+			// uses defaultItem! update it!
+			const std::string file = snddef["file"];
+			snddef = defaultItem;
+			snddef["file"] = file;
+		}
+	}
+
 	return true;
 }
 
