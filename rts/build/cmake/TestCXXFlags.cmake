@@ -118,18 +118,5 @@ IF    (NOT DEFINED MARCH)
 		IF    (HAS_X86_64_FLAG_)
 			Set(MARCH "x86_64")
 		EndIf (HAS_X86_64_FLAG_)
-
-		if    (NOT MARCH)
-			# _should_ sync with 32bit
-			CHECK_CXX_ACCEPTS_FLAG("-march=k8" HAS_K8_FLAG_)
-			IF    (HAS_K8_FLAG_)
-				Set(MARCH "k8")
-			EndIf (HAS_K8_FLAG_)
-		endif (NOT MARCH)
 	endif ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (NOT MARCH))
-
-	# no compatible arch found
-	if    (NOT MARCH)
-		Message(WARNING "Neither i686, x86_64 nor k8 are accepted by the compiler! (`march=native` _may_ cause sync errors!)")
-	endif (NOT MARCH)
 EndIf (NOT DEFINED MARCH)
