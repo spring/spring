@@ -36,5 +36,8 @@ const std::string UnknownNetmsg = "Unhandled net msg (%d) in server from %d";
 
 const std::string CommandNotAllowed = "Player %d is not allowed to execute command %s";
 
+const std::string UncontrolledPlayerName = "Uncontrolled";
+const std::string UnnamedPlayerName = "UnnamedPlayer";
+
 #endif // _SERVER_MSG_STRINGS_H_
 
