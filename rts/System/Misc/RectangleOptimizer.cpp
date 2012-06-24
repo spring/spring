@@ -147,24 +147,11 @@ inline std::bitset<4> CRectangleOptimizer::GetSharedEdges(const SRectangle& rect
 }
 
 
-inline bool CRectangleOptimizer::DoOverlap(const SRectangle& rect1, const SRectangle& rect2)
-{
-	SRectangle boundRect(rect1);
-	if (rect2.x1 < rect1.x1) boundRect.x1 = rect2.x1;
-	if (rect2.x2 > rect1.x2) boundRect.x2 = rect2.x2;
-	if (rect2.z1 < rect1.z1) boundRect.z1 = rect2.z1;
-	if (rect2.z2 > rect1.z2) boundRect.z2 = rect2.z2;
-
-	const bool overlapX = (boundRect.GetWidth() < (rect1.GetWidth() + rect2.GetWidth()));
-	const bool overlapZ = (boundRect.GetHeight() < (rect1.GetHeight() + rect2.GetHeight()));
-
-	const bool overlap = (overlapX && overlapZ);
-	return overlap;
-}
-
-
 inline bool CRectangleOptimizer::AreMergable(const SRectangle& rect1, const SRectangle& rect2)
 {
+	if (!rect1.CheckOverlap(rect2))
+		return false;
+
 	SRectangle boundRect(rect1);
 	if (rect2.x1 < rect1.x1) boundRect.x1 = rect2.x1;
 	if (rect2.x2 > rect1.x2) boundRect.x2 = rect2.x2;
@@ -232,7 +219,7 @@ bool CRectangleOptimizer::HandleMerge(SRectangle& rect1, SRectangle& rect2)
 
 int CRectangleOptimizer::HandleOverlapping(SRectangle* rect1, SRectangle* rect2)
 {
-	if (!DoOverlap(*rect1, *rect2)) {
+	if (!rect1->CheckOverlap(*rect2)) {
 		//  ______
 		// |      |  ___
 		// |      | |   |

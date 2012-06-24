@@ -81,7 +81,6 @@ private:
 	int HandleOverlapping(SRectangle* rect1, SRectangle* rect2);
 	static std::bitset<4> GetEdgesInRect(const SRectangle& rect1, const SRectangle& rect2);
 	static std::bitset<4> GetSharedEdges(const SRectangle& rect1, const SRectangle& rect2);
-	static bool DoOverlap(const SRectangle& rect1, const SRectangle& rect2);
 	static bool AreMergable(const SRectangle& rect1, const SRectangle& rect2);
 
 private:
