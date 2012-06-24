@@ -415,16 +415,18 @@ size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 	//boost::recursive_mutex::scoped_lock lck(soundMutex);
 	const size_t newid = sounds.size();
 	soundItemDef::const_iterator it = itemDef.find("file");
-	boost::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second, false));
-	if (buffer)
-	{
-		SoundItem* buf = new SoundItem(buffer, itemDef);
-		sounds.push_back(buf);
-		soundMap[buf->Name()] = newid;
-		return newid;
-	}
-	else
+	if (it == itemDef.end())
 		return 0;
+
+	boost::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second, false));
+	
+	if (!buffer)
+		return 0;
+		
+	SoundItem* buf = new SoundItem(buffer, itemDef);
+	sounds.push_back(buf);
+	soundMap[buf->Name()] = newid;
+	return newid;
 }
 
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
@@ -516,8 +518,6 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 				buf.GetMap(bufmap);
 				bufmap["name"] = name;
 				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
-				if (sit != soundItemDefs.end())
-					LOG_L(L_WARNING, "Sound %s gets overwritten by %s", name.c_str(), fileName.c_str());
 
 				if (name == "default") {
 					defaultItem = bufmap;
@@ -525,6 +525,9 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 					defaultItem.erase("file");
 					continue;
 				}
+
+				if (sit != soundItemDefs.end())
+					LOG_L(L_WARNING, "Sound %s gets overwritten by %s", name.c_str(), fileName.c_str());
 
 				if (!buf.KeyExists("file")) {
 					// no file, drop
