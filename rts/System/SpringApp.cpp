@@ -30,6 +30,7 @@
 #include "System/Input/MouseInput.h"
 #include "System/Input/InputHandler.h"
 #include "System/Input/Joystick.h"
+#include "System/MsgStrings.h"
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
@@ -103,7 +104,7 @@ CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false);
 CONFIG(int, HardwareThreadCount).defaultValue(0).safemodeValue(1);
-CONFIG(std::string, name).defaultValue("UnnamedPlayer");
+CONFIG(std::string, name).defaultValue(UnnamedPlayerName);
 
 
 ClientSetup* startsetup = NULL;
@@ -854,7 +855,7 @@ void SpringApp::Startup()
 		std::string demoPlayerName = configHandler->GetString("name");
 
 		if (demoPlayerName.empty()) {
-			demoPlayerName = "UnnamedPlayer";
+			demoPlayerName = UnnamedPlayerName;
 		} else {
 			demoPlayerName = StringReplaceInPlace(demoPlayerName, ' ', '_');
 		}
