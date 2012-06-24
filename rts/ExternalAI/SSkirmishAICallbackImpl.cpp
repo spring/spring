@@ -4344,7 +4344,7 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getTargetBorder(int skirmishAIId, int
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getCylinderTargetting(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->cylinderTargetting;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->cylinderTargeting;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getMinIntensity(int skirmishAIId, int weaponDefId) {

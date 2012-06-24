@@ -207,8 +207,8 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 
 
 	// increase range if targets are searched for in a cylinder
-	if (cylinderTargetting > 0.01f) {
-		const float verticalDist = owner->radius * cylinderTargetting * curDir.y;
+	if (cylinderTargeting > 0.01f) {
+		const float verticalDist = owner->radius * cylinderTargeting * curDir.y;
 		const float maxLengthModSq = maxLength * maxLength + verticalDist * verticalDist;
 
 		maxLength = math::sqrt(maxLengthModSq);

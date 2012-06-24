@@ -85,7 +85,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(avoidFeature),
 	CR_MEMBER(avoidNeutral),
 	CR_MEMBER(targetBorder),
-	CR_MEMBER(cylinderTargetting),
+	CR_MEMBER(cylinderTargeting),
 	CR_MEMBER(minIntensity),
 	CR_MEMBER(heightBoostFactor),
 	CR_MEMBER(collisionFlags),
@@ -167,7 +167,7 @@ CWeapon::CWeapon(CUnit* owner):
 	avoidFeature(true),
 	avoidNeutral(true),
 	targetBorder(0.f),
-	cylinderTargetting(0.f),
+	cylinderTargeting(0.f),
 	minIntensity(0.f),
 	heightBoostFactor(-1.f),
 	collisionFlags(0),
@@ -954,7 +954,7 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 	float3 targetDir = targetVec;
 
 	float heightDiff = 0.0f; // negative when target below owner
-	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargetting
+	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
 	bool targetDirNormalized = false;
 
 	if (targetBorder != 0.0f && targetUnit != NULL) {
@@ -965,12 +965,12 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 
 	heightDiff = targetPos.y - owner->pos.y;
 
-	if (targetUnit == NULL || cylinderTargetting < 0.01f) {
+	if (targetUnit == NULL || cylinderTargeting < 0.01f) {
 		// check range in a sphere (with extra radius <heightDiff * heightMod>)
 		weaponRange = GetRange2D(heightDiff * heightMod);
 	} else {
-		// check range in a cylinder (with height <cylinderTargetting * range>)
-		if ((cylinderTargetting * range) > (math::fabsf(heightDiff) * heightMod)) {
+		// check range in a cylinder (with height <cylinderTargeting * range>)
+		if ((cylinderTargeting * range) > (math::fabsf(heightDiff) * heightMod)) {
 			weaponRange = GetRange2D(0.0f);
 		}
 	}
