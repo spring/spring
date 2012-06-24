@@ -239,11 +239,11 @@ bool SpringApp::Initialize()
 	if (globalRendering->FSAA && !MultisampleVerify())
 		globalRendering->FSAA = 0;
 
+	globalRendering->PostInit();
+	
 	InitOpenGL();
 	agui::InitGui();
 	LoadFonts();
-
-	globalRendering->PostInit();
 
 	// Initialize named texture handler
 	CNamedTextures::Init();
@@ -425,8 +425,6 @@ bool SpringApp::SetSDLVideoMode()
 		//! initialize any GL resources that were lost
 		GLContext::Init();
 	}
-
-	VSync.Init();
 
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
@@ -655,6 +653,8 @@ void SpringApp::SetupViewportGeometry()
  */
 void SpringApp::InitOpenGL()
 {
+	VSync.Init();
+
 	SetupViewportGeometry();
 	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	gluPerspective(45.0f,  globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
