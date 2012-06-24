@@ -10,16 +10,20 @@
 #include "System/Log/ILog.h"
 #include "System/UnsyncedRNG.h"
 
+static std::map<const std::string, int> refs;
 
 BasicTimer::BasicTimer(const char* const myname) : name(myname), starttime(SDL_GetTicks())
 {
+	++refs[name];
 }
 
 
 
 ScopedTimer::~ScopedTimer()
 {
-	profiler.AddTime(name, SDL_GetTicks() - starttime, autoShowGraph);
+	int& ref = refs[name];
+	if (--ref == 0)
+		profiler.AddTime(name, SDL_GetTicks() - starttime, autoShowGraph);
 }
 
 ScopedOnceTimer::~ScopedOnceTimer()
