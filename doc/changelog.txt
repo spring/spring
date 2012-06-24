@@ -124,12 +124,20 @@ UI:
  - display average draw & sim frame time in debugview
  - draw buildRange for mobile selected units too & always render them on shift hover (also for shield range)
 
+Sound:
+ ! all items in sounds.lua are now converted to lowercase
+ - allow to create a new "default" item in sounds.lua
+
+Windows:
+ - set IMAGE_FILE_LARGE_ADDRESS_AWARE (increased >2GB memory limit)
+
 Linux:
  ! strip CXX_FLAGS & C_FLAGS in build process to prevent sync incompabilities (can be turned off with a new CUSTOM_CFLAGS cmake flag)
- - use march=amd64 on 64bit systems
  - on multicore systems set scheduler to SCHED_BATCH (semi-solves the core hoping issue)
  - call SDL_WarpMouse only when needed (fixes massive FPS-drop in middle-click-scrolling)
  - use a non-locking vsync mechanism & add support for nvidia's `adaptive vsync`
+ - explicit disable all CPU extensions except SSE1
+ - use mtune=generic on 64bit systems
 
 OSX:
  - fix stack corruption in sound code
