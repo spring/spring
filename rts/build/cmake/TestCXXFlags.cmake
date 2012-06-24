@@ -89,18 +89,6 @@ If    (NOT DEFINED LTO_FLAGS)
 			Message(WARNING "Tried to enable LTO, but compiler doesn't support it!")
 		endif (NOT LTO_FLAGS)
 	EndIf (LTO)
-
-	Set(LTO_WHOPR FALSE CACHE BOOL "Link Time Optimizations (LTO) - Whole program optimizer (WHOPR)")
-	If    (LTO_WHOPR)
-		CHECK_CXX_ACCEPTS_FLAG("-fwhopr" HAS_LTO_WHOPR_FLAG)
-		If    (HAS_LTO_WHOPR_FLAG)
-			Set(LTO_FLAGS "${LTO_FLAGS} -fwhopr")
-		EndIf (HAS_LTO_WHOPR_FLAG)
-	EndIf (LTO_WHOPR)
-	
-	If (LTO AND LTO_WHOPR)
-		Message( FATAL_ERROR "LTO and LTO_WHOPR are mutually exclusive, please enable only one at a time." )
-	EndIf (LTO AND LTO_WHOPR)
 EndIf (NOT DEFINED LTO_FLAGS)
 
 
