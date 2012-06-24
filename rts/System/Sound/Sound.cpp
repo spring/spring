@@ -68,8 +68,7 @@ CSound::CSound()
 	SoundBuffer::Initialise();
 	soundItemDef temp;
 	temp["name"] = "EmptySource";
-	SoundItem* empty = new SoundItem(SoundBuffer::GetById(0), temp);
-	sounds.push_back(empty);
+	sounds.push_back(NULL);
 
 	if (maxSounds <= 0) {
 		LOG_L(L_WARNING, "MaxSounds set to 0, sound is disabled");
