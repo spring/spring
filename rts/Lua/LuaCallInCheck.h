@@ -4,6 +4,7 @@
 #define LUA_CALL_IN_CHECK_H
 
 #include "LuaEventBatch.h"
+#include "System/TimeProfiler.h"
 
 struct lua_State;
 
@@ -19,10 +20,11 @@ class LuaCallInCheck {
 		const char* funcName;
 };
 
+
 #if DEBUG_LUA
 #  define LUA_CALL_IN_CHECK(L, ...) SELECT_LUA_STATE(); LuaCallInCheck ciCheck((L), __FUNCTION__)
 #else
-#  define LUA_CALL_IN_CHECK(L, ...) SELECT_LUA_STATE()
+#  define LUA_CALL_IN_CHECK(L, ...) SCOPED_TIMER("Lua"); SELECT_LUA_STATE()
 #endif
 
 #ifdef USE_GML // hack to add some degree of thread safety to LUA
