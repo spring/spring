@@ -1374,7 +1374,9 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 						teams[fromTeam_g].active = false;
 						teams[fromTeam_g].leader = -1;
 						std::ostringstream givenAwayMsg;
-						givenAwayMsg << players[player].name << " gave everything to " << players[teams[toTeam].leader].name;
+						const int toLeader = teams[toTeam].leader;
+						const std::string& toLeaderName = (toLeader >= 0) ? players[toLeader].name : "Uncontrolled";
+						givenAwayMsg << players[player].name << " gave everything to " << toLeaderName;
 						Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, givenAwayMsg.str()));
 					}
 					break;
