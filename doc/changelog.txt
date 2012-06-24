@@ -22,7 +22,7 @@ Changes:
  - add UI config-variables AutoAddBuiltUnitsToFactoryGroup (def: false) and AutoAddBuiltUnitsToSelectedGroup (def: false)
    if the first variable is true, new units auto-inherit their group number from the factory that built them
    if the first AND second are true, new units are auto-selected if their factory group is currently selected
-
+ - weapondefs.cylinderTargetting spelling fixed, the old one is deprecated
 
 Bugfixes:
  - dedicated server no longer consumes 100% CPU while waiting for gameID
@@ -50,6 +50,10 @@ Bugfixes:
  - fix /godmode and /{luarules,luagaia} {reload,disable} not working in demos
  - fix targetting bug (weapons sometimes failing to fire at badTargetCategory units) as a result of AllowWeaponTarget misuse
  - fix kamikaze units not self-d'ing when given an attack order while on hold-fire 
+ - fix crash when give all units to uncontrolled team
+ - fix fighters that have a target may refuse to obey orders
+ - fix crash in GetPlayerTeam (AI)
+ - fix sync warning when resizing the main window
 
 Simulation:
  - YardMap changes:
@@ -106,6 +110,9 @@ Lua:
  - add new synced callouts Set{Unit,Feature}RadiusAndHeight(number id, number radius, number height) --> boolean
  - add new synced callouts Set{Unit,Feature}MidAndAimPos(number id, number mpx, number mpy, number mpz, number apx, number apy, number apz) --> boolean
  - add optional 2nd (boolean midPos) and 3rd (boolean aimPos) arguments to Spring.Get{Unit,Feature}Position to go with the above four callouts
+ - [MT] disallow other Lua environments to invoke LuaUI if LuaThreadingModel = 2, to prevent deadlock
+ - [MT] fix desync with LuaThreadingModel > 2
+ - [MT] fix teams sometimes wrong in UnitGiven() and UnitTaken()
 
 Rendering:
  - fixed ATi PointSize bug
