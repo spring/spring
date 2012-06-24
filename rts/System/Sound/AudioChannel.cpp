@@ -26,9 +26,12 @@ AudioChannel::AudioChannel()
 
 void AudioChannel::SetVolume(float newVolume)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
-
 	volume = std::max(newVolume, 0.f);
+
+	if (cur_sources.empty())
+		return;
+
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 
 	for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end(); ++it) {
 		it->first->UpdateVolume();
