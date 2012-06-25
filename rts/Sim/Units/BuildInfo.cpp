@@ -46,12 +46,10 @@ bool BuildInfo::Parse(const Command& c)
 {
 	if (c.params.size() < 3)
 		return false;
-
-	pos = float3(c.params[0], c.params[1], c.params[2]);
-
 	if (c.GetID() >= 0)
 		return false;
 
+	pos = c.GetPos(0);
 	def = unitDefHandler->GetUnitDefByID(-c.GetID());
 	buildFacing = FACING_SOUTH;
 

@@ -124,7 +124,6 @@ CUnit::CUnit() : CSolidObject(),
 	reloadSpeed(1.0f),
 	maxRange(0.0f),
 	haveTarget(false),
-	haveUserTarget(false),
 	haveManualFireRequest(false),
 	lastMuzzleFlameSize(0.0f),
 	lastMuzzleFlameDir(0.0f, 1.0f, 0.0f),
@@ -190,8 +189,8 @@ CUnit::CUnit() : CSolidObject(),
 	lastAttack(-200),
 	lastFireWeapon(0),
 	recentDamage(0.0f),
-	userTarget(NULL),
-	userAttackPos(ZeroVector),
+	attackTarget(NULL),
+	attackPos(ZeroVector),
 	userAttackGround(false),
 	commandShotCount(-1),
 	fireState(FIRESTATE_FIREATWILL),
@@ -972,8 +971,8 @@ void CUnit::SlowUpdate()
 		}
 
 		if (
-			   (userTarget       && (userTarget->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
-			|| (userAttackGround && (userAttackPos.SqDistance(pos))  < Square(unitDef->kamikazeDist))
+			   (attackTarget     && (attackTarget->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
+			|| (userAttackGround && (attackPos.SqDistance(pos))  < Square(unitDef->kamikazeDist))
 		) {
 			KillUnit(true, false, NULL);
 			return;
@@ -998,26 +997,38 @@ void CUnit::SlowUpdateWeapons() {
 	}
 
 	haveTarget = false;
-	haveUserTarget = false;
 
 	if (!dontFire) {
 		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 			CWeapon* w = *wi;
 
+			// NOTE:
+			//     w->haveUserTarget can only be true if ::SetAttackTarget
+			//     was called with a non-NULL target-unit AND the CAI did
+			//     not auto-select it
 			if (!w->haveUserTarget) {
 				if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
-					if (userTarget) {
-						w->AttackUnit(userTarget, true);
+					if (attackTarget != NULL) {
+						w->AttackUnit(attackTarget, false);
 					} else if (userAttackGround) {
-						w->AttackGround(userAttackPos, true);
+						w->AttackGround(attackPos, true);
 					}
 				}
 			}
 
 			w->SlowUpdate();
 
-			if (w->targetType == Target_None && fireState > FIRESTATE_HOLDFIRE && lastAttacker && (lastAttack + 200 > gs->frameNum))
-				w->AttackUnit(lastAttacker, false);
+			if (lastAttacker == NULL)
+				continue;
+			if ((lastAttack + 200) <= gs->frameNum)
+				continue;
+			if (w->targetType != Target_None)
+				continue;
+			if (fireState == FIRESTATE_HOLDFIRE)
+				continue;
+
+			// return fire at our last attacker if allowed
+			w->AttackUnit(lastAttacker, false);
 		}
 	}
 }
@@ -1506,7 +1517,7 @@ void CUnit::ChangeTeamReset()
 
 
 
-bool CUnit::AttackUnit(CUnit* targetUnit, bool wantManualFire, bool fpsMode)
+bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {
 	bool ret = false;
 
@@ -1514,7 +1525,7 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool wantManualFire, bool fpsMode)
 	userAttackGround = false;
 	commandShotCount = 0;
 
-	SetUserTarget(targetUnit);
+	SetAttackTarget(targetUnit, isUserTarget);
 
 	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		CWeapon* w = *wi;
@@ -1522,7 +1533,7 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool wantManualFire, bool fpsMode)
 		w->targetType = Target_None;
 
 		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
-			if (w->AttackUnit(targetUnit, true)) {
+			if (w->AttackUnit(targetUnit, isUserTarget)) {
 				ret = true;
 			}
 		}
@@ -1531,16 +1542,17 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool wantManualFire, bool fpsMode)
 	return ret;
 }
 
-bool CUnit::AttackGround(const float3& pos, bool wantManualFire, bool fpsMode)
+bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {
 	bool ret = false;
 
 	haveManualFireRequest = wantManualFire;
-	userAttackPos = pos;
-	userAttackGround = true;
+	userAttackGround = isUserTarget;
+
+	attackPos = pos;
 	commandShotCount = 0;
 
-	SetUserTarget(NULL);
+	SetAttackTarget(NULL, isUserTarget);
 
 	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		CWeapon* w = *wi;
@@ -1573,25 +1585,29 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 	AddDeathDependence(attacker, DEPENDENCE_ATTACKER);
 }
 
-void CUnit::SetUserTarget(CUnit* target)
+void CUnit::SetAttackTarget(CUnit* target, bool isUserTarget)
 {
-	if (userTarget)
-		DeleteDeathDependence(userTarget, DEPENDENCE_TARGET);
+	if (attackTarget != NULL)
+		DeleteDeathDependence(attackTarget, DEPENDENCE_TARGET);
 
-	userTarget = target;
+	attackTarget = target;
 
+	// isUserTarget is true if this target was selected by the
+	// user as opposed to automatically by the unit's commandAI
+	//
+	// NOTE: "&&" because we have a separate userAttackGround (!)
 	for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-		(*wi)->haveUserTarget = (target != NULL);
+		(*wi)->haveUserTarget = (target != NULL && isUserTarget);
 	}
 
-	if (target) {
+	if (target != NULL) {
 		AddDeathDependence(target, DEPENDENCE_TARGET);
 	}
 }
 
 void CUnit::DependentDied(CObject* o)
 {
-	if (o == userTarget)   { userTarget   = NULL; }
+	if (o == attackTarget) { attackTarget   = NULL; }
 	if (o == soloBuilder)  { soloBuilder  = NULL; }
 	if (o == transporter)  { transporter  = NULL; }
 	if (o == lastAttacker) { lastAttacker = NULL; }
@@ -2067,12 +2083,12 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 }
 
 
+
 void CUnit::TempHoldFire()
 {
 	dontFire = true;
-	AttackUnit(0, true);
+	AttackUnit(NULL, false, true);
 }
-
 
 void CUnit::ReleaseTempHoldFire()
 {
@@ -2119,8 +2135,8 @@ void CUnit::StopAttackingAllyTeam(int ally)
 		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
 		lastAttacker = NULL;
 	}
-	if (userTarget != NULL && userTarget->allyteam == ally)
-		SetUserTarget(NULL);
+	if (attackTarget != NULL && attackTarget->allyteam == ally)
+		SetAttackTarget(NULL, false);
 
 	commandAI->StopAttackingAllyTeam(ally);
 	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {
@@ -2232,7 +2248,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(reloadSpeed),
 	CR_MEMBER(maxRange),
 	CR_MEMBER(haveTarget),
-	CR_MEMBER(haveUserTarget),
 	CR_MEMBER(haveManualFireRequest),
 	CR_MEMBER(lastMuzzleFlameSize),
 	CR_MEMBER(lastMuzzleFlameDir),
@@ -2301,8 +2316,8 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastAttack),
 	CR_MEMBER(lastFireWeapon),
 	CR_MEMBER(recentDamage),
-	CR_MEMBER(userTarget),
-	CR_MEMBER(userAttackPos),
+	CR_MEMBER(attackTarget),
+	CR_MEMBER(attackPos),
 	CR_MEMBER(userAttackGround),
 	CR_MEMBER(commandShotCount),
 	CR_MEMBER(fireState),
