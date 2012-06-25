@@ -1696,7 +1696,7 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
 		const bool manualFire = lua_isboolean(L, 5) && lua_toboolean(L, 5);
-		unit->AttackGround(pos, false, false, manualFire);
+		unit->AttackGround(pos, false, manualFire);
 	}
 	else if (args >= 2) {
 		CUnit* target = ParseRawUnit(L, __FUNCTION__, 2);
