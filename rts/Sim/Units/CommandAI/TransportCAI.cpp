@@ -213,7 +213,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 
 		lastCall = gs->frameNum;
 
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 
 		CUnit* unit = FindUnitToTransport(pos, radius);
@@ -494,7 +494,7 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 
 	for(std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
 		u = it->unit;
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 		const float spread = u->radius * ownerTrans->unitDef->unloadSpread;
 		canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, unloadPos, u);
@@ -530,7 +530,7 @@ void CTransportCAI::UnloadUnits_Drop(Command& c, CTransportUnit* transport)
 		return;
 	}
 
-	float3 pos(c.params[0], c.params[1], c.params[2]);
+	float3 pos = c.GetPos(0);
 	float radius = c.params[3];
 	bool canUnload = false;
 
@@ -590,7 +590,7 @@ void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 		return;
 	}
 
-	float3 pos(c.params[0], c.params[1], c.params[2]);
+	float3 pos = c.GetPos(0);
 	float3 found;
 
 	const CTransportUnit* ownerTrans = static_cast<CTransportUnit*>(owner);
@@ -641,7 +641,7 @@ void CTransportCAI::UnloadLand(Command& c)
 			return;
 		}
 
-		float3 pos(c.params[0], c.params[1], c.params[2]);
+		float3 pos = c.GetPos(0);
 		if (goalPos.SqDistance2D(pos) > 400) {
 			SetGoal(pos, owner->pos);
 		}
@@ -728,7 +728,7 @@ void CTransportCAI::UnloadDrop(Command& c)
 			return;
 		}
 
-		float3 pos(c.params[0], c.params[1], c.params[2]); // head towards goal
+		float3 pos = c.GetPos(0); // head towards goal
 
 		// note that HoverAirMoveType must be modified to allow non stop movement
 		// through goals for this to work well
@@ -811,7 +811,7 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 		}
 
 		// move to position
-		float3 pos(c.params[0], c.params[1], c.params[2]);
+		float3 pos = c.GetPos(0);
 		if (isFirstIteration) {
 			if (goalPos.SqDistance2D(pos) > 400) {
 				SetGoal(startingDropPos, owner->pos);
@@ -993,7 +993,7 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 				for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
 					CUnit* u = it->unit;
 
-					const float3 pos(c.params[0], c.params[1], c.params[2]);
+					const float3 pos = c.GetPos(0);
 					const float radius = (c.GetID() == CMD_UNLOAD_UNITS)? c.params[3]: 0.0f;
 					const float spread = u->radius * transport->unitDef->unloadSpread;
 					float3 found;

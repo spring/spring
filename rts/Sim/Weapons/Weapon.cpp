@@ -224,7 +224,7 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 
 static inline bool isBeingServicedOnPad(CUnit* u)
 {
-	const AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
+	const AAirMoveType* a = dynamic_cast<AAirMoveType*>(u->moveType);
 	return (a != NULL && a->GetPadStatus() != 0);
 }
 
@@ -429,9 +429,11 @@ void CWeapon::Update()
 			// add to the commandShotCount if this is the last salvo,
 			// and it is being directed towards the current target
 			// (helps when deciding if a queued ground attack order has been completed)
-			if (((salvoLeft == 0) && (owner->commandShotCount >= 0) &&
-			    ((targetType == Target_Pos) && (targetPos == owner->userAttackPos))) ||
-					((targetType == Target_Unit) && (targetUnit == owner->userTarget))) {
+			const bool lastSalvo = ((salvoLeft == 0) && (owner->commandShotCount >= 0));
+			const bool attackingPos = ((targetType == Target_Pos) && (targetPos == owner->attackPos));
+			const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
+
+			if (lastSalvo && (attackingPos || attackingUnit)) {
 				owner->commandShotCount++;
 			}
 
@@ -475,7 +477,7 @@ void CWeapon::Update()
 		}
 
 #ifdef TRACE_SYNC
-	tracefile << "Weapon fire: ";
+	tracefile << __FUNCTION__;
 	tracefile << weaponPos.x << " " << weaponPos.y << " " << weaponPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
 #endif
 	}
@@ -490,6 +492,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		return false;
 	}
 
+	// keep target positions on the surface if this weapon hates water
 	if (!weaponDef->waterweapon && (pos.y < 1.0f)) {
 		pos.y = 1.0f;
 	}
@@ -505,9 +508,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (!TryTarget(pos, userTarget, 0))
-		return false;
-	if (targetUnit) {
+	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
@@ -516,7 +517,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 	targetType = Target_Pos;
 	targetPos = pos;
 
-	return true;
+	return (TryTarget(pos, userTarget, NULL));
 }
 
 bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
@@ -542,12 +543,13 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (!unit) {
+	if (unit == NULL) {
 		if (targetType != Target_Unit) {
 			// make the unit be more likely to keep the current target if user starts to move it
 			targetType = Target_None;
 		}
 
+		// cannot have a user-target without a unit
 		haveUserTarget = false;
 		return false;
 	}
@@ -561,10 +563,7 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 	if (tempTargetPos.y < appHeight)
 		tempTargetPos.y = appHeight;
 
-	if (!TryTarget(tempTargetPos, userTarget, unit))
-		return false;
-
-	if (targetUnit) {
+	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
@@ -576,7 +575,8 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
-	return true;
+
+	return (TryTarget(tempTargetPos, userTarget, unit));
 }
 
 
@@ -602,12 +602,12 @@ inline bool CWeapon::AllowWeaponTargetCheck() const
 		}
 	}
 
+	if (haveUserTarget)                          { return false; }
 	if (weaponDef->noAutoTarget)                 { return false; }
 	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
-	if (haveUserTarget)                          { return false; }
 
+	if (avoidTarget)               { return true; }
 	if (targetType == Target_None) { return true; }
-	if (avoidTarget)             { return true; }
 
 	if (targetType == Target_Unit) {
 		if (targetUnit->category & badTargetCategory) {
@@ -791,6 +791,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		if (goodTargetUnit != NULL || badTargetUnit != NULL) {
 			if (targetUnit != NULL) {
 				// delete our old target dependence
+				// TODO: only if we have a NEW target?
 				DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 			}
 
@@ -805,9 +806,6 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 	if (targetType != Target_None) {
 		owner->haveTarget = true;
-		if (haveUserTarget) {
-			owner->haveUserTarget = true;
-		}
 	} else {
 		// if we can't target anything, try switching aim point
 		if (useWeaponPosForAim == 1) {

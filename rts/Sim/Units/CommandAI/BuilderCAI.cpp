@@ -348,7 +348,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 
 		BuildInfo bi;
-		bi.pos = float3(c.params[0], c.params[1], c.params[2]);
+		bi.pos = c.GetPos(0);
 
 		if (c.params.size() == 4)
 			bi.buildFacing = int(abs(c.params[3])) % NUM_FACINGS;
@@ -661,7 +661,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		}
 	} else if (c.params.size() == 4) {
 		// area repair
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 
 		builder->StopBuild();
@@ -719,7 +719,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		}
 	} else if (c.params.size() == 4) {
 		// area capture
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 
 		builder->StopBuild();
@@ -962,7 +962,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		}
 	} else if (c.params.size() == 4) {
 		// area reclaim
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 		const bool recUnits = !!(c.options & META_KEY);
 		const bool recEnemyOnly = (c.options & META_KEY) && (c.options & CONTROL_KEY);
@@ -1055,7 +1055,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 		}
 	} else if (c.params.size() == 4) {
 		// area resurrect
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 
 		if (FindResurrectableFeatureAndResurrect(pos, radius, c.options, (c.options & META_KEY))) {
@@ -1130,7 +1130,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	float3 pos(c.params[0], c.params[1], c.params[2]);
+	float3 pos = c.GetPos(0);
 
 	if (!inCommand) {
 		inCommand = true;

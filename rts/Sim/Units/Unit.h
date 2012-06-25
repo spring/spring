@@ -86,8 +86,8 @@ public:
 	virtual void AddImpulse(const float3&);
 	virtual void FinishedBuilding(bool postInit);
 
-	bool AttackGround(const float3& pos, bool wantManualFire, bool fpsMode = false);
-	bool AttackUnit(CUnit* unit, bool wantManualFire, bool fpsMode = false);
+	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
+	bool AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
 
 	int GetBlockingMapID() const { return id; }
 
@@ -118,7 +118,7 @@ public:
 
 	void DependentDied(CObject* o);
 
-	void SetUserTarget(CUnit* target);
+	void SetAttackTarget(CUnit* target, bool isUserTarget);
 	bool SetGroup(CGroup* group, bool fromFactory = false);
 
 	bool AllowedReclaim(CUnit* builder) const;
@@ -252,9 +252,11 @@ public:
 	CWeapon* stockpileWeapon;
 	float reloadSpeed;
 	float maxRange;
+
+	/// true if at least one weapon has targetType != Target_None
 	bool haveTarget;
-	bool haveUserTarget;
 	bool haveManualFireRequest;
+
 	/// used to determine muzzle flare size
 	float lastMuzzleFlameSize;
 	float3 lastMuzzleFlameDir;
@@ -360,8 +362,9 @@ public:
 	/// decaying value of how much damage the unit has taken recently (for severity of death)
 	float recentDamage;
 
-	CUnit* userTarget;
-	float3 userAttackPos;
+	CUnit* attackTarget;
+	float3 attackPos;
+
 	bool userAttackGround;
 	/// number of shots due to the latest command
 	int commandShotCount;

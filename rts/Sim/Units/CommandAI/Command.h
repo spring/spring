@@ -7,6 +7,7 @@
 #include <climits> // for INT_MAX
 
 #include "System/creg/creg_cond.h"
+#include "System/float3.h"
 #include "System/SafeVector.h"
 
 // ID's lower than 0 are reserved for build options (cmd -x = unitdefs[x])
@@ -165,36 +166,41 @@ public:
 
 	// returns true if the command references another object and
 	// in this case also returns the param index of the object in cpos
-	bool IsObjectCommand(int &cpos) const {
-		int psize = params.size();
-		switch(id) {
+	bool IsObjectCommand(int& cpos) const {
+		const int psize = params.size();
+
+		switch (id) {
 			case CMD_ATTACK:
 			case CMD_FIGHT:
 			case CMD_MANUALFIRE:
 				cpos = 0;
-				return 1 <= psize && psize < 3;
+				return (1 <= psize && psize < 3);
 			case CMD_GUARD:
 			case CMD_LOAD_ONTO:
 				cpos = 0;
-				return psize >= 1;
+				return (psize >= 1);
 			case CMD_CAPTURE:
 			case CMD_LOAD_UNITS:
 			case CMD_RECLAIM:
 			case CMD_REPAIR:
 			case CMD_RESURRECT:
 				cpos = 0;
-				return 1 <= psize && psize < 4;
+				return (1 <= psize && psize < 4);
 			case CMD_UNLOAD_UNIT:
 				cpos = 3;
-				return psize >= 4;
+				return (psize >= 4);
 			case CMD_INSERT: {
 				if (psize < 3)
 					return false;
+
 				Command icmd((int)params[1], (unsigned char)params[2]);
+
 				for (int p = 3; p < (int)psize; p++)
 					icmd.params.push_back(params[p]);
+
 				if (!icmd.IsObjectCommand(cpos))
 					return false;
+
 				cpos += 3;
 				return true;
 			}
@@ -231,6 +237,16 @@ public:
 #endif
 		{ this->id = id; params.clear(); }
 	const int& GetID() const { return id; }
+
+	float3 GetPos(int idx) const {
+		float3 p;
+		if (params.size() >= (idx + 3)) {
+			p.x = params[idx    ];
+			p.y = params[idx + 1];
+			p.z = params[idx + 2];
+		}
+		return p;
+	}
 
 public:
 	/**
