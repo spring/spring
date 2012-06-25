@@ -237,8 +237,12 @@ bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool c
 {
 	// only use `buildDistance + radius` iff radius > buildDistance,
 	// and so it would be impossible to get in buildrange (collision detection with units/features)
-	const CBuilder* builder = (CBuilder*)owner;
-	radius = std::max(radius - builder->buildDistance, 0.0f);
+	const CBuilder* builder = (CBuilder*) owner;
+	const UnitDef* builderUD = builder->unitDef;
+
+	if (!builderUD->IsAirUnit()) {
+		radius = std::max(radius - builder->buildDistance, 0.0f);
+	}
 
 	if (!IsInBuildRange(pos, radius)) {
 		if (
@@ -250,13 +254,19 @@ bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool c
 			return false;
 		}
 
-		// too far away start a move command
+		// too far away, start a move command
 		SetGoal(pos, owner->pos, (builder->buildDistance + radius) - 9.0f);
 		return false;
+	} else {
+		// goal reached
+		if (!builderUD->IsAirUnit()) {
+			StopMoveAndKeepPointing(goalPos, goalRadius);
+		} else {
+			// hovering/circling airplane
+			StopMoveAndKeepPointing(pos, builder->buildDistance + builder->radius);
+		}
 	}
 
-	// goal reached
-	StopMoveAndKeepPointing();
 	return true;
 }
 

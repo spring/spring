@@ -957,12 +957,10 @@ void CMobileCAI::StopMove()
 	goalRadius = 0.f;
 }
 
-void CMobileCAI::StopMoveAndKeepPointing()
+void CMobileCAI::StopMoveAndKeepPointing(const float3& p, const float r)
 {
-	const float3 goalPos    = this->goalPos;
-	const float  goalRadius = this->goalRadius;
 	StopMove();
-	owner->moveType->KeepPointingTo(goalPos, goalRadius, false);
+	owner->moveType->KeepPointingTo(p, r, false);
 }
 
 void CMobileCAI::BuggerOff(const float3& pos, float radius)
