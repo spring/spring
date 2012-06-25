@@ -1027,17 +1027,15 @@ void CMobileCAI::IdleCheck()
 {
 	const bool canAttack = (owner->unitDef->canAttack && !owner->weapons.empty());
 	const float extraRange = 200.0f * owner->moveState * owner->moveState;
+	const float maxRangeSq = Square(owner->maxRange + extraRange);
 
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (canAttack) {
 		if (owner->haveTarget) {
 			if (owner->fireState > FIRESTATE_HOLDFIRE) {
-				const float3& P = owner->attackTarget->pos;
-				const float R = owner->pos.SqDistance2D(P);
-
 				if (owner->attackTarget == NULL) {
 					owner->haveTarget = false;
-				} else if (R < Square(owner->maxRange + extraRange)) {
+				} else if (owner->pos.SqDistance2D(owner->attackTarget->pos) < maxRangeSq) {
 					Command c(CMD_ATTACK);
 					c.options = INTERNAL_ORDER;
 					c.params.push_back(owner->attackTarget->id);
@@ -1051,13 +1049,15 @@ void CMobileCAI::IdleCheck()
 			}
 		} else {
 			if (owner->fireState > FIRESTATE_HOLDFIRE) {
-				if (owner->lastAttacker && owner->lastAttack + 200 > gs->frameNum
-						&& !(owner->unitDef->noChaseCategory & owner->lastAttacker->category)) {
+				const bool haveLastAttacker = (owner->lastAttacker != NULL);
+				const bool canAttackAttacker = (haveLastAttacker && (owner->lastAttack + 200) > gs->frameNum);
+				const bool canChaseAttacker = (haveLastAttacker && !(owner->unitDef->noChaseCategory & owner->lastAttacker->category));
 
+				if (canAttackAttacker && canChaseAttacker) {
 					const float3& P = owner->lastAttacker->pos;
 					const float R = owner->pos.SqDistance2D(P);
 
-					if (R < Square(owner->maxRange + extraRange)) {
+					if (R < maxRangeSq) {
 						Command c(CMD_ATTACK);
 						c.options = INTERNAL_ORDER;
 						c.params.push_back(owner->lastAttacker->id);
@@ -1079,7 +1079,7 @@ void CMobileCAI::IdleCheck()
 					Command c(CMD_ATTACK);
 					c.options = INTERNAL_ORDER;
 					c.params.push_back(enemy->id);
-					c.timeOut = gs->frameNum+140;
+					c.timeOut = gs->frameNum + 140;
 					commandQue.push_front(c);
 					tempOrder = true;
 					commandPos1 = owner->pos;
