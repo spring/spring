@@ -789,9 +789,13 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		}
 
 		if (goodTargetUnit != NULL || badTargetUnit != NULL) {
-			if (targetUnit != NULL) {
+			const bool haveOldTarget = (targetUnit != NULL);
+			const bool haveNewTarget =
+				(goodTargetUnit != NULL && goodTargetUnit != targetUnit) ||
+				( badTargetUnit != NULL &&  badTargetUnit != targetUnit);
+
+			if (haveOldTarget && haveNewTarget) {
 				// delete our old target dependence
-				// TODO: only if we have a NEW target?
 				DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 			}
 
