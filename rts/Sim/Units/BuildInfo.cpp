@@ -46,10 +46,19 @@ bool BuildInfo::Parse(const Command& c)
 {
 	if (c.params.size() < 3)
 		return false;
+
+	// FIXME:
+	//   this MUST come before the ID-check because
+	//   CAI::GetOverlapQueued uses a BuildInfo (!!)
+	//   structure to find out if some newly issued
+	//   command overlaps existing ones --> any non-
+	//   build orders would never have <pos> parsed
+	pos = c.GetPos(0);
+
 	if (c.GetID() >= 0)
 		return false;
 
-	pos = c.GetPos(0);
+	// pos = c.GetPos(0);
 	def = unitDefHandler->GetUnitDefByID(-c.GetID());
 	buildFacing = FACING_SOUTH;
 
