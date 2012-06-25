@@ -22,6 +22,10 @@
 
 #define LOG_SECTION_TEXTURE "Texture"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_TEXTURE)
+#ifdef LOG_SECTION_CURRENT
+        #undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_TEXTURE
 
 // The S3O texture handler uses two textures.
 // The first contains diffuse color (RGB) and teamcolor (A)
@@ -60,8 +64,7 @@ void CS3OTextureHandler::Update() {
 int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
 	GML_RECMUTEX_LOCK(model); // LoadS3OTextureNow
-	LOG_S(LOG_SECTION_TEXTURE,
-			"Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)", 
+	LOG("Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)",
 			model->flipTexY ? "yes" : "no",
 			model->invertTexAlpha ? "yes" : "no");
 
