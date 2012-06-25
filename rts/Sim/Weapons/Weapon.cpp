@@ -795,7 +795,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 				( badTargetUnit != NULL &&  badTargetUnit != targetUnit);
 
 			if (haveOldTarget && haveNewTarget) {
-				// delete our old target dependence
+				// delete our old target dependence if we are switching targets
 				DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 			}
 
@@ -804,7 +804,10 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 			targetUnit = (goodTargetUnit != NULL)? goodTargetUnit: badTargetUnit;
 			targetPos = nextTargetPos;
 
-			AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+			if (!haveOldTarget || haveNewTarget) {
+				// add new target dependence if we had no target or switched
+				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+			}
 		}
 	}
 
