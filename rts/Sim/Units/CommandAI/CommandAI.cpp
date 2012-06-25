@@ -1148,14 +1148,15 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 	std::vector<Command> v;
 	BuildInfo cbi(c);
 
-	if (ci != q.begin()){
+	if (ci != q.begin()) {
 		do {
 			--ci; //iterate from the end and dont check the current order
 			const Command& t = *ci;
 
 			if (((t.GetID() == c.GetID()) || ((c.GetID() < 0) && (t.GetID() < 0))) &&
-			    (t.params.size() == c.params.size())){
-				if (c.params.size()==1) {
+			    (t.params.size() == c.params.size())) {
+
+				if (c.params.size() == 1) {
 					// assume the param is a unit or feature id
 					if (t.params[0] == c.params[0]) {
 						v.push_back(t);
@@ -1163,6 +1164,7 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 				}
 				else if (c.params.size() >= 3) {
 					// assume this means that the first 3 makes a position
+					// NOTE: uses a BuildInfo structure, but <t> can be ANY command
 					BuildInfo tbi;
 					if (tbi.Parse(t)) {
 						const float dist2X = 2.0f * fabs(cbi.pos.x - tbi.pos.x);
