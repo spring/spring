@@ -263,7 +263,7 @@ bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool c
 			StopMoveAndKeepPointing(goalPos, goalRadius);
 		} else {
 			// hovering/circling airplane
-			StopMoveAndKeepPointing(pos, builder->buildDistance + builder->radius);
+			StopMoveAndKeepPointing(pos, radius + builder->buildDistance);
 		}
 	}
 
