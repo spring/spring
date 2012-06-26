@@ -1003,9 +1003,9 @@ void CUnit::SlowUpdateWeapons() {
 			CWeapon* w = *wi;
 
 			// NOTE:
-			//     w->haveUserTarget can only be true if ::SetAttackTarget
-			//     was called with a non-NULL target-unit AND the CAI did
-			//     not auto-select it
+			//     w->haveUserTarget can only be true if ::AttackUnit
+			//     was called with a non-NULL target-unit AND the CAI
+			//     did not auto-select it
 			if (!w->haveUserTarget) {
 				if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
 					if (attackTarget != NULL) {
@@ -1525,17 +1525,32 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 	userAttackGround = false;
 	commandShotCount = 0;
 
-	SetAttackTarget(targetUnit, isUserTarget);
+	if (attackTarget != NULL) {
+		DeleteDeathDependence(attackTarget, DEPENDENCE_TARGET);
+	}
+
+	attackPos = ZeroVector;
+	attackTarget = targetUnit;
+
+	if (targetUnit != NULL) {
+		AddDeathDependence(targetUnit, DEPENDENCE_TARGET);
+	}
 
 	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		CWeapon* w = *wi;
 
+		// isUserTarget is true if this target was selected by the
+		// user as opposed to automatically by the unit's commandAI
+		//
+		// NOTE: "&&" because we have a separate userAttackGround (!)
 		w->targetType = Target_None;
+		w->haveUserTarget = (targetUnit != NULL && isUserTarget);
+
+		if (targetUnit == NULL)
+			continue;
 
 		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
-			if (w->AttackUnit(targetUnit, isUserTarget)) {
-				ret = true;
-			}
+			ret |= (w->AttackUnit(targetUnit, isUserTarget));
 		}
 	}
 
@@ -1548,19 +1563,23 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 
 	haveManualFireRequest = wantManualFire;
 	userAttackGround = isUserTarget;
-
-	attackPos = pos;
 	commandShotCount = 0;
 
-	SetAttackTarget(NULL, isUserTarget);
+	if (attackTarget != NULL) {
+		DeleteDeathDependence(attackTarget, DEPENDENCE_TARGET);
+	}
+
+	attackPos = pos;
+	attackTarget = NULL;
 
 	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		CWeapon* w = *wi;
 
+		w->targetType = Target_None;
+		w->haveUserTarget = false;
+
 		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
-			if (w->AttackGround(pos, true)) {
-				ret = true;
-			}
+			ret |= (w->AttackGround(pos, true));
 		}
 	}
 
@@ -1583,26 +1602,6 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 	lastAttack = gs->frameNum;
 	lastAttacker = attacker;
 	AddDeathDependence(attacker, DEPENDENCE_ATTACKER);
-}
-
-void CUnit::SetAttackTarget(CUnit* target, bool isUserTarget)
-{
-	if (attackTarget != NULL)
-		DeleteDeathDependence(attackTarget, DEPENDENCE_TARGET);
-
-	attackTarget = target;
-
-	// isUserTarget is true if this target was selected by the
-	// user as opposed to automatically by the unit's commandAI
-	//
-	// NOTE: "&&" because we have a separate userAttackGround (!)
-	for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-		(*wi)->haveUserTarget = (target != NULL && isUserTarget);
-	}
-
-	if (target != NULL) {
-		AddDeathDependence(target, DEPENDENCE_TARGET);
-	}
 }
 
 void CUnit::DependentDied(CObject* o)
@@ -2087,7 +2086,7 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 void CUnit::TempHoldFire()
 {
 	dontFire = true;
-	AttackUnit(NULL, false, true);
+	AttackUnit(NULL, false, false);
 }
 
 void CUnit::ReleaseTempHoldFire()
@@ -2136,7 +2135,7 @@ void CUnit::StopAttackingAllyTeam(int ally)
 		lastAttacker = NULL;
 	}
 	if (attackTarget != NULL && attackTarget->allyteam == ally)
-		SetAttackTarget(NULL, false);
+		AttackUnit(NULL, false, false);
 
 	commandAI->StopAttackingAllyTeam(ally);
 	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {

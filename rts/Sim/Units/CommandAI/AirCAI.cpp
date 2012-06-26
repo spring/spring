@@ -422,7 +422,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 	if (tempOrder && owner->moveState == MOVESTATE_MANEUVER) {
 		// limit how far away we fly
 		if (orderTarget && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > 1500) {
-			owner->SetAttackTarget(NULL, false);
+			owner->AttackUnit(NULL, false, false);
 			FinishCommand();
 			return;
 		}
@@ -440,12 +440,12 @@ void CAirCAI::ExecuteAttack(Command& c)
 		}
 		if (orderTarget) {
 			if (orderTarget->unitDef->canfly && orderTarget->crashing) {
-				owner->SetAttackTarget(NULL, false);
+				owner->AttackUnit(NULL, false, false);
 				FinishCommand();
 				return;
 			}
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
-				owner->SetAttackTarget(NULL, false);
+				owner->AttackUnit(NULL, false, false);
 				FinishCommand();
 				return;
 			}
