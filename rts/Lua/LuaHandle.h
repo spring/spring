@@ -389,13 +389,13 @@ class CLuaHandle : public CEventClient
 		static int CallOutUnsyncedUpdateCallIn(lua_State* L);
 
 	public: // static
-//FIXME		static LuaArrays& GetActiveArrays(lua_State* L)   { return L->lcd->arrays; }
-		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return L->lcd->shaders; }
-		static inline LuaTextures& GetActiveTextures(lua_State* L) { return L->lcd->textures; }
-//FIXME		static LuaVBOs& GetActiveVBOs(lua_State* L)     { return L->lcd->vbos; }
-		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return L->lcd->fbos; }
-		static inline LuaRBOs& GetActiveRBOs(lua_State* L)     { return L->lcd->rbos; }
-		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return L->lcd->displayLists; }
+//FIXME		static LuaArrays& GetActiveArrays(lua_State* L)   { return GET_HANDLE_CONTEXT_DATA(arrays); }
+		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return GET_HANDLE_CONTEXT_DATA(shaders); }
+		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(textures); }
+//FIXME		static LuaVBOs& GetActiveVBOs(lua_State* L)     { return GET_HANDLE_CONTEXT_DATA(vbos); }
+		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(fbos); }
+		static inline LuaRBOs& GetActiveRBOs(lua_State* L)     { return GET_HANDLE_CONTEXT_DATA(rbos); }
+		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(displayLists); }
 
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
