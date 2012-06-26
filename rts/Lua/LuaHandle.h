@@ -46,7 +46,8 @@ class CLuaHandle;
 
 struct luaContextData {
 	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
-		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false), owner(NULL), drawingEnabled(false) {}
+		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false),
+		owner(NULL), drawingEnabled(false), running(0) {}
 	bool fullCtrl;
 	bool fullRead;
 	int  ctrlTeam;
@@ -63,6 +64,7 @@ struct luaContextData {
 	bool synced;
 	CLuaHandle *owner;
 	bool drawingEnabled;
+	int running; //< is currently running? (0: not running; >0: is running)
 };
 
 class CLuaHandle : public CEventClient
@@ -122,8 +124,8 @@ class CLuaHandle : public CEventClient
 		static bool CheckModUICtrl(lua_State* L) { return GetModUICtrl() || GetHandleUserMode(L); }
 		bool CheckModUICtrl() const { return GetModUICtrl() || GetUserMode(); }
 
-		void SetRunning(const bool _running) { running += (_running) ? +1 : -1; assert(running >= 0); }
-		bool IsRunning() const { return (running > 0); }
+		void SetRunning(lua_State* L, const bool _running) { GET_HANDLE_CONTEXT_DATA(running) += (_running) ? +1 : -1; assert( GET_HANDLE_CONTEXT_DATA(running) >= 0); }
+		bool IsRunning() const { return (GET_ACTIVE_CONTEXT_DATA(running) > 0); }
 
 //FIXME		LuaArrays& GetArrays(const lua_State* L = NULL) { return GET_CONTEXT_DATA(arrays); }
 		LuaShaders& GetShaders(const lua_State* L = NULL) { return GET_CONTEXT_DATA(shaders); }
@@ -359,7 +361,6 @@ class CLuaHandle : public CEventClient
 		luaContextData D_Sim;
 		luaContextData D_Draw;
 
-		int running; //< is currently running? (0: not running; >0: is running)
 		bool killMe;
 		string killMsg;
 
