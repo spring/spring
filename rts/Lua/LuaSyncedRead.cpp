@@ -2687,9 +2687,14 @@ int LuaSyncedRead::GetUnitHealth(lua_State* L)
 	}
 	const UnitDef* ud = unit->unitDef;
 	const bool enemyUnit = IsEnemyUnit(L, unit);
+
 	if (ud->hideDamage && enemyUnit) {
-		return 0;
+		// players can see whether an in-LOS enemy
+		// unit is finished or not, so can widgets
+		lua_pushnumber(L, (unit->beingBuilt)? 0.0f: 1.0f);
+		return 1;
 	}
+
 	if (!enemyUnit || (ud->decoyDef == NULL)) {
 		lua_pushnumber(L, unit->health);
 		lua_pushnumber(L, unit->maxHealth);
