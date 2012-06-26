@@ -2808,6 +2808,7 @@ int LuaSyncedRead::GetUnitPosition(lua_State* L)
 		err -= unit->midPos;
 	}
 
+	// base-position
 	lua_pushnumber(L, unit->pos.x + err.x);
 	lua_pushnumber(L, unit->pos.y + err.y);
 	lua_pushnumber(L, unit->pos.z + err.z);
@@ -2832,21 +2833,7 @@ int LuaSyncedRead::GetUnitPosition(lua_State* L)
 
 int LuaSyncedRead::GetUnitBasePosition(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	float3 pos;
-	if (IsAllyUnit(L, unit)) {
-		pos = unit->pos;
-	} else {
-		pos = helper->GetUnitErrorPos(unit, CLuaHandle::GetHandleReadAllyTeam(L));
-		pos = pos - (unit->midPos - unit->pos);
-	}
-	lua_pushnumber(L, pos.x);
-	lua_pushnumber(L, pos.y);
-	lua_pushnumber(L, pos.z);
-	return 3;
+	return (GetUnitPosition(L));
 }
 
 int LuaSyncedRead::GetUnitVectors(lua_State* L)
