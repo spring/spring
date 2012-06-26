@@ -118,7 +118,6 @@ public:
 
 	void DependentDied(CObject* o);
 
-	void SetAttackTarget(CUnit* target, bool isUserTarget);
 	bool SetGroup(CGroup* group, bool fromFactory = false);
 
 	bool AllowedReclaim(CUnit* builder) const;

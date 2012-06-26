@@ -293,8 +293,7 @@ bool CMobileCAI::RefuelIfNeeded()
 
 	if (owner->currentFuel <= 0.0f) {
 		// we're completely out of fuel
-		owner->userAttackGround = false;
-		owner->SetAttackTarget(NULL, false);
+		owner->AttackUnit(NULL, false, false);
 		inCommand = false;
 
 		CAirBaseHandler::LandingPad* lp =
@@ -329,8 +328,7 @@ bool CMobileCAI::RefuelIfNeeded()
 
 		if (lp != NULL) {
 			StopMove();
-			owner->userAttackGround = false;
-			owner->SetAttackTarget(NULL, false);
+			owner->AttackUnit(NULL, false, false);
 			owner->moveType->ReservePad(lp);
 			inCommand = false;
 			return true;
