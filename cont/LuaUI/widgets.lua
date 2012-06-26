@@ -89,6 +89,7 @@ widgetHandler = {
   ownedButton = 0,
   
   tweakMode = false,
+  tweakKeys = {},
 
   xViewSize    = 1,
   yViewSize    = 1,
@@ -1109,6 +1110,7 @@ end
 
 function widgetHandler:ConfigureLayout(command)
   if (command == 'tweakgui') then
+    self.tweakKeys = {}
     self.tweakMode = true
     Spring.Echo("LuaUI TweakMode: ON")
     return true
@@ -1307,6 +1309,7 @@ end
 
 function widgetHandler:KeyPress(key, mods, isRepeat, label, unicode)
   if (self.tweakMode) then
+    self.tweakKeys[key] = true
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyPress) then
       mo:TweakKeyPress(key, mods, isRepeat, label, unicode)
@@ -1328,7 +1331,7 @@ end
 
 
 function widgetHandler:KeyRelease(key, mods, label, unicode)
-  if (self.tweakMode) then
+  if (self.tweakMode and self.tweakKeys[key] ~= nil) then
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyRelease) then
       mo:TweakKeyRelease(key, mods, label, unicode)
