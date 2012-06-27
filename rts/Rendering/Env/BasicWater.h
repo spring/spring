@@ -3,7 +3,6 @@
 #ifndef BASIC_WATER_H
 #define BASIC_WATER_H
 
-#include "Rendering/GL/myGL.h"
 #include "IWater.h"
 
 class CBasicWater : public IWater
@@ -18,12 +17,10 @@ public:
 	const char* GetName() const { return "basic"; }
 
 private:
-	unsigned int GenWaterQuadsList() const;
+	unsigned int GenWaterQuadsList(unsigned int textureWidth, unsigned int textureHeight) const;
 
-	GLuint texture;
-	unsigned int displist;
-	int textureWidth;
-	int textureHeight;
+	unsigned int textureID;
+	unsigned int displistID;
 };
 
 #endif // BASIC_WATER_H
