@@ -47,7 +47,7 @@ namespace {
 			if (testCwd.empty()) {
 				char* tmpDir = tmpnam(NULL);
 				if (tmpDir != NULL) {
-					testCwd = tmpDir;
+					testCwd = oldDir + tmpDir;
 					FileSystem::CreateDirectory(testCwd);
 				} else {
 					BOOST_FAIL("Failed to create temporary test dir");
@@ -77,9 +77,9 @@ BOOST_AUTO_TEST_CASE(FileExists)
 BOOST_AUTO_TEST_CASE(GetFileSize)
 {
 	BOOST_CHECK(FileSystem::GetFileSize("testFile.txt") == 1);
-	BOOST_CHECK(FileSystem::GetFileSize("testFile99.txt") == 0);
-	BOOST_CHECK(FileSystem::GetFileSize("testDir") > 0);
-	BOOST_CHECK(FileSystem::GetFileSize("testDir99") == 0);
+	BOOST_CHECK(FileSystem::GetFileSize("testFile99.txt") == -1);
+	BOOST_CHECK(FileSystem::GetFileSize("testDir") == -1);
+	BOOST_CHECK(FileSystem::GetFileSize("testDir99") == -1);
 }
 
 BOOST_AUTO_TEST_CASE(CreateDirectory)

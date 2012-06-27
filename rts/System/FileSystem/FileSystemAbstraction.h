@@ -91,7 +91,8 @@ public:
 	/**
 	 * @brief get filesize
 	 *
-	 * @return the files size or 0, if the file does not exist.
+	 * @return the files size or -1, if the file does not exist. Returns
+	 *          also -1 if the file is a directory.
 	 */
 	static size_t GetFileSize(const std::string& file);
 
