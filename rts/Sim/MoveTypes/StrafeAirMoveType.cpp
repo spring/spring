@@ -188,7 +188,7 @@ bool CStrafeAirMoveType::Update()
 	// while no pad is available would otherwise continue
 	// attacking even if out of fuel
 	const bool outOfFuel = (owner->currentFuel <= 0.0f && owner->unitDef->maxFuel > 0.0f);
-	const bool continueAttack = (reservedPad == NULL && !outOfFuel);
+	const bool allowAttack = (reservedPad == NULL && !outOfFuel);
 
 	if (aircraftState != AIRCRAFT_CRASHING) {
 		if (reservedPad != NULL) {
@@ -213,13 +213,17 @@ bool CStrafeAirMoveType::Update()
 		case AIRCRAFT_FLYING: {
 			owner->restTime = 0;
 
-			if (continueAttack && ((owner->userTarget && !owner->userTarget->isDead) || owner->userAttackGround)) {
+			const CCommandQueue& cmdQue = owner->commandAI->commandQue;
+			const bool isAttacking = (!cmdQue.empty() && (cmdQue.front()).GetID() == CMD_ATTACK);
+			const bool keepAttacking = ((owner->attackTarget != NULL && !owner->attackTarget->isDead) || owner->userAttackGround);
+
+			if (isAttacking && allowAttack && keepAttacking) {
 				inefficientAttackTime = std::min(inefficientAttackTime, float(gs->frameNum) - owner->lastFireWeapon);
 
-				if (owner->userTarget) {
-					goalPos = owner->userTarget->pos;
+				if (owner->attackTarget != NULL) {
+					goalPos = owner->attackTarget->pos;
 				} else {
-					goalPos = owner->userAttackPos;
+					goalPos = owner->attackPos;
 				}
 
 				if (maneuver) {
@@ -478,8 +482,9 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 		CheckForCollision();
 	}
 
-	const bool groundTarget = !owner->userTarget || !owner->userTarget->unitDef->canfly || owner->userTarget->unitDef->hoverAttack;
-	const bool airTarget = owner->userTarget && owner->userTarget->unitDef->canfly && !owner->userTarget->unitDef->hoverAttack;	//only "real" aircrafts (non gunship)
+	const bool groundTarget = (owner->attackTarget == NULL) || !owner->attackTarget->unitDef->canfly || owner->attackTarget->unitDef->hoverAttack;
+	const bool airTarget = (owner->attackTarget != NULL) && owner->attackTarget->unitDef->canfly && !owner->attackTarget->unitDef->hoverAttack;	//only "real" aircrafts (non gunship)
+
 	if (groundTarget) {
 		if (frontdir.dot(goalPos - pos) < 0 && (pos - goalPos).SqLength() < turnRadius * turnRadius * (loopbackAttack ? 4 : 1)) {
 			float3 dif = pos - goalPos;
@@ -493,7 +498,7 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 			if (frontdir.dot(goalPos - pos) < owner->maxRange * (hasFired ? 1.0f : 0.7f))
 				maneuver = 1;
 		} else if (frontdir.dot(goalPos - pos) < owner->maxRange * 0.7f) {
-			goalPos += exitVector * (owner->userTarget ? owner->userTarget->radius + owner->radius + 10 : owner->radius + 40);
+			goalPos += exitVector * ((owner->attackTarget != NULL) ? owner->attackTarget->radius + owner->radius + 10 : owner->radius + 40);
 		}
 	}
 	const float3 tgp = goalPos + (goalPos - oldGoalPos) * 8;

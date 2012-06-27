@@ -5,6 +5,7 @@
 #include "VerticalSync.h"
 #include "GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Log/ILog.h"
 
 #if defined HEADLESS
 #elif defined WIN32
@@ -22,7 +23,7 @@ CVerticalSync VSync;
 
 CVerticalSync::CVerticalSync()
 {
-	interval = 0;
+	interval = -1;
 }
 
 
@@ -61,22 +62,36 @@ void CVerticalSync::SetInterval(int i)
 			GLXDrawable drawable = glXGetCurrentDrawable();
 		#ifdef GLXEW_EXT_swap_control_tear
 			// this enables so called `adaptive vsync` or also called late syncing (~ it won't vsync if FPS < monitor refresh rate)
-			if (GLXEW_EXT_swap_control_tear)
+			if (GLXEW_EXT_swap_control_tear) {
+				if (interval != 0)
+					LOG("Using Adaptive VSync");
 				glXSwapIntervalEXT(dpy, drawable, -interval);
-			else
+			} else
 		#endif
+			{
+				if (interval != 0)
+					LOG("Using VSync");
 				glXSwapIntervalEXT(dpy, drawable, interval);
+			}
 		} else
 	#endif
 	if (!GLXEW_SGI_video_sync) {
 		interval = 0; // disable
+	} else {
+		if (interval != 0)
+			LOG("Using SGI VSync");
 	}
 
 #elif defined WIN32
 	if (WGLEW_EXT_swap_control) {
+		if (interval != 0)
+			LOG("Using VSync");
 		wglSwapIntervalEXT(interval);
 	}
 #endif
+
+	if (interval == 0)
+		LOG("VSync disabled");
 }
 
 

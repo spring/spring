@@ -23,7 +23,7 @@ public:
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius, float speed);
 	virtual void BuggerOff(const float3& pos, float radius);
 	void StopMove();
-	void StopMoveAndKeepPointing();
+	void StopMoveAndKeepPointing(const float3& p, const float r);
 
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	void SlowUpdate();

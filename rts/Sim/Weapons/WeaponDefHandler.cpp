@@ -114,7 +114,9 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.type = wdTable.GetString("weaponType", "Cannon");
 
 	wd.targetBorder = Clamp(wdTable.GetFloat("targetBorder", (wd.type == "Melee")? 1.0f : 0.0f), -1.0f, 1.0f);
-	wd.cylinderTargetting = Clamp(wdTable.GetFloat("cylinderTargetting", (wd.type == "Melee")? 1.0f : 0.0f), 0.0f, 128.0f);
+	wd.cylinderTargeting = Clamp(wdTable.GetFloat("cylinderTargeting", wdTable.GetFloat("cylinderTargetting", (wd.type == "Melee")? 1.0f : 0.0f)), 0.0f, 128.0f);
+	if (wdTable.KeyExists("cylinderTargetting"))
+		LOG_L(L_WARNING, "weapondef cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).");
 
 	wd.range = wdTable.GetFloat("range", 10.0f);
 

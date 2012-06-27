@@ -30,6 +30,7 @@
 #include "System/Input/MouseInput.h"
 #include "System/Input/InputHandler.h"
 #include "System/Input/Joystick.h"
+#include "System/MsgStrings.h"
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
@@ -103,7 +104,7 @@ CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false);
 CONFIG(int, HardwareThreadCount).defaultValue(0).safemodeValue(1);
-CONFIG(std::string, name).defaultValue("UnnamedPlayer");
+CONFIG(std::string, name).defaultValue(UnnamedPlayerName);
 
 
 ClientSetup* startsetup = NULL;
@@ -239,11 +240,11 @@ bool SpringApp::Initialize()
 	if (globalRendering->FSAA && !MultisampleVerify())
 		globalRendering->FSAA = 0;
 
+	globalRendering->PostInit();
+	
 	InitOpenGL();
 	agui::InitGui();
 	LoadFonts();
-
-	globalRendering->PostInit();
 
 	// Initialize named texture handler
 	CNamedTextures::Init();
@@ -425,8 +426,6 @@ bool SpringApp::SetSDLVideoMode()
 		//! initialize any GL resources that were lost
 		GLContext::Init();
 	}
-
-	VSync.Init();
 
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
@@ -655,6 +654,8 @@ void SpringApp::SetupViewportGeometry()
  */
 void SpringApp::InitOpenGL()
 {
+	VSync.Init();
+
 	SetupViewportGeometry();
 	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	gluPerspective(45.0f,  globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
@@ -854,7 +855,7 @@ void SpringApp::Startup()
 		std::string demoPlayerName = configHandler->GetString("name");
 
 		if (demoPlayerName.empty()) {
-			demoPlayerName = "UnnamedPlayer";
+			demoPlayerName = UnnamedPlayerName;
 		} else {
 			demoPlayerName = StringReplaceInPlace(demoPlayerName, ' ', '_');
 		}
@@ -1131,9 +1132,9 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			}
 
 			//! release all keyboard keys
-			if ((event.active.state & (SDL_APPACTIVE | SDL_APPINPUTFOCUS)) && !event.active.gain) {
+			if ((event.active.state & (SDL_APPACTIVE | SDL_APPINPUTFOCUS))) {
 				for (boost::uint16_t i = 1; i < SDLK_LAST; ++i) {
-					if (keyInput->IsKeyPressed(i)) {
+					if (i != SDLK_NUMLOCK && i != SDLK_CAPSLOCK && i != SDLK_SCROLLOCK && keyInput->IsKeyPressed(i)) {
 						SDL_Event event;
 						event.type = event.key.type = SDL_KEYUP;
 						event.key.state = SDL_RELEASED;
@@ -1144,10 +1145,12 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						SDL_PushEvent(&event);
 					}
 				}
+				// SDL has some bug and does not update modstate on alt+tab/minimize etc.
+				SDL_SetModState((SDLMod)(SDL_GetModState() & (KMOD_NUM | KMOD_CAPS | KMOD_MODE)));
 			}
 
 			//! simulate mouse release to prevent hung buttons
-			if ((event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS)) && !event.active.gain) {
+			if ((event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS))) {
 				for (int i = 1; i <= NUM_BUTTONS; ++i) {
 					if (mouse && mouse->buttons[i].pressed) {
 						SDL_Event event;
@@ -1162,7 +1165,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				}
 
 				//! and make sure to un-capture mouse
-				if(SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_ON)
+				if(!event.active.gain && SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_ON)
 					SDL_WM_GrabInput(SDL_GRAB_OFF);
 			}
 

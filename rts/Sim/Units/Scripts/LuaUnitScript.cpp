@@ -296,7 +296,6 @@ void CLuaUnitScript::RemoveCallIn(const string& fname)
 void CLuaUnitScript::ShowScriptError(const string& msg)
 {
 	// if we are in the same handle, we can truely raise an error
-	//FIXME check if the current _thread_ is running the LuaState
 	if (handle->IsRunning()) {
 		luaL_error(L, "Lua UnitScript error: %s", msg.c_str());
 	}

@@ -85,7 +85,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(avoidFeature),
 	CR_MEMBER(avoidNeutral),
 	CR_MEMBER(targetBorder),
-	CR_MEMBER(cylinderTargetting),
+	CR_MEMBER(cylinderTargeting),
 	CR_MEMBER(minIntensity),
 	CR_MEMBER(heightBoostFactor),
 	CR_MEMBER(collisionFlags),
@@ -167,7 +167,7 @@ CWeapon::CWeapon(CUnit* owner):
 	avoidFeature(true),
 	avoidNeutral(true),
 	targetBorder(0.f),
-	cylinderTargetting(0.f),
+	cylinderTargeting(0.f),
 	minIntensity(0.f),
 	heightBoostFactor(-1.f),
 	collisionFlags(0),
@@ -224,7 +224,7 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 
 static inline bool isBeingServicedOnPad(CUnit* u)
 {
-	const AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
+	const AAirMoveType* a = dynamic_cast<AAirMoveType*>(u->moveType);
 	return (a != NULL && a->GetPadStatus() != 0);
 }
 
@@ -429,9 +429,11 @@ void CWeapon::Update()
 			// add to the commandShotCount if this is the last salvo,
 			// and it is being directed towards the current target
 			// (helps when deciding if a queued ground attack order has been completed)
-			if (((salvoLeft == 0) && (owner->commandShotCount >= 0) &&
-			    ((targetType == Target_Pos) && (targetPos == owner->userAttackPos))) ||
-					((targetType == Target_Unit) && (targetUnit == owner->userTarget))) {
+			const bool lastSalvo = ((salvoLeft == 0) && (owner->commandShotCount >= 0));
+			const bool attackingPos = ((targetType == Target_Pos) && (targetPos == owner->attackPos));
+			const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
+
+			if (lastSalvo && (attackingPos || attackingUnit)) {
 				owner->commandShotCount++;
 			}
 
@@ -475,7 +477,7 @@ void CWeapon::Update()
 		}
 
 #ifdef TRACE_SYNC
-	tracefile << "Weapon fire: ";
+	tracefile << __FUNCTION__;
 	tracefile << weaponPos.x << " " << weaponPos.y << " " << weaponPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
 #endif
 	}
@@ -490,6 +492,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		return false;
 	}
 
+	// keep target positions on the surface if this weapon hates water
 	if (!weaponDef->waterweapon && (pos.y < 1.0f)) {
 		pos.y = 1.0f;
 	}
@@ -505,9 +508,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (!TryTarget(pos, userTarget, 0))
-		return false;
-	if (targetUnit) {
+	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
@@ -516,7 +517,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 	targetType = Target_Pos;
 	targetPos = pos;
 
-	return true;
+	return (TryTarget(pos, userTarget, NULL));
 }
 
 bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
@@ -542,12 +543,13 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (!unit) {
+	if (unit == NULL) {
 		if (targetType != Target_Unit) {
 			// make the unit be more likely to keep the current target if user starts to move it
 			targetType = Target_None;
 		}
 
+		// cannot have a user-target without a unit
 		haveUserTarget = false;
 		return false;
 	}
@@ -561,10 +563,7 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 	if (tempTargetPos.y < appHeight)
 		tempTargetPos.y = appHeight;
 
-	if (!TryTarget(tempTargetPos, userTarget, unit))
-		return false;
-
-	if (targetUnit) {
+	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
@@ -576,7 +575,8 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
-	return true;
+
+	return (TryTarget(tempTargetPos, userTarget, unit));
 }
 
 
@@ -602,12 +602,12 @@ inline bool CWeapon::AllowWeaponTargetCheck() const
 		}
 	}
 
+	if (haveUserTarget)                          { return false; }
 	if (weaponDef->noAutoTarget)                 { return false; }
 	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
-	if (haveUserTarget)                          { return false; }
 
+	if (avoidTarget)               { return true; }
 	if (targetType == Target_None) { return true; }
-	if (avoidTarget)             { return true; }
 
 	if (targetType == Target_Unit) {
 		if (targetUnit->category & badTargetCategory) {
@@ -789,8 +789,13 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		}
 
 		if (goodTargetUnit != NULL || badTargetUnit != NULL) {
-			if (targetUnit != NULL) {
-				// delete our old target dependence
+			const bool haveOldTarget = (targetUnit != NULL);
+			const bool haveNewTarget =
+				(goodTargetUnit != NULL && goodTargetUnit != targetUnit) ||
+				( badTargetUnit != NULL &&  badTargetUnit != targetUnit);
+
+			if (haveOldTarget && haveNewTarget) {
+				// delete our old target dependence if we are switching targets
 				DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 			}
 
@@ -799,15 +804,15 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 			targetUnit = (goodTargetUnit != NULL)? goodTargetUnit: badTargetUnit;
 			targetPos = nextTargetPos;
 
-			AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+			if (!haveOldTarget || haveNewTarget) {
+				// add new target dependence if we had no target or switched
+				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+			}
 		}
 	}
 
 	if (targetType != Target_None) {
 		owner->haveTarget = true;
-		if (haveUserTarget) {
-			owner->haveUserTarget = true;
-		}
 	} else {
 		// if we can't target anything, try switching aim point
 		if (useWeaponPosForAim == 1) {
@@ -954,7 +959,7 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 	float3 targetDir = targetVec;
 
 	float heightDiff = 0.0f; // negative when target below owner
-	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargetting
+	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
 	bool targetDirNormalized = false;
 
 	if (targetBorder != 0.0f && targetUnit != NULL) {
@@ -965,12 +970,12 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 
 	heightDiff = targetPos.y - owner->pos.y;
 
-	if (targetUnit == NULL || cylinderTargetting < 0.01f) {
+	if (targetUnit == NULL || cylinderTargeting < 0.01f) {
 		// check range in a sphere (with extra radius <heightDiff * heightMod>)
 		weaponRange = GetRange2D(heightDiff * heightMod);
 	} else {
-		// check range in a cylinder (with height <cylinderTargetting * range>)
-		if ((cylinderTargetting * range) > (math::fabsf(heightDiff) * heightMod)) {
+		// check range in a cylinder (with height <cylinderTargeting * range>)
+		if ((cylinderTargeting * range) > (math::fabsf(heightDiff) * heightMod)) {
 			weaponRange = GetRange2D(0.0f);
 		}
 	}

@@ -99,9 +99,8 @@ void CLuaHandleSynced::Init(const string& syncedFile,
                             const string& unsyncedFile,
                             const string& modes)
 {
-	if (!IsValid()) {
+	if (!IsValid())
 		return;
-	}
 
 	if (GetFullCtrl()) {
 		watchUnitDefs.resize(unitDefHandler->unitDefs.size() + 1, false);
@@ -150,38 +149,30 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		return;
 	}
 
-	SetRunning(true);
 	SetAllowChanges(true, true);
 	SetSynced(true, true);
 
 	const bool haveSynced = (SingleState() || L == L_Sim) && SetupSynced(L, syncedCode, syncedFile);
-	if (!IsValid()) {
-		SetRunning(false);
+	if (!IsValid())
 		return;
-	}
 
 	SetAllowChanges(false, true);
 	SetSynced(false, true);
 
 	const bool haveUnsynced = (SingleState() || L == L_Draw) && SetupUnsynced(L, unsyncedCode, unsyncedFile);
-	if (!IsValid()) {
-		SetRunning(false);
+	if (!IsValid())
 		return;
-	}
 
 	SetSynced(true, true);
 	SetAllowChanges(true, true);
 
 	if (!haveSynced && !haveUnsynced) {
 		KillLua();
-		SetRunning(false);
 		return;
 	}
 
 	// register for call-ins
 	eventHandler.AddClient(this);
-
-	SetRunning(false);
 
 	END_ITERATE_LUA_STATES();
 }
@@ -548,9 +539,9 @@ bool CLuaHandleSynced::LoadUnsyncedCode(lua_State *L, const string& code, const 
 	}
 	lua_setfenv(L, -2);
 
-	SetRunning(true);
+	SetRunning(L, true);
 	error = lua_pcall(L, 0, 0, 0);
-	SetRunning(false);
+	SetRunning(L, false);
 
 	if (error != 0) {
 		LOG_L(L_ERROR, "error = %i, %s, %s",

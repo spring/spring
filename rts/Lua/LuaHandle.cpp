@@ -59,7 +59,6 @@ bool CLuaHandle::useDualStates = false;
 CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 	: CEventClient(_name, _order, false) // FIXME
 	, userMode   (_userMode)
-	, running    (0)
 	, killMe     (false)
 #ifdef DEBUG
 	, printTracebacks(true)
@@ -114,18 +113,18 @@ void CLuaHandle::KillLua()
 	if (L_Draw != NULL) {
 		lua_State* L_Old = L_Sim;
 		L_Sim = L_Draw;
-		SetRunning(true);
+		SetRunning(L_Draw, true);
 		LUA_CLOSE(L_Draw);
-		SetRunning(false);
+		//SetRunning(L_Draw, false); --nope, the state is deleted
 		L_Draw = NULL;
 		L_Sim = L_Old;
 	}
 	if (L_Sim != NULL) {
 		lua_State* L_Old = L_Draw;
 		L_Draw = L_Sim;
-		SetRunning(true);
+		SetRunning(L_Sim, true);
 		LUA_CLOSE(L_Sim);
-		SetRunning(false);
+		//SetRunning(L_Sim, false); --nope, the state is deleted
 		L_Sim = NULL;
 		L_Draw = L_Old;
 	}
@@ -196,7 +195,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 	bool ret = true;
 
 	if ((loadError = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str())) == 0) {
-		SetRunning(true);
+		SetRunning(L, true);
 
 		if ((callError = lua_pcall(L, 0, 0, 0)) != 0) {
 			LOG_L(L_ERROR, "Lua LoadCode pcall error = %i, %s, %s", loadError, debug.c_str(), lua_tostring(L, -1));
@@ -204,7 +203,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 			ret = false;
 		}
 
-		SetRunning(false);
+		SetRunning(L, false);
 	} else {
 		LOG_L(L_ERROR, "Lua LoadCode loadbuffer error = %i, %s, %s", callError, debug.c_str(), lua_tostring(L, -1));
 		lua_pop(L, 1);
@@ -425,12 +424,13 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 #endif
 
 	SELECT_LUA_STATE();
-	SetRunning(true);
+	SetRunning(L, true);
 	// disable GC outside of this scope to prevent sync errors and similar
 	lua_gc(L, LUA_GCRESTART, 0);
 	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
 	lua_gc(L, LUA_GCSTOP, 0);
-	SetRunning(false);
+
+	SetRunning(L, false);
 
 	if (error == 0) {
 		// pop the error handler

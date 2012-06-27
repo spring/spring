@@ -36,6 +36,12 @@ struct SRectangle {
 		y2 = Clamp(y2, rect.y1, rect.y2);
 	}
 
+	bool CheckOverlap(const SRectangle& rect) const {
+		return
+			x1 < rect.x2 && x2 > rect.x1 &&
+			y1 < rect.y2 && y2 > rect.y1;
+	}
+
 	bool operator< (const SRectangle& other) {
 		if (x1 == other.x1) {
 			return (z1 < other.z1);

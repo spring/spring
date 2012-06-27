@@ -48,12 +48,12 @@
 #ifdef interface
 	#undef interface
 #endif
-#include "Server/MsgStrings.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/CRC.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/MsgStrings.h"
 #include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoReader.h"
@@ -1374,7 +1374,9 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 						teams[fromTeam_g].active = false;
 						teams[fromTeam_g].leader = -1;
 						std::ostringstream givenAwayMsg;
-						givenAwayMsg << players[player].name << " gave everything to " << players[teams[toTeam].leader].name;
+						const int toLeader = teams[toTeam].leader;
+						const std::string& toLeaderName = (toLeader >= 0) ? players[toLeader].name : UncontrolledPlayerName;
+						givenAwayMsg << players[player].name << " gave everything to " << toLeaderName;
 						Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, givenAwayMsg.str()));
 					}
 					break;
