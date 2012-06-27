@@ -32,6 +32,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	Add_Custom_Target(tests)
+	message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 	add_custom_target(check WINEPATH=${CMAKE_INSTALL_PREFIX} ${CMAKE_CTEST_COMMAND} --output-on-failure)
 
 
