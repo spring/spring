@@ -227,7 +227,7 @@ void CPlayer::StopControllingUnit()
 	CUnit* thisUnit = this->fpsController.GetControllee();
 
 	// note: probably better to issue CMD_STOP via thisUnit->commandAI
-	thisUnit->AttackUnit(NULL, false, true);
+	thisUnit->AttackUnit(NULL, true, false, true);
 	thisUnit->fpsControlPlayer = NULL;
 	fpsController.SetControlleeUnit(NULL);
 	selectedUnits.ClearNetSelect(this->playerNum);

@@ -19,6 +19,7 @@
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/mmgr.h"
+#include "System/MsgStrings.h"
 #include "System/Rectangle.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
@@ -471,7 +472,7 @@ std::string CTeam::GetControllerName() const {
 			}
 		}
 	} else {
-		s = "Uncontrolled";
+		s = UncontrolledPlayerName;
 	}
 
 	return s;

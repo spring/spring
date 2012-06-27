@@ -18,6 +18,7 @@
 #include "System/mmgr.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"
+#include "System/MsgStrings.h"
 
 #include <SDL_keysym.h>
 
@@ -193,7 +194,7 @@ void CQuitBox::Draw(void)
 		if (teamHandler->Team(actualTeam)->leader >= 0)
 			teamName = playerHandler->Player(teamHandler->Team(actualTeam)->leader)->name;
 		else
-			teamName = "uncontrolled";
+			teamName = UncontrolledPlayerName;
 
 		std::string ally, dead;
 		if (teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(actualTeam))) {

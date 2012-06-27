@@ -46,7 +46,8 @@ class CLuaHandle;
 
 struct luaContextData {
 	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
-		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false), owner(NULL), drawingEnabled(false) {}
+		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false),
+		owner(NULL), drawingEnabled(false), running(0) {}
 	bool fullCtrl;
 	bool fullRead;
 	int  ctrlTeam;
@@ -63,6 +64,7 @@ struct luaContextData {
 	bool synced;
 	CLuaHandle *owner;
 	bool drawingEnabled;
+	int running; //< is currently running? (0: not running; >0: is running)
 };
 
 class CLuaHandle : public CEventClient
@@ -122,8 +124,8 @@ class CLuaHandle : public CEventClient
 		static bool CheckModUICtrl(lua_State* L) { return GetModUICtrl() || GetHandleUserMode(L); }
 		bool CheckModUICtrl() const { return GetModUICtrl() || GetUserMode(); }
 
-		void SetRunning(const bool _running) { running += (_running) ? +1 : -1; assert(running >= 0); }
-		bool IsRunning() const { return (running > 0); }
+		void SetRunning(lua_State* L, const bool _running) { GET_HANDLE_CONTEXT_DATA(running) += (_running) ? +1 : -1; assert( GET_HANDLE_CONTEXT_DATA(running) >= 0); }
+		bool IsRunning() const { return (GET_ACTIVE_CONTEXT_DATA(running) > 0); }
 
 //FIXME		LuaArrays& GetArrays(const lua_State* L = NULL) { return GET_CONTEXT_DATA(arrays); }
 		LuaShaders& GetShaders(const lua_State* L = NULL) { return GET_CONTEXT_DATA(shaders); }
@@ -359,7 +361,6 @@ class CLuaHandle : public CEventClient
 		luaContextData D_Sim;
 		luaContextData D_Draw;
 
-		int running; //< is currently running? (0: not running; >0: is running)
 		bool killMe;
 		string killMsg;
 
@@ -388,13 +389,13 @@ class CLuaHandle : public CEventClient
 		static int CallOutUnsyncedUpdateCallIn(lua_State* L);
 
 	public: // static
-//FIXME		static LuaArrays& GetActiveArrays(lua_State* L)   { return L->lcd->arrays; }
-		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return L->lcd->shaders; }
-		static inline LuaTextures& GetActiveTextures(lua_State* L) { return L->lcd->textures; }
-//FIXME		static LuaVBOs& GetActiveVBOs(lua_State* L)     { return L->lcd->vbos; }
-		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return L->lcd->fbos; }
-		static inline LuaRBOs& GetActiveRBOs(lua_State* L)     { return L->lcd->rbos; }
-		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return L->lcd->displayLists; }
+//FIXME		static LuaArrays& GetActiveArrays(lua_State* L)   { return GET_HANDLE_CONTEXT_DATA(arrays); }
+		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return GET_HANDLE_CONTEXT_DATA(shaders); }
+		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(textures); }
+//FIXME		static LuaVBOs& GetActiveVBOs(lua_State* L)     { return GET_HANDLE_CONTEXT_DATA(vbos); }
+		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(fbos); }
+		static inline LuaRBOs& GetActiveRBOs(lua_State* L)     { return GET_HANDLE_CONTEXT_DATA(rbos); }
+		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GET_HANDLE_CONTEXT_DATA(displayLists); }
 
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }

@@ -575,7 +575,8 @@ static bool InitParamMap()
 	ADD_BOOL("avoidNeutral",  wd.avoidNeutral);
 
 	ADD_FLOAT("targetBorder",       wd.targetBorder);
-	ADD_FLOAT("cylinderTargetting", wd.cylinderTargetting);
+	ADD_FLOAT("cylinderTargeting", wd.cylinderTargeting);
+	ADD_FLOAT("cylinderTargetting", wd.cylinderTargeting); // FIXME deprecated misspelling
 	ADD_FLOAT("minIntensity",       wd.minIntensity);
 	ADD_FLOAT("heightBoostFactor",  wd.heightBoostFactor);
 	ADD_FLOAT("proximityPriority",  wd.proximityPriority);

@@ -237,8 +237,12 @@ bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool c
 {
 	// only use `buildDistance + radius` iff radius > buildDistance,
 	// and so it would be impossible to get in buildrange (collision detection with units/features)
-	const CBuilder* builder = (CBuilder*)owner;
-	radius = std::max(radius - builder->buildDistance, 0.0f);
+	const CBuilder* builder = (CBuilder*) owner;
+	const UnitDef* builderUD = builder->unitDef;
+
+	if (!builderUD->IsAirUnit()) {
+		radius = std::max(radius - builder->buildDistance, 0.0f);
+	}
 
 	if (!IsInBuildRange(pos, radius)) {
 		if (
@@ -250,13 +254,19 @@ bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool c
 			return false;
 		}
 
-		// too far away start a move command
+		// too far away, start a move command
 		SetGoal(pos, owner->pos, (builder->buildDistance + radius) - 9.0f);
 		return false;
+	} else {
+		// goal reached
+		if (!builderUD->IsAirUnit()) {
+			StopMoveAndKeepPointing(goalPos, goalRadius);
+		} else {
+			// hovering/circling airplane
+			StopMoveAndKeepPointing(pos, radius + builder->buildDistance);
+		}
 	}
 
-	// goal reached
-	StopMoveAndKeepPointing();
 	return true;
 }
 
@@ -348,7 +358,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 
 		BuildInfo bi;
-		bi.pos = float3(c.params[0], c.params[1], c.params[2]);
+		bi.pos = c.GetPos(0);
 
 		if (c.params.size() == 4)
 			bi.buildFacing = int(abs(c.params[3])) % NUM_FACINGS;
@@ -661,7 +671,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		}
 	} else if (c.params.size() == 4) {
 		// area repair
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 
 		builder->StopBuild();
@@ -719,7 +729,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		}
 	} else if (c.params.size() == 4) {
 		// area capture
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 
 		builder->StopBuild();
@@ -962,7 +972,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		}
 	} else if (c.params.size() == 4) {
 		// area reclaim
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 		const bool recUnits = !!(c.options & META_KEY);
 		const bool recEnemyOnly = (c.options & META_KEY) && (c.options & CONTROL_KEY);
@@ -1055,7 +1065,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 		}
 	} else if (c.params.size() == 4) {
 		// area resurrect
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 
 		if (FindResurrectableFeatureAndResurrect(pos, radius, c.options, (c.options & META_KEY))) {
@@ -1130,7 +1140,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	float3 pos(c.params[0], c.params[1], c.params[2]);
+	float3 pos = c.GetPos(0);
 
 	if (!inCommand) {
 		inCommand = true;
