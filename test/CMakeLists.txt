@@ -32,7 +32,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	Add_Custom_Target(tests)
-	add_custom_target(check ${CMAKE_CTEST_COMMAND} --output-on-failure)
+	add_custom_target(check WINEDLLPATH=${CMAKE_INSTALL_PREFIX} ${CMAKE_CTEST_COMMAND} --output-on-failure)
 
 
 
