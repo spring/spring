@@ -156,10 +156,10 @@ std::string FileSystemAbstraction::GetParent(const std::string& path) {
 
 size_t FileSystemAbstraction::GetFileSize(const std::string& file)
 {
-	size_t fileSize = 0;
+	size_t fileSize = -1;
 
 	struct stat info;
-	if (stat(file.c_str(), &info) == 0) {
+	if ((stat(file.c_str(), &info) == 0) && (!S_ISDIR(info.st_mode))) {
 		fileSize = info.st_size;
 	}
 
