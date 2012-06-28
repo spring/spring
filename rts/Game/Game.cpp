@@ -884,14 +884,15 @@ bool CGame::Update()
 	ENTER_SYNCED_CODE();
 	ClientReadNet(); // this can issue new SimFrame()s
 
-	if (net->NeedsReconnect() && !gameOver) {
-		extern ClientSetup* startsetup;
-		net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
-	}
+	if (!gameOver) {
+		if (net->NeedsReconnect()) {
+			extern ClientSetup* startsetup;
+			net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
+		}
 
-	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
-		LOG_L(L_ERROR, "Lost connection to gameserver");
-		GameEnd(std::vector<unsigned char>());
+		if (net->CheckTimeout(0, gs->frameNum == 0)) {
+			GameEnd(std::vector<unsigned char>(), true);
+		}
 	}
 	LEAVE_SYNCED_CODE();
 
@@ -1876,44 +1877,51 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 
 
 
-void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams)
+void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout)
 {
-	if (!gameOver) {
-		gameOver = true;
-		eventHandler.GameOver(winningAllyTeams);
+	if (gameOver)
+		return;
 
-		new CEndGameBox(winningAllyTeams);
+	gameOver = true;
+	eventHandler.GameOver(winningAllyTeams);
+
+	new CEndGameBox(winningAllyTeams);
 #ifdef    HEADLESS
-		profiler.PrintProfilingInfo();
+	profiler.PrintProfilingInfo();
 #endif // HEADLESS
-		CDemoRecorder* record = net->GetDemoRecorder();
-		if (record != NULL) {
-			// Write CPlayer::Statistics and CTeam::Statistics to demo
-			const int numPlayers = playerHandler->ActivePlayers();
 
-			// TODO: move this to a method in CTeamHandler
-			int numTeams = teamHandler->ActiveTeams();
-			if (gs->useLuaGaia) {
-				--numTeams;
-			}
-			record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
-			record->InitializeStats(numPlayers, numTeams);
-			// pass the list of winners
-			record->SetWinningAllyTeams(winningAllyTeams);
+	CDemoRecorder* record = net->GetDemoRecorder();
 
-			for (int i = 0; i < numPlayers; ++i) {
-				record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
-			}
-			for (int i = 0; i < numTeams; ++i) {
-				record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
-				netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
-				*buf << (uint8_t)teamHandler->Team(i)->teamNum << *(teamHandler->Team(i)->currentStats);
-				net->Send(buf);
-			}
+	if (record != NULL) {
+		// Write CPlayer::Statistics and CTeam::Statistics to demo
+		// TODO: move this to a method in CTeamHandler
+		const int numPlayers = playerHandler->ActivePlayers();
+		const int numTeams = teamHandler->ActiveTeams() - int(gs->useLuaGaia);
+
+		record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
+		record->InitializeStats(numPlayers, numTeams);
+		// pass the list of winners
+		record->SetWinningAllyTeams(winningAllyTeams);
+
+		for (int i = 0; i < numPlayers; ++i) {
+			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 		}
+		for (int i = 0; i < numTeams; ++i) {
+			record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
+			*buf << (uint8_t)teamHandler->Team(i)->teamNum << *(teamHandler->Team(i)->currentStats);
+			net->Send(buf);
+		}
+	}
 
+	if (!timeout) {
 		// pass the winner info to the host in the case it's a dedicated server
 		net->Send(CBaseNetProtocol::Get().SendGameOver(gu->myPlayerNum, winningAllyTeams));
+	} else {
+		// client timed out, don't send anything (in theory the GAMEOVER
+		// message not be able to reach the server if connection is lost,
+		// but in practice it can get through --> timeout check needs work)
+		LOG_L(L_ERROR, "[%s] lost connection to gameserver", __FUNCTION__);
 	}
 }
 
