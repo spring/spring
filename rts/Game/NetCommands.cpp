@@ -141,10 +141,10 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 3);
 					std::string message;
 					pckt >> message;
+
 					LOG("%s", message.c_str());
-					if (!gameOver) {
-						GameEnd(std::vector<unsigned char>());
-					}
+
+					GameEnd(std::vector<unsigned char>());
 					AddTraffic(-1, packetCode, dataLength);
 					net->Close(true);
 				} catch (const netcode::UnpackPacketException& ex) {
