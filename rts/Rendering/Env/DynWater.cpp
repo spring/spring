@@ -1154,7 +1154,6 @@ void CDynWater::AddShipWakes()
 				}
 			} else if (moveDef->moveType == MoveDef::Ship_Move) {
 				// surface ship
-				const float speedf = unit->speed.Length2D();
 				const float3& pos = unit->pos;
 
 				if ((fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
@@ -1166,17 +1165,19 @@ void CDynWater::AddShipWakes()
 					continue;
 				}
 
-				if ((pos.y > -4.0f) && (pos.y < 1.0f)) {
-					const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
-					const float3 sideAdd = unit->rightdir * unit->radius * 0.18f;
-					const float depth = sqrt(sqrt(unit->mass));
-					const float3 n(depth, 0.04f * speedf * depth, depth);
+				// skip submarines (which have deep waterlines)
+				if (unit->isUnderWater || !unit->inWater)
+					continue;
 
-					va->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
-					va->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
-					va->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
-					va->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
-				}
+				const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
+				const float3 sideAdd = unit->rightdir * unit->radius * 0.18f;
+				const float depth = sqrt(sqrt(unit->mass));
+				const float3 n(depth, 0.04f * unit->speed.Length2D() * depth, depth);
+
+				va->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
+				va->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
+				va->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
+				va->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
 			}
 		}
 	}
