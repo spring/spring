@@ -32,6 +32,7 @@
 --  scope:    'all', 'player', 'team', 'allyteam'      <<< not supported yet >>>
 --
 
+local section = 'setupopts.lua'
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
@@ -252,19 +253,19 @@ local function SetupOpts(mapInfo)
 
   local wantedOpts = CreateWantedOpts(mapInfo.defaultoptions)
   if (not wantedOpts) then
-    Spring.Echo('could not parse default map options')
+    Spring.Log(section, LOG.ERROR, 'could not parse default map options')
     return {}
   end
 
   local defaultVals = VFS.Include('maphelper/mapdefaults.lua')
   if (not defaultVals) then
-    Spring.Echo('could not load default map values')
+    Spring.Log(section, LOG.ERROR, 'could not load default map values')
     return {}
   end
 
   local optionDefs = CreateOptionDefs(mapInfo, defaultVals)
   if (not optionDefs) then
-    Spring.Echo('could not create map options')
+    Spring.Log(section, LOG.ERROR, 'could not create map options')
     return {}
   end  
 
@@ -274,7 +275,7 @@ local function SetupOpts(mapInfo)
     local optDef = optionDefs[opt]
     if (optDef) then
       if (type(optDef[4]) ~= 'function') then
-        Spring.Echo('bad option definition in MapOptions.lua: ' .. opt)
+        Spring.Log(section, LOG.ERROR, 'bad option definition in MapOptions.lua: ' .. opt)
       else
         table.insert(options, optDef[4](optDef))
       end

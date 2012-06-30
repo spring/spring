@@ -22,6 +22,7 @@ local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
 
 local system = VFS.Include('gamedata/system.lua')
 VFS.Include('gamedata/VFSUtils.lua')
+local section='featuredefs.lua'
 
 
 --------------------------------------------------------------------------------
@@ -50,7 +51,7 @@ local tdfFiles = RecursiveFileSearch('features/', '*.tdf')
 for _, filename in ipairs(tdfFiles) do
   local fds, err = TDF.Parse(filename)
   if (fds == nil) then
-    Spring.Echo('Error parsing ' .. filename .. ': ' .. err)
+    Spring.Log(section, LOG.ERROR, 'Error parsing ' .. filename .. ': ' .. err)
   else
     for name, fd in pairs(fds) do
       featureDefs[name] = fd
@@ -76,9 +77,9 @@ for _, filename in ipairs(luaFiles) do
   setmetatable(fdEnv, { __index = system })
   local success, fds = pcall(VFS.Include, filename, fdEnv)
   if (not success) then
-    Spring.Echo('Error parsing ' .. filename .. ': ' .. fds)
+    Spring.Log(section, LOG.ERROR, 'Error parsing ' .. filename .. ': ' .. fds)
   elseif (fds == nil) then
-    Spring.Echo('Missing return table from: ' .. filename)
+    Spring.Log(section, LOG.ERROR, 'Missing return table from: ' .. filename)
   else
     for fdName, fd in pairs(fds) do
       if ((type(fdName) == 'string') and (type(fd) == 'table')) then

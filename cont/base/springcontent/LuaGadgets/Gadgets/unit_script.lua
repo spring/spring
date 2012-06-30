@@ -201,6 +201,7 @@ Format: {
 (inner tables are in order the calls to Sleep were made)
 --]]
 local sleepers = {}
+local section = 'unit_script.lua'
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -240,7 +241,7 @@ local function RunOnError(thread)
 	if fun then
 		local good, err = pcall(fun, err)
 		if (not good) then
-			Spring.Echo("error in error handler: " .. err)
+			Spring.Log(section, LOG.ERROR, "error in error handler: " .. err)
 		end
 	end
 end
@@ -252,8 +253,8 @@ local function WakeUp(thread, ...)
 	local co = thread.thread
 	local good, err = co_resume(co, ...)
 	if (not good) then
-		Spring.Echo(err)
-		Spring.Echo(debug.traceback(co))
+		Spring.Log(section, LOG.ERROR, err)
+		Spring.Log(section, LOG.ERROR, debug.traceback(co))
 		RunOnError(thread)
 	end
 end
@@ -491,12 +492,12 @@ end
 local function LoadChunk(filename)
 	local text = VFS.LoadFile(filename, VFSMODE)
 	if (text == nil) then
-		Spring.Echo("Failed to load: " .. filename)
+		Spring.Log(section, LOG.ERROR, "Failed to load: " .. filename)
 		return nil
 	end
 	local chunk, err = loadstring(scriptHeader .. text, filename)
 	if (chunk == nil) then
-		Spring.Echo("Failed to load: " .. Basename(filename) .. "  (" .. err .. ")")
+		Spring.Log(section, LOG.ERROR, "Failed to load: " .. Basename(filename) .. "  (" .. err .. ")")
 		return nil
 	end
 	return chunk
@@ -511,7 +512,7 @@ end
 
 
 function gadget:Initialize()
-	Spring.Echo(string.format("Loading gadget: %-18s  <%s>", ghInfo.name, ghInfo.basename))
+	Spring.Log(section, LOG.ERROR, string.format("Loading gadget: %-18s  <%s>", ghInfo.name, ghInfo.basename))
 
 	-- This initialization code has following properties:
 	--  * all used scripts are loaded => early syntax error detection
@@ -545,7 +546,7 @@ function gadget:Initialize()
 			local filename = scriptFiles[fn] or scriptFiles[bn] or
 			                 scriptFiles[cfn] or scriptFiles[cbn]
 			if filename then
-				Spring.Echo("  Loading unit script: " .. filename)
+				Spring.Log(section, LOG.INFO, "  Loading unit script: " .. filename)
 				LoadScript(unitDef.scriptName, filename)
 			end
 		end

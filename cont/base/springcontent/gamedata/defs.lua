@@ -16,12 +16,13 @@ DEFS = {}
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+local section='defs.lua'
 
 local function LoadDefs(name)
   local filename = 'gamedata/' .. name .. '.lua'
   local success, result = pcall(VFS.Include, filename)
   if (not success) then
-    Spring.Echo('Failed to load ' .. name)
+    Spring.Log(section, LOG.ERROR, 'Failed to load ' .. name)
     error(result)
   end
   if (result == nil) then
