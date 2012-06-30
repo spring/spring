@@ -20,7 +20,7 @@ end
 
 local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
 local SND = SNDparser or VFS.Include('gamedata/parse_snd.lua')
-
+local section = 'parse_fbi.lua'
 
 --------------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ local soundTypes = {}
 local soundTypes, err = SND.Parse('gamedata/sound.tdf')
 if (soundTypes == nil) then
   if (false) then -- sound.tdf is no longer required, do not complain
-    Spring.Echo('could not load sound data: ' .. err)
+    Spring.Log(section, LOG.ERROR, 'could not load sound data: ' .. err)
   end
   soundTypes = {}
 end

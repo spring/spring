@@ -21,7 +21,7 @@ local postProcFile = 'gamedata/explosions_post.lua'
 local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
 
 local system = VFS.Include('gamedata/system.lua')
-
+local section = 'explosions.lua'
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ local function LoadTDFs(dir)
   for _, filename in ipairs(tdfFiles) do
     local eds, err = TDF.Parse(filename)
     if (eds == nil) then
-      Spring.Echo('Error parsing ' .. filename .. ': ' .. err)
+      Spring.Log(section, LOG.ERROR, 'Error parsing ' .. filename .. ': ' .. err)
     else
       for name, ed in pairs(eds) do
         ed.filename = filename
@@ -105,9 +105,9 @@ local function LoadLuas(dir)
     setmetatable(edEnv, { __index = system })
     local success, eds = pcall(VFS.Include, filename, edEnv)
     if (not success) then
-      Spring.Echo('Error parsing ' .. filename .. ': ' .. eds)
+      Spring.Log(section, LOG.ERROR, 'Error parsing ' .. filename .. ': ' .. eds)
     elseif (eds == nil) then
-      Spring.Echo('Missing return table from: ' .. filename)
+      Spring.Log(section, LOG.ERROR, 'Missing return table from: ' .. filename)
     else
       for edName, ed in pairs(eds) do
         if ((type(edName) == 'string') and (type(ed) == 'table')) then
