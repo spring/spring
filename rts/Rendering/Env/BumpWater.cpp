@@ -485,15 +485,15 @@ CBumpWater::CBumpWater()
 		waterShader->Link();
 		waterShader->SetUniformLocation("eyePos");      // idx  0
 		waterShader->SetUniformLocation("frame");       // idx  1
-		waterShader->SetUniformLocation("normalmap");   // idx  2
-		waterShader->SetUniformLocation("heightmap");   // idx  3
-		waterShader->SetUniformLocation("caustic");     // idx  4
-		waterShader->SetUniformLocation("foam");        // idx  5
-		waterShader->SetUniformLocation("reflection");  // idx  6
-		waterShader->SetUniformLocation("refraction");  // idx  7
-		waterShader->SetUniformLocation("depthmap");    // idx  8
-		waterShader->SetUniformLocation("coastmap");    // idx  9
-		waterShader->SetUniformLocation("waverand");    // idx 10
+		waterShader->SetUniformLocation("normalmap");   // idx  2, texunit 0
+		waterShader->SetUniformLocation("heightmap");   // idx  3, texunit 1
+		waterShader->SetUniformLocation("caustic");     // idx  4, texunit 2
+		waterShader->SetUniformLocation("foam");        // idx  5, texunit 3
+		waterShader->SetUniformLocation("reflection");  // idx  6, texunit 4
+		waterShader->SetUniformLocation("refraction");  // idx  7, texunit 5
+		waterShader->SetUniformLocation("depthmap");    // idx  8, texunit 7
+		waterShader->SetUniformLocation("coastmap");    // idx  9, texunit 6
+		waterShader->SetUniformLocation("waverand");    // idx 10, texunit 8
 
 		if (!waterShader->IsValid()) {
 			const char* fmt = "water-shader compilation error: %s";
