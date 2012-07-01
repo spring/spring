@@ -2066,7 +2066,7 @@ void CGameServer::PushAction(const Action& action)
 				}
 				// note: this must only compare by name
 				std::vector<GameParticipant>::iterator participantIter =
-						std::find_if( players.begin(), players.end(), bind( &GameParticipant::name, _1 ) == name );
+						std::find_if( players.begin(), players.end(), boost::bind( &GameParticipant::name, _1 ) == name );
 
 				if (participantIter != players.end()) {
 					const GameParticipant::customOpts &opts = participantIter->GetAllValues();

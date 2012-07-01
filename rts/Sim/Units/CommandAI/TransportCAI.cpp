@@ -676,7 +676,7 @@ void CTransportCAI::UnloadLand(Command& c)
 				am->ForceHeading(unloadHeading);
 				am->maxDrift = 1;
 				if ((owner->pos.SqDistance(pos) < 64) &&
-						(owner->updir.dot(UpVector) > 0.99f) && abs(owner->heading - unloadHeading) < AIRTRANSPORT_DOCKING_ANGLE) {
+						(owner->updir.dot(UpVector) > 0.99f) && fabs(owner->heading - unloadHeading) < AIRTRANSPORT_DOCKING_ANGLE) {
 					if (!SpotIsClearIgnoreSelf(pos, unit)) {
 						// chosen spot is no longer clear to land, choose a new one
 						// if a new spot cannot be found, don't unload at all
@@ -986,7 +986,7 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 				if ((c.GetID() == CMD_UNLOAD_UNITS) && fromSynced) {
 					for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
 						if (CBuilding* building = dynamic_cast<CBuilding*>(it->unit)) {
-							building->buildFacing = int(abs(c.params[4])) % NUM_FACINGS;
+							building->buildFacing = abs((int)c.params[4]) % NUM_FACINGS;
 						}
 					}
 				}
