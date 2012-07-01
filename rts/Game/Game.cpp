@@ -1508,8 +1508,8 @@ void CGame::SimFrame() {
 	{
 		const float msecMaxSimFrameTime = spring_tomsecs(1.0f / (GAME_SPEED * gs->userSpeedFactor));
 		const float msecDifSimFrameTime = spring_tomsecs(lastSimFrameTime - lastFrameTime);
-		// multiply by 0.9 to give unsynced code some execution time (10% of our sleep-budget)
-		const float msecSleepTime = (msecMaxSimFrameTime - msecDifSimFrameTime) * 0.9f;
+		// multiply by 0.5 to give unsynced code some execution time (50% of our sleep-budget)
+		const float msecSleepTime = (msecMaxSimFrameTime - msecDifSimFrameTime) * 0.5f;
 
 		if (msecSleepTime > 0.0f) {
 			spring_sleep(spring_msecs(msecSleepTime));
