@@ -31,8 +31,11 @@ int dummyStackLock = stackLockInit();
 static void SigAbrtHandler(int signal)
 {
 	// cause an exception if on windows
-	// TODO FIXME do a proper stacktrace dump here
-	*((int*)(0)) = 0;
+	LOG_L(L_ERROR, "Spring received an ABORT signal");
+
+	OutputStacktrace();
+
+	ErrorMessageBox("Abort / abnormal termination", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
 }
 
 /** Convert exception code to human readable string. */
