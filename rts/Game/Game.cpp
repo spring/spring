@@ -1506,13 +1506,13 @@ void CGame::SimFrame() {
 
 	#ifdef HEADLESS
 	{
-		const float msecMaxSimFrameTime = spring_tomsecs(1.0f / (GAME_SPEED * gs->userSpeedFactor));
-		const float msecDifSimFrameTime = spring_tomsecs(lastSimFrameTime - lastFrameTime);
+		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->userSpeedFactor);
+		const float msecDifSimFrameTime = spring_tomsecs(lastSimFrameTime) - spring_tomsecs(lastFrameTime);
 		// multiply by 0.5 to give unsynced code some execution time (50% of our sleep-budget)
 		const float msecSleepTime = (msecMaxSimFrameTime - msecDifSimFrameTime) * 0.5f;
 
 		if (msecSleepTime > 0.0f) {
-			spring_sleep(spring_msecs(msecSleepTime));
+			spring_sleep(spring_tomsecs(msecSleepTime));
 		}
 	}
 	#endif
