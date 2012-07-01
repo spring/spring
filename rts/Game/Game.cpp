@@ -1512,7 +1512,7 @@ void CGame::SimFrame() {
 		const float msecSleepTime = (msecMaxSimFrameTime - msecDifSimFrameTime) * 0.5f;
 
 		if (msecSleepTime > 0.0f) {
-			spring_sleep(spring_tomsecs(msecSleepTime));
+			spring_sleep(spring_msecs(msecSleepTime));
 		}
 	}
 	#endif
