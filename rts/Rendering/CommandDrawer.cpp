@@ -214,7 +214,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				bi.def = unitDefHandler->GetUnitDefByID(-(cmdID));
 
 				if (ci->params.size() == 4) {
-					bi.buildFacing = int(abs(ci->params[3])) % NUM_FACINGS;
+					bi.buildFacing = abs((int)ci->params[3]) % NUM_FACINGS;
 				}
 
 				bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
