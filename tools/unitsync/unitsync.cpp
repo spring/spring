@@ -169,7 +169,7 @@ static std::string lastError;
 
 static void _SetLastError(const std::string& err)
 {
-	LOG_L(L_ERROR, "error: %s", err.c_str());
+	LOG_L(L_ERROR, "%s", err.c_str());
 	lastError = err;
 }
 
