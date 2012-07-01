@@ -1502,11 +1502,22 @@ void CGame::SimFrame() {
 	playerHandler->GameFrame(gs->frameNum);
 
 	lastSimFrameTime = spring_gettime();
+	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(lastSimFrameTime - lastFrameTime)), 0.05f);
+
+	#ifdef HEADLESS
+	{
+		const float msecMaxSimFrameTime = spring_tomsecs(1.0f / (GAME_SPEED * gs->userSpeedFactor));
+		const float msecDifSimFrameTime = spring_tomsecs(lastSimFrameTime - lastFrameTime);
+		// multiply by 0.9 to give unsynced code some execution time (10% of our sleep-budget)
+		const float msecSleepTime = (msecMaxSimFrameTime - msecDifSimFrameTime) * 0.9f;
+
+		if (msecSleepTime > 0.0f) {
+			spring_sleep(spring_msecs(msecSleepTime));
+		}
+	}
+	#endif
 
 	DumpState(-1, -1, 1);
-
-	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(spring_gettime() - lastFrameTime)), 0.05f);
-
 	LEAVE_SYNCED_CODE();
 }
 
