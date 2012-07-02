@@ -14,6 +14,8 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
+#include "System/GlobalConfig.h"
+#include "lib/gml/gml_base.h"
 
 CModInfo modInfo;
 
@@ -139,7 +141,9 @@ void CModInfo::Init(const char* modArchive)
 	airLosMul = los.GetFloat("airLosMul", 1.0f);
 
 	const LuaTable system = root.SubTable("system");
-	luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
 	pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
+
+	luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
+	GML::SetCheckCallChain(globalConfig->GetMultiThreadLua() == MT_LUA_SINGLE_BATCH);
 }
 
