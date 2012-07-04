@@ -272,14 +272,11 @@ void CWeapon::Update()
 			lead *= (weaponDef->leadLimit + weaponDef->leadBonus*owner->experience) / (lead.Length() + 0.01f);
 		}
 
-		targetPos =
-			helper->GetUnitErrorPos(targetUnit, owner->allyteam, true) + lead +
-			errorVector * (weaponDef->targetMoveError * GAME_SPEED * targetUnit->speed.Length() * (1.0f - owner->limExperience));
+		const float3 errorPos = helper->GetUnitErrorPos(targetUnit, owner->allyteam, true);
+		const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * targetUnit->speed.Length() * (1.0f - owner->limExperience));
 
-		const float appHeight = ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f;
-
-		if (targetPos.y < appHeight)
-			targetPos.y = appHeight;
+		targetPos = errorPos + lead + errorVector * errorScale;
+		targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 
 		if (!weaponDef->waterweapon && targetPos.y < 1.0f)
 			targetPos.y = 1.0f;
@@ -553,30 +550,34 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 		haveUserTarget = false;
 		return false;
 	}
-
-	float3 tempTargetPos =
-		helper->GetUnitErrorPos(unit, owner->allyteam, true) +
-		errorVector * (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
-
-	const float appHeight = ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f;
-
-	if (tempTargetPos.y < appHeight)
-		tempTargetPos.y = appHeight;
+	// check if it is theoretically impossible for us to attack this unit
+	// must be done before we assign <unit> to <targetUnit>, which itself
+	// must precede the TryTarget call (since we do want to assign if it
+	// is eg. just out of range currently)
+	// note that TryTarget is also called from other places and so has to
+	// repeat this check, but the redundancy added is minimal
+	if (!(onlyTargetCategory & unit->category)) {
+		return false;
+	}
 
 	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
 
+	const float3 errorPos = helper->GetUnitErrorPos(unit, owner->allyteam, true);
+	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
+
 	haveUserTarget = userTarget;
 	targetType = Target_Unit;
 	targetUnit = unit;
-	targetPos = tempTargetPos;
+	targetPos = errorPos + errorVector * errorScale;
+	targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
 
-	return (TryTarget(tempTargetPos, userTarget, unit));
+	return (TryTarget(targetPos, userTarget, unit));
 }
 
 
