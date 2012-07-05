@@ -2,6 +2,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <boost/thread/condition.hpp>
 #include <boost/cstdint.hpp>
 
 #include "System/OpenMP_cond.h"
@@ -107,6 +108,13 @@ QTPFS::PathManager::PathManager() {
 	pmLoadThread = boost::thread(boost::bind(&PathManager::Load, this));
 	pmLoadScreen.Loop();
 	pmLoadThread.join();
+
+	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+	condThreadUpdate = new boost::condition_variable();
+	condThreadUpdated = new boost::condition_variable();
+	mutexThreadUpdate = new boost::mutex();
+	updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
+	#endif
 }
 
 QTPFS::PathManager::~PathManager() {
@@ -138,6 +146,19 @@ QTPFS::PathManager::~PathManager() {
 	numPrevExecutedSearches.clear();
 
 	PathSearch::FreeGlobalQueue();
+
+	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+	// at this point the thread is waiting, so notify it
+	// nodeLayers has been cleared and guarantees that no
+	// "final" iteration shall execute
+	condThreadUpdate->notify_one();
+	updateThread->join();
+
+	delete updateThread;
+	delete condThreadUpdate;
+	delete condThreadUpdated;
+	delete mutexThreadUpdate;
+	#endif
 }
 
 void QTPFS::PathManager::Load() {
@@ -547,44 +568,81 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 void QTPFS::PathManager::Update() {
 	SCOPED_TIMER("PathManager::Update");
 
-	// NOTE:
-	//     for a mod with N move-types, any unit will be waiting
-	//     (N / LAYERS_PER_UPDATE) sim-frames before its request
-	//     executes at a minimum
-	const unsigned int layersPerUpdateTmp = LAYERS_PER_UPDATE;
-	const unsigned int numPathTypeUpdates = std::min(static_cast<unsigned int>(nodeLayers.size()), layersPerUpdateTmp);
+	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+	streflop_init<streflop::Simple>();
 
-	static unsigned int minPathTypeUpdate = 0;
-	static unsigned int maxPathTypeUpdate = numPathTypeUpdates;
+	// allow ThreadUpdate to run one iteration
+	condThreadUpdate->notify_one();
 
-	sharedPaths.clear();
+	boost::mutex::scoped_lock lock(*mutexThreadUpdate);
 
-	for (unsigned int pathTypeUpdate = minPathTypeUpdate; pathTypeUpdate < maxPathTypeUpdate; pathTypeUpdate++) {
-		#ifndef QTPFS_IGNORE_DEAD_PATHS
-		QueueDeadPathSearches(pathTypeUpdate);
-		#endif
+	// wait for the ThreadUpdate iteration to finish
+	condThreadUpdated->wait(lock);
 
-		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		// NOTE: *must* be called between QueueDeadPathSearches and ExecuteQueuedSearches
-		ExecQueuedNodeLayerUpdates(pathTypeUpdate);
-		#endif
+	streflop_init<streflop::Simple>();
+	#else
+	ThreadUpdate();
+	#endif
+}
 
-		ExecuteQueuedSearches(pathTypeUpdate);
+void QTPFS::PathManager::ThreadUpdate() {
+	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+	while (!nodeLayers.empty()) {
+		boost::mutex::scoped_lock lock(*mutexThreadUpdate);
+
+		// wait for green light from Update
+		condThreadUpdate->wait(lock);
+
+		// if we were notified from the destructor, exit right now
+		if (nodeLayers.empty()) {
+			break;
+		}
+	#endif
+
+		// NOTE:
+		//     for a mod with N move-types, any unit will be waiting
+		//     (N / LAYERS_PER_UPDATE) sim-frames before its request
+		//     executes at a minimum
+		const unsigned int layersPerUpdateTmp = LAYERS_PER_UPDATE;
+		const unsigned int numPathTypeUpdates = std::min(static_cast<unsigned int>(nodeLayers.size()), layersPerUpdateTmp);
+
+		// NOTE: thread-safe (only ONE thread ever accesses these)
+		static unsigned int minPathTypeUpdate = 0;
+		static unsigned int maxPathTypeUpdate = numPathTypeUpdates;
+
+		sharedPaths.clear();
+
+		for (unsigned int pathTypeUpdate = minPathTypeUpdate; pathTypeUpdate < maxPathTypeUpdate; pathTypeUpdate++) {
+			#ifndef QTPFS_IGNORE_DEAD_PATHS
+			QueueDeadPathSearches(pathTypeUpdate);
+			#endif
+
+			#ifdef QTPFS_STAGGERED_LAYER_UPDATES
+			// NOTE: *must* be called between QueueDeadPathSearches and ExecuteQueuedSearches
+			ExecQueuedNodeLayerUpdates(pathTypeUpdate);
+			#endif
+
+			ExecuteQueuedSearches(pathTypeUpdate);
+		}
+
+		std::copy(numCurrExecutedSearches.begin(), numCurrExecutedSearches.end(), numPrevExecutedSearches.begin());
+
+		minPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates);
+		maxPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates);
+
+		if (minPathTypeUpdate >= nodeLayers.size()) {
+			minPathTypeUpdate = 0;
+			maxPathTypeUpdate = numPathTypeUpdates;
+		}
+		if (maxPathTypeUpdate >= nodeLayers.size()) {
+			maxPathTypeUpdate = nodeLayers.size();
+		}
+
+	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+		// tell Update we are finished with this iteration
+		condThreadUpdated->notify_one();
 	}
-
-	std::copy(numCurrExecutedSearches.begin(), numCurrExecutedSearches.end(), numPrevExecutedSearches.begin());
-
-	minPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates);
-	maxPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates);
-
-	if (minPathTypeUpdate >= nodeLayers.size()) {
-		minPathTypeUpdate = 0;
-		maxPathTypeUpdate = numPathTypeUpdates;
-		return;
-	}
-	if (maxPathTypeUpdate >= nodeLayers.size()) {
-		maxPathTypeUpdate = nodeLayers.size();
-	}
+	#endif
 }
 
 
