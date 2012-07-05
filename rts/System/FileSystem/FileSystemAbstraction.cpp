@@ -324,16 +324,12 @@ bool FileSystemAbstraction::DirExists(const std::string& dir)
 #ifdef _WIN32
 	struct _stat info;
 	std::string myDir = dir;
-	// for the root dir on a drive (for example C:\)
+	// only for the root dir on a drive (for example C:\)
 	// we need the trailing slash
-	if ((myDir.length() == 3) && (myDir[1] == ':') && ((myDir[2] != '\\') || (myDir[2] != '/'))) {
-		// do nothing
+	if (!IsFSRoot(myDir)) {
+		myDir = StripTrailingSlashes(myDir);
 	} else if ((myDir.length() == 2) && (myDir[1] == ':')) {
 		myDir += "\\";
-	} else {
-		// for any other dir (for example C:\WINDOWS\),
-		// we need to get rid of it.
-		myDir = StripTrailingSlashes(myDir);
 	}
 	const int ret = _stat(myDir.c_str(), &info);
 	dirExists = ((ret == 0) && (info.st_mode & _S_IFDIR));
