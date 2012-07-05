@@ -100,6 +100,7 @@ private:
 
 	int FindReclaimTarget(const float3& pos, float radius, unsigned char cmdopt, ReclaimOption recoptions, float bestStartDist = 1.0e30f) const;
 
+	float GetBuildRange(const float targetRadius) const;
 	bool IsInBuildRange(const CWorldObject* obj) const;
 	bool IsInBuildRange(const float3& pos, const float radius) const;
 
