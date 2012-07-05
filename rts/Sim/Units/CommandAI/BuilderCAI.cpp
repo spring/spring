@@ -215,11 +215,17 @@ void CBuilderCAI::PostLoad()
 inline float CBuilderCAI::GetBuildRange(const float targetRadius) const
 {
 	const CBuilder* builder = (CBuilder*) owner;
+
 	// for immobile:
 	// only use `buildDistance + radius` iff radius > buildDistance,
 	// and so it would be impossible to get in buildrange (collision detection with units/features)
-	const float radius = (owner->immobile) ? std::max(targetRadius - builder->buildDistance, 0.0f) : targetRadius;
-	return builder->buildDistance + radius;
+	//
+	// what does this even mean?? IMMOBILE units cannot "get in range" of anything
+	if (owner->immobile) {
+		return (builder->buildDistance + std::max(targetRadius - builder->buildDistance, 0.0f));
+	}
+
+	return (builder->buildDistance + targetRadius);
 }
 
 
@@ -260,7 +266,12 @@ bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool c
 		return false;
 	}
 
-	StopMoveAndKeepPointing(goalPos, goalRadius);
+	if (owner->unitDef->IsAirUnit()) {
+		StopMoveAndKeepPointing(pos, radius);
+	} else {
+		StopMoveAndKeepPointing(goalPos, goalRadius);
+	}
+
 	return true;
 }
 
