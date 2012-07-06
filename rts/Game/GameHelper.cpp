@@ -328,7 +328,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	#if (PLAY_SOUNDS == 1)
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
-		const int soundNum = (expPos.y < 0.0f);
+		const int soundNum = (expPos.y < 0.1f);
 		const int soundID = soundSet.getID(soundNum);
 
 		if (soundID > 0) {
