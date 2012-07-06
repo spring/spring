@@ -19,8 +19,8 @@ class CSolidObject;
 #ifdef QTPFS_ENABLE_THREADED_UPDATE
 namespace boost {
 	class thread;
-	class condition_variable;
 	class mutex;
+	class condition_variable;
 };
 #endif
 
@@ -169,9 +169,9 @@ namespace QTPFS {
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
 		boost::thread* updateThread;
+		boost::mutex* mutexThreadUpdate;
 		boost::condition_variable* condThreadUpdate;
 		boost::condition_variable* condThreadUpdated;
-		boost::mutex* mutexThreadUpdate;
 		#endif
 	};
 };

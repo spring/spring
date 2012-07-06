@@ -110,9 +110,9 @@ QTPFS::PathManager::PathManager() {
 	pmLoadThread.join();
 
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+	mutexThreadUpdate = new boost::mutex();
 	condThreadUpdate = new boost::condition_variable();
 	condThreadUpdated = new boost::condition_variable();
-	mutexThreadUpdate = new boost::mutex();
 	updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
 	#endif
 }
@@ -149,15 +149,15 @@ QTPFS::PathManager::~PathManager() {
 
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	// at this point the thread is waiting, so notify it
-	// nodeLayers has been cleared and guarantees that no
-	// "final" iteration shall execute
+	// nodeLayers has been cleared already, guaranteeing
+	// that no "final" iteration shall execute
 	condThreadUpdate->notify_one();
 	updateThread->join();
 
 	delete updateThread;
+	delete mutexThreadUpdate;
 	delete condThreadUpdate;
 	delete condThreadUpdated;
-	delete mutexThreadUpdate;
 	#endif
 }
 
@@ -593,7 +593,9 @@ void QTPFS::PathManager::ThreadUpdate() {
 		// wait for green light from Update
 		condThreadUpdate->wait(lock);
 
-		// if we were notified from the destructor, exit right now
+		// if we were notified from the destructor, then structures
+		// are no longer valid and there is no point to finish this
+		// iteration --> break early to avoid crashing
 		if (nodeLayers.empty()) {
 			break;
 		}
