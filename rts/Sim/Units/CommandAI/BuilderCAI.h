@@ -76,12 +76,10 @@ private:
 
 private:
 	/**
-	 * @param noResCheck no resources check
-	 * @param recUnits reclaims units and features
-	 * @param recNonRez reclaims non resurrectable only
-	 * @param recEnemy reclaims enemy units
-	 * @param recEnemyOnly reclaims enemy units only
-	 * @param recSpecial reclaims also non autoreclaimable, metal first
+	 * @param pos position where to reclaim
+	 * @param radius radius to search for objects to reclaim
+	 * @param cmdopts command options
+	 * @param recoptions reclaim optioons
 	 */
 	bool FindReclaimTargetAndReclaim(const float3& pos, float radius, unsigned char cmdopt, ReclaimOption recoptions);
 	/**
