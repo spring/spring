@@ -13,8 +13,8 @@
 #include "Rendering/Env/CubeMapHandler.h"
 #include "System/Config/ConfigHandler.h"
 
-CONFIG(int, CubeTexSizeSpecular).defaultValue(128);
-CONFIG(int, CubeTexSizeReflection).defaultValue(128);
+CONFIG(int, CubeTexSizeSpecular).defaultValue(128).minimumValue(1);
+CONFIG(int, CubeTexSizeReflection).defaultValue(128).minimumValue(1);
 
 static char cameraMemBuf[sizeof(CCamera)];
 
