@@ -73,8 +73,6 @@ Simulation:
  - don't reclaim in-the-way features when the buildee is going to morph into a feature of the same type
    (fixes the ancient bug where ordering a row of features with N > 1 builders causes each to be reclaimed and then immediately rebuilt)
  - do not apply impulse to units being transported
- - WeaponDef: support 'soundHitWet{Volume}' keys for in-water explosion sounds
-   (the 'soundHit' key is now deprecated in favor of 'soundHitDry')
  - make falling wreckage (from aircraft) not lose all its forward speed
  - make ground units consume waypoints less aggressively
  - remove special treatment for collisions between mutually-pushResistant objects for 3031
@@ -134,6 +132,8 @@ UI:
 Sound:
  ! all items in sounds.lua are now converted to lowercase
  - allow to create a new "default" item in sounds.lua
+ - WeaponDef: support 'soundHitWet{Volume}' keys for in-water explosion sounds
+   (the 'soundHit' key is now deprecated in favor of 'soundHitDry')
 
 Windows:
  - set IMAGE_FILE_LARGE_ADDRESS_AWARE (increased >2GB memory limit)
