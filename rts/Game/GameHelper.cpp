@@ -327,11 +327,10 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 	#if (PLAY_SOUNDS == 1)
 	if (weaponDef != NULL) {
-		const unsigned int flags = CCustomExplosionGenerator::GetFlagsFromHeight(expPos.y, altitude);
-		const bool wet = flags & (CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER);
-
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
-		const int soundNum = wet ? 1 : 0;
+
+		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(expPos.y, altitude);
+		const int soundNum = ((soundFlags & (CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER)) != 0);
 		const int soundID = soundSet.getID(soundNum);
 
 		if (soundID > 0) {
@@ -675,7 +674,13 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				if (!(targetUnit->category & weapon->onlyTargetCategory)) {
 					continue;
 				}
-
+				if (targetUnit->GetTransporter() != NULL) {
+					if (!modInfo.targetableTransportedUnits)
+						continue;
+					// the transportee might be "hidden" below terrain, in which case we can't target it
+					if (targetUnit->pos.y < ground->GetHeightReal(targetUnit->pos.x, targetUnit->pos.z))
+						continue;
+				}
 				if (tempTargetUnits[targetUnit->id] == tempNum) {
 					continue;
 				}
