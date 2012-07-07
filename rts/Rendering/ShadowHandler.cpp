@@ -28,7 +28,7 @@
 #define SHADOWMATRIX_NONLINEAR      0
 
 CONFIG(int, Shadows).defaultValue(0);
-CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE);
+CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(1);
 CONFIG(int, ShadowProjectionMode).defaultValue(CShadowHandler::SHADOWPROMODE_CAM_CENTER);
 
 CShadowHandler* shadowHandler = NULL;
