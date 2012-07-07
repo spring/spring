@@ -117,6 +117,8 @@ void CModInfo::Init(const char* modArchive)
 		transportShip   = transportTbl.GetInt("transportShip",  false);
 		transportHover  = transportTbl.GetInt("transportHover", false);
 		transportGround = transportTbl.GetInt("transportGround", true);
+
+		targetableTransportedUnits = transportTbl.GetInt("targetableTransportedUnits", false);
 	}
 
 	{

@@ -1032,6 +1032,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 	}
 
 	owner->physicalState = CSolidObject::Flying;
+	owner->isMoving = (aircraftState != AIRCRAFT_LANDED);
 	owner->useAirLos = true;
 
 	switch (aircraftState) {
@@ -1062,7 +1063,6 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 	// this checks our physicalState, and blocks only
 	// if not flying (otherwise unblocks and returns)
 	owner->Block();
-	owner->isMoving = (aircraftState != AIRCRAFT_LANDED);
 }
 
 

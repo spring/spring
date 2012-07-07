@@ -7,6 +7,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Units/Unit.h"
@@ -459,7 +460,9 @@ void CAirCAI::ExecuteAttack(Command& c)
 
 			if (targetUnit == NULL) { FinishCommand(); return; }
 			if (targetUnit == owner) { FinishCommand(); return; }
-			if (targetUnit->GetTransporter() != NULL) { FinishCommand(); return; }
+			if (targetUnit->GetTransporter() != NULL && !modInfo.targetableTransportedUnits) {
+				FinishCommand(); return;
+			}
 
 			SetGoal(targetUnit->pos, owner->pos, cancelDistance);
 			SetOrderTarget(targetUnit);
