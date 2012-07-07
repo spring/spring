@@ -619,6 +619,16 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 }
 
 
+bool CBuilderCAI::TargetInterceptable(CUnit *unit, float uspeed) {
+	// if the target is moving away at a higher speed than we can manage, there is little point in chasing it
+	const float& maxSpeed = owner->moveType->GetMaxSpeed();
+	if (uspeed <= maxSpeed)
+		return true;
+	const float3& unitToPos = unit->pos - owner->pos;
+	return unitToPos.dot2D(unit->speed) <= unitToPos.Length2D() * maxSpeed;
+}
+
+
 void CBuilderCAI::ExecuteRepair(Command& c)
 {
 	// not all builders are repair-capable by default
@@ -649,8 +659,9 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			const float3 pos(c.params[1], c.params[2], c.params[3]);
 			const float radius = c.params[4] + 100.0f; // do not walk too far outside repair area
 
-			if (((pos - unit->pos).SqLength2D() > radius * radius ||
-				(builder->curBuild == unit && unit->isMoving && !IsInBuildRange(unit)))) {
+			if ((pos - unit->pos).SqLength2D() > radius * radius ||
+				(unit->isMoving && (((c.options & INTERNAL_ORDER) && !TargetInterceptable(unit, unit->speed.Length2D())) || builder->curBuild == unit)
+				&& !IsInBuildRange(unit))) {
 				StopMove();
 				FinishCommand();
 				return;
@@ -1650,6 +1661,8 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 	bool haveEnemy = false;
 	bool trySelfRepair = false;
 	bool stationary = false;
+	const float& maxSpeed = owner->moveType->GetMaxSpeed();
+	float uspeed = 0.0f;
 
 	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
@@ -1687,9 +1700,16 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				}
 
 				float dist = f3SqDist(unit->pos, owner->pos);
+				if (unit->isMoving) {
+					uspeed = unit->speed.Length2D();
+					dist *= 1.0f + std::max(uspeed - maxSpeed, 0.0f); // avoid targets that are faster than our max speed
+				}
 				if (dist < bestDist || (!stationary && !unit->isMoving)) {
 					// dont lock-on to units outside of our reach (for immobile builders)
 					if (owner->immobile && !IsInBuildRange(unit)) {
+						continue;
+					}
+					if (unit->isMoving && !TargetInterceptable(unit, uspeed)) {
 						continue;
 					}
 					// don't repair stuff that's being reclaimed
