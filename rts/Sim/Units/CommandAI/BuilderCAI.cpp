@@ -1706,10 +1706,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				}
 				if (dist < bestDist || (!stationary && !unit->isMoving)) {
 					// dont lock-on to units outside of our reach (for immobile builders)
-					if (owner->immobile && !IsInBuildRange(unit)) {
-						continue;
-					}
-					if (unit->isMoving && !TargetInterceptable(unit, uspeed)) {
+					if ((owner->immobile || (unit->isMoving && !TargetInterceptable(unit, uspeed))) && !IsInBuildRange(unit)) {
 						continue;
 					}
 					// don't repair stuff that's being reclaimed
