@@ -34,6 +34,7 @@ public:
 	void FinishCommand();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void BuggerOff(const float3& pos, float radius);
+	bool TargetInterceptable(CUnit *unit, float uspeed);
 
 	void ExecuteBuildCmd(Command& c);
 	void ExecutePatrol(Command& c);
