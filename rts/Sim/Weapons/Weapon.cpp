@@ -519,8 +519,9 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 
 bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 {
-	if ((!userTarget && weaponDef->noAutoTarget))
+	if ((!userTarget && weaponDef->noAutoTarget)) {
 		return false;
+	}
 	if (weaponDef->interceptor)
 		return false;
 
@@ -587,8 +588,12 @@ void CWeapon::HoldFire()
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
+
 	targetType = Target_None;
-	haveUserTarget = false;
+	// don't set this to false, otherwise a subsequent
+	// call to AttackUnit from Unit::SlowUpdateWeapons
+	// will abort the attack for noAutoTarget weapons
+	// haveUserTarget = false;
 }
 
 

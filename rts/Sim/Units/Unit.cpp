@@ -1002,11 +1002,16 @@ void CUnit::SlowUpdateWeapons() {
 		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 			CWeapon* w = *wi;
 
-			// NOTE:
-			//     w->haveUserTarget can only be true if ::AttackUnit
-			//     was called with a non-NULL target-unit AND the CAI
-			//     did not auto-select it
-			if (!w->haveUserTarget) {
+			w->SlowUpdate();
+
+			if (w->haveUserTarget) {
+				// do not interfere with user targets
+				w->AttackUnit(attackTarget, true);
+			} else {
+				// NOTE:
+				//     w->haveUserTarget can only be true if ::AttackUnit
+				//     was called with a non-NULL target-unit AND the CAI
+				//     did not auto-select it
 				if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
 					if (attackTarget != NULL) {
 						w->AttackUnit(attackTarget, false);
@@ -1014,21 +1019,19 @@ void CUnit::SlowUpdateWeapons() {
 						w->AttackGround(attackPos, true);
 					}
 				}
+
+				if (lastAttacker == NULL)
+					continue;
+				if ((lastAttack + 200) <= gs->frameNum)
+					continue;
+				if (w->targetType != Target_None)
+					continue;
+				if (fireState == FIRESTATE_HOLDFIRE)
+					continue;
+
+				// return fire at our last attacker if allowed
+				w->AttackUnit(lastAttacker, false);
 			}
-
-			w->SlowUpdate();
-
-			if (lastAttacker == NULL)
-				continue;
-			if ((lastAttack + 200) <= gs->frameNum)
-				continue;
-			if (w->targetType != Target_None)
-				continue;
-			if (fireState == FIRESTATE_HOLDFIRE)
-				continue;
-
-			// return fire at our last attacker if allowed
-			w->AttackUnit(lastAttacker, false);
 		}
 	}
 }
