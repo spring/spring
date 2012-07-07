@@ -547,6 +547,7 @@
     <ClInclude Include="..\..\Game\Camera\TWController.h" />
     <ClInclude Include="..\..\Game\Server\GameParticipant.h" />
     <ClInclude Include="..\..\Game\Server\MsgStrings.h" />
+    <ClInclude Include="..\..\Lua\LuaIntro.h" />
     <ClInclude Include="..\..\Rendering\AVIGenerator.h" />
     <ClInclude Include="..\..\Rendering\Colors.h" />
     <ClInclude Include="..\..\Rendering\DebugColVolDrawer.h" />
@@ -989,7 +990,6 @@
     <ClInclude Include="..\..\Lua\LuaHashString.h" />
     <ClInclude Include="..\..\Lua\LuaInputReceiver.h" />
     <ClInclude Include="..\..\Lua\LuaIO.h" />
-    <ClInclude Include="..\..\Lua\LuaLoadScreen.h" />
     <ClInclude Include="..\..\Lua\LuaLobby.h" />
     <ClInclude Include="..\..\Lua\LuaMaterial.h" />
     <ClInclude Include="..\..\Lua\LuaMetalMap.h" />
@@ -1583,6 +1583,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\Game\Server\GameParticipant.cpp" />
+    <ClCompile Include="..\..\Lua\LuaIntro.cpp" />
     <ClCompile Include="..\..\Rendering\AVIGenerator.cpp" />
     <ClCompile Include="..\..\Rendering\CommandDrawer.cpp" />
     <ClCompile Include="..\..\Rendering\DebugColVolDrawer.cpp" />
@@ -2748,7 +2749,6 @@
     <ClCompile Include="..\..\Lua\LuaHandleSynced.cpp" />
     <ClCompile Include="..\..\Lua\LuaInputReceiver.cpp" />
     <ClCompile Include="..\..\Lua\LuaIO.cpp" />
-    <ClCompile Include="..\..\Lua\LuaLoadScreen.cpp" />
     <ClCompile Include="..\..\Lua\LuaLobby.cpp" />
     <ClCompile Include="..\..\Lua\LuaMaterial.cpp" />
     <ClCompile Include="..\..\Lua\LuaMetalMap.cpp" />
