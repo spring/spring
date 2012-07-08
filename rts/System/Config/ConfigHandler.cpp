@@ -44,7 +44,6 @@ public:
 	string GetConfigFile() const;
 	const StringMap GetData() const;
 	void Update();
-	void EnableWriting(bool write) { writingEnabled = write; }
 
 protected:
 	void AddObserver(ConfigNotifyCallback observer);
@@ -61,7 +60,6 @@ private:
 	list<ConfigNotifyCallback> observers;
 	boost::mutex observerMutex;
 	StringMap changedValues;
-	bool writingEnabled;
 };
 
 /******************************************************************************/
@@ -81,7 +79,6 @@ private:
  */
 ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool safemode)
 {
-	writingEnabled = true;
 	overlay = new OverlayConfigSource();
 	writableSource = new FileConfigSource(locations.front());
 
@@ -236,7 +233,7 @@ void ConfigHandlerImpl::SetString(const string& key, const string& value, bool u
 	if (useOverlay) {
 		overlay->SetString(key, value);
 	}
-	else if (writingEnabled) {
+	else {
 		vector<ReadOnlyConfigSource*>::const_iterator it = sources.begin();
 		bool deleted = false;
 
