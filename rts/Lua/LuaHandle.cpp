@@ -1606,7 +1606,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitUnitCollision(e.unit1, e.unit2);
 				break;
 			case UNIT_STOCKPILE_CHANGED:
-				StockpileChanged(e.unit1, (CWeapon *)e.unit2, e.int1);
+				StockpileChanged(e.unit1, reinterpret_cast<const CWeapon*>(e.unit2), e.int1);
 				break;
 			default:
 				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);

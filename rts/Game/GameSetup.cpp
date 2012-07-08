@@ -308,10 +308,10 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 	}
 
 	unsigned allyCount = 0;
-	if (!file.GetValue(allyCount, "GAME\\NumAllyTeams") || (allyStartingData.size() == allyCount)) {
-		;
-	} else {
-		LOG_L(L_WARNING, "Incorrect number of allyteams in GameSetup script");
+	if (file.GetValue(allyCount, "GAME\\NumAllyTeams")
+			&& (allyStartingData.size() != allyCount))
+	{
+		LOG_L(L_WARNING, "Incorrect number of ally teams in GameSetup script");
 	}
 }
 
