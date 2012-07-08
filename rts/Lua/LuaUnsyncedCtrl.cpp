@@ -1793,9 +1793,7 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 
 	lua_settop(L, 0); // pop the input arguments
 
-	configHandler->EnableWriting(false); // lua invoked console commands should not permanently change the user settings
-	guihandler->RunCustomCommands(cmds, false);
-	configHandler->EnableWriting(true);
+	guihandler->RunCustomCommands(cmds, false, true);
 
 	return 0;
 }
