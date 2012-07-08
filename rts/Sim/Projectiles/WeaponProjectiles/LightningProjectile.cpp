@@ -132,11 +132,11 @@ void CLightningProjectile::Draw()
 void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	const unsigned char lcolor[4] = {
-			(unsigned char)color[0] * 255,
-			(unsigned char)color[1] * 255,
-			(unsigned char)color[2] * 255,
-			1                       * 255
-			};
+		(unsigned char)(color[0] * 255),
+		(unsigned char)(color[1] * 255),
+		(unsigned char)(color[2] * 255),
+		                           255
+	};
 	lines.AddVertexQC(pos,    lcolor);
 	lines.AddVertexQC(endPos, lcolor);
 }

@@ -230,7 +230,7 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
 
-	unsigned char color[4] = {255, 255, 255, int(decal->alpha * 255)};
+	unsigned char color[4] = {255, 255, 255, (unsigned char)(decal->alpha * 255)};
 
 	#ifndef DEBUG
 	#define HEIGHT(z, x) (hm[((z) * gsmx1) + (x)])

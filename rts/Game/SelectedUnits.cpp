@@ -499,21 +499,30 @@ void CSelectedUnits::Draw()
 				float3(unit->drawPos.x + mhxsize, unit->drawPos.y, unit->drawPos.z - mhzsize),
 			};
 
-			const unsigned char colors[2][4] = {
-				{(0.0f + cmdColors.unitBox[0]) * 255, (0.0f + cmdColors.unitBox[1]) * 255, (0.0f + cmdColors.unitBox[2] * 255), cmdColors.unitBox[3] * 255},
-				{(1.0f - cmdColors.unitBox[0]) * 255, (1.0f - cmdColors.unitBox[1]) * 255, (1.0f - cmdColors.unitBox[2] * 255), cmdColors.unitBox[3] * 255},
+			const unsigned char color1[4] = {
+				(unsigned char)( cmdColors.unitBox[0] * 255 ),
+				(unsigned char)( cmdColors.unitBox[1] * 255 ),
+				(unsigned char)( cmdColors.unitBox[2] * 255 ),
+				(unsigned char)( cmdColors.unitBox[3] * 255 )
 			};
 
-			va->AddVertexQC(verts[0], colors[0]);
-			va->AddVertexQC(verts[1], colors[0]);
-			va->AddVertexQC(verts[2], colors[0]);
-			va->AddVertexQC(verts[3], colors[0]);
+			va->AddVertexQC(verts[0], color1);
+			va->AddVertexQC(verts[1], color1);
+			va->AddVertexQC(verts[2], color1);
+			va->AddVertexQC(verts[3], color1);
 
 			if (globalRendering->drawdebug && (mhxsize != uhxsize || mhzsize != uhzsize)) {
-				va->AddVertexQC(verts[4], colors[1]);
-				va->AddVertexQC(verts[5], colors[1]);
-				va->AddVertexQC(verts[6], colors[1]);
-				va->AddVertexQC(verts[7], colors[1]);
+				const unsigned char color2[4] = {
+					(unsigned char)( (1.0f - cmdColors.unitBox[0]) * 255 ),
+					(unsigned char)( (1.0f - cmdColors.unitBox[1]) * 255 ),
+					(unsigned char)( (1.0f - cmdColors.unitBox[2]) * 255 ),
+					(unsigned char)( cmdColors.unitBox[3] * 255 )
+				};
+
+				va->AddVertexQC(verts[4], color2);
+				va->AddVertexQC(verts[5], color2);
+				va->AddVertexQC(verts[6], color2);
+				va->AddVertexQC(verts[7], color2);
 			}
 		}
 

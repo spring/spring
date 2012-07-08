@@ -161,7 +161,7 @@ void CStandardGroundFlash::Draw()
 		color[0],
 		color[1],
 		color[2],
-		iAlpha * 255,
+		(unsigned char)(iAlpha * 255),
 	};
 
 	const float iSize = circleSize + circleGrowth * globalRendering->timeOffset;

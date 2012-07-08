@@ -291,10 +291,10 @@ void ShieldSegmentProjectile::Draw() {
 		return;
 
 	const unsigned char segmentColorRGBA[4] = {
-		segmentColor.x * segmentAlpha * 255,
-		segmentColor.y * segmentAlpha * 255,
-		segmentColor.z * segmentAlpha * 255,
-		                 segmentAlpha * 255,
+		(unsigned char)( segmentColor.x * segmentAlpha * 255 ),
+		(unsigned char)( segmentColor.y * segmentAlpha * 255 ),
+		(unsigned char)( segmentColor.z * segmentAlpha * 255 ),
+		(unsigned char)(                  segmentAlpha * 255 ),
 	};
 
 	inArray = true;

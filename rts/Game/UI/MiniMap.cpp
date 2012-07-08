@@ -1181,10 +1181,10 @@ void CMiniMap::DrawForReal(bool use_geo)
 		glLoadIdentity();
 		glScalef(1.0f / width, 1.0f / height, 1.0f);
 
-		const double plane0[4] = {0,-1,0,height};
-		const double plane1[4] = {0,1,0,0};
-		const double plane2[4] = {-1,0,0,width};
-		const double plane3[4] = {1,0,0,0};
+		const double plane0[4] = {0, -1, 0, double(height)};
+		const double plane1[4] = {0, 1, 0, 0};
+		const double plane2[4] = {-1, 0, 0, double(width)};
+		const double plane3[4] = {1, 0, 0, 0};
 
 		glClipPlane(GL_CLIP_PLANE0, plane0); // clip bottom
 		glClipPlane(GL_CLIP_PLANE1, plane1); // clip top
