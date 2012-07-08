@@ -28,7 +28,7 @@ public:
 	void DependentDied(CObject* o);
 	inline void SetOrderTarget(CUnit* o);
 
-	void SetScriptMaxSpeed(float speed);
+	void SetScriptMaxSpeed(float speed, bool persistent);
 	void SlowUpdateMaxSpeed();
 
 	virtual void AddDeathDependence(CObject* o, DependenceType dep);
