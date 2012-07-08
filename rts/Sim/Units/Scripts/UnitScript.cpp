@@ -1529,7 +1529,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case MAX_SPEED: {
 			if (param > 0) {
-				unit->commandAI->SetScriptMaxSpeed(param / (float) COBSCALE);
+				unit->commandAI->SetScriptMaxSpeed(param / (float) COBSCALE, true);
 			}
 			break;
 		}
