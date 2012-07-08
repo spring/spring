@@ -1,7 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifdef _MSC_VER
-#include "System/Platform/Win/win32.h"
+#	include "System/Platform/Win/win32.h"
+#	ifndef S_ISDIR
+#		define S_ISDIR(m) (((m) & 0170000) == 0040000)
+#	endif
 #endif
 
 #include "FileSystemAbstraction.h"
