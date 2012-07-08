@@ -258,7 +258,7 @@ void DebugDrawerAI::Graph::Clear() {
 
 
 void DebugDrawerAI::Graph::Draw() {
-	static unsigned char color[4] = {0.75f * 255, 0.75f * 255, 0.75f * 255, 0.5f * 255};
+	unsigned char color[4];
 
 	CVertexArray* va = GetVertexArray();
 
