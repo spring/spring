@@ -168,6 +168,11 @@ size_t FileSystemAbstraction::GetFileSize(const std::string& file)
 
 bool FileSystemAbstraction::IsReadableFile(const std::string& file)
 {
+	// Exclude directories!
+	if (!FileExists(file)) {
+		return false;
+	}
+
 #ifdef WIN32
 	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);
 #else
@@ -226,7 +231,7 @@ std::string FileSystemAbstraction::GetFileModificationDate(const std::string& fi
 
 	const int fetchOk = stat(file.c_str(), &attrib); // get the attributes of file
 	if (fetchOk != 0) {
-		LOG_L(L_WARNING, "Failed opening file for retreiving last modification time: %s", file.c_str());
+		LOG_L(L_WARNING, "Failed opening file for retrieving last modification time: %s", file.c_str());
 	} else {
 		// Get the last modified time and put it into the time structure
 		clock = gmtime(&(attrib.st_mtime));
