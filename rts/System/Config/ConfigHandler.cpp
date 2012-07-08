@@ -222,6 +222,8 @@ string ConfigHandlerImpl::GetString(const string& key) const
  */
 void ConfigHandlerImpl::SetString(const string& key, const string& value, bool useOverlay)
 {
+	if (!writingEnabled)
+		return;
 	// if we set something to be persisted,
 	// we do want to override the overlay value
 	if (!useOverlay) {
@@ -236,7 +238,7 @@ void ConfigHandlerImpl::SetString(const string& key, const string& value, bool u
 	if (useOverlay) {
 		overlay->SetString(key, value);
 	}
-	else if (writingEnabled) {
+	else {
 		vector<ReadOnlyConfigSource*>::const_iterator it = sources.begin();
 		bool deleted = false;
 
