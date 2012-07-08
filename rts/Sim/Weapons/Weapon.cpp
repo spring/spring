@@ -1129,8 +1129,10 @@ void CWeapon::Fire()
 	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
 	FireImpl();
-	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
+
+	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1)) {
 		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
+	}
 }
 
 void CWeapon::UpdateInterceptTarget(void)

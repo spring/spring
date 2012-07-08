@@ -202,10 +202,14 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.cameraShake = wdTable.GetFloat("cameraShake", defShake);
 	wd.cameraShake = max(0.0f, wd.cameraShake);
 
-	// 0.78.2.1 backwards compatibility
-	bool defaultSoundTrigger = (wd.type == "BeamLaser" && !wd.beamburst) || 
-								wd.type == "Melee"  || wd.type == "Rifle";
-	wd.soundTrigger = wdTable.GetBool("soundTrigger", defaultSoundTrigger);
+	{
+		// 0.78.2.1 backwards compatibility: non-burst beamlasers play one
+		// sample per shot, not for each individual beam making up the shot
+		const bool singleSampleShot = (wd.type == "BeamLaser" && !wd.beamburst);
+		const bool singleShotWeapon = (wd.type == "Melee" || wd.type == "Rifle");
+
+		wd.soundTrigger = wdTable.GetBool("soundTrigger", singleSampleShot || singleShotWeapon);
+	}
 
 	//sunparser->GetDef(wd.highTrajectory, "0", weaponname + "minbarrelangle");
 	wd.stockpile     = wdTable.GetBool("stockpile", false);
@@ -441,9 +445,9 @@ void CWeaponDefHandler::ParseWeaponVisuals(const LuaTable& wdTable, WeaponDef& w
 }
 
 void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd) {
-	LoadSound(wdTable, wd.fireSound, "start");
-	LoadSound(wdTable, wd.hitSound, "hitDry"); // idx 0
-	LoadSound(wdTable, wd.hitSound, "hitWet"); // idx 1
+	LoadSound(wdTable, "soundStart",  0, wd.fireSound.sounds);
+	LoadSound(wdTable, "soundHitDry", 0, wd.hitSound.sounds);
+	LoadSound(wdTable, "soundHitWet", 1, wd.hitSound.sounds);
 
 	// FIXME: do we still want or need any of this?
 	const bool forceSetVolume =
@@ -487,31 +491,38 @@ void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd
 
 
 
-void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
-                                  GuiSoundSet& gsound, const string& soundCat)
+void CWeaponDefHandler::LoadSound(
+	const LuaTable& wdTable,
+	const string& soundKey,
+	const unsigned int soundIdx,
+	std::vector<GuiSoundSet::Data>& soundData)
 {
 	string name = "";
+	int id = -1;
 	float volume = -1.0f;
 
-	if (soundCat == "start") {
-		name   = wdTable.GetString("soundStart", "");
-		volume = wdTable.GetFloat("soundStartVolume", -1.0f);
+	soundData.push_back(GuiSoundSet::Data(name, id, volume));
+	assert(soundIdx < soundData.size());
+	assert(soundData[soundIdx].id == -1);
+
+	if (soundKey == "soundStart") {
+		name   = wdTable.GetString(soundKey, "");
+		volume = wdTable.GetFloat(soundKey + "Volume", -1.0f);
 	}
-	else if (soundCat == "hitDry") {
-		name   = wdTable.GetString("soundHitDry", wdTable.GetString("soundHit", ""));
-		volume = wdTable.GetFloat("soundHitDryVolume", wdTable.GetFloat("soundHitVolume", -1.0f));
+	else if (soundKey == "soundHitDry") {
+		name   = wdTable.GetString(soundKey, wdTable.GetString("soundHit", ""));
+		volume = wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f));
 	}
-	else if (soundCat == "hitWet") {
-		name   = wdTable.GetString("soundHitWet", wdTable.GetString("soundHit", ""));
-		volume = wdTable.GetFloat("soundHitWetVolume", wdTable.GetFloat("soundHitVolume", -1.0f));
+	else if (soundKey == "soundHitWet") {
+		name   = wdTable.GetString(soundKey, wdTable.GetString("soundHit", ""));
+		volume = wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f));
 	}
 
-	if (!name.empty()) {
-		const int id = LoadSoundFile(name);
+	if (name.empty())
+		return;
 
-		if (id > 0) {
-			gsound.sounds.push_back(GuiSoundSet::Data(name, id, volume));
-		}
+	if ((id = LoadSoundFile(name)) > 0) {
+		soundData[soundIdx] = GuiSoundSet::Data(name, id, volume);
 	}
 }
 
