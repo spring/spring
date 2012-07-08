@@ -1422,7 +1422,7 @@ static bool CheckCustomCmdMods(bool rightMouseButton, ModGroup& inMods)
 }
 
 
-void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rightMouseButton)
+void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rightMouseButton, bool protectedMode)
 {
 //	GML_RECMUTEX_LOCK(gui); // RunCustomCommands - called from LuaUnsyncedCtrl::SendCommands
 
@@ -1431,6 +1431,9 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 		return; // recursion protection
 	}
 	depth++;
+
+	if (protectedMode) // lua invoked console commands should not permanently change the user settings
+		configHandler->EnableWriting(false);
 
 	for (int p = 0; p < (int)cmds.size(); p++) {
 		std::string copy = cmds[p];
@@ -1464,6 +1467,10 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 			}
 		}
 	}
+
+	if (protectedMode)
+		configHandler->EnableWriting(true);
+
 	depth--;
 }
 
