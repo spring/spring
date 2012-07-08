@@ -69,7 +69,7 @@ public:
 	int GetActivePage() const { return activePage; }
 
 	void RunLayoutCommand(const std::string& command);
-	void RunCustomCommands(const std::vector<std::string>& cmds, bool rightMouseButton, bool protectedMode = false);
+	void RunCustomCommands(const std::vector<std::string>& cmds, bool rightMouseButton);
 
 	bool GetInvertQueueKey() const { return invertQueueKey; }
 	void SetInvertQueueKey(bool value) { invertQueueKey = value; }

@@ -1793,7 +1793,7 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 
 	lua_settop(L, 0); // pop the input arguments
 
-	guihandler->RunCustomCommands(cmds, false, true);
+	guihandler->RunCustomCommands(cmds, false);
 
 	return 0;
 }
