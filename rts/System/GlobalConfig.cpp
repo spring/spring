@@ -59,6 +59,9 @@ CONFIG(int, TeamHighlight)
 CONFIG(bool, EnableDrawCallIns)
 	.defaultValue(true);
 
+CONFIG(bool, LuaWritableConfigFile)
+	.defaultValue(true);
+
 CONFIG(int, MultiThreadLua)
 	.defaultValue(MT_LUA_DEFAULT)
 	.minimumValue(MT_LUA_FIRST)
@@ -89,6 +92,8 @@ GlobalConfig::GlobalConfig()
 		linkIncomingSustainedBandwidth = linkIncomingPeakBandwidth;
 	if (linkIncomingMaxPacketRate > 0 && linkIncomingSustainedBandwidth <= 0)
 		linkIncomingSustainedBandwidth = linkIncomingPeakBandwidth = 1024 * 1024;
+
+	luaWritableConfigFile = configHandler->GetBool("LuaWritableConfigFile");
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	enableDrawCallIns = configHandler->GetBool("EnableDrawCallIns");
