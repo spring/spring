@@ -479,10 +479,10 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 		const float3 pos1(cmd.params[3], cmd.params[4], cmd.params[5]);
 		SelectRectangleUnits(pos0, pos1, targets, player);
 	}
-	const int targetsCount = (int)targets.size();
-	if (targets.size() <= 0) {
+	if (targets.empty()) {
 		return;
 	}
+	const int targetsCount = (int)targets.size();
 
 	const std::vector<int>& selected = selectedUnits.netSelected[player];
 	const int selectedCount = (int)selected.size();

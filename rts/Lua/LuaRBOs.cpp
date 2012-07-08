@@ -65,7 +65,7 @@ bool LuaRBOs::CreateMetatable(lua_State* L)
 
 const LuaRBOs::RBO* LuaRBOs::GetLuaRBO(lua_State* L, int index)
 {
-	return (RBO*)LuaUtils::GetUserData(L, index, "RBO");
+	return static_cast<RBO*>(LuaUtils::GetUserData(L, index, "RBO"));
 }
 
 
@@ -100,7 +100,7 @@ void LuaRBOs::RBO::Free(lua_State *L)
 
 int LuaRBOs::meta_gc(lua_State* L)
 {
-	RBO* rbo = (RBO*)luaL_checkudata(L, 1, "RBO");
+	RBO* rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
 	rbo->Free(L);
 	return 0;
 }
@@ -108,7 +108,7 @@ int LuaRBOs::meta_gc(lua_State* L)
 
 int LuaRBOs::meta_index(lua_State* L)
 {
-	const RBO* rbo = (RBO*)luaL_checkudata(L, 1, "RBO");
+	const RBO* rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
 	const string key = luaL_checkstring(L, 2);
 	if (key == "valid") {
 		lua_pushboolean(L, glIsRenderbufferEXT(rbo->id));
@@ -165,7 +165,7 @@ int LuaRBOs::CreateRBO(lua_State* L)
 	
 	glBindRenderbufferEXT(rbo.target, 0);
 
-	RBO* rboPtr = (RBO*)lua_newuserdata(L, sizeof(RBO));
+	RBO* rboPtr = static_cast<RBO*>(lua_newuserdata(L, sizeof(RBO)));
 	*rboPtr = rbo;
 
 	luaL_getmetatable(L, "RBO");
@@ -184,7 +184,7 @@ int LuaRBOs::DeleteRBO(lua_State* L)
 	if (lua_isnil(L, 1)) {
 		return 0;
 	}
-	RBO* rbo = (RBO*)luaL_checkudata(L, 1, "RBO");
+	RBO* rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
 	rbo->Free(L);
 	return 0;
 }

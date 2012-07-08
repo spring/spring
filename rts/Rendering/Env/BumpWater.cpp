@@ -204,7 +204,7 @@ CBumpWater::CBumpWater()
 
 	//! caustic textures
 	const vector<string>& causticNames = mapInfo->water.causticTextures;
-	if (causticNames.size() <= 0) {
+	if (causticNames.empty()) {
 		throw content_error("["LOG_SECTION_BUMP_WATER"] no caustic textures");
 	}
 	for (int i = 0; i < (int)causticNames.size(); ++i) {

@@ -106,10 +106,12 @@ static inline void DrawObjectMidPosAndAimPos(const CSolidObject* o)
 
 static inline void DrawFeatureColVol(const CFeature* f)
 {
+	const CollisionVolume* v = f->collisionVolume;
+
+	if (v == NULL) return;
 	if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) return;
 	if (!camera->InView(f->pos, f->drawRadius)) return;
 
-	const CollisionVolume* v = f->collisionVolume;
 	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
 	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - f->radius) >= 1.0f);
 
@@ -117,17 +119,15 @@ static inline void DrawFeatureColVol(const CFeature* f)
 		glMultMatrixf(f->transMatrix.m);
 		DrawObjectMidPosAndAimPos(f);
 
-		if (v != NULL) {
-			if (!v->IsDisabled()) {
-				DrawCollisionVolume(v);
-			}
+		if (!v->IsDisabled()) {
+			DrawCollisionVolume(v);
+		}
 
-			if (vCustomType || vCustomDims) {
-				// assume this is a custom volume
-				glColor3f(0.5f, 0.5f, 0.5f);
-				glScalef(f->radius, f->radius, f->radius);
-				glWireSphere(&volumeDisplayListIDs[0], 20, 20);
-			}
+		if (vCustomType || vCustomDims) {
+			// assume this is a custom volume
+			glColor3f(0.5f, 0.5f, 0.5f);
+			glScalef(f->radius, f->radius, f->radius);
+			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
 		}
 	glPopMatrix();
 }

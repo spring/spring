@@ -2508,7 +2508,7 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 	vector<Command> commands;
 	LuaUtils::ParseCommandArray(L, __FUNCTION__, 2, commands);
 
-	if ((unitIDs.size() <= 0) || (commands.size() <= 0)) {
+	if (unitIDs.empty() || commands.empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -2544,7 +2544,7 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	if (args >= 3)
 		pairwise = lua_toboolean(L, 3);
 
-	if ((unitIDs.size() <= 0) || (commands.size() <= 0)) {
+	if (unitIDs.empty() || commands.empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}

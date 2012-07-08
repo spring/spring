@@ -15,14 +15,18 @@ class CFeature;
 struct LocalModelPiece;
 
 struct CollisionQuery {
-	CollisionQuery() {
+	CollisionQuery()
 		// (0, 0, 0) is volume-space center, so
 		// impossible to obtain as actual points
 		// except in the special cases
-		b0 = false; t0 = 0.0f; p0 = ZeroVector;
-		b1 = false; t1 = 0.0f; p1 = ZeroVector;
-
-		lmp = NULL;
+		: b0(false)
+		, b1(false)
+		, t0(0.0f)
+		, t1(0.0f)
+		, p0(ZeroVector)
+		, p1(ZeroVector)
+		, lmp(NULL)
+	{
 	}
 
 	bool   b0, b1;        ///< true if ingress (b0) or egress (b1) point on ray segment
@@ -61,7 +65,7 @@ class CCollisionHandler {
 		 * Test if a point lies inside a volume.
 		 * @param v volume
 		 * @param m volumes transformation matrix
-		 * @param p point in world-coords
+		 * @param p point in world-coordinates
 		 */
 		static bool Collision(const CollisionVolume* v, const CMatrix44f& m, const float3& p);
 		static bool CollisionFootprint(const CSolidObject* o, const float3& p);
@@ -70,8 +74,8 @@ class CCollisionHandler {
 		 * Test if a ray intersects a volume.
 		 * @param v volume
 		 * @param m volumes transformation matrix
-		 * @param p0 start of ray (in world-coords)
-		 * @param p1 end of ray (in world-coords)
+		 * @param p0 start of ray (in world-coordinates)
+		 * @param p1 end of ray (in world-coordinates)
 		 */
 		static bool Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* q);
 		static bool IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q);
@@ -87,4 +91,4 @@ class CCollisionHandler {
 		static unsigned int numIntersectionTests;
 };
 
-#endif
+#endif // COLLISION_HANDLER_H
