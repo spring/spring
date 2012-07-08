@@ -42,7 +42,7 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 
 /// used only by creg
 CSkirmishAIWrapper::CSkirmishAIWrapper():
-		skirmishAIId((size_t) -1),
+		skirmishAIId(-1),
 		teamId(-1),
 		cheatEvents(false),
 		ai(NULL),
@@ -55,7 +55,7 @@ CSkirmishAIWrapper::CSkirmishAIWrapper():
 {
 }
 
-CSkirmishAIWrapper::CSkirmishAIWrapper(const size_t skirmishAIId):
+CSkirmishAIWrapper::CSkirmishAIWrapper(const int skirmishAIId):
 		skirmishAIId(skirmishAIId),
 		teamId(-1),
 		cheatEvents(false),
