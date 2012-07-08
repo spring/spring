@@ -2049,7 +2049,9 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 		LOG_L(L_ERROR, "tried to set readonly (int) %s = %d", name.c_str(), value);
 		return 0;
 	}
+	configHandler->EnableWriting(false);
 	configHandler->Set(name, value, useOverlay);
+	configHandler->EnableWriting(true);
 	return 0;
 }
 
@@ -2080,7 +2082,9 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 		LOG_L(L_ERROR, "tried to set readonly (string) %s = %s", name.c_str(), value.c_str());
 		return 0;
 	}
+	configHandler->EnableWriting(false);
 	configHandler->SetString(name, value, useOverlay);
+	configHandler->EnableWriting(true);
 	return 0;
 }
 
