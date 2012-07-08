@@ -900,7 +900,7 @@ EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int skirmi
 		return NULL;
 	} else {
 		const std::string& key = *(optionKeys.begin() + optionIndex);
-		return key.c_str();
+		return key.c_str(); // FIXME the returned pointer (string it points to) is invalid after this call
 	}
 }
 

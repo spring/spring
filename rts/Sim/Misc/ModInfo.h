@@ -35,6 +35,7 @@ public:
 		, transportHover(0)
 		, transportShip(0)
 		, transportAir(0)
+		, targetableTransportedUnits(0)
 		, fireAtKilled(1)
 		, fireAtCrashing(1)
 		, flankingBonusModeDefault(0)
@@ -135,6 +136,8 @@ public:
 	int transportShip;
 	/// 0 = all air units cannot be transported, 1 = all air units can be transported (mass and size restrictions still apply). Defaults to 0.
 	int transportAir;
+	/// 0 = transported units cannot be manually or automatically targeted
+	int targetableTransportedUnits;
 
 	// Fire-on-dying-units behaviour
 	/// 1 = units fire at enemies running Killed() script, 0 = units ignore such enemies

@@ -160,7 +160,7 @@ CEventHandler::CEventHandler()
 	SetupEvent("DrawFeature", NULL, UNSYNCED_BIT);
 	SetupEvent("RecvSkirmishAIMessage", NULL, UNSYNCED_BIT);
 
-	// LuaLoadScreen
+	// LuaIntro
 	SetupEvent("DrawLoadScreen",  NULL, UNSYNCED_BIT);
 	SetupEvent("LoadProgress",  NULL, UNSYNCED_BIT);
 

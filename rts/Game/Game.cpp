@@ -307,8 +307,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	showClock = configHandler->GetBool("ShowClock");
 	showSpeed = configHandler->GetBool("ShowSpeed");
 	showMTInfo = configHandler->GetBool("ShowMTInfo");
-	if (!showMTInfo)
-		GML::EnableCallChainWarnings(false);
+	GML::EnableCallChainWarnings(!!showMTInfo);
 	mtInfoThreshold = configHandler->GetFloat("MTInfoThreshold");
 	mtInfoCtrl = 0;
 
@@ -1502,11 +1501,22 @@ void CGame::SimFrame() {
 	playerHandler->GameFrame(gs->frameNum);
 
 	lastSimFrameTime = spring_gettime();
+	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(lastSimFrameTime - lastFrameTime)), 0.05f);
+
+	#ifdef HEADLESS
+	{
+		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->userSpeedFactor);
+		const float msecDifSimFrameTime = spring_tomsecs(lastSimFrameTime) - spring_tomsecs(lastFrameTime);
+		// multiply by 0.5 to give unsynced code some execution time (50% of our sleep-budget)
+		const float msecSleepTime = (msecMaxSimFrameTime - msecDifSimFrameTime) * 0.5f;
+
+		if (msecSleepTime > 0.0f) {
+			spring_sleep(spring_msecs(msecSleepTime));
+		}
+	}
+	#endif
 
 	DumpState(-1, -1, 1);
-
-	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(spring_gettime() - lastFrameTime)), 0.05f);
-
 	LEAVE_SYNCED_CODE();
 }
 

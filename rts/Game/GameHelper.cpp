@@ -328,7 +328,9 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	#if (PLAY_SOUNDS == 1)
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
-		const int soundNum = (expPos.y < 0.0f);
+
+		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(expPos.y, altitude);
+		const int soundNum = ((soundFlags & (CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER)) != 0);
 		const int soundID = soundSet.getID(soundNum);
 
 		if (soundID > 0) {
@@ -672,7 +674,13 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				if (!(targetUnit->category & weapon->onlyTargetCategory)) {
 					continue;
 				}
-
+				if (targetUnit->GetTransporter() != NULL) {
+					if (!modInfo.targetableTransportedUnits)
+						continue;
+					// the transportee might be "hidden" below terrain, in which case we can't target it
+					if (targetUnit->pos.y < ground->GetHeightReal(targetUnit->pos.x, targetUnit->pos.z))
+						continue;
+				}
 				if (tempTargetUnits[targetUnit->id] == tempNum) {
 					continue;
 				}
@@ -990,7 +998,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 					for (int x2 = x2Min; x2 < x2Max; ++x2) {
 						CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 
-						if (solObj && solObj->immobile && dynamic_cast<CFactory*>(solObj) && ((CFactory*)solObj)->opening) {
+						if (solObj && solObj->immobile && dynamic_cast<CFactory*>(solObj) && static_cast<CFactory*>(solObj)->opening) {
 							good = false;
 							break;
 						}

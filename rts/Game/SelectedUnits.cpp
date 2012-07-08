@@ -567,7 +567,7 @@ void CSelectedUnits::DependentDied(CObject *o)
 {
 	GML_RECMUTEX_LOCK(sel); // DependentDied - maybe superfluous, too late anyway
 
-	selectedUnits.erase((CUnit*)o);
+	selectedUnits.erase(static_cast<CUnit*>(o));
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 }

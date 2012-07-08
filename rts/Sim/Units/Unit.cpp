@@ -1002,21 +1002,22 @@ void CUnit::SlowUpdateWeapons() {
 		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 			CWeapon* w = *wi;
 
+			w->SlowUpdate();
+
 			// NOTE:
-			//     w->haveUserTarget can only be true if ::AttackUnit
-			//     was called with a non-NULL target-unit AND the CAI
-			//     did not auto-select it
-			if (!w->haveUserTarget) {
-				if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
-					if (attackTarget != NULL) {
-						w->AttackUnit(attackTarget, false);
-					} else if (userAttackGround) {
-						w->AttackGround(attackPos, true);
-					}
+			//     pass w->haveUserTarget so we do not interfere with
+			//     user targets; w->haveUserTarget can only be true if
+			//     either 1) ::AttackUnit was called with a (non-NULL)
+			//     target-unit which the CAI did *not* auto-select, or
+			//     2) ::AttackGround was called with any user-selected
+			//     position
+			if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
+				if (attackTarget != NULL) {
+					w->AttackUnit(attackTarget, w->haveUserTarget);
+				} else if (userAttackGround) {
+					w->AttackGround(attackPos, w->haveUserTarget);
 				}
 			}
-
-			w->SlowUpdate();
 
 			if (lastAttacker == NULL)
 				continue;

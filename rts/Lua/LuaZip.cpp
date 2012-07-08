@@ -123,7 +123,7 @@ bool LuaZipFileWriter::PushNew(lua_State* L, const string& filename, zipFile zip
 {
 	lua_checkstack(L, 2);
 
-	ZipFileWriterUserdata* udata = (ZipFileWriterUserdata*)lua_newuserdata(L, sizeof(ZipFileWriterUserdata));
+	ZipFileWriterUserdata* udata = static_cast<ZipFileWriterUserdata*>(lua_newuserdata(L, sizeof(ZipFileWriterUserdata)));
 	std::memset(udata, 0, sizeof(ZipFileWriterUserdata));
 	luaL_getmetatable(L, "ZipFileWriter");
 	lua_setmetatable(L, -2);
@@ -157,7 +157,7 @@ int LuaZipFileWriter::open(lua_State* L)
 
 static ZipFileWriterUserdata* towriter(lua_State* L)
 {
-	return ((ZipFileWriterUserdata*)luaL_checkudata(L, 1, "ZipFileWriter"));
+	return static_cast<ZipFileWriterUserdata*>(luaL_checkudata(L, 1, "ZipFileWriter"));
 }
 
 
@@ -276,7 +276,7 @@ bool LuaZipFileReader::PushNew(lua_State* L, const string& filename, IArchive* a
 {
 	lua_checkstack(L, 2);
 
-	ZipFileReaderUserdata* udata = (ZipFileReaderUserdata*)lua_newuserdata(L, sizeof(ZipFileReaderUserdata));
+	ZipFileReaderUserdata* udata = static_cast<ZipFileReaderUserdata*>(lua_newuserdata(L, sizeof(ZipFileReaderUserdata)));
 	std::memset(udata, 0, sizeof(ZipFileReaderUserdata));
 	luaL_getmetatable(L, "ZipFileReader");
 	lua_setmetatable(L, -2);
@@ -310,7 +310,7 @@ int LuaZipFileReader::open(lua_State* L)
 
 static ZipFileReaderUserdata* toreader(lua_State* L)
 {
-	return ((ZipFileReaderUserdata*)luaL_checkudata(L, 1, "ZipFileReader"));
+	return static_cast<ZipFileReaderUserdata*>(luaL_checkudata(L, 1, "ZipFileReader"));
 }
 
 

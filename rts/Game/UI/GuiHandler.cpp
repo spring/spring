@@ -1112,6 +1112,8 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir)
 {
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCommand
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCommand
 	GML_RECMUTEX_LOCK(gui); // MouseRelease
 
 	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
@@ -1462,6 +1464,7 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 			}
 		}
 	}
+
 	depth--;
 }
 
@@ -2100,6 +2103,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 	}
 
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCommand
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCommand
 	GML_RECMUTEX_LOCK(gui); // GetCommand - updates inCommand
 
 	if ((tempInCommand >= 0) && ((size_t)tempInCommand < commands.size())) {
@@ -2277,10 +2282,6 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 4) {
-
-				GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCommand
-				GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCommand
-
 				CUnit* unit = NULL;
 				CFeature* feature = NULL;
 				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, true, NULL, unit, feature);
@@ -3432,11 +3433,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					if (mouse->buttons[button].movement > 30) {
 						float maxSize = 1000000.0f;
 						float sizeDiv = 0.0f;
-						if (cmdDesc.params.size() > 0) {
+						if (!cmdDesc.params.empty()) {
 							maxSize = atof(cmdDesc.params[0].c_str());
-						}
-						if (cmdDesc.params.size() > 1) {
-							sizeDiv = atof(cmdDesc.params[1].c_str());
+							if (cmdDesc.params.size() > 1) {
+								sizeDiv = atof(cmdDesc.params[1].c_str());
+							}
 						}
 						DrawFront(button, maxSize, sizeDiv, onMinimap, cameraPos, mouseDir);
 					}
@@ -4031,7 +4032,7 @@ struct BoxData {
 
 static void DrawBoxShape(const void* data)
 {
-	const BoxData* boxData = (const BoxData*)data;
+	const BoxData* boxData = static_cast<const BoxData*>(data);
 	const float3& mins = boxData->mins;
 	const float3& maxs = boxData->maxs;
 	glBegin(GL_QUADS);
@@ -4216,7 +4217,7 @@ struct CylinderData {
 
 static void DrawCylinderShape(const void* data)
 {
-	const CylinderData& cyl = *((const CylinderData*)data);
+	const CylinderData& cyl = *static_cast<const CylinderData*>(data);
 	const float step = fastmath::PI2 / (float)cyl.divs;
 	int i;
 	glBegin(GL_QUAD_STRIP); // the sides

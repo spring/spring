@@ -1498,7 +1498,9 @@ void CMiniMap::DrawUnitHighlight(const CUnit* unit)
 
 void CMiniMap::DrawNotes()
 {
-	if (notes.size()<=0) return;
+	if (notes.empty()) {
+		return;
+	}
 
 	const float baseSize = gs->mapx * SQUARE_SIZE;
 	CVertexArray* va = GetVertexArray();

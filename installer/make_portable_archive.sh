@@ -1,20 +1,36 @@
 #!/bin/bash
 
-if [ $# != 1 ]; then
-	echo "Usage: $0 <spring_VERSION.exe>"
+set -e
+
+if [ $# -lt 1 ]; then
+	echo "Usage: $0 <spring_VERSION.exe> <outputpath>"
 	exit
 fi
 
 # check req.
-`which wine &> /dev/null` || (echo "Error: You need Wine installed!"; exit)
+`which wine &> /dev/null` || (echo "Error: You need wine installed!"; exit)
+`which winepath &> /dev/null` || (echo "Error: You need winepath installed!"; exit)
 `which 7z &> /dev/null` || (echo "Error: You need 7z installed!"; exit)
+
 
 # prepare
 INSTALLER=$1
+OUTPUTPATH=$2
+
+if [ -n ${OUTPUTPATH} ]; then
+	if [ ! -d ${OUTPUTPATH} ]; then
+		echo "${OUTPUTPATH} doesn't exist!"
+		exit 1
+	fi
+	OUTPUTPATH="${OUTPUTPATH}/"
+fi
+
 VERSION=`basename ${INSTALLER} .exe`
 VERSION=${VERSION:7}
 echo ${VERSION} detected
 TEMPDIR=`mktemp -d`
+
+echo Temporary directory: ${TEMPDIR}
 
 # create a tempdir
 PATHNAME=spring-${VERSION}
@@ -25,8 +41,6 @@ mkdir -p "${INSTPATH}"
 WINEINSTPATH=`winepath -w "${INSTPATH}"`
 if [ "${WINEINSTPATH:0:4}" = "\\\\?\\" ]; then
 	echo "Error: Couldn't translate tempdir path"
-	echo we live secure, do this yourself:
-	echo rm -f ${TEMPDIR}
 	exit
 fi
 
@@ -39,15 +53,11 @@ echo $INSTCOMMAND
 
 if ! sh -c "$INSTCOMMAND" ; then
 	echo "Error: Installation failed"
-	echo we live secure, do this yourself:
-	echo rm -f ${TEMPDIR}
 	exit
 fi
 
 # compress
-7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on spring_${VERSION}_portable.7z ${INSTPATH}
+7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=64m -ms=on ${OUTPUTPATH}spring_${VERSION}_portable.7z ${INSTPATH}
 
-# finished
-echo we live secure, do this yourself:
-echo rm -f ${TEMPDIR}
+rm -rf ${TEMPDIR}
 

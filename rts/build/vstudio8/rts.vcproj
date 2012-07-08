@@ -8696,11 +8696,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lua\LuaLoadScreen.cpp"
+				RelativePath="..\..\Lua\LuaIntro.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lua\LuaLoadScreen.h"
+				RelativePath="..\..\Lua\LuaIntro.h"
 				>
 			</File>
 			<File

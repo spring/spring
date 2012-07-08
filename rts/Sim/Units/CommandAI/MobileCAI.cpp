@@ -11,6 +11,7 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/Units/UnitDef.h"
@@ -468,7 +469,7 @@ void CMobileCAI::ExecuteLoadUnits(Command &c) {
 		newCommand.params.push_back(owner->id);
 		tran->commandAI->GiveCommandReal(newCommand);
 	}
-	if (owner->transporter) {
+	if (owner->GetTransporter() != NULL) {
 		if (!commandQue.empty())
 			FinishCommand();
 		return;
@@ -699,7 +700,9 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// check if we have valid target parameter and that we aren't attacking ourselves
 			if (targetUnit == NULL) { StopMove(); FinishCommand(); return; }
 			if (targetUnit == owner) { StopMove(); FinishCommand(); return; }
-			if (targetUnit->GetTransporter() != NULL) { StopMove(); FinishCommand(); return; }
+			if (targetUnit->GetTransporter() != NULL && !modInfo.targetableTransportedUnits) {
+				StopMove(); FinishCommand(); return;
+			}
 
 			const float3 fix = targetUnit->pos + owner->posErrorVector * 128;
 			const float3 diff = (fix - owner->pos).Normalize();
