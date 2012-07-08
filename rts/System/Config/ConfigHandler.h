@@ -124,6 +124,11 @@ public:
 	 */
 	virtual void Update() = 0;
 
+	/**
+	 * @brief Toggles write protection for this confighandler
+	 */
+	virtual void EnableWriting(bool write) = 0;
+
 protected:
 	typedef boost::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
 

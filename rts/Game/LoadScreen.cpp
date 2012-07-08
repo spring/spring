@@ -13,7 +13,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Game/UI/InputReceiver.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Lua/LuaLoadScreen.h"
+#include "Lua/LuaIntro.h"
 #include "Map/MapInfo.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
@@ -84,10 +84,10 @@ void CLoadScreen::Init()
 	game = new CGame(mapName, modName, saveFile);
 
 	// new stuff
-	CLuaLoadScreen::LoadHandler();
+	CLuaIntro::LoadHandler();
 
 	// old stuff
-	if (!luaLoadScreen) {
+	if (!LuaIntro) {
 		const CTeam* team = teamHandler->Team(gu->myTeam);
 		assert(team);
 		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
@@ -141,9 +141,9 @@ CLoadScreen::~CLoadScreen()
 	if (activeController == this)
 		activeController = NULL;
 
-	if (luaLoadScreen)
-		luaLoadScreen->Shutdown();
-	CLuaLoadScreen::FreeHandler();
+	if (LuaIntro)
+		LuaIntro->Shutdown();
+	CLuaIntro::FreeHandler();
 
 	if (!gu->globalQuit) {
 		//! sending your playername to the server indicates that you are finished loading
@@ -198,16 +198,16 @@ void CLoadScreen::DeleteInstance()
 
 void CLoadScreen::ResizeEvent()
 {
-	if (luaLoadScreen)
-		luaLoadScreen->ViewResize();
+	if (LuaIntro)
+		LuaIntro->ViewResize();
 }
 
 
 int CLoadScreen::KeyPressed(unsigned short k, bool isRepeat)
 {
 	//FIXME add mouse events
-	if (luaLoadScreen)
-		luaLoadScreen->KeyPress(k, isRepeat);
+	if (LuaIntro)
+		LuaIntro->KeyPress(k, isRepeat);
 
 	return 0;
 }
@@ -215,8 +215,8 @@ int CLoadScreen::KeyPressed(unsigned short k, bool isRepeat)
 
 int CLoadScreen::KeyReleased(unsigned short k)
 {
-	if (luaLoadScreen)
-		luaLoadScreen->KeyRelease(k);
+	if (LuaIntro)
+		LuaIntro->KeyRelease(k);
 
 	return 0;
 }
@@ -259,8 +259,8 @@ bool CLoadScreen::Draw()
 
 	ClearScreen();
 
-	if (luaLoadScreen) {
-		luaLoadScreen->DrawLoadScreen();
+	if (LuaIntro) {
+		LuaIntro->DrawLoadScreen();
 	} else {
 		float xDiv = 0.0f;
 		float yDiv = 0.0f;
@@ -341,8 +341,8 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	LOG("%s", text.c_str());
 	LOG_CLEANUP();
 
-	if (luaLoadScreen)
-		luaLoadScreen->LoadProgress(text, replace_lastline);
+	if (LuaIntro)
+		LuaIntro->LoadProgress(text, replace_lastline);
 
 	//! Check the FPU state (needed for synced computations),
 	//! some external libraries which get linked during loading might reset those.

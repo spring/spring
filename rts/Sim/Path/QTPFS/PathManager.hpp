@@ -16,6 +16,14 @@ struct MoveDef;
 struct SRectangle;
 class CSolidObject;
 
+#ifdef QTPFS_ENABLE_THREADED_UPDATE
+namespace boost {
+	class thread;
+	class mutex;
+	class condition_variable;
+};
+#endif
+
 namespace QTPFS {
 	struct QTNode;
 	class PathManager: public IPathManager {
@@ -67,6 +75,7 @@ namespace QTPFS {
 		static const float MAX_SPEEDMOD_VALUE;
 
 	private:
+		void ThreadUpdate();
 		void Load();
 
 		boost::uint64_t GetMemFootPrint() const;
@@ -157,6 +166,13 @@ namespace QTPFS {
 
 		bool layersInited;
 		bool haveCacheDir;
+
+		#ifdef QTPFS_ENABLE_THREADED_UPDATE
+		boost::thread* updateThread;
+		boost::mutex* mutexThreadUpdate;
+		boost::condition_variable* condThreadUpdate;
+		boost::condition_variable* condThreadUpdated;
+		#endif
 	};
 };
 

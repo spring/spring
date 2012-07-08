@@ -68,7 +68,7 @@ This configuration has been tested with schroot 1.4.23. With any other version Y
 
 Build dependencies for Windows build (except MinGW, see below):
 
-	apt-get install cmake nsis p7zip-full unzip wget pandoc
+	apt-get install cmake nsis p7zip-full unzip wget pandoc wine
 	apt-get install openjdk-6-jdk   #to enable building of Java AIs
 
 Build dependencies for Linux build:

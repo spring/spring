@@ -130,7 +130,7 @@ void CGlobalRendering::PostInit() {
 		const std::string renderer = (glRenderer != NULL)? StringToLower(std::string(glRenderer)): "";
 
 		haveATI    = (vendor.find("ati ") != std::string::npos) || (vendor.find("amd ") != std::string::npos);
-		haveMesa   = (renderer.find("mesa ") != std::string::npos);
+		haveMesa   = (renderer.find("mesa ") != std::string::npos) || (renderer.find("gallium ") != std::string::npos);
 		haveIntel  = (vendor.find("intel") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
@@ -170,6 +170,7 @@ void CGlobalRendering::PostInit() {
 
 	// some GLSL relevant information
 	{
+		glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
 		glGetIntegerv(GL_MAX_VARYING_FLOATS,    &glslMaxVaryings);
 		glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,    &glslMaxAttributes);
 		glGetIntegerv(GL_MAX_DRAW_BUFFERS,      &glslMaxDrawBuffers);
@@ -210,12 +211,14 @@ void CGlobalRendering::PostInit() {
 		"\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i\n"
 		"\tmaximum texture size: %i, compress MIP-map textures: %i\n"
 		"\tmaximum SmoothPointSize: %0.0f, maximum vec4 varying/attributes: %i/%i\n"
-		"\tmaximum drawbuffers: %i, maximum recommended indices/vertices: %i/%i",
+		"\tmaximum drawbuffers: %i, maximum recommended indices/vertices: %i/%i\n"
+		"\tnumber of UniformBufferBindings: %i",
 		haveARB, haveGLSL, atiHacks,
 		FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers,
 		maxTextureSize, compressTextures, maxSmoothPointSize,
 		glslMaxVaryings, glslMaxAttributes, glslMaxDrawBuffers,
-		glslMaxRecommendedIndices, glslMaxRecommendedVertices
+		glslMaxRecommendedIndices, glslMaxRecommendedVertices,
+		glslMaxUniformBufferBindings
 	);
 
 	teamNanospray = configHandler->GetBool("TeamNanoSpray");

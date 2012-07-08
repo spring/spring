@@ -212,6 +212,23 @@ void CBuilderCAI::PostLoad()
 }
 
 
+inline float CBuilderCAI::GetBuildRange(const float targetRadius) const
+{
+	const CBuilder* builder = (CBuilder*) owner;
+
+	// for immobile:
+	// only use `buildDistance + radius` iff radius > buildDistance,
+	// and so it would be impossible to get in buildrange (collision detection with units/features)
+	//
+	// what does this even mean?? IMMOBILE units cannot "get in range" of anything
+	if (owner->immobile) {
+		return (builder->buildDistance + std::max(targetRadius - builder->buildDistance, 0.0f));
+	}
+
+	return (builder->buildDistance + targetRadius);
+}
+
+
 inline bool CBuilderCAI::IsInBuildRange(const CWorldObject* obj) const
 {
 	return IsInBuildRange(obj->pos, obj->radius);
@@ -220,9 +237,8 @@ inline bool CBuilderCAI::IsInBuildRange(const CWorldObject* obj) const
 
 inline bool CBuilderCAI::IsInBuildRange(const float3& pos, const float radius) const
 {
-	const CBuilder* builder = (CBuilder*)owner;
 	const float immDistSqr = f3SqDist(owner->pos, pos);
-	const float buildDist = (builder->buildDistance + radius) - 9.0f;
+	const float buildDist = GetBuildRange(radius);
 	return (immDistSqr < (buildDist * buildDist));
 }
 
@@ -235,15 +251,6 @@ inline bool CBuilderCAI::MoveInBuildRange(const CWorldObject* obj, const bool ch
 
 bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed)
 {
-	// only use `buildDistance + radius` iff radius > buildDistance,
-	// and so it would be impossible to get in buildrange (collision detection with units/features)
-	const CBuilder* builder = (CBuilder*) owner;
-	const UnitDef* builderUD = builder->unitDef;
-
-	if (!builderUD->IsAirUnit()) {
-		radius = std::max(radius - builder->buildDistance, 0.0f);
-	}
-
 	if (!IsInBuildRange(pos, radius)) {
 		if (
 			checkMoveTypeForFailed &&
@@ -255,16 +262,14 @@ bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool c
 		}
 
 		// too far away, start a move command
-		SetGoal(pos, owner->pos, (builder->buildDistance + radius) - 9.0f);
+		SetGoal(pos, owner->pos, GetBuildRange(radius) * 0.9f);
 		return false;
+	}
+
+	if (owner->unitDef->IsAirUnit()) {
+		StopMoveAndKeepPointing(pos, radius);
 	} else {
-		// goal reached
-		if (!builderUD->IsAirUnit()) {
-			StopMoveAndKeepPointing(goalPos, goalRadius);
-		} else {
-			// hovering/circling airplane
-			StopMoveAndKeepPointing(pos, radius + builder->buildDistance);
-		}
+		StopMoveAndKeepPointing(goalPos, goalRadius);
 	}
 
 	return true;
@@ -361,7 +366,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		bi.pos = c.GetPos(0);
 
 		if (c.params.size() == 4)
-			bi.buildFacing = int(abs(c.params[3])) % NUM_FACINGS;
+			bi.buildFacing = abs((int)c.params[3]) % NUM_FACINGS;
 
 		bi.def = unitDefHandler->GetUnitDefByName(boi->second);
 		bi.pos = helper->Pos2BuildPos(bi, true);
@@ -495,7 +500,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		bi.pos.y = c.params[1];
 
 		if (c.params.size() == 4)
-			bi.buildFacing = int(abs(c.params[3])) % NUM_FACINGS;
+			bi.buildFacing = abs((int)c.params[3]) % NUM_FACINGS;
 
 		bi.def = unitDefHandler->GetUnitDefByName(boi->second);
 
@@ -614,6 +619,16 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 }
 
 
+bool CBuilderCAI::TargetInterceptable(CUnit *unit, float uspeed) {
+	// if the target is moving away at a higher speed than we can manage, there is little point in chasing it
+	const float& maxSpeed = owner->moveType->GetMaxSpeed();
+	if (uspeed <= maxSpeed)
+		return true;
+	const float3& unitToPos = unit->pos - owner->pos;
+	return unitToPos.dot2D(unit->speed) <= unitToPos.Length2D() * maxSpeed;
+}
+
+
 void CBuilderCAI::ExecuteRepair(Command& c)
 {
 	// not all builders are repair-capable by default
@@ -644,8 +659,9 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			const float3 pos(c.params[1], c.params[2], c.params[3]);
 			const float radius = c.params[4] + 100.0f; // do not walk too far outside repair area
 
-			if (((pos - unit->pos).SqLength2D() > radius * radius ||
-				(builder->curBuild == unit && unit->isMoving && !IsInBuildRange(unit)))) {
+			if ((pos - unit->pos).SqLength2D() > radius * radius ||
+				(unit->isMoving && (((c.options & INTERNAL_ORDER) && !TargetInterceptable(unit, unit->speed.Length2D())) || builder->curBuild == unit)
+				&& !IsInBuildRange(unit))) {
 				StopMove();
 				FinishCommand();
 				return;
@@ -1141,17 +1157,20 @@ void CBuilderCAI::ExecuteFight(Command& c)
 	}
 
 	float3 pos = c.GetPos(0);
-
 	if (!inCommand) {
 		inCommand = true;
 		commandPos2 = pos;
 	}
+
+	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	if (c.params.size() >= 6) {
-		pos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+		pos = curPosOnLine;
 	}
+
 	if (pos != goalPos) {
 		SetGoal(pos, owner->pos);
 	}
+
 	const bool resurrectMode = !!(c.options & ALT_KEY);
 	const bool reclaimEnemyMode = !!(c.options & META_KEY);
 	const bool reclaimEnemyOnlyMode = (c.options & CONTROL_KEY) && (c.options & META_KEY);
@@ -1161,9 +1180,10 @@ void CBuilderCAI::ExecuteFight(Command& c)
 	if (reclaimEnemyMode)     recopt |= REC_ENEMY;
 	if (reclaimEnemyOnlyMode) recopt |= REC_ENEMYONLY;
 
-	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+	const float searchRadius = (owner->immobile ? 0 : (300 * owner->moveState)) + builder->buildDistance;
+
 	if (!reclaimEnemyOnlyMode && (owner->unitDef->canRepair || owner->unitDef->canAssist) && // Priority 1: Repair
-	    FindRepairTargetAndRepair(curPosOnLine, 300*owner->moveState+builder->buildDistance-8, c.options, true, resurrectMode)){
+	    FindRepairTargetAndRepair(curPosOnLine, searchRadius, c.options, true, resurrectMode)){
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC1 != gs->frameNum) {  //avoid infinite loops
@@ -1173,7 +1193,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		return;
 	}
 	if (!reclaimEnemyOnlyMode && resurrectMode && owner->unitDef->canResurrect && // Priority 2: Resurrect (optional)
-	    FindResurrectableFeatureAndResurrect(curPosOnLine, 300, c.options, false)) {
+	    FindResurrectableFeatureAndResurrect(curPosOnLine, searchRadius, c.options, false)) {
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC2 != gs->frameNum) {  //avoid infinite loops
@@ -1183,7 +1203,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		return;
 	}
 	if (owner->unitDef->canReclaim && // Priority 3: Reclaim / reclaim non resurrectable (optional) / reclaim enemy units (optional)
-	    FindReclaimTargetAndReclaim(curPosOnLine, 300, c.options, recopt)) {
+	    FindReclaimTargetAndReclaim(curPosOnLine, searchRadius, c.options, recopt)) {
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC3 != gs->frameNum) {  //avoid infinite loops
@@ -1429,28 +1449,34 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 		const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
 		for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* u = *ui;
-			if (u != owner
-			    && u->unitDef->reclaimable
-			    && ((!recEnemy && !recEnemyOnly) || !teamHandler->Ally(owner->allyteam, u->allyteam))
-			    && (u->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS))
-			) {
-				// do not reclaim friendly builders that are busy
-				if (!u->unitDef->builder || u->commandAI->commandQue.empty() || !teamHandler->Ally(owner->allyteam, u->allyteam)) {
-					if (u->isMoving && stationary) { // reclaim stationary targets first
-						continue;
-					}
-					const float dist = f3SqDist(u->pos, owner->pos);
-					if (dist < bestDist || (!stationary && !u->isMoving)) {
-						if (!owner->unitDef->canmove && !IsInBuildRange(u)) {
-							continue;
-						}
-						if(!stationary && !u->isMoving) {
-							stationary = true;
-						}
-						bestDist = dist;
-						best = u;
-					}
+
+			if (u == owner)
+				continue;
+			if (!u->unitDef->reclaimable)
+				continue;
+			if (!((!recEnemy && !recEnemyOnly) || !teamHandler->Ally(owner->allyteam, u->allyteam)))
+				continue;
+			if (!(u->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS)))
+				continue;
+
+			// reclaim stationary targets first
+			if (u->isMoving && stationary)
+				continue;
+
+			// do not reclaim friendly builders that are busy
+			if (u->unitDef->builder && teamHandler->Ally(owner->allyteam, u->allyteam) && !u->commandAI->commandQue.empty())
+				continue;
+
+			const float dist = f3SqDist(u->pos, owner->pos);
+			if (dist < bestDist || (!stationary && !u->isMoving)) {
+				if (owner->immobile && !IsInBuildRange(u)) {
+					continue;
 				}
+				if(!stationary && !u->isMoving) {
+					stationary = true;
+				}
+				bestDist = dist;
+				best = u;
 			}
 		}
 		if (best)
@@ -1551,7 +1577,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 			float dist = f3SqDist(f->pos, owner->pos);
 			if (dist < bestDist) {
 				// dont lock-on to units outside of our reach (for immobile builders)
-				if (!owner->unitDef->canmove && !IsInBuildRange(f)) {
+				if (owner->immobile && !IsInBuildRange(f)) {
 					continue;
 				}
 				if(!(options & CONTROL_KEY) && IsFeatureBeingReclaimed(f->id, owner)) {
@@ -1635,6 +1661,8 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 	bool haveEnemy = false;
 	bool trySelfRepair = false;
 	bool stationary = false;
+	const float& maxSpeed = owner->moveType->GetMaxSpeed();
+	float uspeed = 0.0f;
 
 	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
@@ -1643,7 +1671,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				// don't help allies build unless set on roam
 				if (unit->beingBuilt && owner->team != unit->team && (owner->moveState != MOVESTATE_ROAM)) {
 					continue;
-				}                
+				}
 				// don't help factories produce units when set on hold pos                
 				if (unit->beingBuilt && unit->moveDef && (owner->moveState == MOVESTATE_HOLDPOS)) {
 					continue;
@@ -1670,10 +1698,15 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				if(builtOnly && unit->beingBuilt) {
 					continue;
 				}
+
 				float dist = f3SqDist(unit->pos, owner->pos);
+				if (unit->isMoving) {
+					uspeed = unit->speed.Length2D();
+					dist *= 1.0f + std::max(uspeed - maxSpeed, 0.0f); // avoid targets that are faster than our max speed
+				}
 				if (dist < bestDist || (!stationary && !unit->isMoving)) {
 					// dont lock-on to units outside of our reach (for immobile builders)
-					if (!owner->unitDef->canmove && !IsInBuildRange(unit)) {
+					if ((owner->immobile || (unit->isMoving && !TargetInterceptable(unit, uspeed))) && !IsInBuildRange(unit)) {
 						continue;
 					}
 					// don't repair stuff that's being reclaimed
@@ -1689,18 +1722,21 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 			}
 		}
 		else {
-			if (attackEnemy && owner->unitDef->canAttack && (owner->maxRange > 0) &&
-				(unit->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS))) {
-				const float dist = f3SqDist(unit->pos, owner->pos);
-				if ((dist < bestDist) || !haveEnemy) {
-					if (!owner->unitDef->canmove &&
-					    ((dist - unit->radius) > owner->maxRange)) {
-						continue;
-					}
-					best = unit;
-					bestDist = dist;
-					haveEnemy = true;
+			if (!attackEnemy || !owner->unitDef->canAttack || (owner->maxRange <= 0) )
+				continue;
+
+			if (!(unit->losStatus[owner->allyteam] & (LOS_INRADAR | LOS_INLOS)))
+				continue;
+
+			const float dist = f3SqDist(unit->pos, owner->pos);
+			if ((dist < bestDist) || !haveEnemy) {
+				if (owner->immobile &&
+					((dist - unit->radius) > owner->maxRange)) {
+					continue;
 				}
+				best = unit;
+				bestDist = dist;
+				haveEnemy = true;
 			}
 		}
 	}

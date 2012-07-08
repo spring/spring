@@ -189,7 +189,7 @@ static bool GetAvailableVideoRAM(GLint* memory)
 #endif
 }
 
-
+#if       !defined DEBUG
 static void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 {
 	// Print out warnings for really crappy graphic cards/drivers
@@ -242,7 +242,7 @@ static void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 		}
 	}
 }
-
+#endif
 
 //FIXME move most of this to globalRendering's ctor?
 void LoadExtensions()

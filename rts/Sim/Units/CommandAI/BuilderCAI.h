@@ -34,6 +34,7 @@ public:
 	void FinishCommand();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void BuggerOff(const float3& pos, float radius);
+	bool TargetInterceptable(CUnit *unit, float uspeed);
 
 	void ExecuteBuildCmd(Command& c);
 	void ExecutePatrol(Command& c);
@@ -76,12 +77,10 @@ private:
 
 private:
 	/**
-	 * @param noResCheck no resources check
-	 * @param recUnits reclaims units and features
-	 * @param recNonRez reclaims non resurrectable only
-	 * @param recEnemy reclaims enemy units
-	 * @param recEnemyOnly reclaims enemy units only
-	 * @param recSpecial reclaims also non autoreclaimable, metal first
+	 * @param pos position where to reclaim
+	 * @param radius radius to search for objects to reclaim
+	 * @param cmdopts command options
+	 * @param recoptions reclaim optioons
 	 */
 	bool FindReclaimTargetAndReclaim(const float3& pos, float radius, unsigned char cmdopt, ReclaimOption recoptions);
 	/**
@@ -100,6 +99,7 @@ private:
 
 	int FindReclaimTarget(const float3& pos, float radius, unsigned char cmdopt, ReclaimOption recoptions, float bestStartDist = 1.0e30f) const;
 
+	float GetBuildRange(const float targetRadius) const;
 	bool IsInBuildRange(const CWorldObject* obj) const;
 	bool IsInBuildRange(const float3& pos, const float radius) const;
 

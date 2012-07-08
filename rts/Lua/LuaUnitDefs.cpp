@@ -160,7 +160,7 @@ static int UnitDefIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const UnitDef* ud = (const UnitDef*)userData;
+	const UnitDef* ud = static_cast<const UnitDef*>(userData);
 	const DataElement& elem = it->second;
 	const char* p = ((const char*)ud) + elem.offset;
 	switch (elem.type) {
@@ -216,7 +216,7 @@ static int UnitDefNewIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const UnitDef* ud = (const UnitDef*)userData;
+	const UnitDef* ud = static_cast<const UnitDef*>(userData);
 
 	// write-protected
 	if (!gs->editDefsEnabled) {
@@ -471,7 +471,7 @@ static int SoundsTable(lua_State* L, const void* data) {
 
 
 static int ModelDefTable(lua_State* L, const void* data) {
-	const UnitModelDef& md = *((const UnitModelDef*) data);
+	const UnitModelDef& md = *static_cast<const UnitModelDef*>(data);
 	const char* type = "???";
 
 	     if (StringToLower(md.modelName).find(".3do") != string::npos) { type = "3do"; }
@@ -496,7 +496,7 @@ static int ModelDefTable(lua_State* L, const void* data) {
 
 static int MoveDefTable(lua_State* L, const void* data)
 {
-	const MoveDef* md = *((const MoveDef**)data);
+	const MoveDef* md = *static_cast<const MoveDef* const*>(data);
 	lua_newtable(L);
 	if (md == NULL) {
 		return 1;
@@ -504,15 +504,11 @@ static int MoveDefTable(lua_State* L, const void* data)
 
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);
 
-	const int Ship_Move   = MoveDef::Ship_Move;
-	const int Hover_Move  = MoveDef::Hover_Move;
-	const int Ground_Move = MoveDef::Ground_Move;
-
 	switch (md->moveType) {
-		case Ship_Move:   { HSTR_PUSH_STRING(L, "type", "ship");   break; }
-		case Hover_Move:  { HSTR_PUSH_STRING(L, "type", "hover");  break; }
-		case Ground_Move: { HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		default:          { HSTR_PUSH_STRING(L, "type", "error");  break; }
+		case MoveDef::Ship_Move:   { HSTR_PUSH_STRING(L, "type", "ship");   break; }
+		case MoveDef::Hover_Move:  { HSTR_PUSH_STRING(L, "type", "hover");  break; }
+		case MoveDef::Ground_Move: { HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		default:                   { HSTR_PUSH_STRING(L, "type", "error");  break; }
 	}
 
 	switch (md->moveFamily) {
@@ -543,7 +539,7 @@ static int MoveDefTable(lua_State* L, const void* data)
 
 static int TotalEnergyOut(lua_State* L, const void* data)
 {
-	const UnitDef& ud = *((const UnitDef*)data);
+	const UnitDef& ud = *static_cast<const UnitDef*>(data);
 	const float basicEnergy = (ud.energyMake - ud.energyUpkeep);
 	const float tidalEnergy = (ud.tidalGenerator * mapInfo->map.tidalStrength);
 	float windEnergy = 0.0f;
@@ -559,7 +555,7 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 #define TYPE_FUNC(FuncName, LuaType)                    \
 	static int FuncName(lua_State* L, const void* data) \
 	{                                                   \
-		const UnitDef* ud = (const UnitDef*) data;      \
+		const UnitDef* ud = static_cast<const UnitDef*>(data);      \
 		lua_push ## LuaType(L, ud->FuncName());         \
 		return 1;                                       \
 	}
@@ -576,7 +572,7 @@ TYPE_FUNC(IsGroundUnit, boolean);
 #define TYPE_MODEL_FUNC(name, param)                  \
 	static int name(lua_State* L, const void* data)   \
 	{                                                 \
-		const UnitDef* ud = (const UnitDef*) data;    \
+		const UnitDef* ud = static_cast<const UnitDef*>(data);    \
 		const S3DModel* model = ud->LoadModel();      \
 		lua_pushnumber(L, model->param);              \
 		return 1;                                     \
