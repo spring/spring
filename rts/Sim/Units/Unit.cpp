@@ -1004,34 +1004,32 @@ void CUnit::SlowUpdateWeapons() {
 
 			w->SlowUpdate();
 
-			if (w->haveUserTarget) {
-				// do not interfere with user targets
-				w->AttackUnit(attackTarget, true);
-			} else {
-				// NOTE:
-				//     w->haveUserTarget can only be true if ::AttackUnit
-				//     was called with a non-NULL target-unit AND the CAI
-				//     did not auto-select it
-				if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
-					if (attackTarget != NULL) {
-						w->AttackUnit(attackTarget, false);
-					} else if (userAttackGround) {
-						w->AttackGround(attackPos, true);
-					}
+			// NOTE:
+			//     pass w->haveUserTarget so we do not interfere with
+			//     user targets; w->haveUserTarget can only be true if
+			//     either 1) ::AttackUnit was called with a (non-NULL)
+			//     target-unit which the CAI did *not* auto-select, or
+			//     2) ::AttackGround was called with any user-selected
+			//     position
+			if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
+				if (attackTarget != NULL) {
+					w->AttackUnit(attackTarget, w->haveUserTarget);
+				} else if (userAttackGround) {
+					w->AttackGround(attackPos, w->haveUserTarget);
 				}
-
-				if (lastAttacker == NULL)
-					continue;
-				if ((lastAttack + 200) <= gs->frameNum)
-					continue;
-				if (w->targetType != Target_None)
-					continue;
-				if (fireState == FIRESTATE_HOLDFIRE)
-					continue;
-
-				// return fire at our last attacker if allowed
-				w->AttackUnit(lastAttacker, false);
 			}
+
+			if (lastAttacker == NULL)
+				continue;
+			if ((lastAttack + 200) <= gs->frameNum)
+				continue;
+			if (w->targetType != Target_None)
+				continue;
+			if (fireState == FIRESTATE_HOLDFIRE)
+				continue;
+
+			// return fire at our last attacker if allowed
+			w->AttackUnit(lastAttacker, false);
 		}
 	}
 }
