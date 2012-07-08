@@ -841,7 +841,7 @@ void CStrafeAirMoveType::UpdateLanding()
 
 		// if spot is valid, mark it on the blocking-map
 		// so other aircraft can not claim the same spot
-		if (reservedLandingPos.x > 0.0f) {
+		if (reservedLandingPos.x >= 0.0f) {
 			const float3 originalPos = pos;
 
 			owner->Move3D(reservedLandingPos, false);
