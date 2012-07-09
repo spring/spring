@@ -109,12 +109,7 @@ void CAirCAI::GiveCommandReal(const Command& c)
 		if (c.params.empty()) {
 			return;
 		}
-		CStrafeAirMoveType* airMT;
-		if (owner->usingScriptMoveType) {
-			airMT = (CStrafeAirMoveType*)owner->prevMoveType;
-		} else {
-			airMT = (CStrafeAirMoveType*)owner->moveType;
-		}
+		CStrafeAirMoveType* airMT = GetOwnerMoveType();
 		switch ((int)c.params[0]) {
 			case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
 			case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
@@ -139,12 +134,7 @@ void CAirCAI::GiveCommandReal(const Command& c)
 		if (c.params.empty()) {
 			return;
 		}
-		CStrafeAirMoveType* airMT;
-		if (owner->usingScriptMoveType) {
-			airMT = (CStrafeAirMoveType*)owner->prevMoveType;
-		} else {
-			airMT = (CStrafeAirMoveType*)owner->moveType;
-		}
+		CStrafeAirMoveType* airMT = GetOwnerMoveType();
 		switch ((int)c.params[0]){
 			case 0: { airMT->autoLand = false; break; }
 			case 1: { airMT->autoLand = true;  break; }
@@ -167,12 +157,7 @@ void CAirCAI::GiveCommandReal(const Command& c)
 		if (c.params.empty()) {
 			return;
 		}
-		CStrafeAirMoveType* airMT;
-		if (owner->usingScriptMoveType) {
-			airMT = (CStrafeAirMoveType*)owner->prevMoveType;
-		} else {
-			airMT = (CStrafeAirMoveType*)owner->moveType;
-		}
+		CStrafeAirMoveType* airMT = GetOwnerMoveType();
 		switch ((int)c.params[0]) {
 			case 0: { airMT->loopbackAttack = false; break; }
 			case 1: { airMT->loopbackAttack = true;  break; }
@@ -222,7 +207,7 @@ void CAirCAI::SlowUpdate()
 		return; // avoid the invalid (CStrafeAirMoveType*) cast
 	}
 
-	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
+	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
 
 	bool wantToRefuel = LandRepairIfNeeded();
 	if (!wantToRefuel && owner->unitDef->maxFuel > 0) {
@@ -314,7 +299,7 @@ void CAirCAI::SlowUpdate()
 void CAirCAI::ExecuteFight(Command& c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
-	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
+	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
 	if (tempOrder) {
 		tempOrder = false;
 		inCommand = true;
@@ -475,7 +460,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 void CAirCAI::ExecuteAreaAttack(Command& c)
 {
 	assert(owner->unitDef->canAttack);
-	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
+	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
 
 	if (targetDied) {
 		targetDied = false;
@@ -588,7 +573,7 @@ int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
 	return CMobileCAI::IsValidTarget(enemy) && !enemy->crashing
-		&& (((CStrafeAirMoveType*)owner->moveType)->isFighter || !enemy->unitDef->canfly);
+		&& (static_cast<CStrafeAirMoveType*>(owner->moveType)->isFighter || !enemy->unitDef->canfly);
 }
 
 
@@ -613,4 +598,17 @@ void CAirCAI::SetGoal(const float3& pos, const float3& curPos, float goalRadius)
 {
 	owner->moveType->SetGoal(pos);
 	CMobileCAI::SetGoal(pos, curPos, goalRadius);
+}
+
+CStrafeAirMoveType* CAirCAI::GetOwnerMoveType()
+{
+	CStrafeAirMoveType* airMT;
+
+	if (owner->usingScriptMoveType) {
+		airMT = static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
+	} else {
+		airMT = static_cast<CStrafeAirMoveType*>(owner->moveType);
+	}
+
+	return airMT;
 }

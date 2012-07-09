@@ -571,7 +571,7 @@ size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 
 		if (!file.FileExists()) {
 			if (hardFail) {
-				handleerror(0, "Could not open audio file", path.c_str(), 0);
+				handleerror(0, "Could not open audio file", path, 0);
 			} else {
 				LOG_L(L_WARNING, "Unable to open audio file: %s", path.c_str());
 			}
