@@ -68,7 +68,7 @@ namespace QTPFS {
 		static NodeLayer* GetSerializingNodeLayer() { return serializingNodeLayer; }
 
 		static const unsigned int LAYERS_PER_UPDATE =  5;
-		static const unsigned int MAX_TEAM_SEARCHES = 50;
+		static const unsigned int MAX_TEAM_SEARCHES = 25;
 		static const unsigned int NUM_SPEEDMOD_BINS = 20;
 
 		static const float MIN_SPEEDMOD_VALUE;
