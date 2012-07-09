@@ -1528,9 +1528,8 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case MAX_SPEED: {
-			if (param > 0) {
-				unit->commandAI->SetScriptMaxSpeed(param / (float) COBSCALE, true);
-			}
+			// interpret negative values as non-persistent changes
+			unit->commandAI->SetScriptMaxSpeed(std::max(param, -param) / float(COBSCALE), (param >= 0));
 			break;
 		}
 		case CLOAKED: {
