@@ -68,124 +68,103 @@ struct LuaUnitEvent {
 	LuaUnitEvent(UnitEvent i, const CUnit* u1)
 		: id(i)
 		, unit1(u1)
-		, unit2(NULL)
 		, bool1(false)
 		, int1(0)
-		, int2(0)
 		, float1(0.0f)
-		, pos1(ZeroVector)
+		, unit2(NULL)
 	{}
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CUnit* u2)
 		: id(i)
 		, unit1(u1)
-		, unit2(u2)
 		, bool1(false)
 		, int1(0)
-		, int2(0)
 		, float1(0.0f)
-		, pos1(ZeroVector)
+		, unit2(u2)
 	{}
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CUnit* u2, bool b1)
 		: id(i)
 		, unit1(u1)
-		, unit2(u2)
 		, bool1(b1)
 		, int1(0)
-		, int2(0)
 		, float1(0.0f)
-		, pos1(ZeroVector)
+		, unit2(u2)
 	{}
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, int i1)
 		: id(i)
 		, unit1(u1)
-		, unit2(NULL)
 		, bool1(false)
 		, int1(i1)
-		, int2(0)
 		, float1(0.0f)
-		, pos1(ZeroVector)
+		, unit2(NULL)
 	{}
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, const Command& c1)
 		: id(i)
 		, unit1(u1)
-		, unit2(NULL)
 		, bool1(false)
 		, int1(0)
-		, int2(0)
-		, cmd1(c1)
 		, float1(0.0f)
-		, pos1(ZeroVector)
-	{}
+		, unit2(NULL)
+	{cmd1.reset(new Command(c1));}
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, int i1, int i2)
 		: id(i)
 		, unit1(u1)
-		, unit2(NULL)
 		, bool1(false)
 		, int1(i1)
-		, int2(i2)
 		, float1(0.0f)
-		, pos1(ZeroVector)
+		, int2(i2)
 	{}
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CUnit* u2, float f1, int i1, bool b1)
 		: id(i)
 		, unit1(u1)
-		, unit2(u2)
 		, bool1(b1)
 		, int1(i1)
-		, int2(0)
 		, float1(f1)
-		, pos1(ZeroVector)
+		, unit2(u2)
 	{}
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, float f1)
 		: id(i)
 		, unit1(u1)
-		, unit2(NULL)
 		, bool1(false)
 		, int1(0)
-		, int2(0)
 		, float1(f1)
-		, pos1(ZeroVector)
+		, unit2(NULL)
 	{}
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, int i1, const float3& p1, float f1)
 		: id(i)
 		, unit1(u1)
-		, unit2(NULL)
 		, bool1(false)
 		, int1(i1)
-		, int2(0)
 		, float1(f1)
-		, pos1(p1)
-	{}
+		, unit2(NULL)
+	{ cmd1.reset(new Command(p1)); } // store the vector as a command to save some memory
 	LuaUnitEvent(UnitEvent i, int i1, const float3& p1, const CUnit* u1)
 		: id(i)
 		, unit1(u1)
-		, unit2(NULL)
 		, bool1(false)
 		, int1(i1)
-		, int2(0)
 		, float1(0.0f)
-		, pos1(p1)
-	{}
-	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CWeapon* u2, int i1)
+		, unit2(NULL)
+	{ cmd1.reset(new Command(p1)); } // store the vector as a command to save some memory
+	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CWeapon* w2, int i1)
 		: id(i)
 		, unit1(u1)
-		, unit2(reinterpret_cast<const CUnit*>(u2))
 		, bool1(false)
 		, int1(i1)
-		, int2(0)
 		, float1(0.0f)
-		, pos1(ZeroVector)
+		, weapon2(w2)
 	{}
 
 	UnitEvent id;
 	const CUnit* unit1;
-	const CUnit* unit2;
 	bool bool1;
 	int int1;
-	int int2;
-	Command cmd1;
 	float float1;
-	float3 pos1;
+	union {
+		const CUnit* unit2;
+		int int2;
+		const CWeapon* weapon2;
+	};
+	boost::shared_ptr<Command> cmd1; // using a shared pointer instead of an actual object saves some memory
 };
 
 struct LuaFeatEvent {
