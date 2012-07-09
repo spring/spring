@@ -23,6 +23,8 @@ Changes:
    if the first variable is true, new units auto-inherit their group number from the factory that built them
    if the first AND second are true, new units are auto-selected if their factory group is currently selected
  - weapondefs.cylinderTargetting spelling fixed, the old one is deprecated
+ - exit with !=0 if spring can't connect to server
+ - decrease loglevel for "Load S3O texture now" & luasocket
 
 Bugfixes:
  - dedicated server no longer consumes 100% CPU while waiting for gameID
