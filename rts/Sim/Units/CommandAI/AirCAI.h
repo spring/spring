@@ -7,6 +7,7 @@
 
 class CUnit;
 class CFeature;
+class CStrafeAirMoveType;
 struct Command;
 
 class CAirCAI : public CMobileCAI
@@ -40,6 +41,7 @@ private:
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}
 
+	CStrafeAirMoveType* GetOwnerMoveType();
 
 	float3 basePos;
 	float3 baseDir;

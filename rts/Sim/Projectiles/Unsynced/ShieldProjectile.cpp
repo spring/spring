@@ -26,27 +26,24 @@ static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
 
 ShieldProjectile::ShieldProjectile(CPlasmaRepulser* shield_)
 	: CProjectile(
-		shield_->weaponPos, // pos
-		ZeroVector, // speed
-		shield_->owner, // owner
-		false, // isSynced
-		false, // isWeapon
-		false  // isPiece
-	)
+			shield_->weaponPos, // pos
+			ZeroVector, // speed
+			shield_->owner, // owner
+			false, // isSynced
+			false, // isWeapon
+			false  // isPiece
+		)
+	, shield(shield_)
+	, shieldTexture(NULL)
+	, lastAllowDrawingUpdate(-1)
+	, allowDrawing(false)
 {
-	shield = shield_;
-	shieldTexture = NULL;
-
 	checkCol      = false;
 	deleteMe      = false;
 	alwaysVisible = false;
 	useAirLos     = true;
-
-	lastAllowDrawingUpdate = -1;
-	allowDrawing = false;
-
-	drawRadius = 1.0f;
-	mygravity = 0.0f;
+	drawRadius    = 1.0f;
+	mygravity     = 0.0f;
 
 	const CUnit* u = shield->owner;
 	const WeaponDef* wd = shield->weaponDef;
@@ -135,34 +132,32 @@ bool ShieldProjectile::AllowDrawing() {
 #define NUM_VERTICES_Y 5
 
 ShieldSegmentProjectile::ShieldSegmentProjectile(
-	ShieldProjectile* shieldProjectile_,
-	const WeaponDef* shieldWeaponDef,
-	const float3& shieldSegmentPos,
-	const int xpart,
-	const int ypart
-): CProjectile(
-	shieldSegmentPos,
-	ZeroVector,
-	shieldProjectile_->owner(),
-	false,
-	false,
-	false
-) {
-	shieldProjectile = shieldProjectile_;
-
+			ShieldProjectile* shieldProjectile_,
+			const WeaponDef* shieldWeaponDef,
+			const float3& shieldSegmentPos,
+			const int xpart,
+			const int ypart
+		)
+	: CProjectile(
+			shieldSegmentPos,
+			ZeroVector,
+			shieldProjectile_->owner(),
+			false,
+			false,
+			false
+		)
+	, shieldProjectile(shieldProjectile_)
+	, segmentPos(shieldSegmentPos)
+	, segmentColor(shieldWeaponDef->shieldBadColor)
+	, segmentSize(shieldWeaponDef->shieldRadius)
+	, segmentAlpha(shieldWeaponDef->shieldAlpha)
+{
 	checkCol      = false;
 	deleteMe      = false;
 	alwaysVisible = false;
 	useAirLos     = true;
-
-	drawRadius = shieldWeaponDef->shieldRadius * 0.4f;
-	mygravity = 0.0f;
-
-	segmentPos = shieldSegmentPos;
-	segmentColor = shieldWeaponDef->shieldBadColor;
-
-	segmentSize = shieldWeaponDef->shieldRadius;
-	segmentAlpha = shieldWeaponDef->shieldAlpha;
+	drawRadius    = shieldWeaponDef->shieldRadius * 0.4f;
+	mygravity     = 0.0f;
 
 	#define texture shieldProjectile->GetShieldTexture()
 	usePerlinTex = (texture == projectileDrawer->perlintex);

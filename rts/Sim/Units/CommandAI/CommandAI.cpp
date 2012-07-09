@@ -322,14 +322,16 @@ void CCommandAI::ClearCommandDependencies() {
 	}
 }
 
-void CCommandAI::AddCommandDependency(const Command &c) {
+void CCommandAI::AddCommandDependency(const Command& c) {
 	int cpos;
 	if (c.IsObjectCommand(cpos)) {
-		int refid = c.params[cpos];
-		CObject* ref = (refid < uh->MaxUnits()) ? (CObject*)uh->GetUnit(refid) :
-						(CObject*)featureHandler->GetFeature(refid - uh->MaxUnits());
-		if (ref)
+		int refId = c.params[cpos];
+		CObject* ref = (refId < uh->MaxUnits()) ?
+				static_cast<CObject*>(uh->GetUnit(refId)) :
+				static_cast<CObject*>(featureHandler->GetFeature(refId - uh->MaxUnits()));
+		if (ref) {
 			AddDeathDependence(ref, DEPENDENCE_COMMANDQUE);
+		}
 	}
 }
 
@@ -1376,10 +1378,10 @@ void CCommandAI::FinishCommand()
 	const Command cmd = commandQue.front();
 	const int cmdID  = cmd.GetID();
 	const int cmdTag = cmd.tag;
-	const bool dontrepeat = (cmd.options & DONT_REPEAT) ||
+	const bool dontRepeat = (cmd.options & DONT_REPEAT) ||
 	                        (cmd.options & INTERNAL_ORDER);
 	if (repeatOrders
-	    && !dontrepeat
+	    && !dontRepeat
 	    && (cmdID != CMD_STOP)
 	    && (cmdID != CMD_PATROL)
 	    && (cmdID != CMD_SET_WANTED_MAX_SPEED)){

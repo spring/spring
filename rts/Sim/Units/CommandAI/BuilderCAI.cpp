@@ -149,7 +149,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		possibleCommands.push_back(c);
 	}
 
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	map<int, string>::const_iterator bi;
 	for (bi = builder->unitDef->buildOptions.begin(); bi != builder->unitDef->buildOptions.end(); ++bi) {
@@ -214,7 +214,7 @@ void CBuilderCAI::PostLoad()
 
 inline float CBuilderCAI::GetBuildRange(const float targetRadius) const
 {
-	const CBuilder* builder = (CBuilder*) owner;
+	const CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	// for immobile:
 	// only use `buildDistance + radius` iff radius > buildDistance,
@@ -353,7 +353,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()
 			&& c.GetID() != CMD_WAIT) {
 		building = false;
-		((CBuilder*) owner)->StopBuild();
+		static_cast<CBuilder*>(owner)->StopBuild();
 	}
 
 	map<int,string>::iterator boi = buildOptions.find(c.GetID());
@@ -476,7 +476,7 @@ void CBuilderCAI::FinishCommand()
 
 void CBuilderCAI::ExecuteStop(Command& c)
 {
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 	building = false;
 	builder->StopBuild();
 	CMobileCAI::ExecuteStop(c);
@@ -485,7 +485,7 @@ void CBuilderCAI::ExecuteStop(Command& c)
 
 void CBuilderCAI::ExecuteBuildCmd(Command& c)
 {
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	map<int, string>::iterator boi = buildOptions.find(c.GetID());
 	if (boi == buildOptions.end())
@@ -633,7 +633,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 	if (!owner->unitDef->canRepair)
 		return;
 
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		// repair unit
@@ -710,7 +710,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 	if (!owner->unitDef->canCapture)
 		return;
 
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		// capture unit
@@ -768,7 +768,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 	if (!owner->unitDef->canGuard)
 		return;
 
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 	CUnit* guardee = uh->GetUnit(c.params[0]);
 
 	if (guardee == NULL) { FinishCommand(); return; }
@@ -872,7 +872,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 
 void CBuilderCAI::ExecuteReclaim(Command& c)
 {
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	// not all builders are reclaim-capable by default
 	if (!owner->unitDef->canReclaim)
@@ -1015,8 +1015,8 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 }
 
 
-bool CBuilderCAI::ResurrectObject(CFeature *feature) {
-	CBuilder* builder = (CBuilder*) owner;
+bool CBuilderCAI::ResurrectObject(CFeature* feature) {
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	if (MoveInBuildRange(feature, true)) {
 		builder->SetResurrectTarget(feature);
@@ -1036,7 +1036,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 	if (!owner->unitDef->canResurrect)
 		return;
 
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	if (c.params.size() == 1) {
 		unsigned int id = (unsigned int) c.params[0];
@@ -1118,13 +1118,13 @@ void CBuilderCAI::ExecutePatrol(Command& c)
 void CBuilderCAI::ExecuteFight(Command& c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	if (tempOrder) {
 		tempOrder = false;
 		inCommand = true;
 	}
-	if (c.params.size() < 3) { // this shouldnt happen but anyway ...
+	if (c.params.size() < 3) { // this should not happen but anyway ...
 		LOG_L(L_ERROR,
 				"Received a Fight command with less than 3 params on %s in BuilderCAI",
 				owner->unitDef->humanName.c_str());
@@ -1221,7 +1221,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 	if (!owner->unitDef->canRestore)
 		return;
 
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	if (inCommand) {
 		if (!builder->terraforming) {
@@ -1407,7 +1407,7 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 
 
 bool CBuilderCAI::ReclaimObject(CSolidObject* object) {
-	CBuilder* builder = (CBuilder*) owner;
+	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	if (MoveInBuildRange(object)) {
 		builder->SetReclaimTarget(object);
@@ -1433,7 +1433,6 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 	const CSolidObject* best = NULL;
 	float bestDist = bestStartDist;
 	bool stationary = false;
-	bool metal = false;
 	int rid = -1;
 
 	if (recUnits || recEnemy || recEnemyOnly) {
@@ -1476,6 +1475,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 
 	if ((!best || !stationary) && !recEnemyOnly) {
 		best = NULL;
+		bool metal = false;
 		const CTeam* team = teamHandler->Team(owner->team);
 		const std::vector<CFeature*>& features = qf->GetFeaturesExact(pos, radius);
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {

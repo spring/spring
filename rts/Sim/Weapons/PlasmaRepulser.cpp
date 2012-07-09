@@ -280,7 +280,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 
 void CPlasmaRepulser::DependentDied(CObject* o)
 {
-	hasGfx.erase((CWeaponProjectile*) o);
+	hasGfx.erase(static_cast<CWeaponProjectile*>(o));
 	CWeapon::DependentDied(o);
 }
 

@@ -503,7 +503,7 @@ BuildSquareStatus CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef
 				feature = f;
 			}
 		} else if (!dynamic_cast<CUnit*>(s) || (allyteam < 0) ||
-			(((CUnit*) s)->losStatus[allyteam] & LOS_INLOS)) {
+				(static_cast<CUnit*>(s)->losStatus[allyteam] & LOS_INLOS)) {
 			if (s->immobile) {
 				return BUILDSQUARE_BLOCKED;
 			} else {

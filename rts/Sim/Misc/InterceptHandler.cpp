@@ -176,7 +176,7 @@ float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const floa
 
 
 void CInterceptHandler::DependentDied(CObject* o) {
-	std::map<int, CWeaponProjectile*>::iterator it = interceptables.find(((CWeaponProjectile*) o)->id);
+	std::map<int, CWeaponProjectile*>::iterator it = interceptables.find(static_cast<CWeaponProjectile*>(o)->id);
 
 	if (it != interceptables.end()) {
 		interceptables.erase(it->first);

@@ -1106,7 +1106,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 			continue;
 		}
 
-		for (it = c.begin(); it != c.end(); it++) {
+		for (it = c.begin(); it != c.end(); ++it) {
 			CSolidObject* obj = it->second;
 
 			if (m->moveMath->IsNonBlocking(*m, obj)) {
@@ -1123,7 +1123,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 					dif *= (dl != 0.0f)? (colDepth / dl): 0.0f;
 					posDelta -= (dif * (1.0f - part));
 
-					CUnit* u = (CUnit*) obj;
+					CUnit* u = static_cast<CUnit*>(obj);
 
 					const int uAllyTeam = u->allyteam;
 					const int oAllyTeam = owner->allyteam;
@@ -1186,7 +1186,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 			continue;
 		}
 
-		for (it = c.begin(); it != c.end(); it++) {
+		for (it = c.begin(); it != c.end(); ++it) {
 			CSolidObject* obj = it->second;
 
 			if (m->moveMath->IsNonBlocking(*m, obj)) {
@@ -1203,7 +1203,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 					dif *= (dl != 0.0f)? (colDepth / dl): 0.0f;
 					posDelta -= (dif * (1.0f - part));
 
-					CUnit* u = (CUnit*) obj;
+					CUnit* u = static_cast<CUnit*>(obj);
 
 					const int uAllyTeam = u->allyteam;
 					const int oAllyTeam = owner->allyteam;

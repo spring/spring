@@ -91,7 +91,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		possibleCommands.push_back(c);
 	}
 
-	CFactory* fac=(CFactory*)owner;
+	CFactory* fac = static_cast<CFactory*>(owner);
 
 	map<int, string>::const_iterator bi;
 	for (bi = fac->unitDef->buildOptions.begin(); bi != fac->unitDef->buildOptions.end(); ++bi) {
@@ -251,7 +251,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				}
 			}
 			if (!repeatOrders) {
-				CFactory* fac = (CFactory*)owner;
+				CFactory* fac = static_cast<CFactory*>(owner);
 				fac->StopBuild();
 			}
 		} else {
@@ -277,7 +277,7 @@ void CFactoryCAI::InsertBuildCommand(CCommandQueue::iterator& it,
 	}
 	if (!commandQue.empty() && (it == commandQue.begin())) {
 		// ExecuteStop(), without the pop_front()
-		CFactory* fac = (CFactory*)owner;
+		CFactory* fac = static_cast<CFactory*>(owner);
 		fac->StopBuild();
 	}
 	commandQue.insert(it, newCmd);
@@ -357,7 +357,7 @@ void CFactoryCAI::SlowUpdate()
 	if (commandQue.empty() || owner->beingBuilt)
 		return;
 
-	CFactory* fac = (CFactory*) owner;
+	CFactory* fac = static_cast<CFactory*>(owner);
 
 	while (!commandQue.empty()) {
 		Command& c = commandQue.front();
@@ -395,7 +395,7 @@ void CFactoryCAI::SlowUpdate()
 
 void CFactoryCAI::ExecuteStop(Command& c)
 {
-	CFactory* fac = (CFactory*) owner;
+	CFactory* fac = static_cast<CFactory*>(owner);
 	fac->StopBuild();
 
 	commandQue.pop_front();

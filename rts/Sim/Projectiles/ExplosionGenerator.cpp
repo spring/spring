@@ -190,7 +190,7 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 		throw content_error(prefix + " is not a subclass of IExplosionGenerator");
 	}
 
-	IExplosionGenerator* explGen = (IExplosionGenerator*) cls->CreateInstance();
+	IExplosionGenerator* explGen = static_cast<IExplosionGenerator*>(cls->CreateInstance());
 	explGen->SetGeneratorID(++numLoadedGenerators);
 
 	assert(gCEG != explGen);
@@ -502,7 +502,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 			case OP_DIR: {
 				boost::uint16_t offset = *(boost::uint16_t*) code;
 				code += 2;
-				*(float3*) (instance + offset) = dir;
+				*reinterpret_cast<float3*>(instance + offset) = dir;
 				break;
 			}
 			case OP_SAWTOOTH: {
@@ -588,7 +588,6 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 		if (!legalType) {
 			throw content_error("[CCEG::ParseExplosionCode] projectile type-properties other than int, float, uchar, or bool are not supported (" + script + ")");
-			return;
 		}
 
 		int p = 0;
@@ -925,7 +924,7 @@ bool CCustomExplosionGenerator::Explosion(
 		}
 
 		for (int c = 0; c < psi.count; c++) {
-			CExpGenSpawnable* projectile = (CExpGenSpawnable*) (psi.projectileClass)->CreateInstance();
+			CExpGenSpawnable* projectile = static_cast<CExpGenSpawnable*>((psi.projectileClass)->CreateInstance());
 
 			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir, (psi.flags & SPW_SYNCED) != 0);
 			projectile->Init(pos, owner);
