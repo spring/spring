@@ -48,6 +48,7 @@ Bugfixes:
  - fix problem to build near map edges
  - fix ping display after mid-game (re-)join + try to reduce lag after mid-game join
  - fix missing stack trace if out-of-memory occurs
+ - fix missing stack trace on abnormal termination (sigabrt)
  - fix resurrecting an individual wreck results in the resurrector not healing it
  - fix /godmode and /{luarules,luagaia} {reload,disable} not working in demos
  - fix targetting bug (weapons sometimes failing to fire at badTargetCategory units) as a result of AllowWeaponTarget misuse
@@ -56,6 +57,7 @@ Bugfixes:
  - fix fighters that have a target may refuse to obey orders
  - fix crash in GetPlayerTeam (AI)
  - fix sync warning when resizing the main window
+ - fix ctrl/alt/shift keys stuck after alt tab
 
 Simulation:
  - YardMap changes:
@@ -82,6 +84,7 @@ Simulation:
    the former allows unit movement like www.youtube.com/watch?v=mRtePUdVk2o at the cost of more clumping (learn to use ctrl+lmb formation orders)
    the latter is a ticket back to unit movement circa 2009: no reversing, no turninplace=false, no smooth collision handling, no nothing (figure it out)
  - introduce an independent Lua-controllable aim-position (defaults to mid-position) for units and features, used by weapons as their aiming/target point
+ - make ground units less keen on repairing fast units such as patrolling aircraft
 
 Pathing:
  - QTPFS: less loadscreen spam, make F2 functional, enable corner-connected node topology, use staggered layer-updates, speedups and tweaks
@@ -110,6 +113,7 @@ Lua:
  - add new synced callouts Set{Unit,Feature}RadiusAndHeight(number id, number radius, number height) --> boolean
  - add new synced callouts Set{Unit,Feature}MidAndAimPos(number id, number mpx, number mpy, number mpz, number apx, number apy, number apz) --> boolean
  - add optional 2nd (boolean midPos) and 3rd (boolean aimPos) arguments to Spring.Get{Unit,Feature}Position to go with the above four callouts
+ - fix keys hang after LuaUI tweakmode
  - [MT] disallow other Lua environments to invoke LuaUI if LuaThreadingModel = 2, to prevent deadlock
  - [MT] fix desync with LuaThreadingModel > 2
  - [MT] fix teams sometimes wrong in UnitGiven() and UnitTaken()
