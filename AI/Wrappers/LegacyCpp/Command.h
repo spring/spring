@@ -8,7 +8,7 @@
 
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
-#include "System/SafeVector.h"
+#include <vector>
 
 // ID's lower than 0 are reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
@@ -330,7 +330,7 @@ public:
 	unsigned char options;
 
 	/// command parameters
-	safe_vector<float> params;
+	std::vector<float> params;
 
 	/// unique id within a CCommandQueue
 	unsigned int tag;
