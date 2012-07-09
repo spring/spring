@@ -55,7 +55,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${mySourceDir}/UnitDef"
 		"${rts}/ExternalAI/AISCommands"
 		"${rts}/System/float3"
-		"${rts}/System/SafeVector"
 		${ai_common_SRC}
 		)
 
