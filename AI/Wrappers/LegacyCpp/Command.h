@@ -225,7 +225,7 @@ public:
 		switch (id) {
 			case CMD_ATTACK:
 			case CMD_FIGHT:
-			case CMD_MANUALFIRE:
+			case CMD_DGUN:
 				cpos = 0;
 				return (1 <= psize && psize < 3);
 			case CMD_GUARD:
