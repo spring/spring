@@ -43,6 +43,9 @@ SmoothController::SmoothController()
 		const float h = std::max(pos.x / globalRendering->aspectRatio, pos.z);
 		height = ground->GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
 	}
+
+	maxHeight = 9.5f * std::max(gs->mapx, gs->mapy);
+	UpdateVectors();
 }
 
 void SmoothController::KeyMove(float3 move)
@@ -90,6 +93,7 @@ void SmoothController::MouseMove(float3 move)
 
 	pos += (thisMove + lastMove) / 2.0f;
 	lastMove = (thisMove + lastMove) / 2.0f;
+	UpdateVectors();
 }
 
 
@@ -170,6 +174,16 @@ void SmoothController::MouseWheelMove(float move)
 			changeAltHeight = true;
 		}
 	}
+	UpdateVectors();
+}
+
+void SmoothController::UpdateVectors()
+{
+	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
+	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
+	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
+	height = Clamp(height, 60.0f, maxHeight);
+	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 }
 
 void SmoothController::Update()
@@ -177,28 +191,12 @@ void SmoothController::Update()
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }
 
-float3 SmoothController::GetPos()
+float3 SmoothController::GetPos() const
 {
-	maxHeight = 9.5f * std::max(gs->mapx, gs->mapy);	//map not created when constructor run
-
-	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
-	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
-	height = Clamp(height, 60.0f, maxHeight);
-
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
-	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
-
 	float3 cpos = pos - dir * height;
 	cpos.y = std::max(cpos.y, ground->GetHeightAboveWater(cpos.x, cpos.z, false) + 5.0f);
 	return cpos;
 }
-
-
-float3 SmoothController::GetDir()
-{
-	return dir;
-}
-
 
 float3 SmoothController::SwitchFrom() const
 {
@@ -256,7 +254,7 @@ void SmoothController::Move(const float3& move, const unsigned timeDiff)
 		if (speedFactor > maxSpeedFactor)
 			speedFactor = maxSpeedFactor; // don't know why, but std::min produces undefined references here
 		lastMove = move;
-		pos += move*static_cast<float>(speedFactor)/static_cast<float>(maxSpeedFactor);
+		pos += move * float(speedFactor) / maxSpeedFactor;
 	}
 	else if ((move.x == 0 || move.z == 0) && speedFactor > 1)
 	{
@@ -265,7 +263,7 @@ void SmoothController::Move(const float3& move, const unsigned timeDiff)
 			speedFactor = 0;
 		else
 			speedFactor -= timeDiff;
-		pos += lastMove*static_cast<float>(speedFactor)/static_cast<float>(maxSpeedFactor);
+		pos += lastMove * float(speedFactor) / maxSpeedFactor;
 	}
 	else
 	{
@@ -273,4 +271,5 @@ void SmoothController::Move(const float3& move, const unsigned timeDiff)
 		pos += move;
 		lastMove = move;
 	}
+	UpdateVectors();
 }

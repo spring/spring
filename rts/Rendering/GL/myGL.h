@@ -68,6 +68,7 @@ inline void glUniformf3(const GLint& location, const float3& v)
 	glUniform3f(location, v.x, v.y, v.z);
 }
 
+void WorkaroundATIPointSizeBug();
 
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data);
 

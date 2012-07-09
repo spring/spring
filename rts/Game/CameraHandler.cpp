@@ -21,10 +21,30 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
+static std::string strformat(const char* fmt, ...)
+{
+	char buf[256];
+	va_list args;
+	va_start(args,fmt);
+	VSNPRINTF(buf, sizeof(buf), fmt, args);
+	va_end(args);
+	return std::string(buf);
+}
+
 CONFIG(std::string, CamModeName).defaultValue("");
 
 CONFIG(int, CamMode)
 	.defaultValue(CCameraHandler::CAMERA_MODE_SMOOTH)
+	.description(strformat("Defines the used camera. Options are:\n%i = FPS\n%i = Overhead\n%i = TotalWar\n%i = RotOverhead\n%i = Free\n%i = SmoothOverhead\n%i = Orbit\n%i = Overview",
+		(int)CCameraHandler::CAMERA_MODE_FIRSTPERSON,
+		(int)CCameraHandler::CAMERA_MODE_OVERHEAD,
+		(int)CCameraHandler::CAMERA_MODE_TOTALWAR,
+		(int)CCameraHandler::CAMERA_MODE_ROTOVERHEAD,
+		(int)CCameraHandler::CAMERA_MODE_FREE,
+		(int)CCameraHandler::CAMERA_MODE_SMOOTH,
+		(int)CCameraHandler::CAMERA_MODE_ORBIT,
+		(int)CCameraHandler::CAMERA_MODE_OVERVIEW
+	).c_str())
 	.minimumValue(0)
 	.maximumValue(CCameraHandler::CAMERA_MODE_LAST - 1);
 

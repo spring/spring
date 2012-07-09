@@ -1,8 +1,8 @@
 /*
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -18,10 +18,10 @@ following conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -47,6 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Hash.h"
 #include "fast_atof.h"
 #include "ParsingUtils.h"
+#include "MaterialSystem.h"
 
 using namespace Assimp;
 
@@ -136,7 +137,7 @@ aiReturn aiGetMaterialFloatArray(const aiMaterial* pMat,
 		const char* cur =  prop->mData+4;
 		ai_assert(prop->mDataLength>=5 && !prop->mData[prop->mDataLength-1]);
 		for (unsigned int a = 0; ;++a) {	
-			cur = fast_atof_move(cur,pOut[a]);
+			cur = fast_atoreal_move<float>(cur,pOut[a]);
 			if(a==iWrite-1) {
 				break;
 			}
@@ -353,7 +354,7 @@ aiReturn aiGetMaterialTexture(const C_STRUCT aiMaterial* mat,
 
 // ------------------------------------------------------------------------------------------------
 // Construction. Actually the one and only way to get an aiMaterial instance
-MaterialHelper::MaterialHelper()
+aiMaterial::aiMaterial()
 {
 	// Allocate 5 entries by default
 	mNumProperties = 0;
@@ -362,38 +363,15 @@ MaterialHelper::MaterialHelper()
 }
 
 // ------------------------------------------------------------------------------------------------
-MaterialHelper::~MaterialHelper()
-{
-	_InternDestruct();
-}
-
-// ------------------------------------------------------------------------------------------------
 aiMaterial::~aiMaterial()
 {
-	// HACK (Aramis): This is safe: aiMaterial has a private constructor,
-	// so instances must be created indirectly via MaterialHelper. We can't
-	// use a virtual d'tor because we need to preserve binary compatibility
-	// with good old C ...
-	((MaterialHelper*)this)->_InternDestruct();
-}
-
-// ------------------------------------------------------------------------------------------------
-// Manual destructor
-void MaterialHelper::_InternDestruct()
-{
-	// First clean up all properties
 	Clear();
 
-	// Then delete the array that stored them
 	delete[] mProperties;
-	AI_DEBUG_INVALIDATE_PTR(mProperties);
-
-	// Update members
-	mNumAllocated = 0;
 }
 
 // ------------------------------------------------------------------------------------------------
-void MaterialHelper::Clear()
+void aiMaterial::Clear()
 {
 	for (unsigned int i = 0; i < mNumProperties;++i)	{
 		// delete this entry
@@ -406,29 +384,7 @@ void MaterialHelper::Clear()
 }
 
 // ------------------------------------------------------------------------------------------------
-uint32_t MaterialHelper::ComputeHash(bool includeMatName /*= false*/)
-{
-	uint32_t hash = 1503; // magic start value, choosen to be my birthday :-)
-	for (unsigned int i = 0; i < mNumProperties;++i)	{
-		aiMaterialProperty* prop;
-
-		// Exclude all properties whose first character is '?' from the hash
-		// See doc for aiMaterialProperty.
-		if ((prop = mProperties[i]) && (includeMatName || prop->mKey.data[0] != '?'))	{
-
-			hash = SuperFastHash(prop->mKey.data,(unsigned int)prop->mKey.length,hash);
-			hash = SuperFastHash(prop->mData,prop->mDataLength,hash);
-
-			// Combine the semantic and the index with the hash
-			hash = SuperFastHash((const char*)&prop->mSemantic,sizeof(unsigned int),hash);
-			hash = SuperFastHash((const char*)&prop->mIndex,sizeof(unsigned int),hash);
-		}
-	}
-	return hash;
-}
-
-// ------------------------------------------------------------------------------------------------
-aiReturn MaterialHelper::RemoveProperty (const char* pKey,unsigned int type,
+aiReturn aiMaterial::RemoveProperty (const char* pKey,unsigned int type,
     unsigned int index
 	)
 {
@@ -456,7 +412,7 @@ aiReturn MaterialHelper::RemoveProperty (const char* pKey,unsigned int type,
 }
 
 // ------------------------------------------------------------------------------------------------
-aiReturn MaterialHelper::AddBinaryProperty (const void* pInput,
+aiReturn aiMaterial::AddBinaryProperty (const void* pInput,
 	unsigned int pSizeInBytes,
 	const char* pKey,
 	unsigned int type,
@@ -526,7 +482,7 @@ aiReturn MaterialHelper::AddBinaryProperty (const void* pInput,
 }
 
 // ------------------------------------------------------------------------------------------------
-aiReturn MaterialHelper::AddProperty (const aiString* pInput,
+aiReturn aiMaterial::AddProperty (const aiString* pInput,
 	const char* pKey,
 	unsigned int type,
     unsigned int index)
@@ -557,8 +513,30 @@ aiReturn MaterialHelper::AddProperty (const aiString* pInput,
 }
 
 // ------------------------------------------------------------------------------------------------
-void MaterialHelper::CopyPropertyList(MaterialHelper* pcDest, 
-	const MaterialHelper* pcSrc
+uint32_t Assimp :: ComputeMaterialHash(const aiMaterial* mat, bool includeMatName /*= false*/)
+{
+	uint32_t hash = 1503; // magic start value, chosen to be my birthday :-)
+	for (unsigned int i = 0; i < mat->mNumProperties;++i)	{
+		aiMaterialProperty* prop;
+
+		// Exclude all properties whose first character is '?' from the hash
+		// See doc for aiMaterialProperty.
+		if ((prop = mat->mProperties[i]) && (includeMatName || prop->mKey.data[0] != '?'))	{
+
+			hash = SuperFastHash(prop->mKey.data,(unsigned int)prop->mKey.length,hash);
+			hash = SuperFastHash(prop->mData,prop->mDataLength,hash);
+
+			// Combine the semantic and the index with the hash
+			hash = SuperFastHash((const char*)&prop->mSemantic,sizeof(unsigned int),hash);
+			hash = SuperFastHash((const char*)&prop->mIndex,sizeof(unsigned int),hash);
+		}
+	}
+	return hash;
+}
+
+// ------------------------------------------------------------------------------------------------
+void aiMaterial::CopyPropertyList(aiMaterial* pcDest, 
+	const aiMaterial* pcSrc
 	)
 {
 	ai_assert(NULL != pcDest);

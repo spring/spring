@@ -42,6 +42,11 @@ namespace Threading {
 	unsigned GetAvailableCores();
 
 	/**
+	 * Inform the OS kernel that we are a cpu-intensive task
+	 */
+	void SetThreadScheduler();
+
+	/**
 	 * Used to detect the main-thread which runs SDL, GL, Input, Sim, ...
 	 */
 	void SetMainThread();

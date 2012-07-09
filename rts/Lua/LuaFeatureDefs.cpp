@@ -167,7 +167,7 @@ static int FeatureDefIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const FeatureDef* fd = (const FeatureDef*)userData;
+	const FeatureDef* fd = static_cast<const FeatureDef*>(userData);
 	const DataElement& elem = it->second;
 	const char* p = ((const char*)fd) + elem.offset;
 	switch (elem.type) {
@@ -223,7 +223,7 @@ static int FeatureDefNewIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const FeatureDef* fd = (const FeatureDef*)userData;
+	const FeatureDef* fd = static_cast<const FeatureDef*>(userData);
 
 	// write-protected
 	if (!gs->editDefsEnabled) {
@@ -333,7 +333,7 @@ static int CustomParamsTable(lua_State* L, const void* data)
 
 static int ModelHeight(lua_State* L, const void* data)
 {
-	const FeatureDef* fd = ((const FeatureDef*) data);
+	const FeatureDef* fd = static_cast<const FeatureDef*>(data);
 	const S3DModel* model = NULL;
 	float height = 0.0f;
 
@@ -363,7 +363,7 @@ static int ModelHeight(lua_State* L, const void* data)
 
 static int ModelRadius(lua_State* L, const void* data)
 {
-	const FeatureDef* fd = ((const FeatureDef*) data);
+	const FeatureDef* fd = static_cast<const FeatureDef*>(data);
 	const S3DModel* model = NULL;
 	float radius = 0.0f;
 
@@ -394,7 +394,7 @@ static int ModelRadius(lua_State* L, const void* data)
 #define TYPE_MODEL_FUNC(name, param)                            \
 	static int Model ## name(lua_State* L, const void* data)    \
 	{                                                           \
-		const FeatureDef* fd = ((const FeatureDef*)data);       \
+		const FeatureDef* fd = static_cast<const FeatureDef*>(data); \
 		if (fd->drawType == DRAWTYPE_MODEL) {                   \
 			const S3DModel* model = fd->LoadModel();            \
 			lua_pushnumber(L, model? model -> param : 0.0f);    \
@@ -405,15 +405,15 @@ static int ModelRadius(lua_State* L, const void* data)
 
 //TYPE_MODEL_FUNC(Height, height); // ::ModelHeight()
 //TYPE_MODEL_FUNC(Radius, radius); // ::ModelRadius()
-TYPE_MODEL_FUNC(Minx,   mins.x);
-TYPE_MODEL_FUNC(Midx,   relMidPos.x);
-TYPE_MODEL_FUNC(Maxx,   maxs.x);
-TYPE_MODEL_FUNC(Miny,   mins.y);
-TYPE_MODEL_FUNC(Midy,   relMidPos.y);
-TYPE_MODEL_FUNC(Maxy,   maxs.y);
-TYPE_MODEL_FUNC(Minz,   mins.z);
-TYPE_MODEL_FUNC(Midz,   relMidPos.z);
-TYPE_MODEL_FUNC(Maxz,   maxs.z);
+TYPE_MODEL_FUNC(Minx, mins.x);
+TYPE_MODEL_FUNC(Midx, relMidPos.x);
+TYPE_MODEL_FUNC(Maxx, maxs.x);
+TYPE_MODEL_FUNC(Miny, mins.y);
+TYPE_MODEL_FUNC(Midy, relMidPos.y);
+TYPE_MODEL_FUNC(Maxy, maxs.y);
+TYPE_MODEL_FUNC(Minz, mins.z);
+TYPE_MODEL_FUNC(Midz, relMidPos.z);
+TYPE_MODEL_FUNC(Maxz, maxs.z);
 
 
 /******************************************************************************/
@@ -446,7 +446,7 @@ static bool InitParamMap()
 
 	ADD_INT("id", fd.id);
 
-	ADD_STRING("name",     fd.myName);
+	ADD_STRING("name",     fd.name);
 	ADD_STRING("tooltip",  fd.description);
 
 	ADD_FLOAT("metal",       fd.metal);
@@ -473,6 +473,7 @@ static bool InitParamMap()
 	ADD_BOOL("upright",      fd.upright);
 	ADD_BOOL("destructable", fd.destructable);
 	ADD_BOOL("reclaimable",  fd.reclaimable);
+	ADD_BOOL("autoreclaim",  fd.autoreclaim);
 	ADD_BOOL("blocking",     fd.blocking);
 	ADD_BOOL("burnable",     fd.burnable);
 	ADD_BOOL("floating",     fd.floating);

@@ -7,7 +7,6 @@ using std::sprintf;
 #include "SAIInterfaceCallbackImpl.h"
 
 #include "Game/GameVersion.h"
-#include "Game/GameSetup.h"
 #include "Sim/Misc/GlobalConstants.h" // for MAX_TEAMS
 #include "Sim/Misc/TeamHandler.h" // ActiveTeams()
 #include "ExternalAI/IAILibraryManager.h"

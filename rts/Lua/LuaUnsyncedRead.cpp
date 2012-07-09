@@ -228,10 +228,11 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (ActiveReadAllyTeam() < 0) {
-		return ActiveFullRead() ? unit : NULL;
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+	if (readAllyTeam < 0) {
+		return CLuaHandle::GetHandleFullRead(L) ? unit : NULL;
 	}
-	if ((unit->losStatus[ActiveReadAllyTeam()] & (LOS_INLOS | LOS_INRADAR)) == 0) {
+	if ((unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
 		return NULL;
 	}
 	return unit;
@@ -246,10 +247,12 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 	const int featureID = lua_toint(L, index);
 	CFeature* feature = featureHandler->GetFeature(featureID);
 
-	if (ActiveFullRead()) { return feature; }
-	if (ActiveReadAllyTeam() < 0) { return NULL; }
+	if (CLuaHandle::GetHandleFullRead(L)) { return feature; }
+
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+	if (readAllyTeam < 0) { return NULL; }
 	if (feature == NULL) { return NULL; }
-	if (feature->IsInLosForAllyTeam(ActiveReadAllyTeam())) { return feature; }
+	if (feature->IsInLosForAllyTeam(readAllyTeam)) { return feature; }
 
 	return NULL;
 }
@@ -450,10 +453,10 @@ int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (ActiveReadAllyTeam() < 0) {
-		lua_pushboolean(L, ActiveFullRead());
+	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
+		lua_pushboolean(L, CLuaHandle::GetHandleFullRead(L));
 	} else {
-		lua_pushboolean(L, (unit->allyteam == ActiveReadAllyTeam()));
+		lua_pushboolean(L, (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L)));
 	}
 	return 1;
 }
@@ -489,8 +492,10 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 	const float radius = luaL_optnumber(L, 2, unit->radius);
 	const bool checkIcon = lua_toboolean(L, 3);
 
-	if (ActiveReadAllyTeam() < 0) {
-		if (!ActiveFullRead()) {
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+
+	if (readAllyTeam < 0) {
+		if (!CLuaHandle::GetHandleFullRead(L)) {
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
@@ -499,7 +504,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 		}
 	}
 	else {
-		if ((unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS) == 0) {
+		if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
@@ -681,19 +686,19 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	// arg 1 - teamID
 	int teamID = luaL_optint(L, 1, -1);
 	if (teamID == MyUnits) {
-		const int scriptTeamID = CLuaHandle::GetReadTeam(L);
+		const int scriptTeamID = CLuaHandle::GetHandleReadTeam(L);
 		if (scriptTeamID >= 0) {
 			teamID = scriptTeamID;
 		} else {
 			teamID = AllUnits;
 		}
 	}
-	int allyTeamID = ActiveReadAllyTeam();
+	int allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
 	if (teamID >= 0) {
 		allyTeamID = teamHandler->AllyTeam(teamID);
 	}
 	if (allyTeamID < 0) {
-		if (!ActiveFullRead()) {
+		if (!CLuaHandle::GetHandleFullRead(L)) {
 			return 0;
 		}
 	}
@@ -816,8 +821,8 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	}
 	if (allyTeamID < 0) {
 		allyTeamID = -1;
-		if (!ActiveFullRead()) {
-			allyTeamID = CLuaHandle::GetReadAllyTeam(L);
+		if (!CLuaHandle::GetHandleFullRead(L)) {
+			allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
 		}
 	}
 
@@ -873,11 +878,8 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	for (CFeatureSet::const_iterator featureIt = featureSet.begin(); featureIt != featureSet.end(); ++featureIt) {
 		const CFeature& f = **featureIt;
 
-		if (noGeos) {
-			if (f.def->geoThermal) {
-				continue;
-			}
-		}
+		if (noGeos && f.def->geoThermal)
+			continue;
 
 		if (noIcons) {
 			float sqDist = (f.pos - camera->pos).SqLength2D();
@@ -1115,7 +1117,7 @@ int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 
 int LuaUnsyncedRead::GetMapSquareTexture(lua_State* L)
 {
-	if (CLuaHandle::GetSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L)) {
 		return 0;
 	}
 
@@ -1311,18 +1313,21 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 	CUnit* unit = NULL;
 	CFeature* feature = NULL;
+
 	const float range = globalRendering->viewRange * 1.4f;
+	const float badRange = range - 300.0f;
+
 	const float3& pos = camera->pos;
 	const float3 dir = camera->CalcPixelDir(wx, wy);
 
 
 // FIXME	const int origAllyTeam = gu->myAllyTeam;
 //	gu->myAllyTeam = readAllyTeam;
-	const float dist = TraceRay::GuiTraceRay(pos, dir, range, true, NULL, unit, feature);
+	const float dist = TraceRay::GuiTraceRay(pos, dir, range, true, NULL, unit, feature, onlyCoords);
 //	gu->myAllyTeam = origAllyTeam;
 
-	const float badRange = range - 300.0f;
-	if ((dist > badRange) && !unit && !feature) {
+	if ((dist < 0.0f || dist > badRange) && unit == NULL && feature == NULL) {
+		// ray went into the void (or started too far above terrain)
 		if (includeSky) {
 			lua_pushliteral(L, "sky");
 		} else {
@@ -1330,13 +1335,13 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		}
 	} else {
 		if (!onlyCoords) {
-			if (unit) {
+			if (unit != NULL) {
 				lua_pushliteral(L, "unit");
 				lua_pushnumber(L, unit->id);
 				return 2;
 			}
 	
-			if (feature) {
+			if (feature != NULL) {
 				lua_pushliteral(L, "feature");
 				lua_pushnumber(L, feature->id);
 				return 2;
@@ -2041,7 +2046,7 @@ int LuaUnsyncedRead::GetGroupList(lua_State* L)
 int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, selectedUnits.selectedGroup);
+	lua_pushnumber(L, selectedUnits.GetSelectedGroup());
 	return 1;
 }
 

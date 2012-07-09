@@ -36,7 +36,10 @@
 #include "System/EventHandler.h"
 #include "System/mmgr.h"
 #include "System/myMath.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
+
+#define PLAY_SOUNDS 1
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -321,6 +324,20 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 	CExplosionEvent explosionEvent(expPos, damages.GetDefaultDamage(), damageAOE, weaponDef);
 	FireExplosionEvent(explosionEvent);
+
+	#if (PLAY_SOUNDS == 1)
+	if (weaponDef != NULL) {
+		const GuiSoundSet& soundSet = weaponDef->hitSound;
+
+		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(expPos.y, altitude);
+		const int soundNum = ((soundFlags & (CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER)) != 0);
+		const int soundID = soundSet.getID(soundNum);
+
+		if (soundID > 0) {
+			Channels::Battle.PlaySample(soundID, expPos, soundSet.getVolume(soundNum));
+		}
+	}
+	#endif
 }
 
 
@@ -618,12 +635,13 @@ public:
 }; // end of namespace Query
 }; // end of namespace
 
-
+// Use this instead of unit->tempNum here, because it requires a mutex lock that will deadlock if luaRules is invoked simultaneously.
+// Not the cleanest solution, but faster than e.g. a std::set, and this function is called quite frequently.
+static int tempTargetUnits[MAX_UNITS] = {0};
+static int targetTempNum = 2;
 
 void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets)
 {
-	GML_RECMUTEX_LOCK(qnum); // GenerateTargets
-
 	const CUnit* attacker = weapon->owner;
 	const float radius    = weapon->range;
 	const float3& pos     = attacker->pos;
@@ -636,11 +654,11 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 	const std::vector<int>& quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->initMinHeight)) * heightMod);
 
-	const int tempNum = gs->tempNum++;
+	const int tempNum = targetTempNum++;
 
 	typedef std::vector<int>::const_iterator VectorIt;
 	typedef std::list<CUnit*>::const_iterator ListIt;
-	
+
 	for (VectorIt qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
 			if (teamHandler->Ally(attacker->allyteam, t)) {
@@ -653,82 +671,90 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				CUnit* targetUnit = *ui;
 				float targetPriority = 1.0f;
 
+				if (!(targetUnit->category & weapon->onlyTargetCategory)) {
+					continue;
+				}
+				if (targetUnit->GetTransporter() != NULL) {
+					if (!modInfo.targetableTransportedUnits)
+						continue;
+					// the transportee might be "hidden" below terrain, in which case we can't target it
+					if (targetUnit->pos.y < ground->GetHeightReal(targetUnit->pos.x, targetUnit->pos.z))
+						continue;
+				}
+				if (tempTargetUnits[targetUnit->id] == tempNum) {
+					continue;
+				}
+
+				tempTargetUnits[targetUnit->id] = tempNum;
+
+				if (targetUnit->isUnderWater && !weapon->weaponDef->waterweapon) {
+					continue;
+				}
+				if (targetUnit->isDead) {
+					continue;
+				}
+
+				float3 targPos;
+				const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
+
+				if (targetLOSState & LOS_INLOS) {
+					targPos = targetUnit->aimPos;
+				} else if (targetLOSState & LOS_INRADAR) {
+					targPos = targetUnit->aimPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
+					targetPriority *= 10.0f;
+				} else {
+					continue;
+				}
+
+				const float modRange = radius + (aHeight - targPos.y) * heightMod;
+
+				if ((pos - targPos).SqLength2D() > modRange * modRange) {
+					continue;
+				}
+
+				const float dist2D = (pos - targPos).Length2D();
+				const float rangeMul = (dist2D * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
+				const float damageMul = weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
+
+				targetPriority *= rangeMul;
+
+				if (targetLOSState & LOS_INLOS) {
+					targetPriority *= (secDamage + targetUnit->health);
+
+					if (targetUnit == lastTargetUnit) {
+						targetPriority *= weapon->avoidTarget ? 10.0f : 0.4f;
+					}
+
+					if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
+						targetPriority *= 4.0f;
+					}
+
+					if (weapon->hasTargetWeight) {
+						targetPriority *= weapon->TargetWeight(targetUnit);
+					}
+				} else {
+					targetPriority *= (secDamage + 10000.0f);
+				}
+
+				if (targetLOSState & LOS_PREVLOS) {
+					targetPriority /= (damageMul * targetUnit->power * (0.7f + gs->randFloat() * 0.6f));
+
+					if (targetUnit->category & weapon->badTargetCategory) {
+						targetPriority *= 100.0f;
+					}
+					if (targetUnit->crashing) {
+						targetPriority *= 1000.0f;
+					}
+				}
+
 				if (luaRules != NULL) {
-					const int targetAllowed = luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weapon->weaponDef->id, &targetPriority);
-
-					if (targetAllowed >= 0) {
-						if (targetAllowed > 0) {
-							targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
-						}
-
+					const bool targetAllowed = luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weapon->weaponDef->id, &targetPriority);
+					if (!targetAllowed) {
 						continue;
 					}
 				}
 
-
-				if (targetUnit->tempNum != tempNum && (targetUnit->category & weapon->onlyTargetCategory)) {
-					targetUnit->tempNum = tempNum;
-
-					if (targetUnit->isUnderWater && !weapon->weaponDef->waterweapon) {
-						continue;
-					}
-					if (targetUnit->isDead) {
-						continue;
-					}
-
-					float3 targPos;
-					const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
-
-					if (targetLOSState & LOS_INLOS) {
-						targPos = targetUnit->midPos;
-					} else if (targetLOSState & LOS_INRADAR) {
-						targPos = targetUnit->midPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
-						targetPriority *= 10.0f;
-					} else {
-						continue;
-					}
-
-					const float modRange = radius + (aHeight - targPos.y) * heightMod;
-
-					if ((pos - targPos).SqLength2D() <= modRange * modRange) {
-						const float dist2D = (pos - targPos).Length2D();
-						const float rangeMul = (dist2D * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
-						const float damageMul = weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
-
-						targetPriority *= rangeMul;
-
-						if (targetLOSState & LOS_INLOS) {
-							targetPriority *= (secDamage + targetUnit->health);
-
-							if (targetUnit == lastTargetUnit) {
-								targetPriority *= weapon->avoidTarget ? 10.0f : 0.4f;
-							}
-
-							if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
-								targetPriority *= 4.0f;
-							}
-
-							if (weapon->hasTargetWeight) {
-								targetPriority *= weapon->TargetWeight(targetUnit);
-							}
-						} else {
-							targetPriority *= (secDamage + 10000.0f);
-						}
-
-						if (targetLOSState & LOS_PREVLOS) {
-							targetPriority /= (damageMul * targetUnit->power * (0.7f + gs->randFloat() * 0.6f));
-
-							if (targetUnit->category & weapon->badTargetCategory) {
-								targetPriority *= 100.0f;
-							}
-							if (targetUnit->crashing) {
-								targetPriority *= 1000.0f;
-							}
-						}
-
-						targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
-					}
-				}
+				targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
 			}
 		}
 	}
@@ -815,18 +841,25 @@ void CGameHelper::GetEnemyUnitsNoLosTest(const float3 &pos, float searchRadius, 
 // Miscellaneous (i.e. not yet categorized)
 //////////////////////////////////////////////////////////////////////
 
-float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
+float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming)
 {
-	float3 pos = unit->midPos;
-	if (teamHandler->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
+	float3 pos = aiming? unit->aimPos: unit->midPos;
+
+	if (teamHandler->Ally(allyteam, unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
 		// ^ it's one of our own, or it's in LOS, so don't add an error ^
-	} else if ((!gameSetup || gameSetup->ghostedBuildings) && (unit->losStatus[allyteam] & LOS_PREVLOS) && !unit->mobility) {
-		// ^ this is a ghosted building, so don't add an error ^
-	} else if ((unit->losStatus[allyteam] & LOS_INRADAR)) {
-		pos += unit->posErrorVector * radarhandler->radarErrorSize[allyteam];
-	} else {
-		pos += unit->posErrorVector * radarhandler->baseRadarErrorSize * 2;
+		return pos;
 	}
+	if (gameSetup->ghostedBuildings && (unit->losStatus[allyteam] & LOS_PREVLOS) && !unit->moveDef) {
+		// ^ this is a ghosted building, so don't add an error ^
+		return pos;
+	}
+
+	if ((unit->losStatus[allyteam] & LOS_INRADAR) != 0) {
+		pos += (unit->posErrorVector * radarhandler->radarErrorSize[allyteam]);
+	} else {
+		pos += (unit->posErrorVector * radarhandler->baseRadarErrorSize * 2);
+	}
+
 	return pos;
 }
 
@@ -965,7 +998,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 					for (int x2 = x2Min; x2 < x2Max; ++x2) {
 						CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 
-						if (solObj && solObj->immobile && dynamic_cast<CFactory*>(solObj) && ((CFactory*)solObj)->opening) {
+						if (solObj && solObj->immobile && dynamic_cast<CFactory*>(solObj) && static_cast<CFactory*>(solObj)->opening) {
 							good = false;
 							break;
 						}

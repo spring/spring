@@ -5,6 +5,9 @@
 #include "3DModel.h"
 #include "3DModelLog.h"
 #include "S3OParser.h"
+#ifdef _MSC_VER
+#define _INC_MATH // a hack to prevent ambiguous math calls
+#endif
 #include "AssIO.h"
 
 #include "Lua/LuaParser.h"
@@ -16,12 +19,13 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 
-#include "assimp.hpp"
-#include "aiDefines.h"
-#include "aiTypes.h"
-#include "aiScene.h"
-#include "aiPostProcess.h"
-#include "DefaultLogger.h"
+#include "lib/assimp/include/assimp/config.h"
+#include "lib/assimp/include/assimp/defs.h"
+#include "lib/assimp/include/assimp/types.h"
+#include "lib/assimp/include/assimp/scene.h"
+#include "lib/assimp/include/assimp/postprocess.h"
+#include "lib/assimp/include/assimp/Importer.hpp"
+#include "lib/assimp/include/assimp/DefaultLogger.hpp"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #ifndef BITMAP_NO_OPENGL
 	#include "Rendering/GL/myGL.h"
@@ -96,12 +100,12 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	//! LOAD METADATA
 	//! Load the lua metafile. This contains properties unique to Spring models and must return a table
 	std::string metaFileName = modelFilePath + ".lua";
-	if (!FileSystem::FileExists(metaFileName)) {
+	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP)) {
 		//! Try again without the model file extension
 		metaFileName = modelPath + '/' + modelName + ".lua";
 	}
 	LuaParser metaFileParser(metaFileName, SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!FileSystem::FileExists(metaFileName)) {
+	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP)) {
 		LOG_S(LOG_SECTION_MODEL, "No meta-file '%s'. Using defaults.", metaFileName.c_str());
 	} else if (!metaFileParser.Execute()) {
 		LOG_SL(LOG_SECTION_MODEL, L_ERROR, "'%s': %s. Using defaults.", metaFileName.c_str(), metaFileParser.GetErrorLog().c_str());

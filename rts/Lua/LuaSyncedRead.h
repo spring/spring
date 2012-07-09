@@ -7,6 +7,8 @@ struct lua_State;
 
 
 class LuaSyncedRead {
+	friend class CLuaIntro;
+
 	public:
 		static bool PushEntries(lua_State* L);
 

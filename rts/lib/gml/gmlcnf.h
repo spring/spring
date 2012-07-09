@@ -49,6 +49,7 @@
 #define GML_LOAD_THREAD_NUM 1 // thread number of game loading thread
 #define GML_SIM_THREAD_NUM 2 // thread number of sim thread
 #define GML_DEBUG_MUTEX 0 // debugs the mutex locking order
+#define GML_MAX_CALL_CHAIN_WARNINGS 5 // max number of warnings for invalid chained calls from synced Lua to LuaUI
 //#define BOOST_AC_USE_PTHREADS
 
 namespace GML {

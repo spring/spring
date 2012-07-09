@@ -219,7 +219,7 @@ public:
 //			int nproc=0;
 			int updsrv=0;
 			if(ex->maxthreads>1) {
-				while(ClientsReady<=gmlThreadCount+1) {
+				while(ClientsReady < gmlThreadCount - 1) {
 					if(!gmlShareLists && ((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL))
 						gmlUpdateServers();
 					BOOL_ processed=FALSE;
@@ -243,9 +243,6 @@ public:
 							//						++nproc;
 						}
 					}
-
-					if(ClientsReady>=gmlThreadCount-1)
-						++ClientsReady;
 				}
 			}
 			else {
@@ -299,6 +296,8 @@ public:
 		new (ex+1) GML_TYPENAME gmlExecState<R,A,U>(wrk,wrka,wrkit,cls,mt,sm,nu,it,l1,l2,sw,swf);
 		newwork=TRUE;
 
+		while(!qd->Empty())
+			boost::thread::yield();
 		++ClientsReady;	
 		gmlClientSub();
 
@@ -351,6 +350,8 @@ public:
 //			}
 		}
 		qd->ReleaseWrite();
+		while(!qd->Empty())
+			boost::thread::yield();
 		++ClientsReady;	
 	}
 
@@ -380,11 +381,11 @@ public:
 		qd->GetWrite(qd->WasSynced?2:TRUE);
 
 		if(isq1) {
-			while(!qd->Locked1 && *(BYTE * volatile *)&qd->Pos1!=qd->Queue1)
+			while(!qd->Locked1 && !qd->Empty(1))
 				boost::thread::yield();
 		}
 		else {
-			while(!qd->Locked2 && *(BYTE * volatile *)&qd->Pos2!=qd->Queue2)
+			while(!qd->Locked2 && !qd->Empty(2))
 				boost::thread::yield();
 		}
 	}

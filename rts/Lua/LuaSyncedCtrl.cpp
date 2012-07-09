@@ -95,7 +95,7 @@ static float smoothMeshAmountChanged;
 
 inline void LuaSyncedCtrl::CheckAllowGameChanges(lua_State* L)
 {
-	const CLuaHandleSynced* lhs = CLuaHandleSynced::GetActiveHandle(L);
+	const CLuaHandleSynced* lhs = CLuaHandleSynced::GetSyncedHandle(L);
 
 	if (lhs == NULL) {
 		luaL_error(L, "Internal lua error, unsynced script using synced calls");
@@ -163,6 +163,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
+	REGISTER_LUA_CFUNC(SetUnitMidAndAimPos);
+	REGISTER_LUA_CFUNC(SetUnitRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
@@ -190,6 +192,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
 	REGISTER_LUA_CFUNC(SetFeatureDirection);
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
+	REGISTER_LUA_CFUNC(SetFeatureMidAndAimPos);
+	REGISTER_LUA_CFUNC(SetFeatureRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 
 
@@ -1692,17 +1696,81 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
 		const bool manualFire = lua_isboolean(L, 5) && lua_toboolean(L, 5);
-		unit->AttackGround(pos, manualFire);
+		unit->AttackGround(pos, false, manualFire);
 	}
 	else if (args >= 2) {
 		CUnit* target = ParseRawUnit(L, __FUNCTION__, 2);
 		const bool manualFire = lua_isboolean(L, 3) && lua_toboolean(L, 3);
-		unit->AttackUnit(target, manualFire);
+		unit->AttackUnit(target, false, manualFire);
 	}
 	return 0;
 }
 
 
+
+int LuaSyncedCtrl::SetUnitMidAndAimPos(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	#define FLOAT(i) luaL_checkfloat(L, i)
+	#define FLOAT3(i, j, k) float3(FLOAT(i), FLOAT(j), FLOAT(k))
+
+	const int argc = lua_gettop(L);
+	const float3 newMidPos = (argc >= 4)? FLOAT3(2, 3, 4): float3(unit->midPos);
+	const float3 newAimPos = (argc >= 7)? FLOAT3(5, 6, 7): float3(unit->aimPos);
+	const bool setRelative = (argc == 8 && lua_isboolean(L, 8) && lua_toboolean(L, 8));
+	const bool updateQuads = (newMidPos != unit->midPos);
+
+	#undef FLOAT3
+	#undef FLOAT
+
+	if (updateQuads) {
+		// safety, possibly just need MovedUnit
+		qf->RemoveUnit(unit);
+	}
+
+	unit->SetMidAndAimPos(newMidPos, newAimPos, setRelative);
+
+	if (updateQuads) {
+		qf->MovedUnit(unit);
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaSyncedCtrl::SetUnitRadiusAndHeight(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const float newRadius = std::max(1.0f, luaL_optfloat(L, 2, unit->radius));
+	const float newHeight = std::max(1.0f, luaL_optfloat(L, 3, unit->height));
+	const bool updateQuads = (newRadius != unit->radius);
+
+	if (updateQuads) {
+		// safety, possibly just need MovedUnit
+		qf->RemoveUnit(unit);
+	}
+
+	unit->SetRadiusAndHeight(newRadius, newHeight);
+
+	if (updateQuads) {
+		qf->MovedUnit(unit);
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
 
 int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 {
@@ -1903,7 +1971,7 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 
 	unit->Move3D(pos, false);
 	unit->SetDirVectors(matrix);
-	unit->UpdateMidPos();
+	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
 	unit->ForcedMove(pos);
 	return 0;
@@ -1956,7 +2024,7 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	matrix.RotateY(rot.y);
 
 	unit->SetDirVectors(matrix);
-	unit->UpdateMidPos();
+	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
 	unit->ForcedMove(unit->pos);
 	return 0;
@@ -2362,13 +2430,73 @@ int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
 }
 
 
+
+int LuaSyncedCtrl::SetFeatureMidAndAimPos(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	#define FLOAT(i) luaL_checkfloat(L, i)
+	#define FLOAT3(i, j, k) float3(FLOAT(i), FLOAT(j), FLOAT(k))
+
+	const int argc = lua_gettop(L);
+	const float3 newMidPos = (argc >= 4)? FLOAT3(2, 3, 4): float3(feature->midPos);
+	const float3 newAimPos = (argc >= 7)? FLOAT3(5, 6, 7): float3(feature->aimPos);
+	const bool setRelative = (argc == 8 && lua_isboolean(L, 8) && lua_toboolean(L, 8));
+	const bool updateQuads = (newMidPos != feature->midPos);
+
+	#undef FLOAT3
+	#undef FLOAT
+
+	if (updateQuads) {
+		qf->RemoveFeature(feature);
+	}
+
+	feature->SetMidAndAimPos(newMidPos, newAimPos, setRelative);
+
+	if (updateQuads) {
+		qf->AddFeature(feature);
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const float newRadius = std::max(1.0f, luaL_optfloat(L, 2, feature->radius));
+	const float newHeight = std::max(1.0f, luaL_optfloat(L, 3, feature->height));
+	const bool updateQuads = (newRadius != feature->radius);
+
+	if (updateQuads) {
+		qf->RemoveFeature(feature);
+	}
+
+	feature->SetRadiusAndHeight(newRadius, newHeight);
+
+	if (updateQuads) {
+		qf->AddFeature(feature);
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
 int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
 	if (feature == NULL) {
-		return 0;
-	}
-	if (feature->collisionVolume == NULL) {
 		return 0;
 	}
 
@@ -2715,6 +2843,8 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 
+	const int args = lua_gettop(L); // number of arguments
+
 	// units
 	vector<CUnit*> units;
 	ParseUnitArray(L, __FUNCTION__, 1, units);
@@ -2724,6 +2854,10 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	vector<Command> commands;
 	LuaUtils::ParseCommandArray(L, __FUNCTION__, 2, commands);
 	const int commandCount = (int)commands.size();
+
+	bool pairwise = false;
+	if (args >= 3)
+		pairwise = lua_toboolean(L, 3);
 
 	if ((unitCount <= 0) || (commandCount <= 0)) {
 		lua_pushnumber(L, 0);
@@ -2736,13 +2870,24 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	inGiveOrder = true;
 
 	int count = 0;
-	for (int u = 0; u < unitCount; u++) {
-		CUnit* unit = units[u];
-		if (CanControlUnit(L, unit)) {
-			for (int c = 0; c < commandCount; c++) {
-				unit->commandAI->GiveCommand(commands[c]);
+	if (pairwise) {
+		for (int x = 0; x < std::min(unitCount, commandCount); ++x) {
+			CUnit* unit = units[x];
+			if (CanControlUnit(L, unit)) {
+				unit->commandAI->GiveCommand(commands[x]);
+				count++;
 			}
-			count++;
+		}
+	}
+	else {
+		for (int u = 0; u < unitCount; u++) {
+			CUnit* unit = units[u];
+			if (CanControlUnit(L, unit)) {
+				for (int c = 0; c < commandCount; c++) {
+					unit->commandAI->GiveCommand(commands[c]);
+				}
+				count++;
+			}
 		}
 	}
 	inGiveOrder = false;
@@ -2787,10 +2932,11 @@ static void ParseParams(lua_State* L, const char* caller, float& factor,
 	}
 
 	// quantize and clamp
-	x1 = (int)max(0 , min(maxX, (int)(fx1 / resolution)));
-	z1 = (int)max(0 , min(maxZ, (int)(fz1 / resolution)));
-	x2 = (int)max(0 , min(maxX, (int)(fx2 / resolution)));
-	z2 = (int)max(0 , min(maxZ, (int)(fz2 / resolution)));
+	x1 = Clamp((int)(fx1 / resolution), 0, maxX);
+	x2 = Clamp((int)(fx2 / resolution), 0, maxX);
+	z1 = Clamp((int)(fz1 / resolution), 0, maxZ);
+	z2 = Clamp((int)(fz2 / resolution), 0, maxZ);
+
 }
 
 static inline void ParseMapParams(lua_State* L, const char* caller,

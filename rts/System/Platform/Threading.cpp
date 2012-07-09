@@ -2,6 +2,7 @@
 
 #include "Threading.h"
 #include "Rendering/GL/myGL.h"
+#include "System/myMath.h"
 
 #include <boost/thread.hpp>
 #if defined(__APPLE__)
@@ -90,6 +91,35 @@ namespace Threading {
 	unsigned GetAvailableCores()
 	{
 		return boost::thread::hardware_concurrency();
+	}
+
+	void SetThreadScheduler()
+	{
+	#ifndef USE_GML
+		#if defined(__APPLE__)
+			// no-op
+
+		#elif defined(WIN32)
+			//TODO add MMCSS (http://msdn.microsoft.com/en-us/library/ms684247.aspx)
+			//Note: only available with mingw64!!!
+
+		#else
+			if (GetAvailableCores() > 1) {
+				// Change os scheduler for this process.
+				// This way the kernel knows that we are a CPU-intensive task
+				// and won't randomly move us across the cores and tries
+				// to maximize the runtime (_slower_ wakeups, less yields)
+				//Note:
+				// It _may_ be possible that this has negative impact in case
+				// threads are waiting for mutexes (-> less yields).
+				sched_param sp;
+				sched_getparam(0, &sp);
+				sp.sched_priority += 2;
+				sp.sched_priority = Clamp(sp.sched_priority, sched_get_priority_min(SCHED_BATCH), sched_get_priority_max(SCHED_BATCH));
+				sched_setscheduler(0, SCHED_BATCH, &sp);
+			}
+		#endif
+	#endif
 	}
 
 

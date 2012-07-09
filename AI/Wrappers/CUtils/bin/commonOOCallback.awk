@@ -279,8 +279,8 @@ function part_getIndicesArgs(clsName_p, implClsName_p, params_p, metaComment_p, 
 #if (clsName_p == "MoveData") { print("parentImplClsId_p: #" parentImplClsId_p "#" cls_implId_indicesArgs[parentImplClsId_p] "#"); }
 		indicesArgs_p = cls_implId_indicesArgs[parentImplClsId_p];
 	} else {
-		print("warning: possible problem with indices args of " implClsName_p);
-#print("XXX: " clsName_p " / " implClsName_p ": " params_p);
+
+		print("caution: possible problem with indices args of " implClsName_p);
 		# This is very hacky! may very well breack in the future.
 		# use only first param, if there is one
 		indicesArgs_p = params_p;
@@ -815,7 +815,7 @@ function wrappFunctionPlusMeta(retType, fullName, params, metaComment) {
 
 		size_funcs++;
 	} else {
-		print("warning: function intentionally NOT wrapped: " fullName);
+		print("note: function intentionally NOT wrapped: " fullName);
 	}
 }
 

@@ -33,8 +33,6 @@ public:
 	/**
 	 * Print out usage information, along with a list of command-line
 	 * options that have been set up for this command-line parser.
-	 * @param program name of the program
-	 * @param version version of this program
 	 */
 	void PrintUsage() const;
 

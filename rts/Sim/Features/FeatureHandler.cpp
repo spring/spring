@@ -57,10 +57,10 @@ CFeatureHandler::CFeatureHandler()
 		throw content_error("Error loading FeatureDefs");
 	}
 
-	//! featureDefIDs start with 1
+	// featureDefIDs start with 1
 	featureDefsVector.push_back(NULL);
 
-	//! get most of the feature defs (missing trees and geovent from the map)
+	// get most of the feature defs (missing trees and geovent from the map)
 	vector<string> keys;
 	rootTable.GetKeys(keys);
 	for (int i = 0; i < (int)keys.size(); i++) {
@@ -116,7 +116,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 
 	FeatureDef* fd = new FeatureDef();
 
-	fd->myName = name;
+	fd->name = name;
 	fd->description = fdTable.GetString("description", "");
 
 	fd->blocking      =  fdTable.GetBool("blocking",        true);
@@ -144,13 +144,15 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 
 	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
-	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_MODEL);
+	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_NONE);
 	fd->modelname = fdTable.GetString("object", "");
+
 	if (!fd->modelname.empty()) {
 		if (fd->modelname.find(".") == string::npos) {
 			fd->modelname += ".3do";
 		}
-		fd->modelname = string("objects3d/") + fd->modelname;
+		fd->modelname = "objects3d/" + fd->modelname;
+		fd->drawType = DRAWTYPE_MODEL;
 	}
 
 
@@ -200,7 +202,7 @@ FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name
 	fd->maxHealth = 5;
 	fd->xsize = 2;
 	fd->zsize = 2;
-	fd->myName = name;
+	fd->name = name;
 	fd->description = "Tree";
 	fd->mass = 20;
 	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, CollisionVolume::COLVOL_HITTEST_DISC);
@@ -223,10 +225,10 @@ FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name)
 	fd->maxHealth = 0;
 	fd->xsize = 0;
 	fd->zsize = 0;
-	fd->myName = name;
+	fd->name = name;
 	fd->mass = CSolidObject::DEFAULT_MASS;
-	// geothermals have no collision volume at all
-	fd->collisionVolume = NULL;
+	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, CollisionVolume::COLVOL_HITTEST_DISC);
+	fd->collisionVolume->Disable();
 	return fd;
 }
 
@@ -266,7 +268,7 @@ const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
 
 void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 {
-	//! add default tree and geo FeatureDefs defined by the map
+	// add default tree and geo FeatureDefs defined by the map
 	const int numFeatureTypes = readmap->GetNumFeatureTypes();
 
 	for (int a = 0; a < numFeatureTypes; ++a) {
@@ -286,13 +288,13 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 		}
 	}
 
-	//! add a default geovent FeatureDef if the map did not
+	// add a default geovent FeatureDef if the map did not
 	if (GetFeatureDef("geovent", false) == NULL) {
 		AddFeatureDef("geovent", CreateDefaultGeoFeatureDef("geovent"));
 	}
 
 	if (!onlyCreateDefs) {
-		//! create map-specified feature instances
+		// create map-specified feature instances
 		const int numFeatures = readmap->GetNumFeatures();
 		MapFeatureInfo* mfi = new MapFeatureInfo[numFeatures];
 		readmap->GetFeatureInfo(mfi);
@@ -307,11 +309,11 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			}
 
 			const float ypos = ground->GetHeightReal(mfi[a].pos.x, mfi[a].pos.z);
-			(new CFeature)->Initialize(
-				float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
-				def->second, (short int) mfi[a].rotation,
-				0, -1, -1, NULL
-			);
+			const float3 fpos = float3(mfi[a].pos.x, ypos, mfi[a].pos.z);
+			const FeatureDef* fdef = def->second;
+
+			CFeature* f = new CFeature();
+			f->Initialize(fpos, fdef, (short int) mfi[a].rotation, 0, -1, -1, NULL);
 		}
 
 		delete[] mfi;
@@ -383,7 +385,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const string& name,
 		return NULL;
 
 	if (!fd->modelname.empty()) {
-		CFeature* f = new CFeature;
+		CFeature* f = new CFeature();
 
 		if (fd->resurrectable == 0 || (iter > 1 && fd->resurrectable < 0)) {
 			f->Initialize(pos, fd, (short int) rot, facing, team, allyteam, NULL, speed, emitSmoke ? fd->smokeTime : 0);

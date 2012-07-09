@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -250,7 +250,7 @@ bool Q3Shader::LoadSkin(SkinData& fill, const std::string& pFile,IOSystem* io)
 
 // ------------------------------------------------------------------------------------------------
 // Convert Q3Shader to material
-void Q3Shader::ConvertShaderToMaterial(MaterialHelper* out, const ShaderDataBlock& shader)
+void Q3Shader::ConvertShaderToMaterial(aiMaterial* out, const ShaderDataBlock& shader)
 {
 	ai_assert(NULL != out);
 
@@ -877,7 +877,7 @@ void MD3Importer::InternReadFile( const std::string& pFile,
 			else DefaultLogger::get()->warn("Unable to find shader record for " +without_ext );
 		}
 
-		MaterialHelper* pcHelper = new MaterialHelper();
+		aiMaterial* pcHelper = new aiMaterial();
 
 		const int iMode = (int)aiShadingMode_Gouraud;
 		pcHelper->AddProperty<int>(&iMode, 1, AI_MATKEY_SHADING_MODEL);

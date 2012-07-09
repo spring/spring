@@ -80,6 +80,7 @@ class CEventClient
 		virtual void GameOver(const std::vector<unsigned char>& winningAllyTeams) {}
 		virtual void GamePaused(int playerID, bool paused) {}
 		virtual void GameFrame(int gameFrame) {}
+		virtual void GameID(const unsigned char* gameID, unsigned int numBytes) {}
 
 		virtual void TeamDied(int teamID) {}
 		virtual void TeamChanged(int teamID) {}
@@ -92,8 +93,8 @@ class CEventClient
 		virtual void UnitFromFactory(const CUnit* unit, const CUnit* factory,
 		                             bool userOrders) {}
 		virtual void UnitDestroyed(const CUnit* unit, const CUnit* attacker) {}
-		virtual void UnitTaken(const CUnit* unit, int newTeam) {}
-		virtual void UnitGiven(const CUnit* unit, int oldTeam) {}
+		virtual void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) {}
+		virtual void UnitGiven(const CUnit* unit, int oldTeam, int newTeam) {}
 
 		virtual void UnitIdle(const CUnit* unit) {}
 		virtual void UnitCommand(const CUnit* unit, const Command& command) {}
@@ -206,6 +207,9 @@ class CEventClient
 		virtual void DrawInMiniMap();
 
 		virtual void GameProgress(int gameFrame) {}
+
+		virtual void DrawLoadScreen() {}
+		virtual void LoadProgress(const std::string& msg, const bool replace_lastline) {}
 		/// @}
 };
 

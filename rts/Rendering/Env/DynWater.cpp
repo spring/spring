@@ -448,6 +448,9 @@ void CDynWater::Update()
 
 void CDynWater::DrawReflection(CGame* game)
 {
+	const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
+	const bool shadowsLoaded = shadowHandler->shadowsLoaded;
+
 //	CCamera* realCam = camera;
 //	camera = new CCamera(*realCam);
 	char realCam[sizeof(CCamera)];
@@ -455,57 +458,52 @@ void CDynWater::DrawReflection(CGame* game)
 
 	camera->forward.y *= -1.0f;
 	camera->pos.y *= -1.0f;
-	camera->pos.y += 0.2f;
 	camera->Update();
+
 	reflectRight = camera->right;
 	reflectUp = camera->up;
 	reflectForward = camera->forward;
 
 	reflectFBO.Bind();
 	glViewport(0, 0, 512, 512);
-
 	glClearColor(0.5f, 0.6f, 0.8f, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	game->SetDrawMode(CGame::gameReflectionDraw);
+	{
+		drawReflection = true;
 
-	sky->Draw();
+		game->SetDrawMode(CGame::gameReflectionDraw);
+		sky->Draw();
 
-	static const double plane[4] = {0.0, 1.0, 0.0, 1.0};
-	static const double plane2[4] = {0.0, -1.0, 0, 1.0};
-	const bool shadowsLoaded = shadowHandler->shadowsLoaded;
+		{
+			glEnable(GL_CLIP_PLANE2);
+			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
-	glEnable(GL_CLIP_PLANE2);
-	glClipPlane(GL_CLIP_PLANE2, plane2);
+			shadowHandler->shadowsLoaded = false;
 
-	drawReflection = true;
-	shadowHandler->shadowsLoaded = false;
+			CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+				gd->SetupReflDrawPass();
+				gd->Draw(DrawPass::WaterReflection);
+				gd->SetupBaseDrawPass();
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->SetupReflDrawPass();
-		gd->Draw(DrawPass::WaterReflection);
-		gd->SetupBaseDrawPass();
+			shadowHandler->shadowsLoaded = shadowsLoaded;
 
-	glClipPlane(GL_CLIP_PLANE2 ,plane);
+			unitDrawer->Draw(true);
+			featureDrawer->Draw();
+			unitDrawer->DrawCloakedUnits(true);
+			featureDrawer->DrawFadeFeatures(true);
 
-	gd->Draw(DrawPass::WaterReflection);
+			projectileDrawer->Draw(true);
+			eventHandler.DrawWorldReflection();
 
-	shadowHandler->shadowsLoaded = shadowsLoaded;
+			glDisable(GL_CLIP_PLANE2);
+		}
 
-	unitDrawer->Draw(true);
-	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(true);
-	featureDrawer->DrawFadeFeatures(true);
+		sky->DrawSun();
+		game->SetDrawMode(CGame::gameNormalDraw);
 
-	projectileDrawer->Draw(true);
-	eventHandler.DrawWorldReflection();
-
-	sky->DrawSun();
-
-	game->SetDrawMode(CGame::gameNormalDraw);
-
-	drawReflection = false;
-	glDisable(GL_CLIP_PLANE2);
+		drawReflection = false;
+	}
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
@@ -1124,13 +1122,13 @@ void CDynWater::AddShipWakes()
 		for (std::set<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* unit = *ui;
 			const UnitDef* unitDef = unit->unitDef;
-			const MoveData* moveData = unitDef->movedata;
+			const MoveDef* moveDef = unitDef->moveDef;
 
-			if (moveData == NULL) {
+			if (moveDef == NULL) {
 				continue;
 			}
 
-			if (moveData->moveType == MoveData::Hover_Move) {
+			if (moveDef->moveType == MoveDef::Hover_Move) {
 				// hovercraft
 				const float3& pos = unit->pos;
 
@@ -1154,9 +1152,8 @@ void CDynWater::AddShipWakes()
 					va2->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
 					va2->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
 				}
-			} else if (moveData->moveType == MoveData::Ship_Move) {
+			} else if (moveDef->moveType == MoveDef::Ship_Move) {
 				// surface ship
-				const float speedf = unit->speed.Length2D();
 				const float3& pos = unit->pos;
 
 				if ((fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
@@ -1168,17 +1165,19 @@ void CDynWater::AddShipWakes()
 					continue;
 				}
 
-				if ((pos.y > -4.0f) && (pos.y < 1.0f)) {
-					const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
-					const float3 sideAdd = unit->rightdir * unit->radius * 0.18f;
-					const float depth = sqrt(sqrt(unit->mass));
-					const float3 n(depth, 0.04f * speedf * depth, depth);
+				// skip submarines (which have deep waterlines)
+				if (unit->isUnderWater || !unit->inWater)
+					continue;
 
-					va->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
-					va->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
-					va->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
-					va->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
-				}
+				const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
+				const float3 sideAdd = unit->rightdir * unit->radius * 0.18f;
+				const float depth = sqrt(sqrt(unit->mass));
+				const float3 n(depth, 0.04f * unit->speed.Length2D() * depth, depth);
+
+				va->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
+				va->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
+				va->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
+				va->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
 			}
 		}
 	}

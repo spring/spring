@@ -5,13 +5,14 @@
 #include "GeoThermSmokeProjectile.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Misc/Wind.h"
 
 CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, (ZeroVector, ZeroVector, 1, NULL));
 
 CR_REG_METADATA(CGeoThermSmokeProjectile, (
 	CR_MEMBER(geo),
 	CR_RESERVED(8)
-	));
+));
 
 CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(const float3& pos, const float3& speed, int ttl, CFeature* geo)
 	: CSmokeProjectile(pos, speed, ttl, 6, 0.35f, NULL, 0.8f)
@@ -25,6 +26,7 @@ void CGeoThermSmokeProjectile::Update()
 
 		float3 d = pos - o->pos;
 		float sql = d.SqLength();
+
 		if ((sql > 0.0f) && (sql < (o->radius * o->radius)) && o->blocking) {
 			d *= o->radius * fastmath::isqrt(sql);
 			pos = pos * 0.3f + (o->pos + d) * 0.7f;
@@ -38,9 +40,12 @@ void CGeoThermSmokeProjectile::Update()
 			}
 		}
 	}
+
 	const float l = fastmath::apxsqrt(speed.SqLength());
 	speed.y += 1.0f;
-	speed *= l * fastmath::isqrt(speed.SqLength());
+	speed.x += (wind.GetCurrentWind().x / GAME_SPEED);
+	speed.z += (wind.GetCurrentWind().z / GAME_SPEED);
+	speed *= (l * fastmath::isqrt(speed.SqLength()));
 
 	CSmokeProjectile::Update();
 }

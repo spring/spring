@@ -45,18 +45,15 @@ MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portab
 
 #create portable spring excluding shard (ask AF why its excluded)
 touch ${INSTALLDIR}/springsettings.cfg
-${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -xr!*.dbg -x!AI/Skirmish/Shard
+${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -xr!*.dbg
 #for ZKL
-(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg AI/Skirmish/Shard/\*)
+(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg)
 
 # compress files excluded from portable archive
 for file in spring-dedicated.exe spring-headless.exe; do
 	name=${file%.*}
 	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file}
 done
-
-#compress shard
-${SEVENZIP} ${TMP_PATH}/${VERSION}_Shard.7z AI/Skirmish/Shard -xr!*.dbg
 
 #create archives for translate_stacktrace.py
 for tocompress in ${EXECUTABLES}; do
@@ -85,9 +82,12 @@ ln -sv ${MIN_PORTABLE_ARCHIVE} ${SOURCEDIR}/installer/downloads/spring_testing_m
 # move installer to rsync-directory
 mv ./installer/spring*.exe ${TMP_PATH}
 
+./installer/make_portable_archive.sh ${TMP_PATH}/spring*.exe ${TMP_PATH}
+
 # create relative symbolic links to current files for rsyncing
 cd ${TMP_PATH}/..
 ln -sfv ${REV}/*.exe spring_testing.exe
+ln -sfv ${REV}/spring_${REV}_portable.7z spring_testing-portable.7z
 ln -sfv ${REV}/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
 ln -sfv ${REV}/spring_${VERSION}_minimal-portable+dedicated.zip spring_testing_minimal-portable+dedicated.zip
 

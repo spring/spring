@@ -14,6 +14,7 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
 
@@ -153,7 +154,10 @@ bool CStrafeAirMoveType::Update()
 {
 	AAirMoveType::Update();
 
-	if (owner->stunned || owner->beingBuilt) {
+	// need to additionally check that we are not crashing,
+	// otherwise we might fall through the map when stunned
+	// (the kill-on-impact code is not reached in that case)
+	if ((owner->stunned && !owner->crashing) || owner->beingBuilt) {
 		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
 		return (HandleCollisions());
 	}
@@ -184,7 +188,7 @@ bool CStrafeAirMoveType::Update()
 	// while no pad is available would otherwise continue
 	// attacking even if out of fuel
 	const bool outOfFuel = (owner->currentFuel <= 0.0f && owner->unitDef->maxFuel > 0.0f);
-	const bool continueAttack = (reservedPad == NULL && !outOfFuel);
+	const bool allowAttack = (reservedPad == NULL && !outOfFuel);
 
 	if (aircraftState != AIRCRAFT_CRASHING) {
 		if (reservedPad != NULL) {
@@ -209,13 +213,17 @@ bool CStrafeAirMoveType::Update()
 		case AIRCRAFT_FLYING: {
 			owner->restTime = 0;
 
-			if (continueAttack && ((owner->userTarget && !owner->userTarget->isDead) || owner->userAttackGround)) {
+			const CCommandQueue& cmdQue = owner->commandAI->commandQue;
+			const bool isAttacking = (!cmdQue.empty() && (cmdQue.front()).GetID() == CMD_ATTACK);
+			const bool keepAttacking = ((owner->attackTarget != NULL && !owner->attackTarget->isDead) || owner->userAttackGround);
+
+			if (isAttacking && allowAttack && keepAttacking) {
 				inefficientAttackTime = std::min(inefficientAttackTime, float(gs->frameNum) - owner->lastFireWeapon);
 
-				if (owner->userTarget) {
-					goalPos = owner->userTarget->pos;
+				if (owner->attackTarget != NULL) {
+					goalPos = owner->attackTarget->pos;
 				} else {
-					goalPos = owner->userAttackPos;
+					goalPos = owner->attackPos;
 				}
 
 				if (maneuver) {
@@ -242,10 +250,10 @@ bool CStrafeAirMoveType::Update()
 			UpdateLanding();
 			break;
 		case AIRCRAFT_CRASHING: {
-			// note: the crashing-state can only be set by scripts
+			// NOTE: the crashing-state can only be set (and unset) by scripts
 			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
 
-			if (!(gs->frameNum & 3) && (ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
+			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
 				owner->crashing = false; owner->KillUnit(true, false, 0);
 			}
 
@@ -474,8 +482,9 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 		CheckForCollision();
 	}
 
-	const bool groundTarget = !owner->userTarget || !owner->userTarget->unitDef->canfly || owner->userTarget->unitDef->hoverAttack;
-	const bool airTarget = owner->userTarget && owner->userTarget->unitDef->canfly && !owner->userTarget->unitDef->hoverAttack;	//only "real" aircrafts (non gunship)
+	const bool groundTarget = (owner->attackTarget == NULL) || !owner->attackTarget->unitDef->canfly || owner->attackTarget->unitDef->hoverAttack;
+	const bool airTarget = (owner->attackTarget != NULL) && owner->attackTarget->unitDef->canfly && !owner->attackTarget->unitDef->hoverAttack;	//only "real" aircrafts (non gunship)
+
 	if (groundTarget) {
 		if (frontdir.dot(goalPos - pos) < 0 && (pos - goalPos).SqLength() < turnRadius * turnRadius * (loopbackAttack ? 4 : 1)) {
 			float3 dif = pos - goalPos;
@@ -489,7 +498,7 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 			if (frontdir.dot(goalPos - pos) < owner->maxRange * (hasFired ? 1.0f : 0.7f))
 				maneuver = 1;
 		} else if (frontdir.dot(goalPos - pos) < owner->maxRange * 0.7f) {
-			goalPos += exitVector * (owner->userTarget ? owner->userTarget->radius + owner->radius + 10 : owner->radius + 40);
+			goalPos += exitVector * ((owner->attackTarget != NULL) ? owner->attackTarget->radius + owner->radius + 10 : owner->radius + 40);
 		}
 	}
 	const float3 tgp = goalPos + (goalPos - oldGoalPos) * 8;
@@ -810,7 +819,7 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 
 	owner->Move3D(speed *= invDrag, true);
 	owner->UpdateDirVectors(false);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 }
 
 
@@ -832,7 +841,7 @@ void CStrafeAirMoveType::UpdateLanding()
 
 		// if spot is valid, mark it on the blocking-map
 		// so other aircraft can not claim the same spot
-		if (reservedLandingPos.x > 0.0f) {
+		if (reservedLandingPos.x >= 0.0f) {
 			const float3 originalPos = pos;
 
 			owner->Move3D(reservedLandingPos, false);
@@ -887,7 +896,7 @@ void CStrafeAirMoveType::UpdateLanding()
 
 	owner->Move3D(speed, true);
 	owner->UpdateDirVectors(false);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 
 	// see if we are at the reserved (not user-clicked) landing spot
 	const float gh = ground->GetHeightAboveWater(pos.x, pos.z);
@@ -967,12 +976,12 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	}
 
 	// bounce away on ground collisions
-	if (gHeight > (owner->pos.y - owner->model->radius * 0.2f) && !owner->crashing) {
+	if (gHeight > (owner->pos.y - owner->radius * 0.2f)) {
 		const float3& gNormal = ground->GetNormal(pos.x, pos.z);
 		const float impactSpeed = -speed.dot(gNormal);
 
 		if (impactSpeed > 0.0f) {
-			owner->Move1D(gHeight + owner->model->radius * 0.2f + 0.01f, 1, false);
+			owner->Move1D(gHeight + owner->radius * 0.2f + 0.01f, 1, false);
 
 			// fix for mantis #1355
 			// aircraft could get stuck in the ground and never recover (on takeoff
@@ -996,7 +1005,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	rightdir.Normalize();
 	updir = rightdir.cross(frontdir);
 
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 	owner->SetHeadingFromDirection();
 }
 
@@ -1007,36 +1016,53 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 	// this state is only used by CHoverAirMoveType, so we should never enter it
 	assert(newState != AIRCRAFT_HOVERING);
 
+	// once in crashing, we should never change back into another state
+	assert(aircraftState != AIRCRAFT_CRASHING || newState == AIRCRAFT_CRASHING);
+
 	if (newState == aircraftState) {
 		return;
 	}
 
-	owner->physicalState = (newState == AIRCRAFT_LANDED)?
-		CSolidObject::OnGround:
-		CSolidObject::Flying;
-	owner->useAirLos = (newState != AIRCRAFT_LANDED);
-	owner->crashing = (newState == AIRCRAFT_CRASHING);
-
-	// this checks our physicalState, and blocks only
-	// if not flying (otherwise unblocks and returns)
-	owner->Block();
-
-	if (newState == AIRCRAFT_FLYING) {
-		owner->Activate();
-		owner->script->StartMoving();
-	}
-
-	if (newState != AIRCRAFT_LANDING) {
-		// don't need a reserved position anymore
-		reservedLandingPos.x = -1.0f;
-	}
-
 	// make sure we only go into takeoff mode when landed
 	if (aircraftState == AIRCRAFT_LANDED) {
+		//assert(newState == AIRCRAFT_TAKEOFF);
 		aircraftState = AIRCRAFT_TAKEOFF;
 	} else {
 		aircraftState = newState;
 	}
+
+	owner->physicalState = CSolidObject::Flying;
+	owner->isMoving = (aircraftState != AIRCRAFT_LANDED);
+	owner->useAirLos = true;
+
+	switch (aircraftState) {
+		case AIRCRAFT_CRASHING:
+			owner->crashing = true;
+			break;
+		case AIRCRAFT_FLYING:
+			owner->Activate();
+			owner->script->StartMoving();
+			break;
+		case AIRCRAFT_LANDED:
+			owner->useAirLos = false;
+			owner->physicalState = CSolidObject::OnGround;
+			
+			//FIXME already inform commandAI in AIRCRAFT_LANDING!
+			//FIXME Problem is StopMove() also calls owner->script->StopMoving() what should only be called when landed. Also see CHoverAirMoveType::SetState().
+			owner->commandAI->StopMove();
+			break;
+		default:
+			break;
+	}
+
+	if (aircraftState != AIRCRAFT_LANDING) {
+		// don't need a reserved position anymore
+		reservedLandingPos.x = -1.0f;
+	}
+
+	// this checks our physicalState, and blocks only
+	// if not flying (otherwise unblocks and returns)
+	owner->Block();
 }
 
 
@@ -1069,7 +1095,7 @@ float3 CStrafeAirMoveType::FindLandingPos() const
 
 	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
-			if (groundBlockingObjectMap->GroundBlockedUnsafe(z * gs->mapx + x)) {
+			if (groundBlockingObjectMap->GroundBlocked(x, z, owner)) {
 				return ret;
 			}
 		}

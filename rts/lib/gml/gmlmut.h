@@ -7,6 +7,26 @@
 // freely for any purpose, as long as 
 // this notice remains unchanged
 
+// MUTEX TYPES:
+// xxx below refers to a mutex named named xxxmutex, declared in gml.cpp and also below as extern
+// If you want to protect a newly introduced shared resource, you may need to declare a new mutex
+// To protect access to an existing shared resource, check if an existing named mutex is used to protect it in other locations, and use that same one
+//
+// Basic mutex lock types
+// GML_STDMUTEX_LOCK(xxx) - scope locks the specified standard (non recursive, boost::mutex) mutex
+// GML_RECMUTEX_LOCK(xxx) - scope locks the specified recursive (boost::recursive_mutex) mutex
+//
+// Specialized mutex lock types - they are rarely needed
+// GML_MSTMUTEX_LOCK(xxx) - scope locks the specified manually lockable/unlockable (gmlMutex) mutex
+// GML_MSTMUTEX_DOLOCK(xxx) - locks the specified manually lockable/unlockable (gmlMutex) mutex
+// GML_MSTMUTEX_DOUNLOCK(xxx) - unlocks the specified manually lockable/unlockable (gmlMutex) mutex
+// GML_THRMUTEX_LOCK(xxx,thr) - scope locks the specified recursive (boost::recursive_mutex) mutex depending on if the current thread matches thr = GML_SIM, GML_DRAW or GML_SIM|GML_DRAW
+// GML_OBJMUTEX_LOCK(xxx,thr,arg) - scope locks the specified recursive (boost::recursive_mutex) mutex depending on if the current thread matches thr = GML_SIM, GML_DRAW or GML_SIM|GML_DRAW, arg will be prefixed to xxx
+// GML_LODMUTEX_LOCK(xxx) - shorthand for GML_OBJMUTEX_LOCK(lod, GML_DRAW|GML_SIM, xxx->), i.e. will lock xxx->lodmutex for sim/draw threads
+// GML_DRCMUTEX_LOCK(xxx) - shorthand for GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(xxx, GML_DRAW|GML_SIM, *L->)), i.e. will lock *L->xxxmutex for sim/draw threads and measure the locking overhead
+// GML_LINEMUTEX_LOCK(...) - special mutex lock replacement for profiling only
+// GML_PROFMUTEX_LOCK(...) - special mutex lock replacement for profiling only
+
 #ifndef GMLMUTEX_H
 #define GMLMUTEX_H
 

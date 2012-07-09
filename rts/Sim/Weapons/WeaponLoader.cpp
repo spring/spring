@@ -149,8 +149,8 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->metalFireCost = weaponDef->metalcost;
 	weapon->energyFireCost = weaponDef->energycost;
 
-	weapon->fireSoundId = weaponDef->firesound.getID(0);
-	weapon->fireSoundVolume = weaponDef->firesound.getVolume(0);
+	weapon->fireSoundId = weaponDef->fireSound.getID(0);
+	weapon->fireSoundVolume = weaponDef->fireSound.getVolume(0);
 
 	weapon->onlyForward = weaponDef->onlyForward;
 	weapon->maxForwardAngleDif = math::cos(DEG2RAD(weaponDef->maxAngle));
@@ -176,7 +176,7 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->avoidFeature = weaponDef->avoidFeature;
 	weapon->avoidNeutral = weaponDef->avoidNeutral;
 	weapon->targetBorder = weaponDef->targetBorder;
-	weapon->cylinderTargetting = weaponDef->cylinderTargetting;
+	weapon->cylinderTargeting = weaponDef->cylinderTargeting;
 	weapon->minIntensity = weaponDef->minIntensity;
 	weapon->heightBoostFactor = weaponDef->heightBoostFactor;
 	weapon->collisionFlags = weaponDef->collisionFlags;

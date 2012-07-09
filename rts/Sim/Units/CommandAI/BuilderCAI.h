@@ -6,6 +6,7 @@
 #include "MobileCAI.h"
 #include "Sim/Units/UnitSet.h"
 #include "Sim/Units/BuildInfo.h"
+#include "System/Misc/BitwiseEnum.h"
 
 #include <map>
 #include <string>
@@ -16,6 +17,7 @@ class CSolidObject;
 class CWorldObject;
 struct Command;
 struct UnitDef;
+
 
 class CBuilderCAI : public CMobileCAI
 {
@@ -29,34 +31,12 @@ public:
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
 	void SlowUpdate();
 
+	void FinishCommand();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void BuggerOff(const float3& pos, float radius);
+	bool TargetInterceptable(CUnit *unit, float uspeed);
 
-	/**
-	 * @param noResCheck no resources check
-	 * @param recUnits reclaims units and features
-	 * @param recNonRez reclaims non resurrectable only
-	 * @param recEnemy reclaims enemy units
-	 * @param recEnemyOnly reclaims enemy units only
-	 * @param recSpecial reclaims also non autoreclaimable, metal first
-	 */
-	bool FindReclaimTargetAndReclaim(const float3& pos, float radius,
-			unsigned char options, bool noResCheck, bool recUnits,
-			bool recNonRez, bool recEnemy, bool recEnemyOnly, bool recSpecial);
-	/**
-	 * @param freshOnly reclaims only corpses that have rez progress or all the metal left
-	 */
-	bool FindResurrectableFeatureAndResurrect(const float3& pos, float radius, unsigned char options, bool freshOnly);
-	void FinishCommand();
-	/**
-	 * @param builtOnly skips units that are under construction
-	 */
-	bool FindRepairTargetAndRepair(const float3& pos, float radius, unsigned char options, bool attackEnemy, bool builtOnly);
-	/**
-	 * @param healthyOnly only capture units with capture progress or 100% health remaining
-	 */
-	bool FindCaptureTargetAndCapture(const float3& pos, float radius, unsigned char options, bool healthyOnly);
-
+	void ExecuteBuildCmd(Command& c);
 	void ExecutePatrol(Command& c);
 	void ExecuteFight(Command& c);
 	void ExecuteGuard(Command& c);
@@ -70,44 +50,63 @@ public:
 	bool ReclaimObject(CSolidObject* o);
 	bool ResurrectObject(CFeature* feature);
 
-	std::map<int, std::string> buildOptions;
-	bool building;
-	BuildInfo build;
-
-	int cachedRadiusId;
-	float cachedRadius;
-	float GetBuildOptionRadius(const UnitDef* unitdef, int cmdId);
-
-	int buildRetries;
-
-	int lastPC1; ///< helps avoid infinite loops
-	int lastPC2;
-	int lastPC3;
-
-	bool range3D;
-
-	inline float f3Dist(const float3& a, const float3& b) const {
-		return range3D ? a.distance(b) : a.distance2D(b);
-	}
-	inline float f3SqDist(const float3& a, const float3& b) const {
-		return range3D ? a.SqDistance(b) : a.SqDistance2D(b);
-	}
-	inline float f3Len(const float3& a) const {
-		return range3D ? a.Length() : a.Length2D();
-	}
-	inline float f3SqLen(const float3& a) const {
-		return range3D ? a.SqLength() : a.SqLength2D();
-	}
+	/**
+	 * Checks if a unit is being reclaimed by a friendly con.
+	 */
+	static bool IsUnitBeingReclaimed(CUnit* unit, CUnit* friendUnit = NULL);
+	static bool IsFeatureBeingReclaimed(int featureId, CUnit* friendUnit = NULL);
+	static bool IsFeatureBeingResurrected(int featureId, CUnit* friendUnit = NULL);
 
 public:
+	std::map<int, std::string> buildOptions;
+
 	static CUnitSet reclaimers;
 	static CUnitSet featureReclaimers;
 	static CUnitSet resurrecters;
 
 private:
+	enum ReclaimOptions {
+		REC_NORESCHECK = 1<<0,
+		REC_UNITS      = 1<<1,
+		REC_NONREZ     = 1<<2,
+		REC_ENEMY      = 1<<3,
+		REC_ENEMYONLY  = 1<<4,
+		REC_SPECIAL    = 1<<5
+	};
+	typedef BitwiseEnum<ReclaimOptions> ReclaimOption;
+
+private:
+	/**
+	 * @param pos position where to reclaim
+	 * @param radius radius to search for objects to reclaim
+	 * @param cmdopts command options
+	 * @param recoptions reclaim optioons
+	 */
+	bool FindReclaimTargetAndReclaim(const float3& pos, float radius, unsigned char cmdopt, ReclaimOption recoptions);
+	/**
+	 * @param freshOnly reclaims only corpses that have rez progress or all the metal left
+	 */
+	bool FindResurrectableFeatureAndResurrect(const float3& pos, float radius, unsigned char options, bool freshOnly);
+
+	/**
+	 * @param builtOnly skips units that are under construction
+	 */
+	bool FindRepairTargetAndRepair(const float3& pos, float radius, unsigned char options, bool attackEnemy, bool builtOnly);
+	/**
+	 * @param healthyOnly only capture units with capture progress or 100% health remaining
+	 */
+	bool FindCaptureTargetAndCapture(const float3& pos, float radius, unsigned char options, bool healthyOnly);
+
+	int FindReclaimTarget(const float3& pos, float radius, unsigned char cmdopt, ReclaimOption recoptions, float bestStartDist = 1.0e30f) const;
+
+	float GetBuildRange(const float targetRadius) const;
+	bool IsInBuildRange(const CWorldObject* obj) const;
+	bool IsInBuildRange(const float3& pos, const float radius) const;
+
+	bool MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed = false);
+	bool MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed = false);
 
 	void CancelRestrictedUnit(const std::string& buildOption);
-	bool ObjInBuildRange(const CWorldObject* obj) const;
 	bool OutOfImmobileRange(const Command& cmd) const;
 	/// add a command to reclaim a feature that is blocking our build-site
 	void ReclaimFeature(CFeature* f);
@@ -123,13 +122,36 @@ private:
 	/// fix for patrolling cons reclaiming stuff that is being resurrected
 	static void AddUnitToResurrecters(CUnit*);
 	static void RemoveUnitFromResurrecters(CUnit*);
-public:
-	/**
-	 * Checks if a unit is being reclaimed by a friendly con.
-	 */
-	static bool IsUnitBeingReclaimed(CUnit* unit, CUnit* friendUnit = NULL);
-	static bool IsFeatureBeingReclaimed(int featureId, CUnit* friendUnit = NULL);
-	static bool IsFeatureBeingResurrected(int featureId, CUnit* friendUnit = NULL);
+
+	inline float f3Dist(const float3& a, const float3& b) const {
+		return range3D ? a.distance(b) : a.distance2D(b);
+	}
+	inline float f3SqDist(const float3& a, const float3& b) const {
+		return range3D ? a.SqDistance(b) : a.SqDistance2D(b);
+	}
+	//inline float f3Len(const float3& a) const {
+	//	return range3D ? a.Length() : a.Length2D();
+	//}
+	//inline float f3SqLen(const float3& a) const {
+	//	return range3D ? a.SqLength() : a.SqLength2D();
+	//}
+
+	float GetBuildOptionRadius(const UnitDef* unitdef, int cmdId);
+
+private:
+	bool building;
+	BuildInfo build;
+
+	int cachedRadiusId;
+	float cachedRadius;
+
+	int buildRetries;
+
+	int lastPC1; ///< helps avoid infinite loops
+	int lastPC2;
+	int lastPC3;
+
+	bool range3D;
 };
 
 #endif // _BUILDER_CAI_H_

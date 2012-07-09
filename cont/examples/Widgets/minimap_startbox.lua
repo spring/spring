@@ -300,7 +300,7 @@ function widget:DrawWorld()
   -- show the team start positions
   for _, teamID in ipairs(Spring.GetTeamList()) do
     local _,leader = Spring.GetTeamInfo(teamID)
-    local _,_,spec = Spring.GetPlayerInfo(leader)
+    local name,_,spec = Spring.GetPlayerInfo(leader)
     if ((not spec) and (teamID ~= gaiaTeamID)) then
       local newx, newy, newz = Spring.GetTeamStartPosition(teamID)
 
@@ -315,6 +315,8 @@ function widget:DrawWorld()
 
       if (newx ~= oldx or newy ~= oldy or newz ~= oldz) then
         Spring.PlaySoundFile("MapPoint")
+        Spring.MarkerErasePosition(oldx, oldy, oldz)
+        Spring.MarkerAddPoint(newx, newy, newz, "Start " .. teamID .. " (" .. name .. ")", 1)
         teamStartPositions[teamID][1] = newx
         teamStartPositions[teamID][2] = newy
         teamStartPositions[teamID][3] = newz

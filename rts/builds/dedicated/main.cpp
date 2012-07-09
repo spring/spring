@@ -23,6 +23,7 @@
 #include "System/LogOutput.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/errorhandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Exceptions.h"
@@ -125,6 +126,14 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 
 
 
+void zzz(unsigned int secs) {
+#ifdef _WIN32
+	Sleep(secs * 1000);
+#else
+	sleep(secs);
+#endif
+}
+
 int main(int argc, char* argv[])
 {
 #ifdef _WIN32
@@ -207,6 +216,8 @@ int main(int argc, char* argv[])
 		if (server->HasFinished()) {
 			break;
 		}
+
+		zzz(1);
 	}
 
 	while (!server->HasFinished()) {
@@ -225,11 +236,7 @@ int main(int argc, char* argv[])
 		}
 
 		// wait 1 second between checks
-#ifdef _WIN32
-		Sleep(1000);
-#else
-		sleep(1);
-#endif
+		zzz(1);
 	}
 
 	delete server;
@@ -245,7 +252,7 @@ int main(int argc, char* argv[])
 }
 #endif
 
-	return 0;
+	return GetExitCode();
 }
 
 #if defined(WIN32) && !defined(_MSC_VER)

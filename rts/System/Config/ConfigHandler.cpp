@@ -39,6 +39,7 @@ public:
 	void SetString(const string& key, const string& value, bool useOverlay);
 	string GetString(const string& key) const;
 	bool IsSet(const string& key) const;
+	bool IsReadOnly(const string& key) const;
 	void Delete(const string& key);
 	string GetConfigFile() const;
 	const StringMap GetData() const;
@@ -173,6 +174,15 @@ bool ConfigHandlerImpl::IsSet(const string& key) const
 		}
 	}
 	return false;
+}
+
+bool ConfigHandlerImpl::IsReadOnly(const string& key) const
+{
+	const ConfigVariableMetaData* meta = ConfigVariable::GetMetaData(key);
+	if (meta==NULL) {
+		return false;
+	}
+	return meta->GetReadOnly().Get();
 }
 
 string ConfigHandlerImpl::GetString(const string& key) const

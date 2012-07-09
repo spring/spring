@@ -213,7 +213,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 
 		lastCall = gs->frameNum;
 
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 
 		CUnit* unit = FindUnitToTransport(pos, radius);
@@ -279,7 +279,7 @@ void CTransportCAI::ExecuteUnloadUnit(Command& c)
 }
 
 
-bool CTransportCAI::CanTransport(const CUnit* unit)
+bool CTransportCAI::CanTransport(const CUnit* unit) const
 {
 	const CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
 
@@ -290,7 +290,7 @@ bool CTransportCAI::CanTransport(const CUnit* unit)
 bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spread, float3& found, const CUnit* unitToUnload)
 {
 	const CTransportUnit* ownerTrans = static_cast<CTransportUnit*>(owner);
-	const MoveData* moveData = unitToUnload->unitDef->movedata;
+	const MoveDef* moveDef = unitToUnload->unitDef->moveDef;
 
 	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
 		// Boundary checking.  If we are too close to the edge of the map, we will get stuck
@@ -327,7 +327,7 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 				continue;
 
 			// don't unload unit on too-steep slopes
-			if (moveData != NULL && ground->GetSlope(pos.x, pos.z) > moveData->maxSlope)
+			if (moveDef != NULL && ground->GetSlope(pos.x, pos.z) > moveDef->maxSlope)
 				continue;
 
 			const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, spread + SQUARE_SIZE);
@@ -361,7 +361,7 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 					continue;
 
 				// don't unload unit on too-steep slopes
-				if (moveData != NULL && ground->GetSlope(x, z) > moveData->maxSlope)
+				if (moveDef != NULL && ground->GetSlope(x, z) > moveDef->maxSlope)
 					continue;
 
 				if (!qf->GetUnitsExact(pos, spread + SQUARE_SIZE).empty())
@@ -382,7 +382,7 @@ bool CTransportCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 	if (!static_cast<CTransportUnit*>(owner)->CanLoadUnloadAtPos(pos, unitToUnload)) {
 		return false;
 	}
-	if (unitToUnload->unitDef->movedata && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope) {
+	if (unitToUnload->unitDef->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->moveDef->maxSlope) {
 		return false;
 	}
 	if (!qf->GetUnitsExact(pos,unitToUnload->radius + 8).empty()) {
@@ -398,7 +398,7 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 	if (!static_cast<CTransportUnit*>(owner)->CanLoadUnloadAtPos(pos, unitToUnload)) {
 		return false;
 	}
-	if (unitToUnload->unitDef->movedata && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope) {
+	if (unitToUnload->unitDef->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->moveDef->maxSlope) {
 		return false;
 	}
 
@@ -494,7 +494,7 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 
 	for(std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
 		u = it->unit;
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 		const float spread = u->radius * ownerTrans->unitDef->unloadSpread;
 		canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, unloadPos, u);
@@ -530,7 +530,7 @@ void CTransportCAI::UnloadUnits_Drop(Command& c, CTransportUnit* transport)
 		return;
 	}
 
-	float3 pos(c.params[0], c.params[1], c.params[2]);
+	float3 pos = c.GetPos(0);
 	float radius = c.params[3];
 	bool canUnload = false;
 
@@ -590,7 +590,7 @@ void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 		return;
 	}
 
-	float3 pos(c.params[0], c.params[1], c.params[2]);
+	float3 pos = c.GetPos(0);
 	float3 found;
 
 	const CTransportUnit* ownerTrans = static_cast<CTransportUnit*>(owner);
@@ -641,7 +641,7 @@ void CTransportCAI::UnloadLand(Command& c)
 			return;
 		}
 
-		float3 pos(c.params[0], c.params[1], c.params[2]);
+		float3 pos = c.GetPos(0);
 		if (goalPos.SqDistance2D(pos) > 400) {
 			SetGoal(pos, owner->pos);
 		}
@@ -676,7 +676,7 @@ void CTransportCAI::UnloadLand(Command& c)
 				am->ForceHeading(unloadHeading);
 				am->maxDrift = 1;
 				if ((owner->pos.SqDistance(pos) < 64) &&
-						(owner->updir.dot(UpVector) > 0.99f) && abs(owner->heading - unloadHeading) < AIRTRANSPORT_DOCKING_ANGLE) {
+						(owner->updir.dot(UpVector) > 0.99f) && fabs(owner->heading - unloadHeading) < AIRTRANSPORT_DOCKING_ANGLE) {
 					if (!SpotIsClearIgnoreSelf(pos, unit)) {
 						// chosen spot is no longer clear to land, choose a new one
 						// if a new spot cannot be found, don't unload at all
@@ -728,7 +728,7 @@ void CTransportCAI::UnloadDrop(Command& c)
 			return;
 		}
 
-		float3 pos(c.params[0], c.params[1], c.params[2]); // head towards goal
+		float3 pos = c.GetPos(0); // head towards goal
 
 		// note that HoverAirMoveType must be modified to allow non stop movement
 		// through goals for this to work well
@@ -811,7 +811,7 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 		}
 
 		// move to position
-		float3 pos(c.params[0], c.params[1], c.params[2]);
+		float3 pos = c.GetPos(0);
 		if (isFirstIteration) {
 			if (goalPos.SqDistance2D(pos) > 400) {
 				SetGoal(startingDropPos, owner->pos);
@@ -986,14 +986,14 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 				if ((c.GetID() == CMD_UNLOAD_UNITS) && fromSynced) {
 					for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
 						if (CBuilding* building = dynamic_cast<CBuilding*>(it->unit)) {
-							building->buildFacing = int(abs(c.params[4])) % NUM_FACINGS;
+							building->buildFacing = abs((int)c.params[4]) % NUM_FACINGS;
 						}
 					}
 				}
 				for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
 					CUnit* u = it->unit;
 
-					const float3 pos(c.params[0], c.params[1], c.params[2]);
+					const float3 pos = c.GetPos(0);
 					const float radius = (c.GetID() == CMD_UNLOAD_UNITS)? c.params[3]: 0.0f;
 					const float spread = u->radius * transport->unitDef->unloadSpread;
 					float3 found;

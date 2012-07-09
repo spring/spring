@@ -51,6 +51,7 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 #endif
 }
 
+
 volatile bool shutdownSucceeded = false;
 
 void ForcedExit(const std::string& msg, const std::string& caption, unsigned int flags) {
@@ -97,4 +98,13 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 
 	ExitMessage(msg, caption, flags, false);
 #endif // defined(DEDICATED)
+}
+
+static int exitcode = 0;
+void SetExitCode(int code) {
+	exitcode = code;
+}
+
+int GetExitCode(){
+	return exitcode;
 }

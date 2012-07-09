@@ -307,6 +307,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	showClock = configHandler->GetBool("ShowClock");
 	showSpeed = configHandler->GetBool("ShowSpeed");
 	showMTInfo = configHandler->GetBool("ShowMTInfo");
+	GML::EnableCallChainWarnings(!!showMTInfo);
 	mtInfoThreshold = configHandler->GetFloat("MTInfoThreshold");
 	mtInfoCtrl = 0;
 
@@ -411,7 +412,7 @@ CGame::~CGame()
 	SafeDelete(loshandler);
 	SafeDelete(mapDamage);
 	SafeDelete(qf);
-	SafeDelete(moveinfo);
+	SafeDelete(moveDefHandler);
 	SafeDelete(unitDefHandler);
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
@@ -545,7 +546,7 @@ void CGame::LoadSimulation(const std::string& mapName)
 	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
-	moveinfo = new CMoveInfo();
+	moveDefHandler = new MoveDefHandler();
 	qf = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
@@ -631,7 +632,7 @@ void CGame::LoadInterface()
 
 	// interface components
 	ReColorTeams();
-	cmdColors.LoadConfig("cmdcolors.txt");
+	cmdColors.LoadConfigFromFile("cmdcolors.txt");
 
 	{
 		ScopedOnceTimer timer("Game::LoadInterface (Console)");
@@ -882,14 +883,15 @@ bool CGame::Update()
 	ENTER_SYNCED_CODE();
 	ClientReadNet(); // this can issue new SimFrame()s
 
-	if (net->NeedsReconnect() && !gameOver) {
-		extern ClientSetup* startsetup;
-		net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
-	}
+	if (!gameOver) {
+		if (net->NeedsReconnect()) {
+			extern ClientSetup* startsetup;
+			net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
+		}
 
-	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
-		LOG_L(L_ERROR, "Lost connection to gameserver");
-		GameEnd(std::vector<unsigned char>());
+		if (net->CheckTimeout(0, gs->frameNum == 0)) {
+			GameEnd(std::vector<unsigned char>(), true);
+		}
 	}
 	LEAVE_SYNCED_CODE();
 
@@ -1094,8 +1096,6 @@ bool CGame::Draw() {
 	if (UpdateUnsynced())
 		return true;
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 	const spring_time currentTime = spring_gettime();
 
@@ -1113,8 +1113,7 @@ bool CGame::Draw() {
 	}
 
 	if (doDrawWorld) {
-		if (shadowHandler->shadowsLoaded && (gd->drawMode != CBaseGroundDrawer::drawLos)) {
-			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
+		if (shadowHandler->shadowsLoaded) {
 			SCOPED_TIMER("ShadowHandler::CreateShadows");
 			SetDrawMode(gameShadowDraw);
 			shadowHandler->CreateShadows();
@@ -1202,14 +1201,17 @@ bool CGame::Draw() {
 
 	if (globalRendering->drawdebug) {
 		//print some infos (fps,gameframe,particles)
-		glColor4f(1,1,0.5f,0.8f);
-		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %0.1f Frame: %d Particles: %d (%d)",
-		    globalRendering->FPS, gs->frameNum, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
+		font->Begin();
+		font->SetTextColor(1,1,0.5f,0.8f);
 
-		if (playing) {
-			font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",
-			    camera->pos.x, camera->pos.y, camera->pos.z, gs->speedFactor);
-		}
+		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f Particles: %d (%d)",
+		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
+
+		// 16ms := 60fps := 30simFPS + 30drawFPS
+		font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
+		   (gu->avgDrawFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime, (gu->avgSimFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime);
+
+		font->End();
 	}
 
 	if (userWriting) {
@@ -1296,7 +1298,7 @@ bool CGame::Draw() {
 
 	CTeamHighlight::Disable();
 
-	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(spring_gettime() - currentTime)), 0.1f);
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(spring_gettime() - currentTime)), 0.05f);
 
 	return true;
 }
@@ -1499,11 +1501,22 @@ void CGame::SimFrame() {
 	playerHandler->GameFrame(gs->frameNum);
 
 	lastSimFrameTime = spring_gettime();
+	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(lastSimFrameTime - lastFrameTime)), 0.05f);
+
+	#ifdef HEADLESS
+	{
+		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->userSpeedFactor);
+		const float msecDifSimFrameTime = spring_tomsecs(lastSimFrameTime) - spring_tomsecs(lastFrameTime);
+		// multiply by 0.5 to give unsynced code some execution time (50% of our sleep-budget)
+		const float msecSleepTime = (msecMaxSimFrameTime - msecDifSimFrameTime) * 0.5f;
+
+		if (msecSleepTime > 0.0f) {
+			spring_sleep(spring_msecs(msecSleepTime));
+		}
+	}
+	#endif
 
 	DumpState(-1, -1, 1);
-
-	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, float(spring_tomsecs(spring_gettime() - lastFrameTime)), 0.1f);
-
 	LEAVE_SYNCED_CODE();
 }
 
@@ -1816,7 +1829,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 	for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
 		const CFeature* f = *featuresIt;
 
-		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->myName << ")\n";
+		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->name << ")\n";
 		file << "\t\t\tpos: <" << f->pos.x << ", " << f->pos.y << ", " << f->pos.z << ">\n";
 		file << "\t\t\thealth: " << f->health << ", reclaimLeft: " << f->reclaimLeft << "\n";
 	}
@@ -1874,44 +1887,51 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 
 
 
-void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams)
+void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout)
 {
-	if (!gameOver) {
-		gameOver = true;
-		eventHandler.GameOver(winningAllyTeams);
+	if (gameOver)
+		return;
 
-		new CEndGameBox(winningAllyTeams);
+	gameOver = true;
+	eventHandler.GameOver(winningAllyTeams);
+
+	new CEndGameBox(winningAllyTeams);
 #ifdef    HEADLESS
-		profiler.PrintProfilingInfo();
+	profiler.PrintProfilingInfo();
 #endif // HEADLESS
-		CDemoRecorder* record = net->GetDemoRecorder();
-		if (record != NULL) {
-			// Write CPlayer::Statistics and CTeam::Statistics to demo
-			const int numPlayers = playerHandler->ActivePlayers();
 
-			// TODO: move this to a method in CTeamHandler
-			int numTeams = teamHandler->ActiveTeams();
-			if (gs->useLuaGaia) {
-				--numTeams;
-			}
-			record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
-			record->InitializeStats(numPlayers, numTeams);
-			// pass the list of winners
-			record->SetWinningAllyTeams(winningAllyTeams);
+	CDemoRecorder* record = net->GetDemoRecorder();
 
-			for (int i = 0; i < numPlayers; ++i) {
-				record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
-			}
-			for (int i = 0; i < numTeams; ++i) {
-				record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
-				netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
-				*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
-				net->Send(buf);
-			}
+	if (record != NULL) {
+		// Write CPlayer::Statistics and CTeam::Statistics to demo
+		// TODO: move this to a method in CTeamHandler
+		const int numPlayers = playerHandler->ActivePlayers();
+		const int numTeams = teamHandler->ActiveTeams() - int(gs->useLuaGaia);
+
+		record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
+		record->InitializeStats(numPlayers, numTeams);
+		// pass the list of winners
+		record->SetWinningAllyTeams(winningAllyTeams);
+
+		for (int i = 0; i < numPlayers; ++i) {
+			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 		}
+		for (int i = 0; i < numTeams; ++i) {
+			record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
+			*buf << (uint8_t)teamHandler->Team(i)->teamNum << *(teamHandler->Team(i)->currentStats);
+			net->Send(buf);
+		}
+	}
 
+	if (!timeout) {
 		// pass the winner info to the host in the case it's a dedicated server
 		net->Send(CBaseNetProtocol::Get().SendGameOver(gu->myPlayerNum, winningAllyTeams));
+	} else {
+		// client timed out, don't send anything (in theory the GAMEOVER
+		// message not be able to reach the server if connection is lost,
+		// but in practice it can get through --> timeout check needs work)
+		LOG_L(L_ERROR, "[%s] lost connection to gameserver", __FUNCTION__);
 	}
 }
 

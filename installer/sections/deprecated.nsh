@@ -29,7 +29,6 @@
 	Delete "$INSTDIR\ArchiveCacheV7.lua"
 	; Old AI stuff
 	RmDir /r "$INSTDIR\AI\Global"
-	RmDir /r "$INSTDIR\AI\Skirmish"
 	RmDir /r "$INSTDIR\AI\Helper-libs"
 
 	RmDir "$INSTDIR\mods"

@@ -51,7 +51,8 @@ struct S3DModelPiece {
 	virtual int GetTxCoorCount() const { return 0; }
 	virtual void SetMinMaxExtends() {}
 	virtual void SetVertexTangents() {}
-	virtual const float3& GetVertexPos(int) const = 0;
+	virtual const float3& GetVertexPos(const int) const = 0;
+	virtual const float3& GetNormal(const int) const = 0;
 	virtual float3 GetPosOffset() const { return ZeroVector; }
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 	void DrawStatic() const;
@@ -109,7 +110,7 @@ struct S3DModel
 	S3DModelPiece* GetRootPiece() const { return rootPiece; }
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
 	void DrawStatic() const { rootPiece->DrawStatic(); }
-	S3DModelPiece* FindPiece(std::string name);
+	S3DModelPiece* FindPiece(const std::string& name) const;
 
 public:
 	std::string name;

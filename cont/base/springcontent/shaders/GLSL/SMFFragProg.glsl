@@ -18,6 +18,7 @@ uniform sampler2D       normalsTex;
 uniform sampler2DShadow shadowTex;
 uniform sampler2D       detailTex;
 uniform sampler2D       specularTex;
+uniform sampler2D       infoTex;
 
 #if (HAVE_SHADOWS == 1)
 uniform mat4 shadowMat;
@@ -72,8 +73,11 @@ varying vec4 vertexWorldPos;
 varying vec2 diffuseTexCoords;
 varying vec2 specularTexCoords;
 varying vec2 normalTexCoords;
+varying vec2 infoTexCoords;
 
-uniform int numMapDynLights;
+#if (HAVE_INFOTEX == 1)
+uniform float infoTexIntensityMul;
+#endif
 
 
 
@@ -198,6 +202,13 @@ void main() {
 		diffuseCol.rgb = mix(diffuseCol.rgb, reflectCol, reflectMod);
 	}
 	#endif
+	#if (HAVE_INFOTEX == 1)
+		// increase contrast and brightness for the overlays
+		// TODO: make the multiplier configurable by users?
+		diffuseCol.rgb += (texture2D(infoTex, infoTexCoords).rgb * infoTexIntensityMul);
+		diffuseCol.rgb -= (vec3(0.5, 0.5, 0.5) * float(infoTexIntensityMul == 1.0));
+	#endif
+
 
 
 	float shadowCoeff = 1.0;

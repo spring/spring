@@ -1,8 +1,8 @@
 /*
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -18,10 +18,10 @@ following conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -52,7 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef AI_MDLFILEHELPER_H_INC
 #define AI_MDLFILEHELPER_H_INC
 
-#include "./../include/Compiler/pushpack1.h"
+#include "./../include/assimp/Compiler/pushpack1.h"
 
 namespace Assimp	{
 namespace MDL	{
@@ -724,7 +724,7 @@ struct GroupFrame
 	SimpleFrame *frames; 
 } PACK_STRUCT;
 
-#include "./../include/Compiler/poppack1.h"
+#include "./../include/assimp/Compiler/poppack1.h"
 
 // -------------------------------------------------------------------------------------
 /** \struct IntFace_MDL7
@@ -763,7 +763,7 @@ struct IntMaterial_MDL7
 	}
 
 	//! Material instance
-	MaterialHelper* pcMat;
+	aiMaterial* pcMat;
 
 	//! Old material indices
 	unsigned int iOldMatIndices[2];
@@ -846,7 +846,7 @@ struct IntGroupInfo_MDL7
 	BE_NCONST MDL::TexCoord_MDL7*	pcGroupUVs;		
 
 	//! Points to the beginning of the triangle section
-	BE_NCONST MDL::Triangle_MDL7*	pcGroupTris;		
+	MDL::Triangle_MDL7*	pcGroupTris;		
 
 	//! Points to the beginning of the vertex section
 	BE_NCONST MDL::Vertex_MDL7*		pcGroupVerts;
@@ -909,7 +909,7 @@ struct IntSharedData_MDL7
 	std::vector<bool> abNeedMaterials;
 
 	//! List of all materials
-	std::vector<MaterialHelper*> pcMats;
+	std::vector<aiMaterial*> pcMats;
 
 	//! List of all bones
 	IntBone_MDL7** apcOutBones;
@@ -920,10 +920,10 @@ struct IntSharedData_MDL7
 
 // -------------------------------------------------------------------------------------
 //! Contains input data for GenerateOutputMeshes_3DGS_MDL7
-struct IntSplittedGroupData_MDL7
+struct IntSplitGroupData_MDL7
 {
 	//! Construction from a given shared data set 
-	IntSplittedGroupData_MDL7(IntSharedData_MDL7& _shared,
+	IntSplitGroupData_MDL7(IntSharedData_MDL7& _shared,
 		std::vector<aiMesh*>& _avOutList)
 
 		: shared(_shared), avOutList(_avOutList)
@@ -931,7 +931,7 @@ struct IntSplittedGroupData_MDL7
 	}
 
 	//! Destruction: properly delete all allocated resources
-	~IntSplittedGroupData_MDL7()
+	~IntSplitGroupData_MDL7()
 	{
 		// kill all face lists
 		if(this->aiSplit)

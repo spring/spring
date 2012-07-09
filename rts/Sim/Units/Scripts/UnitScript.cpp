@@ -551,10 +551,10 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	float fadeupTime = 4;
 
 	const UnitDef* ud = unit->unitDef;
-	const MoveData* md = ud->movedata;
+	const MoveDef* md = ud->moveDef;
 
 	// hovercraft need special care
-	if (md != NULL && md->moveType == MoveData::Hover_Move) {
+	if (md != NULL && md->moveType == MoveDef::Hover_Move) {
 		fadeupTime = 8.0f;
 		alpha = 0.15f + gu->usRandFloat() * 0.2f;
 		alphaFalloff = 0.008f;
@@ -672,10 +672,6 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 				// detonate weapon from piece
 				const WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
-
-				if (weaponDef->soundhit.getID(0) > 0) {
-					Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
-				}
 
 				CGameHelper::ExplosionParams params = {
 					pos,
@@ -1493,19 +1489,21 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case YARD_OPEN: {
-			if (unit->curYardMap != 0) {
+			if (unit->blockMap != NULL) {
 				// note: if this unit is a factory, engine-controlled
 				// OpenYard() and CloseYard() calls can interfere with
 				// the yardOpen state (they probably should be removed
 				// at some point)
 				if (param == 0) {
 					if (groundBlockingObjectMap->CanCloseYard(unit)) {
-						groundBlockingObjectMap->CloseBlockingYard(unit, unit->curYardMap);
+						groundBlockingObjectMap->CloseBlockingYard(unit);
 						yardOpen = false;
 					}
 				} else {
-					groundBlockingObjectMap->OpenBlockingYard(unit, unit->curYardMap);
-					yardOpen = true;
+					if (groundBlockingObjectMap->CanOpenYard(unit)) {
+						groundBlockingObjectMap->OpenBlockingYard(unit);
+						yardOpen = true;
+					}
 				}
 			}
 			break;
@@ -1530,9 +1528,8 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case MAX_SPEED: {
-			if (param > 0) {
-				unit->commandAI->SetScriptMaxSpeed(param / (float) COBSCALE);
-			}
+			// interpret negative values as non-persistent changes
+			unit->commandAI->SetScriptMaxSpeed(std::max(param, -param) / float(COBSCALE), (param >= 0));
 			break;
 		}
 		case CLOAKED: {
@@ -1550,7 +1547,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		case HEADING: {
 			unit->heading = param % COBSCALE;
 			unit->UpdateDirVectors(!unit->upright && unit->moveType->GetMaxSpeed() > 0.0f);
-			unit->UpdateMidPos();
+			unit->UpdateMidAndAimPos();
 		} break;
 		case LOS_RADIUS: {
 			unit->ChangeLos(param, unit->realAirLosRadius);

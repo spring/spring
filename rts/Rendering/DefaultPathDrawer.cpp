@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Game/GlobalUnsynced.h"
-#include "Game/SelectedUnits.h"
 #include "Game/UI/GuiHandler.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -11,9 +10,7 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Units/BuildInfo.h"
-#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 
 // FIXME
@@ -31,75 +28,9 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "System/myMath.h"
-#include "System/Color.h"
 #include "System/Util.h"
 
 #define PE_EXTRA_DEBUG_OVERLAYS 1
-
-static CPathManager* pm = NULL;
-
-static const MoveData* GetMoveData() {
-	const MoveData* md = NULL;
-	const CUnitSet& unitSet = selectedUnits.selectedUnits;
-
-	if (moveinfo->moveData.empty()) {
-		return md;
-	}
-
-	md = moveinfo->moveData[0];
-
-	if (!unitSet.empty()) {
-		const CUnit* unit = *(unitSet.begin());
-		const UnitDef* unitDef = unit->unitDef;
-
-		if (unitDef->movedata != NULL) {
-			md = unitDef->movedata;
-		}
-	}
-
-	return md;
-}
-
-static inline float GetSpeedMod(const MoveData* md, const CMoveMath* mm, int sqx, int sqy) {
-	float m = 0.0f;
-
-	#if 0
-	const int hmIdx = sqy * gs->mapxp1 + sqx;
-	const int cnIdx = sqy * gs->mapx   + sqx;
-
-	const float height = hm[hmIdx];
-	const float slope = 1.0f - cn[cnIdx].y;
-
-	if (md->moveFamily == MoveData::Ship) {
-		// only check water depth
-		m = (height >= (-md->depth))? 0.0f: m;
-	} else {
-		// check depth and slope (if hover, only over land)
-		m = std::max(0.0f, 1.0f - (slope / (md->maxSlope + 0.1f)));
-		m = (height < (-md->depth))? 0.0f: m;
-		m = (height <= 0.0f && md->moveFamily == MoveData::Hover)? 1.0f: m;
-	}
-	#else
-	// NOTE: these values are not necessarily in [0, 1]
-	m = mm->GetPosSpeedMod(md, sqx, sqy);
-	#endif
-
-	return m;
-}
-
-static inline SColor GetSpeedModColor(const float& m) {
-	SColor col(120, 0, 80);
-
-	if (m > 0.0f) {
-		col.r = 255 - ((m <= 1.0f) ? (m * 255) : 255);
-		col.g = 255 - col.r;
-		col.b =   0;
-	}
-
-	return col;
-}
-
-
 
 static const SColor buildColors[] = {
 	SColor(138, 138, 138), // nolos
@@ -185,50 +116,44 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					}
 				}
 			} else {
-				const MoveData* md = NULL;
-				const CMoveMath* mm = NULL;
-				const bool los = (gs->cheatEnabled || gu->spectating);
+				const MoveDef* md = GetSelectedMoveDef();
 
-				{
-					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
+				if (md != NULL) {
+					const CMoveMath* mm = md->moveMath;
+					const bool los = (gs->cheatEnabled || gu->spectating);
 
-					const CUnitSet& selUnits = selectedUnits.selectedUnits;
-					const CUnit* selUnit = NULL;
+					for (int ty = starty; ty < endy; ++ty) {
+						for (int tx = 0; tx < gs->hmapx; ++tx) {
+							const int sqx = (tx << 1);
+							const int sqy = (ty << 1);
+							const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+							const bool losSqr = loshandler->InLos(sqx, sqy, gu->myAllyTeam);
 
-					// use the first selected unit, if it has the ability to move
-					if (!selUnits.empty()) {
-						selUnit = *selUnits.begin();
-						md = selUnit->unitDef->movedata;
-						mm = (md != NULL)? md->moveMath: NULL;
-					}
-				}
+							float scale = 1.0f;
 
-				for (int ty = starty; ty < endy; ++ty) {
-					for (int tx = 0; tx < gs->hmapx; ++tx) {
-						const int sqx = (tx << 1);
-						const int sqy = (ty << 1);
-						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-
-						if (md != NULL) {
-							float s = 1.0f;
-
-							if (los || loshandler->InLos(sqx, sqy, gu->myAllyTeam)) {
-								if (mm->IsBlocked(*md, sqx,     sqy    ) & CMoveMath::BLOCK_STRUCTURE) { s -= 0.25f; }
-								if (mm->IsBlocked(*md, sqx + 1, sqy    ) & CMoveMath::BLOCK_STRUCTURE) { s -= 0.25f; }
-								if (mm->IsBlocked(*md, sqx,     sqy + 1) & CMoveMath::BLOCK_STRUCTURE) { s -= 0.25f; }
-								if (mm->IsBlocked(*md, sqx + 1, sqy + 1) & CMoveMath::BLOCK_STRUCTURE) { s -= 0.25f; }
+							if (los || losSqr) {
+								if (mm->IsBlocked(*md, sqx,     sqy    ) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (mm->IsBlocked(*md, sqx + 1, sqy    ) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (mm->IsBlocked(*md, sqx,     sqy + 1) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (mm->IsBlocked(*md, sqx + 1, sqy + 1) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
 							}
 
-							const float& m  = GetSpeedMod(md, mm, sqx, sqy);
-							const SColor& c = GetSpeedModColor(m * s);
+							// NOTE: raw speedmods are not necessarily clamped to [0, 1]
+							const float sm = mm->GetPosSpeedMod(md, sqx, sqy);
+							const SColor& smc = GetSpeedModColor(sm * scale);
 
-							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = c.r;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = c.g;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = c.b;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = c.a;
-						} else {
-							// we have nothing to show
-							// -> draw a dark red overlay
+							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = smc.r;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = smc.g;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = smc.b;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = smc.a;
+						}
+					}
+				} else {
+					// we have nothing to show -> draw a dark red overlay
+					for (int ty = starty; ty < endy; ++ty) {
+						for (int tx = 0; tx < gs->hmapx; ++tx) {
+							const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+
 							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 100;
 							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = 0;
 							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 0;
@@ -396,8 +321,11 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	GML_RECMUTEX_LOCK(sel); // Draw
 
-	const MoveData* md = GetMoveData();
+	const MoveDef* md = GetSelectedMoveDef();
 	const PathNodeStateBuffer& blockStates = pe->blockStates;
+
+	if (md == NULL)
+		return;
 
 	glDisable(GL_TEXTURE_2D);
 	glColor3f(1.0f, 1.0f, 0.0f);

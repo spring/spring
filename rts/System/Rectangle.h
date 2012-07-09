@@ -3,6 +3,9 @@
 #ifndef RECTANGLE_H
 #define RECTANGLE_H
 
+#include "Vec2.h"
+#include "myMath.h"
+
 struct SRectangle {
 	SRectangle()
 		: x1(0)
@@ -21,12 +24,38 @@ struct SRectangle {
 	int GetHeight() const { return z2 - z1; }
 	int GetArea() const { return (GetWidth() * GetHeight()); }
 
+	void ClampPos(int2* pos) const {
+		pos->x = Clamp(pos->x, x1, x2);
+		pos->y = Clamp(pos->y, y1, y2);
+	}
+
+	void ClampIn(const SRectangle& rect) {
+		x1 = Clamp(x1, rect.x1, rect.x2);
+		x2 = Clamp(x2, rect.x1, rect.x2);
+		y1 = Clamp(y1, rect.y1, rect.y2);
+		y2 = Clamp(y2, rect.y1, rect.y2);
+	}
+
+	bool CheckOverlap(const SRectangle& rect) const {
+		return
+			x1 < rect.x2 && x2 > rect.x1 &&
+			y1 < rect.y2 && y2 > rect.y1;
+	}
+
 	bool operator< (const SRectangle& other) {
 		if (x1 == other.x1) {
 			return (z1 < other.z1);
 		} else {
 			return (x1 < other.x1);
 		}
+	}
+
+	template<typename T>
+	SRectangle operator* (const T v) const {
+		return SRectangle(
+			x1 * v, z1 * v,
+			x2 * v, z2 * v
+		);
 	}
 
 	int x1;

@@ -8,6 +8,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/mmgr.h"
 #include "System/Util.h"
+#include "System/Vec2.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/creg/creg_cond.h"
@@ -18,6 +19,7 @@ CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true); // in sa
 CONFIG(int, AtiHacks).defaultValue(-1);
 CONFIG(bool, DualScreenMode).defaultValue(false);
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false);
+CONFIG(bool, TeamNanoSpray).defaultValue(true);
 
 /**
  * @brief global rendering
@@ -89,7 +91,7 @@ CGlobalRendering::CGlobalRendering()
 	, drawFog(true)
 	, drawdebug(false)
 
-	, teamNanospray(false)
+	, teamNanospray(true)
 	, active(true)
 	, compressTextures(false)
 	, haveATI(false)
@@ -101,6 +103,12 @@ CGlobalRendering::CGlobalRendering()
 	, support24bitDepthBuffers(false)
 	, haveARB(false)
 	, haveGLSL(false)
+	, maxSmoothPointSize(1.0f)
+	, glslMaxVaryings(0)
+	, glslMaxAttributes(0)
+	, glslMaxDrawBuffers(0)
+	, glslMaxRecommendedIndices(0)
+	, glslMaxRecommendedVertices(0)
 
 	, dualScreenMode(false)
 	, dualScreenMiniMapOnLeft(false)
@@ -122,7 +130,7 @@ void CGlobalRendering::PostInit() {
 		const std::string renderer = (glRenderer != NULL)? StringToLower(std::string(glRenderer)): "";
 
 		haveATI    = (vendor.find("ati ") != std::string::npos) || (vendor.find("amd ") != std::string::npos);
-		haveMesa   = (renderer.find("mesa ") != std::string::npos);
+		haveMesa   = (renderer.find("mesa ") != std::string::npos) || (renderer.find("gallium ") != std::string::npos);
 		haveIntel  = (vendor.find("intel") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
@@ -152,6 +160,23 @@ void CGlobalRendering::PostInit() {
 	// maximum 2D texture size
 	{
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+	}
+
+	// retrieve maximu smoothed PointSize
+	float2 aliasedPointSizeRange, smoothPointSizeRange;
+	glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, (GLfloat*)&aliasedPointSizeRange);
+	glGetFloatv(GL_SMOOTH_POINT_SIZE_RANGE,  (GLfloat*)&smoothPointSizeRange);
+	maxSmoothPointSize = std::min(aliasedPointSizeRange.y, smoothPointSizeRange.y);
+
+	// some GLSL relevant information
+	{
+		glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
+		glGetIntegerv(GL_MAX_VARYING_FLOATS,    &glslMaxVaryings);
+		glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,    &glslMaxAttributes);
+		glGetIntegerv(GL_MAX_DRAW_BUFFERS,      &glslMaxDrawBuffers);
+		glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &glslMaxRecommendedIndices);
+		glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &glslMaxRecommendedVertices);
+		glslMaxVaryings /= 4; // GL_MAX_VARYING_FLOATS returns max individual floats, we want float4
 	}
 
 	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
@@ -184,11 +209,19 @@ void CGlobalRendering::PostInit() {
 		"GL info:\n"
 		"\thaveARB: %i, haveGLSL: %i, ATI hacks: %i\n"
 		"\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i\n"
-		"\tmaximum texture size: %i, compress MIP-map textures: %i",
+		"\tmaximum texture size: %i, compress MIP-map textures: %i\n"
+		"\tmaximum SmoothPointSize: %0.0f, maximum vec4 varying/attributes: %i/%i\n"
+		"\tmaximum drawbuffers: %i, maximum recommended indices/vertices: %i/%i\n"
+		"\tnumber of UniformBufferBindings: %i",
 		haveARB, haveGLSL, atiHacks,
 		FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers,
-		maxTextureSize, compressTextures
+		maxTextureSize, compressTextures, maxSmoothPointSize,
+		glslMaxVaryings, glslMaxAttributes, glslMaxDrawBuffers,
+		glslMaxRecommendedIndices, glslMaxRecommendedVertices,
+		glslMaxUniformBufferBindings
 	);
+
+	teamNanospray = configHandler->GetBool("TeamNanoSpray");
 }
 
 

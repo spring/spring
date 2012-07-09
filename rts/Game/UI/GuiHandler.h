@@ -60,7 +60,8 @@ public:
 	/// startInfo.def has to be endInfo.def
 	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
 
-	bool ReloadConfig(const std::string& fileName);
+	bool ReloadConfigFromFile(const std::string& fileName);
+	bool ReloadConfigFromString(const std::string& cfg);
 
 	void ForceLayoutUpdate() { forceLayoutUpdate = true; }
 
@@ -161,7 +162,7 @@ private:
 
 	void LoadDefaults();
 	void SanitizeConfig();
-	bool LoadConfig(const std::string& fileName);
+	bool LoadConfig(const std::string& cfg);
 	void ParseFillOrder(const std::string& text);
 
 	bool ProcessLocalActions(const Action& action);

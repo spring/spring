@@ -318,6 +318,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 
 #if GML_CALL_DEBUG
 #include "lib/lua/include/lauxlib.h"
+extern void gmlPrintCallChainWarning(const char *func);
 extern unsigned gmlLockTime;
 extern lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS];
 class gmlCallDebugger {
@@ -350,6 +351,21 @@ public:
 	if(currentLuaState)\
 		luaL_error(currentLuaState, "Invalid call");\
 	ret
+#if GML_CALL_DEBUG
+#define GML_CHECK_CALL_CHAIN(luastate, ...)\
+	if (gmlCheckCallChain) {\
+		lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
+		if (currentLuaState != NULL && currentLuaState != gmlLuaUIState && luastate == gmlLuaUIState) {\
+			if (gmlCallChainWarning < GML_MAX_CALL_CHAIN_WARNINGS) {\
+				++gmlCallChainWarning;\
+				gmlPrintCallChainWarning(GML_FUNCTION);\
+			}\
+			return __VA_ARGS__;\
+		}\
+	}
+#else
+#define GML_CHECK_CALL_CHAIN(luastate, ...)
+#endif
 #define GML_ITEMLOG_PRINT() GML_THREAD_ERROR(GML_FUNCTION,)
 #define GML_DUMMYRET() return;
 #define GML_DUMMYRETVAL(rettype)\
@@ -1274,6 +1290,7 @@ GML_MAKEFUN2(MultiTexCoord1f,GLenum,GLfloat,)
 GML_MAKEFUN3(MultiTexCoord2f,GLenum,GLfloat,GLfloat,)
 GML_MAKEFUN4(MultiTexCoord3f,GLenum,GLfloat,GLfloat,GLfloat)
 GML_MAKEFUN5(MultiTexCoord4f,GLenum,GLfloat,GLfloat,GLfloat,GLfloat)
+// FIXME: the third parameter should be const, but on old systems opengl headers don't allow to
 GML_MAKEFUN2V(PointParameterfv,GLenum,GLfloat,GLfloat,gmlNumArgsPointParam(A))
 GML_MAKEFUN1(PointSize,GLfloat)
 GML_MAKEFUN4V(ProgramStringARB,GLenum,GLenum,GLsizei,const GLvoid,BYTE,C)

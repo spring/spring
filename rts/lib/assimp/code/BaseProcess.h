@@ -1,8 +1,8 @@
 /*
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -18,10 +18,10 @@ following conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <map>
 
-#include "../include/aiTypes.h"
+#include "../include/assimp/types.h"
 #include "GenericProperty.h"
 
 struct aiScene;
@@ -60,7 +60,7 @@ class Importer;
  *  to provide additional information to other steps. This is primarily
  *  intended for cross-step optimizations.
  */
-class ASSIMP_API SharedPostProcessInfo
+class SharedPostProcessInfo
 {
 public:
 
@@ -211,7 +211,7 @@ private:
  * should be executed. If the function returns true, the class' Execute() 
  * function is called subsequently.
  */
-class ASSIMP_API BaseProcess 
+class ASSIMP_API_WINONLY BaseProcess 
 {
 	friend class Importer;
 
@@ -233,6 +233,11 @@ public:
 	 *   false if not.
 	*/
 	virtual bool IsActive( unsigned int pFlags) const = 0;
+
+	// -------------------------------------------------------------------
+	/** Check whether this step expects its input vertex data to be 
+	 *  in verbose format. */
+	virtual bool RequireVerboseFormat() const;
 
 	// -------------------------------------------------------------------
 	/** Executes the post processing step on the given imported data.

@@ -1036,6 +1036,8 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 	// draw the projectiles
 	if (drawProjectiles) {
+		glPointSize(1.0f);
+		WorkaroundATIPointSizeBug();
 		projectileDrawer->DrawProjectilesMiniMap();
 	}
 
@@ -1098,7 +1100,7 @@ void CMiniMap::DrawForReal(bool use_geo)
 		cam2->ClipFrustumLines(true, -10000.0f, 400096.0f);
 
 		const std::vector<CCamera::FrustumLine>& negSides = cam2->negFrustumSides;
-		const std::vector<CCamera::FrustumLine>& posSides = cam2->posFrustumSides;
+//		const std::vector<CCamera::FrustumLine>& posSides = cam2->posFrustumSides;
 		std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 		CVertexArray* va = GetVertexArray();
@@ -1439,10 +1441,9 @@ void CMiniMap::DrawUnit(const CUnit* unit)
 	}
 
 	// set the color
-	if (unit->commandAI->selected) {
+	if (unit->isSelected) {
 		glColor3f(1.0f, 1.0f, 1.0f);
-	}
-	else {
+	} else {
 		if (simpleColors) {
 			if (unit->team == gu->myTeam) {
 				glColor3ubv(myColor);
@@ -1497,7 +1498,9 @@ void CMiniMap::DrawUnitHighlight(const CUnit* unit)
 
 void CMiniMap::DrawNotes()
 {
-	if (notes.size()<=0) return;
+	if (notes.empty()) {
+		return;
+	}
 
 	const float baseSize = gs->mapx * SQUARE_SIZE;
 	CVertexArray* va = GetVertexArray();

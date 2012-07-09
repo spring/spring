@@ -28,7 +28,8 @@ struct SAssPiece: public S3DModelPiece
 	SAssPiece() : node(NULL) {}
 
 	void DrawForList() const;
-	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }	
+	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }	
+	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
 	
 	//FIXME implement
 	//int GetVertexCount() const { return 0; }

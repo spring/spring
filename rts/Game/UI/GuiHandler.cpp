@@ -182,10 +182,9 @@ static bool SafeAtoF(float& var, const std::string& value)
 }
 
 
-bool CGuiHandler::LoadConfig(const std::string& fileName)
+bool CGuiHandler::LoadConfig(const std::string& cfg)
 {
-	CFileHandler ifs(fileName);
-	CSimpleParser parser(ifs);
+	CSimpleParser parser(cfg);
 
 	std::string deadStr = "";
 	std::string prevStr = "";
@@ -413,9 +412,18 @@ int CGuiHandler::ParseIconSlot(const std::string& text) const
 }
 
 
-bool CGuiHandler::ReloadConfig(const std::string& fileName)
+bool CGuiHandler::ReloadConfigFromFile(const std::string& fileName)
 {
-	LoadConfig(fileName);
+	CFileHandler ifs(fileName);
+	std::string cfg;
+	ifs.LoadStringData(cfg);
+	return ReloadConfigFromString(cfg);
+}
+
+
+bool CGuiHandler::ReloadConfigFromString(const std::string& cfg)
+{
+	LoadConfig(cfg);
 	activePage = 0;
 	selectedUnits.SetCommandPage(activePage);
 	LayoutIcons(false);
@@ -1104,6 +1112,8 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir)
 {
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCommand
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCommand
 	GML_RECMUTEX_LOCK(gui); // MouseRelease
 
 	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
@@ -1656,9 +1666,10 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 
 void CGuiHandler::RunLayoutCommand(const std::string& command)
 {
-	if (command == "reload" || ((LUA_MT_OPT & LUA_STATE) && (globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL || 
-								globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_UNMANAGED) && command == "update")) {
-		if (CLuaHandle::GetActiveHandle() != NULL) {
+	const bool dualStates = (LUA_MT_OPT & LUA_STATE) && (globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL || globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_UNMANAGED);
+
+	if (command == "reload" || (dualStates && command == "update")) {
+		if (luaUI && luaUI->IsRunning()) {
 			// NOTE: causes a SEGV through RunCallIn()
 			LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
 			return;
@@ -1682,7 +1693,7 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 		LayoutIcons(false);
 	}
 	else if (command == "disable") {
-		if (CLuaHandle::GetActiveHandle() != NULL) {
+		if (luaUI && luaUI->IsRunning()) {
 			// NOTE: might cause a SEGV through RunCallIn()
 			LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
 			return;
@@ -2091,6 +2102,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 	}
 
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCommand
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCommand
 	GML_RECMUTEX_LOCK(gui); // GetCommand - updates inCommand
 
 	if ((tempInCommand >= 0) && ((size_t)tempInCommand < commands.size())) {
@@ -2268,10 +2281,6 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 4) {
-
-				GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCommand
-				GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCommand
-
 				CUnit* unit = NULL;
 				CFeature* feature = NULL;
 				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, true, NULL, unit, feature);
@@ -2440,7 +2449,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		} else {
 			Command c = uh->GetBuildCommand(cameraPos, mouseDir);
 			if (c.GetID() < 0 && c.params.size() == 4) {
-				other.pos = float3(c.params[0],c.params[1], c.params[2]);
+				other.pos = c.GetPos(0);
 				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 				other.buildFacing = int(c.params[3]);
 			}
@@ -3120,8 +3129,8 @@ void CGuiHandler::DrawSelectionInfo()
 	if (!selectedUnits.selectedUnits.empty()) {
 		std::ostringstream buf;
 
-		if(selectedUnits.selectedGroup!=-1){
-			buf << "Selected units " << selectedUnits.selectedUnits.size() << " [Group " << selectedUnits.selectedGroup << "]";
+		if (selectedUnits.GetSelectedGroup() != -1) {
+			buf << "Selected units " << selectedUnits.selectedUnits.size() << " [Group " << selectedUnits.GetSelectedGroup() << "]";
 		} else {
 			buf << "Selected units " << selectedUnits.selectedUnits.size();
 		}
@@ -3423,11 +3432,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					if (mouse->buttons[button].movement > 30) {
 						float maxSize = 1000000.0f;
 						float sizeDiv = 0.0f;
-						if (cmdDesc.params.size() > 0) {
+						if (!cmdDesc.params.empty()) {
 							maxSize = atof(cmdDesc.params[0].c_str());
-						}
-						if (cmdDesc.params.size() > 1) {
-							sizeDiv = atof(cmdDesc.params[1].c_str());
+							if (cmdDesc.params.size() > 1) {
+								sizeDiv = atof(cmdDesc.params[1].c_str());
+							}
 						}
 						DrawFront(button, maxSize, sizeDiv, onMinimap, cameraPos, mouseDir);
 					}
@@ -3598,7 +3607,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				}
 			}
 			// draw build distance for immobile builders
-			if (unitdef->builder && !unitdef->canmove) {
+			if (unitdef->builder) {
 				const float radius = unitdef->buildDistance;
 				if (radius > 0.0f) {
 					glColor4fv(cmdColors.rangeBuild);
@@ -3606,7 +3615,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				}
 			}
 			// draw shield range for immobile units
-			if (unitdef->shieldWeaponDef && !unitdef->canmove) {
+			if (unitdef->shieldWeaponDef) {
 				glColor4fv(cmdColors.rangeShield);
 				glSurfaceCircle(unit->pos, unitdef->shieldWeaponDef->shieldRadius, 40);
 			}
@@ -3651,7 +3660,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					continue;
 				}
 				const UnitDef* unitdef = unit->unitDef;
-				if (unitdef->builder && !unitdef->canmove) {
+				if (unitdef->builder && (!unitdef->canmove || selectedUnits.IsUnitSelected(unit))) {
 					const float radius = unitdef->buildDistance;
 					if (radius > 0.0f) {
 						glDisable(GL_TEXTURE_2D);
@@ -3700,7 +3709,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						}
 					}
 					// draw build range for immobile builders
-					if (unitdef->builder && !unitdef->canmove) {
+					if (unitdef->builder) {
 						const float radius = unitdef->buildDistance;
 						if (radius > 0.0f) {
 							glColor4fv(cmdColors.rangeBuild);
@@ -3708,7 +3717,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						}
 					}
 					// draw shield range for immobile units
-					if (unitdef->shieldWeaponDef && !unitdef->canmove) {
+					if (unitdef->shieldWeaponDef) {
 						glColor4fv(cmdColors.rangeShield);
 						glSurfaceCircle(buildpos, unitdef->shieldWeaponDef->shieldRadius, 40);
 					}
@@ -4022,7 +4031,7 @@ struct BoxData {
 
 static void DrawBoxShape(const void* data)
 {
-	const BoxData* boxData = (const BoxData*)data;
+	const BoxData* boxData = static_cast<const BoxData*>(data);
 	const float3& mins = boxData->mins;
 	const float3& maxs = boxData->maxs;
 	glBegin(GL_QUADS);
@@ -4207,7 +4216,7 @@ struct CylinderData {
 
 static void DrawCylinderShape(const void* data)
 {
-	const CylinderData& cyl = *((const CylinderData*)data);
+	const CylinderData& cyl = *static_cast<const CylinderData*>(data);
 	const float step = fastmath::PI2 / (float)cyl.divs;
 	int i;
 	glBegin(GL_QUAD_STRIP); // the sides

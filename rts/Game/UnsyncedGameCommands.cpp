@@ -2295,7 +2295,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		const std::string fileName = action.GetArgs().empty() ? "cmdcolors.txt" : action.GetArgs();
-		cmdColors.LoadConfig(fileName);
+		cmdColors.LoadConfigFromFile(fileName);
 		LOG("Reloaded cmdcolors from file: %s", fileName.c_str());
 		return true;
 	}
@@ -2311,7 +2311,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		const std::string fileName = action.GetArgs().empty() ? "ctrlpanel.txt" : action.GetArgs();
-		guihandler->ReloadConfig(fileName);
+		guihandler->ReloadConfigFromFile(fileName);
 		LOG("Reloaded ctrlpanel from file: %s", fileName.c_str());
 		return true;
 	}
@@ -2364,9 +2364,9 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().empty()) {
-			VSync.SetFrames((VSync.GetFrames() <= 0) ? 1 : 0);
+			VSync.SetInterval((VSync.GetInterval() <= 0) ? 1 : 0);
 		} else {
-			VSync.SetFrames(atoi(action.GetArgs().c_str()));
+			VSync.SetInterval(atoi(action.GetArgs().c_str()));
 		}
 		return true;
 	}

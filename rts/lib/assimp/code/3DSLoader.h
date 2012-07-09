@@ -1,9 +1,9 @@
 
 /*
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -19,10 +19,10 @@ following conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -46,13 +46,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define AI_3DSIMPORTER_H_INC
 
 #include "BaseImporter.h"
-#include "../include/aiTypes.h"
+#include "../include/assimp/types.h"
 
 struct aiNode;
 #include "3DSHelper.h"
 
 namespace Assimp	{
-class MaterialHelper;
+
 
 using namespace D3DS;
 
@@ -101,7 +101,7 @@ protected:
 	/** Converts a temporary material to the outer representation 
 	 */
 	void ConvertMaterial(D3DS::Material& p_cMat,
-		MaterialHelper& p_pcOut);
+		aiMaterial& p_pcOut);
 
 	// -------------------------------------------------------------------
 	/** Read a chunk

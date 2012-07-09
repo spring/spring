@@ -354,6 +354,19 @@ public:
 	}
 
 	/**
+	 * @brief dot2D product
+	 * @param f float3 to use
+	 * @return 2D dot product of float3s
+	 *
+	 * Calculates the 2D dot product of this and
+	 * another float3 (sums the products of
+	 * x/z components).
+	 */
+	float dot2D (const float3& f) const {
+		return (x * f.x) + (z * f.z);
+	}
+
+	/**
 	 * @brief cross product
 	 * @param f float3 to use
 	 * @return cross product of two float3s

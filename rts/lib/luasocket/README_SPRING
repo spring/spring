@@ -1,0 +1,6 @@
+Changes done to luasocket:
+
+1. rename *.c into *.cpp in src/
+2. rename luaL_openlib into luaI_openlib
+3. added restrictions.cpp + restrictions.h
+4. integrated restrictions into inet.cpp and udp.cpp

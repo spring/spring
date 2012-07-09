@@ -14,7 +14,7 @@ namespace netcode
 }
 struct PlayerStatistics;
 
-const unsigned short NETWORK_VERSION = 5;
+const unsigned short NETWORK_VERSION = 6;
 
 /*
  * Comment behind NETMSG enumeration constant gives the extra data belonging to
@@ -47,7 +47,7 @@ enum NETMSG {
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
 
 	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; uchar aiID; short unitID; int id; uchar options; std::vector<float> params;
-	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum; uchar aiID;
+	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum; uchar aiID; uchar pairwise, uint sameCmdID, uchar sameCmdOpt, ushort sameCmdParamSize;
 	                              // short unitIDCount;  unitIDCount * short(unitID)
 	                              // short commandCount; commandCount * { int id; uchar options; std::vector<float> params }
 	NETMSG_AISHARE          = 16, // uchar myPlayerNum, uchar aiID, uchar sourceTeam, uchar destTeam, float metal, float energy, std::vector<short> unitIDs

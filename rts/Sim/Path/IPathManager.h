@@ -4,9 +4,11 @@
 #define I_PATH_MANAGER_H
 
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
+
+#include "PFSTypes.h"
 #include "System/float3.h"
 
-struct MoveData;
+struct MoveDef;
 class CSolidObject;
 
 class IPathManager {
@@ -15,23 +17,31 @@ public:
 
 	virtual ~IPathManager() {}
 
+	virtual unsigned int GetPathFinderType() const = 0;
 	virtual boost::uint32_t GetPathCheckSum() const { return 0; }
 
+	/**
+	 * returns if a path was changed after RequestPath returned its pathID
+	 * this can happen eg. if a PathManager reacts to TerrainChange events
+	 * (by re-requesting affected paths without changing their ID's)
+	 */
+	virtual bool PathUpdated(unsigned int pathID) { return false; }
+
 	virtual void Update() {}
-	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathId) {}
+	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathID) {}
 
 	/**
 	 * When a path is no longer used, call this function to release it from
 	 * memory.
-	 * @param pathId
+	 * @param pathID
 	 *     The path-id returned by RequestPath.
 	 */
-	virtual void DeletePath(unsigned int pathId) {}
+	virtual void DeletePath(unsigned int pathID) {}
 
 	/**
 	 * Returns the next waypoint of the path.
 	 *
-	 * @param pathId
+	 * @param pathID
 	 *     The path-id returned by RequestPath.
 	 * @param callerPos
 	 *     The current position of the user of the path.
@@ -54,7 +64,7 @@ public:
 	 *     waypoint could be found.
 	 */
 	virtual float3 NextWayPoint(
-		unsigned int pathId,
+		unsigned int pathID,
 		float3 callerPos,
 		float minDistance = 0.0f,
 		int numRetries = 0,
@@ -72,7 +82,7 @@ public:
 	 * the latter case ALL waypoints (of the i-th resolution PATH) are stored
 	 * between points[starts[i]] and points[starts[i + 1]]
 	 *
-	 * @param pathId
+	 * @param pathID
 	 *     The path-id returned by RequestPath.
 	 * @param points
 	 *     The list of waypoints.
@@ -80,7 +90,7 @@ public:
 	 *     The list of starting indices for the different resolutions
 	 */
 	virtual void GetPathWayPoints(
-		unsigned int pathId,
+		unsigned int pathID,
 		std::vector<float3>& points,
 		std::vector<int>& starts
 	) const {}
@@ -92,7 +102,7 @@ public:
 	 * If no complete path from startPos to goalPos could be found,
 	 * then a path getting as "close" as possible to target is generated.
 	 *
-	 * @param moveData
+	 * @param moveDef
 	 *     Defines the move details of the unit to use the path.
 	 * @param startPos
 	 *     The starting location of the requested path.
@@ -115,7 +125,7 @@ public:
 	 *     could be found
 	 */
 	virtual unsigned int RequestPath(
-		const MoveData* moveData,
+		const MoveDef* moveDef,
 		const float3& startPos,
 		const float3& goalPos,
 		float goalRadius = 8.0f,

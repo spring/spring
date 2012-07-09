@@ -169,7 +169,7 @@ CUnitScript* CLuaUnitScript::activeScript;
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	: CUnitScript(unit, unit->localmodel->pieces)
-	, handle(ActiveHandle()), L(L)
+	, handle(CLuaHandle::GetHandle(L)), L(L)
 	, scriptIndex(LUAFN_Last, LUA_NOREF)
 	, inKilled(false)
 {
@@ -296,7 +296,7 @@ void CLuaUnitScript::RemoveCallIn(const string& fname)
 void CLuaUnitScript::ShowScriptError(const string& msg)
 {
 	// if we are in the same handle, we can truely raise an error
-	if (ActiveHandle() == handle) {
+	if (handle->IsRunning()) {
 		luaL_error(L, "Lua UnitScript error: %s", msg.c_str());
 	}
 	else {
@@ -392,7 +392,7 @@ int CLuaUnitScript::RunQueryCallIn(int fn)
 	if (!HasFunction(fn))
 		return -1;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, -1);
 	lua_checkstack(L, 1);
 
 	PushFunction(fn);
@@ -419,7 +419,7 @@ int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
 	if (!HasFunction(fn))
 		return -1;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, -1);
 	lua_checkstack(L, 2);
 
 	PushFunction(fn);
@@ -758,7 +758,7 @@ bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool user
 	if (!HasFunction(fn))
 		return false;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 4);
 
 	PushFunction(fn);
@@ -780,7 +780,7 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 	if (!HasFunction(fn))
 		return 1.0f;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, 1.0f);
 	lua_checkstack(L, 3);
 
 	PushFunction(fn);

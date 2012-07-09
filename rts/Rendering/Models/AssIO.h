@@ -3,8 +3,8 @@
 #ifndef ASS_IO_H
 #define ASS_IO_H
 
-#include "IOStream.h"
-#include "IOSystem.h"
+#include "lib/assimp/include/assimp/IOStream.hpp"
+#include "lib/assimp/include/assimp/IOSystem.hpp"
 class CFileHandler;
 
 // Custom implementation of Assimp IOStream to support Spring's VFS

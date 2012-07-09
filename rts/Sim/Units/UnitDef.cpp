@@ -146,7 +146,6 @@ UnitDef::UnitDef()
 , flankingBonusMax(0.0f)
 , flankingBonusMin(0.0f)
 , flankingBonusMobilityAdd(0.0f)
-, modelCenterOffset(ZeroVector)
 , usePieceCollisionVolumes(false)
 , shieldWeaponDef(NULL)
 , stockpileWeaponDef(NULL)
@@ -211,7 +210,7 @@ UnitDef::UnitDef()
 , maxElevator(0.0f)
 , maxRudder(0.0f)
 , crashDrag(0.0f)
-, movedata(NULL)
+, moveDef(NULL)
 , xsize(0)
 , zsize(0)
 , loadingRadius(0.0f)
@@ -436,10 +435,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	cloakCost = udTable.GetFloat("cloakCost", 0.0f);
 	cloakCostMoving = udTable.GetFloat("cloakCostMoving", 0.0f);
 
-	if (cloakCostMoving < 0.0f) {
-		cloakCostMoving = cloakCost;
-	}
-
 	startCloaked     = udTable.GetBool("initCloaked", false);
 	decloakDistance  = udTable.GetFloat("minCloakDistance", 0.0f);
 	decloakSpherical = udTable.GetBool("decloakSpherical", true);
@@ -490,7 +485,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	holdSteady        = udTable.GetBool("holdSteady",        false);
 	releaseHeld       = udTable.GetBool("releaseHeld",       false);
-	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveData());
+	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveDef());
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
 	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
@@ -544,7 +539,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 	// modrules transport settings
-	// FIXME: do we want to check moveData->moveType for these?
+	// FIXME: do we want to check moveDef->moveType for these?
 	if ((!modInfo.transportAir    && canfly)   ||
 		(!modInfo.transportShip   && canFloat) ||
 		(!modInfo.transportHover  && canHover) ||
@@ -552,35 +547,35 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
  		cantBeTransported = true;
 	}
 
-	// aircraft have MoveTypes but no MoveData;
+	// aircraft have MoveTypes but no MoveDef;
 	// static structures have no use for either
 	// (but get StaticMoveType instances)
-	if (WantsMoveData()) {
+	if (WantsMoveDef()) {
 		const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 		const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
-		if ((movedata = moveinfo->GetMoveDataFromName(moveClass)) == NULL) {
+		if ((moveDef = moveDefHandler->GetMoveDefFromName(moveClass)) == NULL) {
 			throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 		}
 
-		movedata->unitDefRefCount += 1;
+		moveDef->unitDefRefCount += 1;
 
 		if (LOG_IS_ENABLED(L_WARNING)) {
 			const char* typeStr = NULL;
 			const char* wantedTypeStr = NULL;
 
 			if (canHover) {
-				if (movedata->moveType != MoveData::Hover_Move) {
+				if (moveDef->moveType != MoveDef::Hover_Move) {
 					typeStr       = "canHover";
 					wantedTypeStr = "hover";
 				}
 			} else if (canFloat) {
-				if (movedata->moveType != MoveData::Ship_Move) {
+				if (moveDef->moveType != MoveDef::Ship_Move) {
 					typeStr       = "canFloat";
 					wantedTypeStr = "ship";
 				}
 			} else {
-				if (movedata->moveType != MoveData::Ground_Move) {
+				if (moveDef->moveType != MoveDef::Ground_Move) {
 					typeStr       = "!(canHover || canFloat)";
 					wantedTypeStr = "ground";
 				}
@@ -589,22 +584,22 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 				LOG_L(L_WARNING,
 						"[%s] inconsistent path-type %i for \"%s\" "
 						"(move-class \"%s\"): %s, but not a %s-based movetype",
-						__FUNCTION__, movedata->pathType, name.c_str(),
+						__FUNCTION__, moveDef->pathType, name.c_str(),
 						moveClass.c_str(), typeStr, wantedTypeStr);
 			}
 		}
 	}
 
-	if (movedata == NULL) {
+	if (moveDef == NULL) {
 		upright = upright || !canfly;
 		floatOnWater = canFloat;
 	} else {
 		upright = upright ||
-			(movedata->moveType == MoveData::Hover_Move) ||
-			(movedata->moveType == MoveData::Ship_Move);
+			(moveDef->moveType == MoveDef::Hover_Move) ||
+			(moveDef->moveType == MoveDef::Ship_Move);
 		floatOnWater =
-			(movedata->moveType == MoveData::Hover_Move) ||
-			(movedata->moveType == MoveData::Ship_Move);
+			(moveDef->moveType == MoveDef::Hover_Move) ||
+			(moveDef->moveType == MoveDef::Ship_Move);
 	}
 
 	if (IsAirUnit()) {
@@ -660,7 +655,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// Spring's heightmap resolution is double the footprint (yardmap)
 	// resolution, so we scale the values (which are not allowed to be
 	// 0)
-	// NOTE that this is done for the FeatureDef and MoveData footprints
+	// NOTE that this is done for the FeatureDef and MoveDef footprints
 	// as well
 	xsize = std::max(1 * 2, (udTable.GetInt("footprintX", 1) * 2));
 	zsize = std::max(1 * 2, (udTable.GetInt("footprintZ", 1) * 2));
@@ -696,9 +691,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	strafeToAttack = udTable.GetBool("strafeToAttack", false);
 
 
-	modelCenterOffset = udTable.GetFloat3("modelCenterOffset", ZeroVector);
-	usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false);
-
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
 	collisionVolume = new CollisionVolume(
@@ -708,7 +700,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		udTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_DISC)
 	);
 
-	if (usePieceCollisionVolumes) {
+	if ((usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false))) {
 		collisionVolume->Disable();
 	}
 
@@ -755,10 +747,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 UnitDef::~UnitDef()
 {
-	for (int u = 0; u < NUM_FACINGS; u++) {
-		yardmaps[u].clear();
-	}
-
 	if (buildPic) {
 		buildPic->Free();
 		delete buildPic;
@@ -778,7 +766,7 @@ UnitDef::~UnitDef()
 S3DModel* UnitDef::LoadModel() const
 {
 	if (this->modelDef.model == NULL) {
-		this->modelDef.model = modelParser->Load3DModel(this->modelDef.modelPath, this->modelCenterOffset);
+		this->modelDef.model = modelParser->Load3DModel(this->modelDef.modelPath);
 		this->modelDef.modelTextures["tex1"] = this->modelDef.model->tex1;
 		this->modelDef.modelTextures["tex2"] = this->modelDef.model->tex2;
 	} else {
@@ -866,49 +854,61 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 
 	StringToLowerInPlace(yardMapStr);
 
-	// create the yardmaps for each build-facing
-	// (xsize and zsize are in heightmap units at
-	// this point)
-	for (int u = 0; u < NUM_FACINGS; u++) {
-		yardmaps[u].resize(xsize * zsize);
-	}
-
+	// read the yardmap in half resolution from the LuaDef string
 	const unsigned int hxsize = xsize >> 1;
 	const unsigned int hzsize = zsize >> 1;
 
-	std::vector<unsigned char> yardMap(hxsize * hzsize, 255);
+	std::vector<YardMapStatus> yardMap(hxsize * hzsize, YARDMAP_BLOCKED);
+	std::string foundUnknownChars;
 
-	unsigned int x = 0;
-	unsigned int z = 0;
+	unsigned int idx = 0;
 
 	for (unsigned int n = 0; n < yardMapStr.size(); n++) {
 		const unsigned char c = yardMapStr[n];
 
-		if (c == ' ') { continue; }
-		if (c == 'g') { needGeo = true; continue; }
-		if (c == 'c') { yardMap[x + z * hxsize] = 1; }   // blocking (not walkable, not buildable)
-		if (c == 'y') { yardMap[x + z * hxsize] = 0; }   // non-blocking (walkable, buildable)
-	//	if (c == 'o') { yardMap[x + z * hxsize] = 2; }   // walkable, not buildable?
-	//	if (c == 'w') { yardMap[x + z * hxsize] = 3; }   // not walkable, buildable?
+		if (isspace(c))
+			continue;
 
-		x += 1;
-		z += ((x == hxsize)? 1: 0);
-		x %= hxsize;
+		YardMapStatus ys = YARDMAP_BLOCKED;
 
-		if (z >= hzsize) {
-			break;
+		switch (c) {
+			case 'g': ys = YARDMAP_GEO; needGeo = true; break;
+			case 'y': ys = YARDMAP_OPEN;    break;
+			case 'c': ys = YARDMAP_YARD;    break;
+			case 'i': ys = YARDMAP_YARDINV; break;
+			//case 'w': { ys = YARDMAP_WALKABLE; } break; //FIXME
+			case 'w':
+			case 'x':
+			case 'f':
+			case 'o': ys = YARDMAP_BLOCKED; break;
+			default:
+				if (foundUnknownChars.find_first_of(c) == std::string::npos)
+					foundUnknownChars += c;
 		}
+
+		if (idx < hxsize * hzsize) {
+			yardMap[idx] = ys;
+		}
+		idx++;
 	}
 
+	// print warnings
+	if (idx > yardMap.size())
+		LOG_L(L_WARNING, "%s: Given yardmap/blockmap contains "_STPF_" excess char(s)!", name.c_str(), idx - yardMap.size());
+
+	if (idx > 0 && idx < yardMap.size())
+		LOG_L(L_WARNING, "%s: Given yardmap/blockmap requires "_STPF_" extra char(s)!", name.c_str(), yardMap.size() - idx);
+
+	if (!foundUnknownChars.empty())
+		LOG_L(L_WARNING, "%s: Unknown char(s) in yardmap/blockmap \"%s\"!", name.c_str(), foundUnknownChars.c_str());
+
+	// write in doubled resolution to final unitdef tag
+	yardmap.resize(xsize * zsize);
 	for (unsigned int z = 0; z < zsize; z++) {
 		for (unsigned int x = 0; x < xsize; x++) {
 			const unsigned int yardMapIdx = (x >> 1) + ((z >> 1) * hxsize);
-			const unsigned char yardMapChar = yardMap[yardMapIdx];
-
-			yardmaps[FACING_SOUTH][                  (x + z * xsize)                ] = yardMapChar;
-			yardmaps[FACING_EAST ][(xsize * zsize) - (zsize * (x + 1) - (z + 1) + 1)] = yardMapChar;
-			yardmaps[FACING_NORTH][(xsize * zsize) - (x + z * xsize + 1)            ] = yardMapChar;
-			yardmaps[FACING_WEST ][                   zsize * (x + 1) - (z + 1)     ] = yardMapChar;
+			const YardMapStatus yardMapChar = yardMap[yardMapIdx];
+			yardmap[x + z * xsize] = yardMapChar;
 		}
 	}
 }
@@ -945,12 +945,12 @@ bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) cons
 	float maxDepth = this->maxWaterDepth;
 	float minDepth = this->minWaterDepth;
 
-	if (movedata != NULL) {
+	if (moveDef != NULL) {
 		// we are a mobile ground-unit
-		if (movedata->moveType == MoveData::Ship_Move) {
-			minDepth = movedata->depth;
+		if (moveDef->moveType == MoveDef::Ship_Move) {
+			minDepth = moveDef->depth;
 		} else {
-			maxDepth = movedata->depth;
+			maxDepth = moveDef->depth;
 		}
 	}
 

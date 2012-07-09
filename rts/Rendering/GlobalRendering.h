@@ -137,7 +137,7 @@ public:
 
 
 	/**
-	 * Does the user want team colored nanospray if the mod allows it?
+	 * Does the user want team colored nanospray?
 	 */
 	bool teamNanospray;
 
@@ -194,6 +194,22 @@ public:
 	bool haveARB;
 	bool haveGLSL;
 
+	/**
+	 * @brief maxSmoothPointSize
+	 *
+	 * maximum smooth point size (driver might fallback in software rendering if larger)
+	 */
+	float maxSmoothPointSize;
+
+	/**
+	 * Shader capabilities
+	 */
+	int glslMaxVaryings;
+	int glslMaxAttributes;
+	int glslMaxDrawBuffers;
+	int glslMaxRecommendedIndices;
+	int glslMaxRecommendedVertices;
+	int glslMaxUniformBufferBindings;
 
 	/**
 	 * @brief dual screen mode

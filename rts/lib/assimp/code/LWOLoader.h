@@ -1,8 +1,8 @@
 /*
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -18,10 +18,10 @@ following conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -42,12 +42,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef AI_LWOLOADER_H_INCLUDED
 #define AI_LWOLOADER_H_INCLUDED
 
-#include "../include/aiTypes.h"
-#include "../include/DefaultLogger.h"
+#include "../include/assimp/types.h"
+#include "../include/assimp/DefaultLogger.hpp"
 
 #include "LWOFileData.h"
 #include "BaseImporter.h"
-#include "MaterialSystem.h"
 
 struct aiTexture;
 struct aiNode;
@@ -262,7 +261,7 @@ private:
 	 *  @param in Input texture list
 	 *  @param type Type identifier of the texture list
 	*/
-	bool HandleTextures(MaterialHelper* pcMat, const TextureList& in,
+	bool HandleTextures(aiMaterial* pcMat, const TextureList& in,
 		aiTextureType type);
 
 	// -------------------------------------------------------------------
@@ -273,7 +272,7 @@ private:
 	// -------------------------------------------------------------------
 	/** Convert a LWO surface description to an ASSIMP material
 	*/
-	void ConvertMaterial(const LWO::Surface& surf,MaterialHelper* pcMat);
+	void ConvertMaterial(const LWO::Surface& surf,aiMaterial* pcMat);
 
 	
 	// -------------------------------------------------------------------
@@ -304,7 +303,7 @@ private:
 	 *  Unused nodes are deleted.
 	 *  @param apcNodes Flat list of nodes
 	*/
-	void GenerateNodeGraph(std::vector<aiNode*>& apcNodes);
+	void GenerateNodeGraph(std::map<uint16_t,aiNode*>& apcNodes);
 
 	// -------------------------------------------------------------------
 	/** Add children to a node

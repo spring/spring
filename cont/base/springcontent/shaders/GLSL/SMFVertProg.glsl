@@ -7,6 +7,7 @@
 
 uniform vec2 normalTexGen;   // either 1.0/mapSize (when NPOT are supported) or 1.0/mapSizePO2
 uniform vec2 specularTexGen; // 1.0/mapSize
+uniform vec2 infoTexGen;     // 1.0/(pwr2map{x,z} * SQUARE_SIZE)
 uniform ivec2 texSquare;
 
 uniform vec4 splatTexScales; // defaults to SMF_DETAILTEX_RES per channel
@@ -20,6 +21,7 @@ varying vec4 vertexWorldPos;
 varying vec2 diffuseTexCoords;
 varying vec2 specularTexCoords;
 varying vec2 normalTexCoords;
+varying vec2 infoTexCoords;
 
 
 
@@ -34,6 +36,7 @@ void main() {
 	diffuseTexCoords = (floor(gl_Vertex.xz) / SMF_TEXSQR_SIZE) - vec2(texSquare);
 	specularTexCoords = gl_Vertex.xz * specularTexGen;
 	normalTexCoords   = gl_Vertex.xz * normalTexGen;
+	infoTexCoords     = gl_Vertex.xz * infoTexGen;
 
 	// detail-tex coords
 	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0)
@@ -47,6 +50,7 @@ void main() {
 
 	// transform vertex pos
 	gl_Position = gl_ModelViewMatrix * gl_Vertex;
+	gl_ClipVertex = gl_Position;
 	float fogCoord = length(gl_Position.xyz);
 	gl_Position = gl_ProjectionMatrix * gl_Position;
 

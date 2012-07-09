@@ -3,9 +3,11 @@
 #include "MoveInfo.h"
 #include "StrafeAirMoveType.h"
 #include "HoverAirMoveType.h"
+#include "ClassicGroundMoveType.h"
 #include "GroundMoveType.h"
 #include "StaticMoveType.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 
@@ -13,26 +15,28 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 	if (ud->IsGroundUnit()) {
 		// mobile ground-unit
 		assert(!ud->canfly);
-		assert(ud->movedata != NULL);
-		assert(unit->mobility == NULL);
+		assert(ud->moveDef != NULL);
+		assert(unit->moveDef == NULL);
 
-		unit->mobility = new MoveData(ud->movedata);
-		CGroundMoveType* gmt = new CGroundMoveType(unit);
-		return gmt;
+		unit->moveDef = new MoveDef(ud->moveDef);
+
+		if (modInfo.useClassicGroundMoveType) {
+			return (new CClassicGroundMoveType(unit));
+		} else {
+			return (new CGroundMoveType(unit));
+		}
 	}
 
 	if (ud->IsAirUnit()) {
 		// mobile air-unit
 		assert(ud->canfly);
-		assert(ud->movedata == NULL);
+		assert(ud->moveDef == NULL);
 
 		if (!ud->builder && !ud->IsTransportUnit() && ud->IsNonHoveringAirUnit()) {
-			CStrafeAirMoveType* sAMT = new CStrafeAirMoveType(unit);
-			return sAMT;
+			return (new CStrafeAirMoveType(unit));
 		} else {
 			// flying builders, transports, gunships
-			CHoverAirMoveType* hAMT = new CHoverAirMoveType(unit);
-			return hAMT;
+			return (new CHoverAirMoveType(unit));
 		}
 	}
 

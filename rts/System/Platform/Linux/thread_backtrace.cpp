@@ -76,7 +76,7 @@ static void internal_pthread_backtrace(pthread_t thread, void** buffer, size_t m
 		uint8_t* frame = stack_buffer + offset;
 		frame = TranslateStackAddrToBufferAddr(frame, stackbot, stack_buffer);
 		uint8_t* last_frame = frame;
-		while (INSTACK(frame) && (frame >= last_frame)) {
+		while (INSTACK(frame) && (frame > last_frame)) {
 			last_frame = frame;
 			frame = TranslateStackAddrToBufferAddr(frame, stackbot, stack_buffer);
 			stack_depth++;
