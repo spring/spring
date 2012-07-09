@@ -35,10 +35,8 @@ int BuildInfo::CreateCommandID() const
 void BuildInfo::AddCommandParams(Command& cmd) const
 {
 	cmd.params.reserve(cmd.params.size() + 4);
-	cmd.AddParam(pos.x);
-	cmd.AddParam(pos.y);
-	cmd.AddParam(pos.z);
-	cmd.AddParam((float) buildFacing);
+	cmd.PushPos(pos);
+	cmd.PushParam((float) buildFacing);
 }
 
 

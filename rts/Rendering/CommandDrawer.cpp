@@ -716,7 +716,7 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) con
 		return;
 	}
 
-	const float3 endPos(c.params[0], c.params[1] + 3.0f, c.params[2]);
+	const float3& endPos = c.GetPos(0) + float3(0.0f, 3.0f, 0.0f);
 
 	if (!dd->showArea || (paramsCount < 4)) {
 		lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);

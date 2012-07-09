@@ -393,8 +393,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 					&& u->beingBuilt && (u->buildProgress == 0.0f)
 					&& (!u->soloBuilder || (u->soloBuilder == owner))
 				) {
-					Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER);
-					c2.params.push_back(u->id);
+					Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER, u->id);
 					CMobileCAI::GiveCommandReal(c2);
 					CMobileCAI::GiveCommandReal(c);
 				}
@@ -457,8 +456,7 @@ void CBuilderCAI::ReclaimFeature(CFeature* f)
 		StopMove();
 		FinishCommand();
 	} else {
-		Command c2(CMD_RECLAIM);
-		c2.params.push_back(f->id + uh->MaxUnits());
+		Command c2(CMD_RECLAIM, 0, f->id + uh->MaxUnits());
 		commandQue.push_front(c2);
 		// this assumes that the reclaim command can never return directly
 		// without having reclaimed the target
@@ -656,7 +654,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		}
 
 		if (c.params.size() == 5) {
-			const float3 pos(c.params[1], c.params[2], c.params[3]);
+			const float3& pos = c.GetPos(1);
 			const float radius = c.params[4] + 100.0f; // do not walk too far outside repair area
 
 			if ((pos - unit->pos).SqLength2D() > radius * radius ||
@@ -724,7 +722,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		}
 
 		if (c.params.size() == 5) {
-			const float3 pos(c.params[1], c.params[2], c.params[3]);
+			const float3& pos = c.GetPos(1);
 			const float radius = c.params[4] + 100; // do not walk too far outside capture area
 
 			if (((pos - unit->pos).SqLength2D() > (radius * radius) ||
@@ -812,8 +810,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 		if (pushRepairCommand) {
 			StopSlowGuard();
 
-			Command nc(CMD_REPAIR, c.options);
-			nc.params.push_back(b->curBuild->id);
+			Command nc(CMD_REPAIR, c.options, b->curBuild->id);
 
 			commandQue.push_front(nc);
 			inCommand = false;
@@ -832,8 +829,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 		if (pushRepairCommand) {
 			StopSlowGuard();
 
-			Command nc(CMD_REPAIR, c.options);
-			nc.params.push_back(fac->curBuild->id);
+			Command nc(CMD_REPAIR, c.options, fac->curBuild->id);
 
 			commandQue.push_front(nc);
 			inCommand = false;
@@ -860,8 +856,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 		if (pushRepairCommand) {
 			StopSlowGuard();
 
-			Command nc(CMD_REPAIR, c.options);
-			nc.params.push_back(guardee->id);
+			Command nc(CMD_REPAIR, c.options, guardee->id);
 
 			commandQue.push_front(nc);
 			inCommand = false;
@@ -904,7 +899,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 				obj = uh->GetUnit(uid);
 			}
 			if (obj) {
-				const float3 pos(c.params[1], c.params[2], c.params[3]);
+				const float3& pos = c.GetPos(1);
 				const float radius = c.params[4];
 				const float curdist = pos.SqDistance2D(obj->pos);
 
@@ -952,7 +947,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 			CUnit* unit = uh->GetUnit(uid);
 
 			if (unit != NULL && c.params.size() == 5) {
-				const float3 pos(c.params[1], c.params[2], c.params[3]);
+				const float3& pos = c.GetPos(1);
 				const float radius = c.params[4] + 100.0f; // do not walk too far outside reclaim area
 
 				const bool outOfReclaimRange =
@@ -1064,8 +1059,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 
 				if (builder->lastResurrected && uh->GetUnitUnsafe(builder->lastResurrected) != NULL && owner->unitDef->canRepair) {
 					// resurrection finished, start repair (by overwriting the current order)
-					c = Command(CMD_REPAIR, c.options | INTERNAL_ORDER);
-					c.AddParam(builder->lastResurrected);
+					c = Command(CMD_REPAIR, c.options | INTERNAL_ORDER, builder->lastResurrected);
 
 					builder->lastResurrected = 0;
 					inCommand = false;
@@ -1110,10 +1104,7 @@ void CBuilderCAI::ExecutePatrol(Command& c)
 		return;
 	}
 
-	Command temp(CMD_FIGHT, c.options|INTERNAL_ORDER);
-	temp.params.push_back(c.params[0]);
-	temp.params.push_back(c.params[1]);
-	temp.params.push_back(c.params[2]);
+	Command temp(CMD_FIGHT, c.options|INTERNAL_ORDER, c.GetPos(0));
 
 	commandQue.push_back(c);
 	commandQue.pop_front();
@@ -1142,7 +1133,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 
 	if (c.params.size() >= 6) {
 		if (!inCommand) {
-			commandPos1 = float3(c.params[3], c.params[4], c.params[5]);
+			commandPos1 = c.GetPos(3);
 		}
 	} else {
 		// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
@@ -1541,12 +1532,8 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos, float radius, u
 			PushOrUpdateReturnFight();
 		}
 
-		Command cmd(CMD_RECLAIM, cmdopt | INTERNAL_ORDER);
-			cmd.params.push_back(rid);
-			cmd.params.push_back(pos.x);
-			cmd.params.push_back(pos.y);
-			cmd.params.push_back(pos.z);
-			cmd.params.push_back(radius);
+		Command cmd(CMD_RECLAIM, cmdopt | INTERNAL_ORDER, rid, pos);
+			cmd.PushParam(radius);
 		commandQue.push_front(cmd);
 		return true;
 	}
@@ -1590,8 +1577,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 	}
 
 	if (best) {
-		Command c2(CMD_RESURRECT, options | INTERNAL_ORDER);
-		c2.params.push_back(uh->MaxUnits() + best->id);
+		Command c2(CMD_RESURRECT, options | INTERNAL_ORDER, uh->MaxUnits() + best->id);
 		commandQue.push_front(c2);
 		return true;
 	}
@@ -1639,8 +1625,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 	}
 
 	if (best) {
-		Command nc(CMD_CAPTURE, options | INTERNAL_ORDER);
-		nc.params.push_back(best->id);
+		Command nc(CMD_CAPTURE, options | INTERNAL_ORDER, best->id);
 		commandQue.push_front(nc);
 		return true;
 	}
@@ -1755,18 +1740,13 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 		if (attackEnemy) {
 			PushOrUpdateReturnFight();
 		}
-		Command cmd(CMD_REPAIR, options | INTERNAL_ORDER);
-			cmd.params.push_back(best->id);
-			cmd.params.push_back(pos.x);
-			cmd.params.push_back(pos.y);
-			cmd.params.push_back(pos.z);
-			cmd.params.push_back(radius);
+		Command cmd(CMD_REPAIR, options | INTERNAL_ORDER, best->id, pos);
+			cmd.PushParam(radius);
 		commandQue.push_front(cmd);
 	}
 	else {
 		PushOrUpdateReturnFight(); // attackEnemy must be true
-		Command cmd(CMD_ATTACK, options | INTERNAL_ORDER);
-		cmd.params.push_back(best->id);
+		Command cmd(CMD_ATTACK, options | INTERNAL_ORDER, best->id);
 		commandQue.push_front(cmd);
 	}
 

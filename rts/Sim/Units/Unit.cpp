@@ -503,8 +503,7 @@ void CUnit::PostInit(const CUnit* builder)
 			moveState = unitDef->moveState;
 		}
 
-		Command c(CMD_MOVE_STATE);
-		c.params.push_back(moveState);
+		Command c(CMD_MOVE_STATE, 0, moveState);
 		commandAI->GiveCommand(c);
 	}
 
@@ -520,8 +519,7 @@ void CUnit::PostInit(const CUnit* builder)
 			fireState = unitDef->fireState;
 		}
 
-		Command c(CMD_FIRE_STATE);
-		c.params.push_back(fireState);
+		Command c(CMD_FIRE_STATE, 0, fireState);
 		commandAI->GiveCommand(c);
 	}
 
@@ -1481,37 +1479,31 @@ void CUnit::ChangeTeamReset()
 
 	// deactivate to prevent the old give metal maker trick
 	// TODO remove, because it is *A specific
-	c = Command(CMD_ONOFF);
-	c.params.push_back(0); // always off
+	c = Command(CMD_ONOFF, 0, 0); // always off
 	commandAI->GiveCommand(c);
 
 	// reset repeat state
-	c = Command(CMD_REPEAT);
-	c.params.push_back(0);
+	c = Command(CMD_REPEAT, 0, 0);
 	commandAI->GiveCommand(c);
 
 	// reset cloak state
 	if (unitDef->canCloak) {
-		c = Command(CMD_CLOAK);
-		c.params.push_back(0); // always off
+		c = Command(CMD_CLOAK, 0, 0); // always off
 		commandAI->GiveCommand(c);
 	}
 	// reset move state
 	if (unitDef->canmove || unitDef->builder) {
-		c = Command(CMD_MOVE_STATE);
-		c.params.push_back(MOVESTATE_MANEUVER);
+		c = Command(CMD_MOVE_STATE, 0, MOVESTATE_MANEUVER);
 		commandAI->GiveCommand(c);
 	}
 	// reset fire state
 	if (commandAI->CanChangeFireState()) {
-		c = Command(CMD_FIRE_STATE);
-		c.params.push_back(FIRESTATE_FIREATWILL);
+		c = Command(CMD_FIRE_STATE, 0, FIRESTATE_FIREATWILL);
 		commandAI->GiveCommand(c);
 	}
 	// reset trajectory state
 	if (unitDef->highTrajectoryType > 1) {
-		c = Command(CMD_TRAJECTORY);
-		c.params.push_back(0);
+		c = Command(CMD_TRAJECTORY, 0, 0);
 		commandAI->GiveCommand(c);
 	}
 }

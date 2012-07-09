@@ -246,9 +246,7 @@ void CAirCAI::SlowUpdate()
 				const CUnit* enemy = helper->GetClosestEnemyAircraft(P, R, owner->allyteam);
 
 				if (IsValidTarget(enemy)) {
-					Command nc(CMD_ATTACK);
-					nc.params.push_back(enemy->id);
-					nc.options = INTERNAL_ORDER;
+					Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
 					commandQue.push_front(nc);
 					inCommand = false;
 					return;
@@ -259,9 +257,7 @@ void CAirCAI::SlowUpdate()
 				const CUnit* enemy = helper->GetClosestValidTarget(P, R, owner->allyteam, this);
 
 				if (enemy != NULL) {
-					Command nc(CMD_ATTACK);
-					nc.params.push_back(enemy->id);
-					nc.options = INTERNAL_ORDER;
+					Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
 					commandQue.push_front(nc);
 					inCommand = false;
 					return;
@@ -331,7 +327,7 @@ void CAirCAI::ExecuteFight(Command& c)
 	}
 	if (c.params.size() >= 6) {
 		if (!inCommand) {
-			commandPos1 = float3(c.params[3], c.params[4], c.params[5]);
+			commandPos1 = c.GetPos(3);
 		}
 	} else {
 		// HACK to make sure the line (commandPos1,commandPos2) is NOT
@@ -368,8 +364,7 @@ void CAirCAI::ExecuteFight(Command& c)
 		if (IsValidTarget(enemy) && (owner->moveState != MOVESTATE_MANEUVER
 				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
 		{
-			Command nc(CMD_ATTACK, c.options | INTERNAL_ORDER);
-			nc.params.push_back(enemy->id);
+			Command nc(CMD_ATTACK, c.options | INTERNAL_ORDER, enemy->id);
 			commandQue.push_front(nc);
 			tempOrder = true;
 			inCommand = false;
@@ -386,8 +381,7 @@ void CAirCAI::ExecuteFight(Command& c)
 			enemy = helper->GetClosestValidTarget(P, R, owner->allyteam, this);
 
 			if (enemy != NULL) {
-				Command nc(CMD_ATTACK, c.options | INTERNAL_ORDER);
-				nc.params.push_back(enemy->id);
+				Command nc(CMD_ATTACK, c.options | INTERNAL_ORDER, enemy->id);
 				PushOrUpdateReturnFight();
 				commandQue.push_front(nc);
 				tempOrder = true;
@@ -555,8 +549,7 @@ void CAirCAI::ExecuteGuard(Command& c)
 		IsValidTarget(guardee->lastAttacker);
 
 	if (pushAttackCommand) {
-		Command nc(CMD_ATTACK, c.options | INTERNAL_ORDER);
-		nc.params.push_back(guardee->lastAttacker->id);
+		Command nc(CMD_ATTACK, c.options | INTERNAL_ORDER, guardee->lastAttacker->id);
 		commandQue.push_front(nc);
 		SlowUpdate();
 	} else {
@@ -564,17 +557,13 @@ void CAirCAI::ExecuteGuard(Command& c)
 		c2.timeOut = gs->frameNum + 60;
 
 		if (guardee->pos.IsInBounds()) {
-			c2.params.push_back(guardee->pos.x);
-			c2.params.push_back(guardee->pos.y);
-			c2.params.push_back(guardee->pos.z);
+			c2.PushPos(guardee->pos);
 		} else {
 			float3 clampedGuardeePos = guardee->pos;
 
 			clampedGuardeePos.ClampInBounds();
 
-			c2.params.push_back(clampedGuardeePos.x);
-			c2.params.push_back(clampedGuardeePos.y);
-			c2.params.push_back(clampedGuardeePos.z);
+			c2.PushPos(clampedGuardeePos);
 		}
 
 		commandQue.push_front(c2);

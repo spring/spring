@@ -1229,8 +1229,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 			SNPRINTF(t, 10, "%d", newMode);
 			cd.params[0] = t;
 
-			Command c(cd.id, CreateOptions(rightMouseButton));
-			c.params.push_back(newMode);
+			Command c(cd.id, CreateOptions(rightMouseButton), newMode);
 			GiveCommand(c);
 			forceLayoutUpdate = true;
 			break;
@@ -1921,8 +1920,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 				SNPRINTF(t, 10, "%d", newMode);
 				cmdDesc.params[0] = t;
 
-				Command c(cmdDesc.id);
-				c.params.push_back(newMode);
+				Command c(cmdDesc.id, 0, newMode);
 				GiveCommand(c);
 				forceLayoutUpdate = true;
 				break;
@@ -1936,11 +1934,10 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
 					if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
 					value = std::max(std::min(value, maxV), minV);
-					Command c(cd.id);
+					Command c(cd.id, 0, value);
 					if (action.extra.find("queued") != std::string::npos) {
 						c.options = SHIFT_KEY;
 					}
-					c.params.push_back(value);
 					GiveCommand(c);
 					break;
 				}
@@ -2112,8 +2109,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 		case CMDTYPE_NUMBER: {
 			const float value = GetNumberInput(commands[tempInCommand]);
-			Command c(commands[tempInCommand].id, CreateOptions(button));
-			c.params.push_back(value);
+			Command c(commands[tempInCommand].id, CreateOptions(button), value);
 			return c;
 		}
 
@@ -2131,10 +2127,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				return defaultRet;
 			}
 			const float3 pos = cameraPos + (mouseDir * dist);
-			Command c(commands[tempInCommand].id, CreateOptions(button));
-			c.params.push_back(pos.x);
-			c.params.push_back(pos.y);
-			c.params.push_back(pos.z);
+			Command c(commands[tempInCommand].id, CreateOptions(button), pos);
 			return c;
 		}
 
@@ -2198,7 +2191,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (!unit) {
 				return defaultRet;
 			}
-			c.params.push_back(unit->id);
+			c.PushParam(unit->id);
 			return c;
 		}
 
@@ -2215,13 +2208,10 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 			if (unit) {
 				// clicked on unit
-				c.params.push_back(unit->id);
+				c.PushParam(unit->id);
 			} else {
 				// clicked in map
-				const float3 pos = cameraPos + (mouseDir * dist2);
-				c.params.push_back(pos.x);
-				c.params.push_back(pos.y);
-				c.params.push_back(pos.z);
+				c.PushPos(cameraPos + (mouseDir * dist2));
 			}
 			return c;
 		}
@@ -2239,10 +2229,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 			float3 pos = mouse->buttons[button].camPos + (mouse->buttons[button].dir * dist);
 
-			Command c(commands[tempInCommand].id, CreateOptions(button));
-			c.params.push_back(pos.x);
-			c.params.push_back(pos.y);
-			c.params.push_back(pos.z);
+			Command c(commands[tempInCommand].id, CreateOptions(button), pos);
 
 			if (mouse->buttons[button].movement > 30) { // only create the front if the mouse has moved enough
 				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
@@ -2253,9 +2240,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 				ProcessFrontPositions(pos, pos2);
 
-				c.params[0] = pos.x;
-				c.params[1] = pos.y;
-				c.params[2] = pos.z;
+				c.SetPos(0, pos);
 
 				if (!commands[tempInCommand].params.empty() &&
 				    pos.SqDistance2D(pos2) > Square(atof(commands[tempInCommand].params[0].c_str()))) {
@@ -2264,9 +2249,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					pos2 = pos + dif * atoi(commands[tempInCommand].params[0].c_str());
 				}
 
-				c.params.push_back(pos2.x);
-				c.params.push_back(pos2.y);
-				c.params.push_back(pos2.z);
+				c.PushPos(pos2);
 			}
 			return c;
 		}
@@ -2291,19 +2274,16 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 
 				if (feature && commands[tempInCommand].type == CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) { // clicked on feature
-					c.params.push_back(uh->MaxUnits() + feature->id);
+					c.PushParam(uh->MaxUnits() + feature->id);
 				} else if (unit && commands[tempInCommand].type != CMDTYPE_ICON_AREA) { // clicked on unit
-					c.params.push_back(unit->id);
+					c.PushParam(unit->id);
 				} else { // clicked in map
 					if (explicitCommand < 0) // only attack ground if explicitly set the command
 						return defaultRet;
-					const float3 pos = cameraPos + (mouseDir * dist2);
-					c.params.push_back(pos.x);
-					c.params.push_back(pos.y);
-					c.params.push_back(pos.z);
-					c.params.push_back(0); // zero radius
+					c.PushPos(cameraPos + (mouseDir * dist2));
+					c.PushParam(0); // zero radius
 					if (c.GetID() == CMD_UNLOAD_UNITS) {
-						c.params.push_back((float)buildFacing);
+						c.PushParam((float)buildFacing);
 					}
 				}
 			} else { // created area
@@ -2318,17 +2298,15 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					return defaultRet;
 				}
 				const float3 pos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
-				c.params.push_back(pos.x);
-				c.params.push_back(pos.y);
-				c.params.push_back(pos.z);
+				c.PushPos(pos);
 				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 				if (dist < 0) {
 					return defaultRet;
 				}
 				const float3 pos2 = cameraPos + mouseDir * dist;
-				c.params.push_back(std::min(maxRadius, pos.distance2D(pos2)));
+				c.PushParam(std::min(maxRadius, pos.distance2D(pos2)));
 				if (c.GetID() == CMD_UNLOAD_UNITS) {
-					c.params.push_back((float)buildFacing);
+					c.PushParam((float)buildFacing);
 				}
 			}
 			return c;
@@ -2348,16 +2326,13 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 				if (unit) {
 					// clicked on unit
-					c.params.push_back(unit->id);
+					c.PushParam(unit->id);
 				} else {
 					// clicked in map
 					if (explicitCommand < 0) { // only attack ground if explicitly set the command
 						return defaultRet;
 					}
-					const float3 pos = cameraPos + (mouseDir * dist2);
-					c.params.push_back(pos.x);
-					c.params.push_back(pos.y);
-					c.params.push_back(pos.z);
+					c.PushPos(cameraPos + (mouseDir * dist2));
 				}
 			} else {
 				// created rectangle
@@ -2376,12 +2351,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					return defaultRet;
 				}
 				const float3 endPos = cameraPos + (mouseDir * dist);
-				c.params.push_back(startPos.x);
-				c.params.push_back(startPos.y);
-				c.params.push_back(startPos.z);
-				c.params.push_back(endPos.x);
-				c.params.push_back(endPos.y);
-				c.params.push_back(endPos.z);
+				c.PushPos(startPos);
+				c.PushPos(endPos);
 			}
 			return c;
 		}

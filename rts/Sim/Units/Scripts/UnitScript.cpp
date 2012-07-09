@@ -1411,8 +1411,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 	switch (val) {
 		case ACTIVATION: {
 			if(unit->unitDef->onoffable) {
-				Command c(CMD_ONOFF);
-				c.params.push_back(param == 0 ? 0 : 1);
+				Command c(CMD_ONOFF, 0, (param == 0) ? 0 : 1);
 				unit->commandAI->GiveCommand(c);
 			}
 			else {
@@ -1427,16 +1426,14 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case STANDINGMOVEORDERS: {
 			if (param >= 0 && param <= 2) {
-				Command c(CMD_MOVE_STATE);
-				c.params.push_back(param);
+				Command c(CMD_MOVE_STATE, 0, param);
 				unit->commandAI->GiveCommand(c);
 			}
 			break;
 		}
 		case STANDINGFIREORDERS: {
 			if (param >= 0 && param <= 2) {
-				Command c(CMD_FIRE_STATE);
-				c.params.push_back(param);
+				Command c(CMD_FIRE_STATE, 0, param);
 				unit->commandAI->GiveCommand(c);
 			}
 			break;

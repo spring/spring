@@ -459,7 +459,7 @@ void CGame::ClientReadNet()
 
 					for (int a = 0; a < numParams; ++a) {
 						float param; pckt >> param;
-						c.params.push_back(param);
+						c.PushParam(param);
 					}
 
 					selectedUnits.NetOrder(c, playerNum);
@@ -545,7 +545,7 @@ void CGame::ClientReadNet()
 					for (int a = 0; a < ((psize - 11) / 4); ++a) {
 						float param;
 						pckt >> param;
-						c.params.push_back(param);
+						c.PushParam(param);
 					}
 
 					selectedUnits.AiOrder(unitid, c, player);
@@ -607,7 +607,7 @@ void CGame::ClientReadNet()
 						for (int p = 0; p < paramCount; p++) {
 							float param;
 							pckt >> param;
-							cmd.params.push_back(param);
+							cmd.PushParam(param);
 						}
 						commands.push_back(cmd);
 					}

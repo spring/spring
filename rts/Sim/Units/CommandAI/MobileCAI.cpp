@@ -465,8 +465,7 @@ void CMobileCAI::ExecuteLoadUnits(Command &c) {
 
 	if (!inCommand) {
 		inCommand = true;
-		Command newCommand(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY);
-		newCommand.params.push_back(owner->id);
+		Command newCommand(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY, owner->id);
 		tran->commandAI->GiveCommandReal(newCommand);
 	}
 	if (owner->GetTransporter() != NULL) {
@@ -502,10 +501,7 @@ void CMobileCAI::ExecutePatrol(Command &c)
 				owner->unitDef->humanName.c_str());
 		return;
 	}
-	Command temp(CMD_FIGHT, c.options | INTERNAL_ORDER);
-	temp.params.push_back(c.params[0]);
-	temp.params.push_back(c.params[1]);
-	temp.params.push_back(c.params[2]);
+	Command temp(CMD_FIGHT, c.options | INTERNAL_ORDER, c.GetPos(0));
 
 	commandQue.push_back(c);
 	commandQue.pop_front();
@@ -551,7 +547,7 @@ void CMobileCAI::ExecuteFight(Command &c)
 	}
 	if(c.params.size() >= 6){
 		if(!inCommand){
-			commandPos1 = float3(c.params[3],c.params[4],c.params[5]);
+			commandPos1 = c.GetPos(3);
 		}
 	} else {
 		// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
@@ -584,8 +580,7 @@ void CMobileCAI::ExecuteFight(Command &c)
 		const float searchRadius = owner->maxRange + 100 * owner->moveState * owner->moveState;
 		CUnit* enemy = helper->GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
 		if (enemy != NULL) {
-			Command c2(CMD_FIGHT, c.options|INTERNAL_ORDER);
-			c2.params.push_back(enemy->id);
+			Command c2(CMD_FIGHT, c.options|INTERNAL_ORDER, enemy->id);
 			PushOrUpdateReturnFight();
 			commandQue.push_front(c2);
 			inCommand=false;
@@ -633,8 +628,7 @@ void CMobileCAI::ExecuteGuard(Command &c)
 		IsValidTarget(guardee->lastAttacker);
 
 	if (pushAttackCommand) {
-		Command nc(CMD_ATTACK, c.options);
-		nc.params.push_back(guardee->lastAttacker->id);
+		Command nc(CMD_ATTACK, c.options, guardee->lastAttacker->id);
 		commandQue.push_front(nc);
 
 		StopSlowGuard();
@@ -1001,11 +995,8 @@ void CMobileCAI::NonMoving()
 			else
 				lastBuggerGoalPos.y = 0.0f;
 
-			Command c(CMD_MOVE);
+			Command c(CMD_MOVE, goalPos);
 			//c.options = INTERNAL_ORDER;
-			c.params.push_back(goalPos.x);
-			c.params.push_back(goalPos.y);
-			c.params.push_back(goalPos.z);
 			c.timeOut = gs->frameNum + 40;
 			commandQue.push_front(c);
 			unimportantMove = true;
@@ -1035,9 +1026,7 @@ void CMobileCAI::IdleCheck()
 				if (owner->attackTarget == NULL) {
 					owner->haveTarget = false;
 				} else if (owner->pos.SqDistance2D(owner->attackTarget->pos) < maxRangeSq) {
-					Command c(CMD_ATTACK);
-					c.options = INTERNAL_ORDER;
-					c.params.push_back(owner->attackTarget->id);
+					Command c(CMD_ATTACK, INTERNAL_ORDER, owner->attackTarget->id);
 					c.timeOut = gs->frameNum + 140;
 					commandQue.push_front(c);
 					tempOrder = true;
@@ -1057,9 +1046,7 @@ void CMobileCAI::IdleCheck()
 					const float R = owner->pos.SqDistance2D(P);
 
 					if (R < maxRangeSq) {
-						Command c(CMD_ATTACK);
-						c.options = INTERNAL_ORDER;
-						c.params.push_back(owner->lastAttacker->id);
+						Command c(CMD_ATTACK, INTERNAL_ORDER, owner->lastAttacker->id);
 						c.timeOut = gs->frameNum + 140;
 						commandQue.push_front(c);
 						tempOrder = true;
@@ -1075,9 +1062,7 @@ void CMobileCAI::IdleCheck()
 				const CUnit* enemy = helper->GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
 
 				if (enemy != NULL) {
-					Command c(CMD_ATTACK);
-					c.options = INTERNAL_ORDER;
-					c.params.push_back(enemy->id);
+					Command c(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
 					c.timeOut = gs->frameNum + 140;
 					commandQue.push_front(c);
 					tempOrder = true;
@@ -1098,10 +1083,7 @@ void CMobileCAI::IdleCheck()
 	    !owner->haveTarget && !dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
 		//note that this is not internal order so that we dont keep generating
 		//new orders if we cant get to that pos
-		Command c(CMD_MOVE);
-		c.params.push_back(lastUserGoal.x);
-		c.params.push_back(lastUserGoal.y);
-		c.params.push_back(lastUserGoal.z);
+		Command c(CMD_MOVE, 0, lastUserGoal);
 		commandQue.push_front(c);
 		unimportantMove=true;
 	} else {
