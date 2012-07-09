@@ -1594,22 +1594,27 @@ void CCommandAI::StopAttackingAllyTeam(int ally)
 
 
 
-void CCommandAI::SetScriptMaxSpeed(float speed) {
-	// find the first CMD_SET_WANTED_MAX_SPEED and modify it
-	// NOTE:
-	//     this has no effect if the unit does not already have
-	//     such an order, and only lasts until a new move-order
-	//     is given
-	CCommandQueue::iterator it;
+void CCommandAI::SetScriptMaxSpeed(float speed, bool persistent) {
+	if (!persistent) {
+		// find the first CMD_SET_WANTED_MAX_SPEED and modify it
+		// NOTE:
+		//     this has no effect if the unit does not already have
+		//     such an order, and only lasts until a new move-order
+		//     is given (hence non-persistent)
+		CCommandQueue::iterator it;
 
-	for (it = commandQue.begin(); it != commandQue.end(); ++it) {
-		Command& c = *it;
+		for (it = commandQue.begin(); it != commandQue.end(); ++it) {
+			Command& c = *it;
 
-		if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
-			continue;
+			if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
+				continue;
 
-		owner->moveType->SetWantedMaxSpeed(c.params[0] = speed);
-		break;
+			owner->moveType->SetWantedMaxSpeed(c.params[0] = speed);
+			break;
+		}
+	} else {
+		// permanently change the unit's speed
+		owner->moveType->SetMaxSpeed(speed);
 	}
 }
 

@@ -1463,7 +1463,6 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 			}
 		}
 	}
-
 	depth--;
 }
 
