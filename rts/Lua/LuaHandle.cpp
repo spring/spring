@@ -1546,7 +1546,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitIdle(e.unit1);
 				break;
 			case UNIT_COMMAND:
-				UnitCommand(e.unit1, e.cmd1);
+				UnitCommand(e.unit1, *e.cmd1);
 				break;
 			case UNIT_CMD_DONE:
 				UnitCmdDone(e.unit1, e.int1, e.int2);
@@ -1558,7 +1558,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitExperience(e.unit1, e.float1);
 				break;
 			case UNIT_SEISMIC_PING:
-				UnitSeismicPing(e.unit1, e.int1, e.pos1, e.float1);
+				UnitSeismicPing(e.unit1, e.int1, e.cmd1->GetPos(0), e.float1);
 				break;
 			case UNIT_ENTERED_RADAR:
 				UnitEnteredRadar(e.unit1, e.int1);
@@ -1600,13 +1600,13 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				UnitMoveFailed(e.unit1);
 				break;
 			case UNIT_EXPLOSION:
-				Explosion(e.int1, e.pos1, e.unit1);
+				Explosion(e.int1, e.cmd1->GetPos(0), e.unit1);
 				break;
 			case UNIT_UNIT_COLLISION:
 				UnitUnitCollision(e.unit1, e.unit2);
 				break;
 			case UNIT_STOCKPILE_CHANGED:
-				StockpileChanged(e.unit1, reinterpret_cast<const CWeapon*>(e.unit2), e.int1);
+				StockpileChanged(e.unit1, e.weapon2, e.int1);
 				break;
 			default:
 				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);

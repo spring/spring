@@ -119,6 +119,16 @@ private:
 */
 
 public:
+	Command(const float3& pos)
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(0)
+	{
+		PushPos(pos);
+	}
+
 	Command(const int cmdID)
 		: aiCommandId(-1)
 		, options(0)
@@ -237,6 +247,13 @@ public:
 #endif
 		{ this->id = id; params.clear(); }
 	const int& GetID() const { return id; }
+
+	void PushPos(const float3& pos)
+	{
+		params.push_back(pos.x);
+		params.push_back(pos.y);
+		params.push_back(pos.z);
+	}
 
 	float3 GetPos(int idx) const {
 		float3 p;
