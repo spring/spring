@@ -100,33 +100,36 @@ CLuaRules::CLuaRules()
 
 	BEGIN_ITERATE_LUA_STATES();
 
-	haveCommandFallback        = HasCallIn(L, "CommandFallback");
-	haveAllowCommand           = HasCallIn(L, "AllowCommand");
-	haveAllowUnitCreation      = HasCallIn(L, "AllowUnitCreation");
-	haveAllowUnitTransfer      = HasCallIn(L, "AllowUnitTransfer");
-	haveAllowUnitBuildStep     = HasCallIn(L, "AllowUnitBuildStep");
-	haveAllowFeatureCreation   = HasCallIn(L, "AllowFeatureCreation");
-	haveAllowFeatureBuildStep  = HasCallIn(L, "AllowFeatureBuildStep");
-	haveAllowResourceLevel     = HasCallIn(L, "AllowResourceLevel");
-	haveAllowResourceTransfer  = HasCallIn(L, "AllowResourceTransfer");
-	haveAllowDirectUnitControl = HasCallIn(L, "AllowDirectUnitControl");
-	haveAllowStartPosition     = HasCallIn(L, "AllowStartPosition");
+	if (SingleState() || L == L_Sim) {
+		haveCommandFallback        = HasCallIn(L, "CommandFallback");
+		haveAllowCommand           = HasCallIn(L, "AllowCommand");
+		haveAllowUnitCreation      = HasCallIn(L, "AllowUnitCreation");
+		haveAllowUnitTransfer      = HasCallIn(L, "AllowUnitTransfer");
+		haveAllowUnitBuildStep     = HasCallIn(L, "AllowUnitBuildStep");
+		haveAllowFeatureCreation   = HasCallIn(L, "AllowFeatureCreation");
+		haveAllowFeatureBuildStep  = HasCallIn(L, "AllowFeatureBuildStep");
+		haveAllowResourceLevel     = HasCallIn(L, "AllowResourceLevel");
+		haveAllowResourceTransfer  = HasCallIn(L, "AllowResourceTransfer");
+		haveAllowDirectUnitControl = HasCallIn(L, "AllowDirectUnitControl");
+		haveAllowStartPosition     = HasCallIn(L, "AllowStartPosition");
 
-	haveMoveCtrlNotify         = HasCallIn(L, "MoveCtrlNotify");
-	haveTerraformComplete      = HasCallIn(L, "TerraformComplete");
-	haveAllowWeaponTargetCheck = HasCallIn(L, "AllowWeaponTargetCheck");
-	haveAllowWeaponTarget      = HasCallIn(L, "AllowWeaponTarget");
-	haveUnitPreDamaged         = HasCallIn(L, "UnitPreDamaged");
-	haveShieldPreDamaged       = HasCallIn(L, "ShieldPreDamaged");
+		haveMoveCtrlNotify         = HasCallIn(L, "MoveCtrlNotify");
+		haveTerraformComplete      = HasCallIn(L, "TerraformComplete");
+		haveAllowWeaponTargetCheck = HasCallIn(L, "AllowWeaponTargetCheck");
+		haveAllowWeaponTarget      = HasCallIn(L, "AllowWeaponTarget");
+		haveUnitPreDamaged         = HasCallIn(L, "UnitPreDamaged");
+		haveShieldPreDamaged       = HasCallIn(L, "ShieldPreDamaged");
+	}
+	if (SingleState() || L == L_Draw) {
+		haveDrawUnit    = HasCallIn(L, "DrawUnit");
+		haveDrawFeature = HasCallIn(L, "DrawFeature");
+		haveDrawShield  = HasCallIn(L, "DrawShield");
 
-	haveDrawUnit    = HasCallIn(L, "DrawUnit");
-	haveDrawFeature = HasCallIn(L, "DrawFeature");
-	haveDrawShield  = HasCallIn(L, "DrawShield");
-
-	SetupUnsyncedFunction(L, "DrawUnit");
-	SetupUnsyncedFunction(L, "DrawFeature");
-	SetupUnsyncedFunction(L, "DrawShield");
-	SetupUnsyncedFunction(L, "RecvSkirmishAIMessage");
+		SetupUnsyncedFunction(L, "DrawUnit");
+		SetupUnsyncedFunction(L, "DrawFeature");
+		SetupUnsyncedFunction(L, "DrawShield");
+		SetupUnsyncedFunction(L, "RecvSkirmishAIMessage");
+	}
 
 	END_ITERATE_LUA_STATES();
 }
@@ -254,7 +257,7 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	if (!haveCommandFallback)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 9);
 	static const LuaHashString cmdStr("CommandFallback");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -286,7 +289,7 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 	if (!haveAllowCommand)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 10);
 	static const LuaHashString cmdStr("AllowCommand");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -318,7 +321,7 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 	if (!haveAllowUnitCreation)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 9);
 	static const LuaHashString cmdStr("AllowUnitCreation");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -357,7 +360,7 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 	if (!haveAllowUnitTransfer)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowUnitTransfer");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -392,7 +395,7 @@ bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
 	if (!haveAllowUnitBuildStep)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowUnitBuildStep");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -427,7 +430,7 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 	if (!haveAllowFeatureCreation)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowFeatureCreation");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -462,7 +465,7 @@ bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
 	if (!haveAllowFeatureBuildStep)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowFeatureBuildStep");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -496,7 +499,7 @@ bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 	if (!haveAllowResourceLevel)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("AllowResourceLevel");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -529,7 +532,7 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 	if (!haveAllowResourceTransfer)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("AllowResourceTransfer");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -562,7 +565,7 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 	if (!haveAllowDirectUnitControl)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("AllowDirectUnitControl");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -595,7 +598,7 @@ bool CLuaRules::AllowStartPosition(int playerID, const float3& pos)
 	if (!haveAllowStartPosition)
 		return true; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 9);
 	static const LuaHashString cmdStr("AllowStartPosition");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -628,7 +631,7 @@ bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
 	if (!haveMoveCtrlNotify)
 		return false; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("MoveCtrlNotify");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -663,7 +666,7 @@ bool CLuaRules::TerraformComplete(const CUnit* unit, const CUnit* build)
 	if (!haveTerraformComplete)
 		return false; // the call is not defined
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 8);
 	static const LuaHashString cmdStr("TerraformComplete");
 	if (!cmdStr.GetGlobalFunc(L))
@@ -713,7 +716,7 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	if (!haveUnitPreDamaged)
 		return false;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 9 + 4);
 
 	const int errfunc = SetupTraceback(L);
@@ -731,7 +734,7 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
-	if (GetFullRead(L)) {
+	if (GetHandleFullRead(L)) {
 		lua_pushnumber(L, weaponID);
 		argCount += 1;
 		if (attacker != NULL) {
@@ -779,7 +782,7 @@ bool CLuaRules::ShieldPreDamaged(
 	if (!haveShieldPreDamaged)
 		return false;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 5 + 3);
 
 	const int errfunc(SetupTraceback(L));
@@ -821,7 +824,7 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 	if (!haveAllowWeaponTargetCheck)
 		return -1;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, -1);
 	lua_checkstack(L, 3 + 1);
 
 	const int errfunc(SetupTraceback(L));
@@ -850,23 +853,25 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 	return ret;
 }
 
-int CLuaRules::AllowWeaponTarget(
+bool CLuaRules::AllowWeaponTarget(
 	unsigned int attackerID,
 	unsigned int targetID,
 	unsigned int attackerWeaponNum,
 	unsigned int attackerWeaponDefID,
 	float* targetPriority)
 {
-	if (!haveAllowWeaponTarget)
-		return -1;
+	assert(targetPriority != NULL);
 
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4 + 2);
+	bool ret = true;
+
+	if (!haveAllowWeaponTarget)
+		return ret;
+
+	LUA_CALL_IN_CHECK(L, true);
+	lua_checkstack(L, 5 + 2);
 
 	const int errfunc(SetupTraceback(L));
 	static const LuaHashString cmdStr("AllowWeaponTarget");
-
-	int ret = -1;
 
 	if (!cmdStr.GetGlobalFunc(L)) {
 		if (errfunc)
@@ -878,15 +883,16 @@ int CLuaRules::AllowWeaponTarget(
 	lua_pushnumber(L, targetID);
 	lua_pushnumber(L, attackerWeaponNum);
 	lua_pushnumber(L, attackerWeaponDefID);
+	lua_pushnumber(L, *targetPriority);
 
-	const bool success = RunCallInTraceback(cmdStr, 4, 2, errfunc);
+	const bool success = RunCallInTraceback(cmdStr, 5, 2, errfunc);
 
 	if (!success)
 		return ret;
 
-	ret = (lua_isboolean(L, -2) && lua_toboolean(L, -2))? 1: 0;
+	ret = lua_toboolean(L, -2);
 
-	if (targetPriority && lua_isnumber(L, -1)) {
+	if (lua_isnumber(L, -1)) {
 		*targetPriority = lua_tonumber(L, -1);
 	}
 
@@ -903,7 +909,7 @@ bool CLuaRules::DrawUnit(int unitID)
 	if (!haveDrawUnit)
 		return false;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 4);
 
 	static const LuaHashString cmdStr("DrawUnit");
@@ -911,14 +917,14 @@ bool CLuaRules::DrawUnit(int unitID)
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
 
-	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled();
-	LuaOpenGL::SetDrawingEnabled(true);
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	lua_pushnumber(L, unitID);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 2, 1);
-	LuaOpenGL::SetDrawingEnabled(oldDrawState);
+	LuaOpenGL::SetDrawingEnabled(L, oldDrawState);
 
 	if (!success)
 		return false;
@@ -938,7 +944,7 @@ bool CLuaRules::DrawFeature(int featureID)
 	if (!haveDrawFeature)
 		return false;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 4);
 
 	static const LuaHashString cmdStr("DrawFeature");
@@ -946,14 +952,14 @@ bool CLuaRules::DrawFeature(int featureID)
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
 
-	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled();
-	LuaOpenGL::SetDrawingEnabled(true);
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	lua_pushnumber(L, featureID);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 2, 1);
-	LuaOpenGL::SetDrawingEnabled(oldDrawState);
+	LuaOpenGL::SetDrawingEnabled(L, oldDrawState);
 
 	if (!success)
 		return false;
@@ -973,7 +979,7 @@ bool CLuaRules::DrawShield(int unitID, int weaponID)
 	if (!haveDrawShield)
 		return false;
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 5);
 
 	static const LuaHashString cmdStr("DrawShield");
@@ -981,15 +987,15 @@ bool CLuaRules::DrawShield(int unitID, int weaponID)
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
 
-	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled();
-	LuaOpenGL::SetDrawingEnabled(true);
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	lua_pushnumber(L, unitID);
 	lua_pushnumber(L, weaponID);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 3, 1);
-	LuaOpenGL::SetDrawingEnabled(oldDrawState);
+	LuaOpenGL::SetDrawingEnabled(L, oldDrawState);
 
 	if (!success)
 		return false;

@@ -11,7 +11,8 @@ class CCommandColors {
 		CCommandColors();
 		~CCommandColors();
 
-		bool LoadConfig(const std::string& filename);
+		bool LoadConfigFromFile(const std::string& filename);
+		bool LoadConfigFromString(const std::string& cfg);
 
 		// for command queue lines
 		bool         AlwaysDrawQueue()   const { return alwaysDrawQueue;   }

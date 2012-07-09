@@ -51,6 +51,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "lib/luasocket/src/luasocket.h"
 
 #include <stdio.h>
 #include <set>
@@ -58,6 +59,12 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
+
+CONFIG(bool, LuaSocketEnabled)
+	.defaultValue(false)
+	.description("Enable LuaSocket support, allows a lua-widget to make TCP/UDP Connections")
+	.readOnly(true)
+;
 
 using std::max;
 
@@ -120,6 +127,7 @@ void CLuaUI::FreeHandler()
 CLuaUI::CLuaUI()
 : CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true)
 {
+	GML::SetLuaUIState(L_Sim);
 	luaUI = this;
 
 	BEGIN_ITERATE_LUA_STATES();
@@ -134,6 +142,9 @@ CLuaUI::CLuaUI()
 	shockFrontMinArea  = 0.0f;
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
+
+	const bool luaSocketEnabled = configHandler->GetBool("LuaSocketEnabled");
+	LOG("LuaSocketEnabled: %s", (luaSocketEnabled ? "yes": "no" ));
 
 	const char* vfsMode = GetVFSMode();
 	const std::string file = (CFileHandler::FileExists("luaui.lua", vfsMode) ? "luaui.lua" : "LuaUI/main.lua");
@@ -151,8 +162,12 @@ CLuaUI::CLuaUI()
 	LUA_OPEN_LIB(L, luaopen_math);
 	LUA_OPEN_LIB(L, luaopen_table);
 	LUA_OPEN_LIB(L, luaopen_string);
-	//LUA_OPEN_LIB(L, luaopen_package);
 	LUA_OPEN_LIB(L, luaopen_debug);
+
+	//initialize luasocket
+	if (luaSocketEnabled){
+		InitLuaSocket(L);
+	}
 
 	// setup the lua IO access check functions
 	lua_set_fopen(L, LuaIO::fopen);
@@ -238,8 +253,22 @@ CLuaUI::~CLuaUI()
 		KillLua();
 	}
 	luaUI = NULL;
+	GML::SetLuaUIState(NULL);
 }
 
+void CLuaUI::InitLuaSocket(lua_State* L) {
+	std::string code;
+	std::string filename="socket.lua";
+	CFileHandler f(filename);
+
+	LUA_OPEN_LIB(L,luaopen_socket_core);
+
+	if (f.LoadStringData(code)){
+		LoadCode(L, code.c_str(), filename.c_str());
+	} else {
+		LOG_L(L_ERROR, "Error loading %s", filename.c_str());
+	}
+}
 
 string CLuaUI::LoadFile(const string& filename) const
 {
@@ -350,7 +379,7 @@ void CLuaUI::Shutdown()
 
 bool CLuaUI::ConfigCommand(const string& command)
 {
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -501,7 +530,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	GML_THRMUTEX_LOCK(feat, GML_DRAW); // LayoutButtons
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // LayoutButtons
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 6);
 	const int top = lua_gettop(L);
 
@@ -832,13 +861,8 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 
 			LuaUtils::ShallowDataDump sdd;
 			sdd.type = LUA_TSTRING;
-
-			size_t len = funcName.length();
 			sdd.data.str = new std::string;
-			if (len > 0) {
-				sdd.data.str->resize(len);
-				memcpy(&(*sdd.data.str)[0], funcName.c_str(), len);
-			}
+			*sdd.data.str = funcName;
 
 			ddmp.data.push_back(sdd);
 
@@ -860,7 +884,7 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 	}
 #endif
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, 0);
 	const LuaHashString funcHash(funcName);
 	if (!funcHash.GetGlobalFunc(L)) {
 		return 0;
@@ -884,11 +908,15 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 		const int srcCount = lua_gettop(srcState);
 
 		LuaUtils::CopyData(L, srcState, srcCount);
+		const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+		LuaOpenGL::SetDrawingEnabled(L, LuaOpenGL::IsDrawingEnabled(srcState));
 
 		// call the function
 		if (!RunCallIn(funcHash, srcCount, LUA_MULTRET)) {
+			LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
 			return 0;
 		}
+		LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
 		retCount = lua_gettop(L) - top;
 
 		lua_settop(srcState, 0);

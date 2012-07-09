@@ -30,7 +30,7 @@ public:
 	~C3DModelLoader();
 
 	void Update();
-	S3DModel* Load3DModel(std::string name, const float3& centerOffset = ZeroVector);
+	S3DModel* Load3DModel(std::string name);
 
 	void DeleteLocalModel(CUnit* unit);
 	void CreateLocalModel(CUnit* unit);

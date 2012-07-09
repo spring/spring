@@ -19,6 +19,8 @@
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/mmgr.h"
+#include "System/MsgStrings.h"
+#include "System/Rectangle.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
@@ -121,6 +123,27 @@ CTeam::CTeam() :
 	currentStats = &statHistory.back();
 }
 
+
+void CTeam::ClampStartPosInStartBox(float3* pos) const
+{
+	const int allyTeam = teamHandler->AllyTeam(teamNum);
+	if (allyTeam < 0 || allyTeam >= gameSetup->allyStartingData.size()) {
+		LOG_L(L_ERROR, "%s: invalid AllyStartingData (team %d)", __FUNCTION__, teamNum);
+		return;
+	}
+	const AllyTeam& at = gameSetup->allyStartingData[allyTeam];
+	const SRectangle rect(
+		at.startRectLeft   * gs->mapx * SQUARE_SIZE,
+		at.startRectTop    * gs->mapy * SQUARE_SIZE,
+		at.startRectRight  * gs->mapx * SQUARE_SIZE,
+		at.startRectBottom * gs->mapy * SQUARE_SIZE
+	);
+
+	int2 ipos(pos->x, pos->z);
+	rect.ClampPos(&ipos);
+	pos->x = ipos.x;
+	pos->z = ipos.y;
+}
 
 
 bool CTeam::UseMetal(float amount)
@@ -449,7 +472,7 @@ std::string CTeam::GetControllerName() const {
 			}
 		}
 	} else {
-		s = "Uncontrolled";
+		s = UncontrolledPlayerName;
 	}
 
 	return s;

@@ -61,11 +61,11 @@ CRadarHandler::CRadarHandler(bool circularRadar)
   targFacEffect(2),
   radarAlgo(int2(xsize, zsize), -1000, 20, readmap->GetMIPHeightMapSynced(radarMipLevel))
 {
-	commonJammerMap.SetSize(xsize, zsize);
-	commonSonarJammerMap.SetSize(xsize, zsize);
+	commonJammerMap.SetSize(xsize, zsize, false);
+	commonSonarJammerMap.SetSize(xsize, zsize, false);
 
 	CLosMap tmp;
-	tmp.SetSize(xsize, zsize);
+	tmp.SetSize(xsize, zsize, false);
 	radarMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
 	sonarMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
 	seismicMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
@@ -88,10 +88,18 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 {
 	SCOPED_TIMER("RadarHandler::MoveUnit");
 
-	if (gs->globalLOS[unit->allyteam]) { return; }
-	if (!unit->hasRadarCapacity || !unit->activated) {
+	if (gs->globalLOS[unit->allyteam])
 		return;
-	}
+	if (!unit->hasRadarCapacity)
+		return;
+	// NOTE:
+	//   when stunned, we are not called during Unit::SlowUpdate's
+	//   but units can in principle still be given on/off commands
+	//   this creates an exploit via Unit::Activate if the unit is
+	//   a transported radar/jammer and leaves a detached coverage
+	//   zone behind
+	if (!unit->activated || unit->stunned)
+		return;
 
 	int2 newPos;
 	newPos.x = (int) (unit->pos.x * invRadarDiv);

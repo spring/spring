@@ -180,7 +180,7 @@ void AAirMoveType::UpdateLanded()
 	owner->Move3D(owner->speed, true);
 	// match the terrain normal
 	owner->UpdateDirVectors(true);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 }
 
 void AAirMoveType::UpdateFuel() {
@@ -297,6 +297,7 @@ bool AAirMoveType::MoveToRepairPad() {
 
 			if ((owner->pos.SqDistance(absPadPos) < SQUARE_SIZE * SQUARE_SIZE) || aircraftState == AIRCRAFT_LANDED) {
 				padStatus = PAD_STATUS_ARRIVED;
+				owner->speed = ZeroVector;
 			}
 		} else {
 			// taking off from pad
@@ -306,7 +307,7 @@ bool AAirMoveType::MoveToRepairPad() {
 
 			owner->pos = absPadPos;
 
-			owner->UpdateMidPos();
+			owner->UpdateMidAndAimPos(); // needed here?
 			owner->AddBuildPower(airBase->unitDef->buildSpeed / GAME_SPEED, airBase);
 
 			owner->currentFuel += (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime));

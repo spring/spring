@@ -54,7 +54,7 @@ public:
 	void LoadGame(const std::string& mapName);
 
 	/// show GameEnd-window, calculate mouse movement etc.
-	void GameEnd(const std::vector<unsigned char>& winningAllyTeams);
+	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);
 
 private:
 	void LoadDefs();

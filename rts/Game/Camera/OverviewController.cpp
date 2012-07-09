@@ -14,6 +14,13 @@ COverviewController::COverviewController()
 {
 	enabled = false;
 	minimizeMinimap = false;
+
+	pos.x = gs->mapx * 0.5f * SQUARE_SIZE;
+	pos.z = gs->mapy * 0.5f * SQUARE_SIZE;
+	const float height = std::max(pos.x / globalRendering->aspectRatio, pos.z);
+	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * height);
+
+	dir = float3(0.0f, -1.0f, -0.001f).ANormalize();
 }
 
 void COverviewController::KeyMove(float3 move)
@@ -32,19 +39,8 @@ void COverviewController::MouseWheelMove(float move)
 {
 }
 
-float3 COverviewController::GetPos()
+void COverviewController::SetDir(const float3& newDir)
 {
-	// map not created when constructor run
-	pos.x = gs->mapx * 0.5f * SQUARE_SIZE;
-	pos.z = gs->mapy * 0.5f * SQUARE_SIZE;
-	const float height = std::max(pos.x / globalRendering->aspectRatio, pos.z);
-	pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * height);
-	return pos;
-}
-
-float3 COverviewController::GetDir()
-{
-	return float3(0.0f, -1.0f, -0.001f).ANormalize();
 }
 
 void COverviewController::SetPos(const float3& newPos)

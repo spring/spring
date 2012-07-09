@@ -85,6 +85,8 @@ int gmlItemsConsumed=0;
 
 int gmlNextTickUpdate=0;
 unsigned gmlCurrentTicks;
+bool gmlCheckCallChain=false;
+int gmlCallChainWarning=0;
 
 std::set<Threading::NativeThreadId> threadnums;
 
@@ -312,6 +314,10 @@ void PrintMTStartupMessage(int showMTInfo) {
 	}
 }
 
+void gmlPrintCallChainWarning(const char *func) {
+	LOG_SL("GML", L_WARNING, "(%d/%d) Invalid attempt to invoke LuaUI (%s) from another Lua environment, this game is using engine features that may require LuaThreadingModel > 2 to work properly with Spring MT.", gmlCallChainWarning, GML_MAX_CALL_CHAIN_WARNINGS, func);
+}
+
 #endif
 
 bool ThreadRegistered() {
@@ -394,7 +400,7 @@ void gmlQueue::ReleaseWrite(BOOL_ final) {
 
 	if(Write==Queue1) {
 		if(final) {
-			while(*(BYTE * volatile *)&Pos2!=Queue2)
+			while(!Empty(2))
 				boost::thread::yield();
 
 			if(WasSynced) {
@@ -405,12 +411,12 @@ void gmlQueue::ReleaseWrite(BOOL_ final) {
 		}
 
 		Pos1=WritePos;
-		Locks1.Unlock();
 		Locked1=FALSE;
+		Locks1.Unlock();
 	}
 	else {
 		if(final) {
-			while(*(BYTE * volatile *)&Pos1!=Queue1)
+			while(!Empty(1))
 				boost::thread::yield();
 
 			if(WasSynced) {
@@ -421,8 +427,8 @@ void gmlQueue::ReleaseWrite(BOOL_ final) {
 		}
 
 		Pos2=WritePos;
-		Locks2.Unlock();
 		Locked2=FALSE;
+		Locks2.Unlock();
 	}
 
 	if(final && WasSynced) {
@@ -434,7 +440,7 @@ void gmlQueue::ReleaseWrite(BOOL_ final) {
 #else
 	if(Write==Queue1) {
 		if(final) {
-			while(*(BYTE * volatile *)&Pos2!=Queue2)
+			while(!Empty(2))
 				boost::thread::yield();
 		}
 		if(WasSynced) {
@@ -444,12 +450,12 @@ void gmlQueue::ReleaseWrite(BOOL_ final) {
 			WasSynced=FALSE;
 		}
 		Pos1=WritePos;
-		Locks1.Unlock();
 		Locked1=FALSE;
+		Locks1.Unlock();
 	}
 	else {
 		if(final) {
-			while(*(BYTE * volatile *)&Pos1!=Queue1)
+			while(!Empty(1))
 				boost::thread::yield();
 		}
 		if(WasSynced) {
@@ -459,8 +465,8 @@ void gmlQueue::ReleaseWrite(BOOL_ final) {
 			WasSynced=FALSE;
 		}
 		Pos2=WritePos;
-		Locks2.Unlock();
 		Locked2=FALSE;
+		Locks2.Unlock();
 	}
 #endif
 	Write=NULL;
@@ -470,7 +476,7 @@ void gmlQueue::ReleaseWrite(BOOL_ final) {
 
 BOOL_ gmlQueue::GetWrite(BOOL_ critical) {
 	while(1) {
-		if(!Locked1 && Pos1==Queue1) {
+		if(!Locked1 && Empty(1)) {
 			if(Locks1.Lock()) {
 				Locked1=TRUE;
 				ReleaseWrite(critical==2);
@@ -479,7 +485,7 @@ BOOL_ gmlQueue::GetWrite(BOOL_ critical) {
 				return TRUE;
 			}
 		}
-		if(!Locked2 && Pos2==Queue2) {
+		if(!Locked2 && Empty(2)) {
 			if(Locks2.Lock()) {
 				Locked2=TRUE;
 				ReleaseWrite(critical==2);
@@ -499,13 +505,13 @@ void gmlQueue::ReleaseRead() {
 		return;
 	if(Read==Queue1) {
 		Pos1=Queue1;
-		Locks1.Unlock();
 		Locked1=FALSE;
+		Locks1.Unlock();
 	}
 	else {
 		Pos2=Queue2;
-		Locks2.Unlock();
 		Locked2=FALSE;
+		Locks2.Unlock();
 	}
 	Read=NULL;
 	ReadPos=NULL;
@@ -513,7 +519,7 @@ void gmlQueue::ReleaseRead() {
 
 BOOL_ gmlQueue::GetRead(BOOL_ critical) {
 	while(1) {
-		if(!Locked1 && Pos1!=Queue1) {
+		if(!Locked1 && !Empty(1)) {
 			if(Locks1.Lock()) {
 				Locked1=TRUE;
 				Read=Queue1;
@@ -521,7 +527,7 @@ BOOL_ gmlQueue::GetRead(BOOL_ critical) {
 				return TRUE;
 			}
 		}
-		if(!Locked2 && Pos2!=Queue2) {
+		if(!Locked2 && !Empty(2)) {
 			if(Locks2.Lock()) {
 				Locked2=TRUE;
 				Read=Queue2;
@@ -539,11 +545,11 @@ BOOL_ gmlQueue::GetRead(BOOL_ critical) {
 void gmlQueue::SyncRequest() {
 	// make sure server is finished with other queue
 	if(Write==Queue1) {
-		while(*(BYTE * volatile *)&Pos2!=Queue2)
+		while(!Empty(2))
 			boost::thread::yield();
 	}
 	else {
-		while(*(BYTE * volatile *)&Pos1!=Queue1)
+		while(!Empty(1))
 			boost::thread::yield();
 	}
 
@@ -799,6 +805,7 @@ gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlLis
 
 #if GML_CALL_DEBUG
 lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS] = { NULL };
+lua_State *gmlLuaUIState=NULL;
 #endif
 
 // queue handler - exequtes one GL command from queue (pointed to by p)

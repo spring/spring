@@ -2,9 +2,14 @@
 #include "IPathDrawer.h"
 #include "DefaultPathDrawer.h"
 #include "QTPFSPathDrawer.h"
+#include "Game/SelectedUnits.h"
+#include "Rendering/GL/myGL.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Path/Default/PathManager.h"
 #include "Sim/Path/QTPFS/PathManager.hpp"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 
 IPathDrawer* pathDrawer = NULL;
 
@@ -28,3 +33,60 @@ IPathDrawer* IPathDrawer::GetInstance() {
 void IPathDrawer::FreeInstance(IPathDrawer* pd) {
 	delete pd;
 }
+
+
+
+const MoveDef* IPathDrawer::GetSelectedMoveDef() {
+	GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
+
+	const MoveDef* md = NULL;
+	const CUnitSet& unitSet = selectedUnits.selectedUnits;
+
+	if (!unitSet.empty()) {
+		const CUnit* unit = *(unitSet.begin());
+		const UnitDef* unitDef = unit->unitDef;
+
+		if (unitDef->moveDef != NULL) {
+			md = unitDef->moveDef;
+		}
+	}
+
+	return md;
+}
+
+SColor IPathDrawer::GetSpeedModColor(const float sm) {
+	SColor col(120, 0, 80);
+
+	if (sm > 0.0f) {
+		col.r = 255 - std::min(sm * 255.0f, 255.0f);
+		col.g = 255 - col.r;
+		col.b =   0;
+	}
+
+	return col;
+}
+
+#if 0
+float IPathDrawer::GetSpeedModNoObstacles(const MoveDef* md, const CMoveMath* mm, int sqx, int sqz) {
+	float m = 0.0f;
+
+	const int hmIdx = sqz * gs->mapxp1 + sqx;
+	const int cnIdx = sqz * gs->mapx   + sqx;
+
+	const float height = hm[hmIdx];
+	const float slope = 1.0f - cn[cnIdx].y;
+
+	if (md->moveFamily == MoveDef::Ship) {
+		// only check water depth
+		m = (height >= (-md->depth))? 0.0f: m;
+	} else {
+		// check depth and slope (if hover, only over land)
+		m = std::max(0.0f, 1.0f - (slope / (md->maxSlope + 0.1f)));
+		m = (height < (-md->depth))? 0.0f: m;
+		m = (height <= 0.0f && md->moveFamily == MoveDef::Hover)? 1.0f: m;
+	}
+
+	return m;
+}
+#endif
+

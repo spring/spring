@@ -27,6 +27,7 @@ CFPSController::CFPSController()
 	mouseScale = configHandler->GetFloat("FPSMouseScale");
 	enabled = configHandler->GetBool("FPSEnabled");
 	fov = configHandler->GetFloat("FPSFOV");
+	UpdateVectors();
 }
 
 
@@ -34,6 +35,7 @@ void CFPSController::KeyMove(float3 move)
 {
 	move *= move.z * 400;
 	pos  += (camera->forward * move.y + camera->right * move.x) * scrollSpeed;
+	UpdateVectors();
 }
 
 
@@ -42,6 +44,7 @@ void CFPSController::MouseMove(float3 move)
 	camera->rot.y -= mouseScale * move.x;
 	camera->rot.x -= mouseScale * move.y * move.z;
 	camera->rot.x = Clamp(camera->rot.x, -PI*0.4999f, PI*0.4999f);
+	UpdateVectors();
 }
 
 
@@ -54,10 +57,11 @@ void CFPSController::ScreenEdgeMove(float3 move)
 void CFPSController::MouseWheelMove(float move)
 {
 	pos += camera->up * move;
+	UpdateVectors();
 }
 
 
-float3 CFPSController::GetPos()
+void CFPSController::UpdateVectors()
 {
 	if (!gu->fpsMode) {
 		const float margin = 0.01f;
@@ -66,27 +70,20 @@ float3 CFPSController::GetPos()
 		const float xMax = (float)(gs->mapx * SQUARE_SIZE) - margin;
 		const float zMax = (float)(gs->mapy * SQUARE_SIZE) - margin;
 
-		pos.x = max(xMin, min(xMax, pos.x));
-		pos.z = max(zMin, min(zMax, pos.z));
+		pos.x = Clamp(pos.x, xMin, xMax);
+		pos.z = Clamp(pos.z, zMin, zMax);
 
 		const float gndHeight = ground->GetHeightAboveWater(pos.x, pos.z, false);
 		const float yMin = gndHeight + 5.0f;
 		const float yMax = 9000.0f;
-		pos.y = max(yMin, min(yMax, pos.y));
+		pos.y = Clamp(pos.y, yMin, yMax);
 		oldHeight = pos.y - gndHeight;
 	}
 
-	return pos;
-}
-
-
-float3 CFPSController::GetDir()
-{
 	dir.x = (float)(cos(camera->rot.x) * sin(camera->rot.y));
 	dir.z = (float)(cos(camera->rot.x) * cos(camera->rot.y));
 	dir.y = (float)(sin(camera->rot.x));
 	dir.ANormalize();
-	return dir;
 }
 
 
@@ -97,12 +94,14 @@ void CFPSController::SetPos(const float3& newPos)
 	if (!gu->fpsMode) {
 		pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + oldHeight;
 	}
+	UpdateVectors();
 }
 
 
 void CFPSController::SetDir(const float3& newDir)
 {
 	dir = newDir;
+	UpdateVectors();
 }
 
 

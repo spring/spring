@@ -83,3 +83,4 @@ void CGfxProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	points.AddVertexQC(pos, color4::green);
 }
+

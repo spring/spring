@@ -85,7 +85,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(avoidFeature),
 	CR_MEMBER(avoidNeutral),
 	CR_MEMBER(targetBorder),
-	CR_MEMBER(cylinderTargetting),
+	CR_MEMBER(cylinderTargeting),
 	CR_MEMBER(minIntensity),
 	CR_MEMBER(heightBoostFactor),
 	CR_MEMBER(collisionFlags),
@@ -167,7 +167,7 @@ CWeapon::CWeapon(CUnit* owner):
 	avoidFeature(true),
 	avoidNeutral(true),
 	targetBorder(0.f),
-	cylinderTargetting(0.f),
+	cylinderTargeting(0.f),
 	minIntensity(0.f),
 	heightBoostFactor(-1.f),
 	collisionFlags(0),
@@ -224,7 +224,7 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 
 static inline bool isBeingServicedOnPad(CUnit* u)
 {
-	const AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
+	const AAirMoveType* a = dynamic_cast<AAirMoveType*>(u->moveType);
 	return (a != NULL && a->GetPadStatus() != 0);
 }
 
@@ -272,14 +272,11 @@ void CWeapon::Update()
 			lead *= (weaponDef->leadLimit + weaponDef->leadBonus*owner->experience) / (lead.Length() + 0.01f);
 		}
 
-		targetPos =
-			helper->GetUnitErrorPos(targetUnit, owner->allyteam) + lead +
-			errorVector * (weaponDef->targetMoveError * GAME_SPEED * targetUnit->speed.Length() * (1.0f - owner->limExperience));
+		const float3 errorPos = helper->GetUnitErrorPos(targetUnit, owner->allyteam, true);
+		const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * targetUnit->speed.Length() * (1.0f - owner->limExperience));
 
-		const float appHeight = ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f;
-
-		if (targetPos.y < appHeight)
-			targetPos.y = appHeight;
+		targetPos = errorPos + lead + errorVector * errorScale;
+		targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 
 		if (!weaponDef->waterweapon && targetPos.y < 1.0f)
 			targetPos.y = 1.0f;
@@ -429,9 +426,11 @@ void CWeapon::Update()
 			// add to the commandShotCount if this is the last salvo,
 			// and it is being directed towards the current target
 			// (helps when deciding if a queued ground attack order has been completed)
-			if (((salvoLeft == 0) && (owner->commandShotCount >= 0) &&
-			    ((targetType == Target_Pos) && (targetPos == owner->userAttackPos))) ||
-					((targetType == Target_Unit) && (targetUnit == owner->userTarget))) {
+			const bool lastSalvo = ((salvoLeft == 0) && (owner->commandShotCount >= 0));
+			const bool attackingPos = ((targetType == Target_Pos) && (targetPos == owner->attackPos));
+			const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
+
+			if (lastSalvo && (attackingPos || attackingUnit)) {
 				owner->commandShotCount++;
 			}
 
@@ -475,7 +474,7 @@ void CWeapon::Update()
 		}
 
 #ifdef TRACE_SYNC
-	tracefile << "Weapon fire: ";
+	tracefile << __FUNCTION__;
 	tracefile << weaponPos.x << " " << weaponPos.y << " " << weaponPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
 #endif
 	}
@@ -490,6 +489,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		return false;
 	}
 
+	// keep target positions on the surface if this weapon hates water
 	if (!weaponDef->waterweapon && (pos.y < 1.0f)) {
 		pos.y = 1.0f;
 	}
@@ -505,9 +505,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (!TryTarget(pos, userTarget, 0))
-		return false;
-	if (targetUnit) {
+	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
@@ -516,13 +514,14 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 	targetType = Target_Pos;
 	targetPos = pos;
 
-	return true;
+	return (TryTarget(pos, userTarget, NULL));
 }
 
 bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 {
-	if ((!userTarget && weaponDef->noAutoTarget))
+	if ((!userTarget && weaponDef->noAutoTarget)) {
 		return false;
+	}
 	if (weaponDef->interceptor)
 		return false;
 
@@ -542,41 +541,44 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (!unit) {
+	if (unit == NULL) {
 		if (targetType != Target_Unit) {
 			// make the unit be more likely to keep the current target if user starts to move it
 			targetType = Target_None;
 		}
 
+		// cannot have a user-target without a unit
 		haveUserTarget = false;
 		return false;
 	}
-
-	float3 tempTargetPos =
-		helper->GetUnitErrorPos(unit, owner->allyteam) +
-		errorVector * (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
-
-	const float appHeight = ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f;
-
-	if (tempTargetPos.y < appHeight)
-		tempTargetPos.y = appHeight;
-
-	if (!TryTarget(tempTargetPos, userTarget, unit))
+	// check if it is theoretically impossible for us to attack this unit
+	// must be done before we assign <unit> to <targetUnit>, which itself
+	// must precede the TryTarget call (since we do want to assign if it
+	// is eg. just out of range currently)
+	// note that TryTarget is also called from other places and so has to
+	// repeat this check, but the redundancy added is minimal
+	if (!(onlyTargetCategory & unit->category)) {
 		return false;
+	}
 
-	if (targetUnit) {
+	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
 
+	const float3 errorPos = helper->GetUnitErrorPos(unit, owner->allyteam, true);
+	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
+
 	haveUserTarget = userTarget;
 	targetType = Target_Unit;
 	targetUnit = unit;
-	targetPos = tempTargetPos;
+	targetPos = errorPos + errorVector * errorScale;
+	targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
-	return true;
+
+	return (TryTarget(targetPos, userTarget, unit));
 }
 
 
@@ -586,8 +588,12 @@ void CWeapon::HoldFire()
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
+
 	targetType = Target_None;
-	haveUserTarget = false;
+	// don't set this to false, otherwise a subsequent
+	// call to AttackUnit from Unit::SlowUpdateWeapons
+	// will abort the attack for noAutoTarget weapons
+	// haveUserTarget = false;
 }
 
 
@@ -602,12 +608,12 @@ inline bool CWeapon::AllowWeaponTargetCheck() const
 		}
 	}
 
+	if (haveUserTarget)                          { return false; }
 	if (weaponDef->noAutoTarget)                 { return false; }
 	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
-	if (haveUserTarget)                          { return false; }
 
+	if (avoidTarget)               { return true; }
 	if (targetType == Target_None) { return true; }
-	if (avoidTarget)             { return true; }
 
 	if (targetType == Target_Unit) {
 		if (targetUnit->category & badTargetCategory) {
@@ -713,7 +719,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 		if (slavedTo->targetType == Target_Unit) {
 			const float3 tp =
-				helper->GetUnitErrorPos(slavedTo->targetUnit, owner->allyteam) +
+				helper->GetUnitErrorPos(slavedTo->targetUnit, owner->allyteam, true) +
 				errorVector * (weaponDef->targetMoveError * GAME_SPEED * slavedTo->targetUnit->speed.Length() * (1.0f - owner->limExperience));
 
 			if (TryTarget(tp, false, slavedTo->targetUnit)) {
@@ -737,34 +743,34 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		lastTargetRetry = gs->frameNum;
 
 		std::multimap<float, CUnit*> targets;
-		std::multimap<float, CUnit*>::const_iterator nextTargetIt;
-		std::multimap<float, CUnit*>::const_iterator lastTargetIt;
+		std::multimap<float, CUnit*>::const_iterator targetsIt;
 
+		// NOTE:
+		//   sorts by INCREASING order of priority, so lower equals better
+		//   <targets> can contain duplicates if a unit covers multiple quads
+		//   <targets> is normally sorted such that all bad TC units are at the
+		//   end, but Lua can mess with the ordering arbitrarily
 		helper->GenerateWeaponTargets(this, targetUnit, targets);
 
-		if (!targets.empty())
-			lastTargetIt = --targets.end();
+		CUnit* prevTargetUnit = NULL;
+		CUnit* goodTargetUnit = NULL;
+		CUnit* badTargetUnit = NULL;
 
-		for (nextTargetIt = targets.begin(); nextTargetIt != targets.end(); ++nextTargetIt) {
-			CUnit* nextTargetUnit = nextTargetIt->second;
+		float3 nextTargetPos = ZeroVector;
 
-			if (nextTargetUnit->neutral && (owner->fireState <= FIRESTATE_FIREATWILL)) {
+		for (targetsIt = targets.begin(); targetsIt != targets.end(); ++targetsIt) {
+			CUnit* nextTargetUnit = targetsIt->second;
+
+			if (nextTargetUnit == prevTargetUnit)
+				continue; // filter consecutive duplicates
+			if (nextTargetUnit->neutral && (owner->fireState <= FIRESTATE_FIREATWILL))
 				continue;
-			}
-
-			// when only one target is available, <nextTarget> can equal <targetUnit>
-			// and we want to attack whether it is in our bad target category or not
-			// (if only bad targets are available and this is the last, just pick it)
-			if (nextTargetUnit != targetUnit && (nextTargetUnit->category & badTargetCategory)) {
-				if (nextTargetIt != lastTargetIt) {
-					continue;
-				}
-			}
 
 			const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTargetUnit->speed.Length();
 			const float weaponError = weaponLead * (1.0f - owner->limExperience);
 
-			float3 nextTargetPos = nextTargetUnit->midPos + (errorVector * weaponError);
+			prevTargetUnit = nextTargetUnit;
+			nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
 
 			const float appHeight = ground->GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
 
@@ -772,26 +778,47 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 				nextTargetPos.y = appHeight;
 			}
 
-			if (TryTarget(nextTargetPos, false, nextTargetUnit)) {
-				if (targetUnit) {
-					DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-				}
+			if (!TryTarget(nextTargetPos, false, nextTargetUnit))
+				continue;
 
-				targetType = Target_Unit;
-				targetUnit = nextTargetUnit;
-				targetPos = nextTargetPos;
+			if ((nextTargetUnit->category & badTargetCategory) != 0) {
+				// save the "best" bad target in case we have no other
+				// good targets (of higher priority) left in <targets>
+				if (badTargetUnit != NULL)
+					continue;
 
-				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+				badTargetUnit = nextTargetUnit;
+			} else {
+				goodTargetUnit = nextTargetUnit;
 				break;
+			}
+		}
+
+		if (goodTargetUnit != NULL || badTargetUnit != NULL) {
+			const bool haveOldTarget = (targetUnit != NULL);
+			const bool haveNewTarget =
+				(goodTargetUnit != NULL && goodTargetUnit != targetUnit) ||
+				( badTargetUnit != NULL &&  badTargetUnit != targetUnit);
+
+			if (haveOldTarget && haveNewTarget) {
+				// delete our old target dependence if we are switching targets
+				DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+			}
+
+			// pick our new target
+			targetType = Target_Unit;
+			targetUnit = (goodTargetUnit != NULL)? goodTargetUnit: badTargetUnit;
+			targetPos = nextTargetPos;
+
+			if (!haveOldTarget || haveNewTarget) {
+				// add new target dependence if we had no target or switched
+				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 			}
 		}
 	}
 
 	if (targetType != Target_None) {
 		owner->haveTarget = true;
-		if (haveUserTarget) {
-			owner->haveUserTarget = true;
-		}
 	} else {
 		// if we can't target anything, try switching aim point
 		if (useWeaponPosForAim == 1) {
@@ -938,7 +965,7 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 	float3 targetDir = targetVec;
 
 	float heightDiff = 0.0f; // negative when target below owner
-	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargetting
+	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
 	bool targetDirNormalized = false;
 
 	if (targetBorder != 0.0f && targetUnit != NULL) {
@@ -949,12 +976,12 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 
 	heightDiff = targetPos.y - owner->pos.y;
 
-	if (targetUnit == NULL || cylinderTargetting < 0.01f) {
+	if (targetUnit == NULL || cylinderTargeting < 0.01f) {
 		// check range in a sphere (with extra radius <heightDiff * heightMod>)
 		weaponRange = GetRange2D(heightDiff * heightMod);
 	} else {
-		// check range in a cylinder (with height <cylinderTargetting * range>)
-		if ((cylinderTargetting * range) > (math::fabsf(heightDiff) * heightMod)) {
+		// check range in a cylinder (with height <cylinderTargeting * range>)
+		if ((cylinderTargeting * range) > (math::fabsf(heightDiff) * heightMod)) {
 			weaponRange = GetRange2D(0.0f);
 		}
 	}
@@ -979,7 +1006,7 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 
 bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
 	float3 tempTargetPos =
-		helper->GetUnitErrorPos(unit, owner->allyteam) +
+		helper->GetUnitErrorPos(unit, owner->allyteam, true) +
 		errorVector * (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
 
 	const float appHeight = ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f;
@@ -992,7 +1019,7 @@ bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
 
 bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
 	float3 tempTargetPos =
-		helper->GetUnitErrorPos(unit, owner->allyteam) +
+		helper->GetUnitErrorPos(unit, owner->allyteam, true) +
 		errorVector * (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
 
 	const float appHeight = ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f;
@@ -1102,8 +1129,10 @@ void CWeapon::Fire()
 	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
 	FireImpl();
-	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
+
+	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1)) {
 		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
+	}
 }
 
 void CWeapon::UpdateInterceptTarget(void)

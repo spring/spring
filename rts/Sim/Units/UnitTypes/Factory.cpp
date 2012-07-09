@@ -110,16 +110,18 @@ void CFactory::Update()
 
 	if (curBuildDef != NULL) {
 		if (!opening && !stunned) {
-			script->Activate();
-			groundBlockingObjectMap->OpenBlockingYard(this, curYardMap);
-			opening = true;
+			if (groundBlockingObjectMap->CanOpenYard(this)) {
+				script->Activate();
+				groundBlockingObjectMap->OpenBlockingYard(this);
+				opening = true;
 
-			// make sure the idle-check does not immediately trigger
-			// (scripts have 7 seconds to set inBuildStance to true)
-			lastBuildUpdateFrame = gs->frameNum;
+				// make sure the idle-check does not immediately trigger
+				// (scripts have 7 seconds to set inBuildStance to true)
+				lastBuildUpdateFrame = gs->frameNum;
+			}
 		}
 
-		if (inBuildStance && !stunned) {
+		if (opening && inBuildStance && !stunned) {
 			StartBuild(curBuildDef);
 		}
 	}
@@ -129,12 +131,12 @@ void CFactory::Update()
 		FinishBuild(curBuild);
 	}
 
-	const bool mayClose = (!stunned && opening && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
-	const bool canClose = (curBuild == NULL && groundBlockingObjectMap->CanCloseYard(this));
+	const bool wantClose = (!stunned && opening && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
+	const bool closeYard = (wantClose && curBuild == NULL && groundBlockingObjectMap->CanCloseYard(this));
 
-	if (mayClose && canClose) {
+	if (closeYard) {
 		// close the factory after inactivity
-		groundBlockingObjectMap->CloseBlockingYard(this, curYardMap);
+		groundBlockingObjectMap->CloseBlockingYard(this);
 		opening = false;
 		script->Deactivate();
 	}
@@ -142,37 +144,56 @@ void CFactory::Update()
 	CBuilding::Update();
 }
 
+/*
+void CFactory::SlowUpdate(void)
+{
+	// this (ancient) code was intended to keep vicinity around factories clear
+	// so units could exit more easily among crowds of assisting builders, etc.
+	// it is unneeded now that units can flow / push through a non-moving crowd
+	// (so we no longer have to override CBuilding::SlowUpdate either)
+	if (transporter == NULL) {
+		helper->BuggerOff(pos - float3(0.01f, 0, 0.02f), radius, true, true, team, NULL);
+	}
+
+	CBuilding::SlowUpdate();
+}
+*/
+
 
 
 void CFactory::StartBuild(const UnitDef* buildeeDef) {
-	const float3        buildPos = CalcBuildPos();
-	const CSolidObject* solidObj = groundBlockingObjectMap->GroundBlocked(buildPos, true);
+	const float3& buildPos = CalcBuildPos();
+	const bool blocked = groundBlockingObjectMap->GroundBlocked(buildPos, this);
 
 	// wait until buildPos is no longer blocked (eg. by a previous buildee)
-	if (solidObj == NULL || solidObj == this) {
-		CUnit* b = unitLoader->LoadUnit(buildeeDef, buildPos, team, true, buildFacing, this);
+	//
+	// it might rarely be the case that a unit got stuck inside the factory
+	// or died right after completion and left some wreckage, but that is up
+	// to players to fix (we no longer broadcast BuggerOff directives, since
+	// those are indiscriminate and ineffective)
+	if (blocked)
+		return;
 
-		if (!unitDef->canBeAssisted) {
-			b->soloBuilder = this;
-			b->AddDeathDependence(this, DEPENDENCE_BUILDER);
-		}
+	CUnit* b = unitLoader->LoadUnit(buildeeDef, buildPos, team, true, buildFacing, this);
 
-		AddDeathDependence(b, DEPENDENCE_BUILD);
-		script->StartBuilding();
-
-		// set curBuildDef to NULL to indicate construction
-		// has started, otherwise we would keep being called
-		curBuild = b;
-		curBuildDef = NULL;
-
-		#if (PLAY_SOUNDS == 1)
-		if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-			Channels::General.PlayRandomSample(unitDef->sounds.build, buildPos);
-		}
-		#endif
-	} else {
-		helper->BuggerOff(buildPos, radius + 8, true, true, team, NULL);
+	if (!unitDef->canBeAssisted) {
+		b->soloBuilder = this;
+		b->AddDeathDependence(this, DEPENDENCE_BUILDER);
 	}
+
+	AddDeathDependence(b, DEPENDENCE_BUILD);
+	script->StartBuilding();
+
+	// set curBuildDef to NULL to indicate construction
+	// has started, otherwise we would keep being called
+	curBuild = b;
+	curBuildDef = NULL;
+
+	#if (PLAY_SOUNDS == 1)
+	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+		Channels::General.PlayRandomSample(unitDef->sounds.build, buildPos);
+	}
+	#endif
 }
 
 void CFactory::UpdateBuild(CUnit* buildee) {
@@ -199,7 +220,7 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 
 	buildee->Move3D(buildeePos, false);
 	buildee->UpdateDirVectors(false);
-	buildee->UpdateMidPos();
+	buildee->UpdateMidAndAimPos();
 
 	const CCommandQueue& queue = commandAI->commandQue;
 
@@ -220,7 +241,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 		GML_RECMUTEX_LOCK(group); // FinishBuild
 
 		if (group && buildee->group == 0) {
-			buildee->SetGroup(group);
+			buildee->SetGroup(group, true);
 		}
 	}
 
@@ -369,14 +390,6 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 }
 
 
-
-void CFactory::SlowUpdate(void)
-{
-	if (!transporter)
-		helper->BuggerOff(pos - float3(0.01f, 0, 0.02f), radius, true, true, team, NULL);
-
-	CBuilding::SlowUpdate();
-}
 
 bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 {

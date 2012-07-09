@@ -43,11 +43,10 @@ static const TdfParser& GetMapDefParser()
 CR_BIND_DERIVED(CSM3ReadMap, CReadMap, (""))
 
 CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
+	: groundDrawer(NULL)
+	, minimapTexture(0)
+	, numFeatures(0)
 {
-	groundDrawer = 0;
-	minimapTexture = 0;
-	numFeatures = 0;
-
 	loadscreen->SetLoadMessage("Loading " + mapName);
 
 	if (!mapInfo->sm3.minimap.empty()) {
@@ -58,16 +57,17 @@ CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 	}
 
 	renderer = new terrain::Terrain();
-	heightMapSynced   = renderer->GetCornerHeightMapSynced();
-	heightMapUnsynced = renderer->GetCornerHeightMapUnsynced();
 
 	{
 		// load the heightmap in advance
 		Sm3LoadCB cb;
 		renderer->LoadHeightMap(GetMapDefParser(), &cb);
 
-		width = renderer->GetHeightmapWidth() - 1;
-		height = renderer->GetHeightmapWidth() - 1; //! note: not height
+		heightMapSynced   = renderer->GetCornerHeightMapSynced();
+		heightMapUnsynced = renderer->GetCornerHeightMapUnsynced();
+
+		width  = renderer->GetHeightmapWidth() - 1;
+		height = renderer->GetHeightmapWidth() - 1; // note: not height (SM3 only supports square maps!)
 	}
 
 	CReadMap::Initialize();
@@ -78,7 +78,7 @@ CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 			char loc[100];
 			SNPRINTF(loc, 100, "map\\featuretypes\\type%d", a);
 			featureTypes.push_back(new std::string(GetMapDefParser().SGetValueDef("TreeType0", loc)));
-			}
+		}
 	}
 
 	LoadFeatureData();
@@ -153,7 +153,7 @@ void CSM3ReadMap::NewGroundDrawer() {
 }
 
 
-void CSM3ReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
+void CSM3ReadMap::UpdateHeightMapUnsynced(const SRectangle& update)
 {
 	int x1 = update.x1, y1 = update.y1;
 	int x2 = update.x2, y2 = update.y2;

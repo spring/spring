@@ -6,11 +6,13 @@
 #include <list>
 #include "IPathDrawer.h"
 
-struct MoveData;
+struct MoveDef;
 class CMoveMath;
 class CVertexArray;
 
 namespace QTPFS {
+	class PathManager;
+
 	struct QTNode;
 	struct IPath;
 	struct PathSearch;
@@ -34,23 +36,23 @@ private:
 		COLOR_BIT_B = 4,
 	};
 
-	void DrawNodeTree(const MoveData* md) const;
+	void DrawNodeTree(const MoveDef* md) const;
 	void DrawNodeTreeRec(
 		const QTPFS::QTNode* nt,
-		const MoveData* md,
+		const MoveDef* md,
 		const CMoveMath* mm,
 		CVertexArray* va
 	) const;
 
 	void GetVisibleNodes(const QTPFS::QTNode* nt, std::list<const QTPFS::QTNode*>& nodes) const;
 
-	void DrawPaths(const MoveData* md) const;
+	void DrawPaths(const MoveDef* md) const;
 	void DrawPath(const QTPFS::IPath* path, CVertexArray* va) const;
 	void DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* searchExec) const;
 	void DrawSearchIteration(unsigned int pathType, const std::list<unsigned int>& nodeIndices, CVertexArray* va) const;
 	void DrawNode(
 		const QTPFS::QTNode* node,
-		const MoveData* md,
+		const MoveDef* md,
 		const CMoveMath* mm,
 		CVertexArray* va,
 		bool fillQuad,
@@ -58,6 +60,9 @@ private:
 		bool batchDraw
 	) const;
 	void DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, CVertexArray* va) const;
+
+private:
+	QTPFS::PathManager* pm;
 };
 
 #endif

@@ -28,6 +28,7 @@
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
+#include <new>
 
 
 #ifdef __APPLE__
@@ -550,8 +551,23 @@ namespace CrashHandler
 				<< error << ".\n\n"
 				<< "A stacktrace has been written to:\n"
 				<< "  " << logOutput.GetFilePath();
-			ErrorMessageBox(buf.str(), "Spring crashed", MBF_CRASH); //! this also calls exit()
+			ErrorMessageBox(buf.str(), "Spring crashed", MBF_OK | MBF_CRASH); //! this also calls exit()
 		}
+	}
+
+	void OutputStacktrace() {
+		bool keepRunning = true;
+		PrepareStacktrace();
+		Stacktrace(&keepRunning);
+		CleanupStacktrace();
+	}
+
+	void NewHandler() {
+		LOG_L(L_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
+
+		OutputStacktrace();
+
+		ErrorMessageBox("Failed to allocate memory", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
 	}
 
 	void Install() {
@@ -565,6 +581,8 @@ namespace CrashHandler
 		sigaction(SIGABRT, &sa, NULL);
 		sigaction(SIGINT,  &sa, NULL);
 		sigaction(SIGBUS,  &sa, NULL); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
+
+		std::set_new_handler(NewHandler);
 	}
 
 	void Remove() {
@@ -578,12 +596,7 @@ namespace CrashHandler
 		sigaction(SIGABRT, &sa, NULL);
 		sigaction(SIGINT,  &sa, NULL);
 		sigaction(SIGBUS,  &sa, NULL); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
-	}
 
-	void OutputStacktrace() {
-		bool keepRunning = true;
-		PrepareStacktrace();
-		Stacktrace(&keepRunning);
-		CleanupStacktrace();
+		std::set_new_handler(NULL);
 	}
 };

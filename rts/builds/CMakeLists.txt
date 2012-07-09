@@ -43,6 +43,7 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 			"doc"
 			"tools/unitsync"
 			"cont"
+			"rts/lib/luasocket"
 		)
 	If    (NOT "${AI_TYPES}" STREQUAL "NONE")
 		Set(${targetName}-InstallDirs ${${targetName}-InstallDirs} "AI")

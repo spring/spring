@@ -274,6 +274,16 @@ void CFreeController::Update()
 	tracking = false;
 }
 
+float3 CFreeController::GetDir() const
+{
+	float3 dir;
+	dir.x = (float)(sin(camera->rot.y) * cos(camera->rot.x));
+	dir.z = (float)(cos(camera->rot.y) * cos(camera->rot.x));
+	dir.y = (float)(sin(camera->rot.x));
+	dir.ANormalize();
+	return dir;
+}
+
 
 void CFreeController::KeyMove(float3 move)
 {
@@ -379,22 +389,6 @@ void CFreeController::SetPos(const float3& newPos)
 */
 	prevVel  = ZeroVector;
 	prevAvel = ZeroVector;
-}
-
-
-float3 CFreeController::GetPos()
-{
-	return pos;
-}
-
-
-float3 CFreeController::GetDir()
-{
-	dir.x = (float)(sin(camera->rot.y) * cos(camera->rot.x));
-	dir.z = (float)(cos(camera->rot.y) * cos(camera->rot.x));
-	dir.y = (float)(sin(camera->rot.x));
-	dir.ANormalize();
-	return dir;
 }
 
 

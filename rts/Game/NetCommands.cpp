@@ -20,7 +20,6 @@
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Lua/LuaRules.h"
-#include "Lua/LuaUI.h"
 #include "UI/GameSetupDrawer.h"
 #include "UI/MouseHandler.h"
 #include "Rendering/GlobalRendering.h"
@@ -142,10 +141,10 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 3);
 					std::string message;
 					pckt >> message;
+
 					LOG("%s", message.c_str());
-					if (!gameOver) {
-						GameEnd(std::vector<unsigned char>());
-					}
+
+					GameEnd(std::vector<unsigned char>());
 					AddTraffic(-1, packetCode, dataLength);
 					net->Close(true);
 				} catch (const netcode::UnpackPacketException& ex) {
@@ -319,6 +318,7 @@ void CGame::ClientReadNet()
 					float3 pos(*(float*)&inbuf[4],
 					           *(float*)&inbuf[8],
 					           *(float*)&inbuf[12]);
+					teamHandler->Team(team)->ClampStartPosInStartBox(&pos);
 					if (!luaRules || luaRules->AllowStartPosition(player, pos)) {
 						teamHandler->Team(team)->StartposMessage(pos);
 						if (inbuf[3] != 2 && player != SERVER_PLAYER)
@@ -350,6 +350,7 @@ void CGame::ClientReadNet()
 						p[ 0], p[ 1], p[ 2], p[ 3], p[ 4], p[ 5], p[ 6], p[ 7],
 						p[ 8], p[ 9], p[10], p[11], p[12], p[13], p[14], p[15]);
 				AddTraffic(-1, packetCode, dataLength);
+				eventHandler.GameID(gameID, sizeof(gameID));
 				break;
 			}
 
@@ -564,6 +565,14 @@ void CGame::ClientReadNet()
 						throw netcode::UnpackPacketException("Invalid player number");
 					unsigned char aiID;
 					pckt >> aiID;
+					unsigned char pairwise;
+					pckt >> pairwise;
+					unsigned int sameCmdID;
+					pckt >> sameCmdID;
+					unsigned char sameCmdOpt;
+					pckt >> sameCmdOpt;
+					unsigned short sameCmdParamSize;
+					pckt >> sameCmdParamSize;
 					// parse the unit list
 					vector<int> unitIDs;
 					short int unitCount;
@@ -580,12 +589,21 @@ void CGame::ClientReadNet()
 					for (int c = 0; c < commandCount; c++) {
 						int cmd_id;
 						unsigned char cmd_opt;
-						pckt >> cmd_id;
-						pckt >> cmd_opt;
+						if (sameCmdID == 0)
+							pckt >> cmd_id;
+						else
+							cmd_id = sameCmdID;
+						if (sameCmdOpt == 0xFF)
+							pckt >> cmd_opt;
+						else
+							cmd_opt = sameCmdOpt;
 
 						Command cmd(cmd_id, cmd_opt);
 						short int paramCount;
-						pckt >> paramCount;
+						if (sameCmdParamSize == 0xFFFF)
+							pckt >> paramCount;
+						else
+							paramCount = sameCmdParamSize;
 						for (int p = 0; p < paramCount; p++) {
 							float param;
 							pckt >> param;
@@ -594,9 +612,16 @@ void CGame::ClientReadNet()
 						commands.push_back(cmd);
 					}
 					// apply the commands
-					for (int c = 0; c < commandCount; c++) {
-						for (int u = 0; u < unitCount; u++) {
-							selectedUnits.AiOrder(unitIDs[u], commands[c], player);
+					if (pairwise) {
+						for (int x = 0; x < std::min(unitCount, commandCount); ++x) {
+							selectedUnits.AiOrder(unitIDs[x], commands[x], player);
+						}
+					}
+					else {
+						for (int c = 0; c < commandCount; c++) {
+							for (int u = 0; u < unitCount; u++) {
+								selectedUnits.AiOrder(unitIDs[u], commands[c], player);
+							}
 						}
 					}
 					AddTraffic(player, packetCode, dataLength);

@@ -11,8 +11,8 @@
 class CShipMoveMath : public CMoveMath {
 	CR_DECLARE(CShipMoveMath);
 public:
-	float SpeedMod(const MoveData& moveData, float height, float slope) const;
-	float SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const;
+	float SpeedMod(const MoveDef& moveDef, float height, float slope) const;
+	float SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const;
 
 	// ships are always at water-level
 	float yLevel(int xSquare, int zSquare) const { return 0.0f; }

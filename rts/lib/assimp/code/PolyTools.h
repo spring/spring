@@ -1,8 +1,8 @@
 /*
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -18,10 +18,10 @@ following conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -45,6 +45,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "System/FastMath.h"
 
 namespace Assimp {
+
+// -------------------------------------------------------------------------------
+/** Compute the signed area of a triangle.
+ *  The function accepts an unconstrained template parameter for use with
+ *  both aiVector3D and aiVector2D, but generally ignores the third coordinate.*/
+template <typename T>
+inline double GetArea2D(const T& v1, const T& v2, const T& v3) 
+{
+	return 0.5 * (v1.x * ((double)v3.y - v2.y) + v2.x * ((double)v1.y - v3.y) + v3.x * ((double)v2.y - v1.y));
+}
 
 // -------------------------------------------------------------------------------
 /** Test if a given point p2 is on the left side of the line formed by p0-p1.
@@ -83,17 +93,6 @@ inline bool PointInTriangle2D(const T& p0, const T& p1,const T& p2, const T& pp)
 
 
 // -------------------------------------------------------------------------------
-/** Compute the signed area of a triangle.
- *  The function accepts an unconstrained template parameter for use with
- *  both aiVector3D and aiVector2D, but generally ignores the third coordinate.*/
-template <typename T>
-inline double GetArea2D(const T& v1, const T& v2, const T& v3) 
-{
-	return 0.5 * (v1.x * ((double)v3.y - v2.y) + v2.x * ((double)v1.y - v3.y) + v3.x * ((double)v2.y - v1.y));
-}
-
-
-// -------------------------------------------------------------------------------
 /** Check whether the winding order of a given polygon is counter-clockwise.
  *  The function accepts an unconstrained template parameter, but is intended 
  *  to be used only with aiVector2D and aiVector3D (z axis is ignored, only
@@ -106,7 +105,9 @@ inline bool IsCCW(T* in, size_t npoints) {
 	double convex_turn;
 	double convex_sum = 0;
 
-	for (int i = 0; i < npoints - 2; i++) {
+	ai_assert(npoints >= 3);
+
+	for (size_t i = 0; i < npoints - 2; i++) {		
 		aa = ((in[i+2].x - in[i].x) * (in[i+2].x - in[i].x)) +
 			((-in[i+2].y + in[i].y) * (-in[i+2].y + in[i].y));
 
@@ -180,8 +181,8 @@ inline bool IsCCW(T* in, size_t npoints) {
  *  @note The data arrays must have storage for at least num+2 elements. Using
  *  this method is much faster than the 'other' NewellNormal()
  */
-template <int ofs_x, int ofs_y, int ofs_z>
-inline void NewellNormal (aiVector3D& out, int num, float* x, float* y, float* z)
+template <int ofs_x, int ofs_y, int ofs_z, typename TReal>
+inline void NewellNormal (aiVector3t<TReal>& out, int num, TReal* x, TReal* y, TReal* z)
 {
 	// Duplicate the first two vertices at the end
 	x[(num+0)*ofs_x] = x[0]; 
@@ -193,11 +194,11 @@ inline void NewellNormal (aiVector3D& out, int num, float* x, float* y, float* z
 	z[(num+0)*ofs_z] = z[0]; 
 	z[(num+1)*ofs_z] = z[ofs_z]; 
 
-	float sum_xy = 0.0, sum_yz = 0.0, sum_zx = 0.0;
+	TReal sum_xy = 0.0, sum_yz = 0.0, sum_zx = 0.0;
 
-	float *xptr = x +ofs_x, *xlow = x, *xhigh = x + ofs_x*2;
-	float *yptr = y +ofs_y, *ylow = y, *yhigh = y + ofs_y*2;
-	float *zptr = z +ofs_z, *zlow = z, *zhigh = z + ofs_z*2;
+	TReal *xptr = x +ofs_x, *xlow = x, *xhigh = x + ofs_x*2;
+	TReal *yptr = y +ofs_y, *ylow = y, *yhigh = y + ofs_y*2;
+	TReal *zptr = z +ofs_z, *zlow = z, *zhigh = z + ofs_z*2;
 
 	for (int tmp=0; tmp < num; tmp++) {
 		sum_xy += (*xptr) * ( (*yhigh) - (*ylow) );
@@ -216,7 +217,7 @@ inline void NewellNormal (aiVector3D& out, int num, float* x, float* y, float* z
 		zlow  += ofs_z;
 		zhigh += ofs_z;
 	}
-	out = aiVector3D(sum_yz,sum_zx,sum_xy);
+	out = aiVector3t<TReal>(sum_yz,sum_zx,sum_xy);
 }
 
 } // ! Assimp

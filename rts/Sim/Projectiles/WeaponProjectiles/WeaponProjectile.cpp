@@ -161,10 +161,6 @@ void CWeaponProjectile::Collision(CFeature* feature)
 		helper->Explosion(params);
 	}
 
-	if (weaponDef->soundhit.getID(0) > 0) {
-		Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this, weaponDef->soundhit.getVolume(0));
-	}
-
 	if (!weaponDef->noExplode) {
 		CProjectile::Collision();
 	} else {
@@ -211,11 +207,6 @@ void CWeaponProjectile::Collision(CUnit* unit)
 		};
 
 		helper->Explosion(params);
-	}
-
-	if (weaponDef->soundhit.getID(0) > 0) {
-		Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this,
-				weaponDef->soundhit.getVolume(0));
 	}
 
 	if (!weaponDef->noExplode) {

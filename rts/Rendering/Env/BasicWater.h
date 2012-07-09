@@ -18,6 +18,8 @@ public:
 	const char* GetName() const { return "basic"; }
 
 private:
+	unsigned int GenWaterQuadsList() const;
+
 	GLuint texture;
 	unsigned int displist;
 	int textureWidth;

@@ -40,8 +40,8 @@ float QTPFS::INode::GetPathCost(unsigned int type) const {
 }
 
 float QTPFS::INode::GetDistance(const INode* n, unsigned int type) const {
-	const float dx = float(WS(xmid())) - float(WS(n->xmid()));
-	const float dz = float(WS(zmid())) - float(WS(n->zmid()));
+	const float dx = float(xmid() * SQUARE_SIZE) - float(n->xmid() * SQUARE_SIZE);
+	const float dz = float(zmid() * SQUARE_SIZE) - float(n->zmid() * SQUARE_SIZE);
 
 	switch (type) {
 		case NODE_DIST_EUCLIDEAN: { return math::sqrt((dx * dx) + (dz * dz)); } break;
@@ -89,48 +89,57 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 	const unsigned int
 		minz = std::max(zmin(), ngb->zmin()),
 		maxz = std::min(zmax(), ngb->zmax());
-	const unsigned int
-		midx = (maxx + minx) >> 1,
-		midz = (maxz + minz) >> 1;
-	const unsigned int rel = GetNeighborRelation(ngb);
 
-	#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
-	#define CAST static_cast<unsigned int>
-	switch (rel) {
+	// NOTE:
+	//     do not use integer arithmetic for the mid-points,
+	//     the path-backtrace expects all waypoints to have
+	//     unique world-space coordinates (ortho-projection
+	//     mode is broken in that regard) and this would not
+	//     hold for a path through multiple neighboring nodes
+	//     with xsize and/or zsize equal to 1 heightmap square
+	const float
+		midx = (maxx + minx) * 0.5f,
+		midz = (maxz + minz) * 0.5f;
+
+	switch (GetNeighborRelation(ngb)) {
+		#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+		#define CAST static_cast<unsigned int>
+
 		// corners
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmax()); } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmax()); } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
 		// edges
 		// clamp <pos> (assumed to be inside <this>) to
 		// the shared-edge bounds and ortho-project it
-		case REL_NGB_EDGE_T: { p.x = WS(Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx)); p.z = WS(minz); } break;
-		case REL_NGB_EDGE_B: { p.x = WS(Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx)); p.z = WS(maxz); } break;
-		case REL_NGB_EDGE_R: { p.z = WS(Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz)); p.x = WS(maxx); } break;
-		case REL_NGB_EDGE_L: { p.z = WS(Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz)); p.x = WS(minx); } break;
+		case REL_NGB_EDGE_T: { p.x = Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx) * SQUARE_SIZE; p.z = minz * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B: { p.x = Clamp(CAST(pos.x / SQUARE_SIZE), minx, maxx) * SQUARE_SIZE; p.z = maxz * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_R: { p.z = Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz) * SQUARE_SIZE; p.x = maxx * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_L: { p.z = Clamp(CAST(pos.z / SQUARE_SIZE), minz, maxz) * SQUARE_SIZE; p.x = minx * SQUARE_SIZE; } break;
 
 		// <ngb> had better be an actual neighbor
 		case 0: { assert(false); } break;
-	}
-	#undef CAST
-	#else
-	switch (rel) {
+
+		#undef CAST
+		#else
+
 		// corners
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = WS(xmax()); p.z = WS(zmax()); } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = WS(xmin()); p.z = WS(zmax()); } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
 		// edges
-		case REL_NGB_EDGE_T:                  { p.x = WS(midx  ); p.z = WS(zmin()); } break;
-		case REL_NGB_EDGE_R:                  { p.x = WS(xmax()); p.z = WS(midz  ); } break;
-		case REL_NGB_EDGE_B:                  { p.x = WS(midx  ); p.z = WS(zmax()); } break;
-		case REL_NGB_EDGE_L:                  { p.x = WS(xmin()); p.z = WS(midz  ); } break;
+		case REL_NGB_EDGE_T:                  { p.x = midx   * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_R:                  { p.x = xmax() * SQUARE_SIZE; p.z = midz   * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_B:                  { p.x = midx   * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
+		case REL_NGB_EDGE_L:                  { p.x = xmin() * SQUARE_SIZE; p.z = midz   * SQUARE_SIZE; } break;
 
 		// <ngb> had better be an actual neighbor
 		case 0: { assert(false); } break;
+
+		#endif
 	}
-	#endif
 
 	return p;
 }
@@ -168,6 +177,9 @@ QTPFS::QTNode::QTNode(
 	unsigned int x1, unsigned int z1,
 	unsigned int x2, unsigned int z2
 ) {
+	assert(MIN_SIZE_X > 0);
+	assert(MIN_SIZE_Z > 0);
+
 	nodeNumber = nn;
 	heapIndex = -1U;
 
@@ -284,10 +296,21 @@ bool QTPFS::QTNode::IsLeaf() const {
 }
 
 bool QTPFS::QTNode::CanSplit() const {
-	// NOTE: caller must additionally check IsLeaf()
+	// NOTE: caller must additionally check IsLeaf() before calling Split()
+	if (depth() >= MAX_DEPTH) { return false; }
+
+	#ifdef QTPFS_CONSERVATIVE_NODE_SPLITS
 	if (xsize() <= MIN_SIZE_X) { return false; }
 	if (zsize() <= MIN_SIZE_Z) { return false; }
-	if (depth() >= MAX_DEPTH) { return false; }
+	#else
+	// aggressive splitting, important with respect to yardmaps
+	// (one yardmap square represents four 1x1 heightmap squares
+	// and the minimum node size is 2 heightmap squares for both
+	// dimensions)
+	if (((xsize() >> 1) ==          0) || ((zsize() >> 1) ==          0)) { return false; }
+	if (( xsize()       <= MIN_SIZE_X) && ( zsize()       <= MIN_SIZE_Z)) { return false; }
+	#endif
+
 	return true;
 }
 
@@ -433,19 +456,15 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 	// technically required whenever numRefBinSquares is zero, ie.
 	// when ALL squares in <r> changed bins in unison
 	//
-	UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares);
+	if (UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares) && Split(nl)) {
+		registerNode = false;
 
-	if (numDifBinSquares > 0) {
-		if (Split(nl)) {
-			registerNode = false;
+		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
+			QTNode* cn = children[i];
+			SRectangle cr = cn->ClipRectangle(r);
 
-			for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-				QTNode* cn = children[i];
-				SRectangle cr = cn->ClipRectangle(r);
-
-				cn->Tesselate(nl, cr, false, true);
-				assert(cn->moveCostAvg != -1.0f);
-			}
+			cn->Tesselate(nl, cr, false, true);
+			assert(cn->GetMoveCost() != -1.0f);
 		}
 	}
 
@@ -454,7 +473,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 	}
 }
 
-void QTPFS::QTNode::UpdateMoveCost(
+bool QTPFS::QTNode::UpdateMoveCost(
 	const NodeLayer& nl,
 	const SRectangle& r,
 	unsigned int& numNewBinSquares,
@@ -534,15 +553,34 @@ void QTPFS::QTNode::UpdateMoveCost(
 
 	assert(moveCostAvg > 0.0f);
 
-	if (numClosedSquares == 0)
-		return;
 	if (numDifBinSquares > 0 && CanSplit())
-		return;
+		return true;
 
 	// if we are not going to tesselate this node further
 	// and there is at least one impassable square inside
 	// it, make sure the pathfinder will not pick us
-	moveCostAvg = QTPFS_POSITIVE_INFINITY;
+	//
+	// HACK:
+	//   set the cost for *!PARTIALLY!* closed nodes to a
+	//   non-infinite value since these are often created
+	//   along factory exit lanes (most on non-square maps
+	//   or when MIN_SIZE_X > 1 or MIN_SIZE_Z > 1), but do
+	//   ensure their cost is still high enough so they get
+	//   expanded only when absolutely necessary
+	//
+	//   units with footprint dimensions equal to the size
+	//   of a lane would otherwise be unable to find a path
+	//   out of their factories
+	//
+	if (numClosedSquares > 0) {
+		if (numClosedSquares < (xsize() * zsize())) {
+			moveCostAvg = QTPFS_CLOSED_NODE_COST * (numClosedSquares / float(xsize() * xsize()));
+		} else {
+			moveCostAvg = QTPFS_POSITIVE_INFINITY;
+		}
+	}
+
+	return false;
 }
 
 
@@ -628,12 +666,18 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 	if (prevMagicNum != currMagicNum) {
 		prevMagicNum = currMagicNum;
 
-		// regenerate our neighbor cache
-		if (GetMaxNumNeighbors() > 0) {
-			unsigned int ngbRel = 0;
+		unsigned int ngbRels = 0;
+		unsigned int maxNgbs = GetMaxNumNeighbors();
 
+		// regenerate our neighbor cache
+		if (maxNgbs > 0) {
 			neighbors.clear();
-			neighbors.reserve(GetMaxNumNeighbors() + 4);
+			neighbors.reserve(maxNgbs + 4);
+
+			#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+			etp_cache.clear();
+			etp_cache.reserve(maxNgbs + 4);
+			#endif
 
 			INode* ngb = NULL;
 
@@ -644,10 +688,14 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmz += ngb->zsize();
+
 					neighbors.push_back(ngb);
+					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
+					#endif
 				}
 
-				ngbRel |= REL_NGB_EDGE_L;
+				ngbRels |= REL_NGB_EDGE_L;
 			}
 			if (xmax() < static_cast<unsigned int>(gs->mapx)) {
 				const unsigned int hmx = xmax() + 0;
@@ -656,10 +704,14 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmz += ngb->zsize();
+
 					neighbors.push_back(ngb);
+					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
+					#endif
 				}
 
-				ngbRel |= REL_NGB_EDGE_R;
+				ngbRels |= REL_NGB_EDGE_R;
 			}
 
 			if (zmin() > 0) {
@@ -669,10 +721,14 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmx += ngb->xsize();
+
 					neighbors.push_back(ngb);
+					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
+					#endif
 				}
 
-				ngbRel |= REL_NGB_EDGE_T;
+				ngbRels |= REL_NGB_EDGE_T;
 			}
 			if (zmax() < static_cast<unsigned int>(gs->mapy)) {
 				const unsigned int hmz = zmax() + 0;
@@ -681,54 +737,74 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmx += ngb->xsize();
+
 					neighbors.push_back(ngb);
+					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
+					#endif
 				}
 
-				ngbRel |= REL_NGB_EDGE_B;
+				ngbRels |= REL_NGB_EDGE_B;
 			}
 
 			#ifdef QTPFS_CORNER_CONNECTED_NODES
 			// top- and bottom-left corners
-			if ((ngbRel & REL_NGB_EDGE_L) != 0) {
-				if ((ngbRel & REL_NGB_EDGE_T) != 0) {
+			if ((ngbRels & REL_NGB_EDGE_L) != 0) {
+				if ((ngbRels & REL_NGB_EDGE_T) != 0) {
 					const INode* ngbL = nodes[(zmin() + 0) * gs->mapx + (xmin() - 1)];
 					const INode* ngbT = nodes[(zmin() - 1) * gs->mapx + (xmin() + 0)];
 						  INode* ngbC = nodes[(zmin() - 1) * gs->mapx + (xmin() - 1)];
 
 					// VERT_TL ngb must be distinct from EDGE_L and EDGE_T ngbs
-					if (ngbC != ngbL && ngbC != ngbT)
+					if (ngbC != ngbL && ngbC != ngbT) {
 						neighbors.push_back(ngbC);
+						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+						#endif
+					}
 				}
-				if ((ngbRel & REL_NGB_EDGE_B) != 0) {
+				if ((ngbRels & REL_NGB_EDGE_B) != 0) {
 					const INode* ngbL = nodes[(zmax() - 1) * gs->mapx + (xmin() - 1)];
 					const INode* ngbB = nodes[(zmax() + 0) * gs->mapx + (xmin() + 0)];
 						  INode* ngbC = nodes[(zmax() + 0) * gs->mapx + (xmin() - 1)];
 
 					// VERT_BL ngb must be distinct from EDGE_L and EDGE_B ngbs
-					if (ngbC != ngbL && ngbC != ngbB)
+					if (ngbC != ngbL && ngbC != ngbB) {
 						neighbors.push_back(ngbC);
+						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+						#endif
+					}
 				}
 			}
 
 			// top- and bottom-right corners
-			if ((ngbRel & REL_NGB_EDGE_R) != 0) {
-				if ((ngbRel & REL_NGB_EDGE_T) != 0) {
+			if ((ngbRels & REL_NGB_EDGE_R) != 0) {
+				if ((ngbRels & REL_NGB_EDGE_T) != 0) {
 					const INode* ngbR = nodes[(zmin() + 0) * gs->mapx + (xmax() + 0)];
 					const INode* ngbT = nodes[(zmin() - 1) * gs->mapx + (xmax() - 1)];
 						  INode* ngbC = nodes[(zmin() - 1) * gs->mapx + (xmax() + 0)];
 
 					// VERT_TR ngb must be distinct from EDGE_R and EDGE_T ngbs
-					if (ngbC != ngbR && ngbC != ngbT)
+					if (ngbC != ngbR && ngbC != ngbT) {
 						neighbors.push_back(ngbC);
+						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+						#endif
+					}
 				}
-				if ((ngbRel & REL_NGB_EDGE_B) != 0) {
+				if ((ngbRels & REL_NGB_EDGE_B) != 0) {
 					const INode* ngbR = nodes[(zmax() - 1) * gs->mapx + (xmax() + 0)];
 					const INode* ngbB = nodes[(zmax() + 0) * gs->mapx + (xmax() - 1)];
 						  INode* ngbC = nodes[(zmax() + 0) * gs->mapx + (xmax() + 0)];
 
 					// VERT_BR ngb must be distinct from EDGE_R and EDGE_B ngbs
-					if (ngbC != ngbR && ngbC != ngbB)
+					if (ngbC != ngbR && ngbC != ngbB) {
 						neighbors.push_back(ngbC);
+						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+						#endif
+					}
 				}
 			}
 			#endif

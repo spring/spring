@@ -68,14 +68,26 @@ This configuration has been tested with schroot 1.4.23. With any other version Y
 
 Build dependencies for Windows build (except MinGW, see below):
 
-	apt-get install cmake nsis p7zip-full unzip wget pandoc
+	apt-get install cmake nsis p7zip-full unzip wget pandoc wine
 	apt-get install openjdk-6-jdk   #to enable building of Java AIs
 
 Build dependencies for Linux build:
 
 	apt-get install libboost-all-dev libdevil-dev libfreetype6-dev libopenal-dev \
 		libogg-dev libvorbis-dev libglew-dev libsdl-dev libxcursor-dev \
-		cppcheck
+		p7zip-full
+
+Build dependencies for validation test:
+	apt-get install gdb libcurl4-gnutls-dev
+
+Build dependencies for doxygen:
+	apt-get install doxygen
+
+Build dependencies for cppcheck:
+	apt-get install cppcheck
+
+Speed up linking:
+	apt-get install binutils-gold
 
 ## Recompile MinGW package with dwarf2 exceptions instead of sjlj exceptions (as root)
 

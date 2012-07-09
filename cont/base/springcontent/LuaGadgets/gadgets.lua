@@ -90,6 +90,7 @@ local callInLists = {
 	"GamePreload",
 	"GameStart",
 	"GameOver",
+	"GameID",
 	"TeamDied",
 
 	"GameFrame",
@@ -1044,10 +1045,48 @@ function gadgetHandler:GameOver()
   return
 end
 
+function gadgetHandler:GameID(gameID)
+  for _,g in ipairs(self.GameIDList) do
+    g:GameID(gameID)
+  end
+  return
+end
+
 
 function gadgetHandler:TeamDied(teamID)
   for _,g in ipairs(self.TeamDiedList) do
     g:TeamDied(teamID)
+  end
+  return
+end
+
+function gadgetHandler:TeamChanged(teamID)
+  for _,g in ipairs(self.TeamChangedList) do
+    g:TeamChanged(teamID)
+  end
+  return
+end
+
+
+function gadgetHandler:PlayerChanged(playerID)
+  for _,g in ipairs(self.PlayerChangedList) do
+    g:PlayerChanged(playerID)
+  end
+  return
+end
+
+
+function gadgetHandler:PlayerAdded(playerID)
+  for _,g in ipairs(self.PlayerAddedList) do
+    g:PlayerAdded(playerID)
+  end
+  return
+end
+
+
+function gadgetHandler:PlayerRemoved(playerID, reason)
+  for _,g in ipairs(self.PlayerRemovedList) do
+    g:PlayerRemoved(playerID, reason)
   end
   return
 end
@@ -1234,25 +1273,26 @@ end
 
 function gadgetHandler:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)
 	for _, g in ipairs(self.AllowWeaponTargetCheckList) do
-		if (g:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)) then
-			return true
+		if (not g:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)) then
+			return false
 		end
 	end
 
-	return false
+	return true
 end
 
-function gadgetHandler:AllowWeaponTarget(attackerID, targetID, attackerWeaponNum, attackerWeaponDefID)
-	local allowed = false
+function gadgetHandler:AllowWeaponTarget(attackerID, targetID, attackerWeaponNum, attackerWeaponDefID, defPriority)
+	local allowed = true
 	local priority = 1.0
 
 	for _, g in ipairs(self.AllowWeaponTargetList) do
-		local targetAllowed, targetPriority = g:AllowWeaponTarget(attackerID, targetID, attackerWeaponNum, attackerWeaponDefID)
+		local targetAllowed, targetPriority = g:AllowWeaponTarget(attackerID, targetID, attackerWeaponNum, attackerWeaponDefID, defPriority)
 
-		if (targetAllowed) then
-			priority = math.max(priority, targetPriority)
-			allowed = true
+		if (not targetAllowed) then
+			allowed = false; break
 		end
+
+		priority = math.max(priority, targetPriority)
 	end
 
 	return allowed, priority

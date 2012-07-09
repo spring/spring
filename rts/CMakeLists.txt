@@ -45,6 +45,7 @@ INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/AL)
 INCLUDE_DIRECTORIES(${SPRING_MINIZIP_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
 
 ### Assemble common libraries
 Add_Subdirectory(System/Sound)
@@ -52,12 +53,16 @@ if    (NO_SOUND)
 	ADD_DEFINITIONS(-DNO_SOUND)
 endif (NO_SOUND)
 
-LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
-
 ### Find include directories and add platform specific libraries
+LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${TIFF_LIBRARY} ${PNG_LIBRARY})
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
+LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
 
-LIST(APPEND engineCommonLibraries lua 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
+IF    (PREFER_STATIC_LIBS)
+	# dependency of minizip
+	FIND_PACKAGE_STATIC(ZLIB REQUIRED)
+	LIST(APPEND engineCommonLibraries ${ZLIB_LIBRARY})
+ENDIF (PREFER_STATIC_LIBS)
 
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
@@ -95,17 +100,6 @@ SET(engineSources
 
 ### Add headers for generated project files (e.g. Code::Blocks)
 file(GLOB_RECURSE engineHeaders "*.h" "*.hpp")
-
-
-### Add icon and manifest to exe using windres
-IF    (WIN32)
-	SET(ENGINE_ICON_DIR "${ENGINE_SRC_ROOT_DIR}")
-	SET(ENGINE_ICON_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-	SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-	CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
-ELSE  (WIN32)
-	SET(ENGINE_ICON "")
-ENDIF (WIN32)
 
 
 Add_Subdirectory(builds)

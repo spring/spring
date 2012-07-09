@@ -28,6 +28,7 @@
 CSelectionKeyHandler* selectionKeys;
 
 CSelectionKeyHandler::CSelectionKeyHandler()
+	: selectNumber(0)
 {
 }
 

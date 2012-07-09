@@ -169,7 +169,7 @@ struct LuaUnitEvent {
 	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CWeapon* u2, int i1)
 		: id(i)
 		, unit1(u1)
-		, unit2((CUnit*)u2)
+		, unit2(reinterpret_cast<const CUnit*>(u2))
 		, bool1(false)
 		, int1(i1)
 		, int2(0)

@@ -9,6 +9,7 @@ class CPathManager;
 class CPathFinderDef;
 class CPathFinder;
 class CPathEstimator;
+struct UnitDef;
 
 struct DefaultPathDrawer: public IPathDrawer {
 public:
@@ -29,6 +30,9 @@ private:
 	void Draw(const CPathFinderDef*) const;
 	void Draw(const CPathFinder*) const;
 	void Draw(const CPathEstimator*) const;
+
+private:
+	CPathManager* pm;
 };
 
 #endif

@@ -6,9 +6,9 @@
 #include <map>
 #include <vector>
 
-#include "Node.hpp"
 #include "PathDefines.hpp"
-#include "PathDataTypes.hpp"
+#include "Node.hpp"
+#include "NodeHeap.hpp"
 #include "System/float3.h"
 #include "System/Rectangle.h"
 
@@ -143,7 +143,7 @@ namespace QTPFS {
 		static void FreeGlobalQueue() { openNodes.clear(); }
 
 	private:
-		void IterateSearch(
+		void Iterate(
 			const std::vector<INode*>& allNodes,
 			      std::vector<INode*>& ngbNodes
 		);

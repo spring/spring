@@ -175,7 +175,7 @@ void CBeamLaser::FireImpl(void)
 	FireInternal(dir, false);
 }
 
-void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
+void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 {
 	// fix negative damage when hitting big spheres
 	float actualRange = range;
@@ -197,22 +197,22 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	float3 hitPos;
 	float3 newDir;
 
-	dir +=
+	curDir +=
 		((gs->randVector() * sprayAngle *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight)));
-	dir.SafeNormalize();
+	curDir.SafeNormalize();
 
 	bool tryAgain = true;
 	bool doDamage = true;
 
+
 	// increase range if targets are searched for in a cylinder
-	if (cylinderTargetting > 0.01f) {
-		const float verticalDist = owner->radius * cylinderTargetting * dir.y;
+	if (cylinderTargeting > 0.01f) {
+		const float verticalDist = owner->radius * cylinderTargeting * curDir.y;
 		const float maxLengthModSq = maxLength * maxLength + verticalDist * verticalDist;
 
 		maxLength = math::sqrt(maxLengthModSq);
 	}
-
 
 	// increase range if targetting edge of hitsphere
 	if (targetType == Target_Unit && targetUnit && targetBorder != 0) {
@@ -226,60 +226,60 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	CPlasmaRepulser* hitShield = NULL;
 
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
-		float length = TraceRay::TraceRay(curPos, dir, maxLength - curLength, collisionFlags, owner, hitUnit, hitFeature);
+		float beamLength = TraceRay::TraceRay(curPos, curDir, maxLength - curLength, collisionFlags, owner, hitUnit, hitFeature);
 
 		if (hitUnit && teamHandler->AlliedTeams(hitUnit->team, owner->team) && sweepFire) {
 			// never damage friendlies with sweepfire
 			lastFireFrame = 0; doDamage = false; break;
 		}
 
+		if (!weaponDef->waterweapon) {
+			// terminate beam at water surface if necessary
+			if ((curDir.y < 0.0f) && ((curPos.y + curDir.y * beamLength) <= 0.0f)) {
+				beamLength = curPos.y / -curDir.y;
+			}
+		}
+
 		// if the beam gets intercepted, this modifies newDir
 		//
 		// we do more than one trace-iteration and set dir to
 		// newDir only in the case there is a shield in our way
-		const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, dir, length, newDir, hitShield);
+		const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, curDir, beamLength, newDir, hitShield);
 
-		if (shieldLength < length) {
-			length = shieldLength;
+		if (shieldLength < beamLength) {
+			beamLength = shieldLength;
 			tryAgain = hitShield->BeamIntercepted(this, damageMul); // repulsed
 		} else {
 			tryAgain = false;
 		}
 
-		if (!weaponDef->waterweapon) {
-			// terminate beam at water surface if necessary
-			if ((dir.y < 0.0f) && ((curPos.y + dir.y * length) <= 0.0f)) {
-				length = curPos.y / -dir.y;
+		hitPos = curPos + curDir * beamLength;
+
+		{
+			const float baseAlpha  = weaponDef->intensity * 255.0f;
+			const float startAlpha = (1.0f - (curLength             ) / (range * 1.3f)) * baseAlpha;
+			const float endAlpha   = (1.0f - (curLength + beamLength) / (range * 1.3f)) * baseAlpha;
+
+			if (weaponDef->largeBeamLaser) {
+				new CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner, weaponDef);
+			} else {
+				new CBeamLaserProjectile(curPos, hitPos, startAlpha, endAlpha, color, owner, weaponDef);
 			}
 		}
 
-		hitPos = curPos + dir * length;
-
-		const float baseAlpha  = weaponDef->intensity * 255.0f;
-		const float startAlpha = (1.0f - (curLength         ) / (range * 1.3f)) * baseAlpha;
-		const float endAlpha   = (1.0f - (curLength + length) / (range * 1.3f)) * baseAlpha;
-
-		if (weaponDef->largeBeamLaser) {
-			new CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner, weaponDef);
-		} else {
-			new CBeamLaserProjectile(curPos, hitPos, startAlpha, endAlpha, color, owner, weaponDef);
-		}
-
 		curPos = hitPos;
-		curLength += length;
-		dir = newDir;
+		curDir = newDir;
+		curLength += beamLength;
 	}
 
 	if (!doDamage)
 		return;
 
-	if (hitUnit) {
-		if (hitUnit->unitDef->usePieceCollisionVolumes) {
-			// getting the actual piece here is probably overdoing it
-			// TODO change this if we really need proper flanking bonus support
-			// for beam-lasers
-			hitUnit->SetLastAttackedPiece(hitUnit->localmodel->GetRoot(), gs->frameNum);
-		}
+	if (hitUnit != NULL) {
+		// getting the actual piece here is probably overdoing it
+		// TODO change this if we really need proper flanking bonus support
+		// for beam-lasers
+		hitUnit->SetLastAttackedPiece(hitUnit->localmodel->GetRoot(), gs->frameNum);
 
 		if (targetBorder > 0.0f) {
 			actualRange += (hitUnit->radius * targetBorder);
@@ -307,7 +307,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		const DamageArray damages = baseDamages * (hitIntensity * damageMul);
 		const CGameHelper::ExplosionParams params = {
 			hitPos,
-			dir,
+			curDir,
 			damages,
 			weaponDef,
 			owner,

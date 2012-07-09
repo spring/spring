@@ -13,13 +13,13 @@ static void GetRectangleCollisionVolume(const SRectangle& r, CollisionVolume& v,
 	float3 vScales;
 
 	// rectangle dimensions (WS)
-	vScales.x = WS(r.x2 - r.x1);
-	vScales.z = WS(r.z2 - r.z1);
+	vScales.x = ((r.x2 - r.x1) * SQUARE_SIZE);
+	vScales.z = ((r.z2 - r.z1) * SQUARE_SIZE);
 	vScales.y = 1.0f;
 
 	// rectangle mid-point (WS)
-	rm.x = WS(r.x1 + r.x2) >> 1;
-	rm.z = WS(r.z1 + r.z2) >> 1;
+	rm.x = ((r.x1 + r.x2) * SQUARE_SIZE) >> 1;
+	rm.z = ((r.z1 + r.z2) * SQUARE_SIZE) >> 1;
 	rm.y = 0.0f;
 
 	#define CV CollisionVolume
@@ -143,31 +143,40 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 		const float3& pathMaxs = path->GetBoundingBoxMaxs();
 
 		// if rectangle does not overlap bounding-box, skip this path
-		if (WS(r.x2) < pathMins.x) { continue; }
-		if (WS(r.z2) < pathMins.z) { continue; }
-		if (WS(r.x1) > pathMaxs.x) { continue; }
-		if (WS(r.z1) > pathMaxs.z) { continue; }
+		if ((r.x2 * SQUARE_SIZE) < pathMins.x) { continue; }
+		if ((r.z2 * SQUARE_SIZE) < pathMins.z) { continue; }
+		if ((r.x1 * SQUARE_SIZE) > pathMaxs.x) { continue; }
+		if ((r.z1 * SQUARE_SIZE) > pathMaxs.z) { continue; }
 
 		// figure out if <path> has at least one edge crossing <r>
 		// we only care about the segments we have not yet visited
-		for (unsigned int i = path->GetPointID(); i < (path->NumPoints() - 1); i++) {
+		const unsigned int minIdx = std::max(path->GetNextPointIndex(), 2U) - 2;
+		const unsigned int maxIdx = std::max(path->NumPoints(), 1U) - 1;
+
+		for (unsigned int i = minIdx; i < maxIdx; i++) {
 			const float3& p0 = path->GetPoint(i    );
 			const float3& p1 = path->GetPoint(i + 1);
 
-			const bool pointInRect0 =
-				((p0.x >= WS(r.x1) && p0.x < WS(r.x2)) &&
-				 (p0.z >= WS(r.z1) && p0.z < WS(r.z2)));
-			const bool pointInRect1 =
-				((p1.x >= WS(r.x1) && p1.x < WS(r.x2)) &&
-				 (p1.z >= WS(r.z1) && p1.z < WS(r.z2)));
-			const bool havePointInRect = (pointInRect0 || pointInRect1);
+			const bool p0InRect =
+				((p0.x >= (r.x1 * SQUARE_SIZE) && p0.x < (r.x2 * SQUARE_SIZE)) &&
+				 (p0.z >= (r.z1 * SQUARE_SIZE) && p0.z < (r.z2 * SQUARE_SIZE)));
+			const bool p1InRect =
+				((p1.x >= (r.x1 * SQUARE_SIZE) && p1.x < (r.x2 * SQUARE_SIZE)) &&
+				 (p1.z >= (r.z1 * SQUARE_SIZE) && p1.z < (r.z2 * SQUARE_SIZE)));
+			const bool havePointInRect = (p0InRect || p1InRect);
+
 			// NOTE:
 			//     box-volume tests in its own space, but points are
 			//     in world-space so we must inv-transform them first
 			//     (p0 --> p0 - rm, p1 --> p1 - rm)
+			const bool
+				xRangeInRect = (p0.x >= (r.x1 * SQUARE_SIZE) && p1.x <  (r.x2 * SQUARE_SIZE)),
+				xRangeExRect = (p0.x <  (r.x1 * SQUARE_SIZE) && p1.x >= (r.x2 * SQUARE_SIZE)),
+				zRangeInRect = (p0.z >= (r.z1 * SQUARE_SIZE) && p1.z <  (r.z2 * SQUARE_SIZE)),
+				zRangeExRect = (p0.z <  (r.z1 * SQUARE_SIZE) && p1.z >= (r.z2 * SQUARE_SIZE));
 			const bool edgeCrossesRect =
-				((p0.x < WS(r.x1) && p1.x >= WS(r.x2)) && (p0.z >= WS(r.z1) && p1.z < WS(r.z2))) ||  // H
-				((p0.z < WS(r.z1) && p1.z >= WS(r.z2)) && (p0.x >= WS(r.x1) && p1.x < WS(r.x2))) ||  // V
+				(xRangeExRect && zRangeInRect) ||
+				(xRangeInRect && zRangeExRect) ||
 				CCollisionHandler::IntersectBox(&rv, p0 - rm, p1 - rm, NULL);
 
 			// remember the ID of each path affected by the deformation

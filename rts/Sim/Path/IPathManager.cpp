@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "IPathManager.h"
-#include "PFSTypes.h"
 #include "Default/PathManager.h"
 #include "QTPFS/PathManager.hpp"
 #include "System/Log/ILog.h"

@@ -195,8 +195,10 @@ This is the bed, it stores all the sleeping threads,
 indexed by the frame in which they need to be woken up.
 
 Format: {
-	[framenum] = { thread1, thread2, ... },
+	[framenum] = { [1] = thread1, [2] = thread2, ... },
 }
+
+(inner tables are in order the calls to Sleep were made)
 --]]
 local sleepers = {}
 
@@ -204,8 +206,11 @@ local sleepers = {}
 --------------------------------------------------------------------------------
 
 -- Helper for Destroy and Signal.
--- Must not change the relative order of all other elements!
-local function Remove(tab, item)
+-- NOTE:
+--   Must not change the relative order of all other elements!
+--   Also must not break the #-operator, so removal must leave
+--   no holes --> uses table.remove() instead of tab[i] = nil.
+local function RemoveTableElement(tab, item)
 	local n = #tab
 	for i = 1,n do
 		if (tab[i] == item) then
@@ -222,7 +227,7 @@ local function Destroy()
 	if (activeUnit ~= nil) then
 		for _,thread in pairs(activeUnit.threads) do
 			if thread.container then
-				Remove(thread.container, thread)
+				RemoveTableElement(thread.container, thread)
 			end
 		end
 		units[activeUnit.unitID] = nil
@@ -257,10 +262,16 @@ end
 local function AnimFinished(waitingForAnim, piece, axis)
 	local index = piece * 3 + axis
 	local wthreads = waitingForAnim[index]
+	local wthread = nil
+
 	if wthreads then
 		waitingForAnim[index] = {}
-		for i=1,#wthreads do
-			WakeUp(wthreads[i])
+
+		while (#wthreads > 0) do	
+			wthread = wthreads[#wthreads]
+			wthreads[#wthreads] = nil
+
+			WakeUp(wthread)
 		end
 	end
 end
@@ -398,13 +409,13 @@ function Spring.UnitScript.Signal(mask)
 		for _,thread in pairs(activeUnit.threads) do
 			local signal_mask = thread.signal_mask
 			if (type(signal_mask) == "number" and bit_and(signal_mask, mask) ~= 0 and thread.container) then
-				Remove(thread.container, thread)
+				RemoveTableElement(thread.container, thread)
 			end
 		end
 	else
 		for _,thread in pairs(activeUnit.threads) do
 			if (thread.signal_mask == mask and thread.container) then
-				Remove(thread.container, thread)
+				RemoveTableElement(thread.container, thread)
 			end
 		end
 	end
@@ -774,14 +785,27 @@ end
 function gadget:GameFrame()
 	local n = sp_GetGameFrame()
 	local zzz = sleepers[n]
+
 	if zzz then
 		sleepers[n] = nil
-		-- Wake up the lazy bastards.
-		for i = 1, #zzz do
-			local unitID = zzz[i].unitID
+
+		-- Wake up the lazy bastards for this frame (in reverse order).
+		-- NOTE:
+		--   1. during WakeUp() a thread t1 might Signal (kill) another thread t2
+		--   2. t2 might also be registered in sleepers[n] and not yet woken up
+		--   3. if so, t1's signal would cause t2 to be removed from sleepers[n]
+		--      via Signal --> RemoveTableElement
+		--   4. therefore we cannot use the "for i = 1, #zzz" pattern since the
+		--      container size/contents might change while we are iterating over
+		--      it (and a Lua for-loop range expression is only evaluated once)
+		while (#zzz > 0) do
+			local sleeper = zzz[#zzz]
+			local unitID = sleeper.unitID
+
+			zzz[#zzz] = nil
 
 			PushActiveUnitID(unitID)
-			sp_CallAsUnit(unitID, WakeUp, zzz[i])
+			sp_CallAsUnit(unitID, WakeUp, sleeper)
 			PopActiveUnitID()
 		end
 	end

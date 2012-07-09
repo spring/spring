@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -137,7 +137,7 @@ void RAWImporter::InternReadFile( const std::string& pFile,
 			for (num = 0; num < 12;++num)
 			{
 				if(!SkipSpaces(&sz) || !IsNumeric(*sz))break;
-				sz = fast_atof_move(sz,data[num]);
+				sz = fast_atoreal_move<float>(sz,data[num]);
 			}
 			if (num != 12 && num != 9)
 			{
@@ -290,7 +290,7 @@ void RAWImporter::InternReadFile( const std::string& pFile,
 			}
 
 			// generate a material for the mesh
-			MaterialHelper* mat = new MaterialHelper();
+			aiMaterial* mat = new aiMaterial();
 
 			aiColor4D clr(1.0f,1.0f,1.0f,1.0f);
 			if ("%default%" == (*it2).name) // a gray default material

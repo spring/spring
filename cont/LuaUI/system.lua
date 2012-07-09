@@ -54,6 +54,9 @@ if (System == nil) then
     package = package,
     coroutine = coroutine,
     
+    -- luasocket
+    socket          = socket,
+
     --  
     --  Standard functions and variables
     --

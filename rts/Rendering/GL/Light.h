@@ -10,32 +10,31 @@
 namespace GL {
 	struct Light: public CObject {
 	public:
-		Light() {
-			position          = float4(0.0f, 0.0f, 1.0f, 1.0f);
-			direction         = ZeroVector;
-			trackPosition     = NULL;
-			trackDirection    = NULL;
-			ambientColor.w    = 1.0f;
-			diffuseColor.w    = 1.0f;
-			specularColor.w   = 1.0f;
-			intensityWeight   = float3(1.0f, 1.0f, 1.0f);
-			ambientDecayRate  = float3(1.0f, 1.0f, 1.0f);
-			diffuseDecayRate  = float3(1.0f, 1.0f, 1.0f);
-			specularDecayRate = float3(1.0f, 1.0f, 1.0f);
-			decayFunctionType = float3(1.0f, 1.0f, 1.0f);
-
-			radius = 0.0f;
-			fov = 180.0f;
-
-			id  = -1U;
-			ttl = 0;
-			relTime = 0;
-			absTime = 0;
-			priority = 0;
+		Light()
+			: position(0.0f, 0.0f, 1.0f, 1.0f)
+			, direction(ZeroVector)
+			, ambientColor(0.0f, 0.0f, 0.0f, 1.0f)
+			, diffuseColor(0.0f, 0.0f, 0.0f, 1.0f)
+			, specularColor(0.0f, 0.0f, 0.0f, 1.0f)
+			, intensityWeight(1.0f, 1.0f, 1.0f)
+			, ambientDecayRate(1.0f, 1.0f, 1.0f)
+			, diffuseDecayRate(1.0f, 1.0f, 1.0f)
+			, specularDecayRate(1.0f, 1.0f, 1.0f)
+			, decayFunctionType(1.0f, 1.0f, 1.0f)
+			, radius(0.0f)
+			, fov(180.0f)
+			, id(-1U)
+			, ttl(0)
+			, relTime(0)
+			, absTime(0)
+			, priority(0)
+			, trackPosition(NULL)
+			, trackDirection(NULL)
+		{
 		}
 
 		// a light can only depend on one object
-		void DependentDied(CObject*) {
+		void DependentDied(CObject* o) {
 			trackPosition = NULL;
 			trackDirection = NULL;
 		}

@@ -110,7 +110,7 @@ function getinfolog(){
 	}
 	$infolog=str_replace("\r\n","\n",$infolog); //windows linebreaks f'up some things here...
 	$infolog=str_replace("\n\n","\n",$infolog);
-	return $infolog;
+	return stripslashes($infolog);
 }
 
 function parse_template($tpl, $vars){

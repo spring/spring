@@ -15,13 +15,14 @@ struct SS3OVertex {
 };
 
 struct SS3OPiece: public S3DModelPiece {
-	SS3OPiece() { parent = NULL; primitiveType=0; }
+	SS3OPiece() { parent = NULL; primitiveType = 0; }
 
 	void DrawForList() const;
 	void SetMinMaxExtends();
 	void SetVertexTangents();
 	int GetVertexCount() const { return vertices.size(); }
-	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
+	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
+	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
 	void Shatter(float pieceChance, int texType, int team, const float3& pos,
 			const float3& speed) const;
 

@@ -160,7 +160,7 @@ static int UnitDefIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const UnitDef* ud = (const UnitDef*)userData;
+	const UnitDef* ud = static_cast<const UnitDef*>(userData);
 	const DataElement& elem = it->second;
 	const char* p = ((const char*)ud) + elem.offset;
 	switch (elem.type) {
@@ -216,7 +216,7 @@ static int UnitDefNewIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const UnitDef* ud = (const UnitDef*)userData;
+	const UnitDef* ud = static_cast<const UnitDef*>(userData);
 
 	// write-protected
 	if (!gs->editDefsEnabled) {
@@ -316,7 +316,7 @@ static int WeaponDefToID(lua_State* L, const void* data)
 static int SafeIconType(lua_State* L, const void* data)
 {
 	// the iconType is unsynced because LuaUI has SetUnitDefIcon()
-	if (!CLuaHandle::GetSynced(L)) {
+	if (!CLuaHandle::GetHandleSynced(L)) {
 		const icon::CIcon& iconType = *((const icon::CIcon*)data);
 		lua_pushsstring(L, iconType->GetName());
 		return 1;
@@ -440,7 +440,7 @@ static void PushGuiSoundSet(lua_State* L, const string& name,
 		const GuiSoundSet::Data& sound = soundSet.sounds[i];
 		HSTR_PUSH_STRING(L, "name",   sound.name);
 		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
-		if (!CLuaHandle::GetSynced(L)) {
+		if (!CLuaHandle::GetHandleSynced(L)) {
 			HSTR_PUSH_NUMBER(L, "id", sound.id);
 		}
 		lua_rawset(L, -3);
@@ -471,7 +471,7 @@ static int SoundsTable(lua_State* L, const void* data) {
 
 
 static int ModelDefTable(lua_State* L, const void* data) {
-	const UnitModelDef& md = *((const UnitModelDef*) data);
+	const UnitModelDef& md = *static_cast<const UnitModelDef*>(data);
 	const char* type = "???";
 
 	     if (StringToLower(md.modelName).find(".3do") != string::npos) { type = "3do"; }
@@ -494,9 +494,9 @@ static int ModelDefTable(lua_State* L, const void* data) {
 }
 
 
-static int MoveDataTable(lua_State* L, const void* data)
+static int MoveDefTable(lua_State* L, const void* data)
 {
-	const MoveData* md = *((const MoveData**)data);
+	const MoveDef* md = *static_cast<const MoveDef* const*>(data);
 	lua_newtable(L);
 	if (md == NULL) {
 		return 1;
@@ -504,15 +504,11 @@ static int MoveDataTable(lua_State* L, const void* data)
 
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);
 
-	const int Ship_Move   = MoveData::Ship_Move;
-	const int Hover_Move  = MoveData::Hover_Move;
-	const int Ground_Move = MoveData::Ground_Move;
-
 	switch (md->moveType) {
-		case Ship_Move:   { HSTR_PUSH_STRING(L, "type", "ship");   break; }
-		case Hover_Move:  { HSTR_PUSH_STRING(L, "type", "hover");  break; }
-		case Ground_Move: { HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		default:          { HSTR_PUSH_STRING(L, "type", "error");  break; }
+		case MoveDef::Ship_Move:   { HSTR_PUSH_STRING(L, "type", "ship");   break; }
+		case MoveDef::Hover_Move:  { HSTR_PUSH_STRING(L, "type", "hover");  break; }
+		case MoveDef::Ground_Move: { HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		default:                   { HSTR_PUSH_STRING(L, "type", "error");  break; }
 	}
 
 	switch (md->moveFamily) {
@@ -528,7 +524,7 @@ static int MoveDataTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "depth",         md->depth);
 	HSTR_PUSH_NUMBER(L, "maxSlope",      md->maxSlope);
 	HSTR_PUSH_NUMBER(L, "slopeMod",      md->slopeMod);
-	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthModParams[MoveData::DEPTHMOD_LIN_COEFF]);
+	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthModParams[MoveDef::DEPTHMOD_LIN_COEFF]);
 	HSTR_PUSH_NUMBER(L, "crushStrength", md->crushStrength);
 
 	HSTR_PUSH_BOOL(L, "heatMapping",     md->heatMapping);
@@ -543,7 +539,7 @@ static int MoveDataTable(lua_State* L, const void* data)
 
 static int TotalEnergyOut(lua_State* L, const void* data)
 {
-	const UnitDef& ud = *((const UnitDef*)data);
+	const UnitDef& ud = *static_cast<const UnitDef*>(data);
 	const float basicEnergy = (ud.energyMake - ud.energyUpkeep);
 	const float tidalEnergy = (ud.tidalGenerator * mapInfo->map.tidalStrength);
 	float windEnergy = 0.0f;
@@ -559,7 +555,7 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 #define TYPE_FUNC(FuncName, LuaType)                    \
 	static int FuncName(lua_State* L, const void* data) \
 	{                                                   \
-		const UnitDef* ud = (const UnitDef*) data;      \
+		const UnitDef* ud = static_cast<const UnitDef*>(data);      \
 		lua_push ## LuaType(L, ud->FuncName());         \
 		return 1;                                       \
 	}
@@ -576,7 +572,7 @@ TYPE_FUNC(IsGroundUnit, boolean);
 #define TYPE_MODEL_FUNC(name, param)                  \
 	static int name(lua_State* L, const void* data)   \
 	{                                                 \
-		const UnitDef* ud = (const UnitDef*) data;    \
+		const UnitDef* ud = static_cast<const UnitDef*>(data);    \
 		const S3DModel* model = ud->LoadModel();      \
 		lua_pushnumber(L, model->param);              \
 		return 1;                                     \
@@ -637,12 +633,13 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("weapons",            ud.weapons,            WeaponsTable);
 	ADD_FUNCTION("sounds",             ud.sounds,             SoundsTable);
 	ADD_FUNCTION("model",              ud.modelDef,           ModelDefTable);
-	ADD_FUNCTION("moveData",           ud.movedata,           MoveDataTable);
+	ADD_FUNCTION("moveData",           ud.moveDef,            MoveDefTable); // backward compatibility
+	ADD_FUNCTION("moveDef",            ud.moveDef,            MoveDefTable);
 	ADD_FUNCTION("shieldWeaponDef",    ud.shieldWeaponDef,    WeaponDefToID);
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
 
-	ADD_FUNCTION("type",         ud, GetTypeString); // backward compability (TODO: find a way to print a warning when used!)
+	ADD_FUNCTION("type",         ud, GetTypeString); // backward compatibility (TODO: find a way to print a warning when used!)
 	ADD_FUNCTION("isBuilding",   ud, IsBuildingUnit);
 	ADD_FUNCTION("isFactory",    ud, IsFactoryUnit);
 	ADD_FUNCTION("isFighter",    ud, IsFighterUnit);
@@ -839,7 +836,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_FLOAT("minAirBasePower", ud.minAirBasePower);
 
-//	MoveData* movedata;
 //	unsigned char* yardmapLevels[6];
 //	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
 

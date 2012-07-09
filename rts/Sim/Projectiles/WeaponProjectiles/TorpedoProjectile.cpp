@@ -117,10 +117,10 @@ void CTorpedoProjectile::Update()
 				if (target) {
 					float3 targPos;
 
-					if ((target->midPos - pos).SqLength() < 150 * 150 || !owner()) {
-						targPos = target->midPos;
+					if ((target->aimPos - pos).SqLength() < 150 * 150 || !owner()) {
+						targPos = target->aimPos;
 					} else {
-						targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
+						targPos = helper->GetUnitErrorPos(target, owner()->allyteam, true);
 					}
 
 					if (!weaponDef->submissile && targPos.y > 0) {

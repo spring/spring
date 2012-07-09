@@ -48,19 +48,23 @@
 #ifdef interface
 	#undef interface
 #endif
-#include "Server/MsgStrings.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/CRC.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/MsgStrings.h"
 #include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoReader.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
+#ifndef DEDICATED
+#include "lib/luasocket/src/restrictions.h"
+#endif
 
 
+#define ALLOW_DEMO_GODMODE
 #define PKTCACHE_VECSIZE 1000
 
 using netcode::RawPacket;
@@ -168,7 +172,6 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 		autohostip = "127.0.0.1";
 	}
 	const int autohostport = configHandler->GetInt("AutohostPort");
-
 	if (autohostport > 0) {
 		AddAutohostInterface(autohostip, autohostport);
 	}
@@ -292,6 +295,10 @@ void CGameServer::AddLocalClient(const std::string& myName, const std::string& m
 
 void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int autohostPort)
 {
+#ifndef DEDICATED
+	//disallow luasockets access to autohost interface
+	luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, autohostIP.c_str(), autohostPort, false);
+#endif
 	if (!hostif) {
 		hostif.reset(new AutohostInterface(autohostIP, autohostPort));
 		if (hostif->IsInitialized()) {
@@ -1091,8 +1098,13 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
 					break;
 				}
+
+				#ifndef ALLOW_DEMO_GODMODE
 				if (!demoReader)
+				#endif
+				{
 					Broadcast(packet); //forward data
+				}
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format("Player %s sent invalid Command: %s") %players[a].name %ex.what()));
 			}
@@ -1107,8 +1119,13 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
 					break;
 				}
+
+				#ifndef ALLOW_DEMO_GODMODE
 				if (!demoReader)
+				#endif
+				{
 					Broadcast(packet); //forward data
+				}
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format("Player %s sent invalid Select: %s") %players[a].name %ex.what()));
 			}
@@ -1357,7 +1374,9 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 						teams[fromTeam_g].active = false;
 						teams[fromTeam_g].leader = -1;
 						std::ostringstream givenAwayMsg;
-						givenAwayMsg << players[player].name << " gave everything to " << players[teams[toTeam].leader].name;
+						const int toLeader = teams[toTeam].leader;
+						const std::string& toLeaderName = (toLeader >= 0) ? players[toLeader].name : UncontrolledPlayerName;
+						givenAwayMsg << players[player].name << " gave everything to " << toLeaderName;
 						Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, givenAwayMsg.str()));
 					}
 					break;
@@ -1804,12 +1823,6 @@ void CGameServer::ServerReadNet()
 
 void CGameServer::GenerateAndSendGameID()
 {
-	// This is where we'll store the ID temporarily.
-	union {
-		unsigned char charArray[16];
-		unsigned int intArray[4];
-	} gameID;
-
 	// First and second dword are time based (current time and load time).
 	gameID.intArray[0] = (unsigned) time(NULL);
 	for (int i = 4; i < 12; ++i)
@@ -1913,7 +1926,11 @@ void CGameServer::StartGame()
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
 	if (hostif)
-		hostif->SendStartPlaying();
+#ifdef DEDICATED
+		hostif->SendStartPlaying(gameID.charArray, demoRecorder->GetName());
+#else
+		hostif->SendStartPlaying(gameID.charArray, "");
+#endif
 	timeLeft=0;
 	lastTick = spring_gettime() - spring_msecs(1);
 	CreateNewFrame(true, false);
@@ -2038,7 +2055,7 @@ void CGameServer::PushAction(const Action& action)
 
 			if (tokens.size() > 1) {
 				const std::string& name = tokens[0];
-				const std::string& password = tokens[1];
+				const std::string& pwd = tokens[1];
 				int team = 0;
 				bool spectator = true;
 				if ( tokens.size() > 2 ) {
@@ -2049,7 +2066,7 @@ void CGameServer::PushAction(const Action& action)
 				}
 				// note: this must only compare by name
 				std::vector<GameParticipant>::iterator participantIter =
-						std::find_if( players.begin(), players.end(), bind( &GameParticipant::name, _1 ) == name );
+						std::find_if( players.begin(), players.end(), boost::bind( &GameParticipant::name, _1 ) == name );
 
 				if (participantIter != players.end()) {
 					const GameParticipant::customOpts &opts = participantIter->GetAllValues();
@@ -2059,22 +2076,27 @@ void CGameServer::PushAction(const Action& action)
 						if(it != opts.end())
 							participantIter->SetValue("origpass", it->second);
 					}
-					participantIter->SetValue("password", password);
-					LOG("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+					participantIter->SetValue("password", pwd);
+					LOG("[%s] changed player/spectator password: \"%s\" \"%s\"", __FUNCTION__, name.c_str(), pwd.c_str());
 				} else {
-					AddAdditionalUser(name, password, false, spectator, team);
-					std::string logstring = "Added ";
-					if ( spectator ) logstring = logstring + "spectator";
-					else logstring = logstring + "player";
-					logstring = logstring + " \"%s\" with password \"%s\", to team %d";
-					LOG(logstring.c_str(), name.c_str(), password.c_str(),team);
+					AddAdditionalUser(name, pwd, false, spectator, team);
+
+					LOG(
+						"[%s] added client \"%s\" with password \"%s\" to team %d (as a %s)",
+						__FUNCTION__, name.c_str(), pwd.c_str(), team, (spectator? "spectator": "player")
+					);
 				}
 			} else {
-				LOG_L(L_WARNING, "Failed to add player/spectator password. usage: /adduser <player-name> <password> [spectator] [team]");
+				LOG_L(L_WARNING,
+					"[%s] failed to add player/spectator password. usage: "
+					"/adduser <player-name> <password> [spectator] [team]",
+					__FUNCTION__
+				);
 			}
 		}
 	}
 	else if (action.command == "kill") {
+		LOG("[%s] server killed", __FUNCTION__);
 		quitServer = true;
 	}
 	else if (action.command == "pause") {
@@ -2246,7 +2268,7 @@ void CGameServer::UpdateLoop()
 			if (players[i].link)
 				players[i].link->Flush();
 		}
-		spring_sleep(spring_msecs(1000)); // now let clients close their connections
+		spring_sleep(spring_msecs(3000)); // now let clients close their connections
 	} CATCH_SPRING_ERRORS
 }
 
@@ -2260,7 +2282,7 @@ void CGameServer::KickPlayer(const int playerNum)
 	if (players[playerNum].link) { // only kick connected players
 		Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
-		players[playerNum].Kill("Kicked from the battle");
+		players[playerNum].Kill("Kicked from the battle", true);
 		UpdateSpeedControl(speedControl);
 		if (hostif)
 			hostif->SendPlayerLeft(playerNum, 2);

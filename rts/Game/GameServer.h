@@ -244,6 +244,11 @@ private:
 
 	spring_time lastBandwidthUpdate;
 	int linkMinPacketSize;
+
+	union {
+		unsigned char charArray[16];
+		unsigned int intArray[4];
+	} gameID;
 };
 
 extern CGameServer* gameServer;

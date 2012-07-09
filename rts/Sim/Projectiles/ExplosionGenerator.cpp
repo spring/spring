@@ -48,7 +48,7 @@ CExpGenSpawnable::CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_E
 
 
 
-static unsigned int GetFlagsFromTable(const LuaTable& table)
+unsigned int CCustomExplosionGenerator::GetFlagsFromTable(const LuaTable& table)
 {
 	unsigned int flags = 0;
 
@@ -62,7 +62,8 @@ static unsigned int GetFlagsFromTable(const LuaTable& table)
 	return flags;
 }
 
-static unsigned int GetFlagsFromHeight(float height, float altitude) {
+unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float altitude)
+{
 	unsigned int flags = 0;
 
 	// note: ranges do not overlap, although code in
@@ -249,7 +250,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	float3 camVect = camera->pos - pos;
 
-	const unsigned int flags = GetFlagsFromHeight(pos.y, altitude);
+	const unsigned int flags = CCustomExplosionGenerator::GetFlagsFromHeight(pos.y, altitude);
 	const bool airExplosion    = ((flags & CCustomExplosionGenerator::SPW_AIR       ) != 0);
 	const bool groundExplosion = ((flags & CCustomExplosionGenerator::SPW_GROUND    ) != 0);
 	const bool waterExplosion  = ((flags & CCustomExplosionGenerator::SPW_WATER     ) != 0);

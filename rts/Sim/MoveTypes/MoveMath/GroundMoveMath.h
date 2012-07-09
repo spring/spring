@@ -11,8 +11,8 @@
 class CGroundMoveMath :	public CMoveMath {
 	CR_DECLARE(CGroundMoveMath);
 public:
-	float SpeedMod(const MoveData& moveData, float height, float slope) const;
-	float SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const;
+	float SpeedMod(const MoveDef& moveDef, float height, float slope) const;
+	float SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const;
 
 	float yLevel(int xSquare, int zSquare) const;
 	float yLevel(const float3& pos) const;

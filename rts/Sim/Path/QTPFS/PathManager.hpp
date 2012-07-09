@@ -12,9 +12,17 @@
 #include "PathCache.hpp"
 #include "PathSearch.hpp"
 
-struct MoveData;
+struct MoveDef;
 struct SRectangle;
 class CSolidObject;
+
+#ifdef QTPFS_ENABLE_THREADED_UPDATE
+namespace boost {
+	class thread;
+	class mutex;
+	class condition_variable;
+};
+#endif
 
 namespace QTPFS {
 	struct QTNode;
@@ -23,7 +31,10 @@ namespace QTPFS {
 		PathManager();
 		~PathManager();
 
+		unsigned int GetPathFinderType() const { return PFS_TYPE_QTPFS; }
 		boost::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
+
+		bool PathUpdated(unsigned int pathID);
 
 		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2);
 		void Update();
@@ -31,7 +42,7 @@ namespace QTPFS {
 		void DeletePath(unsigned int pathID);
 
 		unsigned int RequestPath(
-			const MoveData* moveData,
+			const MoveDef* moveDef,
 			const float3& sourcePos,
 			const float3& targetPos,
 			float radius,
@@ -56,14 +67,15 @@ namespace QTPFS {
 
 		static NodeLayer* GetSerializingNodeLayer() { return serializingNodeLayer; }
 
-		static const unsigned int MAX_UPDATE_DELAY = 10;
-		static const unsigned int MAX_TEAM_SEARCHES = 10;
+		static const unsigned int LAYERS_PER_UPDATE =  5;
+		static const unsigned int MAX_TEAM_SEARCHES = 25;
 		static const unsigned int NUM_SPEEDMOD_BINS = 20;
 
 		static const float MIN_SPEEDMOD_VALUE;
 		static const float MAX_SPEEDMOD_VALUE;
 
 	private:
+		void ThreadUpdate();
 		void Load();
 
 		boost::uint64_t GetMemFootPrint() const;
@@ -71,8 +83,7 @@ namespace QTPFS {
 		typedef void (PathManager::*MemberFunc)(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const SRectangle& rect,
-			bool wantTesselation
+			const SRectangle& rect
 		);
 		typedef std::map<unsigned int, unsigned int> PathTypeMap;
 		typedef std::map<unsigned int, unsigned int>::iterator PathTypeMapIt;
@@ -83,24 +94,27 @@ namespace QTPFS {
 		typedef std::list<IPathSearch*> PathSearchList;
 		typedef std::list<IPathSearch*>::iterator PathSearchListIt;
 
-		void SpawnBoostThreads(MemberFunc f, const SRectangle& r, bool b);
+		void SpawnBoostThreads(MemberFunc f, const SRectangle& r);
 
-		void InitNodeLayersThreaded(const SRectangle& rect, bool haveCacheDir);
+		void InitNodeLayersThreaded(const SRectangle& rect);
 		void UpdateNodeLayersThreaded(const SRectangle& rect);
 		void InitNodeLayersThread(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const SRectangle& rect,
-			bool haveCacheDir
+			const SRectangle& rect
 		);
 		void UpdateNodeLayersThread(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const SRectangle& rect,
-			bool wantTesselation
+			const SRectangle& rect
 		);
 		void InitNodeLayer(unsigned int layerNum, const SRectangle& rect);
-		void UpdateNodeLayer(unsigned int layerNum, const SRectangle& r, bool wantTesselation);
+		void UpdateNodeLayer(unsigned int layerNum, const SRectangle& r);
+
+		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
+		void QueueNodeLayerUpdates(const SRectangle& r);
+		void ExecQueuedNodeLayerUpdates(unsigned int layerNum);
+		#endif
 
 		void ExecuteQueuedSearches(unsigned int pathType);
 		void QueueDeadPathSearches(unsigned int pathType);
@@ -108,7 +122,7 @@ namespace QTPFS {
 		unsigned int QueueSearch(
 			const IPath* oldPath,
 			const CSolidObject* object,
-			const MoveData* moveData,
+			const MoveDef* moveDef,
 			const float3& sourcePoint,
 			const float3& targetPoint,
 			const float radius,
@@ -149,6 +163,16 @@ namespace QTPFS {
 		unsigned int maxNumLeafNodes;
 
 		boost::uint32_t pfsCheckSum;
+
+		bool layersInited;
+		bool haveCacheDir;
+
+		#ifdef QTPFS_ENABLE_THREADED_UPDATE
+		boost::thread* updateThread;
+		boost::mutex* mutexThreadUpdate;
+		boost::condition_variable* condThreadUpdate;
+		boost::condition_variable* condThreadUpdated;
+		#endif
 	};
 };
 

@@ -9,7 +9,6 @@
 
 #include "KeyBindings.h"
 #include "KeyBindingsLog.h"
-#include "Game/GameSetup.h"
 #include "Sim/Misc/Team.h"
 #include "Lua/LuaDefs.h"
 #include "Lua/LuaCallInCheck.h"
@@ -114,7 +113,9 @@ bool CKeyAutoBinder::LoadCode(lua_State *L, const string& code, const string& de
 		lua_pop(L, 1);
 		return false;
 	}
+	SetRunning(L, true); // just for the sake of consistency
 	error = lua_pcall(L, 0, 0, 0);
+	SetRunning(L, false);
 	if (error != 0) {
 		LOG_L(L_ERROR, "Running: %s", lua_tostring(L, -1));
 		lua_pop(L, 1);

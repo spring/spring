@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <limits>
+
 #include "System/mmgr.h"
 
 #include "InterceptHandler.h"
@@ -147,20 +149,25 @@ void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
 
 float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy)
 {
-	float minRange = 99999999;
+	float minRange = std::numeric_limits<float>::max();
 	float3 tempDir;
 
 	for (std::list<CPlasmaRepulser*>::iterator wi = repulsors.begin(); wi != repulsors.end(); ++wi) {
 		CPlasmaRepulser* shield = *wi;
-		if(shield->weaponDef->shieldInterceptType & emitter->weaponDef->interceptedByShieldType){
-			float dist = shield->NewBeam(emitter, start, dir, length, tempDir);
-			if ((dist > 0) && (dist < minRange)) {
-				minRange = dist;
-				newDir = tempDir;
-				repulsedBy = shield;
-			}
-		}
+
+		if ((shield->weaponDef->shieldInterceptType & emitter->weaponDef->interceptedByShieldType) == 0)
+			continue;
+
+		const float dist = shield->NewBeam(emitter, start, dir, length, tempDir);
+
+		if (dist <=     0.0f) continue;
+		if (dist >= minRange) continue;
+
+		minRange = dist;
+		newDir = tempDir;
+		repulsedBy = shield;
 	}
+
 	return minRange;
 }
 

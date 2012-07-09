@@ -121,14 +121,12 @@ public:
 
 	void Draw();
 	void Update();
-	void SunChanged(const float3& sunDir);
 
-	void UnitMoved(const CUnit*);
-	void UnitMovedNow(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 	int GetTrackType(const std::string& name);
 
 	void AddExplosion(float3 pos, float damage, float radius, bool);
+	void ExplosionOccurred(const CExplosionEvent& event);
 
 	void AddBuilding(CBuilding* building);
 	void RemoveBuilding(CBuilding* building, GhostBuilding* gb);
@@ -138,6 +136,7 @@ public:
 	bool GetDrawDecals() const { return drawDecals; }
 	void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } }
 
+public:
 	bool WantsEvent(const std::string& eventName) {
 		return 
 			(eventName == "UnitMoved") ||
@@ -146,7 +145,8 @@ public:
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	virtual void ExplosionOccurred(const CExplosionEvent& event);
+	void SunChanged(const float3& sunDir);
+	void UnitMoved(const CUnit*);
 
 private:
 	void LoadDecalShaders();
@@ -159,6 +159,9 @@ private:
 	void AddScars();
 	void DrawScars();
 
+	void UnitMovedNow(CUnit* unit);
+
+private:
 	unsigned int scarTex;
 	unsigned int decalLevel;
 	bool groundScarAlphaFade;

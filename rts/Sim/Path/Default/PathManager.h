@@ -14,7 +14,7 @@ class CSolidObject;
 class CPathFinder;
 class CPathEstimator;
 class CPathFinderDef;
-struct MoveData;
+struct MoveDef;
 class CMoveMath;
 
 class CPathManager: public IPathManager {
@@ -22,16 +22,17 @@ public:
 	CPathManager();
 	~CPathManager();
 
+	unsigned int GetPathFinderType() const { return PFS_TYPE_DEFAULT; }
 	boost::uint32_t GetPathCheckSum() const;
 
 	void Update();
 	void UpdatePath(const CSolidObject*, unsigned int);
 
-	void DeletePath(unsigned int pathId);
+	void DeletePath(unsigned int pathID);
 
 
 	float3 NextWayPoint(
-		unsigned int pathId,
+		unsigned int pathID,
 		float3 callerPos,
 		float minDistance = 0.0f,
 		int numRetries = 0,
@@ -40,7 +41,7 @@ public:
 	);
 
 	unsigned int RequestPath(
-		const MoveData* moveData,
+		const MoveDef* moveDef,
 		const float3& startPos,
 		const float3& goalPos,
 		float goalRadius = 8.0f,
@@ -50,24 +51,24 @@ public:
 
 	/**
 	 * Returns waypoints of the max-resolution path segments.
-	 * @param pathId
+	 * @param pathID
 	 *     The path-id returned by RequestPath.
 	 * @param points
 	 *     The list of detail waypoints.
 	 */
-	void GetDetailedPath(unsigned pathId, std::vector<float3>& points) const;
+	void GetDetailedPath(unsigned pathID, std::vector<float3>& points) const;
 
 	/**
 	 * Returns waypoints of the max-resolution path segments as a square list.
 	 *
-	 * @param pathId
+	 * @param pathID
 	 *     The path-id returned by RequestPath.
 	 * @param points
 	 *     The list of detail waypoints.
 	 */
-	void GetDetailedPathSquares(unsigned pathId, std::vector<int2>& points) const;
+	void GetDetailedPathSquares(unsigned pathID, std::vector<int2>& points) const;
 
-	void GetPathWayPoints(unsigned int pathId, std::vector<float3>& points, std::vector<int>& starts) const;
+	void GetPathWayPoints(unsigned int pathID, std::vector<float3>& points, std::vector<int>& starts) const;
 
 	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
 
@@ -86,7 +87,7 @@ public:
 
 private:
 	unsigned int RequestPath(
-		const MoveData* moveData,
+		const MoveDef* moveDef,
 		const float3& startPos,
 		const float3& goalPos,
 		CPathFinderDef* peDef,
@@ -95,11 +96,11 @@ private:
 	);
 
 	struct MultiPath {
-		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveData* moveData)
+		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveDef* moveDef)
 			: searchResult(IPath::Error)
 			, start(pos)
 			, peDef(def)
-			, moveData(moveData)
+			, moveDef(moveDef)
 			, finalGoal(ZeroVector)
 			, caller(NULL)
 		{}
@@ -115,7 +116,7 @@ private:
 		// Request definition
 		const float3 start;
 		const CPathFinderDef* peDef;
-		const MoveData* moveData;
+		const MoveDef* moveDef;
 
 		// Additional information.
 		float3 finalGoal;
@@ -131,7 +132,7 @@ private:
 	CPathEstimator* lowResPE;
 
 	std::map<unsigned int, MultiPath*> pathMap;
-	unsigned int nextPathId;
+	unsigned int nextPathID;
 };
 
 #endif

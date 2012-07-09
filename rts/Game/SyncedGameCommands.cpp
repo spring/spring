@@ -80,8 +80,9 @@ public:
 class GodModeActionExecutor : public ISyncedActionExecutor {
 public:
 	GodModeActionExecutor() : ISyncedActionExecutor("GodMode",
-			"Enables/Disables god-mode, which allows all players"
-			" (even spectators) to control all units", true) {}
+			"Enables/Disables god-mode, which allows all players "
+			"(even spectators) to control all units (even during "
+			"replays, which will DESYNC them)", true) {}
 
 	bool Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->godMode, action.GetArgs());
@@ -261,32 +262,42 @@ public:
 			" a chat message to Lua-rules") {}
 
 	bool Execute(const SyncedAction& action) const {
-		if (gs->frameNum > 1) { //TODO still needed???
-			if ((action.GetArgs() == "reload") && (action.GetPlayerID() == 0)) {
-				if (!gs->cheatEnabled) {
-					LOG_L(L_WARNING, "Cheating required to reload synced scripts");
-				} else {
-					CLuaRules::FreeHandler();
-					CLuaRules::LoadHandler();
-					if (luaRules) {
-						LOG("LuaRules reloaded");
-					} else {
-						LOG_L(L_ERROR, "LuaRules reload failed");
-					}
-				}
-			} else if ((action.GetArgs() == "disable") && (action.GetPlayerID() == 0)) {
-				if (!gs->cheatEnabled) {
-					LOG_L(L_WARNING, "Cheating required to disable synced scripts");
-				} else {
-					CLuaRules::FreeHandler();
-					LOG("LuaRules disabled");
-				}
-			} else {
-				if (luaRules) luaRules->GotChatMsg(action.GetArgs(), action.GetPlayerID());
-			}
-		} else {
+		if (gs->frameNum <= 1) {
+			// TODO still needed???
 			LOG_L(L_WARNING, "/%s: cannot be called before gameframe #1", GetCommand().c_str());
+			return false;
 		}
+
+		// NOTE:
+		//     previously only the host player (ID == 0) was allowed to issue these actions
+		//     prior to some server changes they worked even in demos with that restriction,
+		//     but this is no longer the case so we now let any player execute them (for MP
+		//     it does not matter who does so since they are not meant to be used there ITFP
+		//     and no less sync-safe)
+		if (action.GetArgs() == "reload") {
+			if (!gs->cheatEnabled) {
+				LOG_L(L_WARNING, "Cheating required to reload synced scripts");
+			} else {
+				CLuaRules::FreeHandler();
+				CLuaRules::LoadHandler();
+
+				if (luaRules) {
+					LOG("LuaRules reloaded");
+				} else {
+					LOG_L(L_ERROR, "LuaRules reload failed");
+				}
+			}
+		} else if (action.GetArgs() == "disable") {
+			if (!gs->cheatEnabled) {
+				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
+			} else {
+				CLuaRules::FreeHandler();
+				LOG("LuaRules disabled");
+			}
+		} else if (luaRules) {
+			luaRules->GotChatMsg(action.GetArgs(), action.GetPlayerID());
+		}
+
 		return true;
 	}
 };
@@ -299,36 +310,42 @@ public:
 			" a chat message to Lua-Gaia") {}
 
 	bool Execute(const SyncedAction& action) const {
-		if (gs->frameNum > 1) { //TODO still needed???
-			if (gs->useLuaGaia) {
-				if ((action.GetArgs() == "reload") && (action.GetPlayerID() == 0)) {
-					if (!gs->cheatEnabled) {
-						LOG_L(L_WARNING, "Cheating required to reload synced scripts");
-					} else {
-						CLuaGaia::FreeHandler();
-						CLuaGaia::LoadHandler();
-						if (luaGaia) {
-							LOG("LuaGaia reloaded");
-						} else {
-							LOG_L(L_ERROR, "LuaGaia reload failed");
-						}
-					}
-				} else if ((action.GetArgs() == "disable") && (action.GetPlayerID() == 0)) {
-					if (!gs->cheatEnabled) {
-						LOG_L(L_WARNING, "Cheating required to disable synced scripts");
-					} else {
-						CLuaGaia::FreeHandler();
-						LOG("LuaGaia disabled");
-					}
-				} else if (luaGaia) {
-					luaGaia->GotChatMsg(action.GetArgs(), action.GetPlayerID());
+		if (gs->frameNum <= 1) {
+			// TODO still needed???
+			LOG_L(L_WARNING, "/%s: cannot be called before gameframe #1", GetCommand().c_str());
+			return false;
+		}
+
+		if (!gs->useLuaGaia) {
+			return false;
+		}
+
+		if (action.GetArgs() == "reload") {
+			if (!gs->cheatEnabled) {
+				LOG_L(L_WARNING, "Cheating required to reload synced scripts");
+			} else {
+				CLuaGaia::FreeHandler();
+				CLuaGaia::LoadHandler();
+
+				if (luaGaia) {
+					LOG("LuaGaia reloaded");
 				} else {
-					LOG("LuaGaia disabled");
+					LOG_L(L_ERROR, "LuaGaia reload failed");
 				}
 			}
+		} else if (action.GetArgs() == "disable") {
+			if (!gs->cheatEnabled) {
+				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
+			} else {
+				CLuaGaia::FreeHandler();
+				LOG("LuaGaia disabled");
+			}
+		} else if (luaGaia) {
+			luaGaia->GotChatMsg(action.GetArgs(), action.GetPlayerID());
 		} else {
-			LOG_L(L_WARNING, "/%s: cannot be called before gameframe #1", GetCommand().c_str());
+			LOG("LuaGaia disabled");
 		}
+
 		return true;
 	}
 };

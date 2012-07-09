@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ copyright notice, this list of conditions and the
 following disclaimer in the documentation and/or other
 materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
 contributors may be used to endorse or promote products
 derived from this software without specific prior
-written permission of the ASSIMP Development Team.
+written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AssimpPCH.h"
 #ifndef ASSIMP_BUILD_NO_DAE_IMPORTER
 
-#include "../include/aiAnim.h"
+#include "../include/assimp/anim.h"
 #include "ColladaLoader.h"
 #include "ColladaParser.h"
 
@@ -230,13 +230,13 @@ void ColladaLoader::ResolveNodeInstances( const ColladaParser& pParser, const Co
 	{
 		// find the corresponding node in the library
 		const ColladaParser::NodeLibrary::const_iterator itt = pParser.mNodeLibrary.find((*it).mNode);
-		Collada::Node* nd = itt == pParser.mNodeLibrary.end() ? NULL : (*itt).second;
+		const Collada::Node* nd = itt == pParser.mNodeLibrary.end() ? NULL : (*itt).second;
 
 		// FIX for http://sourceforge.net/tracker/?func=detail&aid=3054873&group_id=226462&atid=1067632
 		// need to check for both name and ID to catch all. To avoid breaking valid files,
 		// the workaround is only enabled when the first attempt to resolve the node has failed.
 		if (!nd) {
-			nd = const_cast<Collada::Node*>(FindNode(pParser.mRootNode,(*it).mNode));
+			nd = FindNode(pParser.mRootNode,(*it).mNode);
 		}
 		if (!nd) 
 			DefaultLogger::get()->error("Collada: Unable to resolve reference to instanced node " + (*it).mNode);
@@ -619,7 +619,9 @@ aiMesh* ColladaLoader::CreateMesh( const ColladaParser& pParser, const Collada::
 
 		// build a temporary array of pointers to the start of each vertex's weights
 		typedef std::vector< std::pair<size_t, size_t> > IndexPairVector;
-		std::vector<IndexPairVector::const_iterator> weightStartPerVertex( pSrcController->mWeightCounts.size());
+		std::vector<IndexPairVector::const_iterator> weightStartPerVertex;
+		weightStartPerVertex.resize(pSrcController->mWeightCounts.size(),pSrcController->mWeights.end());
+
 		IndexPairVector::const_iterator pit = pSrcController->mWeights.begin();
 		for( size_t a = 0; a < pSrcController->mWeightCounts.size(); ++a)
 		{
@@ -1084,8 +1086,9 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
 
 		for( size_t a = 0; a < resultTrafos.size(); ++a)
 		{
-			const aiMatrix4x4& mat = resultTrafos[a];
+			aiMatrix4x4 mat = resultTrafos[a];
 			double time = double( mat.d4); // remember? time is stored in mat.d4
+      mat.d4 = 1.0f;
 
 			dstAnim->mPositionKeys[a].mTime = time;
 			dstAnim->mRotationKeys[a].mTime = time;
@@ -1117,7 +1120,7 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
 
 // ------------------------------------------------------------------------------------------------
 // Add a texture to a material structure
-void ColladaLoader::AddTexture ( Assimp::MaterialHelper& mat, const ColladaParser& pParser,
+void ColladaLoader::AddTexture ( aiMaterial& mat, const ColladaParser& pParser,
 	const Collada::Effect& effect,
 	const Collada::Sampler& sampler,
 	aiTextureType type, unsigned int idx)
@@ -1185,7 +1188,7 @@ void ColladaLoader::FillMaterials( const ColladaParser& pParser, aiScene* /*pSce
 	for (std::vector<std::pair<Collada::Effect*, aiMaterial*> >::iterator it = newMats.begin(),
 		end = newMats.end(); it != end; ++it)
 	{
-		MaterialHelper&  mat = (MaterialHelper&)*it->second; 
+		aiMaterial&  mat = (aiMaterial&)*it->second; 
 		Collada::Effect& effect = *it->first;
 
 		// resolve shading mode
@@ -1239,7 +1242,7 @@ void ColladaLoader::FillMaterials( const ColladaParser& pParser, aiScene* /*pSce
 
 		// transparency, a very hard one. seemingly not all files are following the
 		// specification here .. but we can trick.
-		if (effect.mTransparency > 0.f && effect.mTransparency < 1.f) {
+		if (effect.mTransparency >= 0.f && effect.mTransparency < 1.f) {
 			effect.mTransparency = 1.f- effect.mTransparency;
 			mat.AddProperty( &effect.mTransparency, 1, AI_MATKEY_OPACITY );
 			mat.AddProperty( &effect.mTransparent, 1, AI_MATKEY_COLOR_TRANSPARENT );
@@ -1260,7 +1263,7 @@ void ColladaLoader::FillMaterials( const ColladaParser& pParser, aiScene* /*pSce
 			AddTexture( mat, pParser, effect, effect.mTexDiffuse, aiTextureType_DIFFUSE);
 
 		if( !effect.mTexBump.mName.empty())
-			AddTexture( mat, pParser, effect, effect.mTexBump, aiTextureType_HEIGHT);
+			AddTexture( mat, pParser, effect, effect.mTexBump, aiTextureType_NORMALS);
 
 		if( !effect.mTexTransparent.mName.empty())
 			AddTexture( mat, pParser, effect, effect.mTexTransparent, aiTextureType_OPACITY);
@@ -1272,7 +1275,7 @@ void ColladaLoader::FillMaterials( const ColladaParser& pParser, aiScene* /*pSce
 
 // ------------------------------------------------------------------------------------------------
 // Constructs materials from the collada material definitions
-void ColladaLoader::BuildMaterials( const ColladaParser& pParser, aiScene* /*pScene*/)
+void ColladaLoader::BuildMaterials( ColladaParser& pParser, aiScene* /*pScene*/)
 {
 	newMats.reserve(pParser.mMaterialLibrary.size());
 
@@ -1280,19 +1283,19 @@ void ColladaLoader::BuildMaterials( const ColladaParser& pParser, aiScene* /*pSc
 	{
 		const Collada::Material& material = matIt->second;
 		// a material is only a reference to an effect
-		ColladaParser::EffectLibrary::const_iterator effIt = pParser.mEffectLibrary.find( material.mEffect);
+		ColladaParser::EffectLibrary::iterator effIt = pParser.mEffectLibrary.find( material.mEffect);
 		if( effIt == pParser.mEffectLibrary.end())
 			continue;
-		const Collada::Effect& effect = effIt->second;
+		Collada::Effect& effect = effIt->second;
 
 		// create material
-		Assimp::MaterialHelper* mat = new Assimp::MaterialHelper;
+		aiMaterial* mat = new aiMaterial;
 		aiString name( matIt->first);
 		mat->AddProperty(&name,AI_MATKEY_NAME);
 
 		// store the material
 		mMaterialIndexByName[matIt->first] = newMats.size();
-		newMats.push_back( std::pair<Collada::Effect*, aiMaterial*>(const_cast<Collada::Effect*>(&effect),mat) );
+		newMats.push_back( std::pair<Collada::Effect*, aiMaterial*>( &effect,mat) );
 	}
 	// ScenePreprocessor generates a default material automatically if none is there.
 	// All further code here in this loader works well without a valid material so
@@ -1300,7 +1303,7 @@ void ColladaLoader::BuildMaterials( const ColladaParser& pParser, aiScene* /*pSc
 #if 0
 	if( newMats.size() == 0)
 	{
-		Assimp::MaterialHelper* mat = new Assimp::MaterialHelper;
+		aiMaterial* mat = new aiMaterial;
 		aiString name( AI_DEFAULT_MATERIAL_NAME );
 		mat->AddProperty( &name, AI_MATKEY_NAME);
 
@@ -1395,6 +1398,33 @@ void ColladaLoader::ConvertPath (aiString& ss)
 		memmove(ss.data,ss.data+7,ss.length);
 		ss.data[ss.length] = '\0';
 	}
+
+  // Maxon Cinema Collada Export writes "file:///C:\andsoon" with three slashes... 
+  // I need to filter it without destroying linux paths starting with "/somewhere"
+  if( ss.data[0] == '/' && isalpha( ss.data[1]) && ss.data[2] == ':' )
+  {
+    ss.length--;
+    memmove( ss.data, ss.data+1, ss.length);
+    ss.data[ss.length] = 0;
+  }
+
+  // find and convert all %xyz special chars
+  char* out = ss.data;
+  for( const char* it = ss.data; it != ss.data + ss.length; /**/ )
+  {
+    if( *it == '%' )
+    {
+      size_t nbr = strtoul16( ++it, &it);
+      *out++ = (char)(nbr & 0xFF);
+    } else
+    {
+      *out++ = *it++;
+    }
+  }
+
+  // adjust length and terminator of the shortened string
+  *out = 0;
+  ss.length = (ptrdiff_t) (out - ss.data);
 }
 
 // ------------------------------------------------------------------------------------------------

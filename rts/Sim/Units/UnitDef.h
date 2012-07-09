@@ -9,11 +9,12 @@
 
 #include "Rendering/Icon.h"
 #include "Sim/Misc/GuiSoundSet.h"
+#include "Sim/Objects/SolidObject.h"
 #include "System/float3.h"
 
 
 struct Command;
-struct MoveData;
+struct MoveDef;
 struct WeaponDef;
 struct S3DModel;
 struct UnitDefImage;
@@ -71,21 +72,21 @@ public:
 	bool IsAllowedTerrainHeight(float rawHeight, float* clampedHeight = NULL) const;
 
 	bool IsTransportUnit()      const { return (transportCapacity > 0 && transportMass > 0.0f); }
-	bool IsImmobileUnit()       const { return (movedata == NULL && !canfly && speed <= 0.0f); }
-	bool IsBuildingUnit()       const { return (IsImmobileUnit() && !yardmaps[0].empty()); }
+	bool IsImmobileUnit()       const { return (moveDef == NULL && !canfly && speed <= 0.0f); }
+	bool IsBuildingUnit()       const { return (IsImmobileUnit() && !yardmap.empty()); }
 	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
 	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
 	bool IsFactoryUnit()        const { return (builder &&  IsBuildingUnit()); }
 	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f); }
-	bool IsGroundUnit()         const { return (movedata != NULL && !canfly); }
-	bool IsAirUnit()            const { return (movedata == NULL &&  canfly); }
+	bool IsGroundUnit()         const { return (moveDef != NULL && !canfly); }
+	bool IsAirUnit()            const { return (moveDef == NULL &&  canfly); }
 	bool IsNonHoveringAirUnit() const { return (IsAirUnit() && !hoverAttack); }
 	bool IsFighterUnit()        const { return (IsNonHoveringAirUnit() && !HasBomberWeapon()); }
 	bool IsBomberUnit()         const { return (IsNonHoveringAirUnit() &&  HasBomberWeapon()); }
 
-	bool WantsMoveData() const { return (canmove && speed > 0.0f && !canfly); }
+	bool WantsMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
 	bool HasBomberWeapon() const;
-	const std::vector<unsigned char>& GetYardMap(unsigned int facing) const { return (yardmaps[facing % /*NUM_FACINGS*/ 4]); }
+	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
 	// NOTE: deprecated, only used by LuaUnitDefs.cpp
 	const char* GetTypeString() const {
@@ -224,7 +225,6 @@ public:
 	std::string scriptPath;     ///< the path of the unit's script, e.g. "scripts/armjeth.cob"
 
 	mutable UnitModelDef modelDef;
-	mutable float3 modelCenterOffset;	///< offset from the unit model's default center point
 
 	bool usePieceCollisionVolumes;		///< if true, projectile collisions are checked per-piece
 
@@ -316,11 +316,11 @@ public:
 	float maxRudder;
 	float crashDrag;
 
-	MoveData* movedata;
+	MoveDef* moveDef;
 
-	///< Iterations of the yardmap for building rotation
+	///< The unrotated yardmap for buildings
 	///< (only non-mobile ground units can have these)
-	std::vector<unsigned char> yardmaps[/*NUM_FACINGS*/ 4];
+	std::vector<YardMapStatus> yardmap;
 
 	///< both sizes expressed in heightmap coordinates; M x N
 	///< footprint covers M*SQUARE_SIZE x N*SQUARE_SIZE elmos

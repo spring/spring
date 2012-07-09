@@ -5,13 +5,31 @@
 
 #include "WorldObject.h"
 #include "System/Vec2.h"
+#include "System/Misc/BitwiseEnum.h"
 #include "System/Sync/SyncedFloat3.h"
 #include "System/Sync/SyncedPrimitive.h"
 
 class CUnit;
 struct DamageArray;
 struct CollisionVolume;
-struct MoveData;
+struct MoveDef;
+
+
+enum YardmapStates {
+	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
+	//YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
+	YARDMAP_YARD        = 1,    // walkable when yard is open
+	YARDMAP_YARDINV     = 2,    // walkable when yard is closed
+	YARDMAP_BLOCKED     = 0xFF & ~YARDMAP_YARDINV, // always block     (not walkable, not buildable)
+
+	// helpers
+	YARDMAP_YARDBLOCKED = YARDMAP_YARD,
+	YARDMAP_YARDFREE    = ~YARDMAP_YARD,
+	YARDMAP_GEO         = YARDMAP_BLOCKED,
+};
+typedef BitwiseEnum<YardmapStates> YardMapStatus;
+
+
 
 class CSolidObject: public CWorldObject {
 public:
@@ -46,6 +64,7 @@ public:
 
 		pos += dv;
 		midPos += dv;
+		aimPos += dv;
 	}
 
 	void Move1D(const float v, int d, bool relative) {
@@ -53,17 +72,19 @@ public:
 
 		pos[d] += dv;
 		midPos[d] += dv;
+		aimPos[d] += dv;
 	}
 
 	// this should be called whenever the direction
 	// vectors are changed (ie. after a rotation) in
 	// eg. movetype code
-	void UpdateMidPos() {
-		const float3 dz = (frontdir * relMidPos.z);
-		const float3 dy = (updir    * relMidPos.y);
-		const float3 dx = (rightdir * relMidPos.x);
-
-		midPos = pos + dz + dy + dx;
+	void UpdateMidAndAimPos() {
+		midPos = GetMidPos();
+		aimPos = GetAimPos();
+	}
+	void SetMidAndAimPos(const float3& mp, const float3& ap, bool relative) {
+		SetMidPos(mp, relative);
+		SetAimPos(ap, relative);
 	}
 
 	/**
@@ -80,10 +101,43 @@ public:
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
+	YardMapStatus GetGroundBlockingAtPos(float3 gpos) const;
+
+private:
+	void SetMidPos(const float3& mp, bool relative) {
+		if (relative) {
+			relMidPos = mp; midPos = GetMidPos();
+		} else {
+			midPos = mp; relMidPos = midPos - pos;
+		}
+	}
+	void SetAimPos(const float3& ap, bool relative) {
+		if (relative) {
+			relAimPos = ap; aimPos = GetAimPos();
+		} else {
+			aimPos = ap; relAimPos = aimPos - pos;
+		}
+	}
+
+	float3 GetMidPos() const {
+		const float3 dz = (frontdir * relMidPos.z);
+		const float3 dy = (updir    * relMidPos.y);
+		const float3 dx = (rightdir * relMidPos.x);
+
+		return (pos + dz + dy + dx);
+	}
+	float3 GetAimPos() const {
+		const float3 dz = (frontdir * relAimPos.z);
+		const float3 dy = (updir    * relAimPos.y);
+		const float3 dx = (rightdir * relAimPos.x);
+
+		return (pos + dz + dy + dx);
+	}
+
 public:
 	float health;
 	float mass;                                 ///< the physical mass of this object (run-time constant)
-	float crushResistance;                      ///< how much MoveData::crushStrength is required to crush this object (run-time constant)
+	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
 
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
@@ -92,8 +146,12 @@ public:
 	bool blockEnemyPushing;                     ///< if false, object can be pushed during enemy collisions even when modrules forbid it
 	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 
-	int xsize;                                  ///< The x-size of this object, according to its footprint.
-	int zsize;                                  ///< The z-size of this object, according to its footprint.
+	bool luaDraw;                               ///< if true, LuaRules::Draw{Unit, Feature} will be called for this object (UNSYNCED)
+	bool noSelect;                              ///< if true, unit/feature can not be selected/mouse-picked by a player (UNSYNCED)
+
+	int xsize;                                  ///< The x-size of this object, according to its footprint. (Note: this is rotated depending on buildFacing!!!)
+	int zsize;                                  ///< The z-size of this object, according to its footprint. (Note: this is rotated depending on buildFacing!!!)
+	int2 footprint;                             ///< The unrotated x-/z-size of this object, according to its footprint.
 
 	SyncedSshort heading;                       ///< Contains the same information as frontdir, but in a short signed integer.
 	PhysicalState physicalState;                ///< The current state of the object within the gameworld. I.e Flying or OnGround.
@@ -108,21 +166,23 @@ public:
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
 
-	MoveData* mobility;                         ///< holds information about the mobility and movedata of this object (if NULL, object is either static or aircraft)
+	MoveDef* moveDef;                           ///< holds information about the mobility of this object (if NULL, object is either static or aircraft)
 	CollisionVolume* collisionVolume;
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)
 	SyncedFloat3 updir;                         ///< object-local y-axis (in WS)
 
-	SyncedFloat3 relMidPos;                     ///< local-space vector from pos to midPos read from model, used to initialize midPos
-	SyncedFloat3 midPos;                        ///< mid-position of model (pos is at the very bottom of the model) in WS, used as center of mass
+	SyncedFloat3 relMidPos;                     ///< local-space vector from pos to midPos (read from model, used to initialize midPos)
+	SyncedFloat3 relAimPos;                     ///< local-space vector from pos to aimPos (read from model, used to initialize aimPos)
+	SyncedFloat3 midPos;                        ///< mid-position of model in WS, used as center of mass (and many other things)
+	SyncedFloat3 aimPos;                        ///< used as aiming position by weapons
 	int2 mapPos;                                ///< current position on GroundBlockingObjectMap
 
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
-	const unsigned char* curYardMap;            ///< Current active yardmap of this object. 0 means no active yardmap => all blocked.
+	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
 	int buildFacing;                            ///< Orientation of footprint, 4 different states
 
 	static const float DEFAULT_MASS;

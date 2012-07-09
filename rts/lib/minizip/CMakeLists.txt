@@ -1,7 +1,7 @@
 # Spring supplied CMake build file
 
 Set(MINIZIP_FIND_QUIETLY TRUE)
-Find_Package(MiniZip)
+FIND_PACKAGE_STATIC(MiniZip)
 
 If     (MINIZIP_FOUND)
 	# Use the system supplied MiniZip library

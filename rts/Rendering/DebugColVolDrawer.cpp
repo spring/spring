@@ -15,11 +15,13 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
 
-static float3 defaultColVolColor(0.45f, 0.0f, 0.45f);
+static const float3 DEFAULT_VOLUME_COLOR = float3(0.45f, 0.0f, 0.45f);
+static const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
+static unsigned int volumeDisplayListIDs[3] = {0, 0, 0};
 
 static inline void DrawCollisionVolume(const CollisionVolume* vol)
 {
-	static unsigned int listIDs[3] = {0, 0, 0};
+	glPushMatrix();
 
 	switch (vol->GetVolumeType()) {
 		case CollisionVolume::COLVOL_TYPE_FOOTPRINT:
@@ -30,7 +32,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 			// scaled sphere: radius, slices, stacks
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 			glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
-			glWireSphere(&listIDs[0], 20, 20);
+			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
 		} break;
 		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
 			// scaled cylinder: base-radius, top-radius, height, slices, stacks
@@ -58,43 +60,76 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 				} break;
 			}
 
-			glWireCylinder(&listIDs[1], 20, 1.0f);
+			glWireCylinder(&volumeDisplayListIDs[1], 20, 1.0f);
 		} break;
 		case CollisionVolume::COLVOL_TYPE_BOX: {
 			// scaled cube: length, width, height
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 			glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
-			glWireCube(&listIDs[2]);
+			glWireCube(&volumeDisplayListIDs[2]);
 		} break;
 	}
+
+	glPopMatrix();
+}
+
+
+
+static inline void DrawObjectMidPosAndAimPos(const CSolidObject* o)
+{
+	GLUquadricObj* q = gluNewQuadric();
+	glDisable(GL_DEPTH_TEST);
+
+	if (o->aimPos != o->midPos) {
+		// draw the aim-point
+		glPushMatrix();
+		glTranslatef3(o->relAimPos * WORLD_TO_OBJECT_SPACE);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		gluQuadricDrawStyle(q, GLU_FILL);
+		gluSphere(q, 2.0f, 5, 5);
+		glPopMatrix();
+	}
+
+	{
+		// draw the mid-point, keep this transform on the stack
+		glTranslatef3(o->relMidPos * WORLD_TO_OBJECT_SPACE);
+		glColor3f(1.0f, 0.0f, 1.0f);
+		gluQuadricDrawStyle(q, GLU_FILL);
+		gluSphere(q, 2.0f, 5, 5);
+		glColorf3(DEFAULT_VOLUME_COLOR);
+	}
+
+	glEnable(GL_DEPTH_TEST);
+	gluDeleteQuadric(q);
 }
 
 
 static inline void DrawFeatureColVol(const CFeature* f)
 {
-	if (f->collisionVolume && !f->collisionVolume->IsDisabled()) {
-		if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) return;
-		if (!camera->InView(f->pos, f->drawRadius)) return;
+	const CollisionVolume* v = f->collisionVolume;
 
-		glPushMatrix();
-			glMultMatrixf(f->transMatrix.m);
-			glTranslatef3(f->relMidPos * float3(-1.0f, 1.0f, 1.0f));
+	if (v == NULL) return;
+	if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) return;
+	if (!camera->InView(f->pos, f->drawRadius)) return;
 
-			GLUquadricObj* q = gluNewQuadric();
-			{
-				// draw the centerpos
-				glDisable(GL_DEPTH_TEST);
-				glColor3f(1.0f, 0.0f, 1.0f);
-				gluQuadricDrawStyle(q, GLU_FILL);
-				gluSphere(q, 2.0f, 5, 5);
-				glColorf3(defaultColVolColor);
-				glEnable(GL_DEPTH_TEST);
-			}
-			gluDeleteQuadric(q);
+	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
+	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - f->radius) >= 1.0f);
 
-			DrawCollisionVolume(f->collisionVolume);
-		glPopMatrix();
-	}
+	glPushMatrix();
+		glMultMatrixf(f->transMatrix.m);
+		DrawObjectMidPosAndAimPos(f);
+
+		if (!v->IsDisabled()) {
+			DrawCollisionVolume(v);
+		}
+
+		if (vCustomType || vCustomDims) {
+			// assume this is a custom volume
+			glColor3f(0.5f, 0.5f, 0.5f);
+			glScalef(f->radius, f->radius, f->radius);
+			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
+		}
+	glPopMatrix();
 }
 
 
@@ -117,7 +152,7 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 			DrawCollisionVolume(p->GetCollisionVolume());
 
 			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
-				glColorf3(defaultColVolColor);
+				glColorf3(DEFAULT_VOLUME_COLOR);
 			}
 		}
 	glPopMatrix();
@@ -128,45 +163,45 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 }
 
 
-static inline void DrawUnitColVol(const CUnit* unit)
+static inline void DrawUnitColVol(const CUnit* u)
 {
-	if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) return;
-	if (!camera->InView(unit->drawMidPos, unit->drawRadius)) return;
+	if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) return;
+	if (!camera->InView(u->drawMidPos, u->drawRadius)) return;
+
+	const CollisionVolume* v = u->collisionVolume;
+	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
+	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - u->radius) >= 1.0f);
 
 	glPushMatrix();
-		glMultMatrixf(unit->GetTransformMatrix());
-		glTranslatef3(unit->relMidPos * float3(-1.0f, 1.0f, 1.0f));
+		glMultMatrixf(u->GetTransformMatrix());
+		DrawObjectMidPosAndAimPos(u);
 
-		GLUquadricObj* q = gluNewQuadric();
-		{
-			// draw the aimpoint
-			glDisable(GL_DEPTH_TEST);
-			glColor3f(1.0f, 0.0f, 1.0f);
-			gluQuadricDrawStyle(q, GLU_FILL);
-			gluSphere(q, 2.0f, 5, 5);
-			glColorf3(defaultColVolColor);
-			glEnable(GL_DEPTH_TEST);
-		}
-		gluDeleteQuadric(q);
-
-		if (unit->unitDef->usePieceCollisionVolumes) {
-			//! draw only the piece volumes for less clutter
-			CMatrix44f mat(unit->relMidPos * float3(0.0f, -1.0f, 0.0f));
-			DrawUnitDebugPieceTree(unit->localmodel->GetRoot(), unit->lastAttackedPiece, unit->lastAttackedPieceFrame, mat);
+		if (u->unitDef->usePieceCollisionVolumes) {
+			// draw only the piece volumes for less clutter
+			CMatrix44f mat(u->relMidPos * float3(0.0f, -1.0f, 0.0f));
+			DrawUnitDebugPieceTree(u->localmodel->GetRoot(), u->lastAttackedPiece, u->lastAttackedPieceFrame, mat);
 		} else {
-			if (!unit->collisionVolume->IsDisabled()) {
-				//! make it fade red under attack
-				if (unit->lastAttack > 0 && ((gs->frameNum - unit->lastAttack) < 150)) {
-					glColor3f((1.0f - ((gs->frameNum - unit->lastAttack) / 150.0f)), 0.0f, 0.0f);
+			if (!v->IsDisabled()) {
+				// make it fade red under attack
+				if (u->lastAttack > 0 && ((gs->frameNum - u->lastAttack) < 150)) {
+					glColor3f((1.0f - ((gs->frameNum - u->lastAttack) / 150.0f)), 0.0f, 0.0f);
 				}
 
-				DrawCollisionVolume(unit->collisionVolume);
+				DrawCollisionVolume(v);
 
-				if (unit->lastAttack > 0 && ((gs->frameNum - unit->lastAttack) < 150)) {
-					glColorf3(defaultColVolColor);
+				if (u->lastAttack > 0 && ((gs->frameNum - u->lastAttack) < 150)) {
+					glColorf3(DEFAULT_VOLUME_COLOR);
 				}
 			}
 		}
+
+		if (vCustomType || vCustomDims) {
+			// assume this is a custom volume
+			glColor3f(0.5f, 0.5f, 0.5f);
+			glScalef(u->radius, u->radius, u->radius);
+			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
+		}
+
 	glPopMatrix();
 }
 

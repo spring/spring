@@ -1,9 +1,9 @@
 /*
 ---------------------------------------------------------------------------
-Open Asset Import Library (ASSIMP)
+Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2012, assimp team
 
 All rights reserved.
 
@@ -20,10 +20,10 @@ conditions are met:
   following disclaimer in the documentation and/or other
   materials provided with the distribution.
 
-* Neither the name of the ASSIMP team, nor the names of its
+* Neither the name of the assimp team, nor the names of its
   contributors may be used to endorse or promote products
   derived from this software without specific prior
-  written permission of the ASSIMP Development Team.
+  written permission of the assimp team.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
@@ -625,7 +625,7 @@ void SMDImporter::CreateOutputMaterials()
 
 	for (unsigned int iMat = 0; iMat < pScene->mNumMaterials;++iMat)
 	{
-		MaterialHelper* pcMat = new MaterialHelper();
+		aiMaterial* pcMat = new aiMaterial();
 		pScene->mMaterials[iMat] = pcMat;
 
 		aiString szName;
@@ -645,7 +645,7 @@ void SMDImporter::CreateOutputMaterials()
 	{
 		pScene->mNumMaterials = 1;
 
-		MaterialHelper* pcHelper = new MaterialHelper();
+		aiMaterial* pcHelper = new aiMaterial();
 		pScene->mMaterials[0] = pcHelper;
 
 		int iMode = (int)aiShadingMode_Gouraud;
@@ -1018,7 +1018,7 @@ bool SMDImporter::ParseFloat(const char* szCurrent,
 	if(!SkipSpaces(&szCurrent))
 		return false;
 
-	*szCurrentOut = fast_atof_move(szCurrent,out);
+	*szCurrentOut = fast_atoreal_move<float>(szCurrent,out);
 	return true;
 }
 
