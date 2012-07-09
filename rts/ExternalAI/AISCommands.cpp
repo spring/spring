@@ -1224,11 +1224,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c->timeOut = cmd->timeOut;
 
 			if (cmd->buildPos_posF3 != NULL) {
-				c->params.push_back(cmd->buildPos_posF3[0]);
-				c->params.push_back(cmd->buildPos_posF3[1]);
-				c->params.push_back(cmd->buildPos_posF3[2]);
+				c->PushPos(cmd->buildPos_posF3);
 			}
-			if (cmd->facing != UNIT_COMMAND_BUILD_NO_FACING) c->params.push_back(cmd->facing);
+			if (cmd->facing != UNIT_COMMAND_BUILD_NO_FACING) c->PushParam(cmd->facing);
 			break;
 		}
 		case COMMAND_UNIT_STOP:
@@ -1248,28 +1246,25 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 		case COMMAND_UNIT_WAIT_TIME:
 		{
 			STimeWaitUnitCommand* cmd = (STimeWaitUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_TIMEWAIT, cmd->options);
+			c = new Command(CMD_TIMEWAIT, cmd->options, cmd->time);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->time);
 			break;
 		}
 		case COMMAND_UNIT_WAIT_DEATH:
 		{
 			SDeathWaitUnitCommand* cmd = (SDeathWaitUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_DEATHWAIT, cmd->options);
+			c = new Command(CMD_DEATHWAIT, cmd->options, cmd->toDieUnitId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toDieUnitId);
 			break;
 		}
 		case COMMAND_UNIT_WAIT_SQUAD:
 		{
 			SSquadWaitUnitCommand* cmd = (SSquadWaitUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_SQUADWAIT, cmd->options);
+			c = new Command(CMD_SQUADWAIT, cmd->options, cmd->numUnits);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->numUnits);
 			break;
 		}
 		case COMMAND_UNIT_WAIT_GATHER:
@@ -1285,9 +1280,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_MOVE, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toPos_posF3[0]);
-			c->params.push_back(cmd->toPos_posF3[1]);
-			c->params.push_back(cmd->toPos_posF3[2]);
+			c->PushPos(cmd->toPos_posF3);
 			break;
 		}
 		case COMMAND_UNIT_PATROL:
@@ -1296,9 +1289,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_PATROL, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toPos_posF3[0]);
-			c->params.push_back(cmd->toPos_posF3[1]);
-			c->params.push_back(cmd->toPos_posF3[2]);
+			c->PushPos(cmd->toPos_posF3);
 			break;
 		}
 		case COMMAND_UNIT_FIGHT:
@@ -1307,18 +1298,15 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_FIGHT, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toPos_posF3[0]);
-			c->params.push_back(cmd->toPos_posF3[1]);
-			c->params.push_back(cmd->toPos_posF3[2]);
+			c->PushPos(cmd->toPos_posF3);
 			break;
 		}
 		case COMMAND_UNIT_ATTACK:
 		{
 			SAttackUnitCommand* cmd = (SAttackUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_ATTACK, cmd->options);
+			c = new Command(CMD_ATTACK, cmd->options, cmd->toAttackUnitId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toAttackUnitId);
 			break;
 		}
 		case COMMAND_UNIT_ATTACK_AREA:
@@ -1327,28 +1315,24 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_ATTACK, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toAttackPos_posF3[0]);
-			c->params.push_back(cmd->toAttackPos_posF3[1]);
-			c->params.push_back(cmd->toAttackPos_posF3[2]);
-			c->params.push_back(cmd->radius);
+			c->PushPos(cmd->toAttackPos_posF3);
+			c->PushParam(cmd->radius);
 			break;
 		}
 		case COMMAND_UNIT_GUARD:
 		{
 			SGuardUnitCommand* cmd = (SGuardUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_GUARD, cmd->options);
+			c = new Command(CMD_GUARD, cmd->options, cmd->toGuardUnitId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toGuardUnitId);
 			break;
 		}
 		case COMMAND_UNIT_GROUP_ADD:
 		{
 			SGroupAddUnitCommand* cmd = (SGroupAddUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_GROUPADD, cmd->options);
+			c = new Command(CMD_GROUPADD, cmd->options, cmd->toGroupId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toGroupId);
 			break;
 		}
 		case COMMAND_UNIT_GROUP_CLEAR:
@@ -1361,28 +1345,25 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 		case COMMAND_UNIT_REPAIR:
 		{
 			SRepairUnitCommand* cmd = (SRepairUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_REPAIR, cmd->options);
+			c = new Command(CMD_REPAIR, cmd->options, cmd->toRepairUnitId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toRepairUnitId);
 			break;
 		}
 		case COMMAND_UNIT_SET_FIRE_STATE:
 		{
 			SSetFireStateUnitCommand* cmd = (SSetFireStateUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_FIRE_STATE, cmd->options);
+			c = new Command(CMD_FIRE_STATE, cmd->options, cmd->fireState);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->fireState);
 			break;
 		}
 		case COMMAND_UNIT_SET_MOVE_STATE:
 		{
 			SSetMoveStateUnitCommand* cmd = (SSetMoveStateUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_MOVE_STATE, cmd->options);
+			c = new Command(CMD_MOVE_STATE, cmd->options, cmd->moveState);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->moveState);
 			break;
 		}
 		case COMMAND_UNIT_SET_BASE:
@@ -1391,9 +1372,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_SETBASE, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->basePos_posF3[0]);
-			c->params.push_back(cmd->basePos_posF3[1]);
-			c->params.push_back(cmd->basePos_posF3[2]);
+			c->PushPos(cmd->basePos_posF3);
 			break;
 		}
 		case COMMAND_UNIT_SELF_DESTROY:
@@ -1406,10 +1385,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 		case COMMAND_UNIT_SET_WANTED_MAX_SPEED:
 		{
 			SSetWantedMaxSpeedUnitCommand* cmd = (SSetWantedMaxSpeedUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_SET_WANTED_MAX_SPEED, cmd->options);
+			c = new Command(CMD_SET_WANTED_MAX_SPEED, cmd->options, cmd->wantedMaxSpeed);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->wantedMaxSpeed);
 			break;
 		}
 		case COMMAND_UNIT_LOAD_UNITS:
@@ -1419,7 +1397,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c->timeOut = cmd->timeOut;
 
 			for (int i = 0; i < cmd->toLoadUnitIds_size; ++i) {
-				c->params.push_back(cmd->toLoadUnitIds[i]);
+				c->PushParam(cmd->toLoadUnitIds[i]);
 			}
 			break;
 		}
@@ -1429,19 +1407,16 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_LOAD_UNITS, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos_posF3[0]);
-			c->params.push_back(cmd->pos_posF3[1]);
-			c->params.push_back(cmd->pos_posF3[2]);
-			c->params.push_back(cmd->radius);
+			c->PushPos(cmd->pos_posF3);
+			c->PushParam(cmd->radius);
 			break;
 		}
 		case COMMAND_UNIT_LOAD_ONTO:
 		{
 			SLoadOntoUnitCommand* cmd = (SLoadOntoUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_LOAD_ONTO, cmd->options);
+			c = new Command(CMD_LOAD_ONTO, cmd->options, cmd->transporterUnitId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->transporterUnitId);
 			break;
 		}
 		case COMMAND_UNIT_UNLOAD_UNITS_AREA:
@@ -1450,10 +1425,8 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_UNLOAD_UNITS, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toPos_posF3[0]);
-			c->params.push_back(cmd->toPos_posF3[1]);
-			c->params.push_back(cmd->toPos_posF3[2]);
-			c->params.push_back(cmd->radius);
+			c->PushPos(cmd->toPos_posF3);
+			c->PushParam(cmd->radius);
 			break;
 		}
 		case COMMAND_UNIT_UNLOAD_UNIT:
@@ -1462,37 +1435,32 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_UNLOAD_UNIT, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toPos_posF3[0]);
-			c->params.push_back(cmd->toPos_posF3[1]);
-			c->params.push_back(cmd->toPos_posF3[2]);
-			c->params.push_back(cmd->toUnloadUnitId);
+			c->PushPos(cmd->toPos_posF3);
+			c->PushParam(cmd->toUnloadUnitId);
 			break;
 		}
 		case COMMAND_UNIT_SET_ON_OFF:
 		{
 			SSetOnOffUnitCommand* cmd = (SSetOnOffUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_ONOFF, cmd->options);
+			c = new Command(CMD_ONOFF, cmd->options, cmd->on ? 1 : 0);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->on ? 1 : 0);
 			break;
 		}
 		case COMMAND_UNIT_RECLAIM_UNIT:
 		{
 			SReclaimUnitUnitCommand* cmd = (SReclaimUnitUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_RECLAIM, cmd->options);
+			c = new Command(CMD_RECLAIM, cmd->options, cmd->toReclaimUnitId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toReclaimUnitId);
 			break;
 		}
 		case COMMAND_UNIT_RECLAIM_FEATURE:
 		{
 			SReclaimFeatureUnitCommand* cmd = (SReclaimFeatureUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_RECLAIM, cmd->options);
+			c = new Command(CMD_RECLAIM, cmd->options, maxUnits + cmd->toReclaimFeatureId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(maxUnits + cmd->toReclaimFeatureId);
 			break;
 		}
 		case COMMAND_UNIT_RECLAIM_AREA:
@@ -1501,19 +1469,16 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_RECLAIM, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos_posF3[0]);
-			c->params.push_back(cmd->pos_posF3[1]);
-			c->params.push_back(cmd->pos_posF3[2]);
-			c->params.push_back(cmd->radius);
+			c->PushPos(cmd->pos_posF3);
+			c->PushParam(cmd->radius);
 			break;
 		}
 		case COMMAND_UNIT_CLOAK:
 		{
 			SCloakUnitCommand* cmd = (SCloakUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_CLOAK, cmd->options);
+			c = new Command(CMD_CLOAK, cmd->options, cmd->cloak ? 1 : 0);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->cloak ? 1 : 0);
 			break;
 		}
 		case COMMAND_UNIT_STOCKPILE:
@@ -1528,10 +1493,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 		{
 			// FIXME
 			SDGunUnitCommand* cmd = (SDGunUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_MANUALFIRE, cmd->options);
+			c = new Command(CMD_MANUALFIRE, cmd->options, cmd->toAttackUnitId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toAttackUnitId);
 			break;
 		}
 		case COMMAND_UNIT_D_GUN_POS:
@@ -1541,9 +1505,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_MANUALFIRE, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos_posF3[0]);
-			c->params.push_back(cmd->pos_posF3[1]);
-			c->params.push_back(cmd->pos_posF3[2]);
+			c->PushPos(cmd->pos_posF3);
 			break;
 		}
 
@@ -1553,37 +1515,32 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_RESTORE, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos_posF3[0]);
-			c->params.push_back(cmd->pos_posF3[1]);
-			c->params.push_back(cmd->pos_posF3[2]);
-			c->params.push_back(cmd->radius);
+			c->PushPos(cmd->pos_posF3);
+			c->PushParam(cmd->radius);
 			break;
 		}
 		case COMMAND_UNIT_SET_REPEAT:
 		{
 			SSetRepeatUnitCommand* cmd = (SSetRepeatUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_REPEAT, cmd->options);
+			c = new Command(CMD_REPEAT, cmd->options, cmd->repeat ? 1 : 0);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->repeat ? 1 : 0);
 			break;
 		}
 		case COMMAND_UNIT_SET_TRAJECTORY:
 		{
 			SSetTrajectoryUnitCommand* cmd = (SSetTrajectoryUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_TRAJECTORY, cmd->options);
+			c = new Command(CMD_TRAJECTORY, cmd->options, cmd->trajectory);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->trajectory);
 			break;
 		}
 		case COMMAND_UNIT_RESURRECT:
 		{
 			SResurrectUnitCommand* cmd = (SResurrectUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_RESURRECT, cmd->options);
+			c = new Command(CMD_RESURRECT, cmd->options, cmd->toResurrectFeatureId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toResurrectFeatureId);
 			break;
 		}
 		case COMMAND_UNIT_RESURRECT_AREA:
@@ -1592,19 +1549,16 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_RESURRECT, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos_posF3[0]);
-			c->params.push_back(cmd->pos_posF3[1]);
-			c->params.push_back(cmd->pos_posF3[2]);
-			c->params.push_back(cmd->radius);
+			c->PushPos(cmd->pos_posF3);
+			c->PushParam(cmd->radius);
 			break;
 		}
 		case COMMAND_UNIT_CAPTURE:
 		{
 			SCaptureUnitCommand* cmd = (SCaptureUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_CAPTURE, cmd->options);
+			c = new Command(CMD_CAPTURE, cmd->options, cmd->toCaptureUnitId);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toCaptureUnitId);
 			break;
 		}
 		case COMMAND_UNIT_CAPTURE_AREA:
@@ -1613,28 +1567,24 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c = new Command(CMD_CAPTURE, cmd->options);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos_posF3[0]);
-			c->params.push_back(cmd->pos_posF3[1]);
-			c->params.push_back(cmd->pos_posF3[2]);
-			c->params.push_back(cmd->radius);
+			c->PushPos(cmd->pos_posF3);
+			c->PushParam(cmd->radius);
 			break;
 		}
 		case COMMAND_UNIT_SET_AUTO_REPAIR_LEVEL:
 		{
 			SSetAutoRepairLevelUnitCommand* cmd = (SSetAutoRepairLevelUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_AUTOREPAIRLEVEL, cmd->options);
+			c = new Command(CMD_AUTOREPAIRLEVEL, cmd->options, cmd->autoRepairLevel);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->autoRepairLevel);
 			break;
 		}
 		case COMMAND_UNIT_SET_IDLE_MODE:
 		{
 			SSetIdleModeUnitCommand* cmd = (SSetIdleModeUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_IDLEMODE, cmd->options);
+			c = new Command(CMD_IDLEMODE, cmd->options, cmd->idleMode);
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->idleMode);
 			break;
 		}
 		case COMMAND_UNIT_CUSTOM:
@@ -1644,7 +1594,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c->timeOut = cmd->timeOut;
 
 			for (int i = 0; i < cmd->params_size; ++i) {
-				c->params.push_back(cmd->params[i]);
+				c->PushParam(cmd->params[i]);
 			}
 			break;
 		}

@@ -574,7 +574,7 @@ Command LuaUtils::ParseCommand(lua_State* L, const char* caller, int idIndex)
 				luaL_error(L, "%s(): bad param table entry", caller);
 			}
 			const float value = lua_tofloat(L, -1);
-			cmd.params.push_back(value);
+			cmd.PushParam(value);
 		}
 	}
 
@@ -610,7 +610,7 @@ Command LuaUtils::ParseCommandTable(lua_State* L, const char* caller, int table)
 				luaL_error(L, "%s(): bad param table entry", caller);
 			}
 			const float value = lua_tofloat(L, -1);
-			cmd.params.push_back(value);
+			cmd.PushParam(value);
 		}
 	}
 	lua_pop(L, 1);

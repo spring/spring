@@ -219,8 +219,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 		CUnit* unit = FindUnitToTransport(pos, radius);
 
 		if (unit && CanTransport(unit)) {
-			Command c2(CMD_LOAD_UNITS, c.options|INTERNAL_ORDER);
-			c2.params.push_back(unit->id);
+			Command c2(CMD_LOAD_UNITS, c.options|INTERNAL_ORDER, unit->id);
 			commandQue.push_front(c2);
 			inCommand = false;
 			SlowUpdate();
@@ -504,11 +503,8 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 	}
 
 	if (canUnload) {
-		Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER);
-		c2.params.push_back(unloadPos.x);
-		c2.params.push_back(unloadPos.y);
-		c2.params.push_back(unloadPos.z);
-		c2.params.push_back(u->id);
+		Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, unloadPos);
+		c2.PushParam(u->id);
 		commandQue.push_front(c2);
 		SlowUpdate();
 	} else {
@@ -551,10 +547,7 @@ void CTransportCAI::UnloadUnits_Drop(Command& c, CTransportUnit* transport)
 	if (canUnload) {
 		if (SpotIsClear(dropSpots.back(), static_cast<CTransportUnit*>(owner)->GetTransportedUnits().front().unit)) {
 			const float3 pos = dropSpots.back();
-			Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER);
-			c2.params.push_back(pos.x);
-			c2.params.push_back(pos.y);
-			c2.params.push_back(pos.z);
+			Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, pos);
 			commandQue.push_front(c2);
 
 			SlowUpdate();
@@ -601,17 +594,11 @@ void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 	const bool canUnload = FindEmptySpot(pos, radius, spread, found, transportee);
 
 	if (canUnload) {
-		Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER);
-		c2.params.push_back(found.x);
-		c2.params.push_back(found.y);
-		c2.params.push_back(found.z);
+		Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, found);
 		commandQue.push_front(c2);
 
 		if (isFirstIteration )	{
-			Command c1(CMD_MOVE, c.options | INTERNAL_ORDER);;
-			c1.params.push_back(pos.x);
-			c1.params.push_back(pos.y);
-			c1.params.push_back(pos.z);
+			Command c1(CMD_MOVE, c.options | INTERNAL_ORDER, pos);
 			commandQue.push_front(c1);
 			startingDropPos = pos;
 		}
@@ -683,9 +670,7 @@ void CTransportCAI::UnloadLand(Command& c)
 						float3 newpos;
 						if (FindEmptySpot(pos, std::max(128.f, unit->radius*4),
 								unit->radius, newpos, unit)) {
-							c.params[0] = newpos.x;
-							c.params[1] = newpos.y;
-							c.params[2] = newpos.z;
+							c.SetPos(0, newpos);
 							SetGoal(newpos + UpVector * unit->model->height, owner->pos);
 							return;
 						}
@@ -959,7 +944,7 @@ bool CTransportCAI::LoadStillValid(CUnit* unit)
 		return true;
 	}
 
-	const float3 cmdPos(cmd.params[0], cmd.params[1], cmd.params[2]);
+	const float3& cmdPos = cmd.GetPos(0);
 
 	if (!static_cast<CTransportUnit*>(owner)->CanLoadUnloadAtPos(cmdPos, unit)) {
 		return false;

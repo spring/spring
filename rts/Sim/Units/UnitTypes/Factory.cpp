@@ -333,10 +333,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		}
 	}
 
-	Command c(CMD_MOVE);
-	c.params.push_back(foundPos.x);
-	c.params.push_back(foundPos.y);
-	c.params.push_back(foundPos.z);
+	Command c(CMD_MOVE, foundPos);
 	unit->commandAI->GiveCommand(c);
 }
 
@@ -376,9 +373,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			}
 		}
 
-		c.params.push_back(tmpPos.x);
-		c.params.push_back(tmpPos.y);
-		c.params.push_back(tmpPos.z);
+		c.PushPos(tmpPos);
 		unit->commandAI->GiveCommand(c);
 	}
 

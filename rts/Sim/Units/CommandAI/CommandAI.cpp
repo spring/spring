@@ -751,10 +751,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 		}
 		if (ci == commandQue.end()) {
 			if (commandQue.empty()) {
-				Command c2(CMD_PATROL, c.options);
-				c2.params.push_back(owner->pos.x);
-				c2.params.push_back(owner->pos.y);
-				c2.params.push_back(owner->pos.z);
+				Command c2(CMD_PATROL, c.options, owner->pos);
 				commandQue.push_back(c2);
 			} else {
 				do {
@@ -765,10 +762,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 						commandQue.push_back(c2);
 						break;
 					} else if (ci == commandQue.begin()) {
-						Command c2(CMD_PATROL, c.options);
-						c2.params.push_back(owner->pos.x);
-						c2.params.push_back(owner->pos.y);
-						c2.params.push_back(owner->pos.z);
+						Command c2(CMD_PATROL, c.options, owner->pos);
 						commandQue.push_back(c2);
 						break;
 					}
@@ -862,7 +856,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 	// make the command
 	Command newCmd((int)c.params[1], (unsigned char)c.params[2]);
 	for (int p = 3; p < (int)c.params.size(); p++) {
-		newCmd.params.push_back(c.params[p]);
+		newCmd.PushParam(c.params[p]);
 	}
 
 	// validate the command
@@ -1364,9 +1358,8 @@ void CCommandAI::DependentDied(CObject* o)
 				Command &c = *qit;
 				int cpos;
 				if (c.IsObjectCommand(cpos) && (c.params[cpos] == CSolidObject::GetDeletingRefID())) {
-					Command removeCmd(CMD_REMOVE, 0);
 					curTag = c.tag;
-					removeCmd.params.push_back(curTag);
+					Command removeCmd(CMD_REMOVE, 0, curTag);
 					ExecuteRemove(removeCmd);
 					break;
 				}
@@ -1483,7 +1476,7 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 		file->lsInt(paramSize);
 		for (int b = 0; b < paramSize; ++b) {
 			if (loading) {
-				c.params.push_back(0.0f);
+				c.PushParam(0.0f);
 			}
 			file->lsFloat(c.params[b]);
 		}
@@ -1497,17 +1490,10 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 	Command& c(commandQue.front());
 	assert(c.GetID() == CMD_FIGHT && c.params.size() >= 3);
 	if (c.params.size() >= 6) {
-		c.params[0] = pos.x;
-		c.params[1] = pos.y;
-		c.params[2] = pos.z;
+		c.SetPos(0, pos);
 	} else {
-		Command c2(CMD_FIGHT, c.options|INTERNAL_ORDER);
-		c2.params.push_back(pos.x);
-		c2.params.push_back(pos.y);
-		c2.params.push_back(pos.z);
-		c2.params.push_back(c.params[0]);
-		c2.params.push_back(c.params[1]);
-		c2.params.push_back(c.params[2]);
+		Command c2(CMD_FIGHT, c.options|INTERNAL_ORDER, pos);
+		c2.PushPos(c.GetPos(0));
 		commandQue.push_front(c2);
 	}
 }
