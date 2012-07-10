@@ -2,6 +2,14 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 
 
+-- 90.0 ---------------------------------------------------------
+
+Unitsync
+ ! fix return in GetInfoMapSize (#2996)
+ - no crashes in unitsync without init any more (#3120)
+Lua
+ - replace Spring.Echo with Spring.Log in most places in cont/
+
 -- 89.0 ---------------------------------------------------------
 Major Changes:
  - LuaSocket
