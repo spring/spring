@@ -7,6 +7,14 @@ Spring changelog
 Unitsync
  ! fix return in GetInfoMapSize (#2996)
  - no crashes in unitsync without init any more (#3120)
+ ! ProcessUnits, GetUnitCount, GetMapCount, GetMapArchiveCount,
+   GetInfoMap, GetPrimaryModInfoCount,GetPrimaryModArchive,
+   GetSideCount, GetModOptionCount, GetCustomOptionCount,
+   GetSkirmishAICount, GetInfoValueInteger, GetInfoValueFloat,
+   GetOptionType, GetOptionNumberDef, GetOptionNumberStep,
+   GetOptionStringMaxLen, GetOptionListCount and GetModValidMapCount
+   returns now -1/-1.0f on error
+
 Lua
  - replace Spring.Echo with Spring.Log in most places in cont/
 
