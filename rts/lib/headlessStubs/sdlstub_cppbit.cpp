@@ -12,10 +12,16 @@
 extern "C" {
 #endif
 
+#if (BOOST_VERSION >= 105000) //boost 1.50 renamed TIME_UTC to TIME_UTC_
+	#define SPRING_UTCTIME boost::TIME_UTC_
+#else
+	#define SPRING_UTCTIME boost::TIME_UTC
+#endif
+
 int stub_sdl_getSystemMilliSeconds() {
 
 	boost::xtime t;
-	boost::xtime_get(&t, boost::TIME_UTC);
+	boost::xtime_get(&t, SPRING_UTCTIME);
 	const int milliSeconds = t.sec * 1000 + (t.nsec / 1000000);   
 	return milliSeconds;
 }
@@ -23,7 +29,7 @@ int stub_sdl_getSystemMilliSeconds() {
 void stub_sdl_sleepMilliSeconds(int milliSeconds) {
 
 	boost::xtime t;
-	boost::xtime_get(&t, boost::TIME_UTC);
+	boost::xtime_get(&t, SPRING_UTCTIME);
 	t.nsec += 1000000 * milliSeconds;
 	boost::thread::sleep(t);
 }
