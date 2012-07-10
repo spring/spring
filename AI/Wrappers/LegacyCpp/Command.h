@@ -121,6 +121,28 @@ private:
 */
 
 public:
+	Command()
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(0)
+	{}
+
+	Command(const Command& c) {
+		*this = c;
+	}
+
+	Command& operator = (const Command& c) {
+		id = c.id;
+		aiCommandId = c.aiCommandId;
+		options = c.options;
+		tag = c.tag;
+		timeOut = c.timeOut;
+		params = c.params;
+		return *this;
+	}
+
 	Command(const float3& pos)
 		: aiCommandId(-1)
 		, options(0)
@@ -164,7 +186,7 @@ public:
 		, timeOut(INT_MAX)
 		, id(cmdID)
 	{
-		params.push_back(param);
+		PushParam(param);
 	}
 
 	Command(const int cmdID, const unsigned char cmdOptions, const float3& pos)
@@ -184,35 +206,8 @@ public:
 		, timeOut(INT_MAX)
 		, id(cmdID)
 	{
-		params.push_back(param);
+		PushParam(param);
 		PushPos(pos);
-	}
-
-	Command()
-		: aiCommandId(-1)
-		, options(0)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(0)
-	{}
-
-	Command(const Command& c)
-		: aiCommandId(c.aiCommandId)
-		, options(c.options)
-		, params(c.params)
-		, tag(c.tag)
-		, timeOut(c.timeOut)
-		, id(c.id)
-	{}
-
-	Command& operator = (const Command& c) {
-		id = c.id;
-		aiCommandId = c.aiCommandId;
-		options = c.options;
-		tag = c.tag;
-		timeOut = c.timeOut;
-		params = c.params;
-		return *this;
 	}
 
 	~Command() { params.clear(); }
