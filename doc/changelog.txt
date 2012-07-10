@@ -18,6 +18,7 @@ Changes:
  ! remove TASServer.jar (outdated, use http://springrts.com/wiki/Spring_on_a_LAN )
  ! send gameID and SDF filename with SERVER_STARTPLAYING to autohost
  ! remove deprecated LogSubsystems config var
+ - do not send GameOver from a client that timed out
  - add LogFlush config var for instant writes (disabled as default)
  - add UI config-variables AutoAddBuiltUnitsToFactoryGroup (def: false) and AutoAddBuiltUnitsToSelectedGroup (def: false)
    if the first variable is true, new units auto-inherit their group number from the factory that built them
@@ -25,9 +26,11 @@ Changes:
  - weapondefs.cylinderTargetting spelling fixed, the old one is deprecated
  - exit with !=0 if spring can't connect to server
  - decrease loglevel for "Load S3O texture now" & luasocket
+ - change content-exception (for a missing water texture) in BasicWater to a warning message
+ - dedicated server no longer consumes 100% CPU while waiting for gameID
+ - headless builds use less cpu-time (nominally 50% instead of 100%)
 
 Bugfixes:
- - dedicated server no longer consumes 100% CPU while waiting for gameID
  - fix  some orders are discarded when issuing commands to landed planes
  - fix  unfinished units with 100% hp can't be finished
  - fix 'crash when getting LOS of a feature without 3d object and drawType!=-1' (3032)
@@ -50,14 +53,21 @@ Bugfixes:
  - fix missing stack trace if out-of-memory occurs
  - fix missing stack trace on abnormal termination (sigabrt)
  - fix resurrecting an individual wreck results in the resurrector not healing it
- - fix /godmode and /{luarules,luagaia} {reload,disable} not working in demos
+ - fix /godmode and /{luarules,luagaia} {reload,disable} not working in demos (2701)
  - fix targetting bug (weapons sometimes failing to fire at badTargetCategory units) as a result of AllowWeaponTarget misuse
- - fix kamikaze units not self-d'ing when given an attack order while on hold-fire 
+ - fix kamikaze units not self-d'ing when given an attack order while on hold-fire (2405)
+ - fix 3105 (PlayerChanged callin not available in unsynced gadgets)
+ - fix 2947 (size of unidentified radar blips can be determined with mouseover)
+ - fix 1843 (Spring.GetUnitHealth returned nothing for buildProgress on in-LOS enemy units with "hideDamage=1")
+ - fix 3122 (failure to fire at badTargetCategory)
  - fix crash when give all units to uncontrolled team
  - fix fighters that have a target may refuse to obey orders
  - fix crash in GetPlayerTeam (AI)
  - fix sync warning when resizing the main window
  - fix ctrl/alt/shift keys stuck after alt tab
+ - make COB's set(MAX_SPEED) permanent again like its Lua counterpart, rather than
+   letting it apply only temporarily (for the duration of the current move command
+   if any); use negative speed values if you want the change to be non-permanent
 
 Simulation:
  - YardMap changes:
@@ -83,12 +93,15 @@ Simulation:
  - add 'allowUnitCollisionOverlap' (def=true) and 'useClassicGroundMoveType' (def=false) ModInfo keys
    the former allows unit movement like www.youtube.com/watch?v=mRtePUdVk2o at the cost of more clumping (learn to use ctrl+lmb formation orders)
    the latter is a ticket back to unit movement circa 2009: no reversing, no turninplace=false, no smooth collision handling, no nothing (figure it out)
+ - add mod-rule 'targetableTransportedUnits' (default false)
  - introduce an independent Lua-controllable aim-position (defaults to mid-position) for units and features, used by weapons as their aiming/target point
  - make ground units less keen on repairing fast units such as patrolling aircraft
+ - fix distinction between user-selected and internal CommandAI targets
 
 Pathing:
  - QTPFS: less loadscreen spam, make F2 functional, enable corner-connected node topology, use staggered layer-updates, speedups and tweaks
  - QTPFS: increase MAX_TEAM_SEARCHES, decrease LAYERS_PER_UPDATE (more units can request paths per frame, units get paths back more quickly)
+ - QTPFS: fix assertion failure, make execution of path requests more asynchronous
 
 Lua:
  ! some config values are now write protected (Spring.SetConfig*)
@@ -110,15 +123,19 @@ Lua:
  - new Spring.LoadCmdColorsConfig(configStr) & Spring.LoadCtrlPanelConfig(configStr)
  - add new 3 param 'pairwise' to Spring.GiveOrderArrayToUnitArray(), used to send multiple units a single individual command
  - fix crash due to UpdateCallIn removing the current event client from list being iterated
+ - add missing team/player callins to (unsyced) GadgetHandler
  - add new synced callouts Set{Unit,Feature}RadiusAndHeight(number id, number radius, number height) --> boolean
  - add new synced callouts Set{Unit,Feature}MidAndAimPos(number id, number mpx, number mpy, number mpz, number apx, number apy, number apz) --> boolean
  - add optional 2nd (boolean midPos) and 3rd (boolean aimPos) arguments to Spring.Get{Unit,Feature}Position to go with the above four callouts
+ ! change Spring.GetUnitPosition to return a unit's base-position by default, like .GetFeaturePosition does for features
+  (this is usually a point on the model closer to the ground than its mid-position, so may affect some Lua drawing code)
  - fix keys hang after LuaUI tweakmode
  - [MT] disallow other Lua environments to invoke LuaUI if LuaThreadingModel = 2, to prevent deadlock
  - [MT] fix desync with LuaThreadingModel > 2
  - [MT] fix teams sometimes wrong in UnitGiven() and UnitTaken()
 
 Rendering:
+ - fix DynWater ship wakes, BumpWater shorewaves
  - fixed ATi PointSize bug
  - update assimp to svn rev 1231
  - fixed assimp lua metafiles
