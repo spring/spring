@@ -571,10 +571,10 @@ void QTPFS::PathManager::Update() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	streflop_init<streflop::Simple>();
 
+	boost::mutex::scoped_lock lock(*mutexThreadUpdate);
+
 	// allow ThreadUpdate to run one iteration
 	condThreadUpdate->notify_one();
-
-	boost::mutex::scoped_lock lock(*mutexThreadUpdate);
 
 	// wait for the ThreadUpdate iteration to finish
 	condThreadUpdated->wait(lock);
