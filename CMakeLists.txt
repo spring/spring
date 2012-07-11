@@ -415,4 +415,3 @@ Add_Subdirectory(rts)
 # this has to be in root CMakeLists.txt; it requires CMake 2.6.3 or later
 ENABLE_TESTING()
 Add_Subdirectory(test)
-
