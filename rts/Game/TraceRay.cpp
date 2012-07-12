@@ -269,7 +269,7 @@ float GuiTraceRay(
 			const bool unitHostile = (unit->allyteam != gu->myAllyTeam);
 			const bool unitOnRadar = (useRadar && radarhandler->InRadar(unit, gu->myAllyTeam));
 			const bool unitInSight = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
-			const bool unitVisible = !unitHostile || unitOnRadar || unitInLOS || gu->spectatingFullView;
+			const bool unitVisible = !unitHostile || unitOnRadar || unitInSight || gu->spectatingFullView;
 
 			if (unit == exclude)
 				continue;
