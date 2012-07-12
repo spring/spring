@@ -1569,7 +1569,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 		CWeapon* w = *wi;
 
 		w->targetType = Target_None;
-		w->haveUserTarget = false;
+		w->haveUserTarget = false; // this should be false for ground-attack commands
 
 		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
 			ret |= (w->AttackGround(pos, true));
