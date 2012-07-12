@@ -217,11 +217,6 @@ PacketType CBaseNetProtocol::SendSetShare(uchar myPlayerNum, uchar myTeam, float
 }
 
 
-PacketType CBaseNetProtocol::SendSendPlayerStat()
-{
-	return PacketType(new PackPacket(1, NETMSG_SENDPLAYERSTAT));
-}
-
 PacketType CBaseNetProtocol::SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats)
 {
 	PackPacket* packet = new PackPacket(2 + sizeof(PlayerStatistics), NETMSG_PLAYERSTAT);
@@ -489,7 +484,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_ATTEMPTCONNECT, -2);
 	proto->AddType(NETMSG_SHARE, 12);
 	proto->AddType(NETMSG_SETSHARE, 11);
-	proto->AddType(NETMSG_SENDPLAYERSTAT, 1);
+
 	proto->AddType(NETMSG_PLAYERSTAT, 2 + sizeof(PlayerStatistics));
 	proto->AddType(NETMSG_GAMEOVER, -1);
 	proto->AddType(NETMSG_MAPDRAW, -1);

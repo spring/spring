@@ -64,8 +64,8 @@ private:
 
 	std::string setupScript;	// the original, unaltered version from script
 
-	std::vector<PlayerStatistics> playerStats;
-	std::vector< std::vector<TeamStatistics> > teamStats;
+	std::vector<PlayerStatistics> playerStats; // one stat per player
+	std::vector< std::vector<TeamStatistics> > teamStats; // many stats per team
 	std::vector<unsigned char> winningAllyTeams;
 };
 
