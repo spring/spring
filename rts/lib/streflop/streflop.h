@@ -32,7 +32,9 @@ namespace streflop {
     // SSE always uses native types, denormals are handled by FPU flags
     typedef float Simple;
     typedef double Double;
-    #undef Extended
+    typedef long double Extended;
+    #define Extended Extended
+    //#undef Extended
 
 #elif defined(STREFLOP_X87)
 
