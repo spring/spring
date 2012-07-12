@@ -734,11 +734,13 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 			commandQue.clear();
 		}
 
+		SetOrderTarget(NULL);
+
 		// if c is an attack command, the actual order-target
 		// gets set via ExecuteAttack (called from SlowUpdate
 		// at the end of this function)
 		assert(commandQue.empty());
-		SetOrderTarget(NULL);
+
 		inCommand = false;
 	}
 

@@ -480,9 +480,9 @@ void CWeapon::Update()
 	}
 }
 
-bool CWeapon::AttackGround(float3 pos, bool userTarget)
+bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 {
-	if (!userTarget && weaponDef->noAutoTarget) {
+	if (!isUserTarget && weaponDef->noAutoTarget) {
 		return false;
 	}
 	if (weaponDef->interceptor || !weaponDef->canAttackGround) {
@@ -490,8 +490,8 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 	}
 
 	// keep target positions on the surface if this weapon hates water
-	if (!weaponDef->waterweapon && (pos.y < 1.0f)) {
-		pos.y = 1.0f;
+	if (!weaponDef->waterweapon && (newTargetPos.y < 1.0f)) {
+		newTargetPos.y = 1.0f;
 	}
 
 	weaponMuzzlePos =
@@ -505,21 +505,24 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
+	if (!TryTarget(newTargetPos, isUserTarget, NULL))
+		return false;
+
 	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
 
-	haveUserTarget = userTarget;
+	haveUserTarget = isUserTarget;
 	targetType = Target_Pos;
-	targetPos = pos;
+	targetPos = newTargetPos;
 
-	return (TryTarget(pos, userTarget, NULL));
+	return true;
 }
 
-bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
+bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 {
-	if ((!userTarget && weaponDef->noAutoTarget)) {
+	if ((!isUserTarget && weaponDef->noAutoTarget)) {
 		return false;
 	}
 	if (weaponDef->interceptor)
@@ -541,7 +544,7 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (unit == NULL) {
+	if (newTargetUnit == NULL) {
 		if (targetType != Target_Unit) {
 			// make the unit be more likely to keep the current target if user starts to move it
 			targetType = Target_None;
@@ -551,34 +554,45 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 		haveUserTarget = false;
 		return false;
 	}
+
 	// check if it is theoretically impossible for us to attack this unit
 	// must be done before we assign <unit> to <targetUnit>, which itself
 	// must precede the TryTarget call (since we do want to assign if it
-	// is eg. just out of range currently)
+	// is eg. just out of range currently --> however, this in turn causes
+	// "lock-on" targeting behavior which is less desirable, eg. we want a
+	// lock on a user-selected target that moved out of range to be broken
+	// after some time so automatic targeting can select new in-range units)
+	//
 	// note that TryTarget is also called from other places and so has to
 	// repeat this check, but the redundancy added is minimal
-	if (!(onlyTargetCategory & unit->category)) {
+	#if 0
+	if (!(onlyTargetCategory & newTargetUnit->category)) {
 		return false;
 	}
+	#endif
+
+	const float3 errorPos = helper->GetUnitErrorPos(newTargetUnit, owner->allyteam, true);
+	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * newTargetUnit->speed.Length() * (1.0f - owner->limExperience));
+	const float3 newTargetPos = errorPos + errorVector * errorScale;
+
+	if (!TryTarget(newTargetPos, isUserTarget, newTargetUnit))
+		return false;
 
 	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
 
-	const float3 errorPos = helper->GetUnitErrorPos(unit, owner->allyteam, true);
-	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
-
-	haveUserTarget = userTarget;
+	haveUserTarget = isUserTarget;
 	targetType = Target_Unit;
-	targetUnit = unit;
-	targetPos = errorPos + errorVector * errorScale;
+	targetUnit = newTargetUnit;
+	targetPos = newTargetPos;
 	targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
 
-	return (TryTarget(targetPos, userTarget, unit));
+	return true;
 }
 
 
