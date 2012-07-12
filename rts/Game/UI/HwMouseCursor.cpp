@@ -76,8 +76,9 @@ class CHwWinCursor : public IHwCursor {
 		bool IsValid() {return (cursor!=NULL);};
 	protected:
 		HCURSOR cursor;
-
+#ifndef _MSC_VER
 	#pragma push(pack,1)
+#endif
 		struct CursorDirectoryHeader {
 			byte  xsize,ysize,ncolors,reserved1;
 			short hotx,hoty;
@@ -93,7 +94,9 @@ class CHwWinCursor : public IHwCursor {
 		struct AnihStructure {
 			DWORD size,images,frames,width,height,bpp,planes,rate,flags;
 		};
+#ifndef _MSC_VER
 	#pragma pop(pack)
+#endif
 		
 	protected:
 		struct ImageData {
