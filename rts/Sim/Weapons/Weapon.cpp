@@ -604,10 +604,13 @@ void CWeapon::HoldFire()
 	}
 
 	targetType = Target_None;
-	// don't set this to false, otherwise a subsequent
-	// call to AttackUnit from Unit::SlowUpdateWeapons
-	// will abort the attack for noAutoTarget weapons
-	// haveUserTarget = false;
+
+	if (!weaponDef->noAutoTarget) {
+		// if haveUserTarget is set to false unconditionally, a subsequent
+		// call to AttackUnit from Unit::SlowUpdateWeapons would abort the
+		// attack for noAutoTarget weapons
+		haveUserTarget = false;
+	}
 }
 
 
