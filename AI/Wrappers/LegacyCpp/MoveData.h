@@ -92,9 +92,9 @@ struct MoveData {
 	/// are we supposed to be a purely sub-surface ship?
 	bool subMarine;
 
-	/// heatmap this unit
+	/// heat-map this unit
 	bool heatMapping;
-	/// heatmap path cost modifier
+	/// heat-map path cost modifier
 	float heatMod;
 	/// heat produced by a path
 	int heatProduced;

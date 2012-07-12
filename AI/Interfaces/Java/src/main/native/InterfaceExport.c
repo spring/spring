@@ -145,7 +145,7 @@ EXPORT(int) initStatic(int _interfaceId,
 			myShortName, myVersion);
 	simpleLog_log("Using read/write data-directory: %s",
 			callback->DataDirs_getWriteableDir(interfaceId));
-	simpleLog_log("Using log file: %s", propFilePath);
+	simpleLog_log("Using config-file: %s", propFilePath);
 
 	FREE(logFile);
 

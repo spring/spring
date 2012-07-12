@@ -495,13 +495,15 @@ struct SRestartPathDrawerCommand {
 
 /**
  * @brief Creates a cubic Bezier spline figure
- * Creates a cubic Bezier spline figure from pos1 to pos4, with control points pos2 and pos3.
+ * Creates a cubic Bezier spline figure from pos1 to pos4,
+ * with control points pos2 and pos3.
  *
  * - Each figure is part of a figure group
- * - When creating figures, use 0 as \<figureGroupId\> to create a new figure group.
+ * - When creating figures, use 0 as \<figureGroupId\> to create
+ *   a new figure group.
  *   The id of this figure group is returned in \<ret_newFigureGroupId\>
- * - \<lifeTime\> specifies how many frames a figure should live before being auto-removed;
- *   0 means no removal
+ * - \<lifeTime\> specifies how many frames a figure should live
+ *   before being auto-removed; 0 means no removal
  * - \<arrow\> == true means that the figure will get an arrow at the end
  */
 struct SCreateSplineFigureDrawerCommand {
