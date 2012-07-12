@@ -91,7 +91,7 @@ namespace GML {
 			gmlMaxShareThreadNum = GML_LOAD_THREAD_NUM;
 			gmlNoGLThreadNum = GML_SIM_THREAD_NUM;
 		}
-		gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
+		gmlThreadCountOverride = configHandler->GetInt("RenderThreadCount");
 		gmlThreadCount = GML_CPU_COUNT;
 
 		if (gmlShareLists) { // create offscreen OpenGL contexts

@@ -103,7 +103,8 @@ CONFIG(int, WindowPosX).defaultValue(32);
 CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false);
-CONFIG(int, HardwareThreadCount).defaultValue(0).safemodeValue(1);
+CONFIG(int, HardwareThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
+CONFIG(int, RenderThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0).maximumValue(GML_MAX_NUM_THREADS);
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName);
 
 
