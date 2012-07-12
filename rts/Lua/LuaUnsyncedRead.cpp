@@ -2268,7 +2268,6 @@ int LuaUnsyncedRead::GetPlayerStatistics(lua_State* L)
 
 	const PlayerStatistics& pStats = player->currentStats;
 
-	// FIXME: these are not synced until game-over
 	lua_pushnumber(L, pStats.mousePixels);
 	lua_pushnumber(L, pStats.mouseClicks);
 	lua_pushnumber(L, pStats.keyPresses);
