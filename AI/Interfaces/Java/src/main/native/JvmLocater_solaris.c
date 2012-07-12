@@ -76,10 +76,11 @@ bool GetJVMPath(const char* jrePath, const char* jvmType,
 
 static bool CheckIfJREPath(const char* path, const char* arch)
 {
-	char libJava[MAXPATHLEN];
 	bool found = false;
 
 	if (path != NULL) {
+		char libJava[MAXPATHLEN];
+
 		// Is path a JRE path?
 		SNPRINTF(libJava, MAXPATHLEN, "%s/lib/%s/"JAVA_LIB, path, arch);
 		if (access(libJava, F_OK) == 0) {
@@ -93,10 +94,11 @@ static bool CheckIfJREPath(const char* path, const char* arch)
 bool GetJREPathFromBase(char* path, size_t pathSize, const char* basePath,
 		const char* arch)
 {
-	char jrePath[MAXPATHLEN];
 	bool found = false;
 
 	if (basePath != NULL) {
+		char jrePath[MAXPATHLEN];
+
 		// Is basePath a JRE path?
 		STRCPY_T(jrePath, MAXPATHLEN, basePath);
 		if (CheckIfJREPath(jrePath, arch)) {
