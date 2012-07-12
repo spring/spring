@@ -385,7 +385,7 @@ bool SpringApp::SetSDLVideoMode()
 #ifdef STREFLOP_H
 	//! Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	//! Set single precision floating point math.
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 #endif
 
 	//! setup GL smoothing
@@ -1009,7 +1009,7 @@ int SpringApp::Run(int argc, char *argv[])
 			SDL_Event event;
 
 			while (SDL_PollEvent(&event)) {
-				streflop_init<streflop::Simple>(); // SDL_PollEvent may modify FPU flags
+				streflop::streflop_init<streflop::Simple>(); // SDL_PollEvent may modify FPU flags
 				input.PushEvent(event);
 			}
 		}

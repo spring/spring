@@ -201,7 +201,7 @@ void CPathEstimator::InitBlocks() {
 
 void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
 	//! reset FPU state for synced computations
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 
 	// NOTE: EstimatePathCosts() [B] is temporally dependent on CalculateBlockOffsets() [A],
 	// A must be completely finished before B_i can be safely called. This means we cannot
