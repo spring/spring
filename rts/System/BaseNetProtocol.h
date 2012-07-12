@@ -59,7 +59,7 @@ enum NETMSG {
 	NETMSG_DC_UPDATE        = 23, // uchar myPlayerNum, status; short heading, pitch;
 	NETMSG_SHARE            = 26, // uchar myPlayerNum, shareTeam, bShareUnits; float shareMetal, shareEnergy;
 	NETMSG_SETSHARE         = 27, // uchar myPlayerNum, uchar myTeam; float metalShareFraction, energyShareFraction;
-	NETMSG_SENDPLAYERSTAT   = 28, //
+
 	NETMSG_PLAYERSTAT       = 29, // uchar myPlayerNum; CPlayer::Statistics currentStats;
 	NETMSG_GAMEOVER         = 30, // uchar myPlayerNum; std::vector<uchar> winningAllyTeams
 	NETMSG_MAPDRAW          = 31, // uchar messageSize =  8, myPlayerNum, command = MapDrawAction::NET_ERASE; short x, z;
@@ -171,7 +171,6 @@ public:
 	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int netloss, bool reconnect = false);
 	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
-	PacketType SendSendPlayerStat();
 	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
 	PacketType SendGameOver(uchar myPlayerNum, const std::vector<uchar>& winningAllyTeams);
 	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
