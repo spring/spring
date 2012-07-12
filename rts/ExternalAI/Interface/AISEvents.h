@@ -147,7 +147,7 @@ struct SLuaMessageEvent {
  * This AI event is sent whenever a unit of this team is created, and contains
  * the created unit. Usually, the unit has only 1 HP at this time, and consists
  * only of a nano frame (-> will not accept commands yet).
- * See also the unit-finnished event.
+ * See also the unit-finished event.
  */
 struct SUnitCreatedEvent {
 	int unit;
@@ -156,7 +156,7 @@ struct SUnitCreatedEvent {
 
 /**
  * This AI event is sent whenever a unit is fully built, and contains the
- * finnished unit. Usually, the unit has full health at this time, and is ready
+ * finished unit. Usually, the unit has full health at this time, and is ready
  * to accept commands.
  * See also the unit-created event.
  */
@@ -165,7 +165,7 @@ struct SUnitFinishedEvent {
 }; //$ EVENT_UNIT_FINISHED INTERFACES:Unit(unit),UnitLifeState()
 
 /**
- * This AI event is sent when a unit finnished processing a command or just
+ * This AI event is sent when a unit finished processing a command or just
  * finished building, and it has currently no commands in it's queue.
  */
 struct SUnitIdleEvent {
@@ -381,7 +381,7 @@ struct SSaveEvent {
  * This AI event is sent whenever a unit of an enemy team is created,
  * and contains the created unit. Usually, the unit has only 1 HP at this time,
  * and consists only of a nano frame.
- * See also the enemy-finnished event.
+ * See also the enemy-finished event.
  */
 struct SEnemyCreatedEvent {
 	int enemy;
@@ -389,7 +389,7 @@ struct SEnemyCreatedEvent {
 
 /**
  * This AI event is sent whenever an enemy unit is fully built, and contains the
- * finnished unit. Usually, the unit has full health at this time.
+ * finished unit. Usually, the unit has full health at this time.
  * See also the unit-created event.
  */
 struct SEnemyFinishedEvent {
