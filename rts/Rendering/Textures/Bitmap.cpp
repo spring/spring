@@ -18,6 +18,7 @@
 #include "Bitmap.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
+#include "System/ScopedFPUSettings.h"
 #include "System/Log/ILog.h"
 #include "System/OpenMP_cond.h"
 #include "System/FileSystem/DataDirsAccess.h"
@@ -232,24 +233,18 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-	// do not signal floating point exceptions in devil library
-	streflop::fpenv_t fenv;
-	streflop::fegetenv(&fenv);
-	streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
-#endif
+	{
+		// do not signal floating point exceptions in devil library
+		ScopedDisableFpuExceptions fe;
 
-	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
-	ilDisable(IL_ORIGIN_SET);
-	delete[] buffer;
+		const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
+		ilDisable(IL_ORIGIN_SET);
+		delete[] buffer;
 
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-	streflop::fesetenv(&fenv);
-#endif
-
-	if (success == false) {
-		AllocDummy();
-		return false;
+		if (success == false) {
+			AllocDummy();
+			return false;
+		}
 	}
 
 	noAlpha = (ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL) != 4);

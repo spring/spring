@@ -46,7 +46,7 @@ void CMyMath::Init()
 	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
 #if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-	streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+	streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 #endif
 
 	// Initialize FPU in all OpenMP threads, too
@@ -60,7 +60,7 @@ void CMyMath::Init()
 		//good_fpu_control_registers("OMP-Init");
 		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-		streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 #endif
