@@ -52,6 +52,7 @@
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"
@@ -1793,7 +1794,9 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 
 	lua_settop(L, 0); // pop the input arguments
 
+	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
 	guihandler->RunCustomCommands(cmds, false);
+	configHandler->EnableWriting(true);
 
 	return 0;
 }
@@ -2049,7 +2052,9 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 		LOG_L(L_ERROR, "tried to set readonly (int) %s = %d", name.c_str(), value);
 		return 0;
 	}
+	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
 	configHandler->Set(name, value, useOverlay);
+	configHandler->EnableWriting(true);
 	return 0;
 }
 
@@ -2080,7 +2085,9 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 		LOG_L(L_ERROR, "tried to set readonly (string) %s = %s", name.c_str(), value.c_str());
 		return 0;
 	}
+	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
 	configHandler->SetString(name, value, useOverlay);
+	configHandler->EnableWriting(true);
 	return 0;
 }
 
