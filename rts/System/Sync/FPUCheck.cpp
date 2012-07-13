@@ -87,7 +87,7 @@ void good_fpu_control_registers(const char* text)
 		// Set single precision floating point math.
 		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-		streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 
@@ -104,7 +104,7 @@ void good_fpu_control_registers(const char* text)
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-		streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 #endif
