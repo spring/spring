@@ -408,9 +408,10 @@ void CHoverAirMoveType::UpdateFlying()
 						}
 					} else {
 						wantedSpeed = ZeroVector;
-						if (!hasMoreMoveCmds)
+						if (!hasMoreMoveCmds) {
 							wantToStop = true;
-						SetState(AIRCRAFT_HOVERING);
+							SetState(AIRCRAFT_HOVERING);
+						}
 					}
 				} else {
 					wantedHeight = orgWantedHeight;
@@ -958,7 +959,12 @@ void CHoverAirMoveType::Takeoff()
 	}
 }
 
-
+void CHoverAirMoveType::Land()
+{
+	if (aircraftState == AAirMoveType::AIRCRAFT_HOVERING) {
+		SetState(AAirMoveType::AIRCRAFT_FLYING); // switch to flying, it performs necessary checks to prepare for landing
+	}
+}
 
 bool CHoverAirMoveType::HandleCollisions()
 {
