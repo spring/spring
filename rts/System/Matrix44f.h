@@ -11,6 +11,7 @@ public:
 	CR_DECLARE_STRUCT(CMatrix44f);
 
 	CMatrix44f();
+	CMatrix44f(const CMatrix44f& mat);
 
 	CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z);
 	CMatrix44f(const float& rotX, const float& rotY, const float& rotZ);

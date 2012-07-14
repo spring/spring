@@ -8,6 +8,13 @@
 #include "System/Util.h"
 
 const float EPS = 0.0000000001f;
+const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
+
+struct LocalModelPiece;
+class CMatrix44f;
+class CSolidObject;
+class CUnit;
+class CFeature;
 
 struct CollisionVolume
 {
@@ -38,7 +45,12 @@ public:
 public:
 	CollisionVolume();
 	CollisionVolume(const CollisionVolume* v, float defaultRadius = 0.0f);
-	CollisionVolume(const std::string& volTypeStr, const float3& scales, const float3& offsets, int hitTestType);
+	CollisionVolume(
+		const std::string& cvTypeStr,
+		const float3& cvScales,
+		const float3& cvOffsets,
+		const bool cvContHitTest
+	);
 
 	/**
 	 * Called if a unit or feature does not define a custom volume.
@@ -76,11 +88,16 @@ public:
 
 	bool IsDisabled() const { return disabled; }
 	bool DefaultScale() const { return defaultScale; }
-	bool IsSphere() const { return volumeType == COLVOL_TYPE_SPHERE; }
-	bool UseFootprint() const { return volumeType == COLVOL_TYPE_FOOTPRINT; }
+
+	float GetPointDistance(const CUnit* u, const float3& pw) const;
+	float GetPointDistance(const CFeature* u, const float3& pw) const;
+
+	static const CollisionVolume* GetVolume(const CUnit* u, float3& pos, bool);
+	static const CollisionVolume* GetVolume(const CFeature* f, float3& pos);
 
 private:
 	void SetBoundingRadius();
+	float GetPointSurfaceDistance(const CSolidObject* o, const CMatrix44f& m, const float3& pw) const;
 
 	float3 axisScales;                  ///< full-length axis scales
 	float3 axisHScales;                 ///< half-length axis scales

@@ -1,19 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "CollisionVolume.h"
-#include "System/Log/ILog.h"
+#include "Rendering/Models/3DModel.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Features/Feature.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
 #include "System/mmgr.h"
 
-
-#define LOG_SECTION_COLVOL "CollisionVolume"
-LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_COLVOL)
-
-// use the specific section for all LOG*() calls in this source file
-#ifdef LOG_SECTION_CURRENT
-	#undef LOG_SECTION_CURRENT
-#endif
-#define LOG_SECTION_CURRENT LOG_SECTION_COLVOL
-
+#define SUPPORT_COMPLEX_VOLUMES 0
 
 CR_BIND(CollisionVolume, );
 CR_REG_METADATA(CollisionVolume, (
@@ -42,7 +37,7 @@ CollisionVolume::CollisionVolume()
 	axisOffsets            = ZeroVector;
 	volumeBoundingRadius   = 1.0f;
 	volumeBoundingRadiusSq = 1.0f;
-	volumeType             = COLVOL_TYPE_ELLIPSOID;
+	volumeType             = COLVOL_TYPE_SPHERE;
 	testType               = COLVOL_HITTEST_DISC;
 	primaryAxis            = COLVOL_AXIS_Z;
 	secondaryAxes[0]       = COLVOL_AXIS_X;
@@ -77,59 +72,36 @@ CollisionVolume::CollisionVolume(const CollisionVolume* v, float defaultRadius)
 	}
 }
 
-CollisionVolume::CollisionVolume(const std::string& volTypeString, const float3& scales, const float3& offsets, int hitTestType)
+CollisionVolume::CollisionVolume(
+	const std::string& cvTypeString,
+	const float3& cvScales,
+	const float3& cvOffsets,
+	const bool cvContHitTest)
 {
-	int volType = COLVOL_TYPE_FOOTPRINT;
-	int volAxis = COLVOL_AXIS_Z;
+	int cvType = COLVOL_TYPE_FOOTPRINT;
+	int cvAxis = COLVOL_AXIS_Z;
 
-	if (!volTypeString.empty()) {
-		const std::string& volTypeStr = StringToLower(volTypeString);
-		const std::string& volTypePrefix = volTypeStr.substr(0, 3);
+	if (!cvTypeString.empty()) {
+		const std::string& cvTypeStr = StringToLower(cvTypeString);
+		const std::string& cvTypePrefix = cvTypeStr.substr(0, 3);
 
-		if (volTypePrefix == "ell") {
-			volType = COLVOL_TYPE_ELLIPSOID;
-		} else if (volTypePrefix == "cyl") {
-			volType = COLVOL_TYPE_CYLINDER;
+		cvType =
+			(cvTypePrefix == "ell")? COLVOL_TYPE_ELLIPSOID:
+			(cvTypePrefix == "cyl")? COLVOL_TYPE_CYLINDER:
+			(cvTypePrefix == "box")? COLVOL_TYPE_BOX:
+			COLVOL_TYPE_SPHERE;
 
-			switch (volTypeStr[volTypeStr.size() - 1]) {
-				case 'x': { volAxis = COLVOL_AXIS_X; } break;
-				case 'y': { volAxis = COLVOL_AXIS_Y; } break;
-				case 'z': { volAxis = COLVOL_AXIS_Z; } break;
-				default: {} break;
+		if (cvType == COLVOL_TYPE_CYLINDER) {
+			switch (cvTypeStr[cvTypeStr.size() - 1]) {
+				case 'x': { cvAxis = COLVOL_AXIS_X; } break;
+				case 'y': { cvAxis = COLVOL_AXIS_Y; } break;
+				case 'z': { cvAxis = COLVOL_AXIS_Z; } break;
+				default: { assert(false); } break;
 			}
-		} else if (volTypePrefix == "box") {
-			volType = COLVOL_TYPE_BOX;
 		}
 	}
 
-	const char* typeStr = NULL;
-	switch (volType) {
-		case COLVOL_TYPE_ELLIPSOID: {
-			typeStr = "ellipsoid";
-		} break;
-		case COLVOL_TYPE_CYLINDER: {
-			typeStr = "cylinder";
-		} break;
-		case COLVOL_TYPE_BOX: {
-			typeStr = "cuboid";
-		} break;
-		case COLVOL_TYPE_FOOTPRINT: {
-			typeStr = "footprint";
-		} break;
-		default: {} break;
-	}
-	if (typeStr != NULL) {
-		LOG_L(L_DEBUG,
-				"%s (scale: <%.2f, %.2f, %.2f>, "
-				"offsets: <%.2f, %.2f, %.2f>, "
-				"test-type: %d, axis: %d)",
-				typeStr,
-				scales.x, scales.y, scales.z,
-				offsets.x, offsets.y, offsets.z,
-				hitTestType, volAxis);
-	}
-
-	Init(scales, offsets, volType, hitTestType, volAxis);
+	Init(cvScales, cvOffsets, cvType, cvContHitTest, cvAxis);
 }
 
 
@@ -149,6 +121,15 @@ void CollisionVolume::Init(const float3& scales, const float3& offsets, int vTyp
 	volumeType  = std::max(vType, 0) % COLVOL_NUM_SHAPES;
 	testType    = std::max(tType, 0) % COLVOL_NUM_HITTESTS;
 
+	#if (SUPPORT_COMPLEX_VOLUMES == 0)
+	// NOTE:
+	//   ellipses and cylinders are now auto-converted to boxes
+	//   we assume that if the volume-type is set to ellipse or
+	//   cylinder its shape is largely anisotropic such that the
+	//   conversion does not create too much of a difference
+	volumeType = Clamp(volumeType, int(COLVOL_TYPE_BOX), int(COLVOL_TYPE_FOOTPRINT));
+	#endif
+
 	// allow defining a custom volume without using it for coldet
 	disabled    = (scales.x < 0.0f || scales.y < 0.0f || scales.z < 0.0f);
 	axisOffsets = offsets;
@@ -164,7 +145,6 @@ void CollisionVolume::Init(const float3& scales, const float3& offsets, int vTyp
 		if ((math::fabsf(adjScales.x - adjScales.y) < EPS) &&
 		    (math::fabsf(adjScales.y - adjScales.z) < EPS))
 		{
-			LOG_L(L_DEBUG, "auto-converting spherical COLVOL_TYPE_ELLIPSOID to COLVOL_TYPE_SPHERE");
 			volumeType = COLVOL_TYPE_SPHERE;
 		}
 	}
@@ -263,3 +243,116 @@ void CollisionVolume::RescaleAxes(const float& xs, const float& ys, const float&
 
 	SetBoundingRadius();
 }
+
+
+
+const CollisionVolume* CollisionVolume::GetVolume(const CUnit* u, float3& pos, bool useLastAttackedPiece) {
+	const CollisionVolume* vol = NULL;
+	const LocalModelPiece* lap = u->lastAttackedPiece;
+
+	if (useLastAttackedPiece) {
+		assert(lap != NULL);
+
+		vol = lap->GetCollisionVolume();
+		pos = lap->GetAbsolutePos() + vol->GetOffsets();
+		pos = u->pos +
+			u->rightdir * pos.x +
+			u->updir    * pos.y +
+			u->frontdir * pos.z;
+	} else {
+		vol = u->collisionVolume;
+		pos = u->midPos + vol->GetOffsets();
+	}
+
+	return vol;
+}
+
+const CollisionVolume* CollisionVolume::GetVolume(const CFeature* f, float3& pos) {
+	pos = f->midPos + f->collisionVolume->GetOffsets();
+	return f->collisionVolume;
+}
+
+
+
+float CollisionVolume::GetPointDistance(const CUnit* u, const float3& pw) const {
+	return (GetPointSurfaceDistance(u, u->GetTransformMatrix(true), pw));
+}
+
+float CollisionVolume::GetPointDistance(const CFeature* f, const float3& pw) const {
+	return (GetPointSurfaceDistance(f, f->transMatrix, pw));
+}
+
+float CollisionVolume::GetPointSurfaceDistance(const CSolidObject* o, const CMatrix44f& m, const float3& pw) const {
+	CMatrix44f mv = m;
+	mv.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE);
+	mv.Translate(GetOffsets());
+	mv.InvertAffineInPlace();
+
+	// transform <pw> to volume-space
+	float3 pv = mv.Mul(pw);
+	float3 pt;
+
+	float l = 0.0f;
+	float d = 0.0f;
+
+	switch (volumeType) {
+		case COLVOL_TYPE_BOX: {
+			// always clamp <pv> to box (!) surface
+			// (so minimum distance is always zero)
+			pv.x = int(pv.x >= 0.0f) * std::max(math::fabs(pv.x), axisHScales.x);
+			pv.y = int(pv.y >= 0.0f) * std::max(math::fabs(pv.y), axisHScales.y);
+			pv.z = int(pv.z >= 0.0f) * std::max(math::fabs(pv.z), axisHScales.z);
+
+			// calculate the closest surface point
+			pt.x = Clamp(pv.x, -axisHScales.x, axisHScales.x);
+			pt.y = Clamp(pv.y, -axisHScales.y, axisHScales.y);
+			pt.z = Clamp(pv.z, -axisHScales.z, axisHScales.z);
+
+			// l = std::min(pv.x - pt.x, std::min(pv.y - pt.y, pv.z - pt.z));
+			d = (pv - pt).Length();
+		} break;
+
+		case COLVOL_TYPE_SPHERE: {
+			l = pv.Length();
+			d = std::max(l - volumeBoundingRadius, 0.0f);
+			// pt = (pv / std::max(0.01f, l)) * d;
+		} break;
+
+		case COLVOL_TYPE_FOOTPRINT: {
+			// the default type is a sphere volume combined with
+			// a rectangular footprint "box" (of infinite height)
+			const float3 mins = float3(-o->xsize * SQUARE_SIZE, -10000.0f, -o->zsize * SQUARE_SIZE);
+			const float3 maxs = float3( o->xsize * SQUARE_SIZE,  10000.0f,  o->zsize * SQUARE_SIZE);
+
+			// clamp <pv> to object-space footprint (!) edge
+			pv.x = int(pv.x >= 0.0f) * std::max(math::fabs(pv.x), float(o->xsize));
+			pv.y = int(pv.y >= 0.0f) * std::max(math::fabs(pv.y),      (10000.0f));
+			pv.z = int(pv.z >= 0.0f) * std::max(math::fabs(pv.z), float(o->zsize));
+
+			// calculate closest point on footprint (!) edge
+			pt.x = Clamp(pv.x, mins.x, maxs.x);
+			pt.y = Clamp(pv.y, mins.y, maxs.y);
+			pt.z = Clamp(pv.z, mins.z, maxs.z);
+
+			// now take the minimum of the sphere and box cases
+			l = pv.Length();
+			d = std::max(l - volumeBoundingRadius, 0.0f);
+			d = std::min(d, (pv - pt).Length());
+		} break;
+
+		default: {
+			// getting the closest (orthogonal) distance to a 3D
+			// ellipsoid requires numerically solving a 4th-order
+			// polynomial --> too expensive, and because we do not
+			// want approximations to prevent invulnerable objects
+			// we do not support this primitive (anymore)
+			// (cylinders with ellipsoid cross-section are similar)
+			#if (SUPPORT_COMPLEX_VOLUMES == 0)
+			assert(false);
+			#endif
+		} break;
+	}
+
+	return d;
+}
+

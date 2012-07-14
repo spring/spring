@@ -115,6 +115,9 @@ public:
 		lastAttackedPiece      = p;
 		lastAttackedPieceFrame = f;
 	}
+	bool HaveLastAttackedPiece(int f) const {
+		return (lastAttackedPiece != NULL && lastAttackedPieceFrame == f);
+	}
 
 	void DependentDied(CObject* o);
 
