@@ -543,6 +543,7 @@ void CHoverAirMoveType::UpdateLanding()
 	// We should wait until we actually have stopped smoothly
 	if (speed.SqLength2D() > 1.0f) {
 		UpdateFlying();
+		UpdateAirPhysics();
 		return;
 	}
 
