@@ -68,7 +68,7 @@ class CCollisionHandler {
 		 * @param p point in world-coordinates
 		 */
 		static bool Collision(const CollisionVolume* v, const CMatrix44f& m, const float3& p);
-		static bool CollisionFootprint(const CSolidObject* o, const float3& p);
+		static bool CollisionFootPrint(const CSolidObject* o, const float3& p);
 
 		/**
 		 * Test if a ray intersects a volume.

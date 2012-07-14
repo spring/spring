@@ -14,6 +14,16 @@ CMatrix44f::CMatrix44f()
 	LoadIdentity();
 }
 
+CMatrix44f::CMatrix44f(const CMatrix44f& mat)
+{
+	for (unsigned int i = 0; i < 16; i += 4) {
+		m[i    ] = mat[i    ];
+		m[i + 1] = mat[i + 1];
+		m[i + 2] = mat[i + 2];
+		m[i + 3] = mat[i + 3];
+	}
+}
+
 
 CMatrix44f::CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z)
 {

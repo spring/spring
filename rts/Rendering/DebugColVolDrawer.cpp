@@ -16,7 +16,6 @@
 #include "Sim/Misc/QuadField.h"
 
 static const float3 DEFAULT_VOLUME_COLOR = float3(0.45f, 0.0f, 0.45f);
-static const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
 static unsigned int volumeDisplayListIDs[3] = {0, 0, 0};
 
 static inline void DrawCollisionVolume(const CollisionVolume* vol)
@@ -75,7 +74,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 
 
 
-static inline void DrawObjectMidPosAndAimPos(const CSolidObject* o)
+static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 {
 	GLUquadricObj* q = gluNewQuadric();
 	glDisable(GL_DEPTH_TEST);
@@ -108,7 +107,6 @@ static inline void DrawFeatureColVol(const CFeature* f)
 {
 	const CollisionVolume* v = f->collisionVolume;
 
-	if (v == NULL) return;
 	if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) return;
 	if (!camera->InView(f->pos, f->drawRadius)) return;
 
@@ -117,7 +115,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 
 	glPushMatrix();
 		glMultMatrixf(f->transMatrix.m);
-		DrawObjectMidPosAndAimPos(f);
+		DrawObjectMidAndAimPos(f);
 
 		if (!v->IsDisabled()) {
 			DrawCollisionVolume(v);
@@ -174,7 +172,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 
 	glPushMatrix();
 		glMultMatrixf(u->GetTransformMatrix());
-		DrawObjectMidPosAndAimPos(u);
+		DrawObjectMidAndAimPos(u);
 
 		if (u->unitDef->usePieceCollisionVolumes) {
 			// draw only the piece volumes for less clutter

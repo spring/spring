@@ -15,8 +15,6 @@
 
 CR_BIND(CCollisionHandler, );
 
-static const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
-
 unsigned int CCollisionHandler::numCollisionTests = 0;
 unsigned int CCollisionHandler::numIntersectionTests = 0;
 
@@ -87,7 +85,7 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 			return true;
 		}
 		case CollisionVolume::COLVOL_TYPE_FOOTPRINT: {
-			return CCollisionHandler::CollisionFootprint(u, p);
+			return CCollisionHandler::CollisionFootPrint(u, p);
 		}
 		default: {
 			// NOTE: we have to translate by relMidPos to get to midPos
@@ -118,7 +116,7 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 			return true;
 		}
 		case CollisionVolume::COLVOL_TYPE_FOOTPRINT: {
-			return CCollisionHandler::CollisionFootprint(f, p);
+			return CCollisionHandler::CollisionFootPrint(f, p);
 		}
 		default: {
 			CMatrix44f m(f->transMatrix);
@@ -131,21 +129,24 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 }
 
 
-bool CCollisionHandler::CollisionFootprint(const CSolidObject* o, const float3& p)
+bool CCollisionHandler::CollisionFootPrint(const CSolidObject* o, const float3& p)
 {
-	if (o->isMarkedOnBlockingMap && o->physicalState != CSolidObject::Flying) {
-		const float invSquareSize = 1.0f / SQUARE_SIZE;
-		const int square = int(p.x * invSquareSize) + int(p.z * invSquareSize) * gs->mapx;
-
-		if (square >= 0 && square < gs->mapSquares) {
-			const BlockingMapCell& cell = groundBlockingObjectMap->GetCell(square);
-			return cell.find(o->GetBlockingMapID()) != cell.end();
-		}
-	}
 	// If the object isn't marked on blocking map, or it is flying,
 	// effecively only the sphere check (in Collision(CUnit*) or
 	// Collision(CFeature*)) is performed.
-	return true;
+	if (!o->isMarkedOnBlockingMap)
+		return true;
+	if (o->physicalState == CSolidObject::Flying)
+		return true;
+
+	const float invSquareSize = 1.0f / SQUARE_SIZE;
+	const int square = int(p.x * invSquareSize) + int(p.z * invSquareSize) * gs->mapx;
+
+	if (square < 0 || square >= gs->mapSquares)
+		return false;
+
+	const BlockingMapCell& cell = groundBlockingObjectMap->GetCell(square);
+	return (cell.find(o->GetBlockingMapID()) != cell.end());
 }
 
 
@@ -762,3 +763,4 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 
 	return (b0 || b1);
 }
+
