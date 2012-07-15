@@ -94,6 +94,8 @@ public:
 	void UpdateStockpileIcon();
 	bool CanChangeFireState();
 
+	virtual bool AllowedCommand(const Command& c, bool fromSynced);
+
 	CWeapon* stockpileWeapon;
 
 	std::vector<CommandDescription> possibleCommands;
@@ -118,7 +120,6 @@ public:
 
 protected:
 	bool IsAttackCapable() const;
-	virtual bool AllowedCommand(const Command& c, bool fromSynced);
 	bool SkipParalyzeTarget(const CUnit* target);
 	void GiveAllowedCommand(const Command& c, bool fromSynced = true);
 	void GiveWaitCommand(const Command& c);
