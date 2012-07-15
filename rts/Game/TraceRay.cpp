@@ -282,7 +282,7 @@ float GuiTraceRay(
 					// randomize it (by scaling up to a factor of 4) so
 					// unit size cannot be determined by hovering mouse
 					// over radar blips
-					cv.Init(unit->iconRadius * (1.0f + (gu->usRandFloat() * 3.0f)));
+					cv.InitSphere(unit->iconRadius * (1.0f + (gu->usRandFloat() * 3.0f)));
 				}
 
 				if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {

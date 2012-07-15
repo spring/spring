@@ -903,7 +903,7 @@ const {
 	// (scaled uniformly by the absolute target-border
 	// factor)
 	cvNew.RescaleAxes(tbScale, tbScale, tbScale);
-	cvNew.SetTestType(CollisionVolume::COLVOL_HITTEST_DISC);
+	cvNew.SetContHitTest(CollisionVolume::COLVOL_HITTEST_DISC);
 
 	targetUnit->collisionVolume = &cvNew;
 
@@ -919,7 +919,7 @@ const {
 		// (for positive TB values) or egress (for negative TB values) position;
 		// this either increases or decreases the length of <targetVec> but does
 		// not change its direction
-		cvNew.SetTestType(CollisionVolume::COLVOL_HITTEST_CONT);
+		cvNew.SetContHitTest(CollisionVolume::COLVOL_HITTEST_CONT);
 
 		// make the ray-segment long enough so it can reach the far side of the
 		// scaled collision volume (helps to ensure a ray-intersection is found)
