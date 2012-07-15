@@ -2083,6 +2083,20 @@ inline Command CheckCommand(Command c) {
 	return failedRet;
 }
 
+bool ZeroRadiusAllowed(const Command &c) {
+	switch(c.GetID()) {
+	case CMD_CAPTURE:
+	case CMD_GUARD:
+	case CMD_LOAD_UNITS:
+	case CMD_RECLAIM:
+	case CMD_REPAIR:
+	case CMD_RESTORE:
+	case CMD_RESURRECT:
+		return false;
+	}
+	return true;
+}
+
 Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir)
 {
 	Command defaultRet(CMD_FAILED);
@@ -2285,9 +2299,11 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				if (feature && commands[tempInCommand].type == CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) { // clicked on feature
 					c.PushParam(uh->MaxUnits() + feature->id);
 				} else if (unit && commands[tempInCommand].type != CMDTYPE_ICON_AREA) { // clicked on unit
+					if (c.GetID() == CMD_RESURRECT)
+						return defaultRet; // cannot resurrect units!
 					c.PushParam(unit->id);
 				} else { // clicked in map
-					if (explicitCommand < 0) // only attack ground if explicitly set the command
+					if (explicitCommand < 0 || !ZeroRadiusAllowed(c)) // only attack ground if explicitly set the command
 						return defaultRet;
 					c.PushPos(cameraPos + (mouseDir * dist2));
 					c.PushParam(0); // zero radius
