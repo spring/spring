@@ -13,7 +13,8 @@ cd $1
 
 GITOUTPUT=$(git fetch 2>&1 |cat)
 echo $GITOUTPUT
-if [ -n $GITOUTPUT ]; then
+if [ -n "$GITOUTPUT" ];
+then
 	# remote contains new commits, delete builddir
 	rm -rf "$BUILDDIR"
 	git clean -f -d
