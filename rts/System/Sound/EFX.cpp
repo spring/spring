@@ -51,13 +51,6 @@ CEFX::CEFX(ALCdevice* device)
 	sfxProperties = new EAXSfxProps();
 	*sfxProperties = eaxPresets[default_preset];
 
-	//! User may disable it (performance reasons?)
-	enabled = configHandler->GetBool("UseEFX");
-	if (!enabled) {
-		LOG("   EFX Disabled in configuration");
-		supported = false;
-		return;
-	}
 	if (!supported) {
 		if(!hasExtension)
 			LOG("  EFX Supported: no");
@@ -177,6 +170,8 @@ CEFX::CEFX(ALCdevice* device)
 		return;
 	}
 
+	//! User may disable it (performance reasons?)
+	enabled = configHandler->GetBool("UseEFX");
 	LOG("  EFX Enabled: %s", (enabled ? "yes" : "no"));
 	if (enabled) {
 		LOG_L(L_DEBUG, "  EFX MaxSlots: %i", maxSlots);
