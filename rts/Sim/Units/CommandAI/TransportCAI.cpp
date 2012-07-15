@@ -293,14 +293,18 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 	spread = std::max(1.0f, math::ceil(spread / SQUARE_SIZE)) * SQUARE_SIZE;
 	bool isAirTrans = dynamic_cast<AAirMoveType*>(owner->moveType);
 
-	for (int a = 0; a < std::max(100, std::min(1000, (int)(radius * radius / 100))); ++a) { // more attempts for large unloading zone
+	float amax = std::max(100, std::min(1000, (int)(radius * radius / 100)));
+	for (int a = 0; a < amax; ++a) { // more attempts for large unloading zone
 		float3 delta;
 		float3 pos;
-
-		for (int b = 0; b <= (a + 9) / 10; ++b) {
+		const float bmax = std::max(10, a / 10);
+		for (int b = 0; b < bmax; ++b) {
 			// FIXME: using a deterministic technique might be better, since it would allow an unload command to be tested for validity from unsynced (with predictable results)
 			const float ang = 2.0f * PI * (fromSynced ? gs->randFloat() : gu->usRandFloat());
-			const float len = a / 100.0f; // prefer unload near center
+			float len = a; // prefer unload near center
+			if (a != 0 || b != 0)
+				len += (fromSynced ? gs->randFloat() : gu->usRandFloat());
+			len /= amax;
 			delta.x = len * math::sin(ang);
 			delta.z = len * math::cos(ang);
 			pos = center + delta * radius;
