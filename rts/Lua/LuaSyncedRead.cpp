@@ -440,7 +440,7 @@ static int PushCollisionVolumeData(lua_State* L, const CollisionVolume* vol) {
 	lua_pushnumber(L, vol->GetOffsets().y);
 	lua_pushnumber(L, vol->GetOffsets().z);
 	lua_pushnumber(L, vol->GetVolumeType());
-	lua_pushnumber(L, vol->GetTestType());
+	lua_pushnumber(L, int(vol->GetContHitTest()));
 	lua_pushnumber(L, vol->GetPrimaryAxis());
 	lua_pushboolean(L, vol->IsDisabled());
 	return 10;

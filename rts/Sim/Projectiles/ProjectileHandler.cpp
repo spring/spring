@@ -418,7 +418,7 @@ void CProjectileHandler::CheckUnitCollisions(
 			// and waiting for the next-frame CheckUnitCol(), which is problematic
 			// for noExplode projectiles).
 
-			const bool raytraced = (volume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
+			const bool raytraced = (int(volume->GetContHitTest()) == CollisionVolume::COLVOL_HITTEST_CONT);
 			const float3 pimpp =
 				(cq.b0 && cq.b1)? (cq.p0 + cq.p1) * 0.5f:
 				(cq.b0         )? (cq.p0 + ppos1) * 0.5f:
@@ -456,7 +456,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 		}
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
-			const bool raytraced = (volume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
+			const bool raytraced = (int(volume->GetContHitTest()) == CollisionVolume::COLVOL_HITTEST_CONT);
 			const float3 pimpp =
 				(cq.b0 && cq.b1)? (cq.p0 + cq.p1) * 0.5f:
 				(cq.b0         )? (cq.p0 + ppos1) * 0.5f:
