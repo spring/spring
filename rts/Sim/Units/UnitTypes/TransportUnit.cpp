@@ -446,9 +446,10 @@ bool CTransportUnit::DetachUnitFromAir(CUnit* unit, const float3& pos)
 
 
 
-bool CTransportUnit::CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit) const {
+bool CTransportUnit::CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* loadingHeight) const {
 	bool canLoadUnload = false;
 	float loadHeight = GetLoadUnloadHeight(wantedPos, unit, &canLoadUnload);
+	if (loadingHeight) *loadingHeight = loadHeight;
 
 	// for a given unit, we can *potentially* load/unload it at <wantedPos> if
 	//     we are not a gunship-style transport, or
