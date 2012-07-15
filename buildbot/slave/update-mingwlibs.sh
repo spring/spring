@@ -15,7 +15,7 @@ GITOUTPUT=$(git fetch 2>&1 |cat)
 echo $GITOUTPUT
 if [ -n "$GITOUTPUT" ];
 then
-	echo removing builddir $BUILDDIR (mingwlibs updated)
+	echo "removing builddir $BUILDDIR (mingwlibs updated)"
 	rm -rf "$BUILDDIR"
 	git clean -f -d
 	git reset --hard origin/master
