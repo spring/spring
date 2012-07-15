@@ -104,6 +104,7 @@ else  (UNIX AND NOT MINGW)
 	endif (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
 	include_directories(${MINGWLIBS}/include)
 	set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
+	set(CMAKE_INCLUDE_PATH ${MINGWLIBS}/include)
 	set(CMAKE_PREFIX_PATH ${MINGWLIBS})
 
 	add_definitions(-D_WIN32_WINNT=0x500) ## win2k is minimum
