@@ -30,7 +30,7 @@ public:
 	void AttachUnit(CUnit* unit, int piece);
 	bool CanTransport(const CUnit* unit) const;
 	float GetLoadUnloadHeight(const float3& wantedPos, const CUnit* unit, bool* ok = NULL) const;
-	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit) const;
+	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* loadingHeight = NULL) const;
 	float GetLoadUnloadHeading(const CUnit* unit) const;
 
 	bool DetachUnit(CUnit* unit);
