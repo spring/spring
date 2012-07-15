@@ -1112,8 +1112,8 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir)
 {
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCommand
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCommand
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // MouseRelease
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // MouseRelease
 	GML_RECMUTEX_LOCK(gui); // MouseRelease
 
 	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
@@ -2072,6 +2072,17 @@ Command CGuiHandler::GetOrderPreview()
 }
 
 
+inline Command CheckCommand(Command c) {
+	if (selectedUnits.selectedUnits.empty() || (c.options & SHIFT_KEY))
+		return c; // always allow queued commands, since conditions may change so the command becomes valid
+	for (CUnitSet::iterator ui = selectedUnits.selectedUnits.begin(); ui != selectedUnits.selectedUnits.end(); ++ui) {
+		if((*ui)->commandAI->AllowedCommand(c, false))
+			return c;
+	}
+	Command failedRet(CMD_FAILED);
+	return failedRet;
+}
+
 Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir)
 {
 	Command defaultRet(CMD_STOP);
@@ -2109,7 +2120,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		case CMDTYPE_NUMBER: {
 			const float value = GetNumberInput(commands[tempInCommand]);
 			Command c(commands[tempInCommand].id, CreateOptions(button), value);
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON: {
@@ -2117,7 +2128,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (button == SDL_BUTTON_LEFT && !preview) {
 				LOG_L(L_WARNING, "CMDTYPE_ICON left button press in incommand test? This should not happen.");
 			}
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_MAP: {
@@ -2127,7 +2138,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			}
 			const float3 pos = cameraPos + (mouseDir * dist);
 			Command c(commands[tempInCommand].id, CreateOptions(button), pos);
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_BUILDING: {
@@ -2178,7 +2189,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 			}
 			Command c = buildPos.back().CreateCommand(CreateOptions(button));
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_UNIT: {
@@ -2191,7 +2202,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				return defaultRet;
 			}
 			c.PushParam(unit->id);
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_UNIT_OR_MAP: {
@@ -2212,7 +2223,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				// clicked in map
 				c.PushPos(cameraPos + (mouseDir * dist2));
 			}
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_FRONT: {
@@ -2250,7 +2261,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 				c.PushPos(pos2);
 			}
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_UNIT_OR_AREA:
@@ -2308,7 +2319,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					c.PushParam((float)buildFacing);
 				}
 			}
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_UNIT_OR_RECTANGLE: {
@@ -2353,7 +2364,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				c.PushPos(startPos);
 				c.PushPos(endPos);
 			}
-			return c;
+			return CheckCommand(c);
 		}
 
 		default:
