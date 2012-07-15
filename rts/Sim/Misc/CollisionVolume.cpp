@@ -370,7 +370,6 @@ float CollisionVolume::GetPointSurfaceDistance(const CSolidObject* o, const CMat
 					}                                                                       \
 				}                                                                           \
 			}
-			#undef CASE
 
 			switch (volumeAxes[0]) {
 				case COLVOL_AXIS_X: {
@@ -385,6 +384,8 @@ float CollisionVolume::GetPointSurfaceDistance(const CSolidObject* o, const CMat
 					CYLINDER_CASE(z, x, y)
 				} break;
 			}
+
+			#undef CYLINDER_CASE
 		} break;
 
 		default: {
