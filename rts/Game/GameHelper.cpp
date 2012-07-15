@@ -123,8 +123,8 @@ void CGameHelper::DoExplosionDamage(
 	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
 	const float modImpulseScale = Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
 
-	const float3 impulseVec = colVolPos - expPos;
-	const float3 expImpulse = (impulseVec / expDist) * modImpulseScale;
+	const float3 impulseDir = (colVolPos - expPos).SafeNormalize();
+	const float3 expImpulse = impulseDir * modImpulseScale;
 
 	const DamageArray expDamages = damages * expMod;
 
@@ -160,8 +160,8 @@ void CGameHelper::DoExplosionDamage(
 	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
 	const float modImpulseScale = Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
 
-	const float3 impulseVec = colVolPos - expPos;
-	const float3 expImpulse = (impulseVec / expDist) * modImpulseScale;
+	const float3 impulseDir = (colVolPos - expPos).SafeNormalize();
+	const float3 expImpulse = impulseDir * modImpulseScale;
 
 	feature->DoDamage(damages * expMod, expImpulse, NULL, weaponDefID);
 }
