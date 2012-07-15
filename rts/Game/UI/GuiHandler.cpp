@@ -2085,7 +2085,7 @@ inline Command CheckCommand(Command c) {
 
 Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir)
 {
-	Command defaultRet(CMD_STOP);
+	Command defaultRet(CMD_FAILED);
 
 	int button;
 	if (buttonHint >= SDL_BUTTON_LEFT) {
@@ -2095,7 +2095,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 	} else if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) {
 		button = SDL_BUTTON_RIGHT;
 	} else {
-		return defaultRet;
+		return Command(CMD_STOP);
 	}
 
 	int tempInCommand = inCommand;
@@ -2149,7 +2149,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 
 			if(!unitdef){
-				return defaultRet;
+				return Command(CMD_STOP);
 			}
 
 			const float3 pos = cameraPos + mouseDir * dist;
@@ -2168,15 +2168,14 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				buildPos = GetBuildPos(bi, bi, cameraPos, mouseDir);
 
 			if (buildPos.empty()) {
-				return defaultRet;
+				return Command(CMD_STOP);
 			}
 
 			if (buildPos.size() == 1) {
 				CFeature* feature = NULL;
 				// TODO Maybe also check out-of-range for immobile builder?
 				if (!uh->TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam, false)) {
-					Command failedRet(CMD_FAILED);
-					return failedRet;
+					return defaultRet;
 				}
 			}
 
@@ -2368,14 +2367,14 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 
 		default:
-			return defaultRet;
+			return Command(CMD_STOP);
 		}
 	} else {
 		if (!preview) {
 			inCommand = -1;
 		}
 	}
-	return defaultRet;
+	return Command(CMD_STOP);
 }
 
 
