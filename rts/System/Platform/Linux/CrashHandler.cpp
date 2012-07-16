@@ -38,7 +38,7 @@
 #endif
 
 
-static const int MAX_STACKTRACE_DEPTH = 10;
+static const int MAX_STACKTRACE_DEPTH = 100;
 static const std::string INVALID_LINE_INDICATOR = "#####";
 static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
 
