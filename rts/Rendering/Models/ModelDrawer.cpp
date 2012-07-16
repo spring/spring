@@ -275,6 +275,8 @@ bool CModelDrawerGLSL::LoadModelShaders()
 {
 	LOG_L(L_DEBUG, "[%s]", __FUNCTION__);
 
+	shaderHandler->CreateProgramObject(GetName(), "$DUMMY-GLSL$", false);
+
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		shaders[modelType] = std::vector<Shader::IProgramObject*>();
 		shaders[modelType].resize(CGame::gameRefractionDraw + 1, NULL);
@@ -283,7 +285,7 @@ bool CModelDrawerGLSL::LoadModelShaders()
 			if (drawMode == CGame::gameShadowDraw && shadowHandler->shadowsLoaded) {
 				shaders[modelType][drawMode] = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 			} else {
-				shaders[modelType][drawMode] = shaderHandler->CreateProgramObject(GetName(), "$DUMMY-GLSL$", false);
+				shaders[modelType][drawMode] = shaderHandler->GetProgramObject(GetName(), "$DUMMY-GLSL$");
 			}
 		}
 	}
