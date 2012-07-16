@@ -11,7 +11,7 @@ class CTorpedoLauncher :
 	CR_DECLARE(CTorpedoLauncher);
 public:
 	CTorpedoLauncher(CUnit* owner);
-	virtual ~CTorpedoLauncher(void);
+	~CTorpedoLauncher(void);
 
 	void Update(void);
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
