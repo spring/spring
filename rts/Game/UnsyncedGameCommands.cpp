@@ -38,6 +38,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GroundDecalHandler.h"
@@ -3052,6 +3053,21 @@ public:
 
 
 
+class ReloadShadersActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ReloadShadersActionExecutor() : IUnsyncedActionExecutor("ReloadShaders",
+			"Reloads all engine shaders") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LOG("Reloading all engine shaders");
+		//FIXME make threadsafe!
+		shaderHandler->ReloadAll();
+		return true;
+	}
+};
+
+
+
 class DebugInfoActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DebugInfoActionExecutor() : IUnsyncedActionExecutor("DebugInfo",
@@ -3412,6 +3428,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DumpStateActionExecutor());
 	AddActionExecutor(new SaveActionExecutor());
 	AddActionExecutor(new ReloadGameActionExecutor());
+	AddActionExecutor(new ReloadShadersActionExecutor());
 	AddActionExecutor(new DebugInfoActionExecutor());
 	AddActionExecutor(new BenchmarkScriptActionExecutor());
 	// XXX are these redirects really required?
