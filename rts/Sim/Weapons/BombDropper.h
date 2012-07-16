@@ -9,13 +9,12 @@ class CBombDropper : public CWeapon
 {
 	CR_DECLARE(CBombDropper);
 public:
-	void Update();
 	CBombDropper(CUnit* owner, bool useTorps);
-	virtual ~CBombDropper();
+	~CBombDropper();
+
 	bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
 	void Init();
-	bool AttackUnit(CUnit* unit, bool userTarget);
-	bool AttackGround(float3 pos, bool userTarget);
+	void Update();
 	void SlowUpdate();
 
 	/// if we should drop torpedoes

@@ -1913,6 +1913,9 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 		// pass the list of winners
 		record->SetWinningAllyTeams(winningAllyTeams);
 
+		// tell everybody about our APM, it's the most important statistic
+		net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
+
 		for (int i = 0; i < numPlayers; ++i) {
 			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 		}

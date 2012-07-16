@@ -452,14 +452,15 @@ bool CFeature::UpdatePosition()
 		// we are a wreck of a dead unit
 		if (!reachedFinalPos) {
 			// def->floating is unreliable (true for land unit wrecks),
-			// just assume wrecks always sink even if their "owner" was
-			// a floating object (as is the case for ships anyway)
+			// so just assume wrecks always sink even if their "owner"
+			// was a floating object (as is the case for ships anyway)
 			const float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
+			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
 
-			// NOTE: apply more drag if we were a tank or bot?
-			// (would require passing extra data to Initialize())
-			deathSpeed *= ((reachedGround)? 0.95f: 0.9999f);
+			deathSpeed *= 0.999999f;
+			deathSpeed *= (1.0f - (int(reachedWater ) * 0.05f));
+			deathSpeed *= (1.0f - (int(reachedGround) * 0.10f));
 
 			if (deathSpeed.SqLength2D() > 0.01f) {
 				UnBlock();
@@ -477,7 +478,7 @@ bool CFeature::UpdatePosition()
 			}
 
 			if (!reachedGround) {
-				if (pos.y > 0.0f) {
+				if (!reachedWater) {
 					// quadratic acceleration if not in water
 					deathSpeed.y += mapInfo->map.gravity;
 				} else {

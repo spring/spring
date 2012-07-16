@@ -113,8 +113,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetVisibleUnits);
 	REGISTER_LUA_CFUNC(GetVisibleFeatures);
 
-	REGISTER_LUA_CFUNC(GetPlayerRoster);
-
 	REGISTER_LUA_CFUNC(GetTeamColor);
 	REGISTER_LUA_CFUNC(GetTeamOrigColor);
 
@@ -200,7 +198,9 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroupUnitsCounts);
 	REGISTER_LUA_CFUNC(GetGroupUnitsCount);
 
+	REGISTER_LUA_CFUNC(GetPlayerRoster);
 	REGISTER_LUA_CFUNC(GetPlayerTraffic);
+	REGISTER_LUA_CFUNC(GetPlayerStatistics);
 
 	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
@@ -1384,35 +1384,6 @@ static void AddPlayerToRoster(lua_State* L, int playerID)
 }
 
 
-int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
-		luaL_error(L, "Incorrect arguments to GetPlayerRoster([type])");
-	}
-
-	const PlayerRoster::SortType oldSort = playerRoster.GetSortType();
-
-	if (args == 1) {
-		const int type = lua_toint(L, 1);
-		playerRoster.SetSortTypeByCode((PlayerRoster::SortType)type);
-	}
-
-	int count;
-	const std::vector<int>& players = playerRoster.GetIndices(&count);
-
-	playerRoster.SetSortTypeByCode(oldSort); // revert
-
-	lua_createtable(L, count, 0);
-	for (int i = 0; i < count; i++) {
-		AddPlayerToRoster(L, players[i]);
-		lua_rawseti(L, -2, i + 1);
-	}
-
-	return 1;
-}
-
-
 int LuaUnsyncedRead::GetTeamColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
@@ -2214,6 +2185,34 @@ int LuaUnsyncedRead::GetMyAllyTeamID(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
+		luaL_error(L, "Incorrect arguments to GetPlayerRoster([type])");
+	}
+
+	const PlayerRoster::SortType oldSort = playerRoster.GetSortType();
+
+	if (args == 1) {
+		const int type = lua_toint(L, 1);
+		playerRoster.SetSortTypeByCode((PlayerRoster::SortType)type);
+	}
+
+	int count;
+	const std::vector<int>& players = playerRoster.GetIndices(&count);
+
+	playerRoster.SetSortTypeByCode(oldSort); // revert
+
+	lua_createtable(L, count, 0);
+	for (int i = 0; i < count; i++) {
+		AddPlayerToRoster(L, players[i]);
+		lua_rawseti(L, -2, i + 1);
+	}
+
+	return 1;
+}
+
 int LuaUnsyncedRead::GetPlayerTraffic(lua_State* L)
 {
 	const int playerID = luaL_checkint(L, 1);
@@ -2253,6 +2252,29 @@ int LuaUnsyncedRead::GetPlayerTraffic(lua_State* L)
 	}
 	lua_pushnumber(L, pit->second);
 	return 1;
+}
+
+int LuaUnsyncedRead::GetPlayerStatistics(lua_State* L)
+{
+	const int playerID = luaL_checkint(L, 1);
+	if (!playerHandler->IsValidPlayer(playerID)) {
+		return 0;
+	}
+
+	const CPlayer* player = playerHandler->Player(playerID);
+	if (player == NULL) {
+		return 0;
+	}
+
+	const PlayerStatistics& pStats = player->currentStats;
+
+	lua_pushnumber(L, pStats.mousePixels);
+	lua_pushnumber(L, pStats.mouseClicks);
+	lua_pushnumber(L, pStats.keyPresses);
+	lua_pushnumber(L, pStats.numCommands);
+	lua_pushnumber(L, pStats.unitCommands);
+
+	return 5;
 }
 
 

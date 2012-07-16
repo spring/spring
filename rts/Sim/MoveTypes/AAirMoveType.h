@@ -39,6 +39,7 @@ public:
 	virtual void UpdateLanded();
 	virtual bool IsFighter() const = 0;
 	virtual void Takeoff() {}
+	virtual void Land() {}
 	virtual void SetState(AircraftState state) {}
 	virtual AircraftState GetLandingState() const { return AIRCRAFT_LANDING; }
 
