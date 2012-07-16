@@ -375,15 +375,15 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 
 	// create mipmapped texture
 
-	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmapEXT) && !globalRendering->atiHacks) {
+	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap) && !globalRendering->atiHacks) {
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 		if (globalRendering->atiHacks) {
 			glEnable(target);
-			glGenerateMipmapEXT(target);
+			glGenerateMipmap(target);
 			glDisable(target);
 		} else {
-			glGenerateMipmapEXT(target);
+			glGenerateMipmap(target);
 		}
 	} else if (GLEW_VERSION_1_4) {
 		// This required GL-1.4
