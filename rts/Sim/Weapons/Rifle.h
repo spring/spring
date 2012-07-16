@@ -9,10 +9,11 @@ class CRifle : public CWeapon
 {
 	CR_DECLARE(CRifle);
 public:
+	CRifle(CUnit* owner);
+	~CRifle();
+
 	bool TryTarget(const float3 &pos,bool userTarget,CUnit* unit);
 	void Update();
-	CRifle(CUnit* owner);
-	virtual ~CRifle();
 
 private:
 	virtual void FireImpl();

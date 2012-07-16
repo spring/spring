@@ -9,9 +9,10 @@ class CMeleeWeapon : public CWeapon
 {
 	CR_DECLARE(CMeleeWeapon);
 public:
-	void Update();
 	CMeleeWeapon(CUnit* owner);
-	virtual ~CMeleeWeapon();
+	~CMeleeWeapon();
+
+	void Update();
 
 private:
 	virtual void FireImpl();
