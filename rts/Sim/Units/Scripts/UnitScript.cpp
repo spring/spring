@@ -650,17 +650,10 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				const float3 targetPos = weapon->targetPos;
 				const float3 weaponMuzzlePos = weapon->weaponMuzzlePos;
 
-				// don't override the weapon's target position
-				// if it was not set internally (so that force-
-				// fire keeps working as expected)
-				if (!weapon->haveUserTarget) {
-					weapon->targetPos = pos + dir;
-				}
-
+				weapon->targetPos = pos + dir;
 				weapon->weaponMuzzlePos = pos;
 				weapon->Fire();
 				weapon->weaponMuzzlePos = weaponMuzzlePos;
-
 				weapon->targetPos = targetPos;
 			}
 			else if (sfxType & SFX_DETONATE_WEAPON) {
