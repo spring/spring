@@ -33,7 +33,7 @@ public:
 	bool Save(std::string const& filename, bool opaque = true) const;
 
 	const unsigned int CreateTexture(bool mipmaps = false) const;
-	const unsigned int CreateDDSTexture(unsigned int texID = 0) const;
+	const unsigned int CreateDDSTexture(unsigned int texID = 0, bool mipmaps = false) const;
 
 	void CreateAlpha(unsigned char red, unsigned char green, unsigned char blue);
 	void SetTransparent(const SColor& c, const SColor& trans = SColor(0,0,0,0));
@@ -71,7 +71,8 @@ public:
 		BitmapTypeDDS
 	};
 
-	int type;
+	BitmapType type;
+
 #ifndef BITMAP_NO_OPENGL
 	int textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
 	nv_dds::CDDSImage* ddsimage;
