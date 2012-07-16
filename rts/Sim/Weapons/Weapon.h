@@ -130,8 +130,8 @@ public:
 
 	CWeapon* slavedTo;						// use this weapon to choose target
 
-	float maxForwardAngleDif;				// for onlyForward weapons, maximum allowed angle between owner->frontdir and (targetPos - owner->pos)
-	float maxMainDirAngleDif;				// how far away from <mainDir> the weapon can aim at something (as an acos value)
+	float maxForwardAngleDif;				// for onlyForward/!turret weapons, max. angle between owner->frontdir and (targetPos - owner->pos) (derived from UnitDefWeapon::maxAngleDif)
+	float maxMainDirAngleDif;				// for !onlyForward/turret weapons, max. angle from <mainDir> the weapon can aim (derived from WeaponDef::tolerance)
 
 	bool avoidFriendly;						// if true, try to avoid friendly units while aiming
 	bool avoidFeature;      				// if true, try to avoid features while aiming

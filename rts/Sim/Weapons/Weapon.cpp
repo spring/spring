@@ -1006,16 +1006,23 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 	if (targetVec.SqLength2D() >= (weaponRange * weaponRange))
 		return false;
 
-	if (maxMainDirAngleDif > -1.0f) {
-		// NOTE: mainDir is in unit-space, worldMainDir is in world-space
-		const float3 targetNormDir = targetDirNormalized? targetDir: targetDir.SafeNormalize();
-		const float3 worldMainDir =
-			owner->frontdir * mainDir.z +
-			owner->rightdir * mainDir.x +
-			owner->updir    * mainDir.y;
+	const float3 targetNormDir = targetDirNormalized? targetDir: targetDir.SafeNormalize();
+	const float3 worldMainDir =
+		owner->frontdir * mainDir.z +
+		owner->rightdir * mainDir.x +
+		owner->updir    * mainDir.y;
 
-		if (worldMainDir.dot(targetNormDir) < maxMainDirAngleDif)
-			return false;
+	if (onlyForward) {
+		if (maxForwardAngleDif > -1.0f) {
+			if (owner->frontdir.dot(targetNormDir) < maxForwardAngleDif)
+				return false;
+		}
+	} else {
+		if (maxMainDirAngleDif > -1.0f) {
+			// NOTE: mainDir is in unit-space, worldMainDir is in world-space
+			if (worldMainDir.dot(targetNormDir) < maxMainDirAngleDif)
+				return false;
+		}
 	}
 
 	return true;
