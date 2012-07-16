@@ -480,9 +480,9 @@ void CWeapon::Update()
 	}
 }
 
-bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
+bool CWeapon::AttackGround(float3 pos, bool userTarget)
 {
-	if (!isUserTarget && weaponDef->noAutoTarget) {
+	if (!userTarget && weaponDef->noAutoTarget) {
 		return false;
 	}
 	if (weaponDef->interceptor || !weaponDef->canAttackGround) {
@@ -490,8 +490,8 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 	}
 
 	// keep target positions on the surface if this weapon hates water
-	if (!weaponDef->waterweapon && (newTargetPos.y < 1.0f)) {
-		newTargetPos.y = 1.0f;
+	if (!weaponDef->waterweapon && (pos.y < 1.0f)) {
+		pos.y = 1.0f;
 	}
 
 	weaponMuzzlePos =
@@ -505,24 +505,21 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (!TryTarget(newTargetPos, isUserTarget, NULL))
-		return false;
-
 	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
 
-	haveUserTarget = isUserTarget;
+	haveUserTarget = userTarget;
 	targetType = Target_Pos;
-	targetPos = newTargetPos;
+	targetPos = pos;
 
-	return true;
+	return (TryTarget(pos, userTarget, NULL));
 }
 
-bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
+bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 {
-	if ((!isUserTarget && weaponDef->noAutoTarget)) {
+	if ((!userTarget && weaponDef->noAutoTarget)) {
 		return false;
 	}
 	if (weaponDef->interceptor)
@@ -544,7 +541,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (newTargetUnit == NULL) {
+	if (unit == NULL) {
 		if (targetType != Target_Unit) {
 			// make the unit be more likely to keep the current target if user starts to move it
 			targetType = Target_None;
@@ -554,45 +551,34 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 		haveUserTarget = false;
 		return false;
 	}
-
 	// check if it is theoretically impossible for us to attack this unit
 	// must be done before we assign <unit> to <targetUnit>, which itself
 	// must precede the TryTarget call (since we do want to assign if it
-	// is eg. just out of range currently --> however, this in turn causes
-	// "lock-on" targeting behavior which is less desirable, eg. we want a
-	// lock on a user-selected target that moved out of range to be broken
-	// after some time so automatic targeting can select new in-range units)
-	//
+	// is eg. just out of range currently)
 	// note that TryTarget is also called from other places and so has to
 	// repeat this check, but the redundancy added is minimal
-	#if 0
-	if (!(onlyTargetCategory & newTargetUnit->category)) {
+	if (!(onlyTargetCategory & unit->category)) {
 		return false;
 	}
-	#endif
-
-	const float3 errorPos = helper->GetUnitErrorPos(newTargetUnit, owner->allyteam, true);
-	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * newTargetUnit->speed.Length() * (1.0f - owner->limExperience));
-	const float3 newTargetPos = errorPos + errorVector * errorScale;
-
-	if (!TryTarget(newTargetPos, isUserTarget, newTargetUnit))
-		return false;
 
 	if (targetUnit != NULL) {
 		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
 
-	haveUserTarget = isUserTarget;
+	const float3 errorPos = helper->GetUnitErrorPos(unit, owner->allyteam, true);
+	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
+
+	haveUserTarget = userTarget;
 	targetType = Target_Unit;
-	targetUnit = newTargetUnit;
-	targetPos = newTargetPos;
+	targetUnit = unit;
+	targetPos = errorPos + errorVector * errorScale;
 	targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
 
-	return true;
+	return (TryTarget(targetPos, userTarget, unit));
 }
 
 
@@ -604,13 +590,10 @@ void CWeapon::HoldFire()
 	}
 
 	targetType = Target_None;
-
-	if (!weaponDef->noAutoTarget) {
-		// if haveUserTarget is set to false unconditionally, a subsequent
-		// call to AttackUnit from Unit::SlowUpdateWeapons would abort the
-		// attack for noAutoTarget weapons
+	// if haveUserTarget is set to false, a subsequent call to AttackUnit from
+	// Unit::SlowUpdateWeapons will abort the attack for noAutoTarget weapons
+	if (!weaponDef->noAutoTarget)
 		haveUserTarget = false;
-	}
 }
 
 
