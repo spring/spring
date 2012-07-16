@@ -1000,6 +1000,8 @@ void CUnit::SlowUpdateWeapons() {
 		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 			CWeapon* w = *wi;
 
+			w->SlowUpdate();
+
 			// NOTE:
 			//     pass w->haveUserTarget so we do not interfere with
 			//     user targets; w->haveUserTarget can only be true if
@@ -1014,8 +1016,6 @@ void CUnit::SlowUpdateWeapons() {
 					w->AttackGround(attackPos, w->haveUserTarget);
 				}
 			}
-
-			w->SlowUpdate();
 
 			if (lastAttacker == NULL)
 				continue;
@@ -1569,7 +1569,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 		CWeapon* w = *wi;
 
 		w->targetType = Target_None;
-		w->haveUserTarget = false;
+		w->haveUserTarget = false; // this should be false for ground-attack commands
 
 		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
 			ret |= (w->AttackGround(pos, true));
