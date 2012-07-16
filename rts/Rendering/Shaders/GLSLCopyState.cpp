@@ -306,7 +306,7 @@ static void CopyShaderState_Attributes(GLuint newProgID, GLuint oldProgID)
 static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID)
 {
 	//FIXME find out what extensions are really needed
-	if (!GLEW_ARB_transform_feedback_instanced)
+	if (!GLEW_ARB_transform_feedback3)
 		return;
 
 	GLint bufferMode, numVaryings, maxNameLength;
