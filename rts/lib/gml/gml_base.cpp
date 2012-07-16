@@ -30,10 +30,11 @@ COffscreenGLContext* ogc[GML_MAX_NUM_THREADS] = { NULL };
 static void gmlSimLoop(void*)
 {
 	try {
-		Watchdog::ClearTimer(WDT_SIM, true);
-
-		while(gmlKeepRunning && !gmlStartSim)
-			SDL_Delay(100);
+		while(gmlKeepRunning && !gmlStartSim) {
+			// the other thread may ClearPrimaryTimers(), so it is not enough to disable the watchdog timer once
+			Watchdog::ClearTimer(WDT_SIM, true);
+			SDL_Delay((gs->frameNum > 1) ? 500 : 100);
+		}
 
 		if (gmlKeepRunning) {
 			if (gmlShareLists)
@@ -45,9 +46,10 @@ static void gmlSimLoop(void*)
 
 			while(gmlKeepRunning) {
 				if(!gmlMultiThreadSim) {
-					Watchdog::ClearTimer(WDT_SIM, true);
-					while(!gmlMultiThreadSim && gmlKeepRunning)
+					while(!gmlMultiThreadSim && gmlKeepRunning) {
+						Watchdog::ClearTimer(WDT_SIM, true);
 						SDL_Delay(500);
+					}
 				}
 
 				//FIXME activeController could change while processing this branch. Better make it safe with a mutex?
