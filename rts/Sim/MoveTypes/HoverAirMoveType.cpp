@@ -408,9 +408,10 @@ void CHoverAirMoveType::UpdateFlying()
 						}
 					} else {
 						wantedSpeed = ZeroVector;
-						if (!hasMoreMoveCmds)
+						if (!hasMoreMoveCmds) {
 							wantToStop = true;
-						SetState(AIRCRAFT_HOVERING);
+							SetState(AIRCRAFT_HOVERING);
+						}
 					}
 				} else {
 					wantedHeight = orgWantedHeight;
@@ -542,6 +543,7 @@ void CHoverAirMoveType::UpdateLanding()
 	// We should wait until we actually have stopped smoothly
 	if (speed.SqLength2D() > 1.0f) {
 		UpdateFlying();
+		UpdateAirPhysics();
 		return;
 	}
 
@@ -958,7 +960,12 @@ void CHoverAirMoveType::Takeoff()
 	}
 }
 
-
+void CHoverAirMoveType::Land()
+{
+	if (aircraftState == AAirMoveType::AIRCRAFT_HOVERING) {
+		SetState(AAirMoveType::AIRCRAFT_FLYING); // switch to flying, it performs necessary checks to prepare for landing
+	}
+}
 
 bool CHoverAirMoveType::HandleCollisions()
 {

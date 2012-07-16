@@ -25,21 +25,18 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SKY_BOX)
 
 CSkyBox::CSkyBox(const std::string& texture)
 {
+	tex = 0;
+#ifndef HEADLESS
 	CBitmap btex;
-	if (!btex.Load(texture)) {
-		LOG_L(L_WARNING, "could not load skybox texture from file %s",
-				texture.c_str());
-		tex = 0;
+	if (!btex.Load(texture) || btex.textype != GL_TEXTURE_CUBE_MAP) {
+		LOG_L(L_WARNING, "could not load skybox texture from file %s", texture.c_str());
 	} else {
-		tex = btex.CreateTexture(true);
-
+		tex = btex.CreateTexture(false);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
-
+#endif
 	cloudDensity = mapInfo->atmosphere.cloudDensity;
 	cloudColor = mapInfo->atmosphere.cloudColor;
 	skyColor = mapInfo->atmosphere.skyColor;

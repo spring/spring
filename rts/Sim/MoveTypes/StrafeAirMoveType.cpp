@@ -518,7 +518,8 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	float gHeightAW = ground->GetHeightAboveWater(pos.x, pos.z);
 
 	float goalDotRight = rightdir.dot(goalDir);
-	float goalDotFront = goalDir.dot(frontdir) * 0.5f + 0.501f;
+	const float aGoalDotFront = goalDir.dot(frontdir);
+	const float goalDotFront = aGoalDotFront * 0.5f + 0.501f;
 
 	if (goalDotFront != 0.0f) {
 		goalDotRight /= goalDotFront;
@@ -534,30 +535,32 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	}
 
 	// roll
+	const float maxAileronSpeedf = maxAileron * speedf;
+	const float maxAileronSpeedf2 = maxAileronSpeedf * 4.0f;
 	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * fabs(frontdir.y) + std::min(0.0f, float(updir.y)) * 150 > gHeightAW + 60 + fabs(rightdir.y) * 150) {
 		const float goalBankDif = goalDotRight + rightdir.y * 0.2f;
-		if (goalBankDif > maxAileron * speedf * 4.0f) {
+		if (goalBankDif > maxAileronSpeedf2) {
 			aileron = 1;
-		} else if (goalBankDif < -maxAileron * speedf * 4.0f) {
+		} else if (goalBankDif < -maxAileronSpeedf2) {
 			aileron = -1;
-		} else {
-			aileron = goalBankDif / (maxAileron * speedf * 4.0f);
+		} else if (maxAileronSpeedf2 > 0.0f) {
+			aileron = goalBankDif / maxAileronSpeedf2;
 		}
 	} else {
 		if (rightdir.y > 0.0f) {
-			if (rightdir.y > maxAileron * speedf || frontdir.y < -0.7f) {
+			if (rightdir.y > maxAileronSpeedf || frontdir.y < -0.7f) {
 				aileron = 1;
 			} else {
-				if (speedf > 0.0f) {
-					aileron = rightdir.y / (maxAileron * speedf);
+				if (maxAileronSpeedf > 0.0f) {
+					aileron = rightdir.y / maxAileronSpeedf;
 				}
 			}
 		} else {
-			if (rightdir.y < -maxAileron * speedf || frontdir.y < -0.7f) {
+			if (rightdir.y < -maxAileronSpeedf || frontdir.y < -0.7f) {
 				aileron = -1;
 			} else {
-				if (speedf > 0.0f) {
-					aileron = rightdir.y / (maxAileron * speedf);
+				if (maxAileronSpeedf > 0.0f) {
+					aileron = rightdir.y / maxAileronSpeedf;
 				}
 			}
 		}
@@ -565,13 +568,17 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 
 	// yaw
 	if (pos.y > gHeightAW + 30) {
-		if (goalDotRight < -maxRudder * speedf) {
+		const float maxRudderSpeedf = maxRudder * speedf;
+		if (goalDotRight < -maxRudderSpeedf) {
 			rudder = -1;
-		} else if (goalDotRight > maxRudder * speedf) {
+		} else if (goalDotRight > maxRudderSpeedf) {
 			rudder = 1;
 		} else {
-			if (speedf > 0.0f) {
-				rudder = goalDotRight / (maxRudder * speedf);
+			if (maxRudderSpeedf > 0.0f) {
+				rudder = goalDotRight / maxRudderSpeedf;
+				if (fabs(rudder) < 0.01f && aGoalDotFront < 0.0f) {
+					rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f; // target almost straight behind us, we have to choose a direction
+				}
 			}
 		}
 	}
@@ -591,25 +598,27 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 		const float gHeightR = ground->GetHeightAboveWater(pos.x + speed.x * 40, pos.z + speed.z * 40);
 		const float hdif = std::max(gHeightR, gHeightAW) + 60 - pos.y - frontdir.y * speedf * 20;
 		float minPitch = 1.0f; // min(1.0f, hdif / (maxElevator * speedf * speedf * 20));
+		const float maxElevatorSpeedf = maxElevator * speedf;
+		const float maxElevatorSpeedf2 = maxElevatorSpeedf * speedf * 20.0f;
 
-		if (hdif < -(maxElevator * speedf * speedf * 20)) {
+		if (hdif < -maxElevatorSpeedf2) {
 			minPitch = -1;
-		} else if (hdif > (maxElevator * speedf * speedf * 20)) {
+		} else if (hdif > maxElevatorSpeedf2) {
 			minPitch = 1;
-		} else {
-			minPitch = hdif / (maxElevator * speedf * speedf * 20);
+		} else if (maxElevatorSpeedf2 > 0.0f) {
+			minPitch = hdif / maxElevatorSpeedf2;
 		}
 
 		if (lastColWarning && lastColWarningType == 2 && frontdir.dot(lastColWarning->pos + lastColWarning->speed * 20 - pos-owner->speed * 20) < 0) {
 			elevator = (updir.dot(lastColWarning->midPos - owner->midPos) > 0.0f)? -1 : 1;
 		} else {
 			const float hdif = goalDir.dot(updir);
-			if (hdif < -maxElevator * speedf) {
+			if (hdif < -maxElevatorSpeedf) {
 				elevator = -1;
-			} else if (hdif > maxElevator * speedf) {
+			} else if (hdif > maxElevatorSpeedf) {
 				elevator = 1;
-			} else {
-				elevator = hdif / (maxElevator * speedf);
+			} else if (maxElevatorSpeedf > 0.0f) {
+				elevator = hdif / maxElevatorSpeedf;
 			}
 		}
 		if (elevator * upside < minPitch) {
@@ -683,7 +692,8 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	}
 
 	float goalDotRight = rightdir.dot(adjustedGoalDir);
-	float goalDotFront = adjustedGoalDir.dot(frontdir) * 0.5f + 0.501f;
+	const float aGoalDotFront = adjustedGoalDir.dot(frontdir);
+	const float goalDotFront = aGoalDotFront * 0.5f + 0.501f;
 
 	if (goalDotFront > 0.01f) {
 		goalDotRight /= goalDotFront;
@@ -701,13 +711,14 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	// roll
 	if (speedf > 1.5f && pos.y + speed.y * 10 > gHeight + wantedHeight * 0.6f) {
 		const float goalBankDif = goalDotRight + rightdir.y * 0.5f;
-		if (goalBankDif > maxAileron*speedf * 4 && rightdir.y > -maxBank) {
+		const float maxAileronSpeedf = maxAileron * speedf * 4.0f;
+		if (goalBankDif > maxAileronSpeedf && rightdir.y > -maxBank) {
 			aileron = 1;
-		} else if (goalBankDif < -maxAileron * speedf * 4 && rightdir.y < maxBank) {
+		} else if (goalBankDif < -maxAileronSpeedf && rightdir.y < maxBank) {
 			aileron = -1;
 		} else {
-			if (fabs(rightdir.y) < maxBank) {
-				aileron = goalBankDif / (maxAileron * speedf * 4);
+			if (fabs(rightdir.y) < maxBank && maxAileronSpeedf > 0.0f) {
+				aileron = goalBankDif / maxAileronSpeedf;
 			} else {
 				if (rightdir.y < 0.0f && goalBankDif < 0.0f) {
 					aileron = -1;
@@ -726,13 +737,17 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 	// yaw
 	if (pos.y > gHeight + 15) {
-		if (goalDotRight < -maxRudder * speedf * 2) {
+		const float maxRudderSpeedf = maxRudder * speedf * 2.0f;
+		if (goalDotRight < -maxRudderSpeedf) {
 			rudder = -1;
-		} else if (goalDotRight > maxRudder * speedf * 2) {
+		} else if (goalDotRight > maxRudderSpeedf) {
 			rudder = 1;
 		} else {
-			if (speedf > 0.0f && maxRudder > 0.0f) {
-				rudder = goalDotRight / (maxRudder * speedf * 2);
+			if (maxRudderSpeedf > 0.0f) {
+				rudder = goalDotRight / maxRudderSpeedf;
+				if (fabs(rudder) < 0.01f && aGoalDotFront < 0.0f) {
+					rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f; // target almost straight behind us, we have to choose a direction
+				}
 			} else {
 				rudder = 0;
 			}
@@ -754,16 +769,17 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		}
 
 		if (notColliding) {
+			const float maxElevatorSpeedf = maxElevator * 20.0f * speedf * speedf;
 			const float gHeightAW = ground->GetHeightAboveWater(pos.x + speed.x * 40, pos.z + speed.z * 40);
 			const float hdif = std::max(gHeight, gHeightAW) + wantedHeight - pos.y - frontdir.y * speedf * 20;
 
-			if (hdif < -(maxElevator * speedf * speedf * 20) && frontdir.y > -maxPitch) {
+			if (hdif < -maxElevatorSpeedf && frontdir.y > -maxPitch) {
 				elevator = -1;
-			} else if (hdif > (maxElevator * speedf * speedf * 20) && frontdir.y < maxPitch) {
+			} else if (hdif > maxElevatorSpeedf && frontdir.y < maxPitch) {
 				elevator = 1;
-			} else {
+			} else if (maxElevatorSpeedf > 0.0f) {
 				if (fabs(frontdir.y) < maxPitch)
-					elevator = hdif / (maxElevator * speedf * speedf * 20);
+					elevator = hdif / maxElevatorSpeedf;
 			}
 		}
 	} else {

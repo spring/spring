@@ -186,6 +186,34 @@ public:
 		, timeOut(INT_MAX)
 		, id(cmdID)
 	{
+		params.push_back(param);
+	}
+
+	Command(const int cmdID, const unsigned char cmdOptions, const float3& pos)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		PushPos(pos);
+	}
+
+	Command(const int cmdID, const unsigned char cmdOptions, const float param, const float3& pos)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		params.push_back(param);
+		PushPos(pos);
+	}
+
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
 		PushParam(param);
 	}
 
