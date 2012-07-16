@@ -26,7 +26,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SKY_BOX)
 CSkyBox::CSkyBox(const std::string& texture)
 {
 	tex = 0;
-#ifdef HEADLESS
+#ifndef HEADLESS
 	CBitmap btex;
 	if (!btex.Load(texture) || btex.textype != GL_TEXTURE_CUBE_MAP) {
 		LOG_L(L_WARNING, "could not load skybox texture from file %s", texture.c_str());
