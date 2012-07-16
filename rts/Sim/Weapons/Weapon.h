@@ -49,8 +49,8 @@ public:
 	virtual void UpdateRange(float val) { range = val; }
 
 	void HoldFire();
-	virtual bool AttackUnit(CUnit* newTargetUnit, bool isUserTarget);
-	virtual bool AttackGround(float3 newTargetPos, bool isUserTarget);
+	virtual bool AttackUnit(CUnit* unit, bool userTarget);
+	virtual bool AttackGround(float3 pos, bool userTarget);
 
 	void AimReady(int value);
 
