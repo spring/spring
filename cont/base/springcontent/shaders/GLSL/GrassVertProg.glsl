@@ -68,7 +68,8 @@ void main() {
 	gl_TexCoord[3].st = gl_MultiTexCoord0.st;
 
 	gl_FrontColor = gl_Color;
-	gl_FogFragCoord = length(vertexPos.xyz);
+	// no fog for ultra-near grass patches
+	// gl_FogFragCoord = length(vertexPos.xyz);
 	gl_Position = gl_ProjectionMatrix * vertexPos;
 	#endif
 
