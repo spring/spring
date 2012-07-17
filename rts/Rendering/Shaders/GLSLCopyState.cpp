@@ -339,7 +339,7 @@ static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID
 
 static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 {
-#ifdef GL_ARB_geometry_shader4
+#if defined(GL_ARB_geometry_shader4) && defined(GL_ARB_get_program_binary)
 	if (!GLEW_ARB_geometry_shader4)
 		return;
 
