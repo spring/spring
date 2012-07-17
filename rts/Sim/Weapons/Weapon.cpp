@@ -426,13 +426,8 @@ void CWeapon::Update()
 			// add to the commandShotCount if this is the last salvo,
 			// and it is being directed towards the current target
 			// (helps when deciding if a queued ground attack order has been completed)
-			const bool lastSalvo = ((salvoLeft == 0) && (owner->commandShotCount >= 0));
 			const bool attackingPos = ((targetType == Target_Pos) && (targetPos == owner->attackPos));
 			const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
-
-			if (lastSalvo && (attackingPos || attackingUnit)) {
-				owner->commandShotCount++;
-			}
 
 			owner->script->Shot(weaponNum);
 
@@ -467,7 +462,7 @@ void CWeapon::Update()
 			owner->script->RockUnit(rockDir);
 		}
 
-		owner->commandAI->WeaponFired(this);
+		owner->commandAI->WeaponFired(this, salvoLeft == 0);
 
 		if (salvoLeft == 0) {
 			owner->script->EndBurst(weaponNum);
@@ -615,7 +610,7 @@ void CWeapon::HoldFire()
 
 
 
-inline bool CWeapon::AllowWeaponTargetCheck() const
+inline bool CWeapon::AllowWeaponTargetCheck()
 {
 	if (luaRules != NULL) {
 		const int checkAllowed = luaRules->AllowWeaponTargetCheck(owner->id, weaponNum, weaponDef->id);
@@ -625,7 +620,6 @@ inline bool CWeapon::AllowWeaponTargetCheck() const
 		}
 	}
 
-	if (haveUserTarget)                          { return false; }
 	if (weaponDef->noAutoTarget)                 { return false; }
 	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
 
@@ -636,6 +630,20 @@ inline bool CWeapon::AllowWeaponTargetCheck() const
 		if (targetUnit->category & badTargetCategory) {
 			return true;
 		}
+		if (!TryTarget(targetUnit, haveUserTarget)) {
+			// if we have a user-target (ie. a user attack order)
+			// then only allow generating opportunity targets iff
+			// it is not possible to hit the user's chosen unit
+			//
+			// this will switch <targetUnit>, but the CAI will keep
+			// calling AttackUnit while the original order target is
+			// alive to put it back when possible
+			//
+			// note that the CAI itself only auto-picks a target
+			// when a unit has no commands left in its queue, so
+			// it can not interfere
+			return true;
+		}
 	}
 
 	if (gs->frameNum > (lastTargetRetry + 65)) {
@@ -643,6 +651,84 @@ inline bool CWeapon::AllowWeaponTargetCheck() const
 	}
 
 	return false;
+}
+
+void CWeapon::AutoTarget() {
+	lastTargetRetry = gs->frameNum;
+
+	std::multimap<float, CUnit*> targets;
+	std::multimap<float, CUnit*>::const_iterator targetsIt;
+
+	// NOTE:
+	//   sorts by INCREASING order of priority, so lower equals better
+	//   <targets> can contain duplicates if a unit covers multiple quads
+	//   <targets> is normally sorted such that all bad TC units are at the
+	//   end, but Lua can mess with the ordering arbitrarily
+	helper->GenerateWeaponTargets(this, targetUnit, targets);
+
+	CUnit* prevTargetUnit = NULL;
+	CUnit* goodTargetUnit = NULL;
+	CUnit* badTargetUnit = NULL;
+
+	float3 nextTargetPos = ZeroVector;
+
+	for (targetsIt = targets.begin(); targetsIt != targets.end(); ++targetsIt) {
+		CUnit* nextTargetUnit = targetsIt->second;
+
+		if (nextTargetUnit == prevTargetUnit)
+			continue; // filter consecutive duplicates
+		if (nextTargetUnit->neutral && (owner->fireState <= FIRESTATE_FIREATWILL))
+			continue;
+
+		const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTargetUnit->speed.Length();
+		const float weaponError = weaponLead * (1.0f - owner->limExperience);
+
+		prevTargetUnit = nextTargetUnit;
+		nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
+
+		const float appHeight = ground->GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
+
+		if (nextTargetPos.y < appHeight) {
+			nextTargetPos.y = appHeight;
+		}
+
+		if (!TryTarget(nextTargetPos, false, nextTargetUnit))
+			continue;
+
+		if ((nextTargetUnit->category & badTargetCategory) != 0) {
+			// save the "best" bad target in case we have no other
+			// good targets (of higher priority) left in <targets>
+			if (badTargetUnit != NULL)
+				continue;
+
+			badTargetUnit = nextTargetUnit;
+		} else {
+			goodTargetUnit = nextTargetUnit;
+			break;
+		}
+	}
+
+	if (goodTargetUnit != NULL || badTargetUnit != NULL) {
+		const bool haveOldTarget = (targetUnit != NULL);
+		const bool haveNewTarget =
+			(goodTargetUnit != NULL && goodTargetUnit != targetUnit) ||
+			( badTargetUnit != NULL &&  badTargetUnit != targetUnit);
+
+		if (haveOldTarget && haveNewTarget) {
+			// delete our old target dependence if we are switching targets
+			DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+		}
+
+		// pick our new target
+		targetType = Target_Unit;
+		targetUnit = (goodTargetUnit != NULL)? goodTargetUnit: badTargetUnit;
+		targetPos = nextTargetPos;
+
+		if (!haveOldTarget || haveNewTarget) {
+			// add new target dependence if we had no target or switched
+			AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+		}
+	}
 }
 
 
@@ -757,81 +843,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 
 	if (!noAutoTargetOverride && AllowWeaponTargetCheck()) {
-		lastTargetRetry = gs->frameNum;
-
-		std::multimap<float, CUnit*> targets;
-		std::multimap<float, CUnit*>::const_iterator targetsIt;
-
-		// NOTE:
-		//   sorts by INCREASING order of priority, so lower equals better
-		//   <targets> can contain duplicates if a unit covers multiple quads
-		//   <targets> is normally sorted such that all bad TC units are at the
-		//   end, but Lua can mess with the ordering arbitrarily
-		helper->GenerateWeaponTargets(this, targetUnit, targets);
-
-		CUnit* prevTargetUnit = NULL;
-		CUnit* goodTargetUnit = NULL;
-		CUnit* badTargetUnit = NULL;
-
-		float3 nextTargetPos = ZeroVector;
-
-		for (targetsIt = targets.begin(); targetsIt != targets.end(); ++targetsIt) {
-			CUnit* nextTargetUnit = targetsIt->second;
-
-			if (nextTargetUnit == prevTargetUnit)
-				continue; // filter consecutive duplicates
-			if (nextTargetUnit->neutral && (owner->fireState <= FIRESTATE_FIREATWILL))
-				continue;
-
-			const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTargetUnit->speed.Length();
-			const float weaponError = weaponLead * (1.0f - owner->limExperience);
-
-			prevTargetUnit = nextTargetUnit;
-			nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
-
-			const float appHeight = ground->GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
-
-			if (nextTargetPos.y < appHeight) {
-				nextTargetPos.y = appHeight;
-			}
-
-			if (!TryTarget(nextTargetPos, false, nextTargetUnit))
-				continue;
-
-			if ((nextTargetUnit->category & badTargetCategory) != 0) {
-				// save the "best" bad target in case we have no other
-				// good targets (of higher priority) left in <targets>
-				if (badTargetUnit != NULL)
-					continue;
-
-				badTargetUnit = nextTargetUnit;
-			} else {
-				goodTargetUnit = nextTargetUnit;
-				break;
-			}
-		}
-
-		if (goodTargetUnit != NULL || badTargetUnit != NULL) {
-			const bool haveOldTarget = (targetUnit != NULL);
-			const bool haveNewTarget =
-				(goodTargetUnit != NULL && goodTargetUnit != targetUnit) ||
-				( badTargetUnit != NULL &&  badTargetUnit != targetUnit);
-
-			if (haveOldTarget && haveNewTarget) {
-				// delete our old target dependence if we are switching targets
-				DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-			}
-
-			// pick our new target
-			targetType = Target_Unit;
-			targetUnit = (goodTargetUnit != NULL)? goodTargetUnit: badTargetUnit;
-			targetPos = nextTargetPos;
-
-			if (!haveOldTarget || haveNewTarget) {
-				// add new target dependence if we had no target or switched
-				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-			}
-		}
+		AutoTarget();
 	}
 
 	if (targetType != Target_None) {

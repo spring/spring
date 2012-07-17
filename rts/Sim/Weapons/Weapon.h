@@ -32,6 +32,7 @@ public:
 
 	void DependentDied(CObject* o);
 
+	bool AllowWeaponTargetCheck();
 	bool TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit) const;
 	bool HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const;
 	bool AdjustTargetVectorLength(CUnit*, float3&, float3&, float3&) const;
@@ -43,23 +44,24 @@ public:
 	bool CobBlockShot(const CUnit* unit);
 	float TargetWeight(const CUnit* unit) const;
 	void SlowUpdate(bool noAutoTargetOverride);
+
 	virtual void SlowUpdate();
 	virtual void Update();
 	virtual float GetRange2D(float yDiff) const;
 	virtual void UpdateRange(float val) { range = val; }
 
-	void HoldFire();
 	virtual bool AttackUnit(CUnit* newTargetUnit, bool isUserTarget);
 	virtual bool AttackGround(float3 newTargetPos, bool isUserTarget);
 
+	void AutoTarget();
 	void AimReady(int value);
-
-	bool AllowWeaponTargetCheck() const;
-
 	void Fire();
+	void HoldFire();
 
 	void StopAttackingAllyTeam(int ally);
+	void UpdateInterceptTarget();
 
+public:
 	CUnit* owner;
 
 	const WeaponDef* weaponDef;
@@ -122,7 +124,6 @@ public:
 	float buildPercent;						// how far we have come on building current missile if stockpiling
 	int numStockpiled;						// how many missiles we have stockpiled
 	int numStockpileQued;					// how many weapons the user have added to our que
-	void UpdateInterceptTarget();
 
 	int lastRequest;						// when the last script call was done
 	int lastTargetRetry;					// when we last recalculated target selection
@@ -160,7 +161,7 @@ public:
 	float3 targetPos;						// the position of the target (even if targettype=unit)
 
 private:
-	virtual void FireImpl() {};
+	virtual void FireImpl() {}
 };
 
 #endif /* WEAPON_H */
