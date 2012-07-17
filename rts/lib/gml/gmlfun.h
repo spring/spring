@@ -1367,6 +1367,7 @@ GML_MAKEFUN2R(MapBuffer,GLenum,GLenum,GLvoid *)
 GML_MAKEFUN1R(UnmapBuffer,GLenum,GLboolean,)
 GML_MAKEFUN8VP(CompressedTexImage2D,GLenum,GLint,GLenum,GLsizei,GLsizei,GLint,GLsizei,const GLvoid,BYTE,G)
 GML_MAKEFUN1R(IsShader,GLuint, GLboolean,)
+GML_MAKEFUN1R(IsProgram,GLuint, GLboolean,)
 GML_MAKEFUN3(Vertex3i,GLint,GLint,GLint,)
 GML_MAKEFUN2(GetIntegerv,GLenum,GLint *,GML_CACHE(GLenum,GLint,gmlGetIntegervCache,A,B),GML_SYNC())//
 GML_MAKEFUN1R(CheckFramebufferStatusEXT,GLenum, GLenum,GML_DEFAULT_RET(A==GL_FRAMEBUFFER_EXT,GL_FRAMEBUFFER_COMPLETE_EXT))

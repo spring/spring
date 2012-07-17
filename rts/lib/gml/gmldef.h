@@ -218,6 +218,7 @@
 #undef glUnmapBuffer
 #undef glCompressedTexImage2D
 #undef glIsShader
+#undef glIsProgram 
 #undef glVertex3i
 #undef glGetIntegerv
 #undef glCheckFramebufferStatusEXT
@@ -513,6 +514,7 @@
 #define glUnmapBuffer gmlUnmapBuffer
 #define glCompressedTexImage2D gmlCompressedTexImage2D
 #define glIsShader gmlIsShader
+#define glIsProgram gmlIsProgram
 #define glVertex3i gmlVertex3i
 #define glGetIntegerv gmlGetIntegerv
 #define glCheckFramebufferStatusEXT gmlCheckFramebufferStatusEXT

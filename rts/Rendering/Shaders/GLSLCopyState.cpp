@@ -17,7 +17,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
 
 
 //FIXME add missing functions to GML
-#ifndef USE_GML
+#if !defined(USE_GML) && !defined(HEADLESS)
 
 enum {
 	FLOAT1 = 1,
@@ -305,6 +305,7 @@ static void CopyShaderState_Attributes(GLuint newProgID, GLuint oldProgID)
 
 static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID)
 {
+#ifdef GL_ARB_transform_feedback3
 	//FIXME find out what extensions are really needed
 	if (!GLEW_ARB_transform_feedback3)
 		return;
@@ -319,7 +320,7 @@ static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID
 	std::string name(maxNameLength, 0);
 	for (int i = 0; i < numVaryings; ++i) {
 		GLsizei nameLength = 0;
-		GLint size = 0;
+		GLsizei size = 0;
 		GLenum type = 0;
 		glGetTransformFeedbackVarying(oldProgID, i, maxNameLength, &nameLength, &size, &type, &name[0]);
 		name[maxNameLength - 1] = 0;
@@ -332,11 +333,13 @@ static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID
 	}
 
 	glTransformFeedbackVaryings(newProgID, numVaryings, (const GLchar**)&varyingsPtr[0], bufferMode);
+#endif
 }
 
 
 static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 {
+#ifdef GL_ARB_geometry_shader4
 	if (!GLEW_ARB_geometry_shader4)
 		return;
 
@@ -348,13 +351,14 @@ static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 	glProgramParameteri(newProgID, GL_GEOMETRY_INPUT_TYPE, inputType);
 	glProgramParameteri(newProgID, GL_GEOMETRY_OUTPUT_TYPE, outputType);
 	glProgramParameteri(newProgID, GL_GEOMETRY_VERTICES_OUT, verticesOut);
+#endif
 }
 #endif
 
 namespace Shader {
 	void GLSLCopyState(GLuint newProgID, GLuint oldProgID)
 	{
-	#ifndef USE_GML
+	#if !defined(USE_GML) && !defined(HEADLESS)
 		CopyShaderState_Uniforms(newProgID, oldProgID);
 		CopyShaderState_UniformBlocks(newProgID, oldProgID);
 		CopyShaderState_Attributes(newProgID, oldProgID);

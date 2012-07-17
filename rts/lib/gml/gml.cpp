@@ -1025,6 +1025,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER1R(UnmapBuffer)
 		GML_MAKEHANDLER8VP(CompressedTexImage2D)
 		GML_MAKEHANDLER1R(IsShader)
+		GML_MAKEHANDLER1R(IsProgram)
 		GML_MAKEHANDLER3(Vertex3i)
 		GML_MAKEHANDLER2(GetIntegerv)//
 		GML_MAKEHANDLER1R(CheckFramebufferStatusEXT)
