@@ -114,6 +114,7 @@ GLAPI void APIENTRY glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufS
 GLAPI GLint APIENTRY glGetAttribLocation(GLuint program, const GLchar *name) { return -1; }
 GLAPI void APIENTRY glBindAttribLocation(GLuint program, GLuint index, const GLchar *name) {}
 GLAPI GLboolean APIENTRY glIsShader(GLuint shader) { return GL_FALSE; }
+GLAPI GLboolean APIENTRY glIsProgram(GLuint shader) { return GL_FALSE; }
 
 GLAPI void APIENTRY glDetachShader(GLuint program, GLuint shader) {}
 GLAPI void APIENTRY glAttachShader(GLuint program, GLuint shader) {}
