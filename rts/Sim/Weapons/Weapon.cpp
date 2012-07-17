@@ -420,19 +420,11 @@ void CWeapon::Update()
 
 		int projectiles = projectilesPerShot;
 
+		const bool attackingPos = ((targetType == Target_Pos) && (targetPos == owner->attackPos));
+		const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
+
 		while (projectiles > 0) {
 			--projectiles;
-
-			// add to the commandShotCount if this is the last salvo,
-			// and it is being directed towards the current target
-			// (helps when deciding if a queued ground attack order has been completed)
-			const bool lastSalvo = ((salvoLeft == 0) && (owner->commandShotCount >= 0));
-			const bool attackingPos = ((targetType == Target_Pos) && (targetPos == owner->attackPos));
-			const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
-
-			if (lastSalvo && (attackingPos || attackingUnit)) {
-				owner->commandShotCount++;
-			}
 
 			owner->script->Shot(weaponNum);
 
@@ -442,10 +434,19 @@ void CWeapon::Update()
 			piece = owner->script->/*AimFromWeapon*/QueryWeapon(weaponNum);
 			owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
 
-			weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+			weaponPos = owner->pos +
+				owner->frontdir * relWeaponPos.z +
+				owner->updir    * relWeaponPos.y +
+				owner->rightdir * relWeaponPos.x;
+			weaponMuzzlePos = owner->pos +
+				owner->frontdir * relWeaponMuzzlePos.z +
+				owner->updir    * relWeaponMuzzlePos.y +
+				owner->rightdir * relWeaponMuzzlePos.x;
 
-			weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-			weaponDir = owner->frontdir * weaponDir.z + owner->updir * weaponDir.y + owner->rightdir * weaponDir.x;
+			weaponDir =
+				owner->frontdir * weaponDir.z +
+				owner->updir    * weaponDir.y +
+				owner->rightdir * weaponDir.x;
 			weaponDir.SafeNormalize();
 
 			if (owner->unitDef->decloakOnFire && (owner->scriptCloak <= 2)) {
@@ -459,7 +460,7 @@ void CWeapon::Update()
 			Fire();
 		}
 
-		//Rock the unit in the direction of the fireing
+		//Rock the unit in the direction of fire
 		if (owner->script->HasRockUnit()) {
 			float3 rockDir = wantedDir;
 			rockDir.y = 0.0f;
@@ -467,7 +468,7 @@ void CWeapon::Update()
 			owner->script->RockUnit(rockDir);
 		}
 
-		owner->commandAI->WeaponFired(this);
+		owner->commandAI->WeaponFired(this, weaponNum == 0, (salvoLeft == 0 && (attackingPos || attackingUnit)));
 
 		if (salvoLeft == 0) {
 			owner->script->EndBurst(weaponNum);

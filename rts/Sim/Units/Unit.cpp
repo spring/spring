@@ -192,7 +192,6 @@ CUnit::CUnit() : CSolidObject(),
 	attackTarget(NULL),
 	attackPos(ZeroVector),
 	userAttackGround(false),
-	commandShotCount(-1),
 	fireState(FIRESTATE_FIREATWILL),
 	moveState(MOVESTATE_MANEUVER),
 	activated(false),
@@ -1516,7 +1515,6 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 
 	haveManualFireRequest = wantManualFire;
 	userAttackGround = false;
-	commandShotCount = 0;
 
 	if (attackTarget != NULL) {
 		DeleteDeathDependence(attackTarget, DEPENDENCE_TARGET);
@@ -1556,7 +1554,6 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 
 	haveManualFireRequest = wantManualFire;
 	userAttackGround = isUserTarget;
-	commandShotCount = 0;
 
 	if (attackTarget != NULL) {
 		DeleteDeathDependence(attackTarget, DEPENDENCE_TARGET);
@@ -2311,7 +2308,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(attackTarget),
 	CR_MEMBER(attackPos),
 	CR_MEMBER(userAttackGround),
-	CR_MEMBER(commandShotCount),
 	CR_MEMBER(fireState),
 	CR_MEMBER(dontFire),
 	CR_MEMBER(moveState),

@@ -428,7 +428,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 			FinishCommand();
 			return;
 		}
-		if ((c.params.size() == 3) && (owner->commandShotCount < 0) && (commandQue.size() > 1)) {
+		if ((c.params.size() == 3) && (commandQue.size() > 1)) {
 			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, true);
 			FinishCommand();
 			return;
@@ -447,7 +447,6 @@ void CAirCAI::ExecuteAttack(Command& c)
 		}
 	} else {
 		targetAge = 0;
-		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
@@ -482,52 +481,25 @@ void CAirCAI::ExecuteAreaAttack(Command& c)
 		inCommand = false;
 	}
 
-	const float3 pos = c.GetPos(0);
+	const float3& pos = c.GetPos(0);
 	const float radius = c.params[3];
 
 	if (inCommand) {
 		if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED)
 			inCommand = false;
+
 		if (orderTarget && orderTarget->pos.SqDistance2D(pos) > Square(radius)) {
 			inCommand = false;
-			SetOrderTarget(NULL);
-		}
-		if (owner->commandShotCount < 0) {
-			if ((c.params.size() == 4) && (commandQue.size() > 1)) {
-				owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
-				FinishCommand();
-			}
-			else if (owner->userAttackGround) {
-				// reset the attack position after each run
-				float3 attackPos = pos + (gs->randVector() * radius);
-				attackPos.y = ground->GetHeightAboveWater(attackPos.x, attackPos.z);
 
-				owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, false);
-				owner->commandShotCount = 0;
-			}
+			// target wandered out of the attack-area
+			SetOrderTarget(NULL);
+			SelectNewAreaAttackTargetOrPos(c);
 		}
 	} else {
-		owner->commandShotCount = -1;
-
 		if (myPlane->aircraftState != AAirMoveType::AIRCRAFT_LANDED) {
 			inCommand = true;
 
-			std::vector<int> enemyUnitIDs;
-			helper->GetEnemyUnits(pos, radius, owner->allyteam, enemyUnitIDs);
-
-			if (enemyUnitIDs.empty()) {
-				float3 attackPos = pos + gs->randVector() * radius;
-				attackPos.y = ground->GetHeightAboveWater(attackPos.x, attackPos.z);
-				owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, false);
-			} else {
-				// note: the range of randFloat() is inclusive of 1.0f
-				// note: assumes area-attacks can only be issued by users, not CAI's
-				const unsigned int idx(gs->randFloat() * (enemyUnitIDs.size() - 1));
-				CUnit* targetUnit = uh->GetUnitUnsafe(enemyUnitIDs[idx]);
-
-				SetOrderTarget(targetUnit);
-				owner->AttackUnit(targetUnit, false, false);
-			}
+			SelectNewAreaAttackTargetOrPos(c);
 		}
 	}
 }
@@ -614,3 +586,32 @@ void CAirCAI::SetGoal(const float3& pos, const float3& curPos, float goalRadius)
 	owner->moveType->SetGoal(pos);
 	CMobileCAI::SetGoal(pos, curPos, goalRadius);
 }
+
+void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
+	assert(ac.GetID() == CMD_AREA_ATTACK);
+
+	const float3& pos = ac.GetPos(0);
+	const float radius = ac.params[3];
+
+	std::vector<int> enemyUnitIDs;
+	helper->GetEnemyUnits(pos, radius, owner->allyteam, enemyUnitIDs);
+
+	if (enemyUnitIDs.empty()) {
+		float3 attackPos = pos + (gs->randVector() * radius);
+		attackPos.y = ground->GetHeightAboveWater(attackPos.x, attackPos.z);
+
+		owner->AttackGround(attackPos, (ac.options & INTERNAL_ORDER) == 0, false);
+		SetGoal(attackPos, owner->pos);
+	} else {
+		// note: the range of randFloat() is inclusive of 1.0f
+		const unsigned int unitIdx = gs->randFloat() * (enemyUnitIDs.size() - 1);
+		const unsigned int unitID = enemyUnitIDs[unitIdx];
+
+		CUnit* targetUnit = uh->GetUnitUnsafe(unitID);
+
+		SetOrderTarget(targetUnit);
+		owner->AttackUnit(targetUnit, (ac.options & INTERNAL_ORDER) == 0, false);
+		SetGoal(targetUnit->pos, owner->pos);
+	}
+}
+
