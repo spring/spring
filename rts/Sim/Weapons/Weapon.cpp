@@ -634,6 +634,7 @@ inline bool CWeapon::AllowWeaponTargetCheck()
 			// if we have a user-target (ie. a user attack order)
 			// then only allow generating opportunity targets iff
 			// it is not possible to hit the user's chosen unit
+			// TODO: this makes it easy to add toggle-able locking
 			//
 			// this will switch <targetUnit>, but the CAI will keep
 			// calling AttackUnit while the original order target is
