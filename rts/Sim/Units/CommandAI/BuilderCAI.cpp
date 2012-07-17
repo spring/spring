@@ -245,19 +245,24 @@ inline bool CBuilderCAI::IsInBuildRange(const float3& pos, const float radius) c
 
 inline bool CBuilderCAI::MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed)
 {
-	return MoveInBuildRange(obj->pos, obj->radius);
+	return MoveInBuildRange(obj->pos, obj->radius, checkMoveTypeForFailed);
 }
 
 
 bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed)
 {
 	if (!IsInBuildRange(pos, radius)) {
-		if (
-			checkMoveTypeForFailed &&
-			owner->moveType->progressState == AMoveType::Failed &&
-			f3SqDist(goalPos, pos) > 1.0f // check if the AMoveType::Failed belongs to the same goal position
-		) {
-			// don't call SetGoal() it would reset moveType->progressState and so later code couldn't check if the movecmd failed
+		// NOTE:
+		//   ignore the fail-check if we are an aircraft, movetype code
+		//   is unreliable wrt. setting it correctly and causes (landed)
+		//   aircraft to discard orders
+		const bool checkFailed = (checkMoveTypeForFailed && !owner->unitDef->IsAirUnit());
+		// check if the AMoveType::Failed belongs to the same goal position
+		const bool haveFailed = (owner->moveType->progressState == AMoveType::Failed && f3SqDist(goalPos, pos) > 1.0f);
+
+		if (checkFailed && haveFailed) {
+			// don't call SetGoal() it would reset moveType->progressState
+			// and so later code couldn't check if the move command failed
 			return false;
 		}
 
@@ -487,7 +492,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 {
 	CBuilder* builder = (CBuilder*) owner;
 
-	map<int, string>::iterator boi = buildOptions.find(c.GetID());
+	const map<int, string>::const_iterator boi = buildOptions.find(c.GetID());
 	if (boi == buildOptions.end())
 		return;
 
@@ -511,16 +516,16 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			} else {
 				FinishCommand();
 			}
-		} else {
-			inCommand = true;
-			build.Parse(c);
-			ExecuteBuildCmd(c);
+			return;
 		}
-		return;
+
+		inCommand = true;
+		build.Parse(c);
 	}
 
-	assert(build.def);
+	assert(build.def != NULL);
 	const float radius = GetBuildOptionRadius(build.def, c.GetID());
+
 	if (building) {
 		MoveInBuildRange(build.pos, radius);
 
@@ -554,14 +559,16 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		// we are on the way to the buildpos, meanwhile it can happen
 		// that another builder already finished our buildcmd or blocked
 		// the buildpos with another building (skip our buildcmd then)
-		const bool checkBuildPos = (gs->frameNum % (5 * UNIT_SLOWUPDATE_RATE)) < UNIT_SLOWUPDATE_RATE; //FIXME add a per-unit solution to better balance the load?
-		CFeature* feature = NULL;
-		if (checkBuildPos && !uh->TestUnitBuildSquare(build, feature, owner->allyteam, true)) {
-			if (!feature) {
-				const int yardxpos = int(build.pos.x + 4) / SQUARE_SIZE;
-				const int yardypos = int(build.pos.z + 4) / SQUARE_SIZE;
+		//FIXME add a per-unit solution to better balance the load?
+		if ((gs->frameNum % (5 * UNIT_SLOWUPDATE_RATE)) < UNIT_SLOWUPDATE_RATE) {
+			CFeature* feature = NULL;
+
+			if (!uh->TestUnitBuildSquare(build, feature, owner->allyteam, true) && (feature == NULL)) {
+				const int yardxpos = int(build.pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
+				const int yardypos = int(build.pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
 				const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
 				const CUnit* u = dynamic_cast<const CUnit*>(s);
+
 				if (u != NULL) {
 					const bool canAssist =
 						   u->beingBuilt
