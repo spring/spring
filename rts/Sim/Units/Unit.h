@@ -365,8 +365,6 @@ public:
 	float3 attackPos;
 
 	bool userAttackGround;
-	/// number of shots due to the latest command
-	int commandShotCount;
 
 	int fireState;
 	int moveState;

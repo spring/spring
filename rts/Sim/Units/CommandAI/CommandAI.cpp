@@ -1214,7 +1214,7 @@ void CCommandAI::ExecuteAttack(Command& c)
 			FinishCommand();
 			return;
 		}
-		if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
+		if ((c.params.size() == 3) && (commandQue.size() > 1)) {
 			FinishCommand();
 			return;
 		}
@@ -1223,8 +1223,6 @@ void CCommandAI::ExecuteAttack(Command& c)
 			return;
 		}
 	} else {
-		owner->commandShotCount = -1;
-
 		if (c.params.size() == 1) {
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
@@ -1445,13 +1443,19 @@ void CCommandAI::UpdateStockpileIcon()
 	}
 }
 
-void CCommandAI::WeaponFired(CWeapon* weapon)
+void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 {
-	if (!inCommand) { return; }
-	if (commandQue.empty()) { return; }
-	if (!weapon->weaponDef->manualfire) { return; }
+	const Command& c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
-	const Command& c = commandQue.front();
+	if (mainWeapon && lastSalvo && c.GetID() == CMD_AREA_ATTACK) {
+		// if we have an area-attack command and this was the last salvo
+		// of our main weapon, assume we completed an attack (run) on one
+		// position and move to the next
+		SelectNewAreaAttackTargetOrPos(c);
+	}
+
+	if (!inCommand) { return; }
+	if (!weapon->weaponDef->manualfire) { return; }
 
 	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
 		owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);

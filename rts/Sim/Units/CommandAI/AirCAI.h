@@ -36,6 +36,7 @@ public:
 	bool IsValidTarget(const CUnit* enemy) const;
 
 private:
+	void SelectNewAreaAttackTargetOrPos(const Command& ac);
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}

@@ -689,9 +689,6 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 	// check if we are in direct command of attacker
 	if (!inCommand) {
-		// don't start counting until the owner->AttackGround() order is given
-		owner->commandShotCount = -1;
-
 		if (c.params.size() == 1) {
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
@@ -718,7 +715,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			inCommand = true;
 		}
 	}
-	else if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
+	else if ((c.params.size() == 3) && (commandQue.size() > 1)) {
 		// the trailing CMD_SET_WANTED_MAX_SPEED in a command pair does not count
 		if ((commandQue.size() > 2) || (commandQue.back().GetID() != CMD_SET_WANTED_MAX_SPEED)) {
 			StopMove();
