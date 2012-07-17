@@ -426,8 +426,13 @@ void CWeapon::Update()
 			// add to the commandShotCount if this is the last salvo,
 			// and it is being directed towards the current target
 			// (helps when deciding if a queued ground attack order has been completed)
+			const bool lastSalvo = ((salvoLeft == 0) && (owner->commandShotCount >= 0));
 			const bool attackingPos = ((targetType == Target_Pos) && (targetPos == owner->attackPos));
 			const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
+
+			if (lastSalvo && (attackingPos || attackingUnit)) {
+				owner->commandShotCount++;
+			}
 
 			owner->script->Shot(weaponNum);
 
@@ -462,7 +467,7 @@ void CWeapon::Update()
 			owner->script->RockUnit(rockDir);
 		}
 
-		owner->commandAI->WeaponFired(this, salvoLeft == 0);
+		owner->commandAI->WeaponFired(this);
 
 		if (salvoLeft == 0) {
 			owner->script->EndBurst(weaponNum);
