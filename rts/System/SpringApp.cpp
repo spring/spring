@@ -31,6 +31,7 @@
 #include "System/Input/InputHandler.h"
 #include "System/Input/Joystick.h"
 #include "System/MsgStrings.h"
+#include "System/NetProtocol.h"
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
@@ -1040,6 +1041,7 @@ void SpringApp::Shutdown()
 	GML::Exit();
 	DeleteAndNull(pregame);
 	DeleteAndNull(game);
+	SafeDelete(net);
 	DeleteAndNull(gameServer);
 	DeleteAndNull(gameSetup);
 	CLoadScreen::DeleteInstance();
