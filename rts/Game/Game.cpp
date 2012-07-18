@@ -433,7 +433,6 @@ CGame::~CGame()
 	SafeDelete(archiveScanner);
 
 	SafeDelete(gameServer);
-	SafeDelete(net);
 	ISound::Shutdown();
 
 	game = NULL;
