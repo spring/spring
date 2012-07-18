@@ -315,16 +315,19 @@ void CAirCAI::ExecuteFight(Command& c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
 	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
+
 	if (tempOrder) {
 		tempOrder = false;
 		inCommand = true;
 	}
+
 	if (c.params.size() < 3) { // this shouldn't happen but anyway ...
 		LOG_L(L_ERROR,
 				"Received a Fight command with less than 3 params on %s in AirCAI",
 				owner->unitDef->humanName.c_str());
 		return;
 	}
+
 	if (c.params.size() >= 6) {
 		if (!inCommand) {
 			commandPos1 = c.GetPos(3);
@@ -336,11 +339,14 @@ void CAirCAI::ExecuteFight(Command& c)
 		// condition, but is actually updated correctly if you click somewhere
 		// outside the area close to the line (for a new command).
 		commandPos1 = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+
 		if ((owner->pos - commandPos1).SqLength2D() > (150 * 150)) {
 			commandPos1 = owner->pos;
 		}
 	}
+
 	goalPos = c.GetPos(0);
+
 	if (!inCommand) {
 		inCommand = true;
 		commandPos2 = goalPos;
@@ -364,8 +370,17 @@ void CAirCAI::ExecuteFight(Command& c)
 		if (IsValidTarget(enemy) && (owner->moveState != MOVESTATE_MANEUVER
 				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
 		{
-			Command nc(CMD_ATTACK, c.options | INTERNAL_ORDER, enemy->id);
+			// make the attack-command inherit <c>'s options
+			// (if <c> is internal, then so are the attacks)
+			//
+			// this is needed because CWeapon code will not
+			// fire on "internal" targets if the weapon has
+			// noAutoTarget set (although the <enemy> CUnit*
+			// is technically not a user-target, we treat it
+			// as such) even when explicitly told to fight
+			Command nc(CMD_ATTACK, c.options, enemy->id);
 			commandQue.push_front(nc);
+
 			tempOrder = true;
 			inCommand = false;
 
@@ -381,13 +396,17 @@ void CAirCAI::ExecuteFight(Command& c)
 			enemy = helper->GetClosestValidTarget(P, R, owner->allyteam, this);
 
 			if (enemy != NULL) {
-				Command nc(CMD_ATTACK, c.options | INTERNAL_ORDER, enemy->id);
 				PushOrUpdateReturnFight();
+
+				// make the attack-command inherit <c>'s options
+				Command nc(CMD_ATTACK, c.options, enemy->id);
 				commandQue.push_front(nc);
+
 				tempOrder = true;
 				inCommand = false;
 
-				if (lastPC2 != gs->frameNum) { // avoid infinite loops
+				// avoid infinite loops (?)
+				if (lastPC2 != gs->frameNum) {
 					lastPC2 = gs->frameNum;
 					SlowUpdate();
 				}
@@ -464,6 +483,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 			inCommand = true;
 		} else {
 			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, false);
+
 			inCommand = true;
 		}
 	}
@@ -559,8 +579,9 @@ int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 }
 
 bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
-	return CMobileCAI::IsValidTarget(enemy) && !enemy->crashing
-		&& (((CStrafeAirMoveType*)owner->moveType)->isFighter || !enemy->unitDef->canfly);
+	if (!CMobileCAI::IsValidTarget(enemy)) return false;
+	if (enemy->crashing) return false;
+	return (((CStrafeAirMoveType*)owner->moveType)->isFighter || !enemy->unitDef->canfly);
 }
 
 

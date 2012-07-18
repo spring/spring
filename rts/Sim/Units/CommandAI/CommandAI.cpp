@@ -1492,13 +1492,15 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 
 void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2)
 {
-	float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
+	const float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
 	Command& c(commandQue.front());
 	assert(c.GetID() == CMD_FIGHT && c.params.size() >= 3);
+
 	if (c.params.size() >= 6) {
 		c.SetPos(0, pos);
 	} else {
-		Command c2(CMD_FIGHT, c.options|INTERNAL_ORDER, pos);
+		// make the new fight command inherit <c>'s options
+		Command c2(CMD_FIGHT, c.options, pos);
 		c2.PushPos(c.GetPos(0));
 		commandQue.push_front(c2);
 	}

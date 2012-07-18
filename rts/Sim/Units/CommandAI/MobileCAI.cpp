@@ -519,27 +519,30 @@ void CMobileCAI::ExecutePatrol(Command &c)
 /**
 * @brief Executes the Fight command c
 */
-void CMobileCAI::ExecuteFight(Command &c)
+void CMobileCAI::ExecuteFight(Command& c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
+
 	if (c.params.size() == 1 && !owner->weapons.empty()) {
 		CWeapon* w = owner->weapons.front();
 
-		if (orderTarget && !w->AttackUnit(orderTarget, false)) {
+		if ((orderTarget != NULL) && !w->AttackUnit(orderTarget, false)) {
 			CUnit* newTarget = helper->GetClosestValidTarget(owner->pos, owner->maxRange, owner->allyteam, this);
 
 			if ((newTarget != NULL) && w->AttackUnit(newTarget, false)) {
 				c.params[0] = newTarget->id;
-				c.options |= INTERNAL_ORDER;
+
 				inCommand = false;
 			} else {
 				w->AttackUnit(orderTarget, false);
 			}
 		}
+
 		ExecuteAttack(c);
 		return;
 	}
-	if(tempOrder){
+
+	if (tempOrder) {
 		inCommand = true;
 		tempOrder = false;
 	}
@@ -549,8 +552,8 @@ void CMobileCAI::ExecuteFight(Command &c)
 				owner->unitDef->humanName.c_str());
 		return;
 	}
-	if(c.params.size() >= 6){
-		if(!inCommand){
+	if (c.params.size() >= 6) {
+		if (!inCommand) {
 			commandPos1 = c.GetPos(3);
 		}
 	} else {
@@ -583,24 +586,31 @@ void CMobileCAI::ExecuteFight(Command &c)
 		const float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 		const float searchRadius = owner->maxRange + 100 * owner->moveState * owner->moveState;
 		CUnit* enemy = helper->GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
+
 		if (enemy != NULL) {
-			Command c2(CMD_FIGHT, c.options|INTERNAL_ORDER, enemy->id);
 			PushOrUpdateReturnFight();
+
+			// make the attack-command inherit <c>'s options
+			// NOTE: see AirCAI::ExecuteFight why we do not set INTERNAL_ORDER
+			Command c2(CMD_ATTACK, c.options, enemy->id);
 			commandQue.push_front(c2);
-			inCommand=false;
-			tempOrder=true;
-			if(lastPC!=gs->frameNum){	//avoid infinite loops
-				lastPC=gs->frameNum;
+
+			inCommand = false;
+			tempOrder = true;
+
+			// avoid infinite loops (?)
+			if (lastPC != gs->frameNum) {
+				lastPC = gs->frameNum;
 				SlowUpdate();
 			}
 			return;
 		}
 	}
-	if((owner->pos - goalPos).SqLength2D() < (64 * 64)
+
+	if ((owner->pos - goalPos).SqLength2D() < (64 * 64)
 			|| (owner->moveType->progressState == AMoveType::Failed)){
 		FinishCommand();
 	}
-	return;
 }
 
 bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
