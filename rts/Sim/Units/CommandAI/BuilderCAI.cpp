@@ -201,7 +201,6 @@ void CBuilderCAI::PostLoad()
 {
 	if (!commandQue.empty()) {
 		Command& c = commandQue.front();
-//		float3 curPos = owner->pos;
 
 		map<int, string>::iterator boi = buildOptions.find(c.GetID());
 		if (boi != buildOptions.end()) {
@@ -210,6 +209,7 @@ void CBuilderCAI::PostLoad()
 		}
 	}
 }
+
 
 
 inline float CBuilderCAI::GetBuildRange(const float targetRadius) const
@@ -229,18 +229,20 @@ inline float CBuilderCAI::GetBuildRange(const float targetRadius) const
 }
 
 
-inline bool CBuilderCAI::IsInBuildRange(const CWorldObject* obj) const
+
+bool CBuilderCAI::IsInBuildRange(const CWorldObject* obj) const
 {
 	return IsInBuildRange(obj->pos, obj->radius);
 }
 
-
-inline bool CBuilderCAI::IsInBuildRange(const float3& pos, const float radius) const
+bool CBuilderCAI::IsInBuildRange(const float3& objPos, const float objRadius) const
 {
-	const float immDistSqr = f3SqDist(owner->pos, pos);
-	const float buildDist = GetBuildRange(radius);
-	return (immDistSqr < (buildDist * buildDist));
+	const float immDistSqr = f3SqDist(owner->pos, objPos);
+	const float buildDist = GetBuildRange(objRadius);
+
+	return (immDistSqr <= (buildDist * buildDist));
 }
+
 
 
 inline bool CBuilderCAI::MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed)
@@ -248,17 +250,16 @@ inline bool CBuilderCAI::MoveInBuildRange(const CWorldObject* obj, const bool ch
 	return MoveInBuildRange(obj->pos, obj->radius, checkMoveTypeForFailed);
 }
 
-
-bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed)
+bool CBuilderCAI::MoveInBuildRange(const float3& objPos, float objRadius, const bool checkMoveTypeForFailed)
 {
-	if (!IsInBuildRange(pos, radius)) {
+	if (!IsInBuildRange(objPos, objRadius)) {
 		// NOTE:
 		//   ignore the fail-check if we are an aircraft, movetype code
 		//   is unreliable wrt. setting it correctly and causes (landed)
 		//   aircraft to discard orders
 		const bool checkFailed = (checkMoveTypeForFailed && !owner->unitDef->IsAirUnit());
 		// check if the AMoveType::Failed belongs to the same goal position
-		const bool haveFailed = (owner->moveType->progressState == AMoveType::Failed && f3SqDist(goalPos, pos) > 1.0f);
+		const bool haveFailed = (owner->moveType->progressState == AMoveType::Failed && f3SqDist(goalPos, objPos) > 1.0f);
 
 		if (checkFailed && haveFailed) {
 			// don't call SetGoal() it would reset moveType->progressState
@@ -267,12 +268,12 @@ bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool c
 		}
 
 		// too far away, start a move command
-		SetGoal(pos, owner->pos, GetBuildRange(radius) * 0.9f);
+		SetGoal(objPos, owner->pos, GetBuildRange(objRadius) * 0.9f);
 		return false;
 	}
 
 	if (owner->unitDef->IsAirUnit()) {
-		StopMoveAndKeepPointing(pos, radius);
+		StopMoveAndKeepPointing(objPos, objRadius);
 	} else {
 		StopMoveAndKeepPointing(goalPos, goalRadius);
 	}
@@ -490,9 +491,8 @@ void CBuilderCAI::ExecuteStop(Command& c)
 
 void CBuilderCAI::ExecuteBuildCmd(Command& c)
 {
-	CBuilder* builder = (CBuilder*) owner;
-
 	const map<int, string>::const_iterator boi = buildOptions.find(c.GetID());
+
 	if (boi == buildOptions.end())
 		return;
 
@@ -524,10 +524,12 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 	}
 
 	assert(build.def != NULL);
-	const float radius = GetBuildOptionRadius(build.def, c.GetID());
+	const float buildeeRadius = GetBuildOptionRadius(build.def, c.GetID());
+	CBuilder* builder = (CBuilder*) owner;
 
 	if (building) {
-		MoveInBuildRange(build.pos, radius);
+		// keep moving until until 3D distance to buildPos is LEQ our buildDistance
+		MoveInBuildRange(build.pos, 0.0f);
 
 		if (!builder->curBuild && !builder->terraforming) {
 			building = false;
@@ -584,7 +586,8 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			}
 		}
 
-		if (MoveInBuildRange(build.pos, radius, true)) {
+		// keep moving until until 3D distance to buildPos is LEQ our buildDistance
+		if (MoveInBuildRange(build.pos, 0.0f, true)) {
 			if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
 				StopMove(); // cancel KeepPointingTo
 				FinishCommand();
@@ -608,7 +611,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 					// tell everything within the radius of the soon-to-be buildee
 					// to get out of the way; using the model radius is not correct
 					// because this can be shorter than half the footprint diagonal
-					helper->BuggerOff(build.pos, std::max(radius, fpRadius), false, true, owner->team, NULL);
+					helper->BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, NULL);
 					NonMoving();
 				}
 			}
@@ -1617,8 +1620,8 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 			if(healthyOnly && unit->health < unit->maxHealth && unit->captureProgress <= 0.0f) {
 				continue;
 			}
-			float dist = f3SqDist(unit->pos, owner->pos);
-			if(dist < bestDist || (!stationary && !unit->isMoving)) {
+			const float dist = f3SqDist(unit->pos, owner->pos);
+			if (dist < bestDist || (!stationary && !unit->isMoving)) {
 				if (!owner->unitDef->canmove && !IsInBuildRange(unit)) {
 					continue;
 				}
