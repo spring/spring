@@ -13,6 +13,7 @@
 #include "gmlcnt.h"
 
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/version.hpp>
 #include <map>
@@ -207,6 +208,82 @@ typedef int BOOL_;
 #	endif
 #endif /* _WIN32 */
 
+extern bool gmlEnabled;
+
+template <class T, class U>
+class gmlBaseMutexLock {
+	char lockdata[sizeof(T)];
+public:
+	gmlBaseMutexLock(U& m) {
+		if (gmlEnabled)
+			new (lockdata) T(m);
+	}
+	virtual ~gmlBaseMutexLock() {
+		if (gmlEnabled)
+#if (BOOST_VERSION >= 103500)
+			((T*)lockdata)->~unique_lock();
+#else
+			((T*)lockdata)->~scoped_lock();
+#endif
+	}
+};
+
+typedef gmlBaseMutexLock<boost::mutex::scoped_lock, boost::mutex> gmlMutexScopedLock;
+typedef gmlBaseMutexLock<boost::recursive_mutex::scoped_lock, boost::recursive_mutex> gmlRecursiveMutexScopedLock;
+
+
+class gmlRecursiveScopedLock {
+	char sl_lock[sizeof(boost::recursive_mutex::scoped_lock)];
+#if GML_DEBUG_MUTEX
+	boost::recursive_mutex* m1;
+#endif
+public:
+	gmlRecursiveScopedLock(boost::recursive_mutex& m, bool locked = true) {
+		if (gmlEnabled) {
+#if (BOOST_VERSION >= 103500)
+			if (locked) {
+				new (sl_lock) boost::recursive_mutex::scoped_lock(m);
+			} else {
+				new (sl_lock) boost::recursive_mutex::scoped_lock(m, boost::defer_lock);
+			}
+#else
+			new (sl_lock) boost::recursive_mutex::scoped_lock(m, locked);
+#endif
+#if GML_DEBUG_MUTEX
+			if (locked) {
+				m1 = &m;
+				GML_STDMUTEX_LOCK(lm);
+				std::map<boost::recursive_mutex*, int>& lockmmap = lockmmaps[GML::ThreadNumber()];
+				std::map<boost::recursive_mutex*, int>::iterator locki = lockmmap.find(m1);
+				if (locki == lockmmap.end()) {
+					lockmmap[m1] = 1;
+				} else {
+					lockmmap[m1] = (*locki).second + 1;
+				}
+			} else {
+				m1 = NULL;
+			}
+#endif
+		}
+	}
+	virtual ~gmlRecursiveScopedLock() {
+		if (gmlEnabled) {
+#if (BOOST_VERSION >= 103500)
+			((boost::recursive_mutex::scoped_lock*)sl_lock)->~unique_lock();
+#else
+			((boost::recursive_mutex::scoped_lock*)sl_lock)->~scoped_lock();
+#endif
+#if GML_DEBUG_MUTEX
+			if (m1) {
+				GML_STDMUTEX_LOCK(lm);
+				std::map<boost::recursive_mutex*, int>& lockmmap = lockmmaps[GML::ThreadNumber()];
+				lockmmap[m1] = (*lockmmap.find(m1)).second - 1;
+			}
+#endif
+		}
+	}
+};
+
 // gmlMutex - exploits the boost mutex to get direct access to the Lock/Unlock methods
 class gmlMutex {
 	boost::mutex sl_mutex;
@@ -217,14 +294,17 @@ public:
 	virtual ~gmlMutex() {
 	}
 	void Lock() {
-		new (((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber) boost::mutex::scoped_lock(sl_mutex);
+		if (gmlEnabled)
+			new (((gmlMutexScopedLock *)sl_lock)+gmlThreadNumber) boost::mutex::scoped_lock(sl_mutex);
 	}
 	void Unlock() {
+		if (gmlEnabled) {
 #if (BOOST_VERSION >= 103500)
-		(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~unique_lock();
+			(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~unique_lock();
 #else
-		(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~scoped_lock();
+			(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~scoped_lock();
 #endif
+		}
 	}
 };
 

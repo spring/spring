@@ -31,9 +31,8 @@ static CVertexArray* vertexArray2 = NULL;
 static CVertexArray vertexArrays1[GML_MAX_NUM_THREADS];
 static CVertexArray vertexArrays2[GML_MAX_NUM_THREADS];
 static CVertexArray* currentVertexArrays[GML_MAX_NUM_THREADS];
-#else
-static CVertexArray* currentVertexArray = NULL;
 #endif
+static CVertexArray* currentVertexArray = NULL;
 //BOOL gmlVertexArrayEnable = 0;
 /******************************************************************************/
 /******************************************************************************/
@@ -41,21 +40,24 @@ static CVertexArray* currentVertexArray = NULL;
 CVertexArray* GetVertexArray()
 {
 #ifdef USE_GML // each thread gets its own array to avoid conflicts
-	int thread = GML::ThreadNumber();
-	if (currentVertexArrays[thread] == &vertexArrays1[thread]) {
-		currentVertexArrays[thread] = &vertexArrays2[thread];
-	} else {
-		currentVertexArrays[thread] = &vertexArrays1[thread];
-	}
-	return currentVertexArrays[thread];
-#else
-	if (currentVertexArray == vertexArray1){
-		currentVertexArray = vertexArray2;
-	} else {
-		currentVertexArray = vertexArray1;
-	}
-	return currentVertexArray;
+	if (GML::Enabled()) {
+		int thread = GML::ThreadNumber();
+		if (currentVertexArrays[thread] == &vertexArrays1[thread]) {
+			currentVertexArrays[thread] = &vertexArrays2[thread];
+		} else {
+			currentVertexArrays[thread] = &vertexArrays1[thread];
+		}
+		return currentVertexArrays[thread];
+	} else
 #endif
+	{
+		if (currentVertexArray == vertexArray1){
+			currentVertexArray = vertexArray2;
+		} else {
+			currentVertexArray = vertexArray1;
+		}
+		return currentVertexArray;
+	}
 }
 
 
@@ -84,7 +86,9 @@ void PrintAvailableResolutions()
 }
 
 #ifdef GL_ARB_debug_output
-#if defined(WIN32) && !defined(HEADLESS)
+#ifdef _MSC_VER
+#define _APIENTRY __stdcall
+#elif defined(WIN32) && !defined(HEADLESS)
 	#define _APIENTRY APIENTRY
 #else
 	#define _APIENTRY

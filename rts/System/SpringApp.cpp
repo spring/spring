@@ -104,8 +104,8 @@ CONFIG(int, WindowPosX).defaultValue(32);
 CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false);
-CONFIG(int, HardwareThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
-CONFIG(int, RenderThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0).maximumValue(GML_MAX_NUM_THREADS);
+CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
+CONFIG(int, MultiThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0).maximumValue(GML_MAX_NUM_THREADS);
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName);
 
 
@@ -263,7 +263,6 @@ bool SpringApp::Initialize()
 
 	// Multithreading & Affinity
 	LOG("CPU Cores: %d", Threading::GetAvailableCores());
-	Threading::SetThreadScheduler();
 	const uint32_t affinity = configHandler->GetUnsigned("SetCoreAffinity");
 	const uint32_t cpuMask  = Threading::SetAffinity(affinity);
 	if (cpuMask == 0xFFFFFF) {
@@ -779,6 +778,9 @@ void SpringApp::ParseCmdLine()
 	const bool safemode = cmdline->IsSet("safemode");
 
 	ConfigHandler::Instantiate(configSource, safemode);
+	size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
+	if (numThreads == 1)
+		GML::Enable(false);
 	GlobalConfig::Instantiate();
 
 	// mutually exclusive options that cause spring to quit immediately
@@ -1001,8 +1003,6 @@ int SpringApp::Run(int argc, char *argv[])
 	if (!Initialize())
 		return -1;
 
-	GML::Init();
-
 	while (!gu->globalQuit) {
 		ResetScreenSaverTimeout();
 
@@ -1038,7 +1038,6 @@ void SpringApp::Shutdown()
 
 #define DeleteAndNull(x) delete x; x = NULL;
 
-	GML::Exit();
 	DeleteAndNull(pregame);
 	DeleteAndNull(game);
 	SafeDelete(net);

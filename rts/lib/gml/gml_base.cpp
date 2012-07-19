@@ -85,13 +85,15 @@ namespace GML {
 
 	void Init()
 	{
+		if (!gmlEnabled)
+			return;
 		gmlShareLists = configHandler->GetBool("MultiThreadShareLists");
 		if (!gmlShareLists) {
 			gmlMaxServerThreadNum = GML_LOAD_THREAD_NUM;
 			gmlMaxShareThreadNum = GML_LOAD_THREAD_NUM;
 			gmlNoGLThreadNum = GML_SIM_THREAD_NUM;
 		}
-		gmlThreadCountOverride = configHandler->GetInt("RenderThreadCount");
+		gmlThreadCountOverride = configHandler->GetInt("MultiThreadCount");
 		gmlThreadCount = GML_CPU_COUNT;
 
 		if (gmlShareLists) { // create offscreen OpenGL contexts
@@ -113,16 +115,18 @@ namespace GML {
 
 	void Exit()
 	{
-		if(gmlProcessor) {
+		if (!gmlEnabled)
+			return;
+		if (gmlProcessor) {
 	#if GML_ENABLE_SIM
 			gmlKeepRunning = false; // wait for sim to finish
-			while(!gmlProcessor->PumpAux())
+			while (!gmlProcessor->PumpAux())
 				boost::thread::yield();
 	#endif
 			delete gmlProcessor;
 			gmlProcessor = NULL;
 
-			if(gmlShareLists) {
+			if (gmlShareLists) {
 				for (int i = 0; i < gmlThreadCount; ++i) {
 					delete ogc[i];
 					ogc[i] = NULL;
@@ -134,12 +138,15 @@ namespace GML {
 	void PumpAux()
 	{
 	#if GML_ENABLE_SIM
-		gmlProcessor->PumpAux();
+		if (gmlProcessor)
+			gmlProcessor->PumpAux();
 	#endif
 	}
 
 	bool SimThreadRunning()
 	{
+		if (!gmlEnabled)
+			return false;
 	#if GML_ENABLE_SIM
 		if (!gmlStartSim && gmlMultiThreadSim && gs->frameNum > 0) {
 			gmlStartSim = true;

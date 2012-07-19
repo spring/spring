@@ -90,12 +90,19 @@ namespace Threading {
 
 	unsigned GetAvailableCores()
 	{
+		// auto-detect number of system threads
+#if (BOOST_VERSION >= 103500)
 		return boost::thread::hardware_concurrency();
+#elif defined(USE_GML)
+		return gmlCPUCount();
+#else
+		return 1;
+#endif
 	}
 
 	void SetThreadScheduler()
 	{
-	#ifndef USE_GML
+		if (!GML::Enabled()) {
 		#if defined(__APPLE__)
 			// no-op
 
@@ -119,7 +126,7 @@ namespace Threading {
 				sched_setscheduler(0, SCHED_BATCH, &sp);
 			}
 		#endif
-	#endif
+		}
 	}
 
 

@@ -53,11 +53,16 @@
 #define GML_MAX_NUM_THREADS (32+2) // extra for the Sim & Loading threads
 
 //#define BOOST_AC_USE_PTHREADS
+extern bool gmlEnabled;
 
 namespace GML {
 #ifdef USE_GML
+	inline bool Enabled() { return gmlEnabled; }
+	inline void Enable(bool enable) { gmlEnabled = enable; }
 	inline bool SimEnabled() { return GML_ENABLE_SIM ? true : false; }
 #else
+	inline bool Enabled() { return false; }
+	inline void Enable(bool enable) {}
 	inline bool SimEnabled() { return false; }
 #endif
 };

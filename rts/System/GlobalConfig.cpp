@@ -107,7 +107,7 @@ GlobalConfig::GlobalConfig()
 int GlobalConfig::GetMultiThreadLua()
 {
 #if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
-	return std::max((int)MT_LUA_FIRSTACTIVE, std::min((multiThreadLua == MT_LUA_DEFAULT) ? modInfo.luaThreadingModel : multiThreadLua, (int)MT_LUA_LAST));
+	return (!GML::Enabled()) ? MT_LUA_SINGLE : std::max((int)MT_LUA_FIRSTACTIVE, std::min((multiThreadLua == MT_LUA_DEFAULT) ? modInfo.luaThreadingModel : multiThreadLua, (int)MT_LUA_LAST));
 #else
 	return MT_LUA_NONE;
 #endif
