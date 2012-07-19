@@ -329,6 +329,10 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	modInfo.Init(modName.c_str());
 
+	GML::Init();
+
+	Threading::SetThreadScheduler();
+
 	if (!mapInfo) {
 		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
@@ -438,6 +442,8 @@ CGame::~CGame()
 	game = NULL;
 
 	LEAVE_SYNCED_CODE();
+
+	GML::Exit();
 }
 
 

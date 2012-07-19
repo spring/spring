@@ -34,6 +34,7 @@
 // Please note: Some functions may require more advanced coding to implement
 // If a function is not yet supported by GML, a compile error pointing to 'GML_FUNCTION_NOT_IMPLEMENTED' will occur
 
+bool gmlEnabled = true;
 
 #ifdef USE_GML
 

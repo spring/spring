@@ -179,6 +179,9 @@ void CModInfo::Init(const char* modArchive)
 
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 		luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
+		size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
+		if (numThreads == 0 && (luaThreadingModel <= MT_LUA_SINGLE_BATCH || globalConfig->GetNumThreads() <= 1))
+			GML::Enable(false);
 
 		GML::SetCheckCallChain(globalConfig->GetMultiThreadLua() == MT_LUA_SINGLE_BATCH);
 	}

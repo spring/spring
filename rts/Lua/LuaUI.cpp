@@ -412,7 +412,7 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect, floa
 		return;
 	}
 #if defined(USE_GML) && GML_ENABLE_SIM
-	float shockFrontDistAdj = distadj ? *distadj : this->shockFrontDistAdj;
+	float shockFrontDistAdj = (GML::Enabled() && distadj) ? *distadj : this->shockFrontDistAdj;
 #endif
 	float3 gap = (camera->pos - pos);
 	float dist = gap.Length() + shockFrontDistAdj;
