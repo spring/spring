@@ -59,7 +59,7 @@ namespace GML {
 #ifdef USE_GML
 	inline bool Enabled() { return gmlEnabled; }
 	inline void Enable(bool enable) { gmlEnabled = enable; }
-	inline bool SimEnabled() { return GML_ENABLE_SIM ? true : false; }
+	inline bool SimEnabled() { return gmlEnabled && (GML_ENABLE_SIM ? true : false); }
 #else
 	inline bool Enabled() { return false; }
 	inline void Enable(bool enable) {}
