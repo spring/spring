@@ -85,7 +85,11 @@ void PrintAvailableResolutions()
 
 #ifdef GL_ARB_debug_output
 #if defined(WIN32) && !defined(HEADLESS)
-	#define _APIENTRY APIENTRY
+	#if defined(_MSC_VER) && _MSC_VER >= 1600
+		#define _APIENTRY __stdcall
+	#else
+		#define _APIENTRY APIENTRY
+	#endif
 #else
 	#define _APIENTRY
 #endif
