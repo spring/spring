@@ -88,6 +88,22 @@ namespace Threading {
 	#endif
 	}
 
+	void SetAffinityHelper(const char *threadName, uint32_t affinity) {
+		const uint32_t cpuMask  = Threading::SetAffinity(affinity);
+		if (cpuMask == 0xFFFFFF) {
+			LOG("[Threading] %s thread CPU affinity not set", threadName);
+		}
+		else if (cpuMask != affinity) {
+			LOG("[Threading] %s thread CPU affinity mask set: %d (config is %d)", threadName, cpuMask, affinity);
+		}
+		else if (cpuMask == 0) {
+			LOG_L(L_ERROR, "[Threading] %s thread CPU affinity mask failed: %d", threadName, affinity);
+		}
+		else {
+			LOG("[Threading] %s thread CPU affinity mask set: %d", threadName, cpuMask);
+		}
+	}
+
 	unsigned GetAvailableCores()
 	{
 		// auto-detect number of system threads

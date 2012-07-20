@@ -82,6 +82,7 @@
 #include "lib/luasocket/src/restrictions.h"
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
+CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
 CONFIG(int, DepthBufferBits).defaultValue(24);
 CONFIG(int, StencilBufferBits).defaultValue(8);
 CONFIG(int, FSAALevel).defaultValue(0);
@@ -263,20 +264,7 @@ bool SpringApp::Initialize()
 
 	// Multithreading & Affinity
 	LOG("CPU Cores: %d", Threading::GetAvailableCores());
-	const uint32_t affinity = configHandler->GetUnsigned("SetCoreAffinity");
-	const uint32_t cpuMask  = Threading::SetAffinity(affinity);
-	if (cpuMask == 0xFFFFFF) {
-		LOG("CPU affinity not set");
-	}
-	else if (cpuMask != affinity) {
-		LOG("CPU affinity mask set: %d (config is %d)", cpuMask, affinity);
-	}
-	else if (cpuMask == 0) {
-		LOG_L(L_ERROR, "Failed to CPU affinity mask <%d>", affinity);
-	}
-	else {
-		LOG("CPU affinity mask set: %d", cpuMask);
-	}
+	Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
