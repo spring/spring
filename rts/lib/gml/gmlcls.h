@@ -219,12 +219,13 @@ public:
 			new (lockdata) T(m);
 	}
 	virtual ~gmlBaseMutexLock() {
-		if (gmlEnabled)
+		if (gmlEnabled) {
 #if (BOOST_VERSION >= 103500)
 			((T*)lockdata)->~unique_lock();
 #else
 			((T*)lockdata)->~scoped_lock();
 #endif
+		}
 	}
 };
 
@@ -295,7 +296,7 @@ public:
 	}
 	void Lock() {
 		if (gmlEnabled)
-			new (((gmlMutexScopedLock *)sl_lock)+gmlThreadNumber) boost::mutex::scoped_lock(sl_mutex);
+			new (((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber) boost::mutex::scoped_lock(sl_mutex);
 	}
 	void Unlock() {
 		if (gmlEnabled) {

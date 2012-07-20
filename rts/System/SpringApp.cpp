@@ -778,9 +778,6 @@ void SpringApp::ParseCmdLine()
 	const bool safemode = cmdline->IsSet("safemode");
 
 	ConfigHandler::Instantiate(configSource, safemode);
-	size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
-	if (numThreads == 1)
-		GML::Enable(false);
 	GlobalConfig::Instantiate();
 
 	// mutually exclusive options that cause spring to quit immediately
@@ -1038,6 +1035,7 @@ void SpringApp::Shutdown()
 
 #define DeleteAndNull(x) delete x; x = NULL;
 
+	GML::Exit();
 	DeleteAndNull(pregame);
 	DeleteAndNull(game);
 	SafeDelete(net);
