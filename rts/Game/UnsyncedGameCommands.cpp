@@ -2230,11 +2230,12 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		bool showMTInfo = (game->showMTInfo != MT_LUA_NONE);
+		bool showMTInfo = (game->showMTInfo != -1);
 		SetBoolArg(showMTInfo, action.GetArgs());
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
 		int mtl = globalConfig->GetMultiThreadLua();
-		game->showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED)) ? mtl : MT_LUA_NONE;
+		game->showMTInfo = showMTInfo ? mtl : -1;
+		GML::EnableCallChainWarnings(!!game->showMTInfo);
 		return true;
 	}
 };

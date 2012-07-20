@@ -132,7 +132,7 @@ namespace Shader {
 		const std::string srcStr = GetShaderSource(srcFile).c_str();
 
 		const GLchar* sources[4] = {
-			"#line 0 definitions\n",
+			"#line 0\n",
 			definitions.c_str(),
 			"\n#line 0\n",
 			srcStr.c_str()
