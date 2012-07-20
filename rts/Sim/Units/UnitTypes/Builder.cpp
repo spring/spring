@@ -756,7 +756,7 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 	const int piece = script->QueryNanoPiece();
 
 #ifdef USE_GML
-	if (gs->frameNum - lastDrawFrame > 20)
+	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
 		return;
 #endif
 
