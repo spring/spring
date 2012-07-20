@@ -39,7 +39,7 @@ static void gmlSimLoop(void*)
 			if (gmlShareLists)
 				ogc[0]->WorkerThreadPost();
 
-			//Threading::SetAffinity(3);
+			Threading::SetAffinityHelper("Sim", configHandler->GetUnsigned("SetCoreAffinitySim"));
 
 			Watchdog::ClearTimer(WDT_SIM);
 
