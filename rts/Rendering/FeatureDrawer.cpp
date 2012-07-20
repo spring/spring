@@ -66,7 +66,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 #ifdef USE_GML
-	showRezBars = configHandler->GetBool("ShowRezBars");
+	showRezBars = GML::Enabled() && configHandler->GetBool("ShowRezBars");
 #endif
 	featureDrawDistance = configHandler->GetFloat("FeatureDrawDistance");
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);

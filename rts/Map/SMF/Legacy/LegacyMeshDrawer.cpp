@@ -54,10 +54,6 @@ CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 CLegacyMeshDrawer::~CLegacyMeshDrawer()
 {
-#ifdef USE_GML
-	configHandler->Set("MultiThreadDrawGround", multiThreadDrawGround ? 1 : 0);
-	configHandler->Set("MultiThreadDrawGroundShadow", multiThreadDrawGroundShadow ? 1 : 0);
-#endif
 }
 
 
