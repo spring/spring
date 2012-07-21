@@ -179,6 +179,10 @@ void CModInfo::Init(const char* modArchive)
 
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 		luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
+		size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
+		if (numThreads == 1 || (numThreads == 0 && (luaThreadingModel == MT_LUA_NONE || luaThreadingModel == MT_LUA_SINGLE || 
+			luaThreadingModel == MT_LUA_SINGLE_BATCH || Threading::GetAvailableCores() <= 1)))
+			GML::Enable(false); // single core, or this game did not make any effort to specifically support MT ==> disable it by default
 
 		GML::SetCheckCallChain(globalConfig->GetMultiThreadLua() == MT_LUA_SINGLE_BATCH);
 	}

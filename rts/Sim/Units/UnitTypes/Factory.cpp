@@ -398,7 +398,7 @@ void CFactory::CreateNanoParticle(bool highPriority)
 	const int piece = script->QueryNanoPiece();
 
 #ifdef USE_GML
-	if (gs->frameNum - lastDrawFrame > 20)
+	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
 		return;
 #endif
 

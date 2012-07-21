@@ -328,13 +328,15 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
 
 	modInfo.Init(modName.c_str());
+	GML::Init(); // modinfo plays key part in MT enable/disable
+	Threading::SetThreadScheduler();
 
 	if (!mapInfo) {
 		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
 
 	int mtl = globalConfig->GetMultiThreadLua();
-	showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED)) ? mtl : MT_LUA_NONE;
+	showMTInfo = showMTInfo ? mtl : -1;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());

@@ -51,11 +51,11 @@ extern int gmlCallChainWarning;
 	extern int gmlProcNumLoop;
 	extern int gmlProcInterval;
 	#define GML_PROFILER(name) \
-	name && (globalRendering->drawFrame & gmlProcInterval);\
+	GML::Enabled() && name && (globalRendering->drawFrame & gmlProcInterval);\
 	SCOPED_TIMER(!name ? "NoProc" : ((name && (globalRendering->drawFrame & gmlProcInterval)) ? " " GML_QUOTE(name) "MTProc" : " " GML_QUOTE(name) "Proc"));\
 	for(int i = 0; i < (name ? gmlProcNumLoop : 1); ++i)
 #else
-	#define GML_PROFILER(name) name;
+	#define GML_PROFILER(name) (GML::Enabled() && name);
 #endif
 
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX;

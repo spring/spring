@@ -160,7 +160,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
 
 #ifdef USE_GML
-	showHealthBars = configHandler->GetBool("ShowHealthBars");
+	showHealthBars = GML::Enabled() && configHandler->GetBool("ShowHealthBars");
 	multiThreadDrawUnit = configHandler->GetBool("MultiThreadDrawUnit");
 	multiThreadDrawUnitShadow = configHandler->GetBool("MultiThreadDrawUnitShadow");
 #endif
@@ -204,12 +204,6 @@ CUnitDrawer::~CUnitDrawer()
 		deadGhostBuildings[modelType].clear();
 		liveGhostBuildings[modelType].clear();
 	}
-
-#ifdef USE_GML
-	configHandler->Set("MultiThreadDrawUnit", multiThreadDrawUnit ? 1 : 0);
-	configHandler->Set("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow ? 1 : 0);
-#endif
-
 
 	deadGhostBuildings.clear();
 	liveGhostBuildings.clear();

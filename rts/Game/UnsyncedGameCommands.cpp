@@ -1325,6 +1325,8 @@ public:
 			"Enable/Disable rendering of health-bars for units") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		if (!GML::Enabled())
+			return false;
 #ifdef USE_GML
 		SetBoolArg(unitDrawer->showHealthBars, action.GetArgs());
 		LogSystemStatus("rendering of health-bars", unitDrawer->showHealthBars);
@@ -1341,6 +1343,8 @@ public:
 			"Enable/Disable rendering of resource-bars for features") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		if (!GML::Enabled())
+			return false;
 #ifdef USE_GML
 		bool showResBars = featureDrawer->GetShowRezBars();
 		SetBoolArg(showResBars, action.GetArgs());
@@ -1516,9 +1520,11 @@ public:
 			"Enable/Disable multi threaded ground rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		SetBoolArg(gd->multiThreadDrawGround, action.GetArgs());
+		configHandler->Set("MultiThreadDrawGround", gd->multiThreadDrawGround ? 1 : 0);
 		LogSystemStatus("Multi threaded ground rendering", gd->multiThreadDrawGround);
 		return true;
 	}
@@ -1532,9 +1538,11 @@ public:
 			"Enable/Disable multi threaded ground shadow rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		SetBoolArg(gd->multiThreadDrawGroundShadow, action.GetArgs());
+		configHandler->Set("MultiThreadDrawGroundShadow", gd->multiThreadDrawGroundShadow ? 1 : 0);
 		LogSystemStatus("Multi threaded ground shadow rendering", gd->multiThreadDrawGroundShadow);
 		return true;
 	}
@@ -1548,8 +1556,10 @@ public:
 			"Enable/Disable multi threaded unit rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 		SetBoolArg(unitDrawer->multiThreadDrawUnit, action.GetArgs());
+		configHandler->Set("MultiThreadDrawUnit", unitDrawer->multiThreadDrawUnit ? 1 : 0);
 		LogSystemStatus("Multi threaded unit rendering", unitDrawer->multiThreadDrawUnit);
 		return true;
 	}
@@ -1563,8 +1573,10 @@ public:
 			"Enable/Disable multi threaded unit shadow rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 		SetBoolArg(unitDrawer->multiThreadDrawUnitShadow, action.GetArgs());
+		configHandler->Set("MultiThreadDrawUnitShadow", unitDrawer->multiThreadDrawUnitShadow ? 1 : 0);
 		LogSystemStatus("Multi threaded unit shadow rendering", unitDrawer->multiThreadDrawUnitShadow);
 		return true;
 	}
@@ -1578,9 +1590,9 @@ public:
 			"Enable/Disable multi threaded rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-
 		bool mtEnabled = IsMTEnabled();
 		SetBoolArg(mtEnabled, action.GetArgs());
 		gd->multiThreadDrawGround = mtEnabled;
@@ -1613,10 +1625,10 @@ public:
 
 	bool inverse;
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 #	if GML_ENABLE_SIM
 		bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
-
 		// HACK GetInnerAction() should not be used here
 		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? ((inverse && action.GetArgs().empty()) ? !mtEnabled : mtEnabled) : GML::MultiThreadSim();
 		SetBoolArg(mtSim, action.GetArgs());
@@ -2229,12 +2241,14 @@ public:
 			"Shows/Hides the multi threading info panel") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		bool showMTInfo = (game->showMTInfo != MT_LUA_NONE);
+		if (!GML::Enabled())
+			return false;
+		bool showMTInfo = (game->showMTInfo != -1);
 		SetBoolArg(showMTInfo, action.GetArgs());
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
 		int mtl = globalConfig->GetMultiThreadLua();
-		game->showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED)) ? mtl : MT_LUA_NONE;
+		game->showMTInfo = showMTInfo ? mtl : -1;
+		GML::EnableCallChainWarnings(!!game->showMTInfo);
 		return true;
 	}
 };
