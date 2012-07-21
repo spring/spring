@@ -151,6 +151,9 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 	noSelect = def->noSelect;
 
+	// set position before mid-position
+	Move3D(_pos.cClampInMap(), false);
+
 	if (def->drawType == DRAWTYPE_MODEL) {
 		if ((model = def->LoadModel()) == NULL) {
 			LOG_L(L_ERROR, "Features: Couldn't load model for %s", def->name.c_str());
@@ -166,12 +169,11 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		}
 	}
 
-	// note: gets deleted in ~CSolidObject
-	collisionVolume = new CollisionVolume(def->collisionVolume, radius);
-
-	Move3D(_pos.cClampInMap(), false);
 	UpdateMidAndAimPos();
 	CalculateTransform();
+
+	// note: gets deleted in ~CSolidObject
+	collisionVolume = new CollisionVolume(def->collisionVolume, radius);
 
 	featureHandler->AddFeature(this);
 	qf->AddFeature(this);
