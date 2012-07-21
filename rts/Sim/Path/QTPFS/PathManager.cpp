@@ -83,20 +83,8 @@ namespace QTPFS {
 	static boost::thread pmLoadThread;
 
 	static size_t GetNumThreads() {
-		size_t numThreads = std::max(0, configHandler->GetInt("HardwareThreadCount"));
-
-		if (numThreads == 0) {
-			// auto-detect
-			#if (BOOST_VERSION >= 103500)
-			numThreads = boost::thread::hardware_concurrency();
-			#elif defined(USE_GML)
-			numThreads = gmlCPUCount();
-			#else
-			numThreads = 1;
-			#endif
-		}
-
-		return numThreads;
+		size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
+		return (numThreads == 0) ? Threading::GetAvailableCores() : numThreads;
 	}
 
 	NodeLayer* PathManager::serializingNodeLayer = NULL;

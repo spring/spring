@@ -82,6 +82,7 @@
 #include "lib/luasocket/src/restrictions.h"
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
+CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
 CONFIG(int, DepthBufferBits).defaultValue(24);
 CONFIG(int, StencilBufferBits).defaultValue(8);
 CONFIG(int, FSAALevel).defaultValue(0);
@@ -104,8 +105,8 @@ CONFIG(int, WindowPosX).defaultValue(32);
 CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false);
-CONFIG(int, HardwareThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
-CONFIG(int, RenderThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0).maximumValue(GML_MAX_NUM_THREADS);
+CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
+CONFIG(int, MultiThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0).maximumValue(GML_MAX_NUM_THREADS);
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName);
 
 
@@ -263,21 +264,7 @@ bool SpringApp::Initialize()
 
 	// Multithreading & Affinity
 	LOG("CPU Cores: %d", Threading::GetAvailableCores());
-	Threading::SetThreadScheduler();
-	const uint32_t affinity = configHandler->GetUnsigned("SetCoreAffinity");
-	const uint32_t cpuMask  = Threading::SetAffinity(affinity);
-	if (cpuMask == 0xFFFFFF) {
-		LOG("CPU affinity not set");
-	}
-	else if (cpuMask != affinity) {
-		LOG("CPU affinity mask set: %d (config is %d)", cpuMask, affinity);
-	}
-	else if (cpuMask == 0) {
-		LOG_L(L_ERROR, "Failed to CPU affinity mask <%d>", affinity);
-	}
-	else {
-		LOG("CPU affinity mask set: %d", cpuMask);
-	}
+	Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -1000,8 +987,6 @@ int SpringApp::Run(int argc, char *argv[])
 
 	if (!Initialize())
 		return -1;
-
-	GML::Init();
 
 	while (!gu->globalQuit) {
 		ResetScreenSaverTimeout();
