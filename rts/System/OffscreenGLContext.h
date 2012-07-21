@@ -3,11 +3,13 @@
 #ifndef _OFFSCREENGLCONTEXT_H
 #define _OFFSCREENGLCONTEXT_H
 
-#ifdef HEADLESS
+#include "Rendering/GL/myGL.h"
+
+#if defined(HEADLESS)
 	//! nothing
-#elif WIN32
+#elif defined(WIN32)
 	#include "System/Platform/Win/win32.h"
-#elif __APPLE__
+#elif defined(__APPLE__)
 	#include <OpenGL/CGLTypes.h>
 #else
 	#include <GL/glx.h>
