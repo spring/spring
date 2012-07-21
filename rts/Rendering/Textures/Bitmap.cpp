@@ -234,8 +234,8 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 #if defined(__SUPPORT_SNAN__)
 	// do not signal floating point exceptions in devil library
+	streflop::fpenv_t fenv;
 	if (!GML::Enabled()) {
-		streflop::fpenv_t fenv;
 		streflop::fegetenv(&fenv);
 		streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 	}
