@@ -9,6 +9,7 @@
 #include "lib/streflop/streflop_cond.h"
 #include "System/creg/creg_cond.h"
 #include "System/FastMath.h"
+#include "lib/gml/gmlcnf.h"
 
 
 /**
