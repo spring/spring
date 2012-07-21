@@ -3,6 +3,7 @@
 #include "Threading.h"
 #include "Rendering/GL/myGL.h"
 #include "System/myMath.h"
+#include "System/Log/ILog.h"
 
 #include <boost/thread.hpp>
 #if defined(__APPLE__)
