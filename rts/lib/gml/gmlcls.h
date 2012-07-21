@@ -208,18 +208,16 @@ typedef int BOOL_;
 #	endif
 #endif /* _WIN32 */
 
-extern bool gmlEnabled;
-
 template <class T, class U>
 class gmlBaseMutexLock {
 	char lockdata[sizeof(T)];
 public:
 	gmlBaseMutexLock(U& m) {
-		if (gmlEnabled)
+		if (GML::Enabled())
 			new (lockdata) T(m);
 	}
 	virtual ~gmlBaseMutexLock() {
-		if (gmlEnabled) {
+		if (GML::Enabled()) {
 #if (BOOST_VERSION >= 103500)
 			((T*)lockdata)->~unique_lock();
 #else
@@ -240,7 +238,7 @@ class gmlRecursiveScopedLock {
 #endif
 public:
 	gmlRecursiveScopedLock(boost::recursive_mutex& m, bool locked = true) {
-		if (gmlEnabled) {
+		if (GML::Enabled()) {
 #if (BOOST_VERSION >= 103500)
 			if (locked) {
 				new (sl_lock) boost::recursive_mutex::scoped_lock(m);
@@ -268,7 +266,7 @@ public:
 		}
 	}
 	virtual ~gmlRecursiveScopedLock() {
-		if (gmlEnabled) {
+		if (GML::Enabled()) {
 #if (BOOST_VERSION >= 103500)
 			((boost::recursive_mutex::scoped_lock*)sl_lock)->~unique_lock();
 #else
@@ -295,11 +293,11 @@ public:
 	virtual ~gmlMutex() {
 	}
 	void Lock() {
-		if (gmlEnabled)
+		if (GML::Enabled())
 			new (((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber) boost::mutex::scoped_lock(sl_mutex);
 	}
 	void Unlock() {
-		if (gmlEnabled) {
+		if (GML::Enabled()) {
 #if (BOOST_VERSION >= 103500)
 			(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~unique_lock();
 #else

@@ -85,7 +85,7 @@ namespace GML {
 
 	void Init()
 	{
-		if (!gmlEnabled)
+		if (!Enabled())
 			return;
 		gmlShareLists = configHandler->GetBool("MultiThreadShareLists");
 		if (!gmlShareLists) {
@@ -115,7 +115,7 @@ namespace GML {
 
 	void Exit()
 	{
-		if (!gmlEnabled)
+		if (!Enabled())
 			return;
 		if (gmlProcessor) {
 	#if GML_ENABLE_SIM
@@ -145,7 +145,7 @@ namespace GML {
 
 	bool SimThreadRunning()
 	{
-		if (!gmlEnabled)
+		if (!Enabled())
 			return false;
 	#if GML_ENABLE_SIM
 		if (!gmlStartSim && gmlMultiThreadSim && gs->frameNum > 0) {
