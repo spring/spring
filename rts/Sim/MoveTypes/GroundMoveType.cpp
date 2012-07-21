@@ -1790,8 +1790,10 @@ void CGroundMoveType::HandleFeatureCollisions(
 		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f);
 		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f);
 
+		qf->RemoveFeature(collidee);
 		collider->Move3D( colResponseVec * colliderMassScale, true);
 		collidee->Move3D(-colResponseVec * collideeMassScale, true);
+		qf->AddFeature(collidee);
 	}
 }
 
