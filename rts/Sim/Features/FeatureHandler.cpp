@@ -128,10 +128,12 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 	fd->geoThermal    =  fdTable.GetBool("geoThermal",      false);
 
 	// this seem to be the closest thing to floating that ta wreckage contains
+	//FIXME move this to featuredef_post.lua
 	fd->floating = fdTable.GetBool("nodrawundergray", false);
 	if (fd->floating && !fd->blocking) {
 		fd->floating = false;
 	}
+	fd->floating = fdTable.GetBool("floating", fd->floating);
 
 	fd->noSelect = fdTable.GetBool("noselect", false);
 
