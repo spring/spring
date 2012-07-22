@@ -300,28 +300,28 @@ bool FBO::CheckStatus(std::string name)
 			valid = true;
 			return true;
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
-			LOG_L(L_WARNING, "FBO-%s: no/unsupported textures/buffers attached!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: None/Unsupported textures/buffers attached!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT:
-			LOG_L(L_WARNING, "FBO-%s: missing a required texture/buffer attachment!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: Missing a required texture/buffer attachment!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
-			LOG_L(L_WARNING, "FBO-%s: has mismatched texture/buffer dimensions!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: Has mismatched texture/buffer dimensions!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
-			LOG_L(L_WARNING, "FBO-%s: colorbuffer attachments have different types!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: Incomplete buffer formats!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
-			LOG_L(L_WARNING, "FBO-%s: incomplete draw buffers!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: Incomplete draw buffers!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
-			LOG_L(L_WARNING, "FBO-%s: trying to read from a non-attached color buffer!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: Incomplete read buffer!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
-			LOG_L(L_WARNING, "FBO-%s error: GL_FRAMEBUFFER_UNSUPPORTED_EXT", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: GL_FRAMEBUFFER_UNSUPPORTED_EXT", name.c_str());
 			break;
 		default:
-			LOG_L(L_WARNING, "FBO-%s error: 0x%X", name.c_str(), status);
+			LOG_L(L_WARNING, "FBO-%s: error code 0x%X", name.c_str(), status);
 			break;
 	}
 	valid = false;
