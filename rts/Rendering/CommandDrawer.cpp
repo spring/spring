@@ -847,7 +847,7 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 
 	if (quadcounter) {
 		glEnableClientState(GL_VERTEX_ARRAY);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glVertexPointer(3, GL_FLOAT, 0, &vertices_quads[0]);
 		glDrawArrays(GL_QUADS, 0, quadcounter/3);
 
