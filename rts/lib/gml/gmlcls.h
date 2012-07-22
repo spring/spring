@@ -220,9 +220,9 @@ public:
 	virtual ~gmlBaseMutexLock() {
 		if (GML::Enabled()) {
 #if (BOOST_VERSION >= 103500)
-			((T*)lockdata)->~unique_lock();
+			((T*)lockdata)->boost::unique_lock<U>::~unique_lock();
 #else
-			((T*)lockdata)->~scoped_lock();
+			((T*)lockdata)->boost::scoped_lock<U>::~scoped_lock();
 #endif
 		}
 	}
