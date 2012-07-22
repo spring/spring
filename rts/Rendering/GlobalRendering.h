@@ -188,6 +188,8 @@ public:
 	 */
 	bool support24bitDepthBuffers;
 
+	bool supportRestartPrimitive;
+
 	/**
 	 * Shader capabilities
 	 */

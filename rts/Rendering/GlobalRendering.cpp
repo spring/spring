@@ -101,6 +101,7 @@ CGlobalRendering::CGlobalRendering()
 	, atiHacks(false)
 	, supportNPOTs(false)
 	, support24bitDepthBuffers(false)
+	, supportRestartPrimitive(false)
 	, haveARB(false)
 	, haveGLSL(false)
 	, maxSmoothPointSize(1.0f)
@@ -156,6 +157,10 @@ void CGlobalRendering::PostInit() {
 		// default to off because it reduces quality (smallest mipmap level is bigger)
 		compressTextures = configHandler->GetBool("CompressTextures");
 	}
+
+#ifdef GLEW_NV_primitive_restart
+	supportRestartPrimitive = !!(GLEW_NV_primitive_restart);
+#endif
 
 	// maximum 2D texture size
 	{
