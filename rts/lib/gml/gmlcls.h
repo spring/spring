@@ -12,10 +12,11 @@
 
 #include "gmlcnt.h"
 
+#include <boost/version.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/recursive_mutex.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/version.hpp>
 #include <map>
 #include <set>
 #include <string.h>
