@@ -441,7 +441,6 @@ void S3DOPiece::DrawForList() const
 	va1->Initialize();
 	va2->Initialize();
 
-	// glFrontFace(GL_CW);
 	for (std::vector<S3DOPrimitive>::const_iterator ps = prims.begin(); ps != prims.end(); ++ps) {
 		C3DOTextureHandler::UnitTexture* tex = ps->texture;
 
@@ -474,8 +473,6 @@ void S3DOPiece::DrawForList() const
 	if (va2->drawIndex() != 0) {
 		va2->DrawArrayTN(GL_TRIANGLES);
 	}
-
-	// glFrontFace(GL_CCW);
 }
 
 void S3DOPiece::SetMinMaxExtends()
