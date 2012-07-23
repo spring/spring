@@ -213,7 +213,7 @@ inline unsigned gmlGetTicks() {
 #define GML_EXPGEN_CHECK() \
 	if(gmlThreadNumber != GML_SIM_THREAD_NUM && gmlMultiThreadSim && gmlStartSim) {\
 		lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
-		LOG_SL("GML", L_ERROR, "Draw thread created ExpGenSpawnable (%s)", GML_CURRENT_LUA(currentLuaState));\
+		LOG_SL("Threading", L_ERROR, "Draw thread created ExpGenSpawnable (%s)", GML_CURRENT_LUA(currentLuaState));\
 		if(currentLuaState) luaL_error(currentLuaState,"Invalid call");\
 	}
 #define GML_CALL_DEBUGGER() gmlCallDebugger gmlCDBG(L);

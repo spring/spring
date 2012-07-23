@@ -299,34 +299,33 @@ void PrintMTStartupMessage(int showMTInfo) {
 		return;
 	if (showMTInfo != MT_LUA_NONE) {
 		if (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT) {
-			LOG("\n************* SPRING IMPORTANT NOTICE REGARDING MULTITHREADING *************");
-			LOG("Multithreading is enabled but currently running in compatibility mode %d", showMTInfo);
+			LOG("[Threading] Multithreading is enabled but currently running in compatibility mode %d", showMTInfo);
 		} else {
-			LOG("\nMultithreading is enabled and currently running in mode %d", showMTInfo);
+			LOG("[Threading] Multithreading is enabled and currently running in mode %d", showMTInfo);
 		}
 		if (showMTInfo == MT_LUA_SINGLE) {
 			CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
 			std::string lskey = lslist.empty() ? "" : " (press " + lslist.front() + ")";
-			LOG("If your game uses lua based rendering, it may run very slow in this mode");
-			LOG("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem");
-			LOG("Consider changing the engine setting 'MultiThreadLua' to 2 to improve performance,");
-			LOG("or try to disable LuaShaders and all rendering widgets%s\n", lskey.c_str());
+			LOG("[Threading] Games that use lua based rendering may run very slow in this mode, "
+				"indicated by a high LUA-SYNC-CPU(MT) value displayed in the upper right corner");
+			LOG("[Threading] Consider MultiThreadLua = %d in the settings to improve performance, "
+				"or try to disable LuaShaders and all rendering widgets%s", (int)MT_LUA_SINGLE_BATCH, lskey.c_str());
 		} else if (showMTInfo == MT_LUA_SINGLE_BATCH) {
-			LOG("If your game uses lua gadget based rendering, it may run very slow in this mode");
-			LOG("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem\n");
+			LOG("[Threading] Games that use lua gadget based rendering may run very slow in this mode, "
+				"indicated by a high LUA-SYNC-CPU(MT) value displayed in the upper right corner");
 		} else if (showMTInfo == MT_LUA_DUAL_EXPORT) {
-			LOG("If your game uses lua gadgets that export data, it may run very slow in this mode");
-			LOG("A high LUA-EXP-SIZE(MT) value in the upper right corner could indicate a problem\n");
+			LOG("[Threading] Games that use lua gadgets which export data may run very slow in this mode, "
+				"indicated by a high LUA-EXP-SIZE(MT) value displayed in the upper right corner");
 		}
 	} else {
-		LOG("\n************* SPRING IMPORTANT NOTICE REGARDING MULTITHREADING *************");
-		LOG("Multithreading has been disabled because the game or system does not appear compatible");
-		LOG("Multithreading can be enabled with MultiThreadCount = <num threads> in the settings");
+		LOG("[Threading] Multithreading is disabled because the game or system appears incompatible");
+		LOG("[Threading] MultiThreadCount > 1 in the settings will forcefully enable multithreading");
 	}
 }
 
 void gmlPrintCallChainWarning(const char *func) {
-	LOG_SL("GML", L_WARNING, "(%d/%d) Invalid attempt to invoke LuaUI (%s) from another Lua environment, this game is using engine features that may require LuaThreadingModel > 2 to work properly with Spring MT.", gmlCallChainWarning, GML_MAX_CALL_CHAIN_WARNINGS, func);
+	LOG_SL("Threading", L_ERROR, "Invalid attempt (%d/%d) to invoke LuaUI (%s) from another Lua environment, "
+			"certain widgets require LuaThreadingModel > %d to work properly with multithreading", gmlCallChainWarning, GML_MAX_CALL_CHAIN_WARNINGS, func, (int)MT_LUA_SINGLE_BATCH);
 }
 
 #endif
@@ -1129,12 +1128,12 @@ void gmlQueue::ExecuteDebug() {
 
 	while(p<e) {
 		if(*(int *)p!=GML_NOP)
-			LOG_SL("GML", L_ERROR, "Sim thread called %s", gmlFunctionNames[*(int*)p]);
+			LOG_SL("Threading", L_ERROR, "Sim thread called %s", gmlFunctionNames[*(int*)p]);
 		QueueHandler(p,ptr);
 //		++procs;
 	}
 //	if(procs>1 || (procs==1 && *(int *)Read!=GML_NOP))
-//		LOG_SL("GML", L_ERROR, "%d OpenGL calls detected in SimFrame()", procs);
+//		LOG_SL("Threading", L_ERROR, "%d OpenGL calls detected in SimFrame()", procs);
 }
 
 #include "gmlsrv.h"
