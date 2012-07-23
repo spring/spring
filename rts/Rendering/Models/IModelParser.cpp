@@ -218,7 +218,7 @@ void C3DModelLoader::Update() {
 		createLists.clear();
 
 		for (std::set<CUnit*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
-			(*i)->localmodel->ReloadDisplayLists();
+			SetLocalModelPieceDisplayLists(*i);
 		}
 		fixLocalModels.clear();
 
@@ -248,43 +248,59 @@ void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 
 		fixLocalModels.erase(unit);
 		deleteLocalModels.push_back(unit->localmodel);
-	} else {
+	}
+	else {
 		delete unit->localmodel;
 	}
 }
 
 void C3DModelLoader::CreateLocalModel(CUnit* unit)
 {
-	unit->localmodel = new LocalModel(unit->model);
-
 	if (GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // CreateLocalModel
 
+		unit->localmodel = new LocalModel(unit->model);
 		fixLocalModels.insert(unit);
+	}
+	else {
+		unit->localmodel = new LocalModel(unit->model);
+		// SetLocalModelPieceDisplayLists(unit);
+	}
+}
+
+
+void C3DModelLoader::SetLocalModelPieceDisplayLists(CUnit* unit)
+{
+	int piecenum = 0;
+	SetLocalModelPieceDisplayLists(unit->model->GetRootPiece(), unit->localmodel, &piecenum);
+}
+
+void C3DModelLoader::SetLocalModelPieceDisplayLists(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
+{
+	lmodel->pieces[*piecenum]->dispListID = model->dispListID;
+
+	for (unsigned int i = 0; i < model->childs.size(); i++) {
+		(*piecenum)++;
+		SetLocalModelPieceDisplayLists(model->childs[i], lmodel, piecenum);
 	}
 }
 
 
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
-	GLuint id = glGenLists(1);
-	glNewList(id, GL_COMPILE);
+	o->dispListID = glGenLists(1);
+	glNewList(o->dispListID, GL_COMPILE);
 		o->DrawForList();
 	glEndList();
 
 	for (std::vector<S3DModelPiece*>::iterator bs = o->childs.begin(); bs != o->childs.end(); ++bs) {
 		CreateListsNow(*bs);
 	}
-
-	// bind when everything is ready, should be more safe in multithreaded scenarios
-	// TODO: still for 100% safety it should use GL_SYNC
-	o->dispListID = id;
 }
 
 
 void C3DModelLoader::CreateLists(S3DModelPiece* o) {
 	if (GML::SimEnabled() && !GML::ShareLists())
-		// already mutex'ed via ::Load3DModel()
 		createLists.push_back(o);
 	else
 		CreateListsNow(o);
