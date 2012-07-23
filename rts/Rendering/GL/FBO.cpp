@@ -155,7 +155,7 @@ void FBO::GLContextLost()
 			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, (*fi)->fboId);
 			glGetIntegerv(GL_READ_BUFFER,&oldReadBuffer);
 
-			for(int i = 0; i < 15; ++i) {
+			for(int i = 0; i <= 15; ++i) {
 				DownloadAttachment(GL_COLOR_ATTACHMENT0_EXT + i);
 			}
 			DownloadAttachment(GL_DEPTH_ATTACHMENT_EXT);
@@ -399,7 +399,7 @@ void FBO::Detach(const GLenum attachment)
  */
 void FBO::DetachAll()
 {
-	for(int i = 0; i < 15; ++i) {
+	for(int i = 0; i <= 15; ++i) {
 		Detach(GL_COLOR_ATTACHMENT0_EXT + i);
 	}
 	Detach(GL_DEPTH_ATTACHMENT_EXT);
