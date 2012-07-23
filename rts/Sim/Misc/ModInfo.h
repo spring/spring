@@ -98,7 +98,7 @@ public:
 	int multiReclaim;
 	/// 0 = gradual reclaim, 1 = all reclaimed at end, otherwise reclaim in reclaimMethod chunks
 	int reclaimMethod;
-	/// 0 = Revert to wireframe, gradual reclaim, 1 = Subtract HP, give full metal at end, default 1
+	/// 0 = Revert to wireframe and gradual reclaim, 1 = Subtract HP and give full metal at end, default 1
 	int reclaimUnitMethod;
 	/// How much energy should reclaiming a unit cost, default 0.0
 	float reclaimUnitEnergyCostFactor;
