@@ -52,6 +52,9 @@ private:
 	void CreateListsNow(S3DModelPiece* o);
 
 	void DeleteChilds(S3DModelPiece* o);
+
+	void SetLocalModelPieceDisplayLists(CUnit* unit);
+	void SetLocalModelPieceDisplayLists(S3DModelPiece* model, LocalModel* lmodel, int* piecenum);
 };
 
 extern C3DModelLoader* modelParser;
