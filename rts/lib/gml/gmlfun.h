@@ -347,7 +347,7 @@ public:
 #define GML_CURRENT_LUA(currentLuaState) (currentLuaState ? "LUA" : "Unknown")
 #define GML_THREAD_ERROR(msg, ret)\
 	lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
-	LOG_SL("GML", L_ERROR, "Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
+	LOG_SL("Threading", L_ERROR, "Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
 	if(currentLuaState)\
 		luaL_error(currentLuaState, "Invalid call");\
 	ret
@@ -380,7 +380,7 @@ public:
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRETVAL(rettype))\
 	}
 #else
-#define GML_ITEMLOG_PRINT() LOG_SL("GML", L_ERROR, "Sim thread called %s", GML_FUNCTION);
+#define GML_ITEMLOG_PRINT() LOG_SL("Threading", L_ERROR, "Sim thread called %s", GML_FUNCTION);
 #define GML_DUMMYRET()
 #define GML_DUMMYRETVAL(rettype)
 #define GML_IF_SIM_THREAD_RET(thread,name)
