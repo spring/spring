@@ -1699,17 +1699,18 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 
 		if (beingBuilt) { //build
 			const float part = std::min(amount / buildTime, 1.0f - buildProgress);
-			const float metalUse  = (metalCost  * part);
-			const float energyUse = (energyCost * part);
+			const float metalCostPart  = metalCost  * part;
+			const float energyCostPart = energyCost * part;
 
-			if ((teamHandler->Team(builder->team)->metal  >= metalUse) &&
-			    (teamHandler->Team(builder->team)->energy >= energyUse) &&
+			if ((teamHandler->Team(builder->team)->metal  >= metalCostPart) &&
+			    (teamHandler->Team(builder->team)->energy >= energyCostPart) &&
 			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
-				if (builder->UseMetal(metalUse)) {
+
+				if (builder->UseMetal(metalCostPart)) {
 					// just because we checked doesn't mean they were deducted since upkeep can prevent deduction
 					// FIXME luaRules->AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
-					// TODO add a builder->UseResources(SResources(metalUse, energyUse))
-					if (builder->UseEnergy(energyUse)) {
+					// TODO add a builder->UseResources(SResources(metalCostPart, energyCostPart))
+					if (builder->UseEnergy(energyCostPart)) {
 						health += (maxHealth * part);
 						health = std::min(health, maxHealth);
 						buildProgress += part;
@@ -1719,14 +1720,14 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 						}
 					} else {
 						// refund the metal if the energy cannot be deducted
-						builder->UseMetal(-metalUse);
+						builder->UseMetal(-metalCostPart);
 					}
 				}
 				return true;
 			} else {
 				// update the energy and metal required counts
-				teamHandler->Team(builder->team)->metalPull  += metalUse;
-				teamHandler->Team(builder->team)->energyPull += energyUse;
+				teamHandler->Team(builder->team)->metalPull  += metalCostPart;
+				teamHandler->Team(builder->team)->energyPull += energyCostPart;
 			}
 			return false;
 		}
@@ -1741,21 +1742,21 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			}
 
 			repairAmount += amount;
-			health += maxHealth * part;
-			if (health > maxHealth) {
-				health = maxHealth;
-			}
+			health += (maxHealth * part);
+			health = std::min(health, maxHealth);
+
 			return true;
 		}
-	}
-	else { // reclaim
+	} else { // reclaim
 		if (isDead) {
 			return false;
 		}
 
 		const float part = std::max(amount / buildTime, -buildProgress);
-		const float energyUse = (energyCost * part);
-		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
+		const float energyRefundPart = energyCost * part;
+		const float metalRefundPart = metalCost * part;
+		const float metalRefundPartScaled = metalRefundPart * modInfo.reclaimUnitEfficiency;
+		const float energyRefundPartScaled = energyRefundPart * modInfo.reclaimUnitEnergyCostFactor;
 
 		if (luaRules && !luaRules->AllowUnitBuildStep(builder, this, part)) {
 			return false;
@@ -1768,30 +1769,42 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			return false;
 		}
 
-		if (!builder->UseEnergy(-energyUseScaled)) {
-			teamHandler->Team(builder->team)->energyPull += energyUseScaled;
+		if (!builder->UseEnergy(-energyRefundPartScaled)) {
+			teamHandler->Team(builder->team)->energyPull += energyRefundPartScaled;
 			return false;
 		}
 
-		if ((modInfo.reclaimUnitMethod == 0) && (!beingBuilt)) {
+		health += (maxHealth * part);
+		buildProgress += (part * int(beingBuilt) * int(modInfo.reclaimUnitMethod == 0));
+
+		if (modInfo.reclaimUnitMethod == 0) {
+			// gradual reclamation of invested metal
+			builder->AddMetal(-metalRefundPartScaled, false);
+			// turn reclaimee into nanoframe (even living units)
 			beingBuilt = true;
+		} else {
+			// lump reclamation of invested metal
+			// NOTE:
+			//   because the nanoframe is also decaying on its OWN
+			//   (which reduces buildProgress and returns resources)
+			//   *while* we are reclaiming it, the final lump has to
+			//   subtract the amount already returned through decay
+			//
+			//   this also means that in lump-reclaim mode only health
+			//   is reduced since we need buildProgress to calculate a
+			//   proper refund
+			if (buildProgress <= 0.0f || health <= 0.0f) {
+				builder->AddMetal((metalCost * buildProgress) * modInfo.reclaimUnitEfficiency, false);
+			}
 		}
 
-		health += maxHealth * part;
-
 		if (beingBuilt) {
-			// progressive metal reclaiming
-			builder->AddMetal(-metalUse * modInfo.reclaimUnitEfficiency, false);
-			buildProgress += part;
-
-			if (buildProgress < 0 || health < 0) {
+			if (buildProgress <= 0.0f || health <= 0.0f) {
 				KillUnit(false, true, NULL);
 				return false;
 			}
 		} else {
-			if (health < 0) {
-				// in case of reclaiming of living units add the whole metal with the last nano particle to the storage
-				builder->AddMetal(metalCost * modInfo.reclaimUnitEfficiency, false);
+			if (health <= 0.0f) {
 				KillUnit(false, true, NULL);
 				return false;
 			}
