@@ -288,12 +288,22 @@ void CWeapon::Update()
 	}
 
 	if (targetType != Target_None) {
-		if (onlyForward) {
-			const float3 goalDir = (targetPos - owner->pos).Normalize();
-			const float goalDot = owner->frontdir.dot(goalDir);
+		const float3 worldTargetDir = (targetPos - owner->pos).SafeNormalize();
+		const float3 worldMainDir =
+			owner->frontdir * mainDir.z +
+			owner->rightdir * mainDir.x +
+			owner->updir    * mainDir.y;
 
-			angleGood = (goalDot > maxForwardAngleDif);
-		} else if (gs->frameNum >= (lastRequest + (GAME_SPEED >> 1))) {
+		if (angleGood && !CheckTargetAngleConstraint(worldTargetDir, worldMainDir)) {
+			// weapon finished a previously started AimWeapon thread and wants to
+			// fire, but target is no longer within contraints --> wait for re-aim
+			angleGood = false;
+		}
+
+		if (gs->frameNum >= (lastRequest + (GAME_SPEED >> 1))) {
+			// periodically re-aim the weapon (by calling the script's AimWeapon
+			// every N=15 frames regardless of current angleGood state)
+			//
 			// NOTE:
 			//   if AimWeapon sets angleGood immediately (ie. before it returns),
 			//   the weapon can continuously fire at its maximum rate once every
@@ -312,13 +322,13 @@ void CWeapon::Update()
 			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
 			const float pitch = math::asin(Clamp(wantedDir.dot(owner->updir), -1.0f, 1.0f));
 
-			// call AimWeapon every N=15 frames regardless of current angleGood state
-			// for COB, this sets anglegood to return value of AimWeapon when it finished,
-			// for Lua, there exists a callout to set the angleGood member.
+			// for COB, this sets <angleGood> to return value of AimWeapon when finished,
+			// for LUS, there exists a callout to set the <angleGood> member directly.
 			// FIXME: convert CSolidObject::heading to radians too.
 			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
 		}
 	}
+
 	if (weaponDef->stockpile && numStockpileQued) {
 		const float p = 1.0f / stockpileTime;
 
@@ -922,6 +932,24 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float len
 	return (g <= 0.0f || g >= (length * 0.9f));
 }
 
+bool CWeapon::CheckTargetAngleConstraint(const float3& worldTargetDir, const float3& worldWeaponDir) const {
+	if (onlyForward) {
+		if (maxForwardAngleDif > -1.0f) {
+			// if we are not a turret, we care about our owner's direction
+			if (owner->frontdir.dot(worldTargetDir) < maxForwardAngleDif)
+				return false;
+		}
+	} else {
+		if (maxMainDirAngleDif > -1.0f) {
+			if (worldWeaponDir.dot(worldTargetDir) < maxMainDirAngleDif)
+				return false;
+		}
+	}
+
+	return true;
+}
+
+
 bool CWeapon::AdjustTargetVectorLength(
 	CUnit* targetUnit,
 	float3& targetPos,
@@ -1025,26 +1053,14 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 	if (targetVec.SqLength2D() >= (weaponRange * weaponRange))
 		return false;
 
+	// NOTE: mainDir is in unit-space
 	const float3 targetNormDir = targetDirNormalized? targetDir: targetDir.SafeNormalize();
 	const float3 worldMainDir =
 		owner->frontdir * mainDir.z +
 		owner->rightdir * mainDir.x +
 		owner->updir    * mainDir.y;
 
-	if (onlyForward) {
-		if (maxForwardAngleDif > -1.0f) {
-			if (owner->frontdir.dot(targetNormDir) < maxForwardAngleDif)
-				return false;
-		}
-	} else {
-		if (maxMainDirAngleDif > -1.0f) {
-			// NOTE: mainDir is in unit-space, worldMainDir is in world-space
-			if (worldMainDir.dot(targetNormDir) < maxMainDirAngleDif)
-				return false;
-		}
-	}
-
-	return true;
+	return (CheckTargetAngleConstraint(targetNormDir, worldMainDir));
 }
 
 bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {

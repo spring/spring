@@ -35,6 +35,7 @@ public:
 	bool AllowWeaponTargetCheck();
 	bool TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit) const;
 	bool HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const;
+	bool CheckTargetAngleConstraint(const float3& worldTargetDir, const float3& worldWeaponDir) const;
 	bool AdjustTargetVectorLength(CUnit*, float3&, float3&, float3&) const;
 	virtual bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
 	bool TryTarget(CUnit* unit, bool userTarget);
@@ -60,6 +61,9 @@ public:
 
 	void StopAttackingAllyTeam(int ally);
 	void UpdateInterceptTarget();
+
+private:
+	virtual void FireImpl() {}
 
 public:
 	CUnit* owner;
@@ -159,9 +163,6 @@ public:
 	float3 errorVector;
 	float3 errorVectorAdd;
 	float3 targetPos;						// the position of the target (even if targettype=unit)
-
-private:
-	virtual void FireImpl() {}
 };
 
 #endif /* WEAPON_H */
