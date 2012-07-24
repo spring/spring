@@ -305,6 +305,9 @@ void CWeapon::Update()
 			// every N=15 frames regardless of current angleGood state)
 			//
 			// NOTE:
+			//   let scripts do active aiming even if we are an onlyForward weapon
+			//   (reduces how far the entire unit must turn to face worldTargetDir)
+			//
 			//   if AimWeapon sets angleGood immediately (ie. before it returns),
 			//   the weapon can continuously fire at its maximum rate once every
 			//   int(reloadTime / owner->reloadSpeed) frames

@@ -59,7 +59,7 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	this->badTargetCat =                                   CCategoryHandler::Instance()->GetCategories(btcString);
 	this->onlyTargetCat = (otcString.empty())? 0xffffffff: CCategoryHandler::Instance()->GetCategories(otcString);
 
-	this->mainDir = weaponTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f));
+	this->mainDir = weaponTable.GetFloat3("mainDir", float3(0.0f, 0.0f, 1.0f));
 	this->mainDir.SafeNormalize();
 }
 
