@@ -23,19 +23,28 @@
 #include <cassert>
 #define AUTO_GENERATE_ATTACK_ORDERS 1
 
+static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
+	if (owner->usingScriptMoveType) {
+		return ((CStrafeAirMoveType*) owner->prevMoveType);
+	}
+
+	return ((CStrafeAirMoveType*) owner->moveType);
+}
+
+
+
 CR_BIND_DERIVED(CAirCAI, CMobileCAI, );
-
 CR_REG_METADATA(CAirCAI, (
-				CR_MEMBER(basePos),
-				CR_MEMBER(baseDir),
+	CR_MEMBER(basePos),
+	CR_MEMBER(baseDir),
 
-				CR_MEMBER(activeCommand),
-				CR_MEMBER(targetAge),
+	CR_MEMBER(activeCommand),
+	CR_MEMBER(targetAge),
 
-				CR_MEMBER(lastPC1),
-				CR_MEMBER(lastPC2),
-				CR_RESERVED(16)
-				));
+	CR_MEMBER(lastPC1),
+	CR_MEMBER(lastPC2),
+	CR_RESERVED(16)
+));
 
 CAirCAI::CAirCAI()
 	: CMobileCAI()
@@ -84,10 +93,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 	goalPos = owner->pos;
 }
 
-CAirCAI::~CAirCAI()
-{
-}
-
 void CAirCAI::GiveCommandReal(const Command& c)
 {
 	// take care not to allow aircraft to be ordered to move out of the map
@@ -109,12 +114,9 @@ void CAirCAI::GiveCommandReal(const Command& c)
 		if (c.params.empty()) {
 			return;
 		}
-		CStrafeAirMoveType* airMT;
-		if (owner->usingScriptMoveType) {
-			airMT = (CStrafeAirMoveType*)owner->prevMoveType;
-		} else {
-			airMT = (CStrafeAirMoveType*)owner->moveType;
-		}
+
+		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
+
 		switch ((int)c.params[0]) {
 			case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
 			case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
@@ -139,12 +141,9 @@ void CAirCAI::GiveCommandReal(const Command& c)
 		if (c.params.empty()) {
 			return;
 		}
-		CStrafeAirMoveType* airMT;
-		if (owner->usingScriptMoveType) {
-			airMT = (CStrafeAirMoveType*)owner->prevMoveType;
-		} else {
-			airMT = (CStrafeAirMoveType*)owner->moveType;
-		}
+
+		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
+
 		switch ((int)c.params[0]){
 			case 0: { airMT->autoLand = false; break; }
 			case 1: { airMT->autoLand = true;  break; }
@@ -167,12 +166,9 @@ void CAirCAI::GiveCommandReal(const Command& c)
 		if (c.params.empty()) {
 			return;
 		}
-		CStrafeAirMoveType* airMT;
-		if (owner->usingScriptMoveType) {
-			airMT = (CStrafeAirMoveType*)owner->prevMoveType;
-		} else {
-			airMT = (CStrafeAirMoveType*)owner->moveType;
-		}
+
+		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
+
 		switch ((int)c.params[0]) {
 			case 0: { airMT->loopbackAttack = false; break; }
 			case 1: { airMT->loopbackAttack = true;  break; }
@@ -222,57 +218,20 @@ void CAirCAI::SlowUpdate()
 		return; // avoid the invalid (CStrafeAirMoveType*) cast
 	}
 
-	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
-
-	bool wantToRefuel = LandRepairIfNeeded();
-	if (!wantToRefuel && owner->unitDef->maxFuel > 0) {
-		wantToRefuel = RefuelIfNeeded();
-	}
+	const bool wantToRefuel = (LandRepairIfNeeded() || RefuelIfNeeded());
 
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (commandQue.empty()) {
-		const bool autoLand = !owner->unitDef->DontLand() && myPlane->autoLand;
-		const bool autoAttack = ((owner->fireState >= FIRESTATE_FIREATWILL) && (owner->moveState != MOVESTATE_HOLDPOS));
-
-		if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING && autoLand) {
-			StopMove();
-//			myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
+		if (AirAutoGenerateTarget((AAirMoveType*) owner->moveType)) {
+			return;
 		}
-
-		if (owner->unitDef->canAttack && autoAttack && owner->maxRange > 0) {
-			if (myPlane->IsFighter()) {
-				const float3 P = owner->pos + (owner->speed * 10.0);
-				const float R = 1000.0f * owner->moveState;
-				const CUnit* enemy = helper->GetClosestEnemyAircraft(P, R, owner->allyteam);
-
-				if (IsValidTarget(enemy)) {
-					Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
-					commandQue.push_front(nc);
-					inCommand = false;
-					return;
-				}
-			} else {
-				const float3 P = owner->pos + (owner->speed * 20.0f);
-				const float R = 500.0f * owner->moveState;
-				const CUnit* enemy = helper->GetClosestValidTarget(P, R, owner->allyteam, this);
-
-				if (enemy != NULL) {
-					Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
-					commandQue.push_front(nc);
-					inCommand = false;
-					return;
-				}
-			}
-		}
-
-		return;
 	}
 	#endif
 
+	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
 	Command& c = commandQue.front();
-	const int& cmd_id = c.GetID();
 	
-	if (cmd_id == CMD_WAIT) {
+	if (c.GetID() == CMD_WAIT) {
 		if ((myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING)
 		    	&& !owner->unitDef->DontLand() && myPlane->autoLand)
 		{
@@ -282,14 +241,14 @@ void CAirCAI::SlowUpdate()
 		return;
 	}
 
-	if (cmd_id != CMD_STOP && cmd_id != CMD_AUTOREPAIRLEVEL
-			&& cmd_id != CMD_IDLEMODE && cmd_id != CMD_SET_WANTED_MAX_SPEED)
+	if (c.GetID() != CMD_STOP && c.GetID() != CMD_AUTOREPAIRLEVEL &&
+		c.GetID() != CMD_IDLEMODE && c.GetID() != CMD_SET_WANTED_MAX_SPEED)
 	{
 		myPlane->Takeoff();
 	}
 
 	if (wantToRefuel) {
-		switch (cmd_id) {
+		switch (c.GetID()) {
 			case CMD_AREA_ATTACK:
 			case CMD_ATTACK:
 			case CMD_FIGHT:
@@ -297,7 +256,7 @@ void CAirCAI::SlowUpdate()
 		}
 	}
 
-	switch (cmd_id) {
+	switch (c.GetID()) {
 		case CMD_AREA_ATTACK: {
 			ExecuteAreaAttack(c);
 			return;
@@ -307,6 +266,46 @@ void CAirCAI::SlowUpdate()
 			return;
 		}
 	}
+}
+
+bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
+	assert(commandQue.empty());
+
+	const bool autoLand = !owner->unitDef->DontLand() && myPlane->autoLand;
+	const bool autoAttack = ((owner->fireState >= FIRESTATE_FIREATWILL) && (owner->moveState != MOVESTATE_HOLDPOS));
+
+	if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING && autoLand) {
+		StopMove();
+		// myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
+	}
+
+	if (owner->unitDef->canAttack && autoAttack && owner->maxRange > 0) {
+		if (myPlane->IsFighter()) {
+			const float3 P = owner->pos + (owner->speed * 10.0);
+			const float R = 1000.0f * owner->moveState;
+			const CUnit* enemy = helper->GetClosestEnemyAircraft(P, R, owner->allyteam);
+
+			if (IsValidTarget(enemy)) {
+				Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
+				commandQue.push_front(nc);
+				inCommand = false;
+				return true;
+			}
+		} else {
+			const float3 P = owner->pos + (owner->speed * 20.0f);
+			const float R = 500.0f * owner->moveState;
+			const CUnit* enemy = helper->GetClosestValidTarget(P, R, owner->allyteam, this);
+
+			if (enemy != NULL) {
+				Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
+				commandQue.push_front(nc);
+				inCommand = false;
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 
