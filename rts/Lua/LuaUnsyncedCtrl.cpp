@@ -1309,6 +1309,8 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 					light.SetTTL(lua_tofloat(L, -1));
 				} else if (key == "priority") {
 					light.SetPriority(lua_tofloat(L, -1));
+				} else if (key == "ignoreLOS") {
+					light.SetIgnoreLOS(lua_toboolean(L, -1));
 				}
 			}
 		}
