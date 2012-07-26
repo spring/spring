@@ -293,11 +293,19 @@ void CWeapon::Update()
 			owner->frontdir * mainDir.z +
 			owner->rightdir * mainDir.x +
 			owner->updir    * mainDir.y;
-
-		if (angleGood && !CheckTargetAngleConstraint(worldTargetDir, worldMainDir)) {
-			// weapon finished a previously started AimWeapon thread and wants to
-			// fire, but target is no longer within contraints --> wait for re-aim
-			angleGood = false;
+		const bool targetAngleConstraint = CheckTargetAngleConstraint(worldTargetDir, worldMainDir);
+ 
+		if (angleGood && !targetAngleConstraint) {
+ 			// weapon finished a previously started AimWeapon thread and wants to
+ 			// fire, but target is no longer within contraints --> wait for re-aim
+ 			angleGood = false;
+ 		}
+		if (onlyForward && targetAngleConstraint) {
+			// NOTE:
+			//   this should not need to be here, but many legacy scripts do not
+			//   seem to define Aim*Ary in COB for units with onlyForward weapons
+			//   (so angleGood is never set to true) -- REMOVE AFTER 90.0
+			angleGood = true;
 		}
 
 		if (gs->frameNum >= (lastRequest + (GAME_SPEED >> 1))) {
@@ -866,15 +874,9 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		AutoTarget();
 	}
 
-	if (targetType != Target_None) {
-		owner->haveTarget = true;
-	} else {
+	if (targetType == Target_None) {
 		// if we can't target anything, try switching aim point
-		if (useWeaponPosForAim == 1) {
-			useWeaponPosForAim = 0;
-		} else {
-			useWeaponPosForAim = 1;
-		}
+		useWeaponPosForAim = 1 - useWeaponPosForAim;
 	}
 }
 
