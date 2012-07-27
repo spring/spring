@@ -48,6 +48,8 @@ class CCollisionHandler {
 		CCollisionHandler() {}
 		~CCollisionHandler() {}
 
+		static void PrintStats();
+
 		static bool DetectHit(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q = NULL, bool forceTrace = false);
 		static bool DetectHit(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q = NULL, bool forceTrace = false);
 		static bool MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q);
