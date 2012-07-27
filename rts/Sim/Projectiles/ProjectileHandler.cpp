@@ -116,6 +116,8 @@ CProjectileHandler::~CProjectileHandler()
 	unsyncedProjectileIDs.clear();
 
 	ph = NULL;
+
+	CCollisionHandler::PrintStats();
 }
 
 void CProjectileHandler::Serialize(creg::ISerializer* s)
