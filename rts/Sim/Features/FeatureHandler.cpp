@@ -166,7 +166,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 		fdTable.GetString("collisionVolumeType", ""),
 		fdTable.GetFloat3("collisionVolumeScales", ZeroVector),
 		fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		fdTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_CONT)
+		CollisionVolume::COLVOL_HITTEST_CONT
 	);
 
 
