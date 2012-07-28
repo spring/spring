@@ -1558,8 +1558,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (collidee->moveType->IsSkidding()) { continue; }
 		if (collidee->moveType->IsFlying()) { continue; }
 
-		const bool colliderMobile = (collider->moveDef != NULL);
-		const bool collideeMobile = (collidee->moveDef != NULL);
+		const bool colliderMobile = (collider->moveDef != NULL); // always true
+		const bool collideeMobile = (collidee->moveDef != NULL); // maybe true
 
 		const UnitDef*   collideeUD = collidee->unitDef;
 		const MoveDef*   collideeMD = collidee->moveDef;
@@ -1608,9 +1608,9 @@ void CGroundMoveType::HandleUnitCollisions(
 		crushCollidee &= (collider->speed != ZeroVector);
 
 		// don't push/crush either party if the collidee does not block the collider (or vv.)
-		if (colliderMM->IsNonBlocking(*colliderMD, collidee))
+		if (colliderMobile && colliderMM->IsNonBlocking(*colliderMD, collidee))
 			continue;
-		if (collideeMM->IsNonBlocking(*collideeMD, collider))
+		if (collideeMobile && collideeMM->IsNonBlocking(*collideeMD, collider))
 			continue;
 
 		if (crushCollidee && !colliderMM->CrushResistant(*colliderMD, collidee))
