@@ -1607,9 +1607,12 @@ void CGroundMoveType::HandleUnitCollisions(
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= (collider->speed != ZeroVector);
 
-		// don't push/crush either party if the collidee does not block the collider
+		// don't push/crush either party if the collidee does not block the collider (or vv.)
 		if (colliderMM->IsNonBlocking(*colliderMD, collidee))
 			continue;
+		if (collideeMM->IsNonBlocking(*collideeMD, collider))
+			continue;
+
 		if (crushCollidee && !colliderMM->CrushResistant(*colliderMD, collidee))
 			collidee->Kill(crushImpulse, true);
 
