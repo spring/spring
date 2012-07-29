@@ -36,7 +36,7 @@ public:
 	bool TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit) const;
 	bool HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const;
 	bool CheckTargetAngleConstraint(const float3& worldTargetDir, const float3& worldWeaponDir) const;
-	bool AdjustTargetVectorLength(CUnit*, float3&, float3&, float3&) const;
+	bool SetTargetBorderPos(CUnit*, float3&, float3&, float3&);
 	virtual bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
 	bool TryTarget(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
@@ -162,7 +162,9 @@ public:
 	float3 salvoError;						// error vector for the whole salvo
 	float3 errorVector;
 	float3 errorVectorAdd;
-	float3 targetPos;						// the position of the target (even if targettype=unit)
+
+	float3 targetPos;                       // the position of the target (even if targettype=unit)
+	float3 targetBorderPos;                 // <targetPos> adjusted for target-border factor
 };
 
 #endif /* WEAPON_H */
