@@ -35,16 +35,18 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 	// "the LSB does not describe any mechanism by which a
 	// compressor can communicate the size required to the
 	// uncompressor" ==> we must reserve some fixed-length
-	// buffer (256K bytes to handle very large scripts)
-	static const unsigned long bufSize = 262144;
+	// buffer (starting at 256K bytes to handle very large
+	// scripts) for each new decompression attempt
+	unsigned long bufSize = 256 * 1024;
 	unsigned long rawSize = bufSize;
 
 	std::vector<boost::uint8_t> buffer(bufSize);
 
-	if (uncompress(&buffer[0], &rawSize, &compressed[0], compressed.size()) != Z_OK) {
-		static const std::string err = str(boost::format("unpacking game-data packet failed (%u bytes decompressed)") %rawSize);
+	while (uncompress(&buffer[0], &rawSize, &compressed[0], compressed.size()) != Z_OK) {
+		bufSize *= 2;
+		rawSize  = bufSize;
 
-		throw UnpackPacketException(err.c_str());
+		buffer.resize(bufSize);
 	}
 
 	setupText = reinterpret_cast<char*>(&buffer[0]);
