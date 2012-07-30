@@ -404,10 +404,10 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 		treeDrawer->DeleteTree(pos);
 	}
 
-	Move3D(pos, false);
+	Move3D(newPos - pos, true);
 	eventHandler.FeatureMoved(this);
 
-	// setup finalHeight
+	// setup finalHeight (pos == newPos now)
 	if (snapToGround) {
 		if (def->floating) {
 			finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
@@ -415,7 +415,7 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 			finalHeight = ground->GetHeightReal(pos.x, pos.z);
 		}
 	} else {
-		finalHeight = newPos.y;
+		finalHeight = pos.y;
 	}
 
 	// setup the visual transformation matrix
