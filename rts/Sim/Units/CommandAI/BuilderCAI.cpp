@@ -50,6 +50,7 @@ CR_REG_METADATA(CBuilderCAI , (
 				CR_MEMBER(cachedRadius),
 
 				CR_MEMBER(buildRetries),
+				CR_MEMBER(randomCounter),
 
 				CR_MEMBER(lastPC1),
 				CR_MEMBER(lastPC2),
@@ -70,6 +71,7 @@ CBuilderCAI::CBuilderCAI():
 	cachedRadiusId(0),
 	cachedRadius(0),
 	buildRetries(0),
+	randomCounter(0),
 	lastPC1(-1),
 	lastPC2(-1),
 	lastPC3(-1),
@@ -83,6 +85,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 	cachedRadiusId(0),
 	cachedRadius(0),
 	buildRetries(0),
+	randomCounter(0),
 	lastPC1(-1),
 	lastPC2(-1),
 	lastPC3(-1),
@@ -282,6 +285,60 @@ bool CBuilderCAI::MoveInBuildRange(const float3& objPos, float objRadius, const 
 }
 
 
+bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit* nanoFrame) const
+{
+	CFeature* feature = NULL;
+	BuildSquareStatus status = uh->TestUnitBuildSquare(build, feature, owner->allyteam, true);
+
+	if (feature && build.def->isFeature && build.def->wreckName == feature->def->name) {
+		// buildjob is a feature and it is finished already
+		return true;
+	}
+
+	if (status != BUILDSQUARE_BLOCKED) {
+		// open area, reclaimable feature or movable unit
+		return false;
+	}
+
+	const int yardxpos = int(build.pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
+	const int yardypos = int(build.pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
+	const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
+
+	if (s == owner) {
+		return false;
+	}
+
+	const CUnit* u = dynamic_cast<const CUnit*>(s);
+	if (!u /*|| u->pos != build.pos*/) {
+		return true;
+	}
+
+	const bool canAssist = u->beingBuilt && (u->buildProgress < 1.0f) && (!u->soloBuilder || (u->soloBuilder == owner));
+
+	if ((u->unitDef != build.def) || !canAssist) {
+		if (u->immobile) {
+			// either unit is finished already or
+			// can't or don't want assist finishing the nanoframe
+			return true;
+		} else {
+			// mobile unit blocks the position, wait till it moved
+			return false;
+		}
+	}
+
+	if (!owner->unitDef->canAssist) {
+		// blocked by unit and we can't assist it -> blocked
+		// check happens intentionally so late (so the immobile differing happens)
+		return true;
+	}
+
+	// unfinished nanoframe, assist it
+	nanoFrame = u;
+	return false;
+}
+
+
+
 inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 {
 	if (owner->unitDef->canmove) {
@@ -385,25 +442,17 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 		}
 
-		// check if the buildpos is blocked if it is a nanoframe help to finish it
-		//FIXME finish it just if it is of the same unitdef?
-		CFeature* feature = NULL;
-		if (!uh->TestUnitBuildSquare(bi, feature, owner->allyteam, true)) {
-			if (!feature && owner->unitDef->canAssist) {
-				const int yardxpos = int(bi.pos.x + 4) / SQUARE_SIZE;
-				const int yardypos = int(bi.pos.z + 4) / SQUARE_SIZE;
-				const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
-				const CUnit* u = dynamic_cast<const CUnit*>(s);
-				if (
-					   (u != NULL)
-					&& u->beingBuilt && (u->buildProgress == 0.0f)
-					&& (!u->soloBuilder || (u->soloBuilder == owner))
-				) {
-					Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER, u->id);
-					CMobileCAI::GiveCommandReal(c2);
-					CMobileCAI::GiveCommandReal(c);
-				}
-			}
+		const CUnit* nanoFrame = NULL;
+		// check if the buildpos is blocked
+		if (IsBuildPosBlocked(bi, nanoFrame)) {
+			return;
+		}
+
+		// if it is a nanoframe help to finish it
+		if (nanoFrame) {
+			Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER, nanoFrame->id);
+			CMobileCAI::GiveCommandReal(c2);
+			CMobileCAI::GiveCommandReal(c);
 			return;
 		}
 	}
@@ -523,12 +572,12 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		build.Parse(c);
 	}
 
-	assert(build.def != NULL);
+	assert(build.def->id == -c.GetID() && build.def->id != NULL);
 	const float buildeeRadius = GetBuildOptionRadius(build.def, c.GetID());
 	CBuilder* builder = (CBuilder*) owner;
 
 	if (building) {
-		// keep moving until until 3D distance to buildPos is LEQ our buildDistance
+		// keep moving until 3D distance to buildPos is LEQ our buildDistance
 		MoveInBuildRange(build.pos, 0.0f);
 
 		if (!builder->curBuild && !builder->terraforming) {
@@ -558,68 +607,60 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 		build.pos = helper->Pos2BuildPos(build, true);
 
-		// we are on the way to the buildpos, meanwhile it can happen
-		// that another builder already finished our buildcmd or blocked
-		// the buildpos with another building (skip our buildcmd then)
-		//FIXME add a per-unit solution to better balance the load?
-		if ((gs->frameNum % (5 * UNIT_SLOWUPDATE_RATE)) < UNIT_SLOWUPDATE_RATE) {
-			CFeature* feature = NULL;
-
-			if (!uh->TestUnitBuildSquare(build, feature, owner->allyteam, true) && (feature == NULL)) {
-				const int yardxpos = int(build.pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
-				const int yardypos = int(build.pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
-				const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
-				const CUnit* u = dynamic_cast<const CUnit*>(s);
-
-				if (u != NULL) {
-					const bool canAssist =
-						   u->beingBuilt
-						&& owner->unitDef->canAssist
-						&& (!u->soloBuilder || (u->soloBuilder == owner));
-
-					if ((u->unitDef != build.def) || !canAssist) {
-						StopMove();
-						FinishCommand();
-						return;
-					}
-				}
-			}
-		}
-
 		// keep moving until until 3D distance to buildPos is LEQ our buildDistance
 		if (MoveInBuildRange(build.pos, 0.0f, true)) {
+			if (IsBuildPosBlocked(build)) {
+				StopMove();
+				FinishCommand();
+				return;
+			}
+
 			if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
 				StopMove(); // cancel KeepPointingTo
 				FinishCommand();
+				return;
 			}
-			else if (!teamHandler->Team(owner->team)->AtUnitLimit()) {
-				// unit-limit not yet reached
-				CFeature* f = NULL;
 
-				bool waitstance = false;
-				if (builder->StartBuild(build, f, waitstance) || (++buildRetries > 30)) {
-					building = true;
-				}
-				else if (f != NULL && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
-					inCommand = false;
-					ReclaimFeature(f);
-				}
-				else if (!waitstance) {
-					const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
-					const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+			if (teamHandler->Team(owner->team)->AtUnitLimit()) {
+				return;
+			}
 
-					// tell everything within the radius of the soon-to-be buildee
-					// to get out of the way; using the model radius is not correct
-					// because this can be shorter than half the footprint diagonal
-					helper->BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, NULL);
-					NonMoving();
-				}
+			CFeature* f = NULL;
+
+			bool waitstance = false;
+			if (builder->StartBuild(build, f, waitstance) || (++buildRetries > 30)) {
+				building = true;
+			}
+			else if (f != NULL && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
+				inCommand = false;
+				ReclaimFeature(f);
+			}
+			else if (!waitstance) {
+				const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
+				const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+
+				// tell everything within the radius of the soon-to-be buildee
+				// to get out of the way; using the model radius is not correct
+				// because this can be shorter than half the footprint diagonal
+				helper->BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, NULL);
+				NonMoving();
 			}
 		} else {
 			if (owner->moveType->progressState == AMoveType::Failed) {
 				if (++buildRetries > 5) {
 					StopMove();
 					FinishCommand();
+				}
+			}
+
+			// we are on the way to the buildpos, meanwhile it can happen
+			// that another builder already finished our buildcmd or blocked
+			// the buildpos with another building (skip our buildcmd then)
+			if ((++randomCounter % 5) == 0) {
+				if (IsBuildPosBlocked(build)) {
+					StopMove();
+					FinishCommand();
+					return;
 				}
 			}
 		}
@@ -898,8 +939,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 		const unsigned int uid = signedId;
 
-		//FIXME add a per-unit solution to better balance the load?
-		const bool checkForBetterTarget = (gs->frameNum % (5 * UNIT_SLOWUPDATE_RATE)) < UNIT_SLOWUPDATE_RATE;
+		const bool checkForBetterTarget = ((++randomCounter % 5) == 0);
 		if (checkForBetterTarget && (c.options & INTERNAL_ORDER) && (c.params.size() >= 5)) {
 			// regular check if there is a closer reclaim target
 			CSolidObject* obj;
