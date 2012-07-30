@@ -131,6 +131,25 @@ void CBuilder::PreInit(const UnitDef* def, int team, int facing, const float3& p
 }
 
 
+bool CBuilder::CanAssistUnit(const CUnit* u, const UnitDef* def) const
+{
+	return
+		   unitDef->canAssist
+		&& (!def || (u->unitDef == def))
+		&& u->beingBuilt && (u->buildProgress < 1.0f)
+		&& (!u->soloBuilder || (u->soloBuilder == this));
+}
+
+
+bool CBuilder::CanRepairUnit(const CUnit* u) const
+{
+	return 
+		   unitDef->canRepair
+		&& (!u->beingBuilt)
+		&& u->unitDef->repairable && (u->health < u->maxHealth);
+}
+
+
 void CBuilder::Update()
 {
 	CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
@@ -598,10 +617,10 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 				u = helper->GetClosestFriendlyUnit(buildInfo.pos, buildDistance, allyteam);
 			}
 
-			if (u != NULL && u->unitDef == buildInfo.def && unitDef->canAssist) {
+			if (u != NULL && CanAssistUnit(u, buildInfo.def)) {
 				curBuild = u;
 				AddDeathDependence(u, DEPENDENCE_BUILD);
-				SetBuildStanceToward(buildInfo.pos);
+				SetBuildStanceToward(u->pos);
 				return true;
 			}
 
