@@ -106,6 +106,12 @@ private:
 	bool MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed = false);
 	bool MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed = false);
 
+	bool IsBuildPosBlocked(const BuildInfo& build, const CUnit* nanoFrame) const;
+	bool IsBuildPosBlocked(const BuildInfo& build) const {
+		const CUnit* u = NULL;
+		return IsBuildPosBlocked(build, u);
+	}
+
 	void CancelRestrictedUnit(const std::string& buildOption);
 	bool OutOfImmobileRange(const Command& cmd) const;
 	/// add a command to reclaim a feature that is blocking our build-site
@@ -146,6 +152,7 @@ private:
 	float cachedRadius;
 
 	int buildRetries;
+	int randomCounter; ///< used to balance intervals of time intensive ai optimizations
 
 	int lastPC1; ///< helps avoid infinite loops
 	int lastPC2;
