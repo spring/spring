@@ -1985,24 +1985,26 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 		return 0;
 	}
 
+	float3 pos;
+
 	if (lua_isnumber(L, 4)) {
-		float3 pos(luaL_checkfloat(L, 2),
-							 luaL_checkfloat(L, 3),
-							 luaL_checkfloat(L, 4));
-		unit->ForcedMove(pos);
-		return 0;
-	}
-
-	float x, y, z;
-	x = luaL_checkfloat(L, 2);
-	z = luaL_checkfloat(L, 3);
-	if (lua_isboolean(L, 4) && lua_toboolean(L, 4)) {
-		y = ground->GetHeightAboveWater(x, z);
+		// 2=x, 3=y, 4=z
+		pos.x = luaL_checkfloat(L, 2);
+		pos.y = luaL_checkfloat(L, 3);
+		pos.z = luaL_checkfloat(L, 4);
 	} else {
-		y = ground->GetHeightReal(x, z);
-	}
-	unit->ForcedMove(float3(x, y, z));
+		// 2=x, 3=z, 4=bool
+		pos.x = luaL_checkfloat(L, 2);
+		pos.z = luaL_checkfloat(L, 3);
 
+		if (lua_isboolean(L, 4) && lua_toboolean(L, 4)) {
+			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+		} else {
+			pos.y = ground->GetHeightReal(pos.x, pos.z);
+		}
+	}
+
+	unit->ForcedMove(pos);
 	return 0;
 }
 
@@ -2364,18 +2366,11 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	const float3 pos(luaL_checkfloat(L, 2),
-	                 luaL_checkfloat(L, 3),
-	                 luaL_checkfloat(L, 4));
 
-	if (lua_isboolean(L, 5)) {
-		const bool snapToGround = lua_toboolean(L, 5);
-		feature->ForcedMove(pos, snapToGround);
-	} else {
-		// use default argument
-		feature->ForcedMove(pos);
-	}
+	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+	const bool snap(luaL_optboolean(L, 5, true));
 
+	feature->ForcedMove(pos, snap);
 	return 0;
 }
 
