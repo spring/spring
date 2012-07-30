@@ -56,6 +56,9 @@ public:
 	void SetResurrectTarget(CFeature* feature);
 	void SetCaptureTarget(CUnit* unit);
 
+	bool CanAssistUnit(const CUnit* u, const UnitDef* def = NULL) const;
+	bool CanRepairUnit(const CUnit* u) const;
+
 public:
 	bool range3D; ///< spheres instead of infinite cylinders for range tests
 

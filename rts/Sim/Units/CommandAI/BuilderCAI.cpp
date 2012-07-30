@@ -313,28 +313,24 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit* nanoFra
 		return true;
 	}
 
-	const bool canAssist = u->beingBuilt && (u->buildProgress < 1.0f) && (!u->soloBuilder || (u->soloBuilder == owner));
-
-	if ((u->unitDef != build.def) || !canAssist) {
-		if (u->immobile) {
-			// either unit is finished already or
-			// can't or don't want assist finishing the nanoframe
-			return true;
-		} else {
-			// mobile unit blocks the position, wait till it moved
-			return false;
+	if (u->beingBuilt) {
+		if (!owner_builder->CanAssistUnit(u, build.def)) {
+			if (u->immobile) {
+				// we can't or don't want assist finishing the nanoframe
+				return true;
+			} else {
+				// mobile unit blocks the position, wait till it is finished & moved
+				return false;
+			}
 		}
+
+		// unfinished nanoframe, assist it
+		nanoFrame = u;
+		return false;
 	}
 
-	if (!owner->unitDef->canAssist) {
-		// blocked by unit and we can't assist it -> blocked
-		// check happens intentionally so late (so the immobile differing happens)
-		return true;
-	}
-
-	// unfinished nanoframe, assist it
-	nanoFrame = u;
-	return false;
+	// unit blocks the pos, can it move away?
+	return u->immobile;
 }
 
 
@@ -1286,12 +1282,8 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 		} else {
 			const CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
 
-			const bool canAssistPointed =
-				(owner->unitDef->canAssist && pointed->beingBuilt) &&
-				(!pointed->soloBuilder || (pointed->soloBuilder == owner));
-			const bool canRepairPointed =
-				(owner->unitDef->canRepair && !pointed->beingBuilt) &&
-				pointed->unitDef->repairable && (pointed->health < pointed->maxHealth);
+			const bool canAssistPointed = owner_builder->CanAssistUnit(pointed);
+			const bool canRepairPointed = owner_builder->CanRepairUnit(pointed);
 
 			if (canAssistPointed) {
 				return CMD_REPAIR;
@@ -1693,16 +1685,8 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				if (unit->beingBuilt && unit->moveDef && (owner->moveState == MOVESTATE_HOLDPOS)) {
 					continue;
 				}
-				// don't repair stuff that can't be repaired
-				if (!unit->beingBuilt && !unit->unitDef->repairable) {
-					continue;
-				}
 				// don't assist or repair if can't assist or repair
-				if (!( unit->beingBuilt && owner->unitDef->canAssist) &&
-						!(!unit->beingBuilt && owner->unitDef->canRepair)) {
-					continue;
-				}
-				if (unit->soloBuilder && (unit->soloBuilder != owner)) {
+				if (!owner_builder->CanAssistUnit(unit) && !owner_builder->CanRepairUnit(unit)) {
 					continue;
 				}
 				if (unit == owner) {
