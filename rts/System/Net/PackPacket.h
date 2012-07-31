@@ -15,6 +15,11 @@
 namespace netcode
 {
 
+class PackPacketException : public std::runtime_error {
+public:
+	PackPacketException(const std::string& what) : std::runtime_error(what) {}
+};
+
 class PackPacket : public RawPacket
 {
 public:
