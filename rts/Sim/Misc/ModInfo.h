@@ -11,6 +11,7 @@ class CModInfo
 public:
 	CModInfo()
 		: allowAircraftToLeaveMap(true)
+		, allowAircraftToHitGround(true)
 		, allowPushingEnemyUnits(false)
 		, allowCrushingAlliedUnits(false)
 		, allowUnitCollisionDamage(false)
@@ -79,6 +80,7 @@ public:
 
 	// Movement behaviour
 	bool allowAircraftToLeaveMap;    // determines if gunships are allowed to leave map boundaries
+	bool allowAircraftToHitGround;   // determines if aircraft (both types) can collide with terrain
 	bool allowPushingEnemyUnits;     // determines if enemy (ground-)units can be pushed during collisions
 	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
 	bool allowUnitCollisionDamage;   // determines if units take damage from (skidding) collisions

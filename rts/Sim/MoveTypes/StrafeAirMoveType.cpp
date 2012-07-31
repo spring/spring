@@ -8,6 +8,7 @@
 #include "Map/MapInfo.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
@@ -887,7 +888,7 @@ void CStrafeAirMoveType::UpdateLanding()
 	if (reservedLandingPosDist > 0.0f)
 		reservedLandingPosDir /= reservedLandingPosDist;
 
-	const float3 wantedSpeed = reservedLandingPosDir * std::min(maxSpeedDef, landingSpeed);
+	const float3 wantedSpeed = reservedLandingPosDir * std::min(maxSpeed, landingSpeed);
 	const float3 deltaSpeed = wantedSpeed - speed;
 	const float deltaSpeedScale = deltaSpeed.Length();
 
@@ -992,27 +993,29 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	}
 
 	// bounce away on ground collisions
-	if (gHeight > (owner->pos.y - owner->radius * 0.2f)) {
-		const float3& gNormal = ground->GetNormal(pos.x, pos.z);
-		const float impactSpeed = -speed.dot(gNormal);
+	if (modInfo.allowAircraftToHitGround) {
+		if (gHeight > (owner->pos.y - owner->radius)) {
+			owner->Move1D(gHeight + owner->radius + 0.01f, 1, false);
 
-		if (impactSpeed > 0.0f) {
-			owner->Move1D(gHeight + owner->radius * 0.2f + 0.01f, 1, false);
+			const float3& gNormal = ground->GetNormal(pos.x, pos.z);
+			const float impactSpeed = -speed.dot(gNormal);
 
-			// fix for mantis #1355
-			// aircraft could get stuck in the ground and never recover (on takeoff
-			// near map edges) where their forward speed wasn't allowed to build up
-			// therefore add a vertical component help get off the ground if |speed|
-			// is below a certain threshold
-			if (speed.SqLength() > (0.09f * owner->unitDef->speed * owner->unitDef->speed)) {
-				speed *= 0.95f;
-			} else {
-				speed.y += impactSpeed;
+			if (impactSpeed > 0.0f) {
+				// fix for mantis #1355
+				// aircraft could get stuck in the ground and never recover (on takeoff
+				// near map edges) where their forward speed wasn't allowed to build up
+				// therefore add a vertical component help get off the ground if |speed|
+				// is below a certain threshold
+				if (speed.SqLength() > (0.09f * owner->unitDef->speed * owner->unitDef->speed)) {
+					speed *= 0.95f;
+				} else {
+					speed.y += impactSpeed;
+				}
+
+				speed += (gNormal * impactSpeed * 1.5f);
+				updir = (gNormal - frontdir * 0.1f);
+				frontdir = updir.cross(frontdir.cross(updir));
 			}
-
-			speed += (gNormal * impactSpeed * 1.5f);
-			updir = (gNormal - frontdir * 0.1f);
-			frontdir = updir.cross(frontdir.cross(updir));
 		}
 	}
 
@@ -1129,6 +1132,7 @@ float3 CStrafeAirMoveType::FindLandingPos() const
 void CStrafeAirMoveType::SetMaxSpeed(float speed)
 {
 	maxSpeed = speed;
+
 	if (maxAcc != 0.0f && maxSpeed != 0.0f) {
 		// meant to set the drag such that the maxspeed becomes what it should be
 		float drag = 1.0f / (maxSpeed * 1.1f / maxAcc) - wingAngle * wingAngle * wingDrag;
