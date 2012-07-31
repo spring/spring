@@ -791,8 +791,8 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 	}
 
 	// try the input receivers
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		CInputReceiver* recv = *ri;
 		if (recv && recv->KeyPressed(key, isRepeat)) {
@@ -825,8 +825,8 @@ int CGame::KeyReleased(unsigned short k)
 	}
 
 	// try the input receivers
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		CInputReceiver* recv = *ri;
 		if (recv && recv->KeyReleased(k)) {
@@ -1187,8 +1187,8 @@ bool CGame::Draw() {
 		SCOPED_TIMER("InputReceivers::Draw");
 
 		if (!hideInterface) {
-			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-			std::deque<CInputReceiver*>::reverse_iterator ri;
+			std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+			std::list<CInputReceiver*>::reverse_iterator ri;
 			for (ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
 				CInputReceiver* rcvr = *ri;
 				if (rcvr) {

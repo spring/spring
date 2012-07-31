@@ -3,7 +3,7 @@
 #ifndef INPUT_RECEIVER_H
 #define INPUT_RECEIVER_H
 
-#include <deque>
+#include <list>
 #include <string>
 
 #include "Rendering/GlobalRendering.h"
@@ -75,7 +75,7 @@ protected:
 	static CInputReceiver* activeReceiver;
 };
 
-std::deque<CInputReceiver*>& GetInputReceivers();
+std::list<CInputReceiver*>& GetInputReceivers();
 
 #endif /* INPUT_RECEIVER_H */
 

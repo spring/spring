@@ -2015,7 +2015,7 @@ public:
 			return false;
 
 		// already shown?
-		const std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+		const std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (inputReceivers.empty() || (dynamic_cast<CShareBox*>(inputReceivers.front()) != NULL))
 			return false;
 
@@ -2033,7 +2033,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		// already shown?
-		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if  (inputReceivers.empty() || dynamic_cast<CQuitBox*>(inputReceivers.front()))
 			return false;
 
@@ -2053,7 +2053,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		// already shown?
-		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (inputReceivers.empty() || dynamic_cast<CQuitBox*>(inputReceivers.front()))
 			return false;
 

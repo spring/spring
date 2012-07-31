@@ -308,8 +308,8 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		return;
 	}
 
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	if (!game->hideInterface) {
 		for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 			CInputReceiver* recv=*ri;
@@ -526,8 +526,8 @@ void CMouseHandler::DrawSelectionBox()
 std::string CMouseHandler::GetCurrentTooltip()
 {
 	std::string s;
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		CInputReceiver* recv=*ri;
 		if (recv && recv->IsAbove(lastx, lasty)) {
