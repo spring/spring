@@ -42,12 +42,15 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 
 	std::vector<boost::uint8_t> buffer(bufSize);
 
-	while (uncompress(&buffer[0], &rawSize, &compressed[0], compressed.size()) != Z_OK) {
+	int ret;
+	while ((ret = uncompress(&buffer[0], &rawSize, &compressed[0], compressed.size())) == Z_BUF_ERROR) {
 		bufSize *= 2;
 		rawSize  = bufSize;
 
 		buffer.resize(bufSize);
 	}
+	if (ret != Z_OK)
+		throw netcode::UnpackPacketException("Error while decompressing GameData");
 
 	setupText = reinterpret_cast<char*>(&buffer[0]);
 
