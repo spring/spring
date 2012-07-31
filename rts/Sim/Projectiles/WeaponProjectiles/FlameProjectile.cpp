@@ -46,7 +46,7 @@ CFlameProjectile::CFlameProjectile(
 		physLife = 1.0f / weaponDef->duration;
 	}
 
-	cegID = gCEG->Load(explGenHandler, cegTag);
+	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 CFlameProjectile::~CFlameProjectile()

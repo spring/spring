@@ -162,6 +162,7 @@ local callInLists = {
 	"DrawUnit",
 	"DrawFeature",
 	"DrawShield",
+	"DrawProjectile",
 	"RecvSkirmishAIMessage",
 
 	-- COB CallIn  (FIXME?)
@@ -1119,6 +1120,15 @@ end
 function gadgetHandler:DrawShield(unitID, weaponID, drawMode)
   for _,g in ipairs(self.DrawShieldList) do
     if (g:DrawShield(unitID, weaponID, drawMode)) then
+      return true
+    end
+  end
+  return false
+end
+
+function gadgetHandler:DrawProjectile(projectileID, drawMode)
+  for _,g in ipairs(self.DrawProjectileList) do
+    if (g:DrawProjectile(projectile, drawMode)) then
       return true
     end
   end
