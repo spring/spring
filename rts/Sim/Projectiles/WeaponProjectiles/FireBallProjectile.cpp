@@ -43,7 +43,7 @@ CFireBallProjectile::CFireBallProjectile(
 		drawRadius = weaponDef->size;
 	}
 
-	cegID = gCEG->Load(explGenHandler, cegTag);
+	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 CFireBallProjectile::~CFireBallProjectile()

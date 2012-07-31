@@ -121,13 +121,19 @@ CLuaRules::CLuaRules()
 		haveShieldPreDamaged       = HasCallIn(L, "ShieldPreDamaged");
 	}
 	if (SingleState() || L == L_Draw) {
-		haveDrawUnit    = HasCallIn(L, "DrawUnit");
-		haveDrawFeature = HasCallIn(L, "DrawFeature");
-		haveDrawShield  = HasCallIn(L, "DrawShield");
+		#define SET_HAVE_DRAW(Type) { haveDraw ## Type = HasCallIn(L, "Draw ## Type"); }
+
+		SET_HAVE_DRAW(Unit);
+		SET_HAVE_DRAW(Feature);
+		SET_HAVE_DRAW(Shield);
+		SET_HAVE_DRAW(Projectile);
+
+		#undef SET_HAVE_DRAW
 
 		SetupUnsyncedFunction(L, "DrawUnit");
 		SetupUnsyncedFunction(L, "DrawFeature");
 		SetupUnsyncedFunction(L, "DrawShield");
+		SetupUnsyncedFunction(L, "DrawProjectile");
 		SetupUnsyncedFunction(L, "RecvSkirmishAIMessage");
 	}
 
@@ -213,9 +219,10 @@ bool CLuaRules::SyncedUpdateCallIn(lua_State *L, const string& name)
 
 bool CLuaRules::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 {
-	     if (name == "DrawUnit"   ) { haveDrawUnit    = HasCallIn(L, "DrawUnit"   ); }
-	else if (name == "DrawFeature") { haveDrawFeature = HasCallIn(L, "DrawFeature"); }
-	else if (name == "DrawShield" ) { haveDrawShield  = HasCallIn(L, "DrawShield" ); }
+	     if (name == "DrawUnit"      ) { haveDrawUnit       = HasCallIn(L, "DrawUnit"      ); }
+	else if (name == "DrawFeature"   ) { haveDrawFeature    = HasCallIn(L, "DrawFeature"   ); }
+	else if (name == "DrawShield"    ) { haveDrawShield     = HasCallIn(L, "DrawShield"    ); }
+	else if (name == "DrawProjectile") { haveDrawProjectile = HasCallIn(L, "DrawProjectile"); }
 
 	return CLuaHandleSynced::UnsyncedUpdateCallIn(L, name);
 }
@@ -904,7 +911,7 @@ bool CLuaRules::AllowWeaponTarget(
 
 
 
-bool CLuaRules::DrawUnit(int unitID)
+bool CLuaRules::DrawUnit(const CUnit* unit)
 {
 	if (!haveDrawUnit)
 		return false;
@@ -912,7 +919,7 @@ bool CLuaRules::DrawUnit(int unitID)
 	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 4);
 
-	static const LuaHashString cmdStr("DrawUnit");
+	static const LuaHashString cmdStr(__FUNCTION__);
 
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
@@ -920,7 +927,7 @@ bool CLuaRules::DrawUnit(int unitID)
 	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
-	lua_pushnumber(L, unitID);
+	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 2, 1);
@@ -929,17 +936,18 @@ bool CLuaRules::DrawUnit(int unitID)
 	if (!success)
 		return false;
 	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", (cmdStr.GetString()).c_str(), lua_typename(L, lua_type(L, -1)));
+		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", __FUNCTION__, lua_typename(L, lua_type(L, -1)));
 		lua_pop(L, 1);
 		return false;
 	}
 
 	const bool retval = !!lua_toboolean(L, -1);
+
 	lua_pop(L, 1);
 	return retval;
 }
 
-bool CLuaRules::DrawFeature(int featureID)
+bool CLuaRules::DrawFeature(const CFeature* feature)
 {
 	if (!haveDrawFeature)
 		return false;
@@ -947,7 +955,7 @@ bool CLuaRules::DrawFeature(int featureID)
 	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 4);
 
-	static const LuaHashString cmdStr("DrawFeature");
+	static const LuaHashString cmdStr(__FUNCTION__);
 
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
@@ -955,7 +963,7 @@ bool CLuaRules::DrawFeature(int featureID)
 	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
-	lua_pushnumber(L, featureID);
+	lua_pushnumber(L, feature->id);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 2, 1);
@@ -964,17 +972,18 @@ bool CLuaRules::DrawFeature(int featureID)
 	if (!success)
 		return false;
 	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", (cmdStr.GetString()).c_str(), lua_typename(L, lua_type(L, -1)));
+		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", __FUNCTION__, lua_typename(L, lua_type(L, -1)));
 		lua_pop(L, 1);
 		return false;
 	}
 
 	const bool retval = !!lua_toboolean(L, -1);
+
 	lua_pop(L, 1);
 	return retval;
 }
 
-bool CLuaRules::DrawShield(int unitID, int weaponID)
+bool CLuaRules::DrawShield(const CUnit* unit, const CWeapon* weapon)
 {
 	if (!haveDrawShield)
 		return false;
@@ -982,7 +991,7 @@ bool CLuaRules::DrawShield(int unitID, int weaponID)
 	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 5);
 
-	static const LuaHashString cmdStr("DrawShield");
+	static const LuaHashString cmdStr(__FUNCTION__);
 
 	if (!cmdStr.GetRegistryFunc(L))
 		return false;
@@ -990,8 +999,8 @@ bool CLuaRules::DrawShield(int unitID, int weaponID)
 	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
-	lua_pushnumber(L, unitID);
-	lua_pushnumber(L, weaponID);
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, weapon->weaponNum);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(cmdStr, 3, 1);
@@ -1000,12 +1009,51 @@ bool CLuaRules::DrawShield(int unitID, int weaponID)
 	if (!success)
 		return false;
 	if (!lua_isboolean(L, -1)) {
-		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", (cmdStr.GetString()).c_str(), lua_typename(L, lua_type(L, -1)));
+		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", __FUNCTION__, lua_typename(L, lua_type(L, -1)));
 		lua_pop(L, 1);
 		return false;
 	}
 
 	const bool retval = !!lua_toboolean(L, -1);
+
+	lua_pop(L, 1);
+	return retval;
+}
+
+bool CLuaRules::DrawProjectile(const CProjectile* projectile)
+{
+	if (!haveDrawProjectile)
+		return false;
+	if (!(projectile->weapon || projectile->piece))
+		return false;
+
+	LUA_CALL_IN_CHECK(L, false);
+	lua_checkstack(L, 5);
+
+	static const LuaHashString cmdStr(__FUNCTION__);
+
+	if (!cmdStr.GetRegistryFunc(L))
+		return false;
+
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
+	lua_pushnumber(L, projectile->id);
+	lua_pushnumber(L, game->GetDrawMode());
+
+	const bool success = RunCallIn(cmdStr, 2, 1);
+	LuaOpenGL::SetDrawingEnabled(L, oldDrawState);
+
+	if (!success)
+		return false;
+	if (!lua_isboolean(L, -1)) {
+		LOG_L(L_WARNING, "%s() bad return-type (bool expected, got %s)", __FUNCTION__, lua_typename(L, lua_type(L, -1)));
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const bool retval = !!lua_toboolean(L, -1);
+
 	lua_pop(L, 1);
 	return retval;
 }

@@ -123,7 +123,7 @@ CMissileProjectile::CMissileProjectile(
 	}
 
 
-	cegID = gCEG->Load(explGenHandler, cegTag);
+	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 CMissileProjectile::~CMissileProjectile()

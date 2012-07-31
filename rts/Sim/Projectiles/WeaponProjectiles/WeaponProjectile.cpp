@@ -28,7 +28,6 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(targeted),
 //	CR_MEMBER(weaponDef),
-	CR_MEMBER(weaponDefName),
 	CR_MEMBER(target),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(startpos),
@@ -36,13 +35,12 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
 	CR_MEMBER(keepBouncing),
-	CR_MEMBER(cegTag),
+	CR_MEMBER(weaponDefID),
 	CR_MEMBER(cegID),
 	CR_MEMBER(interceptTarget),
-	CR_MEMBER(id),
 	CR_RESERVED(15),
 	CR_POSTLOAD(PostLoad)
-	));
+));
 
 CWeaponProjectile::CWeaponProjectile(): CProjectile()
 {
@@ -58,17 +56,22 @@ CWeaponProjectile::CWeaponProjectile(): CProjectile()
 	cegID = -1U;
 }
 
-CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
-		CUnit* owner, CUnit* target, const float3 &targetPos,
-		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
-		int ttl):
+CWeaponProjectile::CWeaponProjectile(
+	const float3& pos,
+	const float3& speed,
+	CUnit* owner,
+	CUnit* target,
+	const float3& targetPos,
+	const WeaponDef* weaponDef,
+	CWeaponProjectile* interceptTarget,
+	int ttl
+):
 	CProjectile(pos, speed, owner, true, true, false),
 	targeted(false),
 	weaponDef(weaponDef),
-	weaponDefName(weaponDef? weaponDef->name: std::string("")),
 	target(target),
 	targetPos(targetPos),
-	cegTag(weaponDef? weaponDef->cegTag: std::string("")),
+	weaponDefID(weaponDef? weaponDef->id: -1U),
 	cegID(-1U),
 	colorTeam(0),
 	startpos(pos),
@@ -293,7 +296,7 @@ void CWeaponProjectile::DependentDied(CObject* o)
 
 void CWeaponProjectile::PostLoad()
 {
-	weaponDef = weaponDefHandler->GetWeapon(weaponDefName);
+	weaponDef = weaponDefHandler->GetWeaponById(weaponDefID);
 
 //	if(weaponDef->interceptedByShieldType)
 //		interceptHandler.AddShieldInterceptableProjectile(this);
