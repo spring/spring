@@ -316,7 +316,10 @@ PacketType CBaseNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 // NETMSG_LUAMSG = 50, uchar myPlayerNum; std::string modName; (e.g. `custom msg')
 PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg)
 {
-	boost::uint16_t size = 7 + msg.size();
+	boost::uint32_t rawsize = 7 + msg.size();
+	if (rawsize > UINT16_MAX)
+		throw netcode::PackPacketException("Maximum size exceeded");
+	boost::uint16_t size = rawsize;
 	PackPacket* packet = new PackPacket(size, NETMSG_LUAMSG);
 	*packet << size << myPlayerNum << script << mode << msg;
 	return PacketType(packet);

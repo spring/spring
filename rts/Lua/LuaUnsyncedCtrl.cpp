@@ -54,6 +54,7 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
+#include "System/Net/PackPacket.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
 #include "System/Sound/ISound.h"
@@ -2587,7 +2588,11 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 	else if (!mode.empty()) {
 		luaL_error(L, "Unknown SendLuaUIMsg() mode");
 	}
-	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, data));
+	try {
+		net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, data));
+	} catch (const netcode::PackPacketException& ex) {
+		luaL_error(L, "SendLuaUIMsg() packet error: %s", ex.what());
+	}
 	return 0;
 }
 
@@ -2600,7 +2605,11 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
 	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
-	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
+	try {
+		net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
+	} catch (const netcode::PackPacketException& ex) {
+		luaL_error(L, "SendLuaGaiaMsg() packet error: %s", ex.what());
+	}
 	return 0;
 }
 
@@ -2613,7 +2622,11 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
 	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
-	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
+	try {
+		net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
+	} catch (const netcode::PackPacketException& ex) {
+		luaL_error(L, "SendLuaRulesMsg() packet error: %s", ex.what());
+	}
 	return 0;
 }
 
