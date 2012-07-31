@@ -8,8 +8,9 @@
 
 #include <string>
 #include <vector>
-#include <assert.h>
+#include <cassert>
 #include <cstring>
+#include <stdexcept>
 
 
 namespace netcode
