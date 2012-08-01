@@ -539,7 +539,7 @@ void CUnit::PostInit(const CUnit* builder)
 
 
 
-void CUnit::ForcedMove(const float3& newPos)
+void CUnit::ForcedMove(const float3& newPos, bool)
 {
 	if (blocking) {
 		UnBlock();
@@ -561,6 +561,26 @@ void CUnit::ForcedMove(const float3& newPos)
 	qf->MovedUnit(this);
 	loshandler->MoveUnit(this, false);
 	radarhandler->MoveUnit(this);
+}
+
+
+void CUnit::ForcedSpin(const float3& newDir)
+{
+	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::NORMALIZE_EPS);
+
+	updir = UpVector;
+	if (updir == newDir) {
+		//FIXME perhaps save the old right,up,front directions, so we can
+		// reconstruct the old upvector and generate a better assumption for updir
+		updir -= GetVectorFromHeading(heading);
+	}
+	frontdir = newDir;
+	rightdir = newDir.cross(updir).Normalize();
+	updir    = rightdir.cross(newDir);
+	heading  = GetHeadingFromVector(newDir.x, newDir.z);
+
+	UpdateMidAndAimPos();
+	ForcedMove(pos);
 }
 
 

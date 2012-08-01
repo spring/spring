@@ -201,6 +201,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 void CFeature::CalculateTransform()
 {
+	//FIXME CSolidObject already has dir vectors!!!!
 	float3 frontDir = GetVectorFromHeading(heading);
 	float3 upDir;
 
