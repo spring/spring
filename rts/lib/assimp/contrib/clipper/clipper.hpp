@@ -76,9 +76,9 @@ typedef std::vector< ExPolygon > ExPolygons;
 enum JoinType { jtSquare, jtMiter, jtRound };
 
 bool Orientation(const Polygon &poly);
-double Area(const Polygon &poly);
+float Area(const Polygon &poly);
 void OffsetPolygons(const Polygons &in_polys, Polygons &out_polys,
-  double delta, JoinType jointype = jtSquare, double MiterLimit = 2);
+  float delta, JoinType jointype = jtSquare, float MiterLimit = 2);
 
 void ReversePoints(Polygon& p);
 void ReversePoints(Polygons& p);
@@ -94,7 +94,7 @@ struct TEdge {
   long64 ycurr;
   long64 xtop;
   long64 ytop;
-  double dx;
+  float dx;
   long64 tmpX;
   PolyType polyType;
   EdgeSide side;

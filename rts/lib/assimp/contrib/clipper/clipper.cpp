@@ -51,7 +51,7 @@ namespace ClipperLib {
 
 static long64 const loRange = 1518500249;            //sqrt(2^63 -1)/2
 static long64 const hiRange = 6521908912666391106LL; //sqrt(2^127 -1)/2
-static double const pi = 3.141592653589793238;
+static float const pi = 3.141592653589793238;
 enum Direction { dRightToLeft, dLeftToRight };
 enum RangeTest { rtLo, rtHi, rtError };
 
@@ -205,23 +205,23 @@ class Int128
       return result;
     }
 
-    double AsDouble() const
+    float AsDouble() const
     {
-      const double shift64 = 18446744073709551616.0; //2^64
-      const double bit64 = 9223372036854775808.0;
+      const float shift64 = 18446744073709551616.0; //2^64
+      const float bit64 = 9223372036854775808.0;
       if (hi < 0)
       {
         Int128 tmp(*this);
         Negate(tmp);
         if (tmp.lo < 0)
-          return (double)tmp.lo - bit64 - tmp.hi * shift64;
+          return (float)tmp.lo - bit64 - tmp.hi * shift64;
         else
-          return -(double)tmp.lo - tmp.hi * shift64;
+          return -(float)tmp.lo - tmp.hi * shift64;
       }
       else if (lo < 0)
-        return -(double)lo + bit64 + hi * shift64;
+        return -(float)lo + bit64 + hi * shift64;
       else
-        return (double)lo + (double)hi * shift64;
+        return (float)lo + (float)hi * shift64;
     }
 
     //for bug testing ...
@@ -389,7 +389,7 @@ inline bool PointsEqual( const IntPoint &pt1, const IntPoint &pt2)
 }
 //------------------------------------------------------------------------------
 
-double Area(const Polygon &poly)
+float Area(const Polygon &poly)
 {
   int highI = (int)poly.size() -1;
   if (highI < 2) return 0;
@@ -417,10 +417,10 @@ double Area(const Polygon &poly)
   }
   else
   {
-    double a;
-    a = (double)poly[highI].X * poly[0].Y - (double)poly[0].X * poly[highI].Y;
+    float a;
+    a = (float)poly[highI].X * poly[0].Y - (float)poly[0].X * poly[highI].Y;
     for (int i = 0; i < highI; ++i)
-      a += (double)poly[i].X * poly[i+1].Y - (double)poly[i+1].X * poly[i].Y;
+      a += (float)poly[i].X * poly[i+1].Y - (float)poly[i+1].X * poly[i].Y;
     return a/2;
   }
 }
@@ -507,11 +507,11 @@ bool SlopesEqual(const IntPoint pt1, const IntPoint pt2,
 }
 //------------------------------------------------------------------------------
 
-double GetDx(const IntPoint pt1, const IntPoint pt2)
+float GetDx(const IntPoint pt1, const IntPoint pt2)
 {
   if (pt1.Y == pt2.Y) return HORIZONTAL;
   else return
-    (double)(pt2.X - pt1.X) / (double)(pt2.Y - pt1.Y);
+    (float)(pt2.X - pt1.X) / (float)(pt2.Y - pt1.Y);
 }
 //---------------------------------------------------------------------------
 
@@ -519,7 +519,7 @@ void SetDx(TEdge &e)
 {
   if (e.ybot == e.ytop) e.dx = HORIZONTAL;
   else e.dx =
-    (double)(e.xtop - e.xbot) / (double)(e.ytop - e.ybot);
+    (float)(e.xtop - e.xbot) / (float)(e.ytop - e.ybot);
 }
 //---------------------------------------------------------------------------
 
@@ -539,7 +539,7 @@ void SwapPolyIndexes(TEdge &edge1, TEdge &edge2)
 }
 //------------------------------------------------------------------------------
 
-inline long64 Round(double val)
+inline long64 Round(float val)
 {
   if ((val < 0)) return static_cast<long64>(val - 0.5);
   else return static_cast<long64>(val + 0.5);
@@ -561,7 +561,7 @@ long64 TopX(const IntPoint pt1, const IntPoint pt2, const long64 currentY)
   else if (pt1.X == pt2.X) return pt1.X;
   else
   {
-    double q = (double)(pt1.X-pt2.X)/(double)(pt1.Y-pt2.Y);
+    float q = (float)(pt1.X-pt2.X)/(float)(pt1.Y-pt2.Y);
     return Round(pt1.X + (currentY - pt1.Y) *q);
   }
 }
@@ -570,7 +570,7 @@ long64 TopX(const IntPoint pt1, const IntPoint pt2, const long64 currentY)
 bool IntersectPoint(TEdge &edge1, TEdge &edge2,
   IntPoint &ip, bool UseFullInt64Range)
 {
-  double b1, b2;
+  float b1, b2;
   if (SlopesEqual(edge1, edge2, UseFullInt64Range)) return false;
   else if (NEAR_ZERO(edge1.dx))
   {
@@ -1897,8 +1897,8 @@ OutRec* GetLowermostRec(OutRec *outRec1, OutRec *outRec2)
     long64 y2 = std::max(outRec2->bottomE1->ybot, outRec2->bottomE2->ybot);
     if (y2 == y1 || (y1 > outPt1->pt.Y && y2 > outPt1->pt.Y))
     {
-      double dx1 = std::max(outRec1->bottomE1->dx, outRec1->bottomE2->dx);
-      double dx2 = std::max(outRec2->bottomE1->dx, outRec2->bottomE2->dx);
+      float dx1 = std::max(outRec1->bottomE1->dx, outRec1->bottomE2->dx);
+      float dx2 = std::max(outRec2->bottomE1->dx, outRec2->bottomE2->dx);
       if (dx2 > dx1) return outRec2; else return outRec1;
     }
     else if (y2 > y1) return outRec2;
@@ -3018,20 +3018,20 @@ void ReversePoints(Polygons& p)
 
 struct DoublePoint
 {
-  double X;
-  double Y;
-  DoublePoint(double x = 0, double y = 0) : X(x), Y(y) {}
+  float X;
+  float Y;
+  DoublePoint(float x = 0, float y = 0) : X(x), Y(y) {}
 };
 //------------------------------------------------------------------------------
 
 Polygon BuildArc(const IntPoint &pt,
-  const double a1, const double a2, const double r)
+  const float a1, const float a2, const float r)
 {
   int steps = std::max(6, int(math::sqrt(math::fabs(r)) * math::fabs(a2 - a1)));
   Polygon result(steps);
   int n = steps - 1;
-  double da = (a2 - a1) / n;
-  double a = a1;
+  float da = (a2 - a1) / n;
+  float a = a1;
   for (int i = 0; i <= n; ++i)
   {
     result[i].X = pt.X + Round(math::cos(a)*r);
@@ -3047,9 +3047,9 @@ DoublePoint GetUnitNormal( const IntPoint &pt1, const IntPoint &pt2)
   if(pt2.X == pt1.X && pt2.Y == pt1.Y) 
     return DoublePoint(0, 0);
 
-  double dx = (double)(pt2.X - pt1.X);
-  double dy = (double)(pt2.Y - pt1.Y);
-  double f = 1 *1.0/ math::sqrt( dx*dx + dy*dy );
+  float dx = (float)(pt2.X - pt1.X);
+  float dy = (float)(pt2.Y - pt1.Y);
+  float f = 1 *1.0/ math::sqrt( dx*dx + dy*dy );
   dx *= f;
   dy *= f;
   return DoublePoint(dy, -dx);
@@ -3064,7 +3064,7 @@ private:
   Polygons m_p;
   Polygon* m_curr_poly;
   std::vector<DoublePoint> normals;
-  double m_delta, m_RMin, m_R;
+  float m_delta, m_RMin, m_R;
   size_t m_i, m_j, m_k;
   static const int buffLength = 128;
   JoinType m_jointype;
@@ -3072,7 +3072,7 @@ private:
 public:
 
 PolyOffsetBuilder(const Polygons& in_polys, Polygons& out_polys,
-  double delta, JoinType jointype, double MiterLimit)
+  float delta, JoinType jointype, float MiterLimit)
 {
     //nb precondition - out_polys != ptsin_polys
     if (NEAR_ZERO(delta))
@@ -3087,7 +3087,7 @@ PolyOffsetBuilder(const Polygons& in_polys, Polygons& out_polys,
     if (MiterLimit <= 1) MiterLimit = 1;
     m_RMin = 2/(MiterLimit*MiterLimit);
  
-    double deltaSq = delta*delta;
+    float deltaSq = delta*delta;
     out_polys.clear();
     out_polys.resize(in_polys.size());
     for (m_i = 0; m_i < in_polys.size(); m_i++)
@@ -3099,7 +3099,7 @@ PolyOffsetBuilder(const Polygons& in_polys, Polygons& out_polys,
 
         //when 'shrinking' polygons - to minimize artefacts
         //strip those polygons that have an area < pi * delta^2 ...
-        double a1 = Area(in_polys[m_i]);
+        float a1 = Area(in_polys[m_i]);
         if (delta < 0) { if (a1 > 0 && a1 < deltaSq *pi) len = 0; }
         else if (a1 < 0 && -a1 < deltaSq *pi) len = 0; //holes have neg. area
 
@@ -3179,7 +3179,7 @@ void AddPoint(const IntPoint& pt)
 }
 //------------------------------------------------------------------------------
 
-void DoSquare(double mul = 1.0)
+void DoSquare(float mul = 1.0)
 {
     IntPoint pt1 = IntPoint((long64)Round(m_p[m_i][m_j].X + normals[m_k].X * m_delta),
         (long64)Round(m_p[m_i][m_j].Y + normals[m_k].Y * m_delta));
@@ -3187,11 +3187,11 @@ void DoSquare(double mul = 1.0)
         (long64)Round(m_p[m_i][m_j].Y + normals[m_j].Y * m_delta));
     if ((normals[m_k].X * normals[m_j].Y - normals[m_j].X * normals[m_k].Y) * m_delta >= 0)
     {
-        double a1 = math::atan2(normals[m_k].Y, normals[m_k].X);
-        double a2 = math::atan2(-normals[m_j].Y, -normals[m_j].X);
+        float a1 = math::atan2(normals[m_k].Y, normals[m_k].X);
+        float a2 = math::atan2(-normals[m_j].Y, -normals[m_j].X);
         a1 = math::fabs(a2 - a1);
         if (a1 > pi) a1 = pi * 2 - a1;
-        double dx = math::tan((pi - a1)/4) * math::fabs(m_delta * mul);
+        float dx = math::tan((pi - a1)/4) * math::fabs(m_delta * mul);
         pt1 = IntPoint((long64)(pt1.X -normals[m_k].Y * dx),
           (long64)(pt1.Y + normals[m_k].X * dx));
         AddPoint(pt1);
@@ -3212,7 +3212,7 @@ void DoMiter()
 {
     if ((normals[m_k].X * normals[m_j].Y - normals[m_j].X * normals[m_k].Y) * m_delta >= 0)
     {
-        double q = m_delta / m_R;
+        float q = m_delta / m_R;
         AddPoint(IntPoint((long64)Round(m_p[m_i][m_j].X + 
             (normals[m_k].X + normals[m_j].X) * q),
             (long64)Round(m_p[m_i][m_j].Y + (normals[m_k].Y + normals[m_j].Y) * q)));
@@ -3242,8 +3242,8 @@ void DoRound()
     {
       if (normals[m_j].X * normals[m_k].X + normals[m_j].Y * normals[m_k].Y < 0.985)
       {
-        double a1 = math::atan2(normals[m_k].Y, normals[m_k].X);
-        double a2 = math::atan2(normals[m_j].Y, normals[m_j].X);
+        float a1 = math::atan2(normals[m_k].Y, normals[m_k].X);
+        float a2 = math::atan2(normals[m_j].Y, normals[m_j].X);
         if (m_delta > 0 && a2 < a1) a2 += pi *2;
         else if (m_delta < 0 && a2 > a1) a2 -= pi *2;
         Polygon arc = BuildArc(m_p[m_i][m_j], a1, a2, m_delta);
@@ -3263,7 +3263,7 @@ void DoRound()
 //------------------------------------------------------------------------------
 
 void OffsetPolygons(const Polygons &in_polys, Polygons &out_polys,
-  double delta, JoinType jointype, double MiterLimit)
+  float delta, JoinType jointype, float MiterLimit)
 {
   if (&out_polys == &in_polys)
   {
