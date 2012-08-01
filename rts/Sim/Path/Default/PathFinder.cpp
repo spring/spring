@@ -463,7 +463,7 @@ static inline void FixupPath3Pts(const MoveDef& moveDef, float3& p1, float3& p2,
 void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath, float3& nextPoint,
 	std::deque<int2>& previous, int2 square)
 {
-#define COSTMOD 1.39f	// (sqrt(2) + 1)/sqrt(3)
+#define COSTMOD 1.39f	// (math::sqrt(2) + 1)/math::sqrt(3)
 #define TRYFIX3POINTS(dxtest, dytest)                                                            \
 	do {                                                                                         \
 		int testsqr = square.x + (dxtest) + (square.y + (dytest)) * gs->mapx;                    \

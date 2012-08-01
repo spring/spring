@@ -763,7 +763,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		#define SET_TRANSFORM_VECTORS(dir)           \
 			float3 rightdir, updir;                  \
                                                      \
-			if (fabs(dir.y) < 0.95f) {               \
+			if (math::fabs(dir.y) < 0.95f) {               \
 				rightdir = dir.cross(UpVector);      \
 				rightdir.SafeANormalize();           \
 			} else {                                 \

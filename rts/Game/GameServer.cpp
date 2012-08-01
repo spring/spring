@@ -2144,7 +2144,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 
 			timeLeft += GAME_SPEED * internalSpeed * float(spring_tomsecs(timeElapsed)) * 0.001f;
 			lastTick=currentTick;
-			newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
+			newFrames = (timeLeft > 0)? int(math::ceil(timeLeft)): 0;
 			timeLeft -= newFrames;
 
 			if (hasLocalClient) {

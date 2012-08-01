@@ -325,7 +325,7 @@ void CHoverAirMoveType::UpdateHovering()
 {
 	#define NOZERO(x) std::max(x, 0.0001f)
 
-	const float driftSpeed = fabs(owner->unitDef->dlHoverFactor);
+	const float driftSpeed = math::fabs(owner->unitDef->dlHoverFactor);
 	float3 deltaVec = goalPos - owner->pos;
 	float3 deltaDir = float3(deltaVec.x, 0.0f, deltaVec.z);
 	float l = NOZERO(deltaDir.Length2D());
@@ -342,7 +342,7 @@ void CHoverAirMoveType::UpdateHovering()
 	deltaDir -= owner->speed;
 	l = deltaDir.SqLength2D();
 	if (l > (maxSpeed * maxSpeed)) {
-		deltaDir *= maxSpeed / NOZERO(sqrt(l));
+		deltaDir *= maxSpeed / NOZERO(math::sqrt(l));
 	}
 	wantedSpeed = owner->speed + deltaDir;
 

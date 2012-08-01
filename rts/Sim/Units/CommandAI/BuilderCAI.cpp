@@ -542,8 +542,8 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 	if (!inCommand) {
 		BuildInfo bi;
-		bi.pos.x = floor(c.params[0] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
-		bi.pos.z = floor(c.params[2] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
+		bi.pos.x = math::floor(c.params[0] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
+		bi.pos.z = math::floor(c.params[2] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
 		bi.pos.y = c.params[1];
 
 		if (c.params.size() == 4)

@@ -634,7 +634,7 @@ void CFeature::StartFire()
 
 int CFeature::ChunkNumber(float f)
 {
-	return (int) ceil(f * modInfo.reclaimMethod);
+	return (int) math::ceil(f * modInfo.reclaimMethod);
 }
 
 
@@ -652,7 +652,7 @@ float CFeature::RemainingResource(float res) const
 
 	// Otherwise we are doing chunk reclaiming
 	float chunkSize = res / modInfo.reclaimMethod; // resource/no_chunks
-	float chunksLeft = ceil(reclaimLeft * modInfo.reclaimMethod);
+	float chunksLeft = math::ceil(reclaimLeft * modInfo.reclaimMethod);
 	return chunkSize * chunksLeft;
 }
 

@@ -60,8 +60,8 @@ protected:
 			if (team >= 0 && static_cast<size_t>(team) >= values.size()) {
 				values.resize(team + 1);
 			}
-			if (values[team].size() > 0 && fabs(value-values[team].back()) > maxdif) {
-				maxdif = fabs(value-values[team].back());
+			if (values[team].size() > 0 && math::fabs(value-values[team].back()) > maxdif) {
+				maxdif = math::fabs(value-values[team].back());
 			}
 
 			values[team].push_back(value);
