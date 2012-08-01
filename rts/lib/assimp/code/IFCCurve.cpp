@@ -87,7 +87,7 @@ public:
 
 		a = math::fmod(a,static_cast<IfcFloat>( 360. ));
 		b = math::fmod(b,static_cast<IfcFloat>( 360. ));
-		return static_cast<size_t>( fabs(math::ceil(( b-a)) / conv.settings.conicSamplingAngle) );
+		return static_cast<size_t>( abs(math::ceil(( b-a)) / conv.settings.conicSamplingAngle) );
 	}
 
 	// --------------------------------------------------
