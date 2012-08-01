@@ -173,6 +173,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
 	REGISTER_LUA_CFUNC(SetUnitRotation);
+	REGISTER_LUA_CFUNC(SetUnitDirection);
 
 	REGISTER_LUA_CFUNC(AddUnitDamage);
 	REGISTER_LUA_CFUNC(AddUnitImpulse);
@@ -2029,6 +2030,21 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
 	unit->ForcedMove(unit->pos);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitDirection(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	float3 dir(luaL_checkfloat(L, 2),
+	           luaL_checkfloat(L, 3),
+	           luaL_checkfloat(L, 4));
+	dir.Normalize();
+	unit->ForcedSpin(dir);
 	return 0;
 }
 
