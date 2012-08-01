@@ -62,7 +62,7 @@ void CBombDropper::Update()
 			const float s = -owner->speed.y;
 			const float sq = (s - 2*d) / -((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity));
 			if (sq > 0) {
-				predict = s / ((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity)) + sqrt(sq);
+				predict = s / ((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity)) + math::sqrt(sq);
 			} else {
 				predict = 0;
 			}

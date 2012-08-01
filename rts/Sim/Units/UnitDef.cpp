@@ -399,9 +399,9 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	selfDCountdown = udTable.GetInt("selfDestructCountdown", 5);
 
 	speed  = udTable.GetFloat("maxVelocity", 0.0f) * GAME_SPEED;
-	speed  = fabs(speed);
+	speed  = math::fabs(speed);
 	rSpeed = udTable.GetFloat("maxReverseVelocity", 0.0f) * GAME_SPEED;
-	rSpeed = fabs(rSpeed);
+	rSpeed = math::fabs(rSpeed);
 
 	fireState = udTable.GetInt("fireState", canFireControl? FIRESTATE_NONE: FIRESTATE_FIREATWILL);
 	fireState = std::min(fireState, int(FIRESTATE_FIREATWILL));
@@ -462,8 +462,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	useSmoothMesh  = udTable.GetBool("useSmoothMesh", true);
 
 
-	maxAcc = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
-	maxDec = fabs(udTable.GetFloat("brakeRate", 3.0f * maxAcc)) * (canfly? 0.1f: 1.0f); // no negative values
+	maxAcc = math::fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
+	maxDec = math::fabs(udTable.GetFloat("brakeRate", 3.0f * maxAcc)) * (canfly? 0.1f: 1.0f); // no negative values
 
 	turnRate    = udTable.GetFloat("turnRate", 0.0f);
 	turnInPlace = udTable.GetBool("turnInPlace", true);
@@ -709,7 +709,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	seismicSignature = udTable.GetFloat("seismicSignature", -1.0f);
 	if (seismicSignature == -1.0f) {
 		if (!canFloat && !canHover && !canfly) {
-			seismicSignature = sqrt(mass / 100.0f);
+			seismicSignature = math::sqrt(mass / 100.0f);
 		} else {
 			seismicSignature = 0.0f;
 		}

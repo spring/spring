@@ -1433,7 +1433,7 @@ void CGroundMoveType::HandleObjectCollisions()
 		//   use the collider's MoveDef footprint as radius since it is
 		//   always mobile (its UnitDef footprint size may be different)
 		//
-		//   0.75 * sqrt(2) ~= 1, so radius is always that of a circle
+		//   0.75 * math::sqrt(2) ~= 1, so radius is always that of a circle
 		//   _maximally bounded_ by the footprint rather than a circle
 		//   _minimally bounding_ the footprint (assuming square shape)
 		//
@@ -1824,20 +1824,20 @@ void CGroundMoveType::CreateLineTable()
 			float xp = start.x;
 			float zp = start.z;
 
-			if (floor(start.x) == floor(to.x)) {
+			if (math::floor(start.x) == math::floor(to.x)) {
 				if (dz > 0.0f) {
-					for (int a = 1; a <= floor(to.z); ++a)
+					for (int a = 1; a <= math::floor(to.z); ++a)
 						lineTable[yt][xt].push_back(int2(0, a));
 				} else {
-					for (int a = -1; a >= floor(to.z); --a)
+					for (int a = -1; a >= math::floor(to.z); --a)
 						lineTable[yt][xt].push_back(int2(0, a));
 				}
-			} else if (floor(start.z) == floor(to.z)) {
+			} else if (math::floor(start.z) == math::floor(to.z)) {
 				if (dx > 0.0f) {
-					for (int a = 1; a <= floor(to.x); ++a)
+					for (int a = 1; a <= math::floor(to.x); ++a)
 						lineTable[yt][xt].push_back(int2(a, 0));
 				} else {
-					for (int a = -1; a >= floor(to.x); --a)
+					for (int a = -1; a >= math::floor(to.x); --a)
 						lineTable[yt][xt].push_back(int2(a, 0));
 				}
 			} else {
@@ -1846,14 +1846,14 @@ void CGroundMoveType::CreateLineTable()
 
 				while (keepgoing) {
 					if (dx > 0.0f) {
-						xn = (floor(xp) + 1.0f - xp) / dx;
+						xn = (math::floor(xp) + 1.0f - xp) / dx;
 					} else {
-						xn = (floor(xp)        - xp) / dx;
+						xn = (math::floor(xp)        - xp) / dx;
 					}
 					if (dz > 0.0f) {
-						zn = (floor(zp) + 1.0f - zp) / dz;
+						zn = (math::floor(zp) + 1.0f - zp) / dz;
 					} else {
-						zn = (floor(zp)        - zp) / dz;
+						zn = (math::floor(zp)        - zp) / dz;
 					}
 
 					if (xn < zn) {
@@ -1867,7 +1867,7 @@ void CGroundMoveType::CreateLineTable()
 					keepgoing =
 						math::fabs(xp - start.x) <= math::fabs(to.x - start.x) &&
 						math::fabs(zp - start.z) <= math::fabs(to.z - start.z);
-					int2 pt(int(floor(xp)), int(floor(zp)));
+					int2 pt(int(math::floor(xp)), int(math::floor(zp)));
 
 					static const int MIN_IDX = -int(LINETABLE_SIZE / 2);
 					static const int MAX_IDX = -MIN_IDX;

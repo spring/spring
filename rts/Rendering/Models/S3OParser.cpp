@@ -324,7 +324,7 @@ void SS3OPiece::SetVertexTangents()
 		float3& t = tTangents[vrtIdx];
 		int h = 1;
 
-		if (isnan(n.x) || isnan(n.y) || isnan(n.z)) {
+		if (math::isnan(n.x) || math::isnan(n.y) || math::isnan(n.z)) {
 			n = float3(0.0f, 0.0f, 1.0f);
 		}
 		if (s == ZeroVector) { s = float3(1.0f, 0.0f, 0.0f); }

@@ -348,7 +348,7 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 			if (rx <= spread)
 				continue;
 
-			rx = sqrt(rx);
+			rx = math::sqrt(rx);
 	
 			const float minx = std::max(                               spread,  center.x - rx);
 			const float maxx = std::min(float(gs->mapx * SQUARE_SIZE - spread), center.x + rx);
@@ -663,7 +663,7 @@ void CTransportCAI::UnloadLand(Command& c)
 				am->ForceHeading(unloadHeading);
 				am->maxDrift = 1;
 				if ((owner->pos.SqDistance(pos) < 64) &&
-						(owner->updir.dot(UpVector) > 0.99f) && fabs(owner->heading - unloadHeading) < AIRTRANSPORT_DOCKING_ANGLE) {
+						(owner->updir.dot(UpVector) > 0.99f) && math::fabs(owner->heading - unloadHeading) < AIRTRANSPORT_DOCKING_ANGLE) {
 					if (!SpotIsClearIgnoreSelf(pos, unit)) {
 						// chosen spot is no longer clear to land, choose a new one
 						// if a new spot cannot be found, don't unload at all

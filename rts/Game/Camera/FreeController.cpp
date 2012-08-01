@@ -51,9 +51,9 @@ CFreeController::CFreeController()
 	dir = float3(0.0f, -2.0f, -1.0f);
 	dir.ANormalize();
 	if (camera) {
-		const float hDist = sqrt((dir.x * dir.x) + (dir.z * dir.z));
-		camera->rot.y = atan2(dir.x, dir.z);
-		camera->rot.x = atan2(dir.y, hDist);
+		const float hDist = math::sqrt((dir.x * dir.x) + (dir.z * dir.z));
+		camera->rot.y = math::atan2(dir.x, dir.z);
+		camera->rot.x = math::atan2(dir.y, hDist);
 	}
 	pos -= (dir * 1000.0f);
 
@@ -84,14 +84,14 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 
 	// lock the view direction to the target
 	const float3 diff(trackPos - pos);
-	const float rads = atan2(diff.x, diff.z);
+	const float rads = math::atan2(diff.x, diff.z);
 	camera->rot.y = rads;
 
 	const float len2D = diff.Length2D();
-	if (fabs(len2D) <= 0.001f) {
+	if (math::fabs(len2D) <= 0.001f) {
 		camera->rot.x = 0.0f;
 	} else {
-		camera->rot.x = atan2((trackPos.y - pos.y), len2D);
+		camera->rot.x = math::atan2((trackPos.y - pos.y), len2D);
 	}
 
 	camera->UpdateForward();
@@ -130,11 +130,11 @@ void CFreeController::Update()
 		if (pos.y < (gndHeight + gndOffset + 1.0f)) {
 			float3 hDir;
 			hDir.y = 0.0f;
-			hDir.x = (float)sin(camera->rot.y);
-			hDir.z = (float)cos(camera->rot.y);
+			hDir.x = (float)math::sin(camera->rot.y);
+			hDir.z = (float)math::cos(camera->rot.y);
 			const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z, false);
 			const float dot = gndNormal.dot(hDir);
-			const float gndRotX = (float)acos(dot) - (PI * 0.5f);
+			const float gndRotX = (float)math::acos(dot) - (PI * 0.5f);
 			const float rotXdiff = (gndRotX - camera->rot.x);
 			autoTiltVel = (autoTilt * rotXdiff);
 		}
@@ -214,8 +214,8 @@ void CFreeController::Update()
 		// convert the angular velocity into its positional change
 		const float3 diff2 = (pos - trackPos);
 		const float deltaRad = (avel.y * ft);
-		const float cos_val = cos(deltaRad);
-		const float sin_val = sin(deltaRad);
+		const float cos_val = math::cos(deltaRad);
+		const float sin_val = math::sin(deltaRad);
 		pos.x = trackPos.x + ((cos_val * diff2.x) + (sin_val * diff2.z));
 		pos.z = trackPos.z + ((cos_val * diff2.z) - (sin_val * diff2.x));
 	}
@@ -246,7 +246,7 @@ void CFreeController::Update()
 		if (pos.y < minHeight) {
 			pos.y = minHeight;
 			if (gndLock) {
-				vel.y = min(fabs(scrollSpeed), ((minHeight - prevPos.y) / ft));
+				vel.y = min(math::fabs(scrollSpeed), ((minHeight - prevPos.y) / ft));
 			} else {
 				vel.y = 0.0f;
 			}
@@ -263,7 +263,7 @@ void CFreeController::Update()
 		camera->rot.x = -xRotLimit;
 		avel.x = 0.0f;
 	}
-	camera->rot.y = fmod(camera->rot.y, PI * 2.0f);
+	camera->rot.y = math::fmod(camera->rot.y, PI * 2.0f);
 
 	// setup for the next loop
 	prevVel  = vel;
@@ -277,9 +277,9 @@ void CFreeController::Update()
 float3 CFreeController::GetDir() const
 {
 	float3 dir;
-	dir.x = (float)(sin(camera->rot.y) * cos(camera->rot.x));
-	dir.z = (float)(cos(camera->rot.y) * cos(camera->rot.x));
-	dir.y = (float)(sin(camera->rot.x));
+	dir.x = (float)(math::sin(camera->rot.y) * math::cos(camera->rot.x));
+	dir.z = (float)(math::cos(camera->rot.y) * math::cos(camera->rot.x));
+	dir.y = (float)(math::sin(camera->rot.x));
 	dir.ANormalize();
 	return dir;
 }
@@ -373,7 +373,7 @@ void CFreeController::SetPos(const float3& newPos)
 	if ((yDiff * dir.y) >= 0.0f) {
 		pos = float3(newPos.x, h, newPos.z);
 	} else {
-		pos = target - (dir * fabs(yDiff / dir.y));
+		pos = target - (dir * math::fabs(yDiff / dir.y));
 	} // FIXME
 /*
 	const float oldPosY = pos.y;
@@ -381,7 +381,7 @@ void CFreeController::SetPos(const float3& newPos)
 	pos.y = oldPosY;
 	if (gndOffset != 0.0f) {
 		const float h = ground->GetHeightReal(pos.x, pos.z, false);
-		const float absH = h + fabsf(gndOffset);
+		const float absH = h + math::fabsf(gndOffset);
 		if (pos.y < absH) {
 			pos.y = absH;
 		}

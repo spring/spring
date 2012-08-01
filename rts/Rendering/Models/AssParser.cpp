@@ -64,15 +64,15 @@ static float3 QuaternionToRadianAngles(aiQuaternion q1)
 	float3 result;
 
 	if (test > 0.499f * unit) { //! singularity at north pole
-		result.x = 2 * atan2(q1.x,q1.w);
+		result.x = 2 * math::atan2(q1.x,q1.w);
 		result.y = PI/2;
 	} else if (test < -0.499f * unit) { //! singularity at south pole
-		result.x = -2 * atan2(q1.x,q1.w);
+		result.x = -2 * math::atan2(q1.x,q1.w);
 		result.y = -PI/2;
 	} else {
-		result.x = atan2(2*q1.y*q1.w-2*q1.x*q1.z , sqx - sqy - sqz + sqw);
-		result.y = asin(2*test/unit);
-		result.z = atan2(2*q1.x*q1.w-2*q1.y*q1.z , -sqx + sqy - sqz + sqw);
+		result.x = math::atan2(2*q1.y*q1.w-2*q1.x*q1.z , sqx - sqy - sqz + sqw);
+		result.y = math::asin(2*test/unit);
+		result.z = math::atan2(2*q1.x*q1.w-2*q1.y*q1.z , -sqx + sqy - sqz + sqw);
 	}
 	return result;
 }

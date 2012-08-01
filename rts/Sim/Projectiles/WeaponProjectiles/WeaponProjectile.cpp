@@ -255,8 +255,8 @@ void CWeaponProjectile::UpdateGroundBounce()
 				const float dot = speed.dot(normal);
 
 				pos -= speed;
-				speed -= (speed + normal * fabs(dot)) * (1 - weaponDef->bounceSlip);
-				speed += (normal * (fabs(dot))) * (1 + weaponDef->bounceRebound);
+				speed -= (speed + normal * math::fabs(dot)) * (1 - weaponDef->bounceSlip);
+				speed += (normal * (math::fabs(dot))) * (1 + weaponDef->bounceRebound);
 				pos += speed;
 
 				if (weaponDef->bounceExplosionGenerator) {

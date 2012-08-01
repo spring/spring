@@ -67,8 +67,8 @@ CBasicSky::CBasicSky()
 	rawClouds=newmat2<int>(CLOUD_SIZE,CLOUD_SIZE);
 	blendMatrix=newmat3<int>(CLOUD_DETAIL,32,32);
 
-	domeheight=cos(PI/16)*1.01f;
-	domeWidth=sin(PI/16)*400*1.7f;
+	domeheight=math::cos(PI/16)*1.01f;
+	domeWidth=math::sin(PI/16)*400*1.7f;
 
 	UpdateSkyDir();
 	InitSun();
@@ -369,7 +369,7 @@ void CBasicSky::Update()
 	case 0: {
 		for(int a=0; a<CLOUD_DETAIL; a++) {
 			float fade = gs->frameNum / (70.0f * (2<<(CLOUD_DETAIL-1-a)));
-			fade -= floor(fade/2)*2;
+			fade -= math::floor(fade/2)*2;
 			if(fade>1) {
 				fade = 2 - fade;
 				if(!cloudDown[a]) {
@@ -403,11 +403,11 @@ void CBasicSky::Update()
 		int qcda=(4<<CLOUD_DETAIL)>>a;
 		int *pkernel=kernel;
 		for(int y=0; y<cs4a; ++y, pkernel+=CLOUD_SIZE/4) {
-			float ydist=fabs(1.0f+y-cs8a)/cs8a;
+			float ydist=math::fabs(1.0f+y-cs8a)/cs8a;
 			ydist=ydist*ydist*(3-2*ydist);
 			int *pkrn=pkernel;
 			for(int x=0; x<cs4a; ++x) {
-				float xdist=fabs(1.0f+x-cs8a)/cs8a;
+				float xdist=math::fabs(1.0f+x-cs8a)/cs8a;
 				xdist=xdist*xdist*(3-2*xdist);
 
 				float contrib=(1-xdist)*(1-ydist);
@@ -506,7 +506,7 @@ void CBasicSky::CreateTransformVectors()
 	unsigned char *tt=thicknessTransform;
 	for(int a=0;a<1024;++a){
 		float f=(1023.0f-(a+cloudDensity*1024-512))/1023.0f;
-		float alpha=pow(f*2,3);
+		float alpha=math::pow(f*2,3);
 		if(alpha>1)
 			alpha=1;
 		*at=(unsigned char)(alpha*255);
@@ -533,11 +533,11 @@ void CBasicSky::DrawSun()
 
 	float ymod=(sunTexCoordY-0.5f)*domeWidth*0.025f*256;
 	float fy=ymod+modCamera.z*CLOUD_SIZE*0.000025f;
-	int baseY=int(floor(fy))&CLOUD_MASK;
-	fy-=floor(fy);
+	int baseY=int(math::floor(fy))&CLOUD_MASK;
+	fy-=math::floor(fy);
 	float fx=gs->frameNum*0.00005f*CLOUD_SIZE+modCamera.x*CLOUD_SIZE*0.000025f;
-	int baseX=int(floor(fx))&CLOUD_MASK;
-	fx-=floor(fx);
+	int baseX=int(math::floor(fx))&CLOUD_MASK;
+	fx-=math::floor(fx);
 
 	float *cvs=(float *)covers[0], *cvs1=(float *)covers[1], *cvs2=(float *)covers[2], *cvs3=(float *)covers[3];
 	if(baseX!=oldCoverBaseX || baseY!=oldCoverBaseY){
@@ -589,8 +589,8 @@ void CBasicSky::UpdateSunFlare() {
 		glBlendFunc(GL_ONE_MINUS_DST_COLOR,GL_ONE);
 		glBegin(GL_TRIANGLE_STRIP);
 		for(int x=0;x<257;++x){
-			float dx=sin(x*2*PI/256.0f);
-			float dy=cos(x*2*PI/256.0f);
+			float dx=math::sin(x*2*PI/256.0f);
+			float dy=math::cos(x*2*PI/256.0f);
 
 			glTexCoord2f(x/256.0f,0.25f);
 			glVertexf3(modSunDir*5+ldir*dx*0.0014f+udir*dy*0.0014f);
@@ -613,7 +613,7 @@ void CBasicSky::InitSun()
 			mem[(y*128+x)*4+0]=255;
 			mem[(y*128+x)*4+1]=255;
 			mem[(y*128+x)*4+2]=255;
-			float dist=sqrt((float)(y-64)*(y-64)+(x-64)*(x-64));
+			float dist=math::sqrt((float)(y-64)*(y-64)+(x-64)*(x-64));
 			if(dist>60)
 				mem[(y*128+x)*4+3]=0;
 			else
@@ -764,10 +764,10 @@ float3 CBasicSky::GetDirFromTexCoord(float x, float y)
 
 	const float hdist = math::sqrt(dir.x * dir.x + dir.z * dir.z);
 	const float ang = GetRadFromXY(dir.x, dir.z) + skyAngle;
-	const float fy = asin(hdist / 400);
+	const float fy = math::asin(hdist / 400);
 
-	dir.x = hdist * cos(ang);
-	dir.z = hdist * sin(ang);
+	dir.x = hdist * math::cos(ang);
+	dir.z = hdist * math::sin(ang);
 	dir.y = (fastmath::cos(fy) - domeheight) * 400;
 
 	dir.ANormalize();
@@ -800,7 +800,7 @@ void CBasicSky::UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]) {
 	const float3& dir = GetDirFromTexCoord(x / 256.0f, (255.0f - y) / 256.0f);
 
 	const float sunInt = skyLight->GetLightIntensity();
-	const float sunDist = acos(dir.dot(skyLight->GetLightDir())) * 50;
+	const float sunDist = math::acos(dir.dot(skyLight->GetLightDir())) * 50;
 	const float sunMod = sunInt * (0.3f / math::sqrt(sunDist) + 2.0f / sunDist);
 
 	const float green = std::min(1.0f, (0.55f + sunMod));
@@ -814,7 +814,7 @@ void CBasicSky::UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]) {
 void CBasicSky::UpdateTexPart(int x, int y, unsigned char (*texp)[4]) {
 	const float3& dir = GetDirFromTexCoord(x / 512.0f, (511.0f - y) / 512.0f);
 
-	const float sunDist = acos(dir.dot(skyLight->GetLightDir())) * 70;
+	const float sunDist = math::acos(dir.dot(skyLight->GetLightDir())) * 70;
 	const float sunMod = skyLight->GetLightIntensity() * 12.0f / (12 + sunDist);
 
 	const float red   = std::min(skyColor.x + sunMod * sunColor.x, 1.0f);
