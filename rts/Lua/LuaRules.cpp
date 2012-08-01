@@ -58,10 +58,10 @@ void CLuaRules::LoadHandler()
 		return;
 	}
 
-	new CLuaRules();
+	luaRules = new CLuaRules();
 
 	if (!luaRules->IsValid()) {
-		delete luaRules;
+		FreeHandler();
 	}
 }
 
@@ -69,7 +69,7 @@ void CLuaRules::LoadHandler()
 void CLuaRules::FreeHandler()
 {
 	//FIXME GML: this needs a mutex!!!
-	delete luaRules;
+	delete luaRules; luaRules = NULL;
 }
 
 
@@ -79,8 +79,6 @@ void CLuaRules::FreeHandler()
 CLuaRules::CLuaRules()
 : CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES)
 {
-	luaRules = this;
-
 	if (!IsValid()) {
 		return;
 	}
@@ -121,14 +119,10 @@ CLuaRules::CLuaRules()
 		haveShieldPreDamaged       = HasCallIn(L, "ShieldPreDamaged");
 	}
 	if (SingleState() || L == L_Draw) {
-		#define SET_HAVE_DRAW(Type) { haveDraw ## Type = HasCallIn(L, "Draw ## Type"); }
-
-		SET_HAVE_DRAW(Unit);
-		SET_HAVE_DRAW(Feature);
-		SET_HAVE_DRAW(Shield);
-		SET_HAVE_DRAW(Projectile);
-
-		#undef SET_HAVE_DRAW
+		haveDrawUnit       = HasCallIn(L, "DrawUnit"      );
+		haveDrawFeature    = HasCallIn(L, "DrawFeature"   );
+		haveDrawShield     = HasCallIn(L, "DrawShield"    );
+		haveDrawProjectile = HasCallIn(L, "DrawProjectile");
 
 		SetupUnsyncedFunction(L, "DrawUnit");
 		SetupUnsyncedFunction(L, "DrawFeature");
@@ -140,15 +134,14 @@ CLuaRules::CLuaRules()
 	END_ITERATE_LUA_STATES();
 }
 
-
 CLuaRules::~CLuaRules()
 {
 	if (L_Sim != NULL || L_Draw != NULL) {
 		Shutdown();
 		KillLua();
 	}
-	luaRules = NULL;
 }
+
 
 
 bool CLuaRules::AddSyncedCode(lua_State *L)
