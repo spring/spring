@@ -625,7 +625,7 @@ bool TryAddOpenings_Poly2Tri(const std::vector<TempOpening>& openings,const std:
 		// XXX this should be guarded, but we somehow need to pick a suitable
 		// epsilon
 		// if(coord != -1.0f) {
-		//	assert(fabs(coord - vv.z) < 1e-3f);
+		//	assert(math::fabs(coord - vv.z) < 1e-3f);
 		// }
 
 		coord = vv.z;
@@ -1189,7 +1189,7 @@ bool TryAddOpenings_Quadrulate(const std::vector<TempOpening>& openings,const st
 		// XXX this should be guarded, but we somehow need to pick a suitable
 		// epsilon
 		// if(coord != -1.0f) {
-		//	assert(fabs(coord - vv.z) < 1e-3f);
+		//	assert(math::fabs(coord - vv.z) < 1e-3f);
 		// }
 
 		coord = vv.z;
