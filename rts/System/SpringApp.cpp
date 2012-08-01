@@ -593,7 +593,7 @@ void SpringApp::RestoreWindowPosition()
 
 			if (!stateChanged) {
 				MoveWindow(info.window, globalRendering->winPosX, globalRendering->winPosY, globalRendering->viewSizeX, globalRendering->viewSizeY, true);
-				streflop_init<streflop::Simple>(); // MoveWindow may modify FPU flags
+				streflop::streflop_init<streflop::Simple>(); // MoveWindow may modify FPU flags
 			}
 
   #elif     defined(__APPLE__)
@@ -963,7 +963,7 @@ static void ResetScreenSaverTimeout()
 		int timeout; // reset screen saver timer
 		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
 			SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
-		streflop_init<streflop::Simple>(); // SystemParametersInfo may modify FPU flags
+		streflop::streflop_init<streflop::Simple>(); // SystemParametersInfo may modify FPU flags
 	}
   #elif defined(__APPLE__)
 	// TODO: implement
