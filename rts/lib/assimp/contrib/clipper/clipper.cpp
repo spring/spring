@@ -39,7 +39,7 @@
 *******************************************************************************/
 
 #include "clipper.hpp"
-#include <cmath>
+#include "lib/streflop/streflop_cond.h"
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
@@ -3027,15 +3027,15 @@ struct DoublePoint
 Polygon BuildArc(const IntPoint &pt,
   const double a1, const double a2, const double r)
 {
-  int steps = std::max(6, int(std::sqrt(std::fabs(r)) * std::fabs(a2 - a1)));
+  int steps = std::max(6, int(math::sqrt(math::fabs(r)) * math::fabs(a2 - a1)));
   Polygon result(steps);
   int n = steps - 1;
   double da = (a2 - a1) / n;
   double a = a1;
   for (int i = 0; i <= n; ++i)
   {
-    result[i].X = pt.X + Round(std::cos(a)*r);
-    result[i].Y = pt.Y + Round(std::sin(a)*r);
+    result[i].X = pt.X + Round(math::cos(a)*r);
+    result[i].Y = pt.Y + Round(math::sin(a)*r);
     a += da;
   }
   return result;
@@ -3049,7 +3049,7 @@ DoublePoint GetUnitNormal( const IntPoint &pt1, const IntPoint &pt2)
 
   double dx = (double)(pt2.X - pt1.X);
   double dy = (double)(pt2.Y - pt1.Y);
-  double f = 1 *1.0/ std::sqrt( dx*dx + dy*dy );
+  double f = 1 *1.0/ math::sqrt( dx*dx + dy*dy );
   dx *= f;
   dy *= f;
   return DoublePoint(dy, -dx);
@@ -3187,11 +3187,11 @@ void DoSquare(double mul = 1.0)
         (long64)Round(m_p[m_i][m_j].Y + normals[m_j].Y * m_delta));
     if ((normals[m_k].X * normals[m_j].Y - normals[m_j].X * normals[m_k].Y) * m_delta >= 0)
     {
-        double a1 = std::atan2(normals[m_k].Y, normals[m_k].X);
-        double a2 = std::atan2(-normals[m_j].Y, -normals[m_j].X);
-        a1 = std::fabs(a2 - a1);
+        double a1 = math::atan2(normals[m_k].Y, normals[m_k].X);
+        double a2 = math::atan2(-normals[m_j].Y, -normals[m_j].X);
+        a1 = math::fabs(a2 - a1);
         if (a1 > pi) a1 = pi * 2 - a1;
-        double dx = std::tan((pi - a1)/4) * std::fabs(m_delta * mul);
+        double dx = math::tan((pi - a1)/4) * math::fabs(m_delta * mul);
         pt1 = IntPoint((long64)(pt1.X -normals[m_k].Y * dx),
           (long64)(pt1.Y + normals[m_k].X * dx));
         AddPoint(pt1);
@@ -3242,8 +3242,8 @@ void DoRound()
     {
       if (normals[m_j].X * normals[m_k].X + normals[m_j].Y * normals[m_k].Y < 0.985)
       {
-        double a1 = std::atan2(normals[m_k].Y, normals[m_k].X);
-        double a2 = std::atan2(normals[m_j].Y, normals[m_j].X);
+        double a1 = math::atan2(normals[m_k].Y, normals[m_k].X);
+        double a2 = math::atan2(normals[m_j].Y, normals[m_j].X);
         if (m_delta > 0 && a2 < a1) a2 += pi *2;
         else if (m_delta < 0 && a2 > a1) a2 -= pi *2;
         Polygon arc = BuildArc(m_p[m_i][m_j], a1, a2, m_delta);
