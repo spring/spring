@@ -47,18 +47,6 @@
 #include <cstdlib>
 #include <ostream>
 
-#ifdef _MSC_VER // ugh, ugly hack. Maybe change assimp to use floats instead?
-#include "lib/streflop/streflop_cond.h"
-namespace std {
-	float atan2(double val, double val2) { return math::atan2((float) val, (float) val2); }
-	float tan(double val) { return math::tan((float) val); }
-	float fabs(double val) { return math::fabs((float) val); }
-	float sqrt(double val) { return math::sqrt((float) val); }
-	float sin(double val) { return math::sin((float) val); }
-	float cos(double val) { return math::cos((float) val); }
-}
-#endif
-
 namespace ClipperLib {
 
 static long64 const loRange = 1518500249;            //sqrt(2^63 -1)/2
