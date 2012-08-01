@@ -90,7 +90,7 @@ void AviVideoCapturing::StartCapturing() {
 		SDL_ShowCursor(savedCursorMode);
 		//aviGenerator->InitEngine() (avicap32.dll)? modifies the FPU control word.
 		//Setting it back to default state.
-		streflop_init<streflop::Simple>();
+		streflop::streflop_init<streflop::Simple>();
 	}
 }
 
