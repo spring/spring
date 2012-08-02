@@ -50,6 +50,7 @@ CR_REG_METADATA(CBuilderCAI , (
 				CR_MEMBER(cachedRadius),
 
 				CR_MEMBER(buildRetries),
+				CR_MEMBER(randomCounter),
 
 				CR_MEMBER(lastPC1),
 				CR_MEMBER(lastPC2),
@@ -70,6 +71,7 @@ CBuilderCAI::CBuilderCAI():
 	cachedRadiusId(0),
 	cachedRadius(0),
 	buildRetries(0),
+	randomCounter(0),
 	lastPC1(-1),
 	lastPC2(-1),
 	lastPC3(-1),
@@ -83,11 +85,14 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 	cachedRadiusId(0),
 	cachedRadius(0),
 	buildRetries(0),
+	randomCounter(0),
 	lastPC1(-1),
 	lastPC2(-1),
 	lastPC3(-1),
 	range3D(owner->unitDef->buildRange3D)
 {
+	owner_builder = (CBuilder*) owner;
+
 	CommandDescription c;
 	if (owner->unitDef->canRepair) {
 		c.id = CMD_REPAIR;
@@ -149,10 +154,8 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		possibleCommands.push_back(c);
 	}
 
-	CBuilder* builder = static_cast<CBuilder*>(owner);
-
 	map<int, string>::const_iterator bi;
-	for (bi = builder->unitDef->buildOptions.begin(); bi != builder->unitDef->buildOptions.end(); ++bi) {
+	for (bi = owner_builder->unitDef->buildOptions.begin(); bi != owner_builder->unitDef->buildOptions.end(); ++bi) {
 		const string name = bi->second;
 		const UnitDef* ud = unitDefHandler->GetUnitDefByName(name);
 		if (ud == NULL) {
@@ -200,8 +203,9 @@ CBuilderCAI::~CBuilderCAI()
 void CBuilderCAI::PostLoad()
 {
 	if (!commandQue.empty()) {
+		owner_builder = (CBuilder*) owner;
+
 		Command& c = commandQue.front();
-//		float3 curPos = owner->pos;
 
 		map<int, string>::iterator boi = buildOptions.find(c.GetID());
 		if (boi != buildOptions.end()) {
@@ -212,68 +216,123 @@ void CBuilderCAI::PostLoad()
 }
 
 
+
 inline float CBuilderCAI::GetBuildRange(const float targetRadius) const
 {
-	const CBuilder* builder = static_cast<CBuilder*>(owner);
-
 	// for immobile:
 	// only use `buildDistance + radius` iff radius > buildDistance,
 	// and so it would be impossible to get in buildrange (collision detection with units/features)
 	//
 	// what does this even mean?? IMMOBILE units cannot "get in range" of anything
 	if (owner->immobile) {
-		return (builder->buildDistance + std::max(targetRadius - builder->buildDistance, 0.0f));
+		return (owner_builder->buildDistance + std::max(targetRadius - owner_builder->buildDistance, 0.0f));
 	}
 
-	return (builder->buildDistance + targetRadius);
+	return (owner_builder->buildDistance + targetRadius);
 }
 
 
-inline bool CBuilderCAI::IsInBuildRange(const CWorldObject* obj) const
+
+bool CBuilderCAI::IsInBuildRange(const CWorldObject* obj) const
 {
 	return IsInBuildRange(obj->pos, obj->radius);
 }
 
-
-inline bool CBuilderCAI::IsInBuildRange(const float3& pos, const float radius) const
+bool CBuilderCAI::IsInBuildRange(const float3& objPos, const float objRadius) const
 {
-	const float immDistSqr = f3SqDist(owner->pos, pos);
-	const float buildDist = GetBuildRange(radius);
-	return (immDistSqr < (buildDist * buildDist));
+	const float immDistSqr = f3SqDist(owner->pos, objPos);
+	const float buildDist = GetBuildRange(objRadius);
+
+	return (immDistSqr <= (buildDist * buildDist));
 }
+
 
 
 inline bool CBuilderCAI::MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed)
 {
-	return MoveInBuildRange(obj->pos, obj->radius);
+	return MoveInBuildRange(obj->pos, obj->radius, checkMoveTypeForFailed);
 }
 
-
-bool CBuilderCAI::MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed)
+bool CBuilderCAI::MoveInBuildRange(const float3& objPos, float objRadius, const bool checkMoveTypeForFailed)
 {
-	if (!IsInBuildRange(pos, radius)) {
-		if (
-			checkMoveTypeForFailed &&
-			owner->moveType->progressState == AMoveType::Failed &&
-			f3SqDist(goalPos, pos) > 1.0f // check if the AMoveType::Failed belongs to the same goal position
-		) {
-			// don't call SetGoal() it would reset moveType->progressState and so later code couldn't check if the movecmd failed
+	if (!IsInBuildRange(objPos, objRadius)) {
+		// NOTE:
+		//   ignore the fail-check if we are an aircraft, movetype code
+		//   is unreliable wrt. setting it correctly and causes (landed)
+		//   aircraft to discard orders
+		const bool checkFailed = (checkMoveTypeForFailed && !owner->unitDef->IsAirUnit());
+		// check if the AMoveType::Failed belongs to the same goal position
+		const bool haveFailed = (owner->moveType->progressState == AMoveType::Failed && f3SqDist(goalPos, objPos) > 1.0f);
+
+		if (checkFailed && haveFailed) {
+			// don't call SetGoal() it would reset moveType->progressState
+			// and so later code couldn't check if the move command failed
 			return false;
 		}
 
 		// too far away, start a move command
-		SetGoal(pos, owner->pos, GetBuildRange(radius) * 0.9f);
+		SetGoal(objPos, owner->pos, GetBuildRange(objRadius) * 0.9f);
 		return false;
 	}
 
 	if (owner->unitDef->IsAirUnit()) {
-		StopMoveAndKeepPointing(pos, radius);
+		StopMoveAndKeepPointing(objPos, objRadius);
 	} else {
 		StopMoveAndKeepPointing(goalPos, goalRadius);
 	}
 
 	return true;
 }
+
+
+bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit* nanoFrame) const
+{
+	CFeature* feature = NULL;
+	BuildSquareStatus status = uh->TestUnitBuildSquare(build, feature, owner->allyteam, true);
+
+	if (feature && build.def->isFeature && build.def->wreckName == feature->def->name) {
+		// buildjob is a feature and it is finished already
+		return true;
+	}
+
+	if (status != BUILDSQUARE_BLOCKED) {
+		// open area, reclaimable feature or movable unit
+		return false;
+	}
+
+	const int yardxpos = int(build.pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
+	const int yardypos = int(build.pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
+	const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
+
+	if (s == owner) {
+		return false;
+	}
+
+	const CUnit* u = dynamic_cast<const CUnit*>(s);
+	if (!u /*|| u->pos != build.pos*/) {
+		return true;
+	}
+
+	if (u->beingBuilt) {
+		if (!owner_builder->CanAssistUnit(u, build.def)) {
+			if (u->immobile) {
+				// we can't or don't want assist finishing the nanoframe
+				return true;
+			} else {
+				// mobile unit blocks the position, wait till it is finished & moved
+				return false;
+			}
+		}
+
+		// unfinished nanoframe, assist it
+		nanoFrame = u;
+		return false;
+	}
+
+	// unit blocks the pos, can it move away?
+	return u->immobile;
+}
+
 
 
 inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
@@ -353,7 +412,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()
 			&& c.GetID() != CMD_WAIT) {
 		building = false;
-		static_cast<CBuilder*>(owner)->StopBuild();
+		((CBuilder*) owner)->StopBuild();
 	}
 
 	map<int,string>::iterator boi = buildOptions.find(c.GetID());
@@ -379,25 +438,17 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 		}
 
-		// check if the buildpos is blocked if it is a nanoframe help to finish it
-		//FIXME finish it just if it is of the same unitdef?
-		CFeature* feature = NULL;
-		if (!uh->TestUnitBuildSquare(bi, feature, owner->allyteam, true)) {
-			if (!feature && owner->unitDef->canAssist) {
-				const int yardxpos = int(bi.pos.x + 4) / SQUARE_SIZE;
-				const int yardypos = int(bi.pos.z + 4) / SQUARE_SIZE;
-				const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
-				const CUnit* u = dynamic_cast<const CUnit*>(s);
-				if (
-					   (u != NULL)
-					&& u->beingBuilt && (u->buildProgress == 0.0f)
-					&& (!u->soloBuilder || (u->soloBuilder == owner))
-				) {
-					Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER, u->id);
-					CMobileCAI::GiveCommandReal(c2);
-					CMobileCAI::GiveCommandReal(c);
-				}
-			}
+		const CUnit* nanoFrame = NULL;
+		// check if the buildpos is blocked
+		if (IsBuildPosBlocked(bi, nanoFrame)) {
+			return;
+		}
+
+		// if it is a nanoframe help to finish it
+		if (nanoFrame) {
+			Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER, nanoFrame->id);
+			CMobileCAI::GiveCommandReal(c2);
+			CMobileCAI::GiveCommandReal(c);
 			return;
 		}
 	}
@@ -476,18 +527,16 @@ void CBuilderCAI::FinishCommand()
 
 void CBuilderCAI::ExecuteStop(Command& c)
 {
-	CBuilder* builder = static_cast<CBuilder*>(owner);
 	building = false;
-	builder->StopBuild();
+	owner_builder->StopBuild();
 	CMobileCAI::ExecuteStop(c);
 }
 
 
 void CBuilderCAI::ExecuteBuildCmd(Command& c)
 {
-	CBuilder* builder = static_cast<CBuilder*>(owner);
+	const map<int, string>::const_iterator boi = buildOptions.find(c.GetID());
 
-	map<int, string>::iterator boi = buildOptions.find(c.GetID());
 	if (boi == buildOptions.end())
 		return;
 
@@ -511,20 +560,21 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			} else {
 				FinishCommand();
 			}
-		} else {
-			inCommand = true;
-			build.Parse(c);
-			ExecuteBuildCmd(c);
+			return;
 		}
-		return;
+
+		inCommand = true;
+		build.Parse(c);
 	}
 
-	assert(build.def);
-	const float radius = GetBuildOptionRadius(build.def, c.GetID());
-	if (building) {
-		MoveInBuildRange(build.pos, radius);
+	assert(build.def->id == -c.GetID() && build.def->id != NULL);
+	const float buildeeRadius = GetBuildOptionRadius(build.def, c.GetID());
 
-		if (!builder->curBuild && !builder->terraforming) {
+	if (building) {
+		// keep moving until 3D distance to buildPos is LEQ our buildDistance
+		MoveInBuildRange(build.pos, 0.0f);
+
+		if (!owner_builder->curBuild && !owner_builder->terraforming) {
 			building = false;
 			StopMove(); // cancel the effect of KeepPointingTo
 			FinishCommand();
@@ -534,7 +584,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		else if (uh->unitsByDefs[owner->team][build.def->id].size() > build.def->maxThisUnit) {
 			// unit restricted
 			building = false;
-			builder->StopBuild();
+			owner_builder->StopBuild();
 			CancelRestrictedUnit(boi->second);
 		}
 	} else {
@@ -551,65 +601,60 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 		build.pos = helper->Pos2BuildPos(build, true);
 
-		// we are on the way to the buildpos, meanwhile it can happen
-		// that another builder already finished our buildcmd or blocked
-		// the buildpos with another building (skip our buildcmd then)
-		const bool checkBuildPos = (gs->frameNum % (5 * UNIT_SLOWUPDATE_RATE)) < UNIT_SLOWUPDATE_RATE; //FIXME add a per-unit solution to better balance the load?
-		CFeature* feature = NULL;
-		if (checkBuildPos && !uh->TestUnitBuildSquare(build, feature, owner->allyteam, true)) {
-			if (!feature) {
-				const int yardxpos = int(build.pos.x + 4) / SQUARE_SIZE;
-				const int yardypos = int(build.pos.z + 4) / SQUARE_SIZE;
-				const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
-				const CUnit* u = dynamic_cast<const CUnit*>(s);
-				if (u != NULL) {
-					const bool canAssist =
-						   u->beingBuilt
-						&& owner->unitDef->canAssist
-						&& (!u->soloBuilder || (u->soloBuilder == owner));
-
-					if ((u->unitDef != build.def) || !canAssist) {
-						StopMove();
-						FinishCommand();
-						return;
-					}
-				}
+		// keep moving until until 3D distance to buildPos is LEQ our buildDistance
+		if (MoveInBuildRange(build.pos, 0.0f, true)) {
+			if (IsBuildPosBlocked(build)) {
+				StopMove();
+				FinishCommand();
+				return;
 			}
-		}
 
-		if (MoveInBuildRange(build.pos, radius, true)) {
 			if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build)) {
 				StopMove(); // cancel KeepPointingTo
 				FinishCommand();
+				return;
 			}
-			else if (!teamHandler->Team(owner->team)->AtUnitLimit()) {
-				// unit-limit not yet reached
-				CFeature* f = NULL;
 
-				bool waitstance = false;
-				if (builder->StartBuild(build, f, waitstance) || (++buildRetries > 30)) {
-					building = true;
-				}
-				else if (f != NULL && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
-					inCommand = false;
-					ReclaimFeature(f);
-				}
-				else if (!waitstance) {
-					const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
-					const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+			if (teamHandler->Team(owner->team)->AtUnitLimit()) {
+				return;
+			}
 
-					// tell everything within the radius of the soon-to-be buildee
-					// to get out of the way; using the model radius is not correct
-					// because this can be shorter than half the footprint diagonal
-					helper->BuggerOff(build.pos, std::max(radius, fpRadius), false, true, owner->team, NULL);
-					NonMoving();
-				}
+			CFeature* f = NULL;
+
+			bool waitstance = false;
+			if (owner_builder->StartBuild(build, f, waitstance) || (++buildRetries > 30)) {
+				building = true;
+			}
+			else if (f != NULL && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
+				inCommand = false;
+				ReclaimFeature(f);
+			}
+			else if (!waitstance) {
+				const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
+				const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+
+				// tell everything within the radius of the soon-to-be buildee
+				// to get out of the way; using the model radius is not correct
+				// because this can be shorter than half the footprint diagonal
+				helper->BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, NULL);
+				NonMoving();
 			}
 		} else {
 			if (owner->moveType->progressState == AMoveType::Failed) {
 				if (++buildRetries > 5) {
 					StopMove();
 					FinishCommand();
+				}
+			}
+
+			// we are on the way to the buildpos, meanwhile it can happen
+			// that another builder already finished our buildcmd or blocked
+			// the buildpos with another building (skip our buildcmd then)
+			if ((++randomCounter % 5) == 0) {
+				if (IsBuildPosBlocked(build)) {
+					StopMove();
+					FinishCommand();
+					return;
 				}
 			}
 		}
@@ -632,8 +677,6 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 	// not all builders are repair-capable by default
 	if (!owner->unitDef->canRepair)
 		return;
-
-	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		// repair unit
@@ -658,7 +701,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			const float radius = c.params[4] + 100.0f; // do not walk too far outside repair area
 
 			if ((pos - unit->pos).SqLength2D() > radius * radius ||
-				(unit->isMoving && (((c.options & INTERNAL_ORDER) && !TargetInterceptable(unit, unit->speed.Length2D())) || builder->curBuild == unit)
+				(unit->isMoving && (((c.options & INTERNAL_ORDER) && !TargetInterceptable(unit, unit->speed.Length2D())) || owner_builder->curBuild == unit)
 				&& !IsInBuildRange(unit))) {
 				StopMove();
 				FinishCommand();
@@ -677,7 +720,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 
 		if (canRepairUnit) {
 			if (MoveInBuildRange(unit)) {
-				builder->SetRepairTarget(unit);
+				owner_builder->SetRepairTarget(unit);
 			}
 		} else {
 			StopMove();
@@ -688,7 +731,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 
-		builder->StopBuild();
+		owner_builder->StopBuild();
 		if (FindRepairTargetAndRepair(pos, radius, c.options, false, (c.options & META_KEY))) {
 			inCommand = false;
 			SlowUpdate();
@@ -710,8 +753,6 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 	if (!owner->unitDef->canCapture)
 		return;
 
-	CBuilder* builder = static_cast<CBuilder*>(owner);
-
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		// capture unit
 		CUnit* unit = uh->GetUnit(c.params[0]);
@@ -726,7 +767,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 			const float radius = c.params[4] + 100; // do not walk too far outside capture area
 
 			if (((pos - unit->pos).SqLength2D() > (radius * radius) ||
-				(builder->curCapture == unit && unit->isMoving && !IsInBuildRange(unit)))) {
+				(owner_builder->curCapture == unit && unit->isMoving && !IsInBuildRange(unit)))) {
 				StopMove();
 				FinishCommand();
 				return;
@@ -735,7 +776,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 
 		if (unit->unitDef->capturable && unit->team != owner->team && UpdateTargetLostTimer(unit->id)) {
 			if (MoveInBuildRange(unit)) {
-				builder->SetCaptureTarget(unit);
+				owner_builder->SetCaptureTarget(unit);
 			}
 		} else {
 			StopMove();
@@ -746,7 +787,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
 
-		builder->StopBuild();
+		owner_builder->StopBuild();
 
 		if (FindCaptureTargetAndCapture(pos, radius, c.options, (c.options & META_KEY))) {
 			inCommand = false;
@@ -768,7 +809,6 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 	if (!owner->unitDef->canGuard)
 		return;
 
-	CBuilder* builder = static_cast<CBuilder*>(owner);
 	CUnit* guardee = uh->GetUnit(c.params[0]);
 
 	if (guardee == NULL) { FinishCommand(); return; }
@@ -780,7 +820,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 	if (CBuilder* b = dynamic_cast<CBuilder*>(guardee)) {
 		if (b->terraforming) {
 			if (MoveInBuildRange(b->terraformCenter, b->terraformRadius * 0.7f)) {
-				builder->HelpTerraform(b);
+				owner_builder->HelpTerraform(b);
 			} else {
 				StopSlowGuard();
 			}
@@ -798,7 +838,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 			}
 			return;
 		} else {
-			builder->StopBuild();
+			owner_builder->StopBuild();
 		}
 
 		const bool pushRepairCommand =
@@ -872,8 +912,6 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 
 void CBuilderCAI::ExecuteReclaim(Command& c)
 {
-	CBuilder* builder = static_cast<CBuilder*>(owner);
-
 	// not all builders are reclaim-capable by default
 	if (!owner->unitDef->canReclaim)
 		return;
@@ -888,8 +926,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 		const unsigned int uid = signedId;
 
-		//FIXME add a per-unit solution to better balance the load?
-		const bool checkForBetterTarget = (gs->frameNum % (5 * UNIT_SLOWUPDATE_RATE)) < UNIT_SLOWUPDATE_RATE;
+		const bool checkForBetterTarget = ((++randomCounter % 5) == 0);
 		if (checkForBetterTarget && (c.options & INTERNAL_ORDER) && (c.params.size() >= 5)) {
 			// regular check if there is a closer reclaim target
 			CSolidObject* obj;
@@ -952,7 +989,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 				const bool outOfReclaimRange =
 					(pos.SqDistance2D(unit->pos) > radius * radius) ||
-					(builder->curReclaim == unit && unit->isMoving && !IsInBuildRange(unit));
+					(owner_builder->curReclaim == unit && unit->isMoving && !IsInBuildRange(unit));
 				const bool busyAlliedBuilder =
 					unit->unitDef->builder &&
 					!unit->commandAI->commandQue.empty() &&
@@ -991,7 +1028,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 		RemoveUnitFromReclaimers(owner);
 		RemoveUnitFromFeatureReclaimers(owner);
-		builder->StopBuild();
+		owner_builder->StopBuild();
 
 		ReclaimOption recopt = REC_NORESCHECK;
 		if (recUnits)     recopt |= REC_UNITS;
@@ -1015,11 +1052,9 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 }
 
 
-bool CBuilderCAI::ResurrectObject(CFeature* feature) {
-	CBuilder* builder = static_cast<CBuilder*>(owner);
-
+bool CBuilderCAI::ResurrectObject(CFeature *feature) {
 	if (MoveInBuildRange(feature, true)) {
-		builder->SetResurrectTarget(feature);
+		owner_builder->SetResurrectTarget(feature);
 	} else {
 		if (owner->moveType->progressState == AMoveType::Failed) {
 			return false;
@@ -1035,8 +1070,6 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 	// not all builders are resurrect-capable by default
 	if (!owner->unitDef->canResurrect)
 		return;
-
-	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	if (c.params.size() == 1) {
 		unsigned int id = (unsigned int) c.params[0];
@@ -1057,11 +1090,11 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 			} else {
 				RemoveUnitFromResurrecters(owner);
 
-				if (builder->lastResurrected && uh->GetUnitUnsafe(builder->lastResurrected) != NULL && owner->unitDef->canRepair) {
+				if (owner_builder->lastResurrected && uh->GetUnitUnsafe(owner_builder->lastResurrected) != NULL && owner->unitDef->canRepair) {
 					// resurrection finished, start repair (by overwriting the current order)
-					c = Command(CMD_REPAIR, c.options | INTERNAL_ORDER, builder->lastResurrected);
+					c = Command(CMD_REPAIR, c.options | INTERNAL_ORDER, owner_builder->lastResurrected);
 
-					builder->lastResurrected = 0;
+					owner_builder->lastResurrected = 0;
 					inCommand = false;
 					SlowUpdate();
 					return;
@@ -1118,13 +1151,12 @@ void CBuilderCAI::ExecutePatrol(Command& c)
 void CBuilderCAI::ExecuteFight(Command& c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
-	CBuilder* builder = static_cast<CBuilder*>(owner);
 
 	if (tempOrder) {
 		tempOrder = false;
 		inCommand = true;
 	}
-	if (c.params.size() < 3) { // this should not happen but anyway ...
+	if (c.params.size() < 3) { // this shouldnt happen but anyway ...
 		LOG_L(L_ERROR,
 				"Received a Fight command with less than 3 params on %s in BuilderCAI",
 				owner->unitDef->humanName.c_str());
@@ -1171,7 +1203,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 	if (reclaimEnemyMode)     recopt |= REC_ENEMY;
 	if (reclaimEnemyOnlyMode) recopt |= REC_ENEMYONLY;
 
-	const float searchRadius = (owner->immobile ? 0 : (300 * owner->moveState)) + builder->buildDistance;
+	const float searchRadius = (owner->immobile ? 0 : (300 * owner->moveState)) + owner_builder->buildDistance;
 
 	if (!reclaimEnemyOnlyMode && (owner->unitDef->canRepair || owner->unitDef->canAssist) && // Priority 1: Repair
 	    FindRepairTargetAndRepair(curPosOnLine, searchRadius, c.options, true, resurrectMode)){
@@ -1207,12 +1239,12 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		FinishCommand();
 		return;
 	}
-	if(owner->haveTarget && owner->moveType->progressState!=AMoveType::Done){
+
+	if (owner->haveTarget && owner->moveType->progressState != AMoveType::Done) {
 		StopMove();
-	} else if(owner->moveType->progressState!=AMoveType::Active){
+	} else if (owner->moveType->progressState != AMoveType::Active) {
 		owner->moveType->StartMoving(goalPos, 8);
 	}
-	return;
 }
 
 
@@ -1221,10 +1253,8 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 	if (!owner->unitDef->canRestore)
 		return;
 
-	CBuilder* builder = static_cast<CBuilder*>(owner);
-
 	if (inCommand) {
-		if (!builder->terraforming) {
+		if (!owner_builder->terraforming) {
 			FinishCommand();
 		}
 	} else if (owner->unitDef->canRestore) {
@@ -1232,7 +1262,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 		const float radius = std::min(c.params[3], 200.0f);
 
 		if (MoveInBuildRange(pos, radius * 0.7f)) {
-			builder->StartRestore(pos, radius);
+			owner_builder->StartRestore(pos, radius);
 			inCommand = true;
 		}
 	}
@@ -1252,12 +1282,8 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 		} else {
 			const CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
 
-			const bool canAssistPointed =
-				(owner->unitDef->canAssist && pointed->beingBuilt) &&
-				(!pointed->soloBuilder || (pointed->soloBuilder == owner));
-			const bool canRepairPointed =
-				(owner->unitDef->canRepair && !pointed->beingBuilt) &&
-				pointed->unitDef->repairable && (pointed->health < pointed->maxHealth);
+			const bool canAssistPointed = owner_builder->CanAssistUnit(pointed);
+			const bool canRepairPointed = owner_builder->CanRepairUnit(pointed);
 
 			if (canAssistPointed) {
 				return CMD_REPAIR;
@@ -1407,10 +1433,8 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 
 
 bool CBuilderCAI::ReclaimObject(CSolidObject* object) {
-	CBuilder* builder = static_cast<CBuilder*>(owner);
-
 	if (MoveInBuildRange(object)) {
-		builder->SetReclaimTarget(object);
+		owner_builder->SetReclaimTarget(object);
 	} else {
 		if (owner->moveType->progressState == AMoveType::Failed) {
 			return false;
@@ -1433,6 +1457,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 	const CSolidObject* best = NULL;
 	float bestDist = bestStartDist;
 	bool stationary = false;
+	bool metal = false;
 	int rid = -1;
 
 	if (recUnits || recEnemy || recEnemyOnly) {
@@ -1475,7 +1500,6 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 
 	if ((!best || !stationary) && !recEnemyOnly) {
 		best = NULL;
-		bool metal = false;
 		const CTeam* team = teamHandler->Team(owner->team);
 		const std::vector<CFeature*>& features = qf->GetFeaturesExact(pos, radius);
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
@@ -1610,8 +1634,8 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 			if(healthyOnly && unit->health < unit->maxHealth && unit->captureProgress <= 0.0f) {
 				continue;
 			}
-			float dist = f3SqDist(unit->pos, owner->pos);
-			if(dist < bestDist || (!stationary && !unit->isMoving)) {
+			const float dist = f3SqDist(unit->pos, owner->pos);
+			if (dist < bestDist || (!stationary && !unit->isMoving)) {
 				if (!owner->unitDef->canmove && !IsInBuildRange(unit)) {
 					continue;
 				}
@@ -1661,16 +1685,8 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				if (unit->beingBuilt && unit->moveDef && (owner->moveState == MOVESTATE_HOLDPOS)) {
 					continue;
 				}
-				// don't repair stuff that can't be repaired
-				if (!unit->beingBuilt && !unit->unitDef->repairable) {
-					continue;
-				}
 				// don't assist or repair if can't assist or repair
-				if (!( unit->beingBuilt && owner->unitDef->canAssist) &&
-						!(!unit->beingBuilt && owner->unitDef->canRepair)) {
-					continue;
-				}
-				if (unit->soloBuilder && (unit->soloBuilder != owner)) {
+				if (!owner_builder->CanAssistUnit(unit) && !owner_builder->CanRepairUnit(unit)) {
 					continue;
 				}
 				if (unit == owner) {

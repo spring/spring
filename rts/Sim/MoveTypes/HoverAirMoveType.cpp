@@ -716,9 +716,10 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	speed.y = yspeed;
 	curHeight = pos.y - minHeight;
 
-	if (curHeight < 4.0f) {
-		speed.x *= 0.95f;
-		speed.z *= 0.95f;
+	if (modInfo.allowAircraftToHitGround) {
+		if (minHeight > (pos.y - owner->radius)) {
+			owner->Move1D(minHeight + owner->radius + 0.01f, 1, false);
+		}
 	}
 
 	if (lastColWarningType == 2) {

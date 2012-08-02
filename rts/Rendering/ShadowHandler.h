@@ -17,12 +17,7 @@ class CCamera;
 class CShadowHandler
 {
 public:
-	CShadowHandler()
-		: shadowTexture(0)
-		, dummyColorTexture(0)
-	{
-		Init();
-	}
+	CShadowHandler() { Init(); }
 	~CShadowHandler() { Kill(); }
 
 	void Reload(const char* argv);
@@ -64,6 +59,7 @@ public:
 private:
 	void Init();
 	void Kill();
+	void FreeTextures();
 
 	bool InitDepthTarget();
 	bool WorkaroundUnsupportedFboRenderTargets();
