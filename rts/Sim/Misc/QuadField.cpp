@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/mmgr.h"
+#include <algorithm>
 
 #include "lib/gml/gml.h"
 #include "QuadField.h"
@@ -404,39 +405,30 @@ void CQuadField::MovedUnit(CUnit* unit)
 {
 	const std::vector<int>& newQuads = GetQuads(unit->pos, unit->radius);
 
-	//! compare if the quads have changed, if not stop here
+	// compare if the quads have changed, if not stop here
 	if (newQuads.size() == unit->quads.size()) {
-		std::vector<int>::const_iterator qi1, qi2;
-		qi1 = unit->quads.begin();
-		for (qi2 = newQuads.begin(); qi2 != newQuads.end(); ++qi2) {
-			if (*qi1 != *qi2) {
-				break;
-			}
-			++qi1;
-		}
-		if (qi2 == newQuads.end()) {
+		if (std::equal(newQuads.begin(), newQuads.end(), unit->quads.begin())) {
 			return;
 		}
 	}
 
-	GML_RECMUTEX_LOCK(quad); // MovedUnit - possible performance hog
+	GML_RECMUTEX_LOCK(quad); // MovedUnit
 
 	std::vector<int>::const_iterator qi;
 	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
+		std::list<CUnit*>& quadUnits     = baseQuads[*qi].units;
+		std::list<CUnit*>& quadAllyUnits = baseQuads[*qi].teamUnits[unit->allyteam];
 		std::list<CUnit*>::iterator ui;
-		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
-			if (*ui == unit) {
-				baseQuads[*qi].units.erase(ui);
-				break;
-			}
-		}
-		for (ui = baseQuads[*qi].teamUnits[unit->allyteam].begin(); ui != baseQuads[*qi].teamUnits[unit->allyteam].end(); ++ui) {
-			if (*ui == unit) {
-				baseQuads[*qi].teamUnits[unit->allyteam].erase(ui);
-				break;
-			}
-		}
+
+		ui = std::find(quadUnits.begin(), quadUnits.end(), unit);
+		if (ui != quadUnits.end())
+			quadUnits.erase(ui);
+
+		ui = std::find(quadAllyUnits.begin(), quadAllyUnits.end(), unit);
+		if (ui != quadAllyUnits.end())
+			quadAllyUnits.erase(ui);
 	}
+
 	for (qi = newQuads.begin(); qi != newQuads.end(); ++qi) {
 		baseQuads[*qi].units.push_front(unit);
 		baseQuads[*qi].teamUnits[unit->allyteam].push_front(unit);
@@ -450,19 +442,17 @@ void CQuadField::RemoveUnit(CUnit* unit)
 
 	std::vector<int>::const_iterator qi;
 	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
+		std::list<CUnit*>& quadUnits     = baseQuads[*qi].units;
+		std::list<CUnit*>& quadAllyUnits = baseQuads[*qi].teamUnits[unit->allyteam];
 		std::list<CUnit*>::iterator ui;
-		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
-			if (*ui == unit) {
-				baseQuads[*qi].units.erase(ui);
-				break;
-			}
-		}
-		for (ui = baseQuads[*qi].teamUnits[unit->allyteam].begin(); ui != baseQuads[*qi].teamUnits[unit->allyteam].end(); ++ui) {
-			if (*ui == unit) {
-				baseQuads[*qi].teamUnits[unit->allyteam].erase(ui);
-				break;
-			}
-		}
+
+		ui = std::find(quadUnits.begin(), quadUnits.end(), unit);
+		if (ui != quadUnits.end())
+			quadUnits.erase(ui);
+
+		ui = std::find(quadAllyUnits.begin(), quadAllyUnits.end(), unit);
+		if (ui != quadAllyUnits.end())
+			quadAllyUnits.erase(ui);
 	}
 	unit->quads.clear();
 }
