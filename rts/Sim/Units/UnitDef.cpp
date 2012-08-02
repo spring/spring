@@ -59,7 +59,7 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	this->badTargetCat =                                   CCategoryHandler::Instance()->GetCategories(btcString);
 	this->onlyTargetCat = (otcString.empty())? 0xffffffff: CCategoryHandler::Instance()->GetCategories(otcString);
 
-	this->mainDir = weaponTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f));
+	this->mainDir = weaponTable.GetFloat3("mainDir", float3(0.0f, 0.0f, 1.0f));
 	this->mainDir.SafeNormalize();
 }
 
@@ -433,7 +433,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	showPlayerName = udTable.GetBool("showPlayerName",     false);
 
 	cloakCost = udTable.GetFloat("cloakCost", 0.0f);
-	cloakCostMoving = udTable.GetFloat("cloakCostMoving", 0.0f);
+	cloakCostMoving = udTable.GetFloat("cloakCostMoving", cloakCost);
 
 	startCloaked     = udTable.GetBool("initCloaked", false);
 	decloakDistance  = udTable.GetFloat("minCloakDistance", 0.0f);
@@ -697,7 +697,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		udTable.GetString("collisionVolumeType", ""),
 		udTable.GetFloat3("collisionVolumeScales", ZeroVector),
 		udTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		udTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_DISC)
+		CollisionVolume::COLVOL_HITTEST_CONT
 	);
 
 	if ((usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false))) {

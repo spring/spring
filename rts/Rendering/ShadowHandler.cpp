@@ -112,9 +112,8 @@ void CShadowHandler::Init()
 
 	if (!InitDepthTarget()) {
 		// free any resources allocated by InitDepthTarget()
-		if (fb.IsValid()) fb.DetachAll();
-		glDeleteTextures(1, &shadowTexture    );
-		glDeleteTextures(1, &dummyColorTexture);
+		FreeTextures();
+
 		LOG_L(L_ERROR, "[%s] failed to initialize depth-texture FBO", __FUNCTION__);
 		return;
 	}
@@ -125,9 +124,8 @@ void CShadowHandler::Init()
 
 	if (shadowConfig == 0) {
 		// free any resources allocated by InitDepthTarget()
-		if (fb.IsValid()) fb.DetachAll();
-		glDeleteTextures(1, &shadowTexture    );
-		glDeleteTextures(1, &dummyColorTexture);
+		FreeTextures();
+
 		// shadowsLoaded is still false
 		return;
 	}
@@ -137,11 +135,17 @@ void CShadowHandler::Init()
 
 void CShadowHandler::Kill()
 {
-	glDeleteTextures(1, &shadowTexture);
-	glDeleteTextures(1, &dummyColorTexture);
-
+	FreeTextures();
 	shaderHandler->ReleaseProgramObjects("[ShadowHandler]");
 	shadowGenProgs.clear();
+}
+
+void CShadowHandler::FreeTextures() {
+	if (fb.IsValid())
+		fb.DetachAll();
+
+	glDeleteTextures(1, &shadowTexture    ); shadowTexture     = 0;
+	glDeleteTextures(1, &dummyColorTexture); dummyColorTexture = 0;
 }
 
 
@@ -707,3 +711,4 @@ void CShadowHandler::CalcMinMaxView()
 	// yScale = (shadowProjMinMax.w - shadowProjMinMax.z) * 1.5f;
 }
 #endif
+

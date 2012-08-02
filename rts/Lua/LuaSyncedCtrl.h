@@ -89,6 +89,7 @@ class LuaSyncedCtrl
 		static int SetUnitPosition(lua_State* L);
 		static int SetUnitRotation(lua_State* L);
 		static int SetUnitVelocity(lua_State* L);
+		static int SetUnitDirection(lua_State* L);
 
 		static int AddUnitDamage(lua_State* L);
 		static int AddUnitImpulse(lua_State* L);

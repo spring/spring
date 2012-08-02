@@ -151,6 +151,9 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 	noSelect = def->noSelect;
 
+	// set position before mid-position
+	Move3D(_pos.cClampInMap(), false);
+
 	if (def->drawType == DRAWTYPE_MODEL) {
 		if ((model = def->LoadModel()) == NULL) {
 			LOG_L(L_ERROR, "Features: Couldn't load model for %s", def->name.c_str());
@@ -166,12 +169,11 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		}
 	}
 
-	// note: gets deleted in ~CSolidObject
-	collisionVolume = new CollisionVolume(def->collisionVolume, radius);
-
-	Move3D(_pos.cClampInMap(), false);
 	UpdateMidAndAimPos();
 	CalculateTransform();
+
+	// note: gets deleted in ~CSolidObject
+	collisionVolume = new CollisionVolume(def->collisionVolume, radius);
 
 	featureHandler->AddFeature(this);
 	qf->AddFeature(this);
@@ -199,18 +201,12 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 void CFeature::CalculateTransform()
 {
-	float3 frontDir = GetVectorFromHeading(heading);
-	float3 upDir;
+	updir    = (!def->upright)? ground->GetNormal(pos.x, pos.z): UpVector;
+	frontdir = GetVectorFromHeading(heading);
+	rightdir = (frontdir.cross(updir)).Normalize();
+	frontdir = (updir.cross(rightdir)).Normalize();
 
-	if (def->upright) upDir = float3(0.0f, 1.0f, 0.0f);
-	else upDir = ground->GetNormal(pos.x, pos.z);
-
-	float3 rightDir = frontDir.cross(upDir);
-	rightDir.Normalize();
-	frontDir = upDir.cross(rightDir);
-	frontDir.Normalize ();
-
-	transMatrix = CMatrix44f(pos, -rightDir, upDir, frontDir);
+	transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir);
 }
 
 
@@ -402,10 +398,10 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 		treeDrawer->DeleteTree(pos);
 	}
 
-	Move3D(pos, false);
+	Move3D(newPos - pos, true);
 	eventHandler.FeatureMoved(this);
 
-	// setup finalHeight
+	// setup finalHeight (pos == newPos now)
 	if (snapToGround) {
 		if (def->floating) {
 			finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
@@ -413,7 +409,7 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 			finalHeight = ground->GetHeightReal(pos.x, pos.z);
 		}
 	} else {
-		finalHeight = newPos.y;
+		finalHeight = pos.y;
 	}
 
 	// setup the visual transformation matrix

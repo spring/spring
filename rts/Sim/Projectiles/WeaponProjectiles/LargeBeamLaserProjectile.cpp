@@ -69,7 +69,7 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
 		ttl           = weaponDef->beamLaserTTL;
 	}
 
-	cegID = gCEG->Load(explGenHandler, cegTag);
+	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 

@@ -1854,7 +1854,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 
 inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
-	if (unit->luaDraw && luaRules && luaRules->DrawUnit(unit->id)) {
+	if (unit->luaDraw && luaRules && luaRules->DrawUnit(unit)) {
 		return;
 	}
 

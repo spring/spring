@@ -9,6 +9,7 @@ class CUnit;
 class CFeature;
 class CStrafeAirMoveType;
 struct Command;
+class AAirMoveType;
 
 class CAirCAI : public CMobileCAI
 {
@@ -16,7 +17,6 @@ public:
 	CR_DECLARE(CAirCAI);
 	CAirCAI(CUnit* owner);
 	CAirCAI();
-	~CAirCAI();
 
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	void SlowUpdate();
@@ -37,6 +37,8 @@ public:
 	bool IsValidTarget(const CUnit* enemy) const;
 
 private:
+	bool AirAutoGenerateTarget(AAirMoveType*);
+	void SelectNewAreaAttackTargetOrPos(const Command& ac);
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}

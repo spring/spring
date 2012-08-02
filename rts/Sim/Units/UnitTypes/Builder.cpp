@@ -131,8 +131,29 @@ void CBuilder::PreInit(const UnitDef* def, int team, int facing, const float3& p
 }
 
 
+bool CBuilder::CanAssistUnit(const CUnit* u, const UnitDef* def) const
+{
+	return
+		   unitDef->canAssist
+		&& (!def || (u->unitDef == def))
+		&& u->beingBuilt && (u->buildProgress < 1.0f)
+		&& (!u->soloBuilder || (u->soloBuilder == this));
+}
+
+
+bool CBuilder::CanRepairUnit(const CUnit* u) const
+{
+	return 
+		   unitDef->canRepair
+		&& (!u->beingBuilt)
+		&& u->unitDef->repairable && (u->health < u->maxHealth);
+}
+
+
 void CBuilder::Update()
 {
+	CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
+
 	if (!beingBuilt && !stunned) {
 		if (terraforming && inBuildStance) {
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
@@ -259,11 +280,11 @@ void CBuilder::Update()
 				CreateNanoParticle(helpTerraform->terraformCenter, helpTerraform->terraformRadius * 0.5f, false);
 			} else {
 				DeleteDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
-				helpTerraform=0;
+				helpTerraform = NULL;
 				StopBuild(true);
 			}
 		}
-		else if (curBuild && f3SqDist(curBuild->pos, pos) < Square(buildDistance + curBuild->radius)) {
+		else if (curBuild && cai->IsInBuildRange(curBuild)) {
 			if (curBuild->soloBuilder && (curBuild->soloBuilder != this)) {
 				StopBuild();
 			} else {
@@ -295,7 +316,7 @@ void CBuilder::Update()
 						adjBuildSpeed = std::min(unitDef->maxRepairSpeed / 2.0f - curBuild->repairAmount, repairSpeed);
 					}
 
-					const CCommandQueue& queue = commandAI->commandQue;
+					const CCommandQueue& queue = cai->commandQue;
 					const Command& command = (!queue.empty())? queue.front(): Command();
 
 					if (adjBuildSpeed > 0.0f && command.GetID() == CMD_WAIT) {
@@ -346,22 +367,27 @@ void CBuilder::Update()
 						}
 						u->health *= 0.05f;
 
-						CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
 						for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
-							CBuilder *bld = (CBuilder *)*it;
-							if (bld->commandAI->commandQue.empty())
+							CBuilder* bld = (CBuilder*) *it;
+							CCommandAI* bldCAI = bld->commandAI;
+
+							if (bldCAI->commandQue.empty())
 								continue;
-							Command& c = bld->commandAI->commandQue.front();
+
+							Command& c = bldCAI->commandQue.front();
+
 							if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
 								continue;
-							const int cmdFeatureId = (int)c.params[0];
+
+							const int cmdFeatureId = c.params[0];
+
 							if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam)) {
 								bld->lastResurrected = u->id; // all units that were rezzing shall assist the repair too
 								c.params[0] = INT_MAX / 2; // prevent FinishCommand from removing this command when the feature is deleted, since it is needed to start the repair
 							}
 						}
 
-						curResurrect->resurrectProgress=0;
+						curResurrect->resurrectProgress = 0;
 						featureHandler->DeleteFeature(curResurrect);
 						StopBuild(true);
 					}
@@ -591,10 +617,10 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 				u = helper->GetClosestFriendlyUnit(buildInfo.pos, buildDistance, allyteam);
 			}
 
-			if (u != NULL && u->unitDef == buildInfo.def && unitDef->canAssist) {
+			if (u != NULL && CanAssistUnit(u, buildInfo.def)) {
 				curBuild = u;
 				AddDeathDependence(u, DEPENDENCE_BUILD);
-				SetBuildStanceToward(buildInfo.pos);
+				SetBuildStanceToward(u->pos);
 				return true;
 			}
 
@@ -606,7 +632,6 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 			return false;
 	}
 
-	const UnitDef* unitDef = buildInfo.def;
 	SetBuildStanceToward(buildInfo.pos);
 
 	if (!inBuildStance) {
@@ -614,40 +639,41 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 		return false;
 	}
 
-	CUnit* b = unitLoader->LoadUnit(buildInfo.def, buildInfo.pos, team,
+	const UnitDef* buildeeDef = buildInfo.def;
+	CUnit* buildee = unitLoader->LoadUnit(buildeeDef, buildInfo.pos, team,
 	                               true, buildInfo.buildFacing, this);
 
 	// floating structures don't terraform the seabed
-	const float groundheight = ground->GetHeightReal(b->pos.x, b->pos.z);
-	const bool onWater = (unitDef->floatOnWater && groundheight <= 0.0f);
+	const float groundheight = ground->GetHeightReal(buildee->pos.x, buildee->pos.z);
+	const bool onWater = (buildeeDef->floatOnWater && groundheight <= 0.0f);
 
-	if (mapDamage->disabled || !unitDef->levelGround || onWater ||
-	    (unitDef->canmove && (unitDef->speed > 0.0f))) {
+	if (mapDamage->disabled || !buildeeDef->levelGround || onWater ||
+	    (buildeeDef->canmove && (buildeeDef->speed > 0.0f))) {
 		// skip the terraforming job
-		b->terraformLeft = 0;
-		b->groundLevelled=true;
-	}
-	else {
-		tx1 = (int)max((float)0,(b->pos.x - (b->unitDef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-		tx2 = min(gs->mapx,tx1+b->unitDef->xsize);
-		tz1 = (int)max((float)0,(b->pos.z - (b->unitDef->zsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-		tz2 = min(gs->mapy,tz1+b->unitDef->zsize);
+		buildee->terraformLeft = 0;
+		buildee->groundLevelled = true;
+	} else {
+		tx1 = (int)max(    0.0f, (buildee->pos.x - (buildeeDef->xsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
+		tx2 =      min(gs->mapx,             tx1 +  buildeeDef->xsize                                     );
+		tz1 = (int)max(    0.0f, (buildee->pos.z - (buildeeDef->zsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
+		tz2 =      min(gs->mapy,             tz1 +  buildeeDef->zsize                                     );
 
-		b->terraformLeft = CalculateBuildTerraformCost(buildInfo);
-		b->groundLevelled= false;
+		buildee->terraformLeft = CalculateBuildTerraformCost(buildInfo);
+		buildee->groundLevelled = false;
 
 		terraforming    = true;
 		terraformType   = Terraform_Building;
-		terraformRadius = (tx2-tx1)*SQUARE_SIZE;
-		terraformCenter = b->pos;
+		terraformRadius = (tx2 - tx1) * SQUARE_SIZE;
+		terraformCenter = buildee->pos;
 	}
 
 	if (!this->unitDef->canBeAssisted) {
-		b->soloBuilder = this;
-		b->AddDeathDependence(this, DEPENDENCE_BUILDER);
+		buildee->soloBuilder = this;
+		buildee->AddDeathDependence(this, DEPENDENCE_BUILDER);
 	}
-	AddDeathDependence(b, DEPENDENCE_BUILD);
-	curBuild = b;
+
+	AddDeathDependence(buildee, DEPENDENCE_BUILD);
+	curBuild = buildee;
 
 	/* The ground isn't going to be terraformed.
 	 * When the building is completed, it'll 'pop'
@@ -658,7 +684,6 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 	 * at the 'right' height to begin with.
 	 */
 	curBuild->moveType->SlowUpdate();
-
 	return true;
 }
 

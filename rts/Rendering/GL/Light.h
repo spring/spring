@@ -13,6 +13,7 @@ namespace GL {
 		Light()
 			: position(0.0f, 0.0f, 1.0f, 1.0f)
 			, direction(ZeroVector)
+
 			, ambientColor(0.0f, 0.0f, 0.0f, 1.0f)
 			, diffuseColor(0.0f, 0.0f, 0.0f, 1.0f)
 			, specularColor(0.0f, 0.0f, 0.0f, 1.0f)
@@ -21,13 +22,18 @@ namespace GL {
 			, diffuseDecayRate(1.0f, 1.0f, 1.0f)
 			, specularDecayRate(1.0f, 1.0f, 1.0f)
 			, decayFunctionType(1.0f, 1.0f, 1.0f)
+
 			, radius(0.0f)
 			, fov(180.0f)
+
+			, ignoreLOS(true)
+
 			, id(-1U)
 			, ttl(0)
 			, relTime(0)
 			, absTime(0)
 			, priority(0)
+
 			, trackPosition(NULL)
 			, trackDirection(NULL)
 		{
@@ -75,6 +81,9 @@ namespace GL {
 		float GetFOV() const { return fov; }
 		void SetRadius(float r) { radius = r; }
 		void SetFOV(float f) { fov = f; }
+
+		void SetIgnoreLOS(bool b) { ignoreLOS = b; }
+		bool GetIgnoreLOS() const { return ignoreLOS; }
 
 		const unsigned int GetID() const { return id; }
 		unsigned int GetTTL() const { return ttl; }
@@ -141,6 +150,8 @@ namespace GL {
 
 		float radius;             // elmos
 		float fov;                // degrees ([0.0 - 90.0] or 180.0)
+
+		bool ignoreLOS;           // if true, we can be seen out of LOS
 
 		unsigned int id;          // GL_LIGHT[id] we are bound to
 		unsigned int ttl;         // maximum lifetime in sim-frames

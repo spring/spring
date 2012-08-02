@@ -11,6 +11,7 @@ class CModInfo
 public:
 	CModInfo()
 		: allowAircraftToLeaveMap(true)
+		, allowAircraftToHitGround(true)
 		, allowPushingEnemyUnits(false)
 		, allowCrushingAlliedUnits(false)
 		, allowUnitCollisionDamage(false)
@@ -79,6 +80,7 @@ public:
 
 	// Movement behaviour
 	bool allowAircraftToLeaveMap;    // determines if gunships are allowed to leave map boundaries
+	bool allowAircraftToHitGround;   // determines if aircraft (both types) can collide with terrain
 	bool allowPushingEnemyUnits;     // determines if enemy (ground-)units can be pushed during collisions
 	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
 	bool allowUnitCollisionDamage;   // determines if units take damage from (skidding) collisions
@@ -98,7 +100,7 @@ public:
 	int multiReclaim;
 	/// 0 = gradual reclaim, 1 = all reclaimed at end, otherwise reclaim in reclaimMethod chunks
 	int reclaimMethod;
-	/// 0 = Revert to wireframe, gradual reclaim, 1 = Subtract HP, give full metal at end, default 1
+	/// 0 = Revert to wireframe and gradual reclaim, 1 = Subtract HP and give full metal at end, default 1
 	int reclaimUnitMethod;
 	/// How much energy should reclaiming a unit cost, default 0.0
 	float reclaimUnitEnergyCostFactor;

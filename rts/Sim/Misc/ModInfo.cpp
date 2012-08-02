@@ -51,6 +51,7 @@ void CModInfo::Init(const char* modArchive)
 		// movement
 		const LuaTable& movementTbl = root.SubTable("movement");
 		allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
+		allowAircraftToHitGround = movementTbl.GetBool("allowAircraftToHitGround", true);
 		allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);
 		allowCrushingAlliedUnits = movementTbl.GetBool("allowCrushingAlliedUnits", false);
 		allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", false);

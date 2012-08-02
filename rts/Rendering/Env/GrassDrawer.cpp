@@ -422,7 +422,7 @@ void CGrassDrawer::Draw(void)
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	Shader::IProgramObject* grassShader = NULL;
 
-	if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
+	if (shadowHandler->shadowsLoaded) {
 		grassShader = grassShaders[GRASS_PROGRAM_NEAR_SHADOW];
 		grassShader->Enable();
 
@@ -577,7 +577,7 @@ void CGrassDrawer::Draw(void)
 	glDepthMask(false);
 
 
-	if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
+	if (shadowHandler->shadowsLoaded) {
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, farTex);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -727,7 +727,7 @@ void CGrassDrawer::Draw(void)
 
 	glDisable(GL_ALPHA_TEST);
 
-	if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
+	if (shadowHandler->shadowsLoaded) {
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -738,13 +738,13 @@ void CGrassDrawer::Draw(void)
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glDisable(GL_TEXTURE_2D);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-	}
-
-	if (gd->DrawExtraTex()) {
-		glActiveTextureARB(GL_TEXTURE3_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE0_ARB);
+	} else {
+		if (gd->DrawExtraTex()) {
+			glActiveTextureARB(GL_TEXTURE3_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glDisable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+		}
 	}
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);
