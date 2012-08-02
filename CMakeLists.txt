@@ -225,6 +225,11 @@ else   (UNIX)
 	INCLUDE_DIRECTORIES("${COREFOUNDATION_LIBRARY}/Headers")
 endif  (MINGW)
 
+FIND_PACKAGE(VALGRIND)
+if    (VALGRIND_FOUND)
+	add_definitions(-DUSE_VALGRIND)
+endif (VALGRIND_FOUND)
+
 
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXFlags)

@@ -1,5 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#ifdef USE_VALGRIND
+	#include <valgrind/valgrind.h>
+#endif
+
 #include "System/myMath.h"
 #include "System/OpenMP_cond.h"
 #include "System/Sync/FPUCheck.h"
@@ -90,6 +94,14 @@ void CMyMath::Init()
 		checksum *= 33;
 		checksum = 33 * checksum + *(unsigned*) &headingToVectorTable[a].y;
 	}
+
+#ifdef USE_VALGRIND
+	if (RUNNING_ON_VALGRIND) {
+		// Valgrind doesn't allow us setting the FPU, so syncing is impossible
+		LOG_L(L_WARNING, "Valgrind detected sync checking disabled!");
+		return;
+	}
+#endif
 
 #ifdef STREFLOP_H
 	if (checksum != HEADING_CHECKSUM) {

@@ -8,6 +8,11 @@
 	#include <fstream>
 	#include <iostream>
 #endif
+
+#ifdef USE_VALGRIND
+	#include <valgrind/valgrind.h>
+#endif
+
 #include <algorithm>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -286,6 +291,12 @@ namespace Watchdog
 				LOG("[Watchdog] disabled (gdb detected)");
 				return;
 			}
+		}
+	#endif
+	#ifdef USE_VALGRIND
+		if (RUNNING_ON_VALGRIND) {
+			LOG("[Watchdog] disabled (Valgrind detected)");
+			return;
 		}
 	#endif
 		const int hangTimeoutSecs = configHandler->GetInt("HangTimeout");
