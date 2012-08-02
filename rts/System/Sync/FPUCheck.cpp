@@ -1,5 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#ifdef USE_VALGRIND
+	#include <valgrind/valgrind.h>
+#endif
+
 #include "FPUCheck.h"
 #include <cstddef>
 #include "System/Log/ILog.h"
@@ -57,6 +61,14 @@ MaskRsvd: 0    0    0  1  1  1  1  1   0    0   1  1  1  1  1  1 = 0x1F3F
 */
 void good_fpu_control_registers(const char* text)
 {
+#ifdef USE_VALGRIND
+	static const bool valgrindRunning = RUNNING_ON_VALGRIND;
+	if (valgrindRunning) {
+		// Valgrind doesn't allow us setting the FPU, so syncing is impossible
+		return;
+	}
+#endif
+
 	// We are paranoid.
 	// We don't trust the enumeration constants from streflop / (g)libc.
 
