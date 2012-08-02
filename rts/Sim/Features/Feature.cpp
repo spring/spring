@@ -201,19 +201,12 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 void CFeature::CalculateTransform()
 {
-	//FIXME CSolidObject already has dir vectors!!!!
-	float3 frontDir = GetVectorFromHeading(heading);
-	float3 upDir;
+	updir    = (!def->upright)? ground->GetNormal(pos.x, pos.z): UpVector;
+	frontdir = GetVectorFromHeading(heading);
+	rightdir = (frontdir.cross(updir)).Normalize();
+	frontdir = (updir.cross(rightdir)).Normalize();
 
-	if (def->upright) upDir = float3(0.0f, 1.0f, 0.0f);
-	else upDir = ground->GetNormal(pos.x, pos.z);
-
-	float3 rightDir = frontDir.cross(upDir);
-	rightDir.Normalize();
-	frontDir = upDir.cross(rightDir);
-	frontDir.Normalize ();
-
-	transMatrix = CMatrix44f(pos, -rightDir, upDir, frontDir);
+	transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir);
 }
 
 
