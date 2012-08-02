@@ -257,7 +257,8 @@ void C3DModelLoader::CreateLocalModel(CUnit* unit)
 {
 	unit->localmodel = new LocalModel(unit->model);
 
-	if (GML::SimEnabled() && !GML::ShareLists()) {
+	const bool dlistLoaded = !!unit->model->GetRootPiece()->dispListID;
+	if (!dlistLoaded && GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // CreateLocalModel
 
 		fixLocalModels.insert(unit);
