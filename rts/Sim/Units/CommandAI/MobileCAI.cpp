@@ -610,7 +610,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
 	return enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
 		&& !(owner->unitDef->noChaseCategory & enemy->category)
-		&& !enemy->neutral
+		&& !enemy->IsNeutral()
 		// on "Hold pos", a target can not be valid if there exists no line of fire to it.
 		&& (owner->moveState > MOVESTATE_HOLDPOS || owner->weapons.empty() ||
 				owner->weapons.front()->TryTargetRotate(const_cast<CUnit*>(enemy), false));

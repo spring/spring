@@ -662,13 +662,13 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 }
 
 
-bool CBuilderCAI::TargetInterceptable(CUnit *unit, float uspeed) {
+bool CBuilderCAI::TargetInterceptable(CUnit* unit, float targetSpeed) {
 	// if the target is moving away at a higher speed than we can manage, there is little point in chasing it
-	const float& maxSpeed = owner->moveType->GetMaxSpeed();
-	if (uspeed <= maxSpeed)
+	const float maxSpeed = owner->moveType->GetMaxSpeed();
+	if (targetSpeed <= maxSpeed)
 		return true;
-	const float3& unitToPos = unit->pos - owner->pos;
-	return unitToPos.dot2D(unit->speed) <= unitToPos.Length2D() * maxSpeed;
+	const float3 unitToPos = unit->pos - owner->pos;
+	return (unitToPos.dot2D(unit->speed) <= unitToPos.Length2D() * maxSpeed);
 }
 
 
@@ -1663,18 +1663,20 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
                                             bool attackEnemy,
 											bool builtOnly)
 {
-	const std::vector<CUnit*> &cu = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& cu = qf->GetUnitsExact(pos, radius);
+	const CUnit* bestUnit = NULL;
 
-	const CUnit* best = NULL;
+	const float maxSpeed = owner->moveType->GetMaxSpeed();
+	float unitSpeed = 0.0f;
 	float bestDist = 1.0e30f;
+
 	bool haveEnemy = false;
 	bool trySelfRepair = false;
 	bool stationary = false;
-	const float& maxSpeed = owner->moveType->GetMaxSpeed();
-	float uspeed = 0.0f;
 
 	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
+
 		if (teamHandler->Ally(owner->allyteam, unit->allyteam)) {
 			if (!haveEnemy && (unit->health < unit->maxHealth)) {
 				// don't help allies build unless set on roam
@@ -1693,36 +1695,42 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 					trySelfRepair = true;
 					continue;
 				}
-				if(unit->isMoving && stationary) { // repair stationary targets first
+				// repair stationary targets first
+				if (unit->isMoving && stationary) {
 					continue;
 				}
-				if(builtOnly && unit->beingBuilt) {
+				if (builtOnly && unit->beingBuilt) {
 					continue;
 				}
 
 				float dist = f3SqDist(unit->pos, owner->pos);
+
+				// avoid targets that are faster than our max speed
 				if (unit->isMoving) {
-					uspeed = unit->speed.Length2D();
-					dist *= 1.0f + std::max(uspeed - maxSpeed, 0.0f); // avoid targets that are faster than our max speed
+					unitSpeed = unit->speed.Length2D();
+					dist *= (1.0f + std::max(unitSpeed - maxSpeed, 0.0f));
 				}
 				if (dist < bestDist || (!stationary && !unit->isMoving)) {
 					// dont lock-on to units outside of our reach (for immobile builders)
-					if ((owner->immobile || (unit->isMoving && !TargetInterceptable(unit, uspeed))) && !IsInBuildRange(unit)) {
+					if ((owner->immobile || (unit->isMoving && !TargetInterceptable(unit, unitSpeed))) && !IsInBuildRange(unit)) {
 						continue;
 					}
 					// don't repair stuff that's being reclaimed
 					if (!(options & CONTROL_KEY) && IsUnitBeingReclaimed(unit, owner)) {
 						continue;
 					}
-					if(!stationary && !unit->isMoving) {
+					if (!stationary && !unit->isMoving) {
 						stationary = true;
 					}
+
 					bestDist = dist;
-					best = unit;
+					bestUnit = unit;
 				}
 			}
-		}
-		else {
+		} else {
+			if (unit->IsNeutral())
+				continue;
+
 			if (!attackEnemy || !owner->unitDef->canAttack || (owner->maxRange <= 0) )
 				continue;
 
@@ -1730,23 +1738,23 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				continue;
 
 			const float dist = f3SqDist(unit->pos, owner->pos);
+
 			if ((dist < bestDist) || !haveEnemy) {
-				if (owner->immobile &&
-					((dist - unit->radius) > owner->maxRange)) {
+				if (owner->immobile && ((dist - unit->radius) > owner->maxRange))
 					continue;
-				}
-				best = unit;
+
+				bestUnit = unit;
 				bestDist = dist;
 				haveEnemy = true;
 			}
 		}
 	}
 
-	if (best == NULL) {
+	if (bestUnit == NULL) {
 		if (trySelfRepair &&
 		    owner->unitDef->canSelfRepair &&
 		    (owner->health < owner->maxHealth)) {
-			best = owner;
+			bestUnit = owner;
 		} else {
 			return false;
 		}
@@ -1756,13 +1764,12 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 		if (attackEnemy) {
 			PushOrUpdateReturnFight();
 		}
-		Command cmd(CMD_REPAIR, options | INTERNAL_ORDER, best->id, pos);
+		Command cmd(CMD_REPAIR, options | INTERNAL_ORDER, bestUnit->id, pos);
 			cmd.PushParam(radius);
 		commandQue.push_front(cmd);
-	}
-	else {
+	} else {
 		PushOrUpdateReturnFight(); // attackEnemy must be true
-		Command cmd(CMD_ATTACK, options | INTERNAL_ORDER, best->id);
+		Command cmd(CMD_ATTACK, options | INTERNAL_ORDER, bestUnit->id);
 		commandQue.push_front(cmd);
 	}
 
