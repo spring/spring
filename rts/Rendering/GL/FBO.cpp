@@ -273,7 +273,7 @@ bool FBO::IsValid() const
 /**
  * Makes the framebuffer the active framebuffer context
  */
-void FBO::Bind(void)
+void FBO::Bind()
 {
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
 }

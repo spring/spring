@@ -11,11 +11,11 @@ CNoWeapon::CNoWeapon(CUnit *owner) : CWeapon(owner)
 }
 
 
-CNoWeapon::~CNoWeapon(void)
+CNoWeapon::~CNoWeapon()
 {
 }
 
-void CNoWeapon::Update(void)
+void CNoWeapon::Update()
 {
 }
 
@@ -24,7 +24,7 @@ bool CNoWeapon::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 	return false;
 }
 
-void CNoWeapon::Init(void)
+void CNoWeapon::Init()
 {
 }
 

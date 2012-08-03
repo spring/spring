@@ -26,6 +26,7 @@
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/Sound/SoundChannels.h"
+#include "System/Log/ILog.h"
 
 CR_BIND_DERIVED(CWeapon, CObject, (NULL));
 
@@ -1153,7 +1154,7 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit
 
 }
 
-void CWeapon::Init(void)
+void CWeapon::Init()
 {
 	int piece = owner->script->AimFromWeapon(weaponNum);
 	relWeaponPos = owner->script->GetPiecePos(piece);
@@ -1198,7 +1199,7 @@ void CWeapon::Fire()
 	}
 }
 
-void CWeapon::UpdateInterceptTarget(void)
+void CWeapon::UpdateInterceptTarget()
 {
 	targetType = Target_None;
 

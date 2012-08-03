@@ -7,7 +7,7 @@ CSaveInterface::CSaveInterface(std::ofstream* ofs)
 {
 }
 
-CSaveInterface::~CSaveInterface(void)
+CSaveInterface::~CSaveInterface()
 {
 }
 

@@ -36,9 +36,9 @@ public:
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 	// for ARB-only clients
-	void SetupBaseDrawPass(void);
-	void SetupReflDrawPass(void);
-	void SetupRefrDrawPass(void);
+	void SetupBaseDrawPass();
+	void SetupReflDrawPass();
+	void SetupRefrDrawPass();
 
 	void IncreaseDetail();
 	void DecreaseDetail();

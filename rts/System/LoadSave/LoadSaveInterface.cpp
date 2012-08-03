@@ -2,10 +2,10 @@
 
 #include "LoadSaveInterface.h"
 
-CLoadSaveInterface::CLoadSaveInterface(void)
+CLoadSaveInterface::CLoadSaveInterface()
 {
 }
 
-CLoadSaveInterface::~CLoadSaveInterface(void)
+CLoadSaveInterface::~CLoadSaveInterface()
 {
 }

@@ -56,8 +56,8 @@ namespace icon {
 		friend class CIcon;
 
 		public:
-			CIconHandler(void);
-			~CIconHandler(void);
+			CIconHandler();
+			~CIconHandler();
 
 			bool AddIcon(const std::string& iconName,
 									const std::string& textureName,

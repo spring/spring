@@ -15,9 +15,9 @@ class CGrassDrawer
 {
 public:
 	CGrassDrawer();
-	~CGrassDrawer(void);
+	~CGrassDrawer();
 
-	void Draw(void);
+	void Draw();
 	void AddGrass(const float3& pos);
 	void ResetPos(const float3& pos);
 	void RemoveGrass(int x, int z);
@@ -52,7 +52,7 @@ public:
 protected:
 	void LoadGrassShaders();
 	void CreateGrassBladeTex(unsigned char* buf);
-	void CreateFarTex(void);
+	void CreateFarTex();
 
 	GrassStruct grass[32 * 32];
 	NearGrassStruct nearGrass[32 * 32];

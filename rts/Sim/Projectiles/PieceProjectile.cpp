@@ -271,7 +271,7 @@ bool CPieceProjectile::HasVertices() const
 	return (omp->GetVertexCount() > 0);
 }
 
-float3 CPieceProjectile::RandomVertexPos(void)
+float3 CPieceProjectile::RandomVertexPos()
 {
 	if (!HasVertices()) {
 		return ZeroVector;

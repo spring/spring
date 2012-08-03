@@ -13,8 +13,8 @@ class CGameInfo : public CInputReceiver
 		static bool IsActive();
 
 	protected:
-		CGameInfo(void);
-		~CGameInfo(void);
+		CGameInfo();
+		~CGameInfo();
 
 		bool MousePress(int x, int y, int button);
 		void MouseRelease(int x, int y, int button);
