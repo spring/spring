@@ -16,7 +16,7 @@ public:
 
 public:
 	CCameraController();
-	virtual ~CCameraController(void) {}
+	virtual ~CCameraController() {}
 
 	virtual const std::string GetName() const = 0;
 

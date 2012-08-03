@@ -18,11 +18,11 @@ CDGunWeapon::CDGunWeapon(CUnit* owner)
 {
 }
 
-CDGunWeapon::~CDGunWeapon(void)
+CDGunWeapon::~CDGunWeapon()
 {
 }
 
-void CDGunWeapon::Update(void)
+void CDGunWeapon::Update()
 {
 	if(targetType!=Target_None){
 		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
@@ -54,7 +54,7 @@ void CDGunWeapon::FireImpl()
 }
 
 
-void CDGunWeapon::Init(void)
+void CDGunWeapon::Init()
 {
 	CWeapon::Init();
 	muzzleFlareSize=1.5f;

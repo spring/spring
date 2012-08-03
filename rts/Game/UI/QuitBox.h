@@ -10,10 +10,10 @@ class CQuitBox :
 	public CInputReceiver
 {
 public:
-	CQuitBox(void);
-	~CQuitBox(void);
+	CQuitBox();
+	~CQuitBox();
 
-	void Draw(void);
+	void Draw();
 
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);

@@ -12,10 +12,10 @@ class CBeamLaser :
 public:
 	CBeamLaser(CUnit* owner);
 
-	void Update(void);
+	void Update();
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 
-	void Init(void);
+	void Init();
 	void FireInternal(float3 dir, bool sweepFire);
 
 	float3 color;
@@ -25,7 +25,7 @@ public:
 	unsigned int lastFireFrame;
 
 private:
-	virtual void FireImpl(void);
+	virtual void FireImpl();
 };
 
 #endif

@@ -26,7 +26,7 @@ class CWeapon : public CObject
 public:
 	CWeapon(CUnit* owner);
 	virtual ~CWeapon();
-	virtual void Init(void);
+	virtual void Init();
 
 	void SetWeaponNum(int);
 

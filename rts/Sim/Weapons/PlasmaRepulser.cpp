@@ -44,7 +44,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 }
 
 
-CPlasmaRepulser::~CPlasmaRepulser(void)
+CPlasmaRepulser::~CPlasmaRepulser()
 {
 	interceptHandler.RemovePlasmaRepulser(this);
 	shieldProjectile->PreDelete();
@@ -184,7 +184,7 @@ void CPlasmaRepulser::Update()
 }
 
 
-void CPlasmaRepulser::SlowUpdate(void)
+void CPlasmaRepulser::SlowUpdate()
 {
 	const int piece = owner->script->QueryWeapon(weaponNum);
 	relWeaponPos = owner->script->GetPiecePos(piece);

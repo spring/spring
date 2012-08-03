@@ -274,7 +274,7 @@ void CLosHandler::CleanupInstance(LosInstance* instance)
 }
 
 
-void CLosHandler::Update(void)
+void CLosHandler::Update()
 {
 	while (!delayQue.empty() && delayQue.front().timeoutTime < gs->frameNum) {
 		FreeInstance(delayQue.front().instance);

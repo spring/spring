@@ -9,7 +9,7 @@ CLoadInterface::CLoadInterface(std::ifstream* ifs)
 {
 }
 
-CLoadInterface::~CLoadInterface(void)
+CLoadInterface::~CLoadInterface()
 {
 }
 

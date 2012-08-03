@@ -27,7 +27,7 @@ CONFIG(float, GroundLODScaleUnitReflection).defaultValue(1.0f);
 CONFIG(bool, HighResLos).defaultValue(false);
 CONFIG(int, ExtraTextureUpdateRate).defaultValue(45);
 
-CBaseGroundDrawer::CBaseGroundDrawer(void)
+CBaseGroundDrawer::CBaseGroundDrawer()
 {
 	LODScaleReflection = configHandler->GetFloat("GroundLODScaleReflection");
 	LODScaleRefraction = configHandler->GetFloat("GroundLODScaleRefraction");
@@ -83,7 +83,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 }
 
 
-CBaseGroundDrawer::~CBaseGroundDrawer(void)
+CBaseGroundDrawer::~CBaseGroundDrawer()
 {
 	if (infoTex!=0) {
 		glDeleteTextures(1, &infoTex);
@@ -93,7 +93,7 @@ CBaseGroundDrawer::~CBaseGroundDrawer(void)
 }
 
 
-void CBaseGroundDrawer::DrawShadowPass(void)
+void CBaseGroundDrawer::DrawShadowPass()
 {}
 
 

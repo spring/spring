@@ -45,7 +45,7 @@ CCannon::CCannon(CUnit* owner)
 	maxPredict = 0.0f;
 }
 
-void CCannon::Init(void)
+void CCannon::Init()
 {
 	gravity = weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity);
 	highTrajectory = weaponDef->highTrajectory == 1;
@@ -158,7 +158,7 @@ bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 }
 
 
-void CCannon::FireImpl(void)
+void CCannon::FireImpl()
 {
 	float3 diff = targetPos - weaponMuzzlePos;
 	float3 dir = (diff.SqLength() > 4.0) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
@@ -186,7 +186,7 @@ void CCannon::FireImpl(void)
 		weaponDef, ttl, damageAreaOfEffect, gravity);
 }
 
-void CCannon::SlowUpdate(void)
+void CCannon::SlowUpdate()
 {
 	if(weaponDef->highTrajectory == 2 && owner->useHighTrajectory!=highTrajectory){
 		highTrajectory=owner->useHighTrajectory;

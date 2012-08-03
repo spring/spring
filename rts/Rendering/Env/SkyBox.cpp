@@ -45,7 +45,7 @@ CSkyBox::CSkyBox(const std::string& texture)
 	globalRendering->drawFog = (fogStart <= 0.99f);
 }
 
-CSkyBox::~CSkyBox(void)
+CSkyBox::~CSkyBox()
 {
 }
 

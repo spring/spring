@@ -27,7 +27,7 @@
 
 #undef CreateDirectory
 
-CQuitBox::CQuitBox(void)
+CQuitBox::CQuitBox()
 {
 	box.x1 = 0.34f;
 	box.y1 = 0.18f;
@@ -99,11 +99,11 @@ CQuitBox::CQuitBox(void)
 	}
 }
 
-CQuitBox::~CQuitBox(void)
+CQuitBox::~CQuitBox()
 {
 }
 
-void CQuitBox::Draw(void)
+void CQuitBox::Draw()
 {
 	float mx=MouseX(mouse->lastx);
 	float my=MouseY(mouse->lasty);

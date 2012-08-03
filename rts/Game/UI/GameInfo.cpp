@@ -49,7 +49,7 @@ bool CGameInfo::IsActive()
 }
 
 
-CGameInfo::CGameInfo(void)
+CGameInfo::CGameInfo()
 {
 	box.x1=0.5f;
 	box.y1=0.5f;
@@ -57,7 +57,7 @@ CGameInfo::CGameInfo(void)
 	box.y2=0.5f;
 }
 
-CGameInfo::~CGameInfo(void)
+CGameInfo::~CGameInfo()
 {
 	instance = NULL;
 }

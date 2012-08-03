@@ -453,7 +453,7 @@ void CEventHandler::Update()
 
 
 
-void CEventHandler::UpdateUnits(void) { eventBatchHandler->UpdateUnits(); }
+void CEventHandler::UpdateUnits() { eventBatchHandler->UpdateUnits(); }
 void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
 void CEventHandler::DeleteSyncedUnits() {
 	eventBatchHandler->DeleteSyncedUnits();
@@ -461,7 +461,7 @@ void CEventHandler::DeleteSyncedUnits() {
 	if (luaUI) luaUI->ExecuteUnitEventBatch();
 }
 
-void CEventHandler::UpdateFeatures(void) { eventBatchHandler->UpdateFeatures(); }
+void CEventHandler::UpdateFeatures() { eventBatchHandler->UpdateFeatures(); }
 void CEventHandler::UpdateDrawFeatures() { eventBatchHandler->UpdateDrawFeatures(); }
 void CEventHandler::DeleteSyncedFeatures() {
 	eventBatchHandler->DeleteSyncedFeatures();

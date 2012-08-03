@@ -256,7 +256,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 }
 
 
-void CSMFGroundDrawer::DrawShadowPass(void)
+void CSMFGroundDrawer::DrawShadowPass()
 {
 	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return;
@@ -276,9 +276,9 @@ void CSMFGroundDrawer::DrawShadowPass(void)
 
 
 
-void CSMFGroundDrawer::SetupBaseDrawPass(void) { smfRenderStateSSP->SetCurrentShader(DrawPass::Normal); }
-void CSMFGroundDrawer::SetupReflDrawPass(void) { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterReflection); }
-void CSMFGroundDrawer::SetupRefrDrawPass(void) { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterRefraction); }
+void CSMFGroundDrawer::SetupBaseDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::Normal); }
+void CSMFGroundDrawer::SetupReflDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterReflection); }
+void CSMFGroundDrawer::SetupRefrDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterRefraction); }
 
 void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
 {

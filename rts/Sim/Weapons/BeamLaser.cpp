@@ -39,7 +39,7 @@ CBeamLaser::CBeamLaser(CUnit* owner)
 
 
 
-void CBeamLaser::Update(void)
+void CBeamLaser::Update()
 {
 	if (targetType != Target_None) {
 		weaponPos =
@@ -133,7 +133,7 @@ bool CBeamLaser::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	return true;
 }
 
-void CBeamLaser::Init(void)
+void CBeamLaser::Init()
 {
 	if (!weaponDef->beamburst) {
 		salvoDelay = 0;
@@ -150,7 +150,7 @@ void CBeamLaser::Init(void)
 	muzzleFlareSize = 0;
 }
 
-void CBeamLaser::FireImpl(void)
+void CBeamLaser::FireImpl()
 {
 	float3 dir;
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {

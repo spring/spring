@@ -11,9 +11,9 @@ class CStarburstLauncher :
 	CR_DECLARE(CStarburstLauncher);
 public:
 	CStarburstLauncher(CUnit* owner);
-	~CStarburstLauncher(void);
+	~CStarburstLauncher();
 
-	void Update(void);
+	void Update();
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 	float GetRange2D(float yDiff) const;
 

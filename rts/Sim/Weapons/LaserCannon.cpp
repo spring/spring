@@ -23,7 +23,7 @@ CLaserCannon::CLaserCannon(CUnit* owner)
 
 
 
-void CLaserCannon::Update(void)
+void CLaserCannon::Update()
 {
 	if(targetType != Target_None){
 		weaponPos = owner->pos +
@@ -84,7 +84,7 @@ bool CLaserCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	return true;
 }
 
-void CLaserCannon::Init(void)
+void CLaserCannon::Init()
 {
 	CWeapon::Init();
 }

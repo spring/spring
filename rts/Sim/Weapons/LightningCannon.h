@@ -11,15 +11,15 @@ class CLightningCannon :
 	CR_DECLARE(CLightningCannon);
 public:
 	CLightningCannon(CUnit* owner);
-	~CLightningCannon(void);
+	~CLightningCannon();
 
-	void Update(void);
+	void Update();
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 
-	void Init(void);
+	void Init();
 
 	float3 color;
-	void SlowUpdate(void);
+	void SlowUpdate();
 
 private:
 	virtual void FireImpl();

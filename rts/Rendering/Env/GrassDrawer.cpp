@@ -125,7 +125,7 @@ CGrassDrawer::CGrassDrawer()
 	LoadGrassShaders();
 }
 
-CGrassDrawer::~CGrassDrawer(void)
+CGrassDrawer::~CGrassDrawer()
 {
 	if (grassOff)
 		return;
@@ -405,7 +405,7 @@ public:
 
 
 
-void CGrassDrawer::Draw(void)
+void CGrassDrawer::Draw()
 {
 	if (grassOff || !readmap->GetGrassShadingTexture())
 		return;
@@ -879,7 +879,7 @@ void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 	}
 }
 
-void CGrassDrawer::CreateFarTex(void)
+void CGrassDrawer::CreateFarTex()
 {
 	int sizeMod=2;
 	unsigned char* buf=new unsigned char[64*sizeMod*1024*sizeMod*4];

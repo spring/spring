@@ -21,11 +21,11 @@ CMissileLauncher::CMissileLauncher(CUnit* owner)
 {
 }
 
-CMissileLauncher::~CMissileLauncher(void)
+CMissileLauncher::~CMissileLauncher()
 {
 }
 
-void CMissileLauncher::Update(void)
+void CMissileLauncher::Update()
 {
 	if (targetType != Target_None) {
 		weaponPos = owner->pos + owner->frontdir * relWeaponPos.z + owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;

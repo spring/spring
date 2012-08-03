@@ -222,7 +222,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 	}
 }
 
-CSMFGroundTextures::~CSMFGroundTextures(void)
+CSMFGroundTextures::~CSMFGroundTextures()
 {
 	for (int i = 0; i < smfMap->numBigTexX * smfMap->numBigTexY; ++i) {
 		if (!squares[i].luaTexture) {
@@ -249,7 +249,7 @@ inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 	return (cam2->InView(bigTexSquarePos, bigTexSquareRadius));
 }
 
-void CSMFGroundTextures::DrawUpdate(void)
+void CSMFGroundTextures::DrawUpdate()
 {
 	// screen-diagonal number of pixels
 	const float vsxSq = globalRendering->viewSizeX * globalRendering->viewSizeX;
