@@ -4,4 +4,5 @@
 extern float ldexpf(float x, unsigned int y);
 extern float ldexp(float x, unsigned int y);
 extern float ldexpl(float x, unsigned int y);
+extern float frexp(float x, int *y);
 #endif

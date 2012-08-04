@@ -1,5 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#ifdef _MSC_VER
+#undef _CMATH_
+#endif
+
+#include "System/Input/InputHandler.h"
 #include <sstream>
 #include <iostream>
 
@@ -28,11 +33,11 @@
 #include "Game/UI/MouseHandler.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
-#include "System/Input/InputHandler.h"
 #include "System/Input/Joystick.h"
 #include "System/MsgStrings.h"
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
+
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"

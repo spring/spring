@@ -7,4 +7,5 @@
 float ldexpf(float x, unsigned int y) { return streflop::ldexpf(x, (int)y); }
 float ldexp(float x, unsigned int y) { return streflop::ldexpf(x, (int)y); }
 float ldexpl(float x, unsigned int y) { return streflop::ldexpf(x, (int)y); }
+float frexp(float x, int *y) { return streflop::frexp(x, y); }
 #endif

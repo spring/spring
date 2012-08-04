@@ -8,9 +8,7 @@
 #include "System/Net/RawPacket.h"
 #include "System/Net/PackPacket.h"
 #include "System/Net/ProtocolDef.h"
-#if defined(_MSC_VER)
-#include "System.h" // for uint16_t (and possibly other types)
-#endif
+#include <boost/cstdint.hpp>
 
 using netcode::PackPacket;
 typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
