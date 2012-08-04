@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Platform/Win/win32.h"
-
 #include "System/LogOutput.h"
 
 #include "lib/gml/gmlmut.h"
@@ -27,9 +25,6 @@
 
 #include <boost/thread/recursive_mutex.hpp>
 
-#ifdef _MSC_VER
-#include <windows.h>
-#endif
 
 /******************************************************************************/
 /******************************************************************************/

@@ -10,14 +10,6 @@
 #include <vector>
 
 
-// msvc behaves really strange
-#if _MSC_VER
-namespace std {
-	using ::fabs;
-	using ::floor;
-}
-#endif
-
 class CEndGameBox : public CInputReceiver
 {
 public:

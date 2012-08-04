@@ -5,9 +5,6 @@
 #include "3DModel.h"
 #include "3DModelLog.h"
 #include "S3OParser.h"
-#ifdef _MSC_VER
-#define _INC_MATH // a hack to prevent ambiguous math calls
-#endif
 #include "AssIO.h"
 
 #include "Lua/LuaParser.h"

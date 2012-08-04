@@ -18,7 +18,10 @@
 	Several people confirmed its working.
 */
 
-#include "System/Platform/Win/win32.h"
+#ifdef _MSC_VER
+#undef _CMATH_
+#endif
+
 #include "System/mmgr.h"
 
 #include "MouseInput.h"

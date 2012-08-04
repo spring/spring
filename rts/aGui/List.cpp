@@ -1,6 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Platform/Win/win32.h"
+#ifdef _MSC_VER
+#undef _CMATH_
+#endif
+
 #include "List.h"
 
 #include <SDL_keysym.h>
