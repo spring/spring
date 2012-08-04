@@ -222,7 +222,8 @@ void CAirCAI::SlowUpdate()
 
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (commandQue.empty()) {
-		if (AirAutoGenerateTarget((AAirMoveType*) owner->moveType)) {
+		if (!AirAutoGenerateTarget((AAirMoveType*) owner->moveType)) {
+			// if no target found, queue is still empty so bail now
 			return;
 		}
 	}
@@ -230,13 +231,12 @@ void CAirCAI::SlowUpdate()
 
 	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
 	Command& c = commandQue.front();
-	
+
 	if (c.GetID() == CMD_WAIT) {
 		if ((myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING)
 		    	&& !owner->unitDef->DontLand() && myPlane->autoLand)
 		{
 			StopMove();
-//			myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
 		}
 		return;
 	}
@@ -276,7 +276,6 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 
 	if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING && autoLand) {
 		StopMove();
-		// myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
 	}
 
 	if (owner->unitDef->canAttack && autoAttack && owner->maxRange > 0) {
