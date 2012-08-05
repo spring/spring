@@ -711,7 +711,7 @@ void CWeapon::AutoTarget() {
 
 		if (nextTargetUnit == prevTargetUnit)
 			continue; // filter consecutive duplicates
-		if (nextTargetUnit->neutral && (owner->fireState <= FIRESTATE_FIREATWILL))
+		if (nextTargetUnit->IsNeutral() && (owner->fireState <= FIRESTATE_FIREATWILL))
 			continue;
 
 		const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTargetUnit->speed.Length();
@@ -833,7 +833,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		if (!haveUserTarget) {
 			// stop firing at neutral targets (unless in FAW mode)
 			// note: HoldFire sets targetUnit to NULL, so recheck
-			if (targetUnit != NULL && targetUnit->neutral && owner->fireState <= FIRESTATE_FIREATWILL)
+			if (targetUnit != NULL && targetUnit->IsNeutral() && owner->fireState <= FIRESTATE_FIREATWILL)
 				HoldFire();
 
 			// stop firing at allied targets
