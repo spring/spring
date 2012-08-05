@@ -54,7 +54,7 @@ if    (NO_SOUND)
 endif (NO_SOUND)
 
 ### Find include directories and add platform specific libraries
-LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${TIFF_LIBRARY} ${PNG_LIBRARY})
+LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY})
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
 
