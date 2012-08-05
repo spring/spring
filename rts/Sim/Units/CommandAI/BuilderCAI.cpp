@@ -567,7 +567,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		build.Parse(c);
 	}
 
-	assert(build.def->id == -c.GetID() && build.def->id != NULL);
+	assert(build.def->id == -c.GetID() && build.def->id != 0);
 	const float buildeeRadius = GetBuildOptionRadius(build.def, c.GetID());
 
 	if (building) {
