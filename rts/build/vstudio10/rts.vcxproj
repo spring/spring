@@ -161,7 +161,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502  /FI "System/Platform/Win/vs2010.h" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;../../../vclibs/libjpeg/libjpeg-include;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -189,7 +189,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='No debug|Win32'">
     <ClCompile>
-      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502  /FI "System/Platform/Win/vs2010.h" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -228,7 +228,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release with error catching|Win32'">
     <ClCompile>
-      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502  /FI "System/Platform/Win/vs2010.h" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -272,7 +272,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Syncdebug|Win32'">
     <ClCompile>
-      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502  /FI "System/Platform/Win/vs2010.h" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -310,7 +310,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release+MT with error catching|Win32'">
     <ClCompile>
-      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502  /FI "System/Platform/Win/vs2010.h" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -354,7 +354,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug+MT|Win32'">
     <ClCompile>
-      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502  /FI "System/Platform/Win/vs2010.h" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;../../../vclibs/libjpeg/libjpeg-include;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM;SYNCCHECK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -382,7 +382,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dedicated Server (Release)|Win32'">
     <ClCompile>
-      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502  /FI "System/Platform/Win/vs2010.h" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -428,7 +428,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dedicated Server (Debug)|Win32'">
     <ClCompile>
-      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502  /FI "System/Platform/Win/vs2010.h" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/vmg /MP /D_WIN32_WINNT=0x502 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;../../../vclibs/libjpeg/libjpeg-include;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;DEDICATED;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -801,7 +801,6 @@
     <ClInclude Include="..\..\System\Object.h" />
     <ClInclude Include="..\..\System\OffscreenGLContext.h" />
     <ClInclude Include="..\..\System\Option.h" />
-    <ClInclude Include="..\..\System\Platform\Win\vs2010.h" />
     <ClInclude Include="..\..\System\resource.h" />
     <ClInclude Include="..\..\System\SafeCStrings.h" />
     <ClInclude Include="..\..\System\SafeVector.h" />
@@ -2068,7 +2067,6 @@
     <ClCompile Include="..\..\System\Object.cpp" />
     <ClCompile Include="..\..\System\OffscreenGLContext.cpp" />
     <ClCompile Include="..\..\System\Option.cpp" />
-    <ClCompile Include="..\..\System\Platform\Win\vs2010.cpp" />
     <ClCompile Include="..\..\System\SafeCStrings.c" />
     <ClCompile Include="..\..\System\SafeVector.cpp" />
     <ClCompile Include="..\..\System\SpringApp.cpp" />
