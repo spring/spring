@@ -15,12 +15,6 @@
 
 #include "luaconf.h"
 
-#ifdef _MSC_VER
-#include "lib/streflop/streflop_cond.h"
-using math::pow;
-using math::floor;
-#endif
-
 #define LUA_VERSION	"Lua 5.1"
 #define LUA_RELEASE	"Lua 5.1.4"
 #define LUA_VERSION_NUM	501

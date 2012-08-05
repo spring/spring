@@ -18,10 +18,6 @@
 	Several people confirmed its working.
 */
 
-#ifdef _MSC_VER
-#undef _CMATH_
-#endif
-
 #include "System/mmgr.h"
 
 #include "MouseInput.h"

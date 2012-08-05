@@ -1,9 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef _MSC_VER
-#undef _CMATH_
-#endif
-
 #include "LobbyConnection.h"
 #include "SelectMenu.h"
 
