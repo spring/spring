@@ -436,7 +436,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	const int activeFarTex = (camera->forward.z < 0.0f)? treeGen->farTex[0]: treeGen->farTex[1];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+//	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	Shader::IProgramObject* treeShader = NULL;
 
 	const CMapInfo::light_t& light = mapInfo->light;
