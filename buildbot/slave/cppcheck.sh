@@ -9,7 +9,7 @@ find rts/ \
 		--force --quiet \
 		--suppressions-list=buildbot/slave/cppcheck.supress \
 		--enable=style,information \
-		-I rts
+		-I rts \
 		$@
 
 # run CppCheck for the native AI sources
