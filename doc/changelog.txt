@@ -1,5 +1,74 @@
 Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
+(numbers in brackets normally mean the mantis ticket ID)
+
+
+-- 90.0 ---------------------------------------------------------
+Bugfixes:
+ - fix endless loop in Shard in mingw32 builds
+ - fix builders sometimes don't notice when a building was finished by another unit
+ - fix SkyBox corruption
+ - fix QTPFS deadlock at start
+ - partially revert the "lock-on targeting" behavior:
+    If a user-selected target moves out of range, the lock is
+    now broken as it used to be and automatic targeting is not
+    blocked anymore (though this can take some SlowUpdate's).
+    For ground-attack orders it is still in place, since the
+    behavior seems to be preferred (so a unit that is told to
+    attack a position and then to move away will keep firing
+    even when other targets are available)
+ - really fix "endgame stats only show APM for self"
+ - really fix "Size of unidentified radar blips can be determined with mouseover"
+ - fix ship wreckage drag
+ - fix gunships don't obey land/fly state
+ - fix 'Bombers with fight command do not fire' (3190)
+ - fix 'Emit-sfxed weapons point at {0, 0, 0}' (3205)
+ - fix an incorrect watchdog trigger before gamestart
+ - fix 'Aiming animations ignore maxAngleDif [actually tolerance]' (3180)
+ - fix 'Grass is not animated in LOS view' & 'LOS view does not render trees in the same way' (3207 & 3203)
+ - fix 'Bombers with area attack dont work ' (3195)
+ - fix 'If air constructor lands it often fails to do next construction command' (3198)
+ - make fight commands work with noAutoTarget weapons (3190 #2)
+ - fix 'Constructor stops before it enters build range' (3210)
+ - fix bugged/all-white decals when shadows=0
+ - fix units being able to move down steep cliffs (directional slope-tolerance needs work)
+ - fix dangling pointer/memory corruption in QuadField (3211)
+ - fix 'Reclaiming units under construction results in no resources being returned' (3216)
+ - fix some OpenGL usage errors found by decal
+ - fix 'Gunships dont always aquire targets despite fireatwill+roam+fly' (3221)
+ - fix 'TargetBorder=1 only works when a unit has a specific attack command' (2971)
+ - fix CFeature::ForcedMove (3226)
+ - fix Spring crashes when sending large messages (3228)
+ - fix 'Armed constructors attack neutral units on Fight order'
+ - disable unit pushing bidirectionally when one of the parties is non-blocking
+
+GameServer:
+ - support start-scripts of arbitrary size (still not advised to use scripts bugger than 256kB, and we won't optimize anything related to such huge scripts)
+
+UnitDefs:
+ - make cloakCostMoving default to cloakCost
+
+WeaponDefs:
+ - change default weapon "mainDir" to "0,0,1" (before it was "1,0,0")
+ - always enable continuous hit-testing (it showed discountinuous one is used <<1%, so it's not worth to keep it)
+
+FeatureDefs:
+ - add explicit `floating` featureDef tag (before it was implicit via nodrawundergray and failing a lot)
+
+Lua:
+ - add Spring.SetUnitDirection(unitid, x,y,z)
+ - add `ignoreLOS` tag to Spring.UpdateMapLight
+ - LuaRules: add DrawProjectile to complete the Draw* quartet
+
+ModInfo:
+ - add `allowAircraftToHitGround` tag (3199)
+
+Rendering:
+ - runtime create missing DDS mipmaps when supported by the hardware
+
+Windows:
+ - call SDL_WarpMouse every frame again (fixes `ghost mouse` in middle click scroll)
+ - explicit pipe --large-address-aware through -Wl (fixes compiling with tdm-gcc)
 
 
 -- 90.0 ---------------------------------------------------------
