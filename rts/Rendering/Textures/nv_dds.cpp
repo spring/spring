@@ -170,6 +170,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
 #include "System/mmgr.h"
+#include "System/Log/ILog.h"
 
 using namespace std;
 using namespace nv_dds;
@@ -493,16 +494,21 @@ bool CDDSImage::load(string filename, bool flipImage)
     return true;
 }
 
-void CDDSImage::write_texture(const CTexture &texture, FILE *fp)
+bool CDDSImage::write_texture(const CTexture &texture, FILE *fp)
 {
     assert(get_num_mipmaps() == texture.get_num_mipmaps());
     
-    fwrite(texture, 1, texture.get_size(), fp);
-    
+    int res = fwrite(texture, 1, texture.get_size(), fp);
+    if (res<0) {
+        return false;
+    }
     for (unsigned int i = 0; i < texture.get_num_mipmaps(); i++)
     {
         const CSurface &mipmap = texture.get_mipmap(i);
-        fwrite(mipmap, 1, mipmap.get_size(), fp);
+        res = fwrite(mipmap, 1, mipmap.get_size(), fp);
+        if (res<0) {
+            return false;
+        }
     }
 }
 
@@ -589,20 +595,34 @@ bool CDDSImage::save(std::string filename, bool flipImage)
 
     // open file
     FILE *fp = fopen(filename.c_str(), "wb");
-    if (fp == NULL)
+    if (fp == NULL) {
+        LOG_L(L_ERROR, "couldn't create texture %s: %s", filename.c_str(), strerror(ferror(fp)));
         return false;
+    }
 
     // write file header
-    fwrite("DDS ", 1, 4, fp);
+    int res = fwrite("DDS ", 1, 4, fp);
+    if (res<0) {
+        fclose(fp);
+        return false;
+    }
     
     // write dds header
-    fwrite(&ddsh, 1, sizeof(DDS_HEADER), fp);
+    res = fwrite(&ddsh, 1, sizeof(DDS_HEADER), fp);
+    if (res<0) {
+        fclose(fp);
+        return false;
+    }
 
     if (m_type != TextureCubemap)
     {
         CTexture tex = m_images[0];
         if (flipImage) flip_texture(tex);
-        write_texture(tex, fp);
+        if (!write_texture(tex, fp)) {
+            LOG_L(L_ERROR, "couldn't write texture %s: %s",filename.c_str(), strerror(ferror(fp)));
+            fclose(fp);
+            return false;
+	}
     }
     else
     {
