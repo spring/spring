@@ -2,6 +2,22 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 91.0 ---------------------------------------------------------
+
+Unitsync
+ ! fix return in GetInfoMapSize (#2996)
+ - no crashes in unitsync without init any more (#3120)
+ ! ProcessUnits, GetUnitCount, GetMapCount, GetMapArchiveCount,
+   GetInfoMap, GetPrimaryModInfoCount,GetPrimaryModArchive,
+   GetSideCount, GetModOptionCount, GetCustomOptionCount,
+   GetSkirmishAICount, GetInfoValueInteger, GetInfoValueFloat,
+   GetOptionType, GetOptionNumberDef, GetOptionNumberStep,
+   GetOptionStringMaxLen, GetOptionListCount and GetModValidMapCount
+   returns now -1/-1.0f on error
+
+Lua
+ - replace Spring.Echo with Spring.Log in most places in cont/
+
 
 -- 90.0 ---------------------------------------------------------
 Bugfixes:
@@ -70,22 +86,6 @@ Windows:
  - call SDL_WarpMouse every frame again (fixes `ghost mouse` in middle click scroll)
  - explicit pipe --large-address-aware through -Wl (fixes compiling with tdm-gcc)
 
-
--- 90.0 ---------------------------------------------------------
-
-Unitsync
- ! fix return in GetInfoMapSize (#2996)
- - no crashes in unitsync without init any more (#3120)
- ! ProcessUnits, GetUnitCount, GetMapCount, GetMapArchiveCount,
-   GetInfoMap, GetPrimaryModInfoCount,GetPrimaryModArchive,
-   GetSideCount, GetModOptionCount, GetCustomOptionCount,
-   GetSkirmishAICount, GetInfoValueInteger, GetInfoValueFloat,
-   GetOptionType, GetOptionNumberDef, GetOptionNumberStep,
-   GetOptionStringMaxLen, GetOptionListCount and GetModValidMapCount
-   returns now -1/-1.0f on error
-
-Lua
- - replace Spring.Echo with Spring.Log in most places in cont/
 
 -- 89.0 ---------------------------------------------------------
 Major Changes:
