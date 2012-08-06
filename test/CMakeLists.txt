@@ -14,10 +14,10 @@ Else  (NOT Boost_FOUND)
 
 	SET(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
 	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR})
-	If	(NOT WIN32)
+	If	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 		#Win32 tests links static
 		add_definitions(-DBOOST_TEST_DYN_LINK)
-	EndIf	(NOT WIN32)
+	EndIf	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 	add_definitions(-DSYNCCHECK -DUNIT_TEST)
 
 	Set(test_Log_sources
