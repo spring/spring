@@ -510,6 +510,7 @@ bool CDDSImage::write_texture(const CTexture &texture, FILE *fp)
             return false;
         }
     }
+    return true;
 }
 
 bool CDDSImage::save(std::string filename, bool flipImage)
