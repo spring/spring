@@ -300,8 +300,8 @@ void CMiniMap::SetSlaveMode(bool newMode)
 		mouseMove   = false;
 		mouseResize = false;
 	}
-	static int oldButtonSize = 16;
 	if (newMode != slaveDrawMode) {
+		static int oldButtonSize = 16;
 		if (newMode) {
 			oldButtonSize = buttonSize;
 			buttonSize = 0;

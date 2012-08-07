@@ -150,11 +150,11 @@ inline void CCommandAI::SetOrderTarget(CUnit* o) {
 		// NOTE As we do not include Unit.h,
 		//   the compiler does not know that CUnit derives from CObject,
 		//   and thus we can not use static_cast<CObject*>(...) here.
-		DeleteDeathDependence((CObject*)orderTarget, DEPENDENCE_ORDERTARGET);
+		DeleteDeathDependence(reinterpret_cast<CObject*>(orderTarget), DEPENDENCE_ORDERTARGET);
 	}
 	orderTarget = o;
 	if (orderTarget != NULL) {
-		AddDeathDependence((CObject*)orderTarget, DEPENDENCE_ORDERTARGET);
+		AddDeathDependence(reinterpret_cast<CObject*>(orderTarget), DEPENDENCE_ORDERTARGET);
 	}
 }
 
