@@ -169,8 +169,8 @@ void CGameHelper::DoExplosionDamage(
 
 
 void CGameHelper::Explosion(const ExplosionParams& params) {
-	const float3& pos = params.pos;
 	const float3& dir = params.dir;
+	const float3 expPos = params.pos;
 	const DamageArray& damages = params.damages;
 
 	// if weaponDef is NULL, this is a piece-explosion
@@ -178,7 +178,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	const WeaponDef* weaponDef = params.weaponDef;
 	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -CSolidObject::DAMAGE_EXPLOSION_DEBRIS;
 
-	const float3 expPos = pos;
 
 	CUnit* owner = params.owner;
 	CUnit* hitUnit = params.hitUnit;

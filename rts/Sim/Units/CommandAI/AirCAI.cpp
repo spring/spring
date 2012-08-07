@@ -25,10 +25,10 @@
 
 static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
 	if (owner->usingScriptMoveType) {
-		return ((CStrafeAirMoveType*) owner->prevMoveType);
+		return static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
 	}
 
-	return ((CStrafeAirMoveType*) owner->moveType);
+	return static_cast<CStrafeAirMoveType*>(owner->moveType);
 }
 
 
@@ -222,14 +222,14 @@ void CAirCAI::SlowUpdate()
 
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (commandQue.empty()) {
-		if (!AirAutoGenerateTarget((AAirMoveType*) owner->moveType)) {
+		if (!AirAutoGenerateTarget(static_cast<AAirMoveType*>(owner->moveType))) {
 			// if no target found, queue is still empty so bail now
 			return;
 		}
 	}
 	#endif
 
-	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
+	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
 	Command& c = commandQue.front();
 
 	if (c.GetID() == CMD_WAIT) {
@@ -579,7 +579,7 @@ int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
 	if (!CMobileCAI::IsValidTarget(enemy)) return false;
 	if (enemy->crashing) return false;
-	return (((CStrafeAirMoveType*)owner->moveType)->isFighter || !enemy->unitDef->canfly);
+	return (static_cast<CStrafeAirMoveType*>(owner->moveType)->isFighter || !enemy->unitDef->canfly);
 }
 
 

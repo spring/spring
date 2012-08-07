@@ -67,6 +67,7 @@ CUnitSet CBuilderCAI::resurrecters;
 
 CBuilderCAI::CBuilderCAI():
 	CMobileCAI(),
+	owner_builder(NULL),
 	building(false),
 	cachedRadiusId(0),
 	cachedRadius(0),
@@ -91,7 +92,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 	lastPC3(-1),
 	range3D(owner->unitDef->buildRange3D)
 {
-	owner_builder = (CBuilder*) owner;
+	owner_builder = static_cast<CBuilder*>(owner);
 
 	CommandDescription c;
 	if (owner->unitDef->canRepair) {
@@ -203,7 +204,7 @@ CBuilderCAI::~CBuilderCAI()
 void CBuilderCAI::PostLoad()
 {
 	if (!commandQue.empty()) {
-		owner_builder = (CBuilder*) owner;
+		owner_builder = static_cast<CBuilder*>(owner);
 
 		Command& c = commandQue.front();
 
@@ -412,7 +413,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()
 			&& c.GetID() != CMD_WAIT) {
 		building = false;
-		((CBuilder*) owner)->StopBuild();
+		static_cast<CBuilder*>(owner)->StopBuild();
 	}
 
 	map<int,string>::iterator boi = buildOptions.find(c.GetID());
@@ -1457,7 +1458,6 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 	const CSolidObject* best = NULL;
 	float bestDist = bestStartDist;
 	bool stationary = false;
-	bool metal = false;
 	int rid = -1;
 
 	if (recUnits || recEnemy || recEnemyOnly) {
@@ -1498,6 +1498,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 			rid = best->id;
 	}
 
+	bool metal = false;
 	if ((!best || !stationary) && !recEnemyOnly) {
 		best = NULL;
 		const CTeam* team = teamHandler->Team(owner->team);

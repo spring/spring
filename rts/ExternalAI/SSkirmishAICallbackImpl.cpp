@@ -213,7 +213,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_CHEATS_SET_MY_INCOME_MULTIPLIER:
 		{
 			const SSetMyIncomeMultiplierCheatCommand* cmd =
-					(SSetMyIncomeMultiplierCheatCommand*) commandData;
+					static_cast<SSetMyIncomeMultiplierCheatCommand*>(commandData);
 			if (clbCheat != NULL) {
 				clbCheat->SetMyIncomeMultiplier(cmd->factor);
 				ret = 0;
@@ -225,7 +225,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_CHEATS_GIVE_ME_RESOURCE:
 		{
 			const SGiveMeResourceCheatCommand* cmd =
-					(SGiveMeResourceCheatCommand*) commandData;
+					static_cast<SGiveMeResourceCheatCommand*>(commandData);
 			if (clbCheat != NULL) {
 				if (cmd->resourceId == resourceHandler->GetMetalId()) {
 					clbCheat->GiveMeMetal(cmd->amount);
@@ -244,7 +244,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_CHEATS_GIVE_ME_NEW_UNIT:
 		{
 			SGiveMeNewUnitCheatCommand* cmd =
-					(SGiveMeNewUnitCheatCommand*) commandData;
+					static_cast<SGiveMeNewUnitCheatCommand*>(commandData);
 			if (clbCheat != NULL) {
 				cmd->ret_newUnitId = clbCheat->CreateUnit(getUnitDefById(skirmishAIId,
 						cmd->unitDefId)->name.c_str(), cmd->pos_posF3);
@@ -263,14 +263,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 		case COMMAND_SEND_START_POS:
 		{
-			const SSendStartPosCommand* cmd = (SSendStartPosCommand*) commandData;
+			const SSendStartPosCommand* cmd = static_cast<SSendStartPosCommand*>(commandData);
 			AIHCSendStartPos data = {cmd->ready, cmd->pos_posF3};
 			wrapper_HandleCommand(clb, clbCheat, AIHCSendStartPosId, &data);
 			break;
 		}
 		case COMMAND_DRAWER_POINT_ADD:
 		{
-			const SAddPointDrawCommand* cmd = (SAddPointDrawCommand*) commandData;
+			const SAddPointDrawCommand* cmd = static_cast<SAddPointDrawCommand*>(commandData);
 			AIHCAddMapPoint data = {cmd->pos_posF3, cmd->label};
 			wrapper_HandleCommand(clb, clbCheat, AIHCAddMapPointId, &data);
 			break;
@@ -278,14 +278,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_POINT_REMOVE:
 		{
 			const SRemovePointDrawCommand* cmd =
-					(SRemovePointDrawCommand*) commandData;
+					static_cast<SRemovePointDrawCommand*>(commandData);
 			AIHCRemoveMapPoint data = {cmd->pos_posF3};
 			wrapper_HandleCommand(clb, clbCheat, AIHCRemoveMapPointId, &data);
 			break;
 		}
 		case COMMAND_DRAWER_LINE_ADD:
 		{
-			const SAddLineDrawCommand* cmd = (SAddLineDrawCommand*) commandData;
+			const SAddLineDrawCommand* cmd = static_cast<SAddLineDrawCommand*>(commandData);
 			AIHCAddMapLine data = {cmd->posFrom_posF3, cmd->posTo_posF3};
 			wrapper_HandleCommand(clb, clbCheat, AIHCAddMapLineId, &data);
 			break;
@@ -295,20 +295,20 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_SEND_TEXT_MESSAGE:
 		{
 			const SSendTextMessageCommand* cmd =
-					(SSendTextMessageCommand*) commandData;
+					static_cast<SSendTextMessageCommand*>(commandData);
 			clb->SendTextMsg(cmd->text, cmd->zone);
 			break;
 		}
 		case COMMAND_SET_LAST_POS_MESSAGE:
 		{
 			const SSetLastPosMessageCommand* cmd =
-					(SSetLastPosMessageCommand*) commandData;
+					static_cast<SSetLastPosMessageCommand*>(commandData);
 			clb->SetLastMsgPos(cmd->pos_posF3);
 			break;
 		}
 		case COMMAND_SEND_RESOURCES:
 		{
-			SSendResourcesCommand* cmd = (SSendResourcesCommand*) commandData;
+			SSendResourcesCommand* cmd = static_cast<SSendResourcesCommand*>(commandData);
 			if (cmd->resourceId == resourceHandler->GetMetalId()) {
 				cmd->ret_isExecuted = clb->SendResources(cmd->amount, 0, cmd->receivingTeamId);
 				ret = -2;
@@ -324,7 +324,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 		case COMMAND_SEND_UNITS:
 		{
-			SSendUnitsCommand* cmd = (SSendUnitsCommand*) commandData;
+			SSendUnitsCommand* cmd = static_cast<SSendUnitsCommand*>(commandData);
 			std::vector<int> vector_unitIds;
 			fillVector(&vector_unitIds, cmd->unitIds, cmd->unitIds_size);
 			cmd->ret_sentUnits =
@@ -334,13 +334,13 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 		case COMMAND_GROUP_CREATE:
 		{
-			SCreateGroupCommand* cmd = (SCreateGroupCommand*) commandData;
+			SCreateGroupCommand* cmd = static_cast<SCreateGroupCommand*>(commandData);
 			cmd->ret_groupId = clb->CreateGroup();
 			break;
 		}
 		case COMMAND_GROUP_ERASE:
 		{
-			const SEraseGroupCommand* cmd = (SEraseGroupCommand*) commandData;
+			const SEraseGroupCommand* cmd = static_cast<SEraseGroupCommand*>(commandData);
 			clb->EraseGroup(cmd->groupId);
 			break;
 		}
@@ -362,7 +362,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 */
 		case COMMAND_PATH_INIT:
 		{
-			SInitPathCommand* cmd = (SInitPathCommand*) commandData;
+			SInitPathCommand* cmd = static_cast<SInitPathCommand*>(commandData);
 			cmd->ret_pathId = clb->InitPath(cmd->start_posF3,
 					cmd->end_posF3, cmd->pathType, cmd->goalRadius);
 			break;
@@ -370,7 +370,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_PATH_GET_APPROXIMATE_LENGTH:
 		{
 			SGetApproximateLengthPathCommand* cmd =
-					(SGetApproximateLengthPathCommand*) commandData;
+					static_cast<SGetApproximateLengthPathCommand*>(commandData);
 			cmd->ret_approximatePathLength =
 					clb->GetPathLength(cmd->start_posF3, cmd->end_posF3,
 							cmd->pathType, cmd->goalRadius);
@@ -379,13 +379,13 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_PATH_GET_NEXT_WAYPOINT:
 		{
 			SGetNextWaypointPathCommand* cmd =
-					(SGetNextWaypointPathCommand*) commandData;
+					static_cast<SGetNextWaypointPathCommand*>(commandData);
 			clb->GetNextWaypoint(cmd->pathId).copyInto(cmd->ret_nextWaypoint_posF3_out);
 			break;
 		}
 		case COMMAND_PATH_FREE:
 		{
-			const SFreePathCommand* cmd = (SFreePathCommand*) commandData;
+			const SFreePathCommand* cmd = static_cast<SFreePathCommand*>(commandData);
 			clb->FreePath(cmd->pathId);
 			break;
 		}
@@ -414,7 +414,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_ADD_NOTIFICATION:
 		{
 			const SAddNotificationDrawerCommand* cmd =
-					(SAddNotificationDrawerCommand*) commandData;
+					static_cast<SAddNotificationDrawerCommand*>(commandData);
 			clb->AddNotification(cmd->pos_posF3,
 					float3(
 						cmd->color_colorS3[0] / 256.0f,
@@ -426,7 +426,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_PATH_START:
 		{
 			const SStartPathDrawerCommand* cmd =
-					(SStartPathDrawerCommand*) commandData;
+					static_cast<SStartPathDrawerCommand*>(commandData);
 			float arrColor[4];
 			toFloatArr(cmd->color_colorS3, cmd->alpha, arrColor);
 			clb->LineDrawerStartPath(cmd->pos_posF3, arrColor);
@@ -442,7 +442,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_PATH_DRAW_LINE:
 		{
 			const SDrawLinePathDrawerCommand* cmd =
-					(SDrawLinePathDrawerCommand*) commandData;
+					static_cast<SDrawLinePathDrawerCommand*>(commandData);
 			float arrColor[4];
 			toFloatArr(cmd->color_colorS3, cmd->alpha, arrColor);
 			clb->LineDrawerDrawLine(cmd->endPos_posF3, arrColor);
@@ -451,7 +451,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON:
 		{
 			const SDrawLineAndIconPathDrawerCommand* cmd =
-					(SDrawLineAndIconPathDrawerCommand*) commandData;
+					static_cast<SDrawLineAndIconPathDrawerCommand*>(commandData);
 			float arrColor[4];
 			toFloatArr(cmd->color_colorS3, cmd->alpha, arrColor);
 			clb->LineDrawerDrawLineAndIcon(cmd->cmdId, cmd->endPos_posF3,
@@ -461,14 +461,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS:
 		{
 			const SDrawIconAtLastPosPathDrawerCommand* cmd =
-					(SDrawIconAtLastPosPathDrawerCommand*) commandData;
+					static_cast<SDrawIconAtLastPosPathDrawerCommand*>(commandData);
 			clb->LineDrawerDrawIconAtLastPos(cmd->cmdId);
 			break;
 		}
 		case COMMAND_DRAWER_PATH_BREAK:
 		{
 			const SBreakPathDrawerCommand* cmd =
-					(SBreakPathDrawerCommand*) commandData;
+					static_cast<SBreakPathDrawerCommand*>(commandData);
 			float arrColor[4];
 			toFloatArr(cmd->color_colorS3, cmd->alpha, arrColor);
 			clb->LineDrawerBreak(cmd->endPos_posF3, arrColor);
@@ -477,7 +477,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_PATH_RESTART:
 		{
 			const SRestartPathDrawerCommand* cmd =
-					(SRestartPathDrawerCommand*) commandData;
+					static_cast<SRestartPathDrawerCommand*>(commandData);
 			if (cmd->sameColor) {
 				clb->LineDrawerRestartSameColor();
 			} else {
@@ -488,7 +488,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_FIGURE_CREATE_SPLINE:
 		{
 			SCreateSplineFigureDrawerCommand* cmd =
-					(SCreateSplineFigureDrawerCommand*) commandData;
+					static_cast<SCreateSplineFigureDrawerCommand*>(commandData);
 			cmd->ret_newFigureGroupId =
 					clb->CreateSplineFigure(cmd->pos1_posF3, cmd->pos2_posF3,
 							cmd->pos3_posF3, cmd->pos4_posF3, cmd->width,
@@ -498,7 +498,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_FIGURE_CREATE_LINE:
 		{
 			SCreateLineFigureDrawerCommand* cmd =
-					(SCreateLineFigureDrawerCommand*) commandData;
+					static_cast<SCreateLineFigureDrawerCommand*>(commandData);
 			cmd->ret_newFigureGroupId = clb->CreateLineFigure(cmd->pos1_posF3,
 					cmd->pos2_posF3, cmd->width, cmd->arrow, cmd->lifeTime,
 					cmd->figureGroupId);
@@ -507,7 +507,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_FIGURE_SET_COLOR:
 		{
 			const SSetColorFigureDrawerCommand* cmd =
-					(SSetColorFigureDrawerCommand*) commandData;
+					static_cast<SSetColorFigureDrawerCommand*>(commandData);
 			clb->SetFigureColor(cmd->figureGroupId,
 					cmd->color_colorS3[0] / 256.0f,
 					cmd->color_colorS3[1] / 256.0f,
@@ -518,13 +518,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_DRAWER_FIGURE_DELETE:
 		{
 			const SDeleteFigureDrawerCommand* cmd =
-					(SDeleteFigureDrawerCommand*) commandData;
+					static_cast<SDeleteFigureDrawerCommand*>(commandData);
 			clb->DeleteFigureGroup(cmd->figureGroupId);
 			break;
 		}
 		case COMMAND_DRAWER_DRAW_UNIT:
 		{
-			const SDrawUnitDrawerCommand* cmd = (SDrawUnitDrawerCommand*) commandData;
+			const SDrawUnitDrawerCommand* cmd =
+					static_cast<SDrawUnitDrawerCommand*>(commandData);
 			clb->DrawUnit(getUnitDefById(skirmishAIId,
 					cmd->toDrawUnitDefId)->name.c_str(), cmd->pos_posF3,
 					cmd->rotation, cmd->lifeTime, cmd->teamId, cmd->transparent,
@@ -533,7 +534,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		}
 
 		case COMMAND_TRACE_RAY: {
-			STraceRayCommand* cCmdData = (STraceRayCommand*) commandData;
+			STraceRayCommand* cCmdData = static_cast<STraceRayCommand*>(commandData);
 			AIHCTraceRay cppCmdData = {
 				cCmdData->rayPos_posF3,
 				cCmdData->rayDir_posF3,
@@ -550,7 +551,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		} break;
 
 		case COMMAND_TRACE_RAY_FEATURE: {
-			SFeatureTraceRayCommand* cCmdData = (SFeatureTraceRayCommand*) commandData;
+			SFeatureTraceRayCommand* cCmdData = static_cast<SFeatureTraceRayCommand*>(commandData);
 			AIHCFeatureTraceRay cppCmdData = {
 				cCmdData->rayPos_posF3,
 				cCmdData->rayDir_posF3,
@@ -567,7 +568,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		} break;
 
 		case COMMAND_PAUSE: {
-			const SPauseCommand* cmd = (SPauseCommand*) commandData;
+			const SPauseCommand* cmd = static_cast<SPauseCommand*>(commandData);
 			AIHCPause cppCmdData = {
 				cmd->enable,
 				cmd->reason
@@ -577,7 +578,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		} break;
 
 		case COMMAND_DEBUG_DRAWER_GRAPH_LINE_ADD_POINT: {
-			SAddPointLineGraphDrawerDebugCommand* cCmdData = (SAddPointLineGraphDrawerDebugCommand*) commandData;
+			SAddPointLineGraphDrawerDebugCommand* cCmdData = static_cast<SAddPointLineGraphDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADD_GRAPH_POINT,
 				cCmdData->x, cCmdData->y,
@@ -591,7 +592,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
 		case COMMAND_DEBUG_DRAWER_GRAPH_LINE_DELETE_POINTS: {
-			SDeletePointsLineGraphDrawerDebugCommand* cCmdData = (SDeletePointsLineGraphDrawerDebugCommand*) commandData;
+			SDeletePointsLineGraphDrawerDebugCommand* cCmdData = static_cast<SDeletePointsLineGraphDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DEL_GRAPH_POINTS,
 				0.0f, 0.0f,
@@ -605,7 +606,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
 		case COMMAND_DEBUG_DRAWER_GRAPH_SET_POS: {
-			SSetPositionGraphDrawerDebugCommand* cCmdData = (SSetPositionGraphDrawerDebugCommand*) commandData;
+			SSetPositionGraphDrawerDebugCommand* cCmdData = static_cast<SSetPositionGraphDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_POS,
 				cCmdData->x, cCmdData->y,
@@ -619,7 +620,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
 		case COMMAND_DEBUG_DRAWER_GRAPH_SET_SIZE: {
-			SSetSizeGraphDrawerDebugCommand* cCmdData = (SSetSizeGraphDrawerDebugCommand*) commandData;
+			SSetSizeGraphDrawerDebugCommand* cCmdData = static_cast<SSetSizeGraphDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_SIZE,
 				0.0f, 0.0f,
@@ -633,7 +634,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
 		case COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_COLOR: {
-			SSetColorLineGraphDrawerDebugCommand* cCmdData = (SSetColorLineGraphDrawerDebugCommand*) commandData;
+			SSetColorLineGraphDrawerDebugCommand* cCmdData = static_cast<SSetColorLineGraphDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_COLOR,
 				0.0f, 0.0f,
@@ -647,7 +648,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
 		case COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_LABEL: {
-			SSetLabelLineGraphDrawerDebugCommand* cCmdData = (SSetLabelLineGraphDrawerDebugCommand*) commandData;
+			SSetLabelLineGraphDrawerDebugCommand* cCmdData = static_cast<SSetLabelLineGraphDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_LABEL,
 				0.0f, 0.0f,
@@ -663,7 +664,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 
 		case COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_ADD: {
-			SAddOverlayTextureDrawerDebugCommand* cCmdData = (SAddOverlayTextureDrawerDebugCommand*) commandData;
+			SAddOverlayTextureDrawerDebugCommand* cCmdData = static_cast<SAddOverlayTextureDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADD_OVERLAY_TEXTURE,
 				0.0f, 0.0f,
@@ -679,7 +680,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			cCmdData->ret_overlayTextureId = cppCmdData.texHandle;
 		} break;
 		case COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_UPDATE: {
-			SUpdateOverlayTextureDrawerDebugCommand* cCmdData = (SUpdateOverlayTextureDrawerDebugCommand*) commandData;
+			SUpdateOverlayTextureDrawerDebugCommand* cCmdData = static_cast<SUpdateOverlayTextureDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_UPDATE_OVERLAY_TEXTURE,
 				float(cCmdData->x), float(cCmdData->y),
@@ -694,7 +695,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		} break;
 
 		case COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_DELETE: {
-			SDeleteOverlayTextureDrawerDebugCommand* cCmdData = (SDeleteOverlayTextureDrawerDebugCommand*) commandData;
+			SDeleteOverlayTextureDrawerDebugCommand* cCmdData = static_cast<SDeleteOverlayTextureDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DEL_OVERLAY_TEXTURE,
 				0.0f, 0.0f,
@@ -708,7 +709,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
 		case COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_POS: {
-			SSetPositionOverlayTextureDrawerDebugCommand* cCmdData = (SSetPositionOverlayTextureDrawerDebugCommand*) commandData;
+			SSetPositionOverlayTextureDrawerDebugCommand* cCmdData = static_cast<SSetPositionOverlayTextureDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_POS,
 				cCmdData->x, cCmdData->y,
@@ -722,7 +723,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
 		case COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_SIZE: {
-			SSetSizeOverlayTextureDrawerDebugCommand* cCmdData = (SSetSizeOverlayTextureDrawerDebugCommand*) commandData;
+			SSetSizeOverlayTextureDrawerDebugCommand* cCmdData = static_cast<SSetSizeOverlayTextureDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_SIZE,
 				0.0f, 0.0f,
@@ -736,7 +737,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
 		case COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_LABEL: {
-			SSetLabelOverlayTextureDrawerDebugCommand* cCmdData = (SSetLabelOverlayTextureDrawerDebugCommand*) commandData;
+			SSetLabelOverlayTextureDrawerDebugCommand* cCmdData = static_cast<SSetLabelOverlayTextureDrawerDebugCommand*>(commandData);
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_LABEL,
 				0.0f, 0.0f,
@@ -753,10 +754,10 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 		default: {
 			// check if it is a unit command
-			Command* c = (Command*) newCommand(commandData, commandTopic, uh->MaxUnits());
+			Command* c = static_cast<Command*>(newCommand(commandData, commandTopic, uh->MaxUnits()));
 			if (c != NULL) { // it is a unit command
 				c->aiCommandId = commandId;
-				const SStopUnitCommand* cmd = (SStopUnitCommand*) commandData;
+				const SStopUnitCommand* cmd = static_cast<SStopUnitCommand*>(commandData);
 				if (cmd->unitId >= 0) {
 					ret = clb->GiveOrder(cmd->unitId, c);
 				} else {
