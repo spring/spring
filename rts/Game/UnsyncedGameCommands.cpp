@@ -1021,7 +1021,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
-		if (ais.size() > 0) {
+		if (!ais.empty()) {
 			CSkirmishAIHandler::id_ai_t::const_iterator ai;
 			LOG("%s | %s | %s | %s | %s | %s",
 					"ID",

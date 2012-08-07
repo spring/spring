@@ -2080,6 +2080,7 @@ void CGame::StartSkip(int toFrame) {
 
 void CGame::EndSkip() {
 	return; // FIXME
+/*
 	skipping = false;
 
 	gu->gameTime    += skipSeconds;
@@ -2093,6 +2094,7 @@ void CGame::EndSkip() {
 	}
 
 	LOG("Skipped %.1f seconds", skipSeconds);
+*/
 }
 
 
