@@ -831,7 +831,6 @@ std::string CSelectedUnits::GetTooltip()
 	{
 		GML_RECMUTEX_LOCK(sel); // GetTooltip
 
-		char tmp[500];
 		int numFuel = 0;
 		float maxHealth = 0.0f, curHealth = 0.0f;
 		float maxFuel = 0.0f, curFuel = 0.0f;
@@ -880,6 +879,7 @@ std::string CSelectedUnits::GetTooltip()
 
 		if (gs->cheatEnabled && (num == 1)) {
 			const CUnit* unit = *selectedUnits.begin();
+			char tmp[500];
 			SNPRINTF(tmp, sizeof(tmp), "\xff\xc0\xc0\xff  [TechLevel %i]",
 				unit->unitDef->techLevel);
 			s += tmp;

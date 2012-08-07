@@ -1498,11 +1498,11 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 			rid = best->id;
 	}
 
-	bool metal = false;
 	if ((!best || !stationary) && !recEnemyOnly) {
 		best = NULL;
 		const CTeam* team = teamHandler->Team(owner->team);
 		const std::vector<CFeature*>& features = qf->GetFeaturesExact(pos, radius);
+		bool metal = false;
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			const CFeature* f = *fi;
 			if (f->def->reclaimable && (recSpecial || f->def->autoreclaim) &&

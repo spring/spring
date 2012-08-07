@@ -399,10 +399,10 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		// else
 		//     cmd->ret_outData = NULL;
 		//
-		#define SSAICALLBACK_CALL_LUA(HandleName, HANDLENAME)                                               \
-			case COMMAND_CALL_LUA_ ## HANDLENAME: {                                                         \
-				SCallLua ## HandleName ## Command* cmd = (SCallLua ## HandleName ## Command*) commandData;  \
-				cmd->ret_outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize);                    \
+		#define SSAICALLBACK_CALL_LUA(HandleName, HANDLENAME) \
+			case COMMAND_CALL_LUA_ ## HANDLENAME: {       \
+				SCallLua ## HandleName ## Command* cmd = static_cast<SCallLua ## HandleName ## Command*>(commandData);  \
+				cmd->ret_outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize); \
 			} break;
 
 		SSAICALLBACK_CALL_LUA(Rules, RULES)

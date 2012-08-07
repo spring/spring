@@ -597,7 +597,7 @@ bool CDDSImage::save(std::string filename, bool flipImage)
     // open file
     FILE *fp = fopen(filename.c_str(), "wb");
     if (fp == NULL) {
-        LOG_L(L_ERROR, "couldn't create texture %s: %s", filename.c_str(), strerror(ferror(fp)));
+        LOG_L(L_ERROR, "couldn't create texture %s", filename.c_str());
         return false;
     }
 
@@ -1055,7 +1055,7 @@ void CDDSImage::flip_blocks_dxtc3(DXTColBlock *line, unsigned int numBlocks)
 
     for (unsigned int i = 0; i < numBlocks; i++)
     {
-        alphablock = (DXT3AlphaBlock*)curblock;
+        alphablock = reinterpret_cast<DXT3AlphaBlock*>(curblock);
 
         swap(&alphablock->row[0], &alphablock->row[3], sizeof(unsigned short));
         swap(&alphablock->row[1], &alphablock->row[2], sizeof(unsigned short));
@@ -1156,7 +1156,7 @@ void CDDSImage::flip_blocks_dxtc5(DXTColBlock *line, unsigned int numBlocks)
     
     for (unsigned int i = 0; i < numBlocks; i++)
     {
-        alphablock = (DXT5AlphaBlock*)curblock;
+        alphablock = reinterpret_cast<DXT5AlphaBlock*>(curblock);
         
         flip_dxt5_alpha(alphablock);
 

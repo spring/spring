@@ -264,12 +264,13 @@ void LoadExtensions()
 	GLint vidMemBuffer[2] = {0, 0};
 
 	if (GetAvailableVideoRAM(vidMemBuffer)) {
-		const char* memFmtStr = "total %iMB, available %iMB";
 		const GLint totalMemMB = vidMemBuffer[0] / 1024;
 		const GLint availMemMB = vidMemBuffer[1] / 1024;
 
-		if (totalMemMB > 0 && availMemMB > 0)
+		if (totalMemMB > 0 && availMemMB > 0) {
+			const char* memFmtStr = "total %iMB, available %iMB";
 			SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
+		}
 	}
 	
 	// log some useful version info

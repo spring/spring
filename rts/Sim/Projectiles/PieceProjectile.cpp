@@ -441,7 +441,6 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 void CPieceProjectile::DrawCallback()
 {
 	inArray = true;
-	unsigned char col[4];
 
 	if (flags & PF_Fire) {
 		va->EnlargeArrays(8 * 4, 0, VA_SIZE_TC);
@@ -449,6 +448,7 @@ void CPieceProjectile::DrawCallback()
 			float modage = age;
 			float3 interPos = oldInfos[age]->pos;
 			float size = oldInfos[age]->size;
+			unsigned char col[4];
 
 			float alpha = (7.5f - modage) * (1.0f / 8);
 			col[0] = (unsigned char) (255 * alpha);
