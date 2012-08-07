@@ -10,7 +10,7 @@ INSTALLDIR=${DEST}/usr/local
 echo "Installing into $DEST"
 
 #Ultra settings, max number of threads taken from commandline.
-SEVENZIP="7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
+SEVENZIP="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
 ZIP="zip -r9"
 
 MINGWLIBS_PATH=${1}
