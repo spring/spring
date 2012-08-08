@@ -72,31 +72,35 @@ void CGame::ClientReadNet()
 
 		lastframe = currentFrame;
 
-		// read ahead to calculate the number of NETMSG_NEWFRAMES
-		// we still have to process (in variable "que")
-		int que = 0; // Number of NETMSG_NEWFRAMEs waiting to be processed.
-		unsigned ahead = 0;
-		while ((packet = net->Peek(ahead))) {
-			if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
-				++que;
+		// "unconsumedFrames" is only used to calculate the consumeSpeed once per second,
+		// so we should not waste time here, there can be 10000's waiting packets
+		if (unconsumedFrames >= MAX_CONSUME_SPEED) {
+			// read ahead to calculate the number of NETMSG_NEWFRAMES
+			// we still have to process (in variable "que")
+			int numUnconsumedFrames = 0; // Number of NETMSG_NEWFRAMEs waiting to be processed.
+			unsigned ahead = 0;
+			while ((packet = net->Peek(ahead))) {
+				if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
+					++numUnconsumedFrames;
 
-			// this special packet skips queue entirely, so gets processed here
-			// it's meant to indicate current game progress for clients fast-forwarding to current point the game
-			// NOTE: this event should be unsynced, since its time reference frame is not related to the current
-			// progress of the game from the client's point of view
-			if ( packet->data[0] == NETMSG_GAME_FRAME_PROGRESS ) {
-				int serverframenum = *(int*)(packet->data+1);
-				// send the event to lua call-in
-				eventHandler.GameProgress(serverframenum);
-				// pop it out of the net buffer
-				net->DeleteBufferPacketAt(ahead);
+				// this special packet skips queue entirely, so gets processed here
+				// it's meant to indicate current game progress for clients fast-forwarding to current point the game
+				// NOTE: this event should be unsynced, since its time reference frame is not related to the current
+				// progress of the game from the client's point of view
+				if ( packet->data[0] == NETMSG_GAME_FRAME_PROGRESS ) {
+					int serverframenum = *(int*)(packet->data+1);
+					// send the event to lua call-in
+					eventHandler.GameProgress(serverframenum);
+					// pop it out of the net buffer
+					net->DeleteBufferPacketAt(ahead);
+				}
+				else
+					++ahead;
 			}
-			else
-				++ahead;
+			numUnconsumedFrames = std::min(MAX_CONSUME_SPEED - 1, numUnconsumedFrames);
+			if (numUnconsumedFrames < unconsumedFrames)
+				unconsumedFrames = numUnconsumedFrames;
 		}
-
-		if (que < leastQue)
-			leastQue = que;
 	} else {
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.

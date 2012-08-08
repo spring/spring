@@ -194,7 +194,7 @@ public:
 	std::map<int, PlayerTrafficInfo> playerTraffic;
 
 	// to smooth out SimFrame calls
-	int leastQue;          ///< Lowest value of que in the past second.
+	int unconsumedFrames;          ///< Lowest number of unconsumed frames in the past second.
 	float msgProcTimeLeft; ///< How many SimFrame() calls we still may do.
 	float consumeSpeed;    ///< How fast we should eat NETMSG_NEWFRAMEs.
 	spring_time lastframe; ///< time of previous ClientReadNet() call.
