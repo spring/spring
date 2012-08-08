@@ -118,7 +118,8 @@ void CGame::ClientReadNet()
 	const float maxSimFPS    = (1.0f - gu->reconnectSimDrawBalance) * 1000.0f / std::max(0.01f, gu->avgSimFrameTime);
 	const float minDrawFPS   =         gu->reconnectSimDrawBalance  * 1000.0f / std::max(0.01f, gu->avgDrawFrameTime);
 	const float simDrawRatio = maxSimFPS / minDrawFPS;
-	const float msgProcTimeLimit = Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
+	const float msgProcTimeLimit = (GML::SimEnabled() && GML::MultiThreadSim()) ? (1000.0f / gu->minFPS) :
+		Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
 
 	// really process the messages
 	while (true) {
