@@ -55,7 +55,6 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 
 ### Assemble external incude dirs
 INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
 
 
 ### Add icon and manifest to exe using windres
