@@ -74,14 +74,14 @@ void CGame::ClientReadNet()
 
 		// "unconsumedFrames" is only used to calculate the consumeSpeed once per second,
 		// so we should not waste time here, there can be 10000's waiting packets
-		if (unconsumedFrames >= MAX_CONSUME_SPEED) {
+		if (unconsumedFrames < 0) {
 			// read ahead to calculate the number of NETMSG_NEWFRAMES
 			// we still have to process (in variable "que")
-			int numUnconsumedFrames = 0; // Number of NETMSG_NEWFRAMEs waiting to be processed.
+			unconsumedFrames = 0; // Number of NETMSG_NEWFRAMEs waiting to be processed.
 			unsigned ahead = 0;
 			while ((packet = net->Peek(ahead))) {
 				if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
-					++numUnconsumedFrames;
+					++unconsumedFrames;
 
 				// this special packet skips queue entirely, so gets processed here
 				// it's meant to indicate current game progress for clients fast-forwarding to current point the game
@@ -97,9 +97,6 @@ void CGame::ClientReadNet()
 				else
 					++ahead;
 			}
-			numUnconsumedFrames = std::min(MAX_CONSUME_SPEED - 1, numUnconsumedFrames);
-			if (numUnconsumedFrames < unconsumedFrames)
-				unconsumedFrames = numUnconsumedFrames;
 		}
 	} else {
 		// make sure ClientReadNet returns at least every 15 game frames
@@ -385,6 +382,8 @@ void CGame::ClientReadNet()
 				// Fall-through
 			}
 			case NETMSG_NEWFRAME: {
+				if (unconsumedFrames > 0)
+					--unconsumedFrames;
 				msgProcTimeLeft -= 1.0f;
 				SimFrame();
 				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
