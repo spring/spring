@@ -4,7 +4,7 @@ BINARY=${1:-build/default/spring}
 LIBRARY=${2}
 
 # check if the binary links the library
-ldd ${BINARY} | grep -iq ${LIBRARY}
+readelf -d ${BINARY} | grep -i "Shared library:" | grep -iq ${LIBRARY}
 
 # grep returns 0 if found and 1 if not
 RESULT=$?
