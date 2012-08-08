@@ -115,9 +115,4 @@ const float MAX_PROJECTILE_RANGE = 1e6f;
  */
 const float MAX_PROJECTILE_HEIGHT = 1e6f;
 
-/**
- * maximum packet consume speed
- */
-const int MAX_CONSUME_SPEED = 10000;
-
 #endif // _GLOBAL_CONSTANTS_H

@@ -861,8 +861,9 @@ bool CGame::Update()
 
 		// Some netcode stuff
 		if (!gameServer) {
-			consumeSpeed = GAME_SPEED * gs->speedFactor + unconsumedFrames - 2;
-			unconsumedFrames = MAX_CONSUME_SPEED;
+			const int consumeFrameSpeed = (unconsumedFrames < 0) ? 10000 : unconsumedFrames;
+			consumeSpeed = GAME_SPEED * gs->speedFactor + consumeFrameSpeed - 2;
+			unconsumedFrames = -1;
 			msgProcTimeLeft = 0.0f;
 		}
 	}
