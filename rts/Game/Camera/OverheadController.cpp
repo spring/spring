@@ -52,7 +52,7 @@ void COverheadController::KeyMove(float3 move)
 		move.x = -move.x;
 		move.y = -move.y;
 	}
-	move *= sqrt(move.z) * 200;
+	move *= math::sqrt(move.z) * 200;
 
 	pos.x += move.x * pixelSize * 2.0f * scrollSpeed;
 	pos.z -= move.y * pixelSize * 2.0f * scrollSpeed;

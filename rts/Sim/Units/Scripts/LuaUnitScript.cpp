@@ -558,8 +558,8 @@ void CLuaUnitScript::ExtractionRateChanged(float speed)
 void CLuaUnitScript::RockUnit(const float3& rockDir)
 {
 	//FIXME: change COB to get rockDir in unit space too, instead of world space?
-	const float c = cos(unit->heading * TAANG2RAD);
-	const float s = sin(unit->heading * TAANG2RAD);
+	const float c = math::cos(unit->heading * TAANG2RAD);
+	const float s = math::sin(unit->heading * TAANG2RAD);
 	const float x = c * rockDir.x - s * rockDir.z;
 	const float z = s * rockDir.x + c * rockDir.z;
 
@@ -576,8 +576,8 @@ void CLuaUnitScript::HitByWeapon(const float3& hitDir, int weaponDefId, float& i
 		return;
 
 	//FIXME: change COB to get hitDir in unit space too, instead of world space?
-	const float c = cos(unit->heading * TAANG2RAD);
-	const float s = sin(unit->heading * TAANG2RAD);
+	const float c = math::cos(unit->heading * TAANG2RAD);
+	const float s = math::sin(unit->heading * TAANG2RAD);
 	const float x = c * hitDir.x - s * hitDir.z;
 	const float z = s * hitDir.x + c * hitDir.z;
 

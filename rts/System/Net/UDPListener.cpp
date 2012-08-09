@@ -2,9 +2,7 @@
 
 #include "UDPListener.h"
 
-#ifdef _MSC_VER
-#	include "System/Platform/Win/win32.h"
-#elif defined(_WIN32)
+#if defined(_WIN32)
 #	include <windows.h>
 #endif
 

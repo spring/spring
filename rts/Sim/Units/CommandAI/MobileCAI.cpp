@@ -769,7 +769,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			b2 = w->TryTargetRotate(orderTarget, c.GetID() == CMD_MANUALFIRE);
 			b3 = Square(w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.SqDistance(owner->pos));
 			b4 = w->TryTargetHeading(GetHeadingFromVector(-diff.x, -diff.z), orderTarget->pos, orderTarget != NULL, orderTarget);
-			edgeFactor = fabs(w->targetBorder);
+			edgeFactor = math::fabs(w->targetBorder);
 		}
 
 		const float diffLength2D = diff.Length2D();

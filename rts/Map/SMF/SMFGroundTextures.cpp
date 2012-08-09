@@ -203,7 +203,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 						 1.0f * hdata[(y2-1) * mx + x2+1];
 
 					// linear sum, no need for fancy sqrt
-					const float g = (fabs(gx) + fabs(gy)) / mipSquareSize;
+					const float g = (math::fabs(gx) + math::fabs(gy)) / mipSquareSize;
 
 					/*
 					 * square g to amplify large stretches of height.
@@ -259,7 +259,7 @@ void CSMFGroundTextures::DrawUpdate(void)
 	for (int y = 0; y < smfMap->numBigTexY; ++y) {
 		float dz = cam2->pos.z - (y * smfMap->bigSquareSize * SQUARE_SIZE);
 		dz -= (SQUARE_SIZE << 6);
-		dz = std::max(0.0f, float(fabs(dz) - (SQUARE_SIZE << 6)));
+		dz = std::max(0.0f, float(math::fabs(dz) - (SQUARE_SIZE << 6)));
 
 		for (int x = 0; x < smfMap->numBigTexX; ++x) {
 			GroundSquare* square = &squares[y * smfMap->numBigTexX + x];
@@ -281,7 +281,7 @@ void CSMFGroundTextures::DrawUpdate(void)
 
 			float dx = cam2->pos.x - (x * smfMap->bigSquareSize * SQUARE_SIZE);
 			dx -= (SQUARE_SIZE << 6);
-			dx = std::max(0.0f, float(fabs(dx) - (SQUARE_SIZE << 6)));
+			dx = std::max(0.0f, float(math::fabs(dx) - (SQUARE_SIZE << 6)));
 
 			const float hAvg =
 				(heightMaxima[y * smfMap->numBigTexX + x] +

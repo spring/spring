@@ -80,7 +80,7 @@ static float DegreesToMaxSlope(float degrees)
 	const float deg = Clamp(degrees, 0.0f, 60.0f) * 1.5f;
 	const float rad = deg * degToRad;
 
-	return (1.0f - cos(rad));
+	return (1.0f - math::cos(rad));
 }
 
 

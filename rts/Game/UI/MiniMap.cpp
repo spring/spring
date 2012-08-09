@@ -144,7 +144,7 @@ CMiniMap::CMiniMap()
 		const int divs = (1 << (cl + 3));
 		for (int d = 0; d < divs; d++) {
 			const float rads = float(2.0 * PI) * float(d) / float(divs);
-			glVertex3f(sin(rads), 0.0f, cos(rads));
+			glVertex3f(math::sin(rads), 0.0f, math::cos(rads));
 		}
 		glEnd();
 		glEndList();
@@ -223,7 +223,7 @@ void CMiniMap::ParseGeometry(const string& geostr)
 	}
 
 	if ((width <= 0) && (height <= 0)) {
-		const float hw = sqrt(float(gs->mapx) / float(gs->mapy));
+		const float hw = math::sqrt(float(gs->mapx) / float(gs->mapy));
 		width = (int)(-width * hw);
 		height = (int)(-height / hw);
 	}
@@ -444,8 +444,8 @@ void CMiniMap::UpdateGeometry()
 	const float h = float(height);
 	const float mapx = float(gs->mapx * SQUARE_SIZE);
 	const float mapy = float(gs->mapy * SQUARE_SIZE);
-	const float ref  = unitBaseSize / pow((200.f * 200.0f), unitExponent);
-	const float dpr  = ref * pow((w * h), unitExponent);
+	const float ref  = unitBaseSize / math::pow((200.f * 200.0f), unitExponent);
+	const float dpr  = ref * math::pow((w * h), unitExponent);
 
 	unitSizeX = dpr * (mapx / w);
 	unitSizeY = dpr * (mapy / h);
@@ -859,7 +859,7 @@ void CMiniMap::DrawCircle(const float3& pos, float radius)
 
 	const float xPixels = radius * float(width) / float(gs->mapx * SQUARE_SIZE);
 	const float yPixels = radius * float(height) / float(gs->mapy * SQUARE_SIZE);
-	const int lod = (int)(0.25 * log2(1.0f + (xPixels * yPixels)));
+	const int lod = (int)(0.25 * math::log2(1.0f + (xPixels * yPixels)));
 	const int lodClamp = std::max(0, std::min(circleListsCount - 1, lod));
 	glCallList(circleLists + lodClamp);
 

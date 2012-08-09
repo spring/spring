@@ -1242,7 +1242,7 @@ float CWeapon::GetRange2D(float yDiff) const
 	if (root1 < 0) {
 		return 0;
 	} else {
-		return sqrt(root1);
+		return math::sqrt(root1);
 	}
 }
 

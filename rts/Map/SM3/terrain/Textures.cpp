@@ -248,7 +248,7 @@ namespace terrain {
 				}
 
 				// flatness=dotproduct of surface normal with up vector
-				float slope = 1.0f - fabs(norm_y);
+				float slope = 1.0f - math::fabs(norm_y);
 
 				if (slope < gi->minSlope - gi->minSlopeFuzzy) {
 					bm->at(x,y) = 0.0f;
@@ -307,7 +307,7 @@ namespace terrain {
 				Vector3 n;
 
 				if (sx*sx + sy*sy < 32*32) {
-					const int sz = (int)sqrt(static_cast<float>(32 * 32 - sx*sx - sy*sy));
+					const int sz = (int)math::sqrt(static_cast<float>(32 * 32 - sx*sx - sy*sy));
 					n = Vector3(sx, sy, sz);
 					n.ANormalize();
 				}
