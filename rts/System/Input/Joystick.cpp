@@ -1,11 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Platform/Win/win32.h"
+#include "InputHandler.h"
 #include "Joystick.h"
 
 #include <SDL.h>
 
-#include "InputHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/EventHandler.h"

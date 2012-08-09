@@ -225,7 +225,7 @@ namespace terrain {
 		float nodesize = end.x - start.x;
 	//	float sloped = 0.01f * (1.0f + end.y - start.y);
 		nearest -= campos;
-		//return sqrtf(sloped) * nodesize / (nearest.length () + 0.1f);
+		//return math::sqrtf(sloped) * nodesize / (nearest.length () + 0.1f);
 		return nodesize / (nearest.Length() + 0.1f);
 	}
 

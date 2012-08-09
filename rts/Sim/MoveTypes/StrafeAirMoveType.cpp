@@ -413,7 +413,7 @@ void CStrafeAirMoveType::UpdateManeuver()
 				}
 			}
 
-			if (fabs(owner->rightdir.y) < maxAileron * 3.0f * speedf || owner->updir.y < 0.0f) {
+			if (math::fabs(owner->rightdir.y) < maxAileron * 3.0f * speedf || owner->updir.y < 0.0f) {
 				elevator = 1;
 			}
 			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
@@ -530,7 +530,7 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	if (goalDir.dot(frontdir) < -0.2f + inefficientAttackTime * 0.002f && frontdir.y > -0.2f && speedf > 2.0f && gs->randFloat() > 0.996f)
 		maneuver = 1;
 
-	if (goalDir.dot(frontdir) < -0.2f + inefficientAttackTime * 0.002f && fabs(frontdir.y) < 0.2f && gs->randFloat() > 0.996f && gHeightAW + 400 < pos.y) {
+	if (goalDir.dot(frontdir) < -0.2f + inefficientAttackTime * 0.002f && math::fabs(frontdir.y) < 0.2f && gs->randFloat() > 0.996f && gHeightAW + 400 < pos.y) {
 		maneuver = 2;
 		maneuverSubState = 0;
 	}
@@ -538,7 +538,7 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	// roll
 	const float maxAileronSpeedf = maxAileron * speedf;
 	const float maxAileronSpeedf2 = maxAileronSpeedf * 4.0f;
-	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * fabs(frontdir.y) + std::min(0.0f, float(updir.y)) * 150 > gHeightAW + 60 + fabs(rightdir.y) * 150) {
+	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * math::fabs(frontdir.y) + std::min(0.0f, float(updir.y)) * 150 > gHeightAW + 60 + math::fabs(rightdir.y) * 150) {
 		const float goalBankDif = goalDotRight + rightdir.y * 0.2f;
 		if (goalBankDif > maxAileronSpeedf2) {
 			aileron = 1;
@@ -577,7 +577,7 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 		} else {
 			if (maxRudderSpeedf > 0.0f) {
 				rudder = goalDotRight / maxRudderSpeedf;
-				if (fabs(rudder) < 0.01f && aGoalDotFront < 0.0f) {
+				if (math::fabs(rudder) < 0.01f && aGoalDotFront < 0.0f) {
 					rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f; // target almost straight behind us, we have to choose a direction
 				}
 			}
@@ -718,7 +718,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		} else if (goalBankDif < -maxAileronSpeedf && rightdir.y < maxBank) {
 			aileron = -1;
 		} else {
-			if (fabs(rightdir.y) < maxBank && maxAileronSpeedf > 0.0f) {
+			if (math::fabs(rightdir.y) < maxBank && maxAileronSpeedf > 0.0f) {
 				aileron = goalBankDif / maxAileronSpeedf;
 			} else {
 				if (rightdir.y < 0.0f && goalBankDif < 0.0f) {
@@ -746,7 +746,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		} else {
 			if (maxRudderSpeedf > 0.0f) {
 				rudder = goalDotRight / maxRudderSpeedf;
-				if (fabs(rudder) < 0.01f && aGoalDotFront < 0.0f) {
+				if (math::fabs(rudder) < 0.01f && aGoalDotFront < 0.0f) {
 					rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f; // target almost straight behind us, we have to choose a direction
 				}
 			} else {
@@ -779,7 +779,7 @@ void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 			} else if (hdif > maxElevatorSpeedf && frontdir.y < maxPitch) {
 				elevator = 1;
 			} else if (maxElevatorSpeedf > 0.0f) {
-				if (fabs(frontdir.y) < maxPitch)
+				if (math::fabs(frontdir.y) < maxPitch)
 					elevator = hdif / maxElevatorSpeedf;
 			}
 		}

@@ -433,8 +433,8 @@ float CGround::GetSlope(float x, float y, bool synced) const
 
 float3 CGround::GetSmoothNormal(float x, float y, bool synced) const
 {
-	int sx = (int) floor(x / SQUARE_SIZE);
-	int sy = (int) floor(y / SQUARE_SIZE);
+	int sx = (int) math::floor(x / SQUARE_SIZE);
+	int sy = (int) math::floor(y / SQUARE_SIZE);
 
 	if (sy < 1)
 		sy = 1;

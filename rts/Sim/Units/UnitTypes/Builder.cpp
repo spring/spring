@@ -548,7 +548,7 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
 			float delta = orgHeightMap[z * gs->mapxp1 + x] - curHeightMap[z * gs->mapxp1 + x];
-			tcost += fabs(delta);
+			tcost += math::fabs(delta);
 		}
 	}
 	myTerraformLeft = tcost;
@@ -706,7 +706,7 @@ float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 			} else {
 				cost = max(3.0f, orgHeightMap[idx] - curHeightMap[idx] - delta * 0.5f);
 			}
-			tcost += fabs(delta) * cost;
+			tcost += math::fabs(delta) * cost;
 		}
 	}
 
@@ -745,8 +745,8 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 	if (script->HasStartBuilding()) {
 		const float3 wantedDir = (pos - midPos).Normalize();
 		const float h = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
-		const float p = asin(wantedDir.dot(updir));
-		const float pitch = asin(frontdir.dot(updir));
+		const float p = math::asin(wantedDir.dot(updir));
+		const float pitch = math::asin(frontdir.dot(updir));
 
 		// clamping p - pitch not needed, range of asin is -PI/2..PI/2,
 		// so max difference between two asin calls is PI.

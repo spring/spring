@@ -579,7 +579,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	bool b1 = false;
 	float
 		d = (b * b) - (4.0f * a * c),
-		rd = 0.0f, // sqrt(d) or 1/dp
+		rd = 0.0f, // math::sqrt(d) or 1/dp
 		dp = 0.0f, // dot(n{0, 1}, dir)
 		ra = 0.0f; // ellipsoid ratio of p{0, 1}
 	float s0 = 0.0f, t0 = 0.0f;

@@ -262,7 +262,7 @@ bool CStdExplosionGenerator::Explosion(
 	damage *= gfxMod;
 	damage = std::max(damage, 0.0f);
 
-	const float sqrtDmg = sqrt(damage);
+	const float sqrtDmg = math::sqrt(damage);
 	const float camLength = camVect.Length();
 	float moveLength = radius * 0.03f;
 
@@ -283,7 +283,7 @@ bool CStdExplosionGenerator::Explosion(
 		if (airExplosion || waterExplosion) { smokeDamage *= 0.6f; }
 
 		if (smokeDamage > 0.01f) {
-			smokeDamageSQRT = sqrt(smokeDamage);
+			smokeDamageSQRT = math::sqrt(smokeDamage);
 			smokeDamageISQRT = 1.0f / (smokeDamageSQRT * 0.35f);
 		}
 
@@ -507,17 +507,17 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 			}
 			case OP_SAWTOOTH: {
 				// this translates to modulo except it works with floats
-				val -= (*(float*) code) * floor(val / (*(float*) code));
+				val -= (*(float*) code) * math::floor(val / (*(float*) code));
 				code += 4;
 				break;
 			}
 			case OP_DISCRETE: {
-				val = (*(float*) code) * floor(val / (*(float*) code));
+				val = (*(float*) code) * math::floor(val / (*(float*) code));
 				code += 4;
 				break;
 			}
 			case OP_SINE: {
-				val = (*(float*) code) * sin(val);
+				val = (*(float*) code) * math::sin(val);
 				code += 4;
 				break;
 			}
@@ -538,12 +538,12 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				break;
 			}
 			case OP_POW: {
-				val = pow(val, (*(float*) code));
+				val = math::pow(val, (*(float*) code));
 				code += 4;
 				break;
 			}
 			case OP_POWBUFF: {
-				val = pow(val, buffer[(*(int*) code)]);
+				val = math::pow(val, buffer[(*(int*) code)]);
 				code += 4;
 				break;
 			}

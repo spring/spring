@@ -75,11 +75,11 @@ CGrassDrawer::CGrassDrawer()
 	}
 
 	// TODO: get rid of the magic constants
-	maxGrassDist = 800 + sqrt((float) detail) * 240;
+	maxGrassDist = 800 + math::sqrt((float) detail) * 240;
 	maxDetailedDist = 146 + detail * 24;
 	detailedBlocks = int((maxDetailedDist - 24) / bMSsq) + 1;
 	numTurfs = 3 + int(detail * 0.5f);
-	strawPerTurf = 50 + int(sqrt((float) detail) * 10);
+	strawPerTurf = 50 + int(math::sqrt((float) detail) * 10);
 
 	blocksX = gs->mapx / grassSquareSize  /grassBlockSize;
 	blocksY = gs->mapy / grassSquareSize / grassBlockSize;
@@ -641,7 +641,7 @@ void CGrassDrawer::Draw(void)
 		const float3 billboardDirX = (billboardDirZ.cross(UpVector)).ANormalize();
 		const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
 
-		const float ang = acos(billboardDirZ.y);
+		const float ang = math::acos(billboardDirZ.y);
 		const int texPart = std::min(15, int(std::max(0, int((ang + PI / 16 - PI / 2) / PI * 30))));
 
 		if (globalRendering->haveGLSL) {
@@ -673,7 +673,7 @@ void CGrassDrawer::Draw(void)
 			const float3 billboardDirX = (billboardDirZ.cross(UpVector)).ANormalize();
 			const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
 
-			const float ang = acos(billboardDirZ.y);
+			const float ang = math::acos(billboardDirZ.y);
 			const int texPart = std::min(15, int(std::max(0, int((ang + PI / 16 - PI / 2) / PI * 30))));
 
 			if (globalRendering->haveGLSL) {
@@ -820,7 +820,7 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 		float3 forwardVect = sideVect.cross(UpVector);
 		sideVect *= mapInfo->grass.bladeWidth;
 
-		const float3 cornerPos = (UpVector * cos(maxAng) + forwardVect * sin(maxAng)) * length;
+		const float3 cornerPos = (UpVector * math::cos(maxAng) + forwardVect * math::sin(maxAng)) * length;
 		float3 basePos(30.0f, 0.0f, 30.0f);
 
 		while (basePos.SqLength2D() > (turfSize * turfSize / 4)) {
@@ -837,10 +837,10 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 
 			const float3 edgePosL =
 				-sideVect * (1 - h) +
-				(UpVector * cos(ang) + forwardVect * sin(ang)) * length * h;
+				(UpVector * math::cos(ang) + forwardVect * math::sin(ang)) * length * h;
 			const float3 edgePosR =
 				sideVect * (1.0f - h) +
-				(UpVector * cos(ang) + forwardVect * sin(ang)) * length * h;
+				(UpVector * math::cos(ang) + forwardVect * math::sin(ang)) * length * h;
 
 			if (b == 0) {
 				va->AddVertexT(basePos + (edgePosR - float3(0.0f, 0.1f, 0.0f)), xtexBase + xtexOffset, h);

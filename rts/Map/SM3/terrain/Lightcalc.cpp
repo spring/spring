@@ -197,7 +197,7 @@ void Lightmap::CalculateShadows (uchar* dst, int dstw, float lightX, float light
 					continue;
 			}
 
-			float len = sqrt(dx*dx + dy*dy);
+			float len = math::sqrt(dx*dx + dy*dy);
 			const float step = 5.0f;
 			float invLength2d = step / len;
 			dx *= invLength2d;

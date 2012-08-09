@@ -75,7 +75,7 @@ inline bool TestTrajectoryConeHelper(
 	if (closeFlatLength > length)
 		closeFlatLength = length;
 
-	if (fabs(linear - quadratic * closeFlatLength) < 0.15f) {
+	if (math::fabs(linear - quadratic * closeFlatLength) < 0.15f) {
 		// relatively flat region -> use approximation
 		dif.y -= (linear + quadratic * closeFlatLength) * closeFlatLength;
 
