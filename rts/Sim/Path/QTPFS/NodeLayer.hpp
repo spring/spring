@@ -12,7 +12,7 @@
 
 struct SRectangle;
 struct MoveDef;
-struct CMoveMath;
+class CMoveMath;
 
 namespace QTPFS {
 	struct INode;
