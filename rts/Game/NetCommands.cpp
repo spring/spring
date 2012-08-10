@@ -75,9 +75,8 @@ void CGame::ClientReadNet()
 		// "unconsumedFrames" is only used to calculate the consumeSpeed once per second,
 		// so we should not waste time here, there can be 10000's waiting packets
 		if (unconsumedFrames < GAME_SPEED) {
-			// read ahead to calculate the number of NETMSG_NEWFRAMES
-			// we still have to process (in variable "que")
-			int numUnconsumedFrames = 0; // Number of NETMSG_XXXFRAME waiting to be processed.
+			// read ahead to calculate the number of NETMSG_XXXFRAMES we still have to process
+			int numUnconsumedFrames = 0;
 			unsigned ahead = 0;
 			while ((packet = net->Peek(ahead))) {
 				if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
