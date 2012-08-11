@@ -34,7 +34,7 @@ Bugfixes:
  - fix units being able to move down steep cliffs (directional slope-tolerance needs work)
  - fix dangling pointer/memory corruption in QuadField (3211)
  - fix 'Reclaiming units under construction results in no resources being returned' (3216)
- - fix some OpenGL usage errors found by decal
+ - fix some OpenGL usage errors found by [teh]decay
  - fix 'Gunships dont always aquire targets despite fireatwill+roam+fly' (3221)
  - fix 'TargetBorder=1 only works when a unit has a specific attack command' (2971)
  - fix CFeature::ForcedMove (3226)
