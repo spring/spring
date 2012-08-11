@@ -519,7 +519,7 @@ void CHoverAirMoveType::UpdateLanding()
 		return;
 	}
 
-	if (reservedLandingPos.x < 0) {
+	if (reservedLandingPos.x < 0.0f) {
 		if (CanLandAt(pos)) {
 			// found a landing spot
 			reservedLandingPos = pos;
@@ -562,7 +562,9 @@ void CHoverAirMoveType::UpdateLanding()
 
 	UpdateAirPhysics();
 
-	if (altitude <= 1.0f) {
+	// collision detection does not let us get
+	// closer to the ground than <radius> elmos
+	if (altitude <= owner->radius) {
 		SetState(AIRCRAFT_LANDED);
 	}
 }
@@ -693,34 +695,33 @@ void CHoverAirMoveType::UpdateAirPhysics()
 		}
 	}
 
-	float minHeight = 0.0f;  // absolute ground height at (pos.x, pos.z)
-	float curHeight = 0.0f;  // relative ground height at (pos.x, pos.z) == pos.y - minHeight (altitude)
+	// absolute and relative ground height at (pos.x, pos.z)
+	// if this aircraft uses the smoothmes, these values are
+	// calculated with respect to that for changing vertical
+	// speed, but not for ground collision
+	float curAbsHeight = owner->unitDef->canSubmerge?
+		ground->GetHeightReal(pos.x, pos.z):
+		ground->GetHeightAboveWater(pos.x, pos.z);
+	float curRelHeight = 0.0f;
 
 	float wh = wantedHeight; // wanted RELATIVE height (altitude)
 	float ws = 0.0f;         // wanted vertical speed
 
-	if (UseSmoothMesh()) {
-		minHeight = owner->unitDef->canSubmerge?
-			smoothGround->GetHeight(pos.x, pos.z):
-			smoothGround->GetHeightAboveWater(pos.x, pos.z);
-	} else {
-		minHeight = owner->unitDef->canSubmerge?
-			ground->GetHeightReal(pos.x, pos.z):
-			ground->GetHeightAboveWater(pos.x, pos.z);
-	}
-
-	// [?] aircraft should never be able to end up below terrain
-	// if (pos.y < minHeight)
-	//     owner->Move1D(std::min(minHeight - pos.y, altitudeRate), 1, true);
-
-	speed.y = yspeed;
-	curHeight = pos.y - minHeight;
-
+	// always stay above the actual terrain
 	if (modInfo.allowAircraftToHitGround) {
-		if (minHeight > (pos.y - owner->radius)) {
-			owner->Move1D(minHeight + owner->radius + 0.01f, 1, false);
+		if (curAbsHeight > (pos.y - owner->radius)) {
+			owner->Move1D(curAbsHeight + owner->radius + 0.01f, 1, false);
 		}
 	}
+
+	if (UseSmoothMesh()) {
+		curAbsHeight = owner->unitDef->canSubmerge?
+			smoothGround->GetHeight(pos.x, pos.z):
+			smoothGround->GetHeightAboveWater(pos.x, pos.z);
+	}
+
+	speed.y = yspeed;
+	curRelHeight = pos.y - curAbsHeight;
 
 	if (lastColWarningType == 2) {
 		const float3 dir = lastColWarning->midPos - owner->midPos;
@@ -737,27 +738,27 @@ void CHoverAirMoveType::UpdateAirPhysics()
 
 
 
-	if (curHeight < wh) {
+	if (curRelHeight < wh) {
 		ws = altitudeRate;
 
-		if ((speed.y > 0.0001f) && (((wh - curHeight) / speed.y) * accRate * 1.5f) < speed.y) {
+		if ((speed.y > 0.0001f) && (((wh - curRelHeight) / speed.y) * accRate * 1.5f) < speed.y) {
 			ws = 0.0f;
 		}
 	} else {
 		ws = -altitudeRate;
 
-		if ((speed.y < -0.0001f) && (((wh - curHeight) / speed.y) * accRate * 0.7f) < -speed.y) {
+		if ((speed.y < -0.0001f) && (((wh - curRelHeight) / speed.y) * accRate * 0.7f) < -speed.y) {
 			ws = 0.0f;
 		}
 	}
 
 	if (!owner->beingBuilt) {
-		if (math::fabs(wh - curHeight) > 2.0f) {
+		if (math::fabs(wh - curRelHeight) > 2.0f) {
 			if (speed.y > ws) {
 				speed.y = std::max(ws, speed.y - accRate * 1.5f);
 			} else {
 				// accelerate upward faster if close to ground
-				speed.y = std::min(ws, speed.y + accRate * ((curHeight < 20.0f)? 2.0f: 0.7f));
+				speed.y = std::min(ws, speed.y + accRate * ((curRelHeight < 20.0f)? 2.0f: 0.7f));
 			}
 		} else {
 			speed.y *= 0.95;

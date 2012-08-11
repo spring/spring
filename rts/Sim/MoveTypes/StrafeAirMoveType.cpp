@@ -878,17 +878,19 @@ void CStrafeAirMoveType::UpdateLanding()
 
 
 	float3 reservedLandingPosDir = reservedLandingPos - pos;
+	float3 wantedSpeed;
 
-	const float reservedLandingPosDist = reservedLandingPosDir.Length();
-	const float landingSpeed =
-		(speedf > 0.0f && maxAcc > 0.0f)?
-		(reservedLandingPosDist / speedf * 1.8f * maxAcc):
-		0.0f;
+	const float reservedLandingPosDist = reservedLandingPosDir.Length() + 0.1f;
+	const float landingSpeed = (speedf > 0.0f)? ((reservedLandingPosDist / speedf) * (maxAcc * 3.0f)): 0.1f;
 
-	if (reservedLandingPosDist > 0.0f)
-		reservedLandingPosDir /= reservedLandingPosDist;
+	reservedLandingPosDir /= reservedLandingPosDist;
 
-	const float3 wantedSpeed = reservedLandingPosDir * std::min(maxSpeed, landingSpeed);
+	// maxSpeed is set to 0 (when landing) before we are fully
+	// on the ground, so make sure to not get stuck in mid-air
+	wantedSpeed.x = reservedLandingPosDir.x * speedf;
+	wantedSpeed.z = reservedLandingPosDir.z * speedf;
+	wantedSpeed.y = reservedLandingPosDir.y * landingSpeed;
+
 	const float3 deltaSpeed = wantedSpeed - speed;
 	const float deltaSpeedScale = deltaSpeed.Length();
 
@@ -929,7 +931,9 @@ void CStrafeAirMoveType::UpdateLanding()
 		reservedLandingPos.y = gh;
 	}
 
-	if (altitude <= 1.0f) {
+	// collision detection does not let us get
+	// closer to the ground than <radius> elmos
+	if (altitude <= owner->radius) {
 		SetState(AIRCRAFT_LANDED);
 	}
 }
@@ -951,13 +955,9 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	lastAileronPos = aileron;
 	lastElevatorPos = elevator;
 
-	const float speedf = speed.Length();
-	float3 speeddir = frontdir;
-	if (speedf != 0.0f) {
-		speeddir = speed / speedf;
-	}
-
 	const float gHeight = ground->GetHeightAboveWater(pos.x, pos.z);
+	const float speedf = speed.Length() + 0.1f;
+	const float3 speeddir = speed / speedf;
 
 	if (owner->fpsControlPlayer != NULL) {
 		if ((pos.y - gHeight) > wantedHeight * 1.2f) {
@@ -992,7 +992,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 		owner->Move3D(speed, true);
 	}
 
-	// bounce away on ground collisions
+	// bounce away on ground collisions (including water surface)
 	if (modInfo.allowAircraftToHitGround) {
 		if (gHeight > (owner->pos.y - owner->radius)) {
 			owner->Move1D(gHeight + owner->radius + 0.01f, 1, false);
