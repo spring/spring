@@ -457,7 +457,7 @@ void CEventHandler::UpdateUnits() { eventBatchHandler->UpdateUnits(); }
 void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
 void CEventHandler::DeleteSyncedUnits() {
 	eventBatchHandler->DeleteSyncedUnits();
-	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedUnits
+
 	if (luaUI) luaUI->ExecuteUnitEventBatch();
 }
 
@@ -465,7 +465,7 @@ void CEventHandler::UpdateFeatures() { eventBatchHandler->UpdateFeatures(); }
 void CEventHandler::UpdateDrawFeatures() { eventBatchHandler->UpdateDrawFeatures(); }
 void CEventHandler::DeleteSyncedFeatures() {
 	eventBatchHandler->DeleteSyncedFeatures();
-	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedFeatures
+
 	if (luaUI) luaUI->ExecuteFeatEventBatch();
 }
 
@@ -482,7 +482,6 @@ inline void ExecuteAllCallsFromSynced() {
 		if (luaGaia && luaGaia->ExecuteCallsFromSynced())
 			exec = true;
 
-		GML_STDMUTEX_LOCK(luaui); // ExecuteAllCallsFromSynced
 		if (luaUI && luaUI->ExecuteCallsFromSynced())
 			exec = true;
 	} while (exec);
@@ -493,7 +492,6 @@ void CEventHandler::DeleteSyncedProjectiles() {
 	ExecuteAllCallsFromSynced();
 	eventBatchHandler->DeleteSyncedProjectiles();
 
-	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedProjectiles
 	if (luaUI) luaUI->ExecuteProjEventBatch();
 }
 
@@ -503,7 +501,6 @@ void CEventHandler::UpdateObjects() {
 void CEventHandler::DeleteSyncedObjects() {
 	ExecuteAllCallsFromSynced();
 
-	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedObjects
 	if (luaUI) luaUI->ExecuteObjEventBatch();
 }
 
@@ -727,7 +724,7 @@ bool CEventHandler::AddConsoleLine(const std::string& msg, const std::string& se
 void CEventHandler::LastMessagePosition(const float3& pos)
 {
 	EVENTHANDLER_CHECK(LastMessagePosition);
-	//GML_STDMUTEX_LOCK(log); // LastMessagePosition FIXME would this be required?
+
 	ITERATE_EVENTCLIENTLIST(LastMessagePosition, pos);
 }
 
