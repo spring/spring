@@ -235,7 +235,7 @@ void CLuaHandle::CheckStack()
 	ExecuteLogEventBatch();
 
 	SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
+	GML_DRCMUTEX_LOCK(lua); // CheckStack
 
 	const int top = lua_gettop(L);
 	if (top != 0) {
@@ -284,7 +284,7 @@ void CLuaHandle::DelayRecvFromSynced(lua_State* srcState, int args) {
 
 	LuaUtils::ShallowBackup(ddmp.data, srcState, args);
 
-	GML_STDMUTEX_LOCK(scall);
+	GML_STDMUTEX_LOCK(scall); // DelayRecvFromSynced
 
 	delayedCallsFromSynced.push_back(DelayDataDump());
 
@@ -345,7 +345,7 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteCallsFromSynced
 
 	SELECT_UNSYNCED_LUA_STATE(); // ExecuteCallsFromSynced
-	GML_DRCMUTEX_LOCK(lua);
+	GML_DRCMUTEX_LOCK(lua); // ExecuteCallsFromSynced
 
 	for (int i = 0; i < drfs.size(); ++i) {
 		DelayDataDump &ddp = drfs[i];
@@ -1510,7 +1510,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 
 	std::vector<LuaUnitEvent> lueb;
 	{
-		GML_STDMUTEX_LOCK(ulbatch);
+		GML_STDMUTEX_LOCK(ulbatch); // ExecuteUnitEventBatch
 
 		if(luaUnitEventBatch.empty())
 			return;
@@ -1631,7 +1631,7 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 
 	std::vector<LuaFeatEvent> lfeb;
 	{
-		GML_STDMUTEX_LOCK(flbatch);
+		GML_STDMUTEX_LOCK(flbatch); // ExecuteFeatEventBatch
 
 		if(luaFeatEventBatch.empty())
 			return;
@@ -1674,7 +1674,7 @@ void CLuaHandle::ExecuteObjEventBatch() {
 
 	std::vector<LuaObjEvent> loeb;
 	{
-		GML_STDMUTEX_LOCK(olbatch);
+		GML_STDMUTEX_LOCK(olbatch); // ExecuteObjEventBatch
 
 		if(luaObjEventBatch.empty())
 			return;
@@ -1716,7 +1716,7 @@ void CLuaHandle::ExecuteProjEventBatch() {
 
 	std::vector<LuaProjEvent> lpeb;
 	{
-		GML_STDMUTEX_LOCK(plbatch);
+		GML_STDMUTEX_LOCK(plbatch); // ExecuteProjEventBatch
 
 		if(luaProjEventBatch.empty())
 			return;
@@ -1753,7 +1753,7 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 
 	std::vector<int> lgeb;
 	{
-		GML_STDMUTEX_LOCK(glbatch);
+		GML_STDMUTEX_LOCK(glbatch); // ExecuteFrameEventBatch
 
 		if(luaFrameEventBatch.empty())
 			return;
@@ -1783,7 +1783,7 @@ void CLuaHandle::ExecuteLogEventBatch() {
 
 	std::vector<LuaLogEvent> lmeb;
 	{
-		GML_STDMUTEX_LOCK(mlbatch);
+		GML_STDMUTEX_LOCK(mlbatch); // ExecuteLogEventBatch
 
 		if (luaLogEventBatch.empty()) {
 			return;

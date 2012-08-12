@@ -885,7 +885,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 void CGuiHandler::GiveCommand(Command& cmd, bool fromUser)
 {
-	GML_STDMUTEX_LOCK(cmd);
+	GML_STDMUTEX_LOCK(cmd); // GiveCommand
 	commandsToGive.push_back(std::pair<const Command, bool>(cmd, fromUser));
 }
 
@@ -893,7 +893,7 @@ void CGuiHandler::GiveCommand(Command& cmd, bool fromUser)
 void CGuiHandler::GiveCommandsNow() {
 	std::vector< std::pair<Command, bool> > commandsToGiveTemp;
 	{
-		GML_STDMUTEX_LOCK(cmd);
+		GML_STDMUTEX_LOCK(cmd); // GiveCommandsNow
 		commandsToGiveTemp.swap(commandsToGive);
 	}
 
@@ -4296,7 +4296,7 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 void CGuiHandler::PushLayoutCommand(const std::string& cmd, bool luaCmd) {
 	if (GML::SimEnabled()) {
-		GML_RECMUTEX_LOCK(laycmd); // PushLayoutCommand
+		GML_STDMUTEX_LOCK(laycmd); // PushLayoutCommand
 
 		layoutCommands.push_back(cmd);
 		if(luaCmd)
@@ -4313,7 +4313,7 @@ void CGuiHandler::RunLayoutCommands() {
 	bool luaCmd;
 	std::vector<std::string> layoutCmds;
 	{
-		GML_RECMUTEX_LOCK(laycmd); // RunLayoutCommands
+		GML_STDMUTEX_LOCK(laycmd); // RunLayoutCommands
 
 		layoutCmds.swap(layoutCommands);
 		luaCmd = hasLuaUILayoutCommands;

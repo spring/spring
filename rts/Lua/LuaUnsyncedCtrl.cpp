@@ -2291,7 +2291,7 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // SetUnitGroup - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(group); // SetUnitGroup
 
 	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;

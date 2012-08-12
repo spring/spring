@@ -454,7 +454,7 @@ void CLuaUI::ExecuteUIEventBatch() {
 
 	std::vector<LuaUIEvent> lleb;
 	{
-		GML_STDMUTEX_LOCK(llbatch);
+		GML_STDMUTEX_LOCK(llbatch); // ExecuteUIEventBatch
 
 		if(luaUIEventBatch.empty())
 			return;
@@ -865,7 +865,7 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 
 			lua_settop(srcState, 0);
 
-			GML_STDMUTEX_LOCK(scall);
+			GML_STDMUTEX_LOCK(scall); // UnsyncedXCall
 
 			delayedCallsFromSynced.push_back(DelayDataDump());
 

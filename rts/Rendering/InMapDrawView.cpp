@@ -193,7 +193,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 void CInMapDrawView::Draw()
 {
-	GML_STDMUTEX_LOCK(inmap); //! Draw
+	GML_STDMUTEX_LOCK(inmap); // Draw
 
 	CVertexArray* pointsVa = GetVertexArray();
 	pointsVa->Initialize();

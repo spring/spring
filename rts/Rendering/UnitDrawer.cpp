@@ -557,7 +557,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 
 void CUnitDrawer::DrawOpaqueAIUnits()
 {
-	GML_STDMUTEX_LOCK(temp);
+	GML_STDMUTEX_LOCK(temp); // DrawOpaqueAIUnits
 
 	// non-cloaked AI unit ghosts (FIXME: s3o's + teamcolor)
 	for (std::multimap<int, TempDrawUnit>::iterator ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
@@ -1164,7 +1164,7 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 
 void CUnitDrawer::DrawCloakedAIUnits()
 {
-	GML_STDMUTEX_LOCK(temp);
+	GML_STDMUTEX_LOCK(temp); // DrawCloakedAIUnits
 
 	// cloaked AI unit ghosts (FIXME: S3O's need different state)
 	for (std::multimap<int, TempDrawUnit>::iterator ti = tempTransparentDrawUnits.begin(); ti != tempTransparentDrawUnits.end(); ++ti) {
