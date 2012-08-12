@@ -19,45 +19,26 @@
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring (safemode).lnk" "$INSTDIR\spring.exe" "--safemode"
-	!ifdef SEC_GML
-		${If} ${SectionIsSelected} ${SEC_GML}
-			CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk" "$INSTDIR\spring-multithreaded.exe"
-			CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT (safemode).lnk" "$INSTDIR\spring-multithreaded.exe" "--safemode"
-		${EndIf}
-	!endif
-
-	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Readme.lnk" "$INSTDIR\docs\README.html"
+	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk" "$INSTDIR\spring-multithreaded.exe"
+	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT (safemode).lnk" "$INSTDIR\spring-multithreaded.exe" "--safemode"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk" "$INSTDIR\uninst.exe"
+
+	WriteINIStr "$SMPROGRAMS\${PRODUCT_NAME}\Read Me First.URL" "InternetShortcut" "URL" "http://springrts.com/wiki/Read_Me_First"
 
 !else
 
 	; Shortcuts
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringLobby.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Zero-K Lobby.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring (safemode).lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT (safemode).lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Readme.lnk"
 
-	; deprecated files
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Website.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring test.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring multiplayer battleroom.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Update CA.lnk"
-
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringDownloader.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"
-
-	Delete "$INSTDIR\Spring.url"
-	Delete "$INSTDIR\springfiles.url"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Read Me First.URL"
 
 	; delete the folders
 	RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
