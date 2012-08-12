@@ -1373,6 +1373,7 @@ void CCommandAI::DependentDied(CObject* o)
 void CCommandAI::FinishCommand()
 {
 	assert(!commandQue.empty());
+
 	const Command cmd = commandQue.front();
 	const int cmdID  = cmd.GetID();
 	const int cmdTag = cmd.tag;
