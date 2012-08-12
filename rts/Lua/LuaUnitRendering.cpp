@@ -121,7 +121,7 @@ int LuaUnitRendering::SetLODLength(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	GML_LODMUTEX_LOCK(unit);
+	GML_LODMUTEX_LOCK(unit); // SetLODLength
 
 	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
 	if (lod >= unit->lodCount) {

@@ -321,7 +321,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
-	GML_RECMUTEX_LOCK(qnum);
+	GML_RECMUTEX_LOCK(qnum); // QueryUnits
 
 	const vector<int> &quads = qf->GetQuads(query.pos, query.radius);
 

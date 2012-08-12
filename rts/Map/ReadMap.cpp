@@ -300,7 +300,7 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 	// push the unsynced update
 	if (initialize) {
 		// push 1st update through without LOS check
-		GML_STDMUTEX_LOCK(map);
+		GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
 		unsyncedHeightMapUpdates.push_back(rect);
 	} else {
 		InitHeightMapDigestsVectors();
@@ -319,7 +319,7 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 		HeightMapUpdateLOSCheck(rect);
 	}
 #else
-	GML_STDMUTEX_LOCK(map);
+	GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
 	unsyncedHeightMapUpdates.push_back(rect);
 #endif
 }
@@ -480,7 +480,7 @@ void CReadMap::UpdateSlopemap(const SRectangle& rect)
 /// split the update into multiple invididual (los-square) chunks:
 void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& rect)
 {
-	GML_STDMUTEX_LOCK(map);
+	GML_STDMUTEX_LOCK(map); // HeightMapUpdateLOSCheck
 
 	InitHeightMapDigestsVectors();
 	const int losSqSize = loshandler->losDiv / SQUARE_SIZE; // size of LOS square in heightmap coords

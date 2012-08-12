@@ -526,7 +526,7 @@ void CQuadField::AddProjectile(CProjectile* p)
 	cellCoors.x = std::max(0, std::min(int(p->pos.x / QUAD_SIZE), numQuadsX - 1));
 	cellCoors.y = std::max(0, std::min(int(p->pos.z / QUAD_SIZE), numQuadsZ - 1));
 
-	GML_RECMUTEX_LOCK(quad);
+	GML_RECMUTEX_LOCK(quad); // AddProjectile
 
 	Quad& q = baseQuads[numQuadsX * cellCoors.y + cellCoors.x];
 	std::list<CProjectile*>& projectiles = q.projectiles;
@@ -542,7 +542,7 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 	const int2& cellCoors = p->GetQuadFieldCellCoors();
 	const int cellIdx = numQuadsX * cellCoors.y + cellCoors.x;
 
-	GML_RECMUTEX_LOCK(quad);
+	GML_RECMUTEX_LOCK(quad); // RemoveProjectile
 
 	Quad& q = baseQuads[cellIdx];
 
@@ -659,7 +659,7 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const fl
 
 std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& pos, float radius)
 {
-	GML_RECMUTEX_LOCK(qnum);
+	GML_RECMUTEX_LOCK(qnum); // GetProjectilesExact
 
 	const std::vector<int>& quads = GetQuads(pos, radius);
 
@@ -686,7 +686,7 @@ std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& pos, flo
 
 std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& mins, const float3& maxs)
 {
-	GML_RECMUTEX_LOCK(qnum);
+	GML_RECMUTEX_LOCK(qnum); // GetProjectilesExact
 
 	const std::vector<int>& quads = GetQuadsRectangle(mins, maxs);
 
