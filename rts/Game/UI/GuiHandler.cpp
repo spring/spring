@@ -548,8 +548,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			return; // we're done here
 		}
 		else {
-			CLuaUI::FreeHandler();
-			LoadConfig("ctrlpanel.txt");
+			PushLayoutCommand("disable");
 		}
 	}
 

@@ -98,8 +98,6 @@ void CLuaUI::LoadHandler()
 		return;
 	}
 
-	GML_STDMUTEX_LOCK(luaui); // LoadHandler
-
 	new CLuaUI();
 
 	if (!luaUI->IsValid()) {
@@ -112,9 +110,6 @@ void CLuaUI::FreeHandler()
 {
 	static bool inFree = false;
 	if (!inFree) {
-
-		GML_STDMUTEX_LOCK(luaui); // FreeHandler
-
 		inFree = true;
 		delete luaUI;
 		inFree = false;
