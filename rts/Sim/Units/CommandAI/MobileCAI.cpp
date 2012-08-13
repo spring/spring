@@ -714,8 +714,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		}
 		else if (c.params.size() >= 3) {
 			// user gave force-fire attack command
-			float3 pos = c.GetPos(0);
-			SetGoal(pos, owner->pos);
+			SetGoal(c.GetPos(0), owner->pos);
 			inCommand = true;
 		}
 	}
@@ -887,10 +886,11 @@ void CMobileCAI::ExecuteAttack(Command &c)
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 				}
 			} else {
-				const bool inAngle = w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE);
-				const bool inRange = diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D());
+				// [?] TryTargetRotate --> TryTarget already checks range for itself (in 2D)
+				// const bool inAngle = w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE);
+				// const bool inRange = (diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D()));
 
-				if (inAngle || inRange) {
+				if (w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE)) {
 					StopMove();
 					owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
@@ -898,10 +898,13 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			}
 		}
 
+		#if 0
+		// no weapons --> no need to stop at an arbitrary distance?
 		else if (diff.SqLength2D() < 1024) {
 			StopMove();
 			owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 		}
+		#endif
 
 		// if we are more than 10 units distant from target position then keeping moving closer
 		else if (pos.SqDistance2D(goalPos) > 100) {
