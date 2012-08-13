@@ -19,9 +19,6 @@
 
 	; next one is deprecated since mingwlibs 20.1 (around spring v0.81.2.1)
 	Delete "$INSTDIR\wrap_oal.dll"
-	Delete "$INSTDIR\vorbisfile.dll"
-	Delete "$INSTDIR\vorbis.dll"
-	Delete "$INSTDIR\ogg.dll"
 	Delete "$INSTDIR\cache\ArchiveCacheV9.lua"
 
 	Delete "$INSTDIR\SpringDownloader.exe"
