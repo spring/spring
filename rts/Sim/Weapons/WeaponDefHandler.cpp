@@ -67,8 +67,9 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 {
 	wd.tdfId = wdTable.GetInt("id", 0);
 
-	wd.description = wdTable.GetString("name",     "Weapon");
-	wd.cegTag      = wdTable.GetString("cegTag",   "");
+	wd.description = wdTable.GetString("name",       "Weapon");
+	wd.type        = wdTable.GetString("weaponType", "Cannon");
+	wd.cegTag      = wdTable.GetString("cegTag",     "");
 
 	wd.avoidFriendly = wdTable.GetBool("avoidFriendly", true);
 	wd.avoidFeature  = wdTable.GetBool("avoidFeature",  true);
@@ -95,7 +96,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.tracks        = wdTable.GetBool("tracks",          false);
 	wd.fixedLauncher = wdTable.GetBool("fixedLauncher",   false);
 	wd.noExplode     = wdTable.GetBool("noExplode",       false);
-	wd.isShield      = wdTable.GetBool("isShield",        false);
+	wd.isShield      = wdTable.GetBool("isShield",        (wd.type == "Shield"));
 	wd.beamtime      = wdTable.GetFloat("beamTime",       1.0f);
 	wd.beamburst     = wdTable.GetBool("beamburst",       false);
 
@@ -110,8 +111,6 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.falloffRate    = wdTable.GetFloat("fallOffRate",    0.5f);
 
 	wd.gravityAffected = wdTable.GetBool("gravityAffected", false);
-
-	wd.type = wdTable.GetString("weaponType", "Cannon");
 
 	wd.targetBorder = Clamp(wdTable.GetFloat("targetBorder", (wd.type == "Melee")? 1.0f : 0.0f), -1.0f, 1.0f);
 	wd.cylinderTargeting = Clamp(wdTable.GetFloat("cylinderTargeting", wdTable.GetFloat("cylinderTargetting", (wd.type == "Melee")? 1.0f : 0.0f)), 0.0f, 128.0f);
