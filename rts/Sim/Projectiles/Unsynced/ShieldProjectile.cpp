@@ -51,7 +51,7 @@ ShieldProjectile::ShieldProjectile(CPlasmaRepulser* shield_)
 	const CUnit* u = shield->owner;
 	const WeaponDef* wd = shield->weaponDef;
 
-	if ((allowDrawing = wd->visibleShield)) {
+	if ((allowDrawing = (wd->visibleShield || wd->visibleShieldHitFrames > 0))) {
 		shieldTexture = wd->visuals.texture1;
 
 		// Y*X segments, deleted by ProjectileHandler
@@ -188,10 +188,7 @@ ShieldSegmentProjectile::~ShieldSegmentProjectile()
 
 const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const int ypart)
 {
-	static bool init = false;
-	if (!init) {
-		init = true;
-
+	if (spherevertices.empty()) {
 		spherevertices.resize(NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
 
 		// NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X vertices
