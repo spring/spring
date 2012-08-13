@@ -71,10 +71,11 @@ IF    (UNIX)
 		FIND_LIBRARY(C_LIBRARY c)
 		FIND_LIBRARY(MATH_LIBRARY m)
 		FIND_LIBRARY(PTHREAD_LIBRARY pthread)
-		FIND_LIBRARY(OMP_LIBRARY gomp)
+		#FIND_LIBRARY(OMP_LIBRARY gomp) FIXME it's hidden in some subfolders
 		UNPREFER_STATIC_LIBS()
 
-		LIST(APPEND engineCommonLibraries ${DL_LIBRARY} ${C_LIBRARY} ${MATH_LIBRARY} ${PTHREAD_LIBRARY} ${OMP_LIBRARY})
+		LIST(APPEND engineCommonLibraries ${DL_LIBRARY} ${C_LIBRARY} ${MATH_LIBRARY} ${PTHREAD_LIBRARY})
+		#LIST(APPEND engineCommonLibraries ${OMP_LIBRARY})
 	ELSE  (PREFER_STATIC_LIBS)
 		# Needed for dynamically loading shared libraries (on some OS)
 		LIST(APPEND engineCommonLibraries dl)
