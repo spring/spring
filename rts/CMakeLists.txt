@@ -54,16 +54,6 @@ if    (NO_SOUND)
 endif (NO_SOUND)
 
 ### Find include directories and add platform specific libraries
-LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY})
-LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY})
-LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
-
-IF    (PREFER_STATIC_LIBS)
-	# dependency of minizip
-	FIND_PACKAGE_STATIC(ZLIB REQUIRED)
-	LIST(APPEND engineCommonLibraries ${ZLIB_LIBRARY})
-ENDIF (PREFER_STATIC_LIBS)
-
 IF    (UNIX)
 	IF    (PREFER_STATIC_LIBS)
 		PREFER_STATIC_LIBS()
@@ -81,6 +71,16 @@ IF    (UNIX)
 		LIST(APPEND engineCommonLibraries dl)
 	ENDIF (PREFER_STATIC_LIBS)
 ENDIF (UNIX)
+
+LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY})
+LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY})
+LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
+
+IF    (PREFER_STATIC_LIBS)
+	# dependency of minizip
+	FIND_PACKAGE_STATIC(ZLIB REQUIRED)
+	LIST(APPEND engineCommonLibraries ${ZLIB_LIBRARY})
+ENDIF (PREFER_STATIC_LIBS)
 
 IF (MINGW)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
