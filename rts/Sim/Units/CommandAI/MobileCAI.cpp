@@ -886,13 +886,19 @@ void CMobileCAI::ExecuteAttack(Command &c)
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 				}
 			} else {
-				// [?] TryTargetRotate --> TryTarget already checks range for itself (in 2D)
-				// const bool inAngle = w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE);
-				// const bool inRange = (diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D()));
+				if (diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D())) {
+					if (w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE)) {
+						StopMove();
+						owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+					}
 
-				if (w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE)) {
-					StopMove();
-					owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+					// for gunships, this pitches the nose down such that
+					// TryTargetRotate (which also checks range for itself)
+					// has a bigger chance of succeeding
+					//
+					// hence it must be called as soon as we get in range
+					// and may not depend on what TryTargetRotate returns
+					// (otherwise we might never get a firing solution)
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 				}
 			}
