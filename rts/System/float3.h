@@ -10,6 +10,7 @@
 #include "System/creg/creg_cond.h"
 #include "System/FastMath.h"
 #include "lib/gml/gmlcnf.h"
+#include "System/Platform/Threading.h"
 
 
 /**
@@ -453,7 +454,7 @@ public:
 	 */
 	float3& Normalize() {
 #if defined(__SUPPORT_SNAN__)
-		if (GML::Enabled())
+		if (GML::Enabled() && !Threading::IsSimThread())
 			return SafeNormalize();
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeNormalize();
@@ -502,7 +503,7 @@ public:
 	 */
 	float3& ANormalize() {
 #if defined(__SUPPORT_SNAN__)
-		if (GML::Enabled())
+		if (GML::Enabled() && !Threading::IsSimThread())
 			return SafeANormalize();
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeANormalize();
