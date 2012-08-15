@@ -436,8 +436,12 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	SyncedFloat3& Normalize() {
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+#if defined(__SUPPORT_SNAN__)
 		assert(SqLength() > float3::NORMALIZE_EPS);
+#if defined(USE_GML)
+		if (!Threading::IsSimThread())
+			return SafeNormalize();
+#endif
 		return UnsafeNormalize();
 #else
 		return SafeNormalize();
@@ -483,8 +487,12 @@ public:
 	 * the vector's approx. length.
 	 */
 	SyncedFloat3& ANormalize() {
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+#if defined(__SUPPORT_SNAN__)
 		assert(SqLength() > float3::NORMALIZE_EPS);
+#if defined(USE_GML)
+		if (!Threading::IsSimThread())
+			return SafeANormalize();
+#endif
 		return UnsafeANormalize();
 #else
 		return SafeANormalize();
