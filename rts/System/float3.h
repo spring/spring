@@ -453,11 +453,11 @@ public:
 	 */
 	float3& Normalize() {
 #if defined(__SUPPORT_SNAN__)
-		assert(SqLength() > NORMALIZE_EPS);
 #if defined(USE_GML)
 		if (!Threading::IsSimThread())
 			return SafeNormalize();
 #endif
+		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeNormalize();
 #else
 		return SafeNormalize();
@@ -504,11 +504,11 @@ public:
 	 */
 	float3& ANormalize() {
 #if defined(__SUPPORT_SNAN__)
-		assert(SqLength() > NORMALIZE_EPS);
 #if defined(USE_GML)
 		if (!Threading::IsSimThread())
 			return SafeANormalize();
 #endif
+		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeANormalize();
 #else
 		return SafeANormalize();
