@@ -1,5 +1,6 @@
 
 SET(PREFER_STATIC_LIBS TRUE)
 
+SET(AI_TYPES "NONE")
 SET(BUILD_spring-headless FALSE)
 SET(BUILD_spring-dedicated FALSE)
