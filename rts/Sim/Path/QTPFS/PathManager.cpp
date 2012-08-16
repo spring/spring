@@ -239,7 +239,7 @@ void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const SRectangle& r) {
 
 
 void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 
 	char loadMsg[512] = {'\0'};
 	const char* fmtString = "[PathManager::%s] using %u threads for %u node-layers (cached? %s)";
@@ -298,7 +298,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 	}
 	#endif
 
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 }
 
 void QTPFS::PathManager::InitNodeLayersThread(
@@ -348,7 +348,7 @@ void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const SRectangle& 
 
 
 void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
@@ -363,7 +363,7 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 	}
 	#endif
 
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 }
 
 void QTPFS::PathManager::UpdateNodeLayersThread(
@@ -557,7 +557,7 @@ void QTPFS::PathManager::Update() {
 	SCOPED_TIMER("PathManager::Update");
 
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 
 	boost::mutex::scoped_lock lock(*mutexThreadUpdate);
 
@@ -567,7 +567,7 @@ void QTPFS::PathManager::Update() {
 	// wait for the ThreadUpdate iteration to finish
 	condThreadUpdated->wait(lock);
 
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 	#else
 	ThreadUpdate();
 	#endif

@@ -139,7 +139,7 @@ void CCameraHandler::UpdateCam()
 		cameraTimeLeft = std::max(0.0f, (cameraTimeLeft - globalRendering->lastFrameTime));
 		const float nextTime = cameraTimeLeft;
 		const float exp = cameraTimeExponent;
-		const float ratio = 1.0f - (float)pow((nextTime / currTime), exp);
+		const float ratio = 1.0f - (float)math::pow((nextTime / currTime), exp);
 
 		const float  deltaFOV = wantedCamFOV - camera->GetFov();
 		const float3 deltaPos = wantedCamPos - camera->pos;

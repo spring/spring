@@ -194,7 +194,7 @@ unsigned int StandardShapes::MakeIcosahedron(std::vector<aiVector3D>& positions)
 	positions.reserve(positions.size()+60);
 
 	const float t = (1.f + 2.236067977f)/2.f;
-	const float s = sqrt(1.f + t*t);
+	const float s = math::sqrt(1.f + t*t);
 	
 	const aiVector3D v0  = aiVector3D(t,1.f, 0.f)/s;
 	const aiVector3D v1  = aiVector3D(-t,1.f, 0.f)/s;
@@ -244,8 +244,8 @@ unsigned int StandardShapes::MakeDodecahedron(std::vector<aiVector3D>& positions
 	positions.reserve(positions.size()+108);
 
 	const float a = 1.f / 1.7320508f;
-	const float b = sqrt((3.f-2.23606797f)/6.f);
-	const float c = sqrt((3.f+2.23606797f)/6.f);
+	const float b = math::sqrt((3.f-2.23606797f)/6.f);
+	const float c = math::sqrt((3.f+2.23606797f)/6.f);
 
 	const aiVector3D v0  = aiVector3D(a,a,a);
 	const aiVector3D v1  = aiVector3D(a,a,-a);
@@ -392,8 +392,8 @@ void StandardShapes::MakeCone(float height,float radius1,
 	size_t old = positions.size();
 
 	// No negative radii
-	radius1 = fabs(radius1);
-	radius2 = fabs(radius2);
+	radius1 = math::fabs(radius1);
+	radius2 = math::fabs(radius2);
 
 	float halfHeight = height / 2;
 
@@ -478,7 +478,7 @@ void StandardShapes::MakeCircle(float radius, unsigned int tess,
 	if (tess < 3 || !radius)
 		return;
 
-	radius = fabs(radius);
+	radius = math::fabs(radius);
 
 	// We will need 3 vertices per segment 
 	positions.reserve(positions.size()+tess*3);

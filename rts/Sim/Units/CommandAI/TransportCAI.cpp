@@ -624,7 +624,7 @@ void CTransportCAI::UnloadLand(Command& c)
 				am->ForceHeading(unloadHeading);
 				am->maxDrift = 1;
 				if ((owner->pos.SqDistance(pos) < 64) &&
-						(owner->updir.dot(UpVector) > 0.99f) && fabs(owner->heading - unloadHeading) < AIRTRANSPORT_DOCKING_ANGLE) {
+						(owner->updir.dot(UpVector) > 0.99f) && math::fabs(owner->heading - unloadHeading) < AIRTRANSPORT_DOCKING_ANGLE) {
 					pos.y -= unit->radius;
 					if (!SpotIsClearIgnoreSelf(pos, unit)) {
 						// chosen spot is no longer clear to land, choose a new one

@@ -385,7 +385,7 @@ void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 	smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 	smfShaderCurrARB->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
 	smfShaderCurrARB->SetUniform4f(12, 1.0f / smfMap->bigTexSize, 1.0f / smfMap->bigTexSize, 0, 1);
-	smfShaderCurrARB->SetUniform4f(13, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f), 0, 0);
+	smfShaderCurrARB->SetUniform4f(13, -math::floor(camera->pos.x * 0.02f), -math::floor(camera->pos.z * 0.02f), 0, 0);
 	smfShaderCurrARB->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
 	smfShaderCurrARB->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 	smfShaderCurrARB->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1);

@@ -332,12 +332,12 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 	float zp = start.z;
 	const float invQuadSize = 1.0f / QUAD_SIZE;
 
-	if ((floor(start.x * invQuadSize) == floor(to.x * invQuadSize)) &&
-		(floor(start.z * invQuadSize) == floor(to.z * invQuadSize)))
+	if ((math::floor(start.x * invQuadSize) == math::floor(to.x * invQuadSize)) &&
+		(math::floor(start.z * invQuadSize) == math::floor(to.z * invQuadSize)))
 	{
 		*endQuad = ((int(start.x * invQuadSize)) + (int(start.z * invQuadSize)) * numQuadsX);
 		++endQuad;
-	} else if (floor(start.x * invQuadSize) == floor(to.x * invQuadSize)) {
+	} else if (math::floor(start.x * invQuadSize) == math::floor(to.x * invQuadSize)) {
 		const int first = (int)(start.x * invQuadSize) + ((int)(start.z * invQuadSize) * numQuadsX);
 		const int last  = (int)(to.x    * invQuadSize) + ((int)(to.z    * invQuadSize) * numQuadsX);
 
@@ -350,7 +350,7 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 				*endQuad = a; ++endQuad;
 			}
 		}
-	} else if (floor(start.z * invQuadSize) == floor(to.z * invQuadSize)) {
+	} else if (math::floor(start.z * invQuadSize) == math::floor(to.z * invQuadSize)) {
 		const int first = (int)(start.x * invQuadSize) + ((int)(start.z * invQuadSize) * numQuadsX);
 		const int last  = (int)(to.x    * invQuadSize) + ((int)(to.z    * invQuadSize) * numQuadsX);
 
@@ -372,14 +372,14 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 			++endQuad;
 
 			if (dx > 0) {
-				xn = (floor(xp * invQuadSize) * QUAD_SIZE + QUAD_SIZE - xp) / dx;
+				xn = (math::floor(xp * invQuadSize) * QUAD_SIZE + QUAD_SIZE - xp) / dx;
 			} else {
-				xn = (floor(xp * invQuadSize) * QUAD_SIZE - xp) / dx;
+				xn = (math::floor(xp * invQuadSize) * QUAD_SIZE - xp) / dx;
 			}
 			if (dz > 0) {
-				zn = (floor(zp * invQuadSize) * QUAD_SIZE + QUAD_SIZE - zp) / dz;
+				zn = (math::floor(zp * invQuadSize) * QUAD_SIZE + QUAD_SIZE - zp) / dz;
 			} else {
-				zn = (floor(zp * invQuadSize) * QUAD_SIZE - zp) / dz;
+				zn = (math::floor(zp * invQuadSize) * QUAD_SIZE - zp) / dz;
 			}
 
 			if (xn < zn) {
@@ -391,8 +391,8 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 			}
 
 			keepgoing =
-				(fabs(xp - start.x) < fabs(to.x - start.x)) &&
-				(fabs(zp - start.z) < fabs(to.z - start.z));
+				(math::fabs(xp - start.x) < math::fabs(to.x - start.x)) &&
+				(math::fabs(zp - start.z) < math::fabs(to.z - start.z));
 		}
 	}
 

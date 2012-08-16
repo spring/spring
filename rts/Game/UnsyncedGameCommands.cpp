@@ -1841,7 +1841,7 @@ public:
 			speed += (speed < 2) ? 0.1f : 0.2f;
 			float fPart = speed - (int)speed;
 			if (fPart < 0.01f || fPart > 0.99f)
-				speed = round(speed);
+				speed = math::round(speed);
 		} else if (speed < 10) {
 			speed += 0.5f;
 		} else {
@@ -1866,7 +1866,7 @@ public:
 			speed -= (speed <= 2) ? 0.1f : 0.2f;
 			float fPart = speed - (int)speed;
 			if (fPart < 0.01f || fPart > 0.99f)
-				speed = round(speed);
+				speed = math::round(speed);
 			if (speed < 0.1f)
 				speed = 0.1f;
 		} else if (speed <= 10) {

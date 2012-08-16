@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "System/Input/InputHandler.h"
 #include <sstream>
 #include <iostream>
 
@@ -28,12 +29,12 @@
 #include "Game/UI/MouseHandler.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
-#include "System/Input/InputHandler.h"
 #include "System/Input/Joystick.h"
 #include "System/MsgStrings.h"
 #include "System/NetProtocol.h"
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
+
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"
@@ -374,7 +375,7 @@ bool SpringApp::SetSDLVideoMode()
 #ifdef STREFLOP_H
 	//! Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	//! Set single precision floating point math.
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 #endif
 
 	//! setup GL smoothing
@@ -403,7 +404,7 @@ bool SpringApp::SetSDLVideoMode()
 
 	//! setup LOD bias factor
 	const float lodBias = Clamp(configHandler->GetFloat("TextureLODBias"), -4.f, 4.f);
-	if (fabs(lodBias)>0.01f) {
+	if (math::fabs(lodBias)>0.01f) {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
 	}
 
@@ -582,7 +583,7 @@ void SpringApp::RestoreWindowPosition()
 
 			if (!stateChanged) {
 				MoveWindow(info.window, globalRendering->winPosX, globalRendering->winPosY, globalRendering->viewSizeX, globalRendering->viewSizeY, true);
-				streflop_init<streflop::Simple>(); // MoveWindow may modify FPU flags
+				streflop::streflop_init<streflop::Simple>(); // MoveWindow may modify FPU flags
 			}
 
   #elif     defined(__APPLE__)
@@ -952,7 +953,7 @@ static void ResetScreenSaverTimeout()
 		int timeout; // reset screen saver timer
 		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
 			SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
-		streflop_init<streflop::Simple>(); // SystemParametersInfo may modify FPU flags
+		streflop::streflop_init<streflop::Simple>(); // SystemParametersInfo may modify FPU flags
 	}
   #elif defined(__APPLE__)
 	// TODO: implement
@@ -996,7 +997,7 @@ int SpringApp::Run(int argc, char *argv[])
 			SDL_Event event;
 
 			while (SDL_PollEvent(&event)) {
-				streflop_init<streflop::Simple>(); // SDL_PollEvent may modify FPU flags
+				streflop::streflop_init<streflop::Simple>(); // SDL_PollEvent may modify FPU flags
 				input.PushEvent(event);
 			}
 		}

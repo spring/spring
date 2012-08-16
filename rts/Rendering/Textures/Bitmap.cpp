@@ -18,6 +18,7 @@
 #include "Bitmap.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
+#include "System/ScopedFPUSettings.h"
 #include "System/Log/ILog.h"
 #include "System/OpenMP_cond.h"
 #include "System/FileSystem/DataDirsAccess.h"
@@ -232,27 +233,18 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-#if defined(__SUPPORT_SNAN__)
-	// do not signal floating point exceptions in devil library
-	streflop::fpenv_t fenv;
-	if (!GML::Enabled() || Threading::IsSimThread()) {
-		streflop::fegetenv(&fenv);
-		streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
-	}
-#endif
+	{
+		// do not signal floating point exceptions in devil library
+		ScopedDisableFpuExceptions fe;
 
-	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
-	ilDisable(IL_ORIGIN_SET);
-	delete[] buffer;
+		const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
+		ilDisable(IL_ORIGIN_SET);
+		delete[] buffer;
 
-#if defined(__SUPPORT_SNAN__)
-	if (!GML::Enabled() || Threading::IsSimThread())
-		streflop::fesetenv(&fenv);
-#endif
-
-	if (success == false) {
-		AllocDummy();
-		return false;
+		if (success == false) {
+			AllocDummy();
+			return false;
+		}
 	}
 
 	noAlpha = (ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL) != 4);
@@ -385,6 +377,9 @@ const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 		return 0;
 	}
 
+	// jcnossen: Some drivers return "2.0" as a version string,
+	// but switch to software rendering for non-power-of-two textures.
+	// GL_ARB_texture_non_power_of_two indicates that the hardware will actually support it.
 	if (!globalRendering->supportNPOTs && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)))
 	{
 		CBitmap bm = CreateRescaled(next_power_of_2(xsize), next_power_of_2(ysize));
@@ -392,17 +387,25 @@ const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 	}
 
 	unsigned int texture;
+
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	//FIXME add glPixelStorei(GL_UNPACK_ALIGNMENT, 1); for NPOTs
+
 	if (mipmaps) {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+
 		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 	} else {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+		//glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, mem);
+		//gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
+
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 	}
 

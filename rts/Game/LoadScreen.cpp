@@ -265,7 +265,7 @@ bool CLoadScreen::Draw()
 		float xDiv = 0.0f;
 		float yDiv = 0.0f;
 		const float ratioComp = globalRendering->aspectRatio / aspectRatio;
-		if (fabs(ratioComp - 1.0f) < 0.01f) { //! ~= 1
+		if (math::fabs(ratioComp - 1.0f) < 0.01f) { //! ~= 1
 			//! show Load-Screen full screen
 			//! nothing to do
 		} else if (ratioComp > 1.0f) {

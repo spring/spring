@@ -532,7 +532,7 @@ void CBaseGroundDrawer::UpdateCamRestraints(CCamera* cam)
 	const float3& camDir3D = cam->forward;
 
 	// prevent colinearity in top-down view
-	if (fabs(camDir3D.dot(UpVector)) < 0.95f) {
+	if (math::fabs(camDir3D.dot(UpVector)) < 0.95f) {
 		float3 camDir2D  = float3(camDir3D.x, 0.0f, camDir3D.z).SafeANormalize();
 		float3 camOffset = camDir2D * globalRendering->viewRange * 1.05f;
 

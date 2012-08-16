@@ -419,8 +419,8 @@ BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 		// look for a nearby geothermal feature if we need one
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			if ((*fi)->def->geoThermal
-				&& fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
-				&& fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)) {
+				&& math::fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
+				&& math::fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)) {
 				canBuild = BUILDSQUARE_OPEN;
 				break;
 			}
@@ -589,7 +589,7 @@ Command CUnitHandler::GetBuildCommand(const float3& pos, const float3& dir) {
 				BuildInfo bi(cmd);
 				tempF1 = pos + dir * ((bi.pos.y - pos.y) / dir.y) - bi.pos;
 
-				if (bi.def && (bi.GetXSize() / 2) * SQUARE_SIZE > fabs(tempF1.x) && (bi.GetZSize() / 2) * SQUARE_SIZE > fabs(tempF1.z)) {
+				if (bi.def && (bi.GetXSize() / 2) * SQUARE_SIZE > math::fabs(tempF1.x) && (bi.GetZSize() / 2) * SQUARE_SIZE > math::fabs(tempF1.z)) {
 					return cmd;
 				}
 			}

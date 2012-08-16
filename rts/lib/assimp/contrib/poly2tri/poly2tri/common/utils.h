@@ -32,17 +32,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-// Otherwise #defines like M_PI are undeclared under Visual Studio
-#define _USE_MATH_DEFINES
-
 #include <exception>
-#ifdef _MSC_VER // a hack to prevent ambiguous math calls
+#include "lib/streflop/streflop_cond.h"
 #include "System/FastMath.h"
 #define M_PI fastmath::PI
 #define M_PI_2 fastmath::HALFPI
-#else
-#include <math.h>
-#endif
 
 namespace p2t {
 

@@ -324,7 +324,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	float3 foundPos = pos + frontdir * r;
 
 	for (int a = 0; a < 20; ++a) {
-		float3 testPos = pos + frontdir * r * cos(a * PI / 10) + rightdir * r * sin(a * PI / 10);
+		float3 testPos = pos + frontdir * r * math::cos(a * PI / 10) + rightdir * r * math::sin(a * PI / 10);
 		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
 
 		if (qf->GetSolidsExact(testPos, unit->radius * 1.5f).empty()) {

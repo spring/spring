@@ -229,7 +229,7 @@ void CAdvTreeDrawer::Update()
 			std::list<FallingTree>::iterator prev = fti++;
 			fallingTrees.erase(prev);
 		} else {
-			fti->speed += (sin(fti->fallPos) * 0.04f);
+			fti->speed += (math::sin(fti->fallPos) * 0.04f);
 			++fti;
 		}
 	}
@@ -616,7 +616,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			if (camera->InView(pos + float3(0.0f, MAX_TREE_HEIGHT / 2, 0.0f), MAX_TREE_HEIGHT / 2.0f)) {
 				const float ang = fti->fallPos * PI;
 
-				const float3 yvec(fti->dir.x * sin(ang), cos(ang), fti->dir.z * sin(ang));
+				const float3 yvec(fti->dir.x * math::sin(ang), math::cos(ang), fti->dir.z * math::sin(ang));
 				const float3 zvec((yvec.cross(float3(-1.0f, 0.0f, 0.0f))).ANormalize());
 				const float3 xvec(yvec.cross(zvec));
 
@@ -957,7 +957,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 			if (camera->InView(pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2)) {
 				const float ang = fti->fallPos * PI;
 
-				const float3 yvec(fti->dir.x * sin(ang), cos(ang), fti->dir.z * sin(ang));
+				const float3 yvec(fti->dir.x * math::sin(ang), math::cos(ang), fti->dir.z * math::sin(ang));
 				const float3 zvec((yvec.cross(float3(1.0f, 0.0f, 0.0f))).ANormalize());
 				const float3 xvec(zvec.cross(yvec));
 

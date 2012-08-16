@@ -125,9 +125,9 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	// should really be tan but TA seem to cap it somehow
 	// should also be 7fff or ffff theoretically but neither seems good
-	wd.accuracy       = sin((accuracy)       * PI / 0xafff);
-	wd.sprayAngle     = sin((sprayAngle)     * PI / 0xafff);
-	wd.movingAccuracy = sin((movingAccuracy) * PI / 0xafff);
+	wd.accuracy       = math::sin((accuracy)       * PI / 0xafff);
+	wd.sprayAngle     = math::sin((sprayAngle)     * PI / 0xafff);
+	wd.movingAccuracy = math::sin((movingAccuracy) * PI / 0xafff);
 
 	wd.targetMoveError = wdTable.GetFloat("targetMoveError", 0.0f);
 	wd.leadLimit = wdTable.GetFloat("leadLimit", -1.0f);
@@ -374,7 +374,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 
 	const float gd = max(30.0f, wd.damages[0] / 20.0f);
-	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (sqrt(gd) * 0.7f)) * 0.5f;
+	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (math::sqrt(gd) * 0.7f)) * 0.5f;
 	wd.explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
 
 	// Dynamic Damage
@@ -460,7 +460,7 @@ void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd
 			wd.hitSound.setVolume(0, 5.0f);
 			wd.hitSound.setVolume(1, 5.0f);
 		} else {
-			float fireSoundVolume = sqrt(wd.damages[0] * 0.5f);
+			float fireSoundVolume = math::sqrt(wd.damages[0] * 0.5f);
 
 			if (wd.type == "LaserCannon") {
 				fireSoundVolume *= 0.5f;
@@ -471,7 +471,7 @@ void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd
 			if ((fireSoundVolume > 100.0f) &&
 			    ((wd.type == "MissileLauncher") ||
 			     (wd.type == "StarburstLauncher"))) {
-				fireSoundVolume = 10.0f * sqrt(hitSoundVolume);
+				fireSoundVolume = 10.0f * math::sqrt(hitSoundVolume);
 			}
 
 			if (wd.damageAreaOfEffect > 8.0f) {
@@ -563,7 +563,7 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 
 	if (inverted == true) {
 		for(int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
-			dynDamages[i] = damages[i] - (1 - pow(1 / range * travDist, exp)) * damages[i];
+			dynDamages[i] = damages[i] - (1 - math::pow(1 / range * travDist, exp)) * damages[i];
 
 			if (damageMin > 0)
 				dynDamages[i] = max(damages[i] * ddmod, dynDamages[i]);
@@ -576,7 +576,7 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 	}
 	else {
 		for(int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
-			dynDamages[i] = (1 - pow(1 / range * travDist, exp)) * damages[i];
+			dynDamages[i] = (1 - math::pow(1 / range * travDist, exp)) * damages[i];
 
 			if (damageMin > 0)
 				dynDamages[i] = max(damages[i] * ddmod, dynDamages[i]);
