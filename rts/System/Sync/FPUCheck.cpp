@@ -4,6 +4,7 @@
 #include <cstddef>
 #include "System/Log/ILog.h"
 #include "lib/streflop/streflop_cond.h"
+#include "System/Platform/Threading.h"
 
 /**
 	@brief checks FPU control registers.
