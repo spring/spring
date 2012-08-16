@@ -75,7 +75,7 @@ void good_fpu_control_registers(const char* text)
 	// accepted/syncsafe FPU states:
 	int sse_a, sse_b, x87_a, x87_b;
 #if defined(__SUPPORT_SNAN__)	// -fsignaling-nans
-	if (!GML::Enabled()) {
+	if (!GML::Enabled() || Threading::IsSimThread()) {
 		sse_a = (0x1937 & 0xFF80);
 		sse_b = (0x1925 & 0xFF80);
 		x87_a = (0x0072 & 0x1F3F);
@@ -104,7 +104,7 @@ void good_fpu_control_registers(const char* text)
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
-		if (!GML::Enabled())
+		if (!GML::Enabled() || Threading::IsSimThread())
 			streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 	#endif
 	}
@@ -122,7 +122,7 @@ void good_fpu_control_registers(const char* text)
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
-		if (!GML::Enabled())
+		if (!GML::Enabled() || Threading::IsSimThread())
 			streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 	#endif
 	}

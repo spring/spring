@@ -193,7 +193,7 @@ bool LuaParser::Execute()
 #if defined(__SUPPORT_SNAN__) && !defined(DEDICATED) // dedicated is compiled w/o streflop!
 	// do not signal floating point exceptions in user Lua code
 	streflop::fpenv_t fenv;
-	if (!GML::Enabled()) {
+	if (!GML::Enabled() || Threading::IsSimThread()) {
 		streflop::fegetenv(&fenv);
 		streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 	}
@@ -202,7 +202,7 @@ bool LuaParser::Execute()
 	error = lua_pcall(L, 0, 1, 0);
 
 #if defined(__SUPPORT_SNAN__) && !defined(DEDICATED)
-	if (!GML::Enabled())
+	if (!GML::Enabled() || Threading::IsSimThread())
 		streflop::fesetenv(&fenv);
 #endif
 
