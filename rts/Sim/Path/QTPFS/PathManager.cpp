@@ -1,5 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#ifdef GetTempPath
+#undef GetTempPath
+#undef GetTempPathA
+#endif
+
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
@@ -23,11 +28,6 @@
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
-
-#ifdef GetTempPath
-#undef GetTempPath
-#undef GetTempPathA
-#endif
 
 #define NUL_RECTANGLE SRectangle(0, 0,         0,        0)
 #define MAP_RECTANGLE SRectangle(0, 0,  gs->mapx, gs->mapy)
