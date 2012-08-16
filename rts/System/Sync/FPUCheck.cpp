@@ -106,7 +106,7 @@ void good_fpu_control_registers(const char* text)
 		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
 		if (!GML::Enabled() || Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 
