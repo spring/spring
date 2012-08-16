@@ -186,7 +186,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 #if defined(__SUPPORT_SNAN__)
 	// do not signal floating point exceptions in user Lua code
 	streflop::fpenv_t fenv;
-	if (!GML::Enabled()) {
+	if (!GML::Enabled() || Threading::IsSimThread()) {
 		streflop::fegetenv(&fenv);
 		streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 	}
@@ -213,7 +213,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 	}
 
 #if defined(__SUPPORT_SNAN__)
-	if (!GML::Enabled())
+	if (!GML::Enabled() || Threading::IsSimThread())
 		streflop::fesetenv(&fenv);
 #endif
 
@@ -422,7 +422,7 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 #if defined(__SUPPORT_SNAN__)
 	// do not signal floating point exceptions in user Lua code
 	streflop::fpenv_t fenv;
-	if (!GML::Enabled()) {
+	if (!GML::Enabled() || Threading::IsSimThread()) {
 		streflop::fegetenv(&fenv);
 		streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 	}
@@ -452,7 +452,7 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 	}
 
 #if defined(__SUPPORT_SNAN__)
-	if (!GML::Enabled())
+	if (!GML::Enabled() || Threading::IsSimThread())
 		streflop::fesetenv(&fenv);
 #endif
 	return error;
