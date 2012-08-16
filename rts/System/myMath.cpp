@@ -48,7 +48,7 @@ void CMyMath::Init()
 	}
 
 	// Set single precision floating point math.
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 #if defined(__SUPPORT_SNAN__)
 	if (!GML::Enabled() || Threading::IsSimThread())
 		streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
@@ -63,7 +63,7 @@ void CMyMath::Init()
 	#pragma omp parallel
 	{
 		//good_fpu_control_registers("OMP-Init");
-		streflop_init<streflop::Simple>();
+		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
 		if (!GML::Enabled() || Threading::IsSimThread())
 			streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
