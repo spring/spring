@@ -9,7 +9,9 @@
 #include "lib/streflop/streflop_cond.h"
 #include "System/creg/creg_cond.h"
 #include "System/FastMath.h"
+#ifndef BUILDING_AI
 #include "System/Platform/Threading.h"
+#endif
 
 
 /**
@@ -453,7 +455,7 @@ public:
 	 */
 	float3& Normalize() {
 #if defined(__SUPPORT_SNAN__)
-#if defined(USE_GML)
+#if defined(USE_GML) && !defined(BUILDING_AI)
 		if (!Threading::IsSimThread())
 			return SafeNormalize();
 #endif
@@ -504,7 +506,7 @@ public:
 	 */
 	float3& ANormalize() {
 #if defined(__SUPPORT_SNAN__)
-#if defined(USE_GML)
+#if defined(USE_GML) && !defined(BUILDING_AI)
 		if (!Threading::IsSimThread())
 			return SafeANormalize();
 #endif
