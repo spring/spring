@@ -51,7 +51,7 @@ void CMyMath::Init()
 	streflop::streflop_init<streflop::Simple>();
 #if defined(__SUPPORT_SNAN__)
 	if (!GML::Enabled() || Threading::IsSimThread())
-		streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 #endif
 
 	// Initialize FPU in all OpenMP threads, too
@@ -66,7 +66,7 @@ void CMyMath::Init()
 		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
 		if (!GML::Enabled() || Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 #endif
@@ -83,8 +83,8 @@ void CMyMath::Init()
 	for (int a = 0; a < NUM_HEADINGS; ++a) {
 		float ang = (a - (NUM_HEADINGS / 2)) * 2 * PI / NUM_HEADINGS;
 		float2 v;
-			v.x = sin(ang);
-			v.y = cos(ang);
+			v.x = math::sin(ang);
+			v.y = math::cos(ang);
 		headingToVectorTable[a] = v;
 	}
 
@@ -121,9 +121,9 @@ float3 GetVectorFromHAndPExact(short int heading, short int pitch)
 	float3 ret;
 	float h = heading * TAANG2RAD;
 	float p = pitch * TAANG2RAD;
-	ret.x = sin(h) * cos(p);
-	ret.y = sin(p);
-	ret.z = cos(h) * cos(p);
+	ret.x = math::sin(h) * math::cos(p);
+	ret.y = math::sin(p);
+	ret.z = math::cos(h) * math::cos(p);
 	return ret;
 }
 
@@ -152,7 +152,7 @@ float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p)
 	float3 dir(l2-l1);
 	float3 pdir(p-l1);
 	float length = dir.Length();
-	if (fabs(length) < 1e-4f)
+	if (math::fabs(length) < 1e-4f)
 		return l1;
 	float c = dir.dot(pdir) / length;
 	if (c < 0) c = 0;
