@@ -204,7 +204,7 @@ struct aiColor3D
 	/** Check whether a color is black */
 	bool IsBlack() const {
 		static const float epsilon = 10e-3f;
-		return fabs( r ) < epsilon && fabs( g ) < epsilon && fabs( b ) < epsilon;
+		return math::fabs( r ) < epsilon && math::fabs( g ) < epsilon && math::fabs( b ) < epsilon;
 	}
 
 #endif // !__cplusplus

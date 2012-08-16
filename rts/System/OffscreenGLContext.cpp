@@ -274,7 +274,7 @@ void COffscreenGLThread::WrapFunc(boost::function<void()> f)
 #ifdef STREFLOP_H
 	// init streflop to make it available for synced computations, too
 	// redundant? threads copy the FPU state of their parent.
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 #endif
 
 	try {

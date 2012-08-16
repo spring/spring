@@ -2477,11 +2477,11 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		const float3 delta = end - start;
 
 		const float xsize = SQUARE_SIZE * (startInfo.GetXSize() + buildSpacing * 2);
-		const int xnum = (int)((fabs(delta.x) + xsize * 1.4f)/xsize);
+		const int xnum = (int)((math::fabs(delta.x) + xsize * 1.4f)/xsize);
 		float xstep = (int)((0 < delta.x) ? xsize : -xsize);
  
 		const float zsize = SQUARE_SIZE * (startInfo.GetZSize() + buildSpacing * 2);
-		const int znum = (int)((fabs(delta.z) + zsize * 1.4f)/zsize);
+		const int znum = (int)((math::fabs(delta.z) + zsize * 1.4f)/zsize);
 		float zstep = (int)((0 < delta.z) ? zsize : -zsize);
 
 		if (keyInput->IsKeyPressed(SDLK_LALT)) { // build a rectangle
@@ -2514,7 +2514,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 				}
 			}
 		} else { // build a line
-			const bool xDominatesZ = fabs(delta.x) > fabs(delta.z);
+			const bool xDominatesZ = math::fabs(delta.x) > math::fabs(delta.z);
 			if (xDominatesZ) {
 				zstep = keyInput->IsKeyPressed(SDLK_LCTRL) ? 0 : xstep * delta.z / (delta.x ? delta.x : 1);
 			} else {
@@ -3194,8 +3194,8 @@ void CGuiHandler::DrawPrevArrow(const IconInfo& icon)
 {
 	const Box& b = icon.visual;
 	const float yCenter = 0.5f * (b.y1 + b.y2);
-	const float xSize = 0.166f * fabs(b.x2 - b.x1);
-	const float ySize = 0.125f * fabs(b.y2 - b.y1);
+	const float xSize = 0.166f * math::fabs(b.x2 - b.x1);
+	const float ySize = 0.125f * math::fabs(b.y2 - b.y1);
 	const float xSiz2 = 2.0f * xSize;
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_POLYGON);
@@ -3212,8 +3212,8 @@ void CGuiHandler::DrawNextArrow(const IconInfo& icon)
 {
 	const Box& b = icon.visual;
 	const float yCenter = 0.5f * (b.y1 + b.y2);
-	const float xSize = 0.166f * fabs(b.x2 - b.x1);
-	const float ySize = 0.125f * fabs(b.y2 - b.y1);
+	const float xSize = 0.166f * math::fabs(b.x2 - b.x1);
+	const float ySize = 0.125f * math::fabs(b.y2 - b.y1);
 	const float xSiz2 = 2.0f * xSize;
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_POLYGON);
@@ -3310,7 +3310,7 @@ static inline GLuint GetConeList()
 		glVertex3f(0.0f, 0.0f, 0.0f);
 		for (int i = 0; i <= divs; i++) {
 			const float rad = (PI * 2.0) * (float)i / (float)divs;
-			glVertex3f(1.0f, sin(rad), cos(rad));
+			glVertex3f(1.0f, math::sin(rad), math::cos(rad));
 		}
 		glEnd();
 	}
@@ -3324,8 +3324,8 @@ static void DrawWeaponCone(const float3& pos,
 {
 	glPushMatrix();
 
-	const float xlen = len * cos(hrads);
-	const float yzlen = len * sin(hrads);
+	const float xlen = len * math::cos(hrads);
+	const float yzlen = len * math::sin(hrads);
 	glTranslatef(pos.x, pos.y, pos.z);
 	glRotatef(heading * (180.0 / PI), 0.0f, 1.0f, 0.0f);
 	glRotatef(pitch   * (180.0 / PI), 0.0f, 0.0f, 1.0f);
@@ -3372,9 +3372,9 @@ static inline void DrawWeaponArc(const CUnit* unit)
 		pos = interPos + (UpVector * 10.0f);
 	}
 
-	const float hrads   = acos(w->maxForwardAngleDif);
-	const float heading = atan2(-dir.z, dir.x);
-	const float pitch   = asin(dir.y);
+	const float hrads   = math::acos(w->maxForwardAngleDif);
+	const float heading = math::atan2(-dir.z, dir.x);
+	const float pitch   = math::asin(dir.y);
 	DrawWeaponCone(pos, w->range, hrads, heading, pitch);
 }
 
@@ -3819,7 +3819,7 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 	const float groundLevel = ground->GetHeightAboveWater(cameraPos.x, cameraPos.z, false);
 
 	static float spinTime = 0.0f;
-	spinTime = fmod(spinTime + globalRendering->lastFrameTime, 60.0f);
+	spinTime = math::fmod(spinTime + globalRendering->lastFrameTime, 60.0f);
 
 	glPushMatrix();
 	glTranslatef(cameraPos.x, groundLevel, cameraPos.z);

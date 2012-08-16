@@ -1072,8 +1072,8 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command& c, CCommandQu
 					BuildInfo bc(c);
 					BuildInfo bc2(c2);
 					if (bc.def && bc2.def
-					    && fabs(bc.pos.x - bc2.pos.x) * 2 <= std::max(bc.GetXSize(), bc2.GetXSize()) * SQUARE_SIZE
-					    && fabs(bc.pos.z - bc2.pos.z) * 2 <= std::max(bc.GetZSize(), bc2.GetZSize()) * SQUARE_SIZE) {
+					    && math::fabs(bc.pos.x - bc2.pos.x) * 2 <= std::max(bc.GetXSize(), bc2.GetXSize()) * SQUARE_SIZE
+					    && math::fabs(bc.pos.z - bc2.pos.z) * 2 <= std::max(bc.GetZSize(), bc2.GetZSize()) * SQUARE_SIZE) {
 						return ci;
 					}
 				} else {
@@ -1165,8 +1165,8 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 					// NOTE: uses a BuildInfo structure, but <t> can be ANY command
 					BuildInfo tbi;
 					if (tbi.Parse(t)) {
-						const float dist2X = 2.0f * fabs(cbi.pos.x - tbi.pos.x);
-						const float dist2Z = 2.0f * fabs(cbi.pos.z - tbi.pos.z);
+						const float dist2X = 2.0f * math::fabs(cbi.pos.x - tbi.pos.x);
+						const float dist2Z = 2.0f * math::fabs(cbi.pos.z - tbi.pos.z);
 						const float addSizeX = SQUARE_SIZE * (cbi.GetXSize() + tbi.GetXSize());
 						const float addSizeZ = SQUARE_SIZE * (cbi.GetZSize() + tbi.GetZSize());
 						const float maxSizeX = SQUARE_SIZE * std::max(cbi.GetXSize(), tbi.GetXSize());
@@ -1375,6 +1375,7 @@ void CCommandAI::DependentDied(CObject* o)
 void CCommandAI::FinishCommand()
 {
 	assert(!commandQue.empty());
+
 	const Command cmd = commandQue.front();
 	const int cmdID  = cmd.GetID();
 	const int cmdTag = cmd.tag;

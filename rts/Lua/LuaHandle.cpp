@@ -34,6 +34,7 @@
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Rectangle.h"
+#include "System/ScopedFPUSettings.h"
 #include "System/mmgr.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
@@ -183,14 +184,8 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 
 	lua_settop(L, 0);
 
-#if defined(__SUPPORT_SNAN__)
 	// do not signal floating point exceptions in user Lua code
-	streflop::fpenv_t fenv;
-	if (!GML::Enabled() || Threading::IsSimThread()) {
-		streflop::fegetenv(&fenv);
-		streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
-	}
-#endif
+	ScopedDisableFpuExceptions fe;
 
 	int loadError = 0;
 	int callError = 0;
@@ -212,11 +207,6 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 		ret = false;
 	}
 
-#if defined(__SUPPORT_SNAN__)
-	if (!GML::Enabled() || Threading::IsSimThread())
-		streflop::fesetenv(&fenv);
-#endif
-
 	return ret;
 }
 
@@ -235,7 +225,7 @@ void CLuaHandle::CheckStack()
 	ExecuteLogEventBatch();
 
 	SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // CheckStack
+	GML_DRCMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
 
 	const int top = lua_gettop(L);
 	if (top != 0) {
@@ -284,7 +274,7 @@ void CLuaHandle::DelayRecvFromSynced(lua_State* srcState, int args) {
 
 	LuaUtils::ShallowBackup(ddmp.data, srcState, args);
 
-	GML_STDMUTEX_LOCK(scall); // DelayRecvFromSynced
+	GML_STDMUTEX_LOCK(scall);
 
 	delayedCallsFromSynced.push_back(DelayDataDump());
 
@@ -345,7 +335,7 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteCallsFromSynced
 
 	SELECT_UNSYNCED_LUA_STATE(); // ExecuteCallsFromSynced
-	GML_DRCMUTEX_LOCK(lua); // ExecuteCallsFromSynced
+	GML_DRCMUTEX_LOCK(lua);
 
 	for (int i = 0; i < drfs.size(); ++i) {
 		DelayDataDump &ddp = drfs[i];
@@ -419,14 +409,8 @@ int CLuaHandle::SetupTraceback(lua_State *L)
 
 int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, std::string& traceback)
 {
-#if defined(__SUPPORT_SNAN__)
 	// do not signal floating point exceptions in user Lua code
-	streflop::fpenv_t fenv;
-	if (!GML::Enabled() || Threading::IsSimThread()) {
-		streflop::fegetenv(&fenv);
-		streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
-	}
-#endif
+	ScopedDisableFpuExceptions fe;
 
 	SELECT_LUA_STATE();
 	SetRunning(L, true);
@@ -451,10 +435,6 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 		callinErrors += (error == 2);
 	}
 
-#if defined(__SUPPORT_SNAN__)
-	if (!GML::Enabled() || Threading::IsSimThread())
-		streflop::fesetenv(&fenv);
-#endif
 	return error;
 }
 
@@ -1510,7 +1490,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 
 	std::vector<LuaUnitEvent> lueb;
 	{
-		GML_STDMUTEX_LOCK(ulbatch); // ExecuteUnitEventBatch
+		GML_STDMUTEX_LOCK(ulbatch);
 
 		if(luaUnitEventBatch.empty())
 			return;
@@ -1631,7 +1611,7 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 
 	std::vector<LuaFeatEvent> lfeb;
 	{
-		GML_STDMUTEX_LOCK(flbatch); // ExecuteFeatEventBatch
+		GML_STDMUTEX_LOCK(flbatch);
 
 		if(luaFeatEventBatch.empty())
 			return;
@@ -1674,7 +1654,7 @@ void CLuaHandle::ExecuteObjEventBatch() {
 
 	std::vector<LuaObjEvent> loeb;
 	{
-		GML_STDMUTEX_LOCK(olbatch); // ExecuteObjEventBatch
+		GML_STDMUTEX_LOCK(olbatch);
 
 		if(luaObjEventBatch.empty())
 			return;
@@ -1716,7 +1696,7 @@ void CLuaHandle::ExecuteProjEventBatch() {
 
 	std::vector<LuaProjEvent> lpeb;
 	{
-		GML_STDMUTEX_LOCK(plbatch); // ExecuteProjEventBatch
+		GML_STDMUTEX_LOCK(plbatch);
 
 		if(luaProjEventBatch.empty())
 			return;
@@ -1753,7 +1733,7 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 
 	std::vector<int> lgeb;
 	{
-		GML_STDMUTEX_LOCK(glbatch); // ExecuteFrameEventBatch
+		GML_STDMUTEX_LOCK(glbatch);
 
 		if(luaFrameEventBatch.empty())
 			return;
@@ -1783,7 +1763,7 @@ void CLuaHandle::ExecuteLogEventBatch() {
 
 	std::vector<LuaLogEvent> lmeb;
 	{
-		GML_STDMUTEX_LOCK(mlbatch); // ExecuteLogEventBatch
+		GML_STDMUTEX_LOCK(mlbatch);
 
 		if (luaLogEventBatch.empty()) {
 			return;

@@ -360,10 +360,10 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	const float INV_PATCH_SIZE = 1.0f / PATCH_SIZE;
 
 	// hint: the -+1 are cause Patches share 1 pixel border (no vertex holes!)
-	const int xstart = std::max(0,           (int)floor((rect.x1 - margin) * INV_PATCH_SIZE));
-	const int xend   = std::min(numPatchesX, (int)ceil( (rect.x2 + margin) * INV_PATCH_SIZE));
-	const int zstart = std::max(0,           (int)floor((rect.z1 - margin) * INV_PATCH_SIZE));
-	const int zend   = std::min(numPatchesY, (int)ceil( (rect.z2 + margin) * INV_PATCH_SIZE));
+	const int xstart = std::max(0,           (int)math::floor((rect.x1 - margin) * INV_PATCH_SIZE));
+	const int xend   = std::min(numPatchesX, (int)math::ceil( (rect.x2 + margin) * INV_PATCH_SIZE));
+	const int zstart = std::max(0,           (int)math::floor((rect.z1 - margin) * INV_PATCH_SIZE));
+	const int zend   = std::min(numPatchesY, (int)math::ceil( (rect.z2 + margin) * INV_PATCH_SIZE));
 
 	for (int z = zstart; z < zend; ++z) {
 		for (int x = xstart; x < xend; ++x) {

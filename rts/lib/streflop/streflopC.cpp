@@ -9,16 +9,16 @@ extern "C" {
 #endif
 
 void streflop_init_Simple() {
-	streflop_init<Simple>();
+	streflop::streflop_init<streflop::Simple>();
 }
 
 void streflop_init_Double() {
-	streflop_init<Double>();
+	streflop::streflop_init<streflop::Double>();
 }
 
 #if defined(Extended)
 void streflop_init_Extended() {
-	streflop_init<Extended>();
+	streflop::streflop_init<streflop::Extended>();
 }
 #endif // defined(Extended)
 

@@ -212,6 +212,7 @@ public:
 	int glslMaxRecommendedIndices;
 	int glslMaxRecommendedVertices;
 	int glslMaxUniformBufferBindings;
+	int glslMaxUniformBufferSize; ///< in bytes
 
 	/**
 	 * @brief dual screen mode

@@ -177,7 +177,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 		const float3 sideDir = frontdir.cross(UpVector);
 
 		// calculate so that the units form in an aproximate square
-		float length = 100.0f + (sqrt((float)nbrOfSelectedUnits) * 32.0f);
+		float length = 100.0f + (math::sqrt((float)nbrOfSelectedUnits) * 32.0f);
 
 		// push back some extra params so it confer with a front move
 		c.PushPos(pos + (sideDir * length));

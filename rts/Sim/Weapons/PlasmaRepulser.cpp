@@ -267,8 +267,8 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 	const float3 closeVect = dif - dir * closeLength;
 
 	const float tmp = sqRadius - closeVect.SqLength();
-	if ((tmp > 0.0f) && (length > (closeLength - sqrt(tmp)))) {
-		const float colLength = closeLength - sqrt(tmp);
+	if ((tmp > 0.0f) && (length > (closeLength - math::sqrt(tmp)))) {
+		const float colLength = closeLength - math::sqrt(tmp);
 		const float3 colPoint = start + dir * colLength;
 		const float3 normal = (colPoint - weaponPos).Normalize();
 		newDir = dir - normal * normal.dot(dir) * 2;

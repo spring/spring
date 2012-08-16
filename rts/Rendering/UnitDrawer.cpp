@@ -1760,7 +1760,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glEnable(GL_CLIP_PLANE0);
 	glEnable(GL_CLIP_PLANE1);
 
-	const float col = fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
+	const float col = math::fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
 	const unsigned char* tcol = teamHandler->Team(unit->team)->color;
 	// frame line-color
 	const float3 fc = (!globalRendering->teamNanospray)?

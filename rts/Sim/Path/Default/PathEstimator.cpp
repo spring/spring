@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Platform/Win/win32.h"
-
 #include "lib/gml/gml.h" // FIXME: linux for some reason does not compile without this
 
 #include "PathEstimator.h"
@@ -189,7 +188,7 @@ void CPathEstimator::InitBlocks() {
 
 void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
 	//! reset FPU state for synced computations
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 
 	// NOTE: EstimatePathCosts() [B] is temporally dependent on CalculateBlockOffsets() [A],
 	// A must be completely finished before B_i can be safely called. This means we cannot

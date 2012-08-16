@@ -35,7 +35,7 @@ void CTWController::KeyMove(float3 move)
 	flatForward.y=0;
 	flatForward.ANormalize();
 
-	move *= sqrt(move.z) * 200;
+	move *= math::sqrt(move.z) * 200;
 	pos  += (camera->right * move.x + flatForward * move.y) * scrollSpeed;
 	UpdateVectors();
 }
@@ -79,9 +79,9 @@ void CTWController::UpdateVectors()
 
 	camera->rot.x = Clamp(camera->rot.x, -PI * 0.4f, -0.1f);
 
-	dir.x = sin(camera->rot.y) * cos(camera->rot.x);
-	dir.y = sin(camera->rot.x);
-	dir.z = cos(camera->rot.y) * cos(camera->rot.x);
+	dir.x = math::sin(camera->rot.y) * math::cos(camera->rot.x);
+	dir.y = math::sin(camera->rot.x);
+	dir.z = math::cos(camera->rot.y) * math::cos(camera->rot.x);
 	dir.ANormalize();
 }
 

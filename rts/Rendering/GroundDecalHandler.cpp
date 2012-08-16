@@ -963,7 +963,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 		radius = damage * 0.25f;
 
 	if (damage > 400)
-		damage = 400 + sqrt(damage - 399);
+		damage = 400 + math::sqrt(damage - 399);
 
 	pos.ClampInBounds();
 

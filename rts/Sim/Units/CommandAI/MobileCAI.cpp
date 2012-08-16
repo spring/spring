@@ -714,8 +714,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		}
 		else if (c.params.size() >= 3) {
 			// user gave force-fire attack command
-			float3 pos = c.GetPos(0);
-			SetGoal(pos, owner->pos);
+			SetGoal(c.GetPos(0), owner->pos);
 			inCommand = true;
 		}
 	}
@@ -769,7 +768,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			b2 = w->TryTargetRotate(orderTarget, c.GetID() == CMD_MANUALFIRE);
 			b3 = Square(w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.SqDistance(owner->pos));
 			b4 = w->TryTargetHeading(GetHeadingFromVector(-diff.x, -diff.z), orderTarget->pos, orderTarget != NULL, orderTarget);
-			edgeFactor = fabs(w->targetBorder);
+			edgeFactor = math::fabs(w->targetBorder);
 		}
 
 		const float diffLength2D = diff.Length2D();
@@ -887,21 +886,31 @@ void CMobileCAI::ExecuteAttack(Command &c)
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 				}
 			} else {
-				const bool inAngle = w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE);
-				const bool inRange = diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D());
+				if (diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D())) {
+					if (w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE)) {
+						StopMove();
+						owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+					}
 
-				if (inAngle || inRange) {
-					StopMove();
-					owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+					// for gunships, this pitches the nose down such that
+					// TryTargetRotate (which also checks range for itself)
+					// has a bigger chance of succeeding
+					//
+					// hence it must be called as soon as we get in range
+					// and may not depend on what TryTargetRotate returns
+					// (otherwise we might never get a firing solution)
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 				}
 			}
 		}
 
+		#if 0
+		// no weapons --> no need to stop at an arbitrary distance?
 		else if (diff.SqLength2D() < 1024) {
 			StopMove();
 			owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 		}
+		#endif
 
 		// if we are more than 10 units distant from target position then keeping moving closer
 		else if (pos.SqDistance2D(goalPos) > 100) {

@@ -405,7 +405,7 @@ float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const flo
 
 	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
 	// Use values passed on the stack instead of re-accessing the Height Field.
-	float myVariance = fabs(centerZ - ((leftZ + rightZ) / 2));
+	float myVariance = math::fabs(centerZ - ((leftZ + rightZ) / 2));
 	
 	if (leftZ*rightZ<0 || leftZ*centerZ<0 || rightZ*centerZ<0)
 		myVariance = std::max(myVariance * 1.5f, 20.0f); //shore lines get more variance for higher accuracy

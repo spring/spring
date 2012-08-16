@@ -459,7 +459,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 void CBuilderCAI::SlowUpdate()
 {
-	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+	if (gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 
 	if (commandQue.empty()) {
@@ -543,8 +543,8 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 	if (!inCommand) {
 		BuildInfo bi;
-		bi.pos.x = floor(c.params[0] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
-		bi.pos.z = floor(c.params[2] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
+		bi.pos.x = math::floor(c.params[0] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
+		bi.pos.z = math::floor(c.params[2] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
 		bi.pos.y = c.params[1];
 
 		if (c.params.size() == 4)
@@ -645,6 +645,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 				if (++buildRetries > 5) {
 					StopMove();
 					FinishCommand();
+					return;
 				}
 			}
 
@@ -744,7 +745,6 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 	} else {
 		FinishCommand();
 	}
-	return;
 }
 
 
@@ -801,7 +801,6 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 	} else {
 		FinishCommand();
 	}
-	return;
 }
 
 
@@ -1125,7 +1124,6 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 		RemoveUnitFromResurrecters(owner);
 		FinishCommand();
 	}
-	return;
 }
 
 
@@ -1267,7 +1265,6 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 			inCommand = true;
 		}
 	}
-	return;
 }
 
 
