@@ -253,11 +253,11 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 						std::cout << " " << *((unsigned int*)(buffer + startp));
 						startp += 4;
 					}
-					if (sameopt = 0xFF) {
+					if (sameopt == 0xFF) {
 						std::cout << " " << (unsigned)buffer[startp];
 						startp += 1;
 					}
-					if (sameopt = 0xFFFF) {
+					if (sameopt == 0xFFFF) {
 						std::cout << " " << *((unsigned short*)(buffer + startp));
 						startp += 2;
 					}
