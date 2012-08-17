@@ -99,7 +99,7 @@ const std::string commands[numCommands] = {
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
 	"nocost", "forcestart", "nospectatorchat", "nospecdraw",
 	"skip", "reloadcob", "reloadcegs", "devlua", "editdefs",
-	"singlestep"
+	"singlestep", "spec", "specbynum"
 };
 using boost::format;
 
@@ -1389,30 +1389,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 						Message(str(format("Spectator %s sent invalid team resign") %players[player].name), true);
 						break;
 					}
-					Broadcast(CBaseNetProtocol::Get().SendResign(player));
+					ResignPlayer(player);
 
-					//players[player].team = 0;
-					players[player].spectator = true;
-					// actualize all teams of which the player is leader
-					for (size_t t = 0; t < teams.size(); ++t) {
-						if (teams[t].leader == player) {
-							const std::vector<int> &teamPlayers = getPlayersInTeam(players, t);
-							const std::vector<unsigned char> &teamAIs  = getSkirmishAIIds(ais, t);
-							if ((teamPlayers.size() + teamAIs.size()) == 0) {
-								// no controllers left in team
-								teams[t].active = false;
-								teams[t].leader = -1;
-							} else if (teamPlayers.empty()) {
-								// no human player left in team
-								teams[t].leader = ais[teamAIs[0]].hostPlayer;
-							} else {
-								// still human controllers left in team
-								teams[t].leader = teamPlayers[0];
-							}
-						}
-					}
-					if (hostif)
-						hostif->SendPlayerDefeated(player);
 					break;
 				}
 				case TEAMMSG_JOIN_TEAM: {
@@ -1962,6 +1940,24 @@ void CGameServer::PushAction(const Action& action)
 			}
 		}
 	}
+	if (action.command == "specbynum") {
+		if (!action.extra.empty()) {
+			const int playerNum = atoi(action.extra.c_str());
+			SpecPlayer(playerNum);
+		}
+	}
+	else if (action.command == "spec") {
+		if (!action.extra.empty()) {
+			std::string name = action.extra;
+			StringToLowerInPlace(name);
+			for (size_t a=0; a < players.size();++a) {
+				std::string playerLower = StringToLower(players[a].name);
+				if (playerLower.find(name)==0) {	// can spec on substrings of name
+					SpecPlayer(a);
+				}
+			}
+		}
+	}
 	else if (action.command == "nopause") {
 		SetBoolArg(gamePausable, action.extra);
 	}
@@ -2279,17 +2275,57 @@ bool CGameServer::WaitsOnCon() const
 
 void CGameServer::KickPlayer(const int playerNum)
 {
-	if (players[playerNum].link) { // only kick connected players
-		Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
-		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
-		players[playerNum].Kill("Kicked from the battle", true);
-		UpdateSpeedControl(speedControl);
-		if (hostif)
-			hostif->SendPlayerLeft(playerNum, 2);
+	if (!players[playerNum].link) { // only kick connected players
+		Message(str(format("Attempt to kick user %d who is not connected") %playerNum));
+		return;
 	}
-	else
-		Message(str(format("Attempt to kick player %d who is not connected") %playerNum));
+	Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
+	Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
+	players[playerNum].Kill("Kicked from the battle", true);
+	UpdateSpeedControl(speedControl);
+	if (hostif)
+		hostif->SendPlayerLeft(playerNum, 2);
+}
 
+void CGameServer::SpecPlayer(const int player) {
+	if (!players[player].link) {
+		Message(str(format("Attempt to spec user %d who is not connected") %player));
+		return;
+	}
+	if (players[player].spectator) {
+		Message(str(format("Attempt to spec user %d who is spectating already") %player));
+		return;
+	}
+	Message(str(format(PlayerResigned) %players[player].name %"forced spec"));
+	ResignPlayer(player);
+}
+
+void CGameServer::ResignPlayer(const int player)
+{
+	Broadcast(CBaseNetProtocol::Get().SendResign(player));
+
+	//players[player].team = 0;
+	players[player].spectator = true;
+	// actualize all teams of which the player is leader
+	for (size_t t = 0; t < teams.size(); ++t) {
+		if (teams[t].leader == player) {
+			const std::vector<int> &teamPlayers = getPlayersInTeam(players, t);
+			const std::vector<unsigned char> &teamAIs  = getSkirmishAIIds(ais, t);
+			if ((teamPlayers.size() + teamAIs.size()) == 0) {
+				// no controllers left in team
+				teams[t].active = false;
+				teams[t].leader = -1;
+			} else if (teamPlayers.empty()) {
+				// no human player left in team
+				teams[t].leader = ais[teamAIs[0]].hostPlayer;
+			} else {
+				// still human controllers left in team
+				teams[t].leader = teamPlayers[0];
+			}
+		}
+	}
+	if (hostif)
+		hostif->SendPlayerDefeated(player);
 }
 
 

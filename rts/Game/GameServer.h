@@ -41,7 +41,7 @@ class GameSkirmishAI;
  * this value is used as the sending player-number.
  */
 const unsigned SERVER_PLAYER = 255;
-const unsigned numCommands = 20;
+const unsigned numCommands = 22;
 extern const std::string commands[numCommands];
 
 class GameTeam : public TeamBase
@@ -106,6 +106,12 @@ private:
 	 * @brief kick the specified player from the battle
 	 */
 	void KickPlayer(const int playerNum);
+	/**
+	 * @brief force the specified player to spectate
+	 */
+	void SpecPlayer(const int playerNum);
+
+	void ResignPlayer(const int playerNum);
 
 	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
 

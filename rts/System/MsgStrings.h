@@ -24,6 +24,7 @@ const std::string ConnectionReject = "Connection attempt rejected: %s (Message I
 const std::string WrongPlayer = "Got message %d from %d claiming to be from %d";
 const std::string PlayerJoined = "%s %s finished loading and is now ingame";
 const std::string PlayerLeft = "%s %s left the game: %s";
+const std::string PlayerResigned = "Player %s resigned from the game: %s";
 
 const std::string NoStartposChange = "%s tried to change his startposition illegally";
 const std::string NoHelperAI = "%s (%d) is using a helper AI illegally";
