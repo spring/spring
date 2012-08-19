@@ -29,6 +29,11 @@ void CCollisionHandler::PrintStats()
 bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q, bool forceTrace)
 {
 	bool hit = false;
+	if (q) {
+		// reset the query
+		q->b0 = false; q->t0 = 0.0f; q->p0 = ZeroVector;
+		q->b1 = false; q->t1 = 0.0f; q->p1 = ZeroVector;
+	}
 
 	// test *only* for ray intersections with the piece tree
 	// (whether or not the unit's regular volume is disabled)
@@ -43,10 +48,11 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 	if (forceTrace)
 		return (CCollisionHandler::Intersect(u, p0, p1, q));
 
-	switch (int(u->collisionVolume->GetContHitTest())) {
-		// Collision(CUnit*) does not need p1 or q
-		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(u, p0       ); } break;
+	switch (u->collisionVolume->GetTestType()) {
+		// Collision(CUnit*) does not need p1
+		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(u, p0    , q); } break;
 		case CollisionVolume::COLVOL_HITTEST_CONT: { hit = CCollisionHandler::Intersect(u, p0, p1, q); } break;
+		default: assert(false);
 	}
 
 	return hit;
@@ -55,6 +61,11 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 bool CCollisionHandler::DetectHit(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q, bool forceTrace)
 {
 	bool hit = false;
+	if (q) {
+		// reset the query
+		q->b0 = false; q->t0 = 0.0f; q->p0 = ZeroVector;
+		q->b1 = false; q->t1 = 0.0f; q->p1 = ZeroVector;
+	}
 
 	if (f->collisionVolume->IsDisabled())
 		return false;
@@ -62,10 +73,11 @@ bool CCollisionHandler::DetectHit(const CFeature* f, const float3& p0, const flo
 	if (forceTrace)
 		return (CCollisionHandler::Intersect(f, p0, p1, q));
 
-	switch (int(f->collisionVolume->GetContHitTest())) {
-		// Collision(CFeature*) does not need p1 or q
-		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(f, p0       ); } break;
+	switch (f->collisionVolume->GetTestType()) {
+		// Collision(CFeature*) does not need p1
+		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(f, p0    , q); } break;
 		case CollisionVolume::COLVOL_HITTEST_CONT: { hit = CCollisionHandler::Intersect(f, p0, p1, q); } break;
+		default: assert(false);
 	}
 
 	return hit;
@@ -76,7 +88,7 @@ bool CCollisionHandler::DetectHit(const CFeature* f, const float3& p0, const flo
 
 
 
-bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
+bool CCollisionHandler::Collision(const CUnit* u, const float3& p, CollisionQuery* q)
 {
 	const CollisionVolume* v = u->collisionVolume;
 
@@ -84,13 +96,14 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 		return false;
 	}
 
+	bool hit = false;
 	switch (u->collisionVolume->GetVolumeType()) {
 		case CollisionVolume::COLVOL_TYPE_SPHERE: {
-			return true;
-		}
+			hit = true;
+		} break;
 		case CollisionVolume::COLVOL_TYPE_FOOTPRINT: {
-			return CCollisionHandler::CollisionFootPrint(u, p);
-		}
+			hit = CCollisionHandler::CollisionFootPrint(u, p);
+		} break;
 		default: {
 			// NOTE: we have to translate by relMidPos to get to midPos
 			// (which is where the collision volume gets drawn) because
@@ -99,13 +112,17 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 			m.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 			m.Translate(v->GetOffsets());
 
-			return CCollisionHandler::Collision(v, m, p);
+			hit = CCollisionHandler::Collision(v, m, p);
 		}
+	}
+
+	if (q && hit) {
+		q->b0 = true; q->t0 = 0.0f; q->p0 = p;
 	}
 }
 
 
-bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
+bool CCollisionHandler::Collision(const CFeature* f, const float3& p, CollisionQuery* q)
 {
 	const CollisionVolume* v = f->collisionVolume;
 
@@ -113,20 +130,25 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 		return false;
 	}
 
+	bool hit = false;
 	switch (f->collisionVolume->GetVolumeType()) {
 		case CollisionVolume::COLVOL_TYPE_SPHERE: {
-			return true;
-		}
+			hit = true;
+		} break;
 		case CollisionVolume::COLVOL_TYPE_FOOTPRINT: {
 			return CCollisionHandler::CollisionFootPrint(f, p);
-		}
+		} break;
 		default: {
 			CMatrix44f m(f->transMatrix);
 			m.Translate(f->relMidPos * WORLD_TO_OBJECT_SPACE);
 			m.Translate(v->GetOffsets());
 
-			return CCollisionHandler::Collision(v, m, p);
+			hit = CCollisionHandler::Collision(v, m, p);
 		}
+	}
+
+	if (q && hit) {
+		q->b0 = true; q->t0 = 0.0f; q->p0 = p;
 	}
 }
 
@@ -331,11 +353,6 @@ bool CCollisionHandler::IntersectAlt(const collisionVolume* d, const CMatrix44f&
 bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* q)
 {
 	numIntersectionTests += 1;
-	if (q) {
-		// reset the query
-		q->b0 = false; q->t0 = 0.0f; q->p0 = ZeroVector;
-		q->b1 = false; q->t1 = 0.0f; q->p1 = ZeroVector;
-	}
 
 	CMatrix44f mInv = m.Invert();
 	const float3 pi0 = mInv.Mul(p0);
