@@ -432,6 +432,8 @@ static bool InitParamMap()
 
 	ADD_FUNCTION("customParams",   fd.customParams, CustomParamsTable);
 
+	// TODO: share the Model* functions between LuaUnitDefs and LuaFeatureDefs
+	// ADD_FUNCTION("model",   fd, ModelTable);
 	ADD_FUNCTION("height",  fd, ModelHeight);
 	ADD_FUNCTION("radius",  fd, ModelRadius);
 	ADD_FUNCTION("minx",    fd, ModelMinx);
@@ -451,7 +453,7 @@ static bool InitParamMap()
 
 	ADD_FLOAT("metal",       fd.metal);
 	ADD_FLOAT("energy",      fd.energy);
-	ADD_FLOAT("maxHealth",   fd.maxHealth);
+	ADD_FLOAT("maxHealth",   fd.health);
 	ADD_FLOAT("reclaimTime", fd.reclaimTime);
 
 	ADD_FLOAT("mass", fd.mass);
@@ -459,16 +461,7 @@ static bool InitParamMap()
 	ADD_INT("xsize", fd.xsize);
 	ADD_INT("zsize", fd.zsize);
 
-	/*
-	ADD_FLOAT("hitSphereScale",    fd.collisionSphereScale);
-	ADD_FLOAT("hitSphereOffsetX",  fd.collisionSphereOffset.x);
-	ADD_FLOAT("hitSphereOffsetY",  fd.collisionSphereOffset.y);
-	ADD_FLOAT("hitSphereOffsetZ",  fd.collisionSphereOffset.z);
-	ADD_BOOL("useHitSphereOffset", fd.useCSOffset);
-	*/
-
 	ADD_INT("drawType",     fd.drawType);
-	ADD_STRING("modelname", fd.modelname);
 
 	ADD_BOOL("upright",      fd.upright);
 	ADD_BOOL("destructable", fd.destructable);
@@ -483,6 +476,7 @@ static bool InitParamMap()
 
 	ADD_INT("smokeTime",    fd.smokeTime);
 
+	ADD_STRING("modelname", fd.modelName);
 	// name of feature that this turn into when killed (not reclaimed)
 	ADD_STRING("deathFeature", fd.deathFeature);
 

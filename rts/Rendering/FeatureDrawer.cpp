@@ -10,6 +10,7 @@
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
@@ -109,6 +110,11 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 
 		unsortedFeatures.insert(f);
 	}
+
+	// map features are loaded before groundDecals exists
+	if (groundDecals != NULL) {
+		groundDecals->AddSolidObject(f);
+	}
 }
 
 void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
@@ -127,6 +133,10 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 	if (f->model) {
 		opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 		cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
+	}
+
+	if (groundDecals != NULL) {
+		groundDecals->RemoveSolidObject(f, NULL);
 	}
 }
 

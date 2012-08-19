@@ -4129,7 +4129,7 @@ int LuaSyncedRead::GetFeatureHealth(lua_State* L)
 		return 0;
 	}
 	lua_pushnumber(L, feature->health);
-	lua_pushnumber(L, feature->def->maxHealth);
+	lua_pushnumber(L, feature->def->health);
 	lua_pushnumber(L, feature->resurrectProgress);
 	return 3;
 }

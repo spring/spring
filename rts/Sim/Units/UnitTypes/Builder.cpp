@@ -351,8 +351,8 @@ void CBuilder::Update()
 				}
 				else {
 					// Corpse has been restored, begin resurrection
-					if (UseEnergy(ud->energyCost * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {
-						curResurrect->resurrectProgress+=resurrectSpeed/ud->buildTime;
+					if (UseEnergy(ud->energy * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {
+						curResurrect->resurrectProgress += (resurrectSpeed / ud->buildTime);
 						CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, (gs->randInt() & 1));
 					}
 					if (curResurrect->resurrectProgress > 1) {

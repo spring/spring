@@ -13,7 +13,6 @@
 #include "System/EventClient.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
-struct S3DModel;
 struct UnitDef;
 class CWorldObject;
 class IWorldObjectModelRenderer;
@@ -21,19 +20,12 @@ class CUnit;
 class CFeature;
 struct Command;
 struct BuildInfo;
-struct BuildingGroundDecal;
+struct SolidObjectGroundDecal;
+struct GhostSolidObject;
 
 namespace Shader {
 	struct IProgramObject;
 }
-
-struct GhostBuilding {
-	BuildingGroundDecal* decal;
-	float3 pos;
-	S3DModel* model;
-	int facing;
-	int team;
-};
 
 class CUnitDrawer: public CEventClient
 {
@@ -223,7 +215,7 @@ private:
 	std::set<CUnit*> unsortedUnits;
 
 	/// buildings that were in LOS_PREVLOS when they died and not in LOS since
-	std::vector<std::set<GhostBuilding*> > deadGhostBuildings;
+	std::vector<std::set<GhostSolidObject*> > deadGhostBuildings;
 	/// buildings that left LOS but are still alive
 	std::vector<std::set<CUnit*> > liveGhostBuildings;
 

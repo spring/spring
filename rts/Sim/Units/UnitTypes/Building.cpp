@@ -21,7 +21,7 @@ CR_REG_METADATA(CBuilding, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilding::CBuilding(): buildingDecal(0)
+CBuilding::CBuilding()
 {
 	immobile = true;
 }

@@ -21,14 +21,9 @@ WeaponDef::~WeaponDef()
 
 S3DModel* WeaponDef::LoadModel()
 {
-	if ((visuals.model==NULL) && (!visuals.modelName.empty())) {
-		std::string modelname = "objects3d/" + visuals.modelName;
-		if (modelname.find(".") == std::string::npos) {
-			modelname += ".3do";
-		}
-		visuals.model = modelParser->Load3DModel(modelname);
-	}
-	else {
+	if ((visuals.model == NULL) && !visuals.modelName.empty()) {
+		visuals.model = modelParser->Load3DModel(visuals.modelName);
+	} else {
 		eventHandler.LoadedModelRequested();
 	}
 

@@ -12,10 +12,11 @@
 #include "System/EventClient.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 
+class CSolidObject;
 class CUnit;
 class CBuilding;
 class CVertexArray;
-struct GhostBuilding;
+struct S3DModel;
 
 namespace Shader {
 	struct IProgramObject;
@@ -79,8 +80,19 @@ struct TrackToClean {
 	std::set<UnitTrackStruct*>* tracks;
 };
 
-struct BuildingGroundDecal {
-	BuildingGroundDecal()
+struct SolidObjectGroundDecal;
+struct GhostSolidObject {
+	SolidObjectGroundDecal* decal;
+	S3DModel* model;
+
+	float3 pos;
+
+	int facing;
+	int team;
+};
+
+struct SolidObjectGroundDecal {
+	SolidObjectGroundDecal()
 		: va(NULL)
 		, owner(NULL)
 		, gbOwner(NULL)
@@ -94,11 +106,12 @@ struct BuildingGroundDecal {
 		, alpha(1.0f)
 		, alphaFalloff(1.0f)
 	{}
-	~BuildingGroundDecal();
+	~SolidObjectGroundDecal();
 
 	CVertexArray* va;
-	CBuilding* owner;
-	GhostBuilding* gbOwner;
+	CSolidObject* owner;
+	GhostSolidObject* gbOwner;
+
 	int posx;
 	int posy;
 	int xsize;
@@ -128,10 +141,10 @@ public:
 	void AddExplosion(float3 pos, float damage, float radius, bool);
 	void ExplosionOccurred(const CExplosionEvent& event);
 
-	void AddBuilding(CBuilding* building);
-	void RemoveBuilding(CBuilding* building, GhostBuilding* gb);
-	void ForceRemoveBuilding(CBuilding* building);
-	int GetBuildingDecalType(const std::string& name);
+	void AddSolidObject(CSolidObject* object);
+	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
+	void ForceRemoveSolidObject(CSolidObject* object);
+	int GetSolidObjectDecalType(const std::string& name);
 
 	bool GetDrawDecals() const { return drawDecals; }
 	void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } }
@@ -150,7 +163,7 @@ public:
 
 private:
 	void LoadDecalShaders();
-	void DrawBuildingDecals();
+	void DrawObjectDecals();
 
 	void AddTracks();
 	void DrawTracks();
@@ -176,15 +189,15 @@ private:
 	};
 	std::vector<TrackType*> trackTypes;
 
-	struct BuildingDecalType {
-		BuildingDecalType()
-			: texture(0)
-		{}
+	struct SolidObjectDecalType {
+		SolidObjectDecalType(): texture(0) {}
+
 		std::string name;
-		std::set<BuildingGroundDecal*> buildingDecals;
+		std::set<SolidObjectGroundDecal*> objectDecals;
+
 		unsigned int texture;
 	};
-	std::vector<BuildingDecalType*> buildingDecalTypes;
+	std::vector<SolidObjectDecalType*> objectDecalTypes;
 
 	struct Scar {
 		Scar()
@@ -236,7 +249,7 @@ private:
 	};
 
 	std::vector<Shader::IProgramObject*> decalShaders;
-	std::vector<BuildingGroundDecal*> decalsToDraw;
+	std::vector<SolidObjectGroundDecal*> decalsToDraw;
 
 	std::list<Scar*> scars;
 	std::vector<Scar*> scarsToBeAdded;
@@ -257,7 +270,7 @@ private:
 	int scarFieldX;
 	int scarFieldY;
 
-	void DrawBuildingDecal(BuildingGroundDecal* decal);
+	void DrawObjectDecal(SolidObjectGroundDecal* decal);
 	void DrawGroundScar(Scar* scar, bool fade);
 
 	int OverlapSize(Scar* s1, Scar* s2);

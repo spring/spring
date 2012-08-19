@@ -71,7 +71,6 @@ static int CustomParamsTable(lua_State* L, const void* data);
 static int BuildOptions(lua_State* L, const void* data);
 static int SoundsTable(lua_State* L, const void* data);
 static int WeaponsTable(lua_State* L, const void* data);
-static int ModelDefTable(lua_State* L, const void* data);
 static int CategorySetFromBits(lua_State* L, const void* data);
 static int CategorySetFromString(lua_State* L, const void* data);
 
@@ -470,30 +469,6 @@ static int SoundsTable(lua_State* L, const void* data) {
 
 
 
-static int ModelDefTable(lua_State* L, const void* data) {
-	const UnitModelDef& md = *static_cast<const UnitModelDef*>(data);
-	const char* type = "???";
-
-	     if (StringToLower(md.modelName).find(".3do") != string::npos) { type = "3do"; }
-	else if (StringToLower(md.modelName).find(".s3o") != string::npos) { type = "s3o"; }
-	else if (StringToLower(md.modelName).find(".obj") != string::npos) { type = "obj"; }
-
-	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "type", type);
-	HSTR_PUSH_STRING(L, "path", md.modelPath);
-	HSTR_PUSH_STRING(L, "name", md.modelName);
-	HSTR_PUSH(L, "textures");
-
-	lua_newtable(L);
-	map<string, string>::const_iterator it;
-	for (it = md.modelTextures.begin(); it != md.modelTextures.end(); ++it) {
-		LuaPushNamedString(L, it->first, it->second);
-	}
-	lua_rawset(L, -3);
-	return 1;
-}
-
-
 static int MoveDefTable(lua_State* L, const void* data)
 {
 	const MoveDef* md = *static_cast<const MoveDef* const*>(data);
@@ -551,6 +526,24 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 }
 
 
+
+static int ModelTable(lua_State* L, const void* data) {
+	const UnitDef* ud = static_cast<const UnitDef*>(data);
+
+	lua_newtable(L);
+	HSTR_PUSH_STRING(L, "type", FileSystem::GetExtension(ud->modelName));
+	HSTR_PUSH_STRING(L, "path", ud->modelName); // backward compability
+	HSTR_PUSH_STRING(L, "name", ud->modelName);
+	HSTR_PUSH(L, "textures");
+
+	lua_newtable(L);
+	if (ud->model != NULL) {
+		LuaPushNamedString(L, "tex1", ud->model->tex1);
+		LuaPushNamedString(L, "tex2", ud->model->tex2);
+	}
+	lua_rawset(L, -3);
+	return 1;
+}
 
 #define TYPE_FUNC(FuncName, LuaType)                    \
 	static int FuncName(lua_State* L, const void* data) \
@@ -632,7 +625,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("decoyDef",           ud.decoyDef,           UnitDefToID);
 	ADD_FUNCTION("weapons",            ud.weapons,            WeaponsTable);
 	ADD_FUNCTION("sounds",             ud.sounds,             SoundsTable);
-	ADD_FUNCTION("model",              ud.modelDef,           ModelDefTable);
+	ADD_FUNCTION("model",              ud,                    ModelTable);
 	ADD_FUNCTION("moveData",           ud.moveDef,            MoveDefTable); // backward compatibility
 	ADD_FUNCTION("moveDef",            ud.moveDef,            MoveDefTable);
 	ADD_FUNCTION("shieldWeaponDef",    ud.shieldWeaponDef,    WeaponDefToID);
@@ -667,8 +660,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_STRING("tooltip", ud.tooltip);
 
 	ADD_STRING("wreckName", ud.wreckName);
-	ADD_STRING("deathExplosion", ud.deathExplosion);
-	ADD_STRING("selfDExplosion", ud.selfDExplosion);
+	ADD_STRING("deathExplosion", ud.deathExpWeaponDef->name);
+	ADD_STRING("selfDExplosion", ud.selfdExpWeaponDef->name);
 
 	ADD_STRING("buildpicname", ud.buildPicName);
 
@@ -680,8 +673,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("metalMake",      ud.metalMake);
 	ADD_FLOAT("makesMetal",     ud.makesMetal);
 	ADD_FLOAT("energyMake",     ud.energyMake);
-	ADD_FLOAT("metalCost",      ud.metalCost);
-	ADD_FLOAT("energyCost",     ud.energyCost);
+	ADD_FLOAT("metalCost",      ud.metal);
+	ADD_FLOAT("energyCost",     ud.energy);
 	ADD_FLOAT("buildTime",      ud.buildTime);
 	ADD_FLOAT("extractsMetal",  ud.extractsMetal);
 	ADD_FLOAT("extractRange",   ud.extractRange);
@@ -881,12 +874,12 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_INT("highTrajectoryType", ud.highTrajectoryType);
 
-	ADD_BOOL( "leaveTracks",   ud.leaveTracks);
-	ADD_INT(  "trackType",     ud.trackType);
-	ADD_FLOAT("trackWidth",    ud.trackWidth);
-	ADD_FLOAT("trackOffset",   ud.trackOffset);
-	ADD_FLOAT("trackStrength", ud.trackStrength);
-	ADD_FLOAT("trackStretch",  ud.trackStretch);
+	ADD_BOOL( "leaveTracks",   ud.decalDef.leaveTrackDecals);
+	ADD_INT(  "trackType",     ud.decalDef.trackDecalType);
+	ADD_FLOAT("trackWidth",    ud.decalDef.trackDecalWidth);
+	ADD_FLOAT("trackOffset",   ud.decalDef.trackDecalOffset);
+	ADD_FLOAT("trackStrength", ud.decalDef.trackDecalStrength);
+	ADD_FLOAT("trackStretch",  ud.decalDef.trackDecalStretch);
 
 	ADD_BOOL( "canDropFlare",     ud.canDropFlare);
 	ADD_FLOAT("flareReloadTime",  ud.flareReloadTime);
@@ -902,11 +895,11 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("levelGround", ud.levelGround);
 	ADD_BOOL("strafeToAttack", ud.strafeToAttack);
 
-	ADD_BOOL( "useBuildingGroundDecal",  ud.useBuildingGroundDecal);
-	ADD_INT(  "buildingDecalType",       ud.buildingDecalType);
-	ADD_INT(  "buildingDecalSizeX",      ud.buildingDecalSizeX);
-	ADD_INT(  "buildingDecalSizeY",      ud.buildingDecalSizeY);
-	ADD_FLOAT("buildingDecalDecaySpeed", ud.buildingDecalDecaySpeed);
+	ADD_BOOL( "useBuildingGroundDecal",  ReturnFalse);
+	ADD_INT(  "buildingDecalType",       ud.decalDef.groundDecalType);
+	ADD_INT(  "buildingDecalSizeX",      ud.decalDef.groundDecalSizeX);
+	ADD_INT(  "buildingDecalSizeY",      ud.decalDef.groundDecalSizeY);
+	ADD_FLOAT("buildingDecalDecaySpeed", ud.decalDef.groundDecalDecaySpeed);
 
 	ADD_BOOL("showNanoFrame", ud.showNanoFrame);
 	ADD_BOOL("showNanoSpray", ud.showNanoSpray);
@@ -915,7 +908,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("nanoColorB",   ud.nanoColor.z);
 
 	ADD_STRING("scriptName", ud.scriptName);
-	ADD_STRING("scriptPath", ud.scriptPath);
+	ADD_STRING("scriptPath", ud.scriptName); // backward compability
 
 	return true;
 }

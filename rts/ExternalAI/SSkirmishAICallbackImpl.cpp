@@ -2080,9 +2080,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_getCost(int skirmishAIId,
 
 	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
 	if (resourceId == resourceHandler->GetMetalId()) {
-		return ud->metalCost;
+		return ud->metal;
 	} else if (resourceId == resourceHandler->GetEnergyId()) {
-		return ud->energyCost;
+		return ud->energy;
 	} else {
 		return 0.0f;
 	}
@@ -2377,11 +2377,11 @@ EXPORT(const char*) skirmishAiCallback_UnitDef_getWreckName(int skirmishAIId, in
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_getDeathExplosion(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->deathExplosion.c_str();
+	return "$$deprecated$$";
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_getSelfDExplosion(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->selfDExplosion.c_str();
+	return "$$deprecated$$";
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_getCategoryString(int skirmishAIId, int unitDefId) {
@@ -2798,28 +2798,29 @@ EXPORT(int) skirmishAiCallback_UnitDef_getNoChaseCategory(int skirmishAIId, int 
 	return getUnitDefById(skirmishAIId, unitDefId)->noChaseCategory;
 }
 
+// DEPRECATED
 EXPORT(bool) skirmishAiCallback_UnitDef_isLeaveTracks(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->leaveTracks;
+	return false;
 }
-
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_UnitDef_getTrackWidth(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->trackWidth;
+	return 0.0f;
 }
-
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_UnitDef_getTrackOffset(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->trackOffset;
+	return 0.0f;
 }
-
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_UnitDef_getTrackStrength(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->trackStrength;
+	return 0.0f;
 }
-
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_UnitDef_getTrackStretch(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->trackStretch;
+	return 0.0f;
 }
-
+// DEPRECATED
 EXPORT(int) skirmishAiCallback_UnitDef_getTrackType(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->trackType;
+	return -1;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToDropFlare(int skirmishAIId, int unitDefId) {
@@ -2862,24 +2863,25 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isLevelGround(int skirmishAIId, int unit
 	return getUnitDefById(skirmishAIId, unitDefId)->levelGround;
 }
 
+// DEPRECATED
 EXPORT(bool) skirmishAiCallback_UnitDef_isUseBuildingGroundDecal(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->useBuildingGroundDecal;
+	return false;
 }
-
+// DEPRECATED
 EXPORT(int) skirmishAiCallback_UnitDef_getBuildingDecalType(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->buildingDecalType;
+	return 0;
 }
-
+// DEPRECATED
 EXPORT(int) skirmishAiCallback_UnitDef_getBuildingDecalSizeX(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->buildingDecalSizeX;
+	return 0;
 }
-
+// DEPRECATED
 EXPORT(int) skirmishAiCallback_UnitDef_getBuildingDecalSizeY(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->buildingDecalSizeY;
+	return 0;
 }
-
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_UnitDef_getBuildingDecalDecaySpeed(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->buildingDecalDecaySpeed;
+	return 0.0f;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isFirePlatform(int skirmishAIId, int unitDefId) {
@@ -3654,7 +3656,7 @@ EXPORT(float) skirmishAiCallback_FeatureDef_getContainedResource(int skirmishAII
 }
 
 EXPORT(float) skirmishAiCallback_FeatureDef_getMaxHealth(int skirmishAIId, int featureDefId) {
-	return getFeatureDefById(skirmishAIId, featureDefId)->maxHealth;
+	return getFeatureDefById(skirmishAIId, featureDefId)->health;
 }
 
 EXPORT(float) skirmishAiCallback_FeatureDef_getReclaimTime(int skirmishAIId, int featureDefId) {
@@ -3674,7 +3676,7 @@ EXPORT(int) skirmishAiCallback_FeatureDef_getDrawType(int skirmishAIId, int feat
 }
 
 EXPORT(const char*) skirmishAiCallback_FeatureDef_getModelName(int skirmishAIId, int featureDefId) {
-	return getFeatureDefById(skirmishAIId, featureDefId)->modelname.c_str();
+	return getFeatureDefById(skirmishAIId, featureDefId)->modelName.c_str();
 }
 
 EXPORT(int) skirmishAiCallback_FeatureDef_getResurrectable(int skirmishAIId, int featureDefId) {

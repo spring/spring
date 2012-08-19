@@ -100,6 +100,7 @@ CFeature::~CFeature()
 void CFeature::PostLoad()
 {
 	def = featureHandler->GetFeatureDefByID(defID);
+	objectDef = def;
 
 	//FIXME is this really needed (aren't all those tags saved via creg?)
 	if (def->drawType == DRAWTYPE_MODEL) {
@@ -132,6 +133,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	int facing, int _team, int _allyteam, const UnitDef* _udef, const float3& speed, int _smokeTime)
 {
 	def = _def;
+	objectDef = _def;
 	udef = _udef;
 	defID = def->id;
 	heading = _heading;
@@ -143,7 +145,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	mass = def->mass;
 	crushResistance = def->crushResistance;
 
-	health   = def->maxHealth;
+	health   = def->health;
 	blocking = def->blocking;
 
 	xsize    = ((facing & 1) == 0) ? def->xsize : def->zsize;
@@ -394,6 +396,13 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 	// remove from managers
 	qf->RemoveFeature(this);
+
+	#if 0
+	// TODO: create a ForcedMove event, do not include DecalHandler/TreeDrawer in synced code
+	if (def->drawType == DRAWTYPE_MODEL)
+		groundDecals->RemoveSolidObject(this, NULL);
+	}
+	#endif
 	if (def->drawType >= DRAWTYPE_TREE) {
 		treeDrawer->DeleteTree(pos);
 	}
@@ -417,9 +426,15 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 	// insert into managers
 	qf->AddFeature(this);
+
 	if (def->drawType >= DRAWTYPE_TREE) {
 		treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 	}
+	#if 0
+	if (def->drawType == DRAWTYPE_MODEL)
+		groundDecals->AddSolidObject(this, NULL);
+	}
+	#endif
 
 	if (blocking) {
 		Block();

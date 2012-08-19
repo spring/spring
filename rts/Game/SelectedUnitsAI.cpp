@@ -410,7 +410,7 @@ void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 				// give weaponless units a long range to make them go to the back
 				range = 2000;
 			}
-			const float value = ((ud->metalCost * 60) + ud->energyCost) / unit->unitDef->health * range;
+			const float value = ((ud->metal * 60) + ud->energy) / unit->unitDef->health * range;
 			out.insert(std::pair<float, int>(value, *ui));
 		}
 	}

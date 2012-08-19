@@ -3592,7 +3592,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				glColor4fv(cmdColors.rangeKamikaze);
 				glSurfaceCircle(unit->pos, unitdef->kamikazeDist, 40);
 
-				const WeaponDef* wd = weaponDefHandler->GetWeapon(unitdef->selfDExplosion);
+				const WeaponDef* wd = unitdef->selfdExpWeaponDef;
 
 				if (wd != NULL) {
 					glColor4fv(cmdColors.rangeSelfDestruct);

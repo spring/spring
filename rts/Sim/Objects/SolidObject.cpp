@@ -3,6 +3,7 @@
 #include "System/mmgr.h"
 
 #include "SolidObject.h"
+#include "SolidObjectDef.h"
 #include "Map/ReadMap.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -62,6 +63,8 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
 
+	// TODO: register SolidObjectDef with CREG
+	// CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
 
@@ -97,8 +100,12 @@ CSolidObject::CSolidObject():
 	residualImpulse(ZeroVector),
 	team(0),
 	allyteam(0),
+
+	objectDef(NULL),
 	moveDef(NULL),
 	collisionVolume(NULL),
+	groundDecal(NULL),
+
 	frontdir(0.0f, 0.0f, 1.0f),
 	rightdir(-1.0f, 0.0f, 0.0f),
 	updir(0.0f, 1.0f, 0.0f),

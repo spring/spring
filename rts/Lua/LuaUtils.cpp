@@ -1026,3 +1026,4 @@ void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
 	// CmdDesc["params"] = {[1] = "string1", [2] = "string2", ...}
 	lua_settable(L, -3);
 }
+

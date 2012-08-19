@@ -47,6 +47,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/MoveTypes/StaticMoveType.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/MoveTypes/HoverAirMoveType.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Objects/SolidObject.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Objects/SolidObjectDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Objects/WorldObject.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathAllocator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathCache.cpp"
