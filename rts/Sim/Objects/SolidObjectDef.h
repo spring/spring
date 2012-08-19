@@ -25,11 +25,11 @@ public:
 	float groundDecalDecaySpeed;
 
 	bool leaveTrackDecals;
+	int trackDecalType;
 	float trackDecalWidth;
 	float trackDecalOffset;
 	float trackDecalStrength;
 	float trackDecalStretch;
-	int trackDecalType;
 };
 
 struct SolidObjectDef {
@@ -39,6 +39,7 @@ public:
 
 	S3DModel* LoadModel() const;
 	float GetModelRadius() const;
+	void SetCollisionVolume(const LuaTable& table);
 
 public:
 	int id;

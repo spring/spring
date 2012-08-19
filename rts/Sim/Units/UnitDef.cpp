@@ -652,12 +652,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
-	collisionVolume = new CollisionVolume(
-		udTable.GetString("collisionVolumeType", ""),
-		udTable.GetFloat3("collisionVolumeScales", ZeroVector),
-		udTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		CollisionVolume::COLVOL_HITTEST_CONT
-	);
+	SetCollisionVolume(udTable);
 
 	if ((usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false))) {
 		collisionVolume->Disable();
