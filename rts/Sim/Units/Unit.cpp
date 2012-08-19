@@ -1712,12 +1712,13 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 
 bool CUnit::AddBuildPower(float amount, CUnit* builder)
 {
+	// stop decaying on building AND reclaim
+	lastNanoAdd = gs->frameNum;
+
 	if (amount >= 0.0f) { //  build / repair
 		if (!beingBuilt && (health >= maxHealth)) {
 			return false;
 		}
-
-		lastNanoAdd = gs->frameNum;
 
 		if (beingBuilt) { //build
 			const float part = std::min(amount / buildTime, 1.0f - buildProgress);
