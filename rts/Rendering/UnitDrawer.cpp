@@ -124,7 +124,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	cloakAlpha2 = std::min(1.0f, cloakAlpha + 0.2f);
 	cloakAlpha3 = std::min(1.0f, cloakAlpha + 0.4f);
 
-	// load unit explosion generators
+	// load unit explosion generators and decals
 	for (size_t unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
 		UnitDef* ud = unitDefHandler->unitDefs[unitDefID];
 
@@ -132,16 +132,12 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 			ud->sfxExplGens.push_back(explGenHandler->LoadGenerator(*it));
 		}
 
-		if (ud->useBuildingGroundDecal) {
-			ud->buildingDecalType = groundDecals->GetBuildingDecalType(ud->buildingDecalTypeName);
-		} else {
-			ud->buildingDecalType = -1;
+		if (ud->decalDef.useGroundDecal) {
+			ud->decalDef.groundDecalType = groundDecals->GetSolidObjectDecalType(ud->decalDef.groundDecalTypeName);
 		}
 
-		if (ud->leaveTracks) {
-			ud->trackType = groundDecals->GetTrackType(ud->trackTypeName);
-		} else {
-			ud->trackType = -1;
+		if (ud->decalDef.leaveTrackDecals) {
+			ud->decalDef.trackDecalType = groundDecals->GetTrackType(ud->decalDef.trackDecalTypeName);
 		}
 	}
 
@@ -184,15 +180,15 @@ CUnitDrawer::~CUnitDrawer()
 		CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
 		if (building != NULL) {
-			groundDecals->RemoveBuilding(building, NULL);
+			groundDecals->RemoveSolidObject(building, NULL);
 		}
 
 		groundDecals->RemoveUnit(unit);
 	}
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		std::set<GhostBuilding*>& ghostSet = deadGhostBuildings[modelType];
-		std::set<GhostBuilding*>::iterator ghostSetIt;
+		std::set<GhostSolidObject*>& ghostSet = deadGhostBuildings[modelType];
+		std::set<GhostSolidObject*>::iterator ghostSetIt;
 
 		for (ghostSetIt = ghostSet.begin(); ghostSetIt != ghostSet.end(); ++ghostSetIt) {
 			if ((*ghostSetIt)->decal) {
@@ -1210,13 +1206,13 @@ void CUnitDrawer::DrawCloakedAIUnits()
 
 void CUnitDrawer::DrawGhostedBuildings(int modelType)
 {
-	std::set<GhostBuilding*>& deadGhostedBuildings = deadGhostBuildings[modelType];
+	std::set<GhostSolidObject*>& deadGhostedBuildings = deadGhostBuildings[modelType];
 	std::set<CUnit*>& liveGhostedBuildings = liveGhostBuildings[modelType];
 
 	glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
 
 	// buildings that died while ghosted
-	for (std::set<GhostBuilding*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
+	for (std::set<GhostSolidObject*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
 		if (loshandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 			// obtained LOS on the ghost of a dead building
 			if ((*it)->decal)
@@ -2222,14 +2218,14 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	if (GML::SimEnabled() && !GML::ShareLists()) {
 		if (u->model && TEX_TYPE(u) < 0)
 			TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model);
-		if((unsortedUnits.size() % 10) == 0)
+		if ((unsortedUnits.size() % 10) == 0)
 			Watchdog::ClearPrimaryTimers(); // batching can create an avalance of events during /give xxx, triggering hang detection
 	}
 
-	if (building)
-		groundDecals->AddBuilding(building);
+	if (building != NULL)
+		groundDecals->AddSolidObject(building);
 
-	if (u->model) {
+	if (u->model != NULL) {
 		if (cloaked) {
 			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		} else {
@@ -2246,7 +2242,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
 	if (building != NULL) {
-		GhostBuilding* gb = NULL;
+		GhostSolidObject* gb = NULL;
 
 		if (gameSetup->ghostedBuildings) {
 			if (!(building->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
@@ -2257,7 +2253,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 				const UnitDef* decoyDef = building->unitDef->decoyDef;
 				S3DModel* gbModel = (decoyDef == NULL) ? building->model : decoyDef->LoadModel();
 
-				gb = new GhostBuilding();
+				gb = new GhostSolidObject();
 				gb->pos    = building->pos;
 				gb->model  = gbModel;
 				gb->decal  = NULL;
@@ -2268,7 +2264,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 			}
 		}
 
-		groundDecals->RemoveBuilding(building, gb);
+		groundDecals->RemoveSolidObject(building, gb);
 	}
 
 	groundDecals->RemoveUnit(unit);

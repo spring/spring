@@ -2211,12 +2211,17 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
 	if (unit == NULL) {
 		return 0;
 	}
+
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
-	if (building)
-		groundDecals->ForceRemoveBuilding(building);
+
+	if (building != NULL) {
+		groundDecals->ForceRemoveSolidObject(building);
+	}
+
 	return 0;
 }
 

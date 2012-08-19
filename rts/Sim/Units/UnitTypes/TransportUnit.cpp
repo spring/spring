@@ -340,7 +340,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	if (CBuilding* building = dynamic_cast<CBuilding*>(unit)) {
 		unitLoader->RestoreGround(unit);
-		groundDecals->RemoveBuilding(building, NULL);
+		groundDecals->RemoveSolidObject(building, NULL);
 	}
 
 	if (dynamic_cast<CHoverAirMoveType*>(moveType)) {

@@ -176,7 +176,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 
 		char tmp[1024];
 		sprintf(tmp, "\nHealth %.0f\nMetal cost %.0f\nEnergy cost %.0f Build time %.0f",
-		        ud->health, ud->metalCost, ud->energyCost, ud->buildTime);
+		        ud->health, ud->metal, ud->energy, ud->buildTime);
 		if (c.disabled) {
 			c.tooltip = "\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff";
 		} else {

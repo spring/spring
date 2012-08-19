@@ -9,11 +9,13 @@
 #include "System/Sync/SyncedFloat3.h"
 #include "System/Sync/SyncedPrimitive.h"
 
-class CUnit;
-struct DamageArray;
 struct CollisionVolume;
+struct SolidObjectDef;
 struct MoveDef;
+struct SolidObjectGroundDecal;
 
+struct DamageArray;
+class CUnit;
 
 enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
@@ -169,8 +171,10 @@ public:
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
 
+	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
 	MoveDef* moveDef;                           ///< holds information about the mobility of this object (if NULL, object is either static or aircraft)
 	CollisionVolume* collisionVolume;
+	SolidObjectGroundDecal* groundDecal;
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)

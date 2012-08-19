@@ -139,19 +139,15 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 
 	fd->metal       = fdTable.GetFloat("metal",  0.0f);
 	fd->energy      = fdTable.GetFloat("energy", 0.0f);
-	fd->maxHealth   = fdTable.GetFloat("damage", 0.0f);
+	fd->health      = fdTable.GetFloat("damage", 0.0f);
 	fd->reclaimTime = std::max(1.0f, fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy) * 6.0f));
 
 	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
+	fd->modelName = fdTable.GetString("object", "");
 	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_NONE);
-	fd->modelname = fdTable.GetString("object", "");
 
-	if (!fd->modelname.empty()) {
-		if (fd->modelname.find(".") == string::npos) {
-			fd->modelname += ".3do";
-		}
-		fd->modelname = "objects3d/" + fd->modelname;
+	if (!fd->modelName.empty()) {
 		fd->drawType = DRAWTYPE_MODEL;
 	}
 
@@ -177,10 +173,12 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 
 	const float minMass = CSolidObject::MINIMUM_MASS;
 	const float maxMass = CSolidObject::MAXIMUM_MASS;
-	const float defMass = (fd->metal * 0.4f) + (fd->maxHealth * 0.1f);
+	const float defMass = (fd->metal * 0.4f) + (fd->health * 0.1f);
 
 	fd->mass = Clamp(fdTable.GetFloat("mass", defMass), minMass, maxMass);
 	fd->crushResistance = fdTable.GetFloat("crushResistance", fd->mass);
+
+	fd->decalDef.Parse(fdTable);
 
 	// custom parameters table
 	fdTable.SubTable("customParams").GetMap(fd->customParams);
@@ -199,7 +197,7 @@ FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name
 	fd->energy = 250;
 	fd->metal = 0;
 	fd->reclaimTime = 1500;
-	fd->maxHealth = 5;
+	fd->health = 5.0f;
 	fd->xsize = 2;
 	fd->zsize = 2;
 	fd->name = name;
@@ -222,7 +220,7 @@ FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name)
 	fd->energy = 0;
 	fd->metal = 0;
 	fd->reclaimTime = 0;
-	fd->maxHealth = 0;
+	fd->health = 0.0f;
 	fd->xsize = 0;
 	fd->zsize = 0;
 	fd->name = name;
@@ -384,7 +382,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const string& name,
 	if (luaRules && !luaRules->AllowFeatureCreation(fd, team, pos))
 		return NULL;
 
-	if (!fd->modelname.empty()) {
+	if (!fd->modelName.empty()) {
 		CFeature* f = new CFeature();
 
 		if (fd->resurrectable == 0 || (iter > 1 && fd->resurrectable < 0)) {

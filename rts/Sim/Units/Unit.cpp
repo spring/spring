@@ -332,6 +332,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	team = uTeam;
 	allyteam = teamHandler->AllyTeam(uTeam);
 
+	objectDef = uDef;
 	unitDef = uDef;
 	unitDefID = unitDef->id;
 
@@ -392,14 +393,14 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	health = beingBuilt? 0.1f: unitDef->health;
 	losHeight = unitDef->losHeight;
 	radarHeight = unitDef->radarHeight;
-	metalCost = unitDef->metalCost;
-	energyCost = unitDef->energyCost;
+	metalCost = unitDef->metal;
+	energyCost = unitDef->energy;
 	buildTime = unitDef->buildTime;
 	currentFuel = unitDef->maxFuel;
 	armoredMultiple = std::max(0.0001f, unitDef->armoredMultiple); // armored multiple of 0 will crash spring
 	armorType = unitDef->armorType;
 	category = unitDef->category;
-	leaveTracks = unitDef->leaveTracks;
+	leaveTracks = unitDef->decalDef.leaveTrackDecals;
 
 	tooltip = unitDef->humanName + " - " + unitDef->tooltip;
 	wreckName = unitDef->wreckName;
@@ -443,7 +444,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 		unitDef->tidalGenerator * mapInfo->map.tidalStrength;
 
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
-	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
+	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
 }
 
 
@@ -546,13 +547,14 @@ void CUnit::ForcedMove(const float3& newPos, bool)
 	}
 
 	CBuilding* building = dynamic_cast<CBuilding*>(this);
-	if (building)
-		groundDecals->RemoveBuilding(building, NULL);
+
+	if (building != NULL)
+		groundDecals->RemoveSolidObject(building, NULL);
 
 	Move3D(newPos - pos, true);
 
-	if (building)
-		groundDecals->AddBuilding(building);
+	if (building != NULL)
+		groundDecals->AddSolidObject(building);
 
 	if (blocking) {
 		Block();
@@ -1907,8 +1909,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	}
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
-		const std::string& exp = (selfDestruct) ? unitDef->selfDExplosion : unitDef->deathExplosion;
-		const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
+		const WeaponDef* wd = (selfDestruct)? unitDef->selfdExpWeaponDef: unitDef->deathExpWeaponDef;
 
 		if (wd != NULL) {
 			CGameHelper::ExplosionParams params = {
@@ -2123,6 +2124,7 @@ void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
 	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
+	objectDef = unitDef;
 	model = unitDef->LoadModel();
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
@@ -2130,7 +2132,7 @@ void CUnit::PostLoad()
 
 	modelParser->CreateLocalModel(this);
 	// FIXME: how to handle other script types (e.g. Lua) here?
-	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
+	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
 
 	// Call initializing script functions
 	script->Create();

@@ -163,13 +163,22 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name)
 
 	// search in cache first
 	ModelMap::iterator ci;
+	ParserMap::iterator pi;
+
 	if ((ci = cache.find(name)) != cache.end()) {
 		return ci->second;
 	}
 
 	// not found in cache, create the model and cache it
 	const std::string& fileExt = FileSystem::GetExtension(name);
-	const ParserMap::iterator pi = parsers.find(fileExt);
+
+	if (fileExt.empty()) {
+		// fallback (TODO: try all registered extensions?)
+		pi = parsers.find("3do");
+		name += ".3do";
+	} else {
+		pi = parsers.find(fileExt);
+	}
 
 	if (pi != parsers.end()) {
 		IModelParser* p = pi->second;
@@ -177,7 +186,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name)
 		S3DModelPiece* root = NULL;
 
 		try {
-			model = p->Load(name);
+			model = p->Load("objects3d/" + name);
 		} catch (const content_error& ex) {
 			// crash-dummy
 			model = new S3DModel();

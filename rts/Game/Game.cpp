@@ -2139,14 +2139,14 @@ void CGame::ReloadCOB(const string& msg, int player)
 		LOG_L(L_WARNING, "Unknown unit name: \"%s\"", unitName.c_str());
 		return;
 	}
-	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr(udef->scriptPath);
+	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr("scripts/" + udef->scriptName);
 	if (oldScript == NULL) {
-		LOG_L(L_WARNING, "Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptPath.c_str());
+		LOG_L(L_WARNING, "Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptName.c_str());
 		return;
 	}
-	CCobFile* newScript = GCobFileHandler.ReloadCobFile(udef->scriptPath);
+	CCobFile* newScript = GCobFileHandler.ReloadCobFile("scripts/" + udef->scriptName);
 	if (newScript == NULL) {
-		LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptPath.c_str());
+		LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptName.c_str());
 		return;
 	}
 	int count = 0;

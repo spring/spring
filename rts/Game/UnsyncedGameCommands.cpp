@@ -2620,12 +2620,11 @@ public:
 			" explosion.") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (groundDecals) {
-			bool drawDecals = groundDecals->GetDrawDecals();
-			SetBoolArg(drawDecals, action.GetArgs());
-			groundDecals->SetDrawDecals(drawDecals);
-		}
-		LogSystemStatus("Ground-decals rendering", (groundDecals != NULL) ? groundDecals->GetDrawDecals() : false);
+		bool drawDecals = groundDecals->GetDrawDecals();
+		SetBoolArg(drawDecals, action.GetArgs());
+		groundDecals->SetDrawDecals(drawDecals);
+
+		LogSystemStatus("Ground-decals rendering", groundDecals->GetDrawDecals());
 		return true;
 	}
 };
