@@ -158,13 +158,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 	// takes precedence over the old sphere tags as well
 	// as feature->radius (for feature <---> projectile
 	// interactions)
-	fd->collisionVolume = new CollisionVolume(
-		fdTable.GetString("collisionVolumeType", ""),
-		fdTable.GetFloat3("collisionVolumeScales", ZeroVector),
-		fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		CollisionVolume::COLVOL_HITTEST_CONT
-	);
-
+	fd->SetCollisionVolume(fdTable);
 
 	fd->upright = fdTable.GetBool("upright", false);
 

@@ -68,4 +68,13 @@ float SolidObjectDef::GetModelRadius() const
 	return (LoadModel()->radius);
 }
 
+void SolidObjectDef::SetCollisionVolume(const LuaTable& table)
+{
+	collisionVolume = new CollisionVolume(
+		table.GetString("collisionVolumeType", ""),
+		table.GetFloat3("collisionVolumeScales", ZeroVector),
+		table.GetFloat3("collisionVolumeOffsets", ZeroVector),
+		CollisionVolume::COLVOL_HITTEST_CONT
+	);
+}
 

@@ -895,7 +895,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("levelGround", ud.levelGround);
 	ADD_BOOL("strafeToAttack", ud.strafeToAttack);
 
-	ADD_BOOL( "useBuildingGroundDecal",  ReturnFalse);
+	ADD_BOOL( "useBuildingGroundDecal",  ud.decalDef.useGroundDecal);
 	ADD_INT(  "buildingDecalType",       ud.decalDef.groundDecalType);
 	ADD_INT(  "buildingDecalSizeX",      ud.decalDef.groundDecalSizeX);
 	ADD_INT(  "buildingDecalSizeY",      ud.decalDef.groundDecalSizeY);
