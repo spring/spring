@@ -56,8 +56,8 @@ class CCollisionHandler {
 
 	private:
 		// HITTEST_DISC helpers for DetectHit
-		static bool Collision(const CUnit* u, const float3& p);
-		static bool Collision(const CFeature* f, const float3& p);
+		static bool Collision(const CUnit* u, const float3& p, CollisionQuery* q);
+		static bool Collision(const CFeature* f, const float3& p, CollisionQuery* q);
 		// HITTEST_CONT helpers for DetectHit
 		static bool Intersect(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q);
 		static bool Intersect(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q);

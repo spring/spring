@@ -388,7 +388,6 @@ void CProjectileHandler::CheckUnitCollisions(
 
 	for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
 		CUnit* unit = *ui;
-		CollisionVolume* volume = unit->collisionVolume;
 
 		const CUnit* attacker = p->owner();
 
@@ -412,23 +411,8 @@ void CProjectileHandler::CheckUnitCollisions(
 				unit->SetLastAttackedPiece(cq.lmp, gs->frameNum);
 			}
 
-			// The current projectile <p> won't reach the raytraced surface impact
-			// position until ::Update() is called (same frame). This is a problem
-			// when dealing with fast low-AOE projectiles since they would do almost
-			// no damage if detonated outside the collision volume. Therefore, smuggle
-			// a bit with its position now (rather than rolling it back in ::Update()
-			// and waiting for the next-frame CheckUnitCol(), which is problematic
-			// for noExplode projectiles).
-
-			const bool raytraced = (int(volume->GetContHitTest()) == CollisionVolume::COLVOL_HITTEST_CONT);
-			const float3 pimpp =
-				(cq.b0 && cq.b1)? (cq.p0 + cq.p1) * 0.5f:
-				(cq.b0         )? (cq.p0 + ppos1) * 0.5f:
-				                  (ppos0 + cq.p1) * 0.5f;
-
-			p->pos = (raytraced)? pimpp: ppos0;
+			p->pos = (cq.b0) ? cq.p0 : cq.p1;
 			p->Collision(unit);
-			p->pos = (raytraced)? ppos0: p->pos;
 			break;
 		}
 	}
@@ -458,15 +442,8 @@ void CProjectileHandler::CheckFeatureCollisions(
 		}
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
-			const bool raytraced = (int(volume->GetContHitTest()) == CollisionVolume::COLVOL_HITTEST_CONT);
-			const float3 pimpp =
-				(cq.b0 && cq.b1)? (cq.p0 + cq.p1) * 0.5f:
-				(cq.b0         )? (cq.p0 + ppos1) * 0.5f:
-								  (ppos0 + cq.p1) * 0.5f;
-
-			p->pos = (raytraced)? pimpp: ppos0;
+			p->pos = (cq.b0) ? cq.p0 : cq.p1;
 			p->Collision(feature);
-			p->pos = (raytraced)? ppos0: p->pos;
 			break;
 		}
 	}
