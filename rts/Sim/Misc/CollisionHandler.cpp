@@ -48,7 +48,7 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 	if (forceTrace)
 		return (CCollisionHandler::Intersect(u, p0, p1, q));
 
-	switch (u->collisionVolume->GetTestType()) {
+	switch (int(u->collisionVolume->GetContHitTest())) {
 		// Collision(CUnit*) does not need p1
 		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(u, p0    , q); } break;
 		case CollisionVolume::COLVOL_HITTEST_CONT: { hit = CCollisionHandler::Intersect(u, p0, p1, q); } break;
@@ -73,7 +73,7 @@ bool CCollisionHandler::DetectHit(const CFeature* f, const float3& p0, const flo
 	if (forceTrace)
 		return (CCollisionHandler::Intersect(f, p0, p1, q));
 
-	switch (f->collisionVolume->GetTestType()) {
+	switch (int(f->collisionVolume->GetContHitTest())) {
 		// Collision(CFeature*) does not need p1
 		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(f, p0    , q); } break;
 		case CollisionVolume::COLVOL_HITTEST_CONT: { hit = CCollisionHandler::Intersect(f, p0, p1, q); } break;
