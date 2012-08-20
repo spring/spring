@@ -77,6 +77,14 @@ else  (APPLE)
 	set(MACOSX_BUNDLE FALSE)
 endif (APPLE)
 
+if    (UNIX AND NOT MINGW)
+	execute_process(COMMAND ${CMAKE_LINKER} "-v" COMMAND "grep" "-iq" "gold" RESULT_VARIABLE hasGold)
+	if    (hasGold EQUAL 0)
+		Message(STATUS "Found ld.gold, enabling compressed debugsymbols")
+		set(CMAKE_EXE_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib ${CMAKE_EXE_LINKER_FLAGS}")
+	endif (hasGold EQUAL 0)
+endif (UNIX AND NOT MINGW)
+
 
 ### Install paths (relative to CMAKE_INSTALL_PREFIX)
 if    (UNIX AND NOT MINGW)
