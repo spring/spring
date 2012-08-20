@@ -18,7 +18,7 @@ make install DESTDIR=${DEST}
 
 #strip symbols and archive them
 cd ${INSTALLDIR}
-BINARIES="spring* lib*.so"
+BINARIES="spring* lib*.so pr-downloader"
 for tostripfile in ${BINARIES}; do
 	if [ -f ${tostripfile} ]; then
 		if readelf -h ${tostripfile} &> /dev/null; then
@@ -51,7 +51,7 @@ for tocompress in ${BINARIES}; do
 			fi
 			debugfile=${tocompress%.*}.dbg
 			archive_debug="${TMP_PATH}/${VERSION}_${name}_dbg.7z"
-			[ -f ${debugfile} ] && ${SEVENZIP} "${archive_debug}" ${debugfile}
+			[ -f ${debugfile} ] && ${SEVENZIP} "${archive_debug}" ${debugfile} && rm ${debugfile}
 		fi
 	fi
 done
@@ -76,10 +76,12 @@ done
 
 # create relative symbolic links to current files for rsyncing
 cd ${TMP_PATH}/..
-ln -sfv ${REV}/spring-${FILEPREFIX} spring_testing-${FILEPREFIX}
+ln -sfv ${REV}/spring-${FILEPREFIX} spring_testing-${FILEPREFIX}    spring_testing_minimal-portable-${FILEPREFIX}.7z
 ln -sfv ${REV}/spring_${VERSION}_minimal-portable-${FILEPREFIX}.7z  spring_testing_minimal-portable-${FILEPREFIX}.7z
 #ln -sfv ${REV}/spring_${VERSION}_minimal-portable-${FILEPREFIX}.zip spring_testing_minimal-portable-${FILEPREFIX}.zip
 
 # create a file which contains the latest version of a branch
 #echo ${VERSION} > LATEST
 
+#cd ${BUILDDIR}
+#make uninstall DESTDIR=${DEST}
