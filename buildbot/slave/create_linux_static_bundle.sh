@@ -50,7 +50,7 @@ for tocompress in ${BINARIES}; do
 				name=${tocompress%.*}
 			fi
 			debugfile=${tocompress%.*}.dbg
-			archive_debug="${TMP_PATH}/${VERSION}_${name}_dbg.7z"
+			archive_debug="${TMP_PATH}/${VERSION}_${name}_${FILEPREFIX}_dbg.7z"
 			[ -f ${debugfile} ] && ${SEVENZIP} "${archive_debug}" ${debugfile} && rm ${debugfile}
 		fi
 	fi
