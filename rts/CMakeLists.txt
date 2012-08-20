@@ -54,23 +54,22 @@ if    (NO_SOUND)
 endif (NO_SOUND)
 
 ### Find include directories and add platform specific libraries
-IF    (UNIX)
+IF    (UNIX AND NOT MINGW)
 	IF    (PREFER_STATIC_LIBS)
 		PREFER_STATIC_LIBS()
 		FIND_LIBRARY(C_LIBRARY c)
 		FIND_LIBRARY(MATH_LIBRARY m)
-		FIND_LIBRARY(DL_LIBRARY dl)
 		#FIND_LIBRARY(PTHREAD_LIBRARY pthread)
 		#FIND_LIBRARY(OMP_LIBRARY gomp) FIXME it's hidden in some subfolders
 		UNPREFER_STATIC_LIBS()
 
-		LIST(APPEND engineCommonLibraries ${DL_LIBRARY} ${C_LIBRARY} ${MATH_LIBRARY})
+		LIST(APPEND engineCommonLibraries ${C_LIBRARY} ${MATH_LIBRARY})
 		#LIST(APPEND engineCommonLibraries ${PTHREAD_LIBRARY} ${OMP_LIBRARY})
-	ELSE  (PREFER_STATIC_LIBS)
-		# Needed for dynamically loading shared libraries (on some OS)
-		LIST(APPEND engineCommonLibraries dl)
 	ENDIF (PREFER_STATIC_LIBS)
-ENDIF (UNIX)
+
+	# Needed for dynamically loading shared libraries (on some OS)
+	LIST(APPEND engineCommonLibraries dl)
+ENDIF (UNIX AND NOT MINGW)
 
 LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY})
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY})
