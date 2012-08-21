@@ -1642,7 +1642,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			// Arrived if we are closest to kill long pushing contests
 			if (colliderGoalDistSq <= Square(collider->radius * 2.0f) && collideeGoalDistSq <= Square(collidee->radius * 2.0f)) {
 				if (colliderGoalDistSq < collideeGoalDistSq) {
-					atEndOfPath = true; atGoal = true; printf("!!! %d\n", owner->id);
+					atEndOfPath = true; atGoal = true;
 				}
 			}
 		}
