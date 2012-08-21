@@ -59,7 +59,6 @@ Else  (NOT Boost_FOUND)
 	TARGET_LINK_LIBRARIES(test_UDPListener
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
-			dl
 			${SDL_LIBRARY}
 			${WS2_32_LIBRARY}
 			7zip
