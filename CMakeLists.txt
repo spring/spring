@@ -209,7 +209,7 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
-FIND_PACKAGE_STATIC(SDL)
+FIND_PACKAGE(SDL)
 FIND_PACKAGE_STATIC(DevIL)
 IF    (PREFER_STATIC_LIBS)
 	# dependencies of DevIL
