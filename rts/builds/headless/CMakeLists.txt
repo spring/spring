@@ -22,7 +22,7 @@ IF    (MINGW OR APPLE)
 	# due to some #define magic, which is practically impossible to workaround.
 	FIND_PACKAGE(OpenGL REQUIRED)
 	FIND_PACKAGE(GLU REQUIRED)
-	FIND_PACKAGE(SDL REQUIRED)
+	FIND_PACKAGE_STATIC(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 ELSE  (MINGW OR APPLE)
 	# Use a direct copy of the GL and SDL headers,

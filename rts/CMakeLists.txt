@@ -38,7 +38,8 @@ endif (SYNCDEBUG)
 # Only used by GML build, but used in builds/GML and lib/gml
 SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
 
-
+### give error when not found
+FIND_PACKAGE_STATIC(DevIL REQUIRED)
 
 ### Assemble common incude dirs
 INCLUDE_DIRECTORIES(BEFORE lib/lua/include)

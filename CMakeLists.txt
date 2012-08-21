@@ -207,9 +207,10 @@ endif (MINGW)
 FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex program_options system signals REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
-#FIND_PACKAGE_STATIC(SDL REQUIRED)
-
-FIND_PACKAGE_STATIC(DevIL REQUIRED)
+# Note the missing REQUIRED, as headless & dedi may not depend on those.
+#  So req. checks are done in the build target's CMakeLists.txt.
+FIND_PACKAGE_STATIC(SDL)
+FIND_PACKAGE_STATIC(DevIL)
 IF    (PREFER_STATIC_LIBS)
 	# dependencies of DevIL
 	FIND_PACKAGE_STATIC(JPEG REQUIRED)
