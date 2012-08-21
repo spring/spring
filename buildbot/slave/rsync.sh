@@ -10,7 +10,11 @@ REMOTE_RSYNC="nice -19 ionice -c3 rsync" #prevent QQ about rsync killing server
 
 umask 022
 
-#cleanup installed files before rsyncing
+# use old files as base to reduce upload
+RSYNC="${RSYNC} --fuzzy"
+#RSYNC="${RSYNC} --compare-dest="
+
+# cleanup installed files before rsyncing
 rm -rf ${TMP_BASE}/inst/
 
 # Rsync archives to a world-visible location.
