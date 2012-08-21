@@ -39,7 +39,7 @@ IF    (MINGW OR APPLE)
 	# OS X:
 	# Cocoa requires the SDL libary, whenever the SDL headers are used,
 	# due to some #define magic, which is practically impossible to workaround.
-	FIND_PACKAGE_STATIC(SDL REQUIRED)
+	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 ELSE  (MINGW OR APPLE)
 	# Use a direct copy of the GL and SDL headers,
