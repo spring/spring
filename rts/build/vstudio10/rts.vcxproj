@@ -622,6 +622,7 @@
     <ClInclude Include="..\..\Rendering\Models\s3o.h" />
     <ClInclude Include="..\..\Rendering\Models\S3OParser.h" />
     <ClInclude Include="..\..\Rendering\Models\WorldObjectModelRenderer.h" />
+    <ClInclude Include="..\..\Sim\Objects\SolidObjectDef.h" />
     <ClInclude Include="..\..\Sim\Units\BuildInfo.h" />
     <ClInclude Include="..\..\Sim\Units\Unit.h" />
     <ClInclude Include="..\..\Sim\Units\UnitDef.h" />
@@ -1756,6 +1757,7 @@
       <XMLDocumentationFileName Condition="'$(Configuration)|$(Platform)'=='Syncdebug|Win32'">$(IntDir)%(Filename)1.xdc</XMLDocumentationFileName>
     </ClCompile>
     <ClCompile Include="..\..\Rendering\Models\WorldObjectModelRenderer.cpp" />
+    <ClCompile Include="..\..\Sim\Objects\SolidObjectDef.cpp" />
     <ClCompile Include="..\..\Sim\Units\BuildInfo.cpp" />
     <ClCompile Include="..\..\Sim\Units\Unit.cpp" />
     <ClCompile Include="..\..\Sim\Units\UnitDef.cpp" />
