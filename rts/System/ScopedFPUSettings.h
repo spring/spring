@@ -22,7 +22,12 @@ private:
 
 #else
 
-class ScopedDisableFpuExceptions {};
+class ScopedDisableFpuExceptions {
+public:
+	ScopedDisableFpuExceptions() {
+		if (false) *(int *)NULL = 0; // just something here to avoid MSVC "unreferenced local variable"
+	}
+};
 
 #endif
 
