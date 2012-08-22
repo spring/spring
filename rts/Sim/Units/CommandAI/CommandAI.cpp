@@ -730,7 +730,14 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 
 	// flush the queue for immediate commands
 	if (!(c.options & SHIFT_KEY)) {
-		if (!commandQue.empty()) {
+		const Command& fc = (commandQue.empty())? Command(CMD_STOP): commandQue.front();
+
+		if (fc.GetID() == CMD_ATTACK && (fc.options & META_KEY) == 0) {
+			// no meta-bit attack lock, clear the order
+			owner->AttackUnit(NULL, false, false);
+		}
+
+		if (fc.GetID() != CMD_STOP) {
 			waitCommandsAI.ClearUnitQueue(owner, commandQue);
 			ClearCommandDependencies();
 			commandQue.clear();

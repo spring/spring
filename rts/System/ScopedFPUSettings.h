@@ -2,7 +2,7 @@
 #define SCOPED_FPU_SETTINGS
 
 // dedicated is compiled w/o streflop!
-#if defined(__SUPPORT_SNAN__) && !defined(DEDICATED)
+#if defined(__SUPPORT_SNAN__) && !defined(USE_GML) && !defined(DEDICATED)
 
 class ScopedDisableFpuExceptions {
 public:
