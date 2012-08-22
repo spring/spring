@@ -15,10 +15,12 @@ ZIP="zip -r9"
 
 cd ${BUILDDIR}
 make install DESTDIR=${DEST}
-
-#strip symbols and archive them
 cd ${INSTALLDIR}
-BINARIES="spring* lib*.so pr-downloader"
+
+
+BINARIES="spring* lib*.so pr-downloader $(find AI/Skirmish -name libSkirmishAI.so) $(find AI/Interfaces -name libAIInterface.so)"
+
+#strip symbols into a separate file
 for tostripfile in ${BINARIES}; do
 	if [ -f ${tostripfile} ]; then
 		if readelf -h ${tostripfile} &> /dev/null; then
@@ -31,6 +33,21 @@ for tostripfile in ${BINARIES}; do
 				objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}
 			else
 				echo "not stripping ${tostripfile}"
+			fi
+		fi
+	fi
+done
+
+# not all distros have a libSDL-1.2.so.0 link, so better link to the always existing libSDL.so
+# note, cmake says it links to /usr/lib/libSDL.so. But the final binary links then libSDL-1.2.so.0, so either cmake or gcc/ld fails.
+for binary in ${BINARIES}; do
+	if [ -f ${binary} ]; then
+		if readelf -h ${binary} &> /dev/null; then
+			if ! objdump -h ${binary} | grep -q .gnu_debuglink; then
+				echo "fix libSDL.so linking in ${binary}"
+				SDL_LIB_NAME_VER="libSDL-1.2.so.0"
+				SDL_LIB_NAME_FIX="libSDL.so\x0\x0\x0\x0\x0\x0"
+				sed -i "s/${SDL_LIB_NAME_VER}/${SDL_LIB_NAME_FIX}/g" ${binary}
 			fi
 		fi
 	fi
@@ -56,15 +73,13 @@ for tocompress in ${BINARIES}; do
 	fi
 done
 
+
 #absolute path to the minimal portable (engine, unitsync + ais)
 MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable-${FILEPREFIX}.7z
-MIN_PORTABLE_ARCHIVE_ZIP=${TMP_PATH}/spring_${VERSION}_minimal-portable-${FILEPREFIX}.zip
 
 #create portable spring excluding shard (ask AF why its excluded)
 touch ${INSTALLDIR}/springsettings.cfg
 ${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -xr!spring-dedicated* -xr!spring-headless* -xr!*.dbg -xr!*.dbg.7z
-#for ZKL
-#(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_ARCHIVE_ZIP} * -x spring-headless\* spring-dedicated\* \*.dbg \*.dbg.7z)
 
 # compress files excluded from portable archive
 for file in spring-dedicated spring-headless; do
@@ -76,12 +91,4 @@ done
 
 # create relative symbolic links to current files for rsyncing
 cd ${TMP_PATH}/..
-pwd
 ln -sfv ${REV}/spring_${VERSION}_minimal-portable-${FILEPREFIX}.7z  spring_testing_minimal-portable-${FILEPREFIX}.7z
-#ln -sfv ${REV}/spring_${VERSION}_minimal-portable-${FILEPREFIX}.zip spring_testing_minimal-portable-${FILEPREFIX}.zip
-
-# create a file which contains the latest version of a branch
-#echo ${VERSION} > LATEST
-
-#cd ${BUILDDIR}
-#make uninstall DESTDIR=${DEST}
