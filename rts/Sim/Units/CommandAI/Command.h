@@ -271,6 +271,46 @@ public:
 		return false;
 	}
 
+	bool IsMoveCommand() const {
+		switch(id) {
+			case CMD_AREA_ATTACK:
+			case CMD_ATTACK:
+			case CMD_CAPTURE:
+			case CMD_FIGHT:
+			case CMD_GUARD:
+			case CMD_LOAD_UNITS:
+			case CMD_MANUALFIRE:
+			case CMD_MOVE:
+			case CMD_PATROL:
+			case CMD_RECLAIM:
+			case CMD_REPAIR:
+			case CMD_RESTORE:
+			case CMD_RESURRECT:
+			case CMD_UNLOAD_UNIT:
+			case CMD_UNLOAD_UNITS:
+				return true;
+			default:
+				if (id < 0)
+					return true;
+		}
+		return false;
+	}
+
+	bool IsWaitCommand() const {
+		switch(id) {
+			case CMD_DEATHWAIT:
+			case CMD_GATHERWAIT:
+			case CMD_SELFD:
+			case CMD_SQUADWAIT:
+			case CMD_STOP:
+			case CMD_TIMEWAIT:
+			case CMD_WAIT:
+				return true;
+		}
+		return false;
+	}
+
+
 	void PushParam(float par) { params.push_back(par); }
 	const float& GetParam(size_t idx) const { return params[idx]; }
 
