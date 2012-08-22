@@ -94,7 +94,7 @@ int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable&
 		// force-initialize the real* members
 		newDef->SetNoCost(true);
 		newDef->SetNoCost(noCost);
-	} catch (const content_error& ex) {
+	} catch (const content_error&) {
 		delete newDef;
 		return 0;
 	}

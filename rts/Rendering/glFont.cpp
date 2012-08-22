@@ -588,7 +588,7 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 	try {
 		CglFont* newFont = new CglFont(fontFile, size, outlinewidth, outlineweight);
 		return newFont;
-	} catch (const texture_size_exception& ex) {
+	} catch (const texture_size_exception&) {
 		LOG_L(L_ERROR, "Failed creating font: Could not create GlyphAtlas! (try to reduce the font size/outline-width)");
 		return NULL;
 	} catch (const content_error& ex) {
