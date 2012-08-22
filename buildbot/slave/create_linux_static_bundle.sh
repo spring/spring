@@ -40,13 +40,13 @@ done
 
 # not all distros have a libSDL-1.2.so.0 link, so better link to the always existing libSDL.so
 # note, cmake says it links to /usr/lib/libSDL.so. But the final binary links then libSDL-1.2.so.0, so either cmake or gcc/ld fails.
+SDL_LIB_NAME_VER="libSDL-1.2.so.0"
+SDL_LIB_NAME_FIX="libSDL.so\x0\x0\x0\x0\x0\x0"
 for binary in ${BINARIES}; do
 	if [ -f ${binary} ]; then
 		if readelf -h ${binary} &> /dev/null; then
-			if ! objdump -h ${binary} | grep -q .gnu_debuglink; then
+			if grep -q "${SDL_LIB_NAME_VER}" ${binary}; then
 				echo "fix libSDL.so linking in ${binary}"
-				SDL_LIB_NAME_VER="libSDL-1.2.so.0"
-				SDL_LIB_NAME_FIX="libSDL.so\x0\x0\x0\x0\x0\x0"
 				sed -i "s/${SDL_LIB_NAME_VER}/${SDL_LIB_NAME_FIX}/g" ${binary}
 			fi
 		fi
