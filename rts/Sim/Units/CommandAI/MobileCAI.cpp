@@ -576,7 +576,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 		SetGoal(pos, owner->pos);
 	}
 
-	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL && !owner->weapons.empty()) {
+	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL && !owner->noAutoTarget && !owner->weapons.empty()) {
 		const float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 		const float searchRadius = owner->maxRange + 100 * owner->moveState * owner->moveState;
 		CUnit* enemy = helper->GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
@@ -708,13 +708,15 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 			SetGoal(fix - diff * targetUnit->radius, owner->pos);
 			SetOrderTarget(targetUnit);
-			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE, false, (c.options & META_KEY));
 
 			inCommand = true;
 		}
 		else if (c.params.size() >= 3) {
 			// user gave force-fire attack command
 			SetGoal(c.GetPos(0), owner->pos);
+			if ((c.options & INTERNAL_ORDER) == 0) // prevent firing at other units while moving closer to target
+				owner->noAutoTarget = ((c.options & META_KEY) != 0);
 			inCommand = true;
 		}
 	}
@@ -795,7 +797,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				}
 			}
 
-			owner->AttackUnit(orderTarget, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+			owner->AttackUnit(orderTarget, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE, false, (c.options & META_KEY));
 		}
 
 		// if we're on hold pos in a temporary order, then none of the close-in
@@ -882,14 +884,14 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 				if (diff.SqLength() < rr) {
 					StopMove();
-					owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+					owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE, false, (c.options & META_KEY));
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 				}
 			} else {
 				if (diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D())) {
 					if (w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE)) {
 						StopMove();
-						owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+						owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE, false, (c.options & META_KEY));
 					}
 
 					// for gunships, this pitches the nose down such that
@@ -1038,7 +1040,7 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (canAttack) {
 		if (owner->attackTarget != NULL) {
-			if (owner->fireState > FIRESTATE_HOLDFIRE) {
+			if (owner->fireState > FIRESTATE_HOLDFIRE && !owner->noAutoTarget) {
 				if (owner->pos.SqDistance2D(owner->attackTarget->pos) < maxRangeSq) {
 					Command c(CMD_ATTACK, INTERNAL_ORDER, owner->attackTarget->id);
 					c.timeOut = gs->frameNum + 140;
@@ -1050,7 +1052,7 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 				}
 			}
 		} else {
-			if (owner->fireState > FIRESTATE_HOLDFIRE) {
+			if (owner->fireState > FIRESTATE_HOLDFIRE && !owner->noAutoTarget) {
 				const bool haveLastAttacker = (owner->lastAttacker != NULL);
 				const bool canAttackAttacker = (haveLastAttacker && (owner->lastAttack + 200) > gs->frameNum);
 				const bool canChaseAttacker = (haveLastAttacker && !(owner->unitDef->noChaseCategory & owner->lastAttacker->category));
@@ -1071,7 +1073,7 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 				}
 			}
 
-			if (owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)) {
+			if ((owner->fireState >= FIRESTATE_FIREATWILL && !owner->noAutoTarget) && (gs->frameNum >= lastIdleCheck + 10)) {
 				const float searchRadius = owner->maxRange + 150 * owner->moveState * owner->moveState;
 				const CUnit* enemy = helper->GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
 
