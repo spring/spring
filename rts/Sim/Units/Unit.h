@@ -86,8 +86,8 @@ public:
 	virtual void AddImpulse(const float3&);
 	virtual void FinishedBuilding(bool postInit);
 
-	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false, bool disableAutoTarget = false);
-	bool AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode = false, bool disableAutoTarget = false);
+	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
+	bool AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
 
 	int GetBlockingMapID() const { return id; }
 
@@ -99,8 +99,6 @@ public:
 	void Activate();
 	/// turn the unit off
 	void Deactivate();
-
-	void ClearUserTargets();
 
 	void ForcedMove(const float3& newPos, bool snapToGround = true);
 	void ForcedSpin(const float3& newDir);
@@ -370,7 +368,6 @@ public:
 	float3 attackPos;
 
 	bool userAttackGround;
-	bool noAutoTarget;
 
 	int fireState;
 	int moveState;

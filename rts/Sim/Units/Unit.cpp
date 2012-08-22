@@ -192,7 +192,6 @@ CUnit::CUnit() : CSolidObject(),
 	attackTarget(NULL),
 	attackPos(ZeroVector),
 	userAttackGround(false),
-	noAutoTarget(false),
 	fireState(FIRESTATE_FIREATWILL),
 	moveState(MOVESTATE_MANEUVER),
 	activated(false),
@@ -968,7 +967,7 @@ void CUnit::SlowUpdate()
 	SlowUpdateCloak(false);
 
 	if (unitDef->canKamikaze) {
-		if (fireState >= FIRESTATE_FIREATWILL && !noAutoTarget) {
+		if (fireState >= FIRESTATE_FIREATWILL) {
 			std::vector<int> nearbyUnits;
 			if (unitDef->kamikazeUseLOS) {
 				helper->GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
@@ -1011,22 +1010,6 @@ void CUnit::SlowUpdate()
 	UpdateTerrainType();
 }
 
-void CUnit::ClearUserTargets() {
-	for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-		CWeapon* w = *wi;
-		// just clear the "lock", keeping the unit as auto-target is no problem
-		if (w->haveUserTarget) {
-			w->haveUserTarget = false;
-		}
-		if (userAttackGround && w->targetType == Target_Pos) {
-			w->targetType = Target_None;
-			w->targetPos = ZeroVector;
-		}
-	}
-	userAttackGround = false;
-	noAutoTarget = false;
-}
-
 void CUnit::SlowUpdateWeapons() {
 	if (weapons.empty()) {
 		return;
@@ -1038,7 +1021,7 @@ void CUnit::SlowUpdateWeapons() {
 		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 			CWeapon* w = *wi;
 
-			w->SlowUpdate(noAutoTarget);
+			w->SlowUpdate();
 
 			// NOTE:
 			//     pass w->haveUserTarget so we do not interfere with
@@ -1061,7 +1044,7 @@ void CUnit::SlowUpdateWeapons() {
 				continue;
 			if (w->targetType != Target_None)
 				continue;
-			if (fireState == FIRESTATE_HOLDFIRE || noAutoTarget)
+			if (fireState == FIRESTATE_HOLDFIRE)
 				continue;
 
 			// return fire at our last attacker if allowed
@@ -1548,13 +1531,10 @@ void CUnit::ChangeTeamReset()
 
 
 
-bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire, bool fpsMode, bool disableAutoTarget)
+bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {
 	bool ret = false;
-	if (isUserTarget)
-		noAutoTarget = disableAutoTarget;
-	else if (noAutoTarget)
-		return false; // don't modify the user target
+
 	haveManualFireRequest = wantManualFire;
 	userAttackGround = false;
 
@@ -1590,14 +1570,10 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 	return ret;
 }
 
-bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode, bool disableAutoTarget)
+bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {
 	bool ret = false;
 
-	if (isUserTarget)
-		noAutoTarget = disableAutoTarget;
-	else if (noAutoTarget)
-		return false; // don't modify the user target
 	haveManualFireRequest = wantManualFire;
 	userAttackGround = isUserTarget;
 
@@ -1642,7 +1618,7 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 
 void CUnit::DependentDied(CObject* o)
 {
-	if (o == attackTarget) { attackTarget   = NULL; if (noAutoTarget) ClearUserTargets(); }
+	if (o == attackTarget) { attackTarget   = NULL; }
 	if (o == soloBuilder)  { soloBuilder  = NULL; }
 	if (o == transporter)  { transporter  = NULL; }
 	if (o == lastAttacker) { lastAttacker = NULL; }
@@ -2368,7 +2344,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(attackTarget),
 	CR_MEMBER(attackPos),
 	CR_MEMBER(userAttackGround),
-	CR_MEMBER(noAutoTarget),
 	CR_MEMBER(fireState),
 	CR_MEMBER(dontFire),
 	CR_MEMBER(moveState),
