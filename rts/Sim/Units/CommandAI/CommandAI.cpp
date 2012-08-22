@@ -731,8 +731,6 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 	// flush the queue for immediate commands
 	if (!(c.options & SHIFT_KEY)) {
 		if (!commandQue.empty()) {
-			if ((commandQue.front().GetID() == CMD_ATTACK) && !(commandQue.front().options & META_KEY) && c.IsMoveCommand())
-				owner->ClearUserTargets();
 			waitCommandsAI.ClearUnitQueue(owner, commandQue);
 			ClearCommandDependencies();
 			commandQue.clear();
@@ -944,8 +942,6 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		unimportantMove = false;
 		SetOrderTarget(NULL);
 		const Command& cmd = queue->front();
-		if ((cmd.GetID() == CMD_ATTACK) && !(cmd.options & META_KEY) && newCmd.IsMoveCommand())
-			owner->ClearUserTargets();
 		eoh->CommandFinished(*owner, cmd);
 		eventHandler.UnitCmdDone(owner, cmd.GetID(), cmd.tag);
 	}
@@ -1239,11 +1235,11 @@ void CCommandAI::ExecuteAttack(Command& c)
 			}
 
 			SetOrderTarget(targetUnit);
-			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE, false, (c.options & META_KEY));
+			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
 
 			inCommand = true;
 		} else {
-			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE, false, (c.options & META_KEY));
+			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
 			inCommand = true;
 		}
 	}
@@ -1260,7 +1256,6 @@ void CCommandAI::ExecuteStop(Command &c)
 	}
 
 	FinishCommand();
-	owner->ClearUserTargets();
 }
 
 
@@ -1395,8 +1390,6 @@ void CCommandAI::FinishCommand()
 	}
 
 	commandQue.pop_front();
-	if ((cmdID == CMD_ATTACK) && !(cmd.options & META_KEY))
-		owner->ClearUserTargets();
 	inCommand = false;
 	targetDied = false;
 	unimportantMove = false;
@@ -1468,7 +1461,7 @@ void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 	if (!weapon->weaponDef->manualfire) { return; }
 
 	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
-		owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true, false, (c.options & META_KEY));
+		owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
 		eoh->WeaponFired(*owner, *(weapon->weaponDef));
 		FinishCommand();
 	}
@@ -1520,13 +1513,40 @@ bool CCommandAI::HasMoreMoveCommands()
 {
 	if (!commandQue.empty()) {
 		for (CCommandQueue::iterator i = (commandQue.begin()++); i != commandQue.end(); ++i) {
+			const int& id = i->GetID();
+
 			// build commands are no different from reclaim or repair commands
 			// in that they can require a unit to move, so return true when we
 			// have one
-			if (i->IsMoveCommand())
-				return true;
-			if (i->IsWaitCommand())
-				return false;
+			switch(id) {
+				case CMD_AREA_ATTACK:
+				case CMD_ATTACK:
+				case CMD_CAPTURE:
+				case CMD_FIGHT:
+				case CMD_GUARD:
+				case CMD_LOAD_UNITS:
+				case CMD_MANUALFIRE:
+				case CMD_MOVE:
+				case CMD_PATROL:
+				case CMD_RECLAIM:
+				case CMD_REPAIR:
+				case CMD_RESTORE:
+				case CMD_RESURRECT:
+				case CMD_UNLOAD_UNIT:
+				case CMD_UNLOAD_UNITS:
+					return true;
+				case CMD_DEATHWAIT:
+				case CMD_GATHERWAIT:
+				case CMD_SELFD:
+				case CMD_SQUADWAIT:
+				case CMD_STOP:
+				case CMD_TIMEWAIT:
+				case CMD_WAIT:
+					return false;
+				default:
+					if (id < 0)
+						return true;
+			}
 		}
 	}
 	return false;

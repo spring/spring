@@ -272,7 +272,7 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 	assert(commandQue.empty());
 
 	const bool autoLand = !owner->unitDef->DontLand() && myPlane->autoLand;
-	const bool autoAttack = ((owner->fireState >= FIRESTATE_FIREATWILL) && (owner->moveState != MOVESTATE_HOLDPOS)) && !owner->noAutoTarget;
+	const bool autoAttack = ((owner->fireState >= FIRESTATE_FIREATWILL) && (owner->moveState != MOVESTATE_HOLDPOS));
 
 	if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING && autoLand) {
 		StopMove();
@@ -355,7 +355,7 @@ void CAirCAI::ExecuteFight(Command& c)
 
 	// CMD_FIGHT is pretty useless if !canAttack, but we try to honour the modders wishes anyway...
 	if (owner->unitDef->canAttack && (owner->fireState >= FIRESTATE_FIREATWILL)
-			&& (owner->moveState != MOVESTATE_HOLDPOS) && !owner->noAutoTarget && (owner->maxRange > 0))
+			&& (owner->moveState != MOVESTATE_HOLDPOS) && (owner->maxRange > 0))
 	{
 		CUnit* enemy = NULL;
 
@@ -446,7 +446,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 			return;
 		}
 		if ((c.params.size() == 3) && (commandQue.size() > 1)) {
-			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, true, false, (c.options & META_KEY));
+			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, true);
 			FinishCommand();
 			return;
 		}
@@ -476,11 +476,11 @@ void CAirCAI::ExecuteAttack(Command& c)
 
 			SetGoal(targetUnit->pos, owner->pos, cancelDistance);
 			SetOrderTarget(targetUnit);
-			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, false, false, (c.options & META_KEY));
+			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, false);
 
 			inCommand = true;
 		} else {
-			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, false, false, (c.options & META_KEY));
+			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, false);
 
 			inCommand = true;
 		}
@@ -632,7 +632,7 @@ void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 		float3 attackPos = pos + (gs->randVector() * radius);
 		attackPos.y = ground->GetHeightAboveWater(attackPos.x, attackPos.z);
 
-		owner->AttackGround(attackPos, (ac.options & INTERNAL_ORDER) == 0, false, false, (ac.options & META_KEY));
+		owner->AttackGround(attackPos, (ac.options & INTERNAL_ORDER) == 0, false);
 		SetGoal(attackPos, owner->pos);
 	} else {
 		// note: the range of randFloat() is inclusive of 1.0f
@@ -642,7 +642,7 @@ void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 		CUnit* targetUnit = uh->GetUnitUnsafe(unitID);
 
 		SetOrderTarget(targetUnit);
-		owner->AttackUnit(targetUnit, (ac.options & INTERNAL_ORDER) == 0, false, false, (ac.options & META_KEY));
+		owner->AttackUnit(targetUnit, (ac.options & INTERNAL_ORDER) == 0, false);
 		SetGoal(targetUnit->pos, owner->pos);
 	}
 }

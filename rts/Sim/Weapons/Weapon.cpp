@@ -654,7 +654,7 @@ inline bool CWeapon::AllowWeaponTargetCheck()
 	}
 
 	if (weaponDef->noAutoTarget)                 { return false; }
-	if (owner->fireState < FIRESTATE_FIREATWILL || owner->noAutoTarget) { return false; }
+	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
 
 	if (avoidTarget)               { return true; }
 	if (targetType == Target_None) { return true; }
