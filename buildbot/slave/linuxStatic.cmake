@@ -3,7 +3,6 @@
 ## else CMakeLists.txt overrides our given values!
 
 SET(PREFER_STATIC_LIBS TRUE CACHE BOOL "")
-SET(CMAKE_VERBOSE_MAKEFILE TRUE CACHE BOOL "")
 
 SET(BUILD_spring-headless  FALSE CACHE BOOL "")
 SET(BUILD_spring-dedicated FALSE CACHE BOOL "")
