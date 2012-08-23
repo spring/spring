@@ -12,7 +12,7 @@ umask 022
 
 # use old files as base to reduce upload
 RSYNC="${RSYNC} --fuzzy"
-#RSYNC="${RSYNC} --compare-dest="
+RSYNC="${RSYNC} --compare-dest=\"${TMP_BASE}/${CONFIG}/${BRANCH}/LATEST_LINUX_STATIC/\""
 
 # cleanup installed files before rsyncing
 rm -rf ${TMP_BASE}/inst/
