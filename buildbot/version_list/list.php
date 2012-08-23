@@ -16,6 +16,7 @@ if (array_search($ip, $allowed) === FALSE) {
 
 $dirs = array(".");
 $db = new SQLite3("fileattributes.sqlite3");
+$db -> exec("PRAGMA journal_mode = TRUNCATE");
 $db -> exec("CREATE TABLE IF NOT EXISTS files (filename STRING PRIMARY KEY, md5 STRING, filectime INT, filesize, INT)");
 
 function getMD5($file){
