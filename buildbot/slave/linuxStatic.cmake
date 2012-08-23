@@ -4,6 +4,9 @@
 
 SET(PREFER_STATIC_LIBS TRUE CACHE BOOL "")
 
+# we want relative paths in debugsymbols
+SET(CMAKE_USE_RELATIVE_PATHS TRUE CACHE BOOL "")
+
 SET(BUILD_spring-headless  FALSE CACHE BOOL "")
 SET(BUILD_spring-dedicated FALSE CACHE BOOL "")
 #SET(AI_TYPES "NONE" CACHE STRING "")
