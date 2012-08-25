@@ -35,7 +35,6 @@
 #include "Map/ReadMap.h"
 
 #include "Rendering/Models/IModelParser.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GroundFlash.h"
 
 #include "Sim/Units/Groups/Group.h"

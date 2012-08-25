@@ -4,7 +4,6 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
