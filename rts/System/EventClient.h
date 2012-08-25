@@ -3,6 +3,7 @@
 #ifndef EVENT_CLIENT_H
 #define EVENT_CLIENT_H
 
+#include "System/float3.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -17,7 +18,6 @@ using std::string;
 using std::vector;
 using std::map;
 
-class float3;
 class CUnit;
 class CWeapon;
 class CFeature;
@@ -137,7 +137,7 @@ class CEventClient
 
 		virtual void RenderFeatureCreated(const CFeature* feature) {}
 		virtual void RenderFeatureDestroyed(const CFeature* feature) {}
-		virtual void RenderFeatureMoved(const CFeature* feature) {}
+		virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {}
 
 		virtual void ProjectileCreated(const CProjectile* proj) {}
 		virtual void ProjectileDestroyed(const CProjectile* proj) {}

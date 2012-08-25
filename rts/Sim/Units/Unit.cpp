@@ -546,15 +546,9 @@ void CUnit::ForcedMove(const float3& newPos, bool)
 		UnBlock();
 	}
 
-	CBuilding* building = dynamic_cast<CBuilding*>(this);
-
-	if (building != NULL)
-		groundDecals->RemoveSolidObject(building, NULL);
-
 	Move3D(newPos - pos, true);
 
-	if (building != NULL)
-		groundDecals->AddSolidObject(building);
+	eventHandler.UnitMoved(this);
 
 	if (blocking) {
 		Block();

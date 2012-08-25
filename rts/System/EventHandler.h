@@ -104,11 +104,11 @@ class CEventHandler
 
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
-		void FeatureMoved(const CFeature* feature);
+		void FeatureMoved(const CFeature* feature, const float3& oldpos);
 
 		void RenderFeatureCreated(const CFeature* feature);
 		void RenderFeatureDestroyed(const CFeature* feature);
-		void RenderFeatureMoved(const CFeature* feature);
+		void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 
 		void UpdateFeatures();
 		void UpdateDrawFeatures();
@@ -716,9 +716,9 @@ inline void CEventHandler::FeatureDestroyed(const CFeature* feature)
 	}
 }
 
-inline void CEventHandler::FeatureMoved(const CFeature* feature)
+inline void CEventHandler::FeatureMoved(const CFeature* feature, const float3& oldpos)
 {
-	(eventBatchHandler->GetFeatureMovedEventBatch()).enqueue(feature);
+	eventBatchHandler->EnqueueFeatureMovedEvent(feature, oldpos, feature->pos);
 
 	const int featureAllyTeam = feature->allyteam;
 	const int count = listFeatureMoved.size();
@@ -751,12 +751,12 @@ inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature)
 	}
 }
 
-inline void CEventHandler::RenderFeatureMoved(const CFeature* feature)
+inline void CEventHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos)
 {
 	const int count = listRenderFeatureMoved.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderFeatureMoved[i];
-		ec->RenderFeatureMoved(feature);
+		ec->RenderFeatureMoved(feature, oldpos, newpos);
 	}
 }
 

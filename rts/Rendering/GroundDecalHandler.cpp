@@ -795,7 +795,15 @@ void CGroundDecalHandler::Update()
 
 void CGroundDecalHandler::UnitMoved(const CUnit* unit)
 {
-	if (decalLevel == 0 || !unit->leaveTracks)
+	if (decalLevel == 0)
+		return;
+
+	if (!unit->unitDef->canmove) { // faster than dynamic cast to building
+		RemoveSolidObject(const_cast<CUnit *>(unit), NULL);
+		AddSolidObject(const_cast<CUnit *>(unit));
+	}
+
+	if (!unit->leaveTracks)
 		return;
 
 	if (unit->unitDef->decalDef.trackDecalType < 0 || !unit->unitDef->IsGroundUnit())
@@ -1251,4 +1259,19 @@ CGroundDecalHandler::Scar::~Scar() {
 
 void CGroundDecalHandler::ExplosionOccurred(const CExplosionEvent& event) {
 	AddExplosion(event.GetPos(), event.GetDamage(), event.GetRadius(), ((event.GetWeaponDef() != NULL) && event.GetWeaponDef()->visuals.explosionScar));
+}
+
+void CGroundDecalHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {
+	if (feature->def->drawType == DRAWTYPE_MODEL) {
+		RemoveSolidObject(const_cast<CFeature *>(feature), NULL);
+		AddSolidObject(const_cast<CFeature *>(feature));
+	}
+}
+
+void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) {
+	RemoveSolidObject(const_cast<CUnit *>(unit), NULL);
+}
+
+void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) {
+	AddSolidObject(const_cast<CUnit *>(unit));
 }
