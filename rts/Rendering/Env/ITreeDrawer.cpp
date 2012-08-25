@@ -11,6 +11,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
@@ -25,12 +26,14 @@ ITreeDrawer* treeDrawer = NULL;
 
 
 ITreeDrawer::ITreeDrawer()
-	: drawTrees(true)
+	: CEventClient("[CFeatureDrawer]", 314444, false), drawTrees(true)
 {
+	eventHandler.AddClient(this);
 	baseTreeDistance = configHandler->GetInt("TreeRadius") / 256.0f;
 }
 
 ITreeDrawer::~ITreeDrawer() {
+	eventHandler.RemoveClient(this);
 	configHandler->Set("TreeRadius", (unsigned int) (baseTreeDistance * 256));
 }
 
@@ -102,3 +105,18 @@ void ITreeDrawer::Update() {
 	delDispLists.clear();
 }
 
+void ITreeDrawer::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {
+	if (feature->def->drawType >= DRAWTYPE_TREE) {
+		DeleteTree(oldpos);
+		AddTree(feature->def->drawType - 1, newpos, 1.0f);
+	}
+}
+
+void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
+	if (feature->def->drawType >= DRAWTYPE_TREE) {
+		DeleteTree(feature->pos);
+		if (feature->deathSpeed.SqLength2D() > 0.25f) { // deathspeed in this case stores the impulse
+			AddFallingTree(feature->pos, feature->deathSpeed, feature->def->drawType - 1);
+		}
+	}
+}

@@ -14,6 +14,8 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "System/Platform/Threading.h"
 
+boost::int64_t EventBatchHandler::eventSequenceNumber = 0;
+
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Add(const CProjectile* p) { eventHandler.RenderProjectileCreated(p); }
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Remove(const CProjectile* p) { eventHandler.RenderProjectileDestroyed(p); }
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Delete(const CProjectile* p) { delete p; }
@@ -32,7 +34,7 @@ void EventBatchHandler::UnitLOSStateChangedEvent::Add(const UAD& u) { if(!u.unit
 
 void EventBatchHandler::FeatureCreatedDestroyedEvent::Add(const CFeature* f) { eventHandler.RenderFeatureCreated(f); }
 void EventBatchHandler::FeatureCreatedDestroyedEvent::Remove(const CFeature* f) { eventHandler.RenderFeatureDestroyed(f); }
-void EventBatchHandler::FeatureMovedEvent::Add(const CFeature* f) { eventHandler.RenderFeatureMoved(f); }
+void EventBatchHandler::FeatureMovedEvent::Add(const FAP& f) { eventHandler.RenderFeatureMoved(f.feat, f.oldpos, f.newpos); }
 
 EventBatchHandler* EventBatchHandler::GetInstance() {
 	static EventBatchHandler ebh;

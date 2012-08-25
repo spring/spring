@@ -12,6 +12,8 @@ class CProjectile;
 
 struct EventBatchHandler {
 private:
+	static boost::int64_t eventSequenceNumber;
+
 	struct ProjectileCreatedDestroyedEvent {
 		static void Add(const CProjectile*);
 		static void Remove(const CProjectile*);
@@ -42,14 +44,15 @@ private:
 
 	struct UAD {
 		const CUnit* unit;
+		boost::int64_t seqnum;
 		int data;
 		int status;
 
-		UAD(const CUnit* u, int d): unit(u), data(d), status(0) {}
-		UAD(const CUnit* u, int d, int s): unit(u), data(d), status(s) {}
+		UAD(const CUnit* u, int d): unit(u), data(d), status(0), seqnum(eventSequenceNumber++) {}
+		UAD(const CUnit* u, int d, int s): unit(u), data(d), status(s), seqnum(eventSequenceNumber++) {}
 		bool operator==(const CUnit* u) const { return unit == u; }
-		bool operator==(const UAD& u) const { return unit == u.unit && data == u.data && status == u.status; }
-		bool operator<(const UAD& u) const { return unit < u.unit || (unit == u.unit && (data < u.data || (data == u.data && status < u.status))); }
+		bool operator==(const UAD& u) const { return unit == u.unit && seqnum == u.seqnum; }
+		bool operator<(const UAD& u) const { return unit < u.unit || (unit == u.unit && seqnum < u.seqnum); }
 	};
 public:
 	struct UD {
@@ -84,6 +87,18 @@ private:
 	typedef ThreadListRender<const CUnit *, std::set<UAD>, UAD, UnitCloakStateChangedEvent> UnitCloakStateChangedEventBatch;
 	typedef ThreadListRender<const CUnit *, std::set<UAD>, UAD, UnitLOSStateChangedEvent> UnitLOSStateChangedEventBatch;
 
+	struct FAP {
+		const CFeature* feat;
+		boost::int64_t seqnum;
+		float3 oldpos;
+		float3 newpos;
+
+		FAP(const CFeature* f, const float3 op, const float3 np): feat(f), seqnum(eventSequenceNumber++), oldpos(op), newpos(np) {}
+		bool operator==(const CFeature* f) const { return feat == f; }
+		bool operator==(const FAP& f) const { return feat == f.feat && seqnum == f.seqnum; }
+		bool operator<(const FAP& f) const { return feat < f.feat || (feat == f.feat && seqnum < f.seqnum); }
+	};
+
 	struct FeatureCreatedDestroyedEvent {
 		static void Add(const CFeature*);
 		static void Remove(const CFeature*);
@@ -91,9 +106,9 @@ private:
 	};
 
 	struct FeatureMovedEvent {
-		static void Add(const CFeature*);
-		static void Remove(const CFeature*) { }
-		static void Delete(const CFeature*) { }
+		static void Add(const FAP&);
+		static void Remove(const FAP&) { }
+		static void Delete(const FAP&) { }
 	};
 
 	typedef ThreadListRender<
@@ -104,8 +119,8 @@ private:
 	> FeatureCreatedDestroyedEventBatch;
 	typedef ThreadListRender<
 		const CFeature*,
-		std::set<const CFeature*>,
-		const CFeature*,
+		std::set<FAP>,
+		FAP,
 		FeatureMovedEvent
 	> FeatureMovedEventBatch;
 
@@ -148,6 +163,10 @@ public:
 
 	void EnqueueUnitLOSStateChangeEvent(const CUnit* unit, int allyteam, int newstatus) { unitLOSStateChangedEventBatch.enqueue(UAD(unit, allyteam, newstatus)); }
 	void EnqueueUnitCloakStateChangeEvent(const CUnit* unit, int cloaked) { unitCloakStateChangedEventBatch.enqueue(UAD(unit, cloaked)); }
+
+	void EnqueueFeatureMovedEvent(const CFeature* feature, const float3& oldpos, const float3& newpos) {
+		featureMovedEventBatch.enqueue(FAP(feature, oldpos, newpos));
+	}
 
 	ProjectileCreatedDestroyedEventBatch& GetSyncedProjectileCreatedDestroyedBatch() { return syncedProjectileCreatedDestroyedEventBatch; }
 

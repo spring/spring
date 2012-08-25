@@ -113,7 +113,7 @@ public:
 	/// the solid object that is on top of the geothermal
 	CSolidObject* solidOnTop;
 
-	/// initially a copy of CUnit::speed
+	/// initially a copy of CUnit::speed, for trees it stores the impulse that caused the destruction
 	float3 deathSpeed;
 
 private:

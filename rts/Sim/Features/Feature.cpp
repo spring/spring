@@ -83,10 +83,6 @@ CFeature::~CFeature()
 
 	qf->RemoveFeature(this);
 
-	if (def->drawType >= DRAWTYPE_TREE && treeDrawer) {
-		treeDrawer->DeleteTree(pos);
-	}
-
 	if (myFire) {
 		myFire->StopFire();
 		myFire = 0;
@@ -366,14 +362,12 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit
 			deathFeature->reclaimLeft = reclaimLeft;
 		}
 
+		if (def->drawType >= DRAWTYPE_TREE)
+			deathSpeed = impulse; // re-use deathSpeed: impulse is needed for creation of falling trees
+
 		featureHandler->DeleteFeature(this);
 		blockHeightChanges = false;
 
-		if (def->drawType >= DRAWTYPE_TREE) {
-			if (impulse.SqLength2D() > 0.25f) {
-				treeDrawer->AddFallingTree(pos, impulse, def->drawType - 1);
-			}
-		}
 	}
 }
 
@@ -397,18 +391,9 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 	// remove from managers
 	qf->RemoveFeature(this);
 
-	#if 0
-	// TODO: create a ForcedMove event, do not include DecalHandler/TreeDrawer in synced code
-	if (def->drawType == DRAWTYPE_MODEL)
-		groundDecals->RemoveSolidObject(this, NULL);
-	}
-	#endif
-	if (def->drawType >= DRAWTYPE_TREE) {
-		treeDrawer->DeleteTree(pos);
-	}
-
+	const float3 oldpos = pos;
 	Move3D(newPos - pos, true);
-	eventHandler.FeatureMoved(this);
+	eventHandler.FeatureMoved(this, oldpos);
 
 	// setup finalHeight (pos == newPos now)
 	if (snapToGround) {
@@ -426,15 +411,6 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 	// insert into managers
 	qf->AddFeature(this);
-
-	if (def->drawType >= DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
-	}
-	#if 0
-	if (def->drawType == DRAWTYPE_MODEL)
-		groundDecals->AddSolidObject(this, NULL);
-	}
-	#endif
 
 	if (blocking) {
 		Block();
@@ -462,6 +438,7 @@ bool CFeature::UpdatePosition()
 	if (udef != NULL) {
 		// we are a wreck of a dead unit
 		if (!reachedFinalPos) {
+			const float3 oldpos = pos;
 			// def->floating is unreliable (true for land unit wrecks),
 			// so just assume wrecks always sink even if their "owner"
 			// was a floating object (as is the case for ships anyway)
@@ -517,45 +494,33 @@ bool CFeature::UpdatePosition()
 				deathSpeed = ZeroVector;
 			}
 
-			eventHandler.FeatureMoved(this);
+			eventHandler.FeatureMoved(this, oldpos);
 			CalculateTransform();
 		}
 	} else {
 		if (pos.y > finalHeight) {
 			// feature is falling (note: gravity is negative)
-			if (def->drawType >= DRAWTYPE_TREE) {
-				treeDrawer->DeleteTree(pos);
-			}
-
 			if (pos.y > 0.0f) {
 				speed.y += mapInfo->map.gravity;
 			} else {
 				speed.y = mapInfo->map.gravity;
 			}
 
+			const float3 oldpos = pos;
 			Move1D(speed.y, 1, true);
-
-			if (def->drawType >= DRAWTYPE_TREE) {
-				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
-			}
+			eventHandler.FeatureMoved(this, oldpos);
 
 			transMatrix[13] += speed.y;
 		} else if (pos.y < finalHeight) {
 			// if ground is restored, make sure feature does not get buried
-			if (def->drawType >= DRAWTYPE_TREE) {
-				treeDrawer->DeleteTree(pos);
-			}
-
 			const float dy = finalHeight - pos.y;
 
 			speed.y = 0.0f;
 			transMatrix[13] += dy;
 
+			const float3 oldpos = pos;
 			Move1D(dy, 1, true);
-
-			if (def->drawType >= DRAWTYPE_TREE) {
-				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
-			}
+			eventHandler.FeatureMoved(this, oldpos);
 		}
 
 		reachedFinalPos = (pos.y == finalHeight);

@@ -42,9 +42,9 @@ public:
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void RenderFeatureCreated(const CFeature* feature);
-	void RenderFeatureDestroyed(const CFeature* feature);
-	void RenderFeatureMoved(const CFeature* feature);
+	virtual void RenderFeatureCreated(const CFeature* feature);
+	virtual void RenderFeatureDestroyed(const CFeature* feature);
+	virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 
 #ifdef USE_GML
 	void DrawFeatureStats(); 	  	

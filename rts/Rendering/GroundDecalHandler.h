@@ -153,13 +153,19 @@ public:
 	bool WantsEvent(const std::string& eventName) {
 		return 
 			(eventName == "UnitMoved") ||
-			(eventName == "SunChanged");
+			(eventName == "SunChanged") ||
+			(eventName == "RenderFeatureMoved") ||
+			(eventName == "UnitLoaded") ||
+			(eventName == "UnitUnloaded");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void SunChanged(const float3& sunDir);
-	void UnitMoved(const CUnit*);
+	virtual void SunChanged(const float3& sunDir);
+	virtual void UnitMoved(const CUnit*);
+	virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
+	virtual void UnitLoaded(const CUnit* unit, const CUnit* transport);
+	virtual void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 
 private:
 	void LoadDecalShaders();
