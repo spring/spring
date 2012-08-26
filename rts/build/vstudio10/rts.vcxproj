@@ -806,6 +806,7 @@
     <ClInclude Include="..\..\System\resource.h" />
     <ClInclude Include="..\..\System\SafeCStrings.h" />
     <ClInclude Include="..\..\System\SafeVector.h" />
+    <ClInclude Include="..\..\System\ScopedFPUSettings.h" />
     <ClInclude Include="..\..\System\SpringApp.h" />
     <ClInclude Include="..\..\System\tdf_grammar.h" />
     <ClInclude Include="..\..\System\TdfParser.h" />
