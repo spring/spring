@@ -161,11 +161,11 @@ public:
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	virtual void SunChanged(const float3& sunDir);
-	virtual void UnitMoved(const CUnit*);
-	virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
-	virtual void UnitLoaded(const CUnit* unit, const CUnit* transport);
-	virtual void UnitUnloaded(const CUnit* unit, const CUnit* transport);
+	void SunChanged(const float3& sunDir);
+	void UnitMoved(const CUnit*);
+	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
+	void UnitLoaded(const CUnit* unit, const CUnit* transport);
+	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 
 private:
 	void LoadDecalShaders();
