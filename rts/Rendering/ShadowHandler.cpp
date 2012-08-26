@@ -112,9 +112,8 @@ void CShadowHandler::Init()
 
 	if (!InitDepthTarget()) {
 		// free any resources allocated by InitDepthTarget()
-		if (fb.IsValid()) fb.DetachAll();
-		glDeleteTextures(1, &shadowTexture    );
-		glDeleteTextures(1, &dummyColorTexture);
+		FreeTextures();
+
 		LOG_L(L_ERROR, "[%s] failed to initialize depth-texture FBO", __FUNCTION__);
 		return;
 	}
@@ -125,9 +124,8 @@ void CShadowHandler::Init()
 
 	if (shadowConfig == 0) {
 		// free any resources allocated by InitDepthTarget()
-		if (fb.IsValid()) fb.DetachAll();
-		glDeleteTextures(1, &shadowTexture    );
-		glDeleteTextures(1, &dummyColorTexture);
+		FreeTextures();
+
 		// shadowsLoaded is still false
 		return;
 	}
@@ -137,11 +135,17 @@ void CShadowHandler::Init()
 
 void CShadowHandler::Kill()
 {
-	glDeleteTextures(1, &shadowTexture);
-	glDeleteTextures(1, &dummyColorTexture);
-
+	FreeTextures();
 	shaderHandler->ReleaseProgramObjects("[ShadowHandler]");
 	shadowGenProgs.clear();
+}
+
+void CShadowHandler::FreeTextures() {
+	if (fb.IsValid())
+		fb.DetachAll();
+
+	glDeleteTextures(1, &shadowTexture    ); shadowTexture     = 0;
+	glDeleteTextures(1, &dummyColorTexture); dummyColorTexture = 0;
 }
 
 
@@ -348,10 +352,10 @@ void CShadowHandler::SetShadowMapSizeFactors()
 {
 	#if (SHADOWMATRIX_NONLINEAR == 1)
 	// note: depends on CalcMinMaxView(), which is no longer called
-	const float shadowMapX =              sqrt( fabs(shadowProjMinMax.y) ); // sqrt( |x2| )
-	const float shadowMapY =              sqrt( fabs(shadowProjMinMax.w) ); // sqrt( |y2| )
-	const float shadowMapW = shadowMapX + sqrt( fabs(shadowProjMinMax.x) ); // sqrt( |x2| ) + sqrt( |x1| )
-	const float shadowMapH = shadowMapY + sqrt( fabs(shadowProjMinMax.z) ); // sqrt( |y2| ) + sqrt( |y1| )
+	const float shadowMapX =              math::sqrt( math::fabs(shadowProjMinMax.y) ); // math::sqrt( |x2| )
+	const float shadowMapY =              math::sqrt( math::fabs(shadowProjMinMax.w) ); // math::sqrt( |y2| )
+	const float shadowMapW = shadowMapX + math::sqrt( math::fabs(shadowProjMinMax.x) ); // math::sqrt( |x2| ) + math::sqrt( |x1| )
+	const float shadowMapH = shadowMapY + math::sqrt( math::fabs(shadowProjMinMax.z) ); // math::sqrt( |y2| ) + math::sqrt( |y1| )
 
 	shadowTexProjCenter.x = 1.0f - (shadowMapX / shadowMapW);
 	shadowTexProjCenter.y = 1.0f - (shadowMapY / shadowMapH);
@@ -707,3 +711,4 @@ void CShadowHandler::CalcMinMaxView()
 	// yScale = (shadowProjMinMax.w - shadowProjMinMax.z) * 1.5f;
 }
 #endif
+

@@ -42,7 +42,7 @@ public:
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
 	virtual std::vector<CommandDescription>& GetPossibleCommands();
 	virtual void FinishCommand();
-	virtual void WeaponFired(CWeapon* weapon);
+	virtual void WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo);
 	virtual void BuggerOff(const float3& pos, float radius) {}
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	/**
@@ -117,8 +117,10 @@ public:
 	bool unimportantMove;
 
 protected:
-	bool IsAttackCapable() const;
 	virtual bool AllowedCommand(const Command& c, bool fromSynced);
+	virtual void SelectNewAreaAttackTargetOrPos(const Command& ac) {}
+
+	bool IsAttackCapable() const;
 	bool SkipParalyzeTarget(const CUnit* target);
 	void GiveAllowedCommand(const Command& c, bool fromSynced = true);
 	void GiveWaitCommand(const Command& c);

@@ -46,7 +46,6 @@
 #endif
 
 // unitsync only:
-#include "LuaParserAPI.h"
 #include "Syncer.h"
 
 //////////////////////////
@@ -441,6 +440,7 @@ EXPORT(int) GetUnitCount()
 	int count = 0; // FIXME error return should be -1
 
 	try {
+		CheckInit();
 		LOG_L(L_DEBUG, "syncer: get unit count");
 		count = syncer->GetUnitCount();
 	}
@@ -453,6 +453,7 @@ EXPORT(int) GetUnitCount()
 EXPORT(const char*) GetUnitName(int unit)
 {
 	try {
+		CheckInit();
 		LOG_L(L_DEBUG, "syncer: get unit %d name", unit);
 		std::string tmp = syncer->GetUnitName(unit);
 		return GetStr(tmp);
@@ -465,6 +466,7 @@ EXPORT(const char*) GetUnitName(int unit)
 EXPORT(const char*) GetFullUnitName(int unit)
 {
 	try {
+		CheckInit();
 		LOG_L(L_DEBUG, "syncer: get full unit %d name", unit);
 		std::string tmp = syncer->GetFullUnitName(unit);
 		return GetStr(tmp);
@@ -973,6 +975,7 @@ EXPORT(float) GetMapPosZ(int index, int posIndex) {
 
 EXPORT(float) GetMapMinHeight(const char* mapName) {
 	try {
+		CheckInit();
 		const std::string mapFile = GetMapFile(mapName);
 		ScopedMapLoader loader(mapName, mapFile);
 		CSMFMapFile file(mapFile);
@@ -995,6 +998,7 @@ EXPORT(float) GetMapMinHeight(const char* mapName) {
 
 EXPORT(float) GetMapMaxHeight(const char* mapName) {
 	try {
+		CheckInit();
 		const std::string mapFile = GetMapFile(mapName);
 		ScopedMapLoader loader(mapName, mapFile);
 		CSMFMapFile file(mapFile);
@@ -1228,14 +1232,14 @@ EXPORT(int) GetInfoMapSize(const char* mapName, const char* name, int* width, in
 		*width = bmInfo.width;
 		*height = bmInfo.height;
 
-		return bmInfo.width > 0;
+		return bmInfo.width * bmInfo.height;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	if (width)  *width  = 0;
 	if (height) *height = 0;
 
-	return 0;
+	return -1;
 }
 
 
@@ -2644,15 +2648,21 @@ EXPORT(void) SetSpringConfigFile(const char* fileNameAsAbsolutePath)
 	ConfigHandler::Instantiate(fileNameAsAbsolutePath);
 }
 
-EXPORT(const char*) GetSpringConfigFile()
-{
-	return GetStr(configHandler->GetConfigFile());
-}
-
 static void CheckConfigHandler()
 {
 	if (!configHandler)
 		throw std::logic_error("Unitsync config handler not initialized, check config source.");
+}
+
+
+EXPORT(const char*) GetSpringConfigFile()
+{
+	try {
+		CheckConfigHandler();
+		return GetStr(configHandler->GetConfigFile());
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return NULL;
 }
 
 

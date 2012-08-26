@@ -17,6 +17,8 @@
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
 
+#include <limits>
+
 CR_BIND(CInterceptHandler, )
 CR_REG_METADATA(CInterceptHandler, (
 	CR_MEMBER(interceptors),

@@ -101,14 +101,18 @@ CGlobalRendering::CGlobalRendering()
 	, atiHacks(false)
 	, supportNPOTs(false)
 	, support24bitDepthBuffers(false)
+	, supportRestartPrimitive(false)
 	, haveARB(false)
 	, haveGLSL(false)
 	, maxSmoothPointSize(1.0f)
+
 	, glslMaxVaryings(0)
 	, glslMaxAttributes(0)
 	, glslMaxDrawBuffers(0)
 	, glslMaxRecommendedIndices(0)
 	, glslMaxRecommendedVertices(0)
+	, glslMaxUniformBufferBindings(0)
+	, glslMaxUniformBufferSize(0)
 
 	, dualScreenMode(false)
 	, dualScreenMiniMapOnLeft(false)
@@ -157,6 +161,10 @@ void CGlobalRendering::PostInit() {
 		compressTextures = configHandler->GetBool("CompressTextures");
 	}
 
+#ifdef GLEW_NV_primitive_restart
+	supportRestartPrimitive = !!(GLEW_NV_primitive_restart);
+#endif
+
 	// maximum 2D texture size
 	{
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
@@ -171,11 +179,12 @@ void CGlobalRendering::PostInit() {
 	// some GLSL relevant information
 	{
 		glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
-		glGetIntegerv(GL_MAX_VARYING_FLOATS,    &glslMaxVaryings);
-		glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,    &glslMaxAttributes);
-		glGetIntegerv(GL_MAX_DRAW_BUFFERS,      &glslMaxDrawBuffers);
-		glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &glslMaxRecommendedIndices);
-		glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &glslMaxRecommendedVertices);
+		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,      &glslMaxUniformBufferSize);
+		glGetIntegerv(GL_MAX_VARYING_FLOATS,          &glslMaxVaryings);
+		glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,          &glslMaxAttributes);
+		glGetIntegerv(GL_MAX_DRAW_BUFFERS,            &glslMaxDrawBuffers);
+		glGetIntegerv(GL_MAX_ELEMENTS_INDICES,        &glslMaxRecommendedIndices);
+		glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,       &glslMaxRecommendedVertices);
 		glslMaxVaryings /= 4; // GL_MAX_VARYING_FLOATS returns max individual floats, we want float4
 	}
 
@@ -212,13 +221,13 @@ void CGlobalRendering::PostInit() {
 		"\tmaximum texture size: %i, compress MIP-map textures: %i\n"
 		"\tmaximum SmoothPointSize: %0.0f, maximum vec4 varying/attributes: %i/%i\n"
 		"\tmaximum drawbuffers: %i, maximum recommended indices/vertices: %i/%i\n"
-		"\tnumber of UniformBufferBindings: %i",
+		"\tnumber of UniformBufferBindings: %i (%ikB)",
 		haveARB, haveGLSL, atiHacks,
 		FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers,
 		maxTextureSize, compressTextures, maxSmoothPointSize,
 		glslMaxVaryings, glslMaxAttributes, glslMaxDrawBuffers,
 		glslMaxRecommendedIndices, glslMaxRecommendedVertices,
-		glslMaxUniformBufferBindings
+		glslMaxUniformBufferBindings, glslMaxUniformBufferSize / 1024
 	);
 
 	teamNanospray = configHandler->GetBool("TeamNanoSpray");

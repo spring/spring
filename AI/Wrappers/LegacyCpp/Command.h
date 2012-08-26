@@ -4,11 +4,13 @@
 #define COMMAND_H
 
 #include <string>
-#include <vector>
-#include <limits.h> // for INT_MAX
-#include "System/creg/creg_cond.h"
+#include <climits> // for INT_MAX
 
-// cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
+#include "System/creg/creg_cond.h"
+#include "System/float3.h"
+#include <vector>
+
+// ID's lower than 0 are reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
 #define CMD_INSERT                 1
 #define CMD_REMOVE                 2
@@ -23,7 +25,7 @@
 #define CMD_ATTACK                20
 #define CMD_AREA_ATTACK           21
 #define CMD_GUARD                 25
-#define CMD_AISELECT              30
+#define CMD_AISELECT              30 //FIXME REMOVE
 #define CMD_GROUPSELECT           35
 #define CMD_GROUPADD              36
 #define CMD_GROUPCLEAR            37
@@ -91,6 +93,18 @@
 
 #define INTERNAL_ORDER  (DONT_REPEAT)
 
+enum {
+	MOVESTATE_NONE     = -1,
+	MOVESTATE_HOLDPOS  =  0,
+	MOVESTATE_MANEUVER =  1,
+	MOVESTATE_ROAM     =  2,
+};
+enum {
+	FIRESTATE_NONE       = -1,
+	FIRESTATE_HOLDFIRE   =  0,
+	FIRESTATE_RETURNFIRE =  1,
+	FIRESTATE_FIREATWILL =  2,
+};
 
 namespace springLegacyAI {
 
@@ -98,74 +112,221 @@ struct Command
 {
 private:
 	CR_DECLARE_STRUCT(Command);
+/*
+	TODO check if usage of System/MemPool.h for this struct improves performance
+	#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
+	inline void* operator new(size_t size) { return mempool.Alloc(size); }
+	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
+	#endif
+*/
 
 public:
-	Command(const int cmdID)
-		: id(cmdID)
-		, aiCommandId(-1)
+	Command(const float3& pos)
+		: aiCommandId(-1)
 		, options(0)
 		, tag(0)
 		, timeOut(INT_MAX)
+		, id(0)
+	{
+		PushPos(pos);
+	}
+
+	Command(const int cmdID)
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
 	{}
 
+	Command(const int cmdID, const float3& pos)
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		PushPos(pos);
+	}
+
 	Command(const int cmdID, const unsigned char cmdOptions)
-		: id(cmdID)
-		, aiCommandId(-1)
+		: aiCommandId(-1)
 		, options(cmdOptions)
 		, tag(0)
 		, timeOut(INT_MAX)
+		, id(cmdID)
 	{}
 
+	Command(const int cmdID, const unsigned char cmdOptions, const float param)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		params.push_back(param);
+	}
+
+	Command(const int cmdID, const unsigned char cmdOptions, const float3& pos)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		PushPos(pos);
+	}
+
+	Command(const int cmdID, const unsigned char cmdOptions, const float param, const float3& pos)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		params.push_back(param);
+		PushPos(pos);
+	}
+
 	Command()
-		: id(0)
-		, aiCommandId(-1)
+		: aiCommandId(-1)
 		, options(0)
 		, tag(0)
 		, timeOut(INT_MAX)
+		, id(0)
 	{}
 
-	~Command() {
-		params.clear();
+	Command(const Command& c)
+		: aiCommandId(c.aiCommandId)
+		, options(c.options)
+		, params(c.params)
+		, tag(c.tag)
+		, timeOut(c.timeOut)
+		, id(c.id)
+	{}
+
+	Command& operator = (const Command& c) {
+		id = c.id;
+		aiCommandId = c.aiCommandId;
+		options = c.options;
+		tag = c.tag;
+		timeOut = c.timeOut;
+		params = c.params;
+		return *this;
 	}
 
-	bool IsAreaCommand() const {
-		if (id == CMD_REPAIR ||
-			id == CMD_RECLAIM ||
-			id == CMD_CAPTURE ||
-			id == CMD_RESURRECT ||
-			id == CMD_LOAD_UNITS) {
-			// params[0..2] always holds the position, params[3] the radius
-			return (params.size() == 4);
-		}
-		if (id == CMD_UNLOAD_UNITS) {
-			return (params.size() == 5);
-		}
-		if (id == CMD_AREA_ATTACK) {
-			return true;
-		}
+	~Command() { params.clear(); }
 
+	// returns true if the command references another object and
+	// in this case also returns the param index of the object in cpos
+	bool IsObjectCommand(int& cpos) const {
+		const int psize = params.size();
+
+		switch (id) {
+			case CMD_ATTACK:
+			case CMD_FIGHT:
+			case CMD_DGUN:
+				cpos = 0;
+				return (1 <= psize && psize < 3);
+			case CMD_GUARD:
+			case CMD_LOAD_ONTO:
+				cpos = 0;
+				return (psize >= 1);
+			case CMD_CAPTURE:
+			case CMD_LOAD_UNITS:
+			case CMD_RECLAIM:
+			case CMD_REPAIR:
+			case CMD_RESURRECT:
+				cpos = 0;
+				return (1 <= psize && psize < 4);
+			case CMD_UNLOAD_UNIT:
+				cpos = 3;
+				return (psize >= 4);
+			case CMD_INSERT: {
+				if (psize < 3)
+					return false;
+
+				Command icmd((int)params[1], (unsigned char)params[2]);
+
+				for (int p = 3; p < (int)psize; p++)
+					icmd.params.push_back(params[p]);
+
+				if (!icmd.IsObjectCommand(cpos))
+					return false;
+
+				cpos += 3;
+				return true;
+			}
+		}
 		return false;
 	}
 
-	/// adds a value to this commands parameter list
-	void AddParam(float par) {
-		params.push_back(par);
+	bool IsAreaCommand() const {
+		switch(id) {
+			case CMD_CAPTURE:
+			case CMD_LOAD_UNITS:
+			case CMD_RECLAIM:
+			case CMD_REPAIR:
+			case CMD_RESURRECT:
+				// params[0..2] always holds the position, params[3] the radius
+				return (params.size() == 4);
+			case CMD_UNLOAD_UNITS:
+				return (params.size() == 5);
+			case CMD_AREA_ATTACK:
+				return true;
+		}
+		return false;
 	}
 
-	void SetID(int id) { this->id = id; params.clear(); }
+	void PushParam(float par) { params.push_back(par); }
+	const float& GetParam(size_t idx) const { return params[idx]; }
+
+	/// const safe_vector<float>& GetParams() const { return params; }
+	const size_t GetParamsCount() const { return params.size(); }
+
+	void SetID(int id) 
+#ifndef _MSC_VER
+		__attribute__ ((deprecated)) 
+#endif
+		{ this->id = id; params.clear(); }
 	const int& GetID() const { return id; }
 
-public:
-	/// CMD_xxx code  (custom codes can also be used)
-	int id;
+	void PushPos(const float3& pos)
+	{
+		params.push_back(pos.x);
+		params.push_back(pos.y);
+		params.push_back(pos.z);
+	}
 
+	void PushPos(const float* pos)
+	{
+		params.push_back(pos[0]);
+		params.push_back(pos[1]);
+		params.push_back(pos[2]);
+	}
+
+	float3 GetPos(const int idx) const {
+		float3 p;
+		p.x = params[idx    ];
+		p.y = params[idx + 1];
+		p.z = params[idx + 2];
+		return p;
+	}
+
+	void SetPos(const int idx, const float3& p) {
+		params[idx    ] = p.x;
+		params[idx + 1] = p.y;
+		params[idx + 2] = p.z;
+	}
+
+public:
 	/**
 	 * AI Command callback id (passed in on handleCommand, returned
 	 * in CommandFinished event)
 	 */
 	int aiCommandId;
 
-	/// option bits
+	/// option bits (RIGHT_MOUSE_KEY, ...)
 	unsigned char options;
 
 	/// command parameters
@@ -184,6 +345,10 @@ public:
 	 * - currenFrame + 60
 	 */
 	int timeOut;
+
+//private:
+	/// CMD_xxx code  (custom codes can also be used)
+	int id;
 };
 
 
@@ -200,7 +365,7 @@ public:
 		showUnique(false),
 		onlyTexture(false) {}
 
-	/// CMD_xxx     code (custom codes can also be used)
+	/// CMD_xxx code (custom codes can also be used)
 	int id;
 	/// CMDTYPE_xxx code
 	int type;

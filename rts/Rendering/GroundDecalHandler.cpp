@@ -230,7 +230,7 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
 
-	unsigned char color[4] = {255, 255, 255, int(decal->alpha * 255)};
+	unsigned char color[4] = {255, 255, 255, (unsigned char)(decal->alpha * 255)};
 
 	#ifndef DEBUG
 	#define HEIGHT(z, x) (hm[((z) * gsmx1) + (x)])
@@ -697,7 +697,7 @@ void CGroundDecalHandler::Draw()
 		glBindTexture(GL_TEXTURE_2D, gd->infoTex);
 	}
 
-	if (shadowHandler && shadowHandler->shadowsLoaded) {
+	if (shadowHandler->shadowsLoaded) {
 		glActiveTexture(GL_TEXTURE2);
 			glEnable(GL_TEXTURE_2D);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -729,7 +729,7 @@ void CGroundDecalHandler::Draw()
 	DrawBuildingDecals();
 
 
-	if (shadowHandler && shadowHandler->shadowsLoaded) {
+	if (shadowHandler->shadowsLoaded) {
 		decalShaders[DECAL_SHADER_CURR]->Disable();
 
 		glActiveTexture(GL_TEXTURE2);
@@ -963,7 +963,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 		radius = damage * 0.25f;
 
 	if (damage > 400)
-		damage = 400 + sqrt(damage - 399);
+		damage = 400 + math::sqrt(damage - 399);
 
 	pos.ClampInBounds();
 

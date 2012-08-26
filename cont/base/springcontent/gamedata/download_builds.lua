@@ -15,6 +15,7 @@ local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
 
 local dlBuilds
 
+local section='download_builds.lua'
 
 --------------------------------------------------------------------------------
 
@@ -32,7 +33,7 @@ local function Load()
   for i, f in ipairs(files) do
     local tdf, err = TDF.Parse(f)
     if (tdf == nil) then
-      Spring.Echo(err)
+      Spring.Log(section, LOG.ERROR, err)
     else
       for menuEntry, menuTable in pairs(tdf) do
         if (type(menuTable) == 'table') then
@@ -142,4 +143,4 @@ return {
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-                                                                                                      
+

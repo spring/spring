@@ -2,8 +2,10 @@
 
 #include "myGL.h"
 #include "LightHandler.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/LosHandler.h"
 
 static const float4 ZeroVector4 = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -117,6 +119,7 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		const float3* lightTrackDir       = light.GetTrackDirection();
 		const float4& lightPos            = (lightTrackPos != NULL)? float4(*lightTrackPos, 1.0f): light.GetPosition();
 		const float3& lightDir            = (lightTrackDir != NULL)? float3(*lightTrackDir      ): light.GetDirection();
+		const bool    lightVisible        = (gu->spectatingFullView || light.GetIgnoreLOS() || loshandler->InLos(lightPos, gu->myAllyTeam));
 
 		++it;
 
@@ -136,9 +139,20 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 			// note: we want MV to be identity here
 			glEnable(lightID);
 			glLightfv(lightID, GL_POSITION, &lightPos.x);
-			glLightfv(lightID, GL_AMBIENT,  &weightedAmbientCol.x);
-			glLightfv(lightID, GL_DIFFUSE,  &weightedDiffuseCol.x);
-			glLightfv(lightID, GL_SPECULAR, &weightedSpecularCol.x);
+
+			if (lightVisible) {
+				glLightfv(lightID, GL_AMBIENT,  &weightedAmbientCol.x);
+				glLightfv(lightID, GL_DIFFUSE,  &weightedDiffuseCol.x);
+				glLightfv(lightID, GL_SPECULAR, &weightedSpecularCol.x);
+			} else {
+				// zero contribution from this light if not in LOS
+				// (whether or not camera can see it is irrelevant
+				// since the light always takes up a slot anyway)
+				glLightfv(lightID, GL_AMBIENT,  &ZeroVector4.x);
+				glLightfv(lightID, GL_DIFFUSE,  &ZeroVector4.x);
+				glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
+			}
+
 			glLightfv(lightID, GL_SPOT_DIRECTION, &lightDir.x);
 			glLightf(lightID, GL_SPOT_CUTOFF, light.GetFOV());
 			glLightf(lightID, GL_CONSTANT_ATTENUATION, light.GetRadius()); //!

@@ -555,7 +555,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
+	const int args = lua_gettop(L) - top;
 
 	if (lua_israwstring(L, -1) &&
 	    (string(lua_tostring(L, -1)) == "disabled")) {

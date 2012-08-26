@@ -102,7 +102,7 @@ unsigned int CPathManager::RequestPath(
 	// NOTE: this distance can be far smaller than the actual path length!
 	// FIXME: Why are we taking the height difference into consideration?
 	// It seems more logical to subtract goalRadius / SQUARE_SIZE here
-	const float goalDist2D = pfDef->Heuristic(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE) + fabs(goalPos.y - startPos.y) / SQUARE_SIZE;
+	const float goalDist2D = pfDef->Heuristic(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE) + math::fabs(goalPos.y - startPos.y) / SQUARE_SIZE;
 
 	if (goalDist2D < DETAILED_DISTANCE) {
 		result = maxResPF->GetPath(*moveDef, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, ownerId, synced);

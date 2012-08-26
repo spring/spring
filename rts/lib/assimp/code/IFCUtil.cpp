@@ -158,7 +158,7 @@ void TempMesh::RemoveAdjacentDuplicates()
 		//		continue;
 		//	}
 
-		//	const IfcFloat d = (d0/sqrt(l0))*(d1/sqrt(l1));
+		//	const IfcFloat d = (d0/math::sqrt(l0))*(d1/math::sqrt(l1));
 
 		//	if ( d >= 1.f-dotepsilon ) {
 		//		v1 = v0;

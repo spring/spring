@@ -62,7 +62,7 @@ void CBombDropper::Update()
 			const float s = -owner->speed.y;
 			const float sq = (s - 2*d) / -((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity));
 			if (sq > 0) {
-				predict = s / ((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity)) + sqrt(sq);
+				predict = s / ((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity)) + math::sqrt(sq);
 			} else {
 				predict = 0;
 			}
@@ -141,25 +141,13 @@ void CBombDropper::Init()
 	maxForwardAngleDif = -1.0f;
 }
 
-/** @see #SlowUpdate */
-bool CBombDropper::AttackUnit(CUnit* unit, bool userTarget)
-{
-	if (!userTarget) return false;
-	return CWeapon::AttackUnit(unit, userTarget);
-}
-
-/** @see #SlowUpdate */
-bool CBombDropper::AttackGround(float3 pos, bool userTarget)
-{
-	if (!userTarget) return false;
-	return CWeapon::AttackGround(pos, userTarget);
-}
-
 /**
- * Make sure it wont try to find targets not targeted by the Command-AI.
- * (to save CPU mostly)
+ * pass true for noAutoTargetOverride to make sure this weapon
+ * does not generate its own targets (to save CPU mostly), only
+ * allow user- or CAI-picked units (the latter for fight orders)
  */
 void CBombDropper::SlowUpdate()
 {
 	CWeapon::SlowUpdate(true);
 }
+

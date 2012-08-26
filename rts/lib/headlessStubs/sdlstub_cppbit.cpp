@@ -15,7 +15,11 @@ extern "C" {
 int stub_sdl_getSystemMilliSeconds() {
 
 	boost::xtime t;
+#if BOOST_VERSION >= 105000
+	boost::xtime_get(&t, boost::TIME_UTC_);
+#else
 	boost::xtime_get(&t, boost::TIME_UTC);
+#endif
 	const int milliSeconds = t.sec * 1000 + (t.nsec / 1000000);   
 	return milliSeconds;
 }
@@ -23,7 +27,11 @@ int stub_sdl_getSystemMilliSeconds() {
 void stub_sdl_sleepMilliSeconds(int milliSeconds) {
 
 	boost::xtime t;
+#if BOOST_VERSION >= 105000
+	boost::xtime_get(&t, boost::TIME_UTC_);
+#else
 	boost::xtime_get(&t, boost::TIME_UTC);
+#endif
 	t.nsec += 1000000 * milliSeconds;
 	boost::thread::sleep(t);
 }

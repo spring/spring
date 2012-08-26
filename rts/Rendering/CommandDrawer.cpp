@@ -716,7 +716,7 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) con
 		return;
 	}
 
-	const float3 endPos(c.params[0], c.params[1] + 3.0f, c.params[2]);
+	const float3& endPos = c.GetPos(0) + float3(0.0f, 3.0f, 0.0f);
 
 	if (!dd->showArea || (paramsCount < 4)) {
 		lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
@@ -847,7 +847,7 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 
 	if (quadcounter) {
 		glEnableClientState(GL_VERTEX_ARRAY);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glVertexPointer(3, GL_FLOAT, 0, &vertices_quads[0]);
 		glDrawArrays(GL_QUADS, 0, quadcounter/3);
 

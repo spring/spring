@@ -324,7 +324,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	float3 foundPos = pos + frontdir * r;
 
 	for (int a = 0; a < 20; ++a) {
-		float3 testPos = pos + frontdir * r * cos(a * PI / 10) + rightdir * r * sin(a * PI / 10);
+		float3 testPos = pos + frontdir * r * math::cos(a * PI / 10) + rightdir * r * math::sin(a * PI / 10);
 		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
 
 		if (qf->GetSolidsExact(testPos, unit->radius * 1.5f).empty()) {
@@ -333,10 +333,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		}
 	}
 
-	Command c(CMD_MOVE);
-	c.params.push_back(foundPos.x);
-	c.params.push_back(foundPos.y);
-	c.params.push_back(foundPos.z);
+	Command c(CMD_MOVE, foundPos);
 	unit->commandAI->GiveCommand(c);
 }
 
@@ -376,9 +373,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			}
 		}
 
-		c.params.push_back(tmpPos.x);
-		c.params.push_back(tmpPos.y);
-		c.params.push_back(tmpPos.z);
+		c.PushPos(tmpPos);
 		unit->commandAI->GiveCommand(c);
 	}
 

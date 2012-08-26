@@ -543,9 +543,8 @@ CWaitCommandsAI::TimeWait::TimeWait(const Command& cmd, CUnit* _unit)
 	duration = GAME_SPEED * (int)cmd.params[0];
 	factory = (dynamic_cast<CFactory*>(unit) != NULL);
 
-	Command waitCmd(CMD_WAIT, cmd.options);
-	waitCmd.params.push_back(code);
-	waitCmd.params.push_back(GetFloatFromKey(key));
+	Command waitCmd(CMD_WAIT, cmd.options, code);
+	waitCmd.PushParam(GetFloatFromKey(key));
 
 	selectedUnits.ClearSelected();
 	selectedUnits.AddUnit(unit);
@@ -701,8 +700,8 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 		deathUnits.insert(unit);
 	}
 	else if (cmd.params.size() == 6) {
-		const float3 pos0(cmd.params[0], cmd.params[1], cmd.params[2]);
-		const float3 pos1(cmd.params[3], cmd.params[4], cmd.params[5]);
+		const float3& pos0 = cmd.GetPos(0);
+		const float3& pos1 = cmd.GetPos(3);
 		CUnitSet tmpSet;
 		SelectAreaUnits(pos0, pos1, tmpSet, false);
 		CUnitSet::iterator it;
@@ -724,9 +723,8 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 
 	waitUnits = selUnits;
 
-	Command waitCmd(CMD_WAIT, cmd.options);
-	waitCmd.params.push_back(code);
-	waitCmd.params.push_back(GetFloatFromKey(key));
+	Command waitCmd(CMD_WAIT, cmd.options, code);
+	waitCmd.PushParam(GetFloatFromKey(key));
 	selectedUnits.GiveCommand(waitCmd);
 
 	CUnitSet::iterator it;
@@ -924,9 +922,8 @@ CWaitCommandsAI::SquadWait::SquadWait(const Command& cmd)
 	valid = true;
 	key = GetNewKey();
 
-	Command waitCmd(CMD_WAIT, cmd.options);
-	waitCmd.params.push_back(code);
-	waitCmd.params.push_back(GetFloatFromKey(key));
+	Command waitCmd(CMD_WAIT, cmd.options, code);
+	waitCmd.PushParam(GetFloatFromKey(key));
 
 	SendCommand(waitCmd, buildUnits);
 	SendCommand(waitCmd, waitUnits);
@@ -1077,9 +1074,8 @@ CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 	valid = true;
 	key = GetNewKey();
 
-	Command waitCmd(CMD_WAIT, SHIFT_KEY);
-	waitCmd.params.push_back(code);
-	waitCmd.params.push_back(GetFloatFromKey(key));
+	Command waitCmd(CMD_WAIT, SHIFT_KEY, code);
+	waitCmd.PushParam(GetFloatFromKey(key));
 	selectedUnits.GiveCommand(waitCmd, true);
 
 	CUnitSet::iterator wit;

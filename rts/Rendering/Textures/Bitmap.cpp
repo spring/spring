@@ -18,6 +18,7 @@
 #include "Bitmap.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
+#include "System/ScopedFPUSettings.h"
 #include "System/Log/ILog.h"
 #include "System/OpenMP_cond.h"
 #include "System/FileSystem/DataDirsAccess.h"
@@ -232,24 +233,18 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-	// do not signal floating point exceptions in devil library
-	streflop::fpenv_t fenv;
-	streflop::fegetenv(&fenv);
-	streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
-#endif
+	{
+		// do not signal floating point exceptions in devil library
+		ScopedDisableFpuExceptions fe;
 
-	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
-	ilDisable(IL_ORIGIN_SET);
-	delete[] buffer;
+		const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
+		ilDisable(IL_ORIGIN_SET);
+		delete[] buffer;
 
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-	streflop::fesetenv(&fenv);
-#endif
-
-	if (success == false) {
-		AllocDummy();
-		return false;
+		if (success == false) {
+			AllocDummy();
+			return false;
+		}
 	}
 
 	noAlpha = (ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL) != 4);
@@ -375,7 +370,7 @@ const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 	ScopedTimer timer("Textures::CBitmap::CreateTexture");
 
 	if (type == BitmapTypeDDS) {
-		return CreateDDSTexture();
+		return CreateDDSTexture(0, mipmaps);
 	}
 
 	if (mem == NULL) {
@@ -418,7 +413,24 @@ const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 }
 
 
-const unsigned int CBitmap::CreateDDSTexture(unsigned int texID) const
+static void HandleDDSMipmap(GLenum target, bool mipmaps, int num_mipmaps)
+{
+	if (num_mipmaps > 0) {
+		// dds included the MipMaps use them
+		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	} else {
+		if (mipmaps && IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap)) {
+			// create the mipmaps at runtime
+			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glGenerateMipmap(target);
+		} else {
+			// no mipmaps
+			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		}
+	}
+}
+
+const unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) const
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
@@ -435,11 +447,12 @@ const unsigned int CBitmap::CreateDDSTexture(unsigned int texID) const
 	case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texID);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		if (!ddsimage->upload_texture2D(0, GL_TEXTURE_2D)) {
 			glDeleteTextures(1, &texID);
 			texID = 0;
+			break;
 		}
+		HandleDDSMipmap(GL_TEXTURE_2D, mipmaps, ddsimage->get_num_mipmaps());
 		break;
 	case nv_dds::Texture3D:
 		glEnable(GL_TEXTURE_3D);
@@ -447,15 +460,19 @@ const unsigned int CBitmap::CreateDDSTexture(unsigned int texID) const
 		if (!ddsimage->upload_texture3D()) {
 			glDeleteTextures(1, &texID);
 			texID = 0;
+			break;
 		}
+		HandleDDSMipmap(GL_TEXTURE_3D, mipmaps, ddsimage->get_num_mipmaps());
 		break;
 	case nv_dds::TextureCubemap:
-		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, texID);
+		glEnable(GL_TEXTURE_CUBE_MAP);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
 		if (!ddsimage->upload_textureCubemap()) {
 			glDeleteTextures(1, &texID);
 			texID = 0;
+			break;
 		}
+		HandleDDSMipmap(GL_TEXTURE_CUBE_MAP, mipmaps, ddsimage->get_num_mipmaps());
 		break;
 	default:
 		assert(false);
@@ -471,7 +488,7 @@ const unsigned int CBitmap::CreateTexture(bool mipmaps) const {
 	return 0;
 }
 
-const unsigned int CBitmap::CreateDDSTexture(unsigned int texID) const {
+const unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) const {
 	return 0;
 }
 #endif // !BITMAP_NO_OPENGL

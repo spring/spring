@@ -341,7 +341,7 @@ if     (MINGW)
 		# Increase memory limit from 2GB to 3GB on 32bit Windows and 2GB->4GB on 64bit Windows (assuming spring.exe is 32bit)
 		# http://msdn.microsoft.com/en-us/library/windows/desktop/aa366778(v=vs.85).aspx
 		Message(STATUS "Enable IMAGE_FILE_LARGE_ADDRESS_AWARE (>2GB memory limit)")
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --large-address-aware")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--large-address-aware")
 	endif (MARCH_BITS EQUAL 32)
 endif  (MINGW)
 
@@ -415,4 +415,3 @@ Add_Subdirectory(rts)
 # this has to be in root CMakeLists.txt; it requires CMake 2.6.3 or later
 ENABLE_TESTING()
 Add_Subdirectory(test)
-

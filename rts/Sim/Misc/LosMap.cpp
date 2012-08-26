@@ -182,7 +182,7 @@ void CLosTables::OutputTable(int Table)
 
 		y = (int)i;
 		x = 1;
-		y = (int) (sqrt((float)r2 - 1) + 0.5f);
+		y = (int) (math::sqrt((float)r2 - 1) + 0.5f);
 		while (x < y) {
 			if(!PaintTable[x+y*Radius]) {
 				DrawLine(PaintTable, x, y, Radius);
@@ -198,7 +198,7 @@ void CLosTables::OutputTable(int Table)
 			}
 
 			x += 1;
-			y = (int) (sqrt((float)r2 - x*x) + 0.5f);
+			y = (int) (math::sqrt((float)r2 - x*x) + 0.5f);
 		}
 		if (x == y) {
 			if(!PaintTable[x+y*Radius]) {

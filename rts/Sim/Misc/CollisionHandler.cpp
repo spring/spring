@@ -12,6 +12,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/FastMath.h"
 #include "System/Matrix44f.h"
+#include "System/Log/ILog.h"
 
 CR_BIND(CCollisionHandler, );
 
@@ -20,6 +21,11 @@ static const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
 unsigned int CCollisionHandler::numCollisionTests = 0;
 unsigned int CCollisionHandler::numIntersectionTests = 0;
 
+
+void CCollisionHandler::PrintStats()
+{
+	LOG("[CCollisionHandler] dis-/continuous tests: %i/%i", numCollisionTests, numIntersectionTests);
+}
 
 
 bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q, bool forceTrace)
@@ -41,8 +47,8 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 
 	switch (u->collisionVolume->GetTestType()) {
 		// Collision(CUnit*) does not need p1 or q
-		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(u, p0       ); numCollisionTests    += 1; } break;
-		case CollisionVolume::COLVOL_HITTEST_CONT: { hit = CCollisionHandler::Intersect(u, p0, p1, q); numIntersectionTests += 1; } break;
+		case CollisionVolume::COLVOL_HITTEST_DISC: { hit = CCollisionHandler::Collision(u, p0       ); } break;
+		case CollisionVolume::COLVOL_HITTEST_CONT: { hit = CCollisionHandler::Intersect(u, p0, p1, q); } break;
 	}
 
 	return hit;
@@ -80,8 +86,6 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 		return false;
 	}
 
-	numCollisionTests += 1;
-
 	switch (u->collisionVolume->GetVolumeType()) {
 		case CollisionVolume::COLVOL_TYPE_SPHERE: {
 			return true;
@@ -110,8 +114,6 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 	if (((f->midPos + v->GetOffsets()) - p).SqLength() > v->GetBoundingRadiusSq()) {
 		return false;
 	}
-
-	numCollisionTests += 1;
 
 	switch (f->collisionVolume->GetVolumeType()) {
 		case CollisionVolume::COLVOL_TYPE_SPHERE: {
@@ -151,6 +153,8 @@ bool CCollisionHandler::CollisionFootprint(const CSolidObject* o, const float3& 
 
 bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m, const float3& p)
 {
+	numCollisionTests += 1;
+
 	// get the inverse volume transformation matrix and
 	// apply it to the projectile's position, then test
 	// if the transformed position lies within the axis-
@@ -325,6 +329,7 @@ bool CCollisionHandler::IntersectAlt(const collisionVolume* d, const CMatrix44f&
 
 bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* q)
 {
+	numIntersectionTests += 1;
 	if (q) {
 		// reset the query
 		q->b0 = false; q->t0 = 0.0f; q->p0 = ZeroVector;
@@ -574,7 +579,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	bool b1 = false;
 	float
 		d = (b * b) - (4.0f * a * c),
-		rd = 0.0f, // sqrt(d) or 1/dp
+		rd = 0.0f, // math::sqrt(d) or 1/dp
 		dp = 0.0f, // dot(n{0, 1}, dir)
 		ra = 0.0f; // ellipsoid ratio of p{0, 1}
 	float s0 = 0.0f, t0 = 0.0f;

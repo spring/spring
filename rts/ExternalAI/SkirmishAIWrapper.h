@@ -31,7 +31,7 @@ private:
 	void CreateCallback();
 
 public:
-	CSkirmishAIWrapper(const size_t skirmishAIId);
+	CSkirmishAIWrapper(const int skirmishAIId);
 	~CSkirmishAIWrapper();
 
 	void Serialize(creg::ISerializer *s);
@@ -80,13 +80,13 @@ public:
 	/// @see SReleaseEvent in Interface/AISEvents.h
 	virtual void Release(int reason = 0 /* = unspecified */);
 
-	size_t GetSkirmishAIID() const { return skirmishAIId; }
+	int GetSkirmishAIID() const { return skirmishAIId; }
 
 private:
 	bool LoadSkirmishAI(bool postLoad);
 
 
-	size_t skirmishAIId;
+	int skirmishAIId;
 	int teamId;
 	bool cheatEvents;
 

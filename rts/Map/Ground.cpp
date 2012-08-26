@@ -77,7 +77,7 @@ static inline float LineGroundSquareCol(
 	const int& ys)
 {
 	const bool inMap = (xs >= 0) && (ys >= 0) && (xs <= gs->mapxm1) && (ys <= gs->mapym1);
-	assert(inMap);
+//	assert(inMap);
 	if (!inMap)
 		return -1.0f;
 
@@ -256,10 +256,10 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 
 	// Claming is done cause LineGroundSquareCol() operates on the 2 triangles faces each heightmap
 	// square is formed of.
-	const float ffsx = Clamp(from.x / SQUARE_SIZE, 0.0f, (float)gs->mapxm1);
-	const float ffsz = Clamp(from.z / SQUARE_SIZE, 0.0f, (float)gs->mapym1);
-	const float ttsx = Clamp(to.x / SQUARE_SIZE, 0.0f, (float)gs->mapxm1);
-	const float ttsz = Clamp(to.z / SQUARE_SIZE, 0.0f, (float)gs->mapym1);
+	const float ffsx = Clamp(from.x / SQUARE_SIZE, 0.0f, (float)gs->mapx);
+	const float ffsz = Clamp(from.z / SQUARE_SIZE, 0.0f, (float)gs->mapy);
+	const float ttsx = Clamp(to.x / SQUARE_SIZE, 0.0f, (float)gs->mapx);
+	const float ttsz = Clamp(to.z / SQUARE_SIZE, 0.0f, (float)gs->mapy);
 	const int fsx = ffsx; // a>=0: int(a):=floor(a)
 	const int fsz = ffsz;
 	const int tsx = ttsx;
@@ -433,8 +433,8 @@ float CGround::GetSlope(float x, float y, bool synced) const
 
 float3 CGround::GetSmoothNormal(float x, float y, bool synced) const
 {
-	int sx = (int) floor(x / SQUARE_SIZE);
-	int sy = (int) floor(y / SQUARE_SIZE);
+	int sx = (int) math::floor(x / SQUARE_SIZE);
+	int sy = (int) math::floor(y / SQUARE_SIZE);
 
 	if (sy < 1)
 		sy = 1;

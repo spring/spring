@@ -3,6 +3,7 @@
 #include "WorldObjectModelRenderer.h"
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -208,7 +209,8 @@ void WorldObjectModelRenderer3DO::PopRenderState()
 
 void WorldObjectModelRendererS3O::PushRenderState()
 {
-	// no-op
+	if (globalRendering->supportRestartPrimitive)
+		glPrimitiveRestartIndexNV(-1U);
 }
 void WorldObjectModelRendererS3O::PopRenderState()
 {

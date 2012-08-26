@@ -75,7 +75,7 @@ inline bool TestTrajectoryConeHelper(
 	if (closeFlatLength > length)
 		closeFlatLength = length;
 
-	if (fabs(linear - quadratic * closeFlatLength) < 0.15f) {
+	if (math::fabs(linear - quadratic * closeFlatLength) < 0.15f) {
 		// relatively flat region -> use approximation
 		dif.y -= (linear + quadratic * closeFlatLength) * closeFlatLength;
 
@@ -266,43 +266,42 @@ float GuiTraceRay(
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* unit = *ui;
 
+			const bool unitHostile = (unit->allyteam != gu->myAllyTeam);
+			const bool unitOnRadar = (useRadar && radarhandler->InRadar(unit, gu->myAllyTeam));
+			const bool unitInSight = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
+			const bool unitVisible = !unitHostile || unitOnRadar || unitInSight || gu->spectatingFullView;
+
 			if (unit == exclude)
 				continue;
+			if (!unitVisible)
+				continue;
 
-			if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView ||
-				(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) ||
-				(useRadar && radarhandler->InRadar(unit, gu->myAllyTeam)))
-			{
+			CollisionVolume cv(unit->collisionVolume);
 
-				CollisionVolume cv(unit->collisionVolume);
+			if (unit->isIcon || (!unitInSight && unitOnRadar && unitHostile)) {
+				// for iconified units, just pretend the collision
+				// volume is a sphere of radius <unit->IconRadius>
+				// (count radar blips as such too)
+				cv.Init(unit->iconRadius);
+			}
 
-				if (unit->isIcon) {
-					// for iconified units, just pretend the collision
-					// volume is a sphere of radius <unit->IconRadius>
-					// randomize it (by scaling up to a factor of 4) so
-					// unit size cannot be determined by hovering mouse
-					// over radar blips
-					cv.Init(unit->iconRadius * (1.0f + (gu->usRandFloat() * 3.0f)));
-				}
+			if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {
+				// get the distance to the ray-volume ingress point
+				const float3& ingressPos = (cq.b0)? cq.p0 : cq.p1;
+				const float3&  egressPos = (cq.b1)? cq.p1 : cq.p0;
+				const float ingressDist  = (ingressPos - start).dot(dir); // same as (intPos  - start).Length()
+				const float  egressDist  = ( egressPos - start).dot(dir); // same as (intPos2 - start).Length()
+				const bool isFactory = unit->unitDef->IsFactoryUnit();
 
-				if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {
-					// get the distance to the ray-volume ingress point
-					const float3& ingressPos = (cq.b0)? cq.p0 : cq.p1;
-					const float3&  egressPos = (cq.b1)? cq.p1 : cq.p0;
-					const float ingressDist  = (ingressPos - start).dot(dir); // same as (intPos  - start).Length()
-					const float  egressDist  = ( egressPos - start).dot(dir); // same as (intPos2 - start).Length()
-					const bool isFactory = unit->unitDef->IsFactoryUnit();
-
-					// give units in a factory higher priority than the factory itself
-					if (!hitUnit ||
-						(isFactory && ((hitFactory && ingressDist < length) || (!hitFactory && egressDist < length))) ||
-						(!isFactory && ((hitFactory && ingressDist < length2) || (!hitFactory && ingressDist < length)))) {
-							hitFactory = isFactory;
-							length = ingressDist;
-							length2 = egressDist;
-							hitUnit = unit;
-							hitFeature = NULL;
-					}
+				// give units in a factory higher priority than the factory itself
+				if (!hitUnit ||
+					(isFactory && ((hitFactory && ingressDist < length) || (!hitFactory && egressDist < length))) ||
+					(!isFactory && ((hitFactory && ingressDist < length2) || (!hitFactory && ingressDist < length)))) {
+						hitFactory = isFactory;
+						length = ingressDist;
+						length2 = egressDist;
+						hitUnit = unit;
+						hitFeature = NULL;
 				}
 			}
 		}

@@ -119,6 +119,16 @@ private:
 */
 
 public:
+	Command(const float3& pos)
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(0)
+	{
+		PushPos(pos);
+	}
+
 	Command(const int cmdID)
 		: aiCommandId(-1)
 		, options(0)
@@ -127,6 +137,16 @@ public:
 		, id(cmdID)
 	{}
 
+	Command(const int cmdID, const float3& pos)
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		PushPos(pos);
+	}
+
 	Command(const int cmdID, const unsigned char cmdOptions)
 		: aiCommandId(-1)
 		, options(cmdOptions)
@@ -134,6 +154,37 @@ public:
 		, timeOut(INT_MAX)
 		, id(cmdID)
 	{}
+
+	Command(const int cmdID, const unsigned char cmdOptions, const float param)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		params.push_back(param);
+	}
+
+	Command(const int cmdID, const unsigned char cmdOptions, const float3& pos)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		PushPos(pos);
+	}
+
+	Command(const int cmdID, const unsigned char cmdOptions, const float param, const float3& pos)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		params.push_back(param);
+		PushPos(pos);
+	}
 
 	Command()
 		: aiCommandId(-1)
@@ -225,7 +276,7 @@ public:
 		return false;
 	}
 
-	void AddParam(float par) { params.push_back(par); }
+	void PushParam(float par) { params.push_back(par); }
 	const float& GetParam(size_t idx) const { return params[idx]; }
 
 	/// const safe_vector<float>& GetParams() const { return params; }
@@ -238,14 +289,32 @@ public:
 		{ this->id = id; params.clear(); }
 	const int& GetID() const { return id; }
 
-	float3 GetPos(int idx) const {
+	void PushPos(const float3& pos)
+	{
+		params.push_back(pos.x);
+		params.push_back(pos.y);
+		params.push_back(pos.z);
+	}
+
+	void PushPos(const float* pos)
+	{
+		params.push_back(pos[0]);
+		params.push_back(pos[1]);
+		params.push_back(pos[2]);
+	}
+
+	float3 GetPos(const int idx) const {
 		float3 p;
-		if (params.size() >= (idx + 3)) {
-			p.x = params[idx    ];
-			p.y = params[idx + 1];
-			p.z = params[idx + 2];
-		}
+		p.x = params[idx    ];
+		p.y = params[idx + 1];
+		p.z = params[idx + 2];
 		return p;
+	}
+
+	void SetPos(const int idx, const float3& p) {
+		params[idx    ] = p.x;
+		params[idx + 1] = p.y;
+		params[idx + 2] = p.z;
 	}
 
 public:

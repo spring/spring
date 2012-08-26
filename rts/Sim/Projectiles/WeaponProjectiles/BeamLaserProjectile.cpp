@@ -74,7 +74,7 @@ CBeamLaserProjectile::CBeamLaserProjectile(
 		midtexx = 0.0f;
 	}
 
-	cegID = gCEG->Load(explGenHandler, cegTag);
+	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 

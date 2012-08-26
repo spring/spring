@@ -177,22 +177,13 @@ void CGame::ClientReadNet()
 				break;
 			}
 
-			case NETMSG_SENDPLAYERSTAT: {
-				//LOG("Game over");
-				// Warning: using CPlayer::Statistics here may cause endianness problems
-				// once net->SendData is endian aware!
-				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
 			case NETMSG_PLAYERSTAT: {
 				const unsigned char player = inbuf[1];
 				if (!playerHandler->IsValidPlayer(player)) {
 					LOG_L(L_ERROR, "Got invalid player num %i in playerstat msg", player);
 					break;
 				}
-				playerHandler->Player(player)->currentStats = *(CPlayer::Statistics*)&inbuf[2];
+				playerHandler->Player(player)->currentStats = *(PlayerStatistics*)&inbuf[2];
 				if (gameOver) {
 					CDemoRecorder* record = net->GetDemoRecorder();
 					if (record != NULL) {
@@ -221,7 +212,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_INTERNAL_SPEED: {
 				gs->speedFactor = *((float*) &inbuf[1]);
-				sound->PitchAdjust(sqrt(gs->speedFactor));
+				sound->PitchAdjust(math::sqrt(gs->speedFactor));
 				//LOG_L(L_DEBUG, "Internal speed set to %.2f", gs->speedFactor);
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -459,7 +450,7 @@ void CGame::ClientReadNet()
 
 					for (int a = 0; a < numParams; ++a) {
 						float param; pckt >> param;
-						c.params.push_back(param);
+						c.PushParam(param);
 					}
 
 					selectedUnits.NetOrder(c, playerNum);
@@ -545,7 +536,7 @@ void CGame::ClientReadNet()
 					for (int a = 0; a < ((psize - 11) / 4); ++a) {
 						float param;
 						pckt >> param;
-						c.params.push_back(param);
+						c.PushParam(param);
 					}
 
 					selectedUnits.AiOrder(unitid, c, player);
@@ -607,7 +598,7 @@ void CGame::ClientReadNet()
 						for (int p = 0; p < paramCount; p++) {
 							float param;
 							pckt >> param;
-							cmd.params.push_back(param);
+							cmd.PushParam(param);
 						}
 						commands.push_back(cmd);
 					}

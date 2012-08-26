@@ -7,6 +7,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Lua/LuaParser.h"
+#include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/GlobalRendering.h"
@@ -447,33 +448,34 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 	const float time = !GML::SimEnabled() ? globalRendering->timeOffset :
 		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)pro->lastProjUpdate) * globalRendering->weightedSpeedFactor;
 		pro->drawPos = pro->pos + (pro->speed * time);
+	const bool visible = (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)));
 
-	if (
-		(gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))
-		&& camera->InView(pro->pos, pro->drawRadius)
-	) {
-		if (drawReflection) {
-			if (pro->pos.y < -pro->drawRadius) {
-				return;
-			}
+	if (!visible)
+		return;
+	if (!camera->InView(pro->pos, pro->drawRadius))
+		return;
 
-			float dif = pro->pos.y - camera->pos.y;
-			float3 zeroPos = camera->pos * (pro->pos.y / dif) + pro->pos * (-camera->pos.y / dif);
-
-			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > 3 + 0.5f * pro->drawRadius) {
-				return;
-			}
-		}
-
-		if (drawRefraction && pro->pos.y > pro->drawRadius) {
+	if (drawReflection) {
+		if (pro->pos.y < -pro->drawRadius) {
 			return;
 		}
 
-		DrawProjectileModel(pro, false);
+		const float dif = pro->pos.y - camera->pos.y;
+		const float3 zeroPos = camera->pos * (pro->pos.y / dif) + pro->pos * (-camera->pos.y / dif);
 
-		pro->tempdist = pro->pos.dot(camera->forward);
-		zSortedProjectiles.insert(pro);
+		if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > 3 + 0.5f * pro->drawRadius) {
+			return;
+		}
 	}
+
+	if (drawRefraction && pro->pos.y > pro->drawRadius) {
+		return;
+	}
+
+	DrawProjectileModel(pro, false);
+
+	pro->tempdist = pro->pos.dot(camera->forward);
+	zSortedProjectiles.insert(pro);
 }
 
 
@@ -500,16 +502,21 @@ void CProjectileDrawer::DrawProjectilesSetShadow(std::set<CProjectile*>& project
 void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 {
 	const CUnit* owner = p->owner();
+
 	if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
 		(owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))) {
 
-		if (!DrawProjectileModel(p, true)) {
-			if (p->castShadow) {
-				// don't need to z-sort particle
-				// effects for the shadow pass
-				p->Draw();
-			}
-		}
+		// if this returns false, then projectile is
+		// neither weapon nor piece, or has no model
+		if (DrawProjectileModel(p, true))
+			return;
+
+		if (!p->castShadow)
+			return;
+
+		// don't need to z-sort particle
+		// effects for the shadow pass
+		p->Draw();
 	}
 }
 
@@ -744,9 +751,10 @@ void CProjectileDrawer::DrawShadowPass()
 
 
 bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPass) {
-	if (!(p->weapon || p->piece) || (p->model == NULL)) {
+	if (luaRules && luaRules->DrawProjectile(p))
+		return true;
+	if (!(p->weapon || p->piece) || (p->model == NULL))
 		return false;
-	}
 
 	if (p->weapon) {
 		// weapon-projectile
@@ -755,7 +763,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		#define SET_TRANSFORM_VECTORS(dir)           \
 			float3 rightdir, updir;                  \
                                                      \
-			if (fabs(dir.y) < 0.95f) {               \
+			if (math::fabs(dir.y) < 0.95f) {               \
 				rightdir = dir.cross(UpVector);      \
 				rightdir.SafeANormalize();           \
 			} else {                                 \

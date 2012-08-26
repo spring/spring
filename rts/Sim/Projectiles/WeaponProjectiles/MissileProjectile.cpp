@@ -96,7 +96,7 @@ CMissileProjectile::CMissileProjectile(
 	drawRadius = radius + maxSpeed * 8;
 
 	float3 camDir = (pos - camera->pos).ANormalize();
-	if ((camera->pos.distance(pos) * 0.2f + (1 - fabs(camDir.dot(dir))) * 3000) < 200) {
+	if ((camera->pos.distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000) < 200) {
 		drawTrail = false;
 	}
 
@@ -123,7 +123,7 @@ CMissileProjectile::CMissileProjectile(
 	}
 
 
-	cegID = gCEG->Load(explGenHandler, cegTag);
+	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 CMissileProjectile::~CMissileProjectile()
@@ -229,8 +229,8 @@ void CMissileProjectile::Update()
 					// is too close or height difference too large)
 					const float horDiff = (targPos - pos).Length2D() + 0.01f;
 					const float verDiff = (targPos.y - pos.y) + 0.01f;
-					const float dirDiff = fabs(targetDir.y - dir.y);
-					const float ratio = fabs(verDiff / horDiff);
+					const float dirDiff = math::fabs(targetDir.y - dir.y);
+					const float ratio = math::fabs(verDiff / horDiff);
 
 					dir.y -= (dirDiff * ratio);
 				} else {
@@ -295,7 +295,7 @@ void CMissileProjectile::Update()
 		if (!drawTrail) {
 			const float3 camDir = (pos - camera->pos).ANormalize();
 
-			if ((camera->pos.distance(pos) * 0.2f + (1 - fabs(camDir.dot(dir))) * 3000) > 300) {
+			if ((camera->pos.distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000) > 300) {
 				drawTrail = true;
 			}
 		}
@@ -343,7 +343,7 @@ void CMissileProjectile::Draw()
 			dir2.ANormalize();
 
 			float a1 = (1.0f / (SMOKE_TIME)) * 255;
-			a1 *= 0.7f + fabs(dif.dot(dir));
+			a1 *= 0.7f + math::fabs(dif.dot(dir));
 			const float alpha1 = std::min(255.0f, std::max(0.0f, a1));
 			col[0] = (unsigned char) (color * alpha1);
 			col[1] = (unsigned char) (color * alpha1);
@@ -357,7 +357,7 @@ void CMissileProjectile::Draw()
 				a2 = 0;
 			}
 
-			a2 *= 0.7f + fabs(dif2.dot(oldDir));
+			a2 *= 0.7f + math::fabs(dif2.dot(oldDir));
 			const float alpha2 = std::min(255.0f, std::max(0.0f, a2));
 			col2[0] = (unsigned char) (color * alpha2);
 			col2[1] = (unsigned char) (color * alpha2);

@@ -230,7 +230,10 @@ template<> inline void streflop_init<Simple>() {
     STREFLOP_FLDCW(fpu_mode);
 
     // Enable signaling nans if compiled with this option.
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+#if defined(__SUPPORT_SNAN__)
+#if defined(USE_GML)
+	if (Threading::IsSimThread())
+#endif
     feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 }
@@ -242,7 +245,10 @@ template<> inline void streflop_init<Double>() {
     fpu_mode |= 0x0200; // 64 bits internal operations
     STREFLOP_FLDCW(fpu_mode);
 
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+#if defined(__SUPPORT_SNAN__)
+#if defined(USE_GML)
+	if (Threading::IsSimThread())
+#endif
     feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 }
@@ -255,7 +261,10 @@ template<> inline void streflop_init<Extended>() {
     fpu_mode |= 0x0300; // 80 bits internal operations
     STREFLOP_FLDCW(fpu_mode);
 
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+#if defined(__SUPPORT_SNAN__)
+#if defined(USE_GML)
+	if (Threading::IsSimThread())
+#endif
     feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 }

@@ -98,9 +98,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Actually that's not required for MSVC. It is included somewhere in the deeper parts of
  * the MSVC STL but it's necessary for proper build with STLport.
  */
-#ifdef _MSC_VER
-#define _INC_MATH // a hack to prevent ambiguous math calls
-#endif
 #include <ctype.h>
 
 // Runtime/STL headers

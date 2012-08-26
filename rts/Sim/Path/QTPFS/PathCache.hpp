@@ -10,6 +10,11 @@
 #include "PathEnums.hpp"
 #include "Path.hpp"
 
+#ifdef GetTempPath
+#undef GetTempPath
+#undef GetTempPathA
+#endif
+
 struct SRectangle;
 
 namespace QTPFS {

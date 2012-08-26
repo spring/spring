@@ -19,9 +19,6 @@
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "lib/gml/gml_base.h"
-#ifdef _MSC_VER
-#define _INC_MATH // a hack to prevent ambiguous math calls
-#endif
 #include "lib/assimp/include/assimp/Importer.hpp"
 
 C3DModelLoader* modelParser = NULL;

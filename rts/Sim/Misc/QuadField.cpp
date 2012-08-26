@@ -86,6 +86,8 @@ std::vector<int> CQuadField::GetQuads(float3 pos, float radius) const
 
 	std::vector<int> ret;
 
+	const float maxSqLength = (radius + QUAD_SIZE * 0.72f) * (radius + QUAD_SIZE * 0.72f);
+
 	const int maxx = std::min(((int)(pos.x + radius)) / QUAD_SIZE + 1, numQuadsX - 1);
 	const int maxz = std::min(((int)(pos.z + radius)) / QUAD_SIZE + 1, numQuadsZ - 1);
 
@@ -96,8 +98,8 @@ std::vector<int> CQuadField::GetQuads(float3 pos, float radius) const
 		return ret;
 	}
 
-	const float maxSqLength = (radius + QUAD_SIZE * 0.72f) * (radius + QUAD_SIZE * 0.72f);
 	ret.reserve((maxz - minz) * (maxx - minx));
+
 	for (int z = minz; z <= maxz; ++z) {
 		for (int x = minx; x <= maxx; ++x) {
 			if ((pos - float3(x * QUAD_SIZE + QUAD_SIZE * 0.5f, 0, z * QUAD_SIZE + QUAD_SIZE * 0.5f)).SqLength2D() < maxSqLength) {
@@ -329,12 +331,12 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 	float zp = start.z;
 	const float invQuadSize = 1.0f / QUAD_SIZE;
 
-	if ((floor(start.x * invQuadSize) == floor(to.x * invQuadSize)) &&
-		(floor(start.z * invQuadSize) == floor(to.z * invQuadSize)))
+	if ((math::floor(start.x * invQuadSize) == math::floor(to.x * invQuadSize)) &&
+		(math::floor(start.z * invQuadSize) == math::floor(to.z * invQuadSize)))
 	{
 		*endQuad = ((int(start.x * invQuadSize)) + (int(start.z * invQuadSize)) * numQuadsX);
 		++endQuad;
-	} else if (floor(start.x * invQuadSize) == floor(to.x * invQuadSize)) {
+	} else if (math::floor(start.x * invQuadSize) == math::floor(to.x * invQuadSize)) {
 		const int first = (int)(start.x * invQuadSize) + ((int)(start.z * invQuadSize) * numQuadsX);
 		const int last  = (int)(to.x    * invQuadSize) + ((int)(to.z    * invQuadSize) * numQuadsX);
 
@@ -347,7 +349,7 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 				*endQuad = a; ++endQuad;
 			}
 		}
-	} else if (floor(start.z * invQuadSize) == floor(to.z * invQuadSize)) {
+	} else if (math::floor(start.z * invQuadSize) == math::floor(to.z * invQuadSize)) {
 		const int first = (int)(start.x * invQuadSize) + ((int)(start.z * invQuadSize) * numQuadsX);
 		const int last  = (int)(to.x    * invQuadSize) + ((int)(to.z    * invQuadSize) * numQuadsX);
 
@@ -369,14 +371,14 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 			++endQuad;
 
 			if (dx > 0) {
-				xn = (floor(xp * invQuadSize) * QUAD_SIZE + QUAD_SIZE - xp) / dx;
+				xn = (math::floor(xp * invQuadSize) * QUAD_SIZE + QUAD_SIZE - xp) / dx;
 			} else {
-				xn = (floor(xp * invQuadSize) * QUAD_SIZE - xp) / dx;
+				xn = (math::floor(xp * invQuadSize) * QUAD_SIZE - xp) / dx;
 			}
 			if (dz > 0) {
-				zn = (floor(zp * invQuadSize) * QUAD_SIZE + QUAD_SIZE - zp) / dz;
+				zn = (math::floor(zp * invQuadSize) * QUAD_SIZE + QUAD_SIZE - zp) / dz;
 			} else {
-				zn = (floor(zp * invQuadSize) * QUAD_SIZE - zp) / dz;
+				zn = (math::floor(zp * invQuadSize) * QUAD_SIZE - zp) / dz;
 			}
 
 			if (xn < zn) {
@@ -388,8 +390,8 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 			}
 
 			keepgoing =
-				(fabs(xp - start.x) < fabs(to.x - start.x)) &&
-				(fabs(zp - start.z) < fabs(to.z - start.z));
+				(math::fabs(xp - start.x) < math::fabs(to.x - start.x)) &&
+				(math::fabs(zp - start.z) < math::fabs(to.z - start.z));
 		}
 	}
 
@@ -489,6 +491,21 @@ void CQuadField::RemoveFeature(CFeature* feature)
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		baseQuads[*qi].features.remove(feature);
 	}
+
+	#ifdef DEBUG_QUADFIELD
+	for (int x = 0; x < numQuadsX; x++) {
+		for (int z = 0; z < numQuadsZ; z++) {
+			const Quad& q = baseQuads[z * numQuadsX + x];
+			const std::list<CFeature*>& f = q.features;
+
+			std::list<CFeature*>::const_iterator fIt;
+
+			for (fIt = f.begin(); fIt != f.end(); ++fIt) {
+				assert((*fIt) != feature);
+			}
+		}
+	}
+	#endif
 }
 
 
@@ -749,14 +766,14 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos, float r
 
 std::vector<int> CQuadField::GetQuadsRectangle(const float3& pos1, const float3& pos2) const
 {
-	std::vector<int> ret;
-
 	assert(!math::isnan(pos1.x));
 	assert(!math::isnan(pos1.y));
 	assert(!math::isnan(pos1.z));
 	assert(!math::isnan(pos2.x));
 	assert(!math::isnan(pos2.y));
 	assert(!math::isnan(pos2.z));
+
+	std::vector<int> ret;
 
 	const int maxx = std::max(0, std::min(((int)(pos2.x)) / QUAD_SIZE + 1, numQuadsX - 1));
 	const int maxz = std::max(0, std::min(((int)(pos2.z)) / QUAD_SIZE + 1, numQuadsZ - 1));
@@ -768,6 +785,7 @@ std::vector<int> CQuadField::GetQuadsRectangle(const float3& pos1, const float3&
 		return ret;
 
 	ret.reserve((maxz - minz) * (maxx - minx));
+
 	for (int z = minz; z <= maxz; ++z) {
 		for (int x = minx; x <= maxx; ++x) {
 			ret.push_back(z * numQuadsX + x);

@@ -221,7 +221,7 @@ AI_FORCE_INLINE bool EpsilonCompare(const T& n, const T& s, float epsilon);
 
 // ------------------------------------------------------------------------------------------------
 AI_FORCE_INLINE bool EpsilonCompare(float n, float s, float epsilon) {
-	return fabs(n-s)>epsilon;
+	return math::fabs(n-s)>epsilon;
 }
 
 // ------------------------------------------------------------------------------------------------

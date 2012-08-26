@@ -3,7 +3,6 @@
 #include <string>
 #include <sstream>
 
-#include "System/Platform/Win/win32.h"
 #include "LuaLoadSaveHandler.h"
 
 #include "minizip/zip.h"

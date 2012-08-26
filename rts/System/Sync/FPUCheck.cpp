@@ -4,6 +4,7 @@
 #include <cstddef>
 #include "System/Log/ILog.h"
 #include "lib/streflop/streflop_cond.h"
+#include "System/Platform/Threading.h"
 
 /**
 	@brief checks FPU control registers.
@@ -60,17 +61,27 @@ void good_fpu_control_registers(const char* text)
 	// We don't trust the enumeration constants from streflop / (g)libc.
 
 	// accepted/syncsafe FPU states:
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)	// -fsignaling-nans
-	static const int sse_a = (0x1937 & 0xFF80);
-	static const int sse_b = (0x1925 & 0xFF80);
-	static const int x87_a = (0x0072 & 0x1F3F);
-	static const int x87_b = 0x003F;
+	int sse_a, sse_b, x87_a, x87_b;
+#if defined(__SUPPORT_SNAN__)	// -fsignaling-nans
+#if defined(USE_GML)
+	if (Threading::IsSimThread())
 #else
-	static const int sse_a = 0x1D00;
-	static const int sse_b = 0x1F80;
-	static const int x87_a = 0x003A;
-	static const int x87_b = 0x003F;
+	if (true)
 #endif
+	{
+		sse_a = (0x1937 & 0xFF80);
+		sse_b = (0x1925 & 0xFF80);
+		x87_a = (0x0072 & 0x1F3F);
+		x87_b = 0x003F;
+	} else
+#endif
+	{
+		sse_a = 0x1D00;
+		sse_b = 0x1F80;
+		x87_a = 0x003A;
+		x87_b = 0x003F;
+	}
+
 
 #if defined(STREFLOP_SSE)
 	// struct
@@ -85,9 +96,12 @@ void good_fpu_control_registers(const char* text)
 		LOG_L(L_WARNING, "[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __FUNCTION__, fenv.x87_mode, x87_a, x87_b, text);
 
 		// Set single precision floating point math.
-		streflop_init<streflop::Simple>();
-	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-		streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+		streflop::streflop_init<streflop::Simple>();
+	#if defined(__SUPPORT_SNAN__)
+	#if defined(USE_GML)
+		if (Threading::IsSimThread())
+	#endif
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 
@@ -103,8 +117,11 @@ void good_fpu_control_registers(const char* text)
 
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
-	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-		streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+	#if defined(__SUPPORT_SNAN__)
+	#if defined(USE_GML)
+		if (Threading::IsSimThread())
+	#endif
+		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 #endif
