@@ -26,7 +26,7 @@ ITreeDrawer* treeDrawer = NULL;
 
 
 ITreeDrawer::ITreeDrawer()
-	: CEventClient("[CFeatureDrawer]", 314444, false), drawTrees(true)
+	: CEventClient("[ITreeDrawer]", 314444, false), drawTrees(true)
 {
 	eventHandler.AddClient(this);
 	baseTreeDistance = configHandler->GetInt("TreeRadius") / 256.0f;

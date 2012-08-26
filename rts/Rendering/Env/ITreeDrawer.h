@@ -36,11 +36,12 @@ public:
 	virtual void DrawShadowPass();
 
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "RenderFeatureMoved") ||
-			 (eventName == "RenderFeatureDestroyed");
+		return
+			(eventName == "RenderFeatureMoved") ||
+			(eventName == "RenderFeatureDestroyed");
 	}
-	virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
-	virtual void RenderFeatureDestroyed(const CFeature* feature);
+	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
+	void RenderFeatureDestroyed(const CFeature* feature);
 
 	std::vector<GLuint> delDispLists;
 
