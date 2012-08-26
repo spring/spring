@@ -55,7 +55,7 @@ void SmoothController::KeyMove(float3 move)
 		move.y = -move.y;
 	}
 
-	move *= sqrt(move.z) * 200.0f;
+	move *= math::sqrt(move.z) * 200.0f;
 
 	const float3 thisMove(move.x * pixelSize * 2.0f * scrollSpeed, 0.0f, -move.y * pixelSize * 2.0f * scrollSpeed);
 
@@ -103,7 +103,7 @@ void SmoothController::ScreenEdgeMove(float3 move)
 		move.x = -move.x;
 		move.y = -move.y;
 	}
-	move *= sqrt(move.z) * 200.0f;
+	move *= math::sqrt(move.z) * 200.0f;
 
 	const float3 thisMove(move.x * pixelSize * 2.0f * scrollSpeed, 0.0f, -move.y * pixelSize * 2.0f * scrollSpeed);
 

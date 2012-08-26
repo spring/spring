@@ -159,9 +159,9 @@ void CAdvTreeGenerator::DrawTrunk(const float3& start, const float3& end, const 
 	int numIter=(int)max(3.0f,size*10);
 	for(int a=0;a<=numIter;a++){
 		float angle=a/(float)numIter*2*PI;
-		float col=0.4f+(((orto1*sin(angle)+orto2*cos(angle)).dot(flatSun)))*0.3f;
-		barkva->AddVertexTN(start+orto1*sin(angle)*size+orto2*cos(angle)*size,angle/PI*0.125f*0.5f,0,float3(0,0,col));
-		barkva->AddVertexTN(end+orto1*sin(angle)*size*0.2f+orto2*cos(angle)*size*0.2f,angle/PI*0.125f*0.5f,3,float3(0,0,col));
+		float col=0.4f+(((orto1*math::sin(angle)+orto2*math::cos(angle)).dot(flatSun)))*0.3f;
+		barkva->AddVertexTN(start+orto1*math::sin(angle)*size+orto2*math::cos(angle)*size,angle/PI*0.125f*0.5f,0,float3(0,0,col));
+		barkva->AddVertexTN(end+orto1*math::sin(angle)*size*0.2f+orto2*math::cos(angle)*size*0.2f,angle/PI*0.125f*0.5f,3,float3(0,0,col));
 	}
 	barkva->EndStrip();
 }
@@ -176,18 +176,18 @@ void CAdvTreeGenerator::MainTrunk(int numBranch,float height,float width)
 
 	for (int a = 0; a < numBranch; ++a) {
 		const float angle = baseAngle + (a * 3.88f) + fRand(0.5f);
-		float3 dir = orto1 * sin(angle) + orto2 * cos(angle);
+		float3 dir = orto1 * math::sin(angle) + orto2 * math::cos(angle);
 			dir.y = 0.3f + fRand(0.4f);
 			dir.ANormalize();
 		const float3 start(0, (a + 5) * height / (numBranch + 5), 0);
-		const float length = (height * (0.4f + fRand(0.1f))) * sqrt(float(numBranch - a) / numBranch);
+		const float length = (height * (0.4f + fRand(0.1f))) * math::sqrt(float(numBranch - a) / numBranch);
 
 		TrunkIterator(start, dir, length, length * 0.05f, 1);
 	}
 
 	for (int a = 0; a < 3; ++a) {
 		const float angle = (a * 3.88f) + fRand(0.5f);
-		float3 dir = orto1*sin(angle)+orto2*cos(angle);
+		float3 dir = orto1*math::sin(angle)+orto2*math::cos(angle);
 			dir.y = 0.8f;
 			dir.ANormalize();
 		const float3 start(0, height - 0.3f, 0);
@@ -225,7 +225,7 @@ void CAdvTreeGenerator::TrunkIterator(const float3& start, const float3& dir, fl
 		const float newLength = length * (float(numTrunks - a) / (numTrunks + 1));
 
 		float3 newbase = start + dir * length * (float(a + 1) / (numTrunks + 1));
-		float3 newDir = dir + orto1 * cos(angle) * dirDif + orto2 * sin(angle) * dirDif;
+		float3 newDir = dir + orto1 * math::cos(angle) * dirDif + orto2 * math::sin(angle) * dirDif;
 		newDir.ANormalize();
 
 		TrunkIterator(newbase, newDir, newLength, newLength * 0.05f, depth - 1);
@@ -245,8 +245,8 @@ void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, flo
 
 		float3 pos = start + dir * length * (0.7f + fRand(0.3f));
 		pos +=
-			(orto1 * sin(angle) + orto2 * cos(angle)) *
-			(sqrt((float) a + 1) * 0.6f + fRand(0.4f)) *
+			(orto1 * math::sin(angle) + orto2 * math::cos(angle)) *
+			(math::sqrt((float) a + 1) * 0.6f + fRand(0.4f)) *
 			0.1f * MAX_TREE_HEIGHT;
 
 		if (pos.y < 0.2f * MAX_TREE_HEIGHT)
@@ -538,12 +538,12 @@ void CAdvTreeGenerator::PineTree(int numBranch, float height)
 	float baseAngle=fRand(2*PI);
 	for(int a=0;a<numBranch;++a){
 		float sh = 0.2f + fRand(0.2f);
-		float h  = height * pow(sh + float(a)/numBranch * (1-sh), (float)0.7f);
+		float h  = height * math::pow(sh + float(a)/numBranch * (1-sh), (float)0.7f);
 		float angle = baseAngle + (a * 0.618f + fRand(0.1f)) * 2 * PI;
-		float3 dir(orto1 * sin(angle) + orto2 * cos(angle));
+		float3 dir(orto1 * math::sin(angle) + orto2 * math::cos(angle));
 		dir.y = (a - numBranch) * 0.01f - (0.2f + fRand(0.2f));
 		dir.ANormalize();
-		float size = sqrt((float)numBranch - a + 5) * 0.08f * MAX_TREE_HEIGHT;
+		float size = math::sqrt((float)numBranch - a + 5) * 0.08f * MAX_TREE_HEIGHT;
 		DrawPineBranch(float3(0,h,0),dir,size);
 	}
 	//create the top
@@ -569,16 +569,16 @@ void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, fl
 	for(int a=0;a<numIter;a++){
 		float angle=a/(float)numIter*2*PI;
 		float angle2=(a+1)/(float)numIter*2*PI;
-		float col=0.45f+(((orto1*sin(angle)+orto2*cos(angle)).dot(flatSun)))*0.3f;
-		float col2=0.45f+(((orto1*sin(angle2)+orto2*cos(angle2)).dot(flatSun)))*0.3f;
+		float col=0.45f+(((orto1*math::sin(angle)+orto2*math::cos(angle)).dot(flatSun)))*0.3f;
+		float col2=0.45f+(((orto1*math::sin(angle2)+orto2*math::cos(angle2)).dot(flatSun)))*0.3f;
 
-		va->AddVertexTN(start+orto1*sin(angle)*size+orto2*cos(angle)*size,           angle/PI*0.125f*0.5f+0.5f,  0, float3(0,0,col));
-		va->AddVertexTN(end+orto1*sin(angle)*size*0.1f+orto2*cos(angle)*size*0.1f,   angle/PI*0.125f*0.5f+0.5f,  3, float3(0,0,col));
-		va->AddVertexTN(start+orto1*sin(angle2)*size+orto2*cos(angle2)*size,         angle2/PI*0.125f*0.5f+0.5f, 0, float3(0,0,col2));
+		va->AddVertexTN(start+orto1*math::sin(angle)*size+orto2*math::cos(angle)*size,           angle/PI*0.125f*0.5f+0.5f,  0, float3(0,0,col));
+		va->AddVertexTN(end+orto1*math::sin(angle)*size*0.1f+orto2*math::cos(angle)*size*0.1f,   angle/PI*0.125f*0.5f+0.5f,  3, float3(0,0,col));
+		va->AddVertexTN(start+orto1*math::sin(angle2)*size+orto2*math::cos(angle2)*size,         angle2/PI*0.125f*0.5f+0.5f, 0, float3(0,0,col2));
 
-		va->AddVertexTN(start+orto1*sin(angle2)*size+orto2*cos(angle2)*size,         angle2/PI*0.125f*0.5f+0.5f, 0, float3(0,0,col2));
-		va->AddVertexTN(end+orto1*sin(angle)*size*0.1f+orto2*cos(angle)*size*0.1f,   angle/PI*0.125f*0.5f+0.5f,  3, float3(0,0,col));
-		va->AddVertexTN(end+orto1*sin(angle2)*size*0.1f+orto2*cos(angle2)*size*0.1f, angle2/PI*0.125f*0.5f+0.5f, 3, float3(0,0,col2));
+		va->AddVertexTN(start+orto1*math::sin(angle2)*size+orto2*math::cos(angle2)*size,         angle2/PI*0.125f*0.5f+0.5f, 0, float3(0,0,col2));
+		va->AddVertexTN(end+orto1*math::sin(angle)*size*0.1f+orto2*math::cos(angle)*size*0.1f,   angle/PI*0.125f*0.5f+0.5f,  3, float3(0,0,col));
+		va->AddVertexTN(end+orto1*math::sin(angle2)*size*0.1f+orto2*math::cos(angle2)*size*0.1f, angle2/PI*0.125f*0.5f+0.5f, 3, float3(0,0,col2));
 	}
 }
 

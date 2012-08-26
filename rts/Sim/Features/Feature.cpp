@@ -151,6 +151,9 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 	noSelect = def->noSelect;
 
+	// set position before mid-position
+	Move3D(_pos.cClampInMap(), false);
+
 	if (def->drawType == DRAWTYPE_MODEL) {
 		if ((model = def->LoadModel()) == NULL) {
 			LOG_L(L_ERROR, "Features: Couldn't load model for %s", def->name.c_str());
@@ -166,12 +169,11 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		}
 	}
 
-	// note: gets deleted in ~CSolidObject
-	collisionVolume = new CollisionVolume(def->collisionVolume, radius);
-
-	Move3D(_pos.cClampInMap(), false);
 	UpdateMidAndAimPos();
 	CalculateTransform();
+
+	// note: gets deleted in ~CSolidObject
+	collisionVolume = new CollisionVolume(def->collisionVolume, radius);
 
 	featureHandler->AddFeature(this);
 	qf->AddFeature(this);
@@ -199,18 +201,12 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 void CFeature::CalculateTransform()
 {
-	float3 frontDir = GetVectorFromHeading(heading);
-	float3 upDir;
+	updir    = (!def->upright)? ground->GetNormal(pos.x, pos.z): UpVector;
+	frontdir = GetVectorFromHeading(heading);
+	rightdir = (frontdir.cross(updir)).Normalize();
+	frontdir = (updir.cross(rightdir)).Normalize();
 
-	if (def->upright) upDir = float3(0.0f, 1.0f, 0.0f);
-	else upDir = ground->GetNormal(pos.x, pos.z);
-
-	float3 rightDir = frontDir.cross(upDir);
-	rightDir.Normalize();
-	frontDir = upDir.cross(rightDir);
-	frontDir.Normalize ();
-
-	transMatrix = CMatrix44f(pos, -rightDir, upDir, frontDir);
+	transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir);
 }
 
 
@@ -402,10 +398,10 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 		treeDrawer->DeleteTree(pos);
 	}
 
-	Move3D(pos, false);
+	Move3D(newPos - pos, true);
 	eventHandler.FeatureMoved(this);
 
-	// setup finalHeight
+	// setup finalHeight (pos == newPos now)
 	if (snapToGround) {
 		if (def->floating) {
 			finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
@@ -413,7 +409,7 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 			finalHeight = ground->GetHeightReal(pos.x, pos.z);
 		}
 	} else {
-		finalHeight = newPos.y;
+		finalHeight = pos.y;
 	}
 
 	// setup the visual transformation matrix
@@ -452,14 +448,15 @@ bool CFeature::UpdatePosition()
 		// we are a wreck of a dead unit
 		if (!reachedFinalPos) {
 			// def->floating is unreliable (true for land unit wrecks),
-			// just assume wrecks always sink even if their "owner" was
-			// a floating object (as is the case for ships anyway)
+			// so just assume wrecks always sink even if their "owner"
+			// was a floating object (as is the case for ships anyway)
 			const float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
+			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
 
-			// NOTE: apply more drag if we were a tank or bot?
-			// (would require passing extra data to Initialize())
-			deathSpeed *= ((reachedGround)? 0.95f: 0.9999f);
+			deathSpeed *= 0.999999f;
+			deathSpeed *= (1.0f - (int(reachedWater ) * 0.05f));
+			deathSpeed *= (1.0f - (int(reachedGround) * 0.10f));
 
 			if (deathSpeed.SqLength2D() > 0.01f) {
 				UnBlock();
@@ -477,7 +474,7 @@ bool CFeature::UpdatePosition()
 			}
 
 			if (!reachedGround) {
-				if (pos.y > 0.0f) {
+				if (!reachedWater) {
 					// quadratic acceleration if not in water
 					deathSpeed.y += mapInfo->map.gravity;
 				} else {
@@ -630,7 +627,7 @@ void CFeature::StartFire()
 
 int CFeature::ChunkNumber(float f)
 {
-	return (int) ceil(f * modInfo.reclaimMethod);
+	return (int) math::ceil(f * modInfo.reclaimMethod);
 }
 
 
@@ -648,7 +645,7 @@ float CFeature::RemainingResource(float res) const
 
 	// Otherwise we are doing chunk reclaiming
 	float chunkSize = res / modInfo.reclaimMethod; // resource/no_chunks
-	float chunksLeft = ceil(reclaimLeft * modInfo.reclaimMethod);
+	float chunksLeft = math::ceil(reclaimLeft * modInfo.reclaimMethod);
 	return chunkSize * chunksLeft;
 }
 

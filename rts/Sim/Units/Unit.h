@@ -100,7 +100,7 @@ public:
 	/// turn the unit off
 	void Deactivate();
 
-	void ForcedMove(const float3& newPos);
+	void ForcedMove(const float3& newPos, bool snapToGround = true);
 	void ForcedSpin(const float3& newDir);
 	void SetHeadingFromDirection();
 
@@ -365,8 +365,6 @@ public:
 	float3 attackPos;
 
 	bool userAttackGround;
-	/// number of shots due to the latest command
-	int commandShotCount;
 
 	int fireState;
 	int moveState;

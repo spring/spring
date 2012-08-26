@@ -52,9 +52,7 @@ public:
 	 */
 	int ping;
 
-	typedef PlayerStatistics Statistics;
-
-	Statistics currentStats;
+	PlayerStatistics currentStats;
 	FPSUnitController fpsController;
 
 private:

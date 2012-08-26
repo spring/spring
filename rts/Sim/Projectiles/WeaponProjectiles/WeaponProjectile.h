@@ -49,11 +49,11 @@ public:
 	/// true if we are a nuke and an anti is on the way
 	bool targeted;
 	const WeaponDef* weaponDef;
-	std::string weaponDefName;
+
 	CUnit* target;
 	float3 targetPos;
 
-	std::string cegTag;
+	unsigned int weaponDefID;
 	unsigned int cegID;
 
 	int colorTeam;

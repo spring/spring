@@ -53,15 +53,19 @@ function isValidURL($url){
 function pastebin($text, $name=""){
 	$name=substr($name,strlen($name)-23); //limit name to 23 chars
 	$request = http_build_query(array( 'paste_code' => $text,
-		'paste_subdomain' => 'spring-stacktrace',
-		'paste_name' => $name));
+		'name' => 'spring-stacktrace',
+		'title' => $name,
+		'private' => 1,
+		'text' => $text,
+	));
 	$context = stream_context_create(array('http' => array(
 		'method' => "POST",
 		'header' => 'Content-type: application/x-www-form-urlencoded',
 		'content' => $request)));
-	$file = file_get_contents("http://pastebin.com/api_public.php", false, $context);
-	return $file;
+		$file = file_get_contents("http://paste.springfiles.com/api/create", false, $context);
+		return $file;
 }
+
 /**
 	does the translate_stacktrace request on $rpcserver and returns the decoded result
 */

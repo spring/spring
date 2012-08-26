@@ -59,7 +59,7 @@ bool CCameraController::SetStateFloat(const StateMap& sm,
 bool CCameraController::GetUseDistToGroundForIcons() {
 
 	const float3& dir     = GetDir().UnsafeNormalize();
-	const float dot       = std::min(1.0f, std::max(0.0f, fabs(dir.dot(UpVector))));
+	const float dot       = std::min(1.0f, std::max(0.0f, math::fabs(dir.dot(UpVector))));
 
 	if (dot < switchVal) {
 		// flat angle (typical for first person camera)

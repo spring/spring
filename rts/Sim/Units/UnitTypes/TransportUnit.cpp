@@ -201,10 +201,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 
 				// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
 				if (unitDef->canfly && transportee->unitDef->canmove) {
-					Command c(CMD_MOVE);
-					c.params.push_back(transportee->pos.x);
-					c.params.push_back(ground->GetHeightAboveWater(transportee->pos.x, transportee->pos.z));
-					c.params.push_back(transportee->pos.z);
+					Command c(CMD_MOVE, float3(transportee->pos.x, ground->GetHeightAboveWater(transportee->pos.x, transportee->pos.z), transportee->pos.z));
 					transportee->commandAI->GiveCommand(c);
 				}
 
@@ -437,10 +434,7 @@ bool CTransportUnit::DetachUnitFromAir(CUnit* unit, const float3& pos)
 
 		// add an additional move command for after we land
 		if (unit->unitDef->canmove) {
-			Command c(CMD_MOVE);
-			c.params.push_back(pos.x);
-			c.params.push_back(pos.y);
-			c.params.push_back(pos.z);
+			Command c(CMD_MOVE, pos);
 			unit->commandAI->GiveCommand(c);
 		}
 

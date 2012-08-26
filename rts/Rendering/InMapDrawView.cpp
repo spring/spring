@@ -38,7 +38,7 @@ CInMapDrawView::CInMapDrawView()
 	for (int y = 0; y < 64; y++) {
 		// circular thingy
 		for (int x = 0; x < 64; x++) {
-			float dist = sqrt((float)(x - 32) * (x - 32) + (y - 32) * (y - 32));
+			float dist = math::sqrt((float)(x - 32) * (x - 32) + (y - 32) * (y - 32));
 			if (dist > 31.0f) {
 				// do nothing - leave transparent
 			} else if (dist > 30.0f) {

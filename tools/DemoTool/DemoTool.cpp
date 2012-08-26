@@ -282,6 +282,39 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				if (*(unsigned short*)(buffer+1) != packet->length)
 					std::cout << "      packet length error: expected: " <<  *(unsigned short*)(buffer+1) << " got: " << packet->length << std::endl;
 				break;
+			case NETMSG_SELECT:
+				std::cout << "NETMSG_SELECT" << std::endl;
+				break;
+			case NETMSG_GAMEOVER:
+				std::cout << "NETMSG_GAMEOVER" << std::endl;
+				break;
+			case NETMSG_MAPDRAW:
+				std::cout << "NETMSG_MAPDRAW" << std::endl;
+				break;
+			case NETMSG_PATH_CHECKSUM:
+				std::cout << "NETMSG_PATH_CHECKSUM" << std::endl;
+				break;
+			case NETMSG_INTERNAL_SPEED:
+				std::cout << "NETMSG_INTERNAL_SPEED" << std::endl;
+				break;
+			case NETMSG_PLAYERLEFT:
+				std::cout << "NETMSG_PLAYERLEFT" << std::endl;
+				break;
+			case NETMSG_GAMEDATA:
+				std::cout << "NETMSG_GAMEDATA" << std::endl;
+				break;
+			case NETMSG_CREATE_NEWPLAYER:
+				std::cout << "NETMSG_CREATE_NEWPLAYER" << std::endl;
+				break;
+			case NETMSG_GAMEID:
+				std::cout << "NETMSG_GAMEID" << std::endl;
+				break;
+			case NETMSG_RANDSEED:
+				std::cout << "NETMSG_RANDSEED" << std::endl;
+				break;
+			case NETMSG_SHARE:
+				std::cout << "NETMSG_SHARE" << std::endl;
+				break;
 			default:
 				std::cout << "MSG: " << (unsigned)buffer[0] << std::endl;
 		}

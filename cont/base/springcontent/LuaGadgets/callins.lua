@@ -76,6 +76,7 @@ CallInsList = {
 	"DrawUnit",
 	"DrawFeature",
 	"DrawShield",
+	"DrawProjectile",
 
 	"Explosion",
 	"ShockFront",

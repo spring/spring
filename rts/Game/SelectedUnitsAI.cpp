@@ -59,8 +59,7 @@ inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
 	CCommandAI* cai = unit->commandAI;
 
 	if (cai->CanSetMaxSpeed()) {
-		Command c(CMD_SET_WANTED_MAX_SPEED, options);
-		c.AddParam(unit->moveType->GetMaxSpeed());
+		Command c(CMD_SET_WANTED_MAX_SPEED, options, unit->moveType->GetMaxSpeed());
 
 		cai->GiveCommand(c, false);
 	}
@@ -75,8 +74,7 @@ inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
 	CCommandAI* cai = unit->commandAI;
 
 	if (cai->CanSetMaxSpeed()) {
-		Command c(CMD_SET_WANTED_MAX_SPEED, options);
-		c.AddParam(minMaxSpeed);
+		Command c(CMD_SET_WANTED_MAX_SPEED, options, minMaxSpeed);
 
 		cai->GiveCommand(c, false);
 	}
@@ -179,12 +177,10 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 		const float3 sideDir = frontdir.cross(UpVector);
 
 		// calculate so that the units form in an aproximate square
-		float length = 100.0f + (sqrt((float)nbrOfSelectedUnits) * 32.0f);
+		float length = 100.0f + (math::sqrt((float)nbrOfSelectedUnits) * 32.0f);
 
 		// push back some extra params so it confer with a front move
-		c.params.push_back(pos.x + (sideDir.x * length));
-		c.params.push_back(pos.y + (sideDir.y * length));
-		c.params.push_back(pos.z + (sideDir.z * length));
+		c.PushPos(pos + (sideDir * length));
 
 		MakeFrontMove(&c, player);
 
@@ -451,10 +447,7 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, C
 	pos.z = rightPos.z + (movePos.x * (dir.z / dir.y)) + (movePos.z * (dir.x/dir.y));
 	pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 
-	Command c(command->GetID(), command->options);
-	c.params.push_back(pos.x);
-	c.params.push_back(pos.y);
-	c.params.push_back(pos.z);
+	Command c(command->GetID(), command->options, pos);
 
 	frontcmds->push_back(std::pair<int, Command>(unit, c));
 
@@ -472,11 +465,11 @@ struct DistInfo {
 void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 {
 	std::vector<int> targets;
-	const float3 pos0(cmd.params[0], cmd.params[1], cmd.params[2]);
+	const float3& pos0 = cmd.GetPos(0);
 	if (cmd.params.size() == 4) {
 		SelectCircleUnits(pos0, cmd.params[3], targets, player);
 	} else {
-		const float3 pos1(cmd.params[3], cmd.params[4], cmd.params[5]);
+		const float3& pos1 = cmd.GetPos(3);
 		SelectRectangleUnits(pos0, pos1, targets, player);
 	}
 	if (targets.empty()) {
@@ -490,8 +483,7 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 		return;
 	}
 
-	Command attackCmd(CMD_ATTACK, cmd.options);
-	attackCmd.params.push_back(0.0f); // dummy
+	Command attackCmd(CMD_ATTACK, cmd.options, 0.0f);
 
 	// delete the attack commands and bail for CONTROL_KEY
 	if (cmd.options & CONTROL_KEY) {
@@ -643,7 +635,7 @@ float3 CSelectedUnitsAI::LastQueuePosition(const CUnit* unit)
 	for (it = queue.rbegin(); it != queue.rend(); ++it) {
 		const Command& cmd = *it;
 		if (cmd.params.size() >= 3) {
-			return float3(cmd.params[0], cmd.params[1], cmd.params[2]);
+			return cmd.GetPos(0);
 		}
 	}
 	return unit->midPos;

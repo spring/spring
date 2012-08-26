@@ -24,6 +24,7 @@ local DownloadBuilds = VFS.Include('gamedata/download_builds.lua')
 
 local system = VFS.Include('gamedata/system.lua')
 VFS.Include('gamedata/VFSUtils.lua')
+local section = 'unitdefs.lua'
 
 
 --------------------------------------------------------------------------------
@@ -53,9 +54,9 @@ local fbiFiles = RecursiveFileSearch('units/', '*.fbi')
 for _, filename in ipairs(fbiFiles) do
   local ud, err = FBI.Parse(filename)
   if (ud == nil) then
-    Spring.Echo('Error parsing ' .. filename .. ': ' .. err)
+    Spring.Log(section, LOG.ERROR, 'Error parsing ' .. filename .. ': ' .. err)
   elseif (ud.unitname == nil) then
-    Spring.Echo('Missing unitName in ' .. filename)
+    Spring.Log(section, LOG.ERROR, 'Missing unitName in ' .. filename)
   else
     ud.unitname = string.lower(ud.unitname)
     unitDefs[ud.unitname] = ud
@@ -81,15 +82,15 @@ for _, filename in ipairs(luaFiles) do
   setmetatable(udEnv, { __index = system })
   local success, uds = pcall(VFS.Include, filename, udEnv)
   if (not success) then
-    Spring.Echo('Error parsing ' .. filename .. ': ' .. uds)
+    Spring.Log(section, LOG.ERROR, 'Error parsing ' .. filename .. ': ' .. uds)
   elseif (type(uds) ~= 'table') then
-    Spring.Echo('Bad return table from: ' .. filename)
+    Spring.Log(section, LOG.ERROR, 'Bad return table from: ' .. filename)
   else
     for udName, ud in pairs(uds) do
       if ((type(udName) == 'string') and (type(ud) == 'table')) then
         unitDefs[udName] = ud
       else
-        Spring.Echo('Bad return table entry from: ' .. filename)
+        Spring.Log(section, LOG.ERROR, 'Bad return table entry from: ' .. filename)
       end
     end
   end  
@@ -132,7 +133,7 @@ for name, def in pairs(unitDefs) do
   local obj = def.objectName or def.objectname
   if (obj == nil) then
     unitDefs[name] = nil
-    Spring.Echo('WARNING: removed ' .. name ..
+    Spring.Log(section, LOG.ERROR, 'removed ' .. name ..
                 ' unitDef, missing objectname param')
     for k,v in pairs(def) do print('',k,v) end
   else
@@ -141,7 +142,7 @@ for name, def in pairs(unitDefs) do
         (not VFS.FileExists(objfile .. '.3do')) and
         (not VFS.FileExists(objfile .. '.s3o'))) then
       unitDefs[name] = nil
-      Spring.Echo('WARNING: removed ' .. name
+      Spring.Log(section, LOG.ERROR, 'removed ' .. name
                   .. ' unitDef, missing model file  (' .. obj .. ')')
     end
   end
@@ -155,7 +156,7 @@ for name, def in pairs(unitDefs) do
     for i, option in ipairs(buildOptions) do
       if (unitDefs[option] == nil) then
         table.insert(badOptions, i)
-        Spring.Echo('WARNING: removed the "' .. option ..'" entry'
+        Spring.Log(section, LOG.ERROR, 'removed the "' .. option ..'" entry'
                     .. ' from the "' .. name .. '" build menu')
       end
     end

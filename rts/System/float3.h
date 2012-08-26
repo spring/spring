@@ -9,6 +9,9 @@
 #include "lib/streflop/streflop_cond.h"
 #include "System/creg/creg_cond.h"
 #include "System/FastMath.h"
+#ifndef BUILDING_AI
+#include "System/Platform/Threading.h"
+#endif
 
 
 /**
@@ -451,7 +454,11 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	float3& Normalize() {
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+#if defined(__SUPPORT_SNAN__)
+#if defined(USE_GML) && !defined(BUILDING_AI)
+		if (!Threading::IsSimThread())
+			return SafeNormalize();
+#endif
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeNormalize();
 #else
@@ -498,7 +505,11 @@ public:
 	 * the vector's approx. length.
 	 */
 	float3& ANormalize() {
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+#if defined(__SUPPORT_SNAN__)
+#if defined(USE_GML) && !defined(BUILDING_AI)
+		if (!Threading::IsSimThread())
+			return SafeANormalize();
+#endif
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeANormalize();
 #else

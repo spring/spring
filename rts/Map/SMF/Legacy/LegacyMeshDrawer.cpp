@@ -99,7 +99,7 @@ bool CLegacyMeshDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty) cons
 	const int minz =  bty * smfReadMap->bigTexSize;
 	const int maxz = minz + smfReadMap->bigTexSize;
 	const float miny = readmap->currMinHeight;
-	const float maxy = fabs(cam->pos.y);
+	const float maxy = math::fabs(cam->pos.y);
 
 	const float3 mins(                   0, miny, minz);
 	const float3 maxs(smfReadMap->mapSizeX, maxy, maxz);

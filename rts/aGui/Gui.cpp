@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "System/Input/InputHandler.h"
 #include "Gui.h"
 
 #include <boost/bind.hpp>
@@ -7,7 +8,6 @@
 
 #include "GuiElement.h"
 #include "Rendering/GL/myGL.h"
-#include "System/Input/InputHandler.h"
 #include "System/Log/ILog.h"
 
 

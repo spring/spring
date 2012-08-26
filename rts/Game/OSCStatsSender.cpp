@@ -230,7 +230,7 @@ bool COSCStatsSender::SendPlayerStats() {
 
 	if (IsEnabled()) {
 		// get the latest player stats
-		const CPlayer::Statistics& playerStats = localPlayer->currentStats;
+		const PlayerStatistics& playerStats = localPlayer->currentStats;
 
 		(*oscPacker)
 				<< osc::BeginBundleImmediate

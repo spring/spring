@@ -51,7 +51,7 @@ ShieldProjectile::ShieldProjectile(CPlasmaRepulser* shield_)
 	const CUnit* u = shield->owner;
 	const WeaponDef* wd = shield->weaponDef;
 
-	if ((allowDrawing = wd->visibleShield)) {
+	if ((allowDrawing = (wd->visibleShield || wd->visibleShieldHitFrames > 0))) {
 		shieldTexture = wd->visuals.texture1;
 
 		// Y*X segments, deleted by ProjectileHandler
@@ -101,7 +101,7 @@ bool ShieldProjectile::AllowDrawing() {
 	//FIXME if Lua wants to draw the shield itself, we should draw all GL_QUADS in the `va` vertexArray first.
 	// but doing so for each shield might reduce the performance.
 	// so might use a branch-prediciton? -> save last return value and if it is true draw `va` before calling luaRules->DrawShield()
-	if (luaRules && luaRules->DrawShield(shield->owner->id, shield->weaponNum))
+	if (luaRules && luaRules->DrawShield(shield->owner, shield))
 		return allowDrawing;
 
 	// interpolate shield position for drawing
@@ -188,10 +188,7 @@ ShieldSegmentProjectile::~ShieldSegmentProjectile()
 
 const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const int ypart)
 {
-	static bool init = false;
-	if (!init) {
-		init = true;
-
+	if (spherevertices.empty()) {
 		spherevertices.resize(NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
 
 		// NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X vertices
@@ -204,9 +201,9 @@ const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const
 						const float xp = (x + xpart_ * 4) / float(NUM_SEGMENTS_X * 4) * 2 * PI;
 						const size_t vIdx = segmentIdx + y * NUM_VERTICES_X + x;
 
-						spherevertices[vIdx].x = sin(xp) * cos(yp);
-						spherevertices[vIdx].y = sin(yp);
-						spherevertices[vIdx].z = cos(xp) * cos(yp);
+						spherevertices[vIdx].x = math::sin(xp) * math::cos(yp);
+						spherevertices[vIdx].y = math::sin(yp);
+						spherevertices[vIdx].z = math::cos(xp) * math::cos(yp);
 					}
 				}
 			}
@@ -237,8 +234,8 @@ const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture*
 					for (int x = 0; x < NUM_VERTICES_X; ++x) {
 						const size_t vIdx = segmentIdx + y * NUM_VERTICES_X + x;
 
-						texcoords[vIdx].x = (spherevertices[vIdx].x * (2 - fabs(spherevertices[vIdx].y))) * xscale + xmid;
-						texcoords[vIdx].y = (spherevertices[vIdx].z * (2 - fabs(spherevertices[vIdx].y))) * yscale + ymid;
+						texcoords[vIdx].x = (spherevertices[vIdx].x * (2 - math::fabs(spherevertices[vIdx].y))) * xscale + xmid;
+						texcoords[vIdx].y = (spherevertices[vIdx].z * (2 - math::fabs(spherevertices[vIdx].y))) * yscale + ymid;
 					}
 				}
 			}
@@ -291,10 +288,10 @@ void ShieldSegmentProjectile::Draw() {
 		return;
 
 	const unsigned char segmentColorRGBA[4] = {
-		segmentColor.x * segmentAlpha * 255,
-		segmentColor.y * segmentAlpha * 255,
-		segmentColor.z * segmentAlpha * 255,
-		                 segmentAlpha * 255,
+		(unsigned char)( segmentColor.x * segmentAlpha * 255 ),
+		(unsigned char)( segmentColor.y * segmentAlpha * 255 ),
+		(unsigned char)( segmentColor.z * segmentAlpha * 255 ),
+		(unsigned char)(                  segmentAlpha * 255 ),
 	};
 
 	inArray = true;

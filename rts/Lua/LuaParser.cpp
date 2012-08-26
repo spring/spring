@@ -23,6 +23,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/BranchPrediction.h"
 #include "System/Misc/SpringTime.h"
+#include "System/ScopedFPUSettings.h"
 #include "System/Util.h"
 
 LuaParser* LuaParser::currentParser = NULL;
@@ -190,18 +191,12 @@ bool LuaParser::Execute()
 
 	currentParser = this;
 
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML) && !defined(DEDICATED) // dedicated is compiled w/o streflop!
-	// do not signal floating point exceptions in user Lua code
-	streflop::fpenv_t fenv;
-	streflop::fegetenv(&fenv);
-	streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
-#endif
+	{
+		// do not signal floating point exceptions in user Lua code
+		ScopedDisableFpuExceptions fe;
 
-	error = lua_pcall(L, 0, 1, 0);
-
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML) && !defined(DEDICATED)
-	streflop::fesetenv(&fenv);
-#endif
+		error = lua_pcall(L, 0, 1, 0);
+	}
 
 	currentParser = NULL;
 

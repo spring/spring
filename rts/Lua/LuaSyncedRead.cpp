@@ -2674,7 +2674,7 @@ int LuaSyncedRead::GetUnitNeutral(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushboolean(L, unit->neutral);
+	lua_pushboolean(L, unit->IsNeutral());
 	return 1;
 }
 

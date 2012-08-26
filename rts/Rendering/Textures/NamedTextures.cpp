@@ -300,7 +300,7 @@ namespace CNamedTextures {
 	const TexInfo* GetInfo(const std::string& texName)
 	{
 		if (texName.empty()) {
-			return false;
+			return NULL;
 		}
 
 		GML_STDMUTEX_LOCK(ntex); // GetInfo

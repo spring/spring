@@ -192,7 +192,6 @@ CUnit::CUnit() : CSolidObject(),
 	attackTarget(NULL),
 	attackPos(ZeroVector),
 	userAttackGround(false),
-	commandShotCount(-1),
 	fireState(FIRESTATE_FIREATWILL),
 	moveState(MOVESTATE_MANEUVER),
 	activated(false),
@@ -503,8 +502,7 @@ void CUnit::PostInit(const CUnit* builder)
 			moveState = unitDef->moveState;
 		}
 
-		Command c(CMD_MOVE_STATE);
-		c.params.push_back(moveState);
+		Command c(CMD_MOVE_STATE, 0, moveState);
 		commandAI->GiveCommand(c);
 	}
 
@@ -520,8 +518,7 @@ void CUnit::PostInit(const CUnit* builder)
 			fireState = unitDef->fireState;
 		}
 
-		Command c(CMD_FIRE_STATE);
-		c.params.push_back(fireState);
+		Command c(CMD_FIRE_STATE, 0, fireState);
 		commandAI->GiveCommand(c);
 	}
 
@@ -542,7 +539,7 @@ void CUnit::PostInit(const CUnit* builder)
 
 
 
-void CUnit::ForcedMove(const float3& newPos)
+void CUnit::ForcedMove(const float3& newPos, bool)
 {
 	if (blocking) {
 		UnBlock();
@@ -564,6 +561,26 @@ void CUnit::ForcedMove(const float3& newPos)
 	qf->MovedUnit(this);
 	loshandler->MoveUnit(this, false);
 	radarhandler->MoveUnit(this);
+}
+
+
+void CUnit::ForcedSpin(const float3& newDir)
+{
+	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::NORMALIZE_EPS);
+
+	updir = UpVector;
+	if (updir == newDir) {
+		//FIXME perhaps save the old right,up,front directions, so we can
+		// reconstruct the old upvector and generate a better assumption for updir
+		updir -= GetVectorFromHeading(heading);
+	}
+	frontdir = newDir;
+	rightdir = newDir.cross(updir).Normalize();
+	updir    = rightdir.cross(newDir);
+	heading  = GetHeadingFromVector(newDir.x, newDir.z);
+
+	UpdateMidAndAimPos();
+	ForcedMove(pos);
 }
 
 
@@ -680,7 +697,7 @@ void CUnit::Update()
 
 	if (travelPeriod != 0.0f) {
 		travel += speed.Length();
-		travel = fmod(travel, travelPeriod);
+		travel = math::fmod(travel, travelPeriod);
 	}
 
 	recentDamage *= 0.9f;
@@ -1481,37 +1498,31 @@ void CUnit::ChangeTeamReset()
 
 	// deactivate to prevent the old give metal maker trick
 	// TODO remove, because it is *A specific
-	c = Command(CMD_ONOFF);
-	c.params.push_back(0); // always off
+	c = Command(CMD_ONOFF, 0, 0); // always off
 	commandAI->GiveCommand(c);
 
 	// reset repeat state
-	c = Command(CMD_REPEAT);
-	c.params.push_back(0);
+	c = Command(CMD_REPEAT, 0, 0);
 	commandAI->GiveCommand(c);
 
 	// reset cloak state
 	if (unitDef->canCloak) {
-		c = Command(CMD_CLOAK);
-		c.params.push_back(0); // always off
+		c = Command(CMD_CLOAK, 0, 0); // always off
 		commandAI->GiveCommand(c);
 	}
 	// reset move state
 	if (unitDef->canmove || unitDef->builder) {
-		c = Command(CMD_MOVE_STATE);
-		c.params.push_back(MOVESTATE_MANEUVER);
+		c = Command(CMD_MOVE_STATE, 0, MOVESTATE_MANEUVER);
 		commandAI->GiveCommand(c);
 	}
 	// reset fire state
 	if (commandAI->CanChangeFireState()) {
-		c = Command(CMD_FIRE_STATE);
-		c.params.push_back(FIRESTATE_FIREATWILL);
+		c = Command(CMD_FIRE_STATE, 0, FIRESTATE_FIREATWILL);
 		commandAI->GiveCommand(c);
 	}
 	// reset trajectory state
 	if (unitDef->highTrajectoryType > 1) {
-		c = Command(CMD_TRAJECTORY);
-		c.params.push_back(0);
+		c = Command(CMD_TRAJECTORY, 0, 0);
 		commandAI->GiveCommand(c);
 	}
 }
@@ -1524,7 +1535,6 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 
 	haveManualFireRequest = wantManualFire;
 	userAttackGround = false;
-	commandShotCount = 0;
 
 	if (attackTarget != NULL) {
 		DeleteDeathDependence(attackTarget, DEPENDENCE_TARGET);
@@ -1564,7 +1574,6 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 
 	haveManualFireRequest = wantManualFire;
 	userAttackGround = isUserTarget;
-	commandShotCount = 0;
 
 	if (attackTarget != NULL) {
 		DeleteDeathDependence(attackTarget, DEPENDENCE_TARGET);
@@ -1577,7 +1586,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 		CWeapon* w = *wi;
 
 		w->targetType = Target_None;
-		w->haveUserTarget = false;
+		w->haveUserTarget = false; // this should be false for ground-attack commands
 
 		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
 			ret |= (w->AttackGround(pos, true));
@@ -1710,17 +1719,18 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 
 		if (beingBuilt) { //build
 			const float part = std::min(amount / buildTime, 1.0f - buildProgress);
-			const float metalUse  = (metalCost  * part);
-			const float energyUse = (energyCost * part);
+			const float metalCostPart  = metalCost  * part;
+			const float energyCostPart = energyCost * part;
 
-			if ((teamHandler->Team(builder->team)->metal  >= metalUse) &&
-			    (teamHandler->Team(builder->team)->energy >= energyUse) &&
+			if ((teamHandler->Team(builder->team)->metal  >= metalCostPart) &&
+			    (teamHandler->Team(builder->team)->energy >= energyCostPart) &&
 			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
-				if (builder->UseMetal(metalUse)) {
+
+				if (builder->UseMetal(metalCostPart)) {
 					// just because we checked doesn't mean they were deducted since upkeep can prevent deduction
 					// FIXME luaRules->AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
-					// TODO add a builder->UseResources(SResources(metalUse, energyUse))
-					if (builder->UseEnergy(energyUse)) {
+					// TODO add a builder->UseResources(SResources(metalCostPart, energyCostPart))
+					if (builder->UseEnergy(energyCostPart)) {
 						health += (maxHealth * part);
 						health = std::min(health, maxHealth);
 						buildProgress += part;
@@ -1730,14 +1740,14 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 						}
 					} else {
 						// refund the metal if the energy cannot be deducted
-						builder->UseMetal(-metalUse);
+						builder->UseMetal(-metalCostPart);
 					}
 				}
 				return true;
 			} else {
 				// update the energy and metal required counts
-				teamHandler->Team(builder->team)->metalPull  += metalUse;
-				teamHandler->Team(builder->team)->energyPull += energyUse;
+				teamHandler->Team(builder->team)->metalPull  += metalCostPart;
+				teamHandler->Team(builder->team)->energyPull += energyCostPart;
 			}
 			return false;
 		}
@@ -1752,21 +1762,21 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			}
 
 			repairAmount += amount;
-			health += maxHealth * part;
-			if (health > maxHealth) {
-				health = maxHealth;
-			}
+			health += (maxHealth * part);
+			health = std::min(health, maxHealth);
+
 			return true;
 		}
-	}
-	else { // reclaim
+	} else { // reclaim
 		if (isDead) {
 			return false;
 		}
 
 		const float part = std::max(amount / buildTime, -buildProgress);
-		const float energyUse = (energyCost * part);
-		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
+		const float energyRefundPart = energyCost * part;
+		const float metalRefundPart = metalCost * part;
+		const float metalRefundPartScaled = metalRefundPart * modInfo.reclaimUnitEfficiency;
+		const float energyRefundPartScaled = energyRefundPart * modInfo.reclaimUnitEnergyCostFactor;
 
 		if (luaRules && !luaRules->AllowUnitBuildStep(builder, this, part)) {
 			return false;
@@ -1779,30 +1789,42 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			return false;
 		}
 
-		if (!builder->UseEnergy(-energyUseScaled)) {
-			teamHandler->Team(builder->team)->energyPull += energyUseScaled;
+		if (!builder->UseEnergy(-energyRefundPartScaled)) {
+			teamHandler->Team(builder->team)->energyPull += energyRefundPartScaled;
 			return false;
 		}
 
-		if ((modInfo.reclaimUnitMethod == 0) && (!beingBuilt)) {
+		health += (maxHealth * part);
+		buildProgress += (part * int(beingBuilt) * int(modInfo.reclaimUnitMethod == 0));
+
+		if (modInfo.reclaimUnitMethod == 0) {
+			// gradual reclamation of invested metal
+			builder->AddMetal(-metalRefundPartScaled, false);
+			// turn reclaimee into nanoframe (even living units)
 			beingBuilt = true;
+		} else {
+			// lump reclamation of invested metal
+			// NOTE:
+			//   because the nanoframe is also decaying on its OWN
+			//   (which reduces buildProgress and returns resources)
+			//   *while* we are reclaiming it, the final lump has to
+			//   subtract the amount already returned through decay
+			//
+			//   this also means that in lump-reclaim mode only health
+			//   is reduced since we need buildProgress to calculate a
+			//   proper refund
+			if (buildProgress <= 0.0f || health <= 0.0f) {
+				builder->AddMetal((metalCost * buildProgress) * modInfo.reclaimUnitEfficiency, false);
+			}
 		}
 
-		health += maxHealth * part;
-
 		if (beingBuilt) {
-			// progressive metal reclaiming
-			builder->AddMetal(-metalUse * modInfo.reclaimUnitEfficiency, false);
-			buildProgress += part;
-
-			if (buildProgress < 0 || health < 0) {
+			if (buildProgress <= 0.0f || health <= 0.0f) {
 				KillUnit(false, true, NULL);
 				return false;
 			}
 		} else {
-			if (health < 0) {
-				// in case of reclaiming of living units add the whole metal with the last nano particle to the storage
-				builder->AddMetal(metalCost * modInfo.reclaimUnitEfficiency, false);
+			if (health <= 0.0f) {
 				KillUnit(false, true, NULL);
 				return false;
 			}
@@ -2319,7 +2341,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(attackTarget),
 	CR_MEMBER(attackPos),
 	CR_MEMBER(userAttackGround),
-	CR_MEMBER(commandShotCount),
 	CR_MEMBER(fireState),
 	CR_MEMBER(dontFire),
 	CR_MEMBER(moveState),

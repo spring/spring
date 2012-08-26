@@ -12,6 +12,7 @@
 #include <string>
 
 class CUnit;
+class CBuilder;
 class CFeature;
 class CSolidObject;
 class CWorldObject;
@@ -57,6 +58,9 @@ public:
 	static bool IsFeatureBeingReclaimed(int featureId, CUnit* friendUnit = NULL);
 	static bool IsFeatureBeingResurrected(int featureId, CUnit* friendUnit = NULL);
 
+	bool IsInBuildRange(const CWorldObject* obj) const;
+	bool IsInBuildRange(const float3& pos, const float radius) const;
+
 public:
 	std::map<int, std::string> buildOptions;
 
@@ -100,11 +104,14 @@ private:
 	int FindReclaimTarget(const float3& pos, float radius, unsigned char cmdopt, ReclaimOption recoptions, float bestStartDist = 1.0e30f) const;
 
 	float GetBuildRange(const float targetRadius) const;
-	bool IsInBuildRange(const CWorldObject* obj) const;
-	bool IsInBuildRange(const float3& pos, const float radius) const;
-
 	bool MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed = false);
 	bool MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed = false);
+
+	bool IsBuildPosBlocked(const BuildInfo& build, const CUnit* nanoFrame) const;
+	bool IsBuildPosBlocked(const BuildInfo& build) const {
+		const CUnit* u = NULL;
+		return IsBuildPosBlocked(build, u);
+	}
 
 	void CancelRestrictedUnit(const std::string& buildOption);
 	bool OutOfImmobileRange(const Command& cmd) const;
@@ -139,6 +146,8 @@ private:
 	float GetBuildOptionRadius(const UnitDef* unitdef, int cmdId);
 
 private:
+	CBuilder* owner_builder;
+
 	bool building;
 	BuildInfo build;
 
@@ -146,6 +155,7 @@ private:
 	float cachedRadius;
 
 	int buildRetries;
+	int randomCounter; ///< used to balance intervals of time intensive ai optimizations
 
 	int lastPC1; ///< helps avoid infinite loops
 	int lastPC2;

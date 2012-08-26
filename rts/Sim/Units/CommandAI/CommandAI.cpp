@@ -728,17 +728,26 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 
 	// flush the queue for immediate commands
 	if (!(c.options & SHIFT_KEY)) {
-		if (!commandQue.empty()) {
+		const Command& fc = (commandQue.empty())? Command(CMD_STOP): commandQue.front();
+
+		if (fc.GetID() == CMD_ATTACK && (fc.options & META_KEY) == 0) {
+			// no meta-bit attack lock, clear the order
+			owner->AttackUnit(NULL, false, false);
+		}
+
+		if (fc.GetID() != CMD_STOP) {
 			waitCommandsAI.ClearUnitQueue(owner, commandQue);
 			ClearCommandDependencies();
 			commandQue.clear();
 		}
 
+		SetOrderTarget(NULL);
+
 		// if c is an attack command, the actual order-target
 		// gets set via ExecuteAttack (called from SlowUpdate
 		// at the end of this function)
 		assert(commandQue.empty());
-		SetOrderTarget(NULL);
+
 		inCommand = false;
 	}
 
@@ -751,10 +760,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 		}
 		if (ci == commandQue.end()) {
 			if (commandQue.empty()) {
-				Command c2(CMD_PATROL, c.options);
-				c2.params.push_back(owner->pos.x);
-				c2.params.push_back(owner->pos.y);
-				c2.params.push_back(owner->pos.z);
+				Command c2(CMD_PATROL, c.options, owner->pos);
 				commandQue.push_back(c2);
 			} else {
 				do {
@@ -765,10 +771,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 						commandQue.push_back(c2);
 						break;
 					} else if (ci == commandQue.begin()) {
-						Command c2(CMD_PATROL, c.options);
-						c2.params.push_back(owner->pos.x);
-						c2.params.push_back(owner->pos.y);
-						c2.params.push_back(owner->pos.z);
+						Command c2(CMD_PATROL, c.options, owner->pos);
 						commandQue.push_back(c2);
 						break;
 					}
@@ -862,7 +865,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 	// make the command
 	Command newCmd((int)c.params[1], (unsigned char)c.params[2]);
 	for (int p = 3; p < (int)c.params.size(); p++) {
-		newCmd.params.push_back(c.params[p]);
+		newCmd.PushParam(c.params[p]);
 	}
 
 	// validate the command
@@ -1074,8 +1077,8 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command& c, CCommandQu
 					BuildInfo bc(c);
 					BuildInfo bc2(c2);
 					if (bc.def && bc2.def
-					    && fabs(bc.pos.x - bc2.pos.x) * 2 <= std::max(bc.GetXSize(), bc2.GetXSize()) * SQUARE_SIZE
-					    && fabs(bc.pos.z - bc2.pos.z) * 2 <= std::max(bc.GetZSize(), bc2.GetZSize()) * SQUARE_SIZE) {
+					    && math::fabs(bc.pos.x - bc2.pos.x) * 2 <= std::max(bc.GetXSize(), bc2.GetXSize()) * SQUARE_SIZE
+					    && math::fabs(bc.pos.z - bc2.pos.z) * 2 <= std::max(bc.GetZSize(), bc2.GetZSize()) * SQUARE_SIZE) {
 						return ci;
 					}
 				} else {
@@ -1167,8 +1170,8 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 					// NOTE: uses a BuildInfo structure, but <t> can be ANY command
 					BuildInfo tbi;
 					if (tbi.Parse(t)) {
-						const float dist2X = 2.0f * fabs(cbi.pos.x - tbi.pos.x);
-						const float dist2Z = 2.0f * fabs(cbi.pos.z - tbi.pos.z);
+						const float dist2X = 2.0f * math::fabs(cbi.pos.x - tbi.pos.x);
+						const float dist2Z = 2.0f * math::fabs(cbi.pos.z - tbi.pos.z);
 						const float addSizeX = SQUARE_SIZE * (cbi.GetXSize() + tbi.GetXSize());
 						const float addSizeZ = SQUARE_SIZE * (cbi.GetZSize() + tbi.GetZSize());
 						const float maxSizeX = SQUARE_SIZE * std::max(cbi.GetXSize(), tbi.GetXSize());
@@ -1218,7 +1221,7 @@ void CCommandAI::ExecuteAttack(Command& c)
 			FinishCommand();
 			return;
 		}
-		if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
+		if ((c.params.size() == 3) && (commandQue.size() > 1)) {
 			FinishCommand();
 			return;
 		}
@@ -1227,8 +1230,6 @@ void CCommandAI::ExecuteAttack(Command& c)
 			return;
 		}
 	} else {
-		owner->commandShotCount = -1;
-
 		if (c.params.size() == 1) {
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
@@ -1364,9 +1365,8 @@ void CCommandAI::DependentDied(CObject* o)
 				Command &c = *qit;
 				int cpos;
 				if (c.IsObjectCommand(cpos) && (c.params[cpos] == CSolidObject::GetDeletingRefID())) {
-					Command removeCmd(CMD_REMOVE, 0);
 					curTag = c.tag;
-					removeCmd.params.push_back(curTag);
+					Command removeCmd(CMD_REMOVE, 0, curTag);
 					ExecuteRemove(removeCmd);
 					break;
 				}
@@ -1380,6 +1380,7 @@ void CCommandAI::DependentDied(CObject* o)
 void CCommandAI::FinishCommand()
 {
 	assert(!commandQue.empty());
+
 	const Command cmd = commandQue.front();
 	const int cmdID  = cmd.GetID();
 	const int cmdTag = cmd.tag;
@@ -1450,13 +1451,19 @@ void CCommandAI::UpdateStockpileIcon()
 	}
 }
 
-void CCommandAI::WeaponFired(CWeapon* weapon)
+void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 {
-	if (!inCommand) { return; }
-	if (commandQue.empty()) { return; }
-	if (!weapon->weaponDef->manualfire) { return; }
+	const Command& c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
-	const Command& c = commandQue.front();
+	if (mainWeapon && lastSalvo && c.GetID() == CMD_AREA_ATTACK) {
+		// if we have an area-attack command and this was the last salvo
+		// of our main weapon, assume we completed an attack (run) on one
+		// position and move to the next
+		SelectNewAreaAttackTargetOrPos(c);
+	}
+
+	if (!inCommand) { return; }
+	if (!weapon->weaponDef->manualfire) { return; }
 
 	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
 		owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
@@ -1483,7 +1490,7 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 		file->lsInt(paramSize);
 		for (int b = 0; b < paramSize; ++b) {
 			if (loading) {
-				c.params.push_back(0.0f);
+				c.PushParam(0.0f);
 			}
 			file->lsFloat(c.params[b]);
 		}
@@ -1493,21 +1500,16 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 
 void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2)
 {
-	float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
+	const float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
 	Command& c(commandQue.front());
 	assert(c.GetID() == CMD_FIGHT && c.params.size() >= 3);
+
 	if (c.params.size() >= 6) {
-		c.params[0] = pos.x;
-		c.params[1] = pos.y;
-		c.params[2] = pos.z;
+		c.SetPos(0, pos);
 	} else {
-		Command c2(CMD_FIGHT, c.options|INTERNAL_ORDER);
-		c2.params.push_back(pos.x);
-		c2.params.push_back(pos.y);
-		c2.params.push_back(pos.z);
-		c2.params.push_back(c.params[0]);
-		c2.params.push_back(c.params[1]);
-		c2.params.push_back(c.params[2]);
+		// make the new fight command inherit <c>'s options
+		Command c2(CMD_FIGHT, c.options, pos);
+		c2.PushPos(c.GetPos(0));
 		commandQue.push_front(c2);
 	}
 }

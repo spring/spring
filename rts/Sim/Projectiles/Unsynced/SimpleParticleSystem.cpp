@@ -188,7 +188,7 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
 		particles[i].size = particleSize + gu->usRandFloat()*particleSizeSpread;
 		particles[i].pos = pos;
 
-		particles[i].speed = ((up * emitMul.y) * cos(ay) - ((right * emitMul.x) * cos(az) - (forward * emitMul.z) * sin(az)) * sin(ay)) * (particleSpeed + (gu->usRandFloat() * particleSpeedSpread));
+		particles[i].speed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->usRandFloat() * particleSpeedSpread));
 	}
 
 	drawRadius = (particleSpeed + particleSpeedSpread) * (particleLife * particleLifeSpread);
@@ -232,7 +232,7 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 		const float az = gu->usRandFloat() * 2 * PI;
 		const float ay = (emitRot + emitRotSpread*gu->usRandFloat()) * (PI / 180.0);
 
-		float3 pspeed = ((up * emitMul.y) * cos(ay) - ((right * emitMul.x) * cos(az) - (forward * emitMul.z) * sin(az)) * sin(ay)) * (particleSpeed + (gu->usRandFloat() * particleSpeedSpread));
+		float3 pspeed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->usRandFloat() * particleSpeedSpread));
 
 		CGenericParticleProjectile* particle = new CGenericParticleProjectile(pos + explosionPos, pspeed, owner);
 

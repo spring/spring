@@ -5,6 +5,7 @@
 #include "BasicWater.h"
 #include "ISky.h"
 
+#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -30,20 +31,17 @@ CBasicWater::CBasicWater()
 	}
 
 	// create mipmapped texture
-	texture = waterTexBM.CreateTexture(true);
-	displist = GenWaterQuadsList();
-
-	textureWidth = waterTexBM.xsize;
-	textureHeight = waterTexBM.ysize;
+	textureID = waterTexBM.CreateTexture(true);
+	displistID = GenWaterQuadsList(waterTexBM.xsize, waterTexBM.ysize);
 }
 
 CBasicWater::~CBasicWater()
 {
-	glDeleteTextures(1, &texture);
-	glDeleteLists(displist, 1);
+	glDeleteTextures(1, &textureID);
+	glDeleteLists(displistID, 1);
 }
 
-unsigned int CBasicWater::GenWaterQuadsList() const
+unsigned int CBasicWater::GenWaterQuadsList(unsigned int textureWidth, unsigned int textureHeight) const
 {
 	unsigned int listID = glGenLists(1);
 
@@ -52,7 +50,7 @@ unsigned int CBasicWater::GenWaterQuadsList() const
 	glDepthMask(0);
 	glColor4f(0.7f, 0.7f, 0.7f, 0.5f);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindTexture(GL_TEXTURE_2D, textureID);
 	glBegin(GL_QUADS);
 
 	const float mapSizeX = gs->mapx * SQUARE_SIZE;
@@ -101,6 +99,6 @@ void CBasicWater::Draw()
 
 	glPushAttrib(GL_FOG_BIT);
 	ISky::SetupFog();
-	glCallList(displist);
+	glCallList(displistID);
 	glPopAttrib();
 }

@@ -59,7 +59,7 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	this->badTargetCat =                                   CCategoryHandler::Instance()->GetCategories(btcString);
 	this->onlyTargetCat = (otcString.empty())? 0xffffffff: CCategoryHandler::Instance()->GetCategories(otcString);
 
-	this->mainDir = weaponTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f));
+	this->mainDir = weaponTable.GetFloat3("mainDir", float3(0.0f, 0.0f, 1.0f));
 	this->mainDir.SafeNormalize();
 }
 
@@ -399,9 +399,9 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	selfDCountdown = udTable.GetInt("selfDestructCountdown", 5);
 
 	speed  = udTable.GetFloat("maxVelocity", 0.0f) * GAME_SPEED;
-	speed  = fabs(speed);
+	speed  = math::fabs(speed);
 	rSpeed = udTable.GetFloat("maxReverseVelocity", 0.0f) * GAME_SPEED;
-	rSpeed = fabs(rSpeed);
+	rSpeed = math::fabs(rSpeed);
 
 	fireState = udTable.GetInt("fireState", canFireControl? FIRESTATE_NONE: FIRESTATE_FIREATWILL);
 	fireState = std::min(fireState, int(FIRESTATE_FIREATWILL));
@@ -433,7 +433,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	showPlayerName = udTable.GetBool("showPlayerName",     false);
 
 	cloakCost = udTable.GetFloat("cloakCost", 0.0f);
-	cloakCostMoving = udTable.GetFloat("cloakCostMoving", 0.0f);
+	cloakCostMoving = udTable.GetFloat("cloakCostMoving", cloakCost);
 
 	startCloaked     = udTable.GetBool("initCloaked", false);
 	decloakDistance  = udTable.GetFloat("minCloakDistance", 0.0f);
@@ -462,8 +462,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	useSmoothMesh  = udTable.GetBool("useSmoothMesh", true);
 
 
-	maxAcc = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
-	maxDec = fabs(udTable.GetFloat("brakeRate", 3.0f * maxAcc)) * (canfly? 0.1f: 1.0f); // no negative values
+	maxAcc = math::fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
+	maxDec = math::fabs(udTable.GetFloat("brakeRate", 3.0f * maxAcc)) * (canfly? 0.1f: 1.0f); // no negative values
 
 	turnRate    = udTable.GetFloat("turnRate", 0.0f);
 	turnInPlace = udTable.GetBool("turnInPlace", true);
@@ -697,7 +697,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		udTable.GetString("collisionVolumeType", ""),
 		udTable.GetFloat3("collisionVolumeScales", ZeroVector),
 		udTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		udTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_DISC)
+		CollisionVolume::COLVOL_HITTEST_CONT
 	);
 
 	if ((usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false))) {
@@ -709,7 +709,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	seismicSignature = udTable.GetFloat("seismicSignature", -1.0f);
 	if (seismicSignature == -1.0f) {
 		if (!canFloat && !canHover && !canfly) {
-			seismicSignature = sqrt(mass / 100.0f);
+			seismicSignature = math::sqrt(mass / 100.0f);
 		} else {
 			seismicSignature = 0.0f;
 		}

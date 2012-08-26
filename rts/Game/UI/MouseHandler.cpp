@@ -233,7 +233,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 		return;
 	}
 
-	const int movedPixels = (int)sqrt(float(dx*dx + dy*dy));
+	const int movedPixels = (int)math::sqrt(float(dx*dx + dy*dy));
 	buttons[SDL_BUTTON_LEFT].movement  += movedPixels;
 	buttons[SDL_BUTTON_RIGHT].movement += movedPixels;
 
@@ -429,10 +429,10 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			float3 norm4 = -camera->right;
 
 			#define signf(x) ((x>0.0f) ? 1.0f : -1)
-			if (topright.y != 0) norm1 = (camera->forward * signf(-topright.y)) + (camera->up / fabs(topright.y));
-			if (btmleft.y  != 0) norm2 = (camera->forward * signf(  btmleft.y)) - (camera->up / fabs(btmleft.y));
-			if (topright.x != 0) norm3 = (camera->forward * signf(-topright.x)) + (camera->right / fabs(topright.x));
-			if (btmleft.x  != 0) norm4 = (camera->forward * signf(  btmleft.x)) - (camera->right / fabs(btmleft.x));
+			if (topright.y != 0) norm1 = (camera->forward * signf(-topright.y)) + (camera->up / math::fabs(topright.y));
+			if (btmleft.y  != 0) norm2 = (camera->forward * signf(  btmleft.y)) - (camera->up / math::fabs(btmleft.y));
+			if (topright.x != 0) norm3 = (camera->forward * signf(-topright.x)) + (camera->right / math::fabs(topright.x));
+			if (btmleft.x  != 0) norm4 = (camera->forward * signf(  btmleft.x)) - (camera->right / math::fabs(btmleft.x));
 
 			const float4 plane1(norm1, -(norm1.dot(camera->pos)));
 			const float4 plane2(norm2, -(norm2.dot(camera->pos)));
@@ -709,10 +709,10 @@ void CMouseHandler::UpdateCursors()
 
 void CMouseHandler::DrawScrollCursor()
 {
-	const float scaleL = fabs(std::min(0.0f,scrollx)) * crossMoveScale + 1.0f;
-	const float scaleT = fabs(std::min(0.0f,scrolly)) * crossMoveScale + 1.0f;
-	const float scaleR = fabs(std::max(0.0f,scrollx)) * crossMoveScale + 1.0f;
-	const float scaleB = fabs(std::max(0.0f,scrolly)) * crossMoveScale + 1.0f;
+	const float scaleL = math::fabs(std::min(0.0f,scrollx)) * crossMoveScale + 1.0f;
+	const float scaleT = math::fabs(std::min(0.0f,scrolly)) * crossMoveScale + 1.0f;
+	const float scaleR = math::fabs(std::max(0.0f,scrollx)) * crossMoveScale + 1.0f;
+	const float scaleB = math::fabs(std::max(0.0f,scrolly)) * crossMoveScale + 1.0f;
 
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_TRIANGLES);

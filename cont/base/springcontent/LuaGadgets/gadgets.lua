@@ -25,6 +25,7 @@ local SAFEWRAP = 0
 
 local HANDLER_DIR = 'LuaGadgets/'
 local GADGETS_DIR = Script.GetName():gsub('US$', '') .. '/Gadgets/'
+local section = 'gadgets.lua'
 
 
 local VFSMODE = VFS.ZIP_ONLY -- FIXME: ZIP_FIRST ?
@@ -44,7 +45,7 @@ local actionHandler = VFS.Include(HANDLER_DIR .. 'actions.lua', nil, VFSMODE)
 
 function pgl() -- (print gadget list)  FIXME: move this into a gadget
   for k,v in ipairs(gadgetHandler.gadgets) do
-    Spring.Echo(
+    Spring.Log(section, LOG.ERROR,
       string.format("%3i  %3i  %s", k, v.ghInfo.layer, v.ghInfo.name)
     )
   end
@@ -161,6 +162,7 @@ local callInLists = {
 	"DrawUnit",
 	"DrawFeature",
 	"DrawShield",
+	"DrawProjectile",
 	"RecvSkirmishAIMessage",
 
 	-- COB CallIn  (FIXME?)
@@ -298,7 +300,7 @@ function gadgetHandler:Initialize()
 
     local name = g.ghInfo.name
     local basename = g.ghInfo.basename
-    Spring.Echo(string.format("Loaded gadget:  %-18s  <%s>", name, basename))
+    Spring.Log(section, LOG.INFO, string.format("Loaded gadget:  %-18s  <%s>", name, basename))
   end
 end
 
@@ -307,12 +309,12 @@ function gadgetHandler:LoadGadget(filename)
   local basename = Basename(filename)
   local text = VFS.LoadFile(filename, VFSMODE)
   if (text == nil) then
-    Spring.Echo('1Failed to load: ' .. filename)
+    Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. filename)
     return nil
   end
   local chunk, err = loadstring(text, filename)
   if (chunk == nil) then
-    Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
   end
 
@@ -321,7 +323,7 @@ function gadgetHandler:LoadGadget(filename)
   setfenv(chunk, gadget)
   local success, err = pcall(chunk)
   if (not success) then
-    Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
   end
   if (err == false) then
@@ -338,14 +340,14 @@ function gadgetHandler:LoadGadget(filename)
 
   err = self:ValidateGadget(gadget)
   if (err) then
-    Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
   end
 
   local knownInfo = self.knownGadgets[name]
   if (knownInfo) then
     if (knownInfo.active) then
-      Spring.Echo('Failed to load: ' .. basename .. '  (duplicate name)')
+      Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. basename .. '  (duplicate name)')
       return nil
     end
   else
@@ -511,11 +513,11 @@ local function SafeWrap(func, funcName)
       if (funcName ~= 'Shutdown') then
         gadgetHandler:RemoveGadget(g)
       else
-        Spring.Echo('Error in Shutdown')
+        Spring.Log(section, LOG.ERROR, 'Error in Shutdown')
       end
       local name = g.ghInfo.name
-      Spring.Echo(r[2])
-      Spring.Echo('Removed gadget: ' .. name)
+      Spring.Log(section, LOG.INFO, r[2])
+      Spring.Log(section, LOG.INFO, 'Removed gadget: ' .. name)
       return nil
     end
   end
@@ -527,7 +529,7 @@ local function SafeWrapGadget(gadget)
     return
   elseif (SAFEWRAP == 1) then
     if (gadget.GetInfo and gadget.GetInfo().unsafe) then
-      Spring.Echo('LuaUI: loaded unsafe gadget: ' .. gadget.ghInfo.name)
+      Spring.Log(section, LOG.ERROR, 'LuaUI: loaded unsafe gadget: ' .. gadget.ghInfo.name)
       return
     end
   end
@@ -651,7 +653,7 @@ function gadgetHandler:UpdateGadgetCallIn(name, g)
     end
     self:UpdateCallIn(name)
   else
-    Spring.Echo('UpdateGadgetCallIn: bad name: ' .. name)
+    Spring.Log(section, LOG.ERROR, 'UpdateGadgetCallIn: bad name: ' .. name)
   end
 end
 
@@ -663,7 +665,7 @@ function gadgetHandler:RemoveGadgetCallIn(name, g)
     ArrayRemove(ciList, g)
     self:UpdateCallIn(name)
   else
-    Spring.Echo('RemoveGadgetCallIn: bad name: ' .. name)
+    Spring.Log(section, LOG.ERROR, 'RemoveGadgetCallIn: bad name: ' .. name)
   end
 end
 
@@ -681,11 +683,11 @@ end
 function gadgetHandler:EnableGadget(name)
   local ki = self.knownGadgets[name]
   if (not ki) then
-    Spring.Echo("EnableGadget(), could not find gadget: " .. tostring(name))
+    Spring.Log(section, LOG.ERROR, "EnableGadget(), could not find gadget: " .. tostring(name))
     return false
   end
   if (not ki.active) then
-    Spring.Echo('Loading:  '..ki.filename)
+    Spring.Log(section, LOG.INFO, 'Loading:  '..ki.filename)
     local order = gadgetHandler.orderList[name]
     if (not order or (order <= 0)) then
       self.orderList[name] = 1
@@ -701,13 +703,13 @@ end
 function gadgetHandler:DisableGadget(name)
   local ki = self.knownGadgets[name]
   if (not ki) then
-    Spring.Echo("DisableGadget(), could not find gadget: " .. tostring(name))
+    Spring.Log(section, LOG.ERROR, "DisableGadget(), could not find gadget: " .. tostring(name))
     return false
   end
   if (ki.active) then
     local w = self:FindGadget(name)
     if (not w) then return false end
-    Spring.Echo('Removed:  '..ki.filename)
+    Spring.Log(section, LOG.INFO, 'Removed:  '..ki.filename)
     self:RemoveGadget(w)     -- deactivate
     self.orderList[name] = 0 -- disable
   end
@@ -718,7 +720,7 @@ end
 function gadgetHandler:ToggleGadget(name)
   local ki = self.knownGadgets[name]
   if (not ki) then
-    Spring.Echo("ToggleGadget(), could not find gadget: " .. tostring(name))
+    Spring.Log(section, LOG.ERROR, "ToggleGadget(), could not find gadget: " .. tostring(name))
     return
   end
   if (ki.active) then
@@ -893,13 +895,13 @@ end
 
 function gadgetHandler:RegisterCMDID(gadget, id)
   if (id <= 1000) then
-    Spring.Echo('Gadget (' .. gadget.ghInfo.name .. ') ' ..
+    Spring.Log(section, LOG.ERROR, 'Gadget (' .. gadget.ghInfo.name .. ') ' ..
                 'tried to register a reserved CMD_ID')
     Script.Kill('Reserved CMD_ID code: ' .. id)
   end
 
   if (self.CMDIDs[id] ~= nil) then
-    Spring.Echo('Gadget (' .. gadget.ghInfo.name .. ') ' ..
+    Spring.Log(section, LOG.ERROR, 'Gadget (' .. gadget.ghInfo.name .. ') ' ..
                 'tried to register a duplicated CMD_ID')
     Script.Kill('Duplicate CMD_ID code: ' .. id)
   end
@@ -1118,6 +1120,15 @@ end
 function gadgetHandler:DrawShield(unitID, weaponID, drawMode)
   for _,g in ipairs(self.DrawShieldList) do
     if (g:DrawShield(unitID, weaponID, drawMode)) then
+      return true
+    end
+  end
+  return false
+end
+
+function gadgetHandler:DrawProjectile(projectileID, drawMode)
+  for _,g in ipairs(self.DrawProjectileList) do
+    if (g:DrawProjectile(projectile, drawMode)) then
       return true
     end
   end

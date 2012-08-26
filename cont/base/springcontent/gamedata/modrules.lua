@@ -22,13 +22,14 @@ local modRules = {}
 
 local haveRules   = false
 local haveSensors = false
+local section =  'modrules.lua'
 
 
 if (VFS.FileExists('gamedata/modrules.tdf')) then
 	local err
 	modRules, err = TDF.Parse('gamedata/modrules.tdf')
 	if (modRules == nil) then
-		error('Error parsing modrules.tdf: ' .. err)
+		Spring.Log(section, LOG.ERROR, 'Error parsing modrules.tdf: ' .. err)
 	end
 	haveRules = true
 end
@@ -37,7 +38,7 @@ end
 if (VFS.FileExists('gamedata/sensors.tdf')) then
 	local sensors, err = TDF.Parse('gamedata/sensors.tdf')
 	if (sensors == nil)  then
-		error('Error parsing sensors.tdf: ' .. err)
+		Spring.Log(section, LOG.ERROR, 'Error parsing sensors.tdf: ' .. err)
 	end
 	modRules.sensors = sensors
 	haveSensors = true

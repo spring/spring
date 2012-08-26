@@ -128,10 +128,10 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 	fd->geoThermal    =  fdTable.GetBool("geoThermal",      false);
 
 	// this seem to be the closest thing to floating that ta wreckage contains
+	//FIXME move this to featuredef_post.lua
 	fd->floating = fdTable.GetBool("nodrawundergray", false);
-	if (fd->floating && !fd->blocking) {
-		fd->floating = false;
-	}
+	fd->floating = fd->floating && !fd->blocking;
+	fd->floating = fdTable.GetBool("floating", fd->floating);
 
 	fd->noSelect = fdTable.GetBool("noselect", false);
 
@@ -166,7 +166,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 		fdTable.GetString("collisionVolumeType", ""),
 		fdTable.GetFloat3("collisionVolumeScales", ZeroVector),
 		fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		fdTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_CONT)
+		CollisionVolume::COLVOL_HITTEST_CONT
 	);
 
 

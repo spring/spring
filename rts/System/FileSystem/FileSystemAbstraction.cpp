@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef _MSC_VER
-#include "System/Platform/Win/win32.h"
+#if defined(_MSC_VER) && !defined(S_ISDIR)
+#	define S_ISDIR(m) (((m) & 0170000) == 0040000)
 #endif
 
 #include "FileSystemAbstraction.h"
@@ -156,10 +156,10 @@ std::string FileSystemAbstraction::GetParent(const std::string& path) {
 
 size_t FileSystemAbstraction::GetFileSize(const std::string& file)
 {
-	size_t fileSize = 0;
+	size_t fileSize = -1;
 
 	struct stat info;
-	if (stat(file.c_str(), &info) == 0) {
+	if ((stat(file.c_str(), &info) == 0) && (!S_ISDIR(info.st_mode))) {
 		fileSize = info.st_size;
 	}
 

@@ -188,6 +188,8 @@ public:
 	 */
 	bool support24bitDepthBuffers;
 
+	bool supportRestartPrimitive;
+
 	/**
 	 * Shader capabilities
 	 */
@@ -210,6 +212,7 @@ public:
 	int glslMaxRecommendedIndices;
 	int glslMaxRecommendedVertices;
 	int glslMaxUniformBufferBindings;
+	int glslMaxUniformBufferSize; ///< in bytes
 
 	/**
 	 * @brief dual screen mode
