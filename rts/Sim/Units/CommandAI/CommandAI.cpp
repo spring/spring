@@ -732,7 +732,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 	if (!(c.options & SHIFT_KEY)) {
 		const Command& fc = (commandQue.empty())? Command(CMD_STOP): commandQue.front();
 
-		if (fc.GetID() == CMD_ATTACK && (fc.options & META_KEY) == 0) {
+		if (((fc.GetID() == CMD_ATTACK) || (fc.GetID() == CMD_MANUALFIRE)) && (fc.options & META_KEY) == 0) {
 			// no meta-bit attack lock, clear the order
 			owner->AttackUnit(NULL, false, false);
 		}
@@ -1223,10 +1223,6 @@ void CCommandAI::ExecuteAttack(Command& c)
 			FinishCommand();
 			return;
 		}
-		if ((c.params.size() == 3) && (commandQue.size() > 1)) {
-			FinishCommand();
-			return;
-		}
 		if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
 			FinishCommand();
 			return;
@@ -1243,7 +1239,6 @@ void CCommandAI::ExecuteAttack(Command& c)
 
 			SetOrderTarget(targetUnit);
 			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
-
 			inCommand = true;
 		} else {
 			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
@@ -1457,7 +1452,8 @@ void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 {
 	const Command& c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
-	if (mainWeapon && lastSalvo && (c.GetID() == CMD_AREA_ATTACK ||  (c.GetID() == CMD_ATTACK && c.GetParamsCount() == 3 && commandQue.size() > 1))) {
+	if (mainWeapon && lastSalvo && (c.GetID() == CMD_AREA_ATTACK || 
+		(c.GetID() == CMD_ATTACK && c.GetParamsCount() == 3 && HasMoreMoveCommands()))) {
 		// if we have an area-attack command and this was the last salvo
 		// of our main weapon, assume we completed an attack (run) on one
 		// position and move to the next
@@ -1465,7 +1461,7 @@ void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 	}
 
 	if (!inCommand) { return; }
-	if (!weapon->weaponDef->manualfire) { return; }
+	if (!weapon->weaponDef->manualfire || (c.options & META_KEY)) { return; }
 
 	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
 		owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
@@ -1571,12 +1567,8 @@ bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 		return false;
 	}
 	// visible and stunned?
-	if ((target->losStatus[owner->allyteam] & LOS_INLOS) && target->stunned) {
-		if ((commandQue.size() > 2) ||
-				((commandQue.size() == 2) &&
-				 (commandQue.back().GetID() != CMD_SET_WANTED_MAX_SPEED))) {
-			return true;
-		}
+	if ((target->losStatus[owner->allyteam] & LOS_INLOS) && target->stunned && HasMoreMoveCommands()) {
+		return true;
 	}
 	return false;
 }

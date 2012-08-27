@@ -718,14 +718,6 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			inCommand = true;
 		}
 	}
-	else if ((c.params.size() == 3) && (commandQue.size() > 1)) {
-		// the trailing CMD_SET_WANTED_MAX_SPEED in a command pair does not count
-		if ((commandQue.size() > 2) || (commandQue.back().GetID() != CMD_SET_WANTED_MAX_SPEED)) {
-			StopMove();
-			FinishCommand();
-			return;
-		}
-	}
 
 	// if our target is dead or we lost it then stop attacking
 	// NOTE: unit should actually just continue to target area!
