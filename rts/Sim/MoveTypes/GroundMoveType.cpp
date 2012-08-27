@@ -491,7 +491,7 @@ bool CGroundMoveType::FollowPath()
 		const float3 rawWantedDir = waypointDir * (int(!wantReverse) * 2 - 1);
 		const float3& modWantedDir = ObstacleAvoidance(rawWantedDir);
 
-		ASSERT_SYNCED(wantedDir);
+		// ASSERT_SYNCED(modWantedDir);
 
 		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
 		ChangeSpeed(maxWantedSpeed, wantReverse);
@@ -2107,7 +2107,7 @@ void CGroundMoveType::SetMainHeading() {
 		GetHeadingFromVector(dir2.x, dir2.z) -
 		GetHeadingFromVector(dir1.x, dir1.z);
 
-	ASSERT_SYNCED(heading);
+	ASSERT_SYNCED(newHeading);
 
 	if (progressState == Active) {
 		if (owner->heading == newHeading) {
