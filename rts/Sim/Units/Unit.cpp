@@ -76,7 +76,6 @@
 //////////////////////////////////////////////////////////////////////
 
 //! info: SlowUpdate runs each 16th GameFrame (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
-float CUnit::empDecline     = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
 float CUnit::expMultiplier  = 1.0f;
 float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
@@ -853,7 +852,7 @@ void CUnit::SlowUpdate()
 		// DoDamage) we potentially start decaying from a lower damage
 		// level and would otherwise be de-paralyzed more quickly than
 		// specified by <paralyzeTime>
-		paralyzeDamage -= ((modInfo.paralyzeOnMaxHealth? maxHealth: health) * 0.5f * CUnit::empDecline);
+		paralyzeDamage -= ((modInfo.paralyzeOnMaxHealth? maxHealth: health) * 0.5f * modInfo.unitParalysisDeclineScale);
 		paralyzeDamage = std::max(paralyzeDamage, 0.0f);
 	}
 
@@ -1172,7 +1171,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		// rate of paralysis-damage reduction is lower if the unit has less than
 		// maximum health to ensure stun-time is always equal to <paralyzeTime>
 		const float baseHealth = (modInfo.paralyzeOnMaxHealth? maxHealth: health);
-		const float paralysisDecayRate = baseHealth * CUnit::empDecline;
+		const float paralysisDecayRate = baseHealth * modInfo.unitParalysisDeclineScale;
 		const float sumParalysisDamage = paralysisDecayRate * paralyzeTime;
 		const float maxParalysisDamage = baseHealth + sumParalysisDamage - paralyzeDamage;
 
