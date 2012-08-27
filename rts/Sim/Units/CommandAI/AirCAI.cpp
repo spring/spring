@@ -445,11 +445,6 @@ void CAirCAI::ExecuteAttack(Command& c)
 			FinishCommand();
 			return;
 		}
-		if ((c.params.size() == 3) && (commandQue.size() > 1)) {
-			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, true);
-			FinishCommand();
-			return;
-		}
 		if (orderTarget) {
 			if (orderTarget->unitDef->canfly && orderTarget->crashing) {
 				owner->AttackUnit(NULL, false, false);
@@ -620,7 +615,12 @@ CStrafeAirMoveType* CAirCAI::GetOwnerMoveType()
 }
 
 void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
-	assert(ac.GetID() == CMD_AREA_ATTACK);
+	assert(ac.GetID() == CMD_AREA_ATTACK || (ac.GetID() == CMD_ATTACK && ac.GetParamsCount() == 3));
+
+	if (ac.GetID() == CMD_ATTACK) {
+		FinishCommand();
+		return;
+	}
 
 	const float3& pos = ac.GetPos(0);
 	const float radius = ac.params[3];
