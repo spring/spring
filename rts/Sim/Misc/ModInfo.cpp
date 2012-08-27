@@ -3,6 +3,7 @@
 #include "System/mmgr.h"
 
 #include "ModInfo.h"
+#include "GlobalConstants.h"
 
 #include "Game/GameSetup.h"
 #include "Lua/LuaConfig.h"
@@ -101,6 +102,11 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// paralyze
 		const LuaTable& paralyzeTbl = root.SubTable("paralyze");
+		// simulation executes 2 CUnit SlowUpdate's per 32 frames and
+		// paralysis damage is decayed each SlowUpdate, so by default
+		// it takes 40 seconds to drop from 100% to 0% paralysis
+		unitParalysisDeclineScale = paralyzeTbl.GetFloat("unitParalysisDeclineScale", 40.0f);
+		unitParalysisDeclineScale = ((2.0f * UNIT_SLOWUPDATE_RATE) / GAME_SPEED) / unitParalysisDeclineScale;
 		paralyzeOnMaxHealth = paralyzeTbl.GetBool("paralyzeOnMaxHealth", true);
 	}
 
@@ -177,13 +183,25 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// system
 		const LuaTable& system = root.SubTable("system");
+		const size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
+
+		bool disableGML = (numThreads == 1);
 
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 		luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
-		size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
-		if (numThreads == 1 || (numThreads == 0 && (luaThreadingModel == MT_LUA_NONE || luaThreadingModel == MT_LUA_SINGLE || 
-			luaThreadingModel == MT_LUA_SINGLE_BATCH || Threading::GetAvailableCores() <= 1)))
-			GML::Enable(false); // single core, or this game did not make any effort to specifically support MT ==> disable it by default
+
+		if (numThreads == 0) {
+			if (Threading::GetAvailableCores() <= 1     ) disableGML = true;
+			if (luaThreadingModel == MT_LUA_NONE        ) disableGML = true;
+			if (luaThreadingModel == MT_LUA_SINGLE      ) disableGML = true;
+			if (luaThreadingModel == MT_LUA_SINGLE_BATCH) disableGML = true;
+		}
+
+		if (disableGML) {
+			// single core, or this game did not make any effort to
+			// specifically support MT ==> disable it by default
+			GML::Enable(false);
+		}
 
 		GML::SetCheckCallChain(globalConfig->GetMultiThreadLua() == MT_LUA_SINGLE_BATCH);
 	}

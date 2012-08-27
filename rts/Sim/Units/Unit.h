@@ -513,8 +513,6 @@ private:
 	static float expHealthScale;
 	static float expReloadScale;
 	static float expGrade;
-
-	static float empDecline;
 };
 
 #endif // UNIT_H
