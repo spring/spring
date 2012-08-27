@@ -1334,7 +1334,7 @@ void CGame::DrawInputText()
 	const string caretStr = tempstring.substr(0, caretPos);
 	const float caretWidth = fontSize * font->GetTextWidth(caretStr) * globalRendering->pixelX;
 
-	char c = userInput[writingPos];
+	char c = (writingPos >= userInput.size()) ? '\0' : userInput[writingPos];
 	if (c == 0) { c = ' '; }
 
 	const float cw = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
