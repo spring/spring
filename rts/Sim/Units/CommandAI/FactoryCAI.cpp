@@ -137,21 +137,25 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 
 void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
-	const int& cmd_id = c.GetID();
+	const int cmdID = c.GetID();
 	
 	// move is always allowed for factories (passed to units it produces)
-	if ((cmd_id == CMD_SET_WANTED_MAX_SPEED) ||
-	    ((cmd_id != CMD_MOVE) && !AllowedCommand(c, fromSynced))) {
+	if ((cmdID == CMD_SET_WANTED_MAX_SPEED) ||
+	    ((cmdID != CMD_MOVE) && !AllowedCommand(c, fromSynced))) {
 		return;
 	}
 
-	map<int, BuildOption>::iterator boi = buildOptions.find(cmd_id);
+	map<int, BuildOption>::iterator boi = buildOptions.find(cmdID);
 
-	// not a build order so queue it to built units
+	// not a build order (or a build order we do not support, eg. if multiple
+	// factories of different types were selected) so queue it to built units
 	if (boi == buildOptions.end()) {
-		if ((nonQueingCommands.find(cmd_id) != nonQueingCommands.end()) ||
-		    (cmd_id == CMD_INSERT) || (cmd_id == CMD_REMOVE) ||
-		    (!(c.options & SHIFT_KEY) && ((cmd_id == CMD_WAIT) || (cmd_id == CMD_SELFD)))) {
+		if (cmdID < 0)
+			return;
+
+		if ((nonQueingCommands.find(cmdID) != nonQueingCommands.end()) ||
+		    (cmdID == CMD_INSERT) || (cmdID == CMD_REMOVE) ||
+		    (!(c.options & SHIFT_KEY) && ((cmdID == CMD_WAIT) || (cmdID == CMD_SELFD)))) {
 			CCommandAI::GiveAllowedCommand(c);
 			return;
 		}
@@ -164,10 +168,10 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 		CCommandAI::AddCommandDependency(c);
 
-		if (cmd_id != CMD_STOP) {
-			if ((cmd_id == CMD_WAIT) || (cmd_id == CMD_SELFD)) {
-				if (!newUnitCommands.empty() && (newUnitCommands.back().GetID() == cmd_id)) {
-					if (cmd_id == CMD_WAIT) {
+		if (cmdID != CMD_STOP) {
+			if ((cmdID == CMD_WAIT) || (cmdID == CMD_SELFD)) {
+				if (!newUnitCommands.empty() && (newUnitCommands.back().GetID() == cmdID)) {
+					if (cmdID == CMD_WAIT) {
 						waitCommandsAI.RemoveWaitCommand(owner, c);
 					}
 					newUnitCommands.pop_back();
@@ -190,9 +194,11 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 		// the first new-unit build order can not be WAIT or SELFD
 		while (!newUnitCommands.empty()) {
-			const int& id = newUnitCommands.front().GetID();
+			const Command& newUnitCommand = newUnitCommands.front();
+			const int id = newUnitCommand.GetID();
+
 			if ((id == CMD_WAIT) || (id == CMD_SELFD)) {
-				if (cmd_id == CMD_WAIT) {
+				if (cmdID == CMD_WAIT) {
 					waitCommandsAI.RemoveWaitCommand(owner, c);
 				}
 				newUnitCommands.pop_front();
@@ -219,20 +225,20 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		int numToErase = numItems;
 		if (c.options & ALT_KEY) {
 			for (unsigned int cmdNum = 0; cmdNum < commandQue.size() && numToErase; ++cmdNum) {
-				if (commandQue[cmdNum].GetID() == cmd_id) {
+				if (commandQue[cmdNum].GetID() == cmdID) {
 					commandQue[cmdNum] = Command(CMD_STOP);
 					numToErase--;
 				}
 			}
 		} else {
 			for (int cmdNum = commandQue.size() - 1; cmdNum != -1 && numToErase; --cmdNum) {
-				if (commandQue[cmdNum].GetID() == cmd_id) {
+				if (commandQue[cmdNum].GetID() == cmdID) {
 					commandQue[cmdNum] = Command(CMD_STOP);
 					numToErase--;
 				}
 			}
 		}
-		UpdateIconName(cmd_id, bo);
+		UpdateIconName(cmdID, bo);
 		SlowUpdate();
 	}
 	else {
@@ -260,7 +266,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 		}
 		bo.numQued += numItems;
-		UpdateIconName(cmd_id, bo);
+		UpdateIconName(cmdID, bo);
 
 		SlowUpdate();
 	}
