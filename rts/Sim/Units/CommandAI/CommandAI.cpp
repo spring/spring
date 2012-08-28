@@ -1452,11 +1452,14 @@ void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 {
 	const Command& c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
-	if (mainWeapon && lastSalvo && (c.GetID() == CMD_AREA_ATTACK || 
-		(c.GetID() == CMD_ATTACK && c.GetParamsCount() == 3 && HasMoreMoveCommands()))) {
-		// if we have an area-attack command and this was the last salvo
-		// of our main weapon, assume we completed an attack (run) on one
-		// position and move to the next
+	const bool haveGroundAttackCmd = (c.GetID() == CMD_ATTACK && c.GetParamsCount() == 3 && HasMoreMoveCommands());
+	const bool haveAreaAttackCmd = (c.GetID() == CMD_AREA_ATTACK);
+
+	if (mainWeapon && lastSalvo && (haveAreaAttackCmd || haveGroundAttackCmd)) {
+		// if we have an area-attack command (or a regular attack command
+		// followed by anything that requires movement) and this was the
+		// last salvo of our main weapon, assume we completed an attack
+		// (run) on one position and move to the next
 		SelectNewAreaAttackTargetOrPos(c);
 	}
 
