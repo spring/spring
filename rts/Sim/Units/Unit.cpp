@@ -1702,6 +1702,11 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 }
 
 
+#if defined(USE_GML) && defined(__GNUC__) && (__GNUC__ == 4)
+// This is supposed to fix some GCC crashbug related to threading
+// The MOVAPS SSE instruction is otherwise getting misaligned data
+__attribute__ ((force_align_arg_pointer))
+#endif
 bool CUnit::AddBuildPower(float amount, CUnit* builder)
 {
 	// stop decaying on building AND reclaim
