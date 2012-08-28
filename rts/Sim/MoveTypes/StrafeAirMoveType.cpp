@@ -933,6 +933,7 @@ void CStrafeAirMoveType::UpdateLanding()
 
 	// collision detection does not let us get
 	// closer to the ground than <radius> elmos
+	// (wrt. midPos.y)
 	if (altitude <= owner->radius) {
 		SetState(AIRCRAFT_LANDED);
 	}
@@ -994,8 +995,8 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 
 	// bounce away on ground collisions (including water surface)
 	if (modInfo.allowAircraftToHitGround) {
-		if (gHeight > (owner->pos.y - owner->radius)) {
-			owner->Move1D(gHeight + owner->radius + 0.01f, 1, false);
+		if ((gHeight > (owner->midPos.y - owner->radius))) {
+			owner->Move1D(gHeight - (owner->midPos.y - owner->radius) + 0.01f, 1, true);
 
 			const float3& gNormal = ground->GetNormal(pos.x, pos.z);
 			const float impactSpeed = -speed.dot(gNormal);

@@ -564,6 +564,7 @@ void CHoverAirMoveType::UpdateLanding()
 
 	// collision detection does not let us get
 	// closer to the ground than <radius> elmos
+	// (wrt. midPos.y)
 	if (altitude <= owner->radius) {
 		SetState(AIRCRAFT_LANDED);
 	}
@@ -707,10 +708,14 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	float wh = wantedHeight; // wanted RELATIVE height (altitude)
 	float ws = 0.0f;         // wanted vertical speed
 
-	// always stay above the actual terrain
+	// always stay above the actual terrain (therefore either the value of
+	// <midPos.y - radius> or pos.y must never become smaller than the real
+	// ground height)
+	// note: unlike StrafeAirMoveType, UpdateTakeoff calls UpdateAirPhysics
+	// so we ignore terrain while we are in the takeoff state to avoid jumps
 	if (modInfo.allowAircraftToHitGround) {
-		if (curAbsHeight > (pos.y - owner->radius)) {
-			owner->Move1D(curAbsHeight + owner->radius + 0.01f, 1, false);
+		if ((curAbsHeight > (owner->midPos.y - owner->radius))  &&  (aircraftState != AIRCRAFT_TAKEOFF)) {
+			owner->Move1D(curAbsHeight - (owner->midPos.y - owner->radius) + 0.01f, 1, true);
 		}
 	}
 
