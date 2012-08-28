@@ -11,7 +11,6 @@ echo "Installing into $DEST"
 
 #Ultra settings, max number of threads taken from commandline.
 SEVENZIP="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
-SEVENZIP_FAST="nice -19 ionice -c3 7z a -mx=0 -mmt=${2:-on}"
 ZIP="zip -r9"
 
 cd ${BUILDDIR}
@@ -29,7 +28,7 @@ for tostripfile in ${BINARIES}; do
 			if ! objdump -h ${tostripfile} | grep -q .gnu_debuglink; then
 				echo "stripping ${tostripfile}"
 				debugfile=${tostripfile%.*}.dbg
-				objcopy --only-keep-debug --compress-debug-sections ${tostripfile} ${debugfile}
+				objcopy --only-keep-debug ${tostripfile} ${debugfile}
 				strip --strip-debug --strip-unneeded ${tostripfile}
 				objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}
 			else
@@ -69,7 +68,7 @@ for tocompress in ${BINARIES}; do
 			fi
 			debugfile=${tocompress%.*}.dbg
 			archive_debug="${TMP_PATH}/${VERSION}_${name}_${FILEPREFIX}_dbg.7z"
-			[ -f ${debugfile} ] && ${SEVENZIP_FAST} "${archive_debug}" ${debugfile} && rm ${debugfile}
+			[ -f ${debugfile} ] && ${SEVENZIP} "${archive_debug}" ${debugfile} && rm ${debugfile}
 		fi
 	fi
 done
