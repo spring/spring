@@ -1633,6 +1633,20 @@ void CGroundMoveType::HandleUnitCollisions(
 			continue;
 		}
 
+		if (collider->moveType->goalPos == collidee->moveType->goalPos) {
+			// NOTE: works, but should collision detection be doing this?
+			const float colliderGoalDistSq = (collider->moveType->goalPos - collider->pos).SqLength2D();
+			const float collideeGoalDistSq = (collidee->moveType->goalPos - collidee->pos).SqLength2D();
+
+			// if both parties are nearing their shared goal, trigger
+			// Arrived if we are closest to kill long pushing contests
+			if (colliderGoalDistSq <= Square(collider->radius * 2.0f) && collideeGoalDistSq <= Square(collidee->radius * 2.0f)) {
+				if (colliderGoalDistSq < collideeGoalDistSq) {
+					atEndOfPath = true; atGoal = true;
+				}
+			}
+		}
+
 		const float colliderRelRadius = colliderRadius / (colliderRadius + collideeRadius);
 		const float collideeRelRadius = collideeRadius / (colliderRadius + collideeRadius);
 		const float collisionRadiusSum = modInfo.allowUnitCollisionOverlap?
