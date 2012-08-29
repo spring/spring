@@ -437,10 +437,7 @@ public:
 	 */
 	SyncedFloat3& Normalize() {
 #if defined(__SUPPORT_SNAN__)
-#if defined(USE_GML)
-		if (!Threading::IsSimThread())
-			return SafeNormalize();
-#endif
+		// this can only be invoked by sim thread
 		assert(SqLength() > float3::NORMALIZE_EPS);
 		return UnsafeNormalize();
 #else
@@ -488,10 +485,7 @@ public:
 	 */
 	SyncedFloat3& ANormalize() {
 #if defined(__SUPPORT_SNAN__)
-#if defined(USE_GML)
-		if (!Threading::IsSimThread())
-			return SafeANormalize();
-#endif
+		// this can only be invoked by sim thread
 		assert(SqLength() > float3::NORMALIZE_EPS);
 		return UnsafeANormalize();
 #else
