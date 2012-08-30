@@ -912,6 +912,7 @@ int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 	const int retval = XCall(L, srcState, funcName);
+	ASSERT_SYNCED(retval);
 	return retval;
 }
 
