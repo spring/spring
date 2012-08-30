@@ -17,7 +17,7 @@ const std::string GameEnd = "Game has ended";
 const std::string NoClientsExit = "No clients connected, shutting down server";
 
 const std::string NoSyncResponse = "Error: Player %s did not send sync checksum for frame %d";
-const std::string SyncError = "Sync error for %s in frame %d (%x)";
+const std::string SyncError = "Sync error for %s in frame %d (got %x, correct is %x)";
 const std::string NoSyncCheck = "Warning: Sync checking disabled!";
 
 const std::string ConnectionReject = "Connection attempt rejected: %s (Message ID: %d Network version: %d Datalength: %d)";
