@@ -34,9 +34,9 @@ class CSyncDebugger {
 	private:
 
 		enum {
-			MAX_STACK = 20,       ///< Maximum number of stackframes per HistItemWithBacktrace.
-			BLOCK_SIZE = 1<<15,   ///< Number of \p HistItem per block history.
-			HISTORY_SIZE = 1<<15, ///< Number of blocks of the entire history.
+			MAX_STACK = 5,       ///< Maximum number of stackframes per HistItemWithBacktrace.
+			BLOCK_SIZE = 1<<11,   ///< Number of \p HistItem per block history.
+			HISTORY_SIZE = 1<<14, ///< Number of blocks of the entire history.
 		};
 
 		/**
