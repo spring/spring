@@ -23,7 +23,7 @@
 // #define QTPFS_VIRTUAL_NODE_FUNCTIONS
 // #define QTPFS_ENABLE_THREADED_UPDATE
 
-#define QTPFS_CACHE_VERSION 2
+#define QTPFS_CACHE_VERSION 3
 #define QTPFS_CACHE_BASEDIR "cache/QTPFS/"
 
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
