@@ -2,6 +2,11 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 91.0 ---------------------------------------------------------
+Bugfixes:
+ - fix Linux sync errors
+ - fix QTPFS deadlocks
+
 
 -- 90.0 ---------------------------------------------------------
 Bugfixes:
