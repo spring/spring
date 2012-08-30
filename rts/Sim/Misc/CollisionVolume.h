@@ -26,7 +26,7 @@ public:
 		COLVOL_TYPE_CYLINDER  =  1,
 		COLVOL_TYPE_BOX       =  2,
 		COLVOL_TYPE_SPHERE    =  3,
-		COLVOL_TYPE_FOOTPRINT =  4, // intersection of sphere and footprint-prism
+		COLVOL_TYPE_FOOTPRINT =  4, // set-intersection of sphere and footprint-prism
 		COLVOL_NUM_SHAPES     =  5, // number of non-disabled collision volume types
 	};
 
