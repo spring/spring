@@ -346,6 +346,7 @@ void CSyncDebugger::ServerQueueBlockRequests()
 	//cleanup
 	for (PlayerVec::iterator it = players.begin(); it != players.end(); ++it)
 		it->checksumResponses.clear();
+	logger.FlushBuffer();
 }
 
 
