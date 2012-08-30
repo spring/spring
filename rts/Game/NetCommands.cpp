@@ -387,6 +387,8 @@ void CGame::ClientReadNet()
 				SimFrame();
 				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 #ifdef SYNCCHECK
+				ASSERT_SYNCED(gs->frameNum);
+				ASSERT_SYNCED(CSyncChecker::GetChecksum());
 				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
 
 				if ((gs->frameNum & 4095) == 0) {
