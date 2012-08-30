@@ -1523,7 +1523,7 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 
 bool CCommandAI::HasMoreMoveCommands()
 {
-	if (!commandQue.empty()) {
+	if (commandQue.size() > 1) {
 		// skip the first command
 		for (CCommandQueue::iterator i = ++commandQue.begin(); i != commandQue.end(); ++i) {
 			const int& id = i->GetID();
