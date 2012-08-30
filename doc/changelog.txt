@@ -2,7 +2,8 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
--- 91.0 ---------------------------------------------------------
+
+-- 92.0 ---------------------------------------------------------
 
 Unitsync
  ! fix return in GetInfoMapSize (#2996)
@@ -17,6 +18,12 @@ Unitsync
 
 Lua
  - replace Spring.Echo with Spring.Log in most places in cont/
+
+ 
+-- 91.0 ---------------------------------------------------------
+Bugfixes:
+ - fix Linux sync errors
+ - fix QTPFS deadlocks
 
 
 -- 90.0 ---------------------------------------------------------
