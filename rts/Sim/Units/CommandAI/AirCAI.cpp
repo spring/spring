@@ -615,7 +615,7 @@ CStrafeAirMoveType* CAirCAI::GetOwnerMoveType()
 }
 
 void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
-	assert(ac.GetID() == CMD_AREA_ATTACK || (ac.GetID() == CMD_ATTACK && ac.GetParamsCount() == 3));
+	assert(ac.GetID() == CMD_AREA_ATTACK || (ac.GetID() == CMD_ATTACK && ac.GetParamsCount() >= 3));
 
 	if (ac.GetID() == CMD_ATTACK) {
 		FinishCommand();
