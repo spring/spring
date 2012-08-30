@@ -5,6 +5,7 @@
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 
+#include <boost/version.hpp>
 #include <boost/thread.hpp>
 #if defined(__APPLE__)
 #elif defined(WIN32)
