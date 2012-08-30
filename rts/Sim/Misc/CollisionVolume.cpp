@@ -322,12 +322,12 @@ float CollisionVolume::GetPointSurfaceDistance(const CSolidObject* o, const CMat
 		} break;
 
 		case COLVOL_TYPE_FOOTPRINT: {
+			#if 0
 			#define INSIDE_RECTANGLE(p, mins, maxs) \
 				(p.x >= mins.x && p.x <= maxs.x) && \
 				(p.y >= mins.y && p.y <= maxs.y) && \
 				(p.z >= mins.z && p.z <= maxs.z)
 
-			#if 0
 			const float3 mins = float3(-(o->xsize >> 1) * SQUARE_SIZE, -10000.0f, -(o->zsize >> 1) * SQUARE_SIZE);
 			const float3 maxs = float3( (o->xsize >> 1) * SQUARE_SIZE,  10000.0f,  (o->zsize >> 1) * SQUARE_SIZE);
 
