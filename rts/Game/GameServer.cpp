@@ -703,13 +703,17 @@ void CGameServer::CheckSync()
 				std::map<unsigned, std::vector<int> >::const_iterator g = desyncGroups.begin();
 				for (; g != desyncGroups.end(); ++g) {
 					std::string playernames = GetPlayerNames(g->second);
-					Message(str(format(SyncError) %playernames %(*f) %(g->first ^ correctChecksum)));
+					Message(str(format(SyncError) %playernames %(*f) %g->first %correctChecksum));
 				}
 
 				// send spectator desyncs as private messages to reduce spam
 				for (std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
 					int playerNum = s->first;
-					PrivateMessage(playerNum, str(format(SyncError) %players[playerNum].name %(*f) %(s->second ^ correctChecksum)));
+#ifdef DEBUG
+					Message(str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
+#else
+					PrivateMessage(playerNum, str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
+#endif
 				}
 			}
 		}
