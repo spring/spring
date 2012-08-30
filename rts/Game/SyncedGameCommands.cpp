@@ -362,7 +362,7 @@ public:
 		ASSERT_SYNCED(gu->myPlayerNum * 123.0f);
 		ASSERT_SYNCED(gu->myPlayerNum * 123);
 		ASSERT_SYNCED((short)(gu->myPlayerNum * 123 + 123));
-		ASSERT_SYNCED(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
+		//ASSERT_SYNCED(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
 
 		for (size_t i = uh->MaxUnits() - 1; i >= 0; --i) {
 			if (uh->units[i]) {
