@@ -678,6 +678,14 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 }
 
 
+void CCommandAI::ClearTargetLock(const Command &c) {
+	if (((c.GetID() == CMD_ATTACK) || (c.GetID() == CMD_MANUALFIRE)) && (c.options & META_KEY) == 0) {
+		// no meta-bit attack lock, clear the order
+		owner->AttackUnit(NULL, false, false);
+	}
+}
+
+
 void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 {
 	if (ExecuteStateCommand(c)) {
@@ -732,10 +740,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 	if (!(c.options & SHIFT_KEY)) {
 		const Command& fc = (commandQue.empty())? Command(CMD_STOP): commandQue.front();
 
-		if (((fc.GetID() == CMD_ATTACK) || (fc.GetID() == CMD_MANUALFIRE)) && (fc.options & META_KEY) == 0) {
-			// no meta-bit attack lock, clear the order
-			owner->AttackUnit(NULL, false, false);
-		}
+		ClearTargetLock(fc);
 
 		if (fc.GetID() != CMD_STOP) {
 			waitCommandsAI.ClearUnitQueue(owner, commandQue);
@@ -951,6 +956,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		const Command& cmd = queue->front();
 		eoh->CommandFinished(*owner, cmd);
 		eventHandler.UnitCmdDone(owner, cmd.GetID(), cmd.tag);
+		ClearTargetLock(cmd);
 	}
 
 	queue->insert(insertIt, newCmd);
@@ -1398,6 +1404,7 @@ void CCommandAI::FinishCommand()
 	SetOrderTarget(NULL);
 	eoh->CommandFinished(*owner, cmd);
 	eventHandler.UnitCmdDone(owner, cmdID, cmdTag);
+	ClearTargetLock(cmd);
 
 	if (commandQue.empty()) {
 		if (!owner->group) {
@@ -1452,10 +1459,9 @@ void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 {
 	const Command& c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
-	const bool haveGroundAttackCmd = (c.GetID() == CMD_ATTACK && c.GetParamsCount() == 3 && HasMoreMoveCommands());
+	const bool haveGroundAttackCmd = (c.GetID() == CMD_ATTACK && c.GetParamsCount() >= 3);
 	const bool haveAreaAttackCmd = (c.GetID() == CMD_AREA_ATTACK);
-
-	if (mainWeapon && lastSalvo && (haveAreaAttackCmd || haveGroundAttackCmd)) {
+	if (mainWeapon && lastSalvo && (haveAreaAttackCmd || (haveGroundAttackCmd && HasMoreMoveCommands()))) {
 		// if we have an area-attack command (or a regular attack command
 		// followed by anything that requires movement) and this was the
 		// last salvo of our main weapon, assume we completed an attack
@@ -1518,7 +1524,8 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 bool CCommandAI::HasMoreMoveCommands()
 {
 	if (!commandQue.empty()) {
-		for (CCommandQueue::iterator i = (commandQue.begin()++); i != commandQue.end(); ++i) {
+		// skip the first command
+		for (CCommandQueue::iterator i = ++commandQue.begin(); i != commandQue.end(); ++i) {
 			const int& id = i->GetID();
 
 			// build commands are no different from reclaim or repair commands
