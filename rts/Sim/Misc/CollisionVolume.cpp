@@ -154,8 +154,10 @@ void CollisionVolume::InitCustom(const float3& scales, const float3& offsets, in
 	//   then its shape is largely anisotropic such that the
 	//   conversion does not create too much of a difference
 	//
+	//   if all axes are equal in scale, ellipsoid volume is
+	//   a sphere (a special-case ellipsoid), otherwise turn
+	//   it into a box
 	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
-		// if all axes are equal in scale, volume is a sphere (a special-case ellipsoid)
 		if ((math::fabsf(cScales.x - cScales.y) < COLLISION_VOLUME_EPS) && (math::fabsf(cScales.y - cScales.z) < COLLISION_VOLUME_EPS)) {
 			volumeType = COLVOL_TYPE_SPHERE;
 		} else {
@@ -300,9 +302,9 @@ float CollisionVolume::GetPointSurfaceDistance(const CSolidObject* o, const CMat
 		case COLVOL_TYPE_BOX: {
 			// always clamp <pv> to box (!) surface
 			// (so minimum distance is always zero)
-			pv.x = int(pv.x >= 0.0f) * std::max(math::fabs(pv.x), hAxisScales.x);
-			pv.y = int(pv.y >= 0.0f) * std::max(math::fabs(pv.y), hAxisScales.y);
-			pv.z = int(pv.z >= 0.0f) * std::max(math::fabs(pv.z), hAxisScales.z);
+			pv.x = ((int(pv.x >= 0.0f) * 2) - 1) * std::max(math::fabs(pv.x), hAxisScales.x);
+			pv.y = ((int(pv.y >= 0.0f) * 2) - 1) * std::max(math::fabs(pv.y), hAxisScales.y);
+			pv.z = ((int(pv.z >= 0.0f) * 2) - 1) * std::max(math::fabs(pv.z), hAxisScales.z);
 
 			// calculate the closest surface point
 			pt.x = Clamp(pv.x, -hAxisScales.x, hAxisScales.x);
@@ -320,25 +322,56 @@ float CollisionVolume::GetPointSurfaceDistance(const CSolidObject* o, const CMat
 		} break;
 
 		case COLVOL_TYPE_FOOTPRINT: {
-			// the default type is a sphere volume combined with
-			// a rectangular footprint "box" (of infinite height)
+			#define INSIDE_RECTANGLE(p, mins, maxs) \
+				(p.x >= mins.x && p.x <= maxs.x) && \
+				(p.y >= mins.y && p.y <= maxs.y) && \
+				(p.z >= mins.z && p.z <= maxs.z)
+
+			#if 0
 			const float3 mins = float3(-(o->xsize >> 1) * SQUARE_SIZE, -10000.0f, -(o->zsize >> 1) * SQUARE_SIZE);
 			const float3 maxs = float3( (o->xsize >> 1) * SQUARE_SIZE,  10000.0f,  (o->zsize >> 1) * SQUARE_SIZE);
 
-			// clamp <pv> to object-space footprint (!) edge
-			pv.x = int(pv.x >= 0.0f) * std::max(math::fabs(pv.x), float(o->xsize >> 1));
-			pv.y = int(pv.y >= 0.0f) * std::max(math::fabs(pv.y),           (10000.0f));
-			pv.z = int(pv.z >= 0.0f) * std::max(math::fabs(pv.z), float(o->zsize >> 1));
+			// if <pv> lies outside the sphere, project it onto
+			// its surface (we might even be done at this point)
+			if (pv.SqLength() > volumeBoundingRadiusSq) {
+				pt = pv.Normalize() * volumeBoundingRadius;
+			} else {
+				pt = pv;
+			}
 
-			// calculate closest point on footprint (!) edge
+			// if <pv>'s surface projection also lies inside the
+			// footprint, use it to determine orthogonal distance
+			// to the combined shape and bail early
+			if (INSIDE_RECTANGLE(pt, mins, maxs)) {
+				d = (pv - pt).Length(); break;
+			}
+
+			// otherwise project <pv> inward onto the footprint edge
+			// (which we now know must be encompassed by the sphere)
 			pt.x = Clamp(pv.x, mins.x, maxs.x);
 			pt.y = Clamp(pv.y, mins.y, maxs.y);
 			pt.z = Clamp(pv.z, mins.z, maxs.z);
 
-			// now take the minimum of the sphere and box cases
+			// if point on footprint edge also lies within the sphere,
+			// use it to determine distance to the sphere/fprint shape
+			if (pt.SqLength() <= volumeBoundingRadiusSq) {
+				d = (pv - pt).Length();
+			} else {
+				// general case, intersection of sphere and footprint
+				// prism forms complex shape and distance calculation
+				// gets messy
+			}
+
+			#undef INSIDE_RECTANGLE
+			#endif
+
+			// FIXME:
+			//   collision point always lies on the sphere surface
+			//   because CCollisionHandler does not intersect rays
+			//   with footprint prisms --> the above code will not
+			//   work correctly in case sphere encompasses box
 			l = pv.Length();
 			d = std::max(l - volumeBoundingRadius, 0.0f);
-			d = std::min(d, (pv - pt).Length());
 		} break;
 
 		case COLVOL_TYPE_CYLINDER: {
