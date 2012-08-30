@@ -7,8 +7,6 @@
 
 #include <fstream>
 #include <boost/bind.hpp>
-#include <boost/version.hpp>
-#include <boost/version.hpp>
 
 #include "minizip/zip.h"
 #include "System/mmgr.h"
@@ -37,8 +35,9 @@ CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
 static const std::string PATH_CACHE_DIR = "cache/paths/";
 
 static size_t GetNumThreads() {
-	size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
-	return (numThreads == 0) ? Threading::GetAvailableCores() : numThreads;
+	const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
+	const size_t numCores = Threading::GetAvailableCores();
+	return ((numThreads == 0)? numCores: numThreads);
 }
 
 #if !defined(USE_MMGR)
