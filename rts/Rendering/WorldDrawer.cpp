@@ -41,13 +41,9 @@
 CWorldDrawer::CWorldDrawer()
 {
 	// rendering components
-	loadscreen->SetLoadMessage("Creating Sky");
-	sky = ISky::GetSky();
-
 	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
 	cubeMapHandler = new CubeMapHandler();
 	shadowHandler = new CShadowHandler();
-	groundDecals = new CGroundDecalHandler();
 
 	loadscreen->SetLoadMessage("Creating GroundDrawer");
 	readmap->NewGroundDrawer();
