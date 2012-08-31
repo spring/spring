@@ -58,8 +58,10 @@ public:
 
 private:
 	void LoadDefs();
-	void LoadSimulation(const std::string& mapName);
-	void LoadRendering();
+	void PreLoadSimulation(const std::string& mapName);
+	void PostLoadSimulation();
+	void PreLoadRendering();
+	void PostLoadRendering();
 	void LoadInterface();
 	void LoadLua();
 	void LoadFinalize();

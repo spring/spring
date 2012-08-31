@@ -450,8 +450,10 @@ void CGame::LoadGame(const std::string& mapName)
 
 
 	if (!gu->globalQuit) LoadDefs();
-	if (!gu->globalQuit) LoadSimulation(mapName);
-	if (!gu->globalQuit) LoadRendering();
+	if (!gu->globalQuit) PreLoadSimulation(mapName);
+	if (!gu->globalQuit) PreLoadRendering();
+	if (!gu->globalQuit) PostLoadSimulation();
+	if (!gu->globalQuit) PostLoadRendering();
 	if (!gu->globalQuit) LoadInterface();
 	if (!gu->globalQuit) LoadLua();
 	if (!gu->globalQuit) LoadFinalize();
@@ -523,7 +525,7 @@ void CGame::LoadDefs()
 	LEAVE_SYNCED_CODE();
 }
 
-void CGame::LoadSimulation(const std::string& mapName)
+void CGame::PreLoadSimulation(const std::string& mapName)
 {
 	ENTER_SYNCED_CODE();
 
@@ -550,19 +552,10 @@ void CGame::LoadSimulation(const std::string& mapName)
 	qf = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
+}
 
-	{
-		//! FIXME: these five need to be loaded before featureHandler
-		//! (maps with features have their models loaded at startup)
-		modelParser = new C3DModelLoader();
-
-		loadscreen->SetLoadMessage("Creating Unit Textures");
-		texturehandler3DO = new C3DOTextureHandler();
-		texturehandlerS3O = new CS3OTextureHandler();
-
-		featureDrawer = new CFeatureDrawer();
-	}
-
+void CGame::PostLoadSimulation()
+{
 	loadscreen->SetLoadMessage("Loading Weapon Definitions");
 	weaponDefHandler = new CWeaponDefHandler();
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
@@ -600,8 +593,23 @@ void CGame::LoadSimulation(const std::string& mapName)
 	LEAVE_SYNCED_CODE();
 }
 
-void CGame::LoadRendering()
+void CGame::PreLoadRendering()
 {
+	//! these need to be loaded before featureHandler
+	//! (maps with features have their models loaded at startup)
+	modelParser = new C3DModelLoader();
+
+	loadscreen->SetLoadMessage("Creating Unit Textures");
+	texturehandler3DO = new C3DOTextureHandler();
+	texturehandlerS3O = new CS3OTextureHandler();
+
+	featureDrawer = new CFeatureDrawer();
+	loadscreen->SetLoadMessage("Creating Sky");
+	sky = ISky::GetSky();
+	groundDecals = new CGroundDecalHandler();
+}
+
+void CGame::PostLoadRendering() {
 	worldDrawer = new CWorldDrawer();
 }
 
@@ -1489,7 +1497,6 @@ void CGame::SimFrame() {
 	mapDamage->Update();
 	pathManager->Update();
 	uh->Update();
-	groundDecals->Update();
 	ph->Update();
 	featureHandler->Update();
 	GCobEngine.Tick(33);
