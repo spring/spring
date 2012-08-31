@@ -710,7 +710,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		default:
 		case COMMAND_UNIT_CUSTOM:
 		{
-			const int& cmdId         = c->GetID();
+			const int cmdId          = c->GetID();
 			const size_t params_size = c->params.size();
 			SCustomUnitCommand* cmd  = static_cast<SCustomUnitCommand*>(malloc(sizeof (SCustomUnitCommand)));
 			cmd->unitId      = unitId;
@@ -985,7 +985,7 @@ int toInternalUnitCommandTopic(int aiCmdTopic, const void* sUnitCommandData) {
 
 int extractAICommandTopic(const Command* engineCmd, int maxUnits) {
 
-	const int& internalUnitCmdTopic = engineCmd->GetID();
+	const int internalUnitCmdTopic = engineCmd->GetID();
 	int aiCommandTopic;
 
 	switch (internalUnitCmdTopic) {

@@ -580,7 +580,7 @@ static inline void CheckNoArgs(lua_State* L, const char* funcName)
 static int PushRulesParams(lua_State* L, const char* caller,
                           const LuaRulesParams::Params& params,
                           const LuaRulesParams::HashMap& paramsMap,
-                          const int& losStatus)
+                          const int losStatus)
 {
 	lua_newtable(L);
 	const int pCount = (int)params.size();

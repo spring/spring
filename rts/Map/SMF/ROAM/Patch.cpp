@@ -319,7 +319,7 @@ void Patch::Split(TriTreeNode* tri)
 // Tessellate a Patch.
 // Will continue to split until the variance metric is met.
 //
-void Patch::RecursTessellate(TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, const int& node)
+void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, const int node)
 {
 	const bool canFurtherTes = ((abs(left.x - right.x) > 1) || (abs(left.y - right.y) > 1));
 	if (!canFurtherTes)
@@ -364,7 +364,7 @@ void Patch::RecursTessellate(TriTreeNode* const& tri, const int2& left, const in
 //
 
 
-void Patch::RecursRender(TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int maxdepth)
+void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, int maxdepth)
 {
 	if ( tri->IsLeaf() /*|| maxdepth>12*/ ) {
 		indices.push_back(apex.x  + apex.y  * (PATCH_SIZE + 1));
@@ -385,9 +385,9 @@ void Patch::RecursRender(TriTreeNode* const& tri, const int2& left, const int2& 
 // ---------------------------------------------------------------------
 // Computes Variance over the entire tree.  Does not examine node relationships.
 //
-float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const float& leftZ,
-		const int& rightX, const int& rightY, const float& rightZ,
-		const int& apexX, const int& apexY, const float& apexZ, const int& node)
+float Patch::RecursComputeVariance(const int leftX, const int leftY, const float leftZ,
+		const int rightX, const int rightY, const float rightZ,
+		const int apexX, const int apexY, const float apexZ, const int node)
 {
 	/*
 	 *       /|\
@@ -642,7 +642,7 @@ public:
 };
 
 
-void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int& numPatchesX)
+void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX)
 {
 	// very slow
 	//for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {

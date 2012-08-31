@@ -557,7 +557,7 @@ void CSMFReadMap::UpdateShadingTexture(const SRectangle& update)
 }
 
 
-const float CSMFReadMap::GetCenterHeightUnsynced(const int& x, const int& y) const
+const float CSMFReadMap::GetCenterHeightUnsynced(const int x, const int y) const
 {
 	static const float* hm = GetCornerHeightMapUnsynced();
 
@@ -610,7 +610,7 @@ void CSMFReadMap::UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) c
 }
 
 
-float CSMFReadMap::DiffuseSunCoeff(const int& x, const int& y) const
+float CSMFReadMap::DiffuseSunCoeff(const int x, const int y) const
 {
 	const float3& N = centerNormalsUnsynced[y * gs->mapx + x];
 	const float3& L = sky->GetLight()->GetLightDir();
@@ -618,7 +618,7 @@ float CSMFReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 }
 
 
-float3 CSMFReadMap::GetLightValue(const int& x, const int& y) const
+float3 CSMFReadMap::GetLightValue(const int x, const int y) const
 {
 	float3 light =
 		mapInfo->light.groundAmbientColor +

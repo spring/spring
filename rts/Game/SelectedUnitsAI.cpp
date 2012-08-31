@@ -105,7 +105,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 	std::vector<int>::const_iterator ui;
 
 	const int nbrOfSelectedUnits = netSelected.size();
-	const int& cmd_id = c.GetID();
+	const int cmd_id = c.GetID();
 
 	if (nbrOfSelectedUnits < 1) {
 		// no units to command

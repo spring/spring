@@ -408,7 +408,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	// AI's may do as they like
 	const CSkirmishAIHandler::ids_t& saids = skirmishAIHandler.GetSkirmishAIsInTeam(owner->team);
 	const bool aiOrder = (!saids.empty());
-	const int& cmd_id = c.GetID();
+	const int cmd_id = c.GetID();
 
 	switch (cmd_id) {
 		case CMD_MANUALFIRE:
@@ -1067,8 +1067,8 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command& c, CCommandQu
 	while (ci != q.begin()) {
 		--ci; //iterate from the end and dont check the current order
 		const Command& c2 = *ci;
-		const int& cmd_id = c.GetID();
-		const int& cmd2_id = c2.GetID();
+		const int cmd_id = c.GetID();
+		const int cmd2_id = c2.GetID();
 
 		if (((cmd_id == cmd2_id) || ((cmd_id < 0) && (cmd2_id < 0))
 				|| (cmd2_id == CMD_FIGHT && cmd_id == CMD_ATTACK && c2.params.size() == 1))
@@ -1526,7 +1526,7 @@ bool CCommandAI::HasMoreMoveCommands()
 	if (commandQue.size() > 1) {
 		// skip the first command
 		for (CCommandQueue::iterator i = ++commandQue.begin(); i != commandQue.end(); ++i) {
-			const int& id = i->GetID();
+			const int id = i->GetID();
 
 			// build commands are no different from reclaim or repair commands
 			// in that they can require a unit to move, so return true when we

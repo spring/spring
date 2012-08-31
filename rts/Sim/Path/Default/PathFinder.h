@@ -74,7 +74,7 @@ public:
 	bool GetHeatMapState() { return heatMapping; }
 	void UpdateHeatMap();
 
-	void UpdateHeatValue(const int& x, const int& y, const int& value, const int& ownerId)
+	void UpdateHeatValue(const int x, const int y, const int value, const int ownerId)
 	{
 		const int i = GetHeatMapIndex(x, y);
 		if (heatmap[i].value < value + heatMapOffset) {
@@ -83,13 +83,13 @@ public:
 		}
 	}
 
-	const int GetHeatOwner(const int& x, const int& y)
+	const int GetHeatOwner(const int x, const int y)
 	{
 		const int i = GetHeatMapIndex(x, y);
 		return heatmap[i].ownerId;
 	}
 
-	const int GetHeatValue(const int& x, const int& y)
+	const int GetHeatValue(const int x, const int y)
 	{
 		const int i = GetHeatMapIndex(x, y);
 		return std::max(0, heatmap[i].value - heatMapOffset);

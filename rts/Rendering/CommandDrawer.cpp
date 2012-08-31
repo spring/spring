@@ -64,7 +64,7 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_ATTACK:
@@ -118,7 +118,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {
@@ -203,7 +203,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		if (cmdID < 0) {
 			const std::map<int, string>& buildOptions = cai->buildOptions;
@@ -399,7 +399,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = newUnitCommands.begin(); ci != newUnitCommands.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {
@@ -501,7 +501,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {
@@ -586,7 +586,7 @@ void CommandDrawer::DrawTransportCAICommands(const CTransportCAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {

@@ -132,7 +132,7 @@ static bool unitModParamIsVisible(int skirmishAIId, const CUnit& unit,
 
 	if (unitModParamIsValidId(unit, modParamId)) {
 		const int allyID = teamHandler->AllyTeam(teamId);
-		const int& losStatus = unit.losStatus[allyID];
+		const int losStatus = unit.losStatus[allyID];
 
 		int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
