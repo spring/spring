@@ -2223,7 +2223,7 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	}
 
 	if (building != NULL)
-		groundDecals->AddSolidObject(building);
+		groundDecals->AddSolidObject(building, building->pos);
 
 	if (u->model != NULL) {
 		if (cloaked) {

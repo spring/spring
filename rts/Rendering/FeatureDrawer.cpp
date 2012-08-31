@@ -111,10 +111,7 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 		unsortedFeatures.insert(f);
 	}
 
-	// map features are loaded before groundDecals exists
-	if (groundDecals != NULL) {
-		groundDecals->AddSolidObject(f);
-	}
+	groundDecals->AddSolidObject(f, f->pos);
 }
 
 void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
@@ -135,9 +132,7 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 		cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 	}
 
-	if (groundDecals != NULL) {
-		groundDecals->RemoveSolidObject(f, NULL);
-	}
+	groundDecals->RemoveSolidObject(f, NULL);
 }
 
 

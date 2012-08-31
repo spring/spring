@@ -133,7 +133,6 @@ public:
 	~CGroundDecalHandler();
 
 	void Draw();
-	void Update();
 
 	void RemoveUnit(CUnit* unit);
 	int GetTrackType(const std::string& name);
@@ -141,7 +140,7 @@ public:
 	void AddExplosion(float3 pos, float damage, float radius, bool);
 	void ExplosionOccurred(const CExplosionEvent& event);
 
-	void AddSolidObject(CSolidObject* object);
+	void AddSolidObject(CSolidObject* object, const float3& pos);
 	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
 	void ForceRemoveSolidObject(CSolidObject* object);
 	int GetSolidObjectDecalType(const std::string& name);
@@ -152,8 +151,8 @@ public:
 public:
 	bool WantsEvent(const std::string& eventName) {
 		return 
-			(eventName == "UnitMoved") ||
 			(eventName == "SunChanged") ||
+			(eventName == "RenderUnitMoved") ||
 			(eventName == "RenderFeatureMoved") ||
 			(eventName == "UnitLoaded") ||
 			(eventName == "UnitUnloaded");
@@ -162,8 +161,8 @@ public:
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
 	void SunChanged(const float3& sunDir);
-	void UnitMoved(const CUnit*);
 	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
+	void RenderUnitMoved(const CUnit* unit, const float3& newpos);
 	void UnitLoaded(const CUnit* unit, const CUnit* transport);
 	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 
@@ -178,7 +177,7 @@ private:
 	void AddScars();
 	void DrawScars();
 
-	void UnitMovedNow(CUnit* unit);
+	void AddDecalAndTrack(CUnit* unit, const float3& newpos);
 
 private:
 	unsigned int scarTex;
@@ -264,8 +263,6 @@ private:
 	std::vector<TrackToAdd> tracksToBeAdded;
 	std::vector<TrackToClean> tracksToBeCleaned;
 	std::vector<UnitTrackStruct*> tracksToBeDeleted;
-
-	std::vector<CUnit*> moveUnits;
 
 	int lastTest;
 	float maxOverlap;
