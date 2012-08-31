@@ -1480,7 +1480,7 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	lua_rawset(L, -3);
 	for (std::map<ALuint, ALfloat>::iterator it = efxprops->filter_properties_f.begin(); it != efxprops->filter_properties_f.end(); ++it)
 	{
-		const ALuint& param = it->first;
+		const ALuint param = it->first;
 		std::map<ALuint, std::string>::iterator fit = alFilterParamToName.find(param);
 		if (fit != alFilterParamToName.end()) {
 			const std::string& name = fit->second;
@@ -1497,7 +1497,7 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	lua_rawset(L, -3);
 	for (std::map<ALuint, ALfloat>::iterator it = efxprops->properties_f.begin(); it != efxprops->properties_f.end(); ++it)
 	{
-		const ALuint& param = it->first;
+		const ALuint param = it->first;
 		std::map<ALuint, std::string>::iterator fit = alParamToName.find(param);
 		if (fit != alParamToName.end()) {
 			const std::string& name = fit->second;
@@ -1508,7 +1508,7 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	}
 	for (std::map<ALuint, float3>::iterator it = efxprops->properties_v.begin(); it != efxprops->properties_v.end(); ++it)
 	{
-		const ALuint& param = it->first;
+		const ALuint param = it->first;
 		std::map<ALuint, std::string>::iterator fit = alParamToName.find(param);
 		if (fit != alParamToName.end()) {
 			const float3& v = it->second;
@@ -1526,7 +1526,7 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	}
 	for (std::map<ALuint, ALint>::iterator it = efxprops->properties_i.begin(); it != efxprops->properties_i.end(); ++it)
 	{
-		const ALuint& param = it->first;
+		const ALuint param = it->first;
 		std::map<ALuint, std::string>::iterator fit = alParamToName.find(param);
 		if (fit != alParamToName.end()) {
 			const std::string& name = fit->second;

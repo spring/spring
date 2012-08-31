@@ -4664,7 +4664,7 @@ int LuaOpenGL::CallList(lua_State* L)
 	CheckDrawingEnabled(L, __FUNCTION__);
 	const unsigned int listIndex = luaL_checkint(L, 1);
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
-	const unsigned int& dlist = displayLists.GetDList(listIndex);
+	const unsigned int dlist = displayLists.GetDList(listIndex);
 	if (dlist) {
 		glCallList(dlist);
 	}

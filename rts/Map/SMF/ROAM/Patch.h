@@ -135,7 +135,7 @@ public:
 	static void SwitchRenderMode(int mode = -1);
 
 	//void UpdateVisibility(CCamera*& cam);
-	static void UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int& numPatchesX);
+	static void UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX);
 
 protected:
 	void VBOUploadVertices();
@@ -143,9 +143,9 @@ protected:
 private:
 	// The recursive half of the Patch Class
 	void Split(TriTreeNode* tri);
-	void RecursTessellate(TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, const int& node);
-	void RecursRender(TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int maxdepth);
-	float RecursComputeVariance(const int& leftX, const int& leftY, const float& leftZ, const int& rightX, const int& rightY, const float& rightZ, const int& apexX, const int& apexY, const float& apexZ, const int& node);
+	void RecursTessellate(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, const int node);
+	void RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, int maxdepth);
+	float RecursComputeVariance(const int leftX, const int leftY, const float leftZ, const int rightX, const int rightY, const float rightZ, const int apexX, const int apexY, const float apexZ, const int node);
 
 protected:
 	static RenderMode renderMode;

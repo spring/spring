@@ -703,7 +703,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 				const string key = StringToLower(lua_tostring(L, -2));
 				std::map<std::string, ALuint>::iterator it = nameToALFilterParam.find(key);
 				if (it != nameToALFilterParam.end()) {
-					ALuint& param = it->second;
+					ALuint param = it->second;
 					if (lua_isnumber(L, -1)) {
 						if (alParamType[param] == EFXParamTypes::FLOAT) {
 							const float value = lua_tofloat(L, -1);
@@ -725,7 +725,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 				const string key = StringToLower(lua_tostring(L, -2));
 				std::map<std::string, ALuint>::iterator it = nameToALParam.find(key);
 				if (it != nameToALParam.end()) {
-					ALuint& param = it->second;
+					ALuint param = it->second;
 					if (lua_istable(L, -1)) {
 						if (alParamType[param] == EFXParamTypes::VECTOR) {
 							float3 v;

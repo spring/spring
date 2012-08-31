@@ -666,7 +666,7 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 
 	//! set the los checking of the parameter
 	if (lua_istable(L, losIndex)) {
-		const int& table = losIndex;
+		const int table = losIndex;
 		int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE;
 
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {

@@ -203,7 +203,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		return;
 	}
 
-	const int& cmd_id = c.GetID();
+	const int cmd_id = c.GetID();
 
 	if (fromUser) { // add some statistics
 		playerHandler->Player(gu->myPlayerNum)->currentStats.numCommands++;

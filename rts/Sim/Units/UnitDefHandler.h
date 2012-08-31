@@ -29,7 +29,7 @@ public:
 	const UnitDef* GetUnitDefByName(std::string name);
 	const UnitDef* GetUnitDefByID(int id);
 
-	bool IsValidUnitDefID(const int& id) const {
+	bool IsValidUnitDefID(const int id) const {
 		/// zero is not valid!
 		return (id > 0) && (id < (int)unitDefs.size());
 	}

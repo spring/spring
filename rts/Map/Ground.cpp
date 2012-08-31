@@ -69,12 +69,12 @@ static inline float InterpolateHeight(float x, float y, const float* heightmap)
 
 
 static inline float LineGroundSquareCol(
-	const float*& heightmap,
-	const float3*& normalmap,
-	const float3& from,
-	const float3& to,
-	const int& xs,
-	const int& ys)
+	const float* heightmap,
+	const float3* normalmap,
+	const float3 from,
+	const float3 to,
+	const int xs,
+	const int ys)
 {
 	const bool inMap = (xs >= 0) && (ys >= 0) && (xs <= gs->mapxm1) && (ys <= gs->mapym1);
 //	assert(inMap);
