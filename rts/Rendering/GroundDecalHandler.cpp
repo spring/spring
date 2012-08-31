@@ -784,43 +784,39 @@ void CGroundDecalHandler::Draw()
 }
 
 
-void CGroundDecalHandler::Update()
-{
-	for (std::vector<CUnit *>::iterator i = moveUnits.begin(); i != moveUnits.end(); ++i)
-		UnitMovedNow(*i);
-
-	moveUnits.clear();
-}
-
-
-void CGroundDecalHandler::UnitMoved(const CUnit* unit)
+void CGroundDecalHandler::RenderUnitMoved(const CUnit* unit, const float3& newpos)
 {
 	if (decalLevel == 0)
 		return;
 
-	if (!unit->unitDef->canmove) { // faster than dynamic cast to building
-		RemoveSolidObject(const_cast<CUnit *>(unit), NULL);
-		AddSolidObject(const_cast<CUnit *>(unit));
-	}
-
-	if (!unit->leaveTracks)
-		return;
-
-	if (unit->unitDef->decalDef.trackDecalType < 0 || !unit->unitDef->IsGroundUnit())
-		return;
-
-	if (unit->myTrack != NULL && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
-		return;
-
-	if ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)
-		moveUnits.push_back(const_cast<CUnit*>(unit));
+	AddDecalAndTrack(const_cast<CUnit*>(unit), newpos);
 }
 
-void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
+
+void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newpos)
 {
+	if (unit->unitDef->canmove) {
+		if (!unit->leaveTracks)
+			return;
+
+		if (unit->unitDef->decalDef.trackDecalType < 0 || !unit->unitDef->IsGroundUnit())
+			return;
+
+		if (unit->myTrack != NULL && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
+			return;
+
+		if (!((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView))
+			return;
+	}
+	else { // possibly a building
+		RemoveSolidObject(const_cast<CUnit *>(unit), NULL);
+		AddSolidObject(const_cast<CUnit *>(unit), newpos);
+		return;
+	}
+
 	const SolidObjectDecalDef& decalDef = unit->unitDef->decalDef;
-	const int zp = (int(unit->pos.z) / SQUARE_SIZE * 2);
-	const int xp = (int(unit->pos.x) / SQUARE_SIZE * 2);
+	const int zp = (int(newpos.z) / SQUARE_SIZE * 2);
+	const int xp = (int(newpos.x) / SQUARE_SIZE * 2);
 	const int mp = Clamp(zp * gs->hmapx + xp, 0, (gs->mapSquares / 4) - 1);
 
 	if (!mapInfo->terrainTypes[readmap->GetTypeMapSynced()[mp]].receiveTracks)
@@ -830,7 +826,7 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 	if (trackLifeTime <= 0)
 		return;
 
-	const float3 pos = unit->pos + unit->frontdir * decalDef.trackDecalOffset;
+	const float3 pos = newpos + unit->frontdir * decalDef.trackDecalOffset;
 
 	TrackPart* tp = new TrackPart;
 	tp->pos1 = pos + unit->rightdir * decalDef.trackDecalWidth * 0.5f;
@@ -1122,7 +1118,7 @@ void CGroundDecalHandler::RemoveScar(Scar* scar, bool removeFromScars)
 }
 
 
-void CGroundDecalHandler::AddSolidObject(CSolidObject* object)
+void CGroundDecalHandler::AddSolidObject(CSolidObject* object, const float3& pos)
 {
 	const SolidObjectDecalDef& decalDef = object->objectDef->decalDef;
 
@@ -1147,7 +1143,7 @@ void CGroundDecalHandler::AddSolidObject(CSolidObject* object)
 	decal->gbOwner = 0;
 	decal->alphaFalloff = decalDef.groundDecalDecaySpeed;
 	decal->alpha = 0.0f;
-	decal->pos = object->pos;
+	decal->pos = pos;
 	decal->radius = math::sqrtf(float(sizex * sizex + sizey * sizey)) * SQUARE_SIZE + 20.0f;
 	decal->facing = object->buildFacing;
 	// convert to heightmap coors
@@ -1160,8 +1156,8 @@ void CGroundDecalHandler::AddSolidObject(CSolidObject* object)
 	}
 
 	// position of top-left corner
-	decal->posx = (object->pos.x / SQUARE_SIZE) - (decal->xsize >> 1);
-	decal->posy = (object->pos.z / SQUARE_SIZE) - (decal->ysize >> 1);
+	decal->posx = (pos.x / SQUARE_SIZE) - (decal->xsize >> 1);
+	decal->posy = (pos.z / SQUARE_SIZE) - (decal->ysize >> 1);
 
 	object->groundDecal = decal;
 	objectDecalTypes[decalDef.groundDecalType]->objectDecals.insert(decal);
@@ -1225,6 +1221,8 @@ int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
 
 	int decalType = 0;
 
+	GML_STDMUTEX_LOCK(decal); // GetSolidObjectDecalType
+
 	std::vector<SolidObjectDecalType*>::iterator bi;
 	for (bi = objectDecalTypes.begin(); bi != objectDecalTypes.end(); ++bi) {
 		if ((*bi)->name == lowerName) {
@@ -1242,8 +1240,6 @@ int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
 	SolidObjectDecalType* tt = new SolidObjectDecalType();
 	tt->name = lowerName;
 	tt->texture = bm.CreateTexture(true);
-
-//	GML_STDMUTEX_LOCK(decaltype); // GetSolidObjectDecalType
 
 	objectDecalTypes.push_back(tt);
 	return (objectDecalTypes.size() - 1);
@@ -1264,14 +1260,14 @@ void CGroundDecalHandler::ExplosionOccurred(const CExplosionEvent& event) {
 void CGroundDecalHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {
 	if (feature->def->drawType == DRAWTYPE_MODEL) {
 		RemoveSolidObject(const_cast<CFeature *>(feature), NULL);
-		AddSolidObject(const_cast<CFeature *>(feature));
+		AddSolidObject(const_cast<CFeature *>(feature), newpos);
 	}
 }
 
 void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) {
-	RemoveSolidObject(const_cast<CUnit *>(unit), NULL);
+	RemoveSolidObject(const_cast<CUnit *>(unit), NULL); // FIXME: Add a RenderUnitLoaded event
 }
 
 void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) {
-	AddSolidObject(const_cast<CUnit *>(unit));
+	AddSolidObject(const_cast<CUnit *>(unit), unit->pos); // FIXME: Add a RenderUnitUnloaded event
 }

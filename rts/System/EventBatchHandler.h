@@ -64,6 +64,18 @@ public:
 		bool operator==(const UD& u) const { return unit == u.unit; }
 		bool operator<(const UD& u) const { return unit < u.unit; }
 	};
+
+	struct UAP {
+		const CUnit* unit;
+		boost::int64_t seqnum;
+		float3 newpos;
+
+		UAP(const CUnit* u, const float3& np): unit(u), seqnum(eventSequenceNumber++), newpos(np) {}
+		bool operator==(const CUnit* u) const { return unit == u; }
+		bool operator==(const UAP& u) const { return unit == u.unit && seqnum == u.seqnum; }
+		bool operator<(const UAP& u) const { return unit < u.unit || (unit == u.unit && seqnum < u.seqnum); }
+	};
+
 private:
 	struct UnitCreatedDestroyedEvent {
 		static void Add(const UD&);
@@ -83,17 +95,28 @@ private:
 		static void Delete(const UAD&) { }
 	};
 
+	struct UnitMovedEvent {
+		static void Add(const UAP&);
+		static void Remove(const UAP&) { }
+		static void Delete(const UAP&) { }
+	};
+
 	typedef ThreadListRender<const CUnit *, std::set<UD>, UD, UnitCreatedDestroyedEvent> UnitCreatedDestroyedEventBatch;
 	typedef ThreadListRender<const CUnit *, std::set<UAD>, UAD, UnitCloakStateChangedEvent> UnitCloakStateChangedEventBatch;
 	typedef ThreadListRender<const CUnit *, std::set<UAD>, UAD, UnitLOSStateChangedEvent> UnitLOSStateChangedEventBatch;
-
+	typedef ThreadListRender<
+		const CUnit*,
+		std::set<UAP>,
+		UAP,
+		UnitMovedEvent
+	> UnitMovedEventBatch;
 	struct FAP {
 		const CFeature* feat;
 		boost::int64_t seqnum;
 		float3 oldpos;
 		float3 newpos;
 
-		FAP(const CFeature* f, const float3 op, const float3 np): feat(f), seqnum(eventSequenceNumber++), oldpos(op), newpos(np) {}
+		FAP(const CFeature* f, const float3& op, const float3& np): feat(f), seqnum(eventSequenceNumber++), oldpos(op), newpos(np) {}
 		bool operator==(const CFeature* f) const { return feat == f; }
 		bool operator==(const FAP& f) const { return feat == f.feat && seqnum == f.seqnum; }
 		bool operator<(const FAP& f) const { return feat < f.feat || (feat == f.feat && seqnum < f.seqnum); }
@@ -138,6 +161,7 @@ private:
 	UnitCreatedDestroyedEventBatch unitCreatedDestroyedEventBatch;
 	UnitCloakStateChangedEventBatch unitCloakStateChangedEventBatch;
 	UnitLOSStateChangedEventBatch unitLOSStateChangedEventBatch;
+	UnitMovedEventBatch unitMovedEventBatch;
 
 	FeatureCreatedDestroyedEventBatch featureCreatedDestroyedEventBatch;
 	FeatureMovedEventBatch featureMovedEventBatch;
@@ -164,6 +188,9 @@ public:
 	void EnqueueUnitLOSStateChangeEvent(const CUnit* unit, int allyteam, int newstatus) { unitLOSStateChangedEventBatch.enqueue(UAD(unit, allyteam, newstatus)); }
 	void EnqueueUnitCloakStateChangeEvent(const CUnit* unit, int cloaked) { unitCloakStateChangedEventBatch.enqueue(UAD(unit, cloaked)); }
 
+	void EnqueueUnitMovedEvent(const CUnit* unit, const float3& newpos) {
+		unitMovedEventBatch.enqueue(UAP(unit, newpos));
+	}
 	void EnqueueFeatureMovedEvent(const CFeature* feature, const float3& oldpos, const float3& newpos) {
 		featureMovedEventBatch.enqueue(FAP(feature, oldpos, newpos));
 	}
