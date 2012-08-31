@@ -44,9 +44,9 @@ private:
 
 	struct UAD {
 		const CUnit* unit;
-		boost::int64_t seqnum;
 		int data;
 		int status;
+		boost::int64_t seqnum;
 
 		UAD(const CUnit* u, int d): unit(u), data(d), status(0), seqnum(eventSequenceNumber++) {}
 		UAD(const CUnit* u, int d, int s): unit(u), data(d), status(s), seqnum(eventSequenceNumber++) {}
