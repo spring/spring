@@ -1852,14 +1852,14 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	const float yo  = luaL_checkfloat(L, arg++);
 	const float zo  = luaL_checkfloat(L, arg++);
 	const unsigned int vType = luaL_checkint(L, arg++);
+//	const unsigned int tType = luaL_checkint(L, arg++);
 	const unsigned int pAxis = luaL_checkint(L, arg++);
-	const unsigned int tType = luaL_checkint(L, arg++);
 
 	const float3 scales(xs, ys, zs);
 	const float3 offset(xo, yo, zo);
 
-	// finish
-	lmp->GetCollisionVolume()->InitShape(scales, offset, vType, tType, pAxis);
+	// piece volumes are not allowed to use discrete hit-testing
+	lmp->GetCollisionVolume()->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
 	lmp->GetCollisionVolume()->SetIgnoreHits(false);
 
 	return 0;
