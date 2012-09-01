@@ -19,9 +19,10 @@ CR_REG_METADATA(CollisionVolume, (
 	CR_MEMBER(volumeBoundingRadiusSq),
 	CR_MEMBER(volumeType),
 	CR_MEMBER(volumeAxes),
-	CR_MEMBER(disabled),
-	CR_MEMBER(defaultScale),
-	CR_MEMBER(contHitTest)
+	CR_MEMBER(ignoreHits),
+	CR_MEMBER(useContHitTest),
+	CR_MEMBER(defaultToFootPrint),
+	CR_MEMBER(defaultToPieceTree)
 ));
 
 // base ctor (CREG-only)
@@ -38,98 +39,82 @@ CollisionVolume::CollisionVolume()
 	volumeAxes[0]          = COLVOL_AXIS_Z;
 	volumeAxes[1]          = COLVOL_AXIS_X;
 	volumeAxes[2]          = COLVOL_AXIS_Y;
-	disabled               = false;
-	defaultScale           = true;
-	contHitTest            = COLVOL_HITTEST_DISC;
-}
-
-// copy ctor
-CollisionVolume::CollisionVolume(const CollisionVolume* v, float defaultRadius)
-{
-	fAxisScales            = v->fAxisScales;
-	hAxisScales            = v->hAxisScales;
-	hsqAxisScales          = v->hsqAxisScales;
-	hiAxisScales           = v->hiAxisScales;
-	axisOffsets            = v->axisOffsets;
-	volumeBoundingRadius   = v->volumeBoundingRadius;
-	volumeBoundingRadiusSq = v->volumeBoundingRadiusSq;
-	volumeType             = v->volumeType;
-	volumeAxes[0]          = v->volumeAxes[0];
-	volumeAxes[1]          = v->volumeAxes[1];
-	volumeAxes[2]          = v->volumeAxes[2];
-	disabled               = v->disabled;
-	defaultScale           = v->defaultScale;
-	contHitTest            = v->contHitTest;
-
-	if (defaultScale && defaultRadius > 0.0f) {
-		// if the volume being copied was not given
-		// explicit scales, convert the clone into a
-		// sphere if provided with a non-zero radius
-		InitSphere(defaultRadius);
-	}
+	ignoreHits             = false;
+	useContHitTest         = COLVOL_HITTEST_CONT;
+	defaultToFootPrint     = false;
+	defaultToPieceTree     = false;
 }
 
 CollisionVolume::CollisionVolume(
 	const std::string& cvTypeString,
 	const float3& cvScales,
-	const float3& cvOffsets,
-	const bool cvContHitTest)
-{
-	int cvType = COLVOL_TYPE_FOOTPRINT;
+	const float3& cvOffsets
+) {
+	int cvType = COLVOL_TYPE_SPHERE;
 	int cvAxis = COLVOL_AXIS_Z;
 
 	if (!cvTypeString.empty()) {
 		const std::string& cvTypeStr = StringToLower(cvTypeString);
 		const std::string& cvTypePrefix = cvTypeStr.substr(0, 3);
 
-		cvType =
-			(cvTypePrefix == "ell")? COLVOL_TYPE_ELLIPSOID:
-			(cvTypePrefix == "cyl")? COLVOL_TYPE_CYLINDER:
-			(cvTypePrefix == "box")? COLVOL_TYPE_BOX:
-			COLVOL_TYPE_SPHERE;
+		switch (cvTypePrefix[0]) {
+			case 'e': { cvType = COLVOL_TYPE_ELLIPSOID; } break; // "ell..."
+			case 'c': { cvType = COLVOL_TYPE_CYLINDER; } break; // "cyl..."
+			case 'b': { cvType = COLVOL_TYPE_BOX; } break; // "box"
+		}
 
 		if (cvType == COLVOL_TYPE_CYLINDER) {
 			switch (cvTypeStr[cvTypeStr.size() - 1]) {
 				case 'x': { cvAxis = COLVOL_AXIS_X; } break;
 				case 'y': { cvAxis = COLVOL_AXIS_Y; } break;
 				case 'z': { cvAxis = COLVOL_AXIS_Z; } break;
-				default: { assert(false); } break;
+				default: {} break; // just use the z-axis
 			}
 		}
 	}
 
-	InitCustom(cvScales, cvOffsets, cvType, cvContHitTest, cvAxis);
+	InitShape(cvScales, cvOffsets, cvType, COLVOL_HITTEST_CONT, cvAxis);
 }
 
 
 
-void CollisionVolume::InitSphere(float r)
+void CollisionVolume::InitSphere(float radius)
 {
 	// <r> is the object's default RADIUS (not its diameter),
 	// so we need to double it to get the full-length scales
-	InitCustom(float3(r * 2.0f, r * 2.0f, r * 2.0f), ZeroVector, volumeType, contHitTest, volumeAxes[0]);
+	InitShape(float3(1.0f, 1.0f, 1.0f) * radius * 2.0f, ZeroVector, COLVOL_TYPE_SPHERE, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
 }
 
-void CollisionVolume::InitCustom(const float3& scales, const float3& offsets, int vType, int tType, int pAxis)
+void CollisionVolume::InitBox(const float3& scales)
 {
-	// assign these here, since we can be
-	// called from outside the constructor
-	volumeType    = std::max(vType, 0) % COLVOL_NUM_SHAPES;
-	volumeAxes[0] = std::max(pAxis, 0) % COLVOL_NUM_AXES;
+	InitShape(scales, ZeroVector, COLVOL_TYPE_BOX, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
+}
 
-	axisOffsets = offsets;
-
-	// allow defining a custom volume without using it for coldet
-	disabled    = (scales.x < 0.0f || scales.y < 0.0f || scales.z < 0.0f);
-	contHitTest = std::max(tType, 0) % COLVOL_NUM_HITTESTS;
+void CollisionVolume::InitShape(
+	const float3& scales,
+	const float3& offsets,	
+	const int vType,
+	const int tType,
+	const int pAxis)
+{
+	float3 s;
 
 	// make sure none of the scales are ever negative or zero
 	//
 	// if the clamped vector is <1, 1, 1> (ie. all scales were <= 1.0f)
-	// then we assume a "default scale" is wanted and the unit / feature
-	// loaders will override the (unit/feature instance) scales with the
-	// model's radius
-	float3 cScales(std::max(1.0f, scales.x), std::max(1.0f, scales.y), std::max(1.0f, scales.z));
+	// then we assume a "default volume" is wanted and the unit/feature
+	// instances will be assigned spheres (of size model->radius)
+	s.x = std::max(1.0f, scales.x);
+	s.y = std::max(1.0f, scales.y);
+	s.z = std::max(1.0f, scales.z);
+
+	// assign these here, since we can be
+	// called from outside the constructor
+	volumeType    = std::max(vType, 0) % (COLVOL_TYPE_SPHERE + 1);
+	volumeAxes[0] = std::max(pAxis, 0) % (COLVOL_AXIS_Z + 1);
+
+	axisOffsets = offsets;
+	useContHitTest = (tType == COLVOL_HITTEST_CONT);
 
 	switch (volumeAxes[0]) {
 		case COLVOL_AXIS_X: {
@@ -147,30 +132,28 @@ void CollisionVolume::InitCustom(const float3& scales, const float3& offsets, in
 	}
 
 	// NOTE:
-	//   ellipses are now auto-converted to boxes, cylinders
-	//   to base cylinders (ie. with circular cross-section)
+	//   ellipses are now ALWAYS auto-converted to boxes or
+	//   to spheres depending on scale values, cylinders to
+	//   base cylinders (ie. with circular cross-section)
 	//
 	//   we assume that if the volume-type is set to ellipse
 	//   then its shape is largely anisotropic such that the
 	//   conversion does not create too much of a difference
 	//
-	//   if all axes are equal in scale, ellipsoid volume is
-	//   a sphere (a special-case ellipsoid), otherwise turn
-	//   it into a box
 	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
-		if ((math::fabsf(cScales.x - cScales.y) < COLLISION_VOLUME_EPS) && (math::fabsf(cScales.y - cScales.z) < COLLISION_VOLUME_EPS)) {
+		if ((math::fabsf(s.x - s.y) < COLLISION_VOLUME_EPS) && (math::fabsf(s.y - s.z) < COLLISION_VOLUME_EPS)) {
 			volumeType = COLVOL_TYPE_SPHERE;
 		} else {
 			volumeType = COLVOL_TYPE_BOX;
 		}
 	}
-
 	if (volumeType == COLVOL_TYPE_CYLINDER) {
-		cScales[volumeAxes[1]] = std::max(cScales[volumeAxes[1]], cScales[volumeAxes[2]]);
-		cScales[volumeAxes[2]] =          cScales[volumeAxes[1]];
+		s[volumeAxes[1]] = std::max(s[volumeAxes[1]], s[volumeAxes[2]]);
+		s[volumeAxes[2]] =          s[volumeAxes[1]];
 	}
 
-	SetAxisScales(cScales.x, cScales.y, cScales.z);
+	SetAxisScales(s);
+	SetBoundingRadius();
 }
 
 
@@ -178,6 +161,9 @@ void CollisionVolume::SetBoundingRadius() {
 	// set the radius of the minimum bounding sphere
 	// that encompasses this custom collision volume
 	// (for early-out testing)
+	// NOTE:
+	//   this must be called manually after either
+	//   a call to SetAxisScales or to RescaleAxes
 	switch (volumeType) {
 		case COLVOL_TYPE_BOX: {
 			// would be an over-estimation for cylinders
@@ -193,25 +179,20 @@ void CollisionVolume::SetBoundingRadius() {
 			volumeBoundingRadiusSq = prhs * prhs + mshs * mshs;
 			volumeBoundingRadius = math::sqrt(volumeBoundingRadiusSq);
 		} break;
-		case COLVOL_TYPE_ELLIPSOID: {
-			volumeBoundingRadius = std::max(hAxisScales.x, std::max(hAxisScales.y, hAxisScales.z));
-			volumeBoundingRadiusSq = volumeBoundingRadius * volumeBoundingRadius;
-		} break;
-		case COLVOL_TYPE_FOOTPRINT:
-			// fall through, this is intersection of footprint-prism
-			// and sphere, so it has same bounding radius as sphere.
 		case COLVOL_TYPE_SPHERE: {
-			// max{x, y, z} would suffice here too (see ellipsoid)
+			assert(math::fabs(hAxisScales.x - hAxisScales.y) < COLLISION_VOLUME_EPS);
+			assert(math::fabs(hAxisScales.y - hAxisScales.z) < COLLISION_VOLUME_EPS);
+
 			volumeBoundingRadius = hAxisScales.x;
 			volumeBoundingRadiusSq = volumeBoundingRadius * volumeBoundingRadius;
 		} break;
 	}
 }
 
-void CollisionVolume::SetAxisScales(const float xs, const float ys, const float zs) {
-	fAxisScales.x = xs;
-	fAxisScales.y = ys;
-	fAxisScales.z = zs;
+void CollisionVolume::SetAxisScales(const float3& scales) {
+	fAxisScales.x = scales.x;
+	fAxisScales.y = scales.y;
+	fAxisScales.z = scales.z;
 
 	hAxisScales.x = fAxisScales.x * 0.5f;
 	hAxisScales.y = fAxisScales.y * 0.5f;
@@ -224,36 +205,29 @@ void CollisionVolume::SetAxisScales(const float xs, const float ys, const float 
 	hiAxisScales.x = 1.0f / hAxisScales.x;
 	hiAxisScales.y = 1.0f / hAxisScales.y;
 	hiAxisScales.z = 1.0f / hAxisScales.z;
-
-	// scale was unspecified
-	defaultScale = (xs == 1.0f && ys == 1.0f && zs == 1.0f);
-
-	SetBoundingRadius();
 }
 
-void CollisionVolume::RescaleAxes(const float xs, const float ys, const float zs) {
-	fAxisScales.x *= xs; hAxisScales.x *= xs;
-	fAxisScales.y *= ys; hAxisScales.y *= ys;
-	fAxisScales.z *= zs; hAxisScales.z *= zs;
+void CollisionVolume::RescaleAxes(const float3& scales) {
+	fAxisScales.x *= scales.x; hAxisScales.x *= scales.x;
+	fAxisScales.y *= scales.y; hAxisScales.y *= scales.y;
+	fAxisScales.z *= scales.z; hAxisScales.z *= scales.z;
 
-	hsqAxisScales.x *= (xs * xs);
-	hsqAxisScales.y *= (ys * ys);
-	hsqAxisScales.z *= (zs * zs);
+	hsqAxisScales.x *= (scales.x * scales.x);
+	hsqAxisScales.y *= (scales.y * scales.y);
+	hsqAxisScales.z *= (scales.z * scales.z);
 
-	hiAxisScales.x *= (1.0f / xs);
-	hiAxisScales.y *= (1.0f / ys);
-	hiAxisScales.z *= (1.0f / zs);
-
-	SetBoundingRadius();
+	hiAxisScales.x *= (1.0f / scales.x);
+	hiAxisScales.y *= (1.0f / scales.y);
+	hiAxisScales.z *= (1.0f / scales.z);
 }
 
 
 
-const CollisionVolume* CollisionVolume::GetVolume(const CUnit* u, float3& pos, bool useLastAttackedPiece) {
-	const CollisionVolume* vol = NULL;
+const CollisionVolume* CollisionVolume::GetVolume(const CUnit* u, float3& pos) {
+	const CollisionVolume* vol = u->collisionVolume;
 	const LocalModelPiece* lap = u->lastAttackedPiece;
 
-	if (useLastAttackedPiece) {
+	if (vol->DefaultToPieceTree() && u->HaveLastAttackedPiece(gs->frameNum)) {
 		assert(lap != NULL);
 
 		vol = lap->GetCollisionVolume();
@@ -263,7 +237,6 @@ const CollisionVolume* CollisionVolume::GetVolume(const CUnit* u, float3& pos, b
 			u->updir    * pos.y +
 			u->frontdir * pos.z;
 	} else {
-		vol = u->collisionVolume;
 		pos = u->midPos + vol->GetOffsets();
 	}
 
@@ -319,59 +292,6 @@ float CollisionVolume::GetPointSurfaceDistance(const CSolidObject* o, const CMat
 			l = pv.Length();
 			d = std::max(l - volumeBoundingRadius, 0.0f);
 			// pt = (pv / std::max(0.01f, l)) * d;
-		} break;
-
-		case COLVOL_TYPE_FOOTPRINT: {
-			#if 0
-			#define INSIDE_RECTANGLE(p, mins, maxs) \
-				(p.x >= mins.x && p.x <= maxs.x) && \
-				(p.y >= mins.y && p.y <= maxs.y) && \
-				(p.z >= mins.z && p.z <= maxs.z)
-
-			const float3 mins = float3(-(o->xsize >> 1) * SQUARE_SIZE, -10000.0f, -(o->zsize >> 1) * SQUARE_SIZE);
-			const float3 maxs = float3( (o->xsize >> 1) * SQUARE_SIZE,  10000.0f,  (o->zsize >> 1) * SQUARE_SIZE);
-
-			// if <pv> lies outside the sphere, project it onto
-			// its surface (we might even be done at this point)
-			if (pv.SqLength() > volumeBoundingRadiusSq) {
-				pt = pv.Normalize() * volumeBoundingRadius;
-			} else {
-				pt = pv;
-			}
-
-			// if <pv>'s surface projection also lies inside the
-			// footprint, use it to determine orthogonal distance
-			// to the combined shape and bail early
-			if (INSIDE_RECTANGLE(pt, mins, maxs)) {
-				d = (pv - pt).Length(); break;
-			}
-
-			// otherwise project <pv> inward onto the footprint edge
-			// (which we now know must be encompassed by the sphere)
-			pt.x = Clamp(pv.x, mins.x, maxs.x);
-			pt.y = Clamp(pv.y, mins.y, maxs.y);
-			pt.z = Clamp(pv.z, mins.z, maxs.z);
-
-			// if point on footprint edge also lies within the sphere,
-			// use it to determine distance to the sphere/fprint shape
-			if (pt.SqLength() <= volumeBoundingRadiusSq) {
-				d = (pv - pt).Length();
-			} else {
-				// general case, intersection of sphere and footprint
-				// prism forms complex shape and distance calculation
-				// gets messy
-			}
-
-			#undef INSIDE_RECTANGLE
-			#endif
-
-			// FIXME:
-			//   collision point always lies on the sphere surface
-			//   because CCollisionHandler does not intersect rays
-			//   with footprint prisms --> the above code will not
-			//   work correctly in case sphere encompasses box
-			l = pv.Length();
-			d = std::max(l - volumeBoundingRadius, 0.0f);
 		} break;
 
 		case COLVOL_TYPE_CYLINDER: {

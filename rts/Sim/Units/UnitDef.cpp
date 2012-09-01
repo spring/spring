@@ -135,7 +135,6 @@ UnitDef::UnitDef()
 	, flankingBonusMax(0.0f)
 	, flankingBonusMin(0.0f)
 	, flankingBonusMobilityAdd(0.0f)
-	, usePieceCollisionVolumes(false)
 	, shieldWeaponDef(NULL)
 	, stockpileWeaponDef(NULL)
 	, maxWeaponRange(0.0f)
@@ -652,11 +651,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
-	SetCollisionVolume(udTable);
-
-	if ((usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false))) {
-		collisionVolume->Disable();
-	}
+	ParseCollisionVolume(udTable);
 
 
 	seismicRadius    = udTable.GetInt("seismicDistance", 0);

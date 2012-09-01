@@ -304,7 +304,7 @@ CUnit::~CUnit()
 	los = NULL;
 	radarhandler->RemoveUnit(this);
 
-	modelParser->DeleteLocalModel(this);
+	modelParser->DeleteLocalModel(localmodel);
 }
 
 
@@ -334,11 +334,21 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	unitDef = uDef;
 	unitDefID = unitDef->id;
 
+	buildFacing = std::abs(facing) % NUM_FACINGS;
+	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
+	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
+
 	// copy the UnitDef volume instance
 	// NOTE: gets deleted in ~CSolidObject
 	model = unitDef->LoadModel();
-	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius);
-	modelParser->CreateLocalModel(this);
+	localmodel = new LocalModel(model);
+	collisionVolume = new CollisionVolume(unitDef->collisionVolume);
+	modelParser->CreateLocalModel(localmodel);
+
+	if (collisionVolume->DefaultToSphere())
+		collisionVolume->InitSphere(model->radius);
+	if (collisionVolume->DefaultToFootPrint())
+		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
 
 	mapSquare = ground->GetSquare(position.cClampInMap());
 
@@ -376,12 +386,8 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 	ASSERT_SYNCED(pos);
 
-	buildFacing = std::abs(facing) % NUM_FACINGS;
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
-
 	footprint = int2(unitDef->xsize, unitDef->zsize);
-	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
-	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 
 	beingBuilt = build;
 	mass = (beingBuilt)? mass: unitDef->mass;
@@ -2124,11 +2130,12 @@ void CUnit::PostLoad()
 	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	objectDef = unitDef;
 	model = unitDef->LoadModel();
+	localmodel = new LocalModel(model);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
 	SetRadiusAndHeight(model->radius, model->height);
 
-	modelParser->CreateLocalModel(this);
+	modelParser->CreateLocalModel(localmodel);
 	// FIXME: how to handle other script types (e.g. Lua) here?
 	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
 

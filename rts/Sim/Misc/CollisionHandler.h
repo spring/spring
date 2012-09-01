@@ -89,8 +89,8 @@ class CCollisionHandler {
 		static bool IntersectBox(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q);
 
 	private:
-		static unsigned int numCollisionTests;
-		static unsigned int numIntersectionTests;
+		static unsigned int numDiscTests; // number of discrete hit-tests executed
+		static unsigned int numContTests; // number of continuous hit-tests executed (inc. unsynced)
 };
 
 #endif // COLLISION_HANDLER_H

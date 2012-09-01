@@ -23,12 +23,8 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 	glPushMatrix();
 
 	switch (vol->GetVolumeType()) {
-		case CollisionVolume::COLVOL_TYPE_FOOTPRINT:
-			// fall through, this is too hard to render correctly so just render sphere :)
-		case CollisionVolume::COLVOL_TYPE_SPHERE:
-			// fall through, sphere is special case of ellipsoid
-		case CollisionVolume::COLVOL_TYPE_ELLIPSOID: {
-			// scaled sphere: radius, slices, stacks
+		case CollisionVolume::COLVOL_TYPE_SPHERE: {
+			// scaled sphere is special case of ellipsoid: radius, slices, stacks
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 			glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
 			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
@@ -117,7 +113,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 		glMultMatrixf(f->transMatrix.m);
 		DrawObjectMidAndAimPos(f);
 
-		if (!v->IsDisabled()) {
+		if (!v->IgnoreHits()) {
 			DrawCollisionVolume(v);
 		}
 
@@ -142,7 +138,7 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 	glPushMatrix();
 		glMultMatrixf(mat.m);
 
-		if (p->visible && !p->GetCollisionVolume()->IsDisabled()) {
+		if (p->visible && !p->GetCollisionVolume()->IgnoreHits()) {
 			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
 				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
 			}
@@ -174,12 +170,12 @@ static inline void DrawUnitColVol(const CUnit* u)
 		glMultMatrixf(u->GetTransformMatrix());
 		DrawObjectMidAndAimPos(u);
 
-		if (u->unitDef->usePieceCollisionVolumes) {
+		if (v->DefaultToPieceTree()) {
 			// draw only the piece volumes for less clutter
 			CMatrix44f mat(u->relMidPos * float3(0.0f, -1.0f, 0.0f));
 			DrawUnitDebugPieceTree(u->localmodel->GetRoot(), u->lastAttackedPiece, u->lastAttackedPieceFrame, mat);
 		} else {
-			if (!v->IsDisabled()) {
+			if (!v->IgnoreHits()) {
 				// make it fade red under attack
 				if (u->lastAttack > 0 && ((gs->frameNum - u->lastAttack) < 150)) {
 					glColor3f((1.0f - ((gs->frameNum - u->lastAttack) / 150.0f)), 0.0f, 0.0f);

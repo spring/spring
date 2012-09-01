@@ -6,22 +6,37 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/EventHandler.h"
 
+SolidObjectDecalDef::SolidObjectDecalDef()
+	: useGroundDecal(false)
+	, groundDecalType(-1)
+	, groundDecalSizeX(-1)
+	, groundDecalSizeY(-1)
+	, groundDecalDecaySpeed(0.0f)
+
+	, leaveTrackDecals(false)
+	, trackDecalType(-1)
+	, trackDecalWidth(0.0f)
+	, trackDecalOffset(0.0f)
+	, trackDecalStrength(0.0f)
+	, trackDecalStretch(0.0f)
+{}
+
 void SolidObjectDecalDef::Parse(const LuaTable& table) {
 	groundDecalTypeName = table.GetString("groundDecalType", table.GetString("buildingGroundDecalType", ""));
 	trackDecalTypeName = table.GetString("trackType", "StdTank");
 
-	useGroundDecal = table.GetBool("useGroundDecal", table.GetBool("useBuildingGroundDecal", false));
-	groundDecalSizeX = table.GetInt("groundDecalSizeX", table.GetInt("buildingGroundDecalSizeX", 4));
-	groundDecalSizeY = table.GetInt("groundDecalSizeY", table.GetInt("buildingGroundDecalSizeY", 4));
+	useGroundDecal        = table.GetBool("useGroundDecal", table.GetBool("useBuildingGroundDecal", false));
+	groundDecalType       = -1;
+	groundDecalSizeX      = table.GetInt("groundDecalSizeX", table.GetInt("buildingGroundDecalSizeX", 4));
+	groundDecalSizeY      = table.GetInt("groundDecalSizeY", table.GetInt("buildingGroundDecalSizeY", 4));
 	groundDecalDecaySpeed = table.GetFloat("groundDecalDecaySpeed", table.GetFloat("buildingGroundDecalDecaySpeed", 0.1f));
-	groundDecalType = -1;
 
 	leaveTrackDecals   = table.GetBool("leaveTracks", false);
+	trackDecalType     = -1;
 	trackDecalWidth    = table.GetFloat("trackWidth",   32.0f);
 	trackDecalOffset   = table.GetFloat("trackOffset",   0.0f);
 	trackDecalStrength = table.GetFloat("trackStrength", 0.0f);
 	trackDecalStretch  = table.GetFloat("trackStretch",  1.0f);
-	trackDecalType = -1;
 }
 
 
@@ -68,13 +83,19 @@ float SolidObjectDef::GetModelRadius() const
 	return (LoadModel()->radius);
 }
 
-void SolidObjectDef::SetCollisionVolume(const LuaTable& table)
+void SolidObjectDef::ParseCollisionVolume(const LuaTable& table)
 {
 	collisionVolume = new CollisionVolume(
 		table.GetString("collisionVolumeType", ""),
 		table.GetFloat3("collisionVolumeScales", ZeroVector),
-		table.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		CollisionVolume::COLVOL_HITTEST_CONT
+		table.GetFloat3("collisionVolumeOffsets", ZeroVector)
 	);
+
+	// if this unit wants per-piece volumes, make
+	// its main collision volume deferent and let
+	// it ignore hits
+	collisionVolume->SetDefaultToPieceTree(table.GetBool("usePieceCollisionVolumes", false));
+	collisionVolume->SetDefaultToFootPrint(table.GetBool("useFootPrintCollisionVolume", false));
+	collisionVolume->SetIgnoreHits(collisionVolume->DefaultToPieceTree());
 }
 

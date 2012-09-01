@@ -89,8 +89,7 @@ void CGameHelper::DoExplosionDamage(
 
 	float3 colVolPos;
 
-	const CollisionVolume* colVol = CollisionVolume::GetVolume(unit, colVolPos,
-		unit->unitDef->usePieceCollisionVolumes && unit->HaveLastAttackedPiece(gs->frameNum));
+	const CollisionVolume* colVol = CollisionVolume::GetVolume(unit, colVolPos);
 
 	// linear damage falloff with distance
 	const float expDist = colVol->GetPointDistance(unit, expPos);

@@ -158,7 +158,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 	// takes precedence over the old sphere tags as well
 	// as feature->radius (for feature <---> projectile
 	// interactions)
-	fd->SetCollisionVolume(fdTable);
+	fd->ParseCollisionVolume(fdTable);
 
 	fd->upright = fdTable.GetBool("upright", false);
 
@@ -197,7 +197,7 @@ FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name
 	fd->name = name;
 	fd->description = "Tree";
 	fd->mass = 20;
-	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, CollisionVolume::COLVOL_HITTEST_DISC);
+	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector);
 	return fd;
 }
 
@@ -219,8 +219,9 @@ FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name)
 	fd->zsize = 0;
 	fd->name = name;
 	fd->mass = CSolidObject::DEFAULT_MASS;
-	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, CollisionVolume::COLVOL_HITTEST_DISC);
-	fd->collisionVolume->Disable();
+	// geothermal features have no physical map presence
+	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector);
+	fd->collisionVolume->SetIgnoreHits(true);
 	return fd;
 }
 

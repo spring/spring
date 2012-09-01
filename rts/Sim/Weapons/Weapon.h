@@ -142,7 +142,7 @@ public:
 	bool avoidFeature;      				// if true, try to avoid features while aiming
 	bool avoidNeutral;						// if true, try to avoid neutral units while aiming
 
-	float targetBorder;						// if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
+	float targetBorder;						// if nonzero, units will TryTarget wrt. edge of scaled collision volume instead of centre
 	float cylinderTargeting;				// if greater than 0, range will be checked in a cylinder (height=range*cylinderTargeting) instead of a sphere
 	float minIntensity;						// for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
 	float heightBoostFactor;				// controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
