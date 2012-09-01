@@ -76,7 +76,7 @@ struct TriTreeNode
 class CTriNodePool
 {
 public:
-	static void InitPools();
+	static void InitPools(const size_t newPoolSize = POOL_SIZE);
 	static void FreePools();
 	static void ResetAll();
 	inline static CTriNodePool* GetPool();
@@ -89,6 +89,10 @@ public:
 
 	void Reset();
 	TriTreeNode* AllocateTri();
+
+	bool RunOutOfNodes() const {
+		return (m_NextTriNode >= pool.size());
+	}
 
 private:
 	std::vector<TriTreeNode> pool;
