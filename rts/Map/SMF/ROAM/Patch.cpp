@@ -28,10 +28,10 @@
 
 RenderMode Patch::renderMode = VBO;
 
-
+static size_t poolSize = 0;
 static std::vector<CTriNodePool*> pools;
 
-void CTriNodePool::InitPools()
+void CTriNodePool::InitPools(const size_t newPoolSize)
 {
 	if (pools.empty()) {
 		#pragma omp parallel
@@ -43,7 +43,8 @@ void CTriNodePool::InitPools()
 			#else
 				int numThreads = 1;
 			#endif
-				const size_t allocPerThread = std::max(POOL_SIZE / numThreads, POOL_SIZE / 3);
+				poolSize = newPoolSize;
+				const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
 				pools.reserve(numThreads);
 				for (; numThreads > 0; --numThreads) {
 					pools.push_back(new CTriNodePool(allocPerThread));
@@ -65,6 +66,19 @@ void CTriNodePool::FreePools()
 
 void CTriNodePool::ResetAll()
 {
+	bool runOutOfNodes = false;
+	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
+		if ((*it)->RunOutOfNodes()) {
+			runOutOfNodes = true;
+			break;
+		}
+	}
+	if (runOutOfNodes) {
+		FreePools();
+		InitPools(poolSize * 2);
+		return;
+	}
+
 	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
 		(*it)->Reset();
 	}
@@ -99,7 +113,7 @@ void CTriNodePool::Reset()
 TriTreeNode* CTriNodePool::AllocateTri()
 {
 	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
-	if (m_NextTriNode >= pool.size())
+	if (RunOutOfNodes())
 		return NULL;
 
 	TriTreeNode* pTri = &pool[m_NextTriNode++];
