@@ -448,7 +448,7 @@ void COBJParser::BuildModelPieceTreeRec(
 		(piece->maxs - (localPieceOffsets? piece->goffset: piece->offset)) +
 		(piece->mins - (localPieceOffsets? piece->goffset: piece->offset));
 
-	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT));
+	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
 
 
 	std::vector<int> childPieceNumbers;

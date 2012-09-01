@@ -191,8 +191,6 @@ public:
 
 	std::string scriptName;     ///< the name of the unit's script, e.g. "armjeth.cob"
 
-	bool usePieceCollisionVolumes;		///< if true, projectile collisions are checked per-piece
-
 	std::vector<UnitDefWeapon> weapons;
 	const WeaponDef* shieldWeaponDef;
 	const WeaponDef* stockpileWeaponDef;

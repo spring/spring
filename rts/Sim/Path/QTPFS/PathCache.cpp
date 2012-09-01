@@ -23,7 +23,7 @@ static void GetRectangleCollisionVolume(const SRectangle& r, CollisionVolume& v,
 	rm.y = 0.0f;
 
 	#define CV CollisionVolume
-	v.InitCustom(vScales, ZeroVector, CV::COLVOL_TYPE_BOX, CV::COLVOL_HITTEST_CONT, CV::COLVOL_AXIS_Y);
+	v.InitShape(vScales, ZeroVector, CV::COLVOL_TYPE_BOX, CV::COLVOL_HITTEST_CONT, CV::COLVOL_AXIS_Y);
 	#undef CV
 }
 

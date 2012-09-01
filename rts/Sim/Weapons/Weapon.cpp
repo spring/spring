@@ -981,8 +981,9 @@ bool CWeapon::SetTargetBorderPos(
 	// test for "collision" with a temporarily volume
 	// (scaled uniformly by the absolute target-border
 	// factor)
-	tmpColVol.RescaleAxes(tbScale, tbScale, tbScale);
-	tmpColVol.SetContHitTest(CollisionVolume::COLVOL_HITTEST_DISC);
+	tmpColVol.RescaleAxes(float3(tbScale, tbScale, tbScale));
+	tmpColVol.SetBoundingRadius();
+	tmpColVol.SetUseContHitTest(false);
 
 	targetUnit->collisionVolume = &tmpColVol;
 	targetBorderPos = rawTargetPos;
@@ -1000,7 +1001,7 @@ bool CWeapon::SetTargetBorderPos(
 		// (for positive TB values) or egress (for negative TB values) position;
 		// this either increases or decreases the length of <targetVec> but does
 		// not change its direction
-		tmpColVol.SetContHitTest(CollisionVolume::COLVOL_HITTEST_CONT);
+		tmpColVol.SetUseContHitTest(true);
 
 		// make the ray-segment long enough so it can reach the far side of the
 		// scaled collision volume (helps to ensure a ray-intersection is found)

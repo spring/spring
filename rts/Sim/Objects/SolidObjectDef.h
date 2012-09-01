@@ -12,6 +12,7 @@ class LuaTable;
 
 struct SolidObjectDecalDef {
 public:
+	SolidObjectDecalDef();
 	void Parse(const LuaTable&);
 
 public:
@@ -39,7 +40,7 @@ public:
 
 	S3DModel* LoadModel() const;
 	float GetModelRadius() const;
-	void SetCollisionVolume(const LuaTable& table);
+	void ParseCollisionVolume(const LuaTable& table);
 
 public:
 	int id;

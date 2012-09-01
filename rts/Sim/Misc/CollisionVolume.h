@@ -21,53 +21,56 @@ struct CollisionVolume
 	CR_DECLARE_STRUCT(CollisionVolume);
 
 public:
-	enum COLVOL_SHAPE_TYPES {
-		COLVOL_TYPE_ELLIPSOID =  0,
+	enum {
+		COLVOL_TYPE_ELLIPSOID =  0, // dummy, these become spheres or boxes
 		COLVOL_TYPE_CYLINDER  =  1,
 		COLVOL_TYPE_BOX       =  2,
 		COLVOL_TYPE_SPHERE    =  3,
-		COLVOL_TYPE_FOOTPRINT =  4, // set-intersection of sphere and footprint-prism
-		COLVOL_NUM_SHAPES     =  5, // number of non-disabled collision volume types
 	};
-
-	enum COLVOL_AXES {
-		COLVOL_AXIS_X   = 0,
-		COLVOL_AXIS_Y   = 1,
-		COLVOL_AXIS_Z   = 2,
-		COLVOL_NUM_AXES = 3         // number of collision volume axes
+	enum {
+		COLVOL_AXIS_X = 0,
+		COLVOL_AXIS_Y = 1,
+		COLVOL_AXIS_Z = 2,
 	};
-	enum COLVOL_HITTEST_TYPES {
+	enum {
 		COLVOL_HITTEST_DISC = 0,
 		COLVOL_HITTEST_CONT = 1,
-		COLVOL_NUM_HITTESTS = 2     // number of hit-test types
 	};
 
 public:
 	CollisionVolume();
-	CollisionVolume(const CollisionVolume* v, float defaultRadius = 0.0f);
+	CollisionVolume(const CollisionVolume* v) { *this = *v; }
 	CollisionVolume(
 		const std::string& cvTypeStr,
 		const float3& cvScales,
-		const float3& cvOffsets,
-		const bool cvContHitTest
+		const float3& cvOffsets
 	);
 
 	/**
 	 * Called if a unit or feature does not define a custom volume.
-	 * @param r the object's default radius
+	 * @param radius the object's default radius
 	 */
-	void InitSphere(float r);
-	void InitCustom(const float3& scales, const float3& offsets, int vType, int tType, int pAxis);
+	void InitSphere(float radius);
+	void InitBox(const float3& scales);
+	void InitShape(
+		const float3& scales,
+		const float3& offsets,	
+		const int vType,
+		const int tType,
+		const int pAxis
+	);
 
-	void RescaleAxes(const float xs, const float ys, const float zs);
-	void SetAxisScales(const float xs, const float ys, const float zs);
+	void RescaleAxes(const float3& scales);
+	void SetAxisScales(const float3& scales);
+	void SetBoundingRadius();
 
 	int GetVolumeType() const { return volumeType; }
 	void SetVolumeType(int type) { volumeType = type; }
 
-	void Enable() { disabled = false; }
-	void Disable() { disabled = true; }
-	void SetContHitTest(bool cont) { contHitTest = cont; }
+	void SetIgnoreHits(bool b) { ignoreHits = b; }
+	void SetUseContHitTest(bool b) { useContHitTest = b; }
+	void SetDefaultToPieceTree(bool b) { defaultToPieceTree = b; }
+	void SetDefaultToFootPrint(bool b) { defaultToFootPrint = b; }
 
 	int GetPrimaryAxis() const { return volumeAxes[0]; }
 	int GetSecondaryAxis(int axis) const { return volumeAxes[axis + 1]; }
@@ -86,18 +89,19 @@ public:
 	const float3& GetHSqScales() const { return hsqAxisScales; }
 	const float3& GetHIScales() const { return hiAxisScales; }
 
-	bool IsDisabled() const { return disabled; }
-	bool DefaultScale() const { return defaultScale; }
-	bool GetContHitTest() const { return contHitTest; }
+	bool IgnoreHits() const { return ignoreHits; }
+	bool UseContHitTest() const { return useContHitTest; }
+	bool DefaultToSphere() const { return (fAxisScales.x == 1.0f && fAxisScales.y == 1.0f && fAxisScales.z == 1.0f); }
+	bool DefaultToFootPrint() const { return defaultToFootPrint; }
+	bool DefaultToPieceTree() const { return defaultToPieceTree; }
 
 	float GetPointDistance(const CUnit* u, const float3& pw) const;
 	float GetPointDistance(const CFeature* u, const float3& pw) const;
 
-	static const CollisionVolume* GetVolume(const CUnit* u, float3& pos, bool);
+	static const CollisionVolume* GetVolume(const CUnit* u, float3& pos);
 	static const CollisionVolume* GetVolume(const CFeature* f, float3& pos);
 
 private:
-	void SetBoundingRadius();
 	float GetPointSurfaceDistance(const CSolidObject* o, const CMatrix44f& m, const float3& pw) const;
 
 	float3 fAxisScales;                 ///< full-length axis scales
@@ -112,9 +116,11 @@ private:
 	int volumeType;                     ///< which COLVOL_TYPE_* shape we have
 	int volumeAxes[3];                  ///< [0] is prim. axis, [1] and [2] are sec. axes (all COLVOL_AXIS_*)
 
-	bool disabled;
-	bool defaultScale;
-	bool contHitTest;
+	bool ignoreHits;                    /// if true, CollisionHandler does not check for hits against us
+	bool useContHitTest;                /// if true, CollisionHandler does continuous instead of discrete hit-testing
+	bool defaultToFootPrint;            /// if true, volume becomes a box with dimensions equal to a SolidObject's {x,z}size
+	bool defaultToPieceTree;            /// if true, volume is owned by a unit but defaults to piece-volume tree for hit-testing
 };
 
 #endif
+

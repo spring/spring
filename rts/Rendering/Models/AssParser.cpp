@@ -479,8 +479,8 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	// FIXME add metatable tags for this!!!!
 	const float3 cvScales = piece->maxs - piece->mins;
 	const float3 cvOffset = (piece->maxs - piece->offset) + (piece->mins - piece->offset);
-	//const float3 cvOffset(piece->offset.x, piece->offset.y, piece->offset.z);
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset, CollisionVolume::COLVOL_HITTEST_CONT);
+
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset);
 
 	//! Get parent name from metadata or model
 	if (pieceTable.KeyExists("parent")) {

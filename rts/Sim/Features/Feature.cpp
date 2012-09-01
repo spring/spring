@@ -143,8 +143,8 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	health   = def->health;
 	blocking = def->blocking;
 
-	xsize    = ((facing & 1) == 0) ? def->xsize : def->zsize;
-	zsize    = ((facing & 1) == 1) ? def->xsize : def->zsize;
+	xsize = ((facing & 1) == 0) ? def->xsize : def->zsize;
+	zsize = ((facing & 1) == 1) ? def->xsize : def->zsize;
 
 	noSelect = def->noSelect;
 
@@ -170,7 +170,12 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	CalculateTransform();
 
 	// note: gets deleted in ~CSolidObject
-	collisionVolume = new CollisionVolume(def->collisionVolume, radius);
+	collisionVolume = new CollisionVolume(def->collisionVolume);
+
+	if (collisionVolume->DefaultToSphere())
+		collisionVolume->InitSphere(radius);
+	if (collisionVolume->DefaultToFootPrint())
+		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
 
 	featureHandler->AddFeature(this);
 	qf->AddFeature(this);

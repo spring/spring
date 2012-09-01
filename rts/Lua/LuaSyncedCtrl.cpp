@@ -1794,11 +1794,7 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES)   { luaL_argerror(L,  8, "invalid vType"); }
-	if (tType >= CollisionVolume::COLVOL_NUM_HITTESTS) { luaL_argerror(L,  9, "invalid tType"); }
-	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES)     { luaL_argerror(L, 10, "invalid pAxis"); }
-
-	unit->collisionVolume->InitCustom(scales, offsets, vType, tType, pAxis);
+	unit->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
 	return 0;
 }
 
@@ -1840,7 +1836,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 		arg = 7;
 	}
 	if (!enable) {
-		lmp->GetCollisionVolume()->Disable();
+		lmp->GetCollisionVolume()->SetIgnoreHits(true);
 		return 0;
 	}
 
@@ -1857,17 +1853,14 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	const float zo  = luaL_checkfloat(L, arg++);
 	const unsigned int vType = luaL_checkint(L, arg++);
 	const unsigned int pAxis = luaL_checkint(L, arg++);
-	const unsigned int tType = CollisionVolume::COLVOL_HITTEST_CONT;
+	const unsigned int tType = luaL_checkint(L, arg++);
 
 	const float3 scales(xs, ys, zs);
 	const float3 offset(xo, yo, zo);
 
-	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES) { luaL_argerror(L, arg - 2, "invalid vType"); }
-	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES)   { luaL_argerror(L, arg - 1, "invalid pAxis"); }
-
 	// finish
-	lmp->GetCollisionVolume()->InitCustom(scales, offset, vType, tType, pAxis);
-	lmp->GetCollisionVolume()->Enable();
+	lmp->GetCollisionVolume()->InitShape(scales, offset, vType, tType, pAxis);
+	lmp->GetCollisionVolume()->SetIgnoreHits(false);
 
 	return 0;
 }
@@ -2529,7 +2522,7 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	feature->collisionVolume->InitCustom(scales, offsets, vType, tType, pAxis);
+	feature->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
 	return 0;
 }
 
