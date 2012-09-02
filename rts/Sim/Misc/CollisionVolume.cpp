@@ -308,6 +308,7 @@ float CollisionVolume::GetPointDistance(const CFeature* f, const float3& pw) con
 	CMatrix44f m = f->transMatrix;
 
 	m.Translate(f->relMidPos * WORLD_TO_OBJECT_SPACE);
+	mv.Translate(GetOffsets());
 	m.InvertAffineInPlace();
 
 	return (GetPointSurfaceDistance(m, pw));
