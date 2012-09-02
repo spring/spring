@@ -46,6 +46,8 @@ public:
 		const float3& cvOffsets
 	);
 
+	CollisionVolume& operator = (const CollisionVolume&);
+
 	/**
 	 * Called if a unit or feature does not define a custom volume.
 	 * @param radius the object's default radius
@@ -102,7 +104,7 @@ public:
 	static const CollisionVolume* GetVolume(const CFeature* f, float3& pos);
 
 private:
-	float GetPointSurfaceDistance(const CSolidObject* o, const CMatrix44f& m, const float3& pw) const;
+	float GetPointSurfaceDistance(const CMatrix44f& m, const float3& pw) const;
 
 	float3 fAxisScales;                 ///< full-length axis scales
 	float3 hAxisScales;                 ///< half-length axis scales
