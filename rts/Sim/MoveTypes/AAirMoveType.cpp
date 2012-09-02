@@ -295,7 +295,10 @@ bool AAirMoveType::MoveToRepairPad() {
 			reservedLandingPos = absPadPos;
 			wantedHeight = absPadPos.y - ground->GetHeightAboveWater(absPadPos.x, absPadPos.z);
 
-			if ((owner->pos.SqDistance(absPadPos) < SQUARE_SIZE * SQUARE_SIZE) || aircraftState == AIRCRAFT_LANDED) {
+			const float curPadDistanceSq = owner->midPos.SqDistance(absPadPos);
+			const float minPadDistanceSq = owner->radius * owner->radius;
+
+			if (curPadDistanceSq < minPadDistanceSq || aircraftState == AIRCRAFT_LANDED) {
 				padStatus = PAD_STATUS_ARRIVED;
 				owner->speed = ZeroVector;
 			}
