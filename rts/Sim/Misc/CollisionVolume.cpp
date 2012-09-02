@@ -305,7 +305,12 @@ float CollisionVolume::GetPointDistance(const CUnit* u, const float3& pw) const 
 }
 
 float CollisionVolume::GetPointDistance(const CFeature* f, const float3& pw) const {
-	return (GetPointSurfaceDistance((f->transMatrix).InvertAffine(), pw));
+	CMatrix44f m = f->transMatrix;
+
+	m.Translate(f->relMidPos * WORLD_TO_OBJECT_SPACE);
+	m.InvertAffineInPlace();
+
+	return (GetPointSurfaceDistance(m, pw));
 }
 
 float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float3& pw) const {
