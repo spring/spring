@@ -162,6 +162,8 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p, CollisionQ
 	if (q && hit) {
 		q->b0 = true; q->t0 = 0.0f; q->p0 = p;
 	}
+
+	return hit;
 }
 
 
