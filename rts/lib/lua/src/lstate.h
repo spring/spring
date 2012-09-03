@@ -134,8 +134,8 @@ struct lua_State {
   GCObject *gclist;
   struct lua_longjmp *errorJmp;  /* current error recover point */
   ptrdiff_t errfunc;  /* current error handling function (stack index) */
-	boost::recursive_mutex *luamutex;
-	luaContextData *lcd;
+  boost::recursive_mutex *luamutex; // Spring MT needs this
+  luaContextData *lcd; // Spring MT needs this
 };
 
 
