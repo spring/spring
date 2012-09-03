@@ -63,15 +63,15 @@ int GetExitCode();
  * Spring's exception handler additions to BASE for non DEBUG builds.
  */
 #define CATCH_SPRING_ERRORS_EXTENDED                                                        \
-	catch (const boost::system::system_error& e) {                                          \
-		std::ostringstream ss;                                                              \
-		ss << e.code().value() << ": " << e.what();                                         \
-		ErrorMessageBox(ss.str(), "Spring: Fatal Error (boost)", MBF_OK | MBF_CRASH);       \
-	}                                                                                       \
 	catch (const boost::lock_error& e) {                                                    \
 		std::ostringstream ss;                                                              \
 		ss << e.native_error() << ": " << e.what();                                         \
 		ErrorMessageBox(ss.str(), "Spring: Fatal Error (boost-lock)", MBF_OK | MBF_CRASH);  \
+	}                                                                                       \
+	catch (const boost::system::system_error& e) {                                          \
+		std::ostringstream ss;                                                              \
+		ss << e.code().value() << ": " << e.what();                                         \
+		ErrorMessageBox(ss.str(), "Spring: Fatal Error (boost)", MBF_OK | MBF_CRASH);       \
 	}                                                                                       \
 	catch (const std::exception& e) {                                                       \
 		ErrorMessageBox(e.what(), "Spring: Fatal Error (general)", MBF_OK | MBF_CRASH);     \
