@@ -111,7 +111,8 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 		unsortedFeatures.insert(f);
 	}
 
-	groundDecals->AddSolidObject(f, f->pos);
+	if (f->objectDef->decalDef.useGroundDecal)
+		groundDecals->MoveSolidObject(f, f->pos);
 }
 
 void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
@@ -132,7 +133,8 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 		cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 	}
 
-	groundDecals->RemoveSolidObject(f, NULL);
+	if (feature->objectDef->decalDef.useGroundDecal)
+		groundDecals->RemoveSolidObject(f, NULL);
 }
 
 
