@@ -1027,12 +1027,13 @@ void CUnit::SlowUpdateWeapons() {
 			//     either 1) ::AttackUnit was called with a (non-NULL)
 			//     target-unit which the CAI did *not* auto-select, or
 			//     2) ::AttackGround was called with any user-selected
-			//     position
+			//     position and all checks succeeded
 			if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
 				if (attackTarget != NULL) {
 					w->AttackUnit(attackTarget, w->haveUserTarget);
 				} else if (userAttackGround) {
-					w->AttackGround(attackPos, w->haveUserTarget);
+					// this implies a user-order
+					w->AttackGround(attackPos, true);
 				}
 			}
 
@@ -1572,6 +1573,8 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 {
 	bool ret = false;
 
+	// remember whether this was a user-order for SlowUpdateWeapons
+	// (because CCommandAI does not keep calling us, but ::SUW does)
 	haveManualFireRequest = wantManualFire;
 	userAttackGround = isUserTarget;
 
@@ -1589,7 +1592,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 		w->haveUserTarget = false; // this should be false for ground-attack commands
 
 		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
-			ret |= (w->AttackGround(pos, true));
+			ret |= (w->AttackGround(pos, isUserTarget));
 		}
 	}
 

@@ -308,9 +308,6 @@ bool CMobileCAI::RefuelIfNeeded()
 			const float3& landingPos = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
 
 			if (landingPos != ZeroVector) {
-				// NOTE: owner->userAttackGround is wrongly reset to
-				// true in CUnit::AttackGround() via ExecuteAttack()
-				// so don't call it
 				SetGoal(landingPos, owner->pos);
 			} else {
 				StopMove();
