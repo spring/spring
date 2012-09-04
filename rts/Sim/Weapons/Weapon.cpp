@@ -533,7 +533,7 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
-	if (!TryTarget(newTargetPos, isUserTarget, NULL))
+	if ((!weaponDef->stockpile || numStockpiled) && !TryTarget(newTargetPos, isUserTarget, NULL))
 		return false;
 
 	if (targetUnit != NULL) {
@@ -603,7 +603,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * newTargetUnit->speed.Length() * (1.0f - owner->limExperience));
 	const float3 newTargetPos = errorPos + errorVector * errorScale;
 
-	if (!TryTarget(newTargetPos, isUserTarget, newTargetUnit))
+	if ((!weaponDef->stockpile || numStockpiled) && !TryTarget(newTargetPos, isUserTarget, newTargetUnit))
 		return false;
 
 	if (targetUnit != NULL) {
