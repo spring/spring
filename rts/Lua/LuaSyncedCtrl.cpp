@@ -2205,15 +2205,11 @@ int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
-	if (unit == NULL) {
+	if (unit == NULL)
 		return 0;
-	}
 
-	CBuilding* building = dynamic_cast<CBuilding*>(unit);
-
-	if (building != NULL) {
-		groundDecals->ForceRemoveSolidObject(building);
-	}
+	if (unit->unitDef->decalDef.useGroundDecal)
+		groundDecals->ForceRemoveSolidObject(unit);
 
 	return 0;
 }

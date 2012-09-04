@@ -140,7 +140,7 @@ public:
 	void AddExplosion(float3 pos, float damage, float radius, bool);
 	void ExplosionOccurred(const CExplosionEvent& event);
 
-	void AddSolidObject(CSolidObject* object, const float3& pos);
+	void MoveSolidObject(CSolidObject* object, const float3& pos);
 	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
 	void ForceRemoveSolidObject(CSolidObject* object);
 	int GetSolidObjectDecalType(const std::string& name);

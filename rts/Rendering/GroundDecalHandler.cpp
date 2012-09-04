@@ -435,10 +435,12 @@ void CGroundDecalHandler::DrawObjectDecals() {
 					SolidObjectGroundDecal* decal = *bgdi;
 					CSolidObject* decalOwner = decal->owner;
 					CUnit* decalOwnerUnit = dynamic_cast<CUnit*>(decalOwner);
+					CFeature* decalOwnerFeature = (decalOwnerUnit != NULL) ? NULL : static_cast<CFeature *>(decalOwner); // can only be feature or unit
 
-					if (decalOwnerUnit != NULL && decalOwnerUnit->buildProgress >= 0.0f) {
-						decal->alpha = decalOwnerUnit->buildProgress;
-					} else if (decal->gbOwner == NULL) {
+					if (decalOwnerUnit != NULL) {
+						if (decalOwnerUnit->buildProgress >= 0.0f)
+							decal->alpha = decalOwnerUnit->buildProgress;
+					} else if (decalOwner == NULL && decal->gbOwner == NULL) {
 						decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * gs->speedFactor);
 					}
 
@@ -450,14 +452,15 @@ void CGroundDecalHandler::DrawObjectDecals() {
 
 						delete decal;
 
-						set<SolidObjectGroundDecal*>::iterator next(bgdi); ++next;
-						bdt->objectDecals.erase(bgdi);
-						bgdi = next;
+						bgdi = set_erase(bdt->objectDecals, bgdi);
 
 						continue;
 					}
 
-					if (decalOwner == NULL || (decalOwnerUnit != NULL && decalOwnerUnit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) || gu->spectatingFullView) {
+					if (decalOwner == NULL || 
+						(decalOwnerUnit != NULL && (decalOwnerUnit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS))) || 
+						(decalOwnerFeature != NULL && decalOwnerFeature->IsInLosForAllyTeam(gu->myAllyTeam)) || // FIXME: Support "Prev Los" stuff for features?
+						gu->spectatingFullView) {
 						decalsToDraw.push_back(decal);
 					}
 
@@ -795,24 +798,20 @@ void CGroundDecalHandler::RenderUnitMoved(const CUnit* unit, const float3& newpo
 
 void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newpos)
 {
-	if (unit->unitDef->canmove) {
-		if (!unit->leaveTracks)
-			return;
+	if (unit->unitDef->decalDef.useGroundDecal)
+		MoveSolidObject(const_cast<CUnit *>(unit), newpos);
 
-		if (unit->unitDef->decalDef.trackDecalType < 0 || !unit->unitDef->IsGroundUnit())
-			return;
-
-		if (unit->myTrack != NULL && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
-			return;
-
-		if (!((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView))
-			return;
-	}
-	else { // possibly a building
-		RemoveSolidObject(const_cast<CUnit *>(unit), NULL);
-		AddSolidObject(const_cast<CUnit *>(unit), newpos);
+	if (!unit->leaveTracks)
 		return;
-	}
+
+	if (unit->unitDef->decalDef.trackDecalType < 0 || !unit->unitDef->IsGroundUnit())
+		return;
+
+	if (unit->myTrack != NULL && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
+		return;
+
+	if (!((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView))
+		return;
 
 	const SolidObjectDecalDef& decalDef = unit->unitDef->decalDef;
 	const int zp = (int(newpos.z) / SQUARE_SIZE * 2);
@@ -1118,21 +1117,22 @@ void CGroundDecalHandler::RemoveScar(Scar* scar, bool removeFromScars)
 }
 
 
-void CGroundDecalHandler::AddSolidObject(CSolidObject* object, const float3& pos)
+void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& pos)
 {
-	const SolidObjectDecalDef& decalDef = object->objectDef->decalDef;
-
 	if (decalLevel == 0)
 		return;
-	if (!decalDef.useGroundDecal)
-		return;
+
+	const SolidObjectDecalDef& decalDef = object->objectDef->decalDef;
 	if (decalDef.groundDecalType < 0)
 		return;
 
 	GML_STDMUTEX_LOCK(decal); // AddSolidObject
 
-	if (object->groundDecal != NULL)
-		return;
+	SolidObjectGroundDecal* olddecal = object->groundDecal;
+	if (olddecal != NULL) {
+		olddecal->owner = NULL;
+		olddecal->gbOwner = NULL;
+	}
 
 	const int sizex = decalDef.groundDecalSizeX;
 	const int sizey = decalDef.groundDecalSizeY;
@@ -1166,10 +1166,10 @@ void CGroundDecalHandler::AddSolidObject(CSolidObject* object, const float3& pos
 
 void CGroundDecalHandler::RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb)
 {
-	const SolidObjectDecalDef& decalDef = object->objectDef->decalDef;
-
-	if (!decalDef.useGroundDecal)
+	if (decalLevel == 0)
 		return;
+
+	const SolidObjectDecalDef& decalDef = object->objectDef->decalDef;
 
 	GML_STDMUTEX_LOCK(decal); // RemoveSolidObject
 
@@ -1192,9 +1192,7 @@ void CGroundDecalHandler::RemoveSolidObject(CSolidObject* object, GhostSolidObje
  */
 void CGroundDecalHandler::ForceRemoveSolidObject(CSolidObject* object)
 {
-	if (object == NULL)
-		return;
-	if (!object->objectDef->decalDef.useGroundDecal)
+	if (decalLevel == 0)
 		return;
 
 	GML_STDMUTEX_LOCK(decal); // ForcedRemoveSolidObject
@@ -1212,9 +1210,8 @@ void CGroundDecalHandler::ForceRemoveSolidObject(CSolidObject* object)
 
 int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
 {
-	if (decalLevel == 0) {
+	if (decalLevel == 0)
 		return -1;
-	}
 
 	const std::string& lowerName = StringToLower(name);
 	const std::string& fullName = "unittextures/" + lowerName;
@@ -1258,16 +1255,16 @@ void CGroundDecalHandler::ExplosionOccurred(const CExplosionEvent& event) {
 }
 
 void CGroundDecalHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {
-	if (feature->def->drawType == DRAWTYPE_MODEL) {
-		RemoveSolidObject(const_cast<CFeature *>(feature), NULL);
-		AddSolidObject(const_cast<CFeature *>(feature), newpos);
-	}
+	if (feature->objectDef->decalDef.useGroundDecal && (feature->def->drawType == DRAWTYPE_MODEL))
+		MoveSolidObject(const_cast<CFeature *>(feature), newpos);
 }
 
 void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) {
-	RemoveSolidObject(const_cast<CUnit *>(unit), NULL); // FIXME: Add a RenderUnitLoaded event
+	if (unit->unitDef->decalDef.useGroundDecal)
+		RemoveSolidObject(const_cast<CUnit *>(unit), NULL); // FIXME: Add a RenderUnitLoaded event
 }
 
 void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) {
-	AddSolidObject(const_cast<CUnit *>(unit), unit->pos); // FIXME: Add a RenderUnitUnloaded event
+	if (unit->unitDef->decalDef.useGroundDecal)
+		MoveSolidObject(const_cast<CUnit *>(unit), unit->pos); // FIXME: Add a RenderUnitUnloaded event
 }
