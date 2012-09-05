@@ -1955,9 +1955,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 		speed = ZeroVector;
 		stunned = true;
 		paralyzeDamage = 100.0f * maxHealth;
-		if (health < 0.0f) {
-			health = 0.0f;
-		}
+		health = std::max(health, 0.0f);
 	}
 }
 

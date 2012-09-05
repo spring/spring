@@ -245,39 +245,35 @@ void CHoverAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressi
 void CHoverAirMoveType::ExecuteStop()
 {
 	wantToStop = false;
+	wantedSpeed = ZeroVector;
 
 	switch (aircraftState) {
-		case AIRCRAFT_TAKEOFF:
+		case AIRCRAFT_TAKEOFF: {
 			if (!dontLand && autoLand) {
 				SetState(AIRCRAFT_LANDING);
 				// trick to land directly
 				waitCounter = GAME_SPEED;
 				break;
-			} // let it fall through
-		case AIRCRAFT_FLYING:
-			if (owner->unitDef->DontLand()) {
+			}
+		} // fall through
+		case AIRCRAFT_FLYING: {
+			if (owner->unitDef->DontLand() || dontLand || !autoLand) {
 				goalPos = owner->pos;
 				SetState(AIRCRAFT_HOVERING);
-			} else if (dontLand || !autoLand) {
-				goalPos = owner->pos;
-				wantedSpeed = ZeroVector;
 			} else {
 				SetState(AIRCRAFT_LANDING);
 			}
-			break;
-		case AIRCRAFT_LANDING:
-			break;
-		case AIRCRAFT_LANDED:
-			break;
-		case AIRCRAFT_CRASHING:
-			break;
-		case AIRCRAFT_HOVERING:
+		} break;
+		case AIRCRAFT_LANDING: {} break;
+		case AIRCRAFT_LANDED: {} break;
+		case AIRCRAFT_CRASHING: {} break;
+		case AIRCRAFT_HOVERING: {
 			if (!dontLand && autoLand) {
 				// land immediately
 				SetState(AIRCRAFT_LANDING);
 				waitCounter = GAME_SPEED;
 			}
-			break;
+		} break;
 	}
 }
 
@@ -287,6 +283,7 @@ void CHoverAirMoveType::StopMoving()
 	forceHeading = false;
 	owner->isMoving = false;
 	wantedHeight = orgWantedHeight;
+
 	if (progressState != AMoveType::Failed)
 		progressState = AMoveType::Done;
 }
@@ -805,13 +802,8 @@ bool CHoverAirMoveType::Update()
 
 	AAirMoveType::Update();
 
-	if (owner->stunned || owner->beingBuilt) {
-		wantedSpeed = ZeroVector;
-		wantToStop = true;
-	}
-
 	// Allow us to stop if wanted
-	if (wantToStop) {
+	if (wantToStop || owner->stunned || owner->beingBuilt) {
 		ExecuteStop();
 	}
 
