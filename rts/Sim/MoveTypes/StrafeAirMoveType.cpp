@@ -970,7 +970,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 
 
 	speed += (engineThrustVector * maxAcc * engine);
-	speed.y += (mapInfo->map.gravity * myGravity * (owner->beingBuilt? 0.0f: 1.0f));
+	speed.y += (mapInfo->map.gravity * myGravity);
 
 	if (aircraftState == AIRCRAFT_CRASHING) {
 		speed *= crashDrag;
@@ -988,6 +988,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 
 	speed -= (wingDir * wingForce);
 	speed += ((frontdir * speedf - speed) * speedToFront);
+	speed *= (1 - int(owner->beingBuilt && aircraftState == AIRCRAFT_LANDED));
 
 	if (nextPosInBounds) {
 		owner->Move3D(speed, true);
