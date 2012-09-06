@@ -2725,8 +2725,8 @@ int LuaSyncedRead::GetUnitIsStunned(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushboolean(L, unit->stunned || unit->beingBuilt);
-	lua_pushboolean(L, unit->stunned);
+	lua_pushboolean(L, unit->IsStunned() || unit->beingBuilt);
+	lua_pushboolean(L, unit->IsStunned());
 	lua_pushboolean(L, unit->beingBuilt);
 	return 3;
 }

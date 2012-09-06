@@ -234,7 +234,7 @@ bool CGroundMoveType::Update()
 
 	const short heading = owner->heading;
 
-	if (owner->stunned || owner->beingBuilt) {
+	if (owner->IsStunned() || owner->beingBuilt) {
 		owner->script->StopMoving();
 		ChangeSpeed(0.0f, false);
 	} else {

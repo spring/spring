@@ -96,7 +96,7 @@ void CTransportUnit::Update()
 		transportee->SetHeadingFromDirection();
 
 		// see ::AttachUnit
-		if (transportee->stunned) {
+		if (transportee->IsStunned()) {
 			qf->MovedUnit(transportee);
 		}
 	}
@@ -204,7 +204,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 					transportee->commandAI->GiveCommand(c);
 				}
 
-				transportee->stunned = (transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
+				transportee->SetStunned(transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
 				transportee->speed = speed * (0.5f + 0.5f * gs->randFloat());
 
 				if (CBuilding* building = dynamic_cast<CBuilding*>(transportee)) {
@@ -315,9 +315,9 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	unit->transporter = this;
 	unit->toBeTransported = false;
-	unit->stunned = !unitDef->isFirePlatform;
+	unit->SetStunned(!unitDef->isFirePlatform);
 
-	if (unit->stunned) {
+	if (unit->IsStunned()) {
 		// make sure unit does not fire etc in transport
 		selectedUnits.RemoveUnit(unit);
 	}
@@ -382,7 +382,7 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			}
 
 			// de-stun detaching units in case we are not a fire-platform
-			unit->stunned = (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
+			unit->SetStunned(unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
 
 			unit->moveType->SlowUpdate();
 			unit->moveType->LeaveTransport();

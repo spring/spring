@@ -802,10 +802,13 @@ bool CHoverAirMoveType::Update()
 
 	AAirMoveType::Update();
 
-	// Allow us to stop if wanted
-	if (wantToStop || owner->stunned || owner->beingBuilt) {
-		ExecuteStop();
+	if (owner->IsStunned() || owner->beingBuilt) {
+		speed = ZeroVector;
+		return (HandleCollisions());
 	}
+	// Allow us to stop if wanted
+	if (wantToStop)
+		ExecuteStop();
 
 	const float3 lastSpeed = speed;
 

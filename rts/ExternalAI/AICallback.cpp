@@ -703,7 +703,7 @@ bool CAICallback::IsUnitParalyzed(int unitId) {
 	verify();
 	const CUnit* unit = GetInLosUnit(unitId);
 	if (unit) {
-		isParalyzed = unit->stunned;
+		isParalyzed = unit->IsStunned();
 	}
 
 	return isParalyzed;

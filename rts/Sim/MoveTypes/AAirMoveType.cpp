@@ -264,7 +264,7 @@ void AAirMoveType::CheckForCollision()
 bool AAirMoveType::MoveToRepairPad() {
 	CUnit* airBase = reservedPad->GetUnit();
 
-	if (airBase->beingBuilt || airBase->stunned) {
+	if (airBase->beingBuilt || airBase->IsStunned()) {
 		// pad became inoperable after being reserved
 		DependentDied(airBase);
 		return false;

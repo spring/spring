@@ -386,7 +386,7 @@ bool CAICheats::IsUnitParalyzed(int unitId) const
 
 	const CUnit* unit = GetUnit(unitId);
 	if (unit) {
-		stunned = unit->stunned;
+		stunned = unit->IsStunned();
 	}
 
 	return stunned;
