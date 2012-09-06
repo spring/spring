@@ -10,7 +10,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Units/CommandAI/Command.h"

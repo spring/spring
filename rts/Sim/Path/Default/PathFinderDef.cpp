@@ -2,7 +2,7 @@
 
 #include "PathFinderDef.h"
 #include "Map/ReadMap.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 
 CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance):

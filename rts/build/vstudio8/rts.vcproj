@@ -4384,11 +4384,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveInfo.cpp"
+					RelativePath="..\..\Sim\MoveTypes\MoveDefHandler.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveInfo.h"
+					RelativePath="..\..\Sim\MoveTypes\MoveDefHandler.h"
 					>
 				</File>
 				<File

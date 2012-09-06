@@ -17,7 +17,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "System/creg/STL_List.h"
 #include "System/myMath.h"

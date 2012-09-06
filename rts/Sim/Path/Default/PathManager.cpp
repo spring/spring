@@ -8,7 +8,7 @@
 #include "PathEstimator.h"
 #include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"

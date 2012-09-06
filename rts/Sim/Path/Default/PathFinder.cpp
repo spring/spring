@@ -11,7 +11,7 @@
 #include "PathLog.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
 
 #define PATHDEBUG 0

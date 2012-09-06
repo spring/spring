@@ -4,7 +4,7 @@
 #include "QTPFSPathDrawer.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/GL/myGL.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Path/Default/PathManager.h"
 #include "Sim/Path/QTPFS/PathManager.hpp"

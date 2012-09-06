@@ -3,7 +3,7 @@
 #include <boost/lexical_cast.hpp>
 #include "System/mmgr.h"
 
-#include "MoveInfo.h"
+#include "MoveDefHandler.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "Map/ReadMap.h"

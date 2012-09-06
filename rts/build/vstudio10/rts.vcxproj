@@ -744,7 +744,7 @@
     <ClInclude Include="..\..\Sim\MoveTypes\ClassicGroundMoveType.h" />
     <ClInclude Include="..\..\Sim\MoveTypes\GroundMoveType.h" />
     <ClInclude Include="..\..\Sim\MoveTypes\HoverAirMoveType.h" />
-    <ClInclude Include="..\..\Sim\MoveTypes\MoveInfo.h" />
+    <ClInclude Include="..\..\Sim\MoveTypes\MoveDefHandler.h" />
     <ClInclude Include="..\..\Sim\MoveTypes\MoveType.h" />
     <ClInclude Include="..\..\Sim\MoveTypes\MoveTypeFactory.h" />
     <ClInclude Include="..\..\Sim\MoveTypes\ScriptMoveType.h" />
@@ -1904,7 +1904,7 @@
     <ClCompile Include="..\..\Sim\MoveTypes\ClassicGroundMoveType.cpp" />
     <ClCompile Include="..\..\Sim\MoveTypes\GroundMoveType.cpp" />
     <ClCompile Include="..\..\Sim\MoveTypes\HoverAirMoveType.cpp" />
-    <ClCompile Include="..\..\Sim\MoveTypes\MoveInfo.cpp" />
+    <ClCompile Include="..\..\Sim\MoveTypes\MoveDefHandler.cpp" />
     <ClCompile Include="..\..\Sim\MoveTypes\MoveType.cpp" />
     <ClCompile Include="..\..\Sim\MoveTypes\MoveTypeFactory.cpp" />
     <ClCompile Include="..\..\Sim\MoveTypes\ScriptMoveType.cpp" />
