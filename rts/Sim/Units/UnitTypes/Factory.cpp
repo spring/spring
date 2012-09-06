@@ -109,7 +109,7 @@ void CFactory::Update()
 
 
 	if (curBuildDef != NULL) {
-		if (!opening && !stunned) {
+		if (!opening && !IsStunned()) {
 			if (groundBlockingObjectMap->CanOpenYard(this)) {
 				script->Activate();
 				groundBlockingObjectMap->OpenBlockingYard(this);
@@ -121,7 +121,7 @@ void CFactory::Update()
 			}
 		}
 
-		if (opening && inBuildStance && !stunned) {
+		if (opening && inBuildStance && !IsStunned()) {
 			StartBuild(curBuildDef);
 		}
 	}
@@ -131,7 +131,7 @@ void CFactory::Update()
 		FinishBuild(curBuild);
 	}
 
-	const bool wantClose = (!stunned && opening && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
+	const bool wantClose = (!IsStunned() && opening && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
 	const bool closeYard = (wantClose && curBuild == NULL && groundBlockingObjectMap->CanCloseYard(this));
 
 	if (closeYard) {
@@ -197,7 +197,7 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 }
 
 void CFactory::UpdateBuild(CUnit* buildee) {
-	if (stunned)
+	if (IsStunned())
 		return;
 
 	// factory not under construction and

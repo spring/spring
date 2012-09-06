@@ -815,7 +815,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 
 	commandQue.push_back(c);
 
-	if (commandQue.size() == 1 && !owner->beingBuilt && !owner->stunned) {
+	if (commandQue.size() == 1 && !owner->beingBuilt && !owner->IsStunned()) {
 		SlowUpdate();
 	}
 }
@@ -941,7 +941,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 
 	if (facBuildQueue) {
 		facCAI->InsertBuildCommand(insertIt, newCmd);
-		if (!owner->stunned) {
+		if (!owner->IsStunned()) {
 			SlowUpdate();
 		}
 		return;
@@ -961,7 +961,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 
 	queue->insert(insertIt, newCmd);
 
-	if (!owner->stunned) {
+	if (!owner->IsStunned()) {
 		SlowUpdate();
 	}
 }
@@ -1416,7 +1416,7 @@ void CCommandAI::FinishCommand()
 	// avoid infinite loops
 	if (lastFinishCommand != gs->frameNum) {
 		lastFinishCommand = gs->frameNum;
-		if (!owner->stunned) {
+		if (!owner->IsStunned()) {
 			SlowUpdate();
 		}
 	}
@@ -1577,7 +1577,7 @@ bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 		return false;
 	}
 	// visible and stunned?
-	if ((target->losStatus[owner->allyteam] & LOS_INLOS) && target->stunned && HasMoreMoveCommands()) {
+	if ((target->losStatus[owner->allyteam] & LOS_INLOS) && target->IsStunned() && HasMoreMoveCommands()) {
 		return true;
 	}
 	return false;

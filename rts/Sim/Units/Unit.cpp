@@ -703,7 +703,7 @@ void CUnit::Update()
 	recentDamage *= 0.9f;
 	flankingBonusMobility += flankingBonusMobilityAdd;
 
-	if (stunned) {
+	if (IsStunned()) {
 		// leave the pad if reserved
 		moveType->UnreservePad(moveType->GetReservedPad());
 
@@ -826,6 +826,19 @@ inline void CUnit::UpdateLosStatus(int at)
 }
 
 
+void CUnit::SetStunned(bool stun) {
+	stunned = stun;
+	if (moveType->progressState == AMoveType::Active) {
+		if (stunned) {
+			script->StopMoving();
+		}
+		else {
+			script->StartMoving();
+		}
+	}
+}
+
+
 void CUnit::SlowUpdate()
 {
 	--nextPosErrorUpdate;
@@ -864,18 +877,18 @@ void CUnit::SlowUpdate()
 
 	UpdateResources();
 
-	if (stunned) {
+	if (IsStunned()) {
 		// de-stun only if we are not (still) inside a non-firebase transport
 		if ((paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health)) &&
 			!(transporter && !transporter->unitDef->isFirePlatform)) {
-			stunned = false;
+			SetStunned(false);
 		}
 
 		SlowUpdateCloak(true);
 		return;
 	}
 
-	if (selfDCountdown && !stunned) {
+	if (selfDCountdown && !IsStunned()) {
 		selfDCountdown--;
 		if (selfDCountdown <= 1) {
 			if (!beingBuilt) {
@@ -1164,7 +1177,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 				health = maxHealth;
 			}
 			if (health > paralyzeDamage && !modInfo.paralyzeOnMaxHealth) {
-				stunned = false;
+				SetStunned(false);
 			}
 		}
 	} else {
@@ -1186,7 +1199,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			// clamp the dealt paralysis-damage to [0, maxParalysisDamage]
 			damage = std::min(damage, std::max(0.0f, maxParalysisDamage));
 
-			if (stunned) {
+			if (IsStunned()) {
 				// no attacker gains experience from a stunned target
 				experienceMod = 0.0f;
 			}
@@ -1195,7 +1208,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			paralyzeDamage += damage;
 
 			if (paralyzeDamage >= baseHealth) {
-				stunned = true;
+				SetStunned(true);
 			}
 		} else {
 			if (paralyzeDamage <= 0.0f) {
@@ -1208,7 +1221,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			paralyzeDamage = std::max(paralyzeDamage, 0.0f);
 
 			if (paralyzeDamage <= baseHealth) {
-				stunned = false;
+				SetStunned(false);
 			}
 		}
 	}
@@ -1953,7 +1966,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	if (!deathScriptFinished) {
 		// put the unit in a pseudo-zombie state until Killed finishes
 		speed = ZeroVector;
-		stunned = true;
+		SetStunned(true);
 		paralyzeDamage = 100.0f * maxHealth;
 		health = std::max(health, 0.0f);
 	}
@@ -2179,7 +2192,7 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 	const bool oldCloak = isCloaked;
 
 	if (stunCheck) {
-		if (stunned && isCloaked && scriptCloak <= 3) {
+		if (IsStunned() && isCloaked && scriptCloak <= 3) {
 			isCloaked = false;
 		}
 	} else {

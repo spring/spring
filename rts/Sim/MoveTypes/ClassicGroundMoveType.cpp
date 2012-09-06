@@ -173,7 +173,7 @@ bool CClassicGroundMoveType::Update()
 
 	bool hasMoved = false;
 
-	if (owner->stunned || owner->beingBuilt) {
+	if (owner->IsStunned() || owner->beingBuilt) {
 		owner->script->StopMoving();
 		owner->speed = ZeroVector;
 	} else {

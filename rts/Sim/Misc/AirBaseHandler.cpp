@@ -133,7 +133,7 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 			// do not pick ourselves as a landing pad
 			continue;
 		}
-		if (baseUnit->beingBuilt || baseUnit->stunned) {
+		if (baseUnit->beingBuilt || baseUnit->IsStunned()) {
 			continue;
 		}
 

@@ -147,6 +147,9 @@ public:
 		return neutral;
 	}
 
+	void SetStunned(bool stun);
+	bool IsStunned() const { return stunned; }
+
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
 
@@ -228,8 +231,6 @@ public:
 
 	/// used by constructing units
 	bool inBuildStance;
-	/// if we are stunned by a weapon or for other reason
-	bool stunned;
 	/// tells weapons that support it to try to use a high trajectory
 	bool useHighTrajectory;
 
@@ -513,6 +514,8 @@ private:
 	static float expHealthScale;
 	static float expReloadScale;
 	static float expGrade;
+	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
+	bool stunned;
 };
 
 #endif // UNIT_H

@@ -154,7 +154,7 @@ void CBuilder::Update()
 {
 	CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
 
-	if (!beingBuilt && !stunned) {
+	if (!beingBuilt && !IsStunned()) {
 		if (terraforming && inBuildStance) {
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
 

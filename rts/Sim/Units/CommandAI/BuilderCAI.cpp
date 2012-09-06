@@ -467,7 +467,7 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
-	if (owner->beingBuilt || owner->stunned) {
+	if (owner->beingBuilt || owner->IsStunned()) {
 		return;
 	}
 

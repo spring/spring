@@ -158,7 +158,7 @@ bool CStrafeAirMoveType::Update()
 	// need to additionally check that we are not crashing,
 	// otherwise we might fall through the map when stunned
 	// (the kill-on-impact code is not reached in that case)
-	if ((owner->stunned && !owner->crashing) || owner->beingBuilt) {
+	if ((owner->IsStunned() && !owner->crashing) || owner->beingBuilt) {
 		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
 		return (HandleCollisions());
 	}

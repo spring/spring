@@ -111,7 +111,7 @@ bool ShieldProjectile::AllowDrawing() {
 	// if the unit that emits this shield is stunned or not
 	// yet finished, prevent the shield segments from being
 	// drawn
-	if (shield->owner->stunned || shield->owner->beingBuilt)
+	if (shield->owner->IsStunned() || shield->owner->beingBuilt)
 		return allowDrawing;
 	if (shieldSegments.empty())
 		return allowDrawing;

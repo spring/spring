@@ -98,7 +98,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 	//   this creates an exploit via Unit::Activate if the unit is
 	//   a transported radar/jammer and leaves a detached coverage
 	//   zone behind
-	if (!unit->activated || unit->stunned)
+	if (!unit->activated || unit->IsStunned())
 		return;
 
 	int2 newPos;
