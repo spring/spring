@@ -3,7 +3,7 @@
 #ifndef MOVEMATH_H
 #define MOVEMATH_H
 
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/float3.h"
 #include "System/Misc/BitwiseEnum.h"

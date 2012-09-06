@@ -4,7 +4,7 @@
 #include "PathManager.hpp"
 #include "Node.hpp"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/myMath.h"
 #include "System/Rectangle.h"

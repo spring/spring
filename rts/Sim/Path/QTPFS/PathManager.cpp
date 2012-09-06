@@ -14,7 +14,7 @@
 #include "Game/LoadScreen.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/Rectangle.h"
 #include "System/Config/ConfigHandler.h"

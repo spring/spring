@@ -8,7 +8,7 @@
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Sim/Path/IPathManager.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 
 #include <stdlib.h>
 #include <algorithm>

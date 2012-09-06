@@ -18,7 +18,7 @@
 #include "PathLog.h"
 #include "Map/ReadMap.h"
 #include "Game/LoadScreen.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
