@@ -12,7 +12,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 #include "System/NetProtocol.h"
 #include "System/Config/ConfigHandler.h"

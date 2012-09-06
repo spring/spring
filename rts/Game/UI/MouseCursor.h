@@ -5,8 +5,6 @@
 
 #include <string>
 #include <vector>
-/// #include "Rendering/GL/myGL.h"
-//#include "HwMouseCursor.h"
 
 class CBitmap;
 class IHwCursor;

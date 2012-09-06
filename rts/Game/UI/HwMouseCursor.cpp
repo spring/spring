@@ -21,7 +21,6 @@
 #if !defined(__APPLE__) && !defined(HEADLESS)
 #include "System/mmgr.h"
 
-#include "Rendering/GL/myGL.h"
 #include "System/bitops.h"
 #include "MouseCursor.h"
 #include "CommandColors.h"

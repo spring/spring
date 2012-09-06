@@ -3,7 +3,7 @@
 #include "DefaultPathDrawer.h"
 #include "QTPFSPathDrawer.h"
 #include "Game/SelectedUnits.h"
-#include "Rendering/GL/myGL.h"
+#include "lib/gml/gmlmut.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Path/Default/PathManager.h"

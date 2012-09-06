@@ -6,7 +6,6 @@
 
 #include <vector>
 #include "System/Vec2.h"
-#include "GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 
 class CSolidObject;

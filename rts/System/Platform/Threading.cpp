@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "lib/gml/gml_base.h"
 #include "Threading.h"
-#include "Rendering/GL/myGL.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 

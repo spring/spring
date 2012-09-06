@@ -14,7 +14,6 @@
 #include "Map/Ground.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/ProjectileDrawer.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
