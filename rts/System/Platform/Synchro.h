@@ -3,8 +3,6 @@
 #ifndef SYNCHRO_H
 #define SYNCHRO_H
 
-#include "Rendering/GL/myGL.h"
-
 #include <boost/version.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/recursive_mutex.hpp>

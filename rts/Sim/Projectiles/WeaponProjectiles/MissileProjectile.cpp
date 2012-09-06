@@ -9,7 +9,6 @@
 #include "MissileProjectile.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/TextureAtlas.h"

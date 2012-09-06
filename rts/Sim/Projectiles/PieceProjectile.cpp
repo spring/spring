@@ -7,7 +7,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"

@@ -8,7 +8,6 @@
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "GameController.h"
-/// \#include "Rendering/GL/myGL.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/OffscreenGLContext.h"
 #include "System/Misc/SpringTime.h"

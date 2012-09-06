@@ -10,7 +10,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Rendering/Colors.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Map/Ground.h"

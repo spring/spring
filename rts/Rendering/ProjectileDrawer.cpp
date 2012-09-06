@@ -15,7 +15,6 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/FBO.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"

@@ -9,7 +9,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/glFont.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"

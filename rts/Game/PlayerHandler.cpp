@@ -5,7 +5,7 @@
 #include "PlayerHandler.h"
 
 #include "Player.h"
-#include "Rendering/GL/myGL.h"
+#include "lib/gml/gmlmut.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/GameSetup.h"
 #include "SelectedUnits.h"
