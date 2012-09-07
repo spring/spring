@@ -20,6 +20,7 @@ if [ -s $COREFILE ]; then
 	cat $GDBCMDS
 	# cleanup
 	rm -f $GDBCMDS
+	rm -f $COREFILE
 fi
 
 }
@@ -85,21 +86,18 @@ echo waiting for host to exit
 # store exit code
 wait $PID_HOST
 EXIT=$?
-
+Analyzecoredump $1 $HOME/.spring/core.$PID_HOST
 
 echo waiting for client to exit
 # get spring client process exit code / wait for exit
 wait $PID_CLIENT
 EXITCHILD=$?
+Analyzecoredump $1 $HOME/.spring/core.$PID_CLIENT
 
 #reenable abbort on error
 set -e
 
 echo Server and client exited
-
-
-Analyzecoredump $1 $HOME/.spring/core.$PID_HOST
-Analyzecoredump $1 $HOME/.spring/core.$PID_CLIENT
 
 
 # wait for client to exit
