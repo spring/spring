@@ -828,11 +828,11 @@ inline void CUnit::UpdateLosStatus(int at)
 
 void CUnit::SetStunned(bool stun) {
 	stunned = stun;
+
 	if (moveType->progressState == AMoveType::Active) {
 		if (stunned) {
 			script->StopMoving();
-		}
-		else {
+		} else {
 			script->StartMoving();
 		}
 	}
