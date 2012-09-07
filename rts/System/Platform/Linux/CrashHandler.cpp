@@ -16,6 +16,7 @@
 #include <boost/static_assert.hpp> // for BOOST_STATIC_ASSERT
 #include <boost/thread.hpp>
 #include <SDL_events.h>
+#include <sys/resource.h> //for getrlimits
 
 #include "thread_backtrace.h"
 #include "System/FileSystem/FileSystem.h"
@@ -571,6 +572,12 @@ namespace CrashHandler
 	}
 
 	void Install() {
+		struct rlimit limits;
+		if ((getrlimit(RLIMIT_CORE, &limits) == 0) && (limits.rlim_max > 0)) {
+			LOG("Core dumps enabled, not installing signal handler");
+			LOG("see /proc/sys/kernel/core_pattern where it gets written");
+			return;
+		}
 		const sigaction_t& sa = GetSigAction(&HandleSignal);
 
 		sigaction(SIGSEGV, &sa, NULL); // segmentation fault
