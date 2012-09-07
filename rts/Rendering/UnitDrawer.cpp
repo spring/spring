@@ -1237,8 +1237,10 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	}
 
 	if (!gu->spectatingFullView) {
-		for (std::set<CUnit*>::const_iterator ui = liveGhostedBuildings.begin(); ui != liveGhostedBuildings.end(); ++ui)
-			DrawCloakedUnit(*ui, modelType, true);
+		for (std::set<CUnit*>::const_iterator ui = liveGhostedBuildings.begin(); ui != liveGhostedBuildings.end(); ++ui) {
+			if (!((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS)) // because of team switching via cheat, ghost buildings can exist for units in LOS
+				DrawCloakedUnit(*ui, modelType, true);
+		}
 	}
 }
 
