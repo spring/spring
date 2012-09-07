@@ -2,6 +2,28 @@
 
 set -e # abort on error
 
+Analyzecoredump() {
+
+SPRING=$1
+COREFILE=$2
+
+if [ -s $COREFILE ]; then
+	echo Core file found, creating backtrace
+	GDBCMDS=$(mktemp)
+	(
+		echo file $SPRING
+		echo core-file $COREFILE
+		echo bt full
+		echo quit
+	)>$GDBCMDS
+	gdb -batch -x $GDBCMDS
+	cat $GDBCMDS
+	# cleanup
+	rm -f $GDBCMDS
+fi
+
+}
+
 if [ $# -le 0 ]; then
 	echo "Usage: $0 /path/to/spring testScript [parameters]"
 	exit 1
@@ -15,6 +37,16 @@ fi
 
 if [ "$(cat /proc/sys/kernel/core_pattern)" != "core" ]; then
 	echo "Please set /proc/sys/kernel/core_pattern to core"
+	exit 1
+fi
+
+if [ "$(cat /proc/sys/kernel/core_pattern)" != "core" ]; then
+	echo "Please run sudo echo core >/proc/sys/kernel/core_pattern"
+	exit 1
+fi
+
+if [ "$(cat /proc/sys/kernel/core_uses_pid)" != "1" ]; then
+	echo "Please run sudo echo 1 >/proc/sys/kernel/core_uses_pid"
 	exit 1
 fi
 
@@ -65,21 +97,10 @@ set -e
 
 echo Server and client exited
 
-COREFILE=$HOME/.spring/core
-if [ -s $COREFILE ]; then
-	echo Core file found, creating backtrace
-	GDBCMDS=$(mktemp)
-	(
-		echo file $1
-		echo core-file $HOME/.spring/core
-		echo bt full
-		echo quit
-	)>$GDBCMDS
-	gdb -batch -x $GDBCMDS
-	cat $GDBCMDS
-	# cleanup
-	rm -f $GDBCMDS
-fi
+
+Analyzecoredump $1 $HOME/.spring/core.$PID_HOST
+Analyzecoredump $1 $HOME/.spring/core.$PID_CLIENT
+
 
 # wait for client to exit
 if [ $EXITCHILD -ne 0 ];
