@@ -257,8 +257,9 @@ void CHoverAirMoveType::ExecuteStop()
 			}
 		} // fall through
 		case AIRCRAFT_FLYING: {
+			goalPos = owner->pos;
+
 			if (owner->unitDef->DontLand() || dontLand || !autoLand) {
-				goalPos = owner->pos;
 				SetState(AIRCRAFT_HOVERING);
 			} else {
 				SetState(AIRCRAFT_LANDING);
@@ -341,12 +342,13 @@ void CHoverAirMoveType::UpdateHovering()
 	if (l > (maxSpeed * maxSpeed)) {
 		deltaDir *= maxSpeed / NOZERO(math::sqrt(l));
 	}
-	wantedSpeed = owner->speed + deltaDir;
 
 	// random movement (a sort of fake wind effect)
 	// random drift values are in range -0.5 ... 0.5
-	randomWind = float3(randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f, 0.0f,
-                        randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f);
+	randomWind.x = randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f;
+	randomWind.z = randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f;
+
+	wantedSpeed = owner->speed + deltaDir;
 	wantedSpeed += randomWind * driftSpeed * 0.5f;
 
 	UpdateAirPhysics();
@@ -803,10 +805,13 @@ bool CHoverAirMoveType::Update()
 	AAirMoveType::Update();
 
 	if (owner->IsStunned() || owner->beingBuilt) {
-		speed = ZeroVector;
+		wantedSpeed = ZeroVector;
+
+		UpdateAirPhysics();
 		return (HandleCollisions());
 	}
-	// Allow us to stop if wanted
+
+	// allow us to stop if wanted (changes aircraft state)
 	if (wantToStop)
 		ExecuteStop();
 
