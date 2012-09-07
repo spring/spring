@@ -573,7 +573,7 @@ namespace CrashHandler
 
 	void Install() {
 		struct rlimit limits;
-		if ((getrlimit(RLIMIT_CORE, &limits) == 0) && (limits.rlim_max > 0)) {
+		if ((getrlimit(RLIMIT_CORE, &limits) == 0) && (limits.rlim_cur > 0)) {
 			LOG("Core dumps enabled, not installing signal handler");
 			LOG("see /proc/sys/kernel/core_pattern where it gets written");
 			return;
