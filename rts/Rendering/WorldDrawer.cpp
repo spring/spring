@@ -150,10 +150,10 @@ void CWorldDrawer::Draw()
 
 	const bool noAdvShading = shadowHandler->shadowsLoaded;
 
-	static const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
-	static const double plane_above[4] = {0.0f,  1.0f, 0.0f, 0.0f};
 
 	{
+		static const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
+
 		glClipPlane(GL_CLIP_PLANE3, plane_below);
 		glEnable(GL_CLIP_PLANE3);
 
@@ -178,6 +178,8 @@ void CWorldDrawer::Draw()
 	}
 
 	{
+		static const double plane_above[4] = {0.0f,  1.0f, 0.0f, 0.0f};
+
 		glClipPlane(GL_CLIP_PLANE3, plane_above);
 		glEnable(GL_CLIP_PLANE3);
 

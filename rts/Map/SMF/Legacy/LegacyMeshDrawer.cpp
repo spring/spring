@@ -967,9 +967,8 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 void CLegacyMeshDrawer::DrawShadowMesh()
 {
-	const int NUM_LODS = 4;
-
 	{ // profiler scope
+		const int NUM_LODS = 4;
 #ifdef USE_GML
 		// Profiler results, 4 threads: multiThreadDrawGroundShadow is rarely faster than single threaded rendering (therefore disabled by default)
 		const bool mt = GML_PROFILER(multiThreadDrawGroundShadow)
