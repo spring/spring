@@ -368,10 +368,8 @@ void CMobileCAI::SlowUpdate()
 	if (gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 
-	bool wantToLand = false;
-
 	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
-		wantToLand = (LandRepairIfNeeded() || RefuelIfNeeded());
+		LandRepairIfNeeded() || RefuelIfNeeded();
 	}
 
 

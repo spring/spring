@@ -448,7 +448,6 @@ void CDynWater::Update()
 
 void CDynWater::DrawReflection(CGame* game)
 {
-	const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
 	const bool shadowsLoaded = shadowHandler->shadowsLoaded;
 
 //	CCamera* realCam = camera;
@@ -476,6 +475,8 @@ void CDynWater::DrawReflection(CGame* game)
 		sky->Draw();
 
 		{
+			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
+
 			glEnable(GL_CLIP_PLANE2);
 			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 

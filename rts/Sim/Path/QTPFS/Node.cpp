@@ -666,11 +666,11 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 	if (prevMagicNum != currMagicNum) {
 		prevMagicNum = currMagicNum;
 
-		unsigned int ngbRels = 0;
 		unsigned int maxNgbs = GetMaxNumNeighbors();
 
 		// regenerate our neighbor cache
 		if (maxNgbs > 0) {
+			unsigned int ngbRels = 0;
 			neighbors.clear();
 			neighbors.reserve(maxNgbs + 4);
 
