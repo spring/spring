@@ -636,7 +636,7 @@ void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 		SetGoal(attackPos, owner->pos);
 	} else {
 		// note: the range of randFloat() is inclusive of 1.0f
-		const unsigned int unitIdx = gs->randFloat() * (enemyUnitIDs.size() - 1);
+		const unsigned int unitIdx = std::min((unsigned int)(gs->randFloat() * enemyUnitIDs.size()), enemyUnitIDs.size() - 1);
 		const unsigned int unitID = enemyUnitIDs[unitIdx];
 
 		CUnit* targetUnit = uh->GetUnitUnsafe(unitID);
