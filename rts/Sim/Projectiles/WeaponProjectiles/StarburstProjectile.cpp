@@ -314,6 +314,8 @@ void CStarburstProjectile::Draw()
 {
 	inArray = true;
 
+	unsigned char col[4];
+	unsigned char col2[4];
 
 	if (weaponDef->visuals.smokeTrail) {
 		const int curNumParts = GML::SimEnabled() ? *(volatile int*) &numParts : numParts;
@@ -322,7 +324,6 @@ void CStarburstProjectile::Draw()
 
 		const float age2 = (age & 7) + globalRendering->timeOffset;
 		const float color = 0.7f;
-		unsigned char col[4];
 
 		if (drawTrail) {
 			// draw the trail as a single quad
@@ -354,7 +355,6 @@ void CStarburstProjectile::Draw()
 			col[2] = (color * alpha1);
 			col[3] = alpha1;
 
-			unsigned char col2[4];
 			col2[0] = (color * alpha2);
 			col2[1] = (color * alpha2);
 			col2[2] = (color * alpha2);
