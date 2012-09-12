@@ -478,7 +478,7 @@ void Patch::Tessellate(const float3& campos, int groundDetail)
 	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float3 myPos(myx,myy,myz);
 
-	camDistLODFactor  = (myPos - campos).Length();
+	camDistLODFactor  = myPos.distance(campos);
 	camDistLODFactor *= 300.0f / groundDetail; // MAGIC NUMBER 1: increase the dividend to reduce LOD in camera distance
 	camDistLODFactor  = std::max(1.0f, camDistLODFactor);
 	camDistLODFactor  = 1.0f / camDistLODFactor;

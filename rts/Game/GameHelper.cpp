@@ -530,9 +530,7 @@ public:
 	void AddUnit(CUnit* u) {
 		// FIXME: use volumeBoundingRadius?
 		// (more for consistency than need)
-		const float dist =
-			(pos - u->midPos).Length() -
-			u->radius;
+		const float dist = pos.distance(u->midPos) - u->radius;
 
 		if (dist <= closeDist &&
 			(canBeBlind || u->losRadius * loshandler->losDiv > dist)) {

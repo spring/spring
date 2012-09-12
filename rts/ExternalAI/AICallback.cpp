@@ -759,13 +759,13 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType, float g
 	}
 
 	// distance to first intermediate node
-	pathLen = (points[0] - start).Length();
+	pathLen = start.distance(points[0]);
 
 	// we don't care which path segment has
 	// what resolution, just lump all points
 	// together
 	for (size_t i = 1; i < points.size(); i++) {
-		pathLen += (points[i] - points[i - 1]).Length();
+		pathLen += points[i].distance(points[i - 1]);
 	}
 
 	/*

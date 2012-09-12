@@ -44,7 +44,7 @@ void COrbitController::Init(const float3& p, const float3& tar)
 
 	const float l = (tar == ZeroVector)?
 		std::max(ground->LineGroundCol(p, p + cam->forward * 1024.0f, false), 512.0f):
-		(p - tar).Length();
+		p.distance(tar);
 
 	const float3 t = (tar == ZeroVector)? (p + cam->forward * l): tar;
 	const float3 v = (t - p);

@@ -506,7 +506,7 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	oldGoalPos = goalPos;
 	goalPos = tgp;
 
-	const float goalLength = (goalPos - pos).Length();
+	const float goalLength = pos.distance(goalPos);
 	const float3 goalDir =
 		(goalLength > 0.0f)?
 		(goalPos - pos) / goalLength:

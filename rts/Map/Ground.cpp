@@ -237,7 +237,7 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 		return -1.0f;
 	}
 
-	const float skippedDist = (pfrom - from).Length();
+	const float skippedDist = pfrom.distance(from);
 
 	if (synced) { //TODO do this in unsynced too once the map border rendering is finished?
 		// check if our start position is underground (assume ground is unpassable for cannons etc.)
