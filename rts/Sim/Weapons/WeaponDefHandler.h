@@ -34,9 +34,8 @@ public:
 					float damageMin, bool inverted);
 
 public:
-	WeaponDef *weaponDefs;
+	std::vector<WeaponDef> weaponDefs;
 	std::map<std::string, int> weaponID;
-	int numWeaponDefs;
 
 private:
 	void ParseWeapon(const LuaTable& wdTable, WeaponDef& wd);

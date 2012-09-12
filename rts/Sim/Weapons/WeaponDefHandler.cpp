@@ -42,10 +42,9 @@ CWeaponDefHandler::CWeaponDefHandler()
 	vector<string> weaponNames;
 	rootTable.GetKeys(weaponNames);
 
-	numWeaponDefs = weaponNames.size();
-	weaponDefs = new WeaponDef[numWeaponDefs];
+	weaponDefs.resize(weaponNames.size());
 
-	for (int wid = 0; wid < numWeaponDefs; wid++) {
+	for (int wid = 0; wid < weaponDefs.size(); wid++) {
 		WeaponDef& wd = weaponDefs[wid];
 		wd.id = wid;
 		wd.name = weaponNames[wid];
@@ -59,7 +58,6 @@ CWeaponDefHandler::CWeaponDefHandler()
 
 CWeaponDefHandler::~CWeaponDefHandler()
 {
-	delete[] weaponDefs;
 }
 
 
@@ -540,7 +538,7 @@ const WeaponDef *CWeaponDefHandler::GetWeapon(const string& weaponname2)
 
 const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId)
 {
-	if ((weaponDefId < 0) || (weaponDefId >= numWeaponDefs)) {
+	if ((weaponDefId < 0) || (weaponDefId >= weaponDefs.size())) {
 		return NULL;
 	}
 	return &weaponDefs[weaponDefId];
