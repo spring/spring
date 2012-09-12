@@ -277,7 +277,7 @@ public:
 	const float& GetParam(size_t idx) const { return params[idx]; }
 
 	/// const safe_vector<float>& GetParams() const { return params; }
-	const size_t GetParamsCount() const { return params.size(); }
+	size_t GetParamsCount() const { return params.size(); }
 
 	void SetID(int id) 
 #ifndef _MSC_VER
