@@ -4,6 +4,7 @@
 #define WEAPONDEFHANDLER_H
 
 #include <string>
+#include <vector>
 #include <map>
 
 #include "Sim/Misc/CommonDefHandler.h"
@@ -19,10 +20,10 @@ public:
 	CWeaponDefHandler();
 	~CWeaponDefHandler();
 
-	const WeaponDef* GetWeapon(const std::string& weaponname);
-	const WeaponDef* GetWeaponById(int weaponDefId);
+	const WeaponDef* GetWeapon(std::string weaponname) const;
+	const WeaponDef* GetWeaponById(int weaponDefId) const;
 
-	void LoadSound(
+	static void LoadSound(
 		const LuaTable&,
 		const std::string& soundKey,
 		const unsigned int soundIdx,

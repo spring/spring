@@ -23,8 +23,6 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sound/ISound.h"
 
-using std::min;
-using std::max;
 
 CR_BIND(WeaponDef, );
 
@@ -171,7 +169,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	}
 
 	wd.projectilespeed = std::max(0.01f, wdTable.GetFloat("weaponVelocity", 0.0f) / GAME_SPEED);
-	wd.startvelocity = max(0.01f, wdTable.GetFloat("startVelocity", 0.0f) / GAME_SPEED);
+	wd.startvelocity = std::max(0.01f, wdTable.GetFloat("startVelocity", 0.0f) / GAME_SPEED);
 	wd.weaponacceleration = wdTable.GetFloat("weaponAcceleration", 0.0f) / GAME_SPEED / GAME_SPEED;
 	wd.reload = wdTable.GetFloat("reloadTime", 1.0f);
 	wd.salvodelay = wdTable.GetFloat("burstRate", 0.1f);
@@ -190,14 +188,14 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.fireStarter = wdTable.GetFloat("fireStarter", 0.0f) * 0.01f;
 	wd.paralyzer = wdTable.GetBool("paralyzer", false);
 	if (wd.paralyzer) {
-		wd.damages.paralyzeDamageTime = max(0, wdTable.GetInt("paralyzeTime", 10));
+		wd.damages.paralyzeDamageTime = std::max(0, wdTable.GetInt("paralyzeTime", 10));
 	} else {
 		wd.damages.paralyzeDamageTime = 0;
 	}
 
 	const float defShake = wd.paralyzer ? 0.0f : wd.damages.GetDefaultDamage();
 	wd.cameraShake = wdTable.GetFloat("cameraShake", defShake);
-	wd.cameraShake = max(0.0f, wd.cameraShake);
+	wd.cameraShake = std::max(0.0f, wd.cameraShake);
 
 	{
 		// 0.78.2.1 backwards compatibility: non-burst beamlasers play one
@@ -308,11 +306,11 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	if ((wd.type == "AircraftBomb") && !wdTable.GetBool("manualBombSettings", false)) {
 		// allow manually specifying burst and burstrate for AircraftBomb
 		if (wd.reload < 0.5f) {
-			wd.salvodelay = min(0.2f, wd.reload);
+			wd.salvodelay = std::min(0.2f, wd.reload);
 			wd.salvosize = (int)(1 / wd.salvodelay) + 1;
 			wd.reload = 5;
 		} else {
-			wd.salvodelay = min(0.4f, wd.reload);
+			wd.salvodelay = std::min(0.4f, wd.reload);
 			wd.salvosize = 2;
 		}
 	}
@@ -371,7 +369,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	}
 
 
-	const float gd = max(30.0f, wd.damages[0] / 20.0f);
+	const float gd = std::max(30.0f, wd.damages[0] / 20.0f);
 	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (math::sqrt(gd) * 0.7f)) * 0.5f;
 	wd.explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
 
@@ -524,19 +522,19 @@ void CWeaponDefHandler::LoadSound(
 }
 
 
-const WeaponDef *CWeaponDefHandler::GetWeapon(const string& weaponname2)
+const WeaponDef *CWeaponDefHandler::GetWeapon(std::string weaponname) const
 {
-	string weaponname(StringToLower(weaponname2));
+	StringToLowerInPlace(weaponname);
 
-	map<string,int>::iterator ii=weaponID.find(weaponname);
-	if(ii == weaponID.end())
+	std::map<std::string,int>::const_iterator ii = weaponID.find(weaponname);
+	if (ii == weaponID.end())
 		return NULL;
 
 	return &weaponDefs[ii->second];
 }
 
 
-const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId)
+const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId) const
 {
 	if ((weaponDefId < 0) || (weaponDefId >= weaponDefs.size())) {
 		return NULL;
