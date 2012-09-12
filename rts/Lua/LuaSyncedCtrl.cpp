@@ -2080,7 +2080,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		attacker = uh->units[attackerID];
 	}
 
-	if (weaponDefID >= weaponDefHandler->numWeaponDefs) {
+	if (weaponDefID >= weaponDefHandler->weaponDefs.size()) {
 		return 0;
 	}
 

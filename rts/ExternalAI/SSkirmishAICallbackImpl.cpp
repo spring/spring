@@ -3832,7 +3832,7 @@ EXPORT(void) skirmishAiCallback_Feature_getPosition(int skirmishAIId, int featur
 
 //########### BEGINN WeaponDef
 EXPORT(int) skirmishAiCallback_getWeaponDefs(int skirmishAIId) {
-	return weaponDefHandler->numWeaponDefs;
+	return weaponDefHandler->weaponDefs.size();
 }
 
 EXPORT(int) skirmishAiCallback_getWeaponDefByName(int skirmishAIId, const char* weaponDefName) {

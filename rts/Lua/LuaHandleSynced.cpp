@@ -105,7 +105,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	if (GetFullCtrl()) {
 		watchUnitDefs.resize(unitDefHandler->unitDefs.size() + 1, false);
 		watchFeatureDefs.resize(featureHandler->GetFeatureDefs().size(), false);
-		watchWeaponDefs.resize(weaponDefHandler->numWeaponDefs, false);
+		watchWeaponDefs.resize(weaponDefHandler->weaponDefs.size(), false);
 	}
 
 	const string syncedCode   = LoadFile(syncedFile, modes);
