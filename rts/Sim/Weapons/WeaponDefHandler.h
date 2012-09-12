@@ -29,9 +29,9 @@ public:
 		std::vector<GuiSoundSet::Data>&
 	);
 
-	DamageArray DynamicDamages(DamageArray damages, float3 startPos,
-					float3 curPos, float range, float exp,
-					float damageMin, bool inverted);
+	static DamageArray DynamicDamages(const DamageArray damages, const float3 startPos,
+					const float3 curPos, const float range, const float exp,
+					const float damageMin, const bool inverted);
 
 public:
 	std::vector<WeaponDef> weaponDefs;

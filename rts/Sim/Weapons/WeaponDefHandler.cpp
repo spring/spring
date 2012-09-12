@@ -546,43 +546,34 @@ const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId)
 
 
 
-DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startPos, float3 curPos, float range, float exp, float damageMin, bool inverted)
+DamageArray CWeaponDefHandler::DynamicDamages(const DamageArray damages, const float3 startPos, const float3 curPos, const float range, const float exp, const float damageMin, const bool inverted)
 {
 	DamageArray dynDamages(damages);
 
-	curPos.y = 0;
-	startPos.y = 0;
+	const float travDist  = std::min(range, curPos.distance2D(startPos));
+	const float damageMod = 1.0f - math::pow(1.0f / range * travDist, exp);
+	const float ddmod     = damageMin / damages[0]; // get damage mod from first damage type
 
-	float travDist = (curPos-startPos).Length()>range?range:(curPos-startPos).Length();
-	float ddmod = 0;
-
-	if (damageMin > 0)
-		ddmod = damageMin/damages[0]; // get damage mod from first damage type
-
-	if (inverted == true) {
+	if (inverted) {
 		for(int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
-			dynDamages[i] = damages[i] - (1 - math::pow(1 / range * travDist, exp)) * damages[i];
+			dynDamages[i] = damages[i] - damageMod * damages[i];
 
 			if (damageMin > 0)
-				dynDamages[i] = max(damages[i] * ddmod, dynDamages[i]);
+				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
 
 			// to prevent div by 0
-			dynDamages[i] = max(0.0001f, dynDamages[i]);
-//			LOG_L(L_DEBUG, "D%i: %f (%f) - mod %f", i, dynDamages[i], damages[i], ddmod);
-//			LOG_L(L_DEBUG, "F%i: %f - (1 - (1/%f * %f) ^ %f) * %f", i, damages[i], range, travDist, exp, damages[i]);
+			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
 		}
 	}
 	else {
 		for(int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
-			dynDamages[i] = (1 - math::pow(1 / range * travDist, exp)) * damages[i];
+			dynDamages[i] = damageMod * damages[i];
 
 			if (damageMin > 0)
-				dynDamages[i] = max(damages[i] * ddmod, dynDamages[i]);
+				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
 
 			// div by 0
-			dynDamages[i] = max(0.0001f, dynDamages[i]);
-//			LOG_L(L_DEBUG, "D%i: %f (%f) - mod %f", i, dynDamages[i], damages[i], ddmod);
-//			LOG_L(L_DEBUG, "F%i: (1 - (1/%f * %f) ^ %f) * %f", i, range, travDist, exp, damages[i]);
+			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
 		}
 	}
 	return dynDamages;
