@@ -73,7 +73,7 @@ public:
 	int side;
 
 	// if there is more than one instance of AAI, make sure to allocate/free memory only once
-	int aai_instance;
+	static int aai_instance;
 
 	// list of buildtasks
 	list<AAIBuildTask*> build_tasks;

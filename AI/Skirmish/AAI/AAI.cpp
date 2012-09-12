@@ -16,11 +16,12 @@
 #include "CUtils/SimpleProfiler.h"
 #define AAI_SCOPED_TIMER(part) SCOPED_TIMER(part, profiler);
 
+int AAI::aai_instance = 0;
+
 AAI::AAI() :
 	cb(NULL),
 	aicb(NULL),
 	side(0),
-	aai_instance(-1),
 	brain(NULL),
 	execute(NULL),
 	ut(NULL),
