@@ -3912,15 +3912,17 @@ unsigned int AAIBuildTable::GetAllowedMovementTypesForAssister(int building)
 	return allowed_movement_types;
 }
 
+float AAIBuildTable::GetUnitRating(int unit, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff)
+{
+	float rating = 0.1f + ground_eff * units_static[unit].efficiency[0] +  air_eff * units_static[unit].efficiency[1] +  hover_eff * units_static[unit].efficiency[2] +  sea_eff * units_static[unit].efficiency[3] + submarine_eff * units_static[unit].efficiency[4];
+	rating /= units_static[unit].cost;
+	return rating;
+}
+
 int AAIBuildTable::DetermineBetterUnit(int unit1, int unit2, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float speed, float range, float cost)
 {
-	float rating1, rating2;
-
-	rating1 = 0.1f + ground_eff * units_static[unit1].efficiency[0] +  air_eff * units_static[unit1].efficiency[1] +  hover_eff * units_static[unit1].efficiency[2] +  sea_eff * units_static[unit1].efficiency[3] + submarine_eff * units_static[unit1].efficiency[4];
-	rating1 /= units_static[unit1].cost;
-
-	rating2 = 0.1f + ground_eff * units_static[unit2].efficiency[0] +  air_eff * units_static[unit2].efficiency[1] +  hover_eff * units_static[unit2].efficiency[2] +  sea_eff * units_static[unit2].efficiency[3] + submarine_eff * units_static[unit2].efficiency[4];
-	rating2 /= units_static[unit2].cost;
+	float rating1 = GetUnitRating(unit1, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff);
+	float rating2 = GetUnitRating(unit2, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff);
 
 	if (((rating2 == 0.0f) || (units_static[unit2].range == 0.0f) || (unitList[unit2 - 1]->speed == 0.0f))
 			|| ((cost * rating1 / rating2)
