@@ -63,7 +63,7 @@ namespace GML {
 	inline bool SimEnabled() { return Enabled() && (GML_ENABLE_SIM ? true : false); }
 #else
 	inline bool Enabled() { return false; }
-	inline void Enable(bool enable) {}
+	inline void Enable(bool /*enable*/) {}
 	inline bool SimEnabled() { return false; }
 #endif
 };
