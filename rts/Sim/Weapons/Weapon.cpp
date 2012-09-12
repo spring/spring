@@ -1014,8 +1014,8 @@ bool CWeapon::SetTargetBorderPos(
 
 		// adjust the length of <targetVec> based on the targetBorder factor
 		if (CCollisionHandler::DetectHit(targetUnit, weaponMuzzlePos, targetRayPos, &tmpColQry)) {
-			if (targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * ((rawTargetPos - tmpColQry.p0).Length())); }
-			if (targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * ((tmpColQry.p1 - rawTargetPos).Length())); }
+			if (targetBorder > 0.0f) { rawTargetVec -= rawTargetDir * rawTargetPos.distance(tmpColQry.p0); }
+			if (targetBorder < 0.0f) { rawTargetVec += rawTargetDir * rawTargetPos.distance(tmpColQry.p1); }
 
 			targetBorderPos = weaponMuzzlePos + rawTargetVec;
 		}

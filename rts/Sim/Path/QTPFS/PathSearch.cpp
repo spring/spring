@@ -84,7 +84,7 @@ bool QTPFS::PathSearch::Execute(
 		openNodes.reset();
 		openNodes.push(srcNode);
 
-		UpdateNode(srcNode, NULL, 0.0f, (tgtPoint - srcPoint).Length() * hCostMult, srcNode->GetMoveCost());
+		UpdateNode(srcNode, NULL, 0.0f, srcPoint.distance(tgtPoint) * hCostMult, srcNode->GetMoveCost());
 	}
 
 	while (!openNodes.empty()) {
@@ -247,8 +247,8 @@ void QTPFS::PathSearch::Iterate(
 
 		// cannot use squared-distances because that will bias paths
 		// towards smaller nodes (eg. 1^2 + 1^2 + 1^2 + 1^2 != 4^2)
-		const float gDist = (nxtPoint - curPoint).Length();
-		const float hDist = (tgtPoint - nxtPoint).Length();
+		const float gDist = curPoint.distance(nxtPoint);
+		const float hDist = nxtPoint.distance(tgtPoint);
 
 		const float mCost =
 			curNode->GetPathCost(NODE_PATH_COST_M) +

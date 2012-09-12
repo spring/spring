@@ -171,7 +171,7 @@ void CLargeBeamLaserProjectile::Draw()
 		// draw laser end
 		pos1 = startPos + ddir * i;
 		pos2 = endPos;
-		tex.xend = tex.xstart + ((pos2 - pos1).Length() / tilelength) * texxsize;
+		tex.xend = tex.xstart + (pos1.distance(pos2) / tilelength) * texxsize;
 
 		va->AddVertexQTC(pos1 - (dir1 * size),     tex.xstart, tex.ystart, kocolstart);
 		va->AddVertexQTC(pos1 + (dir1 * size),     tex.xstart, tex.yend,   kocolstart);
