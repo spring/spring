@@ -154,6 +154,9 @@ void CBuilder::Update()
 {
 	CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
 
+	const CCommandQueue& cQueue = cai->commandQue;
+	const Command& fCommand = (!cQueue.empty())? cQueue.front(): Command(CMD_STOP);
+
 	if (!beingBuilt && !IsStunned()) {
 		if (terraforming && inBuildStance) {
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
@@ -163,20 +166,19 @@ void CBuilder::Update()
 
 			switch (terraformType) {
 				case Terraform_Building:
-					if (curBuild) {
+					if (curBuild != NULL) {
 						if (curBuild->terraformLeft <= 0)
 							terraformScale = 0.0f;
 						else
 							terraformScale = (terraformSpeed + terraformHelp) / curBuild->terraformLeft;
+
 						curBuild->terraformLeft -= (terraformSpeed + terraformHelp);
 						terraformHelp = 0;
-
-						if (terraformScale > 1.0f) {
-							terraformScale = 1.0f;
-						}
+						terraformScale = std::min(terraformScale, 1.0f);
 
 						// prevent building from timing out while terraforming for it
 						curBuild->AddBuildPower(0.0f, this);
+
 						for (int z = tz1; z <= tz2; z++) {
 							for (int x = tx1; x <= tx2; x++) {
 								int idx = z * gs->mapxp1 + x;
@@ -186,10 +188,11 @@ void CBuilder::Update()
 							}
 						}
 
-						if (curBuild->terraformLeft<=0) {
-							terraforming=false;
-							mapDamage->RecalcArea(tx1,tx2,tz1,tz2);
+						if (curBuild->terraformLeft <= 0.0f) {
+							terraforming = false;
+							mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 							curBuild->groundLevelled = true;
+
 							if (luaRules && luaRules->TerraformComplete(this, curBuild)) {
 								StopBuild();
 							}
@@ -197,16 +200,14 @@ void CBuilder::Update()
 					}
 					break;
 				case Terraform_Restore:
-					if (myTerraformLeft <= 0)
+					if (myTerraformLeft <= 0.0f)
 						terraformScale = 0.0f;
 					else
 						terraformScale = (terraformSpeed + terraformHelp) / myTerraformLeft;
+
 					myTerraformLeft -= (terraformSpeed + terraformHelp);
 					terraformHelp = 0;
-
-					if (terraformScale > 1.0f) {
-						terraformScale = 1.0f;
-					}
+					terraformScale = std::min(terraformScale, 1.0f);
 
 					for (int z = tz1; z <= tz2; z++) {
 						for (int x = tx1; x <= tx2; x++) {
@@ -218,9 +219,9 @@ void CBuilder::Update()
 						}
 					}
 
-					if (myTerraformLeft <= 0) {
-						terraforming=false;
-						mapDamage->RecalcArea(tx1,tx2,tz1,tz2);
+					if (myTerraformLeft <= 0.0f) {
+						terraforming = false;
+						mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 						StopBuild();
 					}
 					break;
@@ -272,7 +273,7 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if (helpTerraform && inBuildStance) {
+		else if (helpTerraform != NULL && inBuildStance) {
 			if (helpTerraform->terraforming) {
 				ScriptDecloak(true);
 
@@ -284,148 +285,164 @@ void CBuilder::Update()
 				StopBuild(true);
 			}
 		}
-		else if (curBuild && cai->IsInBuildRange(curBuild)) {
-			if (curBuild->soloBuilder && (curBuild->soloBuilder != this)) {
+		else if (curBuild != NULL && cai->IsInBuildRange(curBuild)) {
+			if (fCommand.GetID() == CMD_WAIT) {
+				if (curBuild->buildProgress < 1.0f) {
+					// prevent buildee from decaying (we cannot call StopBuild here)
+					curBuild->AddBuildPower(0.0f, this);
+				} else {
+					// stop repairing (FIXME: should be much cleaner to let BuilderCAI
+					// call this instead when a wait command is given?)
+					StopBuild();
+				}
+			} else {
+				if (curBuild->soloBuilder != NULL && (curBuild->soloBuilder != this)) {
+					StopBuild();
+				} else {
+					if (inBuildStance || true) {
+						// NOTE:
+						//     technically this block of code should be guarded by
+						//     "if (inBuildStance)", but doing so can create zombie
+						//     guarders because scripts might not set inBuildStance
+						//     to true when guard or repair orders are executed and
+						//     SetRepairTarget does not check for it
+						//
+						//     StartBuild *does* ensure construction will not start
+						//     until inBuildStance is set to true by the builder's
+						//     script, and there are no cases during construction
+						//     when inBuildStance can become false yet the buildee
+						//     should be kept from decaying, so this is free from
+						//     serious side-effects (when repairing, a builder might
+						//     start adding build-power before having fully finished
+						//     its opening animation)
+						//
+						ScriptDecloak(true);
+
+						// adjusted build-speed: use repair-speed on units with
+						// progress >= 1 rather than raw build-speed on buildees
+						// with progress < 1
+						float adjBuildSpeed = 0.0f;
+
+						if (curBuild->buildProgress >= 1.0f) {
+							adjBuildSpeed = std::min(repairSpeed, unitDef->maxRepairSpeed * 0.5f - curBuild->repairAmount); // repair
+						} else {
+							adjBuildSpeed = buildSpeed; // build
+						}
+
+						if (adjBuildSpeed > 0.0f && curBuild->AddBuildPower(adjBuildSpeed, this)) {
+							CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
+						} else {
+							// check if buildee finished construction
+							if (!curBuild->beingBuilt && curBuild->health >= curBuild->maxHealth) {
+								StopBuild();
+							}
+						}
+					}
+				}
+			}
+		}
+		else if (curReclaim != NULL && f3SqDist(curReclaim->pos, pos)<Square(buildDistance+curReclaim->radius) && inBuildStance) {
+			if (fCommand.GetID() == CMD_WAIT) {
 				StopBuild();
 			} else {
-				if (inBuildStance || true) {
-					// NOTE:
-					//     technically this block of code should be guarded by
-					//     "if (inBuildStance)", but doing so can create zombie
-					//     guarders because scripts might not set inBuildStance
-					//     to true when guard or repair orders are executed and
-					//     SetRepairTarget does not check for it
-					//
-					//     StartBuild *does* ensure construction will not start
-					//     until inBuildStance is set to true by the builder's
-					//     script, and there are no cases during construction
-					//     when inBuildStance can become false yet the buildee
-					//     should be kept from decaying, so this is free from
-					//     serious side-effects (when repairing, a builder might
-					//     start adding build-power before having fully finished
-					//     its opening animation)
-					//
-					ScriptDecloak(true);
+				ScriptDecloak(true);
 
-					// adjusted build-speed: use repair-speed on units with
-					// progress >= 1 rather than raw build-speed on buildees
-					// with progress < 1
-					float adjBuildSpeed = buildSpeed;
-
-					if (curBuild->buildProgress >= 1.0f) {
-						adjBuildSpeed = std::min(unitDef->maxRepairSpeed / 2.0f - curBuild->repairAmount, repairSpeed);
-					}
-
-					const CCommandQueue& queue = cai->commandQue;
-					const Command& command = (!queue.empty())? queue.front(): Command();
-
-					if (adjBuildSpeed > 0.0f && command.GetID() == CMD_WAIT) {
-						// prevent buildee from decaying
-						curBuild->AddBuildPower(0.0f, this);
-					} else if (adjBuildSpeed > 0.0f && curBuild->AddBuildPower(adjBuildSpeed, this)) {
-						CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
-					} else {
-						// check if buildee finished construction
-						if (!curBuild->beingBuilt && curBuild->health >= curBuild->maxHealth) {
-							StopBuild();
-						}
-					}
+				if (curReclaim->AddBuildPower(-reclaimSpeed, this)) {
+					CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true, (reclaimingUnit && curReclaim->team != team));
 				}
 			}
 		}
-		else if (curReclaim && f3SqDist(curReclaim->pos, pos)<Square(buildDistance+curReclaim->radius) && inBuildStance) {
-			ScriptDecloak(true);
-
-			if (curReclaim->AddBuildPower(-reclaimSpeed, this)) {
-				CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true, (reclaimingUnit && curReclaim->team != team));
-			}
-		}
-		else if (curResurrect && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance) {
+		else if (curResurrect != NULL && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance) {
 			const UnitDef* ud = curResurrect->udef;
 
-			if (ud) {
-				if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
-					// This corpse has been reclaimed a little, need to restore the resources
-					// before we can let the player resurrect it.
-					curResurrect->AddBuildPower(repairSpeed, this);
-				}
-				else {
-					// Corpse has been restored, begin resurrection
-					if (UseEnergy(ud->energy * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {
-						curResurrect->resurrectProgress += (resurrectSpeed / ud->buildTime);
-						CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, (gs->randInt() & 1));
-					}
-					if (curResurrect->resurrectProgress > 1) {
-						// resurrect finished
-						curResurrect->UnBlock();
-						CUnit* u = unitLoader->LoadUnit(ud, curResurrect->pos,
-													team, false, curResurrect->buildFacing, this);
-
-						if (!this->unitDef->canBeAssisted) {
-							u->soloBuilder = this;
-							u->AddDeathDependence(this, DEPENDENCE_BUILDER);
-						}
-						u->health *= 0.05f;
-
-						for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
-							CBuilder* bld = (CBuilder*) *it;
-							CCommandAI* bldCAI = bld->commandAI;
-
-							if (bldCAI->commandQue.empty())
-								continue;
-
-							Command& c = bldCAI->commandQue.front();
-
-							if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
-								continue;
-
-							const int cmdFeatureId = c.params[0];
-
-							if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam)) {
-								bld->lastResurrected = u->id; // all units that were rezzing shall assist the repair too
-								c.params[0] = INT_MAX / 2; // prevent FinishCommand from removing this command when the feature is deleted, since it is needed to start the repair
-							}
-						}
-
-						curResurrect->resurrectProgress = 0;
-						featureHandler->DeleteFeature(curResurrect);
-						StopBuild(true);
-					}
-				}
+			if (fCommand.GetID() == CMD_WAIT) {
+				StopBuild();
 			} else {
-				StopBuild(true);
+				if (ud != NULL) {
+					if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
+						// This corpse has been reclaimed a little, need to restore the resources
+						// before we can let the player resurrect it.
+						curResurrect->AddBuildPower(repairSpeed, this);
+					} else {
+						// Corpse has been restored, begin resurrection
+						if (UseEnergy(ud->energy * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {
+							curResurrect->resurrectProgress += (resurrectSpeed / ud->buildTime);
+							CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, (gs->randInt() & 1));
+						}
+						if (curResurrect->resurrectProgress > 1) {
+							// resurrect finished
+							curResurrect->UnBlock();
+							CUnit* u = unitLoader->LoadUnit(ud, curResurrect->pos,
+														team, false, curResurrect->buildFacing, this);
+
+							if (!this->unitDef->canBeAssisted) {
+								u->soloBuilder = this;
+								u->AddDeathDependence(this, DEPENDENCE_BUILDER);
+							}
+							u->health *= 0.05f;
+
+							for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
+								CBuilder* bld = (CBuilder*) *it;
+								CCommandAI* bldCAI = bld->commandAI;
+
+								if (bldCAI->commandQue.empty())
+									continue;
+
+								Command& c = bldCAI->commandQue.front();
+
+								if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
+									continue;
+
+								const int cmdFeatureId = c.params[0];
+
+								if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam)) {
+									bld->lastResurrected = u->id; // all units that were rezzing shall assist the repair too
+									c.params[0] = INT_MAX / 2; // prevent FinishCommand from removing this command when the feature is deleted, since it is needed to start the repair
+								}
+							}
+
+							curResurrect->resurrectProgress = 0;
+							featureHandler->DeleteFeature(curResurrect);
+							StopBuild(true);
+						}
+					}
+				} else {
+					StopBuild(true);
+				}
 			}
 		}
-		else if (curCapture && f3SqDist(curCapture->pos, pos)<Square(buildDistance+curCapture->radius) && inBuildStance) {
-			if (curCapture->team!=team) {
-
-				float captureProgressTemp = curCapture->captureProgress + 1.0f/(150+curCapture->buildTime/captureSpeed*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
-				if (captureProgressTemp >= 1.0f) {
-					captureProgressTemp = 1.0f;
-				}
-
-				const float captureFraction = captureProgressTemp - curCapture->captureProgress;
-				const float energyUseScaled = curCapture->energyCost * captureFraction * modInfo.captureEnergyCostFactor;
-
-				if (!UseEnergy(energyUseScaled)) {
-					teamHandler->Team(team)->energyPull += energyUseScaled;
-				} else {
-					curCapture->captureProgress = captureProgressTemp;
-					CreateNanoParticle(curCapture->midPos, curCapture->radius * 0.7f, false, true);
-					if (curCapture->captureProgress >= 1.0f) {
-						if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
-							// capture failed
-							if (team == gu->myTeam) {
-								LOG_L(L_WARNING, "%s: Capture failed, unit type limit reached", unitDef->humanName.c_str());
-								eventHandler.LastMessagePosition(pos);
-							}
-						}
-						curCapture->captureProgress=0.0f;
-						StopBuild(true);
-					}
-				}
+		else if (curCapture != NULL && f3SqDist(curCapture->pos, pos)<Square(buildDistance+curCapture->radius) && inBuildStance) {
+			if (fCommand.GetID() == CMD_WAIT) {
+				StopBuild();
 			} else {
-				StopBuild(true);
+				if (curCapture->team != team) {
+					const float captureMagicNumber = (150 + curCapture->buildTime / captureSpeed * (curCapture->health + curCapture->maxHealth) / curCapture->maxHealth * 0.4f);
+					const float captureProgressTemp = std::min(curCapture->captureProgress + 1.0f / captureMagicNumber, 1.0f);
+
+					const float captureFraction = captureProgressTemp - curCapture->captureProgress;
+					const float energyUseScaled = curCapture->energyCost * captureFraction * modInfo.captureEnergyCostFactor;
+
+					if (!UseEnergy(energyUseScaled)) {
+						teamHandler->Team(team)->energyPull += energyUseScaled;
+					} else {
+						curCapture->captureProgress = captureProgressTemp;
+						CreateNanoParticle(curCapture->midPos, curCapture->radius * 0.7f, false, true);
+
+						if (curCapture->captureProgress >= 1.0f) {
+							if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
+								// capture failed
+								if (team == gu->myTeam) {
+									LOG_L(L_WARNING, "%s: Capture failed, unit type limit reached", unitDef->humanName.c_str());
+									eventHandler.LastMessagePosition(pos);
+								}
+							}
+							curCapture->captureProgress = 0.0f;
+							StopBuild(true);
+						}
+					}
+				} else {
+					StopBuild(true);
+				}
 			}
 		}
 	}
@@ -472,26 +489,27 @@ void CBuilder::SetRepairTarget(CUnit* target)
 
 void CBuilder::SetReclaimTarget(CSolidObject* target)
 {
-	if (dynamic_cast<CFeature*>(target) && !static_cast<CFeature*>(target)->def->reclaimable) {
+	if (dynamic_cast<CFeature*>(target) != NULL && !static_cast<CFeature*>(target)->def->reclaimable) {
 		return;
 	}
 
 	CUnit* recUnit = dynamic_cast<CUnit*>(target);
-	if (recUnit && !recUnit->unitDef->reclaimable) {
+
+	if (recUnit != NULL && !recUnit->unitDef->reclaimable) {
 		return;
 	}
 
-	if (curReclaim==target || this == target) {
+	if (curReclaim == target || this == target) {
 		return;
 	}
 
 	StopBuild(false);
 	TempHoldFire();
 
-	reclaimingUnit = !!recUnit;
-	curReclaim=target;
-	AddDeathDependence(curReclaim, DEPENDENCE_RECLAIM);
+	reclaimingUnit = (recUnit != NULL);
+	curReclaim = target;
 
+	AddDeathDependence(curReclaim, DEPENDENCE_RECLAIM);
 	SetBuildStanceToward(target->pos);
 }
 
@@ -579,6 +597,7 @@ void CBuilder::StopBuild(bool callScript)
 
 	if (callScript)
 		script->StopBuilding();
+
 	ReleaseTempHoldFire();
 }
 

@@ -1173,9 +1173,8 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			health -= damage;
 		} else { // healing
 			health -= damage;
-			if (health > maxHealth) {
-				health = maxHealth;
-			}
+			health = std::min(health, maxHealth);
+
 			if (health > paralyzeDamage && !modInfo.paralyzeOnMaxHealth) {
 				SetStunned(false);
 			}
