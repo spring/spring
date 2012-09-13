@@ -97,10 +97,11 @@ Analyzecoredump $1 $HOME/.spring/core.$PID_CLIENT
 #reenable abbort on error
 set -e
 
-echo Server and client exited
+echo Server and client exited, dumping log files in ~/.spring/AI
+find ~/.spring/AI -name '*.txt' -or -name '*.log' -and -type f -exec cat {} \; -delete
 
 
-# wait for client to exit
+# exit with exit code of server/client if failed
 if [ $EXITCHILD -ne 0 ];
 then
 	echo Client exited with $EXITCHILD
