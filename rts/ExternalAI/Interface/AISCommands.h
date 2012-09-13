@@ -155,7 +155,7 @@ const int NUM_CMD_TOPICS = 97;
  *
  */
 enum UnitCommandOptions {
-	UNIT_COMMAND_OPTION_DONT_REPEAT       = (1 << 3), //   8
+	UNIT_COMMAND_OPTION_INTERNAL_ORDER    = (1 << 3), //   8
 	UNIT_COMMAND_OPTION_RIGHT_MOUSE_KEY   = (1 << 4), //  16
 	UNIT_COMMAND_OPTION_SHIFT_KEY         = (1 << 5), //  32
 	UNIT_COMMAND_OPTION_CONTROL_KEY       = (1 << 6), //  64

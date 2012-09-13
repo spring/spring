@@ -246,7 +246,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			for (int a = 0; a < numItems; ++a) {
 				if (repeatOrders) {
 					Command nc(c);
-					nc.options |= DONT_REPEAT;
+					nc.options |= INTERNAL_ORDER;
 					if (commandQue.empty()) {
 						commandQue.push_front(nc);
 					} else {
@@ -318,7 +318,7 @@ void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& b
 	// NOTE: the queue should not be empty at this point!
 	const Command frontCommand = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
-	if (!repeatOrders || (buildCommand.options & DONT_REPEAT))
+	if (!repeatOrders || (buildCommand.options & INTERNAL_ORDER))
 		buildOption.numQued--;
 
 	UpdateIconName(buildCommand.GetID(), buildOption);

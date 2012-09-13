@@ -83,15 +83,19 @@
 
 
 // bits for the option field of Command
+// NOTE:
+//   these names are misleading, eg. the SHIFT_KEY bit
+//   really means that an order gets queued instead of
+//   executed immediately (a better name for it would
+//   be QUEUED_ORDER), ALT_KEY in most contexts means
+//   OVERRIDE_QUEUED_ORDER, etc.
+//
 #define META_KEY        (1 << 2) //   4
-#define DONT_REPEAT     (1 << 3) //   8
+#define INTERNAL_ORDER  (1 << 3) //   8
 #define RIGHT_MOUSE_KEY (1 << 4) //  16
 #define SHIFT_KEY       (1 << 5) //  32
 #define CONTROL_KEY     (1 << 6) //  64
 #define ALT_KEY         (1 << 7) // 128
-
-
-#define INTERNAL_ORDER  (DONT_REPEAT)
 
 enum {
 	MOVESTATE_NONE     = -1,
