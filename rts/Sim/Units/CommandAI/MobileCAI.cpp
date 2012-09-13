@@ -698,10 +698,10 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				StopMove(); FinishCommand(); return;
 			}
 
-			const float3 fix = targetUnit->pos + owner->posErrorVector * 128;
-			const float3 diff = (fix - owner->pos).Normalize();
+			const float3 tgtErrPos = targetUnit->pos + owner->posErrorVector * 128;
+			const float3 tgtPosDir = (tgtErrPos - owner->pos).Normalize();
 
-			SetGoal(fix - diff * targetUnit->radius, owner->pos);
+			SetGoal(tgtErrPos - tgtPosDir * targetUnit->radius, owner->pos);
 			SetOrderTarget(targetUnit);
 			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
 
@@ -710,6 +710,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		else if (c.params.size() >= 3) {
 			// user gave force-fire attack command
 			SetGoal(c.GetPos(0), owner->pos);
+
 			inCommand = true;
 		}
 	}
@@ -725,12 +726,21 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 
 	// user clicked on enemy unit (note that we handle aircrafts slightly differently)
-	if (orderTarget) {
-		bool b2 = false;
-		bool b3 = false;
-		bool b4 = false;
+	if (orderTarget != NULL) {
+		bool targetInRange    = false;
+		bool tryTarget        = false;
+		bool tryTargetHeading = false;
+
 		float edgeFactor = 0.0f; // percent offset to target center
-		const float3 diff = owner->pos - orderTarget->midPos;
+		const float3 targetMidPosVec = owner->midPos - orderTarget->midPos;
+
+		const float targetGoalDist = (orderTarget->pos + owner->posErrorVector * 128.0f).SqDistance2D(goalPos);
+		const float targetPosDist = Square(10.0f + orderTarget->pos.distance2D(owner->pos) * 0.2f);
+		const float minPointingDist = std::min(1.0f * owner->losRadius * loshandler->losDiv, owner->maxRange * 0.9f);
+
+		// FIXME? targetMidPosMaxDist is 3D, but compared with a 2D value
+		const float targetMidPosDist2D = targetMidPosVec.Length2D();
+		const float targetMidPosMaxDist = owner->maxRange - (orderTarget->speed.SqLength() / owner->unitDef->maxAcc);
 
 		if (!owner->weapons.empty()) {
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
@@ -738,47 +748,47 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				FinishCommand();
 				return;
 			}
+		}
 
-			CWeapon* w = owner->weapons.front();
+		for (unsigned int wNum = 0; wNum < owner->weapons.size(); wNum++) {
+			CWeapon* w = owner->weapons[wNum];
 
 			if (c.GetID() == CMD_MANUALFIRE) {
 				assert(owner->unitDef->canManualFire);
-				for (vector<CWeapon*>::iterator it = owner->weapons.begin(); it != owner->weapons.end(); ++it) {
-					if ((*it)->weaponDef->manualfire) {
-						w = *it; break;
-					}
+
+				if (!w->weaponDef->manualfire) {
+					continue;
 				}
 			}
 
-			// if we have at least one weapon then check if we
-			// can hit target with our first (meanest) one
-			b2 = w->TryTargetRotate(orderTarget, c.GetID() == CMD_MANUALFIRE);
-			b3 = Square(w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.SqDistance(owner->pos));
-			b4 = w->TryTargetHeading(GetHeadingFromVector(-diff.x, -diff.z), orderTarget->pos, orderTarget != NULL, orderTarget);
+			targetInRange    = Square(w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.SqDistance(owner->pos));
+			tryTarget        = w->TryTargetRotate(orderTarget, (c.options & INTERNAL_ORDER) == 0);
+			tryTargetHeading = w->TryTargetHeading(GetHeadingFromVector(-targetMidPosVec.x, -targetMidPosVec.z), orderTarget->pos, orderTarget != NULL, orderTarget);
+
+			// FIXME: should we already break if only one of these is true?
+			if (targetInRange || tryTarget || tryTargetHeading)
+				break;
+
 			edgeFactor = math::fabs(w->targetBorder);
 		}
 
-		const float diffLength2D = diff.Length2D();
-		const float maxLength = owner->maxRange - (orderTarget->speed.SqLength() / owner->unitDef->maxAcc);
 
 		// if w->AttackUnit() returned true then we are already
 		// in range with our biggest (?) weapon, so stop moving
 		// also make sure that we're not locked in close-in/in-range state loop
 		// due to rotates invoked by in-range or out-of-range states
-		if (b2) {
-			if (!(tempOrder && owner->moveState == MOVESTATE_HOLDPOS)
-				&& (diffLength2D * 1.4f > maxLength)
-				&& b4 && diff.dot(orderTarget->speed) < 0)
-			{
-				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos,
-						SQUARE_SIZE, orderTarget->speed.Length() * 1.1f);
+		if (tryTarget) {
+			const bool canChaseTarget = (!tempOrder || owner->moveState != MOVESTATE_HOLDPOS);
+			const bool targetInRange = (targetMidPosDist2D * 1.4f <= targetMidPosMaxDist);
+			const bool targetBehind = (targetMidPosVec.dot(orderTarget->speed) < 0.0f);
+
+			if (canChaseTarget && !targetInRange && tryTargetHeading && targetBehind) {
+				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, SQUARE_SIZE, orderTarget->speed.Length() * 1.1f);
 			} else {
 				StopMove();
 
 				if (gs->frameNum > lastCloseInTry + MAX_CLOSE_IN_RETRY_TICKS) {
-					owner->moveType->KeepPointingTo(orderTarget->midPos,
-							std::min((float) owner->losRadius * loshandler->losDiv,
-								owner->maxRange * 0.9f), true);
+					owner->moveType->KeepPointingTo(orderTarget->midPos, minPointingDist, true);
 				}
 			}
 
@@ -796,29 +806,26 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// if ((our movetype has type HoverAirMoveType and length of 2D vector from us to target
 		// less than 90% of our maximum range) OR squared length of 2D vector from us to target
 		// less than 1024) then we are close enough
-		else if (diffLength2D < (owner->maxRange * 0.9f)){
-			if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)
-					|| (diff.SqLength2D() < 1024))
-			{
+		else if (targetMidPosDist2D < (owner->maxRange * 0.9f)) {
+			if (dynamic_cast<CHoverAirMoveType*>(owner->moveType) != NULL || (targetMidPosVec.SqLength2D() < 1024)) {
 				StopMove();
-				owner->moveType->KeepPointingTo(orderTarget->midPos,
-						std::min((float) owner->losRadius * loshandler->losDiv,
-							owner->maxRange * 0.9f), true);
+				owner->moveType->KeepPointingTo(orderTarget->midPos, minPointingDist, true);
 			}
 
 			// if (((first weapon range minus first weapon length greater than distance to target)
 			// and length of 2D vector from us to target less than 90% of our maximum range)
 			// then we are close enough, but need to move sideways to get a shot.
 			//assumption is flawed: The unit may be aiming or otherwise unable to shoot
-			else if (owner->unitDef->strafeToAttack && b3 && diffLength2D < (owner->maxRange * 0.9f))
-			{
+			else if (owner->unitDef->strafeToAttack && targetInRange && targetMidPosDist2D < (owner->maxRange * 0.9f)) {
 				moveDir ^= (owner->moveType->progressState == AMoveType::Failed);
+
 				const float sin = moveDir ? 3.0/5 : -3.0/5;
-				const float cos = 4.0/5;
-				float3 goalDiff(0, 0, 0);
-				goalDiff.x = diff.dot(float3(cos, 0, -sin));
-				goalDiff.z = diff.dot(float3(sin, 0, cos));
-				goalDiff *= (diffLength2D < (owner->maxRange * 0.3f)) ? 1/cos : cos;
+				const float cos = 4.0 / 5;
+
+				float3 goalDiff;
+				goalDiff.x = targetMidPosVec.dot(float3(cos, 0, -sin));
+				goalDiff.z = targetMidPosVec.dot(float3(sin, 0,  cos));
+				goalDiff *= (targetMidPosDist2D < (owner->maxRange * 0.3f)) ? 1/cos : cos;
 				goalDiff += orderTarget->pos;
 				SetGoal(goalDiff, owner->pos);
 			}
@@ -828,55 +835,58 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// to goal position greater than
 		// (10 plus 20% of 2D distance between attacker and target) then we need to close
 		// in on target more
-		else if ((orderTarget->pos + owner->posErrorVector * 128).SqDistance2D(goalPos)
-				> Square(10 + orderTarget->pos.distance2D(owner->pos) * 0.2f)) {
+		else if (targetGoalDist > targetPosDist) {
 			// if the target isn't in LOS, go to its approximate position
 			// otherwise try to go precisely to the target
 			// this should fix issues with low range weapons (mainly melee)
-			float3 fix = orderTarget->pos +
-					(orderTarget->losStatus[owner->allyteam] & LOS_INLOS ?
-						float3(0.f,0.f,0.f) :
-						owner->posErrorVector * 128);
-			const float3 norm = float3(fix - owner->pos).Normalize();
-			const float3 goal = fix - norm*(orderTarget->radius*edgeFactor*0.8f);
+			const float3 errPos = ((orderTarget->losStatus[owner->allyteam] & LOS_INLOS)? ZeroVector: owner->posErrorVector * 128.0f);
+			const float3 tgtPos = orderTarget->pos + errPos;
+
+			const float3 norm = (tgtPos - owner->pos).Normalize();
+			const float3 goal = tgtPos - norm * (orderTarget->radius * edgeFactor * 0.8f);
+
 			SetGoal(goal, owner->pos);
+
 			if (lastCloseInTry < gs->frameNum + MAX_CLOSE_IN_RETRY_TICKS)
 				lastCloseInTry = gs->frameNum;
 		}
 	}
 
-	// user is attacking ground
+	// user wants to attack the ground; cycle through our
+	// weapons until we find one that can accomodate him
 	else if (c.params.size() >= 3) {
 		const float3 pos = c.GetPos(0);
 		const float3 diff = owner->pos - pos;
 
-		if (!owner->weapons.empty()) {
-			// if we have at least one weapon then check if
-			// we can hit position with our first (assumed
-			// to be meanest) one
-			CWeapon* w = owner->weapons.front();
+		bool foundWeapon = false;
+
+		for (unsigned int wNum = 0; wNum < owner->weapons.size(); wNum++) {
+			CWeapon* w = owner->weapons[wNum];
+
+			if (foundWeapon)
+				break;
 
 			// XXX HACK - special weapon overrides any checks
 			if (c.GetID() == CMD_MANUALFIRE) {
 				assert(owner->unitDef->canManualFire);
-				float rr = owner->maxRange * owner->maxRange;
 
-				for (vector<CWeapon*>::iterator it = owner->weapons.begin(); it != owner->weapons.end(); ++it) {
-					if ((*it)->weaponDef->manualfire) {
-						rr = (*it)->range * (*it)->range; break;
-					}
-				}
+				if (!w->weaponDef->manualfire)
+					continue;
+				if (diff.SqLength() >= (w->range * w->range))
+					continue;
 
-				if (diff.SqLength() < rr) {
-					StopMove();
-					owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
-					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
-				}
+				StopMove();
+				owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+				owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+
+				foundWeapon = true;
 			} else {
-				if (diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D())) {
-					if (w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE)) {
+				if (diff.SqLength2D() < Square( w->range - w->relWeaponPos.Length2D() )) {
+					if (w->TryTargetRotate(pos, (c.options & INTERNAL_ORDER) == 0)) {
 						StopMove();
 						owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+
+						foundWeapon = true;
 					}
 
 					// for gunships, this pitches the nose down such that
@@ -899,8 +909,9 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		}
 		#endif
 
-		// if we are more than 10 units distant from target position then keeping moving closer
-		else if (pos.SqDistance2D(goalPos) > 100) {
+		// if we are unarmed and more than 10 elmos distant
+		// from target position, then keeping moving closer
+		if (owner->weapons.empty() && pos.SqDistance2D(goalPos) > 100) {
 			SetGoal(pos, owner->pos);
 		}
 	}
