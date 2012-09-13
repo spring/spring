@@ -8,10 +8,6 @@
 
 #include <stdexcept>
 
-
-const std::string CScriptHandler::SKIRMISH_AI_SCRIPT_NAME_PRELUDE = "Skirmish AI: ";
-
-
 CScriptHandler& CScriptHandler::Instance()
 {
 	static CScriptHandler instance;
@@ -19,23 +15,29 @@ CScriptHandler& CScriptHandler::Instance()
 }
 
 
-bool CScriptHandler::IsSkirmishAITestScript(const std::string& script) const
+bool CScriptHandler::IsSkirmishAITestScript(const std::string& scriptName) const
 {
-	return (script.substr(0, SKIRMISH_AI_SCRIPT_NAME_PRELUDE.size())
-			== SKIRMISH_AI_SCRIPT_NAME_PRELUDE);
+	const ScriptMap::const_iterator scriptsIt = scripts.find(scriptName);
+
+	if (scriptsIt == scripts.end())
+		return false;
+
+	return (dynamic_cast<const CSkirmishAIScript*>(scriptsIt->second) != NULL);
 }
 
 
-const SkirmishAIData& CScriptHandler::GetSkirmishAIData(const std::string& script) const
+const SkirmishAIData& CScriptHandler::GetSkirmishAIData(const std::string& scriptName) const
 {
-	ScriptMap::const_iterator s = scripts.find(script);
-	if (s == scripts.end()) {
-		throw std::runtime_error("Not a script");
+	const ScriptMap::const_iterator scriptsIt = scripts.find(scriptName);
+
+	if (scriptsIt == scripts.end()) {
+		throw std::runtime_error("start-script \"" + scriptName + "\" does not exist");
 	}
 
-	const CSkirmishAIScript* aiScript = dynamic_cast<const CSkirmishAIScript*> (s->second);
+	const CSkirmishAIScript* aiScript = dynamic_cast<const CSkirmishAIScript*>(scriptsIt->second);
+
 	if (aiScript == NULL) {
-		throw std::runtime_error("Not a CSkirmishAIScript");
+		throw std::runtime_error("start-script \"" + scriptName + "\" is not a CSkirmishAIScript");
 	}
 
 	return aiScript->aiData;
@@ -52,20 +54,24 @@ void CScriptHandler::Add(CScript* script)
 CScriptHandler::CScriptHandler()
 {
 	// default script
-	Add(new CScript("Commanders"));
+	Add(new CScript("Player Only: Testing Sandbox"));
 
 	// add the C interface Skirmish AIs
-	IAILibraryManager::T_skirmishAIKeys::const_iterator ai, e;
-	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
-	for(ai = skirmishAIKeys.begin(), e = skirmishAIKeys.end(); ai != e; ++ai) {
-		SkirmishAIData aiData;
-		aiData.shortName = ai->GetShortName();
-		aiData.version   = ai->GetVersion();
-		aiData.isLuaAI   = false;
-		Add(new CSkirmishAIScript(aiData));
-	}
 	// Lua AIs can not be added, as the selection would get invalid when
 	// selecting another mod.
+	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
+
+	IAILibraryManager::T_skirmishAIKeys::const_iterator i = skirmishAIKeys.begin();
+	IAILibraryManager::T_skirmishAIKeys::const_iterator e = skirmishAIKeys.end();
+
+	for (; i != e; ++i) {
+		SkirmishAIData aiData;
+		aiData.shortName = i->GetShortName();
+		aiData.version   = i->GetVersion();
+		aiData.isLuaAI   = false;
+
+		Add(new CSkirmishAIScript(aiData));
+	}
 }
 
 
