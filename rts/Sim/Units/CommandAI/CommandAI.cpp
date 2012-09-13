@@ -1387,8 +1387,8 @@ void CCommandAI::FinishCommand()
 	const Command cmd = commandQue.front();
 	const int cmdID  = cmd.GetID();
 	const int cmdTag = cmd.tag;
-	const bool dontRepeat = (cmd.options & DONT_REPEAT) ||
-	                        (cmd.options & INTERNAL_ORDER);
+	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
+
 	if (repeatOrders
 	    && !dontRepeat
 	    && (cmdID != CMD_STOP)

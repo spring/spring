@@ -84,14 +84,11 @@
 
 // bits for the option field of Command
 #define META_KEY        (1 << 2) //   4
-#define DONT_REPEAT     (1 << 3) //   8
+#define INTERNAL_ORDER  (1 << 3) //   8
 #define RIGHT_MOUSE_KEY (1 << 4) //  16
 #define SHIFT_KEY       (1 << 5) //  32
 #define CONTROL_KEY     (1 << 6) //  64
 #define ALT_KEY         (1 << 7) // 128
-
-
-#define INTERNAL_ORDER  (DONT_REPEAT)
 
 enum {
 	MOVESTATE_NONE     = -1,
