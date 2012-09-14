@@ -62,10 +62,6 @@ public:
 	// called every frame
 	void Update();
 
-
-	Profiler* GetProfiler();
-
-
 	// callbacks
 	IAICallback* cb;
 	IGlobalAICallback* aicb;
@@ -89,10 +85,9 @@ public:
 
 	vector<list<AAIGroup*> > group_list;  // unit groups
 
-	bool initialized;
-
-
 private:
+	Profiler* GetProfiler();
 	Profiler* profiler;
 	FILE *file;
+	bool initialized;
 };

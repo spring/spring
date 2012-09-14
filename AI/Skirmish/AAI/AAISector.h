@@ -119,8 +119,6 @@ public:
 	// returns min dist to edge in number of sectors
 	int GetEdgeDistance();
 
-	AAI *ai;
-	AAIUnitTable *ut;
 	AAIMap *map;
 
 	// sector x/y index
@@ -194,4 +192,7 @@ public:
 	// stores combat power of all stationary enemy defs/combat unit vs different categories
 	vector<float> enemy_stat_combat_power; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine
 	vector<float> enemy_mobile_combat_power; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine, 5 building
+private:
+	AAIUnitTable *ut;
+	AAI *ai;
 };

@@ -90,11 +90,6 @@ public:
 	void ActiveUnitKilled(UnitCategory category);
 	void FutureUnitKilled(UnitCategory category);
 
-	AAI *ai;
-	AAIExecute *execute;
-	AAIBuildTable *bt;
-	IAICallback* cb;
-
 	// units[i].unitId = -1 -> not used , -2 -> enemy unit
 	vector<AAIUnit> units;
 
@@ -117,4 +112,10 @@ public:
 
 	int activeBuilders, futureBuilders;
 	int activeFactories, futureFactories;
+private:
+	AAI *ai;
+	AAIExecute *execute;
+	AAIBuildTable *bt;
+	IAICallback* cb;
+
 };
