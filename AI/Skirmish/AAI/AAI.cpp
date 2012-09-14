@@ -293,7 +293,6 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 void AAI::UnitCreated(int unit, int builder)
 {
 	AAI_SCOPED_TIMER("UnitCreated")
-	LogConsole("UnitCreated %d builder: %d", unit, builder);
 	if (!cfg->initialized) {
 		Log("AAI::UnitCreated called but config isn't initialized");
 		return;
