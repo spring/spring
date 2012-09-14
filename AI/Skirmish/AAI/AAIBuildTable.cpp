@@ -67,13 +67,8 @@ AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 		else
 		{
 			startUnits[i] = -1;
-
-			static const size_t c_maxSize = 120;
-			char c[c_maxSize];
-			SNPRINTF(c, c_maxSize, "Error: starting unit %s not found\n",
+			ai->LogConsole("Error: starting unit %s not found\n",
 					cfg->START_UNITS[i]);
-			cb->SendTextMsg(c, 0);
-			ai->Log("%s", c);
 		}
 
 		sideNames[i+1].assign(cfg->SIDE_NAMES[i]);
@@ -741,7 +736,7 @@ void AAIBuildTable::Init()
 		// save to cache file
 		SaveBuildTable(0, LAND_MAP);
 
-		cb->SendTextMsg("New BuildTable has been created", 0);
+		ai->LogConsole("New BuildTable has been created");
 	}
 
 
@@ -2521,7 +2516,7 @@ bool AAIBuildTable::LoadBuildTable()
 
 			if(strcmp(buffer, MOD_LEARN_VERSION))
 			{
-				cb->SendTextMsg("Buildtable version out of date - creating new one",0);
+				ai->LogConsole("Buildtable version out of date - creating new one");
 				return false;
 			}
 

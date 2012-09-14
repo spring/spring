@@ -85,8 +85,7 @@ void AAIExecute::InitAI(int commander_unit_id, const UnitDef* commander_def)
 
 	if(ai->side < 1 || ai->side > bt->numOfSides)
 	{
-		cb->SendTextMsg("Error: side not properly set", 0);
-		ai->Log("ERROR: invalid side id %i\n", ai->side);
+		ai->LogConsole("ERROR: invalid side id %i\n", ai->side);
 		return;
 	}
 

@@ -124,7 +124,7 @@ void AAIAirForceManager::AddTarget(int unit_id, int def_id)
 	{
 		if(targets[i].unit_id == -1)
 		{
-			ai->cb->SendTextMsg("Target added...", 0);
+			ai->LogConsole("Target added...");
 
 			targets[i].pos = cb->GetUnitPos(unit_id);
 			targets[i].def_id = def_id;
@@ -156,7 +156,7 @@ void AAIAirForceManager::RemoveTarget(int unit_id)
 	{
 		if(targets[i].unit_id == unit_id)
 		{
-			ai->cb->SendTextMsg("Target removed...", 0);
+			ai->LogConsole("Target removed...");
 
 			targets[i].unit_id = -1;
 
@@ -198,7 +198,7 @@ void AAIAirForceManager::BombBestUnit(float cost, float danger)
 
 		if(group)
 		{
-			//ai->cb->SendTextMsg("Bombing...", 0);
+			//ai->LogConsole("Bombing...");
 			group->BombTarget(targets[i].unit_id, &targets[i].pos);
 
 			targets[i].unit_id = -1;
