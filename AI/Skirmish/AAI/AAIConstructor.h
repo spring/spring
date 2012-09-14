@@ -61,10 +61,6 @@ public:
 	void Retreat(UnitCategory attacked_by);
 
 
-	AAI *ai;
-	AAIBuildTable *bt;
-	IAICallback *cb;
-
 	// specify type of construction units (several values may be true, e.g. builders that may build certain combat units as well)
 	bool factory;		// can build units
 	bool builder;		// can build buildings
@@ -93,13 +89,16 @@ public:
 	// assistant builders
 	set<int> assistants;
 
-	// engine tick the build order had been given
-	int order_tick;
-
-	// buildque
-	list<int> *buildque;
-
 	// pointer to possible buildtask
 	AAIBuildTask *build_task;
+
+private:
+	AAI *ai;
+	AAIBuildTable *bt;
+	IAICallback *cb;
+	// engine tick the build order had been given
+	int order_tick;
+	// buildque
+	list<int> *buildque;
 
 };
