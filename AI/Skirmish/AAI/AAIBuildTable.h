@@ -191,9 +191,6 @@ public:
 	// number of assault cat + arty & stat defences
 	static const int combat_categories = 6;
 
-	// how many aai instances have been initialized
-	static int aai_instances;
-
 	// path/name of the file in which AAI stores the build table
 	static char buildtable_filename[500];
 
