@@ -90,7 +90,7 @@ AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continen
 
 	avg_speed = bt->unitList[def->id-1]->speed;
 
-	//fprintf(ai->file, "Creating new group - max size: %i   move type: %i   speed group: %i   continent: %i\n", maxSize, group_movement_type, speed_group, continent);
+	//ai->Log("Creating new group - max size: %i   move type: %i   speed group: %i   continent: %i\n", maxSize, group_movement_type, speed_group, continent);
 }
 
 AAIGroup::~AAIGroup(void)

@@ -122,7 +122,7 @@ bool AAISector::SetBase(bool base)
 		// check if already occupied (may happen if two coms start in same sector)
 		if(map->team_sector_map[x][y] >= 0)
 		{
-			fprintf(ai->file, "\nTeam %i could not add sector %i,%i to base, already occupied by ally team %i!\n\n",ai->cb->GetMyTeam(), x, y, map->team_sector_map[x][y]);
+			ai->Log("\nTeam %i could not add sector %i,%i to base, already occupied by ally team %i!\n\n",ai->cb->GetMyTeam(), x, y, map->team_sector_map[x][y]);
 			return false;
 		}
 
@@ -377,7 +377,7 @@ float3 AAISector::GetHighestBuildsite(int building)
 {
 	if(building < 1)
 	{
-		fprintf(ai->file, "ERROR: Invalid building def id %i passed to AAISector::GetRadarBuildsite()\n", building);
+		ai->Log("ERROR: Invalid building def id %i passed to AAISector::GetRadarBuildsite()\n", building);
 		return ZeroVector;
 	}
 
@@ -392,7 +392,7 @@ float3 AAISector::GetRandomBuildsite(int building, int tries, bool water)
 {
 	if(building < 1)
 	{
-		fprintf(ai->file, "ERROR: Invalid building def id %i passed to AAISector::GetRadarBuildsite()\n", building);
+		ai->Log("ERROR: Invalid building def id %i passed to AAISector::GetRadarBuildsite()\n", building);
 		return ZeroVector;
 	}
 

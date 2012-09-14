@@ -222,18 +222,18 @@ void AAIMap::Init()
 	initialized = true;
 
 	// for log file
-	fprintf(ai->file, "Map: %s\n",cb->GetMapName());
-	fprintf(ai->file, "Maptype: %s\n", GetMapTypeTextString(map_type));
-	fprintf(ai->file, "Mapsize is %i x %i\n", cb->GetMapWidth(),cb->GetMapHeight());
-	fprintf(ai->file, "%i sectors in x direction\n", xSectors);
-	fprintf(ai->file, "%i sectors in y direction\n", ySectors);
-	fprintf(ai->file, "x-sectorsize is %i (Map %i)\n", xSectorSize, xSectorSizeMap);
-	fprintf(ai->file, "y-sectorsize is %i (Map %i)\n", ySectorSize, ySectorSizeMap);
-	fprintf(ai->file, _STPF_" metal spots found (%i are on land, %i under water) \n \n", metal_spots.size(), land_metal_spots, water_metal_spots);
-	fprintf(ai->file, _STPF_" continents found on map\n", continents.size());
-	fprintf(ai->file, "%i land and %i water continents\n", land_continents, water_continents);
-	fprintf(ai->file, "Average land continent size is %i\n", avg_land_continent_size);
-	fprintf(ai->file, "Average water continent size is %i\n", avg_water_continent_size);
+	ai->Log("Map: %s\n",cb->GetMapName());
+	ai->Log("Maptype: %s\n", GetMapTypeTextString(map_type));
+	ai->Log("Mapsize is %i x %i\n", cb->GetMapWidth(),cb->GetMapHeight());
+	ai->Log("%i sectors in x direction\n", xSectors);
+	ai->Log("%i sectors in y direction\n", ySectors);
+	ai->Log("x-sectorsize is %i (Map %i)\n", xSectorSize, xSectorSizeMap);
+	ai->Log("y-sectorsize is %i (Map %i)\n", ySectorSize, ySectorSizeMap);
+	ai->Log(_STPF_" metal spots found (%i are on land, %i under water) \n \n", metal_spots.size(), land_metal_spots, water_metal_spots);
+	ai->Log(_STPF_" continents found on map\n", continents.size());
+	ai->Log("%i land and %i water continents\n", land_continents, water_continents);
+	ai->Log("Average land continent size is %i\n", avg_land_continent_size);
+	ai->Log("Average water continent size is %i\n", avg_water_continent_size);
 
 	//debug
 	/*float3 my_pos;
@@ -272,7 +272,7 @@ void AAIMap::ReadMapCacheFile()
 		if(strcmp(buffer, MAP_CACHE_VERSION))
 		{
 			cb->SendTextMsg("Mapcache out of date - creating new one", 0);
-			fprintf(ai->file, "Map cache file out of date - creating new one\n");
+			ai->Log("Map cache file out of date - creating new one\n");
 			fclose(file);
 		}
 		else
@@ -331,7 +331,7 @@ void AAIMap::ReadMapCacheFile()
 
 			fclose(file);
 
-			fprintf(ai->file, "Map cache file successfully loaded\n");
+			ai->Log("Map cache file successfully loaded\n");
 
 			loaded = true;
 		}
@@ -398,7 +398,7 @@ void AAIMap::ReadMapCacheFile()
 
 		fclose(file);
 
-		fprintf(ai->file, "New map cache-file created\n");
+		ai->Log("New map cache-file created\n");
 	}
 
 
@@ -499,7 +499,7 @@ void AAIMap::ReadContinentFile()
 		if(strcmp(buffer, CONTINENT_DATA_VERSION))
 		{
 			cb->SendTextMsg("Continent cache out of date - creating new one", 0);
-			fprintf(ai->file, "Continent cache-file out of date - new one has been created\n");
+			ai->Log("Continent cache-file out of date - new one has been created\n");
 			fclose(file);
 		}
 		else
@@ -536,7 +536,7 @@ void AAIMap::ReadContinentFile()
 
 			fclose(file);
 
-			fprintf(ai->file, "Continent cache file successfully loaded\n");
+			ai->Log("Continent cache file successfully loaded\n");
 
 			return;
 		}
@@ -1261,7 +1261,7 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 		{
 			if(y >= yMapSize)
 			{
-				fprintf(ai->file, "ERROR: y = %i index out of range when checking horizontal rows", y);
+				ai->Log("ERROR: y = %i index out of range when checking horizontal rows", y);
 				return;
 			}
 
@@ -1332,7 +1332,7 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 		{
 			if(x >= xMapSize)
 			{
-				fprintf(ai->file, "ERROR: x = %i index out of range when checking vertical rows", x);
+				ai->Log("ERROR: x = %i index out of range when checking vertical rows", x);
 				return;
 			}
 
@@ -2172,7 +2172,7 @@ void AAIMap::SearchMetalSpots()
 	{
 		metalMap = true;
 		metal_spots.clear();
-		fprintf(ai->file, "Map is considered to be a metal map\n");
+		ai->Log("Map is considered to be a metal map\n");
 	}
 	else
 		metalMap = false;
