@@ -10,6 +10,7 @@
 #include <set>
 #include <math.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "AAI.h"
 
@@ -43,47 +44,47 @@ AAI::~AAI()
 		return;
 
 	// save several AI data
-	fprintf(file, "\nShutting down....\n\n");
+	Log("\nShutting down....\n\n");
 
-	fprintf(file, "\nProfiling summary:\n");
-	fprintf(file, "%s\n", profiler->ToString().c_str());
+	Log("\nProfiling summary:\n");
+	Log("%s\n", profiler->ToString().c_str());
 
-	fprintf(file, "Unit category	active / under construction / requested\n");
+	Log("Unit category active / under construction / requested\n");
 	for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
 	{
-		fprintf(file, "%-20s: %i / %i / %i\n", bt->GetCategoryString2((UnitCategory)i), ut->activeUnits[i], ut->futureUnits[i], ut->requestedUnits[i]);
+		Log("%-20s: %i / %i / %i\n", bt->GetCategoryString2((UnitCategory)i), ut->activeUnits[i], ut->futureUnits[i], ut->requestedUnits[i]);
 	}
 
-	fprintf(file, "\nGround Groups:    "_STPF_"\n", group_list[GROUND_ASSAULT].size());
-	fprintf(file, "\nAir Groups:       "_STPF_"\n", group_list[AIR_ASSAULT].size());
-	fprintf(file, "\nHover Groups:     "_STPF_"\n", group_list[HOVER_ASSAULT].size());
-	fprintf(file, "\nSea Groups:       "_STPF_"\n", group_list[SEA_ASSAULT].size());
-	fprintf(file, "\nSubmarine Groups: "_STPF_"\n\n", group_list[SUBMARINE_ASSAULT].size());
+	Log("\nGround Groups:    "_STPF_"\n", group_list[GROUND_ASSAULT].size());
+	Log("\nAir Groups:       "_STPF_"\n", group_list[AIR_ASSAULT].size());
+	Log("\nHover Groups:     "_STPF_"\n", group_list[HOVER_ASSAULT].size());
+	Log("\nSea Groups:       "_STPF_"\n", group_list[SEA_ASSAULT].size());
+	Log("\nSubmarine Groups: "_STPF_"\n\n", group_list[SUBMARINE_ASSAULT].size());
 
-	fprintf(file, "Future metal/energy request: %i / %i\n", (int)execute->futureRequestedMetal, (int)execute->futureRequestedEnergy);
-	fprintf(file, "Future metal/energy supply:  %i / %i\n\n", (int)execute->futureAvailableMetal, (int)execute->futureAvailableEnergy);
+	Log("Future metal/energy request: %i / %i\n", (int)execute->futureRequestedMetal, (int)execute->futureRequestedEnergy);
+	Log("Future metal/energy supply:  %i / %i\n\n", (int)execute->futureAvailableMetal, (int)execute->futureAvailableEnergy);
 
-	fprintf(file, "Future/active builders:      %i / %i\n", ut->futureBuilders, ut->activeBuilders);
-	fprintf(file, "Future/active factories:     %i / %i\n\n", ut->futureFactories, ut->activeFactories);
+	Log("Future/active builders:      %i / %i\n", ut->futureBuilders, ut->activeBuilders);
+	Log("Future/active factories:     %i / %i\n\n", ut->futureFactories, ut->activeFactories);
 
-	fprintf(file, "Unit production rate: %i\n\n", execute->unitProductionRate);
+	Log("Unit production rate: %i\n\n", execute->unitProductionRate);
 
-	fprintf(file, "Requested constructors:\n");
+	Log("Requested constructors:\n");
 	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].end(); ++fac) {
 		assert((*fac-1) < bt->numOfUnits);
 		assert((*fac)   < bt->units_dynamic.size());
-		fprintf(file, "%-24s: %i\n", bt->unitList[*fac-1]->humanName.c_str(), bt->units_dynamic[*fac].requested);
+		Log("%-24s: %i\n", bt->unitList[*fac-1]->humanName.c_str(), bt->units_dynamic[*fac].requested);
 	}
 	for(list<int>::iterator fac = bt->units_of_category[MOBILE_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[MOBILE_CONSTRUCTOR][side-1].end(); ++fac)
-		fprintf(file, "%-24s: %i\n", bt->unitList[*fac-1]->humanName.c_str(), bt->units_dynamic[*fac].requested);
+		Log("%-24s: %i\n", bt->unitList[*fac-1]->humanName.c_str(), bt->units_dynamic[*fac].requested);
 
-	fprintf(file, "Factory ratings:\n");
+	Log("Factory ratings:\n");
 	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].end(); ++fac)
-		fprintf(file, "%-24s: %f\n", bt->unitList[*fac-1]->humanName.c_str(), bt->GetFactoryRating(*fac));
+		Log("%-24s: %f\n", bt->unitList[*fac-1]->humanName.c_str(), bt->GetFactoryRating(*fac));
 
-	fprintf(file, "Mobile constructor ratings:\n");
+	Log("Mobile constructor ratings:\n");
 	for(list<int>::iterator cons = bt->units_of_category[MOBILE_CONSTRUCTOR][side-1].begin(); cons != bt->units_of_category[MOBILE_CONSTRUCTOR][side-1].end(); ++cons)
-		fprintf(file, "%-24s: %f\n", bt->unitList[*cons-1]->humanName.c_str(), bt->GetBuilderRating(*cons));
+		Log("%-24s: %f\n", bt->unitList[*cons-1]->humanName.c_str(), bt->GetBuilderRating(*cons));
 
 
 	// delete buildtasks
@@ -155,7 +156,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 
 	file = fopen(filename,"w");
 
-	fprintf(file, "AAI %s running mod %s\n \n", AAI_VERSION, cb->GetModHumanName());
+	Log("AAI %s running mod %s\n \n", AAI_VERSION, cb->GetModHumanName());
 
 	// load config file first
 	cfg->LoadConfig(this);
@@ -643,7 +644,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 
 				brain->expandable = true;
 
-				fprintf(file, "\nRemoving sector %i,%i from base; base size: "_STPF_" \n", x, y, brain->sectors[0].size());
+				Log("\nRemoving sector %i,%i from base; base size: "_STPF_" \n", x, y, brain->sectors[0].size());
 			}
 		}
 		else // finished unit has been killed
@@ -995,4 +996,15 @@ int AAI::HandleEvent(int msg, const void* data)
 Profiler* AAI::GetProfiler()
 {
 	return profiler;
+}
+
+void AAI::Log(const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	const int bytes = vfprintf(file, format, args);
+	if (bytes<0) { //write to stderr if write to file failed
+		fprintf(stderr, format, args);
+	}
+	va_end(args);
 }

@@ -55,6 +55,7 @@ public:
 
 	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);	//called when an enemy inside los or radar is damaged
 	void EnemyDestroyed(int enemy, int attacker);
+	void Log(const char* format, ...);
 
 	int HandleEvent(int msg, const void *data);
 
@@ -90,8 +91,8 @@ public:
 
 	bool initialized;
 
-	FILE *file;
 
 private:
 	Profiler* profiler;
+	FILE *file;
 };

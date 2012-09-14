@@ -288,7 +288,7 @@ void AAIAttackManager::GetNextDest(AAIAttack *attack)
 	// get new target sector
 	AAISector *dest = ai->brain->GetNextAttackDest(attack->dest, attack->land, attack->water);
 
-	//fprintf(ai->file, "Getting next dest\n");
+	//ai->Log("Getting next dest\n");
 	if(dest && SufficientAttackPowerVS(dest, &(attack->combat_groups), 2))
 		attack->AttackSector(dest);
 	else
@@ -323,7 +323,7 @@ bool AAIAttackManager::SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *
 
 		sector_defence /= (float)total_units;
 
-		//fprintf(ai->file, "Checking attack power - att power / def power %f %f\n", aggressiveness * attack_power, sector_defence);
+		//ai->Log("Checking attack power - att power / def power %f %f\n", aggressiveness * attack_power, sector_defence);
 
 		if(aggressiveness * attack_power >= sector_defence)
 			return true;
@@ -384,7 +384,7 @@ bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *
 
 		enemy_power /= (float)total_units;
 
-		//fprintf(ai->file, "Checking combat power - att power / def power %f %f\n", aggressiveness * my_power, enemy_power);
+		//ai->Log("Checking combat power - att power / def power %f %f\n", aggressiveness * my_power, enemy_power);
 
 		if(aggressiveness * my_power >= enemy_power)
 			return true;

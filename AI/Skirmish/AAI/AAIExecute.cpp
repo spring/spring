@@ -81,12 +81,12 @@ void AAIExecute::InitAI(int commander_unit_id, const UnitDef* commander_def)
 	ai->side = bt->GetSideByID(commander_def->id);
 
 	//debug
-	fprintf(ai->file, "Playing as %s\n", bt->sideNames[ai->side].c_str());
+	ai->Log("Playing as %s\n", bt->sideNames[ai->side].c_str());
 
 	if(ai->side < 1 || ai->side > bt->numOfSides)
 	{
 		cb->SendTextMsg("Error: side not properly set", 0);
-		fprintf(ai->file, "ERROR: invalid side id %i\n", ai->side);
+		ai->Log("ERROR: invalid side id %i\n", ai->side);
 		return;
 	}
 
@@ -1008,7 +1008,7 @@ bool AAIExecute::BuildPowerPlant()
 			else
 			{
 				brain->ExpandBase(LAND_SECTOR);
-				fprintf(ai->file, "Base expanded by BuildPowerPlant()\n");
+				ai->Log("Base expanded by BuildPowerPlant()\n");
 			}
 		}
 
@@ -1051,7 +1051,7 @@ bool AAIExecute::BuildPowerPlant()
 			else
 			{
 				brain->ExpandBase(WATER_SECTOR);
-				fprintf(ai->file, "Base expanded by BuildPowerPlant() (water sector)\n");
+				ai->Log("Base expanded by BuildPowerPlant() (water sector)\n");
 			}
 		}
 	}
@@ -1142,7 +1142,7 @@ bool AAIExecute::BuildMetalMaker()
 				else
 				{
 					brain->ExpandBase(LAND_SECTOR);
-					fprintf(ai->file, "Base expanded by BuildMetalMaker()\n");
+					ai->Log("Base expanded by BuildMetalMaker()\n");
 				}
 			}
 		}
@@ -1184,7 +1184,7 @@ bool AAIExecute::BuildMetalMaker()
 				else
 				{
 					brain->ExpandBase(WATER_SECTOR);
-					fprintf(ai->file, "Base expanded by BuildMetalMaker() (water sector)\n");
+					ai->Log("Base expanded by BuildMetalMaker() (water sector)\n");
 				}
 			}
 		}
@@ -1265,7 +1265,7 @@ bool AAIExecute::BuildStorage()
 				else
 				{
 					brain->ExpandBase(LAND_SECTOR);
-					fprintf(ai->file, "Base expanded by BuildStorage()\n");
+					ai->Log("Base expanded by BuildStorage()\n");
 				}
 			}
 		}
@@ -1305,7 +1305,7 @@ bool AAIExecute::BuildStorage()
 				else
 				{
 					brain->ExpandBase(WATER_SECTOR);
-					fprintf(ai->file, "Base expanded by BuildStorage()\n");
+					ai->Log("Base expanded by BuildStorage()\n");
 				}
 			}
 		}
@@ -1378,7 +1378,7 @@ bool AAIExecute::BuildAirBase()
 				else
 				{
 					brain->ExpandBase(LAND_SECTOR);
-					fprintf(ai->file, "Base expanded by BuildAirBase()\n");
+					ai->Log("Base expanded by BuildAirBase()\n");
 				}
 			}
 		}
@@ -1418,7 +1418,7 @@ bool AAIExecute::BuildAirBase()
 				else
 				{
 					brain->ExpandBase(WATER_SECTOR);
-					fprintf(ai->file, "Base expanded by BuildAirBase() (water sector)\n");
+					ai->Log("Base expanded by BuildAirBase() (water sector)\n");
 				}
 			}
 		}
@@ -1881,13 +1881,13 @@ bool AAIExecute::BuildFactory()
 			if(bt->CanPlacedLand(building))
 			{
 				expanded = brain->ExpandBase(LAND_SECTOR);
-				fprintf(ai->file, "Base expanded by BuildFactory()\n");
+				ai->Log("Base expanded by BuildFactory()\n");
 			}
 
 			if(!expanded && bt->CanPlacedWater(building))
 			{
 				brain->ExpandBase(WATER_SECTOR);
-				fprintf(ai->file, "Base expanded by BuildFactory() (water sector)\n");
+				ai->Log("Base expanded by BuildFactory() (water sector)\n");
 			}
 
 			// could not build due to lack of suitable buildpos
@@ -2240,14 +2240,14 @@ void AAIExecute::CheckBuildqueues()
 			if(unitProductionRate < 70)
 				++unitProductionRate;
 
-			//fprintf(ai->file, "Increasing unit production rate to %i\n", unitProductionRate);
+			//ai->Log("Increasing unit production rate to %i\n", unitProductionRate);
 		}
 		else if( (float)req_units / (float)active_factory_types > (float)cfg->MAX_BUILDQUE_SIZE / 1.5f )
 		{
 			if(unitProductionRate > 1)
 			{
 				--unitProductionRate;
-				//fprintf(ai->file, "Decreasing unit production rate to %i\n", unitProductionRate);
+				//ai->Log("Decreasing unit production rate to %i\n", unitProductionRate);
 			}
 		}
 	}
@@ -2837,12 +2837,12 @@ void AAIExecute::CheckConstruction()
 
 	/*if(construction_started)
 	{
-		fprintf(ai->file, "\n");
+		ai->Log("\n");
 
 		for(int i = 1; i < METAL_MAKER; ++i)
-			fprintf(ai->file, "%s: %f\n", bt->GetCategoryString2((UnitCategory)i), urgency[i]);
+			ai->Log("%s: %f\n", bt->GetCategoryString2((UnitCategory)i), urgency[i]);
 
-		fprintf(ai->file, "Selected category: %s\n", bt->GetCategoryString2(category));
+		ai->Log("Selected category: %s\n", bt->GetCategoryString2(category));
 	}*/
 
 	if(construction_started)
@@ -3088,7 +3088,7 @@ void AAIExecute::AddStartFactory()
 		bt->units_dynamic[best_factory].requested += 1;
 		urgency[STATIONARY_CONSTRUCTOR] = 3.0f;
 
-		fprintf(ai->file, "%s requested\n", bt->unitList[best_factory-1]->humanName.c_str());
+		ai->Log("%s requested\n", bt->unitList[best_factory-1]->humanName.c_str());
 
 		for(list<int>::iterator j = bt->units_static[best_factory].canBuildList.begin(); j != bt->units_static[best_factory].canBuildList.end(); ++j)
 			bt->units_dynamic[*j].constructorsRequested += 1;
@@ -3338,7 +3338,7 @@ void AAIExecute::GiveOrder(Command *c, int unit, const char *owner)
 	++issued_orders;
 
 	if(issued_orders%500 == 0)
-		fprintf(ai->file, "%i th order has been given by %s in frame %i\n", issued_orders, owner,  cb->GetCurrentFrame());
+		ai->Log("%i th order has been given by %s in frame %i\n", issued_orders, owner,  cb->GetCurrentFrame());
 
 	ut->units[unit].last_order = cb->GetCurrentFrame();
 
