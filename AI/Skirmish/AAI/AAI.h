@@ -56,8 +56,11 @@ public:
 	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);	//called when an enemy inside los or radar is damaged
 	void EnemyDestroyed(int enemy, int attacker);
 	void Log(const char* format, ...);
+	void LogConsole(const char* format, ...);
 
 	int HandleEvent(int msg, const void *data);
+	//return count of aai instances
+	int GetInstances() { return aai_instance; }
 
 	// called every frame
 	void Update();

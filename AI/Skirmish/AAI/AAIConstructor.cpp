@@ -50,9 +50,7 @@ bool AAIConstructor::IsBusy()
 
 void AAIConstructor::Idle()
 {
-	//char c[80];
-	//SNPRINTF(c, 80, "%s is idle", bt->unitList[def_id-1]->humanName.c_str());
-	//cb->SendTextMsg(c, 0);
+	//ai->LogConsole("%s is idle", bt->unitList[def_id-1]->humanName.c_str());
 
 	if(builder)
 	{
@@ -261,7 +259,7 @@ void AAIConstructor::CheckAssistance()
 		// check if assistants are needed anymore
 		else if(!assistants.empty() && buildque->empty() && !construction_def_id)
 		{
-			//cb->SendTextMsg("factory releasing assistants",0);
+			//ai->LogConsole("factory releasing assistants");
 			ReleaseAllAssistants();
 		}
 

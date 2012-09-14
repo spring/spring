@@ -271,8 +271,7 @@ void AAIMap::ReadMapCacheFile()
 
 		if(strcmp(buffer, MAP_CACHE_VERSION))
 		{
-			cb->SendTextMsg("Mapcache out of date - creating new one", 0);
-			ai->Log("Map cache file out of date - creating new one\n");
+			ai->LogConsole("Mapcache out of date - creating new one");
 			fclose(file);
 		}
 		else
@@ -296,8 +295,7 @@ void AAIMap::ReadMapCacheFile()
 			else
 				map_type = UNKNOWN_MAP;
 
-			SNPRINTF(buffer, buffer_sizeMax, "%s detected", GetMapTypeTextString(map_type));
-			ai->cb->SendTextMsg(buffer, 0);
+			ai->LogConsole("%s detected", GetMapTypeTextString(map_type));
 
 			// load water ratio
 			fscanf(file, "%f ", &water_ratio);
@@ -498,8 +496,7 @@ void AAIMap::ReadContinentFile()
 
 		if(strcmp(buffer, CONTINENT_DATA_VERSION))
 		{
-			cb->SendTextMsg("Continent cache out of date - creating new one", 0);
-			ai->Log("Continent cache-file out of date - new one has been created\n");
+			ai->LogConsole("Continent cache out of date - creating new one");
 			fclose(file);
 		}
 		else
@@ -662,7 +659,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 		// file version out of date
 		if(strcmp(buffer, MAP_LEARN_VERSION))
 		{
-			cb->SendTextMsg("Map learning file version out of date, creating new one", 0);
+			ai->LogConsole("Map learning file version out of date, creating new one");
 			fclose(load_file);
 			load_file = 0;
 		}
@@ -773,7 +770,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 	if(load_file)
 		fclose(load_file);
 	else
-		cb->SendTextMsg("New map-learning file created", 0);
+		ai->LogConsole("New map-learning file created");
 }
 
 void AAIMap::Learn()

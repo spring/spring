@@ -167,7 +167,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 				std::string("Error: Could not load mod and/or general config file."
 					" For further information see the config file under: ") +
 				filename;
-		cb->SendTextMsg(errorMsg.c_str(), 0);
+		LogConsole("%s", errorMsg.c_str());
 		throw 1;
 	}
 
@@ -197,7 +197,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	// init attack manager
 	am = new AAIAttackManager(this, cb, bt, map->continents.size());
 
-	cb->SendTextMsg("AAI loaded", 0);
+	LogConsole("AAI loaded");
 }
 
 void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
@@ -325,7 +325,7 @@ void AAI::UnitCreated(int unit, int builder)
 	// resurrected units will be handled differently
 	if ( !cb->UnitBeingBuilt(unit))
 	{
-		cb->SendTextMsg("ressurected", 0);
+		LogConsole("ressurected", 0);
 
 		UnitCategory category = bt->units_static[def->id].category;
 
@@ -787,7 +787,7 @@ void AAI::Update()
 	{
 		if (!(tick % 450))
 		{
-			cb->SendTextMsg("Failed to initialize AAI! Please view ai log for further information and check if AAI supports this mod", 0);
+			LogConsole("Failed to initialize AAI! Please view ai log for further information and check if AAI supports this mod");
 		}
 
 		return;
@@ -857,9 +857,7 @@ void AAI::Update()
 
 		/*if (brain->enemy_pressure_estimation > 0.01f)
 		{
-			char c[20];
-			SNPRINTF(c, 20, "%f", brain->enemy_pressure_estimation);
-			cb->SendTextMsg(c, 0);
+			LogConsole("%f", brain->enemy_pressure_estimation);
 		}*/
 	}
 
@@ -1010,3 +1008,17 @@ void AAI::Log(const char* format, ...)
 	}
 	va_end(args);
 }
+
+void AAI::LogConsole(const char* format, ...)
+{
+	char buf[1024];
+	va_list args;
+
+	va_start(args, format);
+	const int bytes = vsnprintf(buf, 1024, format, args);
+	va_end(args);
+
+	cb->SendTextMsg(buf, 0);
+	Log("%s\n", &buf);
+}
+
