@@ -14,7 +14,6 @@
 // all the static vars
 const UnitDef** AAIBuildTable::unitList = 0;
 list<int>* AAIBuildTable::units_of_category[MOBILE_CONSTRUCTOR+1];
-int AAIBuildTable::aai_instances = 0;
 char AAIBuildTable::buildtable_filename[500];
 float* AAIBuildTable::avg_cost[MOBILE_CONSTRUCTOR+1];
 float* AAIBuildTable::avg_buildtime[MOBILE_CONSTRUCTOR+1];
@@ -81,13 +80,8 @@ AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 	assault_categories.push_back(SEA_ASSAULT);
 	assault_categories.push_back(SUBMARINE_ASSAULT);
 
-	// one more instance
-	++aai_instances;
-
-	ai->aai_instance = aai_instances;
-
 	// only set up static things if first aai intsance is iniatialized
-	if(aai_instances == 1)
+	if(ai->GetInstances() == 1)
 	{
 		for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
 		{
@@ -158,11 +152,8 @@ AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 
 AAIBuildTable::~AAIBuildTable(void)
 {
-	// one instance less
-	--aai_instances;
-
-	// delete common data only if last aai instace has gone
-	if(aai_instances == 0)
+	// delete common data only if last aai instance has gone
+	if(ai->GetInstances() == 0)
 	{
 
 		SafeDeleteArray(unitList);
@@ -742,7 +733,7 @@ void AAIBuildTable::Init()
 
 
 	// only once
-	if(aai_instances == 1)
+	if(ai->GetInstances() == 1)
 	{
 		// apply possible cost multipliers
 		if(cfg->cost_multipliers.size() > 0)

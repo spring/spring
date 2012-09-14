@@ -40,6 +40,7 @@ AAI::AAI() :
 
 AAI::~AAI()
 {
+	aai_instance--;
 	if (!initialized)
 		return;
 
@@ -129,6 +130,7 @@ void AAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {}
 
 void AAI::InitAI(IGlobalAICallback* callback, int team)
 {
+	aai_instance++;
 	char profilerName[16];
 	SNPRINTF(profilerName, sizeof(profilerName), "%s:%i", "AAI", team);
 	profiler = new Profiler(profilerName);

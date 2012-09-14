@@ -12,8 +12,6 @@
 #include "AAISector.h"
 #include "AAIBuildTable.h"
 
-// all the static vars
-int AAIMap::aai_instances = 0;
 int AAIMap::xSize;
 int AAIMap::ySize;
 int AAIMap::xMapSize;
@@ -76,10 +74,8 @@ AAIMap::AAIMap(AAI *ai)
 
 AAIMap::~AAIMap(void)
 {
-	--aai_instances;
-
 	// delete common data only if last aai instace has gone
-	if(aai_instances == 0)
+	if(ai->GetInstances() == 0)
 	{
 		Learn();
 
@@ -128,10 +124,8 @@ AAIMap::~AAIMap(void)
 
 void AAIMap::Init()
 {
-	++aai_instances;
-
 	// all static vars are only initialized by the first aai instance
-	if(aai_instances == 1)
+	if(ai->GetInstances() == 1)
 	{
 		// get size
 		xMapSize = cb->GetMapWidth();

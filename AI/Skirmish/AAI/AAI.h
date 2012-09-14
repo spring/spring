@@ -72,9 +72,6 @@ public:
 	// side 1= arm, 2 = core, 0 = neutral
 	int side;
 
-	// if there is more than one instance of AAI, make sure to allocate/free memory only once
-	static int aai_instance;
-
 	// list of buildtasks
 	list<AAIBuildTask*> build_tasks;
 
@@ -93,4 +90,8 @@ private:
 	Profiler* profiler;
 	FILE *file;
 	bool initialized;
+
+	// if there is more than one instance of AAI, make sure to allocate/free memory only once
+	static int aai_instance;
+
 };
