@@ -10,6 +10,7 @@
 
 #include "Console.h"
 #include "Camera/CameraController.h"
+#include "Game/Camera.h"
 
 
 class CCameraHandler : public CommandReceiver
@@ -75,6 +76,9 @@ private:
 
 	float cameraTime;
 	float cameraTimeLeft;
+	CCamera cameraStart;
+	float cameraTimeStart;
+	float cameraTimeEnd;
 	float cameraTimeFactor;
 	float cameraTimeExponent;
 
