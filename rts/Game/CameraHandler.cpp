@@ -64,6 +64,8 @@ CCameraHandler::CCameraHandler()
 {
 	cameraTime = 0.0f;
 	cameraTimeLeft = 0.0f;
+	cameraTimeStart = 0.0f;
+	cameraTimeEnd = 0.0f;
 
 	// FPS camera must always be the first one in the list
 	camControllers.resize(CAMERA_MODE_LAST);
@@ -128,6 +130,27 @@ void CCameraHandler::UpdateCam()
 	const float3 wantedCamPos = currCamCtrl->GetPos();
 	const float3 wantedCamDir = currCamCtrl->GetDir();
 
+#if 1
+	const float curTime = spring_gettime()/1000.f;
+	if (curTime >= cameraTimeEnd) {
+		camera->pos = wantedCamPos;
+		camera->forward = wantedCamDir;
+		if (wantedCamFOV != camera->GetFov())
+			camera->SetFov(wantedCamFOV);
+	}
+	else {
+		const float exp = cameraTimeExponent;
+		const float ratio = 1.0f - (float)math::pow((cameraTimeEnd - curTime)/(cameraTimeEnd - cameraTimeStart), exp);
+
+		const float  deltaFOV = wantedCamFOV - cameraStart.GetFov();
+		const float3 deltaPos = wantedCamPos - cameraStart.pos;
+		const float3 deltaDir = wantedCamDir - cameraStart.forward;
+		camera->SetFov(cameraStart.GetFov() + (deltaFOV * ratio));
+		camera->pos     = cameraStart.pos + deltaPos * ratio;
+		camera->forward = cameraStart.forward + deltaDir * ratio;
+		camera->forward.Normalize();
+	}
+#else
 	if (cameraTimeLeft <= 0.0f) {
 		camera->pos = wantedCamPos;
 		camera->forward = wantedCamDir;
@@ -149,6 +172,7 @@ void CCameraHandler::UpdateCam()
 		camera->forward += deltaDir * ratio;
 		camera->forward.Normalize();
 	}
+#endif
 }
 
 
@@ -207,8 +231,13 @@ void CCameraHandler::PopMode()
 void CCameraHandler::CameraTransition(float time)
 {
 	time = std::max(time, 0.0f) * cameraTimeFactor;
+
 	cameraTime = time;
 	cameraTimeLeft = time;
+
+	cameraTimeStart = spring_gettime()/1000.f;
+	cameraTimeEnd = cameraTimeStart + time;
+	cameraStart.CopyState(camera);
 }
 
 
