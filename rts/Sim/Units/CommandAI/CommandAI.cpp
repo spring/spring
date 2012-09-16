@@ -3,10 +3,10 @@
 #include "System/mmgr.h"
 
 #include "CommandAI.h"
+#include "BuilderCAI.h"
 #include "FactoryCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/WaitCommandsAI.h"
@@ -21,7 +21,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
@@ -380,8 +379,10 @@ static inline bool IsCommandInMap(const Command& c)
 
 bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 {
+	const int cmdID = c.GetID();
+
 	// TODO check if the command is in the map first, for more commands
-	switch (c.GetID()) {
+	switch (cmdID) {
 		case CMD_MOVE:
 		case CMD_ATTACK:
 		case CMD_AREA_ATTACK:
@@ -399,7 +400,23 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 		default: {
 			// build commands
-			if (c.GetID() < 0 && !IsCommandInMap(c)) { return false; }
+			if (cmdID < 0) {
+				if (!IsCommandInMap(c))
+					return false;
+
+				const CBuilderCAI* bcai = dynamic_cast<const CBuilderCAI*>(this);
+				const CFactoryCAI* fcai = dynamic_cast<const CFactoryCAI*>(this);
+
+				// non-builders cannot ever execute these
+				// we can get here if a factory is selected along with the
+				// unit it is currently building and a build-order is given
+				// to the former
+				if (fcai == NULL && bcai == NULL)
+					return false;
+
+				// {Builder,Factory}CAI::GiveCommandReal (should) handle the
+				// case where buildOptions.find(cmdID) == buildOptions.end()
+			}
 		} break;
 	}
 
@@ -408,9 +425,8 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	// AI's may do as they like
 	const CSkirmishAIHandler::ids_t& saids = skirmishAIHandler.GetSkirmishAIsInTeam(owner->team);
 	const bool aiOrder = (!saids.empty());
-	const int cmd_id = c.GetID();
 
-	switch (cmd_id) {
+	switch (cmdID) {
 		case CMD_MANUALFIRE:
 			if (!ud->canManualFire)
 				return false;
@@ -527,35 +543,35 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	}
 
 
-	if (cmd_id == CMD_FIRE_STATE
+	if (cmdID == CMD_FIRE_STATE
 			&& (c.params.empty() || !CanChangeFireState()))
 	{
 		return false;
 	}
-	if (cmd_id == CMD_MOVE_STATE
+	if (cmdID == CMD_MOVE_STATE
 			&& (c.params.empty() || (!ud->canmove && !ud->builder)))
 	{
 		return false;
 	}
-	if (cmd_id == CMD_REPEAT && (c.params.empty() || !ud->canRepeat || ((int)c.params[0] % 2) != (int)c.params[0]/* only 0 or 1 allowed */))
+	if (cmdID == CMD_REPEAT && (c.params.empty() || !ud->canRepeat || ((int)c.params[0] % 2) != (int)c.params[0]/* only 0 or 1 allowed */))
 	{
 		return false;
 	}
-	if (cmd_id == CMD_TRAJECTORY
+	if (cmdID == CMD_TRAJECTORY
 			&& (c.params.empty() || ud->highTrajectoryType < 2))
 	{
 		return false;
 	}
-	if (cmd_id == CMD_ONOFF
+	if (cmdID == CMD_ONOFF
 			&& (c.params.empty() || !ud->onoffable || owner->beingBuilt || ((int)c.params[0] % 2) != (int)c.params[0]/* only 0 or 1 allowed */))
 	{
 		return false;
 	}
-	if (cmd_id == CMD_CLOAK && (c.params.empty() || !ud->canCloak || ((int)c.params[0] % 2) != (int)c.params[0]/* only 0 or 1 allowed */))
+	if (cmdID == CMD_CLOAK && (c.params.empty() || !ud->canCloak || ((int)c.params[0] % 2) != (int)c.params[0]/* only 0 or 1 allowed */))
 	{
 		return false;
 	}
-	if (cmd_id == CMD_STOCKPILE && !stockpileWeapon)
+	if (cmdID == CMD_STOCKPILE && !stockpileWeapon)
 	{
 		return false;
 	}

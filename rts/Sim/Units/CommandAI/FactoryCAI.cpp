@@ -211,16 +211,14 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	}
 
 	BuildOption& bo = boi->second;
-
 	int numItems = 1;
+
 	if (c.options & SHIFT_KEY)   { numItems *= 5; }
 	if (c.options & CONTROL_KEY) { numItems *= 20; }
 
 	if (c.options & RIGHT_MOUSE_KEY) {
 		bo.numQued -= numItems;
-		if (bo.numQued < 0) {
-			bo.numQued = 0;
-		}
+		bo.numQued  = std::max(bo.numQued, 0);
 
 		int numToErase = numItems;
 		if (c.options & ALT_KEY) {
@@ -240,8 +238,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 		UpdateIconName(cmdID, bo);
 		SlowUpdate();
-	}
-	else {
+	} else {
 		if (c.options & ALT_KEY) {
 			for (int a = 0; a < numItems; ++a) {
 				if (repeatOrders) {
