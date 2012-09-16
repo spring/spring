@@ -489,7 +489,7 @@ bool CGroundMoveType::FollowPath()
 
 		// apply obstacle avoidance (steering)
 		const float3 rawWantedDir = waypointDir * (int(!wantReverse) * 2 - 1);
-		const float3& modWantedDir = ObstacleAvoidance(rawWantedDir);
+		const float3& modWantedDir = GetObstacleAvoidanceDir(rawWantedDir);
 
 		// ASSERT_SYNCED(modWantedDir);
 
@@ -990,27 +990,24 @@ void CGroundMoveType::CalcSkidRot()
  * Dynamic obstacle avoidance, helps the unit to
  * follow the path even when it's not perfect.
  */
-float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
+float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	#if (IGNORE_OBSTACLES == 1)
 	return desiredDir;
 	#endif
-
-	// multiplier for how strongly an object should be avoided
-	static const float AVOIDANCE_STRENGTH = 8000.0f;
 
 	// Obstacle-avoidance-system only needs to be run if the unit wants to move
 	if (pathId == 0)
 		return ZeroVector;
 
-	float3 avoidanceVec = ZeroVector;
-	float3 avoidanceDir = desiredDir;
-
 	// Speed-optimizer. Reduces the times this system is run.
 	if (gs->frameNum < nextObstacleAvoidanceUpdate)
 		return lastAvoidanceDir;
 
+	float3 avoidanceVec = ZeroVector;
+	float3 avoidanceDir = desiredDir;
+
 	lastAvoidanceDir = desiredDir;
-	nextObstacleAvoidanceUpdate = gs->frameNum + 4;
+	nextObstacleAvoidanceUpdate = gs->frameNum + 1;
 
 	CUnit* avoider = owner;
 	MoveDef* avoiderMD = avoider->moveDef;
@@ -1018,15 +1015,14 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 
 	avoiderMD->tempOwner = avoider;
 
+	static const float AVOIDER_DIR_WEIGHT = 2.0f;
+	static const float DESIRED_DIR_WEIGHT = 1.0f;
 
 	// now we do the obstacle avoidance proper
 	// avoider always uses its never-rotated MoveDef footprint
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
 	const float avoiderRadius = FOOTPRINT_RADIUS(avoiderMD->xsize, avoiderMD->zsize, 1.0f);
 	const float3 rightOfPath = desiredDir.cross(UpVector);
-
-	float avoidLeft = 0.0f;
-	float avoidRight = 0.0f;
 
 	const vector<CSolidObject*>& nearbyObjects = qf->GetSolidsExact(avoider->pos, avoidanceRadius);
 
@@ -1042,13 +1038,12 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 		if (!avoiderMM->CrushResistant(*avoiderMD, avoidee))
 			continue;
 		// ignore objects that are slightly behind us
-		if ((desiredDir.dot(avoidee->pos - avoider->pos) + 0.25f) <= 0.0f)
+		if (desiredDir.dot(avoidee->pos - avoider->pos) <= 0.0f)
 			continue;
 
 		const bool avoideeMobile = (avoideeMD != NULL);
 
-		const float3 avoideeVector = (avoider->pos - avoidee->pos - avoidee->speed * GAME_SPEED);
-		const float avoideeDistSq = avoideeVector.SqLength();
+		const float3 avoideeVector = (avoider->pos + avoider->speed) - (avoidee->pos + avoidee->speed);
 
 		// use the avoidee's MoveDef footprint as radius if it is mobile
 		// use the avoidee's Unit (not UnitDef) footprint as radius otherwise
@@ -1058,21 +1053,19 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 		const float avoidanceRadiusSum = avoiderRadius + avoideeRadius;
 		const float avoidanceMassSum = avoider->mass + avoidee->mass;
 		const float avoideeMassScale = (avoideeMobile)? (avoidee->mass / avoidanceMassSum): 1.0f;
+		const float avoideeDistSq = avoideeVector.SqLength();
 
 		if (avoideeMobile && !avoiderMD->avoidMobilesOnPath)
 			continue;
 
-		if (avoideeDistSq >= Square(currentSpeed * GAME_SPEED + avoidanceRadiusSum))
+		if (avoideeDistSq >= Square(std::max(currentSpeed, 1.0f) * GAME_SPEED + avoidanceRadiusSum))
 			continue;
 		if (avoideeDistSq >= avoider->pos.SqDistance2D(goalPos))
 			continue;
 
-		// note: positive angle cosines mean object is to our right
-		const float avoideeDistToAvoidDirCenter = avoideeVector.dot(rightOfPath);
-
 		if (avoideeVector.dot(avoidanceDir) >= avoidanceRadiusSum)
 			continue;
-		if (math::fabs(avoideeDistToAvoidDirCenter) >= avoidanceRadiusSum)
+		if (math::fabs(avoideeVector.dot(rightOfPath)) >= avoidanceRadiusSum)
 			continue;
 
 		// do not bother steering around idling objects
@@ -1087,54 +1080,58 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 		if (avoideeMobile || (Distance2D(owner, avoidee, SQUARE_SIZE) >= 0.0f)) {
 			#if (DEBUG_OUTPUT == 1)
 			{
-				GML_RECMUTEX_LOCK(sel); // ObstacleAvoidance
+				GML_RECMUTEX_LOCK(sel); // GetObstacleAvoidanceDir
 
 				if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
-					geometricObjects->AddLine(avoider->pos + UpVector * 20, object->pos + UpVector * 20, 3, 1, 4);
+					geometricObjects->AddLine(avoider->pos + (UpVector * 20.0f), avoidee->pos + (UpVector * 20.0f), 3, 1, 4);
 				}
 			}
 			#endif
 
-			const float iSqrtDist = (avoideeDistSq <= 1e-4f)? 1e-2f: math::isqrt2(avoideeDistSq);
-			const float avoidScale = (AVOIDANCE_STRENGTH * iSqrtDist * iSqrtDist * iSqrtDist) * avoideeMassScale;
+			const float avoideeDistance = (avoideeDistSq <= 1e-2f)? 1e-1f: fastmath::sqrt2(avoideeDistSq);
+			const float avoidanceAngleDot = avoider->frontdir.dot(avoidee->frontdir);
+			const float avoidanceTurnSign = (avoideeVector.dot(avoider->rightdir) * 2.0f) - 1.0f;
+			const float avoidanceClampDot = 1.0f - (0.5f + Clamp(avoidanceAngleDot, -1.0f, 1.0f) * 0.5f);
+			const float avoidanceFallOff  = 1.0f - std::min(1.0f, avoideeDistance / (4.0f * avoidanceRadiusSum));
 
-			// avoid collision by turning either left or right
-			// using the direction thats needs most adjustment
-			if (avoideeDistToAvoidDirCenter > 0.0f) {
-				avoidRight += ((avoidanceRadiusSum - avoideeDistToAvoidDirCenter) * avoidScale);
+			if (avoidanceAngleDot < 0.0f) {
+				// if anti-parallel, make both parties turn right or both turn left
+				avoidanceDir = ((-avoideeVector / avoideeDistance) + (avoider->rightdir * avoidanceTurnSign * AVOIDER_DIR_WEIGHT));
 			} else {
-				avoidLeft += ((avoidanceRadiusSum + avoideeDistToAvoidDirCenter) * avoidScale);
+				// if parallel, make one of the parties turn left and one turn right
+				avoidanceDir = (( avoideeVector / avoideeDistance) + (avoider->frontdir *                     AVOIDER_DIR_WEIGHT));
 			}
+
+			avoidanceVec += (avoidanceDir * 0.5f * avoidanceClampDot * avoidanceFallOff * avoideeMassScale);
 		}
 	}
 
 	avoiderMD->tempOwner = NULL;
 
-
-	// Sum up avoidance.
-	avoidanceVec = (desiredDir.cross(UpVector) * (avoidRight - avoidLeft));
-	avoidanceDir = (desiredDir + avoidanceVec).SafeNormalize();
+	// use a weighted combination of the desired- and the avoidance-directions
+	// also linearly smooth it using the vector calculated the previous frame
+	avoidanceVec = avoidanceVec.SafeNormalize();
+	avoidanceDir = (desiredDir * DESIRED_DIR_WEIGHT + avoidanceVec).SafeNormalize();
+	avoidanceDir = (lastAvoidanceDir + avoidanceDir) * 0.5f;
 
 	#if (DEBUG_OUTPUT == 1)
 	{
-		GML_RECMUTEX_LOCK(sel); // ObstacleAvoidance
+		GML_RECMUTEX_LOCK(sel); // GetObstacleAvoidanceDir
 
 		if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
-			int a = geometricObjects->AddLine(avoider->pos + UpVector * 20, avoider->pos + UpVector * 20 + avoidanceVec * 40, 7, 1, 4);
-			geometricObjects->SetColor(a, 1, 0.3f, 0.3f, 0.6f);
+			const float3 p0 = owner->pos + (    UpVector * 20.0f);
+			const float3 p1 =         p0 + (avoidanceVec * 40.0f);
+			const float3 p2 =         p0 + (avoidanceDir * 40.0f);
 
-			a = geometricObjects->AddLine(avoider->pos + UpVector * 20, avoider->pos + UpVector * 20 + desiredDir * 40, 7, 1, 4);
-			geometricObjects->SetColor(a, 0.3f, 0.3f, 1, 0.6f);
+			const int avFigGroupID = geometricObjects->AddLine(p0, p1, 8.0f, 1, 4);
+			const int adFigGroupID = geometricObjects->AddLine(p0, p2, 8.0f, 1, 4);
+
+			geometricObjects->SetColor(avFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+			geometricObjects->SetColor(adFigGroupID, 1, 0.3f, 0.3f, 0.6f);
 		}
 	}
 	#endif
 
-#ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
-	tracefile << "avoidanceVec = <" << avoidanceVec.x << " " << avoidanceVec.y << " " << avoidanceVec.z << ">\n";
-#endif
-
-	// Return the resulting recommended velocity.
 	return (lastAvoidanceDir = avoidanceDir);
 }
 
@@ -1222,12 +1219,14 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		}
 
 		#if (DEBUG_OUTPUT == 1)
-		// plot the vectors to {curr, next}WayPoint
-		const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
-		const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
+		if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
+			// plot the vectors to {curr, next}WayPoint
+			const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
+			const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
 
-		geometricObjects->SetColor(cwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
-		geometricObjects->SetColor(nwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+			geometricObjects->SetColor(cwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+			geometricObjects->SetColor(nwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+		}
 		#endif
 
 		// perform a turn-radius check: if the waypoint

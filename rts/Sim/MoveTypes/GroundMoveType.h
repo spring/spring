@@ -47,7 +47,7 @@ public:
 	static void DeleteLineTable();
 
 private:
-	float3 ObstacleAvoidance(const float3& desiredDir);
+	float3 GetObstacleAvoidanceDir(const float3& desiredDir);
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
 	void GetNewPath();
