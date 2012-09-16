@@ -246,7 +246,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	}
 
 	const CCommandAI* bcai = buildee->commandAI;
-	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) && static_cast<const CMobileCAI*>(bcai)->unimportantMove);
+	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) != NULL);
 
 	if (assignOrders) {
 		AssignBuildeeOrders(buildee);

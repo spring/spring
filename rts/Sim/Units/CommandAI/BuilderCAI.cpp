@@ -416,7 +416,8 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		static_cast<CBuilder*>(owner)->StopBuild();
 	}
 
-	map<int,string>::iterator boi = buildOptions.find(c.GetID());
+	const map<int,string>::const_iterator boi = buildOptions.find(c.GetID());
+
 	if (boi != buildOptions.end()) {
 		if (c.params.size() < 3) {
 			return;
@@ -452,7 +453,11 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			CMobileCAI::GiveCommandReal(c);
 			return;
 		}
+	} else {
+		if (c.GetID() < 0)
+			return;
 	}
+
 	CMobileCAI::GiveCommandReal(c);
 }
 

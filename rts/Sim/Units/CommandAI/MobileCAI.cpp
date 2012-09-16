@@ -202,7 +202,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 
 
-void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
+void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
 	if (!AllowedCommand(c, fromSynced))
 		return;
