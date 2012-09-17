@@ -1055,6 +1055,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		const float avoideeMassScale = (avoideeMobile)? (avoidee->mass / avoidanceMassSum): 1.0f;
 		const float avoideeDistSq = avoideeVector.SqLength();
 
+		// TODO: also check if !avoiderUD->pushResistant
 		if (avoideeMobile && !avoiderMD->avoidMobilesOnPath)
 			continue;
 

@@ -251,11 +251,11 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 		}
 	}
 
-	speedModMults[SPEEDMOD_MOBILE_BUSY_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileBusyMult", 0.10f));
-	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileIdleMult", 0.35f));
-	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 0.65f));
+	speedModMults[SPEEDMOD_MOBILE_BUSY_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileBusyMult", 1.0f /*0.10f*/));
+	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileIdleMult", 1.0f /*0.35f*/));
+	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 1.0f /*0.65f*/));
 
-	avoidMobilesOnPath = moveTable.GetBool("avoidMobilesOnPath", false);
+	avoidMobilesOnPath = moveTable.GetBool("avoidMobilesOnPath", true);
 	heatMapping = moveTable.GetBool("heatMapping", false);
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
 	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
