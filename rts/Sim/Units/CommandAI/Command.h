@@ -9,6 +9,7 @@
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 #include "System/SafeVector.h"
+#include "lib/gml/gmlcnf.h"
 
 // ID's lower than 0 are reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0

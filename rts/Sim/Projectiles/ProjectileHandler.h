@@ -7,6 +7,7 @@
 #include <set>
 #include <vector>
 #include <stack>
+#include "lib/gml/gmlcnf.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
 #include "System/MemPool.h"

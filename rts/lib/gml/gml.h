@@ -20,14 +20,6 @@
 
 #ifdef USE_GML
 
-extern bool gmlShareLists; // use glShareLists to allow certain opengl calls in sim and rendering helper threads, unfortunately this may reduce the FPS a bit
-extern int gmlMaxServerThreadNum;
-extern int gmlMaxShareThreadNum;
-extern int gmlNoGLThreadNum;
-extern volatile bool gmlMultiThreadSim;
-extern volatile bool gmlStartSim;
-extern volatile bool gmlKeepRunning;
-
 #define GML_MUTEX_PROFILE 0 // detailed profiling of specific mutex
 extern const char *gmlProfMutex;
 #define GML_PROC_PROFILER 0 // enables gmlprocessor profiler
@@ -42,10 +34,6 @@ extern const char *gmlProfMutex;
 extern gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 
 #include "gmlfun.h"
-
-extern lua_State *gmlLuaUIState;
-extern bool gmlCheckCallChain;
-extern int gmlCallChainWarning;
 
 #if GML_PROC_PROFILER
 	extern int gmlProcNumLoop;
@@ -193,22 +181,6 @@ EXTERN inline GLuint GML_GLAPIENTRY gmlGenLists(GLsizei items) {
 
 #if GML_ENABLE_SIM
 
-extern int gmlNextTickUpdate;
-extern unsigned gmlCurrentTicks;
-
-#include <SDL_timer.h>
-
-inline unsigned gmlUpdateTicks() {
-	gmlNextTickUpdate = 100;
-	return gmlCurrentTicks=SDL_GetTicks();
-}
-
-inline unsigned gmlGetTicks() {
-	if(--gmlNextTickUpdate > 0)
-		return gmlCurrentTicks;
-	return gmlUpdateTicks();
-}
-
 #if GML_CALL_DEBUG
 #define GML_EXPGEN_CHECK() \
 	if(gmlThreadNumber != GML_SIM_THREAD_NUM && gmlMultiThreadSim && gmlStartSim) {\
@@ -224,18 +196,7 @@ inline unsigned gmlGetTicks() {
 #define GML_LOCK_TIME() 0
 #endif
 
-#if GML_ENABLE_SIM
-#define GML_GET_TICKS(var) var=gmlGetTicks()
-#define GML_UPDATE_TICKS() gmlUpdateTicks()
 #else
-#define GML_GET_TICKS(var)
-#define GML_UPDATE_TICKS()
-#endif
-
-#else
-
-#define GML_GET_TICKS(var)
-#define GML_UPDATE_TICKS()
 
 #define GML_EXPGEN_CHECK()
 #define GML_CALL_DEBUGGER()
@@ -256,9 +217,6 @@ inline unsigned gmlGetTicks() {
 #define GML_MSTMUTEX_LOCK(name)
 #define GML_MSTMUTEX_DOLOCK(name)
 #define GML_MSTMUTEX_DOUNLOCK(name)
-
-#define GML_GET_TICKS(var)
-#define GML_UPDATE_TICKS()
 
 #define GML_EXPGEN_CHECK()
 #define GML_CALL_DEBUGGER()

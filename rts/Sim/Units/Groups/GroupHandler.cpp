@@ -5,7 +5,7 @@
 
 #include "System/mmgr.h"
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
 #include "GroupHandler.h"
 #include "Group.h"
 #include "Game/SelectedUnits.h"

@@ -3,7 +3,7 @@
 #ifndef UNIT_H
 #define UNIT_H
 
-#include "lib/gml/gmlcnf.h" // for GML_ENABLE_SIM
+#include "lib/gml/gml_base.h" // for GML_ENABLE_SIM
 #ifdef USE_GML
 	#include <boost/thread/recursive_mutex.hpp>
 #endif

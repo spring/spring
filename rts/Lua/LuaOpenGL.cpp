@@ -8,6 +8,7 @@
 //    requires the ARB_imaging extension)
 // - use materials instead of raw calls (again, handle dlists)
 
+#include "Rendering/GL/myGL.h"
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -18,7 +19,6 @@
 #include "System/mmgr.h"
 
 #include "LuaOpenGL.h"
-
 #include "LuaInclude.h"
 
 #include "LuaHandle.h"
@@ -49,7 +49,6 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
