@@ -126,14 +126,8 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 	fd->autoreclaim   =  fdTable.GetBool("autoreclaimable", fd->reclaimable);
 	fd->resurrectable =  fdTable.GetInt("resurrectable",    -1);
 	fd->geoThermal    =  fdTable.GetBool("geoThermal",      false);
-
-	// this seem to be the closest thing to floating that ta wreckage contains
-	//FIXME move this to featuredef_post.lua
-	fd->floating = fdTable.GetBool("nodrawundergray", false);
-	fd->floating = fd->floating && !fd->blocking;
-	fd->floating = fdTable.GetBool("floating", fd->floating);
-
-	fd->noSelect = fdTable.GetBool("noselect", false);
+	fd->floating      =  fdTable.GetBool("floating",        false);
+	fd->noSelect      =  fdTable.GetBool("noselect",        false);
 
 	fd->deathFeature = fdTable.GetString("featureDead", "");
 
