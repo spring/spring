@@ -1693,7 +1693,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		//
 		// either both parties are pushed, or only one party is
 		// pushed and the other is stopped, or both are stopped
-	    if (pushCollider) {
+		if (pushCollider) {
 			const bool colliderPushPosLegal = !IMPASSABLE(colliderMD, colliderMM, colliderPushPos);
 			const bool colliderPushAllowed = (!colliderUD->pushResistant || collideeUD->pushResistant);
 
