@@ -3,7 +3,7 @@
 #include "System/mmgr.h"
 #include <algorithm>
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
 #include "QuadField.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"

@@ -2,7 +2,7 @@
 
 #include "Watchdog.h"
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gml_base.h"
 #ifndef _WIN32
 	#include <fstream>
 	#include <iostream>

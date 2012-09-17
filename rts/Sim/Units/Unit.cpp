@@ -239,7 +239,7 @@ CUnit::CUnit() : CSolidObject(),
 #endif
 	lastUnitUpdate(0)
 {
-	GML_GET_TICKS(lastUnitUpdate);
+	GML::GetTicks(lastUnitUpdate);
 }
 
 CUnit::~CUnit()

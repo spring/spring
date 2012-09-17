@@ -59,7 +59,7 @@ CProjectile::CProjectile():
 	projectileType(-1U),
 	collisionFlags(0)
 {
-	GML_GET_TICKS(lastProjUpdate);
+	GML::GetTicks(lastProjUpdate);
 }
 
 CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece):
@@ -79,7 +79,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	collisionFlags(0)
 {
 	Init(ZeroVector, owner);
-	GML_GET_TICKS(lastProjUpdate);
+	GML::GetTicks(lastProjUpdate);
 }
 
 void CProjectile::Detach() {

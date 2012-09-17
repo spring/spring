@@ -3,7 +3,7 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gml_base.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)

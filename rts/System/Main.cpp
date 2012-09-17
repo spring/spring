@@ -11,7 +11,7 @@
 
 #include "System/SpringApp.h"
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gml_base.h"
 #include "lib/gml/gmlmut.h"
 #include "System/Exceptions.h"
 #include "System/Platform/errorhandler.h"

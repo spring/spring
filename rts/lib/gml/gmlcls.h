@@ -23,6 +23,22 @@
 
 #include "gmlcnf.h"
 
+extern bool gmlShareLists; // use glShareLists to allow certain opengl calls in sim and rendering helper threads, unfortunately this may reduce the FPS a bit
+extern int gmlMaxServerThreadNum;
+extern int gmlMaxShareThreadNum;
+extern int gmlNoGLThreadNum;
+extern volatile bool gmlMultiThreadSim;
+extern volatile bool gmlStartSim;
+extern volatile bool gmlKeepRunning;
+struct lua_State;
+extern lua_State *gmlLuaUIState;
+extern bool gmlCheckCallChain;
+extern int gmlCallChainWarning;
+
+#include <SDL_timer.h>
+extern int gmlNextTickUpdate;
+extern unsigned gmlCurrentTicks;
+
 #define GML_QUOTE(x) #x
 
 extern bool ThreadRegistered();

@@ -6,6 +6,7 @@
 #include "System/GlobalConfig.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Lua/LuaConfig.h"
+#include "lib/gml/gml_base.h"
 
 CONFIG(int, NetworkLossFactor)
 .defaultValue(netcode::UDPConnection::MIN_LOSS_FACTOR)

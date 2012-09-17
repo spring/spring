@@ -3,7 +3,8 @@
 #include <cassert>
 #include "System/mmgr.h"
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
+#include "lib/gml/gml_base.h"
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
@@ -225,7 +226,7 @@ void CUnitHandler::Update()
 		eventHandler.UpdateUnits();
 	}
 
-	GML_UPDATE_TICKS();
+	GML::UpdateTicks();
 
 	#define VECTOR_SANITY_CHECK(v)                              \
 		assert(!math::isnan(v.x) && !math::isinf(v.x)); \
@@ -269,7 +270,7 @@ void CUnitHandler::Update()
 			}
 
 			UNIT_SANITY_CHECK(unit);
-			GML_GET_TICKS(unit->lastUnitUpdate);
+			GML::GetTicks(unit->lastUnitUpdate);
 		}
 	}
 
