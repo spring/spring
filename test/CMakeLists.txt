@@ -117,7 +117,7 @@ Else  (NOT Boost_FOUND)
 
 	ADD_EXECUTABLE(test_RectangleOptimizer ${test_RectangleOptimizer_src})
 	TARGET_LINK_LIBRARIES(test_RectangleOptimizer
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${Boost_SYSTEM_LIBRARY}
 		)
 
 	ADD_TEST(NAME testRectangleOptimizer COMMAND test_RectangleOptimizer)
