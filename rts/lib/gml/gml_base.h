@@ -7,6 +7,7 @@
 #include "Game/GameController.h"
 
 #ifdef USE_GML
+#include <SDL_timer.h>
 namespace GML {
 	void Init();
 	void Exit();
