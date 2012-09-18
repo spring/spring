@@ -337,7 +337,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	unit->los = NULL;
 
-	if (CBuilding* building = dynamic_cast<CBuilding*>(unit)) {
+	if (dynamic_cast<CBuilding*>(unit) != NULL) {
 		unitLoader->RestoreGround(unit);
 	}
 

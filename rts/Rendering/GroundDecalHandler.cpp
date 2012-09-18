@@ -1169,8 +1169,6 @@ void CGroundDecalHandler::RemoveSolidObject(CSolidObject* object, GhostSolidObje
 	if (decalLevel == 0)
 		return;
 
-	const SolidObjectDecalDef& decalDef = object->objectDef->decalDef;
-
 	GML_STDMUTEX_LOCK(decal); // RemoveSolidObject
 
 	SolidObjectGroundDecal* decal = object->groundDecal;

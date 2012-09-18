@@ -109,7 +109,6 @@ CUnit::CUnit() : CSolidObject(),
 	realAirLosRadius(0),
 	losStatus(teamHandler->ActiveAllyTeams(), 0),
 	inBuildStance(false),
-	stunned(false),
 	useHighTrajectory(false),
 	dontUseWeapons(false),
 	dontFire(false),
@@ -237,7 +236,8 @@ CUnit::CUnit() : CSolidObject(),
 #ifdef USE_GML
 	lastDrawFrame(-30),
 #endif
-	lastUnitUpdate(0)
+	lastUnitUpdate(0),
+	stunned(false)
 {
 	GML::GetTicks(lastUnitUpdate);
 }
