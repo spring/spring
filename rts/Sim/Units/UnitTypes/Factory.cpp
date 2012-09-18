@@ -325,9 +325,9 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	float3 foundPos = pos + frontdir * searchRadius;
 	float3 tempPos = pos + frontdir * radius * 2.0f;
 
-	for (int a = 0; a < 20; ++a) {
-		const float a = searchRadius * math::cos(a * PI / 10);
-		const float b = searchRadius * math::sin(a * PI / 10);
+	for (int x = 0; x < 20; ++x) {
+		const float a = searchRadius * math::cos(x * PI / 10);
+		const float b = searchRadius * math::sin(x * PI / 10);
 		float3 testPos = pos + frontdir * a + rightdir * b;
 		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
 
