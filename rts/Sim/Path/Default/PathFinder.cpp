@@ -112,7 +112,7 @@ IPath::SearchResult CPathFinder::GetPath(
 	bool exactPath,
 	unsigned int maxNodes,
 	bool needPath,
-	const CSolidObject *owner,
+	const CSolidObject* owner,
 	bool synced
 ) {
 
@@ -163,7 +163,7 @@ IPath::SearchResult CPathFinder::GetPath(
 }
 
 
-IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject *owner, bool synced) {
+IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced) {
 	// If exact path is reqired and the goal is blocked, then no search is needed.
 	if (exactPath && pfDef.GoalIsBlocked(moveDef, CMoveMath::BLOCK_STRUCTURE, owner))
 		return IPath::CantGetCloser;
@@ -218,7 +218,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 }
 
 
-IPath::SearchResult CPathFinder::DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject *owner, bool synced) {
+IPath::SearchResult CPathFinder::DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced) {
 	bool foundGoal = false;
 
 	while (!openSquares.empty() && (openSquareBuffer.GetSize() < maxSquaresToBeSearched)) {
@@ -281,7 +281,7 @@ bool CPathFinder::TestSquare(
 	const CPathFinderDef& pfDef,
 	const PathNode* parentOpenSquare,
 	unsigned int enterDirection,
-	const CSolidObject *owner,
+	const CSolidObject* owner,
 	bool synced
 ) {
 	testedNodes++;
@@ -340,7 +340,7 @@ bool CPathFinder::TestSquare(
 	}
 
 	// Include heatmap cost adjustment.
-	if (heatMapping && moveDef.heatMapping && GetHeatOwner(square.x, square.y) != ((owner != NULL) ? owner->id : 0)) {
+	if (heatMapping && moveDef.heatMapping && GetHeatOwner(square.x, square.y) != ((owner != NULL) ? owner->id : -1)) {
 		heatCostMod += (moveDef.heatMod * GetHeatValue(square.x, square.y));
 	}
 

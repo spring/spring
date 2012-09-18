@@ -286,14 +286,16 @@ void CPathEstimator::FindOffset(const MoveDef& moveDef, int blockX, int blockZ) 
 				break;
 			// if last position was not blocked, then we do not need to check the entire square
 			speedMod = moveMath.GetPosSpeedMod(moveDef, lowerX + x, lowerZ + z);
-			curblock = (speedMod == 0.0f) || (curblock ? moveMath.IsBlockedStructure(moveDef, lowerX + x, lowerZ + z, NULL) :
-						moveMath.IsBlockedStructureXmax(moveDef, lowerX + x, lowerZ + z, NULL));
+			curblock = (speedMod == 0.0f) || (curblock ?
+				moveMath.IsBlockedStructure(moveDef, lowerX + x, lowerZ + z, NULL) :
+				moveMath.IsBlockedStructureXmax(moveDef, lowerX + x, lowerZ + z, NULL));
 		}
 		if (++z >= BLOCK_SIZE)
 			break;
 		speedMod = moveMath.GetPosSpeedMod(moveDef, lowerX, lowerZ + z);
-		curblock = (speedMod == 0.0f) || (zcurblock ? moveMath.IsBlockedStructure(moveDef, lowerX, lowerZ + z, NULL) :
-						moveMath.IsBlockedStructureZmax(moveDef, lowerX, lowerZ + z, NULL));
+		curblock = (speedMod == 0.0f) || (zcurblock ?
+			moveMath.IsBlockedStructure(moveDef, lowerX, lowerZ + z, NULL) :
+			moveMath.IsBlockedStructureZmax(moveDef, lowerX, lowerZ + z, NULL));
 	}
 
 	// store the offset found

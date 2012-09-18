@@ -36,7 +36,7 @@ public:
 		float3 callerPos,
 		float minDistance = 0.0f,
 		int numRetries = 0,
-		const CSolidObject *owner = NULL,
+		const CSolidObject* owner = NULL,
 		bool synced = true
 	);
 
@@ -82,7 +82,7 @@ public:
 	void SetHeatMappingEnabled(bool enabled);
 	bool GetHeatMappingEnabled();
 
-	void SetHeatOnSquare(int x, int y, int value, const CSolidObject *owner);
+	void SetHeatOnSquare(int x, int y, int value, const CSolidObject* owner);
 	const int GetHeatOnSquare(int x, int y);
 
 private:
@@ -125,8 +125,8 @@ private:
 
 	inline MultiPath* GetMultiPath(int pathID) const;
 	unsigned int Store(MultiPath* path);
-	void LowRes2MedRes(MultiPath& path, const float3& startPos, const CSolidObject *owner, bool synced) const;
-	void MedRes2MaxRes(MultiPath& path, const float3& startPos, const CSolidObject *owner, bool synced) const;
+	void LowRes2MedRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
+	void MedRes2MaxRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 
 	CPathFinder* maxResPF;
 	CPathEstimator* medResPE;

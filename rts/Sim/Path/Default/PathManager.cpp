@@ -284,7 +284,7 @@ float3 CPathManager::NextWayPoint(
 	float3 callerPos,
 	float minDistance,
 	int numRetries,
-	const CSolidObject *owner,
+	const CSolidObject* owner,
 	bool synced
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");
@@ -429,7 +429,7 @@ void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
 void CPathManager::SetHeatMappingEnabled(bool enabled) { maxResPF->SetHeatMapState(enabled); }
 bool CPathManager::GetHeatMappingEnabled() { return maxResPF->GetHeatMapState(); }
 
-void CPathManager::SetHeatOnSquare(int x, int y, int value, const CSolidObject *owner) { maxResPF->UpdateHeatValue(x, y, value, owner); }
+void CPathManager::SetHeatOnSquare(int x, int y, int value, const CSolidObject* owner) { maxResPF->UpdateHeatValue(x, y, value, owner); }
 const int CPathManager::GetHeatOnSquare(int x, int y) { return maxResPF->GetHeatValue(x, y); }
 
 
