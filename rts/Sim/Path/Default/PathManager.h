@@ -36,7 +36,7 @@ public:
 		float3 callerPos,
 		float minDistance = 0.0f,
 		int numRetries = 0,
-		int ownerId = 0,
+		const CSolidObject *owner = NULL,
 		bool synced = true
 	);
 
@@ -82,7 +82,7 @@ public:
 	void SetHeatMappingEnabled(bool enabled);
 	bool GetHeatMappingEnabled();
 
-	void SetHeatOnSquare(int x, int y, int value, int ownerId);
+	void SetHeatOnSquare(int x, int y, int value, const CSolidObject *owner);
 	const int GetHeatOnSquare(int x, int y);
 
 private:
@@ -123,9 +123,10 @@ private:
 		CSolidObject* caller;
 	};
 
+	inline MultiPath* GetMultiPath(int pathID) const;
 	unsigned int Store(MultiPath* path);
-	void LowRes2MedRes(MultiPath& path, const float3& startPos, int ownerId, bool synced) const;
-	void MedRes2MaxRes(MultiPath& path, const float3& startPos, int ownerId, bool synced) const;
+	void LowRes2MedRes(MultiPath& path, const float3& startPos, const CSolidObject *owner, bool synced) const;
+	void MedRes2MaxRes(MultiPath& path, const float3& startPos, const CSolidObject *owner, bool synced) const;
 
 	CPathFinder* maxResPF;
 	CPathEstimator* medResPE;
@@ -134,5 +135,12 @@ private:
 	std::map<unsigned int, MultiPath*> pathMap;
 	unsigned int nextPathID;
 };
+
+inline CPathManager::MultiPath* CPathManager::GetMultiPath(int pathID) const {
+	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
+	if (pi == pathMap.end())
+		return NULL;
+	return pi->second;
+}
 
 #endif

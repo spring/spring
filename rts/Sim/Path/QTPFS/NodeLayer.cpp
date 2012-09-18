@@ -99,8 +99,8 @@ void QTPFS::NodeLayer::QueueUpdate(const SRectangle& r, const MoveDef* md, const
 			const unsigned int chmz = hmz;
 			#endif
 
-			layerUpdate->speedMods[recIdx] = mm->GetPosSpeedMod(*md, chmx, chmz);
-			layerUpdate->blockBits[recIdx] = mm->IsBlockedNoSpeedModCheck(*md, chmx, chmz);
+			layerUpdate->speedMods[recIdx] = mm->GetPosSpeedMod(*md, chmx, chmz, NULL);
+			layerUpdate->blockBits[recIdx] = mm->IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL);
 		}
 	}
 }
@@ -149,7 +149,7 @@ bool QTPFS::NodeLayer::Update(
 			// NOTE:
 			//     GetPosSpeedMod only checks the terrain (height/slope/type), not the blocking-map
 			//     IsBlockedNoSpeedModCheck scans entire footprint, GetPosSpeedMod just one square
-			const unsigned int blockBits = (luBlockBits == NULL)? mm->IsBlockedNoSpeedModCheck(*md, chmx, chmz): (*luBlockBits)[recIdx];
+			const unsigned int blockBits = (luBlockBits == NULL)? mm->IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
 
 			const float rawAbsSpeedMod = (luSpeedMods == NULL)? mm->GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
 			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, PM::MIN_SPEEDMOD_VALUE, PM::MAX_SPEEDMOD_VALUE);

@@ -10,6 +10,7 @@
 #include "IPath.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
+#include "Sim/Objects/SolidObject.h"
 
 struct MoveDef;
 class CPathFinderDef;
@@ -57,7 +58,7 @@ public:
 		bool exactPath,
 		unsigned int maxSearchedNodes,
 		bool needPath,
-		int ownerId,
+		const CSolidObject *owner,
 		bool synced
 	);
 
@@ -74,12 +75,12 @@ public:
 	bool GetHeatMapState() { return heatMapping; }
 	void UpdateHeatMap();
 
-	void UpdateHeatValue(const int x, const int y, const int value, const int ownerId)
+	void UpdateHeatValue(const int x, const int y, const int value, const CSolidObject *owner)
 	{
 		const int i = GetHeatMapIndex(x, y);
 		if (heatmap[i].value < value + heatMapOffset) {
 			heatmap[i].value = value + heatMapOffset;
-			heatmap[i].ownerId = ownerId;
+			heatmap[i].ownerId = ((owner != NULL) ? owner->id : 0);
 		}
 	}
 
@@ -110,9 +111,9 @@ private:
 	 */
 	void ResetSearch();
 	/// Set up the starting point of the search.
-	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, int ownerId, bool synced);
+	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject *owner, bool synced);
 	/// Performs the actual search.
-	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, int ownerId, bool synced);
+	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject *owner, bool synced);
 	/**
 	 * Test the availability and value of a square,
 	 * and possibly add it to the queue of open squares.
@@ -122,7 +123,7 @@ private:
 		const CPathFinderDef& pfDef,
 		const PathNode* parentOpenSquare,
 		unsigned int enterDirection,
-		int ownerId,
+		const CSolidObject *owner,
 		bool synced
 	);
 	/**

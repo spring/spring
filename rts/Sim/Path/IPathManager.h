@@ -52,8 +52,8 @@ public:
 	 *     and the returned waypoint.
 	 * @param numRetries
 	 *     Dont set this, used internally
-	 * @param ownerId
-	 *     The id of the unit the path is used for, or 0.
+	 * @param owner
+	 *     The the unit the path is used for, or NULL.
 	 * @param synced
 	 *     Whether this evaluation has to run synced or unsynced.
 	 *     If false, this call may not change any state of the path manager
@@ -68,7 +68,7 @@ public:
 		float3 callerPos,
 		float minDistance = 0.0f,
 		int numRetries = 0,
-		int ownerId = 0,
+		const CSolidObject* owner = NULL,
 		bool synced = true
 	) { return ZeroVector; }
 

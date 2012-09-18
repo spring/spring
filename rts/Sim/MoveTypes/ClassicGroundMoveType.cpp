@@ -766,7 +766,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					const int blockBits = CMoveMath::BLOCK_STRUCTURE |
 					                      CMoveMath::BLOCK_MOBILE_BUSY;
 					MoveDef& moveDef = *owner->unitDef->moveDef;
-					if ((moveDef.moveMath->IsBlocked(moveDef, x, y) & blockBits) ||
+					if ((moveDef.moveMath->IsBlocked(moveDef, x, y, owner) & blockBits) ||
 					    (moveDef.moveMath->GetPosSpeedMod(moveDef, x, y) <= 0.01f)) {
 						++etaFailures;
 
@@ -786,7 +786,6 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 
 			MoveDef* moveDef = owner->moveDef;
-			moveDef->tempOwner = owner;
 
 			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
 			vector<CSolidObject*> objectsOnPath;
@@ -796,7 +795,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 				CSolidObject* o = *oi;
 				CMoveMath* moveMath = moveDef->moveMath;
 
-				if (moveMath->IsNonBlocking(*moveDef, o)) {
+				if (moveMath->IsNonBlocking(*moveDef, o, owner)) {
 					continue;
 				}
 
@@ -836,8 +835,6 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 				}
 			}
-
-			moveDef->tempOwner = NULL;
 
 			avoidanceVec = (desiredDir.cross(UpVector) * (avoidRight - avoidLeft));
 		}
@@ -918,7 +915,7 @@ void CClassicGroundMoveType::GetNextWayPoint()
 {
 	if (pathId != 0) {
 		waypoint = nextWaypoint;
-		nextWaypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f*SQUARE_SIZE, 0, owner->id);
+		nextWaypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f*SQUARE_SIZE, 0, owner);
 
 		if (nextWaypoint.x != -1) {
 			etaWaypoint = int(30.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 50;
@@ -1089,7 +1086,6 @@ void CClassicGroundMoveType::CheckCollision()
 bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTestX)
 {
 	MoveDef* m = owner->moveDef;
-	m->tempOwner = owner;
 
 	bool ret = false;
 
@@ -1109,7 +1105,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 		for (it = c.begin(); it != c.end(); ++it) {
 			CSolidObject* obj = it->second;
 
-			if (m->moveMath->IsNonBlocking(*m, obj)) {
+			if (m->moveMath->IsNonBlocking(*m, obj, owner)) {
 				continue;
 			} else {
 				blocked = true;
@@ -1162,14 +1158,12 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 		}
 	}
 
-	m->tempOwner = NULL;
 	return ret;
 }
 
 bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTestY)
 {
 	MoveDef* m = owner->moveDef;
-	m->tempOwner = owner;
 
 	bool ret = false;
 
@@ -1189,7 +1183,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 		for (it = c.begin(); it != c.end(); ++it) {
 			CSolidObject* obj = it->second;
 
-			if (m->moveMath->IsNonBlocking(*m, obj)) {
+			if (m->moveMath->IsNonBlocking(*m, obj, owner)) {
 				continue;
 			} else {
 				blocked = true;
@@ -1242,7 +1236,6 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 		}
 	}
 
-	m->tempOwner = NULL;
 	return ret;
 }
 
@@ -1422,7 +1415,7 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 							CMoveMath::BLOCK_MOBILE |
 							CMoveMath::BLOCK_MOBILE_BUSY;
 
-						if ((movemath->IsBlocked(md, x, y) & blockMask) ||
+						if ((movemath->IsBlocked(md, x, y, owner) & blockMask) ||
 							movemath->GetPosSpeedMod(md, x, y) <= 0.01f) {
 							wpOk = false;
 							break;
@@ -1463,7 +1456,7 @@ bool CClassicGroundMoveType::CheckGoalFeasability()
 		for (int x = minx; x <= maxx; ++x) {
 			float3 pos(x * SQUARE_SIZE * 2, 0, z * SQUARE_SIZE * 2);
 			if ((pos - goalPos).SqLength2D() < goalDist * goalDist) {
-				int blockingType = mm->SquareIsBlocked(*md, x * 2, z * 2);
+				int blockingType = mm->SquareIsBlocked(*md, x * 2, z * 2, owner);
 
 				if ((blockingType & CMoveMath::BLOCK_STRUCTURE) || mm->GetPosSpeedMod(*md, x * 2, z * 2) < 0.01f) {
 					numBlocked += 0.3f;
