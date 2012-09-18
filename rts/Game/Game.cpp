@@ -196,7 +196,7 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(frameStartTime),
 //	CR_MEMBER(lastUpdateTime),
 //	CR_MEMBER(lastSimFrameTime),
-//	CR_MEMBER(lastDrawFrameUpdate),
+//	CR_MEMBER(lastDrawFrameTime),
 //	CR_MEMBER(lastModGameTimeMeasure),
 //	CR_MEMBER(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
@@ -248,7 +248,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, frameStartTime(spring_gettime())
 	, lastUpdateTime(spring_gettime())
 	, lastSimFrameTime(spring_gettime())
-	, lastDrawFrameUpdate(spring_gettime())
+	, lastDrawFrameTime(spring_gettime())
 	, lastModGameTimeMeasure(spring_gettime())
 	, updateDeltaSeconds(0.0f)
 	, lastCpuUsageTime(0.0f)
@@ -730,7 +730,7 @@ void CGame::LoadFinalize()
 	lastframe = spring_gettime();
 	lastModGameTimeMeasure = lastframe;
 	lastSimFrameTime = lastframe;
-	lastDrawFrameUpdate = lastframe;
+	lastDrawFrameTime = lastframe;
 	lastCpuUsageTime = gu->gameTime;
 	updateDeltaSeconds = 0.0f;
 
@@ -1106,16 +1106,21 @@ bool CGame::Draw() {
 		return true;
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
-	const spring_time currentTime = spring_gettime();
+	const spring_time currentTimePreDraw = spring_gettime();
 
 	eventHandler.DrawGenesis();
 
 	if (!globalRendering->active) {
 		spring_sleep(spring_msecs(10));
-		return true;
+
+		// return early if and only if less than 30K milliseconds have passed since last draw-frame
+		// so we force render two frames per minute when minimized to clear batches and free memory
+		// don't need to mess with globalRendering->active since only mouse-input code depends on it
+		if (spring_time(currentTimePreDraw - lastDrawFrameTime) < 30*1000)
+			return true;
 	}
 
-	CTeamHighlight::Enable(spring_tomsecs(currentTime));
+	CTeamHighlight::Enable(spring_tomsecs(currentTimePreDraw));
 
 	if (unitTracker.Enabled()) {
 		unitTracker.SetCam();
@@ -1278,7 +1283,7 @@ bool CGame::Draw() {
 			const char *pstr = (showMTInfo == MT_LUA_DUAL_EXPORT) ? "LUA-EXP-SIZE(MT): %2.1fK" : "LUA-SYNC-CPU(MT): %2.1f%%";
 			char buf[40];
 			SNPRINTF(buf, sizeof(buf), pstr, pval);
-			float4 warncol(pval >= 10.0f && ((int)spring_tomsecs(currentTime) & 128) ?
+			float4 warncol(pval >= 10.0f && ((int)spring_tomsecs(currentTimePreDraw) & 128) ?
 				0.5f : std::max(0.0f, std::min(pval / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - pval / 5.0f, 1.0f)), 0.0f, 1.0f);
 			smallFont->SetColors(&warncol, NULL);
 			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
@@ -1297,17 +1302,18 @@ bool CGame::Draw() {
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 
-	const spring_time start = spring_gettime();
-	globalRendering->lastFrameTime = spring_tomsecs(start - lastDrawFrameUpdate) / 1000.f;
-	lastDrawFrameUpdate = start;
+	const spring_time currentTimePostDraw = spring_gettime();
+
+	globalRendering->lastFrameTime = spring_tomsecs(currentTimePostDraw - lastDrawFrameTime) / 1000.f;
+	lastDrawFrameTime = currentTimePostDraw;
+
+	// do not count the video-capturing time since it runs in a separate thread
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(currentTimePostDraw - currentTimePreDraw)), 0.05f);
 
 	videoCapturing->RenderFrame();
 
 	SetDrawMode(gameNotDrawing);
-
 	CTeamHighlight::Disable();
-
-	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(spring_gettime() - currentTime)), 0.05f);
 
 	return true;
 }

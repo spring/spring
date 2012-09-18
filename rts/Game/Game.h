@@ -151,7 +151,7 @@ public:
 	spring_time frameStartTime;
 	spring_time lastUpdateTime;
 	spring_time lastSimFrameTime;
-	spring_time lastDrawFrameUpdate;
+	spring_time lastDrawFrameTime;
 	spring_time lastModGameTimeMeasure;
 
 	float updateDeltaSeconds;
