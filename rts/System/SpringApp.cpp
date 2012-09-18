@@ -926,7 +926,18 @@ int SpringApp::Update()
 
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");
-			ret = activeController->Draw();
+			static unsigned lastdraw = 0;
+			unsigned curdraw;
+			if (!globalRendering->active && (((curdraw = SDL_GetTicks()) - lastdraw) > 30000)) {
+				// force render two frames per minute to clear batches and free memory
+				lastdraw = curdraw;
+				globalRendering->active = true;
+				ret = activeController->Draw();
+				globalRendering->active = false;
+			}
+			else {
+				ret = activeController->Draw();
+			}
 			GML::PumpAux();
 		}
 	}
