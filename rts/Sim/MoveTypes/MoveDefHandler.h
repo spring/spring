@@ -111,7 +111,6 @@ struct MoveDef {
 	int heatProduced;
 
 	CMoveMath* moveMath;
-	CSolidObject* tempOwner;
 };
 
 

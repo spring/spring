@@ -52,7 +52,6 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(heatProduced),
 
 	CR_MEMBER(moveMath),
-	CR_MEMBER(tempOwner),
 
 	CR_RESERVED(16)
 ));
@@ -202,7 +201,6 @@ MoveDef::MoveDef() {
 	heatProduced      = GAME_SPEED;
 
 	moveMath          = NULL;
-	tempOwner         = NULL;
 }
 
 MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
@@ -321,7 +319,7 @@ bool MoveDef::TestMoveSquare(const int hmx, const int hmz) const {
 	for (int i = hmx - xsizeh; i <= hmx + xsizeh; i++) {
 		for (int j = hmz - zsizeh; j <= hmz + zsizeh; j++) {
 			const float speedMod = moveMath->GetPosSpeedMod(*this, hmx + i, hmz + j);
-			const CMoveMath::BlockType blockBits = moveMath->IsBlocked(*this, hmx + i, hmz + j);
+			const CMoveMath::BlockType blockBits = moveMath->IsBlocked(*this, hmx + i, hmz + j, NULL);
 
 			// check both terrain and the blocking-map
 			ret &= ((speedMod > 0.0f) && ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0));

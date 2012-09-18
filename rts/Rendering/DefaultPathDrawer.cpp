@@ -132,10 +132,10 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							float scale = 1.0f;
 
 							if (los || losSqr) {
-								if (mm->IsBlocked(*md, sqx,     sqy    ) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-								if (mm->IsBlocked(*md, sqx + 1, sqy    ) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-								if (mm->IsBlocked(*md, sqx,     sqy + 1) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-								if (mm->IsBlocked(*md, sqx + 1, sqy + 1) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (mm->IsBlocked(*md, sqx,     sqy    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (mm->IsBlocked(*md, sqx + 1, sqy    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (mm->IsBlocked(*md, sqx,     sqy + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (mm->IsBlocked(*md, sqx + 1, sqy + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
 							}
 
 							// NOTE: raw speedmods are not necessarily clamped to [0, 1]
