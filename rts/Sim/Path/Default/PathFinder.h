@@ -58,7 +58,7 @@ public:
 		bool exactPath,
 		unsigned int maxSearchedNodes,
 		bool needPath,
-		const CSolidObject *owner,
+		const CSolidObject* owner,
 		bool synced
 	);
 
@@ -75,12 +75,12 @@ public:
 	bool GetHeatMapState() { return heatMapping; }
 	void UpdateHeatMap();
 
-	void UpdateHeatValue(const int x, const int y, const int value, const CSolidObject *owner)
+	void UpdateHeatValue(const int x, const int y, const int value, const CSolidObject* owner)
 	{
 		const int i = GetHeatMapIndex(x, y);
 		if (heatmap[i].value < value + heatMapOffset) {
 			heatmap[i].value = value + heatMapOffset;
-			heatmap[i].ownerId = ((owner != NULL) ? owner->id : 0);
+			heatmap[i].ownerId = ((owner != NULL) ? owner->id : -1);
 		}
 	}
 
@@ -111,9 +111,9 @@ private:
 	 */
 	void ResetSearch();
 	/// Set up the starting point of the search.
-	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject *owner, bool synced);
+	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
 	/// Performs the actual search.
-	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject *owner, bool synced);
+	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
 	/**
 	 * Test the availability and value of a square,
 	 * and possibly add it to the queue of open squares.
@@ -123,7 +123,7 @@ private:
 		const CPathFinderDef& pfDef,
 		const PathNode* parentOpenSquare,
 		unsigned int enterDirection,
-		const CSolidObject *owner,
+		const CSolidObject* owner,
 		bool synced
 	);
 	/**
