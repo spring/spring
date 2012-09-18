@@ -9,8 +9,8 @@
 #include "lib/streflop/streflop_cond.h"
 #include "System/creg/creg_cond.h"
 #include "System/FastMath.h"
-#include "lib/gml/gml_base.h"
 #ifndef BUILDING_AI
+#include "lib/gml/gml_base.h"
 #include "System/Platform/Threading.h"
 #endif
 
