@@ -41,6 +41,7 @@
 // target that cloaked after flying over it --> obviously
 // unreasonable
 static const int TARGET_LOST_TIMER = 15;
+static const float COMMAND_CANCEL_DIST = 17.0f;
 
 CR_BIND(CCommandQueue, );
 CR_REG_METADATA(CCommandQueue, (
@@ -1083,36 +1084,45 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command& c, CCommandQu
 	while (ci != q.begin()) {
 		--ci; //iterate from the end and dont check the current order
 		const Command& c2 = *ci;
-		const int cmd_id = c.GetID();
-		const int cmd2_id = c2.GetID();
+		const int cmdID = c.GetID();
+		const int cmd2ID = c2.GetID();
 
-		if (((cmd_id == cmd2_id) || ((cmd_id < 0) && (cmd2_id < 0))
-				|| (cmd2_id == CMD_FIGHT && cmd_id == CMD_ATTACK && c2.params.size() == 1))
-				&& (c2.params.size() == c.params.size())) {
+		const bool attackAndFight = (cmdID == CMD_ATTACK && cmd2ID == CMD_FIGHT && c2.params.size() == 1);
+
+		if (c2.params.size() != c.params.size())
+			continue;
+
+		if ((cmdID == cmd2ID) || (cmdID < 0 && cmd2ID < 0) || attackAndFight) {
 			if (c.params.size() == 1) {
 				// assume the param is a unit-ID or feature-ID
 				if ((c2.params[0] == c.params[0]) &&
-				    (cmd2_id != CMD_SET_WANTED_MAX_SPEED)) {
+				    (cmd2ID != CMD_SET_WANTED_MAX_SPEED)) {
 					return ci;
 				}
 			}
 			else if (c.params.size() >= 3) {
-				if (cmd_id < 0) {
-					BuildInfo bc(c);
+				if (cmdID < 0) {
+					BuildInfo bc1(c);
 					BuildInfo bc2(c2);
-					if (bc.def && bc2.def
-					    && math::fabs(bc.pos.x - bc2.pos.x) * 2 <= std::max(bc.GetXSize(), bc2.GetXSize()) * SQUARE_SIZE
-					    && math::fabs(bc.pos.z - bc2.pos.z) * 2 <= std::max(bc.GetZSize(), bc2.GetZSize()) * SQUARE_SIZE) {
+
+					if (bc1.def == NULL) continue;
+					if (bc2.def == NULL) continue;
+
+					if (math::fabs(bc1.pos.x - bc2.pos.x) * 2 <= std::max(bc1.GetXSize(), bc2.GetXSize()) * SQUARE_SIZE &&
+					    math::fabs(bc1.pos.z - bc2.pos.z) * 2 <= std::max(bc1.GetZSize(), bc2.GetZSize()) * SQUARE_SIZE) {
 						return ci;
 					}
 				} else {
-					// assume this means that the first 3 makes a position
-					const float3& cp = c.GetPos(0);
+					// assume c and c2 are positional commands
+					const float3& c1p = c.GetPos(0);
 					const float3& c2p = c2.GetPos(0);
 
-					if ((cp - c2p).SqLength2D() < (17.0f * 17.0f)) {
-						return ci;
-					}
+					if ((c1p - c2p).SqLength2D() >= (COMMAND_CANCEL_DIST * COMMAND_CANCEL_DIST))
+						continue;
+					if ((c.options & SHIFT_KEY) != 0)
+						continue;
+
+					return ci;
 				}
 			}
 		}
@@ -1180,9 +1190,10 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 			--ci; //iterate from the end and dont check the current order
 			const Command& t = *ci;
 
-			if (((t.GetID() == c.GetID()) || ((c.GetID() < 0) && (t.GetID() < 0))) &&
-			    (t.params.size() == c.params.size())) {
+			if (t.params.size() != c.params.size())
+				continue;
 
+			if (t.GetID() == c.GetID() || (c.GetID() < 0 && t.GetID() < 0)) {
 				if (c.params.size() == 1) {
 					// assume the param is a unit or feature id
 					if (t.params[0] == c.params[0]) {
@@ -1190,7 +1201,7 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 					}
 				}
 				else if (c.params.size() >= 3) {
-					// assume this means that the first 3 makes a position
+					// assume c and t are positional commands
 					// NOTE: uses a BuildInfo structure, but <t> can be ANY command
 					BuildInfo tbi;
 					if (tbi.Parse(t)) {
@@ -1200,15 +1211,21 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 						const float addSizeZ = SQUARE_SIZE * (cbi.GetZSize() + tbi.GetZSize());
 						const float maxSizeX = SQUARE_SIZE * std::max(cbi.GetXSize(), tbi.GetXSize());
 						const float maxSizeZ = SQUARE_SIZE * std::max(cbi.GetZSize(), tbi.GetZSize());
-						if (cbi.def && tbi.def &&
-						    ((dist2X > maxSizeX) || (dist2Z > maxSizeZ)) &&
+
+						if (cbi.def == NULL) continue;
+						if (tbi.def == NULL) continue;
+
+						if (((dist2X > maxSizeX) || (dist2Z > maxSizeZ)) &&
 						    ((dist2X < addSizeX) && (dist2Z < addSizeZ))) {
 							v.push_back(t);
 						}
 					} else {
-						if ((cbi.pos - tbi.pos).SqLength2D() < (17.0f * 17.0f)) {
-							v.push_back(t);
-						}
+						if ((cbi.pos - tbi.pos).SqLength2D() >= (COMMAND_CANCEL_DIST * COMMAND_CANCEL_DIST))
+							continue;
+						if ((c.options & SHIFT_KEY) != 0)
+							continue;
+
+						v.push_back(t);
 					}
 				}
 			}
@@ -1504,8 +1521,8 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 			commandQue.push_back(Command());
 		}
 		Command& c = commandQue[a];
-		int cmd_id = c.GetID();
-		file->lsInt(cmd_id);
+		int cmdID = c.GetID();
+		file->lsInt(cmdID);
 		file->lsUChar(c.options);
 		file->lsInt(c.timeOut);
 
