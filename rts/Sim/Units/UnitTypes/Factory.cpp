@@ -320,21 +320,30 @@ void CFactory::DependentDied(CObject* o)
 
 void CFactory::SendToEmptySpot(CUnit* unit)
 {
-	float r = radius * 1.7f + unit->radius * 4;
-	float3 foundPos = pos + frontdir * r;
+	const float searchRadius = radius * 1.7f + unit->radius * 4.0f;
+
+	float3 foundPos = pos + frontdir * searchRadius;
+	float3 tempPos = pos + frontdir * radius * 2.0f;
 
 	for (int a = 0; a < 20; ++a) {
-		float3 testPos = pos + frontdir * r * math::cos(a * PI / 10) + rightdir * r * math::sin(a * PI / 10);
+		const float a = searchRadius * math::cos(a * PI / 10);
+		const float b = searchRadius * math::sin(a * PI / 10);
+		float3 testPos = pos + frontdir * a + rightdir * b;
 		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
 
 		if (qf->GetSolidsExact(testPos, unit->radius * 1.5f).empty()) {
-			foundPos = testPos;
-			break;
+			foundPos = testPos; break;
 		}
 	}
 
-	Command c(CMD_MOVE, foundPos);
-	unit->commandAI->GiveCommand(c);
+	// first queue a temporary waypoint outside the factory
+	// (otherwise units will try to turn before exiting when
+	// foundPos lies behind it and cause jams / get stuck)
+	// assume this temporary point is not itself blocked
+	Command c1(CMD_MOVE,            tempPos);
+	Command c2(CMD_MOVE, SHIFT_KEY, foundPos);
+	unit->commandAI->GiveCommand(c1);
+	unit->commandAI->GiveCommand(c2);
 }
 
 void CFactory::AssignBuildeeOrders(CUnit* unit) {
