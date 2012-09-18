@@ -34,8 +34,6 @@ struct lua_State;
 extern lua_State *gmlLuaUIState;
 extern bool gmlCheckCallChain;
 extern int gmlCallChainWarning;
-
-#include <SDL_timer.h>
 extern int gmlNextTickUpdate;
 extern unsigned gmlCurrentTicks;
 
