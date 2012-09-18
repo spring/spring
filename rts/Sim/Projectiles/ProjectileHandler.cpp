@@ -436,7 +436,6 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
 		CFeature* feature = *fi;
-		CollisionVolume* volume = feature->collisionVolume;
 
 		if (!feature->blocking) {
 			continue;
