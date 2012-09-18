@@ -2032,7 +2032,9 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 {
 	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
+		// FIXME: why not put this in UnsyncedRead without the ModUICtrl restriction?
+		lua_pushnumber(L, 0);
+		return 1;
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int def     = luaL_optint(L, 2, 0);
@@ -2064,7 +2066,9 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 {
 	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
+		// FIXME: why not put this in UnsyncedRead without the ModUICtrl restriction?
+		lua_pushstring(L, "");
+		return 1;
 	}
 	const string name = luaL_checkstring(L, 1);
 	const string def  = luaL_optstring(L, 2, "");
