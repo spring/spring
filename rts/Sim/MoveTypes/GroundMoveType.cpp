@@ -1039,6 +1039,8 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		if (!avoiderMM->CrushResistant(*avoiderMD, avoidee))
 			continue;
 
+		// for features, avoidance-response is not influenced by angle between frontdir's
+		const bool avoideeFeature = (avoidee->GetBlockingMapID() >= uh->MaxUnits());
 		const bool avoideeMobile = (avoideeMD != NULL);
 		const bool avoidMobiles = avoiderMD->avoidMobilesOnPath;
 
@@ -1088,8 +1090,8 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		float avoideeTurnSign = ((avoider->pos.dot(avoidee->rightdir) - avoidee->pos.dot(avoidee->rightdir)) <= 0.0f) * 2.0f - 1.0f;
 
 		const float avoidanceCosAngle = Clamp(avoider->frontdir.dot(avoidee->frontdir), -1.0f, 1.0f);
-		const float avoidanceResponse = (1.0f - avoidanceCosAngle) + 0.1f;
-		const float avoidanceFallOff  = (1.0f - std::min(1.0f, avoideeDist / (4.0f * avoidanceRadiusSum)));
+		const float avoidanceResponse = (1.0f - avoidanceCosAngle * int(!avoideeFeature)) + 0.1f;
+		const float avoidanceFallOff  = (1.0f - std::min(1.0f, avoideeDist / (5.0f * avoidanceRadiusSum)));
 
 		// if parties are anti-parallel, it is always more efficient for
 		// both to turn in the same local-space direction (either R/R or
@@ -1109,7 +1111,6 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 
 	// use a weighted combination of the desired- and the avoidance-directions
 	// also linearly smooth it using the vector calculated the previous frame
-	// avoidanceVec = avoidanceVec.SafeNormalize();
 	avoidanceDir = (desiredDir * DESIRED_DIR_WEIGHT + avoidanceVec).SafeNormalize();
 	avoidanceDir = lastAvoidanceDir * LAST_DIR_MIX_ALPHA + avoidanceDir * (1.0f - LAST_DIR_MIX_ALPHA);
 
