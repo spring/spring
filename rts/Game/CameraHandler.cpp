@@ -18,8 +18,10 @@
 #include "Camera/TWController.h"
 #include "Camera/OrbitController.h"
 #include "Rendering/GlobalRendering.h"
+#include "System/myMath.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
+
 
 static std::string strformat(const char* fmt, ...)
 {
@@ -62,10 +64,8 @@ CCameraHandler* camHandler = NULL;
 
 CCameraHandler::CCameraHandler()
 {
-	cameraTime = 0.0f;
-	cameraTimeLeft = 0.0f;
 	cameraTimeStart = 0.0f;
-	cameraTimeEnd = 0.0f;
+	cameraTimeEnd   = 0.0f;
 
 	// FPS camera must always be the first one in the list
 	camControllers.resize(CAMERA_MODE_LAST);
@@ -126,53 +126,43 @@ CCameraHandler::~CCameraHandler()
 
 void CCameraHandler::UpdateCam()
 {
+	//??? a lot CameraControllers depend on the calling every frame the 1st part of the if-clause 
+	//if (cameraTimeEnd < 0.0f) {
+	//	return;
+	//}
+	
 	const float  wantedCamFOV = currCamCtrl->GetFOV();
 	const float3 wantedCamPos = currCamCtrl->GetPos();
 	const float3 wantedCamDir = currCamCtrl->GetDir();
 
-#if 1
-	const float curTime = spring_gettime()/1000.f;
+	const float curTime = spring_tomsecs(spring_gettime()) / 1000.0f;
 	if (curTime >= cameraTimeEnd) {
-		camera->pos = wantedCamPos;
+		camera->pos     = wantedCamPos;
 		camera->forward = wantedCamDir;
-		if (wantedCamFOV != camera->GetFov())
-			camera->SetFov(wantedCamFOV);
+		camera->SetFov(wantedCamFOV);
+		//cameraTimeEnd   = -1.0f;
 	}
 	else {
-		const float exp = cameraTimeExponent;
-		const float ratio = 1.0f - (float)math::pow((cameraTimeEnd - curTime)/(cameraTimeEnd - cameraTimeStart), exp);
+		const float timeRatio = (cameraTimeEnd - curTime) / (cameraTimeEnd - cameraTimeStart);
+		const float ratio = 1.0f - (float)math::pow(timeRatio, cameraTimeExponent);
 
-		const float  deltaFOV = wantedCamFOV - cameraStart.GetFov();
-		const float3 deltaPos = wantedCamPos - cameraStart.pos;
-		const float3 deltaDir = wantedCamDir - cameraStart.forward;
-		camera->SetFov(cameraStart.GetFov() + (deltaFOV * ratio));
-		camera->pos     = cameraStart.pos + deltaPos * ratio;
-		camera->forward = cameraStart.forward + deltaDir * ratio;
+		camera->pos     = mix(startCam.pos, wantedCamPos, ratio);
+		camera->forward = mix(startCam.dir, wantedCamDir, ratio);
+		camera->SetFov(   mix(startCam.fov, wantedCamFOV, ratio));
 		camera->forward.Normalize();
 	}
-#else
-	if (cameraTimeLeft <= 0.0f) {
-		camera->pos = wantedCamPos;
-		camera->forward = wantedCamDir;
-		if (wantedCamFOV != camera->GetFov())
-			camera->SetFov(wantedCamFOV);
-	}
-	else {
-		const float currTime = cameraTimeLeft;
-		cameraTimeLeft = std::max(0.0f, (cameraTimeLeft - globalRendering->lastFrameTime));
-		const float nextTime = cameraTimeLeft;
-		const float exp = cameraTimeExponent;
-		const float ratio = 1.0f - (float)math::pow((nextTime / currTime), exp);
+}
 
-		const float  deltaFOV = wantedCamFOV - camera->GetFov();
-		const float3 deltaPos = wantedCamPos - camera->pos;
-		const float3 deltaDir = wantedCamDir - camera->forward;
-		camera->SetFov(camera->GetFov() + (deltaFOV * ratio));
-		camera->pos     += deltaPos * ratio;
-		camera->forward += deltaDir * ratio;
-		camera->forward.Normalize();
-	}
-#endif
+
+void CCameraHandler::CameraTransition(float time)
+{
+	time = std::max(time, 0.0f) * cameraTimeFactor;
+
+	cameraTimeStart = spring_tomsecs(spring_gettime()) / 1000.0f;
+	cameraTimeEnd   = cameraTimeStart + time;
+	startCam.pos = camera->pos;
+	startCam.dir = camera->forward;
+	startCam.fov = camera->GetFov();
 }
 
 
@@ -225,19 +215,6 @@ void CCameraHandler::PopMode()
 		SetCameraMode(controllerStack.top());
 		controllerStack.pop();
 	}
-}
-
-
-void CCameraHandler::CameraTransition(float time)
-{
-	time = std::max(time, 0.0f) * cameraTimeFactor;
-
-	cameraTime = time;
-	cameraTimeLeft = time;
-
-	cameraTimeStart = spring_gettime()/1000.f;
-	cameraTimeEnd = cameraTimeStart + time;
-	cameraStart.CopyState(camera);
 }
 
 
@@ -339,6 +316,7 @@ bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 			return false;
 		}
 		if (camMode != currCamCtrlNum) {
+			CameraTransition(1.0f);
 			currCamCtrlNum = camMode;
 			currCamCtrl = camControllers[camMode];
 			currCamCtrl->SwitchTo();
@@ -436,11 +414,11 @@ bool CCameraHandler::LoadViewData(const ViewData& vd)
 		}
 		const unsigned int currentMode = currCamCtrlNum;
 		if (camMode != currCamCtrlNum) {
+			CameraTransition(1.0f);
 			currCamCtrlNum = camMode;
 			currCamCtrl = camControllers[camMode];
 			const bool showMode = (camMode != currentMode);
 			currCamCtrl->SwitchTo(showMode);
-			CameraTransition(1.0f);
 		}
 	}
 	return currCamCtrl->SetState(vd);
