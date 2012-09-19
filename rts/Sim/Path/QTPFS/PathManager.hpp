@@ -55,7 +55,7 @@ namespace QTPFS {
 			float3 point,
 			float radius = 0.0f,
 			int = 0, // numRetries
-			int = 0, // ownerID
+			const CSolidObject* = 0, // owner
 			bool synced = true
 		);
 
