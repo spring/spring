@@ -892,7 +892,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 	float3 point,
 	float, // radius,
 	int, // numRetries
-	int, // ownerID
+	const CSolidObject*, // owner
 	bool // synced
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");

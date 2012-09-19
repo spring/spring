@@ -53,7 +53,7 @@ public:
 	 * @param numRetries
 	 *     Dont set this, used internally
 	 * @param owner
-	 *     The the unit the path is used for, or NULL.
+	 *     The unit the path is used for, or NULL.
 	 * @param synced
 	 *     Whether this evaluation has to run synced or unsynced.
 	 *     If false, this call may not change any state of the path manager
