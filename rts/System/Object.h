@@ -14,7 +14,12 @@ class CObject
 public:
 	CR_DECLARE(CObject);
 
-	//FIXME why different depType's (it's not used anywhere currently except as a std::map key?!)
+	// The reason to have different dependence types is that an object may simultaneously have more than one kind of dependence to another object.
+	// Without dependence types, the dependencies would therefore need to be duplicated (stored as lists or vectors instead of maps or sets).
+	// This would also make deleting the death dependence somewhat risky since there in this case must be an exact matching number of
+	// AddDeathDependence / DeleteDeathDependence calls in order not to risk a crash. With dependence types this can never happen, i.e.
+	// DeleteDeathDependence(object, DEPENDENCE_ATTACKER) can be called a hundred times without any risk of losing some other type of dependence.
+	// Dependence types also makes it easy to detect deletion of non-existent dependence types, and output a warning for debugging purposes.
 	enum DependenceType {
 		DEPENDENCE_ATTACKER,
 		DEPENDENCE_BUILD,
