@@ -279,15 +279,14 @@ public:
 				LOG_L(L_WARNING, "Cheating required to reload synced scripts");
 			} else {
 
+				GML_MSTMUTEX_DOUNLOCK(sim); // temporarily unlock this mutex to prevent a deadlock
 				{
-					GML_MSTMUTEX_DOUNLOCK(sim); // temporarily unlock this mutex to prevent a deadlock
 					GML_STDMUTEX_LOCK(draw); // the draw thread accesses luaRules in too many places, so we lock the entire draw thread
 
 					CLuaRules::FreeHandler();
 					CLuaRules::LoadHandler();
-
-					GML_MSTMUTEX_DOLOCK(sim); // restore unlocked mutex
 				}
+				GML_MSTMUTEX_DOLOCK(sim); // restore unlocked mutex
 
 				if (luaRules) {
 					LOG("LuaRules reloaded");
@@ -299,14 +298,13 @@ public:
 			if (!gs->cheatEnabled) {
 				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
 			} else {
+				GML_MSTMUTEX_DOUNLOCK(sim); // temporarily unlock this mutex to prevent a deadlock
 				{
-					GML_MSTMUTEX_DOUNLOCK(sim); // temporarily unlock this mutex to prevent a deadlock
 					GML_STDMUTEX_LOCK(draw); // the draw thread accesses luaRules in too many places, so we lock the entire draw thread
 
 					CLuaRules::FreeHandler();
-
-					GML_MSTMUTEX_DOLOCK(sim); // restore unlocked mutex
 				}
+				GML_MSTMUTEX_DOLOCK(sim); // restore unlocked mutex
 
 				LOG("LuaRules disabled");
 			}
