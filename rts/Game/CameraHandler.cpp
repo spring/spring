@@ -131,7 +131,7 @@ void CCameraHandler::UpdateCam()
 	const float3 wantedCamDir = currCamCtrl->GetDir();
 
 #if 1
-	const float curTime = spring_gettime()/1000.f;
+	const float curTime = spring_tomsecs(spring_gettime())/1000.f;
 	if (curTime >= cameraTimeEnd) {
 		camera->pos = wantedCamPos;
 		camera->forward = wantedCamDir;
@@ -149,8 +149,10 @@ void CCameraHandler::UpdateCam()
 		camera->pos     = cameraStart.pos + deltaPos * ratio;
 		camera->forward = cameraStart.forward + deltaDir * ratio;
 		camera->forward.Normalize();
+		LOG("%f,  %f, %f, %f", curTime, camera->pos.x, camera->pos.y, camera->pos.z);
 	}
 #else
+    const float curTime = spring_tomsecs(spring_gettime())/1000.f;
 	if (cameraTimeLeft <= 0.0f) {
 		camera->pos = wantedCamPos;
 		camera->forward = wantedCamDir;
@@ -171,6 +173,7 @@ void CCameraHandler::UpdateCam()
 		camera->pos     += deltaPos * ratio;
 		camera->forward += deltaDir * ratio;
 		camera->forward.Normalize();
+        LOG("%f,  %f, %f, %f", curTime, camera->pos.x, camera->pos.y, camera->pos.z);
 	}
 #endif
 }
@@ -235,7 +238,7 @@ void CCameraHandler::CameraTransition(float time)
 	cameraTime = time;
 	cameraTimeLeft = time;
 
-	cameraTimeStart = spring_gettime()/1000.f;
+	cameraTimeStart = spring_tomsecs(spring_gettime())/1000.f;
 	cameraTimeEnd = cameraTimeStart + time;
 	cameraStart.CopyState(camera);
 }
