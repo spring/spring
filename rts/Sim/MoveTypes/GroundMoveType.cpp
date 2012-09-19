@@ -1013,7 +1013,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	MoveDef* avoiderMD = avoider->moveDef;
 	CMoveMath* avoiderMM = avoiderMD->moveMath;
 
-	static const float AVOIDER_DIR_WEIGHT = 2.0f;
+	static const float AVOIDER_DIR_WEIGHT = 3.0f;
 	static const float DESIRED_DIR_WEIGHT = 1.0f;
 
 	// now we do the obstacle avoidance proper
@@ -1076,39 +1076,28 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// if object and unit in relative motion are closing in on one another
 		// (or not yet fully apart), then the object is on the path of the unit
 		// and they are not collided
-		if (avoideeMobile || (Distance2D(owner, avoidee, SQUARE_SIZE) >= 0.0f)) {
-			#if (DEBUG_OUTPUT == 1)
-			{
-				GML_RECMUTEX_LOCK(sel); // GetObstacleAvoidanceDir
+		#if (DEBUG_OUTPUT == 1)
+		{
+			GML_RECMUTEX_LOCK(sel); // GetObstacleAvoidanceDir
 
-				if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
-					geometricObjects->AddLine(avoider->pos + (UpVector * 20.0f), avoidee->pos + (UpVector * 20.0f), 3, 1, 4);
-				}
+			if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
+				geometricObjects->AddLine(avoider->pos + (UpVector * 20.0f), avoidee->pos + (UpVector * 20.0f), 3, 1, 4);
 			}
-			#endif
-
-			const float avoideeDistance = (avoideeDistSq <= 1e-2f)? 1e-1f: fastmath::sqrt2(avoideeDistSq);
-			const float avoidanceAngleDot = avoider->frontdir.dot(avoidee->frontdir);
-			const float avoidanceTurnSign = (avoideeVector.dot(avoider->rightdir) * 2.0f) - 1.0f;
-			const float avoidanceClampDot = 1.0f - (0.5f + Clamp(avoidanceAngleDot, -1.0f, 1.0f) * 0.5f);
-			const float avoidanceFallOff  = 1.0f - std::min(1.0f, avoideeDistance / (4.0f * avoidanceRadiusSum));
-
-			if (avoidanceAngleDot < 0.0f) {
-				// if anti-parallel, make both parties turn right or both turn left
-				avoidanceDir = ((-avoideeVector / avoideeDistance) + (avoider->rightdir * avoidanceTurnSign * AVOIDER_DIR_WEIGHT));
-			} else {
-				// if parallel, make one of the parties turn left and one turn right
-				avoidanceDir = (( avoideeVector / avoideeDistance) + (avoider->frontdir *                     AVOIDER_DIR_WEIGHT));
-			}
-
-			avoidanceVec += (avoidanceDir * 0.5f * avoidanceClampDot * avoidanceFallOff * avoideeMassScale);
 		}
+		#endif
+
+		const float avoidanceTurnSign = ((avoidee->pos.dot(avoider->rightdir) - avoider->pos.dot(avoider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
+		const float avoidanceClampDot = (1.0f - Clamp(avoider->frontdir.dot(avoidee->frontdir), -1.0f, 1.0f)) * 0.5f + 0.1f;
+		const float avoidanceFallOff  = (1.0f - std::min(1.0f, fastmath::sqrt2(avoideeDistSq) / (4.0f * avoidanceRadiusSum)));
+
+		avoidanceDir = avoider->rightdir * AVOIDER_DIR_WEIGHT * avoidanceTurnSign;
+		avoidanceVec += (avoidanceDir * avoidanceClampDot * avoidanceFallOff * avoideeMassScale);
 	}
 
 
 	// use a weighted combination of the desired- and the avoidance-directions
 	// also linearly smooth it using the vector calculated the previous frame
-	avoidanceVec = avoidanceVec.SafeNormalize();
+	// avoidanceVec = avoidanceVec.SafeNormalize();
 	avoidanceDir = (desiredDir * DESIRED_DIR_WEIGHT + avoidanceVec).SafeNormalize();
 	avoidanceDir = (lastAvoidanceDir + avoidanceDir) * 0.5f;
 
