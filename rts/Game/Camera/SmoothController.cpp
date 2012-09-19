@@ -198,6 +198,12 @@ float3 SmoothController::GetPos() const
 	return cpos;
 }
 
+void SmoothController::SetPos(const float3& newPos)
+{
+	pos = newPos;
+	UpdateVectors();
+}
+
 float3 SmoothController::SwitchFrom() const
 {
 	return pos;

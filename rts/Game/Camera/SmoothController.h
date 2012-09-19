@@ -26,6 +26,7 @@ public:
 
 	void Update();
 	float3 GetPos() const;
+	void SetPos(const float3& newPos);
 
 	float3 SwitchFrom() const;
 	void SwitchTo(bool showText);
