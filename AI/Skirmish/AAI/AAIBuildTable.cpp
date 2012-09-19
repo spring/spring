@@ -2805,7 +2805,6 @@ void AAIBuildTable::DebugPrint()
 
 		//fprintf(file, "Max damage: %f\n", GetMaxDamage(i));
 
-		//fprintf(file, "Max damage: %f\n", GetMaxDamage(i));
 		/*fprintf(file, "Can Build:\n");
 
 		for(list<int>::iterator j = units_static[i].canBuildList.begin(); j != units_static[i].canBuildList.end(); ++j)
@@ -2814,9 +2813,10 @@ void AAIBuildTable::DebugPrint()
 		fprintf(file, "\n Built by: ");
 
 		for(list<int>::iterator k = units_static[i].builtByList.begin(); k != units_static[i].builtByList.end(); ++k)
-			fprintf(file, "%s ", unitList[*k-1]->humanName.c_str());*/
+			fprintf(file, "%s ", unitList[*k-1]->humanName.c_str());
 
 		fprintf(file, "\n \n");
+		*/
 	}
 
 	for(int s = 1; s <= numOfSides; s++)
