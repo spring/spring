@@ -35,6 +35,9 @@
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
+#if 1
+#include "Rendering/GlobalRendering.h"
+#endif
 
 #define LOG_SECTION_GMT "GroundMoveType"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
@@ -52,7 +55,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 
 #define MIN_WAYPOINT_DISTANCE SQUARE_SIZE
 #define MAX_IDLING_SLOWUPDATES 16
-#define DEBUG_OUTPUT 0
 #define WAIT_FOR_PATH 1
 #define IGNORE_OBSTACLES 0
 #define PLAY_SOUNDS 1
@@ -1013,14 +1015,15 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	MoveDef* avoiderMD = avoider->moveDef;
 	CMoveMath* avoiderMM = avoiderMD->moveMath;
 
-	static const float AVOIDER_DIR_WEIGHT = 3.0f;
-	static const float DESIRED_DIR_WEIGHT = 1.0f;
+	static const float AVOIDER_DIR_WEIGHT = 1.0f;
+	static const float DESIRED_DIR_WEIGHT = 0.5f;
+	static const float MAX_AVOIDEE_COSINE = math::cosf(105.0f * (PI / 180.0f));
+	static const float LAST_DIR_MIX_ALPHA = 0.7f;
 
 	// now we do the obstacle avoidance proper
 	// avoider always uses its never-rotated MoveDef footprint
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
 	const float avoiderRadius = FOOTPRINT_RADIUS(avoiderMD->xsize, avoiderMD->zsize, 1.0f);
-	const float3 rightOfPath = desiredDir.cross(UpVector);
 
 	const vector<CSolidObject*>& nearbyObjects = qf->GetSolidsExact(avoider->pos, avoidanceRadius);
 
@@ -1035,11 +1038,9 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 			continue;
 		if (!avoiderMM->CrushResistant(*avoiderMD, avoidee))
 			continue;
-		// ignore objects that are slightly behind us
-		if (desiredDir.dot(avoidee->pos - avoider->pos) <= 0.0f)
-			continue;
 
 		const bool avoideeMobile = (avoideeMD != NULL);
+		const bool avoidMobiles = avoiderMD->avoidMobilesOnPath;
 
 		const float3 avoideeVector = (avoider->pos + avoider->speed) - (avoidee->pos + avoidee->speed);
 
@@ -1052,19 +1053,18 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		const float avoidanceMassSum = avoider->mass + avoidee->mass;
 		const float avoideeMassScale = (avoideeMobile)? (avoidee->mass / avoidanceMassSum): 1.0f;
 		const float avoideeDistSq = avoideeVector.SqLength();
+		const float avoideeDist   = fastmath::sqrt2(avoideeDistSq);
 
 		// TODO: also check if !avoiderUD->pushResistant
-		if (avoideeMobile && !avoiderMD->avoidMobilesOnPath)
+		if (avoideeMobile && !avoidMobiles)
+			continue;
+		// ignore objects that are more than this many degrees off-center from us
+		if (avoider->frontdir.dot(-(avoideeVector / avoideeDist)) < MAX_AVOIDEE_COSINE)
 			continue;
 
 		if (avoideeDistSq >= Square(std::max(currentSpeed, 1.0f) * GAME_SPEED + avoidanceRadiusSum))
 			continue;
 		if (avoideeDistSq >= avoider->pos.SqDistance2D(goalPos))
-			continue;
-
-		if (avoideeVector.dot(avoidanceDir) >= avoidanceRadiusSum)
-			continue;
-		if (math::fabs(avoideeVector.dot(rightOfPath)) >= avoidanceRadiusSum)
 			continue;
 
 		// do not bother steering around idling objects
@@ -1076,22 +1076,34 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// if object and unit in relative motion are closing in on one another
 		// (or not yet fully apart), then the object is on the path of the unit
 		// and they are not collided
-		#if (DEBUG_OUTPUT == 1)
-		{
+		if (globalRendering->drawdebug) {
 			GML_RECMUTEX_LOCK(sel); // GetObstacleAvoidanceDir
 
 			if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
 				geometricObjects->AddLine(avoider->pos + (UpVector * 20.0f), avoidee->pos + (UpVector * 20.0f), 3, 1, 4);
 			}
 		}
-		#endif
 
-		const float avoidanceTurnSign = ((avoidee->pos.dot(avoider->rightdir) - avoider->pos.dot(avoider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
-		const float avoidanceClampDot = (1.0f - Clamp(avoider->frontdir.dot(avoidee->frontdir), -1.0f, 1.0f)) * 0.5f + 0.1f;
-		const float avoidanceFallOff  = (1.0f - std::min(1.0f, fastmath::sqrt2(avoideeDistSq) / (4.0f * avoidanceRadiusSum)));
+		float avoiderTurnSign = ((avoidee->pos.dot(avoider->rightdir) - avoider->pos.dot(avoider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
+		float avoideeTurnSign = ((avoider->pos.dot(avoidee->rightdir) - avoidee->pos.dot(avoidee->rightdir)) <= 0.0f) * 2.0f - 1.0f;
 
-		avoidanceDir = avoider->rightdir * AVOIDER_DIR_WEIGHT * avoidanceTurnSign;
-		avoidanceVec += (avoidanceDir * avoidanceClampDot * avoidanceFallOff * avoideeMassScale);
+		const float avoidanceCosAngle = Clamp(avoider->frontdir.dot(avoidee->frontdir), -1.0f, 1.0f);
+		const float avoidanceResponse = (1.0f - avoidanceCosAngle) + 0.1f;
+		const float avoidanceFallOff  = (1.0f - std::min(1.0f, avoideeDist / (4.0f * avoidanceRadiusSum)));
+
+		// if parties are anti-parallel, it is always more efficient for
+		// both to turn in the same local-space direction (either R/R or
+		// L/L depending on relative object positions) but there exists
+		// a range of orientations for which the signs are not equal
+		//
+		// (this is also true for the parallel situation, but there the
+		// degeneracy only occurs when one of the parties is behind the
+		// other and can be ignored)
+		if (avoidanceCosAngle < 0.0f)
+			avoiderTurnSign = std::max(avoiderTurnSign, avoideeTurnSign);
+
+		avoidanceDir = avoider->rightdir * AVOIDER_DIR_WEIGHT * avoiderTurnSign;
+		avoidanceVec += (avoidanceDir * avoidanceResponse * avoidanceFallOff * avoideeMassScale);
 	}
 
 
@@ -1099,10 +1111,9 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	// also linearly smooth it using the vector calculated the previous frame
 	// avoidanceVec = avoidanceVec.SafeNormalize();
 	avoidanceDir = (desiredDir * DESIRED_DIR_WEIGHT + avoidanceVec).SafeNormalize();
-	avoidanceDir = (lastAvoidanceDir + avoidanceDir) * 0.5f;
+	avoidanceDir = lastAvoidanceDir * LAST_DIR_MIX_ALPHA + avoidanceDir * (1.0f - LAST_DIR_MIX_ALPHA);
 
-	#if (DEBUG_OUTPUT == 1)
-	{
+	if (globalRendering->drawdebug) {
 		GML_RECMUTEX_LOCK(sel); // GetObstacleAvoidanceDir
 
 		if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
@@ -1117,7 +1128,6 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 			geometricObjects->SetColor(adFigGroupID, 1, 0.3f, 0.3f, 0.6f);
 		}
 	}
-	#endif
 
 	return (lastAvoidanceDir = avoidanceDir);
 }
@@ -1205,16 +1215,18 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 			nwp = pathManager->NextWayPoint(pathId, cwp, 1.25f * SQUARE_SIZE, 0, owner);
 		}
 
-		#if (DEBUG_OUTPUT == 1)
-		if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
-			// plot the vectors to {curr, next}WayPoint
-			const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
-			const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
+		if (globalRendering->drawdebug) {
+			GML_RECMUTEX_LOCK(sel); // CanGetNextWayPoint
 
-			geometricObjects->SetColor(cwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
-			geometricObjects->SetColor(nwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+			if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
+				// plot the vectors to {curr, next}WayPoint
+				const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
+				const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
+
+				geometricObjects->SetColor(cwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+				geometricObjects->SetColor(nwpFigGroupID, 1, 0.3f, 0.3f, 0.6f);
+			}
 		}
-		#endif
 
 		// perform a turn-radius check: if the waypoint
 		// lies outside our turning circle, don't skip
