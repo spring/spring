@@ -74,9 +74,12 @@ private:
 	CCameraController* currCamCtrl;
 	unsigned int currCamCtrlNum;
 
-	float cameraTime;
-	float cameraTimeLeft;
-	CCamera cameraStart;
+	struct {
+		float3 pos;
+		float3 dir;
+		float  fov;
+	} startCam;
+
 	float cameraTimeStart;
 	float cameraTimeEnd;
 	float cameraTimeFactor;
