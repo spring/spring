@@ -99,7 +99,7 @@ void QTPFS::NodeLayer::QueueUpdate(const SRectangle& r, const MoveDef* md, const
 			const unsigned int chmz = hmz;
 			#endif
 
-			layerUpdate->speedMods[recIdx] = mm->GetPosSpeedMod(*md, chmx, chmz, NULL);
+			layerUpdate->speedMods[recIdx] = mm->GetPosSpeedMod(*md, chmx, chmz);
 			layerUpdate->blockBits[recIdx] = mm->IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL);
 		}
 	}
