@@ -503,6 +503,7 @@ void CMiniMap::MoveView(int x, int y)
 	float3 clickPos;
 	clickPos.x = ((float(x -                               xpos          )) /  width) * (gs->mapx * SQUARE_SIZE);
 	clickPos.z = ((float(y - (globalRendering->viewSizeY - ypos - height))) / height) * (gs->mapy * SQUARE_SIZE);
+	camHandler->CameraTransition(0.15f);
 	camHandler->GetCurrentController().SetPos(clickPos);
 	unitTracker.Disable();
 }

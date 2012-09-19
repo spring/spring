@@ -79,6 +79,7 @@ void COverheadController::ScreenEdgeMove(float3 move)
 
 void COverheadController::MouseWheelMove(float move)
 {
+	camHandler->CameraTransition(0.05f);
 	const float shiftSpeed = (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3.0f : 1.0f);
 	
 	// tilt the camera if LCTRL is pressed
