@@ -37,6 +37,9 @@
 
 #if 1
 #include "Rendering/GlobalRendering.h"
+#define DEBUG_DRAWING_ENABLED globalRendering->drawdebug
+#else
+#define DEBUG_DRAWING_ENABLED false
 #endif
 
 #define LOG_SECTION_GMT "GroundMoveType"
@@ -1055,7 +1058,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		const float avoidanceMassSum = avoider->mass + avoidee->mass;
 		const float avoideeMassScale = (avoideeMobile)? (avoidee->mass / avoidanceMassSum): 1.0f;
 		const float avoideeDistSq = avoideeVector.SqLength();
-		const float avoideeDist   = fastmath::sqrt2(avoideeDistSq);
+		const float avoideeDist   = fastmath::sqrt2(avoideeDistSq) + 0.01f;
 
 		// TODO: also check if !avoiderUD->pushResistant
 		if (avoideeMobile && !avoidMobiles)
@@ -1078,7 +1081,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// if object and unit in relative motion are closing in on one another
 		// (or not yet fully apart), then the object is on the path of the unit
 		// and they are not collided
-		if (globalRendering->drawdebug) {
+		if (DEBUG_DRAWING_ENABLED) {
 			GML_RECMUTEX_LOCK(sel); // GetObstacleAvoidanceDir
 
 			if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
@@ -1114,7 +1117,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	avoidanceDir = (desiredDir * DESIRED_DIR_WEIGHT + avoidanceVec).SafeNormalize();
 	avoidanceDir = lastAvoidanceDir * LAST_DIR_MIX_ALPHA + avoidanceDir * (1.0f - LAST_DIR_MIX_ALPHA);
 
-	if (globalRendering->drawdebug) {
+	if (DEBUG_DRAWING_ENABLED) {
 		GML_RECMUTEX_LOCK(sel); // GetObstacleAvoidanceDir
 
 		if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
@@ -1216,7 +1219,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 			nwp = pathManager->NextWayPoint(pathId, cwp, 1.25f * SQUARE_SIZE, 0, owner);
 		}
 
-		if (globalRendering->drawdebug) {
+		if (DEBUG_DRAWING_ENABLED) {
 			GML_RECMUTEX_LOCK(sel); // CanGetNextWayPoint
 
 			if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
