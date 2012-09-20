@@ -122,8 +122,8 @@ void CSMFReadMap::LoadHeightMap()
 	cornerHeightMapUnsynced.resize((width + 1) * (height + 1));
 	#endif
 
-	heightMapSynced   = &cornerHeightMapSynced;
-	heightMapUnsynced = &cornerHeightMapUnsynced;
+	heightMapSyncedPtr   = &cornerHeightMapSynced;
+	heightMapUnsyncedPtr = &cornerHeightMapUnsynced;
 
 	const float minH = mapInfo->smf.minHeightOverride ? mapInfo->smf.minHeight : header.minHeight;
 	const float maxH = mapInfo->smf.maxHeightOverride ? mapInfo->smf.maxHeight : header.maxHeight;

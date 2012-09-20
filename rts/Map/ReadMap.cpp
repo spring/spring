@@ -114,8 +114,8 @@ CReadMap::CReadMap()
 	, currMinHeight(0.0f)
 	, currMaxHeight(0.0f)
 	, mapChecksum(0)
-	, heightMapSynced(NULL)
-	, heightMapUnsynced(NULL)
+	, heightMapSyncedPtr(NULL)
+	, heightMapUnsyncedPtr(NULL)
 {
 }
 
@@ -186,8 +186,8 @@ void CReadMap::Initialize()
 	slopeMap.resize(gs->hmapx * gs->hmapy);
 	visVertexNormals.resize(gs->mapxp1 * gs->mapyp1);
 
-	assert(heightMapSynced != NULL);
-	assert(heightMapUnsynced != NULL);
+	assert(heightMapSyncedPtr != NULL);
+	assert(heightMapUnsyncedPtr != NULL);
 
 	CalcHeightmapChecksum();
 	UpdateHeightMapSynced(SRectangle(0, 0, gs->mapx, gs->mapy), true);
