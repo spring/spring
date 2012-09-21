@@ -468,7 +468,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r, bool merged
 	// technically required whenever numRefBinSquares is zero, ie.
 	// when ALL squares in <r> changed bins in unison
 	//
-	if (UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares) && Split(nl, r.ym)) {
+	if (UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares) && Split(nl, r.ForceTesselation())) {
 		registerNode = false;
 
 		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
@@ -565,7 +565,7 @@ bool QTPFS::QTNode::UpdateMoveCost(
 
 	assert(moveCostAvg > 0.0f);
 
-	if (numDifBinSquares > 0 && CanSplit(r.ym))
+	if (numDifBinSquares > 0 && CanSplit(r.ForceTesselation()))
 		return true;
 
 	// if we are not going to tesselate this node further
