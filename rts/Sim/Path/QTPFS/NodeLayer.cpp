@@ -3,11 +3,11 @@
 #include "NodeLayer.hpp"
 #include "PathManager.hpp"
 #include "Node.hpp"
+
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/myMath.h"
-#include "System/Rectangle.h"
 
 // NOTE:
 //   we need a fixed range that does not become wider / narrower
@@ -73,7 +73,7 @@ void QTPFS::NodeLayer::Clear() {
 
 
 #ifdef QTPFS_STAGGERED_LAYER_UPDATES
-void QTPFS::NodeLayer::QueueUpdate(const SRectangle& r, const MoveDef* md, const CMoveMath* mm) {
+void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md, const CMoveMath* mm) {
 	layerUpdates.push_back(LayerUpdate());
 	LayerUpdate* layerUpdate = &(layerUpdates.back());
 
@@ -107,7 +107,7 @@ void QTPFS::NodeLayer::QueueUpdate(const SRectangle& r, const MoveDef* md, const
 
 bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 	const LayerUpdate& layerUpdate = layerUpdates.front();
-	const SRectangle& rectangle = layerUpdate.rectangle;
+	const PathRectangle& rectangle = layerUpdate.rectangle;
 	const std::vector<float>* speedMods = &layerUpdate.speedMods;
 	const std::vector<int>* blockBits = &layerUpdate.blockBits;
 	const bool ret = Update(rectangle, NULL, NULL, speedMods, blockBits);
@@ -119,7 +119,7 @@ bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 
 
 bool QTPFS::NodeLayer::Update(
-	const SRectangle& r,
+	const PathRectangle& r,
 	const MoveDef* md,
 	const CMoveMath* mm,
 	const std::vector<float>* luSpeedMods,
@@ -180,5 +180,76 @@ bool QTPFS::NodeLayer::Update(
 	// if each square happened to change to the SAME bin
 	//
 	return (numNewBinSquares > 0);
+}
+
+
+
+void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum) {
+	const int xoff = (currFrameNum % ((gs->mapx >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
+	const int zoff = (currFrameNum / ((gs->mapy >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
+
+	INode* n = NULL;
+
+	{
+		// top-left quadrant: [0, gs->mapx >> 1) x [0, gs->mapy >> 1)
+		//
+		// update an 8x8 block of squares per quadrant per frame
+		// in row-major order; every GetNeighbors() call invokes
+		// UpdateNeighborCache if the magic numbers do not match
+		// (nodes can be visited multiple times per block update)
+		const int xmin =         (xoff +           0               ), zmin =         (zoff +           0               );
+		const int xmax = std::min(xmin + SQUARE_SIZE, gs->mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE, gs->mapy >> 1);
+
+		for (int x = xmin; x < xmax; x++) {
+			for (int z = zmin; z < zmax; ) {
+				n = nodeGrid[z * xsize + x];
+				n->SetMagicNumber(currMagicNum);
+				n->GetNeighbors(nodeGrid);
+				z += n->zsize();
+			}
+		}
+	}
+	{
+		// top-right quadrant: [gs->mapx >> 1, gs->mapx) x [0, gs->mapy >> 1)
+		const int xmin =         (xoff +              (gs->mapx >> 1)), zmin =         (zoff +           0               );
+		const int xmax = std::min(xmin + SQUARE_SIZE,  gs->mapx      ), zmax = std::min(zmin + SQUARE_SIZE, gs->mapy >> 1);
+
+		for (int x = xmin; x < xmax; x++) {
+			for (int z = zmin; z < zmax; ) {
+				n = nodeGrid[z * xsize + x];
+				n->SetMagicNumber(currMagicNum);
+				n->GetNeighbors(nodeGrid);
+				z += n->zsize();
+			}
+		}
+	}
+	{
+		// bottom-right quadrant: [gs->mapx >> 1, gs->mapx) x [gs->mapy >> 1, gs->mapy)
+		const int xmin =         (xoff +              (gs->mapx >> 1)), zmin =         (zoff +              (gs->mapy >> 1));
+		const int xmax = std::min(xmin + SQUARE_SIZE,  gs->mapx      ), zmax = std::min(zmin + SQUARE_SIZE,  gs->mapy      );
+
+		for (int x = xmin; x < xmax; x++) {
+			for (int z = zmin; z < zmax; ) {
+				n = nodeGrid[z * xsize + x];
+				n->SetMagicNumber(currMagicNum);
+				n->GetNeighbors(nodeGrid);
+				z += n->zsize();
+			}
+		}
+	}
+	{
+		// bottom-left quadrant: [0, gs->mapx >> 1) x [gs->mapy >> 1, gs->mapy)
+		const int xmin =         (xoff +           0               ), zmin =         (zoff +              (gs->mapy >> 1));
+		const int xmax = std::min(xmin + SQUARE_SIZE, gs->mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE,  gs->mapy      );
+
+		for (int x = xmin; x < xmax; x++) {
+			for (int z = zmin; z < zmax; ) {
+				n = nodeGrid[z * xsize + x];
+				n->SetMagicNumber(currMagicNum);
+				n->GetNeighbors(nodeGrid);
+				z += n->zsize();
+			}
+		}
+	}
 }
 
