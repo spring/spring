@@ -10,12 +10,12 @@ namespace QTPFS {
 		PathRectangle() {
 			x1 = 0; x2 = 0;
 			y1 = 0; y2 = 0;
-			ym = false;
+			ft = false;
 		}
-		PathRectangle(int _x1, int _y1, int _x2, int _y2, bool _ym) {
+		PathRectangle(int _x1, int _y1, int _x2, int _y2, bool _ft) {
 			x1 = _x1; x2 = _x2;
 			y1 = _y1; y2 = _y2;
-			ym = _ym;
+			ft = _ft;
 		}
 
 		PathRectangle(const    SRectangle& r) { *this = r; }
@@ -24,20 +24,23 @@ namespace QTPFS {
 		PathRectangle& operator = (const SRectangle& r) {
 			x1 = r.x1; x2 = r.x2;
 			y1 = r.y1; y2 = r.y2;
-			ym = false;
+			ft = false;
 			return *this;
 		}
 		PathRectangle& operator = (const PathRectangle& r) {
 			x1 = r.x1; x2 = r.x2;
 			y1 = r.y1; y2 = r.y2;
-			ym = r.ym;
+			ft = r.ft;
 			return *this;
 		}
 
+		bool ForceTesselation() const { return ft; }
+
+	private:
 		// if true, this rectangle covers the yardmap of
 		// a CSolidObject* and needs to be tesselated to
 		// maximum depth
-		bool ym;
+		bool ft;
 	};
 };
 
