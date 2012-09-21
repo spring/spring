@@ -27,7 +27,6 @@ end
 --------------------------------------------------------------------------------
 
 -- Automatically generated local definitions
-
 local CMD_MOVE_STATE    = CMD.MOVE_STATE
 local CMD_PATROL        = CMD.PATROL
 local CMD_STOP          = CMD.STOP
@@ -49,7 +48,7 @@ local hmsz = Game.mapSizeZ/2
 -- builders that have been idling for the number of game frames
 -- (in case a player accidentally STOPs them)
 
-local idleFrames = 0
+local idleFrames = 30
 
 
 --------------------------------------------------------------------------------
@@ -64,10 +63,11 @@ end
 local function SetupUnit(unitID)
   -- set immobile builders (nanotowers?) to the ROAM movestate,
   -- and give them a PATROL order (does not matter where, afaict)
+  local ret = false
   local x, y, z = spGetUnitPosition(unitID)
   if (x) then
-    spGiveOrderToUnit(unitID, CMD_MOVE_STATE, { 2 }, {})
-    if (x > hmsx) then
+    ret = spGiveOrderToUnit(unitID, CMD_MOVE_STATE, { 2 }, {})
+    if (x > hmsx) then -- avoid to issue commands outside map
       x = x - 25
     else
       x = x + 25
@@ -77,8 +77,9 @@ local function SetupUnit(unitID)
     else
       z = z + 25
     end
-    spGiveOrderToUnit(unitID, CMD_PATROL, { x, y, z }, {})
+    ret = spGiveOrderToUnit(unitID, CMD_PATROL, { x, y, z }, {}) and ret
   end
+  return ret
 end
 
 
@@ -121,12 +122,16 @@ if (idleFrames > 0) then
       if ((frame - f) > idleFrames) then
         local cmds = spGetUnitCommands(unitID)
         if (cmds and (#cmds <= 0)) then
-          SetupUnit(unitID)
+          if SetupUnit(unitID) then
+            idlers[unitID] = frame -- safeguard against command spam
+          else
+            idlers[unitID] = nil -- the unit could not be set up, don't retry
+          end
         else
           idlers[unitID] = nil
         end
       end
-    end  
+    end
   end
 
 

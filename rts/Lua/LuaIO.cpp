@@ -73,11 +73,11 @@ bool LuaIO::SafeReadPath(const string& path)
 }
 
 
-bool LuaIO::SafeWritePath(const string& path)
+bool LuaIO::SafeWritePath(lua_State* L, const string& path)
 {
 	string prefix = ""; // FIXME
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
-	const CLuaHandle* lh = ActiveHandle();
+	const CLuaHandle* lh = CLuaHandle::GetHandle(L);
 	if (lh != NULL) {
 		prefix = lh->GetName() + "/" + "Write";
 	}
@@ -142,7 +142,7 @@ int LuaIO::system(lua_State* L, const char* command)
 
 int LuaIO::remove(lua_State* L, const char* pathname)
 {
-	if (!SafeWritePath(pathname)
+	if (!SafeWritePath(L, pathname)
 		|| !IsSafePath(pathname)) {
 		errno = EPERM; //EACCESS?
 		return -1;
@@ -153,7 +153,7 @@ int LuaIO::remove(lua_State* L, const char* pathname)
 
 int LuaIO::rename(lua_State* L, const char* oldpath, const char* newpath)
 {
-	if (!SafeWritePath(oldpath) || !SafeWritePath(newpath)
+	if (!SafeWritePath(L, oldpath) || !SafeWritePath(L, newpath)
 		|| !IsSafePath(oldpath) || !IsSafePath(newpath)) {
 		errno = EPERM; //EACCESS?
 		return -1;

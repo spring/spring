@@ -386,7 +386,7 @@ bool CAICheats::IsUnitParalyzed(int unitId) const
 
 	const CUnit* unit = GetUnit(unitId);
 	if (unit) {
-		stunned = unit->stunned;
+		stunned = unit->IsStunned();
 	}
 
 	return stunned;
@@ -442,7 +442,7 @@ int CAICheats::HandleCommand(int commandId, void* data)
 		} break;
 
 		case AIHCTraceRayId: {
-			AIHCTraceRay* cmdData = (AIHCTraceRay*) data;
+			AIHCTraceRay* cmdData = static_cast<AIHCTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
@@ -460,7 +460,7 @@ int CAICheats::HandleCommand(int commandId, void* data)
 		} break;
 
 		case AIHCFeatureTraceRayId: {
-			AIHCFeatureTraceRay* cmdData = (AIHCFeatureTraceRay*) data;
+			AIHCFeatureTraceRay* cmdData = static_cast<AIHCFeatureTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];

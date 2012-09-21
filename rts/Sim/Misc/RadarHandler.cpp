@@ -61,11 +61,11 @@ CRadarHandler::CRadarHandler(bool circularRadar)
   targFacEffect(2),
   radarAlgo(int2(xsize, zsize), -1000, 20, readmap->GetMIPHeightMapSynced(radarMipLevel))
 {
-	commonJammerMap.SetSize(xsize, zsize);
-	commonSonarJammerMap.SetSize(xsize, zsize);
+	commonJammerMap.SetSize(xsize, zsize, false);
+	commonSonarJammerMap.SetSize(xsize, zsize, false);
 
 	CLosMap tmp;
-	tmp.SetSize(xsize, zsize);
+	tmp.SetSize(xsize, zsize, false);
 	radarMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
 	sonarMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
 	seismicMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
@@ -98,7 +98,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 	//   this creates an exploit via Unit::Activate if the unit is
 	//   a transported radar/jammer and leaves a detached coverage
 	//   zone behind
-	if (!unit->activated || unit->stunned)
+	if (!unit->activated || unit->IsStunned())
 		return;
 
 	int2 newPos;

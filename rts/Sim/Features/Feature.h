@@ -47,12 +47,12 @@ public:
 	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID);
 	void ForcedMove(const float3& newPos, bool snapToGround = true);
 	void ForcedSpin(const float3& newDir);
-	bool Update(void);
-	bool UpdatePosition(void);
-	void StartFire(void);
+	bool Update();
+	bool UpdatePosition();
+	void StartFire();
 	float RemainingResource(float res) const;
-	float RemainingMetal(void) const;
-	float RemainingEnergy(void) const;
+	float RemainingMetal() const;
+	float RemainingEnergy() const;
 	int ChunkNumber(float f);
 	void CalculateTransform();
 	void DependentDied(CObject *o);
@@ -113,7 +113,7 @@ public:
 	/// the solid object that is on top of the geothermal
 	CSolidObject* solidOnTop;
 
-	/// initially a copy of CUnit::speed
+	/// initially a copy of CUnit::speed, for trees it stores the impulse that caused the destruction
 	float3 deathSpeed;
 
 private:

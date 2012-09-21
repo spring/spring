@@ -9,8 +9,8 @@
 namespace Shader {
 	struct IShaderObject {
 	public:
-		IShaderObject(int shType, const std::string& shSrc):
-			objID(0), type(shType), valid(false), src(shSrc) {
+		IShaderObject(int shType, const std::string& shSrcFile, const std::string& shDefinitions = ""):
+			objID(0), type(shType), valid(false), srcFile(shSrcFile), definitions(shDefinitions) {
 		}
 		virtual ~IShaderObject() {
 		}
@@ -27,21 +27,26 @@ namespace Shader {
 		int type;
 		bool valid;
 
-		std::string src;
+		std::string srcFile;
+		std::string definitions;
 		std::string log;
 	};
 
-
+	struct NullShaderObject: public Shader::IShaderObject {
+	public:
+		NullShaderObject(int shType, const std::string& shSrcFile) : IShaderObject(shType, shSrcFile) {}
+	};
+	
 	struct ARBShaderObject: public Shader::IShaderObject {
 	public:
-		ARBShaderObject(int, const std::string&);
+		ARBShaderObject(int, const std::string&, const std::string& shDefinitions = "");
 		void Compile();
 		void Release();
 	};
 
 	struct GLSLShaderObject: public Shader::IShaderObject {
 	public:
-		GLSLShaderObject(int, const std::string&);
+		GLSLShaderObject(int, const std::string&, const std::string& shDefinitions = "");
 		void Compile();
 		void Release();
 	};
@@ -51,7 +56,7 @@ namespace Shader {
 
 	struct IProgramObject {
 	public:
-		IProgramObject(): objID(0), valid(false) {}
+		IProgramObject(const std::string& poName): name(poName), objID(0), valid(false) {}
 		virtual ~IProgramObject() {}
 
 		virtual void Enable() const = 0;
@@ -59,6 +64,7 @@ namespace Shader {
 		virtual void Link() {}
 		virtual void Validate() {}
 		virtual void Release() = 0;
+		virtual void Reload() = 0;
 
 		virtual void SetUniformTarget(int) {}
 		virtual void SetUniformLocation(const std::string&) {}
@@ -86,32 +92,63 @@ namespace Shader {
 		virtual void SetUniformMatrix3dv(int idx, bool transp, const double* v) const {}
 		virtual void SetUniformMatrix4dv(int idx, bool transp, const double* v) const {}
 
-		typedef std::vector<const IShaderObject*> SOVec;
-		typedef std::vector<const IShaderObject*>::const_iterator SOVecIt;
+		virtual void SetUniformMatrixArray4fv(int idx, int count, bool transp, const float* v) const {}
+		virtual void SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v) const {}
 
-		virtual void AttachShaderObject(const IShaderObject* so) { shaderObjs.push_back(so); }
-		const std::vector<const IShaderObject*>& GetAttachedShaderObjs() const { return shaderObjs; }
+		typedef std::vector<IShaderObject*> SOVec;
+		typedef SOVec::iterator SOVecIt;
+		typedef SOVec::const_iterator SOVecConstIt;
+
+		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
+		SOVec& GetAttachedShaderObjs() { return shaderObjs; }
+		bool IsShaderAttached(const IShaderObject* so) const;
 
 		unsigned int GetObjID() const { return objID; }
 		bool IsValid() const { return valid; }
 		const std::string& GetLog() const { return log; }
 
 	protected:
+		std::string name;
 		unsigned int objID;
 		bool valid;
 
 		std::string log;
-		std::vector<const IShaderObject*> shaderObjs;
+		SOVec shaderObjs;
 	};
 
+	struct NullProgramObject: public Shader::IProgramObject {
+	public:
+		NullProgramObject(const std::string& poName): IProgramObject(poName) {}
+		void Enable() const {}
+		void Disable() const {}
+		void Release() {}
+		void Reload() {}
+
+		void SetUniform1i(int idx, int   v0) const {}
+		void SetUniform2i(int idx, int   v0, int   v1) const {}
+		void SetUniform3i(int idx, int   v0, int   v1, int   v2) const {}
+		void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) const {}
+		void SetUniform1f(int idx, float v0) const {}
+		void SetUniform2f(int idx, float v0, float v1) const {}
+		void SetUniform3f(int idx, float v0, float v1, float v2) const  {}
+		void SetUniform4f(int idx, float v0, float v1, float v2, float v3) const {}
+
+		void SetUniform2iv(int idx, const int*   v) const {}
+		void SetUniform3iv(int idx, const int*   v) const {}
+		void SetUniform4iv(int idx, const int*   v) const {}
+		void SetUniform2fv(int idx, const float* v) const {}
+		void SetUniform3fv(int idx, const float* v) const {}
+		void SetUniform4fv(int idx, const float* v) const {}
+	};
 
 	struct ARBProgramObject: public Shader::IProgramObject {
 	public:
-		ARBProgramObject();
+		ARBProgramObject(const std::string& poName);
 		void Enable() const;
 		void Disable() const;
 		void Link();
 		void Release();
+		void Reload();
 
 		void SetUniformTarget(int target) { uniformTarget = target; }
 
@@ -131,7 +168,7 @@ namespace Shader {
 		void SetUniform3fv(int idx, const float* v) const;
 		void SetUniform4fv(int idx, const float* v) const;
 
-		void AttachShaderObject(const IShaderObject*);
+		void AttachShaderObject(IShaderObject*);
 
 	private:
 		int uniformTarget;
@@ -139,12 +176,13 @@ namespace Shader {
 
 	struct GLSLProgramObject: public Shader::IProgramObject {
 	public:
-		GLSLProgramObject();
+		GLSLProgramObject(const std::string& poName);
 		void Enable() const;
 		void Disable() const;
 		void Link();
 		void Validate();
 		void Release();
+		void Reload();
 
 		void SetUniformLocation(const std::string&);
 
@@ -171,7 +209,10 @@ namespace Shader {
 		void SetUniformMatrix3dv(int idx, bool transp, const double* v) const;
 		void SetUniformMatrix4dv(int idx, bool transp, const double* v) const;
 
-		void AttachShaderObject(const IShaderObject*);
+		void SetUniformMatrixArray4fv(int idx, int count, bool transp, const float* v) const;
+		void SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v) const;
+
+		void AttachShaderObject(IShaderObject*);
 
 	private:
 		std::vector<int> uniformLocs;
@@ -192,6 +233,9 @@ namespace Shader {
 		glGetUniformLocationARB  <==> glGetUniformLocation
 	};
 	*/
+	
+	extern NullShaderObject* nullShaderObject;
+	extern NullProgramObject* nullProgramObject;
 }
 
 #endif

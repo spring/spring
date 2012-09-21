@@ -113,7 +113,6 @@ struct MoveDef {
 	float flowMod;
 
 	CMoveMath* moveMath;
-	CSolidObject* tempOwner;
 };
 
 

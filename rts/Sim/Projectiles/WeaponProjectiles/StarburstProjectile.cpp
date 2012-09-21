@@ -8,7 +8,6 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -90,13 +89,13 @@ CStarburstProjectile::CStarburstProjectile(
 		}
 	}
 
-	maxGoodDif = cos(tracking * 0.6f);
+	maxGoodDif = math::cos(tracking * 0.6f);
 	curSpeed = speed.Length();
 	dir = speed / curSpeed;
 	oldSmokeDir = dir;
 
 	const float3 camDir = (pos - camera->pos).ANormalize();
-	const float camDist = (camera->pos.distance(pos) * 0.2f) + ((1.0f - fabs(camDir.dot(dir))) * 3000);
+	const float camDist = (camera->pos.distance(pos) * 0.2f) + ((1.0f - math::fabs(camDir.dot(dir))) * 3000);
 
 	drawTrail = (camDist >= 200.0f);
 	drawRadius = maxSpeed * 8.0f;
@@ -118,7 +117,7 @@ CStarburstProjectile::CStarburstProjectile(
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	cegID = gCEG->Load(explGenHandler, cegTag);
+	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 void CStarburstProjectile::Detach()
@@ -169,7 +168,7 @@ void CStarburstProjectile::Update()
 	missileAge++;
 
 	if (target && weaponDef->tracks && owner()) {
-		targetPos = helper->GetUnitErrorPos(target, owner()->allyteam);
+		targetPos = helper->GetUnitErrorPos(target, owner()->allyteam, true);
 	}
 	if (interceptTarget) {
 		targetPos = interceptTarget->pos;
@@ -304,7 +303,7 @@ void CStarburstProjectile::Update()
 
 		if (!drawTrail) {
 			const float3 camDir = (pos - camera->pos).ANormalize();
-			const float camDist = (camera->pos.distance(pos) * 0.2f + (1 - fabs(camDir.dot(dir))) * 3000);
+			const float camDist = (camera->pos.distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000);
 
 			drawTrail = (camDist > 300.0f);
 		}
@@ -335,11 +334,11 @@ void CStarburstProjectile::Draw()
 
 			const float a1 =
 				((1.0f - (0.0f / SMOKE_TIME)) * 255) *
-				(0.7f + fabs(dif1.dot(dir)));
+				(0.7f + math::fabs(dif1.dot(dir)));
 			const float a2 =
 				(age < 8)? 0.0f:
 				((1.0f - (age2 / SMOKE_TIME)) * 255) *
-				(0.7f + fabs(dif2.dot(oldSmokeDir)));
+				(0.7f + math::fabs(dif2.dot(oldSmokeDir)));
 			const int alpha1 = std::min(255, (int) std::max(0.0f, a1));
 			const int alpha2 = std::min(255, (int) std::max(0.0f, a2));
 

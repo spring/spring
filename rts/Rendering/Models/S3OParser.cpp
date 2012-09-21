@@ -8,6 +8,7 @@
 #include "s3o.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -120,7 +121,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		(piece->maxs - piece->goffset) +
 		(piece->mins - piece->goffset);
 
-	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT));
+	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
 
 
 	int childTableOffset = fp->childs;
@@ -183,15 +184,19 @@ void SS3OPiece::DrawForList() const
 			glDrawElements(GL_TRIANGLES, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
-			#ifdef GL_PRIMITIVE_RESTART_NV
-			glPrimitiveRestartIndexNV(-1U);
-			glEnableClientState(GL_PRIMITIVE_RESTART_NV);
+			#ifdef GLEW_NV_primitive_restart
+			if (globalRendering->supportRestartPrimitive) {
+				glPrimitiveRestartIndexNV(-1U); // GL_NV_primitive_restart: "PrimitiveRestartIndexNV is not compiled into display lists, but is executed immediately."
+				glEnableClientState(GL_PRIMITIVE_RESTART_NV);
+			}
 			#endif
 
 			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 
-			#ifdef GL_PRIMITIVE_RESTART_NV
-			glDisableClientState(GL_PRIMITIVE_RESTART_NV);
+			#ifdef GLEW_NV_primitive_restart
+			if (globalRendering->supportRestartPrimitive) {
+				glDisableClientState(GL_PRIMITIVE_RESTART_NV);
+			}
 			#endif
 		} break;
 		case S3O_PRIMTYPE_QUADS: {
@@ -319,7 +324,7 @@ void SS3OPiece::SetVertexTangents()
 		float3& t = tTangents[vrtIdx];
 		int h = 1;
 
-		if (isnan(n.x) || isnan(n.y) || isnan(n.z)) {
+		if (math::isnan(n.x) || math::isnan(n.y) || math::isnan(n.z)) {
 			n = float3(0.0f, 0.0f, 1.0f);
 		}
 		if (s == ZeroVector) { s = float3(1.0f, 0.0f, 0.0f); }

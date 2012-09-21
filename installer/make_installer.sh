@@ -27,7 +27,6 @@ mkdir -p installer/downloads
 cd installer/downloads
 
 $WGET http://springrts.com/dl/rapid-spring-latest-win32.7z
-$WGET http://springrts.com/dl/TASServer.jar
 $WGET http://zero-k.info/lobby/setup.exe
 $WGET http://zero-k.info/lobby/setup_icon.ico
 $WGET http://www.springlobby.info/windows/latest.zip

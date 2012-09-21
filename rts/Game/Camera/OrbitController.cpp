@@ -44,15 +44,15 @@ void COrbitController::Init(const float3& p, const float3& tar)
 
 	const float l = (tar == ZeroVector)?
 		std::max(ground->LineGroundCol(p, p + cam->forward * 1024.0f, false), 512.0f):
-		(p - tar).Length();
+		p.distance(tar);
 
 	const float3 t = (tar == ZeroVector)? (p + cam->forward * l): tar;
 	const float3 v = (t - p);
 	const float3 w = (v / v.Length()); // do not normalize v in-place
 
 	const float d = v.Length();
-	const float e = RAD2DEG(acos(v.Length2D() / d));
-	const float r = RAD2DEG(acos(w.x));
+	const float e = RAD2DEG(math::acos(v.Length2D() / d));
+	const float r = RAD2DEG(math::acos(w.x));
 
 	distance  = cDistance = d;
 	elevation = cElevation = e;
@@ -251,12 +251,12 @@ float3 COrbitController::GetOrbitPos() const
 	float tx = cx;
 
 	tx = cx;
-	cx = cx * cos(beta) + cy * sin(beta);
-	cy = tx * sin(beta) + cy * cos(beta);
+	cx = cx * math::cos(beta) + cy * math::sin(beta);
+	cy = tx * math::sin(beta) + cy * math::cos(beta);
 
 	tx = cx;
-	cx = cx * cos(gamma) - cz * sin(gamma);
-	cz = tx * sin(gamma) + cz * cos(gamma);
+	cx = cx * math::cos(gamma) - cz * math::sin(gamma);
+	cz = tx * math::sin(gamma) + cz * math::cos(gamma);
 
 	return float3(cx, cy, cz);
 }

@@ -19,10 +19,6 @@ public:
 	virtual ~IModelParser() {}
 };
 
-
-class CUnit;
-class CAssParser;
-
 class C3DModelLoader
 {
 public:
@@ -30,10 +26,10 @@ public:
 	~C3DModelLoader();
 
 	void Update();
-	S3DModel* Load3DModel(std::string name, const float3& centerOffset = ZeroVector);
+	void CreateLocalModel(LocalModel* model);
+	void DeleteLocalModel(LocalModel* model);
 
-	void DeleteLocalModel(CUnit* unit);
-	void CreateLocalModel(CUnit* unit);
+	S3DModel* Load3DModel(std::string name);
 
 	typedef std::map<std::string, S3DModel*> ModelMap;
 	typedef std::map<std::string, IModelParser*> ParserMap;
@@ -45,16 +41,13 @@ private:
 
 	std::vector<S3DModelPiece*> createLists;
 
-	std::set<CUnit*> fixLocalModels;
+	std::set<LocalModel*> fixLocalModels;
 	std::vector<LocalModel*> deleteLocalModels;
 
 	void CreateLists(S3DModelPiece* o);
 	void CreateListsNow(S3DModelPiece* o);
 
 	void DeleteChilds(S3DModelPiece* o);
-
-	void SetLocalModelPieceDisplayLists(CUnit* unit);
-	void SetLocalModelPieceDisplayLists(S3DModelPiece* model, LocalModel* lmodel, int* piecenum);
 };
 
 extern C3DModelLoader* modelParser;

@@ -17,6 +17,9 @@ void FileSystemInitializer::Initialize()
 			archiveScanner = new CArchiveScanner();
 			vfsHandler = new CVFSHandler();
 			initialized = true;
+		} catch (const std::exception& ex) {
+			Cleanup();
+			throw ex;
 		} catch (...) {
 			Cleanup();
 			throw;

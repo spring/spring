@@ -44,7 +44,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 }
 
 
-CPlasmaRepulser::~CPlasmaRepulser(void)
+CPlasmaRepulser::~CPlasmaRepulser()
 {
 	interceptHandler.RemovePlasmaRepulser(this);
 	shieldProjectile->PreDelete();
@@ -184,7 +184,7 @@ void CPlasmaRepulser::Update()
 }
 
 
-void CPlasmaRepulser::SlowUpdate(void)
+void CPlasmaRepulser::SlowUpdate()
 {
 	const int piece = owner->script->QueryWeapon(weaponNum);
 	relWeaponPos = owner->script->GetPiecePos(piece);
@@ -233,44 +233,54 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir)
 {
 	if (!isEnabled) {
-		return -1;
+		return -1.0f;
 	}
+
+	// ::Update handles projectile <-> shield interactions for normal weapons, but
+	// does not get called when the owner is stunned (CUnit::Update returns early)
+	// BeamLasers and LightningCannons are hitscan (their projectiles do not move),
+	// they call InterceptHandler to figure out if a shield is in the way so check
+	// the stunned-state here keep things consistent
+	if (owner->IsStunned()) {
+		return -1.0f;
+	}
+
 	if (emitter->weaponDef->damages[0] > curPower) {
-		return -1;
+		return -1.0f;
 	}
 	if (weaponDef->smartShield && teamHandler->AlliedTeams(emitter->owner->team, owner->team)) {
-		return -1;
+		return -1.0f;
 	}
 
 	const float3 dif = weaponPos - start;
 
 	if (weaponDef->exteriorShield && dif.SqLength() < sqRadius) {
-		return -1;
+		return -1.0f;
 	}
 
 	const float closeLength = dif.dot(dir);
 
-	if (closeLength < 0) {
-		return -1;
+	if (closeLength < 0.0f) {
+		return -1.0f;
 	}
 
 	const float3 closeVect = dif - dir * closeLength;
 
 	const float tmp = sqRadius - closeVect.SqLength();
-	if ((tmp > 0) && (length > (closeLength - sqrt(tmp)))) {
-		const float colLength = closeLength - sqrt(tmp);
+	if ((tmp > 0.0f) && (length > (closeLength - math::sqrt(tmp)))) {
+		const float colLength = closeLength - math::sqrt(tmp);
 		const float3 colPoint = start + dir * colLength;
 		const float3 normal = (colPoint - weaponPos).Normalize();
 		newDir = dir - normal * normal.dot(dir) * 2;
 		return colLength;
 	}
-	return -1;
+	return -1.0f;
 }
 
 
 void CPlasmaRepulser::DependentDied(CObject* o)
 {
-	hasGfx.erase((CWeaponProjectile*) o);
+	hasGfx.erase(static_cast<CWeaponProjectile*>(o));
 	CWeapon::DependentDied(o);
 }
 

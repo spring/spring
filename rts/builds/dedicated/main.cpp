@@ -23,6 +23,7 @@
 #include "System/LogOutput.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/errorhandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Exceptions.h"
@@ -251,7 +252,7 @@ int main(int argc, char* argv[])
 }
 #endif
 
-	return 0;
+	return GetExitCode();
 }
 
 #if defined(WIN32) && !defined(_MSC_VER)

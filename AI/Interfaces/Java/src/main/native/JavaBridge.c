@@ -341,11 +341,6 @@ static size_t java_createAIClassPath(const char* shortName, const char* version,
 static jobject java_createAIClassLoader(JNIEnv* env,
 		const char* shortName, const char* version) {
 
-#ifdef _WIN32
-	static const char* FILE_URL_PREFIX = "file:///";
-#else // _WIN32
-	static const char* FILE_URL_PREFIX = "file://";
-#endif // _WIN32
 
 	jobject o_jClsLoader = NULL;
 
@@ -355,31 +350,51 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 			java_createAIClassPath(shortName, version, classPathParts, classPathParts_sizeMax);
 
 	jobjectArray o_cppURLs = jniUtil_createURLArray(env, classPathParts_size);
-	if (o_cppURLs == NULL) { return NULL; }
-	size_t cpp;
-	for (cpp = 0; cpp < classPathParts_size; ++cpp) {
-		#ifdef _WIN32
-		// we can not use windows path separators in file URLs
-		util_strReplaceChar(classPathParts[cpp], '\\', '/');
-		#endif
+	if (o_cppURLs != NULL) {
+#ifdef _WIN32
+		static const char* FILE_URL_PREFIX = "file:///";
+#else // _WIN32
+		static const char* FILE_URL_PREFIX = "file://";
+#endif // _WIN32
+		size_t cpp;
+		for (cpp = 0; cpp < classPathParts_size; ++cpp) {
+			#ifdef _WIN32
+			// we can not use windows path separators in file URLs
+			util_strReplaceChar(classPathParts[cpp], '\\', '/');
+			#endif
 
-		char* str_fileUrl = util_allocStrCat(2, FILE_URL_PREFIX, classPathParts[cpp]);
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
-				"Skirmish AI %s %s class-path part %i: %s",
-				shortName, version, cpp, str_fileUrl);
-		jobject jurl_fileUrl = jniUtil_createURLObject(env, str_fileUrl);
-		if (jurl_fileUrl == NULL) { return NULL; }
-		const bool inserted = jniUtil_insertURLIntoArray(env, o_cppURLs, cpp, jurl_fileUrl);
-		if (!inserted) { return NULL; }
-
-		// TODO: check/test if this is allowed/ok
-		FREE(str_fileUrl);
-		FREE(classPathParts[cpp]);
+			char* str_fileUrl = util_allocStrCat(2, FILE_URL_PREFIX, classPathParts[cpp]);
+			// TODO: check/test if this is allowed/ok
+			FREE(classPathParts[cpp]);
+			simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+					"Skirmish AI %s %s class-path part %i: \"%s\"",
+					shortName, version, cpp, str_fileUrl);
+			jobject jurl_fileUrl = jniUtil_createURLObject(env, str_fileUrl);
+			FREE(str_fileUrl);
+			if (jurl_fileUrl == NULL) {
+				simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+						"Skirmish AI %s %s class-path part %i (\"%s\"): failed to create a URL",
+						shortName, version, cpp, str_fileUrl);
+				o_cppURLs = NULL;
+				break;
+			}
+			const bool inserted = jniUtil_insertURLIntoArray(env, o_cppURLs, cpp, jurl_fileUrl);
+			if (!inserted) {
+				simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+						"Skirmish AI %s %s class-path part %i (\"%s\"): failed to insert",
+						shortName, version, cpp, str_fileUrl);
+				o_cppURLs = NULL;
+				break;
+			}
+		}
 	}
 
-	o_jClsLoader = jniUtil_createURLClassLoader(env, o_cppURLs);
-	if (o_jClsLoader == NULL) { return NULL; }
-	o_jClsLoader = jniUtil_makeGlobalRef(env, o_jClsLoader, "Skirmish AI class-loader");
+	if (o_cppURLs != NULL) {
+		o_jClsLoader = jniUtil_createURLClassLoader(env, o_cppURLs);
+		if (o_jClsLoader != NULL) {
+			o_jClsLoader = jniUtil_makeGlobalRef(env, o_jClsLoader, "Skirmish AI class-loader");
+		}
+	}
 
 	FREE(classPathParts);
 

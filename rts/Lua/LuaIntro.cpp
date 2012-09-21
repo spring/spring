@@ -2,7 +2,7 @@
 
 #include "System/mmgr.h"
 
-#include "LuaLoadScreen.h"
+#include "LuaIntro.h"
 
 #include "LuaInclude.h"
 
@@ -31,32 +31,32 @@
 #include "System/Util.h"
 
 
-CLuaLoadScreen* luaLoadScreen = NULL;
+CLuaIntro* LuaIntro = NULL;
 
 /******************************************************************************/
 /******************************************************************************/
 
 
-void CLuaLoadScreen::LoadHandler()
+void CLuaIntro::LoadHandler()
 {
-	if (luaLoadScreen) {
+	if (LuaIntro) {
 		return;
 	}
 
-	new CLuaLoadScreen();
+	new CLuaIntro();
 
-	if (!luaLoadScreen->IsValid()) {
-		delete luaLoadScreen;
+	if (!LuaIntro->IsValid()) {
+		delete LuaIntro;
 	}
 }
 
 
-void CLuaLoadScreen::FreeHandler()
+void CLuaIntro::FreeHandler()
 {
 	static bool inFree = false;
 	if (!inFree) {
 		inFree = true;
-		delete luaLoadScreen;
+		delete LuaIntro;
 		inFree = false;
 	}
 }
@@ -64,16 +64,16 @@ void CLuaLoadScreen::FreeHandler()
 
 /******************************************************************************/
 
-CLuaLoadScreen::CLuaLoadScreen()
-: CLuaHandle("LuaLoadScreen", LUA_HANDLE_ORDER_UI, true)
+CLuaIntro::CLuaIntro()
+: CLuaHandle("LuaIntro", LUA_HANDLE_ORDER_UI, true)
 {
-	luaLoadScreen = this;
+	LuaIntro = this;
 
 	if (!IsValid()) {
 		return;
 	}
 
-	const std::string file = "loadscreen/main.lua";
+	const std::string file = "LuaIntro/main.lua";
 
 	const string code = LoadFile(file);
 	if (code.empty()) {
@@ -160,17 +160,17 @@ CLuaLoadScreen::CLuaLoadScreen()
 }
 
 
-CLuaLoadScreen::~CLuaLoadScreen()
+CLuaIntro::~CLuaIntro()
 {
 	if (L_Sim != NULL || L_Draw != NULL) {
 		Shutdown();
 		KillLua();
 	}
-	luaLoadScreen = NULL;
+	LuaIntro = NULL;
 }
 
 
-bool CLuaLoadScreen::RemoveSomeOpenGLFunctions(lua_State *L)
+bool CLuaIntro::RemoveSomeOpenGLFunctions(lua_State *L)
 {
 	// remove some spring opengl functions that don't work preloading
 	lua_getglobal(L, "gl"); {
@@ -203,7 +203,7 @@ bool CLuaLoadScreen::RemoveSomeOpenGLFunctions(lua_State *L)
 }
 
 
-bool CLuaLoadScreen::LoadUnsyncedCtrlFunctions(lua_State *L)
+bool CLuaIntro::LoadUnsyncedCtrlFunctions(lua_State *L)
 {
 	#define REGISTER_LUA_CFUNC(x) \
 		lua_pushstring(L, #x);      \
@@ -247,7 +247,7 @@ bool CLuaLoadScreen::LoadUnsyncedCtrlFunctions(lua_State *L)
 }
 
 
-bool CLuaLoadScreen::LoadUnsyncedReadFunctions(lua_State *L)
+bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State *L)
 {
 	#define REGISTER_LUA_CFUNC(x) \
 		lua_pushstring(L, #x);      \
@@ -296,7 +296,7 @@ bool CLuaLoadScreen::LoadUnsyncedReadFunctions(lua_State *L)
 }
 
 
-bool CLuaLoadScreen::LoadSyncedReadFunctions(lua_State *L)
+bool CLuaIntro::LoadSyncedReadFunctions(lua_State *L)
 {
 	#define REGISTER_LUA_CFUNC(x) \
 		lua_pushstring(L, #x);      \
@@ -341,7 +341,7 @@ bool CLuaLoadScreen::LoadSyncedReadFunctions(lua_State *L)
 }
 
 
-string CLuaLoadScreen::LoadFile(const string& filename) const
+string CLuaIntro::LoadFile(const string& filename) const
 {
 	CFileHandler f(filename, SPRING_VFS_RAW); //FIXME SPRING_VFS_MOD
 
@@ -353,7 +353,7 @@ string CLuaLoadScreen::LoadFile(const string& filename) const
 }
 
 
-bool CLuaLoadScreen::HasCallIn(lua_State *L, const string& name)
+bool CLuaIntro::HasCallIn(lua_State *L, const string& name)
 {
 	if (!IsValid()) {
 		return false;
@@ -374,7 +374,7 @@ bool CLuaLoadScreen::HasCallIn(lua_State *L, const string& name)
 }
 
 
-bool CLuaLoadScreen::UnsyncedUpdateCallIn(lua_State *L, const string& name)
+bool CLuaIntro::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 {
 	// never allow this call-in
 	if (name == "Explosion") {
@@ -394,7 +394,7 @@ bool CLuaLoadScreen::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 /******************************************************************************/
 /******************************************************************************/
 
-void CLuaLoadScreen::Shutdown()
+void CLuaIntro::Shutdown()
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
@@ -408,26 +408,28 @@ void CLuaLoadScreen::Shutdown()
 }
 
 
-void CLuaLoadScreen::DrawLoadScreen()
+void CLuaIntro::DrawLoadScreen()
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("DrawLoadScreen");
 	if (!cmdStr.GetGlobalFunc(L)) {
-		LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
+		//LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
 		return; // the call is not defined
 	}
-	
+
+	LuaOpenGL::SetDrawingEnabled(L, true);
 	LuaOpenGL::EnableCommon(LuaOpenGL::DRAW_SCREEN);
 
 	// call the routine
 	RunCallIn(cmdStr, 0, 0);
 	
 	LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
+	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
 
-void CLuaLoadScreen::LoadProgress(const std::string& msg, const bool replace_lastline)
+void CLuaIntro::LoadProgress(const std::string& msg, const bool replace_lastline)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);

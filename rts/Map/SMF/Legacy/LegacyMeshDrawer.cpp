@@ -54,10 +54,6 @@ CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 CLegacyMeshDrawer::~CLegacyMeshDrawer()
 {
-#ifdef USE_GML
-	configHandler->Set("MultiThreadDrawGround", multiThreadDrawGround ? 1 : 0);
-	configHandler->Set("MultiThreadDrawGroundShadow", multiThreadDrawGroundShadow ? 1 : 0);
-#endif
 }
 
 
@@ -99,7 +95,7 @@ bool CLegacyMeshDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty) cons
 	const int minz =  bty * smfReadMap->bigTexSize;
 	const int maxz = minz + smfReadMap->bigTexSize;
 	const float miny = readmap->currMinHeight;
-	const float maxy = fabs(cam->pos.y);
+	const float maxy = math::fabs(cam->pos.y);
 
 	const float3 mins(                   0, miny, minz);
 	const float3 maxs(smfReadMap->mapSizeX, maxy, maxz);
@@ -971,9 +967,8 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 void CLegacyMeshDrawer::DrawShadowMesh()
 {
-	const int NUM_LODS = 4;
-
 	{ // profiler scope
+		const int NUM_LODS = 4;
 #ifdef USE_GML
 		// Profiler results, 4 threads: multiThreadDrawGroundShadow is rarely faster than single threaded rendering (therefore disabled by default)
 		const bool mt = GML_PROFILER(multiThreadDrawGroundShadow)

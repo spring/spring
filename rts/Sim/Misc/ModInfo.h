@@ -11,6 +11,7 @@ class CModInfo
 public:
 	CModInfo()
 		: allowAircraftToLeaveMap(true)
+		, allowAircraftToHitGround(true)
 		, allowPushingEnemyUnits(false)
 		, allowCrushingAlliedUnits(false)
 		, allowUnitCollisionDamage(false)
@@ -30,11 +31,13 @@ public:
 		, repairEnergyCostFactor(0.0f)
 		, resurrectEnergyCostFactor(0.5f)
 		, captureEnergyCostFactor(0.0f)
+		, unitParalysisDeclineScale(1.0f)
 		, paralyzeOnMaxHealth(true)
 		, transportGround(1)
 		, transportHover(0)
 		, transportShip(0)
 		, transportAir(0)
+		, targetableTransportedUnits(0)
 		, fireAtKilled(1)
 		, fireAtCrashing(1)
 		, flankingBonusModeDefault(0)
@@ -78,6 +81,7 @@ public:
 
 	// Movement behaviour
 	bool allowAircraftToLeaveMap;    // determines if gunships are allowed to leave map boundaries
+	bool allowAircraftToHitGround;   // determines if aircraft (both types) can collide with terrain
 	bool allowPushingEnemyUnits;     // determines if enemy (ground-)units can be pushed during collisions
 	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
 	bool allowUnitCollisionDamage;   // determines if units take damage from (skidding) collisions
@@ -97,7 +101,7 @@ public:
 	int multiReclaim;
 	/// 0 = gradual reclaim, 1 = all reclaimed at end, otherwise reclaim in reclaimMethod chunks
 	int reclaimMethod;
-	/// 0 = Revert to wireframe, gradual reclaim, 1 = Subtract HP, give full metal at end, default 1
+	/// 0 = Revert to wireframe and gradual reclaim, 1 = Subtract HP and give full metal at end, default 1
 	int reclaimUnitMethod;
 	/// How much energy should reclaiming a unit cost, default 0.0
 	float reclaimUnitEnergyCostFactor;
@@ -122,6 +126,8 @@ public:
 	/// How much should energy should capture cost, default 0.0
 	float captureEnergyCostFactor;
 
+	float unitParalysisDeclineScale;
+
 	// Paralyze behaviour
 	/// paralyze unit depending on maxHealth? if not depending on current health, default true
 	bool paralyzeOnMaxHealth;
@@ -135,6 +141,8 @@ public:
 	int transportShip;
 	/// 0 = all air units cannot be transported, 1 = all air units can be transported (mass and size restrictions still apply). Defaults to 0.
 	int transportAir;
+	/// 0 = transported units cannot be manually or automatically targeted
+	int targetableTransportedUnits;
 
 	// Fire-on-dying-units behaviour
 	/// 1 = units fire at enemies running Killed() script, 0 = units ignore such enemies

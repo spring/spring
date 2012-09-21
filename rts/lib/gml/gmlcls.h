@@ -12,14 +12,30 @@
 
 #include "gmlcnt.h"
 
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/thread.hpp>
 #include <boost/version.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 #include <map>
 #include <set>
 #include <string.h>
 
 #include "gmlcnf.h"
+
+extern bool gmlShareLists; // use glShareLists to allow certain opengl calls in sim and rendering helper threads, unfortunately this may reduce the FPS a bit
+extern int gmlMaxServerThreadNum;
+extern int gmlMaxShareThreadNum;
+extern int gmlNoGLThreadNum;
+extern volatile bool gmlMultiThreadSim;
+extern volatile bool gmlStartSim;
+extern volatile bool gmlKeepRunning;
+struct lua_State;
+extern lua_State *gmlLuaUIState;
+extern bool gmlCheckCallChain;
+extern int gmlCallChainWarning;
+extern int gmlNextTickUpdate;
+extern unsigned gmlCurrentTicks;
 
 #define GML_QUOTE(x) #x
 
@@ -171,7 +187,6 @@ extern unsigned gmlCPUCount();
 #else
 #	define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : gmlCPUCount() )
 #endif
-#define GML_MAX_NUM_THREADS (32+2) // extra for the Sim & Loading threads
 #define GML_IF_SERVER_THREAD(thread) if(!GML_ENABLE || (thread <= gmlMaxServerThreadNum))
 #define GML_IF_SHARE_THREAD(thread) if(!GML_ENABLE || (thread <= gmlMaxShareThreadNum))
 extern int gmlItemsConsumed;
@@ -208,6 +223,81 @@ typedef int BOOL_;
 #	endif
 #endif /* _WIN32 */
 
+template <class T, class U>
+class gmlBaseMutexLock {
+	char lockdata[sizeof(T)];
+public:
+	gmlBaseMutexLock(U& m) {
+		if (GML::Enabled())
+			new (lockdata) T(m);
+	}
+	virtual ~gmlBaseMutexLock() {
+		if (GML::Enabled()) {
+#if (BOOST_VERSION >= 103500)
+			((T*)lockdata)->boost::unique_lock<U>::~unique_lock();
+#else
+			((T*)lockdata)->boost::scoped_lock<U>::~scoped_lock();
+#endif
+		}
+	}
+};
+
+typedef gmlBaseMutexLock<boost::mutex::scoped_lock, boost::mutex> gmlMutexScopedLock;
+typedef gmlBaseMutexLock<boost::recursive_mutex::scoped_lock, boost::recursive_mutex> gmlRecursiveMutexScopedLock;
+
+
+class gmlRecursiveScopedLock {
+	char sl_lock[sizeof(boost::recursive_mutex::scoped_lock)];
+#if GML_DEBUG_MUTEX
+	boost::recursive_mutex* m1;
+#endif
+public:
+	gmlRecursiveScopedLock(boost::recursive_mutex& m, bool locked = true) {
+		if (GML::Enabled()) {
+#if (BOOST_VERSION >= 103500)
+			if (locked) {
+				new (sl_lock) boost::recursive_mutex::scoped_lock(m);
+			} else {
+				new (sl_lock) boost::recursive_mutex::scoped_lock(m, boost::defer_lock);
+			}
+#else
+			new (sl_lock) boost::recursive_mutex::scoped_lock(m, locked);
+#endif
+#if GML_DEBUG_MUTEX
+			if (locked) {
+				m1 = &m;
+				GML_STDMUTEX_LOCK(lm);
+				std::map<boost::recursive_mutex*, int>& lockmmap = lockmmaps[GML::ThreadNumber()];
+				std::map<boost::recursive_mutex*, int>::iterator locki = lockmmap.find(m1);
+				if (locki == lockmmap.end()) {
+					lockmmap[m1] = 1;
+				} else {
+					lockmmap[m1] = (*locki).second + 1;
+				}
+			} else {
+				m1 = NULL;
+			}
+#endif
+		}
+	}
+	virtual ~gmlRecursiveScopedLock() {
+		if (GML::Enabled()) {
+#if (BOOST_VERSION >= 103500)
+			((boost::recursive_mutex::scoped_lock*)sl_lock)->~unique_lock();
+#else
+			((boost::recursive_mutex::scoped_lock*)sl_lock)->~scoped_lock();
+#endif
+#if GML_DEBUG_MUTEX
+			if (m1) {
+				GML_STDMUTEX_LOCK(lm);
+				std::map<boost::recursive_mutex*, int>& lockmmap = lockmmaps[GML::ThreadNumber()];
+				lockmmap[m1] = (*lockmmap.find(m1)).second - 1;
+			}
+#endif
+		}
+	}
+};
+
 // gmlMutex - exploits the boost mutex to get direct access to the Lock/Unlock methods
 class gmlMutex {
 	boost::mutex sl_mutex;
@@ -218,14 +308,17 @@ public:
 	virtual ~gmlMutex() {
 	}
 	void Lock() {
-		new (((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber) boost::mutex::scoped_lock(sl_mutex);
+		if (GML::Enabled())
+			new (((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber) boost::mutex::scoped_lock(sl_mutex);
 	}
 	void Unlock() {
+		if (GML::Enabled()) {
 #if (BOOST_VERSION >= 103500)
-		(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~unique_lock();
+			(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~unique_lock();
 #else
-		(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~scoped_lock();
+			(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~scoped_lock();
 #endif
+		}
 	}
 };
 

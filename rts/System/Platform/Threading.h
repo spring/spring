@@ -39,6 +39,7 @@ namespace Threading {
 	 * Note: that this approach will fail when N > 32.
 	 */
 	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard = true);
+	void SetAffinityHelper(const char *threadName, uint32_t affinity);
 	unsigned GetAvailableCores();
 
 	/**

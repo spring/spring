@@ -62,7 +62,7 @@ void FPSUnitController::Update() {
 		targetPos  = hitUnit->pos;
 
 		if (!mouse2) {
-			controllee->AttackUnit(hitUnit, true, true);
+			controllee->AttackUnit(hitUnit, true, true, true);
 		}
 	} else {
 		hitDist = std::min(hitDist, controllee->maxRange * 0.95f);
@@ -77,7 +77,7 @@ void FPSUnitController::Update() {
 			//
 			// NOTE: CWeapon::AttackGround checks range via TryTarget
 			if ((targetPos.y - ground->GetHeightReal(targetPos.x, targetPos.z)) <= SQUARE_SIZE) {
-				controllee->AttackGround(targetPos, true, true);
+				controllee->AttackGround(targetPos, true, true, true);
 			}
 		}
 	}
@@ -95,7 +95,7 @@ void FPSUnitController::RecvStateUpdate(const unsigned char* buf) {
 	const bool newMouse2 = !!(buf[2] & (1 << 5));
 
 	if (!mouse2 && newMouse2 && controllee != NULL) {
-		controllee->AttackUnit(NULL, true);
+		controllee->AttackUnit(NULL, true, true, true);
 	}
 
 	mouse2 = newMouse2;

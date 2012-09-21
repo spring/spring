@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <limits>
+
 #include "System/mmgr.h"
 
 #include "InterceptHandler.h"
@@ -14,6 +16,8 @@
 #include "System/float3.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
+
+#include <limits>
 
 CR_BIND(CInterceptHandler, )
 CR_REG_METADATA(CInterceptHandler, (
@@ -63,7 +67,7 @@ void CInterceptHandler::Update(bool forced) {
 			//
 			// these checks all need to be evaluated periodically, not just
 			// when a projectile is created and handed to AddInterceptTarget
-			const float interceptDist = (w->weaponPos - p->pos).Length();
+			const float interceptDist = w->weaponPos.distance(p->pos);
 			const float impactDist = ground->LineGroundCol(p->pos, p->pos + p->dir * interceptDist);
 
 			const float3& pFlightPos = p->pos;
@@ -147,7 +151,7 @@ void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
 
 float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy)
 {
-	float minRange = 99999999;
+	float minRange = std::numeric_limits<float>::max();
 	float3 tempDir;
 
 	for (std::list<CPlasmaRepulser*>::iterator wi = repulsors.begin(); wi != repulsors.end(); ++wi) {
@@ -172,7 +176,7 @@ float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const floa
 
 
 void CInterceptHandler::DependentDied(CObject* o) {
-	std::map<int, CWeaponProjectile*>::iterator it = interceptables.find(((CWeaponProjectile*) o)->id);
+	std::map<int, CWeaponProjectile*>::iterator it = interceptables.find(static_cast<CWeaponProjectile*>(o)->id);
 
 	if (it != interceptables.end()) {
 		interceptables.erase(it->first);

@@ -12,6 +12,7 @@
 #include <string>
 
 class CUnit;
+class CBuilder;
 class CFeature;
 class CSolidObject;
 class CWorldObject;
@@ -34,6 +35,7 @@ public:
 	void FinishCommand();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void BuggerOff(const float3& pos, float radius);
+	bool TargetInterceptable(CUnit *unit, float uspeed);
 
 	void ExecuteBuildCmd(Command& c);
 	void ExecutePatrol(Command& c);
@@ -56,6 +58,9 @@ public:
 	static bool IsFeatureBeingReclaimed(int featureId, CUnit* friendUnit = NULL);
 	static bool IsFeatureBeingResurrected(int featureId, CUnit* friendUnit = NULL);
 
+	bool IsInBuildRange(const CWorldObject* obj) const;
+	bool IsInBuildRange(const float3& pos, const float radius) const;
+
 public:
 	std::map<int, std::string> buildOptions;
 
@@ -76,12 +81,10 @@ private:
 
 private:
 	/**
-	 * @param noResCheck no resources check
-	 * @param recUnits reclaims units and features
-	 * @param recNonRez reclaims non resurrectable only
-	 * @param recEnemy reclaims enemy units
-	 * @param recEnemyOnly reclaims enemy units only
-	 * @param recSpecial reclaims also non autoreclaimable, metal first
+	 * @param pos position where to reclaim
+	 * @param radius radius to search for objects to reclaim
+	 * @param cmdopts command options
+	 * @param recoptions reclaim optioons
 	 */
 	bool FindReclaimTargetAndReclaim(const float3& pos, float radius, unsigned char cmdopt, ReclaimOption recoptions);
 	/**
@@ -100,11 +103,15 @@ private:
 
 	int FindReclaimTarget(const float3& pos, float radius, unsigned char cmdopt, ReclaimOption recoptions, float bestStartDist = 1.0e30f) const;
 
-	bool IsInBuildRange(const CWorldObject* obj) const;
-	bool IsInBuildRange(const float3& pos, const float radius) const;
-
+	float GetBuildRange(const float targetRadius) const;
 	bool MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed = false);
 	bool MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed = false);
+
+	bool IsBuildPosBlocked(const BuildInfo& build, const CUnit* nanoFrame) const;
+	bool IsBuildPosBlocked(const BuildInfo& build) const {
+		const CUnit* u = NULL;
+		return IsBuildPosBlocked(build, u);
+	}
 
 	void CancelRestrictedUnit(const std::string& buildOption);
 	bool OutOfImmobileRange(const Command& cmd) const;
@@ -139,6 +146,8 @@ private:
 	float GetBuildOptionRadius(const UnitDef* unitdef, int cmdId);
 
 private:
+	CBuilder* owner_builder;
+
 	bool building;
 	BuildInfo build;
 
@@ -146,6 +155,7 @@ private:
 	float cachedRadius;
 
 	int buildRetries;
+	int randomCounter; ///< used to balance intervals of time intensive ai optimizations
 
 	int lastPC1; ///< helps avoid infinite loops
 	int lastPC2;

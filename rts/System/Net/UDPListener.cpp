@@ -2,12 +2,13 @@
 
 #include "UDPListener.h"
 
-#ifdef _MSC_VER
-#	include "System/Platform/Win/win32.h"
-#elif defined(_WIN32)
+#if defined(_WIN32)
 #	include <windows.h>
 #endif
 
+#ifdef DEBUG
+	#include <boost/format.hpp>
+#endif
 #include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -159,12 +160,20 @@ void UDPListener::Update() {
 				LOG_L(L_WARNING, "Dropping packet from unknown IP: [%s]:%i",
 						sender_endpoint.address().to_string().c_str(),
 						sender_endpoint.port());
+			#ifdef DEBUG
+				std::string conns;
+				for (ConnMap::iterator it = conn.begin(); it != conn.end(); ++it) {
+					conns += str(boost::format(" [%s]:%i;") %it->first.address().to_string().c_str() %it->first.port());
+				}
+				LOG_L(L_DEBUG, "Open connections: %s", conns.c_str());
+			#endif
 			}
 		}
 	}
 
 	for (ConnMap::iterator i = conn.begin(); i != conn.end(); ) {
 		if (i->second.expired()) {
+			LOG_L(L_DEBUG, "Connection closed: [%s]:%i", i->first.address().to_string().c_str(), i->first.port());
 			i = set_erase(conn, i);
 			continue;
 		}

@@ -128,7 +128,7 @@ static int WeaponDefIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const WeaponDef* wd = (const WeaponDef*)userData;
+	const WeaponDef* wd = static_cast<const WeaponDef*>(userData);
 	const DataElement& elem = it->second;
 	const char* p = ((const char*)wd) + elem.offset;
 	switch (elem.type) {
@@ -184,7 +184,7 @@ static int WeaponDefNewIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const WeaponDef* wd = (const WeaponDef*)userData;
+	const WeaponDef* wd = static_cast<const WeaponDef*>(userData);
 
 	// write-protected
 	if (!gs->editDefsEnabled) {
@@ -260,7 +260,7 @@ static int Pairs(lua_State* L)
 
 static int DamagesArray(lua_State* L, const void* data)
 {
-	const DamageArray& d = *((const DamageArray*)data);
+	const DamageArray& d = *static_cast<const DamageArray*>(data);
 	lua_newtable(L);
 	HSTR_PUSH_NUMBER(L, "impulseFactor",      d.impulseFactor);
 	HSTR_PUSH_NUMBER(L, "impulseBoost",       d.impulseBoost);
@@ -283,7 +283,7 @@ static int DamagesArray(lua_State* L, const void* data)
 static int VisualsTable(lua_State* L, const void* data)
 {
 	const struct WeaponDef::Visuals& v =
-		*((const struct WeaponDef::Visuals*)data);
+		*static_cast<const struct WeaponDef::Visuals*>(data);
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "modelName",      v.modelName);
 	HSTR_PUSH_NUMBER(L, "colorR",         v.color.x);
@@ -403,7 +403,7 @@ static int CustomParamsTable(lua_State* L, const void* data)
 
 static int GuiSoundSetTable(lua_State* L, const void* data)
 {
-	const GuiSoundSet& soundSet = *((const GuiSoundSet*) data);
+	const GuiSoundSet& soundSet = *static_cast<const GuiSoundSet*>(data);
 	const int soundCount = (int)soundSet.sounds.size();
 	lua_newtable(L);
 	for (int i = 0; i < soundCount; i++) {
@@ -575,7 +575,8 @@ static bool InitParamMap()
 	ADD_BOOL("avoidNeutral",  wd.avoidNeutral);
 
 	ADD_FLOAT("targetBorder",       wd.targetBorder);
-	ADD_FLOAT("cylinderTargetting", wd.cylinderTargetting);
+	ADD_FLOAT("cylinderTargeting", wd.cylinderTargeting);
+	ADD_FLOAT("cylinderTargetting", wd.cylinderTargeting); // FIXME deprecated misspelling
 	ADD_FLOAT("minIntensity",       wd.minIntensity);
 	ADD_FLOAT("heightBoostFactor",  wd.heightBoostFactor);
 	ADD_FLOAT("proximityPriority",  wd.proximityPriority);

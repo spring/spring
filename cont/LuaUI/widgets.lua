@@ -40,6 +40,7 @@ local SAFEWRAP = 1
 local SAFEDRAW = false  -- requires SAFEWRAP to work
 local glPopAttrib  = gl.PopAttrib
 local glPushAttrib = gl.PushAttrib
+local section = 'widgets.lua'
 
 
 --------------------------------------------------------------------------------
@@ -89,6 +90,7 @@ widgetHandler = {
   ownedButton = 0,
   
   tweakMode = false,
+  tweakKeys = {},
 
   xViewSize    = 1,
   yViewSize    = 1,
@@ -304,17 +306,17 @@ local function GetWidgetInfo(name, mode)
   local info = {}
   local chunk, err = loadstring(table.concat(infoLines, '\n'))
   if (not chunk) then
-    Spring.Echo('not loading ' .. name .. ': ' .. err)
+    Spring.Log(section, LOG.INFO, 'not loading ' .. name .. ': ' .. err)
   else
     setfenv(chunk, info)
     local success, err = pcall(chunk)
     if (not success) then
-      Spring.Echo('not loading ' .. name .. ': ' .. err)
+      Spring.Log(section, LOG.INFO, 'not loading ' .. name .. ': ' .. err)
     end
   end
 
   for k,v in pairs(info) do
-    Spring.Echo(name, k, 'type: ' .. type(v), '<'..tostring(v)..'>')
+    Spring.Log(section, LOG.INFO, name, k, 'type: ' .. type(v), '<'..tostring(v)..'>')
   end
 end
 
@@ -373,7 +375,7 @@ function widgetHandler:Initialize()
     local name = w.whInfo.name
     local basename = w.whInfo.basename
     local source = self.knownWidgets[name].fromZip and "mod: " or "user:"
-    Spring.Echo(string.format("Loading widget from %s  %-18s  <%s> ...", source, name, basename))
+    Spring.Log(section, LOG.INFO, string.format("Loading widget from %s  %-18s  <%s> ...", source, name, basename))
 
     widgetHandler:InsertWidget(w)
   end
@@ -387,12 +389,12 @@ function widgetHandler:LoadWidget(filename, fromZip)
   local basename = Basename(filename)
   local text = VFS.LoadFile(filename)
   if (text == nil) then
-    Spring.Echo('Failed to load: ' .. basename .. '  (missing file: ' .. filename ..')')
+    Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. basename .. '  (missing file: ' .. filename ..')')
     return nil
   end
   local chunk, err = loadstring(text, filename)
   if (chunk == nil) then
-    Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
   end
   
@@ -400,7 +402,7 @@ function widgetHandler:LoadWidget(filename, fromZip)
   setfenv(chunk, widget)
   local success, err = pcall(chunk)
   if (not success) then
-    Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
   end
   if (err == false) then
@@ -420,14 +422,14 @@ function widgetHandler:LoadWidget(filename, fromZip)
 
   err = self:ValidateWidget(widget)
   if (err) then
-    Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
   end
 
   local knownInfo = self.knownWidgets[name]
   if (knownInfo) then
     if (knownInfo.active) then
-      Spring.Echo('Failed to load: ' .. basename .. '  (duplicate name)')
+      Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. basename .. '  (duplicate name)')
       return nil
     end
   else
@@ -445,7 +447,7 @@ function widgetHandler:LoadWidget(filename, fromZip)
   knownInfo.active = true
 
   if (widget.GetInfo == nil) then
-    Spring.Echo('Failed to load: ' .. basename .. '  (no GetInfo() call)')
+    Spring.Log(section, LOG.ERROR, 'Failed to load: ' .. basename .. '  (no GetInfo() call)')
     return nil
   end
 
@@ -539,7 +541,7 @@ function widgetHandler:NewWidget()
     if (self.inCommandsChanged) then
       table.insert(self.customCommands, cmd)
     else
-      Spring.Echo("AddLayoutCommand() can only be used in CommandsChanged()")
+      Spring.Log(section, LOG.ERROR, "AddLayoutCommand() can only be used in CommandsChanged()")
     end
   end
 
@@ -624,12 +626,12 @@ local function SafeWrapFuncNoGL(func, funcName)
       if (funcName ~= 'Shutdown') then
         widgetHandler:RemoveWidget(w)
       else
-        Spring.Echo('Error in Shutdown()')
+        Spring.Log(section, LOG.ERROR, 'Error in Shutdown()')
       end
       local name = w.whInfo.name
-      Spring.Echo(r[1])
-      Spring.Echo('Error in ' .. funcName ..'(): ' .. tostring(r[2]))
-      Spring.Echo('Removed widget: ' .. name)
+      Spring.Log(section, LOG.ERROR, r[1])
+      Spring.Log(section, LOG.ERROR, 'Error in ' .. funcName ..'(): ' .. tostring(r[2]))
+      Spring.Log(section, LOG.ERROR, 'Removed widget: ' .. name)
       return nil
     end
   end
@@ -652,11 +654,11 @@ local function SafeWrapFuncGL(func, funcName)
       if (funcName ~= 'Shutdown') then
         widgetHandler:RemoveWidget(w)
       else
-        Spring.Echo('Error in Shutdown()')
+        Spring.Log(section, LOG.ERROR, 'Error in Shutdown()')
       end
       local name = w.whInfo.name
-      Spring.Echo('Error in ' .. funcName ..'(): ' .. tostring(r[2]))
-      Spring.Echo('Removed widget: ' .. name)
+      Spring.Log(section, LOG.ERROR, 'Error in ' .. funcName ..'(): ' .. tostring(r[2]))
+      Spring.Log(section, LOG.ERROR, 'Removed widget: ' .. name)
       return nil
     end
   end
@@ -681,7 +683,7 @@ local function SafeWrapWidget(widget)
     return
   elseif (SAFEWRAP == 1) then
     if (widget.GetInfo and widget.GetInfo().unsafe) then
-      Spring.Echo('LuaUI: loaded unsafe widget: ' .. widget.whInfo.name)
+      Spring.LOG(section, LOG.INFO, 'LuaUI: loaded unsafe widget: ' .. widget.whInfo.name)
       return
     end
   end
@@ -812,7 +814,7 @@ function widgetHandler:UpdateWidgetCallIn(name, w)
     end
     self:UpdateCallIn(name)
   else
-    Spring.Echo('UpdateWidgetCallIn: bad name: ' .. name)
+    Spring.Log(section, LOG.ERROR, 'UpdateWidgetCallIn: bad name: ' .. name)
   end
 end
 
@@ -824,7 +826,7 @@ function widgetHandler:RemoveWidgetCallIn(name, w)
     ArrayRemove(ciList, w)
     self:UpdateCallIn(name)
   else
-    Spring.Echo('RemoveWidgetCallIn: bad name: ' .. name)
+    Spring.Log(section, LOG.ERROR, 'RemoveWidgetCallIn: bad name: ' .. name)
   end
 end
 
@@ -849,11 +851,11 @@ end
 function widgetHandler:EnableWidget(name)
   local ki = self.knownWidgets[name]
   if (not ki) then
-    Spring.Echo("EnableWidget(), could not find widget: " .. tostring(name))
+    Spring.Log(section, LOG.ERROR, "EnableWidget(), could not find widget: " .. tostring(name))
     return false
   end
   if (not ki.active) then
-    Spring.Echo('Loading:  '..ki.filename)
+    Spring.Log(section, LOG.INFO, 'Loading:  '..ki.filename)
     local order = widgetHandler.orderList[name]
     if (not order or (order <= 0)) then
       self.orderList[name] = 1
@@ -875,13 +877,13 @@ end
 function widgetHandler:DisableWidget(name)
   local ki = self.knownWidgets[name]
   if (not ki) then
-    Spring.Echo("DisableWidget(), could not find widget: " .. tostring(name))
+    Spring.Log(section, LOG.ERROR, "DisableWidget(), could not find widget: " .. tostring(name))
     return false
   end
   if (ki.active) then
     local w = self:FindWidget(name)
     if (not w) then return false end
-    Spring.Echo('Removed:  '..ki.filename)
+    Spring.Log(section, LOG.INFO, 'Removed:  '..ki.filename)
     self:RemoveWidget(w)     -- deactivate
     self.orderList[name] = 0 -- disable
     self:SaveConfigData()
@@ -898,7 +900,7 @@ end
 function widgetHandler:ToggleWidget(name)
   local ki = self.knownWidgets[name]
   if (not ki) then
-    Spring.Echo("ToggleWidget(), could not find widget: " .. tostring(name))
+    Spring.Log(section, LOG.ERROR, "ToggleWidget(), could not find widget: " .. tostring(name))
     return
   end
   if (ki.active) then
@@ -1109,8 +1111,9 @@ end
 
 function widgetHandler:ConfigureLayout(command)
   if (command == 'tweakgui') then
+    self.tweakKeys = {}
     self.tweakMode = true
-    Spring.Echo("LuaUI TweakMode: ON")
+    Spring.Log(section, LOG.INFO, "LuaUI TweakMode: ON")
     return true
   elseif (command == 'reconf') then
     self:SendConfigData()
@@ -1307,6 +1310,7 @@ end
 
 function widgetHandler:KeyPress(key, mods, isRepeat, label, unicode)
   if (self.tweakMode) then
+    self.tweakKeys[key] = true
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyPress) then
       mo:TweakKeyPress(key, mods, isRepeat, label, unicode)
@@ -1328,12 +1332,12 @@ end
 
 
 function widgetHandler:KeyRelease(key, mods, label, unicode)
-  if (self.tweakMode) then
+  if (self.tweakMode and self.tweakKeys[key] ~= nil) then
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyRelease) then
       mo:TweakKeyRelease(key, mods, label, unicode)
     elseif (key == KEYSYMS.ESCAPE) then
-      Spring.Echo("LuaUI TweakMode: OFF")
+      Spring.Log(section, LOG.INFO, "LuaUI TweakMode: OFF")
       self.tweakMode = false
     end
     return true

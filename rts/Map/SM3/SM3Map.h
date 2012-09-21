@@ -27,7 +27,7 @@ public:
 	void NewGroundDrawer();
 	CBaseGroundDrawer* GetGroundDrawer();
 
-	void UpdateHeightMapUnsynced(const HeightMapUpdate& hmu);
+	void UpdateHeightMapUnsynced(const SRectangle& hmu);
 
 	unsigned int GetMiniMapTexture() const { return minimapTexture; }
 	unsigned int GetShadingTexture() const { return 0; }

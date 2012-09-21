@@ -21,11 +21,11 @@ CMissileLauncher::CMissileLauncher(CUnit* owner)
 {
 }
 
-CMissileLauncher::~CMissileLauncher(void)
+CMissileLauncher::~CMissileLauncher()
 {
 }
 
-void CMissileLauncher::Update(void)
+void CMissileLauncher::Update()
 {
 	if (targetType != Target_None) {
 		weaponPos = owner->pos + owner->frontdir * relWeaponPos.z + owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
@@ -134,13 +134,7 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 			if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length, unit)) {
 				return false;
 			}
-		} else {
-			float3 goaldir = pos - owner->pos;
-			goaldir.SafeNormalize();
-			if (owner->frontdir.dot(goaldir) < maxForwardAngleDif)
-				return false;
 		}
-
 		if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, true, false, false, owner)) {
 			return false;
 		}

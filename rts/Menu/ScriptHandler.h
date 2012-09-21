@@ -7,34 +7,34 @@
 
 class CScriptHandler
 {
-public:
-	typedef std::vector<std::string> ScriptList;
-
-	static const std::string SKIRMISH_AI_SCRIPT_NAME_PRELUDE;
-
-	static CScriptHandler& Instance();
-
-	const ScriptList& GetScriptList() const { return scriptNames; }
-
-	bool IsSkirmishAITestScript(const std::string& script) const;
-	const SkirmishAIData& GetSkirmishAIData(const std::string& script) const;
-
 private:
 	struct CScript {
 		std::string name;
-		CScript(const std::string& n) : name(n) {}
+
+		CScript(const std::string& n): name(n) {}
 		virtual ~CScript() {}
 	};
 
 	struct CSkirmishAIScript : CScript {
 		SkirmishAIData aiData;
-		CSkirmishAIScript(const SkirmishAIData& aiData)
-		: CScript(SKIRMISH_AI_SCRIPT_NAME_PRELUDE + aiData.shortName + " " + aiData.version)
-		, aiData(aiData) {}
+
+		CSkirmishAIScript(const SkirmishAIData& data): CScript("Player vs. AI: " + data.shortName + " " + data.version) {
+			aiData = data;
+		}
 	};
 
+public:
+	typedef std::vector<std::string> ScriptList;
 	typedef std::map<std::string, CScript*> ScriptMap;
 
+	static CScriptHandler& Instance();
+
+	bool IsSkirmishAITestScript(const std::string& scriptName) const;
+	const SkirmishAIData& GetSkirmishAIData(const std::string& scriptName) const;
+
+	const ScriptList& GetScriptList() const { return scriptNames; }
+
+private:
 	void Add(CScript* script);
 
 	CScriptHandler();

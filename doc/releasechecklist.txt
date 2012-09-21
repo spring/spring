@@ -28,7 +28,7 @@ Release Time
 		git merge release --no-ff
 2)  Tag the release:
 		export REL_VERS=85.0
-		git tag -a -m "${REL_VERS} release [changed APIs: Lua]" ${REL_VERS}
+		git tag -a -m "${REL_VERS} release [changed APIs: Lua, unitsync, AI]" ${REL_VERS}
     Make sure it looks correct:
 		gitk master develop release &
 3)  Create the source-packages (note: this even works if you got unindexed files in your repo, it creates a repo clone to gen the package):
@@ -46,15 +46,14 @@ Release Time
 7)  POINT OF NO RETURN: Push to the main repo (and delete the release branch):
 		git push --tags origin develop :release master
 9)  Force build of the master branch on the windows and the OS-X buildbots.
-    The later will take long to compleete, one hour or more!
+    The later will take long to complete, one hour or more!
 10) Write the news post for the springrts.com frontpage, while waiting for the
     buildbot to compile the master branch.
-11) Once the windows buildbot is finnished, create the portable archive:
+11) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}.exe
-		./installer/make_portable_archive.sh spring_${REL_VERS}.exe
-12) Once the OS-X buildbot is finished, fetch archive:
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}-MacOSX-10.6-SnowLeopard.zip
-13) you should now have these files:
+		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}_portable.7z
+		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
+12) you should now have these files:
 	* spring_${REL_VERS}.exe
 	* spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
 	* spring_${REL_VERS}_portable.7z
@@ -62,11 +61,11 @@ Release Time
 	* spring_${REL_VERS}_src.tar.lzma
 	Upload them to SF (replace USER with your SF account name):
 		rsync --progress -h -e ssh spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
-14) Post the news post.
-15) download page mirror links:
+13) Post the news post.
+14) download page mirror links:
     Ask someone with access to http://springrts.com/dl/ to put spring_${REL_VERS}* stuff there.
 
-16) After 1 or 2 days, enforce it on the server, if it is a sync relevant change.
+15) After 1 or 2 days, enforce it on the server, if it is a sync relevant change.
 
 
 Enforcing on server

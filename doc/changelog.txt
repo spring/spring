@@ -1,5 +1,103 @@
 Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
+(numbers in brackets normally mean the mantis ticket ID)
+
+
+-- 92.0 ---------------------------------------------------------
+
+Unitsync
+ ! fix return in GetInfoMapSize (#2996)
+ - no crashes in unitsync without init any more (#3120)
+ ! ProcessUnits, GetUnitCount, GetMapCount, GetMapArchiveCount,
+   GetInfoMap, GetPrimaryModInfoCount,GetPrimaryModArchive,
+   GetSideCount, GetModOptionCount, GetCustomOptionCount,
+   GetSkirmishAICount, GetInfoValueInteger, GetInfoValueFloat,
+   GetOptionType, GetOptionNumberDef, GetOptionNumberStep,
+   GetOptionStringMaxLen, GetOptionListCount and GetModValidMapCount
+   returns now -1/-1.0f on error
+
+Lua
+ - replace Spring.Echo with Spring.Log in most places in cont/
+
+ 
+-- 91.0 ---------------------------------------------------------
+Bugfixes:
+ - fix Linux sync errors
+ - fix QTPFS deadlocks
+
+
+-- 90.0 ---------------------------------------------------------
+Bugfixes:
+ - fix endless loop in Shard in mingw32 builds
+ - fix builders sometimes don't notice when a building was finished by another unit
+ - fix SkyBox corruption
+ - fix QTPFS deadlock at start
+ - partially revert the "lock-on targeting" behavior:
+    If a user-selected target moves out of range, the lock is
+    now broken as it used to be and automatic targeting is not
+    blocked anymore (though this can take some SlowUpdate's).
+    For ground-attack orders it is still in place, since the
+    behavior seems to be preferred (so a unit that is told to
+    attack a position and then to move away will keep firing
+    even when other targets are available)
+ - really fix "endgame stats only show APM for self"
+ - really fix "Size of unidentified radar blips can be determined with mouseover"
+ - fix ship wreckage drag
+ - fix gunships don't obey land/fly state
+ - fix 'Bombers with fight command do not fire' (3190)
+ - fix 'Emit-sfxed weapons point at {0, 0, 0}' (3205)
+ - fix an incorrect watchdog trigger before gamestart
+ - fix 'Aiming animations ignore maxAngleDif [actually tolerance]' (3180)
+ - fix 'Grass is not animated in LOS view' & 'LOS view does not render trees in the same way' (3207 & 3203)
+ - fix `halo` in BumpWater with EndlessOcean & OwnRefractionRenderPass
+ - fix 'Bombers with area attack dont work ' (3195)
+ - fix 'If air constructor lands it often fails to do next construction command' (3198)
+ - make fight commands work with noAutoTarget weapons (3190 #2)
+ - fix 'Constructor stops before it enters build range' (3210)
+ - fix bugged/all-white decals when shadows=0
+ - fix units being able to move down steep cliffs (directional slope-tolerance needs work)
+ - fix dangling pointer/memory corruption in QuadField (3211)
+ - fix 'Reclaiming units under construction results in no resources being returned' (3216)
+ - fix some OpenGL usage errors found by [teh]decay
+ - fix 'Gunships dont always aquire targets despite fireatwill+roam+fly' (3221)
+ - fix 'TargetBorder=1 only works when a unit has a specific attack command' (2971)
+ - fix CFeature::ForcedMove (3226)
+ - fix Spring crashes when sending large messages (3228)
+ - fix 'Armed constructors attack neutral units on Fight order'
+ - restore old shield visibility behaviour (3242)
+ - fix 'Units with cannons remain out of range when you force fire onto high ground' (3241)
+ - disable unit pushing bidirectionally when one of the parties is non-blocking
+
+Sim:
+ - make target locking optional via meta-key
+
+GameServer:
+ - support start-scripts of arbitrary size (still not advised to use scripts bugger than 256kB, and we won't optimize anything related to such huge scripts)
+
+UnitDefs:
+ - make cloakCostMoving default to cloakCost
+
+WeaponDefs:
+ - change default weapon "mainDir" to "0,0,1" (before it was "1,0,0")
+ - always enable continuous hit-testing (it showed discountinuous one is used <<1%, so it's not worth to keep it)
+
+FeatureDefs:
+ - add explicit `floating` featureDef tag (before it was implicit via nodrawundergray and failing a lot)
+
+Lua:
+ - add Spring.SetUnitDirection(unitid, x,y,z)
+ - add `ignoreLOS` tag to Spring.UpdateMapLight
+ - LuaRules: add DrawProjectile to complete the Draw* quartet
+
+ModInfo:
+ - add `allowAircraftToHitGround` tag (3199)
+
+Rendering:
+ - runtime create missing DDS mipmaps when supported by the hardware
+
+Windows:
+ - call SDL_WarpMouse every frame again (fixes `ghost mouse` in middle click scroll)
+ - explicit pipe --large-address-aware through -Wl (fixes compiling with tdm-gcc)
 
 
 -- 89.0 ---------------------------------------------------------
@@ -7,21 +105,37 @@ Major Changes:
  - LuaSocket
  - MessageBox for unsupported GPUs (+drivers)
  - fixed ATi PointSize bug
+ - LOS et al. are rendered now through the GLSL terrain shader (-> shadows in LOS-view)
 
 Changes:
  - added Shard to the windows installer
  - added pr-downloader as submodule (only compiled if libcurldev is available)
  - limit infolog.txt buffer to 8kB
  - open a MessageBox on systems with unsupported GPUs (+drivers) on engine start (suppressible with a config-tag)
+ ! remove selectkeys.txt support (use uikeys.txt instead)
+ ! remove TASServer.jar (outdated, use http://springrts.com/wiki/Spring_on_a_LAN )
+ ! send gameID and SDF filename with SERVER_STARTPLAYING to autohost
+ ! remove deprecated LogSubsystems config var
+ - do not send GameOver from a client that timed out
+ - add LogFlush config var for instant writes (disabled as default)
+ - add UI config-variables AutoAddBuiltUnitsToFactoryGroup (def: false) and AutoAddBuiltUnitsToSelectedGroup (def: false)
+   if the first variable is true, new units auto-inherit their group number from the factory that built them
+   if the first AND second are true, new units are auto-selected if their factory group is currently selected
+ - weapondefs.cylinderTargetting spelling fixed, the old one is deprecated
+ - exit with !=0 if spring can't connect to server
+ - decrease loglevel for "Load S3O texture now" & luasocket
+ - change content-exception (for a missing water texture) in BasicWater to a warning message
+ - dedicated server no longer consumes 100% CPU while waiting for gameID
+ - headless builds use less cpu-time (nominally 50% instead of 100%)
 
 Bugfixes:
- - dedicated server no longer consumes 100% CPU while waiting for gameID
  - fix  some orders are discarded when issuing commands to landed planes
  - fix  unfinished units with 100% hp can't be finished
  - fix 'crash when getting LOS of a feature without 3d object and drawType!=-1' (3032)
  - fix "changing unit speed does not work anymore" (2877/3016)
    (scripts can now arbitrarily override the UnitDef values, which are only used for initialization)
  - fix 'LightningCannon can fire into water' (3057)
+ - fix BeamLasers and LightningCannons not ignoring stunned shields
  - fix GameSetupDrawer player-state string (3064)
  - fix 'Con/com gets weird move order after stop command is given' (3069)
    (was intended to keep factories clear, any side-effects are up to players to deal with)
@@ -30,6 +144,28 @@ Bugfixes:
  - fix crash in unit_script.lua
  - fix 'Units stuck in factory' QTPFS bug (3055)
  - fix units moving (being pushed) through factory walls
+ - fix terrain water reflections
+ - fix game does not end properly for a player that is being kicked
+ - fix problem to build near map edges
+ - fix ping display after mid-game (re-)join + try to reduce lag after mid-game join
+ - fix missing stack trace if out-of-memory occurs
+ - fix missing stack trace on abnormal termination (sigabrt)
+ - fix resurrecting an individual wreck results in the resurrector not healing it
+ - fix /godmode and /{luarules,luagaia} {reload,disable} not working in demos (2701)
+ - fix targetting bug (weapons sometimes failing to fire at badTargetCategory units) as a result of AllowWeaponTarget misuse
+ - fix kamikaze units not self-d'ing when given an attack order while on hold-fire (2405)
+ - fix 3105 (PlayerChanged callin not available in unsynced gadgets)
+ - fix 2947 (size of unidentified radar blips can be determined with mouseover)
+ - fix 1843 (Spring.GetUnitHealth returned nothing for buildProgress on in-LOS enemy units with "hideDamage=1")
+ - fix 3122 (failure to fire at badTargetCategory)
+ - fix crash when give all units to uncontrolled team
+ - fix fighters that have a target may refuse to obey orders
+ - fix crash in GetPlayerTeam (AI)
+ - fix sync warning when resizing the main window
+ - fix ctrl/alt/shift keys stuck after alt tab
+ - make COB's set(MAX_SPEED) permanent again like its Lua counterpart, rather than
+   letting it apply only temporarily (for the duration of the current move command
+   if any); use negative speed values if you want the change to be non-permanent
 
 Simulation:
  - YardMap changes:
@@ -42,24 +178,28 @@ Simulation:
   ! make terrain restore range check consistent with new terraform one
   ! don't add target's radius to the builder's builddistance, only do so if the target is bigger than the builddistance (mostly only true for terraform)
     -> from now on the to be built unit's centerpos has to be in buildrange not its border!
+ ! remove obsolete default dependence of cloakCostMoving on cloakCost
+ ! remove modelCenterOffset tag (can now be dynamically set with Lua)
  - improved behaviour of builder masses
  - make StartBox clamping of StartPositions synced
  - don't reclaim in-the-way features when the buildee is going to morph into a feature of the same type
    (fixes the ancient bug where ordering a row of features with N > 1 builders causes each to be reclaimed and then immediately rebuilt)
  - do not apply impulse to units being transported
- - WeaponDef: support 'soundHitWet{Volume}' keys for in-water explosion sounds
-   (the 'soundHit' key is now deprecated in favor of 'soundHitDry')
  - make falling wreckage (from aircraft) not lose all its forward speed
  - make ground units consume waypoints less aggressively
  - remove special treatment for collisions between mutually-pushResistant objects for 3031
  - add 'allowUnitCollisionOverlap' (def=true) and 'useClassicGroundMoveType' (def=false) ModInfo keys
    the former allows unit movement like www.youtube.com/watch?v=mRtePUdVk2o at the cost of more clumping (learn to use ctrl+lmb formation orders)
    the latter is a ticket back to unit movement circa 2009: no reversing, no turninplace=false, no smooth collision handling, no nothing (figure it out)
+ - add mod-rule 'targetableTransportedUnits' (default false)
+ - introduce an independent Lua-controllable aim-position (defaults to mid-position) for units and features, used by weapons as their aiming/target point
+ - make ground units less keen on repairing fast units such as patrolling aircraft
+ - fix distinction between user-selected and internal CommandAI targets
 
 Pathing:
  - QTPFS: less loadscreen spam, make F2 functional, enable corner-connected node topology, use staggered layer-updates, speedups and tweaks
  - QTPFS: increase MAX_TEAM_SEARCHES, decrease LAYERS_PER_UPDATE (more units can request paths per frame, units get paths back more quickly)
-
+ - QTPFS: fix assertion failure, make execution of path requests more asynchronous
 
 Lua:
  ! some config values are now write protected (Spring.SetConfig*)
@@ -72,28 +212,64 @@ Lua:
  ! replace Game.gameID by synced callin GameID(string gameID)
  - fix TraceScreenRay never returning "sky" when includeSky=true
  - fix TraceScreenRay coordinate offset when onlyCoords=true
+ - fix typo in Spring.GetUnitVelocity
  - add extra parameter 'defPriority' to AllowWeaponTarget (what the engine thinks the target priority should be)
+ - add bool FeatureDefs[xyz].autoreclaim
  - add new gl.Texture("$minimap")
  - add new gl.Texture("$info")
  ! remove gl.SelectBuffer and co.
  - new Spring.LoadCmdColorsConfig(configStr) & Spring.LoadCtrlPanelConfig(configStr)
+ - add new 3 param 'pairwise' to Spring.GiveOrderArrayToUnitArray(), used to send multiple units a single individual command
+ - fix crash due to UpdateCallIn removing the current event client from list being iterated
+ - add missing team/player callins to (unsyced) GadgetHandler
+ - add new synced callouts Set{Unit,Feature}RadiusAndHeight(number id, number radius, number height) --> boolean
+ - add new synced callouts Set{Unit,Feature}MidAndAimPos(number id, number mpx, number mpy, number mpz, number apx, number apy, number apz) --> boolean
+ - add optional 2nd (boolean midPos) and 3rd (boolean aimPos) arguments to Spring.Get{Unit,Feature}Position to go with the above four callouts
+ ! change Spring.GetUnitPosition to return a unit's base-position by default, like .GetFeaturePosition does for features
+  (this is usually a point on the model closer to the ground than its mid-position, so may affect some Lua drawing code)
+ - fix keys hang after LuaUI tweakmode
+ - [MT] disallow other Lua environments to invoke LuaUI if LuaThreadingModel = 2, to prevent deadlock
+ - [MT] fix desync with LuaThreadingModel > 2
+ - [MT] fix teams sometimes wrong in UnitGiven() and UnitTaken()
 
 Rendering:
+ - fix DynWater ship wakes, BumpWater shorewaves
  - fixed ATi PointSize bug
  - update assimp to svn rev 1231
  - fixed assimp lua metafiles
  - warn about null normals in models
  - add visualization of default object radii (used for AOE calculations, etc) to alt+v
- - SMF: render the info-texture through GLSL (noob translation: shadows in LOS-view)
+ - SMF: render the info-texture through GLSL (noob translation -> shadows in LOS-view)
+ - improved VSync under Linux (with support for AdaptiveVSync)
+ - added FeatureFadeDistance & FeatureDrawDistance config tags
+ - more failsafe shadow FBO creation
+ - fixed vibrating planes (again)
+ - fix spring_multithreaded hangs
 
 UI:
  - display average draw & sim frame time in debugview
  - draw buildRange for mobile selected units too & always render them on shift hover (also for shield range)
 
+Sound:
+ ! all items in sounds.lua are now converted to lowercase
+ - allow to create a new "default" item in sounds.lua
+ - WeaponDef: support 'soundHitWet{Volume}' keys for in-water explosion sounds
+   (the 'soundHit' key is now deprecated in favor of 'soundHitDry')
+
+Windows:
+ - set IMAGE_FILE_LARGE_ADDRESS_AWARE (increased >2GB memory limit)
+
 Linux:
+ ! strip CXX_FLAGS & C_FLAGS in build process to prevent sync incompabilities (can be turned off with a new CUSTOM_CFLAGS cmake flag)
  - on multicore systems set scheduler to SCHED_BATCH (semi-solves the core hoping issue)
  - call SDL_WarpMouse only when needed (fixes massive FPS-drop in middle-click-scrolling)
- 
+ - use a non-locking vsync mechanism & add support for nvidia's `adaptive vsync`
+ - explicit disable all CPU extensions except SSE1
+ - use mtune=generic on 64bit systems
+
+OSX:
+ - fix stack corruption in sound code
+
 
 -- 88.0 ---------------------------------------------------------
 Changes:

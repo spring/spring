@@ -399,7 +399,7 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 
 	piece->radius = math::sqrt(radiusSq);
 	piece->relMidPos = cvOffset * 0.5f;
-	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT));
+	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
 
 
 	if (me.OffsetToChildObject > 0) {
@@ -441,7 +441,6 @@ void S3DOPiece::DrawForList() const
 	va1->Initialize();
 	va2->Initialize();
 
-	// glFrontFace(GL_CW);
 	for (std::vector<S3DOPrimitive>::const_iterator ps = prims.begin(); ps != prims.end(); ++ps) {
 		C3DOTextureHandler::UnitTexture* tex = ps->texture;
 
@@ -474,8 +473,6 @@ void S3DOPiece::DrawForList() const
 	if (va2->drawIndex() != 0) {
 		va2->DrawArrayTN(GL_TRIANGLES);
 	}
-
-	// glFrontFace(GL_CCW);
 }
 
 void S3DOPiece::SetMinMaxExtends()

@@ -109,7 +109,7 @@ void CFactory::Update()
 
 
 	if (curBuildDef != NULL) {
-		if (!opening && !stunned) {
+		if (!opening && !IsStunned()) {
 			if (groundBlockingObjectMap->CanOpenYard(this)) {
 				script->Activate();
 				groundBlockingObjectMap->OpenBlockingYard(this);
@@ -121,7 +121,7 @@ void CFactory::Update()
 			}
 		}
 
-		if (opening && inBuildStance && !stunned) {
+		if (opening && inBuildStance && !IsStunned()) {
 			StartBuild(curBuildDef);
 		}
 	}
@@ -131,7 +131,7 @@ void CFactory::Update()
 		FinishBuild(curBuild);
 	}
 
-	const bool wantClose = (!stunned && opening && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
+	const bool wantClose = (!IsStunned() && opening && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
 	const bool closeYard = (wantClose && curBuild == NULL && groundBlockingObjectMap->CanCloseYard(this));
 
 	if (closeYard) {
@@ -197,7 +197,7 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 }
 
 void CFactory::UpdateBuild(CUnit* buildee) {
-	if (stunned)
+	if (IsStunned())
 		return;
 
 	// factory not under construction and
@@ -220,7 +220,7 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 
 	buildee->Move3D(buildeePos, false);
 	buildee->UpdateDirVectors(false);
-	buildee->UpdateMidPos();
+	buildee->UpdateMidAndAimPos();
 
 	const CCommandQueue& queue = commandAI->commandQue;
 
@@ -241,12 +241,12 @@ void CFactory::FinishBuild(CUnit* buildee) {
 		GML_RECMUTEX_LOCK(group); // FinishBuild
 
 		if (group && buildee->group == 0) {
-			buildee->SetGroup(group);
+			buildee->SetGroup(group, true);
 		}
 	}
 
 	const CCommandAI* bcai = buildee->commandAI;
-	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) && static_cast<const CMobileCAI*>(bcai)->unimportantMove);
+	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) != NULL);
 
 	if (assignOrders) {
 		AssignBuildeeOrders(buildee);
@@ -320,24 +320,30 @@ void CFactory::DependentDied(CObject* o)
 
 void CFactory::SendToEmptySpot(CUnit* unit)
 {
-	float r = radius * 1.7f + unit->radius * 4;
-	float3 foundPos = pos + frontdir * r;
+	const float searchRadius = radius * 1.7f + unit->radius * 4.0f;
 
-	for (int a = 0; a < 20; ++a) {
-		float3 testPos = pos + frontdir * r * cos(a * PI / 10) + rightdir * r * sin(a * PI / 10);
+	float3 foundPos = pos + frontdir * searchRadius;
+	float3 tempPos = pos + frontdir * radius * 2.0f;
+
+	for (int x = 0; x < 20; ++x) {
+		const float a = searchRadius * math::cos(x * PI / 10);
+		const float b = searchRadius * math::sin(x * PI / 10);
+		float3 testPos = pos + frontdir * a + rightdir * b;
 		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
 
 		if (qf->GetSolidsExact(testPos, unit->radius * 1.5f).empty()) {
-			foundPos = testPos;
-			break;
+			foundPos = testPos; break;
 		}
 	}
 
-	Command c(CMD_MOVE);
-	c.params.push_back(foundPos.x);
-	c.params.push_back(foundPos.y);
-	c.params.push_back(foundPos.z);
-	unit->commandAI->GiveCommand(c);
+	// first queue a temporary waypoint outside the factory
+	// (otherwise units will try to turn before exiting when
+	// foundPos lies behind it and cause jams / get stuck)
+	// assume this temporary point is not itself blocked
+	Command c1(CMD_MOVE,            tempPos);
+	Command c2(CMD_MOVE, SHIFT_KEY, foundPos);
+	unit->commandAI->GiveCommand(c1);
+	unit->commandAI->GiveCommand(c2);
 }
 
 void CFactory::AssignBuildeeOrders(CUnit* unit) {
@@ -376,9 +382,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			}
 		}
 
-		c.params.push_back(tmpPos.x);
-		c.params.push_back(tmpPos.y);
-		c.params.push_back(tmpPos.z);
+		c.PushPos(tmpPos);
 		unit->commandAI->GiveCommand(c);
 	}
 
@@ -403,7 +407,7 @@ void CFactory::CreateNanoParticle(bool highPriority)
 	const int piece = script->QueryNanoPiece();
 
 #ifdef USE_GML
-	if (gs->frameNum - lastDrawFrame > 20)
+	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
 		return;
 #endif
 

@@ -16,10 +16,6 @@ class CSelectedUnits : public CObject
 {
 public:
 	CSelectedUnits();
-	virtual ~CSelectedUnits();
-
-	bool IsSelected(const CUnit* unit) const;
-	bool IsSelected(const int unitID) const;
 
 	void Init(unsigned numPlayers);
 	void SelectGroup(int num);
@@ -56,6 +52,13 @@ public:
 	void SendCommand(const Command& c);
 	void SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands, bool pairwise = false);
 
+	bool IsUnitSelected(const CUnit* unit) const;
+	bool IsUnitSelected(const int unitID) const;
+	bool AutoAddBuiltUnitsToFactoryGroup() const { return autoAddBuiltUnitsToFactoryGroup; }
+	bool AutoAddBuiltUnitsToSelectedGroup() const { return autoAddBuiltUnitsToSelectedGroup; }
+	bool IsGroupSelected(int groupID) const { return (selectedGroup == groupID); }
+	int GetSelectedGroup() const { return selectedGroup; }
+
 public:
 	CUnitSet selectedUnits;
 
@@ -64,13 +67,16 @@ public:
 
 	std::vector< std::vector<int> > netSelected;
 
-	bool buildIconsFirst;
-	int selectedGroup;
-
 private:
+	int selectedGroup;
 	int soundMultiselID;
+
+	bool autoAddBuiltUnitsToFactoryGroup;
+	bool autoAddBuiltUnitsToSelectedGroup;
+	bool buildIconsFirst;
 };
 
 extern CSelectedUnits selectedUnits;
 
 #endif /* SELECTED_UNITS_H */
+

@@ -45,7 +45,7 @@ public:
 public:
 	int id;
 
-	float3 pos;
+	float3 pos;         ///< position of the very bottom of the object
 
 	float radius;       ///< used for collisions
 	float height;       ///< The height of this object

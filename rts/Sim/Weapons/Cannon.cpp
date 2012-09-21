@@ -45,7 +45,7 @@ CCannon::CCannon(CUnit* owner)
 	maxPredict = 0.0f;
 }
 
-void CCannon::Init(void)
+void CCannon::Init()
 {
 	gravity = weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity);
 	highTrajectory = weaponDef->highTrajectory == 1;
@@ -158,7 +158,7 @@ bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 }
 
 
-void CCannon::FireImpl(void)
+void CCannon::FireImpl()
 {
 	float3 diff = targetPos - weaponMuzzlePos;
 	float3 dir = (diff.SqLength() > 4.0) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
@@ -169,7 +169,7 @@ void CCannon::FireImpl(void)
 
 	int ttl = 0;
 	float sqSpeed2D = dir.SqLength2D() * projectileSpeed * projectileSpeed;
-	int predict = (int)ceil((sqSpeed2D == 0) ? (-2 * projectileSpeed * dir.y / gravity)
+	int predict = (int)math::ceil((sqSpeed2D == 0) ? (-2 * projectileSpeed * dir.y / gravity)
 			: math::sqrt(diff.SqLength2D() / sqSpeed2D));
 	if(weaponDef->flighttime > 0) {
 		ttl = weaponDef->flighttime;
@@ -186,7 +186,7 @@ void CCannon::FireImpl(void)
 		weaponDef, ttl, damageAreaOfEffect, gravity);
 }
 
-void CCannon::SlowUpdate(void)
+void CCannon::SlowUpdate()
 {
 	if(weaponDef->highTrajectory == 2 && owner->useHighTrajectory!=highTrajectory){
 		highTrajectory=owner->useHighTrajectory;
@@ -216,9 +216,9 @@ float3 CCannon::GetWantedDir(const float3& diff)
 	// try to cache results, sacrifice some (not much too much even for a pewee) accuracy
 	// it saves a dozen or two expensive calculations per second when 5 guardians
 	// are shooting at several slow- and fast-moving targets
-	if (fabs(diff.x - lastDiff.x) < (SQUARE_SIZE / 4.0f) &&
-		fabs(diff.y - lastDiff.y) < (SQUARE_SIZE / 4.0f) &&
-		fabs(diff.z - lastDiff.z) < (SQUARE_SIZE / 4.0f)) {
+	if (math::fabs(diff.x - lastDiff.x) < (SQUARE_SIZE / 4.0f) &&
+		math::fabs(diff.y - lastDiff.y) < (SQUARE_SIZE / 4.0f) &&
+		math::fabs(diff.z - lastDiff.z) < (SQUARE_SIZE / 4.0f)) {
 		return lastDir;
 	}
 
@@ -237,7 +237,7 @@ float3 CCannon::GetWantedDir(const float3& diff)
 		// FIXME: temporary safeguards against FP overflow
 		// (introduced by extreme off-map unit positions; the term
 		// DFsq * Dsq * ... * dy should never even approach 1e38)
-		if (Dsq < 1e12f && fabs(dy) < 1e6f) {
+		if (Dsq < 1e12f && math::fabs(dy) < 1e6f) {
 			const float root1 = v*v*v*v + 2.0f*v*v*g*dy - g*g*DFsq;
 
 			if (root1 >= 0.0f) {

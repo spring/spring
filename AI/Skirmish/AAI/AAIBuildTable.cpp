@@ -14,7 +14,6 @@
 // all the static vars
 const UnitDef** AAIBuildTable::unitList = 0;
 list<int>* AAIBuildTable::units_of_category[MOBILE_CONSTRUCTOR+1];
-int AAIBuildTable::aai_instances = 0;
 char AAIBuildTable::buildtable_filename[500];
 float* AAIBuildTable::avg_cost[MOBILE_CONSTRUCTOR+1];
 float* AAIBuildTable::avg_buildtime[MOBILE_CONSTRUCTOR+1];
@@ -67,13 +66,8 @@ AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 		else
 		{
 			startUnits[i] = -1;
-
-			static const size_t c_maxSize = 120;
-			char c[c_maxSize];
-			SNPRINTF(c, c_maxSize, "Error: starting unit %s not found\n",
+			ai->LogConsole("Error: starting unit %s not found\n",
 					cfg->START_UNITS[i]);
-			cb->SendTextMsg(c, 0);
-			fprintf(ai->file, "%s", c);
 		}
 
 		sideNames[i+1].assign(cfg->SIDE_NAMES[i]);
@@ -86,13 +80,8 @@ AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 	assault_categories.push_back(SEA_ASSAULT);
 	assault_categories.push_back(SUBMARINE_ASSAULT);
 
-	// one more instance
-	++aai_instances;
-
-	ai->aai_instance = aai_instances;
-
 	// only set up static things if first aai intsance is iniatialized
-	if(aai_instances == 1)
+	if(ai->GetInstances() == 1)
 	{
 		for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
 		{
@@ -163,11 +152,8 @@ AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 
 AAIBuildTable::~AAIBuildTable(void)
 {
-	// one instance less
-	--aai_instances;
-
-	// delete common data only if last aai instace has gone
-	if(aai_instances == 0)
+	// delete common data only if last aai instance has gone
+	if(ai->GetInstances() == 0)
 	{
 
 		SafeDeleteArray(unitList);
@@ -741,13 +727,13 @@ void AAIBuildTable::Init()
 		// save to cache file
 		SaveBuildTable(0, LAND_MAP);
 
-		cb->SendTextMsg("New BuildTable has been created", 0);
+		ai->LogConsole("New BuildTable has been created");
 	}
 
 
 
 	// only once
-	if(aai_instances == 1)
+	if(ai->GetInstances() == 1)
 	{
 		// apply possible cost multipliers
 		if(cfg->cost_multipliers.size() > 0)
@@ -1356,7 +1342,7 @@ int AAIBuildTable::GetPowerPlant(int side, float cost, float urgency, float powe
 	float best_ranking = -10000, my_ranking;
 
 	//debug
-	//fprintf(ai->file, "Selecting power plant:     power %f    cost %f    urgency %f   energy %f \n", power, cost, urgency, current_energy);
+	//ai->Log("Selecting power plant:     power %f    cost %f    urgency %f   energy %f \n", power, cost, urgency, current_energy);
 
 	for(list<int>::iterator pplant = units_of_category[POWER_PLANT][side-1].begin(); pplant != units_of_category[POWER_PLANT][side-1].end(); ++pplant)
 	{
@@ -1375,7 +1361,7 @@ int AAIBuildTable::GetPowerPlant(int side, float cost, float urgency, float powe
 			if(unit->cost >= max_cost[POWER_PLANT][side-1])
 				my_ranking -= (cost + urgency + power)/2.0f;
 
-			//fprintf(ai->file, "%-20s: %f\n", unitList[*pplant-1]->humanName.c_str(), my_ranking);
+			//ai->Log("%-20s: %f\n", unitList[*pplant-1]->humanName.c_str(), my_ranking);
 		}
 		else
 			my_ranking = -10000;
@@ -1560,7 +1546,7 @@ int AAIBuildTable::GetDefenceBuilding(int side, double efficiency, double combat
 	if(max_eff_selection <= 0)
 		return 0;
 
-	//fprintf(ai->file, "\nSelecting defence: eff %f   power %f   urgency %f  range %f\n", efficiency, combat_power, urgency, range);
+	//ai->Log("\nSelecting defence: eff %f   power %f   urgency %f  range %f\n", efficiency, combat_power, urgency, range);
 
 	// reset counter
 	k = 0;
@@ -1582,7 +1568,7 @@ int AAIBuildTable::GetDefenceBuilding(int side, double efficiency, double combat
 
 			my_ranking += (0.1 * ((double)(rand()%randomness)));
 
-			//fprintf(ai->file, "%-20s: %f %f %f %f %f\n", unitList[unit->id-1]->humanName.c_str(), t1, t2, t3, t4, my_ranking);
+			//ai->Log("%-20s: %f %f %f %f %f\n", unitList[unit->id-1]->humanName.c_str(), t1, t2, t3, t4, my_ranking);
 		}
 		else
 			my_ranking = -100000;
@@ -1678,7 +1664,7 @@ int AAIBuildTable::GetCheapDefenceBuilding(int side, double efficiency, double c
 			}
 
 			++k;
-			//fprintf(ai->file, "%-20s: %f %f %f %f %f\n", unitList[unit->id-1]->humanName.c_str(), t1, t2, t3, t4, my_ranking);
+			//ai->Log("%-20s: %f %f %f %f %f\n", unitList[unit->id-1]->humanName.c_str(), t1, t2, t3, t4, my_ranking);
 		}
 	}
 
@@ -2426,7 +2412,7 @@ void AAIBuildTable::UpdateMinMaxAvgEfficiency()
 					total_eff[side][i][j] = 1;
 				}
 
-				//fprintf(ai->file, "min_eff[%i][%i] %f;  max_eff[%i][%i] %f\n", i, j, this->min_eff[i][j], i, j, this->max_eff[i][j]);
+				//ai->Log("min_eff[%i][%i] %f;  max_eff[%i][%i] %f\n", i, j, this->min_eff[i][j], i, j, this->max_eff[i][j]);
 			}
 		}
 	}
@@ -2521,7 +2507,7 @@ bool AAIBuildTable::LoadBuildTable()
 
 			if(strcmp(buffer, MOD_LEARN_VERSION))
 			{
-				cb->SendTextMsg("Buildtable version out of date - creating new one",0);
+				ai->LogConsole("Buildtable version out of date - creating new one");
 				return false;
 			}
 
@@ -2819,7 +2805,6 @@ void AAIBuildTable::DebugPrint()
 
 		//fprintf(file, "Max damage: %f\n", GetMaxDamage(i));
 
-		//fprintf(file, "Max damage: %f\n", GetMaxDamage(i));
 		/*fprintf(file, "Can Build:\n");
 
 		for(list<int>::iterator j = units_static[i].canBuildList.begin(); j != units_static[i].canBuildList.end(); ++j)
@@ -2828,9 +2813,10 @@ void AAIBuildTable::DebugPrint()
 		fprintf(file, "\n Built by: ");
 
 		for(list<int>::iterator k = units_static[i].builtByList.begin(); k != units_static[i].builtByList.end(); ++k)
-			fprintf(file, "%s ", unitList[*k-1]->humanName.c_str());*/
+			fprintf(file, "%s ", unitList[*k-1]->humanName.c_str());
 
 		fprintf(file, "\n \n");
+		*/
 	}
 
 	for(int s = 1; s <= numOfSides; s++)
@@ -3282,12 +3268,12 @@ void AAIBuildTable::BuildFactoryFor(int unit_def_id)
 		{
 			if(units_dynamic[constructor].constructorsAvailable + units_dynamic[constructor].constructorsRequested <= 0)
 			{
-				fprintf(ai->file, "BuildFactoryFor(%s) is requesting builder for %s\n", unitList[unit_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
+				ai->Log("BuildFactoryFor(%s) is requesting builder for %s\n", unitList[unit_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
 				BuildBuilderFor(constructor);
 			}
 
 			// debug
-			fprintf(ai->file, "BuildFactoryFor(%s) requested %s\n", unitList[unit_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
+			ai->Log("BuildFactoryFor(%s) requested %s\n", unitList[unit_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
 		}
 		// mobile constructor requested
 		else
@@ -3300,12 +3286,12 @@ void AAIBuildTable::BuildFactoryFor(int unit_def_id)
 
 				if(units_dynamic[constructor].constructorsAvailable + units_dynamic[constructor].constructorsRequested <= 0)
 				{
-					fprintf(ai->file, "BuildFactoryFor(%s) is requesting factory for %s\n", unitList[unit_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
+					ai->Log("BuildFactoryFor(%s) is requesting factory for %s\n", unitList[unit_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
 					BuildFactoryFor(constructor);
 				}
 
 				// debug
-				fprintf(ai->file, "BuildFactoryFor(%s) requested %s\n", unitList[unit_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
+				ai->Log("BuildFactoryFor(%s) requested %s\n", unitList[unit_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
 			}
 			else
 			{
@@ -3372,7 +3358,7 @@ void AAIBuildTable::BuildBuilderFor(int building_def_id)
 		// build factory if necessary
 		if(units_dynamic[constructor].constructorsAvailable + units_dynamic[constructor].constructorsRequested <= 0)
 		{
-			fprintf(ai->file, "BuildBuilderFor(%s) is requesting factory for %s\n", unitList[building_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
+			ai->Log("BuildBuilderFor(%s) is requesting factory for %s\n", unitList[building_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
 
 			BuildFactoryFor(constructor);
 		}
@@ -3388,7 +3374,7 @@ void AAIBuildTable::BuildBuilderFor(int building_def_id)
 				units_dynamic[*j].constructorsRequested += 1;
 
 			// debug
-			fprintf(ai->file, "BuildBuilderFor(%s) requested %s\n", unitList[building_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
+			ai->Log("BuildBuilderFor(%s) requested %s\n", unitList[building_def_id-1]->humanName.c_str(), unitList[constructor-1]->humanName.c_str());
 		}
 	}
 }
@@ -3444,7 +3430,7 @@ void AAIBuildTable::AddAssistant(unsigned int allowed_movement_types, bool canBu
 			for(list<int>::iterator j = units_static[builder].canBuildList.begin(); j != units_static[builder].canBuildList.end(); ++j)
 				units_dynamic[*j].constructorsRequested += 1;
 
-			//fprintf(ai->file, "AddAssister() requested: %s %i \n", unitList[builder-1]->humanName.c_str(), units_dynamic[builder].requested);
+			//ai->Log("AddAssister() requested: %s %i \n", unitList[builder-1]->humanName.c_str(), units_dynamic[builder].requested);
 		}
 	}
 }
@@ -3912,15 +3898,17 @@ unsigned int AAIBuildTable::GetAllowedMovementTypesForAssister(int building)
 	return allowed_movement_types;
 }
 
+float AAIBuildTable::GetUnitRating(int unit, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff)
+{
+	float rating = 0.1f + ground_eff * units_static[unit].efficiency[0] +  air_eff * units_static[unit].efficiency[1] +  hover_eff * units_static[unit].efficiency[2] +  sea_eff * units_static[unit].efficiency[3] + submarine_eff * units_static[unit].efficiency[4];
+	rating /= units_static[unit].cost;
+	return rating;
+}
+
 int AAIBuildTable::DetermineBetterUnit(int unit1, int unit2, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float speed, float range, float cost)
 {
-	float rating1, rating2;
-
-	rating1 = 0.1f + ground_eff * units_static[unit1].efficiency[0] +  air_eff * units_static[unit1].efficiency[1] +  hover_eff * units_static[unit1].efficiency[2] +  sea_eff * units_static[unit1].efficiency[3] + submarine_eff * units_static[unit1].efficiency[4];
-	rating1 /= units_static[unit1].cost;
-
-	rating2 = 0.1f + ground_eff * units_static[unit2].efficiency[0] +  air_eff * units_static[unit2].efficiency[1] +  hover_eff * units_static[unit2].efficiency[2] +  sea_eff * units_static[unit2].efficiency[3] + submarine_eff * units_static[unit2].efficiency[4];
-	rating2 /= units_static[unit2].cost;
+	float rating1 = GetUnitRating(unit1, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff);
+	float rating2 = GetUnitRating(unit2, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff);
 
 	if (((rating2 == 0.0f) || (units_static[unit2].range == 0.0f) || (unitList[unit2 - 1]->speed == 0.0f))
 			|| ((cost * rating1 / rating2)

@@ -17,20 +17,19 @@ public:
 	CR_DECLARE(CMobileCAI);
 	CMobileCAI(CUnit* owner);
 	CMobileCAI();
-	virtual ~CMobileCAI();
+	virtual ~CMobileCAI() {}
 
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius, float speed);
 	virtual void BuggerOff(const float3& pos, float radius);
 	void StopMove();
-	void StopMoveAndKeepPointing();
+	void StopMoveAndKeepPointing(const float3& p, const float r);
 
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	void SlowUpdate();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void NonMoving();
 	void FinishCommand();
-	void IdleCheck();
 	bool CanSetMaxSpeed() const { return true; }
 	void StopSlowGuard();
 	void StartSlowGuard(float speed);
@@ -84,6 +83,9 @@ protected:
 	}
 
 	void CalculateCancelDistance();
+
+private:
+	bool MobileAutoGenerateTarget();
 };
 
 #endif /* MOBILE_CAI_H */

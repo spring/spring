@@ -17,7 +17,7 @@ SET(sources_engine_Lua
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaHandleSynced.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaIO.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaInputReceiver.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/LuaLoadScreen.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/LuaIntro.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaLobby.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaMaterial.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaMetalMap.cpp"

@@ -1,13 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Platform/Win/win32.h"
 #include "Watchdog.h"
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gml_base.h"
 #ifndef _WIN32
 	#include <fstream>
 	#include <iostream>
 #endif
+
+#ifdef USE_VALGRIND
+	#include <valgrind/valgrind.h>
+#endif
+
 #include <algorithm>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -102,9 +106,8 @@ namespace Watchdog
 				if (spring_istime(curwdt) && curtime > curwdt && (curtime - curwdt) > hangTimeout) {
 					if (!hangDetected) {
 						LOG_L(L_WARNING, "[Watchdog] Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
-#ifdef USE_GML
-						LOG_L(L_WARNING, "MT with %d threads.", GML::ThreadCount());
-#endif
+						if (GML::Enabled())
+							LOG_L(L_WARNING, "MT with %d threads.", GML::ThreadCount());
 					}
 					LOG_L(L_WARNING, "  (in thread: %s)", threadNames[i]);
 
@@ -287,6 +290,12 @@ namespace Watchdog
 				LOG("[Watchdog] disabled (gdb detected)");
 				return;
 			}
+		}
+	#endif
+	#ifdef USE_VALGRIND
+		if (RUNNING_ON_VALGRIND) {
+			LOG("[Watchdog] disabled (Valgrind detected)");
+			return;
 		}
 	#endif
 		const int hangTimeoutSecs = configHandler->GetInt("HangTimeout");

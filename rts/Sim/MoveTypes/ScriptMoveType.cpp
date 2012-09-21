@@ -94,7 +94,7 @@ inline void CScriptMoveType::CalcDirections()
 	matrix.RotateZ(-rot.z);
 
 	owner->SetDirVectors(matrix);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 	owner->SetHeadingFromDirection();
 }
 
@@ -163,7 +163,7 @@ bool CScriptMoveType::Update()
 
 	if (trackSlope) {
 		owner->UpdateDirVectors(true);
-		owner->UpdateMidPos();
+		owner->UpdateMidAndAimPos();
 	}
 
 	// don't need the rest if the pos hasn't changed
@@ -192,22 +192,21 @@ void CScriptMoveType::CheckLimits()
 	if (owner->pos.z < mins.z) { owner->pos.z = mins.z; owner->speed.z = 0.0f; }
 	if (owner->pos.z > maxs.z) { owner->pos.z = maxs.z; owner->speed.z = 0.0f; }
 
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 }
 
 
-void CScriptMoveType::SetPhysics(const float3& pos,
-                                 const float3& vel,
-                                 const float3& rot)
+void CScriptMoveType::SetPhysics(const float3& _pos,
+                                 const float3& _vel,
+                                 const float3& _rot)
 {
-	owner->pos = pos;
-	owner->speed = vel;
-
-	SetRotation(rot);
+	SetPosition(_pos);
+	SetVelocity(_vel);
+	SetRotation(_rot);
 }
 
 
-void CScriptMoveType::SetPosition(const float3& pos) { owner->pos = pos; }
+void CScriptMoveType::SetPosition(const float3& pos) { owner->Move3D(pos, false); }
 void CScriptMoveType::SetVelocity(const float3& _vel) { owner->speed = (vel = _vel); }
 
 
@@ -239,7 +238,7 @@ void CScriptMoveType::SetHeading(short heading)
 
 	if (!trackSlope) {
 		owner->UpdateDirVectors(false);
-		owner->UpdateMidPos();
+		owner->UpdateMidAndAimPos();
 	}
 }
 

@@ -7,58 +7,75 @@
 #include "System/creg/creg_cond.h"
 #include "System/Util.h"
 
-const float EPS = 0.0000000001f;
+const float COLLISION_VOLUME_EPS = 0.0000000001f;
+const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
+
+struct LocalModelPiece;
+class CMatrix44f;
+class CSolidObject;
+class CUnit;
+class CFeature;
 
 struct CollisionVolume
 {
 	CR_DECLARE_STRUCT(CollisionVolume);
 
 public:
-	enum COLVOL_SHAPE_TYPES {
-		COLVOL_TYPE_ELLIPSOID =  0,
+	enum {
+		COLVOL_TYPE_ELLIPSOID =  0, // dummy, these become spheres or boxes
 		COLVOL_TYPE_CYLINDER  =  1,
 		COLVOL_TYPE_BOX       =  2,
 		COLVOL_TYPE_SPHERE    =  3,
-		COLVOL_TYPE_FOOTPRINT =  4, // intersection of sphere and footprint-prism
-		COLVOL_NUM_SHAPES     =  5, // number of non-disabled collision volume types
 	};
-
-	enum COLVOL_AXES {
-		COLVOL_AXIS_X   = 0,
-		COLVOL_AXIS_Y   = 1,
-		COLVOL_AXIS_Z   = 2,
-		COLVOL_NUM_AXES = 3         // number of collision volume axes
+	enum {
+		COLVOL_AXIS_X = 0,
+		COLVOL_AXIS_Y = 1,
+		COLVOL_AXIS_Z = 2,
 	};
-	enum COLVOL_HITTEST_TYPES {
+	enum {
 		COLVOL_HITTEST_DISC = 0,
 		COLVOL_HITTEST_CONT = 1,
-		COLVOL_NUM_HITTESTS = 2     // number of hit-test types
 	};
 
 public:
 	CollisionVolume();
-	CollisionVolume(const CollisionVolume* v, float defaultRadius = 0.0f);
-	CollisionVolume(const std::string& volTypeStr, const float3& scales, const float3& offsets, int hitTestType);
+	CollisionVolume(const CollisionVolume* v) { *this = *v; }
+	CollisionVolume(
+		const std::string& cvTypeStr,
+		const float3& cvScales,
+		const float3& cvOffsets
+	);
+
+	CollisionVolume& operator = (const CollisionVolume&);
 
 	/**
 	 * Called if a unit or feature does not define a custom volume.
-	 * @param r the object's default radius
+	 * @param radius the object's default radius
 	 */
-	void Init(float r);
-	void Init(const float3& scales, const float3& offsets, int vType, int tType, int pAxis);
+	void InitSphere(float radius);
+	void InitBox(const float3& scales);
+	void InitShape(
+		const float3& scales,
+		const float3& offsets,	
+		const int vType,
+		const int tType,
+		const int pAxis
+	);
 
-	void RescaleAxes(const float& xs, const float& ys, const float& zs);
-	void SetAxisScales(const float& xs, const float& ys, const float& zs);
+	void RescaleAxes(const float3& scales);
+	void SetAxisScales(const float3& scales);
+	void SetBoundingRadius();
 
 	int GetVolumeType() const { return volumeType; }
-	int GetTestType() const { return testType; }
 	void SetVolumeType(int type) { volumeType = type; }
-	void SetTestType(int type) { testType = type; }
-	void Enable() { disabled = false; }
-	void Disable() { disabled = true; }
 
-	int GetPrimaryAxis() const { return primaryAxis; }
-	int GetSecondaryAxis(int axis) const { return secondaryAxes[axis]; }
+	void SetIgnoreHits(bool b) { ignoreHits = b; }
+	void SetUseContHitTest(bool b) { useContHitTest = b; }
+	void SetDefaultToPieceTree(bool b) { defaultToPieceTree = b; }
+	void SetDefaultToFootPrint(bool b) { defaultToFootPrint = b; }
+
+	int GetPrimaryAxis() const { return volumeAxes[0]; }
+	int GetSecondaryAxis(int axis) const { return volumeAxes[axis + 1]; }
 
 	float GetBoundingRadius() const { return volumeBoundingRadius; }
 	float GetBoundingRadiusSq() const { return volumeBoundingRadiusSq; }
@@ -66,37 +83,46 @@ public:
 	float GetOffset(int axis) const { return axisOffsets[axis]; }
 	const float3& GetOffsets() const { return axisOffsets; }
 
-	float GetScale(int axis) const { return axisScales[axis]; }
-	float GetHScale(int axis) const { return axisHScales[axis]; }
-	float GetHScaleSq(int axis) const { return axisHScalesSq[axis]; }
-	const float3& GetScales() const { return axisScales; }
-	const float3& GetHScales() const { return axisHScales; }
-	const float3& GetHScalesSq() const { return axisHScalesSq; }
-	const float3& GetHIScales() const { return axisHIScales; }
+	float GetScale(int axis) const { return fAxisScales[axis]; }
+	float GetHScale(int axis) const { return hAxisScales[axis]; }
+	float GetHScaleSq(int axis) const { return hsqAxisScales[axis]; }
+	const float3& GetScales() const { return fAxisScales; }
+	const float3& GetHScales() const { return hAxisScales; }
+	const float3& GetHSqScales() const { return hsqAxisScales; }
+	const float3& GetHIScales() const { return hiAxisScales; }
 
-	bool IsDisabled() const { return disabled; }
-	bool DefaultScale() const { return defaultScale; }
-	bool IsSphere() const { return volumeType == COLVOL_TYPE_SPHERE; }
-	bool UseFootprint() const { return volumeType == COLVOL_TYPE_FOOTPRINT; }
+	bool IgnoreHits() const { return ignoreHits; }
+	bool UseContHitTest() const { return useContHitTest; }
+	bool DefaultToSphere() const { return (fAxisScales.x == 1.0f && fAxisScales.y == 1.0f && fAxisScales.z == 1.0f); }
+	bool DefaultToFootPrint() const { return defaultToFootPrint; }
+	bool DefaultToPieceTree() const { return defaultToPieceTree; }
+
+	float GetPointDistance(const CUnit* u, const float3& pw) const;
+	float GetPointDistance(const CFeature* u, const float3& pw) const;
+
+	static const CollisionVolume* GetVolume(const CUnit* u, float3& pos);
+	static const CollisionVolume* GetVolume(const CFeature* f, float3& pos);
 
 private:
-	void SetBoundingRadius();
+	float GetPointSurfaceDistance(const CMatrix44f& m, const float3& pw) const;
 
-	float3 axisScales;                  ///< full-length axis scales
-	float3 axisHScales;                 ///< half-length axis scales
-	float3 axisHScalesSq;               ///< half-length axis scales (squared)
-	float3 axisHIScales;                ///< half-length axis scales (inverted)
+	float3 fAxisScales;                 ///< full-length axis scales
+	float3 hAxisScales;                 ///< half-length axis scales
+	float3 hsqAxisScales;               ///< half-length axis scales (squared)
+	float3 hiAxisScales;                ///< half-length axis scales (inverted)
 	float3 axisOffsets;                 ///< offsets wrt. the model's mid-position (world-space)
 
 	float volumeBoundingRadius;         ///< radius of minimally-bounding sphere around volume
 	float volumeBoundingRadiusSq;       ///< squared radius of minimally-bounding sphere
-	int volumeType;
-	int testType;
-	int primaryAxis;
-	int secondaryAxes[2];
 
-	bool disabled;
-	bool defaultScale;
+	int volumeType;                     ///< which COLVOL_TYPE_* shape we have
+	int volumeAxes[3];                  ///< [0] is prim. axis, [1] and [2] are sec. axes (all COLVOL_AXIS_*)
+
+	bool ignoreHits;                    /// if true, CollisionHandler does not check for hits against us
+	bool useContHitTest;                /// if true, CollisionHandler does continuous instead of discrete hit-testing
+	bool defaultToFootPrint;            /// if true, volume becomes a box with dimensions equal to a SolidObject's {x,z}size
+	bool defaultToPieceTree;            /// if true, volume is owned by a unit but defaults to piece-volume tree for hit-testing
 };
 
 #endif
+

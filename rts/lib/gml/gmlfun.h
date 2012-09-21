@@ -318,6 +318,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 
 #if GML_CALL_DEBUG
 #include "lib/lua/include/lauxlib.h"
+extern void gmlPrintCallChainWarning(const char *func);
 extern unsigned gmlLockTime;
 extern lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS];
 class gmlCallDebugger {
@@ -346,10 +347,25 @@ public:
 #define GML_CURRENT_LUA(currentLuaState) (currentLuaState ? "LUA" : "Unknown")
 #define GML_THREAD_ERROR(msg, ret)\
 	lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
-	LOG_SL("GML", L_ERROR, "Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
+	LOG_SL("Threading", L_ERROR, "Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
 	if(currentLuaState)\
 		luaL_error(currentLuaState, "Invalid call");\
 	ret
+#if GML_CALL_DEBUG
+#define GML_CHECK_CALL_CHAIN(luastate, ...)\
+	if (gmlCheckCallChain) {\
+		lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
+		if (currentLuaState != NULL && currentLuaState != gmlLuaUIState && luastate == gmlLuaUIState) {\
+			if (gmlCallChainWarning < GML_MAX_CALL_CHAIN_WARNINGS) {\
+				++gmlCallChainWarning;\
+				gmlPrintCallChainWarning(GML_FUNCTION);\
+			}\
+			return __VA_ARGS__;\
+		}\
+	}
+#else
+#define GML_CHECK_CALL_CHAIN(luastate, ...)
+#endif
 #define GML_ITEMLOG_PRINT() GML_THREAD_ERROR(GML_FUNCTION,)
 #define GML_DUMMYRET() return;
 #define GML_DUMMYRETVAL(rettype)\
@@ -364,7 +380,7 @@ public:
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRETVAL(rettype))\
 	}
 #else
-#define GML_ITEMLOG_PRINT() LOG_SL("GML", L_ERROR, "Sim thread called %s", GML_FUNCTION);
+#define GML_ITEMLOG_PRINT() LOG_SL("Threading", L_ERROR, "Sim thread called %s", GML_FUNCTION);
 #define GML_DUMMYRET()
 #define GML_DUMMYRETVAL(rettype)
 #define GML_IF_SIM_THREAD_RET(thread,name)
@@ -1351,6 +1367,7 @@ GML_MAKEFUN2R(MapBuffer,GLenum,GLenum,GLvoid *)
 GML_MAKEFUN1R(UnmapBuffer,GLenum,GLboolean,)
 GML_MAKEFUN8VP(CompressedTexImage2D,GLenum,GLint,GLenum,GLsizei,GLsizei,GLint,GLsizei,const GLvoid,BYTE,G)
 GML_MAKEFUN1R(IsShader,GLuint, GLboolean,)
+GML_MAKEFUN1R(IsProgram,GLuint, GLboolean,)
 GML_MAKEFUN3(Vertex3i,GLint,GLint,GLint,)
 GML_MAKEFUN2(GetIntegerv,GLenum,GLint *,GML_CACHE(GLenum,GLint,gmlGetIntegervCache,A,B),GML_SYNC())//
 GML_MAKEFUN1R(CheckFramebufferStatusEXT,GLenum, GLenum,GML_DEFAULT_RET(A==GL_FRAMEBUFFER_EXT,GL_FRAMEBUFFER_COMPLETE_EXT))

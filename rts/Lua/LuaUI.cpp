@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "LuaLobby.h" // ugh, streflop namespace corruption...
+#include "lib/gml/gmlcnf.h"
 
 #include "System/mmgr.h"
 
@@ -61,7 +62,7 @@
 #include <SDL_timer.h>
 
 CONFIG(bool, LuaSocketEnabled)
-	.defaultValue(false)
+	.defaultValue(true)
 	.description("Enable LuaSocket support, allows a lua-widget to make TCP/UDP Connections")
 	.readOnly(true)
 ;
@@ -98,8 +99,6 @@ void CLuaUI::LoadHandler()
 		return;
 	}
 
-	GML_STDMUTEX_LOCK(luaui); // LoadHandler
-
 	new CLuaUI();
 
 	if (!luaUI->IsValid()) {
@@ -112,9 +111,6 @@ void CLuaUI::FreeHandler()
 {
 	static bool inFree = false;
 	if (!inFree) {
-
-		GML_STDMUTEX_LOCK(luaui); // FreeHandler
-
 		inFree = true;
 		delete luaUI;
 		inFree = false;
@@ -127,6 +123,7 @@ void CLuaUI::FreeHandler()
 CLuaUI::CLuaUI()
 : CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true)
 {
+	GML::SetLuaUIState(L_Sim);
 	luaUI = this;
 
 	BEGIN_ITERATE_LUA_STATES();
@@ -252,6 +249,7 @@ CLuaUI::~CLuaUI()
 		KillLua();
 	}
 	luaUI = NULL;
+	GML::SetLuaUIState(NULL);
 }
 
 void CLuaUI::InitLuaSocket(lua_State* L) {
@@ -377,7 +375,7 @@ void CLuaUI::Shutdown()
 
 bool CLuaUI::ConfigCommand(const string& command)
 {
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -410,7 +408,7 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect, floa
 		return;
 	}
 #if defined(USE_GML) && GML_ENABLE_SIM
-	float shockFrontDistAdj = distadj ? *distadj : this->shockFrontDistAdj;
+	float shockFrontDistAdj = (GML::Enabled() && distadj) ? *distadj : this->shockFrontDistAdj;
 #endif
 	float3 gap = (camera->pos - pos);
 	float dist = gap.Length() + shockFrontDistAdj;
@@ -457,7 +455,7 @@ void CLuaUI::ExecuteUIEventBatch() {
 
 	std::vector<LuaUIEvent> lleb;
 	{
-		GML_STDMUTEX_LOCK(llbatch);
+		GML_STDMUTEX_LOCK(llbatch); // ExecuteUIEventBatch
 
 		if(luaUIEventBatch.empty())
 			return;
@@ -528,7 +526,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	GML_THRMUTEX_LOCK(feat, GML_DRAW); // LayoutButtons
 //	GML_THRMUTEX_LOCK(proj, GML_DRAW); // LayoutButtons
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, false);
 	lua_checkstack(L, 6);
 	const int top = lua_gettop(L);
 
@@ -553,7 +551,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
+	const int args = lua_gettop(L) - top;
 
 	if (lua_israwstring(L, -1) &&
 	    (string(lua_tostring(L, -1)) == "disabled")) {
@@ -859,13 +857,8 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 
 			LuaUtils::ShallowDataDump sdd;
 			sdd.type = LUA_TSTRING;
-
-			size_t len = funcName.length();
 			sdd.data.str = new std::string;
-			if (len > 0) {
-				sdd.data.str->resize(len);
-				memcpy(&(*sdd.data.str)[0], funcName.c_str(), len);
-			}
+			*sdd.data.str = funcName;
 
 			ddmp.data.push_back(sdd);
 
@@ -873,7 +866,7 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 
 			lua_settop(srcState, 0);
 
-			GML_STDMUTEX_LOCK(scall);
+			GML_STDMUTEX_LOCK(scall); // UnsyncedXCall
 
 			delayedCallsFromSynced.push_back(DelayDataDump());
 
@@ -887,7 +880,7 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 	}
 #endif
 
-	LUA_CALL_IN_CHECK(L);
+	LUA_CALL_IN_CHECK(L, 0);
 	const LuaHashString funcHash(funcName);
 	if (!funcHash.GetGlobalFunc(L)) {
 		return 0;
@@ -911,11 +904,15 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 		const int srcCount = lua_gettop(srcState);
 
 		LuaUtils::CopyData(L, srcState, srcCount);
+		const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+		LuaOpenGL::SetDrawingEnabled(L, LuaOpenGL::IsDrawingEnabled(srcState));
 
 		// call the function
 		if (!RunCallIn(funcHash, srcCount, LUA_MULTRET)) {
+			LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
 			return 0;
 		}
+		LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
 		retCount = lua_gettop(L) - top;
 
 		lua_settop(srcState, 0);

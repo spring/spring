@@ -1,5 +1,7 @@
 # This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
 
+# FIXME: remove this file when cmake on the win32 buildslave is updated
+
 # - Find zlib
 # Find the native ZLIB includes and library
 #

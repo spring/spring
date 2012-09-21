@@ -95,7 +95,7 @@ static float smoothMeshAmountChanged;
 
 inline void LuaSyncedCtrl::CheckAllowGameChanges(lua_State* L)
 {
-	const CLuaHandleSynced* lhs = CLuaHandleSynced::GetActiveHandle(L);
+	const CLuaHandleSynced* lhs = CLuaHandleSynced::GetSyncedHandle(L);
 
 	if (lhs == NULL) {
 		luaL_error(L, "Internal lua error, unsynced script using synced calls");
@@ -163,6 +163,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
+	REGISTER_LUA_CFUNC(SetUnitMidAndAimPos);
+	REGISTER_LUA_CFUNC(SetUnitRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
@@ -171,6 +173,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
 	REGISTER_LUA_CFUNC(SetUnitRotation);
+	REGISTER_LUA_CFUNC(SetUnitDirection);
 
 	REGISTER_LUA_CFUNC(AddUnitDamage);
 	REGISTER_LUA_CFUNC(AddUnitImpulse);
@@ -190,6 +193,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
 	REGISTER_LUA_CFUNC(SetFeatureDirection);
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
+	REGISTER_LUA_CFUNC(SetFeatureMidAndAimPos);
+	REGISTER_LUA_CFUNC(SetFeatureRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 
 
@@ -661,7 +666,7 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 
 	//! set the los checking of the parameter
 	if (lua_istable(L, losIndex)) {
-		const int& table = losIndex;
+		const int table = losIndex;
 		int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE;
 
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
@@ -1134,9 +1139,9 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 				else if (key == "paralyze") {
 					unit->paralyzeDamage = max(0.0f, value);
 					if (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health)) {
-						unit->stunned = true;
+						unit->SetStunned(true);
 					} else if (value < 0.0f) {
-						unit->stunned = false;
+						unit->SetStunned(false);
 					}
 				}
 				else if (key == "build") {
@@ -1692,17 +1697,81 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
 		const bool manualFire = lua_isboolean(L, 5) && lua_toboolean(L, 5);
-		unit->AttackGround(pos, manualFire);
+		unit->AttackGround(pos, false, manualFire);
 	}
 	else if (args >= 2) {
 		CUnit* target = ParseRawUnit(L, __FUNCTION__, 2);
 		const bool manualFire = lua_isboolean(L, 3) && lua_toboolean(L, 3);
-		unit->AttackUnit(target, manualFire);
+		unit->AttackUnit(target, false, manualFire);
 	}
 	return 0;
 }
 
 
+
+int LuaSyncedCtrl::SetUnitMidAndAimPos(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	#define FLOAT(i) luaL_checkfloat(L, i)
+	#define FLOAT3(i, j, k) float3(FLOAT(i), FLOAT(j), FLOAT(k))
+
+	const int argc = lua_gettop(L);
+	const float3 newMidPos = (argc >= 4)? FLOAT3(2, 3, 4): float3(unit->midPos);
+	const float3 newAimPos = (argc >= 7)? FLOAT3(5, 6, 7): float3(unit->aimPos);
+	const bool setRelative = (argc == 8 && lua_isboolean(L, 8) && lua_toboolean(L, 8));
+	const bool updateQuads = (newMidPos != unit->midPos);
+
+	#undef FLOAT3
+	#undef FLOAT
+
+	if (updateQuads) {
+		// safety, possibly just need MovedUnit
+		qf->RemoveUnit(unit);
+	}
+
+	unit->SetMidAndAimPos(newMidPos, newAimPos, setRelative);
+
+	if (updateQuads) {
+		qf->MovedUnit(unit);
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaSyncedCtrl::SetUnitRadiusAndHeight(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const float newRadius = std::max(1.0f, luaL_optfloat(L, 2, unit->radius));
+	const float newHeight = std::max(1.0f, luaL_optfloat(L, 3, unit->height));
+	const bool updateQuads = (newRadius != unit->radius);
+
+	if (updateQuads) {
+		// safety, possibly just need MovedUnit
+		qf->RemoveUnit(unit);
+	}
+
+	unit->SetRadiusAndHeight(newRadius, newHeight);
+
+	if (updateQuads) {
+		qf->MovedUnit(unit);
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
 
 int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 {
@@ -1725,11 +1794,7 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES)   { luaL_argerror(L,  8, "invalid vType"); }
-	if (tType >= CollisionVolume::COLVOL_NUM_HITTESTS) { luaL_argerror(L,  9, "invalid tType"); }
-	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  )   { luaL_argerror(L, 10, "invalid pAxis"); }
-
-	unit->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
+	unit->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
 	return 0;
 }
 
@@ -1771,7 +1836,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 		arg = 7;
 	}
 	if (!enable) {
-		lmp->GetCollisionVolume()->Disable();
+		lmp->GetCollisionVolume()->SetIgnoreHits(true);
 		return 0;
 	}
 
@@ -1787,18 +1852,15 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	const float yo  = luaL_checkfloat(L, arg++);
 	const float zo  = luaL_checkfloat(L, arg++);
 	const unsigned int vType = luaL_checkint(L, arg++);
+//	const unsigned int tType = luaL_checkint(L, arg++);
 	const unsigned int pAxis = luaL_checkint(L, arg++);
-	const unsigned int tType = CollisionVolume::COLVOL_HITTEST_CONT;
 
 	const float3 scales(xs, ys, zs);
 	const float3 offset(xo, yo, zo);
 
-	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES) { luaL_argerror(L, arg - 2, "invalid vType"); }
-	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  ) { luaL_argerror(L, arg - 1, "invalid pAxis"); }
-
-	// finish
-	lmp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
-	lmp->GetCollisionVolume()->Enable();
+	// piece volumes are not allowed to use discrete hit-testing
+	lmp->GetCollisionVolume()->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
+	lmp->GetCollisionVolume()->SetIgnoreHits(false);
 
 	return 0;
 }
@@ -1903,7 +1965,7 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 
 	unit->Move3D(pos, false);
 	unit->SetDirVectors(matrix);
-	unit->UpdateMidPos();
+	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
 	unit->ForcedMove(pos);
 	return 0;
@@ -1917,24 +1979,26 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 		return 0;
 	}
 
+	float3 pos;
+
 	if (lua_isnumber(L, 4)) {
-		float3 pos(luaL_checkfloat(L, 2),
-							 luaL_checkfloat(L, 3),
-							 luaL_checkfloat(L, 4));
-		unit->ForcedMove(pos);
-		return 0;
-	}
-
-	float x, y, z;
-	x = luaL_checkfloat(L, 2);
-	z = luaL_checkfloat(L, 3);
-	if (lua_isboolean(L, 4) && lua_toboolean(L, 4)) {
-		y = ground->GetHeightAboveWater(x, z);
+		// 2=x, 3=y, 4=z
+		pos.x = luaL_checkfloat(L, 2);
+		pos.y = luaL_checkfloat(L, 3);
+		pos.z = luaL_checkfloat(L, 4);
 	} else {
-		y = ground->GetHeightReal(x, z);
-	}
-	unit->ForcedMove(float3(x, y, z));
+		// 2=x, 3=z, 4=bool
+		pos.x = luaL_checkfloat(L, 2);
+		pos.z = luaL_checkfloat(L, 3);
 
+		if (lua_isboolean(L, 4) && lua_toboolean(L, 4)) {
+			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+		} else {
+			pos.y = ground->GetHeightReal(pos.x, pos.z);
+		}
+	}
+
+	unit->ForcedMove(pos);
 	return 0;
 }
 
@@ -1956,9 +2020,24 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	matrix.RotateY(rot.y);
 
 	unit->SetDirVectors(matrix);
-	unit->UpdateMidPos();
+	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
 	unit->ForcedMove(unit->pos);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitDirection(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	float3 dir(luaL_checkfloat(L, 2),
+	           luaL_checkfloat(L, 3),
+	           luaL_checkfloat(L, 4));
+	dir.Normalize();
+	unit->ForcedSpin(dir);
 	return 0;
 }
 
@@ -2001,7 +2080,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		attacker = uh->units[attackerID];
 	}
 
-	if (weaponDefID >= weaponDefHandler->numWeaponDefs) {
+	if (weaponDefID >= weaponDefHandler->weaponDefs.size()) {
 		return 0;
 	}
 
@@ -2125,12 +2204,13 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
-	CBuilding* building = dynamic_cast<CBuilding*>(unit);
-	if (building)
-		groundDecals->ForceRemoveBuilding(building);
+
+	if (unit->unitDef->decalDef.useGroundDecal)
+		groundDecals->ForceRemoveSolidObject(unit);
+
 	return 0;
 }
 
@@ -2296,18 +2376,11 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	const float3 pos(luaL_checkfloat(L, 2),
-	                 luaL_checkfloat(L, 3),
-	                 luaL_checkfloat(L, 4));
 
-	if (lua_isboolean(L, 5)) {
-		const bool snapToGround = lua_toboolean(L, 5);
-		feature->ForcedMove(pos, snapToGround);
-	} else {
-		// use default argument
-		feature->ForcedMove(pos);
-	}
+	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+	const bool snap(luaL_optboolean(L, 5, true));
 
+	feature->ForcedMove(pos, snap);
 	return 0;
 }
 
@@ -2362,13 +2435,73 @@ int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
 }
 
 
+
+int LuaSyncedCtrl::SetFeatureMidAndAimPos(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	#define FLOAT(i) luaL_checkfloat(L, i)
+	#define FLOAT3(i, j, k) float3(FLOAT(i), FLOAT(j), FLOAT(k))
+
+	const int argc = lua_gettop(L);
+	const float3 newMidPos = (argc >= 4)? FLOAT3(2, 3, 4): float3(feature->midPos);
+	const float3 newAimPos = (argc >= 7)? FLOAT3(5, 6, 7): float3(feature->aimPos);
+	const bool setRelative = (argc == 8 && lua_isboolean(L, 8) && lua_toboolean(L, 8));
+	const bool updateQuads = (newMidPos != feature->midPos);
+
+	#undef FLOAT3
+	#undef FLOAT
+
+	if (updateQuads) {
+		qf->RemoveFeature(feature);
+	}
+
+	feature->SetMidAndAimPos(newMidPos, newAimPos, setRelative);
+
+	if (updateQuads) {
+		qf->AddFeature(feature);
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const float newRadius = std::max(1.0f, luaL_optfloat(L, 2, feature->radius));
+	const float newHeight = std::max(1.0f, luaL_optfloat(L, 3, feature->height));
+	const bool updateQuads = (newRadius != feature->radius);
+
+	if (updateQuads) {
+		qf->RemoveFeature(feature);
+	}
+
+	feature->SetRadiusAndHeight(newRadius, newHeight);
+
+	if (updateQuads) {
+		qf->AddFeature(feature);
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
 int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
 	if (feature == NULL) {
-		return 0;
-	}
-	if (feature->collisionVolume == NULL) {
 		return 0;
 	}
 
@@ -2385,8 +2518,7 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	feature->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
-
+	feature->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
 	return 0;
 }
 
@@ -3214,7 +3346,7 @@ int LuaSyncedCtrl::SetMapSquareTerrainType(lua_State* L)
 	const int ntt = luaL_checkint(L, 3);
 
 	readmap->GetTypeMapSynced()[tz * gs->hmapx + tx] = std::max(0, std::min(ntt, (CMapInfo::NUM_TERRAIN_TYPES - 1)));
-	pathManager->TerrainChange(hx, hz,  hx + 1, hz + 1);
+	pathManager->TerrainChange(hx, hz,  hx + 1, hz + 1,  TERRAINCHANGE_SQUARE_TYPEMAP_INDEX);
 
 	lua_pushnumber(L, ott);
 	return 1;
@@ -3254,7 +3386,7 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 	for (int tx = 0; tx < gs->hmapx; tx++) {
 		for (int tz = 0; tz < gs->hmapy; tz++) {
 			if (typeMap[tz * gs->hmapx + tx] == tti) {
-				pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1);
+				pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1,  TERRAINCHANGE_TYPEMAP_SPEED_VALUES);
 			}
 		}
 	}

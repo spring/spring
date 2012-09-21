@@ -9,13 +9,13 @@ class CVerticalSync {
 		~CVerticalSync();
 
 		void Init();
-		void SetFrames(int frames);
-		int  GetFrames() const { return frames; }
+		void SetInterval(int interval);
+		int  GetInterval() const { return interval; }
 
 		void Delay() const;
 		
 	private:
-		int frames;
+		int interval;
 };
 
 extern CVerticalSync VSync;

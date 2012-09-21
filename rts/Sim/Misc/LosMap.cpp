@@ -18,9 +18,10 @@
 
 
 
-void CLosMap::SetSize(int2 newSize)
+void CLosMap::SetSize(int2 newSize, bool newSendReadmapEvents)
 {
 	size = newSize;
+	sendReadmapEvents = newSendReadmapEvents;
 	map.clear();
 	map.resize(size.x * size.y, 0);
 }
@@ -33,7 +34,7 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 	static const int LOS2HEIGHT_X = gs->mapx / size.x;
 	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
 
-	const bool updateUnsyncedHeightMap = (allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
+	const bool updateUnsyncedHeightMap = (sendReadmapEvents && allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
 	#endif
 
 	const int sx = std::max(         0, pos.x - radius);
@@ -70,10 +71,8 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 			if (!updateUnsyncedHeightMap) { continue; }
 			if (!squareEnteredLOS) { continue; }
 
-			const int hmxTL = lmx * LOS2HEIGHT_X, hmxBR = std::min(gs->mapxm1, (lmx + 1) * LOS2HEIGHT_X);
-			const int hmzTL = lmz * LOS2HEIGHT_Z, hmzBR = std::min(gs->mapym1, (lmz + 1) * LOS2HEIGHT_Z);
-
-			readmap->PushVisibleHeightMapUpdate(hmxTL, hmzTL,  hmxBR, hmzBR,  true);
+			const SRectangle rect(lmx * LOS2HEIGHT_X, lmz * LOS2HEIGHT_Z, std::min(gs->mapxm1, (lmx + 1) * LOS2HEIGHT_X), std::min(gs->mapym1, (lmz + 1) * LOS2HEIGHT_Z));
+			readmap->UpdateLOS(rect);
 			#endif
 		}
 	}
@@ -85,7 +84,7 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 	static const int LOS2HEIGHT_X = gs->mapx / size.x;
 	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
 
-	const bool updateUnsyncedHeightMap = (allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
+	const bool updateUnsyncedHeightMap = (sendReadmapEvents && allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
 	#endif
 
 	std::vector<int>::const_iterator lsi;
@@ -103,10 +102,8 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 
 		const int lmx = losMapSquareIdx % size.x;
 		const int lmz = losMapSquareIdx / size.x;
-		const int hmxTL = lmx * LOS2HEIGHT_X, hmxBR = std::min(gs->mapxm1, (lmx + 1) * LOS2HEIGHT_X);
-		const int hmzTL = lmz * LOS2HEIGHT_Z, hmzBR = std::min(gs->mapym1, (lmz + 1) * LOS2HEIGHT_Z);
-
-		readmap->PushVisibleHeightMapUpdate(hmxTL, hmzTL,  hmxBR, hmzBR,  true);
+		const SRectangle rect(lmx * LOS2HEIGHT_X, lmz * LOS2HEIGHT_Z, std::min(gs->mapxm1, (lmx + 1) * LOS2HEIGHT_X), std::min(gs->mapym1, (lmz + 1) * LOS2HEIGHT_Z));
+		readmap->UpdateLOS(rect);
 		#endif
 	}
 }
@@ -185,7 +182,7 @@ void CLosTables::OutputTable(int Table)
 
 		y = (int)i;
 		x = 1;
-		y = (int) (sqrt((float)r2 - 1) + 0.5f);
+		y = (int) (math::sqrt((float)r2 - 1) + 0.5f);
 		while (x < y) {
 			if(!PaintTable[x+y*Radius]) {
 				DrawLine(PaintTable, x, y, Radius);
@@ -201,7 +198,7 @@ void CLosTables::OutputTable(int Table)
 			}
 
 			x += 1;
-			y = (int) (sqrt((float)r2 - x*x) + 0.5f);
+			y = (int) (math::sqrt((float)r2 - x*x) + 0.5f);
 		}
 		if (x == y) {
 			if(!PaintTable[x+y*Radius]) {

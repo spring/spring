@@ -14,7 +14,6 @@
 #include "Map/Ground.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/ProjectileDrawer.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -48,7 +47,7 @@ CExpGenSpawnable::CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_E
 
 
 
-static unsigned int GetFlagsFromTable(const LuaTable& table)
+unsigned int CCustomExplosionGenerator::GetFlagsFromTable(const LuaTable& table)
 {
 	unsigned int flags = 0;
 
@@ -62,7 +61,8 @@ static unsigned int GetFlagsFromTable(const LuaTable& table)
 	return flags;
 }
 
-static unsigned int GetFlagsFromHeight(float height, float altitude) {
+unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float altitude)
+{
 	unsigned int flags = 0;
 
 	// note: ranges do not overlap, although code in
@@ -189,7 +189,7 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 		throw content_error(prefix + " is not a subclass of IExplosionGenerator");
 	}
 
-	IExplosionGenerator* explGen = (IExplosionGenerator*) cls->CreateInstance();
+	IExplosionGenerator* explGen = static_cast<IExplosionGenerator*>(cls->CreateInstance());
 	explGen->SetGeneratorID(++numLoadedGenerators);
 
 	assert(gCEG != explGen);
@@ -249,7 +249,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	float3 camVect = camera->pos - pos;
 
-	const unsigned int flags = GetFlagsFromHeight(pos.y, altitude);
+	const unsigned int flags = CCustomExplosionGenerator::GetFlagsFromHeight(pos.y, altitude);
 	const bool airExplosion    = ((flags & CCustomExplosionGenerator::SPW_AIR       ) != 0);
 	const bool groundExplosion = ((flags & CCustomExplosionGenerator::SPW_GROUND    ) != 0);
 	const bool waterExplosion  = ((flags & CCustomExplosionGenerator::SPW_WATER     ) != 0);
@@ -261,7 +261,7 @@ bool CStdExplosionGenerator::Explosion(
 	damage *= gfxMod;
 	damage = std::max(damage, 0.0f);
 
-	const float sqrtDmg = sqrt(damage);
+	const float sqrtDmg = math::sqrt(damage);
 	const float camLength = camVect.Length();
 	float moveLength = radius * 0.03f;
 
@@ -282,7 +282,7 @@ bool CStdExplosionGenerator::Explosion(
 		if (airExplosion || waterExplosion) { smokeDamage *= 0.6f; }
 
 		if (smokeDamage > 0.01f) {
-			smokeDamageSQRT = sqrt(smokeDamage);
+			smokeDamageSQRT = math::sqrt(smokeDamage);
 			smokeDamageISQRT = 1.0f / (smokeDamageSQRT * 0.35f);
 		}
 
@@ -501,22 +501,22 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 			case OP_DIR: {
 				boost::uint16_t offset = *(boost::uint16_t*) code;
 				code += 2;
-				*(float3*) (instance + offset) = dir;
+				*reinterpret_cast<float3*>(instance + offset) = dir;
 				break;
 			}
 			case OP_SAWTOOTH: {
 				// this translates to modulo except it works with floats
-				val -= (*(float*) code) * floor(val / (*(float*) code));
+				val -= (*(float*) code) * math::floor(val / (*(float*) code));
 				code += 4;
 				break;
 			}
 			case OP_DISCRETE: {
-				val = (*(float*) code) * floor(val / (*(float*) code));
+				val = (*(float*) code) * math::floor(val / (*(float*) code));
 				code += 4;
 				break;
 			}
 			case OP_SINE: {
-				val = (*(float*) code) * sin(val);
+				val = (*(float*) code) * math::sin(val);
 				code += 4;
 				break;
 			}
@@ -537,12 +537,12 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				break;
 			}
 			case OP_POW: {
-				val = pow(val, (*(float*) code));
+				val = math::pow(val, (*(float*) code));
 				code += 4;
 				break;
 			}
 			case OP_POWBUFF: {
-				val = pow(val, buffer[(*(int*) code)]);
+				val = math::pow(val, buffer[(*(int*) code)]);
 				code += 4;
 				break;
 			}
@@ -587,7 +587,6 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 		if (!legalType) {
 			throw content_error("[CCEG::ParseExplosionCode] projectile type-properties other than int, float, uchar, or bool are not supported (" + script + ")");
-			return;
 		}
 
 		int p = 0;
@@ -924,7 +923,7 @@ bool CCustomExplosionGenerator::Explosion(
 		}
 
 		for (int c = 0; c < psi.count; c++) {
-			CExpGenSpawnable* projectile = (CExpGenSpawnable*) (psi.projectileClass)->CreateInstance();
+			CExpGenSpawnable* projectile = static_cast<CExpGenSpawnable*>((psi.projectileClass)->CreateInstance());
 
 			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir, (psi.flags & SPW_SYNCED) != 0);
 			projectile->Init(pos, owner);

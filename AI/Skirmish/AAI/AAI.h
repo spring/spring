@@ -55,15 +55,15 @@ public:
 
 	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);	//called when an enemy inside los or radar is damaged
 	void EnemyDestroyed(int enemy, int attacker);
+	void Log(const char* format, ...);
+	void LogConsole(const char* format, ...);
 
 	int HandleEvent(int msg, const void *data);
+	//return count of aai instances
+	int GetInstances() { return aai_instance; }
 
 	// called every frame
 	void Update();
-
-
-	Profiler* GetProfiler();
-
 
 	// callbacks
 	IAICallback* cb;
@@ -71,9 +71,6 @@ public:
 
 	// side 1= arm, 2 = core, 0 = neutral
 	int side;
-
-	// if there is more than one instance of AAI, make sure to allocate/free memory only once
-	int aai_instance;
 
 	// list of buildtasks
 	list<AAIBuildTask*> build_tasks;
@@ -88,10 +85,13 @@ public:
 
 	vector<list<AAIGroup*> > group_list;  // unit groups
 
+private:
+	Profiler* GetProfiler();
+	Profiler* profiler;
+	FILE *file;
 	bool initialized;
 
-	FILE *file;
+	// if there is more than one instance of AAI, make sure to allocate/free memory only once
+	static int aai_instance;
 
-private:
-	Profiler* profiler;
 };

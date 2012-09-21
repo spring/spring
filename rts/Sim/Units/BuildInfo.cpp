@@ -35,10 +35,8 @@ int BuildInfo::CreateCommandID() const
 void BuildInfo::AddCommandParams(Command& cmd) const
 {
 	cmd.params.reserve(cmd.params.size() + 4);
-	cmd.AddParam(pos.x);
-	cmd.AddParam(pos.y);
-	cmd.AddParam(pos.z);
-	cmd.AddParam((float) buildFacing);
+	cmd.PushPos(pos);
+	cmd.PushParam((float) buildFacing);
 }
 
 
@@ -47,11 +45,18 @@ bool BuildInfo::Parse(const Command& c)
 	if (c.params.size() < 3)
 		return false;
 
-	pos = float3(c.params[0], c.params[1], c.params[2]);
+	// FIXME:
+	//   this MUST come before the ID-check because
+	//   CAI::GetOverlapQueued uses a BuildInfo (!!)
+	//   structure to find out if some newly issued
+	//   command overlaps existing ones --> any non-
+	//   build orders would never have <pos> parsed
+	pos = c.GetPos(0);
 
 	if (c.GetID() >= 0)
 		return false;
 
+	// pos = c.GetPos(0);
 	def = unitDefHandler->GetUnitDefByID(-c.GetID());
 	buildFacing = FACING_SOUTH;
 

@@ -30,24 +30,26 @@ COffscreenGLContext* ogc[GML_MAX_NUM_THREADS] = { NULL };
 static void gmlSimLoop(void*)
 {
 	try {
-		Watchdog::ClearTimer(WDT_SIM, true);
-
-		while(gmlKeepRunning && !gmlStartSim)
-			SDL_Delay(100);
+		while(gmlKeepRunning && !gmlStartSim) {
+			// the other thread may ClearPrimaryTimers(), so it is not enough to disable the watchdog timer once
+			Watchdog::ClearTimer(WDT_SIM, true);
+			SDL_Delay((gs->frameNum > 1) ? 500 : 100);
+		}
 
 		if (gmlKeepRunning) {
 			if (gmlShareLists)
 				ogc[0]->WorkerThreadPost();
 
-			//Threading::SetAffinity(3);
+			Threading::SetAffinityHelper("Sim", configHandler->GetUnsigned("SetCoreAffinitySim"));
 
 			Watchdog::ClearTimer(WDT_SIM);
 
 			while(gmlKeepRunning) {
 				if(!gmlMultiThreadSim) {
-					Watchdog::ClearTimer(WDT_SIM, true);
-					while(!gmlMultiThreadSim && gmlKeepRunning)
+					while(!gmlMultiThreadSim && gmlKeepRunning) {
+						Watchdog::ClearTimer(WDT_SIM, true);
 						SDL_Delay(500);
+					}
 				}
 
 				//FIXME activeController could change while processing this branch. Better make it safe with a mutex?
@@ -85,13 +87,15 @@ namespace GML {
 
 	void Init()
 	{
+		if (!Enabled())
+			return;
 		gmlShareLists = configHandler->GetBool("MultiThreadShareLists");
 		if (!gmlShareLists) {
 			gmlMaxServerThreadNum = GML_LOAD_THREAD_NUM;
 			gmlMaxShareThreadNum = GML_LOAD_THREAD_NUM;
 			gmlNoGLThreadNum = GML_SIM_THREAD_NUM;
 		}
-		gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
+		gmlThreadCountOverride = configHandler->GetInt("MultiThreadCount");
 		gmlThreadCount = GML_CPU_COUNT;
 
 		if (gmlShareLists) { // create offscreen OpenGL contexts
@@ -113,16 +117,18 @@ namespace GML {
 
 	void Exit()
 	{
-		if(gmlProcessor) {
+		if (!Enabled())
+			return;
+		if (gmlProcessor) {
 	#if GML_ENABLE_SIM
 			gmlKeepRunning = false; // wait for sim to finish
-			while(!gmlProcessor->PumpAux())
+			while (!gmlProcessor->PumpAux())
 				boost::thread::yield();
 	#endif
 			delete gmlProcessor;
 			gmlProcessor = NULL;
 
-			if(gmlShareLists) {
+			if (gmlShareLists) {
 				for (int i = 0; i < gmlThreadCount; ++i) {
 					delete ogc[i];
 					ogc[i] = NULL;
@@ -134,12 +140,15 @@ namespace GML {
 	void PumpAux()
 	{
 	#if GML_ENABLE_SIM
-		gmlProcessor->PumpAux();
+		if (gmlProcessor)
+			gmlProcessor->PumpAux();
 	#endif
 	}
 
 	bool SimThreadRunning()
 	{
+		if (!Enabled())
+			return false;
 	#if GML_ENABLE_SIM
 		if (!gmlStartSim && gmlMultiThreadSim && gs->frameNum > 0) {
 			gmlStartSim = true;

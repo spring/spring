@@ -76,10 +76,10 @@ void CGameHelper::DoExplosionDamage(
 	CUnit* unit,
 	CUnit* owner,
 	const float3& expPos,
-	float expRad,
-	float expSpeed,
-	float edgeEffectiveness,
-	bool ignoreOwner,
+	const float expRadius,
+	const float expSpeed,
+	const float expEdgeEffect,
+	const bool ignoreOwner,
 	const DamageArray& damages,
 	const int weaponDefID
 ) {
@@ -87,133 +87,89 @@ void CGameHelper::DoExplosionDamage(
 		return;
 	}
 
-	// dist is equal to the maximum of "distance from center
-	// of unit to center of explosion" and "unit radius + 0.1",
-	// where "center of unit" is determined by the relative
-	// position of its collision volume and "unit radius" by
-	// the volume's minimally-bounding sphere
-	//
-	const int damageFrame = unit->lastAttackedPieceFrame;
-	const LocalModelPiece* piece = unit->lastAttackedPiece;
-	const CollisionVolume* volume = NULL;
+	float3 colVolPos;
 
-	float3 basePos;
-	float3 diffPos;
+	const CollisionVolume* colVol = CollisionVolume::GetVolume(unit, colVolPos);
 
-	if (piece != NULL && unit->unitDef->usePieceCollisionVolumes && damageFrame == gs->frameNum) {
-		volume = piece->GetCollisionVolume();
-		basePos = piece->GetAbsolutePos() + volume->GetOffsets();
-		basePos = unit->pos + 
-			unit->rightdir * basePos.x +
-			unit->updir    * basePos.y +
-			unit->frontdir * basePos.z;
-	} else {
-		volume = unit->collisionVolume;
-		basePos = unit->midPos + volume->GetOffsets();
-	}
+	// linear damage falloff with distance
+	const float expDist = colVol->GetPointDistance(unit, expPos);
+	const float expRim = expDist * expEdgeEffect;
+	const float expMod = (expRadius - expDist) / (expRadius - expRim);
+	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
 
-	diffPos = basePos - expPos;
-
-	const float volRad = volume->GetBoundingRadius();
-	const float expDist = std::max(diffPos.Length(), volRad + 0.1f);
-
-	// expDist2 is the distance from the boundary of the
-	// _volume's_ minimally-bounding sphere (!) to the
-	// explosion center, unless unit->isUnderWater and
-	// the explosion is above water: then center2center
-	// distance is used
-	//
-	// NOTE #1: this will be only an approximation when
-	// the unit's collision volume is not a sphere, but
-	// a better one than when using unit->radius
-	//
-	// NOTE #2: if an explosion occurs right underneath
-	// a unit's map footprint, it can cause damage even
-	// if the unit's collision volume is greatly offset
-	// (because CQuadField is again based exclusively on
-	// unit->radius, so the iteration will include units
-	// that should not be touched)
-	// Clamp expDist to radius to prevent division by zero
-	// (expDist2 can never be > radius). We still need the
-	// original expDist later to normalize diffPos.
-	// expDist2 _can_ exceed radius when explosion is eg.
-	// on shield surface: in that case don't do any damage
-	float expDist2 = expDist - volRad;
-	float expDist1 = std::min(expDist, expRad);
-
-	if (expDist2 > expRad) {
+	// return early if (distance > radius)
+	if (expMod <= 0.0f)
 		return;
-	}
+	// TODO: damage attenuation for underwater units?
+	if (expPos.y >= 0.0f && unit->pos.y <  0.0f) {}
+	if (expPos.y <  0.0f && unit->pos.y >= 0.0f) {}
 
-	if (unit->isUnderWater && (expPos.y > -1.0f)) {
-		// should make it harder to damage subs with above-water weapons
-		expDist2 += volRad;
-		expDist2 = std::min(expDist2, expRad);
-	}
-
-	const float mod1 = std::max(0.01f, (expRad - expDist1) / (expRad - (expDist1 * edgeEffectiveness)));
-	const float mod2 = std::max(0.01f, (expRad - expDist2) / (expRad - (expDist2 * edgeEffectiveness)));
-
-	diffPos /= expDist;
-	diffPos.y += 0.12f;
-
-	// limit the impulse to prevent later FP overflow
+	// NOTE: if an explosion occurs right underneath a
+	// unit's map footprint, it might cause damage even
+	// if the unit's collision volume is greatly offset
+	// (because CQuadField coverage is based exclusively
+	// on unit->radius, so the DoDamage() iteration will
+	// include units that should not be touched)
+	//
+	// also limit the impulse to prevent later FP overflow
 	// (several weapons have _default_ damage values in the order of 1e4,
 	// which make the simulation highly unstable because they can impart
 	// speeds of several thousand elmos/frame to units and throw them far
 	// outside the map)
-	const DamageArray damageDone = damages * mod2;
-	const float rawImpulseStrength = damages.impulseFactor * mod1 * (damages.GetDefaultDamage() + damages.impulseBoost) * 3.2f;
-	const float modImpulseStrength = Clamp(rawImpulseStrength, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
-	const float3 addedImpulse = diffPos * modImpulseStrength;
+	// DamageArray::operator* scales damage multipliers,
+	// not the impulse factor --> need to scale manually
+	// by it for impulse
+	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
+	const float modImpulseScale = Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
 
-	if (expDist2 < (expSpeed * 4.0f)) { // damage directly
-		unit->DoDamage(damageDone, addedImpulse, owner, weaponDefID);
-	} else { // damage later
-		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponDefID);
-		waitingDamages[(gs->frameNum + int(expDist2 / expSpeed) - 3) & 127].push_front(wd);
+	const float3 impulseDir = (colVolPos - expPos).SafeNormalize();
+	const float3 expImpulse = impulseDir * modImpulseScale;
+
+	const DamageArray expDamages = damages * expMod;
+
+	if (expDist < (expSpeed * DIRECT_EXPLOSION_DAMAGE_SPEED_SCALE)) {
+		// damage directly
+		unit->DoDamage(expDamages, expImpulse, owner, weaponDefID);
+	} else {
+		// damage later
+		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, expDamages, expImpulse, weaponDefID);
+		waitingDamages[(gs->frameNum + int(expDist / expSpeed) - 3) & 127].push_front(wd);
 	}
 }
 
 void CGameHelper::DoExplosionDamage(
 	CFeature* feature,
 	const float3& expPos,
-	float expRad,
+	const float expRadius,
+	const float expEdgeEffect,
 	const DamageArray& damages,
 	const int weaponDefID
 ) {
-	const CollisionVolume* cv = feature->collisionVolume;
+	float3 colVolPos;
 
-	if (cv) {
-		const float3 dif = (feature->midPos + cv->GetOffsets()) - expPos;
+	const CollisionVolume* colVol = CollisionVolume::GetVolume(feature, colVolPos);
+	const float expDist = colVol->GetPointDistance(feature, expPos);
+	const float expRim = expDist * expEdgeEffect;
+	const float expMod = (expRadius - expDist) / (expRadius - expRim);
+	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
 
-		float expDist = std::max(dif.Length(), 0.1f);
-		float expMod = (expRad - expDist) / expRad;
-		float dmgScale = (damages.GetDefaultDamage() + damages.impulseBoost);
+	if (expMod <= 0.0f)
+		return;
 
-		// always do some damage with explosive stuff
-		// (DDM wreckage etc. is too big to normally
-		// be damaged otherwise, even by BB shells)
-		// NOTE: this will also be only approximate
-		// for non-spherical volumes
-		if ((expRad > SQUARE_SIZE) && (expDist < (cv->GetBoundingRadius() * 1.1f)) && (expMod < 0.1f)) {
-			expMod = 0.1f;
-		}
+	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
+	const float modImpulseScale = Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
 
-		if (expMod > 0.0f) {
-			const DamageArray modDamages = damages * expMod;
-			const float3& modImpulse = dif * (damages.impulseFactor * expMod / expDist * dmgScale);
+	const float3 impulseDir = (colVolPos - expPos).SafeNormalize();
+	const float3 expImpulse = impulseDir * modImpulseScale;
 
-			feature->DoDamage(modDamages, modImpulse, NULL, weaponDefID);
-		}
-	}
+	feature->DoDamage(damages * expMod, expImpulse, NULL, weaponDefID);
 }
 
 
 
 void CGameHelper::Explosion(const ExplosionParams& params) {
-	const float3& pos = params.pos;
 	const float3& dir = params.dir;
+	const float3 expPos = params.pos;
 	const DamageArray& damages = params.damages;
 
 	// if weaponDef is NULL, this is a piece-explosion
@@ -221,7 +177,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	const WeaponDef* weaponDef = params.weaponDef;
 	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -CSolidObject::DAMAGE_EXPLOSION_DEBRIS;
 
-	const float3 expPos = pos;
 
 	CUnit* owner = params.owner;
 	CUnit* hitUnit = params.hitUnit;
@@ -229,7 +184,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 	const float craterAOE = std::max(1.0f, params.craterAreaOfEffect);
 	const float damageAOE = std::max(1.0f, params.damageAreaOfEffect);
-	const float edgeEffectiveness = params.edgeEffectiveness;
+	const float expEdgeEffect = params.edgeEffectiveness;
 	const float expSpeed = params.explosionSpeed;
 	const float gfxMod = params.gfxMod;
 	const float realHeight = ground->GetHeightReal(expPos.x, expPos.z);
@@ -248,9 +203,9 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 	if (impactOnly) {
 		if (hitUnit) {
-			DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, edgeEffectiveness, ignoreOwner, damages, weaponDefID);
+			DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID);
 		} else if (hitFeature) {
-			DoExplosionDamage(hitFeature, expPos, damageAOE, damages, weaponDefID);
+			DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID);
 		}
 	} else {
 		{
@@ -265,14 +220,14 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 					hitUnitDamaged = true;
 				}
 
-				DoExplosionDamage(unit, owner, expPos, damageAOE, expSpeed, edgeEffectiveness, ignoreOwner, damages, weaponDefID);
+				DoExplosionDamage(unit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID);
 			}
 
 			// HACK: for a unit with an offset coldet volume, the explosion
 			// (from an impacting projectile) position might not correspond
 			// to its quadfield position so we need to damage it separately
 			if (hitUnit != NULL && !hitUnitDamaged) {
-				DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, edgeEffectiveness, ignoreOwner, damages, weaponDefID);
+				DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID);
 			}
 		}
 
@@ -288,11 +243,11 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 					hitFeatureDamaged = true;
 				}
 
-				DoExplosionDamage(feature, expPos, damageAOE, damages, weaponDefID);
+				DoExplosionDamage(feature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID);
 			}
 
 			if (hitFeature != NULL && !hitFeatureDamaged) {
-				DoExplosionDamage(hitFeature, expPos, damageAOE, damages, weaponDefID);
+				DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID);
 			}
 		}
 
@@ -328,7 +283,9 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	#if (PLAY_SOUNDS == 1)
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
-		const int soundNum = (expPos.y < 0.0f);
+
+		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(expPos.y, altitude);
+		const int soundNum = ((soundFlags & (CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER)) != 0);
 		const int soundID = soundSet.getID(soundNum);
 
 		if (soundID > 0) {
@@ -363,7 +320,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
-	GML_RECMUTEX_LOCK(qnum);
+	GML_RECMUTEX_LOCK(qnum); // QueryUnits
 
 	const vector<int> &quads = qf->GetQuads(query.pos, query.radius);
 
@@ -573,9 +530,7 @@ public:
 	void AddUnit(CUnit* u) {
 		// FIXME: use volumeBoundingRadius?
 		// (more for consistency than need)
-		const float dist =
-			(pos - u->midPos).Length() -
-			u->radius;
+		const float dist = pos.distance(u->midPos) - u->radius;
 
 		if (dist <= closeDist &&
 			(canBeBlind || u->losRadius * loshandler->losDiv > dist)) {
@@ -656,7 +611,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 	typedef std::vector<int>::const_iterator VectorIt;
 	typedef std::list<CUnit*>::const_iterator ListIt;
-	
+
 	for (VectorIt qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
 			if (teamHandler->Ally(attacker->allyteam, t)) {
@@ -672,7 +627,13 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				if (!(targetUnit->category & weapon->onlyTargetCategory)) {
 					continue;
 				}
-
+				if (targetUnit->GetTransporter() != NULL) {
+					if (!modInfo.targetableTransportedUnits)
+						continue;
+					// the transportee might be "hidden" below terrain, in which case we can't target it
+					if (targetUnit->pos.y < ground->GetHeightReal(targetUnit->pos.x, targetUnit->pos.z))
+						continue;
+				}
 				if (tempTargetUnits[targetUnit->id] == tempNum) {
 					continue;
 				}
@@ -690,9 +651,9 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
 
 				if (targetLOSState & LOS_INLOS) {
-					targPos = targetUnit->midPos;
+					targPos = targetUnit->aimPos;
 				} else if (targetLOSState & LOS_INRADAR) {
-					targPos = targetUnit->midPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
+					targPos = targetUnit->aimPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
 					targetPriority *= 10.0f;
 				} else {
 					continue;
@@ -833,18 +794,25 @@ void CGameHelper::GetEnemyUnitsNoLosTest(const float3 &pos, float searchRadius, 
 // Miscellaneous (i.e. not yet categorized)
 //////////////////////////////////////////////////////////////////////
 
-float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
+float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming)
 {
-	float3 pos = unit->midPos;
-	if (teamHandler->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
+	float3 pos = aiming? unit->aimPos: unit->midPos;
+
+	if (teamHandler->Ally(allyteam, unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
 		// ^ it's one of our own, or it's in LOS, so don't add an error ^
-	} else if ((!gameSetup || gameSetup->ghostedBuildings) && (unit->losStatus[allyteam] & LOS_PREVLOS) && !unit->moveDef) {
-		// ^ this is a ghosted building, so don't add an error ^
-	} else if ((unit->losStatus[allyteam] & LOS_INRADAR)) {
-		pos += unit->posErrorVector * radarhandler->radarErrorSize[allyteam];
-	} else {
-		pos += unit->posErrorVector * radarhandler->baseRadarErrorSize * 2;
+		return pos;
 	}
+	if (gameSetup->ghostedBuildings && (unit->losStatus[allyteam] & LOS_PREVLOS) && !unit->moveDef) {
+		// ^ this is a ghosted building, so don't add an error ^
+		return pos;
+	}
+
+	if ((unit->losStatus[allyteam] & LOS_INRADAR) != 0) {
+		pos += (unit->posErrorVector * radarhandler->radarErrorSize[allyteam]);
+	} else {
+		pos += (unit->posErrorVector * radarhandler->baseRadarErrorSize * 2);
+	}
+
 	return pos;
 }
 
@@ -875,14 +843,14 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 	float3 pos;
 
 	if (buildInfo.GetXSize() & 2)
-		pos.x = floor((buildInfo.pos.x              ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + SQUARE_SIZE;
+		pos.x = math::floor((buildInfo.pos.x              ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + SQUARE_SIZE;
 	else
-		pos.x = floor((buildInfo.pos.x + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
+		pos.x = math::floor((buildInfo.pos.x + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
 	if (buildInfo.GetZSize() & 2)
-		pos.z = floor((buildInfo.pos.z              ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + SQUARE_SIZE;
+		pos.z = math::floor((buildInfo.pos.z              ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + SQUARE_SIZE;
 	else
-		pos.z = floor((buildInfo.pos.z + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
+		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
 	const UnitDef* ud = buildInfo.def;
 	const float bh = uh->GetBuildHeight(pos, ud, synced);
@@ -983,7 +951,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 					for (int x2 = x2Min; x2 < x2Max; ++x2) {
 						CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 
-						if (solObj && solObj->immobile && dynamic_cast<CFactory*>(solObj) && ((CFactory*)solObj)->opening) {
+						if (solObj && solObj->immobile && dynamic_cast<CFactory*>(solObj) && static_cast<CFactory*>(solObj)->opening) {
 							good = false;
 							break;
 						}

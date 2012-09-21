@@ -211,7 +211,7 @@ void TexEnvSetupHandler::BeginPass(const std::vector<Blendmap*>& blendMaps, cons
 
 bool TexEnvSetupHandler::SetupShader(IShaderSetup* shadercfg, NodeSetupParams& parms)
 {
-	NodeTexEnvSetup* ns = (NodeTexEnvSetup*)shadercfg;
+	NodeTexEnvSetup* ns = static_cast<NodeTexEnvSetup*>(shadercfg);
 
 	int tu = 0;// texture unit
 	for (size_t cur = 0; cur < ns->stages.size(); cur ++)

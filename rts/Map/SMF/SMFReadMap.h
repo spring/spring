@@ -29,7 +29,7 @@ public:
 	~CSMFReadMap();
 
 	void UpdateShadingTexture();
-	void UpdateHeightMapUnsynced(const HeightMapUpdate&);
+	void UpdateHeightMapUnsynced(const SRectangle&);
 
 	unsigned int GetDetailTexture() const { return detailTex; }
 	unsigned int GetMiniMapTexture() const { return minimapTex; }
@@ -79,18 +79,18 @@ private:
 	void CreateShadingTex();
 	void CreateNormalTex();
 
-	void UpdateVertexNormals(const HeightMapUpdate& update);
-	void UpdateFaceNormals(const HeightMapUpdate& update);
-	void UpdateNormalTexture(const HeightMapUpdate& update);
-	void UpdateShadingTexture(const HeightMapUpdate& update);
+	void UpdateVertexNormals(const SRectangle& update);
+	void UpdateFaceNormals(const SRectangle& update);
+	void UpdateNormalTexture(const SRectangle& update);
+	void UpdateShadingTexture(const SRectangle& update);
 
 	inline void UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) const;
 	inline CBaseGroundDrawer* GetGroundDrawer();
 
-	inline const float GetCenterHeightUnsynced(const int& x, const int& y) const;
+	inline const float GetCenterHeightUnsynced(const int x, const int y) const;
 
-	inline float DiffuseSunCoeff(const int& x, const int& y) const;
-	inline float3 GetLightValue(const int& x, const int& y) const;
+	inline float DiffuseSunCoeff(const int x, const int y) const;
+	inline float3 GetLightValue(const int x, const int y) const;
 	void ParseSMD(std::string filename);
 
 public:

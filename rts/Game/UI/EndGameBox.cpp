@@ -9,7 +9,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/glFont.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -29,11 +28,11 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 
 	if (num == 0) {
 		sprintf(c, "0");
-	} else if (fabs(num) < 10 * mul) {
+	} else if (math::fabs(num) < 10 * mul) {
 		sprintf(c, "%.1f",  num);
-	} else if (fabs(num) < 10000 * mul) {
+	} else if (math::fabs(num) < 10000 * mul) {
 		sprintf(c, "%.0f",  num);
-	} else if (fabs(num) < 10000000 * mul) {
+	} else if (math::fabs(num) < 10000000 * mul) {
 		sprintf(c, "%.0fk", num / 1000);
 	} else {
 		sprintf(c, "%.0fM", num / 1000000);
@@ -165,7 +164,7 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 	if (dispMode > 0 ) {
 		if ((mx > (box.x1 + 0.01f)) && (mx < (box.x1 + 0.12f)) &&
 		    (my < (box.y1 + 0.57f)) && (my > (box.y1 + 0.571f - stats.size()*0.02f))) {
-			int sel = (int) floor(-(my - box.y1 - 0.57f) * 50);
+			int sel = (int) math::floor(-(my - box.y1 - 0.57f) * 50);
 
 			if (button == 1) {
 				stat1 = sel;
@@ -341,7 +340,7 @@ void CEndGameBox::Draw()
 
 		if ((mx > box.x1 + 0.01f) && (mx < box.x1 + 0.12f) &&
 		    (my < box.y1 + 0.57f) && (my > box.y1 + 0.571f - (stats.size() * 0.02f))) {
-			const int sel = (int) floor(50 * -(my - box.y1 - 0.57f));
+			const int sel = (int) math::floor(50 * -(my - box.y1 - 0.57f));
 
 			glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
 			glDisable(GL_TEXTURE_2D);

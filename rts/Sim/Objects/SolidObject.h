@@ -9,13 +9,24 @@
 #include "System/Sync/SyncedFloat3.h"
 #include "System/Sync/SyncedPrimitive.h"
 
-class CUnit;
-struct DamageArray;
 struct CollisionVolume;
+struct SolidObjectDef;
 struct MoveDef;
+struct SolidObjectGroundDecal;
 
+struct DamageArray;
+class CUnit;
 
-enum YardmapStati {
+enum TerrainChangeTypes {
+	TERRAINCHANGE_DAMAGE_RECALCULATION = 0, // update after regular explosion or terraform event
+	TERRAINCHANGE_SQUARE_TYPEMAP_INDEX = 1, // update after typemap-index of a square changed (Lua)
+	TERRAINCHANGE_TYPEMAP_SPEED_VALUES = 2, // update after speed-values of a terrain-type changed (Lua)
+	TERRAINCHANGE_OBJECT_INSERTED      = 3,
+	TERRAINCHANGE_OBJECT_INSERTED_YM   = 4,
+	TERRAINCHANGE_OBJECT_DELETED       = 5,
+};
+
+enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
 	//YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
 	YARDMAP_YARD        = 1,    // walkable when yard is open
@@ -27,7 +38,7 @@ enum YardmapStati {
 	YARDMAP_YARDFREE    = ~YARDMAP_YARD,
 	YARDMAP_GEO         = YARDMAP_BLOCKED,
 };
-typedef BitwiseEnum<YardmapStati> YardmapStatus;
+typedef BitwiseEnum<YardmapStates> YardMapStatus;
 
 
 
@@ -59,11 +70,15 @@ public:
 	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }
 
+	virtual void ForcedMove(const float3& newPos, bool snapToGround = true) {}
+	virtual void ForcedSpin(const float3& newDir) {}
+
 	void Move3D(const float3& v, bool relative) {
 		const float3& dv = relative? v: (v - pos);
 
 		pos += dv;
 		midPos += dv;
+		aimPos += dv;
 	}
 
 	void Move1D(const float v, int d, bool relative) {
@@ -71,17 +86,19 @@ public:
 
 		pos[d] += dv;
 		midPos[d] += dv;
+		aimPos[d] += dv;
 	}
 
 	// this should be called whenever the direction
 	// vectors are changed (ie. after a rotation) in
 	// eg. movetype code
-	void UpdateMidPos() {
-		const float3 dz = (frontdir * relMidPos.z);
-		const float3 dy = (updir    * relMidPos.y);
-		const float3 dx = (rightdir * relMidPos.x);
-
-		midPos = pos + dz + dy + dx;
+	void UpdateMidAndAimPos() {
+		midPos = GetMidPos();
+		aimPos = GetAimPos();
+	}
+	void SetMidAndAimPos(const float3& mp, const float3& ap, bool relative) {
+		SetMidPos(mp, relative);
+		SetAimPos(ap, relative);
 	}
 
 	/**
@@ -98,7 +115,38 @@ public:
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
-	YardmapStatus GetGroundBlockingAtPos(float3 gpos) const;
+	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
+
+private:
+	void SetMidPos(const float3& mp, bool relative) {
+		if (relative) {
+			relMidPos = mp; midPos = GetMidPos();
+		} else {
+			midPos = mp; relMidPos = midPos - pos;
+		}
+	}
+	void SetAimPos(const float3& ap, bool relative) {
+		if (relative) {
+			relAimPos = ap; aimPos = GetAimPos();
+		} else {
+			aimPos = ap; relAimPos = aimPos - pos;
+		}
+	}
+
+	float3 GetMidPos() const {
+		const float3 dz = (frontdir * relMidPos.z);
+		const float3 dy = (updir    * relMidPos.y);
+		const float3 dx = (rightdir * relMidPos.x);
+
+		return (pos + dz + dy + dx);
+	}
+	float3 GetAimPos() const {
+		const float3 dz = (frontdir * relAimPos.z);
+		const float3 dy = (updir    * relAimPos.y);
+		const float3 dx = (rightdir * relAimPos.x);
+
+		return (pos + dz + dy + dx);
+	}
 
 public:
 	float health;
@@ -132,21 +180,25 @@ public:
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
 
+	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
 	MoveDef* moveDef;                           ///< holds information about the mobility of this object (if NULL, object is either static or aircraft)
 	CollisionVolume* collisionVolume;
+	SolidObjectGroundDecal* groundDecal;
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)
 	SyncedFloat3 updir;                         ///< object-local y-axis (in WS)
 
-	SyncedFloat3 relMidPos;                     ///< local-space vector from pos to midPos read from model, used to initialize midPos
-	SyncedFloat3 midPos;                        ///< mid-position of model (pos is at the very bottom of the model) in WS, used as center of mass
+	SyncedFloat3 relMidPos;                     ///< local-space vector from pos to midPos (read from model, used to initialize midPos)
+	SyncedFloat3 relAimPos;                     ///< local-space vector from pos to aimPos (read from model, used to initialize aimPos)
+	SyncedFloat3 midPos;                        ///< mid-position of model in WS, used as center of mass (and many other things)
+	SyncedFloat3 aimPos;                        ///< used as aiming position by weapons
 	int2 mapPos;                                ///< current position on GroundBlockingObjectMap
 
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
-	const YardmapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
+	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
 	int buildFacing;                            ///< Orientation of footprint, 4 different states
 
 	static const float DEFAULT_MASS;

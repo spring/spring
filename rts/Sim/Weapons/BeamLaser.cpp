@@ -39,7 +39,7 @@ CBeamLaser::CBeamLaser(CUnit* owner)
 
 
 
-void CBeamLaser::Update(void)
+void CBeamLaser::Update()
 {
 	if (targetType != Target_None) {
 		weaponPos =
@@ -133,7 +133,7 @@ bool CBeamLaser::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	return true;
 }
 
-void CBeamLaser::Init(void)
+void CBeamLaser::Init()
 {
 	if (!weaponDef->beamburst) {
 		salvoDelay = 0;
@@ -150,7 +150,7 @@ void CBeamLaser::Init(void)
 	muzzleFlareSize = 0;
 }
 
-void CBeamLaser::FireImpl(void)
+void CBeamLaser::FireImpl()
 {
 	float3 dir;
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
@@ -207,8 +207,8 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 
 
 	// increase range if targets are searched for in a cylinder
-	if (cylinderTargetting > 0.01f) {
-		const float verticalDist = owner->radius * cylinderTargetting * curDir.y;
+	if (cylinderTargeting > 0.01f) {
+		const float verticalDist = owner->radius * cylinderTargeting * curDir.y;
 		const float maxLengthModSq = maxLength * maxLength + verticalDist * verticalDist;
 
 		maxLength = math::sqrt(maxLengthModSq);

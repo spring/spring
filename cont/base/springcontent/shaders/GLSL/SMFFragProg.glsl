@@ -75,7 +75,9 @@ varying vec2 specularTexCoords;
 varying vec2 normalTexCoords;
 varying vec2 infoTexCoords;
 
-uniform int numMapDynLights;
+#if (HAVE_INFOTEX == 1)
+uniform float infoTexIntensityMul;
+#endif
 
 
 
@@ -200,6 +202,13 @@ void main() {
 		diffuseCol.rgb = mix(diffuseCol.rgb, reflectCol, reflectMod);
 	}
 	#endif
+	#if (HAVE_INFOTEX == 1)
+		// increase contrast and brightness for the overlays
+		// TODO: make the multiplier configurable by users?
+		diffuseCol.rgb += (texture2D(infoTex, infoTexCoords).rgb * infoTexIntensityMul);
+		diffuseCol.rgb -= (vec3(0.5, 0.5, 0.5) * float(infoTexIntensityMul == 1.0));
+	#endif
+
 
 
 	float shadowCoeff = 1.0;
@@ -315,11 +324,5 @@ void main() {
 
 	gl_FragColor = mix(gl_Fog.color, gl_FragColor, fogFactor);
 	gl_FragColor.a = min(diffuseCol.a, (vertexWorldPos.y * 0.1) + 1.0);
-
-	#if (HAVE_INFOTEX == 1)
-	// increase contrast and brightness for the overlays
-	gl_FragColor.rgb += (texture2D(infoTex, infoTexCoords).rgb * (2.0 - dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114))));
-	gl_FragColor.rgb -= vec3(0.5, 0.5, 0.5);
-	#endif
 }
 

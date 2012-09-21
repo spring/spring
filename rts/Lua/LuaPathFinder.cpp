@@ -8,7 +8,7 @@
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Sim/Path/IPathManager.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 
 #include <stdlib.h>
 #include <algorithm>
@@ -252,7 +252,7 @@ int LuaPathFinder::InitPathNodeCostsArray(lua_State* L)
 	const unsigned int array = luaL_checkint(L, 1);
 	const unsigned int sizex = luaL_checkint(L, 2);
 	const unsigned int sizez = luaL_checkint(L, 3);
-	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
 	std::map<unsigned int, NodeCostOverlay>& map = synced?
 		costArrayMapSynced:
@@ -277,7 +277,7 @@ int LuaPathFinder::InitPathNodeCostsArray(lua_State* L)
 int LuaPathFinder::FreePathNodeCostsArray(lua_State* L)
 {
 	const unsigned int array = luaL_checkint(L, 1);
-	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
 	std::map<unsigned int, NodeCostOverlay>& map = synced?
 		costArrayMapSynced:
@@ -306,7 +306,7 @@ int LuaPathFinder::FreePathNodeCostsArray(lua_State* L)
 int LuaPathFinder::SetPathNodeCosts(lua_State* L)
 {
 	const unsigned int array = luaL_checkint(L, 1);
-	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
 	std::map<unsigned int, NodeCostOverlay>& map = synced?
 		costArrayMapSynced:
@@ -335,7 +335,7 @@ int LuaPathFinder::SetPathNodeCost(lua_State* L)
 	const unsigned int array = luaL_checkint(L, 1);
 	const unsigned int index = luaL_checkint(L, 2);
 	const float cost = luaL_checkfloat(L, 3);
-	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
 	std::map<unsigned int, NodeCostOverlay>& map = synced?
 		costArrayMapSynced:

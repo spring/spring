@@ -14,10 +14,10 @@ Else  (NOT Boost_FOUND)
 
 	SET(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
 	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR})
-	If	(NOT WIN32)
+	If	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 		#Win32 tests links static
 		add_definitions(-DBOOST_TEST_DYN_LINK)
-	EndIf	(NOT WIN32)
+	EndIf	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 	add_definitions(-DSYNCCHECK -DUNIT_TEST)
 
 	Set(test_Log_sources
@@ -32,6 +32,8 @@ Else  (NOT Boost_FOUND)
 		)
 
 	Add_Custom_Target(tests)
+	#FIXME: hardcoded path (is used in buildbot/slave/make_installer.sh, too)
+	add_custom_target(check WINEPATH=/tmp/spring/inst/${CMAKE_INSTALL_PREFIX} ${CMAKE_CTEST_COMMAND} --output-on-failure)
 
 
 
@@ -115,7 +117,7 @@ Else  (NOT Boost_FOUND)
 
 	ADD_EXECUTABLE(test_RectangleOptimizer ${test_RectangleOptimizer_src})
 	TARGET_LINK_LIBRARIES(test_RectangleOptimizer
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${Boost_SYSTEM_LIBRARY}
 		)
 
 	ADD_TEST(NAME testRectangleOptimizer COMMAND test_RectangleOptimizer)

@@ -2,9 +2,7 @@
 
 #include "UDPConnection.h"
 
-#ifdef _MSC_VER
-#	include "System/Platform/Win/win32.h"
-#elif defined(_WIN32)
+#if defined(_WIN32)
 #	include <windows.h>
 #endif
 
@@ -732,13 +730,15 @@ void UDPConnection::SendIfNecessary(bool flushed)
 					nak = 0; // 1 request is enough, unless high loss
 			}
 
+			bool sent = false;
 			while (true) {
-				bool canResend = maxResend > 0 && ((buf.GetSize() + resIter->second->GetSize()) <= mtu);
+				bool canResend = maxResend > 0 &&
+					((buf.GetSize() +
+					(((netLossFactor == MIN_LOSS_FACTOR) || (rev == 0)) ? resIter->second->GetSize() : ((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize())) // resend chunk size
+					) <= mtu);
 				bool canSendNew = !newChunks.empty() && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu);
-				if (!canResend && !canSendNew) {
-					todo = false;
+				if (!canResend && !canSendNew)
 					break;
-				}
 				resend = !resend; // alternate between send and resend to make sure none is starved
 				if (resend && canResend) {
 					if (netLossFactor == MIN_LOSS_FACTOR) {
@@ -770,20 +770,20 @@ void UDPConnection::SendIfNecessary(bool flushed)
 					}
 					++resentChunks;
 					--maxResend;
+					sent = true;
 				} else if (!resend && canSendNew) {
 					buf.chunks.push_back(newChunks[0]);
 					unackedChunks.push_back(newChunks[0]);
 					newChunks.pop_front();
+					sent = true;
 				}
 			}
-
+			if (!sent || (maxResend == 0 && newChunks.empty()))
+				todo = false;
 			buf.checksum = buf.GetChecksum();
 			EMULATE_PACKET_CORRUPTION(buf.checksum);
 
 			SendPacket(buf);
-			if (maxResend == 0 && newChunks.empty()) {
-				todo = false;
-			}
 		}
 		if (netLossFactor != MIN_LOSS_FACTOR) { // on a lossy connection the packet will be sent multiple times
 			for (int i = unackPrevSize; i < unackedChunks.size(); ++i)
@@ -874,10 +874,9 @@ void UDPConnection::Close(bool flush) {
 	muted = true;
 	if (!sharedSocket) {
 		try {
-			mySocket->shutdown(boost::asio::ip::udp::socket::shutdown_both);
 			mySocket->close();
 		} catch (const boost::system::system_error& ex) {
-			LOG_L(L_ERROR, "Failed closing UDP conection: %s", ex.what());
+			LOG_L(L_ERROR, "Failed closing UDP connection: %s", ex.what());
 		}
 	}
 	closed = true;

@@ -5,6 +5,7 @@
 
 #include "Projectile.h"
 #include <list>
+#include "lib/gml/gmlcnf.h"
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 #define SUBPARTICLE_LIST gmlCircularQueue<CFireProjectile::SubParticle,16>

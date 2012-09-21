@@ -124,7 +124,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	cloakAlpha2 = std::min(1.0f, cloakAlpha + 0.2f);
 	cloakAlpha3 = std::min(1.0f, cloakAlpha + 0.4f);
 
-	// load unit explosion generators
+	// load unit explosion generators and decals
 	for (size_t unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
 		UnitDef* ud = unitDefHandler->unitDefs[unitDefID];
 
@@ -132,16 +132,12 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 			ud->sfxExplGens.push_back(explGenHandler->LoadGenerator(*it));
 		}
 
-		if (ud->useBuildingGroundDecal) {
-			ud->buildingDecalType = groundDecals->GetBuildingDecalType(ud->buildingDecalTypeName);
-		} else {
-			ud->buildingDecalType = -1;
+		if (ud->decalDef.useGroundDecal) {
+			ud->decalDef.groundDecalType = groundDecals->GetSolidObjectDecalType(ud->decalDef.groundDecalTypeName);
 		}
 
-		if (ud->leaveTracks) {
-			ud->trackType = groundDecals->GetTrackType(ud->trackTypeName);
-		} else {
-			ud->trackType = -1;
+		if (ud->decalDef.leaveTrackDecals) {
+			ud->decalDef.trackDecalType = groundDecals->GetTrackType(ud->decalDef.trackDecalTypeName);
 		}
 	}
 
@@ -160,7 +156,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
 
 #ifdef USE_GML
-	showHealthBars = configHandler->GetBool("ShowHealthBars");
+	showHealthBars = GML::Enabled() && configHandler->GetBool("ShowHealthBars");
 	multiThreadDrawUnit = configHandler->GetBool("MultiThreadDrawUnit");
 	multiThreadDrawUnitShadow = configHandler->GetBool("MultiThreadDrawUnitShadow");
 #endif
@@ -181,18 +177,16 @@ CUnitDrawer::~CUnitDrawer()
 	// RenderUnitDestroyed does not trigger on exit, clean up manually
 	for (std::set<CUnit*>::iterator it = unsortedUnits.begin(); it != unsortedUnits.end(); ++it) {
 		CUnit* unit = *it;
-		CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
-		if (building != NULL) {
-			groundDecals->RemoveBuilding(building, NULL);
-		}
+		if (unit->unitDef->decalDef.useGroundDecal)
+			groundDecals->RemoveSolidObject(unit, NULL);
 
 		groundDecals->RemoveUnit(unit);
 	}
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		std::set<GhostBuilding*>& ghostSet = deadGhostBuildings[modelType];
-		std::set<GhostBuilding*>::iterator ghostSetIt;
+		std::set<GhostSolidObject*>& ghostSet = deadGhostBuildings[modelType];
+		std::set<GhostSolidObject*>::iterator ghostSetIt;
 
 		for (ghostSetIt = ghostSet.begin(); ghostSetIt != ghostSet.end(); ++ghostSetIt) {
 			if ((*ghostSetIt)->decal) {
@@ -204,12 +198,6 @@ CUnitDrawer::~CUnitDrawer()
 		deadGhostBuildings[modelType].clear();
 		liveGhostBuildings[modelType].clear();
 	}
-
-#ifdef USE_GML
-	configHandler->Set("MultiThreadDrawUnit", multiThreadDrawUnit ? 1 : 0);
-	configHandler->Set("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow ? 1 : 0);
-#endif
-
 
 	deadGhostBuildings.clear();
 	liveGhostBuildings.clear();
@@ -563,7 +551,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 
 void CUnitDrawer::DrawOpaqueAIUnits()
 {
-	GML_STDMUTEX_LOCK(temp);
+	GML_STDMUTEX_LOCK(temp); // DrawOpaqueAIUnits
 
 	// non-cloaked AI unit ghosts (FIXME: s3o's + teamcolor)
 	for (std::multimap<int, TempDrawUnit>::iterator ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
@@ -967,7 +955,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	unit->iconRadius = scale; // store the icon size so that we don't have to calculate it again
 
 	// Is the unit selected? Then draw it white.
-	if (unit->commandAI && unit->commandAI->selected) {
+	if (unit->isSelected) {
 		glColor3ub(255, 255, 255);
 	} else {
 		glColor3ubv(teamHandler->Team(unit->team)->color);
@@ -1170,7 +1158,7 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 
 void CUnitDrawer::DrawCloakedAIUnits()
 {
-	GML_STDMUTEX_LOCK(temp);
+	GML_STDMUTEX_LOCK(temp); // DrawCloakedAIUnits
 
 	// cloaked AI unit ghosts (FIXME: S3O's need different state)
 	for (std::multimap<int, TempDrawUnit>::iterator ti = tempTransparentDrawUnits.begin(); ti != tempTransparentDrawUnits.end(); ++ti) {
@@ -1216,13 +1204,13 @@ void CUnitDrawer::DrawCloakedAIUnits()
 
 void CUnitDrawer::DrawGhostedBuildings(int modelType)
 {
-	std::set<GhostBuilding*>& deadGhostedBuildings = deadGhostBuildings[modelType];
+	std::set<GhostSolidObject*>& deadGhostedBuildings = deadGhostBuildings[modelType];
 	std::set<CUnit*>& liveGhostedBuildings = liveGhostBuildings[modelType];
 
 	glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
 
 	// buildings that died while ghosted
-	for (std::set<GhostBuilding*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
+	for (std::set<GhostSolidObject*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
 		if (loshandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 			// obtained LOS on the ghost of a dead building
 			if ((*it)->decal)
@@ -1249,8 +1237,10 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	}
 
 	if (!gu->spectatingFullView) {
-		for (std::set<CUnit*>::const_iterator ui = liveGhostedBuildings.begin(); ui != liveGhostedBuildings.end(); ++ui)
-			DrawCloakedUnit(*ui, modelType, true);
+		for (std::set<CUnit*>::const_iterator ui = liveGhostedBuildings.begin(); ui != liveGhostedBuildings.end(); ++ui) {
+			if (!((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS)) // because of team switching via cheat, ghost buildings can exist for units in LOS
+				DrawCloakedUnit(*ui, modelType, true);
+		}
 	}
 }
 
@@ -1766,7 +1756,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glEnable(GL_CLIP_PLANE0);
 	glEnable(GL_CLIP_PLANE1);
 
-	const float col = fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
+	const float col = math::fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
 	const unsigned char* tcol = teamHandler->Team(unit->team)->color;
 	// frame line-color
 	const float3 fc = (!globalRendering->teamNanospray)?
@@ -1860,7 +1850,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 
 inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
-	if (unit->luaDraw && luaRules && luaRules->DrawUnit(unit->id)) {
+	if (unit->luaDraw && luaRules && luaRules->DrawUnit(unit)) {
 		return;
 	}
 
@@ -2222,20 +2212,19 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
-	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 	texturehandlerS3O->UpdateDraw();
 
 	if (GML::SimEnabled() && !GML::ShareLists()) {
 		if (u->model && TEX_TYPE(u) < 0)
 			TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model);
-		if((unsortedUnits.size() % 10) == 0)
+		if ((unsortedUnits.size() % 10) == 0)
 			Watchdog::ClearPrimaryTimers(); // batching can create an avalance of events during /give xxx, triggering hang detection
 	}
 
-	if (building)
-		groundDecals->AddBuilding(building);
+	if (u->unitDef->decalDef.useGroundDecal)
+		groundDecals->MoveSolidObject(const_cast<CUnit *>(u), u->pos);
 
-	if (u->model) {
+	if (u->model != NULL) {
 		if (cloaked) {
 			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		} else {
@@ -2247,37 +2236,31 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 }
 
 
-void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
-	CUnit* unit = const_cast<CUnit*>(u);
-	CBuilding* building = dynamic_cast<CBuilding*>(unit);
+void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
+	CUnit* u = const_cast<CUnit*>(unit);
+	GhostSolidObject* gb = NULL;
 
-	if (building != NULL) {
-		GhostBuilding* gb = NULL;
+	if ((dynamic_cast<CBuilding*>(u) != NULL) && gameSetup->ghostedBuildings &&
+		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
+		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView) {
+		// FIXME -- adjust decals for decoys? gets weird?
+		const UnitDef* decoyDef = u->unitDef->decoyDef;
+		S3DModel* gbModel = (decoyDef == NULL) ? u->model : decoyDef->LoadModel();
 
-		if (gameSetup->ghostedBuildings) {
-			if (!(building->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
-				(building->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) &&
-				!gu->spectatingFullView) {
+		gb = new GhostSolidObject();
+		gb->pos    = u->pos;
+		gb->model  = gbModel;
+		gb->decal  = NULL;
+		gb->facing = u->buildFacing;
+		gb->team   = u->team;
 
-				// FIXME -- adjust decals for decoys? gets weird?
-				const UnitDef* decoyDef = building->unitDef->decoyDef;
-				S3DModel* gbModel = (decoyDef == NULL) ? building->model : decoyDef->LoadModel();
-
-				gb = new GhostBuilding();
-				gb->pos    = building->pos;
-				gb->model  = gbModel;
-				gb->decal  = NULL;
-				gb->facing = building->buildFacing;
-				gb->team   = building->team;
-
-				deadGhostBuildings[gbModel->type].insert(gb);
-			}
-		}
-
-		groundDecals->RemoveBuilding(building, gb);
+		deadGhostBuildings[gbModel->type].insert(gb);
 	}
 
-	groundDecals->RemoveUnit(unit);
+	if (u->unitDef->decalDef.useGroundDecal)
+		groundDecals->RemoveSolidObject(u, gb);
+
+	groundDecals->RemoveUnit(u);
 
 	if (u->model) {
 		// renderer unit cloak state may not match sim (because of MT) - erase from both renderers to be sure
@@ -2285,19 +2268,19 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 
-	unsortedUnits.erase(unit);
-	liveGhostBuildings[MDL_TYPE(u)].erase(unit);
+	unsortedUnits.erase(u);
+	liveGhostBuildings[MDL_TYPE(u)].erase(u);
 
 	// remove the icon for all ally-teams
 	for (std::vector<std::set<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
-		(*it).erase(unit);
+		(*it).erase(u);
 	}
 #ifdef USE_GML
-	drawIcon.erase(unit);
-	drawStat.erase(unit);
+	drawIcon.erase(u);
+	drawStat.erase(u);
 #endif
 
-	SetUnitLODCount(unit, 0);
+	SetUnitLODCount(u, 0);
 }
 
 

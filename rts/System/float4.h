@@ -61,8 +61,8 @@ struct float4 : public float3
 	}
 	
 	/// Allows implicit conversion to float* (for passing to gl functions)
-	operator const float* () const { return &x; }
-	operator float* () { return &x; }
+	operator const float* () const { return reinterpret_cast<const float*>(&x); }
+	operator float* () { return reinterpret_cast<float*>(&x); }
 };
 
 #endif /* FLOAT4_H */

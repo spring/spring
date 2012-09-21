@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "LobbyConnection.h"
-#include "System/Platform/Win/win32.h"
 #include "SelectMenu.h"
 
 #include <SDL_keysym.h>
@@ -28,6 +27,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/MsgStrings.h"
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
@@ -191,7 +191,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name");
 	if (mySettings->myPlayerName.empty()) {
-		mySettings->myPlayerName = "UnnamedPlayer";
+		mySettings->myPlayerName = UnnamedPlayerName;
 	} else {
 		mySettings->myPlayerName = StringReplaceInPlace(mySettings->myPlayerName, ' ', '_');
 	}

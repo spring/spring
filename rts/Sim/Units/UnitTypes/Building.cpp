@@ -21,7 +21,7 @@ CR_REG_METADATA(CBuilding, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilding::CBuilding(): buildingDecal(0)
+CBuilding::CBuilding()
 {
 	immobile = true;
 }
@@ -54,7 +54,7 @@ void CBuilding::ForcedMove(const float3& newPos, int facing) {
 	frontdir = GetVectorFromHeading(heading);
 
 	Move3D(helper->Pos2BuildPos(BuildInfo(unitDef, newPos, buildFacing), true), false);
-	UpdateMidPos();
+	UpdateMidAndAimPos();
 
 	CUnit::ForcedMove(pos);
 

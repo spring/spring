@@ -120,7 +120,7 @@ public:
 		, avoidFeature(false)
 		, avoidNeutral(false)
 		, targetBorder(0.0f)
-		, cylinderTargetting(0.0f)
+		, cylinderTargeting(0.0f)
 		, minIntensity(0.0f)
 		, heightBoostFactor(0.0f)
 		, proximityPriority(0.0f)
@@ -345,9 +345,9 @@ public:
 	float targetBorder;
 	/**
 	 * If greater than 0, the range will be checked in a cylinder
-	 * (height=range*cylinderTargetting) instead of a sphere.
+	 * (height=range*cylinderTargeting) instead of a sphere.
 	 */
-	float cylinderTargetting;
+	float cylinderTargeting;
 	/**
 	 * For beam-lasers only - always hit with some minimum intensity
 	 * (a damage coeffcient normally dependent on distance).

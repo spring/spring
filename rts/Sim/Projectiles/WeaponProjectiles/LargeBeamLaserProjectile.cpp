@@ -5,7 +5,6 @@
 #include "LargeBeamLaserProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -69,7 +68,7 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
 		ttl           = weaponDef->beamLaserTTL;
 	}
 
-	cegID = gCEG->Load(explGenHandler, cegTag);
+	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 
@@ -172,7 +171,7 @@ void CLargeBeamLaserProjectile::Draw()
 		// draw laser end
 		pos1 = startPos + ddir * i;
 		pos2 = endPos;
-		tex.xend = tex.xstart + ((pos2 - pos1).Length() / tilelength) * texxsize;
+		tex.xend = tex.xstart + (pos1.distance(pos2) / tilelength) * texxsize;
 
 		va->AddVertexQTC(pos1 - (dir1 * size),     tex.xstart, tex.ystart, kocolstart);
 		va->AddVertexQTC(pos1 + (dir1 * size),     tex.xstart, tex.yend,   kocolstart);

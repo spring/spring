@@ -11,9 +11,9 @@ class CMissileLauncher :
 	CR_DECLARE(CMissileLauncher);
 public:
 	CMissileLauncher(CUnit* owner);
-	~CMissileLauncher(void);
+	~CMissileLauncher();
 
-	void Update(void);
+	void Update();
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 
 private:

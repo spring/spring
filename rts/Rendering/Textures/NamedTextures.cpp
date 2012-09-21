@@ -230,7 +230,7 @@ namespace CNamedTextures {
 		// cached
 		TEXMAP::iterator it = texMap.find(texName);
 		if (it != texMap.end()) {
-			const GLuint& texID = it->second.id;
+			const GLuint texID = it->second.id;
 			glBindTexture(GL_TEXTURE_2D, texID);
 			return (texID != 0);
 		}
@@ -300,7 +300,7 @@ namespace CNamedTextures {
 	const TexInfo* GetInfo(const std::string& texName)
 	{
 		if (texName.empty()) {
-			return false;
+			return NULL;
 		}
 
 		GML_STDMUTEX_LOCK(ntex); // GetInfo

@@ -48,12 +48,12 @@
 #ifdef interface
 	#undef interface
 #endif
-#include "Server/MsgStrings.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/CRC.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/MsgStrings.h"
 #include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoReader.h"
@@ -64,6 +64,7 @@
 #endif
 
 
+#define ALLOW_DEMO_GODMODE
 #define PKTCACHE_VECSIZE 1000
 
 using netcode::RawPacket;
@@ -98,7 +99,7 @@ const std::string commands[numCommands] = {
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
 	"nocost", "forcestart", "nospectatorchat", "nospecdraw",
 	"skip", "reloadcob", "reloadcegs", "devlua", "editdefs",
-	"singlestep"
+	"singlestep", "spec", "specbynum"
 };
 using boost::format;
 
@@ -252,7 +253,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	// Something in CGameServer::CGameServer borks the FPU control word
 	// maybe the threading, or something in CNet::InitServer() ??
 	// Set single precision floating point math.
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 #endif
 }
 
@@ -702,13 +703,17 @@ void CGameServer::CheckSync()
 				std::map<unsigned, std::vector<int> >::const_iterator g = desyncGroups.begin();
 				for (; g != desyncGroups.end(); ++g) {
 					std::string playernames = GetPlayerNames(g->second);
-					Message(str(format(SyncError) %playernames %(*f) %(g->first ^ correctChecksum)));
+					Message(str(format(SyncError) %playernames %(*f) %g->first %correctChecksum));
 				}
 
 				// send spectator desyncs as private messages to reduce spam
 				for (std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
 					int playerNum = s->first;
-					PrivateMessage(playerNum, str(format(SyncError) %players[playerNum].name %(*f) %(s->second ^ correctChecksum)));
+#ifdef DEBUG
+					Message(str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
+#else
+					PrivateMessage(playerNum, str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
+#endif
 				}
 			}
 		}
@@ -1097,8 +1102,13 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
 					break;
 				}
+
+				#ifndef ALLOW_DEMO_GODMODE
 				if (!demoReader)
+				#endif
+				{
 					Broadcast(packet); //forward data
+				}
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format("Player %s sent invalid Command: %s") %players[a].name %ex.what()));
 			}
@@ -1113,8 +1123,13 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
 					break;
 				}
+
+				#ifndef ALLOW_DEMO_GODMODE
 				if (!demoReader)
+				#endif
+				{
 					Broadcast(packet); //forward data
+				}
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format("Player %s sent invalid Select: %s") %players[a].name %ex.what()));
 			}
@@ -1363,7 +1378,9 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 						teams[fromTeam_g].active = false;
 						teams[fromTeam_g].leader = -1;
 						std::ostringstream givenAwayMsg;
-						givenAwayMsg << players[player].name << " gave everything to " << players[teams[toTeam].leader].name;
+						const int toLeader = teams[toTeam].leader;
+						const std::string& toLeaderName = (toLeader >= 0) ? players[toLeader].name : UncontrolledPlayerName;
+						givenAwayMsg << players[player].name << " gave everything to " << toLeaderName;
 						Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, givenAwayMsg.str()));
 					}
 					break;
@@ -1376,30 +1393,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 						Message(str(format("Spectator %s sent invalid team resign") %players[player].name), true);
 						break;
 					}
-					Broadcast(CBaseNetProtocol::Get().SendResign(player));
+					ResignPlayer(player);
 
-					//players[player].team = 0;
-					players[player].spectator = true;
-					// actualize all teams of which the player is leader
-					for (size_t t = 0; t < teams.size(); ++t) {
-						if (teams[t].leader == player) {
-							const std::vector<int> &teamPlayers = getPlayersInTeam(players, t);
-							const std::vector<unsigned char> &teamAIs  = getSkirmishAIIds(ais, t);
-							if ((teamPlayers.size() + teamAIs.size()) == 0) {
-								// no controllers left in team
-								teams[t].active = false;
-								teams[t].leader = -1;
-							} else if (teamPlayers.empty()) {
-								// no human player left in team
-								teams[t].leader = ais[teamAIs[0]].hostPlayer;
-							} else {
-								// still human controllers left in team
-								teams[t].leader = teamPlayers[0];
-							}
-						}
-					}
-					if (hostif)
-						hostif->SendPlayerDefeated(player);
 					break;
 				}
 				case TEAMMSG_JOIN_TEAM: {
@@ -1810,12 +1805,6 @@ void CGameServer::ServerReadNet()
 
 void CGameServer::GenerateAndSendGameID()
 {
-	// This is where we'll store the ID temporarily.
-	union {
-		unsigned char charArray[16];
-		unsigned int intArray[4];
-	} gameID;
-
 	// First and second dword are time based (current time and load time).
 	gameID.intArray[0] = (unsigned) time(NULL);
 	for (int i = 4; i < 12; ++i)
@@ -1919,7 +1908,11 @@ void CGameServer::StartGame()
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
 	if (hostif)
-		hostif->SendStartPlaying();
+#ifdef DEDICATED
+		hostif->SendStartPlaying(gameID.charArray, demoRecorder->GetName());
+#else
+		hostif->SendStartPlaying(gameID.charArray, "");
+#endif
 	timeLeft=0;
 	lastTick = spring_gettime() - spring_msecs(1);
 	CreateNewFrame(true, false);
@@ -1947,6 +1940,24 @@ void CGameServer::PushAction(const Action& action)
 				if (playerLower.find(name)==0) {	// can kick on substrings of name
 					if (!players[a].isLocal) // do not kick host
 						KickPlayer(a);
+				}
+			}
+		}
+	}
+	if (action.command == "specbynum") {
+		if (!action.extra.empty()) {
+			const int playerNum = atoi(action.extra.c_str());
+			SpecPlayer(playerNum);
+		}
+	}
+	else if (action.command == "spec") {
+		if (!action.extra.empty()) {
+			std::string name = action.extra;
+			StringToLowerInPlace(name);
+			for (size_t a=0; a < players.size();++a) {
+				std::string playerLower = StringToLower(players[a].name);
+				if (playerLower.find(name)==0) {	// can spec on substrings of name
+					SpecPlayer(a);
 				}
 			}
 		}
@@ -2044,7 +2055,7 @@ void CGameServer::PushAction(const Action& action)
 
 			if (tokens.size() > 1) {
 				const std::string& name = tokens[0];
-				const std::string& password = tokens[1];
+				const std::string& pwd = tokens[1];
 				int team = 0;
 				bool spectator = true;
 				if ( tokens.size() > 2 ) {
@@ -2055,7 +2066,7 @@ void CGameServer::PushAction(const Action& action)
 				}
 				// note: this must only compare by name
 				std::vector<GameParticipant>::iterator participantIter =
-						std::find_if( players.begin(), players.end(), bind( &GameParticipant::name, _1 ) == name );
+						std::find_if( players.begin(), players.end(), boost::bind( &GameParticipant::name, _1 ) == name );
 
 				if (participantIter != players.end()) {
 					const GameParticipant::customOpts &opts = participantIter->GetAllValues();
@@ -2065,22 +2076,27 @@ void CGameServer::PushAction(const Action& action)
 						if(it != opts.end())
 							participantIter->SetValue("origpass", it->second);
 					}
-					participantIter->SetValue("password", password);
-					LOG("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+					participantIter->SetValue("password", pwd);
+					LOG("[%s] changed player/spectator password: \"%s\" \"%s\"", __FUNCTION__, name.c_str(), pwd.c_str());
 				} else {
-					AddAdditionalUser(name, password, false, spectator, team);
-					std::string logstring = "Added ";
-					if ( spectator ) logstring = logstring + "spectator";
-					else logstring = logstring + "player";
-					logstring = logstring + " \"%s\" with password \"%s\", to team %d";
-					LOG(logstring.c_str(), name.c_str(), password.c_str(),team);
+					AddAdditionalUser(name, pwd, false, spectator, team);
+
+					LOG(
+						"[%s] added client \"%s\" with password \"%s\" to team %d (as a %s)",
+						__FUNCTION__, name.c_str(), pwd.c_str(), team, (spectator? "spectator": "player")
+					);
 				}
 			} else {
-				LOG_L(L_WARNING, "Failed to add player/spectator password. usage: /adduser <player-name> <password> [spectator] [team]");
+				LOG_L(L_WARNING,
+					"[%s] failed to add player/spectator password. usage: "
+					"/adduser <player-name> <password> [spectator] [team]",
+					__FUNCTION__
+				);
 			}
 		}
 	}
 	else if (action.command == "kill") {
+		LOG("[%s] server killed", __FUNCTION__);
 		quitServer = true;
 	}
 	else if (action.command == "pause") {
@@ -2128,7 +2144,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 
 			timeLeft += GAME_SPEED * internalSpeed * float(spring_tomsecs(timeElapsed)) * 0.001f;
 			lastTick=currentTick;
-			newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
+			newFrames = (timeLeft > 0)? int(math::ceil(timeLeft)): 0;
 			timeLeft -= newFrames;
 
 			if (hasLocalClient) {
@@ -2263,17 +2279,57 @@ bool CGameServer::WaitsOnCon() const
 
 void CGameServer::KickPlayer(const int playerNum)
 {
-	if (players[playerNum].link) { // only kick connected players
-		Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
-		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
-		players[playerNum].Kill("Kicked from the battle");
-		UpdateSpeedControl(speedControl);
-		if (hostif)
-			hostif->SendPlayerLeft(playerNum, 2);
+	if (!players[playerNum].link) { // only kick connected players
+		Message(str(format("Attempt to kick user %d who is not connected") %playerNum));
+		return;
 	}
-	else
-		Message(str(format("Attempt to kick player %d who is not connected") %playerNum));
+	Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
+	Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
+	players[playerNum].Kill("Kicked from the battle", true);
+	UpdateSpeedControl(speedControl);
+	if (hostif)
+		hostif->SendPlayerLeft(playerNum, 2);
+}
 
+void CGameServer::SpecPlayer(const int player) {
+	if (!players[player].link) {
+		Message(str(format("Attempt to spec user %d who is not connected") %player));
+		return;
+	}
+	if (players[player].spectator) {
+		Message(str(format("Attempt to spec user %d who is spectating already") %player));
+		return;
+	}
+	Message(str(format(PlayerResigned) %players[player].name %"forced spec"));
+	ResignPlayer(player);
+}
+
+void CGameServer::ResignPlayer(const int player)
+{
+	Broadcast(CBaseNetProtocol::Get().SendResign(player));
+
+	//players[player].team = 0;
+	players[player].spectator = true;
+	// actualize all teams of which the player is leader
+	for (size_t t = 0; t < teams.size(); ++t) {
+		if (teams[t].leader == player) {
+			const std::vector<int> &teamPlayers = getPlayersInTeam(players, t);
+			const std::vector<unsigned char> &teamAIs  = getSkirmishAIIds(ais, t);
+			if ((teamPlayers.size() + teamAIs.size()) == 0) {
+				// no controllers left in team
+				teams[t].active = false;
+				teams[t].leader = -1;
+			} else if (teamPlayers.empty()) {
+				// no human player left in team
+				teams[t].leader = ais[teamAIs[0]].hostPlayer;
+			} else {
+				// still human controllers left in team
+				teams[t].leader = teamPlayers[0];
+			}
+		}
+	}
+	if (hostif)
+		hostif->SendPlayerDefeated(player);
 }
 
 

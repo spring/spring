@@ -45,11 +45,12 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 	}
 
 #ifdef _MSC_VER
-	TerminateProcess(GetCurrentProcess(), -1);
-#else
-	exit(-1);
+	if (forced)
+		TerminateProcess(GetCurrentProcess(), -1);
 #endif
+	exit(-1);
 }
+
 
 volatile bool shutdownSucceeded = false;
 
@@ -97,4 +98,13 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 
 	ExitMessage(msg, caption, flags, false);
 #endif // defined(DEDICATED)
+}
+
+static int exitcode = 0;
+void SetExitCode(int code) {
+	exitcode = code;
+}
+
+int GetExitCode(){
+	return exitcode;
 }

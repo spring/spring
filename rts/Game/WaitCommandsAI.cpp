@@ -245,7 +245,7 @@ void CWaitCommandsAI::AddLocalUnit(CUnit* unit, const CUnit* builder)
 		else {
 			// add a unit-specific TimeWait
 			// (straight into the waitMap, no net ack required)
-			const int duration = ((TimeWait*)wait)->GetDuration();
+			const int duration = static_cast<TimeWait*>(wait)->GetDuration();
 			TimeWait* tw = TimeWait::New(duration, unit);
 			if (tw != NULL) {
 				if (waitMap.find(tw->GetKey()) != waitMap.end()) {
@@ -543,15 +543,14 @@ CWaitCommandsAI::TimeWait::TimeWait(const Command& cmd, CUnit* _unit)
 	duration = GAME_SPEED * (int)cmd.params[0];
 	factory = (dynamic_cast<CFactory*>(unit) != NULL);
 
-	Command waitCmd(CMD_WAIT, cmd.options);
-	waitCmd.params.push_back(code);
-	waitCmd.params.push_back(GetFloatFromKey(key));
+	Command waitCmd(CMD_WAIT, cmd.options, code);
+	waitCmd.PushParam(GetFloatFromKey(key));
 
 	selectedUnits.ClearSelected();
 	selectedUnits.AddUnit(unit);
 	selectedUnits.GiveCommand(waitCmd);
 
-	AddDeathDependence((CObject*)unit, DEPENDENCE_WAITCMD);
+	AddDeathDependence(unit, DEPENDENCE_WAITCMD);
 
 	return;
 }
@@ -569,7 +568,7 @@ CWaitCommandsAI::TimeWait::TimeWait(int _duration, CUnit* _unit)
 	duration = _duration;
 	factory = false;
 
-	AddDeathDependence((CObject*)unit, DEPENDENCE_WAITCMD);
+	AddDeathDependence(unit, DEPENDENCE_WAITCMD);
 }
 
 
@@ -701,8 +700,8 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 		deathUnits.insert(unit);
 	}
 	else if (cmd.params.size() == 6) {
-		const float3 pos0(cmd.params[0], cmd.params[1], cmd.params[2]);
-		const float3 pos1(cmd.params[3], cmd.params[4], cmd.params[5]);
+		const float3& pos0 = cmd.GetPos(0);
+		const float3& pos1 = cmd.GetPos(3);
 		CUnitSet tmpSet;
 		SelectAreaUnits(pos0, pos1, tmpSet, false);
 		CUnitSet::iterator it;
@@ -724,9 +723,8 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 
 	waitUnits = selUnits;
 
-	Command waitCmd(CMD_WAIT, cmd.options);
-	waitCmd.params.push_back(code);
-	waitCmd.params.push_back(GetFloatFromKey(key));
+	Command waitCmd(CMD_WAIT, cmd.options, code);
+	waitCmd.PushParam(GetFloatFromKey(key));
 	selectedUnits.GiveCommand(waitCmd);
 
 	CUnitSet::iterator it;
@@ -749,19 +747,19 @@ CWaitCommandsAI::DeathWait::~DeathWait()
 
 void CWaitCommandsAI::DeathWait::DependentDied(CObject* object)
 {
-	waitUnits.erase((CUnit*)object);
+	waitUnits.erase(static_cast<CUnit*>(object));
 
 	if (waitUnits.empty())
 		return;
 
-	deathUnits.erase((CUnit*)object);
+	deathUnits.erase(static_cast<CUnit*>(object));
 }
 
 
 void CWaitCommandsAI::DeathWait::AddUnit(CUnit* unit)
 {
 	if (waitUnits.insert(unit).second)
-		AddDeathDependence((CObject*)unit, DEPENDENCE_WAITCMD);
+		AddDeathDependence(unit, DEPENDENCE_WAITCMD);
 }
 
 
@@ -924,9 +922,8 @@ CWaitCommandsAI::SquadWait::SquadWait(const Command& cmd)
 	valid = true;
 	key = GetNewKey();
 
-	Command waitCmd(CMD_WAIT, cmd.options);
-	waitCmd.params.push_back(code);
-	waitCmd.params.push_back(GetFloatFromKey(key));
+	Command waitCmd(CMD_WAIT, cmd.options, code);
+	waitCmd.PushParam(GetFloatFromKey(key));
 
 	SendCommand(waitCmd, buildUnits);
 	SendCommand(waitCmd, waitUnits);
@@ -952,15 +949,15 @@ CWaitCommandsAI::SquadWait::~SquadWait()
 
 void CWaitCommandsAI::SquadWait::DependentDied(CObject* object)
 {
-	buildUnits.erase((CUnit*)object);
-	waitUnits.erase((CUnit*)object);
+	buildUnits.erase(static_cast<CUnit*>(object));
+	waitUnits.erase(static_cast<CUnit*>(object));
 }
 
 
 void CWaitCommandsAI::SquadWait::AddUnit(CUnit* unit)
 {
 	if (waitUnits.insert(unit).second)
-		AddDeathDependence((CObject*)unit, DEPENDENCE_WAITCMD);
+		AddDeathDependence(unit, DEPENDENCE_WAITCMD);
 }
 
 
@@ -1077,9 +1074,8 @@ CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 	valid = true;
 	key = GetNewKey();
 
-	Command waitCmd(CMD_WAIT, SHIFT_KEY);
-	waitCmd.params.push_back(code);
-	waitCmd.params.push_back(GetFloatFromKey(key));
+	Command waitCmd(CMD_WAIT, SHIFT_KEY, code);
+	waitCmd.PushParam(GetFloatFromKey(key));
 	selectedUnits.GiveCommand(waitCmd, true);
 
 	CUnitSet::iterator wit;
@@ -1099,7 +1095,7 @@ CWaitCommandsAI::GatherWait::~GatherWait()
 
 void CWaitCommandsAI::GatherWait::DependentDied(CObject* object)
 {
-	waitUnits.erase((CUnit*)object);
+	waitUnits.erase(static_cast<CUnit*>(object));
 }
 
 

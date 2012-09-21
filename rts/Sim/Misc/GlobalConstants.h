@@ -100,6 +100,12 @@ const float MAX_UNIT_SPEED = 1e3f;
 const float MAX_EXPLOSION_IMPULSE = 1e4f;
 
 /**
+ * if explosion distance is less than speed of explosion multiplied by
+ * this factor, units are damaged directly rather than N>=1 frames later
+ */
+const float DIRECT_EXPLOSION_DAMAGE_SPEED_SCALE = 4.0f;
+
+/**
  * maximum range of a weapon-projectile with a flight-time member
  */
 const float MAX_PROJECTILE_RANGE = 1e6f;

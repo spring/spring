@@ -15,7 +15,12 @@ RMDIR="rmdir"
 # Uncomment this for dry run.
 #RM=echo
 #RMDIR=echo
+BUILDBOTDIR=/home/buildbot/www/default
 
-find /home/buildbot/www -mindepth 4 -type f -regex '.*-g[a-f0-9]+[_.].*_dbg\.7z' -mtime +${DBG_AGE} -exec ${RM} '{}' \;
-find /home/buildbot/www -mindepth 4 -type f -regex '.*-g[a-f0-9]+[_.].*' -mtime +${AGE} -exec ${RM} '{}' \;
-find /home/buildbot/www -ignore_readdir_race -maxdepth 3 -type d -empty -exec ${RMDIR} '{}' \;
+#old debug files
+find ${BUILDBOTDIR} -type f -not -path '*/master/*' -path "*dbg.7z*" -mtime +${DBG_AGE} -exec ${RM} '{}' \;
+#very old files
+find ${BUILDBOTDIR} -type f -not -path '*/master/*' -mtime +${AGE} -exec ${RM} '{}' \;
+#empty directories
+find ${BUILDBOTDIR} -ignore_readdir_race -type d -empty -exec ${RMDIR} '{}' \;
+

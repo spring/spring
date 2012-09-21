@@ -7,7 +7,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
@@ -111,7 +110,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	oldSmokeDir.Normalize();
 	const float3 camDir = (pos - camera->pos).Normalize();
 
-	if (camera->pos.distance(pos) + (1 - fabs(camDir.dot(oldSmokeDir))) * 3000 < 200) {
+	if (camera->pos.distance(pos) + (1 - math::fabs(camDir.dot(oldSmokeDir))) * 3000 < 200) {
 		drawTrail = false;
 	}
 
@@ -271,7 +270,7 @@ bool CPieceProjectile::HasVertices() const
 	return (omp->GetVertexCount() > 0);
 }
 
-float3 CPieceProjectile::RandomVertexPos(void)
+float3 CPieceProjectile::RandomVertexPos()
 {
 	if (!HasVertices()) {
 		return ZeroVector;
@@ -334,7 +333,7 @@ void CPieceProjectile::Update()
 
 			if (!drawTrail) {
 				float3 camDir = (pos - camera->pos).Normalize();
-				if (camera->pos.distance(pos) + (1 - fabs(camDir.dot(dir))) * 3000 > 300) {
+				if (camera->pos.distance(pos) + (1 - math::fabs(camDir.dot(dir))) * 3000 > 300) {
 					drawTrail = true;
 				}
 			}
@@ -373,7 +372,7 @@ void CPieceProjectile::Draw()
 				const float3 dif2 = (oldSmokePos - camera->pos).Normalize();
 				const float3 dir2 = (dif2.cross(oldSmokeDir)).Normalize();
 
-				float a1 = ((1 - 0.0f / (Smoke_Time)) * 255) * (0.7f + fabs(dif.dot(dir)));
+				float a1 = ((1 - 0.0f / (Smoke_Time)) * 255) * (0.7f + math::fabs(dif.dot(dir)));
 				float alpha = std::min(255.0f, std::max(0.f, a1));
 				col[0] = (unsigned char) (color * alpha);
 				col[1] = (unsigned char) (color * alpha);
@@ -381,7 +380,7 @@ void CPieceProjectile::Draw()
 				col[3] = (unsigned char) (alpha);
 
 				unsigned char col2[4];
-				float a2 = ((1 - float(age2) / (Smoke_Time)) * 255) * (0.7f + fabs(dif2.dot(oldSmokeDir)));
+				float a2 = ((1 - float(age2) / (Smoke_Time)) * 255) * (0.7f + math::fabs(dif2.dot(oldSmokeDir)));
 
 				if (age < 8)
 					a2 = 0;
@@ -441,7 +440,6 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 void CPieceProjectile::DrawCallback()
 {
 	inArray = true;
-	unsigned char col[4];
 
 	if (flags & PF_Fire) {
 		va->EnlargeArrays(8 * 4, 0, VA_SIZE_TC);
@@ -449,6 +447,7 @@ void CPieceProjectile::DrawCallback()
 			float modage = age;
 			float3 interPos = oldInfos[age]->pos;
 			float size = oldInfos[age]->size;
+			unsigned char col[4];
 
 			float alpha = (7.5f - modage) * (1.0f / 8);
 			col[0] = (unsigned char) (255 * alpha);

@@ -8,12 +8,18 @@
 
 #include <string>
 #include <vector>
-#include <assert.h>
+#include <cassert>
 #include <cstring>
+#include <stdexcept>
 
 
 namespace netcode
 {
+
+class PackPacketException : public std::runtime_error {
+public:
+	PackPacketException(const std::string& what) : std::runtime_error(what) {}
+};
 
 class PackPacket : public RawPacket
 {

@@ -80,6 +80,9 @@ tgz="spring_${versionString}_src.tar.gz"
 include="${dir}"
 
 # Excude list (exclude git-files, win32 executables on linux, etc.)
+# after switching to git-archive usage in tarball creation below, 
+# 	some of the excludes become obsolete and the platform
+#		independent could be switched to the "export-ignore" git attribute
 exclude_from_all=" \
  ${dir}/.git \
  ${dir}/.gitignore \
@@ -105,6 +108,7 @@ echo "${versionInfo}" > ./VERSION
 
 cd ..
 # XXX use git-archive instead? (submodules may cause a bit trouble with it)
+# https://github.com/meitar/git-archive-all.sh/wiki
 [ -n "${linux_exclude}" ] && rm -rf ${linux_exclude}
 [ -n "${lzma}" ] && echo "Creating .tar.lzma archive (${lzma})" && \
 	tar -c --lzma  -f "../${lzma}" ${include} ${linux_include} --exclude=.git

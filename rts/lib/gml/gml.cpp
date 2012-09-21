@@ -34,6 +34,7 @@
 // Please note: Some functions may require more advanced coding to implement
 // If a function is not yet supported by GML, a compile error pointing to 'GML_FUNCTION_NOT_IMPLEMENTED' will occur
 
+bool gmlEnabled = true;
 
 #ifdef USE_GML
 
@@ -85,6 +86,8 @@ int gmlItemsConsumed=0;
 
 int gmlNextTickUpdate=0;
 unsigned gmlCurrentTicks;
+bool gmlCheckCallChain=false;
+int gmlCallChainWarning=0;
 
 std::set<Threading::NativeThreadId> threadnums;
 
@@ -256,19 +259,17 @@ boost::mutex glbatchmutex;
 boost::mutex mlbatchmutex;
 boost::mutex llbatchmutex;
 boost::mutex cmdmutex;
-boost::mutex luauimutex;
 boost::mutex xcallmutex;
 boost::mutex blockmutex;
 boost::mutex tnummutex;
 boost::mutex ntexmutex;
-boost::mutex lodmutex;
 boost::mutex catmutex;
 boost::mutex grpchgmutex;
+boost::mutex laycmdmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
 boost::recursive_mutex selmutex;
-//boost::recursive_mutex luamutex;
 boost::recursive_mutex quadmutex;
 boost::recursive_mutex featmutex;
 boost::recursive_mutex grassmutex;
@@ -277,8 +278,6 @@ boost::recursive_mutex filemutex;
 boost::recursive_mutex &qnummutex=quadmutex;
 boost::recursive_mutex &groupmutex=selmutex;
 boost::recursive_mutex &grpselmutex=selmutex;
-boost::recursive_mutex laycmdmutex;
-//boost::recursive_mutex luadrawmutex;
 boost::recursive_mutex projmutex;
 boost::recursive_mutex objmutex;
 boost::recursive_mutex modelmutex;
@@ -292,24 +291,37 @@ std::map<boost::recursive_mutex *, int> lockmmaps[GML_MAX_NUM_THREADS];
 #endif
 
 void PrintMTStartupMessage(int showMTInfo) {
+	if (showMTInfo == -1)
+		return;
 	if (showMTInfo != MT_LUA_NONE) {
-		LOG("\n************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
-		LOG("Engine or game settings have forced Spring MT to use compatibility mode %d", showMTInfo);
+		if (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT) {
+			LOG("[Threading] Multithreading is enabled but currently running in compatibility mode %d", showMTInfo);
+		} else {
+			LOG("[Threading] Multithreading is enabled and currently running in mode %d", showMTInfo);
+		}
 		if (showMTInfo == MT_LUA_SINGLE) {
 			CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
 			std::string lskey = lslist.empty() ? "" : " (press " + lslist.front() + ")";
-			LOG("If your game uses lua based rendering, it may run very slow with Spring MT");
-			LOG("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem");
-			LOG("Consider changing the engine setting 'MultiThreadLua' to 2 to improve performance,");
-			LOG("or try to disable LuaShaders and all rendering widgets%s\n", lskey.c_str());
+			LOG("[Threading] Games that use lua based rendering may run very slow in this mode, "
+				"indicated by a high LUA-SYNC-CPU(MT) value displayed in the upper right corner");
+			LOG("[Threading] Consider MultiThreadLua = %d in the settings to improve performance, "
+				"or try to disable LuaShaders and all rendering widgets%s", (int)MT_LUA_SINGLE_BATCH, lskey.c_str());
 		} else if (showMTInfo == MT_LUA_SINGLE_BATCH) {
-			LOG("If your game uses lua gadget based rendering, it may run very slow with Spring MT");
-			LOG("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem\n");
+			LOG("[Threading] Games that use lua gadget based rendering may run very slow in this mode, "
+				"indicated by a high LUA-SYNC-CPU(MT) value displayed in the upper right corner");
 		} else if (showMTInfo == MT_LUA_DUAL_EXPORT) {
-			LOG("If your game uses lua gadgets that export data, it may run very slow with Spring MT");
-			LOG("A high LUA-EXP-SIZE(MT) value in the upper right corner could indicate a problem\n");
+			LOG("[Threading] Games that use lua gadgets which export data may run very slow in this mode, "
+				"indicated by a high LUA-EXP-SIZE(MT) value displayed in the upper right corner");
 		}
+	} else {
+		LOG("[Threading] Multithreading is disabled because the game or system appears incompatible");
+		LOG("[Threading] MultiThreadCount > 1 in the settings will forcefully enable multithreading");
 	}
+}
+
+void gmlPrintCallChainWarning(const char *func) {
+	LOG_SL("Threading", L_ERROR, "Invalid attempt (%d/%d) to invoke LuaUI (%s) from another Lua environment, "
+			"certain widgets require LuaThreadingModel > %d to work properly with multithreading", gmlCallChainWarning, GML_MAX_CALL_CHAIN_WARNINGS, func, (int)MT_LUA_SINGLE_BATCH);
 }
 
 #endif
@@ -799,6 +811,7 @@ gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlLis
 
 #if GML_CALL_DEBUG
 lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS] = { NULL };
+lua_State *gmlLuaUIState=NULL;
 #endif
 
 // queue handler - exequtes one GL command from queue (pointed to by p)
@@ -1018,6 +1031,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER1R(UnmapBuffer)
 		GML_MAKEHANDLER8VP(CompressedTexImage2D)
 		GML_MAKEHANDLER1R(IsShader)
+		GML_MAKEHANDLER1R(IsProgram)
 		GML_MAKEHANDLER3(Vertex3i)
 		GML_MAKEHANDLER2(GetIntegerv)//
 		GML_MAKEHANDLER1R(CheckFramebufferStatusEXT)
@@ -1110,12 +1124,12 @@ void gmlQueue::ExecuteDebug() {
 
 	while(p<e) {
 		if(*(int *)p!=GML_NOP)
-			LOG_SL("GML", L_ERROR, "Sim thread called %s", gmlFunctionNames[*(int*)p]);
+			LOG_SL("Threading", L_ERROR, "Sim thread called %s", gmlFunctionNames[*(int*)p]);
 		QueueHandler(p,ptr);
 //		++procs;
 	}
 //	if(procs>1 || (procs==1 && *(int *)Read!=GML_NOP))
-//		LOG_SL("GML", L_ERROR, "%d OpenGL calls detected in SimFrame()", procs);
+//		LOG_SL("Threading", L_ERROR, "%d OpenGL calls detected in SimFrame()", procs);
 }
 
 #include "gmlsrv.h"

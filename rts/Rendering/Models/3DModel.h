@@ -225,6 +225,8 @@ struct LocalModel
 	void DrawLOD(unsigned int lod) const { if (lod <= lodCount) pieces[0]->DrawLOD(lod); }
 	void SetLODCount(unsigned int count);
 
+	void ReloadDisplayLists();
+
 	//! raw forms, the piecenum must be valid
 	void ApplyRawPieceTransformUnsynced(int piecenum) const;
 	float3 GetRawPiecePos(int piecenum) const;

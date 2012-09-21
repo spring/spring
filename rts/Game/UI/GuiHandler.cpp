@@ -548,8 +548,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			return; // we're done here
 		}
 		else {
-			CLuaUI::FreeHandler();
-			LoadConfig("ctrlpanel.txt");
+			PushLayoutCommand("disable");
 		}
 	}
 
@@ -886,7 +885,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 void CGuiHandler::GiveCommand(Command& cmd, bool fromUser)
 {
-	GML_STDMUTEX_LOCK(cmd);
+	GML_STDMUTEX_LOCK(cmd); // GiveCommand
 	commandsToGive.push_back(std::pair<const Command, bool>(cmd, fromUser));
 }
 
@@ -894,7 +893,7 @@ void CGuiHandler::GiveCommand(Command& cmd, bool fromUser)
 void CGuiHandler::GiveCommandsNow() {
 	std::vector< std::pair<Command, bool> > commandsToGiveTemp;
 	{
-		GML_STDMUTEX_LOCK(cmd);
+		GML_STDMUTEX_LOCK(cmd); // GiveCommandsNow
 		commandsToGiveTemp.swap(commandsToGive);
 	}
 
@@ -1112,6 +1111,8 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir)
 {
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // MouseRelease
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // MouseRelease
 	GML_RECMUTEX_LOCK(gui); // MouseRelease
 
 	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
@@ -1227,8 +1228,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 			SNPRINTF(t, 10, "%d", newMode);
 			cd.params[0] = t;
 
-			Command c(cd.id, CreateOptions(rightMouseButton));
-			c.params.push_back(newMode);
+			Command c(cd.id, CreateOptions(rightMouseButton), newMode);
 			GiveCommand(c);
 			forceLayoutUpdate = true;
 			break;
@@ -1664,9 +1664,10 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 
 void CGuiHandler::RunLayoutCommand(const std::string& command)
 {
-	if (command == "reload" || ((LUA_MT_OPT & LUA_STATE) && (globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL || 
-								globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_UNMANAGED) && command == "update")) {
-		if (CLuaHandle::GetActiveHandle() != NULL) {
+	const bool dualStates = (LUA_MT_OPT & LUA_STATE) && (globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL || globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_UNMANAGED);
+
+	if (command == "reload" || (dualStates && command == "update")) {
+		if (luaUI && luaUI->IsRunning()) {
 			// NOTE: causes a SEGV through RunCallIn()
 			LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
 			return;
@@ -1690,7 +1691,7 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 		LayoutIcons(false);
 	}
 	else if (command == "disable") {
-		if (CLuaHandle::GetActiveHandle() != NULL) {
+		if (luaUI && luaUI->IsRunning()) {
 			// NOTE: might cause a SEGV through RunCallIn()
 			LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
 			return;
@@ -1917,8 +1918,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 				SNPRINTF(t, 10, "%d", newMode);
 				cmdDesc.params[0] = t;
 
-				Command c(cmdDesc.id);
-				c.params.push_back(newMode);
+				Command c(cmdDesc.id, 0, newMode);
 				GiveCommand(c);
 				forceLayoutUpdate = true;
 				break;
@@ -1932,11 +1932,10 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
 					if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
 					value = std::max(std::min(value, maxV), minV);
-					Command c(cd.id);
+					Command c(cd.id, 0, value);
 					if (action.extra.find("queued") != std::string::npos) {
 						c.options = SHIFT_KEY;
 					}
-					c.params.push_back(value);
 					GiveCommand(c);
 					break;
 				}
@@ -2072,9 +2071,34 @@ Command CGuiHandler::GetOrderPreview()
 }
 
 
+inline Command CheckCommand(Command c) {
+	if (selectedUnits.selectedUnits.empty() || (c.options & SHIFT_KEY))
+		return c; // always allow queued commands, since conditions may change so the command becomes valid
+	for (CUnitSet::iterator ui = selectedUnits.selectedUnits.begin(); ui != selectedUnits.selectedUnits.end(); ++ui) {
+		if((*ui)->commandAI->AllowedCommand(c, false))
+			return c;
+	}
+	Command failedRet(CMD_FAILED);
+	return failedRet;
+}
+
+bool ZeroRadiusAllowed(const Command &c) {
+	switch(c.GetID()) {
+	case CMD_CAPTURE:
+	case CMD_GUARD:
+	case CMD_LOAD_UNITS:
+	case CMD_RECLAIM:
+	case CMD_REPAIR:
+	case CMD_RESTORE:
+	case CMD_RESURRECT:
+		return false;
+	}
+	return true;
+}
+
 Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir)
 {
-	Command defaultRet(CMD_STOP);
+	Command defaultRet(CMD_FAILED);
 
 	int button;
 	if (buttonHint >= SDL_BUTTON_LEFT) {
@@ -2084,7 +2108,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 	} else if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) {
 		button = SDL_BUTTON_RIGHT;
 	} else {
-		return defaultRet;
+		return Command(CMD_STOP);
 	}
 
 	int tempInCommand = inCommand;
@@ -2099,6 +2123,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 	}
 
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCommand
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCommand
 	GML_RECMUTEX_LOCK(gui); // GetCommand - updates inCommand
 
 	if ((tempInCommand >= 0) && ((size_t)tempInCommand < commands.size())) {
@@ -2106,9 +2132,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 		case CMDTYPE_NUMBER: {
 			const float value = GetNumberInput(commands[tempInCommand]);
-			Command c(commands[tempInCommand].id, CreateOptions(button));
-			c.params.push_back(value);
-			return c;
+			Command c(commands[tempInCommand].id, CreateOptions(button), value);
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON: {
@@ -2116,7 +2141,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (button == SDL_BUTTON_LEFT && !preview) {
 				LOG_L(L_WARNING, "CMDTYPE_ICON left button press in incommand test? This should not happen.");
 			}
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_MAP: {
@@ -2125,11 +2150,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				return defaultRet;
 			}
 			const float3 pos = cameraPos + (mouseDir * dist);
-			Command c(commands[tempInCommand].id, CreateOptions(button));
-			c.params.push_back(pos.x);
-			c.params.push_back(pos.y);
-			c.params.push_back(pos.z);
-			return c;
+			Command c(commands[tempInCommand].id, CreateOptions(button), pos);
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_BUILDING: {
@@ -2140,7 +2162,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 
 			if(!unitdef){
-				return defaultRet;
+				return Command(CMD_STOP);
 			}
 
 			const float3 pos = cameraPos + mouseDir * dist;
@@ -2159,15 +2181,14 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				buildPos = GetBuildPos(bi, bi, cameraPos, mouseDir);
 
 			if (buildPos.empty()) {
-				return defaultRet;
+				return Command(CMD_STOP);
 			}
 
 			if (buildPos.size() == 1) {
 				CFeature* feature = NULL;
 				// TODO Maybe also check out-of-range for immobile builder?
 				if (!uh->TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam, false)) {
-					Command failedRet(CMD_FAILED);
-					return failedRet;
+					return defaultRet;
 				}
 			}
 
@@ -2180,7 +2201,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 			}
 			Command c = buildPos.back().CreateCommand(CreateOptions(button));
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_UNIT: {
@@ -2192,8 +2213,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (!unit) {
 				return defaultRet;
 			}
-			c.params.push_back(unit->id);
-			return c;
+			c.PushParam(unit->id);
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_UNIT_OR_MAP: {
@@ -2209,15 +2230,12 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 			if (unit) {
 				// clicked on unit
-				c.params.push_back(unit->id);
+				c.PushParam(unit->id);
 			} else {
 				// clicked in map
-				const float3 pos = cameraPos + (mouseDir * dist2);
-				c.params.push_back(pos.x);
-				c.params.push_back(pos.y);
-				c.params.push_back(pos.z);
+				c.PushPos(cameraPos + (mouseDir * dist2));
 			}
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_FRONT: {
@@ -2233,10 +2251,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 			float3 pos = mouse->buttons[button].camPos + (mouse->buttons[button].dir * dist);
 
-			Command c(commands[tempInCommand].id, CreateOptions(button));
-			c.params.push_back(pos.x);
-			c.params.push_back(pos.y);
-			c.params.push_back(pos.z);
+			Command c(commands[tempInCommand].id, CreateOptions(button), pos);
 
 			if (mouse->buttons[button].movement > 30) { // only create the front if the mouse has moved enough
 				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
@@ -2247,9 +2262,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 				ProcessFrontPositions(pos, pos2);
 
-				c.params[0] = pos.x;
-				c.params[1] = pos.y;
-				c.params[2] = pos.z;
+				c.SetPos(0, pos);
 
 				if (!commands[tempInCommand].params.empty() &&
 				    pos.SqDistance2D(pos2) > Square(atof(commands[tempInCommand].params[0].c_str()))) {
@@ -2258,11 +2271,9 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					pos2 = pos + dif * atoi(commands[tempInCommand].params[0].c_str());
 				}
 
-				c.params.push_back(pos2.x);
-				c.params.push_back(pos2.y);
-				c.params.push_back(pos2.z);
+				c.PushPos(pos2);
 			}
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_UNIT_OR_AREA:
@@ -2276,10 +2287,6 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 4) {
-
-				GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCommand
-				GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCommand
-
 				CUnit* unit = NULL;
 				CFeature* feature = NULL;
 				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, true, NULL, unit, feature);
@@ -2289,19 +2296,18 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 
 				if (feature && commands[tempInCommand].type == CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) { // clicked on feature
-					c.params.push_back(uh->MaxUnits() + feature->id);
+					c.PushParam(uh->MaxUnits() + feature->id);
 				} else if (unit && commands[tempInCommand].type != CMDTYPE_ICON_AREA) { // clicked on unit
-					c.params.push_back(unit->id);
+					if (c.GetID() == CMD_RESURRECT)
+						return defaultRet; // cannot resurrect units!
+					c.PushParam(unit->id);
 				} else { // clicked in map
-					if (explicitCommand < 0) // only attack ground if explicitly set the command
+					if (explicitCommand < 0 || !ZeroRadiusAllowed(c)) // only attack ground if explicitly set the command
 						return defaultRet;
-					const float3 pos = cameraPos + (mouseDir * dist2);
-					c.params.push_back(pos.x);
-					c.params.push_back(pos.y);
-					c.params.push_back(pos.z);
-					c.params.push_back(0); // zero radius
+					c.PushPos(cameraPos + (mouseDir * dist2));
+					c.PushParam(0); // zero radius
 					if (c.GetID() == CMD_UNLOAD_UNITS) {
-						c.params.push_back((float)buildFacing);
+						c.PushParam((float)buildFacing);
 					}
 				}
 			} else { // created area
@@ -2316,20 +2322,18 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					return defaultRet;
 				}
 				const float3 pos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
-				c.params.push_back(pos.x);
-				c.params.push_back(pos.y);
-				c.params.push_back(pos.z);
+				c.PushPos(pos);
 				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 				if (dist < 0) {
 					return defaultRet;
 				}
 				const float3 pos2 = cameraPos + mouseDir * dist;
-				c.params.push_back(std::min(maxRadius, pos.distance2D(pos2)));
+				c.PushParam(std::min(maxRadius, pos.distance2D(pos2)));
 				if (c.GetID() == CMD_UNLOAD_UNITS) {
-					c.params.push_back((float)buildFacing);
+					c.PushParam((float)buildFacing);
 				}
 			}
-			return c;
+			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_UNIT_OR_RECTANGLE: {
@@ -2346,16 +2350,13 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 				if (unit) {
 					// clicked on unit
-					c.params.push_back(unit->id);
+					c.PushParam(unit->id);
 				} else {
 					// clicked in map
 					if (explicitCommand < 0) { // only attack ground if explicitly set the command
 						return defaultRet;
 					}
-					const float3 pos = cameraPos + (mouseDir * dist2);
-					c.params.push_back(pos.x);
-					c.params.push_back(pos.y);
-					c.params.push_back(pos.z);
+					c.PushPos(cameraPos + (mouseDir * dist2));
 				}
 			} else {
 				// created rectangle
@@ -2374,25 +2375,21 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					return defaultRet;
 				}
 				const float3 endPos = cameraPos + (mouseDir * dist);
-				c.params.push_back(startPos.x);
-				c.params.push_back(startPos.y);
-				c.params.push_back(startPos.z);
-				c.params.push_back(endPos.x);
-				c.params.push_back(endPos.y);
-				c.params.push_back(endPos.z);
+				c.PushPos(startPos);
+				c.PushPos(endPos);
 			}
-			return c;
+			return CheckCommand(c);
 		}
 
 		default:
-			return defaultRet;
+			return Command(CMD_STOP);
 		}
 	} else {
 		if (!preview) {
 			inCommand = -1;
 		}
 	}
-	return defaultRet;
+	return Command(CMD_STOP);
 }
 
 
@@ -2448,7 +2445,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		} else {
 			Command c = uh->GetBuildCommand(cameraPos, mouseDir);
 			if (c.GetID() < 0 && c.params.size() == 4) {
-				other.pos = float3(c.params[0],c.params[1], c.params[2]);
+				other.pos = c.GetPos(0);
 				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 				other.buildFacing = int(c.params[3]);
 			}
@@ -2480,11 +2477,11 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		const float3 delta = end - start;
 
 		const float xsize = SQUARE_SIZE * (startInfo.GetXSize() + buildSpacing * 2);
-		const int xnum = (int)((fabs(delta.x) + xsize * 1.4f)/xsize);
+		const int xnum = (int)((math::fabs(delta.x) + xsize * 1.4f)/xsize);
 		float xstep = (int)((0 < delta.x) ? xsize : -xsize);
  
 		const float zsize = SQUARE_SIZE * (startInfo.GetZSize() + buildSpacing * 2);
-		const int znum = (int)((fabs(delta.z) + zsize * 1.4f)/zsize);
+		const int znum = (int)((math::fabs(delta.z) + zsize * 1.4f)/zsize);
 		float zstep = (int)((0 < delta.z) ? zsize : -zsize);
 
 		if (keyInput->IsKeyPressed(SDLK_LALT)) { // build a rectangle
@@ -2517,7 +2514,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 				}
 			}
 		} else { // build a line
-			const bool xDominatesZ = fabs(delta.x) > fabs(delta.z);
+			const bool xDominatesZ = math::fabs(delta.x) > math::fabs(delta.z);
 			if (xDominatesZ) {
 				zstep = keyInput->IsKeyPressed(SDLK_LCTRL) ? 0 : xstep * delta.z / (delta.x ? delta.x : 1);
 			} else {
@@ -3128,8 +3125,8 @@ void CGuiHandler::DrawSelectionInfo()
 	if (!selectedUnits.selectedUnits.empty()) {
 		std::ostringstream buf;
 
-		if(selectedUnits.selectedGroup!=-1){
-			buf << "Selected units " << selectedUnits.selectedUnits.size() << " [Group " << selectedUnits.selectedGroup << "]";
+		if (selectedUnits.GetSelectedGroup() != -1) {
+			buf << "Selected units " << selectedUnits.selectedUnits.size() << " [Group " << selectedUnits.GetSelectedGroup() << "]";
 		} else {
 			buf << "Selected units " << selectedUnits.selectedUnits.size();
 		}
@@ -3197,8 +3194,8 @@ void CGuiHandler::DrawPrevArrow(const IconInfo& icon)
 {
 	const Box& b = icon.visual;
 	const float yCenter = 0.5f * (b.y1 + b.y2);
-	const float xSize = 0.166f * fabs(b.x2 - b.x1);
-	const float ySize = 0.125f * fabs(b.y2 - b.y1);
+	const float xSize = 0.166f * math::fabs(b.x2 - b.x1);
+	const float ySize = 0.125f * math::fabs(b.y2 - b.y1);
 	const float xSiz2 = 2.0f * xSize;
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_POLYGON);
@@ -3215,8 +3212,8 @@ void CGuiHandler::DrawNextArrow(const IconInfo& icon)
 {
 	const Box& b = icon.visual;
 	const float yCenter = 0.5f * (b.y1 + b.y2);
-	const float xSize = 0.166f * fabs(b.x2 - b.x1);
-	const float ySize = 0.125f * fabs(b.y2 - b.y1);
+	const float xSize = 0.166f * math::fabs(b.x2 - b.x1);
+	const float ySize = 0.125f * math::fabs(b.y2 - b.y1);
 	const float xSiz2 = 2.0f * xSize;
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_POLYGON);
@@ -3313,7 +3310,7 @@ static inline GLuint GetConeList()
 		glVertex3f(0.0f, 0.0f, 0.0f);
 		for (int i = 0; i <= divs; i++) {
 			const float rad = (PI * 2.0) * (float)i / (float)divs;
-			glVertex3f(1.0f, sin(rad), cos(rad));
+			glVertex3f(1.0f, math::sin(rad), math::cos(rad));
 		}
 		glEnd();
 	}
@@ -3327,8 +3324,8 @@ static void DrawWeaponCone(const float3& pos,
 {
 	glPushMatrix();
 
-	const float xlen = len * cos(hrads);
-	const float yzlen = len * sin(hrads);
+	const float xlen = len * math::cos(hrads);
+	const float yzlen = len * math::sin(hrads);
 	glTranslatef(pos.x, pos.y, pos.z);
 	glRotatef(heading * (180.0 / PI), 0.0f, 1.0f, 0.0f);
 	glRotatef(pitch   * (180.0 / PI), 0.0f, 0.0f, 1.0f);
@@ -3375,9 +3372,9 @@ static inline void DrawWeaponArc(const CUnit* unit)
 		pos = interPos + (UpVector * 10.0f);
 	}
 
-	const float hrads   = acos(w->maxForwardAngleDif);
-	const float heading = atan2(-dir.z, dir.x);
-	const float pitch   = asin(dir.y);
+	const float hrads   = math::acos(w->maxForwardAngleDif);
+	const float heading = math::atan2(-dir.z, dir.x);
+	const float pitch   = math::asin(dir.y);
 	DrawWeaponCone(pos, w->range, hrads, heading, pitch);
 }
 
@@ -3431,11 +3428,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					if (mouse->buttons[button].movement > 30) {
 						float maxSize = 1000000.0f;
 						float sizeDiv = 0.0f;
-						if (cmdDesc.params.size() > 0) {
+						if (!cmdDesc.params.empty()) {
 							maxSize = atof(cmdDesc.params[0].c_str());
-						}
-						if (cmdDesc.params.size() > 1) {
-							sizeDiv = atof(cmdDesc.params[1].c_str());
+							if (cmdDesc.params.size() > 1) {
+								sizeDiv = atof(cmdDesc.params[1].c_str());
+							}
 						}
 						DrawFront(button, maxSize, sizeDiv, onMinimap, cameraPos, mouseDir);
 					}
@@ -3577,7 +3574,6 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			// draw decloak distance
 			if (unit->decloakDistance > 0.0f) {
 				glColor4fv(cmdColors.rangeDecloak);
-#ifndef USE_GML
 				if (unit->unitDef->decloakSpherical && globalRendering->drawdebug) {
 					glPushMatrix();
 					glTranslatef(unit->midPos.x, unit->midPos.y, unit->midPos.z);
@@ -3587,9 +3583,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					gluSphere(q, unit->decloakDistance, 10, 10);
 					gluDeleteQuadric(q);
 					glPopMatrix();
-				} else
-#endif
-				{ // cylindrical
+				} else { // cylindrical
 					glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
 				}
 			}
@@ -3598,7 +3592,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				glColor4fv(cmdColors.rangeKamikaze);
 				glSurfaceCircle(unit->pos, unitdef->kamikazeDist, 40);
 
-				const WeaponDef* wd = weaponDefHandler->GetWeapon(unitdef->selfDExplosion);
+				const WeaponDef* wd = unitdef->selfdExpWeaponDef;
 
 				if (wd != NULL) {
 					glColor4fv(cmdColors.rangeSelfDestruct);
@@ -3659,7 +3653,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					continue;
 				}
 				const UnitDef* unitdef = unit->unitDef;
-				if (unitdef->builder && (!unitdef->canmove || selectedUnits.IsSelected(unit))) {
+				if (unitdef->builder && (!unitdef->canmove || selectedUnits.IsUnitSelected(unit))) {
 					const float radius = unitdef->buildDistance;
 					if (radius > 0.0f) {
 						glDisable(GL_TEXTURE_2D);
@@ -3825,7 +3819,7 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 	const float groundLevel = ground->GetHeightAboveWater(cameraPos.x, cameraPos.z, false);
 
 	static float spinTime = 0.0f;
-	spinTime = fmod(spinTime + globalRendering->lastFrameTime, 60.0f);
+	spinTime = math::fmod(spinTime + globalRendering->lastFrameTime, 60.0f);
 
 	glPushMatrix();
 	glTranslatef(cameraPos.x, groundLevel, cameraPos.z);
@@ -4030,7 +4024,7 @@ struct BoxData {
 
 static void DrawBoxShape(const void* data)
 {
-	const BoxData* boxData = (const BoxData*)data;
+	const BoxData* boxData = static_cast<const BoxData*>(data);
 	const float3& mins = boxData->mins;
 	const float3& maxs = boxData->maxs;
 	glBegin(GL_QUADS);
@@ -4215,7 +4209,7 @@ struct CylinderData {
 
 static void DrawCylinderShape(const void* data)
 {
-	const CylinderData& cyl = *((const CylinderData*)data);
+	const CylinderData& cyl = *static_cast<const CylinderData*>(data);
 	const float step = fastmath::PI2 / (float)cyl.divs;
 	int i;
 	glBegin(GL_QUAD_STRIP); // the sides
@@ -4302,7 +4296,7 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 void CGuiHandler::PushLayoutCommand(const std::string& cmd, bool luaCmd) {
 	if (GML::SimEnabled()) {
-		GML_RECMUTEX_LOCK(laycmd); // PushLayoutCommand
+		GML_STDMUTEX_LOCK(laycmd); // PushLayoutCommand
 
 		layoutCommands.push_back(cmd);
 		if(luaCmd)
@@ -4319,7 +4313,7 @@ void CGuiHandler::RunLayoutCommands() {
 	bool luaCmd;
 	std::vector<std::string> layoutCmds;
 	{
-		GML_RECMUTEX_LOCK(laycmd); // RunLayoutCommands
+		GML_STDMUTEX_LOCK(laycmd); // RunLayoutCommands
 
 		layoutCmds.swap(layoutCommands);
 		luaCmd = hasLuaUILayoutCommands;

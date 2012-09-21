@@ -24,11 +24,11 @@ public:
 	CCommandAI(CUnit* owner);
 	CCommandAI();
 	virtual ~CCommandAI();
-	void PostLoad();
+	void PostLoad() {}
 	void DependentDied(CObject* o);
 	inline void SetOrderTarget(CUnit* o);
 
-	void SetScriptMaxSpeed(float speed);
+	void SetScriptMaxSpeed(float speed, bool persistent);
 	void SlowUpdateMaxSpeed();
 
 	virtual void AddDeathDependence(CObject* o, DependenceType dep);
@@ -37,16 +37,17 @@ public:
 	void ClearCommandDependencies();
 	/// feeds into GiveCommandReal()
 	void GiveCommand(const Command& c, bool fromSynced = true);
+	void ClearTargetLock(const Command &fc);
 	virtual int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
 	virtual std::vector<CommandDescription>& GetPossibleCommands();
 	virtual void FinishCommand();
-	virtual void WeaponFired(CWeapon* weapon);
+	virtual void WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo);
 	virtual void BuggerOff(const float3& pos, float radius) {}
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	/**
-	 * @brief Determins if c will cancel a queued command
+	 * @brief Determines if c will cancel a queued command
 	 * @return true if c will cancel a queued command
 	 */
 	virtual bool WillCancelQueued(const Command& c);
@@ -62,7 +63,7 @@ public:
 	/**
 	 * @brief Finds the queued command that would be canceled by the Command c
 	 * @return An iterator pointing at the command, or commandQue.end(),
-	 *   if no such queued command exsists
+	 *   if no such queued command exists
 	 */
 	CCommandQueue::iterator GetCancelQueued(const Command& c,
 	                                        CCommandQueue& queue);
@@ -94,6 +95,8 @@ public:
 	void UpdateStockpileIcon();
 	bool CanChangeFireState();
 
+	virtual bool AllowedCommand(const Command& c, bool fromSynced);
+
 	CWeapon* stockpileWeapon;
 
 	std::vector<CommandDescription> possibleCommands;
@@ -112,14 +115,14 @@ public:
 
 	bool targetDied;
 	bool inCommand;
-	bool selected;
 	bool repeatOrders;
 	int lastSelectedCommandPage;
 	bool unimportantMove;
 
 protected:
+	virtual void SelectNewAreaAttackTargetOrPos(const Command& ac) {}
+
 	bool IsAttackCapable() const;
-	virtual bool AllowedCommand(const Command& c, bool fromSynced);
 	bool SkipParalyzeTarget(const CUnit* target);
 	void GiveAllowedCommand(const Command& c, bool fromSynced = true);
 	void GiveWaitCommand(const Command& c);
@@ -127,7 +130,7 @@ protected:
 	 * @brief Returns the command that keeps the unit close to the path
 	 * @return a Fight Command with 6 arguments, the first three being where to
 	 *   return to (the current position of the unit), and the second being
-	 *   the location of the origional command.
+	 *   the location of the original command.
 	 */
 	void PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2);
 	int UpdateTargetLostTimer(int unitID);
@@ -144,11 +147,16 @@ private:
 };
 
 inline void CCommandAI::SetOrderTarget(CUnit* o) {
-	if (orderTarget != NULL)
-		DeleteDeathDependence((CObject*)orderTarget, DEPENDENCE_ORDERTARGET);
+	if (orderTarget != NULL) {
+		// NOTE As we do not include Unit.h,
+		//   the compiler does not know that CUnit derives from CObject,
+		//   and thus we can not use static_cast<CObject*>(...) here.
+		DeleteDeathDependence(reinterpret_cast<CObject*>(orderTarget), DEPENDENCE_ORDERTARGET);
+	}
 	orderTarget = o;
-	if (orderTarget != NULL)
-		AddDeathDependence((CObject*)orderTarget, DEPENDENCE_ORDERTARGET);
+	if (orderTarget != NULL) {
+		AddDeathDependence(reinterpret_cast<CObject*>(orderTarget), DEPENDENCE_ORDERTARGET);
+	}
 }
 
 #endif // _COMMAND_AI_H

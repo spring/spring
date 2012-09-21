@@ -296,13 +296,14 @@ void COggStream::Update()
 // read decoded data from audio stream into PCM buffer
 bool COggStream::DecodeStream(ALuint buffer)
 {
-	char pcm[BUFFER_SIZE];
+	memset(pcmDecodeBuffer, 0, BUFFER_SIZE);
+
 	int size = 0;
 	int section = 0;
 	int result = 0;
 
 	while (size < BUFFER_SIZE) {
-		result = ov_read(&oggStream, pcm + size, BUFFER_SIZE - size, 0, 2, 1, &section);
+		result = ov_read(&oggStream, pcmDecodeBuffer + size, BUFFER_SIZE - size, 0, 2, 1, &section);
 
 		if (result > 0) {
 			size += result;
@@ -320,7 +321,7 @@ bool COggStream::DecodeStream(ALuint buffer)
 		return false;
 	}
 
-	alBufferData(buffer, format, pcm, size, vorbisInfo->rate);
+	alBufferData(buffer, format, pcmDecodeBuffer, size, vorbisInfo->rate);
 	CheckError("COggStream::DecodeStream");
 
 	return true;

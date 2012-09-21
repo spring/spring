@@ -9,6 +9,7 @@
 #include "System/mmgr.h"
 #include "System/creg/STL_Set.h"
 #include "System/float3.h"
+#include "lib/gml/gmlmut.h"
 
 CR_BIND(CGroup, (0, NULL))
 

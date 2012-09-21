@@ -13,7 +13,7 @@
 #include "PathLog.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
 
 #define PATHDEBUG 0
@@ -104,7 +104,7 @@ IPath::SearchResult CPathFinder::GetPath(
 	bool exactPath,
 	unsigned int maxNodes,
 	bool needPath,
-	int ownerId,
+	const CSolidObject* owner,
 	bool synced
 ) {
 
@@ -130,7 +130,7 @@ IPath::SearchResult CPathFinder::GetPath(
 	mStartSquareIdx = startxSqr + startzSqr * gs->mapx;
 
 	// Start up the search.
-	IPath::SearchResult result = InitSearch(moveDef, pfDef, ownerId, synced);
+	IPath::SearchResult result = InitSearch(moveDef, pfDef, owner, synced);
 
 	// Respond to the success of the search.
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -154,9 +154,9 @@ IPath::SearchResult CPathFinder::GetPath(
 }
 
 
-IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, int ownerId, bool synced) {
+IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced) {
 	// If exact path is reqired and the goal is blocked, then no search is needed.
-	if (exactPath && pfDef.GoalIsBlocked(moveDef, CMoveMath::BLOCK_STRUCTURE))
+	if (exactPath && pfDef.GoalIsBlocked(moveDef, CMoveMath::BLOCK_STRUCTURE, owner))
 		return IPath::CantGetCloser;
 
 	// Clamp the start position
@@ -197,7 +197,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	openSquares.push(os);
 
 	// perform the search
-	IPath::SearchResult result = DoSearch(moveDef, pfDef, ownerId, synced);
+	IPath::SearchResult result = DoSearch(moveDef, pfDef, owner, synced);
 
 	// if no improvements are found, then return CantGetCloser instead
 	if ((mGoalSquareIdx == mStartSquareIdx && (!isStartGoal || pfDef.startInGoalRadius)) || mGoalSquareIdx == 0) {
@@ -208,7 +208,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 }
 
 
-IPath::SearchResult CPathFinder::DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, int ownerId, bool synced) {
+IPath::SearchResult CPathFinder::DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced) {
 	bool foundGoal = false;
 
 	while (!openSquares.empty() && (openSquareBuffer.GetSize() < maxSquaresToBeSearched)) {
@@ -229,20 +229,20 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveDef& moveDef, const CPathFin
 		}
 
 		// Test the 8 surrounding squares.
-		const bool right = TestSquare(moveDef, pfDef, os, PATHOPT_RIGHT, ownerId, synced);
-		const bool left  = TestSquare(moveDef, pfDef, os, PATHOPT_LEFT,  ownerId, synced);
-		const bool up    = TestSquare(moveDef, pfDef, os, PATHOPT_UP,    ownerId, synced);
-		const bool down  = TestSquare(moveDef, pfDef, os, PATHOPT_DOWN,  ownerId, synced);
+		const bool right = TestSquare(moveDef, pfDef, os, PATHOPT_RIGHT, owner, synced);
+		const bool left  = TestSquare(moveDef, pfDef, os, PATHOPT_LEFT,  owner, synced);
+		const bool up    = TestSquare(moveDef, pfDef, os, PATHOPT_UP,    owner, synced);
+		const bool down  = TestSquare(moveDef, pfDef, os, PATHOPT_DOWN,  owner, synced);
 
 		if (up) {
 			// we dont want to search diagonally if there is a blocking object
 			// (not blocking terrain) in one of the two side squares
-			if (right) { TestSquare(moveDef, pfDef, os, (PATHOPT_RIGHT | PATHOPT_UP), ownerId, synced); }
-			if (left) { TestSquare(moveDef, pfDef, os, (PATHOPT_LEFT | PATHOPT_UP), ownerId, synced); }
+			if (right) { TestSquare(moveDef, pfDef, os, (PATHOPT_RIGHT | PATHOPT_UP), owner, synced); }
+			if (left) { TestSquare(moveDef, pfDef, os, (PATHOPT_LEFT | PATHOPT_UP), owner, synced); }
 		}
 		if (down) {
-			if (right) { TestSquare(moveDef, pfDef, os, (PATHOPT_RIGHT | PATHOPT_DOWN), ownerId, synced); }
-			if (left) { TestSquare(moveDef, pfDef, os, (PATHOPT_LEFT | PATHOPT_DOWN), ownerId, synced); }
+			if (right) { TestSquare(moveDef, pfDef, os, (PATHOPT_RIGHT | PATHOPT_DOWN), owner, synced); }
+			if (left) { TestSquare(moveDef, pfDef, os, (PATHOPT_LEFT | PATHOPT_DOWN), owner, synced); }
 		}
 
 		// Mark this square as closed.
@@ -270,8 +270,7 @@ bool CPathFinder::TestSquare(
 	const MoveDef& moveDef,
 	const CPathFinderDef& pfDef,
 	const PathNode* parentOpenSquare,
-	unsigned int pathOpt,
-	int ownerId,
+	const CSolidObject* owner,
 	bool synced
 ) {
 	testedNodes++;
@@ -297,7 +296,7 @@ bool CPathFinder::TestSquare(
 		return false;
 	}
 
-	const CMoveMath::BlockType blockStatus = moveDef.moveMath->IsBlocked(moveDef, square.x, square.y);
+	const CMoveMath::BlockType blockStatus = moveDef.moveMath->IsBlocked(moveDef, square.x, square.y, owner);
 
 	// Check if square are out of constraints or blocked by something.
 	// Doesn't need to be done on open squares, as those are already tested.
@@ -449,7 +448,7 @@ static inline void FixupPath3Pts(const MoveDef& moveDef, float3& p1, float3& p2,
 void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath, float3& nextPoint,
 	std::deque<int2>& previous, int2 square)
 {
-#define COSTMOD 1.39f	// (sqrt(2) + 1)/sqrt(3)
+#define COSTMOD 1.39f	// (math::sqrt(2) + 1)/math::sqrt(3)
 #define TRYFIX3POINTS(dxtest, dytest)                                                            \
 	do {                                                                                         \
 		int testsqr = square.x + (dxtest) + (square.y + (dytest)) * gs->mapx;                    \

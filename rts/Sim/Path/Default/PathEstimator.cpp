@@ -1,15 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Platform/Win/win32.h"
-
 #include "lib/gml/gml.h" // FIXME: linux for some reason does not compile without this
 
 #include "PathEstimator.h"
 
 #include <fstream>
 #include <boost/bind.hpp>
-#include <boost/version.hpp>
-#include <boost/version.hpp>
 
 #include "minizip/zip.h"
 #include "System/mmgr.h"
@@ -22,7 +19,7 @@
 #include "PathLog.h"
 #include "Map/ReadMap.h"
 #include "Game/LoadScreen.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -39,20 +36,9 @@ CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
 static const std::string PATH_CACHE_DIR = "cache/paths/";
 
 static size_t GetNumThreads() {
-	size_t numThreads = std::max(0, configHandler->GetInt("HardwareThreadCount"));
-
-	if (numThreads == 0) {
-		// auto-detect
-		#if (BOOST_VERSION >= 103500)
-		numThreads = boost::thread::hardware_concurrency();
-		#elif defined(USE_GML)
-		numThreads = gmlCPUCount();
-		#else
-		numThreads = 1;
-		#endif
-	}
-
-	return numThreads;
+	const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
+	const size_t numCores = Threading::GetAvailableCores();
+	return ((numThreads == 0)? numCores: numThreads);
 }
 
 #if !defined(USE_MMGR)
@@ -184,7 +170,7 @@ void CPathEstimator::InitBlocks() {
 
 void CPathEstimator::CalcOffsetsAndPathCosts(unsigned int threadNum) {
 	//! reset FPU state for synced computations
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 
 	// NOTE: EstimatePathCosts() [B] is temporally dependent on CalculateBlockOffsets() [A],
 	// A must be completely finished before B_i can be safely called. This means we cannot
@@ -262,7 +248,7 @@ void CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, uns
 	const CMoveMath& moveMath = *(moveDef.moveMath);
 
 	float speedMod = moveMath.GetPosSpeedMod(moveDef, lowerX, lowerZ);
-	bool curblock = (speedMod == 0.0f) || moveMath.IsBlockedStructure(moveDef, lowerX, lowerZ);
+	bool curblock = (speedMod == 0.0f) || moveMath.IsBlockedStructure(moveDef, lowerX, lowerZ, NULL);
 	// search for an accessible position
 	unsigned int z = 0;
 	while (true) {
@@ -285,14 +271,16 @@ void CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, uns
 				break;
 			// if last position was not blocked, then we do not need to check the entire square
 			speedMod = moveMath.GetPosSpeedMod(moveDef, lowerX + x, lowerZ + z);
-			curblock = (speedMod == 0.0f) || (curblock ? moveMath.IsBlockedStructure(moveDef, lowerX + x, lowerZ + z) :
-						moveMath.IsBlockedStructureXmax(moveDef, lowerX + x, lowerZ + z));
+			curblock = (speedMod == 0.0f) || (curblock ?
+				moveMath.IsBlockedStructure(moveDef, lowerX + x, lowerZ + z, NULL) :
+				moveMath.IsBlockedStructureXmax(moveDef, lowerX + x, lowerZ + z, NULL));
 		}
 		if (++z >= BLOCK_SIZE)
 			break;
 		speedMod = moveMath.GetPosSpeedMod(moveDef, lowerX, lowerZ + z);
-		curblock = (speedMod == 0.0f) || (zcurblock ? moveMath.IsBlockedStructure(moveDef, lowerX, lowerZ + z) :
-						moveMath.IsBlockedStructureZmax(moveDef, lowerX, lowerZ + z));
+		curblock = (speedMod == 0.0f) || (zcurblock ?
+			moveMath.IsBlockedStructure(moveDef, lowerX, lowerZ + z, NULL) :
+			moveMath.IsBlockedStructureZmax(moveDef, lowerX, lowerZ + z, NULL));
 	}
 
 	// store the offset found

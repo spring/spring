@@ -3,6 +3,8 @@
 #ifndef FLYING_PIECE_H
 #define FLYING_PIECE_H
 
+#include "lib/gml/gmlcnf.h"
+
 #if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
 #include "System/mmgr.h"
 #include "System/MemPool.h"

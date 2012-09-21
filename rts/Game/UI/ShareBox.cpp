@@ -13,6 +13,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/NetProtocol.h"
 #include "System/mmgr.h"
+#include "System/MsgStrings.h"
 
 #include <SDL_keysym.h>
 
@@ -235,7 +236,7 @@ void CShareBox::Draw()
 		if (teamHandler->Team(actualTeam)->leader >= 0) {
 			teamName = playerHandler->Player(teamHandler->Team(actualTeam)->leader)->name;
 		} else {
-			teamName = "Uncontrolled";
+			teamName = UncontrolledPlayerName;
 		}
 
 		std::string ally, dead;

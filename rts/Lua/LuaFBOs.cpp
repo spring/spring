@@ -80,7 +80,7 @@ bool LuaFBOs::CreateMetatable(lua_State* L)
 
 inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 {
-	if (!LuaOpenGL::IsDrawingEnabled()) {
+	if (!LuaOpenGL::IsDrawingEnabled(L)) {
 		luaL_error(L, "%s(): OpenGL calls can only be used in Draw() "
 		              "call-ins, or while creating display lists", caller);
 	}
@@ -92,7 +92,7 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 
 const LuaFBOs::FBO* LuaFBOs::GetLuaFBO(lua_State* L, int index)
 {
-	return (FBO*)LuaUtils::GetUserData(L, index, "FBO");
+	return static_cast<FBO*>(LuaUtils::GetUserData(L, index, "FBO"));
 }
 
 
@@ -127,7 +127,7 @@ void LuaFBOs::FBO::Free(lua_State* L)
 
 int LuaFBOs::meta_gc(lua_State* L)
 {
-	FBO* fbo = (FBO*)luaL_checkudata(L, 1, "FBO");
+	FBO* fbo = static_cast<FBO*>(luaL_checkudata(L, 1, "FBO"));
 	fbo->Free(L);
 	return 0;
 }
@@ -135,7 +135,7 @@ int LuaFBOs::meta_gc(lua_State* L)
 
 int LuaFBOs::meta_index(lua_State* L)
 {
-	const FBO* fbo = (FBO*)luaL_checkudata(L, 1, "FBO");
+	const FBO* fbo = static_cast<FBO*>(luaL_checkudata(L, 1, "FBO"));
 	if (fbo->luaRef == LUA_NOREF) {
 		return 0;
 	}
@@ -151,7 +151,7 @@ int LuaFBOs::meta_index(lua_State* L)
 
 int LuaFBOs::meta_newindex(lua_State* L)
 {
-	FBO* fbo = (FBO*)luaL_checkudata(L, 1, "FBO");
+	FBO* fbo = static_cast<FBO*>(luaL_checkudata(L, 1, "FBO"));
 	if (fbo->luaRef == LUA_NOREF) {
 		return 0;
 	}
@@ -402,7 +402,7 @@ int LuaFBOs::CreateFBO(lua_State* L)
 	glBindFramebufferEXT(fbo.target, fbo.id);
 
 
-	FBO* fboPtr = (FBO*)lua_newuserdata(L, sizeof(FBO));
+	FBO* fboPtr = static_cast<FBO*>(lua_newuserdata(L, sizeof(FBO)));
 	*fboPtr = fbo;
 
 	luaL_getmetatable(L, "FBO");
@@ -440,7 +440,7 @@ int LuaFBOs::DeleteFBO(lua_State* L)
 	if (lua_isnil(L, 1)) {
 		return 0;
 	}
-	FBO* fbo = (FBO*)luaL_checkudata(L, 1, "FBO");
+	FBO* fbo = static_cast<FBO*>(luaL_checkudata(L, 1, "FBO"));
 	fbo->Free(L);
 	return 0;
 }
@@ -452,7 +452,7 @@ int LuaFBOs::IsValidFBO(lua_State* L)
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	FBO* fbo = (FBO*)luaL_checkudata(L, 1, "FBO");
+	const FBO* fbo = static_cast<FBO*>(luaL_checkudata(L, 1, "FBO"));
 	if ((fbo->id == 0) || (fbo->luaRef == LUA_NOREF)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -482,7 +482,7 @@ int LuaFBOs::ActiveFBO(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 	
-	FBO* fbo = (FBO*)luaL_checkudata(L, 1, "FBO");
+	const FBO* fbo = static_cast<FBO*>(luaL_checkudata(L, 1, "FBO"));
 	if (fbo->id == 0) {
 		return 0;
 	}
@@ -550,7 +550,7 @@ int LuaFBOs::UnsafeSetFBO(lua_State* L)
 		return 0;
 	}
 		
-	FBO* fbo = (FBO*)luaL_checkudata(L, 1, "FBO");
+	const FBO* fbo = static_cast<FBO*>(luaL_checkudata(L, 1, "FBO"));
 	if (fbo->id == 0) {
 		return 0;
 	}
@@ -583,14 +583,14 @@ int LuaFBOs::BlitFBO(lua_State* L)
 												 mask, filter);
 	}
 	else {
-		FBO* fboSrc = (FBO*)luaL_checkudata(L, 1, "FBO");
+		const FBO* fboSrc = static_cast<FBO*>(luaL_checkudata(L, 1, "FBO"));
 		if (fboSrc->id == 0) { return 0; }
 		const GLint x0Src = (GLint)luaL_checknumber(L, 2);
 		const GLint y0Src = (GLint)luaL_checknumber(L, 3);
 		const GLint x1Src = (GLint)luaL_checknumber(L, 4);
 		const GLint y1Src = (GLint)luaL_checknumber(L, 5);
 
-		FBO* fboDst = (FBO*)luaL_checkudata(L, 6, "FBO");
+		const FBO* fboDst = static_cast<FBO*>(luaL_checkudata(L, 6, "FBO"));
 		if (fboDst->id == 0) { return 0; }
 		const GLint x0Dst = (GLint)luaL_checknumber(L, 7);
 		const GLint y0Dst = (GLint)luaL_checknumber(L, 8);

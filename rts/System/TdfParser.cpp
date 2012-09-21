@@ -189,7 +189,7 @@ void TdfParser::LoadFile(std::string const& filename)
 	this->filename = filename;
 	CFileHandler file(filename);
 	if (!file.FileExists()) {
-		throw content_error(("file " + filename + " not found").c_str());
+		throw content_error("file " + filename + " not found");
 	}
 
 	const size_t fileBuf_size = file.FileSize();

@@ -428,7 +428,7 @@ bool CKeyBindings::UnBind(const string& keystr, const string& command)
 	if (it != bindings.end()) {
 		ActionList& al = it->second;
 		success = RemoveCommandFromList(al, command);
-		if (al.size() <= 0) {
+		if (al.empty()) {
 			bindings.erase(it);
 		}
 	}
@@ -464,7 +464,7 @@ bool CKeyBindings::UnBindAction(const string& command)
 		if (RemoveCommandFromList(al, command)) {
 			success = true;
 		}
-		if (al.size() <= 0) {
+		if (al.empty()) {
 			KeyMap::iterator it_next = it;
 			++it_next;
 			bindings.erase(it);
@@ -603,7 +603,7 @@ bool CKeyBindings::ExecuteCommand(const string& line)
 {
 	const vector<string> words = CSimpleParser::Tokenize(line, 2);
 
-	if (words.size() <= 0) {
+	if (words.empty()) {
 		return false;
 	}
 	const string command = StringToLower(words[0]);

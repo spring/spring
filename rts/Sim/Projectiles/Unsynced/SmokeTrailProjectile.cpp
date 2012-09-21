@@ -8,7 +8,6 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
@@ -124,7 +123,7 @@ void CSmokeTrailProjectile::Draw()
 		if (lastSegment) {
 			a1 = 0;
 		}
-		a1 *= 0.7f + fabs(dif1.dot(dir1));
+		a1 *= 0.7f + math::fabs(dif1.dot(dir1));
 		float alpha = std::min(255.f, std::max(0.f, a1));
 		col[0] = (unsigned char) (color * alpha);
 		col[1] = (unsigned char) (color * alpha);
@@ -136,7 +135,7 @@ void CSmokeTrailProjectile::Draw()
 		if (firstSegment) {
 			a2 = 0;
 		}
-		a2 *= 0.7f + fabs(dif2.dot(dir2));
+		a2 *= 0.7f + math::fabs(dif2.dot(dir2));
 		alpha = std::min(255.f, std::max(0.0f, a2));
 		col2[0] = (unsigned char) (color * alpha);
 		col2[1] = (unsigned char) (color * alpha);
@@ -153,7 +152,7 @@ void CSmokeTrailProjectile::Draw()
 
 			unsigned char col3[4];
 			float a2 = (1 - (float)(age + 4) / lifeTime) * 255;
-			a2 *= 0.7f + fabs(dif3.dot(middir));
+			a2 *= 0.7f + math::fabs(dif3.dot(middir));
 			alpha = std::min(255.0f, std::max(0.0f, a2));
 			col3[0] = (unsigned char) (color * alpha);
 			col3[1] = (unsigned char) (color * alpha);

@@ -15,7 +15,7 @@ void Plane::MakePlane(const Vector3& v1, const Vector3& v2, const Vector3& v3)
 	a = ry1*rz2 - ry2*rz1;
 	b = rz1*rx2 - rz2*rx1;
 	c = rx1*ry2 - rx2*ry1;
-	float len = (float)sqrt(a*a + b*b + c*c);
+	float len = (float)math::sqrt(a*a + b*b + c*c);
 	a /= len;
 	b /= len;
 	c /= len;
@@ -37,10 +37,10 @@ bool Plane::operator==(const Plane& pln) const
 bool Plane::EpsilonCompare(const Plane& pln, float epsilon)
 {
 	Plane t;
-	t.a = fabs(a - pln.a);
-	t.b = fabs(b - pln.b);
-	t.c = fabs(c - pln.c);
-	t.d = fabs(d - pln.d);
+	t.a = math::fabs(a - pln.a);
+	t.b = math::fabs(b - pln.b);
+	t.c = math::fabs(c - pln.c);
+	t.d = math::fabs(d - pln.d);
 	if (t.a > epsilon || t.b > epsilon || t.c > epsilon || t.d > epsilon) {
 		return false;
 	}

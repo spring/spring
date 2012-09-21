@@ -64,7 +64,7 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_ATTACK:
@@ -118,7 +118,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {
@@ -203,7 +203,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		if (cmdID < 0) {
 			const std::map<int, string>& buildOptions = cai->buildOptions;
@@ -214,7 +214,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				bi.def = unitDefHandler->GetUnitDefByID(-(cmdID));
 
 				if (ci->params.size() == 4) {
-					bi.buildFacing = int(abs(ci->params[3])) % NUM_FACINGS;
+					bi.buildFacing = abs((int)ci->params[3]) % NUM_FACINGS;
 				}
 
 				bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
@@ -399,7 +399,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = newUnitCommands.begin(); ci != newUnitCommands.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {
@@ -501,7 +501,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {
@@ -586,7 +586,7 @@ void CommandDrawer::DrawTransportCAICommands(const CTransportCAI* cai) const
 
 	CCommandQueue::const_iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmdID = ci->GetID();
+		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {
@@ -716,7 +716,7 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) con
 		return;
 	}
 
-	const float3 endPos(c.params[0], c.params[1] + 3.0f, c.params[2]);
+	const float3& endPos = c.GetPos(0) + float3(0.0f, 3.0f, 0.0f);
 
 	if (!dd->showArea || (paramsCount < 4)) {
 		lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
@@ -847,7 +847,7 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 
 	if (quadcounter) {
 		glEnableClientState(GL_VERTEX_ARRAY);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glVertexPointer(3, GL_FLOAT, 0, &vertices_quads[0]);
 		glDrawArrays(GL_QUADS, 0, quadcounter/3);
 

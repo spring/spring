@@ -2,20 +2,21 @@
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <boost/thread/condition.hpp>
 #include <boost/cstdint.hpp>
 
 #include "System/OpenMP_cond.h"
-#include "lib/gml/gml.h" // for gmlCPUCount
 
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
+#include "PathRectangle.hpp"
+
 #include "Game/GameSetup.h"
 #include "Game/LoadScreen.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
-#include "System/Rectangle.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
@@ -23,13 +24,8 @@
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 
-#ifdef GetTempPath
-#undef GetTempPath
-#undef GetTempPathA
-#endif
-
-#define NUL_RECTANGLE SRectangle(0, 0,         0,        0)
-#define MAP_RECTANGLE SRectangle(0, 0,  gs->mapx, gs->mapy)
+#define NUL_RECTANGLE PathRectangle(0, 0,         0,        0, false)
+#define MAP_RECTANGLE PathRectangle(0, 0,  gs->mapx, gs->mapy, false)
 
 namespace QTPFS {
 	const float PathManager::MIN_SPEEDMOD_VALUE = 0.0f;
@@ -82,20 +78,9 @@ namespace QTPFS {
 	static boost::thread pmLoadThread;
 
 	static size_t GetNumThreads() {
-		size_t numThreads = std::max(0, configHandler->GetInt("HardwareThreadCount"));
-
-		if (numThreads == 0) {
-			// auto-detect
-			#if (BOOST_VERSION >= 103500)
-			numThreads = boost::thread::hardware_concurrency();
-			#elif defined(USE_GML)
-			numThreads = gmlCPUCount();
-			#else
-			numThreads = 1;
-			#endif
-		}
-
-		return numThreads;
+		const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
+		const size_t numCores = Threading::GetAvailableCores();
+		return ((numThreads == 0)? numCores: numThreads);
 	}
 
 	NodeLayer* PathManager::serializingNodeLayer = NULL;
@@ -107,6 +92,13 @@ QTPFS::PathManager::PathManager() {
 	pmLoadThread = boost::thread(boost::bind(&PathManager::Load, this));
 	pmLoadScreen.Loop();
 	pmLoadThread.join();
+
+	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+	mutexThreadUpdate = new boost::mutex();
+	condThreadUpdate = new boost::condition_variable();
+	condThreadUpdated = new boost::condition_variable();
+	updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
+	#endif
 }
 
 QTPFS::PathManager::~PathManager() {
@@ -138,6 +130,19 @@ QTPFS::PathManager::~PathManager() {
 	numPrevExecutedSearches.clear();
 
 	PathSearch::FreeGlobalQueue();
+
+	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+	// at this point the thread is waiting, so notify it
+	// nodeLayers has been cleared already, guaranteeing
+	// that no "final" iteration shall execute
+	condThreadUpdate->notify_one();
+	updateThread->join();
+
+	delete updateThread;
+	delete mutexThreadUpdate;
+	delete condThreadUpdate;
+	delete condThreadUpdated;
+	#endif
 }
 
 void QTPFS::PathManager::Load() {
@@ -215,7 +220,7 @@ boost::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
 
 
 
-void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const SRectangle& r) {
+void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const PathRectangle& r) {
 	static std::vector<boost::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
 
 	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
@@ -229,8 +234,8 @@ void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const SRectangle& r) {
 
 
 
-void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
-	streflop_init<streflop::Simple>();
+void QTPFS::PathManager::InitNodeLayersThreaded(const PathRectangle& rect) {
+	streflop::streflop_init<streflop::Simple>();
 
 	char loadMsg[512] = {'\0'};
 	const char* fmtString = "[PathManager::%s] using %u threads for %u node-layers (cached? %s)";
@@ -289,13 +294,13 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 	}
 	#endif
 
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 }
 
 void QTPFS::PathManager::InitNodeLayersThread(
 	unsigned int threadNum,
 	unsigned int numThreads,
-	const SRectangle& rect
+	const PathRectangle& rect
 ) {
 	const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
 	const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
@@ -330,16 +335,16 @@ void QTPFS::PathManager::InitNodeLayersThread(
 	}
 }
 
-void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const SRectangle& rect) {
-	nodeTrees[layerNum] = new QTPFS::QTNode(NULL,  0,  rect.x1, rect.z1,  rect.x2, rect.z2);
+void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const PathRectangle& r) {
+	nodeTrees[layerNum] = new QTPFS::QTNode(NULL,  0,  r.x1, r.z1,  r.x2, r.z2);
 	nodeLayers[layerNum].Init(layerNum);
 	nodeLayers[layerNum].RegisterNode(nodeTrees[layerNum]);
 }
 
 
 
-void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
-	streflop_init<streflop::Simple>();
+void QTPFS::PathManager::UpdateNodeLayersThreaded(const PathRectangle& rect) {
+	streflop::streflop_init<streflop::Simple>();
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
@@ -354,13 +359,13 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 	}
 	#endif
 
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 }
 
 void QTPFS::PathManager::UpdateNodeLayersThread(
 	unsigned int threadNum,
 	unsigned int numThreads,
-	const SRectangle& rect
+	const PathRectangle& rect
 ) {
 	const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
 	const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
@@ -374,7 +379,7 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 	}
 }
 
-void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r) {
+void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectangle& r) {
 	const MoveDef* md = moveDefHandler->moveDefs[layerNum];
 	const CMoveMath* mm = md->moveMath;
 
@@ -391,7 +396,7 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 
 	// adjust the borders so we are not left with "rims" of
 	// impassable squares when eg. a structure is reclaimed
-	SRectangle mr = SRectangle(r);
+	PathRectangle mr = PathRectangle(r);
 	mr.x1 = std::max(r.x1 - md->xsizeh,        0);
 	mr.z1 = std::max(r.z1 - md->zsizeh,        0);
 	mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
@@ -409,7 +414,7 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 
 
 #ifdef QTPFS_STAGGERED_LAYER_UPDATES
-void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
+void QTPFS::PathManager::QueueNodeLayerUpdates(const PathRectangle& r) {
 	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 		const MoveDef* md = moveDefHandler->moveDefs[layerNum];
 		const CMoveMath* mm = md->moveMath;
@@ -417,7 +422,7 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 		if (md->unitDefRefCount == 0)
 			continue;
 
-		SRectangle mr = SRectangle(r);
+		PathRectangle mr = PathRectangle(r);
 		mr.x1 = std::max(r.x1 - md->xsizeh,        0);
 		mr.z1 = std::max(r.z1 - md->zsizeh,        0);
 		mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
@@ -428,12 +433,25 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 }
 
 void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum) {
+	// update the neighbor-cache for (a chunk of) the leaf
+	// nodes in this layer; this amortizes (in theory) the
+	// cost of doing it "on-demand" in PathSearch::Iterate
+	// (which can not be avoided since updating the entire
+	// layer in one frame is computationally infeasible)
+	//
+	// NOTE: exclusive to QTPFS_STAGGERED_LAYER_UPDATES
+	//
+	#ifdef QTPFS_AMORTIZED_NODE_NEIGHBOR_CACHE_UPDATES
+	nodeLayers[layerNum].ExecuteNodeNeighborCacheUpdate(gs->frameNum, numTerrainChanges);
+	#endif
+
 	// flush this layer's entire update-queue if necessary
+	//
 	// called at run-time only, not load-time so we always
-	// *want* tesselation here
+	// *want* (as opposed to need) a tesselation pass here
 	while (nodeLayers[layerNum].HaveQueuedUpdate()) {
 		const NodeLayer& nl = nodeLayers[layerNum];
-		const SRectangle& r = nl.GetQueuedUpdateRectangle();
+		const PathRectangle& r = nl.GetQueuedUpdateRectangle();
 
 		if (nodeLayers[layerNum].ExecQueuedUpdate()) {
 			nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], r);
@@ -523,17 +541,27 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 //     this event (because map and features are already
 //     present when PathManager gets instantiated)
 //
-void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2) {
+//     this means nodes underneath trees, rocks, etc.
+//     will *NOT* be tesselated to maximal resolution
+//     --> need to queue up the FeatureCreated events
+//
+void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type) {
 	SCOPED_TIMER("PathManager::TerrainChange");
+
+	#ifdef QTPFS_FORCE_TESSELATE_OBJECT_YARDMAPS
+	const bool forceTesselation = (type == TERRAINCHANGE_OBJECT_INSERTED || type == TERRAINCHANGE_OBJECT_INSERTED_YM);
+	#else
+	const bool forceTesselation = false;
+	#endif
 
 	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 	// defer layer-updates to ::Update so we can stagger them
 	// this may or may not be more efficient than updating all
 	// layers right away, depends on many factors
-	QueueNodeLayerUpdates(SRectangle(x1, z1,  x2, z2));
+	QueueNodeLayerUpdates(PathRectangle(x1, z1,  x2, z2, forceTesselation));
 	#else
 	// update all layers right now for this change-event
-	UpdateNodeLayersThreaded(SRectangle(x1, z1,  x2, z2));
+	UpdateNodeLayersThreaded(PathRectangle(x1, z1,  x2, z2, forceTesselation));
 	#endif
 
 	numTerrainChanges += 1;
@@ -547,44 +575,83 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 void QTPFS::PathManager::Update() {
 	SCOPED_TIMER("PathManager::Update");
 
-	// NOTE:
-	//     for a mod with N move-types, any unit will be waiting
-	//     (N / LAYERS_PER_UPDATE) sim-frames before its request
-	//     executes at a minimum
-	const unsigned int layersPerUpdateTmp = LAYERS_PER_UPDATE;
-	const unsigned int numPathTypeUpdates = std::min(static_cast<unsigned int>(nodeLayers.size()), layersPerUpdateTmp);
+	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+	streflop::streflop_init<streflop::Simple>();
 
-	static unsigned int minPathTypeUpdate = 0;
-	static unsigned int maxPathTypeUpdate = numPathTypeUpdates;
+	boost::mutex::scoped_lock lock(*mutexThreadUpdate);
 
-	sharedPaths.clear();
+	// allow ThreadUpdate to run one iteration
+	condThreadUpdate->notify_one();
 
-	for (unsigned int pathTypeUpdate = minPathTypeUpdate; pathTypeUpdate < maxPathTypeUpdate; pathTypeUpdate++) {
-		#ifndef QTPFS_IGNORE_DEAD_PATHS
-		QueueDeadPathSearches(pathTypeUpdate);
-		#endif
+	// wait for the ThreadUpdate iteration to finish
+	condThreadUpdated->wait(lock);
 
-		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		// NOTE: *must* be called between QueueDeadPathSearches and ExecuteQueuedSearches
-		ExecQueuedNodeLayerUpdates(pathTypeUpdate);
-		#endif
+	streflop::streflop_init<streflop::Simple>();
+	#else
+	ThreadUpdate();
+	#endif
+}
 
-		ExecuteQueuedSearches(pathTypeUpdate);
+void QTPFS::PathManager::ThreadUpdate() {
+	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+	while (!nodeLayers.empty()) {
+		boost::mutex::scoped_lock lock(*mutexThreadUpdate);
+
+		// wait for green light from Update
+		condThreadUpdate->wait(lock);
+
+		// if we were notified from the destructor, then structures
+		// are no longer valid and there is no point to finish this
+		// iteration --> break early to avoid crashing
+		if (nodeLayers.empty()) {
+			break;
+		}
+	#endif
+
+		// NOTE:
+		//     for a mod with N move-types, any unit will be waiting
+		//     (N / LAYERS_PER_UPDATE) sim-frames before its request
+		//     executes at a minimum
+		const unsigned int layersPerUpdateTmp = LAYERS_PER_UPDATE;
+		const unsigned int numPathTypeUpdates = std::min(static_cast<unsigned int>(nodeLayers.size()), layersPerUpdateTmp);
+
+		// NOTE: thread-safe (only ONE thread ever accesses these)
+		static unsigned int minPathTypeUpdate = 0;
+		static unsigned int maxPathTypeUpdate = numPathTypeUpdates;
+
+		sharedPaths.clear();
+
+		for (unsigned int pathTypeUpdate = minPathTypeUpdate; pathTypeUpdate < maxPathTypeUpdate; pathTypeUpdate++) {
+			#ifndef QTPFS_IGNORE_DEAD_PATHS
+			QueueDeadPathSearches(pathTypeUpdate);
+			#endif
+
+			#ifdef QTPFS_STAGGERED_LAYER_UPDATES
+			// NOTE: *must* be called between QueueDeadPathSearches and ExecuteQueuedSearches
+			ExecQueuedNodeLayerUpdates(pathTypeUpdate);
+			#endif
+
+			ExecuteQueuedSearches(pathTypeUpdate);
+		}
+
+		std::copy(numCurrExecutedSearches.begin(), numCurrExecutedSearches.end(), numPrevExecutedSearches.begin());
+
+		minPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates);
+		maxPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates);
+
+		if (minPathTypeUpdate >= nodeLayers.size()) {
+			minPathTypeUpdate = 0;
+			maxPathTypeUpdate = numPathTypeUpdates;
+		}
+		if (maxPathTypeUpdate >= nodeLayers.size()) {
+			maxPathTypeUpdate = nodeLayers.size();
+		}
+
+	#ifdef QTPFS_ENABLE_THREADED_UPDATE
+		// tell Update we are finished with this iteration
+		condThreadUpdated->notify_one();
 	}
-
-	std::copy(numCurrExecutedSearches.begin(), numCurrExecutedSearches.end(), numPrevExecutedSearches.begin());
-
-	minPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates);
-	maxPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates);
-
-	if (minPathTypeUpdate >= nodeLayers.size()) {
-		minPathTypeUpdate = 0;
-		maxPathTypeUpdate = numPathTypeUpdates;
-		return;
-	}
-	if (maxPathTypeUpdate >= nodeLayers.size()) {
-		maxPathTypeUpdate = nodeLayers.size();
-	}
+	#endif
 }
 
 
@@ -849,7 +916,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 	float3 point,
 	float, // radius,
 	int, // numRetries
-	int, // ownerID
+	const CSolidObject*, // owner
 	bool // synced
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");

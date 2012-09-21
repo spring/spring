@@ -416,7 +416,7 @@ void CMapInfo::ReadSound()
 		if (luaType == LuaTable::NIL)
 			continue;
 		
-		const ALuint& param = it->second;
+		const ALuint param = it->second;
 		const unsigned& type = alParamType[param];
 		switch (type) {
 			case EFXParamTypes::FLOAT:
@@ -434,7 +434,7 @@ void CMapInfo::ReadSound()
 		if (luaType == LuaTable::NIL)
 			continue;
 
-		const ALuint& param = it->second;
+		const ALuint param = it->second;
 		const unsigned& type = alParamType[param];
 		switch (type) {
 			case EFXParamTypes::VECTOR:

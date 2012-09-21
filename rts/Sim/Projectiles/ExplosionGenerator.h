@@ -190,6 +190,8 @@ public:
 	~CCustomExplosionGenerator() { ClearCache(); }
 
 	static void OutputProjectileClassInfo();
+	static unsigned int GetFlagsFromTable(const LuaTable& table);
+	static unsigned int GetFlagsFromHeight(float height, float altitude);
 
 	/// @throws content_error/runtime_error on errors
 	unsigned int Load(CExplosionGeneratorHandler* handler, const std::string& tag);

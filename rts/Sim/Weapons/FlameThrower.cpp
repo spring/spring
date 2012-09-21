@@ -21,11 +21,11 @@ CFlameThrower::CFlameThrower(CUnit* owner)
 {
 }
 
-CFlameThrower::~CFlameThrower(void)
+CFlameThrower::~CFlameThrower()
 {
 }
 
-void CFlameThrower::FireImpl(void)
+void CFlameThrower::FireImpl()
 {
 	const float3 dir = (targetPos - weaponMuzzlePos).Normalize();
 	const float3 spread =
@@ -69,7 +69,7 @@ bool CFlameThrower::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 	return true;
 }
 
-void CFlameThrower::Update(void)
+void CFlameThrower::Update()
 {
 	if(targetType != Target_None){
 		weaponPos = owner->pos +

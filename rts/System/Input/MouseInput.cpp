@@ -18,7 +18,6 @@
 	Several people confirmed its working.
 */
 
-#include "System/Platform/Win/win32.h"
 #include "System/mmgr.h"
 
 #include "MouseInput.h"
@@ -221,11 +220,13 @@ void IMouseInput::SetPos(int2 pos)
 
 	mousepos = pos;
 	int2 curpos;
+#ifndef WIN32 // seems SDL_GetMouseState isn't always updated on windows when cursor is hidden? (2012 - untested)
 	SDL_GetMouseState(&curpos.x, &curpos.y);
-	if (!(pos.x != curpos.x || pos.y != curpos.y)) {
+	if (pos.x == curpos.x && pos.y == curpos.y) {
 		// calling SDL_WarpMouse at 300fps eats ~5% cpu usage, so only update when needed
 		return;
 	}
+#endif
 
 #ifdef WIN32
 	wsdl::SDL_WarpMouse(pos.x, pos.y);

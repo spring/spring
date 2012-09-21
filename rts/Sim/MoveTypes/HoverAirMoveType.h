@@ -101,6 +101,7 @@ private:
 	void ExecuteStop();
 
 	void Takeoff();
+	void Land();
 	bool IsFighter() const { return false; }
 
 	bool HandleCollisions();

@@ -26,15 +26,17 @@ class CWeapon : public CObject
 public:
 	CWeapon(CUnit* owner);
 	virtual ~CWeapon();
-	virtual void Init(void);
+	virtual void Init();
 
 	void SetWeaponNum(int);
 
 	void DependentDied(CObject* o);
 
+	bool AllowWeaponTargetCheck();
 	bool TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit) const;
 	bool HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const;
-	bool AdjustTargetVectorLength(CUnit*, float3&, float3&, float3&) const;
+	bool CheckTargetAngleConstraint(const float3& worldTargetDir, const float3& worldWeaponDir) const;
+	bool SetTargetBorderPos(CUnit*, float3&, float3&, float3&);
 	virtual bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
 	bool TryTarget(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
@@ -43,23 +45,27 @@ public:
 	bool CobBlockShot(const CUnit* unit);
 	float TargetWeight(const CUnit* unit) const;
 	void SlowUpdate(bool noAutoTargetOverride);
+
 	virtual void SlowUpdate();
 	virtual void Update();
 	virtual float GetRange2D(float yDiff) const;
 	virtual void UpdateRange(float val) { range = val; }
 
-	void HoldFire();
-	virtual bool AttackUnit(CUnit* unit, bool userTarget);
-	virtual bool AttackGround(float3 pos, bool userTarget);
+	virtual bool AttackUnit(CUnit* newTargetUnit, bool isUserTarget);
+	virtual bool AttackGround(float3 newTargetPos, bool isUserTarget);
 
+	void AutoTarget();
 	void AimReady(int value);
-
-	bool AllowWeaponTargetCheck() const;
-
 	void Fire();
+	void HoldFire();
 
 	void StopAttackingAllyTeam(int ally);
+	void UpdateInterceptTarget();
 
+private:
+	virtual void FireImpl() {}
+
+public:
 	CUnit* owner;
 
 	const WeaponDef* weaponDef;
@@ -122,7 +128,6 @@ public:
 	float buildPercent;						// how far we have come on building current missile if stockpiling
 	int numStockpiled;						// how many missiles we have stockpiled
 	int numStockpileQued;					// how many weapons the user have added to our que
-	void UpdateInterceptTarget();
 
 	int lastRequest;						// when the last script call was done
 	int lastTargetRetry;					// when we last recalculated target selection
@@ -130,15 +135,15 @@ public:
 
 	CWeapon* slavedTo;						// use this weapon to choose target
 
-	float maxForwardAngleDif;				// for onlyForward weapons, maximum allowed angle between owner->frontdir and (targetPos - owner->pos)
-	float maxMainDirAngleDif;				// how far away from <mainDir> the weapon can aim at something (as an acos value)
+	float maxForwardAngleDif;				// for onlyForward/!turret weapons, max. angle between owner->frontdir and (targetPos - owner->pos) (derived from UnitDefWeapon::maxAngleDif)
+	float maxMainDirAngleDif;				// for !onlyForward/turret weapons, max. angle from <mainDir> the weapon can aim (derived from WeaponDef::tolerance)
 
 	bool avoidFriendly;						// if true, try to avoid friendly units while aiming
 	bool avoidFeature;      				// if true, try to avoid features while aiming
 	bool avoidNeutral;						// if true, try to avoid neutral units while aiming
 
-	float targetBorder;						// if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
-	float cylinderTargetting;				// if greater than 0, range will be checked in a cylinder (height=range*cylinderTargetting) instead of a sphere
+	float targetBorder;						// if nonzero, units will TryTarget wrt. edge of scaled collision volume instead of centre
+	float cylinderTargeting;				// if greater than 0, range will be checked in a cylinder (height=range*cylinderTargeting) instead of a sphere
 	float minIntensity;						// for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
 	float heightBoostFactor;				// controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
 
@@ -157,10 +162,9 @@ public:
 	float3 salvoError;						// error vector for the whole salvo
 	float3 errorVector;
 	float3 errorVectorAdd;
-	float3 targetPos;						// the position of the target (even if targettype=unit)
 
-private:
-	virtual void FireImpl() {};
+	float3 targetPos;                       // the position of the target (even if targettype=unit)
+	float3 targetBorderPos;                 // <targetPos> adjusted for target-border factor
 };
 
 #endif /* WEAPON_H */

@@ -11,8 +11,8 @@
 class CLoadSaveInterface
 {
 public:
-	CLoadSaveInterface(void);
-	virtual ~CLoadSaveInterface(void);
+	CLoadSaveInterface();
+	virtual ~CLoadSaveInterface();
 
 	virtual void lsBool(bool& v)=0;
 	virtual void lsChar(char& v)=0;

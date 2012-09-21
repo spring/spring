@@ -22,11 +22,11 @@ CEmgCannon::CEmgCannon(CUnit* owner)
 {
 }
 
-CEmgCannon::~CEmgCannon(void)
+CEmgCannon::~CEmgCannon()
 {
 }
 
-void CEmgCannon::Update(void)
+void CEmgCannon::Update()
 {
 	if(targetType != Target_None){
 		weaponPos = owner->pos +
@@ -85,7 +85,7 @@ bool CEmgCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	return true;
 }
 
-void CEmgCannon::Init(void)
+void CEmgCannon::Init()
 {
 	CWeapon::Init();
 }

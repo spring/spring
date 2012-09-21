@@ -89,7 +89,7 @@ void CCamera::Update(bool resetUp)
 	up.UnsafeANormalize();
 
 	const float aspect = globalRendering->aspectRatio;
-	const float viewx = tan(aspect * halfFov);
+	const float viewx = math::tan(aspect * halfFov);
 	const float viewy = tanHalfFov;
 
 	if (globalRendering->viewSizeY <= 0) {
@@ -218,9 +218,9 @@ bool CCamera::InView(const float3& p, float radius) const
 
 void CCamera::UpdateForward()
 {
-	forward.z = cos(rot.y) * cos(rot.x);
-	forward.x = sin(rot.y) * cos(rot.x);
-	forward.y = sin(rot.x);
+	forward.z = math::cos(rot.y) * math::cos(rot.x);
+	forward.x = math::sin(rot.y) * math::cos(rot.x);
+	forward.y = math::sin(rot.x);
 	forward.Normalize();
 }
 
@@ -229,7 +229,7 @@ void CCamera::SetFov(float myfov)
 {
 	fov = myfov;
 	halfFov = (fov * 0.5f) * (PI / 180.f);
-	tanHalfFov = tan(halfFov);
+	tanHalfFov = math::tan(halfFov);
 }
 
 
@@ -330,7 +330,7 @@ void CCamera::GetFrustumSide(
 	float3 pInt;
 
 	// prevent DIV0 when calculating line.dir
-	if (fabs(xdir.z) < 0.001f)
+	if (math::fabs(xdir.z) < 0.001f)
 		xdir.z = 0.001f;
 
 	if (ydir.y != 0.0f) {

@@ -19,7 +19,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -48,6 +48,8 @@
 #define PLAY_SOUNDS 1
 
 CONFIG(bool, BuildIconsFirst).defaultValue(false);
+CONFIG(bool, AutoAddBuiltUnitsToFactoryGroup).defaultValue(false);
+CONFIG(bool, AutoAddBuiltUnitsToSelectedGroup).defaultValue(false);
 
 CSelectedUnits selectedUnits;
 
@@ -55,35 +57,35 @@ CSelectedUnits selectedUnits;
 CSelectedUnits::CSelectedUnits()
 	: selectionChanged(false)
 	, possibleCommandsChanged(true)
-	, buildIconsFirst(false)
 	, selectedGroup(-1)
 	, soundMultiselID(0)
+	, autoAddBuiltUnitsToFactoryGroup(false)
+	, autoAddBuiltUnitsToSelectedGroup(false)
+	, buildIconsFirst(false)
 {
 }
 
-
-CSelectedUnits::~CSelectedUnits()
-{
-}
 
 
 void CSelectedUnits::Init(unsigned numPlayers)
 {
 	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 	buildIconsFirst = configHandler->GetBool("BuildIconsFirst");
+	autoAddBuiltUnitsToFactoryGroup = configHandler->GetBool("AutoAddBuiltUnitsToFactoryGroup");
+	autoAddBuiltUnitsToSelectedGroup = configHandler->GetBool("AutoAddBuiltUnitsToSelectedGroup");
 	netSelected.resize(numPlayers);
 }
 
 
-bool CSelectedUnits::IsSelected(const CUnit* unit) const
+bool CSelectedUnits::IsUnitSelected(const CUnit* unit) const
 {
 	return (selectedUnits.find(const_cast<CUnit*>(unit)) != selectedUnits.end());
 }
 
-bool CSelectedUnits::IsSelected(const int unitID) const
+bool CSelectedUnits::IsUnitSelected(const int unitID) const
 {
 	const CUnit* u = uh->GetUnit(unitID);
-	return (u != NULL && IsSelected(u));
+	return (u != NULL && IsUnitSelected(u));
 }
 
 
@@ -197,12 +199,11 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 {
 	GML_RECMUTEX_LOCK(grpsel); // GiveCommand
 
-//	LOG_L(L_DEBUG, "Command given %i", c.id);
 	if ((gu->spectating && !gs->godMode) || selectedUnits.empty()) {
 		return;
 	}
 
-	const int& cmd_id = c.GetID();
+	const int cmd_id = c.GetID();
 
 	if (fromUser) { // add some statistics
 		playerHandler->Player(gu->myPlayerNum)->currentStats.numCommands++;
@@ -391,7 +392,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 		selectedGroup = -1;
 	}
 
-	unit->commandAI->selected = true;
+	unit->isSelected = true;
 }
 
 
@@ -404,7 +405,7 @@ void CSelectedUnits::RemoveUnit(CUnit* unit)
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 	selectedGroup = -1;
-	unit->commandAI->selected = false;
+	unit->isSelected = false;
 }
 
 
@@ -414,7 +415,7 @@ void CSelectedUnits::ClearSelected()
 
 	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		(*ui)->commandAI->selected = false;
+		(*ui)->isSelected = false;
 		DeleteDeathDependence(*ui, DEPENDENCE_SELECTED);
 	}
 
@@ -436,7 +437,7 @@ void CSelectedUnits::SelectGroup(int num)
 	CUnitSet::iterator ui;
 	for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
 		if (!(*ui)->noSelect) {
-			(*ui)->commandAI->selected = true;
+			(*ui)->isSelected = true;
 			selectedUnits.insert(*ui);
 			AddDeathDependence(*ui, DEPENDENCE_SELECTED);
 		}
@@ -462,6 +463,9 @@ void CSelectedUnits::Draw()
 	if (cmdColors.unitBox[3] > 0.05f) {
 		const CUnitSet* unitSet;
 		if (selectedGroup != -1) {
+			// note: units in this set are not necessarily all selected themselves, eg.
+			// if autoAddBuiltUnitsToSelectedGroup is true, so we check IsUnitSelected
+			// for each
 			unitSet = &grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
 		} else {
 			unitSet = &selectedUnits;
@@ -473,9 +477,9 @@ void CSelectedUnits::Draw()
 
 		for (CUnitSet::const_iterator ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
 			const CUnit* unit = *ui;
-			if (unit->isIcon) {
-				continue;
-			}
+
+			if (unit->isIcon) continue;
+			if (!IsUnitSelected(unit)) continue;
 
 			const int
 				uhxsize = (unit->xsize * SQUARE_SIZE) >> 1,
@@ -495,21 +499,30 @@ void CSelectedUnits::Draw()
 				float3(unit->drawPos.x + mhxsize, unit->drawPos.y, unit->drawPos.z - mhzsize),
 			};
 
-			const unsigned char colors[2][4] = {
-				{(0.0f + cmdColors.unitBox[0]) * 255, (0.0f + cmdColors.unitBox[1]) * 255, (0.0f + cmdColors.unitBox[2] * 255), cmdColors.unitBox[3] * 255},
-				{(1.0f - cmdColors.unitBox[0]) * 255, (1.0f - cmdColors.unitBox[1]) * 255, (1.0f - cmdColors.unitBox[2] * 255), cmdColors.unitBox[3] * 255},
+			const unsigned char color1[4] = {
+				(unsigned char)( cmdColors.unitBox[0] * 255 ),
+				(unsigned char)( cmdColors.unitBox[1] * 255 ),
+				(unsigned char)( cmdColors.unitBox[2] * 255 ),
+				(unsigned char)( cmdColors.unitBox[3] * 255 )
 			};
 
-			va->AddVertexQC(verts[0], colors[0]);
-			va->AddVertexQC(verts[1], colors[0]);
-			va->AddVertexQC(verts[2], colors[0]);
-			va->AddVertexQC(verts[3], colors[0]);
+			va->AddVertexQC(verts[0], color1);
+			va->AddVertexQC(verts[1], color1);
+			va->AddVertexQC(verts[2], color1);
+			va->AddVertexQC(verts[3], color1);
 
 			if (globalRendering->drawdebug && (mhxsize != uhxsize || mhzsize != uhzsize)) {
-				va->AddVertexQC(verts[4], colors[1]);
-				va->AddVertexQC(verts[5], colors[1]);
-				va->AddVertexQC(verts[6], colors[1]);
-				va->AddVertexQC(verts[7], colors[1]);
+				const unsigned char color2[4] = {
+					(unsigned char)( (1.0f - cmdColors.unitBox[0]) * 255 ),
+					(unsigned char)( (1.0f - cmdColors.unitBox[1]) * 255 ),
+					(unsigned char)( (1.0f - cmdColors.unitBox[2]) * 255 ),
+					(unsigned char)( cmdColors.unitBox[3] * 255 )
+				};
+
+				va->AddVertexQC(verts[4], color2);
+				va->AddVertexQC(verts[5], color2);
+				va->AddVertexQC(verts[6], color2);
+				va->AddVertexQC(verts[7], color2);
 			}
 		}
 
@@ -563,7 +576,7 @@ void CSelectedUnits::DependentDied(CObject *o)
 {
 	GML_RECMUTEX_LOCK(sel); // DependentDied - maybe superfluous, too late anyway
 
-	selectedUnits.erase((CUnit*)o);
+	selectedUnits.erase(static_cast<CUnit*>(o));
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 }
@@ -818,7 +831,6 @@ std::string CSelectedUnits::GetTooltip()
 	{
 		GML_RECMUTEX_LOCK(sel); // GetTooltip
 
-		char tmp[500];
 		int numFuel = 0;
 		float maxHealth = 0.0f, curHealth = 0.0f;
 		float maxFuel = 0.0f, curFuel = 0.0f;
@@ -867,6 +879,7 @@ std::string CSelectedUnits::GetTooltip()
 
 		if (gs->cheatEnabled && (num == 1)) {
 			const CUnit* unit = *selectedUnits.begin();
+			char tmp[500];
 			SNPRINTF(tmp, sizeof(tmp), "\xff\xc0\xc0\xff  [TechLevel %i]",
 				unit->unitDef->techLevel);
 			s += tmp;

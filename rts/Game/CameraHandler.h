@@ -10,6 +10,7 @@
 
 #include "Console.h"
 #include "Camera/CameraController.h"
+#include "Game/Camera.h"
 
 
 class CCameraHandler : public CommandReceiver
@@ -73,8 +74,14 @@ private:
 	CCameraController* currCamCtrl;
 	unsigned int currCamCtrlNum;
 
-	float cameraTime;
-	float cameraTimeLeft;
+	struct {
+		float3 pos;
+		float3 dir;
+		float  fov;
+	} startCam;
+
+	float cameraTimeStart;
+	float cameraTimeEnd;
 	float cameraTimeFactor;
 	float cameraTimeExponent;
 

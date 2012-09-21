@@ -23,12 +23,12 @@ CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
 	if (owner) owner->hasUWWeapons=true;
 }
 
-CTorpedoLauncher::~CTorpedoLauncher(void)
+CTorpedoLauncher::~CTorpedoLauncher()
 {
 }
 
 
-void CTorpedoLauncher::Update(void)
+void CTorpedoLauncher::Update()
 {
 	if (targetType != Target_None) {
 		weaponPos = owner->pos +

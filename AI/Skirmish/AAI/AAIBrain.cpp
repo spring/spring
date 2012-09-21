@@ -207,7 +207,7 @@ bool AAIBrain::MetalForConstr(int unit, int workertime)
 	// check index
 	if(unit >= bt->numOfUnits)
 	{
-		fprintf(ai->file, "ERROR: MetalForConstr(): index %i out of range, max units are: %i\n", unit, bt->numOfSides);
+		ai->Log("ERROR: MetalForConstr(): index %i out of range, max units are: %i\n", unit, bt->numOfSides);
 		return false;
 	}
 
@@ -225,7 +225,7 @@ bool AAIBrain::EnergyForConstr(int unit, int wokertime)
 	// check index
 	if(unit >= bt->numOfUnits)
 	{
-		fprintf(ai->file, "ERROR: EnergyForConstr(): index %i out of range, max units are: %i\n", unit, bt->numOfSides);
+		ai->Log("ERROR: EnergyForConstr(): index %i out of range, max units are: %i\n", unit, bt->numOfSides);
 		return false;
 	}
 
@@ -389,7 +389,7 @@ void AAIBrain::UpdateNeighbouringSectors()
 		}
 	}
 
-	//fprintf(ai->file, "Base has now %i direct neighbouring sectors\n", sectors[1].size());
+	//ai->Log("Base has now %i direct neighbouring sectors\n", sectors[1].size());
 }
 
 bool AAIBrain::SectorInList(list<AAISector*> mylist, AAISector *sector)
@@ -515,13 +515,13 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 		// debug purposes:
 		if(sectorType == LAND_SECTOR)
 		{
-			fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
-			fprintf(ai->file, "\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
+			ai->Log("\nAdding land sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
+			ai->Log("\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
 		}
 		else
 		{
-			fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
-			fprintf(ai->file, "\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
+			ai->Log("\nAdding water sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
+			ai->Log("\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
 		}
 
 		// update neighbouring sectors
@@ -629,10 +629,10 @@ void AAIBrain::UpdateDefenceCapabilities()
 	}
 
 	// debug
-	/*fprintf(ai->file, "Defence capabilities:\n");
+	/*ai->Log("Defence capabilities:\n");
 
 	for(int i = 0; i < bt->assault_categories.size(); ++i)
-		fprintf(ai->file, "%-20s %f\n" , bt->GetCategoryString2(bt->GetAssaultCategoryOfID(i)),defence_power_vs[i]);
+		ai->Log("%-20s %f\n" , bt->GetCategoryString2(bt->GetAssaultCategoryOfID(i)),defence_power_vs[i]);
 	*/
 }
 
