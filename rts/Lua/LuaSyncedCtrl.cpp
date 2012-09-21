@@ -3346,7 +3346,7 @@ int LuaSyncedCtrl::SetMapSquareTerrainType(lua_State* L)
 	const int ntt = luaL_checkint(L, 3);
 
 	readmap->GetTypeMapSynced()[tz * gs->hmapx + tx] = std::max(0, std::min(ntt, (CMapInfo::NUM_TERRAIN_TYPES - 1)));
-	pathManager->TerrainChange(hx, hz,  hx + 1, hz + 1);
+	pathManager->TerrainChange(hx, hz,  hx + 1, hz + 1,  TERRAINCHANGE_SQUARE_TYPEMAP_INDEX);
 
 	lua_pushnumber(L, ott);
 	return 1;
@@ -3386,7 +3386,7 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 	for (int tx = 0; tx < gs->hmapx; tx++) {
 		for (int tz = 0; tz < gs->hmapy; tz++) {
 			if (typeMap[tz * gs->hmapx + tx] == tti) {
-				pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1);
+				pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1,  TERRAINCHANGE_TYPEMAP_SPEED_VALUES);
 			}
 		}
 	}

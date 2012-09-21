@@ -200,7 +200,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	}
 
 	readmap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
-	pathManager->TerrainChange(x1, y1, x2, y2);
+	pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
 }
 

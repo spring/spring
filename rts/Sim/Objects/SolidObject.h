@@ -17,6 +17,15 @@ struct SolidObjectGroundDecal;
 struct DamageArray;
 class CUnit;
 
+enum TerrainChangeTypes {
+	TERRAINCHANGE_DAMAGE_RECALCULATION = 0, // update after regular explosion or terraform event
+	TERRAINCHANGE_SQUARE_TYPEMAP_INDEX = 1, // update after typemap-index of a square changed (Lua)
+	TERRAINCHANGE_TYPEMAP_SPEED_VALUES = 2, // update after speed-values of a terrain-type changed (Lua)
+	TERRAINCHANGE_OBJECT_INSERTED      = 3,
+	TERRAINCHANGE_OBJECT_INSERTED_YM   = 4,
+	TERRAINCHANGE_OBJECT_DELETED       = 5,
+};
+
 enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
 	//YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
@@ -106,7 +115,7 @@ public:
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
-	YardMapStatus GetGroundBlockingAtPos(float3 gpos) const;
+	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 
 private:
 	void SetMidPos(const float3& mp, bool relative) {

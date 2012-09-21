@@ -153,7 +153,7 @@ void CSolidObject::Block() {
 }
 
 
-YardMapStatus CSolidObject::GetGroundBlockingAtPos(float3 gpos) const
+YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 {
 	if (!blockMap)
 		return YARDMAP_OPEN;

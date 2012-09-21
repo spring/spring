@@ -552,7 +552,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 				float turnSpeed = (reversing)? maxReverseSpeed: maxSpeed;
 
 				if (reqTurnAngle != 0.0f) {
-					turnSpeed *= (maxTurnAngle / reqTurnAngle);
+					turnSpeed *= std::min(maxTurnAngle / reqTurnAngle, 1.0f);
 				}
 
 				if (waypointDir.SqLength() > 0.1f) {

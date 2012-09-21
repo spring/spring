@@ -8,15 +8,15 @@
 #include "NodeLayer.hpp"
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
+#include "PathRectangle.hpp"
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/Rectangle.h"
-#include "System/myMath.h"
 
 
 
 void QTPFS::INode::SetPathCost(unsigned int type, float cost) {
+	#ifndef QTPFS_ENABLE_MICRO_OPTIMIZATION_HACKS
 	switch (type) {
 		case NODE_PATH_COST_F: { fCost = cost; return; } break;
 		case NODE_PATH_COST_G: { gCost = cost; return; } break;
@@ -25,9 +25,17 @@ void QTPFS::INode::SetPathCost(unsigned int type, float cost) {
 	}
 
 	assert(false);
+	#else
+	assert(&gCost == &fCost + 1);
+	assert(&hCost == &gCost + 1);
+	assert(&mCost == &hCost + 1);
+
+	*(&fCost + type) = cost;
+	#endif
 }
 
 float QTPFS::INode::GetPathCost(unsigned int type) const {
+	#ifndef QTPFS_ENABLE_MICRO_OPTIMIZATION_HACKS
 	switch (type) {
 		case NODE_PATH_COST_F: { return fCost; } break;
 		case NODE_PATH_COST_G: { return gCost; } break;
@@ -37,6 +45,13 @@ float QTPFS::INode::GetPathCost(unsigned int type) const {
 
 	assert(false);
 	return 0.0f;
+	#else
+	assert(&gCost == &fCost + 1);
+	assert(&hCost == &gCost + 1);
+	assert(&mCost == &hCost + 1);
+
+	return *(&fCost + type);
+	#endif
 }
 
 float QTPFS::INode::GetDistance(const INode* n, unsigned int type) const {
@@ -44,7 +59,7 @@ float QTPFS::INode::GetDistance(const INode* n, unsigned int type) const {
 	const float dz = float(zmid() * SQUARE_SIZE) - float(n->zmid() * SQUARE_SIZE);
 
 	switch (type) {
-		case NODE_DIST_EUCLIDEAN: { return math::sqrt((dx * dx) + (dz * dz)); } break;
+		case NODE_DIST_EUCLIDEAN: { return (math::sqrt((dx * dx) + (dz * dz))); } break;
 		case NODE_DIST_MANHATTAN: { return (math::fabs(dx) + math::fabs(dz)); } break;
 	}
 
@@ -52,22 +67,17 @@ float QTPFS::INode::GetDistance(const INode* n, unsigned int type) const {
 }
 
 unsigned int QTPFS::INode::GetNeighborRelation(const INode* ngb) const {
-	const bool edgeL = (xmin() == ngb->xmax());
-	const bool edgeR = (xmax() == ngb->xmin());
-	const bool edgeT = (zmin() == ngb->zmax());
-	const bool edgeB = (zmax() == ngb->zmin());
-
 	unsigned int rel = 0;
 
-	if (edgeL) { rel |= REL_NGB_EDGE_L; }
-	if (edgeR) { rel |= REL_NGB_EDGE_R; }
-	if (edgeT) { rel |= REL_NGB_EDGE_T; }
-	if (edgeB) { rel |= REL_NGB_EDGE_B; }
+	rel |= ((xmin() == ngb->xmax()) * REL_NGB_EDGE_L);
+	rel |= ((xmax() == ngb->xmin()) * REL_NGB_EDGE_R);
+	rel |= ((zmin() == ngb->zmax()) * REL_NGB_EDGE_T);
+	rel |= ((zmax() == ngb->zmin()) * REL_NGB_EDGE_B);
 
 	return rel;
 }
 
-unsigned int QTPFS::INode::GetRectangleRelation(const SRectangle& r) const {
+unsigned int QTPFS::INode::GetRectangleRelation(const PathRectangle& r) const {
 	// NOTE: we consider "interior" to be the set of all
 	// legal indices, and conversely "exterior" the set
 	// of all illegal indices (min-edges are inclusive,
@@ -157,8 +167,8 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 //     at its default value (0.0, which no node can logically
 //     have)
 //
-SRectangle QTPFS::INode::ClipRectangle(const SRectangle& r) const {
-	SRectangle cr = SRectangle(0, 0, 0, 0);
+QTPFS::PathRectangle QTPFS::INode::ClipRectangle(const PathRectangle& r) const {
+	PathRectangle cr = r;
 	cr.x1 = std::max(int(xmin()), r.x1);
 	cr.z1 = std::max(int(zmin()), r.z1);
 	cr.x2 = std::min(int(xmax()), r.x2);
@@ -295,8 +305,12 @@ bool QTPFS::QTNode::IsLeaf() const {
 	return (children[0] == NULL);
 }
 
-bool QTPFS::QTNode::CanSplit() const {
+bool QTPFS::QTNode::CanSplit(bool force) const {
 	// NOTE: caller must additionally check IsLeaf() before calling Split()
+	if (force) {
+		return ((xsize() >> 1) > 0 && (zsize() >> 1) > 0);
+	}
+
 	if (depth() >= MAX_DEPTH) { return false; }
 
 	#ifdef QTPFS_CONSERVATIVE_NODE_SPLITS
@@ -304,9 +318,8 @@ bool QTPFS::QTNode::CanSplit() const {
 	if (zsize() <= MIN_SIZE_Z) { return false; }
 	#else
 	// aggressive splitting, important with respect to yardmaps
-	// (one yardmap square represents four 1x1 heightmap squares
-	// and the minimum node size is 2 heightmap squares for both
-	// dimensions)
+	// (one yardmap square represents four heightmap squares; a
+	// node represents MIN_SIZE_X by MIN_SIZE_Z of such squares)
 	if (((xsize() >> 1) ==          0) || ((zsize() >> 1) ==          0)) { return false; }
 	if (( xsize()       <= MIN_SIZE_X) && ( zsize()       <= MIN_SIZE_Z)) { return false; }
 	#endif
@@ -316,8 +329,8 @@ bool QTPFS::QTNode::CanSplit() const {
 
 
 
-bool QTPFS::QTNode::Split(NodeLayer& nl) {
-	if (!CanSplit())
+bool QTPFS::QTNode::Split(NodeLayer& nl, bool force) {
+	if (!CanSplit(force))
 		return false;
 
 	neighbors.clear();
@@ -368,7 +381,7 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 	// this code can be VERY slow in the worst-case (eg. when <r>
 	// overlaps all four children of the ROOT node), but minimizes
 	// the overall number of nodes in the tree at any given time
-	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
+	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const PathRectangle& r) {
 		bool recursed = false;
 
 		if (!IsLeaf()) {
@@ -387,11 +400,11 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 
 #else
 
-	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
+	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const PathRectangle& r) {
 		const unsigned int rel = GetRectangleRelation(r);
 
 		// use <r> if it is fully inside <this>, otherwise clip against our edges
-		const SRectangle& cr = (rel != REL_RECT_INTERIOR_NODE)? ClipRectangle(r): r;
+		const PathRectangle& cr = (rel != REL_RECT_INTERIOR_NODE)? ClipRectangle(r): r;
 
 		if ((cr.x2 - cr.x1) <= 0 || (cr.z2 - cr.z1) <= 0) {
 			return;
@@ -405,10 +418,9 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 		// breaking <r> up into pieces while descending further)
 		//
 		const bool leaf = IsLeaf();
-		const bool cont = (rel != REL_RECT_INTERIOR_NODE)?
+		const bool cont = (rel == REL_RECT_INTERIOR_NODE) ||
 			(((xsize() >> 1) > (cr.x2 - cr.x1)) &&
-			 ((zsize() >> 1) > (cr.z2 - cr.z1))):
-			true;
+			 ((zsize() >> 1) > (cr.z2 - cr.z1)));
 
 		if (leaf || !cont) {
 			Merge(nl);
@@ -425,7 +437,7 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 
 
 
-void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, bool split) {
+void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r, bool merged, bool split) {
 	unsigned int numNewBinSquares = 0; // nr. of squares in <r> that changed bin after deformation
 	unsigned int numDifBinSquares = 0; // nr. of different bin-types across all squares within <r>
 	unsigned int numClosedSquares = 0;
@@ -456,12 +468,12 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 	// technically required whenever numRefBinSquares is zero, ie.
 	// when ALL squares in <r> changed bins in unison
 	//
-	if (UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares) && Split(nl)) {
+	if (UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares) && Split(nl, r.ym)) {
 		registerNode = false;
 
 		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
 			QTNode* cn = children[i];
-			SRectangle cr = cn->ClipRectangle(r);
+			PathRectangle cr = cn->ClipRectangle(r);
 
 			cn->Tesselate(nl, cr, false, true);
 			assert(cn->GetMoveCost() != -1.0f);
@@ -475,7 +487,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 
 bool QTPFS::QTNode::UpdateMoveCost(
 	const NodeLayer& nl,
-	const SRectangle& r,
+	const PathRectangle& r,
 	unsigned int& numNewBinSquares,
 	unsigned int& numDifBinSquares,
 	unsigned int& numClosedSquares
@@ -553,7 +565,7 @@ bool QTPFS::QTNode::UpdateMoveCost(
 
 	assert(moveCostAvg > 0.0f);
 
-	if (numDifBinSquares > 0 && CanSplit())
+	if (numDifBinSquares > 0 && CanSplit(r.ym))
 		return true;
 
 	// if we are not going to tesselate this node further
@@ -571,6 +583,10 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	//   units with footprint dimensions equal to the size
 	//   of a lane would otherwise be unable to find a path
 	//   out of their factories
+	//
+	//   this is crucial for handling the squares underneath
+	//   static obstacles (eg. factories) if MIN_SIZE_XZ != 1
+	//   and ifndef QTPFS_FORCE_TESSELATE_OBJECT_YARDMAPS
 	//
 	if (numClosedSquares > 0) {
 		if (numClosedSquares < (xsize() * zsize())) {
@@ -623,7 +639,7 @@ void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
 		if (numChildren > 0) {
 			// re-create child nodes
 			assert(IsLeaf());
-			Split(*PathManager::GetSerializingNodeLayer());
+			Split(*PathManager::GetSerializingNodeLayer(), false);
 		} else {
 			// node was a leaf in an earlier life, register it
 			PathManager::GetSerializingNodeLayer()->RegisterNode(this);

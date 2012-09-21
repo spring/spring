@@ -13,7 +13,6 @@
 #include "PathSearch.hpp"
 
 struct MoveDef;
-struct SRectangle;
 class CSolidObject;
 
 #ifdef QTPFS_ENABLE_THREADED_UPDATE
@@ -25,6 +24,7 @@ namespace boost {
 #endif
 
 namespace QTPFS {
+	struct PathRectangle;
 	struct QTNode;
 	class PathManager: public IPathManager {
 	public:
@@ -36,7 +36,7 @@ namespace QTPFS {
 
 		bool PathUpdated(unsigned int pathID);
 
-		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2);
+		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type);
 		void Update();
 		void UpdatePath(const CSolidObject* owner, unsigned int pathID);
 		void DeletePath(unsigned int pathID);
@@ -69,7 +69,7 @@ namespace QTPFS {
 
 		static const unsigned int LAYERS_PER_UPDATE =  5;
 		static const unsigned int MAX_TEAM_SEARCHES = 25;
-		static const unsigned int NUM_SPEEDMOD_BINS =  5;
+		static const unsigned int NUM_SPEEDMOD_BINS = 10;
 
 		static const float MIN_SPEEDMOD_VALUE;
 		static const float MAX_SPEEDMOD_VALUE;
@@ -83,7 +83,7 @@ namespace QTPFS {
 		typedef void (PathManager::*MemberFunc)(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const SRectangle& rect
+			const PathRectangle& rect
 		);
 		typedef std::map<unsigned int, unsigned int> PathTypeMap;
 		typedef std::map<unsigned int, unsigned int>::iterator PathTypeMapIt;
@@ -94,25 +94,25 @@ namespace QTPFS {
 		typedef std::list<IPathSearch*> PathSearchList;
 		typedef std::list<IPathSearch*>::iterator PathSearchListIt;
 
-		void SpawnBoostThreads(MemberFunc f, const SRectangle& r);
+		void SpawnBoostThreads(MemberFunc f, const PathRectangle& r);
 
-		void InitNodeLayersThreaded(const SRectangle& rect);
-		void UpdateNodeLayersThreaded(const SRectangle& rect);
+		void InitNodeLayersThreaded(const PathRectangle& rect);
+		void UpdateNodeLayersThreaded(const PathRectangle& rect);
 		void InitNodeLayersThread(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const SRectangle& rect
+			const PathRectangle& rect
 		);
 		void UpdateNodeLayersThread(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const SRectangle& rect
+			const PathRectangle& rect
 		);
-		void InitNodeLayer(unsigned int layerNum, const SRectangle& rect);
-		void UpdateNodeLayer(unsigned int layerNum, const SRectangle& r);
+		void InitNodeLayer(unsigned int layerNum, const PathRectangle& r);
+		void UpdateNodeLayer(unsigned int layerNum, const PathRectangle& r);
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		void QueueNodeLayerUpdates(const SRectangle& r);
+		void QueueNodeLayerUpdates(const PathRectangle& r);
 		void ExecQueuedNodeLayerUpdates(unsigned int layerNum);
 		#endif
 

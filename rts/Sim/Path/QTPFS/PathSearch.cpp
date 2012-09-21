@@ -23,7 +23,7 @@ void QTPFS::PathSearch::Initialize(
 	PathCache* cache,
 	const float3& sourcePoint,
 	const float3& targetPoint,
-	const SRectangle& searchArea
+	const PathRectangle& searchArea
 ) {
 	srcPoint = sourcePoint; srcPoint.ClampInBounds();
 	tgtPoint = targetPoint; tgtPoint.ClampInBounds();
@@ -196,7 +196,7 @@ void QTPFS::PathSearch::Iterate(
 	const float hWeight = 2.0f;
 	#endif
 
-	#ifdef QTPFS_COPY_NEIGHBOR_NODES
+	#ifdef QTPFS_COPY_ITERATE_NEIGHBOR_NODES
 	const unsigned int numNgbs = curNode->GetNeighbors(allNodes, ngbNodes);
 	#else
 	// cannot assign to <ngbNodes> because that would still make a copy
@@ -226,7 +226,7 @@ void QTPFS::PathSearch::Iterate(
 		//   in the first case we would explore many more nodes than necessary (CPU
 		//   nightmare), while in the second we would get low-quality paths (player
 		//   nightmare)
-		#ifdef QTPFS_COPY_NEIGHBOR_NODES
+		#ifdef QTPFS_COPY_ITERATE_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
 		#else
 		nxtNode = nxtNodes[i];
