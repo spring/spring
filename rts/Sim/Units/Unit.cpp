@@ -965,14 +965,12 @@ void CUnit::SlowUpdate()
 	AddEnergy(energyTickMake * 0.5f);
 
 	if (health < maxHealth) {
-		health += unitDef->autoHeal;
-
 		if (restTime > unitDef->idleTime) {
 			health += unitDef->idleAutoHeal;
 		}
-		if (health > maxHealth) {
-			health = maxHealth;
-		}
+
+		health += unitDef->autoHeal;
+		health = std::min(health, maxHealth);
 	}
 
 	SlowUpdateCloak(false);
@@ -1225,15 +1223,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		}
 	}
 
-	if (damage > 0.0f) {
-		recentDamage += damage;
-
-		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
-			attacker->AddExperience(0.1f * experienceMod
-			                             * (power / attacker->power)
-			                             * (damage + std::min(0.0f, health)) / maxHealth);
-		}
-	}
+	recentDamage += damage;
 
 	eventHandler.UnitDamaged(this, attacker, damage, weaponDefID, isParalyzer);
 	eoh->UnitDamaged(*this, attacker, damage, weaponDefID, isParalyzer);
@@ -1242,6 +1232,16 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 	tracefile << "Damage: ";
 	tracefile << id << " " << damage << "\n";
 #endif
+
+	if (damage > 0.0f) {
+		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
+			const float scaledExpMod = 0.1f * experienceMod * (power / attacker->power);
+			const float scaledDamage = (damage / maxHealth) * int(health > 0.0f);
+
+			// FIXME: why is experience added a second time when health <= 0.0f?
+			attacker->AddExperience(scaledExpMod * scaledDamage);
+		}
+	}
 
 	if (health <= 0.0f) {
 		KillUnit(false, false, attacker);
