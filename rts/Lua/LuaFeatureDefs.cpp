@@ -167,7 +167,7 @@ static int FeatureDefIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const FeatureDef* fd = (const FeatureDef*)userData;
+	const FeatureDef* fd = static_cast<const FeatureDef*>(userData);
 	const DataElement& elem = it->second;
 	const char* p = ((const char*)fd) + elem.offset;
 	switch (elem.type) {
@@ -223,7 +223,7 @@ static int FeatureDefNewIndex(lua_State* L)
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const FeatureDef* fd = (const FeatureDef*)userData;
+	const FeatureDef* fd = static_cast<const FeatureDef*>(userData);
 
 	// write-protected
 	if (!gs->editDefsEnabled) {
@@ -333,7 +333,7 @@ static int CustomParamsTable(lua_State* L, const void* data)
 
 static int ModelHeight(lua_State* L, const void* data)
 {
-	const FeatureDef* fd = ((const FeatureDef*) data);
+	const FeatureDef* fd = static_cast<const FeatureDef*>(data);
 	const S3DModel* model = NULL;
 	float height = 0.0f;
 
@@ -363,7 +363,7 @@ static int ModelHeight(lua_State* L, const void* data)
 
 static int ModelRadius(lua_State* L, const void* data)
 {
-	const FeatureDef* fd = ((const FeatureDef*) data);
+	const FeatureDef* fd = static_cast<const FeatureDef*>(data);
 	const S3DModel* model = NULL;
 	float radius = 0.0f;
 
@@ -394,7 +394,7 @@ static int ModelRadius(lua_State* L, const void* data)
 #define TYPE_MODEL_FUNC(name, param)                            \
 	static int Model ## name(lua_State* L, const void* data)    \
 	{                                                           \
-		const FeatureDef* fd = ((const FeatureDef*)data);       \
+		const FeatureDef* fd = static_cast<const FeatureDef*>(data); \
 		if (fd->drawType == DRAWTYPE_MODEL) {                   \
 			const S3DModel* model = fd->LoadModel();            \
 			lua_pushnumber(L, model? model -> param : 0.0f);    \
@@ -405,15 +405,15 @@ static int ModelRadius(lua_State* L, const void* data)
 
 //TYPE_MODEL_FUNC(Height, height); // ::ModelHeight()
 //TYPE_MODEL_FUNC(Radius, radius); // ::ModelRadius()
-TYPE_MODEL_FUNC(Minx,   mins.x);
-TYPE_MODEL_FUNC(Midx,   relMidPos.x);
-TYPE_MODEL_FUNC(Maxx,   maxs.x);
-TYPE_MODEL_FUNC(Miny,   mins.y);
-TYPE_MODEL_FUNC(Midy,   relMidPos.y);
-TYPE_MODEL_FUNC(Maxy,   maxs.y);
-TYPE_MODEL_FUNC(Minz,   mins.z);
-TYPE_MODEL_FUNC(Midz,   relMidPos.z);
-TYPE_MODEL_FUNC(Maxz,   maxs.z);
+TYPE_MODEL_FUNC(Minx, mins.x);
+TYPE_MODEL_FUNC(Midx, relMidPos.x);
+TYPE_MODEL_FUNC(Maxx, maxs.x);
+TYPE_MODEL_FUNC(Miny, mins.y);
+TYPE_MODEL_FUNC(Midy, relMidPos.y);
+TYPE_MODEL_FUNC(Maxy, maxs.y);
+TYPE_MODEL_FUNC(Minz, mins.z);
+TYPE_MODEL_FUNC(Midz, relMidPos.z);
+TYPE_MODEL_FUNC(Maxz, maxs.z);
 
 
 /******************************************************************************/
@@ -432,6 +432,8 @@ static bool InitParamMap()
 
 	ADD_FUNCTION("customParams",   fd.customParams, CustomParamsTable);
 
+	// TODO: share the Model* functions between LuaUnitDefs and LuaFeatureDefs
+	// ADD_FUNCTION("model",   fd, ModelTable);
 	ADD_FUNCTION("height",  fd, ModelHeight);
 	ADD_FUNCTION("radius",  fd, ModelRadius);
 	ADD_FUNCTION("minx",    fd, ModelMinx);
@@ -451,7 +453,7 @@ static bool InitParamMap()
 
 	ADD_FLOAT("metal",       fd.metal);
 	ADD_FLOAT("energy",      fd.energy);
-	ADD_FLOAT("maxHealth",   fd.maxHealth);
+	ADD_FLOAT("maxHealth",   fd.health);
 	ADD_FLOAT("reclaimTime", fd.reclaimTime);
 
 	ADD_FLOAT("mass", fd.mass);
@@ -459,16 +461,7 @@ static bool InitParamMap()
 	ADD_INT("xsize", fd.xsize);
 	ADD_INT("zsize", fd.zsize);
 
-	/*
-	ADD_FLOAT("hitSphereScale",    fd.collisionSphereScale);
-	ADD_FLOAT("hitSphereOffsetX",  fd.collisionSphereOffset.x);
-	ADD_FLOAT("hitSphereOffsetY",  fd.collisionSphereOffset.y);
-	ADD_FLOAT("hitSphereOffsetZ",  fd.collisionSphereOffset.z);
-	ADD_BOOL("useHitSphereOffset", fd.useCSOffset);
-	*/
-
 	ADD_INT("drawType",     fd.drawType);
-	ADD_STRING("modelname", fd.modelname);
 
 	ADD_BOOL("upright",      fd.upright);
 	ADD_BOOL("destructable", fd.destructable);
@@ -483,6 +476,7 @@ static bool InitParamMap()
 
 	ADD_INT("smokeTime",    fd.smokeTime);
 
+	ADD_STRING("modelname", fd.modelName);
 	// name of feature that this turn into when killed (not reclaimed)
 	ADD_STRING("deathFeature", fd.deathFeature);
 

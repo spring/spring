@@ -62,12 +62,14 @@ private:
 
 
 struct PathNodeStateBuffer {
-	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes): fCostMax(0.0f), gCostMax(0.0f) {
-		extraCostsOverlaySynced = NULL;
-		extraCostsOverlayUnsynced = NULL;
-
-		mr = mapRes;
-		br = bufRes;
+	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes)
+		: extraCostsOverlaySynced(NULL)
+		, extraCostsOverlayUnsynced(NULL)
+		, fCostMax(0.0f)
+		, gCostMax(0.0f)
+		, br(bufRes)
+		, mr(mapRes)
+	{
 		ps.x = mapRes.x / bufRes.x;
 		ps.y = mapRes.y / bufRes.y;
 

@@ -225,7 +225,7 @@ namespace terrain {
 		float nodesize = end.x - start.x;
 	//	float sloped = 0.01f * (1.0f + end.y - start.y);
 		nearest -= campos;
-		//return sqrtf(sloped) * nodesize / (nearest.length () + 0.1f);
+		//return math::sqrtf(sloped) * nodesize / (nearest.length () + 0.1f);
 		return nodesize / (nearest.Length() + 0.1f);
 	}
 
@@ -1047,7 +1047,7 @@ namespace terrain {
 		if (!success) {
 			ilDeleteImages(1,&ilheightmap);
 			cb->PrintMsg("Failed to load %s", hmfile);
-			return false;
+			return NULL;
 		}
 
 		int hmWidth = ilGetInteger(IL_IMAGE_WIDTH);
@@ -1063,14 +1063,14 @@ namespace terrain {
 		if ((testw > hmWidth) || (hmWidth != hmHeight)) {
 			cb->PrintMsg("Heightmap %s has wrong dimensions (should be 129x129,257x257...)", hmfile);
 			ilDeleteImages(1,&ilheightmap);
-			return false;
+			return NULL;
 		}
 
 		// convert
 		if (!ilConvertImage(IL_LUMINANCE, IL_UNSIGNED_SHORT)) {
 			cb->PrintMsg("Failed to convert heightmap image (%s) to grayscale image.", hmfile);
 			ilDeleteImages(1, &ilheightmap);
-			return false;
+			return NULL;
 		}
 
 		// copy the data into the highest detail heightmap

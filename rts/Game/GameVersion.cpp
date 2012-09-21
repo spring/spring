@@ -112,6 +112,12 @@ std::string GetAdditional()
 	#define GV_ADD_SPACE " "
 #endif
 
+#if defined DEDICATED
+	GV_ADD_SPACE "Dedicated"
+	#undef GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+
 #if defined UNITSYNC
 	GV_ADD_SPACE "Unitsync"
 	#undef  GV_ADD_SPACE

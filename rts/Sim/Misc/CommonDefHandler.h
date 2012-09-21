@@ -12,7 +12,7 @@ public:
 	 * Loads a soundfile, does add "sounds/" prefix
 	 * and ".wav" extension if necessary.
 	 */
-	int LoadSoundFile(const std::string& fileName);
+	static int LoadSoundFile(const std::string& fileName);
 };
 
 #endif // COMMON_DEF_HANDLER

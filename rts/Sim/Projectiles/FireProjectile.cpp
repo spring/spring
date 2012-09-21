@@ -17,6 +17,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "System/creg/STL_List.h"
+#include "lib/gml/gmlcnf.h"
 
 CR_BIND_DERIVED(CFireProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0));
 CR_BIND(CFireProjectile::SubParticle, );

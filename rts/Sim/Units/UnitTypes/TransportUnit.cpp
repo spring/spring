@@ -4,8 +4,7 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
-#include "Rendering/GroundDecalHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Units/Scripts/CobInstance.h"
@@ -93,11 +92,11 @@ void CTransportUnit::Update()
 		}
 
 		transportee->Move3D(absPiecePos, false);
-		transportee->UpdateMidPos();
+		transportee->UpdateMidAndAimPos();
 		transportee->SetHeadingFromDirection();
 
 		// see ::AttachUnit
-		if (transportee->stunned) {
+		if (transportee->IsStunned()) {
 			qf->MovedUnit(transportee);
 		}
 	}
@@ -201,14 +200,11 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 
 				// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
 				if (unitDef->canfly && transportee->unitDef->canmove) {
-					Command c(CMD_MOVE);
-					c.params.push_back(transportee->pos.x);
-					c.params.push_back(ground->GetHeightAboveWater(transportee->pos.x, transportee->pos.z));
-					c.params.push_back(transportee->pos.z);
+					Command c(CMD_MOVE, float3(transportee->pos.x, ground->GetHeightAboveWater(transportee->pos.x, transportee->pos.z), transportee->pos.z));
 					transportee->commandAI->GiveCommand(c);
 				}
 
-				transportee->stunned = (transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
+				transportee->SetStunned(transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
 				transportee->speed = speed * (0.5f + 0.5f * gs->randFloat());
 
 				if (CBuilding* building = dynamic_cast<CBuilding*>(transportee)) {
@@ -319,9 +315,9 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	unit->transporter = this;
 	unit->toBeTransported = false;
-	unit->stunned = !unitDef->isFirePlatform;
+	unit->SetStunned(!unitDef->isFirePlatform);
 
-	if (unit->stunned) {
+	if (unit->IsStunned()) {
 		// make sure unit does not fire etc in transport
 		selectedUnits.RemoveUnit(unit);
 	}
@@ -341,9 +337,8 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	unit->los = NULL;
 
-	if (CBuilding* building = dynamic_cast<CBuilding*>(unit)) {
+	if (dynamic_cast<CBuilding*>(unit) != NULL) {
 		unitLoader->RestoreGround(unit);
-		groundDecals->RemoveBuilding(building, NULL);
 	}
 
 	if (dynamic_cast<CHoverAirMoveType*>(moveType)) {
@@ -387,7 +382,7 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			}
 
 			// de-stun detaching units in case we are not a fire-platform
-			unit->stunned = (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
+			unit->SetStunned(unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
 
 			unit->moveType->SlowUpdate();
 			unit->moveType->LeaveTransport();
@@ -437,10 +432,7 @@ bool CTransportUnit::DetachUnitFromAir(CUnit* unit, const float3& pos)
 
 		// add an additional move command for after we land
 		if (unit->unitDef->canmove) {
-			Command c(CMD_MOVE);
-			c.params.push_back(pos.x);
-			c.params.push_back(pos.y);
-			c.params.push_back(pos.z);
+			Command c(CMD_MOVE, pos);
 			unit->commandAI->GiveCommand(c);
 		}
 
@@ -452,9 +444,10 @@ bool CTransportUnit::DetachUnitFromAir(CUnit* unit, const float3& pos)
 
 
 
-bool CTransportUnit::CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit) const {
+bool CTransportUnit::CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* loadingHeight) const {
 	bool canLoadUnload = false;
 	float loadHeight = GetLoadUnloadHeight(wantedPos, unit, &canLoadUnload);
+	if (loadingHeight) *loadingHeight = loadHeight;
 
 	// for a given unit, we can *potentially* load/unload it at <wantedPos> if
 	//     we are not a gunship-style transport, or

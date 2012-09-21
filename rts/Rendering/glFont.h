@@ -51,10 +51,10 @@ public:
 	 *                  FONT_TOP | FONT_ASCENDER | FONT_BOTTOM) |
 	 *                 FONT_NEAREST | FONT_OUTLINE | FONT_SHADOW
 	 */
-	void glPrint(float x, float y, float s, const int& options, const std::string& str);
-	void glPrintTable(float x, float y, float s, const int& options, const std::string& str);
-	void glFormat(float x, float y, float s, const int& options, const std::string& fmt, ...);
-	void glFormat(float x, float y, float s, const int& options, const char* fmt, ...);
+	void glPrint(float x, float y, float s, const int options, const std::string& str);
+	void glPrintTable(float x, float y, float s, const int options, const std::string& str);
+	void glFormat(float x, float y, float s, const int options, const std::string& fmt, ...);
+	void glFormat(float x, float y, float s, const int options, const char* fmt, ...);
 
 	void SetAutoOutlineColor(bool enable); //! auto select outline color for in-text-colorcodes
 	void SetTextColor(const float4* color = NULL);
@@ -67,7 +67,7 @@ public:
 	int WrapInPlace(std::string& text, float fontSize, const float maxWidth, const float maxHeight = 1e9) const;
 	std::list<std::string> Wrap(const std::string& text, float fontSize, const float maxWidth, const float maxHeight = 1e9) const;
 
-	float GetKerning(const unsigned int& left_char, const unsigned int& right_char) const;
+	float GetKerning(const unsigned int left_char, const unsigned int right_char) const;
 	float GetCharacterWidth(const unsigned char c) const;
 	float GetTextWidth(const std::string& text) const;
 	float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL) const;

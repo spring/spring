@@ -80,9 +80,9 @@ void CFPSController::UpdateVectors()
 		oldHeight = pos.y - gndHeight;
 	}
 
-	dir.x = (float)(cos(camera->rot.x) * sin(camera->rot.y));
-	dir.z = (float)(cos(camera->rot.x) * cos(camera->rot.y));
-	dir.y = (float)(sin(camera->rot.x));
+	dir.x = (float)(math::cos(camera->rot.x) * math::sin(camera->rot.y));
+	dir.z = (float)(math::cos(camera->rot.x) * math::cos(camera->rot.y));
+	dir.y = (float)(math::sin(camera->rot.x));
 	dir.ANormalize();
 }
 

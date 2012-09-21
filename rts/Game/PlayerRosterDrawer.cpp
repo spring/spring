@@ -11,7 +11,6 @@
 #include "Game/UI/GuiHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"

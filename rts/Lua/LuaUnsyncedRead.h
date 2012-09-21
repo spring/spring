@@ -7,7 +7,7 @@ struct lua_State;
 
 
 class LuaUnsyncedRead {
-	friend class CLuaLoadScreen;
+	friend class CLuaIntro;
 
 	public:
 		static bool PushEntries(lua_State* L);
@@ -48,8 +48,6 @@ class LuaUnsyncedRead {
 
 		static int GetVisibleUnits(lua_State* L);
 		static int GetVisibleFeatures(lua_State* L);
-
-		static int GetPlayerRoster(lua_State* L);
 
 		static int GetTeamColor(lua_State* L);
 		static int GetTeamOrigColor(lua_State* L);
@@ -135,7 +133,9 @@ class LuaUnsyncedRead {
 		static int GetGroupUnitsCounts(lua_State* L);
 		static int GetGroupUnitsCount(lua_State* L);
 
+		static int GetPlayerRoster(lua_State* L);
 		static int GetPlayerTraffic(lua_State* L);
+		static int GetPlayerStatistics(lua_State* L);
 
 		static int GetDrawSelectionInfo(lua_State* L);
 };

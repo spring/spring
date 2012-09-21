@@ -230,7 +230,7 @@ bool COSCStatsSender::SendPlayerStats() {
 
 	if (IsEnabled()) {
 		// get the latest player stats
-		const CPlayer::Statistics& playerStats = localPlayer->currentStats;
+		const PlayerStatistics& playerStats = localPlayer->currentStats;
 
 		(*oscPacker)
 				<< osc::BeginBundleImmediate
@@ -301,9 +301,9 @@ bool COSCStatsSender::SendTeamStatsTitles() {
 bool COSCStatsSender::SendTeamStats() {
 
 	static const int teamId = gu->myTeam;
-	static unsigned int prevHistSize = 0;
 
 	if (IsEnabled()) {
+		static unsigned int prevHistSize = 0;
 		std::list<CTeam::Statistics> statHistory =
 				teamHandler->Team(teamId)->statHistory;
 		unsigned int currHistSize = statHistory.size();

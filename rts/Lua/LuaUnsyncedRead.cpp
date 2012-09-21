@@ -113,8 +113,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetVisibleUnits);
 	REGISTER_LUA_CFUNC(GetVisibleFeatures);
 
-	REGISTER_LUA_CFUNC(GetPlayerRoster);
-
 	REGISTER_LUA_CFUNC(GetTeamColor);
 	REGISTER_LUA_CFUNC(GetTeamOrigColor);
 
@@ -200,7 +198,9 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroupUnitsCounts);
 	REGISTER_LUA_CFUNC(GetGroupUnitsCount);
 
+	REGISTER_LUA_CFUNC(GetPlayerRoster);
 	REGISTER_LUA_CFUNC(GetPlayerTraffic);
+	REGISTER_LUA_CFUNC(GetPlayerStatistics);
 
 	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
@@ -228,10 +228,11 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (ActiveReadAllyTeam() < 0) {
-		return ActiveFullRead() ? unit : NULL;
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+	if (readAllyTeam < 0) {
+		return CLuaHandle::GetHandleFullRead(L) ? unit : NULL;
 	}
-	if ((unit->losStatus[ActiveReadAllyTeam()] & (LOS_INLOS | LOS_INRADAR)) == 0) {
+	if ((unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
 		return NULL;
 	}
 	return unit;
@@ -246,10 +247,12 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 	const int featureID = lua_toint(L, index);
 	CFeature* feature = featureHandler->GetFeature(featureID);
 
-	if (ActiveFullRead()) { return feature; }
-	if (ActiveReadAllyTeam() < 0) { return NULL; }
+	if (CLuaHandle::GetHandleFullRead(L)) { return feature; }
+
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+	if (readAllyTeam < 0) { return NULL; }
 	if (feature == NULL) { return NULL; }
-	if (feature->IsInLosForAllyTeam(ActiveReadAllyTeam())) { return feature; }
+	if (feature->IsInLosForAllyTeam(readAllyTeam)) { return feature; }
 
 	return NULL;
 }
@@ -450,10 +453,10 @@ int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (ActiveReadAllyTeam() < 0) {
-		lua_pushboolean(L, ActiveFullRead());
+	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
+		lua_pushboolean(L, CLuaHandle::GetHandleFullRead(L));
 	} else {
-		lua_pushboolean(L, (unit->allyteam == ActiveReadAllyTeam()));
+		lua_pushboolean(L, (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L)));
 	}
 	return 1;
 }
@@ -489,8 +492,10 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 	const float radius = luaL_optnumber(L, 2, unit->radius);
 	const bool checkIcon = lua_toboolean(L, 3);
 
-	if (ActiveReadAllyTeam() < 0) {
-		if (!ActiveFullRead()) {
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+
+	if (readAllyTeam < 0) {
+		if (!CLuaHandle::GetHandleFullRead(L)) {
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
@@ -499,7 +504,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 		}
 	}
 	else {
-		if ((unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS) == 0) {
+		if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
@@ -688,12 +693,12 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			teamID = AllUnits;
 		}
 	}
-	int allyTeamID = ActiveReadAllyTeam();
+	int allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
 	if (teamID >= 0) {
 		allyTeamID = teamHandler->AllyTeam(teamID);
 	}
 	if (allyTeamID < 0) {
-		if (!ActiveFullRead()) {
+		if (!CLuaHandle::GetHandleFullRead(L)) {
 			return 0;
 		}
 	}
@@ -816,7 +821,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	}
 	if (allyTeamID < 0) {
 		allyTeamID = -1;
-		if (!ActiveFullRead()) {
+		if (!CLuaHandle::GetHandleFullRead(L)) {
 			allyTeamID = CLuaHandle::GetHandleReadAllyTeam(L);
 		}
 	}
@@ -873,11 +878,8 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	for (CFeatureSet::const_iterator featureIt = featureSet.begin(); featureIt != featureSet.end(); ++featureIt) {
 		const CFeature& f = **featureIt;
 
-		if (noGeos) {
-			if (f.def->geoThermal) {
-				continue;
-			}
-		}
+		if (noGeos && f.def->geoThermal)
+			continue;
 
 		if (noIcons) {
 			float sqDist = (f.pos - camera->pos).SqLength2D();
@@ -1382,35 +1384,6 @@ static void AddPlayerToRoster(lua_State* L, int playerID)
 }
 
 
-int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
-		luaL_error(L, "Incorrect arguments to GetPlayerRoster([type])");
-	}
-
-	const PlayerRoster::SortType oldSort = playerRoster.GetSortType();
-
-	if (args == 1) {
-		const int type = lua_toint(L, 1);
-		playerRoster.SetSortTypeByCode((PlayerRoster::SortType)type);
-	}
-
-	int count;
-	const std::vector<int>& players = playerRoster.GetIndices(&count);
-
-	playerRoster.SetSortTypeByCode(oldSort); // revert
-
-	lua_createtable(L, count, 0);
-	for (int i = 0; i < count; i++) {
-		AddPlayerToRoster(L, players[i]);
-		lua_rawseti(L, -2, i + 1);
-	}
-
-	return 1;
-}
-
-
 int LuaUnsyncedRead::GetTeamColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
@@ -1507,7 +1480,7 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	lua_rawset(L, -3);
 	for (std::map<ALuint, ALfloat>::iterator it = efxprops->filter_properties_f.begin(); it != efxprops->filter_properties_f.end(); ++it)
 	{
-		const ALuint& param = it->first;
+		const ALuint param = it->first;
 		std::map<ALuint, std::string>::iterator fit = alFilterParamToName.find(param);
 		if (fit != alFilterParamToName.end()) {
 			const std::string& name = fit->second;
@@ -1524,7 +1497,7 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	lua_rawset(L, -3);
 	for (std::map<ALuint, ALfloat>::iterator it = efxprops->properties_f.begin(); it != efxprops->properties_f.end(); ++it)
 	{
-		const ALuint& param = it->first;
+		const ALuint param = it->first;
 		std::map<ALuint, std::string>::iterator fit = alParamToName.find(param);
 		if (fit != alParamToName.end()) {
 			const std::string& name = fit->second;
@@ -1535,7 +1508,7 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	}
 	for (std::map<ALuint, float3>::iterator it = efxprops->properties_v.begin(); it != efxprops->properties_v.end(); ++it)
 	{
-		const ALuint& param = it->first;
+		const ALuint param = it->first;
 		std::map<ALuint, std::string>::iterator fit = alParamToName.find(param);
 		if (fit != alParamToName.end()) {
 			const float3& v = it->second;
@@ -1553,7 +1526,7 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	}
 	for (std::map<ALuint, ALint>::iterator it = efxprops->properties_i.begin(); it != efxprops->properties_i.end(); ++it)
 	{
-		const ALuint& param = it->first;
+		const ALuint param = it->first;
 		std::map<ALuint, std::string>::iterator fit = alParamToName.find(param);
 		if (fit != alParamToName.end()) {
 			const std::string& name = fit->second;
@@ -2044,7 +2017,7 @@ int LuaUnsyncedRead::GetGroupList(lua_State* L)
 int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, selectedUnits.selectedGroup);
+	lua_pushnumber(L, selectedUnits.GetSelectedGroup());
 	return 1;
 }
 
@@ -2212,6 +2185,34 @@ int LuaUnsyncedRead::GetMyAllyTeamID(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
+		luaL_error(L, "Incorrect arguments to GetPlayerRoster([type])");
+	}
+
+	const PlayerRoster::SortType oldSort = playerRoster.GetSortType();
+
+	if (args == 1) {
+		const int type = lua_toint(L, 1);
+		playerRoster.SetSortTypeByCode((PlayerRoster::SortType)type);
+	}
+
+	int count;
+	const std::vector<int>& players = playerRoster.GetIndices(&count);
+
+	playerRoster.SetSortTypeByCode(oldSort); // revert
+
+	lua_createtable(L, count, 0);
+	for (int i = 0; i < count; i++) {
+		AddPlayerToRoster(L, players[i]);
+		lua_rawseti(L, -2, i + 1);
+	}
+
+	return 1;
+}
+
 int LuaUnsyncedRead::GetPlayerTraffic(lua_State* L)
 {
 	const int playerID = luaL_checkint(L, 1);
@@ -2251,6 +2252,29 @@ int LuaUnsyncedRead::GetPlayerTraffic(lua_State* L)
 	}
 	lua_pushnumber(L, pit->second);
 	return 1;
+}
+
+int LuaUnsyncedRead::GetPlayerStatistics(lua_State* L)
+{
+	const int playerID = luaL_checkint(L, 1);
+	if (!playerHandler->IsValidPlayer(playerID)) {
+		return 0;
+	}
+
+	const CPlayer* player = playerHandler->Player(playerID);
+	if (player == NULL) {
+		return 0;
+	}
+
+	const PlayerStatistics& pStats = player->currentStats;
+
+	lua_pushnumber(L, pStats.mousePixels);
+	lua_pushnumber(L, pStats.mouseClicks);
+	lua_pushnumber(L, pStats.keyPresses);
+	lua_pushnumber(L, pStats.numCommands);
+	lua_pushnumber(L, pStats.unitCommands);
+
+	return 5;
 }
 
 

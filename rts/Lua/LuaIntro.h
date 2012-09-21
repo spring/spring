@@ -9,7 +9,7 @@
 struct lua_State;
 
 
-class CLuaLoadScreen : public CLuaHandle
+class CLuaIntro : public CLuaHandle
 {
 	public:
 		static void LoadHandler();
@@ -24,8 +24,8 @@ class CLuaLoadScreen : public CLuaHandle
 		void LoadProgress(const std::string& msg, const bool replace_lastline);
 
 	protected:
-		CLuaLoadScreen();
-		~CLuaLoadScreen();
+		CLuaIntro();
+		~CLuaIntro();
 
 		std::string LoadFile(const std::string& filename) const;
 
@@ -37,7 +37,7 @@ class CLuaLoadScreen : public CLuaHandle
 };
 
 
-extern CLuaLoadScreen* luaLoadScreen;
+extern CLuaIntro* LuaIntro;
 
 
 #endif /* LUA_LOADSCREEN_H */

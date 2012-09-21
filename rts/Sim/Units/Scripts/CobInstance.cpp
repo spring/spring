@@ -187,7 +187,7 @@ void CCobInstance::Create()
 // Called when a unit's Killed script finishes executing
 static void CUnitKilledCB(int retCode, void* p1, void* p2)
 {
-	CUnit* self = (CUnit*) p1;
+	CUnit* self = static_cast<CUnit*>(p1);
 	self->deathScriptFinished = true;
 	self->delayedWreckLevel = retCode;
 }
@@ -355,7 +355,7 @@ int CCobInstance::QueryWeapon(int weaponNum)
 // Called when unit's AimWeapon script finished executing
 static void ScriptCallback(int retCode, void* p1, void* p2)
 {
-	((CWeapon*)p1)->angleGood = (retCode == 1);
+	static_cast<CWeapon*>(p1)->angleGood = (retCode == 1);
 }
 
 void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
@@ -371,7 +371,7 @@ void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 // Called when unit's AimWeapon script finished executing (for shield weapon)
 static void ShieldScriptCallback(int retCode, void* p1, void* p2)
 {
-	((CPlasmaRepulser*)p1)->isEnabled = !!retCode;
+	static_cast<CPlasmaRepulser*>(p1)->isEnabled = !!retCode;
 }
 
 void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)

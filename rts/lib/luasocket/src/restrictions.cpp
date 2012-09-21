@@ -28,9 +28,9 @@ CLuaSocketRestrictions::CLuaSocketRestrictions()
 {
 #ifndef TEST
 	addRules(TCP_CONNECT, configHandler->GetString("TCPAllowConnect"));
-	addRules(TCP_LISTEN,  configHandler->GetString("TCPAllowListen"));
+//	addRules(TCP_LISTEN,  configHandler->GetString("TCPAllowListen"));
 	addRules(UDP_CONNECT, configHandler->GetString("UDPAllowConnect"));
-	addRules(UDP_LISTEN,  configHandler->GetString("UDPAllowListen"));
+//	addRules(UDP_LISTEN,  configHandler->GetString("UDPAllowListen"));
 #endif
 }
 
@@ -44,7 +44,7 @@ void CLuaSocketRestrictions::addRule(RestrictType type, const std::string& hostn
 		LOG_L(L_ERROR, "Rule already exists: %s %d", hostname.c_str(), port);
 		return;
 	}
-	LOG_L(L_WARNING, "Adding rule %d %s:%d",type, hostname.c_str(), port);
+	LOG("Adding rule %d %s:%d",type, hostname.c_str(), port);
 	if (!allowed) { //add deny rules to the front of the list
 		restrictions[type].push_front(TSocketRule(hostname, port, allowed));
 	} else {
@@ -140,16 +140,30 @@ void CLuaSocketRestrictions::addIP(const char* hostname, const char* ip)
 	}
 }
 
+const char* CLuaSocketRestrictions::ruleToStr(RestrictType type) {
+	switch(type) {
+		case TCP_CONNECT:
+			return "TCP_CONNECT";
+		case TCP_LISTEN:
+			return "TCP_LISTEN ";
+		case UDP_LISTEN:
+			return "UDP_LISTEN ";
+		case UDP_CONNECT:
+			return "UDP_CONNECT";
+		default:
+			return "INVALID";
+	}
+}
+
 CLuaSocketRestrictions::~CLuaSocketRestrictions()
 {
-	//FIXME: dump rules only in debug build if luasockets has become more stable
+	LOG("Dumping luasocket rules:");
 	for(int i=0; i<ALL_RULES; i++) {
 		TStrIntMap::iterator it;
 		for(it = restrictions[i].begin(); it != restrictions[i].end(); ++it) {
 			TSocketRule &rule = *it;
-			LOG_L(L_WARNING, "%d %s %d %d", i, rule.hostname.c_str(), rule.port, rule.allowed);
+			LOG("%s %s %s %d", ruleToStr((RestrictType)i), rule.allowed ? "ALLOW" : "DENY ", rule.hostname.c_str(), rule.port);
 		}
 	}
-
 }
 

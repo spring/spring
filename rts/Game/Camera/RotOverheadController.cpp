@@ -29,7 +29,7 @@ CRotOverheadController::CRotOverheadController()
 
 void CRotOverheadController::KeyMove(float3 move)
 {
-	move *= sqrt(move.z) * 400;
+	move *= math::sqrt(move.z) * 400;
 
 	float3 flatForward = camera->forward;
 	if(camera->forward.y < -0.9f)
@@ -68,9 +68,9 @@ void CRotOverheadController::MouseWheelMove(float move)
 
 void CRotOverheadController::UpdateVectors()
 {
-	dir.x=(float)(sin(camera->rot.y) * cos(camera->rot.x));
-	dir.y=(float)(sin(camera->rot.x));
-	dir.z=(float)(cos(camera->rot.y) * cos(camera->rot.x));
+	dir.x=(float)(math::sin(camera->rot.y) * math::cos(camera->rot.x));
+	dir.y=(float)(math::sin(camera->rot.x));
+	dir.z=(float)(math::cos(camera->rot.y) * math::cos(camera->rot.x));
 	dir.ANormalize();
 
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);

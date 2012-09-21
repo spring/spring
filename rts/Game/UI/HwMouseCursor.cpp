@@ -21,7 +21,6 @@
 #if !defined(__APPLE__) && !defined(HEADLESS)
 #include "System/mmgr.h"
 
-#include "Rendering/GL/myGL.h"
 #include "System/bitops.h"
 #include "MouseCursor.h"
 #include "CommandColors.h"
@@ -61,8 +60,8 @@ class CHwDummyCursor : public IHwCursor {
 #elif defined(WIN32)
 class CHwWinCursor : public IHwCursor {
 	public:
-		CHwWinCursor(void);
-		~CHwWinCursor(void);
+		CHwWinCursor();
+		~CHwWinCursor();
 
 		void PushImage(int xsize, int ysize, void* mem);
 		void SetDelay(float delay);
@@ -76,8 +75,9 @@ class CHwWinCursor : public IHwCursor {
 		bool IsValid() {return (cursor!=NULL);};
 	protected:
 		HCURSOR cursor;
-
+#ifndef _MSC_VER
 	#pragma push(pack,1)
+#endif
 		struct CursorDirectoryHeader {
 			byte  xsize,ysize,ncolors,reserved1;
 			short hotx,hoty;
@@ -93,7 +93,9 @@ class CHwWinCursor : public IHwCursor {
 		struct AnihStructure {
 			DWORD size,images,frames,width,height,bpp,planes,rate,flags;
 		};
+#ifndef _MSC_VER
 	#pragma pop(pack)
+#endif
 		
 	protected:
 		struct ImageData {
@@ -116,8 +118,8 @@ class CHwWinCursor : public IHwCursor {
 #else
 class CHwX11Cursor : public IHwCursor {
 	public:
-		CHwX11Cursor(void);
-		~CHwX11Cursor(void);
+		CHwX11Cursor();
+		~CHwX11Cursor();
 
 		void PushImage(int xsize, int ysize, void* mem);
 		void SetDelay(float delay);
@@ -408,7 +410,7 @@ void CHwWinCursor::Bind()
 	mouseInput->SetWMMouseCursor(cursor);
 }
 
-CHwWinCursor::CHwWinCursor(void)
+CHwWinCursor::CHwWinCursor()
 {
 	cursor = NULL;
 	hotSpot= CMouseCursor::Center;
@@ -417,7 +419,7 @@ CHwWinCursor::CHwWinCursor(void)
 	hotx = hoty = 0;
 }
 
-CHwWinCursor::~CHwWinCursor(void)
+CHwWinCursor::~CHwWinCursor()
 {
 	if (cursor!=NULL)
 		DestroyCursor(cursor);
@@ -542,14 +544,14 @@ void CHwX11Cursor::Bind()
 	info.info.x11.unlock_func();
 }
 
-CHwX11Cursor::CHwX11Cursor(void)
+CHwX11Cursor::CHwX11Cursor()
 {
 	cursor = 0;
 	hotSpot=CMouseCursor::Center;
 	xmaxsize = ymaxsize = 0;
 }
 
-CHwX11Cursor::~CHwX11Cursor(void)
+CHwX11Cursor::~CHwX11Cursor()
 {
 	for (std::vector<XcursorImage*>::iterator it=cimages.begin() ; it < cimages.end(); ++it )
 		XcursorImageDestroy(*it);

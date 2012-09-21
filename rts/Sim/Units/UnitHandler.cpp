@@ -3,7 +3,8 @@
 #include <cassert>
 #include "System/mmgr.h"
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
+#include "lib/gml/gml_base.h"
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
@@ -225,7 +226,7 @@ void CUnitHandler::Update()
 		eventHandler.UpdateUnits();
 	}
 
-	GML_UPDATE_TICKS();
+	GML::UpdateTicks();
 
 	#define VECTOR_SANITY_CHECK(v)                              \
 		assert(!math::isnan(v.x) && !math::isinf(v.x)); \
@@ -269,7 +270,7 @@ void CUnitHandler::Update()
 			}
 
 			UNIT_SANITY_CHECK(unit);
-			GML_GET_TICKS(unit->lastUnitUpdate);
+			GML::GetTicks(unit->lastUnitUpdate);
 		}
 	}
 
@@ -419,8 +420,8 @@ BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 		// look for a nearby geothermal feature if we need one
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			if ((*fi)->def->geoThermal
-				&& fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
-				&& fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)) {
+				&& math::fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
+				&& math::fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)) {
 				canBuild = BUILDSQUARE_OPEN;
 				break;
 			}
@@ -503,7 +504,7 @@ BuildSquareStatus CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef
 				feature = f;
 			}
 		} else if (!dynamic_cast<CUnit*>(s) || (allyteam < 0) ||
-			(((CUnit*) s)->losStatus[allyteam] & LOS_INLOS)) {
+				(static_cast<CUnit*>(s)->losStatus[allyteam] & LOS_INLOS)) {
 			if (s->immobile) {
 				return BUILDSQUARE_BLOCKED;
 			} else {
@@ -589,7 +590,7 @@ Command CUnitHandler::GetBuildCommand(const float3& pos, const float3& dir) {
 				BuildInfo bi(cmd);
 				tempF1 = pos + dir * ((bi.pos.y - pos.y) / dir.y) - bi.pos;
 
-				if (bi.def && (bi.GetXSize() / 2) * SQUARE_SIZE > fabs(tempF1.x) && (bi.GetZSize() / 2) * SQUARE_SIZE > fabs(tempF1.z)) {
+				if (bi.def && (bi.GetXSize() / 2) * SQUARE_SIZE > math::fabs(tempF1.x) && (bi.GetZSize() / 2) * SQUARE_SIZE > math::fabs(tempF1.z)) {
 					return cmd;
 				}
 			}

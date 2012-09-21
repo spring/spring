@@ -180,7 +180,7 @@ void AAirMoveType::UpdateLanded()
 	owner->Move3D(owner->speed, true);
 	// match the terrain normal
 	owner->UpdateDirVectors(true);
-	owner->UpdateMidPos();
+	owner->UpdateMidAndAimPos();
 }
 
 void AAirMoveType::UpdateFuel() {
@@ -264,7 +264,7 @@ void AAirMoveType::CheckForCollision()
 bool AAirMoveType::MoveToRepairPad() {
 	CUnit* airBase = reservedPad->GetUnit();
 
-	if (airBase->beingBuilt || airBase->stunned) {
+	if (airBase->beingBuilt || airBase->IsStunned()) {
 		// pad became inoperable after being reserved
 		DependentDied(airBase);
 		return false;
@@ -295,7 +295,10 @@ bool AAirMoveType::MoveToRepairPad() {
 			reservedLandingPos = absPadPos;
 			wantedHeight = absPadPos.y - ground->GetHeightAboveWater(absPadPos.x, absPadPos.z);
 
-			if ((owner->pos.SqDistance(absPadPos) < SQUARE_SIZE * SQUARE_SIZE) || aircraftState == AIRCRAFT_LANDED) {
+			const float curPadDistanceSq = owner->midPos.SqDistance(absPadPos);
+			const float minPadDistanceSq = owner->radius * owner->radius;
+
+			if (curPadDistanceSq < minPadDistanceSq || aircraftState == AIRCRAFT_LANDED) {
 				padStatus = PAD_STATUS_ARRIVED;
 				owner->speed = ZeroVector;
 			}
@@ -307,7 +310,7 @@ bool AAirMoveType::MoveToRepairPad() {
 
 			owner->pos = absPadPos;
 
-			owner->UpdateMidPos();
+			owner->UpdateMidAndAimPos(); // needed here?
 			owner->AddBuildPower(airBase->unitDef->buildSpeed / GAME_SPEED, airBase);
 
 			owner->currentFuel += (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime));

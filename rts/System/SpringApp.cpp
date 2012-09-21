@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "System/Input/InputHandler.h"
 #include <sstream>
 #include <iostream>
 
@@ -28,10 +29,12 @@
 #include "Game/UI/MouseHandler.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
-#include "System/Input/InputHandler.h"
 #include "System/Input/Joystick.h"
+#include "System/MsgStrings.h"
+#include "System/NetProtocol.h"
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
+
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"
@@ -80,6 +83,7 @@
 #include "lib/luasocket/src/restrictions.h"
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
+CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
 CONFIG(int, DepthBufferBits).defaultValue(24);
 CONFIG(int, StencilBufferBits).defaultValue(8);
 CONFIG(int, FSAALevel).defaultValue(0);
@@ -102,8 +106,9 @@ CONFIG(int, WindowPosX).defaultValue(32);
 CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false);
-CONFIG(int, HardwareThreadCount).defaultValue(0).safemodeValue(1);
-CONFIG(std::string, name).defaultValue("UnnamedPlayer");
+CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
+CONFIG(int, MultiThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0).maximumValue(GML_MAX_NUM_THREADS);
+CONFIG(std::string, name).defaultValue(UnnamedPlayerName);
 
 
 ClientSetup* startsetup = NULL;
@@ -239,11 +244,11 @@ bool SpringApp::Initialize()
 	if (globalRendering->FSAA && !MultisampleVerify())
 		globalRendering->FSAA = 0;
 
+	globalRendering->PostInit();
+	
 	InitOpenGL();
 	agui::InitGui();
 	LoadFonts();
-
-	globalRendering->PostInit();
 
 	// Initialize named texture handler
 	CNamedTextures::Init();
@@ -260,21 +265,7 @@ bool SpringApp::Initialize()
 
 	// Multithreading & Affinity
 	LOG("CPU Cores: %d", Threading::GetAvailableCores());
-	Threading::SetThreadScheduler();
-	const uint32_t affinity = configHandler->GetUnsigned("SetCoreAffinity");
-	const uint32_t cpuMask  = Threading::SetAffinity(affinity);
-	if (cpuMask == 0xFFFFFF) {
-		LOG("CPU affinity not set");
-	}
-	else if (cpuMask != affinity) {
-		LOG("CPU affinity mask set: %d (config is %d)", cpuMask, affinity);
-	}
-	else if (cpuMask == 0) {
-		LOG_L(L_ERROR, "Failed to CPU affinity mask <%d>", affinity);
-	}
-	else {
-		LOG("CPU affinity mask set: %d", cpuMask);
-	}
+	Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -384,7 +375,7 @@ bool SpringApp::SetSDLVideoMode()
 #ifdef STREFLOP_H
 	//! Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	//! Set single precision floating point math.
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 #endif
 
 	//! setup GL smoothing
@@ -413,7 +404,7 @@ bool SpringApp::SetSDLVideoMode()
 
 	//! setup LOD bias factor
 	const float lodBias = Clamp(configHandler->GetFloat("TextureLODBias"), -4.f, 4.f);
-	if (fabs(lodBias)>0.01f) {
+	if (math::fabs(lodBias)>0.01f) {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
 	}
 
@@ -425,8 +416,6 @@ bool SpringApp::SetSDLVideoMode()
 		//! initialize any GL resources that were lost
 		GLContext::Init();
 	}
-
-	VSync.Init();
 
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
@@ -594,6 +583,7 @@ void SpringApp::RestoreWindowPosition()
 
 			if (!stateChanged) {
 				MoveWindow(info.window, globalRendering->winPosX, globalRendering->winPosY, globalRendering->viewSizeX, globalRendering->viewSizeY, true);
+				streflop::streflop_init<streflop::Simple>(); // MoveWindow may modify FPU flags
 			}
 
   #elif     defined(__APPLE__)
@@ -654,6 +644,8 @@ void SpringApp::SetupViewportGeometry()
  */
 void SpringApp::InitOpenGL()
 {
+	VSync.Init();
+
 	SetupViewportGeometry();
 	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	gluPerspective(45.0f,  globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
@@ -853,7 +845,7 @@ void SpringApp::Startup()
 		std::string demoPlayerName = configHandler->GetString("name");
 
 		if (demoPlayerName.empty()) {
-			demoPlayerName = "UnnamedPlayer";
+			demoPlayerName = UnnamedPlayerName;
 		} else {
 			demoPlayerName = StringReplaceInPlace(demoPlayerName, ' ', '_');
 		}
@@ -935,6 +927,7 @@ int SpringApp::Update()
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");
 			ret = activeController->Draw();
+
 			GML::PumpAux();
 		}
 	}
@@ -961,6 +954,7 @@ static void ResetScreenSaverTimeout()
 		int timeout; // reset screen saver timer
 		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
 			SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
+		streflop::streflop_init<streflop::Simple>(); // SystemParametersInfo may modify FPU flags
 	}
   #elif defined(__APPLE__)
 	// TODO: implement
@@ -996,8 +990,6 @@ int SpringApp::Run(int argc, char *argv[])
 	if (!Initialize())
 		return -1;
 
-	GML::Init();
-
 	while (!gu->globalQuit) {
 		ResetScreenSaverTimeout();
 
@@ -1006,6 +998,7 @@ int SpringApp::Run(int argc, char *argv[])
 			SDL_Event event;
 
 			while (SDL_PollEvent(&event)) {
+				streflop::streflop_init<streflop::Simple>(); // SDL_PollEvent may modify FPU flags
 				input.PushEvent(event);
 			}
 		}
@@ -1018,7 +1011,7 @@ int SpringApp::Run(int argc, char *argv[])
 
 	// Shutdown
 	Shutdown();
-	return 0;
+	return GetExitCode();
 }
 
 
@@ -1035,6 +1028,7 @@ void SpringApp::Shutdown()
 	GML::Exit();
 	DeleteAndNull(pregame);
 	DeleteAndNull(game);
+	SafeDelete(net);
 	DeleteAndNull(gameServer);
 	DeleteAndNull(gameSetup);
 	CLoadScreen::DeleteInstance();
@@ -1128,9 +1122,9 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			}
 
 			//! release all keyboard keys
-			if ((event.active.state & (SDL_APPACTIVE | SDL_APPINPUTFOCUS)) && !event.active.gain) {
+			if ((event.active.state & (SDL_APPACTIVE | SDL_APPINPUTFOCUS))) {
 				for (boost::uint16_t i = 1; i < SDLK_LAST; ++i) {
-					if (keyInput->IsKeyPressed(i)) {
+					if (i != SDLK_NUMLOCK && i != SDLK_CAPSLOCK && i != SDLK_SCROLLOCK && keyInput->IsKeyPressed(i)) {
 						SDL_Event event;
 						event.type = event.key.type = SDL_KEYUP;
 						event.key.state = SDL_RELEASED;
@@ -1141,10 +1135,12 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						SDL_PushEvent(&event);
 					}
 				}
+				// SDL has some bug and does not update modstate on alt+tab/minimize etc.
+				SDL_SetModState((SDLMod)(SDL_GetModState() & (KMOD_NUM | KMOD_CAPS | KMOD_MODE)));
 			}
 
 			//! simulate mouse release to prevent hung buttons
-			if ((event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS)) && !event.active.gain) {
+			if ((event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS))) {
 				for (int i = 1; i <= NUM_BUTTONS; ++i) {
 					if (mouse && mouse->buttons[i].pressed) {
 						SDL_Event event;
@@ -1159,7 +1155,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				}
 
 				//! and make sure to un-capture mouse
-				if(SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_ON)
+				if(!event.active.gain && SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_ON)
 					SDL_WM_GrabInput(SDL_GRAB_OFF);
 			}
 

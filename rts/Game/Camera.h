@@ -101,7 +101,7 @@ private:
 
 	float fov;         ///< in degrees
 	float halfFov;     ///< half the fov in radians
-	float tanHalfFov;  ///< tan(halfFov)
+	float tanHalfFov;  ///< math::tan(halfFov)
 	float lppScale;    ///< length-per-pixel scale
 };
 

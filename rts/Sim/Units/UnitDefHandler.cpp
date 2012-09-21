@@ -33,7 +33,7 @@ bool isblank(int c) {
 #endif
 
 
-CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
+CUnitDefHandler::CUnitDefHandler() : noCost(false)
 {
 	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("UnitDefs");
 	if (!rootTable.IsValid()) {
@@ -62,7 +62,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 }
 
 
-CUnitDefHandler::~CUnitDefHandler(void)
+CUnitDefHandler::~CUnitDefHandler()
 {
 	for (std::vector<UnitDef*>::iterator it = unitDefs.begin(); it != unitDefs.end(); ++it) {
 		delete *it;
@@ -94,7 +94,7 @@ int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable&
 		// force-initialize the real* members
 		newDef->SetNoCost(true);
 		newDef->SetNoCost(noCost);
-	} catch (const content_error& ex) {
+	} catch (const content_error&) {
 		delete newDef;
 		return 0;
 	}

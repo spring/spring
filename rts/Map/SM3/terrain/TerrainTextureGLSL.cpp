@@ -89,11 +89,11 @@ struct Shader {
 	void DebugOutput(GLenum shaderType)
 	{
 		char fn[20];
-		static int fpc = 0;
-		static int vpc = 0;
 		if (shaderType == GL_FRAGMENT_SHADER_ARB) {
+			static int fpc = 0;
 			sprintf(fn, "shader%dfp.txt", fpc++);
 		} else {
+			static int vpc = 0;
 			sprintf(fn, "shader%dvp.txt", vpc++);
 		}
 		WriteToFile(fn);

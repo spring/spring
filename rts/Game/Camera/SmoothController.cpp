@@ -55,7 +55,7 @@ void SmoothController::KeyMove(float3 move)
 		move.y = -move.y;
 	}
 
-	move *= sqrt(move.z) * 200.0f;
+	move *= math::sqrt(move.z) * 200.0f;
 
 	const float3 thisMove(move.x * pixelSize * 2.0f * scrollSpeed, 0.0f, -move.y * pixelSize * 2.0f * scrollSpeed);
 
@@ -103,7 +103,7 @@ void SmoothController::ScreenEdgeMove(float3 move)
 		move.x = -move.x;
 		move.y = -move.y;
 	}
-	move *= sqrt(move.z) * 200.0f;
+	move *= math::sqrt(move.z) * 200.0f;
 
 	const float3 thisMove(move.x * pixelSize * 2.0f * scrollSpeed, 0.0f, -move.y * pixelSize * 2.0f * scrollSpeed);
 
@@ -196,6 +196,12 @@ float3 SmoothController::GetPos() const
 	float3 cpos = pos - dir * height;
 	cpos.y = std::max(cpos.y, ground->GetHeightAboveWater(cpos.x, cpos.z, false) + 5.0f);
 	return cpos;
+}
+
+void SmoothController::SetPos(const float3& newPos)
+{
+	pos = newPos;
+	UpdateVectors();
 }
 
 float3 SmoothController::SwitchFrom() const

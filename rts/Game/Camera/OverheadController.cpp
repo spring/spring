@@ -52,7 +52,7 @@ void COverheadController::KeyMove(float3 move)
 		move.x = -move.x;
 		move.y = -move.y;
 	}
-	move *= sqrt(move.z) * 200;
+	move *= math::sqrt(move.z) * 200;
 
 	pos.x += move.x * pixelSize * 2.0f * scrollSpeed;
 	pos.z -= move.y * pixelSize * 2.0f * scrollSpeed;
@@ -79,6 +79,7 @@ void COverheadController::ScreenEdgeMove(float3 move)
 
 void COverheadController::MouseWheelMove(float move)
 {
+	camHandler->CameraTransition(0.05f);
 	const float shiftSpeed = (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3.0f : 1.0f);
 	
 	// tilt the camera if LCTRL is pressed

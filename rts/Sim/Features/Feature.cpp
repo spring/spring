@@ -11,7 +11,6 @@
 #include "Map/MapInfo.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
-#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/ModInfo.h"
@@ -83,10 +82,6 @@ CFeature::~CFeature()
 
 	qf->RemoveFeature(this);
 
-	if (def->drawType >= DRAWTYPE_TREE && treeDrawer) {
-		treeDrawer->DeleteTree(pos);
-	}
-
 	if (myFire) {
 		myFire->StopFire();
 		myFire = 0;
@@ -100,25 +95,20 @@ CFeature::~CFeature()
 void CFeature::PostLoad()
 {
 	def = featureHandler->GetFeatureDefByID(defID);
-
-	float fRadius = 1.0f;
-	float fHeight = 0.0f;
+	objectDef = def;
 
 	//FIXME is this really needed (aren't all those tags saved via creg?)
 	if (def->drawType == DRAWTYPE_MODEL) {
 		model = def->LoadModel();
 
-		relMidPos = model->relMidPos;
-		fRadius = model->radius;
-		fHeight = model->height;
+		SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
+		SetRadiusAndHeight(model->radius, model->height);
 	} else if (def->drawType >= DRAWTYPE_TREE) {
-		relMidPos = UpVector * TREE_RADIUS;
-		fRadius = TREE_RADIUS;
-		fHeight = fRadius * 2.0f;
+		SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
+		SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
 	}
 
-	SetRadiusAndHeight(fRadius, fHeight);
-	UpdateMidPos();
+	UpdateMidAndAimPos();
 }
 
 
@@ -138,6 +128,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	int facing, int _team, int _allyteam, const UnitDef* _udef, const float3& speed, int _smokeTime)
 {
 	def = _def;
+	objectDef = _def;
 	udef = _udef;
 	defID = def->id;
 	heading = _heading;
@@ -149,45 +140,42 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	mass = def->mass;
 	crushResistance = def->crushResistance;
 
-	health   = def->maxHealth;
+	health   = def->health;
 	blocking = def->blocking;
 
-	xsize    = ((facing & 1) == 0) ? def->xsize : def->zsize;
-	zsize    = ((facing & 1) == 1) ? def->xsize : def->zsize;
+	xsize = ((facing & 1) == 0) ? def->xsize : def->zsize;
+	zsize = ((facing & 1) == 1) ? def->xsize : def->zsize;
 
 	noSelect = def->noSelect;
 
-	float fRadius = 1.0f;
-	float fHeight = 0.0f;
+	// set position before mid-position
+	Move3D(_pos.cClampInMap(), false);
 
 	if (def->drawType == DRAWTYPE_MODEL) {
-		model = def->LoadModel();
-
-		if (!model) {
+		if ((model = def->LoadModel()) == NULL) {
 			LOG_L(L_ERROR, "Features: Couldn't load model for %s", def->name.c_str());
 		} else {
-			relMidPos = model->relMidPos;
-			fRadius = model->radius;
-			fHeight = model->height;
-
-			// note: gets deleted in ~CSolidObject
-			collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
+			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
+			SetRadiusAndHeight(model->radius, model->height);
+		}
+	} else {
+		if (def->drawType >= DRAWTYPE_TREE) {
+			// LoadFeaturesFromMap() doesn't set a scale for trees
+			SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
+			SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
 		}
 	}
-	else if (def->drawType >= DRAWTYPE_TREE) {
-		relMidPos = UpVector * TREE_RADIUS;
-		fRadius = TREE_RADIUS;
-		fHeight = fRadius * 2.0f;
 
-		// LoadFeaturesFromMap() doesn't set a scale for trees
-		// note: gets deleted in ~CSolidObject
-		collisionVolume = new CollisionVolume(def->collisionVolume, fRadius);
-	}
-
-	Move3D(_pos.cClampInMap(), false);
-	SetRadiusAndHeight(fRadius, fHeight);
-	UpdateMidPos();
+	UpdateMidAndAimPos();
 	CalculateTransform();
+
+	// note: gets deleted in ~CSolidObject
+	collisionVolume = new CollisionVolume(def->collisionVolume);
+
+	if (collisionVolume->DefaultToSphere())
+		collisionVolume->InitSphere(radius);
+	if (collisionVolume->DefaultToFootPrint())
+		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
 
 	featureHandler->AddFeature(this);
 	qf->AddFeature(this);
@@ -215,18 +203,12 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 void CFeature::CalculateTransform()
 {
-	float3 frontDir = GetVectorFromHeading(heading);
-	float3 upDir;
+	updir    = (!def->upright)? ground->GetNormal(pos.x, pos.z): UpVector;
+	frontdir = GetVectorFromHeading(heading);
+	rightdir = (frontdir.cross(updir)).Normalize();
+	frontdir = (updir.cross(rightdir)).Normalize();
 
-	if (def->upright) upDir = float3(0.0f, 1.0f, 0.0f);
-	else upDir = ground->GetNormal(pos.x, pos.z);
-
-	float3 rightDir = frontDir.cross(upDir);
-	rightDir.Normalize();
-	frontDir = upDir.cross(rightDir);
-	frontDir.Normalize ();
-
-	transMatrix = CMatrix44f(pos, -rightDir, upDir, frontDir);
+	transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir);
 }
 
 
@@ -384,14 +366,12 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit
 			deathFeature->reclaimLeft = reclaimLeft;
 		}
 
+		if (def->drawType >= DRAWTYPE_TREE)
+			deathSpeed = impulse; // re-use deathSpeed: impulse is needed for creation of falling trees
+
 		featureHandler->DeleteFeature(this);
 		blockHeightChanges = false;
 
-		if (def->drawType >= DRAWTYPE_TREE) {
-			if (impulse.SqLength2D() > 0.25f) {
-				treeDrawer->AddFallingTree(pos, impulse, def->drawType - 1);
-			}
-		}
 	}
 }
 
@@ -414,14 +394,12 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 	// remove from managers
 	qf->RemoveFeature(this);
-	if (def->drawType >= DRAWTYPE_TREE) {
-		treeDrawer->DeleteTree(pos);
-	}
 
-	Move3D(pos, false);
-	eventHandler.FeatureMoved(this);
+	const float3 oldpos = pos;
+	Move3D(newPos - pos, true);
+	eventHandler.FeatureMoved(this, oldpos);
 
-	// setup finalHeight
+	// setup finalHeight (pos == newPos now)
 	if (snapToGround) {
 		if (def->floating) {
 			finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
@@ -429,7 +407,7 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 			finalHeight = ground->GetHeightReal(pos.x, pos.z);
 		}
 	} else {
-		finalHeight = newPos.y;
+		finalHeight = pos.y;
 	}
 
 	// setup the visual transformation matrix
@@ -437,9 +415,6 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 	// insert into managers
 	qf->AddFeature(this);
-	if (def->drawType >= DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
-	}
 
 	if (blocking) {
 		Block();
@@ -467,15 +442,17 @@ bool CFeature::UpdatePosition()
 	if (udef != NULL) {
 		// we are a wreck of a dead unit
 		if (!reachedFinalPos) {
+			const float3 oldpos = pos;
 			// def->floating is unreliable (true for land unit wrecks),
-			// just assume wrecks always sink even if their "owner" was
-			// a floating object (as is the case for ships anyway)
+			// so just assume wrecks always sink even if their "owner"
+			// was a floating object (as is the case for ships anyway)
 			const float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
+			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
 
-			// NOTE: apply more drag if we were a tank or bot?
-			// (would require passing extra data to Initialize())
-			deathSpeed *= ((reachedGround)? 0.95f: 0.9999f);
+			deathSpeed *= 0.999999f;
+			deathSpeed *= (1.0f - (int(reachedWater ) * 0.05f));
+			deathSpeed *= (1.0f - (int(reachedGround) * 0.10f));
 
 			if (deathSpeed.SqLength2D() > 0.01f) {
 				UnBlock();
@@ -493,7 +470,7 @@ bool CFeature::UpdatePosition()
 			}
 
 			if (!reachedGround) {
-				if (pos.y > 0.0f) {
+				if (!reachedWater) {
 					// quadratic acceleration if not in water
 					deathSpeed.y += mapInfo->map.gravity;
 				} else {
@@ -521,45 +498,33 @@ bool CFeature::UpdatePosition()
 				deathSpeed = ZeroVector;
 			}
 
-			eventHandler.FeatureMoved(this);
+			eventHandler.FeatureMoved(this, oldpos);
 			CalculateTransform();
 		}
 	} else {
 		if (pos.y > finalHeight) {
 			// feature is falling (note: gravity is negative)
-			if (def->drawType >= DRAWTYPE_TREE) {
-				treeDrawer->DeleteTree(pos);
-			}
-
 			if (pos.y > 0.0f) {
 				speed.y += mapInfo->map.gravity;
 			} else {
 				speed.y = mapInfo->map.gravity;
 			}
 
+			const float3 oldpos = pos;
 			Move1D(speed.y, 1, true);
-
-			if (def->drawType >= DRAWTYPE_TREE) {
-				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
-			}
+			eventHandler.FeatureMoved(this, oldpos);
 
 			transMatrix[13] += speed.y;
 		} else if (pos.y < finalHeight) {
 			// if ground is restored, make sure feature does not get buried
-			if (def->drawType >= DRAWTYPE_TREE) {
-				treeDrawer->DeleteTree(pos);
-			}
-
 			const float dy = finalHeight - pos.y;
 
 			speed.y = 0.0f;
 			transMatrix[13] += dy;
 
+			const float3 oldpos = pos;
 			Move1D(dy, 1, true);
-
-			if (def->drawType >= DRAWTYPE_TREE) {
-				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
-			}
+			eventHandler.FeatureMoved(this, oldpos);
 		}
 
 		reachedFinalPos = (pos.y == finalHeight);
@@ -646,7 +611,7 @@ void CFeature::StartFire()
 
 int CFeature::ChunkNumber(float f)
 {
-	return (int) ceil(f * modInfo.reclaimMethod);
+	return (int) math::ceil(f * modInfo.reclaimMethod);
 }
 
 
@@ -664,7 +629,7 @@ float CFeature::RemainingResource(float res) const
 
 	// Otherwise we are doing chunk reclaiming
 	float chunkSize = res / modInfo.reclaimMethod; // resource/no_chunks
-	float chunksLeft = ceil(reclaimLeft * modInfo.reclaimMethod);
+	float chunksLeft = math::ceil(reclaimLeft * modInfo.reclaimMethod);
 	return chunkSize * chunksLeft;
 }
 

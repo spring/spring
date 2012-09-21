@@ -191,9 +191,6 @@ public:
 	// number of assault cat + arty & stat defences
 	static const int combat_categories = 6;
 
-	// how many aai instances have been initialized
-	static int aai_instances;
-
 	// path/name of the file in which AAI stores the build table
 	static char buildtable_filename[500];
 
@@ -278,6 +275,7 @@ private:
 	// for internal use
 	void CalcBuildTree(int unit);
 	bool LoadBuildTable();
+	float GetUnitRating(int unit, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff);
 	void DebugPrint();
 
 	IAICallback *cb;

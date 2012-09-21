@@ -60,13 +60,14 @@ class CEventHandler
 		void UnitFromFactory(const CUnit* unit, const CUnit* factory,
 		                     bool userOrders);
 		void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
-		void UnitTaken(const CUnit* unit, int newTeam);
-		void UnitGiven(const CUnit* unit, int oldTeam);
+		void UnitTaken(const CUnit* unit, int oldTeam, int newTeam);
+		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam);
 
 		void RenderUnitCreated(const CUnit* unit, int cloaked);
 		void RenderUnitDestroyed(const CUnit* unit);
 		void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 		void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
+		void RenderUnitMoved(const CUnit* unit, const float3& newpos);
 
 		void UpdateUnits();
 		void UpdateDrawUnits();
@@ -104,11 +105,11 @@ class CEventHandler
 
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
-		void FeatureMoved(const CFeature* feature);
+		void FeatureMoved(const CFeature* feature, const float3& oldpos);
 
 		void RenderFeatureCreated(const CFeature* feature);
 		void RenderFeatureDestroyed(const CFeature* feature);
-		void RenderFeatureMoved(const CFeature* feature);
+		void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 
 		void UpdateFeatures();
 		void UpdateDrawFeatures();
@@ -299,6 +300,8 @@ class CEventHandler
 		EventClientList listUnitMoved;
 		EventClientList listUnitMoveFailed;
 
+		EventClientList listRenderUnitMoved;
+
 		EventClientList listFeatureCreated;
 		EventClientList listFeatureDestroyed;
 		EventClientList listFeatureMoved;
@@ -402,30 +405,42 @@ inline void CEventHandler::UnitCreated(const CUnit* unit, const CUnit* builder)
 
 UNIT_CALLIN_NO_PARAM(UnitFinished)
 UNIT_CALLIN_NO_PARAM(UnitIdle)
-UNIT_CALLIN_NO_PARAM(UnitMoved)
 UNIT_CALLIN_NO_PARAM(UnitMoveFailed)
 UNIT_CALLIN_NO_PARAM(UnitEnteredWater)
 UNIT_CALLIN_NO_PARAM(UnitEnteredAir)
 UNIT_CALLIN_NO_PARAM(UnitLeftWater)
 UNIT_CALLIN_NO_PARAM(UnitLeftAir)
 
+inline void CEventHandler::UnitMoved(const CUnit* unit)
+{
+	eventBatchHandler->EnqueueUnitMovedEvent(unit, unit->pos);
+
+	const int unitAllyTeam = unit->allyteam;
+	const int count = listUnitMoved.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listUnitMoved[i];
+		if (ec->CanReadAllyTeam(unitAllyTeam)) {
+			ec->UnitMoved(unit);
+		}
+	}
+}
 
 
-#define UNIT_CALLIN_INT_PARAM(name)                                       \
-	inline void CEventHandler:: Unit ## name (const CUnit* unit, int p)   \
+#define UNIT_CALLIN_INT_PARAMS(name)                                       \
+	inline void CEventHandler:: Unit ## name (const CUnit* unit, int p1, int p2)   \
 	{                                                                     \
 		const int unitAllyTeam = unit->allyteam;                          \
 		const int count = listUnit ## name.size();                        \
 		for (int i = 0; i < count; i++) {                                 \
 			CEventClient* ec = listUnit ## name [i];                      \
 			if (ec->CanReadAllyTeam(unitAllyTeam)) {                      \
-				ec-> Unit ## name (unit, p);                              \
+				ec-> Unit ## name (unit, p1, p2);                              \
 			}                                                             \
 		}                                                                 \
 	}
 
-UNIT_CALLIN_INT_PARAM(Taken)
-UNIT_CALLIN_INT_PARAM(Given)
+UNIT_CALLIN_INT_PARAMS(Taken)
+UNIT_CALLIN_INT_PARAMS(Given)
 
 
 
@@ -686,6 +701,15 @@ inline void CEventHandler::UnitUnloaded(const CUnit* unit,
 }
 
 
+inline void CEventHandler::RenderUnitMoved(const CUnit* unit, const float3& newpos)
+{
+	const int count = listRenderUnitMoved.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listRenderUnitMoved[i];
+		ec->RenderUnitMoved(unit, newpos);
+	}
+}
+
 inline void CEventHandler::FeatureCreated(const CFeature* feature)
 {
 	(eventBatchHandler->GetFeatureCreatedDestroyedEventBatch()).enqueue(feature);
@@ -716,9 +740,9 @@ inline void CEventHandler::FeatureDestroyed(const CFeature* feature)
 	}
 }
 
-inline void CEventHandler::FeatureMoved(const CFeature* feature)
+inline void CEventHandler::FeatureMoved(const CFeature* feature, const float3& oldpos)
 {
-	(eventBatchHandler->GetFeatureMovedEventBatch()).enqueue(feature);
+	eventBatchHandler->EnqueueFeatureMovedEvent(feature, oldpos, feature->pos);
 
 	const int featureAllyTeam = feature->allyteam;
 	const int count = listFeatureMoved.size();
@@ -751,12 +775,12 @@ inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature)
 	}
 }
 
-inline void CEventHandler::RenderFeatureMoved(const CFeature* feature)
+inline void CEventHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos)
 {
 	const int count = listRenderFeatureMoved.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderFeatureMoved[i];
-		ec->RenderFeatureMoved(feature);
+		ec->RenderFeatureMoved(feature, oldpos, newpos);
 	}
 }
 

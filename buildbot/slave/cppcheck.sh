@@ -1,6 +1,23 @@
 #!/bin/sh
 set +e
 
-find rts AI/ -name "*\.cpp" -or -name "*\.c" \
-|grep -v '^rts/lib' \
-|cppcheck --force --enable=style,information,unusedFunction --quiet -I rts --file-list=/dev/stdin --suppressions-list=buildbot/slave/cppcheck.supress $@
+# run CppCheck for the engine sources
+find rts/ \
+	-name "*\.cpp" -or -name "*\.c" \
+	| grep -v '^rts/lib' \
+	| cppcheck --file-list=/dev/stdin \
+		--force --quiet \
+		--suppressions-list=buildbot/slave/cppcheck.supress \
+		--enable=style,information \
+		-I rts \
+		$@
+
+# run CppCheck for the native AI sources
+find AI/ \
+	-name "*\.cpp" -or -name "*\.c" \
+	| cppcheck --file-list=/dev/stdin \
+		--force --quiet \
+		--suppressions-list=buildbot/slave/cppcheck.supress \
+		--enable=style,information \
+		-I rts -I rts/ExternalAI/Interface -I AI/Wrappers \
+		$@

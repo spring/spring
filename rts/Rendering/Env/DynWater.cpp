@@ -19,7 +19,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Log/ILog.h"
@@ -88,9 +88,9 @@ CDynWater::CDynWater()
 
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
-			temp[(y*64 + x)*4 + 0] = sin(x*PI*2.0f/64.0f) + ((x < 32) ? -1 : 1)*0.3f;
+			temp[(y*64 + x)*4 + 0] = math::sin(x*PI*2.0f/64.0f) + ((x < 32) ? -1 : 1)*0.3f;
 			temp[(y*64 + x)*4 + 1] = temp[(y*64 + x)*4 + 0];
-			temp[(y*64 + x)*4 + 2] = cos(x*PI*2.0f/64.0f) + ((x < 32) ? (16 - x) : (x - 48))/16.0f*0.3f;
+			temp[(y*64 + x)*4 + 2] = math::cos(x*PI*2.0f/64.0f) + ((x < 32) ? (16 - x) : (x - 48))/16.0f*0.3f;
 			temp[(y*64 + x)*4 + 3] = 0;
 		}
 	}
@@ -167,7 +167,7 @@ CDynWater::CDynWater()
 	for (int y = 0; y < 1024; ++y) {
 		for (int x = 0; x < 1024; ++x) {
 			//const float dist = (x - 500)*(x - 500)+(y - 450)*(y - 450);
-			temp[(y*1024 + x)*4 + 0] = 0;//max(0.0f,15-sqrt(dist));//sin(y*PI*2.0f/64.0f)*0.5f+0.5f;
+			temp[(y*1024 + x)*4 + 0] = 0;//max(0.0f,15-math::sqrt(dist));//math::sin(y*PI*2.0f/64.0f)*0.5f+0.5f;
 			temp[(y*1024 + x)*4 + 1] = 0;
 			temp[(y*1024 + x)*4 + 2] = 0;
 			temp[(y*1024 + x)*4 + 3] = 0;
@@ -197,7 +197,7 @@ CDynWater::CDynWater()
 		const float dy = y - 31.5f;
 		for (int x = 0; x < 64; ++x) {
 			const float dx = x-31.5f;
-			const float dist = sqrt(dx*dx + dy*dy);
+			const float dist = math::sqrt(dx*dx + dy*dy);
 			temp[(y*64 + x)*4 + 0] = std::max(0.0f, 1 - dist/30.f) * std::max(0.0f, 1 - dist/30.f);
 			temp[(y*64 + x)*4 + 1] = std::max(0.0f, 1 - dist/30.f);
 			temp[(y*64 + x)*4 + 2] = std::max(0.0f, 1 - dist/30.f) * std::max(0.0f, 1 - dist/30.f);
@@ -425,8 +425,8 @@ void CDynWater::Update()
 
 	oldCamPosBig = camPosBig;
 
-	camPosBig.x = floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE-WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig.z = floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE-WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.x = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE-WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.z = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE-WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(0);
@@ -448,6 +448,8 @@ void CDynWater::Update()
 
 void CDynWater::DrawReflection(CGame* game)
 {
+	const bool shadowsLoaded = shadowHandler->shadowsLoaded;
+
 //	CCamera* realCam = camera;
 //	camera = new CCamera(*realCam);
 	char realCam[sizeof(CCamera)];
@@ -455,57 +457,54 @@ void CDynWater::DrawReflection(CGame* game)
 
 	camera->forward.y *= -1.0f;
 	camera->pos.y *= -1.0f;
-	camera->pos.y += 0.2f;
 	camera->Update();
+
 	reflectRight = camera->right;
 	reflectUp = camera->up;
 	reflectForward = camera->forward;
 
 	reflectFBO.Bind();
 	glViewport(0, 0, 512, 512);
-
 	glClearColor(0.5f, 0.6f, 0.8f, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	game->SetDrawMode(CGame::gameReflectionDraw);
+	{
+		drawReflection = true;
 
-	sky->Draw();
+		game->SetDrawMode(CGame::gameReflectionDraw);
+		sky->Draw();
 
-	static const double plane[4] = {0.0, 1.0, 0.0, 1.0};
-	static const double plane2[4] = {0.0, -1.0, 0, 1.0};
-	const bool shadowsLoaded = shadowHandler->shadowsLoaded;
+		{
+			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
 
-	glEnable(GL_CLIP_PLANE2);
-	glClipPlane(GL_CLIP_PLANE2, plane2);
+			glEnable(GL_CLIP_PLANE2);
+			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
-	drawReflection = true;
-	shadowHandler->shadowsLoaded = false;
+			shadowHandler->shadowsLoaded = false;
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->SetupReflDrawPass();
-		gd->Draw(DrawPass::WaterReflection);
-		gd->SetupBaseDrawPass();
+			CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+				gd->SetupReflDrawPass();
+				gd->Draw(DrawPass::WaterReflection);
+				gd->SetupBaseDrawPass();
 
-	glClipPlane(GL_CLIP_PLANE2 ,plane);
+			shadowHandler->shadowsLoaded = shadowsLoaded;
 
-	gd->Draw(DrawPass::WaterReflection);
+			unitDrawer->Draw(true);
+			featureDrawer->Draw();
+			unitDrawer->DrawCloakedUnits(true);
+			featureDrawer->DrawFadeFeatures(true);
 
-	shadowHandler->shadowsLoaded = shadowsLoaded;
+			projectileDrawer->Draw(true);
+			eventHandler.DrawWorldReflection();
 
-	unitDrawer->Draw(true);
-	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(true);
-	featureDrawer->DrawFadeFeatures(true);
+			glDisable(GL_CLIP_PLANE2);
+		}
 
-	projectileDrawer->Draw(true);
-	eventHandler.DrawWorldReflection();
+		sky->DrawSun();
+		game->SetDrawMode(CGame::gameNormalDraw);
 
-	sky->DrawSun();
-
-	game->SetDrawMode(CGame::gameNormalDraw);
-
-	drawReflection = false;
-	glDisable(GL_CLIP_PLANE2);
+		drawReflection = false;
+	}
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
@@ -837,8 +836,8 @@ void CDynWater::DrawWaterSurface()
 	va = GetVertexArray();
 	va->Initialize();
 
-	camPosBig2.x = floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE - WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig2.z = floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE - WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE - WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE - WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
 
 	// FIXME:
 	//     1. DynWater::UpdateCamRestraints was never called ==> <this->left> and <this->right> were always empty
@@ -1134,8 +1133,8 @@ void CDynWater::AddShipWakes()
 				// hovercraft
 				const float3& pos = unit->pos;
 
-				if ((fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
-					(fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
+				if ((math::fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
+					(math::fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
 				{
 					continue;
 				}
@@ -1146,7 +1145,7 @@ void CDynWater::AddShipWakes()
 				if ((pos.y > -4.0f) && (pos.y < 4.0f)) {
 					const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
 					const float3 sideAdd = unit->rightdir * unit->radius * 0.75f;
-					const float depth = sqrt(sqrt(unit->mass)) * 0.4f;
+					const float depth = math::sqrt(math::sqrt(unit->mass)) * 0.4f;
 					const float3 n(depth, 0.05f * depth, depth);
 
 					va2->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
@@ -1156,11 +1155,10 @@ void CDynWater::AddShipWakes()
 				}
 			} else if (moveDef->moveType == MoveDef::Ship_Move) {
 				// surface ship
-				const float speedf = unit->speed.Length2D();
 				const float3& pos = unit->pos;
 
-				if ((fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
-					(fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
+				if ((math::fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
+					(math::fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
 				{
 					continue;
 				}
@@ -1168,17 +1166,19 @@ void CDynWater::AddShipWakes()
 					continue;
 				}
 
-				if ((pos.y > -4.0f) && (pos.y < 1.0f)) {
-					const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
-					const float3 sideAdd = unit->rightdir * unit->radius * 0.18f;
-					const float depth = sqrt(sqrt(unit->mass));
-					const float3 n(depth, 0.04f * speedf * depth, depth);
+				// skip submarines (which have deep waterlines)
+				if (unit->isUnderWater || !unit->inWater)
+					continue;
 
-					va->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
-					va->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
-					va->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
-					va->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
-				}
+				const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
+				const float3 sideAdd = unit->rightdir * unit->radius * 0.18f;
+				const float depth = math::sqrt(math::sqrt(unit->mass));
+				const float3 n(depth, 0.04f * unit->speed.Length2D() * depth, depth);
+
+				va->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
+				va->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
+				va->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
+				va->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
 			}
 		}
 	}
@@ -1250,8 +1250,8 @@ void CDynWater::AddExplosions()
 	for (std::vector<Explosion>::iterator ei = explosions.begin(); ei != explosions.end(); ++ei) {
 		Explosion& explo = *ei;
 		float3 pos = explo.pos;
-		if ((fabs(pos.x - camPosBig.x) > (WH_SIZE - 50))
-				|| (fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
+		if ((math::fabs(pos.x - camPosBig.x) > (WH_SIZE - 50))
+				|| (math::fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
 		{
 			continue;
 		}
@@ -1398,7 +1398,7 @@ void CDynWater::UpdateCamRestraints(CCamera* cam) {
 	static const float maxy = 255.0f / 3.5f;
 
 	// prevent colinearity in top-down view
-	if (fabs(camDir3D.dot(UpVector)) < 0.95f) {
+	if (math::fabs(camDir3D.dot(UpVector)) < 0.95f) {
 		camDir2D  = camDir2D.SafeANormalize();
 		camOffset = camDir2D * globalRendering->viewRange * 1.05f;
 

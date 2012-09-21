@@ -10,6 +10,7 @@
 #include "IPath.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
+#include "Sim/Objects/SolidObject.h"
 
 struct MoveDef;
 class CPathFinderDef;
@@ -57,7 +58,7 @@ public:
 		bool exactPath,
 		unsigned int maxSearchedNodes,
 		bool needPath,
-		int ownerId,
+		const CSolidObject* owner,
 		bool synced
 	);
 
@@ -72,9 +73,9 @@ private:
 	/// Clear things up from last search.
 	void ResetSearch();
 	/// Set up the starting point of the search.
-	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, int ownerId, bool synced);
+	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
 	/// Performs the actual search.
-	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, int ownerId, bool synced);
+	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
 	/**
 	 * Test the availability and value of a square,
 	 * and possibly add it to the queue of open squares.
@@ -84,7 +85,7 @@ private:
 		const CPathFinderDef& pfDef,
 		const PathNode* parentOpenSquare,
 		unsigned int pathOpt,
-		int ownerId,
+		const CSolidObject* owner,
 		bool synced
 	);
 	/**

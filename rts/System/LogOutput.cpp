@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Platform/Win/win32.h"
-
 #include "System/LogOutput.h"
 
 #include "lib/gml/gmlmut.h"
@@ -27,16 +25,16 @@
 
 #include <boost/thread/recursive_mutex.hpp>
 
-#ifdef _MSC_VER
-#include <windows.h>
-#endif
 
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(std::string, RotateLogFiles).defaultValue("auto");
-CONFIG(std::string, LogSections).defaultValue("");
-CONFIG(std::string, LogSubsystems).defaultValue(""); // XXX deprecated on 22. August 2011, before the 0.83 release
+CONFIG(std::string, RotateLogFiles).defaultValue("auto")
+		.description("rotate logfiles, valid values are \"always\" (default in debug builds) and \"never\" (default in release builds).");
+CONFIG(std::string, LogSections).defaultValue("")
+		.description("Comma seperated list of enabled logsections, see infolog.txt / console output for possible values");
+CONFIG(bool, LogFlush).defaultValue(false)
+		.description("Instantly write to the logfile, use only for debugging as it will cause a slowdown");
 
 /******************************************************************************/
 /******************************************************************************/
@@ -158,7 +156,8 @@ void CLogOutput::Initialize()
 	/*filelog = new std::ofstream(filePath.c_str());
 	if (filelog->bad())
 		SafeDelete(filelog);*/
-	log_file_addLogFile(filePath.c_str());
+	const bool flush = configHandler->GetBool("LogFlush");
+	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, flush);
 
 	initialized = true;
 	InitializeSections();
@@ -214,19 +213,13 @@ void CLogOutput::InitializeSections()
 	enabledSections += "Sound,";
 	#endif
 	enabledSections += StringToLower(configHandler->GetString("LogSections")) + ",";
-	enabledSections += StringToLower(configHandler->GetString("LogSubsystems")) + ","; // XXX deprecated on 22. August 2011, before the 0.83 release
 #endif
 
 	const char* const envSec = getenv("SPRING_LOG_SECTIONS");
-	const char* const envSubsys = getenv("SPRING_LOG_SUBSYSTEMS"); // XXX deprecated on 22. August 2011, before the 0.83 release
 	std::string env;
 	if (envSec != NULL) {
 		env += ",";
 		env += envSec;
-	}
-	if (envSubsys != NULL) {
-		env += ",";
-		env += envSubsys;
 	}
 
 	if (!env.empty()) {

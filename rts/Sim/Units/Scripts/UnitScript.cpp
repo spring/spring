@@ -20,7 +20,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -612,7 +612,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			const float3 speed =
 				unit->speed    * 0.7f +
 				unit->frontdir * 0.5f *       relDir.z  +
-				unit->updir    * 0.5f * -fabs(relDir.y) +
+				unit->updir    * 0.5f * -math::fabs(relDir.y) +
 				unit->rightdir * 0.5f *       relDir.x;
 
 			CHeatCloudProjectile* hc = new CHeatCloudProjectile(
@@ -650,17 +650,10 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				const float3 targetPos = weapon->targetPos;
 				const float3 weaponMuzzlePos = weapon->weaponMuzzlePos;
 
-				// don't override the weapon's target position
-				// if it was not set internally (so that force-
-				// fire keeps working as expected)
-				if (!weapon->haveUserTarget) {
-					weapon->targetPos = pos + dir;
-				}
-
+				weapon->targetPos = pos + dir;
 				weapon->weaponMuzzlePos = pos;
 				weapon->Fire();
 				weapon->weaponMuzzlePos = weaponMuzzlePos;
-
 				weapon->targetPos = targetPos;
 			}
 			else if (sfxType & SFX_DETONATE_WEAPON) {
@@ -963,13 +956,13 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return int(u->radius * COBSCALE);
 	}
 	case XZ_ATAN:
-		return int(RAD2TAANG*atan2((float)UNPACKX(p1), (float)UNPACKZ(p1)) + 32768 - unit->heading);
+		return int(RAD2TAANG*math::atan2((float)UNPACKX(p1), (float)UNPACKZ(p1)) + 32768 - unit->heading);
 	case XZ_HYPOT:
-		return int(hypot((float)UNPACKX(p1), (float)UNPACKZ(p1)) * COBSCALE);
+		return int(math::hypot((float)UNPACKX(p1), (float)UNPACKZ(p1)) * COBSCALE);
 	case ATAN:
-		return int(RAD2TAANG*atan2((float)p1, (float)p2));
+		return int(RAD2TAANG*math::atan2((float)p1, (float)p2));
 	case HYPOT:
-		return int(hypot((float)p1, (float)p2));
+		return int(math::hypot((float)p1, (float)p2));
 	case GROUND_HEIGHT:
 		return int(ground->GetHeightAboveWater(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case GROUND_WATER_HEIGHT:
@@ -1038,7 +1031,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case UPRIGHT:
 		return !!unit->upright;
 	case POW:
-		return int(pow(((float)p1)/COBSCALE,((float)p2)/COBSCALE)*COBSCALE);
+		return int(math::pow(((float)p1)/COBSCALE,((float)p2)/COBSCALE)*COBSCALE);
 	case PRINT:
 		LOG("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
 		break;
@@ -1108,7 +1101,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (unit->shieldWeapon == NULL) {
 			return -1;
 		}
-		const CPlasmaRepulser* shield = (CPlasmaRepulser*) unit->shieldWeapon;
+		const CPlasmaRepulser* shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
 		return int(shield->curPower * float(COBSCALE));
 	}
 
@@ -1411,8 +1404,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 	switch (val) {
 		case ACTIVATION: {
 			if(unit->unitDef->onoffable) {
-				Command c(CMD_ONOFF);
-				c.params.push_back(param == 0 ? 0 : 1);
+				Command c(CMD_ONOFF, 0, (param == 0) ? 0 : 1);
 				unit->commandAI->GiveCommand(c);
 			}
 			else {
@@ -1427,16 +1419,14 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case STANDINGMOVEORDERS: {
 			if (param >= 0 && param <= 2) {
-				Command c(CMD_MOVE_STATE);
-				c.params.push_back(param);
+				Command c(CMD_MOVE_STATE, 0, param);
 				unit->commandAI->GiveCommand(c);
 			}
 			break;
 		}
 		case STANDINGFIREORDERS: {
 			if (param >= 0 && param <= 2) {
-				Command c(CMD_FIRE_STATE);
-				c.params.push_back(param);
+				Command c(CMD_FIRE_STATE, 0, param);
 				unit->commandAI->GiveCommand(c);
 			}
 			break;
@@ -1528,9 +1518,8 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case MAX_SPEED: {
-			if (param > 0) {
-				unit->commandAI->SetScriptMaxSpeed(param / (float) COBSCALE);
-			}
+			// interpret negative values as non-persistent changes
+			unit->commandAI->SetScriptMaxSpeed(std::max(param, -param) / float(COBSCALE), (param >= 0));
 			break;
 		}
 		case CLOAKED: {
@@ -1548,7 +1537,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		case HEADING: {
 			unit->heading = param % COBSCALE;
 			unit->UpdateDirVectors(!unit->upright && unit->moveType->GetMaxSpeed() > 0.0f);
-			unit->UpdateMidPos();
+			unit->UpdateMidAndAimPos();
 		} break;
 		case LOS_RADIUS: {
 			unit->ChangeLos(param, unit->realAirLosRadius);
@@ -1586,7 +1575,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case SHIELD_POWER: {
 			if (unit->shieldWeapon != NULL) {
-				CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
+				CPlasmaRepulser* shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
 				shield->curPower = std::max(0.0f, float(param) / float(COBSCALE));
 			}
 			break;

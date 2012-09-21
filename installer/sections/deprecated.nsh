@@ -16,23 +16,33 @@
 
 	; Purge old file from 0.75 install.
 	Delete "$INSTDIR\LuaUI\unitdefs.lua"
-!else
+
 	; next one is deprecated since mingwlibs 20.1 (around spring v0.81.2.1)
 	Delete "$INSTDIR\wrap_oal.dll"
-	Delete "$INSTDIR\vorbisfile.dll"
-	Delete "$INSTDIR\vorbis.dll"
-	Delete "$INSTDIR\ogg.dll"
 	Delete "$INSTDIR\cache\ArchiveCacheV9.lua"
-	; deprecated files
+
 	Delete "$INSTDIR\SpringDownloader.exe"
 	Delete "$INSTDIR\springfiles.url"
 	Delete "$INSTDIR\ArchiveCacheV7.lua"
-	; Old AI stuff
-	RmDir /r "$INSTDIR\AI\Global"
-	RmDir /r "$INSTDIR\AI\Helper-libs"
 
 	RmDir "$INSTDIR\mods"
 
-	; Old Springlobby stuff
-        RmDir /R "$INSTDIR\SpringLobbyDocs"
+	; deprecated Shortcuts
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Website.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring test.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring multiplayer battleroom.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Update CA.lnk"
+
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringDownloader.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Readme.lnk"
+
+	Delete "$INSTDIR\Spring.url"
+	Delete "$INSTDIR\springfiles.url"
+
+	Delete "$DESKTOP\Zero-K Lobby.lnk"
+
 !endif

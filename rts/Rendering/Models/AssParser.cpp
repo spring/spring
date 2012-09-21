@@ -5,9 +5,6 @@
 #include "3DModel.h"
 #include "3DModelLog.h"
 #include "S3OParser.h"
-#ifdef _MSC_VER
-#define _INC_MATH // a hack to prevent ambiguous math calls
-#endif
 #include "AssIO.h"
 
 #include "Lua/LuaParser.h"
@@ -64,15 +61,15 @@ static float3 QuaternionToRadianAngles(aiQuaternion q1)
 	float3 result;
 
 	if (test > 0.499f * unit) { //! singularity at north pole
-		result.x = 2 * atan2(q1.x,q1.w);
+		result.x = 2 * math::atan2(q1.x,q1.w);
 		result.y = PI/2;
 	} else if (test < -0.499f * unit) { //! singularity at south pole
-		result.x = -2 * atan2(q1.x,q1.w);
+		result.x = -2 * math::atan2(q1.x,q1.w);
 		result.y = -PI/2;
 	} else {
-		result.x = atan2(2*q1.y*q1.w-2*q1.x*q1.z , sqx - sqy - sqz + sqw);
-		result.y = asin(2*test/unit);
-		result.z = atan2(2*q1.x*q1.w-2*q1.y*q1.z , -sqx + sqy - sqz + sqw);
+		result.x = math::atan2(2*q1.y*q1.w-2*q1.x*q1.z , sqx - sqy - sqz + sqw);
+		result.y = math::asin(2*test/unit);
+		result.z = math::atan2(2*q1.x*q1.w-2*q1.y*q1.z , -sqx + sqy - sqz + sqw);
 	}
 	return result;
 }
@@ -482,8 +479,8 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	// FIXME add metatable tags for this!!!!
 	const float3 cvScales = piece->maxs - piece->mins;
 	const float3 cvOffset = (piece->maxs - piece->offset) + (piece->mins - piece->offset);
-	//const float3 cvOffset(piece->offset.x, piece->offset.y, piece->offset.z);
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset, CollisionVolume::COLVOL_HITTEST_CONT);
+
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset);
 
 	//! Get parent name from metadata or model
 	if (pieceTable.KeyExists("parent")) {

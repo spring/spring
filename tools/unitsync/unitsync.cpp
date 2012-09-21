@@ -46,7 +46,6 @@
 #endif
 
 // unitsync only:
-#include "LuaParserAPI.h"
 #include "Syncer.h"
 
 //////////////////////////
@@ -169,7 +168,7 @@ static std::string lastError;
 
 static void _SetLastError(const std::string& err)
 {
-	LOG_L(L_ERROR, "error: %s", err.c_str());
+	LOG_L(L_ERROR, "%s", err.c_str());
 	lastError = err;
 }
 
@@ -418,7 +417,7 @@ EXPORT(const char*) GetDataDirectory(int index)
 
 EXPORT(int) ProcessUnits()
 {
-	int leftToProcess = 0; // FIXME error return should be -1
+	int leftToProcess = -1;
 
 	try {
 		LOG_L(L_DEBUG, "syncer: process units");
@@ -438,9 +437,10 @@ EXPORT(int) ProcessUnitsNoChecksum()
 
 EXPORT(int) GetUnitCount()
 {
-	int count = 0; // FIXME error return should be -1
+	int count = -1;
 
 	try {
+		CheckInit();
 		LOG_L(L_DEBUG, "syncer: get unit count");
 		count = syncer->GetUnitCount();
 	}
@@ -453,6 +453,7 @@ EXPORT(int) GetUnitCount()
 EXPORT(const char*) GetUnitName(int unit)
 {
 	try {
+		CheckInit();
 		LOG_L(L_DEBUG, "syncer: get unit %d name", unit);
 		std::string tmp = syncer->GetUnitName(unit);
 		return GetStr(tmp);
@@ -465,6 +466,7 @@ EXPORT(const char*) GetUnitName(int unit)
 EXPORT(const char*) GetFullUnitName(int unit)
 {
 	try {
+		CheckInit();
 		LOG_L(L_DEBUG, "syncer: get full unit %d name", unit);
 		std::string tmp = syncer->GetFullUnitName(unit);
 		return GetStr(tmp);
@@ -735,7 +737,7 @@ static std::vector<std::string> mapNames;
 
 EXPORT(int) GetMapCount()
 {
-	int count = 0; // FIXME error return should be -1
+	int count = -1;
 
 	try {
 		CheckInit();
@@ -973,6 +975,7 @@ EXPORT(float) GetMapPosZ(int index, int posIndex) {
 
 EXPORT(float) GetMapMinHeight(const char* mapName) {
 	try {
+		CheckInit();
 		const std::string mapFile = GetMapFile(mapName);
 		ScopedMapLoader loader(mapName, mapFile);
 		CSMFMapFile file(mapFile);
@@ -995,6 +998,7 @@ EXPORT(float) GetMapMinHeight(const char* mapName) {
 
 EXPORT(float) GetMapMaxHeight(const char* mapName) {
 	try {
+		CheckInit();
 		const std::string mapFile = GetMapFile(mapName);
 		ScopedMapLoader loader(mapName, mapFile);
 		CSMFMapFile file(mapFile);
@@ -1021,7 +1025,7 @@ static std::vector<std::string> mapArchives;
 
 EXPORT(int) GetMapArchiveCount(const char* mapName)
 {
-	int count = 0; // FIXME error return should be -1
+	int count = -1;
 
 	try {
 		CheckInit();
@@ -1228,20 +1232,20 @@ EXPORT(int) GetInfoMapSize(const char* mapName, const char* name, int* width, in
 		*width = bmInfo.width;
 		*height = bmInfo.height;
 
-		return bmInfo.width > 0;
+		return bmInfo.width * bmInfo.height;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	if (width)  *width  = 0;
 	if (height) *height = 0;
 
-	return 0;
+	return -1;
 }
 
 
 EXPORT(int) GetInfoMap(const char* mapName, const char* name, unsigned char* data, int typeHint)
 {
-	int ret = 0; // FIXME error return should be -1
+	int ret = -1;
 
 	try {
 		CheckInit();
@@ -1294,7 +1298,7 @@ std::vector<CArchiveScanner::ArchiveData> modData;
 
 EXPORT(int) GetPrimaryModCount()
 {
-	int count = 0; // FIXME error return should be -1
+	int count = -1;
 
 	try {
 		CheckInit();
@@ -1324,7 +1328,7 @@ EXPORT(int) GetPrimaryModInfoCount(int modIndex) {
 
 	info.clear();
 
-	return 0; // FIXME error return should be -1
+	return -1;
 }
 EXPORT(const char*) GetPrimaryModName(int index)
 {
@@ -1442,7 +1446,7 @@ std::vector<std::string> primaryArchives;
 
 EXPORT(int) GetPrimaryModArchiveCount(int index)
 {
-	int count = 0; // FIXME error return should be -1
+	int count = -1;
 
 	try {
 		CheckInit();
@@ -1515,7 +1519,7 @@ EXPORT(unsigned int) GetPrimaryModChecksumFromName(const char* name)
 
 EXPORT(int) GetSideCount()
 {
-	int count = 0; // FIXME error return should be -1
+	int count = -1;
 
 	try {
 		CheckInit();
@@ -1614,7 +1618,7 @@ EXPORT(int) GetMapOptionCount(const char* name)
 	options.clear();
 	optionsSet.clear();
 
-	return 0; // FIXME error return should be -1
+	return -1;
 }
 
 
@@ -1648,7 +1652,7 @@ EXPORT(int) GetModOptionCount()
 	options.clear();
 	optionsSet.clear();
 
-	return 0; // FIXME error return should be -1
+	return -1;
 }
 
 EXPORT(int) GetCustomOptionCount(const char* fileName)
@@ -1674,7 +1678,7 @@ EXPORT(int) GetCustomOptionCount(const char* fileName)
 	options.clear();
 	optionsSet.clear();
 
-	return 0; // FIXME error return should be -1
+	return -1;
 }
 
 //////////////////////////
@@ -1718,7 +1722,7 @@ static std::vector<std::string> skirmishAIDataDirs;
 
 EXPORT(int) GetSkirmishAICount() {
 
-	int count = 0; // FIXME error return should be -1
+	int count = -1;
 
 	try {
 		CheckInit();
@@ -1798,7 +1802,7 @@ EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 
 	info.clear();
 
-	return 0; // FIXME error return should be -1
+	return -1;
 }
 
 static const InfoItem* GetInfoItem(int infoIndex) {
@@ -1868,7 +1872,7 @@ EXPORT(const char*) GetInfoValueString(int infoIndex) {
 }
 EXPORT(int) GetInfoValueInteger(int infoIndex) {
 
-	int value = 0; // FIXME error return should be -1
+	int value = -1;
 
 	try {
 		const InfoItem* infoItem = GetInfoItem(infoIndex);
@@ -1881,7 +1885,7 @@ EXPORT(int) GetInfoValueInteger(int infoIndex) {
 }
 EXPORT(float) GetInfoValueFloat(int infoIndex) {
 
-	float value = 0.0f; // FIXME error return should be -1.0f
+	float value = -1.0f;
 
 	try {
 		const InfoItem* infoItem = GetInfoItem(infoIndex);
@@ -1944,7 +1948,7 @@ EXPORT(int) GetSkirmishAIOptionCount(int aiIndex) {
 	options.clear();
 	optionsSet.clear();
 
-	return 0; // FIXME error return should be -1
+	return -1;
 }
 
 
@@ -2012,7 +2016,7 @@ EXPORT(const char*) GetOptionDesc(int optIndex)
 
 EXPORT(int) GetOptionType(int optIndex)
 {
-	int type = 0; // FIXME error return should be -1
+	int type = -1;
 
 	try {
 		CheckOptionIndex(optIndex);
@@ -2041,7 +2045,7 @@ EXPORT(int) GetOptionBoolDef(int optIndex)
 
 EXPORT(float) GetOptionNumberDef(int optIndex)
 {
-	float numDef = 0.0f; // FIXME error return should be -1.0f
+	float numDef = -1.0f;
 
 	try {
 		CheckOptionType(optIndex, opt_number);
@@ -2080,7 +2084,7 @@ EXPORT(float) GetOptionNumberMax(int optIndex)
 
 EXPORT(float) GetOptionNumberStep(int optIndex)
 {
-	float numStep = 0.0f; // FIXME error return should be -1.0f
+	float numStep = -1.0f;
 
 	try {
 		CheckOptionType(optIndex, opt_number);
@@ -2106,7 +2110,7 @@ EXPORT(const char*) GetOptionStringDef(int optIndex)
 
 EXPORT(int) GetOptionStringMaxLen(int optIndex)
 {
-	int count = 0; // FIXME error return should be -1
+	int count = -1;
 
 	try {
 		CheckOptionType(optIndex, opt_string);
@@ -2122,7 +2126,7 @@ EXPORT(int) GetOptionStringMaxLen(int optIndex)
 
 EXPORT(int) GetOptionListCount(int optIndex)
 {
-	int count = 0; // FIXME error return should be -1
+	int count = -1;
 
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2258,7 +2262,7 @@ static int LuaGetMapInfo(lua_State* L)
 
 EXPORT(int) GetModValidMapCount()
 {
-	int count = 0; // FIXME error return should be -1
+	int count = -1;
 
 	try {
 		CheckInit();
@@ -2644,15 +2648,21 @@ EXPORT(void) SetSpringConfigFile(const char* fileNameAsAbsolutePath)
 	ConfigHandler::Instantiate(fileNameAsAbsolutePath);
 }
 
-EXPORT(const char*) GetSpringConfigFile()
-{
-	return GetStr(configHandler->GetConfigFile());
-}
-
 static void CheckConfigHandler()
 {
 	if (!configHandler)
 		throw std::logic_error("Unitsync config handler not initialized, check config source.");
+}
+
+
+EXPORT(const char*) GetSpringConfigFile()
+{
+	try {
+		CheckConfigHandler();
+		return GetStr(configHandler->GetConfigFile());
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return NULL;
 }
 
 

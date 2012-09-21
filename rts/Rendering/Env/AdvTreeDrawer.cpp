@@ -229,7 +229,7 @@ void CAdvTreeDrawer::Update()
 			std::list<FallingTree>::iterator prev = fti++;
 			fallingTrees.erase(prev);
 		} else {
-			fti->speed += (sin(fti->fallPos) * 0.04f);
+			fti->speed += (math::sin(fti->fallPos) * 0.04f);
 			++fti;
 		}
 	}
@@ -436,7 +436,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	const int activeFarTex = (camera->forward.z < 0.0f)? treeGen->farTex[0]: treeGen->farTex[1];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+//	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	Shader::IProgramObject* treeShader = NULL;
 
 	const CMapInfo::light_t& light = mapInfo->light;
@@ -446,7 +446,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	ISky::SetupFog();
 
-	if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
+	if (shadowHandler->shadowsLoaded) {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
 		glActiveTexture(GL_TEXTURE0);
@@ -496,7 +496,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		const int ystart = std::max(                              0, cy - 2);
 		const int yend   = std::min(gs->mapy / TREE_SQUARE_SIZE - 1, cy + 2);
 
-		if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
+		if (shadowHandler->shadowsLoaded) {
 			treeShader->Disable();
 			treeShader = treeShaders[TREE_PROGRAM_NEAR_SHADOW];
 			treeShader->Enable();
@@ -616,7 +616,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			if (camera->InView(pos + float3(0.0f, MAX_TREE_HEIGHT / 2, 0.0f), MAX_TREE_HEIGHT / 2.0f)) {
 				const float ang = fti->fallPos * PI;
 
-				const float3 yvec(fti->dir.x * sin(ang), cos(ang), fti->dir.z * sin(ang));
+				const float3 yvec(fti->dir.x * math::sin(ang), math::cos(ang), fti->dir.z * math::sin(ang));
 				const float3 zvec((yvec.cross(float3(-1.0f, 0.0f, 0.0f))).ANormalize());
 				const float3 xvec(yvec.cross(zvec));
 
@@ -641,7 +641,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		}
 
 
-		if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
+		if (shadowHandler->shadowsLoaded) {
 			treeShader->Disable();
 			treeShader = treeShaders[TREE_PROGRAM_DIST_SHADOW];
 			treeShader->Enable();
@@ -671,7 +671,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		}
 	}
 
-	if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
+	if (shadowHandler->shadowsLoaded) {
 		treeShader->Disable();
 
 		glActiveTexture(GL_TEXTURE1);
@@ -957,7 +957,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 			if (camera->InView(pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2)) {
 				const float ang = fti->fallPos * PI;
 
-				const float3 yvec(fti->dir.x * sin(ang), cos(ang), fti->dir.z * sin(ang));
+				const float3 yvec(fti->dir.x * math::sin(ang), math::cos(ang), fti->dir.z * math::sin(ang));
 				const float3 zvec((yvec.cross(float3(1.0f, 0.0f, 0.0f))).ANormalize());
 				const float3 xvec(zvec.cross(yvec));
 

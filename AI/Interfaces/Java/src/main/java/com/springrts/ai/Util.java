@@ -21,7 +21,7 @@ package com.springrts.ai;
 import java.awt.Color;
 
 /**
- * Contains util functions used within all of the Java AI Interface code.
+ * Contains utility functions used within all of the Java AI Interface code.
  *
  * @author	hoijui.quaero@gmail.com
  * @version	0.1

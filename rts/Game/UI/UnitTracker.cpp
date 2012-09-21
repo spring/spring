@@ -297,8 +297,8 @@ void CUnitTracker::SetCam()
   			modPlanePos.y = minHeight;
 		}
 
-		trackPos += (modPlanePos - trackPos) * (1 - pow(0.95f, deltaTime));
-		trackDir += (u->frontdir - trackDir) * (1 - pow(0.90f, deltaTime));
+		trackPos += (modPlanePos - trackPos) * (1 - math::pow(0.95f, deltaTime));
+		trackDir += (u->frontdir - trackDir) * (1 - math::pow(0.90f, deltaTime));
 		trackDir.ANormalize();
 
 		camera->pos = trackPos;

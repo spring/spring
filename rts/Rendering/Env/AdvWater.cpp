@@ -48,7 +48,7 @@ CAdvWater::CAdvWater(bool loadShader)
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
 			scrap[(y*64 + x)*4 + 0] = 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)(sin(y*PI*2.0f/64.0f)*128 + 128);
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)(math::sin(y*PI*2.0f/64.0f)*128 + 128);
 			scrap[(y*64 + x)*4 + 2] = 0;
 			scrap[(y*64 + x)*4 + 3] = 255;
 		}
@@ -62,8 +62,8 @@ CAdvWater::CAdvWater(bool loadShader)
 		for (int x = 0; x < 64; ++x) {
 			const float ang = 26.5f*PI/180.0f;
 			const float pos = y*2+x;
-			scrap[(y*64 + x)*4 + 0] = (unsigned char)((sin(pos*PI*2.0f/64.0f))*128*sin(ang)) + 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)((sin(pos*PI*2.0f/64.0f))*128*cos(ang)) + 128;
+			scrap[(y*64 + x)*4 + 0] = (unsigned char)((math::sin(pos*PI*2.0f/64.0f))*128*math::sin(ang)) + 128;
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)((math::sin(pos*PI*2.0f/64.0f))*128*math::cos(ang)) + 128;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
@@ -75,8 +75,8 @@ CAdvWater::CAdvWater(bool loadShader)
 		for (int x = 0; x < 64; ++x) {
 			const float ang = -19*PI/180.0f;
 			const float pos = 3*y - x;
-			scrap[(y*64 + x)*4 + 0] = (unsigned char)((sin(pos*PI*2.0f/64.0f))*128*sin(ang)) + 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)((sin(pos*PI*2.0f/64.0f))*128*cos(ang)) + 128;
+			scrap[(y*64 + x)*4 + 0] = (unsigned char)((math::sin(pos*PI*2.0f/64.0f))*128*math::sin(ang)) + 128;
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)((math::sin(pos*PI*2.0f/64.0f))*128*math::cos(ang)) + 128;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
@@ -87,6 +87,7 @@ CAdvWater::CAdvWater(bool loadShader)
 	delete[] scrap;
 
 	if (loadShader) {
+		// NOTE: needs a VP with OPTION ARB_position_invariant for clipping if !haveGLSL
 		waterFP = LoadFragmentProgram("ARB/water.fp");
 	}
 
@@ -191,14 +192,14 @@ void CAdvWater::Draw(bool useBlending)
 				dir = xbase + dv;
 				dir.ANormalize();
 				zpos = camera->pos + dir*(camera->pos.y / -dir.y);
-				zpos.y = sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
+				zpos.y = math::sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
 				col[3] = (unsigned char)((0.8f + 0.7f*dir.y)*255);
 				va->AddVertexQTC(zpos, x*(1.0f/numDivs), screenY - yInc, col);
 
 				dir = xbase;
 				dir.ANormalize();
 				zpos = camera->pos + dir*(camera->pos.y / -dir.y);
-				zpos.y = sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
+				zpos.y = math::sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
 				col[3] = (unsigned char)((0.8f + 0.7f*dir.y)*255);
 				va->AddVertexQTC(zpos, x*(1.0f/numDivs), screenY, col);
 

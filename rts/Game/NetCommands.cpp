@@ -72,31 +72,33 @@ void CGame::ClientReadNet()
 
 		lastframe = currentFrame;
 
-		// read ahead to calculate the number of NETMSG_NEWFRAMES
-		// we still have to process (in variable "que")
-		int que = 0; // Number of NETMSG_NEWFRAMEs waiting to be processed.
-		unsigned ahead = 0;
-		while ((packet = net->Peek(ahead))) {
-			if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
-				++que;
+		// "unconsumedFrames" is only used to calculate the consumeSpeed once per second,
+		// so we should not waste time here, there can be 10000's waiting packets
+		if (unconsumedFrames < GAME_SPEED) {
+			// read ahead to calculate the number of NETMSG_XXXFRAMES we still have to process
+			int numUnconsumedFrames = 0;
+			unsigned ahead = 0;
+			while ((packet = net->Peek(ahead))) {
+				if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
+					++numUnconsumedFrames;
 
-			// this special packet skips queue entirely, so gets processed here
-			// it's meant to indicate current game progress for clients fast-forwarding to current point the game
-			// NOTE: this event should be unsynced, since its time reference frame is not related to the current
-			// progress of the game from the client's point of view
-			if ( packet->data[0] == NETMSG_GAME_FRAME_PROGRESS ) {
-				int serverframenum = *(int*)(packet->data+1);
-				// send the event to lua call-in
-				eventHandler.GameProgress(serverframenum);
-				// pop it out of the net buffer
-				net->DeleteBufferPacketAt(ahead);
+				// this special packet skips queue entirely, so gets processed here
+				// it's meant to indicate current game progress for clients fast-forwarding to current point the game
+				// NOTE: this event should be unsynced, since its time reference frame is not related to the current
+				// progress of the game from the client's point of view
+				if ( packet->data[0] == NETMSG_GAME_FRAME_PROGRESS ) {
+					int serverframenum = *(int*)(packet->data+1);
+					// send the event to lua call-in
+					eventHandler.GameProgress(serverframenum);
+					// pop it out of the net buffer
+					net->DeleteBufferPacketAt(ahead);
+				}
+				else
+					++ahead;
 			}
-			else
-				++ahead;
+			if (unconsumedFrames < 0 || numUnconsumedFrames < unconsumedFrames)
+				unconsumedFrames = numUnconsumedFrames;
 		}
-
-		if (que < leastQue)
-			leastQue = que;
 	} else {
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
@@ -114,7 +116,8 @@ void CGame::ClientReadNet()
 	const float maxSimFPS    = (1.0f - gu->reconnectSimDrawBalance) * 1000.0f / std::max(0.01f, gu->avgSimFrameTime);
 	const float minDrawFPS   =         gu->reconnectSimDrawBalance  * 1000.0f / std::max(0.01f, gu->avgDrawFrameTime);
 	const float simDrawRatio = maxSimFPS / minDrawFPS;
-	const float msgProcTimeLimit = Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
+	const float msgProcTimeLimit = (GML::SimEnabled() && GML::MultiThreadSim()) ? (1000.0f / gu->minFPS) :
+		Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
 
 	// really process the messages
 	while (true) {
@@ -141,10 +144,10 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 3);
 					std::string message;
 					pckt >> message;
+
 					LOG("%s", message.c_str());
-					if (!gameOver) {
-						GameEnd(std::vector<unsigned char>());
-					}
+
+					GameEnd(std::vector<unsigned char>());
 					AddTraffic(-1, packetCode, dataLength);
 					net->Close(true);
 				} catch (const netcode::UnpackPacketException& ex) {
@@ -177,22 +180,13 @@ void CGame::ClientReadNet()
 				break;
 			}
 
-			case NETMSG_SENDPLAYERSTAT: {
-				//LOG("Game over");
-				// Warning: using CPlayer::Statistics here may cause endianness problems
-				// once net->SendData is endian aware!
-				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
 			case NETMSG_PLAYERSTAT: {
 				const unsigned char player = inbuf[1];
 				if (!playerHandler->IsValidPlayer(player)) {
 					LOG_L(L_ERROR, "Got invalid player num %i in playerstat msg", player);
 					break;
 				}
-				playerHandler->Player(player)->currentStats = *(CPlayer::Statistics*)&inbuf[2];
+				playerHandler->Player(player)->currentStats = *(PlayerStatistics*)&inbuf[2];
 				if (gameOver) {
 					CDemoRecorder* record = net->GetDemoRecorder();
 					if (record != NULL) {
@@ -221,7 +215,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_INTERNAL_SPEED: {
 				gs->speedFactor = *((float*) &inbuf[1]);
-				sound->PitchAdjust(sqrt(gs->speedFactor));
+				sound->PitchAdjust(math::sqrt(gs->speedFactor));
 				//LOG_L(L_DEBUG, "Internal speed set to %.2f", gs->speedFactor);
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -393,6 +387,8 @@ void CGame::ClientReadNet()
 				SimFrame();
 				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 #ifdef SYNCCHECK
+				ASSERT_SYNCED(gs->frameNum);
+				ASSERT_SYNCED(CSyncChecker::GetChecksum());
 				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
 
 				if ((gs->frameNum & 4095) == 0) {
@@ -459,7 +455,7 @@ void CGame::ClientReadNet()
 
 					for (int a = 0; a < numParams; ++a) {
 						float param; pckt >> param;
-						c.params.push_back(param);
+						c.PushParam(param);
 					}
 
 					selectedUnits.NetOrder(c, playerNum);
@@ -545,7 +541,7 @@ void CGame::ClientReadNet()
 					for (int a = 0; a < ((psize - 11) / 4); ++a) {
 						float param;
 						pckt >> param;
-						c.params.push_back(param);
+						c.PushParam(param);
 					}
 
 					selectedUnits.AiOrder(unitid, c, player);
@@ -607,7 +603,7 @@ void CGame::ClientReadNet()
 						for (int p = 0; p < paramCount; p++) {
 							float param;
 							pckt >> param;
-							cmd.params.push_back(param);
+							cmd.PushParam(param);
 						}
 						commands.push_back(cmd);
 					}

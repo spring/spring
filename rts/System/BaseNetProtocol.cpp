@@ -1,8 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/BaseNetProtocol.h"
-
-#include <boost/cstdint.hpp>
 #include "System/mmgr.h"
 
 #include "Game/PlayerStatistics.h"
@@ -10,9 +8,7 @@
 #include "System/Net/RawPacket.h"
 #include "System/Net/PackPacket.h"
 #include "System/Net/ProtocolDef.h"
-#if defined(_MSC_VER)
-#include "System.h" // for uint16_t (and possibly other types)
-#endif
+#include <boost/cstdint.hpp>
 
 using netcode::PackPacket;
 typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
@@ -217,11 +213,6 @@ PacketType CBaseNetProtocol::SendSetShare(uchar myPlayerNum, uchar myTeam, float
 }
 
 
-PacketType CBaseNetProtocol::SendSendPlayerStat()
-{
-	return PacketType(new PackPacket(1, NETMSG_SENDPLAYERSTAT));
-}
-
 PacketType CBaseNetProtocol::SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats)
 {
 	PackPacket* packet = new PackPacket(2 + sizeof(PlayerStatistics), NETMSG_PLAYERSTAT);
@@ -321,6 +312,8 @@ PacketType CBaseNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 // NETMSG_LUAMSG = 50, uchar myPlayerNum; std::string modName; (e.g. `custom msg')
 PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg)
 {
+	if ((7 + msg.size()) >= (1 << (sizeof(boost::uint16_t) * 8)))
+		throw netcode::PackPacketException("Maximum size exceeded");
 	boost::uint16_t size = 7 + msg.size();
 	PackPacket* packet = new PackPacket(size, NETMSG_LUAMSG);
 	*packet << size << myPlayerNum << script << mode << msg;
@@ -489,7 +482,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_ATTEMPTCONNECT, -2);
 	proto->AddType(NETMSG_SHARE, 12);
 	proto->AddType(NETMSG_SETSHARE, 11);
-	proto->AddType(NETMSG_SENDPLAYERSTAT, 1);
+
 	proto->AddType(NETMSG_PLAYERSTAT, 2 + sizeof(PlayerStatistics));
 	proto->AddType(NETMSG_GAMEOVER, -1);
 	proto->AddType(NETMSG_MAPDRAW, -1);

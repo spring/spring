@@ -19,7 +19,7 @@
 SmoothHeightMesh* smoothGround = NULL;
 
 
-static float Interpolate(float x, float y, const int& maxx, const int& maxy, const float& res, const float* heightmap)
+static float Interpolate(float x, float y, const int maxx, const int maxy, const float res, const float* heightmap)
 {
 	x = Clamp(x / res, 0.0f, maxx - 1.0f);
 	y = Clamp(y / res, 0.0f, maxy - 1.0f);

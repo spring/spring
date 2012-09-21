@@ -87,7 +87,7 @@ static bool WrapTable(lua_State* L)
 
 /******************************************************************************/
 
-inline static bool SafeType(lua_State* L, const int& index)
+inline static bool SafeType(lua_State* L, const int index)
 {
 	const int t = lua_type(L, index);
 

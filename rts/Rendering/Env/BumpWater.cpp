@@ -204,7 +204,7 @@ CBumpWater::CBumpWater()
 
 	//! caustic textures
 	const vector<string>& causticNames = mapInfo->water.causticTextures;
-	if (causticNames.size() <= 0) {
+	if (causticNames.empty()) {
 		throw content_error("["LOG_SECTION_BUMP_WATER"] no caustic textures");
 	}
 	for (int i = 0; i < (int)causticNames.size(); ++i) {
@@ -485,15 +485,15 @@ CBumpWater::CBumpWater()
 		waterShader->Link();
 		waterShader->SetUniformLocation("eyePos");      // idx  0
 		waterShader->SetUniformLocation("frame");       // idx  1
-		waterShader->SetUniformLocation("normalmap");   // idx  2
-		waterShader->SetUniformLocation("heightmap");   // idx  3
-		waterShader->SetUniformLocation("caustic");     // idx  4
-		waterShader->SetUniformLocation("foam");        // idx  5
-		waterShader->SetUniformLocation("reflection");  // idx  6
-		waterShader->SetUniformLocation("refraction");  // idx  7
-		waterShader->SetUniformLocation("depthmap");    // idx  8
-		waterShader->SetUniformLocation("coastmap");    // idx  9
-		waterShader->SetUniformLocation("waverand");    // idx 10
+		waterShader->SetUniformLocation("normalmap");   // idx  2, texunit 0
+		waterShader->SetUniformLocation("heightmap");   // idx  3, texunit 1
+		waterShader->SetUniformLocation("caustic");     // idx  4, texunit 2
+		waterShader->SetUniformLocation("foam");        // idx  5, texunit 3
+		waterShader->SetUniformLocation("reflection");  // idx  6, texunit 4
+		waterShader->SetUniformLocation("refraction");  // idx  7, texunit 5
+		waterShader->SetUniformLocation("depthmap");    // idx  8, texunit 7
+		waterShader->SetUniformLocation("coastmap");    // idx  9, texunit 6
+		waterShader->SetUniformLocation("waverand");    // idx 10, texunit 8
 
 		if (!waterShader->IsValid()) {
 			const char* fmt = "water-shader compilation error: %s";
@@ -1133,27 +1133,32 @@ void CBumpWater::DrawRefraction(CGame* game)
 	refractFBO.Bind();
 
 	camera->Update();
+
+	game->SetDrawMode(CGame::gameRefractionDraw);
 	glViewport(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//sky->Draw();
+	glDisable(GL_FOG); // fog has overground settings, if at all we should add special underwater settings
 
-	glClear(GL_DEPTH_BUFFER_BIT);
-	glDisable(GL_FOG);
-
-	float3 oldsun = unitDrawer->unitSunColor;
-	float3 oldambient = unitDrawer->unitAmbientColor;
+	const float3 oldsun = unitDrawer->unitSunColor;
+	const float3 oldambient = unitDrawer->unitAmbientColor;
 
 	unitDrawer->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
 	unitDrawer->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
-	game->SetDrawMode(CGame::gameRefractionDraw);
 	drawRefraction = true;
 
 	glEnable(GL_CLIP_PLANE2);
 	const double plane[4] = {0, -1, 0, 5};
 	glClipPlane(GL_CLIP_PLANE2, plane);
 
+	// opaque
 	readmap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
 	unitDrawer->Draw(false, true);
 	featureDrawer->Draw();
+
+	// transparent stuff
 	unitDrawer->DrawCloakedUnits();
 	featureDrawer->DrawFadeFeatures();
 	projectileDrawer->Draw(false, true);
@@ -1184,10 +1189,10 @@ void CBumpWater::DrawReflection(CGame* game)
 	camera->pos.y *= -1.0f;
 	camera->Update();
 
-	glViewport(0, 0, reflTexSize, reflTexSize);
-	glClear(GL_DEPTH_BUFFER_BIT);
-
 	game->SetDrawMode(CGame::gameReflectionDraw);
+	glViewport(0, 0, reflTexSize, reflTexSize);
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	sky->Draw();
 
 	glEnable(GL_CLIP_PLANE2);
@@ -1195,11 +1200,14 @@ void CBumpWater::DrawReflection(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2, plane);
 	drawReflection = true;
 
+	// opaque
 	if (reflection > 1) {
 		readmap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 	}
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();
+
+	// transparent
 	unitDrawer->DrawCloakedUnits(true);
 	featureDrawer->DrawFadeFeatures(true);
 	projectileDrawer->Draw(true);

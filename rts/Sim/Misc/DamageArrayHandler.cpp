@@ -62,7 +62,7 @@ CDamageArrayHandler::CDamageArrayHandler()
 			}
 		}
 	}
-	catch (const content_error& ex) {
+	catch (const content_error&) {
 		name2type.clear();
 		name2type["default"] = 0;
 		typeList.clear();

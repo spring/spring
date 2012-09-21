@@ -38,7 +38,8 @@ endif (SYNCDEBUG)
 # Only used by GML build, but used in builds/GML and lib/gml
 SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
 
-
+### give error when not found
+FIND_PACKAGE_STATIC(DevIL REQUIRED)
 
 ### Assemble common incude dirs
 INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
@@ -54,8 +55,25 @@ if    (NO_SOUND)
 endif (NO_SOUND)
 
 ### Find include directories and add platform specific libraries
-LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${TIFF_LIBRARY} ${PNG_LIBRARY})
-LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
+IF    (UNIX AND NOT MINGW)
+	IF    (PREFER_STATIC_LIBS)
+		PREFER_STATIC_LIBS()
+		FIND_LIBRARY(C_LIBRARY c)
+		FIND_LIBRARY(MATH_LIBRARY m)
+		#FIND_LIBRARY(PTHREAD_LIBRARY pthread)
+		#FIND_LIBRARY(OMP_LIBRARY gomp) FIXME it's hidden in some subfolders
+		UNPREFER_STATIC_LIBS()
+
+		LIST(APPEND engineCommonLibraries ${C_LIBRARY} ${MATH_LIBRARY})
+		#LIST(APPEND engineCommonLibraries ${PTHREAD_LIBRARY} ${OMP_LIBRARY})
+	ENDIF (PREFER_STATIC_LIBS)
+
+	# Needed for dynamically loading shared libraries (on some OS)
+	LIST(APPEND engineCommonLibraries dl)
+ENDIF (UNIX AND NOT MINGW)
+
+LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY})
+LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
 
 IF    (PREFER_STATIC_LIBS)
@@ -63,11 +81,6 @@ IF    (PREFER_STATIC_LIBS)
 	FIND_PACKAGE_STATIC(ZLIB REQUIRED)
 	LIST(APPEND engineCommonLibraries ${ZLIB_LIBRARY})
 ENDIF (PREFER_STATIC_LIBS)
-
-IF    (UNIX)
-	# Needed for dynamically loading shared libraries (on some OS)
-	LIST(APPEND engineCommonLibraries dl)
-ENDIF (UNIX)
 
 IF (MINGW)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)

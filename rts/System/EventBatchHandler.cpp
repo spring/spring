@@ -14,6 +14,8 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "System/Platform/Threading.h"
 
+boost::int64_t EventBatchHandler::eventSequenceNumber = 0;
+
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Add(const CProjectile* p) { eventHandler.RenderProjectileCreated(p); }
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Remove(const CProjectile* p) { eventHandler.RenderProjectileDestroyed(p); }
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Delete(const CProjectile* p) { delete p; }
@@ -29,10 +31,11 @@ void EventBatchHandler::UnitCreatedDestroyedEvent::Add(const UD& u) { eventHandl
 void EventBatchHandler::UnitCreatedDestroyedEvent::Remove(const UD& u) { eventHandler.RenderUnitDestroyed(u.unit); }
 void EventBatchHandler::UnitCloakStateChangedEvent::Add(const UAD& u) { if(!u.unit->isDead) eventHandler.RenderUnitCloakChanged(u.unit, u.data); }
 void EventBatchHandler::UnitLOSStateChangedEvent::Add(const UAD& u) { if(!u.unit->isDead) eventHandler.RenderUnitLOSChanged(u.unit, u.data, u.status); }
+void EventBatchHandler::UnitMovedEvent::Add(const UAP& u) { eventHandler.RenderUnitMoved(u.unit, u.newpos); }
 
 void EventBatchHandler::FeatureCreatedDestroyedEvent::Add(const CFeature* f) { eventHandler.RenderFeatureCreated(f); }
 void EventBatchHandler::FeatureCreatedDestroyedEvent::Remove(const CFeature* f) { eventHandler.RenderFeatureDestroyed(f); }
-void EventBatchHandler::FeatureMovedEvent::Add(const CFeature* f) { eventHandler.RenderFeatureMoved(f); }
+void EventBatchHandler::FeatureMovedEvent::Add(const FAP& f) { eventHandler.RenderFeatureMoved(f.feat, f.oldpos, f.newpos); }
 
 EventBatchHandler* EventBatchHandler::GetInstance() {
 	static EventBatchHandler ebh;
@@ -43,6 +46,7 @@ void EventBatchHandler::UpdateUnits() {
 	unitCreatedDestroyedEventBatch.delay();
 	unitCloakStateChangedEventBatch.delay();
 	unitLOSStateChangedEventBatch.delay();
+	unitMovedEventBatch.delay();
 }
 void EventBatchHandler::UpdateDrawUnits() {
 	GML_STDMUTEX_LOCK(runit); // UpdateDrawUnits
@@ -50,11 +54,14 @@ void EventBatchHandler::UpdateDrawUnits() {
 	unitCreatedDestroyedEventBatch.execute();
 	unitCloakStateChangedEventBatch.execute();
 	unitLOSStateChangedEventBatch.execute();
+	unitMovedEventBatch.execute();
 }
 void EventBatchHandler::DeleteSyncedUnits() {
 	unitCloakStateChangedEventBatch.clean(unitCreatedDestroyedEventBatch.to_destroy());
 
 	unitLOSStateChangedEventBatch.clean(unitCreatedDestroyedEventBatch.to_destroy());
+
+	unitMovedEventBatch.clean(unitCreatedDestroyedEventBatch.to_destroy());
 
 	unitCreatedDestroyedEventBatch.clean();
 	unitCreatedDestroyedEventBatch.destroy_synced();

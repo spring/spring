@@ -31,6 +31,14 @@ local Sounds = {
 			--- > 1 -> high pitched, < 1 lowered
 			pitch = 1,
 
+			--- If > 0.0 then this adds a random amount to gain each time the sound is played.
+			--- Clamped between 0.0 and 1.0. The result is in the range [(gain * (1 + gainMod)), (gain * (1 - gainMod))].
+			gainmod = 0.0,
+
+			--- If > 0.0 then this adds a random amount to pitch each time the sound is played.
+			--- Clamped between 0.0 and 1.0. The result is in the range [(pitch * (1 + pitchMod)), (pitch * (1 - pitchMod))].
+			pitchmod = 0.0,
+
 			--- how unit / camera speed affects the sound, to exagerate it, use values > 1
 			--- dopplerscale = 0 completely disables the effect
 			dopplerscale = 1,
@@ -54,6 +62,15 @@ local Sounds = {
 
 			--- you can loop it for X miliseconds
 			looptime = 0,
+		},
+
+		default = {
+			--- new since 89.0
+			--- you can overwrite the fallback profile here (used when no corresponding SoundItem is defined for a sound)
+			--gainmod = 0.35,
+			--pitchmod = 0.3,
+			--pitch = 0.7,
+			--in3d = true,
 		},
 	},
 }

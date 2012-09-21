@@ -9,6 +9,10 @@
 #include "lib/streflop/streflop_cond.h"
 #include "System/creg/creg_cond.h"
 #include "System/FastMath.h"
+#ifndef BUILDING_AI
+#include "lib/gml/gml_base.h"
+#include "System/Platform/Threading.h"
+#endif
 
 
 /**
@@ -354,6 +358,19 @@ public:
 	}
 
 	/**
+	 * @brief dot2D product
+	 * @param f float3 to use
+	 * @return 2D dot product of float3s
+	 *
+	 * Calculates the 2D dot product of this and
+	 * another float3 (sums the products of
+	 * x/z components).
+	 */
+	float dot2D (const float3& f) const {
+		return (x * f.x) + (z * f.z);
+	}
+
+	/**
 	 * @brief cross product
 	 * @param f float3 to use
 	 * @return cross product of two float3s
@@ -438,7 +455,11 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	float3& Normalize() {
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+#if defined(__SUPPORT_SNAN__)
+#ifndef BUILDING_AI
+		if (GML::Enabled() && !Threading::IsSimThread())
+			return SafeNormalize();
+#endif
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeNormalize();
 #else
@@ -485,7 +506,11 @@ public:
 	 * the vector's approx. length.
 	 */
 	float3& ANormalize() {
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+#if defined(__SUPPORT_SNAN__)
+#ifndef BUILDING_AI
+		if (GML::Enabled() && !Threading::IsSimThread())
+			return SafeANormalize();
+#endif
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeANormalize();
 #else

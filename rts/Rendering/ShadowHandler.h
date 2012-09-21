@@ -59,8 +59,10 @@ public:
 private:
 	void Init();
 	void Kill();
+	void FreeTextures();
 
 	bool InitDepthTarget();
+	bool WorkaroundUnsupportedFboRenderTargets();
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
 	void SetShadowMapSizeFactors();

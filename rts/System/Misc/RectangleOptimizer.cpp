@@ -9,7 +9,6 @@
 unsigned CRectangleOptimizer::statsTotalSize = 0;
 unsigned CRectangleOptimizer::statsOptSize   = 0;
 
-
 CRectangleOptimizer::CRectangleOptimizer()
 	: maxAreaPerRect(500 * 500) // FIXME auto adjust this in HeightMapUpdate!
 	, needsUpdate(false)
@@ -41,50 +40,67 @@ unsigned CRectangleOptimizer::GetTotalArea() const
 
 void CRectangleOptimizer::Optimize()
 {
-	if (!needsUpdate) {
+	if (!needsUpdate)
 		return;
-	}
-
-	CRectangleOptimizer::iterator it;
-	CRectangleOptimizer::iterator jt;
 
 	//TODO this is not fully correct, when there was still rectangles
 	//     left from the last update we shouldn't count them twice!
 	statsTotalSize += GetTotalArea();
 
+	StageMerge();
+	StageOverlap();
+	StageMerge();
+	StageSplitTooLarge();
+	
+	statsOptSize += GetTotalArea();
+
+	needsUpdate = false;
+}
+
+void CRectangleOptimizer::StageMerge()
+{
+	CRectangleOptimizer::iterator it;
+	CRectangleOptimizer::iterator jt;
+
+	rectangles.sort();
+	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
+		for (jt = it, ++jt; jt != rectangles.end(); ++jt) {
+			const bool del = HandleMerge(*it, *jt);
+			if (del) {
+				it = rectangles.erase(it);
+				jt = it;
+			}
+		}
+	}
+}
+
+
+void CRectangleOptimizer::StageOverlap()
+{
+	CRectangleOptimizer::iterator it;
+	CRectangleOptimizer::iterator jt;
+
 	//! Fix Overlap
 	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
-		for (jt = it, ++jt; jt != rectangles.end(); ) {
-			int del = HandleOverlapping(&(*it), &(*jt));
+		for (jt = it, ++jt; jt != rectangles.end(); ++jt) {
+			const int del = HandleOverlapping(&(*it), &(*jt));
 			if (del < 0) {
 				it = rectangles.erase(it);
-				jt = it; ++jt;
+				jt = it;
 			} else if (del > 0) {
 				//jt = rectangles.erase(jt);
 				std::swap(*it, *jt);
 				it = rectangles.erase(it);
-				jt = it; ++jt;
-			} else {
-				++jt;
+				jt = it;
 			}
 		}
 	}
+}
 
-	statsOptSize += GetTotalArea();
 
-	//! Merge when possible
-	rectangles.sort();
-	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
-		for (jt = it, ++jt; jt != rectangles.end(); ) {
-			bool del = HandleMerge(*it, *jt);
-			if (del) {
-				it = rectangles.erase(it);
-				jt = it; ++jt;
-			} else {
-				++jt;
-			}
-		}
-	}
+void CRectangleOptimizer::StageSplitTooLarge()
+{
+	CRectangleOptimizer::iterator it;
 
 	//! Split too large
 	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
@@ -132,36 +148,13 @@ inline std::bitset<4> CRectangleOptimizer::GetSharedEdges(const SRectangle& rect
 }
 
 
-inline bool CRectangleOptimizer::DoOverlap(const SRectangle& rect1, const SRectangle& rect2)
-{
-	SRectangle boundRect(rect1);
-	if (rect2.x1 < rect1.x1) boundRect.x1 = rect2.x1;
-	if (rect2.x2 > rect1.x2) boundRect.x2 = rect2.x2;
-	if (rect2.z1 < rect1.z1) boundRect.z1 = rect2.z1;
-	if (rect2.z2 > rect1.z2) boundRect.z2 = rect2.z2;
-
-	const bool overlapX = (boundRect.GetWidth() < (rect1.GetWidth() + rect2.GetWidth()));
-	const bool overlapZ = (boundRect.GetHeight() < (rect1.GetHeight() + rect2.GetHeight()));
-
-	const bool overlap = (overlapX && overlapZ);
-	return overlap;
-}
-
-
 inline bool CRectangleOptimizer::AreMergable(const SRectangle& rect1, const SRectangle& rect2)
 {
-	SRectangle boundRect(rect1);
-	if (rect2.x1 < rect1.x1) boundRect.x1 = rect2.x1;
-	if (rect2.x2 > rect1.x2) boundRect.x2 = rect2.x2;
-	if (rect2.z1 < rect1.z1) boundRect.z1 = rect2.z1;
-	if (rect2.z2 > rect1.z2) boundRect.z2 = rect2.z2;
+	if (!rect1.CheckOverlap(rect2))
+		return false;
 
-	const bool touchX = (boundRect.GetWidth() <= (rect1.GetWidth() + rect2.GetWidth()));
-	const bool touchZ = (boundRect.GetHeight() <= (rect1.GetHeight() + rect2.GetHeight()));
+	return (rect1.x1 == rect2.x1 && rect1.x2 == rect2.x2) || (rect1.z1 == rect2.z1 && rect1.z2 == rect2.z2);
 
-	const bool mergableX = ((rect1.GetHeight() == rect2.GetHeight()) && (boundRect.GetHeight() == rect2.GetHeight()) && touchX);
-	const bool mergableZ = ((rect1.GetWidth() == rect2.GetWidth()) && (boundRect.GetWidth() == rect2.GetWidth()) && touchZ);
-	return mergableX || mergableZ;
 }
 
 
@@ -217,7 +210,7 @@ bool CRectangleOptimizer::HandleMerge(SRectangle& rect1, SRectangle& rect2)
 
 int CRectangleOptimizer::HandleOverlapping(SRectangle* rect1, SRectangle* rect2)
 {
-	if (!DoOverlap(*rect1, *rect2)) {
+	if (!rect1->CheckOverlap(*rect2)) {
 		//  ______
 		// |      |  ___
 		// |      | |   |

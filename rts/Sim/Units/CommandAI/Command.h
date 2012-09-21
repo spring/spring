@@ -7,7 +7,9 @@
 #include <climits> // for INT_MAX
 
 #include "System/creg/creg_cond.h"
+#include "System/float3.h"
 #include "System/SafeVector.h"
+#include "lib/gml/gmlcnf.h"
 
 // ID's lower than 0 are reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
@@ -82,15 +84,19 @@
 
 
 // bits for the option field of Command
+// NOTE:
+//   these names are misleading, eg. the SHIFT_KEY bit
+//   really means that an order gets queued instead of
+//   executed immediately (a better name for it would
+//   be QUEUED_ORDER), ALT_KEY in most contexts means
+//   OVERRIDE_QUEUED_ORDER, etc.
+//
 #define META_KEY        (1 << 2) //   4
-#define DONT_REPEAT     (1 << 3) //   8
+#define INTERNAL_ORDER  (1 << 3) //   8
 #define RIGHT_MOUSE_KEY (1 << 4) //  16
 #define SHIFT_KEY       (1 << 5) //  32
 #define CONTROL_KEY     (1 << 6) //  64
 #define ALT_KEY         (1 << 7) // 128
-
-
-#define INTERNAL_ORDER  (DONT_REPEAT)
 
 enum {
 	MOVESTATE_NONE     = -1,
@@ -118,22 +124,6 @@ private:
 */
 
 public:
-	Command(const int cmdID)
-		: aiCommandId(-1)
-		, options(0)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(cmdID)
-	{}
-
-	Command(const int cmdID, const unsigned char cmdOptions)
-		: aiCommandId(-1)
-		, options(cmdOptions)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(cmdID)
-	{}
-
 	Command()
 		: aiCommandId(-1)
 		, options(0)
@@ -142,14 +132,9 @@ public:
 		, id(0)
 	{}
 
-	Command(const Command& c)
-		: aiCommandId(c.aiCommandId)
-		, options(c.options)
-		, params(c.params)
-		, tag(c.tag)
-		, timeOut(c.timeOut)
-		, id(c.id)
-	{}
+	Command(const Command& c) {
+		*this = c;
+	}
 
 	Command& operator = (const Command& c) {
 		id = c.id;
@@ -161,40 +146,112 @@ public:
 		return *this;
 	}
 
+	Command(const float3& pos)
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(0)
+	{
+		PushPos(pos);
+	}
+
+	Command(const int cmdID)
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{}
+
+	Command(const int cmdID, const float3& pos)
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		PushPos(pos);
+	}
+
+	Command(const int cmdID, const unsigned char cmdOptions)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{}
+
+	Command(const int cmdID, const unsigned char cmdOptions, const float param)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		PushParam(param);
+	}
+
+	Command(const int cmdID, const unsigned char cmdOptions, const float3& pos)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		PushPos(pos);
+	}
+
+	Command(const int cmdID, const unsigned char cmdOptions, const float param, const float3& pos)
+		: aiCommandId(-1)
+		, options(cmdOptions)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmdID)
+	{
+		PushParam(param);
+		PushPos(pos);
+	}
+
 	~Command() { params.clear(); }
 
 	// returns true if the command references another object and
 	// in this case also returns the param index of the object in cpos
-	bool IsObjectCommand(int &cpos) const {
-		int psize = params.size();
-		switch(id) {
+	bool IsObjectCommand(int& cpos) const {
+		const int psize = params.size();
+
+		switch (id) {
 			case CMD_ATTACK:
 			case CMD_FIGHT:
 			case CMD_MANUALFIRE:
 				cpos = 0;
-				return 1 <= psize && psize < 3;
+				return (1 <= psize && psize < 3);
 			case CMD_GUARD:
 			case CMD_LOAD_ONTO:
 				cpos = 0;
-				return psize >= 1;
+				return (psize >= 1);
 			case CMD_CAPTURE:
 			case CMD_LOAD_UNITS:
 			case CMD_RECLAIM:
 			case CMD_REPAIR:
 			case CMD_RESURRECT:
 				cpos = 0;
-				return 1 <= psize && psize < 4;
+				return (1 <= psize && psize < 4);
 			case CMD_UNLOAD_UNIT:
 				cpos = 3;
-				return psize >= 4;
+				return (psize >= 4);
 			case CMD_INSERT: {
 				if (psize < 3)
 					return false;
+
 				Command icmd((int)params[1], (unsigned char)params[2]);
+
 				for (int p = 3; p < (int)psize; p++)
 					icmd.params.push_back(params[p]);
+
 				if (!icmd.IsObjectCommand(cpos))
 					return false;
+
 				cpos += 3;
 				return true;
 			}
@@ -219,7 +276,7 @@ public:
 		return false;
 	}
 
-	void AddParam(float par) { params.push_back(par); }
+	void PushParam(float par) { params.push_back(par); }
 	const float& GetParam(size_t idx) const { return params[idx]; }
 
 	/// const safe_vector<float>& GetParams() const { return params; }
@@ -231,6 +288,34 @@ public:
 #endif
 		{ this->id = id; params.clear(); }
 	const int& GetID() const { return id; }
+
+	void PushPos(const float3& pos)
+	{
+		params.push_back(pos.x);
+		params.push_back(pos.y);
+		params.push_back(pos.z);
+	}
+
+	void PushPos(const float* pos)
+	{
+		params.push_back(pos[0]);
+		params.push_back(pos[1]);
+		params.push_back(pos[2]);
+	}
+
+	float3 GetPos(const int idx) const {
+		float3 p;
+		p.x = params[idx    ];
+		p.y = params[idx + 1];
+		p.z = params[idx + 2];
+		return p;
+	}
+
+	void SetPos(const int idx, const float3& p) {
+		params[idx    ] = p.x;
+		params[idx + 1] = p.y;
+		params[idx + 2] = p.z;
+	}
 
 public:
 	/**

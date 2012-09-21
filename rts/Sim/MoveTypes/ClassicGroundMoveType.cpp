@@ -173,7 +173,7 @@ bool CClassicGroundMoveType::Update()
 
 	bool hasMoved = false;
 
-	if (owner->stunned || owner->beingBuilt) {
+	if (owner->IsStunned() || owner->beingBuilt) {
 		owner->script->StopMoving();
 		owner->speed = ZeroVector;
 	} else {
@@ -247,7 +247,7 @@ bool CClassicGroundMoveType::Update()
 		AdjustPosToWaterLine();
 
 		owner->speed = owner->pos - oldPos;
-		owner->UpdateMidPos();
+		owner->UpdateMidAndAimPos();
 
 		oldPos = owner->pos;
 
@@ -386,7 +386,7 @@ void CClassicGroundMoveType::ChangeSpeed()
 
 	const float dif = wSpeed - currentSpeed;
 
-	if (fabs(dif) < 0.05f) {
+	if (math::fabs(dif) < 0.05f) {
 		deltaSpeed = dif * 0.125f;
 		nextDeltaSpeedUpdate = gs->frameNum + 8;
 	} else if (dif > 0.0f) {
@@ -529,7 +529,7 @@ void CClassicGroundMoveType::UpdateSkid()
 			skidRotSpeed = 0.0f;
 			owner->physicalState = oldPhysState;
 			owner->moveType->useHeading = true;
-			float rp = floor(skidRotPos2 + skidRotSpeed2 + 0.5f);
+			float rp = math::floor(skidRotPos2 + skidRotSpeed2 + 0.5f);
 			skidRotSpeed2 = (rp - skidRotPos2) * 0.5f;
 			ChangeHeading(owner->heading);
 		} else {
@@ -545,10 +545,10 @@ void CClassicGroundMoveType::UpdateSkid()
 			}
 
 			float remTime=speedf/speedReduction-1;
-			float rp=floor(skidRotPos2+skidRotSpeed2*remTime+0.5f);
+			float rp=math::floor(skidRotPos2+skidRotSpeed2*remTime+0.5f);
 			skidRotSpeed2=(remTime+1 == 0 ) ? 0 : (rp-skidRotPos2)/(remTime+1);
 
-			if(floor(skidRotPos2)!=floor(skidRotPos2+skidRotSpeed2)){
+			if(math::floor(skidRotPos2)!=math::floor(skidRotPos2+skidRotSpeed2)){
 				skidRotPos2=0;
 				skidRotSpeed2=0;
 			}
@@ -571,7 +571,7 @@ void CClassicGroundMoveType::UpdateSkid()
 				speed*=0.95f;
 			}
 			else {
-				speed += (normal*(fabs(speed.dot(normal)) + .1))*1.9f;
+				speed += (normal*(math::fabs(speed.dot(normal)) + .1))*1.9f;
 				speed*=.8;
 			}
 		}
@@ -625,7 +625,7 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 		float totRad = owner->radius + u->radius;
 
 		if (sqDist < totRad * totRad && sqDist != 0) {
-			float dist = sqrt(sqDist);
+			float dist = math::sqrt(sqDist);
 			float3 dif = midPos - u->midPos;
 			dif /= std::max(dist, 1.f);
 
@@ -682,7 +682,7 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 		float sqDist=(midPos-u->midPos).SqLength();
 		float totRad=owner->radius+u->radius;
 		if(sqDist<totRad*totRad && sqDist!=0){
-			float dist=sqrt(sqDist);
+			float dist=math::sqrt(sqDist);
 			float3 dif=midPos-u->midPos;
 			dif/=std::max(dist, 1.f);
 			float impactSpeed = -owner->speed.dot(dif);
@@ -721,8 +721,8 @@ void CClassicGroundMoveType::CalcSkidRot()
 
 	skidRotPos2 += skidRotSpeed2;
 
-	float cosp = cos(skidRotPos2 * PI * 2.0f);
-	float sinp = sin(skidRotPos2 * PI * 2.0f);
+	float cosp = math::cos(skidRotPos2 * PI * 2.0f);
+	float sinp = math::sin(skidRotPos2 * PI * 2.0f);
 
 	float3 f1 = skidRotVector * skidRotVector.dot(owner->frontdir);
 	float3 f2 = owner->frontdir - f1;
@@ -766,7 +766,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					const int blockBits = CMoveMath::BLOCK_STRUCTURE |
 					                      CMoveMath::BLOCK_MOBILE_BUSY;
 					MoveDef& moveDef = *owner->unitDef->moveDef;
-					if ((moveDef.moveMath->IsBlocked(moveDef, x, y) & blockBits) ||
+					if ((moveDef.moveMath->IsBlocked(moveDef, x, y, owner) & blockBits) ||
 					    (moveDef.moveMath->GetPosSpeedMod(moveDef, x, y) <= 0.01f)) {
 						++etaFailures;
 
@@ -786,7 +786,6 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 
 			MoveDef* moveDef = owner->moveDef;
-			moveDef->tempOwner = owner;
 
 			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
 			vector<CSolidObject*> objectsOnPath;
@@ -796,7 +795,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 				CSolidObject* o = *oi;
 				CMoveMath* moveMath = moveDef->moveMath;
 
-				if (moveMath->IsNonBlocking(*moveDef, o)) {
+				if (moveMath->IsNonBlocking(*moveDef, o, owner)) {
 					continue;
 				}
 
@@ -812,7 +811,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 						float objectDistToAvoidDirCenter = objectToUnit.dot(rightOfAvoid);
 
 						if (objectToUnit.dot(avoidanceDir) < radiusSum &&
-							fabs(objectDistToAvoidDirCenter) < radiusSum &&
+							math::fabs(objectDistToAvoidDirCenter) < radiusSum &&
 							(o->moveDef || Distance2D(owner, o) >= 0)) {
 
 							if (objectDistToAvoidDirCenter > 0.0f) {
@@ -824,7 +823,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
 							} else {
 								avoidLeft +=
-									(radiusSum - fabs(objectDistToAvoidDirCenter)) *
+									(radiusSum - math::fabs(objectDistToAvoidDirCenter)) *
 									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
 								avoidanceDir.Normalize();
@@ -836,8 +835,6 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 				}
 			}
-
-			moveDef->tempOwner = NULL;
 
 			avoidanceVec = (desiredDir.cross(UpVector) * (avoidRight - avoidLeft));
 		}
@@ -918,7 +915,7 @@ void CClassicGroundMoveType::GetNextWayPoint()
 {
 	if (pathId != 0) {
 		waypoint = nextWaypoint;
-		nextWaypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f*SQUARE_SIZE, 0, owner->id);
+		nextWaypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f*SQUARE_SIZE, 0, owner);
 
 		if (nextWaypoint.x != -1) {
 			etaWaypoint = int(30.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 50;
@@ -952,7 +949,7 @@ float CClassicGroundMoveType::BreakingDistance(float speed)
 	if (!decRate) {
 		return 0.0f;
 	}
-	return fabs(speed*speed / decRate);
+	return math::fabs(speed*speed / decRate);
 }
 
 float3 CClassicGroundMoveType::Here()
@@ -1043,7 +1040,7 @@ void CClassicGroundMoveType::CheckCollision()
 			const float zmove = (owner->mapPos.y + owner->zsize / 2) * SQUARE_SIZE;
 			const float xmove = (owner->mapPos.x + owner->xsize / 2) * SQUARE_SIZE;
 
-			if (fabs(owner->frontdir.x) > fabs(owner->frontdir.z)) {
+			if (math::fabs(owner->frontdir.x) > math::fabs(owner->frontdir.z)) {
 				if (newmp.y < owner->mapPos.y) {
 					haveCollided |= CheckColV(newmp.y, newmp.x, newmp.x + owner->xsize - 1,  zmove - 3.99f, owner->mapPos.y);
 					newmp = owner->GetMapPos();
@@ -1089,7 +1086,6 @@ void CClassicGroundMoveType::CheckCollision()
 bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTestX)
 {
 	MoveDef* m = owner->moveDef;
-	m->tempOwner = owner;
 
 	bool ret = false;
 
@@ -1106,10 +1102,10 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 			continue;
 		}
 
-		for (it = c.begin(); it != c.end(); it++) {
+		for (it = c.begin(); it != c.end(); ++it) {
 			CSolidObject* obj = it->second;
 
-			if (m->moveMath->IsNonBlocking(*m, obj)) {
+			if (m->moveMath->IsNonBlocking(*m, obj, owner)) {
 				continue;
 			} else {
 				blocked = true;
@@ -1123,7 +1119,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 					dif *= (dl != 0.0f)? (colDepth / dl): 0.0f;
 					posDelta -= (dif * (1.0f - part));
 
-					CUnit* u = (CUnit*) obj;
+					CUnit* u = static_cast<CUnit*>(obj);
 
 					const int uAllyTeam = u->allyteam;
 					const int oAllyTeam = owner->allyteam;
@@ -1131,7 +1127,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 
 					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
 						u->Move3D((dif * part), true);
-						u->UpdateMidPos();
+						u->UpdateMidAndAimPos();
 					}
 				}
 
@@ -1162,14 +1158,12 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 		}
 	}
 
-	m->tempOwner = NULL;
 	return ret;
 }
 
 bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTestY)
 {
 	MoveDef* m = owner->moveDef;
-	m->tempOwner = owner;
 
 	bool ret = false;
 
@@ -1186,10 +1180,10 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 			continue;
 		}
 
-		for (it = c.begin(); it != c.end(); it++) {
+		for (it = c.begin(); it != c.end(); ++it) {
 			CSolidObject* obj = it->second;
 
-			if (m->moveMath->IsNonBlocking(*m, obj)) {
+			if (m->moveMath->IsNonBlocking(*m, obj, owner)) {
 				continue;
 			} else {
 				blocked = true;
@@ -1203,7 +1197,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 					dif *= (dl != 0.0f)? (colDepth / dl): 0.0f;
 					posDelta -= (dif * (1.0f - part));
 
-					CUnit* u = (CUnit*) obj;
+					CUnit* u = static_cast<CUnit*>(obj);
 
 					const int uAllyTeam = u->allyteam;
 					const int oAllyTeam = owner->allyteam;
@@ -1211,7 +1205,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 
 					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
 						u->Move3D((dif * part), true);
-						u->UpdateMidPos();
+						u->UpdateMidAndAimPos();
 					}
 				}
 
@@ -1242,7 +1236,6 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 		}
 	}
 
-	m->tempOwner = NULL;
 	return ret;
 }
 
@@ -1261,20 +1254,20 @@ void CClassicGroundMoveType::CreateLineTable()
 			float xp = start.x;
 			float zp = start.z;
 
-			if (floor(start.x) == floor(to.x)) {
+			if (math::floor(start.x) == math::floor(to.x)) {
 				if (dz > 0.0f) {
-					for (int a = 1; a < floor(to.z); ++a)
+					for (int a = 1; a < math::floor(to.z); ++a)
 						lineTable[yt][xt].push_back(int2(0, a));
 				} else {
-					for (int a = -1; a > floor(to.z); --a)
+					for (int a = -1; a > math::floor(to.z); --a)
 						lineTable[yt][xt].push_back(int2(0, a));
 				}
-			} else if (floor(start.z) == floor(to.z)) {
+			} else if (math::floor(start.z) == math::floor(to.z)) {
 				if (dx > 0.0f) {
-					for (int a = 1; a < floor(to.x); ++a)
+					for (int a = 1; a < math::floor(to.x); ++a)
 						lineTable[yt][xt].push_back(int2(a, 0));
 				} else {
-					for (int a = -1; a > floor(to.x); --a)
+					for (int a = -1; a > math::floor(to.x); --a)
 						lineTable[yt][xt].push_back(int2(a, 0));
 				}
 			} else {
@@ -1283,14 +1276,14 @@ void CClassicGroundMoveType::CreateLineTable()
 
 				while (keepgoing) {
 					if (dx > 0.0f) {
-						xn = (floor(xp) + 1.0f - xp) / dx;
+						xn = (math::floor(xp) + 1.0f - xp) / dx;
 					} else {
-						xn = (floor(xp)        - xp) / dx;
+						xn = (math::floor(xp)        - xp) / dx;
 					}
 					if (dz > 0.0f) {
-						zn = (floor(zp) + 1.0f - zp) / dz;
+						zn = (math::floor(zp) + 1.0f - zp) / dz;
 					} else {
-						zn = (floor(zp)        - zp) / dz;
+						zn = (math::floor(zp)        - zp) / dz;
 					}
 
 					if (xn < zn) {
@@ -1302,10 +1295,10 @@ void CClassicGroundMoveType::CreateLineTable()
 					}
 
 					keepgoing =
-						fabs(xp - start.x) < fabs(to.x - start.x) &&
-						fabs(zp - start.z) < fabs(to.z - start.z);
+						math::fabs(xp - start.x) < math::fabs(to.x - start.x) &&
+						math::fabs(zp - start.z) < math::fabs(to.z - start.z);
 
-					lineTable[yt][xt].push_back( int2(int(floor(xp)), int(floor(zp))) );
+					lineTable[yt][xt].push_back( int2(int(math::floor(xp)), int(math::floor(zp))) );
 				}
 
 				lineTable[yt][xt].pop_back();
@@ -1335,7 +1328,7 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 		const MoveDef& md = *(owner->unitDef->moveDef);
 		const float cmod = movemath->GetPosSpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
-		if (fabs(owner->frontdir.x) < fabs(owner->frontdir.z)) {
+		if (math::fabs(owner->frontdir.x) < math::fabs(owner->frontdir.z)) {
 			if (newMoveSquareX > moveSquareX) {
 				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
@@ -1422,7 +1415,7 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 							CMoveMath::BLOCK_MOBILE |
 							CMoveMath::BLOCK_MOBILE_BUSY;
 
-						if ((movemath->IsBlocked(md, x, y) & blockMask) ||
+						if ((movemath->IsBlocked(md, x, y, owner) & blockMask) ||
 							movemath->GetPosSpeedMod(md, x, y) <= 0.01f) {
 							wpOk = false;
 							break;
@@ -1463,7 +1456,7 @@ bool CClassicGroundMoveType::CheckGoalFeasability()
 		for (int x = minx; x <= maxx; ++x) {
 			float3 pos(x * SQUARE_SIZE * 2, 0, z * SQUARE_SIZE * 2);
 			if ((pos - goalPos).SqLength2D() < goalDist * goalDist) {
-				int blockingType = mm->SquareIsBlocked(*md, x * 2, z * 2);
+				int blockingType = mm->SquareIsBlocked(*md, x * 2, z * 2, owner);
 
 				if ((blockingType & CMoveMath::BLOCK_STRUCTURE) || mm->GetPosSpeedMod(*md, x * 2, z * 2) < 0.01f) {
 					numBlocked += 0.3f;

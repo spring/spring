@@ -13,8 +13,8 @@
 #include "Rendering/Env/CubeMapHandler.h"
 #include "System/Config/ConfigHandler.h"
 
-CONFIG(int, CubeTexSizeSpecular).defaultValue(128);
-CONFIG(int, CubeTexSizeReflection).defaultValue(128);
+CONFIG(int, CubeTexSizeSpecular).defaultValue(128).minimumValue(1);
+CONFIG(int, CubeTexSizeReflection).defaultValue(128).minimumValue(1);
 
 static char cameraMemBuf[sizeof(CCamera)];
 
@@ -191,7 +191,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		glEnable(GL_DEPTH_TEST);
 	}
 
-	new (cameraMemBuf) CCamera(*camera); // anti-crash workaround for multithreading
+	new (cameraMemBuf) CCamera(*camera); // anti-crash workaround for multi-threading
 
 	game->SetDrawMode(CGame::gameReflectionDraw);
 
@@ -211,7 +211,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		readmap->GetGroundDrawer()->Draw(DrawPass::UnitReflection);
 	}
 
-	//! we do this later to save render context switches (this is one of the slowest opengl operations!)
+	// NOTE we do this later to save render context switches (this is one of the slowest OpenGL operations!)
 	// reflectionCubeFBO.Unbind();
 	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();
@@ -219,7 +219,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	game->SetDrawMode(CGame::gameNormalDraw);
 
 	camera->~CCamera();
-	new (camera) CCamera(*(CCamera*) cameraMemBuf);
+	new (camera) CCamera(*reinterpret_cast<CCamera*>(cameraMemBuf));
 	camera->Update();
 }
 
@@ -269,7 +269,7 @@ void CubeMapHandler::CreateSpecularFacePart(
 	for (int x = 0; x < size; ++x) {
 		const float3 dir = (cdir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size).Normalize();
 		const float dot  = std::max(0.0f, dir.dot(sky->GetLight()->GetLightDir()));
-		const float spec = std::min(1.0f, pow(dot, mapInfo->light.specularExponent) + pow(dot, 3.0f) * 0.25f);
+		const float spec = std::min(1.0f, math::pow(dot, mapInfo->light.specularExponent) + math::pow(dot, 3.0f) * 0.25f);
 
 		buf[x * 4 + 0] = (mapInfo->light.unitSpecularColor.x * spec * 255);
 		buf[x * 4 + 1] = (mapInfo->light.unitSpecularColor.y * spec * 255);

@@ -5,10 +5,11 @@
 
 #include <list>
 
-#include "System/creg/creg_cond.h"
-#include "System/float3.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "System/float3.h"
+#include "System/creg/creg_cond.h"
+#include "System/Misc/RectangleOptimizer.h"
 
 #define USE_UNSYNCED_HEIGHTMAP
 
@@ -40,14 +41,6 @@ struct MapBitmapInfo
 	int height;
 };
 
-struct HeightMapUpdate {
-	HeightMapUpdate(int tlx, int brx,  int tly, int bry, bool inLOS = false): x1(tlx), x2(brx), y1(tly), y2(bry), los(inLOS) {
-	}
-
-	int x1, x2;
-	int y1, y2;
-	bool los;
-};
 
 
 class CReadMap
@@ -59,7 +52,7 @@ protected:
 	void Initialize();
 	void CalcHeightmapChecksum();
 
-	virtual void UpdateHeightMapUnsynced(const HeightMapUpdate&) = 0;
+	virtual void UpdateHeightMapUnsynced(const SRectangle&) = 0;
 
 public:
 	CR_DECLARE(CReadMap);
@@ -77,8 +70,9 @@ public:
 	 * calculates derived heightmap information
 	 * such as normals, centerheightmap and slopemap
 	 */
-	void UpdateHeightMapSynced(int x1, int z1, int x2, int z2);
-	void PushVisibleHeightMapUpdate(int x1, int z1, int x2, int z2, bool);
+	void UpdateHeightMapSynced(SRectangle rect, bool initialize = false);
+	void UpdateLOS(const SRectangle& rect);
+	void BecomeSpectator();
 	void UpdateDraw();
 
 	virtual ~CReadMap();
@@ -139,12 +133,12 @@ public:
 
 	/// both
 	/// synced versions
-	const float* GetCornerHeightMapSynced() const { return &(*heightMapSynced)[0]; }
+	const float* GetCornerHeightMapSynced() const { return &(*heightMapSyncedPtr)[0]; }
 	const float3* GetFaceNormalsSynced()    const { return &faceNormalsSynced[0]; }
 	const float3* GetCenterNormalsSynced()  const { return &centerNormalsSynced[0]; }
 	/// unsynced versions
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	const float* GetCornerHeightMapUnsynced() const { return &(*heightMapUnsynced)[0]; }
+	const float* GetCornerHeightMapUnsynced() const { return &(*heightMapUnsyncedPtr)[0]; }
 	const float3* GetFaceNormalsUnsynced()   const { return &faceNormalsUnsynced[0]; }
 	const float3* GetCenterNormalsUnsynced() const { return &centerNormalsUnsynced[0]; }
 #else
@@ -153,8 +147,8 @@ public:
 	const float3* GetCenterNormalsUnsynced()  const { return GetCenterNormalsSynced(); }
 #endif
 
-	// shared interface
-	// Use when code is shared between synced & unsynced, in such cases these functions will have a better branch-prediciton behavior.
+	/// shared interface
+	/// Use when code is shared between synced & unsynced, in such cases these functions will have a better branch-prediciton behavior.
 	static const float* GetCornerHeightMap(const bool& synced);
 	static const float* GetCenterHeightMap(const bool& synced);
 	static const float3* GetFaceNormals(const bool& synced);
@@ -162,8 +156,8 @@ public:
 	static const float* GetSlopeMap(const bool& synced);
 
 	/// if you modify the heightmap through these, call UpdateHeightMapSynced
-	float SetHeight(const int& idx, const float& h);
-	float AddHeight(const int& idx, const float& a);
+	float SetHeight(const int idx, const float h, const int add = 0);
+	float AddHeight(const int idx, const float a);
 
 public:
 	/// number of heightmap mipmaps, including full resolution
@@ -173,22 +167,26 @@ public:
 	CMetalMap* metalMap;
 
 	int width, height;
-	float initMinHeight, initMaxHeight; //! initial minimum- and maximum-height (before any deformations)
-	float currMinHeight, currMaxHeight; //! current minimum- and maximum-height 
+	float initMinHeight, initMaxHeight; //< initial minimum- and maximum-height (before any deformations)
+	float currMinHeight, currMaxHeight; //< current minimum- and maximum-height 
 
 	unsigned int mapChecksum;
 
 private:
-	void UpdateCenterHeightmap(const int x1, const int z1, const int x2, const int z2);
-	void UpdateMipHeightmaps(const int x1, const int z1, const int x2, const int z2);
-	void UpdateFaceNormals(int x1, int z1, int x2, int z2);
-	void UpdateSlopemap(const int x1, const int z1, const int x2, const int z2);
+	void UpdateCenterHeightmap(const SRectangle& rect);
+	void UpdateMipHeightmaps(const SRectangle& rect);
+	void UpdateFaceNormals(const SRectangle& rect);
+	void UpdateSlopemap(const SRectangle& rect);
+	
+	inline void HeightMapUpdateLOSCheck(const SRectangle& rect);
+	inline bool HasHeightMapChanged(const int lmx, const int lmy);
+	inline void InitHeightMapDigestsVectors();
 
 protected:
-	std::vector<float>* heightMapSynced;      /// size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
-	std::vector<float>* heightMapUnsynced;    /// size: (mapx+1)*(mapy+1) (per vertex) [UNSYNCED]
-	std::vector<float> originalHeightMap;    /// size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, does NOT update on terrain deformation]
-	std::vector<float> centerHeightMap;      /// size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+	std::vector<float>* heightMapSyncedPtr;      //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
+	std::vector<float>* heightMapUnsyncedPtr;    //< size: (mapx+1)*(mapy+1) (per vertex) [UNSYNCED]
+	std::vector<float> originalHeightMap;        //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, does NOT update on terrain deformation]
+	std::vector<float> centerHeightMap;          //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
 	std::vector< std::vector<float> > mipCenterHeightMaps;
 
 	/**
@@ -198,36 +196,23 @@ protected:
 	 */
 	std::vector< float* > mipPointerHeightMaps;
 
-	std::vector<float3> visVertexNormals;      /// size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
-	std::vector<float3> faceNormalsSynced;     /// size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
-	std::vector<float3> faceNormalsUnsynced;   /// size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [UNSYNCED]
-	std::vector<float3> centerNormalsSynced;   /// size:   mapx      *  mapy     , contains 1 interpolated normal per quad, same as (facenormal0+facenormal1).Normalize()) [SYNCED]
+	std::vector<float3> visVertexNormals;      //< size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
+	std::vector<float3> faceNormalsSynced;     //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
+	std::vector<float3> faceNormalsUnsynced;   //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [UNSYNCED]
+	std::vector<float3> centerNormalsSynced;   //< size:   mapx      *  mapy     , contains 1 interpolated normal per quad, same as (facenormal0+facenormal1).Normalize()) [SYNCED]
 	std::vector<float3> centerNormalsUnsynced;
 
-	std::vector<float> slopeMap;               /// size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
+	std::vector<float> slopeMap;               //< size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
 	std::vector<unsigned char> typeMap;
 
-	std::list<HeightMapUpdate> unsyncedHeightMapUpdates;
+	CRectangleOptimizer unsyncedHeightMapUpdates;
+	CRectangleOptimizer unsyncedHeightMapUpdatesTemp;
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	struct HeightMapUpdateFilter {
-		HeightMapUpdateFilter(bool upd = false) : minx(0), maxx(0), miny(0), maxy(0), update(upd) {}
-		HeightMapUpdateFilter(int mnx, int mxx, int mny, int mxy, bool upd = false) : minx(mnx), maxx(mxx), miny(mny), maxy(mxy), update(upd) {}
-
-		void Expand(const HeightMapUpdateFilter& fnew) {
-			minx = std::min(minx, fnew.minx);
-			maxx = std::max(maxx, fnew.maxx);
-			miny = std::min(miny, fnew.miny);
-			maxy = std::max(maxy, fnew.maxy);
-			update = fnew.update;
-		}
-
-		int minx;
-		int maxx;
-		int miny;
-		int maxy;
-		bool update;
-	};
+	/// used to filer LOS updates (so only update UHM on LOS updates when the heightmap was changed beforehand)
+	/// size: in LOS resolution
+	std::vector<unsigned char>   syncedHeightMapDigests;
+	std::vector<unsigned char> unsyncedHeightMapDigests;
 #endif
 };
 
@@ -268,15 +253,21 @@ inline const float* CReadMap::GetSlopeMap(const bool& synced) {
 
 
 
-/// if you modify the heightmap through these, call UpdateHeightMapSynced
-inline float CReadMap::SetHeight(const int& idx, const float& h) {
-	currMinHeight = std::min(h, currMinHeight);
-	currMaxHeight = std::max(h, currMaxHeight);
-	return ((*heightMapSynced)[idx] = h);
+inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
+	float& x = (*heightMapSyncedPtr)[idx];
+
+	// add=0 <--> x = x*0 + h =   h
+	// add=1 <--> x = x*1 + h = x+h
+	x = x * add + h;
+
+	currMinHeight = std::min(x, currMinHeight);
+	currMaxHeight = std::max(x, currMaxHeight);
+
+	return x;
 }
 
-inline float CReadMap::AddHeight(const int& idx, const float& a) {
-	return SetHeight(idx, (*heightMapSynced)[idx] + a);
+inline float CReadMap::AddHeight(const int idx, const float a) {
+	return SetHeight(idx, a, 1);
 }
 
 

@@ -81,7 +81,7 @@ bool AAIUnitTable::AddUnit(int unit_id, int def_id, AAIGroup *group, AAIConstruc
 	}
 	else
 	{
-		fprintf(ai->file, "ERROR: AAIUnitTable::AddUnit() index %i out of range", unit_id);
+		ai->Log("ERROR: AAIUnitTable::AddUnit() index %i out of range", unit_id);
 		return false;
 	}
 }
@@ -98,7 +98,7 @@ void AAIUnitTable::RemoveUnit(int unit_id)
 	}
 	else
 	{
-		fprintf(ai->file, "ERROR: AAIUnitTable::RemoveUnit() index %i out of range", unit_id);
+		ai->Log("ERROR: AAIUnitTable::RemoveUnit() index %i out of range", unit_id);
 	}
 }
 
@@ -306,7 +306,7 @@ void AAIUnitTable::RemoveStationaryArty(int unit_id)
 
 AAIConstructor* AAIUnitTable::FindBuilder(int building, bool commander)
 {
-	//fprintf(ai->file, "constructor for %s\n", bt->GetCategoryString(building));
+	//ai->Log("constructor for %s\n", bt->GetCategoryString(building));
 	AAIConstructor *builder;
 
 	// look for idle builder
@@ -321,7 +321,7 @@ AAIConstructor* AAIUnitTable::FindBuilder(int building, bool commander)
 			if(builder->task != BUILDING && bt->CanBuildUnit(builder->def_id, building))
 			{
 				//if(bt->units_static[building].category == STATIONARY_JAMMER)
-				//	fprintf(ai->file, "%s can build %s\n", bt->unitList[builder->def_id-1]->humanName.c_str(), bt->unitList[building-1]->humanName.c_str());
+				//	ai->Log("%s can build %s\n", bt->unitList[builder->def_id-1]->humanName.c_str(), bt->unitList[building-1]->humanName.c_str());
 
 				// filter out commander (if not allowed)
 				if(! (!commander &&  bt->IsCommander(builder->def_id)) )

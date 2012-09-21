@@ -10,32 +10,37 @@
 namespace GL {
 	struct Light: public CObject {
 	public:
-		Light() {
-			position          = float4(0.0f, 0.0f, 1.0f, 1.0f);
-			direction         = ZeroVector;
-			trackPosition     = NULL;
-			trackDirection    = NULL;
-			ambientColor.w    = 1.0f;
-			diffuseColor.w    = 1.0f;
-			specularColor.w   = 1.0f;
-			intensityWeight   = float3(1.0f, 1.0f, 1.0f);
-			ambientDecayRate  = float3(1.0f, 1.0f, 1.0f);
-			diffuseDecayRate  = float3(1.0f, 1.0f, 1.0f);
-			specularDecayRate = float3(1.0f, 1.0f, 1.0f);
-			decayFunctionType = float3(1.0f, 1.0f, 1.0f);
+		Light()
+			: position(0.0f, 0.0f, 1.0f, 1.0f)
+			, direction(ZeroVector)
 
-			radius = 0.0f;
-			fov = 180.0f;
+			, ambientColor(0.0f, 0.0f, 0.0f, 1.0f)
+			, diffuseColor(0.0f, 0.0f, 0.0f, 1.0f)
+			, specularColor(0.0f, 0.0f, 0.0f, 1.0f)
+			, intensityWeight(1.0f, 1.0f, 1.0f)
+			, ambientDecayRate(1.0f, 1.0f, 1.0f)
+			, diffuseDecayRate(1.0f, 1.0f, 1.0f)
+			, specularDecayRate(1.0f, 1.0f, 1.0f)
+			, decayFunctionType(1.0f, 1.0f, 1.0f)
 
-			id  = -1U;
-			ttl = 0;
-			relTime = 0;
-			absTime = 0;
-			priority = 0;
+			, radius(0.0f)
+			, fov(180.0f)
+
+			, ignoreLOS(true)
+
+			, id(-1U)
+			, ttl(0)
+			, relTime(0)
+			, absTime(0)
+			, priority(0)
+
+			, trackPosition(NULL)
+			, trackDirection(NULL)
+		{
 		}
 
 		// a light can only depend on one object
-		void DependentDied(CObject*) {
+		void DependentDied(CObject* o) {
 			trackPosition = NULL;
 			trackDirection = NULL;
 		}
@@ -76,6 +81,9 @@ namespace GL {
 		float GetFOV() const { return fov; }
 		void SetRadius(float r) { radius = r; }
 		void SetFOV(float f) { fov = f; }
+
+		void SetIgnoreLOS(bool b) { ignoreLOS = b; }
+		bool GetIgnoreLOS() const { return ignoreLOS; }
 
 		const unsigned int GetID() const { return id; }
 		unsigned int GetTTL() const { return ttl; }
@@ -142,6 +150,8 @@ namespace GL {
 
 		float radius;             // elmos
 		float fov;                // degrees ([0.0 - 90.0] or 180.0)
+
+		bool ignoreLOS;           // if true, we can be seen out of LOS
 
 		unsigned int id;          // GL_LIGHT[id] we are bound to
 		unsigned int ttl;         // maximum lifetime in sim-frames

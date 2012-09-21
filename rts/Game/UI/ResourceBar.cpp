@@ -48,11 +48,11 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 
 	if (num == 0)
 		sprintf(c, "0");
-	if (       fabs(num) < (10       * mul)) {
+	if (       math::fabs(num) < (10       * mul)) {
 		sprintf(c, "%.1f",  num);
-	} else if (fabs(num) < (10000    * mul)) {
+	} else if (math::fabs(num) < (10000    * mul)) {
 		sprintf(c, "%.0f",  num);
-	} else if (fabs(num) < (10000000 * mul)) {
+	} else if (math::fabs(num) < (10000000 * mul)) {
 		sprintf(c, "%.0fk", num / 1000);
 	} else {
 		sprintf(c, "%.0fM", num / 1000000);
@@ -180,11 +180,11 @@ void CResourceBar::Draw()
 
 	smallFont->SetTextColor(1.0f, 0.3f, 0.3f, 1.0f); // Expenses
 	smallFont->glFormat(metalx  + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions, "-%s(-%s)",
-			FloatToSmallString(fabs(myTeam->prevMetalPull)).c_str(),
-			FloatToSmallString(fabs(myTeam->metalSent)).c_str());
+			FloatToSmallString(math::fabs(myTeam->prevMetalPull)).c_str(),
+			FloatToSmallString(math::fabs(myTeam->metalSent)).c_str());
 	smallFont->glFormat(energyx + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions, "-%s(-%s)",
-			FloatToSmallString(fabs(myTeam->prevEnergyPull)).c_str(),
-			FloatToSmallString(fabs(myTeam->energySent)).c_str());
+			FloatToSmallString(math::fabs(myTeam->prevEnergyPull)).c_str(),
+			FloatToSmallString(math::fabs(myTeam->energySent)).c_str());
 
 	smallFont->SetTextColor(0.4f, 1.0f, 0.4f, 0.95f); // Income
 	smallFont->glFormat(metalx  + 0.044f, box.y2 - 2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",

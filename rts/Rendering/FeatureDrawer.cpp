@@ -10,6 +10,7 @@
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
@@ -66,7 +67,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 #ifdef USE_GML
-	showRezBars = configHandler->GetBool("ShowRezBars");
+	showRezBars = GML::Enabled() && configHandler->GetBool("ShowRezBars");
 #endif
 	featureDrawDistance = configHandler->GetFloat("FeatureDrawDistance");
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
@@ -109,6 +110,9 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 
 		unsortedFeatures.insert(f);
 	}
+
+	if (f->objectDef->decalDef.useGroundDecal)
+		groundDecals->MoveSolidObject(f, f->pos);
 }
 
 void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
@@ -128,10 +132,13 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 		opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 		cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 	}
+
+	if (feature->objectDef->decalDef.useGroundDecal)
+		groundDecals->RemoveSolidObject(f, NULL);
 }
 
 
-void CFeatureDrawer::RenderFeatureMoved(const CFeature* feature)
+void CFeatureDrawer::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
 
@@ -326,7 +333,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 
 	unitDrawer->SetTeamColour(feature->team, alpha);
 
-	if (!(feature->luaDraw && luaRules && luaRules->DrawFeature(feature->id))) {
+	if (!(feature->luaDraw && luaRules && luaRules->DrawFeature(feature))) {
 		feature->model->DrawStatic();
 	}
 
@@ -542,11 +549,13 @@ public:
 
 					if (sqDist < sqFadeDistB) {
 						cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
-						opaqueModelRenderers[MDL_TYPE(f)]->AddFeature(f);
+						if (camera->InView(f->drawMidPos, f->drawRadius))
+							opaqueModelRenderers[MDL_TYPE(f)]->AddFeature(f);
 					} else if (sqDist < sqFadeDistE) {
 						const float falpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
 						opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
-						cloakedModelRenderers[MDL_TYPE(f)]->AddFeature(f, falpha);
+						if (camera->InView(f->drawMidPos, f->drawRadius))
+							cloakedModelRenderers[MDL_TYPE(f)]->AddFeature(f, falpha);
 					}
 				} else {
 					if (farFeatures) {

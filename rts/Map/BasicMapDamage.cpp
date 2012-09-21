@@ -33,7 +33,7 @@ CBasicMapDamage::CBasicMapDamage()
 
 	for (int a = 0; a <= CRATER_TABLE_SIZE; ++a) {
 		const float r = a / float(CRATER_TABLE_SIZE);
-		const float d = cos((r - 0.1f) * (PI + 0.3f)) * (1 - r) * (0.5f + 0.5f * cos(std::max(0.0f, r * 3 - 2) * PI));
+		const float d = math::cos((r - 0.1f) * (PI + 0.3f)) * (1 - r) * (0.5f + 0.5f * math::cos(std::max(0.0f, r * 3 - 2) * PI));
 		craterTable[a] = d;
 	}
 
@@ -83,7 +83,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
 	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
 	const unsigned char* typeMap = readmap->GetTypeMapSynced();
-	const float baseStrength = -pow(strength, 0.6f) * 3 / mapHardness;
+	const float baseStrength = -math::pow(strength, 0.6f) * 3 / mapHardness;
 	const float invRadius = 1.0f / radius;
 
 	for (int y = e->y1; y <= e->y2; ++y) {
@@ -111,7 +111,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 				orgHeightMap[y * gs->mapxp1 + x];
 
 			if (prevDif * dif > 0.0f) {
-				dif /= fabs(prevDif) * 0.1f + 1;
+				dif /= math::fabs(prevDif) * 0.1f + 1;
 			}
 
 			e->squares.push_back(dif);
@@ -148,7 +148,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 						orgHeightMap[z * gs->mapxp1 + x];
 
 				if (prevDif * dif > 0.0f) {
-					dif /= fabs(prevDif) * 0.1f + 1;
+					dif /= math::fabs(prevDif) * 0.1f + 1;
 				}
 
 				totalDif += dif;
@@ -199,8 +199,8 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 		}
 	}
 
-	readmap->UpdateHeightMapSynced(x1, y1, x2, y2);
-	pathManager->TerrainChange(x1, y1, x2, y2);
+	readmap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
+	pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
 }
 

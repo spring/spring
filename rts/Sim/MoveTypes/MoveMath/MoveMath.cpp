@@ -76,7 +76,7 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 }
 
 /* Check if a given square-position is accessable by the MoveDef footprint. */
-CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare) const
+CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider) const
 {
 	BlockType ret = BLOCK_NONE;
 	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
@@ -85,7 +85,7 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int x = xmin; x <= xmax; x += xstep) {
 		for (int z = zmin; z <= zmax; z += zstep) {
-			ret |= SquareIsBlocked(moveDef, x, z);
+			ret |= SquareIsBlocked(moveDef, x, z, collider);
 		}
 	}
 
@@ -93,7 +93,7 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 }
 
 /* Optimized function to check if a given square-position has a structure block. */
-bool CMoveMath::IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSquare) const
+bool CMoveMath::IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider) const
 {
 	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
 	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
@@ -101,7 +101,7 @@ bool CMoveMath::IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSqu
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int x = xmin; x <= xmax; x += xstep) {
 		for (int z = zmin; z <= zmax; z += zstep) {
-			if (SquareIsBlocked(moveDef, x, z) & BLOCK_STRUCTURE)
+			if (SquareIsBlocked(moveDef, x, z, collider) & BLOCK_STRUCTURE)
 				return true;
 		}
 	}
@@ -111,14 +111,14 @@ bool CMoveMath::IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSqu
 
 /* Optimized function to check if the square at the given position has a structure block, 
    provided that the square at (xSquare - 1, zSquare) did not have a structure block */
-bool CMoveMath::IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int zSquare) const
+bool CMoveMath::IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider) const
 {
 	const int                                  xmax = xSquare + moveDef.xsizeh;
 	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
 	const int zstep = 2;
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int z = zmin; z <= zmax; z += zstep) {
-		if (SquareIsBlocked(moveDef, xmax, z) & BLOCK_STRUCTURE)
+		if (SquareIsBlocked(moveDef, xmax, z, collider) & BLOCK_STRUCTURE)
 			return true;
 	}
 
@@ -127,14 +127,14 @@ bool CMoveMath::IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int 
 
 /* Optimized function to check if the square at the given position has a structure block, 
    provided that the square at (xSquare, zSquare - 1) did not have a structure block */
-bool CMoveMath::IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int zSquare) const
+bool CMoveMath::IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider) const
 {
 	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
 	const int                                  zmax = zSquare + moveDef.zsizeh;
 	const int xstep = 2;
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int x = xmin; x <= xmax; x += xstep) {
-		if (SquareIsBlocked(moveDef, x, zmax) & BLOCK_STRUCTURE)
+		if (SquareIsBlocked(moveDef, x, zmax, collider) & BLOCK_STRUCTURE)
 			return true;
 	}
 
@@ -158,10 +158,8 @@ bool CMoveMath::CrushResistant(const MoveDef& colliderMD, const CSolidObject* co
  * check if an object is NON-blocking for a given MoveDef
  * (ex. a submarine's moveDef vs. a surface ship object)
  */
-bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* collidee)
+bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* collidee, const CSolidObject* collider)
 {
-	const CSolidObject* collider = colliderMD.tempOwner;
-
 	if (!collidee->blocking)
 		return true;
 
@@ -247,7 +245,7 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 
 
 /* Check if a single square is accessable (for any object which uses the given MoveDef). */
-CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare)
+CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
 	// bounds-check
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
@@ -260,7 +258,7 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 	for (BlockingMapCellIt it = c.begin(); it != c.end(); ++it) {
 		CSolidObject* obstacle = it->second;
 
-		if (IsNonBlocking(moveDef, obstacle)) {
+		if (IsNonBlocking(moveDef, obstacle, collider)) {
 			continue;
 		}
 

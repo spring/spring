@@ -3,9 +3,6 @@
 /**
  * Glob conversion by Chris Han (based on work by Nathaniel Smith).
  */
-#ifdef _MSC_VER
-#include "System/Platform/Win/win32.h"
-#endif
 #include "FileSystem.h"
 
 #include "System/Log/ILog.h"

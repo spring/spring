@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef _MSC_VER
-#include "System/Platform/Win/win32.h"
+#if defined(_MSC_VER) && !defined(S_ISDIR)
+#	define S_ISDIR(m) (((m) & 0170000) == 0040000)
 #endif
 
 #include "FileSystemAbstraction.h"
@@ -156,10 +156,10 @@ std::string FileSystemAbstraction::GetParent(const std::string& path) {
 
 size_t FileSystemAbstraction::GetFileSize(const std::string& file)
 {
-	size_t fileSize = 0;
+	size_t fileSize = -1;
 
 	struct stat info;
-	if (stat(file.c_str(), &info) == 0) {
+	if ((stat(file.c_str(), &info) == 0) && (!S_ISDIR(info.st_mode))) {
 		fileSize = info.st_size;
 	}
 
@@ -168,6 +168,11 @@ size_t FileSystemAbstraction::GetFileSize(const std::string& file)
 
 bool FileSystemAbstraction::IsReadableFile(const std::string& file)
 {
+	// Exclude directories!
+	if (!FileExists(file)) {
+		return false;
+	}
+
 #ifdef WIN32
 	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);
 #else
@@ -226,7 +231,7 @@ std::string FileSystemAbstraction::GetFileModificationDate(const std::string& fi
 
 	const int fetchOk = stat(file.c_str(), &attrib); // get the attributes of file
 	if (fetchOk != 0) {
-		LOG_L(L_WARNING, "Failed opening file for retreiving last modification time: %s", file.c_str());
+		LOG_L(L_WARNING, "Failed opening file for retrieving last modification time: %s", file.c_str());
 	} else {
 		// Get the last modified time and put it into the time structure
 		clock = gmtime(&(attrib.st_mtime));
@@ -324,16 +329,12 @@ bool FileSystemAbstraction::DirExists(const std::string& dir)
 #ifdef _WIN32
 	struct _stat info;
 	std::string myDir = dir;
-	// for the root dir on a drive (for example C:\)
+	// only for the root dir on a drive (for example C:\)
 	// we need the trailing slash
-	if ((myDir.length() == 3) && (myDir[1] == ':') && ((myDir[2] != '\\') || (myDir[2] != '/'))) {
-		// do nothing
+	if (!IsFSRoot(myDir)) {
+		myDir = StripTrailingSlashes(myDir);
 	} else if ((myDir.length() == 2) && (myDir[1] == ':')) {
 		myDir += "\\";
-	} else {
-		// for any other dir (for example C:\WINDOWS\),
-		// we need to get rid of it.
-		myDir = StripTrailingSlashes(myDir);
 	}
 	const int ret = _stat(myDir.c_str(), &info);
 	dirExists = ((ret == 0) && (info.st_mode & _S_IFDIR));

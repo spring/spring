@@ -28,10 +28,10 @@
 
 RenderMode Patch::renderMode = VBO;
 
-
+static size_t poolSize = 0;
 static std::vector<CTriNodePool*> pools;
 
-void CTriNodePool::InitPools()
+void CTriNodePool::InitPools(const size_t newPoolSize)
 {
 	if (pools.empty()) {
 		#pragma omp parallel
@@ -43,7 +43,8 @@ void CTriNodePool::InitPools()
 			#else
 				int numThreads = 1;
 			#endif
-				const size_t allocPerThread = std::max(POOL_SIZE / numThreads, POOL_SIZE / 3);
+				poolSize = newPoolSize;
+				const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
 				pools.reserve(numThreads);
 				for (; numThreads > 0; --numThreads) {
 					pools.push_back(new CTriNodePool(allocPerThread));
@@ -65,6 +66,19 @@ void CTriNodePool::FreePools()
 
 void CTriNodePool::ResetAll()
 {
+	bool runOutOfNodes = false;
+	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
+		if ((*it)->RunOutOfNodes()) {
+			runOutOfNodes = true;
+			break;
+		}
+	}
+	if (runOutOfNodes) {
+		FreePools();
+		InitPools(poolSize * 2);
+		return;
+	}
+
 	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
 		(*it)->Reset();
 	}
@@ -99,7 +113,7 @@ void CTriNodePool::Reset()
 TriTreeNode* CTriNodePool::AllocateTri()
 {
 	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
-	if (m_NextTriNode >= pool.size())
+	if (RunOutOfNodes())
 		return NULL;
 
 	TriTreeNode* pTri = &pool[m_NextTriNode++];
@@ -319,7 +333,7 @@ void Patch::Split(TriTreeNode* tri)
 // Tessellate a Patch.
 // Will continue to split until the variance metric is met.
 //
-void Patch::RecursTessellate(TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, const int& node)
+void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, const int node)
 {
 	const bool canFurtherTes = ((abs(left.x - right.x) > 1) || (abs(left.y - right.y) > 1));
 	if (!canFurtherTes)
@@ -364,7 +378,7 @@ void Patch::RecursTessellate(TriTreeNode* const& tri, const int2& left, const in
 //
 
 
-void Patch::RecursRender(TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int maxdepth)
+void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, int maxdepth)
 {
 	if ( tri->IsLeaf() /*|| maxdepth>12*/ ) {
 		indices.push_back(apex.x  + apex.y  * (PATCH_SIZE + 1));
@@ -385,9 +399,9 @@ void Patch::RecursRender(TriTreeNode* const& tri, const int2& left, const int2& 
 // ---------------------------------------------------------------------
 // Computes Variance over the entire tree.  Does not examine node relationships.
 //
-float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const float& leftZ,
-		const int& rightX, const int& rightY, const float& rightZ,
-		const int& apexX, const int& apexY, const float& apexZ, const int& node)
+float Patch::RecursComputeVariance(const int leftX, const int leftY, const float leftZ,
+		const int rightX, const int rightY, const float rightZ,
+		const int apexX, const int apexY, const float apexZ, const int node)
 {
 	/*
 	 *       /|\
@@ -405,7 +419,7 @@ float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const flo
 
 	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
 	// Use values passed on the stack instead of re-accessing the Height Field.
-	float myVariance = abs(centerZ - ((leftZ + rightZ) / 2));
+	float myVariance = math::fabs(centerZ - ((leftZ + rightZ) / 2));
 	
 	if (leftZ*rightZ<0 || leftZ*centerZ<0 || rightZ*centerZ<0)
 		myVariance = std::max(myVariance * 1.5f, 20.0f); //shore lines get more variance for higher accuracy
@@ -464,7 +478,7 @@ void Patch::Tessellate(const float3& campos, int groundDetail)
 	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float3 myPos(myx,myy,myz);
 
-	camDistLODFactor  = (myPos - campos).Length();
+	camDistLODFactor  = myPos.distance(campos);
 	camDistLODFactor *= 300.0f / groundDetail; // MAGIC NUMBER 1: increase the dividend to reduce LOD in camera distance
 	camDistLODFactor  = std::max(1.0f, camDistLODFactor);
 	camDistLODFactor  = 1.0f / camDistLODFactor;
@@ -642,7 +656,7 @@ public:
 };
 
 
-void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int& numPatchesX)
+void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX)
 {
 	// very slow
 	//for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {

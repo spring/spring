@@ -14,6 +14,16 @@ CMatrix44f::CMatrix44f()
 	LoadIdentity();
 }
 
+CMatrix44f::CMatrix44f(const CMatrix44f& mat)
+{
+	for (unsigned int i = 0; i < 16; i += 4) {
+		m[i    ] = mat[i    ];
+		m[i + 1] = mat[i + 1];
+		m[i + 2] = mat[i + 2];
+		m[i + 3] = mat[i + 3];
+	}
+}
+
 
 CMatrix44f::CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z)
 {
@@ -61,8 +71,8 @@ void CMatrix44f::LoadIdentity()
 void CMatrix44f::RotateX(float rad)
 {
 /*
-	const float sr = sin(rad);
-	const float cr = cos(rad);
+	const float sr = math::sin(rad);
+	const float cr = math::cos(rad);
 
 	CMatrix44f rm;
 	rm[5]  = +cr;
@@ -72,8 +82,8 @@ void CMatrix44f::RotateX(float rad)
 
 	*this=Mul(rm);
 */
-	const float sr = sin(rad);
-	const float cr = cos(rad);
+	const float sr = math::sin(rad);
+	const float cr = math::cos(rad);
 
 	float a=m[4];
 	m[4] = cr*a - sr*m[8];
@@ -96,8 +106,8 @@ void CMatrix44f::RotateX(float rad)
 void CMatrix44f::RotateY(float rad)
 {
 /*
-	const float sr = sin(rad);
-	const float cr = cos(rad);
+	const float sr = math::sin(rad);
+	const float cr = math::cos(rad);
 
 	CMatrix44f rm;
 	rm[0]  = +cr;
@@ -107,8 +117,8 @@ void CMatrix44f::RotateY(float rad)
 
 	*this = Mul(rm);
 */
-	const float sr = sin(rad);
-	const float cr = cos(rad);
+	const float sr = math::sin(rad);
+	const float cr = math::cos(rad);
 
 	float a=m[0];
 	m[0] =  cr*a + sr*m[8];
@@ -131,8 +141,8 @@ void CMatrix44f::RotateY(float rad)
 void CMatrix44f::RotateZ(float rad)
 {
 /*
-	const float sr = sin(rad);
-	const float cr = cos(rad);
+	const float sr = math::sin(rad);
+	const float cr = math::cos(rad);
 
 	CMatrix44f rm;
 	rm[0] = +cr;
@@ -142,8 +152,8 @@ void CMatrix44f::RotateZ(float rad)
 
 	*this = Mul(rm);
 */
-	const float sr = sin(rad);
-	const float cr = cos(rad);
+	const float sr = math::sin(rad);
+	const float cr = math::cos(rad);
 
 	float a=m[0];
 	m[0] = cr*a - sr*m[4];
@@ -165,8 +175,8 @@ void CMatrix44f::RotateZ(float rad)
 
 void CMatrix44f::Rotate(float rad, const float3& axis)
 {
-	const float sr = sin(rad);
-	const float cr = cos(rad);
+	const float sr = math::sin(rad);
+	const float cr = math::cos(rad);
 
 	for(int a=0;a<3;++a){
 		float3 v(m[a*4],m[a*4+1],m[a*4+2]);

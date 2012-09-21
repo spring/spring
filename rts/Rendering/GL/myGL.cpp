@@ -85,7 +85,11 @@ void PrintAvailableResolutions()
 
 #ifdef GL_ARB_debug_output
 #if defined(WIN32) && !defined(HEADLESS)
-	#define _APIENTRY APIENTRY
+	#if defined(_MSC_VER) && _MSC_VER >= 1600
+		#define _APIENTRY __stdcall
+	#else
+		#define _APIENTRY APIENTRY
+	#endif
 #else
 	#define _APIENTRY
 #endif
@@ -172,19 +176,77 @@ static bool GetAvailableVideoRAM(GLint* memory)
 	if (GLEW_NVX_gpu_memory_info) {
 		glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &memory[0]);
 		glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &memory[1]);
-	}
+	} else
 	if (GLEW_ATI_meminfo) {
 		GLint texMemInfo[4];
 		glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, texMemInfo);
 
 		memory[0] = texMemInfo[1];
 		memory[1] = texMemInfo[0];
+	} else
+	{
+		memory[0] = SDL_GetVideoInfo()->video_mem;
+		memory[1] = memory[0]; // not available
 	}
 
 	return true;
 #endif
 }
 
+#if       !defined DEBUG
+static void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
+{
+	// Print out warnings for really crappy graphic cards/drivers
+	const std::string gfxCardVendor = (glVendor != NULL)? glVendor: "UNKNOWN";
+	const std::string gfxCardModel  = (glRenderer != NULL)? glRenderer: "UNKNOWN";
+	bool gfxCardIsCrap = false;
+
+	if (gfxCardVendor == "SiS") {
+		gfxCardIsCrap = true;
+	} else if (gfxCardModel.find("Intel") != std::string::npos) {
+		// the vendor does not have to be Intel
+		if (gfxCardModel.find(" 945G") != std::string::npos) {
+			gfxCardIsCrap = true;
+		} else if (gfxCardModel.find(" 915G") != std::string::npos) {
+			gfxCardIsCrap = true;
+		}
+	}
+
+	if (gfxCardIsCrap) {
+		LOG_L(L_WARNING, "WW     WWW     WW    AAA     RRRRR   NNN  NN  II  NNN  NN   GGGGG ");
+		LOG_L(L_WARNING, " WW   WW WW   WW    AA AA    RR  RR  NNNN NN  II  NNNN NN  GG     ");
+		LOG_L(L_WARNING, "  WW WW   WW WW    AAAAAAA   RRRRR   NN NNNN  II  NN NNNN  GG   GG");
+		LOG_L(L_WARNING, "   WWW     WWW    AA     AA  RR  RR  NN  NNN  II  NN  NNN   GGGGG ");
+		LOG_L(L_WARNING, "(warning)");
+		LOG_L(L_WARNING, "Your graphic card is ...");
+		LOG_L(L_WARNING, "well, you know ...");
+		LOG_L(L_WARNING, "insufficient");
+		LOG_L(L_WARNING, "(in case you are not using a horribly wrong driver).");
+		LOG_L(L_WARNING, "If the game crashes, looks ugly or runs slow, buy a better card!");
+		LOG_L(L_WARNING, ".");
+	}
+
+	if (!configHandler->GetBool("DisableCrappyGPUWarning")) {
+		if (gfxCardIsCrap) {
+			std::string msg =
+				"Warning!\n"
+				"Your graphics card is insufficient to play Spring.\n\n"
+				"If the game crashes, looks ugly or runs slow, buy a better card!\n"
+				"You may try \"spring --safemode\" to test if some of your issues are related to wrong settings.\n"
+				"\nHint: You can disable this MessageBox by appending \"DisableCrappyGPUWarning = 1\" to \"" + configHandler->GetConfigFile() + "\".";
+			Platform::MsgBox(msg, "Warning: Your GPU is not supported", MBF_EXCL);
+		} else if (globalRendering->haveMesa) {
+			std::string mesa_msg =
+				"Warning!\n"
+				"OpenSource graphics card drivers detected.\n"
+				"MesaGL/Gallium drivers are not able to run Spring. Try to switch to proprietary drivers.\n\n"
+				"You may try \"spring --safemode\".\n"
+				"\nHint: You can disable this MessageBox by appending \"DisableCrappyGPUWarning = 1\" to \"" + configHandler->GetConfigFile() + "\".";
+			Platform::MsgBox(mesa_msg, "Warning: Your GPU driver is not supported", MBF_EXCL);
+		}
+	}
+}
+#endif
 
 //FIXME move most of this to globalRendering's ctor?
 void LoadExtensions()
@@ -202,12 +264,13 @@ void LoadExtensions()
 	GLint vidMemBuffer[2] = {0, 0};
 
 	if (GetAvailableVideoRAM(vidMemBuffer)) {
-		const char* memFmtStr = "total %iMB, available %iMB";
 		const GLint totalMemMB = vidMemBuffer[0] / 1024;
 		const GLint availMemMB = vidMemBuffer[1] / 1024;
 
-		if (totalMemMB > 0 && availMemMB > 0)
+		if (totalMemMB > 0 && availMemMB > 0) {
+			const char* memFmtStr = "total %iMB, available %iMB";
 			SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
+		}
 	}
 	
 	// log some useful version info
@@ -220,57 +283,7 @@ void LoadExtensions()
 	LOG("Video RAM:    %s", glVidMemStr);
 
 #if       !defined DEBUG
-	{
-		// Print out warnings for really crappy graphic cards/drivers
-		const std::string gfxCardVendor = (glVendor != NULL)? glVendor: "UNKNOWN";
-		const std::string gfxCardModel  = (glRenderer != NULL)? glRenderer: "UNKNOWN";
-		bool gfxCardIsCrap = false;
-
-		if (gfxCardVendor == "SiS") {
-			gfxCardIsCrap = true;
-		} else if (gfxCardModel.find("Intel") != std::string::npos) {
-			// the vendor does not have to be Intel
-			if (gfxCardModel.find(" 945G") != std::string::npos) {
-				gfxCardIsCrap = true;
-			} else if (gfxCardModel.find(" 915G") != std::string::npos) {
-				gfxCardIsCrap = true;
-			}
-		}
-
-		if (gfxCardIsCrap) {
-			LOG_L(L_WARNING, "WW     WWW     WW    AAA     RRRRR   NNN  NN  II  NNN  NN   GGGGG ");
-			LOG_L(L_WARNING, " WW   WW WW   WW    AA AA    RR  RR  NNNN NN  II  NNNN NN  GG     ");
-			LOG_L(L_WARNING, "  WW WW   WW WW    AAAAAAA   RRRRR   NN NNNN  II  NN NNNN  GG   GG");
-			LOG_L(L_WARNING, "   WWW     WWW    AA     AA  RR  RR  NN  NNN  II  NN  NNN   GGGGG ");
-			LOG_L(L_WARNING, "(warning)");
-			LOG_L(L_WARNING, "Your graphic card is ...");
-			LOG_L(L_WARNING, "well, you know ...");
-			LOG_L(L_WARNING, "insufficient");
-			LOG_L(L_WARNING, "(in case you are not using a horribly wrong driver).");
-			LOG_L(L_WARNING, "If the game crashes, looks ugly or runs slow, buy a better card!");
-			LOG_L(L_WARNING, ".");
-		}
-
-		if (!configHandler->GetBool("DisableCrappyGPUWarning")) {
-			if (gfxCardIsCrap) {
-				std::string msg =
-					"Warning!\n"
-					"Your graphics card is insufficient to play Spring.\n\n"
-					"If the game crashes, looks ugly or runs slow, buy a better card!\n"
-					"You may try \"spring --safemode\" to test if some of your issues are related to wrong settings.\n"
-					"\nHint: You can disable this MessageBox by appending \"DisableCrappyGPUWarning = 1\" to \"" + configHandler->GetConfigFile() + "\".";
-				Platform::MsgBox(msg, "Warning: Your GPU is not supported", MBF_EXCL);
-			} else if (globalRendering->haveMesa) {
-				std::string mesa_msg =
-					"Warning!\n"
-					"OpenSource graphics card drivers detected.\n"
-					"MesaGL/Gallium drivers are not able to run Spring. Try to switch to proprietary drivers.\n\n"
-					"You may try \"spring --safemode\".\n"
-					"\nHint: You can disable this MessageBox by appending \"DisableCrappyGPUWarning = 1\" to \"" + configHandler->GetConfigFile() + "\".";
-				Platform::MsgBox(mesa_msg, "Warning: Your GPU driver is not supported", MBF_EXCL);
-			}
-		}
-	}
+	ShowCrappyGpuWarning(glVendor, glRenderer);
 #endif // !defined DEBUG
 
 	/*{
@@ -367,15 +380,15 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 
 	// create mipmapped texture
 
-	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmapEXT) && !globalRendering->atiHacks) {
+	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap) && !globalRendering->atiHacks) {
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 		if (globalRendering->atiHacks) {
 			glEnable(target);
-			glGenerateMipmapEXT(target);
+			glGenerateMipmap(target);
 			glDisable(target);
 		} else {
-			glGenerateMipmapEXT(target);
+			glGenerateMipmap(target);
 		}
 	} else if (GLEW_VERSION_1_4) {
 		// This required GL-1.4

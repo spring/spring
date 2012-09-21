@@ -168,8 +168,8 @@ public:
 
 	GLuint CreateTexture();
 
-	void AddGlyph(unsigned int& index, int& xsize, int& ysize, unsigned char* pixels, int& pitch);
-	void GetGlyph(unsigned int& index, CglFont::GlyphInfo* g) const;
+	void AddGlyph(unsigned int index, int xsize, int ysize, unsigned char* pixels, int pitch);
+	void GetGlyph(unsigned int index, CglFont::GlyphInfo* g) const;
 
 	int texWidth, texHeight;
 private:
@@ -272,7 +272,7 @@ void CFontTextureRenderer::CopyGlyphsIntoBitmapAtlas(bool outline)
 
 
 
-void CFontTextureRenderer::GetGlyph(unsigned int& index, CglFont::GlyphInfo* g) const
+void CFontTextureRenderer::GetGlyph(unsigned int index, CglFont::GlyphInfo* g) const
 {
 	const GlyphInfo& gi = glyphs[index];
 	g->u0 = gi.u / (float)texWidth;
@@ -286,7 +286,7 @@ void CFontTextureRenderer::GetGlyph(unsigned int& index, CglFont::GlyphInfo* g) 
 }
 
 
-void CFontTextureRenderer::AddGlyph(unsigned int& index, int& xsize, int& ysize, unsigned char* pixels, int& pitch)
+void CFontTextureRenderer::AddGlyph(unsigned int index, int xsize, int ysize, unsigned char* pixels, int pitch)
 {
 	GlyphInfo& g = glyphs[index];
 	g.xsize = xsize;
@@ -588,7 +588,7 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 	try {
 		CglFont* newFont = new CglFont(fontFile, size, outlinewidth, outlineweight);
 		return newFont;
-	} catch (const texture_size_exception& ex) {
+	} catch (const texture_size_exception&) {
 		LOG_L(L_ERROR, "Failed creating font: Could not create GlyphAtlas! (try to reduce the font size/outline-width)");
 		return NULL;
 	} catch (const content_error& ex) {
@@ -749,7 +749,7 @@ std::string CglFont::StripColorCodes(const std::string& text)
 }
 
 
-float CglFont::GetKerning(const unsigned int& left_char, const unsigned int& right_char) const
+float CglFont::GetKerning(const unsigned int left_char, const unsigned int right_char) const
 {
 	return glyphs[left_char].kerning[right_char];
 }
@@ -1880,7 +1880,7 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 }
 
 
-void CglFont::glPrint(float x, float y, float s, const int& options, const std::string& text)
+void CglFont::glPrint(float x, float y, float s, const int options, const std::string& text)
 {
 	//! s := scale or absolute size?
 	if (options & FONT_SCALE) {
@@ -1959,7 +1959,7 @@ void CglFont::glPrint(float x, float y, float s, const int& options, const std::
 	SetColors(&baseTextColor,&baseOutlineColor);
 }
 
-void CglFont::glPrintTable(float x, float y, float s, const int& options, const std::string& text) {
+void CglFont::glPrintTable(float x, float y, float s, const int options, const std::string& text) {
 	int col = 0;
 	int row = 0;
 	std::vector<std::string> coltext;
@@ -2096,14 +2096,14 @@ void CglFont::glPrintTable(float x, float y, float s, const int& options, const 
 		VSNPRINTF(out, sizeof(out), fmt, ap);  \
 		va_end(ap);
 
-void CglFont::glFormat(float x, float y, float s, const int& options, const char* fmt, ...)
+void CglFont::glFormat(float x, float y, float s, const int options, const char* fmt, ...)
 {
 	FORMAT_STRING(fmt,fmt,text);
 	glPrint(x, y, s, options, string(text));
 }
 
 
-void CglFont::glFormat(float x, float y, float s, const int& options, const string& fmt, ...)
+void CglFont::glFormat(float x, float y, float s, const int options, const string& fmt, ...)
 {
 	FORMAT_STRING(fmt,fmt.c_str(),text);
 	glPrint(x, y, s, options, string(text));

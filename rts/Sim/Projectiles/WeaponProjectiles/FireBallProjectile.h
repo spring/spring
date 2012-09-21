@@ -5,6 +5,7 @@
 
 #include "WeaponProjectile.h"
 #include <deque>
+#include "lib/gml/gmlcnf.h"
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 #define SPARK_QUEUE gmlCircularQueue<CFireBallProjectile::Spark,32>

@@ -63,8 +63,8 @@ public:
 	CUnit* GetClosestFriendlyUnit(const float3& pos, float searchRadius, int searchAllyteam);
 	CUnit* GetClosestEnemyAircraft(const float3& pos, float searchRadius, int searchAllyteam);
 
-	//get the position of a unit + eventuall error due to lack of los
-	float3 GetUnitErrorPos(const CUnit* unit, int allyteam);
+	// get the mid- or aim-position of a unit, offset by an error vector if not in LOS for <allyteam>
+	float3 GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming = false);
 
 	void BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* exclude);
 	float3 Pos2BuildPos(const BuildInfo& buildInfo, bool synced);
@@ -77,8 +77,25 @@ public:
 	void Update();
 	void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets);
 
-	void DoExplosionDamage(CUnit* unit, CUnit* owner, const float3& expPos, float expRad, float expSpeed, float edgeEffectiveness, bool ignoreOwner, const DamageArray& damages, const int weaponDefID);
-	void DoExplosionDamage(CFeature* feature, const float3& expPos, float expRad, const DamageArray& damages, const int weaponDefID);
+	void DoExplosionDamage(
+		CUnit* unit,
+		CUnit* owner,
+		const float3& expPos,
+		const float expRadius,
+		const float expSpeed,
+		const float expEdgeEffect,
+		const bool ignoreOwner,
+		const DamageArray& damages,
+		const int weaponDefID
+	);
+	void DoExplosionDamage(
+		CFeature* feature,
+		const float3& expPos,
+		const float expRadius,
+		const float expEdgeEffect,
+		const DamageArray& damages,
+		const int weaponDefID
+	);
 
 	void Explosion(const ExplosionParams& params);
 

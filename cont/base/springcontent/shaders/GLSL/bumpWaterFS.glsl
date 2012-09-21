@@ -131,7 +131,12 @@ vec4 waveIntensity(const vec4 v) {
 // MAIN()
 
 void main(void) {
-  // GET WATERDEPTH
+#ifdef dbg_coastmap
+    gl_FragColor = vec4(float(texture2D(coastmap, gl_TexCoord[0].st).r == 1.0));
+    return;
+#endif
+
+    // GET WATERDEPTH
     vec3 coast = vec3(0.0,0.0,1.0);
     float waterdepth,invwaterdepth;
 #ifdef opt_endlessocean
@@ -146,13 +151,18 @@ void main(void) {
     {
 #ifdef opt_shorewaves
       coast = texture2D(coastmap,gl_TexCoord[0].st).rgb;
-      if (coast.r==1.0) discard;
+      #ifdef dbg_coastmap
+      // note: debugging coastmap shows that r is *never* 1.0
+      // for any fragment so this line should be a no-op, yet
+      // with it enabled shorewaves break --> miscompilation?
+      if (coast.r == 1.0) discard;
+      #endif
       invwaterdepth = coast.b;
       waterdepth = 1.0 - invwaterdepth;
 #else
       invwaterdepth = texture2D(heightmap,gl_TexCoord[5].st).a; //heightmap in alpha channel
       waterdepth = 1.0 - invwaterdepth;
-      if (waterdepth==0.0) discard;
+      if (waterdepth == 0.0) discard;
 #endif
     }
 

@@ -86,7 +86,7 @@ CFarTextureHandler::~CFarTextureHandler()
 /**
  * @brief Returns the (row, column) pair of a FarTexture in the TextureAtlas.
  */
-int2 CFarTextureHandler::GetTextureCoordsInt(const int& farTextureNum, const int& orientation) const
+int2 CFarTextureHandler::GetTextureCoordsInt(const int farTextureNum, const int orientation) const
 {
 	const int texnum = (farTextureNum * numOrientations) + orientation;
 
@@ -99,7 +99,7 @@ int2 CFarTextureHandler::GetTextureCoordsInt(const int& farTextureNum, const int
 /**
  * @brief Returns the TexCoords of a FarTexture in the TextureAtlas.
  */
-float2 CFarTextureHandler::GetTextureCoords(const int& farTextureNum, const int& orientation) const
+float2 CFarTextureHandler::GetTextureCoords(const int farTextureNum, const int orientation) const
 {
 	float2 texcoords;
 

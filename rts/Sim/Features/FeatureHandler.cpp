@@ -57,10 +57,10 @@ CFeatureHandler::CFeatureHandler()
 		throw content_error("Error loading FeatureDefs");
 	}
 
-	//! featureDefIDs start with 1
+	// featureDefIDs start with 1
 	featureDefsVector.push_back(NULL);
 
-	//! get most of the feature defs (missing trees and geovent from the map)
+	// get most of the feature defs (missing trees and geovent from the map)
 	vector<string> keys;
 	rootTable.GetKeys(keys);
 	for (int i = 0; i < (int)keys.size(); i++) {
@@ -126,32 +126,22 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 	fd->autoreclaim   =  fdTable.GetBool("autoreclaimable", fd->reclaimable);
 	fd->resurrectable =  fdTable.GetInt("resurrectable",    -1);
 	fd->geoThermal    =  fdTable.GetBool("geoThermal",      false);
-
-	// this seem to be the closest thing to floating that ta wreckage contains
-	fd->floating = fdTable.GetBool("nodrawundergray", false);
-	if (fd->floating && !fd->blocking) {
-		fd->floating = false;
-	}
-
-	fd->noSelect = fdTable.GetBool("noselect", false);
+	fd->floating      =  fdTable.GetBool("floating",        false);
+	fd->noSelect      =  fdTable.GetBool("noselect",        false);
 
 	fd->deathFeature = fdTable.GetString("featureDead", "");
 
 	fd->metal       = fdTable.GetFloat("metal",  0.0f);
 	fd->energy      = fdTable.GetFloat("energy", 0.0f);
-	fd->maxHealth   = fdTable.GetFloat("damage", 0.0f);
+	fd->health      = fdTable.GetFloat("damage", 0.0f);
 	fd->reclaimTime = std::max(1.0f, fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy) * 6.0f));
 
 	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
+	fd->modelName = fdTable.GetString("object", "");
 	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_NONE);
-	fd->modelname = fdTable.GetString("object", "");
 
-	if (!fd->modelname.empty()) {
-		if (fd->modelname.find(".") == string::npos) {
-			fd->modelname += ".3do";
-		}
-		fd->modelname = "objects3d/" + fd->modelname;
+	if (!fd->modelName.empty()) {
 		fd->drawType = DRAWTYPE_MODEL;
 	}
 
@@ -162,13 +152,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 	// takes precedence over the old sphere tags as well
 	// as feature->radius (for feature <---> projectile
 	// interactions)
-	fd->collisionVolume = new CollisionVolume(
-		fdTable.GetString("collisionVolumeType", ""),
-		fdTable.GetFloat3("collisionVolumeScales", ZeroVector),
-		fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		fdTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_CONT)
-	);
-
+	fd->ParseCollisionVolume(fdTable);
 
 	fd->upright = fdTable.GetBool("upright", false);
 
@@ -177,10 +161,12 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 
 	const float minMass = CSolidObject::MINIMUM_MASS;
 	const float maxMass = CSolidObject::MAXIMUM_MASS;
-	const float defMass = (fd->metal * 0.4f) + (fd->maxHealth * 0.1f);
+	const float defMass = (fd->metal * 0.4f) + (fd->health * 0.1f);
 
 	fd->mass = Clamp(fdTable.GetFloat("mass", defMass), minMass, maxMass);
 	fd->crushResistance = fdTable.GetFloat("crushResistance", fd->mass);
+
+	fd->decalDef.Parse(fdTable);
 
 	// custom parameters table
 	fdTable.SubTable("customParams").GetMap(fd->customParams);
@@ -199,13 +185,13 @@ FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name
 	fd->energy = 250;
 	fd->metal = 0;
 	fd->reclaimTime = 1500;
-	fd->maxHealth = 5;
+	fd->health = 5.0f;
 	fd->xsize = 2;
 	fd->zsize = 2;
 	fd->name = name;
 	fd->description = "Tree";
 	fd->mass = 20;
-	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, CollisionVolume::COLVOL_HITTEST_DISC);
+	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector);
 	return fd;
 }
 
@@ -222,13 +208,14 @@ FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name)
 	fd->energy = 0;
 	fd->metal = 0;
 	fd->reclaimTime = 0;
-	fd->maxHealth = 0;
+	fd->health = 0.0f;
 	fd->xsize = 0;
 	fd->zsize = 0;
 	fd->name = name;
 	fd->mass = CSolidObject::DEFAULT_MASS;
-	// geothermals have no collision volume at all
-	fd->collisionVolume = NULL;
+	// geothermal features have no physical map presence
+	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector);
+	fd->collisionVolume->SetIgnoreHits(true);
 	return fd;
 }
 
@@ -268,7 +255,7 @@ const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
 
 void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 {
-	//! add default tree and geo FeatureDefs defined by the map
+	// add default tree and geo FeatureDefs defined by the map
 	const int numFeatureTypes = readmap->GetNumFeatureTypes();
 
 	for (int a = 0; a < numFeatureTypes; ++a) {
@@ -288,13 +275,13 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 		}
 	}
 
-	//! add a default geovent FeatureDef if the map did not
+	// add a default geovent FeatureDef if the map did not
 	if (GetFeatureDef("geovent", false) == NULL) {
 		AddFeatureDef("geovent", CreateDefaultGeoFeatureDef("geovent"));
 	}
 
 	if (!onlyCreateDefs) {
-		//! create map-specified feature instances
+		// create map-specified feature instances
 		const int numFeatures = readmap->GetNumFeatures();
 		MapFeatureInfo* mfi = new MapFeatureInfo[numFeatures];
 		readmap->GetFeatureInfo(mfi);
@@ -309,11 +296,11 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			}
 
 			const float ypos = ground->GetHeightReal(mfi[a].pos.x, mfi[a].pos.z);
-			(new CFeature)->Initialize(
-				float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
-				def->second, (short int) mfi[a].rotation,
-				0, -1, -1, NULL
-			);
+			const float3 fpos = float3(mfi[a].pos.x, ypos, mfi[a].pos.z);
+			const FeatureDef* fdef = def->second;
+
+			CFeature* f = new CFeature();
+			f->Initialize(fpos, fdef, (short int) mfi[a].rotation, 0, -1, -1, NULL);
 		}
 
 		delete[] mfi;
@@ -384,8 +371,8 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const string& name,
 	if (luaRules && !luaRules->AllowFeatureCreation(fd, team, pos))
 		return NULL;
 
-	if (!fd->modelname.empty()) {
-		CFeature* f = new CFeature;
+	if (!fd->modelName.empty()) {
+		CFeature* f = new CFeature();
 
 		if (fd->resurrectable == 0 || (iter > 1 && fd->resurrectable < 0)) {
 			f->Initialize(pos, fd, (short int) rot, facing, team, allyteam, NULL, speed, emitSmoke ? fd->smokeTime : 0);

@@ -11,13 +11,13 @@
 union SColor
 {
 	/// Initialize with values in the range [0, 255]
-	SColor(const boost::uint8_t& r, const boost::uint8_t& g, const boost::uint8_t& b, const boost::uint8_t& a = 255)
+	SColor(const boost::uint8_t r, const boost::uint8_t g, const boost::uint8_t b, const boost::uint8_t a = 255)
 		: r(r), g(g), b(b), a(a) {}
 	/// Initialize with values in the range [0, 255]
-	SColor(const int& r, const int& g, const int& b, const int& a = 255)
+	SColor(const int r, const int g, const int b, const int a = 255)
 		: r(r), g(g), b(b), a(a) {}
 	/// Initialize with values in the range [0.0, 1.0]
-	SColor(const float& r, const float& g, const float& b, const float& a = 1.0f)
+	SColor(const float r, const float g, const float b, const float a = 1.0f)
 		: r((unsigned char)(r * 255.0f))
 		, g((unsigned char)(g * 255.0f))
 		, b((unsigned char)(b * 255.0f))

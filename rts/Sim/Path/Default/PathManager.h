@@ -37,7 +37,7 @@ public:
 		float3 callerPos,
 		float minDistance = 0.0f,
 		int numRetries = 0,
-		int ownerId = 0,
+		const CSolidObject* owner = NULL,
 		bool synced = true
 	);
 
@@ -71,7 +71,7 @@ public:
 
 	void GetPathWayPoints(unsigned int pathID, std::vector<float3>& points, std::vector<int>& starts) const;
 
-	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
+	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int type);
 
 	bool SetNodeExtraCost(unsigned int, unsigned int, float, bool);
 	bool SetNodeExtraCosts(const float*, unsigned int, unsigned int, bool);
@@ -116,9 +116,10 @@ private:
 		CSolidObject* caller;
 	};
 
+	inline MultiPath* GetMultiPath(int pathID) const;
 	unsigned int Store(MultiPath* path);
-	void LowRes2MedRes(MultiPath& path, const float3& startPos, int ownerId, bool synced) const;
-	void MedRes2MaxRes(MultiPath& path, const float3& startPos, int ownerId, bool synced) const;
+	void LowRes2MedRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
+	void MedRes2MaxRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 
 	CPathFinder* maxResPF;
 	CPathEstimator* medResPE;
@@ -130,5 +131,12 @@ private:
 	std::map<unsigned int, MultiPath*> pathMap;
 	unsigned int nextPathID;
 };
+
+inline CPathManager::MultiPath* CPathManager::GetMultiPath(int pathID) const {
+	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
+	if (pi == pathMap.end())
+		return NULL;
+	return pi->second;
+}
 
 #endif

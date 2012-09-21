@@ -18,6 +18,7 @@
 #include "System/mmgr.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"
+#include "System/MsgStrings.h"
 
 #include <SDL_keysym.h>
 
@@ -26,7 +27,7 @@
 
 #undef CreateDirectory
 
-CQuitBox::CQuitBox(void)
+CQuitBox::CQuitBox()
 {
 	box.x1 = 0.34f;
 	box.y1 = 0.18f;
@@ -98,11 +99,11 @@ CQuitBox::CQuitBox(void)
 	}
 }
 
-CQuitBox::~CQuitBox(void)
+CQuitBox::~CQuitBox()
 {
 }
 
-void CQuitBox::Draw(void)
+void CQuitBox::Draw()
 {
 	float mx=MouseX(mouse->lastx);
 	float my=MouseY(mouse->lasty);
@@ -193,7 +194,7 @@ void CQuitBox::Draw(void)
 		if (teamHandler->Team(actualTeam)->leader >= 0)
 			teamName = playerHandler->Player(teamHandler->Team(actualTeam)->leader)->name;
 		else
-			teamName = "uncontrolled";
+			teamName = UncontrolledPlayerName;
 
 		std::string ally, dead;
 		if (teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(actualTeam))) {

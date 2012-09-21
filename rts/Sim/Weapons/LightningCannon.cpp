@@ -27,11 +27,11 @@ CLightningCannon::CLightningCannon(CUnit* owner)
 {
 }
 
-CLightningCannon::~CLightningCannon(void)
+CLightningCannon::~CLightningCannon()
 {
 }
 
-void CLightningCannon::Update(void)
+void CLightningCannon::Update()
 {
 	if (targetType != Target_None) {
 		weaponPos = owner->pos +
@@ -83,7 +83,7 @@ bool CLightningCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 	return true;
 }
 
-void CLightningCannon::Init(void)
+void CLightningCannon::Init()
 {
 	CWeapon::Init();
 }
@@ -177,7 +177,7 @@ void CLightningCannon::FireImpl()
 
 
 
-void CLightningCannon::SlowUpdate(void)
+void CLightningCannon::SlowUpdate()
 {
 	CWeapon::SlowUpdate();
 }

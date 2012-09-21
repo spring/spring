@@ -54,12 +54,14 @@ public:
 	void LoadGame(const std::string& mapName);
 
 	/// show GameEnd-window, calculate mouse movement etc.
-	void GameEnd(const std::vector<unsigned char>& winningAllyTeams);
+	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);
 
 private:
 	void LoadDefs();
-	void LoadSimulation(const std::string& mapName);
-	void LoadRendering();
+	void PreLoadSimulation(const std::string& mapName);
+	void PostLoadSimulation();
+	void PreLoadRendering();
+	void PostLoadRendering();
 	void LoadInterface();
 	void LoadLua();
 	void LoadFinalize();
@@ -149,7 +151,7 @@ public:
 	spring_time frameStartTime;
 	spring_time lastUpdateTime;
 	spring_time lastSimFrameTime;
-	spring_time lastDrawFrameUpdate;
+	spring_time lastDrawFrameTime;
 	spring_time lastModGameTimeMeasure;
 
 	float updateDeltaSeconds;
@@ -194,7 +196,7 @@ public:
 	std::map<int, PlayerTrafficInfo> playerTraffic;
 
 	// to smooth out SimFrame calls
-	int leastQue;          ///< Lowest value of que in the past second.
+	int unconsumedFrames;          ///< Lowest number of unconsumed frames in the past second.
 	float msgProcTimeLeft; ///< How many SimFrame() calls we still may do.
 	float consumeSpeed;    ///< How fast we should eat NETMSG_NEWFRAMEs.
 	spring_time lastframe; ///< time of previous ClientReadNet() call.

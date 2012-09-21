@@ -8,7 +8,6 @@
 #include <vector>
 #include "Rendering/GL/myGL.h"
 #include "System/Platform/Threading.h"
-#include "lib/gml/gml_base.h"
 
 struct TexFile;
 struct S3DModel;

@@ -1964,7 +1964,7 @@ int springLegacyAI::CAIAICallback::HandleCommand(int commandId, void* data) {
 			break;
 		}
 		case AIHCAddMapPointId: {
-			AIHCAddMapPoint* myData = (AIHCAddMapPoint*) data;
+			const AIHCAddMapPoint* myData = static_cast<AIHCAddMapPoint*>(data);
 			float pos[3];
 			myData->pos.copyInto(pos);
 			SAddPointDrawCommand cmd = {pos, myData->label};
@@ -1972,7 +1972,7 @@ int springLegacyAI::CAIAICallback::HandleCommand(int commandId, void* data) {
 			break;
 		}
 		case AIHCAddMapLineId: {
-			AIHCAddMapLine* myData = (AIHCAddMapLine*) data;
+			const AIHCAddMapLine* myData = static_cast<AIHCAddMapLine*>(data);
 			float posfrom[3];
 			myData->posfrom.copyInto(posfrom);
 			float posto[3];
@@ -1982,7 +1982,7 @@ int springLegacyAI::CAIAICallback::HandleCommand(int commandId, void* data) {
 			break;
 		}
 		case AIHCRemoveMapPointId: {
-			AIHCRemoveMapPoint* myData = (AIHCRemoveMapPoint*) data;
+			const AIHCRemoveMapPoint* myData = static_cast<AIHCRemoveMapPoint*>(data);
 			float pos[3];
 			myData->pos.copyInto(pos);
 			SRemovePointDrawCommand cmd = {pos};
@@ -1990,7 +1990,7 @@ int springLegacyAI::CAIAICallback::HandleCommand(int commandId, void* data) {
 			break;
 		}
 		case AIHCSendStartPosId: {
-			AIHCSendStartPos* myData = (AIHCSendStartPos*) data;
+			const AIHCSendStartPos* myData = static_cast<AIHCSendStartPos*>(data);
 			float pos[3];
 			myData->pos.copyInto(pos);
 			SSendStartPosCommand cmd = {myData->ready, pos};
@@ -1999,7 +1999,7 @@ int springLegacyAI::CAIAICallback::HandleCommand(int commandId, void* data) {
 		}
 
 		case AIHCTraceRayId: {
-			AIHCTraceRay* myData = (AIHCTraceRay*) data;
+			AIHCTraceRay* myData = static_cast<AIHCTraceRay*>(data);
 			float rayPos[3];
 			myData->rayPos.copyInto(rayPos);
 			float rayDir[3];
@@ -2021,7 +2021,7 @@ int springLegacyAI::CAIAICallback::HandleCommand(int commandId, void* data) {
 		}
 
 		case AIHCFeatureTraceRayId: {
-			AIHCFeatureTraceRay* myData = (AIHCFeatureTraceRay*) data;
+			AIHCFeatureTraceRay* myData = static_cast<AIHCFeatureTraceRay*>(data);
 			float rayPos[3];
 			myData->rayPos.copyInto(rayPos);
 			float rayDir[3];
@@ -2043,7 +2043,7 @@ int springLegacyAI::CAIAICallback::HandleCommand(int commandId, void* data) {
 		}
 
 		case AIHCPauseId: {
-			AIHCPause* cppCmdData = (AIHCPause*) data;
+			const AIHCPause* cppCmdData = static_cast<AIHCPause*>(data);
 			SPauseCommand cCmdData = {
 				cppCmdData->enable,
 				cppCmdData->reason
@@ -2053,7 +2053,7 @@ int springLegacyAI::CAIAICallback::HandleCommand(int commandId, void* data) {
 		}
 
 		case AIHCGetDataDirId: {
-			AIHCGetDataDir* cppCmdData = (AIHCGetDataDir*) data;
+			AIHCGetDataDir* cppCmdData = static_cast<AIHCGetDataDir*>(data);
 			cppCmdData->ret_path = sAICallback->DataDirs_allocatePath(
 					skirmishAIId,
 					cppCmdData->relPath,

@@ -12,10 +12,11 @@
 #include "System/EventClient.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 
+class CSolidObject;
 class CUnit;
 class CBuilding;
 class CVertexArray;
-struct GhostBuilding;
+struct S3DModel;
 
 namespace Shader {
 	struct IProgramObject;
@@ -79,8 +80,19 @@ struct TrackToClean {
 	std::set<UnitTrackStruct*>* tracks;
 };
 
-struct BuildingGroundDecal {
-	BuildingGroundDecal()
+struct SolidObjectGroundDecal;
+struct GhostSolidObject {
+	SolidObjectGroundDecal* decal;
+	S3DModel* model;
+
+	float3 pos;
+
+	int facing;
+	int team;
+};
+
+struct SolidObjectGroundDecal {
+	SolidObjectGroundDecal()
 		: va(NULL)
 		, owner(NULL)
 		, gbOwner(NULL)
@@ -94,11 +106,12 @@ struct BuildingGroundDecal {
 		, alpha(1.0f)
 		, alphaFalloff(1.0f)
 	{}
-	~BuildingGroundDecal();
+	~SolidObjectGroundDecal();
 
 	CVertexArray* va;
-	CBuilding* owner;
-	GhostBuilding* gbOwner;
+	CSolidObject* owner;
+	GhostSolidObject* gbOwner;
+
 	int posx;
 	int posy;
 	int xsize;
@@ -120,7 +133,6 @@ public:
 	~CGroundDecalHandler();
 
 	void Draw();
-	void Update();
 
 	void RemoveUnit(CUnit* unit);
 	int GetTrackType(const std::string& name);
@@ -128,10 +140,10 @@ public:
 	void AddExplosion(float3 pos, float damage, float radius, bool);
 	void ExplosionOccurred(const CExplosionEvent& event);
 
-	void AddBuilding(CBuilding* building);
-	void RemoveBuilding(CBuilding* building, GhostBuilding* gb);
-	void ForceRemoveBuilding(CBuilding* building);
-	int GetBuildingDecalType(const std::string& name);
+	void MoveSolidObject(CSolidObject* object, const float3& pos);
+	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
+	void ForceRemoveSolidObject(CSolidObject* object);
+	int GetSolidObjectDecalType(const std::string& name);
 
 	bool GetDrawDecals() const { return drawDecals; }
 	void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } }
@@ -139,18 +151,24 @@ public:
 public:
 	bool WantsEvent(const std::string& eventName) {
 		return 
-			(eventName == "UnitMoved") ||
-			(eventName == "SunChanged");
+			(eventName == "SunChanged") ||
+			(eventName == "RenderUnitMoved") ||
+			(eventName == "RenderFeatureMoved") ||
+			(eventName == "UnitLoaded") ||
+			(eventName == "UnitUnloaded");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
 	void SunChanged(const float3& sunDir);
-	void UnitMoved(const CUnit*);
+	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
+	void RenderUnitMoved(const CUnit* unit, const float3& newpos);
+	void UnitLoaded(const CUnit* unit, const CUnit* transport);
+	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 
 private:
 	void LoadDecalShaders();
-	void DrawBuildingDecals();
+	void DrawObjectDecals();
 
 	void AddTracks();
 	void DrawTracks();
@@ -159,7 +177,7 @@ private:
 	void AddScars();
 	void DrawScars();
 
-	void UnitMovedNow(CUnit* unit);
+	void AddDecalAndTrack(CUnit* unit, const float3& newpos);
 
 private:
 	unsigned int scarTex;
@@ -176,15 +194,15 @@ private:
 	};
 	std::vector<TrackType*> trackTypes;
 
-	struct BuildingDecalType {
-		BuildingDecalType()
-			: texture(0)
-		{}
+	struct SolidObjectDecalType {
+		SolidObjectDecalType(): texture(0) {}
+
 		std::string name;
-		std::set<BuildingGroundDecal*> buildingDecals;
+		std::set<SolidObjectGroundDecal*> objectDecals;
+
 		unsigned int texture;
 	};
-	std::vector<BuildingDecalType*> buildingDecalTypes;
+	std::vector<SolidObjectDecalType*> objectDecalTypes;
 
 	struct Scar {
 		Scar()
@@ -236,7 +254,7 @@ private:
 	};
 
 	std::vector<Shader::IProgramObject*> decalShaders;
-	std::vector<BuildingGroundDecal*> decalsToDraw;
+	std::vector<SolidObjectGroundDecal*> decalsToDraw;
 
 	std::list<Scar*> scars;
 	std::vector<Scar*> scarsToBeAdded;
@@ -245,8 +263,6 @@ private:
 	std::vector<TrackToAdd> tracksToBeAdded;
 	std::vector<TrackToClean> tracksToBeCleaned;
 	std::vector<UnitTrackStruct*> tracksToBeDeleted;
-
-	std::vector<CUnit*> moveUnits;
 
 	int lastTest;
 	float maxOverlap;
@@ -257,7 +273,7 @@ private:
 	int scarFieldX;
 	int scarFieldY;
 
-	void DrawBuildingDecal(BuildingGroundDecal* decal);
+	void DrawObjectDecal(SolidObjectGroundDecal* decal);
 	void DrawGroundScar(Scar* scar, bool fade);
 
 	int OverlapSize(Scar* s1, Scar* s2);

@@ -150,16 +150,16 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	va->Initialize();
 
 	const unsigned char fogColor[4] = {
-		(255 * mapInfo->atmosphere.fogColor[0]),
-		(255 * mapInfo->atmosphere.fogColor[1]),
-		(255 * mapInfo->atmosphere.fogColor[2]),
+		(unsigned char)(255 * mapInfo->atmosphere.fogColor[0]),
+		(unsigned char)(255 * mapInfo->atmosphere.fogColor[1]),
+		(unsigned char)(255 * mapInfo->atmosphere.fogColor[2]),
 		 255
 	};
 
 	const unsigned char planeColor[4] = {
-		(255 * mapInfo->water.planeColor[0]),
-		(255 * mapInfo->water.planeColor[1]),
-		(255 * mapInfo->water.planeColor[2]),
+		(unsigned char)(255 * mapInfo->water.planeColor[0]),
+		(unsigned char)(255 * mapInfo->water.planeColor[1]),
+		(unsigned char)(255 * mapInfo->water.planeColor[2]),
 		 255
 	};
 
@@ -256,7 +256,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 }
 
 
-void CSMFGroundDrawer::DrawShadowPass(void)
+void CSMFGroundDrawer::DrawShadowPass()
 {
 	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return;
@@ -276,9 +276,9 @@ void CSMFGroundDrawer::DrawShadowPass(void)
 
 
 
-void CSMFGroundDrawer::SetupBaseDrawPass(void) { smfRenderStateSSP->SetCurrentShader(DrawPass::Normal); }
-void CSMFGroundDrawer::SetupReflDrawPass(void) { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterReflection); }
-void CSMFGroundDrawer::SetupRefrDrawPass(void) { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterRefraction); }
+void CSMFGroundDrawer::SetupBaseDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::Normal); }
+void CSMFGroundDrawer::SetupReflDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterReflection); }
+void CSMFGroundDrawer::SetupRefrDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterRefraction); }
 
 void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
 {

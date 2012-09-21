@@ -144,7 +144,7 @@ CMiniMap::CMiniMap()
 		const int divs = (1 << (cl + 3));
 		for (int d = 0; d < divs; d++) {
 			const float rads = float(2.0 * PI) * float(d) / float(divs);
-			glVertex3f(sin(rads), 0.0f, cos(rads));
+			glVertex3f(math::sin(rads), 0.0f, math::cos(rads));
 		}
 		glEnd();
 		glEndList();
@@ -223,7 +223,7 @@ void CMiniMap::ParseGeometry(const string& geostr)
 	}
 
 	if ((width <= 0) && (height <= 0)) {
-		const float hw = sqrt(float(gs->mapx) / float(gs->mapy));
+		const float hw = math::sqrt(float(gs->mapx) / float(gs->mapy));
 		width = (int)(-width * hw);
 		height = (int)(-height / hw);
 	}
@@ -300,8 +300,8 @@ void CMiniMap::SetSlaveMode(bool newMode)
 		mouseMove   = false;
 		mouseResize = false;
 	}
-	static int oldButtonSize = 16;
 	if (newMode != slaveDrawMode) {
+		static int oldButtonSize = 16;
 		if (newMode) {
 			oldButtonSize = buttonSize;
 			buttonSize = 0;
@@ -444,8 +444,8 @@ void CMiniMap::UpdateGeometry()
 	const float h = float(height);
 	const float mapx = float(gs->mapx * SQUARE_SIZE);
 	const float mapy = float(gs->mapy * SQUARE_SIZE);
-	const float ref  = unitBaseSize / pow((200.f * 200.0f), unitExponent);
-	const float dpr  = ref * pow((w * h), unitExponent);
+	const float ref  = unitBaseSize / math::pow((200.f * 200.0f), unitExponent);
+	const float dpr  = ref * math::pow((w * h), unitExponent);
 
 	unitSizeX = dpr * (mapx / w);
 	unitSizeY = dpr * (mapy / h);
@@ -503,6 +503,7 @@ void CMiniMap::MoveView(int x, int y)
 	float3 clickPos;
 	clickPos.x = ((float(x -                               xpos          )) /  width) * (gs->mapx * SQUARE_SIZE);
 	clickPos.z = ((float(y - (globalRendering->viewSizeY - ypos - height))) / height) * (gs->mapy * SQUARE_SIZE);
+	camHandler->CameraTransition(0.15f);
 	camHandler->GetCurrentController().SetPos(clickPos);
 	unitTracker.Disable();
 }
@@ -859,7 +860,7 @@ void CMiniMap::DrawCircle(const float3& pos, float radius)
 
 	const float xPixels = radius * float(width) / float(gs->mapx * SQUARE_SIZE);
 	const float yPixels = radius * float(height) / float(gs->mapy * SQUARE_SIZE);
-	const int lod = (int)(0.25 * log2(1.0f + (xPixels * yPixels)));
+	const int lod = (int)(0.25 * math::log2(1.0f + (xPixels * yPixels)));
 	const int lodClamp = std::max(0, std::min(circleListsCount - 1, lod));
 	glCallList(circleLists + lodClamp);
 
@@ -1181,10 +1182,10 @@ void CMiniMap::DrawForReal(bool use_geo)
 		glLoadIdentity();
 		glScalef(1.0f / width, 1.0f / height, 1.0f);
 
-		const double plane0[4] = {0,-1,0,height};
-		const double plane1[4] = {0,1,0,0};
-		const double plane2[4] = {-1,0,0,width};
-		const double plane3[4] = {1,0,0,0};
+		const double plane0[4] = {0, -1, 0, double(height)};
+		const double plane1[4] = {0, 1, 0, 0};
+		const double plane2[4] = {-1, 0, 0, double(width)};
+		const double plane3[4] = {1, 0, 0, 0};
 
 		glClipPlane(GL_CLIP_PLANE0, plane0); // clip bottom
 		glClipPlane(GL_CLIP_PLANE1, plane1); // clip top
@@ -1441,10 +1442,9 @@ void CMiniMap::DrawUnit(const CUnit* unit)
 	}
 
 	// set the color
-	if (unit->commandAI->selected) {
+	if (unit->isSelected) {
 		glColor3f(1.0f, 1.0f, 1.0f);
-	}
-	else {
+	} else {
 		if (simpleColors) {
 			if (unit->team == gu->myTeam) {
 				glColor3ubv(myColor);
@@ -1499,7 +1499,9 @@ void CMiniMap::DrawUnitHighlight(const CUnit* unit)
 
 void CMiniMap::DrawNotes()
 {
-	if (notes.size()<=0) return;
+	if (notes.empty()) {
+		return;
+	}
 
 	const float baseSize = gs->mapx * SQUARE_SIZE;
 	CVertexArray* va = GetVertexArray();

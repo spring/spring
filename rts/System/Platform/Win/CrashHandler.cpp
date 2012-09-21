@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gml_base.h"
 #include <windows.h>
 #include <process.h>
 #include <imagehlp.h>
@@ -31,8 +31,11 @@ int dummyStackLock = stackLockInit();
 static void SigAbrtHandler(int signal)
 {
 	// cause an exception if on windows
-	// TODO FIXME do a proper stacktrace dump here
-	*((int*)(0)) = 0;
+	LOG_L(L_ERROR, "Spring received an ABORT signal");
+
+	OutputStacktrace();
+
+	ErrorMessageBox("Abort / abnormal termination", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
 }
 
 /** Convert exception code to human readable string. */
@@ -310,9 +313,8 @@ void CleanupStacktrace() {
 
 void OutputStacktrace() {
 	LOG_L(L_ERROR, "Error handler invoked for Spring %s.", SpringVersion::GetFull().c_str());
-#ifdef USE_GML
-	LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
-#endif
+	if (GML::Enabled())
+		LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
 
 	PrepareStacktrace();
 
@@ -335,9 +337,8 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	// Prologue.
 	logSinkHandler.SetSinking(false);
 	LOG_L(L_ERROR, "Spring %s has crashed.", SpringVersion::GetFull().c_str());
-#ifdef USE_GML
-	LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
-#endif
+	if (GML::Enabled())
+		LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
 
 	PrepareStacktrace();
 

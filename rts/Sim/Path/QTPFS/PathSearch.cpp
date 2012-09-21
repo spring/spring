@@ -23,7 +23,7 @@ void QTPFS::PathSearch::Initialize(
 	PathCache* cache,
 	const float3& sourcePoint,
 	const float3& targetPoint,
-	const SRectangle& searchArea
+	const PathRectangle& searchArea
 ) {
 	srcPoint = sourcePoint; srcPoint.ClampInBounds();
 	tgtPoint = targetPoint; tgtPoint.ClampInBounds();
@@ -84,7 +84,7 @@ bool QTPFS::PathSearch::Execute(
 		openNodes.reset();
 		openNodes.push(srcNode);
 
-		UpdateNode(srcNode, NULL, 0.0f, (tgtPoint - srcPoint).Length() * hCostMult, srcNode->GetMoveCost());
+		UpdateNode(srcNode, NULL, 0.0f, srcPoint.distance(tgtPoint) * hCostMult, srcNode->GetMoveCost());
 	}
 
 	while (!openNodes.empty()) {
@@ -134,10 +134,10 @@ void QTPFS::PathSearch::UpdateNode(
 	float mCost
 ) {
 	// NOTE:
-	//     the heuristic must never over-estimate the distance,
-	//     but this is *impossible* to achieve on a non-regular
-	//     grid on which any node only has an average move-cost
-	//     associated with it --> paths will be "nearly optimal"
+	//   the heuristic must never over-estimate the distance,
+	//   but this is *impossible* to achieve on a non-regular
+	//   grid on which any node only has an average move-cost
+	//   associated with it --> paths will be "nearly optimal"
 	nxt->SetSearchState(searchState | NODE_STATE_OPEN);
 	nxt->SetPrevNode(cur);
 	nxt->SetPathCost(NODE_PATH_COST_G, gCost);
@@ -196,7 +196,7 @@ void QTPFS::PathSearch::Iterate(
 	const float hWeight = 2.0f;
 	#endif
 
-	#ifdef QTPFS_COPY_NEIGHBOR_NODES
+	#ifdef QTPFS_COPY_ITERATE_NEIGHBOR_NODES
 	const unsigned int numNgbs = curNode->GetNeighbors(allNodes, ngbNodes);
 	#else
 	// cannot assign to <ngbNodes> because that would still make a copy
@@ -206,27 +206,27 @@ void QTPFS::PathSearch::Iterate(
 
 	for (unsigned int i = 0; i < numNgbs; i++) {
 		// NOTE:
-		//     this uses the actual distance that edges of the final path will cover,
-		//     from <curPoint> (initialized to sourcePoint) to the middle of the edge
-		//     shared between <curNode> and <nxtNode>
-		//     (each individual path-segment is weighted by the average move-cost of
-		//     the node it crosses; the heuristic is weighted by the average move-cost
-		//     of all nodes encountered along partial path thus far)
+		//   this uses the actual distance that edges of the final path will cover,
+		//   from <curPoint> (initialized to sourcePoint) to the middle of the edge
+		//   shared between <curNode> and <nxtNode>
+		//   (each individual path-segment is weighted by the average move-cost of
+		//   the node it crosses; the heuristic is weighted by the average move-cost
+		//   of all nodes encountered along partial path thus far)
 		// NOTE:
-		//     heading for the MIDDLE of the shared edge is not always the best option
-		//     we deal with this sub-optimality later (in SmoothPath if it is enabled)
+		//   heading for the MIDDLE of the shared edge is not always the best option
+		//   we deal with this sub-optimality later (in SmoothPath if it is enabled)
 		// NOTE:
-		//     short paths that should have 3 points (2 nodes) can contain 4 (3 nodes);
-		//     this happens when a path takes a "detour" through a corner neighbor of
-		//     srcNode if the shared corner vertex is closer to the goal position than
-		//     the mid-point on the edge between srcNode and tgtNode
+		//   short paths that should have 3 points (2 nodes) can contain 4 (3 nodes);
+		//   this happens when a path takes a "detour" through a corner neighbor of
+		//   srcNode if the shared corner vertex is closer to the goal position than
+		//   the mid-point on the edge between srcNode and tgtNode
 		// NOTE:
-		//     H needs to be of the same order as G, otherwise the search reduces to
-		//     Dijkstra (if G dominates H) or becomes inadmissable (if H dominates G)
-		//     in the first case we would explore many more nodes than necessary (CPU
-		//     nightmare), while in the second we would get low-quality paths (player
-		//     nightmare)
-		#ifdef QTPFS_COPY_NEIGHBOR_NODES
+		//   H needs to be of the same order as G, otherwise the search reduces to
+		//   Dijkstra (if G dominates H) or becomes inadmissable (if H dominates G)
+		//   in the first case we would explore many more nodes than necessary (CPU
+		//   nightmare), while in the second we would get low-quality paths (player
+		//   nightmare)
+		#ifdef QTPFS_COPY_ITERATE_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
 		#else
 		nxtNode = nxtNodes[i];
@@ -247,8 +247,8 @@ void QTPFS::PathSearch::Iterate(
 
 		// cannot use squared-distances because that will bias paths
 		// towards smaller nodes (eg. 1^2 + 1^2 + 1^2 + 1^2 != 4^2)
-		const float gDist = (nxtPoint - curPoint).Length();
-		const float hDist = (tgtPoint - nxtPoint).Length();
+		const float gDist = curPoint.distance(nxtPoint);
+		const float hDist = nxtPoint.distance(tgtPoint);
 
 		const float mCost =
 			curNode->GetPathCost(NODE_PATH_COST_M) +
@@ -293,9 +293,6 @@ void QTPFS::PathSearch::Iterate(
 void QTPFS::PathSearch::Finalize(IPath* path) {
 	TracePath(path);
 
-	path->SetSourcePoint(srcPoint);
-	path->SetTargetPoint(tgtPoint);
-
 	#ifdef QTPFS_SMOOTH_PATHS
 	SmoothPath(path);
 	#endif
@@ -321,15 +318,21 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 
 			assert(!math::isinf(tmpPoint.x) && !math::isinf(tmpPoint.z));
 			assert(!math::isnan(tmpPoint.x) && !math::isnan(tmpPoint.z));
-			// NOTE: waypoints should NEVER have identical coordinates
-			assert(tmpPoint != prvPoint);
+			// NOTE:
+			//   waypoints should NEVER have identical coordinates
+			//   one exception: tgtPoint can legitimately coincide
+			//   with first transition-point, which we must ignore
+			assert(tmpNode != prvNode);
+			assert(tmpPoint != prvPoint || tmpNode == tgtNode);
 
-			points.push_front(tmpPoint);
+			if (tmpPoint != prvPoint) {
+				points.push_front(tmpPoint);
+			}
 
 			#ifndef QTPFS_SMOOTH_PATHS
 			// make sure the back-pointers can never become dangling
-			// if smoothing IS enabled, we delay this until we reach
-			// SmoothPath() because we still need them there
+			// (if smoothing IS enabled, we delay this until we reach
+			// SmoothPath() because we still need them there)
 			tmpNode->SetPrevNode(NULL);
 			#endif
 
@@ -344,16 +347,17 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 		path->AllocPoints(points.size() + 2);
 	} else {
 		assert(path->NumPoints() == 2);
-		return;
 	}
 
-	// set waypoints with indices [1, N - 2]; the first (0)
-	// and last (N - 1) waypoint are not set until after we
-	// return
+	// set waypoints with indices [1, N - 2] (if any)
 	while (!points.empty()) {
 		path->SetPoint((path->NumPoints() - points.size()) - 1, points.front());
 		points.pop_front();
 	}
+
+	// set the first (0) and last (N - 1) waypoint
+	path->SetSourcePoint(srcPoint);
+	path->SetTargetPoint(tgtPoint);
 }
 
 void QTPFS::PathSearch::SmoothPath(IPath* path) {

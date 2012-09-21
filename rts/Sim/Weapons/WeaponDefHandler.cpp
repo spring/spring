@@ -23,8 +23,6 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sound/ISound.h"
 
-using std::min;
-using std::max;
 
 CR_BIND(WeaponDef, );
 
@@ -42,10 +40,9 @@ CWeaponDefHandler::CWeaponDefHandler()
 	vector<string> weaponNames;
 	rootTable.GetKeys(weaponNames);
 
-	numWeaponDefs = weaponNames.size();
-	weaponDefs = new WeaponDef[numWeaponDefs];
+	weaponDefs.resize(weaponNames.size());
 
-	for (int wid = 0; wid < numWeaponDefs; wid++) {
+	for (int wid = 0; wid < weaponDefs.size(); wid++) {
 		WeaponDef& wd = weaponDefs[wid];
 		wd.id = wid;
 		wd.name = weaponNames[wid];
@@ -59,7 +56,6 @@ CWeaponDefHandler::CWeaponDefHandler()
 
 CWeaponDefHandler::~CWeaponDefHandler()
 {
-	delete[] weaponDefs;
 }
 
 
@@ -67,8 +63,9 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 {
 	wd.tdfId = wdTable.GetInt("id", 0);
 
-	wd.description = wdTable.GetString("name",     "Weapon");
-	wd.cegTag      = wdTable.GetString("cegTag",   "");
+	wd.description = wdTable.GetString("name",       "Weapon");
+	wd.type        = wdTable.GetString("weaponType", "Cannon");
+	wd.cegTag      = wdTable.GetString("cegTag",     "");
 
 	wd.avoidFriendly = wdTable.GetBool("avoidFriendly", true);
 	wd.avoidFeature  = wdTable.GetBool("avoidFeature",  true);
@@ -95,7 +92,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.tracks        = wdTable.GetBool("tracks",          false);
 	wd.fixedLauncher = wdTable.GetBool("fixedLauncher",   false);
 	wd.noExplode     = wdTable.GetBool("noExplode",       false);
-	wd.isShield      = wdTable.GetBool("isShield",        false);
+	wd.isShield      = wdTable.GetBool("isShield",        (wd.type == "Shield"));
 	wd.beamtime      = wdTable.GetFloat("beamTime",       1.0f);
 	wd.beamburst     = wdTable.GetBool("beamburst",       false);
 
@@ -111,10 +108,10 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.gravityAffected = wdTable.GetBool("gravityAffected", false);
 
-	wd.type = wdTable.GetString("weaponType", "Cannon");
-
 	wd.targetBorder = Clamp(wdTable.GetFloat("targetBorder", (wd.type == "Melee")? 1.0f : 0.0f), -1.0f, 1.0f);
-	wd.cylinderTargetting = Clamp(wdTable.GetFloat("cylinderTargetting", (wd.type == "Melee")? 1.0f : 0.0f), 0.0f, 128.0f);
+	wd.cylinderTargeting = Clamp(wdTable.GetFloat("cylinderTargeting", wdTable.GetFloat("cylinderTargetting", (wd.type == "Melee")? 1.0f : 0.0f)), 0.0f, 128.0f);
+	if (wdTable.KeyExists("cylinderTargetting"))
+		LOG_L(L_WARNING, "weapondef cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).");
 
 	wd.range = wdTable.GetFloat("range", 10.0f);
 
@@ -124,9 +121,9 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	// should really be tan but TA seem to cap it somehow
 	// should also be 7fff or ffff theoretically but neither seems good
-	wd.accuracy       = sin((accuracy)       * PI / 0xafff);
-	wd.sprayAngle     = sin((sprayAngle)     * PI / 0xafff);
-	wd.movingAccuracy = sin((movingAccuracy) * PI / 0xafff);
+	wd.accuracy       = math::sin((accuracy)       * PI / 0xafff);
+	wd.sprayAngle     = math::sin((sprayAngle)     * PI / 0xafff);
+	wd.movingAccuracy = math::sin((movingAccuracy) * PI / 0xafff);
 
 	wd.targetMoveError = wdTable.GetFloat("targetMoveError", 0.0f);
 	wd.leadLimit = wdTable.GetFloat("leadLimit", -1.0f);
@@ -172,7 +169,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	}
 
 	wd.projectilespeed = std::max(0.01f, wdTable.GetFloat("weaponVelocity", 0.0f) / GAME_SPEED);
-	wd.startvelocity = max(0.01f, wdTable.GetFloat("startVelocity", 0.0f) / GAME_SPEED);
+	wd.startvelocity = std::max(0.01f, wdTable.GetFloat("startVelocity", 0.0f) / GAME_SPEED);
 	wd.weaponacceleration = wdTable.GetFloat("weaponAcceleration", 0.0f) / GAME_SPEED / GAME_SPEED;
 	wd.reload = wdTable.GetFloat("reloadTime", 1.0f);
 	wd.salvodelay = wdTable.GetFloat("burstRate", 0.1f);
@@ -191,19 +188,23 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.fireStarter = wdTable.GetFloat("fireStarter", 0.0f) * 0.01f;
 	wd.paralyzer = wdTable.GetBool("paralyzer", false);
 	if (wd.paralyzer) {
-		wd.damages.paralyzeDamageTime = max(0, wdTable.GetInt("paralyzeTime", 10));
+		wd.damages.paralyzeDamageTime = std::max(0, wdTable.GetInt("paralyzeTime", 10));
 	} else {
 		wd.damages.paralyzeDamageTime = 0;
 	}
 
 	const float defShake = wd.paralyzer ? 0.0f : wd.damages.GetDefaultDamage();
 	wd.cameraShake = wdTable.GetFloat("cameraShake", defShake);
-	wd.cameraShake = max(0.0f, wd.cameraShake);
+	wd.cameraShake = std::max(0.0f, wd.cameraShake);
 
-	// 0.78.2.1 backwards compatibility
-	bool defaultSoundTrigger = (wd.type == "BeamLaser" && !wd.beamburst) || 
-								wd.type == "Melee"  || wd.type == "Rifle";
-	wd.soundTrigger = wdTable.GetBool("soundTrigger", defaultSoundTrigger);
+	{
+		// 0.78.2.1 backwards compatibility: non-burst beamlasers play one
+		// sample per shot, not for each individual beam making up the shot
+		const bool singleSampleShot = (wd.type == "BeamLaser" && !wd.beamburst);
+		const bool singleShotWeapon = (wd.type == "Melee" || wd.type == "Rifle");
+
+		wd.soundTrigger = wdTable.GetBool("soundTrigger", singleSampleShot || singleShotWeapon);
+	}
 
 	//sunparser->GetDef(wd.highTrajectory, "0", weaponname + "minbarrelangle");
 	wd.stockpile     = wdTable.GetBool("stockpile", false);
@@ -305,11 +306,11 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	if ((wd.type == "AircraftBomb") && !wdTable.GetBool("manualBombSettings", false)) {
 		// allow manually specifying burst and burstrate for AircraftBomb
 		if (wd.reload < 0.5f) {
-			wd.salvodelay = min(0.2f, wd.reload);
+			wd.salvodelay = std::min(0.2f, wd.reload);
 			wd.salvosize = (int)(1 / wd.salvodelay) + 1;
 			wd.reload = 5;
 		} else {
-			wd.salvodelay = min(0.4f, wd.reload);
+			wd.salvodelay = std::min(0.4f, wd.reload);
 			wd.salvosize = 2;
 		}
 	}
@@ -368,8 +369,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	}
 
 
-	const float gd = max(30.0f, wd.damages[0] / 20.0f);
-	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (sqrt(gd) * 0.7f)) * 0.5f;
+	const float gd = std::max(30.0f, wd.damages[0] / 20.0f);
+	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (math::sqrt(gd) * 0.7f)) * 0.5f;
 	wd.explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
 
 	// Dynamic Damage
@@ -439,9 +440,9 @@ void CWeaponDefHandler::ParseWeaponVisuals(const LuaTable& wdTable, WeaponDef& w
 }
 
 void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd) {
-	LoadSound(wdTable, wd.fireSound, "start");
-	LoadSound(wdTable, wd.hitSound, "hitDry"); // idx 0
-	LoadSound(wdTable, wd.hitSound, "hitWet"); // idx 1
+	LoadSound(wdTable, "soundStart",  0, wd.fireSound.sounds);
+	LoadSound(wdTable, "soundHitDry", 0, wd.hitSound.sounds);
+	LoadSound(wdTable, "soundHitWet", 1, wd.hitSound.sounds);
 
 	// FIXME: do we still want or need any of this?
 	const bool forceSetVolume =
@@ -455,7 +456,7 @@ void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd
 			wd.hitSound.setVolume(0, 5.0f);
 			wd.hitSound.setVolume(1, 5.0f);
 		} else {
-			float fireSoundVolume = sqrt(wd.damages[0] * 0.5f);
+			float fireSoundVolume = math::sqrt(wd.damages[0] * 0.5f);
 
 			if (wd.type == "LaserCannon") {
 				fireSoundVolume *= 0.5f;
@@ -466,7 +467,7 @@ void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd
 			if ((fireSoundVolume > 100.0f) &&
 			    ((wd.type == "MissileLauncher") ||
 			     (wd.type == "StarburstLauncher"))) {
-				fireSoundVolume = 10.0f * sqrt(hitSoundVolume);
+				fireSoundVolume = 10.0f * math::sqrt(hitSoundVolume);
 			}
 
 			if (wd.damageAreaOfEffect > 8.0f) {
@@ -485,50 +486,57 @@ void CWeaponDefHandler::ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd
 
 
 
-void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
-                                  GuiSoundSet& gsound, const string& soundCat)
+void CWeaponDefHandler::LoadSound(
+	const LuaTable& wdTable,
+	const string& soundKey,
+	const unsigned int soundIdx,
+	std::vector<GuiSoundSet::Data>& soundData)
 {
 	string name = "";
+	int id = -1;
 	float volume = -1.0f;
 
-	if (soundCat == "start") {
-		name   = wdTable.GetString("soundStart", "");
-		volume = wdTable.GetFloat("soundStartVolume", -1.0f);
+	soundData.push_back(GuiSoundSet::Data(name, id, volume));
+	assert(soundIdx < soundData.size());
+	assert(soundData[soundIdx].id == -1);
+
+	if (soundKey == "soundStart") {
+		name   = wdTable.GetString(soundKey, "");
+		volume = wdTable.GetFloat(soundKey + "Volume", -1.0f);
 	}
-	else if (soundCat == "hitDry") {
-		name   = wdTable.GetString("soundHitDry", wdTable.GetString("soundHit", ""));
-		volume = wdTable.GetFloat("soundHitDryVolume", wdTable.GetFloat("soundHitVolume", -1.0f));
+	else if (soundKey == "soundHitDry") {
+		name   = wdTable.GetString(soundKey, wdTable.GetString("soundHit", ""));
+		volume = wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f));
 	}
-	else if (soundCat == "hitWet") {
-		name   = wdTable.GetString("soundHitWet", wdTable.GetString("soundHit", ""));
-		volume = wdTable.GetFloat("soundHitWetVolume", wdTable.GetFloat("soundHitVolume", -1.0f));
+	else if (soundKey == "soundHitWet") {
+		name   = wdTable.GetString(soundKey, wdTable.GetString("soundHit", ""));
+		volume = wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f));
 	}
 
-	if (!name.empty()) {
-		const int id = LoadSoundFile(name);
+	if (name.empty())
+		return;
 
-		if (id > 0) {
-			gsound.sounds.push_back(GuiSoundSet::Data(name, id, volume));
-		}
+	if ((id = LoadSoundFile(name)) > 0) {
+		soundData[soundIdx] = GuiSoundSet::Data(name, id, volume);
 	}
 }
 
 
-const WeaponDef *CWeaponDefHandler::GetWeapon(const string& weaponname2)
+const WeaponDef *CWeaponDefHandler::GetWeapon(std::string weaponname) const
 {
-	string weaponname(StringToLower(weaponname2));
+	StringToLowerInPlace(weaponname);
 
-	map<string,int>::iterator ii=weaponID.find(weaponname);
-	if(ii == weaponID.end())
+	std::map<std::string,int>::const_iterator ii = weaponID.find(weaponname);
+	if (ii == weaponID.end())
 		return NULL;
 
 	return &weaponDefs[ii->second];
 }
 
 
-const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId)
+const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId) const
 {
-	if ((weaponDefId < 0) || (weaponDefId >= numWeaponDefs)) {
+	if ((weaponDefId < 0) || (weaponDefId >= weaponDefs.size())) {
 		return NULL;
 	}
 	return &weaponDefs[weaponDefId];
@@ -536,43 +544,34 @@ const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId)
 
 
 
-DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startPos, float3 curPos, float range, float exp, float damageMin, bool inverted)
+DamageArray CWeaponDefHandler::DynamicDamages(const DamageArray damages, const float3 startPos, const float3 curPos, const float range, const float exp, const float damageMin, const bool inverted)
 {
 	DamageArray dynDamages(damages);
 
-	curPos.y = 0;
-	startPos.y = 0;
+	const float travDist  = std::min(range, curPos.distance2D(startPos));
+	const float damageMod = 1.0f - math::pow(1.0f / range * travDist, exp);
+	const float ddmod     = damageMin / damages[0]; // get damage mod from first damage type
 
-	float travDist = (curPos-startPos).Length()>range?range:(curPos-startPos).Length();
-	float ddmod = 0;
-
-	if (damageMin > 0)
-		ddmod = damageMin/damages[0]; // get damage mod from first damage type
-
-	if (inverted == true) {
+	if (inverted) {
 		for(int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
-			dynDamages[i] = damages[i] - (1 - pow(1 / range * travDist, exp)) * damages[i];
+			dynDamages[i] = damages[i] - damageMod * damages[i];
 
 			if (damageMin > 0)
-				dynDamages[i] = max(damages[i] * ddmod, dynDamages[i]);
+				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
 
 			// to prevent div by 0
-			dynDamages[i] = max(0.0001f, dynDamages[i]);
-//			LOG_L(L_DEBUG, "D%i: %f (%f) - mod %f", i, dynDamages[i], damages[i], ddmod);
-//			LOG_L(L_DEBUG, "F%i: %f - (1 - (1/%f * %f) ^ %f) * %f", i, damages[i], range, travDist, exp, damages[i]);
+			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
 		}
 	}
 	else {
 		for(int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
-			dynDamages[i] = (1 - pow(1 / range * travDist, exp)) * damages[i];
+			dynDamages[i] = damageMod * damages[i];
 
 			if (damageMin > 0)
-				dynDamages[i] = max(damages[i] * ddmod, dynDamages[i]);
+				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
 
 			// div by 0
-			dynDamages[i] = max(0.0001f, dynDamages[i]);
-//			LOG_L(L_DEBUG, "D%i: %f (%f) - mod %f", i, dynDamages[i], damages[i], ddmod);
-//			LOG_L(L_DEBUG, "F%i: (1 - (1/%f * %f) ^ %f) * %f", i, range, travDist, exp, damages[i]);
+			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
 		}
 	}
 	return dynDamages;

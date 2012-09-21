@@ -27,6 +27,7 @@
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
+#include "lib/gml/gmlmut.h"
 
 // reserve 5% of maxNanoParticles for important stuff such as capture and reclaim other teams' units
 #define NORMAL_NANO_PRIO 0.95f
@@ -116,6 +117,8 @@ CProjectileHandler::~CProjectileHandler()
 	unsyncedProjectileIDs.clear();
 
 	ph = NULL;
+
+	CCollisionHandler::PrintStats();
 }
 
 void CProjectileHandler::Serialize(creg::ISerializer* s)
@@ -224,7 +227,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			qf->MovedProjectile(p);
 
 			PROJECTILE_SANITY_CHECK(p);
-			GML_GET_TICKS(p->lastProjUpdate);
+			GML::GetTicks(p->lastProjUpdate);
 
 			++pci;
 		}
@@ -239,7 +242,7 @@ void CProjectileHandler::Update()
 
 	{
 		SCOPED_TIMER("ProjectileHandler::Update");
-		GML_UPDATE_TICKS();
+		GML::UpdateTicks();
 
 		UpdateProjectileContainer(syncedProjectiles, true);
 		UpdateProjectileContainer(unsyncedProjectiles, false);
@@ -382,13 +385,12 @@ void CProjectileHandler::CheckUnitCollisions(
 	const float3& ppos0,
 	const float3& ppos1)
 {
-	CollisionQuery q;
+	CollisionQuery cq;
 
 	for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
 		CUnit* unit = *ui;
 
 		const CUnit* attacker = p->owner();
-		const bool raytraced = (unit->collisionVolume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
 
 		// if this unit fired this projectile, always ignore
 		if (attacker == unit) {
@@ -405,28 +407,13 @@ void CProjectileHandler::CheckUnitCollisions(
 			if (unit->IsNeutral()) { continue; }
 		}
 
-		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &q)) {
-			if (q.lmp != NULL) {
-				unit->SetLastAttackedPiece(q.lmp, gs->frameNum);
+		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &cq)) {
+			if (cq.lmp != NULL) {
+				unit->SetLastAttackedPiece(cq.lmp, gs->frameNum);
 			}
 
-			// The current projectile <p> won't reach the raytraced surface impact
-			// position until ::Update() is called (same frame). This is a problem
-			// when dealing with fast low-AOE projectiles since they would do almost
-			// no damage if detonated outside the collision volume. Therefore, smuggle
-			// a bit with its position now (rather than rolling it back in ::Update()
-			// and waiting for the next-frame CheckUnitCol(), which is problematic
-			// for noExplode projectiles).
-
-			// const float3& pimpp = (q.b0)? q.p0: q.p1;
-			const float3 pimpp =
-				(q.b0 && q.b1)? ( q.p0 +  q.p1) * 0.5f:
-				(q.b0        )? ( q.p0 + ppos1) * 0.5f:
-								(ppos0 +  q.p1) * 0.5f;
-
-			p->pos = (raytraced)? pimpp: ppos0;
+			p->pos = (cq.b0) ? cq.p0 : cq.p1;
 			p->Collision(unit);
-			p->pos = (raytraced)? ppos0: p->pos;
 			break;
 		}
 	}
@@ -445,29 +432,18 @@ void CProjectileHandler::CheckFeatureCollisions(
 	if ((p->GetCollisionFlags() & Collision::NOFEATURES) != 0)
 		return;
 
-	CollisionQuery q;
+	CollisionQuery cq;
 
 	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
 		CFeature* feature = *fi;
 
-		// geothermals do not have a collision volume, skip them
-		if (!feature->blocking || feature->def->geoThermal) {
+		if (!feature->blocking) {
 			continue;
 		}
 
-		const bool raytraced =
-			(feature->collisionVolume &&
-			feature->collisionVolume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
-
-		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &q)) {
-			const float3 pimpp =
-				(q.b0 && q.b1)? (q.p0 + q.p1) * 0.5f:
-				(q.b0        )? (q.p0 + ppos1) * 0.5f:
-								(ppos0 + q.p1) * 0.5f;
-
-			p->pos = (raytraced)? pimpp: ppos0;
+		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
+			p->pos = (cq.b0) ? cq.p0 : cq.p1;
 			p->Collision(feature);
-			p->pos = (raytraced)? ppos0: p->pos;
 			break;
 		}
 	}

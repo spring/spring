@@ -3,7 +3,7 @@
 #include <boost/lexical_cast.hpp>
 #include "System/mmgr.h"
 
-#include "MoveInfo.h"
+#include "MoveDefHandler.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "Map/ReadMap.h"
@@ -54,7 +54,6 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(flowMod),
 
 	CR_MEMBER(moveMath),
-	CR_MEMBER(tempOwner),
 
 	CR_RESERVED(16)
 ));
@@ -82,7 +81,7 @@ static float DegreesToMaxSlope(float degrees)
 	const float deg = Clamp(degrees, 0.0f, 60.0f) * 1.5f;
 	const float rad = deg * degToRad;
 
-	return (1.0f - cos(rad));
+	return (1.0f - math::cos(rad));
 }
 
 
@@ -206,7 +205,6 @@ MoveDef::MoveDef() {
 	flowMod           = 1.0f;
 
 	moveMath          = NULL;
-	tempOwner         = NULL;
 }
 
 MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
@@ -255,11 +253,11 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 		}
 	}
 
-	speedModMults[SPEEDMOD_MOBILE_BUSY_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileBusyMult", 0.10f));
-	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileIdleMult", 0.35f));
-	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 0.65f));
+	speedModMults[SPEEDMOD_MOBILE_BUSY_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileBusyMult", 1.0f /*0.10f*/));
+	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileIdleMult", 1.0f /*0.35f*/));
+	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 1.0f /*0.65f*/));
 
-	avoidMobilesOnPath = moveTable.GetBool("avoidMobilesOnPath", false);
+	avoidMobilesOnPath = moveTable.GetBool("avoidMobilesOnPath", true);
 	heatMapping = moveTable.GetBool("heatMapping", false);
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
 
@@ -328,7 +326,7 @@ bool MoveDef::TestMoveSquare(const int hmx, const int hmz) const {
 	for (int i = hmx - xsizeh; i <= hmx + xsizeh; i++) {
 		for (int j = hmz - zsizeh; j <= hmz + zsizeh; j++) {
 			const float speedMod = moveMath->GetPosSpeedMod(*this, hmx + i, hmz + j);
-			const CMoveMath::BlockType blockBits = moveMath->IsBlocked(*this, hmx + i, hmz + j);
+			const CMoveMath::BlockType blockBits = moveMath->IsBlocked(*this, hmx + i, hmz + j, NULL);
 
 			// check both terrain and the blocking-map
 			ret &= ((speedMod > 0.0f) && ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0));

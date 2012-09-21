@@ -26,6 +26,10 @@ IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineDedicatedLibraries dl)
 ENDIF (UNIX)
+IF    (PREFER_STATIC_LIBS)
+	# dependency of minizip
+	LIST(APPEND engineDedicatedLibraries ${ZLIB_LIBRARY})
+ENDIF (PREFER_STATIC_LIBS)
 
 IF    (MINGW OR APPLE)
 	# Windows:

@@ -176,7 +176,7 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->avoidFeature = weaponDef->avoidFeature;
 	weapon->avoidNeutral = weaponDef->avoidNeutral;
 	weapon->targetBorder = weaponDef->targetBorder;
-	weapon->cylinderTargetting = weaponDef->cylinderTargetting;
+	weapon->cylinderTargeting = weaponDef->cylinderTargeting;
 	weapon->minIntensity = weaponDef->minIntensity;
 	weapon->heightBoostFactor = weaponDef->heightBoostFactor;
 	weapon->collisionFlags = weaponDef->collisionFlags;

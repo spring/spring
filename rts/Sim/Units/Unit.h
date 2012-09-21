@@ -3,7 +3,7 @@
 #ifndef UNIT_H
 #define UNIT_H
 
-#include "lib/gml/gmlcnf.h" // for GML_ENABLE_SIM
+#include "lib/gml/gml_base.h" // for GML_ENABLE_SIM
 #ifdef USE_GML
 	#include <boost/thread/recursive_mutex.hpp>
 #endif
@@ -86,8 +86,8 @@ public:
 	virtual void AddImpulse(const float3&);
 	virtual void FinishedBuilding(bool postInit);
 
-	bool AttackGround(const float3& pos, bool wantManualFire, bool fpsMode = false);
-	bool AttackUnit(CUnit* unit, bool wantManualFire, bool fpsMode = false);
+	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
+	bool AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
 
 	int GetBlockingMapID() const { return id; }
 
@@ -100,7 +100,7 @@ public:
 	/// turn the unit off
 	void Deactivate();
 
-	void ForcedMove(const float3& newPos);
+	void ForcedMove(const float3& newPos, bool snapToGround = true);
 	void ForcedSpin(const float3& newDir);
 	void SetHeadingFromDirection();
 
@@ -115,11 +115,13 @@ public:
 		lastAttackedPiece      = p;
 		lastAttackedPieceFrame = f;
 	}
+	bool HaveLastAttackedPiece(int f) const {
+		return (lastAttackedPiece != NULL && lastAttackedPieceFrame == f);
+	}
 
 	void DependentDied(CObject* o);
 
-	void SetUserTarget(CUnit* target);
-	bool SetGroup(CGroup* group);
+	bool SetGroup(CGroup* group, bool fromFactory = false);
 
 	bool AllowedReclaim(CUnit* builder) const;
 	bool UseMetal(float metal);
@@ -144,6 +146,9 @@ public:
 	bool IsNeutral() const {
 		return neutral;
 	}
+
+	void SetStunned(bool stun);
+	bool IsStunned() const { return stunned; }
 
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
@@ -226,8 +231,6 @@ public:
 
 	/// used by constructing units
 	bool inBuildStance;
-	/// if we are stunned by a weapon or for other reason
-	bool stunned;
 	/// tells weapons that support it to try to use a high trajectory
 	bool useHighTrajectory;
 
@@ -252,9 +255,11 @@ public:
 	CWeapon* stockpileWeapon;
 	float reloadSpeed;
 	float maxRange;
+
+	/// true if at least one weapon has targetType != Target_None
 	bool haveTarget;
-	bool haveUserTarget;
 	bool haveManualFireRequest;
+
 	/// used to determine muzzle flare size
 	float lastMuzzleFlameSize;
 	float3 lastMuzzleFlameDir;
@@ -360,11 +365,10 @@ public:
 	/// decaying value of how much damage the unit has taken recently (for severity of death)
 	float recentDamage;
 
-	CUnit* userTarget;
-	float3 userAttackPos;
+	CUnit* attackTarget;
+	float3 attackPos;
+
 	bool userAttackGround;
-	/// number of shots due to the latest command
-	int commandShotCount;
 
 	int fireState;
 	int moveState;
@@ -457,6 +461,7 @@ public:
 	bool noMinimap;
 	bool leaveTracks;
 
+	bool isSelected;
 	bool isIcon;
 	float iconRadius;
 
@@ -509,8 +514,8 @@ private:
 	static float expHealthScale;
 	static float expReloadScale;
 	static float expGrade;
-
-	static float empDecline;
+	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
+	bool stunned;
 };
 
 #endif // UNIT_H

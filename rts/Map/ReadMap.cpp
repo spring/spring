@@ -114,8 +114,8 @@ CReadMap::CReadMap()
 	, currMinHeight(0.0f)
 	, currMaxHeight(0.0f)
 	, mapChecksum(0)
-	, heightMapSynced(NULL)
-	, heightMapUnsynced(NULL)
+	, heightMapSyncedPtr(NULL)
+	, heightMapUnsyncedPtr(NULL)
 {
 }
 
@@ -186,11 +186,11 @@ void CReadMap::Initialize()
 	slopeMap.resize(gs->hmapx * gs->hmapy);
 	visVertexNormals.resize(gs->mapxp1 * gs->mapyp1);
 
-	assert(heightMapSynced != NULL);
-	assert(heightMapUnsynced != NULL);
+	assert(heightMapSyncedPtr != NULL);
+	assert(heightMapUnsyncedPtr != NULL);
 
 	CalcHeightmapChecksum();
-	UpdateHeightMapSynced(0, 0, gs->mapx, gs->mapy);
+	UpdateHeightMapSynced(SRectangle(0, 0, gs->mapx, gs->mapy), true);
 	//FIXME can't call that yet cause sky & skyLight aren't created yet (crashes in SMFReadMap.cpp)
 	//UpdateDraw(); 
 }
@@ -221,68 +221,116 @@ void CReadMap::CalcHeightmapChecksum()
 	currMaxHeight = initMaxHeight;
 }
 
-void CReadMap::UpdateDraw() {
-	std::list<HeightMapUpdate> ushmu;
-	std::list<HeightMapUpdate>::const_iterator ushmuIt;
+
+void CReadMap::UpdateDraw()
+{
+	if (unsyncedHeightMapUpdates.empty())
+		return;
+
+	std::list<SRectangle> ushmu;
+	std::list<SRectangle>::const_iterator ushmuIt;
 
 	{
 		GML_STDMUTEX_LOCK(map); // UpdateDraw
+		
+		if (!unsyncedHeightMapUpdates.empty())
+			unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap to avoid Optimize() inside a mutex
+	}
+	{
 
-		static const float MIN_UNSYNCED_UPDATES_RATIO = 0.0625f;
-		static const size_t MIN_UNSYNCED_UPDATES = 32U;
-		       const size_t maxUpdates = unsyncedHeightMapUpdates.size();
-		       const size_t minUpdates = maxUpdates * MIN_UNSYNCED_UPDATES_RATIO;
-		       const size_t numUpdates = std::min(maxUpdates, std::max(MIN_UNSYNCED_UPDATES, minUpdates));
+		SCOPED_TIMER("ReadMap::UpdateHeightMapOptimize");
 
-		// process the first <numUpdates> pending updates
-		for (size_t n = 0; n < numUpdates; n++) {
-			ushmu.push_back(unsyncedHeightMapUpdates.front());
-			unsyncedHeightMapUpdates.pop_front();
+		static bool first = true;
+		if (!first) {
+			if (!unsyncedHeightMapUpdatesTemp.empty()) {
+				unsyncedHeightMapUpdatesTemp.Optimize();
+				int updateArea = unsyncedHeightMapUpdatesTemp.GetTotalArea() * 0.0625f + (50 * 50);
+
+				while (updateArea > 0 && !unsyncedHeightMapUpdatesTemp.empty()) {
+					const SRectangle& rect = unsyncedHeightMapUpdatesTemp.front();
+					updateArea -= rect.GetArea();
+					ushmu.push_back(rect);
+					unsyncedHeightMapUpdatesTemp.pop_front();
+				}
+			}
+		} else {
+			// first update is full map
+			unsyncedHeightMapUpdatesTemp.swap(ushmu);
+			first = false;
 		}
 	}
+	if (!unsyncedHeightMapUpdatesTemp.empty()) {
+		GML_STDMUTEX_LOCK(map); // UpdateDraw
+
+		unsyncedHeightMapUpdates.splice(unsyncedHeightMapUpdates.end(), unsyncedHeightMapUpdatesTemp);
+	}
+	// unsyncedHeightMapUpdatesTemp is now guaranteed empty
 
 	SCOPED_TIMER("ReadMap::UpdateHeightMapUnsynced");
 
 	for (ushmuIt = ushmu.begin(); ushmuIt != ushmu.end(); ++ushmuIt) {
 		UpdateHeightMapUnsynced(*ushmuIt);
-
-		const SRectangle rect(ushmuIt->x1, ushmuIt->y1, ushmuIt->x2, ushmuIt->y2);
-		eventHandler.UnsyncedHeightMapUpdate(rect);
+	}
+	for (ushmuIt = ushmu.begin(); ushmuIt != ushmu.end(); ++ushmuIt) {
+		eventHandler.UnsyncedHeightMapUpdate(*ushmuIt);
 	}
 }
 
 
-
-void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
+void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 {
-	if ((x1 >= x2) || (z1 >= z2)) {
+	if (rect.GetArea() <= 0) {
 		// do not bother with zero-area updates
 		return;
 	}
 
 	SCOPED_TIMER("ReadMap::UpdateHeightMapSynced");
 
-	x1 = std::max(         0, x1 - 1);
-	z1 = std::max(         0, z1 - 1);
-	x2 = std::min(gs->mapxm1, x2 + 1);
-	z2 = std::min(gs->mapym1, z2 + 1);
+	rect.x1 = std::max(         0, rect.x1 - 1);
+	rect.z1 = std::max(         0, rect.z1 - 1);
+	rect.x2 = std::min(gs->mapxm1, rect.x2 + 1);
+	rect.z2 = std::min(gs->mapym1, rect.z2 + 1);
 
-	UpdateCenterHeightmap(x1, z1, x2, z2);
-	UpdateMipHeightmaps(x1, z1, x2, z2);
-	UpdateFaceNormals(x1, z1, x2, z2);
-	UpdateSlopemap(x1, z1, x2, z2); // must happen after UpdateFaceNormals()!
+	UpdateCenterHeightmap(rect);
+	UpdateMipHeightmaps(rect);
+	UpdateFaceNormals(rect);
+	UpdateSlopemap(rect); // must happen after UpdateFaceNormals()!
 
+#ifdef USE_UNSYNCED_HEIGHTMAP
 	// push the unsynced update
-	PushVisibleHeightMapUpdate(x1, z1,  x2, z2,  false);
+	if (initialize) {
+		// push 1st update through without LOS check
+		GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
+		unsyncedHeightMapUpdates.push_back(rect);
+	} else {
+		InitHeightMapDigestsVectors();
+		const int losSquaresX = loshandler->losSizeX; // size of LOS square in heightmap coords
+		const SRectangle& lm = rect * (SQUARE_SIZE * loshandler->invLosDiv); // LOS space
+
+		// we updated the heightmap so change their digest (byte-overflow is intentional!)
+		for (int lmx = lm.x1; lmx <= lm.x2; ++lmx) {
+			for (int lmz = lm.z1; lmz <= lm.z2; ++lmz) {
+				const int idx = lmx + lmz * (losSquaresX + 1);
+				assert(idx < syncedHeightMapDigests.size());
+				syncedHeightMapDigests[idx]++;
+			}
+		}
+
+		HeightMapUpdateLOSCheck(rect);
+	}
+#else
+	GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
+	unsyncedHeightMapUpdates.push_back(rect);
+#endif
 }
 
 
-void CReadMap::UpdateCenterHeightmap(const int x1, const int z1, const int x2, const int z2)
+void CReadMap::UpdateCenterHeightmap(const SRectangle& rect)
 {
 	const float* heightmapSynced = GetCornerHeightMapSynced();
 
-	for (int y = z1; y <= z2; y++) {
-		for (int x = x1; x <= x2; x++) {
+	for (int y = rect.z1; y <= rect.z2; y++) {
+		for (int x = rect.x1; x <= rect.x2; x++) {
 			const int idxTL = (y    ) * gs->mapxp1 + x;
 			const int idxTR = (y    ) * gs->mapxp1 + x + 1;
 			const int idxBL = (y + 1) * gs->mapxp1 + x;
@@ -299,13 +347,18 @@ void CReadMap::UpdateCenterHeightmap(const int x1, const int z1, const int x2, c
 }
 
 
-void CReadMap::UpdateMipHeightmaps(const int x1, const int z1, const int x2, const int z2)
+void CReadMap::UpdateMipHeightmaps(const SRectangle& rect)
 {
 	for (int i = 0; i < numHeightMipMaps - 1; i++) {
 		const int hmapx = gs->mapx >> i;
 
-		for (int y = ((z1 >> i) & (~1)); y < (z2 >> i); y += 2) {
-			for (int x = ((x1 >> i) & (~1)); x < (x2 >> i); x += 2) {
+		const int sx = (rect.x1 >> i) & (~1);
+		const int ex = (rect.x2 >> i);
+		const int sy = (rect.z1 >> i) & (~1);
+		const int ey = (rect.z2 >> i);
+		
+		for (int y = sy; y < ey; y += 2) {
+			for (int x = sx; x < ex; x += 2) {
 				const float height =
 					mipPointerHeightMaps[i][(x    ) + (y    ) * hmapx] +
 					mipPointerHeightMaps[i][(x    ) + (y + 1) * hmapx] +
@@ -318,14 +371,14 @@ void CReadMap::UpdateMipHeightmaps(const int x1, const int z1, const int x2, con
 }
 
 
-void CReadMap::UpdateFaceNormals(int x1, int z1, int x2, int z2)
+void CReadMap::UpdateFaceNormals(const SRectangle& rect)
 {
 	const float* heightmapSynced = GetCornerHeightMapSynced();
 
-	z1 = std::max(         0, z1 - 1);
-	x1 = std::max(         0, x1 - 1);
-	z2 = std::min(gs->mapym1, z2 + 1);
-	x2 = std::min(gs->mapxm1, x2 + 1);
+	const int z1 = std::max(         0, rect.z1 - 1);
+	const int x1 = std::max(         0, rect.x1 - 1);
+	const int z2 = std::min(gs->mapym1, rect.z2 + 1);
+	const int x2 = std::min(gs->mapxm1, rect.x2 + 1);
 
 	int y;
 	#pragma omp parallel for private(y)
@@ -382,10 +435,15 @@ void CReadMap::UpdateFaceNormals(int x1, int z1, int x2, int z2)
 }
 
 
-void CReadMap::UpdateSlopemap(const int x1, const int z1, const int x2, const int z2)
+void CReadMap::UpdateSlopemap(const SRectangle& rect)
 {
-	for (int y = std::max(0, (z1 / 2) - 1); y <= std::min(gs->hmapy - 1, (z2 / 2) + 1); y++) {
-		for (int x = std::max(0, (x1 / 2) - 1); x <= std::min(gs->hmapx - 1, (x2 / 2) + 1); x++) {
+	const int sx = std::max(0, (rect.x1 / 2) - 1);
+	const int ex = std::min(gs->hmapx - 1, (rect.x2 / 2) + 1);
+	const int sy = std::max(0, (rect.z1 / 2) - 1);
+	const int ey = std::min(gs->hmapy - 1, (rect.z2 / 2) + 1);
+	
+	for (int y = sy; y <= ey; y++) {
+		for (int x = sx; x <= ex; x++) {
 			const int idx0 = (y*2    ) * (gs->mapx) + x*2;
 			const int idx1 = (y*2 + 1) * (gs->mapx) + x*2;
 
@@ -416,92 +474,114 @@ void CReadMap::UpdateSlopemap(const int x1, const int z1, const int x2, const in
 			slopeMap[y * gs->hmapx + x] = 1.0f - slope;
 		}
 	}
-
 }
 
 
-void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1,  int x2, int z2,  bool losMapCall)
+/// split the update into multiple invididual (los-square) chunks:
+void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& rect)
 {
-	GML_STDMUTEX_LOCK(map); // PushVisibleHeightMapUpdate
+	GML_STDMUTEX_LOCK(map); // HeightMapUpdateLOSCheck
 
-	#ifdef USE_UNSYNCED_HEIGHTMAP
-	if (gs->frameNum <= 0) {
-		// NOTE:
-		//     loshandler does not exist on startup when the map is loaded
-		//     rather than duplicating LosHandler member variables here to
-		//     avoid this special case, just push the entire update at once
-		unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2,  z1, z2,  true));
-	} else {
-		static const int losSqSizeX = loshandler->losSizeX;
-		static const int losSqSizeY = loshandler->losSizeY;
-		static const int losSquaresX = (gs->mapx / losSqSizeX);
-		static const int losSquaresY = (gs->mapy / losSqSizeY);
-		static std::vector<HeightMapUpdateFilter> updateFilters((losSquaresX + 1) * (losSquaresY + 1));
+	InitHeightMapDigestsVectors();
+	const int losSqSize = loshandler->losDiv / SQUARE_SIZE; // size of LOS square in heightmap coords
+	const SRectangle& lm = rect * (SQUARE_SIZE * loshandler->invLosDiv); // LOS space
 
-		// split the update into multiple invididual (los-square) chunks:
-		// we need to do this because the reduced-rate unsynced updating
-		// can mean a chunk has gone out of LOS again by the time it gets
-		// processed in UpdateHeightMapUnsynced
-		//
-		// terrain deformations can overlap, so also check if chunks have
-		// have not already been marked before pushing them
-		//
-		// find the losMap squares covered by the update rectangle
-		const int lmxTL = x1 / losSqSizeX, lmxBR = x2 / losSqSizeX;
-		const int lmzTL = z1 / losSqSizeY, lmzBR = z2 / losSqSizeY;
+	for (int lmz = lm.z1; lmz <= lm.z2; ++lmz) {
+		const int hmz = lmz * losSqSize;
+		      int hmx = lm.x1 * losSqSize;
 
-		for (int lmx = lmxTL; lmx <= lmxBR; ++lmx) {
-			const int hmx = lmx * losSqSizeX;
-
-			for (int lmz = lmzTL; lmz <= lmzBR; ++lmz) {
-				HeightMapUpdateFilter& f = updateFilters[lmz * losSquaresX + lmx];
-
-				// if the unsynced heightmap has not actually been modified for this LOS block, skip it
-				// (assumes deformations occur first and LOS is obtained *after* ::update has been set)
-				if (losMapCall && !f.update)
-					continue;
-
-				// note: calls can come from losMap even when spectatingFullView
-				const int hmz = lmz * losSqSizeY;
-				const bool inlos = losMapCall || gu->spectatingFullView || loshandler->InLos(hmx, hmz, gu->myAllyTeam);
-
-				// create a new filter for this los-square
-				HeightMapUpdateFilter fnew(
-					Clamp(hmx, x1, x2), Clamp(hmx + losSqSizeX - 1, x1, x2),
-					Clamp(hmz, z1, z2), Clamp(hmz + losSqSizeY - 1, z1, z2),
-					true
-				);
-
-				if (!inlos) {
-					// the heightmap has been modified, but the block is not currently in LOS
-					// if this block was never visited (ever, or since coming into LOS before)
-					// then set a filter for it, otherwise expand (this heightmap update might
-					// cover a larger area than the previous)
-					if (!f.update) {
-						f = fnew;
-					} else {
-						f.Expand(fnew);
-					}
-				} else if (losMapCall) {
-					// the block has now come into LOS: any subsequent deformations whose area
-					// includes this block do not need to update the squares covered by it (so
-					// long as it remains visible)
-					fnew = f;
-					f.update = false;
-				}
-
-				HeightMapUpdate hmUpdate = HeightMapUpdate(
-					fnew.minx, std::min(gs->mapxm1, fnew.maxx), 
-					fnew.miny, std::min(gs->mapym1, fnew.maxy),
-					inlos
-				);
-				unsyncedHeightMapUpdates.push_back(hmUpdate);
+		SRectangle subrect(hmx, hmz, hmx, hmz + losSqSize);
+		#define PUSH_RECT \
+			if (subrect.GetArea() > 0) { \
+				subrect.ClampIn(rect); \
+				unsyncedHeightMapUpdates.push_back(subrect); \
+				subrect = SRectangle(hmx + losSqSize, hmz, hmx + losSqSize, hmz + losSqSize); \
+			} else { \
+				subrect.x1 = hmx + losSqSize; \
+				subrect.x2 = hmx + losSqSize; \
 			}
+
+		for (int lmx = lm.x1; lmx <= lm.x2; ++lmx) {
+			hmx = lmx * losSqSize;
+
+			const bool inlos = (gu->spectatingFullView || loshandler->InLos(hmx, hmz, gu->myAllyTeam));
+			if (!inlos) {
+				PUSH_RECT
+				continue;
+			}
+
+			const bool heightmapChanged = HasHeightMapChanged(lmx, lmz);
+			if (!heightmapChanged) {
+				PUSH_RECT
+				continue;
+			}
+
+			// update rectangle size
+			subrect.x2 = hmx + losSqSize;
 		}
+
+		PUSH_RECT
 	}
-	#else
-	// only reached from UpdateHeightMapSynced, los-state is irrelevant
-	// (however, could still split chunk to save some CPU in UpdateDraw)
-	unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2,  z1, z2));
-	#endif
+}
+
+
+void CReadMap::InitHeightMapDigestsVectors()
+{
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (syncedHeightMapDigests.empty()) {
+		const int losSquaresX = loshandler->losSizeX;
+		const int losSquaresY = loshandler->losSizeY;
+		const int size = (losSquaresX + 1) * (losSquaresY + 1);
+		syncedHeightMapDigests.resize(size, 0);
+		unsyncedHeightMapDigests.resize(size, 0);
+	}
+#endif
+}
+
+
+bool CReadMap::HasHeightMapChanged(const int lmx, const int lmy)
+{
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	const int losSquaresX = loshandler->losSizeX;
+	const int idx = lmx + lmy * (losSquaresX + 1);
+	assert(idx < syncedHeightMapDigests.size());
+	const bool heightmapChanged = (unsyncedHeightMapDigests[idx] != syncedHeightMapDigests[idx]);
+	if (heightmapChanged) {
+		unsyncedHeightMapDigests[idx] = syncedHeightMapDigests[idx];
+	}
+	return heightmapChanged;
+#else
+	return true;
+#endif
+}
+
+
+void CReadMap::UpdateLOS(const SRectangle& rect)
+{
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (gu->spectatingFullView)
+		return;
+
+	// currently we use the LOS for view updates (alternatives are AirLOS and/or radar)
+	// cause the others use different resolutions we must check it here for safety
+	// (if you want to use another source you need to change the res. of syncedHeightMapDigests etc.)
+	assert(rect.GetWidth() <= loshandler->losDiv / SQUARE_SIZE);
+
+	//HACK: UpdateLOS() is called for single LOS squares, but we use <= in HeightMapUpdateLOSCheck().
+	// This would make our update area 4x as large, so we need to make the rectangle a point. Better
+	// would be to use < instead of <= everywhere.
+	SRectangle r = rect;
+	r.x2 = r.x1;
+	r.z2 = r.z1;
+
+	HeightMapUpdateLOSCheck(rect);
+#endif
+}
+
+
+void CReadMap::BecomeSpectator()
+{
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	HeightMapUpdateLOSCheck(SRectangle(0, 0, gs->mapx, gs->mapy));
+#endif
 }

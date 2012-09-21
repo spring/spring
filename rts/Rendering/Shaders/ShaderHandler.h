@@ -12,18 +12,18 @@ class CShaderHandler {
 public:
 	static CShaderHandler* GetInstance();
 
-	void ReleaseProgramObjects(const std::string&);
-	Shader::IProgramObject* CreateProgramObject(const std::string&, const std::string&, bool);
-	Shader::IProgramObject* CreateProgramObject(
-		const std::string&,
-		const std::string&,
-		const std::string&,
-		const std::string&,
-		const std::string&,
-		const std::string&,
-		bool
-	);
-	Shader::IShaderObject* CreateShaderObject(const std::string&, const std::string&, int);
+	void ReloadAll();
+	Shader::IProgramObject* GetProgramObject(const std::string& poClass, const std::string& poName);
+	void ReleaseProgramObjects(const std::string& poClass);
+
+	Shader::IProgramObject* CreateProgramObject(const std::string& poClass, const std::string& poName, bool arbProgram);
+	/**
+	 * @param soName Either the filepath to the shader or the shader source code itself.
+	 * @param soDefs Additional preprocessor flags passed as header.
+	 * @param soType In case of an ARB shader it must be either GL_VERTEX_PROGRAM_ARB & GL_FRAGMENT_PROGRAM_ARB.
+	 *               In case of an GLSL shader it can be GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, ...
+	 */
+	Shader::IShaderObject* CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType);
 
 private:
 	typedef std::map<std::string, Shader::IProgramObject*> ProgramObjMap;

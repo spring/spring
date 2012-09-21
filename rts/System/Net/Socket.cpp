@@ -21,7 +21,8 @@ bool CheckErrorCode(boost::system::error_code& err)
 {
 	// connection reset can happen when host did not start up
 	// before the client wants to connect
-	if (!err || err.value() == connection_reset) {
+	if (!err || err.value() == connection_reset || 
+		err.value() == resource_unavailable_try_again) { // this should only ever happen with async sockets, but testing indicates it happens anyway...
 		return false;
 	} else {
 		LOG_L(L_WARNING, "Network error %i: %s", err.value(),
@@ -72,7 +73,7 @@ boost::asio::ip::address WrapIP(const std::string& ip,
 	//! (date of note: 08/05/10)
 	//! something in from_string() is invalidating the FPU flags
 	//! tested on win2k and linux (not happening there)
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 #endif
 
 	return addr;
@@ -93,7 +94,7 @@ boost::asio::ip::tcp::resolver::iterator WrapResolve(
 #ifdef STREFLOP_H
 	//! (date of note: 08/22/10)
 	//! something in resolve() is invalidating the FPU flags
-	streflop_init<streflop::Simple>();
+	streflop::streflop_init<streflop::Simple>();
 #endif
 
 	return resolveIt;

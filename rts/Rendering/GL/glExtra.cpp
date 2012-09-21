@@ -83,7 +83,7 @@ void glBallisticCircle(const float3& center, const float radius,
 		float adjustment = rad/2;
 		float ydiff = 0;
 		int j;
-		for(j = 0; j < 50 && fabs(adjRadius - rad) + ydiff > .01*rad; j++){
+		for(j = 0; j < 50 && math::fabs(adjRadius - rad) + ydiff > .01*rad; j++){
 			if(adjRadius > rad) {
 				rad += adjustment;
 			} else {
@@ -93,7 +93,7 @@ void glBallisticCircle(const float3& center, const float radius,
 			pos.x = center.x + (sinR * rad);
 			pos.z = center.z + (cosR * rad);
 			float newY = ground->GetHeightAboveWater(pos.x, pos.z, false);
-			ydiff = fabs(pos.y - newY);
+			ydiff = math::fabs(pos.y - newY);
 			pos.y = newY;
 			heightDiff = (pos.y - center.y);
 			adjRadius = weapon ? weapon->GetRange2D(heightDiff*weapon->heightMod) : rad;

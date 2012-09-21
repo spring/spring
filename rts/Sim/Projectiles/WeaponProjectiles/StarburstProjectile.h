@@ -5,6 +5,7 @@
 
 #include "WeaponProjectile.h"
 #include <vector>
+#include "lib/gml/gmlcnf.h"
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 #define AGEMOD_VECTOR gmlCircularQueue<float, 64>

@@ -64,6 +64,13 @@ S3DModelPiece::~S3DModelPiece()
  * LocalModel
  */
 
+void LocalModel::ReloadDisplayLists()
+{
+	for (std::vector<LocalModelPiece*>::iterator piece = pieces.begin(); piece != pieces.end(); ++piece) {
+		(*piece)->dispListID = (*piece)->original->dispListID;
+	}
+}
+
 LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParent, size_t pieceNum)
 {
 	LocalModelPiece* lmpParent = new LocalModelPiece(mpParent);

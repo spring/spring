@@ -8,6 +8,7 @@
 //    requires the ARB_imaging extension)
 // - use materials instead of raw calls (again, handle dlists)
 
+#include "Rendering/GL/myGL.h"
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -18,7 +19,6 @@
 #include "System/mmgr.h"
 
 #include "LuaOpenGL.h"
-
 #include "LuaInclude.h"
 
 #include "LuaHandle.h"
@@ -49,7 +49,6 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -441,7 +440,6 @@ void LuaOpenGL::EnableCommon(DrawMode mode)
 {
 	assert(drawMode == DRAW_NONE);
 	drawMode = mode;
-	SetDrawingEnabled(true);
 	if (safeMode) {
 		glPushAttrib(AttribBits);
 		glCallList(resetStateList);
@@ -458,7 +456,6 @@ void LuaOpenGL::DisableCommon(DrawMode mode)
 	// FIXME  --  not needed by shadow or minimap
 	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 	drawMode = DRAW_NONE;
-	SetDrawingEnabled(false);
 	if (safeMode) {
 		glPopAttrib();
 	}
@@ -1007,16 +1004,10 @@ void LuaOpenGL::ResetMiniMapMatrices()
 /******************************************************************************/
 /******************************************************************************/
 
-static inline bool CheckModUICtrl()
-{
-	return CLuaHandle::GetModUICtrl() ||
-	       ActiveHandle()->GetUserMode();
-}
-
 
 inline void LuaOpenGL::CheckDrawingEnabled(lua_State* L, const char* caller)
 {
-	if (!IsDrawingEnabled()) {
+	if (!IsDrawingEnabled(L)) {
 		luaL_error(L, "%s(): OpenGL calls can only be used in Draw() "
 		              "call-ins, or while creating display lists", caller);
 	}
@@ -1567,7 +1558,7 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 
 static inline bool IsFeatureVisible(const lua_State *L, const CFeature* feature)
 {
-	if (ActiveFullRead())
+	if (CLuaHandle::GetHandleFullRead(L))
 		return true;
 
 	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
@@ -1663,12 +1654,13 @@ static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (ActiveReadAllyTeam() < 0) {
-		if (!ActiveFullRead()) {
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+	if (readAllyTeam < 0) {
+		if (!CLuaHandle::GetHandleFullRead(L)) {
 			return NULL;
 		}
 	} else {
-		if ((unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS) == 0) {
+		if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
 			return NULL;
 		}
 	}
@@ -4639,8 +4631,8 @@ int LuaOpenGL::CreateList(lua_State* L)
 	}
 
 	// save the current state
-	const bool origDrawingEnabled = IsDrawingEnabled();
-	SetDrawingEnabled(true);
+	const bool origDrawingEnabled = IsDrawingEnabled(L);
+	SetDrawingEnabled(L, true);
 
 	// build the list with the specified lua call/args
 	glNewList(list, GL_COMPILE);
@@ -4660,7 +4652,7 @@ int LuaOpenGL::CreateList(lua_State* L)
 	}
 
 	// restore the state
-	SetDrawingEnabled(origDrawingEnabled);
+	SetDrawingEnabled(L, origDrawingEnabled);
 
 	return 1;
 }
@@ -4671,7 +4663,7 @@ int LuaOpenGL::CallList(lua_State* L)
 	CheckDrawingEnabled(L, __FUNCTION__);
 	const unsigned int listIndex = luaL_checkint(L, 1);
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
-	const unsigned int& dlist = displayLists.GetDList(listIndex);
+	const unsigned int dlist = displayLists.GetDList(listIndex);
 	if (dlist) {
 		glCallList(dlist);
 	}
@@ -4835,7 +4827,7 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 
 int LuaOpenGL::SaveImage(lua_State* L)
 {
-	if (!CheckModUICtrl()) {
+	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;
 	}
 	const GLint x = (GLint)luaL_checknumber(L, 1);
