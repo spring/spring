@@ -1218,8 +1218,8 @@ bool CGame::Draw() {
 		font->Begin();
 		font->SetTextColor(1,1,0.5f,0.8f);
 
-		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f Particles: %d (%d)",
-		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
+		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
+		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
 
 		// 16ms := 60fps := 30simFPS + 30drawFPS
 		font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
@@ -1273,7 +1273,7 @@ bool CGame::Draw() {
 			char buf[32];
 			SNPRINTF(buf, sizeof(buf), "%2.2f", gs->speedFactor);
 
-			const float4 speedcol(1.0f, gs->speedFactor < gs->userSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
+			const float4 speedcol(1.0f, gs->speedFactor < gs->wantedSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
 			smallFont->SetColors(&speedcol, NULL);
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, font_options, buf);
 		}
@@ -1519,7 +1519,7 @@ void CGame::SimFrame() {
 
 	#ifdef HEADLESS
 	{
-		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->userSpeedFactor);
+		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->wantedSpeedFactor);
 		const float msecDifSimFrameTime = spring_tomsecs(lastSimFrameTime) - spring_tomsecs(lastFrameTime);
 		// multiply by 0.5 to give unsynced code some execution time (50% of our sleep-budget)
 		const float msecSleepTime = (msecMaxSimFrameTime - msecDifSimFrameTime) * 0.5f;
@@ -2080,11 +2080,12 @@ void CGame::StartSkip(int toFrame) {
 	if (!skipSoundmute)
 		sound->Mute(); // no sounds
 
+	//FIXME not smart to change SYNCED values in demo playbacks etc.
 	skipOldSpeed     = gs->speedFactor;
-	skipOldUserSpeed = gs->userSpeedFactor;
+	skipOldUserSpeed = gs->wantedSpeedFactor;
 	const float speed = 1.0f;
 	gs->speedFactor     = speed;
-	gs->userSpeedFactor = speed;
+	gs->wantedSpeedFactor = speed;
 
 	skipLastDraw = spring_gettime();
 
@@ -2100,7 +2101,7 @@ void CGame::EndSkip() {
 	gu->modGameTime += skipSeconds;
 
 	gs->speedFactor     = skipOldSpeed;
-	gs->userSpeedFactor = skipOldUserSpeed;
+	gs->wantedSpeedFactor = skipOldUserSpeed;
 
 	if (!skipSoundmute) {
 		sound->Mute(); // sounds back on
