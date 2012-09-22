@@ -1015,7 +1015,6 @@ bool CGame::UpdateUnsynced()
 		}
 
 		CNamedTextures::Update();
-		texturehandlerS3O->Update();
 		modelParser->Update();
 		worldDrawer->Update();
 	}
