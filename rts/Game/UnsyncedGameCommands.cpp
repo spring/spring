@@ -1837,7 +1837,7 @@ public:
 			" The engine will try to simulate more frames per second") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		float speed = gs->userSpeedFactor;
+		float speed = gs->wantedSpeedFactor;
 		if (speed < 5) {
 			speed += (speed < 2) ? 0.1f : 0.2f;
 			float fPart = speed - (int)speed;
@@ -1862,7 +1862,7 @@ public:
 			" The engine will try to simulate less frames per second") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		float speed = gs->userSpeedFactor;
+		float speed = gs->wantedSpeedFactor;
 		if (speed <= 5) {
 			speed -= (speed <= 2) ? 0.1f : 0.2f;
 			float fPart = speed - (int)speed;
