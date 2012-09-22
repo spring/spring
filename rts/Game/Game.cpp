@@ -961,7 +961,7 @@ bool CGame::UpdateUnsynced()
 	// Update the interpolation coefficient (globalRendering->timeOffset)
 	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
 		globalRendering->lastFrameStart = currentTime;
-		globalRendering->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->userSpeedFactor;
+		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = spring_tomsecs(globalRendering->lastFrameStart - lastSimFrameTime) * globalRendering->weightedSpeedFactor;
 	} else  {
 		globalRendering->timeOffset = 0;
