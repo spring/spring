@@ -2147,62 +2147,62 @@ bool CGameServer::HasFinished() const
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
-	if (!demoReader) {
-		// use NEWFRAME_MSGes from demo otherwise
-		Threading::RecursiveScopedLock(gameServerMutex, !fromServerThread);
-
-		CheckSync();
-		int newFrames = 1;
-
-		if (!fixedFrameTime) {
-			spring_time currentTick = spring_gettime();
-			spring_duration timeElapsed = currentTick - lastTick;
-
-			if (timeElapsed > spring_msecs(200))
-				timeElapsed = spring_msecs(200);
-
-			timeLeft += GAME_SPEED * internalSpeed * float(spring_tomsecs(timeElapsed)) * 0.001f;
-			lastTick=currentTick;
-			newFrames = (timeLeft > 0)? int(math::ceil(timeLeft)): 0;
-			timeLeft -= newFrames;
-
-			if (hasLocalClient) {
-				// needs to set lastTick and stuff, otherwise we will get all the left out NEWFRAME's at once when client has catched up
-				if (players[localClientNumber].lastFrameResponse + GAME_SPEED*2 <= serverFrameNum)
-					return;
-			}
-		}
-
-		const bool rec = videoCapturing->IsCapturing();
-		const bool normalFrame = !isPaused && !rec;
-		const bool videoFrame = !isPaused && fixedFrameTime;
-		const bool singleStep = fixedFrameTime && !rec;
-
-		if (normalFrame || videoFrame || singleStep) {
-			for (int i=0; i < newFrames; ++i) {
-				assert(!demoReader);
-				++serverFrameNum;
-				// Send out new frame messages.
-				if ((serverFrameNum % serverKeyframeIntervall) == 0)
-					Broadcast(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
-				else
-					Broadcast(CBaseNetProtocol::Get().SendNewFrame());
-
-				// every gameProgressFrameInterval, we broadcast current frame in a special message that doesn't get cached and skips normal queue, to let players know their loading %
-				if ((serverFrameNum%gameProgressFrameInterval) == 0) {
-					CBaseNetProtocol::PacketType progressPacket = CBaseNetProtocol::Get().SendCurrentFrameProgress(serverFrameNum);
-					// we cannot use broadcast here, since we want to skip caching
-					for (size_t p = 0; p < players.size(); ++p)
-						players[p].SendData(progressPacket);
-				}
-#ifdef SYNCCHECK
-				outstandingSyncFrames.insert(serverFrameNum);
-#endif
-			}
-		}
-	} else {
+	if (demoReader) {
 		CheckSync();
 		SendDemoData(-1);
+		return;
+	}
+
+	Threading::RecursiveScopedLock(gameServerMutex, !fromServerThread);
+
+	CheckSync();
+	int newFrames = 1;
+
+	if (!fixedFrameTime) {
+		spring_time currentTick = spring_gettime();
+		spring_duration timeElapsed = currentTick - lastTick;
+
+		if (timeElapsed > spring_msecs(200))
+			timeElapsed = spring_msecs(200);
+
+		timeLeft += GAME_SPEED * internalSpeed * float(spring_tomsecs(timeElapsed)) * 0.001f;
+		lastTick=currentTick;
+		newFrames = (timeLeft > 0)? int(math::ceil(timeLeft)): 0;
+		timeLeft -= newFrames;
+
+		if (hasLocalClient) {
+			// needs to set lastTick and stuff, otherwise we will get all the left out NEWFRAME's at once when client has catched up
+			if (players[localClientNumber].lastFrameResponse + GAME_SPEED*2 <= serverFrameNum)
+				return;
+		}
+	}
+
+	const bool rec = videoCapturing->IsCapturing();
+	const bool normalFrame = !isPaused && !rec;
+	const bool videoFrame = !isPaused && fixedFrameTime;
+	const bool singleStep = fixedFrameTime && !rec;
+
+	if (normalFrame || videoFrame || singleStep) {
+		for (int i=0; i < newFrames; ++i) {
+			assert(!demoReader);
+			++serverFrameNum;
+			// Send out new frame messages.
+			if ((serverFrameNum % serverKeyframeIntervall) == 0)
+				Broadcast(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
+			else
+				Broadcast(CBaseNetProtocol::Get().SendNewFrame());
+
+			// every gameProgressFrameInterval, we broadcast current frame in a special message that doesn't get cached and skips normal queue, to let players know their loading %
+			if ((serverFrameNum%gameProgressFrameInterval) == 0) {
+				CBaseNetProtocol::PacketType progressPacket = CBaseNetProtocol::Get().SendCurrentFrameProgress(serverFrameNum);
+				// we cannot use broadcast here, since we want to skip caching
+				for (size_t p = 0; p < players.size(); ++p)
+					players[p].SendData(progressPacket);
+			}
+#ifdef SYNCCHECK
+			outstandingSyncFrames.insert(serverFrameNum);
+#endif
+		}
 	}
 }
 
