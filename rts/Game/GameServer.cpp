@@ -762,58 +762,7 @@ void CGameServer::Update()
 		lastPlayerInfo = spring_gettime();
 
 		if (serverFrameNum > 0) {
-			//send info about the players
-			std::vector<float> cpu;
-			std::vector<int> ping;
-			float refCpu = 0.0f;
-			for (size_t a = 0; a < players.size(); ++a) {
-				if (players[a].myState == GameParticipant::INGAME) {
-					int curPing = (serverFrameNum - players[a].lastFrameResponse);
-					if (players[a].isReconn && curPing < 2 * GAME_SPEED)
-						players[a].isReconn = false;
-					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, curPing));
-					float correctedCpu = players[a].isLocal ? players[a].cpuUsage :
-						std::max(0.0f, std::min(players[a].cpuUsage - 0.0025f * (float)players[a].luaLockTime, 1.0f));
-					if (demoReader ? !players[a].isFromDemo : !players[a].spectator) {
-						if (!players[a].isReconn && correctedCpu > refCpu)
-							refCpu = correctedCpu;
-						cpu.push_back(correctedCpu);
-						ping.push_back(curPing);
-					}
-				}
-			}
-
-			medianCpu = 0.0f;
-			medianPing = 0;
-			if (curSpeedCtrl > 0 && !cpu.empty()) {
-				std::sort(cpu.begin(), cpu.end());
-				std::sort(ping.begin(), ping.end());
-
-				int midpos = cpu.size() / 2;
-				medianCpu = cpu[midpos];
-				medianPing = ping[midpos];
-				if (midpos * 2 == cpu.size()) {
-					medianCpu = (medianCpu + cpu[midpos - 1]) / 2.0f;
-					medianPing = (medianPing + ping[midpos - 1]) / 2;
-				}
-				refCpu = medianCpu;
-			}
-
-			if (refCpu > 0.0f) {
-				// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
-				float wantedCpu = (curSpeedCtrl > 0) ? 0.6f + (1 - internalSpeed / userSpeedFactor) * 0.5f : 0.75f + (1 - internalSpeed / userSpeedFactor) * 0.5f;
-				float newSpeed = internalSpeed * wantedCpu / refCpu;
-//				float speedMod=1+wantedCpu-refCpu;
-//				LOG_L(L_DEBUG, "Speed REF %f MED %f WANT %f SPEEDM %f NSPEED %f",refCpu,medianCpu,wantedCpu,speedMod,newSpeed);
-				newSpeed = (newSpeed + internalSpeed) * 0.5f;
-				newSpeed = std::max(newSpeed, (curSpeedCtrl > 0) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
-				if (newSpeed > userSpeedFactor)
-					newSpeed = userSpeedFactor;
-				if (newSpeed < 0.1f)
-					newSpeed = 0.1f;
-				if (newSpeed != internalSpeed)
-					InternalSpeedChange(newSpeed);
-			}
+			LagProtection();
 		}
 		else {
 			for (size_t a = 0; a < players.size(); ++a) {
@@ -870,6 +819,76 @@ void CGameServer::Update()
 }
 
 
+
+void CGameServer::LagProtection()
+{
+	std::vector<float> cpu;
+	std::vector<int> ping;
+	cpu.reserve(players.size());
+	ping.reserve(players.size());
+
+	// detect reference cpu usage
+	float refCpuUsage = 0.0f;
+	for (size_t a = 0; a < players.size(); ++a) {
+		GameParticipant& player = players[a];
+		if (player.myState == GameParticipant::INGAME) {
+			// send info about the players
+			const int curPing = (serverFrameNum - player.lastFrameResponse);
+			Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, player.cpuUsage, curPing));
+
+			const float playerCpuUsage = player.isLocal ? player.cpuUsage : player.cpuUsage - 0.0025f * (float)player.luaLockTime;
+			const float correctedCpu   = Clamp(playerCpuUsage, 0.0f, 1.0f);
+
+			if (player.isReconn && curPing < 2 * GAME_SPEED)
+				player.isReconn = false;
+
+			if ((player.isLocal) || (demoReader ? !player.isFromDemo : !player.spectator)) {
+				if (!player.isReconn && correctedCpu > refCpuUsage)
+					refCpuUsage = correctedCpu;
+				cpu.push_back(correctedCpu);
+				ping.push_back(curPing);
+			}
+		}
+	}
+
+	// calculate median values
+	medianCpu = 0.0f;
+	medianPing = 0;
+	if (curSpeedCtrl > 0 && !cpu.empty()) {
+		std::sort(cpu.begin(), cpu.end());
+		std::sort(ping.begin(), ping.end());
+
+		int midpos = cpu.size() / 2;
+		medianCpu = cpu[midpos];
+		medianPing = ping[midpos];
+		if (midpos * 2 == cpu.size()) {
+			medianCpu = (medianCpu + cpu[midpos - 1]) / 2.0f;
+			medianPing = (medianPing + ping[midpos - 1]) / 2;
+		}
+		refCpuUsage = medianCpu;
+	}
+
+	// adjust game speed
+	if (refCpuUsage > 0.0f) {
+		// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
+		float wantedCpuUsage = (curSpeedCtrl > 0) ?  0.60f : 0.75f;
+		wantedCpuUsage += (1.0f - internalSpeed / userSpeedFactor) * 0.5f; //???
+	
+		float newSpeed = internalSpeed * wantedCpuUsage / refCpuUsage;
+		newSpeed = (newSpeed + internalSpeed) * 0.5f;
+		newSpeed = Clamp(newSpeed, 0.1f, userSpeedFactor);
+		if (userSpeedFactor <= 2.f)
+			newSpeed = std::max(newSpeed, (curSpeedCtrl > 0) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
+
+		//float speedMod = 1.f + wantedCpuUsage - refCpuUsage;
+		//LOG_L(L_DEBUG, "Speed REF %f MED %f WANT %f SPEEDM %f NSPEED %f", refCpuUsage, medianCpu, wantedCpuUsage, speedMod, newSpeed);
+
+		if (newSpeed != internalSpeed)
+			InternalSpeedChange(newSpeed);
+	}
+}
+
+
 /// has to be consistent with Game.cpp/CPlayerHandler
 static std::vector<int> getPlayersInTeam(const std::vector<GameParticipant>& players, const int teamId) {
 	std::vector<int> playersInTeam;
@@ -911,7 +930,6 @@ static std::vector<unsigned char> getSkirmishAIIds(const std::map<unsigned char,
 static int countNumSkirmishAIsInTeam(const std::map<unsigned char, GameSkirmishAI>& ais, const int teamId) {
 	return getSkirmishAIIds(ais, teamId).size();
 }
-
 
 
 void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet)

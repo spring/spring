@@ -123,6 +123,8 @@ private:
 	void CheckSync();
 	void ServerReadNet();
 
+	void LagProtection();
+
 	/** @brief Generate a unique game identifier and send it to all clients. */
 	void GenerateAndSendGameID();
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
@@ -150,6 +152,7 @@ private:
 
 	float GetDemoTime() const;
 
+private:
 	/////////////////// game status variables ///////////////////
 
 	unsigned char playerNumberMap[256];
