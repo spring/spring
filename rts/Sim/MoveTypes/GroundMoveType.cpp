@@ -1060,8 +1060,10 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		const float avoideeDistSq = avoideeVector.SqLength();
 		const float avoideeDist   = fastmath::sqrt2(avoideeDistSq) + 0.01f;
 
+		// do not bother steering around idling MOBILE objects
+		// (since collision handling will just push them aside)
 		// TODO: also check if !avoiderUD->pushResistant
-		if (avoideeMobile && !avoidMobiles)
+		if (avoideeMobile && (!avoidMobiles || (!avoidee->isMoving && avoidee->allyteam == avoider->allyteam)))
 			continue;
 		// ignore objects that are more than this many degrees off-center from us
 		if (avoider->frontdir.dot(-(avoideeVector / avoideeDist)) < MAX_AVOIDEE_COSINE)
@@ -1070,12 +1072,6 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		if (avoideeDistSq >= Square(std::max(currentSpeed, 1.0f) * GAME_SPEED + avoidanceRadiusSum))
 			continue;
 		if (avoideeDistSq >= avoider->pos.SqDistance2D(goalPos))
-			continue;
-
-		// do not bother steering around idling objects
-		// (collision handling will push them aside, or
-		// us in case of "allied" features)
-		if (!avoidee->isMoving && avoidee->allyteam == avoider->allyteam)
 			continue;
 
 		// if object and unit in relative motion are closing in on one another
