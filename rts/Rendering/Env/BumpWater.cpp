@@ -565,6 +565,7 @@ CBumpWater::CBumpWater()
 	occlusionQueryResult = GL_TRUE;
 	wasLastFrameVisible = true;
 	bool useOcclQuery  = (configHandler->GetBool("BumpWaterOcclusionQuery"));
+#ifdef GL_ARB_occlusion_query2
 	if (useOcclQuery && GLEW_ARB_occlusion_query2 && (refraction < 2)) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
 		GLint bitsSupported;
 		glGetQueryiv(GL_ANY_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
@@ -572,6 +573,7 @@ CBumpWater::CBumpWater()
 			glGenQueries(1, &occlusionQuery);
 		}
 	}
+#endif
 
 	if (refraction > 1) {
 		drawSolid = true;
@@ -609,9 +611,11 @@ CBumpWater::~CBumpWater()
 		delete[] tileOffsets;
 	}
 
+#ifdef GL_ARB_occlusion_query2
 	if (occlusionQuery) {
 		glDeleteQueries(1, &occlusionQuery);
 	}
+#endif
 
 	shaderHandler->ReleaseProgramObjects("[BumpWater]");
 }
@@ -712,6 +716,7 @@ void CBumpWater::UpdateWater(CGame* game)
 		return;
 	}
 
+#ifdef GL_ARB_occlusion_query2
 	if (occlusionQuery && !wasLastFrameVisible) {
 		SCOPED_TIMER("BumpWater::UpdateWater (Occlcheck)");
 
@@ -728,6 +733,7 @@ void CBumpWater::UpdateWater(CGame* game)
 
 		wasLastFrameVisible = true;
 	}
+#endif
 
 	glPushAttrib(GL_FOG_BIT);
 	if (refraction > 1) DrawRefraction(game);
@@ -1066,10 +1072,12 @@ void CBumpWater::Draw()
 		return;
 	}
 
+#ifdef GL_ARB_occlusion_query2
 	if (occlusionQuery) {
 		glBeginConditionalRenderNV(occlusionQuery, GL_QUERY_BY_REGION_WAIT_NV);
 		glBeginQuery(GL_ANY_SAMPLES_PASSED,occlusionQuery);
 	}
+#endif
 
 	if (refraction == 1) {
 		//! _SCREENCOPY_ REFRACT TEXTURE
@@ -1124,10 +1132,12 @@ void CBumpWater::Draw()
 		glEnable(GL_BLEND);
 	}
 
+#ifdef GL_ARB_occlusion_query2
 	if (occlusionQuery) {
 		glEndQuery(GL_ANY_SAMPLES_PASSED);
 		glEndConditionalRenderNV();
 	}
+#endif
 }
 
 
@@ -1235,6 +1245,7 @@ void CBumpWater::OcclusionQuery()
 		return;
 	}
 
+#ifdef GL_ARB_occlusion_query2
 	glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &occlusionQueryResult);
 	if (occlusionQueryResult || !wasLastFrameVisible) {
 		glGetQueryObjectuiv(occlusionQuery,GL_QUERY_RESULT, &occlusionQueryResult);
@@ -1259,4 +1270,5 @@ void CBumpWater::OcclusionQuery()
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glDepthMask(GL_TRUE);
 	}
+#endif
 }
