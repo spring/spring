@@ -54,6 +54,7 @@
 #include "System/CRC.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/MsgStrings.h"
+#include "System/myMath.h"
 #include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoReader.h"
