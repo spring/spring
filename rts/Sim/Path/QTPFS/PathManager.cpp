@@ -685,12 +685,16 @@ void QTPFS::PathManager::ExecuteSearch(
 	assert(search != NULL);
 	assert(path != NULL);
 
+	#define DeleteSearch(s, it) { \
+		*it = NULL;               \
+		it = searches.erase(it);  \
+		delete s;                 \
+	}
+
 	// temp-path might have been removed already via
 	// DeletePath before we got a chance to process it
 	if (path->GetID() == 0) {
-		*searchesIt = NULL;
-		searchesIt = searches.erase(searchesIt);
-		delete search;
+		DeleteSearch(search, searchesIt);
 		return;
 	}
 
@@ -705,11 +709,10 @@ void QTPFS::PathManager::ExecuteSearch(
 		SharedPathMap::const_iterator sharedPathsIt = sharedPaths.find(path->GetHash());
 
 		if (sharedPathsIt != sharedPaths.end()) {
-			search->SharedFinalize(sharedPathsIt->second, path);
-			*searchesIt = NULL;
-			searchesIt = searches.erase(searchesIt);
-			delete search;
-			return;
+			if (search->SharedFinalize(sharedPathsIt->second, path)) {
+				DeleteSearch(search, searchesIt);
+				return;
+			}
 		}
 		#endif
 
@@ -740,9 +743,7 @@ void QTPFS::PathManager::ExecuteSearch(
 		DeletePath(path->GetID());
 	}
 
-	*searchesIt = NULL;
-	searchesIt = searches.erase(searchesIt);
-	delete search;
+	DeleteSearch(search, searchesIt);
 
 	searchStateOffset += NODE_STATE_OFFSET;
 }

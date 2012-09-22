@@ -505,18 +505,26 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 
 
 
-void QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
+bool QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
 	assert(dstPath->GetID() != 0);
 	assert(dstPath->GetID() != srcPath->GetID());
 	assert(dstPath->NumPoints() == 2);
 
-	// copy <srcPath> to <dstPath>
-	dstPath->CopyPoints(*srcPath);
-	dstPath->SetSourcePoint(srcPoint);
-	dstPath->SetTargetPoint(tgtPoint);
-	dstPath->SetBoundingBox();
+	const float3& p0 = srcPath->GetTargetPoint();
+	const float3& p1 = dstPath->GetTargetPoint();
 
-	pathCache->AddLivePath(dstPath);
+	if (p0.SqDistance(p1) < (SQUARE_SIZE * SQUARE_SIZE)) {
+		// copy <srcPath> to <dstPath>
+		dstPath->CopyPoints(*srcPath);
+		dstPath->SetSourcePoint(srcPoint);
+		dstPath->SetTargetPoint(tgtPoint);
+		dstPath->SetBoundingBox();
+
+		pathCache->AddLivePath(dstPath);
+		return true;
+	}
+
+	return false;
 }
 
 const boost::uint64_t QTPFS::PathSearch::GetHash(unsigned int N, unsigned int k) const {
