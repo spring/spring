@@ -54,7 +54,7 @@ CONFIG(bool, BumpWaterShoreWaves).defaultValue(true);
 CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true);
 CONFIG(bool, BumpWaterDynamicWaves).defaultValue(true);
 CONFIG(bool, BumpWaterUseUniforms).defaultValue(false);
-CONFIG(bool, BumpWaterOcclusionQuery).defaultValue(true);
+CONFIG(bool, BumpWaterOcclusionQuery).defaultValue(false); //FIXME doesn't work as expected (it's slower than w/o), needs fixing
 
 
 #define LOG_SECTION_BUMP_WATER "BumpWater"
@@ -565,9 +565,9 @@ CBumpWater::CBumpWater()
 	occlusionQueryResult = GL_TRUE;
 	wasLastFrameVisible = true;
 	bool useOcclQuery  = (configHandler->GetBool("BumpWaterOcclusionQuery"));
-	if (useOcclQuery && GLEW_ARB_occlusion_query && (refraction < 2)) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
+	if (useOcclQuery && GLEW_ARB_occlusion_query2 && (refraction < 2)) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
 		GLint bitsSupported;
-		glGetQueryiv(GL_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
+		glGetQueryiv(GL_ANY_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
 		if (bitsSupported > 0) {
 			glGenQueries(1, &occlusionQuery);
 		}
@@ -715,17 +715,18 @@ void CBumpWater::UpdateWater(CGame* game)
 	if (occlusionQuery && !wasLastFrameVisible) {
 		SCOPED_TIMER("BumpWater::UpdateWater (Occlcheck)");
 
-		//glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &occlusionQueryResult);
-		//if (!occlusionQueryResult) {
-		//	LOG_L(L_DEBUG, "OcclusionQuery did not finished yet!");
-		//}
-		glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, &occlusionQueryResult);
+		glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &occlusionQueryResult);
+		if (occlusionQueryResult) {
+			glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, &occlusionQueryResult);
 
-		wasLastFrameVisible = !!occlusionQueryResult;
+			wasLastFrameVisible = !!occlusionQueryResult;
 
-		if (!occlusionQueryResult) {
-			return;
+			if (!occlusionQueryResult) {
+				return;
+			}
 		}
+
+		wasLastFrameVisible = true;
 	}
 
 	glPushAttrib(GL_FOG_BIT);
@@ -1065,8 +1066,10 @@ void CBumpWater::Draw()
 		return;
 	}
 
-	if (occlusionQuery)
-		glBeginQuery(GL_SAMPLES_PASSED,occlusionQuery);
+	if (occlusionQuery) {
+		glBeginConditionalRenderNV(occlusionQuery, GL_QUERY_BY_REGION_WAIT_NV);
+		glBeginQuery(GL_ANY_SAMPLES_PASSED,occlusionQuery);
+	}
 
 	if (refraction == 1) {
 		//! _SCREENCOPY_ REFRACT TEXTURE
@@ -1122,7 +1125,8 @@ void CBumpWater::Draw()
 	}
 
 	if (occlusionQuery) {
-		glEndQuery(GL_SAMPLES_PASSED);
+		glEndQuery(GL_ANY_SAMPLES_PASSED);
+		glEndConditionalRenderNV();
 	}
 }
 
@@ -1247,9 +1251,9 @@ void CBumpWater::OcclusionQuery()
 
 		glPushMatrix();
 			glTranslatef(0.0, 10.0, 0.0);
-			glBeginQuery(GL_SAMPLES_PASSED, occlusionQuery);
+			glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusionQuery);
 				glCallList(displayList);
-			glEndQuery(GL_SAMPLES_PASSED);
+			glEndQuery(GL_ANY_SAMPLES_PASSED);
 		glPopMatrix();
 
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
