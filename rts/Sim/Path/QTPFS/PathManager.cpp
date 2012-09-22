@@ -536,15 +536,6 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 
 
-// NOTE:
-//     map-features added during loading do NOT trigger
-//     this event (because map and features are already
-//     present when PathManager gets instantiated)
-//
-//     this means nodes underneath trees, rocks, etc.
-//     will *NOT* be tesselated to maximal resolution
-//     --> need to queue up the FeatureCreated events
-//
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type) {
 	SCOPED_TIMER("PathManager::TerrainChange");
 

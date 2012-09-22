@@ -568,14 +568,16 @@ void CGame::PostLoadSimulation()
 
 	loadscreen->SetLoadMessage("Loading Feature Definitions");
 	featureHandler = new CFeatureHandler();
-	loadscreen->SetLoadMessage("Initializing Map Features");
-	featureHandler->LoadFeaturesFromMap(saveFile != NULL);
 
-	mapDamage = IMapDamage::GetMapDamage();
 	loshandler = new CLosHandler();
 	radarhandler = new CRadarHandler(false);
 
+	mapDamage = IMapDamage::GetMapDamage();
 	pathManager = IPathManager::GetInstance(modInfo.pathFinderSystem);
+
+	// load map-specific features after pathManager so it knows about them (via TerrainChange)
+	loadscreen->SetLoadMessage("Initializing Map Features");
+	featureHandler->LoadFeaturesFromMap(saveFile != NULL);
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
