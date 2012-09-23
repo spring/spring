@@ -40,8 +40,8 @@ float CGroundMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slop
 	// too steep uphill slope?
 	if ((slope * dirSlopeScale) > ( moveDef.maxSlope       ))
 		return speedMod;
-	// is this square below our maxWaterDepth?
-	if (-height > moveDef.depth)
+	// is this square below our maxWaterDepth and are we going further downhill?
+	if ((dirSlopeScale < 0.0f) && (-height > moveDef.depth))
 		return speedMod;
 
 	// slope-mod (speedMod is not increased or decreased by downhill slopes)
