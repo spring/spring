@@ -565,7 +565,7 @@ CBumpWater::CBumpWater()
 	occlusionQueryResult = GL_TRUE;
 	wasLastFrameVisible = true;
 	bool useOcclQuery  = (configHandler->GetBool("BumpWaterOcclusionQuery"));
-#ifdef GL_ARB_occlusion_query2
+#ifdef GLEW_ARB_occlusion_query2
 	if (useOcclQuery && GLEW_ARB_occlusion_query2 && (refraction < 2)) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
 		GLint bitsSupported;
 		glGetQueryiv(GL_ANY_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
@@ -611,7 +611,7 @@ CBumpWater::~CBumpWater()
 		delete[] tileOffsets;
 	}
 
-#ifdef GL_ARB_occlusion_query2
+#ifdef GLEW_ARB_occlusion_query2
 	if (occlusionQuery) {
 		glDeleteQueries(1, &occlusionQuery);
 	}
@@ -716,7 +716,7 @@ void CBumpWater::UpdateWater(CGame* game)
 		return;
 	}
 
-#ifdef GL_ARB_occlusion_query2
+#ifdef GLEW_ARB_occlusion_query2
 	if (occlusionQuery && !wasLastFrameVisible) {
 		SCOPED_TIMER("BumpWater::UpdateWater (Occlcheck)");
 
@@ -1072,7 +1072,7 @@ void CBumpWater::Draw()
 		return;
 	}
 
-#ifdef GL_ARB_occlusion_query2
+#ifdef GLEW_ARB_occlusion_query2
 	if (occlusionQuery) {
 		glBeginConditionalRenderNV(occlusionQuery, GL_QUERY_BY_REGION_WAIT_NV);
 		glBeginQuery(GL_ANY_SAMPLES_PASSED,occlusionQuery);
@@ -1132,7 +1132,7 @@ void CBumpWater::Draw()
 		glEnable(GL_BLEND);
 	}
 
-#ifdef GL_ARB_occlusion_query2
+#ifdef GLEW_ARB_occlusion_query2
 	if (occlusionQuery) {
 		glEndQuery(GL_ANY_SAMPLES_PASSED);
 		glEndConditionalRenderNV();
@@ -1245,7 +1245,7 @@ void CBumpWater::OcclusionQuery()
 		return;
 	}
 
-#ifdef GL_ARB_occlusion_query2
+#ifdef GLEW_ARB_occlusion_query2
 	glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &occlusionQueryResult);
 	if (occlusionQueryResult || !wasLastFrameVisible) {
 		glGetQueryObjectuiv(occlusionQuery,GL_QUERY_RESULT, &occlusionQueryResult);
