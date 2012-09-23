@@ -14,7 +14,7 @@ class CMoveMath {
 	
 protected:
 	virtual float SpeedMod(const MoveDef& moveDef, float height, float slope) const = 0;
-	virtual float SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const = 0;
+	virtual float SpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale) const = 0;
 
 public:
 	// gives the y-coordinate the unit will "stand on"

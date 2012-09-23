@@ -703,7 +703,8 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_L (west) neighbors
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmz += ngb->zsize();
+					hmz = ngb->zmax();
+					// hmz += ngb->zsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
@@ -719,7 +720,8 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_R (east) neighbors
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmz += ngb->zsize();
+					hmz = ngb->zmax();
+					// hmz += ngb->zsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
@@ -736,7 +738,8 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_T (north) neighbors
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmx += ngb->xsize();
+					hmx = ngb->xmax();
+					// hmz += ngb->xsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
@@ -752,7 +755,8 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_B (south) neighbors
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmx += ngb->xsize();
+					hmx = ngb->xmax();
+					// hmz += ngb->xsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
