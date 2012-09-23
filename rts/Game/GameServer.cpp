@@ -873,7 +873,7 @@ void CGameServer::LagProtection()
 	}
 
 	// adjust game speed
-	if (refCpuUsage > 0.0f) {
+	if (refCpuUsage > 0.0f && !isPaused) {
 		// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
 		float wantedCpuUsage = (curSpeedCtrl > 0) ?  0.60f : 0.75f;
 		wantedCpuUsage += (1.0f - internalSpeed / userSpeedFactor) * 0.5f; //???
@@ -885,11 +885,10 @@ void CGameServer::LagProtection()
 			newSpeed = std::max(newSpeed, (curSpeedCtrl > 0) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
 
 #ifndef DEDICATED
-		if (!gs->paused) {
-			//FIXME instead of using CpuUsage for connected clients use their avgSimFrameTime or rather maxSimFPS, too (which isn't send via network yet!)
-			const float maxSimFPS = (1000.0f / gu->avgSimFrameTime) * (1.0f - gu->reconnectSimDrawBalance);
-			newSpeed = Clamp(newSpeed, 0.1f, maxSimFPS / GAME_SPEED);
-		}
+		// adjust game speed to localclient's (:= host) maximum SimFrame rate
+		//FIXME instead of using CpuUsage for connected clients use their avgSimFrameTime or rather maxSimFPS, too (which isn't send via network yet!)
+		const float maxSimFPS = (1000.0f / gu->avgSimFrameTime) * (1.0f - gu->reconnectSimDrawBalance);
+		newSpeed = Clamp(newSpeed, 0.1f, maxSimFPS / GAME_SPEED);
 #endif
 
 		//float speedMod = 1.f + wantedCpuUsage - refCpuUsage;
@@ -2185,7 +2184,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		if (hasLocalClient) {
 			// Don't create newFrames when localClient (:= host) isn't able to process them fast enough.
 			// Despite still allow to create a few in advance to not lag other connected clients.
-			const int simFramesBehind = serverFrameNum - players[localClientNumber].lastFrameResponse;
+			const float simFramesBehind = serverFrameNum - players[localClientNumber].lastFrameResponse;
 			const float a          = std::min(simFramesBehind / GAME_SPEED, 1.0f);
 			const int curSimFPS    = std::max((int)gu->simFPS, GAME_SPEED); // max advance 1sec in the future
 			const int maxNewFrames = mix(curSimFPS, 0, a);
