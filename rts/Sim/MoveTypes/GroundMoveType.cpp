@@ -531,7 +531,9 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 	{
 		if (wantedSpeed > 0.0f) {
 			const UnitDef* ud = owner->unitDef;
-			const float groundMod = ud->moveDef->moveMath->GetPosSpeedMod(*ud->moveDef, owner->pos, flatFrontDir);
+			const MoveDef* md = ud->moveDef;
+
+			const float groundMod = md->moveMath->GetPosSpeedMod(*md, owner->pos, flatFrontDir);
 			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
 			const float minGoalDistSq = Square(BrakingDistance(currentSpeed));
 
@@ -2248,10 +2250,11 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		const float3 speedVector = owner->frontdir * speedScale * speedSign;
 
 		// NOTE: don't check for structure blockage, coldet handles that
-		// FIXME: directional slope-tolerance needs an upper limit, units can move down ~vertical cliffs
 		//
-		// const bool terrainBlocked = (mm->GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
-		const bool terrainBlocked = (mm->GetPosSpeedMod(*md, owner->pos + speedVector) <= 0.01f);
+		// we want directional slope-tolerance checking, otherwise units get stuck on terrain too much
+		// note that we only reach this point after the pathfinder has already decided on a valid path
+		//
+		const bool terrainBlocked = (mm->GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
 		const bool terrainIgnored = pathController->IgnoreTerrain(*md, owner->pos + speedVector);
 
 		if (terrainBlocked && !terrainIgnored) {

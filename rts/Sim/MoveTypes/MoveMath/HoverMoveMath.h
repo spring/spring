@@ -13,7 +13,7 @@ class CHoverMoveMath : public CMoveMath {
 	CR_DECLARE(CHoverMoveMath);
 public:
 	float SpeedMod(const MoveDef& moveDef, float height, float slope) const;
-	float SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const;
+	float SpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale) const;
 
 	float yLevel(int xSquare, int zSquare) const;
 	float yLevel(const float3& pos) const;

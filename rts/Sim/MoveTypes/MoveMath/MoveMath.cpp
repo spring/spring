@@ -53,22 +53,30 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 	const int square = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
 	const int squareTerrType = readmap->GetTypeMapSynced()[square];
 
-	const float height  = readmap->GetMIPHeightMapSynced(1)[square];
-	const float slope   = readmap->GetSlopeMapSynced()[square];
+	const float height = readmap->GetMIPHeightMapSynced(1)[square];
+	const float slope  = readmap->GetSlopeMapSynced()[square];
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
-	float3 flatNorm = readmap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
-		flatNorm.y = 0.0f;
-		flatNorm.SafeNormalize();
+	#if 1
+	// with a flat normal, only consider the normalized xz-direction
+	// (the actual steepness is represented by the "slope" variable)
+	float3 sqrNormal = readmap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
+		sqrNormal.y = 0.0f;
+		sqrNormal.SafeNormalize();
+	#else
+	const float3& sqrNormal = readmap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
+	#endif
 
-	const float moveSlope = -moveDir.dot(flatNorm);
+	// note: moveDir is (or should be) a unit vector in the xz-plane, y=0
+	// scale is negative for "downhill" slopes, positive for "uphill" ones
+	const float dirSlopeScale = -moveDir.dot(sqrNormal);
 
 	switch (moveDef.moveFamily) {
-		case MoveDef::Tank:  { return (SpeedMod(moveDef, height, slope, moveSlope) * tt.tankSpeed ); } break;
-		case MoveDef::KBot:  { return (SpeedMod(moveDef, height, slope, moveSlope) * tt.kbotSpeed ); } break;
-		case MoveDef::Hover: { return (SpeedMod(moveDef, height, slope, moveSlope) * tt.hoverSpeed); } break;
-		case MoveDef::Ship:  { return (SpeedMod(moveDef, height, slope, moveSlope) * tt.shipSpeed ); } break;
+		case MoveDef::Tank:  { return (SpeedMod(moveDef, height, slope, dirSlopeScale) * tt.tankSpeed ); } break;
+		case MoveDef::KBot:  { return (SpeedMod(moveDef, height, slope, dirSlopeScale) * tt.kbotSpeed ); } break;
+		case MoveDef::Hover: { return (SpeedMod(moveDef, height, slope, dirSlopeScale) * tt.hoverSpeed); } break;
+		case MoveDef::Ship:  { return (SpeedMod(moveDef, height, slope, dirSlopeScale) * tt.shipSpeed ); } break;
 		default: {} break;
 	}
 

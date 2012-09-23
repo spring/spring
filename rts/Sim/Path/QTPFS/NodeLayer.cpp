@@ -205,7 +205,8 @@ void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum,
 				n = nodeGrid[z * xsize + x];
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z += n->zsize();
+				z = n->zmax();
+				// z += n->zsize();
 			}
 		}
 	}
@@ -219,7 +220,8 @@ void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum,
 				n = nodeGrid[z * xsize + x];
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z += n->zsize();
+				z = n->zmax();
+				// z += n->zsize();
 			}
 		}
 	}
@@ -233,7 +235,8 @@ void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum,
 				n = nodeGrid[z * xsize + x];
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z += n->zsize();
+				z = n->zmax();
+				// z += n->zsize();
 			}
 		}
 	}
@@ -247,7 +250,8 @@ void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum,
 				n = nodeGrid[z * xsize + x];
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z += n->zsize();
+				z = n->zmax();
+				// z += n->zsize();
 			}
 		}
 	}

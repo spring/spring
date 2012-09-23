@@ -18,9 +18,10 @@ float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope)
 	return 1.0f;
 }
 
-float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const
+float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale) const
 {
-	if (-height < moveDef.depth && moveSlope > 0.0f)
+	// FIXME: why do ships care if a slope is "uphill" in thise case?
+	if (-height < moveDef.depth && dirSlopeScale > 0.0f)
 		return 0.0f;
 
 	return 1.0f;
