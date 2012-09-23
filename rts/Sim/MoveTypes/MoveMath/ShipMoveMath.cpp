@@ -20,8 +20,9 @@ float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope)
 
 float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale) const
 {
-	// FIXME: why do ships care if a slope is "uphill" in thise case?
-	if (-height < moveDef.depth && dirSlopeScale > 0.0f)
+	// uphill slopes can lead even closer to shore, so
+	// block movement if we are above our minWaterDepth
+	if ((dirSlopeScale > 0.0f) && (-height < moveDef.depth))
 		return 0.0f;
 
 	return 1.0f;
