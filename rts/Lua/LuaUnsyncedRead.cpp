@@ -1376,7 +1376,7 @@ static void AddPlayerToRoster(lua_State* L, int playerID)
 	PUSH_ROSTER_ENTRY(number, playerID);
 	PUSH_ROSTER_ENTRY(number, p->team);
 	PUSH_ROSTER_ENTRY(number, teamHandler->AllyTeam(p->team));
-	PUSH_ROSTER_ENTRY(number, p->spectator);
+	PUSH_ROSTER_ENTRY(boolean, p->spectator);
 	PUSH_ROSTER_ENTRY(number, p->cpuUsage);
 	const float pingScale = (GAME_SPEED * gs->speedFactor);
 	const float pingSecs = float(p->ping - 1) / pingScale;
