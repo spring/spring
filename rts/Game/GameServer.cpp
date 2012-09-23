@@ -37,6 +37,9 @@
 #include "System/TdfParser.h"
 #include "GlobalUnsynced.h" // for syncdebug
 #include "Sim/Misc/GlobalConstants.h"
+#ifndef DEDICATED
+	#include "Sim/Misc/GlobalSynced.h"
+#endif
 
 #include "Player.h"
 #include "IVideoCapturing.h"
@@ -880,6 +883,14 @@ void CGameServer::LagProtection()
 		newSpeed = Clamp(newSpeed, 0.1f, userSpeedFactor);
 		if (userSpeedFactor <= 2.f)
 			newSpeed = std::max(newSpeed, (curSpeedCtrl > 0) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
+
+#ifndef DEDICATED
+		if (!gs->paused) {
+			//FIXME instead of using CpuUsage for connected clients use their avgSimFrameTime or rather maxSimFPS, too (which isn't send via network yet!)
+			const float maxSimFPS = (1000.0f / gu->avgSimFrameTime) * (1.0f - gu->reconnectSimDrawBalance);
+			newSpeed = Clamp(newSpeed, 0.1f, maxSimFPS / GAME_SPEED);
+		}
+#endif
 
 		//float speedMod = 1.f + wantedCpuUsage - refCpuUsage;
 		//LOG_L(L_DEBUG, "Speed REF %f MED %f WANT %f SPEEDM %f NSPEED %f", refCpuUsage, medianCpu, wantedCpuUsage, speedMod, newSpeed);
@@ -2166,15 +2177,21 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			timeElapsed = spring_msecs(200);
 
 		timeLeft += GAME_SPEED * internalSpeed * float(spring_tomsecs(timeElapsed)) * 0.001f;
-		lastTick=currentTick;
+		lastTick  = currentTick;
 		newFrames = (timeLeft > 0)? int(math::ceil(timeLeft)): 0;
 		timeLeft -= newFrames;
 
+#ifndef DEDICATED
 		if (hasLocalClient) {
-			// needs to set lastTick and stuff, otherwise we will get all the left out NEWFRAME's at once when client has catched up
-			if (players[localClientNumber].lastFrameResponse + GAME_SPEED*2 <= serverFrameNum)
-				return;
+			// Don't create newFrames when localClient (:= host) isn't able to process them fast enough.
+			// Despite still allow to create a few in advance to not lag other connected clients.
+			const int simFramesBehind = serverFrameNum - players[localClientNumber].lastFrameResponse;
+			const float a          = std::min(simFramesBehind / GAME_SPEED, 1.0f);
+			const int curSimFPS    = std::max((int)gu->simFPS, GAME_SPEED); // max advance 1sec in the future
+			const int maxNewFrames = mix(curSimFPS, 0, a);
+			newFrames = std::min(newFrames, maxNewFrames);
 		}
+#endif
 	}
 
 	const bool rec = videoCapturing->IsCapturing();
