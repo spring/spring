@@ -5,9 +5,7 @@
 #endif
 
 #include "System/myMath.h"
-#include "System/OpenMP_cond.h"
 #include "System/Sync/FPUCheck.h"
-#include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 #include "Sim/Units/Scripts/CobInstance.h" // for TAANG2RAD (ugh)
@@ -16,69 +14,7 @@ float2 CMyMath::headingToVectorTable[NUM_HEADINGS];
 
 void CMyMath::Init()
 {
-	const unsigned int sseBits = proc::GetProcSSEBits();
-		LOG("[CMyMath::Init] CPU SSE mask: %u, flags:", sseBits);
-		LOG("\tSSE 1.0:  %d,  SSE 2.0:  %d", (sseBits >> 5) & 1, (sseBits >> 4) & 1);
-		LOG("\tSSE 3.0:  %d, SSSE 3.0:  %d", (sseBits >> 3) & 1, (sseBits >> 2) & 1);
-		LOG("\tSSE 4.1:  %d,  SSE 4.2:  %d", (sseBits >> 1) & 1, (sseBits >> 0) & 1);
-		LOG("\tSSE 4.0A: %d,  SSE 5.0A: %d", (sseBits >> 8) & 1, (sseBits >> 7) & 1);
-
-#ifdef STREFLOP_H
-	// SSE 1.0 is mandatory in synced context
-	if (((sseBits >> 5) & 1) == 0) {
-		#ifdef STREFLOP_SSE
-		handleerror(0, "CPU is missing SSE instruction support", "Sync Error", 0);
-		#elif STREFLOP_X87
-		LOG_L(L_WARNING, "\tStreflop floating-point math is not SSE-enabled");
-		LOG_L(L_WARNING, "\tThis may cause desyncs during multi-player games");
-		LOG_L(L_WARNING, "\tThis CPU is not SSE-capable; it can only use X87 mode");
-		#else
-		handleerror(0, "streflop FP-math mode must be either SSE or X87", "Sync Error", 0);
-		#endif
-	} else {
-		#ifdef STREFLOP_SSE
-		LOG("\tusing streflop SSE FP-math mode, CPU supports SSE instructions");
-		#elif STREFLOP_X87
-		LOG_L(L_WARNING, "\tStreflop floating-point math is set to X87 mode");
-		LOG_L(L_WARNING, "\tThis may cause desyncs during multi-player games");
-		LOG_L(L_WARNING, "\tThis CPU is SSE-capable; consider recompiling");
-		#else
-		handleerror(0, "streflop FP-math mode must be either SSE or X87", "Sync Error", 0);
-		#endif
-	}
-
-	// Set single precision floating point math.
-	streflop::streflop_init<streflop::Simple>();
-#if defined(__SUPPORT_SNAN__)
-	if (!GML::Enabled() || Threading::IsSimThread())
-		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
-#endif
-
-	// Initialize FPU in all OpenMP threads, too
-	// Note: Tested on Linux it seems it's not needed to do this.
-	//       Either OMP threads copy the FPU state of the mainthread
-	//       or the FPU state per-process on Linux.
-	//       Still it hurts nobody to call these functions ;-)
-#ifdef _OPENMP
-	#pragma omp parallel
-	{
-		//good_fpu_control_registers("OMP-Init");
-		streflop::streflop_init<streflop::Simple>();
-	#if defined(__SUPPORT_SNAN__)
-		if (!GML::Enabled() || Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
-	#endif
-	}
-#endif
-
-#else
-	// probably should check if SSE was enabled during
-	// compilation and issue a warning about illegal
-	// instructions if so (or just die with an error)
-	LOG_L(L_WARNING, "Floating-point math is not controlled by streflop");
-	LOG_L(L_WARNING, "This makes keeping multi-player sync 99% impossible");
-#endif
-
+	good_fpu_init();
 
 	for (int a = 0; a < NUM_HEADINGS; ++a) {
 		float ang = (a - (NUM_HEADINGS / 2)) * 2 * PI / NUM_HEADINGS;
