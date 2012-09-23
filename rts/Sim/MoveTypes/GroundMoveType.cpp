@@ -1039,13 +1039,14 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// cases in which there is no need to avoid this obstacle
 		if (avoidee == owner)
 			continue;
+		// ignore aircraft (or flying ground units)
+		if (avoidee->physicalState == CSolidObject::Hovering || avoidee->physicalState == CSolidObject::Flying)
+			continue;
 		if (avoiderMM->IsNonBlocking(*avoiderMD, avoidee, avoider))
 			continue;
 		if (!avoiderMM->CrushResistant(*avoiderMD, avoidee))
 			continue;
 
-		// for features, avoidance-response is not influenced by angle between frontdir's
-		const bool avoideeFeature = (avoidee->GetBlockingMapID() >= uh->MaxUnits());
 		const bool avoideeMobile = (avoideeMD != NULL);
 		const bool avoidMobiles = avoiderMD->avoidMobilesOnPath;
 
@@ -1090,8 +1091,11 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		float avoiderTurnSign = ((avoidee->pos.dot(avoider->rightdir) - avoider->pos.dot(avoider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
 		float avoideeTurnSign = ((avoider->pos.dot(avoidee->rightdir) - avoidee->pos.dot(avoidee->rightdir)) <= 0.0f) * 2.0f - 1.0f;
 
+		// for mobile units, avoidance-response is modulated by angle
+		// between avoidee's and avoider's frontdir such that maximal
+		// avoidance occurs when they are anti-parallel
 		const float avoidanceCosAngle = Clamp(avoider->frontdir.dot(avoidee->frontdir), -1.0f, 1.0f);
-		const float avoidanceResponse = (1.0f - avoidanceCosAngle * int(!avoideeFeature)) + 0.1f;
+		const float avoidanceResponse = (1.0f - avoidanceCosAngle * int(avoideeMobile)) + 0.1f;
 		const float avoidanceFallOff  = (1.0f - std::min(1.0f, avoideeDist / (5.0f * avoidanceRadiusSum)));
 
 		// if parties are anti-parallel, it is always more efficient for
