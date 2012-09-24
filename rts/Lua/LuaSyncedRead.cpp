@@ -730,7 +730,7 @@ int LuaSyncedRead::GetGaiaTeamID(lua_State* L)
 int LuaSyncedRead::GetGameSpeed(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, gs->userSpeedFactor);
+	lua_pushnumber(L, gs->wantedSpeedFactor);
 	lua_pushnumber(L, gs->speedFactor);
 	lua_pushboolean(L, gs->paused);
 	return 3;

@@ -15,9 +15,8 @@
 #undef GetTempPathA
 #endif
 
-struct SRectangle;
-
 namespace QTPFS {
+	struct PathRectangle;
 	struct PathCache {
 		PathCache() {
 			numCacheHits.resize(PATH_TYPE_DEAD + 1, 0);
@@ -27,7 +26,7 @@ namespace QTPFS {
 		typedef std::map<unsigned int, IPath*> PathMap;
 		typedef std::map<unsigned int, IPath*>::iterator PathMapIt;
 
-		bool MarkDeadPaths(const SRectangle& r);
+		bool MarkDeadPaths(const PathRectangle& r);
 		void KillDeadPaths();
 
 		const IPath* GetTempPath(unsigned int pathID) const { return (GetConstPath(pathID, PATH_TYPE_TEMP)); }

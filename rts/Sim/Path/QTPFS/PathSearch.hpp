@@ -7,10 +7,10 @@
 #include <vector>
 
 #include "PathDefines.hpp"
+#include "PathRectangle.hpp"
 #include "Node.hpp"
 #include "NodeHeap.hpp"
 #include "System/float3.h"
-#include "System/Rectangle.h"
 
 namespace QTPFS {
 	struct PathCache;
@@ -77,14 +77,14 @@ namespace QTPFS {
 			PathCache* cache,
 			const float3& sourcePoint,
 			const float3& targetPoint,
-			const SRectangle& searchArea
+			const PathRectangle& searchArea
 		) = 0;
 		virtual bool Execute(
 			unsigned int searchStateOffset = 0,
 			unsigned int searchMagicNumber = 0
 		) = 0;
 		virtual void Finalize(IPath* path) = 0;
-		virtual void SharedFinalize(const IPath* srcPath, IPath* dstPath) {}
+		virtual bool SharedFinalize(const IPath* srcPath, IPath* dstPath) {}
 		virtual PathSearchTrace::Execution* GetExecutionTrace() { return NULL; }
 
 		virtual const boost::uint64_t GetHash(unsigned int N, unsigned int k) const = 0;
@@ -127,14 +127,14 @@ namespace QTPFS {
 			PathCache* cache,
 			const float3& sourcePoint,
 			const float3& targetPoint,
-			const SRectangle& searchArea
+			const PathRectangle& searchArea
 		);
 		bool Execute(
 			unsigned int searchStateOffset = 0,
 			unsigned int searchMagicNumber = 0
 		);
 		void Finalize(IPath* path);
-		void SharedFinalize(const IPath* srcPath, IPath* dstPath);
+		bool SharedFinalize(const IPath* srcPath, IPath* dstPath);
 		PathSearchTrace::Execution* GetExecutionTrace() { return searchExec; }
 
 		const boost::uint64_t GetHash(unsigned int N, unsigned int k) const;
@@ -172,7 +172,7 @@ namespace QTPFS {
 		PathSearchTrace::Execution* searchExec;
 		PathSearchTrace::Iteration searchIter;
 
-		SRectangle searchRect;
+		PathRectangle searchRect;
 
 		// global queue: allocated once, re-used by all searches without clear()'s
 		// this relies on INode::operator< to sort the INode*'s by increasing f-cost

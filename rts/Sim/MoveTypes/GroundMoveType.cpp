@@ -531,7 +531,9 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 	{
 		if (wantedSpeed > 0.0f) {
 			const UnitDef* ud = owner->unitDef;
-			const float groundMod = ud->moveDef->moveMath->GetPosSpeedMod(*ud->moveDef, owner->pos, flatFrontDir);
+			const MoveDef* md = ud->moveDef;
+
+			const float groundMod = md->moveMath->GetPosSpeedMod(*md, owner->pos, flatFrontDir);
 			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
 			const float minGoalDistSq = Square(BrakingDistance(currentSpeed));
 
@@ -552,7 +554,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 				float turnSpeed = (reversing)? maxReverseSpeed: maxSpeed;
 
 				if (reqTurnAngle != 0.0f) {
-					turnSpeed *= (maxTurnAngle / reqTurnAngle);
+					turnSpeed *= std::min(maxTurnAngle / reqTurnAngle, 1.0f);
 				}
 
 				if (waypointDir.SqLength() > 0.1f) {
@@ -1037,13 +1039,14 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// cases in which there is no need to avoid this obstacle
 		if (avoidee == owner)
 			continue;
+		// ignore aircraft (or flying ground units)
+		if (avoidee->physicalState == CSolidObject::Hovering || avoidee->physicalState == CSolidObject::Flying)
+			continue;
 		if (avoiderMM->IsNonBlocking(*avoiderMD, avoidee, avoider))
 			continue;
 		if (!avoiderMM->CrushResistant(*avoiderMD, avoidee))
 			continue;
 
-		// for features, avoidance-response is not influenced by angle between frontdir's
-		const bool avoideeFeature = (avoidee->GetBlockingMapID() >= uh->MaxUnits());
 		const bool avoideeMobile = (avoideeMD != NULL);
 		const bool avoidMobiles = avoiderMD->avoidMobilesOnPath;
 
@@ -1060,8 +1063,10 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		const float avoideeDistSq = avoideeVector.SqLength();
 		const float avoideeDist   = fastmath::sqrt2(avoideeDistSq) + 0.01f;
 
+		// do not bother steering around idling MOBILE objects
+		// (since collision handling will just push them aside)
 		// TODO: also check if !avoiderUD->pushResistant
-		if (avoideeMobile && !avoidMobiles)
+		if (avoideeMobile && (!avoidMobiles || (!avoidee->isMoving && avoidee->allyteam == avoider->allyteam)))
 			continue;
 		// ignore objects that are more than this many degrees off-center from us
 		if (avoider->frontdir.dot(-(avoideeVector / avoideeDist)) < MAX_AVOIDEE_COSINE)
@@ -1070,12 +1075,6 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		if (avoideeDistSq >= Square(std::max(currentSpeed, 1.0f) * GAME_SPEED + avoidanceRadiusSum))
 			continue;
 		if (avoideeDistSq >= avoider->pos.SqDistance2D(goalPos))
-			continue;
-
-		// do not bother steering around idling objects
-		// (collision handling will push them aside, or
-		// us in case of "allied" features)
-		if (!avoidee->isMoving && avoidee->allyteam == avoider->allyteam)
 			continue;
 
 		// if object and unit in relative motion are closing in on one another
@@ -1092,8 +1091,11 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		float avoiderTurnSign = ((avoidee->pos.dot(avoider->rightdir) - avoider->pos.dot(avoider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
 		float avoideeTurnSign = ((avoider->pos.dot(avoidee->rightdir) - avoidee->pos.dot(avoidee->rightdir)) <= 0.0f) * 2.0f - 1.0f;
 
+		// for mobile units, avoidance-response is modulated by angle
+		// between avoidee's and avoider's frontdir such that maximal
+		// avoidance occurs when they are anti-parallel
 		const float avoidanceCosAngle = Clamp(avoider->frontdir.dot(avoidee->frontdir), -1.0f, 1.0f);
-		const float avoidanceResponse = (1.0f - avoidanceCosAngle * int(!avoideeFeature)) + 0.1f;
+		const float avoidanceResponse = (1.0f - avoidanceCosAngle * int(avoideeMobile)) + 0.1f;
 		const float avoidanceFallOff  = (1.0f - std::min(1.0f, avoideeDist / (5.0f * avoidanceRadiusSum)));
 
 		// if parties are anti-parallel, it is always more efficient for
@@ -2252,10 +2254,11 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		const float3 speedVector = owner->frontdir * speedScale * speedSign;
 
 		// NOTE: don't check for structure blockage, coldet handles that
-		// FIXME: directional slope-tolerance needs an upper limit, units can move down ~vertical cliffs
 		//
-		// const bool terrainBlocked = (mm->GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
-		const bool terrainBlocked = (mm->GetPosSpeedMod(*md, owner->pos + speedVector) <= 0.01f);
+		// we want directional slope-tolerance checking, otherwise units get stuck on terrain too much
+		// note that we only reach this point after the pathfinder has already decided on a valid path
+		//
+		const bool terrainBlocked = (mm->GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
 		const bool terrainIgnored = pathController->IgnoreTerrain(*md, owner->pos + speedVector);
 
 		if (terrainBlocked && !terrainIgnored) {

@@ -52,20 +52,21 @@ public:
 	* @brief speed factor
 	*
 	* Contains the actual gamespeed factor
-	* used by the game. The total simframes
-	* per second calculate as follow:
-	* simFPS = speedFactor * GAME_SPEED;
+	* used by the game. The real gamespeed
+	* can be up to this but is lowered if
+	* clients can't keep up (lag protection)
 	*/
 	float speedFactor;
 
 	/**
-	* @brief user speed factor
+	* @brief wanted speed factor
 	*
-	* Contains the user's speed factor.
-	* The real gamespeed can be up to this
-	* but is lowered if a computer can't keep up
+	* Contains the aimed speed factor.
+	* The total simframes
+	* per second calculate as follow:
+	* wantedSimFPS = speedFactor * GAME_SPEED;
 	*/
-	float userSpeedFactor;
+	float wantedSpeedFactor;
 
 	/**
 	* @brief paused

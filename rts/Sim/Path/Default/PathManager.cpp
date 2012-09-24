@@ -383,7 +383,7 @@ void CPathManager::DeletePath(unsigned int pathID) {
 
 
 // Tells estimators about changes in or on the map.
-void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {
+void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int /*type*/) {
 	medResPE->MapChanged(x1, z1, x2, z2);
 	lowResPE->MapChanged(x1, z1, x2, z2);
 }

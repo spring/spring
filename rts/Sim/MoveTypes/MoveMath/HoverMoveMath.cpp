@@ -16,26 +16,29 @@ Calculate speed-multiplier for given height and slope data.
 float CHoverMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope) const
 {
 	// no speed-penalty if on water (unless noWaterMove)
-	if (height < 0.0f) {
-		return (noWaterMove? 0.0f: 1.0f);
-	}
-
+	if (height < 0.0f)
+		return (1.0f * noWaterMove);
+	// slope too steep?
 	if (slope > moveDef.maxSlope)
 		return 0.0f;
 
 	return (1.0f / (1.0f + slope * moveDef.slopeMod));
 }
 
-float CHoverMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const
+float CHoverMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale) const
 {
 	// no speed-penalty if on water
 	if (height < 0.0f)
 		return 1.0f;
 
-	if ((slope * moveSlope) > moveDef.maxSlope)
+	// too steep downhill slope?
+	if ((slope * dirSlopeScale) < (-moveDef.maxSlope * 2.0f))
+		return 0.0f;
+	// too steep uphill slope?
+	if ((slope * dirSlopeScale) > ( moveDef.maxSlope       ))
 		return 0.0f;
 
-	return (1.0f / (1.0f + std::max(0.0f, slope * moveSlope) * moveDef.slopeMod));
+	return (1.0f / (1.0f + std::max(0.0f, slope * dirSlopeScale) * moveDef.slopeMod));
 }
 
 

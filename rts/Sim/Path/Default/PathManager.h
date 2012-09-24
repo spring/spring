@@ -70,7 +70,7 @@ public:
 
 	void GetPathWayPoints(unsigned int pathID, std::vector<float3>& points, std::vector<int>& starts) const;
 
-	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
+	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int type);
 
 	bool SetNodeExtraCost(unsigned int, unsigned int, float, bool);
 	bool SetNodeExtraCosts(const float*, unsigned int, unsigned int, bool);

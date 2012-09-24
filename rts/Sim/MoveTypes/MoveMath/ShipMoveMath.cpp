@@ -18,9 +18,11 @@ float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope)
 	return 1.0f;
 }
 
-float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const
+float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale) const
 {
-	if (-height < moveDef.depth && moveSlope > 0.0f)
+	// uphill slopes can lead even closer to shore, so
+	// block movement if we are above our minWaterDepth
+	if ((dirSlopeScale > 0.0f) && (-height < moveDef.depth))
 		return 0.0f;
 
 	return 1.0f;

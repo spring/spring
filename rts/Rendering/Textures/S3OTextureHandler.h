@@ -29,7 +29,6 @@ public:
 	CS3OTextureHandler();
 	virtual ~CS3OTextureHandler();
 
-	void Update();
 	void LoadS3OTexture(S3DModel* model);
 	int LoadS3OTextureNow(const S3DModel* model);
 	void SetS3oTexture(int num);

@@ -9,9 +9,11 @@
 
 #ifdef __GNUC__
 	#define _const __attribute__((const))
+	#define _pure __attribute__((pure))
 	#define _warn_unused_result __attribute__((warn_unused_result))
 #else
 	#define _const
+	#define _pure
 	#define _warn_unused_result
 #endif
 
@@ -55,19 +57,19 @@ struct shortint2 {
 };
 
 
-short int GetHeadingFromFacing(int facing);
-int GetFacingFromHeading(short int heading);
-float GetHeadingFromVectorF(float dx, float dz);
-short int GetHeadingFromVector(float dx, float dz);
-shortint2 GetHAndPFromVector(const float3& vec); // vec should be normalized
-float2 GetHAndPFromVectorF(const float3& vec); // vec should be normalized
-float3 GetVectorFromHeading(short int heading);
-float3 GetVectorFromHAndPExact(short int heading,short int pitch);
+short int GetHeadingFromFacing(const int facing) _pure _warn_unused_result;
+int GetFacingFromHeading(const short int heading) _pure _warn_unused_result;
+float GetHeadingFromVectorF(const float dx, const float dz) _pure _warn_unused_result;
+short int GetHeadingFromVector(const float dx, const float dz) _pure _warn_unused_result;
+shortint2 GetHAndPFromVector(const float3 vec) _pure _warn_unused_result; // vec should be normalized
+float2 GetHAndPFromVectorF(const float3 vec) _pure _warn_unused_result; // vec should be normalized
+float3 GetVectorFromHeading(const short int heading) _pure _warn_unused_result;
+float3 GetVectorFromHAndPExact(const short int heading, const short int pitch) _pure _warn_unused_result;
 
-float3 CalcBeizer(float i, const float3& p1, const float3& p2, const float3& p3, const float3& p4);
+float3 CalcBeizer(const float i, const float3 p1, const float3 p2, const float3 p3, const float3 p4) _pure _warn_unused_result;
 
-float LinePointDist(const float3& l1, const float3& l2, const float3& p);
-float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
+float LinePointDist(const float3 l1, const float3 l2, const float3 p) _pure _warn_unused_result;
+float3 ClosestPointOnLine(const float3 l1, const float3 l2, const float3 p) _pure _warn_unused_result;
 
 /**
  * @brief Returns the intersection points of a ray with the map boundary (2d only)
@@ -75,7 +77,7 @@ float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
  * @param dir float3 direction of the ray
  * @return <near,far> std::pair<float,float> distance to the intersection points in mulitples of `dir`
  */
-std::pair<float,float> GetMapBoundaryIntersectionPoints(const float3& start, const float3& dir);
+std::pair<float,float> GetMapBoundaryIntersectionPoints(const float3 start, const float3 dir) _pure _warn_unused_result;
 
 /**
  * @brief clamps a line (start & end points) to the map boundaries
@@ -91,26 +93,29 @@ bool ClampLineInMap(float3& start, float3& end);
  * @param end float3 the `end` point of the line
  * @return true if changed
  */
-bool ClampRayInMap(const float3& start, float3& end);
+bool ClampRayInMap(const float3 start, float3& end);
 
 
-float smoothstep(const float edge0, const float edge1, const float value) _warn_unused_result;
-float3 smoothstep(const float edge0, const float edge1, float3 vec) _warn_unused_result;
+float smoothstep(const float edge0, const float edge1, const float value) _pure _warn_unused_result;
+float3 smoothstep(const float edge0, const float edge1, float3 vec) _pure _warn_unused_result;
 
-template<class T> T mix(const T& v1, const T& v2, const float& a) _warn_unused_result;
-template<class T> T Blend(const T& v1, const T& v2, const float& a) _warn_unused_result;
-template<class T> inline T Blend(const T& v1, const T& v2, const float& a) { return mix(v1, v2, a); }
+float mix(const float v1, const float v2, const float a) _pure _warn_unused_result;
+float Blend(const float v1, const float v2, const float a) _pure _warn_unused_result;
+inline float Blend(const float v1, const float v2, const float a) { return mix(v1, v2, a); }
+template<class T> T mix(const T v1, const T v2, const float a) _pure _warn_unused_result;
+template<class T> T Blend(const T v1, const T v2, const float a) _pure _warn_unused_result;
+template<class T> inline T Blend(const T v1, const T v2, const float a) { return mix(v1, v2, a); }
 
 float Square(const float x) _const _warn_unused_result;
 int Round(const float f) _const _warn_unused_result;
-template<class T> T Clamp(const T& v, const T& min, const T& max) _warn_unused_result;
+template<class T> T Clamp(const T v, const T min, const T max) _pure _warn_unused_result;
 
 
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp
  */
-float ClampRad(float f) _const;
+float ClampRad(float f) _const _warn_unused_result;
 
 
 /**
@@ -136,7 +141,7 @@ float GetRadFromXY(const float dx, const float dy) _const;
 /**
  * convert a color in HS(V) space to RGB
  */
-float3 hs2rgb(float h, float s);
+float3 hs2rgb(float h, float s) _pure _warn_unused_result;
 
 
 #include "myMath.inl"
