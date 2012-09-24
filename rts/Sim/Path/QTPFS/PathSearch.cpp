@@ -156,7 +156,11 @@ void QTPFS::PathSearch::Iterate(
 ) {
 	curNode = openNodes.top();
 	curNode->SetSearchState(searchState | NODE_STATE_CLOSED);
+	#ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
+	// in the non-conservative case, this is done from
+	// NodeLayer::ExecNodeNeighborCacheUpdates instead
 	curNode->SetMagicNumber(searchMagic);
+	#endif
 
 	openNodes.pop();
 	openNodes.check_heap_property(0);
