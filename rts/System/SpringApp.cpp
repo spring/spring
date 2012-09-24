@@ -913,9 +913,6 @@ void SpringApp::Startup()
  */
 int SpringApp::Update()
 {
-	if (globalRendering->FSAA)
-		glEnable(GL_MULTISAMPLE_ARB);
-
 	int ret = 1;
 	if (activeController) {
 		Watchdog::ClearTimer(WDT_MAIN);
@@ -926,17 +923,25 @@ int SpringApp::Update()
 
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");
-			ret = activeController->Draw();
+			if (globalRendering->FSAA)
+				glEnable(GL_MULTISAMPLE_ARB);
+
+			const bool drawDone = activeController->Draw();
 
 			GML::PumpAux();
+
+			VSync.Delay();
+			SDL_GL_SwapBuffers();
+
+			if (drawDone) {
+				activeController->DrawPost();
+			}
+
+			if (globalRendering->FSAA)
+				glDisable(GL_MULTISAMPLE_ARB);
+
 		}
 	}
-
-	VSync.Delay();
-	SDL_GL_SwapBuffers();
-
-	if (globalRendering->FSAA)
-		glDisable(GL_MULTISAMPLE_ARB);
 
 	return ret;
 }

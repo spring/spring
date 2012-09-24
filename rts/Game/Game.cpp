@@ -1103,10 +1103,10 @@ bool CGame::Draw() {
 	GML_STDMUTEX_LOCK(draw); //Draw
 
 	if (UpdateUnsynced())
-		return true;
+		return false;
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
-	const spring_time currentTimePreDraw = spring_gettime();
+	currentTimePreDraw = spring_gettime();
 
 	eventHandler.DrawGenesis();
 
@@ -1117,7 +1117,7 @@ bool CGame::Draw() {
 		// so we force render two frames per minute when minimized to clear batches and free memory
 		// don't need to mess with globalRendering->active since only mouse-input code depends on it
 		if (spring_tomsecs(currentTimePreDraw - lastDrawFrameTime) < 30*1000)
-			return true;
+			return false;
 	}
 
 	CTeamHighlight::Enable(spring_tomsecs(currentTimePreDraw));
@@ -1302,14 +1302,6 @@ bool CGame::Draw() {
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 
-	const spring_time currentTimePostDraw = spring_gettime();
-
-	globalRendering->lastFrameTime = spring_tomsecs(currentTimePostDraw - lastDrawFrameTime) / 1000.f;
-	lastDrawFrameTime = currentTimePostDraw;
-
-	// do not count the video-capturing time since it runs in a separate thread
-	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(currentTimePostDraw - currentTimePreDraw)), 0.05f);
-
 	videoCapturing->RenderFrame();
 
 	SetDrawMode(gameNotDrawing);
@@ -1318,6 +1310,17 @@ bool CGame::Draw() {
 	return true;
 }
 
+void CGame::DrawPost()
+{
+	const spring_time currentTimePostDraw = spring_gettime();
+
+	globalRendering->lastFrameTime = spring_tomsecs(currentTimePostDraw - lastDrawFrameTime) / 1000.f;
+	lastDrawFrameTime = currentTimePostDraw;
+
+	// do not count the video-capturing time since it runs in a separate thread
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(currentTimePostDraw - currentTimePreDraw)), 0.05f);
+
+}
 
 void CGame::ParseInputTextGeometry(const string& geo)
 {
