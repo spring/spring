@@ -34,6 +34,7 @@ namespace QTPFS {
 			return *this;
 		}
 
+		void ForceTesselation(bool b) { ft = b; }
 		bool ForceTesselation() const { return ft; }
 
 	private:

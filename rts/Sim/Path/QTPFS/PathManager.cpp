@@ -379,6 +379,8 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 	}
 }
 
+// called in the non-staggered (#ifndef QTPFS_STAGGERED_LAYER_UPDATES)
+// layer update scheme and during initialization; see ::TerrainChange
 void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectangle& r) {
 	const MoveDef* md = moveDefHandler->moveDefs[layerNum];
 	const CMoveMath* mm = md->moveMath;
@@ -396,18 +398,28 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectan
 
 	// adjust the borders so we are not left with "rims" of
 	// impassable squares when eg. a structure is reclaimed
-	PathRectangle mr = PathRectangle(r);
+	PathRectangle mr; mr.ForceTesselation(r.ForceTesselation());
+	PathRectangle ur; ur.ForceTesselation(r.ForceTesselation());
+
 	mr.x1 = std::max(r.x1 - md->xsizeh,        0);
 	mr.z1 = std::max(r.z1 - md->zsizeh,        0);
 	mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
 	mr.z2 = std::min(r.z2 + md->zsizeh, gs->mapy);
+	ur.x1 = mr.x1;
+	ur.z1 = mr.z1;
+	ur.x2 = mr.x2;
+	ur.z2 = mr.z2;
 
 	const bool wantTesselation = (layersInited || !haveCacheDir);
 	const bool needTesselation = nodeLayers[layerNum].Update(mr, md, mm);
 
 	if (needTesselation && wantTesselation) {
-		nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr);
+		nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr, ur);
 		pathCaches[layerNum].MarkDeadPaths(mr);
+
+		#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
+		nodeLayers[layerNum].ExecNodeNeighborCacheUpdates(ur, numTerrainChanges);
+		#endif
 	}
 }
 
@@ -422,7 +434,9 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const PathRectangle& r) {
 		if (md->unitDefRefCount == 0)
 			continue;
 
-		PathRectangle mr = PathRectangle(r);
+		PathRectangle mr; mr.ForceTesselation(r.ForceTesselation());
+		// PathRectangle ur; ur.ForceTesselation(r.ForceTesselation());
+
 		mr.x1 = std::max(r.x1 - md->xsizeh,        0);
 		mr.z1 = std::max(r.z1 - md->zsizeh,        0);
 		mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
@@ -433,29 +447,32 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const PathRectangle& r) {
 }
 
 void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum) {
-	// update the neighbor-cache for (a chunk of) the leaf
-	// nodes in this layer; this amortizes (in theory) the
-	// cost of doing it "on-demand" in PathSearch::Iterate
-	// (which can not be avoided since updating the entire
-	// layer in one frame is computationally infeasible)
-	//
-	// NOTE: exclusive to QTPFS_STAGGERED_LAYER_UPDATES
-	//
-	#ifdef QTPFS_AMORTIZED_NODE_NEIGHBOR_CACHE_UPDATES
-	nodeLayers[layerNum].ExecuteNodeNeighborCacheUpdate(gs->frameNum, numTerrainChanges);
-	#endif
-
 	// flush this layer's entire update-queue if necessary
 	//
 	// called at run-time only, not load-time so we always
 	// *want* (as opposed to need) a tesselation pass here
+	//
 	while (nodeLayers[layerNum].HaveQueuedUpdate()) {
-		const NodeLayer& nl = nodeLayers[layerNum];
-		const PathRectangle& r = nl.GetQueuedUpdateRectangle();
+		const LayerUpdate& lu = nodeLayers[layerNum].GetQueuedUpdate();
+		const PathRectangle& mr = lu.rectangle;
+
+		PathRectangle ur = mr;
 
 		if (nodeLayers[layerNum].ExecQueuedUpdate()) {
-			nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], r);
-			pathCaches[layerNum].MarkDeadPaths(r);
+			nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr, ur);
+			pathCaches[layerNum].MarkDeadPaths(mr);
+
+			#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
+			// NOTE:
+			//   since any terrain changes have already happened when we start eating
+			//   through the queue for this layer, <numTerrainChanges> would have the
+			//   same value for each queued update we consume and is not useful here:
+			//   in case queue-item j referenced some or all of the same nodes as item
+			//   i (j > i), it could cause nodes updated during processing of i to not
+			//   be updated again when j gets processed --> dangling neighbor pointers
+			//
+			nodeLayers[layerNum].ExecNodeNeighborCacheUpdates(ur, lu.counter);
+			#endif
 		}
 
 		nodeLayers[layerNum].PopQueuedUpdate();
@@ -536,6 +553,8 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 
 
+// note that this is called twice per object:
+// height-map changes, then blocking-map does
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type) {
 	SCOPED_TIMER("PathManager::TerrainChange");
 
@@ -544,6 +563,8 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 	#else
 	const bool forceTesselation = false;
 	#endif
+
+	numTerrainChanges += 1;
 
 	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 	// defer layer-updates to ::Update so we can stagger them
@@ -554,8 +575,6 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 	// update all layers right now for this change-event
 	UpdateNodeLayersThreaded(PathRectangle(x1, z1,  x2, z2, forceTesselation));
 	#endif
-
-	numTerrainChanges += 1;
 }
 
 

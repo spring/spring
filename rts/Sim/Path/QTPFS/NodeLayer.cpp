@@ -77,9 +77,12 @@ void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md, co
 	layerUpdates.push_back(LayerUpdate());
 	LayerUpdate* layerUpdate = &(layerUpdates.back());
 
+	// the first update MUST have a non-zero counter
+	// since all nodes are at 0 after initialization
 	layerUpdate->rectangle = r;
 	layerUpdate->speedMods.resize(r.GetArea());
 	layerUpdate->blockBits.resize(r.GetArea());
+	layerUpdate->counter = ++updateCounter;
 
 	#ifdef QTPFS_IGNORE_MAP_EDGES
 	const unsigned int md_xsizeh = md->xsizeh;
@@ -184,7 +187,19 @@ bool QTPFS::NodeLayer::Update(
 
 
 
-void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum) {
+// update the neighbor-cache for (a chunk of) the leaf
+// nodes in this layer; this amortizes (in theory) the
+// cost of doing it "on-demand" in PathSearch::Iterate
+// when QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
+//
+// NOTE:
+//   exclusive to the QTPFS_STAGGERED_LAYER_UPDATES path,
+//   and makes no sense to use with the non-conservative
+//   update scheme
+//
+#ifdef QTPFS_AMORTIZED_NODE_NEIGHBOR_CACHE_UPDATES
+#ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
+void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum) {
 	const int xoff = (currFrameNum % ((gs->mapx >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 	const int zoff = (currFrameNum / ((gs->mapy >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 
@@ -253,6 +268,32 @@ void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum,
 				z = n->zmax();
 				// z += n->zsize();
 			}
+		}
+	}
+}
+#endif
+#endif
+
+void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const PathRectangle& ur, unsigned int currMagicNum) {
+	// account for the rim of nodes around the bounding box
+	// (whose neighbors also changed during re-tesselation)
+	const int xmin = std::max(ur.x1 - 1, 0), xmax = std::min(ur.x2 + 1, gs->mapx);
+	const int zmin = std::max(ur.z1 - 1, 0), zmax = std::min(ur.z2 + 1, gs->mapy);
+
+	INode* n = NULL;
+
+	for (int x = xmin; x < xmax; x++) {
+		for (int z = zmin; z < zmax; ) {
+			n = nodeGrid[z * xsize + x];
+
+			// NOTE:
+			//   during initialization, currMagicNum == 0 which nodes start with already 
+			//   (does not matter because prevMagicNum == -1, so updates are not no-ops)
+			n->SetMagicNumber(currMagicNum);
+			n->UpdateNeighborCache(nodeGrid);
+
+			z = n->zmax();
+			// z += n->zsize();
 		}
 	}
 }
