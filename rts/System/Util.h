@@ -120,19 +120,6 @@ template<class T> void SafeDeleteArray(T*& a)
 	delete [] tmp;
 }
 
-namespace proc {
-	#if defined(__GNUC__)
-	__attribute__((__noinline__))
-	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d);
-	#else
-	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d);
-	#endif
-
-	unsigned int GetProcMaxStandardLevel();
-	unsigned int GetProcMaxExtendedLevel();
-	unsigned int GetProcSSEBits();
-}
-
 // set.erase(iterator++) is prone to crash with MSVC
 template <class S, class I>
 inline I set_erase(S &s, I i) {

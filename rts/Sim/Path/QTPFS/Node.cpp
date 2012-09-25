@@ -381,26 +381,33 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 	// this code can be VERY slow in the worst-case (eg. when <r>
 	// overlaps all four children of the ROOT node), but minimizes
 	// the overall number of nodes in the tree at any given time
-	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const PathRectangle& r) {
-		bool recursed = false;
+	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const PathRectangle& r, PathRectangle& ur) {
+		bool cont = false;
 
 		if (!IsLeaf()) {
 			for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-				if (children[i]->GetRectangleRelation(r) == REL_RECT_INTERIOR_NODE) {
-					children[i]->PreTesselate(nl, r); recursed = true; break;
+				if ((cont |= (children[i]->GetRectangleRelation(r) == REL_RECT_INTERIOR_NODE))) {
+					// only need to descend down one branch
+					children[i]->PreTesselate(nl, r, ur);
+					break;
 				}
 			}
 		}
 
-		if (!recursed) {
+		if (!cont) {
+			ur.x1 = std::min(ur.x1, int(xmin()));
+			ur.z1 = std::min(ur.z1, int(zmin()));
+			ur.x2 = std::max(ur.x2, int(xmax()));
+			ur.z2 = std::max(ur.z2, int(zmax()));
+
 			Merge(nl);
-			Tesselate(nl, r, true, false);
+			Tesselate(nl, r);
 		}
 	}
 
 #else
 
-	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const PathRectangle& r) {
+	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const PathRectangle& r, PathRectangle& ur) {
 		const unsigned int rel = GetRectangleRelation(r);
 
 		// use <r> if it is fully inside <this>, otherwise clip against our edges
@@ -423,13 +430,20 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 			 ((zsize() >> 1) > (cr.z2 - cr.z1)));
 
 		if (leaf || !cont) {
+			// extend a bounding box around every
+			// node modified during re-tesselation
+			ur.x1 = std::min(ur.x1, int(xmin()));
+			ur.z1 = std::min(ur.z1, int(zmin()));
+			ur.x2 = std::max(ur.x2, int(xmax()));
+			ur.z2 = std::max(ur.z2, int(zmax()));
+
 			Merge(nl);
-			Tesselate(nl, cr, true, false);
+			Tesselate(nl, cr);
 			return;
 		}
 
 		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-			children[i]->PreTesselate(nl, cr);
+			children[i]->PreTesselate(nl, cr, ur);
 		}
 	}
 
@@ -437,7 +451,7 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 
 
 
-void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r, bool merged, bool split) {
+void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r) {
 	unsigned int numNewBinSquares = 0; // nr. of squares in <r> that changed bin after deformation
 	unsigned int numDifBinSquares = 0; // nr. of different bin-types across all squares within <r>
 	unsigned int numClosedSquares = 0;
@@ -475,7 +489,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r, bool merged
 			QTNode* cn = children[i];
 			PathRectangle cr = cn->ClipRectangle(r);
 
-			cn->Tesselate(nl, cr, false, true);
+			cn->Tesselate(nl, cr);
 			assert(cn->GetMoveCost() != -1.0f);
 		}
 	}
@@ -585,7 +599,7 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	//   out of their factories
 	//
 	//   this is crucial for handling the squares underneath
-	//   static obstacles (eg. factories) if MIN_SIZE_XZ != 1
+	//   static obstacles (eg. factories) if MIN_SIZE_* != 1
 	//   and ifndef QTPFS_FORCE_TESSELATE_OBJECT_YARDMAPS
 	//
 	if (numClosedSquares > 0) {
@@ -659,7 +673,9 @@ void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
 }
 
 unsigned int QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes, std::vector<INode*>& ngbs) {
+	#ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
 	UpdateNeighborCache(nodes);
+	#endif
 
 	if (!neighbors.empty()) {
 		ngbs.clear();
@@ -672,10 +688,15 @@ unsigned int QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes, std::
 }
 
 const std::vector<QTPFS::INode*>& QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes) {
+	#ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
 	UpdateNeighborCache(nodes);
+	#endif
 	return neighbors;
 }
 
+// this is *either* called from ::GetNeighbors when the conservative
+// update-scheme is enabled, *or* from PM::ExecQueuedNodeLayerUpdates
+// (never both)
 bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 	assert(IsLeaf());
 
@@ -703,7 +724,8 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_L (west) neighbors
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmz += ngb->zsize();
+					hmz = ngb->zmax();
+					// hmz += ngb->zsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
@@ -719,7 +741,8 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_R (east) neighbors
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmz += ngb->zsize();
+					hmz = ngb->zmax();
+					// hmz += ngb->zsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
@@ -736,7 +759,8 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_T (north) neighbors
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmx += ngb->xsize();
+					hmx = ngb->xmax();
+					// hmz += ngb->xsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
@@ -752,7 +776,8 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_B (south) neighbors
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmx += ngb->xsize();
+					hmx = ngb->xmax();
+					// hmz += ngb->xsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS

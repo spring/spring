@@ -73,13 +73,16 @@ void QTPFS::NodeLayer::Clear() {
 
 
 #ifdef QTPFS_STAGGERED_LAYER_UPDATES
-void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md, const CMoveMath* mm) {
+void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md) {
 	layerUpdates.push_back(LayerUpdate());
 	LayerUpdate* layerUpdate = &(layerUpdates.back());
 
+	// the first update MUST have a non-zero counter
+	// since all nodes are at 0 after initialization
 	layerUpdate->rectangle = r;
 	layerUpdate->speedMods.resize(r.GetArea());
 	layerUpdate->blockBits.resize(r.GetArea());
+	layerUpdate->counter = ++updateCounter;
 
 	#ifdef QTPFS_IGNORE_MAP_EDGES
 	const unsigned int md_xsizeh = md->xsizeh;
@@ -99,8 +102,8 @@ void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md, co
 			const unsigned int chmz = hmz;
 			#endif
 
-			layerUpdate->speedMods[recIdx] = mm->GetPosSpeedMod(*md, chmx, chmz);
-			layerUpdate->blockBits[recIdx] = mm->IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL);
+			layerUpdate->speedMods[recIdx] = CMoveMath::GetPosSpeedMod(*md, chmx, chmz);
+			layerUpdate->blockBits[recIdx] = CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL);
 		}
 	}
 }
@@ -110,7 +113,7 @@ bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 	const PathRectangle& rectangle = layerUpdate.rectangle;
 	const std::vector<float>* speedMods = &layerUpdate.speedMods;
 	const std::vector<int>* blockBits = &layerUpdate.blockBits;
-	const bool ret = Update(rectangle, NULL, NULL, speedMods, blockBits);
+	const bool ret = Update(rectangle, NULL, speedMods, blockBits);
 
 	return ret;
 }
@@ -121,7 +124,6 @@ bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 bool QTPFS::NodeLayer::Update(
 	const PathRectangle& r,
 	const MoveDef* md,
-	const CMoveMath* mm,
 	const std::vector<float>* luSpeedMods,
 	const std::vector<int>* luBlockBits
 ) {
@@ -149,9 +151,9 @@ bool QTPFS::NodeLayer::Update(
 			// NOTE:
 			//     GetPosSpeedMod only checks the terrain (height/slope/type), not the blocking-map
 			//     IsBlockedNoSpeedModCheck scans entire footprint, GetPosSpeedMod just one square
-			const unsigned int blockBits = (luBlockBits == NULL)? mm->IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
+			const unsigned int blockBits = (luBlockBits == NULL)? CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
 
-			const float rawAbsSpeedMod = (luSpeedMods == NULL)? mm->GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
+			const float rawAbsSpeedMod = (luSpeedMods == NULL)? CMoveMath::GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
 			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, PM::MIN_SPEEDMOD_VALUE, PM::MAX_SPEEDMOD_VALUE);
 			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
 			const float newRelSpeedMod = (newAbsSpeedMod - PM::MIN_SPEEDMOD_VALUE) / PM_SPEEDMOD_RANGE;
@@ -184,7 +186,19 @@ bool QTPFS::NodeLayer::Update(
 
 
 
-void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum) {
+// update the neighbor-cache for (a chunk of) the leaf
+// nodes in this layer; this amortizes (in theory) the
+// cost of doing it "on-demand" in PathSearch::Iterate
+// when QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
+//
+// NOTE:
+//   exclusive to the QTPFS_STAGGERED_LAYER_UPDATES path,
+//   and makes no sense to use with the non-conservative
+//   update scheme
+//
+#ifdef QTPFS_AMORTIZED_NODE_NEIGHBOR_CACHE_UPDATES
+#ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
+void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum) {
 	const int xoff = (currFrameNum % ((gs->mapx >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 	const int zoff = (currFrameNum / ((gs->mapy >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 
@@ -205,7 +219,8 @@ void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum,
 				n = nodeGrid[z * xsize + x];
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z += n->zsize();
+				z = n->zmax();
+				// z += n->zsize();
 			}
 		}
 	}
@@ -219,7 +234,8 @@ void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum,
 				n = nodeGrid[z * xsize + x];
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z += n->zsize();
+				z = n->zmax();
+				// z += n->zsize();
 			}
 		}
 	}
@@ -233,7 +249,8 @@ void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum,
 				n = nodeGrid[z * xsize + x];
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z += n->zsize();
+				z = n->zmax();
+				// z += n->zsize();
 			}
 		}
 	}
@@ -247,8 +264,35 @@ void QTPFS::NodeLayer::ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum,
 				n = nodeGrid[z * xsize + x];
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z += n->zsize();
+				z = n->zmax();
+				// z += n->zsize();
 			}
+		}
+	}
+}
+#endif
+#endif
+
+void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const PathRectangle& ur, unsigned int currMagicNum) {
+	// account for the rim of nodes around the bounding box
+	// (whose neighbors also changed during re-tesselation)
+	const int xmin = std::max(ur.x1 - 1, 0), xmax = std::min(ur.x2 + 1, gs->mapx);
+	const int zmin = std::max(ur.z1 - 1, 0), zmax = std::min(ur.z2 + 1, gs->mapy);
+
+	INode* n = NULL;
+
+	for (int x = xmin; x < xmax; x++) {
+		for (int z = zmin; z < zmax; ) {
+			n = nodeGrid[z * xsize + x];
+
+			// NOTE:
+			//   during initialization, currMagicNum == 0 which nodes start with already 
+			//   (does not matter because prevMagicNum == -1, so updates are not no-ops)
+			n->SetMagicNumber(currMagicNum);
+			n->UpdateNeighborCache(nodeGrid);
+
+			z = n->zmax();
+			// z += n->zsize();
 		}
 	}
 }

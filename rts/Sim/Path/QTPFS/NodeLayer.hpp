@@ -11,16 +11,28 @@
 #include "PathRectangle.hpp"
 
 struct MoveDef;
-class CMoveMath;
 
 namespace QTPFS {
 	struct PathRectangle;
 	struct INode;
+
+	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
+	struct LayerUpdate {
+		PathRectangle rectangle;
+
+		std::vector<float> speedMods;
+		std::vector<int  > blockBits;
+
+		unsigned int counter;
+	};
+	#endif
+
 	struct NodeLayer {
 	public:
 		NodeLayer()
 			: numLeafNodes(0)
 			, layerNumber(0)
+			, updateCounter(0)
 			, xsize(0)
 			, zsize(0)
 			{}
@@ -29,22 +41,22 @@ namespace QTPFS {
 		void Clear();
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		void QueueUpdate(const PathRectangle& r, const MoveDef* md, const CMoveMath* mm);
+		void QueueUpdate(const PathRectangle& r, const MoveDef* md);
 		void PopQueuedUpdate() { layerUpdates.pop_front(); }
 		bool ExecQueuedUpdate();
 		bool HaveQueuedUpdate() const { return (!layerUpdates.empty()); }
-		const PathRectangle& GetQueuedUpdateRectangle() const { return ((layerUpdates.front()).rectangle); }
+		const LayerUpdate& GetQueuedUpdate() const { return (layerUpdates.front()); }
 		#endif
 
 		bool Update(
 			const PathRectangle& r,
 			const MoveDef* md,
-			const CMoveMath* mm,
 			const std::vector<float>* luSpeedMods = NULL,
 			const std::vector<int>* luBlockBits = NULL
 		);
 
-		void ExecuteNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum);
+		void ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum);
+		void ExecNodeNeighborCacheUpdates(const PathRectangle& ur, unsigned int currMagicNum);
 
 		float GetNodeRatio() const { return (numLeafNodes / float(xsize * zsize)); }
 		const INode* GetNode(unsigned int x, unsigned int z) const { return nodeGrid[z * xsize + x]; }
@@ -76,15 +88,6 @@ namespace QTPFS {
 		}
 
 	private:
-		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		struct LayerUpdate {
-			PathRectangle rectangle;
-
-			std::vector<float> speedMods;
-			std::vector<int  > blockBits;
-		};
-		#endif
-
 		std::vector<INode*> nodeGrid;
 
 		std::vector<float> curSpeedMods;
@@ -98,6 +101,7 @@ namespace QTPFS {
 
 		unsigned int numLeafNodes;
 		unsigned int layerNumber;
+		unsigned int updateCounter;
 
 		unsigned int xsize;
 		unsigned int zsize;

@@ -450,7 +450,7 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 	// (<A> represents dir.dot(dir), equal to 1
 	// since ray direction already normalized)
 	const float A = 1.0f;
-	const float B = (pii0 * 2.0f).dot(dir);
+	const float B = 2.0f * (pii0).dot(dir);
 	const float C = pii0.dot(pii0) - rSq;
 	const float D = (B * B) - (4.0f * A * C);
 

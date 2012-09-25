@@ -62,7 +62,7 @@ void CPlayerRosterDrawer::Draw()
 					prefix = "E";	//no alliance at all
 				}
 			}
-			float4 cpucolor(!p->spectator && p->cpuUsage > 0.75f && gs->speedFactor < gs->userSpeedFactor * 0.99f &&
+			float4 cpucolor(!p->spectator && p->cpuUsage > 0.75f && gs->speedFactor < gs->wantedSpeedFactor * 0.99f &&
 				(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, p->cpuUsage * 2.0f / 0.75f)),
 					std::min(1.0f, std::max(0.01f, (1.0f - p->cpuUsage / 0.75f) * 2.0f)), 0.01f, 1.0f);
 			int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));

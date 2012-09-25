@@ -55,7 +55,7 @@ public:
 	 * @brief simulation frames per second
 	 * 
 	 * Should normally be:
-	 * simFPS ~= GAME_SPEED * gs->userSpeedFactor;
+	 * simFPS ~= GAME_SPEED * gs->wantedSpeedFactor;
 	 * Only differs if the client lags or reconnects.
 	 */
 	float simFPS;

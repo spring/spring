@@ -1141,11 +1141,13 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		restTime = 0; // bleeding != resting
 	}
 
-	float3 hitDir = -impulse;
-	hitDir.y = 0.0f;
-	hitDir.SafeNormalize();
+	{
+		float3 hitDir = -impulse;
+		hitDir.y = 0.0f;
+		hitDir.SafeNormalize();
 
-	script->HitByWeapon(hitDir, weaponDefID, /*inout*/ damage);
+		script->HitByWeapon(hitDir, weaponDefID, /*inout*/ damage);
+	}
 
 	float experienceMod = expMultiplier;
 	float newDamage = damage;
@@ -1236,7 +1238,9 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 	if (damage > 0.0f) {
 		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
 			const float scaledExpMod = 0.1f * experienceMod * (power / attacker->power);
-			const float scaledDamage = (damage / maxHealth) * int(health > 0.0f);
+			const float scaledDamage = std::max(0.0f, (damage + std::min(0.0f, health))) / maxHealth;
+			// alternative
+			// scaledDamage = (max(healthPreDamage, 0) - max(health, 0)) / maxHealth
 
 			// FIXME: why is experience added a second time when health <= 0.0f?
 			attacker->AddExperience(scaledExpMod * scaledDamage);

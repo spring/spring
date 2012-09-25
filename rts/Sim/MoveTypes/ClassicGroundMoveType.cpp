@@ -362,7 +362,7 @@ void CClassicGroundMoveType::ChangeSpeed()
 	float wSpeed = maxSpeed;
 
 	if (wantedSpeed > 0.0f) {
-		const float groundMod = owner->unitDef->moveDef->moveMath->GetPosSpeedMod(*owner->unitDef->moveDef, owner->pos, flatFrontDir);
+		const float groundMod = CMoveMath::GetPosSpeedMod(*owner->unitDef->moveDef, owner->pos, flatFrontDir);
 		const float3 goalDif = waypoint - owner->pos;
 		const short turn = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
@@ -766,8 +766,8 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					const int blockBits = CMoveMath::BLOCK_STRUCTURE |
 					                      CMoveMath::BLOCK_MOBILE_BUSY;
 					MoveDef& moveDef = *owner->unitDef->moveDef;
-					if ((moveDef.moveMath->IsBlocked(moveDef, x, y, owner) & blockBits) ||
-					    (moveDef.moveMath->GetPosSpeedMod(moveDef, x, y) <= 0.01f)) {
+					if ((CMoveMath::IsBlocked(moveDef, x, y, owner) & blockBits) ||
+					    (CMoveMath::GetPosSpeedMod(moveDef, x, y) <= 0.01f)) {
 						++etaFailures;
 
 						break;
@@ -793,13 +793,12 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			for (oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
 				CSolidObject* o = *oi;
-				CMoveMath* moveMath = moveDef->moveMath;
 
-				if (moveMath->IsNonBlocking(*moveDef, o, owner)) {
+				if (CMoveMath::IsNonBlocking(*moveDef, o, owner)) {
 					continue;
 				}
 
-				if (o != owner && moveMath->CrushResistant(*moveDef, o) && desiredDir.dot(o->pos - owner->pos) > 0) {
+				if (o != owner && CMoveMath::CrushResistant(*moveDef, o) && desiredDir.dot(o->pos - owner->pos) > 0) {
 					float3 objectToUnit = (owner->pos - o->pos - o->speed * 30);
 					float distanceToObjectSq = objectToUnit.SqLength();
 					float radiusSum = (owner->xsize + o->xsize) * SQUARE_SIZE / 2;
@@ -1105,7 +1104,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 		for (it = c.begin(); it != c.end(); ++it) {
 			CSolidObject* obj = it->second;
 
-			if (m->moveMath->IsNonBlocking(*m, obj, owner)) {
+			if (CMoveMath::IsNonBlocking(*m, obj, owner)) {
 				continue;
 			} else {
 				blocked = true;
@@ -1131,7 +1130,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 					}
 				}
 
-				if (!m->moveMath->CrushResistant(*m, obj)) {
+				if (!CMoveMath::CrushResistant(*m, obj)) {
 					obj->Kill(owner->frontdir * currentSpeed * 200.0f, true);
 				}
 			}
@@ -1183,7 +1182,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 		for (it = c.begin(); it != c.end(); ++it) {
 			CSolidObject* obj = it->second;
 
-			if (m->moveMath->IsNonBlocking(*m, obj, owner)) {
+			if (CMoveMath::IsNonBlocking(*m, obj, owner)) {
 				continue;
 			} else {
 				blocked = true;
@@ -1209,7 +1208,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 					}
 				}
 
-				if (!m->moveMath->CrushResistant(*m, obj)) {
+				if (!CMoveMath::CrushResistant(*m, obj)) {
 					obj->Kill(owner->frontdir * currentSpeed * 200.0f, true);
 				}
 			}
@@ -1324,32 +1323,31 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 	float3 newpos = owner->pos;
 
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
-		const CMoveMath* movemath = owner->unitDef->moveDef->moveMath;
 		const MoveDef& md = *(owner->unitDef->moveDef);
-		const float cmod = movemath->GetPosSpeedMod(md, moveSquareX * 2, moveSquareY * 2);
+		const float cmod = CMoveMath::GetPosSpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
 		if (math::fabs(owner->frontdir.x) < math::fabs(owner->frontdir.z)) {
 			if (newMoveSquareX > moveSquareX) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
 			if (newMoveSquareY > moveSquareY) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1357,13 +1355,13 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 			}
 		} else {
 			if (newMoveSquareY > moveSquareY) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod>0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1371,13 +1369,13 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 			}
 
 			if (newMoveSquareX > moveSquareX) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
@@ -1395,7 +1393,7 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
 			moveSquareX = newMoveSquareX;
 			moveSquareY = newMoveSquareY;
-			terrainSpeed = movemath->GetPosSpeedMod(md, moveSquareX * 2, moveSquareY * 2);
+			terrainSpeed = CMoveMath::GetPosSpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
 			int nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
 			int nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
@@ -1415,8 +1413,8 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 							CMoveMath::BLOCK_MOBILE |
 							CMoveMath::BLOCK_MOBILE_BUSY;
 
-						if ((movemath->IsBlocked(md, x, y, owner) & blockMask) ||
-							movemath->GetPosSpeedMod(md, x, y) <= 0.01f) {
+						if ((CMoveMath::IsBlocked(md, x, y, owner) & blockMask) ||
+							CMoveMath::GetPosSpeedMod(md, x, y) <= 0.01f) {
 							wpOk = false;
 							break;
 						}
@@ -1447,7 +1445,6 @@ bool CClassicGroundMoveType::CheckGoalFeasability()
 	int maxz = (int) std::min(float(gs->hmapy - 1), (goalPos.z + goalDist) / (SQUARE_SIZE * 2));
 
 	MoveDef* md = owner->unitDef->moveDef;
-	CMoveMath* mm = md->moveMath;
 
 	float numBlocked = 0.0f;
 	float numSquares = 0.0f;
@@ -1456,9 +1453,9 @@ bool CClassicGroundMoveType::CheckGoalFeasability()
 		for (int x = minx; x <= maxx; ++x) {
 			float3 pos(x * SQUARE_SIZE * 2, 0, z * SQUARE_SIZE * 2);
 			if ((pos - goalPos).SqLength2D() < goalDist * goalDist) {
-				int blockingType = mm->SquareIsBlocked(*md, x * 2, z * 2, owner);
+				int blockingType = CMoveMath::SquareIsBlocked(*md, x * 2, z * 2, owner);
 
-				if ((blockingType & CMoveMath::BLOCK_STRUCTURE) || mm->GetPosSpeedMod(*md, x * 2, z * 2) < 0.01f) {
+				if ((blockingType & CMoveMath::BLOCK_STRUCTURE) || CMoveMath::GetPosSpeedMod(*md, x * 2, z * 2) < 0.01f) {
 					numBlocked += 0.3f;
 					numSquares += 0.3f;
 				} else {

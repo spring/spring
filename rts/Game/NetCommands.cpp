@@ -102,7 +102,7 @@ void CGame::ClientReadNet()
 	} else {
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
-		msgProcTimeLeft = GAME_SPEED / float(gu->minFPS) * gs->userSpeedFactor;
+		msgProcTimeLeft = GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor;
 	}
 
 	const spring_time msgProcStartTime = spring_gettime();
@@ -222,7 +222,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_USER_SPEED: {
-				gs->userSpeedFactor = *((float*) &inbuf[2]);
+				gs->wantedSpeedFactor = *((float*) &inbuf[2]);
 
 				const unsigned char player = inbuf[1];
 				if (!playerHandler->IsValidPlayer(player) && player != SERVER_PLAYER) {
@@ -231,7 +231,7 @@ void CGame::ClientReadNet()
 				}
 				const char* pName = (player == SERVER_PLAYER)? "server": playerHandler->Player(player)->name.c_str();
 
-				LOG("Speed set to %.1f [%s]", gs->userSpeedFactor, pName);
+				LOG("Speed set to %.1f [%s]", gs->wantedSpeedFactor, pName);
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}

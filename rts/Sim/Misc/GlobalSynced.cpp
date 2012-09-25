@@ -27,7 +27,7 @@ CR_BIND(CGlobalSynced, );
 CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(frameNum),
 	CR_MEMBER(speedFactor),
-	CR_MEMBER(userSpeedFactor),
+	CR_MEMBER(wantedSpeedFactor),
 	CR_MEMBER(paused),
 	CR_MEMBER(mapx),
 	CR_MEMBER(mapy),
@@ -69,7 +69,7 @@ CGlobalSynced::CGlobalSynced()
 	initRandSeed = randSeed;
 	frameNum = 0;
 	speedFactor = 1;
-	userSpeedFactor = 1;
+	wantedSpeedFactor = 1;
 	paused = false;
 	godMode = false;
 	cheatEnabled = false;

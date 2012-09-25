@@ -72,15 +72,10 @@ IF    (UNIX AND NOT MINGW)
 	LIST(APPEND engineCommonLibraries dl)
 ENDIF (UNIX AND NOT MINGW)
 
+FIND_PACKAGE_STATIC(ZLIB REQUIRED)
 LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY})
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY})
-LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
-
-IF    (PREFER_STATIC_LIBS)
-	# dependency of minizip
-	FIND_PACKAGE_STATIC(ZLIB REQUIRED)
-	LIST(APPEND engineCommonLibraries ${ZLIB_LIBRARY})
-ENDIF (PREFER_STATIC_LIBS)
+LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY} streflop lobby assimp)
 
 IF (MINGW)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
