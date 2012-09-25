@@ -73,7 +73,7 @@ void QTPFS::NodeLayer::Clear() {
 
 
 #ifdef QTPFS_STAGGERED_LAYER_UPDATES
-void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md, const CMoveMath* mm) {
+void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md) {
 	layerUpdates.push_back(LayerUpdate());
 	LayerUpdate* layerUpdate = &(layerUpdates.back());
 
@@ -102,8 +102,8 @@ void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md, co
 			const unsigned int chmz = hmz;
 			#endif
 
-			layerUpdate->speedMods[recIdx] = mm->GetPosSpeedMod(*md, chmx, chmz);
-			layerUpdate->blockBits[recIdx] = mm->IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL);
+			layerUpdate->speedMods[recIdx] = CMoveMath::GetPosSpeedMod(*md, chmx, chmz);
+			layerUpdate->blockBits[recIdx] = CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL);
 		}
 	}
 }
@@ -113,7 +113,7 @@ bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 	const PathRectangle& rectangle = layerUpdate.rectangle;
 	const std::vector<float>* speedMods = &layerUpdate.speedMods;
 	const std::vector<int>* blockBits = &layerUpdate.blockBits;
-	const bool ret = Update(rectangle, NULL, NULL, speedMods, blockBits);
+	const bool ret = Update(rectangle, NULL, speedMods, blockBits);
 
 	return ret;
 }
@@ -124,7 +124,6 @@ bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 bool QTPFS::NodeLayer::Update(
 	const PathRectangle& r,
 	const MoveDef* md,
-	const CMoveMath* mm,
 	const std::vector<float>* luSpeedMods,
 	const std::vector<int>* luBlockBits
 ) {
@@ -152,9 +151,9 @@ bool QTPFS::NodeLayer::Update(
 			// NOTE:
 			//     GetPosSpeedMod only checks the terrain (height/slope/type), not the blocking-map
 			//     IsBlockedNoSpeedModCheck scans entire footprint, GetPosSpeedMod just one square
-			const unsigned int blockBits = (luBlockBits == NULL)? mm->IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
+			const unsigned int blockBits = (luBlockBits == NULL)? CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
 
-			const float rawAbsSpeedMod = (luSpeedMods == NULL)? mm->GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
+			const float rawAbsSpeedMod = (luSpeedMods == NULL)? CMoveMath::GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
 			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, PM::MIN_SPEEDMOD_VALUE, PM::MAX_SPEEDMOD_VALUE);
 			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
 			const float newRelSpeedMod = (newAbsSpeedMod - PM::MIN_SPEEDMOD_VALUE) / PM_SPEEDMOD_RANGE;

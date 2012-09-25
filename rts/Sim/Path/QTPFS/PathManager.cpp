@@ -17,6 +17,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
+#include "Sim/Objects/SolidObject.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
@@ -383,7 +384,6 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 // layer update scheme and during initialization; see ::TerrainChange
 void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectangle& r) {
 	const MoveDef* md = moveDefHandler->moveDefs[layerNum];
-	const CMoveMath* mm = md->moveMath;
 
 	if (md->unitDefRefCount == 0)
 		return;
@@ -411,7 +411,7 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectan
 	ur.z2 = mr.z2;
 
 	const bool wantTesselation = (layersInited || !haveCacheDir);
-	const bool needTesselation = nodeLayers[layerNum].Update(mr, md, mm);
+	const bool needTesselation = nodeLayers[layerNum].Update(mr, md);
 
 	if (needTesselation && wantTesselation) {
 		nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr, ur);
@@ -429,7 +429,6 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectan
 void QTPFS::PathManager::QueueNodeLayerUpdates(const PathRectangle& r) {
 	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 		const MoveDef* md = moveDefHandler->moveDefs[layerNum];
-		const CMoveMath* mm = md->moveMath;
 
 		if (md->unitDefRefCount == 0)
 			continue;
@@ -442,7 +441,7 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const PathRectangle& r) {
 		mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
 		mr.z2 = std::min(r.z2 + md->zsizeh, gs->mapy);
 
-		nodeLayers[layerNum].QueueUpdate(mr, md, mm);
+		nodeLayers[layerNum].QueueUpdate(mr, md);
 	}
 }
 

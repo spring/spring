@@ -41,7 +41,7 @@ bool CPathFinderDef::GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::Bloc
 
 	return
 		((sqGoalRadius < r0 || sqGoalRadius <= r1) &&
-		(moveDef.moveMath->IsBlocked(moveDef, goal, owner) & moveMathOptions));
+		(CMoveMath::IsBlocked(moveDef, goal, owner) & moveMathOptions));
 }
 
 int2 CPathFinderDef::GoalSquareOffset(int blockSize) const {

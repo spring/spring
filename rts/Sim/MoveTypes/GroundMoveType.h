@@ -8,7 +8,6 @@
 
 struct UnitDef;
 struct MoveDef;
-class CMoveMath;
 class IPathController;
 
 class CGroundMoveType : public AMoveType
@@ -68,13 +67,11 @@ private:
 		CUnit* collider,
 		CSolidObject* collidee,
 		const MoveDef* colliderMD,
-		const CMoveMath* colliderMM,
 		bool repath);
 	void HandleStaticObjectCollision(
 		CUnit* collider,
 		CSolidObject* collidee,
 		const MoveDef* colliderMD,
-		const CMoveMath* colliderMM,
 		const float3& collisionImpulse,
 		bool repath);
 
@@ -84,16 +81,14 @@ private:
 		const float colliderRadius,
 		const float3& sepDirMask,
 		const UnitDef* colliderUD,
-		const MoveDef* colliderMD,
-		const CMoveMath* colliderMM);
+		const MoveDef* colliderMD);
 	void HandleFeatureCollisions(
 		CUnit* collider,
 		const float colliderSpeed,
 		const float colliderRadius,
 		const float3& sepDirMask,
 		const UnitDef* colliderUD,
-		const MoveDef* colliderMD,
-		const CMoveMath* colliderMM);
+		const MoveDef* colliderMD);
 
 	void SetMainHeading();
 	void ChangeSpeed(float, bool, bool = false);

@@ -66,7 +66,7 @@ void QTPFSPathDrawer::DrawNodeTree(const MoveDef* md) const {
 	va->EnlargeArrays(nodes.size() * 4, 0, VA_SIZE_C);
 
 	for (nodesIt = nodes.begin(); nodesIt != nodes.end(); ++nodesIt) {
-		DrawNode(*nodesIt, md, md->moveMath, va, false, true, true);
+		DrawNode(*nodesIt, md, va, false, true, true);
 	}
 
 	glLineWidth(2);
@@ -79,11 +79,10 @@ void QTPFSPathDrawer::DrawNodeTree(const MoveDef* md) const {
 void QTPFSPathDrawer::DrawNodeTreeRec(
 	const QTPFS::QTNode* nt,
 	const MoveDef* md,
-	const CMoveMath* mm,
 	CVertexArray* va
 ) const {
 	if (nt->IsLeaf()) {
-		DrawNode(nt, md, mm, va, false, true, false);
+		DrawNode(nt, md, va, false, true, false);
 	} else {
 		for (unsigned int i = 0; i < QTPFS::QTNode::CHILD_COUNT; i++) {
 			const QTPFS::QTNode* n = nt->children[i];
@@ -93,7 +92,7 @@ void QTPFSPathDrawer::DrawNodeTreeRec(
 			if (!camera->InView(mins, maxs))
 				continue;
 
-			DrawNodeTreeRec(nt->children[i], md, mm, va);
+			DrawNodeTreeRec(nt->children[i], md, va);
 		}
 	}
 }
@@ -224,14 +223,14 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list
 	const QTPFS::QTNode* poppedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
 	const QTPFS::QTNode* pushedNode = NULL;
 
-	DrawNode(poppedNode, NULL, NULL, va, true, false, false);
+	DrawNode(poppedNode, NULL, va, true, false, false);
 
 	for (++it; it != nodeIndices.end(); ++it) {
 		hmx = (*it) % gs->mapx;
 		hmz = (*it) / gs->mapx;
 		pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
 
-		DrawNode(pushedNode, NULL, NULL, va, true, false, false);
+		DrawNode(pushedNode, NULL, va, true, false, false);
 		DrawNodeLink(pushedNode, poppedNode, va);
 	}
 }
@@ -239,7 +238,6 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list
 void QTPFSPathDrawer::DrawNode(
 	const QTPFS::QTNode* node,
 	const MoveDef* md,
-	const CMoveMath* mm,
 	CVertexArray* va,
 	bool fillQuad,
 	bool showCost,
@@ -346,7 +344,6 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 			const MoveDef* md = GetSelectedMoveDef();
 
 			if (md != NULL) {
-				const CMoveMath* mm = md->moveMath;
 				const QTPFS::NodeLayer& nl = pm->nodeLayers[md->pathType];
 
 				const float smr = QTPFS::PathManager::MAX_SPEEDMOD_VALUE - QTPFS::PathManager::MIN_SPEEDMOD_VALUE;
@@ -363,19 +360,19 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 						// use node-modifiers as baseline so visualisation is in sync with alt+B
 						const QTPFS::QTNode* node = static_cast<const QTPFS::QTNode*>(nl.GetNode(sqx, sqz));
 
-						const float sm = mm->GetPosSpeedMod(md, sqx, sqz);
+						const float sm = CMoveMath::GetPosSpeedMod(md, sqx, sqz);
 						const SColor& smc = GetSpeedModColor((los || losSqr)? node->speedModAvg * smr: sm);
 						#else
 						float scale = 1.0f;
 
 						if (los || losSqr) {
-							if (mm->IsBlocked(*md, sqx,     sqz    ) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-							if (mm->IsBlocked(*md, sqx + 1, sqz    ) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-							if (mm->IsBlocked(*md, sqx,     sqz + 1) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-							if (mm->IsBlocked(*md, sqx + 1, sqz + 1) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+							if (CMoveMath::IsBlocked(*md, sqx,     sqz    ) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+							if (CMoveMath::IsBlocked(*md, sqx + 1, sqz    ) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+							if (CMoveMath::IsBlocked(*md, sqx,     sqz + 1) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+							if (CMoveMath::IsBlocked(*md, sqx + 1, sqz + 1) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
 						}
 
-						const float sm = mm->GetPosSpeedMod(md, sqx, sqz);
+						const float sm = CMoveMath::GetPosSpeedMod(md, sqx, sqz);
 						const SColor& smc = GetSpeedModColor(sm * scale);
 						#endif
 

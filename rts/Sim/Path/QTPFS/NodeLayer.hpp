@@ -11,7 +11,6 @@
 #include "PathRectangle.hpp"
 
 struct MoveDef;
-class CMoveMath;
 
 namespace QTPFS {
 	struct PathRectangle;
@@ -42,7 +41,7 @@ namespace QTPFS {
 		void Clear();
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		void QueueUpdate(const PathRectangle& r, const MoveDef* md, const CMoveMath* mm);
+		void QueueUpdate(const PathRectangle& r, const MoveDef* md);
 		void PopQueuedUpdate() { layerUpdates.pop_front(); }
 		bool ExecQueuedUpdate();
 		bool HaveQueuedUpdate() const { return (!layerUpdates.empty()); }
@@ -52,7 +51,6 @@ namespace QTPFS {
 		bool Update(
 			const PathRectangle& r,
 			const MoveDef* md,
-			const CMoveMath* mm,
 			const std::vector<float>* luSpeedMods = NULL,
 			const std::vector<int>* luBlockBits = NULL
 		);

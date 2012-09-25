@@ -1,16 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "ShipMoveMath.h"
-#include "Map/ReadMap.h"
-#include "Sim/Objects/SolidObject.h"
+#include "MoveMath.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "System/mmgr.h"
-
-CR_BIND_DERIVED(CShipMoveMath, CMoveMath, );
 
 /*
 Calculate speed-multiplier for given height and slope data.
 */
-float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope) const
+float CMoveMath::ShipSpeedMod(const MoveDef& moveDef, float height, float slope)
 {
 	if (-height < moveDef.depth)
 		return 0.0f;
@@ -18,7 +15,7 @@ float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope)
 	return 1.0f;
 }
 
-float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale) const
+float CMoveMath::ShipSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale)
 {
 	// uphill slopes can lead even closer to shore, so
 	// block movement if we are above our minWaterDepth
@@ -27,3 +24,4 @@ float CShipMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope,
 
 	return 1.0f;
 }
+
