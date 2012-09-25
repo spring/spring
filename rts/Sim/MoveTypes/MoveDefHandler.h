@@ -10,7 +10,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 
 class MoveDefHandler;
-class CMoveMath;
 class CSolidObject;
 class LuaTable;
 
