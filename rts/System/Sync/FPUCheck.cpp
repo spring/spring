@@ -6,9 +6,11 @@
 
 #include "FPUCheck.h"
 #include <cstddef>
-#include "System/Log/ILog.h"
 #include "lib/streflop/streflop_cond.h"
 #include "lib/gml/gml_base.h"
+#include "System/OpenMP_cond.h"
+#include "System/Log/ILog.h"
+#include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 
 /**
@@ -121,11 +123,185 @@ void good_fpu_control_registers(const char* text)
 		LOG_L(L_WARNING, "[%s] Sync warning: FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __FUNCTION__, fenv, x87_a, x87_b, text);
 
 		// Set single precision floating point math.
-		streflop_init<streflop::Simple>();
+		streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
 		if (!GML::Enabled() || Threading::IsSimThread())
-			streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
 #endif
+}
+
+void good_fpu_init()
+{
+	const unsigned int sseBits = proc::GetProcSSEBits();
+		LOG("[CMyMath::Init] CPU SSE mask: %u, flags:", sseBits);
+		LOG("\tSSE 1.0:  %d,  SSE 2.0:  %d", (sseBits >> 5) & 1, (sseBits >> 4) & 1);
+		LOG("\tSSE 3.0:  %d, SSSE 3.0:  %d", (sseBits >> 3) & 1, (sseBits >> 2) & 1);
+		LOG("\tSSE 4.1:  %d,  SSE 4.2:  %d", (sseBits >> 1) & 1, (sseBits >> 0) & 1);
+		LOG("\tSSE 4.0A: %d,  SSE 5.0A: %d", (sseBits >> 8) & 1, (sseBits >> 7) & 1);
+
+#ifdef STREFLOP_H
+	// SSE 1.0 is mandatory in synced context
+	if (((sseBits >> 5) & 1) == 0) {
+	#ifdef STREFLOP_SSE
+		handleerror(0, "CPU is missing SSE instruction support", "Sync Error", 0);
+	#elif STREFLOP_X87
+		LOG_L(L_WARNING, "\tStreflop floating-point math is not SSE-enabled");
+		LOG_L(L_WARNING, "\tThis may cause desyncs during multi-player games");
+		LOG_L(L_WARNING, "\tThis CPU is not SSE-capable; it can only use X87 mode");
+	#else
+		handleerror(0, "streflop FP-math mode must be either SSE or X87", "Sync Error", 0);
+	#endif
+	} else {
+	#ifdef STREFLOP_SSE
+		LOG("\tusing streflop SSE FP-math mode, CPU supports SSE instructions");
+	#elif STREFLOP_X87
+		LOG_L(L_WARNING, "\tStreflop floating-point math is set to X87 mode");
+		LOG_L(L_WARNING, "\tThis may cause desyncs during multi-player games");
+		LOG_L(L_WARNING, "\tThis CPU is SSE-capable; consider recompiling");
+	#else
+		handleerror(0, "streflop FP-math mode must be either SSE or X87", "Sync Error", 0);
+	#endif
+	}
+
+	// Set single precision floating point math.
+	streflop::streflop_init<streflop::Simple>();
+	#if defined(__SUPPORT_SNAN__)
+		if (!GML::Enabled() || Threading::IsSimThread())
+			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+	#endif
+
+	// Initialize FPU in all OpenMP threads, too
+	// Note: Tested on Linux it seems it's not needed to do this.
+	//       Either OMP threads copy the FPU state of the mainthread
+	//       or the FPU state per-process on Linux.
+	//       Still it hurts nobody to call these functions ;-)
+	#ifdef _OPENMP
+		#pragma omp parallel
+		{
+			//good_fpu_control_registers("OMP-Init");
+			streflop::streflop_init<streflop::Simple>();
+		#if defined(__SUPPORT_SNAN__)
+			if (!GML::Enabled() || Threading::IsSimThread())
+				streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+		#endif
+		}
+	#endif
+
+#else
+	// probably should check if SSE was enabled during
+	// compilation and issue a warning about illegal
+	// instructions if so (or just die with an error)
+	LOG_L(L_WARNING, "Floating-point math is not controlled by streflop");
+	LOG_L(L_WARNING, "This makes keeping multi-player sync 99% impossible");
+#endif
+}
+
+
+namespace proc {
+	#if defined(__GNUC__)
+	// function inlining breaks this
+	__attribute__((__noinline__))
+	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+	{
+	#ifndef __APPLE__
+		__asm__ __volatile__(
+			"cpuid"
+			: "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d)
+			: "0" (*a)
+		);
+	#else
+		#ifdef __x86_64__
+			__asm__ __volatile__(
+				"pushq %%rbx\n\t"
+				"cpuid\n\t"
+				"movl %%ebx, %1\n\t"
+				"popq %%rbx"
+				: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
+				: "0" (*a)
+			);
+		#else
+			__asm__ __volatile__(
+				"pushl %%ebx\n\t"
+				"cpuid\n\t"
+				"movl %%ebx, %1\n\t"
+				"popl %%ebx"
+				: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
+				: "0" (*a)
+			);
+		#endif
+	#endif
+	}
+	#elif defined(_MSC_VER) && (_MSC_VER >= 1310)
+	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+	{
+		int features[4];
+		__cpuid(features, *a);
+		*a=features[0];
+		*b=features[1];
+		*c=features[2];
+		*d=features[3];
+	}
+	#else
+	// no-op on other compilers
+	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+	{
+	}
+	#endif
+
+	unsigned int GetProcMaxStandardLevel()
+	{
+		unsigned int rEAX = 0x00000000;
+		unsigned int rEBX =          0;
+		unsigned int rECX =          0;
+		unsigned int rEDX =          0;
+
+		ExecCPUID(&rEAX, &rEBX, &rECX, &rEDX);
+
+		return rEAX;
+	}
+	unsigned int GetProcMaxExtendedLevel()
+	{
+		unsigned int rEAX = 0x80000000;
+		unsigned int rEBX =          0;
+		unsigned int rECX =          0;
+		unsigned int rEDX =          0;
+
+		ExecCPUID(&rEAX, &rEBX, &rECX, &rEDX);
+
+		return rEAX;
+	}
+
+	unsigned int GetProcSSEBits()
+	{
+		unsigned int rEAX = 0;
+		unsigned int rEBX = 0;
+		unsigned int rECX = 0;
+		unsigned int rEDX = 0;
+		unsigned int bits = 0;
+
+		if (GetProcMaxStandardLevel() >= 0x00000001U) {
+			rEAX = 0x00000001U; ExecCPUID(&rEAX, &rEBX, &rECX, &rEDX);
+
+			int SSE42  = (rECX >> 20) & 1; bits |= ( SSE42 << 0); // SSE 4.2
+			int SSE41  = (rECX >> 19) & 1; bits |= ( SSE41 << 1); // SSE 4.1
+			int SSSE30 = (rECX >>  9) & 1; bits |= (SSSE30 << 2); // Supplemental SSE 3.0
+			int SSE30  = (rECX >>  0) & 1; bits |= ( SSE30 << 3); // SSE 3.0
+
+			int SSE20  = (rEDX >> 26) & 1; bits |= ( SSE20 << 4); // SSE 2.0
+			int SSE10  = (rEDX >> 25) & 1; bits |= ( SSE10 << 5); // SSE 1.0
+			int MMX    = (rEDX >> 23) & 1; bits |= ( MMX   << 6); // MMX
+		}
+
+		if (GetProcMaxExtendedLevel() >= 0x80000001U) {
+			rEAX = 0x80000001U; ExecCPUID(&rEAX, &rEBX, &rECX, &rEDX);
+
+			int SSE50A = (rECX >> 11) & 1; bits |= (SSE50A << 7); // SSE 5.0A
+			int SSE40A = (rECX >>  6) & 1; bits |= (SSE40A << 8); // SSE 4.0A
+			int MSSE   = (rECX >>  7) & 1; bits |= (MSSE   << 9); // Misaligned SSE
+		}
+
+		return bits;
+	}
 }

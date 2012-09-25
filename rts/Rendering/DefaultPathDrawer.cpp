@@ -121,7 +121,6 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 				const MoveDef* md = GetSelectedMoveDef();
 
 				if (md != NULL) {
-					const CMoveMath* mm = md->moveMath;
 					const bool los = (gs->cheatEnabled || gu->spectating);
 
 					for (int ty = starty; ty < endy; ++ty) {
@@ -134,14 +133,14 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							float scale = 1.0f;
 
 							if (los || losSqr) {
-								if (mm->IsBlocked(*md, sqx,     sqy    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-								if (mm->IsBlocked(*md, sqx + 1, sqy    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-								if (mm->IsBlocked(*md, sqx,     sqy + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-								if (mm->IsBlocked(*md, sqx + 1, sqy + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (CMoveMath::IsBlocked(*md, sqx,     sqy    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (CMoveMath::IsBlocked(*md, sqx + 1, sqy    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (CMoveMath::IsBlocked(*md, sqx,     sqy + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+								if (CMoveMath::IsBlocked(*md, sqx + 1, sqy + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
 							}
 
 							// NOTE: raw speedmods are not necessarily clamped to [0, 1]
-							const float sm = mm->GetPosSpeedMod(md, sqx, sqy);
+							const float sm = CMoveMath::GetPosSpeedMod(md, sqx, sqy);
 							const SColor& smc = GetSpeedModColor(sm * scale);
 
 							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = smc.r;

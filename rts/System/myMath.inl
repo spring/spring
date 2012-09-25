@@ -13,7 +13,7 @@
 //                         v
 //
 //                  F(S=0) = H(0)
-inline short int GetHeadingFromFacing(int facing)
+inline short int GetHeadingFromFacing(const int facing)
 {
 	switch (facing) {
 		case FACING_SOUTH: return      0;
@@ -24,7 +24,7 @@ inline short int GetHeadingFromFacing(int facing)
 	}
 }
 
-inline int GetFacingFromHeading(short int heading)
+inline int GetFacingFromHeading(const short int heading)
 {
 	if (heading >= 0) {
 		if (heading <  8192) { return FACING_SOUTH; }
@@ -37,7 +37,7 @@ inline int GetFacingFromHeading(short int heading)
 	}
 }
 
-inline float GetHeadingFromVectorF(float dx, float dz)
+inline float GetHeadingFromVectorF(const float dx, const float dz)
 {
 	float h = 0.0f;
 
@@ -68,7 +68,7 @@ inline float GetHeadingFromVectorF(float dx, float dz)
 	return h;
 }
 
-inline short int GetHeadingFromVector(float dx, float dz)
+inline short int GetHeadingFromVector(const float dx, const float dz)
 {
 	float h = GetHeadingFromVectorF(dx, dz);
 
@@ -92,7 +92,7 @@ inline short int GetHeadingFromVector(float dx, float dz)
 }
 
 // vec should be normalized
-inline shortint2 GetHAndPFromVector(const float3& vec)
+inline shortint2 GetHAndPFromVector(const float3 vec)
 {
 	shortint2 ret;
 
@@ -108,7 +108,7 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 }
 
 // vec should be normalized
-inline float2 GetHAndPFromVectorF(const float3& vec)
+inline float2 GetHAndPFromVectorF(const float3 vec)
 {
 	float2 ret;
 
@@ -117,13 +117,13 @@ inline float2 GetHAndPFromVectorF(const float3& vec)
 	return ret;
 }
 
-inline float3 GetVectorFromHeading(short int heading)
+inline float3 GetVectorFromHeading(const short int heading)
 {
 	float2 v = CMyMath::headingToVectorTable[heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2];
 	return float3(v.x, 0.0f, v.y);
 }
 
-inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const float3& p3, const float3& p4)
+inline float3 CalcBeizer(const float i, const float3 p1, const float3 p2, const float3 p3, const float3 p4)
 {
 	float ni = 1 - i;
 
@@ -132,11 +132,16 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 }
 
 
-template<class T>
-inline T mix(const T& v1, const T& v2, const float& a)
+inline float mix(const float v1, const float v2, const float a)
 {
 	//return v1 * (1.0f - a) + v2 * a;
 	return v1 + (v2 - v1) * a;
+}
+
+template<class T>
+inline T mix(const T v1, const T v2, const float a)
+{
+	return v1 * (1.0f - a) + v2 * a;
 }
 
 inline float Square(const float x)
@@ -150,7 +155,7 @@ inline int Round(const float f)
 }
 
 template<class T>
-inline T Clamp(const T& v, const T& min, const T& max)
+inline T Clamp(const T v, const T min, const T max)
 {
 	return std::min(max, std::max(min, v));
 }

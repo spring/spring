@@ -104,15 +104,14 @@ struct MoveDef {
 
 	/// do we leave heat and avoid any left by others?
 	bool heatMapping;
+	bool flowMapping;
+
 	/// heatmap path-cost modifier
 	float heatMod;
-	/// heat produced by a path
-	int heatProduced;
-
-	bool flowMapping;
 	float flowMod;
 
-	CMoveMath* moveMath;
+	/// heat produced by a path
+	int heatProduced;
 };
 
 
@@ -130,10 +129,6 @@ public:
 	unsigned int GetCheckSum() const { return checksum; }
 
 private:
-	CMoveMath* groundMoveMath;
-	CMoveMath* hoverMoveMath;
-	CMoveMath* seaMoveMath;
-
 	unsigned int checksum;
 };
 

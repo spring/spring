@@ -9,9 +9,6 @@
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
-#include "MoveMath/GroundMoveMath.h"
-#include "MoveMath/HoverMoveMath.h"
-#include "MoveMath/ShipMoveMath.h"
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_Map.h"
 #include "System/Exceptions.h"
@@ -48,12 +45,10 @@ CR_REG_METADATA(MoveDef, (
 
 	CR_MEMBER(avoidMobilesOnPath),
 	CR_MEMBER(heatMapping),
-	CR_MEMBER(heatMod),
-	CR_MEMBER(heatProduced),
 	CR_MEMBER(flowMapping),
+	CR_MEMBER(heatMod),
 	CR_MEMBER(flowMod),
-
-	CR_MEMBER(moveMath),
+	CR_MEMBER(heatProduced),
 
 	CR_RESERVED(16)
 ));
@@ -92,10 +87,6 @@ MoveDefHandler::MoveDefHandler()
 		throw content_error("Error loading movement definitions");
 	}
 
-	groundMoveMath = new CGroundMoveMath();
-	hoverMoveMath = new CHoverMoveMath();
-	seaMoveMath = new CShipMoveMath();
-
 	CRC crc;
 
 	for (int tt = 0; tt < CMapInfo::NUM_TERRAIN_TYPES; ++tt) {
@@ -116,21 +107,15 @@ MoveDefHandler::MoveDefHandler()
 		moveDefs.push_back(md);
 		name2moveDef[md->name] = md->pathType;
 
-		switch (md->moveType) {
-			case MoveDef::Ship_Move: { md->moveMath = seaMoveMath; } break;
-			case MoveDef::Hover_Move: { md->moveMath = hoverMoveMath; } break;
-			case MoveDef::Ground_Move: { md->moveMath = groundMoveMath; } break;
-		}
-
 		crc << md->GetCheckSum();
 	}
 
-	CHoverMoveMath::noWaterMove = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_HMM);
-	CGroundMoveMath::waterDamageCost = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_GMM)?
+	CMoveMath::noHoverWaterMove = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_HMM);
+	CMoveMath::waterDamageCost = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_GMM)?
 		0.0f: (1.0f / (1.0f + mapInfo->water.damage * 0.1f));
 
-	crc << CGroundMoveMath::waterDamageCost;
-	crc << CHoverMoveMath::noWaterMove;
+	crc << CMoveMath::waterDamageCost;
+	crc << CMoveMath::noHoverWaterMove;
 
 	checksum = crc.GetDigest();
 }
@@ -142,10 +127,6 @@ MoveDefHandler::~MoveDefHandler()
 		delete moveDefs.back();
 		moveDefs.pop_back();
 	}
-
-	delete groundMoveMath;
-	delete hoverMoveMath;
-	delete seaMoveMath;
 }
 
 
@@ -199,12 +180,12 @@ MoveDef::MoveDef() {
 	avoidMobilesOnPath = true;
 
 	heatMapping       = true;
-	heatMod           = 0.05f;
-	heatProduced      = GAME_SPEED;
 	flowMapping       = true;
+
+	heatMod           = 0.05f;
 	flowMod           = 1.0f;
 
-	moveMath          = NULL;
+	heatProduced      = GAME_SPEED;
 }
 
 MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
@@ -258,12 +239,14 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = std::max(0.01f, speedModMultsTable.GetFloat("mobileMoveMult", 1.0f /*0.65f*/));
 
 	avoidMobilesOnPath = moveTable.GetBool("avoidMobilesOnPath", true);
+
 	heatMapping = moveTable.GetBool("heatMapping", false);
+	flowMapping  = moveTable.GetBool("flowMapping", true);
+
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
+	flowMod      = moveTable.GetFloat("flowMod", 1.0f);
 
 	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
-	flowMapping  = moveTable.GetBool("flowMapping", true);
-	flowMod      = moveTable.GetFloat("flowMod", 1.0f);
 
 	//  <maxSlope> ranges from 0.0 to 60 * 1.5 degrees, ie. from 0.0 to
 	//  0.5 * PI radians, ie. from 1.0 - cos(0.0) to 1.0 - cos(0.5 * PI)
@@ -325,8 +308,8 @@ bool MoveDef::TestMoveSquare(const int hmx, const int hmz) const {
 	// test the entire footprint
 	for (int i = hmx - xsizeh; i <= hmx + xsizeh; i++) {
 		for (int j = hmz - zsizeh; j <= hmz + zsizeh; j++) {
-			const float speedMod = moveMath->GetPosSpeedMod(*this, hmx + i, hmz + j);
-			const CMoveMath::BlockType blockBits = moveMath->IsBlocked(*this, hmx + i, hmz + j, NULL);
+			const float speedMod = CMoveMath::GetPosSpeedMod(*this, hmx + i, hmz + j);
+			const CMoveMath::BlockType blockBits = CMoveMath::IsBlocked(*this, hmx + i, hmz + j, NULL);
 
 			// check both terrain and the blocking-map
 			ret &= ((speedMod > 0.0f) && ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0));

@@ -43,7 +43,7 @@ public:
 	/// the starting time in tick for last draw frame
 	spring_time lastFrameStart;
 
-	/// 0.001f * GAME_SPEED * gs->speedFactor, used for rendering
+	/// 0.001f * gu->simFPS, used for rendering
 	float weightedSpeedFactor;
 
 	/// the draw frame number (never 0)

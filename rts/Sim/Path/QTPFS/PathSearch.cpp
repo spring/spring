@@ -156,7 +156,11 @@ void QTPFS::PathSearch::Iterate(
 ) {
 	curNode = openNodes.top();
 	curNode->SetSearchState(searchState | NODE_STATE_CLOSED);
+	#ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
+	// in the non-conservative case, this is done from
+	// NodeLayer::ExecNodeNeighborCacheUpdates instead
 	curNode->SetMagicNumber(searchMagic);
+	#endif
 
 	openNodes.pop();
 	openNodes.check_heap_property(0);
@@ -505,18 +509,26 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 
 
 
-void QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
+bool QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
 	assert(dstPath->GetID() != 0);
 	assert(dstPath->GetID() != srcPath->GetID());
 	assert(dstPath->NumPoints() == 2);
 
-	// copy <srcPath> to <dstPath>
-	dstPath->CopyPoints(*srcPath);
-	dstPath->SetSourcePoint(srcPoint);
-	dstPath->SetTargetPoint(tgtPoint);
-	dstPath->SetBoundingBox();
+	const float3& p0 = srcPath->GetTargetPoint();
+	const float3& p1 = dstPath->GetTargetPoint();
 
-	pathCache->AddLivePath(dstPath);
+	if (p0.SqDistance(p1) < (SQUARE_SIZE * SQUARE_SIZE)) {
+		// copy <srcPath> to <dstPath>
+		dstPath->CopyPoints(*srcPath);
+		dstPath->SetSourcePoint(srcPoint);
+		dstPath->SetTargetPoint(tgtPoint);
+		dstPath->SetBoundingBox();
+
+		pathCache->AddLivePath(dstPath);
+		return true;
+	}
+
+	return false;
 }
 
 const boost::uint64_t QTPFS::PathSearch::GetHash(unsigned int N, unsigned int k) const {

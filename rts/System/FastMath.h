@@ -14,6 +14,16 @@
 #define __builtin_sqrtf math::sqrtf
 #endif
 
+#ifdef __GNUC__
+	#define _const __attribute__((const))
+	#define _pure __attribute__((pure))
+	#define _warn_unused_result __attribute__((warn_unused_result))
+#else
+	#define _const
+	#define _pure
+	#define _warn_unused_result
+#endif
+
 /**
  * @brief Fast math routines
  *
@@ -25,7 +35,21 @@
  */
 
 namespace fastmath {
-	float isqrt_nosse(float);
+	float isqrt_nosse(float) _const;
+	float isqrt_sse(float x) _const;
+	float __ALIGN_ARG__ sqrt_sse(float x) _const;
+	float isqrt_nosse(float x) _const;
+	float isqrt2_nosse(float x) _const;
+	float sqrt(float x) _const;
+	float sqrt2(float x) _const;
+	float apxsqrt(float x) _const;
+	float apxsqrt2(float x) _const;
+	float isqrt(float x) _const;
+	float isqrt2(float x) _const;
+	float sin(float x) _const;
+	float cos(float x) _const;
+	template<typename T> float floor(const T& f) _const;
+
 	/****************** Square root functions ******************/
 
 	/**
@@ -52,7 +76,6 @@ namespace fastmath {
 	*
 	* Slower than std::sqrtf, faster than streflop
 	*/
-
 	inline float __ALIGN_ARG__ sqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
@@ -153,10 +176,10 @@ namespace fastmath {
 	* @brief Calculates 1/sqrt(x) very quickly.
 	*
 	*/
+
 	inline float isqrt(float x) {
 		return isqrt2_nosse(x);
 	}
-
 	/**
 	* @brief Calculates 1/sqrt(x) very quickly. More accurate but slower than isqrt.
 	*
@@ -267,7 +290,8 @@ namespace fastmath {
 
 using fastmath::PI;
 namespace math {
-	//! override streflop with faster sqrt!
+	// override streflop with faster sqrt!
+	float sqrt(float x) _const;
 	inline float sqrt(float x) {
 		return fastmath::sqrt_sse(x);
 	}
