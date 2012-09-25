@@ -10,6 +10,7 @@
 #include "lib/gml/gml_base.h"
 #include "System/OpenMP_cond.h"
 #include "System/Log/ILog.h"
+#include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 
 /**
