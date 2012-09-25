@@ -15,7 +15,6 @@ class CPathFinder;
 class CPathEstimator;
 class CPathFinderDef;
 struct MoveDef;
-class CMoveMath;
 
 class CPathManager: public IPathManager {
 public:
