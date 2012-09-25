@@ -17,7 +17,6 @@ class PathFlowMap;
 class PathHeatMap;
 class CPathFinderDef;
 struct MoveDef;
-class CMoveMath;
 
 class CPathManager: public IPathManager {
 public:
