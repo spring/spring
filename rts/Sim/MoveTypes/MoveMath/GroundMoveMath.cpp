@@ -1,18 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "GroundMoveMath.h"
-#include "Map/ReadMap.h"
-#include "Sim/Objects/SolidObject.h"
-#include "Sim/Features/Feature.h"
-
-CR_BIND_DERIVED(CGroundMoveMath, CMoveMath, );
-
-float CGroundMoveMath::waterDamageCost = 1.0f;
+#include "MoveMath.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 
 /*
 Calculate speed-multiplier for given height and slope data.
 */
-float CGroundMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope) const
+float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slope)
 {
 	float speedMod = 0.0f;
 
@@ -30,7 +24,7 @@ float CGroundMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slop
 	return speedMod;
 }
 
-float CGroundMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale) const
+float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale)
 {
 	float speedMod = 0.0f;
 
@@ -52,17 +46,3 @@ float CGroundMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slop
 	return speedMod;
 }
 
-
-
-/*
-Gives the ground-level of given square.
-*/
-float CGroundMoveMath::yLevel(int xSquare, int zSquare) const
-{
-	return readmap->GetCenterHeightMapSynced()[xSquare + zSquare * gs->mapx];
-}
-
-float CGroundMoveMath::yLevel(const float3& pos) const
-{
-	return (ground->GetHeightReal(pos.x, pos.z) + 10.0f);
-}

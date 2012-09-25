@@ -67,7 +67,7 @@ SColor IPathDrawer::GetSpeedModColor(const float sm) {
 }
 
 #if 0
-float IPathDrawer::GetSpeedModNoObstacles(const MoveDef* md, const CMoveMath* mm, int sqx, int sqz) {
+float IPathDrawer::GetSpeedModNoObstacles(const MoveDef* md, int sqx, int sqz) {
 	float m = 0.0f;
 
 	const int hmIdx = sqz * gs->mapxp1 + sqx;

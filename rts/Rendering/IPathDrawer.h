@@ -5,7 +5,6 @@
 #include "System/Color.h"
 
 struct MoveDef;
-class CMoveMath;
 
 struct IPathDrawer {
 	virtual ~IPathDrawer() {}
@@ -18,7 +17,7 @@ struct IPathDrawer {
 
 	static const MoveDef* GetSelectedMoveDef();
 	static SColor GetSpeedModColor(const float sm);
-	static float GetSpeedModNoObstacles(const MoveDef* md, const CMoveMath* mm, int sqx, int sqz);
+	static float GetSpeedModNoObstacles(const MoveDef* md, int sqx, int sqz);
 };
 
 extern IPathDrawer* pathDrawer;

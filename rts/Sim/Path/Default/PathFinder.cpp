@@ -307,7 +307,7 @@ bool CPathFinder::TestSquare(
 		return false;
 	}
 
-	const CMoveMath::BlockType blockStatus = moveDef.moveMath->IsBlocked(moveDef, square.x, square.y, owner);
+	const CMoveMath::BlockType blockStatus = CMoveMath::IsBlocked(moveDef, square.x, square.y, owner);
 
 	// Check if square are out of constraints or blocked by something.
 	// Doesn't need to be done on open squares, as those are already tested.
@@ -320,7 +320,7 @@ bool CPathFinder::TestSquare(
 	}
 
 	// Evaluate this square.
-	float squareSpeedMod = moveDef.moveMath->GetPosSpeedMod(moveDef, square.x, square.y, dirVec3D);
+	float squareSpeedMod = CMoveMath::GetPosSpeedMod(moveDef, square.x, square.y, dirVec3D);
 	float heatCostMod = 1.0f;
 
 	if (squareSpeedMod == 0.0f) {
@@ -416,7 +416,7 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath) {
 			float3 cs;
 				cs.x = (square.x/2/* + 0.5f*/) * SQUARE_SIZE * 2 + SQUARE_SIZE;
 				cs.z = (square.y/2/* + 0.5f*/) * SQUARE_SIZE * 2 + SQUARE_SIZE;
-				cs.y = moveDef.moveMath->yLevel(square.x, square.y);
+				cs.y = CMoveMath::yLevel(moveDef, square.x, square.y);
 
 			// try to cut corners
 			AdjustFoundPath(moveDef, foundPath, /* inout */ cs, previous, square);
@@ -451,7 +451,7 @@ static inline void FixupPath3Pts(const MoveDef& moveDef, float3& p1, float3& p2,
 	old.y += 10;
 	p2.x = 0.5f * (p1.x + p3.x);
 	p2.z = 0.5f * (p1.z + p3.z);
-	p2.y = moveDef.moveMath->yLevel(sqr.x, sqr.y);
+	p2.y = CMoveMath::yLevel(moveDef, sqr.x, sqr.y);
 
 #if PATHDEBUG
 	geometricObjects->AddLine(p3 + float3(0, 5, 0), p2 + float3(0, 10, 0), 5, 10, 600, 0);

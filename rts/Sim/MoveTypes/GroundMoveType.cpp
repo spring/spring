@@ -533,7 +533,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 			const UnitDef* ud = owner->unitDef;
 			const MoveDef* md = ud->moveDef;
 
-			const float groundMod = md->moveMath->GetPosSpeedMod(*md, owner->pos, flatFrontDir);
+			const float groundMod = CMoveMath::GetPosSpeedMod(*md, owner->pos, flatFrontDir);
 			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
 			const float minGoalDistSq = Square(BrakingDistance(currentSpeed));
 
@@ -1018,7 +1018,6 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 
 	CUnit* avoider = owner;
 	MoveDef* avoiderMD = avoider->moveDef;
-	CMoveMath* avoiderMM = avoiderMD->moveMath;
 
 	static const float AVOIDER_DIR_WEIGHT = 1.0f;
 	static const float DESIRED_DIR_WEIGHT = 0.5f;
@@ -1042,9 +1041,9 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// ignore aircraft (or flying ground units)
 		if (avoidee->physicalState == CSolidObject::Hovering || avoidee->physicalState == CSolidObject::Flying)
 			continue;
-		if (avoiderMM->IsNonBlocking(*avoiderMD, avoidee, avoider))
+		if (CMoveMath::IsNonBlocking(*avoiderMD, avoidee, avoider))
 			continue;
-		if (!avoiderMM->CrushResistant(*avoiderMD, avoidee))
+		if (!CMoveMath::CrushResistant(*avoiderMD, avoidee))
 			continue;
 
 		const bool avoideeMobile = (avoideeMD != NULL);
@@ -1430,7 +1429,6 @@ void CGroundMoveType::HandleObjectCollisions()
 	{
 		const UnitDef*   colliderUD = collider->unitDef;
 		const MoveDef*   colliderMD = collider->moveDef;
-		const CMoveMath* colliderMM = colliderMD->moveMath;
 
 		// NOTE:
 		//   use the collider's MoveDef footprint as radius since it is
@@ -1443,8 +1441,8 @@ void CGroundMoveType::HandleObjectCollisions()
 		const float colliderSpeed = collider->speed.Length();
 		const float colliderRadius = FOOTPRINT_RADIUS(colliderMD->xsize, colliderMD->zsize, 0.75f);
 
-		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD, colliderMM);
-		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD, colliderMM);
+		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
+		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
 	}
 
 	collider->Block();
@@ -1454,7 +1452,6 @@ void CGroundMoveType::HandleStaticObjectCollisionYM(
 	CUnit* collider,
 	CSolidObject*,
 	const MoveDef* colliderMD,
-	const CMoveMath* colliderMM,
 	bool repath
 ) {
 	float3 impulseVec;
@@ -1469,12 +1466,12 @@ void CGroundMoveType::HandleStaticObjectCollisionYM(
 	// check for blocked squares along collider's MoveDef footprint edges
 	// NOTE: assumes the collider's footprint is still always axis-aligned
 	for (int x = -colliderMD->xsizeh; x <= colliderMD->xsizeh; x++) {
-		if ((colliderMM->SquareIsBlocked(*colliderMD, xmid + x, zmin, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-x * SQUARE_SIZE, 1.0f,  SQUARE_SIZE); }
-		if ((colliderMM->SquareIsBlocked(*colliderMD, xmid + x, zmax, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-x * SQUARE_SIZE, 1.0f, -SQUARE_SIZE); }
+		if ((CMoveMath::SquareIsBlocked(*colliderMD, xmid + x, zmin, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-x * SQUARE_SIZE, 1.0f,  SQUARE_SIZE); }
+		if ((CMoveMath::SquareIsBlocked(*colliderMD, xmid + x, zmax, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-x * SQUARE_SIZE, 1.0f, -SQUARE_SIZE); }
 	}
 	for (int z = -colliderMD->zsizeh; z <= colliderMD->zsizeh; z++) {
-		if ((colliderMM->SquareIsBlocked(*colliderMD, xmin, zmid + z, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3( SQUARE_SIZE, 1.0f, -z * SQUARE_SIZE); }
-		if ((colliderMM->SquareIsBlocked(*colliderMD, xmax, zmid + z, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-SQUARE_SIZE, 1.0f, -z * SQUARE_SIZE); }
+		if ((CMoveMath::SquareIsBlocked(*colliderMD, xmin, zmid + z, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3( SQUARE_SIZE, 1.0f, -z * SQUARE_SIZE); }
+		if ((CMoveMath::SquareIsBlocked(*colliderMD, xmax, zmid + z, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-SQUARE_SIZE, 1.0f, -z * SQUARE_SIZE); }
 	}
 
 	if (impulseVec.y > 0.0f) {
@@ -1510,11 +1507,10 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	CUnit* collider,
 	CSolidObject*,
 	const MoveDef* colliderMD,
-	const CMoveMath* colliderMM,
 	const float3& collisionImpulse,
 	bool repath
 ) {
-	const CMoveMath::BlockType posBits = colliderMM->IsBlocked(*colliderMD, collider->pos + collider->speed, collider);
+	const CMoveMath::BlockType posBits = CMoveMath::IsBlocked(*colliderMD, collider->pos + collider->speed, collider);
 
 	if ((posBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
 		collider->AddImpulse(-collider->speed);
@@ -1541,8 +1537,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	const float colliderRadius,
 	const float3& sepDirMask,
 	const UnitDef* colliderUD,
-	const MoveDef* colliderMD,
-	const CMoveMath* colliderMM
+	const MoveDef* colliderMD
 ) {
 	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
 
@@ -1565,7 +1560,6 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		const UnitDef*   collideeUD = collidee->unitDef;
 		const MoveDef*   collideeMD = collidee->moveDef;
-		const CMoveMath* collideeMM = (collideeMobile)? collideeMD->moveMath: NULL;
 
 		// use the collidee's MoveDef footprint as radius if it is mobile
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
@@ -1610,12 +1604,12 @@ void CGroundMoveType::HandleUnitCollisions(
 		crushCollidee &= (collider->speed != ZeroVector);
 
 		// don't push/crush either party if the collidee does not block the collider (or vv.)
-		if (colliderMobile && colliderMM->IsNonBlocking(*colliderMD, collidee, collider))
+		if (colliderMobile && CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
 			continue;
-		if (collideeMobile && collideeMM->IsNonBlocking(*collideeMD, collider, collidee))
+		if (collideeMobile && CMoveMath::IsNonBlocking(*collideeMD, collider, collidee))
 			continue;
 
-		if (crushCollidee && !colliderMM->CrushResistant(*colliderMD, collidee))
+		if (crushCollidee && !CMoveMath::CrushResistant(*colliderMD, collidee))
 			collidee->Kill(crushImpulse, true);
 
 		if (pathController->IgnoreCollision(collider, collidee))
@@ -1626,10 +1620,10 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (!collideeMobile) {
 			// building (always axis-aligned, but possibly has a yardmap)
 			if (collideeUD->IsFactoryUnit()) {
-				HandleStaticObjectCollisionYM(collider, collidee, colliderMD, colliderMM, (gs->frameNum > pathRequestDelay));
+				HandleStaticObjectCollisionYM(collider, collidee, colliderMD, (gs->frameNum > pathRequestDelay));
 			} else {
 				#define IMPULSE ((separationVector / (separationVector.Length() + 0.1f)) * sepDirMask)
-				HandleStaticObjectCollision(collider, collidee, colliderMD, colliderMM, IMPULSE, (gs->frameNum > pathRequestDelay));
+				HandleStaticObjectCollision(collider, collidee, colliderMD, IMPULSE, (gs->frameNum > pathRequestDelay));
 				#undef IMPULSE
 			}
 			continue;
@@ -1681,9 +1675,9 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3 colliderPushPos = collider->pos + (colResponseVec * colliderMassScale);
 		const float3 collideePushPos = collidee->pos - (colResponseVec * collideeMassScale);
 
-		#define IMPASSABLE(md, mm, pos, u)                                         \
-			(((mm->IsBlocked(*md, pos, u) & CMoveMath::BLOCK_STRUCTURE) != 0) ||   \
-			 ((mm->GetPosSpeedMod(*md, pos) <= 0.01f)))
+		#define IMPASSABLE(md, pos, u)                                                   \
+			(((CMoveMath::IsBlocked(*md, pos, u) & CMoveMath::BLOCK_STRUCTURE) != 0) ||  \
+			 ((CMoveMath::GetPosSpeedMod(*md, pos) <= 0.01f)))
 
 		// try to prevent both parties from being pushed onto non-traversable
 		// squares (without resetting their position which stops them dead in
@@ -1696,7 +1690,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		// either both parties are pushed, or only one party is
 		// pushed and the other is stopped, or both are stopped
 		if (pushCollider) {
-			const bool colliderPushPosLegal = !IMPASSABLE(colliderMD, colliderMM, colliderPushPos, collider);
+			const bool colliderPushPosLegal = !IMPASSABLE(colliderMD, colliderPushPos, collider);
 			const bool colliderPushAllowed = (!colliderUD->pushResistant || collideeUD->pushResistant);
 
 			if (colliderPushPosLegal && colliderPushAllowed) {
@@ -1707,7 +1701,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		}
 
 		if (pushCollidee) {
-			const bool collideePushPosLegal = !IMPASSABLE(collideeMD, collideeMM, collideePushPos, collidee);
+			const bool collideePushPosLegal = !IMPASSABLE(collideeMD, collideePushPos, collidee);
 			const bool collideePushAllowed = (!collideeUD->pushResistant || colliderUD->pushResistant);
 
 			if (collideePushPosLegal && collideePushAllowed) {
@@ -1724,8 +1718,8 @@ void CGroundMoveType::HandleUnitCollisions(
 			const int collideeSign = SIGN(-separationVector.dot(collidee->rightdir));
 			const float3 colliderSlideVec = collider->rightdir * colliderSign * (1.0f / penDistance);
 			const float3 collideeSlideVec = collidee->rightdir * collideeSign * (1.0f / penDistance);
-			const bool colliderSlidePosLegal = !IMPASSABLE(colliderMD, colliderMM, collider->pos + colliderSlideVec * r2, collider);
-			const bool collideeSlidePosLegal = !IMPASSABLE(colliderMD, colliderMM, collidee->pos + collideeSlideVec * r1, collider);
+			const bool colliderSlidePosLegal = !IMPASSABLE(colliderMD, collider->pos + colliderSlideVec * r2, collider);
+			const bool collideeSlidePosLegal = !IMPASSABLE(colliderMD, collidee->pos + collideeSlideVec * r1, collider);
 
 			if (pushCollider && colliderSlidePosLegal) { collider->Move3D(colliderSlideVec * r2, true); }
 			if (pushCollidee && collideeSlidePosLegal) { collidee->Move3D(collideeSlideVec * r1, true); }
@@ -1742,8 +1736,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const float colliderRadius,
 	const float3& sepDirMask,
 	const UnitDef* colliderUD,
-	const MoveDef* colliderMD,
-	const CMoveMath* colliderMM
+	const MoveDef* colliderMD
 ) {
 	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
 
@@ -1767,9 +1760,9 @@ void CGroundMoveType::HandleFeatureCollisions(
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
 			continue;
 
-		if (colliderMM->IsNonBlocking(*colliderMD, collidee, collider))
+		if (CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
 			continue;
-		if (!colliderMM->CrushResistant(*colliderMD, collidee))
+		if (!CMoveMath::CrushResistant(*colliderMD, collidee))
 			collidee->Kill(crushImpulse, true);
 
 		if (pathController->IgnoreCollision(collider, collidee))
@@ -1779,7 +1772,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 		if (collidee->reachedFinalPos) {
 			#define IMPULSE ((separationVector / (separationVector.Length() + 0.1f)) * sepDirMask)
-			HandleStaticObjectCollision(collider, collidee, colliderMD, colliderMM, IMPULSE, (gs->frameNum > pathRequestDelay));
+			HandleStaticObjectCollision(collider, collidee, colliderMD, IMPULSE, (gs->frameNum > pathRequestDelay));
 			#undef IMPULSE
 			continue;
 		}
@@ -1916,32 +1909,31 @@ void CGroundMoveType::TestNewTerrainSquare()
 	float3 newpos = owner->pos;
 
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
-		const CMoveMath* movemath = owner->unitDef->moveDef->moveMath;
 		const MoveDef& md = *(owner->unitDef->moveDef);
-		const float cmod = movemath->GetPosSpeedMod(md, moveSquareX, moveSquareY);
+		const float cmod = CMoveMath::GetPosSpeedMod(md, moveSquareX, moveSquareY);
 
 		if (math::fabs(owner->frontdir.x) < math::fabs(owner->frontdir.z)) {
 			if (newMoveSquareX > moveSquareX) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
 			if (newMoveSquareY > moveSquareY) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1949,13 +1941,13 @@ void CGroundMoveType::TestNewTerrainSquare()
 			}
 		} else {
 			if (newMoveSquareY > moveSquareY) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1963,13 +1955,13 @@ void CGroundMoveType::TestNewTerrainSquare()
 			}
 
 			if (newMoveSquareX > moveSquareX) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
+				const float nmod = CMoveMath::GetPosSpeedMod(md, newMoveSquareX, newMoveSquareY);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareX = moveSquareX;
@@ -2013,7 +2005,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 						const int x = (moveSquareX + li->x);
 						const int y = (moveSquareY + li->y);
 
-						if ((movemath->IsBlocked(md, x, y, owner) & blockBits) || movemath->GetPosSpeedMod(md, x, y) <= 0.01f) {
+						if ((CMoveMath::IsBlocked(md, x, y, owner) & blockBits) || CMoveMath::GetPosSpeedMod(md, x, y) <= 0.01f) {
 							wpOk = false;
 							break;
 						}
@@ -2179,9 +2171,8 @@ void CGroundMoveType::AdjustPosToWaterLine()
 		/*
 		const UnitDef* ud = owner->unitDef;
 		const MoveDef* md = ud->moveDef;
-		const CMoveMath* mm = md->moveMath;
 
-		y = mm->yLevel(owner->pos.x, owner->pos.z);
+		y = CMoveMath::yLevel(*md, owner->pos.x, owner->pos.z);
 
 		if (owner->unitDef->floatOnWater && owner->inWater) {
 			y -= owner->unitDef->waterline;
@@ -2247,7 +2238,6 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 		const UnitDef* ud = owner->unitDef;
 		const MoveDef* md = ud->moveDef;
-		const CMoveMath* mm = md->moveMath;
 
 		const int    speedSign = int(!reversing) * 2 - 1;
 		const float  speedScale = currentSpeed + deltaSpeed;
@@ -2258,7 +2248,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		// we want directional slope-tolerance checking, otherwise units get stuck on terrain too much
 		// note that we only reach this point after the pathfinder has already decided on a valid path
 		//
-		const bool terrainBlocked = (mm->GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
+		const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
 		const bool terrainIgnored = pathController->IgnoreTerrain(*md, owner->pos + speedVector);
 
 		if (terrainBlocked && !terrainIgnored) {
