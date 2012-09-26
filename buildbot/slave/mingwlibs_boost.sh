@@ -2,8 +2,8 @@
 
 # Setting system dependent vars
 BOOST_DIR=/tmp/boost/
-BOOST_BUILD_DIR=/tmp/build-boost
-MINGWLIBS_DIR=/tmp/mingwlibs
+BOOST_BUILD_DIR=/tmp/build-boost/
+MINGWLIBS_DIR=/tmp/mingwlibs/
 
 # spring's boost dependencies
 BOOST_LIBS="test thread system filesystem regex program_options signals"
