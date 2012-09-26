@@ -63,17 +63,15 @@ private:
 	void Fail();
 
 	void HandleObjectCollisions();
-	void HandleStaticObjectCollisionYM(
-		CUnit* collider,
-		CSolidObject* collidee,
-		const MoveDef* colliderMD,
-		bool repath);
 	void HandleStaticObjectCollision(
 		CUnit* collider,
 		CSolidObject* collidee,
 		const MoveDef* colliderMD,
-		const float3& collisionImpulse,
-		bool repath);
+		const float colliderRadius,
+		const float collideeRadius,
+		const float3& separationVector,
+		bool canRequestPath,
+		bool checkYardMap = false);
 
 	void HandleUnitCollisions(
 		CUnit* collider,

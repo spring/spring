@@ -16,6 +16,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -66,7 +67,9 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define OWNER_MOVE_CMD() (OWNER_CMD_QUE.empty() || OWNER_CMD_QUE[0].GetID() == CMD_MOVE)
 
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
-
+#define POS_IMPASSABLE(md, pos, u)                                               \
+	(((CMoveMath::IsBlocked(*md, pos, u) & CMoveMath::BLOCK_STRUCTURE) != 0) ||  \
+	 ((CMoveMath::GetPosSpeedMod(*md, pos) <= 0.01f)))
 
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -1448,83 +1451,84 @@ void CGroundMoveType::HandleObjectCollisions()
 	collider->Block();
 }
 
-void CGroundMoveType::HandleStaticObjectCollisionYM(
-	CUnit* collider,
-	CSolidObject*,
-	const MoveDef* colliderMD,
-	bool repath
-) {
-	float3 impulseVec;
-
-	const int xmid = (collider->pos.x + collider->speed.x) / SQUARE_SIZE;
-	const int zmid = (collider->pos.z + collider->speed.z) / SQUARE_SIZE;
-	const int xmin = xmid - colliderMD->xsizeh;
-	const int xmax = xmid + colliderMD->xsizeh;
-	const int zmin = zmid - colliderMD->zsizeh;
-	const int zmax = zmid + colliderMD->zsizeh;
-
-	// check for blocked squares along collider's MoveDef footprint edges
-	// NOTE: assumes the collider's footprint is still always axis-aligned
-	for (int x = -colliderMD->xsizeh; x <= colliderMD->xsizeh; x++) {
-		if ((CMoveMath::SquareIsBlocked(*colliderMD, xmid + x, zmin, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-x * SQUARE_SIZE, 1.0f,  SQUARE_SIZE); }
-		if ((CMoveMath::SquareIsBlocked(*colliderMD, xmid + x, zmax, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-x * SQUARE_SIZE, 1.0f, -SQUARE_SIZE); }
-	}
-	for (int z = -colliderMD->zsizeh; z <= colliderMD->zsizeh; z++) {
-		if ((CMoveMath::SquareIsBlocked(*colliderMD, xmin, zmid + z, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3( SQUARE_SIZE, 1.0f, -z * SQUARE_SIZE); }
-		if ((CMoveMath::SquareIsBlocked(*colliderMD, xmax, zmid + z, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-SQUARE_SIZE, 1.0f, -z * SQUARE_SIZE); }
-	}
-
-	if (impulseVec.y > 0.0f) {
-		impulseVec.y = 0.0f;
-
-		collider->AddImpulse(-collider->speed);
-		collider->AddImpulse(impulseVec.SafeNormalize());
-
-		currentSpeed = 0.0f;
-		deltaSpeed = 0.0f;
-
-		if (repath) {
-			// repath iff obstacle is within 90-degree cone; we do this
-			// because the GNWP lookahead (for non-TIP units) can cause
-			// corners to be cut across statically blocked squares
-			//
-			// NOTE:
-			//   we want an initial speed of 0 to avoid ramming into the
-			//   obstacle again right after the push, but if our leading
-			//   command is not a CMD_MOVE then SetMaxSpeed will not get
-			//   called later and 0 will immobilize us
-			//
-			if (OWNER_MOVE_CMD()) {
-				StartMoving(goalPos, goalRadius, 0.0f);
-			} else {
-				StartMoving(goalPos, goalRadius);
-			}
-		}
-	}
-}
-
 void CGroundMoveType::HandleStaticObjectCollision(
 	CUnit* collider,
-	CSolidObject*,
+	CSolidObject* collidee,
 	const MoveDef* colliderMD,
-	const float3& collisionImpulse,
-	bool repath
+	const float colliderRadius,
+	const float collideeRadius,
+	const float3& separationVector,
+	bool canRequestPath,
+	bool checkYardMap
 ) {
-	const CMoveMath::BlockType posBits = CMoveMath::IsBlocked(*colliderMD, collider->pos + collider->speed, collider);
+	// for factories, check if collidee's position is behind us (which means we are likely exiting)
+	// NOTE: allow units to move _through_ idle open factories? (pathfinder and coldet disagree now)
+	const bool exitingYardMap = (collider->frontdir.dot(separationVector) > 0.0f);
+	const bool insideYardMap =
+		(collider->pos.x >= (collidee->pos.x - ((collidee->xsize >> 1) - 0) * SQUARE_SIZE)) &&
+		(collider->pos.x <= (collidee->pos.x + ((collidee->xsize >> 1) - 0) * SQUARE_SIZE)) &&
+		(collider->pos.z >= (collidee->pos.z - ((collidee->zsize >> 1) - 0) * SQUARE_SIZE)) &&
+		(collider->pos.z <= (collidee->pos.z + ((collidee->zsize >> 1) - 0) * SQUARE_SIZE));
+	const bool objectOnPath = ((CMoveMath::IsBlocked(colliderMD, collider->pos + collider->speed, collider) & CMoveMath::BLOCK_STRUCTURE) != 0);
 
-	if ((posBits & CMoveMath::BLOCK_STRUCTURE) != 0) {
-		collider->AddImpulse(-collider->speed);
-		collider->AddImpulse(collisionImpulse);
+	const float  colRadiusSum = colliderRadius + collideeRadius;
+	const float   sepDistance = separationVector.Length() + 0.1f;
+	const float   penDistance = std::min(sepDistance - colRadiusSum, 0.0f);
+	const float  colSlideSign = ((collidee->pos.dot(collider->rightdir) - collider->pos.dot(collider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
+	const float3 colSlideVec  = collider->rightdir * colSlideSign * std::min(maxSpeed, -penDistance * 0.5f);
 
-		currentSpeed = 0.0f;
-		deltaSpeed = 0.0f;
+	bool wantRequestPath = false;
 
-		if (repath) {
-			if (OWNER_MOVE_CMD()) {
-				StartMoving(goalPos, goalRadius, 0.0f);
-			} else {
-				StartMoving(goalPos, goalRadius);
-			}
+	if (checkYardMap && insideYardMap && (exitingYardMap || !objectOnPath)) {
+		float3 impulseVec;
+
+		const int xmid = (collider->pos.x + collider->speed.x) / SQUARE_SIZE;
+		const int zmid = (collider->pos.z + collider->speed.z) / SQUARE_SIZE;
+		const int xmin = xmid - colliderMD->xsizeh;
+		const int xmax = xmid + colliderMD->xsizeh;
+		const int zmin = zmid - colliderMD->zsizeh;
+		const int zmax = zmid + colliderMD->zsizeh;
+
+		// check for blocked squares along collider's MoveDef footprint edges
+		// NOTE: assumes the collider's footprint is still always axis-aligned
+		for (int x = -colliderMD->xsizeh; x <= colliderMD->xsizeh; x++) {
+			if ((CMoveMath::SquareIsBlocked(*colliderMD, xmid + x, zmin, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-x * SQUARE_SIZE, 1.0f,  SQUARE_SIZE); }
+			if ((CMoveMath::SquareIsBlocked(*colliderMD, xmid + x, zmax, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-x * SQUARE_SIZE, 1.0f, -SQUARE_SIZE); }
+		}
+		for (int z = -colliderMD->zsizeh; z <= colliderMD->zsizeh; z++) {
+			if ((CMoveMath::SquareIsBlocked(*colliderMD, xmin, zmid + z, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3( SQUARE_SIZE, 1.0f, -z * SQUARE_SIZE); }
+			if ((CMoveMath::SquareIsBlocked(*colliderMD, xmax, zmid + z, collider) & CMoveMath::BLOCK_STRUCTURE) != 0) { impulseVec += float3(-SQUARE_SIZE, 1.0f, -z * SQUARE_SIZE); }
+		}
+
+		if (impulseVec.y > 0.0f) {
+			impulseVec.y = 0.0f;
+
+			collider->AddImpulse(-collider->speed);
+			collider->AddImpulse(impulseVec.SafeNormalize());
+
+			currentSpeed = 0.0f;
+			deltaSpeed = 0.0f;
+
+			wantRequestPath = true;
+		}
+	} else {
+		collider->Move3D(colSlideVec, true);
+		collider->Move3D((separationVector / sepDistance) * std::max(0.0f, -penDistance), true);
+
+		wantRequestPath = (penDistance < 0.0f);
+	}
+
+	// NOTE:
+	//   we want an initial speed of 0 to avoid ramming into the
+	//   obstacle again right after the push, but if our leading
+	//   command is not a CMD_MOVE then SetMaxSpeed will not get
+	//   called later and 0 will immobilize us
+	//
+	if (canRequestPath && wantRequestPath) {
+		if (OWNER_MOVE_CMD()) {
+			StartMoving(goalPos, goalRadius, 0.0f);
+		} else {
+			StartMoving(goalPos, goalRadius);
 		}
 	}
 }
@@ -1619,13 +1623,16 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		if (!collideeMobile) {
 			// building (always axis-aligned, but possibly has a yardmap)
-			if (collideeUD->IsFactoryUnit()) {
-				HandleStaticObjectCollisionYM(collider, collidee, colliderMD, (gs->frameNum > pathRequestDelay));
-			} else {
-				#define IMPULSE ((separationVector / (separationVector.Length() + 0.1f)) * sepDirMask)
-				HandleStaticObjectCollision(collider, collidee, colliderMD, IMPULSE, (gs->frameNum > pathRequestDelay));
-				#undef IMPULSE
-			}
+			HandleStaticObjectCollision(
+				collider,
+				collidee,
+				colliderMD,
+				colliderRadius,
+				collideeRadius,
+				separationVector,
+				(gs->frameNum > pathRequestDelay),
+				collideeUD->IsFactoryUnit());
+
 			continue;
 		}
 
@@ -1675,10 +1682,6 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3 colliderPushPos = collider->pos + (colResponseVec * colliderMassScale);
 		const float3 collideePushPos = collidee->pos - (colResponseVec * collideeMassScale);
 
-		#define IMPASSABLE(md, pos, u)                                                   \
-			(((CMoveMath::IsBlocked(*md, pos, u) & CMoveMath::BLOCK_STRUCTURE) != 0) ||  \
-			 ((CMoveMath::GetPosSpeedMod(*md, pos) <= 0.01f)))
-
 		// try to prevent both parties from being pushed onto non-traversable
 		// squares (without resetting their position which stops them dead in
 		// their tracks and undoes previous legitimate pushes made this frame)
@@ -1690,7 +1693,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		// either both parties are pushed, or only one party is
 		// pushed and the other is stopped, or both are stopped
 		if (pushCollider) {
-			const bool colliderPushPosLegal = !IMPASSABLE(colliderMD, colliderPushPos, collider);
+			const bool colliderPushPosLegal = !POS_IMPASSABLE(colliderMD, colliderPushPos, collider);
 			const bool colliderPushAllowed = (!colliderUD->pushResistant || collideeUD->pushResistant);
 
 			if (colliderPushPosLegal && colliderPushAllowed) {
@@ -1701,7 +1704,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		}
 
 		if (pushCollidee) {
-			const bool collideePushPosLegal = !IMPASSABLE(collideeMD, collideePushPos, collidee);
+			const bool collideePushPosLegal = !POS_IMPASSABLE(collideeMD, collideePushPos, collidee);
 			const bool collideePushAllowed = (!collideeUD->pushResistant || colliderUD->pushResistant);
 
 			if (collideePushPosLegal && collideePushAllowed) {
@@ -1718,15 +1721,13 @@ void CGroundMoveType::HandleUnitCollisions(
 			const int collideeSign = SIGN(-separationVector.dot(collidee->rightdir));
 			const float3 colliderSlideVec = collider->rightdir * colliderSign * (1.0f / penDistance);
 			const float3 collideeSlideVec = collidee->rightdir * collideeSign * (1.0f / penDistance);
-			const bool colliderSlidePosLegal = !IMPASSABLE(colliderMD, collider->pos + colliderSlideVec * r2, collider);
-			const bool collideeSlidePosLegal = !IMPASSABLE(colliderMD, collidee->pos + collideeSlideVec * r1, collider);
+			const bool colliderSlidePosLegal = !POS_IMPASSABLE(colliderMD, collider->pos + colliderSlideVec * r2, collider);
+			const bool collideeSlidePosLegal = !POS_IMPASSABLE(colliderMD, collidee->pos + collideeSlideVec * r1, collider);
 
 			if (pushCollider && colliderSlidePosLegal) { collider->Move3D(colliderSlideVec * r2, true); }
 			if (pushCollidee && collideeSlidePosLegal) { collidee->Move3D(collideeSlideVec * r1, true); }
 			#undef SIGN
 		}
-
-		#undef IMPASSABLE
 	}
 }
 
@@ -1753,9 +1754,10 @@ void CGroundMoveType::HandleFeatureCollisions(
 		// use the collidee's Feature (not FeatureDef) footprint as radius
 		// const float collideeRadius = FOOTPRINT_RADIUS(collideeFD->xsize, collideeFD->zsize, 0.75f);
 		const float collideeRadius = FOOTPRINT_RADIUS(collidee->xsize, collidee->zsize, 0.75f);
+		const float collisionRadiusSum = colliderRadius + collideeRadius;
 
 		const float3 separationVector   = collider->pos - collidee->pos;
-		const float separationMinDistSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
+		const float separationMinDistSq = collisionRadiusSum * collisionRadiusSum;
 
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
 			continue;
@@ -1771,14 +1773,20 @@ void CGroundMoveType::HandleFeatureCollisions(
 		eventHandler.UnitFeatureCollision(collider, collidee);
 
 		if (collidee->reachedFinalPos) {
-			#define IMPULSE ((separationVector / (separationVector.Length() + 0.1f)) * sepDirMask)
-			HandleStaticObjectCollision(collider, collidee, colliderMD, IMPULSE, (gs->frameNum > pathRequestDelay));
-			#undef IMPULSE
+			HandleStaticObjectCollision(
+				collider,
+				collidee,
+				colliderMD,
+				colliderRadius,
+				collideeRadius,
+				separationVector,
+				(gs->frameNum > pathRequestDelay));
+
 			continue;
 		}
 
 		const float  sepDistance    = separationVector.Length() + 0.1f;
-		const float  penDistance    = std::max((colliderRadius + collideeRadius) - sepDistance, 1.0f);
+		const float  penDistance    = std::max(collisionRadiusSum - sepDistance, 1.0f);
 		const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
 
 		const float3 sepDirection   = (separationVector / sepDistance);
