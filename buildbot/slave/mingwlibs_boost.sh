@@ -94,5 +94,5 @@ echo "#define BOOST_THREAD_USE_LIB" >> "${MINGWLIBS_DIR}include/boost/config/use
 
 
 # cleanup
-rm -rf ${BOOST_BUILD_DIR}
-rm -rf ${BOOST_DIR}
+#rm -rf ${BOOST_BUILD_DIR}
+#rm -rf ${BOOST_DIR}
