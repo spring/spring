@@ -36,7 +36,7 @@ mkdir -p ${MINGWLIBS_DIR}include/boost/ 2>/dev/null
 # Gentoo related - retrieve boost's tarball
 command -v emerge >/dev/null 2>&1 || { echo >&2 "Gentoo needed. Aborting."; exit 1; } 
 emerge boost --fetchonly
-source /etc/make.config
+source /etc/make.conf
 find ${DISTDIR} -iname "boost_*.tar.*" -print 2>/dev/null | xargs tar -xa -C ${BOOST_DIR} -f
 
 
