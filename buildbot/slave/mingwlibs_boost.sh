@@ -69,7 +69,7 @@ cp $(ls ${BOOST_BUILD_DIR}/boost/*/tools/bcp/*/*/*/bcp) .
 # Building the required libraries
 echo "\n---------------------------------------------------"
 echo "-- running bjam"
-echo "-- using gcc : : ${MINGW_GPP} ;" > ${BOOST_CONF}
+echo "using gcc : : ${MINGW_GPP} ;" > ${BOOST_CONF}
 ./bjam \
     --build-dir="${BOOST_BUILD_DIR}" \
     --stagedir="${MINGWLIBS_DIR}" \
