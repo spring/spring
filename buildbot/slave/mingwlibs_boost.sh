@@ -28,17 +28,13 @@ done
 
 # Setup final structure
 echo "---------------------------------------------------"
-echo "setup dirs"
-rm -f ${MINGWLIBS_DIR}lib/libboost* 2>/dev/null
-rm -Rf ${MINGWLIBS_DIR}include/boost 2>/dev/null
-mkdir -p ${MINGWLIBS_DIR}lib/ 2>/dev/null
-mkdir -p ${MINGWLIBS_DIR}include/boost/ 2>/dev/null
+echo "-- setup dirs"
 mkdir -p ${BOOST_DIR} 2>/dev/null
 
 
 # Gentoo related - retrieve boost's tarball
 echo "---------------------------------------------------"
-echo "fetch boost's tarball"
+echo "-- fetching boost's tarball"
 command -v emerge >/dev/null 2>&1 || { echo >&2 "Gentoo needed. Aborting."; exit 1; } 
 emerge boost --fetchonly &>/dev/null
 source /etc/make.conf
@@ -46,23 +42,33 @@ find ${DISTDIR} -iname "boost_*.tar.*" -print 2>/dev/null | xargs tar -xa -C ${B
 
 
 # bootstrap bjam
+echo "---------------------------------------------------"
+echo "-- bootstrap bjam"
 cd ${BOOST_DIR}/boost_*
 ./bootstrap.sh || exit 1
 
 
 # Building bcp - boosts own filtering tool
 echo "---------------------------------------------------"
-echo "create bcp"
+echo "-- creating bcp"
 cd tools/bcp
 ../../bjam --build-dir=${BOOST_BUILD_DIR} || exit 1
 cd ../..
 cp $(ls ${BOOST_BUILD_DIR}/boost/*/tools/bcp/*/*/*/bcp) .
 
 
+echo "---------------------------------------------------"
+echo "-- setup dirs 2"
+rm -f ${MINGWLIBS_DIR}lib/libboost* 2>/dev/null
+rm -Rf ${MINGWLIBS_DIR}include/boost 2>/dev/null
+mkdir -p ${MINGWLIBS_DIR}lib/ 2>/dev/null
+mkdir -p ${MINGWLIBS_DIR}include/boost/ 2>/dev/null
+
+
 # Building the required libraries
 echo "---------------------------------------------------"
-echo "running bjam"
-echo "using gcc : : ${MINGW_GPP} ;" > ${BOOST_CONF}
+echo "-- running bjam"
+echo "-- using gcc : : ${MINGW_GPP} ;" > ${BOOST_CONF}
 ./bjam \
     --build-dir="${BOOST_BUILD_DIR}" \
     --stagedir="${MINGWLIBS_DIR}" \
@@ -93,7 +99,7 @@ echo "using gcc : : ${MINGW_GPP} ;" > ${BOOST_CONF}
 
 # Copying the headers to MinGW-libs
 echo "---------------------------------------------------"
-echo "copying headers"
+echo "-- copying headers"
 rm -Rf ${BOOST_BUILD_DIR}/filtered
 mkdir ${BOOST_BUILD_DIR}/filtered
 ./bcp ${BOOST_HEADERS} ${BOOST_BUILD_DIR}/filtered
@@ -102,7 +108,7 @@ cp -r ${BOOST_BUILD_DIR}/filtered/boost ${MINGWLIBS_DIR}include/boost
 
 # some config we need
 echo "---------------------------------------------------"
-echo "adjust config/user.hpp"
+echo "-- adjust config/user.hpp"
 echo "#define BOOST_THREAD_USE_LIB" >> "${MINGWLIBS_DIR}include/boost/config/user.hpp"
 
 
