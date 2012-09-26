@@ -97,7 +97,7 @@ echo "-- copying headers"
 rm -Rf ${BOOST_BUILD_DIR}/filtered
 mkdir ${BOOST_BUILD_DIR}/filtered
 ./bcp ${BOOST_HEADERS} ${BOOST_BUILD_DIR}/filtered
-cp -r ${BOOST_BUILD_DIR}/filtered/boost ${MINGWLIBS_DIR}include/boost
+cp -r ${BOOST_BUILD_DIR}/filtered/boost ${MINGWLIBS_DIR}include/
 
 
 # some config we need
