@@ -31,6 +31,7 @@ rm -f ${MINGWLIBS_DIR}lib/libboost* 2>/dev/null
 rm -Rf ${MINGWLIBS_DIR}include/boost 2>/dev/null
 mkdir -p ${MINGWLIBS_DIR}lib/ 2>/dev/null
 mkdir -p ${MINGWLIBS_DIR}include/boost/ 2>/dev/null
+mkdir -p ${BOOST_DIR} 2>/dev/null
 
 
 # Gentoo related - retrieve boost's tarball
@@ -42,12 +43,12 @@ find ${DISTDIR} -iname "boost_*.tar.*" -print 2>/dev/null | xargs tar -xa -C ${B
 
 # bootstrap bjam
 cd ${BOOST_DIR}/boost_*
-./bootstrap.sh
+./bootstrap.sh || exit 1
 
 
 # Building bcp - boosts own filtering tool
 cd tools/bcp
-../../bjam --build-dir=${BOOST_BUILD_DIR}
+../../bjam --build-dir=${BOOST_BUILD_DIR} || exit 1
 cd ../..
 cp $(ls ${BOOST_BUILD_DIR}/boost/*/tools/bcp/*/*/*/bcp) .
 
@@ -66,7 +67,7 @@ echo "using gcc : : ${MINGW_GPP} ;" > ${BOOST_CONF}
     threading=multi \
     link=static \
     toolset=gcc \
-
+|| exit 1
 
 # fix library names (libboost_thread_win32.a -> libboost_thread-mt.a)
 for f in $(ls ${MINGWLIBS_DIR}lib/*.a); do
