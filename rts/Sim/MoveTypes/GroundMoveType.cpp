@@ -1512,8 +1512,10 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			wantRequestPath = true;
 		}
 	} else {
+		// when exiting a lab, insideYardMap goes from true to false
+		// before we stop colliding and we get a slight unneeded push
 		collider->Move3D(colSlideVec, true);
-		collider->Move3D((separationVector / sepDistance) * std::max(0.0f, -penDistance), true);
+		collider->Move3D((separationVector / sepDistance) * std::max(0.0f, -penDistance) * (1.0f - checkYardMap * exitingYardMap), true);
 
 		wantRequestPath = (penDistance < 0.0f);
 	}
