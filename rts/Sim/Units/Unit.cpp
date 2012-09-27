@@ -1123,7 +1123,7 @@ void CUnit::DoWaterDamage()
 
 void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID)
 {
-	if (isDead) {
+	if (isDead || crashing) {
 		return;
 	}
 
@@ -1793,7 +1793,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			return true;
 		}
 	} else { // reclaim
-		if (isDead) {
+		if (isDead || crashing) {
 			return false;
 		}
 
