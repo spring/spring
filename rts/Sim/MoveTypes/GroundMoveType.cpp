@@ -1475,7 +1475,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	const float   sepDistance = separationVector.Length() + 0.1f;
 	const float   penDistance = std::min(sepDistance - colRadiusSum, 0.0f);
 	const float  colSlideSign = ((collidee->pos.dot(collider->rightdir) - collider->pos.dot(collider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
-	const float3 colSlideVec  = collider->rightdir * colSlideSign * std::min(maxSpeed, -penDistance * 0.5f);
+	const float3 colSlideVec  = collider->rightdir * colSlideSign * std::min(currentSpeed, -penDistance * 0.5f);
 
 	bool wantRequestPath = false;
 
