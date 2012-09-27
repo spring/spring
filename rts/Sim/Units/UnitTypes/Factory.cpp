@@ -328,7 +328,12 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	for (int x = 0; x < 20; ++x) {
 		const float a = searchRadius * math::cos(x * PI / 10);
 		const float b = searchRadius * math::sin(x * PI / 10);
+
 		float3 testPos = pos + frontdir * a + rightdir * b;
+
+		if (!testPos.IsInMap())
+			continue;
+
 		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
 
 		if (qf->GetSolidsExact(testPos, unit->radius * 1.5f).empty()) {
