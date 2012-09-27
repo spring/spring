@@ -75,6 +75,7 @@ echo "using gcc : : ${MINGW_GPP} ;" > ${BOOST_CONF}
     --stagedir="${MINGWLIBS_DIR}" \
     --user-config=${BOOST_CONF} \
     --debug-building \
+    --layout="tagged" \
     ${BOOST_LIBS_ARG} \
     variant=release \
     target-os=windows \
@@ -85,10 +86,10 @@ echo "using gcc : : ${MINGW_GPP} ;" > ${BOOST_CONF}
 || exit 1
 
 # fix library names (libboost_thread_win32.a -> libboost_thread-mt.a)
-for f in $(ls ${MINGWLIBS_DIR}lib/*.a); do
-	FIXEDBASENAME=$(basename "$f" | sed -e 's/_win32//' | sed -e 's/\.a/-mt\.a/' )
-	mv "$f" "${MINGWLIBS_DIR}lib/$FIXEDBASENAME"
-done
+#for f in $(ls ${MINGWLIBS_DIR}lib/*.a); do
+#	FIXEDBASENAME=$(basename "$f" | sed -e 's/_win32//' | sed -e 's/\.a/-mt\.a/' )
+#	mv "$f" "${MINGWLIBS_DIR}lib/$FIXEDBASENAME"
+#done
 
 
 # Copying the headers to MinGW-libs
