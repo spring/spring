@@ -340,8 +340,10 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	// (otherwise units will try to turn before exiting when
 	// foundPos lies behind it and cause jams / get stuck)
 	// assume this temporary point is not itself blocked
-	Command c1(CMD_MOVE,            tempPos);
-	Command c2(CMD_MOVE, SHIFT_KEY, foundPos);
+	//
+	// make sure CAI does not cancel if foundPos == tempPos
+	Command c1(CMD_MOVE,                             tempPos);
+	Command c2(CMD_MOVE, SHIFT_KEY | INTERNAL_ORDER, foundPos);
 	unit->commandAI->GiveCommand(c1);
 	unit->commandAI->GiveCommand(c2);
 }
