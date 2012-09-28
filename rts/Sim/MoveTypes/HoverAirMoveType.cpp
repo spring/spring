@@ -713,7 +713,10 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	// note: unlike StrafeAirMoveType, UpdateTakeoff calls UpdateAirPhysics
 	// so we ignore terrain while we are in the takeoff state to avoid jumps
 	if (modInfo.allowAircraftToHitGround) {
-		if ((curAbsHeight > (owner->midPos.y - owner->radius))  &&  (aircraftState != AIRCRAFT_TAKEOFF)) {
+		const bool groundContact = (curAbsHeight > (owner->midPos.y - owner->radius));
+		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
+
+		if (groundContact && handleContact) {
 			owner->Move1D(curAbsHeight - (owner->midPos.y - owner->radius) + 0.01f, 1, true);
 		}
 	}

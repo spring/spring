@@ -957,8 +957,8 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	lastElevatorPos = elevator;
 
 	const float gHeight = ground->GetHeightAboveWater(pos.x, pos.z);
-	const float speedf = speed.Length() + 0.1f;
-	const float3 speeddir = speed / speedf;
+	const float speedf = speed.Length();
+	const float3 speeddir = speed / (speedf + 0.1f);
 
 	if (owner->fpsControlPlayer != NULL) {
 		if ((pos.y - gHeight) > wantedHeight * 1.2f) {
@@ -969,8 +969,9 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	}
 
 
+	// apply gravity only when in the air
+	speed.y += (mapInfo->map.gravity * myGravity) * int((owner->midPos.y - owner->radius) > gHeight);
 	speed += (engineThrustVector * maxAcc * engine);
-	speed.y += (mapInfo->map.gravity * myGravity);
 
 	if (aircraftState == AIRCRAFT_CRASHING) {
 		speed *= crashDrag;
@@ -981,26 +982,39 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	const float3 wingDir = updir * (1 - wingAngle) - frontdir * wingAngle;
 	const float wingForce = wingDir.dot(speed) * wingDrag;
 
-	frontdir += (rightdir * rudder   * maxRudder   * speedf); // yaw
-	updir    += (rightdir * aileron  * maxAileron  * speedf); // roll
-	frontdir += (updir    * elevator * maxElevator * speedf); // pitch
-	frontdir += ((speeddir - frontdir) * frontToSpeed);
+	if (!owner->IsStunned()) {
+		frontdir += (rightdir * rudder   * maxRudder   * speedf); // yaw
+		updir    += (rightdir * aileron  * maxAileron  * speedf); // roll
+		frontdir += (updir    * elevator * maxElevator * speedf); // pitch
+		frontdir += ((speeddir - frontdir) * frontToSpeed);
 
-	speed -= (wingDir * wingForce);
-	speed += ((frontdir * speedf - speed) * speedToFront);
-	speed *= (1 - int(owner->beingBuilt && aircraftState == AIRCRAFT_LANDED));
+		speed -= (wingDir * wingForce);
+		speed += ((frontdir * speedf - speed) * speedToFront);
+		speed *= (1 - int(owner->beingBuilt && aircraftState == AIRCRAFT_LANDED));
+	}
 
 	if (nextPosInBounds) {
 		owner->Move3D(speed, true);
 	}
 
 	// bounce away on ground collisions (including water surface)
+	// NOTE:
+	//   as soon as we get stunned, Update calls UpdateAirPhysics
+	//   and pops us into the air because of the ground-collision
+	//   logic --> check if we are already on the ground first
+	//
+	//   impulse from weapon impacts can add speed and cause us
+	//   to start bouncing with ever-increasing amplitude while
+	//   stunned, so the same applies there
 	if (modInfo.allowAircraftToHitGround) {
-		if ((gHeight > (owner->midPos.y - owner->radius))) {
+		const bool groundContact = (gHeight > (owner->midPos.y - owner->radius));
+		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
+
+		if (groundContact && handleContact) {
 			owner->Move1D(gHeight - (owner->midPos.y - owner->radius) + 0.01f, 1, true);
 
 			const float3& gNormal = ground->GetNormal(pos.x, pos.z);
-			const float impactSpeed = -speed.dot(gNormal);
+			const float impactSpeed = -speed.dot(gNormal) * int(1 - owner->IsStunned());
 
 			if (impactSpeed > 0.0f) {
 				// fix for mantis #1355
@@ -1008,7 +1022,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 				// near map edges) where their forward speed wasn't allowed to build up
 				// therefore add a vertical component help get off the ground if |speed|
 				// is below a certain threshold
-				if (speed.SqLength() > (0.09f * owner->unitDef->speed * owner->unitDef->speed)) {
+				if (speed.SqLength() > (0.09f * Square(owner->unitDef->speed))) {
 					speed *= 0.95f;
 				} else {
 					speed.y += impactSpeed;
