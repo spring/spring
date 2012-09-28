@@ -1475,7 +1475,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	const float   sepDistance = separationVector.Length() + 0.1f;
 	const float   penDistance = std::min(sepDistance - colRadiusSum, 0.0f);
 	const float  colSlideSign = ((collidee->pos.dot(collider->rightdir) - collider->pos.dot(collider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
-	const float3 colSlideVec  = collider->rightdir * colSlideSign * std::min(maxSpeed, -penDistance * 0.5f);
+	const float3 colSlideVec  = collider->rightdir * colSlideSign * std::min(currentSpeed, -penDistance * 0.5f);
 
 	bool wantRequestPath = false;
 
@@ -1512,8 +1512,10 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			wantRequestPath = true;
 		}
 	} else {
+		// when exiting a lab, insideYardMap goes from true to false
+		// before we stop colliding and we get a slight unneeded push
 		collider->Move3D(colSlideVec, true);
-		collider->Move3D((separationVector / sepDistance) * std::max(0.0f, -penDistance), true);
+		collider->Move3D((separationVector / sepDistance) * std::max(0.0f, -penDistance) * (1.0f - checkYardMap * exitingYardMap), true);
 
 		wantRequestPath = (penDistance < 0.0f);
 	}

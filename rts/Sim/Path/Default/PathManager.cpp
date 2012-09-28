@@ -163,9 +163,21 @@ unsigned int CPathManager::RequestPath(
 		}
 	}
 
-	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-		LowRes2MedRes(*newPath, startPos, caller, synced);
-		MedRes2MaxRes(*newPath, startPos, caller, synced);
+	if (result != IPath::Error) {
+		if (result != IPath::CantGetCloser) {
+			LowRes2MedRes(*newPath, startPos, caller, synced);
+			MedRes2MaxRes(*newPath, startPos, caller, synced);
+		} else {
+			// add one dummy waypoint so that the calling MoveType
+			// does not consider this request a failure, which can
+			// happen when startPos is very close to goalPos
+			//
+			// otherwise, code relying on MoveType::progressState
+			// (eg. BuilderCAI::MoveInBuildRange) would misbehave
+			// (eg. reject build orders)
+			newPath->maxResPath.path.push_back(goalPos);
+			newPath->maxResPath.squares.push_back(int2(goalPos.x / SQUARE_SIZE, goalPos.z / SQUARE_SIZE));
+		}
 
 		newPath->searchResult = result;
 		pathID = Store(newPath);
