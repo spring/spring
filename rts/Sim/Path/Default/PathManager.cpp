@@ -175,8 +175,10 @@ unsigned int CPathManager::RequestPath(
 			// otherwise, code relying on MoveType::progressState
 			// (eg. BuilderCAI::MoveInBuildRange) would misbehave
 			// (eg. reject build orders)
-			newPath->maxResPath.path.push_back(goalPos);
-			newPath->maxResPath.squares.push_back(int2(goalPos.x / SQUARE_SIZE, goalPos.z / SQUARE_SIZE));
+			if (newPath->maxResPath.path.empty()) {
+				newPath->maxResPath.path.push_back(startPos);
+				newPath->maxResPath.squares.push_back(int2(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE));
+			}
 		}
 
 		newPath->searchResult = result;
