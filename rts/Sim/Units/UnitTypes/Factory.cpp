@@ -328,7 +328,12 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	for (int x = 0; x < 20; ++x) {
 		const float a = searchRadius * math::cos(x * PI / 10);
 		const float b = searchRadius * math::sin(x * PI / 10);
+
 		float3 testPos = pos + frontdir * a + rightdir * b;
+
+		if (!testPos.IsInMap())
+			continue;
+
 		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
 
 		if (qf->GetSolidsExact(testPos, unit->radius * 1.5f).empty()) {
@@ -340,8 +345,10 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	// (otherwise units will try to turn before exiting when
 	// foundPos lies behind it and cause jams / get stuck)
 	// assume this temporary point is not itself blocked
-	Command c1(CMD_MOVE,            tempPos);
-	Command c2(CMD_MOVE, SHIFT_KEY, foundPos);
+	//
+	// make sure CAI does not cancel if foundPos == tempPos
+	Command c1(CMD_MOVE,                             tempPos);
+	Command c2(CMD_MOVE, SHIFT_KEY | INTERNAL_ORDER, foundPos);
 	unit->commandAI->GiveCommand(c1);
 	unit->commandAI->GiveCommand(c2);
 }
