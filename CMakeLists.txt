@@ -205,6 +205,7 @@ if    (MINGW)
 endif (MINGW)
 
 FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex program_options system signals REQUIRED)
+FIND_PACKAGE(Boost 1.35.0 COMPONENTS chrono)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
