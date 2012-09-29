@@ -29,6 +29,7 @@
 #define AUTO_GENERATE_ATTACK_ORDERS 1
 #define BUGGER_OFF_TTL 200
 #define MAX_CLOSE_IN_RETRY_TICKS 30
+#define MAX_USERGOAL_TOLERANCE_DIST 100.0f
 
 /** helper function for CMobileCAI::GiveCommandReal */
 template <typename T> static T* GetAirMoveType(const CUnit* owner)
@@ -1018,7 +1019,7 @@ void CMobileCAI::NonMoving()
 
 void CMobileCAI::FinishCommand()
 {
-	if (!(commandQue.front().options & INTERNAL_ORDER)) {
+	if (!((commandQue.front()).options & INTERNAL_ORDER)) {
 		lastUserGoal = owner->pos;
 	}
 	StopSlowGuard();
@@ -1096,7 +1097,7 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 	if (owner->haveTarget) {
 		NonMoving(); return false;
 	}
-	if ((owner->pos - lastUserGoal).SqLength2D() <= 10000.0f) {
+	if ((owner->pos - lastUserGoal).SqLength2D() <= (MAX_USERGOAL_TOLERANCE_DIST * MAX_USERGOAL_TOLERANCE_DIST)) {
 		NonMoving(); return false;
 	}
 	if (dynamic_cast<CHoverAirMoveType*>(owner->moveType) != NULL) {
@@ -1104,7 +1105,7 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 	}
 
 	// NOTE:
-	//   dp not flag as internal order, otherwise we would keep
+	//   do not flag as internal order, otherwise we would keep
 	//   generating new orders if we cannot get to lastUserGoal (?)
 	Command c(CMD_MOVE, 0, lastUserGoal);
 	commandQue.push_front(c);
