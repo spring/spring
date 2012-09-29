@@ -125,8 +125,10 @@ lua_State *luaE_newthread (lua_State *L) {
   L1->hookmask = L->hookmask;
   L1->basehookcount = L->basehookcount;
   L1->hook = L->hook;
+#ifndef BUILDING_AI
   L1->luamutex = L->luamutex; // Spring MT needs this
   L1->lcd = L->lcd; // Spring MT needs this
+#endif
   resethookcount(L1);
   lua_assert(iswhite(obj2gco(L1)));
   return L1;
