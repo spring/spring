@@ -77,6 +77,11 @@ LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBR
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY} streflop lobby assimp)
 
+if (MINGW AND Boost_CHRONO_FOUND)
+	# in newer boost versions the thread library depends on it
+	LIST(APPEND engineCommonLibraries ${Boost_CHRONO_LIBRARY})
+endif (MINGW AND Boost_CHRONO_FOUND)
+
 IF (MINGW)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
 ENDIF (MINGW)
