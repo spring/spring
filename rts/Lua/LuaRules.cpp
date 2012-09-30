@@ -53,8 +53,7 @@ const int* CLuaRules::currentCobArgs = NULL;
 void CLuaRules::LoadHandler()
 {
 	//FIXME GML: this needs a mutex!!!
-
-	if (luaRules) {
+	if (luaRules != NULL) {
 		return;
 	}
 
@@ -139,6 +138,16 @@ CLuaRules::~CLuaRules()
 	if (L_Sim != NULL || L_Draw != NULL) {
 		Shutdown();
 		KillLua();
+	}
+
+	assert(this == luaRules);
+	assert(!IsValid());
+
+	// make sure to really get rid of the LuaRules environment if we were
+	// called from outside FreeHandler (see LuaHandle::KillActiveHandle())
+	// note that ctor is only ever reached from LoadHandler
+	if (killMe) {
+		luaRules = NULL;
 	}
 }
 

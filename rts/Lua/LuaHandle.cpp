@@ -138,11 +138,12 @@ void CLuaHandle::KillLua()
 int CLuaHandle::KillActiveHandle(lua_State* L)
 {
 	CLuaHandle* ah = GetHandle(L);
-	if (ah) {
+	if (ah != NULL) {
 		const int args = lua_gettop(L);
 		if ((args >= 1) && lua_isstring(L, 1)) {
 			ah->killMsg = lua_tostring(L, 1);
 		}
+		// get rid of us next GameFrame call
 		ah->killMe = true;
 	}
 	return 0;
@@ -590,7 +591,7 @@ void CLuaHandle::GameFrame(int frameNum)
 		if (!killMsg.empty()) {
 			msg += ": " + killMsg;
 		}
-		LOG("Disabled %s", msg.c_str());
+		LOG("[%s] disabled %s", __FUNCTION__, msg.c_str());
 		delete this;
 		return;
 	}
