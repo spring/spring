@@ -441,8 +441,8 @@ void CMobileCAI::ExecuteMove(Command &c)
 	if (cmdPos != goalPos) {
 		SetGoal(cmdPos, owner->pos);
 	}
-	if ((owner->pos - goalPos).SqLength2D() < cancelDistance ||
-			owner->moveType->progressState == AMoveType::Failed) {
+
+	if ((owner->pos - goalPos).SqLength2D() < cancelDistance || owner->moveType->progressState == AMoveType::Failed) {
 		FinishCommand();
 	}
 	return;
