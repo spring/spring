@@ -19,13 +19,9 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
 ### Assemble libraries
-LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
+LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY} lua)
 LIST(APPEND engineDedicatedLibraries headlessStubs)
-if (MINGW AND Boost_CHRONO_FOUND)
-	# in newer boost versions the thread library depends on it
-	LIST(APPEND engineDedicatedLibraries ${Boost_CHRONO_LIBRARY})
-endif (MINGW AND Boost_CHRONO_FOUND)
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineDedicatedLibraries dl)
