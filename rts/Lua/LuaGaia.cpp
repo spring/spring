@@ -41,14 +41,14 @@ void CLuaGaia::LoadHandler()
 {
 	//FIXME GML: this needs a mutex!!!
 
-	if (luaGaia) {
+	if (luaGaia != NULL) {
 		return;
 	}
 
-	new CLuaGaia();
+	luaGaia = new CLuaGaia();
 
 	if (!luaGaia->IsValid()) {
-		delete luaGaia;
+		FreeHandler();
 	}
 }
 
@@ -56,7 +56,7 @@ void CLuaGaia::LoadHandler()
 void CLuaGaia::FreeHandler()
 {
 	//FIXME GML: this needs a mutex!!!
-	delete luaGaia;
+	delete luaGaia; luaGaia = NULL;
 }
 
 
@@ -66,8 +66,6 @@ void CLuaGaia::FreeHandler()
 CLuaGaia::CLuaGaia()
 : CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA)
 {
-	luaGaia = this;
-
 	if (!IsValid()) {
 		return;
 	}
@@ -91,7 +89,13 @@ CLuaGaia::~CLuaGaia()
 		Shutdown();
 		KillLua();
 	}
-	luaGaia = NULL;
+
+	assert(this == luaGaia);
+	assert(!IsValid());
+
+	if (killMe) {
+		luaGaia = NULL;
+	}
 }
 
 

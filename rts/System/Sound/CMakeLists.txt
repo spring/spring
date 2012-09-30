@@ -4,10 +4,10 @@ REMOVE_DEFINITIONS(-DNO_SOUND)
 
 # Dummy Sound implementaiton
 SET(noSoundSources
-		IAudioChannel
-		ISound
-		SoundChannels
-		NullSound
+		IAudioChannel.cpp
+		ISound.cpp
+		SoundChannels.cpp
+		NullSound.cpp
 	)
 
 ADD_LIBRARY(no-sound STATIC EXCLUDE_FROM_ALL ${noSoundSources})
@@ -26,17 +26,17 @@ endif (NO_SOUND)
 if    (NOT NO_SOUND)
 	SET(soundSources
 			${noSoundSources}
-			ALShared
-			EFX
-			EFXfuncs
-			EFXPresets
-			AudioChannel
-			OggStream
-			Sound
-			SoundBuffer
-			SoundItem
-			SoundSource
-			VorbisShared
+			ALShared.cpp
+			EFX.cpp
+			EFXfuncs.cpp
+			EFXPresets.cpp
+			AudioChannel.cpp
+			OggStream.cpp
+			Sound.cpp
+			SoundBuffer.cpp
+			SoundItem.cpp
+			SoundSource.cpp
+			VorbisShared.cpp
 		)
 
 	FIND_PACKAGE_STATIC(OpenAL REQUIRED)

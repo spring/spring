@@ -10,8 +10,8 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 ### Assemble libraries
 FIND_PACKAGE(SDL REQUIRED)
-INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-LIST(APPEND engineLibraries ${SDL_LIBRARY})
+SET(engineIncludes ${SDL_INCLUDE_DIR})
+SET(engineLibraries ${SDL_LIBRARY})
 
 
 FIND_PACKAGE_STATIC(OpenGL REQUIRED)
@@ -21,7 +21,7 @@ LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LI
 
 
 FIND_PACKAGE_STATIC(Freetype REQUIRED)
-INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIRS})
+LIST(APPEND engineIncludes ${FREETYPE_INCLUDE_DIRS})
 LIST(APPEND engineLibraries ${FREETYPE_LIBRARIES})
 
 IF    (PREFER_STATIC_LIBS)
@@ -50,12 +50,16 @@ LIST(APPEND engineLibraries ${sound-impl})
 
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
-
+LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
+if (MINGW AND Boost_CHRONO_FOUND)
+	# in newer boost versions the thread library depends on it
+	LIST(APPEND engineLibraries ${Boost_CHRONO_LIBRARY})
+endif (MINGW AND Boost_CHRONO_FOUND)
 
 ### Assemble external incude dirs
-INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
+LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
 
+INCLUDE_DIRECTORIES(${engineIncludes})
 
 ### Add icon and manifest to exe using windres
 IF    (WIN32)
@@ -67,6 +71,9 @@ ELSE  (WIN32)
 	SET(ENGINE_ICON "")
 ENDIF (WIN32)
 
+### allow engineLibraries to be used in multithreaded, too
+MakeGlobal(engineLibraries)
+MakeGlobal(engineIncludes)
 
 ### Build the executable
 ADD_EXECUTABLE(engine-default ${engineSources} ${ENGINE_ICON} ${engineHeaders})

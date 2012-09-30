@@ -20,7 +20,7 @@ endmacro (AIWrapperMessage type msg)
 
 # Configure all AI Wrapper submodules that need processing
 GetListOfSubModules(AI_WRAPPER_DIRS)
-set(DEPS_AI_WRAPPERS )
+set(DEPS_AI_WRAPPERS "")
 foreach    (aiWrapperDir ${AI_WRAPPER_DIRS})
 	# exclude CUtils here, as it was already included before
 	if    (NOT "${aiWrapperDir}" STREQUAL "CUtils")

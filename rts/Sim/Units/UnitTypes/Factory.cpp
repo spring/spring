@@ -320,18 +320,24 @@ void CFactory::DependentDied(CObject* o)
 
 void CFactory::SendToEmptySpot(CUnit* unit)
 {
-	const float searchRadius = radius * 1.7f + unit->radius * 4.0f;
+	const float searchRadius = radius * 4.0f + unit->radius * 4.0f;
+	const int numSteps = 36;
 
 	float3 foundPos = pos + frontdir * searchRadius;
-	float3 tempPos = pos + frontdir * radius * 2.0f;
+	float3 tempPos = foundPos;
 
-	for (int x = 0; x < 20; ++x) {
-		const float a = searchRadius * math::cos(x * PI / 10);
-		const float b = searchRadius * math::sin(x * PI / 10);
+	for (int x = 0; x < numSteps; ++x) {
+		const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
+		const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
 
 		float3 testPos = pos + frontdir * a + rightdir * b;
 
 		if (!testPos.IsInMap())
+			continue;
+		// don't pick spots behind the factory (because
+		// units will want to path through it when open
+		// which slows down production)
+		if ((testPos - pos).dot(frontdir) < 0.0f)
 			continue;
 
 		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
@@ -341,14 +347,43 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		}
 	}
 
+	if (foundPos == tempPos) {
+		// no empty spot found, pick one randomly so units do not pile up even more
+		// also make sure not to loop forever if we happen to be facing a map border
+		foundPos.y = 0.0f;
+
+		do {
+			const float x = ((gs->randInt() * 1.0f) / RANDINT_MAX) * numSteps;
+			const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
+			const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
+
+			foundPos.x = pos.x + frontdir.x * a + rightdir.x * b;
+			foundPos.z = pos.z + frontdir.z * a + rightdir.z * b;
+			foundPos.y += 1.0f;
+		} while ((!foundPos.IsInMap() || (foundPos - pos).dot(frontdir) < 0.0f) && (foundPos.y < 100.0f));
+
+		foundPos.y = ground->GetHeightAboveWater(foundPos.x, foundPos.z);
+	}
+
 	// first queue a temporary waypoint outside the factory
 	// (otherwise units will try to turn before exiting when
-	// foundPos lies behind it and cause jams / get stuck)
-	// assume this temporary point is not itself blocked
+	// foundPos lies behind exit and cause jams / get stuck)
+	// we assume this temporary point is not itself blocked
+	// (redundant now foundPos always lies in front of us)
 	//
-	// make sure CAI does not cancel if foundPos == tempPos
-	Command c1(CMD_MOVE,                             tempPos);
-	Command c2(CMD_MOVE, SHIFT_KEY | INTERNAL_ORDER, foundPos);
+	// NOTE:
+	//   MobileCAI::AutoGenerateTarget inserts a _third_
+	//   command when |foundPos - tempPos| >= 100 elmos,
+	//   because MobileCAI::FinishCommand only updates
+	//   lastUserGoal for non-internal orders --> the
+	//   final order given here should not be internal
+	//   (and should also be more than CMD_CANCEL_DIST
+	//   elmos distant from foundPos)
+	//
+	//   Command c0(CMD_MOVE, tempPos);
+	Command c1(CMD_MOVE, SHIFT_KEY | INTERNAL_ORDER, foundPos);
+	Command c2(CMD_MOVE, SHIFT_KEY,                  foundPos + frontdir * 20.0f);
+	// unit->commandAI->GiveCommand(c0);
 	unit->commandAI->GiveCommand(c1);
 	unit->commandAI->GiveCommand(c2);
 }
