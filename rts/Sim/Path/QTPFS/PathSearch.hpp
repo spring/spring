@@ -84,7 +84,7 @@ namespace QTPFS {
 			unsigned int searchMagicNumber = 0
 		) = 0;
 		virtual void Finalize(IPath* path) = 0;
-		virtual bool SharedFinalize(const IPath* srcPath, IPath* dstPath) {}
+		virtual bool SharedFinalize(const IPath* srcPath, IPath* dstPath) { return false; }
 		virtual PathSearchTrace::Execution* GetExecutionTrace() { return NULL; }
 
 		virtual const boost::uint64_t GetHash(unsigned int N, unsigned int k) const = 0;
