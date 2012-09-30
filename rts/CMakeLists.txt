@@ -108,7 +108,6 @@ SET(engineSources
 		${sources_engine_Sim}
 		${sources_engine_System}
 		${sources_engine_ExternalAI}
-		${nedmalloc_obj} # TODO remove? (seems never to be set)
 	)
 
 ### Add headers for generated project files (e.g. Code::Blocks)

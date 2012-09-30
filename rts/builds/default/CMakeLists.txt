@@ -50,6 +50,12 @@ LIST(APPEND engineLibraries ${sound-impl})
 
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 
+LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
+if (MINGW AND Boost_CHRONO_FOUND)
+	# in newer boost versions the thread library depends on it
+	LIST(APPEND engineLibraries ${Boost_CHRONO_LIBRARY})
+endif (MINGW AND Boost_CHRONO_FOUND)
+
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 
 
@@ -67,6 +73,8 @@ ELSE  (WIN32)
 	SET(ENGINE_ICON "")
 ENDIF (WIN32)
 
+### allow engineLibraries to be used in multithreaded, too
+MakeGlobal(engineLibraries)
 
 ### Build the executable
 ADD_EXECUTABLE(engine-default ${engineSources} ${ENGINE_ICON} ${engineHeaders})
