@@ -32,7 +32,7 @@ ELSE  (WIN32)
 ENDIF (WIN32)
 
 ### Assemble external incude dirs (defined in ../default/CMakeLists.txt)
-INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR} ${OPENAL_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(${engineIncludes})
 
 ### Build the executable
 ADD_EXECUTABLE(engine-multithreaded ${engineSources} ${ENGINE_ICON_GML} ${engineHeaders})
