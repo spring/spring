@@ -564,8 +564,8 @@ CBumpWater::CBumpWater()
 	occlusionQuery = 0;
 	occlusionQueryResult = GL_TRUE;
 	wasLastFrameVisible = true;
-	bool useOcclQuery  = (configHandler->GetBool("BumpWaterOcclusionQuery"));
 #ifdef GLEW_ARB_occlusion_query2
+	bool useOcclQuery  = (configHandler->GetBool("BumpWaterOcclusionQuery"));
 	if (useOcclQuery && GLEW_ARB_occlusion_query2 && (refraction < 2)) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
 		GLint bitsSupported;
 		glGetQueryiv(GL_ANY_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
