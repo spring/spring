@@ -56,11 +56,10 @@ if (MINGW AND Boost_CHRONO_FOUND)
 	LIST(APPEND engineLibraries ${Boost_CHRONO_LIBRARY})
 endif (MINGW AND Boost_CHRONO_FOUND)
 
-INCLUDE_DIRECTORIES(${engineIncludes})
-
-
 ### Assemble external incude dirs
 LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
+
+INCLUDE_DIRECTORIES(${engineIncludes})
 
 ### Add icon and manifest to exe using windres
 IF    (WIN32)
