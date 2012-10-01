@@ -1393,7 +1393,14 @@ void CGroundMoveType::Arrived()
 
 		// and the action is done
 		progressState = Done;
-		owner->commandAI->SlowUpdate();
+
+		// FIXME:
+		//   CAI sometimes does not update its queue correctly
+		//   (probably whenever we are called "before" the CAI
+		//   is ready to accept that a unit is at its goal-pos)
+		// owner->commandAI->SlowUpdate();
+		owner->commandAI->GiveCommand(Command(CMD_WAIT));
+		owner->commandAI->GiveCommand(Command(CMD_WAIT));
 
 		LOG_L(L_DEBUG, "Arrived: unit %i arrived", owner->id);
 	}

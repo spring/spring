@@ -24,22 +24,27 @@ float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slop
 	return speedMod;
 }
 
-float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale)
+float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod)
 {
 	float speedMod = 0.0f;
 
 	// too steep downhill slope?
-	if ((slope * dirSlopeScale) < (-moveDef.maxSlope * 2.0f))
+	if ((slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
 		return speedMod;
+	#if 0
 	// too steep uphill slope?
-	if ((slope * dirSlopeScale) > ( moveDef.maxSlope       ))
+	if ((slope * dirSlopeMod) > ( moveDef.maxSlope       ))
+		return speedMod;
+	#endif
+	// too steep uphill slope? (we ignore direction here)
+	if (slope > moveDef.maxSlope)
 		return speedMod;
 	// is this square below our maxWaterDepth and are we going further downhill?
-	if ((dirSlopeScale < 0.0f) && (-height > moveDef.depth))
+	if ((dirSlopeMod < 0.0f) && (-height > moveDef.depth))
 		return speedMod;
 
 	// slope-mod (speedMod is not increased or decreased by downhill slopes)
-	speedMod = 1.0f / (1.0f + std::max(0.0f, slope * dirSlopeScale) * moveDef.slopeMod);
+	speedMod = 1.0f / (1.0f + std::max(0.0f, slope * dirSlopeMod) * moveDef.slopeMod);
 	speedMod *= ((height < 0.0f)? waterDamageCost: 1.0f);
 	speedMod *= moveDef.GetDepthMod(height);
 
