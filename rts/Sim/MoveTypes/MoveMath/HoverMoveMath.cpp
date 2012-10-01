@@ -18,19 +18,24 @@ float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float slope
 	return (1.0f / (1.0f + slope * moveDef.slopeMod));
 }
 
-float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeScale)
+float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod)
 {
 	// no speed-penalty if on water
 	if (height < 0.0f)
 		return 1.0f;
 
 	// too steep downhill slope?
-	if ((slope * dirSlopeScale) < (-moveDef.maxSlope * 2.0f))
+	if ((slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
 		return 0.0f;
+	#if 0
 	// too steep uphill slope?
-	if ((slope * dirSlopeScale) > ( moveDef.maxSlope       ))
+	if ((slope * dirSlopeMod) > ( moveDef.maxSlope       ))
+		return 0.0f;
+	#endif
+	// too steep uphill slope? (we ignore direction here)
+	if (slope > moveDef.maxSlope)
 		return 0.0f;
 
-	return (1.0f / (1.0f + std::max(0.0f, slope * dirSlopeScale) * moveDef.slopeMod));
+	return (1.0f / (1.0f + std::max(0.0f, slope * dirSlopeMod) * moveDef.slopeMod));
 }
 
