@@ -28,17 +28,23 @@ float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slop
 {
 	float speedMod = 0.0f;
 
+	// NOTE:
+	//    dirSlopeMod is always a value in [-1, 1], so <slope * mod>
+	//    is never greater than <slope> and never less than <-slope>
+	//
+	//    any slope > (tolerance * 2) is always non-navigable (up or down)
+	//    any slope < (tolerance    ) is always     navigable (up or down)
+	//    for any in-between slope it depends on the directional modifier
+	if (slope > (moveDef.maxSlope * 2.0f))
+		return speedMod;
+
 	// too steep downhill slope?
-	if ((slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
+	if (dirSlopeMod <= 0.0f && (slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
 		return speedMod;
-	#if 0
 	// too steep uphill slope?
-	if ((slope * dirSlopeMod) > ( moveDef.maxSlope       ))
+	if (dirSlopeMod  > 0.0f && (slope * dirSlopeMod) > ( moveDef.maxSlope       ))
 		return speedMod;
-	#endif
-	// too steep uphill slope? (we ignore direction here)
-	if (slope > moveDef.maxSlope)
-		return speedMod;
+
 	// is this square below our maxWaterDepth and are we going further downhill?
 	if ((dirSlopeMod < 0.0f) && (-height > moveDef.depth))
 		return speedMod;

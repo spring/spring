@@ -24,16 +24,14 @@ float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float slope
 	if (height < 0.0f)
 		return 1.0f;
 
+	if (slope > (moveDef.maxSlope * 2.0f))
+		return 0.0f;
+
 	// too steep downhill slope?
-	if ((slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
+	if (dirSlopeMod <= 0.0f && (slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
 		return 0.0f;
-	#if 0
 	// too steep uphill slope?
-	if ((slope * dirSlopeMod) > ( moveDef.maxSlope       ))
-		return 0.0f;
-	#endif
-	// too steep uphill slope? (we ignore direction here)
-	if (slope > moveDef.maxSlope)
+	if (dirSlopeMod  > 0.0f && (slope * dirSlopeMod) > ( moveDef.maxSlope       ))
 		return 0.0f;
 
 	return (1.0f / (1.0f + std::max(0.0f, slope * dirSlopeMod) * moveDef.slopeMod));
