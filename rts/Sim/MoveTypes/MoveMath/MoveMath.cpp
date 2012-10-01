@@ -94,17 +94,12 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 
 	// note: moveDir is (or should be) a unit vector in the xz-plane, y=0
 	// scale is negative for "downhill" slopes, positive for "uphill" ones
-	//   const float dirSlopeMod = -moveDir.dot(sqrNormal);
+	const float dirSlopeMod = -moveDir.dot(sqrNormal);
 	//
 	// treat every move-direction as either fully uphill or fully downhill
 	// (otherwise units are still able to move orthogonally across vertical
-	// faces)
-	const float dirSlopeMod = (moveDir.dot(sqrNormal) < 0.0f) * 2.0f - 1.0f;
-	//
-	// make sure that abs(dot) > threshold to prevent orthogonal movement
-	//   const float dirSlopeDot = -moveDir.dot(sqrNormal);
-	//   const float dirSlopeSgn = (dirSlopeDot >= 0.0f) * 2.0f - 1.0f;
-	//   const float dirSlopeMod = std::max(std::max(dirSlopeDot, -dirSlopeDot), 0.2f) * dirSlopeSgn;
+	// faces --> fixed)
+	//   const float dirSlopeMod = (moveDir.dot(sqrNormal) < 0.0f) * 2.0f - 1.0f;
 
 	switch (moveDef.moveFamily) {
 		case MoveDef::Tank:  { return (GroundSpeedMod(moveDef, height, slope, dirSlopeMod) * tt.tankSpeed ); } break;
