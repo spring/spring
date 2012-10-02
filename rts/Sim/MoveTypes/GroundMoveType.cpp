@@ -1267,6 +1267,25 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		#endif
 
 		{
+			// check the rectangle between pos and cwp for obstacles
+			// TODO: use the line-table? (faster but less accurate)
+			const int xmin = std::min(cwp.x / SQUARE_SIZE, pos.x / SQUARE_SIZE) - 1, xmax = std::max(cwp.x / SQUARE_SIZE, pos.x / SQUARE_SIZE) + 1;
+			const int zmin = std::min(cwp.z / SQUARE_SIZE, pos.z / SQUARE_SIZE) - 1, zmax = std::max(cwp.z / SQUARE_SIZE, pos.z / SQUARE_SIZE) + 1;
+
+			for (int x = xmin; x < xmax; x++) {
+				for (int z = zmin; z < zmax; z++) {
+					if ((CMoveMath::SquareIsBlocked(owner->moveDef, x, z, owner) & CMoveMath::BLOCK_STRUCTURE) == 0) {
+						continue;
+					}
+
+					if ((pos - cwp).SqLength() > (SQUARE_SIZE * SQUARE_SIZE)) {
+						return false;
+					}
+				}
+			}
+		}
+
+		{
 			const float curGoalDistSq = (currWayPoint - goalPos).SqLength2D();
 			const float minGoalDistSq = (OWNER_MOVE_CMD())?
 				Square(goalRadius * (numIdlingSlowUpdates + 1)):
@@ -1835,9 +1854,9 @@ void CGroundMoveType::CreateLineTable()
 	// grid sample-points (int2 offsets) along the line from <start>
 	// to <to>; <to> ranges from [x=-4.5, z=-4.5] to [x=+5.5, z=+5.5]
 	//
-	// TestNewTerrainSquare() and ObstacleAvoidance() check whether
-	// squares are blocked at these offsets to get a fast estimate
-	// of terrain passability
+	// TestNewTerrainSquare() and CanGetNextWayPoint() check whether
+	// squares are blocked at these offsets to get a fast estimate of
+	// terrain passability
 	for (int yt = 0; yt < LINETABLE_SIZE; ++yt) {
 		for (int xt = 0; xt < LINETABLE_SIZE; ++xt) {
 			// center-point of grid-center cell
@@ -1917,6 +1936,7 @@ void CGroundMoveType::DeleteLineTable()
 	}
 }
 
+#if 0
 void CGroundMoveType::TestNewTerrainSquare()
 {
 	// first make sure we don't go into any terrain we cant get out of
@@ -2042,6 +2062,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 		}
 	}
 }
+#endif
 
 void CGroundMoveType::LeaveTransport()
 {
