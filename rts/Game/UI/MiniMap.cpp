@@ -1014,18 +1014,7 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 	{
 		GML_RECMUTEX_LOCK(unit); // DrawForReal
-
-		const std::set<CUnit*>& units = unitDrawer->GetUnsortedUnits();
-
-		for (std::set<CUnit*>::const_iterator it = units.begin(); it != units.end(); ++it) {
-			DrawUnit(*it);
-		}
-
-		// highlight the selected unit
-		CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
-		if (unit != NULL) {
-			DrawUnitHighlight(unit);
-		}
+		unitDrawer->DrawUnitMiniMapIcons();
 	}
 
 	glDisable(GL_ALPHA_TEST);
@@ -1384,6 +1373,7 @@ void CMiniMap::DrawButtons()
 
 
 
+#if 0
 inline const icon::CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) const
 {
 	scale = 1.0f;
@@ -1413,7 +1403,6 @@ inline const icon::CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& sc
 
 	return NULL;
 }
-
 
 void CMiniMap::DrawUnit(const CUnit* unit)
 {
@@ -1470,7 +1459,6 @@ void CMiniMap::DrawUnit(const CUnit* unit)
 	iconData->Draw(x0, y0, x1, y1);
 }
 
-
 void CMiniMap::DrawUnitHighlight(const CUnit* unit)
 {
 	glEnable(GL_ALPHA_TEST);
@@ -1495,6 +1483,7 @@ void CMiniMap::DrawUnitHighlight(const CUnit* unit)
 
 	return;
 }
+#endif
 
 
 void CMiniMap::DrawNotes()

@@ -10,6 +10,8 @@
 #include "Icon.h"
 #include "System/float3.h"
 
+class CVertexArray;
+
 namespace icon {
 	class CIconData {
 		public:
@@ -25,6 +27,7 @@ namespace icon {
 			void CopyData(const CIconData* iconData);
 
 			void BindTexture() const;
+			void DrawArray(CVertexArray* va, float x0, float y0, float x1, float y1) const;
 			void Draw(float x0, float y0, float x1, float y1) const;
 			void Draw(const float3& botLeft, const float3& botRight,
 					const float3& topLeft, const float3& topRight) const;
