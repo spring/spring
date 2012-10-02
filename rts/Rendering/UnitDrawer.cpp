@@ -301,18 +301,6 @@ bool CUnitDrawer::LoadModelShaders()
 }
 
 
-void CUnitDrawer::SunChanged(const float3& sunDir) {
-	if (advShading && shadowHandler->shadowsSupported && globalRendering->haveGLSL) {
-		const float3 factoredUnitSunColor = unitSunColor * sky->GetLight()->GetLightIntensity();
-
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &factoredUnitSunColor[0]);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
-	}
-}
-
 
 void CUnitDrawer::SetUnitDrawDist(float dist)
 {
@@ -2525,3 +2513,37 @@ void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
 		unit->currentLOD = (count == 0) ? 0 : count - 1;
 #endif
 }
+
+
+
+
+
+
+
+
+
+void CUnitDrawer::PlayerChanged(int playerNum) {
+	std::map<icon::CIconData*, std::set<const CUnit*> >::iterator iconIt;
+	std::set<CUnit*>::const_iterator unitIt;
+
+	for (iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
+		(iconIt->second).clear();
+	}
+
+	for (unitIt = unsortedUnits.begin(); unitIt != unsortedUnits.end(); ++unitIt) {
+		UpdateUnitMiniMapIcon(*unitIt, false);
+	}
+}
+
+void CUnitDrawer::SunChanged(const float3& sunDir) {
+	if (advShading && shadowHandler->shadowsSupported && globalRendering->haveGLSL) {
+		const float3 factoredUnitSunColor = unitSunColor * sky->GetLight()->GetLightIntensity();
+
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &factoredUnitSunColor[0]);
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
+	}
+}
+
