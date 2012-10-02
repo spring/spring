@@ -20,6 +20,7 @@
 #define VA_SIZE_TC   6
 #define VA_SIZE_T2   7
 #define VA_SIZE_2DT  4
+#define VA_SIZE_2DTC 5
 
 class CVertexArray  
 {
@@ -44,6 +45,7 @@ public:
 	inline void AddVertexTNT(const float3& p, float tx, float ty, const float3& n, const float3& st, const float3& tt); 
 	inline void AddVertexT2(const float3& p, float t1x, float t1y, float t2x, float t2y);
 	inline void AddVertex2dT(float x, float y, float tx, float ty);
+	inline void AddVertex2dTC(float x, float y, float tx, float ty, const unsigned char* c);
 
 	void DrawArray0(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_0);
 	void DrawArray2d0(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_2D0);
@@ -55,6 +57,7 @@ public:
 	void DrawArrayTNT(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_TNT);
 	void DrawArrayT2(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_T2);
 	void DrawArray2dT(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_2DT);
+	void DrawArray2dTC(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_2DTC);
 	void DrawArray2dT(const int drawType, StripCallback callback, void* data, unsigned int stride = sizeof(float) * VA_SIZE_2DT);
 
 	//! same as the AddVertex... functions just without automated CheckEnlargeDrawArray
