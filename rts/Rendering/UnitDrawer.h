@@ -23,6 +23,9 @@ struct BuildInfo;
 struct SolidObjectGroundDecal;
 struct GhostSolidObject;
 
+namespace icon {
+	class CIconData;
+}
 namespace Shader {
 	struct IProgramObject;
 }
@@ -87,6 +90,8 @@ public:
 	/** CGame::DrawDirectControlHud,  **/
 	void DrawIndividual(CUnit* unit);
 
+	void DrawUnitMiniMapIcons() const;
+
 	static unsigned int CalcUnitLOD(const CUnit* unit, unsigned int lastLOD);
 	static unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD);
 	static void SetUnitLODCount(CUnit* unit, unsigned int count);
@@ -96,6 +101,7 @@ public:
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
 	GL::LightHandler* GetLightHandler() { return &lightHandler; }
+
 
 #ifdef USE_GML
 	bool multiThreadDrawUnit;
@@ -119,6 +125,7 @@ public:
 	void DrawUnitStats(CUnit* unit);
 #endif
 
+
 private:
 	bool LoadModelShaders();
 
@@ -135,7 +142,10 @@ private:
 	void DrawOpaqueAIUnits();
 	void DrawCloakedAIUnits();
 	void DrawGhostedBuildings(int modelType);
+
 	void DrawUnitIcons(bool drawReflection);
+	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
+	void UpdateUnitMiniMapIcon(const CUnit* unit, bool killed);
 
 	// note: make these static?
 	void DrawUnitBeingBuilt(CUnit* unit);
@@ -225,6 +235,7 @@ private:
 #endif
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
+	std::map<icon::CIconData*, std::set<const CUnit*> > unitsByIcon;
 
 	GL::LightHandler lightHandler;
 };

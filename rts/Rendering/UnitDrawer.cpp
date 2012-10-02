@@ -2207,6 +2207,133 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 
 
+inline const icon::CIconData* GetUnitIcon(const CUnit* unit) {
+	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+
+	const UnitDef* unitDef = unit->unitDef;
+	const icon::CIconData* iconData = NULL;
+
+	// use the unit's custom icon if we can currently see it,
+	// or have seen it before and did not lose contact since
+	const bool unitVisible = ((losStatus & LOS_INLOS) || ((losStatus & LOS_INRADAR) && ((losStatus & prevMask) == prevMask)));
+
+	if (minimap->UseUnitIcons() && (unitVisible || gu->spectatingFullView)) {
+		iconData = unitDef->iconType.GetIconData();
+	} else {
+		if (losStatus & LOS_INRADAR) {
+			iconData = icon::iconHandler->GetDefaultIconData();
+		}
+	}
+
+	return iconData;
+}
+
+inline float GetUnitIconScale(const CUnit* unit) {
+	float scale = unit->myIcon->GetSize();
+
+	if (!minimap->UseUnitIcons())
+		return scale;
+	if (!unit->myIcon->GetRadiusAdjust())
+		return scale;
+
+	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+	const bool unitVisible = ((losStatus & LOS_INLOS) || ((losStatus & LOS_INRADAR) && ((losStatus & prevMask) == prevMask)));
+
+	if ((unitVisible || gu->spectatingFullView)) {
+		scale *= (unit->radius / 30.0f);
+	}
+
+	return scale;
+}
+
+
+void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const {
+	if (unit->noMinimap)
+		return;
+	if (unit->myIcon == NULL)
+		return;
+
+	if (unit->isSelected) {
+		glColor3f(1.0f, 1.0f, 1.0f);
+	} else {
+		if (minimap->UseSimpleColors()) {
+			if (unit->team == gu->myTeam) {
+				glColor3ubv(minimap->GetMyTeamIconColor());
+			} else if (teamHandler->Ally(gu->myAllyTeam, unit->allyteam)) {
+				glColor3ubv(minimap->GetAllyTeamIconColor());
+			} else {
+				glColor3ubv(minimap->GetEnemyTeamIconColor());
+			}
+		} else {
+			glColor3ubv(teamHandler->Team(unit->team)->color);
+		}
+	}
+
+	const float iconScale = GetUnitIconScale(unit);
+	const float3& iconPos = (!gu->spectatingFullView)?
+		helper->GetUnitErrorPos(unit, gu->myAllyTeam):
+		static_cast<float3>(unit->midPos);
+
+	const float iconSizeX = (iconScale * minimap->GetUnitSizeX());
+	const float iconSizeY = (iconScale * minimap->GetUnitSizeY());
+
+	const float x0 = iconPos.x - iconSizeX;
+	const float x1 = iconPos.x + iconSizeX;
+	const float y0 = iconPos.z - iconSizeY;
+	const float y1 = iconPos.z + iconSizeY;
+
+	unit->myIcon->DrawArray(va, x0, y0, x1, y1);
+}
+
+// TODO:
+//   UnitDrawer::DrawIcon was half-duplicate of MiniMap::DrawUnit&co
+//   the latter has been replaced by this, do the same for the former
+//   (mini-map icons and real-map radar icons are the same anyway)
+void CUnitDrawer::DrawUnitMiniMapIcons() const {
+	std::map<icon::CIconData*, std::set<const CUnit*> >::const_iterator iconIt;
+	std::set<const CUnit*>::const_iterator unitIt;
+
+	CVertexArray* va = GetVertexArray();
+
+	for (iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
+		const icon::CIconData* icon = iconIt->first;
+		const std::set<const CUnit*>& units = iconIt->second;
+
+		if (icon == NULL)
+			continue;
+
+		va->Initialize();
+		va->EnlargeArrays(units.size() * 4, 0, VA_SIZE_2DT);
+		icon->BindTexture();
+
+		for (unitIt = units.begin(); unitIt != units.end(); ++unitIt) {
+			assert((*unitIt)->myIcon == icon);
+			DrawUnitMiniMapIcon(*unitIt, va);
+		}
+
+		va->DrawArray2dT(GL_QUADS);
+	}
+}
+
+void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool killed) {
+	icon::CIconData* oldIcon = unit->myIcon;
+	icon::CIconData* newIcon = const_cast<icon::CIconData*>(GetUnitIcon(unit));
+
+	CUnit* u = const_cast<CUnit*>(unit);
+
+	if (!killed) {
+		if (oldIcon != newIcon) {
+			unitsByIcon[oldIcon].erase(u);
+			unitsByIcon[newIcon].insert(u);
+		}
+	} else {
+		unitsByIcon[oldIcon].erase(u);
+	}
+
+	u->myIcon = killed? NULL: newIcon;
+}
 
 
 
@@ -2232,6 +2359,7 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 		}
 	}
 
+	UpdateUnitMiniMapIcon(u, false);
 	unsortedUnits.insert(unit);
 }
 
@@ -2280,6 +2408,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	drawStat.erase(u);
 #endif
 
+	UpdateUnitMiniMapIcon(unit, true);
 	SetUnitLODCount(u, 0);
 }
 
@@ -2324,6 +2453,8 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 			unitRadarIcons[allyTeam].erase(u);
 		}
 	}
+
+	UpdateUnitMiniMapIcon(unit, false);
 }
 
 
