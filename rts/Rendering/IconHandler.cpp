@@ -9,6 +9,7 @@
 #include "System/mmgr.h"
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include "System/Log/ILog.h"
 #include "IconHandler.h"
 #include "Lua/LuaParser.h"
@@ -322,6 +323,14 @@ void CIconData::CopyData(const CIconData* iconData)
 void CIconData::BindTexture() const
 {
 	glBindTexture(GL_TEXTURE_2D, texID);
+}
+
+void CIconData::DrawArray(CVertexArray* va, float x0, float y0, float x1, float y1) const
+{
+	va->AddVertex2dT(x0, y0, 0.0f, 0.0f);
+	va->AddVertex2dT(x1, y0, 1.0f, 0.0f);
+	va->AddVertex2dT(x1, y1, 1.0f, 1.0f);
+	va->AddVertex2dT(x0, y1, 0.0f, 1.0f);
 }
 
 void CIconData::Draw(float x0, float y0, float x1, float y1) const
