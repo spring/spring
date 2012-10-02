@@ -36,9 +36,9 @@ public:
 	//! CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
 		return
-			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed") ||
+			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed" ) ||
 			(eventName == "RenderUnitCloakChanged" || eventName == "RenderUnitLOSChanged") ||
-			(eventName == "SunChanged");
+			(eventName == "PlayerChanged"          || eventName == "SunChanged"          );
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -49,6 +49,7 @@ public:
 	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
 	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 
+	void PlayerChanged(int playerNum);
 	void SunChanged(const float3& sunDir);
 
 public:

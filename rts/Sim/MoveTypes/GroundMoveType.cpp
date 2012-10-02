@@ -1315,10 +1315,10 @@ void CGroundMoveType::GetNextWayPoint()
 		// NOTE: pathfinder implementation should ensure waypoints are not equal
 		currWayPoint = nextWayPoint;
 		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner);
+	}
 
-		if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
-			Fail();
-		}
+	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
+		Fail();
 	}
 }
 
