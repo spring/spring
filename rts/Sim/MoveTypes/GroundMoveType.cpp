@@ -1274,10 +1274,12 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 
 			for (int x = xmin; x < xmax; x++) {
 				for (int z = zmin; z < zmax; z++) {
-					if ((CMoveMath::SquareIsBlocked(owner->moveDef, x, z, owner) & CMoveMath::BLOCK_STRUCTURE) == 0) {
+					const bool noStructBlock = ((CMoveMath::SquareIsBlocked(*owner->moveDef, x, z, owner) & CMoveMath::BLOCK_STRUCTURE) == 0);
+					const bool noGroundBlock = (CMoveMath::GetPosSpeedMod(*owner->moveDef, pos) >= 0.01f);
+
+					if (noStructBlock && noGroundBlock) {
 						continue;
 					}
-
 					if ((pos - cwp).SqLength() > (SQUARE_SIZE * SQUARE_SIZE)) {
 						return false;
 					}
