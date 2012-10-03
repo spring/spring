@@ -146,7 +146,7 @@ private:
 
 	void DrawUnitIcons(bool drawReflection);
 	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
-	void UpdateUnitMiniMapIcon(const CUnit* unit, bool killed);
+	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 
 	// note: make these static?
 	void DrawUnitBeingBuilt(CUnit* unit);
