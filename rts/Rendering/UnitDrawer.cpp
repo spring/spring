@@ -2243,19 +2243,20 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 	if (unit->myIcon == NULL)
 		return;
 
-	if (unit->isSelected) {
-		glColor3f(1.0f, 1.0f, 1.0f);
-	} else {
+	const unsigned char defaultColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	const unsigned char* color = &defaultColor[0];
+
+	if (!unit->isSelected) {
 		if (minimap->UseSimpleColors()) {
 			if (unit->team == gu->myTeam) {
-				glColor3ubv(minimap->GetMyTeamIconColor());
+				color = minimap->GetMyTeamIconColor();
 			} else if (teamHandler->Ally(gu->myAllyTeam, unit->allyteam)) {
-				glColor3ubv(minimap->GetAllyTeamIconColor());
+				color = minimap->GetAllyTeamIconColor();
 			} else {
-				glColor3ubv(minimap->GetEnemyTeamIconColor());
+				color = minimap->GetEnemyTeamIconColor();
 			}
 		} else {
-			glColor3ubv(teamHandler->Team(unit->team)->color);
+			color = teamHandler->Team(unit->team)->color;
 		}
 	}
 
@@ -2272,7 +2273,7 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 	const float y0 = iconPos.z - iconSizeY;
 	const float y1 = iconPos.z + iconSizeY;
 
-	unit->myIcon->DrawArray(va, x0, y0, x1, y1);
+	unit->myIcon->DrawArray(va, x0, y0, x1, y1, color);
 }
 
 // TODO:
@@ -2293,7 +2294,7 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 			continue;
 
 		va->Initialize();
-		va->EnlargeArrays(units.size() * 4, 0, VA_SIZE_2DT);
+		va->EnlargeArrays(units.size() * 4, 0, VA_SIZE_2DTC);
 		icon->BindTexture();
 
 		for (unitIt = units.begin(); unitIt != units.end(); ++unitIt) {
@@ -2301,7 +2302,7 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 			DrawUnitMiniMapIcon(*unitIt, va);
 		}
 
-		va->DrawArray2dT(GL_QUADS);
+		va->DrawArray2dTC(GL_QUADS);
 	}
 }
 

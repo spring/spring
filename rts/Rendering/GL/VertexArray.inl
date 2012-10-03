@@ -225,6 +225,15 @@ void CVertexArray::AddVertex2dT(float x, float y, float tx, float ty) {
 	*drawArrayPos++ = ty;
 }
 
+void CVertexArray::AddVertex2dTC(float x, float y, float tx, float ty, const unsigned char* col) {
+	CheckEnlargeDrawArray();
+	*drawArrayPos++ = x;
+	*drawArrayPos++ = y;
+	*drawArrayPos++ = tx;
+	*drawArrayPos++ = ty;
+	*drawArrayPos++ = *((float*)(col));
+}
+
 
 void CVertexArray::CheckEndStrip() {
 	if (stripArrayPos == stripArray || ((ptrdiff_t) * (stripArrayPos - 1)) != ((char*) drawArrayPos - (char*) drawArray))
