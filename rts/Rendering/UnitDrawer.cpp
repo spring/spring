@@ -2243,7 +2243,7 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 	if (unit->myIcon == NULL)
 		return;
 
-	const unsigned char defaultColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	const unsigned char defaultColor[4] = {255, 255, 255, 255};
 	const unsigned char* color = &defaultColor[0];
 
 	if (!unit->isSelected) {
@@ -2306,14 +2306,14 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 	}
 }
 
-void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool killed) {
+void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed) {
 	icon::CIconData* oldIcon = unit->myIcon;
 	icon::CIconData* newIcon = const_cast<icon::CIconData*>(GetUnitIcon(unit));
 
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (!killed) {
-		if (oldIcon != newIcon) {
+		if ((oldIcon != newIcon) || forced) {
 			unitsByIcon[oldIcon].erase(u);
 			unitsByIcon[newIcon].insert(u);
 		}
@@ -2348,7 +2348,7 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 		}
 	}
 
-	UpdateUnitMiniMapIcon(u, false);
+	UpdateUnitMiniMapIcon(u, false, false);
 	unsortedUnits.insert(unit);
 }
 
@@ -2397,7 +2397,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	drawStat.erase(u);
 #endif
 
-	UpdateUnitMiniMapIcon(unit, true);
+	UpdateUnitMiniMapIcon(unit, false, true);
 	SetUnitLODCount(u, 0);
 }
 
@@ -2443,7 +2443,7 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 		}
 	}
 
-	UpdateUnitMiniMapIcon(unit, false);
+	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
 
@@ -2524,6 +2524,9 @@ void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
 
 
 void CUnitDrawer::PlayerChanged(int playerNum) {
+	if (playerNum != gu->myPlayerNum)
+		return;
+
 	std::map<icon::CIconData*, std::set<const CUnit*> >::iterator iconIt;
 	std::set<CUnit*>::const_iterator unitIt;
 
@@ -2532,7 +2535,8 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 	}
 
 	for (unitIt = unsortedUnits.begin(); unitIt != unsortedUnits.end(); ++unitIt) {
-		UpdateUnitMiniMapIcon(*unitIt, false);
+		// force an erase (no-op) followed by an insert
+		UpdateUnitMiniMapIcon(*unitIt, true, false);
 	}
 }
 
