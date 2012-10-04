@@ -103,9 +103,6 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		extraDefs += (smfMap->HaveSplatTexture())?
 			"#define SMF_DETAIL_TEXTURE_SPLATTING 1\n":
 			"#define SMF_DETAIL_TEXTURE_SPLATTING 0\n";
-		extraDefs += (smfMap->initMinHeight > 0.0f || mapInfo->map.voidWater)?
-			"#define SMF_WATER_ABSORPTION 0\n":
-			"#define SMF_WATER_ABSORPTION 1\n";
 		extraDefs += (smfMap->GetSkyReflectModTexture() != 0)?
 			"#define SMF_SKY_REFLECTIONS 1\n":
 			"#define SMF_SKY_REFLECTIONS 0\n";
@@ -121,6 +118,9 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		extraDefs +=
 			("#define BASE_DYNAMIC_MAP_LIGHT " + IntToString(lightHandler->GetBaseLight()) + "\n") +
 			("#define MAX_DYNAMIC_MAP_LIGHTS " + IntToString(lightHandler->GetMaxLights()) + "\n");
+		extraDefs += ("#define SMF_WATER_ABSORPTION " + IntToString(smfMap->initMinHeight <= 0.0f) + "\n");
+		extraDefs += ("#define SMF_VOID_WATER       " + IntToString(mapInfo->map.voidWater       ) + "\n");
+		extraDefs += ("#define SMF_VOID_GROUND      " + IntToString(mapInfo->map.voidGround      ) + "\n");
 
 	// generate all runtime-switchable shader configurations
 	for (unsigned int i = 0; i < SMF_MAX_OPT_BIT_VAL; i++) {

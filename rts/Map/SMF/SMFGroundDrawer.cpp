@@ -224,23 +224,24 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	UpdateCamRestraints(cam2);
 	smfRenderState->Enable(this, drawPass);
 
+	{
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
-			if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
-				glEnable(GL_ALPHA_TEST);
-				glAlphaFunc(GL_GREATER, 0.9f);
-			}
+		if ((mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection) || mapInfo->map.voidGround) {
+			glEnable(GL_ALPHA_TEST);
+			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
+		}
 
-				meshDrawer->DrawMesh(drawPass);
-	
-			if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
-				glDisable(GL_ALPHA_TEST);
-			}
+		meshDrawer->DrawMesh(drawPass);
 
+		if ((mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection) || mapInfo->map.voidGround) {
+			glDisable(GL_ALPHA_TEST);
+		}
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
+	}
 
 	smfRenderState->Disable(this, drawPass);
 	glDisable(GL_CULL_FACE);
@@ -290,7 +291,7 @@ void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY
 
 void CSMFGroundDrawer::Update()
 {
-	if (mapInfo->map.voidWater && (readmap->currMaxHeight < 0.0f)) {
+	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return;
 	}
 

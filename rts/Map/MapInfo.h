@@ -68,7 +68,9 @@ public:
 		float tidalStrength;
 		float maxMetal;        ///< what metal value 255 in the metal map is worth
 		float extractorRadius; ///< extraction radius for mines
+		float voidAlphaMin;
 		bool  voidWater;
+		bool  voidGround;
 	} map;
 
 	/** GUI settings (used by CGuiHandler) */
