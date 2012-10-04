@@ -89,7 +89,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "waterFoamTexture",    mapInfo->water.foamTexture);
 	LuaPushNamedString(L, "waterNormalTexture",  mapInfo->water.normalTexture);
 	LuaPushNamedNumber(L, "waterNumTiles",       mapInfo->water.numTiles);
-	LuaPushNamedBool(L,   "waterVoid",           mapInfo->map.voidWater);
+	LuaPushNamedBool(L,   "voidWater",           mapInfo->map.voidWater);
+	LuaPushNamedBool(L,   "voidGround",          mapInfo->map.voidGround);
 	LuaPushNamedBool(L,   "waterHasWaterPlane",  mapInfo->water.hasWaterPlane);
 	LuaPushNamedBool(L,   "waterForceRendering", mapInfo->water.forceRendering);
 	LuaPushNamedColor(L,  "waterAbsorb",         mapInfo->water.absorb);
