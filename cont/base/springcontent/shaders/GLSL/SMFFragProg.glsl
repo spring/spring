@@ -155,10 +155,11 @@ vec4 GetShadeInt(float groundLightInt, float shadowCoeff) {
 		float waterLightInt    = min((groundLightInt + 0.2) * 2.0, 1.0);
 
 		#if (SMF_VOID_WATER == 1)
-		// cut out all underwater fragments
+		// cut out all underwater fragments indiscriminately
 		waterShadeInt.a = float(vertexWorldPos.y >= 0.0);
 		#else
-		waterShadeInt.a = 1.0;
+		// allow voidground maps to create holes in the seabed
+		waterShadeInt.a = groundShadeInt.a;
 		#endif
 
 		waterShadeInt.rgb = waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight);
