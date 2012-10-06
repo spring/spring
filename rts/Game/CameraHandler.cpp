@@ -303,6 +303,7 @@ void CCameraHandler::GetState(CCameraController::StateMap& sm) const
 {
 	sm.clear();
 	sm["mode"] = (float)currCamCtrlNum;
+
 	currCamCtrl->GetState(sm);
 }
 

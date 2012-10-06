@@ -69,3 +69,34 @@ bool CCameraController::GetUseDistToGroundForIcons() {
 		return true;
 	}
 }
+
+
+
+bool CCameraController::SetState(const StateMap& sm)
+{
+	SetStateFloat(sm, "fov", fov);
+
+	SetStateFloat(sm, "px", pos.x);
+	SetStateFloat(sm, "py", pos.y);
+	SetStateFloat(sm, "pz", pos.z);
+
+	SetStateFloat(sm, "dx", dir.x);
+	SetStateFloat(sm, "dy", dir.y);
+	SetStateFloat(sm, "dz", dir.z);
+
+	return true;
+}
+
+void CCameraController::GetState(StateMap& sm) const
+{
+	sm["fov"] = fov;
+
+	sm["px"] = pos.x;
+	sm["py"] = pos.y;
+	sm["pz"] = pos.z;
+
+	sm["dx"] = dir.x;
+	sm["dy"] = dir.y;
+	sm["dz"] = dir.z;
+}
+

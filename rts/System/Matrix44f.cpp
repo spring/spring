@@ -16,7 +16,7 @@ CMatrix44f::CMatrix44f()
 
 CMatrix44f::CMatrix44f(const CMatrix44f& mat)
 {
-	for (unsigned int i = 0; i < 16; i += 4) {
+	for (int i = 0; i < 16; i += 4) {
 		m[i    ] = mat[i    ];
 		m[i + 1] = mat[i + 1];
 		m[i + 2] = mat[i + 2];

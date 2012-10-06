@@ -1112,7 +1112,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return unit->sonarStealth ? 1 : 0;
 	}
 	case CRASHING:
-		return !!unit->crashing;
+		return !!unit->IsCrashing();
 	case ALPHA_THRESHOLD: {
 		return int(unit->alphaThreshold * 255);
 	}

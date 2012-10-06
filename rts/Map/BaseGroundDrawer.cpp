@@ -278,7 +278,7 @@ static inline int InterpolateLos(const unsigned short* p, int xsize, int ysize,
 //   updateTextureState = extraTextureUpdateRate:   Copy the buffer into a texture
 bool CBaseGroundDrawer::UpdateExtraTexture()
 {
-	if (mapInfo->map.voidWater && readmap->currMaxHeight<0) {
+	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return true;
 	}
 

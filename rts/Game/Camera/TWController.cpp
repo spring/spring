@@ -127,22 +127,12 @@ void CTWController::SwitchTo(bool showText)
 
 void CTWController::GetState(StateMap& sm) const
 {
-	sm["px"] = pos.x;
-	sm["py"] = pos.y;
-	sm["pz"] = pos.z;
-	sm["rx"] = camera->rot.x;
-	sm["ry"] = camera->rot.y;
-	sm["rz"] = camera->rot.z;
+	CCameraController::GetState(sm);
 }
 
 
 bool CTWController::SetState(const StateMap& sm)
 {
-	SetStateFloat(sm, "px", pos.x);
-	SetStateFloat(sm, "py", pos.y);
-	SetStateFloat(sm, "pz", pos.z);
-	SetStateFloat(sm, "rx", camera->rot.x);
-	SetStateFloat(sm, "ry", camera->rot.y);
-	SetStateFloat(sm, "rz", camera->rot.z);
+	CCameraController::SetState(sm);
 	return true;
 }

@@ -158,31 +158,9 @@ bool CStrafeAirMoveType::Update()
 	// need to additionally check that we are not crashing,
 	// otherwise we might fall through the map when stunned
 	// (the kill-on-impact code is not reached in that case)
-	if ((owner->IsStunned() && !owner->crashing) || owner->beingBuilt) {
+	if ((owner->IsStunned() && !owner->IsCrashing()) || owner->beingBuilt) {
 		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
 		return (HandleCollisions());
-	}
-
-	if (owner->fpsControlPlayer != NULL && !(aircraftState == AIRCRAFT_CRASHING)) {
-		SetState(AIRCRAFT_FLYING);
-		inefficientAttackTime = 0;
-
-		const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
-
-		if (con.forward || con.back || con.left || con.right) {
-			float aileron = 0.0f;
-			float elevator = 0.0f;
-
-			if (con.forward) { elevator -= 1; }
-			if (con.back   ) { elevator += 1; }
-			if (con.right  ) { aileron  += 1; }
-			if (con.left   ) { aileron  -= 1; }
-
-			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
-			maneuver = 0;
-
-			return (HandleCollisions());
-		}
 	}
 
 	// somewhat hackish, but planes that have attack orders
@@ -192,6 +170,28 @@ bool CStrafeAirMoveType::Update()
 	const bool allowAttack = (reservedPad == NULL && !outOfFuel);
 
 	if (aircraftState != AIRCRAFT_CRASHING) {
+		if (owner->fpsControlPlayer != NULL) {
+			SetState(AIRCRAFT_FLYING);
+			inefficientAttackTime = 0;
+
+			const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
+
+			if (con.forward || con.back || con.left || con.right) {
+				float aileron = 0.0f;
+				float elevator = 0.0f;
+
+				if (con.forward) { elevator -= 1; }
+				if (con.back   ) { elevator += 1; }
+				if (con.right  ) { aileron  += 1; }
+				if (con.left   ) { aileron  -= 1; }
+
+				UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
+				maneuver = 0;
+
+				return (HandleCollisions());
+			}
+		}
+
 		if (reservedPad != NULL) {
 			MoveToRepairPad();
 		} else {
@@ -255,7 +255,8 @@ bool CStrafeAirMoveType::Update()
 			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
 
 			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
-				owner->crashing = false; owner->KillUnit(true, false, 0);
+				owner->SetCrashing(false);
+				owner->KillUnit(true, false, 0);
 			}
 
 			new CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
@@ -295,9 +296,9 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 		// check for collisions if not on a pad, not being built, or not taking off
 		const bool checkCollisions = collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF);
+		bool hitBuilding = false;
 
 		if (checkCollisions) {
-			bool hitBuilding = false;
 			const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 
 			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
@@ -320,6 +321,7 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
+
 					hitBuilding = true;
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
@@ -335,17 +337,14 @@ bool CStrafeAirMoveType::HandleCollisions() {
 					owner->speed *= 0.99f;
 				}
 			}
+		}
 
-			if (hitBuilding && owner->crashing) {
-				// if our collision sphere overlapped with that
-				// of a building and we're crashing, die right
-				// now rather than waiting until we're close
-				// enough to the ground (which may never happen
-				// if eg. we're going down over a crowded field
-				// of windmills due to col-det)
-				owner->KillUnit(true, false, 0);
-				return true;
-			}
+		if (hitBuilding && owner->IsCrashing()) {
+			// if crashing and we hit a building, die right now
+			// rather than waiting until we are close enough to
+			// the ground
+			owner->KillUnit(true, false, 0);
+			return true;
 		}
 
 		if (pos.x < 0.0f) {
@@ -1072,7 +1071,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 	switch (aircraftState) {
 		case AIRCRAFT_CRASHING:
-			owner->crashing = true;
+			owner->SetCrashing(true);
 			break;
 		case AIRCRAFT_FLYING:
 			owner->Activate();

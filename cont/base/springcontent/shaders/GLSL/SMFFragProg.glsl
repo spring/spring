@@ -133,6 +133,55 @@ vec4 GetDetailTextureColor(vec2 uv) {
 	return detailCol;
 }
 
+vec4 GetShadeInt(float groundLightInt, float shadowCoeff) {
+	vec4 groundShadeInt;
+	vec4 waterShadeInt;
+
+	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (shadowCoeff * groundLightInt);
+	groundShadeInt.rgb *= SMF_INTENSITY_MUL;
+
+	#if (SMF_VOID_GROUND == 1)
+	// assume the map(per)'s diffuse texture provides sensible alphas
+	groundShadeInt.a = diffuseCol.a;
+	#else
+	groundShadeInt.a = 1.0;
+	#endif
+
+	#if (SMF_WATER_ABSORPTION == 1)
+	{
+		float waterHeightAlpha = abs(vertexWorldPos.y) * SMF_SHALLOW_WATER_DEPTH_INV;
+		float waterShadeDecay  = 0.2 + (waterHeightAlpha * 0.1);
+		float vertexStepHeight = min(1023.0, -floor(vertexWorldPos.y));
+		float waterLightInt    = min((groundLightInt + 0.2) * 2.0, 1.0);
+
+		#if (SMF_VOID_WATER == 1)
+		// cut out all underwater fragments indiscriminately
+		waterShadeInt.a = float(vertexWorldPos.y >= 0.0);
+		#else
+		// allow voidground maps to create holes in the seabed
+		waterShadeInt.a = groundShadeInt.a;
+		#endif
+
+		waterShadeInt.rgb = waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight);
+		waterShadeInt.rgb = max(waterMinColor.rgb, waterShadeInt.rgb);
+		waterShadeInt.rgb *= SMF_INTENSITY_MUL * waterLightInt;
+
+		// make shadowed areas darker over deeper water
+		waterShadeInt.rgb -= (waterShadeInt.rgb * waterShadeDecay * (1.0 - shadowCoeff));
+
+		// "shallow" water, interpolate between groundShadeInt
+		// and waterShadeInt (both are already cosine-weighted)
+		if (vertexWorldPos.y > -SMF_SHALLOW_WATER_DEPTH) {
+			waterShadeInt.rgb = mix(groundShadeInt.rgb, waterShadeInt.rgb, waterHeightAlpha);
+		}
+	}
+
+	return mix(groundShadeInt, waterShadeInt, float(vertexWorldPos.y < 0.0));
+	#else
+	return groundShadeInt;
+	#endif
+}
+
 
 
 void main() {
@@ -228,40 +277,13 @@ void main() {
 	}
 	#endif
 
-	// Light Ambient + Diffuse
-	vec4 shadeInt;
-	shadeInt.rgb = groundAmbientColor + groundDiffuseColor * (shadowCoeff * cosAngleDiffuse);
-	shadeInt.rgb *= SMF_INTENSITY_MUL;
-	shadeInt.a = 1.0;
+	{
+		// GroundMaterialAmbientDiffuseColor * LightAmbientDiffuseColor
+		vec4 shadeInt = GetShadeInt(cosAngleDiffuse, shadowCoeff);
 
-	#if (SMF_WATER_ABSORPTION == 1)
-	if (vertexWorldPos.y < 0.0) {
-		float waterHeightAlpha = abs(vertexWorldPos.y) * SMF_SHALLOW_WATER_DEPTH_INV;
-		float waterShadeDecay  = 0.2 + (waterHeightAlpha * 0.1);
-		float vertexStepHeight = min(1023.0, -floor(vertexWorldPos.y));
-		float waterLightInt    = min((cosAngleDiffuse + 0.2) * 2.0, 1.0);
-
-		vec4 waterHeightColor;
-			waterHeightColor.a = max(0.0, (255.0 + SMF_SHALLOW_WATER_DEPTH * vertexWorldPos.y) / 255.0);
-			waterHeightColor.rgb = waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight);
-			waterHeightColor.rgb = max(waterMinColor.rgb, waterHeightColor.rgb);
-			waterHeightColor.rgb *= SMF_INTENSITY_MUL * waterLightInt;
-
-		// make shadowed areas darker over deeper water
-		waterHeightColor.rgb -= (waterHeightColor.rgb * waterShadeDecay * (1.0 - shadowCoeff));
-
-		// "shallow" water, interpolate between shadeInt and
-		// waterHeightColor (both are already cosine-weighted)
-		if (vertexWorldPos.y > -SMF_SHALLOW_WATER_DEPTH) {
-			waterHeightColor.rgb = mix(shadeInt.rgb, waterHeightColor.rgb, waterHeightAlpha);
-		}
-
-		shadeInt = waterHeightColor;
+		gl_FragColor.rgb = (diffuseCol.rgb + detailCol.rgb) * shadeInt.rgb;
+		gl_FragColor.a = shadeInt.a;
 	}
-	#endif
-
-	// GroundMaterialAmbientDiffuseColor * LightAmbientDiffuseColor
-	gl_FragColor = (diffuseCol + detailCol) * shadeInt;
 
 	#if (SMF_LIGHT_EMISSION == 1)
 	{
@@ -322,7 +344,6 @@ void main() {
 	}
 	#endif
 
-	gl_FragColor = mix(gl_Fog.color, gl_FragColor, fogFactor);
-	gl_FragColor.a = min(diffuseCol.a, (vertexWorldPos.y * 0.1) + 1.0);
+	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor);
 }
 
