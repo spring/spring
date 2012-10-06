@@ -628,7 +628,7 @@ void CMobileCAI::ExecuteGuard(Command &c)
 
 	const bool pushAttackCommand =
 		owner->unitDef->canAttack &&
-		(guardee->lastAttack + 40 < gs->frameNum) &&
+		(guardee->lastAttackFrame + 40 < gs->frameNum) &&
 		IsValidTarget(guardee->lastAttacker);
 
 	if (pushAttackCommand) {
@@ -1051,7 +1051,7 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 		} else {
 			if (owner->fireState > FIRESTATE_HOLDFIRE) {
 				const bool haveLastAttacker = (owner->lastAttacker != NULL);
-				const bool canAttackAttacker = (haveLastAttacker && (owner->lastAttack + 200) > gs->frameNum);
+				const bool canAttackAttacker = (haveLastAttacker && (owner->lastAttackFrame + 200) > gs->frameNum);
 				const bool canChaseAttacker = (haveLastAttacker && !(owner->unitDef->noChaseCategory & owner->lastAttacker->category));
 
 				if (canAttackAttacker && canChaseAttacker) {

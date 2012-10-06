@@ -12,6 +12,9 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 /**
 	@brief checks FPU control registers.

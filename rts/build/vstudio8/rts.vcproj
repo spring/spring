@@ -43,7 +43,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x502"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="DEBUG;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
+				PreprocessorDefinitions="DEBUG;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -132,7 +132,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
+				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
@@ -227,7 +227,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
+				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -325,7 +325,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="SYNCDEBUG;_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
+				PreprocessorDefinitions="SYNCDEBUG;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
@@ -419,7 +419,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;USE_GML;USE_GML_SIM;AVI_CAPTURING"
+				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;USE_GML;USE_GML_SIM;AVI_CAPTURING"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -514,7 +514,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x502"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="DEBUG;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM;SYNCCHECK"
+				PreprocessorDefinitions="DEBUG;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM;SYNCCHECK"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -603,7 +603,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="DEDICATED;_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;AVI_CAPTURING"
+				PreprocessorDefinitions="DEDICATED;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;AVI_CAPTURING"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -699,7 +699,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x502"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="DEBUG;DEDICATED;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
+				PreprocessorDefinitions="DEBUG;DEDICATED;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -4340,6 +4340,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Objects\SolidObjectDef.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Objects\SolidObjectDef.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Objects\WorldObject.cpp"
 					>
 				</File>
@@ -5065,26 +5073,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\builds\dedicated\main.cpp"
 				>
 				<FileConfiguration
@@ -5163,6 +5151,26 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -8688,19 +8696,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lua\LuaIO.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Lua\LuaIO.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Lua\LuaIntro.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaIntro.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaIO.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaIO.h"
 				>
 			</File>
 			<File

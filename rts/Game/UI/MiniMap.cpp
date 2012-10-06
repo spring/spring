@@ -544,7 +544,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 		if (gu->spectatingFullSelect) {
 			unit = helper->GetClosestUnit(pos, size);
 		} else {
-			unit = helper->GetClosestFriendlyUnit(pos, size, gu->myAllyTeam);
+			unit = helper->GetClosestFriendlyUnit(NULL, pos, size, gu->myAllyTeam);
 		}
 
 		selectedUnits.HandleSingleUnitClickSelection(unit, false);

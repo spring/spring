@@ -57,11 +57,18 @@ public:
 	void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	CUnit* GetClosestUnit(const float3& pos, float searchRadius);
-	CUnit* GetClosestEnemyUnit(const float3& pos, float searchRadius, int searchAllyteam);
+	CUnit* GetClosestEnemyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 	CUnit* GetClosestValidTarget(const float3& pos, float radius, int searchAllyteam, const CMobileCAI* cai);
-	CUnit* GetClosestEnemyUnitNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, bool sphere, bool canBeBlind);
-	CUnit* GetClosestFriendlyUnit(const float3& pos, float searchRadius, int searchAllyteam);
-	CUnit* GetClosestEnemyAircraft(const float3& pos, float searchRadius, int searchAllyteam);
+	CUnit* GetClosestEnemyUnitNoLosTest(
+		const CUnit* excludeUnit,
+		const float3& pos,
+		float searchRadius,
+		int searchAllyteam,
+		bool sphere,
+		bool canBeBlind
+	);
+	CUnit* GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
+	CUnit* GetClosestEnemyAircraft(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 
 	// get the mid- or aim-position of a unit, offset by an error vector if not in LOS for <allyteam>
 	float3 GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming = false);

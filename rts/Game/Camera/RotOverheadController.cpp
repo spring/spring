@@ -105,17 +105,7 @@ void CRotOverheadController::SwitchTo(bool showText)
 
 void CRotOverheadController::GetState(StateMap& sm) const
 {
-	sm["px"] = pos.x;
-	sm["py"] = pos.y;
-	sm["pz"] = pos.z;
-
-	sm["dx"] = dir.x;
-	sm["dy"] = dir.y;
-	sm["dz"] = dir.z;
-
-	sm["rx"] = camera->rot.x;
-	sm["ry"] = camera->rot.y;
-	sm["rz"] = camera->rot.z;
+	CCameraController::GetState(sm);
 
 	sm["oldHeight"] = oldHeight;
 }
@@ -123,17 +113,7 @@ void CRotOverheadController::GetState(StateMap& sm) const
 
 bool CRotOverheadController::SetState(const StateMap& sm)
 {
-	SetStateFloat(sm, "px", pos.x);
-	SetStateFloat(sm, "py", pos.y);
-	SetStateFloat(sm, "pz", pos.z);
-
-	SetStateFloat(sm, "dx", dir.x);
-	SetStateFloat(sm, "dy", dir.y);
-	SetStateFloat(sm, "dz", dir.z);
-
-	SetStateFloat(sm, "rx", camera->rot.x);
-	SetStateFloat(sm, "ry", camera->rot.y);
-	SetStateFloat(sm, "rz", camera->rot.z);
+	CCameraController::SetState(sm);
 
 	SetStateFloat(sm, "oldHeight", oldHeight);
 

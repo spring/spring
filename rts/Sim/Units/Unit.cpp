@@ -183,7 +183,7 @@ CUnit::CUnit() : CSolidObject(),
 	lastAttacker(NULL),
 	lastAttackedPiece(NULL),
 	lastAttackedPieceFrame(-1),
-	lastAttack(-200),
+	lastAttackFrame(-200),
 	lastFireWeapon(0),
 	recentDamage(0.0f),
 	attackTarget(NULL),
@@ -1051,7 +1051,7 @@ void CUnit::SlowUpdateWeapons() {
 
 			if (lastAttacker == NULL)
 				continue;
-			if ((lastAttack + 200) <= gs->frameNum)
+			if ((lastAttackFrame + 200) <= gs->frameNum)
 				continue;
 			if (w->targetType != Target_None)
 				continue;
@@ -1629,14 +1629,15 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
 	}
 
-	lastAttack = gs->frameNum;
+	lastAttackFrame = gs->frameNum;
 	lastAttacker = attacker;
+
 	AddDeathDependence(attacker, DEPENDENCE_ATTACKER);
 }
 
 void CUnit::DependentDied(CObject* o)
 {
-	if (o == attackTarget) { attackTarget   = NULL; }
+	if (o == attackTarget) { attackTarget = NULL; }
 	if (o == soloBuilder)  { soloBuilder  = NULL; }
 	if (o == transporter)  { transporter  = NULL; }
 	if (o == lastAttacker) { lastAttacker = NULL; }
@@ -2191,53 +2192,50 @@ void CUnit::StopAttackingAllyTeam(int ally)
 	}
 }
 
-void CUnit::SlowUpdateCloak(bool stunCheck)
-{
-	const bool oldCloak = isCloaked;
 
+bool CUnit::GetNewCloakState(bool stunCheck) {
 	if (stunCheck) {
 		if (IsStunned() && isCloaked && scriptCloak <= 3) {
-			isCloaked = false;
+			return false;
 		}
-	} else {
-		if (scriptCloak >= 3) {
-			isCloaked = true;
-		} else if (wantCloak || (scriptCloak >= 1)) {
-			if ((decloakDistance > 0.0f) &&
-				helper->GetClosestEnemyUnitNoLosTest(midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false)) {
-				curCloakTimeout = gs->frameNum + cloakTimeout;
-				isCloaked = false;
-			}
-			if (isCloaked || (gs->frameNum >= curCloakTimeout)) {
-				if (scriptCloak >= 2) {
-					isCloaked = true;
-				}
-				else {
-					float cloakCost = unitDef->cloakCost;
-					if (speed.SqLength() > 0.2f) {
-						cloakCost = unitDef->cloakCostMoving;
-					}
-					if (UseEnergy(cloakCost * 0.5f)) {
-						isCloaked = true;
-					} else {
-						isCloaked = false;
-					}
-				}
-			} else {
-				isCloaked = false;
-			}
-		} else {
-			isCloaked = false;
+
+		return isCloaked;
+	}
+
+	if (scriptCloak >= 3) {
+		return true;
+	}
+
+	if (wantCloak || (scriptCloak >= 1)) {
+		const CUnit* closestEnemy = helper->GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
+		const float cloakCost = (speed.SqLength() > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
+
+		if (decloakDistance > 0.0f && closestEnemy != NULL) {
+			curCloakTimeout = gs->frameNum + cloakTimeout;
+			return false;
+		}
+
+		if (isCloaked || (gs->frameNum >= curCloakTimeout)) {
+			return ((scriptCloak >= 2) || UseEnergy(cloakCost * 0.5f));
 		}
 	}
 
-	if (oldCloak != isCloaked) {
-		if (isCloaked) {
+	return false;
+}
+void CUnit::SlowUpdateCloak(bool stunCheck)
+{
+	const bool oldCloak = isCloaked;
+	const bool newCloak = GetNewCloakState(stunCheck);
+
+	if (oldCloak != newCloak) {
+		if (newCloak) {
 			eventHandler.UnitCloaked(this);
 		} else {
 			eventHandler.UnitDecloaked(this);
 		}
 	}
+
+	isCloaked = newCloak;
 }
 
 void CUnit::ScriptDecloak(bool updateCloakTimeOut)
@@ -2360,7 +2358,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastAttacker),
 	// CR_MEMBER(lastAttackedPiece),
 	CR_MEMBER(lastAttackedPieceFrame),
-	CR_MEMBER(lastAttack),
+	CR_MEMBER(lastAttackFrame),
 	CR_MEMBER(lastFireWeapon),
 	CR_MEMBER(recentDamage),
 	CR_MEMBER(attackTarget),

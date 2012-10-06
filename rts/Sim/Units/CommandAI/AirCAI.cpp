@@ -282,7 +282,7 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 		if (myPlane->IsFighter()) {
 			const float3 P = owner->pos + (owner->speed * 10.0);
 			const float R = 1000.0f * owner->moveState;
-			const CUnit* enemy = helper->GetClosestEnemyAircraft(P, R, owner->allyteam);
+			const CUnit* enemy = helper->GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
 
 			if (IsValidTarget(enemy)) {
 				Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
@@ -363,7 +363,7 @@ void CAirCAI::ExecuteFight(Command& c)
 			const float3 P = ClosestPointOnLine(commandPos1, commandPos2, owner->pos + owner->speed*10);
 			const float R = 1000.0f * owner->moveState;
 
-			enemy = helper->GetClosestEnemyAircraft(P, R, owner->allyteam);
+			enemy = helper->GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
 		}
 		if (IsValidTarget(enemy) && (owner->moveState != MOVESTATE_MANEUVER
 				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
@@ -446,7 +446,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 			return;
 		}
 		if (orderTarget) {
-			if (orderTarget->unitDef->canfly && orderTarget->crashing) {
+			if (orderTarget->unitDef->canfly && orderTarget->IsCrashing()) {
 				owner->AttackUnit(NULL, false, false);
 				FinishCommand();
 				return;
@@ -530,7 +530,7 @@ void CAirCAI::ExecuteGuard(Command& c)
 	const bool pushAttackCommand =
 		(owner->maxRange > 0.0f) &&
 		owner->unitDef->canAttack &&
-		((guardee->lastAttack + 40) < gs->frameNum) &&
+		((guardee->lastAttackFrame + 40) < gs->frameNum) &&
 		IsValidTarget(guardee->lastAttacker);
 
 	if (pushAttackCommand) {
@@ -573,7 +573,7 @@ int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
 	if (!CMobileCAI::IsValidTarget(enemy)) return false;
-	if (enemy->crashing) return false;
+	if (enemy->IsCrashing()) return false;
 	return (static_cast<CStrafeAirMoveType*>(owner->moveType)->isFighter || !enemy->unitDef->canfly);
 }
 
