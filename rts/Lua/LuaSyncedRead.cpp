@@ -2285,9 +2285,10 @@ int LuaSyncedRead::GetUnitNearestAlly(lua_State* L)
 		return 0;
 	}
 	const float range = luaL_optnumber(L, 2, 1.0e9f);
-	CUnit* target =
-		helper->GetClosestFriendlyUnit(unit->pos, range, unit->allyteam);
-	if (target) {
+	const CUnit* target =
+		helper->GetClosestFriendlyUnit(unit, unit->pos, range, unit->allyteam);
+
+	if (target != NULL) {
 		lua_pushnumber(L, target->id);
 		return 1;
 	}
@@ -2304,14 +2305,15 @@ int LuaSyncedRead::GetUnitNearestEnemy(lua_State* L)
 	const float range = luaL_optnumber(L, 2, 1.0e9f);
 	const bool useLos =
 		!CLuaHandle::GetHandleFullRead(L) || !lua_isboolean(L, 3) || lua_toboolean(L, 3);
-	CUnit* target = NULL;
+	const CUnit* target = NULL;
+
 	if (useLos) {
-		target = helper->GetClosestEnemyUnit(unit->pos, range, unit->allyteam);
+		target = helper->GetClosestEnemyUnit(unit, unit->pos, range, unit->allyteam);
 	} else {
-		target = helper->GetClosestEnemyUnitNoLosTest(unit->pos, range,
-		                                              unit->allyteam, false, true);
+		target = helper->GetClosestEnemyUnitNoLosTest(unit, unit->pos, range, unit->allyteam, false, true);
 	}
-	if (target) {
+
+	if (target != NULL) {
 		lua_pushnumber(L, target->id);
 		return 1;
 	}

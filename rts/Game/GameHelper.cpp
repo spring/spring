@@ -348,244 +348,252 @@ static inline void QueryUnits(TFilter filter, TQuery& query)
 
 
 namespace {
-namespace Filter {
+	namespace Filter {
 
-/**
- * Base class for Filter::Friendly and Filter::Enemy.
- */
-struct Base
-{
-	const int searchAllyteam;
-	Base(int at) : searchAllyteam(at) {}
-};
+		/**
+		 * Base class for Filter::Friendly and Filter::Enemy.
+		 */
+		struct Base
+		{
+			const int searchAllyteam;
+			Base(int at) : searchAllyteam(at) {}
+		};
 
-/**
- * Look for friendly units only.
- * All units are included by default.
- */
-struct Friendly : public Base
-{
-	Friendly(int at) : Base(at) {}
-	bool Team(int t) { return teamHandler->Ally(searchAllyteam, t); }
-	bool Unit(const CUnit*) { return true; }
-};
+		/**
+		 * Look for friendly units only.
+		 * All units are included by default.
+		 */
+		struct Friendly : public Base
+		{
+		public:
+			Friendly(const CUnit* exclUnit, int allyTeam) : Base(allyTeam), excludeUnit(exclUnit) {}
+			bool Team(int allyTeam) { return teamHandler->Ally(searchAllyteam, allyTeam); }
+			bool Unit(const CUnit* unit) { return (unit != excludeUnit); }
+		protected:
+			const CUnit* excludeUnit;
+		};
 
-/**
- * Look for enemy units only.
- * All units are included by default.
- */
-struct Enemy : public Base
-{
-	Enemy(int at) : Base(at) {}
-	bool Team(int t) { return !teamHandler->Ally(searchAllyteam, t); }
-	bool Unit(const CUnit*) { return true; }
-};
+		/**
+		 * Look for enemy units only.
+		 * All units are included by default.
+		 */
+		struct Enemy : public Base
+		{
+		public:
+			Enemy(const CUnit* exclUnit, int allyTeam) : Base(allyTeam), excludeUnit(exclUnit) {}
+			bool Team(int allyTeam) { return !teamHandler->Ally(searchAllyteam, allyTeam); }
+			bool Unit(const CUnit* unit) { return (unit != excludeUnit); }
+		protected:
+			const CUnit* excludeUnit;
+		};
 
-/**
- * Look for enemy units which are in LOS/Radar only.
- */
-struct Enemy_InLos : public Enemy
-{
-	Enemy_InLos(int at) : Enemy(at) {}
-	bool Unit(const CUnit* u) {
-		return (u->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR));
-	}
-};
+		/**
+		 * Look for enemy units which are in LOS/Radar only.
+		 */
+		struct Enemy_InLos : public Enemy
+		{
+			Enemy_InLos(const CUnit* exclUnit, int allyTeam) : Enemy(exclUnit, allyTeam) {}
+			bool Unit(const CUnit* u) {
+				return (u != excludeUnit && u->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR));
+			}
+		};
 
-/**
- * Look for enemy aircraft which are in LOS/Radar only.
- */
-struct EnemyAircraft : public Enemy_InLos
-{
-	EnemyAircraft(int at) : Enemy_InLos(at) {}
-	bool Unit(const CUnit* u) {
-		return u->unitDef->canfly && !u->crashing && Enemy_InLos::Unit(u);
-	}
-};
+		/**
+		 * Look for enemy aircraft which are in LOS/Radar only.
+		 */
+		struct EnemyAircraft : public Enemy_InLos
+		{
+			EnemyAircraft(const CUnit* exclUnit, int allyTeam) : Enemy_InLos(exclUnit, allyTeam) {}
+			bool Unit(const CUnit* u) {
+				return (u->unitDef->canfly && !u->crashing && Enemy_InLos::Unit(u));
+			}
+		};
 
-/**
- * Look for units of any team. Enemy units must be in LOS/Radar.
- *
- * NOT SYNCED
- */
-struct Friendly_All_Plus_Enemy_InLos_NOT_SYNCED
-{
-	bool Team(int) const { return true; }
-	bool Unit(const CUnit* u) const {
-		return (u->allyteam == gu->myAllyTeam) ||
-		       (u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) ||
-		       gu->spectatingFullView;
-	}
-};
+		/**
+		 * Look for units of any team. Enemy units must be in LOS/Radar.
+		 *
+		 * NOT SYNCED
+		 */
+		struct Friendly_All_Plus_Enemy_InLos_NOT_SYNCED
+		{
+			bool Team(int) const { return true; }
+			bool Unit(const CUnit* u) const {
+				return (u->allyteam == gu->myAllyTeam) ||
+					   (u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) ||
+					   gu->spectatingFullView;
+			}
+		};
 
-/**
- * Delegates filtering to CMobileCAI::IsValidTarget.
- *
- * This is necessary in CMobileCAI and CAirCAI so they can select the closest
- * enemy unit which they consider a valid target.
- *
- * Without the valid target condition, units don't attack anything if an
- * the nearest enemy is an invalid target. (e.g. noChaseCategory)
- */
-struct Enemy_InLos_ValidTarget : public Enemy_InLos
-{
-	const CMobileCAI* const cai;
-	Enemy_InLos_ValidTarget(int at, const CMobileCAI* cai) :
-		Enemy_InLos(at), cai(cai) {}
-	bool Unit(const CUnit* u) {
-		return Enemy_InLos::Unit(u) && cai->IsValidTarget(u);
-	}
-};
+		/**
+		 * Delegates filtering to CMobileCAI::IsValidTarget.
+		 *
+		 * This is necessary in CMobileCAI and CAirCAI so they can select the closest
+		 * enemy unit which they consider a valid target.
+		 *
+		 * Without the valid target condition, units don't attack anything if an
+		 * the nearest enemy is an invalid target. (e.g. noChaseCategory)
+		 */
+		struct Enemy_InLos_ValidTarget : public Enemy_InLos
+		{
+			const CMobileCAI* const cai;
 
-}; // end of namespace Filter
+			Enemy_InLos_ValidTarget(int at, const CMobileCAI* cai) :
+				Enemy_InLos(NULL, at), cai(cai) {}
+
+			bool Unit(const CUnit* u) {
+				return Enemy_InLos::Unit(u) && cai->IsValidTarget(u);
+			}
+		};
+
+	}; // end of namespace Filter
 
 
-namespace Query {
+	namespace Query {
 
-/**
- * Base class for Query objects, containing the basic methods needed by
- * QueryUnits which defined the search area.
- */
-struct Base
-{
-	const float3& pos;
-	const float radius;
-	const float sqRadius;
-	Base(const float3& pos, float searchRadius) :
-		pos(pos), radius(searchRadius), sqRadius(searchRadius * searchRadius) {}
-};
+		/**
+		 * Base class for Query objects, containing the basic methods needed by
+		 * QueryUnits which defined the search area.
+		 */
+		struct Base
+		{
+			const float3& pos;
+			const float radius;
+			const float sqRadius;
+			Base(const float3& pos, float searchRadius) :
+				pos(pos), radius(searchRadius), sqRadius(searchRadius * searchRadius) {}
+		};
 
-/**
- * Return the closest unit.
- */
-struct ClosestUnit : public Base
-{
-protected:
-	float closeSqDist;
-	CUnit* closeUnit;
+		/**
+		 * Return the closest unit.
+		 */
+		struct ClosestUnit : public Base
+		{
+		protected:
+			float closeSqDist;
+			CUnit* closeUnit;
 
-public:
-	ClosestUnit(const float3& pos, float searchRadius) :
-		Base(pos, searchRadius), closeSqDist(sqRadius), closeUnit(NULL) {}
+		public:
+			ClosestUnit(const float3& pos, float searchRadius) :
+				Base(pos, searchRadius), closeSqDist(sqRadius), closeUnit(NULL) {}
 
-	void AddUnit(CUnit* u) {
-		const float sqDist = (pos - u->midPos).SqLength2D();
-		if (sqDist <= closeSqDist) {
-			closeSqDist = sqDist;
-			closeUnit = u;
-		}
-	}
+			void AddUnit(CUnit* u) {
+				const float sqDist = (pos - u->midPos).SqLength2D();
+				if (sqDist <= closeSqDist) {
+					closeSqDist = sqDist;
+					closeUnit = u;
+				}
+			}
 
-	CUnit* GetClosestUnit() const { return closeUnit; }
-};
+			CUnit* GetClosestUnit() const { return closeUnit; }
+		};
 
-/**
- * Return the closest unit, using CGameHelper::GetUnitErrorPos
- * instead of the unit's actual position.
- *
- * NOT SYNCED
- */
-struct ClosestUnit_ErrorPos_NOT_SYNCED : public ClosestUnit
-{
-	ClosestUnit_ErrorPos_NOT_SYNCED(const float3& pos, float searchRadius) :
-		ClosestUnit(pos, searchRadius) {}
+		/**
+		 * Return the closest unit, using CGameHelper::GetUnitErrorPos
+		 * instead of the unit's actual position.
+		 *
+		 * NOT SYNCED
+		 */
+		struct ClosestUnit_ErrorPos_NOT_SYNCED : public ClosestUnit
+		{
+			ClosestUnit_ErrorPos_NOT_SYNCED(const float3& pos, float searchRadius) :
+				ClosestUnit(pos, searchRadius) {}
 
-	void AddUnit(CUnit* u) {
-		float3 unitPos;
-		if (gu->spectatingFullView) {
-			unitPos = u->midPos;
-		} else {
-			unitPos = helper->GetUnitErrorPos(u, gu->myAllyTeam);
-		}
-		const float sqDist = (pos - unitPos).SqLength2D();
-		if (sqDist <= closeSqDist) {
-			closeSqDist = sqDist;
-			closeUnit = u;
-		}
-	}
-};
+			void AddUnit(CUnit* u) {
+				float3 unitPos;
+				if (gu->spectatingFullView) {
+					unitPos = u->midPos;
+				} else {
+					unitPos = helper->GetUnitErrorPos(u, gu->myAllyTeam);
+				}
+				const float sqDist = (pos - unitPos).SqLength2D();
+				if (sqDist <= closeSqDist) {
+					closeSqDist = sqDist;
+					closeUnit = u;
+				}
+			}
+		};
 
-/**
- * Returns the closest unit (3D) which may have LOS on the search position.
- * LOS is spherical in the context of this query. Whether the unit actually has
- * LOS depends on nearby obstacles.
- *
- * Search area just needs to touch the unit's radius: this query includes the
- * target unit's radius.
- *
- * If canBeBlind is true then the LOS test is skipped.
- */
-struct ClosestUnit_InLos : public Base
-{
-protected:
-	float closeDist;
-	CUnit* closeUnit;
-	const bool canBeBlind;
+		/**
+		 * Returns the closest unit (3D) which may have LOS on the search position.
+		 * LOS is spherical in the context of this query. Whether the unit actually has
+		 * LOS depends on nearby obstacles.
+		 *
+		 * Search area just needs to touch the unit's radius: this query includes the
+		 * target unit's radius.
+		 *
+		 * If canBeBlind is true then the LOS test is skipped.
+		 */
+		struct ClosestUnit_InLos : public Base
+		{
+		protected:
+			float closeDist;
+			CUnit* closeUnit;
+			const bool canBeBlind;
 
-public:
-	ClosestUnit_InLos(const float3& pos, float searchRadius, bool canBeBlind) :
-		Base(pos, searchRadius + uh->maxUnitRadius),
-		closeDist(searchRadius), closeUnit(NULL), canBeBlind(canBeBlind) {}
+		public:
+			ClosestUnit_InLos(const float3& pos, float searchRadius, bool canBeBlind) :
+				Base(pos, searchRadius + uh->maxUnitRadius),
+				closeDist(searchRadius), closeUnit(NULL), canBeBlind(canBeBlind) {}
 
-	void AddUnit(CUnit* u) {
-		// FIXME: use volumeBoundingRadius?
-		// (more for consistency than need)
-		const float dist = pos.distance(u->midPos) - u->radius;
+			void AddUnit(CUnit* u) {
+				// FIXME: use volumeBoundingRadius?
+				// (more for consistency than need)
+				const float dist = pos.distance(u->midPos) - u->radius;
 
-		if (dist <= closeDist &&
-			(canBeBlind || u->losRadius * loshandler->losDiv > dist)) {
-			closeDist = dist;
-			closeUnit = u;
-		}
-	}
+				if (dist <= closeDist &&
+					(canBeBlind || u->losRadius * loshandler->losDiv > dist)) {
+					closeDist = dist;
+					closeUnit = u;
+				}
+			}
 
-	CUnit* GetClosestUnit() const { return closeUnit; }
-};
+			CUnit* GetClosestUnit() const { return closeUnit; }
+		};
 
-/**
- * Returns the closest unit (2D) which may have LOS on the search position.
- * Whether it actually has LOS depends on nearby obstacles.
- *
- * If canBeBlind is true then the LOS test is skipped.
- */
-struct ClosestUnit_InLos_Cylinder : public ClosestUnit
-{
-	const bool canBeBlind;
+		/**
+		 * Returns the closest unit (2D) which may have LOS on the search position.
+		 * Whether it actually has LOS depends on nearby obstacles.
+		 *
+		 * If canBeBlind is true then the LOS test is skipped.
+		 */
+		struct ClosestUnit_InLos_Cylinder : public ClosestUnit
+		{
+			const bool canBeBlind;
 
-	ClosestUnit_InLos_Cylinder(const float3& pos, float searchRadius, bool canBeBlind) :
-		ClosestUnit(pos, searchRadius), canBeBlind(canBeBlind) {}
+			ClosestUnit_InLos_Cylinder(const float3& pos, float searchRadius, bool canBeBlind) :
+				ClosestUnit(pos, searchRadius), canBeBlind(canBeBlind) {}
 
-	void AddUnit(CUnit* u) {
-		const float sqDist = (pos - u->midPos).SqLength2D();
+			void AddUnit(CUnit* u) {
+				const float sqDist = (pos - u->midPos).SqLength2D();
 
-		if (sqDist <= closeSqDist &&
-			(canBeBlind || Square(u->losRadius * loshandler->losDiv) > sqDist)) {
-			closeSqDist = sqDist;
-			closeUnit = u;
-		}
-	}
-};
+				if (sqDist <= closeSqDist &&
+					(canBeBlind || Square(u->losRadius * loshandler->losDiv) > sqDist)) {
+					closeSqDist = sqDist;
+					closeUnit = u;
+				}
+			}
+		};
 
-/**
- * Return the unitIDs of all units exactly within the search area.
- */
-struct AllUnitsById : public Base
-{
-protected:
-	vector<int>& found;
+		/**
+		 * Return the unitIDs of all units exactly within the search area.
+		 */
+		struct AllUnitsById : public Base
+		{
+		protected:
+			vector<int>& found;
 
-public:
-	AllUnitsById(const float3& pos, float searchRadius, vector<int>& found) :
-		Base(pos, searchRadius), found(found) {}
+		public:
+			AllUnitsById(const float3& pos, float searchRadius, vector<int>& found) :
+				Base(pos, searchRadius), found(found) {}
 
-	void AddUnit(CUnit* u) {
-		if ((pos - u->midPos).SqLength2D() <= sqRadius) {
-			found.push_back(u->id);
-		}
-	}
-};
+			void AddUnit(CUnit* u) {
+				if ((pos - u->midPos).SqLength2D() <= sqRadius) {
+					found.push_back(u->id);
+				}
+			}
+		};
 
-}; // end of namespace Query
+	}; // end of namespace Query
 }; // end of namespace
 
 // Use this instead of unit->tempNum here, because it requires a mutex lock that will deadlock if luaRules is invoked simultaneously.
@@ -724,17 +732,17 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 #endif
 }
 
-CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float searchRadius)
+CUnit* CGameHelper::GetClosestUnit(const float3& pos, float searchRadius)
 {
 	Query::ClosestUnit_ErrorPos_NOT_SYNCED q(pos, searchRadius);
 	QueryUnits(Filter::Friendly_All_Plus_Enemy_InLos_NOT_SYNCED(), q);
 	return q.GetClosestUnit();
 }
 
-CUnit* CGameHelper::GetClosestEnemyUnit(const float3& pos, float searchRadius, int searchAllyteam)
+CUnit* CGameHelper::GetClosestEnemyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam)
 {
 	Query::ClosestUnit q(pos, searchRadius);
-	QueryUnits(Filter::Enemy_InLos(searchAllyteam), q);
+	QueryUnits(Filter::Enemy_InLos(excludeUnit, searchAllyteam), q);
 	return q.GetClosestUnit();
 }
 
@@ -745,48 +753,51 @@ CUnit* CGameHelper::GetClosestValidTarget(const float3& pos, float searchRadius,
 	return q.GetClosestUnit();
 }
 
-CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float searchRadius,
-                                                 int searchAllyteam, bool sphere, bool canBeBlind)
-{
-	if (sphere) { // includes target radius
-
+CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(
+	const CUnit* excludeUnit,
+	const float3& pos,
+	float searchRadius,
+	int searchAllyteam,
+	bool sphere,
+	bool canBeBlind
+) {
+	if (sphere) {
+		// includes target radius
 		Query::ClosestUnit_InLos q(pos, searchRadius, canBeBlind);
-		QueryUnits(Filter::Enemy(searchAllyteam), q);
+		QueryUnits(Filter::Enemy(excludeUnit, searchAllyteam), q);
 		return q.GetClosestUnit();
-
-	} else { // cylinder  (doesn't include target radius)
-
+	} else {
+		// cylinder (doesn't include target radius)
 		Query::ClosestUnit_InLos_Cylinder q(pos, searchRadius, canBeBlind);
-		QueryUnits(Filter::Enemy(searchAllyteam), q);
+		QueryUnits(Filter::Enemy(excludeUnit, searchAllyteam), q);
 		return q.GetClosestUnit();
-
 	}
 }
 
-CUnit* CGameHelper::GetClosestFriendlyUnit(const float3 &pos, float searchRadius, int searchAllyteam)
+CUnit* CGameHelper::GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam)
 {
 	Query::ClosestUnit q(pos, searchRadius);
-	QueryUnits(Filter::Friendly(searchAllyteam), q);
+	QueryUnits(Filter::Friendly(excludeUnit, searchAllyteam), q);
 	return q.GetClosestUnit();
 }
 
-CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float searchRadius, int searchAllyteam)
+CUnit* CGameHelper::GetClosestEnemyAircraft(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam)
 {
 	Query::ClosestUnit q(pos, searchRadius);
-	QueryUnits(Filter::EnemyAircraft(searchAllyteam), q);
+	QueryUnits(Filter::EnemyAircraft(excludeUnit, searchAllyteam), q);
 	return q.GetClosestUnit();
 }
 
-void CGameHelper::GetEnemyUnits(const float3 &pos, float searchRadius, int searchAllyteam, vector<int> &found)
+void CGameHelper::GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, vector<int> &found)
 {
 	Query::AllUnitsById q(pos, searchRadius, found);
-	QueryUnits(Filter::Enemy_InLos(searchAllyteam), q);
+	QueryUnits(Filter::Enemy_InLos(NULL, searchAllyteam), q);
 }
 
-void CGameHelper::GetEnemyUnitsNoLosTest(const float3 &pos, float searchRadius, int searchAllyteam, vector<int> &found)
+void CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, vector<int> &found)
 {
 	Query::AllUnitsById q(pos, searchRadius, found);
-	QueryUnits(Filter::Enemy(searchAllyteam), q);
+	QueryUnits(Filter::Enemy(NULL, searchAllyteam), q);
 }
 
 

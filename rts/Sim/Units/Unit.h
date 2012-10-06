@@ -146,9 +146,8 @@ public:
 	void SetDirVectors(const CMatrix44f&);
 	void UpdateDirVectors(bool);
 
-	bool IsNeutral() const {
-		return neutral;
-	}
+	bool IsNeutral() const { return neutral; }
+	bool IsCloaked() const { return isCloaked; }
 
 	void SetStunned(bool stun);
 	bool IsStunned() const { return stunned; }
@@ -158,6 +157,7 @@ public:
 
 	void SlowUpdateCloak(bool);
 	void ScriptDecloak(bool);
+	bool GetNewCloakState(bool checkStun);
 
 	enum ChangeType {
 		ChangeGiven,
