@@ -74,15 +74,11 @@ void COverviewController::SwitchTo(bool showText)
 
 void COverviewController::GetState(StateMap& sm) const
 {
-	sm["px"] = pos.x;
-	sm["py"] = pos.y;
-	sm["pz"] = pos.z;
+	CCameraController::GetState(sm);
 }
 
 bool COverviewController::SetState(const StateMap& sm)
 {
-	SetStateFloat(sm, "px", pos.x);
-	SetStateFloat(sm, "py", pos.y);
-	SetStateFloat(sm, "pz", pos.z);
+	CCameraController::SetState(sm);
 	return true;
 }

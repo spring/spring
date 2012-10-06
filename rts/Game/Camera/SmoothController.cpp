@@ -220,13 +220,7 @@ void SmoothController::SwitchTo(bool showText)
 
 void SmoothController::GetState(StateMap& sm) const
 {
-	sm["px"] = pos.x;
-	sm["py"] = pos.y;
-	sm["pz"] = pos.z;
-
-	sm["dx"] = dir.x;
-	sm["dy"] = dir.y;
-	sm["dz"] = dir.z;
+	CCameraController::GetState(sm);
 
 	sm["height"]  = height;
 	sm["zscale"]  = zscale;
@@ -235,13 +229,7 @@ void SmoothController::GetState(StateMap& sm) const
 
 bool SmoothController::SetState(const StateMap& sm)
 {
-	SetStateFloat(sm, "px", pos.x);
-	SetStateFloat(sm, "py", pos.y);
-	SetStateFloat(sm, "pz", pos.z);
-
-	SetStateFloat(sm, "dx", dir.x);
-	SetStateFloat(sm, "dy", dir.y);
-	SetStateFloat(sm, "dz", dir.z);
+	CCameraController::SetState(sm);
 
 	SetStateFloat(sm, "height",  height);
 	SetStateFloat(sm, "zscale",  zscale);
