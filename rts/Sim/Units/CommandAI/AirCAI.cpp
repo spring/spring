@@ -446,7 +446,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 			return;
 		}
 		if (orderTarget) {
-			if (orderTarget->unitDef->canfly && orderTarget->crashing) {
+			if (orderTarget->unitDef->canfly && orderTarget->IsCrashing()) {
 				owner->AttackUnit(NULL, false, false);
 				FinishCommand();
 				return;
@@ -530,7 +530,7 @@ void CAirCAI::ExecuteGuard(Command& c)
 	const bool pushAttackCommand =
 		(owner->maxRange > 0.0f) &&
 		owner->unitDef->canAttack &&
-		((guardee->lastAttack + 40) < gs->frameNum) &&
+		((guardee->lastAttackFrame + 40) < gs->frameNum) &&
 		IsValidTarget(guardee->lastAttacker);
 
 	if (pushAttackCommand) {
@@ -573,7 +573,7 @@ int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
 	if (!CMobileCAI::IsValidTarget(enemy)) return false;
-	if (enemy->crashing) return false;
+	if (enemy->IsCrashing()) return false;
 	return (static_cast<CStrafeAirMoveType*>(owner->moveType)->isFighter || !enemy->unitDef->canfly);
 }
 

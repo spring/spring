@@ -183,7 +183,7 @@ CUnit::CUnit() : CSolidObject(),
 	lastAttacker(NULL),
 	lastAttackedPiece(NULL),
 	lastAttackedPieceFrame(-1),
-	lastAttack(-200),
+	lastAttackFrame(-200),
 	lastFireWeapon(0),
 	recentDamage(0.0f),
 	attackTarget(NULL),
@@ -1051,7 +1051,7 @@ void CUnit::SlowUpdateWeapons() {
 
 			if (lastAttacker == NULL)
 				continue;
-			if ((lastAttack + 200) <= gs->frameNum)
+			if ((lastAttackFrame + 200) <= gs->frameNum)
 				continue;
 			if (w->targetType != Target_None)
 				continue;
@@ -1629,14 +1629,15 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
 	}
 
-	lastAttack = gs->frameNum;
+	lastAttackFrame = gs->frameNum;
 	lastAttacker = attacker;
+
 	AddDeathDependence(attacker, DEPENDENCE_ATTACKER);
 }
 
 void CUnit::DependentDied(CObject* o)
 {
-	if (o == attackTarget) { attackTarget   = NULL; }
+	if (o == attackTarget) { attackTarget = NULL; }
 	if (o == soloBuilder)  { soloBuilder  = NULL; }
 	if (o == transporter)  { transporter  = NULL; }
 	if (o == lastAttacker) { lastAttacker = NULL; }
@@ -2357,7 +2358,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastAttacker),
 	// CR_MEMBER(lastAttackedPiece),
 	CR_MEMBER(lastAttackedPieceFrame),
-	CR_MEMBER(lastAttack),
+	CR_MEMBER(lastAttackFrame),
 	CR_MEMBER(lastFireWeapon),
 	CR_MEMBER(recentDamage),
 	CR_MEMBER(attackTarget),

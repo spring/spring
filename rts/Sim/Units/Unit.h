@@ -152,6 +152,9 @@ public:
 	void SetStunned(bool stun);
 	bool IsStunned() const { return stunned; }
 
+	void SetCrashing(bool crash) { crashing = crash; }
+	bool IsCrashing() const { return crashing; }
+
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
 
@@ -402,7 +405,7 @@ public:
 	/// frame in which lastAttackedPiece was hit
 	int lastAttackedPieceFrame;
 	/// last frame unit was attacked by other unit
-	int lastAttack;
+	int lastAttackFrame;
 	/// last time this unit fired a weapon
 	int lastFireWeapon;
 	/// decaying value of how much damage the unit has taken recently (for severity of death)

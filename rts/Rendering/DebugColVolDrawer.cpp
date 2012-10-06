@@ -177,13 +177,13 @@ static inline void DrawUnitColVol(const CUnit* u)
 		} else {
 			if (!v->IgnoreHits()) {
 				// make it fade red under attack
-				if (u->lastAttack > 0 && ((gs->frameNum - u->lastAttack) < 150)) {
-					glColor3f((1.0f - ((gs->frameNum - u->lastAttack) / 150.0f)), 0.0f, 0.0f);
+				if (u->lastAttackFrame > 0 && ((gs->frameNum - u->lastAttackFrame) < 150)) {
+					glColor3f((1.0f - ((gs->frameNum - u->lastAttackFrame) / 150.0f)), 0.0f, 0.0f);
 				}
 
 				DrawCollisionVolume(v);
 
-				if (u->lastAttack > 0 && ((gs->frameNum - u->lastAttack) < 150)) {
+				if (u->lastAttackFrame > 0 && ((gs->frameNum - u->lastAttackFrame) < 150)) {
 					glColorf3(DEFAULT_VOLUME_COLOR);
 				}
 			}

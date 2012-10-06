@@ -1036,8 +1036,8 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 	if (targetUnit && !(onlyTargetCategory & targetUnit->category)) {
 		return false;
 	}
-	if (targetUnit && ((targetUnit->isDead   && (modInfo.fireAtKilled   == 0)) ||
-	                   (targetUnit->crashing && (modInfo.fireAtCrashing == 0)))) {
+	if (targetUnit && ((targetUnit->isDead       && (modInfo.fireAtKilled   == 0)) ||
+	                   (targetUnit->IsCrashing() && (modInfo.fireAtCrashing == 0)))) {
 		return false;
 	}
 	if (weaponDef->stockpile && !numStockpiled) {
