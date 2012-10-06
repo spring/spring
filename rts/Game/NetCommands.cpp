@@ -715,34 +715,32 @@ void CGame::ClientReadNet()
 					LOG_L(L_ERROR, "Got invalid player num %i in share msg", player);
 					break;
 				}
-				int teamID1 = playerHandler->Player(player)->team;
-				int teamID2 = inbuf[2];
-				bool shareUnits = !!inbuf[3];
-				CTeam* team1 = teamHandler->Team(teamID1);
-				CTeam* team2 = teamHandler->Team(teamID2);
-				float metalShare  = std::min(*(float*)&inbuf[4], (float)team1->metal);
-				float energyShare = std::min(*(float*)&inbuf[8], (float)team1->energy);
+				const int teamID1 = playerHandler->Player(player)->team;
+				const int teamID2 = inbuf[2];
+				const bool shareUnits = !!inbuf[3];
+				CTeam* srcTeam = teamHandler->Team(teamID1);
+				CTeam* dstTeam = teamHandler->Team(teamID2);
+				const float metalShare  = Clamp(*(float*)&inbuf[4], 0.0f, (float)srcTeam->metal);
+				const float energyShare = Clamp(*(float*)&inbuf[8], 0.0f, (float)srcTeam->energy);
 
-				if (metalShare != 0.0f) {
-					metalShare = std::min(metalShare, (float)team1->metal);
+				if (metalShare > 0.0f) {
 					if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "m", metalShare)) {
-						team1->metal                       -= metalShare;
-						team1->metalSent                   += metalShare;
-						team1->currentStats->metalSent     += metalShare;
-						team2->metal                       += metalShare;
-						team2->metalReceived               += metalShare;
-						team2->currentStats->metalReceived += metalShare;
+						srcTeam->metal                       -= metalShare;
+						srcTeam->metalSent                   += metalShare;
+						srcTeam->currentStats->metalSent     += metalShare;
+						dstTeam->metal                       += metalShare;
+						dstTeam->metalReceived               += metalShare;
+						dstTeam->currentStats->metalReceived += metalShare;
 					}
 				}
-				if (energyShare != 0.0f) {
-					energyShare = std::min(energyShare, (float)team1->energy);
+				if (energyShare > 0.0f) {
 					if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", energyShare)) {
-						team1->energy                       -= energyShare;
-						team1->energySent                   += energyShare;
-						team1->currentStats->energySent     += energyShare;
-						team2->energy                       += energyShare;
-						team2->energyReceived               += energyShare;
-						team2->currentStats->energyReceived += energyShare;
+						srcTeam->energy                       -= energyShare;
+						srcTeam->energySent                   += energyShare;
+						srcTeam->currentStats->energySent     += energyShare;
+						dstTeam->energy                       += energyShare;
+						dstTeam->energyReceived               += energyShare;
+						dstTeam->currentStats->energyReceived += energyShare;
 					}
 				}
 
