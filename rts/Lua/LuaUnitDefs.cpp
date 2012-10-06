@@ -532,8 +532,8 @@ static int ModelTable(lua_State* L, const void* data) {
 
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "type", FileSystem::GetExtension(ud->modelName));
-	HSTR_PUSH_STRING(L, "path", ud->modelName); // backward compability
-	HSTR_PUSH_STRING(L, "name", ud->modelName);
+	HSTR_PUSH_STRING(L, "path", "objects3d/" + ud->modelName); // backward compability
+	HSTR_PUSH_STRING(L, "name",                ud->modelName);
 	HSTR_PUSH(L, "textures");
 
 	lua_newtable(L);
