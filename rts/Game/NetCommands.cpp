@@ -715,16 +715,16 @@ void CGame::ClientReadNet()
 					LOG_L(L_ERROR, "Got invalid player num %i in share msg", player);
 					break;
 				}
-				const int teamID1 = playerHandler->Player(player)->team;
-				const int teamID2 = inbuf[2];
+				const int srcTeamID = playerHandler->Player(player)->team;
+				const int dstTeamID = inbuf[2];
 				const bool shareUnits = !!inbuf[3];
-				CTeam* srcTeam = teamHandler->Team(teamID1);
-				CTeam* dstTeam = teamHandler->Team(teamID2);
+				CTeam* srcTeam = teamHandler->Team(srcTeamID);
+				CTeam* dstTeam = teamHandler->Team(dstTeamID);
 				const float metalShare  = Clamp(*(float*)&inbuf[4], 0.0f, (float)srcTeam->metal);
 				const float energyShare = Clamp(*(float*)&inbuf[8], 0.0f, (float)srcTeam->energy);
 
 				if (metalShare > 0.0f) {
-					if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "m", metalShare)) {
+					if (!luaRules || luaRules->AllowResourceTransfer(srcTeamID, dstTeamID, "m", metalShare)) {
 						srcTeam->metal                       -= metalShare;
 						srcTeam->metalSent                   += metalShare;
 						srcTeam->currentStats->metalSent     += metalShare;
@@ -734,7 +734,7 @@ void CGame::ClientReadNet()
 					}
 				}
 				if (energyShare > 0.0f) {
-					if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", energyShare)) {
+					if (!luaRules || luaRules->AllowResourceTransfer(srcTeamID, dstTeamID, "e", energyShare)) {
 						srcTeam->energy                       -= energyShare;
 						srcTeam->energySent                   += energyShare;
 						srcTeam->currentStats->energySent     += energyShare;
@@ -751,9 +751,9 @@ void CGame::ClientReadNet()
 					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui) {
 						CUnit* unit = uh->GetUnit(*ui);
 
-						if (unit && unit->team == teamID1 && !unit->beingBuilt) {
+						if (unit && unit->team == srcTeamID && !unit->beingBuilt) {
 							if (unit->fpsControlPlayer == NULL)
-								unit->ChangeTeam(teamID2, CUnit::ChangeGiven);
+								unit->ChangeTeam(dstTeamID, CUnit::ChangeGiven);
 						}
 					}
 					netSelUnits.clear();
