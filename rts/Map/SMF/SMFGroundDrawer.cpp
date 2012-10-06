@@ -228,14 +228,14 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
-		if ((mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection) || mapInfo->map.voidGround) {
+		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
 			glEnable(GL_ALPHA_TEST);
 			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
 		}
 
 		meshDrawer->DrawMesh(drawPass);
 
-		if ((mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection) || mapInfo->map.voidGround) {
+		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
 			glDisable(GL_ALPHA_TEST);
 		}
 		if (wireframe) {

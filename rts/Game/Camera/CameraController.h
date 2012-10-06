@@ -42,8 +42,8 @@ public:
 	virtual float3 SwitchFrom() const = 0;
 	virtual void SwitchTo(bool showText = true) = 0;
 
-	virtual void GetState(StateMap& sm) const = 0;
-	virtual bool SetState(const StateMap& sm) = 0;
+	virtual void GetState(StateMap& sm) const;
+	virtual bool SetState(const StateMap& sm);
 	virtual void SetTrackingInfo(const float3& pos, float radius) { SetPos(pos); }
 
 	/**
