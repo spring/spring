@@ -282,7 +282,7 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 		if (myPlane->IsFighter()) {
 			const float3 P = owner->pos + (owner->speed * 10.0);
 			const float R = 1000.0f * owner->moveState;
-			const CUnit* enemy = helper->GetClosestEnemyAircraft(P, R, owner->allyteam);
+			const CUnit* enemy = helper->GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
 
 			if (IsValidTarget(enemy)) {
 				Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
@@ -363,7 +363,7 @@ void CAirCAI::ExecuteFight(Command& c)
 			const float3 P = ClosestPointOnLine(commandPos1, commandPos2, owner->pos + owner->speed*10);
 			const float R = 1000.0f * owner->moveState;
 
-			enemy = helper->GetClosestEnemyAircraft(P, R, owner->allyteam);
+			enemy = helper->GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
 		}
 		if (IsValidTarget(enemy) && (owner->moveState != MOVESTATE_MANEUVER
 				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
