@@ -21,14 +21,13 @@
 #undef private
 
 #include "Rendering/glFont.h"
-#include "Rendering/GlobalRendering.h"
 #include "Rendering/QTPFSPathDrawer.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "System/Util.h"
 
-QTPFSPathDrawer::QTPFSPathDrawer() {
+QTPFSPathDrawer::QTPFSPathDrawer(): IPathDrawer() {
 	pm = dynamic_cast<QTPFS::PathManager*>(pathManager);
 }
 
@@ -39,7 +38,7 @@ void QTPFSPathDrawer::DrawAll() const {
 		return;
 
 	// QTPFS::PathManager is not thread-safe
-	if (!GML::SimEnabled() && globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
+	if (!GML::SimEnabled() && enabled && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_LIGHTING);

@@ -36,6 +36,7 @@
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
+#include "Rendering/IPathDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
@@ -1385,12 +1386,11 @@ public:
 			"Enable/Disable debug info rendering mode") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
 		// toggle
-		const bool drawDebug = !globalRendering->drawdebug;
-		ProfileDrawer::SetEnabled(drawDebug);
-		globalRendering->drawdebug = drawDebug;
-		LogSystemStatus("debug info rendering mode", globalRendering->drawdebug);
+		globalRendering->drawdebug = !globalRendering->drawdebug;
+
+		ProfileDrawer::SetEnabled(globalRendering->drawdebug);
+		LogSystemStatus("debug-info rendering mode", globalRendering->drawdebug);
 		return true;
 	}
 };
@@ -1484,12 +1484,12 @@ public:
 class DynamicSkyActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DynamicSkyActionExecutor() : IUnsyncedActionExecutor("DynamicSky",
-			"Enable/Disable rendering of the dynamic sky") {}
+			"Enable/Disable dynamic-sky rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 
 		SetBoolArg(sky->dynamicSky, action.GetArgs());
-		LogSystemStatus("rendering of the dynamic sky", sky->dynamicSky);
+		LogSystemStatus("dynamic-sky rendering", sky->dynamicSky);
 		return true;
 	}
 };
@@ -1499,14 +1499,14 @@ public:
 class DynamicSunActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DynamicSunActionExecutor() : IUnsyncedActionExecutor("DynamicSun",
-			"Enable/Disable rendering of dynamic sun") {}
+			"Enable/Disable dynamic-sun rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool dynamicSun = sky->GetLight()->IsDynamic();
 		SetBoolArg(dynamicSun, action.GetArgs());
 		sky->SetLight(dynamicSun);
-		LogSystemStatus("rendering of the dynamic sun", sky->GetLight()->IsDynamic());
+		LogSystemStatus("dynamic-sun rendering", sky->GetLight()->IsDynamic());
 		return true;
 	}
 };
@@ -2837,21 +2837,31 @@ public:
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		SetBoolArg(gd->wireframe, action.GetArgs());
 		sky->wireframe = gd->wireframe;
-		LogSystemStatus("drawing of the map as wire-frame", gd->wireframe);
+		LogSystemStatus("wireframe map-drawing mode", gd->wireframe);
 		return true;
 	}
 };
 
 
 
-class DebugColVolActionExecutor : public IUnsyncedActionExecutor {
+class DebugColVolDrawerActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DebugColVolActionExecutor()
-		: IUnsyncedActionExecutor("DebugColVol",
-			"Enable/Disable drawing of collision volumes for units & features.") {}
+	DebugColVolDrawerActionExecutor(): IUnsyncedActionExecutor("DebugColVol", "Enable/Disable drawing of collision volumes") {
+	}
 
 	bool Execute(const UnsyncedAction& action) const {
 		SetBoolArg(DebugColVolDrawer::enable, action.GetArgs());
+		return true;
+	}
+};
+
+class DebugPathDrawerActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugPathDrawerActionExecutor(): IUnsyncedActionExecutor("DebugPath", "Enable/Disable drawing of pathfinder debug-data") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LogSystemStatus("path-debug rendering mode", pathDrawer->ToggleEnabled());
 		return true;
 	}
 };
@@ -3348,7 +3358,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ShowRezurectionBarsActionExecutor()); // MT only
 	AddActionExecutor(new PauseActionExecutor());
 	AddActionExecutor(new DebugActionExecutor());
-	AddActionExecutor(new DebugColVolActionExecutor());
+	AddActionExecutor(new DebugColVolDrawerActionExecutor());
+	AddActionExecutor(new DebugPathDrawerActionExecutor());
 	AddActionExecutor(new NoSoundActionExecutor());
 	AddActionExecutor(new SoundChannelEnableActionExecutor());
 	AddActionExecutor(new CreateVideoActionExecutor());
