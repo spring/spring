@@ -32,8 +32,8 @@ public:
 	 */
 	CTeam* Team(int i) const
 	{
-		assert(i>=0);
-		assert(i<teams.size());
+		assert(i >=            0);
+		assert(i <  teams.size());
 		return teams[i];
 	}
 
