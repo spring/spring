@@ -45,11 +45,11 @@ struct SSkirmishAICallback;
 // see struct SSkirmishAILibrary in "ExternalAI/Interface/SSkirmishAILibrary.h"
 
 // static AI library methods (optional to implement)
-EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
+/*EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 		const char* aiShortName, const char* aiVersion,
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion);
-
+*/
 // instance functions
 EXPORT(int) init(int skirmishAIId, const struct SSkirmishAICallback* callback);
 EXPORT(int) release(int skirmishAIId);

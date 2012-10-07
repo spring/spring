@@ -337,7 +337,7 @@ void AAIExecute::SendScoutToNewDest(int scout)
 		MoveUnitTo(scout, &pos);
 }
 
-float3 AAIExecute::GetBuildsite(int builder, int building, UnitCategory category)
+float3 AAIExecute::GetBuildsite(int builder, int building, UnitCategory /*category*/)
 {
 	float3 pos;
 	float3 builder_pos;
@@ -372,7 +372,7 @@ float3 AAIExecute::GetBuildsite(int builder, int building, UnitCategory category
 	return pos;
 }
 
-float3 AAIExecute::GetUnitBuildsite(int builder, int unit)
+float3 AAIExecute::GetUnitBuildsite(int /*builder*/, int unit)
 {
 //	float3 builder_pos = cb->GetUnitPos(builder);
 	float3 pos = ZeroVector, best_pos = ZeroVector;
@@ -595,7 +595,7 @@ float3 AAIExecute::GetRallyPoint(unsigned int unit_movement_type, int continent_
 	return ZeroVector;
 }
 
-float3 AAIExecute::GetRallyPointCloseTo(UnitCategory category, unsigned int unit_movement_type, int continent_id, float3 pos, int min_dist, int max_dist)
+float3 AAIExecute::GetRallyPointCloseTo(UnitCategory /*category*/, unsigned int unit_movement_type, int continent_id, float3 /*pos*/, int min_dist, int max_dist)
 {
 	float3 move_pos;
 
@@ -1428,7 +1428,7 @@ bool AAIExecute::BuildAirBase()
 
 bool AAIExecute::BuildDefences()
 {
-	if(ai->ut->futureUnits[STATIONARY_DEF] + ai->ut->requestedUnits[STATIONARY_DEF] > 2 || next_defence <= 0)
+	if(ai->ut->futureUnits[STATIONARY_DEF] + ai->ut->requestedUnits[STATIONARY_DEF] > 2 || next_defence == 0)
 		return true;
 
 	BuildOrderStatus status = BuildStationaryDefenceVS(def_category, next_defence);
@@ -1908,10 +1908,12 @@ bool AAIExecute::BuildFactory()
 	return true;
 }
 
+/*
 void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float range, float power, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, float eff, bool urgent)
 {
 
 }
+*/
 
 bool AAIExecute::BuildRadar()
 {
@@ -2856,7 +2858,7 @@ void AAIExecute::CheckConstruction()
 	}
 }
 
-bool AAIExecute::AssistConstructionOfCategory(UnitCategory category, int importance)
+bool AAIExecute::AssistConstructionOfCategory(UnitCategory category, int /*importance*/)
 {
 	AAIConstructor *builder, *assistant;
 
@@ -3094,7 +3096,7 @@ void AAIExecute::AddStartFactory()
 	}
 }
 
-AAIGroup* AAIExecute::GetClosestGroupForDefence(UnitType group_type, float3 *pos, int continent, int importance)
+AAIGroup* AAIExecute::GetClosestGroupForDefence(UnitType group_type, float3 *pos, int continent, int /*importance*/)
 {
 	AAIGroup *best_group = 0;
 	float best_rating = 0, my_rating;

@@ -890,7 +890,7 @@ bool CHoverAirMoveType::Update()
 				owner->SetCrashing(false);
 				owner->KillUnit(true, false, 0);
 			} else {
-				#define SPIN_DIR(o) ((o->lastAttackFrame & 1) * 2 - 1)
+				#define SPIN_DIR(o) ((o->id & 1) * 2 - 1)
 				wantedHeading = GetHeadingFromVector(owner->rightdir.x * SPIN_DIR(owner), owner->rightdir.z * SPIN_DIR(owner));
 				wantedHeight = 0.0f;
 				#undef SPIN_DIR

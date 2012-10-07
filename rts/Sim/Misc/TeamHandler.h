@@ -30,7 +30,12 @@ public:
 	 *
 	 * Accesses a CTeam instance at a given index
 	 */
-	CTeam* Team(int i) const { return teams[i]; }
+	CTeam* Team(int i) const
+	{
+		assert(i >=            0);
+		assert(i <  teams.size());
+		return teams[i];
+	}
 
 	/**
 	 * @brief ally
