@@ -133,16 +133,16 @@ vec4 GetDetailTextureColor(vec2 uv) {
 	return detailCol;
 }
 
-vec4 GetShadeInt(float groundLightInt, float shadowCoeff) {
+vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiffuseAlpha) {
 	vec4 groundShadeInt;
 	vec4 waterShadeInt;
 
-	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (shadowCoeff * groundLightInt);
+	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (groundShadowCoeff * groundLightInt);
 	groundShadeInt.rgb *= SMF_INTENSITY_MUL;
 
 	#if (SMF_VOID_GROUND == 1)
 	// assume the map(per)'s diffuse texture provides sensible alphas
-	groundShadeInt.a = diffuseCol.a;
+	groundShadeInt.a = groundDiffuseAlpha;
 	#else
 	groundShadeInt.a = 1.0;
 	#endif
@@ -167,7 +167,7 @@ vec4 GetShadeInt(float groundLightInt, float shadowCoeff) {
 		waterShadeInt.rgb *= SMF_INTENSITY_MUL * waterLightInt;
 
 		// make shadowed areas darker over deeper water
-		waterShadeInt.rgb -= (waterShadeInt.rgb * waterShadeDecay * (1.0 - shadowCoeff));
+		waterShadeInt.rgb -= (waterShadeInt.rgb * waterShadeDecay * (1.0 - groundShadowCoeff));
 
 		// "shallow" water, interpolate between groundShadeInt
 		// and waterShadeInt (both are already cosine-weighted)
@@ -279,7 +279,7 @@ void main() {
 
 	{
 		// GroundMaterialAmbientDiffuseColor * LightAmbientDiffuseColor
-		vec4 shadeInt = GetShadeInt(cosAngleDiffuse, shadowCoeff);
+		vec4 shadeInt = GetShadeInt(cosAngleDiffuse, shadowCoeff, diffuseCol.a);
 
 		gl_FragColor.rgb = (diffuseCol.rgb + detailCol.rgb) * shadeInt.rgb;
 		gl_FragColor.a = shadeInt.a;
