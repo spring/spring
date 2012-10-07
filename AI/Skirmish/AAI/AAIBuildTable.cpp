@@ -1333,7 +1333,7 @@ bool AAIBuildTable::MemberOf(int unit_id, list<int> unit_list)
 	return false;
 }
 
-int AAIBuildTable::GetPowerPlant(int side, float cost, float urgency, float power, float current_energy, bool water, bool geo, bool canBuild)
+int AAIBuildTable::GetPowerPlant(int side, float cost, float urgency, float power, float /*current_energy*/, bool water, bool geo, bool canBuild)
 {
 	UnitTypeStatic *unit;
 
@@ -1671,7 +1671,7 @@ int AAIBuildTable::GetCheapDefenceBuilding(int side, double efficiency, double c
 	return best_defence;
 }
 
-int AAIBuildTable::GetRandomDefence(int side, UnitCategory category)
+int AAIBuildTable::GetRandomDefence(int side, UnitCategory /*category*/)
 {
 	float best_rating = 0, my_rating;
 
@@ -1693,7 +1693,7 @@ int AAIBuildTable::GetRandomDefence(int side, UnitCategory category)
 	return best_defence;
 }
 
-int AAIBuildTable::GetAirBase(int side, float cost, bool water, bool canBuild)
+int AAIBuildTable::GetAirBase(int side, float /*cost*/, bool water, bool canBuild)
 {
 	float best_ranking = 0, my_ranking;
 	int best_airbase = 0;
@@ -3909,12 +3909,17 @@ int AAIBuildTable::DetermineBetterUnit(int unit1, int unit2, float ground_eff, f
 {
 	float rating1 = GetUnitRating(unit1, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff);
 	float rating2 = GetUnitRating(unit2, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff);
+	float rating3 = 0.0f;
+	if (units_static[unit2].range > 0) { //compare unit weapon range
+		rating3 = range * units_static[unit1].range / units_static[unit2].range;
+	}
+	float rating4 = 0.0f;
+	if (unitList[unit2 - 1]->speed > 0) { //compare unit speeds
+		rating4 = (speed * unitList[unit1 - 1]->speed / unitList[unit2 - 1]->speed);
+	}
 
 	if (((rating2 == 0.0f) || (units_static[unit2].range == 0.0f) || (unitList[unit2 - 1]->speed == 0.0f))
-			|| ((cost * rating1 / rating2)
-				+ (range * units_static[unit1].range / units_static[unit2].range)
-				+ (speed * unitList[unit1 - 1]->speed / unitList[unit2 - 1]->speed)
-				> 0.0f)) {
+			|| ((cost * rating1 / rating2) + rating3 + rating4 > 0.0f)) {
 		return unit1;
 	} else {
 		return unit2;

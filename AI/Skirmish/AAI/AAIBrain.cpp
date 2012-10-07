@@ -220,7 +220,7 @@ bool AAIBrain::MetalForConstr(int unit, int workertime)
 	return false;
 }
 
-bool AAIBrain::EnergyForConstr(int unit, int wokertime)
+bool AAIBrain::EnergyForConstr(int unit, int /*wokertime*/)
 {
 	// check index
 	if(unit >= bt->numOfUnits)
@@ -237,7 +237,7 @@ bool AAIBrain::EnergyForConstr(int unit, int wokertime)
 	return true;
 }
 
-bool AAIBrain::RessourcesForConstr(int unit, int wokertime)
+bool AAIBrain::RessourcesForConstr(int /*unit*/, int /*wokertime*/)
 {
 	// check metal and energy
 	/*if(MetalForConstr(unit) && EnergyForConstr(unit))
@@ -291,7 +291,7 @@ void AAIBrain::RemoveSector(AAISector *sector)
 }
 
 
-void AAIBrain::DefendCommander(int attacker)
+void AAIBrain::DefendCommander(int /*attacker*/)
 {
 //	float3 pos = cb->GetUnitPos(ai->ut->cmdr);
 	//float importance = 120;
@@ -450,7 +450,7 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 
 	// now targets should contain all neighbouring sectors that are not currently part of the base
 	// only once; select the sector with most metalspots and least danger
-	AAISector *best_sector = 0;
+	AAISector *best_sector = NULL;
 	float best_rating  = 0, my_rating;
 	int spots;
 	float dist;
@@ -677,9 +677,11 @@ void AAIBrain::AddDefenceCapabilities(int def_id, UnitCategory category)
 	}
 }
 
+/*
 void AAIBrain::SubtractDefenceCapabilities(int def_id, UnitCategory category)
 {
 }
+*/
 
 float AAIBrain::Affordable()
 {
@@ -1174,7 +1176,9 @@ int AAIBrain::GetGamePeriod()
 bool AAIBrain::IsSafeSector(AAISector *sector)
 {
 	// TODO: improve criteria
-	return (sector->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 0.5 &&  sector->enemy_combat_units[5] < 0.1 && sector->enemy_structures < 0.01 && sector->enemies_on_radar == 0);
+	return (sector->lost_units[MOBILE_CONSTRUCTOR-COMMANDER] < 0.5
+		&& sector->enemy_combat_units[5] < 0.1 && sector->enemy_structures < 0.01
+		&& sector->enemies_on_radar == 0);
 }
 
 float AAIBrain::GetAttacksBy(int combat_category, int game_period)

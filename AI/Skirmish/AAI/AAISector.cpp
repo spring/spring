@@ -76,6 +76,7 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 
 	// nothing sighted in that sector
 	enemy_structures = 0;
+	enemies_on_radar = 0;
 	own_structures = 0;
 	allied_structures = 0;
 	failed_defences = 0;
@@ -754,7 +755,7 @@ void AAISector::GetMovePos(float3 *pos)
 	*pos = ZeroVector;
 }
 
-void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, int continent)
+void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int /*movement_type*/, int continent)
 {
 	int x,y;
 	*pos = ZeroVector;

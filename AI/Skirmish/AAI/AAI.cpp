@@ -30,9 +30,9 @@ AAI::AAI() :
 	map(NULL),
 	af(NULL),
 	am(NULL),
-	initialized(false),
+	profiler(NULL),
 	file(NULL),
-	profiler(NULL)
+	initialized(false)
 {
 	// initialize random numbers generator
 	srand (time(NULL));
@@ -125,7 +125,7 @@ AAI::~AAI()
 }
 
 
-void AAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {}
+//void AAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {}
 
 
 void AAI::InitAI(IGlobalAICallback* callback, int team)
@@ -202,7 +202,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	LogConsole("AAI loaded");
 }
 
-void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
+void AAI::UnitDamaged(int damaged, int attacker, float /*damage*/, float3 /*dir*/)
 {
 	AAI_SCOPED_TIMER("UnitDamaged")
 	const UnitDef* def;
@@ -290,7 +290,7 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 	}
 }
 
-void AAI::UnitCreated(int unit, int builder)
+void AAI::UnitCreated(int unit, int /*builder*/)
 {
 	AAI_SCOPED_TIMER("UnitCreated")
 	if (!cfg->initialized)
@@ -742,10 +742,10 @@ void AAI::UnitMoveFailed(int unit)
 		execute->MoveUnitTo(unit, &pos);
 }
 
-void AAI::EnemyEnterLOS(int enemy) {}
-void AAI::EnemyLeaveLOS(int enemy) {}
-void AAI::EnemyEnterRadar(int enemy) {}
-void AAI::EnemyLeaveRadar(int enemy) {}
+void AAI::EnemyEnterLOS(int /*enemy*/) {}
+void AAI::EnemyLeaveLOS(int /*enemy*/) {}
+void AAI::EnemyEnterRadar(int /*enemy*/) {}
+void AAI::EnemyLeaveRadar(int /*enemy*/) {}
 
 void AAI::EnemyDestroyed(int enemy, int attacker)
 {
@@ -993,11 +993,6 @@ int AAI::HandleEvent(int msg, const void* data)
 	return 0;
 }
 
-Profiler* AAI::GetProfiler()
-{
-	return profiler;
-}
-
 void AAI::Log(const char* format, ...)
 {
 	va_list args;
@@ -1015,7 +1010,7 @@ void AAI::LogConsole(const char* format, ...)
 	va_list args;
 
 	va_start(args, format);
-	const int bytes = vsnprintf(buf, 1024, format, args);
+	vsnprintf(buf, 1024, format, args);
 	va_end(args);
 
 	cb->SendTextMsg(buf, 0);
