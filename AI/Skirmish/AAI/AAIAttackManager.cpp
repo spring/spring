@@ -422,6 +422,6 @@ bool AAIAttackManager::SufficientDefencePowerAt(AAISector *dest, float aggressiv
 	return false;
 }
 
-void AAIAttackManager::RallyGroups(AAIAttack *attack)
+void AAIAttackManager::RallyGroups(AAIAttack * /*attack*/)
 {
 }

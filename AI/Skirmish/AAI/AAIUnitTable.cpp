@@ -294,7 +294,7 @@ void AAIUnitTable::RemoveJammer(int unit_id)
 	jammers.erase(unit_id);
 }
 
-void AAIUnitTable::AddStationaryArty(int unit_id, int def_id)
+void AAIUnitTable::AddStationaryArty(int unit_id, int /*def_id*/)
 {
 	stationary_arty.insert(unit_id);
 }
@@ -389,7 +389,7 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 *pos, bool
 	return best_builder;
 }
 
-AAIConstructor* AAIUnitTable::FindClosestAssistant(float3 pos, int importance, bool commander)
+AAIConstructor* AAIUnitTable::FindClosestAssistant(float3 pos, int /*importance*/, bool commander)
 {
 	AAIConstructor *best_assistant = 0, *assistant;
 	float best_rating = 0, my_rating, dist;

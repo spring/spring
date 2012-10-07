@@ -39,6 +39,7 @@ static std::map<int, CAIAI*> myAIs;
 static std::map<int, const struct SSkirmishAICallback*> skirmishAIId_callback;
 
 
+/*
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 		const char* aiShortName, const char* aiVersion,
 		const char* engineVersionString, int engineVersionNumber,
@@ -51,6 +52,7 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 
 	return LOS_None;
 }
+*/
 
 EXPORT(int) init(int skirmishAIId, const struct SSkirmishAICallback* callback) {
 
