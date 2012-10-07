@@ -76,6 +76,7 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 
 	// nothing sighted in that sector
 	enemy_structures = 0;
+	enemies_on_radar = 0;
 	own_structures = 0;
 	allied_structures = 0;
 	failed_defences = 0;
