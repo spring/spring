@@ -1333,7 +1333,7 @@ bool AAIBuildTable::MemberOf(int unit_id, list<int> unit_list)
 	return false;
 }
 
-int AAIBuildTable::GetPowerPlant(int side, float cost, float urgency, float power, float current_energy, bool water, bool geo, bool canBuild)
+int AAIBuildTable::GetPowerPlant(int side, float cost, float urgency, float power, float /*current_energy*/, bool water, bool geo, bool canBuild)
 {
 	UnitTypeStatic *unit;
 
@@ -1671,7 +1671,7 @@ int AAIBuildTable::GetCheapDefenceBuilding(int side, double efficiency, double c
 	return best_defence;
 }
 
-int AAIBuildTable::GetRandomDefence(int side, UnitCategory category)
+int AAIBuildTable::GetRandomDefence(int side, UnitCategory /*category*/)
 {
 	float best_rating = 0, my_rating;
 
@@ -1693,7 +1693,7 @@ int AAIBuildTable::GetRandomDefence(int side, UnitCategory category)
 	return best_defence;
 }
 
-int AAIBuildTable::GetAirBase(int side, float cost, bool water, bool canBuild)
+int AAIBuildTable::GetAirBase(int side, float /*cost*/, bool water, bool canBuild)
 {
 	float best_ranking = 0, my_ranking;
 	int best_airbase = 0;

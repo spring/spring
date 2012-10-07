@@ -755,7 +755,7 @@ void AAISector::GetMovePos(float3 *pos)
 	*pos = ZeroVector;
 }
 
-void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, int continent)
+void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int /*movement_type*/, int continent)
 {
 	int x,y;
 	*pos = ZeroVector;
