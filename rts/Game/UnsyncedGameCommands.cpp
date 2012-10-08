@@ -804,9 +804,8 @@ public:
 				share = true;
 			}
 
-			CTeam* teamToKill = teamHandler->IsActiveTeam(teamToKillId) ?
-			                          teamHandler->Team(teamToKillId) : NULL;
-			const CTeam* teamToReceiveUnits = (teamHandler->IsValidTeam(teamToReceiveUnitsId))? teamHandler->Team(teamToReceiveUnitsId): NULL;
+			CTeam* teamToKill = (teamHandler->IsActiveTeam(teamToKillId))? teamHandler->Team(teamToKillId) : NULL;
+			const CTeam* teamToReceiveUnits = (teamHandler->IsActiveTeam(teamToReceiveUnitsId))? teamHandler->Team(teamToReceiveUnitsId): NULL;
 
 			if (teamToKill == NULL) {
 				LOG_L(L_WARNING, "Team to %s: not a valid team number: \"%s\"", actionName.c_str(), args[0].c_str());
