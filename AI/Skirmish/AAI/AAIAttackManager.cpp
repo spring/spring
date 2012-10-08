@@ -15,21 +15,17 @@
 #include "AAIMap.h"
 #include "AAIAttack.h"
 
-AAIAttackManager::AAIAttackManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt, int continents)
+AAIAttackManager::AAIAttackManager(AAI *ai, int continents)
 {
 	this->ai = ai;
-	brain = ai->brain;
-	this->bt = bt;
-	this->cb = cb;
-	this->map = ai->map;
 
-	available_combat_cat.resize(bt->ass_categories);
+	available_combat_cat.resize(AAIBuildTable::ass_categories);
 
 	available_combat_groups_continent.resize(continents);
 	available_aa_groups_continent.resize(continents);
 
-	attack_power_continent.resize(continents, vector<float>(bt->combat_categories) );
-	attack_power_global.resize(bt->combat_categories);
+	attack_power_continent.resize(continents, vector<float>(AAIBuildTable::combat_categories) );
+	attack_power_global.resize(AAIBuildTable::combat_categories);
 }
 
 AAIAttackManager::~AAIAttackManager(void)
@@ -77,9 +73,9 @@ void AAIAttackManager::LaunchAttack()
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	int total_combat_groups = 0;
 
-	for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
+	for(list<UnitCategory>::iterator category = ai->Getbt()->assault_categories.begin(); category != ai->Getbt()->assault_categories.end(); ++category)
 	{
-		for(list<AAIGroup*>::iterator group = ai->group_list[*category].begin(); group != ai->group_list[*category].end(); ++group)
+		for(list<AAIGroup*>::iterator group = ai->Getgroup_list()[*category].begin(); group != ai->Getgroup_list()[*category].end(); ++group)
 		{
 			if( (*group)->AvailableForAttack() )
 			{
@@ -130,11 +126,11 @@ void AAIAttackManager::LaunchAttack()
 	// determine max lost units
 	float max_lost_units = 0.0f;
 
-	for(int x = 0; x < map->xSectors; ++x)
+	for(int x = 0; x < ai->Getmap()->xSectors; ++x)
 	{
-		for(int y = 0; y < map->ySectors; ++y)
+		for(int y = 0; y < ai->Getmap()->ySectors; ++y)
 		{
-			float lost_units = map->sector[x][y].GetLostUnits(1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+			float lost_units = ai->Getmap()->sector[x][y].GetLostUnits(1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
 			if(lost_units > max_lost_units)
 				max_lost_units = lost_units;
@@ -150,11 +146,11 @@ void AAIAttackManager::LaunchAttack()
 	AAISector* sector;
 	AAISector* dest = NULL;
 
-	for(int x = 0; x < map->xSectors; ++x)
+	for(int x = 0; x < ai->Getmap()->xSectors; ++x)
 	{
-		for(int y = 0; y < map->ySectors; ++y)
+		for(int y = 0; y < ai->Getmap()->ySectors; ++y)
 		{
-			sector = &map->sector[x][y];
+			sector = &ai->Getmap()->sector[x][y];
 
 			float my_rating;
 
@@ -163,7 +159,7 @@ void AAIAttackManager::LaunchAttack()
 				my_rating = 0.0f;
 			else
 			{
-				if(ai->map->continents[sector->continent].water)
+				if(ai->Getmap()->continents[sector->continent].water)
 				{
 					def_power = sector->GetEnemyDefencePower(0.0f, 0.0f, 0.5f, 1.0f, 1.0f) + 0.01;
 					att_power = attack_power_global[5] + attack_power_continent[sector->continent][5];
@@ -207,7 +203,7 @@ void AAIAttackManager::LaunchAttack()
 		int aa_added = 0, max_aa;
 
 		// check how much aa sensible
-		if(brain->max_combat_units_spotted[1] < 0.2)
+		if(ai->Getbrain()->max_combat_units_spotted[1] < 0.2)
 			max_aa = 0;
 		else
 			max_aa = 1;
@@ -257,7 +253,7 @@ void AAIAttackManager::StopAttack(AAIAttack *attack)
 void AAIAttackManager::CheckAttack(AAIAttack *attack)
 {
 	// prevent command overflow
-	if((cb->GetCurrentFrame() - attack->lastAttack) < 30)
+	if((ai->Getcb()->GetCurrentFrame() - attack->lastAttack) < 30)
 		return;
 
 	// drop failed attacks
@@ -282,11 +278,11 @@ void AAIAttackManager::CheckAttack(AAIAttack *attack)
 void AAIAttackManager::GetNextDest(AAIAttack *attack)
 {
 	// prevent command overflow
-	if((cb->GetCurrentFrame() - attack->lastAttack) < 60)
+	if((ai->Getcb()->GetCurrentFrame() - attack->lastAttack) < 60)
 		return;
 
 	// get new target sector
-	AAISector *dest = ai->brain->GetNextAttackDest(attack->dest, attack->land, attack->water);
+	AAISector *dest = ai->Getbrain()->GetNextAttackDest(attack->dest, attack->land, attack->water);
 
 	//ai->Log("Getting next dest\n");
 	if(dest && SufficientAttackPowerVS(dest, &(attack->combat_groups), 2))
@@ -318,7 +314,7 @@ bool AAIAttackManager::SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *
 		attack_power += (float)total_units * 0.2f;
 
 		//  get expected def power
-		for(int i = 0; i < bt->ass_categories; ++i)
+		for(int i = 0; i < AAIBuildTable::ass_categories; ++i)
 			sector_defence += dest->enemy_stat_combat_power[i] * (float)available_combat_cat[i];
 
 		sector_defence /= (float)total_units;
@@ -341,11 +337,11 @@ bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *
 		int total_units = 0;
 
 		// reset counter
-		for(int i = 0; i < bt->ass_categories; ++i)
+		for(int i = 0; i < AAIBuildTable::ass_categories; ++i)
 			available_combat_cat[i] = 0;
 
 		// get total att power
-		for(int i = 0; i < bt->ass_categories; ++i)
+		for(int i = 0; i < AAIBuildTable::ass_categories; ++i)
 		{
 			// skip if no enemy units of that category present
 			if(dest->enemy_combat_units[i] > 0)
@@ -379,7 +375,7 @@ bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *
 		}
 
 		// get total enemy power
-		for(int i = 0; i < bt->ass_categories; ++i)
+		for(int i = 0; i < AAIBuildTable::ass_categories; ++i)
 			enemy_power += dest->GetEnemyAreaCombatPowerVs(i, 0.25) * (float)available_combat_cat[i];
 
 		enemy_power /= (float)total_units;
@@ -401,7 +397,7 @@ bool AAIAttackManager::SufficientDefencePowerAt(AAISector *dest, float aggressiv
 	float enemies = 0;
 
 	// get defence power
-	for(int i = 0; i < bt->ass_categories; ++i)
+	for(int i = 0; i < AAIBuildTable::ass_categories; ++i)
 	{
 		// only check if enemies of that category present
 		if(dest->enemy_combat_units[i] > 0)

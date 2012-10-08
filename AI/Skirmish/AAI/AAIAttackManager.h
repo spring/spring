@@ -26,7 +26,7 @@ class AAISector;
 class AAIAttackManager
 {
 public:
-	AAIAttackManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt, int continents);
+	AAIAttackManager(AAI *ai, int continents);
 	~AAIAttackManager(void);
 
 	void Update();
@@ -68,9 +68,5 @@ public:
 
 private:
 
-	IAICallback *cb;
 	AAI *ai;
-	AAIBrain *brain;
-	AAIBuildTable *bt;
-	AAIMap *map;
 };

@@ -66,9 +66,6 @@ AAIMap::AAIMap(AAI *ai)
 	srand ( time(NULL) );
 
 	this->ai = ai;
-	bt = ai->bt;
-	cb = ai->cb;
-
 	initialized = false;
 }
 
@@ -93,7 +90,7 @@ AAIMap::~AAIMap(void)
 				// save sector data
 				fprintf(save_file, "%f %f %f", sector[x][y].flat_ratio, sector[x][y].water_ratio, sector[x][y].importance_this_game);
 				// save combat data
-				for(size_t cat = 0; cat < bt->assault_categories.size(); ++cat)
+				for(size_t cat = 0; cat < ai->Getbt()->assault_categories.size(); ++cat)
 					fprintf(save_file, "%f %f ", sector[x][y].attacked_by_this_game[cat], sector[x][y].combats_this_game[cat]);
 			}
 
@@ -128,13 +125,13 @@ void AAIMap::Init()
 	if(ai->GetInstances() == 1)
 	{
 		// get size
-		xMapSize = cb->GetMapWidth();
-		yMapSize = cb->GetMapHeight();
+		xMapSize = ai->Getcb()->GetMapWidth();
+		yMapSize = ai->Getcb()->GetMapHeight();
 
 		xSize = xMapSize * SQUARE_SIZE;
 		ySize = yMapSize * SQUARE_SIZE;
 
-		losMapRes = cb->GetLosMapResolution();
+		losMapRes = ai->Getcb()->GetLosMapResolution();
 		xLOSMapSize = xMapSize / losMapRes;
 		yLOSMapSize = yMapSize / losMapRes;
 
@@ -206,7 +203,7 @@ void AAIMap::Init()
 
 	units_in_los.resize(cfg->MAX_UNITS, 0);
 
-	enemy_combat_units_spotted.resize(bt->ass_categories, 0);
+	enemy_combat_units_spotted.resize(AAIBuildTable::ass_categories, 0);
 
 	// create defence
 	defence_map.resize(xDefMapSize*yDefMapSize, 0);
@@ -216,9 +213,9 @@ void AAIMap::Init()
 	initialized = true;
 
 	// for log file
-	ai->Log("Map: %s\n",cb->GetMapName());
+	ai->Log("Map: %s\n",ai->Getcb()->GetMapName());
 	ai->Log("Maptype: %s\n", GetMapTypeTextString(map_type));
-	ai->Log("Mapsize is %i x %i\n", cb->GetMapWidth(),cb->GetMapHeight());
+	ai->Log("Mapsize is %i x %i\n", ai->Getcb()->GetMapWidth(),ai->Getcb()->GetMapHeight());
 	ai->Log("%i sectors in x direction\n", xSectors);
 	ai->Log("%i sectors in y direction\n", ySectors);
 	ai->Log("x-sectorsize is %i (Map %i)\n", xSectorSize, xSectorSizeMap);
@@ -239,8 +236,8 @@ void AAIMap::Init()
 			{
 				my_pos.x = x * 8;
 				my_pos.z = y * 8;
-				my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
-				cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 8000, cb->GetMyAllyTeam(), true, true);
+				my_pos.y = ai->Getcb()->GetElevation(my_pos.x, my_pos.z);
+				ai->Getcb()->DrawUnit("ARMMINE1", my_pos, 0.0f, 8000, ai->Getcb()->GetMyAllyTeam(), true, true);
 			}
 		}
 	}*/
@@ -461,17 +458,17 @@ void AAIMap::ReadContinentFile()
 	char buffer[buffer_sizeMax];
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
-	std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	std::string mapName = MakeFileSystemCompatible(ai->Getcb()->GetMapName());
 	mapName.resize(mapName.size() - 4); // cut off extension
 	STRCAT(buffer, mapName.c_str());
 	STRCAT(buffer, "-");
-	const std::string mapHash = IntToString(cb->GetMapHash(), "%x");
+	const std::string mapHash = IntToString(ai->Getcb()->GetMapHash(), "%x");
 	STRCAT(buffer, mapHash.c_str());
 	STRCAT(buffer, "_");
-	const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
+	const std::string modHumanName = MakeFileSystemCompatible(ai->Getcb()->GetModHumanName());
 	STRCAT(buffer, modHumanName.c_str());
 	STRCAT(buffer, "-");
-	const std::string modHash = IntToString(cb->GetModHash(), "%x");
+	const std::string modHash = IntToString(ai->Getcb()->GetModHash(), "%x");
 	STRCAT(buffer, modHash.c_str());
 	STRCAT(buffer, ".dat");
 	char filename[buffer_sizeMax];
@@ -479,7 +476,7 @@ void AAIMap::ReadContinentFile()
 
 	// as we will have to write to the file later on anyway,
 	// we want it writable
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
+	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	FILE* file = fopen(filename, "r");
 
@@ -549,7 +546,7 @@ void AAIMap::ReadContinentFile()
 	STRCAT(buffer, ".dat");
 	STRCPY(filename, buffer);
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
+	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	file = fopen(filename, "w+");
 
@@ -586,24 +583,24 @@ std::string AAIMap::LocateMapLearnFile(const bool forWriting) const {
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_LEARN_PATH);
-	std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	std::string mapName = MakeFileSystemCompatible(ai->Getcb()->GetMapName());
 	mapName.resize(mapName.size() - 4); // cut off extension
 	STRCAT(buffer, mapName.c_str());
 	STRCAT(buffer, "-");
-	const std::string mapHash = IntToString(cb->GetMapHash(), "%x");
+	const std::string mapHash = IntToString(ai->Getcb()->GetMapHash(), "%x");
 	STRCAT(buffer, mapHash.c_str());
 	STRCAT(buffer, "_");
-	const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
+	const std::string modHumanName = MakeFileSystemCompatible(ai->Getcb()->GetModHumanName());
 	STRCAT(buffer, modHumanName.c_str());
 	STRCAT(buffer, "-");
-	const std::string modHash = IntToString(cb->GetModHash(), "%x");
+	const std::string modHash = IntToString(ai->Getcb()->GetModHash(), "%x");
 	STRCAT(buffer, modHash.c_str());
 	STRCAT(buffer, ".dat");
 
 	if (forWriting) {
-		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
+		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, buffer);
 	} else {
-		cb->GetValue(AIVAL_LOCATE_FILE_R, buffer);
+		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_R, buffer);
 	}
 
 	return std::string(buffer);
@@ -617,18 +614,18 @@ std::string AAIMap::LocateMapCacheFile(const bool forWriting) const {
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
-	std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	std::string mapName = MakeFileSystemCompatible(ai->Getcb()->GetMapName());
 	mapName.resize(mapName.size() - 4); // cut off extension
 	STRCAT(buffer, mapName.c_str());
 	STRCAT(buffer, "-");
-	const std::string mapHash = IntToString(cb->GetMapHash(), "%x");
+	const std::string mapHash = IntToString(ai->Getcb()->GetMapHash(), "%x");
 	STRCAT(buffer, mapHash.c_str());
 	STRCAT(buffer, ".dat");
 
 	if (forWriting) {
-		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
+		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, buffer);
 	} else {
-		cb->GetValue(AIVAL_LOCATE_FILE_R, buffer);
+		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_R, buffer);
 	}
 
 	return std::string(buffer);
@@ -687,14 +684,14 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 					sector[i][j].importance_learned += (rand()%5)/20.0;
 
 				// load combat data
-				for(size_t cat = 0; cat < bt->assault_categories.size(); cat++)
+				for(size_t cat = 0; cat < ai->Getbt()->assault_categories.size(); cat++)
 					fscanf(load_file, "%f %f ", &sector[i][j].attacked_by_learned[cat], &sector[i][j].combats_learned[cat]);
 
 				if(auto_set)
 				{
 					sector[i][j].importance_this_game = sector[i][j].importance_learned;
 
-					for(size_t cat = 0; cat < bt->assault_categories.size(); ++cat)
+					for(size_t cat = 0; cat < ai->Getbt()->assault_categories.size(); ++cat)
 					{
 						sector[i][j].attacked_by_this_game[cat] = sector[i][j].attacked_by_learned[cat];
 						sector[i][j].combats_this_game[cat] = sector[i][j].combats_learned[cat];
@@ -731,7 +728,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 				{
 					sector[i][j].importance_this_game = sector[i][j].importance_learned;
 
-					for(size_t cat = 0; cat < bt->assault_categories.size(); ++cat)
+					for(size_t cat = 0; cat < ai->Getbt()->assault_categories.size(); ++cat)
 					{
 						// init with higher values in the center of the map
 						sector[i][j].attacked_by_learned[cat] = 2 * sector[i][j].GetEdgeDistance();
@@ -782,7 +779,7 @@ void AAIMap::Learn()
 			if(sector->importance_this_game < 1)
 				sector->importance_this_game = 1;
 
-			for(size_t cat = 0; cat < bt->assault_categories.size(); ++cat)
+			for(size_t cat = 0; cat < ai->Getbt()->assault_categories.size(); ++cat)
 			{
 				sector->attacked_by_this_game[cat] = 0.90f * (sector->attacked_by_this_game[cat] + 3.0f * sector->attacked_by_learned[cat])/4.0f;
 
@@ -851,8 +848,8 @@ bool AAIMap::SetBuildMap(int xPos, int yPos, int xSize, int ySize, int value, in
 					{
 						my_pos.x = x * 8;
 						my_pos.z = y * 8;
-						my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
-						cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, cb->GetMyAllyTeam(), true, true);
+						my_pos.y = ai->Getcb()->GetElevation(my_pos.x, my_pos.z);
+						ai->Getcb()->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, ai->Getcb()->GetMyAllyTeam(), true, true);
 					}*/
 				}
 			}
@@ -878,7 +875,7 @@ float3 AAIMap::GetBuildSiteInRect(const UnitDef *def, int xStart, int xEnd, int 
 			// check if buildmap allows construction
 			if(CanBuildAt(xPos, yPos, xSize, ySize, water))
 			{
-				if(bt->IsFactory(def->id))
+				if(ai->Getbt()->IsFactory(def->id))
 					yPos += 8;
 
 				pos.x = xPos;
@@ -888,7 +885,7 @@ float3 AAIMap::GetBuildSiteInRect(const UnitDef *def, int xStart, int xEnd, int 
 				BuildMapPos2Pos(&pos, def);
 				Pos2FinalBuildPos(&pos, def);
 
-				if(ai->cb->CanBuildAt(def, pos))
+				if(ai->Getcb()->CanBuildAt(def, pos))
 				{
 					int x = pos.x/xSectorSize;
 					int y = pos.z/ySectorSize;
@@ -939,7 +936,7 @@ float3 AAIMap::GetRadarArtyBuildsite(const UnitDef *def, int xStart, int xEnd, i
 					BuildMapPos2Pos(&pos, def);
 					Pos2FinalBuildPos(&pos, def);
 
-					if(ai->cb->CanBuildAt(def, pos))
+					if(ai->Getcb()->CanBuildAt(def, pos))
 					{
 						best_pos = pos;
 						best_rating = my_rating;
@@ -974,14 +971,14 @@ float3 AAIMap::GetHighestBuildsite(const UnitDef *def, int xStart, int xEnd, int
 				BuildMapPos2Pos(&pos, def);
 				Pos2FinalBuildPos(&pos, def);
 
-				if(ai->cb->CanBuildAt(def, pos))
+				if(ai->Getcb()->CanBuildAt(def, pos))
 				{
 					x = pos.x/xSectorSize;
 					y = pos.z/ySectorSize;
 
 					if(x < xSectors && x  >= 0 && y < ySectors && y >= 0)
 					{
-						pos.y = cb->GetElevation(pos.x, pos.z);
+						pos.y = ai->Getcb()->GetElevation(pos.x, pos.z);
 
 						if(pos.y > best_pos.y)
 							best_pos = pos;
@@ -1024,14 +1021,14 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 					temp_pos.y = 0;
 					temp_pos.z = pos.z;
 
-					if(bt->IsFactory(def->id))
+					if(ai->Getbt()->IsFactory(def->id))
 						temp_pos.z += 8;
 
 					// buildmap allows construction, now check if otherwise blocked
 					BuildMapPos2Pos(&temp_pos, def);
 					Pos2FinalBuildPos(&temp_pos, def);
 
-					if(ai->cb->CanBuildAt(def, temp_pos))
+					if(ai->Getcb()->CanBuildAt(def, temp_pos))
 					{
 						int	x = temp_pos.x/xSectorSize;
 						int	y = temp_pos.z/ySectorSize;
@@ -1047,14 +1044,14 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 					temp_pos.y = 0;
 					temp_pos.z = pos.z + 2 * vIterator;
 
-					if(bt->IsFactory(def->id))
+					if(ai->Getbt()->IsFactory(def->id))
 						temp_pos.z += 8;
 
 					// buildmap allows construction, now check if otherwise blocked
 					BuildMapPos2Pos(&temp_pos, def);
 					Pos2FinalBuildPos(&temp_pos, def);
 
-					if(ai->cb->CanBuildAt(def, temp_pos))
+					if(ai->Getcb()->CanBuildAt(def, temp_pos))
 					{
 						int x = temp_pos.x/xSectorSize;
 						int y = temp_pos.z/ySectorSize;
@@ -1090,14 +1087,14 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 					temp_pos.y = 0;
 					temp_pos.z = pos.z;
 
-					if(bt->IsFactory(def->id))
+					if(ai->Getbt()->IsFactory(def->id))
 						temp_pos.z += 8;
 
 					// buildmap allows construction, now check if otherwise blocked
 					BuildMapPos2Pos(&temp_pos, def);
 					Pos2FinalBuildPos(&temp_pos, def);
 
-					if(ai->cb->CanBuildAt(def, temp_pos))
+					if(ai->Getcb()->CanBuildAt(def, temp_pos))
 					{
 						int x = temp_pos.x/xSectorSize;
 						int y = temp_pos.z/ySectorSize;
@@ -1112,14 +1109,14 @@ float3 AAIMap::GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 					temp_pos.y = 0;
 					temp_pos.z = pos.z;
 
-					if(bt->IsFactory(def->id))
+					if(ai->Getbt()->IsFactory(def->id))
 						temp_pos.z += 8;
 
 					// buildmap allows construction, now check if otherwise blocked
 					BuildMapPos2Pos(&temp_pos, def);
 					Pos2FinalBuildPos(&temp_pos, def);
 
-					if(ai->cb->CanBuildAt(def, temp_pos))
+					if(ai->Getcb()->CanBuildAt(def, temp_pos))
 					{
 						int x = temp_pos.x/xSectorSize;
 						int y = temp_pos.z/ySectorSize;
@@ -1167,14 +1164,14 @@ float3 AAIMap::GetRandomBuildsite(const UnitDef *def, int xStart, int xEnd, int 
 		// check if buildmap allows construction
 		if(CanBuildAt(pos.x, pos.z, xSize, ySize, water))
 		{
-			if(bt->IsFactory(def->id))
+			if(ai->Getbt()->IsFactory(def->id))
 				pos.z += 8;
 
 			// buildmap allows construction, now check if otherwise blocked
 			BuildMapPos2Pos(&pos, def);
 			Pos2FinalBuildPos(&pos, def);
 
-			if(ai->cb->CanBuildAt(def, pos))
+			if(ai->Getcb()->CanBuildAt(def, pos))
 			{
 				int x = pos.x/xSectorSize;
 				int y = pos.z/ySectorSize;
@@ -1426,8 +1423,8 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 					{
 						my_pos.x = x * 8;
 						my_pos.z = y * 8;
-						my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
-						cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, cb->GetMyAllyTeam(), true, true);
+						my_pos.y = ai->Getcb()->GetElevation(my_pos.x, my_pos.z);
+						ai->Getcb()->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, ai->Getcb()->GetMyAllyTeam(), true, true);
 					}*/
 				}
 
@@ -1458,8 +1455,8 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 						{
 							my_pos.x = x * 8;
 							my_pos.z = y * 8;
-							my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
-							cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, cb->GetMyAllyTeam(), true, true);
+							my_pos.y = ai->Getcb()->GetElevation(my_pos.x, my_pos.z);
+							ai->Getcb()->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, ai->Getcb()->GetMyAllyTeam(), true, true);
 						}*/
 					}
 				}
@@ -1574,7 +1571,7 @@ void AAIMap::GetSize(const UnitDef *def, int *xSize, int *ySize)
 	*ySize = def->zsize;
 
 	// if building is a factory additional vertical space is needed
-	if(bt->IsFactory(def->id))
+	if(ai->Getbt()->IsFactory(def->id))
 	{
 		*xSize += cfg->X_SPACE;
 		*ySize += ((float)cfg->Y_SPACE)*1.5;
@@ -1624,7 +1621,7 @@ void AAIMap::AnalyseMap()
 
 	float slope;
 
-	const float *height_map = cb->GetHeightMap();
+	const float *height_map = ai->Getcb()->GetHeightMap();
 
 	// get water/cliffs
 	for(int x = 0; x < xMapSize; ++x)
@@ -1732,7 +1729,7 @@ void AAIMap::CalculateContinentMaps()
 	old_edge_cells = &a;
 	new_edge_cells = &b;
 
-	const float *height_map = cb->GetHeightMap();
+	const float *height_map = ai->Getcb()->GetHeightMap();
 
 	int x, y;
 
@@ -1990,7 +1987,7 @@ void AAIMap::CalculateContinentMaps()
 // algorithm more or less by krogothe - thx very much
 void AAIMap::SearchMetalSpots()
 {
-	const UnitDef* def = bt->unitList[bt->GetBiggestMex()-1];
+	const UnitDef* def = ai->Getbt()->unitList[ai->Getbt()->GetBiggestMex()-1];
 
 	metalMap = false;
 	bool Stopme = false;
@@ -2009,13 +2006,13 @@ void AAIMap::SearchMetalSpots()
 							//They are still perfectly valid and will generate metal mind you!
 	int MaxSpots = 5000; //If more spots than that are found the map is considered a metalmap, tweak this as needed
 
-	int MetalMapHeight = cb->GetMapHeight() / 2; //metal map has 1/2 resolution of normal map
-	int MetalMapWidth = cb->GetMapWidth() / 2;
+	int MetalMapHeight = ai->Getcb()->GetMapHeight() / 2; //metal map has 1/2 resolution of normal map
+	int MetalMapWidth = ai->Getcb()->GetMapWidth() / 2;
 	int TotalCells = MetalMapHeight * MetalMapWidth;
-	unsigned char XtractorRadius = cb->GetExtractorRadius()/ 16.0;
-	unsigned char DoubleRadius = cb->GetExtractorRadius() / 8.0;
-	int SquareRadius = (cb->GetExtractorRadius() / 16.0) * (cb->GetExtractorRadius() / 16.0); //used to speed up loops so no recalculation needed
-	int DoubleSquareRadius = (cb->GetExtractorRadius() / 8.0) * (cb->GetExtractorRadius() / 8.0); // same as above
+	unsigned char XtractorRadius = ai->Getcb()->GetExtractorRadius()/ 16.0;
+	unsigned char DoubleRadius = ai->Getcb()->GetExtractorRadius() / 8.0;
+	int SquareRadius = (ai->Getcb()->GetExtractorRadius() / 16.0) * (ai->Getcb()->GetExtractorRadius() / 16.0); //used to speed up loops so no recalculation needed
+	int DoubleSquareRadius = (ai->Getcb()->GetExtractorRadius() / 8.0) * (ai->Getcb()->GetExtractorRadius() / 8.0); // same as above
 //	int CellsInRadius = PI * XtractorRadius * XtractorRadius; //yadda yadda
 	unsigned char* MexArrayA = new unsigned char [TotalCells];
 	unsigned char* MexArrayB = new unsigned char [TotalCells];
@@ -2030,7 +2027,7 @@ void AAIMap::SearchMetalSpots()
 	//Load up the metal Values in each pixel
 	for (int i = 0; i != TotalCells - 1; i++)
 	{
-		MexArrayA[i] = *(cb->GetMetalMap() + i);
+		MexArrayA[i] = *(ai->Getcb()->GetMetalMap() + i);
 		TotalMetal += MexArrayA[i];		// Count the total metal so you can work out an average of the whole map
 	}
 
@@ -2086,15 +2083,15 @@ void AAIMap::SearchMetalSpots()
 		{
 			pos.x = coordx * 2 * SQUARE_SIZE;
 			pos.z = coordy * 2 * SQUARE_SIZE;
-			pos.y = cb->GetElevation(pos.x, pos.z);
+			pos.y = ai->Getcb()->GetElevation(pos.x, pos.z);
 
 			Pos2FinalBuildPos(&pos, def);
 
-			temp.amount = TempMetal * cb->GetMaxMetal() * MaxMetal / 255.0;
+			temp.amount = TempMetal * ai->Getcb()->GetMaxMetal() * MaxMetal / 255.0;
 			temp.occupied = false;
 			temp.pos = pos;
 
-			//if(cb->CanBuildAt(def, pos))
+			//if(ai->Getcb()->CanBuildAt(def, pos))
 			//{
 				Pos2BuildMapPos(&pos, def);
 
@@ -2179,7 +2176,7 @@ void AAIMap::UpdateRecon()
 	UnitCategory cat;
 	float3 pos;
 
-	int frame = cb->GetCurrentFrame();
+	int frame = ai->Getcb()->GetCurrentFrame();
 
 	fill(sector_in_los.begin(), sector_in_los.end(), 0);
 	fill(sector_in_los_with_enemies.begin(), sector_in_los_with_enemies.end(), 0);
@@ -2188,7 +2185,7 @@ void AAIMap::UpdateRecon()
 	//
 	// reset scouted buildings for all cells within current los
 	//
-	const unsigned short *los_map = cb->GetLosMap();
+	const unsigned short *los_map = ai->Getcb()->GetLosMap();
 
 	for(int y = 0; y < yLOSMapSize; ++y)
 	{
@@ -2211,13 +2208,13 @@ void AAIMap::UpdateRecon()
 	}
 
 	// update enemy units
-	int number_of_units = cb->GetEnemyUnitsInRadarAndLos(&(units_in_los.front()));
+	int number_of_units = ai->Getcb()->GetEnemyUnitsInRadarAndLos(&(units_in_los.front()));
 	int x_pos, y_pos;
 
 	for(int i = 0; i < number_of_units; ++i)
 	{
-		//pos = cb->GetUnitPos(units_in_los[i]);
-		def = cb->GetUnitDef(units_in_los[i]);
+		//pos = ai->Getcb()->GetUnitPos(units_in_los[i]);
+		def = ai->Getcb()->GetUnitDef(units_in_los[i]);
 
 		if(def) // unit is within los
 		{
@@ -2227,7 +2224,7 @@ void AAIMap::UpdateRecon()
 			// make sure unit is within the map (e.g. no aircraft that has flown outside of the map)
 			if(x_pos >= 0 && x_pos < xLOSMapSize && y_pos >= 0 && y_pos < yLOSMapSize)
 			{
-				cat = bt->units_static[def->id].category;
+				cat = ai->Getbt()->units_static[def->id].category;
 
 				// add buildings/combat units to scout map
 				if(cat >= STATIONARY_DEF && cat <= SUBMARINE_ASSAULT)
@@ -2242,7 +2239,7 @@ void AAIMap::UpdateRecon()
 		}
 		else // unit on radar only
 		{
-			pos = cb->GetUnitPos(units_in_los[i]);
+			pos = ai->Getcb()->GetUnitPos(units_in_los[i]);
 
 			x_pos = pos.x/xSectorSize;
 			y_pos = pos.z/ySectorSize;
@@ -2272,19 +2269,19 @@ void AAIMap::UpdateRecon()
 
 	// update own/friendly units
 	int x, y;
-	int my_team = cb->GetMyTeam();
+	int my_team = ai->Getcb()->GetMyTeam();
 
-	number_of_units = cb->GetFriendlyUnits(&(units_in_los.front()));
+	number_of_units = ai->Getcb()->GetFriendlyUnits(&(units_in_los.front()));
 
 	for(int i = 0; i < number_of_units; ++i)
 	{
 		// get unit def & category
-		def = cb->GetUnitDef(units_in_los[i]);
-		cat = bt->units_static[def->id].category;
+		def = ai->Getcb()->GetUnitDef(units_in_los[i]);
+		cat = ai->Getbt()->units_static[def->id].category;
 
 		if(cat >= STATIONARY_DEF && cat <= SUBMARINE_ASSAULT)
 		{
-			pos = cb->GetUnitPos(units_in_los[i]);
+			pos = ai->Getcb()->GetUnitPos(units_in_los[i]);
 
 			x = pos.x/xSectorSize;
 			y = pos.z/ySectorSize;
@@ -2294,36 +2291,36 @@ void AAIMap::UpdateRecon()
 				// add building to sector (and update stat_combat_power if it's a stat defence)
 				if(cat <= METAL_MAKER)
 				{
-					if(cb->GetUnitTeam(units_in_los[i]) == my_team)
+					if(ai->Getcb()->GetUnitTeam(units_in_los[i]) == my_team)
 						++sector[x][y].own_structures;
 					else
 						++sector[x][y].allied_structures;
 
 					if(cat == STATIONARY_DEF)
 					{
-						for(int i = 0; i < bt->ass_categories; ++i)
-							sector[x][y].my_stat_combat_power[i] += bt->units_static[def->id].efficiency[i];
+						for(int i = 0; i < AAIBuildTable::ass_categories; ++i)
+							sector[x][y].my_stat_combat_power[i] += ai->Getbt()->units_static[def->id].efficiency[i];
 					}
 				}
 				// add unit to sector and update mobile_combat_power
 				else if(cat >= GROUND_ASSAULT)
 				{
-					++sector[x][y].my_combat_units[bt->units_static[def->id].category - GROUND_ASSAULT];
+					++sector[x][y].my_combat_units[ai->Getbt()->units_static[def->id].category - GROUND_ASSAULT];
 
-					for(int i = 0; i < bt->combat_categories; ++i)
-						sector[x][y].my_mobile_combat_power[i] += bt->units_static[def->id].efficiency[i];
+					for(int i = 0; i < AAIBuildTable::combat_categories; ++i)
+						sector[x][y].my_mobile_combat_power[i] += ai->Getbt()->units_static[def->id].efficiency[i];
 				}
 			}
 		}
 	}
 
-	ai->brain->UpdateMaxCombatUnitsSpotted(enemy_combat_units_spotted);
+	ai->Getbrain()->UpdateMaxCombatUnitsSpotted(enemy_combat_units_spotted);
 }
 
 void AAIMap::UpdateEnemyScoutingData()
 {
 	int def_id;
-	int frame = cb->GetCurrentFrame();
+	int frame = ai->Getcb()->GetCurrentFrame();
 	float last_seen;
 	AAISector *sector;
 
@@ -2348,27 +2345,27 @@ void AAIMap::UpdateEnemyScoutingData()
 					if(def_id)
 					{
 						// add building to sector (and update stat_combat_power if it's a stat defence)
-						if(bt->units_static[def_id].category <= METAL_MAKER)
+						if(ai->Getbt()->units_static[def_id].category <= METAL_MAKER)
 						{
 							++sector->enemy_structures;
 
-							if(bt->units_static[def_id].category == STATIONARY_DEF)
+							if(ai->Getbt()->units_static[def_id].category == STATIONARY_DEF)
 							{
-								for(int i = 0; i < bt->ass_categories; ++i)
-									sector->enemy_stat_combat_power[i] += bt->units_static[def_id].efficiency[i];
+								for(int i = 0; i < AAIBuildTable::ass_categories; ++i)
+									sector->enemy_stat_combat_power[i] += ai->Getbt()->units_static[def_id].efficiency[i];
 							}
 						}
 						// add unit to sector and update mobile_combat_power
-						else if(bt->units_static[def_id].category >= GROUND_ASSAULT)
+						else if(ai->Getbt()->units_static[def_id].category >= GROUND_ASSAULT)
 						{
 							// units that have been scouted long time ago matter less
 							last_seen = exp(cfg->SCOUTING_MEMORY_FACTOR * ((float)(last_updated_map[x + y * xLOSMapSize] - frame)) / 3600.0f  );
 
-							sector->enemy_combat_units[bt->units_static[def_id].category - GROUND_ASSAULT] += last_seen;
+							sector->enemy_combat_units[ai->Getbt()->units_static[def_id].category - GROUND_ASSAULT] += last_seen;
 							sector->enemy_combat_units[5] += last_seen;
 
-							for(int i = 0; i < bt->combat_categories; ++i)
-								sector->enemy_mobile_combat_power[i] += last_seen * bt->units_static[def_id].efficiency[i];
+							for(int i = 0; i < AAIBuildTable::combat_categories; ++i)
+								sector->enemy_mobile_combat_power[i] += last_seen * ai->Getbt()->units_static[def_id].efficiency[i];
 						}
 					}
 				}
@@ -2432,7 +2429,7 @@ AAISector* AAIMap::GetSectorOfPos(float3 *pos)
 
 void AAIMap::AddDefence(float3 *pos, int defence)
 {
-	int range = bt->units_static[defence].range / (SQUARE_SIZE * 4);
+	int range = ai->Getbt()->units_static[defence].range / (SQUARE_SIZE * 4);
 	int cell;
 
 	float power;
@@ -2441,23 +2438,23 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 
 	if(cfg->AIR_ONLY_MOD)
 	{
-		power = bt->fixed_eff[defence][0];
-		air_power = (bt->fixed_eff[defence][1] + bt->fixed_eff[defence][2])/2.0f;
-		submarine_power = bt->fixed_eff[defence][3];
+		power = ai->Getbt()->fixed_eff[defence][0];
+		air_power = (ai->Getbt()->fixed_eff[defence][1] + ai->Getbt()->fixed_eff[defence][2])/2.0f;
+		submarine_power = ai->Getbt()->fixed_eff[defence][3];
 	}
 	else
 	{
-		if(bt->unitList[defence-1]->minWaterDepth > 0)
-			power = (bt->fixed_eff[defence][2] + bt->fixed_eff[defence][3]) / 2.0f;
+		if(ai->Getbt()->unitList[defence-1]->minWaterDepth > 0)
+			power = (ai->Getbt()->fixed_eff[defence][2] + ai->Getbt()->fixed_eff[defence][3]) / 2.0f;
 		else
-			power = bt->fixed_eff[defence][0];
+			power = ai->Getbt()->fixed_eff[defence][0];
 
-		air_power = bt->fixed_eff[defence][1];
-		submarine_power = bt->fixed_eff[defence][4];
+		air_power = ai->Getbt()->fixed_eff[defence][1];
+		submarine_power = ai->Getbt()->fixed_eff[defence][4];
 	}
 
-	int xPos = (pos->x + bt->unitList[defence-1]->xsize/2)/ (SQUARE_SIZE * 4);
-	int yPos = (pos->z + bt->unitList[defence-1]->zsize/2)/ (SQUARE_SIZE * 4);
+	int xPos = (pos->x + ai->Getbt()->unitList[defence-1]->xsize/2)/ (SQUARE_SIZE * 4);
+	int yPos = (pos->z + ai->Getbt()->unitList[defence-1]->zsize/2)/ (SQUARE_SIZE * 4);
 
 	// x range will change from line to line
 	int xStart;
@@ -2526,12 +2523,12 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 
 			/*my_pos.x = x * 32;
 			my_pos.z = y * 32;
-			my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
-			cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 8000, cb->GetMyAllyTeam(), false, true);
+			my_pos.y = ai->Getcb()->GetElevation(my_pos.x, my_pos.z);
+			ai->Getcb()->DrawUnit("ARMMINE1", my_pos, 0.0f, 8000, ai->Getcb()->GetMyAllyTeam(), false, true);
 			my_pos.x = (x+1) * 32;
 			my_pos.z = (y+1) * 32;
-			my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
-			cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 8000, cb->GetMyAllyTeam(), false, true);*/
+			my_pos.y = ai->Getcb()->GetElevation(my_pos.x, my_pos.z);
+			ai->Getcb()->DrawUnit("ARMMINE1", my_pos, 0.0f, 8000, ai->Getcb()->GetMyAllyTeam(), false, true);*/
 		}
 	}
 
@@ -2539,7 +2536,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 	static const size_t filename_sizeMax = 2048;
 	char filename[filename_sizeMax];
 	STRCPY(filename, "AAIDefMap.txt");
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
+	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, filename);
 	FILE* file = fopen(filename, "w+");
 	for(int y = 0; y < yDefMapSize; ++y)
 	{
@@ -2556,7 +2553,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 void AAIMap::RemoveDefence(float3 *pos, int defence)
 {
 	int cell;
-	int range = bt->units_static[defence].range / 32;
+	int range = ai->Getbt()->units_static[defence].range / 32;
 
 	float power;
 	float air_power;
@@ -2564,23 +2561,23 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 
 	if(cfg->AIR_ONLY_MOD)
 	{
-		power = bt->fixed_eff[defence][0];
-		air_power = (bt->fixed_eff[defence][1] + bt->fixed_eff[defence][2])/2.0f;
-		submarine_power = bt->fixed_eff[defence][3];
+		power = ai->Getbt()->fixed_eff[defence][0];
+		air_power = (ai->Getbt()->fixed_eff[defence][1] + ai->Getbt()->fixed_eff[defence][2])/2.0f;
+		submarine_power = ai->Getbt()->fixed_eff[defence][3];
 	}
 	else
 	{
-		if(bt->unitList[defence-1]->minWaterDepth > 0)
-			power = (bt->fixed_eff[defence][2] + bt->fixed_eff[defence][3]) / 2.0f;
+		if(ai->Getbt()->unitList[defence-1]->minWaterDepth > 0)
+			power = (ai->Getbt()->fixed_eff[defence][2] + ai->Getbt()->fixed_eff[defence][3]) / 2.0f;
 		else
-			power = bt->fixed_eff[defence][0];
+			power = ai->Getbt()->fixed_eff[defence][0];
 
-		air_power = bt->fixed_eff[defence][1];
-		submarine_power = bt->fixed_eff[defence][4];
+		air_power = ai->Getbt()->fixed_eff[defence][1];
+		submarine_power = ai->Getbt()->fixed_eff[defence][4];
 	}
 
-	int xPos = (pos->x + bt->unitList[defence-1]->xsize/2) / (SQUARE_SIZE * 4);
-	int yPos = (pos->z + bt->unitList[defence-1]->zsize/2) / (SQUARE_SIZE * 4);
+	int xPos = (pos->x + ai->Getbt()->unitList[defence-1]->xsize/2) / (SQUARE_SIZE * 4);
+	int yPos = (pos->z + ai->Getbt()->unitList[defence-1]->zsize/2) / (SQUARE_SIZE * 4);
 
 	// further decrease values close around the bulding (to prevent aai from packing buildings too close together)
 	int xStart = xPos - 3;
@@ -2678,13 +2675,13 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 	else if(category == SUBMARINE_ASSAULT)
 		map = &submarine_defence_map;
 
-	float range =  bt->units_static[def->id].range / 8.0;
+	float range =  ai->Getbt()->units_static[def->id].range / 8.0;
 
 	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
 	static const size_t filename_sizeMax = 2048;
 	char filename[filename_sizeMax];
 	STRCPY(filename, "AAIDebug.txt");
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
+	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, filename);
 	FILE* file = fopen(filename, "w+");
 	fprintf(file, "Search area: (%i, %i) x (%i, %i)\n", xStart, yStart, xEnd, yEnd);
 	fprintf(file, "Range: %g\n", range);
@@ -2721,7 +2718,7 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 					BuildMapPos2Pos(&pos, def);
 					Pos2FinalBuildPos(&pos, def);
 
-					if(cb->CanBuildAt(def, pos))
+					if(ai->Getcb()->CanBuildAt(def, pos))
 					{
 						*best_pos = pos;
 						best_rating = my_rating;
@@ -2763,27 +2760,27 @@ int AAIMap::GetContinentID(float3 *pos)
 int AAIMap::GetSmartContinentID(float3 *pos, unsigned int unit_movement_type)
 {
 	// check if non sea/amphib unit in shallow water
-	if(ai->cb->GetElevation(pos->x, pos->z) < 0 && unit_movement_type & MOVE_TYPE_GROUND)
+	if(ai->Getcb()->GetElevation(pos->x, pos->z) < 0 && unit_movement_type & MOVE_TYPE_GROUND)
 	{
 		//look for closest land cell
 		for(int k = 1; k < 10; ++k)
 		{
-			if(ai->cb->GetElevation(pos->x + k * 16, pos->z) > 0)
+			if(ai->Getcb()->GetElevation(pos->x + k * 16, pos->z) > 0)
 			{
 				pos->x += k *16;
 				break;
 			}
-			else if(ai->cb->GetElevation(pos->x - k * 16, pos->z) > 0)
+			else if(ai->Getcb()->GetElevation(pos->x - k * 16, pos->z) > 0)
 			{
 				pos->x -= k *16;
 				break;
 			}
-			else if(ai->cb->GetElevation(pos->x, pos->z + k * 16) > 0)
+			else if(ai->Getcb()->GetElevation(pos->x, pos->z + k * 16) > 0)
 			{
 				pos->z += k *16;
 				break;
 			}
-			else if(ai->cb->GetElevation(pos->x, pos->z - k * 16) > 0)
+			else if(ai->Getcb()->GetElevation(pos->x, pos->z - k * 16) > 0)
 			{
 				pos->z -= k *16;
 				break;

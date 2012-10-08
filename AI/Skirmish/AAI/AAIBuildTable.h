@@ -17,7 +17,7 @@ class AAI;
 class AAIBuildTable
 {
 public:
-	AAIBuildTable(IAICallback *cb, AAI* ai);
+	AAIBuildTable(AAI* ai);
 	~AAIBuildTable(void);
 
 	// call before you want to use the buildtable
@@ -278,7 +278,6 @@ private:
 	float GetUnitRating(int unit, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff);
 	void DebugPrint();
 
-	IAICallback *cb;
 	AAI * ai;
 
 	FILE *file;

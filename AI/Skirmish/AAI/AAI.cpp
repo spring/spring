@@ -174,11 +174,11 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	}
 
 	// create buildtable
-	bt = new AAIBuildTable(cb, this);
+	bt = new AAIBuildTable(this);
 	bt->Init();
 
 	// init unit table
-	ut = new AAIUnitTable(this, bt);
+	ut = new AAIUnitTable(this);
 
 	// init map
 	map = new AAIMap(this);
@@ -188,16 +188,16 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	brain = new AAIBrain(this);
 
 	// init executer
-	execute = new AAIExecute(this, brain);
+	execute = new AAIExecute(this);
 
 	// create unit groups
 	group_list.resize(MOBILE_CONSTRUCTOR+1);
 
 	// init airforce manager
-	af = new AAIAirForceManager(this, cb, bt);
+	af = new AAIAirForceManager(this);
 
 	// init attack manager
-	am = new AAIAttackManager(this, cb, bt, map->continents.size());
+	am = new AAIAttackManager(this, map->continents.size());
 
 	LogConsole("AAI loaded");
 }
@@ -315,6 +315,9 @@ void AAI::UnitCreated(int unit, int /*builder*/)
 		ut->requestedUnits[COMMANDER] += 1;
 		ut->futureBuilders += 1;
 		bt->units_dynamic[def->id].under_construction += 1;
+
+		// set side
+		side = bt->GetSideByID(def->id);
 
 		execute->InitAI(unit, def);
 

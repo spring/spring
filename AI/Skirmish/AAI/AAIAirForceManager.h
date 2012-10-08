@@ -20,7 +20,7 @@ class AAIMap;
 class AAIAirForceManager
 {
 public:
-	AAIAirForceManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt);
+	AAIAirForceManager(AAI *ai);
 	~AAIAirForceManager(void);
 
 	// checks if a certain unit is worth attacking it and tries to order air units to do it (units, stationary defences)
@@ -52,12 +52,7 @@ public:
 	AAIGroup* GetAirGroup(float importance, UnitType group_type);
 
 private:
-
-
-	IAICallback *cb;
 	AAI *ai;
-	AAIBuildTable *bt;
-	AAIMap *map;
 
 	int my_team;
 	int num_of_targets;
