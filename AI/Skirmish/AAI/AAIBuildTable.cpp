@@ -12,7 +12,7 @@
 #include "AAI.h"
 
 // all the static vars
-const UnitDef** AAIBuildTable::unitList = 0;
+const UnitDef** AAIBuildTable::unitList = NULL;
 list<int>* AAIBuildTable::units_of_category[MOBILE_CONSTRUCTOR+1];
 char AAIBuildTable::buildtable_filename[500];
 float* AAIBuildTable::avg_cost[MOBILE_CONSTRUCTOR+1];
@@ -222,7 +222,7 @@ void AAIBuildTable::Init()
 	}
 
 	// get unit defs from game
-	if(!unitList)
+	if(unitList==NULL)
 	{
 		unitList = new const UnitDef*[numOfUnits];
 		cb->GetUnitDefList(unitList);
