@@ -94,8 +94,6 @@ public:
 
 private:
 	AAI *ai;
-	AAIBuildTable *bt;
-	IAICallback *cb;
 	// engine tick the build order had been given
 	int order_tick;
 	// buildque

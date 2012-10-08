@@ -104,8 +104,6 @@ public:
 	int continent;
 
 private:
-
-	IAICallback *cb;
 	AAI* ai;
-	AAIBuildTable *bt;
+
 };
