@@ -58,7 +58,6 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/Screenshot.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
@@ -608,7 +607,6 @@ void CGame::PreLoadRendering()
 	featureDrawer = new CFeatureDrawer();
 	loadscreen->SetLoadMessage("Creating Sky");
 	sky = ISky::GetSky();
-	groundDecals = new CGroundDecalHandler();
 }
 
 void CGame::PostLoadRendering() {

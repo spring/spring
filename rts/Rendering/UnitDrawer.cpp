@@ -26,7 +26,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
@@ -131,14 +131,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 		for (std::vector<std::string>::const_iterator it = ud->modelCEGTags.begin(); it != ud->modelCEGTags.end(); ++it) {
 			ud->sfxExplGens.push_back(explGenHandler->LoadGenerator(*it));
 		}
-
-		if (ud->decalDef.useGroundDecal) {
-			ud->decalDef.groundDecalType = groundDecals->GetSolidObjectDecalType(ud->decalDef.groundDecalTypeName);
-		}
-
-		if (ud->decalDef.leaveTrackDecals) {
-			ud->decalDef.trackDecalType = groundDecals->GetTrackType(ud->decalDef.trackDecalTypeName);
-		}
 	}
 
 
@@ -174,24 +166,11 @@ CUnitDrawer::~CUnitDrawer()
 	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
 	cubeMapHandler->Free();
 
-	// RenderUnitDestroyed does not trigger on exit, clean up manually
-	for (std::set<CUnit*>::iterator it = unsortedUnits.begin(); it != unsortedUnits.end(); ++it) {
-		CUnit* unit = *it;
-
-		if (unit->unitDef->decalDef.useGroundDecal)
-			groundDecals->RemoveSolidObject(unit, NULL);
-
-		groundDecals->RemoveUnit(unit);
-	}
-
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		std::set<GhostSolidObject*>& ghostSet = deadGhostBuildings[modelType];
 		std::set<GhostSolidObject*>::iterator ghostSetIt;
 
 		for (ghostSetIt = ghostSet.begin(); ghostSetIt != ghostSet.end(); ++ghostSetIt) {
-			if ((*ghostSetIt)->decal) {
-				(*ghostSetIt)->decal->gbOwner = 0;
-			}
 			delete *ghostSetIt;
 		}
 
@@ -1201,8 +1180,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	for (std::set<GhostSolidObject*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
 		if (loshandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 			// obtained LOS on the ghost of a dead building
-			if ((*it)->decal)
-				(*it)->decal->gbOwner = 0;
+			groundDecals->GhostDestroyed(*it);
 
 			delete *it;
 			it = set_erase(deadGhostedBuildings, it);
@@ -2337,9 +2315,6 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 			Watchdog::ClearPrimaryTimers(); // batching can create an avalance of events during /give xxx, triggering hang detection
 	}
 
-	if (u->unitDef->decalDef.useGroundDecal)
-		groundDecals->MoveSolidObject(const_cast<CUnit *>(u), u->pos);
-
 	if (u->model != NULL) {
 		if (cloaked) {
 			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
@@ -2359,7 +2334,8 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 
 	if ((dynamic_cast<CBuilding*>(u) != NULL) && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
-		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView) {
+		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView
+	) {
 		// FIXME -- adjust decals for decoys? gets weird?
 		const UnitDef* decoyDef = u->unitDef->decoyDef;
 		S3DModel* gbModel = (decoyDef == NULL) ? u->model : decoyDef->LoadModel();
@@ -2369,15 +2345,13 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		gb->model  = gbModel;
 		gb->decal  = NULL;
 		gb->facing = u->buildFacing;
+		gb->dir    = u->frontdir;
 		gb->team   = u->team;
 
 		deadGhostBuildings[gbModel->type].insert(gb);
+
+		groundDecals->GhostCreated(u, gb);
 	}
-
-	if (u->unitDef->decalDef.useGroundDecal)
-		groundDecals->RemoveSolidObject(u, gb);
-
-	groundDecals->RemoveUnit(u);
 
 	if (u->model) {
 		// renderer unit cloak state may not match sim (because of MT) - erase from both renderers to be sure
