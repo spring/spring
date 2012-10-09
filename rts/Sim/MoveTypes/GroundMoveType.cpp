@@ -2288,7 +2288,11 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		// we want directional slope-tolerance checking, otherwise units get stuck on terrain too much
 		// note that we only reach this point after the pathfinder has already decided on a valid path
 		//
-		const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
+		// only use directional passability test if we already spilled over into terrain that the pathfinder
+		// would consider impassable, otherwise many units will enter regions where pathing fails totally
+		const bool curBlock = (CMoveMath::GetPosSpeedMod(*md, owner->pos) <= 0.01f);
+		const bool terrainBlocked = (!curBlock && (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector) <= 0.01f)) ||
+						(curBlock && (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f));
 		const bool terrainIgnored = pathController->IgnoreTerrain(*md, owner->pos + speedVector);
 
 		if (terrainBlocked && !terrainIgnored) {
