@@ -2,7 +2,6 @@
 
 #include "IGroundDecalDrawer.h"
 #include "Rendering/Env/Decals/GroundDecalHandler.h"
-#include "Rendering/Env/Decals/ShaderGroundDecalDrawer.h"
 #include "System/Config/ConfigHandler.h"
 
 
