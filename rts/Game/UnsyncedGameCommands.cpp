@@ -43,7 +43,7 @@
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/glFont.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
