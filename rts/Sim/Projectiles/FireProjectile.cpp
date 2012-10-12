@@ -82,21 +82,21 @@ void CFireProjectile::Update()
 			//! unsynced code
 			SubParticle sub;
 			sub.age = 0;
-			sub.maxSize = (0.7f + gu->usRandFloat()*0.3f) * particleSize;
-			sub.posDif = gu->usRandVector() * emitRadius;
+			sub.maxSize = (0.7f + gu->RandFloat()*0.3f) * particleSize;
+			sub.posDif = gu->RandVector() * emitRadius;
 			sub.pos = emitPos;
 			sub.pos.y += sub.posDif.y;
 			sub.posDif.y = 0;
-			sub.rotSpeed = (gu->usRandFloat() - 0.5f) * 4;
-			sub.smokeType = gu->usRandInt() % projectileDrawer->smoketex.size();
+			sub.rotSpeed = (gu->RandFloat() - 0.5f) * 4;
+			sub.smokeType = gu->RandInt() % projectileDrawer->smoketex.size();
 			subParticles.push_front(sub);
 
-			sub.maxSize = (0.7f + gu->usRandFloat()*0.3f) * particleSize;
-			sub.posDif = gu->usRandVector() * emitRadius;
+			sub.maxSize = (0.7f + gu->RandFloat()*0.3f) * particleSize;
+			sub.posDif = gu->RandVector() * emitRadius;
 			sub.pos = emitPos;
 			sub.pos.y += sub.posDif.y - radius*0.3f;
 			sub.posDif.y = 0;
-			sub.rotSpeed=(gu->usRandFloat() - 0.5f) * 4;
+			sub.rotSpeed=(gu->RandFloat() - 0.5f) * 4;
 			subParticles2.push_front(sub);
 		}
 		if (!(ttl & 31)) {

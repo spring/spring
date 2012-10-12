@@ -300,10 +300,10 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 		const float bmax = std::max(10, a / 10);
 		for (int b = 0; b < bmax; ++b) {
 			// FIXME: using a deterministic technique might be better, since it would allow an unload command to be tested for validity from unsynced (with predictable results)
-			const float ang = 2.0f * PI * (fromSynced ? gs->randFloat() : gu->usRandFloat());
+			const float ang = 2.0f * PI * (fromSynced ? gs->randFloat() : gu->RandFloat());
 			float len = a; // prefer unload near center
 			if (a != 0 || b != 0)
-				len += (fromSynced ? gs->randFloat() : gu->usRandFloat());
+				len += (fromSynced ? gs->randFloat() : gu->RandFloat());
 			len /= amax;
 			delta.x = len * math::sin(ang);
 			delta.z = len * math::cos(ang);

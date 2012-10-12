@@ -972,8 +972,8 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	s->alphaFalloff = s->startAlpha / (lifeTime);
 	s->lifeTime = (int) (gs->frameNum + lifeTime);
 	// atlas contains 2x2 textures, pick one of them
-	s->texOffsetX = (gu->usRandInt() & 128)? 0: 0.5f;
-	s->texOffsetY = (gu->usRandInt() & 128)? 0: 0.5f;
+	s->texOffsetX = (gu->RandInt() & 128)? 0: 0.5f;
+	s->texOffsetY = (gu->RandInt() & 128)? 0: 0.5f;
 
 	s->x1 = (int) max(0.f,                  (pos.x - radius) / 16.0f    );
 	s->x2 = (int) min(float(gs->hmapx - 1), (pos.x + radius) / 16.0f + 1);

@@ -491,9 +491,9 @@ void S3DOPiece::SetMinMaxExtends()
 void S3DOPiece::Shatter(float pieceChance, int /*texType*/, int team, const float3& pos, const float3& speed) const
 {
 	for (std::vector<S3DOPrimitive>::const_iterator pi = prims.begin(); pi != prims.end(); ++pi) {
-		if (gu->usRandFloat() > pieceChance || pi->numVertex != 4)
+		if (gu->RandFloat() > pieceChance || pi->numVertex != 4)
 			continue;
 
-		ph->AddFlyingPiece(team, pos, speed + gu->usRandVector() * 2.0f, this, &*pi);
+		ph->AddFlyingPiece(team, pos, speed + gu->RandVector() * 2.0f, this, &*pi);
 	}
 }
