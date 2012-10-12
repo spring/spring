@@ -223,7 +223,6 @@ bool CGroundMoveType::Update()
 	}
 	if (skidding) {
 		UpdateSkid();
-		HandleObjectCollisions();
 		return false;
 	}
 
@@ -721,6 +720,8 @@ void CGroundMoveType::UpdateSkid()
 			speed.y += mapInfo->map.gravity;
 		}
 	} else {
+		// *assume* this means the unit is still on the ground
+		// (Lua gadgetry can interfere with our "physics" logic)
 		float speedf = speed.Length();
 		float skidRotSpd = 0.0f;
 
@@ -796,6 +797,9 @@ void CGroundMoveType::UpdateSkid()
 	if (skidding) {
 		CalcSkidRot();
 		CheckCollisionSkid();
+	} else {
+		// do this here since ::Update returns early if it calls us
+		HandleObjectCollisions();
 	}
 
 	// always update <oldPos> here so that <speed> does not make
@@ -889,16 +893,19 @@ void CGroundMoveType::CheckCollisionSkid()
 				collidee->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 			}
 		} else {
-			// don't conserve momentum
 			assert(collider->mass > 0.0f && collidee->mass > 0.0f);
 
+			// don't conserve momentum (impact speed is halved, so impulses are too)
+			// --> collisions are neither truly elastic nor truly inelastic to prevent
+			// the simulation from blowing up from impulses applied to tight groups of
+			// units
 			const float impactSpeed = (collidee->speed - collider->speed).dot(dif) * 0.5f;
 			const float colliderRelMass = (collider->mass / (collider->mass + collidee->mass));
 			const float colliderRelImpactSpeed = impactSpeed * (1.0f - colliderRelMass);
 			const float collideeRelImpactSpeed = impactSpeed * (       colliderRelMass); 
 
-			const float colliderImpactDmgMult  = std::min(colliderRelImpactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
-			const float collideeImpactDmgMult  = std::min(collideeRelImpactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
+			const float  colliderImpactDmgMult = std::min(colliderRelImpactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
+			const float  collideeImpactDmgMult = std::min(collideeRelImpactSpeed * collider->mass * MASS_MULT, MAX_UNIT_SPEED);
 			const float3 colliderImpactImpulse = dif * colliderRelImpactSpeed;
 			const float3 collideeImpactImpulse = dif * collideeRelImpactSpeed;
 
@@ -908,7 +915,7 @@ void CGroundMoveType::CheckCollisionSkid()
 			if (impactSpeed <= 0.0f)
 				continue;
 
-			collider->Move3D(colliderImpactImpulse, true);
+			collider->Move3D( colliderImpactImpulse, true);
 			collidee->Move3D(-collideeImpactImpulse, true);
 
 			// damage the collider
@@ -921,9 +928,7 @@ void CGroundMoveType::CheckCollisionSkid()
 			}
 
 			collider->speed += colliderImpactImpulse;
-			collider->speed *= 0.9f;
 			collidee->speed -= collideeImpactImpulse;
-			collidee->speed *= 0.9f;
 		}
 	}
 
@@ -2290,9 +2295,11 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		//
 		// only use directional passability test if we already spilled over into terrain that the pathfinder
 		// would consider impassable, otherwise many units will enter regions where pathing fails totally
-		const bool curBlock = (CMoveMath::GetPosSpeedMod(*md, owner->pos) <= 0.01f);
-		const bool terrainBlocked = (!curBlock && (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector) <= 0.01f)) ||
-						(curBlock && (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f));
+		//
+		// const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
+		const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos) <= 0.01f)?
+			(CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f):
+			(CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector              ) <= 0.01f);
 		const bool terrainIgnored = pathController->IgnoreTerrain(*md, owner->pos + speedVector);
 
 		if (terrainBlocked && !terrainIgnored) {
