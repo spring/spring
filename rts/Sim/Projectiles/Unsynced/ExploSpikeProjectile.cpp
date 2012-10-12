@@ -47,7 +47,7 @@ CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos, const float3& sp
 	dir(speed),
 	color(1.0f, 0.8f, 0.5f)
 {
-	lengthGrowth = dir.Length() * (0.5f + gu->usRandFloat() * 0.4f);
+	lengthGrowth = dir.Length() * (0.5f + gu->RandFloat() * 0.4f);
 	dir /= lengthGrowth;
 
 	checkCol  = false;
@@ -101,7 +101,7 @@ void CExploSpikeProjectile::Init(const float3& pos, CUnit* owner)
 {
 	CProjectile::Init(pos, owner);
 
-	lengthGrowth = dir.Length() * (0.5f + gu->usRandFloat() * 0.4f);
+	lengthGrowth = dir.Length() * (0.5f + gu->RandFloat() * 0.4f);
 	dir /= lengthGrowth;
 
 	checkCol = false;

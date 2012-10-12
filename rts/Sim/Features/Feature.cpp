@@ -541,8 +541,8 @@ bool CFeature::Update()
 	if (emitSmokeTime != 0) {
 		--emitSmokeTime;
 		if (!((gs->frameNum + id) & 3) && ph->particleSaturation < 0.7f) {
-			new CSmokeProjectile(midPos + gu->usRandVector() * radius * 0.3f,
-				gu->usRandVector() * 0.3f + UpVector, emitSmokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
+			new CSmokeProjectile(midPos + gu->RandVector() * radius * 0.3f,
+				gu->RandVector() * 0.3f + UpVector, emitSmokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
 		}
 		if (emitSmokeTime > 0)
 			finishedUpdate = false;
@@ -583,11 +583,11 @@ bool CFeature::Update()
 		CUnit *u = dynamic_cast<CUnit*>(solidOnTop);
 		if (!u || !u->unitDef->needGeo) {
 			if ((ph->particleSaturation < 0.7f) || (ph->particleSaturation < 1 && !(gs->frameNum & 3))) {
-				float3 speed = gu->usRandVector() * 0.5f;
+				float3 speed = gu->RandVector() * 0.5f;
 				speed.y += 2.0f;
 
-				new CGeoThermSmokeProjectile(gu->usRandVector() * 10 +
-					float3(pos.x, pos.y-10, pos.z), speed, int(50 + gu->usRandFloat() * 7), this);
+				new CGeoThermSmokeProjectile(gu->RandVector() * 10 +
+					float3(pos.x, pos.y-10, pos.z), speed, int(50 + gu->RandFloat() * 7), this);
 			}
 		}
 

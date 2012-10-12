@@ -379,7 +379,7 @@ static string SelectPicture(const std::string& dir, const std::string& prefix)
 		return "";
 	}
 
-	return pics[gu->usRandInt() % pics.size()];
+	return pics[gu->RandInt() % pics.size()];
 }
 
 
