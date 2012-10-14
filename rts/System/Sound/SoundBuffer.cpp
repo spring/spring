@@ -40,7 +40,7 @@ int	VorbisClose(void* datasource)
 SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
 SoundBuffer::bufferVecT SoundBuffer::buffers;
 
-SoundBuffer::SoundBuffer() : id(0), channels(0)
+SoundBuffer::SoundBuffer() : id(0), channels(0), length(0.0f)
 {
 }
 
@@ -154,6 +154,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 
 	filename = file;
 	channels = header->channels;
+	length   = float(header->datalen) / (header->channels * header->SamplesPerSec * header->BitsPerSample);
 
 	return true;
 }
@@ -233,6 +234,7 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 	AlGenBuffer(file, format, &decodeBuffer[0], pos, vorbisInfo->rate);
 	filename = file;
 	channels = vorbisInfo->channels;
+	length   = ov_time_total(&oggStream, -1);
 	return true;
 }
 
