@@ -56,15 +56,16 @@ namespace Shader {
 
 	struct IProgramObject {
 	public:
-		IProgramObject(const std::string& poName): name(poName), objID(0), valid(false) {}
+		IProgramObject(const std::string& poName): name(poName), objID(0), valid(false), bound(false), curHash(0) {}
 		virtual ~IProgramObject() {}
 
-		virtual void Enable() const = 0;
-		virtual void Disable() const = 0;
+		virtual void Enable() = 0;
+		virtual void Disable() = 0;
 		virtual void Link() {}
 		virtual void Validate() {}
 		virtual void Release() = 0;
 		virtual void Reload() = 0;
+		bool IsBound() const { return bound; }
 
 		virtual void SetUniformTarget(int) {}
 		virtual void SetUniformLocation(const std::string&) {}
@@ -111,6 +112,7 @@ namespace Shader {
 		std::string name;
 		unsigned int objID;
 		bool valid;
+		bool bound;
 
 		std::string log;
 		SOVec shaderObjs;
@@ -119,8 +121,8 @@ namespace Shader {
 	struct NullProgramObject: public Shader::IProgramObject {
 	public:
 		NullProgramObject(const std::string& poName): IProgramObject(poName) {}
-		void Enable() const {}
-		void Disable() const {}
+		void Enable() {}
+		void Disable() {}
 		void Release() {}
 		void Reload() {}
 
@@ -144,8 +146,8 @@ namespace Shader {
 	struct ARBProgramObject: public Shader::IProgramObject {
 	public:
 		ARBProgramObject(const std::string& poName);
-		void Enable() const;
-		void Disable() const;
+		void Enable();
+		void Disable();
 		void Link();
 		void Release();
 		void Reload();
@@ -177,8 +179,8 @@ namespace Shader {
 	struct GLSLProgramObject: public Shader::IProgramObject {
 	public:
 		GLSLProgramObject(const std::string& poName);
-		void Enable() const;
-		void Disable() const;
+		void Enable();
+		void Disable();
 		void Link();
 		void Validate();
 		void Release();

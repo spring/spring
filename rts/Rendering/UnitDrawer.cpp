@@ -1348,11 +1348,13 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 		const CTeam* t = teamHandler->Team(team);
 		const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
-		if (globalRendering->haveGLSL && shadowHandler->shadowsLoaded) {
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(9, &c[0]);
-		} else {
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &c[0]);
+		if (modelShaders[MODEL_SHADER_S3O_ACTIVE]->IsBound()) {
+			if (globalRendering->haveGLSL && shadowHandler->shadowsLoaded) {
+				modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(9, &c[0]);
+			} else {
+				modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
+				modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &c[0]);
+			}
 		}
 
 		if (LUA_DRAWING) {// FIXME?

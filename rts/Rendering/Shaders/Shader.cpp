@@ -181,17 +181,19 @@ namespace Shader {
 		uniformTarget = -1;
 	}
 
-	void ARBProgramObject::Enable() const {
+	void ARBProgramObject::Enable() {
 		for (SOVecConstIt it = shaderObjs.begin(); it != shaderObjs.end(); it++) {
 			glEnable((*it)->GetType());
 			glBindProgramARB((*it)->GetType(), (*it)->GetObjID());
 		}
+		bound = true;
 	}
-	void ARBProgramObject::Disable() const {
+	void ARBProgramObject::Disable() {
 		for (SOVecConstIt it = shaderObjs.begin(); it != shaderObjs.end(); it++) {
 			glBindProgramARB((*it)->GetType(), 0);
 			glDisable((*it)->GetType());
 		}
+		bound = false;
 	}
 
 	void ARBProgramObject::Link() {
@@ -242,8 +244,8 @@ namespace Shader {
 		objID = glCreateProgram();
 	}
 
-	void GLSLProgramObject::Enable() const { glUseProgram(objID); }
-	void GLSLProgramObject::Disable() const { glUseProgram(0); }
+	void GLSLProgramObject::Enable() { glUseProgram(objID); bound = true; }
+	void GLSLProgramObject::Disable() { glUseProgram(0); bound = false; }
 
 	void GLSLProgramObject::Link() {
 		glLinkProgram(objID);
