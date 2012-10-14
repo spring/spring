@@ -26,6 +26,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SkyBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SkyLight.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Decals/GroundDecalHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Decals/DecalsDrawerGL4.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FarTextureHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FeatureDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/FBO.cpp"
