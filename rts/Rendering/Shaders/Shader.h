@@ -56,7 +56,7 @@ namespace Shader {
 
 	struct IProgramObject {
 	public:
-		IProgramObject(const std::string& poName): name(poName), objID(0), valid(false), bound(false), curHash(0) {}
+		IProgramObject(const std::string& poName): name(poName), objID(0), valid(false), bound(false) {}
 		virtual ~IProgramObject() {}
 
 		virtual void Enable() = 0;
