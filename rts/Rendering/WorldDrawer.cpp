@@ -6,12 +6,12 @@
 
 #include "WorldDrawer.h"
 #include "Rendering/Env/CubeMapHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/FarTextureHandler.h"
-#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
@@ -81,13 +81,14 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(inMapDrawerView);
 
 	SafeDelete(featureDrawer);
-	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler, groundDecals
+	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler
 	SafeDelete(projectileDrawer);
 
 	SafeDelete(farTextureHandler);
 	SafeDelete(heightMapTexture);
 
 	SafeDelete(cubeMapHandler);
+	IGroundDecalDrawer::FreeInstance();
 }
 
 
