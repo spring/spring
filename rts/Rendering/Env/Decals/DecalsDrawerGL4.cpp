@@ -18,7 +18,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/TimerQuery.h"
+//#include "Rendering/GL/TimerQuery.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/GL/VBO.h"
 #include "Rendering/Shaders/ShaderHandler.h"
@@ -682,13 +682,13 @@ void CDecalsDrawerGL4::Draw()
 		glBindTexture(GL_TEXTURE_2D, depthTex);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
-	static GLTimerQuery glTimer;
+	/*static GLTimerQuery glTimer;
 	static float gpuDrawFrameTimeInMS = 0;
 	if (glTimer.Available()) {
 		gpuDrawFrameTimeInMS = mix(gpuDrawFrameTimeInMS, glTimer.Query(), 0.05f);
 		//LOG("CDecalsDrawerGL4::Draw %.4f ms", gpuDrawFrameTimeInMS);
 	}
-	glTimer.Start();
+	glTimer.Start();*/
 
 	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	const CSMFReadMap* smfrm = dynamic_cast<CSMFReadMap*>(readmap);
@@ -749,7 +749,7 @@ void CDecalsDrawerGL4::Draw()
 
 	decalShader->Disable();
 
-	glTimer.Stop();
+	//glTimer.Stop();
 }
 
 
