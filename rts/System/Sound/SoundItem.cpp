@@ -34,20 +34,20 @@ namespace
 	}
 }
 
-SoundItem::SoundItem(boost::shared_ptr<SoundBuffer> _buffer, const std::map<std::string, std::string>& items) :
-buffer(_buffer),
-gain(1.0),
-gainMod(0),
-pitch(1.0),
-pitchMod(0),
-dopplerScale(1.0),
-maxDist(FLT_MAX),
-rolloff(1.0f),
-priority(0),
-maxConcurrent(16),
-currentlyPlaying(0),
-loopTime(0),
-in3D(true)
+SoundItem::SoundItem(boost::shared_ptr<SoundBuffer> _buffer, const std::map<std::string, std::string>& items)
+	: buffer(_buffer)
+	, gain(1.0)
+	, gainMod(0)
+	, pitch(1.0)
+	, pitchMod(0)
+	, dopplerScale(1.0)
+	, maxDist(FLT_MAX)
+	, rolloff(1.0f)
+	, priority(0)
+	, maxConcurrent(16)
+	, currentlyPlaying(0)
+	, loopTime(0)
+	, in3D(true)
 {
 	if (!MapEntryValExtract(items, "name", name))
 		name = buffer->GetFilename();
