@@ -15,6 +15,21 @@
 #include "System/float4.h"
 #include "System/Vec2.h"
 
+#ifndef GL_VERSION_4_0
+	class CDecalsDrawerGL4: public IGroundDecalDrawer
+	{
+		CDecalsDrawerGL4();
+		virtual ~CDecalsDrawerGL4() {}
+
+		virtual void Draw() {}
+		virtual void Update() {}
+
+		virtual void ForceRemoveSolidObject(CSolidObject* object) {}
+		virtual void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb) {}
+		virtual void GhostDestroyed(GhostSolidObject* gb) {}
+		virtual void GhostCreated(CSolidObject* object, GhostSolidObject* gb) {}
+	};
+#else
 
 namespace Shader {
 	struct IProgramObject;
@@ -136,6 +151,6 @@ private:
 	Shader::IProgramObject* decalShader;
 };
 
-extern CDecalsDrawerGL4* shaderGroundDecals;
+#endif // GL_VERSION_4_0
 
 #endif // SHADER_GROUND_DECAL_DRAWER_H 
