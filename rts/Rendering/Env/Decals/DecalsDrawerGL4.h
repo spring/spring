@@ -15,7 +15,7 @@
 #include "System/float4.h"
 #include "System/Vec2.h"
 
-#ifndef GL_VERSION_4_0
+#if !defined(GL_VERSION_4_0) || HEADLESS
 	class CDecalsDrawerGL4: public IGroundDecalDrawer
 	{
 		CDecalsDrawerGL4();
@@ -151,6 +151,6 @@ private:
 	Shader::IProgramObject* decalShader;
 };
 
-#endif // GL_VERSION_4_0
+#endif // !defined(GL_VERSION_4_0) || HEADLESS
 
 #endif // SHADER_GROUND_DECAL_DRAWER_H 

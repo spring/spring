@@ -51,7 +51,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DECALS_GL4)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_DECALS_GL4
 
-#ifndef GL_VERSION_4_0
+#if !defined(GL_VERSION_4_0) || HEADLESS
 CDecalsDrawerGL4::CDecalsDrawerGL4()
 {
 	throw opengl_error(LOG_SECTION_DECALS_GL4 ": Compiled without OpenGL4 support!");
@@ -594,7 +594,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	assert(uniformBlockSize > 0);
 
 	if (uniformBlockSize % sizeof(SGLSLGroundLighting) != 0)
-		LOG("uniformBlockSize sizeof(SGLSLGroundLighting) %u %u", uniformBlockSize, sizeof(SGLSLGroundLighting));
+		LOG("uniformBlockSize sizeof(SGLSLGroundLighting) %u %" PRIuPTR, uniformBlockSize, sizeof(SGLSLGroundLighting));
 	assert(uniformBlockSize % sizeof(SGLSLGroundLighting) == 0);
 
 
@@ -944,4 +944,4 @@ void CDecalsDrawerGL4::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 	//decal->gbOwner = gb;
 }
 
-#endif // GL_VERSION_4_0
+#endif // !defined(GL_VERSION_4_0) || HEADLESS
