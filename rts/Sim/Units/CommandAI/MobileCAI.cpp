@@ -852,8 +852,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	// user wants to attack the ground; cycle through our
 	// weapons until we find one that can accomodate him
 	else if (c.params.size() >= 3) {
-		const float3 pos = c.GetPos(0);
-		const float3 diff = owner->pos - pos;
+		const float3 attackPos = c.GetPos(0);
+		const float3 attackVec = attackPos - owner->pos;
 
 		bool foundWeapon = false;
 
@@ -869,19 +869,23 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 				if (!w->weaponDef->manualfire)
 					continue;
-				if (diff.SqLength() >= (w->range * w->range))
+				if (attackVec.SqLength() >= (w->range * w->range))
 					continue;
 
 				StopMove();
-				owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
-				owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+				owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+				owner->moveType->KeepPointingTo(attackPos, owner->maxRange * 0.9f, true);
 
 				foundWeapon = true;
 			} else {
-				if (w->TryTargetHeading(GetHeadingFromVector(diff.x, diff.z), pos, (c.options & INTERNAL_ORDER) == 0, NULL)) {
-					if (w->TryTargetRotate(pos, (c.options & INTERNAL_ORDER) == 0)) {
+				// NOTE:
+				//   we call TryTargetHeading which is less restrictive than TryTarget
+				//   (eg. the former succeeds even if the unit has not already aligned
+				//   itself with <attackVec>)
+				if (w->TryTargetHeading(GetHeadingFromVector(attackVec.x, attackVec.z), attackPos, (c.options & INTERNAL_ORDER) == 0, NULL)) {
+					if (w->TryTargetRotate(attackPos, (c.options & INTERNAL_ORDER) == 0)) {
 						StopMove();
-						owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+						owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
 
 						foundWeapon = true;
 					}
@@ -893,7 +897,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 					// hence it must be called as soon as we get in range
 					// and may not depend on what TryTargetRotate returns
 					// (otherwise we might never get a firing solution)
-					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+					owner->moveType->KeepPointingTo(attackPos, owner->maxRange * 0.9f, true);
 				}
 			}
 		}
@@ -902,14 +906,14 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// no weapons --> no need to stop at an arbitrary distance?
 		else if (diff.SqLength2D() < 1024) {
 			StopMove();
-			owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
+			owner->moveType->KeepPointingTo(attackPos, owner->maxRange * 0.9f, true);
 		}
 		#endif
 
 		// if we are unarmed and more than 10 elmos distant
 		// from target position, then keeping moving closer
-		if (owner->weapons.empty() && pos.SqDistance2D(goalPos) > 100) {
-			SetGoal(pos, owner->pos);
+		if (owner->weapons.empty() && attackPos.SqDistance2D(goalPos) > 100) {
+			SetGoal(attackPos, owner->pos);
 		}
 	}
 }
