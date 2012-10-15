@@ -594,7 +594,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	assert(uniformBlockSize > 0);
 
 	if (uniformBlockSize % sizeof(SGLSLGroundLighting) != 0)
-		LOG("uniformBlockSize sizeof(SGLSLGroundLighting) %u %" PRIuPTR, uniformBlockSize, sizeof(SGLSLGroundLighting));
+		LOG("uniformBlockSize sizeof(SGLSLGroundLighting) %u %zu", uniformBlockSize, sizeof(SGLSLGroundLighting));
 	assert(uniformBlockSize % sizeof(SGLSLGroundLighting) == 0);
 
 
