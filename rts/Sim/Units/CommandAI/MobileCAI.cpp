@@ -728,8 +728,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 	// user clicked on enemy unit (note that we handle aircrafts slightly differently)
 	if (orderTarget != NULL) {
-		bool targetInRange    = false;
-		bool tryTarget        = false;
+		bool tryTargetRotate  = false;
 		bool tryTargetHeading = false;
 
 		float edgeFactor = 0.0f; // percent offset to target center
@@ -762,12 +761,10 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				}
 			}
 
-			targetInRange    = Square(w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.SqDistance(owner->pos));
-			tryTarget        = w->TryTargetRotate(orderTarget, (c.options & INTERNAL_ORDER) == 0);
+			tryTargetRotate  = w->TryTargetRotate(orderTarget, (c.options & INTERNAL_ORDER) == 0);
 			tryTargetHeading = w->TryTargetHeading(GetHeadingFromVector(-targetMidPosVec.x, -targetMidPosVec.z), orderTarget->pos, orderTarget != NULL, orderTarget);
 
-			// FIXME: should we already break if only one of these is true?
-			if (targetInRange || tryTarget || tryTargetHeading)
+			if (tryTargetRotate || tryTargetHeading)
 				break;
 
 			edgeFactor = math::fabs(w->targetBorder);
@@ -778,12 +775,11 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// in range with our biggest (?) weapon, so stop moving
 		// also make sure that we're not locked in close-in/in-range state loop
 		// due to rotates invoked by in-range or out-of-range states
-		if (tryTarget) {
+		if (tryTargetRotate) {
 			const bool canChaseTarget = (!tempOrder || owner->moveState != MOVESTATE_HOLDPOS);
-			const bool targetInRange = (targetMidPosDist2D * 1.4f <= targetMidPosMaxDist);
 			const bool targetBehind = (targetMidPosVec.dot(orderTarget->speed) < 0.0f);
 
-			if (canChaseTarget && !targetInRange && tryTargetHeading && targetBehind) {
+			if (canChaseTarget && tryTargetHeading && targetBehind) {
 				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, SQUARE_SIZE, orderTarget->speed.Length() * 1.1f);
 			} else {
 				StopMove();
@@ -817,7 +813,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// and length of 2D vector from us to target less than 90% of our maximum range)
 			// then we are close enough, but need to move sideways to get a shot.
 			//assumption is flawed: The unit may be aiming or otherwise unable to shoot
-			else if (owner->unitDef->strafeToAttack && targetInRange && targetMidPosDist2D < (owner->maxRange * 0.9f)) {
+			else if (owner->unitDef->strafeToAttack && targetMidPosDist2D < (owner->maxRange * 0.9f)) {
 				moveDir ^= (owner->moveType->progressState == AMoveType::Failed);
 
 				const float sin = moveDir ? 3.0/5 : -3.0/5;
@@ -882,7 +878,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 				foundWeapon = true;
 			} else {
-				if (diff.SqLength2D() < Square( w->range - w->relWeaponPos.Length2D() )) {
+				if (w->TryTargetHeading(GetHeadingFromVector(diff.x, diff.z), pos, (c.options & INTERNAL_ORDER) == 0, NULL)) {
 					if (w->TryTargetRotate(pos, (c.options & INTERNAL_ORDER) == 0)) {
 						StopMove();
 						owner->AttackGround(pos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
