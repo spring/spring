@@ -64,9 +64,27 @@ public:
 
 	// called every frame
 	void Update();
+
+	IAICallback* Getcb() { return cb; }
+	IGlobalAICallback* Getaicb() { return aicb; }
+	int Getside()
+	{
+		assert(side>=0);
+		assert(side<=2);
+		return side;
+	}
+	list<AAIBuildTask*>& Getbuild_tasks() { return build_tasks; }
+	AAIBrain* Getbrain() { return brain; }
+	AAIExecute* Getexecute() { return execute; }
+	AAIUnitTable* Getut() { return ut; }
+	AAIMap* Getmap() { return map; }
+	AAIAirForceManager* Getaf() { return af; }
+	AAIAttackManager* Getam() { return am; }
+	AAIBuildTable* Getbt() { return bt; }
+	vector<list<AAIGroup*> >& Getgroup_list() { return group_list; }
+
 private:
 	Profiler* GetProfiler(){ return profiler; }
-public:
 
 	// callbacks
 	IAICallback* cb;
@@ -88,7 +106,6 @@ public:
 
 	vector<list<AAIGroup*> > group_list;  // unit groups
 
-private:
 	Profiler* profiler;
 	FILE *file;
 	bool initialized;

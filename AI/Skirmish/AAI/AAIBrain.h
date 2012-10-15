@@ -131,11 +131,6 @@ public:
 	// pos where com spawned
 	float3 start_pos;
 
-	AAIExecute *execute;
-
 private:
 	AAI *ai;
-	AAIMap *map;
-	IAICallback *cb;
-	AAIBuildTable *bt;
 };

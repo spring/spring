@@ -180,15 +180,15 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
 	}
 
 	for (int i = 0; i < numParticles; i++) {
-		float az = gu->usRandFloat() * 2 * PI;
-		float ay = (emitRot + (emitRotSpread * gu->usRandFloat())) * (PI / 180.0);
+		float az = gu->RandFloat() * 2 * PI;
+		float ay = (emitRot + (emitRotSpread * gu->RandFloat())) * (PI / 180.0);
 
-		particles[i].decayrate = 1.0f / (particleLife + (gu->usRandFloat() * particleLifeSpread));
+		particles[i].decayrate = 1.0f / (particleLife + (gu->RandFloat() * particleLifeSpread));
 		particles[i].life = 0;
-		particles[i].size = particleSize + gu->usRandFloat()*particleSizeSpread;
+		particles[i].size = particleSize + gu->RandFloat()*particleSizeSpread;
 		particles[i].pos = pos;
 
-		particles[i].speed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->usRandFloat() * particleSpeedSpread));
+		particles[i].speed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
 	}
 
 	drawRadius = (particleSpeed + particleSpeedSpread) * (particleLife * particleLifeSpread);
@@ -229,16 +229,16 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 	}
 
 	for (int i = 0; i < numParticles; i++) {
-		const float az = gu->usRandFloat() * 2 * PI;
-		const float ay = (emitRot + emitRotSpread*gu->usRandFloat()) * (PI / 180.0);
+		const float az = gu->RandFloat() * 2 * PI;
+		const float ay = (emitRot + emitRotSpread*gu->RandFloat()) * (PI / 180.0);
 
-		float3 pspeed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->usRandFloat() * particleSpeedSpread));
+		float3 pspeed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
 
 		CGenericParticleProjectile* particle = new CGenericParticleProjectile(pos + explosionPos, pspeed, owner);
 
-		particle->decayrate = 1.0f / (particleLife + gu->usRandFloat() * particleLifeSpread);
+		particle->decayrate = 1.0f / (particleLife + gu->RandFloat() * particleLifeSpread);
 		particle->life = 0;
-		particle->size = particleSize + gu->usRandFloat() * particleSizeSpread;
+		particle->size = particleSize + gu->RandFloat() * particleSizeSpread;
 
 		particle->texture = texture;
 		particle->colorMap = colorMap;

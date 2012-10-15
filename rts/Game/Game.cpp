@@ -58,7 +58,6 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/Screenshot.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
@@ -608,7 +607,6 @@ void CGame::PreLoadRendering()
 	featureDrawer = new CFeatureDrawer();
 	loadscreen->SetLoadMessage("Creating Sky");
 	sky = ISky::GetSky();
-	groundDecals = new CGroundDecalHandler();
 }
 
 void CGame::PostLoadRendering() {
@@ -1690,7 +1688,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 
 		std::string name = (gameServer != NULL)? "Server": "Client";
 		name += "GameState-";
-		name += IntToString(gu->usRandInt());
+		name += IntToString(gu->RandInt());
 		name += "-[";
 		name += IntToString(gMinFrameNum);
 		name += "-";

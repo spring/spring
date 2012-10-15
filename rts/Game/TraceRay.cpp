@@ -282,7 +282,7 @@ float GuiTraceRay(
 				// for iconified units, just pretend the collision
 				// volume is a sphere of radius <unit->IconRadius>
 				// (count radar blips as such too)
-				cv.InitSphere(unit->iconRadius * (1.0f + (gu->usRandFloat() * 3.0f)));
+				cv.InitSphere(unit->iconRadius * (1.0f + (gu->RandFloat() * 3.0f)));
 			}
 
 			if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {

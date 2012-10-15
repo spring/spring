@@ -103,14 +103,14 @@ public:
 		return ((id >= 0) && (id < ActiveTeams()));
 	}
 	bool IsActiveTeam(int id) const {
-		return IsValidTeam(id);
+		return (IsValidTeam(id) && !teams[id]->isDead);
 	}
 
 	bool IsValidAllyTeam(int id) const {
 		return ((id >= 0) && (id < ActiveAllyTeams()));
 	}
 	bool IsActiveAllyTeam(int id) const {
-		return IsValidAllyTeam(id);
+		return (IsValidAllyTeam(id) /*&& !allyTeams[id].isDead*/);
 	}
 
 	void GameFrame(int frameNum);

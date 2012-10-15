@@ -126,7 +126,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	for (int a = 0; a < 8; ++a) {
 		oldInfos[a] = new OldInfo;
 		oldInfos[a]->pos = pos;
-		oldInfos[a]->size = gu->usRandFloat() * 2 + 2;
+		oldInfos[a]->size = gu->RandFloat() * 2 + 2;
 	}
 
 	SetRadiusAndHeight(radius, 0.0f);
@@ -276,7 +276,7 @@ float3 CPieceProjectile::RandomVertexPos()
 		return ZeroVector;
 	}
 
-	const int vertexNum = (int) (gu->usRandFloat() * 0.99f * omp->GetVertexCount());
+	const int vertexNum = (int) (gu->RandFloat() * 0.99f * omp->GetVertexCount());
 	const float3& pos = omp->GetVertexPos(vertexNum);
 
 	return pos;
@@ -309,7 +309,7 @@ void CPieceProjectile::Update()
 
 		oldInfos[0] = tempOldInfo;
 		oldInfos[0]->pos = m.GetPos();
-		oldInfos[0]->size = gu->usRandFloat() * 1 + 1;
+		oldInfos[0]->size = gu->RandFloat() * 1 + 1;
 	}
 
 	age++;

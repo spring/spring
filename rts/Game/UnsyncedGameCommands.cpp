@@ -43,7 +43,7 @@
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/glFont.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
@@ -804,9 +804,8 @@ public:
 				share = true;
 			}
 
-			CTeam* teamToKill = teamHandler->IsActiveTeam(teamToKillId) ?
-			                          teamHandler->Team(teamToKillId) : NULL;
-			const CTeam* teamToReceiveUnits = (teamHandler->IsValidTeam(teamToReceiveUnitsId))? teamHandler->Team(teamToReceiveUnitsId): NULL;
+			CTeam* teamToKill = (teamHandler->IsActiveTeam(teamToKillId))? teamHandler->Team(teamToKillId) : NULL;
+			const CTeam* teamToReceiveUnits = (teamHandler->IsActiveTeam(teamToReceiveUnitsId))? teamHandler->Team(teamToReceiveUnitsId): NULL;
 
 			if (teamToKill == NULL) {
 				LOG_L(L_WARNING, "Team to %s: not a valid team number: \"%s\"", actionName.c_str(), args[0].c_str());
@@ -2626,11 +2625,11 @@ public:
 			" explosion.") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		bool drawDecals = groundDecals->GetDrawDecals();
+		bool drawDecals = IGroundDecalDrawer::GetDrawDecals();
 		SetBoolArg(drawDecals, action.GetArgs());
-		groundDecals->SetDrawDecals(drawDecals);
+		IGroundDecalDrawer::SetDrawDecals(drawDecals);
 
-		LogSystemStatus("Ground-decals rendering", groundDecals->GetDrawDecals());
+		LogSystemStatus("Ground-decals rendering", IGroundDecalDrawer::GetDrawDecals());
 		return true;
 	}
 };
