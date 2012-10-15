@@ -28,6 +28,7 @@ IGroundDecalDrawer* IGroundDecalDrawer::GetInstance()
 			singleton = new CDecalsDrawerGL4();
 			LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "GL4");
 		} catch(const unsupported_error& ex) {
+		} catch(const opengl_error& ex) {
 			LOG_L(L_ERROR, "IGroundDecalDrawer loading failed: %s", ex.what());
 #endif
 			delete singleton;

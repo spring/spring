@@ -51,9 +51,15 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DECALS_GL4)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_DECALS_GL4
 
+#ifndef GL_VERSION_4_0
+CDecalsDrawerGL4::CDecalsDrawerGL4()
+{
+	throw opengl_error(LOG_SECTION_DECALS_GL4 ": Compiled without OpenGL4 support!");
+}
+#else
 
 
-CDecalsDrawerGL4* shaderGroundDecals = NULL;
+
 
 struct SGLSLDecal {
 	float3 pos;
@@ -212,7 +218,7 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	helper->AddExplosionListener(this);
 
 	if (!globalRendering->haveGLSL) {
-		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": missing GLSL");
+		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GLSL");
 	}
 
 	//if (!GetDrawDecals()) {
@@ -231,11 +237,11 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	//TODO FINISH
 	if (!decalShader->IsValid()) {
 		LOG_L(L_ERROR, "%s", decalShader->GetLog().c_str());
-		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": cannot compile shader");
+		throw opengl_error(LOG_SECTION_DECALS_GL4 ": cannot compile shader");
 	}
 
 	if (!GLEW_ARB_depth_clamp) //GL_DEPTH_CLAMP
-		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": missing GL_ARB_depth_clamp");
+		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GL_ARB_depth_clamp");
 
 	if (!dynamic_cast<CSMFReadMap*>(readmap))
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": only SMF supported");
@@ -937,3 +943,5 @@ void CDecalsDrawerGL4::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 	//decal->owner = NULL;
 	//decal->gbOwner = gb;
 }
+
+#endif // GL_VERSION_4_0
