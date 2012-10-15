@@ -9,11 +9,13 @@ extern "C" {
 
 
 #if       defined WIN32
+#ifndef _TIMEZONE_DEFINED
+#define _TIMEZONE_DEFINED
 struct timezone {
 	int  tz_minuteswest; ///< minutes W of Greenwich
 	int  tz_dsttime;     ///< type of dst correction
 };
-
+#endif
 /// @link http://linux.die.net/man/2/gettimeofday
 int gettimeofday(struct timeval* tv, struct timezone* tz);
 #else  // defined WIN32
