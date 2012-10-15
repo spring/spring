@@ -454,13 +454,13 @@ void CUnitScript::StopSpin(int piece, int axis, float decel)
 
 void CUnitScript::Turn(int piece, int axis, float speed, float destination)
 {
-	AddAnim(ATurn, piece, axis, speed, destination, 0);
+	AddAnim(ATurn, piece, axis, std::max(speed, -speed), destination, 0);
 }
 
 
 void CUnitScript::Move(int piece, int axis, float speed, float destination)
 {
-	AddAnim(AMove, piece, axis, speed, destination, 0);
+	AddAnim(AMove, piece, axis, std::max(speed, -speed), destination, 0);
 }
 
 
@@ -546,7 +546,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		unit->updir    * relDir.y +
 		unit->rightdir * relDir.x;
 
-	float alpha = 0.3f + gu->usRandFloat() * 0.2f;
+	float alpha = 0.3f + gu->RandFloat() * 0.2f;
 	float alphaFalloff = 0.004f;
 	float fadeupTime = 4;
 
@@ -556,7 +556,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	// hovercraft need special care
 	if (md != NULL && md->moveType == MoveDef::Hover_Move) {
 		fadeupTime = 8.0f;
-		alpha = 0.15f + gu->usRandFloat() * 0.2f;
+		alpha = 0.15f + gu->RandFloat() * 0.2f;
 		alphaFalloff = 0.008f;
 	}
 
@@ -564,10 +564,10 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		case SFX_REVERSE_WAKE:
 		case SFX_REVERSE_WAKE_2: {  //reverse wake
 			new CWakeProjectile(
-				pos + gu->usRandVector() * 2.0f,
+				pos + gu->RandVector() * 2.0f,
 				dir * 0.4f,
-				6.0f + gu->usRandFloat() * 4.0f,
-				0.15f + gu->usRandFloat() * 0.3f,
+				6.0f + gu->RandFloat() * 4.0f,
+				0.15f + gu->RandFloat() * 0.3f,
 				unit,
 				alpha, alphaFalloff, fadeupTime
 			);
@@ -577,10 +577,10 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		case SFX_WAKE_2:  //wake 2, in TA it lives longer..
 		case SFX_WAKE: {  //regular ship wake
 			new CWakeProjectile(
-				pos + gu->usRandVector() * 2.0f,
+				pos + gu->RandVector() * 2.0f,
 				dir * 0.4f,
-				6.0f + gu->usRandFloat() * 4.0f,
-				0.15f + gu->usRandFloat() * 0.3f,
+				6.0f + gu->RandFloat() * 4.0f,
+				0.15f + gu->RandFloat() * 0.3f,
 				unit,
 				alpha, alphaFalloff, fadeupTime
 			);
@@ -588,25 +588,25 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		}
 
 		case SFX_BUBBLE: {  //submarine bubble. does not provide direction through piece vertices..
-			float3 pspeed = gu->usRandVector() * 0.1f;
+			float3 pspeed = gu->RandVector() * 0.1f;
 				pspeed.y += 0.2f;
 
 			new CBubbleProjectile(
-				pos + gu->usRandVector() * 2.0f,
+				pos + gu->RandVector() * 2.0f,
 				pspeed,
-				40.0f + gu->usRandFloat() * 30.0f,
-				1.0f + gu->usRandFloat() * 2.0f,
+				40.0f + gu->RandFloat() * 30.0f,
+				1.0f + gu->RandFloat() * 2.0f,
 				0.01f,
 				unit,
-				0.3f + gu->usRandFloat() * 0.3f
+				0.3f + gu->RandFloat() * 0.3f
 			);
 		} break;
 
 		case SFX_WHITE_SMOKE:  //damaged unit smoke
-			new CSmokeProjectile(pos, gu->usRandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.5f);
+			new CSmokeProjectile(pos, gu->RandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.5f);
 			break;
 		case SFX_BLACK_SMOKE:  //damaged unit smoke
-			new CSmokeProjectile(pos, gu->usRandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.6f);
+			new CSmokeProjectile(pos, gu->RandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.6f);
 			break;
 		case SFX_VTOL: {
 			const float3 speed =
@@ -618,8 +618,8 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			CHeatCloudProjectile* hc = new CHeatCloudProjectile(
 				pos,
 				speed,
-				10 + gu->usRandFloat() * 5,
-				3 + gu->usRandFloat() * 2,
+				10 + gu->RandFloat() * 5,
+				3 + gu->RandFloat() * 2,
 				unit
 			);
 			hc->size = 3;

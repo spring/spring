@@ -22,7 +22,7 @@ class AAIUnitTable;
 class AAIExecute
 {
 public:
-	AAIExecute(AAI* ai, AAIBrain *brain);
+	AAIExecute(AAI* ai);
 	~AAIExecute(void);
 
 	void InitAI(int commander_unit_id, const UnitDef *commander_def);
@@ -205,11 +205,6 @@ public:
 
 private:
 	AAI *ai;
-	IAICallback *cb;
-	AAIBuildTable *bt;
-	AAIBrain *brain;
-	AAIMap *map;
-	AAIUnitTable *ut;
 
 	// stores which buildque belongs to what kind of factory
 	vector<int> factory_table;

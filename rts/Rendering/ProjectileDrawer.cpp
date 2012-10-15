@@ -1029,7 +1029,7 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 	unsigned char* mem = new unsigned char[4 * size * size];
 
 	for (int a = 0; a < size * size; ++a) {
-		const unsigned char rnd = int(std::max(0.0f, gu->usRandFloat() * 555.0f - 300.0f));
+		const unsigned char rnd = int(std::max(0.0f, gu->RandFloat() * 555.0f - 300.0f));
 
 		mem[a * 4 + 0] = rnd;
 		mem[a * 4 + 1] = rnd;

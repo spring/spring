@@ -21,7 +21,7 @@ class AAIExecute;
 class AAIUnitTable
 {
 public:
-	AAIUnitTable(AAI *ai, AAIBuildTable *bt);
+	AAIUnitTable(AAI *ai);
 	~AAIUnitTable(void);
 
 	bool AddUnit(int unit_id, int def_id, AAIGroup *group = 0, AAIConstructor *cons = 0);
@@ -114,8 +114,4 @@ public:
 	int activeFactories, futureFactories;
 private:
 	AAI *ai;
-	AAIExecute *execute;
-	AAIBuildTable *bt;
-	IAICallback* cb;
-
 };

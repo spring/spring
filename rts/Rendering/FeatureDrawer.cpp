@@ -10,7 +10,7 @@
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
@@ -101,18 +101,15 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 	CFeature* f = const_cast<CFeature*>(feature);
 	texturehandlerS3O->UpdateDraw();
 
-	if (GML::SimEnabled() && !GML::ShareLists() && f->model && TEX_TYPE(f) < 0)
-		TEX_TYPE(f) = texturehandlerS3O->LoadS3OTextureNow(f->model);
+	if (GML::SimEnabled() && !GML::ShareLists() && feature->model && TEX_TYPE(feature) < 0)
+		TEX_TYPE(f) = texturehandlerS3O->LoadS3OTextureNow(feature->model);
 
-	if (f->def->drawType == DRAWTYPE_MODEL) {
+	if (feature->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
 		UpdateDrawQuad(f);
 
 		unsortedFeatures.insert(f);
 	}
-
-	if (f->objectDef->decalDef.useGroundDecal)
-		groundDecals->MoveSolidObject(f, f->pos);
 }
 
 void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)

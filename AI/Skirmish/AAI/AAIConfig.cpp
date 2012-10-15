@@ -118,27 +118,27 @@ void AAIConfig::LoadConfig(AAI *ai)
 	char filename[2048];
 	char buffer[500];
 
-	MAX_UNITS = ai->cb->GetMaxUnits();
+	MAX_UNITS = ai->Getcb()->GetMaxUnits();
 
 	FILE* file = NULL;
 
 	STRCPY_T(buffer, sizeof(buffer), MAIN_PATH);
 	STRCAT_T(buffer, sizeof(buffer), MOD_CFG_PATH);
-	const std::string modHumanName = MakeFileSystemCompatible(ai->cb->GetModHumanName());
+	const std::string modHumanName = MakeFileSystemCompatible(ai->Getcb()->GetModHumanName());
 	STRCAT_T(buffer, sizeof(buffer), modHumanName.c_str());
 	STRCAT_T(buffer, sizeof(buffer), ".cfg");
 	STRCPY_T(filename, sizeof(filename), buffer);
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_R, filename);
 	file = fopen(filename, "r");
 	if (file == NULL) {
 		ai->Log("Mod config file %s not found\n", filename);
 		ai->Log("Now trying with legacy mod config file name ...\n");
 		STRCPY_T(buffer, sizeof(buffer), MAIN_PATH);
 		STRCAT_T(buffer, sizeof(buffer), MOD_CFG_PATH);
-		const std::string modName = MakeFileSystemCompatible(ai->cb->GetModName());
+		const std::string modName = MakeFileSystemCompatible(ai->Getcb()->GetModName());
 		STRCAT_T(buffer, sizeof(buffer), modName.c_str());
 		ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
-		ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_R, filename);
 		file = fopen(filename, "r");
 	}
 	if (file == NULL) {
@@ -146,11 +146,11 @@ void AAIConfig::LoadConfig(AAI *ai)
 		ai->Log("Now trying with version independent mod config file name ...\n");
 		STRCPY_T(buffer, sizeof(buffer), MAIN_PATH);
 		STRCAT_T(buffer, sizeof(buffer), MOD_CFG_PATH);
-		const std::string modShortName = MakeFileSystemCompatible(ai->cb->GetModShortName());
+		const std::string modShortName = MakeFileSystemCompatible(ai->Getcb()->GetModShortName());
 		STRCAT_T(buffer, sizeof(buffer), modShortName.c_str());
 		STRCAT_T(buffer, sizeof(buffer), ".cfg");
 		STRCPY_T(filename, sizeof(filename), buffer);
-		ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_R, filename);
 		file = fopen(filename, "r");
 	}
 	if (file == NULL) {
@@ -189,7 +189,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 					fscanf(file, "%s", filename);
 					STRCPY(START_UNITS[i], filename);
 
-					if(!ai->cb->GetUnitDef(START_UNITS[i]))
+					if(!ai->Getcb()->GetUnitDef(START_UNITS[i]))
 					{
 						ai->Log("ERROR: loading starting units - could not find unit %s\n", START_UNITS[i]);
 						error = true;
@@ -216,8 +216,8 @@ void AAIConfig::LoadConfig(AAI *ai)
 				for(int i = 0; i < ival; ++i)
 				{
 					fscanf(file, "%s", filename);
-					if(ai->cb->GetUnitDef(filename))
-						SCOUTS.push_back(ai->cb->GetUnitDef(filename)->id);
+					if(ai->Getcb()->GetUnitDef(filename))
+						SCOUTS.push_back(ai->Getcb()->GetUnitDef(filename)->id);
 					else
 					{
 						ai->Log("ERROR: loading scouts - could not find unit %s\n", filename);
@@ -234,8 +234,8 @@ void AAIConfig::LoadConfig(AAI *ai)
 				for(int i = 0; i < ival; ++i)
 				{
 					fscanf(file, "%s", filename);
-					if(ai->cb->GetUnitDef(filename))
-						ATTACKERS.push_back(ai->cb->GetUnitDef(filename)->id);
+					if(ai->Getcb()->GetUnitDef(filename))
+						ATTACKERS.push_back(ai->Getcb()->GetUnitDef(filename)->id);
 					else
 					{
 						ai->Log("ERROR: loading attackers - could not find unit %s\n", filename);
@@ -252,8 +252,8 @@ void AAIConfig::LoadConfig(AAI *ai)
 				for(int i = 0; i < ival; ++i)
 				{
 					fscanf(file, "%s", filename);
-					if(ai->cb->GetUnitDef(filename))
-						TRANSPORTERS.push_back(ai->cb->GetUnitDef(filename)->id);
+					if(ai->Getcb()->GetUnitDef(filename))
+						TRANSPORTERS.push_back(ai->Getcb()->GetUnitDef(filename)->id);
 					else
 					{
 						ai->Log("ERROR: loading transporters - could not find unit %s\n", filename);
@@ -270,8 +270,8 @@ void AAIConfig::LoadConfig(AAI *ai)
 				for(int i = 0; i < ival; ++i)
 				{
 					fscanf(file, "%s", filename);
-					if(ai->cb->GetUnitDef(filename))
-						DONT_BUILD.push_back(ai->cb->GetUnitDef(filename)->id);
+					if(ai->Getcb()->GetUnitDef(filename))
+						DONT_BUILD.push_back(ai->Getcb()->GetUnitDef(filename)->id);
 					else
 					{
 						ai->Log("ERROR: loading dont_build units - could not find unit %s\n", filename);
@@ -284,7 +284,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 			{
 				// get the unit def
 				fscanf(file, "%s", filename);
-				def = ai->cb->GetUnitDef(filename);
+				def = ai->Getcb()->GetUnitDef(filename);
 
 				if(def)
 				{
@@ -625,7 +625,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 	STRCPY_T(buffer, sizeof(buffer), MAIN_PATH);
 	STRCAT_T(buffer, sizeof(buffer), GENERAL_CFG_FILE);
 	ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_R, filename);
 	file = fopen(filename, "r");
 
 	if(file)

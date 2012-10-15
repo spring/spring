@@ -27,7 +27,7 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -2208,9 +2208,7 @@ int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	if (unit->unitDef->decalDef.useGroundDecal)
-		groundDecals->ForceRemoveSolidObject(unit);
-
+	groundDecals->ForceRemoveSolidObject(unit);
 	return 0;
 }
 

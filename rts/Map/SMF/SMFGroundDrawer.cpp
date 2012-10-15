@@ -9,7 +9,7 @@
 #include "Map/ReadMap.h"
 #include "Map/SMF/Legacy/LegacyMeshDrawer.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/ShadowHandler.h"

@@ -28,8 +28,8 @@ void FlyingPiece::Init(int _team, const float3& _pos, const float3& _speed)
 	texture = 0;
 	team    = _team;
 
-	rotAxis  = gu->usRandVector().ANormalize();
-	rotSpeed = gu->usRandFloat() * 0.1f;
+	rotAxis  = gu->RandVector().ANormalize();
+	rotSpeed = gu->RandFloat() * 0.1f;
 	rot = 0;
 }
 

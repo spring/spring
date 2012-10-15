@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "System/float3.h"
 #include "System/EventClient.h"
 #include "Sim/Projectiles/ExplosionListener.h"
@@ -16,6 +17,7 @@ class CSolidObject;
 class CUnit;
 class CBuilding;
 class CVertexArray;
+struct SolidObjectGroundDecal;
 struct S3DModel;
 
 namespace Shader {
@@ -80,16 +82,6 @@ struct TrackToClean {
 	std::set<UnitTrackStruct*>* tracks;
 };
 
-struct SolidObjectGroundDecal;
-struct GhostSolidObject {
-	SolidObjectGroundDecal* decal;
-	S3DModel* model;
-
-	float3 pos;
-
-	int facing;
-	int team;
-};
 
 struct SolidObjectGroundDecal {
 	SolidObjectGroundDecal()
@@ -126,33 +118,36 @@ struct SolidObjectGroundDecal {
 };
 
 
-class CGroundDecalHandler: public CEventClient, public IExplosionListener
+class CGroundDecalHandler: public IGroundDecalDrawer, public CEventClient, public IExplosionListener
 {
 public:
 	CGroundDecalHandler();
-	~CGroundDecalHandler();
+	virtual ~CGroundDecalHandler();
 
-	void Draw();
+	virtual void Draw();
+	virtual void Update() {}
 
-	void RemoveUnit(CUnit* unit);
+	virtual void GhostCreated(CSolidObject* object, GhostSolidObject* gb);
+	virtual void GhostDestroyed(GhostSolidObject* gb);
+
+	virtual void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
+	virtual void ForceRemoveSolidObject(CSolidObject* object);
+
+private:
+	void AddExplosion(float3 pos, float damage, float radius, bool);
+	void MoveSolidObject(CSolidObject* object, const float3& pos);
+	int GetSolidObjectDecalType(const std::string& name);
 	int GetTrackType(const std::string& name);
 
-	void AddExplosion(float3 pos, float damage, float radius, bool);
-	void ExplosionOccurred(const CExplosionEvent& event);
-
-	void MoveSolidObject(CSolidObject* object, const float3& pos);
-	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
-	void ForceRemoveSolidObject(CSolidObject* object);
-	int GetSolidObjectDecalType(const std::string& name);
-
-	bool GetDrawDecals() const { return drawDecals; }
-	void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } }
-
 public:
+	//CEventClient
 	bool WantsEvent(const std::string& eventName) {
 		return 
 			(eventName == "SunChanged") ||
+			(eventName == "RenderUnitCreated") ||
+			(eventName == "RenderUnitDestroyed") ||
 			(eventName == "RenderUnitMoved") ||
+			(eventName == "RenderFeatureCreated") ||
 			(eventName == "RenderFeatureMoved") ||
 			(eventName == "UnitLoaded") ||
 			(eventName == "UnitUnloaded");
@@ -161,10 +156,16 @@ public:
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
 	void SunChanged(const float3& sunDir);
+	void RenderUnitCreated(const CUnit*, int cloaked);
+	void RenderUnitDestroyed(const CUnit*);
+	void RenderFeatureCreated(const CFeature* feature);
 	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 	void RenderUnitMoved(const CUnit* unit, const float3& newpos);
 	void UnitLoaded(const CUnit* unit, const CUnit* transport);
 	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
+
+	//IExplosionListener
+	void ExplosionOccurred(const CExplosionEvent& event);
 
 private:
 	void LoadDecalShaders();
@@ -181,7 +182,6 @@ private:
 
 private:
 	unsigned int scarTex;
-	unsigned int decalLevel;
 	bool groundScarAlphaFade;
 
 	struct TrackType {
@@ -267,8 +267,6 @@ private:
 	int lastTest;
 	float maxOverlap;
 
-	bool drawDecals;
-
 	std::set<Scar*>* scarField;
 	int scarFieldX;
 	int scarFieldY;
@@ -280,10 +278,9 @@ private:
 	void TestOverlaps(Scar* scar);
 	void RemoveScar(Scar* scar, bool removeFromScars);
 	unsigned int LoadTexture(const std::string& name);
-	void LoadScar(const std::string& file, unsigned char* buf, int xoffset,
-			int yoffset);
+	void LoadScar(const std::string& file, unsigned char* buf, int xoffset, int yoffset);
 };
 
-extern CGroundDecalHandler* groundDecals;
+extern CGroundDecalHandler* groundDecals_;
 
 #endif // GROUND_DECAL_HANDLER_H

@@ -348,7 +348,7 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 	switch (primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
 			for (size_t i = 0; i < vertexDrawOrder.size(); i += 3) {
-				if (gu->usRandFloat() > pieceChance)
+				if (gu->RandFloat() > pieceChance)
 					continue;
 
 				SS3OVertex* verts = new SS3OVertex[4];
@@ -358,13 +358,13 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 				verts[2] = vertices[vertexDrawOrder[i + 1]];
 				verts[3] = vertices[vertexDrawOrder[i + 2]];
 
-				ph->AddFlyingPiece(texType, team, pos, speed + gu->usRandVector() * 2.0f, verts);
+				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
 			}
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
 			// vertexDrawOrder can contain end-of-strip markers (-1U)
 			for (size_t i = 2; i < vertexDrawOrder.size(); ) {
-				if (gu->usRandFloat() > pieceChance) { i += 1; continue; }
+				if (gu->RandFloat() > pieceChance) { i += 1; continue; }
 				if (vertexDrawOrder[i] == -1) { i += 3; continue; }
 
 				SS3OVertex* verts = new SS3OVertex[4];
@@ -374,13 +374,13 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 				verts[2] = vertices[vertexDrawOrder[i - 1]];
 				verts[3] = vertices[vertexDrawOrder[i - 0]];
 
-				ph->AddFlyingPiece(texType, team, pos, speed + gu->usRandVector() * 2.0f, verts);
+				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
 				i += 1;
 			}
 		} break;
 		case S3O_PRIMTYPE_QUADS: {
 			for (size_t i = 0; i < vertexDrawOrder.size(); i += 4) {
-				if (gu->usRandFloat() > pieceChance)
+				if (gu->RandFloat() > pieceChance)
 					continue;
 
 				SS3OVertex* verts = new SS3OVertex[4];
@@ -390,7 +390,7 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 				verts[2] = vertices[vertexDrawOrder[i + 2]];
 				verts[3] = vertices[vertexDrawOrder[i + 3]];
 
-				ph->AddFlyingPiece(texType, team, pos, speed + gu->usRandVector() * 2.0f, verts);
+				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
 			}
 		} break;
 

@@ -40,8 +40,8 @@ CWakeProjectile::CWakeProjectile(const float3& pos, const float3& speed, float s
 {
 	this->pos.y = 0.0f;
 	this->speed.y = 0.0f;
-	rotation = gu->usRandFloat() * PI*2;
-	rotSpeed = (gu->usRandFloat() - 0.5f) * PI*2*0.01f;
+	rotation = gu->RandFloat() * PI*2;
+	rotSpeed = (gu->RandFloat() - 0.5f) * PI*2*0.01f;
 	checkCol = false;
 	if (water->BlockWakeProjectiles()) {
 		alpha = 0;

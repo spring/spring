@@ -11,7 +11,7 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/FarTextureHandler.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
@@ -88,7 +88,6 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(heightMapTexture);
 
 	SafeDelete(cubeMapHandler);
-	SafeDelete(groundDecals);
 }
 
 

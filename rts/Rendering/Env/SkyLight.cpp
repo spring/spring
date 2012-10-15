@@ -5,7 +5,6 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Sim/Misc/GlobalSynced.h"

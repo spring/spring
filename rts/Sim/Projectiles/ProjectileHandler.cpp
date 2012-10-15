@@ -559,7 +559,7 @@ void CProjectileHandler::AddNanoParticle(
 	const float l = fastmath::apxsqrt2(dif.SqLength());
 
 	dif /= l;
-	dif += gu->usRandVector() * 0.15f;
+	dif += gu->RandVector() * 0.15f;
 
 	float3 color = unitDef->nanoColor;
 
@@ -592,7 +592,7 @@ void CProjectileHandler::AddNanoParticle(
 	const float l = fastmath::apxsqrt2(dif.SqLength());
 	dif /= l;
 
-	float3 error = gu->usRandVector() * (radius / l);
+	float3 error = gu->RandVector() * (radius / l);
 	float3 color = unitDef->nanoColor;
 
 	if (globalRendering->teamNanospray) {
