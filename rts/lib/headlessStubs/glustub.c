@@ -8,6 +8,17 @@
 extern "C" {
 #endif
 
+// We need this because newer versions of GL/gl.h
+// undefine GLAPI in the end
+#ifndef GLAPI
+# ifdef _WIN32
+#  define GLAPI __stdcall
+# else
+#  define GLAPI
+# endif
+# define __DEFINED_GLAPI
+#endif
+
 // #include <stdio.h>
 
 GLAPI void APIENTRY gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar) {}
