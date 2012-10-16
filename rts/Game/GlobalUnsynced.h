@@ -16,7 +16,7 @@ class CGameSetup;
  * Contains globally accessible data that does not remain synced
  */
 class CGlobalUnsynced {
-	CR_DECLARE(CGlobalUnsynced);
+	CR_DECLARE_STRUCT(CGlobalUnsynced);
 
 	CGlobalUnsynced();
 	~CGlobalUnsynced();

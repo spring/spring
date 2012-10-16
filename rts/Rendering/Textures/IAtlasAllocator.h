@@ -13,6 +13,7 @@ class IAtlasAllocator
 {
 public:
 	virtual void Allocate() = 0;
+	virtual ~IAtlasAllocator(){}
 
 public:
 	void AddEntry(const std::string& name, int2 size)

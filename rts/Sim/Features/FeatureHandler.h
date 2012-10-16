@@ -19,7 +19,7 @@ class LuaTable;
 
 class CFeatureHandler : public boost::noncopyable
 {
-	CR_DECLARE(CFeatureHandler);
+	CR_DECLARE_STRUCT(CFeatureHandler);
 
 public:
 	CFeatureHandler();

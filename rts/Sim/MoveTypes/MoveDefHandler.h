@@ -113,7 +113,7 @@ struct MoveDef {
 
 class MoveDefHandler
 {
-	CR_DECLARE(MoveDefHandler);
+	CR_DECLARE_STRUCT(MoveDefHandler);
 public:
 	MoveDefHandler();
 	~MoveDefHandler();
