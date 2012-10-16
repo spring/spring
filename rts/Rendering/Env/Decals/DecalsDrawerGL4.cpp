@@ -24,7 +24,9 @@
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/LegacyAtlasAlloc.h"
 #include "Rendering/Textures/NamedTextures.h"
+#include "Rendering/Textures/QuadtreeAtlasAlloc.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -50,6 +52,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DECALS_GL4)
 	#undef LOG_SECTION_CURRENT
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_DECALS_GL4
+
 
 #if !defined(GL_VERSION_4_0) || HEADLESS
 CDecalsDrawerGL4::CDecalsDrawerGL4()
@@ -77,79 +80,6 @@ struct SGLSLGroundLighting {
 	float3 dir __attribute__ ((aligned (16)));
 	float unused;
 };
-
-
-struct QuadTreeNode {
-	QuadTreeNode() {
-		used = false;
-		memset(children, 0, 4 * sizeof(QuadTreeNode*));
-	}
-	QuadTreeNode(QuadTreeNode* node, int i) {
-		used = false;
-		size = node->size >> 1;
-		posx = node->posx;
-		posy = node->posy;
-
-		switch (i) {
-			case 0:
-				break;
-			case 1:
-				posy += size;
-				break;
-			case 2:
-				posx += size;
-				break;
-			case 3:
-				posy += size;
-				posx += size;
-				break;
-		}
-
-		memset(children, 0, 4 * sizeof(QuadTreeNode*));
-	}
-	short int posx;
-	short int posy;
-	int size;
-	bool used;
-	QuadTreeNode* children[4];
-	
-	static int MIN_SIZE;
-};
-
-int QuadTreeNode::MIN_SIZE = 8;
-
-QuadTreeNode* FindPosInQuadTree(QuadTreeNode* node, int xsize, int ysize)
-{
-	if (node->used)
-		return NULL;
-
-	if ((node->size < xsize) || (node->size < ysize))
-		return NULL;
-
-	if (((node->size >> 1) < xsize) || ((node->size >> 1) < ysize)) {
-		if (!node->children[0]) {
-			node->used = true;
-			return node;
-		} else {
-			return NULL;
-		}
-	}
-
-	if (node->size <= QuadTreeNode::MIN_SIZE)
-		return NULL;
-
-	for (int i = 0; i < 4; ++i) {
-		if (!node->children[i])
-			node->children[i] = new QuadTreeNode(node, i);
-
-		QuadTreeNode* subnode = FindPosInQuadTree(node->children[i], xsize, ysize);
-		if (subnode)
-			return subnode;
-	}
-
-	//FIXME resize whole quadmap then
-	return NULL;
-}
 
 
 static GLuint LoadTexture(const std::string& name, size_t* texX, size_t* texY)
@@ -385,7 +315,6 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 2048, 2048, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-	int i = 0;
 	std::map<std::string, STex> textures;
 	for (std::vector<UnitDef*>::const_iterator it = unitDefHandler->unitDefs.begin(); it != unitDefHandler->unitDefs.end(); ++it) {
 		SolidObjectDecalDef& decalDef = (*it)->decalDef;
@@ -413,25 +342,11 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 		}
 
 		const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
+		for (int i = 1; i <= 4; ++i)
 		{
 				STex tex;
-				tex.id = LoadTexture("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), &tex.sizeX, &tex.sizeY);
-				textures["1"] = tex;
-		}
-		{
-				STex tex;
-				tex.id = LoadTexture("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), &tex.sizeX, &tex.sizeY);
-				textures["2"] = tex;
-		}
-		{
-				STex tex;
-				tex.id = LoadTexture("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), &tex.sizeX, &tex.sizeY);
-				textures["3"] = tex;
-		}
-		{
-				STex tex;
-				tex.id = LoadTexture("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), &tex.sizeX, &tex.sizeY);
-				textures["4"] = tex;
+				tex.id = LoadTexture("bitmaps/" + scarsTable.GetString(i, IntToString(i, "scars/scar%i.bmp")), &tex.sizeX, &tex.sizeY);
+				textures[IntToString(i)] = tex;
 		}
 	}
 
@@ -467,10 +382,9 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 		glBlendFunc(GL_ONE, GL_ZERO);
 		glDisable(GL_DEPTH_TEST);
 
-	QuadTreeNode root;
-	root.posx = 0;
-	root.posy = 0;
-	root.size = 2048;
+
+	CQuadtreeAtlasAlloc atlas;
+	//CLegacyAtlasAlloc atlas;
 	for (std::map<std::string, STex>::const_iterator it = textures.begin(); it != textures.end(); ++it) {
 		if (it->second.id == 0)
 			continue;
@@ -487,18 +401,28 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 			sizeY = maxSize;
 		}
 
-		QuadTreeNode* node = FindPosInQuadTree(&root, sizeX, sizeY);
+		atlas.AddEntry(it->first, int2(sizeX, sizeY));
+	}
+	atlas.Allocate();
 
-		if (!node) {
-			LOG_L(L_ERROR, "DecalTextureAtlas full: failed to add %s", it->first.c_str());
+
+	for (std::map<std::string, STex>::const_iterator it = textures.begin(); it != textures.end(); ++it) {
+		if (it->second.id == 0)
 			continue;
-		}
+
+		float4 texCoords = atlas.GetTexCoords(it->first);
+
+		//FIXME
+		//if (!node) {
+		//	LOG_L(L_ERROR, "DecalTextureAtlas full: failed to add %s", it->first.c_str());
+		//	continue;
+		//}
 
 		SAtlasTex aTex;
-		aTex.tx  = node->posx / 2048.f;
-		aTex.ty  = node->posy / 2048.f;
-		aTex.tx2 = (node->posx + node->size) / 2048.f;
-		aTex.ty2 = (node->posy + node->size) / 2048.f;
+		aTex.tx  = texCoords.x;
+		aTex.ty  = texCoords.y;
+		aTex.tx2 = texCoords.z;
+		aTex.ty2 = texCoords.w;
 		atlasTexs[it->first.c_str()] = aTex;
 
 		CVertexArray va;
