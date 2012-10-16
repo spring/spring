@@ -14,6 +14,7 @@ public:
 
 	virtual void Run(IGlobalAI& ai,
 			IGlobalAICallback* globalAICallback = NULL) = 0;
+	virtual ~CAIEvent(){}
 };
 
 } // namespace springLegacyAI
