@@ -175,7 +175,7 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
 		LOG_L(L_WARNING, "[CSimpleParticleSystem::Init] no color-map specified");
 	}
 	if (texture == NULL) {
-		texture = projectileDrawer->textureAtlas->GetTexturePtr("simpleparticle");
+		texture = &projectileDrawer->textureAtlas->GetTexture("simpleparticle");
 		LOG_L(L_WARNING, "[CSimpleParticleSystem::Init] no texture specified");
 	}
 
@@ -224,7 +224,7 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 		LOG_L(L_WARNING, "[CSphereParticleSpawner::Init] no color-map specified");
 	}
 	if (texture == NULL) {
-		texture = projectileDrawer->textureAtlas->GetTexturePtr("sphereparticle");
+		texture = &projectileDrawer->textureAtlas->GetTexture("sphereparticle");
 		LOG_L(L_WARNING, "[CSphereParticleSpawner::Init] no texture specified");
 	}
 

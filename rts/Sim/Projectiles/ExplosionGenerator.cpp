@@ -681,7 +681,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			string::size_type end = script.find(';', 0);
 			string texname = script.substr(0, end);
 			// this memory is managed by textureAtlas (CTextureAtlas)
-			void* tex = projectileDrawer->textureAtlas->GetTexturePtr(texname);
+			void* tex = &projectileDrawer->textureAtlas->GetTexture(texname);
 			code += OP_LOADP;
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
 			code += OP_STOREP;
@@ -691,7 +691,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			string::size_type end = script.find(';', 0);
 			string texname = script.substr(0, end);
 			// this memory is managed by groundFXAtlas (CTextureAtlas)
-			void* tex = projectileDrawer->groundFXAtlas->GetTexturePtr(texname);
+			void* tex = &projectileDrawer->groundFXAtlas->GetTexture(texname);
 			code += OP_LOADP;
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
 			code += OP_STOREP;
