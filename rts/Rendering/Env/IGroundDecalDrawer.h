@@ -45,6 +45,7 @@ public:
 
 public:
 	IGroundDecalDrawer();
+	virtual ~IGroundDecalDrawer(){}
 
 protected:
 	static bool drawDecals;

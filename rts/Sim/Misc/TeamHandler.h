@@ -15,7 +15,7 @@ class CGameSetup;
 /** @brief Handles teams and allyteams */
 class CTeamHandler
 {
-	CR_DECLARE(CTeamHandler);
+	CR_DECLARE_STRUCT(CTeamHandler);
 
 public:
 	CTeamHandler();

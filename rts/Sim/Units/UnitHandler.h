@@ -27,7 +27,7 @@ enum BuildSquareStatus {
 
 class CUnitHandler
 {
-	CR_DECLARE(CUnitHandler)
+	CR_DECLARE_STRUCT(CUnitHandler)
 
 public:
 	CUnitHandler();

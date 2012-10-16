@@ -13,7 +13,7 @@
  * that does not remain synced.
  */
 class CGlobalRendering {
-	CR_DECLARE(CGlobalRendering);
+	CR_DECLARE_STRUCT(CGlobalRendering);
 
 	CGlobalRendering();
 
