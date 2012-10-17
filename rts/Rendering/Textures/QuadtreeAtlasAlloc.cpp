@@ -80,27 +80,39 @@ static QuadTreeNode* FindPosInQuadTree(QuadTreeNode* node, int xsize, int ysize)
 }
 
 
-void CQuadtreeAtlasAlloc::Allocate()
+bool CQuadtreeAtlasAlloc::Allocate()
 {
 	QuadTreeNode root;
 	root.posx = 0;
 	root.posy = 0;
 	root.size = 2048;
 
+	bool failure = false;
+
 	for (std::map<std::string, SAtlasEntry>::iterator it = entries.begin(); it != entries.end(); ++it) {
 		QuadTreeNode* node = FindPosInQuadTree(&root, it->second.size.x, it->second.size.y);
 
 		if (!node) {
-			//LOG_L(L_ERROR, "DecalTextureAtlas full: failed to add %s", it->first.c_str());
+			//LOG_L(L_ERROR, "CQuadtreeAtlasAlloc full: failed to add %s", it->first.c_str());
+			failure = true;
 			continue;
 		}
 
 		it->second.texCoords.x = node->posx;
 		it->second.texCoords.y = node->posy;
-		it->second.texCoords.z = node->posx + node->size; //FIXME
-		it->second.texCoords.w = node->posy + node->size;
+		it->second.texCoords.z = node->posx + it->second.size.x;
+		it->second.texCoords.w = node->posy + it->second.size.y;
 	}
 
 	atlasSize.x = 2048;
 	atlasSize.y = 2048;
+
+	return !failure;
+}
+
+
+int CQuadtreeAtlasAlloc::GetMaxMipMaps()
+{
+
+	return 0;
 }

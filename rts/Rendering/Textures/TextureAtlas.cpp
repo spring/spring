@@ -6,6 +6,7 @@
 
 #include "Bitmap.h"
 #include "LegacyAtlasAlloc.h"
+#include "QuadtreeAtlasAlloc.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/PBO.h"
@@ -35,6 +36,7 @@ CTextureAtlas::CTextureAtlas(int maxxsize, int maxysize)
 	, initialized(false)
 {
 	atlasAllocator = new CLegacyAtlasAlloc();
+	//atlasAllocator = new CQuadtreeAtlasAlloc();
 }
 
 CTextureAtlas::~CTextureAtlas()
@@ -65,20 +67,10 @@ void* CTextureAtlas::AddTex(std::string name, int xsize, int ysize, TextureType 
 
 int CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void* data)
 {
+	void* memdata = AddTex(name, xsize, ysize, texType);
 	const int gpp = GetBPP(texType);
 	const size_t data_size = xsize * ysize * gpp / 8;
-	MemTex* memtex = new MemTex;
-	memtex->xsize = xsize;
-	memtex->ysize = ysize;
-	memtex->texType = texType;
-	memtex->data = new char[data_size];
-	StringToLowerInPlace(name);
-	memtex->names.push_back(name);
-	std::memcpy(memtex->data, data, data_size);
-	memtextures.push_back(memtex);
-
-	atlasAllocator->AddEntry(name, int2(xsize, ysize));
-
+	std::memcpy(memdata, data, data_size);
 	return 1;
 }
 
@@ -89,15 +81,14 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 	// if the file is already loaded, use that instead
 	std::string lcFile = StringToLower(file);
 	std::map<std::string, MemTex*>::iterator it = files.find(lcFile);
-
 	if (it != files.end()) {
 		MemTex* memtex = it->second;
 		memtex->names.push_back(name);
 		return 1;
 	}
 
-	CBitmap bitmap;
 
+	CBitmap bitmap;
 	if (!bitmap.Load(file)) {
 		throw content_error("Could not load texture from file " + file);
 	}
@@ -108,19 +99,15 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 	}
 
 	const int ret = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, bitmap.mem);
-
 	if (ret == 1) {
 		files[lcFile] = memtextures.back();
 	}
-
-	atlasAllocator->AddEntry(name, int2(bitmap.xsize, bitmap.ysize));
-
 	return ret;
 }
 
 bool CTextureAtlas::Finalize()
 {
-	atlasAllocator->Allocate();
+	bool success = atlasAllocator->Allocate();
 
 	CreateTexture();
 
@@ -131,8 +118,7 @@ bool CTextureAtlas::Finalize()
 	}
 	memtextures.clear();
 
-	//FIXME return success;
-	return true;
+	return success;
 }
 
 void CTextureAtlas::CreateTexture()
@@ -154,12 +140,7 @@ void CTextureAtlas::CreateTexture()
 			const int xpos = absCoords.x;
 			const int ypos = absCoords.y;
 
-			AtlasedTexture tex;
-			tex.xstart = texCoords.x;
-			tex.xend   = texCoords.z;
-			tex.ystart = texCoords.y;
-			tex.yend   = texCoords.w;
-
+			AtlasedTexture tex(texCoords);
 			for (size_t n = 0; n < (*it)->names.size(); ++n) {
 				textures[(*it)->names[n]] = tex;
 			}

@@ -12,8 +12,11 @@
 class IAtlasAllocator
 {
 public:
-	virtual void Allocate() = 0;
-	virtual ~IAtlasAllocator(){}
+	virtual ~IAtlasAllocator() {}
+
+public:
+	virtual bool Allocate() = 0;
+	virtual int GetMaxMipMaps() = 0;
 
 public:
 	void AddEntry(const std::string& name, int2 size)
