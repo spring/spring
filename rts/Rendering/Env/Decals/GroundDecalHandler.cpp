@@ -48,6 +48,7 @@ CONFIG(int, GroundScarAlphaFade).defaultValue(0);
 CGroundDecalHandler::CGroundDecalHandler()
 	: CEventClient("[CGroundDecalHandler]", 314159, false)
 {
+	scarField = NULL;
 	if (!GetDrawDecals())
 		return;
 
@@ -130,7 +131,7 @@ CGroundDecalHandler::~CGroundDecalHandler()
 	for (std::vector<Scar*>::iterator si = scarsToBeAdded.begin(); si != scarsToBeAdded.end(); ++si) {
 		delete *si;
 	}
-	if (decalLevel != 0) {
+	if (scarField != NULL) {
 		delete[] scarField;
 
 		glDeleteTextures(1, &scarTex);
