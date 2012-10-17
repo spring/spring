@@ -12,7 +12,11 @@
 class IAtlasAllocator
 {
 public:
+	IAtlasAllocator() : maxsize(2048,2048), npot(false) {}
 	virtual ~IAtlasAllocator() {}
+
+	void SetMaxSize(int xsize, int ysize) { maxsize = int2(xsize, ysize); }
+	void SetNonPowerOfTwo(bool nonPowerOfTwo) { npot = nonPowerOfTwo; }
 
 public:
 	virtual bool Allocate() = 0;
@@ -54,6 +58,9 @@ protected:
 
 	std::map<std::string, SAtlasEntry> entries;
 	int2 atlasSize;
+
+	int2 maxsize;
+	bool npot;
 };
 
 #endif // IATLAS_ALLOC_H

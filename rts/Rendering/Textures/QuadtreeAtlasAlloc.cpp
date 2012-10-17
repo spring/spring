@@ -10,31 +10,29 @@
 struct QuadTreeNode {
 	QuadTreeNode() {
 		used = false;
+		posx = posy = size = 0;
 		memset(children, 0, 4 * sizeof(QuadTreeNode*));
 	}
+	~QuadTreeNode() {
+		for (int i = 0; i < 4; ++i) {
+			if (children[i]) {
+				delete children[i];
+				children[i] = NULL;
+			}
+		}
+	}
+
 	QuadTreeNode(QuadTreeNode* node, int i) {
+		// i ... 0:=topleft, 1:=topright, 2:=btmleft, 3:=btmright
 		used = false;
 		size = node->size >> 1;
-		posx = node->posx;
-		posy = node->posy;
-
-		switch (i) {
-			case 0:
-				break;
-			case 1:
-				posy += size;
-				break;
-			case 2:
-				posx += size;
-				break;
-			case 3:
-				posy += size;
-				posx += size;
-				break;
-		}
-
+		posx = node->posx + ((i & 1)     ) * size;
+		posy = node->posy + ((i & 2) >> 1) * size;
 		memset(children, 0, 4 * sizeof(QuadTreeNode*));
 	}
+
+	QuadTreeNode* FindPosInQuadTree(int xsize, int ysize);
+
 	short int posx;
 	short int posy;
 	int size;
@@ -44,53 +42,115 @@ struct QuadTreeNode {
 	static int MIN_SIZE;
 };
 
+
 int QuadTreeNode::MIN_SIZE = 8;
 
-static QuadTreeNode* FindPosInQuadTree(QuadTreeNode* node, int xsize, int ysize)
+
+QuadTreeNode* QuadTreeNode::FindPosInQuadTree(int xsize, int ysize)
 {
-	if (node->used)
+	if (used)
 		return NULL;
 
-	if ((node->size < xsize) || (node->size < ysize))
+	if ((size < xsize) || (size < ysize))
 		return NULL;
 
-	if (((node->size >> 1) < xsize) || ((node->size >> 1) < ysize)) {
-		if (!node->children[0]) {
-			node->used = true;
-			return node;
+	const bool xfit = ((size >> 1) < xsize);
+	const bool yfit = ((size >> 1) < ysize);
+	const bool minSizeReached = (size <= QuadTreeNode::MIN_SIZE);
+	
+	if (xfit || yfit || minSizeReached) {
+		if (!children[0]) {
+			if (!minSizeReached) {
+				//FIXME
+				if (!yfit) {
+					children[0] = new QuadTreeNode(this, 0);
+					children[1] = new QuadTreeNode(this, 1);
+					children[0]->used = true;
+					children[1]->used = true;
+					return this;
+				} else if (!xfit) {
+					children[0] = new QuadTreeNode(this, 0);
+					children[2] = new QuadTreeNode(this, 2);
+					children[0]->used = true;
+					children[2]->used = true;
+					return this;
+				}
+			}
+
+			used = true;
+			return this;
 		} else {
-			return NULL;
+			return NULL; //FIXME
 		}
 	}
 
-	if (node->size <= QuadTreeNode::MIN_SIZE)
-		return NULL;
-
 	for (int i = 0; i < 4; ++i) {
-		if (!node->children[i])
-			node->children[i] = new QuadTreeNode(node, i);
-
-		QuadTreeNode* subnode = FindPosInQuadTree(node->children[i], xsize, ysize);
-		if (subnode)
-			return subnode;
+		if (!children[i]) children[i] = new QuadTreeNode(this, i);
+		QuadTreeNode* subnode = children[i]->FindPosInQuadTree(xsize, ysize);
+		if (subnode) return subnode;
 	}
 
-	//FIXME resize whole quadmap then
 	return NULL;
+}
+
+
+
+CQuadtreeAtlasAlloc::~CQuadtreeAtlasAlloc()
+{
+	delete root;
+}
+
+
+QuadTreeNode* CQuadtreeAtlasAlloc::FindPosInQuadTree(int xsize, int ysize)
+{
+	QuadTreeNode* node = root->FindPosInQuadTree(xsize, ysize);
+	while (!node) {
+		if (!root->used && !root->children[0]) {
+			root->size = root->size << 1;
+			node = root->FindPosInQuadTree(xsize, ysize);
+			continue;
+		}
+		QuadTreeNode* oldroot = root;
+		root = new QuadTreeNode();
+		root->posx = 0;
+		root->posy = 0;
+		root->size = oldroot->size << 1;
+		root->children[0] = oldroot;
+		node = root->FindPosInQuadTree(xsize, ysize);
+	}
+	return node;
+}
+
+
+int CQuadtreeAtlasAlloc::CompareTex(SAtlasEntry* tex1, SAtlasEntry* tex2)
+{
+	const size_t area1 = std::max(tex1->size.x, tex1->size.y);
+	const size_t area2 = std::max(tex2->size.x, tex2->size.y);
+	return (area1 > area2);
 }
 
 
 bool CQuadtreeAtlasAlloc::Allocate()
 {
-	QuadTreeNode root;
-	root.posx = 0;
-	root.posy = 0;
-	root.size = 2048;
+	//if (!root) { //FIXME
+		root = new QuadTreeNode();
+		root->posx = 0;
+		root->posy = 0;
+		root->size = 32;
+	//}
 
 	bool failure = false;
 
+	std::vector<SAtlasEntry*> sortedEntries;
 	for (std::map<std::string, SAtlasEntry>::iterator it = entries.begin(); it != entries.end(); ++it) {
-		QuadTreeNode* node = FindPosInQuadTree(&root, it->second.size.x, it->second.size.y);
+		sortedEntries.push_back(&it->second);
+	}
+	sort(sortedEntries.begin(), sortedEntries.end(), CQuadtreeAtlasAlloc::CompareTex);
+
+	//for (std::map<std::string, SAtlasEntry>::iterator it = entries.begin(); it != entries.end(); ++it) {
+	for (std::vector<SAtlasEntry*>::iterator it = sortedEntries.begin(); it != sortedEntries.end(); ++it) {
+		SAtlasEntry& entry = **it;
+		QuadTreeNode* node = FindPosInQuadTree(entry.size.x, entry.size.y);
 
 		if (!node) {
 			//LOG_L(L_ERROR, "CQuadtreeAtlasAlloc full: failed to add %s", it->first.c_str());
@@ -98,14 +158,14 @@ bool CQuadtreeAtlasAlloc::Allocate()
 			continue;
 		}
 
-		it->second.texCoords.x = node->posx;
-		it->second.texCoords.y = node->posy;
-		it->second.texCoords.z = node->posx + it->second.size.x;
-		it->second.texCoords.w = node->posy + it->second.size.y;
+		entry.texCoords.x = node->posx;
+		entry.texCoords.y = node->posy;
+		entry.texCoords.z = node->posx + entry.size.x;
+		entry.texCoords.w = node->posy + entry.size.y;
 	}
 
-	atlasSize.x = 2048;
-	atlasSize.y = 2048;
+	atlasSize.x = root->size;
+	atlasSize.y = root->size;
 
 	return !failure;
 }
@@ -113,6 +173,11 @@ bool CQuadtreeAtlasAlloc::Allocate()
 
 int CQuadtreeAtlasAlloc::GetMaxMipMaps()
 {
+	/*
+	for (std::map<std::string, SAtlasEntry>::iterator it = entries.begin(); it != entries.end(); ++it) {
+		QuadTreeNode* node = FindPosInQuadTree(&root, it->second.size.x, it->second.size.y);
+	}
+	*/
 
 	return 0;
 }

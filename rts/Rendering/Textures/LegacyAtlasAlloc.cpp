@@ -10,10 +10,6 @@
 // texture spacing in the atlas (in pixels)
 #define TEXMARGIN 2
 
-static const size_t maxysize = 2048;
-static const size_t maxxsize = 2048;
-
-
 
 inline int CLegacyAtlasAlloc::CompareTex(SAtlasEntry* tex1, SAtlasEntry* tex2)
 {
@@ -28,20 +24,20 @@ inline int CLegacyAtlasAlloc::CompareTex(SAtlasEntry* tex1, SAtlasEntry* tex2)
 bool CLegacyAtlasAlloc::IncreaseSize()
 {
 	if (atlasSize.y < atlasSize.x) {
-		if (atlasSize.y < maxysize) {
+		if (atlasSize.y < maxsize.y) {
 			atlasSize.y *= 2;
 			return true;
 		}
-		if (atlasSize.x < maxxsize) {
+		if (atlasSize.x < maxsize.x) {
 			atlasSize.x *= 2;
 			return true;
 		}
 	} else {
-		if (atlasSize.x < maxxsize) {
+		if (atlasSize.x < maxsize.x) {
 			atlasSize.x *= 2;
 			return true;
 		}
-		if (atlasSize.y < maxysize) {
+		if (atlasSize.y < maxsize.y) {
 			atlasSize.y *= 2;
 			return true;
 		}
@@ -53,8 +49,8 @@ bool CLegacyAtlasAlloc::IncreaseSize()
 
 bool CLegacyAtlasAlloc::Allocate()
 {
-	atlasSize.x = 2;
-	atlasSize.y = 2;
+	atlasSize.x = 32;
+	atlasSize.y = 32;
 
 	std::vector<SAtlasEntry*> memtextures;
 	for (std::map<std::string, SAtlasEntry>::iterator it = entries.begin(); it != entries.end(); ++it) {
@@ -63,10 +59,8 @@ bool CLegacyAtlasAlloc::Allocate()
 	sort(memtextures.begin(), memtextures.end(), CLegacyAtlasAlloc::CompareTex);
 
 	bool success = true;
-	int maxx = 0;
-	int curx = 0;
-	int maxy = 0;
-	int cury = 0;
+	int2 max;
+	int2 cur;
 	std::list<int2> nextSub;
 	std::list<int2> thisSub;
 	bool recalc = false;
@@ -77,14 +71,13 @@ bool CLegacyAtlasAlloc::Allocate()
 		while (!done) {
 			if (thisSub.empty()) {
 				if (nextSub.empty()) {
-					maxx = std::max(maxx, curx);
-					cury = maxy;
-					maxy += curtex->size.y + TEXMARGIN;
-					if (maxy > atlasSize.y) {
+					cur.y = max.y;
+					max.y += curtex->size.y + TEXMARGIN;
+					if (max.y > atlasSize.y) {
 						if (IncreaseSize()) {
  							nextSub.clear();
 							thisSub.clear();
-							cury = maxy = curx = 0;
+							cur.y = max.y = cur.x = 0;
 							recalc = true;
 							break;
 						} else {
@@ -92,7 +85,7 @@ bool CLegacyAtlasAlloc::Allocate()
 							break;
 						}
 					}
-					thisSub.push_back(int2(0, cury));
+					thisSub.push_back(int2(0, cur.y));
 				} else {
 					thisSub = nextSub;
 					nextSub.clear();
@@ -103,7 +96,7 @@ bool CLegacyAtlasAlloc::Allocate()
 				thisSub.clear();
 				continue;
 			}
-			if (thisSub.front().y + curtex->size.y > maxy) {
+			if (thisSub.front().y + curtex->size.y > max.y) {
 				thisSub.pop_front();
 				continue;
 			}
@@ -114,9 +107,12 @@ bool CLegacyAtlasAlloc::Allocate()
 			curtex->texCoords.z = thisSub.front().x + curtex->size.x;
 			curtex->texCoords.w = thisSub.front().y + curtex->size.y;
 
+			cur.x = thisSub.front().x + curtex->size.x + TEXMARGIN;
+			max.x = std::max(max.x,cur.x);
+
 			done = true;
 
-			if (thisSub.front().y + curtex->size.y + TEXMARGIN < maxy) {
+			if (thisSub.front().y + curtex->size.y + TEXMARGIN < max.y) {
 				nextSub.push_back(int2(thisSub.front().x + TEXMARGIN, thisSub.front().y + curtex->size.y + TEXMARGIN));
 			}
 
@@ -125,8 +121,8 @@ bool CLegacyAtlasAlloc::Allocate()
 				(++thisSub.begin())->x = thisSub.front().x;
 				thisSub.erase(thisSub.begin());
 			}
-
 		}
+
 		if (recalc) {
 			// reset all existing texcoords
 			for (std::vector<SAtlasEntry*>::iterator it = memtextures.begin(); it != memtextures.end(); ++it) {
@@ -138,13 +134,9 @@ bool CLegacyAtlasAlloc::Allocate()
 		}
 	}
 
-/*
-	if (globalRendering->supportNPOTs && !debug) {
-		maxx = std::max(maxx,curx);
-		//atlasSize.x = maxx;
-		atlasSize.y = maxy;
+	if (npot) {
+		atlasSize = max;
 	}
-*/
 
 	return success;
 }

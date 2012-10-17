@@ -359,6 +359,9 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 
 	CQuadtreeAtlasAlloc atlas;
 	//CLegacyAtlasAlloc atlas;
+	atlas.SetNonPowerOfTwo(globalRendering->supportNPOTs);
+	atlas.SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
+
 	for (std::map<std::string, STex>::const_iterator it = textures.begin(); it != textures.end(); ++it) {
 		if (it->second.id == 0)
 			continue;

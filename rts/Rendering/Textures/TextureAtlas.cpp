@@ -32,11 +32,12 @@ CTextureAtlas::CTextureAtlas(int maxxsize, int maxysize)
 	, freeTexture(true)
 	, maxxsize(maxxsize)
 	, maxysize(maxysize)
-	, usedPixels(0)
 	, initialized(false)
 {
 	atlasAllocator = new CLegacyAtlasAlloc();
 	//atlasAllocator = new CQuadtreeAtlasAlloc();
+	atlasAllocator->SetNonPowerOfTwo(globalRendering->supportNPOTs);
+	//atlasAllocator->SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
 }
 
 CTextureAtlas::~CTextureAtlas()
@@ -112,7 +113,6 @@ bool CTextureAtlas::Finalize()
 	CreateTexture();
 
 	for(std::vector<MemTex*>::iterator it = memtextures.begin(); it != memtextures.end(); ++it) {
-		usedPixels += (*it)->xsize * (*it)->ysize;
 		delete[] (char*)(*it)->data;
 		delete (*it);
 	}
@@ -158,7 +158,6 @@ void CTextureAtlas::CreateTexture()
 			char fname[256];
 			SNPRINTF(fname, sizeof(fname), "textureatlas%d.png", ++count);
 
-			// even with pbo.MapBuffer(GL_WRITE_ONLY) we can readback from it. GL_READ is only needed if we want to readback GPU data!
 			CBitmap save(data, atlasSize.x, atlasSize.y);
 			save.Save(fname);
 			LOG("Saved finalized texture-atlas to '%s'.", fname);
