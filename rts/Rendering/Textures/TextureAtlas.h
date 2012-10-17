@@ -22,8 +22,8 @@ public:
 
 	AtlasedTexture(const float* v) {
 		xstart = v[0];
-		xend   = v[1];
-		ystart = v[2];
+		ystart = v[1];
+		xend   = v[2];
 		yend   = v[3];
 	}
 
@@ -120,7 +120,6 @@ protected:
 	std::map<std::string, AtlasedTexture> textures;
 	int maxxsize;
 	int maxysize;
-	int usedPixels;
 	bool initialized;
 
 	int GetBPP(TextureType tetxType);
