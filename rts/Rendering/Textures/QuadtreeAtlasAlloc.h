@@ -9,7 +9,8 @@
 class CQuadtreeAtlasAlloc : public IAtlasAllocator
 {
 public:
-	virtual void Allocate();
+	virtual bool Allocate();
+	virtual int GetMaxMipMaps();
 };
 
 #endif // QUADTREE_ATLAS_ALLOC_H

@@ -17,7 +17,7 @@ static const size_t maxxsize = 2048;
 
 inline int CLegacyAtlasAlloc::CompareTex(SAtlasEntry* tex1, SAtlasEntry* tex2)
 {
-	//sort in reverse order
+	// sort in reverse order
 	if ((tex1)->size.y == (tex2)->size.y) {
 		return ((tex1)->size.x > (tex2)->size.x);
 	}
@@ -51,7 +51,7 @@ bool CLegacyAtlasAlloc::IncreaseSize()
 }
 
 
-void CLegacyAtlasAlloc::Allocate()
+bool CLegacyAtlasAlloc::Allocate()
 {
 	atlasSize.x = 2;
 	atlasSize.y = 2;
@@ -108,8 +108,7 @@ void CLegacyAtlasAlloc::Allocate()
 				continue;
 			}
 
-			//ok found space for us
-			//FIXME when starting again!
+			// ok found space for us
 			curtex->texCoords.x = thisSub.front().x;
 			curtex->texCoords.y = thisSub.front().y;
 			curtex->texCoords.z = thisSub.front().x + curtex->size.x;
@@ -129,6 +128,10 @@ void CLegacyAtlasAlloc::Allocate()
 
 		}
 		if (recalc) {
+			// reset all existing texcoords
+			for (std::vector<SAtlasEntry*>::iterator it = memtextures.begin(); it != memtextures.end(); ++it) {
+				(*it)->texCoords = float4();
+			}
 			recalc = false;
 			a = -1;
 			continue;
@@ -142,6 +145,6 @@ void CLegacyAtlasAlloc::Allocate()
 		atlasSize.y = maxy;
 	}
 */
-	//FIXME
-	//return success;
+
+	return success;
 }

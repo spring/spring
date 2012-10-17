@@ -17,6 +17,16 @@ struct AtlasedTexture
 {
 public:
 	CR_DECLARE_STRUCT(AtlasedTexture);
+
+	AtlasedTexture() { xstart = xend = ystart = yend = 0.0f; }
+
+	AtlasedTexture(const float* v) {
+		xstart = v[0];
+		xend   = v[1];
+		ystart = v[2];
+		yend   = v[3];
+	}
+
 	float xstart;
 	float xend;
 	float ystart;

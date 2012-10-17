@@ -356,32 +356,6 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 		return;
 	}
 
-	fb.Bind();
-	fb.AttachTexture(atlasTex);
-	bool status = fb.CheckStatus(LOG_SECTION_DECALS_GL4);
-	if (!status) {
-		LOG_L(L_ERROR, "[%s] Couldn't render to FBO!", __FUNCTION__);
-		return;
-	}
-
-	fb.Bind();
-		glViewport(0, 0, 2048, 2048);
-		glClearColor(1.0f, 0.0f, 0.0f, 1.0f); //red
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluOrtho2D(0,1,0,1);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-
-		glActiveTexture(GL_TEXTURE0);
-		glEnable(GL_TEXTURE_2D);
-
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_ONE, GL_ZERO);
-		glDisable(GL_DEPTH_TEST);
-
 
 	CQuadtreeAtlasAlloc atlas;
 	//CLegacyAtlasAlloc atlas;
@@ -403,8 +377,33 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 
 		atlas.AddEntry(it->first, int2(sizeX, sizeY));
 	}
-	atlas.Allocate();
+	bool success = atlas.Allocate();
 
+	fb.Bind();
+	fb.AttachTexture(atlasTex);
+	bool status = fb.CheckStatus(LOG_SECTION_DECALS_GL4);
+	if (!status) {
+		LOG_L(L_ERROR, "[%s] Couldn't render to FBO!", __FUNCTION__);
+		return;
+	}
+
+	fb.Bind();
+		glViewport(0, 0, atlas.GetAtlasSize().x, atlas.GetAtlasSize().y);
+		glClearColor(1.0f, 0.0f, 0.0f, 1.0f); //red
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluOrtho2D(0,1,0,1);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		glActiveTexture(GL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ZERO);
+		glDisable(GL_DEPTH_TEST);
 
 	for (std::map<std::string, STex>::const_iterator it = textures.begin(); it != textures.end(); ++it) {
 		if (it->second.id == 0)
