@@ -662,7 +662,7 @@ void CGroundDecalHandler::Draw()
 
 	SCOPED_TIMER("GroundDecals");
 
-	const float3 ambientColor = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
+	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
 	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
 	glEnable(GL_TEXTURE_2D);
