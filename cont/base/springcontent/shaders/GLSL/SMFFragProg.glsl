@@ -1,8 +1,3 @@
-// ARB shader receives groundAmbientColor multiplied
-// by this constant; shading-texture intensities are
-// also pre-dimmed
-#define SMF_TEXSQR_SIZE 1024.0
-#define SMF_INTENSITY_MUL (210.0 / 255.0)
 #define SSMF_UNCOMPRESSED_NORMALS 0
 #define SMF_SHALLOW_WATER_DEPTH     (10.0                          )
 #define SMF_SHALLOW_WATER_DEPTH_INV ( 1.0 / SMF_SHALLOW_WATER_DEPTH)
@@ -138,7 +133,7 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 	vec4 waterShadeInt;
 
 	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (groundShadowCoeff * groundLightInt);
-	groundShadeInt.rgb *= SMF_INTENSITY_MUL;
+	groundShadeInt.rgb *= SMF_INTENSITY_MULT;
 
 	#if (SMF_VOID_GROUND == 1)
 	// assume the map(per)'s diffuse texture provides sensible alphas
@@ -164,7 +159,7 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 
 		waterShadeInt.rgb = waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight);
 		waterShadeInt.rgb = max(waterMinColor.rgb, waterShadeInt.rgb);
-		waterShadeInt.rgb *= SMF_INTENSITY_MUL * waterLightInt;
+		waterShadeInt.rgb *= SMF_INTENSITY_MULT * waterLightInt;
 
 		// make shadowed areas darker over deeper water
 		waterShadeInt.rgb -= (waterShadeInt.rgb * waterShadeDecay * (1.0 - groundShadowCoeff));
@@ -214,7 +209,7 @@ void main() {
 		vec2 specTexSize = 1.0 / specularTexGen;
 
 		// scale the parallax offset since it is in spectex-space
-		diffTexCoords += (uvOffset * (specTexSize / SMF_TEXSQR_SIZE));
+		diffTexCoords += (uvOffset * (specTexSize / SMF_TEXSQUARE_SIZE));
 		normTexCoords += (uvOffset * (specTexSize / normTexSize));
 		specTexCoords += (uvOffset);
 
