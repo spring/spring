@@ -524,9 +524,9 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	uboGroundLighting.Bind(GL_UNIFORM_BUFFER);
 	uboGroundLighting.Resize(uniformBlockSize, GL_STATIC_DRAW);
 		SGLSLGroundLighting* uboGroundLightingData = (SGLSLGroundLighting*)uboGroundLighting.MapBuffer(0, sizeof(SGLSLGroundLighting));
-		uboGroundLightingData->ambientColor  = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
-		uboGroundLightingData->diffuseColor  = mapInfo->light.groundSunColor * (210.0f / 255.0f);
-		uboGroundLightingData->specularColor = mapInfo->light.groundSpecularColor * (210.0f / 255.0f);
+		uboGroundLightingData->ambientColor  = mapInfo->light.groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->diffuseColor  = mapInfo->light.groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->specularColor = mapInfo->light.groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->dir           = mapInfo->light.sunDir;
 		uboGroundLighting.UnmapBuffer();
 	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 5);

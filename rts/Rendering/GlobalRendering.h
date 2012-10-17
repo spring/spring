@@ -244,6 +244,11 @@ public:
 	* @brief near z-plane distance in elmos
 	*/
 	static const float NEAR_PLANE;
+
+
+	/// magic constant to reduce overblending on SMF maps
+	/// (scales the MapInfo::light_t::ground*Color values)
+	static const float SMF_INTENSITY_MULT;
 };
 
 extern CGlobalRendering* globalRendering;

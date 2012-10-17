@@ -18,8 +18,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Util.h"
 
-#define SMF_INTENSITY_MUL (210.0f / 255.0f)
-#define SMF_TEXSQR_SIZE 1024.0f
+#define SMF_TEXSQUARE_SIZE 1024.0f
 
 
 
@@ -118,6 +117,8 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		extraDefs +=
 			("#define BASE_DYNAMIC_MAP_LIGHT " + IntToString(lightHandler->GetBaseLight()) + "\n") +
 			("#define MAX_DYNAMIC_MAP_LIGHTS " + IntToString(lightHandler->GetMaxLights()) + "\n");
+		extraDefs += ("#define SMF_TEXSQUARE_SIZE   " + FloatToString(                  SMF_TEXSQUARE_SIZE) + "\n");
+		extraDefs += ("#define SMF_INTENSITY_MULT   " + FloatToString(CGlobalRendering::SMF_INTENSITY_MULT) + "\n");
 		extraDefs += ("#define SMF_WATER_ABSORPTION " + IntToString(smfMap->initMinHeight <= 0.0f) + "\n");
 		extraDefs += ("#define SMF_VOID_WATER       " + IntToString(mapInfo->map.voidWater       ) + "\n");
 		extraDefs += ("#define SMF_VOID_GROUND      " + IntToString(mapInfo->map.voidGround      ) + "\n");
@@ -364,7 +365,7 @@ void SMFRenderStateFFP::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 
 void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) {
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
-	const float3 ambientColor = mapInfo->light.groundAmbientColor * SMF_INTENSITY_MUL;
+	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -514,7 +515,7 @@ void SMFRenderStateFFP::SetSquareTexGen(const int sqx, const int sqy) const {
 	// const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	// const float smfTexSquareSizeInv = 1.0f / smfMap->bigTexSize;
 
-	SetTexGen(1.0f / SMF_TEXSQR_SIZE, 1.0f / SMF_TEXSQR_SIZE, -sqx, -sqy);
+	SetTexGen(1.0f / SMF_TEXSQUARE_SIZE, 1.0f / SMF_TEXSQUARE_SIZE, -sqx, -sqy);
 }
 
 void SMFRenderStateARB::SetSquareTexGen(const int sqx, const int sqy) const {

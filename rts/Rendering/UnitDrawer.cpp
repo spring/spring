@@ -2270,7 +2270,9 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 		const icon::CIconData* icon = iconIt->first;
 		const std::set<const CUnit*>& units = iconIt->second;
 
-		if (units.empty() || !icon)
+		if (icon == NULL)
+			continue;
+		if (units.empty())
 			continue;
 
 		va->Initialize();
