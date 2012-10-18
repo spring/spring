@@ -182,12 +182,15 @@ bool CQuadtreeAtlasAlloc::Allocate()
 
 		entry.texCoords.x = node->posx;
 		entry.texCoords.y = node->posy;
-		entry.texCoords.z = node->posx + entry.size.x - 1;
+		entry.texCoords.z = node->posx + entry.size.x - 1; //FIXME stretch if image is smaller than node!
 		entry.texCoords.w = node->posy + entry.size.y - 1;
 	}
 
 	atlasSize.x = root->size;
 	atlasSize.y = root->size;
+	if (!root->children[2] && !root->children[3]) {
+		atlasSize.y = std::max(atlasSize.y >> 1, NODE_MIN_SIZE);
+	}
 
 	return !failure;
 }
@@ -196,5 +199,5 @@ bool CQuadtreeAtlasAlloc::Allocate()
 int CQuadtreeAtlasAlloc::GetMaxMipMaps()
 {
 	if (!root) return 0;
-	return bits_ffs(root->size) - bits_ffs(root->GetMinSize());
+	return bits_ffs(root->GetMinSize()) - 1;
 }
