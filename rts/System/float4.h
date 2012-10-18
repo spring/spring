@@ -13,7 +13,13 @@ struct float4 : public float3
 {
 	CR_DECLARE_STRUCT(float4);
 
-	float w;
+	union {
+		struct { float w; };
+		struct { float a; };
+		struct { float x2; };
+		struct { float q; };
+		struct { float yend; };
+	};
 
 	float4();
 	float4(const float3& f, const float w = 0.0f) : float3(f), w(w) {}
