@@ -19,7 +19,7 @@
 #include <list>
 #include <cstring>
 
-CR_BIND(AtlasedTexture, );
+CR_BIND_DERIVED(AtlasedTexture, float4, );
 CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );
 
 // texture spacing in the atlas (in pixels)

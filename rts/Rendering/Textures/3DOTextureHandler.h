@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include "Rendering/GL/myGL.h"
+#include "System/float4.h"
 
 struct TexFile;
 class CFileHandler;
@@ -14,12 +15,7 @@ class CFileHandler;
 class C3DOTextureHandler
 {
 public:
-	struct UnitTexture {
-		float xstart;
-		float xend;
-		float ystart;
-		float yend;
-	};
+	typedef float4 UnitTexture;
 
 	C3DOTextureHandler();
 	~C3DOTextureHandler();
@@ -32,15 +28,16 @@ public:
 	unsigned int GetAtlasTex2ID() const { return atlas3do2; }
 	unsigned int GetAtlasTexSizeX() const { return bigTexX; }
 	unsigned int GetAtlasTexSizeY() const { return bigTexY; }
-	const std::map<std::string, UnitTexture*>& GetAtlasTextures() const { return textures; }
+	const std::map<std::string, UnitTexture>& GetAtlasTextures() const { return textures; }
 
 private:
-	std::map<std::string, UnitTexture*> textures;
+	std::map<std::string, UnitTexture> textures;
 	GLuint atlas3do1;
 	GLuint atlas3do2;
 	int bigTexX;
 	int bigTexY;
 
+	std::vector<TexFile*> LoadTexFiles();
 	static TexFile* CreateTex(const std::string& name, const std::string& name2, bool teamcolor = false);
 };
 
