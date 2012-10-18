@@ -127,10 +127,7 @@ static GLuint LoadTexture(const std::string& name, size_t* texX, size_t* texY)
 		size_t sizeY;
 	};
 
-struct SAtlasTex {
-	float tx, ty;
-	float tx2, ty2;
-};
+typedef float4 SAtlasTex;
 std::map<std::string, SAtlasTex> atlasTexs;
 
 
@@ -362,26 +359,17 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 		//	continue;
 		//}
 
-		SAtlasTex aTex;
-		aTex.tx  = texCoords.x;
-		aTex.ty  = texCoords.y;
-		aTex.tx2 = texCoords.z;
-		aTex.ty2 = texCoords.w;
+		SAtlasTex aTex(texCoords);
 		atlasTexs[it->first.c_str()] = aTex;
 
 		CVertexArray va;
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		glBindTexture(GL_TEXTURE_2D, it->second.id);
-		//va.AddVertex2dT(aTex.tx,  aTex.ty,  0.0f, 0.0f);
-		//va.AddVertex2dT(aTex.tx2, aTex.ty,  1.0f, 0.0f);
-		//va.AddVertex2dT(aTex.tx,  aTex.ty2, 0.0f, 1.0f);
-		//va.AddVertex2dT(aTex.tx2, aTex.ty2, 1.0f, 1.0f);
-
-		va.AddVertex2dT(absCoords.x, absCoords.y, 0.0f, 0.0f);
+		//FIXME why +1?
+		va.AddVertex2dT(absCoords.x,   absCoords.y, 0.0f, 0.0f);
 		va.AddVertex2dT(absCoords.z+1, absCoords.y, 1.0f, 0.0f);
-		va.AddVertex2dT(absCoords.x, absCoords.w+1, 0.0f, 1.0f);
+		va.AddVertex2dT(absCoords.x,   absCoords.w+1, 0.0f, 1.0f);
 		va.AddVertex2dT(absCoords.z+1, absCoords.w+1, 1.0f, 1.0f);
-
 		va.DrawArray2dT(GL_TRIANGLE_STRIP);
 	}
 
@@ -755,11 +743,7 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius, bool
 	int r = (gu->RandInt() & 3) + 1;
 	char buf[2];
 	SNPRINTF(buf, sizeof(buf), "%i", r);
-	SAtlasTex& aTex = atlasTexs[std::string(buf)];
-	s->texOffsets.x = aTex.tx;
-	s->texOffsets.y = aTex.ty;
-	s->texOffsets.z = aTex.tx2;
-	s->texOffsets.w = aTex.ty2;
+	s->texOffsets = atlasTexs[std::string(buf)];
 
 	GML_STDMUTEX_LOCK(decal);
 
@@ -792,11 +776,7 @@ void CDecalsDrawerGL4::UnitCreated(const CUnit* unit, const CUnit* builder)
 	s->size.y = sizey * SQUARE_SIZE;
 	s->alpha  = 1.0f;
 
-	SAtlasTex& aTex = atlasTexs[unit->unitDef->decalDef.groundDecalTypeName];
-	s->texOffsets.x = aTex.tx;
-	s->texOffsets.y = aTex.ty;
-	s->texOffsets.z = aTex.tx2;
-	s->texOffsets.w = aTex.ty2;
+	s->texOffsets = atlasTexs[unit->unitDef->decalDef.groundDecalTypeName];
 
 	if (decals.size() < maxDecals) {
 		//FIXME use mt-safe container
