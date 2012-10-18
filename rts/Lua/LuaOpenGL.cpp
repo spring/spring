@@ -4966,8 +4966,8 @@ int LuaOpenGL::GetQuery(lua_State* L)
 
 int LuaOpenGL::GetGlobalTexNames(lua_State* L)
 {
-	map<string, C3DOTextureHandler::UnitTexture*>::const_iterator it;
-	const map<string, C3DOTextureHandler::UnitTexture*>& textures =
+	map<string, C3DOTextureHandler::UnitTexture>::const_iterator it;
+	const map<string, C3DOTextureHandler::UnitTexture>& textures =
 		texturehandler3DO->GetAtlasTextures();
 
 	lua_createtable(L, textures.size(), 0);
