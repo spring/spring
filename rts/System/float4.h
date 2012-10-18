@@ -16,7 +16,7 @@ struct float4 : public float3
 	union {
 		struct { float w; };
 		struct { float a; };
-		struct { float x2; };
+		struct { float y2; };
 		struct { float q; };
 		struct { float yend; };
 	};
