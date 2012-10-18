@@ -117,7 +117,6 @@ private:
 	};
 
 private:
-	void LoadScarTexture();
 	void LoadShaders();
 	void GenerateAtlasTexture();
 
@@ -129,7 +128,6 @@ private:
 
 	void DrawDecals();
 	//void DrawTracks();
-	//void DrawBuildingDecals();
 
 private:
 	VBO vboVertices;
@@ -144,7 +142,6 @@ private:
 	size_t maxDecals;
 
 	GLuint tbo;
-	GLuint scarTex;
 	GLuint depthTex;
 	GLuint atlasTex;
 	//GLuint decalShader;
