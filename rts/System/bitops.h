@@ -20,6 +20,9 @@
  */
 static inline unsigned int next_power_of_2(unsigned int x)
 {
+#ifdef __GNUC__
+	return 1 << (sizeof(unsigned int) * 8 - __builtin_clz(--x));
+#else
 	x--;
 	x |= (x >> 1);
 	x |= (x >> 2);
@@ -27,6 +30,7 @@ static inline unsigned int next_power_of_2(unsigned int x)
 	x |= (x >> 8);
 	x |= (x >> 16);
 	return ++x;
+#endif
 }
 
 /**
@@ -36,14 +40,14 @@ static inline unsigned int next_power_of_2(unsigned int x)
  *
  * Counts the number of bits in an unsigned int
  * that are set to 1.  So, for example, in the
- * number 5, hich is 101 in binary, there are
+ * number 5, which is 101 in binary, there are
  * two bits set to 1.
  */
 static inline unsigned int count_bits_set(unsigned int w)
 {
-	/*
-	 * This is faster, and runs in parallel
-	 */
+#ifdef __GNUC__
+	return __builtin_popcount(w);
+#else
 	const int S[] = {1, 2, 4, 8, 16};
 	const int B[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF, 0x0000FFFF};
 	int c = w;
@@ -53,6 +57,25 @@ static inline unsigned int count_bits_set(unsigned int w)
 	c = ((c >> S[3]) & B[3]) + (c & B[3]);
 	c = ((c >> S[4]) & B[4]) + (c & B[4]);
 	return c;
+#endif
+}
+
+/**
+ * quote from GCC doc "Returns one plus the index of the least significant 1-bit of x, or if x is zero, returns zero."
+ */
+static inline unsigned int bits_ffs(unsigned int x)
+{
+#ifdef __GNUC__
+	return __builtin_ffs(x);
+#else
+	if (x == 0) return 0;
+	int i = 1;
+	while (!(x & 0x1)) {
+		x = x >> 1;
+		++i;
+	}
+	return i;
+#endif
 }
 
 /**

@@ -3,8 +3,9 @@
 #include "System/mmgr.h"
 
 #include "QuadtreeAtlasAlloc.h"
-#include "System/Log/ILog.h"
 #include "System/Exceptions.h"
+#include "System/bitops.h"
+#include "System/Log/ILog.h"
 
 
 static int NODE_MIN_SIZE = 8;
@@ -195,5 +196,5 @@ bool CQuadtreeAtlasAlloc::Allocate()
 int CQuadtreeAtlasAlloc::GetMaxMipMaps()
 {
 	if (!root) return 0;
-	return int(std::ceil(float(root->size) / root->GetMinSize())) - 1;
+	return bits_ffs(root->size) - bits_ffs(root->GetMinSize());
 }
