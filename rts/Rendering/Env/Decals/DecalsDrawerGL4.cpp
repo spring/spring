@@ -138,7 +138,6 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	: CEventClient("[CDecalsDrawerGL4]", 314159, false)
 	, maxDecals(0)
 	, tbo(0)
-	, scarTex(0)
 	, depthTex(0)
 	, atlasTex(0)
 {
@@ -161,7 +160,6 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	glGenTextures(1, &tbo);
 	glGenTextures(1, &depthTex);
 
-	LoadScarTexture();
 	LoadShaders();
 
 	//TODO FINISH
@@ -194,74 +192,10 @@ CDecalsDrawerGL4::~CDecalsDrawerGL4()
 	if (helper != NULL) helper->RemoveExplosionListener(this);
 
 	glDeleteTextures(1, &tbo);
-	glDeleteTextures(1, &scarTex);
 	glDeleteTextures(1, &depthTex);
 
 	shaderHandler->ReleaseProgramObjects("[DecalsDrawerGL4]");
 	decalShader = NULL;
-}
-
-
-static void LoadScar(const std::string& file, unsigned char* buf, int xoffset, int yoffset)
-{
-	CBitmap bm;
-	if (!bm.Load(file)) {
-		throw content_error("Could not load scar from file " + file);
-	}
-	bool isBitmap = (FileSystem::GetExtension(file) == "bmp");
-	if (isBitmap) {
-		// bitmaps don't have an alpha channel
-		// so use: red := brightness & green := alpha
-		for (int y = 0; y < bm.ysize; ++y) {
-			for (int x = 0; x < bm.xsize; ++x) {
-				const int memIndex = ((y * bm.xsize) + x) * 4;
-				const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
-				const int brightness = bm.mem[memIndex + 0];
-				buf[bufIndex + 0] = (brightness * 90) / 255;
-				buf[bufIndex + 1] = (brightness * 60) / 255;
-				buf[bufIndex + 2] = (brightness * 30) / 255;
-				buf[bufIndex + 3] = bm.mem[memIndex + 1];
-			}
-		}
-	} else {
-		for (int y = 0; y < bm.ysize; ++y) {
-			for (int x = 0; x < bm.xsize; ++x) {
-				const int memIndex = ((y * bm.xsize) + x) * 4;
-				const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
-				buf[bufIndex + 0] = bm.mem[memIndex + 0];
-				buf[bufIndex + 1] = bm.mem[memIndex + 1];
-				buf[bufIndex + 2] = bm.mem[memIndex + 2];
-				buf[bufIndex + 3] = bm.mem[memIndex + 3];
-			}
-		}
-	}
-}
-
-
-void CDecalsDrawerGL4::LoadScarTexture()
-{
-	unsigned char* buf = new unsigned char[512*512*4];
-	memset(buf,0,512*512*4);
-
-	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!resourcesParser.Execute()) {
-		LOG_L(L_ERROR, "Failed to load resources: %s", resourcesParser.GetErrorLog().c_str());
-	}
-
-	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
-	LoadScar("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), buf, 0,   0);
-	LoadScar("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), buf, 256, 0);
-	LoadScar("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), buf, 0,   256);
-	LoadScar("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), buf, 256, 256);
-
-	glGenTextures(1, &scarTex);
-	glBindTexture(GL_TEXTURE_2D, scarTex);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-	delete[] buf;
 }
 
 
@@ -307,14 +241,6 @@ void CDecalsDrawerGL4::LoadShaders()
 
 void CDecalsDrawerGL4::GenerateAtlasTexture()
 {
-	glGenTextures(1, &atlasTex);
-	glBindTexture(GL_TEXTURE_2D, atlasTex);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 2048, 2048, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
 	std::map<std::string, STex> textures;
 	for (std::vector<UnitDef*>::const_iterator it = unitDefHandler->unitDefs.begin(); it != unitDefHandler->unitDefs.end(); ++it) {
 		SolidObjectDecalDef& decalDef = (*it)->decalDef;
@@ -350,17 +276,11 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 		}
 	}
 
-	FBO fb;
-	if (!fb.IsValid()) {
-		LOG_L(L_ERROR, "[%s] framebuffer not valid", __FUNCTION__);
-		return;
-	}
-
-
 	CQuadtreeAtlasAlloc atlas;
 	//CLegacyAtlasAlloc atlas;
 	atlas.SetNonPowerOfTwo(globalRendering->supportNPOTs);
 	atlas.SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
+	//atlas.SetMaxSize(512,512);
 
 	for (std::map<std::string, STex>::const_iterator it = textures.begin(); it != textures.end(); ++it) {
 		if (it->second.id == 0)
@@ -382,6 +302,26 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	}
 	bool success = atlas.Allocate();
 
+
+
+	glGenTextures(1, &atlasTex);
+	glBindTexture(GL_TEXTURE_2D, atlasTex);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//#ifdef OPENGL4 //FIXME
+//		glTexStorage2D(GL_TEXTURE_2D, atlas.GetMaxMipMaps(), GL_RGBA8, atlas.GetAtlasSize().x, atlas.GetAtlasSize().y);
+//#else
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, atlas.GetMaxMipMaps());
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, atlas.GetAtlasSize().x, atlas.GetAtlasSize().y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+//#endif
+
+	FBO fb;
+	if (!fb.IsValid()) {
+		LOG_L(L_ERROR, "[%s] framebuffer not valid", __FUNCTION__);
+		return;
+	}
 	fb.Bind();
 	fb.AttachTexture(atlasTex);
 	bool status = fb.CheckStatus(LOG_SECTION_DECALS_GL4);
@@ -400,6 +340,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 		gluOrtho2D(0,1,0,1);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
+		glScalef(1.0f/atlas.GetAtlasSize().x,1.0f/atlas.GetAtlasSize().y,1.0f);
 
 		glActiveTexture(GL_TEXTURE0);
 		glEnable(GL_TEXTURE_2D);
@@ -413,6 +354,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 			continue;
 
 		float4 texCoords = atlas.GetTexCoords(it->first);
+		float4 absCoords = atlas.GetEntry(it->first);
 
 		//FIXME
 		//if (!node) {
@@ -430,21 +372,30 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 		CVertexArray va;
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		glBindTexture(GL_TEXTURE_2D, it->second.id);
-		va.AddVertex2dT(aTex.tx,  aTex.ty,  0.0f, 0.0f);
-		va.AddVertex2dT(aTex.tx2, aTex.ty,  1.0f, 0.0f);
-		va.AddVertex2dT(aTex.tx,  aTex.ty2, 0.0f, 1.0f);
-		va.AddVertex2dT(aTex.tx2, aTex.ty2, 1.0f, 1.0f);
+		//va.AddVertex2dT(aTex.tx,  aTex.ty,  0.0f, 0.0f);
+		//va.AddVertex2dT(aTex.tx2, aTex.ty,  1.0f, 0.0f);
+		//va.AddVertex2dT(aTex.tx,  aTex.ty2, 0.0f, 1.0f);
+		//va.AddVertex2dT(aTex.tx2, aTex.ty2, 1.0f, 1.0f);
+
+		va.AddVertex2dT(absCoords.x, absCoords.y, 0.0f, 0.0f);
+		va.AddVertex2dT(absCoords.z+1, absCoords.y, 1.0f, 0.0f);
+		va.AddVertex2dT(absCoords.x, absCoords.w+1, 0.0f, 1.0f);
+		va.AddVertex2dT(absCoords.z+1, absCoords.w+1, 1.0f, 1.0f);
+
 		va.DrawArray2dT(GL_TRIANGLE_STRIP);
 	}
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	unsigned char* img = new unsigned char[2048*2048*4];
-	memset(img, 0, 2048*2048*4);
-	glReadPixels(0, 0, 2048, 2048, GL_RGBA, GL_UNSIGNED_BYTE, img);
-	CBitmap bitmap(img, 2048, 2048);
+#ifdef DEBUG
+	const size_t datasize = 4 * atlas.GetAtlasSize().x * atlas.GetAtlasSize().y;
+	unsigned char* img = new unsigned char[datasize];
+	memset(img, 0, datasize);
+	glReadPixels(0, 0, atlas.GetAtlasSize().x, atlas.GetAtlasSize().y, GL_RGBA, GL_UNSIGNED_BYTE, img);
+	CBitmap bitmap(img, atlas.GetAtlasSize().x, atlas.GetAtlasSize().y);
 	bitmap.Save("x_decal_atlas.png", false);
 	delete[] img;
+#endif
 
 	for (std::map<std::string, STex>::const_iterator it = textures.begin(); it != textures.end(); ++it) {
 		if (it->second.id == 0)
@@ -669,7 +620,6 @@ void CDecalsDrawerGL4::Draw()
 		glBindTexture(GL_TEXTURE_BUFFER, tbo);
 
 	glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, scarTex);
 		glBindTexture(GL_TEXTURE_2D, atlasTex);
 
 	DrawDecals();

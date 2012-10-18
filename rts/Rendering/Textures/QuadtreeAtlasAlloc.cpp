@@ -7,6 +7,9 @@
 #include "System/Exceptions.h"
 
 
+static int NODE_MIN_SIZE = 8;
+
+
 struct QuadTreeNode {
 	QuadTreeNode() {
 		used = false;
@@ -33,17 +36,22 @@ struct QuadTreeNode {
 
 	QuadTreeNode* FindPosInQuadTree(int xsize, int ysize);
 
+	int GetMinSize() {
+		int minsize = size;
+		for (int i = 0; i < 4; ++i) {
+			if (children[i]) {
+				minsize = std::min(minsize, children[i]->GetMinSize());
+			}
+		}
+		return minsize;
+	}
+
 	short int posx;
 	short int posy;
 	int size;
 	bool used;
 	QuadTreeNode* children[4];
-	
-	static int MIN_SIZE;
 };
-
-
-int QuadTreeNode::MIN_SIZE = 8;
 
 
 QuadTreeNode* QuadTreeNode::FindPosInQuadTree(int xsize, int ysize)
@@ -56,19 +64,19 @@ QuadTreeNode* QuadTreeNode::FindPosInQuadTree(int xsize, int ysize)
 
 	const bool xfit = ((size >> 1) < xsize);
 	const bool yfit = ((size >> 1) < ysize);
-	const bool minSizeReached = (size <= QuadTreeNode::MIN_SIZE);
+	const bool minSizeReached = (size <= NODE_MIN_SIZE);
 	
 	if (xfit || yfit || minSizeReached) {
 		if (!children[0]) {
 			if (!minSizeReached) {
-				//FIXME
 				if (!yfit) {
 					children[0] = new QuadTreeNode(this, 0);
 					children[1] = new QuadTreeNode(this, 1);
 					children[0]->used = true;
 					children[1]->used = true;
 					return this;
-				} else if (!xfit) {
+				}
+				if (!xfit) {
 					children[0] = new QuadTreeNode(this, 0);
 					children[2] = new QuadTreeNode(this, 2);
 					children[0]->used = true;
@@ -80,7 +88,7 @@ QuadTreeNode* QuadTreeNode::FindPosInQuadTree(int xsize, int ysize)
 			used = true;
 			return this;
 		} else {
-			return NULL; //FIXME
+			return NULL; //FIXME dynamic x/y quadnode size?
 		}
 	}
 
@@ -94,6 +102,11 @@ QuadTreeNode* QuadTreeNode::FindPosInQuadTree(int xsize, int ysize)
 }
 
 
+CQuadtreeAtlasAlloc::CQuadtreeAtlasAlloc()
+{
+	root = NULL;
+}
+
 
 CQuadtreeAtlasAlloc::~CQuadtreeAtlasAlloc()
 {
@@ -105,6 +118,10 @@ QuadTreeNode* CQuadtreeAtlasAlloc::FindPosInQuadTree(int xsize, int ysize)
 {
 	QuadTreeNode* node = root->FindPosInQuadTree(xsize, ysize);
 	while (!node) {
+		if (root->size >= maxsize.x) {
+			break;
+		}
+
 		if (!root->used && !root->children[0]) {
 			root->size = root->size << 1;
 			node = root->FindPosInQuadTree(xsize, ysize);
@@ -132,12 +149,12 @@ int CQuadtreeAtlasAlloc::CompareTex(SAtlasEntry* tex1, SAtlasEntry* tex2)
 
 bool CQuadtreeAtlasAlloc::Allocate()
 {
-	//if (!root) { //FIXME
+	if (!root) {
 		root = new QuadTreeNode();
 		root->posx = 0;
 		root->posy = 0;
 		root->size = 32;
-	//}
+	}
 
 	bool failure = false;
 
@@ -147,21 +164,25 @@ bool CQuadtreeAtlasAlloc::Allocate()
 	}
 	sort(sortedEntries.begin(), sortedEntries.end(), CQuadtreeAtlasAlloc::CompareTex);
 
-	//for (std::map<std::string, SAtlasEntry>::iterator it = entries.begin(); it != entries.end(); ++it) {
 	for (std::vector<SAtlasEntry*>::iterator it = sortedEntries.begin(); it != sortedEntries.end(); ++it) {
 		SAtlasEntry& entry = **it;
 		QuadTreeNode* node = FindPosInQuadTree(entry.size.x, entry.size.y);
 
 		if (!node) {
-			//LOG_L(L_ERROR, "CQuadtreeAtlasAlloc full: failed to add %s", it->first.c_str());
+			for (std::map<std::string, SAtlasEntry>::iterator jt = entries.begin(); jt != entries.end(); ++jt) {
+				if (&entry == &(jt->second)) {
+					LOG_L(L_ERROR, "CQuadtreeAtlasAlloc full: failed to add %s", jt->first.c_str());
+					break;
+				}
+			}
 			failure = true;
 			continue;
 		}
 
 		entry.texCoords.x = node->posx;
 		entry.texCoords.y = node->posy;
-		entry.texCoords.z = node->posx + entry.size.x;
-		entry.texCoords.w = node->posy + entry.size.y;
+		entry.texCoords.z = node->posx + entry.size.x - 1;
+		entry.texCoords.w = node->posy + entry.size.y - 1;
 	}
 
 	atlasSize.x = root->size;
@@ -173,11 +194,6 @@ bool CQuadtreeAtlasAlloc::Allocate()
 
 int CQuadtreeAtlasAlloc::GetMaxMipMaps()
 {
-	/*
-	for (std::map<std::string, SAtlasEntry>::iterator it = entries.begin(); it != entries.end(); ++it) {
-		QuadTreeNode* node = FindPosInQuadTree(&root, it->second.size.x, it->second.size.y);
-	}
-	*/
-
-	return 0;
+	if (!root) return 0;
+	return int(std::ceil(float(root->size) / root->GetMinSize())) - 1;
 }
