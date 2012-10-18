@@ -658,9 +658,13 @@ public:
 	float3 cClampInMap() const { float3 f = *this; f.ClampInMap(); return f; }
 
 public:
-	float x; ///< x component
-	float y; ///< y component
-	float z; ///< z component
+	union {
+		struct { float x,y,z; };
+		struct { float r,g,b; };
+		struct { float x1,y1,x2; };
+		struct { float s,t,p; };
+		struct { float xstart, ystart, xend; };
+	};
 };
 
 /**
