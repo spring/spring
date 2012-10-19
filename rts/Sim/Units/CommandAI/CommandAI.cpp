@@ -754,22 +754,17 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 	}
 
 	// flush the queue for immediate commands
+	// NOTE: CMD_STOP can be a queued order (!)
 	if (!(c.options & SHIFT_KEY)) {
-		const Command& fc = (commandQue.empty())? Command(CMD_STOP): commandQue.front();
-
-		ClearTargetLock(fc);
-
-		if (fc.GetID() != CMD_STOP) {
-			waitCommandsAI.ClearUnitQueue(owner, commandQue);
-			ClearCommandDependencies();
-			commandQue.clear();
-		}
-
+		waitCommandsAI.ClearUnitQueue(owner, commandQue);
+		ClearTargetLock((commandQue.empty())? Command(CMD_STOP): commandQue.front());
+		ClearCommandDependencies();
 		SetOrderTarget(NULL);
 
 		// if c is an attack command, the actual order-target
 		// gets set via ExecuteAttack (called from SlowUpdate
 		// at the end of this function)
+		commandQue.clear();
 		assert(commandQue.empty());
 
 		inCommand = false;
