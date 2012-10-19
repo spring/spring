@@ -879,9 +879,15 @@ void CUnit::SlowUpdate()
 	UpdateResources();
 
 	if (IsStunned()) {
+		// call this because we can be pushed into a different quad while stunned
+		// which would make us invulnerable to most non-/small-AOE weapon impacts
+		static_cast<AMoveType*>(moveType)->SlowUpdate();
+
+		const bool b0 = (paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health));
+		const bool b1 = (transporter == NULL || transporter->unitDef->isFirePlatform);
+
 		// de-stun only if we are not (still) inside a non-firebase transport
-		if ((paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health)) &&
-			!(transporter && !transporter->unitDef->isFirePlatform)) {
+		if (b0 && b1) {
 			SetStunned(false);
 		}
 
@@ -889,20 +895,18 @@ void CUnit::SlowUpdate()
 		return;
 	}
 
-	if (selfDCountdown && !IsStunned()) {
-		selfDCountdown--;
-		if (selfDCountdown <= 1) {
+	if (selfDCountdown > 0) {
+		if ((selfDCountdown -= 1) == 0) {
+			// avoid unfinished buildings making an explosion
 			if (!beingBuilt) {
 				KillUnit(true, false, NULL);
 			} else {
-				KillUnit(false, true, NULL);	//avoid unfinished buildings making an explosion
+				KillUnit(false, true, NULL);
 			}
-			selfDCountdown = 0;
 			return;
 		}
-		if ((selfDCountdown & 1) && (team == gu->myTeam)) {
-			LOG("%s: Self destruct in %i s",
-					unitDef->humanName.c_str(), selfDCountdown / 2);
+		if ((selfDCountdown & 1) && (team == gu->myTeam) && !gu->spectating) {
+			LOG("%s: self-destruct in %is", unitDef->humanName.c_str(), (selfDCountdown >> 1) + 1);
 		}
 	}
 
