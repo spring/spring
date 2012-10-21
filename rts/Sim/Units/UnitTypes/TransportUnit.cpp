@@ -58,28 +58,27 @@ void CTransportUnit::Update()
 	for (std::list<TransportedUnit>::iterator ti = transportedUnits.begin(); ti != transportedUnits.end(); ++ti) {
 		CUnit* transportee = ti->unit;
 
-		float3 relPiecePos;
-		float3 absPiecePos;
+		transportee->mapSquare = mapSquare;
+
+		// by default, "hide" the transportee far underneath terrain
+		// FIXME: this is stupid, just set noDraw and disable coldet
+		float3 relPiecePos = UpVector * -10000.0f;
+		float3 absPiecePos = pos + relPiecePos;
 
 		if (ti->piece >= 0) {
 			relPiecePos = script->GetPiecePos(ti->piece);
-		} else {
-			relPiecePos = float3(0.0f, -1000.0f, 0.0f);
+			absPiecePos = pos +
+				(frontdir * relPiecePos.z) +
+				(updir    * relPiecePos.y) +
+				(rightdir * relPiecePos.x);
 		}
-
-		absPiecePos = pos +
-			(frontdir * relPiecePos.z) +
-			(updir    * relPiecePos.y) +
-			(rightdir * relPiecePos.x);
-
-		transportee->mapSquare = mapSquare;
 
 		if (unitDef->holdSteady) {
 			// slave transportee orientation to piece
 			if (ti->piece >= 0) {
 				const CMatrix44f& transMat = GetTransformMatrix(true);
 				const CMatrix44f& pieceMat = script->GetPieceMatrix(ti->piece);
-				const CMatrix44f slaveMat = pieceMat * transMat;
+				const CMatrix44f  slaveMat = pieceMat * transMat;
 
 				transportee->SetDirVectors(slaveMat);
 			}

@@ -1590,9 +1590,10 @@ void CGroundMoveType::HandleUnitCollisions(
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 		CUnit* collidee = const_cast<CUnit*>(*uit);
 
-		if (collidee == collider) { continue; }
-		if (collidee->moveType->IsSkidding()) { continue; }
-		if (collidee->moveType->IsFlying()) { continue; }
+		if (collidee == collider) continue;
+		if (collidee->moveType->IsSkidding()) continue;
+		if (collidee->moveType->IsFlying()) continue;
+		if (collidee->GetTransporter() != NULL) continue;
 
 		const bool colliderMobile = (collider->moveDef != NULL); // always true
 		const bool collideeMobile = (collidee->moveDef != NULL); // maybe true
