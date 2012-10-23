@@ -104,6 +104,17 @@ void CFactory::Update()
 	if (beingBuilt) {
 		// factory is under construction, cannot build anything yet
 		CUnit::Update();
+
+		#if 1
+		// this can happen if we started being reclaimed *while* building a
+		// unit, in which case our buildee can either be allowed to finish
+		// construction (by assisting builders) or has to be killed --> the
+		// latter is easier
+		if (curBuild != NULL) {
+			StopBuild();
+		}
+		#endif
+
 		return;
 	}
 
@@ -126,7 +137,7 @@ void CFactory::Update()
 		}
 	}
 
-	if (curBuild != NULL && !beingBuilt) {
+	if (curBuild != NULL) {
 		UpdateBuild(curBuild);
 		FinishBuild(curBuild);
 	}
@@ -207,13 +218,13 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 	// buildPiece is the rotating platform
 	const int buildPiece = GetBuildPiece();
 	const float3& buildPos = CalcBuildPos(buildPiece);
-	const CMatrix44f& mat = script->GetPieceMatrix(buildPiece);
-	const int h = GetHeadingFromVector(mat[2], mat[10]); //! x.z, z.z
+	const CMatrix44f& buildPieceMat = script->GetPieceMatrix(buildPiece);
+	const int buildPieceHeading = GetHeadingFromVector(buildPieceMat[2], buildPieceMat[10]); //! x.z, z.z
 
 	float3 buildeePos = buildPos;
 
 	// rotate unit nanoframe with platform
-	buildee->heading = (-h + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
+	buildee->heading = (-buildPieceHeading + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
 
 	if (buildee->unitDef->floatOnWater && (buildeePos.y <= 0.0f))
 		buildeePos.y = -buildee->unitDef->waterline;
