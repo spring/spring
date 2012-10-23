@@ -499,10 +499,7 @@ void CUnitScript::SetVisibility(int piece, bool visible)
 		return;
 	}
 
-	LocalModelPiece* p = pieces[piece];
-	if (p->visible != visible) {
-		p->visible = visible;
-	}
+	pieces[piece]->visible = visible;
 }
 
 

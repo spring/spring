@@ -253,28 +253,26 @@ void CEndGameBox::Draw()
 		      bool playedAndWon = false;
 
 		for (unsigned int i = 0; i < winners.size(); i++) {
-			const int winner = winners[i];
+			const int winnerAllyTeam = winners[i];
 
-			if (!neverPlayed && winner == gu->myPlayingAllyTeam) {
+			if (!neverPlayed && winnerAllyTeam == gu->myPlayingAllyTeam) {
 				// we actually played and won!
 				playedAndWon = true; break;
 			}
 
-			winnersList << winner;
-
-			if (i < (winners.size() - 1))
-				winnersList << ", ";
+			winnersList << (((i > 0)? ((i < (winners.size() - 1))? ", ": " and "): ""));
+			winnersList << winnerAllyTeam;
 		}
 
 		if (neverPlayed) {
-			winnersText << "Game Over! Winning ally-teams are: ";
-			winnersText << winnersList.str();
+			winnersText << "Game Over! Ally-team(s) ";
+			winnersText << winnersList.str() << " won!";
 
 			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, (winnersText.str()).c_str());
 		} else {
 			winnersText.str("");
 			winnersText << "Game Over! Your ally-team ";
-			winnersText << (playedAndWon? "won the game": "lost the game");
+			winnersText << (playedAndWon? "won!": "lost!");
 			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, (winnersText.str()).c_str());
 		}
 	}
