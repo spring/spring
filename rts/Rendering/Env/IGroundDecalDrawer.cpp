@@ -17,6 +17,7 @@ static IGroundDecalDrawer* singleton = NULL;
 IGroundDecalDrawer::IGroundDecalDrawer()
 {
 	decalLevel = std::max(0, configHandler->GetInt("GroundDecals"));
+	drawDecals = (decalLevel > 0); //FIXME
 }
 
 
