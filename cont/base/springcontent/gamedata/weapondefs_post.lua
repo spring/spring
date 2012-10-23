@@ -35,7 +35,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function BackwardCompability(wdName,wd)
+local function BackwardCompability(wdName, wd)
   -- weapon reloadTime and stockpileTime were seperated in 77b1
   if (tobool(wd.stockpile) and (wd.stockpiletime==nil)) then
     wd.stockpiletime = wd.reloadtime
@@ -43,8 +43,9 @@ local function BackwardCompability(wdName,wd)
   end
 
   -- auto detect ota weapontypes
-  if (wd.weapontype==nil) then
+  if (wd.weapontype == nil) then
     local rendertype = tonumber(wd.rendertype) or 0
+
     if (tobool(wd.dropped)) then
       wd.weapontype = "AircraftBomb";
     elseif (tobool(wd.vlaunch)) then
@@ -58,7 +59,7 @@ local function BackwardCompability(wdName,wd)
     elseif (wdName:lower():find("disintegrator",1,true)) then
       wd.weaponType = "DGun"
     elseif (tobool(wd.lineofsight)) then
-      if (rendertype==7) then
+      if (rendertype == 7) then
         wd.weapontype = "LightningCannon";
 
       -- swta fix (outdated?)
@@ -69,11 +70,11 @@ local function BackwardCompability(wdName,wd)
         wd.weapontype = "LaserCannon";
       elseif (tobool(wd.smoketrail)) then
         wd.weapontype = "MissileLauncher";
-      elseif (rendertype==4 and tonumber(wd.color)==2) then
+      elseif (rendertype == 4 and tonumber(wd.color)==2) then
         wd.weapontype = "EmgCannon";
-      elseif (rendertype==5) then
+      elseif (rendertype == 5) then
         wd.weapontype = "Flame";
-      --elseif(rendertype==1) then
+      --elseif(rendertype == 1) then
       --  wd.weapontype = "MissileLauncher";
       else
         wd.weapontype = "Cannon";
@@ -81,13 +82,26 @@ local function BackwardCompability(wdName,wd)
     else
       wd.weapontype = "Cannon";
     end
+  end
 
-    if (wd.weapontype == "LightingCannon") then
-      wd.weapontype = "LightningCannon";
+  if (wd.weapontype == "LightingCannon") then
+    wd.weapontype = "LightningCannon";
+  elseif (wd.weapontype == "AircraftBomb") then
+    if (wd.manualbombsettings) then
+      wd.reloadtime = wd.reloadtime or 1.0
+      wd.burstrate  = wd.burstrate or 0.1
+
+      if (wd.reloadtime < 0.5) then
+        wd.burstrate  = math.min(0.2, wd.reloadtime)         -- salvodelay
+        wd.burst      = math.floor((1.0 / wd.burstrate) + 1) -- salvosize
+        wd.reloadtime = 5.0
+      else
+        wd.burstrate = math.min(0.4, wd.reloadtime)
+        wd.burst     = 2
+      end
     end
   end
 
-  -- 
   if (tobool(wd.ballistic) or tobool(wd.dropped)) then
     wd.gravityaffected = true
   end
@@ -149,7 +163,7 @@ end
 local function ProcessWeaponDef(wdName, wd)
 
   -- backward compability
-  BackwardCompability(wdName,wd)
+  BackwardCompability(wdName, wd)
 end
 
 --------------------------------------------------------------------------------

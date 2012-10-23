@@ -303,18 +303,6 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.flighttime = wdTable.GetFloat("flightTime", 0) * 32;
 	wd.turnrate = (wdTable.GetFloat("turnRate", 0.0f) * TAANG2RAD) / GAME_SPEED;
 
-	if ((wd.type == "AircraftBomb") && !wdTable.GetBool("manualBombSettings", false)) {
-		// allow manually specifying burst and burstrate for AircraftBomb
-		if (wd.reload < 0.5f) {
-			wd.salvodelay = std::min(0.2f, wd.reload);
-			wd.salvosize = (int)(1 / wd.salvodelay) + 1;
-			wd.reload = 5;
-		} else {
-			wd.salvodelay = std::min(0.4f, wd.reload);
-			wd.salvosize = 2;
-		}
-	}
-
 	const float tempsize = 2.0f + std::min(wd.damages[0] * 0.0025f, wd.damageAreaOfEffect * 0.1f);
 	wd.size = wdTable.GetFloat("size", tempsize);
 	wd.sizeGrowth = wdTable.GetFloat("sizeGrowth", 0.2f);
