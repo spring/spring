@@ -12,6 +12,7 @@ public:
 	virtual ~CGameController();
 
 	virtual bool Draw();
+	virtual void DrawPost() {}
 	virtual bool Update();
 	virtual int KeyPressed(unsigned short key, bool isRepeat);
 	virtual int KeyReleased(unsigned short key);

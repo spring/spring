@@ -106,6 +106,7 @@ public:
 private:
 	bool Draw();
 	bool DrawMT();
+	void DrawPost();
 
 	static void DrawMTcb(void* c) { static_cast<CGame*>(c)->DrawMT(); }
 	bool UpdateUnsynced();
@@ -151,6 +152,7 @@ public:
 	spring_time frameStartTime;
 	spring_time lastUpdateTime;
 	spring_time lastSimFrameTime;
+	spring_time currentTimePreDraw;
 	spring_time lastDrawFrameTime;
 	spring_time lastModGameTimeMeasure;
 
