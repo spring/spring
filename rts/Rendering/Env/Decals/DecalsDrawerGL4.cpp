@@ -78,7 +78,10 @@ struct SGLSLGroundLighting {
 	float3 diffuseColor __attribute__ ((aligned (16)));
 	float3 specularColor __attribute__ ((aligned (16)));
 	float3 dir __attribute__ ((aligned (16)));
-	float unused;
+	float3 fogColor __attribute__ ((aligned (16)));
+	float fogEnd;
+	float fogScale;
+	float3 unused;
 };
 
 
@@ -470,6 +473,9 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 		uboGroundLightingData->diffuseColor  = mapInfo->light.groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->specularColor = mapInfo->light.groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->dir           = mapInfo->light.sunDir;
+		uboGroundLightingData->fogColor      = mapInfo->atmosphere.fogColor;
+		uboGroundLightingData->fogEnd        = globalRendering->viewRange * mapInfo->atmosphere.fogEnd;
+		uboGroundLightingData->fogScale      = 1.0f / (globalRendering->viewRange * (mapInfo->atmosphere.fogEnd - mapInfo->atmosphere.fogStart));
 		uboGroundLighting.UnmapBuffer();
 	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 5);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 5, uboGroundLighting.GetId());
@@ -489,17 +495,13 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	assert(uniformBlockSize % sizeof(SGLSLDecal) == 0);
 
 	maxDecals = uniformBlockSize / sizeof(SGLSLDecal);
-	maxDecals = 500;
+
+	GLint maxTexBufSize;
+	glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &maxTexBufSize);
+
+	maxDecals = (maxTexBufSize / sizeof(SGLSLDecal)) / 2;
+
 	uniformBlockSize = maxDecals * sizeof(SGLSLDecal);
-
-/*
-	GLuint index[4]; GLint offsets[4];
-	const char* names[] = { "scars_[0].radius", "scars_[0].texcoords", "scars_[0].pos", "scars_[10].radius" };
-	glGetUniformIndices(decalShader, 4, names, index);
-	glGetActiveUniformsiv(decalShader, 4, index, GL_UNIFORM_OFFSET, offsets);
-	LOG("radius offset is %i %i %i %i", offsets[0], offsets[1], offsets[2], offsets[3]);
-*/
-
 	uboDecalsStructures.Resize(uniformBlockSize, GL_DYNAMIC_DRAW);
 
 	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 3);
@@ -521,12 +523,14 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 
 void CDecalsDrawerGL4::ViewResize()
 {
+	decalShader->Enable();
 	GLint invScreenSizeLoc = glGetUniformLocation(decalShader->GetObjID(), "invScreenSize");
 	glUniform2f(invScreenSizeLoc, 1.f / globalRendering->viewSizeX, 1.f / globalRendering->viewSizeY);
+	decalShader->Disable();
 
 	glBindTexture(GL_TEXTURE_2D, depthTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
@@ -540,9 +544,6 @@ void CDecalsDrawerGL4::Draw()
 
 	if (decals.empty())
 		return;
-
-	if (dynamic_cast<CSMFReadMap*>(readmap)->GetNormalsTexture() <= 0)
-		return; //FIXME fallback to legacy
 
 	SCOPED_TIMER("GroundDecals2");
 
@@ -566,7 +567,7 @@ void CDecalsDrawerGL4::Draw()
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glDepthMask(GL_FALSE);
 	glDisable(GL_DEPTH_TEST);
@@ -574,7 +575,7 @@ void CDecalsDrawerGL4::Draw()
 	//glEnable(GL_DEPTH_TEST);
 
 	decalShader->Enable();
-		static GLint camPosLoc = glGetUniformLocation(decalShader->GetObjID(), "camPos");
+ 		static GLint camPosLoc = glGetUniformLocation(decalShader->GetObjID(), "camPos");
 		glUniformf3(camPosLoc, camera->pos);
 
 		static GLint shadowMatrixLoc = glGetUniformLocation(decalShader->GetObjID(), "shadowMatrix");
@@ -582,6 +583,9 @@ void CDecalsDrawerGL4::Draw()
 
 		static GLint shadowDensityLoc = glGetUniformLocation(decalShader->GetObjID(), "shadowDensity");
 		glUniform1f(shadowDensityLoc, sky->GetLight()->GetGroundShadowDensity());
+
+		static GLint invMapSizeLoc = glGetUniformLocation(decalShader->GetObjID(), "invMapSize");
+		glUniform2f(invMapSizeLoc, 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
 
 	glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, smfrm->GetNormalsTexture());
@@ -613,7 +617,7 @@ void CDecalsDrawerGL4::Draw()
 	DrawDecals();
 
 	glDisable(GL_DEPTH_CLAMP);
-	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_BLEND);
 
@@ -737,9 +741,7 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius, bool
 	s->size.y = s->size.x;
 	s->alpha  = Clamp(damage / 255.0f, 0.2f, 1.0f);
 
-	// atlas contains 2x2 textures, pick one of them
-	//s->texOffsets.x = (gu->RandInt() & 128)? 0: 0.5f;
-	//s->texOffsets.y = (gu->RandInt() & 128)? 0: 0.5f;
+	// pick one of 4 scar textures
 	int r = (gu->RandInt() & 3) + 1;
 	char buf[2];
 	SNPRINTF(buf, sizeof(buf), "%i", r);
