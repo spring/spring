@@ -138,7 +138,7 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 	glPushMatrix();
 		glMultMatrixf(mat.m);
 
-		if (p->visible && !p->GetCollisionVolume()->IgnoreHits()) {
+		if (p->scriptSetVisible && !p->GetCollisionVolume()->IgnoreHits()) {
 			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
 				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
 			}
