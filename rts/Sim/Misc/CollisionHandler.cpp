@@ -288,7 +288,7 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	mat.RotateX(-rot[0]);
 	mat.RotateZ(-rot[2]);
 
-	if (lmp->visible && !vol->IgnoreHits()) {
+	if (lmp->scriptSetVisible && !vol->IgnoreHits()) {
 		mat.Translate(offset);
 
 		CollisionQuery q;

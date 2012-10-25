@@ -50,7 +50,7 @@ public:
 	static const int* GetAllyVars(int ally) { return &allyVars[ally][0]; }
 	static const int* GetGlobalVars()       { return globalVars; }
 
-	const int* GetUnitVars() const { return unitVars; };
+	const int* GetUnitVars() const { return unitVars; }
 protected:
 	static std::vector< std::vector<int> > teamVars;
 	static std::vector< std::vector<int> > allyVars;
@@ -102,25 +102,24 @@ public:
 		}else{
 			return NULL;
 		}
-	};
+	}
 
 	int ScriptToModel(int scriptnum) const;
 
 	bool PieceExists(int scriptnum) const {
-		return GetLocalModelPiece(scriptnum) != NULL;
-	};
+		return (GetLocalModelPiece(scriptnum) != NULL);
+	}
 
 #define SCRIPT_TO_LOCALPIECE_FUNC(x,y,z,w) \
 	x y(int scriptnum) const { \
 		LocalModelPiece* p = GetLocalModelPiece(scriptnum); \
 		if (p != NULL) return p->z(); \
 		return w; \
-	};
+	}
 
-	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPiecePos,       GetAbsolutePos, float3(0.0f,0.0f,0.0f))
-	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix,    GetMatrix,      CMatrix44f())
-	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPieceDirection, GetDirection,   float3(1.0f,1.0f,1.0f))
-	//SCRIPT_TO_LOCALPIECE_FUNC(int,        GetPieceVertCount, GetVertCount, 0)
+	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPiecePos,       GetAbsolutePos,      float3(0.0f,0.0f,0.0f))
+	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix,    GetModelSpaceMatrix,           CMatrix44f())
+	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPieceDirection, GetDirection,        float3(1.0f,1.0f,1.0f))
 
 	bool GetEmitDirPos(int scriptnum, float3 &pos, float3 &dir) const {
 		LocalModelPiece* p = GetLocalModelPiece(scriptnum);
@@ -129,7 +128,7 @@ public:
 		} else {
 			return true;
 		}
-	};
+	}
 
 public:
 	CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces);

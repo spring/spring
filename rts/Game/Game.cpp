@@ -1770,7 +1770,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 			file << "\t\t\t\tname: " << omp->name << " (parentName: " << omp->parentName << ")\n";
 			file << "\t\t\t\tpos: <" << ppos.x << ", " << ppos.y << ", " << ppos.z << ">\n";
 			file << "\t\t\t\trot: <" << prot.x << ", " << prot.y << ", " << prot.z << ">\n";
-			file << "\t\t\t\tvisible: " << lmp->visible << "\n";
+			file << "\t\t\t\tvisible: " << lmp->scriptSetVisible << "\n";
 			file << "\n";
 		}
 		#endif

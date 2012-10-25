@@ -664,7 +664,11 @@ void CUnit::Update()
 {
 	ASSERT_SYNCED(pos);
 
-	posErrorVector += posErrorDelta;
+	// UnitScript only applies piece-space transforms so
+	// we apply the forward kinematics update separately
+	// (only if we have any dirty pieces)
+	// TODO: move this to UnitScript::Tick?
+	localmodel->UpdatePieceMatrices();
 
 	{
 		const bool oldInAir   = inAir;
@@ -690,11 +694,12 @@ void CUnit::Update()
 		}
 	}
 
-	if (beingBuilt)
-		return;
-
 	// 0.968 ** 16 is slightly less than 0.6, which was the old value used in SlowUpdate
 	residualImpulse *= 0.968f;
+	posErrorVector += posErrorDelta;
+
+	if (beingBuilt)
+		return;
 
 	if (travelPeriod != 0.0f) {
 		travel += speed.Length();

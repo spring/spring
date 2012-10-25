@@ -125,7 +125,7 @@ void CUnitScript::UnblockAll(AnimInfo* anim)
  * @param speed float max increment per tick
  * @return returns true if destination was reached, false otherwise
  */
-bool CUnitScript::MoveToward(float &cur, float dest, float speed)
+bool CUnitScript::MoveToward(float& cur, float dest, float speed)
 {
 	const float delta = dest - cur;
 
@@ -151,7 +151,7 @@ bool CUnitScript::MoveToward(float &cur, float dest, float speed)
  * @param speed float max increment per tick
  * @return returns true if destination was reached, false otherwise
  */
-bool CUnitScript::TurnToward(float &cur, float dest, float speed)
+bool CUnitScript::TurnToward(float& cur, float dest, float speed)
 {
 	float delta = dest - cur;
 
@@ -187,7 +187,7 @@ bool CUnitScript::TurnToward(float &cur, float dest, float speed)
  * @param divisor int is the deltatime, it is not added before the call because speed may have to be updated
  * @return true if the desired speed is 0 and it is reached, false otherwise
  */
-bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int divisor)
+bool CUnitScript::DoSpin(float& cur, float dest, float &speed, float accel, int divisor)
 {
 	const float delta = dest - speed;
 
@@ -230,6 +230,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetPosition(pos);
+				unit->localmodel->PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -243,6 +244,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
+				unit->localmodel->PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -256,6 +258,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
+				unit->localmodel->PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -471,10 +474,14 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 		return;
 	}
 
+	LocalModel* m = unit->localmodel;
 	LocalModelPiece* p = pieces[piece];
+
 	float3 pos = p->GetPosition();
 	pos[axis] = pieces[piece]->original->offset[axis] + destination;
+
 	p->SetPosition(pos);
+	m->PieceUpdated(piece);
 }
 
 
@@ -485,10 +492,14 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 		return;
 	}
 
+	LocalModel* m = unit->localmodel;
 	LocalModelPiece* p = pieces[piece];
+
 	float3 rot = p->GetRotation();
 	rot[axis] = destination;
+
 	p->SetRotation(rot);
+	m->PieceUpdated(piece);
 }
 
 
@@ -499,7 +510,7 @@ void CUnitScript::SetVisibility(int piece, bool visible)
 		return;
 	}
 
-	pieces[piece]->visible = visible;
+	pieces[piece]->scriptSetVisible = visible;
 }
 
 
@@ -1697,12 +1708,15 @@ void CUnitScript::BenchmarkScript(const std::string& unitname)
 int CUnitScript::ScriptToModel(int scriptnum) const {
 	const LocalModelPiece* p = GetLocalModelPiece(scriptnum);
 
-	if (p == NULL) return -1;
+	if (p == NULL)
+		return -1;
 
 	int i = 0;
 	const std::vector<LocalModelPiece*>& modelpieces = unit->localmodel->pieces;
+
 	for (std::vector<LocalModelPiece*>::const_iterator pm = modelpieces.begin(); pm != modelpieces.end(); ++pm, ++i) {
 		if (p == *pm) return i;
 	}
+
 	return -1;
 };

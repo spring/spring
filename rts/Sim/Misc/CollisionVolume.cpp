@@ -294,7 +294,7 @@ float CollisionVolume::GetPointDistance(const CUnit* u, const float3& pw) const 
 		assert(this == p->GetCollisionVolume());
 
 		// need to transform into piece-space
-		m = m * p->GetMatrix();
+		m = m * p->GetModelSpaceMatrix();
 		o = -o;
 	}
 

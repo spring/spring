@@ -117,11 +117,11 @@ public:
 	std::string tex1;
 	std::string tex2;
 
-	int id;                 //! unsynced ID, starting with 1
+	int id;                 // unsynced ID, starting with 1
 	ModelType type;
-	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
-	bool flipTexY;          //! Turn both textures upside down before use
-	bool invertTexAlpha;    //! Invert teamcolor alpha channel in S3O texture 1
+	int textureType;        // FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+	bool flipTexY;          // Turn both textures upside down before use
+	bool invertTexAlpha;    // Invert teamcolor alpha channel in S3O texture 1
 
 	float radius;
 	float height;
@@ -131,9 +131,10 @@ public:
 	float3 relMidPos;
 
 	int numPieces;
-	S3DModelPiece* rootPiece;   //! The piece at the base of the model hierarchy
-	ModelPieceMap pieces;       //! Lookup table for pieces by name
+	S3DModelPiece* rootPiece;   // The piece at the base of the model hierarchy
+	ModelPieceMap pieces;       // Lookup table for pieces by name
 };
+
 
 
 /**
@@ -149,52 +150,55 @@ struct LocalModelPiece
 	void AddChild(LocalModelPiece* c) { childs.push_back(c); }
 	void SetParent(LocalModelPiece* p) { parent = p; }
 
-	void Draw();
-	void DrawLOD(unsigned int lod);
+	void Draw() const;
+	void DrawLOD(unsigned int lod) const;
 	void SetLODCount(unsigned int count);
 
-	void ApplyTransformUnsynced();
-	void GetPiecePosIter(CMatrix44f* mat) const;
+	void UpdateMatricesRec();
+
 	bool GetEmitDirPos(float3& pos, float3& dir) const;
 	float3 GetAbsolutePos() const;
 
 	void SetPosition(const float3& p) { pos = p; ++numUpdatesSynced; }
 	void SetRotation(const float3& r) { rot = r; ++numUpdatesSynced; }
-	//void SetDirection(const float3&);
+	void SetDirection(const float3& d) { dir = d; } // unused
+
 	const float3& GetPosition() const { return pos; }
 	const float3& GetRotation() const { return rot; }
-	float3 GetDirection() const;
-	CMatrix44f GetMatrix() const;
+	const float3& GetDirection() const { return dir; }
+
+	const CMatrix44f& GetPieceSpaceMatrix() const { return pieceSpaceMat; }
+	const CMatrix44f& GetModelSpaceMatrix() const { return modelSpaceMat; }
 
 	const CollisionVolume* GetCollisionVolume() const { return colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
 
 private:
-	void CheckUpdateMatrixUnsynced();
+	float3 pos; // translation relative to parent LMP
+	float3 rot; // orientation relative to parent LMP, in radians
+	float3 dir; // direction from vertex[0] to vertex[1] (constant!)
 
-private:
-	float3 pos;
-	float3 rot; //! in radians
+	CMatrix44f pieceSpaceMat; // transform relative to parent LMP (SYNCED), combines <pos> and <rot>
+	CMatrix44f modelSpaceMat; // transform relative to root LMP (SYNCED)
 
 	CollisionVolume* colvol;
-	CMatrix44f transfMat;
 
 	unsigned numUpdatesSynced;
 	unsigned lastMatrixUpdate;
 
 public:
-	// TODO: add (visibility) maxradius!
-	bool visible;
-	bool identity;
-
-	const S3DModelPiece* original;
-
-	LocalModelPiece* parent;
-	std::vector<LocalModelPiece*> childs;
+	bool scriptSetVisible;  // TODO: add (visibility) maxradius!
+	bool identityTransform; // true IFF pieceSpaceMat (!) equals identity
 
 	unsigned int dispListID;
+
+	const S3DModelPiece* original;
+	const LocalModelPiece* parent;
+
+	std::vector<LocalModelPiece*> childs;
 	std::vector<unsigned int> lodDispLists;
 };
+
 
 struct LocalModel
 {
@@ -202,6 +206,7 @@ struct LocalModel
 		: original(model)
 		, type(model->type)
 		, lodCount(0)
+		, dirtyPieces(model->numPieces)
 	{
 		assert(model->numPieces >= 1);
 		pieces.reserve(model->numPieces);
@@ -211,7 +216,7 @@ struct LocalModel
 
 	~LocalModel()
 	{
-		//! delete the local piece copies
+		// delete the local piece copies
 		for (std::vector<LocalModelPiece*>::iterator pi = pieces.begin(); pi != pieces.end(); ++pi) {
 			delete *pi;
 		}
@@ -221,18 +226,40 @@ struct LocalModel
 	LocalModelPiece* GetPiece(unsigned int i) const { return pieces[i]; }
 	LocalModelPiece* GetRoot() const { return GetPiece(0); }
 
-	void Draw() const { pieces[0]->Draw(); }
-	void DrawLOD(unsigned int lod) const { if (lod <= lodCount) pieces[0]->DrawLOD(lod); }
+	void Draw() const { DrawPieces(); }
+	void DrawLOD(unsigned int lod) const {
+		if (lod > lodCount)
+			return;
+
+		DrawPiecesLOD(lod);
+	}
+
+	void UpdatePieceMatrices() {
+		if (dirtyPieces > 0) {
+			pieces[0]->UpdateMatricesRec();
+		}
+		dirtyPieces = 0;
+	}
+
+
+
+	void DrawPieces() const;
+	void DrawPiecesLOD(unsigned int lod) const;
+
 	void SetLODCount(unsigned int count);
+	void PieceUpdated(unsigned int pieceIdx) { dirtyPieces += 1; }
 
 	void ReloadDisplayLists();
 
-	//! raw forms, the piecenum must be valid
-	void ApplyRawPieceTransformUnsynced(int piecenum) const;
-	float3 GetRawPiecePos(int piecenum) const;
-	CMatrix44f GetRawPieceMatrix(int piecenum) const;
-	float3 GetRawPieceDirection(int piecenum) const;
-	void GetRawEmitDirPos(int piecenum, float3& pos, float3& dir) const;
+	// raw forms, the piece-index must be valid
+	// NOTE:
+	//   GetRawPieceDirection is only useful for special pieces (used for emit-sfx)
+	//   it returns a direction in piece-space, NOT model-space as the "Raw" suggests
+	void ApplyRawPieceTransformUnsynced(int pieceIdx) const;
+	void GetRawEmitDirPos(int pieceIdx, float3& pos, float3& dir) const { pieces[pieceIdx]->GetEmitDirPos(pos, dir); }
+	float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx]->GetAbsolutePos(); }
+	float3 GetRawPieceDirection(int pieceIdx) const { return pieces[pieceIdx]->GetDirection(); }
+	CMatrix44f GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx]->GetModelSpaceMatrix(); }
 
 private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent, size_t pieceNum = 0);
@@ -241,6 +268,9 @@ public:
 	const S3DModel* original;
 
 	ModelType type;
+
+	// increased by UnitScript whenever a piece is transformed
+	unsigned int dirtyPieces;
 	unsigned int lodCount;
 
 	std::vector<LocalModelPiece*> pieces;
