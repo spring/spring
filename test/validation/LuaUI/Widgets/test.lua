@@ -14,6 +14,20 @@ local maxframes = 27000 -- run spring 15 minutes (ingame time)
 local initialspeed = 120 -- speed at the beginning
 local timer
 
+local function ShowStats()
+	local time = Spring.DiffTimers(Spring.GetTimer(), timer)
+	local gameseconds = Spring.GetGameSeconds()
+	local speed = gameseconds / time
+	Spring.Echo("Test done:")
+	Spring.Echo(string.format("Realtime %is gametime: %is", time, gameseconds ))
+	Spring.Echo(string.format("Run at %.2fx real time", speed))
+end
+
+function widget:GameOver()
+	Spring.Echo("GameOver called!")
+	ShowStats()
+end
+
 function widget:GameFrame(n)
 	if n==0 then -- set gamespeed at start of game
 		Spring.SendCommands("setmaxspeed " .. 1000,
@@ -22,9 +36,7 @@ function widget:GameFrame(n)
 		timer = Spring.GetTimer()
 	end
 	if n==maxframes then
-		local time = Spring.DiffTimers(Spring.GetTimer(), timer)
-		Spring.Echo("Tests run long enough, quitting...")
-		Spring.Echo(string.format('Game over, realtime: %i seconds, gametime: %i seconds', time, Spring.GetGameSeconds()))
+		ShowStats()
 		Spring.SendCommands("quit")
 	end
 end
