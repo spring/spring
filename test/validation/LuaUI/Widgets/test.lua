@@ -12,7 +12,10 @@ end
 
 local maxframes = 27000 -- run spring 15 minutes (ingame time)
 local initialspeed = 120 -- speed at the beginning
+local minunits = 10 -- if fewer than this units are created/destroyed print a warning
 local timer
+local unitscreated = 0
+local unitsdestroyed = 0
 
 local function ShowStats()
 	local time = Spring.DiffTimers(Spring.GetTimer(), timer)
@@ -21,6 +24,10 @@ local function ShowStats()
 	Spring.Echo("Test done:")
 	Spring.Echo(string.format("Realtime %is gametime: %is", time, gameseconds ))
 	Spring.Echo(string.format("Run at %.2fx real time", speed))
+	Spring.Echo(string.format("Units created: %i Units destroyed: %i", unitscreated, unitsdestroyed))
+	if unitscreated <= minunits or unitsdestroyed <= minunits then
+		Spring.Log(LOG.ERROR, string.format("Fewer then  minunits %i units were created/destroyed!", minunits))
+	end
 end
 
 function widget:GameOver()
@@ -39,5 +46,14 @@ function widget:GameFrame(n)
 		ShowStats()
 		Spring.SendCommands("quit")
 	end
+end
+
+
+function widget:UnitCreated(unitID, unitDefID, unitTeam)
+	unitscreated = unitscreated + 1
+end
+
+function widget:UnitDestroyed(unitID, unitDefID, unitTeam)
+	unitsdestroyed = unitsdestroyed + 1
 end
 
