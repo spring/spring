@@ -154,7 +154,8 @@ struct LocalModelPiece
 	void DrawLOD(unsigned int lod) const;
 	void SetLODCount(unsigned int count);
 
-	void UpdateMatricesRec();
+	bool UpdateMatrix();
+	void UpdateMatricesRec(bool updateChildMatrices);
 
 	bool GetEmitDirPos(float3& pos, float3& dir) const;
 	float3 GetAbsolutePos() const;
@@ -183,7 +184,7 @@ private:
 
 	CollisionVolume* colvol;
 
-	unsigned numUpdatesSynced;
+	unsigned numUpdatesSynced; // triggers UpdateMatrix (via UpdateMatricesRec) if != lastMatrixUpdate
 	unsigned lastMatrixUpdate;
 
 public:
@@ -204,7 +205,6 @@ struct LocalModel
 {
 	LocalModel(const S3DModel* model)
 		: original(model)
-		, type(model->type)
 		, lodCount(0)
 		, dirtyPieces(model->numPieces)
 	{
@@ -236,7 +236,7 @@ struct LocalModel
 
 	void UpdatePieceMatrices() {
 		if (dirtyPieces > 0) {
-			pieces[0]->UpdateMatricesRec();
+			pieces[0]->UpdateMatricesRec(false);
 		}
 		dirtyPieces = 0;
 	}
@@ -266,8 +266,6 @@ private:
 
 public:
 	const S3DModel* original;
-
-	ModelType type;
 
 	// increased by UnitScript whenever a piece is transformed
 	unsigned int dirtyPieces;

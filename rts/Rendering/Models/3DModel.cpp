@@ -145,34 +145,49 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	} else {
 		dir = piece->GetVertexPos(0) - piece->GetVertexPos(1);
 	}
+
+	identityTransform = UpdateMatrix();
 }
 
 LocalModelPiece::~LocalModelPiece() {
 	delete colvol; colvol = NULL;
 }
 
-void LocalModelPiece::UpdateMatricesRec() {
-	if (lastMatrixUpdate != numUpdatesSynced) {
-		lastMatrixUpdate = numUpdatesSynced;
-		identityTransform = true;
+bool LocalModelPiece::UpdateMatrix()
+{
+	bool r = true;
 
+	{
 		pieceSpaceMat.LoadIdentity();
 
 		// Translate & Rotate are faster than matrix-mul!
-		if (pos.SqLength() != 0.0f) { pieceSpaceMat.Translate(pos); identityTransform = false; }
-		if (rot[1] != 0.0f) { pieceSpaceMat.RotateY(-rot[1]); identityTransform = false; }
-		if (rot[0] != 0.0f) { pieceSpaceMat.RotateX(-rot[0]); identityTransform = false; }
-		if (rot[2] != 0.0f) { pieceSpaceMat.RotateZ(-rot[2]); identityTransform = false; }
+		if (pos.SqLength() != 0.0f) { pieceSpaceMat.Translate(pos);  r = false; }
+		if (         rot.y != 0.0f) { pieceSpaceMat.RotateY(-rot.y); r = false; }
+		if (         rot.x != 0.0f) { pieceSpaceMat.RotateX(-rot.x); r = false; }
+		if (         rot.z != 0.0f) { pieceSpaceMat.RotateZ(-rot.z); r = false; }
 	}
 
-	if (parent == NULL) {
-		modelSpaceMat = pieceSpaceMat;
-	} else {
-		modelSpaceMat = pieceSpaceMat * parent->modelSpaceMat;
+	return r;
+}
+
+void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices)
+{
+	if (lastMatrixUpdate != numUpdatesSynced) {
+		lastMatrixUpdate = numUpdatesSynced;
+		identityTransform = UpdateMatrix();
+		updateChildMatrices = true;
+	}
+
+	if (updateChildMatrices) {
+		if (parent == NULL) {
+			modelSpaceMat = pieceSpaceMat;
+		} else {
+			modelSpaceMat = pieceSpaceMat * parent->modelSpaceMat;
+		}
 	}
 
 	for (unsigned int i = 0; i < childs.size(); i++) {
-		childs[i]->UpdateMatricesRec();
+		childs[i]->UpdateMatricesRec(updateChildMatrices);
 	}
 }
 
@@ -259,8 +274,6 @@ bool LocalModelPiece::GetEmitDirPos(float3& pos, float3& dir) const
 
 		pos = p1;
 		dir = p2 - p1;
-	} else {
-		return false;
 	}
 
 	// we use a 'right' vector, and the positive x axis points to the left
