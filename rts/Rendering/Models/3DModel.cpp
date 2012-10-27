@@ -197,10 +197,6 @@ void LocalModelPiece::Draw() const
 {
 	if (!scriptSetVisible)
 		return;
-	if (identityTransform) {
-		glCallList(dispListID);
-		return;
-	}
 
 	glPushMatrix();
 	glMultMatrixf(modelSpaceMat);
@@ -212,10 +208,6 @@ void LocalModelPiece::DrawLOD(unsigned int lod) const
 {
 	if (!scriptSetVisible)
 		return;
-	if (identityTransform) {
-		glCallList(lodDispLists[lod]);
-		return;
-	}
 
 	glPushMatrix();
 	glMultMatrixf(modelSpaceMat);
