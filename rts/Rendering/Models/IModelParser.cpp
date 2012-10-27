@@ -42,6 +42,7 @@ static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
 	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
 	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
 	// FIXME: SAssPiece is not yet fully implemented
+	LOG_L(L_ERROR,"ASS PIECE NOT IMPLEMENTED, GAME WILL CRASH :)");
 	// if (type == MODELTYPE_ASS) { return (new SAssPiece()); }
 	return NULL;
 }
