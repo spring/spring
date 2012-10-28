@@ -158,13 +158,13 @@ int LuaUnitRendering::SetLODDistance(lua_State* L)
 int LuaUnitRendering::SetPieceList(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->localmodel == NULL)) {
+	if ((unit == NULL) || (unit->localModel == NULL)) {
 		return 0;
 	}
 
 	GML_LODMUTEX_LOCK(unit); // SetPieceList
 
-	const LocalModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localModel;
 
 	const unsigned int lod   = (unsigned int)luaL_checknumber(L, 2) - 1;
 	if (lod >= unit->lodCount) {

@@ -1816,7 +1816,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	LocalModel* localModel = unit->localmodel;
+	LocalModel* localModel = unit->localModel;
 
 	// 2nd argument: piece index
 	const int  pieceIndex = luaL_checkint(L, 2);

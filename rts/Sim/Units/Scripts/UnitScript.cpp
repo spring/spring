@@ -230,7 +230,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetPosition(pos);
-				unit->localmodel->PieceUpdated(ai->piece);
+				unit->localModel->PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -244,7 +244,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
-				unit->localmodel->PieceUpdated(ai->piece);
+				unit->localModel->PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -258,7 +258,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
-				unit->localmodel->PieceUpdated(ai->piece);
+				unit->localModel->PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -474,7 +474,7 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 		return;
 	}
 
-	LocalModel* m = unit->localmodel;
+	LocalModel* m = unit->localModel;
 	LocalModelPiece* p = pieces[piece];
 
 	float3 pos = p->GetPosition();
@@ -492,7 +492,7 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 		return;
 	}
 
-	LocalModel* m = unit->localmodel;
+	LocalModel* m = unit->localModel;
 	LocalModelPiece* p = pieces[piece];
 
 	float3 rot = p->GetRotation();
@@ -1712,7 +1712,7 @@ int CUnitScript::ScriptToModel(int scriptnum) const {
 		return -1;
 
 	int i = 0;
-	const std::vector<LocalModelPiece*>& modelpieces = unit->localmodel->pieces;
+	const std::vector<LocalModelPiece*>& modelpieces = unit->localModel->pieces;
 
 	for (std::vector<LocalModelPiece*>::const_iterator pm = modelpieces.begin(); pm != modelpieces.end(); ++pm, ++i) {
 		if (p == *pm) return i;

@@ -279,7 +279,7 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 		// getting the actual piece here is probably overdoing it
 		// TODO change this if we really need proper flanking bonus support
 		// for beam-lasers
-		hitUnit->SetLastAttackedPiece(hitUnit->localmodel->GetRoot(), gs->frameNum);
+		hitUnit->SetLastAttackedPiece(hitUnit->localModel->GetRoot(), gs->frameNum);
 
 		if (targetBorder > 0.0f) {
 			actualRange += (hitUnit->radius * targetBorder);

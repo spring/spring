@@ -168,7 +168,7 @@ CUnitScript* CLuaUnitScript::activeScript;
 
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
-	: CUnitScript(unit, unit->localmodel->pieces)
+	: CUnitScript(unit, unit->localModel->pieces)
 	, handle(CLuaHandle::GetHandle(L)), L(L)
 	, scriptIndex(LUAFN_Last, LUA_NOREF)
 	, inKilled(false)
@@ -1181,7 +1181,7 @@ int CLuaUnitScript::SetPieceVisibility(lua_State* L)
 	}
 
 	// note: for Lua unit scripts it would be confusing if the unit's
-	// unit->script->pieces differs from the unit->localmodel->pieces.
+	// unit->script->pieces differs from the unit->localModel->pieces.
 
 	const int piece = luaL_checkint(L, 1) - 1;
 	const bool visible = lua_toboolean(L, 2);

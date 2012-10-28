@@ -1823,16 +1823,16 @@ inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 	}
 
 	if (unit->lodCount <= 0) {
-		unit->localmodel->Draw();
+		unit->localModel->Draw();
 	} else {
 
 		GML_LODMUTEX_LOCK(unit); // DrawUnitModel
 #ifdef USE_GML
 		if (unit->lodCount <= 0) // re-read the value inside the mutex
-			unit->localmodel->Draw();
+			unit->localModel->Draw();
 		else
 #endif
-		unit->localmodel->DrawLOD(unit->currentLOD);
+		unit->localModel->DrawLOD(unit->currentLOD);
 	}
 }
 
@@ -1899,16 +1899,16 @@ void CUnitDrawer::DrawUnitRaw(CUnit* unit)
 void CUnitDrawer::DrawUnitRawModel(CUnit* unit)
 {
 	if (unit->lodCount <= 0) {
-		unit->localmodel->Draw();
+		unit->localModel->Draw();
 	} else {
 
 		GML_LODMUTEX_LOCK(unit); // DrawUnitRawModel
 #ifdef USE_GML
 		if (unit->lodCount <= 0)
-			unit->localmodel->Draw();
+			unit->localModel->Draw();
 		else
 #endif
-		unit->localmodel->DrawLOD(unit->currentLOD);
+		unit->localModel->DrawLOD(unit->currentLOD);
 	}
 }
 
@@ -2478,7 +2478,7 @@ void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
 
 	unit->lodCount = count;
 	unit->lodLengths.resize(count);
-	unit->localmodel->SetLODCount(count);
+	unit->localModel->SetLODCount(count);
 
 	for (unsigned int i = oldCount; i < count; i++) {
 		unit->lodLengths[i] = -1.0f;
