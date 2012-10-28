@@ -26,7 +26,7 @@ local function ShowStats()
 	Spring.Echo(string.format("Run at %.2fx real time", speed))
 	Spring.Echo(string.format("Units created: %i Units destroyed: %i", unitscreated, unitsdestroyed))
 	if unitscreated <= minunits or unitsdestroyed <= minunits then
-		Spring.Log(LOG.ERROR, "test.lua", string.format("Fewer then minunits %i units were created/destroyed!", minunits))
+		Spring.Log("test.lua", LOG.ERROR, string.format("Fewer then minunits %i units were created/destroyed!", minunits))
 	end
 end
 
