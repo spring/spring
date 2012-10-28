@@ -255,11 +255,10 @@ struct LocalModel
 	// NOTE:
 	//   GetRawPieceDirection is only useful for special pieces (used for emit-sfx)
 	//   it returns a direction in piece-space, NOT model-space as the "Raw" suggests
-	void ApplyRawPieceTransformUnsynced(int pieceIdx) const;
 	void GetRawEmitDirPos(int pieceIdx, float3& pos, float3& dir) const { pieces[pieceIdx]->GetEmitDirPos(pos, dir); }
 	float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx]->GetAbsolutePos(); }
 	float3 GetRawPieceDirection(int pieceIdx) const { return pieces[pieceIdx]->GetDirection(); }
-	CMatrix44f GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx]->GetModelSpaceMatrix(); }
+	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx]->GetModelSpaceMatrix(); }
 
 private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent, size_t pieceNum = 0);
