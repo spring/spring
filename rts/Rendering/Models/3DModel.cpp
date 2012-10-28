@@ -80,6 +80,11 @@ void LocalModel::DrawPiecesLOD(unsigned int lod) const
 	}
 }
 
+void LocalModel::SetLODCount(unsigned int count)
+{
+	pieces[0]->SetLODCount(lodCount = count);
+}
+
 
 
 void LocalModel::ReloadDisplayLists()
@@ -103,17 +108,6 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 	}
 
 	return lmpParent;
-}
-
-
-void LocalModel::SetLODCount(unsigned int count)
-{
-	pieces[0]->SetLODCount(lodCount = count);
-}
-
-void LocalModel::ApplyRawPieceTransformUnsynced(int pieceIdx) const
-{
-	glMultMatrixf(pieces[pieceIdx]->GetModelSpaceMatrix());
 }
 
 
