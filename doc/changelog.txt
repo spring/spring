@@ -5,6 +5,12 @@ Spring changelog
 
 -- 92.0 ---------------------------------------------------------
 
+Changes
+ - don't install crash handler when core dumps are enabled
+ - fix "Transport endpoint is not connected"
+ - AAI: refactor / fixes
+ - fix bug in /aikill
+
 Unitsync
  ! fix return in GetInfoMapSize (#2996)
  - no crashes in unitsync without init any more (#3120)
@@ -18,6 +24,7 @@ Unitsync
 
 Lua
  - replace Spring.Echo with Spring.Log in most places in cont/
+ - enable luasocket as default and always allow to listen (UDP & TCP)
 
  
 -- 91.0 ---------------------------------------------------------
