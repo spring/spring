@@ -173,7 +173,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 		if (v->DefaultToPieceTree()) {
 			// draw only the piece volumes for less clutter
 			CMatrix44f mat(u->relMidPos * float3(0.0f, -1.0f, 0.0f));
-			DrawUnitDebugPieceTree(u->localmodel->GetRoot(), u->lastAttackedPiece, u->lastAttackedPieceFrame, mat);
+			DrawUnitDebugPieceTree(u->localModel->GetRoot(), u->lastAttackedPiece, u->lastAttackedPieceFrame, mat);
 		} else {
 			if (!v->IgnoreHits()) {
 				// make it fade red under attack

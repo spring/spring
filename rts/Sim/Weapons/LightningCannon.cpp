@@ -126,7 +126,7 @@ void CLightningCannon::FireImpl()
 	// curDir = newDir;
 
 	if (hitUnit != NULL) {
-		hitUnit->SetLastAttackedPiece(hitUnit->localmodel->GetRoot(), gs->frameNum);
+		hitUnit->SetLastAttackedPiece(hitUnit->localModel->GetRoot(), gs->frameNum);
 	}
 
 

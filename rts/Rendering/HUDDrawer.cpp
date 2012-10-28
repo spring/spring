@@ -69,7 +69,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 		}
 
 		glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
-		unit->localmodel->Draw();
+		unit->localModel->Draw();
 	glPopMatrix();
 }
 

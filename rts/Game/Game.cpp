@@ -1738,8 +1738,8 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 	for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
 		const CUnit* u = *unitsIt;
 		const std::vector<CWeapon*>& weapons = u->weapons;
-		const LocalModel* lm = u->localmodel;
-		const S3DModel* om = u->localmodel->original;
+		const LocalModel* lm = u->localModel;
+		const S3DModel* om = lm->original;
 		const std::vector<LocalModelPiece*>& pieces = lm->pieces;
 		const float3& pos = u->pos;
 		const float3& xdir = u->rightdir;
