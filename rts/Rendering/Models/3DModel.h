@@ -205,8 +205,8 @@ struct LocalModel
 {
 	LocalModel(const S3DModel* model)
 		: original(model)
-		, lodCount(0)
 		, dirtyPieces(model->numPieces)
+		, lodCount(0)
 	{
 		assert(model->numPieces >= 1);
 		pieces.reserve(model->numPieces);
