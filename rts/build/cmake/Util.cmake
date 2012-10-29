@@ -89,7 +89,6 @@ EndMacro (FixLibName targetName)
 # 			C-AIInterface
 # 			NullAI
 # 			KAIK
-# 			ArchiveMover
 # 		)
 # 	CreateInstallTarget(myPkg myInstallDeps myInstallDirs)
 # This creates a new target "install-myPkg"
