@@ -560,6 +560,7 @@
     <ClInclude Include="..\..\Rendering\GLContext.h" />
     <ClInclude Include="..\..\Rendering\glFont.h" />
     <ClInclude Include="..\..\Rendering\GlobalRendering.h" />
+    <ClInclude Include="..\..\Rendering\GL\VBO.h" />
     <ClInclude Include="..\..\Rendering\GroundFlash.h" />
     <ClInclude Include="..\..\Rendering\HUDDrawer.h" />
     <ClInclude Include="..\..\Rendering\Icon.h" />
@@ -574,6 +575,7 @@
     <ClInclude Include="..\..\Rendering\ShadowHandler.h" />
     <ClInclude Include="..\..\Rendering\SmoothHeightMeshDrawer.h" />
     <ClInclude Include="..\..\Rendering\TeamHighlight.h" />
+    <ClInclude Include="..\..\Rendering\Textures\LegacyAtlasAlloc.h" />
     <ClInclude Include="..\..\Rendering\UnitDrawer.h" />
     <ClInclude Include="..\..\Rendering\VerticalSync.h" />
     <ClInclude Include="..\..\Rendering\WorldDrawer.h" />
@@ -1599,6 +1601,7 @@
     <ClCompile Include="..\..\Rendering\GLContext.cpp" />
     <ClCompile Include="..\..\Rendering\glFont.cpp" />
     <ClCompile Include="..\..\Rendering\GlobalRendering.cpp" />
+    <ClCompile Include="..\..\Rendering\GL\VBO.cpp" />
     <ClCompile Include="..\..\Rendering\GroundFlash.cpp" />
     <ClCompile Include="..\..\Rendering\HUDDrawer.cpp" />
     <ClCompile Include="..\..\Rendering\IconHandler.cpp" />
@@ -1612,6 +1615,7 @@
     <ClCompile Include="..\..\Rendering\ShadowHandler.cpp" />
     <ClCompile Include="..\..\Rendering\SmoothHeightMeshDrawer.cpp" />
     <ClCompile Include="..\..\Rendering\TeamHighlight.cpp" />
+    <ClCompile Include="..\..\Rendering\Textures\LegacyAtlasAlloc.cpp" />
     <ClCompile Include="..\..\Rendering\UnitDrawer.cpp" />
     <ClCompile Include="..\..\Rendering\VerticalSync.cpp" />
     <ClCompile Include="..\..\Rendering\WorldDrawer.cpp" />
@@ -1653,7 +1657,6 @@
     <ClCompile Include="..\..\Rendering\Gl\glExtra.cpp" />
     <ClCompile Include="..\..\Rendering\GL\LightHandler.cpp" />
     <ClCompile Include="..\..\Rendering\Gl\myGL.cpp" />
-    <ClCompile Include="..\..\Rendering\GL\PBO.cpp" />
     <ClCompile Include="..\..\Rendering\Gl\VertexArray.cpp" />
     <ClCompile Include="..\..\Rendering\Gl\VertexArrayRange.cpp" />
     <ClCompile Include="..\..\Rendering\Textures\3DOTextureHandler.cpp" />
