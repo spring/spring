@@ -503,15 +503,12 @@ bool CFeature::UpdatePosition()
 				speed.y = mapInfo->map.gravity;
 			}
 
-			// stop falling when we reach finalHeight (which can be arbitrary)
-			speed.y *= (pos.y != finalHeight);
-
+			// stop falling when we reach our finalHeight
+			// (which can be arbitrary, even below ground)
 			Move1D(std::min(pos.y - finalHeight, speed.y), 1, true);
 			eventHandler.FeatureMoved(this, oldPos);
-
-			transMatrix[13] = pos.y;
 		} else if (pos.y < finalHeight) {
-			// if ground is restored, make sure feature does not get buried
+			// stop vertical movement and teleport up
 			speed.y = 0.0f;
 
 			Move1D((finalHeight - pos.y), 1, true);
