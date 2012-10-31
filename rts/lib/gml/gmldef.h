@@ -364,6 +364,7 @@
 #define glDrawArrays gmlDrawArrays
 #define glFogfv gmlFogfv
 #define glFramebufferTexture2DEXT gmlFramebufferTexture2DEXT
+#define glFramebufferTextureEXT gmlFramebufferTextureEXT
 #define glTexCoordPointer gmlTexCoordPointer
 #define glTexSubImage2D gmlTexSubImage2D
 #define glClipPlane gmlClipPlane
