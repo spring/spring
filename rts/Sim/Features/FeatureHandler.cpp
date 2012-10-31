@@ -408,14 +408,12 @@ void CFeatureHandler::Update()
 	{
 		GML_STDMUTEX_LOCK(rfeat); // Update
 
-		if(!toBeRemoved.empty()) {
+		if (!toBeRemoved.empty()) {
 
 			GML_RECMUTEX_LOCK(obj); // Update
-
 			eventHandler.DeleteSyncedObjects();
 
 			GML_RECMUTEX_LOCK(feat); // Update
-
 			eventHandler.DeleteSyncedFeatures();
 
 			GML_RECMUTEX_LOCK(quad); // Update
@@ -423,16 +421,17 @@ void CFeatureHandler::Update()
 			while (!toBeRemoved.empty()) {
 				CFeature* feature = GetFeature(toBeRemoved.back());
 				toBeRemoved.pop_back();
+
 				if (feature) {
-					int delID = feature->id;
-					toBeFreedIDs.push_back(delID);
+					toBeFreedIDs.push_back(feature->id);
 					activeFeatures.erase(feature);
-					features[delID] = 0;
+					features[feature->id] = NULL;
 
 					if (feature->inUpdateQue) {
 						updateFeatures.erase(feature);
 					}
-					CSolidObject::SetDeletingRefID(delID + uh->MaxUnits());
+
+					CSolidObject::SetDeletingRefID(feature->id + uh->MaxUnits());
 					delete feature;
 					CSolidObject::SetDeletingRefID(-1);
 				}
@@ -478,13 +477,18 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
 			float3& fpos = feature->pos;
+
 			float gh = ground->GetHeightReal(fpos.x, fpos.z);
 			float wh = gh;
-			if(feature->def->floating)
+
+			if (feature->def->floating)
 				wh = ground->GetHeightAboveWater(fpos.x, fpos.z);
+
 			if (fpos.y > wh || fpos.y < gh) {
 				feature->finalHeight = wh;
-				feature->reachedFinalPos = false;
+				feature->isMoving = false;
+
+				// put this feature back in the update-queue
 				SetFeatureUpdateable(feature);
 			}
 		}

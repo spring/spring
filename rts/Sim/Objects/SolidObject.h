@@ -71,7 +71,7 @@ public:
 	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }
 
-	virtual void ForcedMove(const float3& newPos, bool snapToGround = true) {}
+	virtual void ForcedMove(const float3& newPos) {}
 	virtual void ForcedSpin(const float3& newDir) {}
 
 	void Move3D(const float3& v, bool relative) {

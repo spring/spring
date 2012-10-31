@@ -1808,7 +1808,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 		eventHandler.UnitFeatureCollision(collider, collidee);
 
-		if (collidee->reachedFinalPos) {
+		if (collidee->isMoving) {
 			HandleStaticObjectCollision(
 				collider,
 				collidee,

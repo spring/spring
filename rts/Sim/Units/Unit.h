@@ -103,7 +103,7 @@ public:
 	/// turn the unit off
 	void Deactivate();
 
-	void ForcedMove(const float3& newPos, bool snapToGround = true);
+	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
 	void SetHeadingFromDirection();
 

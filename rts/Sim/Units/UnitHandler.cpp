@@ -159,6 +159,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 	int delType = 0;
 
 	std::list<CUnit*>::iterator usi;
+
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		if (*usi == delUnit) {
 			if (slowUpdateIterator != activeUnits.end() && *usi == *slowUpdateIterator) {
@@ -169,17 +170,18 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 			GML_STDMUTEX_LOCK(dque); // DeleteUnitNow
 
-			int delID = delUnit->id;
-			activeUnits.erase(usi);
-			units[delID] = 0;
-			freeUnitIDs.push_back(delID);
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
+			activeUnits.erase(usi);
+			freeUnitIDs.push_back(delUnit->id);
 			unitsByDefs[delTeam][delType].erase(delUnit);
 
-			CSolidObject::SetDeletingRefID(delID);
+			units[delUnit->id] = NULL;
+
+			CSolidObject::SetDeletingRefID(delUnit->id);
 			delete delUnit;
 			CSolidObject::SetDeletingRefID(-1);
+
 			break;
 		}
 	}

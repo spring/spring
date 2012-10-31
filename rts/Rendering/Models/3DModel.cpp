@@ -118,12 +118,13 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 
 LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	: colvol(new CollisionVolume(piece->GetCollisionVolume()))
-	, numUpdatesSynced(1)
 
+	, numUpdatesSynced(1)
 	, lastMatrixUpdate(0)
 
 	, scriptSetVisible(!piece->isEmpty)
 	, identityTransform(true)
+
 	, original(piece)
 	, parent(NULL) // set later
 {
