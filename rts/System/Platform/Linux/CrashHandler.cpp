@@ -322,6 +322,11 @@ static void ForcedExitAfterFiveSecs() {
 	exit(-1);
 }
 
+static void ForcedExitAfterTenSecs() {
+	boost::this_thread::sleep(boost::posix_time::seconds(10));
+	std::_Exit(-1);
+}
+
 
 typedef struct sigaction sigaction_t;
 
@@ -478,6 +483,7 @@ namespace CrashHandler
 
 			//! abort after 5sec
 			boost::thread(boost::bind(&ForcedExitAfterFiveSecs));
+			boost::thread(boost::bind(&ForcedExitAfterTenSecs));
 			return;
 		}
 
