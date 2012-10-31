@@ -882,6 +882,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER3VDA(DrawArrays)
 		GML_MAKEHANDLER2V(Fogfv)
 		GML_MAKEHANDLER5(FramebufferTexture2DEXT)
+		GML_MAKEHANDLER4(FramebufferTextureEXT)
 		GML_MAKEHANDLER4(TexCoordPointer)
 		GML_MAKEHANDLER9S(TexSubImage2D)
 		GML_MAKEHANDLER2V(ClipPlane)
