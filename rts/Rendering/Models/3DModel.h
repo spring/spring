@@ -92,17 +92,23 @@ struct S3DModel
 	S3DModel()
 		: tex1("default.png")
 		, tex2("")
+
 		, id(-1)
-		, type(MODELTYPE_OTHER)
+		, numPieces(0)
 		, textureType(-1)
+
+		, type(MODELTYPE_OTHER)
+
 		, flipTexY(false)
 		, invertTexAlpha(false)
+
 		, radius(0.0f)
 		, height(0.0f)
+
 		, mins(10000.0f, 10000.0f, 10000.0f)
 		, maxs(-10000.0f, -10000.0f, -10000.0f)
 		, relMidPos(ZeroVector)
-		, numPieces(0)
+
 		, rootPiece(NULL)
 	{
 	}
@@ -118,8 +124,11 @@ public:
 	std::string tex2;
 
 	int id;                 // unsynced ID, starting with 1
-	ModelType type;
+	int numPieces;
 	int textureType;        // FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+
+	ModelType type;
+
 	bool flipTexY;          // Turn both textures upside down before use
 	bool invertTexAlpha;    // Invert teamcolor alpha channel in S3O texture 1
 
@@ -130,7 +139,6 @@ public:
 	float3 maxs;
 	float3 relMidPos;
 
-	int numPieces;
 	S3DModelPiece* rootPiece;   // The piece at the base of the model hierarchy
 	ModelPieceMap pieces;       // Lookup table for pieces by name
 };

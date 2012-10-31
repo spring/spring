@@ -2378,7 +2378,9 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
 	const bool snap(luaL_optboolean(L, 5, true));
 
-	feature->ForcedMove(pos, snap);
+	feature->ForcedMove(pos);
+	feature->UpdateFinalHeight(snap);
+
 	return 0;
 }
 
@@ -2392,8 +2394,8 @@ int LuaSyncedCtrl::SetFeatureDirection(lua_State* L)
 	float3 dir(luaL_checkfloat(L, 2),
 	           luaL_checkfloat(L, 3),
 	           luaL_checkfloat(L, 4));
-	dir.Normalize();
-	feature->ForcedSpin(dir);
+
+	feature->ForcedSpin(dir.Normalize());
 	return 0;
 }
 
@@ -2959,8 +2961,7 @@ int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			const int index = (z * gs->mapxp1) + x;
-			readmap->SetHeight(index, height);
+			readmap->SetHeight((z * gs->mapxp1) + x, height);
 		}
 	}
 
@@ -2974,14 +2975,15 @@ int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 	if (mapDamage->disabled) {
 		return 0;
 	}
+
 	float height;
 	int x1, x2, z1, z2;
+
 	ParseMapParams(L, __FUNCTION__, height, x1, z1, x2, z2);
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			const int index = (z * gs->mapxp1) + x;
-			readmap->AddHeight(index, height);
+			readmap->AddHeight((z * gs->mapxp1) + x, height);
 		}
 	}
 

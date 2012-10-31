@@ -545,7 +545,7 @@ void CUnit::PostInit(const CUnit* builder)
 
 
 
-void CUnit::ForcedMove(const float3& newPos, bool)
+void CUnit::ForcedMove(const float3& newPos)
 {
 	if (blocking) {
 		UnBlock();
