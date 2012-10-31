@@ -1213,7 +1213,7 @@ static bool ParseBoolean(lua_State* L, int index, bool& value)
 //  String key functions
 //
 
-int LuaTable::GetInt(const string& key, int def) const
+int LuaTable::Get(const string& key, int def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1228,7 +1228,7 @@ int LuaTable::GetInt(const string& key, int def) const
 }
 
 
-bool LuaTable::GetBool(const string& key, bool def) const
+bool LuaTable::Get(const string& key, bool def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1243,7 +1243,7 @@ bool LuaTable::GetBool(const string& key, bool def) const
 }
 
 
-float LuaTable::GetFloat(const string& key, float def) const
+float LuaTable::Get(const string& key, float def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1259,7 +1259,7 @@ float LuaTable::GetFloat(const string& key, float def) const
 
 
 
-float3 LuaTable::GetFloat3(const string& key, const float3& def) const
+float3 LuaTable::Get(const string& key, const float3& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1273,7 +1273,7 @@ float3 LuaTable::GetFloat3(const string& key, const float3& def) const
 	return value;
 }
 
-float4 LuaTable::GetFloat4(const string& key, const float4& def) const
+float4 LuaTable::Get(const string& key, const float4& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1289,7 +1289,7 @@ float4 LuaTable::GetFloat4(const string& key, const float4& def) const
 
 
 
-string LuaTable::GetString(const string& key, const string& def) const
+string LuaTable::Get(const string& key, const string& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1310,7 +1310,7 @@ string LuaTable::GetString(const string& key, const string& def) const
 //  Number key functions
 //
 
-int LuaTable::GetInt(int key, int def) const
+int LuaTable::Get(int key, int def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1325,7 +1325,7 @@ int LuaTable::GetInt(int key, int def) const
 }
 
 
-bool LuaTable::GetBool(int key, bool def) const
+bool LuaTable::Get(int key, bool def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1340,7 +1340,7 @@ bool LuaTable::GetBool(int key, bool def) const
 }
 
 
-float LuaTable::GetFloat(int key, float def) const
+float LuaTable::Get(int key, float def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1356,7 +1356,7 @@ float LuaTable::GetFloat(int key, float def) const
 
 
 
-float3 LuaTable::GetFloat3(int key, const float3& def) const
+float3 LuaTable::Get(int key, const float3& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1370,7 +1370,7 @@ float3 LuaTable::GetFloat3(int key, const float3& def) const
 	return value;
 }
 
-float4 LuaTable::GetFloat4(int key, const float4& def) const
+float4 LuaTable::Get(int key, const float4& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1386,7 +1386,7 @@ float4 LuaTable::GetFloat4(int key, const float4& def) const
 
 
 
-string LuaTable::GetString(int key, const string& def) const
+string LuaTable::Get(int key, const string& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1399,6 +1399,37 @@ string LuaTable::GetString(int key, const string& def) const
 	lua_pop(L, 1);
 	return value;
 }
+
+
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Number key functions
+//
+
+float3 LuaTable::GetFloat3(int key, const float3& def) const
+{
+	return Get(key, def);
+}
+
+
+float4 LuaTable::GetFloat4(int key, const float4& def) const
+{
+	return Get(key, def);
+}
+
+
+float3 LuaTable::GetFloat3(const string& key, const float3& def) const
+{
+	return Get(key, def);
+}
+
+
+float4 LuaTable::GetFloat4(const string& key, const float4& def) const
+{
+	return Get(key, def);
+}
+
 
 
 /******************************************************************************/
