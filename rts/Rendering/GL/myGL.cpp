@@ -20,8 +20,14 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/MessageBox.h"
 
+#ifdef DEBUG //used for StacktraceOnGLErrors
+#include "System/Platform/CrashHandler.h"
+#include "System/Platform/Threading.h"
+#endif
+
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false);
+CONFIG(bool, StacktraceOnGLErrors).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs (only available in DEBUG builds)");
 
 
 static CVertexArray* vertexArray1 = NULL;
@@ -163,6 +169,12 @@ void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 	LOG_L(L_ERROR, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s",
 			sourceStr.c_str(), typeStr.c_str(), id, severityStr.c_str(),
 			messageStr.c_str());
+#ifdef DEBUG
+	if (configHandler->GetBool("StacktraceOnGLErrors")) {
+		const std::string threadName = "rendering";
+		CrashHandler::Stacktrace(Threading::GetCurrentThread(), threadName);
+	}
+#endif
 }
 #endif // GL_ARB_debug_output
 
