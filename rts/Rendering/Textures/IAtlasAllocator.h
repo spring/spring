@@ -36,16 +36,16 @@ public:
 	float4 GetTexCoords(const std::string& name)
 	{
 		float4 uv(entries[name].texCoords);
-		uv.x /= atlasSize.x;
-		uv.y /= atlasSize.y;
-		uv.z /= atlasSize.x;
-		uv.w /= atlasSize.y;
+		uv.x1 /= atlasSize.x;
+		uv.y1 /= atlasSize.y;
+		uv.x2 /= atlasSize.x;
+		uv.y2 /= atlasSize.y;
 
 		// adjust texture coordinates by half a texel (opengl uses centeroids)
-		uv.x += 0.5f / atlasSize.x;
-		uv.y += 0.5f / atlasSize.y;
-		uv.z += 0.5f / atlasSize.x;
-		uv.w += 0.5f / atlasSize.y;
+		uv.x1 += 0.5f / atlasSize.x;
+		uv.y1 += 0.5f / atlasSize.y;
+		uv.x2 += 0.5f / atlasSize.x;
+		uv.y2 += 0.5f / atlasSize.y;
 
 		return uv;
 	}
