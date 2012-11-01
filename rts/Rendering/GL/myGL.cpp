@@ -338,6 +338,14 @@ void LoadExtensions()
 	if (GLEW_ARB_debug_output) {
 		LOG("Installing OpenGL-DebugMessageHandler");
 		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
+
+	#ifdef DEBUG
+		if (configHandler->GetBool("StacktraceOnGLErrors")) {
+			// The callback should happen in the thread that made the gl call
+			// so we get proper stacktraces.
+			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+		}
+	#endif
 	}
 #endif
 
