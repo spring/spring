@@ -31,7 +31,7 @@ function widget:Shutdown()
 	debug.sethook()
 end
 
-function widget:DrawScreen()
+function widget:Update()
 	-- reset watchdog counter
 	i=0
 end
