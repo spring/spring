@@ -900,6 +900,84 @@ void CMiniMap::Draw()
 	}
 }
 
+struct MatrixStateBackup {
+	struct MatrixBackup {
+		GLfloat mat[16];
+	};
+	std::vector<MatrixBackup> backups;
+	int mvDepth, prDepth, txDepth;
+};
+
+void BackupMatrixState(MatrixStateBackup &bk) {
+	// note: does not backup the matrices on top of the stack
+	glGetIntegerv(GL_MODELVIEW_STACK_DEPTH , &bk.mvDepth);
+	glGetIntegerv(GL_PROJECTION_STACK_DEPTH , &bk.prDepth);
+	glGetIntegerv(GL_TEXTURE_STACK_DEPTH , &bk.txDepth);
+	--bk.mvDepth;
+	--bk.prDepth;
+	--bk.txDepth;
+	int tot = bk.mvDepth + bk.prDepth + bk.txDepth;
+	if (tot == 0)
+		return;
+	GLint matMode;
+	glGetIntegerv(GL_MATRIX_MODE, &matMode);
+	bk.backups.resize(tot);
+	int pos = 0;
+	if (bk.mvDepth > 0) {
+		glMatrixMode(GL_MODELVIEW);
+		for (int i = 0; i < bk.mvDepth; ++i) {
+			glPopMatrix();
+			glGetFloatv(GL_MODELVIEW_MATRIX, bk.backups[pos++].mat);
+		}
+	}
+	if (bk.prDepth > 0) {
+		glMatrixMode(GL_PROJECTION);
+		for (int i = 0; i < bk.prDepth; ++i) {
+			glPopMatrix();
+			glGetFloatv(GL_PROJECTION_MATRIX, bk.backups[pos++].mat);
+		}
+	}
+	if (bk.txDepth > 0) {
+		glMatrixMode(GL_TEXTURE);
+		for (int i = 0; i < bk.txDepth; ++i) {
+			glPopMatrix();
+			glGetFloatv(GL_TEXTURE_MATRIX, bk.backups[pos++].mat);
+		}
+	}
+	glMatrixMode(matMode);
+}
+
+void RestoreMatrixState(MatrixStateBackup &bk) {
+	int tot = bk.mvDepth + bk.prDepth + bk.txDepth;
+	if (tot == 0)
+		return;
+	GLint matMode;
+	glGetIntegerv(GL_MATRIX_MODE, &matMode);
+	bk.backups.resize(tot);
+	int pos = tot;
+	if (bk.txDepth > 0) {
+		glMatrixMode(GL_TEXTURE);
+		for (int i = 0; i < bk.txDepth; ++i) {
+			glLoadMatrixf(bk.backups[--pos].mat);
+			glPushMatrix();
+		}
+	}
+	if (bk.prDepth > 0) {
+		glMatrixMode(GL_PROJECTION);
+		for (int i = 0; i < bk.prDepth; ++i) {
+			glLoadMatrixf(bk.backups[--pos].mat);
+			glPushMatrix();
+		}
+	}
+	if (bk.mvDepth > 0) {
+		glMatrixMode(GL_MODELVIEW);
+		for (int i = 0; i < bk.mvDepth; ++i) {
+			glLoadMatrixf(bk.backups[--pos].mat);
+			glPushMatrix();
+		}
+	}
+	glMatrixMode(matMode);
+}
 
 void CMiniMap::DrawForReal(bool use_geo)
 {
@@ -1184,13 +1262,15 @@ void CMiniMap::DrawForReal(bool use_geo)
 		glPopMatrix();
 	}
 
+	MatrixStateBackup bk;
+	BackupMatrixState(bk);
 	//! allow the LUA scripts to draw into the minimap
 	eventHandler.DrawInMiniMap();
+	RestoreMatrixState(bk);
 
 	if (use_geo && globalRendering->dualScreenMode)
 		glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 
-	//FIXME: Lua modifies the matrices w/o reseting it! (quite complexe to fix because ClearMatrixStack() makes it impossible to use glPushMatrix)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluOrtho2D(0,1,0,1);
