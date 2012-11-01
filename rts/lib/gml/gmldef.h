@@ -68,6 +68,7 @@
 #undef glDrawArrays
 #undef glFogfv
 #undef glFramebufferTexture2DEXT
+#undef glFramebufferTextureEXT
 #undef glTexCoordPointer
 #undef glTexSubImage2D
 #undef glClipPlane
