@@ -62,8 +62,8 @@ if [ ! -x $RUNCLIENT ]; then
 fi
 
 
-# limit to 1GB RAM
-ulimit -v 1000000
+# limit to 1.5GB RAM
+ulimit -v 1500000
 # max 15 min cpu time
 ulimit -t 900
 
