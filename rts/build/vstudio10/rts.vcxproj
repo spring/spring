@@ -547,6 +547,7 @@
     <ClInclude Include="..\..\Game\Camera\TWController.h" />
     <ClInclude Include="..\..\Game\Server\GameParticipant.h" />
     <ClInclude Include="..\..\Game\Server\MsgStrings.h" />
+    <ClInclude Include="..\..\Lua\LuaContextData.h" />
     <ClInclude Include="..\..\Lua\LuaIntro.h" />
     <ClInclude Include="..\..\Rendering\AVIGenerator.h" />
     <ClInclude Include="..\..\Rendering\Colors.h" />
