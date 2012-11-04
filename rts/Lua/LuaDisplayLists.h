@@ -10,7 +10,6 @@ using std::vector;
 
 
 class CLuaDisplayLists {
-	typedef std::map<unsigned int, int> MatrixData;
 	public:
 		CLuaDisplayLists()
 		{
@@ -43,16 +42,16 @@ class CLuaDisplayLists {
 			}
 		}
 
-		MatrixData GetMatrixData(unsigned int index) const
+		MatrixStateData GetMatrixState(unsigned int index) const
 		{
 			if (index < active.size()) {
 				return active[index].matData;
 			} else {
-				return MatrixData();
+				return MatrixStateData();
 			}
 		}
 
-		unsigned int NewDList(GLuint dlist, MatrixData& m)
+		unsigned int NewDList(GLuint dlist, MatrixStateData& m)
 		{
 			if (dlist == 0) {
 				return 0;
@@ -78,9 +77,9 @@ class CLuaDisplayLists {
 	private:
 		struct DLdata {
 			DLdata(int i) { id = i; }
-			DLdata(int i, MatrixData &m) { id = i; matData = m; }
+			DLdata(int i, MatrixStateData &m) { id = i; matData = m; }
 			GLuint id;
-			MatrixData matData;
+			MatrixStateData matData;
 		};
 		vector<DLdata> active;
 		vector<unsigned int> unused; // references slots in active

@@ -275,9 +275,9 @@ inline void LuaOpenGL::InitMatrixState(lua_State* L, const LuaHashString* hs) {
 }
 
 inline void LuaOpenGL::CheckMatrixState(lua_State* L, const LuaHashString* hs, int error) {
-	if (!L->lcd->HasMatrixError())
+	if (!L->lcd->HasMatrixStateError())
 		return;
-	L->lcd->HandleMatrixError(error, (hs == NULL) ? "Unknown" : hs->GetString().c_str());
+	L->lcd->HandleMatrixStateError(error, (hs == NULL) ? "Unknown" : hs->GetString().c_str());
 }
 
 #endif /* LUA_UNITDEFS_H */
