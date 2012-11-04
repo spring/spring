@@ -196,25 +196,6 @@ void CFileHandler::Seek(int length, std::ios_base::seekdir where)
 	}
 }
 
-
-int CFileHandler::Peek() const
-{
-	GML_RECMUTEX_LOCK(file); // Peek
-
-	if (ifs) {
-		return ifs->peek();
-	}
-	else if (!fileBuffer.empty()) {
-		if (filePos < fileSize) {
-			return fileBuffer.at(filePos);
-		} else {
-			return EOF;
-		}
-	}
-	return EOF;
-}
-
-
 bool CFileHandler::Eof() const
 {
 	GML_RECMUTEX_LOCK(file); // Eof

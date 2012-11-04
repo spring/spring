@@ -34,7 +34,6 @@ public:
 	bool FileExists() const;
 
 	bool Eof() const;
-	int Peek() const;
 	int GetPos() const;
 	int FileSize() const;
 
