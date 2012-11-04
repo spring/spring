@@ -4378,8 +4378,6 @@ int LuaSyncedRead::GetProjectileName(lua_State* L)
 		return 0;
 	}
 
-	assert(pro->weapon || pro->piece);
-
 	if (pro->weapon) {
 		const CWeaponProjectile* wpro = dynamic_cast<const CWeaponProjectile*>(pro);
 
@@ -4399,6 +4397,7 @@ int LuaSyncedRead::GetProjectileName(lua_State* L)
 		}
 	}
 
+	// neither weapon nor piece likely means the projectile is CExpGenSpawner, should we return any name in this case?
 	return 0;
 }
 
