@@ -9,7 +9,7 @@
 #include <cstring>
 
 #include "ArchiveLoader.h"
-#include "IArchive.h"
+#include "System/FileSystem/Archives/IArchive.h"
 #include "FileSystem.h"
 #include "ArchiveScanner.h"
 #include "System/Exceptions.h"

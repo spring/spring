@@ -28,7 +28,7 @@
 #include "LuaZip.h"
 #include "LuaInclude.h"
 #include "LuaHashString.h"
-#include "System/FileSystem/IArchive.h"
+#include "System/FileSystem/Archives/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileHandler.h"

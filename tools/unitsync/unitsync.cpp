@@ -20,7 +20,7 @@
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/LuaAIImplHandler.h"
-#include "System/FileSystem/IArchive.h"
+#include "System/FileSystem/Archives/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/DataDirsAccess.h"

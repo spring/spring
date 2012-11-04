@@ -13,7 +13,7 @@
 
 #include "ArchiveLoader.h"
 #include "DataDirLocater.h"
-#include "IArchive.h"
+#include "Archives/IArchive.h"
 #include "FileFilter.h"
 #include "DataDirsAccess.h"
 #include "FileSystem.h"

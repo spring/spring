@@ -4,13 +4,12 @@
 
 #include "ArchiveLoader.h"
 
-#include "ArchiveFactory.h"
-
-#include "IArchive.h"
-#include "PoolArchive.h"
-#include "DirArchive.h"
-#include "ZipArchive.h"
-#include "SevenZipArchive.h"
+#include "Archives/ArchiveFactory.h"
+#include "Archives/IArchive.h"
+#include "Archives/PoolArchive.h"
+#include "Archives/DirArchive.h"
+#include "Archives/ZipArchive.h"
+#include "Archives/SevenZipArchive.h"
 
 #include "FileSystem.h"
 #include "DataDirsAccess.h"
