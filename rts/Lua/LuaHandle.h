@@ -128,7 +128,7 @@ struct luaContextData {
 	bool SetMatrixMode(int mode) {
 		if (mode <= 0)
 			return false;
-		if (mode == GL_MODELVIEW)
+		if (!listMode && mode == GL_MODELVIEW)
 			matrixData.erase(0);
 		else
 			matrixData[0] = mode;
@@ -149,7 +149,10 @@ struct luaContextData {
 		// apply
 		for (MatrixData::iterator i = m.begin(); i != m.end(); ++i) {
 			if (i->first == 0) {
-				matrixData[0] = i->second;
+				if (i->second == GL_MODELVIEW)
+					matrixData.erase(0);
+				else
+					matrixData[0] = i->second;
 				continue;
 			}
 			int newdepth = GetDepth(i->first) + i->second;
