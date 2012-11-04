@@ -320,6 +320,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 void LuaOpenGL::ClearMatrixStack(int stackDepthEnum)
 {
+	return;
 	GLint depth = 0;
 
 	glGetIntegerv(stackDepthEnum, &depth);
@@ -4330,7 +4331,10 @@ int LuaOpenGL::MatrixMode(lua_State* L)
 	if ((args != 1) || !lua_isnumber(L, 1)) {
 		luaL_error(L, "Incorrect arguments to gl.MatrixMode");
 	}
-	glMatrixMode((GLenum)lua_tonumber(L, 1));
+	GLenum mode = (GLenum)lua_tonumber(L, 1);
+	if (!L->lcd->SetMatrixMode(mode))
+		luaL_error(L, "Incorrect value to gl.MatrixMode");
+	glMatrixMode(mode);
 	return 0;
 }
 
@@ -4419,6 +4423,8 @@ int LuaOpenGL::PushMatrix(lua_State* L)
 		luaL_error(L, "gl.PushMatrix takes no arguments");
 	}
 
+	if (!L->lcd->PushMatrix())
+		luaL_error(L, "Matrix stack overflow");
 	glPushMatrix();
 
 	return 0;
@@ -4434,6 +4440,8 @@ int LuaOpenGL::PopMatrix(lua_State* L)
 		luaL_error(L, "gl.PopMatrix takes no arguments");
 	}
 
+	if (!L->lcd->PopMatrix())
+		luaL_error(L, "Matrix stack underflow");
 	glPopMatrix();
 
 	return 0;
@@ -4618,7 +4626,10 @@ int LuaOpenGL::CreateList(lua_State* L)
 
 	// build the list with the specified lua call/args
 	glNewList(list, GL_COMPILE);
+	luaContextData::MatrixData oldMD = L->lcd->PushMatrixState(true);
 	const int error = lua_pcall(L, (args - 1), 0, 0);
+	luaContextData::MatrixData matData = L->lcd->GetMatrixData();
+	L->lcd->PopMatrixState(oldMD, false);
 	glEndList();
 
 	if (error != 0) {
@@ -4629,7 +4640,7 @@ int LuaOpenGL::CreateList(lua_State* L)
 	}
 	else {
 		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
-		const unsigned int index = displayLists.NewDList(list);
+		const unsigned int index = displayLists.NewDList(list, matData);
 		lua_pushnumber(L, index);
 	}
 
@@ -4647,7 +4658,12 @@ int LuaOpenGL::CallList(lua_State* L)
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
 	if (dlist) {
-		glCallList(dlist);
+		int error = L->lcd->ApplyMatrixState(displayLists.GetMatrixData(listIndex));
+		if (error == 0) {
+			glCallList(dlist);
+			return 0;
+		}
+		luaL_error(L, "Matrix stack %sflow in gl.CallList", (error > 0) ? "over" : "under");
 	}
 	return 0;
 }
