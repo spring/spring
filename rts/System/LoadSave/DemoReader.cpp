@@ -63,8 +63,9 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		// (if this had still used CFileHandler that would have been easier ;-))
 		long curPos = playbackDemo.tellg();
 		playbackDemo.seekg(0, std::ios::end);
- 		bytesRemaining = (long) playbackDemo.tellg() - curPos;
- 		playbackDemo.seekg(curPos);
+		playbackDemoSize = playbackDemo.tellg();
+		bytesRemaining = playbackDemoSize - curPos;
+		playbackDemo.seekg(curPos);
 	}
 }
 
@@ -95,9 +96,10 @@ netcode::RawPacket* CDemoReader::GetData(float readTime)
 	}
 }
 
-bool CDemoReader::ReachedEnd() const
+bool CDemoReader::ReachedEnd()
 {
-	if (bytesRemaining <= 0 || playbackDemo.eof())
+	if (bytesRemaining <= 0 || playbackDemo.eof()
+		|| (playbackDemo.tellg() >=  playbackDemoSize) ) //don't allow a growing file
 		return true;
 	else
 		return false;
