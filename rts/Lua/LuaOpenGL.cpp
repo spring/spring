@@ -4626,10 +4626,10 @@ int LuaOpenGL::CreateList(lua_State* L)
 
 	// build the list with the specified lua call/args
 	glNewList(list, GL_COMPILE);
-	luaContextData::MatrixData oldMD = L->lcd->PushMatrixState(true);
+	MatrixStateData prevMSD = L->lcd->PushMatrixState(true);
 	const int error = lua_pcall(L, (args - 1), 0, 0);
-	luaContextData::MatrixData matData = L->lcd->GetMatrixData();
-	L->lcd->PopMatrixState(oldMD, false);
+	MatrixStateData matData = L->lcd->GetMatrixState();
+	L->lcd->PopMatrixState(prevMSD, false);
 	glEndList();
 
 	if (error != 0) {
@@ -4658,7 +4658,7 @@ int LuaOpenGL::CallList(lua_State* L)
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
 	if (dlist) {
-		int error = L->lcd->ApplyMatrixState(displayLists.GetMatrixData(listIndex));
+		int error = L->lcd->ApplyMatrixState(displayLists.GetMatrixState(listIndex));
 		if (error == 0) {
 			glCallList(dlist);
 			return 0;

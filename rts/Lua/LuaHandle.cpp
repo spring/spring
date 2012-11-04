@@ -417,11 +417,11 @@ int CLuaHandle::RunCallInTraceback(const LuaHashString* hs, int inArgs, int outA
 	SetRunning(L, true);
 	// disable GC outside of this scope to prevent sync errors and similar
 	lua_gc(L, LUA_GCRESTART, 0);
-	luaContextData::MatrixData oldMD = L->lcd->PushMatrixState();
+	MatrixStateData prevMSD = L->lcd->PushMatrixState();
 	LuaOpenGL::InitMatrixState(L, hs);
 	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
 	LuaOpenGL::CheckMatrixState(L, hs, error);
-	L->lcd->PopMatrixState(oldMD);
+	L->lcd->PopMatrixState(prevMSD);
 	lua_gc(L, LUA_GCSTOP, 0);
 
 	SetRunning(L, false);
