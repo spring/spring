@@ -318,19 +318,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-void LuaOpenGL::ClearMatrixStack(int stackDepthEnum)
-{
-	return;
-	GLint depth = 0;
-
-	glGetIntegerv(stackDepthEnum, &depth);
-
-	for (int i = 0; i < depth - 1; i++) {
-		glPopMatrix();
-	}
-}
-
-
 void LuaOpenGL::ResetGLState()
 {
 	glDisable(GL_DEPTH_TEST);
@@ -753,15 +740,12 @@ void LuaOpenGL::DisableDrawInMiniMap()
 		DisableCommon(DRAW_MINIMAP);
 
 		glMatrixMode(GL_TEXTURE); {
-			ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 			glLoadIdentity();
 		}
 		glMatrixMode(GL_PROJECTION); {
-			ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 			glLoadIdentity();
 		}
 		glMatrixMode(GL_MODELVIEW); {
-			ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 			glLoadIdentity();
 		}
 	}
@@ -845,16 +829,13 @@ void LuaOpenGL::SetupScreenMatrices()
 void LuaOpenGL::RevertScreenMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 		gluOrtho2D(0.0, 1.0, 0.0, 1.0);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 	}
 }
@@ -912,15 +893,12 @@ void LuaOpenGL::RevertScreenLighting()
 void LuaOpenGL::ResetGenesisMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 	}
 }
@@ -929,15 +907,12 @@ void LuaOpenGL::ResetGenesisMatrices()
 void LuaOpenGL::ResetWorldMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadMatrixf(camera->GetProjectionMatrix());
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadMatrixf(camera->GetViewMatrix());
 	}
 }
@@ -946,16 +921,13 @@ void LuaOpenGL::ResetWorldMatrices()
 void LuaOpenGL::ResetWorldShadowMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 		glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, -1.0);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 	}
 }
@@ -964,15 +936,12 @@ void LuaOpenGL::ResetWorldShadowMatrices()
 void LuaOpenGL::ResetScreenMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	SetupScreenMatrices();
@@ -982,11 +951,9 @@ void LuaOpenGL::ResetScreenMatrices()
 void LuaOpenGL::ResetMiniMapMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 		assert(minimap);
 		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
@@ -994,7 +961,6 @@ void LuaOpenGL::ResetMiniMapMatrices()
 		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 		glScalef(1.0f / (float)minimap->GetSizeX(),
 		         1.0f / (float)minimap->GetSizeY(), 1.0f);
