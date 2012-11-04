@@ -79,6 +79,9 @@ class LuaOpenGL {
 		static void ResetDrawInMiniMap();
 		static void DisableDrawInMiniMap();
 
+		inline static void InitMatrixState(lua_State* L, const LuaHashString* hs);
+		inline static void CheckMatrixState(lua_State* L, const LuaHashString* hs, int error);
+
 	protected:
 		static void ResetGLState();
 
@@ -259,5 +262,22 @@ class LuaOpenGL {
 		static int GetSun(lua_State* L);
 };
 
+inline void LuaOpenGL::InitMatrixState(lua_State* L, const LuaHashString* hs) {
+#ifndef NDEBUG
+	if (IsDrawingEnabled(L)) {
+		GLint curmode; // the matrix mode should be set to GL_MODELVIEW before calling any lua code
+		glGetIntegerv(GL_MATRIX_MODE, &curmode);
+		if (curmode != GL_MODELVIEW)
+			LOG_L(L_ERROR, "%s: Current matrix mode is not GL_MODELVIEW", (hs == NULL) ? "Unknown" : hs->GetString().c_str());
+		glMatrixMode(GL_MODELVIEW);
+	}
+#endif
+}
+
+inline void LuaOpenGL::CheckMatrixState(lua_State* L, const LuaHashString* hs, int error) {
+	if (!L->lcd->HasMatrixError())
+		return;
+	L->lcd->HandleMatrixError(error, (hs == NULL) ? "Unknown" : hs->GetString().c_str());
+}
 
 #endif /* LUA_UNITDEFS_H */
