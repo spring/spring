@@ -10,8 +10,8 @@
 #include <cstring>
 #include <iostream>
 
-#include "DataDirsAccess.h"
-#include "FileSystem.h"
+#include "System/FileSystem/DataDirsAccess.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
 #include "System/Log/ILog.h"

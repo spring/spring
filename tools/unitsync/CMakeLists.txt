@@ -12,8 +12,7 @@ FIND_PACKAGE_STATIC(DevIL REQUIRED)
 LIST(APPEND unitsync_libs ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY})
 LIST(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
 LIST(APPEND unitsync_libs ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY})
-LIST(APPEND unitsync_libs 7zip lua)
-LIST(APPEND unitsync_libs headlessStubs)
+LIST(APPEND unitsync_libs 7zip lua headlessStubs archives)
 
 IF    (MINGW)
 	# We still need these header files,
