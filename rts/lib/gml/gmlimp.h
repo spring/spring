@@ -396,6 +396,7 @@
 #undef glGenTexturesEXT
 #undef glGenVertexArraysAPPLE
 #undef glGenVertexShadersEXT
+#undef glGenerateMipmap
 #undef glGenerateMipmapEXT
 #undef glGetActiveAttrib
 #undef glGetActiveAttribARB
@@ -1964,6 +1965,7 @@
 #define glGenTexturesEXT GML_FUNCTION_NOT_IMPLEMENTED
 #define glGenVertexArraysAPPLE GML_FUNCTION_NOT_IMPLEMENTED
 #define glGenVertexShadersEXT GML_FUNCTION_NOT_IMPLEMENTED
+#define glGenerateMipmap GML_FUNCTION_NOT_IMPLEMENTED
 #define glGenerateMipmapEXT GML_FUNCTION_NOT_IMPLEMENTED
 #define glGetActiveAttrib GML_FUNCTION_NOT_IMPLEMENTED
 #define glGetActiveAttribARB GML_FUNCTION_NOT_IMPLEMENTED
