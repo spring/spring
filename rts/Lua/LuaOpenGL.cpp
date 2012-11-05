@@ -21,6 +21,7 @@
 #include "LuaOpenGL.h"
 #include "LuaInclude.h"
 
+#include "LuaContextData.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaShaders.h"
@@ -4624,7 +4625,8 @@ int LuaOpenGL::CallList(lua_State* L)
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
 	if (dlist) {
-		int error = L->lcd->ApplyMatrixState(displayLists.GetMatrixState(listIndex));
+		MatrixStateData matrixStateData = displayLists.GetMatrixState(listIndex);
+		int error = L->lcd->ApplyMatrixState(matrixStateData);
 		if (error == 0) {
 			glCallList(dlist);
 			return 0;
