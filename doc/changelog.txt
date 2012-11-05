@@ -10,6 +10,7 @@ Changes
  - fix "Transport endpoint is not connected"
  - AAI: refactor / fixes
  - fix bug in /aikill
+ - removed oscpack
 
 Unitsync
  ! fix return in GetInfoMapSize (#2996)

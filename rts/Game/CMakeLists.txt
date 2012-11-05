@@ -36,7 +36,6 @@ SET(sources_engine_Game_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/LoadScreen.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Messages.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/NetCommands.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/OSCStatsSender.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Player.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerBase.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerHandler.cpp"

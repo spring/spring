@@ -36,7 +36,6 @@
 #include "PlayerRosterDrawer.h"
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
-#include "OSCStatsSender.h"
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
 #include "InMapDrawModel.h"
@@ -1026,10 +1025,6 @@ bool CGame::UpdateUnsynced()
 
 	if (newSimFrame) {
 		CInputReceiver::CollectGarbage();
-	
-		if (!(gs->frameNum & 31)) {
-			oscStatsSender->Update(gs->frameNum);
-		}
 	}
 
 	// always update ExtraTexture & SoundListener with <=30Hz (even when paused)
