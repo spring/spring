@@ -157,6 +157,7 @@ private:
 	/// The priority-queue used to select next block to be searched.
 	PathPriorityQueue openBlocks;
 
+	friend class CPathManager;
 	std::vector<float> vertices;
 	/// List of blocks changed in last search.
 	std::list<int> dirtyBlocks;

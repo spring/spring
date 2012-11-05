@@ -420,7 +420,10 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 void CPathEstimator::Update() {
 	pathCache->Update();
 
-	for (unsigned int n = 0; !needUpdate.empty() && n < BLOCKS_TO_UPDATE; ) {
+	const unsigned int progressiveUpdates = needUpdate.size() * 0.01f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
+	const unsigned int blocksToUpdate = std::max(BLOCKS_TO_UPDATE, progressiveUpdates);
+
+	for (unsigned int n = 0; !needUpdate.empty() && n < blocksToUpdate; ) {
 		// copy the next block in line
 		const SingleBlock sb = needUpdate.front();
 
