@@ -105,6 +105,7 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Path/IPathManager.h"
+#include "Sim/Path/Default/PathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -1225,6 +1226,14 @@ bool CGame::Draw() {
 		// 16ms := 60fps := 30simFPS + 30drawFPS
 		font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
 		   (gu->avgDrawFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime, (gu->avgSimFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime);
+
+		CPathManager* legacy = dynamic_cast<CPathManager*>(pathManager);
+		if (legacy) {
+			int med,low;
+			legacy->GetOutstandingUpdates(&med, &low);
+			font->glFormat(0.03f, 0.12f, 0.7f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "Outstanding Pathing Updates: %i %i",
+				med, low);
+		}
 
 		font->End();
 	}

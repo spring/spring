@@ -581,3 +581,9 @@ const float* CPathManager::GetNodeExtraCosts(bool synced) const {
 	const float* costs = buf.GetNodeExtraCosts(synced);
 	return costs;
 }
+
+void CPathManager::GetOutstandingUpdates(int* med, int* low)
+{
+	*med = medResPE->needUpdate.size();
+	*low = lowResPE->needUpdate.size();
+}
