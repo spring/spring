@@ -82,7 +82,6 @@ SET(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/DataDirsAccess.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileFilter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/File.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystem.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystemAbstraction.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystemInitializer.cpp"
