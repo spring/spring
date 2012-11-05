@@ -64,6 +64,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
+#include "System/Sync/HsiehHash.h"
 #include "LuaHelper.h"
 
 using std::max;
@@ -3364,10 +3365,19 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 
 	CMapInfo::TerrainType* tt = const_cast<CMapInfo::TerrainType*>(&mapInfo->terrainTypes[tti]);
 
+	const int checksumOld = HsiehHash(tt, sizeof(CMapInfo::TerrainType), 0);
+
 	if (args >= 2 && lua_isnumber(L, 2)) { tt->tankSpeed  = lua_tofloat(L, 2); }
 	if (args >= 3 && lua_isnumber(L, 3)) { tt->kbotSpeed  = lua_tofloat(L, 3); }
 	if (args >= 4 && lua_isnumber(L, 4)) { tt->hoverSpeed = lua_tofloat(L, 4); }
 	if (args >= 5 && lua_isnumber(L, 5)) { tt->shipSpeed  = lua_tofloat(L, 5); }
+
+	const int checksumNew = HsiehHash(tt, sizeof(CMapInfo::TerrainType), 0);
+	if (checksumOld == checksumNew) {
+		// no change, no need to repath
+		lua_pushboolean(L, true);
+		return 1;
+	}
 
 	/*
 	if (!mapDamage->disabled) {
