@@ -143,6 +143,7 @@ private:
 		GLenum target,format,type;
 	};
 	static std::map<GLuint,TexData*> texBuf;
+	static GLint maxAttachments;
 
 	/**
 	 * @brief DownloadAttachment
