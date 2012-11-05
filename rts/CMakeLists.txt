@@ -75,7 +75,7 @@ ENDIF (UNIX AND NOT MINGW)
 FIND_PACKAGE_STATIC(ZLIB REQUIRED)
 LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY})
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY})
-LIST(APPEND engineCommonLibraries lua luasocket oscpack archives streflop lobby assimp)
+LIST(APPEND engineCommonLibraries lua luasocket archives streflop lobby assimp)
 
 if (MINGW AND Boost_CHRONO_FOUND)
 	# in newer boost versions the thread library depends on it
