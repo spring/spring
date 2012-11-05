@@ -723,8 +723,11 @@ void CGame::LoadLua()
 
 void CGame::LoadFinalize()
 {
-	loadscreen->SetLoadMessage("Finalizing");
+	loadscreen->SetLoadMessage("Initializing PathCache");
 	eventHandler.GamePreload();
+	pathManager->UpdateFull(); // mapfeatures are not in written pathcaches, so we need to repath those & other stuff done by Lua
+
+	loadscreen->SetLoadMessage("Finalizing");
 
 	lastframe = spring_gettime();
 	lastModGameTimeMeasure = lastframe;

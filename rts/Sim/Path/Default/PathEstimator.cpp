@@ -454,6 +454,13 @@ void CPathEstimator::Update() {
 }
 
 
+void CPathEstimator::UpdateFull() {
+	while (!needUpdate.empty()) {
+		Update();
+	}
+}
+
+
 /**
  * Stores data and does some top-administration
  */
