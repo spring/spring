@@ -17,7 +17,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
 
 
 //FIXME add missing functions to GML
-#if !defined(USE_GML) && !defined(HEADLESS)
+#if !defined(HEADLESS)
 
 enum {
 	FLOAT1 = 1,
@@ -358,7 +358,7 @@ static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 namespace Shader {
 	void GLSLCopyState(GLuint newProgID, GLuint oldProgID)
 	{
-	#if !defined(USE_GML) && !defined(HEADLESS)
+	#if !defined(HEADLESS)
 		CopyShaderState_Uniforms(newProgID, oldProgID);
 		CopyShaderState_UniformBlocks(newProgID, oldProgID);
 		CopyShaderState_Attributes(newProgID, oldProgID);

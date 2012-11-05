@@ -565,6 +565,7 @@
 #undef glGetUniformfvARB
 #undef glGetUniformiv
 #undef glGetUniformivARB
+#undef glGetUniformuiv
 #undef glGetUniformuivEXT
 #undef glGetVariantArrayObjectfvATI
 #undef glGetVariantArrayObjectivATI
@@ -1162,6 +1163,7 @@
 #undef glUniform1iv
 #undef glUniform1ivARB
 #undef glUniform1uiEXT
+#undef glUniform1uiv
 #undef glUniform1uivEXT
 #undef glUniform2f
 #undef glUniform2fARB
@@ -1172,6 +1174,7 @@
 #undef glUniform2iv
 #undef glUniform2ivARB
 #undef glUniform2uiEXT
+#undef glUniform2uiv
 #undef glUniform2uivEXT
 #undef glUniform3f
 #undef glUniform3fARB
@@ -1182,6 +1185,7 @@
 #undef glUniform3iv
 #undef glUniform3ivARB
 #undef glUniform3uiEXT
+#undef glUniform3uiv
 #undef glUniform3uivEXT
 #undef glUniform4f
 #undef glUniform4fARB
@@ -1192,6 +1196,7 @@
 #undef glUniform4iv
 #undef glUniform4ivARB
 #undef glUniform4uiEXT
+#undef glUniform4uiv
 #undef glUniform4uivEXT
 #undef glUniformBufferEXT
 #undef glUniformMatrix2fv
@@ -2124,10 +2129,11 @@
 #define glGetUniformLocation GML_FUNCTION_NOT_IMPLEMENTED
 #define glGetUniformLocationARB GML_FUNCTION_NOT_IMPLEMENTED
 #define glGetUniformOffsetEXT GML_FUNCTION_NOT_IMPLEMENTED
-#define glGetUniformfv GML_FUNCTION_NOT_IMPLEMENTED
 #define glGetUniformfvARB GML_FUNCTION_NOT_IMPLEMENTED
+#define glGetUniformfv GML_FUNCTION_NOT_IMPLEMENTED
 #define glGetUniformiv GML_FUNCTION_NOT_IMPLEMENTED
 #define glGetUniformivARB GML_FUNCTION_NOT_IMPLEMENTED
+#define glGetUniformuiv GML_FUNCTION_NOT_IMPLEMENTED
 #define glGetUniformuivEXT GML_FUNCTION_NOT_IMPLEMENTED
 #define glGetVariantArrayObjectfvATI GML_FUNCTION_NOT_IMPLEMENTED
 #define glGetVariantArrayObjectivATI GML_FUNCTION_NOT_IMPLEMENTED
@@ -2725,6 +2731,7 @@
 #define glUniform1iv GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform1ivARB GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform1uiEXT GML_FUNCTION_NOT_IMPLEMENTED
+#define glUniform1uiv GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform1uivEXT GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform2f GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform2fARB GML_FUNCTION_NOT_IMPLEMENTED
@@ -2735,6 +2742,7 @@
 #define glUniform2iv GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform2ivARB GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform2uiEXT GML_FUNCTION_NOT_IMPLEMENTED
+#define glUniform2uiv GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform2uivEXT GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform3f GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform3fARB GML_FUNCTION_NOT_IMPLEMENTED
@@ -2745,6 +2753,7 @@
 #define glUniform3iv GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform3ivARB GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform3uiEXT GML_FUNCTION_NOT_IMPLEMENTED
+#define glUniform3uiv GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform3uivEXT GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform4f GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform4fARB GML_FUNCTION_NOT_IMPLEMENTED
@@ -2755,6 +2764,7 @@
 #define glUniform4iv GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform4ivARB GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform4uiEXT GML_FUNCTION_NOT_IMPLEMENTED
+#define glUniform4uiv GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniform4uivEXT GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniformBufferEXT GML_FUNCTION_NOT_IMPLEMENTED
 #define glUniformMatrix2fv GML_FUNCTION_NOT_IMPLEMENTED

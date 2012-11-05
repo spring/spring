@@ -278,14 +278,6 @@ namespace Shader {
 	}
 
 	void GLSLProgramObject::Reload() {
-	#ifdef USE_GML
-		//FIXME GLSLCopyState() isn't supported by GML yet
-		{
-			LOG_L(L_WARNING, "/ReloadShaders isn't available in spring-mt (use default build)");
-			return;
-		}
-	#endif
-
 		log = "";
 		valid = false;
 
