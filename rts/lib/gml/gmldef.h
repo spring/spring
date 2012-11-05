@@ -7,592 +7,617 @@
 // freely for any purpose, as long as 
 // this notice remains unchanged
 
-#undef glDisable
-#undef glEnable
-#undef glBindTexture
-#undef glTexParameteri
-#undef glActiveTextureARB
-#undef glColor4f
-#undef glVertex3f
-#undef glTexEnvi
-#undef glTexCoord2f
-#undef glProgramEnvParameter4fARB
-#undef glEnd
-#undef glBegin
-#undef glMatrixMode
-#undef glVertex2f
-#undef glPopMatrix
-#undef glPushMatrix
-#undef glLoadIdentity
-#undef glTranslatef
-#undef glBlendFunc
-#undef glCallList
-#undef glColor3f
-#undef glTexImage2D
-#undef glColor4fv
-#undef glBindProgramARB
-#undef glScalef
-#undef glViewport
-#undef glDeleteTextures
-#undef glMultiTexCoord2fARB
-#undef glAlphaFunc
-#undef glDepthMask
-#undef glLineWidth
-#undef glBindFramebufferEXT
-#undef glRotatef
-#undef glDeleteLists
-#undef glDisableClientState
-#undef glEnableClientState
-#undef glRectf
-#undef glLightfv
-#undef gluBuild2DMipmaps
-#undef glClear
-#undef glEndList
-#undef glNewList
-#undef glClearColor
-#undef glPolygonMode
-#undef glActiveTexture
-#undef glFogf
-#undef glMultMatrixf
-#undef glOrtho
-#undef glPopAttrib
-#undef glMaterialfv
-#undef glPolygonOffset
-#undef glPushAttrib
-#undef glCullFace
-#undef glColorMask
-#undef glVertex3fv
-#undef glTexGenfv
-#undef glVertex2d
-#undef glVertexPointer
-#undef glDrawArrays
-#undef glFogfv
-#undef glFramebufferTexture2DEXT
-#undef glFramebufferTextureEXT
-#undef glTexCoordPointer
-#undef glTexSubImage2D
-#undef glClipPlane
-#undef glColor4d
-#undef glLightModeli
-#undef glTexGeni
-#undef glTexParameterf
-#undef glCopyTexSubImage2D
-#undef glDeleteFramebuffersEXT
-#undef glLoadMatrixf
-#undef glShadeModel
-#undef glUseProgram
-#undef glClientActiveTextureARB
-#undef glDeleteRenderbuffersEXT
-#undef glFlush
-#undef glNormal3f
-#undef glUseProgramObjectARB
-#undef glCompressedTexImage2DARB
-#undef glDeleteObjectARB
-#undef glFogi
-#undef glMultMatrixd
-#undef glPixelStorei
-#undef glPointParameterf
-#undef glTexCoord3f
-#undef glUniform1i
-#undef glBindRenderbufferEXT
-#undef glColor3fv
-#undef glDepthFunc
-#undef glHint
-#undef glLogicOp
-#undef glStencilOp
-#undef glTexEnvfv
-#undef glUniformMatrix4fv
-#undef gluOrtho2D
-#undef glAttachObjectARB
-#undef glBindBufferARB
-#undef glColor3ubv
-#undef glDetachObjectARB
-#undef glFramebufferRenderbufferEXT
-#undef glLineStipple
-#undef glLoadMatrixd
-#undef glSetFenceNV
-#undef glStencilFunc
-#undef glTexImage3D
-#undef glUniform1f
-#undef glClearStencil
-#undef glColorPointer
-#undef glDeleteShader
-#undef glDrawElements
-#undef glGenerateMipmapEXT
-#undef glMaterialf
-#undef glNormalPointer
-#undef glProgramEnvParameter4fvARB
-#undef glRenderbufferStorageEXT
-#undef glStencilMask
-#undef glUniform3f
-#undef gluPerspective
 #undef glActiveStencilFaceEXT
+#undef glActiveTexture
+#undef glActiveTextureARB
+#undef glAlphaFunc
+#undef glAttachObjectARB
 #undef glAttachShader
+#undef glBegin
+#undef glBeginQuery
+#undef glBindAttribLocation
+#undef glBindBuffer
+#undef glBindBufferARB
+#undef glBindFramebufferEXT
+#undef glBindProgramARB
+#undef glBindRenderbufferEXT
+#undef glBindTexture
+#undef glBlendColor
+#undef glBlendEquation
+#undef glBlendEquationSeparate
+#undef glBlendFunc
+#undef glBlendFuncSeparate
 #undef glBlitFramebufferEXT
+#undef glBufferData
 #undef glBufferDataARB
-#undef glClearDepth
-#undef glColor3ub
-#undef glCompressedTexImage1DARB
-#undef glCompressedTexImage3DARB
-#undef glDrawBuffer
-#undef glFrontFace
-#undef glFrustum
-#undef glLinkProgramARB
-#undef glMultiTexCoord1f
-#undef glMultiTexCoord2f
-#undef glMultiTexCoord3f
-#undef glMultiTexCoord4f
-#undef glPointParameterfv
-#undef glPointSize
-#undef glProgramStringARB
-#undef glSecondaryColor3f
-#undef glTexCoord1f
-#undef glTexCoord4f
-#undef glTexEnvf
-#undef glTexGenf
-#undef glTexImage1D
-#undef glUniform1iARB
-#undef glUniform2f
-#undef glUniform2fARB
-#undef glUniform2i
-#undef glUniform3fARB
-#undef glUniform3i
-#undef glUniform4f
-#undef glUniform4i
-#undef glUniformMatrix2fv
-#undef glUniformMatrix3fv
-#undef glVertex4f
-#undef gluDeleteQuadric
-#undef gluQuadricDrawStyle
-#undef gluSphere
+#undef glCallList
+#undef glCheckFramebufferStatusEXT
+#undef glClear
 #undef glClearAccum
+#undef glClearColor
+#undef glClearDepth
+#undef glClearStencil
+#undef glClientActiveTexture
+#undef glClientActiveTextureARB
+#undef glClipPlane
+#undef glColor3f
+#undef glColor3fv
+#undef glColor3ub
+#undef glColor3ubv
+#undef glColor4d
+#undef glColor4f
+#undef glColor4fv
 #undef glColor4ub
 #undef glColor4ubv
+#undef glColorMask
+#undef glColorPointer
 #undef glCompileShader
 #undef glCompileShaderARB
-#undef glCopyTexImage2D
-#undef glDeleteBuffersARB
-#undef glDeleteFencesNV
-#undef glDeleteProgram
-#undef glDeleteProgramsARB
-#undef glDetachShader
-#undef glDisableVertexAttribArrayARB
-#undef glDrawBuffersARB
-#undef glEdgeFlag
-#undef glEnableVertexAttribArrayARB
-#undef glFinish
-#undef glFinishFenceNV
-#undef glFogCoordf
-#undef glLightf
-#undef glLinkProgram
-#undef glNormal3fv
-#undef glRasterPos2i
-#undef glReadBuffer
-#undef glScissor
-#undef glShaderSource
-#undef glShaderSourceARB
-#undef glTexCoord2fv
-#undef glTexParameterfv
-#undef glTranslated
-#undef glUniform1fv
-#undef glUniform4fARB
-#undef glUniformMatrix4fvARB
-#undef glVertexAttribPointerARB
-#undef gluLookAt
-#undef glLightModelfv
-#undef glDeleteQueries
-#undef glBlendEquation
-#undef glStencilMaskSeparate
-#undef glStencilFuncSeparate
-#undef glStencilOpSeparate
-#undef glBeginQuery
-#undef glEndQuery
-#undef glGetQueryObjectuiv
-#undef glBlendEquationSeparate
-#undef glBlendFuncSeparate
-#undef gluCylinder
-#undef glGenBuffers
-#undef glDeleteBuffers
-#undef glBindBuffer
-#undef glBufferData
-#undef glMapBuffer
-#undef glUnmapBuffer
+#undef glCompressedTexImage1DARB
 #undef glCompressedTexImage2D
-#undef glIsShader
-#undef glIsProgram 
-#undef glVertex3i
-#undef glGetIntegerv
-#undef glCheckFramebufferStatusEXT
-#undef glGetFloatv
-#undef glGetString
-#undef glGetUniformLocationARB
-#undef glReadPixels
-#undef glGetError
-#undef glGetObjectParameterivARB
-#undef glGetUniformLocation
-#undef glGetDoublev
-#undef glGetProgramiv
-#undef glGetActiveUniform
-#undef glGetAttribLocationARB
-#undef glGetInfoLogARB
-#undef glGetProgramInfoLog
-#undef glGetProgramivARB
-#undef glGetShaderInfoLog
-#undef glGetShaderiv
-#undef glIsRenderbufferEXT
-#undef glMapBufferARB
-#undef gluProject
-#undef gluScaleImage
-#undef glIndexPointer
-#undef glEdgeFlagPointer
-#undef glTrackMatrixNV
-#undef glTestFenceNV
+#undef glCompressedTexImage2DARB
+#undef glCompressedTexImage3DARB
+#undef glCopyTexImage2D
+#undef glCopyTexSubImage2D
 #undef glCreateProgram
 #undef glCreateProgramObjectARB
 #undef glCreateShader
 #undef glCreateShaderObjectARB
-#undef gluNewQuadric
-#undef glGenTextures
-#undef glGenBuffersARB
-#undef glGenFencesNV
-#undef glGenProgramsARB
-#undef glGenRenderbuffersEXT
-#undef glGenFramebuffersEXT
-#undef glGenQueries
-#undef glGenLists
-#undef glProgramParameteriEXT
-#undef glBlendColor
-#undef glMap1f
-#undef glMap2f
-#undef glMapGrid1f
-#undef glMapGrid2f
-#undef glEvalMesh1
-#undef glEvalMesh2
+#undef glCullFace
+#undef glDeleteBuffers
+#undef glDeleteBuffersARB
+#undef glDeleteFencesNV
+#undef glDeleteFramebuffersEXT
+#undef glDeleteLists
+#undef glDeleteObjectARB
+#undef glDeleteProgram
+#undef glDeleteProgramsARB
+#undef glDeleteQueries
+#undef glDeleteRenderbuffersEXT
+#undef glDeleteShader
+#undef glDeleteTextures
+#undef glDepthFunc
+#undef glDepthMask
+#undef glDetachObjectARB
+#undef glDetachShader
+#undef glDisable
+#undef glDisableClientState
+#undef glDisableVertexAttribArrayARB
+#undef glDrawArrays
+#undef glDrawBuffer
+#undef glDrawBuffersARB
+#undef glDrawElements
+#undef glDrawRangeElements
+#undef glEdgeFlag
+#undef glEdgeFlagPointer
+#undef glEnable
+#undef glEnableClientState
+#undef glEnableVertexAttribArrayARB
+#undef glEnd
+#undef glEndList
+#undef glEndQuery
 #undef glEvalCoord1f
 #undef glEvalCoord2f
+#undef glEvalMesh1
+#undef glEvalMesh2
 #undef glEvalPoint1
 #undef glEvalPoint2
-#undef glRenderMode
-#undef glSelectBuffer
-#undef glInitNames
-#undef glLoadName
-#undef glPushName
-#undef glPopName
-#undef glGetTexLevelParameteriv
-#undef glGetFramebufferAttachmentParameterivEXT
-#undef glGetRenderbufferParameterivEXT
-#undef glGetTexImage
-#undef glIsTexture
+#undef glFinish
+#undef glFinishFenceNV
+#undef glFlush
+#undef glFogCoordf
+#undef glFogf
+#undef glFogfv
+#undef glFogi
+#undef glFramebufferRenderbufferEXT
 #undef glFramebufferTexture1DEXT
+#undef glFramebufferTexture2DEXT
 #undef glFramebufferTexture3DEXT
-#undef glClientActiveTexture
-#undef glMultiTexCoord2i
-#undef glGetQueryiv
+#undef glFramebufferTextureEXT
+#undef glFrontFace
+#undef glFrustum
+#undef glGenBuffers
+#undef glGenBuffersARB
+#undef glGenFencesNV
+#undef glGenFramebuffersEXT
+#undef glGenLists
+#undef glGenProgramsARB
+#undef glGenQueries
+#undef glGenRenderbuffersEXT
+#undef glGenTextures
+#undef glGenerateMipmap
+#undef glGenerateMipmapEXT
+#undef glGetActiveAttrib
+#undef glGetActiveUniform
+#undef glGetAttribLocation
+#undef glGetAttribLocationARB
 #undef glGetBooleanv
-#undef glValidateProgram
-#undef glUniform2iv
-#undef glUniform3iv
-#undef glUniform4iv
-#undef glUniform2fv
-#undef glUniform3fv
-#undef glUniform4fv
+#undef glGetDoublev
+#undef glGetError
+#undef glGetFloatv
+#undef glGetFramebufferAttachmentParameterivEXT
+#undef glGetInfoLogARB
+#undef glGetIntegerv
+#undef glGetObjectParameterivARB
+#undef glGetProgramInfoLog
+#undef glGetProgramiv
+#undef glGetProgramivARB
+#undef glGetQueryObjectuiv
+#undef glGetQueryiv
+#undef glGetRenderbufferParameterivEXT
+#undef glGetShaderInfoLog
+#undef glGetShaderiv
+#undef glGetString
+#undef glGetTexImage
+#undef glGetTexLevelParameteriv
+#undef glGetUniformfv
+#undef glGetUniformiv
+#undef glGetUniformuiv
+#undef glGetUniformLocation
+#undef glGetUniformLocationARB
+#undef glHint
+#undef glIndexPointer
+#undef glInitNames
+#undef glIsProgram 
+#undef glIsRenderbufferEXT
+#undef glIsShader
+#undef glIsTexture
+#undef glLightModelfv
+#undef glLightModeli
+#undef glLightf
+#undef glLightfv
+#undef glLineStipple
+#undef glLineWidth
+#undef glLinkProgram
+#undef glLinkProgramARB
+#undef glLoadIdentity
+#undef glLoadMatrixd
+#undef glLoadMatrixf
+#undef glLoadName
+#undef glLogicOp
+#undef glMap1f
+#undef glMap2f
+#undef glMapBuffer
+#undef glMapBufferARB
 #undef glMapBufferRange
+#undef glMapGrid1f
+#undef glMapGrid2f
+#undef glMaterialf
+#undef glMaterialfv
+#undef glMatrixMode
+#undef glMultMatrixd
+#undef glMultMatrixf
+#undef glMultiTexCoord1f
+#undef glMultiTexCoord2f
+#undef glMultiTexCoord2fARB
+#undef glMultiTexCoord2i
+#undef glMultiTexCoord3f
+#undef glMultiTexCoord4f
+#undef glNewList
+#undef glNormal3f
+#undef glNormal3fv
+#undef glNormalPointer
+#undef glOrtho
+#undef glPixelStorei
+#undef glPointParameterf
+#undef glPointParameterfv
+#undef glPointSize
+#undef glPolygonMode
+#undef glPolygonOffset
+#undef glPopAttrib
+#undef glPopMatrix
+#undef glPopName
 #undef glPrimitiveRestartIndexNV
-#undef glDrawRangeElements
+#undef glProgramEnvParameter4fARB
+#undef glProgramEnvParameter4fvARB
+#undef glProgramParameteriEXT
+#undef glProgramStringARB
+#undef glPushAttrib
+#undef glPushMatrix
+#undef glPushName
+#undef glRasterPos2i
+#undef glReadBuffer
+#undef glReadPixels
+#undef glRectf
+#undef glRenderMode
+#undef glRenderbufferStorageEXT
+#undef glRotatef
+#undef glScalef
+#undef glScissor
+#undef glSecondaryColor3f
+#undef glSelectBuffer
+#undef glSetFenceNV
+#undef glShadeModel
+#undef glShaderSource
+#undef glShaderSourceARB
+#undef glStencilFunc
+#undef glStencilFuncSeparate
+#undef glStencilMask
+#undef glStencilMaskSeparate
+#undef glStencilOp
+#undef glStencilOpSeparate
+#undef glTestFenceNV
+#undef glTexCoord1f
+#undef glTexCoord2f
+#undef glTexCoord2fv
+#undef glTexCoord3f
+#undef glTexCoord4f
+#undef glTexCoordPointer
+#undef glTexEnvf
+#undef glTexEnvfv
+#undef glTexEnvi
+#undef glTexGenf
+#undef glTexGenfv
+#undef glTexGeni
+#undef glTexImage1D
+#undef glTexImage2D
+#undef glTexImage3D
+#undef glTexParameterf
+#undef glTexParameterfv
+#undef glTexParameteri
+#undef glTexSubImage2D
+#undef glTrackMatrixNV
+#undef glTranslated
+#undef glTranslatef
+#undef glUniform1f
+#undef glUniform1fv
+#undef glUniform1i
+#undef glUniform1iv
+#undef glUniform1iARB
+#undef glUniform1uiv
+#undef glUniform2f
+#undef glUniform2fARB
+#undef glUniform2fv
+#undef glUniform2i
+#undef glUniform2iv
+#undef glUniform2uiv
+#undef glUniform3f
+#undef glUniform3fARB
+#undef glUniform3fv
+#undef glUniform3i
+#undef glUniform3iv
+#undef glUniform3uiv
+#undef glUniform4f
+#undef glUniform4fARB
+#undef glUniform4fv
+#undef glUniform4i
+#undef glUniform4iv
+#undef glUniform4uiv
+#undef glUniformMatrix2fv
+#undef glUniformMatrix3fv
+#undef glUniformMatrix4fv
+#undef glUniformMatrix4fvARB
+#undef glUnmapBuffer
+#undef glUseProgram
+#undef glUseProgramObjectARB
+#undef glValidateProgram
+#undef glVertex2d
+#undef glVertex2f
+#undef glVertex3f
+#undef glVertex3fv
+#undef glVertex3i
+#undef glVertex4f
+#undef glVertexAttribPointerARB
+#undef glVertexPointer
+#undef glViewport
+#undef gluBuild2DMipmaps
+#undef gluCylinder
+#undef gluDeleteQuadric
+#undef gluLookAt
+#undef gluNewQuadric
+#undef gluOrtho2D
+#undef gluPerspective
+#undef gluProject
+#undef gluQuadricDrawStyle
+#undef gluScaleImage
+#undef gluSphere
+
 
 // #####################################################################
 
 #define GML_NULL_CHECK(name) (GLEW_GET_FUN(__glew##name) ? &gml##name : GLEW_GET_FUN(__glew##name))
 
-#define glDisable gmlDisable
-#define glEnable gmlEnable
-#define glBindTexture gmlBindTexture
-#define glTexParameteri gmlTexParameteri
-#define glActiveTextureARB gmlActiveTextureARB
-#define glColor4f gmlColor4f
-#define glVertex3f gmlVertex3f
-#define glTexEnvi gmlTexEnvi
-#define glTexCoord2f gmlTexCoord2f
-#define glProgramEnvParameter4fARB gmlProgramEnvParameter4fARB
-#define glEnd gmlEnd
-#define glBegin gmlBegin
-#define glMatrixMode gmlMatrixMode
-#define glVertex2f gmlVertex2f
-#define glPopMatrix gmlPopMatrix
-#define glPushMatrix gmlPushMatrix
-#define glLoadIdentity gmlLoadIdentity
-#define glTranslatef gmlTranslatef
-#define glBlendFunc gmlBlendFunc
-#define glCallList gmlCallList
-#define glColor3f gmlColor3f
-#define glTexImage2D gmlTexImage2D
-#define glColor4fv gmlColor4fv
-#define glBindProgramARB GML_NULL_CHECK(BindProgramARB)
-#define glScalef gmlScalef
-#define glViewport gmlViewport
-#define glDeleteTextures gmlDeleteTextures
-#define glMultiTexCoord2fARB gmlMultiTexCoord2fARB
-#define glAlphaFunc gmlAlphaFunc
-#define glDepthMask gmlDepthMask
-#define glLineWidth gmlLineWidth
-#define glBindFramebufferEXT gmlBindFramebufferEXT
-#define glRotatef gmlRotatef
-#define glDeleteLists gmlDeleteLists
-#define glDisableClientState gmlDisableClientState
-#define glEnableClientState gmlEnableClientState
-#define glRectf gmlRectf
-#define glLightfv gmlLightfv
-#define gluBuild2DMipmaps gmluBuild2DMipmaps
-#define glClear gmlClear
-#define glEndList gmlEndList
-#define glNewList gmlNewList
-#define glClearColor gmlClearColor
-#define glPolygonMode gmlPolygonMode
-#define glActiveTexture gmlActiveTexture
-#define glFogf gmlFogf
-#define glMultMatrixf gmlMultMatrixf
-#define glOrtho gmlOrtho
-#define glPopAttrib gmlPopAttrib
-#define glMaterialfv gmlMaterialfv
-#define glPolygonOffset gmlPolygonOffset
-#define glPushAttrib gmlPushAttrib
-#define glCullFace gmlCullFace
-#define glColorMask gmlColorMask
-#define glVertex3fv gmlVertex3fv
-#define glTexGenfv gmlTexGenfv
-#define glVertex2d gmlVertex2d
-#define glVertexPointer gmlVertexPointer
-#define glDrawArrays gmlDrawArrays
-#define glFogfv gmlFogfv
-#define glFramebufferTexture2DEXT gmlFramebufferTexture2DEXT
-#define glFramebufferTextureEXT gmlFramebufferTextureEXT
-#define glTexCoordPointer gmlTexCoordPointer
-#define glTexSubImage2D gmlTexSubImage2D
-#define glClipPlane gmlClipPlane
-#define glColor4d gmlColor4d
-#define glLightModeli gmlLightModeli
-#define glTexGeni gmlTexGeni
-#define glTexParameterf gmlTexParameterf
-#define glCopyTexSubImage2D gmlCopyTexSubImage2D
-#define glDeleteFramebuffersEXT gmlDeleteFramebuffersEXT
-#define glLoadMatrixf gmlLoadMatrixf
-#define glShadeModel gmlShadeModel
-#define glUseProgram GML_NULL_CHECK(UseProgram)
-#define glClientActiveTextureARB gmlClientActiveTextureARB
-#define glDeleteRenderbuffersEXT gmlDeleteRenderbuffersEXT
-#define glFlush gmlFlush
-#define glNormal3f gmlNormal3f
-#define glUseProgramObjectARB gmlUseProgramObjectARB
-#define glCompressedTexImage2DARB gmlCompressedTexImage2DARB
-#define glDeleteObjectARB gmlDeleteObjectARB
-#define glFogi gmlFogi
-#define glMultMatrixd gmlMultMatrixd
-#define glPixelStorei gmlPixelStorei
-#define glPointParameterf gmlPointParameterf
-#define glTexCoord3f gmlTexCoord3f
-#define glUniform1i gmlUniform1i
-#define glBindRenderbufferEXT gmlBindRenderbufferEXT
-#define glColor3fv gmlColor3fv
-#define glDepthFunc gmlDepthFunc
-#define glHint gmlHint
-#define glLogicOp gmlLogicOp
-#define glStencilOp gmlStencilOp
-#define glTexEnvfv gmlTexEnvfv
-#define glUniformMatrix4fv gmlUniformMatrix4fv
-#define gluOrtho2D gmluOrtho2D
-#define glAttachObjectARB gmlAttachObjectARB
-#define glBindBufferARB gmlBindBufferARB
-#define glColor3ubv gmlColor3ubv
-#define glDetachObjectARB gmlDetachObjectARB
-#define glFramebufferRenderbufferEXT gmlFramebufferRenderbufferEXT
-#define glLineStipple gmlLineStipple
-#define glLoadMatrixd gmlLoadMatrixd
-#define glSetFenceNV gmlSetFenceNV
-#define glStencilFunc gmlStencilFunc
-#define glTexImage3D gmlTexImage3D
-#define glUniform1f gmlUniform1f
-#define glClearStencil gmlClearStencil
-#define glColorPointer gmlColorPointer
-#define glDeleteShader GML_NULL_CHECK(DeleteShader)
-#define glDrawElements gmlDrawElements
-#define glGenerateMipmapEXT GML_NULL_CHECK(GenerateMipmapEXT)
-#define glMaterialf gmlMaterialf
-#define glNormalPointer gmlNormalPointer
-#define glProgramEnvParameter4fvARB gmlProgramEnvParameter4fvARB
-#define glRenderbufferStorageEXT gmlRenderbufferStorageEXT
-#define glStencilMask gmlStencilMask
-#define glUniform3f gmlUniform3f
-#define gluPerspective gmluPerspective
 #define glActiveStencilFaceEXT gmlActiveStencilFaceEXT
+#define glActiveTexture gmlActiveTexture
+#define glActiveTextureARB gmlActiveTextureARB
+#define glAlphaFunc gmlAlphaFunc
+#define glAttachObjectARB gmlAttachObjectARB
 #define glAttachShader gmlAttachShader
+#define glBegin gmlBegin
+#define glBeginQuery gmlBeginQuery
+#define glBindAttribLocation gmlBindAttribLocation
+#define glBindBuffer gmlBindBuffer
+#define glBindBufferARB gmlBindBufferARB
+#define glBindFramebufferEXT gmlBindFramebufferEXT
+#define glBindProgramARB GML_NULL_CHECK(BindProgramARB)
+#define glBindRenderbufferEXT gmlBindRenderbufferEXT
+#define glBindTexture gmlBindTexture
+#define glBlendColor gmlBlendColor
+#define glBlendEquation GML_NULL_CHECK(BlendEquation)
+#define glBlendEquationSeparate gmlBlendEquationSeparate
+#define glBlendFunc gmlBlendFunc
+#define glBlendFuncSeparate gmlBlendFuncSeparate
 #define glBlitFramebufferEXT gmlBlitFramebufferEXT
+#define glBufferData gmlBufferData
 #define glBufferDataARB gmlBufferDataARB
-#define glClearDepth gmlClearDepth
-#define glColor3ub gmlColor3ub
-#define glCompressedTexImage1DARB gmlCompressedTexImage1DARB
-#define glCompressedTexImage3DARB gmlCompressedTexImage3DARB
-#define glDrawBuffer gmlDrawBuffer
-#define glFrontFace gmlFrontFace
-#define glFrustum gmlFrustum
-#define glLinkProgramARB gmlLinkProgramARB
-#define glMultiTexCoord1f gmlMultiTexCoord1f
-#define glMultiTexCoord2f gmlMultiTexCoord2f
-#define glMultiTexCoord3f gmlMultiTexCoord3f
-#define glMultiTexCoord4f gmlMultiTexCoord4f
-#define glPointParameterfv gmlPointParameterfv
-#define glPointSize gmlPointSize
-#define glProgramStringARB gmlProgramStringARB
-#define glSecondaryColor3f gmlSecondaryColor3f
-#define glTexCoord1f gmlTexCoord1f
-#define glTexCoord4f gmlTexCoord4f
-#define glTexEnvf gmlTexEnvf
-#define glTexGenf gmlTexGenf
-#define glTexImage1D gmlTexImage1D
-#define glUniform1iARB gmlUniform1iARB
-#define glUniform2f gmlUniform2f
-#define glUniform2fARB gmlUniform2fARB
-#define glUniform2i gmlUniform2i
-#define glUniform3fARB gmlUniform3fARB
-#define glUniform3i gmlUniform3i
-#define glUniform4f gmlUniform4f
-#define glUniform4i gmlUniform4i
-#define glUniformMatrix2fv gmlUniformMatrix2fv
-#define glUniformMatrix3fv gmlUniformMatrix3fv
-#define glVertex4f gmlVertex4f
-#define gluDeleteQuadric gmluDeleteQuadric
-#define gluQuadricDrawStyle gmluQuadricDrawStyle
-#define gluSphere gmluSphere
+#define glCallList gmlCallList
+#define glCheckFramebufferStatusEXT gmlCheckFramebufferStatusEXT
+#define glClear gmlClear
 #define glClearAccum gmlClearAccum
+#define glClearColor gmlClearColor
+#define glClearDepth gmlClearDepth
+#define glClearStencil gmlClearStencil
+#define glClientActiveTexture gmlClientActiveTexture
+#define glClientActiveTextureARB gmlClientActiveTextureARB
+#define glClipPlane gmlClipPlane
+#define glColor3f gmlColor3f
+#define glColor3fv gmlColor3fv
+#define glColor3ub gmlColor3ub
+#define glColor3ubv gmlColor3ubv
+#define glColor4d gmlColor4d
+#define glColor4f gmlColor4f
+#define glColor4fv gmlColor4fv
 #define glColor4ub gmlColor4ub
 #define glColor4ubv gmlColor4ubv
+#define glColorMask gmlColorMask
+#define glColorPointer gmlColorPointer
 #define glCompileShader gmlCompileShader
 #define glCompileShaderARB gmlCompileShaderARB
-#define glCopyTexImage2D gmlCopyTexImage2D
-#define glDeleteBuffersARB gmlDeleteBuffersARB
-#define glDeleteFencesNV gmlDeleteFencesNV
-#define glDeleteProgram GML_NULL_CHECK(DeleteProgram)
-#define glDeleteProgramsARB GML_NULL_CHECK(DeleteProgramsARB)
-#define glDetachShader gmlDetachShader
-#define glDisableVertexAttribArrayARB gmlDisableVertexAttribArrayARB
-#define glDrawBuffersARB gmlDrawBuffersARB
-#define glEdgeFlag gmlEdgeFlag
-#define glEnableVertexAttribArrayARB gmlEnableVertexAttribArrayARB
-#define glFinish gmlFinish
-#define glFinishFenceNV gmlFinishFenceNV
-#define glFogCoordf gmlFogCoordf
-#define glLightf gmlLightf
-#define glLinkProgram GML_NULL_CHECK(LinkProgram)
-#define glNormal3fv gmlNormal3fv
-#define glRasterPos2i gmlRasterPos2i
-#define glReadBuffer gmlReadBuffer
-#define glScissor gmlScissor
-#define glShaderSource GML_NULL_CHECK(ShaderSource)
-#define glShaderSourceARB gmlShaderSourceARB
-#define glTexCoord2fv gmlTexCoord2fv
-#define glTexParameterfv gmlTexParameterfv
-#define glTranslated gmlTranslated
-#define glUniform1fv gmlUniform1fv
-#define glUniform4fARB gmlUniform4fARB
-#define glUniformMatrix4fvARB gmlUniformMatrix4fvARB
-#define glVertexAttribPointerARB gmlVertexAttribPointerARB
-#define gluLookAt gmluLookAt
-#define glLightModelfv gmlLightModelfv
-#define glDeleteQueries gmlDeleteQueries
-#define glBlendEquation GML_NULL_CHECK(BlendEquation)
-#define glStencilMaskSeparate gmlStencilMaskSeparate
-#define glStencilFuncSeparate gmlStencilFuncSeparate
-#define glStencilOpSeparate gmlStencilOpSeparate
-#define glBeginQuery gmlBeginQuery
-#define glEndQuery gmlEndQuery
-#define glGetQueryObjectuiv gmlGetQueryObjectuiv
-#define glBlendEquationSeparate gmlBlendEquationSeparate
-#define glBlendFuncSeparate gmlBlendFuncSeparate
-#define gluCylinder gmluCylinder
-#define glGenBuffers gmlGenBuffers
-#define glDeleteBuffers gmlDeleteBuffers
-#define glBindBuffer gmlBindBuffer
-#define glBufferData gmlBufferData
-#define glMapBuffer gmlMapBuffer
-#define glUnmapBuffer gmlUnmapBuffer
+#define glCompressedTexImage1DARB gmlCompressedTexImage1DARB
 #define glCompressedTexImage2D gmlCompressedTexImage2D
-#define glIsShader gmlIsShader
-#define glIsProgram gmlIsProgram
-#define glVertex3i gmlVertex3i
-#define glGetIntegerv gmlGetIntegerv
-#define glCheckFramebufferStatusEXT gmlCheckFramebufferStatusEXT
-#define glGetFloatv gmlGetFloatv
-#define glGetString gmlGetString
-#define glGetUniformLocationARB gmlGetUniformLocationARB
-#define glReadPixels gmlReadPixels
-#define glGetError gmlGetError
-#define glGetObjectParameterivARB gmlGetObjectParameterivARB
-#define glGetUniformLocation gmlGetUniformLocation
-#define glGetDoublev gmlGetDoublev
-#define glGetProgramiv gmlGetProgramiv
-#define glGetActiveUniform gmlGetActiveUniform
-#define glGetAttribLocationARB gmlGetAttribLocationARB
-#define glGetInfoLogARB gmlGetInfoLogARB
-#define glGetProgramInfoLog gmlGetProgramInfoLog
-#define glGetProgramivARB gmlGetProgramivARB
-#define glGetShaderInfoLog gmlGetShaderInfoLog
-#define glGetShaderiv gmlGetShaderiv
-#define glIsRenderbufferEXT gmlIsRenderbufferEXT
-#define glMapBufferARB gmlMapBufferARB
-#define gluProject gmluProject
-#define gluScaleImage gmluScaleImage
-#define glIndexPointer gmlIndexPointer
-#define glEdgeFlagPointer gmlEdgeFlagPointer
-#define glTrackMatrixNV gmlTrackMatrixNV
-#define glTestFenceNV gmlTestFenceNV
+#define glCompressedTexImage2DARB gmlCompressedTexImage2DARB
+#define glCompressedTexImage3DARB gmlCompressedTexImage3DARB
+#define glCopyTexImage2D gmlCopyTexImage2D
+#define glCopyTexSubImage2D gmlCopyTexSubImage2D
 #define glCreateProgram GML_NULL_CHECK(CreateProgram)
 #define glCreateProgramObjectARB gmlCreateProgramObjectARB
 #define glCreateShader GML_NULL_CHECK(CreateShader)
 #define glCreateShaderObjectARB gmlCreateShaderObjectARB
-#define gluNewQuadric gmluNewQuadric
-#define glGenTextures gmlGenTextures
-#define glGenBuffersARB gmlGenBuffersARB
-#define glGenFencesNV gmlGenFencesNV
-#define glGenProgramsARB GML_NULL_CHECK(GenProgramsARB)
-#define glGenRenderbuffersEXT gmlGenRenderbuffersEXT
-#define glGenFramebuffersEXT gmlGenFramebuffersEXT
-#define glGenQueries gmlGenQueries
-#define glGenLists gmlGenLists
-#define glProgramParameteriEXT GML_NULL_CHECK(ProgramParameteriEXT)
-#define glBlendColor gmlBlendColor
-#define glMap1f gmlMap1f
-#define glMap2f gmlMap2f
-#define glMapGrid1f gmlMapGrid1f
-#define glMapGrid2f gmlMapGrid2f
-#define glEvalMesh1 gmlEvalMesh1
-#define glEvalMesh2 gmlEvalMesh2
+#define glCullFace gmlCullFace
+#define glDeleteBuffers gmlDeleteBuffers
+#define glDeleteBuffersARB gmlDeleteBuffersARB
+#define glDeleteFencesNV gmlDeleteFencesNV
+#define glDeleteFramebuffersEXT gmlDeleteFramebuffersEXT
+#define glDeleteLists gmlDeleteLists
+#define glDeleteObjectARB gmlDeleteObjectARB
+#define glDeleteProgram GML_NULL_CHECK(DeleteProgram)
+#define glDeleteProgramsARB GML_NULL_CHECK(DeleteProgramsARB)
+#define glDeleteQueries gmlDeleteQueries
+#define glDeleteRenderbuffersEXT gmlDeleteRenderbuffersEXT
+#define glDeleteShader GML_NULL_CHECK(DeleteShader)
+#define glDeleteTextures gmlDeleteTextures
+#define glDepthFunc gmlDepthFunc
+#define glDepthMask gmlDepthMask
+#define glDetachObjectARB gmlDetachObjectARB
+#define glDetachShader gmlDetachShader
+#define glDisable gmlDisable
+#define glDisableClientState gmlDisableClientState
+#define glDisableVertexAttribArrayARB gmlDisableVertexAttribArrayARB
+#define glDrawArrays gmlDrawArrays
+#define glDrawBuffer gmlDrawBuffer
+#define glDrawBuffersARB gmlDrawBuffersARB
+#define glDrawElements gmlDrawElements
+#define glDrawRangeElements gmlDrawRangeElements
+#define glEdgeFlag gmlEdgeFlag
+#define glEdgeFlagPointer gmlEdgeFlagPointer
+#define glEnable gmlEnable
+#define glEnableClientState gmlEnableClientState
+#define glEnableVertexAttribArrayARB gmlEnableVertexAttribArrayARB
+#define glEnd gmlEnd
+#define glEndList gmlEndList
+#define glEndQuery gmlEndQuery
 #define glEvalCoord1f gmlEvalCoord1f
 #define glEvalCoord2f gmlEvalCoord2f
+#define glEvalMesh1 gmlEvalMesh1
+#define glEvalMesh2 gmlEvalMesh2
 #define glEvalPoint1 gmlEvalPoint1
 #define glEvalPoint2 gmlEvalPoint2
-#define glRenderMode gmlRenderMode
-#define glSelectBuffer gmlSelectBuffer
-#define glInitNames gmlInitNames
-#define glLoadName gmlLoadName
-#define glPushName gmlPushName
-#define glPopName gmlPopName
-#define glGetTexLevelParameteriv gmlGetTexLevelParameteriv
-#define glGetFramebufferAttachmentParameterivEXT gmlGetFramebufferAttachmentParameterivEXT
-#define glGetRenderbufferParameterivEXT gmlGetRenderbufferParameterivEXT
-#define glGetTexImage gmlGetTexImage
-#define glIsTexture gmlIsTexture
+#define glFinish gmlFinish
+#define glFinishFenceNV gmlFinishFenceNV
+#define glFlush gmlFlush
+#define glFogCoordf gmlFogCoordf
+#define glFogf gmlFogf
+#define glFogfv gmlFogfv
+#define glFogi gmlFogi
+#define glFramebufferRenderbufferEXT gmlFramebufferRenderbufferEXT
 #define glFramebufferTexture1DEXT gmlFramebufferTexture1DEXT
+#define glFramebufferTexture2DEXT gmlFramebufferTexture2DEXT
 #define glFramebufferTexture3DEXT gmlFramebufferTexture3DEXT
-#define glClientActiveTexture gmlClientActiveTexture
-#define glMultiTexCoord2i gmlMultiTexCoord2i
-#define glGetQueryiv gmlGetQueryiv
+#define glFramebufferTextureEXT gmlFramebufferTextureEXT
+#define glFrontFace gmlFrontFace
+#define glFrustum gmlFrustum
+#define glGenBuffers gmlGenBuffers
+#define glGenBuffersARB gmlGenBuffersARB
+#define glGenFencesNV gmlGenFencesNV
+#define glGenFramebuffersEXT gmlGenFramebuffersEXT
+#define glGenLists gmlGenLists
+#define glGenProgramsARB GML_NULL_CHECK(GenProgramsARB)
+#define glGenQueries gmlGenQueries
+#define glGenRenderbuffersEXT gmlGenRenderbuffersEXT
+#define glGenTextures gmlGenTextures
+#define glGenerateMipmap GML_NULL_CHECK(GenerateMipmap)
+#define glGenerateMipmapEXT GML_NULL_CHECK(GenerateMipmapEXT)
+#define glGetActiveAttrib gmlGetActiveAttrib
+#define glGetActiveUniform gmlGetActiveUniform
+#define glGetAttribLocation gmlGetAttribLocation
+#define glGetAttribLocationARB gmlGetAttribLocationARB
 #define glGetBooleanv gmlGetBooleanv
-#define glValidateProgram gmlValidateProgram
-#define glUniform2iv gmlUniform2iv
-#define glUniform3iv gmlUniform3iv
-#define glUniform4iv gmlUniform4iv
-#define glUniform2fv gmlUniform2fv
-#define glUniform3fv gmlUniform3fv
-#define glUniform4fv gmlUniform4fv
+#define glGetDoublev gmlGetDoublev
+#define glGetError gmlGetError
+#define glGetFloatv gmlGetFloatv
+#define glGetFramebufferAttachmentParameterivEXT gmlGetFramebufferAttachmentParameterivEXT
+#define glGetInfoLogARB gmlGetInfoLogARB
+#define glGetIntegerv gmlGetIntegerv
+#define glGetObjectParameterivARB gmlGetObjectParameterivARB
+#define glGetProgramInfoLog gmlGetProgramInfoLog
+#define glGetProgramiv gmlGetProgramiv
+#define glGetProgramivARB gmlGetProgramivARB
+#define glGetQueryObjectuiv gmlGetQueryObjectuiv
+#define glGetQueryiv gmlGetQueryiv
+#define glGetRenderbufferParameterivEXT gmlGetRenderbufferParameterivEXT
+#define glGetShaderInfoLog gmlGetShaderInfoLog
+#define glGetShaderiv gmlGetShaderiv
+#define glGetString gmlGetString
+#define glGetTexImage gmlGetTexImage
+#define glGetTexLevelParameteriv gmlGetTexLevelParameteriv
+#define glGetUniformfv gmlGetUniformfv
+#define glGetUniformiv gmlGetUniformiv
+#define glGetUniformuiv gmlGetUniformuiv
+#define glGetUniformLocation gmlGetUniformLocation
+#define glGetUniformLocationARB gmlGetUniformLocationARB
+#define glHint gmlHint
+#define glIndexPointer gmlIndexPointer
+#define glInitNames gmlInitNames
+#define glIsProgram gmlIsProgram
+#define glIsRenderbufferEXT gmlIsRenderbufferEXT
+#define glIsShader gmlIsShader
+#define glIsTexture gmlIsTexture
+#define glLightModelfv gmlLightModelfv
+#define glLightModeli gmlLightModeli
+#define glLightf gmlLightf
+#define glLightfv gmlLightfv
+#define glLineStipple gmlLineStipple
+#define glLineWidth gmlLineWidth
+#define glLinkProgram GML_NULL_CHECK(LinkProgram)
+#define glLinkProgramARB gmlLinkProgramARB
+#define glLoadIdentity gmlLoadIdentity
+#define glLoadMatrixd gmlLoadMatrixd
+#define glLoadMatrixf gmlLoadMatrixf
+#define glLoadName gmlLoadName
+#define glLogicOp gmlLogicOp
+#define glMap1f gmlMap1f
+#define glMap2f gmlMap2f
+#define glMapBuffer gmlMapBuffer
+#define glMapBufferARB gmlMapBufferARB
 #define glMapBufferRange gmlMapBufferRange
+#define glMapGrid1f gmlMapGrid1f
+#define glMapGrid2f gmlMapGrid2f
+#define glMaterialf gmlMaterialf
+#define glMaterialfv gmlMaterialfv
+#define glMatrixMode gmlMatrixMode
+#define glMultMatrixd gmlMultMatrixd
+#define glMultMatrixf gmlMultMatrixf
+#define glMultiTexCoord1f gmlMultiTexCoord1f
+#define glMultiTexCoord2f gmlMultiTexCoord2f
+#define glMultiTexCoord2fARB gmlMultiTexCoord2fARB
+#define glMultiTexCoord2i gmlMultiTexCoord2i
+#define glMultiTexCoord3f gmlMultiTexCoord3f
+#define glMultiTexCoord4f gmlMultiTexCoord4f
+#define glNewList gmlNewList
+#define glNormal3f gmlNormal3f
+#define glNormal3fv gmlNormal3fv
+#define glNormalPointer gmlNormalPointer
+#define glOrtho gmlOrtho
+#define glPixelStorei gmlPixelStorei
+#define glPointParameterf gmlPointParameterf
+#define glPointParameterfv gmlPointParameterfv
+#define glPointSize gmlPointSize
+#define glPolygonMode gmlPolygonMode
+#define glPolygonOffset gmlPolygonOffset
+#define glPopAttrib gmlPopAttrib
+#define glPopMatrix gmlPopMatrix
+#define glPopName gmlPopName
 #define glPrimitiveRestartIndexNV gmlPrimitiveRestartIndexNV
-#define glDrawRangeElements gmlDrawRangeElements
+#define glProgramEnvParameter4fARB gmlProgramEnvParameter4fARB
+#define glProgramEnvParameter4fvARB gmlProgramEnvParameter4fvARB
+#define glProgramParameteriEXT GML_NULL_CHECK(ProgramParameteriEXT)
+#define glProgramStringARB gmlProgramStringARB
+#define glPushAttrib gmlPushAttrib
+#define glPushMatrix gmlPushMatrix
+#define glPushName gmlPushName
+#define glRasterPos2i gmlRasterPos2i
+#define glReadBuffer gmlReadBuffer
+#define glReadPixels gmlReadPixels
+#define glRectf gmlRectf
+#define glRenderMode gmlRenderMode
+#define glRenderbufferStorageEXT gmlRenderbufferStorageEXT
+#define glRotatef gmlRotatef
+#define glScalef gmlScalef
+#define glScissor gmlScissor
+#define glSecondaryColor3f gmlSecondaryColor3f
+#define glSelectBuffer gmlSelectBuffer
+#define glSetFenceNV gmlSetFenceNV
+#define glShadeModel gmlShadeModel
+#define glShaderSource GML_NULL_CHECK(ShaderSource)
+#define glShaderSourceARB gmlShaderSourceARB
+#define glStencilFunc gmlStencilFunc
+#define glStencilFuncSeparate gmlStencilFuncSeparate
+#define glStencilMask gmlStencilMask
+#define glStencilMaskSeparate gmlStencilMaskSeparate
+#define glStencilOp gmlStencilOp
+#define glStencilOpSeparate gmlStencilOpSeparate
+#define glTestFenceNV gmlTestFenceNV
+#define glTexCoord1f gmlTexCoord1f
+#define glTexCoord2f gmlTexCoord2f
+#define glTexCoord2fv gmlTexCoord2fv
+#define glTexCoord3f gmlTexCoord3f
+#define glTexCoord4f gmlTexCoord4f
+#define glTexCoordPointer gmlTexCoordPointer
+#define glTexEnvf gmlTexEnvf
+#define glTexEnvfv gmlTexEnvfv
+#define glTexEnvi gmlTexEnvi
+#define glTexGenf gmlTexGenf
+#define glTexGenfv gmlTexGenfv
+#define glTexGeni gmlTexGeni
+#define glTexImage1D gmlTexImage1D
+#define glTexImage2D gmlTexImage2D
+#define glTexImage3D gmlTexImage3D
+#define glTexParameterf gmlTexParameterf
+#define glTexParameterfv gmlTexParameterfv
+#define glTexParameteri gmlTexParameteri
+#define glTexSubImage2D gmlTexSubImage2D
+#define glTrackMatrixNV gmlTrackMatrixNV
+#define glTranslated gmlTranslated
+#define glTranslatef gmlTranslatef
+#define glUniform1f gmlUniform1f
+#define glUniform1fv gmlUniform1fv
+#define glUniform1i gmlUniform1i
+#define glUniform1iv gmlUniform1iv
+#define glUniform1iARB gmlUniform1iARB
+#define glUniform1uiv gmlUniform1uiv
+#define glUniform2f gmlUniform2f
+#define glUniform2fARB gmlUniform2fARB
+#define glUniform2fv gmlUniform2fv
+#define glUniform2i gmlUniform2i
+#define glUniform2iv gmlUniform2iv
+#define glUniform2uiv gmlUniform2uiv
+#define glUniform3f gmlUniform3f
+#define glUniform3fARB gmlUniform3fARB
+#define glUniform3fv gmlUniform3fv
+#define glUniform3i gmlUniform3i
+#define glUniform3iv gmlUniform3iv
+#define glUniform3uiv gmlUniform3uiv
+#define glUniform4f gmlUniform4f
+#define glUniform4fARB gmlUniform4fARB
+#define glUniform4fv gmlUniform4fv
+#define glUniform4i gmlUniform4i
+#define glUniform4iv gmlUniform4iv
+#define glUniform4uiv gmlUniform4uiv
+#define glUniformMatrix2fv gmlUniformMatrix2fv
+#define glUniformMatrix3fv gmlUniformMatrix3fv
+#define glUniformMatrix4fv gmlUniformMatrix4fv
+#define glUniformMatrix4fvARB gmlUniformMatrix4fvARB
+#define glUnmapBuffer gmlUnmapBuffer
+#define glUseProgram GML_NULL_CHECK(UseProgram)
+#define glUseProgramObjectARB gmlUseProgramObjectARB
+#define glValidateProgram gmlValidateProgram
+#define glVertex2d gmlVertex2d
+#define glVertex2f gmlVertex2f
+#define glVertex3f gmlVertex3f
+#define glVertex3fv gmlVertex3fv
+#define glVertex3i gmlVertex3i
+#define glVertex4f gmlVertex4f
+#define glVertexAttribPointerARB gmlVertexAttribPointerARB
+#define glVertexPointer gmlVertexPointer
+#define glViewport gmlViewport
+#define gluBuild2DMipmaps gmluBuild2DMipmaps
+#define gluCylinder gmluCylinder
+#define gluDeleteQuadric gmluDeleteQuadric
+#define gluLookAt gmluLookAt
+#define gluNewQuadric gmluNewQuadric
+#define gluOrtho2D gmluOrtho2D
+#define gluPerspective gmluPerspective
+#define gluProject gmluProject
+#define gluQuadricDrawStyle gmluQuadricDrawStyle
+#define gluScaleImage gmluScaleImage
+#define gluSphere gmluSphere
