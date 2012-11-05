@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "LobbyConnection.h"
 #include "SelectMenu.h"
 
 #include <SDL_keysym.h>
@@ -181,7 +180,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWindow(NULL), settingsWindow(NULL), curSelect(NULL)
+SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), settingsWindow(NULL), curSelect(NULL)
 {
 	SetPos(0,0);
 	SetSize(1,1);
@@ -213,8 +212,6 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 		/*agui::TextElement* title = */new agui::TextElement("Spring", menu); // will be deleted in menu
 		Button* single = new Button("Test the Game", menu);
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
-		Button* update = new Button("Lobby connect (WIP)", menu);
-		update->Clicked.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, true));
 
 		userSetting = configHandler->GetString("LastSelectedSetting");
 		Button* editsettings = new Button("Edit settings", menu);
@@ -237,7 +234,6 @@ SelectMenu::~SelectMenu()
 {
 	ShowConnectWindow(false);
 	ShowSettingsWindow(false, "");
-	ShowUpdateWindow(false);
 	CleanWindow();
 
 	delete mySettings;
@@ -248,21 +244,6 @@ bool SelectMenu::Draw()
 	SDL_Delay(10); // milliseconds
 	ClearScreen();
 	agui::gui->Draw();
-
-	return true;
-}
-
-bool SelectMenu::Update()
-{
-	if (updWindow)
-	{
-		updWindow->Poll();
-		if (updWindow->WantClose())
-		{
-			delete updWindow;
-			updWindow = NULL;
-		}
-	}
 
 	return true;
 }
@@ -337,21 +318,6 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 		}
 		if(curSelect)
 			curSelect->list->SetFocus(true);
-	}
-}
-
-void SelectMenu::ShowUpdateWindow(bool show)
-{
-	if (show)
-	{
-		if (!updWindow)
-			updWindow = new LobbyConnection();
-		updWindow->ConnectDialog(true);
-	}
-	else if (!show && updWindow)
-	{
-		delete updWindow;
-		updWindow = NULL;
 	}
 }
 

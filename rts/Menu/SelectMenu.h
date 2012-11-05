@@ -10,7 +10,6 @@ class ClientSetup;
 union SDL_Event;
 class SelectionWidget;
 class ConnectWindow;
-class LobbyConnection;
 class SettingsWindow;
 class ListSelectWnd;
 
@@ -28,7 +27,6 @@ public:
 	~SelectMenu();
 
 	bool Draw();
-	bool Update();
 
 private:
 	void Single();
@@ -36,7 +34,6 @@ private:
 	void Multi();
 	void Quit();
 	void ShowConnectWindow(bool show);
-	void ShowUpdateWindow(bool show);
 	void DirectConnect(const std::string& addr);
 
 	bool HandleEventSelf(const SDL_Event& ev);
@@ -53,7 +50,6 @@ private:
 	ClientSetup* mySettings;
 
 	ConnectWindow* conWindow;
-	LobbyConnection* updWindow;
 	SelectionWidget* selw;
 
 	SettingsWindow* settingsWindow;
