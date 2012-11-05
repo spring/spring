@@ -240,20 +240,22 @@ static void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 
 	if (!configHandler->GetBool("DisableCrappyGPUWarning")) {
 		if (gfxCardIsCrap) {
-			std::string msg =
+			const std::string msg =
 				"Warning!\n"
 				"Your graphics card is insufficient to play Spring.\n\n"
 				"If the game crashes, looks ugly or runs slow, buy a better card!\n"
 				"You may try \"spring --safemode\" to test if some of your issues are related to wrong settings.\n"
 				"\nHint: You can disable this MessageBox by appending \"DisableCrappyGPUWarning = 1\" to \"" + configHandler->GetConfigFile() + "\".";
+			LOG_L(L_WARNING, "%s", msg.c_str());
 			Platform::MsgBox(msg, "Warning: Your GPU is not supported", MBF_EXCL);
 		} else if (globalRendering->haveMesa) {
-			std::string mesa_msg =
+			const std::string mesa_msg =
 				"Warning!\n"
 				"OpenSource graphics card drivers detected.\n"
 				"MesaGL/Gallium drivers are not able to run Spring. Try to switch to proprietary drivers.\n\n"
 				"You may try \"spring --safemode\".\n"
 				"\nHint: You can disable this MessageBox by appending \"DisableCrappyGPUWarning = 1\" to \"" + configHandler->GetConfigFile() + "\".";
+			LOG_L(L_WARNING, "%s", mesa_msg.c_str());
 			Platform::MsgBox(mesa_msg, "Warning: Your GPU driver is not supported", MBF_EXCL);
 		}
 	}
