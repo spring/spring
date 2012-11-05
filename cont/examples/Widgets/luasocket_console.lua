@@ -106,7 +106,7 @@ function widget:AddConsoleLine(line)
 	end
 end
 
-function widget:DrawScreen(n)
+function widget:Update()
 	if set==nil or #set<=0 then
 		return
 	end
