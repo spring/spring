@@ -389,7 +389,7 @@ void FBO::Detach(const GLenum attachment)
 			}
 		}
 	} else {
-		glFramebufferTextureEXT(GL_FRAMEBUFFER_EXT, attachment, 0, 0);
+		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, 0, 0);
 	}
 }
 
