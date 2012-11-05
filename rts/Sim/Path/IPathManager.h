@@ -28,6 +28,7 @@ public:
 	virtual bool PathUpdated(unsigned int pathID) { return false; }
 
 	virtual void Update() {}
+	virtual void UpdateFull() {}
 	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathID) {}
 
 	/**

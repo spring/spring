@@ -25,6 +25,7 @@ public:
 	boost::uint32_t GetPathCheckSum() const;
 
 	void Update();
+	void UpdateFull();
 	void UpdatePath(const CSolidObject*, unsigned int);
 
 	void DeletePath(unsigned int pathID);
