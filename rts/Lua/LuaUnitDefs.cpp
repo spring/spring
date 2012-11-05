@@ -660,6 +660,9 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_STRING("tooltip", ud.tooltip);
 
 	ADD_STRING("wreckName", ud.wreckName);
+
+	assert(ud.deathExpWeaponDef);
+	assert(ud.selfdExpWeaponDef);
 	ADD_STRING("deathExplosion", ud.deathExpWeaponDef->name);
 	ADD_STRING("selfDExplosion", ud.selfdExpWeaponDef->name);
 
