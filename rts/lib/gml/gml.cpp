@@ -932,6 +932,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER4(ColorPointer)
 		GML_MAKEHANDLER1(DeleteShader)
 		GML_MAKEHANDLER4VDE(DrawElements)
+		GML_MAKEHANDLER1(GenerateMipmap)
 		GML_MAKEHANDLER1(GenerateMipmapEXT)
 		GML_MAKEHANDLER3(Materialf)
 		GML_MAKEHANDLER3(NormalPointer)
