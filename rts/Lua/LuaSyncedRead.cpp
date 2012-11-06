@@ -277,6 +277,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroundInfo);
 	REGISTER_LUA_CFUNC(GetGroundBlocked);
 	REGISTER_LUA_CFUNC(GetGroundExtremes);
+	REGISTER_LUA_CFUNC(GetTerrainTypeData);
 
 	REGISTER_LUA_CFUNC(GetSmoothMeshHeight);
 
@@ -4541,6 +4542,28 @@ int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 	lua_pushnumber(L, readmap->initMinHeight);
 	lua_pushnumber(L, readmap->initMaxHeight);
 	return 2;
+}
+
+
+int LuaSyncedRead::GetTerrainTypeData(lua_State* L)
+{
+	const int tti = luaL_checkint(L, 1);
+
+	if (tti < 0 || tti >= CMapInfo::NUM_TERRAIN_TYPES) {
+		return 0;
+	}
+
+	const CMapInfo::TerrainType* tt = &mapInfo->terrainTypes[tti];
+
+	lua_pushsstring(L, tt->name);
+	lua_pushnumber(L, tt->hardness);
+	lua_pushnumber(L, tt->tankSpeed);
+	lua_pushnumber(L, tt->kbotSpeed);
+	lua_pushnumber(L, tt->hoverSpeed);
+	lua_pushnumber(L, tt->shipSpeed);
+	lua_pushboolean(L, tt->receiveTracks);
+
+	return 7;
 }
 
 /******************************************************************************/
