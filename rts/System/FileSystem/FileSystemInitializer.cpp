@@ -19,7 +19,7 @@ void FileSystemInitializer::Initialize()
 			initialized = true;
 		} catch (const std::exception& ex) {
 			Cleanup();
-			throw ex;
+			throw;
 		} catch (...) {
 			Cleanup();
 			throw;

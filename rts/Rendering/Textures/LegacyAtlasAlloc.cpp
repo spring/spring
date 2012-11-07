@@ -102,10 +102,10 @@ bool CLegacyAtlasAlloc::Allocate()
 			}
 
 			// ok found space for us
-			curtex->texCoords.x = thisSub.front().x;
-			curtex->texCoords.y = thisSub.front().y;
-			curtex->texCoords.z = thisSub.front().x + curtex->size.x - 1;
-			curtex->texCoords.w = thisSub.front().y + curtex->size.y - 1;
+			curtex->texCoords.x1 = thisSub.front().x;
+			curtex->texCoords.y1 = thisSub.front().y;
+			curtex->texCoords.x2 = thisSub.front().x + curtex->size.x - 1;
+			curtex->texCoords.y2 = thisSub.front().y + curtex->size.y - 1;
 
 			cur.x = thisSub.front().x + curtex->size.x + TEXMARGIN;
 			max.x = std::max(max.x,cur.x);
