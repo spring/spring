@@ -63,7 +63,7 @@ static inline unsigned int count_bits_set(unsigned int w)
 /**
  * quote from GCC doc "Returns one plus the index of the least significant 1-bit of x, or if x is zero, returns zero."
  */
-static inline unsigned int bits_ffs(unsigned int x)
+static inline int bits_ffs(unsigned int x)
 {
 #ifdef __GNUC__
 	return __builtin_ffs(x);
