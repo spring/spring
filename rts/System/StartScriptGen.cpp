@@ -5,10 +5,12 @@
 #include "AIScriptHandler.h"
 #include "Config/ConfigHandler.h"
 
-#include <string>
 
-std::string StartScriptGen::CreateMinimalSetup(const std::string game, const std::string map) {
-	std::string playername = "unnamed"; //FIXME
+namespace StartScriptGen {
+
+std::string CreateMinimalSetup(const std::string& game, const std::string& map)
+{
+	const std::string playername = configHandler->GetString("name");
 	TdfParser::TdfSection setup;
 	TdfParser::TdfSection* g = setup.construct_subsection("GAME");
 
@@ -42,7 +44,7 @@ std::string StartScriptGen::CreateMinimalSetup(const std::string game, const std
 }
 
 
-std::string StartScriptGen::CreateDefaultSetup(const std::string& map, const std::string& game, const std::string& ai,
+std::string CreateDefaultSetup(const std::string& map, const std::string& game, const std::string& ai,
 			const std::string& playername)
 {
 	//FIXME:: duplicate code with CreateMinimalSetup
@@ -103,3 +105,4 @@ std::string StartScriptGen::CreateDefaultSetup(const std::string& map, const std
 	return str.str();
 }
 
+}; //namespace StartScriptGen
