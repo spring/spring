@@ -3,6 +3,7 @@
 # > find . -name "*.cpp" -or -name "*.c" | sort
 # Then Sound/ stuff was removed, because it is now a separate static lib.
 SET(sources_engine_System_common
+		"${CMAKE_CURRENT_SOURCE_DIR}/AIScriptHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/AutohostInterface.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/BaseNetProtocol.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigHandler.cpp"
@@ -50,6 +51,7 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/SafeVector.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SafeCStrings.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SpringApp.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/StartScriptGen.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/FPUCheck.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/Logger.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncChecker.cpp"

@@ -5,7 +5,7 @@
 
 #include "ExternalAI/SkirmishAIData.h"
 
-class CScriptHandler
+class CAIScriptHandler
 {
 private:
 	struct CScript {
@@ -27,7 +27,7 @@ public:
 	typedef std::vector<std::string> ScriptList;
 	typedef std::map<std::string, CScript*> ScriptMap;
 
-	static CScriptHandler& Instance();
+	static CAIScriptHandler& Instance();
 
 	bool IsSkirmishAITestScript(const std::string& scriptName) const;
 	const SkirmishAIData& GetSkirmishAIData(const std::string& scriptName) const;
@@ -37,8 +37,8 @@ public:
 private:
 	void Add(CScript* script);
 
-	CScriptHandler();
-	~CScriptHandler();
+	CAIScriptHandler();
+	~CAIScriptHandler();
 
 	ScriptMap scripts;
 	ScriptList scriptNames;
