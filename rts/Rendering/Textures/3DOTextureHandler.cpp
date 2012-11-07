@@ -97,9 +97,9 @@ C3DOTextureHandler::C3DOTextureHandler()
 	glGenTextures(1, &atlas3do1);
 		glBindTexture(GL_TEXTURE_2D, atlas3do1);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
 		if (maxMipMaps > 0) {
 			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1); //FIXME disable texcompression
@@ -111,8 +111,8 @@ C3DOTextureHandler::C3DOTextureHandler()
 		glBindTexture(GL_TEXTURE_2D, atlas3do2);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
 		if (maxMipMaps > 0) {
 			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2); //FIXME disable texcompression
