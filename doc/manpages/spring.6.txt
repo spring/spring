@@ -125,6 +125,13 @@ ifndef::DEDICATED[  Dump a list of available Skirmish AIs to STDOUT]
 *--list-config-vars*::
   Dump all default config vars in JSON-format to STDOUT
 
+*--game*::'GAME'::
+  instantly start the GAME with a minimal setup. Requires --map to be present, too.
+  Sets the modoption minimalsetup = 1
+
+*--map*::'MAP'::
+  Requires --game to be set, too. see --game
+
 DATA DIR
 --------
 Data directories are searched for content, and among other things, may contain:

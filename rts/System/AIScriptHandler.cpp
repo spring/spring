@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "ScriptHandler.h"
+#include "AIScriptHandler.h"
 
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -8,14 +8,14 @@
 
 #include <stdexcept>
 
-CScriptHandler& CScriptHandler::Instance()
+CAIScriptHandler& CAIScriptHandler::Instance()
 {
-	static CScriptHandler instance;
+	static CAIScriptHandler instance;
 	return instance;
 }
 
 
-bool CScriptHandler::IsSkirmishAITestScript(const std::string& scriptName) const
+bool CAIScriptHandler::IsSkirmishAITestScript(const std::string& scriptName) const
 {
 	const ScriptMap::const_iterator scriptsIt = scripts.find(scriptName);
 
@@ -26,7 +26,7 @@ bool CScriptHandler::IsSkirmishAITestScript(const std::string& scriptName) const
 }
 
 
-const SkirmishAIData& CScriptHandler::GetSkirmishAIData(const std::string& scriptName) const
+const SkirmishAIData& CAIScriptHandler::GetSkirmishAIData(const std::string& scriptName) const
 {
 	const ScriptMap::const_iterator scriptsIt = scripts.find(scriptName);
 
@@ -44,14 +44,14 @@ const SkirmishAIData& CScriptHandler::GetSkirmishAIData(const std::string& scrip
 }
 
 
-void CScriptHandler::Add(CScript* script)
+void CAIScriptHandler::Add(CScript* script)
 {
 	scripts.insert(ScriptMap::value_type(script->name, script));
 	scriptNames.push_back(script->name);
 }
 
 
-CScriptHandler::CScriptHandler()
+CAIScriptHandler::CAIScriptHandler()
 {
 	// default script
 	Add(new CScript("Player Only: Testing Sandbox"));
@@ -75,7 +75,7 @@ CScriptHandler::CScriptHandler()
 }
 
 
-CScriptHandler::~CScriptHandler()
+CAIScriptHandler::~CAIScriptHandler()
 {
 	for (ScriptMap::iterator it = scripts.begin(); it != scripts.end(); ++it) {
 		delete it->second;

@@ -51,6 +51,7 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/OpenMP_cond.h"
+#include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "System/FileSystem/DataDirLocater.h"
@@ -726,6 +727,8 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
 	cmdline->AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
 	cmdline->AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
+	cmdline->AddString(0,   "game",               "Specify the game that will be instantly loaded");
+	cmdline->AddString(0,   "map",                "Specify the map that will be instantly loaded");
 
 	try {
 		cmdline->Parse();
@@ -819,11 +822,38 @@ void SpringApp::ParseCmdLine()
 }
 
 
+void SpringApp::RunScript(const std::string buf) {
+	startsetup = new ClientSetup();
+	startsetup->Init(buf);
+
+	// commandline parameters overwrite setup
+	if (cmdline->IsSet("client"))
+		startsetup->isHost = false;
+	else if (cmdline->IsSet("server"))
+		startsetup->isHost = true;
+
+#ifdef SYNCDEBUG
+	CSyncDebugger::GetInstance()->Initialize(startsetup->isHost, 64); //FIXME: add actual number of player
+#endif
+	pregame = new CPreGame(startsetup);
+	if (startsetup->isHost)
+		pregame->LoadSetupscript(buf);
+}
+
+
 /**
  * Initializes instance of GameSetup
  */
 void SpringApp::Startup()
 {
+	if ((cmdline->IsSet("game") && cmdline->IsSet("map"))) { // --game and --map directly specified, try to run them
+		const std::string game = cmdline->GetString("game");
+		const std::string map = cmdline->GetString("map");
+		std::string buf = StartScriptGen::CreateMinimalSetup(game, map);
+		RunScript(buf);
+		return;
+	}
+
 	std::string inputFile = cmdline->GetInputFile();
 	if (inputFile.empty())
 	{
@@ -886,21 +916,7 @@ void SpringApp::Startup()
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setup-script cannot be read: " + startscript);
-		startsetup = new ClientSetup();
-		startsetup->Init(buf);
-
-		// commandline parameters overwrite setup
-		if (cmdline->IsSet("client"))
-			startsetup->isHost = false;
-		else if (cmdline->IsSet("server"))
-			startsetup->isHost = true;
-
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(startsetup->isHost, 64); //FIXME: add actual number of player
-#endif
-		pregame = new CPreGame(startsetup);
-		if (startsetup->isHost)
-			pregame->LoadSetupscript(buf);
+		RunScript(buf);
 	}
 }
 
@@ -1023,18 +1039,16 @@ void SpringApp::Shutdown()
 {
 	if (gu) gu->globalQuit = true;
 
-#define DeleteAndNull(x) delete x; x = NULL;
-
 	GML::Exit();
-	DeleteAndNull(pregame);
-	DeleteAndNull(game);
+	SafeDelete(pregame);
+	SafeDelete(game);
 	SafeDelete(net);
-	DeleteAndNull(gameServer);
-	DeleteAndNull(gameSetup);
+	SafeDelete(gameServer);
+	SafeDelete(gameSetup);
 	CLoadScreen::DeleteInstance();
 	ISound::Shutdown();
-	DeleteAndNull(font);
-	DeleteAndNull(smallFont);
+	SafeDelete(font);
+	SafeDelete(smallFont);
 	CNamedTextures::Kill();
 	GLContext::Free();
 	GlobalConfig::Deallocate();
@@ -1050,11 +1064,11 @@ void SpringApp::Shutdown()
 #endif
 	SDL_Quit();
 
-	DeleteAndNull(gs);
-	DeleteAndNull(gu);
-	DeleteAndNull(globalRendering);
-	DeleteAndNull(startsetup);
-	DeleteAndNull(luaSocketRestrictions);
+	SafeDelete(gs);
+	SafeDelete(gu);
+	SafeDelete(globalRendering);
+	SafeDelete(startsetup);
+	SafeDelete(luaSocketRestrictions);
 
 	FileSystemInitializer::Cleanup();
 
