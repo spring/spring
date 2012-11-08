@@ -14,7 +14,7 @@ namespace
 	UnsyncedRNG randnum; // no need for strong randomness here, so default seed is ok
 	
 	template <typename T>
-	inline bool MapEntryValExtract(const std::map<std::string, std::string> map, const std::string& key, T& t)
+	inline bool MapEntryValExtract(const std::map<std::string, std::string>& map, const std::string& key, T& t)
 	{
 		std::map<std::string, std::string>::const_iterator it = map.find(key);
 		if (it != map.end())
