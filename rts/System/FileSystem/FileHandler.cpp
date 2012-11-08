@@ -12,7 +12,6 @@
 #include <limits.h>
 #include <boost/regex.hpp>
 
-#include "System/mmgr.h"
 #include "lib/gml/gmlmut.h"
 #include "VFSHandler.h"
 #include "DataDirsAccess.h"

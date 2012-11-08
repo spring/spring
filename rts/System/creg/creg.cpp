@@ -10,18 +10,10 @@
 #include <string>
 #include <string.h>
 
-#include "System/mmgr.h"
 
 // creg has to be made aware of mmgr explicitly
-#ifdef USE_MMGR
-# undef new
-# undef delete
-# define	operator_new		(m_setOwner  (__FILE__,__LINE__,__FUNCTION__),false) ? NULL : ::operator new
-# define	operator_delete		(m_setOwner  (__FILE__,__LINE__,__FUNCTION__),false) ? m_setOwner("",0,"") : ::operator delete
-#else
-# define	operator_new		::operator new
-# define	operator_delete		::operator delete
-#endif
+#define	operator_new		::operator new
+#define	operator_delete		::operator delete
 
 #include "System/Util.h"
 

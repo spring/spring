@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <boost/lexical_cast.hpp>
-#include "System/mmgr.h"
 
 #include "MoveDefHandler.h"
 #include "Game/Game.h"

@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "System/mmgr.h"
 
 #include "Messages.h"
 #include "Game/GlobalUnsynced.h"

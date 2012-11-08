@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
 #include <boost/cstdint.hpp>

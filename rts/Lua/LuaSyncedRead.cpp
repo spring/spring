@@ -66,7 +66,6 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
-#include "System/mmgr.h"
 
 #include <set>
 #include <list>

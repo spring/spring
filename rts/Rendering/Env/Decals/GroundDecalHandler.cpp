@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include "System/mmgr.h"
 
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"

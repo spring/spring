@@ -5,8 +5,6 @@
 #include <cctype>
 #include <cstring>
 
-#include "System/mmgr.h"
-
 #include "KeyBindings.h"
 #include "KeyBindingsLog.h"
 #include "SDL_keysym.h"

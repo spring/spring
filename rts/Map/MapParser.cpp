@@ -4,7 +4,6 @@
 
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
-#include "System/mmgr.h"
 #include "System/float3.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"

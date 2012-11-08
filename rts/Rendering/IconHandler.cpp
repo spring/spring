@@ -6,7 +6,6 @@
 #include <cctype>
 #include <vector>
 #include <string>
-#include "System/mmgr.h"
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"

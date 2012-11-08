@@ -8,7 +8,6 @@
 //#include <IL/ilu.h>
 #include <SDL_video.h>
 #include <boost/thread.hpp>
-#include "System/mmgr.h"
 
 #ifndef BITMAP_NO_OPENGL
 	#include "Rendering/GL/myGL.h"

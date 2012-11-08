@@ -3,7 +3,6 @@
 #include "Rendering/GL/myGL.h"
 #include <algorithm>
 #include <cctype>
-#include "System/mmgr.h"
 
 #include "IModelParser.h"
 #include "3DModel.h"

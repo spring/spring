@@ -2,7 +2,6 @@
 
 #include "3DModel.h"
 
-#include "System/mmgr.h"
 
 #include "3DOParser.h"
 #include "S3OParser.h"

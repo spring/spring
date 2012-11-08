@@ -117,7 +117,7 @@ private:
 	CR_DECLARE_STRUCT(Command);
 /*
 	TODO check if usage of System/MemPool.h for this struct improves performance
-	#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
+	#if !(defined(USE_GML) && GML_ENABLE_SIM)
 	inline void* operator new(size_t size) { return mempool.Alloc(size); }
 	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
 	#endif

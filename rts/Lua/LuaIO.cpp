@@ -11,8 +11,6 @@
 #include <string>
 using std::string;
 
-#include "System/mmgr.h"
-
 #include "LuaIO.h"
 
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI

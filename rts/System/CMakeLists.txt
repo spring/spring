@@ -68,7 +68,6 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Vec2.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float3.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float4.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/mmgr.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/myMath.cpp"
 	)
 SET(sources_engine_System_creg

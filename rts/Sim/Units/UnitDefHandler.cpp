@@ -5,7 +5,6 @@
 #include <iostream>
 #include <locale>
 #include <cctype>
-#include "System/mmgr.h"
 
 #include "UnitDefHandler.h"
 #include "UnitDef.h"

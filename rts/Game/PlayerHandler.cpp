@@ -9,7 +9,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/GameSetup.h"
 #include "SelectedUnits.h"
-#include "System/mmgr.h"
 
 CR_BIND(CPlayerHandler,);
 

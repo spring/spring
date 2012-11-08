@@ -4,7 +4,6 @@
 #include <ostream>
 #include <deque>
 
-#include "System/mmgr.h"
 #include "PathAllocator.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
@@ -16,10 +15,8 @@
 
 #define PATHDEBUG 0
 
-#if !defined(USE_MMGR)
 void* CPathFinder::operator new(size_t size) { return PathAllocator::Alloc(size); }
 void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p, size); }
-#endif
 
 const CMoveMath::BlockType squareMobileBlockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 

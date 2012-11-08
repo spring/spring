@@ -8,7 +8,6 @@
 #include <boost/regex.hpp>
 
 #include "lib/streflop/streflop_cond.h"
-#include "System/mmgr.h"
 
 #include "System/float3.h"
 #include "System/float4.h"

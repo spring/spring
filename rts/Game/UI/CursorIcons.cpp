@@ -2,7 +2,6 @@
 
 #include <algorithm>
 
-#include "System/mmgr.h"
 
 #include "CursorIcons.h"
 #include "CommandColors.h"

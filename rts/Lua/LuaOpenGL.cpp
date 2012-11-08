@@ -16,7 +16,6 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 
-#include "System/mmgr.h"
 
 #include "LuaOpenGL.h"
 #include "LuaInclude.h"

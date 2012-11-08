@@ -8,7 +8,6 @@
 #include "BumpWater.h"
 
 #include <boost/format.hpp>
-#include "System/mmgr.h"
 
 #include "ISky.h"
 #include "Game/Game.h"

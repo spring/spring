@@ -7,7 +7,6 @@
 
 #include <assert.h>
 #include <vector>
-#include "System/mmgr.h"
 
 #include "VBO.h"
 

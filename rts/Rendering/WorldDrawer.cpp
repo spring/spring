@@ -2,7 +2,6 @@
 
 #include "Rendering/GL/myGL.h"
 
-#include "System/mmgr.h"
 
 #include "WorldDrawer.h"
 #include "Rendering/Env/CubeMapHandler.h"

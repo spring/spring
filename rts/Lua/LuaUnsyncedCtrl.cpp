@@ -57,7 +57,6 @@
 #include "System/NetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Util.h"
-#include "System/mmgr.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/FileSystem/FileHandler.h"

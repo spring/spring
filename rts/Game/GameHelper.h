@@ -110,7 +110,7 @@ private:
 	CStdExplosionGenerator* stdExplosionGenerator;
 
 	struct WaitingDamage{
-#if !defined(SYNCIFY) && !defined(USE_MMGR)
+#if !defined(SYNCIFY)
 		inline void* operator new(size_t size) {
 			return mempool.Alloc(size);
 		};

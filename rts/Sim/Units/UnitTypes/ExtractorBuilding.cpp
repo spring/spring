@@ -14,7 +14,6 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/creg/STL_List.h"
 #include "System/myMath.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CExtractorBuilding, CBuilding, );
 

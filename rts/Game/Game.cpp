@@ -14,7 +14,6 @@
 
 #include <SDL_keyboard.h>
 
-#include "System/mmgr.h"
 
 #include "Game.h"
 #include "Camera.h"
@@ -1473,11 +1472,6 @@ void CGame::SimFrame() {
 
 #ifdef TRACE_SYNC
 	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
-#endif
-
-#ifdef USE_MMGR
-	if (!(gs->frameNum & 31))
-		m_validateAllAllocUnits();
 #endif
 
 	eventHandler.GameFrame(gs->frameNum);

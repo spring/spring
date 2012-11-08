@@ -12,7 +12,6 @@
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
 #include "System/myMath.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, false));
 

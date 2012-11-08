@@ -18,7 +18,6 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
-#include "System/mmgr.h"
 #include "System/MsgStrings.h"
 #include "System/Rectangle.h"
 #include "System/creg/STL_List.h"

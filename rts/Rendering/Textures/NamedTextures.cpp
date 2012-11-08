@@ -4,7 +4,6 @@
 #include <boost/unordered_map.hpp>
 #include <vector>
 
-#include "System/mmgr.h"
 
 #include "NamedTextures.h"
 

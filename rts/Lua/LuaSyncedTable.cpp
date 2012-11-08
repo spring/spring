@@ -6,7 +6,6 @@
 //         __newindex call. This could be used in conjunction with the
 //         current setup to avoid table creation in WrapTable().
 
-#include "System/mmgr.h"
 
 #include "LuaSyncedTable.h"
 

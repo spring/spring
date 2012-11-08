@@ -2,7 +2,6 @@
 
 #include "lib/gml/gmlcnf.h"
 
-#include "System/mmgr.h"
 
 #include "LuaUI.h"
 

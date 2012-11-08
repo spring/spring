@@ -19,7 +19,6 @@
 #include "HwMouseCursor.h"
 
 #if !defined(__APPLE__) && !defined(HEADLESS)
-#include "System/mmgr.h"
 
 #include "System/bitops.h"
 #include "MouseCursor.h"
