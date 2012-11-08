@@ -684,4 +684,10 @@ const float3 UpVector(0.0f, 1.0f, 0.0f);
 const float3 ZeroVector(0.0f, 0.0f, 0.0f);
 
 
+namespace std {
+	float3 min(float3 v1, float3 v2);
+	float3 max(float3 v1, float3 v2);
+};
+
+
 #endif /* FLOAT3_H */
