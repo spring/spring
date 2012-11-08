@@ -875,12 +875,56 @@ bool LuaTable::PushValue(const string& mixedKey) const
 	if (!PushTable()) {
 		return false;
 	}
-	lua_pushstring(L, key.c_str());
+
+	const int top = lua_gettop(L);
+
+	if (key.find(".") != std::string::npos) {
+		// nested key (e.g. "subtable.subsub.mahkey")
+		size_t lastpos = 0;
+		size_t dotpos = key.find(".");
+
+		lua_pushvalue(L, -1);
+		do {
+			const std::string subTableName = key.substr(lastpos, dotpos);
+			lastpos = dotpos + 1;
+			dotpos = key.find(".", lastpos);
+
+			lua_pushsstring(L, subTableName);
+			lua_gettable(L, -2);
+			if (!lua_istable(L, -1)) {
+				lua_pop(L, 2);
+				const int newtop = lua_gettop(L);
+				assert(newtop == top);
+				return false;
+			}
+			lua_remove(L, -2);
+		} while (dotpos != std::string::npos);
+
+		const std::string keyname = key.substr(lastpos);
+		lua_pushsstring(L, keyname);
+		lua_gettable(L, -2);
+		if (lua_isnoneornil(L, -1)) {
+			lua_pop(L, 2);
+			const int newtop = lua_gettop(L);
+			assert(newtop == top);
+			return false;
+		}
+		lua_remove(L, -2);
+		const int newtop = lua_gettop(L);
+		assert(newtop == top + 1);
+		return true;
+	}
+
+	lua_pushsstring(L, key);
 	lua_gettable(L, -2);
 	if (lua_isnoneornil(L, -1)) {
 		lua_pop(L, 1);
+		const int newtop = lua_gettop(L);
+		assert(newtop == top);
 		return false;
 	}
+	const int newtop = lua_gettop(L);
+	assert(newtop == top + 1);
 	return true;
 }
 
