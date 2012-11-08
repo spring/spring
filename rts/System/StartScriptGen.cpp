@@ -4,6 +4,7 @@
 #include "StartScriptGen.h"
 #include "AIScriptHandler.h"
 #include "System/TdfParser.h"
+#include "System/Util.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Log/ILog.h"
@@ -165,6 +166,7 @@ namespace StartScriptGen {
 		std::string applicableName = lazyName;
 		if (GetGameByExactName(lazyName, &applicableName)) return applicableName;
 		if (GetGameByShortName(lazyName, &applicableName)) return applicableName;
+		//TODO add rapid tags support, e.g. `s44:test`
 
 		return lazyName;
 	}
