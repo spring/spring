@@ -18,7 +18,6 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "PlasmaRepulser.h"
 #include "WeaponDefHandler.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));
 

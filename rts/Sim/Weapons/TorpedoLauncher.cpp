@@ -7,7 +7,6 @@
 #include "Sim/Units/Unit.h"
 #include "TorpedoLauncher.h"
 #include "WeaponDefHandler.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, (NULL));
 

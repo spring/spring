@@ -2,7 +2,6 @@
 
 #include <cstdlib>
 
-#include "System/mmgr.h"
 
 #include "CameraHandler.h"
 

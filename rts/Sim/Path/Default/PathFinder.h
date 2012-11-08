@@ -21,10 +21,8 @@ public:
 	CPathFinder();
 	~CPathFinder();
 
-#if !defined(USE_MMGR)
 	void* operator new(size_t size);
 	void operator delete(void* p, size_t size);
-#endif
 
 	/**
 	 * Gives a detailed path from given starting location to target defined in

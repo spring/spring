@@ -45,7 +45,6 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/NetProtocol.h"
-#include "System/mmgr.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"

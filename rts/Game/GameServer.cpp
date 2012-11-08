@@ -19,7 +19,6 @@
 #include <stdlib.h> // why is this here?
 
 #include "System/Net/Connection.h"
-#include "System/mmgr.h"
 
 #include "GameServer.h"
 

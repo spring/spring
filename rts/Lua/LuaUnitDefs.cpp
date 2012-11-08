@@ -8,7 +8,6 @@
 #include <map>
 #include <cctype>
 
-#include "System/mmgr.h"
 
 #include "LuaUnitDefs.h"
 

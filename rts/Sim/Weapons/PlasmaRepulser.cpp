@@ -14,7 +14,6 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/mmgr.h"
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL));

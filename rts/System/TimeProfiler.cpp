@@ -5,7 +5,6 @@
 #include <SDL_timer.h>
 #include <cstring>
 
-#include "System/mmgr.h"
 #include "lib/gml/gmlmut.h"
 #include "System/Log/ILog.h"
 #include "System/UnsyncedRNG.h"

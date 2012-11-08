@@ -18,7 +18,6 @@
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/OpenMP_cond.h"
-#include "System/mmgr.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 

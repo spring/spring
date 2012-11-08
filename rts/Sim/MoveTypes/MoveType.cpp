@@ -2,7 +2,6 @@
 
 #include <cassert>
 
-#include "System/mmgr.h"
 
 #include "MoveType.h"
 #include "Map/Ground.h"

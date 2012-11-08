@@ -9,8 +9,6 @@
 	#include <SDL_syswm.h>
 #endif
 
-#include "System/mmgr.h"
-
 #include "Rendering/GL/myGL.h"
 #include "System/SpringApp.h"
 
@@ -66,7 +64,6 @@
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Sound/ISound.h"
 
-#include "System/mmgr.h"
 
 #ifdef WIN32
 	#include "System/Platform/Win/WinVersion.h"
@@ -1073,10 +1070,6 @@ void SpringApp::Shutdown()
 	FileSystemInitializer::Cleanup();
 
 	Watchdog::Uninstall();
-
-#ifdef USE_MMGR
-	m_dumpMemoryReport();
-#endif
 }
 
 bool SpringApp::MainEventHandler(const SDL_Event& event)

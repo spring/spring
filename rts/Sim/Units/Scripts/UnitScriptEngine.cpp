@@ -16,7 +16,6 @@
 	#define SCOPED_TIMER(a) {}
 #endif
 
-#include "System/mmgr.h"
 
 
 CUnitScriptEngine GUnitScriptEngine;

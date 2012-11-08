@@ -33,7 +33,6 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-#include "System/mmgr.h"
 #include "System/NetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Input/KeyInput.h"

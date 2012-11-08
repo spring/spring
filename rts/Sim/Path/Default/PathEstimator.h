@@ -43,10 +43,8 @@ public:
 	CPathEstimator(CPathFinder* pathFinder, unsigned int BLOCK_SIZE, const std::string& cacheFileName, const std::string& map);
 	~CPathEstimator();
 
-#if !defined(USE_MMGR)
 	void* operator new(size_t size);
 	void operator delete(void* p, size_t size);
-#endif
 
 
 

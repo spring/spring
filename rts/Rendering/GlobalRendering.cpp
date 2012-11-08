@@ -6,7 +6,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/mmgr.h"
 #include "System/Util.h"
 #include "System/Vec2.h"
 #include "System/Config/ConfigHandler.h"

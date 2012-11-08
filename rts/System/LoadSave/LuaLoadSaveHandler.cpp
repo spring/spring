@@ -22,7 +22,6 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
-#include "System/mmgr.h"
 
 
 // Prefix for all files in the save file.

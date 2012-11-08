@@ -12,7 +12,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h" // for RANDINT_MAX
 #include "Sim/Units/Unit.h" // required by CREG
-#include "System/mmgr.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"

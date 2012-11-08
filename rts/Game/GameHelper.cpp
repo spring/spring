@@ -34,7 +34,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/mmgr.h"
 #include "System/myMath.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"

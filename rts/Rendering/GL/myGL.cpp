@@ -8,7 +8,6 @@
 #include <windef.h>
 #endif
 
-#include "System/mmgr.h"
 #include "myGL.h"
 #include "VertexArray.h"
 #include "VertexArrayRange.h"

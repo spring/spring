@@ -15,7 +15,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/GameServer.h"
 #include "Game/GameSetup.h"
-#include "System/mmgr.h"
 
 #include <vector>
 #include <list>

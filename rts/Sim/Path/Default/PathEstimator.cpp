@@ -9,7 +9,6 @@
 #include <boost/bind.hpp>
 
 #include "minizip/zip.h"
-#include "System/mmgr.h"
 
 #include "PathAllocator.h"
 #include "PathCache.h"
@@ -40,10 +39,8 @@ static size_t GetNumThreads() {
 	return ((numThreads == 0)? numCores: numThreads);
 }
 
-#if !defined(USE_MMGR)
 void* CPathEstimator::operator new(size_t size) { return PathAllocator::Alloc(size); }
 void CPathEstimator::operator delete(void* p, size_t size) { PathAllocator::Free(p, size); }
-#endif
 
 
 

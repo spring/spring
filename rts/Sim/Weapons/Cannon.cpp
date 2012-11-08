@@ -12,7 +12,6 @@
 #include "WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/FastMath.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CCannon, CWeapon, (NULL));
 

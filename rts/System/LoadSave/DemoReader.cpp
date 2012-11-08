@@ -2,7 +2,6 @@
 
 #include "DemoReader.h"
 
-#include "System/mmgr.h"
 
 #include "System/Exceptions.h"
 #include "System/Net/RawPacket.h"

@@ -5,8 +5,6 @@
 #include <list>
 #include <cctype>
 
-#include "System/mmgr.h"
-
 #include "LuaSyncedCtrl.h"
 
 #include "LuaInclude.h"

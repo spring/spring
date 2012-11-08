@@ -2,7 +2,6 @@
 
 #include <assert.h>
 
-#include "System/mmgr.h"
 
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Player.h"

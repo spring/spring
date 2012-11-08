@@ -35,7 +35,6 @@
 #include "System/GlobalConfig.h"
 #include "System/Rectangle.h"
 #include "System/ScopedFPUSettings.h"
-#include "System/mmgr.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
