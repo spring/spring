@@ -799,7 +799,13 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 				continue;
 			}
 
-			//! add the unit
+
+			//??? should the quadmap really contain dead units?
+			if (unit.isDead) {
+				continue;
+			}
+
+			// add the unit
 			count++;
 			lua_pushnumber(L, count);
 			lua_pushnumber(L, unit.id);
