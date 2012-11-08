@@ -39,6 +39,7 @@
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/bitops.h"
@@ -722,6 +723,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
 	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
 	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
+	cmdline->AddSwitch(0,   "list-def-tags",      "Dump a list of all unitdef-, weapondef-, ... tags and meta data to stdout");
 	cmdline->AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
 	cmdline->AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
 	cmdline->AddString(0,   "game",               "Specify the game that will be instantly loaded");
@@ -763,14 +765,22 @@ void SpringApp::ParseCmdLine()
 		dataDirLocater.SetIsolationModeDir(cmdline->GetString("isolation-dir"));
 	}
 
+	// mutually exclusive options that cause spring to quit immediately
+	if (cmdline->IsSet("list-config-vars")) {
+		ConfigVariable::OutputMetaDataMap();
+		exit(0);
+	}
+	else if (cmdline->IsSet("list-def-tags")) {
+		DefType::OutputTagMap();
+		exit(0);
+	}
+
 	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
 	const bool safemode = cmdline->IsSet("safemode");
-
 	ConfigHandler::Instantiate(configSource, safemode);
 	GlobalConfig::Instantiate();
 
 	// mutually exclusive options that cause spring to quit immediately
-	// and require the configHandler
 	if (cmdline->IsSet("list-ai-interfaces")) {
 		dataDirLocater.LocateDataDirs();
 		IAILibraryManager::OutputAIInterfacesInfo();
@@ -779,10 +789,6 @@ void SpringApp::ParseCmdLine()
 	else if (cmdline->IsSet("list-skirmish-ais")) {
 		dataDirLocater.LocateDataDirs();
 		IAILibraryManager::OutputSkirmishAIInfo();
-		exit(0);
-	}
-	else if (cmdline->IsSet("list-config-vars")) {
-		ConfigVariable::OutputMetaDataMap();
 		exit(0);
 	}
 
