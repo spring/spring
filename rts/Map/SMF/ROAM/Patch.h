@@ -20,7 +20,8 @@ class CCamera;
 #define VARIANCE_DEPTH (12)
 
 // How many TriTreeNodes should be allocated?
-#define POOL_SIZE (500000)
+#define POOL_SIZE      (500000)
+#define MAX_POOL_SIZE (8000000)
 
 
 
@@ -148,7 +149,7 @@ private:
 	// The recursive half of the Patch Class
 	void Split(TriTreeNode* tri);
 	void RecursTessellate(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, const int node);
-	void RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, int maxdepth);
+	void RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex);
 	float RecursComputeVariance(const int leftX, const int leftY, const float leftZ, const int rightX, const int rightY, const float rightZ, const int apexX, const int apexY, const float apexZ, const int node);
 
 protected:
