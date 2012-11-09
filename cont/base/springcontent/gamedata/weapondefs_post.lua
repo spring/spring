@@ -33,6 +33,42 @@ local function tobool(val)
   return false
 end
 
+local function hs2rgb(h, s)
+	--// FIXME? ignores saturation completely
+	s = 1
+
+	local invSat = 1 - s
+
+	if (h > 0.5) then h = h + 0.1; end
+	if (h > 1.0) then h = h - 1.0; end
+
+	local r = invSat / 2.0
+	local g = invSat / 2.0
+	local b = invSat / 2.0
+
+	if (h < (1.0 / 6.0)) then
+		r = r + s;
+		g = g + s * (h * 6.0);
+	else if (h < (1.0 / 3.0)) then
+		g = g + s;
+		r = r + s * ((1.0 / 3.0 - h) * 6.0);
+	else if (h < (1.0 / 2.0)) then
+		g = g + s;
+		b = b + s * ((h - (1.0 / 3.0)) * 6.0);
+	else if (h < (2.0 / 3.0)) then
+		b = b + s;
+		g = g + s * ((2.0 / 3.0 - h) * 6.0);
+	else if (h < (5.0 / 6.0)) then
+		b = b + s;
+		r = r + s * ((h - (2.0 / 3.0)) * 6.0);
+	else
+		r = r + s;
+		b = b + s * ((3.0 / 3.0 - h) * 6.0);
+	end
+
+	return ("%0.3f %0.3f %0.3f"):format(r,g,b)
+end
+
 --------------------------------------------------------------------------------
 
 local function BackwardCompability(wdName, wd)
@@ -99,6 +135,18 @@ local function BackwardCompability(wdName, wd)
         wd.burstrate = math.min(0.4, wd.reloadtime)
         wd.burst     = 2
       end
+    end
+  end
+
+  if (not wd.rgbcolor) then
+    if (wd.weapontype == "Cannon") then
+      wd.rgbcolor = "1.0 0.5 0.0"
+    else if (wd.weapontype == "EmgCannon") then
+      wd.rgbcolor = "0.0 0.9 0.2"
+    else
+      local hue = (wd.color or 0) / 255
+      local sat = (wd.color2 or 0) / 255
+      wd.rgbcolor = hs2rgb(hue, sat)
     end
   end
 
