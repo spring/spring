@@ -1007,11 +1007,9 @@ bool CGame::UpdateUnsynced()
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	if (doDrawWorld) {
-		// do as early as possible (give OpenGL time to upload textures etc.)
-		{
-			SCOPED_TIMER("GroundDrawer::Update");
-			gd->Update();
-		}
+		worldDrawer->Update();
+		CNamedTextures::Update();
+		modelParser->Update();
 
 		if (newSimFrame) {
 			projectileDrawer->UpdateTextures();
@@ -1019,10 +1017,6 @@ bool CGame::UpdateUnsynced()
 			sky->GetLight()->Update();
 			water->Update();
 		}
-
-		CNamedTextures::Update();
-		modelParser->Update();
-		worldDrawer->Update();
 	}
 
 

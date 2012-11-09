@@ -93,8 +93,13 @@ CWorldDrawer::~CWorldDrawer()
 
 void CWorldDrawer::Update()
 {
-	treeDrawer->Update();
 	readmap->UpdateDraw();
+	if (globalRendering->drawGround) {
+		SCOPED_TIMER("GroundDrawer::Update");
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		gd->Update();
+	}
+	treeDrawer->Update();
 	unitDrawer->Update();
 	featureDrawer->Update();
 	lineDrawer.UpdateLineStipple();
@@ -115,6 +120,7 @@ void CWorldDrawer::Draw()
 	if (globalRendering->drawGround) {
 		SCOPED_TIMER("WorldDrawer::Terrain");
 		gd->Draw(DrawPass::Normal);
+		groundDecals->Draw();
 		smoothHeightMeshDrawer->Draw(1.0f);
 		treeDrawer->DrawGrass();
 		gd->DrawTrees();
