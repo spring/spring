@@ -712,7 +712,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
 	cmdline->AddInt(   'x', "xresolution",        "Set X resolution");
 	cmdline->AddInt(   'y', "yresolution",        "Set Y resolution");
-	cmdline->AddSwitch('m', "minimise",           "Start minimised");
+	cmdline->AddSwitch('b', "minimise",           "Start in background (minimised)");
 	cmdline->AddSwitch('s', "server",             "Run as a server");
 	cmdline->AddSwitch('c', "client",             "Run as a client");
 	cmdline->AddSwitch('p', "projectiledump",     "Dump projectile class info in projectiles.txt");
@@ -726,8 +726,8 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch(0,   "list-def-tags",      "Dump a list of all unitdef-, weapondef-, ... tags and meta data to stdout");
 	cmdline->AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
 	cmdline->AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
-	cmdline->AddString(0,   "game",               "Specify the game that will be instantly loaded");
-	cmdline->AddString(0,   "map",                "Specify the map that will be instantly loaded");
+	cmdline->AddString('g', "game",               "Specify the game that will be instantly loaded");
+	cmdline->AddString('m', "map",                "Specify the map that will be instantly loaded");
 
 	try {
 		cmdline->Parse();
