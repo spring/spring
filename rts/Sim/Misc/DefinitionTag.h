@@ -276,13 +276,13 @@ private:
 
 #define GETSECONDARG( x, y, ... ) y
 
-#define DEFTAG_CNTER(Defs, DefClass, T, name, counter, ...) \
-	static void MACRO_CONCAT(fnc,counter)(void* def) { \
-		T& staticCheckType = static_cast<DefClass*>(def)->GETSECONDARG(unused ,##__VA_ARGS__, name); \
+#define DEFTAG_CNTER(Defs, DefClass, T, name, varname) \
+	static void MACRO_CONCAT(fnc,name)(void* def) { \
+		T& staticCheckType = static_cast<DefClass*>(def)->varname; \
 		staticCheckType = Defs.GetTag<T>(#name); \
 	} \
-	void MACRO_CONCAT(add,counter)() { Defs.AddInitializer(&MACRO_CONCAT(fnc,counter)); } \
-	struct MACRO_CONCAT(do_once,counter) { MACRO_CONCAT(do_once,counter)() {MACRO_CONCAT(add,counter)();} }; static MACRO_CONCAT(do_once,counter) MACRO_CONCAT(do_once,counter); \
+	void MACRO_CONCAT(add,name)() { Defs.AddInitializer(&MACRO_CONCAT(fnc,name)); } \
+	struct MACRO_CONCAT(do_once,name) { MACRO_CONCAT(do_once,name)() {MACRO_CONCAT(add,name)();} }; static MACRO_CONCAT(do_once,name) MACRO_CONCAT(do_once,name); \
 	static DefTagBuilder<T> deftag##name = Defs.AddTag<T>(#name)
 
 #define tagFunction(fname) \
@@ -297,10 +297,10 @@ private:
  * @see DefTagBuilder
  */
 #define DEFTAG(Defs, DefClass, T, name, ...) \
-	DEFTAG_CNTER(Defs, DefClass, T, name, __COUNTER__, ##__VA_ARGS__)
+	DEFTAG_CNTER(Defs, DefClass, T, name, GETSECONDARG(unused ,##__VA_ARGS__, name))
 
 #define DUMMYTAG(Defs, T, name) \
-	static DefTagBuilder<T> MACRO_CONCAT(cfg,__COUNTER__) = Defs.AddTag<T>(#name)
+	static DefTagBuilder<T> MACRO_CONCAT(deftag,__LINE__) = Defs.AddTag<T>(#name)
 
 #define TAGFUNCTION(name, T, function) \
 	static T tagFnc##name(T x) { \
