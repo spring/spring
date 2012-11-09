@@ -74,9 +74,11 @@ void CTriNodePool::ResetAll()
 		}
 	}
 	if (runOutOfNodes) {
-		FreePools();
-		InitPools(poolSize * 2);
-		return;
+		if (poolSize < MAX_POOL_SIZE) {
+			FreePools();
+			InitPools(std::min(poolSize * 2, size_t(MAX_POOL_SIZE)));
+			return;
+		}
 	}
 
 	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
@@ -277,8 +279,12 @@ void Patch::Split(TriTreeNode* tri)
 	tri->RightChild = pool->AllocateTri();
 
 	// If creation failed, just exit.
-	if (!tri->IsBranch())
+	if (!tri->IsBranch()) {
+		// make sure both nodes are NULL if just the right one failed
+		// special handling the cause that only one of them is NULL wouldn't make sense (only less performance)
+		tri->LeftChild = NULL;
 		return;
+	}
 
 	// Fill in the information we can get from the parent (neighbor pointers)
 	tri->LeftChild->BaseNeighbor = tri->LeftNeighbor;
@@ -378,9 +384,9 @@ void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2
 //
 
 
-void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, int maxdepth)
+void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex)
 {
-	if ( tri->IsLeaf() /*|| maxdepth>12*/ ) {
+	if ( tri->IsLeaf()) {
 		indices.push_back(apex.x  + apex.y  * (PATCH_SIZE + 1));
 		indices.push_back(left.x  + left.y  * (PATCH_SIZE + 1));
 		indices.push_back(right.x + right.y * (PATCH_SIZE + 1));
@@ -389,8 +395,8 @@ void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 rig
 			(left.x + right.x) >> 1, // Compute X coordinate of center of Hypotenuse
 			(left.y + right.y) >> 1  // Compute Y coord...
 		);
-		RecursRender(tri->LeftChild,  apex,  left, center, maxdepth + 1);
-		RecursRender(tri->RightChild, right, apex, center, maxdepth + 1);
+		RecursRender(tri->LeftChild,  apex,  left, center);
+		RecursRender(tri->RightChild, right, apex, center);
 	}
 }
 
@@ -547,8 +553,8 @@ void Patch::Draw()
 void Patch::GenerateIndices()
 {
 	indices.clear();
-	RecursRender(&m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   0);
-	RecursRender(&m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 0);
+	RecursRender(&m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0)                  );
+	RecursRender(&m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
 }
 
 
