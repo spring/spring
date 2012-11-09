@@ -84,8 +84,8 @@ ifndef::GUILESS[ ]
 ifndef::GUILESS[*-y, --yresolution*::'SIZE'::]
 ifndef::GUILESS[  Set Y resolution]
 ifndef::GUILESS[ ]
-ifndef::GUILESS[*-m, --minimise*::]
-ifndef::GUILESS[  Start minimised]
+ifndef::GUILESS[*-b, --minimise*::]
+ifndef::GUILESS[  Start in background (minimised)]
 ifndef::DEDICATED[ ]
 ifndef::DEDICATED[*--safemode*::]
 ifndef::DEDICATED[  Turns off many things that are known to cause problems (i.e. on PC/Mac's with lower-end graphic cards)]
@@ -125,11 +125,11 @@ ifndef::DEDICATED[  Dump a list of available Skirmish AIs to STDOUT]
 *--list-config-vars*::
   Dump all default config vars in JSON-format to STDOUT
 
-*--game*::'GAME'::
+*-g, --game*::'GAME'::
   instantly start the GAME with a minimal setup. Requires --map to be present, too.
   Sets the modoption minimalsetup = 1
 
-*--map*::'MAP'::
+*-m, --map*::'MAP'::
   Requires --game to be set, too. see --game
 
 DATA DIR
