@@ -13,6 +13,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/CommonDefHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/DamageArray.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/DamageArrayHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/DefinitionTag.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/GeometricObjects.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/GlobalSynced.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/GroundBlockingObjectMap.cpp"
