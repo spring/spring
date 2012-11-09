@@ -216,9 +216,6 @@ WEAPONTAG(float, falloffRate).defaultValue(0.5f);
 WEAPONTAG(bool, laserHardStop).externalName("hardstop").defaultValue(false);
 
 // Color
-//FIXME move those to lua!
-WEAPONDUMMYTAG(int, color);
-WEAPONDUMMYTAG(int, color2);
 WEAPONTAG(float3, rgbColor, visuals.color).defaultValue(float3(1.0f, 0.5f, 0.0f));
 WEAPONTAG(float3, rgbColor2, visuals.color2).defaultValue(float3(1.0f, 1.0f, 1.0f));
 WEAPONDUMMYTAG(std::string, colormap);
@@ -282,6 +279,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	if (wdTable.KeyExists("cylinderTargetting"))
 		LOG_L(L_WARNING, "WeaponDef cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).");
 
+	if (wdTable.KeyExists("color1") || wdTable.KeyExists("color2"))
+		LOG_L(L_WARNING, "WeaponDef color1 & color2 (= hue & sat) were removed. Use rgbColor instead!");
 
 	if (!wd.paralyzer)
 		wd.damages.paralyzeDamageTime = 0;
@@ -436,27 +435,11 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 }
 
 void CWeaponDefHandler::ParseWeaponVisuals(const LuaTable& wdTable, WeaponDef& wd) {
-	const float color1Hue = wdTable.GetInt("color",  0) / 255.0f;
-	const float color1Sat = wdTable.GetInt("color2", 0) / 255.0f;
-
-	const float3 defColors[4] = {
-		hs2rgb(color1Hue, color1Sat), // default rgbColor1 for all weapon-types except cannons
-		float3(1.0f, 1.0f, 1.0f),     // default rgbColor2 for all weapon-types
-		float3(1.0f, 0.5f, 0.0f),     // default rgbColor1 for Cannons
-		float3(0.9f, 0.9f, 0.2f),     // default rgbColor1 for EMGCannons
-	};
-
-	WeaponDef::Visuals& visuals = wd.visuals;
-	visuals.color  = wdTable.GetFloat3("rgbColor",  defColors[0]);
-	visuals.color2 = wdTable.GetFloat3("rgbColor2", defColors[1]);
-	if (wd.type ==    "Cannon") { visuals.color = wdTable.GetFloat3("rgbColor", defColors[2]); }
-	if (wd.type == "EmgCannon") { visuals.color = wdTable.GetFloat3("rgbColor", defColors[3]); }
-
 	const std::string& colormap = wdTable.GetString("colormap", "");
 	if (!colormap.empty()) {
-		visuals.colorMap = CColorMap::LoadFromDefString(colormap);
+		wd.visuals.colorMap = CColorMap::LoadFromDefString(colormap);
 	} else {
-		visuals.colorMap = NULL;
+		wd.visuals.colorMap = NULL;
 	}
 }
 
