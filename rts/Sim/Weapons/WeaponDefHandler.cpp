@@ -178,7 +178,7 @@ WEAPONTAG(float, shieldMaxSpeed).externalName("shield.maxSpeed").fallbackName("s
 WEAPONTAG(float, shieldPower).externalName("shield.power").fallbackName("shieldPower").defaultValue(0.0f);
 WEAPONTAG(float, shieldPowerRegen).externalName("shield.powerRegen").fallbackName("shieldPowerRegen").defaultValue(0.0f);
 WEAPONTAG(float, shieldPowerRegenEnergy).externalName("shield.powerRegenEnergy").fallbackName("shieldPowerRegenEnergy").defaultValue(0.0f);
-WEAPONDUMMYTAG(int, shieldRechargeDelay).externalName("rechargeDelay").fallbackName("shieldRechargeDelay").defaultValue(0).scaleValue(GAME_SPEED); // must be read as float
+WEAPONDUMMYTAG(float, shieldRechargeDelay).externalName("rechargeDelay").fallbackName("shieldRechargeDelay").defaultValue(0).scaleValue(GAME_SPEED); // must be read as float
 WEAPONTAG(float, shieldStartingPower).externalName("shield.startingPower").fallbackName("shieldStartingPower").defaultValue(0.0f);
 WEAPONTAG(unsigned int, shieldInterceptType).externalName("shield.interceptType").fallbackName("shieldInterceptType").defaultValue(0);
 WEAPONTAG(float3, shieldBadColor).externalName("shield.badColor").fallbackName("shieldBadColor").defaultValue(float3(1.0f, 0.5f, 0.5f));
@@ -280,10 +280,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.restTime = 0.0f; //FIXME remove var?
 
 	if (wdTable.KeyExists("cylinderTargetting"))
-		LOG_L(L_WARNING, "weapondef cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).");
+		LOG_L(L_WARNING, "WeaponDef cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).");
 
-	if (wdTable.KeyExists("craterAreaOfEffect"))
-		assert(false);
 
 	if (!wd.paralyzer)
 		wd.damages.paralyzeDamageTime = 0;
