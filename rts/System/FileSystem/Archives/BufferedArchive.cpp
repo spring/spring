@@ -4,9 +4,10 @@
 #include "BufferedArchive.h"
 
 
-CBufferedArchive::CBufferedArchive(const std::string& name)
+CBufferedArchive::CBufferedArchive(const std::string& name, bool cache)
 	: IArchive(name)
 {
+	caching = cache;
 }
 
 CBufferedArchive::~CBufferedArchive()
@@ -17,6 +18,10 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& bu
 {
 	boost::mutex::scoped_lock lck(archiveLock);
 	assert(IsFileId(fid));
+
+	if (!caching) {
+		return GetFileImpl(fid,buffer);
+	}
 
 	if (fid >= cache.size()) {
 		cache.resize(fid + 1);

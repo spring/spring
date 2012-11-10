@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <assert.h>
 
 #include "System/Util.h"
 #include "System/Log/ILog.h"
