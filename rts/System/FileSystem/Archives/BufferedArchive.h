@@ -15,7 +15,7 @@
 class CBufferedArchive : public IArchive
 {
 public:
-	CBufferedArchive(const std::string& name);
+	CBufferedArchive(const std::string& name, bool cache = true);
 	virtual ~CBufferedArchive();
 
 	virtual bool GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer);
@@ -32,6 +32,8 @@ protected:
 		std::vector<boost::uint8_t> data;
 	};
 	std::vector<FileBuffer> cache; // cache[fileId]
+private:
+	bool caching;
 };
 
 #endif // _BUFFERED_ARCHIVE_H

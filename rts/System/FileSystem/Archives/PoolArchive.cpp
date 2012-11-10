@@ -9,6 +9,7 @@
 #include <string>
 #include <cstring>
 #include <iostream>
+#include <assert.h>
 
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"

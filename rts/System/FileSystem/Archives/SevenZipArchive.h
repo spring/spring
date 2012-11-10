@@ -3,14 +3,13 @@
 #ifndef _7ZIP_ARCHIVE_H
 #define _7ZIP_ARCHIVE_H
 
-#include <boost/thread/mutex.hpp>
 extern "C" {
 #include "lib/7z/7zFile.h"
 #include "lib/7z/Archive/7z/7zIn.h"
 };
 
 #include "ArchiveFactory.h"
-#include "IArchive.h"
+#include "BufferedArchive.h"
 
 
 /**
@@ -28,7 +27,7 @@ private:
 /**
  * An LZMA/7zip compressed, single-file archive.
  */
-class CSevenZipArchive : public IArchive
+class CSevenZipArchive : public CBufferedArchive
 {
 public:
 	CSevenZipArchive(const std::string& name);
@@ -37,13 +36,12 @@ public:
 	virtual bool IsOpen();
 	
 	virtual unsigned int NumFiles() const;
-	virtual bool GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer);
+	virtual bool GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer);
 	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
 	virtual bool HasLowReadingCost(unsigned int fid) const;
 	virtual unsigned GetCrc32(unsigned int fid);
 
 private:
-	boost::mutex archiveLock;
 	UInt32 blockIndex;
 	Byte* outBuffer;
 	size_t outBufferSize;

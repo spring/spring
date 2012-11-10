@@ -30,7 +30,7 @@ IArchive* CSevenZipArchiveFactory::DoCreateArchive(const std::string& filePath) 
 
 
 CSevenZipArchive::CSevenZipArchive(const std::string& name) :
-	IArchive(name),
+	CBufferedArchive(name, false),
 	isOpen(false)
 {
 	blockIndex = 0xFFFFFFFF;
@@ -152,9 +152,8 @@ unsigned int CSevenZipArchive::NumFiles() const
 	return fileData.size();
 }
 
-bool CSevenZipArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CSevenZipArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
-	boost::mutex::scoped_lock lck(archiveLock);
 	assert(IsFileId(fid));
 	
 	// Get 7zip to decompress it
