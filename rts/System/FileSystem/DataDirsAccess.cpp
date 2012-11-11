@@ -82,7 +82,6 @@ std::string DataDirsAccess::LocateFileInternal(const std::string& file) const
 void DataDirsAccess::FindFilesSingleDir(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const std::string& pattern, int flags) const
 {
 	assert(datadir.empty() || datadir[datadir.length() - 1] == FileSystem::GetNativePathSeparator());
-	assert(!dir.empty() && dir[dir.length() - 1] == FileSystem::GetNativePathSeparator());
 
 	const std::string regexPattern = FileSystem::ConvertGlobToRegex(pattern);
 
