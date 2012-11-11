@@ -209,7 +209,7 @@ bool DataDirsAccess::InReadDir(const std::string& path)
 }
 
 
-bool DataDirsAccess::InWriteDir(const std::string& path, const std::string& prefix)
+bool DataDirsAccess::InWriteDir(const std::string& path)
 {
 	std::string locatedFile = LocateFile(path, FileQueryFlags::WRITE);
 	return (locatedFile != "") && (locatedFile != path);
