@@ -37,16 +37,12 @@ function makescript {
 
 PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
-GAME1=$($PRDL --rapid-search ba:latest |egrep -o 'Filename: (.*) Size:'|sed 's/Filename: \(.*\) Size:/\1/')
-GAME2=$($PRDL --rapid-search zk:stable |egrep -o 'Filename: (.*) Size:'|sed 's/Filename: \(.*\) Size:/\1/')
-GAME3=$($PRDL --rapid-search bar:test |egrep -o 'Filename: (.*) Size:'|sed 's/Filename: \(.*\) Size:/\1/')
+GAME1=$($PRDL ba:latest |egrep -o '\[Download\] (.*)' |cut -b 12-)
+GAME2=$($PRDL zk:stable |egrep -o '\[Download\] (.*)' |cut -b 12-)
+GAME3=$($PRDL bar:test |egrep -o '\[Download\] (.*)' |cut -b 12-)
 MAP="Altair_Crossing-V1"
 
-
-$PRDL --download-game "$GAME1"
-$PRDL --download-game "$GAME2"
-$PRDL --download-game "$GAME3"
-$PRDL --download-map "$MAP"
+$PRDL "$MAP"
 
 #install required files into spring dir
 cd ${SOURCEDIR}
