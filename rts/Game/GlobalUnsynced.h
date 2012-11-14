@@ -68,6 +68,7 @@ public:
 	 */
 	float avgSimFrameTime;
 	float avgDrawFrameTime;
+	float avgFrameTime;
 
 	/**
 	 * @brief mod game time
