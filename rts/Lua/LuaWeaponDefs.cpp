@@ -449,6 +449,7 @@ static bool InitParamMap()
 	ADD_DEPRECATED_LUADEF_KEY("areaOfEffect");
 	ADD_DEPRECATED_LUADEF_KEY("maxVelocity");
 	ADD_DEPRECATED_LUADEF_KEY("onlyTargetCategories");
+	ADD_DEPRECATED_LUADEF_KEY("restTime");
 
 	ADD_INT("id", wd.id);
 
@@ -496,7 +497,6 @@ static bool InitParamMap()
 	ADD_INT("numbounce",       wd.numBounce);
 
 	ADD_FLOAT("maxAngle", wd.maxAngle);
-	ADD_FLOAT("restTime", wd.restTime);
 
 	ADD_FLOAT("uptime", wd.uptime);
 

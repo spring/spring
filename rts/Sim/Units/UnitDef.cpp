@@ -607,6 +607,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	selfdExpWeaponDef = weaponDefHandler->GetWeapon(udTable.GetString("selfDestructAs", ""));
 	if (deathExpWeaponDef == NULL) { deathExpWeaponDef = weaponDefHandler->GetWeapon("NOWEAPON"); }
 	if (selfdExpWeaponDef == NULL) { selfdExpWeaponDef = weaponDefHandler->GetWeapon("NOWEAPON"); }
+	assert(deathExpWeaponDef);
+	assert(selfdExpWeaponDef);
 
 	power = udTable.GetFloat("power", (metal + (energy / 60.0f)));
 

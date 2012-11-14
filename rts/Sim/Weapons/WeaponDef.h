@@ -13,6 +13,7 @@ struct AtlasedTexture;
 class CColorMap;
 class IExplosionGenerator;
 struct S3DModel;
+class LuaTable;
 
 struct WeaponDef
 {
@@ -20,127 +21,14 @@ private:
 	CR_DECLARE_STRUCT(WeaponDef);
 
 public:
-	WeaponDef(const DamageArray& damages = DamageArray())
-		: range(0.0f)
-		, heightmod(0.0f)
-		, accuracy(0.0f)
-		, sprayAngle(0.0f)
-		, movingAccuracy(0.0f)
-		, ownerExpAccWeight(0.0f)
-		, targetMoveError(0.0f)
-		, leadLimit(0.0f)
-		, leadBonus(0.0f)
-		, predictBoost(0.0f)
-		, damages(damages)
-		, craterAreaOfEffect(0.0f)
-		, damageAreaOfEffect(0.0f)
-		, noSelfDamage(false)
-		, fireStarter(0.0f)
-		, edgeEffectiveness(0.0f)
-		, size(0.0f)
-		, sizeGrowth(0.0f)
-		, collisionSize(0.0f)
-		, salvosize(0)
-		, salvodelay(0.0f)
-		, reload(0.0f)
-		, beamtime(0.0f)
-		, beamburst(false)
-		, waterBounce(false)
-		, groundBounce(false)
-		, bounceRebound(0.0f)
-		, bounceSlip(0.0f)
-		, numBounce(0)
-		, maxAngle(0.0f)
-		, restTime(0.0f)
-		, uptime(0.0f)
-		, flighttime(0)
-		, metalcost(0.0f)
-		, energycost(0.0f)
-		, projectilespershot(0)
-		, id(0)
-		, tdfId(0)
-		, turret(false)
-		, onlyForward(false)
-		, fixedLauncher(false)
-		, waterweapon(false)
-		, fireSubmersed(false)
-		, submissile(false)
-		, tracks(false)
-		, paralyzer(false)
-		, impactOnly(false)
-		, noAutoTarget(false)
-		, manualfire(false)
-		, interceptor(0)
-		, targetable(0)
-		, stockpile(false)
-		, coverageRange(0.0f)
-		, stockpileTime(0.0f)
-		, intensity(0.0f)
-		, falloffRate(0.0f)
-		, duration(0.0f)
-		, beamLaserTTL(0)
-		, soundTrigger(false)
-		, selfExplode(false)
-		, gravityAffected(false)
-		, highTrajectory(0)
-		, myGravity(0.0f)
-		, noExplode(false)
-		, startvelocity(0.0f)
-		, weaponacceleration(0.0f)
-		, turnrate(0.0f)
-		, projectilespeed(0.0f)
-		, explosionSpeed(0.0f)
-		, wobble(0.0f)
-		, dance(0.0f)
-		, trajectoryHeight(0.0f)
-		, largeBeamLaser(false)
-		, laserHardStop(false)
-		, isShield(false) //FIXME REMOVE! (this information is/should be saved in the weapontype)
-		, shieldRepulser(false)
-		, smartShield(false)
-		, exteriorShield(false)
-		, visibleShield(false)
-		, visibleShieldRepulse(false)
-		, visibleShieldHitFrames(0)
-		, shieldEnergyUse(0.0f)
-		, shieldRadius(0.0f)
-		, shieldForce(0.0f)
-		, shieldMaxSpeed(0.0f)
-		, shieldPower(0.0f)
-		, shieldPowerRegen(0.0f)
-		, shieldPowerRegenEnergy(0.0f)
-		, shieldStartingPower(0.0f)
-		, shieldRechargeDelay(0.0f)
-		, shieldGoodColor(ZeroVector)
-		, shieldBadColor(ZeroVector)
-		, shieldAlpha(0.0f)
-		, shieldInterceptType(0)
-		, interceptedByShieldType(0)
-		, avoidFriendly(false)
-		, avoidFeature(false)
-		, avoidNeutral(false)
-		, targetBorder(0.0f)
-		, cylinderTargeting(0.0f)
-		, minIntensity(0.0f)
-		, heightBoostFactor(0.0f)
-		, proximityPriority(0.0f)
-		, collisionFlags(0)
-		, explosionGenerator(NULL)
-		, bounceExplosionGenerator(NULL)
-		, sweepFire(false)
-		, canAttackGround(false)
-		, cameraShake(0.0f)
-		, dynDamageExp(0.0f)
-		, dynDamageMin(0.0f)
-		, dynDamageRange(0.0f)
-		, dynDamageInverted(false)
-	{}
-
+	WeaponDef();
+	WeaponDef(const LuaTable& wdTable, const std::string& name, int id);
 	~WeaponDef();
 
 	S3DModel* LoadModel();
 	S3DModel* LoadModel() const;
 
+public:
 	std::string name;
 	std::string type;
 	std::string description;
@@ -183,7 +71,6 @@ public:
 	int numBounce;
 
 	float maxAngle;
-	float restTime;
 
 	float uptime;
 	int flighttime;
@@ -312,7 +199,7 @@ public:
 	bool largeBeamLaser;             // whether a BeamLaser should spawn LargeBeamLaserProjectile's or regular ones
 	bool laserHardStop;              // whether the shot should fade out or stop and contract at max-range (applies to LaserCannons only)
 
-	bool isShield;                   // if the weapon is a shield rather than a weapon
+	bool isShield;                   // if the weapon is a shield rather than a weapon //FIXME REMOVE! (this information is/should be saved in the weapontype)
 	bool shieldRepulser;             // if the weapon should be repulsed or absorbed
 	bool smartShield;                // only affect enemy projectiles
 	bool exteriorShield;             // only affect stuff coming from outside shield radius
@@ -378,6 +265,10 @@ public:
 	bool dynDamageInverted;
 
 	std::map<std::string, std::string> customParams;
+
+private:
+	void ParseWeaponSounds(const LuaTable& wdTable);
+	void LoadSound(const LuaTable& wdTable, const std::string& soundKey, const unsigned int soundIdx, std::vector<GuiSoundSet::Data>& soundData);
 };
 
 #endif // _WEAPON_DEF_H

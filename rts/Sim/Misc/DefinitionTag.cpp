@@ -9,7 +9,6 @@ using std::cout;
 using std::map;
 using std::string;
 
-static std::map<std::string, const DefType*> tagtypes;
 
 /**
  * @brief Log an error about a DefTagMetaData
@@ -18,8 +17,15 @@ static std::map<std::string, const DefType*> tagtypes;
 	LOG_L(L_ERROR, "%s:%d: " fmt, data->GetDeclarationFile().Get().c_str(), data->GetDeclarationLine().Get(), ## __VA_ARGS__) \
 
 
+std::map<std::string, const DefType*>& DefType::GetTypes()
+{
+	static std::map<std::string, const DefType*> tagtypes;
+	return tagtypes;
+}
+
+
 DefType::DefType(const std::string& name) : luaTable(NULL) {
-	tagtypes[name] = this;
+	GetTypes()[name] = this;
 }
 
 
@@ -156,6 +162,7 @@ void DefType::OutputTagMap()
 {
 	cout << "{\n";
 
+	std::map<std::string, const DefType*>& tagtypes = GetTypes();
 	for (std::map<std::string, const DefType*>::const_iterator it = tagtypes.begin(); it != tagtypes.end(); ++it) {
 		if (it != tagtypes.begin()) {
 			cout << ",\n";
