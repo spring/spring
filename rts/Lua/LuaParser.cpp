@@ -901,31 +901,52 @@ bool LuaTable::PushValue(const string& mixedKey) const
 		} while (dotpos != std::string::npos);
 
 		const std::string keyname = key.substr(lastpos);
+
+		// try as string
 		lua_pushsstring(L, keyname);
 		lua_gettable(L, -2);
-		if (lua_isnoneornil(L, -1)) {
+		if (!lua_isnoneornil(L, -1)) {
+			lua_remove(L, -2);
+			const int newtop = lua_gettop(L);
+			assert(newtop == top + 1);
+			return true;
+		}
+
+		// try as integer
+		bool failed;
+		int i = StringToInt(keyname, &failed);
+		if (failed) {
 			lua_pop(L, 2);
 			const int newtop = lua_gettop(L);
 			assert(newtop == top);
 			return false;
 		}
-		lua_remove(L, -2);
-		const int newtop = lua_gettop(L);
-		assert(newtop == top + 1);
-		return true;
-	}
-
-	lua_pushsstring(L, key);
-	lua_gettable(L, -2);
-	if (lua_isnoneornil(L, -1)) {
-		lua_pop(L, 1);
+		lua_pop(L, 1); // pop nil
+		lua_pushnumber(L, i);
+		lua_gettable(L, -2);
+		if (!lua_isnoneornil(L, -1)) {
+			lua_remove(L, -2);
+			const int newtop = lua_gettop(L);
+			assert(newtop == top + 1);
+			return true;
+		}
+		lua_pop(L, 2);
 		const int newtop = lua_gettop(L);
 		assert(newtop == top);
 		return false;
 	}
+
+	lua_pushsstring(L, key);
+	lua_gettable(L, -2);
+	if (!lua_isnoneornil(L, -1)) {
+		const int newtop = lua_gettop(L);
+		assert(newtop == top + 1);
+		return true;
+	}
+	lua_pop(L, 1);
 	const int newtop = lua_gettop(L);
-	assert(newtop == top + 1);
-	return true;
+	assert(newtop == top);
+	return false;
 }
 
 
