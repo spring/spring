@@ -1844,8 +1844,21 @@ void CGameServer::GenerateAndSendGameID()
 	gameID.intArray[2] = crc.GetDigest();
 
 	CRC entropy;
-	entropy.Update(spring_tomsecs(lastTick-serverStartTime));
+	entropy.Update(spring_tomsecs(lastTick - serverStartTime));
 	gameID.intArray[3] = entropy.GetDigest();
+
+	// fixed gameID?
+	if (!setup->gameID.empty()) {
+		unsigned char p[16];
+		generatedGameID = (sscanf(setup->gameID.c_str(),
+		      "%02x%02x%02x%02x%02x%02x%02x%02x"
+		      "%02x%02x%02x%02x%02x%02x%02x%02x",
+		      &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
+		      &p[ 8], &p[ 9], &p[10], &p[11], &p[12], &p[13], &p[14], &p[15]) == 16);
+		if (generatedGameID)
+			for (int i = 0; i<16; ++i)
+				gameID.charArray[i] =  p[i];
+	}
 
 	Broadcast(CBaseNetProtocol::Get().SendGameID(gameID.charArray));
 #ifdef DEDICATED
@@ -1880,10 +1893,14 @@ void CGameServer::CheckForGameStart(bool forced)
 	if (allReady || forced) {
 		if (!spring_istime(readyTime)) {
 			readyTime = spring_gettime();
-			rng.Seed(spring_tomsecs(readyTime-serverStartTime));
+
 			// we have to wait at least 1 msec, because 0 is a special case
 			const unsigned countdown = std::max(1, spring_tomsecs(gameStartDelay));
 			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(countdown));
+
+			// make seed more random
+			if (setup->gameID.empty())
+				rng.Seed(spring_tomsecs(readyTime - serverStartTime));
 		}
 	}
 	if (spring_istime(readyTime) && ((spring_gettime() - readyTime) > gameStartDelay)) {
@@ -1912,27 +1929,29 @@ void CGameServer::StartGame()
 		return;
 	}
 
+	{
+		std::vector<bool> teamStartPosSent(teams.size(), false);
+
+		// send start position for player controlled teams
+		for (size_t a = 0; a < players.size(); ++a) {
+			if (!players[a].spectator) {
+				const unsigned aTeam = players[a].team;
+				Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
+				teamStartPosSent[aTeam] = true;
+			}
+		}
+
+		// send start position for all other teams
+		for (size_t a = 0; a < teams.size(); ++a) {
+			if (!teamStartPosSent[a]) {
+				// teams which aren't player controlled are always ready
+				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
+			}
+		}
+	}
+
 	GenerateAndSendGameID();
-
-	std::vector<bool> teamStartPosSent(teams.size(), false);
-
-	// send start position for player controlled teams
-	for (size_t a = 0; a < players.size(); ++a) {
-		if (!players[a].spectator) {
-			const unsigned aTeam = players[a].team;
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
-			teamStartPosSent[aTeam] = true;
-		}
-	}
-
-	// send start position for all other teams
-	for (size_t a = 0; a < teams.size(); ++a) {
-		if (!teamStartPosSent[a]) {
-			// teams which aren't player controlled are always ready
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
-		}
-	}
-
+	rng.Seed(gameID.intArray[0] ^ gameID.intArray[1] ^ gameID.intArray[2] ^ gameID.intArray[3]);
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
 	if (hostif)
