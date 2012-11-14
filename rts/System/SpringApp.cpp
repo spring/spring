@@ -9,11 +9,15 @@
 	#include <SDL_syswm.h>
 #endif
 
+#undef KeyPress
+#undef KeyRelease
+
 #include "Rendering/GL/myGL.h"
 #include "System/SpringApp.h"
 
 #include "aGui/Gui.h"
 #include "ExternalAI/IAILibraryManager.h"
+#include "Game/Benchmark.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameServer.h"
 #include "Game/GameSetup.h"
@@ -74,9 +78,6 @@
 	#include <X11/Xlib.h>
 	#include "System/Platform/Linux/myX11.h"
 #endif
-
-#undef KeyPress
-#undef KeyRelease
 
 #include "lib/gml/gml_base.h"
 #include "lib/luasocket/src/restrictions.h"
@@ -717,6 +718,8 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch('c', "client",             "Run as a client");
 	cmdline->AddSwitch('p', "projectiledump",     "Dump projectile class info in projectiles.txt");
 	cmdline->AddSwitch('t', "textureatlas",       "Dump each finalized textureatlas in textureatlasN.tga");
+	cmdline->AddInt(   0,   "benchmark",          "Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.");
+	cmdline->AddInt(   0,   "benchmarkstart",     "Benchmark start time in minutes.");
 	cmdline->AddString('n', "name",               "Set your player name");
 	cmdline->AddString('C', "config",             "Configuration file");
 	cmdline->AddSwitch(0,   "safemode",           "Turns off many things that are known to cause problems (i.e. on PC/Mac's with lower-end graphic cards)");
@@ -822,6 +825,15 @@ void SpringApp::ParseCmdLine()
 	globalRendering->viewSizeY = configHandler->GetInt("YResolution");
 	if (cmdline->IsSet("yresolution"))
 		globalRendering->viewSizeY = std::max(cmdline->GetInt("yresolution"), 480);
+
+
+	if (cmdline->IsSet("benchmark")) {
+		CBenchmark::enabled = true;
+		if (cmdline->IsSet("benchmarkstart")) {
+			CBenchmark::startFrame = cmdline->GetInt("benchmarkstart") * 60 * GAME_SPEED;
+		}
+		CBenchmark::endFrame = CBenchmark::startFrame + cmdline->GetInt("benchmark") * 60 * GAME_SPEED;
+	}
 }
 
 
