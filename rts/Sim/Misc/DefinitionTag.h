@@ -45,10 +45,10 @@ namespace {
 
 
 /**
- * @brief Untyped configuration variable meta data.
+ * @brief Untyped definition tag meta data.
  *
  * That is, meta data of a type that does not depend on the declared type
- * of the config variable.
+ * of the definition tag.
  */
 class DefTagMetaData : public boost::noncopyable
 {
@@ -58,16 +58,16 @@ public:
 
 	virtual ~DefTagMetaData() {}
 
-	/// @brief Get the default value of this config variable.
+	/// @brief Get the default value of this definition tag.
 	virtual const StringConvertibleOptionalValue& GetDefaultValue() const = 0;
 
-	/// @brief Get the minimum value of this config variable.
+	/// @brief Get the minimum value of this definition tag.
 	virtual const StringConvertibleOptionalValue& GetMinimumValue() const = 0;
 
-	/// @brief Get the maximum value of this config variable.
+	/// @brief Get the maximum value of this definition tag.
 	virtual const StringConvertibleOptionalValue& GetMaximumValue() const = 0;
 
-	/// @brief Get the scale value of this config variable.
+	/// @brief Get the scale value of this definition tag.
 	virtual const StringConvertibleOptionalValue& GetScaleValue() const = 0;
 
 	std::string GetKey() const {
@@ -103,10 +103,10 @@ protected:
 
 
 /**
- * @brief Typed configuration variable meta data.
+ * @brief Typed definition tag meta data.
  *
  * That is, meta data of the same type as the declared type
- * of the config variable.
+ * of the definition tag.
  */
 template<typename T>
 class DefTagTypedMetaData : public DefTagMetaData
@@ -156,9 +156,9 @@ protected:
 
 
 /**
- * @brief Fluent interface to declare meta data of config variables
+ * @brief Fluent interface to declare meta data of deftag
  *
- * Uses method chaining so that a config variable can be declared like this:
+ * Uses method chaining so that a definition tag can be declared like this:
  *
  * DEFTAG(Defs, DefClass, float, example)
  *   .defaultValue(6.0f)
@@ -207,10 +207,10 @@ private:
 
 
 /**
- * @brief Configuration variable declaration
+ * @brief Definition tag declaration
  *
  * The only purpose of this class is to store the meta data created by a
- * ConfigVariableBuilder in a global map of meta data as it is assigned to
+ * DefTagBuilder in a global map of meta data as it is assigned to
  * an instance of this class.
  */
 class DefType
@@ -261,6 +261,7 @@ private:
 	const LuaTable* luaTable;
 
 private:
+	static std::map<std::string, const DefType*>& GetTypes();
 	const DefTagMetaData* GetMetaData(const std::string& key);
 	void AddMetaData(const DefTagMetaData* data);
 	static void CheckType(const DefTagMetaData* meta, const std::type_info& want);
@@ -277,36 +278,36 @@ private:
 #define GETSECONDARG( x, y, ... ) y
 
 #define DEFTAG_CNTER(Defs, DefClass, T, name, varname) \
-	static void MACRO_CONCAT(fnc,name)(void* def) { \
+	static void MACRO_CONCAT(fnc_,name)(void* def) { \
 		T& staticCheckType = static_cast<DefClass*>(def)->varname; \
 		staticCheckType = Defs.GetTag<T>(#name); \
 	} \
-	void MACRO_CONCAT(add,name)() { Defs.AddInitializer(&MACRO_CONCAT(fnc,name)); } \
-	struct MACRO_CONCAT(do_once,name) { MACRO_CONCAT(do_once,name)() {MACRO_CONCAT(add,name)();} }; static MACRO_CONCAT(do_once,name) MACRO_CONCAT(do_once,name); \
-	static DefTagBuilder<T> deftag##name = Defs.AddTag<T>(#name)
+	void MACRO_CONCAT(add_,name)() { Defs.AddInitializer(&MACRO_CONCAT(fnc_,name)); } \
+	struct MACRO_CONCAT(do_once_,name) { MACRO_CONCAT(do_once_,name)() {MACRO_CONCAT(add_,name)();} }; static MACRO_CONCAT(do_once_,name) MACRO_CONCAT(do_once_,name); \
+	static DefTagBuilder<T> deftag_##name = Defs.AddTag<T>(#name)
 
 #define tagFunction(fname) \
-	tagFunctionPtr(&tagFnc##fname).tagFunctionStr(tagFncStr##fname)
+	tagFunctionPtr(&tagFnc_##fname).tagFunctionStr(tagFncStr_##fname)
 
 #define scaleValue(v) \
 	scaleValue(v).scaleValueStr(#v)
 
 
 /**
- * @brief Macros to start the method chain used to declare a config variable.
+ * @brief Macros to start the method chain used to declare a deftag.
  * @see DefTagBuilder
  */
 #define DEFTAG(Defs, DefClass, T, name, ...) \
 	DEFTAG_CNTER(Defs, DefClass, T, name, GETSECONDARG(unused ,##__VA_ARGS__, name))
 
 #define DUMMYTAG(Defs, T, name) \
-	static DefTagBuilder<T> MACRO_CONCAT(deftag,__LINE__) = Defs.AddTag<T>(#name)
+	static DefTagBuilder<T> MACRO_CONCAT(deftag_,__LINE__) = Defs.AddTag<T>(#name)
 
 #define TAGFUNCTION(name, T, function) \
-	static T tagFnc##name(T x) { \
+	static T tagFnc_##name(T x) { \
 		return function; \
 	} \
-	static const std::string tagFncStr##name = #function;
+	static const std::string tagFncStr_##name = #function;
 
 
 #endif // DEFINTION_TAG_H

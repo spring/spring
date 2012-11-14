@@ -4022,10 +4022,6 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getMaxAngle(int skirmishAIId, int wea
 	return getWeaponDefById(skirmishAIId, weaponDefId)->maxAngle;
 }
 
-EXPORT(float) skirmishAiCallback_WeaponDef_getRestTime(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->restTime;
-}
-
 EXPORT(float) skirmishAiCallback_WeaponDef_getUpTime(int skirmishAIId, int weaponDefId) {
 	return getWeaponDefById(skirmishAIId, weaponDefId)->uptime;
 }
@@ -5065,7 +5061,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->WeaponDef_getBounceSlip = &skirmishAiCallback_WeaponDef_getBounceSlip;
 	callback->WeaponDef_getNumBounce = &skirmishAiCallback_WeaponDef_getNumBounce;
 	callback->WeaponDef_getMaxAngle = &skirmishAiCallback_WeaponDef_getMaxAngle;
-	callback->WeaponDef_getRestTime = &skirmishAiCallback_WeaponDef_getRestTime;
 	callback->WeaponDef_getUpTime = &skirmishAiCallback_WeaponDef_getUpTime;
 	callback->WeaponDef_getFlightTime = &skirmishAiCallback_WeaponDef_getFlightTime;
 	callback->WeaponDef_getCost = &skirmishAiCallback_WeaponDef_getCost;
