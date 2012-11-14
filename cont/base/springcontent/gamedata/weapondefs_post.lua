@@ -142,7 +142,7 @@ local function BackwardCompability(wdName, wd)
     if (wd.weapontype == "Cannon") then
       wd.rgbcolor = "1.0 0.5 0.0"
     else if (wd.weapontype == "EmgCannon") then
-      wd.rgbcolor = "0.0 0.9 0.2"
+      wd.rgbcolor = "0.9 0.9 0.2"
     else
       local hue = (wd.color or 0) / 255
       local sat = (wd.color2 or 0) / 255
