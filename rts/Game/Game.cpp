@@ -925,7 +925,7 @@ bool CGame::UpdateUnsynced()
 
 	globalRendering->lastFrameTime = spring_tomsecs(currentTime - lastDrawFrameTime) / 1000.f;
 	lastDrawFrameTime = currentTime; //FIXME merge with lastModGameTimeMeasure
-	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, globalRendering->lastFrameTime * 1000.f, 0.05f);
+	gu->avgFrameTime = mix(gu->avgFrameTime, globalRendering->lastFrameTime * 1000.f, 0.05f);
 
 	// Update game times
 	gu->gameTime += dif;
@@ -1217,8 +1217,11 @@ bool CGame::Draw() {
 		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
 
 		// 16ms := 60fps := 30simFPS + 30drawFPS
-		font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
-		   (gu->avgDrawFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime, (gu->avgSimFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime);
+		font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
+		   (gu->avgFrameTime>30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
+		   (gu->avgDrawFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
+		   (gu->avgSimFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
+		);
 
 		CPathManager* legacy = dynamic_cast<CPathManager*>(pathManager);
 		if (legacy) {
@@ -1309,6 +1312,9 @@ bool CGame::Draw() {
 
 	SetDrawMode(gameNotDrawing);
 	CTeamHighlight::Disable();
+
+	const spring_time currentTimePostDraw = spring_gettime();
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, spring_tomsecs(currentTimePostDraw - currentTimePreDraw), 0.05f);
 
 	return true;
 }
