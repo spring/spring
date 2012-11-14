@@ -93,6 +93,16 @@ static inline std::string FloatToString(float f, const std::string& format = "%f
 	return std::string(buf);
 }
 
+static inline int StringToInt(std::string str, bool* failed)
+{
+	StringTrimInPlace(str);
+	std::istringstream stream(str);
+	int buffer = 0;
+	stream >> buffer;
+	*failed = stream.fail();
+	return buffer;
+}
+
 /**
  * Returns true of the argument string matches "0|n|no|f|false".
  * The matching is done case insensitive.
