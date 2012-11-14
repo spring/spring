@@ -213,6 +213,7 @@ bool SpringApp::Initialize()
 			std::ostringstream buf;
 			buf << "omp" << i;
 			Threading::SetThreadName(buf.str().c_str());
+			Threading::SetAffinity(1 << i);
 		}
 	}
 #endif
