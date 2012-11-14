@@ -457,6 +457,7 @@ void CPathEstimator::Update() {
 void CPathEstimator::UpdateFull() {
 	while (!needUpdate.empty()) {
 		Update();
+		Watchdog::ClearTimer();
 	}
 }
 
