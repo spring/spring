@@ -16,6 +16,7 @@
 
 
 #include "Game.h"
+#include "Benchmark.h"
 #include "Camera.h"
 #include "CameraHandler.h"
 #include "ChatMessage.h"
@@ -445,8 +446,6 @@ void CGame::LoadGame(const std::string& mapName)
 	GML::ThreadNumber(GML_LOAD_THREAD_NUM);
 
 	Watchdog::RegisterThread(WDT_LOAD);
-
-
 	if (!gu->globalQuit) LoadDefs();
 	if (!gu->globalQuit) PreLoadSimulation(mapName);
 	if (!gu->globalQuit) PreLoadRendering();
@@ -728,6 +727,10 @@ void CGame::LoadFinalize()
 	pathManager->UpdateFull(); // mapfeatures are not in written pathcaches, so we need to repath those & other stuff done by Lua
 
 	loadscreen->SetLoadMessage("Finalizing");
+
+	if (CBenchmark::enabled) {
+		static CBenchmark benchmark;
+	}
 
 	lastframe = spring_gettime();
 	lastModGameTimeMeasure = lastframe;
