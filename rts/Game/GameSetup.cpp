@@ -385,6 +385,7 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetTDef(mapHash, unsigned(0), "GAME\\MapHash");
 	file.GetTDef(modHash, unsigned(0), "GAME\\ModHash");
 
+	gameID      = file.SGetValueDef("",  "GAME\\GameID");
 	modName     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
 	saveName    = file.SGetValueDef("",  "GAME\\Savefile");
