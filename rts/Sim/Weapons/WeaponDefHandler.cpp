@@ -10,8 +10,9 @@
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/DamageArrayHandler.h"
-#include "System/Log/ILog.h"
+#include "System/Exceptions.h"
 #include "System/Util.h"
+#include "System/Log/ILog.h"
 
 
 CWeaponDefHandler* weaponDefHandler = NULL;
