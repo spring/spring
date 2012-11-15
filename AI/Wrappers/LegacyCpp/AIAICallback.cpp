@@ -1432,7 +1432,6 @@ weaponDef->bounceRebound = sAICallback->WeaponDef_getBounceRebound(skirmishAIId,
 weaponDef->bounceSlip = sAICallback->WeaponDef_getBounceSlip(skirmishAIId, weaponDefId);
 weaponDef->numBounce = sAICallback->WeaponDef_getNumBounce(skirmishAIId, weaponDefId);
 weaponDef->maxAngle = sAICallback->WeaponDef_getMaxAngle(skirmishAIId, weaponDefId);
-weaponDef->restTime = sAICallback->WeaponDef_getRestTime(skirmishAIId, weaponDefId);
 weaponDef->uptime = sAICallback->WeaponDef_getUpTime(skirmishAIId, weaponDefId);
 weaponDef->flighttime = sAICallback->WeaponDef_getFlightTime(skirmishAIId, weaponDefId);
 weaponDef->metalcost = sAICallback->WeaponDef_getCost(skirmishAIId, weaponDefId, m);
