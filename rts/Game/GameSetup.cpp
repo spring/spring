@@ -209,15 +209,6 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 
 		skirmishAIStartingData.push_back(data);
 	}
-
-	unsigned aiCount = 0;
-	if (!file.GetValue(aiCount, "GAME\\NumSkirmishAIs")
-			|| skirmishAIStartingData.size() == aiCount) {
-		aiCount = skirmishAIStartingData.size();
-	} else {
-		throw content_error(
-				"incorrect number of skirmish AIs in GameSetup script");
-	}
 }
 
 const std::vector<SkirmishAIData>& CGameSetup::GetSkirmishAIs() const {

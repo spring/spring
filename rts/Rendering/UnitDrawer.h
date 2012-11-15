@@ -115,12 +115,12 @@ public:
 	bool showHealthBars;
 
 	static void DrawOpaqueUnitMT(void* c, CUnit* unit) {
-		CUnitDrawer* const ud = (CUnitDrawer*) c;
+		CUnitDrawer* const ud = reinterpret_cast<CUnitDrawer*>(c);
 		ud->DrawOpaqueUnit(unit, ud->mt_excludeUnit, ud->mt_drawReflection, ud->mt_drawRefraction);
 	}
 
 	static void DrawOpaqueUnitShadowMT(void* c, CUnit* unit) {
-		((CUnitDrawer*) c)->DrawOpaqueUnitShadow(unit);
+		reinterpret_cast<CUnitDrawer*>(c)->DrawOpaqueUnitShadow(unit);
 	}
 
 	void DrawUnitStats(CUnit* unit);

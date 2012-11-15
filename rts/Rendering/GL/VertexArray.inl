@@ -57,7 +57,7 @@ void CVertexArray::AddVertexQC(const float3& pos, const unsigned char* color) {
 	*drawArrayPos++ = pos.x;
 	*drawArrayPos++ = pos.y;
 	*drawArrayPos++ = pos.z;
-	*drawArrayPos++ = *((float*) (color));
+	*drawArrayPos++ = *(reinterpret_cast<const float*>(color));
 }
 
 void CVertexArray::AddVertexQT(const float3& pos, float tx, float ty) {
@@ -106,7 +106,7 @@ void CVertexArray::AddVertexQTC(const float3& pos, float tx, float ty, const uns
 	*drawArrayPos++ = pos.z;
 	*drawArrayPos++ = tx;
 	*drawArrayPos++ = ty;
-	*drawArrayPos++ = *((float*)(col));
+	*drawArrayPos++ = *(reinterpret_cast<const float*>(col));
 }
 
 void CVertexArray::AddVertex2dQT(float x, float y, float tx, float ty) {
@@ -154,7 +154,7 @@ void CVertexArray::AddVertexC(const float3& pos, const unsigned char* color) {
 	*drawArrayPos++ = pos.x;
 	*drawArrayPos++ = pos.y;
 	*drawArrayPos++ = pos.z;
-	*drawArrayPos++ = *((float*)(color));
+	*drawArrayPos++ = *(reinterpret_cast<const float*>(color));
 }
 
 void CVertexArray::AddVertexT(const float3& pos, float tx, float ty) {
@@ -214,7 +214,7 @@ void CVertexArray::AddVertexTC(const float3& pos, float tx, float ty, const unsi
 	*drawArrayPos++ = pos.z;
 	*drawArrayPos++ = tx;
 	*drawArrayPos++ = ty;
-	*drawArrayPos++ = *((float*)(col));
+	*drawArrayPos++ = *(reinterpret_cast<const float*>(col));
 }
 
 void CVertexArray::AddVertex2dT(float x, float y, float tx, float ty) {
@@ -231,7 +231,7 @@ void CVertexArray::AddVertex2dTC(float x, float y, float tx, float ty, const uns
 	*drawArrayPos++ = y;
 	*drawArrayPos++ = tx;
 	*drawArrayPos++ = ty;
-	*drawArrayPos++ = *((float*)(col));
+	*drawArrayPos++ = *(reinterpret_cast<const float*>(col));
 }
 
 

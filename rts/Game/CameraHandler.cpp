@@ -65,6 +65,7 @@ CCameraHandler::CCameraHandler()
 {
 	cameraTimeStart = 0.0f;
 	cameraTimeEnd   = 0.0f;
+	startCam.fov    = 90.0f;
 
 	// FPS camera must always be the first one in the list
 	camControllers.resize(CAMERA_MODE_LAST);

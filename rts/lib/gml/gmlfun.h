@@ -279,7 +279,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 #define GML_MAKEASS_I() GML_MAKEASS_H() p->I=I;
 #define GML_MAKEASS_J() GML_MAKEASS_I() p->J=J;
 
-#define GML_RETVAL(ft) return (ft)*(volatile ft *)&(p->ret);
+#define GML_RETVAL(ft) return (ft) *reinterpret_cast<volatile ft *>(&(p->ret));
 
 #define GML_RELOC()\
 	while(qd->WritePos+datasize>=qd->WriteSize)\
@@ -289,7 +289,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 	gmlQueue *qd=&gmlQueues[gmlThreadNumber];\
 	int datasize=sizeof(gml##name##Data);\
 	GML_RELOC()\
-	gml##name##Data *p=(gml##name##Data *)qd->WritePos;\
+	gml##name##Data *p=reinterpret_cast<gml##name##Data *>(qd->WritePos);\
 	p->type=gml##name##Enum;
 
 #define GML_UPD_POS()\
@@ -303,7 +303,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 	int size=sizefun;\
 	int datasize=sizeof(gml##name##Data)+size;\
 	GML_RELOC()\
-	gml##name##Data *p=(gml##name##Data *)qd->WritePos;\
+	gml##name##Data *p=reinterpret_cast<gml##name##Data *>(qd->WritePos);\
 	p->type=gml##name##Enum;
 
 #define GML_PREP_VAR_SIZE(name,sizefun)\
