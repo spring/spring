@@ -21,13 +21,16 @@
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/NetProtocol.h"
+#include "System/TimeProfiler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/Archives/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
-#include "System/Config/ConfigHandler.h"
-#include "System/NetProtocol.h"
+#include "System/Platform/Watchdog.h"
+
 
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
 
@@ -185,6 +188,8 @@ void CPathEstimator::InitBlocks() {
 void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
 	//! reset FPU state for synced computations
 	streflop::streflop_init<streflop::Simple>();
+	//Threading::SetAffinity(i<<thread);
+	Threading::SetAffinity(~0);
 
 	// NOTE: EstimatePathCosts() [B] is temporally dependent on CalculateBlockOffsets() [A],
 	// A must be completely finished before B_i can be safely called. This means we cannot
