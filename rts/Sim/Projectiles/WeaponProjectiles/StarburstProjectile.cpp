@@ -14,8 +14,10 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Sync/SyncTracer.h"
+#include "System/Color.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
+#include "System/TimeProfiler.h"
 
 const float CStarburstProjectile::SMOKE_TIME = 70.0f;
 
@@ -99,6 +101,7 @@ CStarburstProjectile::CStarburstProjectile(
 	drawTrail = (camDist >= 200.0f);
 	drawRadius = maxSpeed * 8.0f;
 
+	memset(tracerPartMem, 0, sizeof(TracerPart) * sizeof(tracerPartMem));
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		tracerParts[a] = &tracerPartMem[a];
 		tracerParts[a]->dir = dir;
@@ -313,9 +316,6 @@ void CStarburstProjectile::Draw()
 {
 	inArray = true;
 
-	unsigned char col[4];
-	unsigned char col2[4];
-
 	if (weaponDef->visuals.smokeTrail) {
 		const int curNumParts = GML::SimEnabled() ? *(volatile int*) &numParts : numParts;
 
@@ -332,14 +332,14 @@ void CStarburstProjectile::Draw()
 			const float3 dir2 = (dif2.cross(oldSmokeDir)).ANormalize();
 
 			const float a1 =
-				((1.0f - (0.0f / SMOKE_TIME)) * 255) *
+				((1.0f - (0.0f / SMOKE_TIME))) *
 				(0.7f + math::fabs(dif1.dot(dir)));
 			const float a2 =
 				(age < 8)? 0.0f:
-				((1.0f - (age2 / SMOKE_TIME)) * 255) *
+				((1.0f - (age2 / SMOKE_TIME))) *
 				(0.7f + math::fabs(dif2.dot(oldSmokeDir)));
-			const int alpha1 = std::min(255, (int) std::max(0.0f, a1));
-			const int alpha2 = std::min(255, (int) std::max(0.0f, a2));
+			const float alpha1 = Clamp(a1, 0.0f, 1.0f);
+			const float alpha2 = Clamp(a2, 0.0f, 1.0f);
 
 			const float size1 = 1.0f;
 			const float size2 = (1.0f + age2 * (1.0f / SMOKE_TIME) * 7.0f);
@@ -349,15 +349,8 @@ void CStarburstProjectile::Draw()
 				(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) *
 				(age2 / 8.0f);
 
-			col[0] = (color * alpha1);
-			col[1] = (color * alpha1);
-			col[2] = (color * alpha1);
-			col[3] = alpha1;
-
-			col2[0] = (color * alpha2);
-			col2[1] = (color * alpha2);
-			col2[2] = (color * alpha2);
-			col2[3] = alpha2;
+			SColor col (color * alpha1, color * alpha1, color * alpha1, alpha1);
+			SColor col2(color * alpha2, color * alpha2, color * alpha2, alpha2);
 
 			va->AddVertexQTC(drawPos  - dir1 * size1, txs,                               weaponDef->visuals.texture2->ystart, col);
 			va->AddVertexQTC(drawPos  + dir1 * size1, txs,                               weaponDef->visuals.texture2->yend,   col);
@@ -368,14 +361,10 @@ void CStarburstProjectile::Draw()
 			const float dist = pos.distance(oldSmoke);
 			const float3 dirpos1 = pos - dir * dist * 0.33f;
 			const float3 dirpos2 = oldSmoke + oldSmokeDir * dist * 0.33f;
+			const SColor col(color, color, color);
 
 			for (int a = 0; a < curNumParts; ++a) {
-				//! CAUTION: loop count must match EnlargeArrays above
-				col[0] = (color * 255);
-				col[1] = (color * 255);
-				col[2] = (color * 255);
-				col[3] = 255;
-
+				// CAUTION: loop count must match EnlargeArrays above
 				const float size = 1 + (a * (1.0f / SMOKE_TIME) * 7.0f);
 				const float3 pos1 = CalcBeizer((float)a / curNumParts, pos, dirpos1, dirpos2, oldSmoke);
 

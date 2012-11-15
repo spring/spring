@@ -93,7 +93,6 @@ namespace terrain {
 
 	void RenderDataManager::UpdateRect(int sx, int sy,int w,int h)
 	{
-		std::vector<QuadRenderData*> remain;
 		for (size_t a = 0; a < qrd.size(); a++)
 		{
 			QuadRenderData* rd = qrd[a];

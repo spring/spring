@@ -30,7 +30,7 @@ public:
 		if ((pos + sizeof(T)) > pckt->length) {
 			throw UnpackPacketException("Unpack failure (type)");
 		}
-		t = *(T*)(pckt->data + pos);
+		t = *reinterpret_cast<T*>(pckt->data + pos);
 		pos += sizeof(T);
 	}
 

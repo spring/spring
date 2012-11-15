@@ -28,6 +28,9 @@ union SColor
 	struct { boost::uint8_t r, g, b, a; };
 	/// The color as a single 32bit value
 	boost::uint32_t i;
+
+	operator const unsigned char* () const { return &r; }
+	operator unsigned char* () { return &r; }
 };
 
 #endif // _COLOR_H

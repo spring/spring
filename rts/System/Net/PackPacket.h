@@ -31,7 +31,7 @@ public:
 	PackPacket& operator<<(const T& t) {
 		unsigned size = sizeof(T);
 		assert((size + pos) <= length);
-		*(T*)(data + pos) = t;
+		*reinterpret_cast<T*>(data + pos) = t;
 		pos += size;
 		return *this;
 	}
@@ -40,7 +40,7 @@ public:
 
 	template <typename element>
 	PackPacket& operator<<(const std::vector<element>& vec) {
-		const size_t size = vec.size()* sizeof(element);
+		const size_t size = vec.size() * sizeof(element);
 		assert((size + pos) <= length);
 		if (size > 0) {
 			std::memcpy((data+pos), (void*)(&vec[0]), size);
