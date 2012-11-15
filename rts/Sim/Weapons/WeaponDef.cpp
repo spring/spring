@@ -263,7 +263,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	if (!paralyzer)
 		damages.paralyzeDamageTime = 0;
 
-	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", shieldRechargeDelay) * GAME_SPEED);
+	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
 	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
 
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
