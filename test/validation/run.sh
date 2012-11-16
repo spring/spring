@@ -13,7 +13,9 @@ if [ -s $COREFILE ]; then
 	(
 		echo file $SPRING
 		echo core-file $COREFILE
+		echo info program
 		echo bt full
+		echo 'call malloc_stats()'
 		echo quit
 	)>$GDBCMDS
 	gdb -batch -x $GDBCMDS
