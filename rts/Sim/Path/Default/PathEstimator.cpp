@@ -750,14 +750,11 @@ void CPathEstimator::FinishSearch(const MoveDef& moveDef, IPath::Path& foundPath
 	while (block.x != startBlock.x || block.y != startBlock.y) {
 		const int blockIdx = block.y * nbrOfBlocksX + block.x;
 
-		{
-			// use offset defined by the block
-			const int xBSquare = blockStates.peNodeOffsets[blockIdx][moveDef.pathType].x;
-			const int zBSquare = blockStates.peNodeOffsets[blockIdx][moveDef.pathType].y;
-			const float3& pos = SquareToFloat3(xBSquare, zBSquare);
+		// use offset defined by the block
+		int2 bsquare = blockStates.peNodeOffsets[blockIdx][moveDef.pathType];
+		const float3& pos = SquareToFloat3(bsquare.x, bsquare.y);
 
-			foundPath.path.push_back(pos);
-		}
+		foundPath.path.push_back(pos);
 
 		// next step backwards
 		block = blockStates.peParentNodePos[blockIdx];
