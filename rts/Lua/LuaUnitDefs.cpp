@@ -311,6 +311,17 @@ static int WeaponDefToID(lua_State* L, const void* data)
 }
 
 
+static int WeaponDefToName(lua_State* L, const void* data)
+{
+	const WeaponDef* wd = *((const WeaponDef**)data);
+	if (wd == NULL) {
+		return 0;
+	}
+	lua_pushsstring(L, wd->name);
+	return 1;
+}
+
+
 static int SafeIconType(lua_State* L, const void* data)
 {
 	// the iconType is unsynced because LuaUI has SetUnitDefIcon()
@@ -660,10 +671,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_STRING("wreckName", ud.wreckName);
 
-	assert(ud.deathExpWeaponDef);
-	assert(ud.selfdExpWeaponDef);
-	ADD_STRING("deathExplosion", ud.deathExpWeaponDef->name);
-	ADD_STRING("selfDExplosion", ud.selfdExpWeaponDef->name);
+	ADD_FUNCTION("deathExplosion", ud.deathExpWeaponDef, WeaponDefToName);
+	ADD_FUNCTION("selfDExplosion", ud.selfdExpWeaponDef, WeaponDefToName);
 
 	ADD_STRING("buildpicname", ud.buildPicName);
 
