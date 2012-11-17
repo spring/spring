@@ -231,7 +231,7 @@ struct LocalModel
 		pieces.clear();
 	}
 
-	LocalModelPiece* GetPiece(unsigned int i) const { return pieces[i]; }
+	LocalModelPiece* GetPiece(unsigned int i) const { return (i < pieces.size()) ?  pieces[i] : NULL; }
 	LocalModelPiece* GetRoot() const { return GetPiece(0); }
 
 	void Draw() const { DrawPieces(); }
