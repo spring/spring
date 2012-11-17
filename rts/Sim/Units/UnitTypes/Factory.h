@@ -42,6 +42,11 @@ public:
 	void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
 	bool ChangeTeam(int newTeam, ChangeType type);
 
+private:
+	void SendToEmptySpot(CUnit* unit);
+	void AssignBuildeeOrders(CUnit* unit);
+
+public:
 	float buildSpeed;
 
 	/// whether we are currently opening in preparation to start building
@@ -56,15 +61,18 @@ public:
 		FACTORY_NEXT_BUILD_ORDER = 2,
 	};
 
-private:
-	void SendToEmptySpot(CUnit* unit);
-	void AssignBuildeeOrders(CUnit* unit);
+	int curBuildPower; //< bitmask use `count_bits_set(curBuildPower) / float(UNIT_SLOWUPDATE_RATE)` to convert to 0..1
+	std::vector<int> nanoPieces;
 
+private:
 	int nextBuildUnitDefID;
 	int lastBuildUpdateFrame;
 
 	FinishBuildCallBackFunc finishedBuildFunc;
 	Command finishedBuildCommand;
+
+	int lastNanoPieceCnt;
+
 };
 
 #endif // _FACTORY_H
