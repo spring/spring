@@ -35,8 +35,11 @@ CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
 	CR_MEMBER(opening),
 	CR_MEMBER(curBuild),
+	CR_MEMBER(curBuildPower),
 	CR_MEMBER(nextBuildUnitDefID),
 	CR_MEMBER(lastBuildUpdateFrame),
+	CR_MEMBER(nanoPieces),
+	CR_MEMBER(lastNanoPieceCnt),
 	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -50,9 +53,11 @@ CFactory::CFactory():
 	opening(false),
 	curBuildDef(NULL),
 	curBuild(NULL),
+	curBuildPower(0),
 	nextBuildUnitDefID(-1),
 	lastBuildUpdateFrame(-1),
-	finishedBuildFunc(NULL)
+	finishedBuildFunc(NULL),
+	lastNanoPieceCnt(0)
 {
 }
 
@@ -100,6 +105,8 @@ float3 CFactory::CalcBuildPos(int buildPiece)
 
 void CFactory::Update()
 {
+	curBuildPower >>= 1;
+
 	if (beingBuilt) {
 		// factory is under construction, cannot build anything yet
 		CUnit::Update();
@@ -456,7 +463,38 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 
 void CFactory::CreateNanoParticle(bool highPriority)
 {
-	const int piece = script->QueryNanoPiece();
+	assert(UNIT_SLOWUPDATE_RATE == 16);
+	curBuildPower |= 1 << 15;
+
+	int piece = -1;
+	if (!nanoPieces.empty()) {
+		const unsigned cnt = nanoPieces.size();
+		const unsigned rnd = gs->randInt();
+		piece = nanoPieces[rnd % cnt];
+	}
+
+	//if (lastNanoPieceCnt <= 30) { // only do so 30 times and then use the cache
+		const int p = script->QueryNanoPiece();
+		if (p >= 0) {
+			piece = p;
+
+			bool found = false;
+			for (std::vector<int>::const_iterator it = nanoPieces.begin(); it != nanoPieces.end(); ++it) {
+				if (piece == *it) {
+					lastNanoPieceCnt++;
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				nanoPieces.push_back(piece);
+				lastNanoPieceCnt = 0;
+			}
+		} else {
+			lastNanoPieceCnt++;
+		}
+	//}
 
 #ifdef USE_GML
 	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))

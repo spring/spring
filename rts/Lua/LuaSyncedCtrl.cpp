@@ -153,6 +153,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
+	REGISTER_LUA_CFUNC(SetUnitNanoPieces);
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
 	REGISTER_LUA_CFUNC(SetUnitCrashing);
 	REGISTER_LUA_CFUNC(SetUnitShieldState);
@@ -1510,6 +1511,43 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 	if (lua_isnumber(L, 7)) {
 		builder->terraformSpeed = buildScale * max(0.0f, lua_tofloat(L, 7));
 	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitNanoPieces(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	std::vector<int>* pieces = NULL;
+	{
+		CBuilder* builder = dynamic_cast<CBuilder*>(unit);
+		if (builder) {
+			pieces = &builder->nanoPieces;
+		}
+		CFactory* factory = dynamic_cast<CFactory*>(unit);
+		if (factory) {
+			pieces = &factory->nanoPieces;
+		}
+	}
+
+	pieces->clear();
+	luaL_checktype(L, 2, LUA_TTABLE);
+	for (lua_pushnil(L); lua_next(L, 2) != 0; lua_pop(L, 1)) {
+		if (lua_israwnumber(L, -1)) {
+			const int piecenum  = lua_toint(L, -1) - 1;
+			const int scriptnum = unit->script->ModelToScript(piecenum);
+			if (scriptnum >= 0) {
+				pieces->push_back(scriptnum);
+			} else {
+				luaL_error(L, "Incorrect piecenum to SetUnitNanoPieces()");
+			}
+		}
+	}
+
 	return 0;
 }
 

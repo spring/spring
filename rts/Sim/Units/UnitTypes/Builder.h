@@ -88,6 +88,10 @@ public:
 	int tx1,tx2,tz1,tz2;
 	float3 terraformCenter;
 	float terraformRadius;
+
+	std::vector<int> nanoPieces;
+	int lastNanoPieceCnt;
+	int curBuildPower; //< bitmask use `count_bits_set(curBuildPower) / float(UNIT_SLOWUPDATE_RATE)` to convert to 0..1
 };
 
 #endif // _BUILDER_H

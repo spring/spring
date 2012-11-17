@@ -105,6 +105,7 @@ public:
 	}
 
 	int ScriptToModel(int scriptnum) const;
+	int ModelToScript(int piecenum) const;
 
 	bool PieceExists(int scriptnum) const {
 		return (GetLocalModelPiece(scriptnum) != NULL);

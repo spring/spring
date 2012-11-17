@@ -61,6 +61,7 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/bitops.h"
 #include "System/myMath.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -212,6 +213,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitVelocity);
 	REGISTER_LUA_CFUNC(GetUnitBuildFacing);
 	REGISTER_LUA_CFUNC(GetUnitIsBuilding);
+	REGISTER_LUA_CFUNC(GetUnitCurrentBuildPower);
+	REGISTER_LUA_CFUNC(GetUnitNanoPieces);
 	REGISTER_LUA_CFUNC(GetUnitTransporter);
 	REGISTER_LUA_CFUNC(GetUnitIsTransporting);
 	REGISTER_LUA_CFUNC(GetUnitShieldState);
@@ -2932,6 +2935,63 @@ int LuaSyncedRead::GetUnitIsBuilding(lua_State* L)
 		return 1;
 	}
 	return 0;
+}
+
+
+int LuaSyncedRead::GetUnitCurrentBuildPower(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const CBuilder* builder = dynamic_cast<CBuilder*>(unit);
+	if (builder) {
+		lua_pushnumber(L, count_bits_set(builder->curBuildPower) / float(UNIT_SLOWUPDATE_RATE));
+		return 1;
+	}
+	const CFactory* factory = dynamic_cast<CFactory*>(unit);
+	if (factory) {
+		lua_pushnumber(L, count_bits_set(factory->curBuildPower) / float(UNIT_SLOWUPDATE_RATE));
+		return 1;
+	}
+	return 0;
+}
+
+
+int LuaSyncedRead::GetUnitNanoPieces(lua_State* L)
+{
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const std::vector<int>* pieces = NULL;
+	{
+		const CBuilder* builder = dynamic_cast<const CBuilder*>(unit);
+		if (builder) {
+			pieces = &builder->nanoPieces;
+		}
+		const CFactory* factory = dynamic_cast<const CFactory*>(unit);
+		if (factory) {
+			pieces = &factory->nanoPieces;
+		}
+	}
+
+	if (pieces == NULL) {
+		return 0;
+	}
+
+	lua_createtable(L, pieces->size(), 0);
+	for (size_t p = 0; p < pieces->size(); p++) {
+		const int scriptnum = (*pieces)[p];
+		const int piecenum  = unit->script->ScriptToModel(scriptnum) + 1;
+
+		lua_pushnumber(L, p + 1);
+		lua_pushnumber(L, piecenum);
+		lua_rawset(L, -3);
+	}
+
+	return 1;
 }
 
 

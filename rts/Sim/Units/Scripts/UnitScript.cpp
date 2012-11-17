@@ -1720,3 +1720,20 @@ int CUnitScript::ScriptToModel(int scriptnum) const {
 
 	return -1;
 };
+
+
+int CUnitScript::ModelToScript(int piecenum) const {
+	const LocalModelPiece* p = unit->localModel->GetPiece(piecenum);
+
+	if (p == NULL)
+		return -1;
+
+	int i = 0;
+	const std::vector<LocalModelPiece*>& scriptpieces = pieces;
+
+	for (std::vector<LocalModelPiece*>::const_iterator pm = scriptpieces.begin(); pm != scriptpieces.end(); ++pm, ++i) {
+		if (p == *pm) return i;
+	}
+
+	return -1;
+};

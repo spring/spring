@@ -58,6 +58,9 @@ CR_REG_METADATA(CBuilder, (
 				CR_MEMBER(terraformCenter),
 				CR_MEMBER(terraformRadius),
 				CR_ENUM_MEMBER(terraformType),
+				CR_MEMBER(lastNanoPieceCnt),
+				CR_MEMBER(nanoPieces),
+				CR_MEMBER(curBuildPower),
 				CR_RESERVED(12),
 				CR_POSTLOAD(PostLoad)
 				));
@@ -92,7 +95,9 @@ CBuilder::CBuilder():
 	tz1(0),
 	tz2(0),
 	terraformCenter(0,0,0),
-	terraformRadius(0)
+	terraformRadius(0),
+	lastNanoPieceCnt(0),
+	curBuildPower(0)
 {
 }
 
@@ -142,7 +147,7 @@ bool CBuilder::CanAssistUnit(const CUnit* u, const UnitDef* def) const
 
 bool CBuilder::CanRepairUnit(const CUnit* u) const
 {
-	return 
+	return
 		   unitDef->canRepair
 		&& (!u->beingBuilt)
 		&& u->unitDef->repairable && (u->health < u->maxHealth);
@@ -151,6 +156,8 @@ bool CBuilder::CanRepairUnit(const CUnit* u) const
 
 void CBuilder::Update()
 {
+	curBuildPower >>= 1;
+
 	CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
 
 	const CCommandQueue& cQueue = cai->commandQue;
@@ -796,7 +803,38 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 
 void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse, bool highPriority)
 {
-	const int piece = script->QueryNanoPiece();
+	assert(UNIT_SLOWUPDATE_RATE == 16);
+	curBuildPower |= 1 << 15;
+
+	int piece = -1;
+	if (!nanoPieces.empty()) {
+		const unsigned cnt = nanoPieces.size();
+		const unsigned rnd = gs->randInt();
+		piece = nanoPieces[rnd % cnt];
+	}
+
+	//if (lastNanoPieceCnt <= 30) { // only do so 30 times and then use the cache
+		const int p = script->QueryNanoPiece();
+		if (p >= 0) {
+			piece = p;
+
+			bool found = false;
+			for (std::vector<int>::const_iterator it = nanoPieces.begin(); it != nanoPieces.end(); ++it) {
+				if (piece == *it) {
+					lastNanoPieceCnt++;
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				nanoPieces.push_back(piece);
+				lastNanoPieceCnt = 0;
+			}
+		} else {
+			lastNanoPieceCnt++;
+		}
+	//}
 
 #ifdef USE_GML
 	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
