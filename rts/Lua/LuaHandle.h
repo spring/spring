@@ -32,6 +32,7 @@ using std::set;
 #define LUA_HANDLE_ORDER_UNITS_UNSYNCED  1200
 #define LUA_HANDLE_ORDER_GAIA_UNSYNCED   1300
 #define LUA_HANDLE_ORDER_UI              2000
+#define LUA_HANDLE_ORDER_INTRO           3000
 
 
 class CUnit;

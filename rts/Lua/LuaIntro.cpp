@@ -64,7 +64,7 @@ void CLuaIntro::FreeHandler()
 /******************************************************************************/
 
 CLuaIntro::CLuaIntro()
-: CLuaHandle("LuaIntro", LUA_HANDLE_ORDER_UI, true)
+: CLuaHandle("LuaIntro", LUA_HANDLE_ORDER_INTRO, true)
 {
 	LuaIntro = this;
 
