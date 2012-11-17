@@ -66,8 +66,8 @@ private:
 		float speedf;
 		AGEMOD_VECTOR ageMods;
 	};
-	TracerPart *tracerParts[NUM_TRACER_PARTS];
-	TracerPart tracerPartMem[NUM_TRACER_PARTS];
+	size_t curTracerPart;
+	TracerPart tracerParts[NUM_TRACER_PARTS];
 };
 
 #endif /* STARBURST_PROJECTILE_H */
