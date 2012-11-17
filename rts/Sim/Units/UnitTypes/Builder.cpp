@@ -813,7 +813,7 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 		piece = nanoPieces[rnd % cnt];
 	}
 
-	//if (lastNanoPieceCnt <= 30) { // only do so 30 times and then use the cache
+	if (lastNanoPieceCnt <= 30) { // only do so 30 times and then use the cache
 		const int p = script->QueryNanoPiece();
 		if (p >= 0) {
 			piece = p;
@@ -834,7 +834,7 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 		} else {
 			lastNanoPieceCnt++;
 		}
-	//}
+	}
 
 #ifdef USE_GML
 	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
