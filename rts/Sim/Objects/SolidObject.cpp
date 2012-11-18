@@ -55,6 +55,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(isMoving),
 	CR_MEMBER(isUnderWater),
 	CR_MEMBER(isMarkedOnBlockingMap),
+	CR_MEMBER(groundBlockPos),
 
 	CR_MEMBER(speed),
 	CR_MEMBER(residualImpulse),
@@ -137,6 +138,10 @@ void CSolidObject::UnBlock() {
 }
 
 void CSolidObject::Block() {
+	if (isMarkedOnBlockingMap && groundBlockPos == pos) {
+		return;
+	}
+	
 	UnBlock();
 
 	if (!blocking) {
@@ -146,6 +151,7 @@ void CSolidObject::Block() {
 		return;
 	}
 
+	groundBlockPos = pos;
 	groundBlockingObjectMap->AddGroundBlockingObject(this);
 
 	assert(isMarkedOnBlockingMap);
