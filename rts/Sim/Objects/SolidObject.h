@@ -174,6 +174,7 @@ public:
 	bool isMoving;                              ///< = velocity.length() > 0.0
 	bool isUnderWater;                          ///< true if this object is completely submerged (pos + height < 0)
 	bool isMarkedOnBlockingMap;                 ///< true if this object is currently marked on the GroundBlockingMap
+	float3 groundBlockPos;
 
 	float3 speed;                               ///< current velocity vector (length in elmos/frame)
 	float3 residualImpulse;                     ///< Used to sum up external impulses.
