@@ -110,12 +110,12 @@ const char* CSevenZipArchive::GetErrorStr(int err)
 
 CSevenZipArchive::CSevenZipArchive(const std::string& name):
 	CBufferedArchive(name, false),
-	isOpen(false),
 	blockIndex(0xFFFFFFFF),
 	outBuffer(NULL),
 	outBufferSize(0),
 	tempBuf(NULL),
-	tempBufSize(0)
+	tempBufSize(0),
+	isOpen(false)
 {
 	allocImp.Alloc = SzAlloc;
 	allocImp.Free = SzFree;
