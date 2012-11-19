@@ -5,12 +5,14 @@
 
 extern "C" {
 #include "lib/7z/7zFile.h"
-#include "lib/7z/Archive/7z/7zIn.h"
+#include "lib/7z/7z.h"
 };
 
 #include "ArchiveFactory.h"
 #include "BufferedArchive.h"
-
+#include <vector>
+#include <string>
+#include "IArchive.h"
 
 /**
  * Creates LZMA/7zip compressed, single-file archives.
@@ -91,7 +93,12 @@ private:
 		 */
 		int packedSize;
 	};
+	int GetFileName(const CSzArEx* db, int i);
+	const char* GetErrorStr(int res);
+
 	std::vector<FileData> fileData;
+	UInt16 *tempBuf;
+	size_t tempBufSize;
 
 	CFileInStream archiveStream;
 	CSzArEx db;
