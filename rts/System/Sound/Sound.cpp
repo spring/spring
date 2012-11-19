@@ -287,6 +287,10 @@ void CSound::StartThread(int maxSounds)
 	{
 		boost::recursive_mutex::scoped_lock lck(soundMutex);
 
+		// alc... will create its own thread it will copy the name from the current thread.
+		// Later we finally rename `our` audio thread.
+		Threading::SetThreadName("openal");
+
 		// NULL -> default device
 		const ALchar* deviceName = NULL;
 		std::string configDeviceName = "";

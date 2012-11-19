@@ -444,6 +444,7 @@ CGame::~CGame()
 void CGame::LoadGame(const std::string& mapName)
 {
 	GML::ThreadNumber(GML_LOAD_THREAD_NUM);
+	Threading::SetThreadName("loading");
 
 	Watchdog::RegisterThread(WDT_LOAD);
 	if (!gu->globalQuit) LoadDefs();
@@ -460,6 +461,7 @@ void CGame::LoadGame(const std::string& mapName)
 		saveFile->LoadGame();
 	}
 
+	Threading::SetThreadName("unknown");
 	Watchdog::DeregisterThread(WDT_LOAD);
 }
 

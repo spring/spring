@@ -143,6 +143,7 @@ void CNetProtocol::Send(const netcode::RawPacket* pkt)
 
 void CNetProtocol::UpdateLoop()
 {
+	Threading::SetThreadName("heartbeat");
 	loading = true;
 	while (loading) {
 		Update();

@@ -283,11 +283,15 @@ bool SpringApp::Initialize()
  */
 bool SpringApp::InitWindow(const char* title)
 {
+	// SDL will cause a creation of gpu-driver thread that will clone its name from the starting threads (= this one = mainthread)
+	Threading::SetThreadName("gpu-driver");
+
 	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
 #ifdef WIN32
 	// the crash reporter should be catching the errors
 	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
 #endif
+
 	if ((SDL_Init(sdlInitFlags) == -1)) {
 		LOG_L(L_FATAL, "Could not initialize SDL: %s", SDL_GetError());
 		return false;
@@ -312,6 +316,8 @@ bool SpringApp::InitWindow(const char* title)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
 
+	// anyone other thread spawned from the main-process should be `unknown`
+	Threading::SetThreadName("unknown");
 	return true;
 }
 
