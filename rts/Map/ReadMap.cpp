@@ -236,9 +236,6 @@ void CReadMap::UpdateDraw()
 			unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap to avoid Optimize() inside a mutex
 	}
 	{
-
-		SCOPED_TIMER("ReadMap::UpdateHeightMapOptimize");
-
 		static bool first = true;
 		if (!first) {
 			if (!unsyncedHeightMapUpdatesTemp.empty()) {
@@ -265,8 +262,6 @@ void CReadMap::UpdateDraw()
 	}
 	// unsyncedHeightMapUpdatesTemp is now guaranteed empty
 
-	SCOPED_TIMER("ReadMap::UpdateHeightMapUnsynced");
-
 	for (ushmuIt = ushmu.begin(); ushmuIt != ushmu.end(); ++ushmuIt) {
 		UpdateHeightMapUnsynced(*ushmuIt);
 	}
@@ -282,8 +277,6 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 		// do not bother with zero-area updates
 		return;
 	}
-
-	SCOPED_TIMER("ReadMap::UpdateHeightMapSynced");
 
 	rect.x1 = std::max(         0, rect.x1 - 1);
 	rect.z1 = std::max(         0, rect.z1 - 1);
