@@ -19,5 +19,11 @@ SET(7zSources
 )
 
 ADD_LIBRARY(7zip STATIC EXCLUDE_FROM_ALL ${7zSources})
-SET_TARGET_PROPERTIES(7zip PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
+
+## FIXME: 7z doesn't compile on old compilers / 32bit (?) with -fPIC
+##   CpuArch.c: In function 'MyCPUID':
+##   CpuArch.c:75:3: error: can't find a register in class 'BREG' while reloading 'asm'
+##   CpuArch.c:75:3: error: 'asm' operand has impossible constraints
+
+#SET_TARGET_PROPERTIES(7zip PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
 
