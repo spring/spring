@@ -110,6 +110,7 @@ const char* CSevenZipArchive::GetErrorStr(int err)
 
 CSevenZipArchive::CSevenZipArchive(const std::string& name):
 	CBufferedArchive(name, false),
+	isOpen(false),
 	blockIndex(0xFFFFFFFF),
 	outBuffer(NULL),
 	outBufferSize(0),
