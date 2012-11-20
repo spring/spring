@@ -18,6 +18,7 @@
 #include "FileSystem.h"
 #include "FileQueryFlags.h"
 #include "System/Util.h"
+#include "System/Platform/Misc.h"
 
 using std::string;
 
@@ -53,6 +54,22 @@ CFileHandler::~CFileHandler()
 
 
 /******************************************************************************/
+
+bool CFileHandler::TryReadFromPWD(const string& fileName)
+{
+	const std::string fullpath(Platform::GetOrigCWD() + fileName);
+	ifs = new std::ifstream(fullpath.c_str(), std::ios::in | std::ios::binary);
+	if (ifs && !ifs->bad() && ifs->is_open()) {
+		ifs->seekg(0, std::ios_base::end);
+		fileSize = ifs->tellg();
+		ifs->seekg(0, std::ios_base::beg);
+		return true;
+	}
+	delete ifs;
+	ifs = NULL;
+	return false;
+}
+
 
 bool CFileHandler::TryReadFromRawFS(const string& fileName)
 {
@@ -111,6 +128,7 @@ void CFileHandler::TryReadContent(const string& fileName, const string& modes)
 		if ((c[0] == SPRING_VFS_MOD[0])  && TryReadFromModFS(fileName))  break;
 		if ((c[0] == SPRING_VFS_MAP[0])  && TryReadFromMapFS(fileName))  break;
 		if ((c[0] == SPRING_VFS_BASE[0]) && TryReadFromBaseFS(fileName)) break;
+		if ((c[0] == SPRING_VFS_PWD[0])  && TryReadFromPWD(fileName)) break;
 		c++;
 	}
 }

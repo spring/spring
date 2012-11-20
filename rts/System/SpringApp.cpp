@@ -930,14 +930,13 @@ void SpringApp::Startup()
 	else
 	{
 		LOG("Loading startscript from: %s", inputFile.c_str());
-		std::string startscript = inputFile;
-		CFileHandler fh(startscript);
+		CFileHandler fh(inputFile, SPRING_VFS_PWD_ALL);
 		if (!fh.FileExists())
-			throw content_error("Setup-script does not exist in given location: "+startscript);
+			throw content_error("Setup-script does not exist in given location: " + inputFile);
 
 		std::string buf;
 		if (!fh.LoadStringData(buf))
-			throw content_error("Setup-script cannot be read: " + startscript);
+			throw content_error("Setup-script cannot be read: " + inputFile);
 		RunScript(buf);
 	}
 }

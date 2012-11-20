@@ -3,6 +3,7 @@
 #ifndef VFS_MODES_H
 #define VFS_MODES_H
 
+#define SPRING_VFS_PWD  "p"
 #define SPRING_VFS_RAW  "r"
 #define SPRING_VFS_MOD  "M"  // currently equivalent to SPRING_VFS_ZIP
 #define SPRING_VFS_MAP  "m"  // currently equivalent to SPRING_VFS_ZIP
@@ -14,5 +15,6 @@
 #define SPRING_VFS_RAW_FIRST  SPRING_VFS_RAW  SPRING_VFS_ZIP
 #define SPRING_VFS_ZIP_FIRST  SPRING_VFS_ZIP  SPRING_VFS_RAW
 #define SPRING_VFS_ALL        SPRING_VFS_RAW_FIRST
+#define SPRING_VFS_PWD_ALL    SPRING_VFS_PWD SPRING_VFS_ALL
 
 #endif // VFS_MODES_H
