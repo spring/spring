@@ -5,6 +5,7 @@
 #include "ArchiveScanner.h"
 #include "VFSHandler.h"
 #include "System/Util.h"
+#include "System/Platform/Misc.h"
 
 
 bool FileSystemInitializer::initialized = false;
@@ -13,6 +14,7 @@ void FileSystemInitializer::Initialize()
 {
 	if (!initialized) {
 		try {
+			Platform::SetOrigCWD();
 			dataDirLocater.LocateDataDirs();
 			archiveScanner = new CArchiveScanner();
 			vfsHandler = new CVFSHandler();

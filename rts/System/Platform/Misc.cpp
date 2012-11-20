@@ -8,6 +8,7 @@
 
 #elif WIN32
 #include <io.h>
+#include <direct.h>
 #include <process.h>
 #include <shlobj.h>
 #include <shlwapi.h>
@@ -101,6 +102,26 @@ static std::string GetUserDirFromSystemApi()
 
 namespace Platform
 {
+
+static std::string origCWD;
+
+
+std::string GetOrigCWD()
+{
+	return origCWD;
+}
+
+
+void SetOrigCWD()
+{
+#ifdef WIN32
+	origCWD = _getcwd(NULL, 0);
+#else
+	origCWD = getcwd(NULL, 0);
+#endif
+	FileSystemAbstraction::EnsurePathSepAtEnd(origCWD);
+}
+
 
 std::string GetUserDir()
 {

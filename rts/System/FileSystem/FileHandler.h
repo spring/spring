@@ -53,6 +53,7 @@ public:
 private:
 	void TryReadContent(const std::string& fileName, const std::string& modes);
 
+	bool TryReadFromPWD(const std::string& fileName);
 	bool TryReadFromRawFS(const std::string& fileName);
 	bool TryReadFromModFS(const std::string& fileName);
 	bool TryReadFromMapFS(const std::string& fileName);

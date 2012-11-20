@@ -4,6 +4,7 @@
 
 
 #include "System/Exceptions.h"
+#include "System/FileSystem/FileHandler.h"
 #include "System/Net/RawPacket.h"
 #include "Game/GameVersion.h"
 
@@ -13,15 +14,16 @@
 #include <cstring>
 
 CDemoReader::CDemoReader(const std::string& filename, float curTime)
+	: playbackDemo(NULL)
 {
-	playbackDemo.open(filename.c_str(), std::ios::binary);
+	playbackDemo = new CFileHandler(filename, SPRING_VFS_PWD_ALL);
 
-	if (!playbackDemo.is_open()) {
+	if (!playbackDemo->FileExists()) {
 		// file not found -> exception
 		throw user_error(std::string("Demofile not found: ")+filename);
 	}
 
-	playbackDemo.read((char*)&fileHeader, sizeof(fileHeader));
+	playbackDemo->Read((char*)&fileHeader, sizeof(fileHeader));
 	fileHeader.swab();
 
 	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic))
@@ -41,20 +43,20 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 
 	if (fileHeader.scriptSize != 0) {
 		char* buf = new char[fileHeader.scriptSize];
-		playbackDemo.read(buf, fileHeader.scriptSize);
+		playbackDemo->Read(buf, fileHeader.scriptSize);
 		setupScript = std::string(buf, fileHeader.scriptSize);
 		delete[] buf;
 	}
 
-	playbackDemo.read((char*)&chunkHeader, sizeof(chunkHeader));
+	playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader));
 	chunkHeader.swab();
 
 	demoTimeOffset = curTime - chunkHeader.modGameTime - 0.1f;
 	nextDemoReadTime = curTime - 0.01f;
 
-	long curPos = playbackDemo.tellg();
-	playbackDemo.seekg(0, std::ios::end);
-	playbackDemoSize = playbackDemo.tellg();
+	long curPos = playbackDemo->GetPos();
+	playbackDemo->Seek(0, std::ios::end);
+	playbackDemoSize = playbackDemo->GetPos();
 	if (fileHeader.demoStreamSize != 0) {
 		bytesRemaining = fileHeader.demoStreamSize;
 	}
@@ -65,8 +67,15 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		// (if this had still used CFileHandler that would have been easier ;-))
 		bytesRemaining = playbackDemoSize - curPos;
 	}
-	playbackDemo.seekg(curPos);
+	playbackDemo->Seek(curPos);
 }
+
+
+CDemoReader::~CDemoReader()
+{
+	delete playbackDemo;
+}
+
 
 netcode::RawPacket* CDemoReader::GetData(float readTime)
 {
@@ -78,20 +87,20 @@ netcode::RawPacket* CDemoReader::GetData(float readTime)
 	// check needed
 	if (readTime >= nextDemoReadTime) {
 		netcode::RawPacket* buf = new netcode::RawPacket(chunkHeader.length);
-		playbackDemo.read((char*)(buf->data), chunkHeader.length);
+		playbackDemo->Read((char*)(buf->data), chunkHeader.length);
 		bytesRemaining -= chunkHeader.length;
 
-		if (bytesRemaining > 0 && !playbackDemo.eof()) {
-			long curPos = playbackDemo.tellg();
+		if (bytesRemaining > 0 && !playbackDemo->Eof()) {
+			long curPos = playbackDemo->GetPos();
 			if (readTime == nextDemoReadTime) {
-				playbackDemo.seekg(0, std::ios::end);
-				if (playbackDemoSize != playbackDemo.tellg())
+				playbackDemo->Seek(0, std::ios::end);
+				if (playbackDemoSize != playbackDemo->GetPos())
 					readTime = -nextDemoReadTime;
-				playbackDemo.seekg(curPos);
+				playbackDemo->Seek(curPos);
 			}
 			if (curPos < playbackDemoSize) {
 				// read next chunk header
-				playbackDemo.read((char*)&chunkHeader, sizeof(chunkHeader));
+				playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader));
 				chunkHeader.swab();
 				nextDemoReadTime = chunkHeader.modGameTime + demoTimeOffset;
 				bytesRemaining -= sizeof(chunkHeader);
@@ -106,8 +115,8 @@ netcode::RawPacket* CDemoReader::GetData(float readTime)
 
 bool CDemoReader::ReachedEnd()
 {
-	if (bytesRemaining <= 0 || playbackDemo.eof() ||
-		(playbackDemo.tellg() > playbackDemoSize) )
+	if (bytesRemaining <= 0 || playbackDemo->Eof() ||
+		(playbackDemo->GetPos() > playbackDemoSize) )
 		return true;
 	else
 		return false;
@@ -121,8 +130,8 @@ void CDemoReader::LoadStats()
 		return;
 	}
 
-	const int curPos = playbackDemo.tellg();
-	playbackDemo.seekg(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
+	const int curPos = playbackDemo->GetPos();
+	playbackDemo->Seek(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
 
 	winningAllyTeams.clear();
 	playerStats.clear();
@@ -130,13 +139,13 @@ void CDemoReader::LoadStats()
 
 	for (int allyTeamNum = 0; allyTeamNum < fileHeader.winningAllyTeamsSize; ++allyTeamNum) {
 		unsigned char winnerAllyTeam;
-		playbackDemo.read((char*) &winnerAllyTeam, sizeof(unsigned char));
+		playbackDemo->Read((char*) &winnerAllyTeam, sizeof(unsigned char));
 		winningAllyTeams.push_back(winnerAllyTeam);
 	}
 
 	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum) {
 		PlayerStatistics buf;
-		playbackDemo.read((char*) &buf, sizeof(buf));
+		playbackDemo->Read((char*) &buf, sizeof(buf));
 		buf.swab();
 		playerStats.push_back(buf);
 	}
@@ -145,17 +154,17 @@ void CDemoReader::LoadStats()
 		teamStats.resize(fileHeader.numTeams);
 		// Read the array containing the number of team stats for each team.
 		std::vector<int> numStatsPerTeam(fileHeader.numTeams, 0);
-		playbackDemo.read((char*) (&numStatsPerTeam[0]), numStatsPerTeam.size());
+		playbackDemo->Read((char*) (&numStatsPerTeam[0]), numStatsPerTeam.size());
 
 		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum) {
 			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i) {
 				TeamStatistics buf;
-				playbackDemo.read((char*) &buf, sizeof(buf));
+				playbackDemo->Read((char*) &buf, sizeof(buf));
 				buf.swab();
 				teamStats[teamNum].push_back(buf);
 			}
 		}
 	}
 
-	playbackDemo.seekg(curPos);
+	playbackDemo->Seek(curPos);
 }
