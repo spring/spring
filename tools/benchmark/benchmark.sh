@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+set -e
 
 TESTRUNS=4
 
@@ -11,28 +13,33 @@ SCRIPT="script_benchmark.txt"
 #SCRIPT="demos/20121114_033937_TheHunters-v3_91.0.1-368-gbca8185 develop.sdf"
 #DEMOFILE="$SCRIPT"
 
-for (( i=1; i <= TESTRUNS; i++ )); do
-	if (( (i % 2) > 0 )); then
-		CMD=$CMD1
-	else
-		CMD=$CMD2
-	fi
+PREFIX=$PWD/bench_results_$(date +"%Y-%m-%d_%k-%M-%S")
 
-	if (( i == 1)); then
-		$CMD "$SCRIPT" &
-		CPID=$!
-		sleep 10s
-		DEMOFILE=`lsof -p $CPID -Fn | grep demos | cut -c2-`
-	else
-		$CMD "$DEMOFILE" &
-		CPID=$!
-	fi
+
+if ! [ -s "$DEMOFILE" ]; then
+	echo Creating demo
+	$CMD1 "$SCRIPT" >/dev/null 2>&1 &
+	CPID=$!
+	sleep 10s
+	DEMOFILE=`lsof -p $CPID -Fn | grep demos | cut -c2-`
+	echo demo file: $DEMOFILE
 	wait $CPID
+fi
 
-	./plot
-	mkdir "bench_results${i}"
-	mv benchmark.data "bench_results${i}/"
-	mv bench*.png "bench_results${i}/"
+
+mkdir "$PREFIX"
+cp -v "$DEMOFILE" "$PREFIX/benchmark.sdf"
+mv benchmark.data "$PREFIX/data-0-cmd1.data"
+
+for (( i=1; i <= TESTRUNS; i++ )); do
+	echo Round $i/$TESTRUNS
+
+	$CMD1 "$DEMOFILE" >/dev/null 2>&1
+	mv benchmark.data "$PREFIX/data-${i}-cmd1.data"
+
+	$CMD2 "$DEMOFILE" >/dev/null 2>&1
+	mv benchmark.data "$PREFIX/data-${i}-cmd1.data"
 done
 
-./plot_mass.sh $TESTRUNS
+#./plot
+#./plot_mass.sh $TESTRUNS
