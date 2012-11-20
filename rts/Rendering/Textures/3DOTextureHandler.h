@@ -10,7 +10,6 @@
 #include "System/float4.h"
 
 struct TexFile;
-class CFileHandler;
 
 class C3DOTextureHandler
 {

@@ -11,7 +11,6 @@
 
 struct TexFile;
 struct S3DModel;
-class CFileHandler;
 
 class CS3OTextureHandler
 {

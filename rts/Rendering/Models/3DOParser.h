@@ -13,7 +13,6 @@
 
 
 class CMatrix44f;
-class CFileHandler;
 
 struct S3DOVertex {
 	float3 pos;
