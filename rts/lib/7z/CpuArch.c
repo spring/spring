@@ -1,5 +1,5 @@
 /* CpuArch.c -- CPU specific code
-2010-10-26: Igor Pavlov : Public domain */
+2012-05-29: Igor Pavlov : Public domain */
 
 #include "CpuArch.h"
 
@@ -7,6 +7,10 @@
 
 #if (defined(_MSC_VER) && !defined(MY_CPU_AMD64)) || defined(__GNUC__)
 #define USE_ASM
+#endif
+
+#if !defined(USE_ASM) && _MSC_VER >= 1500
+#include <intrin.h>
 #endif
 
 #if defined(USE_ASM) && !defined(MY_CPU_AMD64)
@@ -73,9 +77,17 @@ static void MyCPUID(UInt32 function, UInt32 *a, UInt32 *b, UInt32 *c, UInt32 *d)
   #else
 
   __asm__ __volatile__ (
+  #if defined(MY_CPU_X86) && defined(__PIC__)
+    "mov %%ebx, %%edi;"
+    "cpuid;"
+    "xchgl %%ebx, %%edi;"
+    : "=a" (*a) ,
+      "=D" (*b) ,
+  #else
     "cpuid"
     : "=a" (*a) ,
       "=b" (*b) ,
+  #endif
       "=c" (*c) ,
       "=d" (*d)
     : "0" (function)) ;
