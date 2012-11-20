@@ -10,8 +10,8 @@ namespace Platform
 {
 
 /**
- * Returns the path to the original PWD/CWD dir from where the user start the execution.
- * We change the CWD to spring's write-dir (most of the time it's the home-dir), so we need to cache it.
+ * Returns the path to the original PWD/CWD dir from where the user started the execution.
+ * For security reasons we change the CWD to Spring's write-dir (most of the time it's the home-dir), so we need to cache the PWD/CWD.
  * @return path to the CWD, with trailing path separator
  */
 std::string GetOrigCWD();
