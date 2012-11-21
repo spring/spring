@@ -366,8 +366,6 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 #ifndef BITMAP_NO_OPENGL
 const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 {
-	ScopedTimer timer("Textures::CBitmap::CreateTexture");
-
 	if (type == BitmapTypeDDS) {
 		return CreateDDSTexture(0, mipmaps);
 	}
