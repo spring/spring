@@ -1468,8 +1468,6 @@ void CGame::StartPlaying()
 void CGame::SimFrame() {
 	ENTER_SYNCED_CODE();
 
-	ScopedTimer cputimer("Game::SimFrame", true); // SimFrame
-
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = spring_gettime();
 
@@ -1479,9 +1477,10 @@ void CGame::SimFrame() {
 	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
 #endif
 
-	eventHandler.GameFrame(gs->frameNum);
-
 	if (!skipping) {
+		ScopedTimer cputimer("Game::SimFrame_Unsynced", true); // SimFrame
+
+		// everything here is unsynced and should ideally moved to Game::Update()
 		infoConsole->Update();
 		waitCommandsAI.Update();
 		geometricObjects->Update();
@@ -1498,8 +1497,9 @@ void CGame::SimFrame() {
 
 	// everything from here is simulation
 	// don't use SCOPED_TIMER here because this is the only timer needed always
-	ScopedTimer forced("Game::SimFrame (Update)");
+	ScopedTimer forced("SimFrame");
 
+	eventHandler.GameFrame(gs->frameNum);
 	helper->Update();
 	mapDamage->Update();
 	pathManager->Update();
