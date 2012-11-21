@@ -13,15 +13,16 @@ Changes
  - AAI: refactor / fixes
  - fix bug in /aikill
  - removed oscpack
-FIXME - spring-mt is merged into spring (defautl disabled, games can enable it with ...)
+FIXME - spring-mt is merged into spring (default disabled, games can enable it with ...)
 
 AI:
  - Shard update
  - AAI: stability & code fixes
 
 pr-download:
-FIXME ADD ME
-
+ - add --download-engine
+ - fixes / speedups
+ - add c-api to shared lib & use it for pr-downloader
 
 Unitsync
  ! fix return in GetInfoMapSize (#2996)
@@ -151,7 +152,7 @@ Bugfixes:
 Buildprocess:
  - boost 1.50 compatibility
  - detect ld.gold and compress debugsymbols
- - update 7z to v9.20
+ - update 7z to v9.22
 
 Windows:
  - update to boost 1.50
