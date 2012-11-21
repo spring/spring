@@ -53,8 +53,6 @@ namespace CNamedTextures {
 
 	static bool Load(const std::string& texName, unsigned int texID)
 	{
-		ScopedTimer timer("Textures::NamedTextures");
-
 		//! strip off the qualifiers
 		std::string filename = texName;
 		bool border  = false;

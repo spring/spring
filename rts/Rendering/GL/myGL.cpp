@@ -383,8 +383,6 @@ void WorkaroundATIPointSizeBug()
 
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data)
 {
-	ScopedTimer timer("Textures::glBuildMipmaps");
-
 	if (globalRendering->compressTextures) {
 		switch ( internalFormat ) {
 			case 4:

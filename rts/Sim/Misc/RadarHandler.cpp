@@ -85,8 +85,6 @@ CRadarHandler::~CRadarHandler()
 // TODO: add the LosHandler optimizations (instance-sharing)
 void CRadarHandler::MoveUnit(CUnit* unit)
 {
-	SCOPED_TIMER("RadarHandler::MoveUnit");
-
 	if (gs->globalLOS[unit->allyteam])
 		return;
 	if (!unit->hasRadarCapacity)
@@ -140,8 +138,6 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 
 void CRadarHandler::RemoveUnit(CUnit* unit)
 {
-	SCOPED_TIMER("RadarHandler::RemoveUnit");
-
 	if (!unit->hasRadarCapacity) {
 		return;
 	}
