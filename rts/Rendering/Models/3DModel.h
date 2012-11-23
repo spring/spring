@@ -103,6 +103,7 @@ struct S3DModel
 		, invertTexAlpha(false)
 
 		, radius(0.0f)
+		, farTexRadius(0.0f)
 		, height(0.0f)
 
 		, mins(10000.0f, 10000.0f, 10000.0f)
@@ -133,6 +134,7 @@ public:
 	bool invertTexAlpha;    // Invert teamcolor alpha channel in S3O texture 1
 
 	float radius;
+	float farTexRadius;
 	float height;
 
 	float3 mins;

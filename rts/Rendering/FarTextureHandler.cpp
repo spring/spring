@@ -129,7 +129,7 @@ bool CFarTextureHandler::HaveFarIcon(const CSolidObject* obj) const
  */
 void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 {
-	const S3DModel* model = obj->model;
+	S3DModel* model = const_cast<S3DModel*>(obj->model);
 
 	// make space in the std::vectors
 	if (obj->team >= (int)cache.size()) {
@@ -173,11 +173,11 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		texturehandlerS3O->SetS3oTexture(model->textureType);
 	}
 
-	//const float xs = std::max(math::fabs(model->relMidPos.x + model->maxs.x), math::fabs(model->relMidPos.x + model->mins.x));
-	//const float ys = std::max(math::fabs(model->relMidPos.y + model->maxs.y), math::fabs(model->relMidPos.y + model->mins.y));
-	//const float zs = std::max(math::fabs(model->relMidPos.z + model->maxs.z), math::fabs(model->relMidPos.z + model->mins.z));
-	//const float modelradius = std::max(xs, std::max(ys, zs));*/
-	const float modelradius = 1.15f * model->radius;
+	const float xs = std::max(math::fabs(model->relMidPos.x + model->maxs.x), math::fabs(model->relMidPos.x + model->mins.x));
+	const float ys = std::max(math::fabs(model->relMidPos.y + model->maxs.y), math::fabs(model->relMidPos.y + model->mins.y));
+	const float zs = std::max(math::fabs(model->relMidPos.z + model->maxs.z), math::fabs(model->relMidPos.z + model->mins.z));
+	const float modelradius = std::max(xs, std::max(ys, zs));
+	model->farTexRadius = modelradius;
 
 	// overwrite the matrices set by SetupForUnitDrawing
 	// RTT with a top-down view; the view-matrix must be
@@ -247,8 +247,8 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 	const float iconSizeY = float(this->iconSizeY) / texSizeY;
 	const float2 texcoords = GetTextureCoords(farTextureNum - 1, orient);
 
-	const float3 curad = camera->up *    obj->radius;
-	const float3 crrad = camera->right * obj->radius;
+	const float3 curad = camera->up *    obj->model->farTexRadius;
+	const float3 crrad = camera->right * obj->model->farTexRadius;
 
 	va->AddVertexQT(interPos - curad + crrad, texcoords.x, texcoords.y );
 	va->AddVertexQT(interPos + curad + crrad, texcoords.x, texcoords.y + iconSizeY);
