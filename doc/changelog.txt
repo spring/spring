@@ -134,6 +134,7 @@ Misc:
  - add a new GameID tag to script.txt
  - fix performance leak in CSolidObject::Block()
  - search script.txt & demofiles in $PWD
+ ! default enable AllowAdditionalPlayers
 
 Rendering:
  - fix a few OpenGL errors reported by MESA drivers
@@ -141,6 +142,7 @@ Rendering:
  - disable occlusion query in BumpWater it doesn't work and just makes it slower
  - speedup minimap icon rendering * keep units sorted by icon-type in UnitDrawer * use a vertex-array instead of tons of quads
  - move `lastFrameTime` calculation from the end of a drawframe to the beginning this way vsync locktimes are counted to the previous frame time (thx FIXME)
+ ! removal of DepthBufferBits & StencilBufferBits
 
 Bugfixes:
  - fix network connection is not properly closed when an error occurs in pregame (3166)
