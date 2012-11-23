@@ -1,8 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Input/InputHandler.h"
-#include <sstream>
-#include <iostream>
 
 #include <SDL.h>
 #if !defined(HEADLESS)
@@ -198,24 +196,6 @@ bool SpringApp::Initialize()
 	else
 		LOG("OS: 32bit native mode");
 
-	// Rename Threads
-	// We give the process itself the name `unknown`, htop & co. will still show the binary's name.
-	// But all child threads copy by default the name of their parent, so all threads that don't set
-	// their name themselves will show up as 'unknown'.
-	Threading::SetThreadName("unknown");
-#ifdef _OPENMP
-	#pragma omp parallel
-	{
-		int i = omp_get_thread_num();
-		if (i != 0) { // 0 is the source thread
-			std::ostringstream buf;
-			buf << "omp" << i;
-			Threading::SetThreadName(buf.str().c_str());
-			Threading::SetAffinity(1 << i);
-		}
-	}
-#endif
-
 	// Install Watchdog
 	Watchdog::Install();
 	Watchdog::RegisterThread(WDT_MAIN, true);
@@ -262,9 +242,32 @@ bool SpringApp::Initialize()
 	// Lua socket restrictions
 	luaSocketRestrictions = new CLuaSocketRestrictions();
 
+	// OpenMP
+	Threading::SetThreadName("unknown"); // set default threadname
+#ifdef _OPENMP
+	// For latency reason our openmp yield rarely and so eat a lot cputime with idleing.
+	// So it's better we always leave 1 core free for our other threads, drivers & OS
+	if (omp_get_max_threads() > 2)
+		omp_set_num_threads(omp_get_max_threads() - 1); 
+
+	unsigned ompCores = 0;
+	#pragma omp parallel reduction(|:ompCores)
+	{
+		int i = omp_get_thread_num();
+		if (i != 0) { // 0 is the source thread
+			Threading::SetThreadName(IntToString(i, "omp%i"));
+			Threading::SetAffinity(1 << i);
+			ompCores |= 1 << i;
+		}
+	}
+	unsigned nonOmpCores = ~ompCores;
+#else
+	unsigned nonOmpCores = ~0;
+#endif
+
 	// Multithreading & Affinity
 	LOG("CPU Cores: %d", Threading::GetAvailableCores());
-	Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
+	Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity") & nonOmpCores);
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
