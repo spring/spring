@@ -84,12 +84,10 @@
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
-CONFIG(int, DepthBufferBits).defaultValue(24);
-CONFIG(int, StencilBufferBits).defaultValue(8);
-CONFIG(int, FSAALevel).defaultValue(0);
+CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(8);
 CONFIG(int, SmoothLines).defaultValue(2).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
 CONFIG(int, SmoothPoints).defaultValue(2).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
-CONFIG(float, TextureLODBias).defaultValue(0.0f);
+CONFIG(float, TextureLODBias).defaultValue(0.0f).minimumValue(-4.0f).maximumValue(4.0f);
 CONFIG(bool, FixAltTab).defaultValue(false);
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf");
@@ -241,7 +239,7 @@ bool SpringApp::Initialize()
 	// Initialize GLEW
 	LoadExtensions();
 
-	//! check if FSAA init worked fine
+	// check if FSAA init worked fine
 	if (globalRendering->FSAA && !MultisampleVerify())
 		globalRendering->FSAA = 0;
 
@@ -330,7 +328,7 @@ bool SpringApp::SetSDLVideoMode()
 {
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
-	//! w/o SDL_NOFRAME, kde's windowmanager still creates a border (in fullscreen!) and forces a `window`-resize causing a lot of trouble (in the ::SaveWindowPosition)
+	// w/o SDL_NOFRAME, kde's windowmanager still creates a border (in fullscreen!) and forces a `window`-resize causing a lot of trouble (in the ::SaveWindowPosition)
 	sdlflags |= globalRendering->fullScreen ? SDL_FULLSCREEN | SDL_NOFRAME : 0;
 
 	const bool winBorderless = configHandler->GetBool("WindowBorderless");
@@ -339,15 +337,15 @@ bool SpringApp::SetSDLVideoMode()
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); //! enable alpha channel ???
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel ???
 
-	globalRendering->depthBufferBits = configHandler->GetInt("DepthBufferBits");
+	globalRendering->depthBufferBits = 24;
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, globalRendering->depthBufferBits);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->GetInt("StencilBufferBits"));
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	//! FullScreen AntiAliasing
-	globalRendering->FSAA = Clamp(configHandler->GetInt("FSAALevel"), 0, 8);
+	globalRendering->FSAA = configHandler->GetInt("FSAALevel");
 	if (globalRendering->FSAA > 0) {
 		make_even_number(globalRendering->FSAA);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -410,7 +408,7 @@ bool SpringApp::SetSDLVideoMode()
 	}
 
 	//! setup LOD bias factor
-	const float lodBias = Clamp(configHandler->GetFloat("TextureLODBias"), -4.f, 4.f);
+	const float lodBias = configHandler->GetFloat("TextureLODBias");
 	if (math::fabs(lodBias)>0.01f) {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
 	}
@@ -969,8 +967,11 @@ int SpringApp::Update()
 		}
 	}
 
-	VSync.Delay();
-	SDL_GL_SwapBuffers();
+	{
+		ScopedTimer cputimer("SwapBuffers");
+		VSync.Delay();
+		SDL_GL_SwapBuffers();
+	}
 
 	if (globalRendering->FSAA)
 		glDisable(GL_MULTISAMPLE_ARB);
