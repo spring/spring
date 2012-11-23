@@ -41,7 +41,7 @@ void CGame::ClientReadNet()
 		lastCpuUsageTime = gu->gameTime;
 
 		if (playing) {
-			float simCpuUsage = profiler.GetPercent("Game::SimFrame");
+			float simCpuUsage = profiler.GetPercent("SimFrame");
 
 			if (!GML::SimEnabled() || !GML::MultiThreadSim()) // take the minimum drawframes into account, too
 				simCpuUsage += (profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
