@@ -233,6 +233,9 @@ WeaponDef::WeaponDef()
 	collisionFlags = 0;
 	explosionGenerator = NULL;
 	bounceExplosionGenerator = NULL;
+	isShield = false;
+	noAutoTarget = false;
+	onlyForward = false;
 
 	const LuaTable wdTable;
 	WeaponDefs.Load(this, wdTable);
@@ -245,11 +248,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	, collisionFlags(0)
 	, explosionGenerator(NULL)
 	, bounceExplosionGenerator(NULL)
+	, isShield(false)
 {
 	WeaponDefs.Load(this, wdTable);
-
-	noAutoTarget = (manualfire || interceptor || isShield);
-	onlyForward = !turret && (type != "StarburstLauncher");
 
 	if (wdTable.KeyExists("cylinderTargetting"))
 		LOG_L(L_WARNING, "WeaponDef cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).");
@@ -259,9 +260,6 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 	if (wdTable.KeyExists("isShield"))
 		LOG_L(L_WARNING, "WeaponDef isShield is removed. Use weaponType=\"Shield\" instead!");
-
-	if (!paralyzer)
-		damages.paralyzeDamageTime = 0;
 
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
 	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
@@ -311,6 +309,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 			defDamage = 1.0f; //avoid division by zeros
 		}
 		damages.SetDefaultDamage(defDamage);
+
+		if (!paralyzer)
+			damages.paralyzeDamageTime = 0;
 
 		std::map<string, float> dmgs;
 		dmgTable.GetMap(dmgs);
@@ -413,10 +414,14 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		visuals.colorMap = NULL;
 	}
 
+	ParseWeaponSounds(wdTable);
+
 	// custom parameters table
 	wdTable.SubTable("customParams").GetMap(customParams);
 
-	ParseWeaponSounds(wdTable);
+	// internal only
+	noAutoTarget = (manualfire || interceptor || isShield);
+	onlyForward = !turret && (type != "StarburstLauncher");
 }
 
 
