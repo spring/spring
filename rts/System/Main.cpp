@@ -1,19 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 /**
- * Main application class that launches
- * everything else
- */
-
-/**
 	\mainpage
 	This is the documentation of the Spring RTS Engine.
 	http://springrts.com/
 */
 
-#include <sstream>
-#include <boost/system/system_error.hpp>
-#include <boost/bind.hpp>
 
 #include "System/SpringApp.h"
 
@@ -29,8 +21,19 @@
 	#include <SDL_main.h>
 #endif
 
+#ifdef WIN32
+	#include <stdlib.h>
+	#define execv _execv
+	#define setenv(k,v,o) _putenv_s(k,v)
+#endif
 
-void MainFunc(int argc, char** argv, int* ret) {
+
+
+
+int Run(int argc, char* argv[])
+{
+	int ret = -1;
+
 #ifdef __MINGW32__
 	// For the MinGW backtrace() implementation we need to know the stack end.
 	{
@@ -40,39 +43,52 @@ void MainFunc(int argc, char** argv, int* ret) {
 	}
 #endif
 
-	while (!Threading::IsMainThread())
-		;
+	Threading::SetMainThread();
 
 #ifdef USE_GML
 	GML::ThreadNumber(GML_DRAW_THREAD_NUM);
   #if GML_ENABLE_TLS_CHECK
-	if (GML::ThreadNumber() != GML_DRAW_THREAD_NUM) {
+	if (GML::ThreadNumber() != GML_DRAW_THREAD_NUM) { //XXX how does this check relate to TLS??? and how does it relate to the line above???
 		ErrorMessageBox("Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 	}
   #endif
 #endif
 
+	// run
 	try {
 		SpringApp app;
-		*ret = app.Run(argc, argv);
+		ret = app.Run(argc, argv);
 	} CATCH_SPRING_ERRORS
-}
 
-
-
-int Run(int argc, char* argv[])
-{
-	int ret = -1;
-
-	Threading::SetMainThread();
-	MainFunc(argc, argv, &ret);
-
-	//! check if Spring crashed, if so display an error message
+	// check if Spring crashed, if so display an error message
 	Threading::Error* err = Threading::GetThreadError();
 	if (err)
 		ErrorMessageBox("Error in main(): " + err->message, err->caption, err->flags);
 
 	return ret;
+}
+
+static void SetOpenMpEnvVars(char* argv[])
+{
+	// set some performance relevant openmp envvars
+	bool restart = false;
+	/*if (!getenv("OMP_WAIT_POLICY")) {
+		// omp threads will use a spinlock instead of yield'ing when waiting
+		// cause 100% cpu usage in the omp threads
+		setenv("OMP_WAIT_POLICY", "ACTIVE", 1);
+		restart = true;
+	}*/
+	if (!getenv("GOMP_SPINCOUNT")) {
+		// default spinlock time when waiting for new omp tasks is 3ms, increase it (better than active wait policy above)
+		#define MILLISEC "00000"
+		setenv("GOMP_SPINCOUNT", "20" MILLISEC, 1);
+		restart = true;
+	}
+
+	// restart with new envvars
+	if (restart) {
+		execv(argv[0], argv);
+	}
 }
 
 
@@ -87,6 +103,7 @@ int Run(int argc, char* argv[])
  */
 int main(int argc, char* argv[])
 {
+	SetOpenMpEnvVars(argv);
 	return Run(argc, argv);
 }
 
