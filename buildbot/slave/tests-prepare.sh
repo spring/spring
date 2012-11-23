@@ -18,7 +18,8 @@ fi
 
 #install
 cd ${BUILDDIR}
-make install-spring-headless install-pr-downloader demotool unitsyncTest lua2php DESTDIR=${TESTDIR}
+#FIXME: fix and re-add demotool !!! http://springrts.com/phpbb/viewtopic.php?f=22&t=29073
+make install-spring-headless install-pr-downloader unitsyncTest lua2php DESTDIR=${TESTDIR}
 
 # HACK/FIXME force spring to detect install dir as read-only
 chmod 555 ${TESTDIR}/usr/local/share/games/spring
