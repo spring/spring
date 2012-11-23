@@ -66,8 +66,8 @@ fi
 
 # limit to 1.5GB RAM
 ulimit -v 1500000
-# max 15 min cpu time
-ulimit -t 900
+# max 10 min cpu time
+ulimit -t 600
 
 # FIXME: remove old caching files, the client-script would start immediately when they exist
 # maybe a foreign directory for the client is the cleanest way...
