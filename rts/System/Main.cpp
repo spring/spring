@@ -22,6 +22,7 @@
 #endif
 
 #ifdef WIN32
+	#include <stdlib.h>
 	#include <fenv.h>
 	#include <process.h>
 	#define execv _execv
