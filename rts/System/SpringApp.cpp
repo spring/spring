@@ -7,6 +7,8 @@
 	#include <SDL_syswm.h>
 #endif
 
+#include <iostream>
+
 #undef KeyPress
 #undef KeyRelease
 
