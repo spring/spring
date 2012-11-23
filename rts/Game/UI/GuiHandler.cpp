@@ -101,7 +101,7 @@ CGuiHandler::CGuiHandler():
 	autoShowMetal = mapInfo->gui.autoShowMetal;
 
 	useStencil = false;
-	if (GLEW_NV_depth_clamp && configHandler->GetBool("StencilBufferBits")) {
+	if (GLEW_NV_depth_clamp) {
 		GLint stencilBits;
 		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
 		useStencil = (stencilBits >= 1);
