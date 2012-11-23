@@ -10,7 +10,7 @@ return {
 }
 end
 
-local maxframes = 27000 -- run spring 15 minutes (ingame time)
+local maxframes = 36000 -- run spring 20 minutes (ingame time)
 local initialspeed = 120 -- speed at the beginning
 local minunits = 10 -- if fewer than this units are created/destroyed print a warning
 local timer
