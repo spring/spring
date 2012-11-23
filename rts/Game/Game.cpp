@@ -1478,7 +1478,7 @@ void CGame::SimFrame() {
 #endif
 
 	if (!skipping) {
-		ScopedTimer cputimer("Game::SimFrame_Unsynced", true); // SimFrame
+		SCOPED_TIMER("Game::SimFrame_Unsynced");
 
 		// everything here is unsynced and should ideally moved to Game::Update()
 		infoConsole->Update();
@@ -1496,10 +1496,11 @@ void CGame::SimFrame() {
 	}
 
 	// everything from here is simulation
-	// don't use SCOPED_TIMER here because this is the only timer needed always
-	ScopedTimer forced("SimFrame");
-
-	eventHandler.GameFrame(gs->frameNum);
+	{
+		SCOPED_TIMER("EventHandler::GameFrame");
+		eventHandler.GameFrame(gs->frameNum);
+	}
+	SCOPED_TIMER("SimFrame");
 	helper->Update();
 	mapDamage->Update();
 	pathManager->Update();
