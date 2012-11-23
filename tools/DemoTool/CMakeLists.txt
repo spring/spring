@@ -12,10 +12,16 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/src-generated/engine)
 
+ADD_DEFINITIONS(-DTOOLS)
+
 SET(demoToolSpringSources
 	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/PlayerStatistics.cpp
 	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamStatistics.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/FileHandler.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/FileSystem.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/FileSystemAbstraction.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Net/RawPacket.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/Demo.cpp
@@ -34,7 +40,7 @@ IF (MINGW)
 	# To enable console output/force a console window to open
 	SET_TARGET_PROPERTIES(demotool PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
 ENDIF (MINGW)
-TARGET_LINK_LIBRARIES(demotool ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+TARGET_LINK_LIBRARIES(demotool ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 Add_Dependencies(demotool generateVersionFiles)
 
 
