@@ -22,7 +22,8 @@
 #endif
 
 #ifdef WIN32
-	#include <stdlib.h>
+	#include <fenv.h>
+	#include <process.h>
 	#define execv _execv
 	#define setenv(k,v,o) _putenv_s(k,v)
 #endif
