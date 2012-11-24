@@ -34,8 +34,11 @@ def getContents(archives):
 	files=[]
 	for archive in archives:
 		path, prefix=parseArgv(archive)
-		output=subprocess.check_output(["7z","l","-slt", path])
+		output=str(subprocess.check_output(["7z","l","-slt", path]))
 		lines=output.split("\n")
+		if (len(lines)==1): # python 3 hack
+			lines = output.split("\\n")
+		print(lines)
 		for line in lines:
 			isdir=False
 			if line.startswith('Path = '):
