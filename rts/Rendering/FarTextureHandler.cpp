@@ -247,8 +247,8 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 	const float iconSizeY = float(this->iconSizeY) / texSizeY;
 	const float2 texcoords = GetTextureCoords(farTextureNum - 1, orient);
 
-	const float3 curad = camera->up *    obj->radius;
-	const float3 crrad = camera->right * obj->radius;
+	const float3 curad = camera->up *    obj->model->radius;
+	const float3 crrad = camera->right * obj->model->radius;
 
 	va->AddVertexQT(interPos - curad + crrad, texcoords.x, texcoords.y );
 	va->AddVertexQT(interPos + curad + crrad, texcoords.x, texcoords.y + iconSizeY);
