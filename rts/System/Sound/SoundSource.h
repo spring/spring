@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include <al.h>
+#include <AL/al.h>
 #include <boost/noncopyable.hpp>
 
 class IAudioChannel;

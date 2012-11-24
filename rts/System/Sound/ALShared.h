@@ -3,7 +3,7 @@
 #ifndef _AL_SHARED_H_
 #define _AL_SHARED_H_
 
-#include <al.h>
+#include <AL/al.h>
 
 bool CheckError(const char* msg);
 
