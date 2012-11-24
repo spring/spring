@@ -713,12 +713,14 @@ void CGameServer::CheckSync()
 				for (std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
 					int playerNum = s->first;
 #ifdef DEBUG
+					LOG_L(L_ERROR,"%s", str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum).c_str());
 					Message(str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
 #else
 					PrivateMessage(playerNum, str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
 #endif
 				}
 			}
+			SetExitCode(-1);
 		}
 
 		// Remove complete sets (for which all player's checksums have been received).
