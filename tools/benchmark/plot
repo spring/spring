@@ -1,4 +1,5 @@
-#!/usr/bin/gnuplot -persist
+# run with
+# gnuplot -e 'datafile="../../bench_results_2012-11-20_10-46-56/data-0-cmd0.data"' plot
 
 #set terminal jpeg
 set terminal pngcairo enhanced
@@ -10,7 +11,7 @@ set border 3
 #set xrange [10:15]
 
 
-datafile="benchmark.data"
+
 outdir="./"
 
 #set object 1 rect from screen 0, 0 to screen 1, 1 behind fc rgb "black" fillstyle transparent solid 0.1
