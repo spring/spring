@@ -106,17 +106,52 @@ namespace Threading {
 		}
 	}
 
-	unsigned GetAvailableCores()
+	int GetAvailableCores()
 	{
 		// auto-detect number of system threads
-#if (BOOST_VERSION >= 103500)
+	#if (BOOST_VERSION >= 103500)
 		return boost::thread::hardware_concurrency();
-#elif defined(USE_GML)
+	#elif defined(USE_GML)
 		return gmlCPUCount();
-#else
+	#else
 		return 1;
-#endif
+	#endif
 	}
+
+
+	boost::uint32_t GetAvailableCoresMask()
+	{
+		boost::uint32_t systemCores = 0;
+	#if defined(__APPLE__)
+		// no-op
+		systemCores = ~0;
+
+	#elif defined(WIN32)
+		// Get the available cores
+		DWORD curMask;
+		DWORD cpusSystem = 0;
+		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cpusSystem);
+
+		// Create mask
+		systemCores = cpusSystem;
+
+	#else
+		// Get the available cores
+		cpu_set_t cpusSystem; CPU_ZERO(&cpusSystem);
+		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
+
+		// Create mask
+		int numCpus = std::min(CPU_COUNT(&cpusSystem), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
+		for (int n = numCpus - 1; n >= 0; --n) {
+			if (CPU_ISSET(n, &cpusSystem)) {
+				systemCores |= (1 << n);
+			}
+		}
+	#endif
+
+		return systemCores;
+	}
+
 
 	void SetThreadScheduler()
 	{
