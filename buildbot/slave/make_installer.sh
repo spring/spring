@@ -25,7 +25,7 @@ make install DESTDIR=${DEST}
 
 #strip symbols and archive them
 cd ${INSTALLDIR}
-EXECUTABLES="spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll springserver.dll $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll) $(find -name pr-downloader.exe -or -name pr-downloader_shared.dll)"
+EXECUTABLES="spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll springserver.dll $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll) $(find -name pr-downloader.exe -or -name pr-downloader_shared.dll -printf '%f\n')"
 for tostripfile in ${EXECUTABLES}; do
 	if [ -f ${tostripfile} ]; then
 		# dont strip binaries that we processed earlier
