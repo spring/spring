@@ -313,7 +313,7 @@ bool SpringApp::Initialize()
 	Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
 
 #else
-	Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity") & nonOmpCores);
+	Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
 #endif
 
 	// Create CGameSetup and CPreGame objects
