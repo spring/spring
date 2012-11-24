@@ -38,7 +38,6 @@ def getContents(archives):
 		lines=output.split("\n")
 		if (len(lines)==1): # python 3 hack
 			lines = output.split("\\n")
-		print(lines)
 		for line in lines:
 			isdir=False
 			if line.startswith('Path = '):
