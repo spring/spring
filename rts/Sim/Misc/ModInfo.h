@@ -31,7 +31,6 @@ public:
 		, repairEnergyCostFactor(0.0f)
 		, resurrectEnergyCostFactor(0.5f)
 		, captureEnergyCostFactor(0.0f)
-		, unitParalysisDeclineScale(1.0f)
 		, paralyzeOnMaxHealth(true)
 		, transportGround(1)
 		, transportHover(0)
@@ -125,8 +124,6 @@ public:
 	// Capture behaviour
 	/// How much should energy should capture cost, default 0.0
 	float captureEnergyCostFactor;
-
-	float unitParalysisDeclineScale;
 
 	// Paralyze behaviour
 	/// paralyze unit depending on maxHealth? if not depending on current health, default true
