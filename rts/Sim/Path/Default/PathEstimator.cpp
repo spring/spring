@@ -220,7 +220,7 @@ void CPathEstimator::CalculateBlockOffsets(int idx, int thread)
 
 	for (vector<MoveDef*>::iterator mi = moveDefHandler->moveDefs.begin(); mi != moveDefHandler->moveDefs.end(); ++mi) {
 		if ((*mi)->unitDefRefCount > 0) {
-			FindOffset(**mi, x, z);
+			blockStates.peNodeOffsets[idx][(*mi)->pathType] = FindOffset(**mi, x, z);
 		}
 	}
 }
@@ -252,7 +252,7 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 /**
  * Finds a square accessable by the given MoveDef within the given block
  */
-void CPathEstimator::FindOffset(const MoveDef& moveDef, int blockX, int blockZ) {
+int2 CPathEstimator::FindOffset(const MoveDef& moveDef, int blockX, int blockZ) const {
 	//! lower corner position of block
 	const int lowerX = blockX * BLOCK_SIZE;
 	const int lowerZ = blockZ * BLOCK_SIZE;
@@ -302,8 +302,8 @@ void CPathEstimator::FindOffset(const MoveDef& moveDef, int blockX, int blockZ) 
 			CMoveMath::IsBlockedStructureZmax(moveDef, lowerX, lowerZ + z, NULL));
 	}
 
-	// store the offset found
-	blockStates.peNodeOffsets[blockZ * nbrOfBlocksX + blockX][moveDef.pathType] = int2(blockX * BLOCK_SIZE + bestPosX, blockZ * BLOCK_SIZE + bestPosZ);
+	// return the offset found
+	return int2(blockX * BLOCK_SIZE + bestPosX, blockZ * BLOCK_SIZE + bestPosZ);
 }
 
 
@@ -422,26 +422,66 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 void CPathEstimator::Update() {
 	pathCache->Update();
 
-	const unsigned int progressiveUpdates = needUpdate.size() * 0.01f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
-	const unsigned int blocksToUpdate = std::max(BLOCKS_TO_UPDATE, progressiveUpdates);
+	if (needUpdate.empty())
+		return;
 
-	for (unsigned int n = 0; !needUpdate.empty() && n < blocksToUpdate; ) {
+	const unsigned int progressiveUpdates = needUpdate.size() * 0.01f * ((BLOCK_SIZE >= 16)? 1.0f : 0.6f);
+	const int blocksToUpdate = std::max(BLOCKS_TO_UPDATE, progressiveUpdates);
+
+	std::vector<SingleBlock> v;
+	v.reserve(blocksToUpdate);
+
+	// CalculateVertices (not threadsafe)
+	for (int n = 0; !needUpdate.empty() && n < blocksToUpdate; ) {
 		// copy the next block in line
 		const SingleBlock sb = needUpdate.front();
-
-		const unsigned int blockX = sb.block.x;
-		const unsigned int blockZ = sb.block.y;
-		const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
-
 		needUpdate.pop_front();
+
+		const unsigned int blockN = sb.block.y * nbrOfBlocksX + sb.block.x;
 
 		// check if it's not already updated
 		if (blockStates.nodeMask[blockN] & PATHOPT_OBSOLETE) {
+			// no need to check for duplicates, cause FindOffset is deterministic
+			// and so even when we compute it multiple times the result will be the same
+			v.push_back(sb);
+
+			// one stale SingleBlock consumed
+			n++;
+		}
+	}
+
+	// FindOffset (threadsafe)
+	{
+		SCOPED_TIMER("CPathEstimator::FindOffset");
+		#pragma omp parallel for
+		for (int n = 0; n < v.size(); ++n) {
+			// copy the next block in line
+			const SingleBlock sb = v[n];
+
+			const unsigned int blockX = sb.block.x;
+			const unsigned int blockZ = sb.block.y;
+			const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
+
+			const MoveDef* currBlockMD = sb.moveDef;
+
+			blockStates.peNodeOffsets[blockN][currBlockMD->pathType] = FindOffset(*currBlockMD, blockX, blockZ);
+		}
+	}
+
+	// CalculateVertices (not threadsafe)
+	{
+		SCOPED_TIMER("CPathEstimator::CalculateVertices");
+		for (int n = 0; n < v.size(); ++n) {
+			// copy the next block in line
+			const SingleBlock sb = v[n];
+
+			const unsigned int blockX = sb.block.x;
+			const unsigned int blockZ = sb.block.y;
+			const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
+
 			const MoveDef* currBlockMD = sb.moveDef;
 			const MoveDef* nextBlockMD = (needUpdate.empty())? NULL: (needUpdate.front()).moveDef;
 
-			// no, update the block
-			FindOffset(*currBlockMD, blockX, blockZ);
 			CalculateVertices(*currBlockMD, blockX, blockZ);
 
 			// each MapChanged() call adds AT MOST <moveDefs.size()> SingleBlock's
@@ -451,11 +491,10 @@ void CPathEstimator::Update() {
 			if (nextBlockMD == NULL || nextBlockMD->pathType <= currBlockMD->pathType) {
 				blockStates.nodeMask[blockN] &= ~PATHOPT_OBSOLETE;
 			}
-
-			// one stale SingleBlock consumed
-			n++;
 		}
 	}
+
+	v.clear();
 }
 
 
