@@ -119,7 +119,7 @@ private:
 	void CalculateBlockOffsets(int, int);
 	void EstimatePathCosts(int, int);
 
-	void FindOffset(const MoveDef&, int, int);
+	int2 FindOffset(const MoveDef&, int, int) const;
 	void CalculateVertices(const MoveDef&, int, int, int thread = 0);
 	void CalculateVertex(const MoveDef&, int, int, unsigned int, int thread = 0);
 
