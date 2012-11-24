@@ -3,7 +3,7 @@
 #ifndef _EFX_FUNCS_H_
 #define _EFX_FUNCS_H_
 
-#include <al.h>
+#include <AL/al.h>
 #include <efx.h>
 
 //! EFX Function Pointers

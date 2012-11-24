@@ -3,7 +3,7 @@
 #ifndef SOUNDBUFFER_H
 #define SOUNDBUFFER_H
 
-#include <al.h>
+#include <AL/al.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <string>
