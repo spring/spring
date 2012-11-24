@@ -2,6 +2,8 @@
 
 if [ $# -le 0 ]; then
 	echo "Usage: $0 [[file1] file2 ...]"
+	echo "Advanced usage: "
+	echo "$0 ../../bench_results_*/data-{1,2,3,4}-cmd{0,1}.data"
 	exit 1
 fi
 set -e
