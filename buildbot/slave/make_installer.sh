@@ -14,7 +14,11 @@ SEVENZIP="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -m
 ZIP="zip -r9"
 
 MINGWLIBS_PATH=${1}
-MINGW_HOST=i586-mingw32msvc-
+
+#use host from env if set
+if [ -z "$MINGW_HOST" ]; then
+	MINGW_HOST=i586-mingw32msvc-
+fi
 
 cd ${BUILDDIR}
 make install DESTDIR=${DEST}
