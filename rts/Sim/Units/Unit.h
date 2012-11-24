@@ -525,6 +525,8 @@ public:
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
 	bool stunned;
+
+	static float empDecline;
 };
 
 #endif // UNIT_H
