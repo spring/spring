@@ -5,8 +5,8 @@
 
 #include <string>
 #include <map>
-#include <AL/al.h>
-#include <AL/alc.h>
+#include <al.h>
+#include <alc.h>
 #include <efx.h>
 
 struct EAXSfxProps;

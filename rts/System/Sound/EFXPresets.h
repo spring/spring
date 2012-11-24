@@ -6,7 +6,7 @@
 #include <string>
 #include <map>
 #include "System/float3.h"
-#include <AL/al.h>
+#include <al.h>
 #include <efx.h>
 
 
