@@ -9,18 +9,13 @@ Major Changes:
  - much faster Sim (~20%)
  - new cmdline arguments
  - better pathing
-
-Changes
- - don't install crash handler when core dumps are enabled
- - fix "Transport endpoint is not connected"
- - AAI: refactor / fixes
- - fix bug in /aikill
- - removed oscpack
 FIXME - spring-mt is merged into spring (default disabled, games can enable it with ...)
 
 AI:
  - Shard update
  - AAI: stability & code fixes
+ - AAI: refactor / fixes
+ - fix bug in /aikill
 
 pr-download:
  - new --download-engine
@@ -49,7 +44,7 @@ Lua
  - Lua: make Spring.GetPlayerRoster really return a boolean for spectator as the wiki says
  - fix crash when calling Script.Kill() (3292)
  - fix Spring.GetUnitNearestAlly takes self into account (3293)
- - fix UnitDefs[*].model.path
+CHECK - fix UnitDefs[*].model.path
  ! make TeamHandler::IsActiveTeam check Team::isDead
  ! gl.UnitPieceMatrix & gl.UnitPieceMultMatrix do now the same and work from UnitSpace & aren't recursive anymore (don't depend on the parent-piece)
  ! remove LuaLobby
@@ -57,15 +52,16 @@ Lua
  - fix crash in LuaUnitDefs when trying to read deathExpWeaponDef (#3333 & #3325)
 
 CollisionVolumes:
- ! coldet: drop support for ellipsoid-cylinders and ellipsoids
+ ! drop support for ellipsoid-cylinders and ellipsoids
     simplify how damage from an explosion is calculated, fewer magic numbers, etc
     no more distance approximations means no more invincible units (or features)
     and no more general "weird" cases like 3103
     THIS WILL CAUSE BALANCE CHANGES, BE PREPARED
- ! coldet: get rid of TYPE_FOOTPRINT, it was an alias for TYPE_SPHERE in the continuous case which is now default and the original intent (a shape defined by the CSG 	intersection of sphere and footprint) would have been tricky to get right
+ ! get rid of TYPE_FOOTPRINT, it was an alias for TYPE_SPHERE in the continuous case which is now default and the original intent (a shape defined by the CSG 	intersection of sphere and footprint) would have been tricky to get right
     instead support a {Unit,Feature}Def key "useFootPrintCollisionVolume" which
     makes a collision volume a box with dimensions equal to the object's footprint
     (this overrides any custom scaling and/or offsets)
+ ! let projectiles explode _on_ collision volumes and not in a interpolated pos in front of it
 
 Pathing:
  - faster updates
@@ -90,7 +86,8 @@ UnitScripts:
 WeaponDefs:
  ! remove of manualBombSettings (backward-compability code in weapondefs_post.lua)
  ! fix: half craterAreaOfEffect the same way as it is done with damageAreaOfEffect
- ! remove color1 (hue) & color2 (sat). Use rgbColor instead!
+ ! removed color1 (hue) & color2 (sat). Use rgbColor instead!
+ ! removed isShield. Use weaponType="Shield" instead!
 
 FeatureDefs:
  ! remove "nodrawundergray" now that there is a proper "floating" tag
@@ -122,10 +119,8 @@ Rendering:
  ! removal of DepthBufferBits & StencilBufferBits
 
 Sim Bugfixes:
- - fix unload commands close to map edges are ignored (3175)
  ! stop buildframe decaying on reclaiming
- ! let projectiles explode _on_ collision volumes and not in a interpolated pos in front of it
-FIXME revert? 549b6405d30a0a7758c8f1a858989c77ff45bee3
+ - fix unload commands close to map edges are ignored (3175)
 CHECK experimental? 251894116242d18b9430feef27a8275017fb9aee & 19cc83adbfa2de52752c953bbfc9b8271e06628d
  - fix nukes (3269)
  - fix some issues with bombers (3253)
@@ -158,12 +153,13 @@ Bugfixes:
  - extend desync message (send in debugmode for specs too and send correct & got checksum)
  - fix "Transport endpoint is not connected"
  - fix secret exploit
- - fix secret explot #2
+ - fix secret exploit #2
 
 Buildprocess:
  - boost 1.50 compatibility
  - detect ld.gold and compress debugsymbols
  - update 7z to v9.22
+FIXME - spring-mt is merged into spring (default disabled, games can enable it with ...)
 
 OS:
  - set affinity of omp threads
@@ -174,7 +170,7 @@ OS:
 Cmdline Arguments:
  - new --game (-g) & --map (-m)
    - if both parameters are set, this starts spring a with minimal setup and it sets the modoption minimalsetup = 1
-   - supports fuzzy search e.g. `spring -g ba -m Delta` or `spring -g zk -m Delta X`
+   - supports fuzzy search e.g. `spring -g ba -m Delta` or `spring -g zk -m "Delta X"`
  - renamed shortarg -m (--minimised) to -b (~background)
  - new `spring --list-def-tags`, will in future return all Unit-, Weapon-, FeatureDefs in a `--list-config-vars` manner (not finished yet)
  - new benchmark mode (`--benchmark %time_min --benchmarkstart %starttime_min`) writes a benchmark.data parsable by gnuplot
