@@ -39,31 +39,31 @@ local function hs2rgb(h, s)
 
 	local invSat = 1 - s
 
-	if (h > 0.5) then h = h + 0.1; end
-	if (h > 1.0) then h = h - 1.0; end
+	if (h > 0.5) then h = h + 0.1 end
+	if (h > 1.0) then h = h - 1.0 end
 
 	local r = invSat / 2.0
 	local g = invSat / 2.0
 	local b = invSat / 2.0
 
 	if (h < (1.0 / 6.0)) then
-		r = r + s;
-		g = g + s * (h * 6.0);
-	else if (h < (1.0 / 3.0)) then
-		g = g + s;
-		r = r + s * ((1.0 / 3.0 - h) * 6.0);
-	else if (h < (1.0 / 2.0)) then
-		g = g + s;
-		b = b + s * ((h - (1.0 / 3.0)) * 6.0);
-	else if (h < (2.0 / 3.0)) then
-		b = b + s;
-		g = g + s * ((2.0 / 3.0 - h) * 6.0);
-	else if (h < (5.0 / 6.0)) then
-		b = b + s;
-		r = r + s * ((h - (2.0 / 3.0)) * 6.0);
+		r = r + s
+		g = g + s * (h * 6.0)
+	elseif (h < (1.0 / 3.0)) then
+		g = g + s
+		r = r + s * ((1.0 / 3.0 - h) * 6.0)
+	elseif (h < (1.0 / 2.0)) then
+		g = g + s
+		b = b + s * ((h - (1.0 / 3.0)) * 6.0)
+	elseif (h < (2.0 / 3.0)) then
+		b = b + s
+		g = g + s * ((2.0 / 3.0 - h) * 6.0)
+	elseif (h < (5.0 / 6.0)) then
+		b = b + s
+		r = r + s * ((h - (2.0 / 3.0)) * 6.0)
 	else
-		r = r + s;
-		b = b + s * ((3.0 / 3.0 - h) * 6.0);
+		r = r + s
+		b = b + s * ((3.0 / 3.0 - h) * 6.0)
 	end
 
 	return ("%0.3f %0.3f %0.3f"):format(r,g,b)
@@ -83,45 +83,45 @@ local function BackwardCompability(wdName, wd)
     local rendertype = tonumber(wd.rendertype) or 0
 
     if (tobool(wd.dropped)) then
-      wd.weapontype = "AircraftBomb";
+      wd.weapontype = "AircraftBomb"
     elseif (tobool(wd.vlaunch)) then
-      wd.weapontype = "StarburstLauncher";
+      wd.weapontype = "StarburstLauncher"
     elseif (tobool(wd.beamlaser)) then
-      wd.weapontype = "BeamLaser";
+      wd.weapontype = "BeamLaser"
     elseif (tobool(wd.isshield)) then
-      wd.weapontype = "Shield";
+      wd.weapontype = "Shield"
     elseif (tobool(wd.waterweapon)) then
-      wd.weapontype = "TorpedoLauncher";
+      wd.weapontype = "TorpedoLauncher"
     elseif (wdName:lower():find("disintegrator",1,true)) then
       wd.weaponType = "DGun"
     elseif (tobool(wd.lineofsight)) then
       if (rendertype == 7) then
-        wd.weapontype = "LightningCannon";
+        wd.weapontype = "LightningCannon"
 
       -- swta fix (outdated?)
       elseif (wd.model and wd.model:lower():find("laser",1,true)) then
-        wd.weapontype = "LaserCannon";
+        wd.weapontype = "LaserCannon"
 
       elseif (tobool(wd.beamweapon)) then
-        wd.weapontype = "LaserCannon";
+        wd.weapontype = "LaserCannon"
       elseif (tobool(wd.smoketrail)) then
-        wd.weapontype = "MissileLauncher";
+        wd.weapontype = "MissileLauncher"
       elseif (rendertype == 4 and tonumber(wd.color)==2) then
-        wd.weapontype = "EmgCannon";
+        wd.weapontype = "EmgCannon"
       elseif (rendertype == 5) then
-        wd.weapontype = "Flame";
+        wd.weapontype = "Flame"
       --elseif(rendertype == 1) then
-      --  wd.weapontype = "MissileLauncher";
+      --  wd.weapontype = "MissileLauncher"
       else
-        wd.weapontype = "Cannon";
+        wd.weapontype = "Cannon"
       end
     else
-      wd.weapontype = "Cannon";
+      wd.weapontype = "Cannon"
     end
   end
 
   if (wd.weapontype == "LightingCannon") then
-    wd.weapontype = "LightningCannon";
+    wd.weapontype = "LightningCannon"
   elseif (wd.weapontype == "AircraftBomb") then
     if (wd.manualbombsettings) then
       wd.reloadtime = wd.reloadtime or 1.0
@@ -141,7 +141,7 @@ local function BackwardCompability(wdName, wd)
   if (not wd.rgbcolor) then
     if (wd.weapontype == "Cannon") then
       wd.rgbcolor = "1.0 0.5 0.0"
-    else if (wd.weapontype == "EmgCannon") then
+    elseif (wd.weapontype == "EmgCannon") then
       wd.rgbcolor = "0.9 0.9 0.2"
     else
       local hue = (wd.color or 0) / 255
