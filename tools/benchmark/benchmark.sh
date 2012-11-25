@@ -15,7 +15,7 @@ SCRIPT="script_benchmark.txt"
 #SCRIPT="demos/20121114_033937_TheHunters-v3_91.0.1-368-gbca8185 develop.sdf"
 DEMOFILE=bench_results_2012-11-20_10-33-36/benchmark.sdf
 
-PREFIX=$PWD/bench_results_$(date +"%Y-%m-%d_%k-%M-%S")
+PREFIX=$PWD/bench_results_$(date +"%Y-%m-%d_%H-%M-%S")
 
 
 mkdir "$PREFIX"
