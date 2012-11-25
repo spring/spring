@@ -414,7 +414,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 #endif
 
 		if (!unit->isIcon) {
-			if ((unit->pos - camera->pos).SqLength() > (unit->sqRadius * unitDrawDistSqr)) {
+			if ((unit->pos - camera->pos).SqLength() > (Square(unit->model->radius) * unitDrawDistSqr)) {
 				farTextureHandler->Queue(unit);
 			} else {
 				if (!DrawUnitLOD(unit)) {
