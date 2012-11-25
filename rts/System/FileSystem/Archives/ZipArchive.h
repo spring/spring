@@ -7,14 +7,6 @@
 #include "BufferedArchive.h"
 #include "minizip/unzip.h"
 
-#ifdef _WIN32
-// This is specified in the build config,
-// because minizip needs to have it defined as well.
-//#define ZLIB_WINAPI
-#define USEWIN32IOAPI
-#include "minizip/iowin32.h"
-#endif
-
 #include <string>
 #include <vector>
 
