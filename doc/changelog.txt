@@ -180,6 +180,7 @@ Cmdline Arguments:
 
 Windows:
  - update to boost 1.50
+ - slightly improve speed of zip / sdz archives (#3338)
 
 Linux:
  - Linux's ctrl+c: `hardkill` after 10sec (and 5 seconds softkill)
