@@ -263,7 +263,7 @@ class LuaOpenGL {
 };
 
 inline void LuaOpenGL::InitMatrixState(lua_State* L, const LuaHashString* hs) {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(HEADLESS)
 	if (IsDrawingEnabled(L)) {
 		GLint curmode; // the matrix mode should be set to GL_MODELVIEW before calling any lua code
 		glGetIntegerv(GL_MATRIX_MODE, &curmode);
