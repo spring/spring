@@ -11,7 +11,8 @@ else
 	echo "skipped."
 fi
 
-echo "configuring ${BUILDDIR} with $@ ..."
+echo "building in ${BUILDDIR}"
+echo "configuring ${SOURCEDIR} with $@ ..."
 
 cd ${BUILDDIR}
 cmake ${SOURCEDIR} $@
