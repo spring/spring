@@ -171,7 +171,11 @@ void CollisionVolume::InitShape(
 	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
 		if ((math::fabsf(s.x - s.y) < COLLISION_VOLUME_EPS) && (math::fabsf(s.y - s.z) < COLLISION_VOLUME_EPS)) {
 			volumeType = COLVOL_TYPE_SPHERE;
-		} else {
+		} else 
+		if ((math::fabsf(scales[volumeAxes[1]] - scales[volumeAxes[2]]) < COLLISION_VOLUME_EPS)) {
+			volumeType = COLVOL_TYPE_CYLINDER;
+		}
+		else {
 			volumeType = COLVOL_TYPE_BOX;
 		}
 	}
