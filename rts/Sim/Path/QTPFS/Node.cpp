@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cassert>
-#include <cmath>
 #include <limits>
 
+#include "lib/streflop/streflop_cond.h"
 #include "Node.hpp"
 #include "NodeLayer.hpp"
 #include "PathDefines.hpp"
