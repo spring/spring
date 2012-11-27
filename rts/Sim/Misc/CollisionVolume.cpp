@@ -208,8 +208,8 @@ void CollisionVolume::SetBoundingRadius() {
 			volumeBoundingRadius = math::sqrt(volumeBoundingRadiusSq);
 		} break;
 		case COLVOL_TYPE_SPHERE: {
-			assert(math::fabs(hAxisScales.x - hAxisScales.y) < COLLISION_VOLUME_EPS);
-			assert(math::fabs(hAxisScales.y - hAxisScales.z) < COLLISION_VOLUME_EPS);
+			assert(math::fabs(hAxisScales.x - hAxisScales.y) < 2 * COLLISION_VOLUME_EPS);
+			assert(math::fabs(hAxisScales.y - hAxisScales.z) < 2 * COLLISION_VOLUME_EPS);
 
 			volumeBoundingRadius = hAxisScales.x;
 			volumeBoundingRadiusSq = volumeBoundingRadius * volumeBoundingRadius;
