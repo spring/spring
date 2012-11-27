@@ -222,17 +222,10 @@ void CollisionVolume::SetBoundingRadius() {
 }
 
 void CollisionVolume::SetAxisScales(const float3& scales) {
-	fAxisScales.x = scales.x;
-	fAxisScales.y = scales.y;
-	fAxisScales.z = scales.z;
+	fAxisScales = scales;
+	hAxisScales = fAxisScales * 0.5f;
 
-	hAxisScales.x = fAxisScales.x * 0.5f;
-	hAxisScales.y = fAxisScales.y * 0.5f;
-	hAxisScales.z = fAxisScales.z * 0.5f;
-
-	hsqAxisScales.x = hAxisScales.x * hAxisScales.x;
-	hsqAxisScales.y = hAxisScales.y * hAxisScales.y;
-	hsqAxisScales.z = hAxisScales.z * hAxisScales.z;
+	hsqAxisScales = hAxisScales * hAxisScales;
 
 	hiAxisScales.x = 1.0f / hAxisScales.x;
 	hiAxisScales.y = 1.0f / hAxisScales.y;
@@ -240,13 +233,10 @@ void CollisionVolume::SetAxisScales(const float3& scales) {
 }
 
 void CollisionVolume::RescaleAxes(const float3& scales) {
-	fAxisScales.x *= scales.x; hAxisScales.x *= scales.x;
-	fAxisScales.y *= scales.y; hAxisScales.y *= scales.y;
-	fAxisScales.z *= scales.z; hAxisScales.z *= scales.z;
+	fAxisScales *= scales;
+	hAxisScales *= scales;
 
-	hsqAxisScales.x *= (scales.x * scales.x);
-	hsqAxisScales.y *= (scales.y * scales.y);
-	hsqAxisScales.z *= (scales.z * scales.z);
+	hsqAxisScales *= (scales * scales);
 
 	hiAxisScales.x *= (1.0f / scales.x);
 	hiAxisScales.y *= (1.0f / scales.y);
@@ -339,7 +329,7 @@ float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float
 			pt.z = Clamp(pv.z, -hAxisScales.z, hAxisScales.z);
 
 			// l = std::min(pv.x - pt.x, std::min(pv.y - pt.y, pv.z - pt.z));
-			d = (pv - pt).Length();
+			d = pv.distance(pt);
 		} break;
 
 		case COLVOL_TYPE_SPHERE: {
