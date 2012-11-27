@@ -6,7 +6,7 @@ Spring changelog
 -- 92.0 ---------------------------------------------------------
 Major Changes:
  - Linux cross-distro binary builds
- - much faster Sim (~20%)
+ - much faster Sim (~20% and ~50% with working OMP)
  - new cmdline arguments
  - better pathing
 FIXME - spring-mt is merged into spring (default disabled, games can enable it with ...)
@@ -53,6 +53,7 @@ CHECK - fix UnitDefs[*].model.path
 
 CollisionVolumes:
  ! drop support for ellipsoid-cylinders and ellipsoids
+    cylinders with round(!) baseplates are still supported!
     simplify how damage from an explosion is calculated, fewer magic numbers, etc
     no more distance approximations means no more invincible units (or features)
     and no more general "weird" cases like 3103
@@ -84,7 +85,7 @@ UnitScripts:
  ! LUS/COB: deprecate QueryNanoPiece() makes SimCode ~10% faster use the new Spring.SetUnitNanoPieces instead
     Note, once set the engine won't call `QueryNanoPiece` anymore and instead randomly toggles between the set nanopieces, saving a lot time-consuming COB/LUS calls.
  ! LUS/COB: cache QueryNanoPiece() results
-    Note, this stops QueryNanoPiece() calls after 31 times no matter what! This breaks ZKs LupsNanoSpray, fixed version can be found here http://gw.gd/Zaae.
+    Note, this stops QueryNanoPiece() calls after 31 times no matter what! This breaks ZK's LupsNanoSpray, fixed version can be found here http://gw.gd/Zaae.
 
 WeaponDefs:
  ! remove of manualBombSettings (backward-compability code in weapondefs_post.lua)
@@ -104,7 +105,7 @@ GameServer:
 
 Misc:
  - experimental /ReloadShaders
- - less jerky camera transitions (cleanrock)
+ - less jerky camera transitions (thx cleanrock)
  - make camera a bit smoother by adding some micro-transitions
  - SMF/MapInfo: new tag voidGround
  - fix 'only FreeCamera allows to set FOV ingame' (3291)
