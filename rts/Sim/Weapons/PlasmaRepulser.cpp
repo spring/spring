@@ -240,7 +240,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 	// BeamLasers and LightningCannons are hitscan (their projectiles do not move),
 	// they call InterceptHandler to figure out if a shield is in the way so check
 	// the stunned-state here keep things consistent
-	if (owner->IsStunned()) {
+	if (owner->IsStunned() || owner->beingBuilt) {
 		return -1.0f;
 	}
 
