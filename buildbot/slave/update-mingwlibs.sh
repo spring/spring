@@ -9,12 +9,12 @@ fi
 
 . buildbot/slave/prepare.sh
 
-if [ ! -d ~/$1 ]; then
+if [ ! -d $1 ]; then
 	echo "clone mingwlibs git-repo"
-	git clone git://github.com/spring/mingwlibs.git ~/$1
+	git clone git://github.com/spring/mingwlibs.git $1
 fi
 
-cd ~/$1
+cd $1
 
 GITOUTPUT=$(git fetch 2>&1 |cat)
 echo $GITOUTPUT
