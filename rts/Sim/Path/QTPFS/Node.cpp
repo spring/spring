@@ -107,9 +107,11 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 	//     mode is broken in that regard) and this would not
 	//     hold for a path through multiple neighboring nodes
 	//     with xsize and/or zsize equal to 1 heightmap square
+	#ifndef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
 	const float
 		midx = (maxx + minx) * 0.5f,
 		midz = (maxz + minz) * 0.5f;
+	#endif
 
 	switch (GetNeighborRelation(ngb)) {
 		#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
@@ -216,6 +218,7 @@ QTPFS::QTNode::QTNode(
 	speedModSum =  0.0f;
 	speedModAvg =  0.0f;
 	moveCostAvg = -1.0f;
+	prevNode = NULL;
 
 	// for leafs, all children remain NULL
 	children.resize(QTNode::CHILD_COUNT, NULL);
