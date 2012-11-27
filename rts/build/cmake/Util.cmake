@@ -56,7 +56,11 @@ If     (APPLE)
 ElseIf (MINGW)
 	Set(PIC_FLAG "")
 Else   ()
-	Set(PIC_FLAG "-fpic")
+	if (CMAKE_SIZEOF_VOID_P EQUAL 8) # add fpic flag on 64 bit platforms
+		Set(PIC_FLAG "-fpic")
+	else () #no fpic needed on 32bit
+		Set(PIC_FLAG "")
+	endif()
 EndIf  ()
 
 
