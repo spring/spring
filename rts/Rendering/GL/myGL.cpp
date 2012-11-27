@@ -26,6 +26,7 @@
 
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false);
+CONFIG(bool, ReportGLErrors).defaultValue(false);
 CONFIG(bool, StacktraceOnGLErrors).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs (only available in DEBUG builds)");
 
 
@@ -335,8 +336,9 @@ void LoadExtensions()
 		handleerror(0, errorMsg, "Update graphic drivers", 0);
 	}
 
-#if defined(GL_ARB_debug_output) && !defined(HEADLESS) //! it's not defined in older GLEW versions
-	if (GLEW_ARB_debug_output) {
+	// install OpenGL DebugMessageCallback
+#if defined(GL_ARB_debug_output) && !defined(HEADLESS)
+	if (GLEW_ARB_debug_output && configHandler->GetBool("ReportGLErrors")) {
 		LOG("Installing OpenGL-DebugMessageHandler");
 		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
 
