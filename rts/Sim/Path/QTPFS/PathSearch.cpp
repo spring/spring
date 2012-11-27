@@ -309,7 +309,7 @@ void QTPFS::PathSearch::Finalize(IPath* path) {
 
 void QTPFS::PathSearch::TracePath(IPath* path) {
 	std::list<float3> points;
-	std::list<float3>::const_iterator pointsIt;
+//	std::list<float3>::const_iterator pointsIt;
 
 	if (srcNode != tgtNode) {
 		INode* tmpNode = tgtNode;

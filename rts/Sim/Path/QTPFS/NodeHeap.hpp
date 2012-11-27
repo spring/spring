@@ -82,7 +82,7 @@ namespace QTPFS {
 
 		// utility functions
 		bool empty() const { return (cur_idx == 0); }
-		bool full() const { return (size() >= capacity()); }
+//		bool full() const { return (size() >= capacity()); }
 		size_t size() const { return cur_idx; }
 		size_t capacity() const { return (max_idx + 1); }
 
