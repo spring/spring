@@ -369,7 +369,7 @@ template<class T>
 class gmlVectorIter {
 public:
 	T *p; 
-	gmlVectorIter() {} 
+	gmlVectorIter():p(NULL) {}
 	gmlVectorIter(T *d) {p=d;} 
 	void operator=(const GML_TYPENAME gmlVectorIter<T> &i) {p=i.p;}
 	GML_TYPENAME gmlVectorIter<T> &operator++() {++p; return *this;} 

@@ -49,7 +49,7 @@ static int VisualsTable(lua_State* L, const void* data);
 static int DamagesArray(lua_State* L, const void* data);
 static int CustomParamsTable(lua_State* L, const void* data);
 static int GuiSoundSetTable(lua_State* L, const void* data);
-static int CategorySetFromBits(lua_State* L, const void* data);
+//static int CategorySetFromBits(lua_State* L, const void* data);
 
 
 /******************************************************************************/
@@ -368,6 +368,7 @@ static inline int BuildCategorySet(lua_State* L, const vector<string>& cats)
 }
 
 
+/*
 static int CategorySetFromBits(lua_State* L, const void* data)
 {
 	const int bits = *((const int*)data);
@@ -375,7 +376,7 @@ static int CategorySetFromBits(lua_State* L, const void* data)
 		CCategoryHandler::Instance()->GetCategoryNames(bits);
 	return BuildCategorySet(L, cats);
 }
-
+*/
 
 /*static int CategorySetFromString(lua_State* L, const void* data)
 {

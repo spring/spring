@@ -149,7 +149,7 @@ static boost::uint32_t GetOpenMPCpuCore(int index, boost::uint32_t availCores, b
 
 	// select one of the mainthread cores if none found
 	if (ompCore == 0) {
-		int cntBits = count_bits_set(avoidCores);
+		/*int cntBits =*/ count_bits_set(avoidCores);
 		ompCore = 1;
 		while ((ompCore) && !(ompCore & avoidCores))
 			ompCore <<= 1;

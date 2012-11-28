@@ -29,6 +29,8 @@ bool CTextureAtlas::debug;
 CTextureAtlas::CTextureAtlas(int maxxsize, int maxysize)
 	: gltex(0)
 	, freeTexture(true)
+	, xsize(0)
+	, ysize(0)
 	, maxxsize(maxxsize)
 	, maxysize(maxysize)
 	, initialized(false)

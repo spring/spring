@@ -739,7 +739,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		// FIXME? targetMidPosMaxDist is 3D, but compared with a 2D value
 		const float targetMidPosDist2D = targetMidPosVec.Length2D();
-		const float targetMidPosMaxDist = owner->maxRange - (orderTarget->speed.SqLength() / owner->unitDef->maxAcc);
+		//const float targetMidPosMaxDist = owner->maxRange - (orderTarget->speed.SqLength() / owner->unitDef->maxAcc);
 
 		if (!owner->weapons.empty()) {
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
