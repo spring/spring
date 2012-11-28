@@ -12,10 +12,7 @@
 #include "PathDataTypes.h"
 #include "System/float3.h"
 
-#include <boost/thread/thread.hpp>
 #include <boost/detail/atomic_count.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/barrier.hpp>
 #include <boost/cstdint.hpp>
 
 struct MoveDef;
@@ -23,6 +20,11 @@ class CPathFinder;
 class CPathEstimatorDef;
 class CPathFinderDef;
 class CPathCache;
+
+namespace boost {
+	class thread;
+	class barrier;
+}
 
 class CPathEstimator {
 public:

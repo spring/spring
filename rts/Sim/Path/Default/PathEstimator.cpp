@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <boost/bind.hpp>
+#include <boost/thread/barrier.hpp>
 
 #include "minizip/zip.h"
 
