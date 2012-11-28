@@ -245,10 +245,10 @@ WeaponDef::WeaponDef()
 WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	: name(name_)
 	, id(id_)
+	, isShield(false)
 	, collisionFlags(0)
 	, explosionGenerator(NULL)
 	, bounceExplosionGenerator(NULL)
-	, isShield(false)
 {
 	WeaponDefs.Load(this, wdTable);
 

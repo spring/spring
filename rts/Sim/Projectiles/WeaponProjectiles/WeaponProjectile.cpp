@@ -51,6 +51,7 @@ CWeaponProjectile::CWeaponProjectile(): CProjectile()
 	interceptTarget = NULL;
 	bounces = 0;
 	keepBouncing = true;
+	weaponDefID = 0;
 	cegID = -1U;
 }
 
