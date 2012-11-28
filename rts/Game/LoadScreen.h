@@ -4,7 +4,6 @@
 #define _LOAD_SCREEN_H
 
 #include <string>
-#include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "GameController.h"
@@ -12,6 +11,9 @@
 #include "System/OffscreenGLContext.h"
 #include "System/Misc/SpringTime.h"
 
+namespace boost {
+	class thread;
+}
 
 class CLoadScreen : public CGameController
 {

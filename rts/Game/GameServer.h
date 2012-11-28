@@ -3,7 +3,6 @@
 #ifndef _GAME_SERVER_H
 #define _GAME_SERVER_H
 
-#include <boost/thread/thread.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <string>
 #include <map>
@@ -19,6 +18,10 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Platform/Synchro.h"
 
+
+namespace boost {
+	class thread;
+}
 
 namespace netcode
 {
