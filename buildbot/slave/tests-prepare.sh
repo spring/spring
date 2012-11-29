@@ -39,7 +39,7 @@ PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR
 # get the name of the latest versions
 GAME1=$($PRDL ba:latest |egrep -o '\[Download\] (.*)' |cut -b 12-)
 GAME2=$($PRDL zk:stable |egrep -o '\[Download\] (.*)' |cut -b 12-)
-GAME3=$($PRDL bar:test |egrep -o '\[Download\] (.*)' |cut -b 12-)
+#GAME3=$($PRDL bar:test |egrep -o '\[Download\] (.*)' |cut -b 12-)
 MAP="Altair_Crossing-V1"
 
 $PRDL "$MAP"
@@ -72,6 +72,6 @@ makescript "$GAME1" "$MAP" KAIK 0.13
 makescript "$GAME1" "$MAP" RAI 0.601
 makescript "$GAME1" "$MAP" Shard dev
 makescript "$GAME2" "$MAP" CAI ""
-makescript "$GAME3" "$MAP" KAIK 0.13
+makescript "$GAME2" "$MAP" KAIK 0.13
 ${SOURCEDIR}/test/validation/prepare-client.sh ValidationClient 127.0.0.1 8452 >${CONTENT_DIR}/connect.txt
 
