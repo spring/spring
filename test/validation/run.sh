@@ -77,6 +77,7 @@ rm -rf ~/.spring/cache/paths
 $RUNCLIENT $1 &
 PID_CLIENT=$!
 
+rm -rf ~/.spring/cache/QTPFS
 set +e #temp disable abort on error
 $@ &
 PID_HOST=$!
