@@ -66,6 +66,11 @@
 #include "lib/luasocket/src/restrictions.h"
 #endif
 
+#ifdef __MINGW32__
+	// workaround missing C99 support in a msvc lib with %02hhx
+	#define sscanf __mingw_sscanf
+#endif
+
 
 #define ALLOW_DEMO_GODMODE
 #define PKTCACHE_VECSIZE 1000
