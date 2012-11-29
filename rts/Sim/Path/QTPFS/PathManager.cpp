@@ -527,11 +527,12 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveDefHandler->moveDefs[i]->name;
 		fileStreams[i] = new std::fstream();
 
+		const bool readMode = haveCacheDir && FileSystem::FileExists(fileNames[i]);
 		//  FIXME: lock fileNames[i]
 		// but locking isn't easily possible, because fstream files can't be easily locked,
 		// see http://stackoverflow.com/questions/839856/
 
-		if (haveCacheDir && FileSystem::FileExists(fileNames[i])) {
+		if (readMode) {
 			// read fileNames[i] into nodeTrees[i]
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::in | std::ios::binary);
 			assert(nodeTrees[i]->IsLeaf());
@@ -546,7 +547,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		#endif
 
 		serializingNodeLayer = &nodeLayers[i];
-		nodeTrees[i]->Serialize(*fileStreams[i], haveCacheDir);
+		nodeTrees[i]->Serialize(*fileStreams[i], readMode);
 		serializingNodeLayer = NULL;
 
 		fileStreams[i]->flush();
