@@ -69,15 +69,10 @@ ulimit -v 1500000
 # max 3 min cpu time
 ulimit -t 180
 
-# FIXME: remove old caching files, the client-script would start immediately when they exist
-# maybe a foreign directory for the client is the cleanest way...
-rm -rf ~/.spring/cache/paths
-
 # start up the client in background
 $RUNCLIENT $1 &
 PID_CLIENT=$!
 
-rm -rf ~/.spring/cache/QTPFS
 set +e #temp disable abort on error
 $@ &
 PID_HOST=$!

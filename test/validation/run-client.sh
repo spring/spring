@@ -17,7 +17,6 @@ do
 	if [ -n "$(grep "Initializing Map Features" ~/.spring/infolog.txt)" ];
 	then
 		LOG=$(mktemp)
-		rm -rf ~/.spring/cache/QTPFS
 		echo "Starting $HEADLESS client"
 		set +e
 		$HEADLESS connect.txt &>$LOG
