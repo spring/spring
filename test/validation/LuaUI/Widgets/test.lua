@@ -16,6 +16,7 @@ local minunits = 10 -- if fewer than this units are created/destroyed print a wa
 local timer
 local unitscreated = 0
 local unitsdestroyed = 0
+local maxruntime = 120 -- run at max 2 minutes
 
 local function ShowStats()
 	local time = Spring.DiffTimers(Spring.GetTimer(), timer)
@@ -41,6 +42,10 @@ function widget:GameFrame(n)
 			"setminspeed " .. initialspeed,
 			"setminspeed 1")
 		timer = Spring.GetTimer()
+	end
+	if (Spring.DiffTimers(Spring.GetTimer(), timer)) > maxruntime then
+		Spring.Log("test.lua", LOG.ERROR, string.format("Tests run longer than %i seconds, aborting!", maxruntime ))
+		Spring.SendCommands("quit")
 	end
 	if n==maxframes then
 		ShowStats()
