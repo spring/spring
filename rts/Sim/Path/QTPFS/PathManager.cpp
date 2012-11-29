@@ -512,12 +512,10 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 	std::vector<std::string> fileNames(nodeTrees.size());
 	std::vector<std::fstream*> fileStreams(nodeTrees.size());
 
-	if (!FileSystem::DirExists(cacheFileDir)) {
+	if (!haveCacheDir) {
 		FileSystem::CreateDirectory(cacheFileDir);
 		assert(FileSystem::DirExists(cacheFileDir));
 	}
-
-	bool readMode = false;
 
 	#ifndef NDEBUG
 	char loadMsg[512] = {'\0'};
@@ -529,7 +527,11 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveDefHandler->moveDefs[i]->name;
 		fileStreams[i] = new std::fstream();
 
-		if ((readMode = FileSystem::FileExists(fileNames[i]))) {
+		/* FIXME: lock files that are written to
+		   locking isn't easily possible, because fstream files can't be easily locked,
+		   see http://stackoverflow.com/questions/839856/
+		*/
+		if (haveCacheDir) {
 			// read fileNames[i] into nodeTrees[i]
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::in | std::ios::binary);
 			assert(nodeTrees[i]->IsLeaf());
@@ -544,7 +546,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		#endif
 
 		serializingNodeLayer = &nodeLayers[i];
-		nodeTrees[i]->Serialize(*fileStreams[i], readMode);
+		nodeTrees[i]->Serialize(*fileStreams[i], haveCacheDir);
 		serializingNodeLayer = NULL;
 
 		fileStreams[i]->flush();
