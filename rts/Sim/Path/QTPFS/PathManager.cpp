@@ -188,6 +188,13 @@ void QTPFS::PathManager::Load() {
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+			#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
+			if (haveCacheDir) {
+				// if cache-dir exists, must set node relations after de-serializing its trees
+				nodeLayers[layerNum].ExecNodeNeighborCacheUpdates(MAP_RECTANGLE, numTerrainChanges);
+			}
+			#endif
+
 			pfsCheckSum ^= nodeTrees[layerNum]->GetCheckSum();
 			maxNumLeafNodes = std::max(nodeLayers[layerNum].GetNumLeafNodes(), maxNumLeafNodes);
 		}
