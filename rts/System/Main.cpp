@@ -22,6 +22,7 @@
 #endif
 
 #ifdef WIN32
+	#include "lib/SOP/SOP.hpp" // NvOptimus
 	#include <stdlib.h>
 	#include <process.h>
 	#define execv _execv
@@ -69,9 +70,12 @@ int Run(int argc, char* argv[])
 	return ret;
 }
 
+
+/**
+ * Set some performance relevant OpenMP EnvVars.
+ */
 static void SetOpenMpEnvVars(char* argv[])
 {
-	// set some performance relevant openmp envvars
 	bool restart = false;
 	/*if (!getenv("OMP_WAIT_POLICY")) {
 		// omp threads will use a spinlock instead of yield'ing when waiting
@@ -93,6 +97,23 @@ static void SetOpenMpEnvVars(char* argv[])
 }
 
 
+/**
+ * Always run on dedicated GPU.
+ */
+static void SetNvOptimusProfile(char* argv[])
+{
+#ifdef WIN32
+	if (SOP_CheckProfile("Spring"))
+		return;
+
+	const std::string exename = argv[0];
+	const int res = SOP_SetProfile("Spring", exename);
+	if (res == SOP_RESULT_CHANGE)
+		execv(argv[0], argv);
+#endif
+}
+
+
 
 /**
  * @brief main
@@ -104,6 +125,7 @@ static void SetOpenMpEnvVars(char* argv[])
  */
 int main(int argc, char* argv[])
 {
+	SetNvOptimusProfile(argv);
 	SetOpenMpEnvVars(argv);
 	return Run(argc, argv);
 }
