@@ -66,11 +66,6 @@
 #include "lib/luasocket/src/restrictions.h"
 #endif
 
-#ifdef __MINGW32__
-	// workaround missing C99 support in a msvc lib with %02hhx
-	#define sscanf __mingw_sscanf
-#endif
-
 
 #define ALLOW_DEMO_GODMODE
 #define PKTCACHE_VECSIZE 1000
@@ -1857,11 +1852,20 @@ void CGameServer::GenerateAndSendGameID()
 	// fixed gameID?
 	if (!setup->gameID.empty()) {
 		unsigned char p[16];
+	#ifdef __MINGW32__
+		// workaround missing C99 support in a msvc lib with %02hhx
+		generatedGameID = (sscanf(setup->gameID.c_str(),
+		      "%02hc%02hc%02hc%02hc%02hc%02hc%02hc%02hc"
+		      "%02hc%02hc%02hc%02hc%02hc%02hc%02hc%02hc",
+		      &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
+		      &p[ 8], &p[ 9], &p[10], &p[11], &p[12], &p[13], &p[14], &p[15]) == 16);
+	#else
 		generatedGameID = (sscanf(setup->gameID.c_str(),
 		      "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx"
 		      "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
 		      &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
 		      &p[ 8], &p[ 9], &p[10], &p[11], &p[12], &p[13], &p[14], &p[15]) == 16);
+	#endif
 		if (generatedGameID)
 			for (int i = 0; i<16; ++i)
 				gameID.charArray[i] =  p[i];
