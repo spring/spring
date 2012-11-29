@@ -14,7 +14,7 @@ MAXWAIT=60
 
 for (( i=0; $i<$MAXWAIT; i++ ));
 do
-	if [ -s ~/.spring/infolog.txt] && [ -n "$(grep "Finalizing" ~/.spring/infolog.txt)" ];
+	if [ -s ~/.spring/infolog.txt ] && [ -n "$(grep "Finalizing" ~/.spring/infolog.txt)" ];
 	then
 		LOG=$(mktemp)
 		echo "Starting $HEADLESS client"
