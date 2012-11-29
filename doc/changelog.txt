@@ -125,7 +125,6 @@ Rendering:
 Sim Bugfixes:
  ! stop buildframe decaying on reclaiming
  - fix unload commands close to map edges are ignored (3175)
-CHECK experimental? 251894116242d18b9430feef27a8275017fb9aee & 19cc83adbfa2de52752c953bbfc9b8271e06628d
  - fix nukes (3269)
  - fix some issues with bombers (3253)
  - fix MANUALFIRE hangs despite no target lock
@@ -180,8 +179,10 @@ Cmdline Arguments:
  - new benchmark mode (`--benchmark %time_min --benchmarkstart %starttime_min`) writes a benchmark.data parsable by gnuplot
 
 Windows:
+ - OpenMP build
  - update to boost 1.50
  - slightly improve speed of zip / sdz archives (#3338)
+ - Nvidia Optimus support
 
 Linux:
  - Linux's ctrl+c: `hardkill` after 10sec (and 5 seconds softkill)
