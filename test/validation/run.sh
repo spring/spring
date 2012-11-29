@@ -43,11 +43,6 @@ if [ "$(cat /proc/sys/kernel/core_pattern)" != "core" ]; then
 	exit 1
 fi
 
-if [ "$(cat /proc/sys/kernel/core_pattern)" != "core" ]; then
-	echo "Please run sudo echo core >/proc/sys/kernel/core_pattern"
-	exit 1
-fi
-
 if [ "$(cat /proc/sys/kernel/core_uses_pid)" != "1" ]; then
 	echo "Please run sudo echo 1 >/proc/sys/kernel/core_uses_pid"
 	exit 1
@@ -68,6 +63,9 @@ fi
 ulimit -v 1500000
 # max 3 min cpu time
 ulimit -t 180
+
+# delete path cache
+rm -rf ~/.spring/cache/
 
 # start up the client in background
 $RUNCLIENT $1 &
