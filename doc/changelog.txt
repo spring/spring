@@ -69,7 +69,7 @@ Pathing:
  - legacy: use omp in ::Update to multithread a function that eats 40% of the time spend in ::Update
    - this gives a _massive_ boost with like >30% more FPS
    - it needs low latency omp threads to work, those are currently broken in gomp, the bug will be fixed with the next release of gcc
- - QTPFS: a lot fixes & optimizations
+ - QTPFS: a lot fixes & optimizations, fixed desync (#3339)
  - give pathfinder debug-data drawing its own shortcut (alt+p)
  - GMT: rewrite collision handling between units and static objects (again)   instead of using impulse to push units away, do SCII-style strafing   result: www.youtube.com/watch?v=4rycY4JfLGs
  ! put on upper limit on directional slope tolerance for "downhill" slopes
