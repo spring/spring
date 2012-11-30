@@ -37,8 +37,10 @@ enum SimpleLog_Level {
 
 /**
  * Initializes the log.
- * @param  logLevel   see enum SimpleLog_Level
- * @param  append     if true, previous content of the file is preserved
+ * @param logFileName   file to log to
+ * @param useTimeStamps prefix each log entry with a timestamp
+ * @param logLevel      see enum SimpleLog_Level
+ * @param append        if true, previous content of the file is preserved
  */
 void simpleLog_init(const char* logFileName, bool useTimeStamps,
 		int logLevel, bool append);
@@ -47,7 +49,8 @@ void simpleLog_init(const char* logFileName, bool useTimeStamps,
  * Logs a text message,
  * but only if level <= logLevel (see simpleLog_init()).
  * Works like printf(fmt, ...).
- * @param  level   see enum SimpleLog_Level
+ * @param level see enum SimpleLog_Level
+ * @param fmt   format of the logmessage, see man 3 printf
  */
 void simpleLog_logL(int level, const char* fmt, ...);
 

@@ -97,6 +97,9 @@ private:
 	 */
 	bool FindRepairTargetAndRepair(const float3& pos, float radius, unsigned char options, bool attackEnemy, bool builtOnly);
 	/**
+	 * @param pos         position where to search for units to capture
+	 * @param radius      radius in which are searched units to capture
+	 * @param options     command options
 	 * @param healthyOnly only capture units with capture progress or 100% health remaining
 	 */
 	bool FindCaptureTargetAndCapture(const float3& pos, float radius, unsigned char options, bool healthyOnly);
