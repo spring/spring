@@ -239,8 +239,8 @@ bool ContainsApplication(int session, int profile, Profile profileDescriptor, un
 // the name provided exists.
 bool SOP_CheckProfile(std::string profileNameString) {
     bool result = false;
-    int session = NULL;
-    int profile = NULL;
+    int session = 0;
+    int profile = 0;
     
     // Initialize NvAPI
     if ((!GetProcs()) || (CheckForError((*Initialize)()))) {
@@ -265,7 +265,7 @@ bool SOP_CheckProfile(std::string profileNameString) {
     result = ((*FindProfileByName)(session, profileName, &profile) == 0);
     
     (*DestroySession)(session);
-    session = NULL;
+    session = 0;
 
     return result;
 }
@@ -278,8 +278,8 @@ bool SOP_CheckProfile(std::string profileNameString) {
 int SOP_RemoveProfile(std::string profileNameString) {
     int result = SOP_RESULT_NO_CHANGE;
     int status = 0;
-    int session = NULL;
-    int profile = NULL;
+    int session = 0;
+    int profile = 0;
     
     // Initialize NvAPI
     if ((!GetProcs()) || (CheckForError((*Initialize)()))) {
@@ -322,7 +322,7 @@ int SOP_RemoveProfile(std::string profileNameString) {
     }
     
     (*DestroySession)(session);
-    session = NULL;
+    session = 0;
 
     return result;
 }
@@ -336,8 +336,8 @@ int SOP_RemoveProfile(std::string profileNameString) {
 int SOP_SetProfile(std::string profileNameString, std::string applicationNameString) {
     int result = SOP_RESULT_NO_CHANGE;
     int status = 0;
-    int session = NULL;
-    int profile = NULL;
+    int session = 0;
+    int profile = 0;
     
     // Initialize NvAPI
     if ((!GetProcs()) || (CheckForError((*Initialize)()))) {
@@ -368,7 +368,7 @@ int SOP_SetProfile(std::string profileNameString, std::string applicationNameStr
 
     if (status == -163 /* Profile not found */) {
         // The application profile does not yet exist and has to be created
-        Profile newProfileDescriptor = { NULL };
+        Profile newProfileDescriptor = { 0 };
         newProfileDescriptor.version = 69652; // Calculated from the size of the descriptor
         newProfileDescriptor.isPredefined = 0;
         memcpy(&newProfileDescriptor.profileName, &profileName, 2048);
@@ -383,7 +383,7 @@ int SOP_SetProfile(std::string profileNameString, std::string applicationNameStr
         }
 
         // Create the application settings. This is where the discrete GPU for Optimus is set.
-        Setting optimusSetting = { NULL };
+        Setting optimusSetting = { 0 };
         optimusSetting.version = 77856; // Calculated from the size of the descriptor
         optimusSetting.settingID = 0x10F9DC81; // Shim rendering mode ID
         optimusSetting.u32CurrentValue = 0x00000001 | 0x00000010; // Enable | Auto select
@@ -401,7 +401,7 @@ int SOP_SetProfile(std::string profileNameString, std::string applicationNameStr
     }
 
     // Retrieve the profile information of the application profile
-    Profile profileDescriptor = { NULL };
+    Profile profileDescriptor = { 0 };
     profileDescriptor.version = 69652; // Calculated from the size of the descriptor
 
     if (CheckForError((*GetProfileInfo)(session, profile, &profileDescriptor))) {
@@ -409,7 +409,7 @@ int SOP_SetProfile(std::string profileNameString, std::string applicationNameStr
     }
 
     // Application descriptor
-    Application applicationDescriptor = { NULL };
+    Application applicationDescriptor = { 0 };
 
     if (!ContainsApplication(session, profile, profileDescriptor, applicationName, &applicationDescriptor)) {
         applicationDescriptor.version = 147464; // Calculated from the size of the descriptor
@@ -427,9 +427,10 @@ int SOP_SetProfile(std::string profileNameString, std::string applicationNameStr
     }
 
     (*DestroySession)(session);
-    session = NULL;
+    session = 0;
 
     return result;
 }
 
 #endif
+
