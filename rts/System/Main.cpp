@@ -23,6 +23,7 @@
 
 #ifdef WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
+	#include "System/FileSystem/FileSystem.h"
 	#include <stdlib.h>
 	#include <process.h>
 	#define execv _execv
@@ -106,7 +107,7 @@ static void SetNvOptimusProfile(char* argv[])
 	if (SOP_CheckProfile("Spring"))
 		return;
 
-	const std::string exename = argv[0];
+	const std::string exename = FileSystem::GetFilename(argv[0]);
 	const int res = SOP_SetProfile("Spring", exename);
 	if (res == SOP_RESULT_CHANGE)
 		execv(argv[0], argv);
