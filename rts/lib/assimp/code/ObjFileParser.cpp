@@ -54,9 +54,6 @@ namespace Assimp
 {
 
 // -------------------------------------------------------------------
-const std::string ObjFileParser::DEFAULT_MATERIAL = AI_DEFAULT_MATERIAL_NAME; 
-
-// -------------------------------------------------------------------
 //	Constructor with loaded data and directories.
 ObjFileParser::ObjFileParser(std::vector<char> &Data,const std::string &strModelName, IOSystem *io ) :
 	m_DataIt(Data.begin()),
@@ -72,9 +69,9 @@ ObjFileParser::ObjFileParser(std::vector<char> &Data,const std::string &strModel
 	m_pModel->m_ModelName = strModelName;
 	
 	m_pModel->m_pDefaultMaterial = new ObjFile::Material();
-	m_pModel->m_pDefaultMaterial->MaterialName.Set( DEFAULT_MATERIAL );
-	m_pModel->m_MaterialLib.push_back( DEFAULT_MATERIAL );
-	m_pModel->m_MaterialMap[ DEFAULT_MATERIAL ] = m_pModel->m_pDefaultMaterial;
+	m_pModel->m_pDefaultMaterial->MaterialName.Set( AI_DEFAULT_MATERIAL_NAME );
+	m_pModel->m_MaterialLib.push_back( AI_DEFAULT_MATERIAL_NAME );
+	m_pModel->m_MaterialMap[ AI_DEFAULT_MATERIAL_NAME ] = m_pModel->m_pDefaultMaterial;
 	
 	// Start parsing the file
 	parseFile();
