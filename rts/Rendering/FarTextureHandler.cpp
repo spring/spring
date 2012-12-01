@@ -183,12 +183,14 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	// RTT with a top-down view; the view-matrix must be
 	// on the PROJECTION stack for the model shaders
 	glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
 		glLoadIdentity();
 		glOrtho(-modelradius, modelradius, -modelradius, modelradius, -modelradius, modelradius);
 		glRotatef(45.0f, 1.0f, 0.0f, 0.0f);
 		glScalef(-1.0f, 1.0f, 1.0f);
 
 	glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
 		glLoadIdentity();
 
 	for (int orient = 0; orient < numOrientations; ++orient) {
@@ -209,6 +211,11 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		// rotate by 360 / numOrientations degrees for the next orientation
 		glRotatef(-360.0f / numOrientations, 0.0f, 1.0f, 0.0f);
 	}
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
 
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
 	unitDrawer->CleanUpUnitDrawing();
