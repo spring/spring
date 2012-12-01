@@ -56,6 +56,12 @@ if (MINGW AND Boost_CHRONO_FOUND)
 	LIST(APPEND engineLibraries ${Boost_CHRONO_LIBRARY})
 endif (MINGW AND Boost_CHRONO_FOUND)
 
+if (MINGW AND OPENMP_FOUND)
+	FIND_PACKAGE_STATIC(Threads)
+	# omp support depends currently bases on win32-pthreads, link to it
+	LIST(APPEND engineLibraries ${CMAKE_THREAD_LIBS_INIT})
+endif(MINGW AND OPENMP_FOUND)
+
 ### Assemble external incude dirs
 LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
 
