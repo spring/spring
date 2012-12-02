@@ -16,6 +16,7 @@
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Game/TraceRay.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -281,10 +282,9 @@ static int DamagesArray(lua_State* L, const void* data)
 
 static int VisualsTable(lua_State* L, const void* data)
 {
-	const struct WeaponDef::Visuals& v =
-		*static_cast<const struct WeaponDef::Visuals*>(data);
+	const struct WeaponDef::Visuals& v = *static_cast<const struct WeaponDef::Visuals*>(data);
 	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "modelName",      v.modelName);
+	HSTR_PUSH_STRING(L, "modelName",      modelParser->Find(v.modelName));
 	HSTR_PUSH_NUMBER(L, "colorR",         v.color.x);
 	HSTR_PUSH_NUMBER(L, "colorG",         v.color.y);
 	HSTR_PUSH_NUMBER(L, "colorB",         v.color.z);

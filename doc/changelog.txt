@@ -44,7 +44,6 @@ Lua
  - Lua: make Spring.GetPlayerRoster really return a boolean for spectator as the wiki says
  - fix crash when calling Script.Kill() (3292)
  - fix Spring.GetUnitNearestAlly takes self into account (3293)
-CHECK - fix UnitDefs[*].model.path
  ! make TeamHandler::IsActiveTeam check Team::isDead
  ! gl.UnitPieceMatrix & gl.UnitPieceMultMatrix do now the same and work from UnitSpace & aren't recursive anymore (don't depend on the parent-piece)
  ! remove LuaLobby
