@@ -389,13 +389,13 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 
 
 	if (me.OffsetToChildObject > 0) {
-		piece->childs.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj));
+		piece->children.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj));
 	}
 
 	piece->isEmpty = (piece->prims.size() < 1);
 
 	if (me.OffsetToSiblingObject > 0) {
-		parent->childs.push_back(LoadPiece(model, me.OffsetToSiblingObject, parent, numobj));
+		parent->children.push_back(LoadPiece(model, me.OffsetToSiblingObject, parent, numobj));
 	}
 
 	return piece;

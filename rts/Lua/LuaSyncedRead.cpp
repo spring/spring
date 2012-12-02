@@ -4948,9 +4948,9 @@ static int GetUnitPieceInfo(lua_State* L, const ModelType& op)
 
 	HSTR_PUSH(L, "children");
 	lua_newtable(L);
-	for (int c = 0; c < (int)op.childs.size(); c++) {
+	for (int c = 0; c < (int)op.children.size(); c++) {
 		lua_pushnumber(L, c + 1);
-		lua_pushsstring(L, op.childs[c]->name);
+		lua_pushsstring(L, op.children[c]->name);
 		lua_rawset(L, -3);
 	}
 	lua_rawset(L, -3);

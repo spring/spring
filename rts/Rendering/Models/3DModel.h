@@ -61,13 +61,13 @@ struct S3DModelPiece {
 	const CollisionVolume* GetCollisionVolume() const { return colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
 
-	unsigned int GetChildCount() const { return childs.size(); }
-	S3DModelPiece* GetChild(unsigned int i) const { return childs[i]; }
+	unsigned int GetChildCount() const { return children.size(); }
+	S3DModelPiece* GetChild(unsigned int i) const { return children[i]; }
 
 public:
 	std::string name;
 	std::string parentName;
-	std::vector<S3DModelPiece*> childs;
+	std::vector<S3DModelPiece*> children;
 
 	S3DModel* model;
 	S3DModelPiece* parent;
@@ -85,6 +85,7 @@ public:
 	float3 rot;
 	float3 scale;
 };
+
 
 
 struct S3DModel
@@ -155,7 +156,7 @@ struct LocalModelPiece
 	LocalModelPiece(const S3DModelPiece* piece);
 	~LocalModelPiece();
 
-	void AddChild(LocalModelPiece* c) { childs.push_back(c); }
+	void AddChild(LocalModelPiece* c) { children.push_back(c); }
 	void SetParent(LocalModelPiece* p) { parent = p; }
 
 	void Draw() const;
@@ -204,7 +205,7 @@ public:
 	const S3DModelPiece* original;
 	const LocalModelPiece* parent;
 
-	std::vector<LocalModelPiece*> childs;
+	std::vector<LocalModelPiece*> children;
 	std::vector<unsigned int> lodDispLists;
 };
 

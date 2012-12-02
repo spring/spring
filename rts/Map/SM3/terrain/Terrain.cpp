@@ -73,7 +73,7 @@ namespace terrain {
 			assert(highDetail);
 
 			for (int a = 0; a < 4; a++)
-				highDetail->Fill(q->childs[a]);
+				highDetail->Fill(q->children[a]);
 		}
 	}
 
@@ -86,7 +86,7 @@ namespace terrain {
 	{
 		parent = 0;
 		for (int a = 0; a < 4; a++)
-			childs[a] = 0;
+			children[a] = 0;
 		depth = width = 0;
 		drawState = NoDraw;
 		renderData = 0;
@@ -100,7 +100,7 @@ namespace terrain {
 	{
 		if (!isLeaf()) {
 			for (int a = 0; a < 4; a++)
-				delete childs[a];
+				delete children[a];
 		}
 
 		// delete cached texture
@@ -115,14 +115,14 @@ namespace terrain {
 		// create child nodes if necessary
 		if (hm->highDetail) {
 			for (int a = 0; a < 4; a++) {
-				childs[a] = new TQuad;
-				childs[a]->parent = this;
+				children[a] = new TQuad;
+				children[a]->parent = this;
 
 				int2 sqPos(sqStart.x   + (a & 1)*w/2, sqStart.y + (a & 2)*w/4); // square pos
 				int2 hmPos(hmStart.x*2 + (a & 1)*QUAD_W, hmStart.y*2 + (a & 2)*QUAD_W/2); // heightmap pos
 				int2 cqPos(quadPos.x*2 + (a & 1), quadPos.y*2 + (a & 2)/2);// child quad pos
 
-				childs[a]->Build(hm->highDetail, sqPos, hmPos, cqPos, w/2, d + 1);
+				children[a]->Build(hm->highDetail, sqPos, hmPos, cqPos, w/2, d + 1);
 			}
 		}
 
@@ -233,7 +233,7 @@ namespace terrain {
 	{
 		if (!isLeaf()) {
 			for (int a = 0; a < 4; a++)
-				childs[a]->CollectNodes(quads);
+				children[a]->CollectNodes(quads);
 		}
 		quads.push_back(this);
 	}
@@ -251,7 +251,7 @@ namespace terrain {
 		if (depth < maxdepth)
 		{
 			for (int a = 0; a < 4; a++) {
-				TQuad* r = childs[a]->FindSmallestContainingQuad2D(pos,range,maxdepth);
+				TQuad* r = children[a]->FindSmallestContainingQuad2D(pos,range,maxdepth);
 				if (r) return r;
 			}
 		}
@@ -318,7 +318,7 @@ namespace terrain {
 			// change the queued quad to a parent quad
 			q->parent->drawState = TQuad::Parent;
 			for (int a = 0; a < 4; a++) {
-				TQuad* ch = q->parent->childs [a];
+				TQuad* ch = q->parent->children [a];
 
 				updatequads.push_back(ch);
 				ch->drawState = TQuad::Queued;
@@ -366,7 +366,7 @@ namespace terrain {
 
 		if (q->drawState == TQuad::Parent) {
 			for(int a = 0; a < 4; a++)
-				UpdateLodFix(q->childs [a]);
+				UpdateLodFix(q->children [a]);
 		}
 		else if (q->parent) {
 			// find the nabours, and make sure at least them or their parents are drawn
@@ -388,7 +388,7 @@ namespace terrain {
 			if (q->depth < quadTreeDepth-config.maxLodLevel || (lod > 1.0f && !q->isLeaf())) {
 				q->drawState = TQuad::Parent;
 				for (int a = 0; a < 4; a++)
-					QuadVisLod(q->childs[a]);
+					QuadVisLod(q->children[a]);
 			} else q->drawState = TQuad::Queued;
 			updatequads.push_back(q);
 
@@ -713,7 +713,7 @@ namespace terrain {
 			if (q->isLeaf()) return q;
 
 			for (int a = 0; a < 4; a++)  {
-				TQuad* r = FindQuad(q->childs[a], cpos);
+				TQuad* r = FindQuad(q->children[a], cpos);
 				if (r) return r;
 			}
 		}

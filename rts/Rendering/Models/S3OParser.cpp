@@ -123,13 +123,13 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
 
 
-	int childTableOffset = fp->childs;
+	int childTableOffset = fp->children;
 
-	for (int a = 0; a < fp->numChilds; ++a) {
+	for (int a = 0; a < fp->numchildren; ++a) {
 		int childOffset = swabDWord(*(int*) &buf[childTableOffset]);
 
 		SS3OPiece* childPiece = LoadPiece(model, piece, buf, childOffset);
-		piece->childs.push_back(childPiece);
+		piece->children.push_back(childPiece);
 
 		childTableOffset += sizeof(int);
 	}

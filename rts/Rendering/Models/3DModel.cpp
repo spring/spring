@@ -42,7 +42,7 @@ void S3DModelPiece::DrawStatic() const
 		if (!isEmpty)
 			glCallList(dispListID);
 
-		for (std::vector<S3DModelPiece*>::const_iterator ci = childs.begin(); ci != childs.end(); ++ci) {
+		for (std::vector<S3DModelPiece*>::const_iterator ci = children.begin(); ci != children.end(); ++ci) {
 			(*ci)->DrawStatic();
 		}
 
@@ -132,7 +132,7 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	dispListID =  piece->dispListID;
 	pos        =  piece->offset;
 
-	childs.reserve(piece->childs.size());
+	children.reserve(piece->children.size());
 
 	if (piece->GetVertexCount() < 2) {
 		dir = float3(1.0f, 1.0f, 1.0f);
@@ -180,8 +180,8 @@ void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices)
 		}
 	}
 
-	for (unsigned int i = 0; i < childs.size(); i++) {
-		childs[i]->UpdateMatricesRec(updateChildMatrices);
+	for (unsigned int i = 0; i < children.size(); i++) {
+		children[i]->UpdateMatricesRec(updateChildMatrices);
 	}
 }
 
@@ -220,8 +220,8 @@ void LocalModelPiece::SetLODCount(unsigned int count)
 		lodDispLists[i] = 0;
 	}
 
-	for (unsigned int i = 0; i < childs.size(); i++) {
-		childs[i]->SetLODCount(count);
+	for (unsigned int i = 0; i < children.size(); i++) {
+		children[i]->SetLODCount(count);
 	}
 }
 

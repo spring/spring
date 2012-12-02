@@ -141,12 +141,12 @@ WEAPONTAG(bool, paralyzer).defaultValue(false);
 WEAPONTAG(int, paralyzeTime,  damages.paralyzeDamageTime).defaultValue(10).minimumValue(0);
 WEAPONTAG(bool, stockpile).defaultValue(false);
 WEAPONTAG(float, stockpileTime).fallbackName("reload").defaultValue(1.0f);
-WEAPONTAG(float, coverageRange).externalName("coverage").defaultValue(0.0f);
 
 // Interceptor
 WEAPONTAG(int, targetable).defaultValue(0);
 WEAPONTAG(int, interceptor).defaultValue(0);
 WEAPONDUMMYTAG(unsigned, interceptedByShieldType);
+WEAPONTAG(float, coverageRange).externalName("coverage").defaultValue(0.0f);
 
 // Dynamic Damage
 WEAPONTAG(bool, dynDamageInverted).defaultValue(false);
