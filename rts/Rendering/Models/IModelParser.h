@@ -29,6 +29,7 @@ public:
 	void CreateLocalModel(LocalModel* model);
 	void DeleteLocalModel(LocalModel* model);
 
+	std::string Find(std::string name) const;
 	S3DModel* Load3DModel(std::string name);
 
 	typedef std::map<std::string, S3DModel*> ModelMap;
