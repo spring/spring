@@ -95,14 +95,11 @@ C3DModelLoader::C3DModelLoader()
 C3DModelLoader::~C3DModelLoader()
 {
 	// delete model cache
-	ModelMap::iterator ci;
-	for (ci = cache.begin(); ci != cache.end(); ++ci) {
-		S3DModel* model = ci->second;
-
-		DeleteChilds(model->GetRootPiece());
+	for (std::list<S3DModel*>::iterator mi = models.begin(); mi != models.end(); ++mi) {
+		S3DModel* model = *mi;
+		DeleteChildren(model->GetRootPiece());
 		delete model;
 	}
-	cache.clear();
 
 	// get rid of Spring's native parsers
 	delete parsers["3do"]; parsers.erase("3do");
@@ -243,7 +240,8 @@ dummy:
 
 	cache[name] = model; // cache the model
 	cache[modelPath] = model; // cache the model
-	model->id = cache.size(); // IDs start with 1
+	models.push_back(model);
+	model->id = models.size(); // IDs start with 1
 
 	return model;
 }
@@ -252,17 +250,17 @@ void C3DModelLoader::Update() {
 	if (GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // Update
 
-		for (std::vector<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
+		for (std::list<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
 			CreateListsNow(*it);
 		}
 		createLists.clear();
 
-		for (std::set<LocalModel*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
+		for (std::list<LocalModel*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
 			(*i)->ReloadDisplayLists();
 		}
 		fixLocalModels.clear();
 
-		for (std::vector<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i) {
+		for (std::list<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i) {
 			delete *i;
 		}
 		deleteLocalModels.clear();
@@ -270,10 +268,10 @@ void C3DModelLoader::Update() {
 }
 
 
-void C3DModelLoader::DeleteChilds(S3DModelPiece* o)
+void C3DModelLoader::DeleteChildren(S3DModelPiece* o)
 {
 	for (std::vector<S3DModelPiece*>::iterator di = o->childs.begin(); di != o->childs.end(); ++di) {
-		DeleteChilds(*di);
+		DeleteChildren(*di);
 	}
 
 	o->childs.clear();
@@ -291,7 +289,7 @@ void C3DModelLoader::CreateLocalModel(LocalModel* localModel)
 	if (!dlistLoaded && GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // CreateLocalModel
 
-		fixLocalModels.insert(localModel);
+		fixLocalModels.push_back(localModel);
 	}
 }
 
@@ -300,7 +298,9 @@ void C3DModelLoader::DeleteLocalModel(LocalModel* localModel)
 	if (GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // DeleteLocalModel
 
-		fixLocalModels.erase(localModel);
+		std::list<LocalModel*>::iterator it = find(fixLocalModels.begin(), fixLocalModels.end(), localModel);
+		if (it != fixLocalModels.end())
+			fixLocalModels.erase(it);
 		deleteLocalModels.push_back(localModel);
 	} else {
 		delete localModel;

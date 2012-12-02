@@ -4,9 +4,8 @@
 #define IMODELPARSER_H
 
 #include <map>
-#include <vector>
 #include <string>
-#include <set>
+#include <list>
 
 #include "System/Matrix44f.h"
 #include "3DModel.h"
@@ -36,19 +35,19 @@ public:
 	typedef std::map<std::string, IModelParser*> ParserMap;
 
 private:
-	// FIXME make some static?
 	ModelMap cache;
 	ParserMap parsers;
+	std::list<S3DModel*> models;
 
-	std::vector<S3DModelPiece*> createLists;
+	std::list<S3DModelPiece*> createLists;
 
-	std::set<LocalModel*> fixLocalModels;
-	std::vector<LocalModel*> deleteLocalModels;
+	std::list<LocalModel*> fixLocalModels;
+	std::list<LocalModel*> deleteLocalModels;
 
 	void CreateLists(S3DModelPiece* o);
 	void CreateListsNow(S3DModelPiece* o);
 
-	void DeleteChilds(S3DModelPiece* o);
+	void DeleteChildren(S3DModelPiece* o);
 };
 
 extern C3DModelLoader* modelParser;
