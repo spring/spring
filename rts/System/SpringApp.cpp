@@ -290,11 +290,8 @@ bool SpringApp::Initialize()
 
 	// For latency reasons our openmp threads yield rarely and so eat a lot cputime with idleing.
 	// So it's better we always leave 1 core free for our other threads, drivers & OS
-	const int maxthreads = omp_get_max_threads() - 1;
-	if (maxthreads > 1) {
-		omp_set_num_threads(maxthreads);
-		LOG("Using %d OMP threads", maxthreads);
-	}
+	if (omp_get_max_threads() > 2)
+		omp_set_num_threads(omp_get_max_threads() - 1); 
 
 	// omp threads
 	boost::uint32_t ompCores = 0;
