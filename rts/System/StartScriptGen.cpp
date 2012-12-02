@@ -3,6 +3,7 @@
 #include <iostream>
 #include "StartScriptGen.h"
 #include "AIScriptHandler.h"
+#include "Game/GlobalUnsynced.h"
 #include "System/TdfParser.h"
 #include "System/Util.h"
 #include "System/Config/ConfigHandler.h"
@@ -58,8 +59,8 @@ namespace StartScriptGen {
 		const std::string lowerLazyName = StringToLower(lazyName);
 		const std::vector<CArchiveScanner::ArchiveData>& found = archiveScanner->GetPrimaryMods();
 
-		std::string matchingName = "";
-		std::string matchingVersion = "";
+		std::string matchingName;
+		std::string matchingVersion;
 		uint64_t matchingVersionInt = 0;
 
 		for (std::vector<CArchiveScanner::ArchiveData>::const_iterator it = found.begin(); it != found.end(); ++it) {
@@ -98,6 +99,19 @@ namespace StartScriptGen {
 	}
 
 
+	static bool GetRandomGame(const std::string& lazyName, std::string* applicableName)
+	{
+		if (std::string("random").find(lazyName) != std::string::npos) {
+			const std::vector<CArchiveScanner::ArchiveData>& games = archiveScanner->GetPrimaryMods();
+			if (!games.empty()) {
+				*applicableName = games[gu->RandInt() % games.size()].GetName();
+				return true;
+			}
+		}
+		return false;
+	}
+
+
 	static bool GetMapByExactName(const std::string& lazyName, std::string* applicableName)
 	{
 		const CArchiveScanner::ArchiveData& aData = archiveScanner->GetArchiveData(lazyName);
@@ -126,7 +140,7 @@ namespace StartScriptGen {
 			substrings.push_back(buf);
 		}
 
-		std::string matchingName = lazyName;
+		std::string matchingName;
 		size_t matchingLength = 1e6;
 
 		for (std::vector<std::string>::const_iterator it = found.begin(); it != found.end(); ++it) {
@@ -161,11 +175,25 @@ namespace StartScriptGen {
 	}
 
 
+	static bool GetRandomMap(const std::string& lazyName, std::string* applicableName)
+	{
+		if (std::string("random").find(lazyName) != std::string::npos) {
+			const std::vector<std::string>& maps = archiveScanner->GetMaps();
+			if (!maps.empty()) {
+				*applicableName = maps[gu->RandInt() % maps.size()];
+				return true;
+			}
+		}
+		return false;
+	}
+
+
 	static std::string GetGame(const std::string& lazyName)
 	{
 		std::string applicableName = lazyName;
 		if (GetGameByExactName(lazyName, &applicableName)) return applicableName;
 		if (GetGameByShortName(lazyName, &applicableName)) return applicableName;
+		if (GetRandomGame(lazyName, &applicableName))      return applicableName;
 		//TODO add rapid tags support, e.g. `s44:test`
 
 		return lazyName;
@@ -177,6 +205,7 @@ namespace StartScriptGen {
 		std::string applicableName = lazyName;
 		if (GetMapByExactName(lazyName, &applicableName)) return applicableName;
 		if (GetMapBySubString(lazyName, &applicableName)) return applicableName;
+		if (GetRandomMap(lazyName, &applicableName))      return applicableName;
 		//TODO add a string similarity search?
 
 		return lazyName;
