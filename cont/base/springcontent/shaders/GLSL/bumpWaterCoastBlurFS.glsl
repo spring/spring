@@ -1,3 +1,5 @@
+#version 120
+
 /**
  * @project Spring RTS
  * @file bumpWaterCoastBlurFS.glsl
@@ -10,7 +12,6 @@
  * GNU GPL, v2 or later.
  */
 
-#version 120
 #define res 15.0
 #define renderToAtlas (gl_TexCoord[2].x > 0.5)
 #define radius gl_TexCoord[2].y
