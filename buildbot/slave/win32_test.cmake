@@ -6,4 +6,7 @@ SET(CMAKE_CXX_COMPILER i686-mingw32-g++)
 SET(WINDRES i686-mingw32-windres)
 
 # here is the target environment located
-SET(CMAKE_FIND_ROOT_PATH /usr/lib/gcc/i686-mingw32)
+SET(CMAKE_FIND_ROOT_PATH
+	/usr/lib/gcc/i686-mingw32
+	/usr/i686-mingw32
+)

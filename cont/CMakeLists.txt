@@ -71,9 +71,7 @@ if    (MINGW)
 		install(FILES ${STDCXX_LIBRARY} DESTINATION ${BINDIR})
 
 		# pthreadGC2 is a dependency of gomp
-		find_library(PTHREADGC2_LIBRARY NAMES pthreadGC2
-				HINTS /usr/i686-mingw32/usr/bin
-			)
+		find_library(PTHREADGC2_LIBRARY NAMES pthreadGC2)
 		install(FILES ${PTHREADGC2_LIBRARY} DESTINATION ${BINDIR})
 	endif(OPENMP_FOUND)
 endif (MINGW)
