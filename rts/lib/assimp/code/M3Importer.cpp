@@ -47,7 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace Assimp {
 namespace M3 {
 
-static const std::string M3Extension = "m3";
+static const char* M3Extension = "m3";
 
 // ------------------------------------------------------------------------------------------------
 //	Constructor.
@@ -72,7 +72,7 @@ M3Importer::~M3Importer()
 bool M3Importer::CanRead( const std::string &rFile, IOSystem* /*pIOHandler*/, bool checkSig ) const
 {
 	if ( !checkSig ) {
-		return SimpleExtensionCheck( rFile, M3Extension.c_str() );
+		return SimpleExtensionCheck( rFile, M3Extension );
 	}
 
 	return false;
