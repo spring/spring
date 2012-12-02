@@ -299,8 +299,8 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 		mat.Translate(-offset);
 	}
 
-	for (unsigned int i = 0; i < lmp->childs.size(); i++) {
-		IntersectPieceTreeHelper(lmp->childs[i], mat, p0, p1, hits);
+	for (unsigned int i = 0; i < lmp->children.size(); i++) {
+		IntersectPieceTreeHelper(lmp->children[i], mat, p0, p1, hits);
 	}
 }
 

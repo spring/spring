@@ -477,7 +477,7 @@ void COBJParser::BuildModelPieceTreeRec(
 				assert(childPieceName == childPiece->name);
 
 				childPiece->parent = piece;
-				piece->childs.push_back(childPiece);
+				piece->children.push_back(childPiece);
 
 				BuildModelPieceTreeRec(model, childPiece, pieceMap, childPieceTable, globalVertexOffsets, localPieceOffsets);
 			}
@@ -499,7 +499,7 @@ void COBJParser::BuildModelPieceTreeRec(
 				assert(childPieceName == childPiece->name);
 
 				childPiece->parent = piece;
-				piece->childs.push_back(childPiece);
+				piece->children.push_back(childPiece);
 
 				BuildModelPieceTreeRec(model, childPiece, pieceMap, childPieceTable, globalVertexOffsets, localPieceOffsets);
 			}

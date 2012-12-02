@@ -532,7 +532,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 						"Missing piece '%s' declared as parent of '%s'.",
 						piece->parentName.c_str(), piece->name.c_str());
 			} else {
-				piece->parent->childs.push_back(piece);
+				piece->parent->children.push_back(piece);
 				++model->numPieces;
 			}
 		} else {
@@ -541,7 +541,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 			if (piece->parent == NULL) {
 				LOG_SL(LOG_SECTION_PIECE, L_ERROR, "Missing root piece");
 			} else {
-				piece->parent->childs.push_back(piece);
+				piece->parent->children.push_back(piece);
 				++model->numPieces;
 			}
 		}
@@ -562,9 +562,9 @@ void CAssParser::CalculateMinMax(S3DModelPiece* piece)
 	piece->model->maxs.y = std::max(piece->goffset.y + piece->maxs.y, piece->model->maxs.y);
 	piece->model->maxs.z = std::max(piece->goffset.z + piece->maxs.z, piece->model->maxs.z);
 
-	//! Repeat with childs
-	for (unsigned int i = 0; i < piece->childs.size(); i++) {
-		CalculateMinMax(piece->childs[i]);
+	//! Repeat with children
+	for (unsigned int i = 0; i < piece->children.size(); i++) {
+		CalculateMinMax(piece->children[i]);
 	}
 }
 

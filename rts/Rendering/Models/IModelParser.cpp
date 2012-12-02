@@ -270,11 +270,11 @@ void C3DModelLoader::Update() {
 
 void C3DModelLoader::DeleteChildren(S3DModelPiece* o)
 {
-	for (std::vector<S3DModelPiece*>::iterator di = o->childs.begin(); di != o->childs.end(); ++di) {
+	for (std::vector<S3DModelPiece*>::iterator di = o->children.begin(); di != o->children.end(); ++di) {
 		DeleteChildren(*di);
 	}
 
-	o->childs.clear();
+	o->children.clear();
 	delete o;
 }
 
@@ -315,7 +315,7 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 		o->DrawForList();
 	glEndList();
 
-	for (std::vector<S3DModelPiece*>::iterator bs = o->childs.begin(); bs != o->childs.end(); ++bs) {
+	for (std::vector<S3DModelPiece*>::iterator bs = o->children.begin(); bs != o->children.end(); ++bs) {
 		CreateListsNow(*bs);
 	}
 

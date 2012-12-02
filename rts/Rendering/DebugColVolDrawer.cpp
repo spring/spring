@@ -150,8 +150,8 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 		}
 	glPopMatrix();
 
-	for (unsigned int i = 0; i < p->childs.size(); i++) {
-		DrawUnitDebugPieceTree(p->childs[i], lap, lapf, mat);
+	for (unsigned int i = 0; i < p->children.size(); i++) {
+		DrawUnitDebugPieceTree(p->children[i], lap, lapf, mat);
 	}
 }
 
