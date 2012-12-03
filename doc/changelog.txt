@@ -49,6 +49,7 @@ Lua
  ! remove LuaLobby
  - Spring.SetTerrainTypeData now only updates pathfinder when there is a real change (performance)
  - fix crash in LuaUnitDefs when trying to read deathExpWeaponDef (#3333 & #3325)
+ - add Spring.GetReplayLength()
 
 CollisionVolumes:
  ! drop support for ellipsoid-cylinders and ellipsoids

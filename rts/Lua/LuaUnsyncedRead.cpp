@@ -10,6 +10,7 @@
 #include "Game/CameraHandler.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
+#include "Game/GameServer.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Player.h"
@@ -49,6 +50,8 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/LoadSave/demofile.h"
+#include "System/LoadSave/DemoReader.h"
 #include "System/Sound/SoundChannels.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
@@ -77,6 +80,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	lua_rawset(L, -3)
 
 	REGISTER_LUA_CFUNC(IsReplay);
+	REGISTER_LUA_CFUNC(GetReplayLength);
 	REGISTER_LUA_CFUNC(GetModUICtrl);
 
 	REGISTER_LUA_CFUNC(GetDrawFrame);
@@ -282,6 +286,17 @@ int LuaUnsyncedRead::IsReplay(lua_State* L)
 		lua_pushboolean(L, false);
 	}
 	return 1;
+}
+
+
+int LuaUnsyncedRead::GetReplayLength(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	if (gameServer && gameServer->GetDemoReader()) {
+		lua_pushnumber(L, gameServer->GetDemoReader()->GetFileHeader().gameTime);
+		return 1;
+	}
+	return 0;
 }
 
 

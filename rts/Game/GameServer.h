@@ -92,6 +92,7 @@ public:
 	void UpdateSpeedControl(int speedCtrl);
 	static std::string SpeedControlToString(int speedCtrl);
 
+	const boost::scoped_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
 	#ifdef DEDICATED
 	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
 	#endif
