@@ -77,7 +77,7 @@ class CLuaDisplayLists {
 	private:
 		struct DLdata {
 			DLdata(int i) { id = i; }
-			DLdata(int i, MatrixStateData &m) { id = i; matData = m; }
+			DLdata(int i, MatrixStateData &m): id(i), matData(m) {}
 			GLuint id;
 			MatrixStateData matData;
 		};
