@@ -123,6 +123,15 @@ static inline bool StringEndsWith(const std::string& str, const std::string& pos
 	return StringEndsWith(str, postfix.c_str());
 }
 
+/// Helper function to avoid division by Zero
+static inline float SafeDivide(const float a, const float b)
+{
+	if (b==0)
+		return a;
+	else
+		return a/b;
+}
+
 /**
  * @brief Safe alternative to "delete obj;"
  * Safely deletes an object, by first setting the pointer to NULL and then
