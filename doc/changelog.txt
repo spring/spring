@@ -119,7 +119,7 @@ Rendering:
  - ROAM: resize pool when running out of nodes fixes rendering on maps like Knockout
  - disable occlusion query in BumpWater it doesn't work and just makes it slower
  - speedup minimap icon rendering * keep units sorted by icon-type in UnitDrawer * use a vertex-array instead of tons of quads
- - move `lastFrameTime` calculation from the end of a drawframe to the beginning this way vsync locktimes are counted to the previous frame time (thx FIXME)
+ - move `lastFrameTime` calculation from the end of a drawframe to the beginning this way vsync locktimes are counted to the previous frame time
  ! removal of DepthBufferBits & StencilBufferBits
 
 Sim Bugfixes:
@@ -162,7 +162,6 @@ Buildprocess:
  - boost 1.50 compatibility
  - detect ld.gold and compress debugsymbols
  - update 7z to v9.22
-FIXME - spring-mt is merged into spring (default disabled, games can enable it with ...)
 
 OS:
  - set affinity of omp threads
