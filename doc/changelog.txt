@@ -158,17 +158,6 @@ Bugfixes:
  - fix secret exploit
  - fix secret exploit #2
 
-Buildprocess:
- - boost 1.50 compatibility
- - detect ld.gold and compress debugsymbols
- - update 7z to v9.22
-
-OS:
- - set affinity of omp threads
- - search script.txt & demofiles in $PWD
- - detect Valgrind and disable Watchdog & syncing (it won't let us change the FPU state) if it is running
- - don't install crash handler when core dumps are enabled
-
 Cmdline Arguments:
  - new --game (-g) & --map (-m)
    - if both parameters are set, this starts spring a with minimal setup and it sets the modoption minimalsetup = 1
@@ -176,6 +165,18 @@ Cmdline Arguments:
  - renamed shortarg -m (--minimised) to -b (~background)
  - new `spring --list-def-tags`, will in future return all Unit-, Weapon-, FeatureDefs in a `--list-config-vars` manner (not finished yet)
  - new benchmark mode (`--benchmark %time_min --benchmarkstart %starttime_min`) writes a benchmark.data parsable by gnuplot
+
+OS:
+ - set affinity of omp threads
+ - search script.txt & demofiles in $PWD
+ - detect Valgrind and disable Watchdog & syncing (it won't let us change the FPU state) if it is running
+ - don't install crash handler when core dumps are enabled
+
+Buildprocess:
+ - boost 1.50 compatibility
+ - detect ld.gold and compress debugsymbols
+ - update 7z to v9.22
+ - use tcmalloc when found (new USE_TCMALLOC use-flag)
 
 Windows:
  - OpenMP build
