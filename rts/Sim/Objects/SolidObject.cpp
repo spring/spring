@@ -138,22 +138,25 @@ void CSolidObject::UnBlock() {
 }
 
 void CSolidObject::Block() {
+	if (physicalState == Flying) {
+		//FIXME why does airmovetypes really on Block() to UNblock!
+		UnBlock();
+		return;
+	}
+
+	if (!blocking) {
+		//FIXME just why???
+		UnBlock();
+		return;
+	}
+
 	if (isMarkedOnBlockingMap && groundBlockPos == pos) {
 		return;
 	}
-	
+
 	UnBlock();
-
-	if (!blocking) {
-		return;
-	}
-	if (physicalState == Flying) {
-		return;
-	}
-
 	groundBlockPos = pos;
 	groundBlockingObjectMap->AddGroundBlockingObject(this);
-
 	assert(isMarkedOnBlockingMap);
 }
 
