@@ -119,7 +119,9 @@ void CHoverAirMoveType::SetGoal(float3 newPos, float distance)
 void CHoverAirMoveType::SetState(AircraftState newState)
 {
 	// once in crashing, we should never change back into another state
-	assert(aircraftState != AIRCRAFT_CRASHING || newState == AIRCRAFT_CRASHING);
+	if (aircraftState == AIRCRAFT_CRASHING && newState != AIRCRAFT_CRASHING) {
+		return;
+	}
 
 	if (newState == aircraftState) {
 		return;
