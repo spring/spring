@@ -10,7 +10,7 @@ float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float slope
 {
 	// no speed-penalty if on water (unless noWaterMove)
 	if (height < 0.0f)
-		return (1.0f * noHoverWaterMove);
+		return (1.0f * !noHoverWaterMove);
 	// slope too steep?
 	if (slope > moveDef.maxSlope)
 		return 0.0f;
