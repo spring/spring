@@ -26,8 +26,30 @@
 	#include "System/FileSystem/FileSystem.h"
 	#include <stdlib.h>
 	#include <process.h>
-	#define execv _execv
 	#define setenv(k,v,o) SetEnvironmentVariable(k,v)
+
+	//workaround #1: _execv() fails horribly when the binary path contains spaces, in that case the 2nd process will got a splitted arg0
+	//workaround #2: _execv() makes the parent process return directly after the new one started, POSIX behaviour is that to wait for the new one and pass the return value
+	static void execv(char*, char*)
+	{
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+		ZeroMemory( &si, sizeof(STARTUPINFO) );
+		si.cb = sizeof(si);
+		ZeroMemory( &pi, sizeof(PROCESS_INFORMATION) );
+
+		char* cmdLine = GetCommandLine();
+		int result = CreateProcess(NULL, cmdLine, NULL, NULL, false, NULL, NULL, NULL, &si, &pi);
+
+		if (result) {
+			int ret = WaitForSingleObject(pi.hProcess, INFINITE);
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+			exit(ret);
+		}
+
+		exit(GetLastError());
+	}
 #endif
 
 
