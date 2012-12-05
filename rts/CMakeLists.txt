@@ -81,6 +81,14 @@ IF (MINGW)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
 ENDIF (MINGW)
 
+FIND_PACKAGE_STATIC(TCMalloc)
+set(USE_TCMALLOC TRUE CACHE BOOL "use tcmalloc (part of google's perftools)")
+if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
+	MESSAGE(STATUS "Using tcmalloc")
+	LIST(APPEND engineCommonLibraries ${TCMALLOC_LIBRARY})
+endif (USE_TCMALLOC AND TCMALLOC_LIBRARY)
+
+
 
 ### Assemble engine sources
 Add_Subdirectory(Game)
