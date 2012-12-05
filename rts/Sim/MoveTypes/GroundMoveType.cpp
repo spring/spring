@@ -36,8 +36,8 @@
 #include "System/Sync/SyncTracer.h"
 
 #if 1
-#include "Rendering/GlobalRendering.h"
-#define DEBUG_DRAWING_ENABLED globalRendering->drawdebug
+#include "Rendering/IPathDrawer.h"
+#define DEBUG_DRAWING_ENABLED pathDrawer->IsEnabled()
 #else
 #define DEBUG_DRAWING_ENABLED false
 #endif
