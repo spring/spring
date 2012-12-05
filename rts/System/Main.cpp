@@ -145,8 +145,11 @@ static void SetNvOptimusProfile(char* argv[])
  */
 int main(int argc, char* argv[])
 {
+#ifndef PROFILE // PROFILE builds exit on execv ...
 	SetNvOptimusProfile(argv);
 	SetOpenMpEnvVars(argv);
+#endif
+
 	return Run(argc, argv);
 }
 
