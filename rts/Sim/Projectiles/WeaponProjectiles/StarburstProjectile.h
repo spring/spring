@@ -57,8 +57,6 @@ private:
 	float distanceToTravel;
 
 	static const int NUM_TRACER_PARTS = 5;
-	/// the smokes life-time in frames
-	static const float SMOKE_TIME;
 
 	struct TracerPart {
 		float3 pos;

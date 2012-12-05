@@ -19,7 +19,10 @@
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 
-const float CStarburstProjectile::SMOKE_TIME = 70.0f;
+// the smokes life-time in frames
+static const float SMOKE_TIME = 70.0f;
+
+static const float TRACER_PARTS_STEP = 2.0f;
 
 CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, ZeroVector, 0, 0, 0, 0, NULL, NULL, NULL, 0, ZeroVector));
 
@@ -108,7 +111,7 @@ CStarburstProjectile::CStarburstProjectile(
 		tracerParts[a].pos = pos;
 		tracerParts[a].speedf = curSpeed;
 
-		tracerParts[a].ageMods.resize(std::floor((curSpeed + 0.6f) / 0.15f), 1.0f);
+		tracerParts[a].ageMods.resize(std::floor((curSpeed + 0.6f) / TRACER_PARTS_STEP), 1.0f);
 	}
 	castShadow = true;
 
@@ -265,7 +268,7 @@ void CStarburstProjectile::Update()
 		tracerPart->speedf = curSpeed;
 
 		int newsize = 0;
-		for (float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f, ++newsize) {
+		for (float aa = 0; aa < curSpeed + 0.6f; aa += TRACER_PARTS_STEP, ++newsize) {
 			const float ageMod = (missileAge < 20) ? 1.0f : (0.6f + (rand() * 0.8f) / RAND_MAX);
 
 			if (tracerPart->ageMods.size() <= newsize) {
@@ -381,14 +384,16 @@ void CStarburstProjectile::DrawCallback()
 
 	unsigned char col[4];
 
+	size_t part = curTracerPart;
+
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		const TracerPart* tracerPart = (GML::SimEnabled()) ? (TracerPart* volatile)(&tracerParts[curTracerPart]) : &tracerParts[curTracerPart];
+		const TracerPart* tracerPart = (GML::SimEnabled()) ? (TracerPart* volatile)(&tracerParts[part]) : &tracerParts[part];
 		const float3& opos = tracerPart->pos;
 		const float3& odir = tracerPart->dir;
 		const float ospeed = tracerPart->speedf;
 		float aa = 0;
 
-		for (AGEMOD_VECTOR::const_iterator ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += 0.15f) {
+		for (AGEMOD_VECTOR::const_iterator ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += TRACER_PARTS_STEP) {
 			const float ageMod = *ai;
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
 			const float3 interPos = opos - (odir * ((a * 0.5f) + aa));
@@ -416,6 +421,8 @@ void CStarburstProjectile::DrawCallback()
 			va->AddVertexTC(interPos - camera->right * drawsize + camera->up * drawsize, wt3->xstart, wt3->yend,   col);
 			#undef wt3
 		}
+
+		part == 0 ? part = NUM_TRACER_PARTS-1 : --part;
 	}
 
 	// draw the engine flare
