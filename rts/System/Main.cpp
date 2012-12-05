@@ -100,17 +100,14 @@ int Run(int argc, char* argv[])
 static void SetOpenMpEnvVars(char* argv[])
 {
 	bool restart = false;
-	/*if (!getenv("OMP_WAIT_POLICY")) {
-		// omp threads will use a spinlock instead of yield'ing when waiting
-		// cause 100% cpu usage in the omp threads
-		setenv("OMP_WAIT_POLICY", "ACTIVE", 1);
-		restart = true;
-	}*/
-	if (!getenv("GOMP_SPINCOUNT")) {
-		// default spinlock time when waiting for new omp tasks is 3ms, increase it (better than active wait policy above)
-		#define MILLISEC "00000"
-		setenv("GOMP_SPINCOUNT", "20" MILLISEC, 1);
-		restart = true;
+	if (Threading::GetAvailableCores() >= 3) {
+		if (!getenv("OMP_WAIT_POLICY")) {
+			// omp threads will use a spinlock instead of yield'ing when waiting
+			// cause 100% cpu usage in the omp threads
+			setenv("OMP_WAIT_POLICY", "ACTIVE", 1);
+			restart = true;
+		}
+		// another envvar is "GOMP_SPINCOUNT", but it seems less predictable
 	}
 
 	// restart with new envvars
