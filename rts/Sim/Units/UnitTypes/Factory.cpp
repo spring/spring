@@ -442,13 +442,19 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		}
 
 		c.PushPos(tmpPos);
-		unit->commandAI->GiveCommand(c);
 	}
 
-	for (CCommandQueue::const_iterator ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
-		c = *ci;
-		c.options |= SHIFT_KEY;
+	if (unit->commandAI->commandQue.empty()) {
 		unit->commandAI->GiveCommand(c);
+
+		// copy factory orders
+		for (CCommandQueue::const_iterator ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
+			c = *ci;
+			c.options |= SHIFT_KEY;
+			unit->commandAI->GiveCommand(c);
+		}
+	} else {
+		unit->commandAI->commandQue.push_front(c);
 	}
 }
 
