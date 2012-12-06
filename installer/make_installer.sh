@@ -7,7 +7,7 @@ if [ ! -e installer ]; then
 	echo "Error: This script needs to be run from the root directory of the archive"
 	exit 1
 fi
-WGET="wget -N"
+WGET="wget -N --cache=off"
 
 TAG=$(git describe --tags|tr -d '\n')
 
