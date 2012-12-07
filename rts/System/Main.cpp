@@ -14,6 +14,7 @@
 #include "System/Exceptions.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
+#include "System/Platform/Misc.h"
 
 
 #if !defined(__APPLE__) || !defined(HEADLESS)
@@ -26,30 +27,6 @@
 	#include "System/FileSystem/FileSystem.h"
 	#include <stdlib.h>
 	#include <process.h>
-	#define setenv(k,v,o) SetEnvironmentVariable(k,v)
-
-	//workaround #1: _execv() fails horribly when the binary path contains spaces, in that case the 2nd process will got a splitted arg0
-	//workaround #2: _execv() makes the parent process return directly after the new one started, POSIX behaviour is that to wait for the new one and pass the return value
-	static void execv(char*, char*)
-	{
-		STARTUPINFO si;
-		PROCESS_INFORMATION pi;
-		ZeroMemory( &si, sizeof(STARTUPINFO) );
-		si.cb = sizeof(si);
-		ZeroMemory( &pi, sizeof(PROCESS_INFORMATION) );
-
-		char* cmdLine = GetCommandLine();
-		int result = CreateProcess(NULL, cmdLine, NULL, NULL, false, NULL, NULL, NULL, &si, &pi);
-
-		if (result) {
-			int ret = WaitForSingleObject(pi.hProcess, INFINITE);
-			CloseHandle(pi.hProcess);
-			CloseHandle(pi.hThread);
-			exit(ret);
-		}
-
-		exit(GetLastError());
-	}
 #endif
 
 
@@ -96,8 +73,9 @@ int Run(int argc, char* argv[])
 
 /**
  * Set some performance relevant OpenMP EnvVars.
+ * @return true when restart is required with new env vars
  */
-static void SetOpenMpEnvVars(char* argv[])
+static bool SetOpenMpEnvVars(char* argv[])
 {
 	bool restart = false;
 	if (Threading::GetAvailableCores() >= 3) {
@@ -109,18 +87,15 @@ static void SetOpenMpEnvVars(char* argv[])
 		}
 		// another envvar is "GOMP_SPINCOUNT", but it seems less predictable
 	}
-
-	// restart with new envvars
-	if (restart) {
-		execv(argv[0], argv);
-	}
+	return restart;
 }
 
 
 /**
- * Always run on dedicated GPU.
+ * Always run on dedicated GPU
+ * @return true when restart is required with new env vars
  */
-static void SetNvOptimusProfile(char* argv[])
+static bool SetNvOptimusProfile(char* argv[])
 {
 #ifdef WIN32
 	if (SOP_CheckProfile("Spring"))
@@ -128,8 +103,9 @@ static void SetNvOptimusProfile(char* argv[])
 
 	const std::string exename = FileSystem::GetFilename(argv[0]);
 	const int res = SOP_SetProfile("Spring", exename);
-	if (res == SOP_RESULT_CHANGE)
-		execv(argv[0], argv);
+	return (res == SOP_RESULT_CHANGE);
+#else
+	return false;
 #endif
 }
 
@@ -146,10 +122,18 @@ static void SetNvOptimusProfile(char* argv[])
 int main(int argc, char* argv[])
 {
 #ifndef PROFILE // PROFILE builds exit on execv ...
-	SetNvOptimusProfile(argv);
-	SetOpenMpEnvVars(argv);
+	bool res1 = SetNvOptimusProfile(argv);
+	bool res2 = SetOpenMpEnvVars(argv);
+	if (res1 || res2) {
+		std::vector<std::string> args;
+		args.resize(argc-1);
+		for (int i=1; i<argc; i++) {
+			args[i] = argv[i];
+		}
+		const std::string err = Platform::ExecuteProcess(argv[0], args);
+		return (err==""); //FIXME: error message box?!
+	}
 #endif
-
 	return Run(argc, argv);
 }
 
