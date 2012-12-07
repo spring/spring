@@ -100,7 +100,7 @@ static bool SetNvOptimusProfile(char* argv[])
 {
 #ifdef WIN32
 	if (SOP_CheckProfile("Spring"))
-		return;
+		return false;
 
 	const std::string exename = FileSystem::GetFilename(argv[0]);
 	const int res = SOP_SetProfile("Spring", exename);
