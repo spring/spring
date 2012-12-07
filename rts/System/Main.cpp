@@ -126,10 +126,9 @@ int main(int argc, char* argv[])
 	bool res1 = SetNvOptimusProfile(argv);
 	bool res2 = SetOpenMpEnvVars(argv);
 	if (res1 || res2) {
-		std::vector<std::string> args;
-		args.resize(argc-1);
+		std::vector<std::string> args(argc-1);
 		for (int i=1; i<argc; i++) {
-			args[i] = argv[i];
+			args[i-1] = argv[i];
 		}
 		const std::string err = Platform::ExecuteProcess(argv[0], args);
 		return (err==""); //FIXME: error message box?!
