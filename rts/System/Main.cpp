@@ -27,6 +27,7 @@
 	#include "System/FileSystem/FileSystem.h"
 	#include <stdlib.h>
 	#include <process.h>
+	#define setenv(k,v,o) SetEnvironmentVariable(k,v)
 #endif
 
 
