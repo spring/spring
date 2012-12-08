@@ -15,6 +15,7 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Misc.h"
+#include "System/Log/ILog.h"
 
 
 #if !defined(__APPLE__) || !defined(HEADLESS)
@@ -122,18 +123,12 @@ static bool SetNvOptimusProfile(char* argv[])
  */
 int main(int argc, char* argv[])
 {
-#ifndef PROFILE // PROFILE builds exit on execv ...
-	bool res1 = SetNvOptimusProfile(argv);
-	bool res2 = SetOpenMpEnvVars(argv);
-	if (res1 || res2) {
-		std::vector<std::string> args(argc-1);
-		for (int i=1; i<argc; i++) {
-			args[i-1] = argv[i];
-		}
-		const std::string err = Platform::ExecuteProcess(argv[0], args);
-		return (err==""); //FIXME: error message box?!
+	if (SetNvOptimusProfile(argv)) {
+		LOG_L(L_ERROR, "Optimus profile not set, please set it to get better performance!");
 	}
-#endif
+	if (SetOpenMpEnvVars(argv)) {
+		LOG_L(L_ERROR, "Please set env var OMP_WAIT_POLICY=ACTIVE to get better performance!");
+	}
 	return Run(argc, argv);
 }
 
