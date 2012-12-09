@@ -466,8 +466,10 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 
 void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
-	const vector<int> &quads = qf->GetQuadsRectangle(float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
-		float3(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE));
+	const vector<int>& quads = qf->GetQuadsRectangle(
+		float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
+		float3(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE)
+	);
 
 	for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		list<CFeature*>::const_iterator fi;
@@ -475,21 +477,10 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
-			float3& fpos = feature->pos;
-
-			float gh = ground->GetHeightReal(fpos.x, fpos.z);
-			float wh = gh;
-
-			if (feature->def->floating)
-				wh = ground->GetHeightAboveWater(fpos.x, fpos.z);
-
-			if (fpos.y > wh || fpos.y < gh) {
-				feature->finalHeight = wh;
-				feature->isMoving = false;
-
-				// put this feature back in the update-queue
-				SetFeatureUpdateable(feature);
-			}
+			feature->UpdateFinalHeight(true);
+			// put this feature back in the update-queue
+			SetFeatureUpdateable(feature);
 		}
 	}
 }
+

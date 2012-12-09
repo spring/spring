@@ -89,6 +89,7 @@ public:
 	 * until the corpse has been fully 'repaired'.
 	 */
 	bool isRepairingBeforeResurrect;
+	bool isAtFinalHeight;
 	bool isMoving;
 	bool inUpdateQue;
 
