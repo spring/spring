@@ -2310,6 +2310,7 @@ void CGameServer::UpdateLoop()
 {
 	try {
 		Threading::SetThreadName("netcode");
+		Threading::SetAffinity(~0);
 
 		while (!quitServer) {
 			spring_sleep(spring_msecs(10));
