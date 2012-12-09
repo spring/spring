@@ -129,19 +129,28 @@ namespace Shader {
 		assert(globalRendering->haveGLSL); // non-debug check is done in ShaderHandler
 	}
 	void GLSLShaderObject::Compile() {
-		const std::string srcStr = GetShaderSource(srcFile).c_str();
+		std::string srcStr = GetShaderSource(srcFile).c_str();
 
-		const GLchar* sources[4] = {
-			"#line 0\n",
+		// extract #version and put it in first line
+		std::string version;
+		if (StringStartsWith(srcStr, "#version ")) {
+			size_t nl = srcStr.find('\n');
+			version = srcStr.substr(0, nl);
+			srcStr  = "//" + srcStr; // comment out the #version pragma (it's only allowed in the first line)
+		}
+
+		const GLchar* sources[5] = {
+			version.c_str(),
+			"// flags\n#line 0\n",
 			definitions.c_str(),
-			"\n#line 0\n",
+			"\n// shader source code\n#line 0\n",
 			srcStr.c_str()
 		};
-		const GLint lengths[4] = {-1, -1, -1, -1};
+		const GLint lengths[5] = {-1, -1, -1, -1, -1};
 
 		if (!objID)
 			objID = glCreateShader(type);
-		glShaderSource(objID, 4, sources, lengths);
+		glShaderSource(objID, 5, sources, lengths);
 		glCompileShader(objID);
 
 		valid = glslIsValid(objID);
