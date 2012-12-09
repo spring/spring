@@ -80,6 +80,10 @@ int Run(int argc, char* argv[])
 static bool SetOpenMpEnvVars(char* argv[])
 {
 	bool restart = false;
+	
+//FIXME GML creates additional threads that need `free` cores too, the problem is to detect if
+//      GML is used or not and to reduce the omp threads then (gomp doesn't give you an interface to kill threads once they are started!)
+#if !defined(USE_GML)
 	if (Threading::GetAvailableCores() >= 3) {
 		if (!getenv("OMP_WAIT_POLICY")) {
 			// omp threads will use a spinlock instead of yield'ing when waiting
@@ -87,8 +91,9 @@ static bool SetOpenMpEnvVars(char* argv[])
 			setenv("OMP_WAIT_POLICY", "ACTIVE", 1);
 			restart = true;
 		}
-		// another envvar is "GOMP_SPINCOUNT", but it seems less predictable
+		// another envvar is "GOMP_SPINCOUNT", but it seems to be less predictable
 	}
+#endif
 	return restart;
 }
 
@@ -123,12 +128,24 @@ static bool SetNvOptimusProfile(char* argv[])
  */
 int main(int argc, char* argv[])
 {
-	if (SetNvOptimusProfile(argv)) {
-		LOG_L(L_ERROR, "Optimus profile not set, please set it to get better performance!");
+// PROFILE builds exit on execv ...
+// HEADLESS run mostly in parallel for testing purposes, 100% omp threads wouldn't help then
+#if !defined(PROFILE) and !defined(HEADLESS)
+	bool restart = false;
+	restart |= SetNvOptimusProfile(argv);
+	restart |= SetOpenMpEnvVars(argv);
+
+  #ifndef WIN32
+	if (restart) {
+		std::vector<std::string> args(argc-1);
+		for (int i=1; i<argc; i++) {
+			args[i-1] = argv[i];
+		}
+		const std::string err = Platform::ExecuteProcess(argv[0], args);
+		ErrorMessageBox(err, "Execv error:", MBF_OK | MBF_EXCL);
 	}
-	if (SetOpenMpEnvVars(argv)) {
-		LOG_L(L_ERROR, "Please set env var OMP_WAIT_POLICY=ACTIVE to get better performance!");
-	}
+  #endif
+#endif
 	return Run(argc, argv);
 }
 
