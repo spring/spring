@@ -6,6 +6,7 @@
 
 #include "Game.h"
 #include "GlobalUnsynced.h"
+#include "UI/GuiHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -62,6 +63,20 @@ CBenchmark::~CBenchmark()
 
 void CBenchmark::GameFrame(int gameFrame)
 {
+	if (gameFrame == 0 && (startFrame - 45 * GAME_SPEED > 0)) {
+		std::vector<string> cmds;
+		cmds.push_back("@@setmaxspeed 100");
+		cmds.push_back("@@setminspeed 100");
+		guihandler->RunCustomCommands(cmds, false);
+	}
+
+	if (gameFrame == (startFrame - 45 * GAME_SPEED)) {
+		std::vector<string> cmds;
+		cmds.push_back("@@setminspeed 1");
+		cmds.push_back("@@setmaxspeed 1");
+		guihandler->RunCustomCommands(cmds, false);
+	}
+
 	if (gameFrame >= startFrame) {
 		simFPS[gameFrame] = (gu->avgSimFrameTime == 0.0f)? 0.0f: 1000.0f / gu->avgSimFrameTime;
 		units[gameFrame] = uh->units.size();
