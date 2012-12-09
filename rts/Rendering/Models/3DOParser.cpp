@@ -440,14 +440,28 @@ void S3DOPiece::DrawForList() const
 			va2->AddVertexTN(vertices[ps->vertices[1]].pos, tex->xend,   tex->ystart, ps->vnormals[1]);
 			va2->AddVertexTN(vertices[ps->vertices[2]].pos, tex->xend,   tex->yend,   ps->vnormals[2]);
 		} else {
-			glBegin(GL_TRIANGLE_FAN);
+			/*glBegin(GL_TRIANGLE_FAN);
 			glNormalf3(ps->primNormal);
 			glTexCoord2f(tex->xstart, tex->ystart);
 
 			for (std::vector<int>::const_iterator fi = ps->vertices.begin(); fi != ps->vertices.end(); ++fi) {
 				glVertexf3(vertices[(*fi)].pos);
 			}
-			glEnd();
+			glEnd();*/
+
+			//workaround: split fan into triangles to workaround a bug in Mesa drivers with fans, dlists & glbegin..glend
+			if (ps->vertices.size() >= 3) {
+				std::vector<int>::const_iterator fi = ps->vertices.begin();
+				const float3* edge1 = &(vertices[*fi].pos); ++fi;
+				const float3* edge2 = &(vertices[*fi].pos); ++fi;
+				for (; fi != ps->vertices.end(); ++fi) {
+					const float3* edge3 = &(vertices[*fi].pos);
+					va2->AddVertexTN(*edge1, tex->xstart, tex->ystart, ps->primNormal);
+					va2->AddVertexTN(*edge2, tex->xstart, tex->ystart, ps->primNormal);
+					va2->AddVertexTN(*edge3, tex->xstart, tex->ystart, ps->primNormal);
+					edge2 = edge3;
+				}
+			}
 		}
 	}
 
