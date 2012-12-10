@@ -6,13 +6,5 @@
 
 
 namespace Shader {
-	int SShaderFlagState::GetHash()
-	{
-		if (updates != lastUpdates) {
-			lastUpdates = updates;
-			const std::string defs = GetString();
-			lastHash = HsiehHash(&defs[0], defs.length(), 0);
-		}
-		return lastHash;
-	}
+
 }
