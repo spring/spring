@@ -411,7 +411,10 @@ void CProjectileHandler::CheckUnitCollisions(
 				unit->SetLastAttackedPiece(cq.lmp, gs->frameNum);
 			}
 
-			p->pos = (cq.b0) ? cq.p0 : cq.p1;
+			const float3 newpos = (cq.b0) ? cq.p0 : cq.p1;
+			if ((newpos - p->pos).dot(p->speed) >= 0.0f) { // only move the projectile forward
+				p->pos = newpos;
+			}
 			p->Collision(unit);
 			break;
 		}
