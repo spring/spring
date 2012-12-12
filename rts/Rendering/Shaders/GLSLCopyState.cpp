@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "GLSLCopyState.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -16,7 +17,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
 #define LOG_SECTION_CURRENT LOG_SECTION_SHADER
 
 
-//FIXME add missing functions to GML
 #if !defined(HEADLESS)
 
 enum {
@@ -165,15 +165,16 @@ static void CreateBindingTypeMap()
 DO_ONCE(CreateBindingTypeMap)
 
 
-static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID)
+static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::vector<int>& uniformLocs, const std::vector<Shader::UniformState>& uniformStates)
 {
 	GLsizei numUniforms, maxUniformNameLength;
-	glGetProgramiv(oldProgID, GL_ACTIVE_UNIFORMS, &numUniforms);
-	glGetProgramiv(oldProgID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
+	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORMS, &numUniforms);
+	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
 	if (maxUniformNameLength <= 0)
 		return;
 
+	std::vector<int> newUniformLocs(uniformLocs.size(), -1);
 	glUseProgram(newProgID);
 
 	std::string name(maxUniformNameLength, 0);
@@ -181,29 +182,60 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID)
 		GLsizei nameLength = 0;
 		GLint size = 0;
 		GLenum type = 0;
-		glGetActiveUniform(oldProgID, i, maxUniformNameLength, &nameLength, &size, &type, &name[0]);
-		name[maxUniformNameLength - 1] = 0;
+		glGetActiveUniform(newProgID, i, maxUniformNameLength, &nameLength, &size, &type, &name[0]);
+		name[nameLength] = 0;
 
 		if (nameLength == 0)
 			continue;
 
-		GLint oldLoc = glGetUniformLocation(oldProgID, &name[0]);
-		GLint newLoc = glGetUniformLocation(newProgID, &name[0]);
+		const GLint oldLoc = glGetUniformLocation(oldProgID, &name[0]);
+		const GLint newLoc = glGetUniformLocation(newProgID, &name[0]);
 
-		if (oldLoc < 0 || newLoc < 0)
+		if (newLoc < 0)
 			continue;
+
+		// Try to find old data for the uniform either in the old shader itself or in our own state tracker
+		const Shader::UniformState* oldUniformState = NULL;
+		if (oldLoc < 0) {
+			const std::string uname = name.substr(0, nameLength); // `name` contains garbage at the end, cut it
+			for (size_t j = 0; j < uniformStates.size(); ++j) {
+				if (uname == uniformStates[j].name) {
+					oldUniformState = &(uniformStates[j]);
+					newUniformLocs[j] = newLoc;
+					break;
+				}
+			}
+			if (!oldUniformState) {
+				continue;
+			}
+		} else {
+			for (size_t j = 0; j < uniformLocs.size(); ++j) {
+				if (uniformLocs[j] == oldLoc) {
+					newUniformLocs[j] = newLoc;
+					break;
+				}
+			}
+		}
 
 		switch (bindingType[type]) {
 			#define HANDLE_TYPE(type, size, ftype, internalTypeName) \
 				case type##size: { \
 					internalTypeName _value[size]; \
-					glGetUniform##ftype(oldProgID, oldLoc, &_value[0]); \
+					if (oldLoc >= 0) { \
+						glGetUniform##ftype(oldProgID, oldLoc, &_value[0]); \
+					} else { \
+						memcpy(_value, oldUniformState->i, size * sizeof(internalTypeName)); \
+					} \
 					glUniform##size##ftype(newLoc, 1, &_value[0]); \
 				} break;
 			#define HANDLE_MATTYPE(type, size, ftype, internalTypeName) \
 				case type##size: { \
 					internalTypeName _value[size*size]; \
-					glGetUniform##ftype(oldProgID, oldLoc, &_value[0]); \
+					if (oldLoc >= 0) { \
+						glGetUniform##ftype(oldProgID, oldLoc, &_value[0]); \
+					} else { \
+						memcpy(_value, oldUniformState->i, size*size * sizeof(internalTypeName)); \
+					} \
 					glUniformMatrix##size##ftype(newLoc, 1, false, &_value[0]); \
 				} break;
 
@@ -236,6 +268,7 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID)
 	}
 
 	glUseProgram(0);
+	uniformLocs.swap(newUniformLocs);
 }
 
 
@@ -356,10 +389,10 @@ static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 #endif
 
 namespace Shader {
-	void GLSLCopyState(GLuint newProgID, GLuint oldProgID)
+	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, std::vector<int>* uniformLocs, const std::vector<UniformState>& uniformStates)
 	{
 	#if !defined(HEADLESS)
-		CopyShaderState_Uniforms(newProgID, oldProgID);
+		CopyShaderState_Uniforms(newProgID, oldProgID, *uniformLocs, uniformStates);
 		CopyShaderState_UniformBlocks(newProgID, oldProgID);
 		CopyShaderState_Attributes(newProgID, oldProgID);
 		CopyShaderState_TransformFeedback(newProgID, oldProgID);
