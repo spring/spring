@@ -213,10 +213,16 @@ namespace Shader {
 		template <typename T>
 		T GetFlag(const std::string& flag) const
 		{
-			std::istringstream buf(flags[flag]);
-			T temp;
-			buf >> temp;
-			return temp;
+			std::map<std::string, std::string>::const_iterator it = flags.find(flag);
+			if (it != flags.end()) {
+				std::istringstream buf(*it);
+				T temp;
+				buf >> temp;
+				return temp;
+			} else {
+				return T();
+			}
+
 		}
 
 	private:
