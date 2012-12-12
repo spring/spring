@@ -19,6 +19,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
+#include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.h"
@@ -460,6 +461,7 @@ CBumpWater::CBumpWater()
 		GLSLDefineConstf1(definitions, "PerlinLacunarity", mapInfo->water.perlinLacunarity);
 		GLSLDefineConstf1(definitions, "PerlinAmp",        mapInfo->water.perlinAmplitude);
 		GLSLDefineConstf1(definitions, "WindSpeed",        mapInfo->water.windSpeed);
+		GLSLDefineConstf1(definitions, "shadowDensity",  sky->GetLight()->GetGroundShadowDensity());
 	}
 
 	{
@@ -492,6 +494,9 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniformLocation("depthmap");    // idx  8, texunit 7
 		waterShader->SetUniformLocation("coastmap");    // idx  9, texunit 6
 		waterShader->SetUniformLocation("waverand");    // idx 10, texunit 8
+		waterShader->SetUniformLocation("infotex");     // idx 11, texunit 10
+		waterShader->SetUniformLocation("shadowmap");   // idx 12, texunit 9
+		waterShader->SetUniformLocation("shadowMatrix");   // idx 13
 
 		if (!waterShader->IsValid()) {
 			const char* fmt = "water-shader compilation error: %s";
@@ -517,6 +522,8 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniform1i( 8, 7);
 		waterShader->SetUniform1i( 9, 6);
 		waterShader->SetUniform1i(10, 8);
+		waterShader->SetUniform1i(11, 10);
+		waterShader->SetUniform1i(12, 9);
 		waterShader->Disable();
 		waterShader->Validate();
 
@@ -640,6 +647,7 @@ void CBumpWater::SetupUniforms(string& definitions)
 	definitions += "uniform float PerlinLacunarity;\n";
 	definitions += "uniform float PerlinAmp;\n";
 	definitions += "uniform float WindSpeed;\n";
+	definitions += "uniform float shadowDensity;\n";
 }
 
 void CBumpWater::GetUniformLocations(const Shader::IProgramObject* shader)
@@ -663,6 +671,7 @@ void CBumpWater::GetUniformLocations(const Shader::IProgramObject* shader)
 	uniforms[16] = glGetUniformLocation( shader->GetObjID(), "PerlinLacunarity" );
 	uniforms[17] = glGetUniformLocation( shader->GetObjID(), "PerlinAmp" );
 	uniforms[18] = glGetUniformLocation( shader->GetObjID(), "WindSpeed" );
+	uniforms[19] = glGetUniformLocation( shader->GetObjID(), "shadowDensity" );
 }
 
 
@@ -1062,6 +1071,7 @@ void CBumpWater::SetUniforms()
 	glUniform1f( uniforms[16], mapInfo->water.perlinLacunarity);
 	glUniform1f( uniforms[17], mapInfo->water.perlinAmplitude);
 	glUniform1f( uniforms[18], mapInfo->water.windSpeed);
+	glUniform1f( uniforms[19], sky->GetLight()->GetGroundShadowDensity());
 }
 
 
@@ -1092,10 +1102,29 @@ void CBumpWater::Draw()
 
 	glDisable(GL_ALPHA_TEST);
 	if (refraction < 2) {
-		glDepthMask(0);
+		glDepthMask(GL_FALSE);
 	}
 	if (refraction > 0) {
 		glDisable(GL_BLEND);
+	}
+
+	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+
+	waterShader->SetFlag("opt_shadows", (shadowHandler && shadowHandler->shadowsLoaded));
+	waterShader->SetFlag("opt_infotex", gd->DrawExtraTex());
+
+	waterShader->Enable();
+	waterShader->SetUniform3fv(0, &camera->pos[0]);
+	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
+ 
+	if (shadowHandler && shadowHandler->shadowsLoaded) {
+		waterShader->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
+
+		glActiveTexture(GL_TEXTURE9);
+		glBindTexture(GL_TEXTURE_2D, (shadowHandler && shadowHandler->shadowsLoaded) ? shadowHandler->shadowTexture : 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	}
 
 	const int causticTexNum = (gs->frameNum % caustTextures.size());
@@ -1107,12 +1136,9 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, coastTexture);
 	glActiveTexture(GL_TEXTURE7); glBindTexture(target,        depthTexture);
 	glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, waveRandTexture);
+	//glActiveTexture(GL_TEXTURE9); see above
+	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, gd->DrawExtraTex() ? gd->infoTex : 0);
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
-
-
-	waterShader->Enable();
-	waterShader->SetUniform3fv(0, &camera->pos[0]);
-	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
 
 	if (useUniforms) {
 		SetUniforms();
@@ -1123,9 +1149,12 @@ void CBumpWater::Draw()
 
 	waterShader->Disable();
 
-
+	if (shadowHandler && shadowHandler->shadowsLoaded) {
+		glActiveTexture(GL_TEXTURE9); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+		glActiveTexture(GL_TEXTURE0);
+	}
 	if (refraction < 2) {
-		glDepthMask(1);
+		glDepthMask(GL_TRUE);
 	}
 	if (refraction > 0) {
 		glEnable(GL_BLEND);
