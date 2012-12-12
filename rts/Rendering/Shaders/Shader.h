@@ -12,7 +12,7 @@ namespace Shader {
 	struct IShaderObject {
 	public:
 		IShaderObject(int shType, const std::string& shSrcFile, const std::string& shDefinitions = ""):
-			objID(0), type(shType), valid(false), srcFile(shSrcFile), definitions(shDefinitions) {
+			objID(0), type(shType), valid(false), srcFile(shSrcFile), definitions2(shDefinitions) {
 		}
 		virtual ~IShaderObject() {
 		}
@@ -23,6 +23,7 @@ namespace Shader {
 		int GetType() const { return type; }
 		bool IsValid() const { return valid; }
 		const std::string& GetLog() const { return log; }
+		void SetDefinitions(const std::string& defs) { definitions = defs; }
 
 	protected:
 		unsigned int objID;
@@ -31,6 +32,7 @@ namespace Shader {
 
 		std::string srcFile;
 		std::string definitions;
+		std::string definitions2;
 		std::string log;
 	};
 
@@ -56,9 +58,9 @@ namespace Shader {
 
 
 
-	struct IProgramObject {
+	struct IProgramObject : public SShaderFlagState {
 	public:
-		IProgramObject(const std::string& poName): name(poName), objID(0), valid(false), bound(false) {}
+		IProgramObject(const std::string& poName): name(poName), objID(0), valid(false), bound(false), curHash(0) {}
 		virtual ~IProgramObject() {}
 
 		virtual void Enable() = 0;
@@ -67,6 +69,7 @@ namespace Shader {
 		virtual void Validate() {}
 		virtual void Release() = 0;
 		virtual void Reload() = 0;
+		void RecompileIfNeeded();
 		bool IsBound() const { return bound; }
 
 		virtual void SetUniformTarget(int) {}
@@ -114,7 +117,10 @@ namespace Shader {
 		std::string name;
 		unsigned int objID;
 		bool valid;
+	
 		bool bound;
+
+		int curHash;
 
 		std::string log;
 		SOVec shaderObjs;

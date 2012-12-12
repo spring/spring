@@ -17,8 +17,9 @@ namespace Shader {
 			float   f[17];
 		};
 		int type; //TODO implement (should be either GL_FLOAT_VEC2, GL_INT_SAMPLER_CUBE, ... see GLSLCopyState.cpp)
+		std::string name;
 
-		UniformState() {
+		UniformState(const std::string& name) : name(name) {
 			i[0] = -6666;
 			i[1] = -6666;
 			i[2] = -6666;
@@ -136,6 +137,94 @@ namespace Shader {
 			i[16] = transp;
 			return true;
 		}
+	};
+
+
+	struct SShaderFlagState {
+	public:
+		SShaderFlagState() : updates(0), lastUpdates(0), lastHash(0) {}
+		virtual ~SShaderFlagState() {}
+
+		int GetHash();
+
+		std::string GetString() const
+		{
+			std::ostringstream strbuf;
+			for (std::map<std::string, std::string>::const_iterator it = flags.begin(); it != flags.end(); ++it) {
+				strbuf << "#define " << it->first << " " << it->second << std::endl;
+			}
+			return strbuf.str();
+		}
+
+
+		void ClearFlag(const std::string& flag)
+		{
+			++updates;
+			flags.erase(flag);
+		}
+
+		void SetFlag(const std::string& flag, const bool enable)
+		{
+			if (enable) {
+				++updates;
+				flags[flag] = "";
+			} else {
+				ClearFlag(flag);
+			}
+		}
+
+		//FIXME gives compiletime error
+		/*bool GetFlag(const std::string& flag) const
+		{
+			std::map<std::string, std::string>::const_iterator it = flags.find(flag);
+			if (it != flags.end()) {
+				return true;
+			} else {
+				return false;
+			}
+		}*/
+
+		void SetFlag(const std::string& flag, const std::string& newvalue)
+		{
+			++updates;
+			flags[flag] = newvalue;
+		}
+
+		const std::string& GetFlag(const std::string& flag) const
+		{
+			std::map<std::string, std::string>::const_iterator it = flags.find(flag);
+			if (it != flags.end()) {
+				return it->second;
+			} else {
+				static std::string nulstr;
+				return nulstr;
+			}
+		}
+
+		template <typename T>
+		void SetFlag(const std::string& flag, const T newvalue)
+		{
+			++updates;
+			std::ostringstream buffer;
+			buffer << newvalue;
+			flags[flag] = buffer.str();
+		}
+
+		template <typename T>
+		T GetFlag(const std::string& flag) const
+		{
+			std::istringstream buf(flags[flag]);
+			T temp;
+			buf >> temp;
+			return temp;
+		}
+
+	private:
+		int updates;
+		int lastUpdates;
+		int lastHash;
+		std::map<std::string, std::string> flags;
+		//std::set<std::string> skipAutoUpdate;
 	};
 }
 

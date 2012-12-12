@@ -3,6 +3,8 @@
 #ifndef _GLSL_COPY_STATE_H
 #define _GLSL_COPY_STATE_H
 
+#include <vector>
+#include "ShaderStates.h"
 typedef unsigned int GLuint;
 
 namespace Shader {
@@ -16,7 +18,7 @@ namespace Shader {
 	 * Very useful when you want to recompile an uber-shader
 	 * with a different #define-flagset.
 	 */
-	void GLSLCopyState(GLuint newProgID, GLuint oldProgID);
+	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, std::vector<int>* uniformLocs, const std::vector<UniformState>& uniformStates);
 }
 
 #endif //_GLSL_COPY_STATE_H
