@@ -104,7 +104,7 @@ GameServer:
  - make game ways more responsive when running at high speeds
 
 Misc:
- - experimental /ReloadShaders
+ - add /ReloadShaders
  - less jerky camera transitions (thx cleanrock)
  - make camera a bit smoother by adding some micro-transitions
  - SMF/MapInfo: new tag voidGround
@@ -115,12 +115,13 @@ Misc:
  ! remove OSC
 
 Rendering:
+ - speedup minimap icon rendering
  - fix a few OpenGL errors reported by MESA drivers
  - ROAM: resize pool when running out of nodes fixes rendering on maps like Knockout
  - disable occlusion query in BumpWater it doesn't work and just makes it slower
- - speedup minimap icon rendering * keep units sorted by icon-type in UnitDrawer * use a vertex-array instead of tons of quads
  - move `lastFrameTime` calculation from the end of a drawframe to the beginning this way vsync locktimes are counted to the previous frame time
  ! removal of DepthBufferBits & StencilBufferBits
+ - BumpWater renders now with shadowmap & infotex
 
 Sim Bugfixes:
  ! stop buildframe decaying on reclaiming
