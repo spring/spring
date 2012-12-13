@@ -117,13 +117,13 @@ float GetShadowOcclusion(vec3 worldPos) {
 #endif
 
 vec3 GetInfoTex(bool outside) {
-	vec3 info = vec3(1.0);
+	vec3 info = vec3(0.0);
 #ifdef opt_infotex
 	vec2 clampedPos = clamp(worldPos.xz, vec2(0.0), (vec2(1.0) / (ShadingPlane.xy / ShadingPlane.zw)));
 	vec2 clampedPotCoords = ShadingPlane.xy * clampedPos;
 	info = texture2D(infotex, clampedPotCoords).rgb * 0.5 + 0.5;
-	info = mix(info, vec3(1.0), float(outside));
-	//info = info * 1.0 - 0.5;
+	info = info * 1.0 - 0.5;
+	info = mix(info, vec3(0.0), float(outside));
 #endif
 	return info;
 }
@@ -333,7 +333,7 @@ void main()
     gl_FragColor.rgb += shadowOcc * specular * SpecularColor;
 
   // INFOTEX
-    gl_FragColor.rgb *= mix(vec3(1.0), GetInfoTex(outside), waterdepth);
+    gl_FragColor.rgb += mix(vec3(0.0), GetInfoTex(outside), waterdepth);
 
   // FOG
     float fog = clamp( (gl_Fog.end - abs(gl_FogFragCoord)) * gl_Fog.scale ,0.0,1.0);
