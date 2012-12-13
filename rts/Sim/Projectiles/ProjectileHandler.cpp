@@ -411,7 +411,9 @@ void CProjectileHandler::CheckUnitCollisions(
 				unit->SetLastAttackedPiece(cq.lmp, gs->frameNum);
 			}
 
-			p->pos = ((cq.p0 * cq.b0) + (cq.p1 * cq.b1)) / (int(cq.b0) + int(cq.b1));
+			// when the testpos is in the colvol DetectHit() sometimes
+			// returns the colvols center as colpos, so use ppos0 in that case
+			p->pos = (cq.b0 && cq.b1) ? ppos0 : cq.p0;
 			p->Collision(unit);
 			p->pos = ppos0;
 			break;
@@ -442,7 +444,9 @@ void CProjectileHandler::CheckFeatureCollisions(
 		}
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
-			p->pos = ((cq.p0 * cq.b0) + (cq.p1 * cq.b1)) / (int(cq.b0) + int(cq.b1));
+			// when the testpos is in the colvol DetectHit() sometimes
+			// returns the colvols center as colpos, so use ppos0 in that case
+			p->pos = (cq.b0 && cq.b1) ? ppos0 : cq.p0;
 			p->Collision(feature);
 			p->pos = ppos0;
 			break;
