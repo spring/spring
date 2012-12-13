@@ -1757,7 +1757,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			const float3 colliderSlideVec = collider->rightdir * colliderSign * (1.0f / penDistance);
 			const float3 collideeSlideVec = collidee->rightdir * collideeSign * (1.0f / penDistance);
 			const bool colliderSlidePosFree = !POS_IMPASSABLE(colliderMD, collider->pos + colliderSlideVec * r2, collider);
-			const bool collideeSlidePosFree = !POS_IMPASSABLE(colliderMD, collidee->pos + collideeSlideVec * r1, collider);
+			const bool collideeSlidePosFree = !POS_IMPASSABLE(collideeMD, collidee->pos + collideeSlideVec * r1, collidee);
 
 			if (pushCollider && colliderSlidePosFree) { collider->Move3D(colliderSlideVec * r2, true); }
 			if (pushCollidee && collideeSlidePosFree) { collidee->Move3D(collideeSlideVec * r1, true); }
