@@ -382,6 +382,7 @@ void CWeapon::Update()
 		 || fpsPlayer->fpsController.mouse2);
 	canFire = canFire && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0));
 	canFire = canFire && !isBeingServicedOnPad(owner);
+	canFire = canFire && (wantedDir.dot(lastRequestedDir) > 0.94); // ~20 degree sanity check to force new aim
 
 	if (canFire) {
 		if ((weaponDef->stockpile ||
