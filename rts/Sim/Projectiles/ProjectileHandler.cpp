@@ -413,7 +413,7 @@ void CProjectileHandler::CheckUnitCollisions(
 
 			// when the testpos is in the colvol DetectHit() sometimes
 			// returns the colvols center as colpos, so use ppos0 in that case
-			p->pos = (cq.b0 && cq.b1) ? ppos0 : cq.p0;
+			p->pos = (cq.b0 && cq.b1 && (cq.p0 == unit->midPos)) ? ppos0 : cq.p0;
 			p->Collision(unit);
 			p->pos = ppos0;
 			break;
@@ -446,7 +446,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
 			// when the testpos is in the colvol DetectHit() sometimes
 			// returns the colvols center as colpos, so use ppos0 in that case
-			p->pos = (cq.b0 && cq.b1) ? ppos0 : cq.p0;
+			p->pos = (cq.b0 && cq.b1 && (cq.p0 == feature->midPos)) ? ppos0 : cq.p0;
 			p->Collision(feature);
 			p->pos = ppos0;
 			break;
