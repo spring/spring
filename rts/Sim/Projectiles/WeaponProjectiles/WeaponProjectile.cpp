@@ -127,14 +127,25 @@ void CWeaponProjectile::Collision(CFeature* feature)
 	}
 
 	{
+		float3 impactPos = pos;
 		float3 impactDir = speed;
+
+		switch(projectileType) {
+			case WEAPON_BEAMLASER_PROJECTILE:
+			case WEAPON_LARGEBEAMLASER_PROJECTILE:
+			case WEAPON_LIGHTNING_PROJECTILE:
+			{
+				impactPos = feature ? feature->pos : targetPos;
+				impactDir = (targetPos - startpos);
+			} break;
+		}
 
 		const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
 			weaponDef->damages:
 			weaponDefHandler->DynamicDamages(
 				weaponDef->damages,
 				startpos,
-				pos,
+				impactPos,
 				(weaponDef->dynDamageRange > 0.0f)?
 					weaponDef->dynDamageRange:
 					weaponDef->range,
@@ -143,7 +154,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			);
 
 		const CGameHelper::ExplosionParams params = {
-			pos,
+			impactPos,
 			impactDir.SafeNormalize(),
 			damageArray,
 			weaponDef,
@@ -163,26 +174,33 @@ void CWeaponProjectile::Collision(CFeature* feature)
 		helper->Explosion(params);
 	}
 
-	if (!weaponDef->noExplode) {
+	if (!weaponDef->noExplode || TraveledRange()) {
 		CProjectile::Collision();
-	} else {
-		if (TraveledRange()) {
-			CProjectile::Collision();
-		}
 	}
 }
 
 void CWeaponProjectile::Collision(CUnit* unit)
 {
 	{
+		float3 impactPos = pos;
 		float3 impactDir = speed;
+
+		switch(projectileType) {
+			case WEAPON_BEAMLASER_PROJECTILE:
+			case WEAPON_LARGEBEAMLASER_PROJECTILE:
+			case WEAPON_LIGHTNING_PROJECTILE:
+			{
+				impactPos = unit->pos;
+				impactDir = (targetPos - startpos);
+			} break;
+		}
 
 		const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
 			weaponDef->damages:
 			weaponDefHandler->DynamicDamages(
 				weaponDef->damages,
 				startpos,
-				pos,
+				impactPos,
 				(weaponDef->dynDamageRange > 0.0f)?
 					weaponDef->dynDamageRange:
 					weaponDef->range,
@@ -191,7 +209,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 			);
 
 		const CGameHelper::ExplosionParams params = {
-			pos,
+			impactPos,
 			impactDir.SafeNormalize(),
 			damageArray,
 			weaponDef,
@@ -211,11 +229,8 @@ void CWeaponProjectile::Collision(CUnit* unit)
 		helper->Explosion(params);
 	}
 
-	if (!weaponDef->noExplode) {
-		CProjectile::Collision(unit);
-	} else {
-		if (TraveledRange())
-			CProjectile::Collision();
+	if (!weaponDef->noExplode || TraveledRange()) {
+		CProjectile::Collision();
 	}
 }
 
