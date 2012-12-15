@@ -78,23 +78,12 @@ void CTorpedoProjectile::DependentDied(CObject* o)
 	CWeaponProjectile::DependentDied(o);
 }
 
-void CTorpedoProjectile::Collision()
-{
-	CWeaponProjectile::Collision();
-}
-
-void CTorpedoProjectile::Collision(CUnit *unit)
-{
-	CWeaponProjectile::Collision(unit);
-}
-
 void CTorpedoProjectile::Update()
 {
 	if (!weaponDef->submissile && pos.y > -3.0f) {
 		// tracking etc only works when we are underwater
 		if (!luaMoveCtrl) {
 			speed.y += mygravity;
-			dir.y = std::min(dir.y, 0.0f);
 			dir = speed;
 			dir.Normalize();
 		}

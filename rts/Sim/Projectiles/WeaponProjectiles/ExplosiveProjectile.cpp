@@ -62,10 +62,6 @@ CExplosiveProjectile::CExplosiveProjectile(
 
 void CExplosiveProjectile::Update()
 {
-//	if (!luaMoveCtrl) {
-//		pos += speed;
-//		speed.y += mygravity;
-//	}
 	CProjectile::Update();
 
 	if (--ttl == 0) {
@@ -87,16 +83,6 @@ void CExplosiveProjectile::Update()
 		curTime = 1;
 	}
 	UpdateGroundBounce();
-}
-
-void CExplosiveProjectile::Collision()
-{
-	CWeaponProjectile::Collision();
-}
-
-void CExplosiveProjectile::Collision(CUnit* unit)
-{
-	CWeaponProjectile::Collision(unit);
 }
 
 void CExplosiveProjectile::Draw()

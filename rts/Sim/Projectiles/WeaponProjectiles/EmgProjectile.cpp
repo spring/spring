@@ -65,15 +65,6 @@ void CEmgProjectile::Update()
 	UpdateGroundBounce();
 }
 
-void CEmgProjectile::Collision(CUnit* unit)
-{
-	CWeaponProjectile::Collision(unit);
-}
-
-void CEmgProjectile::Collision() {
-	CWeaponProjectile::Collision();
-}
-
 void CEmgProjectile::Draw()
 {
 	inArray = true;
