@@ -94,10 +94,8 @@ void CLightningProjectile::Draw()
 	col[2] = (unsigned char) (color.z * 255);
 	col[3] = 1; //intensity*255;
 
-	const float3 ddir = (endPos - pos).Normalize();
-	float3 dif(pos - camera->pos);
-	float camDist = dif.Length();
-	dif /= camDist;
+	const float3 ddir = (targetPos - pos).Normalize();
+	const float3 dif  = (pos - camera->pos).Normalize();
 	const float3 dir1 = (dif.cross(ddir)).Normalize();
 	float3 tempPos = pos;
 

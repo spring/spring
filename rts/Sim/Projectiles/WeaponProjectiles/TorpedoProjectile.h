@@ -14,8 +14,6 @@ public:
 			CUnit* target, const WeaponDef* weaponDef);
 	~CTorpedoProjectile();
 	void DependentDied(CObject* o);
-	void Collision(CUnit* unit);
-	void Collision();
 
 	void Update();
 	void Draw();

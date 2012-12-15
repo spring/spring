@@ -61,11 +61,6 @@ void CFlameProjectile::Collision()
 	curTime += 0.05f;
 }
 
-void CFlameProjectile::Collision(CUnit* unit)
-{
-	CWeaponProjectile::Collision(unit);
-}
-
 void CFlameProjectile::Update()
 {
 	if (!luaMoveCtrl) {
