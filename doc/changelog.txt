@@ -151,6 +151,8 @@ Sim Bugfixes:
  - fix air transports have trouble loading multiple units if units are large (3307)
  - fix partly reclaiming factory allows unit teleportation/remote destruction (3308)
  - fix 'SetFeaturePosition snapToGround get reset when there is terraform nearby' (3243)
+ ! fix dynamicDamage with beam weapons (BeamLaser, LargeBeamLaser & Lightning)
+    it used incorrectly either the startpos or the midpos of the beam instead of the targetpos for the computations
 
 Bugfixes:
  - fix network connection is not properly closed when an error occurs in pregame (3166)
