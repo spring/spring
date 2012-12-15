@@ -143,4 +143,5 @@ void CLightningProjectile::DependentDied(CObject* o)
 	if (o == weapon) {
 		weapon = NULL;
 	}
+	CWeaponProjectile::DependentDied(o);
 }
