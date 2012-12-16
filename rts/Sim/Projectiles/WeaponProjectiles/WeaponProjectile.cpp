@@ -251,38 +251,40 @@ void CWeaponProjectile::Update()
 
 void CWeaponProjectile::UpdateInterception()
 {
-	if (target) {
-		CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
-		if (po) {
-			switch(projectileType) {
-				case WEAPON_BEAMLASER_PROJECTILE:
-				case WEAPON_LARGEBEAMLASER_PROJECTILE:
-				case WEAPON_LIGHTNING_PROJECTILE:
-				{
-					if (ClosestPointOnLine(startpos, targetPos, po->pos).SqDistance(po->pos) < weaponDef->collisionSize * weaponDef->collisionSize) {
-						po->Collision();
-						Collision();
-						return;
-					}
-				} break;
+	if (!target)
+		return;
 
-				case WEAPON_LASER_PROJECTILE: // important!
-				case WEAPON_BASE_PROJECTILE:
-				case WEAPON_EMG_PROJECTILE:
-				case WEAPON_EXPLOSIVE_PROJECTILE:
-				case WEAPON_FIREBALL_PROJECTILE:
-				case WEAPON_FLAME_PROJECTILE:
-				case WEAPON_MISSILE_PROJECTILE:
-				case WEAPON_STARBURST_PROJECTILE:
-				case WEAPON_TORPEDO_PROJECTILE:
-				default:
-					if (pos.SqDistance(targetPos) < weaponDef->damageAreaOfEffect * weaponDef->damageAreaOfEffect) {
-					//FIXME if (pos.SqDistance(targetPos) < weaponDef->collisionSize * weaponDef->collisionSize) {
-						po->Collision();
-						Collision();
-					}
+	CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
+	if (!po)
+		return;
+
+	switch(projectileType) {
+		case WEAPON_BEAMLASER_PROJECTILE:
+		case WEAPON_LARGEBEAMLASER_PROJECTILE:
+		case WEAPON_LIGHTNING_PROJECTILE:
+		{
+			if (ClosestPointOnLine(startpos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
+				po->Collision();
+				Collision();
+				return;
 			}
-		}
+		} break;
+
+		case WEAPON_LASER_PROJECTILE: // important!
+		case WEAPON_BASE_PROJECTILE:
+		case WEAPON_EMG_PROJECTILE:
+		case WEAPON_EXPLOSIVE_PROJECTILE:
+		case WEAPON_FIREBALL_PROJECTILE:
+		case WEAPON_FLAME_PROJECTILE:
+		case WEAPON_MISSILE_PROJECTILE:
+		case WEAPON_STARBURST_PROJECTILE:
+		case WEAPON_TORPEDO_PROJECTILE:
+		default:
+			if (pos.SqDistance(po->pos) < Square(weaponDef->damageAreaOfEffect)) {
+			//FIXME if (pos.SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
+				po->Collision();
+				Collision();
+			}
 	}
 }
 
