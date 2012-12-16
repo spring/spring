@@ -361,7 +361,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 	Move3D(position.cClampInMap(), false);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-	SetRadiusAndHeight(model->radius, model->height);
+	SetRadiusAndHeight(model);
 	UpdateDirVectors(!upright);
 	UpdateMidAndAimPos();
 
@@ -2161,7 +2161,7 @@ void CUnit::PostLoad()
 	localModel = new LocalModel(model);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
-	SetRadiusAndHeight(model->radius, model->height);
+	SetRadiusAndHeight(model);
 
 	modelParser->CreateLocalModel(localModel);
 	// FIXME: how to handle other script types (e.g. Lua) here?

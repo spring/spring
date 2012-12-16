@@ -76,7 +76,7 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params, float are
 	if (weaponDef) {
 		model = weaponDef->LoadModel();
 		if (model) {
-			SetRadiusAndHeight(model->radius, model->height);
+			SetRadiusAndHeight(model);
 		}
 	}
 

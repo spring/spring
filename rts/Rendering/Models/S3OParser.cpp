@@ -49,7 +49,8 @@ S3DModel* CS3OParser::Load(const std::string& name)
 	model->SetRootPiece(rootPiece);
 	model->radius = (header.radius <= 0.01f)? (model->maxs.y - model->mins.y): header.radius;
 	model->height = (header.height <= 0.01f)? (model->radius + model->radius): header.height;
-
+	model->drawRadius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
+	
 	model->relMidPos = float3(header.midx, header.midy, header.midz);
 	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f); // ?
 

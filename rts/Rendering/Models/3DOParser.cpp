@@ -156,6 +156,7 @@ S3DModel* C3DOParser::Load(const std::string& name)
 	model->SetRootPiece(rootPiece);
 	model->radius = ((model->maxs - model->mins) * 0.5f).Length();
 	model->height = model->maxs.y - model->mins.y;
+	model->drawRadius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
 	model->relMidPos = (model->maxs - model->mins) * 0.5f;
 	model->relMidPos.x = 0.0f; // ?
 	model->relMidPos.z = 0.0f; // ?
