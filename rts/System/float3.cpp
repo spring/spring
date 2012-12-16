@@ -67,4 +67,13 @@ namespace std {
 			std::max(v1.z, v2.z)
 		);
 	}
+
+	float3 fabs(float3 v)
+	{
+		return float3(
+			std::fabs(v.x),
+			std::fabs(v.y),
+			std::fabs(v.z)
+		);
+	}
 };
