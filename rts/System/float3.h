@@ -604,7 +604,6 @@ public:
 		return (float)(dx*dx + dz*dz);
 	}
 
-
 	/**
 	 * @brief max x pos
 	 *
@@ -687,6 +686,8 @@ const float3 ZeroVector(0.0f, 0.0f, 0.0f);
 namespace std {
 	float3 min(float3 v1, float3 v2);
 	float3 max(float3 v1, float3 v2);
+	
+	float3 fabs(float3 v);
 };
 
 
