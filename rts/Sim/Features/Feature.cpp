@@ -104,7 +104,7 @@ void CFeature::PostLoad()
 		model = def->LoadModel();
 
 		SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-		SetRadiusAndHeight(model->radius, model->height);
+		SetRadiusAndHeight(model);
 	} else if (def->drawType >= DRAWTYPE_TREE) {
 		SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
 		SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
@@ -158,7 +158,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 			LOG_L(L_ERROR, "Features: Couldn't load model for %s", def->name.c_str());
 		} else {
 			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-			SetRadiusAndHeight(model->radius, model->height);
+			SetRadiusAndHeight(model);
 		}
 	} else {
 		if (def->drawType >= DRAWTYPE_TREE) {

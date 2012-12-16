@@ -205,6 +205,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	//! Simplified dimensions used for rough calculations
 	model->radius = metaTable.GetFloat("radius", model->radius);
 	model->height = metaTable.GetFloat("height", model->height);
+	model->drawRadius = metaTable.GetFloat("drawRadius", model->drawRadius);
 	model->relMidPos = metaTable.GetFloat3("midpos", model->relMidPos);
 	model->mins = metaTable.GetFloat3("mins", model->mins);
 	model->maxs = metaTable.GetFloat3("maxs", model->maxs);
@@ -219,6 +220,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->numobjects: %d", model->numPieces);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->radius: %f", model->radius);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->height: %f", model->height);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->drawRadius: %f", model->drawRadius);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->mins: (%f,%f,%f)", model->mins[0], model->mins[1], model->mins[2]);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->maxs: (%f,%f,%f)", model->maxs[0], model->maxs[1], model->maxs[2]);
 
@@ -572,13 +574,8 @@ void CAssParser::CalculateMinMax(S3DModelPiece* piece)
 //! Calculate model radius from the min/max extents
 void CAssParser::CalculateRadius(S3DModel* model)
 {
-	model->radius = std::max(model->radius, math::fabs(model->maxs.x));
-	model->radius = std::max(model->radius, math::fabs(model->maxs.y));
-	model->radius = std::max(model->radius, math::fabs(model->maxs.z));
-
-	model->radius = std::max(model->radius, math::fabs(model->mins.x));
-	model->radius = std::max(model->radius, math::fabs(model->mins.y));
-	model->radius = std::max(model->radius, math::fabs(model->mins.z));
+	model->radius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
+	model->drawRadius = model->radius;
 }
 
 

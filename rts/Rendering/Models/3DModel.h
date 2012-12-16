@@ -105,6 +105,7 @@ struct S3DModel
 
 		, radius(0.0f)
 		, height(0.0f)
+		, drawRadius(0.0f)
 
 		, mins(10000.0f, 10000.0f, 10000.0f)
 		, maxs(-10000.0f, -10000.0f, -10000.0f)
@@ -135,6 +136,7 @@ public:
 
 	float radius;
 	float height;
+	float drawRadius;
 
 	float3 mins;
 	float3 maxs;

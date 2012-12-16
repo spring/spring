@@ -414,7 +414,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 #endif
 
 		if (!unit->isIcon) {
-			if ((unit->pos - camera->pos).SqLength() > (Square(unit->model->radius) * unitDrawDistSqr)) {
+			if ((unit->pos).SqDistance(camera->pos) > (unit->sqRadius * unitDrawDistSqr)) {
 				farTextureHandler->Queue(unit);
 			} else {
 				if (!DrawUnitLOD(unit)) {
@@ -1184,7 +1184,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 			delete *it;
 			it = set_erase(deadGhostedBuildings, it);
 		} else {
-			if (camera->InView((*it)->pos, (*it)->model->radius * 2.0f)) {
+			if (camera->InView((*it)->pos, (*it)->drawRadius)) {
 				glPushMatrix();
 				glTranslatef3((*it)->pos);
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);

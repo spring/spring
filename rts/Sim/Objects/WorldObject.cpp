@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "WorldObject.h"
+#include "Rendering/Models/3DModel.h"
 
 CR_BIND_DERIVED(CWorldObject, CObject, )
 CR_REG_METADATA(CWorldObject, (
@@ -17,3 +18,11 @@ CR_REG_METADATA(CWorldObject, (
 	CR_RESERVED(16))
 );
 
+
+void CWorldObject::SetRadiusAndHeight(S3DModel* model)
+{
+	radius = model->radius;
+	height = model->height;
+	sqRadius = radius * radius;
+	drawRadius = model->drawRadius;
+}
