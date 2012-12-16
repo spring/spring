@@ -19,6 +19,7 @@ public:
 	~CMissileProjectile();
 	void DependentDied(CObject* o);
 	void Collision(CUnit* unit);
+	void Collision(CFeature* feature);
 	void Collision();
 
 	void Update();

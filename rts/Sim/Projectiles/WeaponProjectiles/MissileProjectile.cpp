@@ -120,6 +120,15 @@ CMissileProjectile::CMissileProjectile(
 		extraHeightDecay = extraHeight / extraHeightTime;
 	}
 
+void CMissileProjectile::Collision(CFeature* feature)
+{
+	if (weaponDef->visuals.smokeTrail) {
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+	}
+
+	CWeaponProjectile::Collision(feature);
+	oldSmoke = pos;
+}
 
 	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
@@ -149,7 +158,7 @@ void CMissileProjectile::Collision()
 	oldSmoke = pos;
 }
 
-void CMissileProjectile::Collision(CUnit *unit)
+void CMissileProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
 		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
