@@ -112,7 +112,7 @@ int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow,
 		group = firstFreeGroup++;
 	}
 
-	float3 dir = (end - start).ANormalize();
+	float3 dir = (end - start).SafeANormalize();
 	if (arrow) {
 		CGeoSquareProjectile* gsp = new CGeoSquareProjectile(start, start*0.2f + end*0.8f, dir, dir, width*0.5f, width*0.5f);
 		geoGroups[group].squares.push_back(gsp);
