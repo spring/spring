@@ -24,7 +24,7 @@ static const float SMOKE_TIME = 70.0f;
 
 static const float TRACER_PARTS_STEP = 2.0f;
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, ZeroVector, 0, 0, 0, 0, NULL, NULL, NULL, 0, ZeroVector));
+CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ProjectileParams(), 0, 0, 0, 0, 0, ZeroVector));
 
 CR_REG_METADATA(CStarburstProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -57,32 +57,23 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 	}
 }
 
-CStarburstProjectile::CStarburstProjectile(
-	const float3& pos, const float3& speed,
-	CUnit* owner,
-	float3 targetPos,
-	float areaOfEffect, float maxSpeed,
-	float tracking, int uptime,
-	CUnit* target,
-	const WeaponDef* weaponDef,
-	CWeaponProjectile* interceptTarget,
-	float maxRange, float3 aimError):
-
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200),
-	tracking(tracking),
-	maxSpeed(maxSpeed),
-	acceleration(0.f),
-	areaOfEffect(areaOfEffect),
-	age(0),
-	oldSmoke(pos),
-	aimError(aimError),
-	drawTrail(true),
-	numParts(0),
-	doturn(true),
-	curCallback(NULL),
-	missileAge(0),
-	distanceToTravel(maxRange),
-	curTracerPart(0)
+CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params,
+	float areaOfEffect, float maxSpeed, float tracking, int uptime, float maxRange, float3 aimError)
+	: CWeaponProjectile(params)
+	, tracking(tracking)
+	, maxSpeed(maxSpeed)
+	, acceleration(0.f)
+	, areaOfEffect(areaOfEffect)
+	, age(0)
+	, oldSmoke(pos)
+	, aimError(aimError)
+	, drawTrail(true)
+	, numParts(0)
+	, doturn(true)
+	, curCallback(NULL)
+	, missileAge(0)
+	, distanceToTravel(maxRange)
+	, curTracerPart(0)
 {
 	projectileType = WEAPON_STARBURST_PROJECTILE;
 	this->uptime = uptime;
@@ -182,13 +173,10 @@ void CStarburstProjectile::Update()
 	missileAge++;
 
 	if (target && weaponDef->tracks && owner()) {
-		targetPos = helper->GetUnitErrorPos(target, owner()->allyteam, true);
-	}
-	if (interceptTarget) {
-		targetPos = interceptTarget->pos;
-		if (targetPos.SqDistance(pos) < Square(areaOfEffect * 2)) {
-			interceptTarget->Collision();
-			Collision();
+		targetPos = target->pos;
+		CUnit* u = dynamic_cast<CUnit*>(target);
+		if (u) {
+			targetPos = helper->GetUnitErrorPos(u, owner()->allyteam, true);
 		}
 	}
 
@@ -318,6 +306,8 @@ void CStarburstProjectile::Update()
 			drawTrail = (camDist > 300.0f);
 		}
 	}
+
+	UpdateInterception();
 }
 
 void CStarburstProjectile::Draw()

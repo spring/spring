@@ -7,7 +7,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
@@ -15,7 +14,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, NULL, 1, 0));
+CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams(), 1, 1));
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
@@ -27,11 +26,9 @@ CR_REG_METADATA(CExplosiveProjectile, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CExplosiveProjectile::CExplosiveProjectile(
-		const float3& pos, const float3& speed,
-		CUnit* owner, const WeaponDef* weaponDef,
-		int ttl, float areaOfEffect, float g)
-	: CWeaponProjectile(pos, speed, owner, NULL, ZeroVector, weaponDef, NULL, ttl)
+
+CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params, float areaOfEffect, float g)
+	: CWeaponProjectile(params)
 	, areaOfEffect(areaOfEffect)
 	, curTime(0)
 {
@@ -72,17 +69,20 @@ void CExplosiveProjectile::Update()
 		}
 	}
 
-	if (weaponDef->noExplode) {
-		if (TraveledRange()) {
-			CProjectile::Collision();
-		}
-	}
-
 	curTime += invttl;
 	if (curTime > 1) {
 		curTime = 1;
 	}
+
+	if (weaponDef->noExplode) {
+		if (TraveledRange()) {
+			CProjectile::Collision();
+			return;
+		}
+	}
+
 	UpdateGroundBounce();
+	UpdateInterception();
 }
 
 void CExplosiveProjectile::Draw()

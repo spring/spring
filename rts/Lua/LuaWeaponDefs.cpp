@@ -515,6 +515,7 @@ static bool InitParamMap()
 	ADD_INT("targetable",      wd.targetable);
 	ADD_BOOL("stockpile",      wd.stockpile);
 	ADD_INT("interceptor",     wd.interceptor);
+	ADD_BOOL("interceptSolo",  wd.interceptSolo);
 	ADD_FLOAT("coverageRange", wd.coverageRange);
 
 	ADD_FLOAT("stockpileTime", wd.stockpileTime);

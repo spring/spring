@@ -110,8 +110,12 @@ void CBombDropper::FireImpl()
 		} else {
 			ttl = weaponDef->flighttime;
 		}
-		new CTorpedoProjectile(weaponPos, speed, owner, damageAreaOfEffect,
-				projectileSpeed, tracking, ttl, targetUnit, weaponDef);
+
+		ProjectileParams params = GetProjectileParams();
+		params.pos = weaponPos;
+		params.speed = speed;
+		params.ttl = ttl;
+		new CTorpedoProjectile(params, damageAreaOfEffect, projectileSpeed, tracking);
 	} else {
 		// fudge a bit better lateral aim to compensate for imprecise aircraft steering
 		float3 dif = targetPos-weaponPos;
@@ -128,8 +132,12 @@ void CBombDropper::FireImpl()
 		if (size > 1.0f) {
 			dif /= size * 1.0f;
 		}
-		new CExplosiveProjectile(weaponPos, owner->speed + dif, owner,
-				weaponDef, 1000, damageAreaOfEffect,
+
+		ProjectileParams params = GetProjectileParams();
+		params.pos = weaponPos;
+		params.speed = owner->speed + dif;
+		params.ttl = 1000;
+		new CExplosiveProjectile(params, damageAreaOfEffect,
 				((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity)));
 	}
 }

@@ -2,7 +2,6 @@
 
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/StarburstProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "StarburstLauncher.h"
@@ -60,13 +59,13 @@ void CStarburstLauncher::FireImpl()
 		(gs->randVector() * sprayAngle + salvoError) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
-	CStarburstProjectile* p =
-		new CStarburstProjectile(weaponMuzzlePos + float3(0, 2, 0), speed, owner,
-		targetPos, damageAreaOfEffect, projectileSpeed, tracking, (int) uptime, targetUnit,
-		weaponDef, interceptTarget, maxRange, aimError);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos + float3(0, 2, 0);
+	params.end = targetPos;
+	params.speed = speed;
+	params.ttl = 200; //???
 
-	if (weaponDef->targetable)
-		interceptHandler.AddInterceptTarget(p, targetPos);
+	new CStarburstProjectile(params, damageAreaOfEffect, projectileSpeed, tracking, (int) uptime, maxRange, aimError);
 }
 
 bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)

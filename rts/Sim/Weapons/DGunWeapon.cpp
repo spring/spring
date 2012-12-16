@@ -49,7 +49,12 @@ void CDGunWeapon::FireImpl()
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
 
-	new CFireBallProjectile(weaponMuzzlePos, dir * projectileSpeed, owner, 0, targetPos, weaponDef);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.end = targetPos;
+	params.speed = dir * projectileSpeed;
+	params.ttl = 1;
+	new CFireBallProjectile(params);
 }
 
 

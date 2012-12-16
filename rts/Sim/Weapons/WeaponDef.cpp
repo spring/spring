@@ -147,6 +147,7 @@ WEAPONTAG(int, targetable).defaultValue(0);
 WEAPONTAG(int, interceptor).defaultValue(0);
 WEAPONDUMMYTAG(unsigned, interceptedByShieldType);
 WEAPONTAG(float, coverageRange).externalName("coverage").defaultValue(0.0f);
+WEAPONTAG(bool, interceptSolo).defaultValue(true).description("If true don't allow any other interceptors to target the same projectile.");
 
 // Dynamic Damage
 WEAPONTAG(bool, dynDamageInverted).defaultValue(false);

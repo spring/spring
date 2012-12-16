@@ -20,11 +20,7 @@ class CStarburstProjectile : public CWeaponProjectile
 	CR_DECLARE(CStarburstProjectile);
 	void creg_Serialize(creg::ISerializer& s);
 public:
-	CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
-			float3 targetPos, float areaOfEffect, float maxSpeed,float tracking,
-			int uptime, CUnit* target, const WeaponDef* weaponDef,
-			CWeaponProjectile* interceptTarget, float maxRange,
-			float3 aimError);
+	CStarburstProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed, float tracking, int uptime, float maxRange, float3 aimError);
 	~CStarburstProjectile();
 	virtual void Detach();
 	void Collision(CUnit* unit);
