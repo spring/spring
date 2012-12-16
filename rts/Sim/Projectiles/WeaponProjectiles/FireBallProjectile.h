@@ -18,8 +18,7 @@ class CFireBallProjectile : public CWeaponProjectile
 	CR_DECLARE(CFireBallProjectile);
 	CR_DECLARE_SUB(Spark);
 public:
-	CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner,
-			CUnit *target, const float3 &targetPos, const WeaponDef* weaponDef);
+	CFireBallProjectile(const ProjectileParams& params);
 	~CFireBallProjectile();
 
 	void Draw();

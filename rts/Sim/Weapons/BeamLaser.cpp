@@ -259,10 +259,15 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 			const float startAlpha = (1.0f - (curLength             ) / (range * 1.3f)) * baseAlpha;
 			const float endAlpha   = (1.0f - (curLength + beamLength) / (range * 1.3f)) * baseAlpha;
 
+			ProjectileParams params = GetProjectileParams();
+			params.pos = curPos;
+			params.end = hitPos;
+			params.ttl = std::max(1, weaponDef->beamLaserTTL);
+
 			if (weaponDef->largeBeamLaser) {
-				new CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner, weaponDef);
+				new CLargeBeamLaserProjectile(params, color, weaponDef->visuals.color2);
 			} else {
-				new CBeamLaserProjectile(curPos, hitPos, startAlpha, endAlpha, color, owner, weaponDef);
+				new CBeamLaserProjectile(params, startAlpha, endAlpha, color);
 			}
 		}
 

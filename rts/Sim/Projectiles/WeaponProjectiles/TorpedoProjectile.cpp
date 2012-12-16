@@ -19,7 +19,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, 0, 0, 0, 0, NULL, NULL));
+CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ProjectileParams(), 0, 0, 0));
 
 CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -28,25 +28,17 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(curSpeed),
 	CR_MEMBER(areaOfEffect),
-	CR_MEMBER(target),
 	CR_MEMBER(nextBubble),
 	CR_MEMBER(texx),
 	CR_MEMBER(texy),
 	CR_RESERVED(16)
 	));
 
-CTorpedoProjectile::CTorpedoProjectile(
-		const float3& pos, const float3& speed,
-		CUnit* owner,
-		float areaOfEffect, float maxSpeed,
-		float tracking, int ttl,
-		CUnit* target,
-		const WeaponDef* weaponDef)
-	: CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, NULL, ttl),
+CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed, float tracking)
+	: CWeaponProjectile(params),
 	tracking(tracking),
 	maxSpeed(maxSpeed),
 	areaOfEffect(areaOfEffect),
-	target(target),
 	nextBubble(4)
 {
 	projectileType = WEAPON_TORPEDO_PROJECTILE;
@@ -68,14 +60,6 @@ CTorpedoProjectile::CTorpedoProjectile(
 
 CTorpedoProjectile::~CTorpedoProjectile()
 {
-}
-
-void CTorpedoProjectile::DependentDied(CObject* o)
-{
-	if (o == target) {
-		target = NULL;
-	}
-	CWeaponProjectile::DependentDied(o);
 }
 
 void CTorpedoProjectile::Update()
@@ -103,20 +87,31 @@ void CTorpedoProjectile::Update()
 				}
 
 				if (target) {
-					float3 targPos;
+					CSolidObject* so = dynamic_cast<CSolidObject*>(target);
+					CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
 
-					if ((target->aimPos - pos).SqLength() < 150 * 150 || !owner()) {
-						targPos = target->aimPos;
-					} else {
-						targPos = helper->GetUnitErrorPos(target, owner()->allyteam, true);
+					targetPos = target->pos;
+					float3 targSpeed(ZeroVector);
+					if (so) {
+						targetPos = so->aimPos;
+						targSpeed = so->speed;
+
+						if (pos.SqDistance(so->aimPos) > 150 * 150 && owner()) {
+							CUnit* u = dynamic_cast<CUnit*>(so);
+							if (u) {
+								targetPos = helper->GetUnitErrorPos(u, owner()->allyteam, true);
+							}
+						}
+					} if (po) {
+						targSpeed = po->speed;
 					}
 
-					if (!weaponDef->submissile && targPos.y > 0) {
-						targPos.y = 0;
+					if (!weaponDef->submissile && targetPos.y > 0) {
+						targetPos.y = 0;
 					}
 
-					float dist = targPos.distance(pos);
-					float3 dif = (targPos + target->speed * (dist / maxSpeed) * 0.7f - pos).Normalize();
+					const float dist = pos.distance(targetPos);
+					float3 dif = (targetPos + targSpeed * (dist / maxSpeed) * 0.7f - pos).Normalize();
 					float3 dif2 = dif - dir;
 
 					if (dif2.Length() < tracking) {
@@ -163,6 +158,7 @@ void CTorpedoProjectile::Update()
 	}
 
 	UpdateGroundBounce();
+	UpdateInterception();
 }
 
 void CTorpedoProjectile::Draw()

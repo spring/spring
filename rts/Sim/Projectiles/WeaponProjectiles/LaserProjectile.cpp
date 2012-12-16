@@ -13,7 +13,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, 0, ZeroVector, ZeroVector, 0, NULL, 0));
+CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (ProjectileParams(), 0.0f, ZeroVector, ZeroVector, 0.0f));
 
 CR_REG_METADATA(CLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -31,24 +31,16 @@ CR_REG_METADATA(CLaserProjectile,(
 ));
 
 CLaserProjectile::CLaserProjectile(
-	const float3& pos,
-	const float3& speed,
-	CUnit* owner,
-	float length,
-	const float3& color,
-	const float3& color2,
-	float intensity,
-	const WeaponDef* weaponDef,
-	int ttl):
-
-	CWeaponProjectile(pos, speed, owner, NULL, ZeroVector, weaponDef, NULL, ttl),
-	intensity(intensity),
-	color(color),
-	color2(color2),
-	length(length),
-	curLength(0.0f),
-	intensityFalloff(weaponDef ? (intensity * weaponDef->falloffRate) : 0.0f),
-	stayTime(0)
+	const ProjectileParams& params,
+	float length, const float3& color, const float3& color2, float intensity)
+	: CWeaponProjectile(params)
+	, intensity(intensity)
+	, color(color)
+	, color2(color2)
+	, length(length)
+	, curLength(0.0f)
+	, intensityFalloff(weaponDef ? (intensity * weaponDef->falloffRate) : 0.0f)
+	, stayTime(0)
 {
 	projectileType = WEAPON_LASER_PROJECTILE;
 
@@ -133,6 +125,7 @@ void CLaserProjectile::Update()
 
 	float3 tempSpeed = speed;
 	UpdateGroundBounce();
+	UpdateInterception();
 
 	if (tempSpeed != speed) {
 		dir = speed;

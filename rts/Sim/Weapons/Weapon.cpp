@@ -150,7 +150,7 @@ CWeapon::CWeapon(CUnit* owner):
 	badTargetCategory(0),
 	onlyTargetCategory(0xffffffff),
 
-	interceptTarget(0),
+	interceptTarget(NULL),
 	stockpileTime(1),
 	buildPercent(0),
 	numStockpiled(0),
@@ -1234,9 +1234,25 @@ void CWeapon::UpdateInterceptTarget()
 		// keep targetPos in sync with the incoming projectile's position
 		interceptTarget = p;
 		targetType = Target_Intercept;
-		targetPos = p->pos;
+		targetPos = p->pos + p->speed;
 	}
 }
+
+
+ProjectileParams CWeapon::GetProjectileParams()
+{
+	ProjectileParams params;
+	params.target = targetUnit;
+	params.weaponDef = weaponDef;
+	params.owner = owner;
+	params.weapon = this;
+	if (interceptTarget) {
+		params.target = interceptTarget;
+	}
+
+	return params;
+}
+
 
 float CWeapon::GetRange2D(float yDiff) const
 {

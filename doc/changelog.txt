@@ -87,11 +87,13 @@ UnitScripts:
  ! LUS/COB: cache QueryNanoPiece() results
     Note, this stops QueryNanoPiece() calls after 31 times no matter what! This breaks ZK's LupsNanoSpray, fixed version can be found here http://gw.gd/Zaae.
 
-WeaponDefs:
+Weapons/WeaponDefs:
  ! remove of manualBombSettings (backward-compability code in weapondefs_post.lua)
  ! fix: half craterAreaOfEffect the same way as it is done with damageAreaOfEffect
  ! removed color1 (hue) & color2 (sat). Use rgbColor instead!
  ! removed isShield. Use weaponType="Shield" instead!
+ - new 'interceptSolo', if true (=default) don't allow any other interceptors to target the same projectile
+ - allow any weapons to be interceptors
 
 FeatureDefs:
  ! remove "nodrawundergray" now that there is a proper "floating" tag
@@ -151,8 +153,6 @@ Sim Bugfixes:
  - fix air transports have trouble loading multiple units if units are large (3307)
  - fix partly reclaiming factory allows unit teleportation/remote destruction (3308)
  - fix 'SetFeaturePosition snapToGround get reset when there is terraform nearby' (3243)
- ! fix dynamicDamage with beam weapons (BeamLaser, LargeBeamLaser & Lightning)
-    it used incorrectly either the startpos or the midpos of the beam instead of the targetpos for the computations
 
 Bugfixes:
  - fix network connection is not properly closed when an error occurs in pregame (3166)

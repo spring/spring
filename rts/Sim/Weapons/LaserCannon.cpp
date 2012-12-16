@@ -109,9 +109,9 @@ void CLaserCannon::FireImpl()
 	const float boltLength = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
 	const int boltTTL = ((weaponDef->range - fpsRangeSub) / weaponDef->projectilespeed) - (fpsRangeSub >> 2);
 
-	new CLaserProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		boltLength,
-		weaponDef->visuals.color, weaponDef->visuals.color2,
-		weaponDef->intensity, weaponDef,
-		boltTTL);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.speed = dir * projectileSpeed;
+	params.ttl = boltTTL;
+	new CLaserProjectile(params, boltLength, weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity);
 }

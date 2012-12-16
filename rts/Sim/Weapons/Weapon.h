@@ -7,10 +7,10 @@
 
 #include "System/Object.h"
 #include "Sim/Misc/DamageArray.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "System/float3.h"
 
 class CUnit;
-class CWeaponProjectile;
 struct WeaponDef;
 
 enum TargetType {
@@ -64,6 +64,9 @@ public:
 
 private:
 	virtual void FireImpl() {}
+
+protected:
+	ProjectileParams GetProjectileParams();
 
 public:
 	CUnit* owner;

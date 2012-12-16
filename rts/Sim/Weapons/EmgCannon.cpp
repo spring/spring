@@ -104,7 +104,9 @@ void CEmgCannon::FireImpl()
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
 
-	new CEmgProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		weaponDef->visuals.color, weaponDef->intensity, (int) (range / projectileSpeed),
-		weaponDef);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.speed = dir * projectileSpeed;
+	params.ttl = (int) (range / projectileSpeed);
+	new CEmgProjectile(params, weaponDef->visuals.color, weaponDef->intensity);
 }

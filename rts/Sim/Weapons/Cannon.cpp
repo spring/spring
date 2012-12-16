@@ -180,8 +180,12 @@ void CCannon::FireImpl()
 		ttl=predict*2;
 	}
 
-	new CExplosiveProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		weaponDef, ttl, damageAreaOfEffect, gravity);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.speed = dir * projectileSpeed;
+	params.ttl = ttl;
+
+	new CExplosiveProjectile(params, damageAreaOfEffect, gravity);
 }
 
 void CCannon::SlowUpdate()
