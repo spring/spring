@@ -1184,7 +1184,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 			delete *it;
 			it = set_erase(deadGhostedBuildings, it);
 		} else {
-			if (camera->InView((*it)->pos, (*it)->drawRadius)) {
+			if (camera->InView((*it)->pos, (*it)->model->drawRadius)) {
 				glPushMatrix();
 				glTranslatef3((*it)->pos);
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
