@@ -163,6 +163,17 @@ void CStarburstProjectile::Collision(CUnit* unit)
 	oldSmoke = pos;
 }
 
+void CStarburstProjectile::Collision(CFeature* feature)
+{
+	if (weaponDef->visuals.smokeTrail) {
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(), false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
+	}
+
+	oldSmokeDir = dir;
+	CWeaponProjectile::Collision(feature);
+	oldSmoke = pos;
+}
+
 
 void CStarburstProjectile::Update()
 {
