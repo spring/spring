@@ -420,6 +420,7 @@ EXPORT(int) ProcessUnits()
 	int leftToProcess = -1;
 
 	try {
+		CheckInit();
 		LOG_L(L_DEBUG, "syncer: process units");
 		leftToProcess = syncer->ProcessUnits();
 	}
