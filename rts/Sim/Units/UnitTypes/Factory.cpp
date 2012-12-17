@@ -442,6 +442,9 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		}
 
 		c.PushPos(tmpPos);
+	} else {
+		// dummy rallypoint for aircraft
+		c.PushPos(unit->pos);
 	}
 
 	if (unit->commandAI->commandQue.empty()) {
