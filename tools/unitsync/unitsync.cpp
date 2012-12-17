@@ -62,7 +62,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_UNITSYNC)
 
 // NOTE This means that the DLL can only support one instance.
 //   This is no problem in the current architecture.
-static CSyncer* syncer;
+static CSyncer* syncer = NULL;
 
 static bool logOutputInitialised = false;
 // for we do not have to include global-stuff (Sim/Misc/GlobalConstants.h)
@@ -122,7 +122,7 @@ private:
 
 static void CheckInit()
 {
-	if (!archiveScanner || !vfsHandler)
+	if (!archiveScanner || !vfsHandler || !syncer)
 		throw std::logic_error("Unitsync not initialized. Call Init first.");
 }
 
