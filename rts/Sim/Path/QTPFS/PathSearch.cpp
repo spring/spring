@@ -84,7 +84,7 @@ bool QTPFS::PathSearch::Execute(
 		openNodes.reset();
 		openNodes.push(srcNode);
 
-		UpdateNode(srcNode, NULL, 0.0f, srcPoint.distance(tgtPoint) * hCostMult, srcNode->GetMoveCost());
+		UpdateNode(srcNode, NULL, 0.0f, srcPoint.distance(tgtPoint), srcNode->GetMoveCost());
 	}
 
 	while (!openNodes.empty()) {
@@ -127,8 +127,8 @@ bool QTPFS::PathSearch::Execute(
 
 
 void QTPFS::PathSearch::UpdateNode(
-	INode* nxt,
-	INode* cur,
+	INode* nxtNode,
+	INode* curNode,
 	float gCost,
 	float hCost,
 	float mCost
@@ -138,15 +138,15 @@ void QTPFS::PathSearch::UpdateNode(
 	//   but this is *impossible* to achieve on a non-regular
 	//   grid on which any node only has an average move-cost
 	//   associated with it --> paths will be "nearly optimal"
-	nxt->SetSearchState(searchState | NODE_STATE_OPEN);
-	nxt->SetPrevNode(cur);
-	nxt->SetPathCost(NODE_PATH_COST_G, gCost);
-	nxt->SetPathCost(NODE_PATH_COST_H, hCost * hCostMult);
-	nxt->SetPathCost(NODE_PATH_COST_F, gCost + (hCost * hCostMult));
-	nxt->SetPathCost(NODE_PATH_COST_M, mCost);
+	nxtNode->SetSearchState(searchState | NODE_STATE_OPEN);
+	nxtNode->SetPrevNode(curNode);
+	nxtNode->SetPathCost(NODE_PATH_COST_G, gCost                      );
+	nxtNode->SetPathCost(NODE_PATH_COST_H,         (hCost * hCostMult));
+	nxtNode->SetPathCost(NODE_PATH_COST_F, gCost + (hCost * hCostMult));
+	nxtNode->SetPathCost(NODE_PATH_COST_M, mCost                      );
 
 	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-	nxt->SetNumPrevNodes((cur != NULL)? (cur->GetNumPrevNodes() + 1): 0);
+	nxtNode->SetNumPrevNodes((curNode != NULL)? (curNode->GetNumPrevNodes() + 1): 0);
 	#endif
 }
 

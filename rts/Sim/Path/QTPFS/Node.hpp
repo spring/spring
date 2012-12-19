@@ -62,6 +62,7 @@ namespace QTPFS {
 		virtual unsigned int zmid() const = 0;
 		virtual unsigned int xsize() const = 0;
 		virtual unsigned int zsize() const = 0;
+		virtual unsigned int area() const = 0;
 
 		virtual void SetMoveCost(float cost) = 0;
 		virtual float GetMoveCost() const = 0;
@@ -131,9 +132,9 @@ namespace QTPFS {
 		void Serialize(std::fstream& fStream, bool read);
 
 		bool IsLeaf() const;
-		bool CanSplit(bool force) const;
+		bool CanSplit(bool forced) const;
 
-		bool Split(NodeLayer& nl, bool force);
+		bool Split(NodeLayer& nl, bool forced);
 		bool Merge(NodeLayer& nl);
 
 		unsigned int GetMaxNumNeighbors() const;
@@ -157,6 +158,7 @@ namespace QTPFS {
 		unsigned int xsize() const { return (_xmax - _xmin); }
 		unsigned int zsize() const { return (_zmax - _zmin); }
 		unsigned int depth() const { return _depth; }
+		unsigned int area() const { return (xsize() * zsize()); }
 
 		void SetSearchState(unsigned int state) { searchState = state; }
 		unsigned int GetSearchState() const { return searchState; }
@@ -175,7 +177,9 @@ namespace QTPFS {
 			const PathRectangle& r,
 			unsigned int& numNewBinSquares,
 			unsigned int& numDifBinSquares,
-			unsigned int& numClosedSquares
+			unsigned int& numClosedSquares,
+			bool& wantSplit,
+			bool& needSplit
 		);
 
 		unsigned int _xmin, _xmax;
