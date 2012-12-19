@@ -408,10 +408,10 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectan
 	PathRectangle mr; mr.ForceTesselation(r.ForceTesselation());
 	PathRectangle ur; ur.ForceTesselation(r.ForceTesselation());
 
-	mr.x1 = std::max(r.x1 - md->xsizeh,        0);
-	mr.z1 = std::max(r.z1 - md->zsizeh,        0);
-	mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
-	mr.z2 = std::min(r.z2 + md->zsizeh, gs->mapy);
+	mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MIN_SIZE_X >> 1),        0);
+	mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MIN_SIZE_Z >> 1),        0);
+	mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MIN_SIZE_X >> 1), gs->mapx);
+	mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MIN_SIZE_Z >> 1), gs->mapy);
 	ur.x1 = mr.x1;
 	ur.z1 = mr.z1;
 	ur.x2 = mr.x2;
@@ -443,10 +443,10 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const PathRectangle& r) {
 		PathRectangle mr; mr.ForceTesselation(r.ForceTesselation());
 		// PathRectangle ur; ur.ForceTesselation(r.ForceTesselation());
 
-		mr.x1 = std::max(r.x1 - md->xsizeh,        0);
-		mr.z1 = std::max(r.z1 - md->zsizeh,        0);
-		mr.x2 = std::min(r.x2 + md->xsizeh, gs->mapx);
-		mr.z2 = std::min(r.z2 + md->zsizeh, gs->mapy);
+		mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MIN_SIZE_X >> 1),        0);
+		mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MIN_SIZE_Z >> 1),        0);
+		mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MIN_SIZE_X >> 1), gs->mapx);
+		mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MIN_SIZE_Z >> 1), gs->mapy);
 
 		nodeLayers[layerNum].QueueUpdate(mr, md);
 	}
@@ -985,7 +985,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 	unsigned int minPointIdx = livePath->GetNextPointIndex();
 	unsigned int nxtPointIdx = 1;
 
-	for (unsigned int i = (livePath->GetNextPointIndex() * 1); i < (livePath->NumPoints() - 1); i++) {
+	for (unsigned int i = (livePath->GetNextPointIndex()); i < (livePath->NumPoints() - 1); i++) {
 		const float radiusSq = (point - livePath->GetPoint(i)).SqLength2D();
 
 		// find waypoints <p0> and <p1> such that <point> is

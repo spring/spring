@@ -218,6 +218,7 @@ QTPFS::QTNode::QTNode(
 	speedModSum =  0.0f;
 	speedModAvg =  0.0f;
 	moveCostAvg = -1.0f;
+
 	prevNode = NULL;
 
 	// for leafs, all children remain NULL
@@ -308,9 +309,9 @@ bool QTPFS::QTNode::IsLeaf() const {
 	return (children[0] == NULL);
 }
 
-bool QTPFS::QTNode::CanSplit(bool force) const {
+bool QTPFS::QTNode::CanSplit(bool forced) const {
 	// NOTE: caller must additionally check IsLeaf() before calling Split()
-	if (force) {
+	if (forced) {
 		return ((xsize() >> 1) > 0 && (zsize() >> 1) > 0);
 	}
 
@@ -332,8 +333,8 @@ bool QTPFS::QTNode::CanSplit(bool force) const {
 
 
 
-bool QTPFS::QTNode::Split(NodeLayer& nl, bool force) {
-	if (!CanSplit(force))
+bool QTPFS::QTNode::Split(NodeLayer& nl, bool forced) {
+	if (!CanSplit(forced))
 		return false;
 
 	neighbors.clear();
@@ -461,6 +462,8 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r) {
 
 	// if true, we are at the bottom of the recursion
 	bool registerNode = true;
+	bool wantSplit = false;
+	bool needSplit = false;
 
 	// if we just entered Tesselate from PreTesselate, <this> was
 	// merged and we need to update squares across the entire node
@@ -485,7 +488,9 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r) {
 	// technically required whenever numRefBinSquares is zero, ie.
 	// when ALL squares in <r> changed bins in unison
 	//
-	if (UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares) && Split(nl, r.ForceTesselation())) {
+	UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares, wantSplit, needSplit);
+
+	if ((wantSplit && Split(nl, wantSplit && r.ForceTesselation())) || (needSplit && Split(nl, needSplit || r.ForceTesselation()))) {
 		registerNode = false;
 
 		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
@@ -507,7 +512,9 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	const PathRectangle& r,
 	unsigned int& numNewBinSquares,
 	unsigned int& numDifBinSquares,
-	unsigned int& numClosedSquares
+	unsigned int& numClosedSquares,
+	bool& wantSplit,
+	bool& needSplit
 ) {
 	const std::vector<int>& oldSpeedBins = nl.GetOldSpeedBins();
 	const std::vector<int>& curSpeedBins = nl.GetCurSpeedBins();
@@ -545,9 +552,9 @@ bool QTPFS::QTNode::UpdateMoveCost(
 				const int oldSpeedBin = oldSpeedBins[sqrIdx];
 				const int curSpeedBin = curSpeedBins[sqrIdx];
 
-				numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
-				numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
-				numClosedSquares += (curSpeedMods[sqrIdx] <= 0.0f)? 1: 0;
+				numNewBinSquares += int(curSpeedBin != oldSpeedBin);
+				numDifBinSquares += int(curSpeedBin != refSpeedBin);
+				numClosedSquares += int(curSpeedMods[sqrIdx] <= 0.0f);
 
 				speedModSum -= oldSpeedMods[sqrIdx];
 				speedModSum += curSpeedMods[sqrIdx];
@@ -565,9 +572,9 @@ bool QTPFS::QTNode::UpdateMoveCost(
 				const int oldSpeedBin = oldSpeedBins[sqrIdx];
 				const int curSpeedBin = curSpeedBins[sqrIdx];
 
-				numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
-				numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
-				numClosedSquares += (curSpeedMods[sqrIdx] <= 0.0f)? 1: 0;
+				numNewBinSquares += int(curSpeedBin != oldSpeedBin);
+				numDifBinSquares += int(curSpeedBin != refSpeedBin);
+				numClosedSquares += int(curSpeedMods[sqrIdx] <= 0.0f);
 
 				speedModSum += curSpeedMods[sqrIdx];
 			}
@@ -577,11 +584,25 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	// (re-)calculate the average cost of this node
 	assert(speedModSum >= 0.0f);
 
-	speedModAvg = speedModSum / (xsize() * zsize());
+	speedModAvg = speedModSum / area();
 	moveCostAvg = (speedModAvg <= 0.001f)? QTPFS_POSITIVE_INFINITY: (1.0f / speedModAvg);
 
 	assert(moveCostAvg > 0.0f);
 
+	wantSplit |= (numDifBinSquares > 0);
+	needSplit |= (numClosedSquares > 0 && numClosedSquares < area());
+
+	if (numClosedSquares > 0) {
+		if (numClosedSquares < area()) {
+			moveCostAvg = QTPFS_CLOSED_NODE_COST * (numClosedSquares / float(xsize() * xsize()));
+		} else {
+			moveCostAvg = QTPFS_POSITIVE_INFINITY;
+		}
+	}
+
+	return (wantSplit || needSplit);
+
+	#if 0
 	if (numDifBinSquares > 0 && CanSplit(r.ForceTesselation()))
 		return true;
 
@@ -606,7 +627,7 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	//   and ifndef QTPFS_FORCE_TESSELATE_OBJECT_YARDMAPS
 	//
 	if (numClosedSquares > 0) {
-		if (numClosedSquares < (xsize() * zsize())) {
+		if (numClosedSquares < area()) {
 			moveCostAvg = QTPFS_CLOSED_NODE_COST * (numClosedSquares / float(xsize() * xsize()));
 		} else {
 			moveCostAvg = QTPFS_POSITIVE_INFINITY;
@@ -614,6 +635,7 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	}
 
 	return false;
+	#endif
 }
 
 
