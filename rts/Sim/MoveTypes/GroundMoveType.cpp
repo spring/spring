@@ -1071,7 +1071,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 
 		// do not bother steering around idling MOBILE objects
 		// (since collision handling will just push them aside)
-		// TODO: also check if !avoiderUD->pushResistant
+		// TODO: also check if !avoideeUD->pushResistant
 		if (avoideeMobile && (!avoidMobiles || (!avoidee->isMoving && avoidee->allyteam == avoider->allyteam)))
 			continue;
 		// ignore objects that are more than this many degrees off-center from us
@@ -1735,7 +1735,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				collider->Move3D(colliderPushPos, false);
 			}
 		} else {
-			collider->Move3D(collider->moveType->oldPos, false);
+			collider->AddImpulse((collider->moveType->oldPos - collider->pos) * collideeMassScale);
 		}
 
 		if (pushCollidee) {
@@ -1746,7 +1746,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				collidee->Move3D(collideePushPos, false);
 			}
 		} else {
-			collidee->Move3D(collidee->moveType->oldPos, false);
+			collidee->AddImpulse((collidee->moveType->oldPos - collidee->pos) * colliderMassScale);
 		}
 
 		if (collider->isMoving && collidee->isMoving) {
@@ -2285,7 +2285,11 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		const MoveDef* md = ud->moveDef;
 
 		const int    speedSign = int(!reversing) * 2 - 1;
-		const float  speedScale = currentSpeed + deltaSpeed;
+		// LuaSyncedCtrl::SetUnitVelocity directly assigns
+		// to owner->speed which gets overridden below, so
+		// need to calculate speedScale from it directly
+		// const float  speedScale = currentSpeed + deltaSpeed;
+		const float  speedScale = owner->speed.Length() + deltaSpeed;
 		const float3 speedVector = owner->frontdir * speedScale * speedSign;
 
 		// NOTE: don't check for structure blockage, coldet handles that
@@ -2365,3 +2369,4 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 
 	return (fwdETA > revETA);
 }
+
