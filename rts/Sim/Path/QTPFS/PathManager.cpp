@@ -532,13 +532,14 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		// but locking isn't easily possible, because fstream files can't be easily locked,
 		// see http://stackoverflow.com/questions/839856/
 
+		const std::string tmpName = fileNames[i] + ".tmp";
 		if (readMode) {
 			// read fileNames[i] into nodeTrees[i]
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::in | std::ios::binary);
 			assert(nodeTrees[i]->IsLeaf());
 		} else {
 			// write nodeTrees[i] into fileNames[i]
-			fileStreams[i]->open(fileNames[i].c_str(), std::ios::out | std::ios::binary);
+			fileStreams[i]->open(tmpName.c_str(), std::ios::out | std::ios::binary);
 		}
 
 		#ifndef NDEBUG
@@ -549,9 +550,14 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		serializingNodeLayer = &nodeLayers[i];
 		nodeTrees[i]->Serialize(*fileStreams[i], readMode);
 		serializingNodeLayer = NULL;
-
-		fileStreams[i]->flush();
+		if (!readMode) {
+			fileStreams[i]->flush();
+		}
 		fileStreams[i]->close();
+
+		if (!readMode) {
+			rename(tmpName.c_str(), fileNames[i].c_str());
+		}
 
 		delete fileStreams[i];
 	}
