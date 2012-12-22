@@ -13,9 +13,8 @@ fi
 
 EXITCODE=0
 
-for i in $(find ${TESTDIR} -maxdepth 1 -type f -name "core.*") ; do
+for i in $(find ${TESTDIR}/.spring -maxdepth 1 -type f -name "core.*") ; do
 
-	SPRING=$1
 	COREFILE=$i
 
 	echo Core file found, creating backtrace
