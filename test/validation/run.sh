@@ -2,31 +2,6 @@
 
 set -e # abort on error
 
-Analyzecoredump() {
-
-SPRING=$1
-COREFILE=$2
-
-if [ -s $COREFILE ]; then
-	echo Core file found, creating backtrace
-	GDBCMDS=$(mktemp)
-	(
-		echo file $SPRING
-		echo core-file $COREFILE
-		echo info program
-		echo bt full
-		echo 'call malloc_stats()'
-		echo quit
-	)>$GDBCMDS
-	gdb -batch -x $GDBCMDS
-	cat $GDBCMDS
-	# cleanup
-	rm -f $GDBCMDS
-	rm -f $COREFILE
-fi
-
-}
-
 if [ $# -le 0 ]; then
 	echo "Usage: $0 /path/to/spring testScript [parameters]"
 	exit 1
@@ -78,17 +53,15 @@ PID_HOST=$!
 # auto kill host after 15mins
 #sleep 900 && kill -9 $PID_HOST &
 
-echo waiting for host to exit
+echo waiting for host to exit, pid: $PID_HOST
 # store exit code
 wait $PID_HOST
 EXIT=$?
-Analyzecoredump $1 $HOME/.spring/core.$PID_HOST
 
-echo waiting for client to exit
+echo waiting for client to exit, pid: $PID_CLIENT
 # get spring client process exit code / wait for exit
 wait $PID_CLIENT
 EXITCHILD=$?
-Analyzecoredump $1 $HOME/.spring/core.$PID_CLIENT
 
 #reenable abbort on error
 set -e
