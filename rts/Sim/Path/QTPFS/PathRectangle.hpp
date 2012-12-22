@@ -40,7 +40,7 @@ namespace QTPFS {
 	private:
 		// if true, this rectangle covers the yardmap of
 		// a CSolidObject* and needs to be tesselated to
-		// maximum depth
+		// maximum depth (now redundant)
 		bool ft;
 	};
 };

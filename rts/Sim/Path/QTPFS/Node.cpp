@@ -490,7 +490,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r) {
 	//
 	UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares, wantSplit, needSplit);
 
-	if ((wantSplit && Split(nl, wantSplit && r.ForceTesselation())) || (needSplit && Split(nl, needSplit || r.ForceTesselation()))) {
+	if ((wantSplit && Split(nl, false)) || (needSplit && Split(nl, true))) {
 		registerNode = false;
 
 		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
@@ -603,9 +603,6 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	return (wantSplit || needSplit);
 
 	#if 0
-	if (numDifBinSquares > 0 && CanSplit(r.ForceTesselation()))
-		return true;
-
 	// if we are not going to tesselate this node further
 	// and there is at least one impassable square inside
 	// it, make sure the pathfinder will not pick us
