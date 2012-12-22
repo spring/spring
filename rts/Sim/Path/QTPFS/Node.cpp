@@ -811,6 +811,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 			}
 
 			#ifdef QTPFS_CORNER_CONNECTED_NODES
+			#define NODE_FULLY_OPEN(n) (n->GetMoveCost() < (QTPFS_CLOSED_NODE_COST / float(n->area())))
 			// top- and bottom-left corners
 			if ((ngbRels & REL_NGB_EDGE_L) != 0) {
 				if ((ngbRels & REL_NGB_EDGE_T) != 0) {
@@ -820,10 +821,12 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_TL ngb must be distinct from EDGE_L and EDGE_T ngbs
 					if (ngbC != ngbL && ngbC != ngbT) {
-						neighbors.push_back(ngbC);
-						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
-						#endif
+						if (NODE_FULLY_OPEN(ngbL) && NODE_FULLY_OPEN(ngbT)) {
+							neighbors.push_back(ngbC);
+							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+							etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+							#endif
+						}
 					}
 				}
 				if ((ngbRels & REL_NGB_EDGE_B) != 0) {
@@ -833,10 +836,12 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_BL ngb must be distinct from EDGE_L and EDGE_B ngbs
 					if (ngbC != ngbL && ngbC != ngbB) {
-						neighbors.push_back(ngbC);
-						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
-						#endif
+						if (NODE_FULLY_OPEN(ngbL) && NODE_FULLY_OPEN(ngbB)) {
+							neighbors.push_back(ngbC);
+							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+							etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+							#endif
+						}
 					}
 				}
 			}
@@ -850,10 +855,12 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_TR ngb must be distinct from EDGE_R and EDGE_T ngbs
 					if (ngbC != ngbR && ngbC != ngbT) {
-						neighbors.push_back(ngbC);
-						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
-						#endif
+						if (NODE_FULLY_OPEN(ngbR) && NODE_FULLY_OPEN(ngbT)) {
+							neighbors.push_back(ngbC);
+							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+							etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+							#endif
+						}
 					}
 				}
 				if ((ngbRels & REL_NGB_EDGE_B) != 0) {
@@ -863,13 +870,16 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_BR ngb must be distinct from EDGE_R and EDGE_B ngbs
 					if (ngbC != ngbR && ngbC != ngbB) {
-						neighbors.push_back(ngbC);
-						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
-						#endif
+						if (NODE_FULLY_OPEN(ngbR) && NODE_FULLY_OPEN(ngbB)) {
+							neighbors.push_back(ngbC);
+							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+							etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+							#endif
+						}
 					}
 				}
 			}
+			#undef NODE_FULLY_OPEN
 			#endif
 		}
 
