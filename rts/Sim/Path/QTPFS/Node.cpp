@@ -660,11 +660,14 @@ unsigned int QTPFS::QTNode::GetMaxNumNeighbors() const {
 
 
 
-void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
+void QTPFS::QTNode::Serialize(std::fstream& fStream, unsigned int* streamSize, bool readMode) {
 	// overwritten when de-serializing
 	unsigned int numChildren = IsLeaf()? 0: QTNode::CHILD_COUNT;
 
-	if (read) {
+	(*streamSize) += (2 * sizeof(unsigned int));
+	(*streamSize) += (3 * sizeof(float));
+
+	if (readMode) {
 		fStream.read(reinterpret_cast<char*>(&nodeNumber), sizeof(unsigned int));
 		fStream.read(reinterpret_cast<char*>(&numChildren), sizeof(unsigned int));
 
@@ -675,7 +678,7 @@ void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
 		if (numChildren > 0) {
 			// re-create child nodes
 			assert(IsLeaf());
-			Split(*PathManager::GetSerializingNodeLayer(), false);
+			Split(*PathManager::GetSerializingNodeLayer(), true);
 		} else {
 			// node was a leaf in an earlier life, register it
 			PathManager::GetSerializingNodeLayer()->RegisterNode(this);
@@ -690,7 +693,7 @@ void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
 	}
 
 	for (unsigned int i = 0; i < numChildren; i++) {
-		children[i]->Serialize(fStream, read);
+		children[i]->Serialize(fStream, streamSize, readMode);
 	}
 }
 
