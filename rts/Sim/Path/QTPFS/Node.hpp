@@ -37,7 +37,7 @@ namespace QTPFS {
 		bool operator >= (const INode* n) const { return (fCost >= n->fCost); }
 
 		#ifdef QTPFS_VIRTUAL_NODE_FUNCTIONS
-		virtual void Serialize(std::fstream&, bool) = 0;
+		virtual void Serialize(std::fstream&, unsigned int*, bool) = 0;
 		virtual unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&) = 0;
 		virtual const std::vector<INode*>& GetNeighbors(const std::vector<INode*>& v) = 0;
 		virtual bool UpdateNeighborCache(const std::vector<INode*>& nodes) = 0;
@@ -129,7 +129,7 @@ namespace QTPFS {
 		void Delete();
 		void PreTesselate(NodeLayer& nl, const PathRectangle& r, PathRectangle& ur);
 		void Tesselate(NodeLayer& nl, const PathRectangle& r);
-		void Serialize(std::fstream& fStream, bool read);
+		void Serialize(std::fstream& fStream, unsigned int* streamSize, bool readMode);
 
 		bool IsLeaf() const;
 		bool CanSplit(bool forced) const;

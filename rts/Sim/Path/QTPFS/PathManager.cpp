@@ -246,7 +246,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const PathRectangle& rect) {
 	streflop::streflop_init<streflop::Simple>();
 
 	char loadMsg[512] = {'\0'};
-	const char* fmtString = "[PathManager::%s] using %u threads for %u node-layers (cached? %s)";
+	const char* fmtString = "[PathManager::%s] using %u threads for %u node-layers (%s)";
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
@@ -258,7 +258,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const PathRectangle& rect) {
 			// too many and esp. too few threads would be wasteful
 			//
 			// TODO: OpenMP needs project-global linking changes
-			sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
+			sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
 			pmLoadScreen.AddLoadMessage(loadMsg);
 		}
 
@@ -295,7 +295,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const PathRectangle& rect) {
 	}
 	#else
 	{
-		sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
+		sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
 		pmLoadScreen.AddLoadMessage(loadMsg);
 
 		SpawnBoostThreads(&PathManager::InitNodeLayersThread, rect);
@@ -509,8 +509,9 @@ std::string QTPFS::PathManager::GetCacheDirName(boost::uint32_t mapCheckSum, boo
 }
 
 void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
-	std::vector<std::string> fileNames(nodeTrees.size());
-	std::vector<std::fstream*> fileStreams(nodeTrees.size());
+	std::vector<std::string> fileNames(nodeTrees.size(), "");
+	std::vector<std::fstream*> fileStreams(nodeTrees.size(), NULL);
+	std::vector<unsigned int> fileSizes(nodeTrees.size(), 0);
 
 	if (!haveCacheDir) {
 		FileSystem::CreateDirectory(cacheFileDir);
@@ -527,12 +528,32 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveDefHandler->moveDefs[i]->name;
 		fileStreams[i] = new std::fstream();
 
-		const bool readMode = haveCacheDir && FileSystem::FileExists(fileNames[i]);
-		//  FIXME: lock fileNames[i]
-		// but locking isn't easily possible, because fstream files can't be easily locked,
-		// see http://stackoverflow.com/questions/839856/
+		if (haveCacheDir) {
+			#ifdef QTPFS_CACHE_XACCESS
+			{
+				// FIXME: lock fileNames[i] instead of doing this
+				// fstreams can not be easily locked however, see
+				// http://stackoverflow.com/questions/839856/
+				while (!FileSystem::FileExists(fileNames[i] + "-tmp")) {
+					boost::this_thread::sleep(boost::posix_time::millisec(100));
+				}
+				while (FileSystem::GetFileSize(fileNames[i] + "-tmp") != sizeof(unsigned int)) {
+					boost::this_thread::sleep(boost::posix_time::millisec(100));
+				}
 
-		if (readMode) {
+				fileStreams[i]->open((fileNames[i] + "-tmp").c_str(), std::ios::in | std::ios::binary);
+				fileStreams[i]->read(reinterpret_cast<char*>(&fileSizes[i]), sizeof(unsigned int));
+				fileStreams[i]->close();
+
+				while (!FileSystem::FileExists(fileNames[i])) {
+					boost::this_thread::sleep(boost::posix_time::millisec(100));
+				}
+				while (FileSystem::GetFileSize(fileNames[i]) != fileSizes[i]) {
+					boost::this_thread::sleep(boost::posix_time::millisec(100));
+				}
+			}
+			#endif
+
 			// read fileNames[i] into nodeTrees[i]
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::in | std::ios::binary);
 			assert(nodeTrees[i]->IsLeaf());
@@ -547,11 +568,21 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		#endif
 
 		serializingNodeLayer = &nodeLayers[i];
-		nodeTrees[i]->Serialize(*fileStreams[i], readMode);
+		nodeTrees[i]->Serialize(*fileStreams[i], &fileSizes[i], haveCacheDir);
 		serializingNodeLayer = NULL;
 
 		fileStreams[i]->flush();
 		fileStreams[i]->close();
+
+		#ifdef QTPFS_CACHE_XACCESS
+		if (!haveCacheDir) {
+			// signal any other (concurrently loading) Spring processes; needed for validation-tests
+			fileStreams[i]->open((fileNames[i] + "-tmp").c_str(), std::ios::out | std::ios::binary);
+			fileStreams[i]->write(reinterpret_cast<const char*>(&fileSizes[i]), sizeof(unsigned int));
+			fileStreams[i]->flush();
+			fileStreams[i]->close();
+		}
+		#endif
 
 		delete fileStreams[i];
 	}
