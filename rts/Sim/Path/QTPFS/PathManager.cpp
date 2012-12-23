@@ -552,10 +552,13 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 					boost::this_thread::sleep(boost::posix_time::millisec(100));
 				}
 			}
+			#else
+			assert(FileSystem::FileExists(fileNames[i]));
 			#endif
 
 			// read fileNames[i] into nodeTrees[i]
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::in | std::ios::binary);
+			assert(fileStreams[i]->good());
 			assert(nodeTrees[i]->IsLeaf());
 		} else {
 			// write nodeTrees[i] into fileNames[i]
