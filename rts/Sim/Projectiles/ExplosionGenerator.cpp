@@ -30,6 +30,7 @@
 #include "System/Exceptions.h"
 #include "System/creg/VarTypes.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Util.h"
 
 CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
 CR_REG_METADATA(CExpGenSpawnable, );
@@ -510,7 +511,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				break;
 			}
 			case OP_DISCRETE: {
-				val = (*(float*) code) * math::floor(val / (*(float*) code));
+				val = (*(float*) code) * math::floor(SafeDivide(val, (*(float*) code)));
 				code += 4;
 				break;
 			}
