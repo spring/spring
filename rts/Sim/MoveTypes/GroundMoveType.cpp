@@ -1679,8 +1679,12 @@ void CGroundMoveType::HandleUnitCollisions(
 			// if collidee shares our goal position and is no longer
 			// moving along its path, trigger Arrived() to kill long
 			// pushing contests
-			if (collider->isMoving && !collidee->isMoving) {
-				atEndOfPath = true; atGoal = true;
+			// check the progress-states so collisions with units which
+			// failed to reach goalPos for whatever reason do not count
+			if (collider->isMoving && collider->moveType->progressState == AMoveType::Active) {
+				if (!collidee->isMoving && collidee->moveType->progressState != AMoveType::Failed) {
+					atEndOfPath = true; atGoal = true;
+				}
 			}
 		}
 
