@@ -428,8 +428,9 @@ void CGroundMoveType::StopMoving() {
 	LOG_L(L_DEBUG, "StopMoving: stopping engine for unit %i", owner->id);
 
 	StopEngine();
-	SetGoal(owner->pos);
+
 	useMainHeading = false;
+	progressState = Done;
 }
 
 
@@ -461,7 +462,7 @@ bool CGroundMoveType::FollowPath()
 				Square(goalRadius * (numIdlingSlowUpdates + 1)):
 				Square(goalRadius                             );
 
-			atGoal |= (curGoalDistSq < minGoalDistSq) && (currentSpeed < 1.f);
+			atGoal |= (curGoalDistSq < minGoalDistSq);
 		}
 
 		if (!atGoal) {
