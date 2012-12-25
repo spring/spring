@@ -74,7 +74,7 @@ CMobileCAI::CMobileCAI():
 	goalPos(-1,-1,-1),
 	goalRadius(0.0f),
 	lastBuggerGoalPos(-1,0,-1),
-	lastUserGoal(0,0,0),
+	lastUserGoal(ZeroVector),
 	lastIdleCheck(0),
 	tempOrder(false),
 	lastPC(-1),
@@ -1103,13 +1103,10 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 		NonMoving(); return false;
 	}
 
-	// NOTE:
-	//   do not flag as internal order, otherwise we would keep
-	//   generating new orders if we cannot get to lastUserGoal (?)
-	Command c(CMD_MOVE, 0, lastUserGoal);
-	commandQue.push_front(c);
-	unimportantMove = true;
+	// move back to where the user last actively wanted us
+	SetGoal(lastUserGoal, owner->pos);
 
+	unimportantMove = true;
 	return false;
 }
 
