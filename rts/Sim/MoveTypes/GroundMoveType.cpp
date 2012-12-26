@@ -62,8 +62,8 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define IGNORE_OBSTACLES 0
 #define PLAY_SOUNDS 1
 
-#define OWNER_CMD_QUE_SIZE() (owner->commandAI->commandQue.size())
-#define OWNER_HAS_MOVE_CMD() (owner->commandAI->commandQue.empty() || owner->commandAI->commandQue[0].GetID() == CMD_MOVE)
+#define UNIT_CMD_QUE_SIZE(u) (u->commandAI->commandQue.size())
+#define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE)
 
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
 #define POS_IMPASSABLE(md, pos, u)                                               \
@@ -458,7 +458,7 @@ bool CGroundMoveType::FollowPath()
 			//     and we cannot increase tolerance safely (otherwise the unit might stop when still
 			//     outside its range and fail to start construction)
 			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
-			const float minGoalDistSq = (OWNER_HAS_MOVE_CMD())?
+			const float minGoalDistSq = (UNIT_HAS_MOVE_CMD(owner))?
 				Square(goalRadius * (numIdlingSlowUpdates + 1)):
 				Square(goalRadius                             );
 
@@ -545,7 +545,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 			const short turnDeltaHeading = owner->heading - GetHeadingFromVector(waypointDif.x, waypointDif.z);
 
 			// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
-			const bool startBraking = (OWNER_CMD_QUE_SIZE() <= 2 && curGoalDistSq <= minGoalDistSq);
+			const bool startBraking = (UNIT_CMD_QUE_SIZE(owner) <= 2 && curGoalDistSq <= minGoalDistSq);
 
 			if (!fpsMode && turnDeltaHeading != 0) {
 				// only auto-adjust speed for turns when not in FPS mode
@@ -1293,7 +1293,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 
 		{
 			const float curGoalDistSq = (currWayPoint - goalPos).SqLength2D();
-			const float minGoalDistSq = (OWNER_HAS_MOVE_CMD())?
+			const float minGoalDistSq = (UNIT_HAS_MOVE_CMD(owner))?
 				Square(goalRadius * (numIdlingSlowUpdates + 1)):
 				Square(goalRadius                             );
 
@@ -1427,7 +1427,7 @@ void CGroundMoveType::Arrived()
 		owner->commandAI->GiveCommand(Command(CMD_WAIT));
 		owner->commandAI->GiveCommand(Command(CMD_WAIT));
 
-		if (OWNER_CMD_QUE_SIZE() <= 2 && OWNER_HAS_MOVE_CMD()) {
+		if (UNIT_CMD_QUE_SIZE(owner) <= 2 && UNIT_HAS_MOVE_CMD(owner)) {
 			owner->commandAI->GiveCommand(Command(CMD_STOP));
 		}
 
@@ -1563,7 +1563,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	//   called later and 0 will immobilize us
 	//
 	if (canRequestPath && wantRequestPath) {
-		if (OWNER_HAS_MOVE_CMD()) {
+		if (UNIT_HAS_MOVE_CMD(owner)) {
 			StartMoving(goalPos, goalRadius, 0.0f);
 		} else {
 			StartMoving(goalPos, goalRadius);
@@ -1681,9 +1681,12 @@ void CGroundMoveType::HandleUnitCollisions(
 			// pushing contests
 			// check the progress-states so collisions with units which
 			// failed to reach goalPos for whatever reason do not count
+			// (or those that still have orders)
 			if (collider->isMoving && collider->moveType->progressState == AMoveType::Active) {
 				if (!collidee->isMoving && collidee->moveType->progressState != AMoveType::Failed) {
-					atEndOfPath = true; atGoal = true;
+					if (UNIT_CMD_QUE_SIZE(collidee) == 0) {
+						atEndOfPath = true; atGoal = true;
+					}
 				}
 			}
 		}
