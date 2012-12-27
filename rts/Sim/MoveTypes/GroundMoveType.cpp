@@ -1683,7 +1683,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			// failed to reach goalPos for whatever reason do not count
 			// (or those that still have orders)
 			if (collider->isMoving && collider->moveType->progressState == AMoveType::Active) {
-				if (!collidee->isMoving && collidee->moveType->progressState != AMoveType::Failed) {
+				if (!collidee->isMoving && collidee->moveType->progressState == AMoveType::Done) {
 					if (UNIT_CMD_QUE_SIZE(collidee) == 0) {
 						atEndOfPath = true; atGoal = true;
 					}

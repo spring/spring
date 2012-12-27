@@ -454,6 +454,16 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		for (CCommandQueue::const_iterator ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
 			c = *ci;
 			c.options |= SHIFT_KEY;
+
+			if (c.GetID() == CMD_MOVE) {
+				const float3 p1 = c.GetPos(0);
+				const float3 p2 = float3(p1.x + gs->randFloat() * TWOPI, p1.y, p1.z + gs->randFloat() * TWOPI);
+				// apply a small amount of random jitter to move commands
+				// such that new units do not all share the same goal-pos
+				// and start forming a "trail" back to the factory exit
+				c.SetPos(0, p2);
+			}
+
 			unit->commandAI->GiveCommand(c);
 		}
 	} else {
