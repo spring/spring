@@ -8,6 +8,7 @@
 // -------------------------------------------------------------------------
 
 #include "System/FastMath.h"
+#include "System/Util.h"
 #include "AAIBuildTable.h"
 #include "AAI.h"
 
@@ -3337,9 +3338,9 @@ void AAIBuildTable::BuildBuilderFor(int building_def_id)
 		// prevent ai from ordering too many builders of the same type/commanders/builders that cant be built atm
 		if(units_dynamic[*builder].active + units_dynamic[*builder].under_construction + units_dynamic[*builder].requested < cfg->MAX_BUILDERS_PER_TYPE)
 		{
-			my_rating = buildspeed * (unitList[*builder-1]->buildSpeed / max_buildspeed)
-				- (unitList[*builder-1]->buildTime / max_buildtime)
-				- cost * (units_static[*builder].cost / max_cost);
+			my_rating = buildspeed * SafeDivide(unitList[*builder-1]->buildSpeed, max_buildspeed)
+				- SafeDivide(unitList[*builder-1]->buildTime, max_buildtime)
+				- cost * SafeDivide(units_static[*builder].cost, max_cost);
 
 			// prefer builders that can be built atm
 			if(units_dynamic[*builder].constructorsAvailable > 0)
