@@ -143,7 +143,7 @@ namespace QTPFS {
 		bool UpdateNeighborCache(const std::vector<INode*>& nodes);
 
 		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-		const float3& GetNeighborEdgeTransitionPoint(unsigned int ngbIdx) const { return etp_cache[ngbIdx]; }
+		const float3& GetNeighborEdgeTransitionPoint(unsigned int ngbIdx) const { return netpoints[ngbIdx]; }
 		#endif
 
 		void SetMoveCost(float cost) { moveCostAvg = cost; }
@@ -198,7 +198,7 @@ namespace QTPFS {
 		std::vector<INode*> neighbors;
 
 		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-		std::vector<float3> etp_cache;
+		std::vector<float3> netpoints;
 		#endif
 	};
 };
