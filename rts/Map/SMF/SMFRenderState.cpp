@@ -95,9 +95,13 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 	const GL::LightHandler* lightHandler = smfGroundDrawer->GetLightHandler();
 
 	#define sh shaderHandler
+	std::ostringstream defBuf;
+	defBuf
+		<< "#define SMF_TEXSQUARE_SIZE " << float(SMF_TEXSQUARE_SIZE) << std::endl
+		<< "#define SMF_INTENSITY_MULT " << float(CGlobalRendering::SMF_INTENSITY_MULT);
 	smfShaderGLSL = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderGLSL", false);
-	smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", "", GL_VERTEX_SHADER));
-	smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", "", GL_FRAGMENT_SHADER));
+	smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", defBuf.str(), GL_VERTEX_SHADER));
+	smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", defBuf.str(), GL_FRAGMENT_SHADER));
 
 	smfShaderGLSL->SetFlag("SMF_WATER_ABSORPTION",         (smfMap->initMinHeight <= 0.0f) ? 1 : 0);
 	smfShaderGLSL->SetFlag("SMF_VOID_WATER",               (mapInfo->map.voidWater) ? 1 : 0);
@@ -112,8 +116,6 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 
 	smfShaderGLSL->SetFlag("BASE_DYNAMIC_MAP_LIGHT",       lightHandler->GetBaseLight());
 	smfShaderGLSL->SetFlag("MAX_DYNAMIC_MAP_LIGHTS",       lightHandler->GetMaxLights());
-	smfShaderGLSL->SetFlag("SMF_TEXSQUARE_SIZE",           SMF_TEXSQUARE_SIZE);
-	smfShaderGLSL->SetFlag("SMF_INTENSITY_MULT",           CGlobalRendering::SMF_INTENSITY_MULT);
 
 	smfShaderGLSL->Link();
 	smfShaderGLSL->SetUniformLocation("diffuseTex");          // idx  0
