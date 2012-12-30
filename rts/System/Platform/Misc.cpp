@@ -311,7 +311,7 @@ std::string GetModuleFile(std::string moduleName)
 		LOG_L(L_WARNING, "Failed to get file path of the module \"%s\", reason: %s", moduleName.c_str(), error);
 	}
 
-	return moduleFilePath;
+	return UnQuote(moduleFilePath);
 }
 std::string GetModulePath(const std::string& moduleName)
 {

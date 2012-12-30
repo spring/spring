@@ -25,6 +25,7 @@
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
 #include "System/maindefines.h" // for SNPRINTF
+#include "System/Util.h"
 #include "System/Misc/SpringTime.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
@@ -53,13 +54,11 @@ static std::string CreateAbsolutePath(const std::string& relativePath)
 	if (relativePath.empty())
 		return relativePath;
 
-	std::string absolutePath;
+	std::string absolutePath = UnQuote(relativePath);
 
-	if (relativePath.length() > 0 && (relativePath[0] == '/')) {
+	if (absolutePath.length() > 0 && (absolutePath[0] == '/')) {
 		//! is already absolute
-		absolutePath = relativePath;
 	} else {
-		absolutePath = relativePath;
 		if (absolutePath.find("./") == 0) {
 			//! remove initial "./"
 			absolutePath = absolutePath.substr(2);
