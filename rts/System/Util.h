@@ -51,6 +51,18 @@ static inline std::string Quote(std::string esc)
 	return buf.str();
 }
 
+
+/**
+ * @brief Escape special characters and wrap in double quotes.
+ */
+static inline std::string UnQuote(const std::string& str)
+{
+	if (str[0] == '"' && str[str.length() - 1] == '"') {
+		return str.substr(1, str.length() - 2);
+	}
+	return str;
+}
+
 //! replace all characters matching 'c' in a string by 'd'
 static inline std::string& StringReplaceInPlace(std::string& s, char c, char d)
 {
