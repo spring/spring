@@ -93,7 +93,7 @@ Weapons/WeaponDefs:
  ! removed color1 (hue) & color2 (sat). Use rgbColor instead!
  ! removed isShield. Use weaponType="Shield" instead!
  - new 'interceptSolo', if true (=default) don't allow any other interceptors to target the same projectile
- - allow any weapons to be interceptors
+ - allow any weapons to be interceptors/targetables (not that all combinations work/make sense)
 
 FeatureDefs:
  ! remove "nodrawundergray" now that there is a proper "floating" tag
