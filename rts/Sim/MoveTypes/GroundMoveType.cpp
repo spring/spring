@@ -1675,7 +1675,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			continue;
 		}
 
-		if (collider->moveType->goalPos == collidee->moveType->goalPos) {
+		if ((collider->moveType->goalPos - collidee->moveType->goalPos).SqLength2D() < 2.0f) {
 			// if collidee shares our goal position and is no longer
 			// moving along its path, trigger Arrived() to kill long
 			// pushing contests
