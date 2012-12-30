@@ -140,20 +140,21 @@ namespace Shader {
 			srcStr  = "//" + srcStr; // comment out the #version pragma (it's only allowed in the first line)
 		}
 
-		const GLchar* sources[6] = {
+		const GLchar* sources[7] = {
 			version.c_str(),
 			"// flags\n#line 0\n",
 			definitions2.c_str(),
+			"\n",
 			definitions.c_str(),
 			"\n// shader source code\n#line 0\n",
 			srcStr.c_str()
 		};
-		const GLint lengths[6] = {-1, -1, -1, -1, -1, -1};
-		//LOG("shader source:\n%s%s%s%s%s%s", sources[0], sources[1], sources[2], sources[3], sources[4], sources[5]);
+		const GLint lengths[7] = {-1, -1, -1, -1, -1, -1, -1};
+		//LOG("shader source:\n%s%s%s%s%s%s", sources[0], sources[1], sources[2], sources[3], sources[4], sources[5], sources[6]);
 
 		if (!objID)
 			objID = glCreateShader(type);
-		glShaderSource(objID, 6, sources, lengths);
+		glShaderSource(objID, 7, sources, lengths);
 		glCompileShader(objID);
 
 		valid = glslIsValid(objID);

@@ -27,7 +27,7 @@ namespace Shader {
 		}
 
 		int Hash(const int v0, const int v1, const int v2, const int v3) const {
-			int hash = ~0;
+			int hash = ~0;//FIXME check if this is really faster than a for() if()
 			hash += v0 ^ (hash * 33);
 			hash += v1 ^ (hash * 33);
 			hash += v2 ^ (hash * 33);
