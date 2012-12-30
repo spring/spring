@@ -68,14 +68,11 @@
 //////////////////////////////////////////////////
 // shorewaves functions
 #ifdef opt_shorewaves
-const float InvWavesLength = 1.0/WavesLength;
+const float InvWavesLength = 1.0 / WavesLength;
 
-float smoothlimit(const float x, const float step) {
-	if (x > step)
-		//return step * smoothstep(1.0,step,x);
-		return step - (mod(x,step)*step)/(1.0-step);
-	else
-		return x;
+float smoothlimit(const float x, const float edge) {
+	float limitcurv = edge - (mod(x,edge) * edge) / (1.0 - edge);
+	return mix(x, limitcurv, step(edge, x));
 }
 
 vec4 waveIntensity(const vec4 v) {
@@ -132,28 +129,23 @@ vec3 GetInfoTex(bool outside) {
 //////////////////////////////////////////////////
 // Helpers
 
-void GetWaterHeight(out float waterdepth, out float invwaterdepth, out bool outside, in out vec3 coastdist)
+void GetWaterHeight(out float waterdepth, out float invwaterdepth, out bool outside, in out vec2 coastdist)
 {
 	outside = any(greaterThanEqual(gl_TexCoord[5].st, ShadingPlane.pq)) || any(lessThanEqual(gl_TexCoord[5].st, vec2(0.0)));
-#ifdef opt_endlessocean
-	if (outside) {
-		outside = true;
-		waterdepth = 1.0;
-		invwaterdepth = 0.0;
-	} else
-#endif
-	{
+
 #ifdef opt_shorewaves
-		coastdist = texture2D(coastmap, gl_TexCoord[0].st).rgb;
-		//if (coastdist.r == 1.0) discard; //FIXME
-		invwaterdepth = coastdist.b;
-		waterdepth = 1.0 - invwaterdepth;
+	vec3 coast = texture2D(coastmap, gl_TexCoord[0].st).rgb;
+	coastdist = coast.rg;
+	invwaterdepth = coast.b;
 #else
-		invwaterdepth = texture2D(heightmap, gl_TexCoord[5].st).a; // heightmap in alpha channel
-		waterdepth = 1.0 - invwaterdepth;
-		//if (waterdepth == 0.0) discard; //FIXME
+	invwaterdepth = texture2D(heightmap, gl_TexCoord[5].st).a; // heightmap in alpha channel
 #endif
-	}
+
+#ifdef opt_endlessocean
+	invwaterdepth = mix(invwaterdepth, 0.0, float(outside));
+#endif
+
+	waterdepth = 1.0 - invwaterdepth;
 }
 
 
@@ -174,6 +166,7 @@ vec3 GetNormal(out vec3 octave)
 	normal = normalize(normal).xzy;
 
 	octave = octave3;
+
 	return normal;
 }
 
@@ -191,33 +184,37 @@ float GetWaterDepthFromDepthBuffer(float waterdepth)
 }
 
 
-float GetShorewaves(vec3 coast, vec3 octave, float waterdepth , float invwaterdepth)
+vec3 GetShorewaves(vec2 coast, vec3 octave, float waterdepth , float invwaterdepth)
 {
 	vec3 color = vec3(0.0, 0.0, 0.0);
 #ifdef opt_shorewaves
 	float coastdist = coast.g + octave.x * 0.1;
 	if (coastdist > 0.0) {
+		// no shorewaves/foam under terrain (is 0.0 underground, 1.0 else)
+		float underground = 1.0 - step(1.0, invwaterdepth);
+
 		vec3 wavefoam = texture2D(foam, gl_TexCoord[3].st).rgb;
 		wavefoam += texture2D(foam, gl_TexCoord[3].pq).rgb;
 		wavefoam *= 0.5;
 
-		if (waterdepth < 1.0) {
-			vec4 waverands = texture2D(waverand, gl_TexCoord[4].pq);
+		// shorewaves
+		vec4 waverands = texture2D(waverand, gl_TexCoord[4].pq);
 
-			vec4 fi = vec4(0.25, 0.50, 0.75, 1.00);
-			vec4 f = fract(fi + frame * 50.0);
-			f = f * 1.4 - vec4(coastdist);
-			f = vec4(1.0) - f * InvWavesLength;
-			f = clamp(f, 0.0, 1.0);
-			f = waveIntensity(f);
-			vec3 shorewavesColor = wavefoam * dot(f, waverands) * coastdist;
+		vec4 fi = vec4(0.25, 0.50, 0.75, 1.00);
+		vec4 f = fract(fi + frame * 50.0);
+		f = f * 1.4 - vec4(coastdist);
+		f = vec4(1.0) - f * InvWavesLength;
+		f = clamp(f, 0.0, 1.0);
+		f = waveIntensity(f);
+		float intensity = dot(f, waverands) * coastdist;
 
-			float iwd = smoothlimit(invwaterdepth, 0.8);
-			color = shorewavesColor * iwd * 1.5;
-		}
+		float iwd = smoothlimit(invwaterdepth, 0.8);
+		intensity *= iwd * 1.5;
+
+		color += wavefoam * underground * intensity;
 
 		// cliff foam
-		color += 5.5 * (wavefoam * wavefoam) * (coast.r * coast.r * coast.r) * (coastdist * coastdist * coastdist * coastdist);
+		color += (wavefoam * wavefoam) * (underground * 5.5 * (coast.r * coast.r * coast.r) * (coastdist * coastdist * coastdist * coastdist));
 	}
 #endif
 	return color;
@@ -259,14 +256,15 @@ void main()
 {
    gl_FragColor.a = 1.0; //note: only rendered with blending iff !opt_refraction
 
+//#define dbg_coastmap
 #ifdef dbg_coastmap
-    gl_FragColor = vec4(float(texture2D(coastmap, gl_TexCoord[0].st).r == 1.0));
+    gl_FragColor = vec4(texture2D(coastmap, gl_TexCoord[0].st).g);
     return;
 #endif
 
-    // GET WATERDEPTH
+  // GET WATERDEPTH
     bool outside = false;
-    vec3 coast = vec3(0.0, 0.0, 1.0);
+    vec2 coast = vec2(0.0, 0.0);
     float waterdepth, invwaterdepth;
     GetWaterHeight(waterdepth, invwaterdepth, outside, coast);
     float shallowScale = GetWaterDepthFromDepthBuffer(waterdepth);
