@@ -707,11 +707,11 @@ void CBumpWater::Update()
 
 	SCOPED_TIMER("BumpWater::Update (Coastmap)");
 
-	if ((gs->frameNum % 10) == 5 && !heightmapUpdates.empty()) {
+	if ((gs->frameNum % 10) == 0 && !heightmapUpdates.empty()) {
 		UploadCoastline();
 	}
 
-	if ((gs->frameNum % 10) == 0 && !coastmapAtlasRects.empty()) {
+	if ((gs->frameNum % 10) == 5 && !coastmapAtlasRects.empty()) {
 		UpdateCoastmap();
 	}
 }
@@ -759,28 +759,29 @@ void CBumpWater::UpdateWater(CGame* game)
 
 CBumpWater::CoastAtlasRect::CoastAtlasRect(const SRectangle& rect)
 {
-	xsize = rect.x2 - rect.x1;
-	ysize = rect.z2 - rect.z1;
-	ix1 = rect.x1;
-	ix2 = rect.x2;
-	iy1 = rect.z1;
-	iy2 = rect.z2;
-	x1 = rect.x1 / (float)gs->mapx;
-	x2 = rect.x2 / (float)gs->mapx;
-	y1 = rect.z1 / (float)gs->mapy;
-	y2 = rect.z2 / (float)gs->mapy;
+	ix1 = std::max(rect.x1 - 15, 0);
+	ix2 = std::min(rect.x2 + 15, gs->mapx);
+	iy1 = std::max(rect.y1 - 15, 0);
+	iy2 = std::min(rect.y2 + 15, gs->mapy);
+
+	xsize = ix2 - ix1;
+	ysize = iy2 - iy1;
+
+	x1 = (ix1 + 0.5f) / (float)gs->mapx;
+	x2 = (ix2 + 0.5f) / (float)gs->mapx;
+	y1 = (iy1 + 0.5f) / (float)gs->mapy;
+	y2 = (iy2 + 0.5f) / (float)gs->mapy;
 	tx1 = tx2 = ty1 = ty2 = 0.f;
 	isCoastline = true;
 }
 
 void CBumpWater::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
-	if (/*!shoreWaves ||*/ readmap->currMinHeight > 0.0f || mapInfo->map.voidWater) {
+	if (!shoreWaves || readmap->currMinHeight > 0.0f || mapInfo->map.voidWater) {
 		return;
 	}
 
-	SRectangle urect(std::max(rect.x1 - 15, 0), std::max(rect.z1 - 15, 0),  std::min(rect.x2 + 15, gs->mapx), std::min(rect.z2 + 15, gs->mapy));
-	heightmapUpdates.push_back(urect);
+	heightmapUpdates.push_back(rect);
 }
 
 
@@ -796,13 +797,9 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 	while (!heightmapUpdates.empty()) {
 		SRectangle& cuRect1 = heightmapUpdates.front();
 
-		const int width  = cuRect1.GetWidth();
-		const int height = cuRect1.GetHeight();
-
-		if ((currentPixels + (width * height) <= 512 * 512) || forceFull) {
-			CoastAtlasRect caRect(cuRect1);
-			currentPixels += width * height;
-			coastmapAtlasRects.push_back(caRect);
+		if ((currentPixels + cuRect1.GetArea() <= 512 * 512) || forceFull) {
+			currentPixels += cuRect1.GetArea();
+			coastmapAtlasRects.push_back(cuRect1);
 			heightmapUpdates.pop_front();
 		} else {
 			break;
