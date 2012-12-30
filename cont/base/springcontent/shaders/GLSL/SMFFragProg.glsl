@@ -14,7 +14,7 @@ uniform sampler2D detailTex;
 uniform sampler2D infoTex;
 
 #if (SMF_ARB_LIGHTING == 0)
-	uniform sampler2D       specularTex;
+	uniform sampler2D specularTex;
 #endif
 
 #if (HAVE_SHADOWS == 1)
@@ -237,6 +237,7 @@ void main() {
 
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
 	vec4 detailCol = GetDetailTextureColor(specTexCoords);
+	vec4 specularCol = vec4(0.5, 0.5, 0.5, 1.0);
 
 	#if (SMF_SKY_REFLECTIONS == 1)
 	{
@@ -291,7 +292,6 @@ void main() {
 	}
 	#endif
 
-	vec4 specularCol = vec4(vec3(0.5), 1.0);
 	#if (SMF_ARB_LIGHTING == 0)
 		specularCol = texture2D(specularTex, specTexCoords);
 
