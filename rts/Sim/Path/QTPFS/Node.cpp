@@ -338,6 +338,9 @@ bool QTPFS::QTNode::Split(NodeLayer& nl, bool forced) {
 		return false;
 
 	neighbors.clear();
+	#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+	netpoints.clear();
+	#endif
 
 	// can only split leaf-nodes (ie. nodes with NULL-children)
 	assert(children[NODE_IDX_TL] == NULL);
@@ -737,8 +740,8 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 			neighbors.reserve(maxNgbs + 4);
 
 			#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-			etp_cache.clear();
-			etp_cache.reserve(maxNgbs + 4);
+			netpoints.clear();
+			netpoints.reserve(maxNgbs + 4);
 			#endif
 
 			INode* ngb = NULL;
@@ -754,7 +757,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
+					netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
 					#endif
 				}
 
@@ -771,7 +774,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
+					netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
 					#endif
 				}
 
@@ -789,7 +792,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
+					netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
 					#endif
 				}
 
@@ -806,7 +809,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
+					netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
 					#endif
 				}
 
@@ -827,7 +830,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 						if (NODE_FULLY_OPEN(ngbL) && NODE_FULLY_OPEN(ngbT)) {
 							neighbors.push_back(ngbC);
 							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-							etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+							netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
 							#endif
 						}
 					}
@@ -842,7 +845,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 						if (NODE_FULLY_OPEN(ngbL) && NODE_FULLY_OPEN(ngbB)) {
 							neighbors.push_back(ngbC);
 							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-							etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+							netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
 							#endif
 						}
 					}
@@ -861,7 +864,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 						if (NODE_FULLY_OPEN(ngbR) && NODE_FULLY_OPEN(ngbT)) {
 							neighbors.push_back(ngbC);
 							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-							etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+							netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
 							#endif
 						}
 					}
@@ -876,13 +879,21 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 						if (NODE_FULLY_OPEN(ngbR) && NODE_FULLY_OPEN(ngbB)) {
 							neighbors.push_back(ngbC);
 							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-							etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
+							netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
 							#endif
 						}
 					}
 				}
 			}
 			#undef NODE_FULLY_OPEN
+			#endif
+
+			// NOTE: gcc 4.7 should FINALLY define __cplusplus properly (and accept -std=c++11)
+			#if (__cplusplus >= 201103L)
+			neighbors.shrink_to_fit();
+			#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+			netpoints.shrink_to_fit();
+			#endif
 			#endif
 		}
 
