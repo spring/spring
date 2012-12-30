@@ -142,6 +142,7 @@
 #undef glGetProgramInfoLog
 #undef glGetProgramiv
 #undef glGetProgramivARB
+#undef glGetQueryObjectiv
 #undef glGetQueryObjectuiv
 #undef glGetQueryiv
 #undef glGetRenderbufferParameterivEXT
@@ -452,6 +453,7 @@
 #define glGetProgramInfoLog gmlGetProgramInfoLog
 #define glGetProgramiv gmlGetProgramiv
 #define glGetProgramivARB gmlGetProgramivARB
+#define glGetQueryObjectiv gmlGetQueryObjectiv
 #define glGetQueryObjectuiv gmlGetQueryObjectuiv
 #define glGetQueryiv gmlGetQueryiv
 #define glGetRenderbufferParameterivEXT gmlGetRenderbufferParameterivEXT

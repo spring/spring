@@ -1022,6 +1022,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER4(StencilOpSeparate)
 		GML_MAKEHANDLER2(BeginQuery)
 		GML_MAKEHANDLER1(EndQuery)
+		GML_MAKEHANDLER3(GetQueryObjectiv)
 		GML_MAKEHANDLER3(GetQueryObjectuiv)
 		GML_MAKEHANDLER2(BlendEquationSeparate)
 		GML_MAKEHANDLER4(BlendFuncSeparate)
