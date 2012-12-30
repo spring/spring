@@ -8,14 +8,17 @@
 
 uniform vec4 lightDir;
 
-uniform sampler2D       diffuseTex;
-uniform sampler2D       normalsTex;
-uniform sampler2DShadow shadowTex;
-uniform sampler2D       detailTex;
-uniform sampler2D       specularTex;
-uniform sampler2D       infoTex;
+uniform sampler2D diffuseTex;
+uniform sampler2D normalsTex;
+uniform sampler2D detailTex;
+uniform sampler2D infoTex;
+
+#if (SMF_ARB_LIGHTING == 0)
+	uniform sampler2D       specularTex;
+#endif
 
 #if (HAVE_SHADOWS == 1)
+uniform sampler2DShadow shadowTex;
 uniform mat4 shadowMat;
 uniform vec4 shadowParams;
 #endif
@@ -132,7 +135,7 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 	vec4 groundShadeInt;
 	vec4 waterShadeInt;
 
-	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (groundShadowCoeff * groundLightInt);
+	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (groundLightInt * groundShadowCoeff);
 	groundShadeInt.rgb *= SMF_INTENSITY_MULT;
 
 	#if (SMF_VOID_GROUND == 1)
@@ -233,7 +236,6 @@ void main() {
 	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.0, 1.0);
 
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
-	vec4 specularCol = texture2D(specularTex, specTexCoords);
 	vec4 detailCol = GetDetailTextureColor(specTexCoords);
 
 	#if (SMF_SKY_REFLECTIONS == 1)
@@ -289,7 +291,10 @@ void main() {
 	}
 	#endif
 
+	vec4 specularCol = vec4(vec3(0.5), 1.0);
 	#if (SMF_ARB_LIGHTING == 0)
+		specularCol = texture2D(specularTex, specTexCoords);
+
 		// sun specular lighting contribution
 		float specularExp  = specularCol.a * 16.0;
 		float specularPow  = pow(cosAngleSpecular, specularExp);
@@ -333,8 +338,8 @@ void main() {
 
 		lightScale *= ((vectorDot < cutoffDot)? 0.0: 1.0);
 
-		gl_FragColor.rgb += (lightScale *                                     gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].ambient.rgb);
-		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuseCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].diffuse.rgb * lightCosAngDiff));
+		gl_FragColor.rgb += (lightScale *                                       gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].ambient.rgb);
+		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuseCol.rgb  * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].diffuse.rgb * lightCosAngDiff));
 		gl_FragColor.rgb += (lightScale * lightAttenuation * (specularCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].specular.rgb * lightSpecularPow));
 	}
 	#endif
