@@ -56,8 +56,6 @@ WEAPONTAG(float, edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
 WEAPONTAG(float, collisionSize).defaultValue(0.05f);
 
 // Projectile Properties
-WEAPONTAG(float, intensity).defaultValue(0.9f);
-WEAPONTAG(float, minIntensity).defaultValue(0.0f);
 WEAPONTAG(float, projectilespeed).externalName("weaponVelocity").defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
 WEAPONTAG(float, startvelocity).defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
 WEAPONTAG(float, weaponacceleration).defaultValue(0.0f).scaleValue(1.0f / (GAME_SPEED * GAME_SPEED));
@@ -120,6 +118,7 @@ WEAPONTAG(float, predictBoost).defaultValue(0.0f);
 WEAPONDUMMYTAG(float, ownerExpAccWeight);
 
 // Laser Stuff
+WEAPONTAG(float, minIntensity).defaultValue(0.0f).description("The minimum percentage the weapon's damage can fall-off to over its range. Setting to 1.0 will disable fall off entirely. Unrelated to the visual-only [[intensity]] tag.");
 WEAPONTAG(float, duration).defaultValue(0.05f);
 WEAPONTAG(float, beamtime).defaultValue(1.0f);
 WEAPONTAG(bool, beamburst).defaultValue(false);
@@ -209,6 +208,7 @@ WEAPONTAG(bool, laserHardStop).externalName("hardstop").defaultValue(false);
 // Color
 WEAPONTAG(float3, rgbColor, visuals.color).defaultValue(float3(1.0f, 0.5f, 0.0f));
 WEAPONTAG(float3, rgbColor2, visuals.color2).defaultValue(float3(1.0f, 1.0f, 1.0f));
+WEAPONTAG(float, intensity).defaultValue(0.9f).description("Alpha transparency for non-3D model projectiles. Lower values are more opaque, but 0.0 will cause the projectile to disappear entirely.");
 WEAPONDUMMYTAG(std::string, colormap);
 
 WEAPONTAG(std::string, textures1, visuals.texNames[0]).externalName("textures.1").fallbackName("texture1").defaultValue("");

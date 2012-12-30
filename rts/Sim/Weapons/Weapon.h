@@ -127,47 +127,47 @@ public:
 	// projectile that we currently target for interception
 	CWeaponProjectile* interceptTarget;
 
-	int stockpileTime;						// how long it takes to stockpile 1 missile
-	float buildPercent;						// how far we have come on building current missile if stockpiling
-	int numStockpiled;						// how many missiles we have stockpiled
-	int numStockpileQued;					// how many weapons the user have added to our que
+	int stockpileTime;            // how long it takes to stockpile 1 missile
+	float buildPercent;           // how far we have come on building current missile if stockpiling
+	int numStockpiled;            // how many missiles we have stockpiled
+	int numStockpileQued;         // how many weapons the user have added to our que
 
-	int lastRequest;						// when the last script call was done
-	int lastTargetRetry;					// when we last recalculated target selection
+	int lastRequest;              // when the last script call was done
+	int lastTargetRetry;          // when we last recalculated target selection
 	int lastErrorVectorUpdate;
 
-	CWeapon* slavedTo;						// use this weapon to choose target
+	CWeapon* slavedTo;            // use this weapon to choose target
 
-	float maxForwardAngleDif;				// for onlyForward/!turret weapons, max. angle between owner->frontdir and (targetPos - owner->pos) (derived from UnitDefWeapon::maxAngleDif)
-	float maxMainDirAngleDif;				// for !onlyForward/turret weapons, max. angle from <mainDir> the weapon can aim (derived from WeaponDef::tolerance)
+	float maxForwardAngleDif;     // for onlyForward/!turret weapons, max. angle between owner->frontdir and (targetPos - owner->pos) (derived from UnitDefWeapon::maxAngleDif)
+	float maxMainDirAngleDif;     // for !onlyForward/turret weapons, max. angle from <mainDir> the weapon can aim (derived from WeaponDef::tolerance)
 
-	bool avoidFriendly;						// if true, try to avoid friendly units while aiming
-	bool avoidFeature;      				// if true, try to avoid features while aiming
-	bool avoidNeutral;						// if true, try to avoid neutral units while aiming
+	bool avoidFriendly;           // if true, try to avoid friendly units while aiming
+	bool avoidFeature;            // if true, try to avoid features while aiming
+	bool avoidNeutral;            // if true, try to avoid neutral units while aiming
 
-	float targetBorder;						// if nonzero, units will TryTarget wrt. edge of scaled collision volume instead of centre
-	float cylinderTargeting;				// if greater than 0, range will be checked in a cylinder (height=range*cylinderTargeting) instead of a sphere
-	float minIntensity;						// for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
-	float heightBoostFactor;				// controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
+	float targetBorder;           // if nonzero, units will TryTarget wrt. edge of scaled collision volume instead of centre
+	float cylinderTargeting;      // if greater than 0, range will be checked in a cylinder (height=range*cylinderTargeting) instead of a sphere
+	float minIntensity;           // for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
+	float heightBoostFactor;      // controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
 
 	unsigned int collisionFlags;
 
 	float fuelUsage;
 
-	float3 relWeaponPos;					// weaponpos relative to the unit
-	float3 weaponPos;						// absolute weapon pos
-	float3 relWeaponMuzzlePos;				// position of the firepoint
+	float3 relWeaponPos;          // weaponpos relative to the unit
+	float3 weaponPos;             // absolute weapon pos
+	float3 relWeaponMuzzlePos;    // position of the firepoint
 	float3 weaponMuzzlePos;
 	float3 weaponDir;
-	float3 mainDir;							// main aiming-direction of weapon
-	float3 wantedDir;						// the angle we want to aim in, set by the weapon subclass
-	float3 lastRequestedDir;				// last angle we called the script with
-	float3 salvoError;						// error vector for the whole salvo
+	float3 mainDir;               // main aiming-direction of weapon
+	float3 wantedDir;             // the angle we want to aim in, set by the weapon subclass
+	float3 lastRequestedDir;      // last angle we called the script with
+	float3 salvoError;            // error vector for the whole salvo
 	float3 errorVector;
 	float3 errorVectorAdd;
 
-	float3 targetPos;                       // the position of the target (even if targettype=unit)
-	float3 targetBorderPos;                 // <targetPos> adjusted for target-border factor
+	float3 targetPos;             // the position of the target (even if targettype=unit)
+	float3 targetBorderPos;       // <targetPos> adjusted for target-border factor
 };
 
 #endif /* WEAPON_H */
