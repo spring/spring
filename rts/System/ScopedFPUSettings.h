@@ -4,6 +4,10 @@
 // dedicated is compiled w/o streflop!
 #if defined(__SUPPORT_SNAN__) && !defined(DEDICATED) && !defined(UNITSYNC)
 
+#include "gml/gml.h"
+#include "streflop/streflop_cond.h"
+#include "System/Platform/Threading.h"
+
 class ScopedDisableFpuExceptions {
 public:
 	ScopedDisableFpuExceptions() {

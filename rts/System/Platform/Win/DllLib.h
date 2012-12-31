@@ -3,6 +3,8 @@
 #ifndef DLLLIB_H
 #define DLLLIB_H
 
+#ifdef WIN32
+
 #include "System/Platform/SharedLib.h"
 #include <windows.h>
 
@@ -50,5 +52,7 @@ private:
 	 */
 	HINSTANCE dll;
 };
+
+#endif
 
 #endif // DLLLIB_H

@@ -12,6 +12,7 @@ typedef unsigned   int  GLenum;
 
 #include <vector>
 using std::vector;
+#include <stddef.h>
 
 class CUnit;
 class LuaMatBin;

@@ -5,7 +5,7 @@
 
 #include <map>
 #include <string>
-
+#include <assert.h>
 
 enum DataType {
 	INT_TYPE,
@@ -17,7 +17,7 @@ enum DataType {
 	ERROR_TYPE
 };
 
-
+struct lua_State;
 typedef int (*AccessFunc)(lua_State* L, const void* data);
 
 
