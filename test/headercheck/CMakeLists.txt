@@ -16,6 +16,7 @@ include_directories(
 
 FILE(GLOB_RECURSE headers
 		${Spring_SOURCE_DIR}/tools/unitsync/*.h
+		${Spring_SOURCE_DIR}/rts/ExternalAI/*.h
 		${Spring_SOURCE_DIR}/rts/Game/*.h
 		${Spring_SOURCE_DIR}/rts/Rendering/*.h
 		${Spring_SOURCE_DIR}/rts/Map/*.h
@@ -24,7 +25,6 @@ FILE(GLOB_RECURSE headers
 		${Spring_SOURCE_DIR}/rts/Sim/*.h
 		${Spring_SOURCE_DIR}/rts/Menu/*.h
 		${Spring_SOURCE_DIR}/rts/System/*.h
-		${Spring_SOURCE_DIR}/rts/ExternalAI/*.h
 	)
 ADD_CUSTOM_TARGET( headercheck )
 

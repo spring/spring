@@ -4,9 +4,11 @@
 #define SERIALIZER_IMPL_H
 
 #include "ISerializer.h"
+#include "creg.h"
 #include <map>
 #include <vector>
 #include <list>
+#include <istream>
 
 namespace creg {
 
@@ -19,12 +21,12 @@ namespace creg {
 	{
 	protected:
 		struct ObjectMember {
-			creg::Class::Member* member;
+			Class::Member* member;
 			int memberId;
 			int size;
 		};
 		struct ObjectMemberGroup {
-			creg::Class *membersClass;
+			Class *membersClass;
 			std::vector<COutputStreamSerializer::ObjectMember> members;
 			int size;
 		};
@@ -36,7 +38,7 @@ namespace creg {
 				isEmbedded=false;
 				class_=0;
 			}
-			ObjectRef(void *ptr,int id,bool isEmbedded,creg::Class *class_) {
+			ObjectRef(void *ptr,int id,bool isEmbedded,Class *class_) {
 				this->ptr = ptr;
 				this->id=id;
 				classIndex=0;
@@ -53,19 +55,19 @@ namespace creg {
 			void *ptr;
 			int id, classIndex;
 			bool isEmbedded;
-			creg::Class *class_;
+			Class *class_;
 			std::vector<COutputStreamSerializer::ObjectMemberGroup> memberGroups;
-			bool isThisObject(void *objPtr,creg::Class *objClass,bool objEmbedded) const
+			bool isThisObject(void *objPtr,Class *objClass,bool objEmbedded) const
 			{
 				if (ptr!=objPtr) return false;
 				if (class_==objClass) return true;
 				if (isEmbedded&&objEmbedded) return false;
 				if (!objEmbedded) {
-					for (creg::Class *base=class_->base;base;base=base->base)
+					for (Class *base=class_->base;base;base=base->base)
 						if (base==objClass) return true;
 				} 
 				if (!isEmbedded) {
-					for (creg::Class *base=objClass->base;base;base=base->base)
+					for (Class *base=objClass->base;base;base=base->base)
 						if (base==class_) return true;
 				}
 				return false;
@@ -83,9 +85,9 @@ namespace creg {
 		// Serialize all class names
 		void WriteObjectInfo ();
 		// Helper for instance/ptr saving
-		void WriteObjectRef (void *inst, creg::Class *cls, bool embedded);
+		void WriteObjectRef (void *inst, Class *cls, bool embedded);
 
-		ObjectRef* FindObjectRef(void *inst, creg::Class *objClass, bool isEmbedded);
+		ObjectRef* FindObjectRef(void *inst, Class *objClass, bool isEmbedded);
 
 		void SerializeObject (Class *c, void *ptr, ObjectRef *objr);
 
@@ -98,16 +100,16 @@ namespace creg {
 		 * @param cls the class of the root object
 		 * This method throws an std::runtime_error when something goes wrong
 		 */
-		void SavePackage (std::ostream *s, void *rootObj, creg::Class *cls);
+		void SavePackage (std::ostream *s, void *rootObj, Class *cls);
 
 		/** @see ISerializer::IsWriting */
 		bool IsWriting ();
 
 		/** @see ISerializer::SerializeObjectPtr */
-		void SerializeObjectPtr (void **ptr, creg::Class *cls);
+		void SerializeObjectPtr (void **ptr, Class *cls);
 		
 		/** @see ISerializer::SerializeObjectInstance */
-		void SerializeObjectInstance (void *inst, creg::Class *cls);
+		void SerializeObjectInstance (void *inst, Class *cls);
 
 		/** @see ISerializer::Serialize */
 		void Serialize (void *data, int byteSize);
@@ -127,7 +129,7 @@ namespace creg {
 	{
 	protected:
 		std::istream* stream;
-		std::vector <creg::Class *> classRefs;
+		std::vector <Class *> classRefs;
 
 		struct UnfixedPtr {
 			void **ptrAddr;
@@ -159,10 +161,10 @@ namespace creg {
 		bool IsWriting ();
 
 		/** @see ISerializer::SerializeObjectPtr */
-		void SerializeObjectPtr (void **ptr, creg::Class *cls);
+		void SerializeObjectPtr (void **ptr, Class *cls);
 		
 		/** @see ISerializer::SerializeObjectInstance */
-		void SerializeObjectInstance (void *inst, creg::Class *cls);
+		void SerializeObjectInstance (void *inst, Class *cls);
 
 		/** @see ISerializer::Serialize */
 		void Serialize (void *data, int byteSize);
@@ -178,7 +180,7 @@ namespace creg {
 		 * @param root the root object address will be assigned to this
 		 * @param rootCls the root object class will be assigned to this
 		 * This method throws an std::runtime_error when something goes wrong */
-		void LoadPackage (std::istream *s, void *&root, creg::Class *&rootCls);
+		void LoadPackage (std::istream *s, void *&root, Class *&rootCls);
 	};
 
 };

@@ -3,6 +3,8 @@
 #ifndef SAFE_C_STRINGS_H
 #define SAFE_C_STRINGS_H
 
+#include <stddef.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
