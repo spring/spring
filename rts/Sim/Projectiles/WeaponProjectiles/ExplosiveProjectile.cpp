@@ -74,11 +74,9 @@ void CExplosiveProjectile::Update()
 		curTime = 1;
 	}
 
-	if (weaponDef->noExplode) {
-		if (TraveledRange()) {
-			CProjectile::Collision();
-			return;
-		}
+	if (weaponDef->noExplode && TraveledRange()) {
+		CProjectile::Collision();
+		return;
 	}
 
 	UpdateGroundBounce();

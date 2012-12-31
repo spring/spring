@@ -102,9 +102,8 @@ void CFireBallProjectile::Update()
 			}
 		}
 
-		if (weaponDef->noExplode) {
-			if (TraveledRange())
-				checkCol = false;
+		if (weaponDef->noExplode && TraveledRange()) {
+			checkCol = false;
 		}
 
 		EmitSpark();
