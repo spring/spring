@@ -285,10 +285,6 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 			targetBorder = Clamp(wdTable.GetFloat("targetBorder", 1.0f), -1.0f, 1.0f);
 			cylinderTargeting = Clamp(wdTable.GetFloat("cylinderTargeting", wdTable.GetFloat("cylinderTargetting", 1.0f)), 0.0f, 128.0f);
 		}
-		
-		if (type == "Shield") {
-			isShield = true;
-		}
 
 		if (type == "Flame") {
 			//FIXME move to lua (for all other weapons this tag is named `duration` and has a different default)
@@ -409,10 +405,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	}
 
 	const std::string& colormap = wdTable.GetString("colormap", "");
+	visuals.colorMap = NULL;
 	if (!colormap.empty()) {
 		visuals.colorMap = CColorMap::LoadFromDefString(colormap);
-	} else {
-		visuals.colorMap = NULL;
 	}
 
 	ParseWeaponSounds(wdTable);
@@ -421,6 +416,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	wdTable.SubTable("customParams").GetMap(customParams);
 
 	// internal only
+	if (type == "Shield") {
+		isShield = true;
+	}
 	noAutoTarget = (manualfire || interceptor || isShield);
 	onlyForward = !turret && (type != "StarburstLauncher");
 }
