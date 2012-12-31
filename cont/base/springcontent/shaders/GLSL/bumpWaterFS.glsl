@@ -41,6 +41,8 @@
   varying vec3 worldPos;
   varying vec2 clampedPotCoords;
 
+  vec2 clampedWorldPos = clamp(worldPos.xz, vec2(0.0), (vec2(1.0) / TexGenPlane.xy));
+
 //////////////////////////////////////////////////
 // Screen Coordinates (normalized and screen dimensions)
 
@@ -113,14 +115,13 @@ float GetShadowOcclusion(vec3 worldPos) {
   uniform sampler2D infotex;
 #endif
 
-vec3 GetInfoTex(bool outside) {
+vec3 GetInfoTex(float outside) {
 	vec3 info = vec3(0.0);
 #ifdef opt_infotex
-	vec2 clampedPos = clamp(worldPos.xz, vec2(0.0), (vec2(1.0) / (ShadingPlane.xy / ShadingPlane.zw)));
-	vec2 clampedPotCoords = ShadingPlane.xy * clampedPos;
+	vec2 clampedPotCoords = ShadingPlane.xy * clampedWorldPos;
 	info = texture2D(infotex, clampedPotCoords).rgb * 0.5 + 0.5;
 	info = info * 1.0 - 0.5;
-	info = mix(info, vec3(0.0), float(outside));
+	info = mix(info, vec3(0.0), outside);
 #endif
 	return info;
 }
@@ -129,9 +130,9 @@ vec3 GetInfoTex(bool outside) {
 //////////////////////////////////////////////////
 // Helpers
 
-void GetWaterHeight(out float waterdepth, out float invwaterdepth, out bool outside, in out vec2 coastdist)
+void GetWaterHeight(out float waterdepth, out float invwaterdepth, out float outside, in out vec2 coastdist)
 {
-	outside = any(greaterThanEqual(gl_TexCoord[5].st, ShadingPlane.pq)) || any(lessThanEqual(gl_TexCoord[5].st, vec2(0.0)));
+	outside = 0.0;
 
 #ifdef opt_shorewaves
 	vec3 coast = texture2D(coastmap, gl_TexCoord[0].st).rgb;
@@ -142,7 +143,8 @@ void GetWaterHeight(out float waterdepth, out float invwaterdepth, out bool outs
 #endif
 
 #ifdef opt_endlessocean
-	invwaterdepth = mix(invwaterdepth, 0.0, float(outside));
+	outside = min(1., distance(clampedWorldPos, worldPos.xz));
+	invwaterdepth = mix(invwaterdepth, 1.0, step(0.5, outside));
 #endif
 
 	waterdepth = 1.0 - invwaterdepth;
@@ -263,7 +265,7 @@ void main()
 #endif
 
   // GET WATERDEPTH
-    bool outside = false;
+    float outside = 0.0;
     vec2 coast = vec2(0.0, 0.0);
     float waterdepth, invwaterdepth;
     GetWaterHeight(waterdepth, invwaterdepth, outside, coast);

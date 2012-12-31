@@ -115,16 +115,16 @@ void main() {
 		return;
 	} else if (radius > 8.5) {
 		//! blur the texture in the final stage
-		/*vec2
+		vec2
 			blur  = texture2D(tex0, gl_TexCoord[0].st + vec2( 1.0, 1.0) * texel0).rg;
 			blur += texture2D(tex0, gl_TexCoord[0].st + vec2(-1.0, 1.0) * texel0).rg;
 			blur += texture2D(tex0, gl_TexCoord[0].st + vec2(-1.0,-1.0) * texel0).rg;
 			blur += texture2D(tex0, gl_TexCoord[0].st + vec2( 1.0,-1.0) * texel0).rg;
 
 		gl_FragColor = texture2D(tex0, gl_TexCoord[0].st);
-		gl_FragColor.r = step(5.0, blur.x + gl_FragColor.r); //FIXME?
+		gl_FragColor.r = step(5.0, blur.x + gl_FragColor.r);
 		gl_FragColor.g = mix(gl_FragColor.g, blur.y * 0.25, 0.4);
-		return;*/
+		return;
 	}
 
 	float maxValue = 0.0;
