@@ -70,9 +70,6 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 
 !define SP_OUTSUFFIX1 ""
 
-; if present this should hold defines with custom mingwlibs location, etc.
-!include /NONFATAL "custom_defines.nsi"
-
 ; set output filename for installer
 OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
 InstallDir "$PROGRAMFILES\Spring"
@@ -160,6 +157,8 @@ SectionGroup "Tools"
 		!define INSTALL
 			${!echonow} "Processing: rapid"
 			!insertmacro extractFile "${RAPID_ARCHIVE}" "rapid-spring-latest-win32.7z" rapid
+			#FIXME workaround for #3369
+			CopyFiles "$INSTDIR\pthreadGC2.dll" "$INSTDIR\rapid"
 		!undef INSTALL
 	SectionEnd
 !endif
@@ -244,7 +243,8 @@ Section Uninstall
 	!include "sections\main.nsh"
 	!include "sections\deprecated.nsh"
 
-	Delete "$INSTDIR\spring-multithreaded.exe"
+	# FIXME workaround part2
+	Delete "$INSTDIR\pthreadGC2.dll"
 
 	!include "sections\shortcuts_startMenu.nsh"
 	!include "sections\shortcuts_desktop.nsh"
