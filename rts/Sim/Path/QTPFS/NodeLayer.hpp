@@ -29,6 +29,12 @@ namespace QTPFS {
 
 	struct NodeLayer {
 	public:
+		typedef unsigned char SpeedModType;
+		typedef unsigned char SpeedBinType;
+
+		static size_t MaxSpeedModTypeValue() { return (std::numeric_limits<SpeedModType>::max()); }
+		static size_t MaxSpeedBinTypeValue() { return (std::numeric_limits<SpeedBinType>::max()); }
+
 		NodeLayer()
 			: numLeafNodes(0)
 			, layerNumber(0)
@@ -64,10 +70,10 @@ namespace QTPFS {
 		const INode* GetNode(unsigned int i) const { return nodeGrid[i]; }
 		      INode* GetNode(unsigned int i)       { return nodeGrid[i]; }
 
-		const std::vector<unsigned char >& GetOldSpeedBins() const { return oldSpeedBins; }
-		const std::vector<unsigned char >& GetCurSpeedBins() const { return curSpeedBins; }
-		const std::vector<unsigned short>& GetOldSpeedMods() const { return oldSpeedMods; }
-		const std::vector<unsigned short>& GetCurSpeedMods() const { return curSpeedMods; }
+		const std::vector<SpeedBinType>& GetOldSpeedBins() const { return oldSpeedBins; }
+		const std::vector<SpeedBinType>& GetCurSpeedBins() const { return curSpeedBins; }
+		const std::vector<SpeedModType>& GetOldSpeedMods() const { return oldSpeedMods; }
+		const std::vector<SpeedModType>& GetCurSpeedMods() const { return curSpeedMods; }
 
 		std::vector<INode*>& GetNodes() { return nodeGrid; }
 		void RegisterNode(INode* n);
@@ -79,10 +85,10 @@ namespace QTPFS {
 
 		boost::uint64_t GetMemFootPrint() const {
 			boost::uint64_t memFootPrint = sizeof(NodeLayer);
-			memFootPrint += (curSpeedMods.size() * sizeof(unsigned short));
-			memFootPrint += (oldSpeedMods.size() * sizeof(unsigned short));
-			memFootPrint += (curSpeedBins.size() * sizeof(unsigned  char));
-			memFootPrint += (oldSpeedBins.size() * sizeof(unsigned  char));
+			memFootPrint += (curSpeedMods.size() * sizeof(SpeedModType));
+			memFootPrint += (oldSpeedMods.size() * sizeof(SpeedModType));
+			memFootPrint += (curSpeedBins.size() * sizeof(SpeedBinType));
+			memFootPrint += (oldSpeedBins.size() * sizeof(SpeedBinType));
 			memFootPrint += (nodeGrid.size() * sizeof(INode*));
 			return memFootPrint;
 		}
@@ -98,10 +104,10 @@ namespace QTPFS {
 	private:
 		std::vector<INode*> nodeGrid;
 
-		std::vector<unsigned short> curSpeedMods;
-		std::vector<unsigned short> oldSpeedMods;
-		std::vector<unsigned  char> curSpeedBins;
-		std::vector<unsigned  char> oldSpeedBins;
+		std::vector<SpeedModType> curSpeedMods;
+		std::vector<SpeedModType> oldSpeedMods;
+		std::vector<SpeedBinType> curSpeedBins;
+		std::vector<SpeedBinType> oldSpeedBins;
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 		std::list<LayerUpdate> layerUpdates;

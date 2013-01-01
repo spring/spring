@@ -29,12 +29,11 @@
 #define QTPFS_ENABLE_MICRO_OPTIMIZATION_HACKS
 // #define QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
 
-#define QTPFS_CACHE_VERSION 6
+#define QTPFS_CACHE_VERSION 7
 #define QTPFS_CACHE_BASEDIR "cache/QTPFS/"
 #define QTPFS_CACHE_XACCESS
 
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
-#define QTPFS_FLOAT_MAX_USSHORT float(std::numeric_limits<unsigned short>::max())
 #define QTPFS_CLOSED_NODE_COST (1 << 24)
 
 #endif

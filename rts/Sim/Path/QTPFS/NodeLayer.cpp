@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <limits>
+
 #include "NodeLayer.hpp"
 #include "PathManager.hpp"
 #include "Node.hpp"
@@ -11,14 +13,14 @@
 
 #define NL QTPFS::NodeLayer
 
-static unsigned char GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
+static NL::SpeedBinType GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
 	// NOTE:
 	//     bins N and N+1 are reserved for modifiers <= min and >= max
 	//     respectively; blocked squares MUST be in their own category
-	const unsigned char defBin = NL::NUM_SPEEDMOD_BINS * relSpeedMod;
-	const unsigned char maxBin = NL::NUM_SPEEDMOD_BINS - 1;
+	const NL::SpeedBinType defBin = NL::NUM_SPEEDMOD_BINS * relSpeedMod;
+	const NL::SpeedBinType maxBin = NL::NUM_SPEEDMOD_BINS - 1;
 
-	unsigned char speedModBin = Clamp(defBin, static_cast<unsigned char>(0), maxBin);
+	NL::SpeedBinType speedModBin = Clamp(defBin, static_cast<NL::SpeedBinType>(0), maxBin);
 
 	if (absSpeedMod <= NL::MIN_SPEEDMOD_VALUE) { speedModBin = NL::NUM_SPEEDMOD_BINS + 0; }
 	if (absSpeedMod >= NL::MAX_SPEEDMOD_VALUE) { speedModBin = NL::NUM_SPEEDMOD_BINS + 1; }
@@ -37,6 +39,8 @@ void QTPFS::NodeLayer::RegisterNode(INode* n) {
 }
 
 void QTPFS::NodeLayer::Init(unsigned int layerNum) {
+	assert((NUM_SPEEDMOD_BINS + 1) <= MaxSpeedBinTypeValue());
+
 	// pre-count the root
 	numLeafNodes = 1;
 	layerNumber = layerNum;
@@ -152,16 +156,16 @@ bool QTPFS::NodeLayer::Update(
 			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, NL::MIN_SPEEDMOD_VALUE, NL::MAX_SPEEDMOD_VALUE);
 			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
 			const float newRelSpeedMod = (newAbsSpeedMod - NL::MIN_SPEEDMOD_VALUE) / (NL::MAX_SPEEDMOD_VALUE - NL::MIN_SPEEDMOD_VALUE);
-			const float curRelSpeedMod = curSpeedMods[sqrIdx] / QTPFS_FLOAT_MAX_USSHORT;
+			const float curRelSpeedMod = curSpeedMods[sqrIdx] / float(MaxSpeedModTypeValue());
 
-			const unsigned char newSpeedModBin = GetSpeedModBin(newAbsSpeedMod, newRelSpeedMod);
-			const unsigned char curSpeedModBin = curSpeedBins[sqrIdx];
+			const SpeedBinType newSpeedModBin = GetSpeedModBin(newAbsSpeedMod, newRelSpeedMod);
+			const SpeedBinType curSpeedModBin = curSpeedBins[sqrIdx];
 
 			numNewBinSquares += int(newSpeedModBin != curSpeedModBin);
 
 			// need to keep track of these for Tesselate
-			oldSpeedMods[sqrIdx] = curRelSpeedMod * QTPFS_FLOAT_MAX_USSHORT;
-			curSpeedMods[sqrIdx] = newRelSpeedMod * QTPFS_FLOAT_MAX_USSHORT;
+			oldSpeedMods[sqrIdx] = curRelSpeedMod * float(MaxSpeedModTypeValue());
+			curSpeedMods[sqrIdx] = newRelSpeedMod * float(MaxSpeedModTypeValue());
 
 			oldSpeedBins[sqrIdx] = curSpeedModBin;
 			curSpeedBins[sqrIdx] = newSpeedModBin;

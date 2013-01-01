@@ -525,12 +525,12 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	bool& wantSplit,
 	bool& needSplit
 ) {
-	const std::vector<unsigned  char>& oldSpeedBins = nl.GetOldSpeedBins();
-	const std::vector<unsigned  char>& curSpeedBins = nl.GetCurSpeedBins();
-	const std::vector<unsigned short>& oldSpeedMods = nl.GetOldSpeedMods();
-	const std::vector<unsigned short>& curSpeedMods = nl.GetCurSpeedMods();
+	const std::vector<NodeLayer::SpeedBinType>& oldSpeedBins = nl.GetOldSpeedBins();
+	const std::vector<NodeLayer::SpeedBinType>& curSpeedBins = nl.GetCurSpeedBins();
+	const std::vector<NodeLayer::SpeedModType>& oldSpeedMods = nl.GetOldSpeedMods();
+	const std::vector<NodeLayer::SpeedModType>& curSpeedMods = nl.GetCurSpeedMods();
 
-	const unsigned char refSpeedBin = curSpeedBins[zmin() * gs->mapx + xmin()];
+	const NodeLayer::SpeedBinType refSpeedBin = curSpeedBins[zmin() * gs->mapx + xmin()];
 
 	// <this> can either just have been merged or added as
 	// new child of split parent; in the former case we can
@@ -558,15 +558,15 @@ bool QTPFS::QTNode::UpdateMoveCost(
 			for (unsigned int hmz = minz; hmz < maxz; hmz++) {
 				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
-				const unsigned char oldSpeedBin = oldSpeedBins[sqrIdx];
-				const unsigned char curSpeedBin = curSpeedBins[sqrIdx];
+				const NodeLayer::SpeedBinType oldSpeedBin = oldSpeedBins[sqrIdx];
+				const NodeLayer::SpeedBinType curSpeedBin = curSpeedBins[sqrIdx];
 
 				numNewBinSquares += int(curSpeedBin != oldSpeedBin);
 				numDifBinSquares += int(curSpeedBin != refSpeedBin);
 				numClosedSquares += int(curSpeedMods[sqrIdx] <= 0);
 
-				speedModSum -= (oldSpeedMods[sqrIdx] / QTPFS_FLOAT_MAX_USSHORT);
-				speedModSum += (curSpeedMods[sqrIdx] / QTPFS_FLOAT_MAX_USSHORT);
+				speedModSum -= (oldSpeedMods[sqrIdx] / float(NodeLayer::MaxSpeedModTypeValue()));
+				speedModSum += (curSpeedMods[sqrIdx] / float(NodeLayer::MaxSpeedModTypeValue()));
 
 				assert(speedModSum >= 0.0f);
 			}
@@ -578,14 +578,14 @@ bool QTPFS::QTNode::UpdateMoveCost(
 			for (unsigned int hmz = zmin(); hmz < zmax(); hmz++) {
 				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
-				const unsigned char oldSpeedBin = oldSpeedBins[sqrIdx];
-				const unsigned char curSpeedBin = curSpeedBins[sqrIdx];
+				const NodeLayer::SpeedBinType oldSpeedBin = oldSpeedBins[sqrIdx];
+				const NodeLayer::SpeedBinType curSpeedBin = curSpeedBins[sqrIdx];
 
 				numNewBinSquares += int(curSpeedBin != oldSpeedBin);
 				numDifBinSquares += int(curSpeedBin != refSpeedBin);
 				numClosedSquares += int(curSpeedMods[sqrIdx] <= 0);
 
-				speedModSum += (curSpeedMods[sqrIdx] / QTPFS_FLOAT_MAX_USSHORT);
+				speedModSum += (curSpeedMods[sqrIdx] / float(NodeLayer::MaxSpeedModTypeValue()));
 			}
 		}
 	}
