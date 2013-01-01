@@ -71,9 +71,6 @@ namespace QTPFS {
 		static const unsigned int MAX_TEAM_SEARCHES = 25;
 		static const unsigned int NUM_SPEEDMOD_BINS = 10;
 
-		static const float MIN_SPEEDMOD_VALUE;
-		static const float MAX_SPEEDMOD_VALUE;
-
 	private:
 		void ThreadUpdate();
 		void Load();

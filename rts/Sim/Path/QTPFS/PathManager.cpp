@@ -29,9 +29,6 @@
 #define MAP_RECTANGLE PathRectangle(0, 0,  gs->mapx, gs->mapy, false)
 
 namespace QTPFS {
-	const float PathManager::MIN_SPEEDMOD_VALUE = 0.0f;
-	const float PathManager::MAX_SPEEDMOD_VALUE = 2.0f;
-
 	struct PMLoadScreen {
 		PMLoadScreen(): loading(true) {}
 		~PMLoadScreen() { assert(loadMessages.empty()); }

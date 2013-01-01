@@ -9,24 +9,17 @@
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/myMath.h"
 
-// NOTE:
-//   we need a fixed range that does not become wider / narrower
-//   during terrain deformations (otherwise the bins would change
-//   across ALL nodes)
-#define PM QTPFS::PathManager
-#define PM_SPEEDMOD_RANGE (PM::MAX_SPEEDMOD_VALUE - PM::MIN_SPEEDMOD_VALUE)
-
-static int GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
+static unsigned char GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
 	// NOTE:
 	//     bins N and N+1 are reserved for modifiers <= min and >= max
 	//     respectively; blocked squares MUST be in their own category
-	const int defBin = int(PM::NUM_SPEEDMOD_BINS * relSpeedMod);
-	const int maxBin = int(PM::NUM_SPEEDMOD_BINS - 1);
+	const unsigned char defBin = NUM_SPEEDMOD_BINS * relSpeedMod;
+	const unsigned char maxBin = NUM_SPEEDMOD_BINS - 1;
 
-	int speedModBin = Clamp(defBin, 0, maxBin);
+	unsigned char speedModBin = Clamp(defBin, static_cast<unsigned char>(0), maxBin);
 
-	if (absSpeedMod <= PM::MIN_SPEEDMOD_VALUE) { speedModBin = PM::NUM_SPEEDMOD_BINS + 0; }
-	if (absSpeedMod >= PM::MAX_SPEEDMOD_VALUE) { speedModBin = PM::NUM_SPEEDMOD_BINS + 1; }
+	if (absSpeedMod <= MIN_SPEEDMOD_VALUE) { speedModBin = NUM_SPEEDMOD_BINS + 0; }
+	if (absSpeedMod >= MAX_SPEEDMOD_VALUE) { speedModBin = NUM_SPEEDMOD_BINS + 1; }
 
 	return speedModBin;
 }
@@ -51,8 +44,8 @@ void QTPFS::NodeLayer::Init(unsigned int layerNum) {
 
 	nodeGrid.resize(xsize * zsize, NULL);
 
-	curSpeedMods.resize(xsize * zsize, 0.0f);
-	oldSpeedMods.resize(xsize * zsize, 0.0f);
+	curSpeedMods.resize(xsize * zsize,  0);
+	oldSpeedMods.resize(xsize * zsize,  0);
 	oldSpeedBins.resize(xsize * zsize, -1);
 	curSpeedBins.resize(xsize * zsize, -1);
 }
@@ -85,8 +78,8 @@ void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md) {
 	layerUpdate->counter = ++updateCounter;
 
 	#ifdef QTPFS_IGNORE_MAP_EDGES
-	const unsigned int md_xsizeh = md->xsizeh;
-	const unsigned int md_zsizeh = md->zsizeh;
+	const unsigned int xsizehMD = md->xsizeh;
+	const unsigned int zsizehMD = md->zsizeh;
 	#endif
 
 	// make a snapshot of the terrain-state within <r>
@@ -95,8 +88,8 @@ void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md) {
 			const unsigned int recIdx = (hmz - r.z1) * r.GetWidth() + (hmx - r.x1);
 
 			#ifdef QTPFS_IGNORE_MAP_EDGES
-			const unsigned int chmx = Clamp(hmx, md_xsizeh, r.x2 - md_xsizeh - 1);
-			const unsigned int chmz = Clamp(hmz, md_zsizeh, r.z2 - md_zsizeh - 1);
+			const unsigned int chmx = Clamp(hmx, xsizehMD, r.x2 - xsizehMD - 1);
+			const unsigned int chmz = Clamp(hmz, zsizehMD, r.z2 - zsizehMD - 1);
 			#else
 			const unsigned int chmx = hmx;
 			const unsigned int chmz = hmz;
@@ -112,7 +105,7 @@ bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 	const LayerUpdate& layerUpdate = layerUpdates.front();
 	const PathRectangle& rectangle = layerUpdate.rectangle;
 	const std::vector<float>* speedMods = &layerUpdate.speedMods;
-	const std::vector<int>* blockBits = &layerUpdate.blockBits;
+	const std::vector<  int>* blockBits = &layerUpdate.blockBits;
 	const bool ret = Update(rectangle, NULL, speedMods, blockBits);
 
 	return ret;
@@ -125,13 +118,13 @@ bool QTPFS::NodeLayer::Update(
 	const PathRectangle& r,
 	const MoveDef* md,
 	const std::vector<float>* luSpeedMods,
-	const std::vector<int>* luBlockBits
+	const std::vector<  int>* luBlockBits
 ) {
 	unsigned int numNewBinSquares = 0;
 
 	#ifdef QTPFS_IGNORE_MAP_EDGES
-	const unsigned int md_xsizeh = (md == NULL)? 0: md->xsizeh;
-	const unsigned int md_zsizeh = (md == NULL)? 0: md->zsizeh;
+	const unsigned int xsizehMD = (md == NULL)? 0: md->xsizeh;
+	const unsigned int zsizehMD = (md == NULL)? 0: md->zsizeh;
 	#endif
 
 	// divide speed-modifiers into bins
@@ -141,8 +134,8 @@ bool QTPFS::NodeLayer::Update(
 			const unsigned int recIdx = (hmz - r.z1) * r.GetWidth() + (hmx - r.x1);
 
 			#ifdef QTPFS_IGNORE_MAP_EDGES
-			const unsigned int chmx = Clamp(hmx, md_xsizeh, r.x2 - md_xsizeh - 1);
-			const unsigned int chmz = Clamp(hmz, md_zsizeh, r.z2 - md_zsizeh - 1);
+			const unsigned int chmx = Clamp(hmx, xsizehMD, r.x2 - xsizehMD - 1);
+			const unsigned int chmz = Clamp(hmz, zsizehMD, r.z2 - zsizehMD - 1);
 			#else
 			const unsigned int chmx = hmx;
 			const unsigned int chmz = hmz;
@@ -154,19 +147,19 @@ bool QTPFS::NodeLayer::Update(
 			const unsigned int blockBits = (luBlockBits == NULL)? CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
 
 			const float rawAbsSpeedMod = (luSpeedMods == NULL)? CMoveMath::GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
-			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, PM::MIN_SPEEDMOD_VALUE, PM::MAX_SPEEDMOD_VALUE);
+			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, MIN_SPEEDMOD_VALUE, MAX_SPEEDMOD_VALUE);
 			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
-			const float newRelSpeedMod = (newAbsSpeedMod - PM::MIN_SPEEDMOD_VALUE) / PM_SPEEDMOD_RANGE;
-			const float curRelSpeedMod = curSpeedMods[sqrIdx];
+			const float newRelSpeedMod = (newAbsSpeedMod - MIN_SPEEDMOD_VALUE) / (MAX_SPEEDMOD_VALUE - MIN_SPEEDMOD_VALUE);
+			const float curRelSpeedMod = curSpeedMods[sqrIdx] / QTPFS_FLOAT_MAX_USSHORT;
 
-			const int newSpeedModBin = GetSpeedModBin(newAbsSpeedMod, newRelSpeedMod);
-			const int curSpeedModBin = curSpeedBins[sqrIdx];
+			const unsigned char newSpeedModBin = GetSpeedModBin(newAbsSpeedMod, newRelSpeedMod);
+			const unsigned char curSpeedModBin = curSpeedBins[sqrIdx];
 
-			numNewBinSquares += (newSpeedModBin != curSpeedModBin)? 1: 0;
+			numNewBinSquares += int(newSpeedModBin != curSpeedModBin);
 
 			// need to keep track of these for Tesselate
-			oldSpeedMods[sqrIdx] = curRelSpeedMod;
-			curSpeedMods[sqrIdx] = newRelSpeedMod;
+			oldSpeedMods[sqrIdx] = curRelSpeedMod * QTPFS_FLOAT_MAX_USSHORT;
+			curSpeedMods[sqrIdx] = newRelSpeedMod * QTPFS_FLOAT_MAX_USSHORT;
 
 			oldSpeedBins[sqrIdx] = curSpeedModBin;
 			curSpeedBins[sqrIdx] = newSpeedModBin;

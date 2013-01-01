@@ -34,6 +34,7 @@
 #define QTPFS_CACHE_XACCESS
 
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
+#define QTPFS_FLOAT_MAX_USSHORT float(std::numeric_limits<unsigned short>::max())
 #define QTPFS_CLOSED_NODE_COST (1 << 24)
 
 #endif

@@ -57,8 +57,6 @@ bool QTPFS::PathSearch::Execute(
 	if (haveFullPath)
 		return true;
 
-	const bool srcBlocked = (srcNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY);
-
 	std::vector<INode*>& allNodes = nodeLayer->GetNodes();
 	std::vector<INode*> ngbNodes;
 
@@ -76,7 +74,7 @@ bool QTPFS::PathSearch::Execute(
 	// nodes can represent many terrain squares, some of which can still
 	// be passable and allow a unit to move within a node)
 	// NOTE: we need to make sure such paths do not have infinite cost!
-	if (srcBlocked) {
+	if (srcNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY) {
 		srcNode->SetMoveCost(0.0f);
 	}
 
@@ -103,7 +101,7 @@ bool QTPFS::PathSearch::Execute(
 		}
 	}
 
-	if (srcBlocked) {
+	if (srcNode->GetMoveCost() == 0.0f) {
 		srcNode->SetMoveCost(QTPFS_POSITIVE_INFINITY);
 	}
 		
@@ -173,7 +171,7 @@ void QTPFS::PathSearch::Iterate(
 		return;
 	if (curNode != srcNode)
 		curPoint = curNode->GetNeighborEdgeTransitionPoint(curNode->GetPrevNode(), curPoint);
-	if (curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
+	if (curNode->IsClosed())
 		return;
 
 	if (curNode->xmid() < searchRect.x1) return;
@@ -195,9 +193,8 @@ void QTPFS::PathSearch::Iterate(
 	// this value lies halfway between the minimum and the maximum of the
 	// speedmod range (2.0), so a node covering such terrain will receive
 	// a *relative* (average) speedmod of 0.5 --> the average move-cost of
-	// a "virtual node" containing nxtPoint and tgtPoint is the inverse of
-	// 0.5, making our "admissable" heuristic distance-weight 2.0 (1.0/0.5)
-	const float hWeight = 2.0f;
+	// a "virtual node" containing nxtPoint and tgtPoint is its reciprocal
+	const float hWeight = 1.0f / ((NodeLayer::MAX_SPEEDMOD_VALUE - NodeLayer::MIN_SPEEDMOD_VALUE) * 0.5f);
 	#endif
 
 	#ifdef QTPFS_COPY_ITERATE_NEIGHBOR_NODES
@@ -242,7 +239,7 @@ void QTPFS::PathSearch::Iterate(
 		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
 		#endif
 
-		if (nxtNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
+		if (nxtNode->IsClosed())
 			continue;
 
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
