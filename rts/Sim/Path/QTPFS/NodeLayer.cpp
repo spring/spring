@@ -9,17 +9,19 @@
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/myMath.h"
 
+#define NL QTPFS::NodeLayer
+
 static unsigned char GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
 	// NOTE:
 	//     bins N and N+1 are reserved for modifiers <= min and >= max
 	//     respectively; blocked squares MUST be in their own category
-	const unsigned char defBin = NUM_SPEEDMOD_BINS * relSpeedMod;
-	const unsigned char maxBin = NUM_SPEEDMOD_BINS - 1;
+	const unsigned char defBin = NL::NUM_SPEEDMOD_BINS * relSpeedMod;
+	const unsigned char maxBin = NL::NUM_SPEEDMOD_BINS - 1;
 
 	unsigned char speedModBin = Clamp(defBin, static_cast<unsigned char>(0), maxBin);
 
-	if (absSpeedMod <= MIN_SPEEDMOD_VALUE) { speedModBin = NUM_SPEEDMOD_BINS + 0; }
-	if (absSpeedMod >= MAX_SPEEDMOD_VALUE) { speedModBin = NUM_SPEEDMOD_BINS + 1; }
+	if (absSpeedMod <= NL::MIN_SPEEDMOD_VALUE) { speedModBin = NL::NUM_SPEEDMOD_BINS + 0; }
+	if (absSpeedMod >= NL::MAX_SPEEDMOD_VALUE) { speedModBin = NL::NUM_SPEEDMOD_BINS + 1; }
 
 	return speedModBin;
 }
@@ -147,9 +149,9 @@ bool QTPFS::NodeLayer::Update(
 			const unsigned int blockBits = (luBlockBits == NULL)? CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
 
 			const float rawAbsSpeedMod = (luSpeedMods == NULL)? CMoveMath::GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
-			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, MIN_SPEEDMOD_VALUE, MAX_SPEEDMOD_VALUE);
+			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, NL::MIN_SPEEDMOD_VALUE, NL::MAX_SPEEDMOD_VALUE);
 			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
-			const float newRelSpeedMod = (newAbsSpeedMod - MIN_SPEEDMOD_VALUE) / (MAX_SPEEDMOD_VALUE - MIN_SPEEDMOD_VALUE);
+			const float newRelSpeedMod = (newAbsSpeedMod - NL::MIN_SPEEDMOD_VALUE) / (NL::MAX_SPEEDMOD_VALUE - NL::MIN_SPEEDMOD_VALUE);
 			const float curRelSpeedMod = curSpeedMods[sqrIdx] / QTPFS_FLOAT_MAX_USSHORT;
 
 			const unsigned char newSpeedModBin = GetSpeedModBin(newAbsSpeedMod, newRelSpeedMod);

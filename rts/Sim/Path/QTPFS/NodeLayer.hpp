@@ -91,6 +91,7 @@ namespace QTPFS {
 		//   we need a fixed range that does not become wider / narrower
 		//   during terrain deformations (otherwise the bins would change
 		//   across ALL nodes)
+		static const unsigned int NUM_SPEEDMOD_BINS = 10;
 		static const float MIN_SPEEDMOD_VALUE = 0.0f;
 		static const float MAX_SPEEDMOD_VALUE = 2.0f;
 
