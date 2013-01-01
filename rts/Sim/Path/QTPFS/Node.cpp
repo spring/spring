@@ -21,14 +21,14 @@ void QTPFS::INode::SetPathCost(unsigned int type, float cost) {
 		case NODE_PATH_COST_F: { fCost = cost; return; } break;
 		case NODE_PATH_COST_G: { gCost = cost; return; } break;
 		case NODE_PATH_COST_H: { hCost = cost; return; } break;
-		case NODE_PATH_COST_M: { mCost = cost; return; } break;
+		// case NODE_PATH_COST_M: { mCost = cost; return; } break;
 	}
 
 	assert(false);
 	#else
 	assert(&gCost == &fCost + 1);
 	assert(&hCost == &gCost + 1);
-	assert(&mCost == &hCost + 1);
+	// assert(&mCost == &hCost + 1);
 
 	*(&fCost + type) = cost;
 	#endif
@@ -40,7 +40,7 @@ float QTPFS::INode::GetPathCost(unsigned int type) const {
 		case NODE_PATH_COST_F: { return fCost; } break;
 		case NODE_PATH_COST_G: { return gCost; } break;
 		case NODE_PATH_COST_H: { return hCost; } break;
-		case NODE_PATH_COST_M: { return mCost; } break;
+		// case NODE_PATH_COST_M: { return mCost; } break;
 	}
 
 	assert(false);
@@ -48,7 +48,7 @@ float QTPFS::INode::GetPathCost(unsigned int type) const {
 	#else
 	assert(&gCost == &fCost + 1);
 	assert(&hCost == &gCost + 1);
-	assert(&mCost == &hCost + 1);
+	// assert(&mCost == &hCost + 1);
 
 	return *(&fCost + type);
 	#endif
@@ -203,17 +203,19 @@ QTPFS::QTNode::QTNode(
 	numPrevNodes = 0;
 	#endif
 
-	_xmin = x1; _xmax = x2;
-	_zmin = z1; _zmax = z2;
 	_depth = (parent != NULL)? parent->depth() + 1: 0;
+	_xminxmax = (x2 << 16) | (x1 << 0);
+	_zminzmax = (z2 << 16) | (z1 << 0);
 
+	assert(x2 < (1 << 16));
+	assert(z2 < (1 << 16));
 	assert(xsize() != 0);
 	assert(zsize() != 0);
 
 	fCost = 0.0f;
 	gCost = 0.0f;
 	hCost = 0.0f;
-	mCost = 0.0f;
+	// mCost = 0.0f;
 
 	speedModSum =  0.0f;
 	speedModAvg =  0.0f;
@@ -249,6 +251,10 @@ boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
 	if (IsLeaf()) {
 		memFootPrint += (neighbors.size() * sizeof(INode*));
 		memFootPrint += (children.size() * sizeof(QTNode*));
+
+		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+		memFootPrint += (netpoints.size() * sizeof(float3));
+		#endif
 	} else {
 		for (unsigned int i = 0; i < CHILD_COUNT; i++) {
 			memFootPrint += (children[i]->GetMemFootPrint());
@@ -267,7 +273,7 @@ boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
 		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&numPrevNodes) + sizeof(numPrevNodes);
 		#else
 		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);
-		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&mCost) + sizeof(mCost);
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&mCost) + sizeof(hCost);
 		#endif
 
 		assert(minByte < maxByte);
@@ -278,7 +284,7 @@ boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
 		}
 	}
 	{
-		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&_xmin);
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&depth);
 		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&prevMagicNum) + sizeof(prevMagicNum);
 
 		assert(minByte < maxByte);
@@ -519,12 +525,12 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	bool& wantSplit,
 	bool& needSplit
 ) {
-	const std::vector<int>& oldSpeedBins = nl.GetOldSpeedBins();
-	const std::vector<int>& curSpeedBins = nl.GetCurSpeedBins();
-	const std::vector<float>& oldSpeedMods = nl.GetOldSpeedMods();
-	const std::vector<float>& curSpeedMods = nl.GetCurSpeedMods();
+	const std::vector<unsigned  char>& oldSpeedBins = nl.GetOldSpeedBins();
+	const std::vector<unsigned  char>& curSpeedBins = nl.GetCurSpeedBins();
+	const std::vector<unsigned short>& oldSpeedMods = nl.GetOldSpeedMods();
+	const std::vector<unsigned short>& curSpeedMods = nl.GetCurSpeedMods();
 
-	const int refSpeedBin = curSpeedBins[zmin() * gs->mapx + xmin()];
+	const unsigned char refSpeedBin = curSpeedBins[zmin() * gs->mapx + xmin()];
 
 	// <this> can either just have been merged or added as
 	// new child of split parent; in the former case we can
@@ -552,15 +558,15 @@ bool QTPFS::QTNode::UpdateMoveCost(
 			for (unsigned int hmz = minz; hmz < maxz; hmz++) {
 				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
-				const int oldSpeedBin = oldSpeedBins[sqrIdx];
-				const int curSpeedBin = curSpeedBins[sqrIdx];
+				const unsigned char oldSpeedBin = oldSpeedBins[sqrIdx];
+				const unsigned char curSpeedBin = curSpeedBins[sqrIdx];
 
 				numNewBinSquares += int(curSpeedBin != oldSpeedBin);
 				numDifBinSquares += int(curSpeedBin != refSpeedBin);
-				numClosedSquares += int(curSpeedMods[sqrIdx] <= 0.0f);
+				numClosedSquares += int(curSpeedMods[sqrIdx] <= 0);
 
-				speedModSum -= oldSpeedMods[sqrIdx];
-				speedModSum += curSpeedMods[sqrIdx];
+				speedModSum -= (oldSpeedMods[sqrIdx] / QTPFS_FLOAT_MAX_USSHORT);
+				speedModSum += (curSpeedMods[sqrIdx] / QTPFS_FLOAT_MAX_USSHORT);
 
 				assert(speedModSum >= 0.0f);
 			}
@@ -572,14 +578,14 @@ bool QTPFS::QTNode::UpdateMoveCost(
 			for (unsigned int hmz = zmin(); hmz < zmax(); hmz++) {
 				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
-				const int oldSpeedBin = oldSpeedBins[sqrIdx];
-				const int curSpeedBin = curSpeedBins[sqrIdx];
+				const unsigned char oldSpeedBin = oldSpeedBins[sqrIdx];
+				const unsigned char curSpeedBin = curSpeedBins[sqrIdx];
 
 				numNewBinSquares += int(curSpeedBin != oldSpeedBin);
 				numDifBinSquares += int(curSpeedBin != refSpeedBin);
-				numClosedSquares += int(curSpeedMods[sqrIdx] <= 0.0f);
+				numClosedSquares += int(curSpeedMods[sqrIdx] <= 0);
 
-				speedModSum += curSpeedMods[sqrIdx];
+				speedModSum += (curSpeedMods[sqrIdx] / QTPFS_FLOAT_MAX_USSHORT);
 			}
 		}
 	}
@@ -590,6 +596,7 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	speedModAvg = speedModSum / area();
 	moveCostAvg = (speedModAvg <= 0.001f)? QTPFS_POSITIVE_INFINITY: (1.0f / speedModAvg);
 
+	// no node can have ZERO traversal cost
 	assert(moveCostAvg > 0.0f);
 
 	wantSplit |= (numDifBinSquares > 0);
@@ -817,7 +824,6 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 			}
 
 			#ifdef QTPFS_CORNER_CONNECTED_NODES
-			#define NODE_FULLY_OPEN(n) (n->GetMoveCost() < (QTPFS_CLOSED_NODE_COST / float(n->area())))
 			// top- and bottom-left corners
 			if ((ngbRels & REL_NGB_EDGE_L) != 0) {
 				if ((ngbRels & REL_NGB_EDGE_T) != 0) {
@@ -827,7 +833,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_TL ngb must be distinct from EDGE_L and EDGE_T ngbs
 					if (ngbC != ngbL && ngbC != ngbT) {
-						if (NODE_FULLY_OPEN(ngbL) && NODE_FULLY_OPEN(ngbT)) {
+						if (ngbL->IsOpen() && ngbT->IsOpen()) {
 							neighbors.push_back(ngbC);
 							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
 							netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
@@ -842,7 +848,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_BL ngb must be distinct from EDGE_L and EDGE_B ngbs
 					if (ngbC != ngbL && ngbC != ngbB) {
-						if (NODE_FULLY_OPEN(ngbL) && NODE_FULLY_OPEN(ngbB)) {
+						if (ngbL->IsOpen() && ngbB->IsOpen()) {
 							neighbors.push_back(ngbC);
 							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
 							netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
@@ -861,7 +867,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_TR ngb must be distinct from EDGE_R and EDGE_T ngbs
 					if (ngbC != ngbR && ngbC != ngbT) {
-						if (NODE_FULLY_OPEN(ngbR) && NODE_FULLY_OPEN(ngbT)) {
+						if (ngbR->IsOpen() && ngbT->IsOpen()) {
 							neighbors.push_back(ngbC);
 							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
 							netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
@@ -876,7 +882,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_BR ngb must be distinct from EDGE_R and EDGE_B ngbs
 					if (ngbC != ngbR && ngbC != ngbB) {
-						if (NODE_FULLY_OPEN(ngbR) && NODE_FULLY_OPEN(ngbB)) {
+						if (ngbR->IsOpen() && ngbB->IsOpen()) {
 							neighbors.push_back(ngbC);
 							#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
 							netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
@@ -885,7 +891,6 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 					}
 				}
 			}
-			#undef NODE_FULLY_OPEN
 			#endif
 
 			// NOTE: gcc 4.7 should FINALLY define __cplusplus properly (and accept -std=c++11)

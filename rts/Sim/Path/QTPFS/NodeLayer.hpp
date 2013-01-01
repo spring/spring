@@ -52,7 +52,7 @@ namespace QTPFS {
 			const PathRectangle& r,
 			const MoveDef* md,
 			const std::vector<float>* luSpeedMods = NULL,
-			const std::vector<int>* luBlockBits = NULL
+			const std::vector<  int>* luBlockBits = NULL
 		);
 
 		void ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum);
@@ -64,10 +64,10 @@ namespace QTPFS {
 		const INode* GetNode(unsigned int i) const { return nodeGrid[i]; }
 		      INode* GetNode(unsigned int i)       { return nodeGrid[i]; }
 
-		const std::vector<int>& GetOldSpeedBins() const { return oldSpeedBins; }
-		const std::vector<int>& GetCurSpeedBins() const { return curSpeedBins; }
-		const std::vector<float>& GetOldSpeedMods() const { return oldSpeedMods; }
-		const std::vector<float>& GetCurSpeedMods() const { return curSpeedMods; }
+		const std::vector<unsigned char >& GetOldSpeedBins() const { return oldSpeedBins; }
+		const std::vector<unsigned char >& GetCurSpeedBins() const { return curSpeedBins; }
+		const std::vector<unsigned short>& GetOldSpeedMods() const { return oldSpeedMods; }
+		const std::vector<unsigned short>& GetCurSpeedMods() const { return curSpeedMods; }
 
 		std::vector<INode*>& GetNodes() { return nodeGrid; }
 		void RegisterNode(INode* n);
@@ -79,21 +79,28 @@ namespace QTPFS {
 
 		boost::uint64_t GetMemFootPrint() const {
 			boost::uint64_t memFootPrint = sizeof(NodeLayer);
-			memFootPrint += (curSpeedMods.size() * sizeof(float));
-			memFootPrint += (oldSpeedMods.size() * sizeof(float));
-			memFootPrint += (curSpeedBins.size() * sizeof(int));
-			memFootPrint += (oldSpeedBins.size() * sizeof(int));
+			memFootPrint += (curSpeedMods.size() * sizeof(unsigned short));
+			memFootPrint += (oldSpeedMods.size() * sizeof(unsigned short));
+			memFootPrint += (curSpeedBins.size() * sizeof(unsigned  char));
+			memFootPrint += (oldSpeedBins.size() * sizeof(unsigned  char));
 			memFootPrint += (nodeGrid.size() * sizeof(INode*));
 			return memFootPrint;
 		}
 
+		// NOTE:
+		//   we need a fixed range that does not become wider / narrower
+		//   during terrain deformations (otherwise the bins would change
+		//   across ALL nodes)
+		static const float MIN_SPEEDMOD_VALUE = 0.0f;
+		static const float MAX_SPEEDMOD_VALUE = 2.0f;
+
 	private:
 		std::vector<INode*> nodeGrid;
 
-		std::vector<float> curSpeedMods;
-		std::vector<float> oldSpeedMods;
-		std::vector<int  > curSpeedBins;
-		std::vector<int  > oldSpeedBins;
+		std::vector<unsigned short> curSpeedMods;
+		std::vector<unsigned short> oldSpeedMods;
+		std::vector<unsigned  char> curSpeedBins;
+		std::vector<unsigned  char> oldSpeedBins;
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 		std::list<LayerUpdate> layerUpdates;
