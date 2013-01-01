@@ -194,7 +194,7 @@ void QTPFS::PathSearch::Iterate(
 	// speedmod range (2.0), so a node covering such terrain will receive
 	// a *relative* (average) speedmod of 0.5 --> the average move-cost of
 	// a "virtual node" containing nxtPoint and tgtPoint is its reciprocal
-	const float hWeight = 1.0f / ((NodeLayer::MAX_SPEEDMOD_VALUE - NodeLayer::MIN_SPEEDMOD_VALUE) * 0.5f);
+	const float hWeight = NodeLayer::MAX_SPEEDMOD_VALUE - NodeLayer::MIN_SPEEDMOD_VALUE;
 	#endif
 
 	#ifdef QTPFS_COPY_ITERATE_NEIGHBOR_NODES
