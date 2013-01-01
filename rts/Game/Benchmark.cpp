@@ -46,11 +46,11 @@ CBenchmark::~CBenchmark()
 	while (dit != drawFPS.end() && sit != simFPS.end())
 	{
 		if (dit->first < sit->first) {
-			fprintf(pFile, "%f %f %f %f %u %u %f %f\n", dit->first, rit->second, dit->second, sit->second, uit->second, fit->second, git->second, lit->second);
+			fprintf(pFile, "%f %f %f %f " _STPF_ " " _STPF_ " %f %f\n", dit->first, rit->second, dit->second, sit->second, uit->second, fit->second, git->second, lit->second);
 			++dit;
 			++rit;
 		} else {
-			fprintf(pFile, "%f %f %f %f %u %u %f %f\n", (float)sit->first, rit->second, dit->second, sit->second, uit->second, fit->second, git->second, lit->second);
+			fprintf(pFile, "%f %f %f %f " _STPF_ " " _STPF_ " %f %f\n", (float)sit->first, rit->second, dit->second, sit->second, uit->second, fit->second, git->second, lit->second);
 			++sit;
 			++uit;
 			++fit;

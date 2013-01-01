@@ -461,7 +461,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	assert(uniformBlockSize > 0);
 
 	if (uniformBlockSize % sizeof(SGLSLGroundLighting) != 0)
-		LOG("uniformBlockSize sizeof(SGLSLGroundLighting) %u %zu", uniformBlockSize, sizeof(SGLSLGroundLighting));
+		LOG("uniformBlockSize sizeof(SGLSLGroundLighting) %u " _STPF_, uniformBlockSize, sizeof(SGLSLGroundLighting));
 	assert(uniformBlockSize % sizeof(SGLSLGroundLighting) == 0);
 
 
@@ -490,7 +490,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	glGetActiveUniformBlockiv(decalShader->GetObjID(), uniformBlockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &uniformBlockSize);
 
 	if (uniformBlockSize % sizeof(SGLSLDecal) != 0)
-		LOG("uniformBlockSize sizeof(SGLSLDecal) %u %u", uniformBlockSize, sizeof(SGLSLDecal));
+		LOG("uniformBlockSize sizeof(SGLSLDecal) %u " _STPF_, uniformBlockSize, sizeof(SGLSLDecal));
 	assert(uniformBlockSize % sizeof(SGLSLDecal) == 0);
 
 	maxDecals = uniformBlockSize / sizeof(SGLSLDecal);
