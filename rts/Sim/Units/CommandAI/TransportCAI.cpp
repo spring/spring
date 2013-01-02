@@ -923,27 +923,37 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 	switch (c.GetID()) {
 		case CMD_UNLOAD_UNIT:
 		case CMD_UNLOAD_UNITS: {
-			CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
+			const CTransportUnit* transport = static_cast<CTransportUnit*>(owner);
+			const std::list<CTransportUnit::TransportedUnit>& transportees = transport->GetTransportedUnits();
 
-			const std::list<CTransportUnit::TransportedUnit> &transpunits = reinterpret_cast<CTransportUnit*>(owner)->GetTransportedUnits();
 			// allow unloading empty transports for easier setup of transport bridges
-			if (!transpunits.empty()) {
-				if ((c.GetID() == CMD_UNLOAD_UNITS) && fromSynced) {
-					for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
-						if (CBuilding* building = dynamic_cast<CBuilding*>(it->unit)) {
-							building->buildFacing = abs((int)c.params[4]) % NUM_FACINGS;
-						}
-					}
+			if (transportees.empty())
+				return true;
+			if (!fromSynced)
+				return false;
+
+			if (c.GetParamsCount() == 5) {
+				// point transported buildings (...) in their wanted direction after unloading
+				for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transportees.begin(); it != transportees.end(); ++it) {
+					CBuilding* building = dynamic_cast<CBuilding*>(it->unit));
+
+					if (building == NULL)
+						continue;
+
+					building->buildFacing = std::abs(int(c.GetParam(4))) % NUM_FACINGS;
 				}
-				for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
+			}
+
+			if (c.GetParamsCount() >= 4) {
+				for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transportees.begin(); it != transportees.end(); ++it) {
 					CUnit* u = it->unit;
 
-					const float3 pos = c.GetPos(0);
-					const float radius = (c.GetID() == CMD_UNLOAD_UNITS)? c.params[3]: 0.0f;
+					const float radius = (c.GetID() == CMD_UNLOAD_UNITS)? c.GetParam(3): 0.0f;
 					const float spread = u->radius * transport->unitDef->unloadSpread;
-					float3 found;
 
-					if (FindEmptySpot(pos, radius, spread, found, u, fromSynced)) {
+					float3 foundPos;
+
+					if (FindEmptySpot(c.GetPos(0), radius, spread, foundPos, u, fromSynced)) {
 						return true;
 					}
 					 // FIXME: support arbitrary unloading order for other unload types also
@@ -951,11 +961,14 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 						return false;
 					}
 				}
+
+				// no empty spot found for any transported unit
 				return false;
 			}
 
 			break;
 		}
 	}
+
 	return true;
 }
