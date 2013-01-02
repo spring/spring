@@ -929,22 +929,23 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 			// allow unloading empty transports for easier setup of transport bridges
 			if (transportees.empty())
 				return true;
-			if (!fromSynced)
-				return false;
 
 			if (c.GetParamsCount() == 5) {
-				// point transported buildings (...) in their wanted direction after unloading
-				for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transportees.begin(); it != transportees.end(); ++it) {
-					CBuilding* building = dynamic_cast<CBuilding*>(it->unit));
+				if (fromSynced) {
+					// point transported buildings (...) in their wanted direction after unloading
+					for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transportees.begin(); it != transportees.end(); ++it) {
+						CBuilding* building = dynamic_cast<CBuilding*>(it->unit);
 
-					if (building == NULL)
-						continue;
+						if (building == NULL)
+							continue;
 
-					building->buildFacing = std::abs(int(c.GetParam(4))) % NUM_FACINGS;
+						building->buildFacing = std::abs(int(c.GetParam(4))) % NUM_FACINGS;
+					}
 				}
 			}
 
 			if (c.GetParamsCount() >= 4) {
+				// find unload positions for transportees (WHY can this run in unsynced context?)
 				for (std::list<CTransportUnit::TransportedUnit>::const_iterator it = transportees.begin(); it != transportees.end(); ++it) {
 					CUnit* u = it->unit;
 
