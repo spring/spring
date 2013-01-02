@@ -30,6 +30,17 @@ static NL::SpeedBinType GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
 
 
 
+QTPFS::NodeLayer::NodeLayer()
+	: layerNumber(0)
+	, numLeafNodes(0)
+	, updateCounter(0)
+	, xsize(0)
+	, zsize(0)
+	, maxRelSpeedMod(0.0f)
+	, avgRelSpeedMod(0.0f)
+{
+}
+
 void QTPFS::NodeLayer::RegisterNode(INode* n) {
 	for (unsigned int hmx = n->xmin(); hmx < n->xmax(); hmx++) {
 		for (unsigned int hmz = n->zmin(); hmz < n->zmax(); hmz++) {
@@ -39,7 +50,7 @@ void QTPFS::NodeLayer::RegisterNode(INode* n) {
 }
 
 void QTPFS::NodeLayer::Init(unsigned int layerNum) {
-	assert((NUM_SPEEDMOD_BINS + 1) <= MaxSpeedBinTypeValue());
+	assert((NL::NUM_SPEEDMOD_BINS + 1) <= MaxSpeedBinTypeValue());
 
 	// pre-count the root
 	numLeafNodes = 1;
@@ -110,11 +121,11 @@ void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md) {
 bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 	const LayerUpdate& layerUpdate = layerUpdates.front();
 	const PathRectangle& rectangle = layerUpdate.rectangle;
+
 	const std::vector<float>* speedMods = &layerUpdate.speedMods;
 	const std::vector<  int>* blockBits = &layerUpdate.blockBits;
-	const bool ret = Update(rectangle, NULL, speedMods, blockBits);
 
-	return ret;
+	return (Update(rectangle, NULL, speedMods, blockBits));
 }
 #endif
 
@@ -127,11 +138,21 @@ bool QTPFS::NodeLayer::Update(
 	const std::vector<  int>* luBlockBits
 ) {
 	unsigned int numNewBinSquares = 0;
+	unsigned int numClosedSquares = 0;
 
 	#ifdef QTPFS_IGNORE_MAP_EDGES
 	const unsigned int xsizehMD = (md == NULL)? 0: md->xsizeh;
 	const unsigned int zsizehMD = (md == NULL)? 0: md->zsizeh;
 	#endif
+
+	const bool globalUpdate =
+		((r.x1 == 0 && r.x2 == gs->mapx) &&
+		 (r.z1 == 0 && r.z2 == gs->mapy));
+
+	if (globalUpdate) {
+		maxRelSpeedMod = 0.0f;
+		avgRelSpeedMod = 0.0f;
+	}
 
 	// divide speed-modifiers into bins
 	for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
@@ -162,6 +183,7 @@ bool QTPFS::NodeLayer::Update(
 			const SpeedBinType curSpeedModBin = curSpeedBins[sqrIdx];
 
 			numNewBinSquares += int(newSpeedModBin != curSpeedModBin);
+			numClosedSquares += int(newSpeedModBin == NL::NUM_SPEEDMOD_BINS);
 
 			// need to keep track of these for Tesselate
 			oldSpeedMods[sqrIdx] = curRelSpeedMod * float(MaxSpeedModTypeValue());
@@ -169,7 +191,18 @@ bool QTPFS::NodeLayer::Update(
 
 			oldSpeedBins[sqrIdx] = curSpeedModBin;
 			curSpeedBins[sqrIdx] = newSpeedModBin;
+
+			if (globalUpdate && newRelSpeedMod > 0.0f) {
+				// only count open squares toward the maximum and average
+				maxRelSpeedMod  = std::max(maxRelSpeedMod, newRelSpeedMod);
+				avgRelSpeedMod += newRelSpeedMod;
+			}
 		}
+	}
+
+	if (globalUpdate && maxRelSpeedMod > 0.0f) {
+		// if at least one open square, set the new average
+		avgRelSpeedMod /= ((xsize * zsize) - numClosedSquares);
 	}
 
 	// if at least one square changed bin, we need to re-tesselate
