@@ -35,13 +35,7 @@ namespace QTPFS {
 		static size_t MaxSpeedModTypeValue() { return (std::numeric_limits<SpeedModType>::max()); }
 		static size_t MaxSpeedBinTypeValue() { return (std::numeric_limits<SpeedBinType>::max()); }
 
-		NodeLayer()
-			: numLeafNodes(0)
-			, layerNumber(0)
-			, updateCounter(0)
-			, xsize(0)
-			, zsize(0)
-			{}
+		NodeLayer();
 
 		void Init(unsigned int layerNum);
 		void Clear();
@@ -81,7 +75,8 @@ namespace QTPFS {
 		void SetNumLeafNodes(unsigned int n) { numLeafNodes = n; }
 		unsigned int GetNumLeafNodes() const { return numLeafNodes; }
 
-		unsigned int GetLayerNumber() const { return layerNumber; }
+		float GetMaxRelSpeedMod() const { return maxRelSpeedMod; }
+		float GetAvgRelSpeedMod() const { return avgRelSpeedMod; }
 
 		boost::uint64_t GetMemFootPrint() const {
 			boost::uint64_t memFootPrint = sizeof(NodeLayer);
@@ -113,12 +108,15 @@ namespace QTPFS {
 		std::list<LayerUpdate> layerUpdates;
 		#endif
 
-		unsigned int numLeafNodes;
 		unsigned int layerNumber;
+		unsigned int numLeafNodes;
 		unsigned int updateCounter;
 
 		unsigned int xsize;
 		unsigned int zsize;
+
+		float maxRelSpeedMod;
+		float avgRelSpeedMod;
 	};
 };
 

@@ -189,12 +189,13 @@ void QTPFS::PathSearch::Iterate(
 	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
 	const float hWeight = math::sqrtf(curNode->GetPathCost(NODE_PATH_COST_M) / (curNode->GetNumPrevNodes() + 1));
 	#else
-	// the default speedmod on flat terrain (assuming no typemaps) is 1.0
-	// this value lies halfway between the minimum and the maximum of the
-	// speedmod range (2.0), so a node covering such terrain will receive
-	// a *relative* (average) speedmod of 0.5 --> the average move-cost of
-	// a "virtual node" containing nxtPoint and tgtPoint is its reciprocal
-	const float hWeight = NodeLayer::MAX_SPEEDMOD_VALUE - NodeLayer::MIN_SPEEDMOD_VALUE;
+	// be as optimistic as possible: assume the remainder of our path will
+	// cover only flat terrain with maximum speed-modifier between nxtPoint
+	// and tgtPoint
+	// this is admissable so long as the map is not LOCALLY changed in such
+	// a way as to increase the maximum speedmod beyond the current layer's
+	// cached maximum value
+	const float hWeight = 1.0f / nodeLayer->GetMaxRelSpeedMod();
 	#endif
 
 	#ifdef QTPFS_COPY_ITERATE_NEIGHBOR_NODES
