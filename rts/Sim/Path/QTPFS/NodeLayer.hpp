@@ -93,8 +93,8 @@ namespace QTPFS {
 		//   during terrain deformations (otherwise the bins would change
 		//   across ALL nodes)
 		static const unsigned int NUM_SPEEDMOD_BINS = 10;
-		static const float MIN_SPEEDMOD_VALUE = 0.0f;
-		static const float MAX_SPEEDMOD_VALUE = 2.0f;
+		static const float MIN_SPEEDMOD_VALUE;
+		static const float MAX_SPEEDMOD_VALUE;
 
 	private:
 		std::vector<INode*> nodeGrid;

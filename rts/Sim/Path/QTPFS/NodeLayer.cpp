@@ -13,6 +13,9 @@
 
 #define NL QTPFS::NodeLayer
 
+const float QTPFS::NodeLayer::MIN_SPEEDMOD_VALUE = 0.0f;
+const float QTPFS::NodeLayer::MAX_SPEEDMOD_VALUE = 2.0f;
+
 static NL::SpeedBinType GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
 	// NOTE:
 	//     bins N and N+1 are reserved for modifiers <= min and >= max

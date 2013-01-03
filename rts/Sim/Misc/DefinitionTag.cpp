@@ -3,7 +3,9 @@
 #include "DefinitionTag.h"
 #include "System/Log/ILog.h"
 #include <iostream>
+#ifndef _MSC_VER
 #include <cxxabi.h>
+#endif
 
 using std::cout;
 using std::map;
@@ -58,10 +60,14 @@ const DefTagMetaData* DefType::GetMetaData(const string& key)
 std::string DefTagMetaData::GetTypeName(const std::type_info& typeInfo)
 {
 	// demangle typename
+#ifndef _MSC_VER
 	int status;
 	char* ctname = abi::__cxa_demangle(typeInfo.name(), 0, 0, &status);
 	const std::string tname = ctname;
 	free(ctname);
+#else
+	const std::string tname(typeInfo.name()); // FIXME?
+#endif
 	return tname;
 }
 
