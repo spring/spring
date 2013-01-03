@@ -529,7 +529,12 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 	// TODO: compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
-		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveDefHandler->moveDefs[i]->name;
+		const MoveDef* md = moveDefHandler->moveDefs[i];
+
+		if (md->unitDefRefCount == 0)
+			continue;
+
+		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + md->name;
 		fileStreams[i] = new std::fstream();
 
 		if (haveCacheDir) {
@@ -570,7 +575,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		}
 
 		#ifndef NDEBUG
-		sprintf(loadMsg, fmtString, __FUNCTION__, i, moveDefHandler->moveDefs[i]->name.c_str());
+		sprintf(loadMsg, fmtString, __FUNCTION__, i, md->name.c_str());
 		pmLoadScreen.AddLoadMessage(loadMsg);
 		#endif
 
