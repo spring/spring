@@ -1112,6 +1112,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER7(GetActiveAttrib)
 		GML_MAKEHANDLER2(GetAttribLocation)
 		GML_MAKEHANDLER3(BindAttribLocation)
+		GML_MAKEHANDLER3(GetCompressedTexImage)
 	}
 }
 
