@@ -231,6 +231,8 @@ bool QTPFS::NodeLayer::Update(
 #ifdef QTPFS_AMORTIZED_NODE_NEIGHBOR_CACHE_UPDATES
 #ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
 void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum) {
+	assert(!nodeGrid.empty());
+
 	const int xoff = (currFrameNum % ((gs->mapx >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 	const int zoff = (currFrameNum / ((gs->mapy >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 
@@ -306,6 +308,8 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 #endif
 
 void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const PathRectangle& ur, unsigned int currMagicNum) {
+	assert(!nodeGrid.empty());
+
 	// account for the rim of nodes around the bounding box
 	// (whose neighbors also changed during re-tesselation)
 	const int xmin = std::max(ur.x1 - 1, 0), xmax = std::min(ur.x2 + 1, gs->mapx);
