@@ -42,8 +42,8 @@ QTPFS::NodeLayer::NodeLayer()
 }
 
 void QTPFS::NodeLayer::RegisterNode(INode* n) {
-	for (unsigned int hmx = n->xmin(); hmx < n->xmax(); hmx++) {
-		for (unsigned int hmz = n->zmin(); hmz < n->zmax(); hmz++) {
+	for (unsigned int hmz = n->zmin(); hmz < n->zmax(); hmz++) {
+		for (unsigned int hmx = n->xmin(); hmx < n->xmax(); hmx++) {
 			nodeGrid[hmz * xsize + hmx] = n;
 		}
 	}
@@ -100,8 +100,8 @@ void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md) {
 	#endif
 
 	// make a snapshot of the terrain-state within <r>
-	for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
-		for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
+	for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
+		for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
 			const unsigned int recIdx = (hmz - r.z1) * r.GetWidth() + (hmx - r.x1);
 
 			#ifdef QTPFS_IGNORE_MAP_EDGES
@@ -155,8 +155,8 @@ bool QTPFS::NodeLayer::Update(
 	}
 
 	// divide speed-modifiers into bins
-	for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
-		for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
+	for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
+		for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
 			const unsigned int sqrIdx = hmz * xsize + hmx;
 			const unsigned int recIdx = (hmz - r.z1) * r.GetWidth() + (hmx - r.x1);
 
@@ -248,13 +248,13 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		const int xmin =         (xoff +           0               ), zmin =         (zoff +           0               );
 		const int xmax = std::min(xmin + SQUARE_SIZE, gs->mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE, gs->mapy >> 1);
 
-		for (int x = xmin; x < xmax; x++) {
-			for (int z = zmin; z < zmax; ) {
+		for (int z = zmin; z < zmax; z++) {
+			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
+				x = n->xmax();
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z = n->zmax();
-				// z += n->zsize();
 			}
 		}
 	}
@@ -263,13 +263,13 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		const int xmin =         (xoff +              (gs->mapx >> 1)), zmin =         (zoff +           0               );
 		const int xmax = std::min(xmin + SQUARE_SIZE,  gs->mapx      ), zmax = std::min(zmin + SQUARE_SIZE, gs->mapy >> 1);
 
-		for (int x = xmin; x < xmax; x++) {
-			for (int z = zmin; z < zmax; ) {
+		for (int z = zmin; z < zmax; z++) {
+			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
+				x = n->xmax();
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z = n->zmax();
-				// z += n->zsize();
 			}
 		}
 	}
@@ -278,13 +278,13 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		const int xmin =         (xoff +              (gs->mapx >> 1)), zmin =         (zoff +              (gs->mapy >> 1));
 		const int xmax = std::min(xmin + SQUARE_SIZE,  gs->mapx      ), zmax = std::min(zmin + SQUARE_SIZE,  gs->mapy      );
 
-		for (int x = xmin; x < xmax; x++) {
-			for (int z = zmin; z < zmax; ) {
+		for (int z = zmin; z < zmax; z++) {
+			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
+				x = n->xmax();
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z = n->zmax();
-				// z += n->zsize();
 			}
 		}
 	}
@@ -293,13 +293,13 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		const int xmin =         (xoff +           0               ), zmin =         (zoff +              (gs->mapy >> 1));
 		const int xmax = std::min(xmin + SQUARE_SIZE, gs->mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE,  gs->mapy      );
 
-		for (int x = xmin; x < xmax; x++) {
-			for (int z = zmin; z < zmax; ) {
+		for (int z = zmin; z < zmax; z++) {
+			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
+				x = n->xmax();
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z = n->zmax();
-				// z += n->zsize();
 			}
 		}
 	}
@@ -317,18 +317,16 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const PathRectangle& ur, uns
 
 	INode* n = NULL;
 
-	for (int x = xmin; x < xmax; x++) {
-		for (int z = zmin; z < zmax; ) {
+	for (int z = zmin; z < zmax; z++) {
+		for (int x = xmin; x < xmax; ) {
 			n = nodeGrid[z * xsize + x];
+			x = n->xmax();
 
 			// NOTE:
 			//   during initialization, currMagicNum == 0 which nodes start with already 
 			//   (does not matter because prevMagicNum == -1, so updates are not no-ops)
 			n->SetMagicNumber(currMagicNum);
 			n->UpdateNeighborCache(nodeGrid);
-
-			z = n->zmax();
-			// z += n->zsize();
 		}
 	}
 }
