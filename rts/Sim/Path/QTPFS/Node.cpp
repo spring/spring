@@ -554,8 +554,8 @@ bool QTPFS::QTNode::UpdateMoveCost(
 		const unsigned int minz = std::max(r.z1, int(zmin()));
 		const unsigned int maxz = std::min(r.z2, int(zmax()));
 
-		for (unsigned int hmx = minx; hmx < maxx; hmx++) {
-			for (unsigned int hmz = minz; hmz < maxz; hmz++) {
+		for (unsigned int hmz = minz; hmz < maxz; hmz++) {
+			for (unsigned int hmx = minx; hmx < maxx; hmx++) {
 				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
 				const NodeLayer::SpeedBinType oldSpeedBin = oldSpeedBins[sqrIdx];
@@ -574,8 +574,8 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	} else {
 		speedModSum = 0.0f;
 
-		for (unsigned int hmx = xmin(); hmx < xmax(); hmx++) {
-			for (unsigned int hmz = zmin(); hmz < zmax(); hmz++) {
+		for (unsigned int hmz = zmin(); hmz < zmax(); hmz++) {
+			for (unsigned int hmx = xmin(); hmx < xmax(); hmx++) {
 				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
 				const NodeLayer::SpeedBinType oldSpeedBin = oldSpeedBins[sqrIdx];
@@ -760,7 +760,6 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmz = ngb->zmax();
-					// hmz += ngb->zsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
@@ -777,7 +776,6 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmz = ngb->zmax();
-					// hmz += ngb->zsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
@@ -795,7 +793,6 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmx = ngb->xmax();
-					// hmz += ngb->xsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
@@ -812,7 +809,6 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmx = ngb->xmax();
-					// hmz += ngb->xsize();
 
 					neighbors.push_back(ngb);
 					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
