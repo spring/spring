@@ -58,7 +58,7 @@ namespace QTPFS {
 		void ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum);
 		void ExecNodeNeighborCacheUpdates(const PathRectangle& ur, unsigned int currMagicNum);
 
-		float GetNodeRatio() const { return (numLeafNodes / float(xsize * zsize)); }
+		float GetNodeRatio() const { return (numLeafNodes / std::max(1.0f, float(xsize * zsize))); }
 		const INode* GetNode(unsigned int x, unsigned int z) const { return nodeGrid[z * xsize + x]; }
 		      INode* GetNode(unsigned int x, unsigned int z)       { return nodeGrid[z * xsize + x]; }
 		const INode* GetNode(unsigned int i) const { return nodeGrid[i]; }
