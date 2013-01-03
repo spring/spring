@@ -269,7 +269,7 @@ void ShieldSegmentProjectile::Draw() {
 
 	segmentPos   = shieldProjectile->pos;
 	segmentColor = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
-	segmentAlpha = (shieldDef->visibleShield ? shieldDef->shieldAlpha : 0.0f);
+	segmentAlpha = shieldDef->visibleShield * shieldDef->shieldAlpha;
 
 	if (shield->hitFrames > 0 && shieldDef->visibleShieldHitFrames > 0) {
 		// when a shield is hit, increase segment's opacity to
