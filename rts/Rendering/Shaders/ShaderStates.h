@@ -3,7 +3,7 @@
 #ifndef SPRING_SHADER_STATES_HDR
 #define SPRING_SHADER_STATES_HDR
 
-#include <stdint.h>
+#include <boost/cstdint.hpp>
 #include <string.h>
 #include <string>
 #include <map>
@@ -13,7 +13,7 @@
 namespace Shader {
 	struct UniformState {
 		union {
-			int32_t i[17];
+			boost::int32_t i[17];
 			float   f[17];
 		};
 		int type; //TODO implement (should be either GL_FLOAT_VEC2, GL_INT_SAMPLER_CUBE, ... see GLSLCopyState.cpp)
@@ -115,7 +115,7 @@ namespace Shader {
 
 		bool Set2x2(const float* v, bool transp) {
 			const int* vi = reinterpret_cast<const int*>(v);
-			if (CheckHash(vi, 4) && i[16] == transp)
+			if (CheckHash(vi, 4) && (bool)i[16] == transp)
 				return false;
 			memcpy(f, v, 4 * sizeof(float));
 			i[16] = transp;
@@ -123,7 +123,7 @@ namespace Shader {
 		}
 		bool Set3x3(const float* v, bool transp) {
 			const int* vi = reinterpret_cast<const int*>(v);
-			if (CheckHash(vi, 9) && i[16] == transp)
+			if (CheckHash(vi, 9) && (bool)i[16] == transp)
 				return false;
 			memcpy(f, v, 9 * sizeof(float));
 			i[16] = transp;
@@ -131,7 +131,7 @@ namespace Shader {
 		}
 		bool Set4x4(const float* v, bool transp) {
 			const int* vi = reinterpret_cast<const int*>(v);
-			if (CheckHash(vi, 16) && i[16] == transp)
+			if (CheckHash(vi, 16) && (bool)i[16] == transp)
 				return false;
 			memcpy(f, v, 16 * sizeof(float));
 			i[16] = transp;

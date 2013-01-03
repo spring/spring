@@ -73,11 +73,19 @@ struct SGLSLDecal {
 };
 
 struct SGLSLGroundLighting {
+#ifdef _MSC_VER
+	__declspec(align(16)) float3 ambientColor;
+	__declspec(align(16))float3 diffuseColor;
+	__declspec(align(16))float3 specularColor;
+	__declspec(align(16))float3 dir;
+	__declspec(align(16))float3 fogColor;
+#else
 	float3 ambientColor __attribute__ ((aligned (16)));
 	float3 diffuseColor __attribute__ ((aligned (16)));
 	float3 specularColor __attribute__ ((aligned (16)));
 	float3 dir __attribute__ ((aligned (16)));
 	float3 fogColor __attribute__ ((aligned (16)));
+#endif
 	float fogEnd;
 	float fogScale;
 	float3 unused;

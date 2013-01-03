@@ -130,7 +130,7 @@ int main(int argc, char* argv[])
 {
 // PROFILE builds exit on execv ...
 // HEADLESS run mostly in parallel for testing purposes, 100% omp threads wouldn't help then
-#if !defined(PROFILE) and !defined(HEADLESS)
+#if !defined(PROFILE) && !defined(HEADLESS)
 	bool restart = false;
 	restart |= SetNvOptimusProfile(argv);
 	restart |= SetOpenMpEnvVars(argv);
