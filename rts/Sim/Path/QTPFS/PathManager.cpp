@@ -185,6 +185,9 @@ void QTPFS::PathManager::Load() {
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+			if (moveDefHandler->moveDefs[layerNum]->unitDefRefCount == 0)
+				continue;
+
 			#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
 			if (haveCacheDir) {
 				// if cache-dir exists, must set node relations after de-serializing its trees
@@ -342,6 +345,10 @@ void QTPFS::PathManager::InitNodeLayersThread(
 
 void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const PathRectangle& r) {
 	nodeTrees[layerNum] = new QTPFS::QTNode(NULL,  0,  r.x1, r.z1,  r.x2, r.z2);
+
+	if (moveDefHandler->moveDefs[layerNum]->unitDefRefCount == 0)
+		return;
+
 	nodeLayers[layerNum].Init(layerNum);
 	nodeLayers[layerNum].RegisterNode(nodeTrees[layerNum]);
 }
