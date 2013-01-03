@@ -35,6 +35,8 @@ function makescript {
 	${SOURCEDIR}/test/validation/prepare.sh "$GAME" "$MAP" "$AI" "$AIVERSION" > "$OUTPUT"
 }
 
+mkdir -p $DOWNLOADDIR
+
 PRDL="${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
 GAME1=$($PRDL ba:latest |egrep -o '\[Download\] (.*)' |cut -b 12-)
