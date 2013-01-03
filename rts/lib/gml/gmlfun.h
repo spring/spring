@@ -1448,5 +1448,6 @@ GML_MAKEFUN3(GetUniformuiv,GLuint,GLint,GLuint *,,GML_SYNC())
 GML_MAKEFUN7(GetActiveAttrib,GLuint,GLuint,GLsizei,GLsizei *,GLint *,GLenum *,GLchar *,GML_SYNC())
 GML_MAKEFUN2R(GetAttribLocation,GLuint,const GLchar *,GLint)
 GML_MAKEFUN3(BindAttribLocation,GLuint,GLuint,const GLchar *,)
+GML_MAKEFUN3(GetCompressedTexImage,GLenum,GLint,GLvoid *,,GML_SYNC())
 
 #endif // _GML_FUN_H

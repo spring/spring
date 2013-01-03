@@ -132,6 +132,7 @@
 #undef glGetAttribLocation
 #undef glGetAttribLocationARB
 #undef glGetBooleanv
+#undef glGetCompressedTexImage
 #undef glGetDoublev
 #undef glGetError
 #undef glGetFloatv
@@ -444,6 +445,7 @@
 #define glGetAttribLocationARB gmlGetAttribLocationARB
 #define glGetBooleanv gmlGetBooleanv
 #define glGetDoublev gmlGetDoublev
+#define glGetCompressedTexImage gmlGetCompressedTexImage
 #define glGetError gmlGetError
 #define glGetFloatv gmlGetFloatv
 #define glGetFramebufferAttachmentParameterivEXT gmlGetFramebufferAttachmentParameterivEXT
