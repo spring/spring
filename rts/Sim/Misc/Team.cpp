@@ -24,7 +24,7 @@
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
 
-CR_BIND(CTeam,);
+CR_BIND(CTeam, (-1));
 CR_REG_METADATA(CTeam, (
 	// from CTeamBase
 	CR_MEMBER(leader),
