@@ -1705,35 +1705,23 @@ void CUnitScript::BenchmarkScript(const std::string& unitname)
 /******************************************************************************/
 /******************************************************************************/
 
-int CUnitScript::ScriptToModel(int scriptnum) const {
-	const LocalModelPiece* p = GetLocalModelPiece(scriptnum);
-
-	if (p == NULL)
+int CUnitScript::ScriptToModel(int scriptPieceNum) const {
+	if (!PieceExists(scriptPieceNum))
 		return -1;
 
-	int i = 0;
-	const std::vector<LocalModelPiece*>& modelpieces = unit->localModel->pieces;
+	const LocalModelPiece* smp = GetScriptLocalModelPiece(scriptPieceNum);
 
-	for (std::vector<LocalModelPiece*>::const_iterator pm = modelpieces.begin(); pm != modelpieces.end(); ++pm, ++i) {
-		if (p == *pm) return i;
-	}
-
-	return -1;
+	return (smp->GetLModelPieceIndex());
 };
 
+int CUnitScript::ModelToScript(int lmodelPieceNum) const {
+	const LocalModel* lm = unit->localModel;
 
-int CUnitScript::ModelToScript(int piecenum) const {
-	const LocalModelPiece* p = unit->localModel->GetPiece(piecenum);
-
-	if (p == NULL)
+	if (!lm->HasPiece(lmodelPieceNum))
 		return -1;
 
-	int i = 0;
-	const std::vector<LocalModelPiece*>& scriptpieces = pieces;
+	const LocalModelPiece* lmp = lm->GetPiece(lmodelPieceNum);
 
-	for (std::vector<LocalModelPiece*>::const_iterator pm = scriptpieces.begin(); pm != scriptpieces.end(); ++pm, ++i) {
-		if (p == *pm) return i;
-	}
-
-	return -1;
+	return (lmp->GetScriptPieceIndex());
 };
+

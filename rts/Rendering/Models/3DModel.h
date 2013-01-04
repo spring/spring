@@ -161,6 +161,11 @@ struct LocalModelPiece
 	void AddChild(LocalModelPiece* c) { children.push_back(c); }
 	void SetParent(LocalModelPiece* p) { parent = p; }
 
+	void SetLModelPieceIndex(unsigned int idx) { lmodelPieceIndex = idx; }
+	void SetScriptPieceIndex(unsigned int idx) { scriptPieceIndex = idx; }
+	unsigned int GetLModelPieceIndex() const { return lmodelPieceIndex; }
+	unsigned int GetScriptPieceIndex() const { return scriptPieceIndex; }
+
 	void Draw() const;
 	void DrawLOD(unsigned int lod) const;
 	void SetLODCount(unsigned int count);
@@ -202,6 +207,8 @@ public:
 	bool scriptSetVisible;  // TODO: add (visibility) maxradius!
 	bool identityTransform; // true IFF pieceSpaceMat (!) equals identity
 
+	unsigned int lmodelPieceIndex; // index of this piece into LocalModel::pieces
+	unsigned int scriptPieceIndex; // index of this piece into UnitScript::pieces
 	unsigned int dispListID;
 
 	const S3DModelPiece* original;
@@ -234,7 +241,8 @@ struct LocalModel
 		pieces.clear();
 	}
 
-	LocalModelPiece* GetPiece(unsigned int i) const { return (pieces.at(i)); }
+	bool HasPiece(unsigned int i) const { return (i < pieces.size()); }
+	LocalModelPiece* GetPiece(unsigned int i) const { assert(HasPiece(i)); return pieces[i]; }
 	LocalModelPiece* GetRoot() const { return GetPiece(0); }
 
 	void Draw() const { DrawPieces(); }

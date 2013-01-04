@@ -33,8 +33,9 @@ S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
 
 void S3DModelPiece::DrawStatic() const
 {
-	const bool needTrafo = (offset.SqLength() != 0.f);
-	if (needTrafo) {
+	const bool transform = (offset.SqLength() != 0.0f);
+
+	if (transform) {
 		glPushMatrix();
 		glTranslatef(offset.x, offset.y, offset.z);
 	}
@@ -46,7 +47,7 @@ void S3DModelPiece::DrawStatic() const
 			(*ci)->DrawStatic();
 		}
 
-	if (needTrafo) {
+	if (transform) {
 		glPopMatrix();
 	}
 }
@@ -100,6 +101,11 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 
 	pieces.push_back(lmpParent);
 
+	// the mapping is 1:1 for Lua scripts, but not necessarily for COB
+	// CobInstance::MapScriptToModelPieces does the remapping (if any)
+	lmpParent->SetLModelPieceIndex(pieceNum);
+	lmpParent->SetScriptPieceIndex(pieceNum);
+
 	for (unsigned int i = 0; i < mpParent->GetChildCount(); i++) {
 		lmpChild = CreateLocalModelPieces(mpParent->GetChild(i), ++pieceNum);
 		lmpChild->SetParent(lmpParent);
@@ -123,6 +129,9 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 
 	, scriptSetVisible(!piece->isEmpty)
 	, identityTransform(true)
+
+	, lmodelPieceIndex(-1)
+	, scriptPieceIndex(-1)
 
 	, original(piece)
 	, parent(NULL) // set later
