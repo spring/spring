@@ -21,7 +21,7 @@ class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shall
 {
 	CR_DECLARE(CTeam);
 public:
-	CTeam();
+	CTeam(int _teamNum);
 
 	void ResetResourceState();
 	void SlowUpdate();
