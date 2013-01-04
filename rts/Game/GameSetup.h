@@ -74,7 +74,7 @@ public:
 	std::map<std::string, std::string> mapOptions;
 	std::map<std::string, std::string> modOptions;
 
-	int maxUnits;
+	int maxUnitsPerTeam;
 
 	bool ghostedBuildings;
 	bool disableMapDamage;
