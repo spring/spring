@@ -23,6 +23,7 @@
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/CommandAI/TransportCAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -1590,13 +1591,18 @@ void CGroundMoveType::HandleUnitCollisions(
 	const int dirSign = int(!reversing) * 2 - 1;
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
+	CTransportCAI* transA = dynamic_cast<CTransportCAI*>(collider->commandAI);
+
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 		CUnit* collidee = const_cast<CUnit*>(*uit);
+		CTransportCAI* transB = dynamic_cast<CTransportCAI*>(collidee->commandAI);
 
 		if (collidee == collider) continue;
 		if (collidee->moveType->IsSkidding()) continue;
 		if (collidee->moveType->IsFlying()) continue;
 		if (collidee->GetTransporter() != NULL) continue;
+		if (transB && transB->LoadStillValid(collider)) continue;
+		if (transA && transA->LoadStillValid(collidee)) continue;
 
 		const bool colliderMobile = (collider->moveDef != NULL); // always true
 		const bool collideeMobile = (collidee->moveDef != NULL); // maybe true
