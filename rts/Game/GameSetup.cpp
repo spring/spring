@@ -26,7 +26,7 @@ CGameSetup::CGameSetup()
 	, modHash(0)
 	, useLuaGaia(true)
 	, startPosType(StartPos_Fixed)
-	, maxUnits(1500)
+	, maxUnitsPerTeam(1500)
 	, ghostedBuildings(true)
 	, disableMapDamage(false)
 	, maxSpeed(0.0f)
@@ -385,12 +385,12 @@ bool CGameSetup::Init(const std::string& buf)
 
 	file.GetTDef(gameStartDelay, (unsigned int) 4, "GAME\\GameStartDelay");
 
-	file.GetDef(onlyLocal,        "0", "GAME\\OnlyLocal");
-	file.GetDef(useLuaGaia,       "1", "GAME\\ModOptions\\LuaGaia");
-	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");
-	file.GetDef(maxUnits,       "1500", "GAME\\ModOptions\\MaxUnits");
-	file.GetDef(disableMapDamage, "0", "GAME\\ModOptions\\DisableMapDamage");
-	file.GetDef(ghostedBuildings, "1", "GAME\\ModOptions\\GhostedBuildings");
+	file.GetDef(onlyLocal,           "0", "GAME\\OnlyLocal");
+	file.GetDef(useLuaGaia,          "1", "GAME\\ModOptions\\LuaGaia");
+	file.GetDef(noHelperAIs,         "0", "GAME\\ModOptions\\NoHelperAIs");
+	file.GetDef(maxUnitsPerTeam,  "1500", "GAME\\ModOptions\\MaxUnits");
+	file.GetDef(disableMapDamage,    "0", "GAME\\ModOptions\\DisableMapDamage");
+	file.GetDef(ghostedBuildings,    "1", "GAME\\ModOptions\\GhostedBuildings");
 
 	file.GetDef(maxSpeed, "3.0", "GAME\\ModOptions\\MaxSpeed");
 	file.GetDef(minSpeed, "0.3", "GAME\\ModOptions\\MinSpeed");

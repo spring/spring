@@ -56,7 +56,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 		// all non-Gaia teams (within one allyteam) get and maintain the same unit-limit
 		// (because of this it would be better treated as a pool owned by class AllyTeam)
-		team->SetMaxUnits(std::min(setup->maxUnits, int(MAX_UNITS / teams.size())));
+		team->SetMaxUnits(std::min(setup->maxUnitsPerTeam, int(MAX_UNITS / teams.size())));
 
 		assert(team->teamAllyteam >=                0);
 		assert(team->teamAllyteam <  allyTeams.size());
@@ -104,17 +104,85 @@ void CTeamHandler::GameFrame(int frameNum)
 	}
 }
 
-void CTeamHandler::UpdateTeamUnitLimits(int deadTeamNum)
-{
-	int numRemainingActiveTeams = 0;
 
+
+unsigned int CTeamHandler::GetNumTeamsInAllyTeam(unsigned int allyTeamNum, bool countDeadTeams) const
+{
+	unsigned int numTeams = 0;
+
+	for (unsigned int teamNum = 0; teamNum < teamHandler->ActiveTeams(); teamNum++) {
+		if (AllyTeam(teamNum) != allyTeamNum)
+			continue;
+		if (Team(teamNum)->isDead && !countDeadTeams)
+			continue;
+
+		numTeams += 1;
+	}
+
+	return numTeams;
+}
+
+void CTeamHandler::UpdateTeamUnitLimitsPreSpawn(int liveTeamNum)
+{
+	CTeam* liveTeam = teams[liveTeamNum];
+	CTeam* tempTeam = NULL;
+
+	// will be set to true immediately after we return
+	assert(liveTeam->isDead);
+
+	// Gaia team is alone in its allyteam and cannot really spawn
+	if (liveTeamNum == gaiaTeamID)
+		return;
+
+	// count the number of remaining (non-dead) teams in <liveTeam>'s allyteam, EXCLUDING us
+	const unsigned int numRemainingActiveTeams = GetNumTeamsInAllyTeam(AllyTeam(liveTeamNum), false);
+
+	if (numRemainingActiveTeams == 0) {
+		// set default since we are the only team in our allyteam now
+		liveTeam->SetMaxUnits(std::min(gameSetup->maxUnitsPerTeam, int(MAX_UNITS / teams.size())));
+		return;
+	}
+
+	// reduce the limit of each team in our allyteam uniformly
+	for (unsigned int tempTeamNum = 0; tempTeamNum < teams.size(); tempTeamNum++) {
+		if (tempTeamNum == liveTeamNum)
+			continue;
+		if (AllyTeam(tempTeamNum) != AllyTeam(liveTeamNum))
+			continue;
+		if (Team(tempTeamNum)->isDead)
+			continue;
+
+		tempTeam = teams[tempTeamNum];
+		tempTeam->SetMaxUnits((tempTeam->GetMaxUnits() * numRemainingActiveTeams) / (numRemainingActiveTeams + 1));
+	}
+
+	assert(tempTeam != NULL);
+	liveTeam->SetMaxUnits(tempTeam->GetMaxUnits());
+}
+
+void CTeamHandler::UpdateTeamUnitLimitsPreDeath(int deadTeamNum)
+{
 	CTeam* deadTeam = teams[deadTeamNum];
-	CTeam* activeTeam = NULL;
+	CTeam* tempTeam = NULL;
+
+	// will be set to false immediately after we return
+	assert(!deadTeam->isDead);
 
 	// Gaia team is alone in its allyteam and cannot really die
 	if (deadTeamNum == gaiaTeamID)
 		return;
 
+	// count the number of remaining (non-dead) teams in <deadTeam>'s allyteam, INCLUDING us
+	const unsigned int numRemainingActiveTeams = GetNumTeamsInAllyTeam(AllyTeam(deadTeamNum), false);
+
+	if (numRemainingActiveTeams == 1) {
+		// no more zombie unit production after death
+		deadTeam->SetMaxUnits(0);
+		return;
+	}
+
+	// redistribute <deadTeam>'s unit-limit over those teams uniformly
+	//
 	// assume an allyteam of 5 teams, each with a unit-limit of 500
 	// whenever one of these teams dies, its limit is redistributed
 	// as follows (integer division means some units are lost):
@@ -123,23 +191,6 @@ void CTeamHandler::UpdateTeamUnitLimits(int deadTeamNum)
 	//   4 x  625 = 2500 --> 3 x ( 625 + ( 625/3)= 208 =  833)=2499
 	//   3 x  833 = 2499 --> 2 x ( 833 + ( 833/2)= 416 = 1249)=2498
 	//   2 x 1249 = 2498 --> 1 x (1249 + (1249/1)=1249 = 2498)=2498
-
-	// count the number of remaining (non-dead) teams in <deadTeam>'s allyteam
-	for (unsigned int tempTeamNum = 0; tempTeamNum < teams.size(); tempTeamNum++) {
-		if (tempTeamNum == deadTeamNum)
-			continue;
-		if (AllyTeam(tempTeamNum) != AllyTeam(deadTeamNum))
-			continue;
-		if (teams[tempTeamNum]->isDead)
-			continue;
-
-		numRemainingActiveTeams += 1;
-	}
-
-	if (numRemainingActiveTeams == 0)
-		return;
-
-	// redistribute <deadTeam>'s unit-limit over those teams uniformly
 	for (unsigned int tempTeamNum = 0; tempTeamNum < teams.size(); tempTeamNum++) {
 		if (tempTeamNum == deadTeamNum)
 			continue;
@@ -150,8 +201,11 @@ void CTeamHandler::UpdateTeamUnitLimits(int deadTeamNum)
 
 		assert(teams[tempTeamNum]->GetMaxUnits() == deadTeam->GetMaxUnits());
 
-		activeTeam = teams[tempTeamNum];
-		activeTeam->SetMaxUnits(activeTeam->GetMaxUnits() + (deadTeam->GetMaxUnits() / numRemainingActiveTeams));
+		tempTeam = teams[tempTeamNum];
+		tempTeam->SetMaxUnits((tempTeam->GetMaxUnits() * numRemainingActiveTeams) / (numRemainingActiveTeams - 1));
 	}
+
+	assert(tempTeam != NULL);
+	deadTeam->SetMaxUnits(0);
 }
 

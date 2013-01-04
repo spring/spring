@@ -223,8 +223,6 @@ void CTeam::Died(bool normalDeath)
 	if (isDead)
 		return;
 
-	isDead = true;
-
 	if (normalDeath) {
 		if (leader >= 0) {
 			const CPlayer* leadPlayer = playerHandler->Player(leader);
@@ -249,14 +247,19 @@ void CTeam::Died(bool normalDeath)
 	}
 
 	// increase per-team unit-limit for each remaining team in _our_ allyteam
-	teamHandler->UpdateTeamUnitLimits(teamNum);
+	teamHandler->UpdateTeamUnitLimitsPreDeath(teamNum);
 	eventHandler.TeamDied(teamNum);
+
+	isDead = true;
 }
 
 void CTeam::AddPlayer(int playerNum)
 {
 	// note: does it matter if this team was already dead?
-	isDead = false;
+	// (besides needing to restore its original unit-limit)
+	if (isDead) {
+		teamHandler->UpdateTeamUnitLimitsPreSpawn(teamNum);
+	}
 
 	if (leader == -1) {
 		leader = playerNum;
@@ -264,6 +267,8 @@ void CTeam::AddPlayer(int playerNum)
 
 	playerHandler->Player(playerNum)->JoinTeam(teamNum);
 	playerHandler->Player(playerNum)->SetControlledTeams();
+
+	isDead = false;
 }
 
 void CTeam::KillAIs()

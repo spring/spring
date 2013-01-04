@@ -118,8 +118,12 @@ public:
 		return (IsValidAllyTeam(id) /*&& !allyTeams[id].isDead*/);
 	}
 
+	unsigned int GetNumTeamsInAllyTeam(unsigned int allyTeam, bool countDeadTeams) const;
+
 	void GameFrame(int frameNum);
-	void UpdateTeamUnitLimits(int deadTeamNum);
+
+	void UpdateTeamUnitLimitsPreSpawn(int liveTeamNum);
+	void UpdateTeamUnitLimitsPreDeath(int deadTeamNum);
 
 private:
 
