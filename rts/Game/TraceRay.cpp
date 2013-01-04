@@ -265,10 +265,10 @@ float GuiTraceRay(
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* unit = *ui;
 
-			const bool unitHostile = (unit->allyteam != gu->myAllyTeam);
+			const bool unitIsEnemy = !teamHandler->Ally(unit->allyteam, gu->myAllyTeam);
 			const bool unitOnRadar = (useRadar && radarhandler->InRadar(unit, gu->myAllyTeam));
 			const bool unitInSight = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
-			const bool unitVisible = !unitHostile || unitOnRadar || unitInSight || gu->spectatingFullView;
+			const bool unitVisible = !unitIsEnemy || unitOnRadar || unitInSight || gu->spectatingFullView;
 
 			if (unit == exclude)
 				continue;
@@ -277,11 +277,11 @@ float GuiTraceRay(
 
 			CollisionVolume cv(unit->collisionVolume);
 
-			if (unit->isIcon || (!unitInSight && unitOnRadar && unitHostile)) {
+			if (unit->isIcon || (!unitInSight && unitOnRadar && unitIsEnemy)) {
 				// for iconified units, just pretend the collision
 				// volume is a sphere of radius <unit->IconRadius>
 				// (count radar blips as such too)
-				cv.InitSphere(unit->iconRadius * (1.0f + (gu->RandFloat() * 3.0f)));
+				cv.InitSphere(unit->iconRadius);
 			}
 
 			if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {
