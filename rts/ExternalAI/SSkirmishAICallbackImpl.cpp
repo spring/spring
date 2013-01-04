@@ -3092,7 +3092,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCategory(int ski
 //########### BEGINN Unit
 EXPORT(int) skirmishAiCallback_Unit_getLimit(int skirmishAIId) {
 	const int team = skirmishAIId_teamId[skirmishAIId];
-	const int limit = teamHandler->Team(team)->maxUnits;
+	const int limit = teamHandler->Team(team)->GetMaxUnits();
 	return limit;
 }
 

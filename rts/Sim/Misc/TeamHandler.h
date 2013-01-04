@@ -92,10 +92,15 @@ public:
 	void SetAlly(int allyteamA, int allyteamB, bool allied) { allyTeams[allyteamA].allies[allyteamB] = allied; }
 
 	// accessors
-
 	int GaiaTeamID() const { return gaiaTeamID; }
 	int GaiaAllyTeamID() const { return gaiaAllyTeamID; }
 
+	// number of teams and allyteams that were *INITIALLY* part
+	// of a game (teams.size() and allyTeams.size() are runtime
+	// constants), ie. including teams that died during it and
+	// are actually NO LONGER "active"
+	//
+	// NOTE: TEAM INSTANCES ARE NEVER DELETED UNTIL SHUTDOWN, THEY ONLY GET MARKED AS DEAD!
 	int ActiveTeams() const { return teams.size(); }
 	int ActiveAllyTeams() const { return allyTeams.size(); }
 
@@ -114,6 +119,7 @@ public:
 	}
 
 	void GameFrame(int frameNum);
+	void UpdateTeamUnitLimits(int deadTeamNum);
 
 private:
 

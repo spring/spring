@@ -195,8 +195,8 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		unsigned int currentNumUnits = receivingTeam->units.size();
 
 		// make sure team unit-limit is not exceeded
-		if ((currentNumUnits + numRequestedUnits) > receivingTeam->maxUnits) {
-			numRequestedUnits = receivingTeam->maxUnits - currentNumUnits;
+		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits()) {
+			numRequestedUnits = receivingTeam->GetMaxUnits() - currentNumUnits;
 		}
 
 		// make sure square is entirely on the map
@@ -228,14 +228,14 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		if (receivingTeam->AtUnitLimit()) {
 			LOG_L(L_WARNING,
 				"[%s] unable to give more units to team %d (current: %u, team limit: %u, global limit: %u)",
-				__FUNCTION__, team, currentNumUnits, receivingTeam->maxUnits, uh->MaxUnits()
+				__FUNCTION__, team, currentNumUnits, receivingTeam->GetMaxUnits(), uh->MaxUnits()
 			);
 			return;
 		}
 
 		// make sure team unit-limit is not exceeded
-		if ((currentNumUnits + numRequestedUnits) > receivingTeam->maxUnits) {
-			numRequestedUnits = receivingTeam->maxUnits - currentNumUnits;
+		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits()) {
+			numRequestedUnits = receivingTeam->GetMaxUnits() - currentNumUnits;
 		}
 
 		const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(objectName);

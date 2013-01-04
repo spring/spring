@@ -50,11 +50,14 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 	for (size_t i = 0; i < teams.size(); ++i) {
 		// TODO: this loop body could use some more refactoring
-		CTeam* team = new CTeam();
+		CTeam* team = new CTeam(i);
 		teams[i] = team;
 		*team = setup->teamStartingData[i];
-		team->teamNum = i;
-		team->maxUnits = std::min(setup->maxUnits, int(MAX_UNITS / teams.size()));
+
+		// all non-Gaia teams get the same unit-limit
+		// (because of this it would be better treated
+		// as a pool owned by class AllyTeam)
+		team->SetMaxUnits(std::min(setup->maxUnits, int(MAX_UNITS / teams.size())));
 
 		assert(team->teamAllyteam >=                0);
 		assert(team->teamAllyteam <  allyTeams.size());
@@ -66,19 +69,18 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaiaAllyTeamID = static_cast<int>(allyTeams.size());
 
 		// Setup the gaia team
-		CTeam* gaia = new CTeam();
+		CTeam* gaia = new CTeam(gaiaTeamID);
 		gaia->color[0] = 255;
 		gaia->color[1] = 255;
 		gaia->color[2] = 255;
 		gaia->color[3] = 255;
 		gaia->gaia = true;
-		gaia->teamNum = gaiaTeamID;
-		gaia->maxUnits = MAX_UNITS - (teams.size() * teams[0]->maxUnits);
+		gaia->SetMaxUnits(MAX_UNITS - (teams.size() * teams[0]->GetMaxUnits()));
 		gaia->StartposMessage(ZeroVector);
 		gaia->teamAllyteam = gaiaAllyTeamID;
 		teams.push_back(gaia);
 
-		assert((((teams.size() - 1) * teams[0]->maxUnits) + gaia->maxUnits) == MAX_UNITS);
+		assert((((teams.size() - 1) * teams[0]->GetMaxUnits()) + gaia->GetMaxUnits()) == MAX_UNITS);
 
 		for (std::vector< ::AllyTeam >::iterator it = allyTeams.begin(); it != allyTeams.end(); ++it) {
 			it->allies.push_back(false); // enemy to everyone
@@ -102,3 +104,55 @@ void CTeamHandler::GameFrame(int frameNum)
 		}
 	}
 }
+
+void CTeamHandler::UpdateTeamUnitLimits(int deadTeamNum)
+{
+	int numRemaingActiveTeams = 0;
+
+	CTeam* deadTeam = teams[deadTeamNum];
+	CTeam* activeTeam = NULL;
+
+	// Gaia team is alone in its allyteam and cannot really die
+	if (deadTeamNum == gaiaTeamID)
+		return;
+
+	// assume an allyteam of 5 teams, each with a unit-limit of 500
+	// whenever one of these teams dies, its limit is redistributed
+	// as follows (integer division means some units are lost):
+	//
+	//   5 x  500 = 2500 --> 4 x ( 500 + ( 500/4)= 125 =  625)=2500
+	//   4 x  625 = 2500 --> 3 x ( 625 + ( 625/3)= 208 =  833)=2499
+	//   3 x  833 = 2499 --> 2 x ( 833 + ( 833/2)= 416 = 1249)=2498
+	//   2 x 1249 = 2498 --> 1 x (1249 + (1249/1)=1249 = 2498)=2498
+
+	// count the number of remaining (non-dead) teams in <deadTeam>'s allyteam
+	for (unsigned int tempTeamNum = 0; tempTeamNum < teams.size(); tempTeamNum++) {
+		if (tempTeamNum == deadTeamNum)
+			continue;
+		if (AllyTeam(tempTeamNum) != AllyTeam(deadTeamNum))
+			continue;
+		if (teams[tempTeamNum]->isDead)
+			continue;
+
+		numRemaingActiveTeams += 1;
+	}
+
+	if (numRemaingActiveTeams == 0)
+		return;
+
+	// redistribute <deadTeam>'s unit-limit over those teams
+	for (unsigned int tempTeamNum = 0; tempTeamNum < teams.size(); tempTeamNum++) {
+		if (tempTeamNum == deadTeamNum)
+			continue;
+		if (AllyTeam(tempTeamNum) != AllyTeam(deadTeamNum))
+			continue;
+		if (teams[tempTeamNum]->isDead)
+			continue;
+
+		assert(teams[tempTeamNum]->GetMaxUnits() == deadTeam->GetMaxUnits());
+
+		activeTeam = teams[tempTeamNum];
+		activeTeam->SetMaxUnits(activeTeam->GetMaxUnits() + (deadTeam->GetMaxUnits() / numRemaingActiveTeams));
+	}
+}
+

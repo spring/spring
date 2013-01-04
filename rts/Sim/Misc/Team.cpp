@@ -85,8 +85,8 @@ CR_REG_METADATA(CTeam, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTeam::CTeam() :
-	teamNum(-1),
+CTeam::CTeam(int _teamNum):
+	teamNum(_teamNum),
 	maxUnits(0),
 	isDead(false),
 	gaia(false),
@@ -248,6 +248,8 @@ void CTeam::Died(bool normalDeath)
 		}
 	}
 
+	// increase per-team unit-limit for each remaining team in _our_ allyteam
+	teamHandler->UpdateTeamUnitLimits(teamNum);
 	eventHandler.TeamDied(teamNum);
 }
 
@@ -271,14 +273,6 @@ void CTeam::KillAIs()
 	for (CSkirmishAIHandler::ids_t::const_iterator ai = localTeamAIs.begin(); ai != localTeamAIs.end(); ++ai) {
 		skirmishAIHandler.SetLocalSkirmishAIDieing(*ai, 2 /* = team died */);
 	}
-}
-
-
-
-CTeam& CTeam::operator=(const TeamBase& base)
-{
-	TeamBase::operator=(base);
-	return *this;
 }
 
 
@@ -378,13 +372,12 @@ void CTeam::SlowUpdate()
 	//! make sure the stats update is always in a SlowUpdate
 	assert(((TeamStatistics::statsPeriod * GAME_SPEED) % TEAM_SLOWUPDATE_RATE) == 0);
 
-	const int statsFrames = TeamStatistics::statsPeriod * GAME_SPEED;
 	if (nextHistoryEntry <= gs->frameNum) {
 		currentStats->frame = gs->frameNum;
 		statHistory.push_back(*currentStats);
 		currentStats = &statHistory.back();
 
-		nextHistoryEntry = gs->frameNum + statsFrames;
+		nextHistoryEntry = gs->frameNum + (TeamStatistics::statsPeriod * GAME_SPEED);
 		currentStats->frame = nextHistoryEntry;
 	}
 }

@@ -62,15 +62,19 @@ void CUnitHandler::PostLoad()
 
 CUnitHandler::CUnitHandler()
 :
+	maxUnits(0),
 	maxUnitRadius(0.0f),
-	morphUnitToFeature(true),
-	maxUnits(0)
+	morphUnitToFeature(true)
 {
-	// note: the number of active teams can change at run-time, so
-	// the team unit limit should be recalculated whenever one dies
-	// or spawns (but that would get complicated)
+	// set the global (runtime-constant) unit-limit as the sum
+	// of  all team unit-limits, which is *always* <= MAX_UNITS
+	// (note that this also counts the Gaia team)
+	//
+	// teams can not be created at runtime, but they can die and
+	// in that case the per-team limit is recalculated for every
+	// other team in the respective allyteam
 	for (unsigned int n = 0; n < teamHandler->ActiveTeams(); n++) {
-		maxUnits += teamHandler->Team(n)->maxUnits;
+		maxUnits += teamHandler->Team(n)->GetMaxUnits();
 	}
 
 	units.resize(maxUnits, NULL);
