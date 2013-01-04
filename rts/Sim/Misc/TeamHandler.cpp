@@ -54,9 +54,8 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		teams[i] = team;
 		*team = setup->teamStartingData[i];
 
-		// all non-Gaia teams get the same unit-limit
-		// (because of this it would be better treated
-		// as a pool owned by class AllyTeam)
+		// all non-Gaia teams (within one allyteam) get and maintain the same unit-limit
+		// (because of this it would be better treated as a pool owned by class AllyTeam)
 		team->SetMaxUnits(std::min(setup->maxUnits, int(MAX_UNITS / teams.size())));
 
 		assert(team->teamAllyteam >=                0);
@@ -107,7 +106,7 @@ void CTeamHandler::GameFrame(int frameNum)
 
 void CTeamHandler::UpdateTeamUnitLimits(int deadTeamNum)
 {
-	int numRemaingActiveTeams = 0;
+	int numRemainingActiveTeams = 0;
 
 	CTeam* deadTeam = teams[deadTeamNum];
 	CTeam* activeTeam = NULL;
@@ -134,13 +133,13 @@ void CTeamHandler::UpdateTeamUnitLimits(int deadTeamNum)
 		if (teams[tempTeamNum]->isDead)
 			continue;
 
-		numRemaingActiveTeams += 1;
+		numRemainingActiveTeams += 1;
 	}
 
-	if (numRemaingActiveTeams == 0)
+	if (numRemainingActiveTeams == 0)
 		return;
 
-	// redistribute <deadTeam>'s unit-limit over those teams
+	// redistribute <deadTeam>'s unit-limit over those teams uniformly
 	for (unsigned int tempTeamNum = 0; tempTeamNum < teams.size(); tempTeamNum++) {
 		if (tempTeamNum == deadTeamNum)
 			continue;
@@ -152,7 +151,7 @@ void CTeamHandler::UpdateTeamUnitLimits(int deadTeamNum)
 		assert(teams[tempTeamNum]->GetMaxUnits() == deadTeam->GetMaxUnits());
 
 		activeTeam = teams[tempTeamNum];
-		activeTeam->SetMaxUnits(activeTeam->GetMaxUnits() + (deadTeam->GetMaxUnits() / numRemaingActiveTeams));
+		activeTeam->SetMaxUnits(activeTeam->GetMaxUnits() + (deadTeam->GetMaxUnits() / numRemainingActiveTeams));
 	}
 }
 
