@@ -223,7 +223,7 @@ void AAISector::AddExtractor(int unit_id, int def_id, float3 *pos)
 		{
 			// compare positions
 			spot_pos = (*spot)->pos;
-			ai->Getmap()->Pos2FinalBuildPos(&spot_pos, ai->Getbt()->unitList[def_id-1]);
+			ai->Getmap()->Pos2FinalBuildPos(&spot_pos, &ai->Getbt()->GetUnitDef(def_id-1));
 
 			if(pos->x == spot_pos.x && pos->z == spot_pos.z)
 			{
@@ -256,13 +256,13 @@ float3 AAISector::GetBuildsite(int building, bool water)
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
 
-	return ai->Getmap()->GetBuildSiteInRect(ai->Getbt()->unitList[building-1], xStart, xEnd, yStart, yEnd, water);
+	return ai->Getmap()->GetBuildSiteInRect(&ai->Getbt()->GetUnitDef(building-1), xStart, xEnd, yStart, yEnd, water);
 }
 
 float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, float terrain_modifier, bool water)
 {
 	float3 best_pos = ZeroVector, pos;
-	const UnitDef *def = ai->Getbt()->unitList[building-1];
+	const UnitDef *def = &ai->Getbt()->GetUnitDef(building-1);
 
 	int my_team = ai->Getcb()->GetMyAllyTeam();
 
@@ -360,7 +360,7 @@ float3 AAISector::GetCenterBuildsite(int building, bool water)
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
 
-	return ai->Getmap()->GetCenterBuildsite(ai->Getbt()->unitList[building-1], xStart, xEnd, yStart, yEnd, water);
+	return ai->Getmap()->GetCenterBuildsite(&ai->Getbt()->GetUnitDef(building-1), xStart, xEnd, yStart, yEnd, water);
 }
 
 float3 AAISector::GetRadarArtyBuildsite(int building, float range, bool water)
@@ -369,7 +369,7 @@ float3 AAISector::GetRadarArtyBuildsite(int building, float range, bool water)
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
 
-	return ai->Getmap()->GetRadarArtyBuildsite(ai->Getbt()->unitList[building-1], xStart, xEnd, yStart, yEnd, range, water);
+	return ai->Getmap()->GetRadarArtyBuildsite(&ai->Getbt()->GetUnitDef(building-1), xStart, xEnd, yStart, yEnd, range, water);
 }
 
 float3 AAISector::GetHighestBuildsite(int building)
@@ -384,7 +384,7 @@ float3 AAISector::GetHighestBuildsite(int building)
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
 
-	return ai->Getmap()->GetHighestBuildsite(ai->Getbt()->unitList[building-1], xStart, xEnd, yStart, yEnd);
+	return ai->Getmap()->GetHighestBuildsite(&ai->Getbt()->GetUnitDef(building-1), xStart, xEnd, yStart, yEnd);
 }
 
 float3 AAISector::GetRandomBuildsite(int building, int tries, bool water)
@@ -399,7 +399,7 @@ float3 AAISector::GetRandomBuildsite(int building, int tries, bool water)
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
 
-	return ai->Getmap()->GetRandomBuildsite(ai->Getbt()->unitList[building-1], xStart, xEnd, yStart, yEnd, tries, water);
+	return ai->Getmap()->GetRandomBuildsite(&ai->Getbt()->GetUnitDef(building-1), xStart, xEnd, yStart, yEnd, tries, water);
 }
 
 void AAISector::GetBuildsiteRectangle(int *xStart, int *xEnd, int *yStart, int *yEnd)

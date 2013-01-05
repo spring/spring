@@ -3843,6 +3843,8 @@ bool AAIBuildTable::IsBuilder(int def_id)
 
 bool AAIBuildTable::IsFactory(int def_id)
 {
+	assert(def_id >= 0);
+	assert(def_id < units_static.size());
 	if(units_static[def_id].unit_type & UNIT_TYPE_FACTORY)
 		return true;
 	else
@@ -3926,3 +3928,11 @@ int AAIBuildTable::DetermineBetterUnit(int unit1, int unit2, float ground_eff, f
 		return unit2;
 	}
 }
+
+const UnitDef& AAIBuildTable::GetUnitDef(unsigned i)
+{
+	assert(i>=0);
+	assert(i<ai->Getcb()->GetNumUnitDefs());
+	return *unitList[i];
+}
+

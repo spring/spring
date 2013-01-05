@@ -71,7 +71,7 @@ AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continen
 	{
 		if(category == AIR_ASSAULT)
 		{
-			speed_group = floor((ai->Getbt()->unitList[def->id-1]->speed - ai->Getbt()->min_speed[1][ai->Getside()-1])/ai->Getbt()->group_speed[1][ai->Getside()-1]);
+			speed_group = floor((ai->Getbt()->GetUnitDef(def->id-1).speed - ai->Getbt()->min_speed[1][ai->Getside()-1])/ai->Getbt()->group_speed[1][ai->Getside()-1]);
 		}
 		else
 			speed_group = 0;
@@ -79,14 +79,14 @@ AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continen
 	else
 	{
 		if(category == GROUND_ASSAULT)
-			speed_group = floor((ai->Getbt()->unitList[def->id-1]->speed - ai->Getbt()->min_speed[0][ai->Getside()-1])/ai->Getbt()->group_speed[0][ai->Getside()-1]);
+			speed_group = floor((ai->Getbt()->GetUnitDef(def->id-1).speed - ai->Getbt()->min_speed[0][ai->Getside()-1])/ai->Getbt()->group_speed[0][ai->Getside()-1]);
 		else if(category == SEA_ASSAULT)
-			speed_group = floor((ai->Getbt()->unitList[def->id-1]->speed - ai->Getbt()->min_speed[3][ai->Getside()-1])/ai->Getbt()->group_speed[3][ai->Getside()-1]);
+			speed_group = floor((ai->Getbt()->GetUnitDef(def->id-1).speed - ai->Getbt()->min_speed[3][ai->Getside()-1])/ai->Getbt()->group_speed[3][ai->Getside()-1]);
 		else
 			speed_group = 0;
 	}
 
-	avg_speed = ai->Getbt()->unitList[def->id-1]->speed;
+	avg_speed = ai->Getbt()->GetUnitDef(def->id-1).speed;
 
 	//ai->Log("Creating new group - max size: %i   move type: %i   speed group: %i   continent: %i\n", maxSize, group_movement_type, speed_group, continent);
 }
@@ -120,15 +120,15 @@ bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type, int continent_id)
 			// check if speed group is matching
 			if(cfg->AIR_ONLY_MOD)
 			{
-				if(category == AIR_ASSAULT && speed_group != floor((ai->Getbt()->unitList[def_id-1]->speed - ai->Getbt()->min_speed[1][ai->Getside()-1])/ai->Getbt()->group_speed[1][ai->Getside()-1]))
+				if(category == AIR_ASSAULT && speed_group != floor((ai->Getbt()->GetUnitDef(def_id-1).speed - ai->Getbt()->min_speed[1][ai->Getside()-1])/ai->Getbt()->group_speed[1][ai->Getside()-1]))
 					return false;
 			}
 			else
 			{
-				if(category == GROUND_ASSAULT && speed_group != floor((ai->Getbt()->unitList[def_id-1]->speed - ai->Getbt()->min_speed[0][ai->Getside()-1])/ai->Getbt()->group_speed[0][ai->Getside()-1]))
+				if(category == GROUND_ASSAULT && speed_group != floor((ai->Getbt()->GetUnitDef(def_id-1).speed - ai->Getbt()->min_speed[0][ai->Getside()-1])/ai->Getbt()->group_speed[0][ai->Getside()-1]))
 					return false;
 
-				if(category == SEA_ASSAULT && speed_group != floor((ai->Getbt()->unitList[def_id-1]->speed - ai->Getbt()->min_speed[3][ai->Getside()-1])/ai->Getbt()->group_speed[3][ai->Getside()-1]))
+				if(category == SEA_ASSAULT && speed_group != floor((ai->Getbt()->GetUnitDef(def_id-1).speed - ai->Getbt()->min_speed[3][ai->Getside()-1])/ai->Getbt()->group_speed[3][ai->Getside()-1]))
 					return false;
 			}
 
