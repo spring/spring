@@ -3929,10 +3929,11 @@ int AAIBuildTable::DetermineBetterUnit(int unit1, int unit2, float ground_eff, f
 	}
 }
 
-const UnitDef& AAIBuildTable::GetUnitDef(unsigned i)
+const UnitDef& AAIBuildTable::GetUnitDef(int i)
 {
 	assert(i>=0);
 	assert(i<ai->Getcb()->GetNumUnitDefs());
+	assert(unitList[i]->id>0);
 	return *unitList[i];
 }
 

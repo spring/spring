@@ -268,7 +268,7 @@ public:
 	// all assault unit categories
 	list<UnitCategory> assault_categories;
 
-	const UnitDef& GetUnitDef(unsigned i);
+	const UnitDef& GetUnitDef(int i);
 private:
 	// for internal use
 	void CalcBuildTree(int unit);
