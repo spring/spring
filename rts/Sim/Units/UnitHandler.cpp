@@ -62,9 +62,9 @@ void CUnitHandler::PostLoad()
 
 CUnitHandler::CUnitHandler()
 :
-	maxUnits(0),
 	maxUnitRadius(0.0f),
-	morphUnitToFeature(true)
+	morphUnitToFeature(true),
+	maxUnits(0)
 {
 	// set the global (runtime-constant) unit-limit as the sum
 	// of  all team unit-limits, which is *always* <= MAX_UNITS
