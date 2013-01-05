@@ -1,10 +1,5 @@
 # This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
 
-#FIXME: for some reason the target headercheck is always built. if this can be fixed,
-#       this option can be removed
-OPTION(HEADER_CHECK "check header files if they compile correctly" OFF)
-
-IF(HEADER_CHECK)
 include_directories(
 		${Spring_SOURCE_DIR}/rts
 		${Spring_SOURCE_DIR}/include
@@ -26,7 +21,8 @@ FILE(GLOB_RECURSE headers
 		${Spring_SOURCE_DIR}/rts/Menu/*.h
 		${Spring_SOURCE_DIR}/rts/System/*.h
 	)
-ADD_CUSTOM_TARGET( headercheck )
+
+set(headerchecklibs "")
 
 FOREACH( HEADER ${headers} )
 
@@ -45,9 +41,8 @@ FOREACH( HEADER ${headers} )
 	configure_file( headercheck.cpp.in ${TEST_FILE} )
 	# add library
 	add_library( ${TEST_NAME} EXCLUDE_FROM_ALL ${TEST_FILE} )
-	#set_target_properties(${TEST_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-	add_dependencies( headercheck ${TEST_NAME} )
+	list(APPEND headerchecklibs ${TEST_NAME})
 ENDFOREACH( HEADER )
 
-ENDIF(HEADER_CHECK)
+add_custom_target(headercheck DEPENDS ${headerchecklibs})
 
