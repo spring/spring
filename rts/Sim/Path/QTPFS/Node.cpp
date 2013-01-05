@@ -891,9 +891,9 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 			// NOTE: gcc 4.7 should FINALLY define __cplusplus properly (and accept -std=c++11)
 			#if (__cplusplus >= 201103L)
-			neighbors.shrink_to_fit();
+			// neighbors.shrink_to_fit();
 			#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-			netpoints.shrink_to_fit();
+			// netpoints.shrink_to_fit();
 			#endif
 			#endif
 		}
