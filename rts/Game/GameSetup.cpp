@@ -375,6 +375,7 @@ bool CGameSetup::Init(const std::string& buf)
 	// Used by dedicated server only
 	file.GetTDef(mapHash, unsigned(0), "GAME\\MapHash");
 	file.GetTDef(modHash, unsigned(0), "GAME\\ModHash");
+	file.GetTDef(mapSeed, unsigned(0), "GAME\\MapSeed");
 
 	gameID      = file.SGetValueDef("",  "GAME\\GameID");
 	modName     = file.SGetValueDef("",  "GAME\\Gametype");
