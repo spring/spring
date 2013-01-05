@@ -52,6 +52,7 @@ public:
 	bool fixedAllies;
 	unsigned int mapHash;
 	unsigned int modHash;
+	unsigned int mapSeed;
 	std::string MapFile() const;
 	std::string mapName;
 	std::string modName;
