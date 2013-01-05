@@ -601,8 +601,6 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMENT
 			"  ${myTarget}: Generating enums wrapper sources" VERBATIM
 		)
-	add_custom_target(testthisstuff DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/Enumerations.java")
-	MESSAGE(STATUS "${myGenTarget} ${myGeneratedSources}")
 	add_custom_target(${myGenTarget} DEPENDS ${myGeneratedSources})
 	add_dependencies(generateSources ${myGenTarget})
 
