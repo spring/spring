@@ -595,7 +595,8 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMENT
 			"  ${myTarget}: Generating enums wrapper sources" VERBATIM
 		)
-
+	add_custom_target(testthisstuff DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/Enumerations.java")
+	MESSAGE(STATUS "${myGenTarget} ${myGeneratedSources}")
 	add_custom_target(${myGenTarget} DEPENDS ${myGeneratedSources})
 	add_dependencies(generateSources ${myGenTarget})
 
@@ -658,7 +659,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			# (less then 1s per build => negliable), but prevetns multiple
 			# execution of the source generating custom-commands
 			# (which results in wrongly generated source files with "make -j <X>")
-			#${myJavaGeneratedSources}
+			${myJavaGeneratedSources}
 			${myNativeTarget}
 		WORKING_DIRECTORY
 			"${myJavaGeneratedSourceDir}"
@@ -690,7 +691,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			# (less then 1s per build => negliable), but prevetns multiple
 			# execution of the source generating custom-commands
 			# (which results in wrongly generated source files with "make -j <X>")
-			#${myJavaGeneratedSources}
+			${myJavaGeneratedSources}
 			${myNativeTarget}
 		WORKING_DIRECTORY
 			"${myBuildDir}"
