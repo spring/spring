@@ -93,12 +93,18 @@ void CGameHelper::DoExplosionDamage(
 	// linear damage falloff with distance
 	const float expDist = colVol->GetPointDistance(unit, expPos);
 	const float expRim = expDist * expEdgeEffect;
-	const float expMod = (expRadius - expDist) / (expRadius - expRim);
-	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
 
 	// return early if (distance > radius)
-	if (expMod <= 0.0f)
+	if (expDist >= expRadius)
 		return;
+
+	// expEdgeEffect should be in [0, 1], so expDist >= expDist*expEdgeEffect
+	assert(expRadius >= expRim);
+
+	// expMod will also be in [0, 1], no negatives
+	const float expMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
+
 	// TODO: damage attenuation for underwater units?
 	if (expPos.y >= 0.0f && unit->pos.y <  0.0f) {}
 	if (expPos.y <  0.0f && unit->pos.y >= 0.0f) {}
@@ -149,11 +155,14 @@ void CGameHelper::DoExplosionDamage(
 	const CollisionVolume* colVol = CollisionVolume::GetVolume(feature, colVolPos);
 	const float expDist = colVol->GetPointDistance(feature, expPos);
 	const float expRim = expDist * expEdgeEffect;
-	const float expMod = (expRadius - expDist) / (expRadius - expRim);
-	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
 
-	if (expMod <= 0.0f)
+	if (expDist >= expRadius)
 		return;
+
+	assert(expRadius >= expRim);
+
+	const float expMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
 
 	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
 	const float modImpulseScale = Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
