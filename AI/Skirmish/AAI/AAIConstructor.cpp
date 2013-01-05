@@ -10,7 +10,7 @@ AAIConstructor::AAIConstructor(AAI *ai, int unit_id, int def_id, bool factory, b
 
 	this->unit_id = unit_id;
 	this->def_id = def_id;
-	buildspeed = ai->Getbt()->unitList[def_id-1]->buildSpeed;
+	buildspeed = ai->Getbt()->GetUnitDef(def_id-1).buildSpeed;
 
 	construction_unit_id = -1;
 	construction_def_id = 0;
@@ -48,7 +48,7 @@ bool AAIConstructor::IsBusy()
 
 void AAIConstructor::Idle()
 {
-	//ai->LogConsole("%s is idle", ai->Getbt()->unitList[def_id-1]->humanName.c_str());
+	//ai->LogConsole("%s is idle", ai->Getbt()->GetUnitDef(def_id-1).humanName.c_str());
 
 	if(builder)
 	{
@@ -236,7 +236,7 @@ void AAIConstructor::CheckAssistance()
 				float buildtime = 1e6;
 				if (construction_def_id && buildspeed > 0) {
 					//FIXME why use *1/30 here? below there is exactly the same code w/o it, so what's the correct one?
-					buildtime = ai->Getbt()->unitList[construction_def_id-1]->buildTime / (30.0f * buildspeed);
+					buildtime = ai->Getbt()->GetUnitDef(construction_def_id-1).buildTime / (30.0f * buildspeed);
 				}
 
 				if (buildtime > cfg->MIN_ASSISTANCE_BUILDTIME)
@@ -270,7 +270,7 @@ void AAIConstructor::CheckAssistance()
 		{
 			if(construction_category == METAL_MAKER)
 			{
-				if(ai->Getexecute()->averageEnergySurplus < 0.5 * ai->Getbt()->unitList[construction_def_id-1]->energyUpkeep)
+				if(ai->Getexecute()->averageEnergySurplus < 0.5 * ai->Getbt()->GetUnitDef(construction_def_id-1).energyUpkeep)
 					return;
 			}
 			else if(construction_category != EXTRACTOR && construction_category != POWER_PLANT)
@@ -279,7 +279,7 @@ void AAIConstructor::CheckAssistance()
 
 		float buildtime = 1e6;
 		if (buildspeed > 0) {
-			buildtime = ai->Getbt()->unitList[construction_def_id-1]->buildTime / buildspeed;
+			buildtime = ai->Getbt()->GetUnitDef(construction_def_id-1).buildTime / buildspeed;
 		}
 
 		if((buildtime > cfg->MIN_ASSISTANCE_BUILDTIME) && (assistants.size() < cfg->MAX_ASSISTANTS))
@@ -313,7 +313,7 @@ double AAIConstructor::GetMyQueBuildtime()
 	double buildtime = 0;
 
 	for(list<int>::iterator unit = buildque->begin(); unit != buildque->end(); ++unit)
-		buildtime += ai->Getbt()->unitList[(*unit)-1]->buildTime;
+		buildtime += ai->Getbt()->GetUnitDef((*unit)-1).buildTime;
 
 	return buildtime;
 }
@@ -340,7 +340,7 @@ void AAIConstructor::GiveReclaimOrder(int unit_id)
 void AAIConstructor::GiveConstructionOrder(int id_building, float3 pos, bool water)
 {
 	// get def and final position
-	const UnitDef *def = ai->Getbt()->unitList[id_building-1];
+	const UnitDef *def = &ai->Getbt()->GetUnitDef(id_building-1);
 
 	// give order if building can be placed at the desired position (position lies within a valid sector)
 	if(ai->Getexecute()->InitBuildingAt(def, &pos, water))
@@ -547,7 +547,7 @@ void AAIConstructor::Retreat(UnitCategory attacked_by)
 				// dont flee outside of the base if health is > 50%
 				else
 				{
-					if(ai->Getcb()->GetUnitHealth(unit_id) > ai->Getbt()->unitList[def_id-1]->health / 2.0)
+					if(ai->Getcb()->GetUnitHealth(unit_id) > ai->Getbt()->GetUnitDef(def_id-1).health / 2.0)
 						return;
 				}
 			}

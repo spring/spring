@@ -12,7 +12,7 @@
 class AAI;
 
 #include "aidef.h"
-
+#include <assert.h>
 
 class AAIBuildTable
 {
@@ -194,9 +194,6 @@ public:
 	// path/name of the file in which AAI stores the build table
 	static char buildtable_filename[500];
 
-	// all the unit defs
-	static const UnitDef **unitList;
-
 	// cached values of average costs and buildtime
 	static float *avg_cost[MOBILE_CONSTRUCTOR+1];
 	static float *avg_buildtime[MOBILE_CONSTRUCTOR+1];
@@ -271,6 +268,7 @@ public:
 	// all assault unit categories
 	list<UnitCategory> assault_categories;
 
+	const UnitDef& GetUnitDef(unsigned i);
 private:
 	// for internal use
 	void CalcBuildTree(int unit);
@@ -281,4 +279,8 @@ private:
 	AAI * ai;
 
 	FILE *file;
+
+	// all the unit defs
+	static const UnitDef **unitList;
+
 };

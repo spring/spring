@@ -74,18 +74,18 @@ AAI::~AAI()
 	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].end(); ++fac) {
 		assert((*fac-1) < bt->numOfUnits);
 		assert((*fac)   < bt->units_dynamic.size());
-		Log("%-24s: %i\n", bt->unitList[*fac-1]->humanName.c_str(), bt->units_dynamic[*fac].requested);
+		Log("%-24s: %i\n", bt->GetUnitDef(*fac-1).humanName.c_str(), bt->units_dynamic[*fac].requested);
 	}
 	for(list<int>::iterator fac = bt->units_of_category[MOBILE_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[MOBILE_CONSTRUCTOR][side-1].end(); ++fac)
-		Log("%-24s: %i\n", bt->unitList[*fac-1]->humanName.c_str(), bt->units_dynamic[*fac].requested);
+		Log("%-24s: %i\n", bt->GetUnitDef(*fac-1).humanName.c_str(), bt->units_dynamic[*fac].requested);
 
 	Log("Factory ratings:\n");
 	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].end(); ++fac)
-		Log("%-24s: %f\n", bt->unitList[*fac-1]->humanName.c_str(), bt->GetFactoryRating(*fac));
+		Log("%-24s: %f\n", bt->GetUnitDef(*fac-1).humanName.c_str(), bt->GetFactoryRating(*fac));
 
 	Log("Mobile constructor ratings:\n");
 	for(list<int>::iterator cons = bt->units_of_category[MOBILE_CONSTRUCTOR][side-1].begin(); cons != bt->units_of_category[MOBILE_CONSTRUCTOR][side-1].end(); ++cons)
-		Log("%-24s: %f\n", bt->unitList[*cons-1]->humanName.c_str(), bt->GetBuilderRating(*cons));
+		Log("%-24s: %f\n", bt->GetUnitDef(*cons-1).humanName.c_str(), bt->GetBuilderRating(*cons));
 
 
 	// delete buildtasks
@@ -416,8 +416,8 @@ void AAI::UnitFinished(int unit)
 		}
 		else if (category == STORAGE)
 		{
-			execute->futureStoredEnergy -= bt->unitList[def->id-1]->energyStorage;
-			execute->futureStoredMetal -= bt->unitList[def->id-1]->metalStorage;
+			execute->futureStoredEnergy -= bt->GetUnitDef(def->id-1).energyStorage;
+			execute->futureStoredMetal -= bt->GetUnitDef(def->id-1).metalStorage;
 		}
 		else if (category == METAL_MAKER)
 		{

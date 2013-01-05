@@ -207,8 +207,8 @@ bool AAIBrain::MetalForConstr(int unit, int workertime)
 		return false;
 	}
 
-	int metal = (ai->Getbt()->unitList[unit-1]->buildTime/workertime) * (ai->Getcb()->GetMetalIncome()-(ai->Getcb()->GetMetalUsage()) + ai->Getcb()->GetMetal());
-	int total_cost = ai->Getbt()->unitList[unit-1]->metalCost;
+	int metal = (ai->Getbt()->GetUnitDef(unit-1).buildTime/workertime) * (ai->Getcb()->GetMetalIncome()-(ai->Getcb()->GetMetalUsage()) + ai->Getcb()->GetMetal());
+	int total_cost = ai->Getbt()->GetUnitDef(unit-1).metalCost;
 
 	if(metal > total_cost)
 		return true;

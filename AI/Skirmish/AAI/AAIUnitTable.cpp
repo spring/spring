@@ -257,7 +257,7 @@ void AAIUnitTable::RemovePowerPlant(int unit_id)
 void AAIUnitTable::AddMetalMaker(int unit_id, int def_id)
 {
 	metal_makers.insert(unit_id);
-	ai->Getexecute()->futureRequestedEnergy -= ai->Getbt()->unitList[def_id-1]->energyUpkeep;
+	ai->Getexecute()->futureRequestedEnergy -= ai->Getbt()->GetUnitDef(def_id-1).energyUpkeep;
 }
 
 void AAIUnitTable::RemoveMetalMaker(int unit_id)
@@ -319,7 +319,7 @@ AAIConstructor* AAIUnitTable::FindBuilder(int building, bool commander)
 			if(builder->task != BUILDING && ai->Getbt()->CanBuildUnit(builder->def_id, building))
 			{
 				//if(ai->Getbt()->units_static[building].category == STATIONARY_JAMMER)
-				//	ai->Log("%s can build %s\n", ai->Getbt()->unitList[builder->def_id-1]->humanName.c_str(), ai->Getbt()->unitList[building-1]->humanName.c_str());
+				//	ai->Log("%s can build %s\n", ai->Getbt()->GetUnitDef(builder->def_id-1).humanName.c_str(), ai->Getbt()->GetUnitDef(building-1).humanName.c_str());
 
 				// filter out commander (if not allowed)
 				if(! (!commander &&  ai->Getbt()->IsCommander(builder->def_id)) )
@@ -371,8 +371,8 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 *pos, bool
 				{
 					my_dist = fastmath::apxsqrt( (builder_pos.x - pos->x) * (builder_pos.x - pos->x) + (builder_pos.z - pos->z) * (builder_pos.z - pos->z) );
 
-					if(ai->Getbt()->unitList[builder->def_id-1]->speed > 0)
-						my_dist /= ai->Getbt()->unitList[builder->def_id-1]->speed;
+					if(ai->Getbt()->GetUnitDef(builder->def_id-1).speed > 0)
+						my_dist /= ai->Getbt()->GetUnitDef(builder->def_id-1).speed;
 
 					if(my_dist < *min_dist)
 					{
