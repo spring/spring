@@ -463,43 +463,51 @@ static void AddDependency(std::vector<std::string>& deps, const std::string& dep
 
 void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 {
-	struct stat info;
-	stat(fullName.c_str(), &info);
-
 	const std::string fn    = FileSystem::GetFilename(fullName);
 	const std::string fpath = FileSystem::GetDirectory(fullName);
 	const std::string lcfn  = StringToLower(fn);
 
-	//! Determine whether this archive has earlier be found to be broken
-	std::map<std::string, BrokenArchive>::iterator bai = brokenArchives.find(lcfn);
-	if (bai != brokenArchives.end()) {
-		if ((unsigned)info.st_mtime == bai->second.modified && fpath == bai->second.path) {
-			bai->second.updated = true;
-			return;
-		}
-	}
-
-	//! Determine whether to rely on the cached info or not
+	// Cache variables
+	std::map<std::string, ArchiveInfo>::iterator aii;
 	bool cached = false;
 
-	std::map<std::string, ArchiveInfo>::iterator aii = archiveInfos.find(lcfn);
-	if (aii != archiveInfos.end()) {
+	// Stat file
+	struct stat info = {0};
+	int statfailed = stat(fullName.c_str(), &info);
 
-		//! This archive may have been obsoleted, do not process it if so
-		if (aii->second.replaced.length() > 0) {
-			return;
+	// If stat fails, assume the archive is not broken nor cached
+	if(!statfailed)
+	{
+		//! Determine whether this archive has earlier be found to be broken
+		std::map<std::string, BrokenArchive>::iterator bai = brokenArchives.find(lcfn);
+		if (bai != brokenArchives.end()) {
+			if ((unsigned)info.st_mtime == bai->second.modified && fpath == bai->second.path) {
+				bai->second.updated = true;
+				return;
+			}
 		}
 
-		if ((unsigned)info.st_mtime == aii->second.modified && fpath == aii->second.path) {
-			cached = true;
-			aii->second.updated = true;
-		}
 
-		//! If we are here, we could have invalid info in the cache
-		//! Force a reread if it's a directory archive, as st_mtime only
-		//! reflects changes to the directory itself, not the contents.
-		if (!cached) {
-			archiveInfos.erase(aii);
+		// Determine whether to rely on the cached info or not
+		aii = archiveInfos.find(lcfn);
+		if (aii != archiveInfos.end()) {
+
+			// This archive may have been obsoleted, do not process it if so
+			if (aii->second.replaced.length() > 0) {
+				return;
+			}
+
+			if ((unsigned)info.st_mtime == aii->second.modified && fpath == aii->second.path) {
+				cached = true;
+				aii->second.updated = true;
+			}
+
+			// If we are here, we could have invalid info in the cache
+			// Force a reread if it's a directory archive, as st_mtime only
+			// reflects changes to the directory itself, not the contents.
+			if (!cached) {
+				archiveInfos.erase(aii);
+			}
 		}
 	}
 
