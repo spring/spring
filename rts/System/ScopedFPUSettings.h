@@ -26,6 +26,7 @@ private:
 
 #else
 
+#include <stddef.h> //NULL
 class ScopedDisableFpuExceptions {
 public:
 	ScopedDisableFpuExceptions() {
