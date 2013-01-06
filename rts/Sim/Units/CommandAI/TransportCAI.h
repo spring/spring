@@ -36,6 +36,7 @@ public:
 	CUnit* FindUnitToTransport(float3 center, float radius);
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	void FinishCommand();
+	bool IsBusyLoading() const;
 	bool LoadStillValid(CUnit* unit);
 
 	virtual void ExecuteUnloadUnit(Command& c);

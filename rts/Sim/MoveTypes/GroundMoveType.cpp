@@ -57,11 +57,11 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 // so the assertion can be less strict
 #define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < (MAX_UNIT_SPEED * MAX_UNIT_SPEED * 1e2));
 
-#define MIN_WAYPOINT_DISTANCE SQUARE_SIZE
-#define MAX_IDLING_SLOWUPDATES 16
-#define WAIT_FOR_PATH 1
-#define IGNORE_OBSTACLES 0
-#define PLAY_SOUNDS 1
+#define MIN_WAYPOINT_DISTANCE   SQUARE_SIZE
+#define MAX_IDLING_SLOWUPDATES           16
+#define IGNORE_OBSTACLES                  0
+#define WAIT_FOR_PATH                     1
+#define PLAY_SOUNDS                       1
 
 #define UNIT_CMD_QUE_SIZE(u) (u->commandAI->commandQue.size())
 #define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE)
@@ -1627,7 +1627,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	const int dirSign = int(!reversing) * 2 - 1;
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
-	CTransportCAI* colliderTCAI = dynamic_cast<CTransportCAI*>(collider->commandAI);
+	CTransportCAI* colliderTCAI = ((colliderUD->IsTransportUnit())? static_cast<CTransportCAI*>(collider->commandAI): NULL);
 
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 		CUnit* collidee = const_cast<CUnit*>(*uit);
@@ -1651,15 +1651,22 @@ void CGroundMoveType::HandleUnitCollisions(
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
 			continue;
 
-		CTransportCAI* collideeTCAI = dynamic_cast<CTransportCAI*>(collidee->commandAI);
+		CTransportCAI* collideeTCAI = ((collideeUD->IsTransportUnit())? static_cast<CTransportCAI*>(collidee->commandAI): NULL);
 
 		if (collidee == collider) continue;
 		if (collidee->moveType->IsSkidding()) continue;
 		if (collidee->moveType->IsFlying()) continue;
-		if (collidee->GetTransporter() != NULL) continue;
+
+		// disable collisions between collider and collidee
+		// if collidee is currently inside any transporter,
+		// or if collider is being transported by collidee
 		if (collider->GetTransporter() == collidee) continue;
-		if (collideeTCAI && collideeTCAI->LoadStillValid(collider)) continue;
-		if (colliderTCAI && colliderTCAI->LoadStillValid(collidee)) continue;
+		if (collidee->GetTransporter() != NULL) continue;
+		// also disable collisions if either party currently
+		// has an order to load units (TODO: do we want this
+		// for unloading as well?)
+		if (colliderTCAI != NULL && colliderTCAI->IsBusyLoading()) continue;
+		if (collideeTCAI != NULL && collideeTCAI->IsBusyLoading()) continue;
 
 		// NOTE:
 		//    we exclude aircraft (which have NULL moveDef's) landed
@@ -2260,9 +2267,9 @@ void CGroundMoveType::AdjustPosToWaterLine()
 		return;
 
 	if (owner->unitDef->floatOnWater) {
-		owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline), 1, false);
+		owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z),          -owner->unitDef->waterline), 1, false);
 	} else {
-		owner->Move1D(        (ground->GetHeightReal(owner->pos.x, owner->pos.z)                            ), 1, false);
+		owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z), owner->pos.y + mapInfo->map.gravity), 1, false);
 	}
 }
 
