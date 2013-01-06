@@ -10,6 +10,7 @@ add_library(archives STATIC
 	IArchive.cpp
 	PoolArchive.cpp
 	SevenZipArchive.cpp
+	VirtualArchive.cpp
 	ZipArchive.cpp
 	${sources_engine_System_Log}
 	${sources_engine_System_Log_sinkConsole}

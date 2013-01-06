@@ -8,7 +8,7 @@
 //class CUnit;
 class CSolidObject;
 //struct CExplosionEvent;
-class SolidObjectGroundDecal;
+struct SolidObjectGroundDecal;
 struct S3DModel;
 
 struct GhostSolidObject {
