@@ -1504,7 +1504,9 @@ void CGroundMoveType::HandleStaticObjectCollision(
 ) {
 	// for factories, check if collidee's position is behind us (which means we are likely exiting)
 	// NOTE: allow units to move _through_ idle open factories? (pathfinder and coldet disagree now)
-	const bool exitingYardMap = (collider->frontdir.dot(separationVector) > 0.0f);
+	const bool exitingYardMap =
+		((collider->frontdir.dot(separationVector) > 0.0f) &&
+		 (collider->   speed.dot(separationVector) > 0.0f));
 	const bool insideYardMap =
 		(collider->pos.x >= (collidee->pos.x - ((collidee->xsize >> 1) - 0) * SQUARE_SIZE)) &&
 		(collider->pos.x <= (collidee->pos.x + ((collidee->xsize >> 1) - 0) * SQUARE_SIZE)) &&
@@ -1517,14 +1519,24 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const int xmid = (collider->pos.x + collider->speed.x) / SQUARE_SIZE;
 		const int zmid = (collider->pos.z + collider->speed.z) / SQUARE_SIZE;
 
+		const int xmin = std::min(-1, -colliderMD->xsizeh), xmax = std::max(1, colliderMD->xsizeh);
+		const int zmin = std::min(-1, -colliderMD->xsizeh), zmax = std::max(1, colliderMD->zsizeh);
+
 		float3 strafeVec;
 		float3 bounceVec;
 
+		float sqPenDistanceSum = 0.0f;
+		float sqPenDistanceCnt = 0.0f;
+
+		if (DEBUG_DRAWING_ENABLED) {
+			geometricObjects->AddLine(collider->pos + (UpVector * 25.0f), collider->pos + (UpVector * 100.0f), 3, 1, 4);
+		}
+
 		// check for blocked squares inside collider's MoveDef footprint zone
-		// interpret each square as a "collidee" with a radius of SQUARE_SIZE
+		// interpret each square as a "collidee" and sum up separation vectors
 		// NOTE: assumes the collider's footprint is still always axis-aligned
-		for (int z = -colliderMD->zsizeh; z <= colliderMD->zsizeh; z++) {
-			for (int x = -colliderMD->xsizeh; x <= colliderMD->xsizeh; x++) {
+		for (int z = zmin; z <= zmax; z++) {
+			for (int x = xmin; x <= xmax; x++) {
 				const int xabs = xmid + x;
 				const int zabs = zmid + z;
 
@@ -1534,16 +1546,33 @@ void CGroundMoveType::HandleStaticObjectCollision(
 				const float3 squarePos = float3(xabs * SQUARE_SIZE + (SQUARE_SIZE >> 1), 0.0f, zabs * SQUARE_SIZE + (SQUARE_SIZE >> 1));
 				const float3 squareVec = collider->pos - squarePos;
 
-				const float squareDist = std::min((squareVec.Length() - (colliderRadius + SQUARE_SIZE * 2.0f)), 0.0f);
-				const float squareSign = ((squarePos.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir)) < 0.0f) * 2.0f - 1.0f;
+				if (squareVec.dot(collider->speed) > 0.0f)
+					continue;	
 
-				strafeVec += (collider->rightdir * squareSign * std::min(currentSpeed, std::max(0.0f, -squareDist * 0.5f)));
-				bounceVec += ((squareVec / (squareVec.Length() + 0.01f)) * std::min(currentSpeed, std::max(0.0f, -squareDist)));
+				// radius of a square is the RHS magic constant (sqrt(2*(SQUARE_SIZE>>1)*(SQUARE_SIZE>>1)))
+				const float  sqColRadiusSum = colliderRadius + 5.656854249492381f;
+				const float   sqSepDistance = squareVec.Length2D() + 0.1f;
+				const float   sqPenDistance = std::min(sqSepDistance - sqColRadiusSum, 0.0f);
+				const float  sqColSlideSign = ((squarePos.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir)) < 0.0f) * 2.0f - 1.0f;
+
+				strafeVec += (collider->rightdir * sqColSlideSign);
+				bounceVec += (squareVec / sqSepDistance);
+
+				sqPenDistanceSum += sqPenDistance;
+				sqPenDistanceCnt += 1.0f;
 			}
 		}
 
-		collider->Move3D(strafeVec, true);
-		collider->Move3D(bounceVec, true);
+		if (sqPenDistanceCnt > 0.0f) {
+			strafeVec.y = 0.0f; strafeVec.SafeNormalize();
+			bounceVec.y = 0.0f; bounceVec.SafeNormalize();
+
+			const float strafeScale = std::min(currentSpeed, std::max(0.0f, -(sqPenDistanceSum / sqPenDistanceCnt) * 0.5f));
+			const float bounceScale =                        std::max(0.0f, -(sqPenDistanceSum / sqPenDistanceCnt)        );
+
+			collider->Move3D(strafeVec * strafeScale, true);
+			collider->Move3D(bounceVec * bounceScale, true);
+		}
 
 		wantRequestPath = ((strafeVec + bounceVec) != ZeroVector);
 	} else {
@@ -1552,11 +1581,14 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const float   penDistance = std::min(sepDistance - colRadiusSum, 0.0f);
 		const float  colSlideSign = ((collidee->pos.dot(collider->rightdir) - collider->pos.dot(collider->rightdir)) <= 0.0f) * 2.0f - 1.0f;
 
+		const float strafeScale = std::min(currentSpeed, std::max(0.0f, -penDistance * 0.5f)) * (1 -                exitingYardMap);
+		const float bounceScale =                        std::max(0.0f, -penDistance        ) * (1 - checkYardMap * exitingYardMap);
+
 		// when exiting a lab, insideYardMap goes from true to false
 		// before we stop colliding and we get a slight unneeded push
 		// --> compensate for this
-		collider->Move3D(collider->rightdir * colSlideSign * std::min(currentSpeed, std::max(0.0f, -penDistance * 0.5f)), true);
-		collider->Move3D((separationVector / sepDistance) * std::max(0.0f, -penDistance) * (1.0f - checkYardMap * exitingYardMap), true);
+		collider->Move3D((collider->rightdir * colSlideSign) * strafeScale, true);
+		collider->Move3D((separationVector / sepDistance) *  bounceScale, true);
 
 		wantRequestPath = (penDistance < 0.0f);
 	}
