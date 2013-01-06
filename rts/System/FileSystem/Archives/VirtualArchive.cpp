@@ -146,7 +146,7 @@ void CVirtualArchive::WriteToFile()
 		CVirtualFile* file = *it;
 
 		zipOpenNewFileInZip(zip, file->GetName().c_str(), NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
-		zipWriteInFileInZip(zip, file->buffer.data(), file->buffer.size());
+		zipWriteInFileInZip(zip, file->buffer.empty() ? NULL : &file->buffer[0], file->buffer.size());
 		zipCloseFileInZip(zip);
 	}
 
