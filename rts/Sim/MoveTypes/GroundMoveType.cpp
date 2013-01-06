@@ -2254,27 +2254,15 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 
 void CGroundMoveType::AdjustPosToWaterLine()
 {
-	if (!(owner->falling || flying)) {
-		float groundHeight = GetGroundHeight(owner->pos);
+	if (owner->falling)
+		return;
+	if (flying)
+		return;
 
-		if (owner->unitDef->floatOnWater && owner->inWater && groundHeight <= 0.0f) {
-			groundHeight = -owner->unitDef->waterline;
-		}
-
-		owner->Move1D(groundHeight, 1, false);
-
-		/*
-		const UnitDef* ud = owner->unitDef;
-		const MoveDef* md = ud->moveDef;
-
-		y = CMoveMath::yLevel(*md, owner->pos.x, owner->pos.z);
-
-		if (owner->unitDef->floatOnWater && owner->inWater) {
-			y -= owner->unitDef->waterline;
-		}
-
-		owner->Move1D(y, 1, false);
-		*/
+	if (owner->unitDef->floatOnWater) {
+		owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline), 1, false);
+	} else {
+		owner->Move1D(        (ground->GetHeightReal(owner->pos.x, owner->pos.z)                            ), 1, false);
 	}
 }
 

@@ -25,11 +25,6 @@ namespace QTPFS {
 		unsigned int GetNodeNumber() const { return nodeNumber; }
 		unsigned int GetHeapIndex() const { return heapIndex; }
 
-		#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-		void SetNumPrevNodes(unsigned int n) { numPrevNodes = n; }
-		unsigned int GetNumPrevNodes() const { return numPrevNodes; }
-		#endif
-
 		bool operator <  (const INode* n) const { return (fCost <  n->fCost); }
 		bool operator >  (const INode* n) const { return (fCost >  n->fCost); }
 		bool operator == (const INode* n) const { return (fCost == n->fCost); }
@@ -93,11 +88,6 @@ namespace QTPFS {
 		float fCost;
 		float gCost;
 		float hCost;
-		// float mCost;
-
-		#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-		unsigned int numPrevNodes;
-		#endif
 
 		// points back to previous node in path
 		INode* prevNode;

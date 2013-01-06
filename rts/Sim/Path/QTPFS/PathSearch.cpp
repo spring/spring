@@ -64,10 +64,15 @@ bool QTPFS::PathSearch::Execute(
 	searchExec = new PathSearchTrace::Execution(gs->frameNum);
 	#endif
 
+	// be as optimistic as possible: assume the remainder of our path will
+	// cover only flat terrain with maximum speed-modifier between nxtPoint
+	// and tgtPoint
+	// this is admissable so long as the map is not LOCALLY changed in such
+	// a way as to increase the maximum speedmod beyond the current layer's
+	// cached maximum value
 	switch (searchType) {
-		case PATH_SEARCH_ASTAR:    { hCostMult = 1.0f; } break;
-		case PATH_SEARCH_DIJKSTRA: { hCostMult = 0.0f; } break;
-		default:                   {    assert(false); } break;
+		case PATH_SEARCH_ASTAR:    { hCostMult = 1.0f / nodeLayer->GetMaxRelSpeedMod(); } break;
+		case PATH_SEARCH_DIJKSTRA: { hCostMult = 0.0f;                                  } break;
 	}
 
 	// allow the search to start from an impassable node (because single
@@ -82,7 +87,7 @@ bool QTPFS::PathSearch::Execute(
 		openNodes.reset();
 		openNodes.push(srcNode);
 
-		UpdateNode(srcNode, NULL, 0.0f, srcPoint.distance(tgtPoint), srcNode->GetMoveCost());
+		UpdateNode(srcNode, NULL, 0.0f, srcPoint.distance(tgtPoint));
 	}
 
 	while (!openNodes.empty()) {
@@ -128,8 +133,7 @@ void QTPFS::PathSearch::UpdateNode(
 	INode* nxtNode,
 	INode* curNode,
 	float gCost,
-	float hCost,
-	float mCost
+	float hCost
 ) {
 	// NOTE:
 	//   the heuristic must never over-estimate the distance,
@@ -141,11 +145,6 @@ void QTPFS::PathSearch::UpdateNode(
 	nxtNode->SetPathCost(NODE_PATH_COST_G, gCost                      );
 	nxtNode->SetPathCost(NODE_PATH_COST_H,         (hCost * hCostMult));
 	nxtNode->SetPathCost(NODE_PATH_COST_F, gCost + (hCost * hCostMult));
-	nxtNode->SetPathCost(NODE_PATH_COST_M, mCost                      );
-
-	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-	nxtNode->SetNumPrevNodes((curNode != NULL)? (curNode->GetNumPrevNodes() + 1): 0);
-	#endif
 }
 
 void QTPFS::PathSearch::Iterate(
@@ -183,19 +182,6 @@ void QTPFS::PathSearch::Iterate(
 	// remember the node with lowest h-cost in case the search fails to reach tgtNode
 	if (curNode->GetPathCost(NODE_PATH_COST_H) < minNode->GetPathCost(NODE_PATH_COST_H))
 		minNode = curNode;
-	#endif
-
-
-	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-	const float hWeight = math::sqrtf(curNode->GetPathCost(NODE_PATH_COST_M) / (curNode->GetNumPrevNodes() + 1));
-	#else
-	// be as optimistic as possible: assume the remainder of our path will
-	// cover only flat terrain with maximum speed-modifier between nxtPoint
-	// and tgtPoint
-	// this is admissable so long as the map is not LOCALLY changed in such
-	// a way as to increase the maximum speedmod beyond the current layer's
-	// cached maximum value
-	const float hWeight = 1.0f / nodeLayer->GetMaxRelSpeedMod();
 	#endif
 
 	#ifdef QTPFS_COPY_ITERATE_NEIGHBOR_NODES
@@ -252,18 +238,14 @@ void QTPFS::PathSearch::Iterate(
 		const float gDist = curPoint.distance(nxtPoint);
 		const float hDist = nxtPoint.distance(tgtPoint);
 
-		const float mCost =
-			curNode->GetPathCost(NODE_PATH_COST_M) +
-			curNode->GetMoveCost() +
-			nxtNode->GetMoveCost() * int(isTarget);
 		const float gCost =
 			curNode->GetPathCost(NODE_PATH_COST_G) +
 			curNode->GetMoveCost() * gDist +
 			nxtNode->GetMoveCost() * hDist * int(isTarget);
-		const float hCost = hWeight * hDist * int(!isTarget);
+		const float hCost = hDist * int(!isTarget);
 
 		if (!isCurrent) {
-			UpdateNode(nxtNode, curNode, gCost, hCost, mCost);
+			UpdateNode(nxtNode, curNode, gCost, hCost);
 
 			openNodes.push(nxtNode);
 			openNodes.check_heap_property(0);
@@ -281,7 +263,7 @@ void QTPFS::PathSearch::Iterate(
 			openNodes.push(nxtNode);
 
 
-		UpdateNode(nxtNode, curNode, gCost, hCost, mCost);
+		UpdateNode(nxtNode, curNode, gCost, hCost);
 
 		// restore ordering in case nxtNode was already open
 		// (changing the f-cost of an OPEN node messes up the

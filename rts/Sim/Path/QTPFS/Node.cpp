@@ -21,14 +21,13 @@ void QTPFS::INode::SetPathCost(unsigned int type, float cost) {
 		case NODE_PATH_COST_F: { fCost = cost; return; } break;
 		case NODE_PATH_COST_G: { gCost = cost; return; } break;
 		case NODE_PATH_COST_H: { hCost = cost; return; } break;
-		// case NODE_PATH_COST_M: { mCost = cost; return; } break;
 	}
 
 	assert(false);
 	#else
 	assert(&gCost == &fCost + 1);
 	assert(&hCost == &gCost + 1);
-	// assert(&mCost == &hCost + 1);
+	assert(type <= NODE_PATH_COST_H);
 
 	*(&fCost + type) = cost;
 	#endif
@@ -40,7 +39,6 @@ float QTPFS::INode::GetPathCost(unsigned int type) const {
 		case NODE_PATH_COST_F: { return fCost; } break;
 		case NODE_PATH_COST_G: { return gCost; } break;
 		case NODE_PATH_COST_H: { return hCost; } break;
-		// case NODE_PATH_COST_M: { return mCost; } break;
 	}
 
 	assert(false);
@@ -48,7 +46,7 @@ float QTPFS::INode::GetPathCost(unsigned int type) const {
 	#else
 	assert(&gCost == &fCost + 1);
 	assert(&hCost == &gCost + 1);
-	// assert(&mCost == &hCost + 1);
+	assert(type <= NODE_PATH_COST_H);
 
 	return *(&fCost + type);
 	#endif
@@ -199,10 +197,6 @@ QTPFS::QTNode::QTNode(
 	currMagicNum =   0;
 	prevMagicNum = -1U;
 
-	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-	numPrevNodes = 0;
-	#endif
-
 	_depth = (parent != NULL)? parent->depth() + 1: 0;
 	_xminxmax = (x2 << 16) | (x1 << 0);
 	_zminzmax = (z2 << 16) | (z1 << 0);
@@ -215,7 +209,6 @@ QTPFS::QTNode::QTNode(
 	fCost = 0.0f;
 	gCost = 0.0f;
 	hCost = 0.0f;
-	// mCost = 0.0f;
 
 	speedModSum =  0.0f;
 	speedModAvg =  0.0f;
@@ -268,13 +261,8 @@ boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
 	boost::uint64_t sum = 0;
 
 	{
-		#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);
-		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&numPrevNodes) + sizeof(numPrevNodes);
-		#else
 		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);
 		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&hCost) + sizeof(hCost);
-		#endif
 
 		assert(minByte < maxByte);
 
