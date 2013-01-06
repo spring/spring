@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "GroundMoveType.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/Camera.h"
@@ -1429,7 +1428,11 @@ void CGroundMoveType::Arrived()
 		owner->commandAI->GiveCommand(Command(CMD_WAIT));
 		owner->commandAI->GiveCommand(Command(CMD_WAIT));
 
-		if (UNIT_CMD_QUE_SIZE(owner) <= 2 && UNIT_HAS_MOVE_CMD(owner)) {
+		if (!owner->commandAI->HasMoreMoveCommands()) {
+			// NOTE:
+			//   this is probably too drastic, need another way
+			//   to make the CAI consider its goal reached that
+			//   does *NOT* change our goal-pos
 			owner->commandAI->GiveCommand(Command(CMD_STOP));
 		}
 
@@ -1592,7 +1595,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	const int dirSign = int(!reversing) * 2 - 1;
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
-	CTransportCAI* transA = dynamic_cast<CTransportCAI*>(collider->commandAI);
+	CTransportCAI* colliderTCAI = dynamic_cast<CTransportCAI*>(collider->commandAI);
 
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 		CUnit* collidee = const_cast<CUnit*>(*uit);
@@ -1616,15 +1619,15 @@ void CGroundMoveType::HandleUnitCollisions(
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
 			continue;
 
-		CTransportCAI* transB = dynamic_cast<CTransportCAI*>(collidee->commandAI);
+		CTransportCAI* collideeTCAI = dynamic_cast<CTransportCAI*>(collidee->commandAI);
 
 		if (collidee == collider) continue;
 		if (collidee->moveType->IsSkidding()) continue;
 		if (collidee->moveType->IsFlying()) continue;
 		if (collidee->GetTransporter() != NULL) continue;
 		if (collider->GetTransporter() == collidee) continue;
-		if (transB && transB->LoadStillValid(collider)) continue;
-		if (transA && transA->LoadStillValid(collidee)) continue;
+		if (collideeTCAI && collideeTCAI->LoadStillValid(collider)) continue;
+		if (colliderTCAI && colliderTCAI->LoadStillValid(collidee)) continue;
 
 		// NOTE:
 		//    we exclude aircraft (which have NULL moveDef's) landed

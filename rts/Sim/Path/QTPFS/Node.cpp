@@ -734,6 +734,7 @@ const std::vector<QTPFS::INode*>& QTPFS::QTNode::GetNeighbors(const std::vector<
 // (never both)
 bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 	assert(IsLeaf());
+	assert(!nodes.empty());
 
 	if (prevMagicNum != currMagicNum) {
 		prevMagicNum = currMagicNum;
