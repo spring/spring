@@ -1665,8 +1665,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		// also disable collisions if either party currently
 		// has an order to load units (TODO: do we want this
 		// for unloading as well?)
-		if (colliderTCAI != NULL && colliderTCAI->IsBusyLoading()) continue;
-		if (collideeTCAI != NULL && collideeTCAI->IsBusyLoading()) continue;
+		if (colliderTCAI != NULL && colliderTCAI->IsBusyLoading(collidee)) continue;
+		if (collideeTCAI != NULL && collideeTCAI->IsBusyLoading(collider)) continue;
 
 		// NOTE:
 		//    we exclude aircraft (which have NULL moveDef's) landed

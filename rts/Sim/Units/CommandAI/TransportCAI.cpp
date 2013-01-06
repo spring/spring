@@ -913,7 +913,7 @@ void CTransportCAI::FinishCommand()
 }
 
 
-bool CTransportCAI::IsBusyLoading() const
+bool CTransportCAI::IsBusyLoading(const CUnit* unit) const
 {
 	if (commandQue.empty())
 		return false;
@@ -928,6 +928,8 @@ bool CTransportCAI::IsBusyLoading() const
 			const CUnit* loadee = uh->GetUnit(cmd.GetParam(0));
 
 			if (loadee == NULL)
+				return false;
+			if (loadee != unit)
 				return false;
 
 			return (owner->pos.SqDistance2D(loadee->pos) <= Square(owner->unitDef->loadingRadius));
@@ -958,7 +960,7 @@ bool CTransportCAI::LoadStillValid(CUnit* unit)
 	// we are called from ExecuteLoadUnits only in the case that
 	// that commandQue[0].id == CMD_LOAD_UNITS, so if the second
 	// command is NOT an area- but a single-unit-loading command
-	// (which has one parameter) then the first will still valid
+	// (which has one parameter) then the first one will be valid
 	// (ELU keeps pushing CMD_LOAD_UNITS as long as there are any
 	// units to pick up)
 	// 
