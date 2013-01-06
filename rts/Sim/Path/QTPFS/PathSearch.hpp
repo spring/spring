@@ -153,8 +153,7 @@ namespace QTPFS {
 			INode* nxtNode,
 			INode* curNode,
 			float gCost,
-			float hCost,
-			float mCost
+			float hCost
 		);
 		void UpdateQueue();
 
