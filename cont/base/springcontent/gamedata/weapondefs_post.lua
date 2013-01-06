@@ -124,8 +124,8 @@ local function BackwardCompability(wdName, wd)
     wd.weapontype = "LightningCannon"
   elseif (wd.weapontype == "AircraftBomb") then
     if (wd.manualbombsettings) then
-      wd.reloadtime = wd.reloadtime or 1.0
-      wd.burstrate  = wd.burstrate or 0.1
+      wd.reloadtime = tonumber(wd.reloadtime or 1.0)
+      wd.burstrate  = tonumber(wd.burstrate or 0.1)
 
       if (wd.reloadtime < 0.5) then
         wd.burstrate  = math.min(0.2, wd.reloadtime)         -- salvodelay
