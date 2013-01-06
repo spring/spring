@@ -5073,6 +5073,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\CRC.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\CRC.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\demofile.h"
 				>
 			</File>
@@ -5135,6 +5143,26 @@
 			<File
 				RelativePath="..\..\System\LogOutput.h"
 				>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\builds\dedicated\main.cpp"
@@ -5215,26 +5243,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -5562,10 +5570,6 @@
 				Name="FileSystem"
 				>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveFactory.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\FileSystem\ArchiveLoader.cpp"
 					>
 				</File>
@@ -5576,70 +5580,6 @@
 				<File
 					RelativePath="..\..\System\FileSystem\ArchiveScanner.cpp"
 					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\ArchiveScanner.h"
@@ -5651,78 +5591,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\CacheDir.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\CRC.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\CRC.h"
 					>
 				</File>
 				<File
@@ -5744,70 +5612,6 @@
 				<File
 					RelativePath="..\..\System\FileSystem\FileFilter.cpp"
 					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\FileFilter.h"
@@ -5852,78 +5656,6 @@
 				<File
 					RelativePath="..\..\System\FileSystem\SimpleParser.cpp"
 					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\SimpleParser.h"
@@ -5942,7 +5674,7 @@
 					>
 				</File>
 				<Filter
-					Name="Libraries"
+					Name="Archives"
 					>
 					<File
 						RelativePath="..\..\System\FileSystem\Archives\ArchiveFactory.h"
@@ -5986,6 +5718,14 @@
 					</File>
 					<File
 						RelativePath="..\..\System\FileSystem\Archives\SevenZipArchive.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\VirtualArchive.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\VirtualArchive.h"
 						>
 					</File>
 					<File
@@ -8566,6 +8306,26 @@
 						</File>
 					</Filter>
 				</Filter>
+			</Filter>
+			<Filter
+				Name="Generation"
+				>
+				<File
+					RelativePath="..\..\Map\Generation\MapGenerator.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\Generation\MapGenerator.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\Generation\SimpleMapGenerator.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\Generation\SimpleMapGenerator.h"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
