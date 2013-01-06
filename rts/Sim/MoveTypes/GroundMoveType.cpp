@@ -1627,7 +1627,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	const int dirSign = int(!reversing) * 2 - 1;
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
-	CTransportCAI* colliderTCAI = ((colliderUD->IsTransportUnit())? static_cast<CTransportCAI*>(collider->commandAI): NULL);
+	int colliderLoadingTransportId = collider->loadingTransportId;
 
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 		CUnit* collidee = const_cast<CUnit*>(*uit);
@@ -1651,8 +1651,6 @@ void CGroundMoveType::HandleUnitCollisions(
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
 			continue;
 
-		CTransportCAI* collideeTCAI = ((collideeUD->IsTransportUnit())? static_cast<CTransportCAI*>(collidee->commandAI): NULL);
-
 		if (collidee == collider) continue;
 		if (collidee->moveType->IsSkidding()) continue;
 		if (collidee->moveType->IsFlying()) continue;
@@ -1665,8 +1663,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		// also disable collisions if either party currently
 		// has an order to load units (TODO: do we want this
 		// for unloading as well?)
-		if (colliderTCAI != NULL && colliderTCAI->IsBusyLoading(collidee)) continue;
-		if (collideeTCAI != NULL && collideeTCAI->IsBusyLoading(collider)) continue;
+		if (colliderLoadingTransportId == collidee->id) continue;
+		if (collidee->loadingTransportId == collider->id) continue;
 
 		// NOTE:
 		//    we exclude aircraft (which have NULL moveDef's) landed

@@ -88,7 +88,7 @@ CTransportCAI::~CTransportCAI()
 		CUnit* transportee = uh->GetUnitUnsafe(toBeTransportedUnitId);
 
 		if (transportee) {
-			transportee->toBeTransported = false;
+			transportee->loadingTransportId = -1;
 		}
 
 		toBeTransportedUnitId = -1;
@@ -159,7 +159,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 		}
 		if (unit && CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))) {
 			toBeTransportedUnitId = unit->id;
-			unit->toBeTransported = true;
+			unit->loadingTransportId = this->owner->id;
 
 			const float sqDist = unit->pos.SqDistance2D(owner->pos);
 			const bool inLoadingRadius = (sqDist <= Square(owner->unitDef->loadingRadius));
@@ -841,7 +841,7 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 		CUnit* unit = (*ui);
 		float dist = unit->pos.SqDistance2D(owner->pos);
 
-		if (unit->toBeTransported)
+		if (unit->loadingTransportId >= 0)
 			continue;
 		if (dist >= bestDist)
 			continue;
@@ -898,7 +898,7 @@ void CTransportCAI::FinishCommand()
 		CUnit* transportee = uh->GetUnitUnsafe(toBeTransportedUnitId);
 
 		if (transportee) {
-			transportee->toBeTransported = false;
+			transportee->loadingTransportId = -1;
 		}
 
 		toBeTransportedUnitId = -1;
