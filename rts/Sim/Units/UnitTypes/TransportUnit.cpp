@@ -312,7 +312,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->AddDeathDependence(this, DEPENDENCE_TRANSPORTER);
 
 	unit->transporter = this;
-	unit->toBeTransported = false;
+	unit->loadingTransportId = -1;
 	unit->SetStunned(!unitDef->isFirePlatform);
 
 	if (unit->IsStunned()) {
