@@ -8,6 +8,7 @@ using std::vector;
 
 #include "Rendering/GL/myGL.h"
 
+typedef std::map<unsigned int, int> MatrixStateData;
 
 class CLuaDisplayLists {
 	public:
