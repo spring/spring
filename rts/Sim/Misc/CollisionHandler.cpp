@@ -30,9 +30,7 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 	bool hit = false;
 
 	if (q != NULL) {
-		// reset the query
-		q->b0 = false; q->t0 = 0.0f; q->p0 = ZeroVector;
-		q->b1 = false; q->t1 = 0.0f; q->p1 = ZeroVector;
+		q->Reset();
 	}
 
 	// test *only* for ray intersections with the piece tree
@@ -63,9 +61,7 @@ bool CCollisionHandler::DetectHit(const CFeature* f, const float3& p0, const flo
 	bool hit = false;
 
 	if (q != NULL) {
-		// reset the query
-		q->b0 = false; q->t0 = 0.0f; q->p0 = ZeroVector;
-		q->b1 = false; q->t1 = 0.0f; q->p1 = ZeroVector;
+		q->Reset();
 	}
 
 	if (f->collisionVolume->IgnoreHits())
@@ -121,8 +117,10 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p, CollisionQuer
 		}
 	}
 
-	if (q && hit) {
-		q->b0 = true; q->t0 = 0.0f; q->p0 = p;
+	if (q != NULL && hit) {
+		// same as the special cases for the continuous tests
+		// (but here p is a valid coordinate and safe to use)
+		q->b0 = CQ_POINT_IN_VOL; q->t0 = 0.0f; q->p0 = p;
 	}
 
 	return hit;
@@ -158,8 +156,10 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p, CollisionQ
 		}
 	}
 
-	if (q && hit) {
-		q->b0 = true; q->t0 = 0.0f; q->p0 = p;
+	if (q != NULL && hit) {
+		// same as the special cases for the continuous tests
+		// (but here p is a valid coordinate and safe to use)
+		q->b0 = CQ_POINT_IN_VOL; q->t0 = 0.0f; q->p0 = p;
 	}
 
 	return hit;
@@ -416,9 +416,10 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	}
 
 	if (q != NULL) {
-		// transform the intersection points
-		if (q->b0) { q->p0 = m.Mul(q->p0); }
-		if (q->b1) { q->p1 = m.Mul(q->p1); }
+		// transform intersection points (iff not a special
+		// case, otherwise calling code should not use them)
+		if (q->b0 == CQ_POINT_ON_RAY) { q->p0 = m.Mul(q->p0); }
+		if (q->b1 == CQ_POINT_ON_RAY) { q->p1 = m.Mul(q->p1); }
 	}
 
 	return intersect;
@@ -432,12 +433,13 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 	const float3 pii1 = float3(pi1.x * v->GetHIScales().x, pi1.y * v->GetHIScales().y, pi1.z * v->GetHIScales().z);
 	const float rSq = 1.0f;
 
-	if (pii0.dot(pii0) <= rSq /* && pii1.dot(pii1) <= rSq */) {
+	if (pii0.dot(pii0) <= rSq) {
 		if (q != NULL) {
 			// terminate early in the special case
-			// that shot originated within volume
-			q->b0 = true; q->p0 = ZeroVector;
-			q->b1 = true; q->p1 = ZeroVector;
+			// that ray-segment originated *in* <v>
+			// (these points are NOT transformed!)
+			q->b0 = CQ_POINT_IN_VOL; q->p0 = ZeroVector;
+			q->b1 = CQ_POINT_IN_VOL; q->p1 = ZeroVector;
 		}
 		return true;
 	}
@@ -472,15 +474,15 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			const float dSq0 = (p0 - pi0).SqLength();
 			// if the intersection point is closer to p0 than
 			// the end of the ray segment, the hit is valid
-			const bool b0 = (t0 > 0.0f && dSq0 <= segLenSq);
+			const int b0 = (t0 > 0.0f && dSq0 <= segLenSq) * CQ_POINT_ON_RAY;
 
 			if (q != NULL) {
-				q->b0 = b0; q->b1 = false;
+				q->b0 = b0; q->b1 = CQ_POINT_NO_INT;
 				q->t0 = t0; q->t1 = 0.0f;
 				q->p0 = p0; q->p1 = ZeroVector;
 			}
 
-			return b0;
+			return (b0 == CQ_POINT_ON_RAY);
 		} else {
 			// two solutions for t
 			const float rD = fastmath::apxsqrt(D);
@@ -500,8 +502,8 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			const float dSq1 = (p1 - pi0).SqLength();
 			// if one of the intersection points is closer to p0
 			// than the end of the ray segment, the hit is valid
-			const bool b0 = (t0 > 0.0f && dSq0 <= segLenSq);
-			const bool b1 = (t1 > 0.0f && dSq1 <= segLenSq);
+			const int b0 = (t0 > 0.0f && dSq0 <= segLenSq) * CQ_POINT_ON_RAY;
+			const int b1 = (t1 > 0.0f && dSq1 <= segLenSq) * CQ_POINT_ON_RAY;
 
 			if (q != NULL) {
 				q->b0 = b0; q->b1 = b1;
@@ -509,7 +511,7 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 				q->p0 = p0; q->p1 = p1;
 			}
 
-			return (b0 || b1);
+			return (b0 == CQ_POINT_ON_RAY || b1 == CQ_POINT_ON_RAY);
 		}
 	}
 
@@ -530,9 +532,9 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	if ((math::fabs(pi0[pAx]) < ahs[pAx]) && (ratio <= 1.0f)) {
 		if (q != NULL) {
 			// terminate early in the special case
-			// that shot originated within volume
-			q->b0 = true; q->p0 = ZeroVector;
-			q->b1 = true; q->p1 = ZeroVector;
+			// that ray-segment originated within v
+			q->b0 = CQ_POINT_IN_VOL; q->p0 = ZeroVector;
+			q->b1 = CQ_POINT_IN_VOL; q->p1 = ZeroVector;
 		}
 		return true;
 	}
@@ -620,8 +622,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	float3 p0 = ZeroVector;
 	float3 p1 = ZeroVector;
 
-	bool b0 = false;
-	bool b1 = false;
+	int b0 = CQ_POINT_NO_INT;
+	int b1 = CQ_POINT_NO_INT;
 	float
 		d = (b * b) - (4.0f * a * c),
 		rd = 0.0f, // math::sqrt(d) or 1/dp
@@ -640,7 +642,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 				t0 = -b / (2.0f * a);
 				p0 = (pii0 + (diir * t0)) * inv;
 				s0 = (p0 - pi0).SqLength();
-				b0 = (s0 < segLenSq  &&  math::fabs(p0[pAx]) < ahs[pAx]);
+				b0 = (s0 < segLenSq  &&  math::fabs(p0[pAx]) < ahs[pAx]) * CQ_POINT_ON_RAY;
 			} else {
 				rd = fastmath::apxsqrt(d);
 				t0 = (-b - rd) / (2.0f * a);
@@ -649,8 +651,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 				p1 = (pii0 + (diir * t1)) * inv;
 				s0 = (p0 - pi0).SqLength();
 				s1 = (p1 - pi0).SqLength();
-				b0 = (s0 < segLenSq  &&  math::fabs(p0[pAx]) < ahs[pAx]);
-				b1 = (s1 < segLenSq  &&  math::fabs(p1[pAx]) < ahs[pAx]);
+				b0 = (s0 < segLenSq  &&  math::fabs(p0[pAx]) < ahs[pAx]) * CQ_POINT_ON_RAY;
+				b1 = (s1 < segLenSq  &&  math::fabs(p1[pAx]) < ahs[pAx]) * CQ_POINT_ON_RAY;
 			}
 		} else {
 			if (b != 0.0f) {
@@ -658,12 +660,12 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 				t0 = -c / b;
 				p0 = (pii0 + (diir * t0)) * inv;
 				s0 = (p0 - pi0).SqLength();
-				b0 = (s0 < segLenSq  &&  math::fabs(p0[pAx]) < ahs[pAx]);
+				b0 = (s0 < segLenSq  &&  math::fabs(p0[pAx]) < ahs[pAx]) * CQ_POINT_ON_RAY;
 			}
 		}
 	}
 
-	if (!b0) {
+	if (b0 == CQ_POINT_NO_INT) {
 		// p0 does not lie on ray segment, or does not fall
 		// between cylinder end-caps: check if segment goes
 		// through front cap (plane)
@@ -677,9 +679,9 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		ra =
 			(((p0[sAx0] * p0[sAx0]) / ahsq[sAx0]) +
 			 ((p0[sAx1] * p0[sAx1]) / ahsq[sAx1]));
-		b0 = (t0 >= 0.0f && ra <= 1.0f && s0 <= segLenSq);
+		b0 = (t0 >= 0.0f && ra <= 1.0f && s0 <= segLenSq) * CQ_POINT_ON_RAY;
 	}
-	if (!b1) {
+	if (b1 == CQ_POINT_NO_INT) {
 		// p1 does not lie on ray segment, or does not fall
 		// between cylinder end-caps: check if segment goes
 		// through rear cap (plane)
@@ -693,7 +695,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		ra =
 			(((p1[sAx0] * p1[sAx0]) / ahsq[sAx0]) +
 			 ((p1[sAx1] * p1[sAx1]) / ahsq[sAx1]));
-		b1 = (t1 >= 0.0f && ra <= 1.0f && s1 <= segLenSq);
+		b1 = (t1 >= 0.0f && ra <= 1.0f && s1 <= segLenSq) * CQ_POINT_ON_RAY;
 	}
 
 	if (q != NULL) {
@@ -702,7 +704,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		q->p0 = p0; q->p1 = p1;
 	}
 
-	return (b0 || b1);
+	return (b0 == CQ_POINT_ON_RAY || b1 == CQ_POINT_ON_RAY);
 }
 
 bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q)
@@ -711,12 +713,12 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 	const bool bb = (math::fabs(pi0.y) < v->GetHScales().y);
 	const bool bc = (math::fabs(pi0.z) < v->GetHScales().z);
 
-	if ((ba && bb && bc) /* && (bd && be && bf) */) {
+	if (ba && bb && bc) {
 		// terminate early in the special case
-		// that shot originated within volume
+		// that ray-segment originated within v
 		if (q != NULL) {
-			q->b0 = true; q->p0 = ZeroVector;
-			q->b1 = true; q->p1 = ZeroVector;
+			q->b0 = CQ_POINT_IN_VOL; q->p0 = ZeroVector;
+			q->b1 = CQ_POINT_IN_VOL; q->p1 = ZeroVector;
 		}
 
 		return true;
@@ -801,8 +803,8 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 	const float dSq1 = (p1 - pi0).SqLength();
 	// if one of the intersection points is closer to p0
 	// than the end of the ray segment, the hit is valid
-	const bool b0 = (dSq0 <= segLenSq);
-	const bool b1 = (dSq1 <= segLenSq);
+	const int b0 = (dSq0 <= segLenSq) * CQ_POINT_ON_RAY;
+	const int b1 = (dSq1 <= segLenSq) * CQ_POINT_ON_RAY;
 
 	if (q != NULL) {
 		q->b0 = b0; q->b1 = b1;
@@ -810,6 +812,6 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 		q->p0 = p0; q->p1 = p1;
 	}
 
-	return (b0 || b1);
+	return (b0 == CQ_POINT_ON_RAY || b1 == CQ_POINT_ON_RAY);
 }
 

@@ -407,13 +407,11 @@ void CProjectileHandler::CheckUnitCollisions(
 		}
 
 		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &cq)) {
-			if (cq.lmp != NULL) {
-				unit->SetLastAttackedPiece(cq.lmp, gs->frameNum);
+			if (cq.GetHitPiece() != NULL) {
+				unit->SetLastAttackedPiece(cq.GetHitPiece(), gs->frameNum);
 			}
 
-			// when the testpos is in the colvol DetectHit() sometimes
-			// returns the colvols center as colpos, so use ppos0 in that case
-			p->pos = (cq.b0 && cq.b1 && (cq.p0 == unit->midPos)) ? ppos0 : cq.p0;
+			p->pos = cq.InsideHit()? ppos0 : cq.GetIngressPos();
 			p->Collision(unit);
 			p->pos = ppos0;
 			break;
@@ -428,7 +426,8 @@ void CProjectileHandler::CheckFeatureCollisions(
 	const float3& ppos0,
 	const float3& ppos1)
 {
-	if (!p->checkCol) // already collided with unit?
+	// already collided with unit?
+	if (!p->checkCol)
 		return;
 
 	if ((p->GetCollisionFlags() & Collision::NOFEATURES) != 0)
@@ -444,9 +443,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 		}
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
-			// when the testpos is in the colvol DetectHit() sometimes
-			// returns the colvols center as colpos, so use ppos0 in that case
-			p->pos = (cq.b0 && cq.b1 && (cq.p0 == feature->midPos)) ? ppos0 : cq.p0;
+			p->pos = cq.InsideHit()? ppos0 : cq.GetIngressPos();
 			p->Collision(feature);
 			p->pos = ppos0;
 			break;

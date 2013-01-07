@@ -14,22 +14,40 @@ class CUnit;
 class CFeature;
 struct LocalModelPiece;
 
+enum {
+	CQ_POINT_NO_INT = 0,
+	CQ_POINT_ON_RAY = 1,
+	CQ_POINT_IN_VOL = 2,
+};
+
 struct CollisionQuery {
-	CollisionQuery()
-		// (0, 0, 0) is volume-space center, so
-		// impossible to obtain as actual points
-		// except in the special cases
-		: b0(false)
-		, b1(false)
-		, t0(0.0f)
-		, t1(0.0f)
-		, p0(ZeroVector)
-		, p1(ZeroVector)
-		, lmp(NULL)
-	{
+public:
+	CollisionQuery(): lmp(NULL) {
+		Reset();
 	}
 
-	bool   b0, b1;        ///< true if ingress (b0) or egress (b1) point on ray segment
+	void Reset() {
+		// (0, 0, 0) is volume-space center, so impossible
+		// to obtain as actual points except in the special
+		// cases (which all calling code should check for!)
+		// when continuous hit-detection is enabled
+		b0 = CQ_POINT_NO_INT; t0 = 0.0f; p0 = ZeroVector;
+		b1 = CQ_POINT_NO_INT; t1 = 0.0f; p1 = ZeroVector;
+	}
+
+	bool InsideHit() const { return (b0 == CQ_POINT_IN_VOL); }
+	bool IngressHit() const { return (b0 == CQ_POINT_ON_RAY); }
+	bool EgressHit() const { return (b1 == CQ_POINT_ON_RAY); }
+
+	const float3& GetIngressPos() const { return p0; }
+	const float3& GetEgressPos() const { return p1; }
+
+	LocalModelPiece* GetHitPiece() const { return lmp; }
+
+private:
+	friend class CCollisionHandler;
+
+	int    b0, b1;        ///< true (non-zero) if ingress (b0) or egress (b1) point on ray segment
 	float  t0, t1;        ///< distance parameter for ingress and egress point
 	float3 p0, p1;        ///< ray-volume ingress and egress points
 
