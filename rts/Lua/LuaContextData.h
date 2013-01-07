@@ -4,7 +4,6 @@
 #define LUA_CONTEXT_DATA_H
 
 #include <map>
-typedef std::map<unsigned int, int> MatrixStateData;
 
 #include "LuaShaders.h"
 #include "LuaTextures.h"
