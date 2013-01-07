@@ -1,5 +1,7 @@
 # This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
 
+OPTION(HEADERCHECK "adds the target headercheck which compiles every header file, default disabled because it adds many targets" OFF)
+if(HEADERCHECK)
 include_directories(
 		${Spring_SOURCE_DIR}/rts
 		${Spring_SOURCE_DIR}/include
@@ -46,3 +48,4 @@ ENDFOREACH( HEADER )
 
 add_custom_target(headercheck DEPENDS ${headerchecklibs})
 
+endif()
