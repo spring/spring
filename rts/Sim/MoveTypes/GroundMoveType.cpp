@@ -1627,8 +1627,6 @@ void CGroundMoveType::HandleUnitCollisions(
 	const int dirSign = int(!reversing) * 2 - 1;
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
-	int colliderLoadingTransportId = collider->loadingTransportId;
-
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 		CUnit* collidee = const_cast<CUnit*>(*uit);
 
@@ -1663,7 +1661,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		// also disable collisions if either party currently
 		// has an order to load units (TODO: do we want this
 		// for unloading as well?)
-		if (colliderLoadingTransportId == collidee->id) continue;
+		if (collider->loadingTransportId == collidee->id) continue;
 		if (collidee->loadingTransportId == collider->id) continue;
 
 		// NOTE:

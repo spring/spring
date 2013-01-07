@@ -161,7 +161,7 @@ float TraceRay(
 						continue;
 
 					if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
-						const float3& intPos = (cq.b0)? cq.p0: cq.p1;
+						const float3& intPos = (cq.IngressHit())? cq.GetIngressPos(): cq.GetEgressPos();
 						const float len = (intPos - start).dot(dir); // same as (intPos - start).Length()
 
 						// we want the closest feature (intersection point) on the ray
@@ -192,7 +192,7 @@ float TraceRay(
 						continue;
 
 					if (CCollisionHandler::DetectHit(u, start, start + dir * length, &cq, true)) {
-						const float3& intPos = (cq.b0)? cq.p0: cq.p1;
+						const float3& intPos = (cq.IngressHit())? cq.GetIngressPos(): cq.GetEgressPos();
 						const float len = (intPos - start).dot(dir); // same as (intPos - start).Length()
 
 						// we want the closest unit (intersection point) on the ray
@@ -286,8 +286,8 @@ float GuiTraceRay(
 
 			if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {
 				// get the distance to the ray-volume ingress point
-				const float3& ingressPos = (cq.b0)? cq.p0 : cq.p1;
-				const float3&  egressPos = (cq.b1)? cq.p1 : cq.p0;
+				const float3& ingressPos = (cq.IngressHit())? cq.GetIngressPos() : cq.GetEgressPos();
+				const float3&  egressPos = (cq.EgressHit())?  cq.GetEgressPos()  : cq.GetIngressPos();
 				const float ingressDist  = (ingressPos - start).dot(dir); // same as (intPos  - start).Length()
 				const float  egressDist  = ( egressPos - start).dot(dir); // same as (intPos2 - start).Length()
 				const bool isFactory = unit->unitDef->IsFactoryUnit();
@@ -318,7 +318,7 @@ float GuiTraceRay(
 				continue;
 
 			if (CCollisionHandler::DetectHit(f, start, start + dir * origlength, &cq, true)) {
-				const float3& ingressPos = (cq.b0)? cq.p0 : cq.p1;
+				const float3& ingressPos = (cq.IngressHit())? cq.GetIngressPos() : cq.GetEgressPos();
 				const float ingressDist = (ingressPos - start).dot(dir); // same as (intPos - start).Length()
 
 				// we want the closest feature (intersection point) on the ray
