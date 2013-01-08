@@ -1524,9 +1524,10 @@ void CGroundMoveType::HandleStaticObjectCollision(
 
 		float3 strafeVec;
 		float3 bounceVec;
+		float3 sqCenterPosition;
 
 		float sqPenDistanceSum = 0.0f;
-		float sqPenDistanceCnt = 0.0f;
+		float sqPenDistanceCtr = 0.0f;
 
 		if (DEBUG_DRAWING_ENABLED) {
 			geometricObjects->AddLine(collider->pos + (UpVector * 25.0f), collider->pos + (UpVector * 100.0f), 3, 1, 4);
@@ -1553,22 +1554,29 @@ void CGroundMoveType::HandleStaticObjectCollision(
 				const float  sqColRadiusSum = colliderRadius + 5.656854249492381f;
 				const float   sqSepDistance = squareVec.Length2D() + 0.1f;
 				const float   sqPenDistance = std::min(sqSepDistance - sqColRadiusSum, 0.0f);
-				const float  sqColSlideSign = ((squarePos.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir)) < 0.0f) * 2.0f - 1.0f;
+				// const float  sqColSlideSign = ((squarePos.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir)) < 0.0f) * 2.0f - 1.0f;
 
-				strafeVec += (collider->rightdir * sqColSlideSign);
+				// this tends to cancel out too much on average
+				// strafeVec += (collider->rightdir * sqColSlideSign);
 				bounceVec += (squareVec / sqSepDistance);
 
 				sqPenDistanceSum += sqPenDistance;
-				sqPenDistanceCnt += 1.0f;
+				sqPenDistanceCtr += 1.0f;
+				sqCenterPosition += squarePos;
 			}
 		}
 
-		if (sqPenDistanceCnt > 0.0f) {
+		if (sqPenDistanceCtr > 0.0f) {
+			sqCenterPosition /= sqPenDistanceCtr;
+			sqPenDistanceSum /= sqPenDistanceCtr;
+
+			const float strafeSign = ((sqCenterPosition.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir)) < 0.0f) * 2.0f - 1.0f;
+			const float strafeScale = std::min(currentSpeed, std::max(0.0f, -sqPenDistanceSum * 0.5f));
+			const float bounceScale =                        std::max(0.0f, -sqPenDistanceSum        );
+
+			strafeVec = collider->rightdir * strafeSign;
 			strafeVec.y = 0.0f; strafeVec.SafeNormalize();
 			bounceVec.y = 0.0f; bounceVec.SafeNormalize();
-
-			const float strafeScale = std::min(currentSpeed, std::max(0.0f, -(sqPenDistanceSum / sqPenDistanceCnt) * 0.5f));
-			const float bounceScale =                        std::max(0.0f, -(sqPenDistanceSum / sqPenDistanceCnt)        );
 
 			collider->Move3D(strafeVec * strafeScale, true);
 			collider->Move3D(bounceVec * bounceScale, true);
