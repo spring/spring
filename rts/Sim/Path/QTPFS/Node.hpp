@@ -9,6 +9,7 @@
 
 #include "PathEnums.hpp"
 #include "PathDefines.hpp"
+
 #include "System/float3.h"
 
 #ifndef QTPFS_VIRTUAL_NODE_FUNCTIONS
@@ -37,15 +38,14 @@ namespace QTPFS {
 		virtual const std::vector<INode*>& GetNeighbors(const std::vector<INode*>& v) = 0;
 		virtual bool UpdateNeighborCache(const std::vector<INode*>& nodes) = 0;
 
-		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+		virtual void SetNeighborEdgeTransitionPoint(unsigned int ngbIdx, const float3& point) = 0;
 		virtual const float3& GetNeighborEdgeTransitionPoint(unsigned int ngbIdx) const = 0;
-		#endif
 		#endif
 
 		unsigned int GetNeighborRelation(const INode* ngb) const;
 		unsigned int GetRectangleRelation(const PathRectangle& r) const;
 		float GetDistance(const INode* n, unsigned int type) const;
-		float3 GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos) const;
+		float3 GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos, float alpha) const;
 		PathRectangle ClipRectangle(const PathRectangle& r) const;
 
 		#ifdef QTPFS_VIRTUAL_NODE_FUNCTIONS
@@ -59,8 +59,8 @@ namespace QTPFS {
 		virtual unsigned int zsize() const = 0;
 		virtual unsigned int area() const = 0;
 
-		virtual bool IsOpen() const = 0;
-		virtual bool IsClosed() const = 0;
+		virtual bool AllSquaresAccessible() const = 0;
+		virtual bool AllSquaresImpassable() const = 0;
 
 		virtual void SetMoveCost(float cost) = 0;
 		virtual float GetMoveCost() const = 0;
@@ -72,7 +72,9 @@ namespace QTPFS {
 		virtual unsigned int GetMagicNumber() const = 0;
 		#endif
 
+		void SetPathCosts(float f, float g, float h) { fCost = f; gCost = g; hCost = h; }
 		void SetPathCost(unsigned int type, float cost);
+		const float* GetPathCosts() const { return &fCost; }
 		float GetPathCost(unsigned int type) const;
 
 		void SetPrevNode(INode* n) { prevNode = n; }
@@ -135,9 +137,8 @@ namespace QTPFS {
 		const std::vector<INode*>& GetNeighbors(const std::vector<INode*>&);
 		bool UpdateNeighborCache(const std::vector<INode*>& nodes);
 
-		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+		void SetNeighborEdgeTransitionPoint(unsigned int ngbIdx, const float3& point) { netpoints[ngbIdx] = point; }
 		const float3& GetNeighborEdgeTransitionPoint(unsigned int ngbIdx) const { return netpoints[ngbIdx]; }
-		#endif
 
 		unsigned int xmin() const { return (_xminxmax  & 0xFFFF); }
 		unsigned int zmin() const { return (_zminzmax  & 0xFFFF); }
@@ -151,8 +152,8 @@ namespace QTPFS {
 		unsigned int area() const { return (xsize() * zsize()); }
 
 		// true iff this node is fully open (partially open nodes have larger but non-infinite cost)
-		bool IsOpen() const { return (moveCostAvg < (QTPFS_CLOSED_NODE_COST / float(area()))); }
-		bool IsClosed() const { return (moveCostAvg == QTPFS_POSITIVE_INFINITY); }
+		bool AllSquaresAccessible() const { return (moveCostAvg < (QTPFS_CLOSED_NODE_COST / float(area()))); }
+		bool AllSquaresImpassable() const { return (moveCostAvg == QTPFS_POSITIVE_INFINITY); }
 
 		void SetMoveCost(float cost) { moveCostAvg = cost; }
 		float GetMoveCost() const { return moveCostAvg; }
@@ -194,9 +195,10 @@ namespace QTPFS {
 		std::vector<QTNode*> children;
 		std::vector<INode*> neighbors;
 
-		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
+		// NOTE:
+		//   these should be float2's, but profiling shows float3's to be *faster* and
+		//   float3's are also more convenient to work with (so we take the memory hit)
 		std::vector<float3> netpoints;
-		#endif
 	};
 };
 
