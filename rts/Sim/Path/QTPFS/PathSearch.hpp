@@ -144,16 +144,11 @@ namespace QTPFS {
 		static void FreeGlobalQueue() { openNodes.clear(); }
 
 	private:
-		void UpdateNode(
-			INode* nextNode,
-			INode* prevNode,
-			const float3& netPoint,
-			float gCost,
-			float hCost
-		);
+		void ResetState(INode* node);
+		void UpdateNode(INode* nextNode, INode* prevNode, unsigned int netPointIdx);
 
-		void Iterate(const std::vector<INode*>& allNodes);
-		void IterateNodes(const std::vector<INode*>& nxtNodes);
+		void IterateNodes(const std::vector<INode*>& allNodes);
+		void IterateNodeNeighbors(const std::vector<INode*>& nxtNodes);
 
 		void TracePath(IPath* path);
 		void SmoothPath(IPath* path);
@@ -175,8 +170,8 @@ namespace QTPFS {
 		INode *curNode, *nxtNode;
 		INode *minNode;
 
-		float3 srcPoint, tgtPoint;
-		float3 curPoint, nxtPoint;
+		float3 srcPoint;
+		float3 tgtPoint;
 
 		float3 netPoints[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
 

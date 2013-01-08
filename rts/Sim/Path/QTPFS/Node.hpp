@@ -72,7 +72,7 @@ namespace QTPFS {
 		virtual unsigned int GetMagicNumber() const = 0;
 		#endif
 
-		void SetPathCosts(float f, float g, float h) { fCost = f; gCost = g; hCost = h; }
+		void SetPathCosts(float g, float h) { fCost = g + h; gCost = g; hCost = h; }
 		void SetPathCost(unsigned int type, float cost);
 		const float* GetPathCosts() const { return &fCost; }
 		float GetPathCost(unsigned int type) const;
