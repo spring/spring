@@ -59,18 +59,22 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "squareSize",    SQUARE_SIZE);
 
 	LuaPushNamedNumber(L, "startPosType",  startPosType);
-
 	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
 
-	if (mapDamage) {
-		LuaPushNamedBool(L,   "mapDamage",           !mapDamage->disabled);
-	}
 	LuaPushNamedNumber(L, "gravity",             gravity);
 	LuaPushNamedNumber(L, "windMin",             wind.GetMinWind());
 	LuaPushNamedNumber(L, "windMax",             wind.GetMaxWind());
 	LuaPushNamedString(L, "mapName",             mapInfo->map.name);
 	LuaPushNamedString(L, "mapHumanName",        mapInfo->map.description); //! deprecated
 	LuaPushNamedString(L, "mapDescription",      mapInfo->map.description);
+	LuaPushNamedNumber(L, "mapHardness",         mapInfo->map.hardness);
+
+	if (mapDamage) {
+		// damage is enabled iff !mapInfo->map.notDeformable
+		LuaPushNamedBool(L, "mapDamage", !mapDamage->disabled);
+	}
+
+
 	if (readmap) {
 		//FIXME make this available in LoadScreen already!
 		LuaPushNamedNumber(L, "mapX",                readmap->width  / 64);
