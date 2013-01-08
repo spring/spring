@@ -30,9 +30,6 @@ void QTPFS::PathSearch::Initialize(
 	srcPoint = sourcePoint; srcPoint.ClampInBounds();
 	tgtPoint = targetPoint; tgtPoint.ClampInBounds();
 
-	curPoint = srcPoint;
-	nxtPoint = tgtPoint;
-
 	nodeLayer = layer;
 	pathCache = cache;
 
@@ -83,15 +80,11 @@ bool QTPFS::PathSearch::Execute(
 		srcNode->SetMoveCost(0.0f);
 	}
 
-	{
-		openNodes.reset();
-		openNodes.push(srcNode);
-
-		UpdateNode(srcNode, NULL, float3(), 0.0f, srcPoint.distance(tgtPoint) * hCostMult);
-	}
+	ResetState(srcNode);
+	UpdateNode(srcNode, NULL, 0);
 
 	while (!openNodes.empty()) {
-		Iterate(nodeLayer->GetNodes());
+		IterateNodes(nodeLayer->GetNodes());
 
 		#ifdef QTPFS_TRACE_PATH_SEARCHES
 		searchExec->AddIteration(searchIter);
@@ -129,25 +122,41 @@ bool QTPFS::PathSearch::Execute(
 
 
 
-void QTPFS::PathSearch::UpdateNode(
-	INode* nextNode,
-	INode* prevNode,
-	const float3& netPoint,
-	float gCost,
-	float hCost
-) {
+void QTPFS::PathSearch::ResetState(INode* node) {
+	// will be copied into srcNode by UpdateNode()
+	netPoints[0] = srcPoint;
+
+	gDists[0] = 0.0f;
+	hDists[0] = srcPoint.distance(tgtPoint);
+	gCosts[0] = 0.0f;
+	hCosts[0] = hDists[0] * hCostMult;
+
+	for (unsigned int i = 1; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
+		netPoints[i] = ZeroVector;
+
+		gDists[i] = 0.0f;
+		hDists[i] = 0.0f;
+		gCosts[i] = 0.0f;
+		hCosts[i] = 0.0f;
+	}
+
+	openNodes.reset();
+	openNodes.push(node);
+}
+
+void QTPFS::PathSearch::UpdateNode(INode* nextNode, INode* prevNode, unsigned int netPointIdx) {
 	// NOTE:
 	//   the heuristic must never over-estimate the distance,
 	//   but this is *impossible* to achieve on a non-regular
 	//   grid on which any node only has an average move-cost
 	//   associated with it --> paths will be "nearly optimal"
 	nextNode->SetPrevNode(prevNode);
-	nextNode->SetPathCosts(gCost + hCost, gCost, hCost);
+	nextNode->SetPathCosts(gCosts[netPointIdx], hCosts[netPointIdx]);
 	nextNode->SetSearchState(searchState | NODE_STATE_OPEN);
-	nextNode->SetNeighborEdgeTransitionPoint(0, netPoint);
+	nextNode->SetNeighborEdgeTransitionPoint(0, netPoints[netPointIdx]);
 }
 
-void QTPFS::PathSearch::Iterate(const std::vector<INode*>& allNodes) {
+void QTPFS::PathSearch::IterateNodes(const std::vector<INode*>& allNodes) {
 	curNode = openNodes.top();
 	curNode->SetSearchState(searchState | NODE_STATE_CLOSED);
 	#ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
@@ -165,8 +174,6 @@ void QTPFS::PathSearch::Iterate(const std::vector<INode*>& allNodes) {
 
 	if (curNode == tgtNode)
 		return;
-	if (curNode != srcNode)
-		curPoint = curNode->GetNeighborEdgeTransitionPoint(0);
 	if (curNode->AllSquaresImpassable())
 		return;
 
@@ -181,25 +188,25 @@ void QTPFS::PathSearch::Iterate(const std::vector<INode*>& allNodes) {
 		minNode = curNode;
 	#endif
 
-	IterateNodes(curNode->GetNeighbors(allNodes));
+	IterateNodeNeighbors(curNode->GetNeighbors(allNodes));
 }
 
-void QTPFS::PathSearch::IterateNodes(const std::vector<INode*>& nxtNodes) {
+void QTPFS::PathSearch::IterateNodeNeighbors(const std::vector<INode*>& nxtNodes) {
+	// if curNode equals srcNode, this is just the original srcPoint
+	const float3 curPoint = curNode->GetNeighborEdgeTransitionPoint(0);
+
 	for (unsigned int i = 0; i < nxtNodes.size(); i++) {
 		// NOTE:
 		//   this uses the actual distance that edges of the final path will cover,
-		//   from <curPoint> (initialized to sourcePoint) to the middle of the edge
+		//   from <curPoint> (initialized to sourcePoint) to a position on the edge
 		//   shared between <curNode> and <nxtNode>
 		//   (each individual path-segment is weighted by the average move-cost of
 		//   the node it crosses, which is the reciprocal of the average speed-mod)
 		// NOTE:
-		//   heading for the MIDDLE of the shared edge is not always the best option
-		//   we deal with this sub-optimality later (in SmoothPath if it is enabled)
-		// NOTE:
 		//   short paths that should have 3 points (2 nodes) can contain 4 (3 nodes);
 		//   this happens when a path takes a "detour" through a corner neighbor of
 		//   srcNode if the shared corner vertex is closer to the goal position than
-		//   the mid-point on the edge between srcNode and tgtNode
+		//   any transition-point on the edge between srcNode and tgtNode
 		// NOTE:
 		//   H needs to be of the same order as G, otherwise the search reduces to
 		//   Dijkstra (if G dominates H) or becomes inadmissable (if H dominates G)
@@ -215,21 +222,21 @@ void QTPFS::PathSearch::IterateNodes(const std::vector<INode*>& nxtNodes) {
 		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
 		const bool isTarget = (nxtNode == tgtNode);
 
-		  int minCostIdx = 0;
-		float minCostVal = std::numeric_limits<float>::max();
+		unsigned int netPointIdx = 0;
 
 		#if (QTPFS_MAX_NETPOINTS_PER_NODE_EDGE == 1)
-		{
-			// if only one transition-point is allowed per
-			// edge, this will always be the edge's center
-			// --> no need to be fancy
+		/*if (!IntersectEdge(curNode, nxtNode, tgtPoint - curPoint))*/ {
+			// if only one transition-point is allowed per edge,
+			// this will always be the edge's center --> no need
+			// to be fancy (note that this is not always the best
+			// option, it causes local and global sub-optimalities
+			// which SmoothPath can only partially address)
 			netPoints[0] = curNode->GetNeighborEdgeTransitionPoint(1 + i);
-			nxtPoint = netPoints[0];
 
 			// cannot use squared-distances because that will bias paths
 			// towards smaller nodes (eg. 1^2 + 1^2 + 1^2 + 1^2 != 4^2)
-			gDists[0] = curPoint.distance(nxtPoint);
-			hDists[0] = tgtPoint.distance(nxtPoint);
+			gDists[0] = curPoint.distance(netPoints[0]);
+			hDists[0] = tgtPoint.distance(netPoints[0]);
 			gCosts[0] =
 				curNode->GetPathCost(NODE_PATH_COST_G) +
 				curNode->GetMoveCost() * gDists[0] +
@@ -254,17 +261,14 @@ void QTPFS::PathSearch::IterateNodes(const std::vector<INode*>& nxtNodes) {
 				nxtNode->GetMoveCost() * hDists[j] * int(isTarget);
 			hCosts[j] = hDists[j] * hCostMult * int(!isTarget);
 
-			if ((gCosts[j] + hCosts[j]) < minCostVal) {
-				minCostIdx = j;
-				minCostVal = gCosts[j] + hCosts[j];
-
-				nxtPoint = netPoints[j];
+			if ((gCosts[j] + hCosts[j]) < (gCosts[netPointIdx] + hCosts[netPointIdx])) {
+				netPointIdx = j;
 			}
 		}
 		#endif
 
 		if (!isCurrent) {
-			UpdateNode(nxtNode, curNode, netPoints[minCostIdx], gCosts[minCostIdx], hCosts[minCostIdx]);
+			UpdateNode(nxtNode, curNode, netPointIdx);
 
 			openNodes.push(nxtNode);
 			openNodes.check_heap_property(0);
@@ -275,12 +279,12 @@ void QTPFS::PathSearch::IterateNodes(const std::vector<INode*>& nxtNodes) {
 
 			continue;
 		}
-		if (gCosts[minCostIdx] >= nxtNode->GetPathCost(NODE_PATH_COST_G))
+		if (gCosts[netPointIdx] >= nxtNode->GetPathCost(NODE_PATH_COST_G))
 			continue;
 		if (isClosed)
 			openNodes.push(nxtNode);
 
-		UpdateNode(nxtNode, curNode, netPoints[minCostIdx], gCosts[minCostIdx], hCosts[minCostIdx]);
+		UpdateNode(nxtNode, curNode, netPointIdx);
 
 		// restore ordering in case nxtNode was already open
 		// (changing the f-cost of an OPEN node messes up the
