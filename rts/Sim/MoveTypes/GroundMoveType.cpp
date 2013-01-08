@@ -2271,9 +2271,9 @@ void CGroundMoveType::AdjustPosToWaterLine()
 		return;
 
 	if (owner->unitDef->floatOnWater) {
-		owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z),          -owner->unitDef->waterline), 1, false);
+		owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline), 1, false);
 	} else {
-		owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z), owner->pos.y + mapInfo->map.gravity), 1, false);
+		owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z),               owner->pos.y), 1, false);
 	}
 }
 
@@ -2333,13 +2333,17 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		const UnitDef* ud = owner->unitDef;
 		const MoveDef* md = ud->moveDef;
 
-		const int    speedSign = int(!reversing) * 2 - 1;
+		const int hSpeedSign = (int(!reversing) * 2 - 1);
+		const int vSpeedSign = (owner->pos.y > GetGroundHeight(owner->pos));
 		// LuaSyncedCtrl::SetUnitVelocity directly assigns
 		// to owner->speed which gets overridden below, so
-		// need to calculate speedScale from it directly
-		// const float  speedScale = currentSpeed + deltaSpeed;
-		const float  speedScale = owner->speed.Length() + deltaSpeed;
-		const float3 speedVector = owner->frontdir * speedScale * speedSign;
+		// need to calculate hSpeedScale from it (not from
+		// currentSpeed) directly
+		const float hSpeedScale = owner->speed.Length2D() + deltaSpeed;
+		const float vSpeedScale = owner->speed.y + mapInfo->map.gravity;
+		const float3 speedVector =
+			(flatFrontDir * hSpeedScale * hSpeedSign) +
+			(    UpVector * vSpeedScale * vSpeedSign);
 
 		// NOTE: don't check for structure blockage, coldet handles that
 		//
@@ -2359,13 +2363,13 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			// never move onto an impassable square (units
 			// can still tunnel across them at high enough
 			// speeds however)
-			owner->speed = ZeroVector;
+			owner->Move3D(owner->speed = ZeroVector, true);
 		} else {
 			// use the simplest possible Euler integration
 			owner->Move3D(owner->speed = speedVector, true);
 		}
 
-		currentSpeed = (owner->speed != ZeroVector)? speedScale: 0.0f;
+		currentSpeed = (owner->speed != ZeroVector)? hSpeedScale: 0.0f;
 		deltaSpeed = 0.0f;
 
 		assert(math::fabs(currentSpeed) < 1e6f);
