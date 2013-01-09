@@ -57,9 +57,9 @@ void AAIAirForceManager::CheckTarget(int unit_id, const UnitDef *def)
 
 			UnitCategory category = ai->Getbt()->units_static[def->id].category;
 
-			if(ai->Getbt()->GetUnitDef(def->id-1).health > 8000)
+			if(ai->Getbt()->GetUnitDef(def->id).health > 8000)
 				max_groups = 3;
-			else if(ai->Getbt()->GetUnitDef(def->id-1).health > 4000)
+			else if(ai->Getbt()->GetUnitDef(def->id).health > 4000)
 				max_groups = 2;
 			else
 				max_groups = 1;
@@ -179,7 +179,7 @@ void AAIAirForceManager::BombBestUnit(float cost, float danger)
 			x = targets[i].pos.x/ai->Getmap()->xSectorSize;
 			y = targets[i].pos.z/ai->Getmap()->ySectorSize;
 
-			current = pow(targets[i].cost, cost) / (1.0f + ai->Getmap()->sector[x][y].enemy_stat_combat_power[1] * danger) * targets[i].health / ai->Getbt()->GetUnitDef(targets[i].def_id-1).health ;
+			current = pow(targets[i].cost, cost) / (1.0f + ai->Getmap()->sector[x][y].enemy_stat_combat_power[1] * danger) * targets[i].health / ai->Getbt()->GetUnitDef(targets[i].def_id).health ;
 
 			if(current > best)
 			{
