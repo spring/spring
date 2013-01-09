@@ -9,6 +9,7 @@ Major Changes:
  - much faster Sim (~20% and ~50% with working OMP)
  - new cmdline arguments
  - better pathing
+ - add experimental map generator (see http://springrts.com/wiki/Mapgen for details)
 FIXME - spring-mt is merged into spring (default disabled, games can enable it with ...)
 
 AI:
@@ -186,6 +187,7 @@ Windows:
  - update to boost 1.50
  - slightly improve speed of zip / sdz archives (#3338)
  - Nvidia Optimus support
+ - removed springsettings.exe as its directly included in springlobby
 
 Linux:
  - Linux's ctrl+c: `hardkill` after 10sec (and 5 seconds softkill)
