@@ -280,7 +280,7 @@ private:
 
 	FILE *file;
 
-	// all the unit defs
-	static const UnitDef **unitList;
+	// all the unit defs, FIXME: this can't be made static as spring seems to free the memory returned by GetUnitDefList()
+	const UnitDef **unitList;
 
 };

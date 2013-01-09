@@ -13,7 +13,6 @@
 #include "AAI.h"
 
 // all the static vars
-const UnitDef** AAIBuildTable::unitList = NULL;
 list<int>* AAIBuildTable::units_of_category[MOBILE_CONSTRUCTOR+1];
 char AAIBuildTable::buildtable_filename[500];
 float* AAIBuildTable::avg_cost[MOBILE_CONSTRUCTOR+1];
@@ -50,6 +49,7 @@ AAIBuildTable::AAIBuildTable(AAI* ai)
 
 	initialized = false;
 	numOfUnits = 0;
+	unitList = NULL;
 
 	numOfSides = cfg->SIDES;
 	startUnits.resize(numOfSides);
@@ -157,7 +157,6 @@ AAIBuildTable::~AAIBuildTable(void)
 	if(ai->GetInstances() == 0)
 	{
 
-		SafeDeleteArray(unitList);
 
 		for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
 		{
@@ -199,6 +198,7 @@ AAIBuildTable::~AAIBuildTable(void)
 		min_eff.clear();
 		total_eff.clear();
 	}
+	SafeDeleteArray(unitList);
 }
 
 void AAIBuildTable::Init()
