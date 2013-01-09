@@ -249,8 +249,6 @@ public:
 	// start units of each side (e.g. commander)
 	vector<int> startUnits;
 
-	// number of unit definitions
-	int numOfUnits;
 
 	vector<float> combat_eff;
 
@@ -269,7 +267,7 @@ public:
 	list<UnitCategory> assault_categories;
 
 	const UnitDef& GetUnitDef(int i) { assert(IsValidUnitDefID(i));	return *unitList[i];}
-	bool IsValidUnitDefID(int i) { return (i>=0) && (i<=numOfUnits); }
+	bool IsValidUnitDefID(int i) { return (i>=0) && (i<=unitList.size()); }
 private:
 	// for internal use
 	void CalcBuildTree(int unit);

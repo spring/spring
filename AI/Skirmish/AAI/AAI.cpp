@@ -72,7 +72,6 @@ AAI::~AAI()
 
 	Log("Requested constructors:\n");
 	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].end(); ++fac) {
-		assert((*fac-1) < bt->numOfUnits);
 		assert((*fac)   < bt->units_dynamic.size());
 		Log("%-24s: %i\n", bt->GetUnitDef(*fac).humanName.c_str(), bt->units_dynamic[*fac].requested);
 	}
