@@ -31,7 +31,7 @@ REV=$(git describe --tags)
 SOURCEDIR=${PWD}
 BUILDDIR=${PWD}/build/${CONFIG}
 TMP_BASE=/tmp/spring
-TMP_PATH=${TMP_BASE}/${CONFIG}/${BRANCH}/${REV}
+TMP_PATH=${TMP_BASE}/${CONFIG}/${BRANCH}/${REV}/$OUTPUTDIR
 
 if [ x${CONFIG} = xdefault ]; then
    CONFIG_=''
