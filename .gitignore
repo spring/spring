@@ -24,6 +24,9 @@
 # DoxyGen output
 /doc/doxygen
 
+# doc/manpages
+/manpages
+
 # CMake generated version container file for use within tarballs
 /VERSION
 
@@ -36,6 +39,11 @@ Makefile
 cmake_install.cmake
 CTestTestfile.cmake
 progress.make
+
+# Ninja related
+/.ninja_log
+/build.ninja
+/rules.ninja
 
 # Visual Studio related
 *.ncb
