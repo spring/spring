@@ -2444,7 +2444,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 	}
 	else
 	{
-		if(ai->Getbt()->GetUnitDef(defence-1).minWaterDepth > 0)
+		if(ai->Getbt()->GetUnitDef(defence).minWaterDepth > 0)
 			power = (ai->Getbt()->fixed_eff[defence][2] + ai->Getbt()->fixed_eff[defence][3]) / 2.0f;
 		else
 			power = ai->Getbt()->fixed_eff[defence][0];
@@ -2453,8 +2453,8 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 		submarine_power = ai->Getbt()->fixed_eff[defence][4];
 	}
 
-	int xPos = (pos->x + ai->Getbt()->GetUnitDef(defence-1).xsize/2)/ (SQUARE_SIZE * 4);
-	int yPos = (pos->z + ai->Getbt()->GetUnitDef(defence-1).zsize/2)/ (SQUARE_SIZE * 4);
+	int xPos = (pos->x + ai->Getbt()->GetUnitDef(defence).xsize/2)/ (SQUARE_SIZE * 4);
+	int yPos = (pos->z + ai->Getbt()->GetUnitDef(defence).zsize/2)/ (SQUARE_SIZE * 4);
 
 	// x range will change from line to line
 	int xStart;
@@ -2567,7 +2567,7 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 	}
 	else
 	{
-		if(ai->Getbt()->GetUnitDef(defence-1).minWaterDepth > 0)
+		if(ai->Getbt()->GetUnitDef(defence).minWaterDepth > 0)
 			power = (ai->Getbt()->fixed_eff[defence][2] + ai->Getbt()->fixed_eff[defence][3]) / 2.0f;
 		else
 			power = ai->Getbt()->fixed_eff[defence][0];
@@ -2576,8 +2576,8 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 		submarine_power = ai->Getbt()->fixed_eff[defence][4];
 	}
 
-	int xPos = (pos->x + ai->Getbt()->GetUnitDef(defence-1).xsize/2) / (SQUARE_SIZE * 4);
-	int yPos = (pos->z + ai->Getbt()->GetUnitDef(defence-1).zsize/2) / (SQUARE_SIZE * 4);
+	int xPos = (pos->x + ai->Getbt()->GetUnitDef(defence).xsize/2) / (SQUARE_SIZE * 4);
+	int yPos = (pos->z + ai->Getbt()->GetUnitDef(defence).zsize/2) / (SQUARE_SIZE * 4);
 
 	// further decrease values close around the bulding (to prevent aai from packing buildings too close together)
 	int xStart = xPos - 3;

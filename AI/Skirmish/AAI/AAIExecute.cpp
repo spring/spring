@@ -243,7 +243,7 @@ void AAIExecute::AddUnitToGroup(int unit_id, int def_id, UnitCategory category)
 		float3 pos = ai->Getcb()->GetUnitPos(unit_id);
 		continent_id = ai->Getmap()->GetContinentID(&pos);
 	}
-	AAIGroup *new_group = new AAIGroup(ai, &ai->Getbt()->GetUnitDef(def_id-1), unit_type, continent_id);
+	AAIGroup *new_group = new AAIGroup(ai, &ai->Getbt()->GetUnitDef(def_id), unit_type, continent_id);
 
 	ai->Getgroup_list()[category].push_back(new_group);
 	new_group->AddUnit(unit_id, def_id, unit_type, continent_id);
@@ -330,7 +330,7 @@ float3 AAIExecute::GetBuildsite(int builder, int building, UnitCategory /*catego
 {
 	float3 pos;
 	float3 builder_pos;
-	//const UnitDef *def = ai->Getbt()->GetUnitDef(building-1);
+	//const UnitDef *def = ai->Getbt()->GetUnitDef(building);
 
 	// check the sector of the builder
 	builder_pos = ai->Getcb()->GetUnitPos(builder);
@@ -1010,7 +1010,7 @@ bool AAIExecute::BuildPowerPlant()
 
 				if(builder)
 				{
-					pos = ai->Getmap()->GetClosestBuildsite(&ai->Getbt()->GetUnitDef(water_plant-1), ai->Getcb()->GetUnitPos(builder->unit_id), 40, true);
+					pos = ai->Getmap()->GetClosestBuildsite(&ai->Getbt()->GetUnitDef(water_plant), ai->Getcb()->GetUnitPos(builder->unit_id), 40, true);
 
 					if(pos.x <= 0)
 						pos = (*sector)->GetBuildsite(water_plant, true);
@@ -1117,7 +1117,7 @@ bool AAIExecute::BuildMetalMaker()
 
 					if(builder)
 					{
-						futureRequestedEnergy += ai->Getbt()->GetUnitDef(maker-1).energyUpkeep;
+						futureRequestedEnergy += ai->Getbt()->GetUnitDef(maker).energyUpkeep;
 						builder->GiveConstructionOrder(maker, pos, false);
 						return true;
 					}
@@ -1159,7 +1159,7 @@ bool AAIExecute::BuildMetalMaker()
 
 					if(builder)
 					{
-						futureRequestedEnergy += ai->Getbt()->GetUnitDef(maker-1).energyUpkeep;
+						futureRequestedEnergy += ai->Getbt()->GetUnitDef(maker).energyUpkeep;
 						builder->GiveConstructionOrder(maker, pos, true);
 						return true;
 					}
@@ -2103,7 +2103,7 @@ void AAIExecute::DefendMex(int mex, int def_id)
 			bool water;
 
 			// get defence building dependend on water or land mex
-			if(ai->Getbt()->GetUnitDef(def_id-1).minWaterDepth > 0)
+			if(ai->Getbt()->GetUnitDef(def_id).minWaterDepth > 0)
 			{
 				water = true;
 
@@ -2145,7 +2145,7 @@ void AAIExecute::DefendMex(int mex, int def_id)
 					pos.z -= 70;
 
 				// get suitable pos
-				pos = ai->Getcb()->ClosestBuildSite(&ai->Getbt()->GetUnitDef(defence-1), pos, 1400.0, 2);
+				pos = ai->Getcb()->ClosestBuildSite(&ai->Getbt()->GetUnitDef(defence), pos, 1400.0, 2);
 
 				if(pos.x > 0)
 				{
@@ -2462,10 +2462,10 @@ void AAIExecute::CheckMexUpgrade()
 	}
 
 	if(land_mex)
-		land_def = &ai->Getbt()->GetUnitDef(land_mex-1);
+		land_def = &ai->Getbt()->GetUnitDef(land_mex);
 
 	if(water_mex)
-		water_def = &ai->Getbt()->GetUnitDef(water_mex-1);
+		water_def = &ai->Getbt()->GetUnitDef(water_mex);
 
 	// check extractor upgrades
 	for(int dist = 0; dist < 2; ++dist)
@@ -2481,7 +2481,7 @@ void AAIExecute::CheckMexUpgrade()
 				if((*spot)->extractor_def > 0 && (*spot)->extractor > -1 && (*spot)->extractor < cfg->MAX_UNITS
 					&& ai->Getcb()->GetUnitTeam((*spot)->extractor) == my_team)	// only upgrade own extractors
 				{
-					my_def = &ai->Getbt()->GetUnitDef((*spot)->extractor_def-1);
+					my_def = &ai->Getbt()->GetUnitDef((*spot)->extractor_def);
 
 					if(my_def->minWaterDepth <= 0 && land_def)	// land mex
 					{
@@ -2534,10 +2534,10 @@ void AAIExecute::CheckRadarUpgrade()
 	int water_radar = ai->Getbt()->GetRadar(ai->Getside(), cost, range, true, true);
 
 	if(land_radar)
-		land_def = &ai->Getbt()->GetUnitDef(land_radar-1);
+		land_def = &ai->Getbt()->GetUnitDef(land_radar);
 
 	if(water_radar)
-		water_def = &ai->Getbt()->GetUnitDef(water_radar-1);
+		water_def = &ai->Getbt()->GetUnitDef(water_radar);
 
 	// check radar upgrades
 	for(set<int>::iterator recon = ai->Getut()->recon.begin(); recon != ai->Getut()->recon.end(); ++recon)
@@ -2594,10 +2594,10 @@ void AAIExecute::CheckJammerUpgrade()
 	int water_jammer = ai->Getbt()->GetJammer(ai->Getside(), cost, range, true, true);
 
 	if(land_jammer)
-		land_def = &ai->Getbt()->GetUnitDef(land_jammer-1);
+		land_def = &ai->Getbt()->GetUnitDef(land_jammer);
 
 	if(water_jammer)
-		water_def = &ai->Getbt()->GetUnitDef(water_jammer-1);
+		water_def = &ai->Getbt()->GetUnitDef(water_jammer);
 
 	// check radar upgrades
 	for(set<int>::iterator jammer = ai->Getut()->jammers.begin(); jammer != ai->Getut()->jammers.end(); ++jammer)
@@ -2967,7 +2967,7 @@ void AAIExecute::ConstructionFinished()
 
 void AAIExecute::ConstructionFailed(float3 build_pos, int def_id)
 {
-	const UnitDef *def = &ai->Getbt()->GetUnitDef(def_id-1);
+	const UnitDef *def = &ai->Getbt()->GetUnitDef(def_id);
 	UnitCategory category = ai->Getbt()->units_static[def_id].category;
 
 	int x = build_pos.x/ai->Getmap()->xSectorSize;
@@ -2996,12 +2996,12 @@ void AAIExecute::ConstructionFailed(float3 build_pos, int def_id)
 	}
 	else if(category == STORAGE)
 	{
-		futureStoredEnergy -= ai->Getbt()->GetUnitDef(def->id-1).energyStorage;
-		futureStoredMetal -= ai->Getbt()->GetUnitDef(def->id-1).metalStorage;
+		futureStoredEnergy -= ai->Getbt()->GetUnitDef(def->id).energyStorage;
+		futureStoredMetal -= ai->Getbt()->GetUnitDef(def->id).metalStorage;
 	}
 	else if(category == METAL_MAKER)
 	{
-		futureRequestedEnergy -= ai->Getbt()->GetUnitDef(def->id-1).energyUpkeep;
+		futureRequestedEnergy -= ai->Getbt()->GetUnitDef(def->id).energyUpkeep;
 
 		if(futureRequestedEnergy < 0)
 			futureRequestedEnergy = 0;
@@ -3078,7 +3078,7 @@ void AAIExecute::AddStartFactory()
 		ai->Getbt()->units_dynamic[best_factory].requested += 1;
 		urgency[STATIONARY_CONSTRUCTOR] = 3.0f;
 
-		ai->Log("%s requested\n", ai->Getbt()->GetUnitDef(best_factory-1).humanName.c_str());
+		ai->Log("%s requested\n", ai->Getbt()->GetUnitDef(best_factory).humanName.c_str());
 
 		for(list<int>::iterator j = ai->Getbt()->units_static[best_factory].canBuildList.begin(); j != ai->Getbt()->units_static[best_factory].canBuildList.end(); ++j)
 			ai->Getbt()->units_dynamic[*j].constructorsRequested += 1;
@@ -3250,7 +3250,7 @@ void AAIExecute::CheckFallBack(int unit_id, int def_id)
 {
 	float max_weapon_range = ai->Getbt()->units_static[def_id].range;
 
-	if(max_weapon_range > cfg->MIN_FALLBACK_RANGE && ai->Getbt()->GetUnitDef(def_id-1).turnRate >= cfg->MIN_FALLBACK_TURNRATE)
+	if(max_weapon_range > cfg->MIN_FALLBACK_RANGE && ai->Getbt()->GetUnitDef(def_id).turnRate >= cfg->MIN_FALLBACK_TURNRATE)
 	{
 		if(max_weapon_range > cfg->MAX_FALLBACK_RANGE)
 			max_weapon_range = cfg->MAX_FALLBACK_RANGE;

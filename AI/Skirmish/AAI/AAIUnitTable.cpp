@@ -257,7 +257,7 @@ void AAIUnitTable::RemovePowerPlant(int unit_id)
 void AAIUnitTable::AddMetalMaker(int unit_id, int def_id)
 {
 	metal_makers.insert(unit_id);
-	ai->Getexecute()->futureRequestedEnergy -= ai->Getbt()->GetUnitDef(def_id-1).energyUpkeep;
+	ai->Getexecute()->futureRequestedEnergy -= ai->Getbt()->GetUnitDef(def_id).energyUpkeep;
 }
 
 void AAIUnitTable::RemoveMetalMaker(int unit_id)
@@ -371,8 +371,8 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 *pos, bool
 				{
 					my_dist = fastmath::apxsqrt( (builder_pos.x - pos->x) * (builder_pos.x - pos->x) + (builder_pos.z - pos->z) * (builder_pos.z - pos->z) );
 
-					if(ai->Getbt()->GetUnitDef(builder->def_id-1).speed > 0)
-						my_dist /= ai->Getbt()->GetUnitDef(builder->def_id-1).speed;
+					if(ai->Getbt()->GetUnitDef(builder->def_id).speed > 0)
+						my_dist /= ai->Getbt()->GetUnitDef(builder->def_id).speed;
 
 					if(my_dist < *min_dist)
 					{

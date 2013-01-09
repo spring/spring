@@ -10,10 +10,10 @@ AAIConstructor::AAIConstructor(AAI *ai, int unit_id, int def_id, bool factory, b
 
 	this->unit_id = unit_id;
 	this->def_id = def_id;
-	buildspeed = ai->Getbt()->GetUnitDef(def_id-1).buildSpeed;
+	buildspeed = ai->Getbt()->GetUnitDef(def_id).buildSpeed;
 
 	construction_unit_id = -1;
-	construction_def_id = 0;
+	construction_def_id = -1;
 	construction_category = UNKNOWN;
 
 	assistance = -1;
@@ -54,7 +54,7 @@ void AAIConstructor::Idle()
 	{
 		if(task == BUILDING)
 		{
-			if(construction_unit_id == -1)
+			if(!ai->Getbt()->IsValidUnitDefID(construction_unit_id))
 			{
 				//ai->Getbt()->units_dynamic[construction_def_id].active -= 1;
 				//assert(ai->Getbt()->units_dynamic[construction_def_id].active >= 0);
@@ -89,7 +89,7 @@ void AAIConstructor::Update()
 {
 	if(factory)
 	{
-		if(!construction_def_id && !buildque->empty())
+		if(!ai->Getbt()->IsValidUnitDefID(construction_def_id) && !buildque->empty())
 		{
 			int def_id = (*buildque->begin());
 			UnitCategory cat = ai->Getbt()->units_static[def_id].category;
@@ -105,6 +105,7 @@ void AAIConstructor::Update()
 					c.id = -def_id;
 					ai->Getcb()->GiveOrder(unit_id, &c);
 					construction_def_id = def_id;
+					assert(ai->Getbt()->IsValidUnitDefID(def_id));
 					task = BUILDING;
 
 					//if(ai->Getbt()->IsFactory(def_id))
@@ -129,6 +130,7 @@ void AAIConstructor::Update()
 
 						ai->Getcb()->GiveOrder(unit_id, &c);
 						construction_def_id = def_id;
+						assert(ai->Getbt()->IsValidUnitDefID(def_id));
 						task = BUILDING;
 
 						++ai->Getut()->futureUnits[cat];
@@ -154,7 +156,7 @@ void AAIConstructor::Update()
 			// if building has not yet begun, check if something unexpected happened (buildsite blocked)
 			else
 			{
-				if(!IsBusy() && construction_unit_id == -1)
+				if(!IsBusy() && !ai->Getbt()->IsValidUnitDefID(construction_unit_id))
 					ConstructionFailed();
 			}
 		}
@@ -232,11 +234,11 @@ void AAIConstructor::CheckAssistance()
 
 			if(buildque->size() > 2)
 				assist = true;
-			else if(construction_def_id) {
+			else if(ai->Getbt()->IsValidUnitDefID(construction_def_id)) {
 				float buildtime = 1e6;
-				if (construction_def_id && buildspeed > 0) {
+				if (buildspeed > 0) {
 					//FIXME why use *1/30 here? below there is exactly the same code w/o it, so what's the correct one?
-					buildtime = ai->Getbt()->GetUnitDef(construction_def_id-1).buildTime / (30.0f * buildspeed);
+					buildtime = ai->Getbt()->GetUnitDef(construction_def_id).buildTime / (30.0f * buildspeed);
 				}
 
 				if (buildtime > cfg->MIN_ASSISTANCE_BUILDTIME)
@@ -255,7 +257,7 @@ void AAIConstructor::CheckAssistance()
 			}
 		}
 		// check if assistants are needed anymore
-		else if(!assistants.empty() && buildque->empty() && !construction_def_id)
+		else if(!assistants.empty() && buildque->empty() && !ai->Getbt()->IsValidUnitDefID(construction_def_id))
 		{
 			//ai->LogConsole("factory releasing assistants");
 			ReleaseAllAssistants();
@@ -270,7 +272,7 @@ void AAIConstructor::CheckAssistance()
 		{
 			if(construction_category == METAL_MAKER)
 			{
-				if(ai->Getexecute()->averageEnergySurplus < 0.5 * ai->Getbt()->GetUnitDef(construction_def_id-1).energyUpkeep)
+				if(ai->Getexecute()->averageEnergySurplus < 0.5 * ai->Getbt()->GetUnitDef(construction_def_id).energyUpkeep)
 					return;
 			}
 			else if(construction_category != EXTRACTOR && construction_category != POWER_PLANT)
@@ -279,7 +281,7 @@ void AAIConstructor::CheckAssistance()
 
 		float buildtime = 1e6;
 		if (buildspeed > 0) {
-			buildtime = ai->Getbt()->GetUnitDef(construction_def_id-1).buildTime / buildspeed;
+			buildtime = ai->Getbt()->GetUnitDef(construction_def_id).buildTime / buildspeed;
 		}
 
 		if((buildtime > cfg->MIN_ASSISTANCE_BUILDTIME) && (assistants.size() < cfg->MAX_ASSISTANTS))
@@ -313,7 +315,7 @@ double AAIConstructor::GetMyQueBuildtime()
 	double buildtime = 0;
 
 	for(list<int>::iterator unit = buildque->begin(); unit != buildque->end(); ++unit)
-		buildtime += ai->Getbt()->GetUnitDef((*unit)-1).buildTime;
+		buildtime += ai->Getbt()->GetUnitDef((*unit)).buildTime;
 
 	return buildtime;
 }
@@ -340,7 +342,7 @@ void AAIConstructor::GiveReclaimOrder(int unit_id)
 void AAIConstructor::GiveConstructionOrder(int id_building, float3 pos, bool water)
 {
 	// get def and final position
-	const UnitDef *def = &ai->Getbt()->GetUnitDef(id_building-1);
+	const UnitDef *def = &ai->Getbt()->GetUnitDef(id_building);
 
 	// give order if building can be placed at the desired position (position lies within a valid sector)
 	if(ai->Getexecute()->InitBuildingAt(def, &pos, water))
@@ -357,6 +359,7 @@ void AAIConstructor::GiveConstructionOrder(int id_building, float3 pos, bool wat
 		// set building as current task and order construction
 		build_pos = pos;
 		construction_def_id = id_building;
+		assert(ai->Getbt()->IsValidUnitDefID(id_building));
 		task = BUILDING;
 		construction_category = ai->Getbt()->units_static[id_building].category;
 
@@ -427,6 +430,7 @@ void AAIConstructor::TakeOverConstruction(AAIBuildTask *build_task)
 
 	construction_unit_id = build_task->unit_id;
 	construction_def_id = build_task->def_id;
+	assert(ai->Getbt()->IsValidUnitDefID(construction_def_id));
 	construction_category = ai->Getbt()->units_static[construction_def_id].category;
 	build_pos = build_task->build_pos;
 
@@ -456,7 +460,7 @@ void AAIConstructor::ConstructionFinished()
 	task = UNIT_IDLE;
 
 	build_pos = ZeroVector;
-	construction_def_id = 0;
+	construction_def_id = -1;
 	construction_unit_id = -1;
 	construction_category = UNKNOWN;
 
@@ -547,7 +551,7 @@ void AAIConstructor::Retreat(UnitCategory attacked_by)
 				// dont flee outside of the base if health is > 50%
 				else
 				{
-					if(ai->Getcb()->GetUnitHealth(unit_id) > ai->Getbt()->GetUnitDef(def_id-1).health / 2.0)
+					if(ai->Getcb()->GetUnitHealth(unit_id) > ai->Getbt()->GetUnitDef(def_id).health / 2.0)
 						return;
 				}
 			}

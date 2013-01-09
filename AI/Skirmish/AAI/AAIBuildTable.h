@@ -268,7 +268,8 @@ public:
 	// all assault unit categories
 	list<UnitCategory> assault_categories;
 
-	const UnitDef& GetUnitDef(int i);
+	const UnitDef& GetUnitDef(int i) { assert(IsValidUnitDefID(i));	return *unitList[i];}
+	bool IsValidUnitDefID(int i) { return (i>=0) && (i<=numOfUnits); }
 private:
 	// for internal use
 	void CalcBuildTree(int unit);
@@ -281,6 +282,5 @@ private:
 	FILE *file;
 
 	// all the unit defs, FIXME: this can't be made static as spring seems to free the memory returned by GetUnitDefList()
-	const UnitDef **unitList;
-
+	std::vector<const UnitDef*> unitList;
 };
