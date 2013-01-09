@@ -2359,10 +2359,12 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			(CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector              ) <= 0.01f);
 		const bool terrainIgnored = pathController->IgnoreTerrain(*md, owner->pos + speedVector);
 
-		if (terrainBlocked && !terrainIgnored) {
+		if (terrainBlocked && !terrainIgnored && !owner->inAir) {
 			// never move onto an impassable square (units
 			// can still tunnel across them at high enough
-			// speeds however)
+			// speeds however), unless not on ground (this
+			// can only happen going downhill) or we would
+			// stop in mid-air
 			owner->Move3D(owner->speed = ZeroVector, true);
 		} else {
 			// use the simplest possible Euler integration

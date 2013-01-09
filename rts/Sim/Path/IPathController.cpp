@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 #include "IPathController.hpp"
+#include "Sim/Units/Unit.h"
 #include "System/myMath.h"
 
 IPathController* IPathController::GetInstance(CUnit* owner) {
@@ -44,7 +45,8 @@ float GMTDefaultPathController::GetDeltaSpeed(
 		deltaSpeed = (rawSpeedDiff < 0.0f)? -modDecRate:  modAccRate;
 	}
 
-	return deltaSpeed;
+	// no acceleration changes if not on ground
+	return (deltaSpeed * (1 - int(owner->inAir)));
 }
 
 short GMTDefaultPathController::GetDeltaHeading(
@@ -61,6 +63,7 @@ short GMTDefaultPathController::GetDeltaHeading(
 		deltaHeading = std::max(deltaHeading, short(-maxTurnRate));
 	}
 
-	return deltaHeading;
+	// no orientation changes if not on ground
+	return (deltaHeading * (1 - int(owner->inAir)));
 }
 
