@@ -1522,26 +1522,38 @@ int LuaSyncedCtrl::SetUnitNanoPieces(lua_State* L)
 		return 0;
 	}
 
-	std::vector<int>* pieces = NULL;
+	NanoPieceCache* pieceCache = NULL;
+	std::vector<int>* nanoPieces = NULL;
+
 	{
 		CBuilder* builder = dynamic_cast<CBuilder*>(unit);
-		if (builder) {
-			pieces = &builder->nanoPieces;
+
+		if (builder != NULL) {
+			pieceCache = &builder->GetNanoPieceCache();
+			nanoPieces = &pieceCache->GetNanoPieces();
 		}
+
 		CFactory* factory = dynamic_cast<CFactory*>(unit);
-		if (factory) {
-			pieces = &factory->nanoPieces;
+
+		if (factory != NULL) {
+			pieceCache = &factory->GetNanoPieceCache();
+			nanoPieces = &pieceCache->GetNanoPieces();
 		}
 	}
 
-	pieces->clear();
+	if (nanoPieces == NULL)
+		return 0;
+
+	nanoPieces->clear();
 	luaL_checktype(L, 2, LUA_TTABLE);
+
 	for (lua_pushnil(L); lua_next(L, 2) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -1)) {
 			const int piecenum  = lua_toint(L, -1) - 1;
 			const int scriptnum = unit->script->ModelToScript(piecenum);
+
 			if (scriptnum >= 0) {
-				pieces->push_back(scriptnum);
+				nanoPieces->push_back(scriptnum);
 			} else {
 				luaL_error(L, "Incorrect piecenum to SetUnitNanoPieces()");
 			}

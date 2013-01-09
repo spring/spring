@@ -35,11 +35,8 @@ CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
 	CR_MEMBER(opening),
 	CR_MEMBER(curBuild),
-	CR_MEMBER(curBuildPower),
 	CR_MEMBER(nextBuildUnitDefID),
 	CR_MEMBER(lastBuildUpdateFrame),
-	CR_MEMBER(nanoPieces),
-	CR_MEMBER(lastNanoPieceCnt),
 	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -53,11 +50,9 @@ CFactory::CFactory():
 	opening(false),
 	curBuildDef(NULL),
 	curBuild(NULL),
-	curBuildPower(0),
 	nextBuildUnitDefID(-1),
 	lastBuildUpdateFrame(-1),
-	finishedBuildFunc(NULL),
-	lastNanoPieceCnt(0)
+	finishedBuildFunc(NULL)
 {
 }
 
@@ -88,15 +83,11 @@ void CFactory::PreInit(const UnitDef* def, int team, int facing, const float3& p
 	CBuilding::PreInit(def, team, facing, position, build);
 }
 
-int CFactory::GetBuildPiece()
-{
-	return script->QueryBuildInfo();
-}
 
-// GetBuildPiece() is called if piece < 0
+
 float3 CFactory::CalcBuildPos(int buildPiece)
 {
-	const float3 relBuildPos = script->GetPiecePos(buildPiece < 0 ? GetBuildPiece() : buildPiece);
+	const float3 relBuildPos = script->GetPiecePos((buildPiece < 0)? script->QueryBuildInfo() : buildPiece);
 	const float3 absBuildPos = pos + frontdir * relBuildPos.z + updir * relBuildPos.y + rightdir * relBuildPos.x;
 	return absBuildPos;
 }
@@ -105,7 +96,7 @@ float3 CFactory::CalcBuildPos(int buildPiece)
 
 void CFactory::Update()
 {
-	curBuildPower >>= 1;
+	nanoPieceCache.Update();
 
 	if (beingBuilt) {
 		// factory is under construction, cannot build anything yet
@@ -222,7 +213,7 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 	lastBuildUpdateFrame = gs->frameNum;
 
 	// buildPiece is the rotating platform
-	const int buildPiece = GetBuildPiece();
+	const int buildPiece = script->QueryBuildInfo();
 	const float3& buildPos = CalcBuildPos(buildPiece);
 	const CMatrix44f& buildPieceMat = script->GetPieceMatrix(buildPiece);
 	const int buildPieceHeading = GetHeadingFromVector(buildPieceMat[2], buildPieceMat[10]); //! x.z, z.z
@@ -482,45 +473,14 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 
 void CFactory::CreateNanoParticle(bool highPriority)
 {
-	assert(UNIT_SLOWUPDATE_RATE == 16);
-	curBuildPower |= 1 << 15;
-
-	int piece = -1;
-	if (!nanoPieces.empty()) {
-		const unsigned cnt = nanoPieces.size();
-		const unsigned rnd = gs->randInt();
-		piece = nanoPieces[rnd % cnt];
-	}
-
-	if (lastNanoPieceCnt <= 30) { // only do so 30 times and then use the cache
-		const int p = script->QueryNanoPiece();
-		if (p >= 0) {
-			piece = p;
-
-			bool found = false;
-			for (std::vector<int>::const_iterator it = nanoPieces.begin(); it != nanoPieces.end(); ++it) {
-				if (piece == *it) {
-					lastNanoPieceCnt++;
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				nanoPieces.push_back(piece);
-				lastNanoPieceCnt = 0;
-			}
-		} else {
-			lastNanoPieceCnt++;
-		}
-	}
+	const int nanoPiece = nanoPieceCache.GetNanoPiece(script);
 
 #ifdef USE_GML
 	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
 		return;
 #endif
 
-	const float3 relWeaponFirePos = script->GetPiecePos(piece);
+	const float3 relWeaponFirePos = script->GetPiecePos(nanoPiece);
 	const float3 weaponPos = pos
 		+ (frontdir * relWeaponFirePos.z)
 		+ (updir    * relWeaponFirePos.y)
