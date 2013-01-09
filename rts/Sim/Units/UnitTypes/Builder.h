@@ -5,6 +5,7 @@
 
 #include <string>
 
+#include "Sim/Misc/NanoPieceCache.h"
 #include "Sim/Units/Unit.h"
 #include "System/float3.h"
 
@@ -59,6 +60,9 @@ public:
 	bool CanAssistUnit(const CUnit* u, const UnitDef* def = NULL) const;
 	bool CanRepairUnit(const CUnit* u) const;
 
+	const NanoPieceCache& GetNanoPieceCache() const { return nanoPieceCache; }
+	      NanoPieceCache& GetNanoPieceCache()       { return nanoPieceCache; }
+
 public:
 	bool range3D; ///< spheres instead of infinite cylinders for range tests
 
@@ -89,9 +93,8 @@ public:
 	float3 terraformCenter;
 	float terraformRadius;
 
-	std::vector<int> nanoPieces;
-	int lastNanoPieceCnt;
-	int curBuildPower; //< bitmask use `count_bits_set(curBuildPower) / float(UNIT_SLOWUPDATE_RATE)` to convert to 0..1
+private:
+	NanoPieceCache nanoPieceCache;
 };
 
 #endif // _BUILDER_H

@@ -2944,17 +2944,28 @@ int LuaSyncedRead::GetUnitCurrentBuildPower(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const CBuilder* builder = dynamic_cast<CBuilder*>(unit);
-	if (builder) {
-		lua_pushnumber(L, count_bits_set(builder->curBuildPower) / float(UNIT_SLOWUPDATE_RATE));
-		return 1;
+
+	const NanoPieceCache* pieceCache = NULL;
+
+	{
+		const CBuilder* builder = dynamic_cast<const CBuilder*>(unit);
+
+		if (builder != NULL) {
+			pieceCache = &builder->GetNanoPieceCache();
+		}
+
+		const CFactory* factory = dynamic_cast<const CFactory*>(unit);
+
+		if (factory != NULL) {
+			pieceCache = &factory->GetNanoPieceCache();
+		}
 	}
-	const CFactory* factory = dynamic_cast<CFactory*>(unit);
-	if (factory) {
-		lua_pushnumber(L, count_bits_set(factory->curBuildPower) / float(UNIT_SLOWUPDATE_RATE));
-		return 1;
-	}
-	return 0;
+
+	if (pieceCache == NULL)
+		return 0;
+
+	lua_pushnumber(L, pieceCache->GetBuildPower());
+	return 1;
 }
 
 
@@ -2965,25 +2976,32 @@ int LuaSyncedRead::GetUnitNanoPieces(lua_State* L)
 		return 0;
 	}
 
-	const std::vector<int>* pieces = NULL;
+	const NanoPieceCache* pieceCache = NULL;
+	const std::vector<int>* nanoPieces = NULL;
+
 	{
 		const CBuilder* builder = dynamic_cast<const CBuilder*>(unit);
-		if (builder) {
-			pieces = &builder->nanoPieces;
+
+		if (builder != NULL) {
+			pieceCache = &builder->GetNanoPieceCache();
+			nanoPieces = &pieceCache->GetNanoPieces();
 		}
+
 		const CFactory* factory = dynamic_cast<const CFactory*>(unit);
-		if (factory) {
-			pieces = &factory->nanoPieces;
+
+		if (factory != NULL) {
+			pieceCache = &factory->GetNanoPieceCache();
+			nanoPieces = &pieceCache->GetNanoPieces();
 		}
 	}
 
-	if (pieces == NULL) {
+	if (nanoPieces == NULL || nanoPieces->empty())
 		return 0;
-	}
 
-	lua_createtable(L, pieces->size(), 0);
-	for (size_t p = 0; p < pieces->size(); p++) {
-		const int scriptnum = (*pieces)[p];
+	lua_createtable(L, nanoPieces->size(), 0);
+
+	for (size_t p = 0; p < nanoPieces->size(); p++) {
+		const int scriptnum = (*nanoPieces)[p];
 		const int piecenum  = unit->script->ScriptToModel(scriptnum) + 1;
 
 		lua_pushnumber(L, p + 1);

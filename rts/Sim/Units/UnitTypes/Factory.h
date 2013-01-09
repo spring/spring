@@ -4,6 +4,7 @@
 #define _FACTORY_H
 
 #include "Building.h"
+#include "Sim/Misc/NanoPieceCache.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
 
@@ -37,10 +38,12 @@ public:
 
 	/// supply the build piece to speed up
 	float3 CalcBuildPos(int buildPiece = -1);
-	int GetBuildPiece();
 
 	void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
 	bool ChangeTeam(int newTeam, ChangeType type);
+
+	const NanoPieceCache& GetNanoPieceCache() const { return nanoPieceCache; }
+	      NanoPieceCache& GetNanoPieceCache()       { return nanoPieceCache; }
 
 private:
 	void SendToEmptySpot(CUnit* unit);
@@ -61,9 +64,6 @@ public:
 		FACTORY_NEXT_BUILD_ORDER = 2,
 	};
 
-	int curBuildPower; //< bitmask use `count_bits_set(curBuildPower) / float(UNIT_SLOWUPDATE_RATE)` to convert to 0..1
-	std::vector<int> nanoPieces;
-
 private:
 	int nextBuildUnitDefID;
 	int lastBuildUpdateFrame;
@@ -71,8 +71,7 @@ private:
 	FinishBuildCallBackFunc finishedBuildFunc;
 	Command finishedBuildCommand;
 
-	int lastNanoPieceCnt;
-
+	NanoPieceCache nanoPieceCache;
 };
 
 #endif // _FACTORY_H

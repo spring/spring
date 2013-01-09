@@ -36,34 +36,31 @@ using std::max;
 CR_BIND_DERIVED(CBuilder, CUnit, );
 
 CR_REG_METADATA(CBuilder, (
-				CR_MEMBER(range3D),
-				CR_MEMBER(buildDistance),
-				CR_MEMBER(buildSpeed),
-				CR_MEMBER(repairSpeed),
-				CR_MEMBER(reclaimSpeed),
-				CR_MEMBER(resurrectSpeed),
-				CR_MEMBER(captureSpeed),
-				CR_MEMBER(terraformSpeed),
-				CR_MEMBER(curResurrect),
-				CR_MEMBER(lastResurrected),
-				CR_MEMBER(curBuild),
-				CR_MEMBER(curCapture),
-				CR_MEMBER(curReclaim),
-				CR_MEMBER(reclaimingUnit),
-				CR_MEMBER(helpTerraform),
-				CR_MEMBER(terraforming),
-				CR_MEMBER(myTerraformLeft),
-				CR_MEMBER(terraformHelp),
-				CR_MEMBER(tx1), CR_MEMBER(tx2), CR_MEMBER(tz1), CR_MEMBER(tz2),
-				CR_MEMBER(terraformCenter),
-				CR_MEMBER(terraformRadius),
-				CR_ENUM_MEMBER(terraformType),
-				CR_MEMBER(lastNanoPieceCnt),
-				CR_MEMBER(nanoPieces),
-				CR_MEMBER(curBuildPower),
-				CR_RESERVED(12),
-				CR_POSTLOAD(PostLoad)
-				));
+	CR_MEMBER(range3D),
+	CR_MEMBER(buildDistance),
+	CR_MEMBER(buildSpeed),
+	CR_MEMBER(repairSpeed),
+	CR_MEMBER(reclaimSpeed),
+	CR_MEMBER(resurrectSpeed),
+	CR_MEMBER(captureSpeed),
+	CR_MEMBER(terraformSpeed),
+	CR_MEMBER(curResurrect),
+	CR_MEMBER(lastResurrected),
+	CR_MEMBER(curBuild),
+	CR_MEMBER(curCapture),
+	CR_MEMBER(curReclaim),
+	CR_MEMBER(reclaimingUnit),
+	CR_MEMBER(helpTerraform),
+	CR_MEMBER(terraforming),
+	CR_MEMBER(myTerraformLeft),
+	CR_MEMBER(terraformHelp),
+	CR_MEMBER(tx1), CR_MEMBER(tx2), CR_MEMBER(tz1), CR_MEMBER(tz2),
+	CR_MEMBER(terraformCenter),
+	CR_MEMBER(terraformRadius),
+	CR_ENUM_MEMBER(terraformType),
+	CR_RESERVED(12),
+	CR_POSTLOAD(PostLoad)
+));
 
 
 //////////////////////////////////////////////////////////////////////
@@ -95,9 +92,7 @@ CBuilder::CBuilder():
 	tz1(0),
 	tz2(0),
 	terraformCenter(0,0,0),
-	terraformRadius(0),
-	lastNanoPieceCnt(0),
-	curBuildPower(0)
+	terraformRadius(0)
 {
 }
 
@@ -156,8 +151,6 @@ bool CBuilder::CanRepairUnit(const CUnit* u) const
 
 void CBuilder::Update()
 {
-	curBuildPower >>= 1;
-
 	CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
 
 	const CCommandQueue& cQueue = cai->commandQue;
@@ -715,7 +708,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 
 float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 {
-	float3& buildPos=buildInfo.pos;
+	float3& buildPos = buildInfo.pos;
 
 	float tcost = 0.0f;
 	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
@@ -803,45 +796,14 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 
 void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse, bool highPriority)
 {
-	assert(UNIT_SLOWUPDATE_RATE == 16);
-	curBuildPower |= 1 << 15;
-
-	int piece = -1;
-	if (!nanoPieces.empty()) {
-		const unsigned cnt = nanoPieces.size();
-		const unsigned rnd = gs->randInt();
-		piece = nanoPieces[rnd % cnt];
-	}
-
-	if (lastNanoPieceCnt <= 30) { // only do so 30 times and then use the cache
-		const int p = script->QueryNanoPiece();
-		if (p >= 0) {
-			piece = p;
-
-			bool found = false;
-			for (std::vector<int>::const_iterator it = nanoPieces.begin(); it != nanoPieces.end(); ++it) {
-				if (piece == *it) {
-					lastNanoPieceCnt++;
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				nanoPieces.push_back(piece);
-				lastNanoPieceCnt = 0;
-			}
-		} else {
-			lastNanoPieceCnt++;
-		}
-	}
+	const int nanoPiece = nanoPieceCache.GetNanoPiece(script);
 
 #ifdef USE_GML
 	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
 		return;
 #endif
 
-	const float3 relWeaponFirePos = script->GetPiecePos(piece);
+	const float3 relWeaponFirePos = script->GetPiecePos(nanoPiece);
 	const float3 weaponPos = pos
 		+ (frontdir * relWeaponFirePos.z)
 		+ (updir    * relWeaponFirePos.y)
