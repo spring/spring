@@ -48,7 +48,6 @@ AAIBuildTable::AAIBuildTable(AAI* ai)
 	this->ai = ai;
 
 	initialized = false;
-	numOfUnits = 0;
 
 	numOfSides = cfg->SIDES;
 	startUnits.resize(numOfSides);
@@ -208,7 +207,7 @@ void AAIBuildTable::Init()
 	srand ( time(NULL) );
 
 	// get number of units and alloc memory for unit list
-	numOfUnits = ai->Getcb()->GetNumUnitDefs();
+	const int numOfUnits = ai->Getcb()->GetNumUnitDefs();
 
 	// one more than needed because 0 is dummy object (so UnitDef->id can be used to adress that unit in the array)
 	units_dynamic.resize(numOfUnits+1);
@@ -2472,9 +2471,9 @@ bool AAIBuildTable::LoadBuildTable()
 	// stop further loading if already done
 	if(!units_static.empty())
 	{
-		units_dynamic.resize(numOfUnits+1);
+		units_dynamic.resize(unitList.size());
 
-		for(int i = 0; i <= numOfUnits; ++i)
+		for(int i = 0; i < unitList.size(); ++i)
 		{
 			units_dynamic[i].active = 0;
 			units_dynamic[i].requested = 0;
@@ -2535,14 +2534,14 @@ bool AAIBuildTable::LoadBuildTable()
 				}
 			}
 
-			units_static.resize(numOfUnits+1);
-			units_dynamic.resize(numOfUnits+1);
-			fixed_eff.resize(numOfUnits+1, vector<float>(combat_categories));
+			units_static.resize(unitList.size());
+			units_dynamic.resize(unitList.size());
+			fixed_eff.resize(unitList.size(), vector<float>(combat_categories));
 
 			units_static[0].def_id = 0;
 			units_static[0].side = 0;
 
-			for(int i = 1; i <= numOfUnits; ++i)
+			for(int i = 1; i < unitList.size(); ++i)
 			{
 				fscanf(load_file, "%i %i %u %u %f %f %f %i "_STPF_" "_STPF_" ",&units_static[i].def_id, &units_static[i].side,
 									&units_static[i].unit_type, &units_static[i].movement_type,
@@ -2679,7 +2678,7 @@ void AAIBuildTable::SaveBuildTable(int game_period, MapType map_type)
 
 //	int tmp;
 
-	for(int i = 1; i <= numOfUnits; ++i)
+	for(int i = 1; i < unitList.size(); ++i)
 	{
 //		tmp = units_static[i].canBuildList.size();
 
@@ -2765,7 +2764,7 @@ void AAIBuildTable::DebugPrint()
 	if(file)
 	{
 
-	for(int i = 1; i <= numOfUnits; i++)
+	for(int i = 1; i < unitList.size(); i++)
 	{
 		// unit type
 		unitType = GetUnitType(i);
