@@ -95,5 +95,5 @@ for file in spring-dedicated spring-headless; do
 done
 
 # create relative symbolic links to current files for rsyncing
-cd ${TMP_PATH}/..
-ln -sfv ${REV}/spring_${VERSION}_minimal-portable-${FILEPREFIX}.7z  spring_testing_minimal-portable-${FILEPREFIX}.7z
+cd ${TMP_PATH}/../..
+ln -sfv ${REV}/$OUTPUTDIR/spring_${VERSION}_minimal-portable-${FILEPREFIX}.7z  spring_testing_minimal-portable-${FILEPREFIX}.7z
