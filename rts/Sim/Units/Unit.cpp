@@ -603,8 +603,11 @@ void CUnit::SetDirVectors(const CMatrix44f& matrix) {
 }
 
 // NOTE: movetypes call this directly
-void CUnit::UpdateDirVectors(bool useGroundNormal)
+void CUnit::UpdateDirVectors(bool useGroundNormal, bool isGroundUnit)
 {
+	if (isGroundUnit && inAir)
+		return;
+
 	updir    = useGroundNormal? ground->GetSmoothNormal(pos.x, pos.z): UpVector;
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();

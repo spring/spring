@@ -55,6 +55,7 @@ void CModInfo::Init(const char* modArchive)
 		allowCrushingAlliedUnits = movementTbl.GetBool("allowCrushingAlliedUnits", false);
 		allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", false);
 		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", true);
+		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", true);
 		useClassicGroundMoveType = movementTbl.GetBool("useClassicGroundMoveType", (gameSetup->modName.find("Balanced Annihilation") != std::string::npos));
 	}
 
@@ -176,13 +177,25 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// system
 		const LuaTable& system = root.SubTable("system");
+		const size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
+
+		bool disableGML = (numThreads == 1);
 
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 		luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
-		size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
-		if (numThreads == 1 || (numThreads == 0 && (luaThreadingModel == MT_LUA_NONE || luaThreadingModel == MT_LUA_SINGLE || 
-			luaThreadingModel == MT_LUA_SINGLE_BATCH || Threading::GetAvailableCores() <= 1)))
-			GML::Enable(false); // single core, or this game did not make any effort to specifically support MT ==> disable it by default
+
+		if (numThreads == 0) {
+			if (Threading::GetAvailableCores() <= 1     ) disableGML = true;
+			if (luaThreadingModel == MT_LUA_NONE        ) disableGML = true;
+			if (luaThreadingModel == MT_LUA_SINGLE      ) disableGML = true;
+			if (luaThreadingModel == MT_LUA_SINGLE_BATCH) disableGML = true;
+		}
+
+		if (disableGML) {
+			// single core, or this game did not make any effort to
+			// specifically support MT ==> disable it by default
+			GML::Enable(false);
+		}
 
 		GML::SetCheckCallChain(globalConfig->GetMultiThreadLua() == MT_LUA_SINGLE_BATCH);
 	}
