@@ -2,19 +2,20 @@
 
 set -e
 
-if [ $# != 3 ]; then
-	echo Usage: $0 config branch /path/to/mingwlibs
-	exit 1
-fi
 
 . buildbot/slave/prepare.sh
 
-if [ ! -d $1 ]; then
-	echo "clone mingwlibs git-repo"
-	git clone git://github.com/spring/mingwlibs.git $1
+if [ -z $MINGWLIBS_PATH ]; then
+	echo 'MINGWLIBS_PATH not set'
+	exit 1
 fi
 
-cd $1
+if [ ! -d $MINGWLIBS_PATH ]; then
+	echo "clone mingwlibs git-repo"
+	git clone git://github.com/spring/mingwlibs.git $MINGWLIBS_PATH
+fi
+
+cd $MINGWLIBS_PATH
 
 GITOUTPUT=$(git fetch 2>&1 |cat)
 echo $GITOUTPUT
