@@ -615,7 +615,7 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 
 	owner->heading += pathController->GetDeltaHeading(pathId, (wantedHeading = newHeading), owner->heading, turnRate);
 
-	owner->UpdateDirVectors(!owner->upright && maxSpeed > 0.0f);
+	owner->UpdateDirVectors(!owner->upright && maxSpeed > 0.0f, true);
 	owner->UpdateMidAndAimPos();
 
 	flatFrontDir = owner->frontdir;
@@ -791,8 +791,8 @@ void CGroundMoveType::UpdateSkid()
 	owner->Move3D(speed, true);
 
 	// NOTE: only needed to match terrain normal
-	if ((pos.y - groundHeight) <= SQUARE_SIZE)
-		owner->UpdateDirVectors(true);
+	if ((pos.y - groundHeight) <= 1.0f)
+		owner->UpdateDirVectors(true, true);
 
 	if (skidding) {
 		CalcSkidRot();
@@ -2254,7 +2254,8 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 
 	if (owner->unitDef->floatOnWater) {
 		// in [0, maxHeight]
-		h = ground->GetHeightAboveWater(p.x, p.z);
+		h += ground->GetHeightAboveWater(p.x, p.z);
+		h -= (owner->unitDef->waterline * (h <= 0.0f));
 	} else {
 		// in [minHeight, maxHeight]
 		h = ground->GetHeightReal(p.x, p.z);
@@ -2270,10 +2271,14 @@ void CGroundMoveType::AdjustPosToWaterLine()
 	if (flying)
 		return;
 
-	if (owner->unitDef->floatOnWater) {
-		owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline), 1, false);
+	if (modInfo.allowGroundUnitGravity) {
+		if (owner->unitDef->floatOnWater) {
+			owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline), 1, false);
+		} else {
+			owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z),               owner->pos.y), 1, false);
+		}
 	} else {
-		owner->Move1D(std::max(ground->GetHeightReal(owner->pos.x, owner->pos.z),               owner->pos.y), 1, false);
+		owner->Move1D(GetGroundHeight(owner->pos), 1, false);
 	}
 }
 
@@ -2333,17 +2338,42 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		const UnitDef* ud = owner->unitDef;
 		const MoveDef* md = ud->moveDef;
 
-		const int hSpeedSign = (int(!reversing) * 2 - 1);
-		const int vSpeedSign = (owner->pos.y > GetGroundHeight(owner->pos));
-		// LuaSyncedCtrl::SetUnitVelocity directly assigns
-		// to owner->speed which gets overridden below, so
-		// need to calculate hSpeedScale from it (not from
-		// currentSpeed) directly
-		const float hSpeedScale = owner->speed.Length2D() + deltaSpeed;
-		const float vSpeedScale = owner->speed.y + mapInfo->map.gravity;
-		const float3 speedVector =
-			(flatFrontDir * hSpeedScale * hSpeedSign) +
-			(    UpVector * vSpeedScale * vSpeedSign);
+		float3 speedVector;
+
+		if (modInfo.allowGroundUnitGravity) {
+			const int hSpeedSign = (int(!reversing) * 2 - 1);
+			const int vSpeedSign = ((owner->pos.y + owner->speed.y) >= GetGroundHeight(owner->pos + owner->speed));
+
+			#define hAcc deltaSpeed
+			#define vAcc mapInfo->map.gravity
+
+			// never drop below terrain
+			if (vSpeedSign == 0) {
+				owner->speed.y = (owner->frontdir.y * owner->speed.Length());
+			}
+
+			// NOTE: new speed-vector has to be parallel to frontdir
+			const float3 accelVec =
+				(owner->frontdir * hAcc * hSpeedSign) +
+				(       UpVector * vAcc * vSpeedSign);
+			const float3 speedVec = owner->speed + accelVec;
+
+			speedVector =
+				(flatFrontDir * speedVec.dot(flatFrontDir)) +
+				(    UpVector * speedVec.dot(    UpVector));
+
+			#undef vAcc
+			#undef hAcc
+		} else {
+			// LuaSyncedCtrl::SetUnitVelocity directly assigns
+			// to owner->speed which gets overridden below, so
+			// need to calculate hSpeedScale from it (not from
+			// currentSpeed) directly
+			const int    speedSign = int(!reversing) * 2 - 1;
+			const float  speedScale = owner->speed.Length() + deltaSpeed;
+
+			speedVector = owner->frontdir * speedScale * speedSign;
+		}
 
 		// NOTE: don't check for structure blockage, coldet handles that
 		//
@@ -2371,7 +2401,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			owner->Move3D(owner->speed = speedVector, true);
 		}
 
-		currentSpeed = (owner->speed != ZeroVector)? hSpeedScale: 0.0f;
+		currentSpeed = math::fabs(speedVector.dot(flatFrontDir));
 		deltaSpeed = 0.0f;
 
 		assert(math::fabs(currentSpeed) < 1e6f);
