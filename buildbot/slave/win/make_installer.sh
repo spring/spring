@@ -13,7 +13,10 @@ echo "Installing into $DEST"
 SEVENZIP="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
 ZIP="zip -r9"
 
-MINGWLIBS_PATH=${1}
+if [ -z $MINGWLIBS_PATH ]; then
+	echo 'MINGWLIBS_PATH is not set'
+	exit 1
+fi
 
 #use host from env if set
 if [ -z "$MINGW_HOST" ]; then
