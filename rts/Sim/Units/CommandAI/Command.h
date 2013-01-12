@@ -260,7 +260,7 @@ public:
 	}
 
 	bool IsAreaCommand() const {
-		switch(id) {
+		switch (id) {
 			case CMD_CAPTURE:
 			case CMD_LOAD_UNITS:
 			case CMD_RECLAIM:
@@ -275,6 +275,7 @@ public:
 		}
 		return false;
 	}
+	bool IsBuildCommand() const { return (id < 0); }
 
 	void PushParam(float par) { params.push_back(par); }
 	const float& GetParam(size_t idx) const { return params[idx]; }

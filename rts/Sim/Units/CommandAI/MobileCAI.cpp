@@ -939,7 +939,7 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 	return CMD_MOVE;
 }
 
-void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadius)
+void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
 	if (pos == goalPos)
 		return;
@@ -948,13 +948,24 @@ void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadi
 	owner->moveType->StartMoving(pos, goalRadius);
 }
 
-void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadius, float speed)
+void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
 	if (pos == goalPos)
 		return;
 	goalPos = pos;
 	this->goalRadius = goalRadius;
 	owner->moveType->StartMoving(pos, goalRadius, speed);
+}
+
+bool CMobileCAI::SetFrontMoveCommandPos(const float3& pos)
+{
+	if (commandQue.empty())
+		return false;
+	if ((commandQue.front()).GetID() != CMD_MOVE)
+		return false;
+
+	(commandQue.front()).SetPos(0, pos);
+	return true;
 }
 
 void CMobileCAI::StopMove()
@@ -1102,9 +1113,6 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 	if (dynamic_cast<CHoverAirMoveType*>(owner->moveType) != NULL) {
 		NonMoving(); return false;
 	}
-
-	// move back to where the user last actively wanted us
-	SetGoal(lastUserGoal, owner->pos);
 
 	unimportantMove = true;
 	return false;
