@@ -22,8 +22,6 @@ float GMTDefaultPathController::GetDeltaSpeed(
 	bool wantReverse,
 	bool isReversing
 ) const {
-	float deltaSpeed = 0.0f;
-
 	const int targetSpeedSign = int(!wantReverse) * 2 - 1;
 	const int currentSpeedSign = int(!isReversing) * 2 - 1;
 
@@ -33,17 +31,7 @@ float GMTDefaultPathController::GetDeltaSpeed(
 	const float modAccRate = std::min(absSpeedDiff, maxAccRate);
 	const float modDecRate = std::min(absSpeedDiff, maxDecRate);
 
-	if (isReversing) {
-		// speed-sign in GMT::UpdateOwnerPos is negative
-		//   --> to go faster in reverse gear, we need to add +decRate
-		//   --> to go slower in reverse gear, we need to add -accRate
-		deltaSpeed = (rawSpeedDiff < 0.0f)?  modDecRate: -modAccRate;
-	} else {
-		// speed-sign in GMT::UpdateOwnerPos is positive
-		//   --> to go faster in forward gear, we need to add +accRate
-		//   --> to go slower in forward gear, we need to add -decRate
-		deltaSpeed = (rawSpeedDiff < 0.0f)? -modDecRate:  modAccRate;
-	}
+	const float deltaSpeed = (rawSpeedDiff < 0.0f)? -modDecRate: modAccRate;
 
 	// no acceleration changes if not on ground
 	return (deltaSpeed * (1 - int(owner->inAir)));

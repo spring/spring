@@ -23,7 +23,7 @@
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/CommandAI/TransportCAI.h"
+#include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -1424,16 +1424,14 @@ void CGroundMoveType::Arrived()
 		//   CAI sometimes does not update its queue correctly
 		//   (probably whenever we are called "before" the CAI
 		//   is ready to accept that a unit is at its goal-pos)
-		// owner->commandAI->SlowUpdate();
 		owner->commandAI->GiveCommand(Command(CMD_WAIT));
 		owner->commandAI->GiveCommand(Command(CMD_WAIT));
 
 		if (!owner->commandAI->HasMoreMoveCommands()) {
-			// NOTE:
-			//   this is probably too drastic, need another way
-			//   to make the CAI consider its goal reached that
-			//   does *NOT* change our goal-pos
-			owner->commandAI->GiveCommand(Command(CMD_STOP));
+			// update the position-parameter of our queue's front CMD_MOVE
+			// this is needed in case we Arrive()'ed non-directly (through
+			// colliding with another unit that happened to share our goal)
+			static_cast<CMobileCAI*>(owner->commandAI)->SetFrontMoveCommandPos(owner->pos);
 		}
 
 		LOG_L(L_DEBUG, "Arrived: unit %i arrived", owner->id);
@@ -2335,27 +2333,16 @@ bool CGroundMoveType::UpdateDirectControl()
 void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 {
 	if (wantedSpeed > 0.0f || currentSpeed != 0.0f) {
-		if (wantReverse) {
-			if (!reversing) {
-				reversing = (currentSpeed <= accRate);
-			}
-		} else {
-			if (reversing) {
-				reversing = (currentSpeed > accRate);
-			}
-		}
-
 		const UnitDef* ud = owner->unitDef;
 		const MoveDef* md = ud->moveDef;
 
 		float3 speedVector;
 
 		if (modInfo.allowGroundUnitGravity) {
-			const int hSpeedSign = (int(!reversing) * 2 - 1);
-			const int vSpeedSign = ((owner->pos.y + owner->speed.y) >= GetGroundHeight(owner->pos + owner->speed));
-
 			#define hAcc deltaSpeed
 			#define vAcc mapInfo->map.gravity
+
+			const bool g = ((owner->pos.y + owner->speed.y) >= GetGroundHeight(owner->pos + owner->speed));
 
 			// use terrain-tangent vector because it does not
 			// depend on UnitDef::upright (unlike o->frontdir)
@@ -2364,13 +2351,13 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 			// never drop below terrain
 			owner->speed.y =
-				(               owner->speed.dot(  UpVector) * (    vSpeedSign)) +
-				(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - vSpeedSign));
+				(               owner->speed.dot(  UpVector) * (    g)) +
+				(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - g));
 
 			// NOTE: new speed-vector has to be parallel to frontdir
 			const float3 accelVec =
-				(gndTangVec * hAcc * hSpeedSign) +
-				(  UpVector * vAcc * vSpeedSign);
+				(gndTangVec * hAcc) +
+				(  UpVector * vAcc);
 			const float3 speedVec = owner->speed + accelVec;
 
 			speedVector =
@@ -2384,10 +2371,10 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			// to owner->speed which gets overridden below, so
 			// need to calculate hSpeedScale from it (not from
 			// currentSpeed) directly
-			const int    speedSign = int(!reversing) * 2 - 1;
-			const float  speedScale = owner->speed.Length() + deltaSpeed;
+			const int    speedSign  = int(!reversing) * 2 - 1;
+			const float  speedScale = owner->speed.Length() * speedSign + deltaSpeed;
 
-			speedVector = owner->frontdir * speedScale * speedSign;
+			speedVector = owner->frontdir * speedScale;
 		}
 
 		// NOTE: don't check for structure blockage, coldet handles that
@@ -2416,14 +2403,11 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			owner->Move3D(owner->speed = speedVector, true);
 		}
 
+		reversing    = (speedVector.dot(flatFrontDir) < 0.0f);
 		currentSpeed = math::fabs(speedVector.dot(flatFrontDir));
-		deltaSpeed = 0.0f;
+		deltaSpeed   = 0.0f;
 
 		assert(math::fabs(currentSpeed) < 1e6f);
-	}
-
-	if (!wantReverse && currentSpeed == 0.0f) {
-		reversing = false;
 	}
 }
 
