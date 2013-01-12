@@ -26,6 +26,7 @@ public:
 
 	float GetSlope(float x, float y, bool synced = true) const;
 	const float3& GetNormal(float x, float y, bool synced = true) const;
+	const float3& GetNormalAboveWater(const float3& p, bool synced = true) const;
 	float3 GetSmoothNormal(float x, float y, bool synced = true) const;
 
 	float LineGroundCol(float3 from, float3 to, bool synced = true) const;

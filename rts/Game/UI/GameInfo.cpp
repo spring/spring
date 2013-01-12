@@ -179,7 +179,8 @@ void CGameInfo::Draw()
 	values.push_back(gs->speedFactor);
 
 	labels.push_back("Gravity:");
-	values.push_back(-(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED));
+	sprintf(buf, "%.2f (%.2f e/f^2)", -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED), -mapInfo->map.gravity);
+	values.push_back(buf);
 
 	labels.push_back("Tidal:");
 	values.push_back(mapInfo->map.tidalStrength);

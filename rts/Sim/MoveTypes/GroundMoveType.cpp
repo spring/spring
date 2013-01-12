@@ -2248,6 +2248,16 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 
 
 
+const float3& CGroundMoveType::GetGroundNormal(const float3& p) const
+{
+	if (owner->inWater && owner->unitDef->floatOnWater) {
+		// return (ground->GetNormalAboveWater(p));
+		return UpVector;
+	}
+
+	return (ground->GetNormal(p.x, p.z));
+}
+
 float CGroundMoveType::GetGroundHeight(const float3& p) const
 {
 	float h = 0.0f;
@@ -2349,7 +2359,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 			// use terrain-tangent vector because it does not
 			// depend on UnitDef::upright (unlike o->frontdir)
-			const float3& gndNormVec = ground->GetNormal(owner->pos.x, owner->pos.z);
+			const float3& gndNormVec = GetGroundNormal(owner->pos);
 			const float3  gndTangVec = gndNormVec.cross(owner->rightdir);
 
 			// never drop below terrain

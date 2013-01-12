@@ -406,15 +406,21 @@ float CGround::GetOrigHeight(float x, float y) const
 }
 
 
-const float3& CGround::GetNormal(float x, float y, bool synced) const
+const float3& CGround::GetNormal(float x, float z, bool synced) const
 {
-	int xsquare = int(x) / SQUARE_SIZE;
-	int ysquare = int(y) / SQUARE_SIZE;
-	xsquare = Clamp(xsquare, 0, gs->mapxm1);
-	ysquare = Clamp(ysquare, 0, gs->mapym1);
+	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, gs->mapxm1);
+	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, gs->mapym1);
 
 	const float3* normalMap = readmap->GetCenterNormals(synced);
-	return normalMap[xsquare + ysquare * gs->mapx];
+	return normalMap[xsquare + zsquare * gs->mapx];
+}
+
+const float3& CGround::GetNormalAboveWater(const float3& p, bool synced) const
+{
+	if (GetHeightReal(p.x, p.z, synced) <= 0.0f)
+		return UpVector;
+
+	return (GetNormal(p.x, p.z, synced));
 }
 
 
