@@ -2347,15 +2347,20 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			#define hAcc deltaSpeed
 			#define vAcc mapInfo->map.gravity
 
+			// use terrain-tangent vector because it does not
+			// depend on UnitDef::upright (unlike o->frontdir)
+			const float3& gndNormVec = ground->GetNormal(owner->pos.x, owner->pos.z);
+			const float3  gndTangVec = gndNormVec.cross(owner->rightdir);
+
 			// never drop below terrain
-			if (vSpeedSign == 0) {
-				owner->speed.y = (owner->frontdir.y * owner->speed.Length());
-			}
+			owner->speed.y =
+				(               owner->speed.dot(  UpVector) * (    vSpeedSign)) +
+				(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - vSpeedSign));
 
 			// NOTE: new speed-vector has to be parallel to frontdir
 			const float3 accelVec =
-				(owner->frontdir * hAcc * hSpeedSign) +
-				(       UpVector * vAcc * vSpeedSign);
+				(gndTangVec * hAcc * hSpeedSign) +
+				(  UpVector * vAcc * vSpeedSign);
 			const float3 speedVec = owner->speed + accelVec;
 
 			speedVector =
