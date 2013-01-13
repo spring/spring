@@ -787,12 +787,9 @@ void CGroundMoveType::UpdateSkid()
 		}
 	}
 
-	// translate before rotate
+	// translate before rotate, match terrain normal if not in air
 	owner->Move3D(speed, true);
-
-	// NOTE: only needed to match terrain normal
-	if ((pos.y - groundHeight) <= 1.0f)
-		owner->UpdateDirVectors(true, true);
+	owner->UpdateDirVectors(true, true);
 
 	if (skidding) {
 		CalcSkidRot();
