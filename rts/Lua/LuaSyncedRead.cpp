@@ -21,7 +21,6 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
-#include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/SideParser.h"
@@ -447,6 +446,27 @@ static int PushCollisionVolumeData(lua_State* L, const CollisionVolume* vol) {
 	lua_pushnumber(L, vol->GetPrimaryAxis());
 	lua_pushboolean(L, vol->IgnoreHits());
 	return 10;
+}
+
+static int PushTerrainTypeData(lua_State* L, const CMapInfo::TerrainType* tt, bool groundInfo) {
+	lua_pushsstring(L, tt->name);
+
+	if (groundInfo) {
+		assert(lua_isnumber(L, 1));
+		assert(lua_isnumber(L, 2));
+		// WTF is this still doing here? WHY the premultiplication?
+		lua_pushnumber(L, LuaMetalMap::GetMetalAmount(L));
+		lua_pushnumber(L, tt->hardness * mapDamage->mapHardness);
+	} else {
+		lua_pushnumber(L, tt->hardness);
+	}
+
+	lua_pushnumber(L, tt->tankSpeed);
+	lua_pushnumber(L, tt->kbotSpeed);
+	lua_pushnumber(L, tt->hoverSpeed);
+	lua_pushnumber(L, tt->shipSpeed);
+	lua_pushboolean(L, tt->receiveTracks);
+	return (7 + int(groundInfo));
 }
 
 
@@ -4518,25 +4538,19 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
 
-	const int ix = (int)(max(0.0f, min(float3::maxxpos, x)) / 16.0f);
-	const int iz = (int)(max(0.0f, min(float3::maxzpos, z)) / 16.0f);
-
-	const float metal = readmap->metalMap->GetMetalAmount(ix, iz);
+	const int ix = Clamp(x, 0.0f, float3::maxxpos) / (SQUARE_SIZE * 2);
+	const int iz = Clamp(z, 0.0f, float3::maxzpos) / (SQUARE_SIZE * 2);
 
 	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
-	const int index = min(maxIndex, (gs->hmapx * iz) + ix);
-	const int typeIndex = readmap->GetTypeMapSynced()[index];
-	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[typeIndex];
+	const int sqrIndex = std::min(maxIndex, (gs->hmapx * iz) + ix);
+	const int typeIndex = readmap->GetTypeMapSynced()[sqrIndex];
 
-	lua_pushsstring(L, tt.name);
-	lua_pushnumber(L, metal);
-	lua_pushnumber(L, tt.hardness * mapDamage->mapHardness);
-	lua_pushnumber(L, tt.tankSpeed);
-	lua_pushnumber(L, tt.kbotSpeed);
-	lua_pushnumber(L, tt.hoverSpeed);
-	lua_pushnumber(L, tt.shipSpeed);
-	lua_pushboolean(L, tt.receiveTracks);
-	return 8;
+	// arguments to LuaMetalMap::GetMetalAmount in half-heightmap coors
+	lua_pop(L, 2);
+	lua_pushnumber(L, ix);
+	lua_pushnumber(L, iz);
+
+	return (PushTerrainTypeData(L, &mapInfo->terrainTypes[typeIndex], true));
 }
 
 
@@ -4630,17 +4644,7 @@ int LuaSyncedRead::GetTerrainTypeData(lua_State* L)
 		return 0;
 	}
 
-	const CMapInfo::TerrainType* tt = &mapInfo->terrainTypes[tti];
-
-	lua_pushsstring(L, tt->name);
-	lua_pushnumber(L, tt->hardness);
-	lua_pushnumber(L, tt->tankSpeed);
-	lua_pushnumber(L, tt->kbotSpeed);
-	lua_pushnumber(L, tt->hoverSpeed);
-	lua_pushnumber(L, tt->shipSpeed);
-	lua_pushboolean(L, tt->receiveTracks);
-
-	return 7;
+	return (PushTerrainTypeData(L, &mapInfo->terrainTypes[tti], false));
 }
 
 /******************************************************************************/
