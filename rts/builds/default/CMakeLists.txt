@@ -21,9 +21,8 @@ LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LI
 
 
 FIND_PACKAGE_STATIC(Freetype REQUIRED)
-foreach(f ${FREETYPE_INCLUDE_DIRS})
-	LIST(APPEND engineIncludes ${f})
-endforeach(f)
+LIST(APPEND engineIncludes ${FREETYPE_INCLUDE_DIR_ft2build})
+LIST(APPEND engineIncludes ${FREETYPE_INCLUDE_DIR_freetype2})
 LIST(APPEND engineLibraries ${FREETYPE_LIBRARIES})
 
 IF    (PREFER_STATIC_LIBS)
