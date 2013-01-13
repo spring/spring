@@ -454,8 +454,9 @@ static int PushTerrainTypeData(lua_State* L, const CMapInfo::TerrainType* tt, bo
 	if (groundInfo) {
 		assert(lua_isnumber(L, 1));
 		assert(lua_isnumber(L, 2));
-		// WTF is this still doing here? WHY the premultiplication?
-		lua_pushnumber(L, LuaMetalMap::GetMetalAmount(L));
+		// WTF is this still doing here?
+		LuaMetalMap::GetMetalAmount(L);
+		// WHY the premultiplication?
 		lua_pushnumber(L, tt->hardness * mapDamage->mapHardness);
 	} else {
 		lua_pushnumber(L, tt->hardness);
