@@ -257,7 +257,7 @@ CUnit::~CUnit()
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
 		// to be as short as possible to prevent position jumps)
 		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
-		featureHandler->CreateWreckage(params, delayedWreckLevel, true);
+		featureHandler->CreateWreckage(params, delayedWreckLevel - 1, true);
 	}
 
 	if (unitDef->isAirBase) {

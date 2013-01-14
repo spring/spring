@@ -355,8 +355,8 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit
 	health -= damages[0];
 
 	if (health <= 0 && def->destructable) {
-		FeatureLoadParams params = {def, NULL, pos, ZeroVector, -1, team, -1, heading, buildFacing, 0};
-		CFeature* deathFeature = featureHandler->CreateWreckage(params, 1, false);
+		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, ZeroVector, -1, team, -1, heading, buildFacing, 0};
+		CFeature* deathFeature = featureHandler->CreateWreckage(params, 0, false);
 
 		if (deathFeature != NULL) {
 			// if a partially reclaimed corpse got blasted,
