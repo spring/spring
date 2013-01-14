@@ -329,15 +329,13 @@ void CUnit::SetEnergyStorage(float newStorage)
 
 void CUnit::PreInit(const UnitLoadParams& params)
 {
-	// if this is -1, we get a random ID from UnitHandler
-	id = std::min(params.unitID, int(uh->MaxUnits()) - 1);
-	team = params.teamID;
-	allyteam = teamHandler->AllyTeam(team);
+	// if this is <= -1, we get a random ID from UnitHandler
+	id = params.unitID;
+	unitDefID = (params.unitDef)->id;
+	featureDefID = -1;
 
 	objectDef = params.unitDef;
 	unitDef = params.unitDef;
-	unitDefID = unitDef->id;
-	featureDefID = -1;
 
 	{
 		const FeatureDef* wreckFeatureDef = featureHandler->GetFeatureDef(unitDef->wreckName);
@@ -346,6 +344,9 @@ void CUnit::PreInit(const UnitLoadParams& params)
 			featureDefID = wreckFeatureDef->id;
 		}
 	}
+
+	team = params.teamID;
+	allyteam = teamHandler->AllyTeam(team);
 
 	buildFacing = std::abs(params.facing) % NUM_FACINGS;
 	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;

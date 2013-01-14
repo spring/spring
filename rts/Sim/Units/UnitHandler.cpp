@@ -124,7 +124,7 @@ bool CUnitHandler::AddUnit(CUnit* unit)
 		return false;
 	}
 
-	if (unit->id == -1) {
+	if ((unit->id = Clamp(unit->id, -1, int(units.size()) - 1)) == -1) {
 		// pick the first available (randomized) ID
 		assert(freeUnitIDs.find(unit->id) == freeUnitIDs.end());
 		unit->id = *(freeUnitIDs.begin());

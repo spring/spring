@@ -135,10 +135,11 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	udef = params.unitDef;
 	objectDef = params.featureDef;
 
-	heading = params.heading;
-	buildFacing = params.facing;
 	team = params.teamID;
 	allyteam = params.allyTeamID;
+
+	heading = params.heading;
+	buildFacing = params.facing;
 	smokeTime = params.smokeTime;
 
 	mass = def->mass;

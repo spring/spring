@@ -335,22 +335,22 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
 	if (freeFeatureIDs.empty()) {
-		// alloc n new ids and randomly insert to freeFeatureIDs
-		static const unsigned n = 100;
+		// allocate new ids and randomly insert to freeFeatureIDs
+		// if feature->id is non-negative, then allocate enough to
+		// make it a valid index (we have no hard MAX_FEATURES cap)
+		std::vector<int> newIDs(std::max(int(features.size()) + 100, feature->id + 1) - int(features.size()));
 
-		std::vector<int> newIds(n);
+		for (unsigned i = 0; i < newIDs.size(); ++i)
+			newIDs[i] = i + features.size();
 
-		for (unsigned i = 0; i < n; ++i)
-			newIds[i] = i + features.size();
-
-		features.resize(features.size() + n, NULL);
+		features.resize(features.size() + newIDs.size(), NULL);
 
 		SyncedRNG rng;
-		std::random_shuffle(newIds.begin(), newIds.end(), rng); // synced
-		std::copy(newIds.begin(), newIds.end(), std::inserter(freeFeatureIDs, freeFeatureIDs.begin()));
+		std::random_shuffle(newIDs.begin(), newIDs.end(), rng); // synced
+		std::copy(newIDs.begin(), newIDs.end(), std::inserter(freeFeatureIDs, freeFeatureIDs.begin()));
 	}
 
-	if (feature->id == -1) {
+	if ((feature->id = Clamp(feature->id, -1, int(features.size()) - 1)) == -1) {
 		assert(freeFeatureIDs.find(unit->id) == freeFeatureIDs.end());
 		feature->id = *(freeFeatureIDs.begin());
 	} else {
