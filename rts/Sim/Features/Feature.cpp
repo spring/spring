@@ -126,18 +126,20 @@ void CFeature::ChangeTeam(int newTeam)
 }
 
 
-void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int _heading,
-	int facing, int _team, int _allyteam, const UnitDef* _udef, const float3& speed, int _smokeTime)
+void CFeature::Initialize(const FeatureLoadParams& params)
 {
-	def = _def;
-	objectDef = _def;
-	udef = _udef;
-	defID = def->id;
-	heading = _heading;
-	buildFacing = facing;
-	team = _team;
-	allyteam = _allyteam;
-	smokeTime = _smokeTime;
+	id = params.featureID;
+	defID = (params.featureDef)->id;
+
+	def = params.featureDef;
+	udef = params.unitDef;
+	objectDef = params.featureDef;
+
+	heading = params.heading;
+	buildFacing = params.facing;
+	team = params.teamID;
+	allyteam = params.allyTeamID;
+	smokeTime = params.smokeTime;
 
 	mass = def->mass;
 	crushResistance = def->crushResistance;
@@ -145,13 +147,13 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	health   = def->health;
 	blocking = def->blocking;
 
-	xsize = ((facing & 1) == 0) ? def->xsize : def->zsize;
-	zsize = ((facing & 1) == 1) ? def->xsize : def->zsize;
+	xsize = ((buildFacing & 1) == 0) ? def->xsize : def->zsize;
+	zsize = ((buildFacing & 1) == 1) ? def->xsize : def->zsize;
 
 	noSelect = def->noSelect;
 
 	// set position before mid-position
-	Move3D(_pos.cClampInMap(), false);
+	Move3D((params.pos).cClampInMap(), false);
 
 	if (def->drawType == DRAWTYPE_MODEL) {
 		if ((model = def->LoadModel()) == NULL) {
@@ -195,11 +197,8 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		finalHeight = ground->GetHeightReal(pos.x, pos.z);
 	}
 
-	if (speed != ZeroVector) {
-		deathSpeed = speed;
-	}
-
-	isMoving = ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
+	deathSpeed = params.speed;
+	isMoving = ((deathSpeed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
 }
 
 
@@ -355,12 +354,10 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit
 	health -= damages[0];
 
 	if (health <= 0 && def->destructable) {
-		CFeature* deathFeature = featureHandler->CreateWreckage(
-			pos, def->deathFeature, heading,
-			buildFacing, 1, team, -1, false, NULL
-		);
+		FeatureLoadParams params = {def, NULL, pos, ZeroVector, -1, team, -1, heading, buildFacing, 0};
+		CFeature* deathFeature = featureHandler->CreateWreckage(params, 1, false);
 
-		if (deathFeature) {
+		if (deathFeature != NULL) {
 			// if a partially reclaimed corpse got blasted,
 			// ensure its wreck is not worth the full amount
 			// (which might be more than the amount remaining)

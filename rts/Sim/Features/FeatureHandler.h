@@ -16,6 +16,22 @@ struct S3DModel;
 struct UnitDef;
 class LuaTable;
 
+struct FeatureLoadParams {
+	const FeatureDef* featureDef;
+	const UnitDef* unitDef;
+
+	float3 pos;
+	float3 speed;
+
+	int featureID;
+	int teamID;
+	int allyTeamID;
+
+	short int heading;
+	short int facing;
+
+	int smokeTime;
+};
 
 class CFeatureHandler : public boost::noncopyable
 {
@@ -25,9 +41,7 @@ public:
 	CFeatureHandler();
 	~CFeatureHandler();
 
-	CFeature* CreateWreckage(const float3& pos, const std::string& name,
-		float rot, int facing, int iter, int team, int allyteam, bool emitSmoke,
-		const UnitDef* udef, const float3& speed = ZeroVector);
+	CFeature* CreateWreckage(const FeatureLoadParams& params, const int numIterations, bool emitSmoke);
 
 	void Update();
 
@@ -56,8 +70,8 @@ private:
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;
 
-	std::list<int> freeIDs;
-	std::list<int> toBeFreedIDs;
+	std::set<int> freeFeatureIDs;
+	std::list<int> toBeFreedFeatureIDs;
 	CFeatureSet activeFeatures;
 	std::vector<CFeature*> features;
 

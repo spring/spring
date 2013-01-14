@@ -15,12 +15,13 @@ CR_REG_METADATA(FeatureDef, (
 	CR_MEMBER(burnable),
 	CR_MEMBER(floating),
 	CR_MEMBER(geoThermal),
-	CR_MEMBER(deathFeature),
+	CR_MEMBER(deathFeatureDefID),
 	CR_MEMBER(smokeTime)
 ));
 
 FeatureDef::FeatureDef()
-	: reclaimTime(0)
+	: deathFeatureDefID(-1)
+	, reclaimTime(0)
 	, drawType(DRAWTYPE_NONE)
 	, resurrectable(false)
 	, smokeTime(0)

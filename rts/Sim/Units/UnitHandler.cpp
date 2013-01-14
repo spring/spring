@@ -44,7 +44,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius),
 	CR_MEMBER(unitsToBeRemoved),
-	CR_MEMBER(morphUnitToFeature),
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(unitsByDefs),
 	CR_POSTLOAD(PostLoad),
@@ -63,7 +62,6 @@ void CUnitHandler::PostLoad()
 CUnitHandler::CUnitHandler()
 :
 	maxUnitRadius(0.0f),
-	morphUnitToFeature(true),
 	maxUnits(0)
 {
 	// set the global (runtime-constant) unit-limit as the sum
@@ -96,7 +94,7 @@ CUnitHandler::CUnitHandler()
 
 		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
 		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
-		std::copy(freeIDs.begin(), freeIDs.end(), std::front_inserter(freeUnitIDs));
+		std::copy(freeIDs.begin(), freeIDs.end(), std::inserter(freeUnitIDs, freeUnitIDs.begin()));
 	}
 
 	slowUpdateIterator = activeUnits.end();
@@ -116,7 +114,7 @@ CUnitHandler::~CUnitHandler()
 }
 
 
-bool CUnitHandler::AddUnit(CUnit *unit)
+bool CUnitHandler::AddUnit(CUnit* unit)
 {
 	if (freeUnitIDs.empty()) {
 		// should be unreachable (all code that goes through
@@ -126,8 +124,18 @@ bool CUnitHandler::AddUnit(CUnit *unit)
 		return false;
 	}
 
-	unit->id = freeUnitIDs.front();
-	freeUnitIDs.pop_front();
+	if (unit->id == -1) {
+		// pick the first available (randomized) ID
+		assert(freeUnitIDs.find(unit->id) == freeUnitIDs.end());
+		unit->id = *(freeUnitIDs.begin());
+	} else {
+		// otherwise use given ID if not already taken
+		if (freeUnitIDs.find(unit->id) == freeUnitIDs.end()) {
+			assert(units[unit->id] != NULL);
+			return false;
+		}
+	}
+
 	units[unit->id] = unit;
 
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
@@ -140,6 +148,8 @@ bool CUnitHandler::AddUnit(CUnit *unit)
 			++ui;
 		}
 	}
+
+	freeUnitIDs.erase(unit->id);
 	activeUnits.insert(ui, unit);
 
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
@@ -176,7 +186,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
 			activeUnits.erase(usi);
-			freeUnitIDs.push_back(delUnit->id);
+			freeUnitIDs.insert(delUnit->id);
 			unitsByDefs[delTeam][delType].erase(delUnit);
 
 			units[delUnit->id] = NULL;

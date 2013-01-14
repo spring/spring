@@ -3716,7 +3716,7 @@ EXPORT(bool) skirmishAiCallback_FeatureDef_isGeoThermal(int skirmishAIId, int fe
 }
 
 EXPORT(const char*) skirmishAiCallback_FeatureDef_getDeathFeature(int skirmishAIId, int featureDefId) {
-	return getFeatureDefById(skirmishAIId, featureDefId)->deathFeature.c_str();
+	return "$$deprecated$$";
 }
 
 EXPORT(int) skirmishAiCallback_FeatureDef_getXSize(int skirmishAIId, int featureDefId) {

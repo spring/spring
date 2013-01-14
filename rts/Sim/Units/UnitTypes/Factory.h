@@ -39,7 +39,7 @@ public:
 	/// supply the build piece to speed up
 	float3 CalcBuildPos(int buildPiece = -1);
 
-	void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
+	void PreInit(const UnitLoadParams& params);
 	bool ChangeTeam(int newTeam, ChangeType type);
 
 	const NanoPieceCache& GetNanoPieceCache() const { return nanoPieceCache; }

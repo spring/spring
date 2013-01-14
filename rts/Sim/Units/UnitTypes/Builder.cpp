@@ -112,21 +112,22 @@ void CBuilder::PostLoad()
 }
 
 
-void CBuilder::PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build)
+void CBuilder::PreInit(const UnitLoadParams& params)
 {
-	range3D = def->buildRange3D;
-	buildDistance = def->buildDistance;
+	unitDef = params.unitDef;
+	range3D = unitDef->buildRange3D;
+	buildDistance = (params.unitDef)->buildDistance;
 
 	const float scale = (1.0f / TEAM_SLOWUPDATE_RATE);
 
-	buildSpeed     = scale * def->buildSpeed;
-	repairSpeed    = scale * def->repairSpeed;
-	reclaimSpeed   = scale * def->reclaimSpeed;
-	resurrectSpeed = scale * def->resurrectSpeed;
-	captureSpeed   = scale * def->captureSpeed;
-	terraformSpeed = scale * def->terraformSpeed;
+	buildSpeed     = scale * unitDef->buildSpeed;
+	repairSpeed    = scale * unitDef->repairSpeed;
+	reclaimSpeed   = scale * unitDef->reclaimSpeed;
+	resurrectSpeed = scale * unitDef->resurrectSpeed;
+	captureSpeed   = scale * unitDef->captureSpeed;
+	terraformSpeed = scale * unitDef->terraformSpeed;
 
-	CUnit::PreInit(def, team, facing, position, build);
+	CUnit::PreInit(params);
 }
 
 
@@ -371,14 +372,17 @@ void CBuilder::Update()
 						if (curResurrect->resurrectProgress > 1) {
 							// resurrect finished
 							curResurrect->UnBlock();
-							CUnit* u = unitLoader->LoadUnit(ud, curResurrect->pos,
-														team, false, curResurrect->buildFacing, this);
+
+							UnitLoadParams resurrecteeParams = {ud, this, curResurrect->pos, ZeroVector, -1, team, curResurrect->buildFacing, false, false};
+							CUnit* resurrectee = unitLoader->LoadUnit(resurrecteeParams);
 
 							if (!this->unitDef->canBeAssisted) {
-								u->soloBuilder = this;
-								u->AddDeathDependence(this, DEPENDENCE_BUILDER);
+								resurrectee->soloBuilder = this;
+								resurrectee->AddDeathDependence(this, DEPENDENCE_BUILDER);
 							}
-							u->health *= 0.05f;
+
+							// TODO: make configurable if this should happen
+							resurrectee->health *= 0.05f;
 
 							for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
 								CBuilder* bld = (CBuilder*) *it;
@@ -395,7 +399,7 @@ void CBuilder::Update()
 								const int cmdFeatureId = c.params[0];
 
 								if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam)) {
-									bld->lastResurrected = u->id; // all units that were rezzing shall assist the repair too
+									bld->lastResurrected = resurrectee->id; // all units that were rezzing shall assist the repair too
 									c.params[0] = INT_MAX / 2; // prevent FinishCommand from removing this command when the feature is deleted, since it is needed to start the repair
 								}
 							}
@@ -658,8 +662,9 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 	}
 
 	const UnitDef* buildeeDef = buildInfo.def;
-	CUnit* buildee = unitLoader->LoadUnit(buildeeDef, buildInfo.pos, team,
-	                               true, buildInfo.buildFacing, this);
+	const UnitLoadParams buildeeParams = {buildeeDef, this, buildInfo.pos, ZeroVector, -1, team, buildInfo.buildFacing, true, false};
+
+	CUnit* buildee = unitLoader->LoadUnit(buildeeParams);
 
 	// floating structures don't terraform the seabed
 	const float groundheight = ground->GetHeightReal(buildee->pos.x, buildee->pos.z);

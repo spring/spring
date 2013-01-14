@@ -41,6 +41,7 @@ public:
 	void PostLoad();
 
 	unsigned int MaxUnits() const { return maxUnits; }
+	float MaxUnitRadius() const { return maxUnitRadius; }
 
 	///< test if a unit can be built at specified position
 	BuildSquareStatus TestUnitBuildSquare(
@@ -74,20 +75,21 @@ public:
 	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
 	std::list<CBuilderCAI*> builderCAIs; //FIXME use std::set? (std::set is ingeneral not syncsafe, but when using a custom compare func it can)
 
-	float maxUnitRadius;                              ///< largest radius of any unit added so far
-	bool morphUnitToFeature;
-
 private:
 	///< test a single mapsquare for build possibility
 	BuildSquareStatus TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature, int allyteam, bool synced);
 
 private:
-	std::list<unsigned int> freeUnitIDs;
+	std::set<unsigned int> freeUnitIDs;
 	std::vector<CUnit*> unitsToBeRemoved;            ///< units that will be removed at start of next update
 	std::list<CUnit*>::iterator slowUpdateIterator;
 
 	///< global unit-limit (derived from the per-team limit)
 	unsigned int maxUnits;
+
+	///< largest radius of any unit added so far (some
+	///< spatial query filters in GameHelper use this)
+	float maxUnitRadius;
 };
 
 extern CUnitHandler* uh;

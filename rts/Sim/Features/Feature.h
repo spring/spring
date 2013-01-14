@@ -17,6 +17,7 @@
 #define TREE_RADIUS 20
 
 struct FeatureDef;
+struct FeatureLoadParams;
 class CUnit;
 struct DamageArray;
 class CFireProjectile;
@@ -35,8 +36,7 @@ public:
 	 * Pos of quad must not change after this.
 	 * This will add this to the FeatureHandler.
 	 */
-	void Initialize(const float3& pos, const FeatureDef* def, short int heading, int facing,
-		int team, int allyteam, const UnitDef* udef, const float3& speed = ZeroVector, int smokeTime = 0);
+	void Initialize(const FeatureLoadParams& params);
 	int GetBlockingMapID() const { return id + (10 * uh->MaxUnits()); }
 
 	/**
