@@ -323,8 +323,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				0, // smokeTime
 			};
 
-			CFeature* feature = new CFeature();
-			feature->Initialize(params);
+			LoadFeature(params);
 		}
 
 		delete[] mfi;
@@ -332,10 +331,25 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 }
 
 
-int CFeatureHandler::AddFeature(CFeature* feature)
+CFeature* CFeatureHandler::LoadFeature(const FeatureLoadParams& params) {
+	// need to check this BEFORE creating the instance
+	if (!CanAddFeature(params.featureID))
+		return NULL;
+
+	// Initialize() calls AddFeature -> no memory-leak
+	CFeature* feature = new CFeature();
+	feature->Initialize(params);
+	return feature;
+}
+
+bool CFeatureHandler::AddFeature(CFeature* feature)
 {
-	if (freeFeatureIDs.empty()) {
+	// LoadFeature should make sure this is true
+	assert(CanAddFeature(feature->id));
+
+	if ((feature->id < 0 && freeFeatureIDs.empty()) || (feature->id >= 0 && feature->id >= freeFeatureIDs.size())) {
 		// allocate new ids and randomly insert to freeFeatureIDs
+		//
 		// if feature->id is non-negative, then allocate enough to
 		// make it a valid index (we have no hard MAX_FEATURES cap)
 		std::vector<int> newIDs(std::max(int(features.size()) + 100, feature->id + 1) - int(features.size()));
@@ -350,13 +364,16 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 		std::copy(newIDs.begin(), newIDs.end(), std::inserter(freeFeatureIDs, freeFeatureIDs.begin()));
 	}
 
-	if ((feature->id = Clamp(feature->id, -1, int(features.size()) - 1)) == -1) {
-		assert(freeFeatureIDs.find(unit->id) == freeFeatureIDs.end());
+
+	if (feature->id < 0) {
+		assert(!freeFeatureIDs.empty());
+		assert(freeFeatureIDs.find(feature->id) == freeFeatureIDs.end());
 		feature->id = *(freeFeatureIDs.begin());
 	} else {
 		if (freeFeatureIDs.find(feature->id) == freeFeatureIDs.end()) {
+			assert(feature->id < features.size());
 			assert(features[feature->id] != NULL);
-			return -1;
+			return false;
 		}
 	}
 
@@ -366,7 +383,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	SetFeatureUpdateable(feature);
 
 	eventHandler.FeatureCreated(feature);
-	return feature->id;
+	return true;
 }
 
 
@@ -409,14 +426,12 @@ CFeature* CFeatureHandler::CreateWreckage(
 		return NULL;
 
 	if (!fd->modelName.empty()) {
-		CFeature* feature = new CFeature();
 		FeatureLoadParams params = cparams;
 
 		params.unitDef = ((fd->resurrectable == 0) || (numWreckLevels > 1 && fd->resurrectable < 0))? NULL: cparams.unitDef;
 		params.smokeTime = fd->smokeTime * emitSmoke;
 
-		feature->Initialize(params);
-		return feature;
+		return (LoadFeature(params));
 	}
 
 	return NULL;

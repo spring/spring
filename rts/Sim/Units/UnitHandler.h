@@ -40,6 +40,17 @@ public:
 	void Serialize(creg::ISerializer& s) {}
 	void PostLoad();
 
+	bool CanAddUnit(int id) const {
+		// do we want to be assigned a random ID and are any left in pool?
+		if (id < 0)
+			return (!freeUnitIDs.empty());
+		// is this ID not already in use?
+		if (id < MaxUnits())
+			return (units[id] == NULL);
+		// AddUnit will not make new room for us
+		return false;
+	}
+
 	unsigned int MaxUnits() const { return maxUnits; }
 	float MaxUnitRadius() const { return maxUnitRadius; }
 
@@ -85,6 +96,7 @@ private:
 	std::list<CUnit*>::iterator slowUpdateIterator;
 
 	///< global unit-limit (derived from the per-team limit)
+	///< units.size() is equal to this and constant at runtime
 	unsigned int maxUnits;
 
 	///< largest radius of any unit added so far (some

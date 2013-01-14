@@ -41,11 +41,12 @@ public:
 	CFeatureHandler();
 	~CFeatureHandler();
 
+	CFeature* LoadFeature(const FeatureLoadParams& params);
 	CFeature* CreateWreckage(const FeatureLoadParams& params, const int numWreckLevels, bool emitSmoke);
 
 	void Update();
 
-	int AddFeature(CFeature* feature);
+	bool AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
 	CFeature* GetFeature(int id);
 
@@ -60,6 +61,19 @@ public:
 	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
 
 private:
+	bool CanAddFeature(int id) const {
+		// do we want to be assigned a random ID? (in case
+		// freeFeatureIDs is empty, AddFeature will always
+		// allocate more)
+		if (id < 0)
+			return true;
+		// is this ID not already in use?
+		if (id < features.size())
+			return (features[id] == NULL);
+		// AddFeature will make new room for us
+		return true;
+	}
+
 	FeatureDef* CreateDefaultTreeFeatureDef(const std::string& name) const;
 	FeatureDef* CreateDefaultGeoFeatureDef(const std::string& name) const;
 	FeatureDef* CreateFeatureDef(const LuaTable& luaTable, const std::string& name) const;

@@ -116,22 +116,21 @@ CUnitHandler::~CUnitHandler()
 
 bool CUnitHandler::AddUnit(CUnit* unit)
 {
-	if (freeUnitIDs.empty()) {
+	// LoadUnit should make sure this is true
+	assert(CanAddUnit(unit->id));
+
+	if (unit->id < 0) {
 		// should be unreachable (all code that goes through
 		// UnitLoader::LoadUnit --> Unit::PreInit checks the
 		// unit limit first)
-		assert(false);
-		return false;
-	}
-
-	if ((unit->id = Clamp(unit->id, -1, int(units.size()) - 1)) == -1) {
+		assert(!freeUnitIDs.empty());
 		// pick the first available (randomized) ID
 		assert(freeUnitIDs.find(unit->id) == freeUnitIDs.end());
 		unit->id = *(freeUnitIDs.begin());
 	} else {
 		// otherwise use given ID if not already taken
 		if (freeUnitIDs.find(unit->id) == freeUnitIDs.end()) {
-			assert(units[unit->id] != NULL);
+			assert(unit->id >= units.size() || units[unit->id] != NULL);
 			return false;
 		}
 	}
