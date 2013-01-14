@@ -907,13 +907,22 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	ASSERT_SYNCED(pos);
 	ASSERT_SYNCED(facing);
 
-	CUnit* unit = NULL;
-	CUnit* builder = uh->GetUnit(luaL_optint(L, 8, -1));
-
-	UnitLoadParams unitParams = {unitDef, builder, pos, ZeroVector, luaL_optint(L, 7, -1), teamID, facing, beingBuilt, flattenGround};
-
 	inCreateUnit = true;
-	unit = unitLoader->LoadUnit(unitParams);
+	UnitLoadParams unitParams = {
+		unitDef,
+		uh->GetUnit(luaL_optint(L, 8, -1)),
+
+		pos,
+		ZeroVector,
+
+		luaL_optint(L, 7, -1),
+		teamID,
+		facing,
+
+		beingBuilt,
+		flattenGround
+	};
+	CUnit* unit = unitLoader->LoadUnit(unitParams);
 	inCreateUnit = false;
 
 	if (unit != NULL) {
@@ -2291,6 +2300,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	CheckAllowGameChanges(L);
 
 	const FeatureDef* featureDef = NULL;
+
 	if (lua_israwstring(L, 1)) {
 		featureDef = featureHandler->GetFeatureDef(lua_tostring(L, 1));
 	} else if (lua_israwnumber(L, 1)) {
@@ -2337,7 +2347,6 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
-
 	FeatureLoadParams params = {
 		featureDef,
 		NULL,
@@ -2355,7 +2364,6 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 		0 // smokeTime
 	};
 	CFeature* feature = featureHandler->LoadFeature(params);
-
 	inCreateFeature = false;
 
 	if (feature != NULL) {

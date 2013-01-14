@@ -370,11 +370,8 @@ bool CFeatureHandler::AddFeature(CFeature* feature)
 		assert(freeFeatureIDs.find(feature->id) == freeFeatureIDs.end());
 		feature->id = *(freeFeatureIDs.begin());
 	} else {
-		if (freeFeatureIDs.find(feature->id) == freeFeatureIDs.end()) {
-			assert(feature->id < features.size());
-			assert(features[feature->id] != NULL);
-			return false;
-		}
+		assert(feature->id < features.size());
+		assert(features[feature->id] == NULL);
 	}
 
 	freeFeatureIDs.erase(feature->id);
