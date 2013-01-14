@@ -388,19 +388,22 @@ CFeature* CFeatureHandler::GetFeature(int id)
 
 CFeature* CFeatureHandler::CreateWreckage(
 	const FeatureLoadParams& cparams,
-	const int numIterations,
+	const int numWreckLevels,
 	bool emitSmoke)
 {
 	const FeatureDef* fd = cparams.featureDef;
-	int i = numIterations;
+	int i = numWreckLevels;
 
 	if (fd == NULL)
 		return NULL;
 
-	while ((--i) > 0) {
-		if ((fd = GetFeatureDefByID(fd->deathFeatureDefID)) == NULL)
+	// move down the wreck-chain; this
+	// always executes max(1, N) times
+	do {
+		if ((fd = GetFeatureDefByID(fd->deathFeatureDefID)) == NULL) {
 			return NULL;
-	}
+		}
+	} while ((--i) > 0);
 
 	if (luaRules && !luaRules->AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
 		return NULL;
@@ -409,12 +412,13 @@ CFeature* CFeatureHandler::CreateWreckage(
 		CFeature* feature = new CFeature();
 		FeatureLoadParams params = cparams;
 
-		params.unitDef = ((fd->resurrectable == 0) || (numIterations > 1 && fd->resurrectable < 0))? NULL: cparams.unitDef;
+		params.unitDef = ((fd->resurrectable == 0) || (numWreckLevels > 1 && fd->resurrectable < 0))? NULL: cparams.unitDef;
 		params.smokeTime = fd->smokeTime * emitSmoke;
 
 		feature->Initialize(params);
 		return feature;
 	}
+
 	return NULL;
 }
 

@@ -41,7 +41,7 @@ public:
 	CFeatureHandler();
 	~CFeatureHandler();
 
-	CFeature* CreateWreckage(const FeatureLoadParams& params, const int numIterations, bool emitSmoke);
+	CFeature* CreateWreckage(const FeatureLoadParams& params, const int numWreckLevels, bool emitSmoke);
 
 	void Update();
 
