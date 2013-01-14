@@ -77,10 +77,12 @@ void CFactory::PostLoad()
 	}
 }
 
-void CFactory::PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build)
+void CFactory::PreInit(const UnitLoadParams& params)
 {
-	buildSpeed = def->buildSpeed / TEAM_SLOWUPDATE_RATE;
-	CBuilding::PreInit(def, team, facing, position, build);
+	unitDef = params.unitDef;
+	buildSpeed = unitDef->buildSpeed / TEAM_SLOWUPDATE_RATE;
+
+	CBuilding::PreInit(params);
 }
 
 
@@ -182,19 +184,20 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	if (blocked)
 		return;
 
-	CUnit* b = unitLoader->LoadUnit(buildeeDef, buildPos, team, true, buildFacing, this);
+	UnitLoadParams buildeeParams = {buildeeDef, this, buildPos, ZeroVector, -1, team, buildFacing, true, false};
+	CUnit* buildee = unitLoader->LoadUnit(buildeeParams);
 
 	if (!unitDef->canBeAssisted) {
-		b->soloBuilder = this;
-		b->AddDeathDependence(this, DEPENDENCE_BUILDER);
+		buildee->soloBuilder = this;
+		buildee->AddDeathDependence(this, DEPENDENCE_BUILDER);
 	}
 
-	AddDeathDependence(b, DEPENDENCE_BUILD);
+	AddDeathDependence(buildee, DEPENDENCE_BUILD);
 	script->StartBuilding();
 
 	// set curBuildDef to NULL to indicate construction
 	// has started, otherwise we would keep being called
-	curBuild = b;
+	curBuild = buildee;
 	curBuildDef = NULL;
 
 	#if (PLAY_SOUNDS == 1)

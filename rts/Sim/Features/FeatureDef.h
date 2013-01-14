@@ -21,8 +21,8 @@ struct FeatureDef: public SolidObjectDef
 	FeatureDef();
 
 	std::string description;
-	/// name of feature that this turn into when killed (not reclaimed)
-	std::string deathFeature;
+	/// feature that this turn into when killed (not reclaimed)
+	int deathFeatureDefID;
 
 	float reclaimTime;
 

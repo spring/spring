@@ -27,13 +27,12 @@ CBuilding::CBuilding()
 
 
 
-void CBuilding::PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build)
+void CBuilding::PreInit(const UnitLoadParams& params)
 {
-	if (def->levelGround) {
-		blockHeightChanges = true;
-	}
+	unitDef = params.unitDef;
+	blockHeightChanges = unitDef->levelGround;
 
-	CUnit::PreInit(def, team, facing, position, build);
+	CUnit::PreInit(params);
 }
 
 void CBuilding::PostInit(const CUnit* builder)

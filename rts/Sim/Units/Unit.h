@@ -25,7 +25,6 @@ class CGroup;
 class CLoadSaveInterface;
 class CMissileProjectile;
 class AMoveType;
-class CUnitAI;
 class CWeapon;
 class CUnitScript;
 struct DamageArray;
@@ -34,6 +33,8 @@ struct LocalModel;
 struct LocalModelPiece;
 struct UnitDef;
 struct UnitTrackStruct;
+struct UnitLoadParams;
+
 namespace icon {
 	class CIconData;
 }
@@ -77,7 +78,7 @@ public:
 	CUnit();
 	virtual ~CUnit();
 
-	virtual void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
+	virtual void PreInit(const UnitLoadParams& params);
 	virtual void PostInit(const CUnit* builder);
 
 	virtual void SlowUpdate();
@@ -190,12 +191,6 @@ protected:
 	void UpdateLosStatus(int allyTeam);
 	float GetFlankingDamageBonus(const float3& attackDir);
 
-private:
-	static float expMultiplier;
-	static float expPowerScale;
-	static float expHealthScale;
-	static float expReloadScale;
-	static float expGrade;
 public:
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
 	static float GetExpMultiplier()     { return expMultiplier; }
@@ -208,9 +203,12 @@ public:
 	static void  SetExpGrade(float value) { expGrade = value; }
 	static float GetExpGrade()     { return expGrade; }
 
+	static void SetSpawnFeature(bool b) { spawnFeature = b; }
+
 public:
 	const UnitDef* unitDef;
 	int unitDefID;
+	int featureDefID; // FeatureDef id of the wreck we spawn on death
 
 	/**
 	 * @brief mod controlled parameters
@@ -456,7 +454,6 @@ public:
 	float curArmorMultiple;
 
 	std::string tooltip;
-	std::string wreckName;
 
 	/// used for innacuracy with radars etc
 	float3 posErrorVector;
@@ -526,7 +523,14 @@ private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
 	bool stunned;
 
+	static float expMultiplier;
+	static float expPowerScale;
+	static float expHealthScale;
+	static float expReloadScale;
+	static float expGrade;
+
 	static float empDecline;
+	static bool spawnFeature;
 };
 
 #endif // UNIT_H

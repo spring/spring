@@ -456,6 +456,7 @@ static bool InitParamMap()
 	ADD_FUNCTION("modelname", fd, ModelName);
 	
 	ADD_INT("id", fd.id);
+	ADD_INT("deathFeatureID", fd.deathFeatureDefID);
 
 	ADD_STRING("name",     fd.name);
 	ADD_STRING("tooltip",  fd.description);
@@ -485,8 +486,7 @@ static bool InitParamMap()
 
 	ADD_INT("smokeTime",    fd.smokeTime);
 
-	// name of feature that this turn into when killed (not reclaimed)
-	ADD_STRING("deathFeature", fd.deathFeature);
+	ADD_DEPRECATED_LUADEF_KEY("deathFeature");
 
 	return true;
 }

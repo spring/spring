@@ -540,7 +540,7 @@ namespace {
 
 		public:
 			ClosestUnit_InLos(const float3& pos, float searchRadius, bool canBeBlind) :
-				Base(pos, searchRadius + uh->maxUnitRadius),
+				Base(pos, searchRadius + uh->MaxUnitRadius()),
 				closeDist(searchRadius), closeUnit(NULL), canBeBlind(canBeBlind) {}
 
 			void AddUnit(CUnit* u) {

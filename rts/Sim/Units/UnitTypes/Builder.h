@@ -17,7 +17,7 @@ class CSolidObject;
 class CBuilder : public CUnit
 {
 private:
-	void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
+	void PreInit(const UnitLoadParams& params);
 
 public:
 	inline float f3Dist(const float3& a, const float3& b) const {

@@ -75,7 +75,9 @@
 //////////////////////////////////////////////////////////////////////
 
 //! info: SlowUpdate runs each 16th GameFrame (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
-float CUnit::empDecline     = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
+float CUnit::empDecline   = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
+bool  CUnit::spawnFeature = true;
+
 float CUnit::expMultiplier  = 1.0f;
 float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
@@ -254,9 +256,8 @@ CUnit::~CUnit()
 		// we have to wait for deathScriptFinished (but we want the delay
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
 		// to be as short as possible to prevent position jumps)
-		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
-		                               delayedWreckLevel, team, -1, true,
-		                               unitDef, deathSpeed);
+		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
+		featureHandler->CreateWreckage(params, delayedWreckLevel, true);
 	}
 
 	if (unitDef->isAirBase) {
@@ -326,16 +327,27 @@ void CUnit::SetEnergyStorage(float newStorage)
 
 
 
-void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& position, bool build)
+void CUnit::PreInit(const UnitLoadParams& params)
 {
-	team = uTeam;
-	allyteam = teamHandler->AllyTeam(uTeam);
+	// if this is -1, we get a random ID from UnitHandler
+	id = std::min(params.unitID, int(uh->MaxUnits()) - 1);
+	team = params.teamID;
+	allyteam = teamHandler->AllyTeam(team);
 
-	objectDef = uDef;
-	unitDef = uDef;
+	objectDef = params.unitDef;
+	unitDef = params.unitDef;
 	unitDefID = unitDef->id;
+	featureDefID = -1;
 
-	buildFacing = std::abs(facing) % NUM_FACINGS;
+	{
+		const FeatureDef* wreckFeatureDef = featureHandler->GetFeatureDef(unitDef->wreckName);
+
+		if (wreckFeatureDef != NULL) {
+			featureDefID = wreckFeatureDef->id;
+		}
+	}
+
+	buildFacing = std::abs(params.facing) % NUM_FACINGS;
 	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
 	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 
@@ -351,15 +363,16 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	if (collisionVolume->DefaultToFootPrint())
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
 
-	mapSquare = ground->GetSquare(position.cClampInMap());
+	speed = params.speed;
+	mapSquare = ground->GetSquare((params.pos).cClampInMap());
 
-	heading  = GetHeadingFromFacing(facing);
+	heading  = GetHeadingFromFacing(buildFacing);
 	frontdir = GetVectorFromHeading(heading);
 	updir    = UpVector;
 	rightdir = frontdir.cross(updir);
 	upright  = unitDef->upright;
 
-	Move3D(position.cClampInMap(), false);
+	Move3D((params.pos).cClampInMap(), false);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
 	UpdateDirVectors(!upright);
@@ -390,7 +403,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 	footprint = int2(unitDef->xsize, unitDef->zsize);
 
-	beingBuilt = build;
+	beingBuilt = params.beingBuilt;
 	mass = (beingBuilt)? mass: unitDef->mass;
 	crushResistance = unitDef->crushResistance;
 	power = unitDef->power;
@@ -408,7 +421,6 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	leaveTracks = unitDef->decalDef.leaveTrackDecals;
 
 	tooltip = unitDef->humanName + " - " + unitDef->tooltip;
-	wreckName = unitDef->wreckName;
 
 
 	// sensor parameters
@@ -1912,9 +1924,9 @@ void CUnit::FinishedBuilding(bool postInit)
 		wantCloak = true;
 	}
 
-	if (unitDef->isFeature && uh->morphUnitToFeature) {
-		CFeature* f = featureHandler->CreateWreckage(
-			pos, wreckName, heading, buildFacing, 0, team, allyteam, false, NULL);
+	if (unitDef->isFeature && CUnit::spawnFeature) {
+		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
+		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
 
 		if (f) {
 			f->blockHeightChanges = true;
@@ -2268,6 +2280,7 @@ CR_BIND_DERIVED(CUnit, CSolidObject, );
 CR_REG_METADATA(CUnit, (
 	// CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
+	CR_MEMBER(featureDefID),
 	CR_MEMBER(upright),
 	CR_MEMBER(deathSpeed),
 	CR_MEMBER(travel),
@@ -2400,7 +2413,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(armoredState),
 	CR_MEMBER(armoredMultiple),
 	CR_MEMBER(curArmorMultiple),
-	CR_MEMBER(wreckName),
 	CR_MEMBER(posErrorVector),
 	CR_MEMBER(posErrorDelta),
 	CR_MEMBER(nextPosErrorUpdate),

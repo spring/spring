@@ -33,7 +33,6 @@ const CMapInfo* mapInfo = NULL;
 
 
 CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
-	: mapInfoFile(mapInfoFile)
 {
 	map.name = mapName;
 
@@ -43,11 +42,14 @@ CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
 	}
 
 	LuaParser resParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	LuaTable resTable;
+
 	if (!resParser.Execute()) {
 		LOG_L(L_ERROR, "%s", resParser.GetErrorLog().c_str());
 	}
-	LuaTable resTbl = resParser.GetRoot();
-	resRoot = &resTbl;
+
+	resTable = resParser.GetRoot();
+	resRoot = &resTable;
 
 	ReadGlobal();
 	ReadAtmosphere();
@@ -59,16 +61,8 @@ CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
 	ReadSMF();
 	ReadSM3();
 	ReadTerrainTypes();
+	ReadPFSConstants();
 	ReadSound();
-
-	if (light.groundShadowDensity > 1.0 || light.groundShadowDensity < 0.0) {
-		LOG_L(L_WARNING, "MapInfo.lua: Incorrect value \"groundShadowDensity=%f\"! Clamping to 0..1 range!!", light.groundShadowDensity);
-		light.groundShadowDensity = Clamp(light.groundShadowDensity, 0.0f, 1.0f);
-	}
-	if (light.unitShadowDensity > 1.0 || light.unitShadowDensity < 0.0) {
-		LOG_L(L_WARNING, "MapInfo.lua: Incorrect value \"unitShadowDensity=%f\"! Clamping to 0..1 range!!", light.unitShadowDensity);
-		light.unitShadowDensity = Clamp(light.unitShadowDensity, 0.0f, 1.0f);
-	}
 
 	//FIXME save all data in an array, so we can destroy the lua context (to save mem)?
 	//delete parser; 
@@ -206,6 +200,15 @@ void CMapInfo::ReadLight()
 	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
 
 	light.specularExponent = lightTable.GetFloat("specularExponent", 100.0f);
+
+	if (light.groundShadowDensity > 1.0 || light.groundShadowDensity < 0.0) {
+		LOG_L(L_WARNING, "MapInfo.lua: Incorrect value \"groundShadowDensity=%f\"! Clamping to 0..1 range!!", light.groundShadowDensity);
+		light.groundShadowDensity = Clamp(light.groundShadowDensity, 0.0f, 1.0f);
+	}
+	if (light.unitShadowDensity > 1.0 || light.unitShadowDensity < 0.0) {
+		LOG_L(L_WARNING, "MapInfo.lua: Incorrect value \"unitShadowDensity=%f\"! Clamping to 0..1 range!!", light.unitShadowDensity);
+		light.unitShadowDensity = Clamp(light.unitShadowDensity, 0.0f, 1.0f);
+	}
 }
 
 
@@ -402,6 +405,20 @@ void CMapInfo::ReadTerrainTypes()
 	}
 }
 
+void CMapInfo::ReadPFSConstants()
+{
+	const LuaTable& pfsTable = (parser->GetRoot()).SubTable("pfsConstants");
+	const LuaTable& legacyTable = pfsTable.SubTable("legacy");
+	const LuaTable& qtpfsTable = pfsTable.SubTable("qtpfs");
+
+	// TODO
+	pfs.qtpfs.minNodeSizeX    = qtpfsTable.GetInt("minNodeSizeX",     8);
+	pfs.qtpfs.minNodeSizeZ    = qtpfsTable.GetInt("minNodeSizeZ",     8);
+	pfs.qtpfs.maxNodeDepth    = qtpfsTable.GetInt("maxNodeDepth",    16);
+	pfs.qtpfs.numSpeedBins    = qtpfsTable.GetInt("numSpeedBins",    10);
+	pfs.qtpfs.layersPerUpdate = qtpfsTable.GetInt("layersPerUpdate",  5);
+	pfs.qtpfs.maxTeamSearches = qtpfsTable.GetInt("maxTeamSearches", 25);
+}
 
 void CMapInfo::ReadSound()
 {

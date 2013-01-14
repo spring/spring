@@ -888,6 +888,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	const bool flattenGround = (lua_isboolean(L, 8) && lua_toboolean(L, 8)) || lua_isnone(L, 8); // default true
 
 	int teamID = CtrlTeam(L);
+
 	if (lua_israwnumber(L, 6)) {
 		teamID = lua_toint(L, 6);
 	}
@@ -906,15 +907,16 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	ASSERT_SYNCED(pos);
 	ASSERT_SYNCED(facing);
 
-	// FIXME -- allow specifying the 'builder' parameter?
+	CUnit* unit = NULL;
+	CUnit* builder = uh->GetUnit(luaL_optint(L, 8, -1));
+
+	UnitLoadParams unitParams = {unitDef, builder, pos, ZeroVector, luaL_optint(L, 7, -1), teamID, facing, beingBuilt, flattenGround};
+
 	inCreateUnit = true;
-	CUnit* unit = unitLoader->LoadUnit(unitDef, pos, teamID, beingBuilt, facing, NULL);
+	unit = unitLoader->LoadUnit(unitParams);
 	inCreateUnit = false;
 
 	if (unit != NULL) {
-		if (flattenGround)
-			unitLoader->FlattenGround(unit);
-
 		lua_pushnumber(L, unit->id);
 		return 1;
 	}
@@ -2336,7 +2338,24 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
 	CFeature* feature = new CFeature();
-	feature->Initialize(pos, featureDef, heading, facing, team, allyTeam, NULL);
+	FeatureLoadParams params = {
+		featureDef,
+		NULL,
+
+		pos,
+		ZeroVector,
+
+		luaL_optint(L, 7, -1),
+		team,
+		allyTeam,
+
+		heading,
+		facing,
+
+		0 // smokeTime
+	};
+
+	feature->Initialize(params);
 	inCreateFeature = false;
 
 	lua_pushnumber(L, feature->id);
@@ -3503,7 +3522,7 @@ int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
 	if (!lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetUnitToFeature()");
 	}
-	uh->morphUnitToFeature = lua_toboolean(L, 1);
+	CUnit::SetSpawnFeature(lua_toboolean(L, 1));
 	return 0;
 }
 
