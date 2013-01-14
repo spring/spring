@@ -75,7 +75,7 @@ CFeatureHandler::CFeatureHandler()
 		const string& nameLowerCase = StringToLower(nameMixedCase);
 		const LuaTable& fdTable = rootTable.SubTable(nameMixedCase);
 
-		const FeatureDef* fd = featureDefsVector[i];
+		const FeatureDef* fd = GetFeatureDef(nameLowerCase);
 		const FeatureDef* dfd = GetFeatureDef(fdTable.GetString("featureDead", ""));
 
 		if (fd == NULL) continue;
@@ -406,18 +406,16 @@ CFeature* CFeatureHandler::CreateWreckage(
 	bool emitSmoke)
 {
 	const FeatureDef* fd = cparams.featureDef;
-	int i = numWreckLevels;
 
 	if (fd == NULL)
 		return NULL;
 
-	// move down the wreck-chain; this
-	// always executes max(1, N) times
-	do {
+	// move down the wreck-chain by <numWreckLevels> steps beyond <fd>
+	for (int i = 0; i < numWreckLevels; i++) {
 		if ((fd = GetFeatureDefByID(fd->deathFeatureDefID)) == NULL) {
 			return NULL;
 		}
-	} while ((--i) > 0);
+	}
 
 	if (luaRules && !luaRules->AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
 		return NULL;
