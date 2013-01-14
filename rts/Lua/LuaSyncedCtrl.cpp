@@ -2337,7 +2337,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
-	CFeature* feature = new CFeature();
+
 	FeatureLoadParams params = {
 		featureDef,
 		NULL,
@@ -2354,13 +2354,16 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 		0 // smokeTime
 	};
+	CFeature* feature = featureHandler->LoadFeature(params);
 
-	feature->Initialize(params);
 	inCreateFeature = false;
 
-	lua_pushnumber(L, feature->id);
+	if (feature != NULL) {
+		lua_pushnumber(L, feature->id);
+		return 1;
+	}
 
-	return 1;
+	return 0;
 }
 
 

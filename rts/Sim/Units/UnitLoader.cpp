@@ -70,6 +70,9 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 
 		if (ud == NULL)
 			return unit;
+		// need to check this BEFORE creating the instance
+		if (!uh->CanAddUnit(cparams.unitID))
+			return unit;
 
 		if (params.teamID < 0) {
 			// FIXME use gs->gaiaTeamID ?  (once it is always enabled)
@@ -343,8 +346,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 						0, // smokeTime
 					};
 
-					// Initialize() adds the feature to the FeatureHandler -> no memory-leak
-					feature->Initialize(params);
+					featureHandler->LoadFeature(params);
 
 					--total;
 				}

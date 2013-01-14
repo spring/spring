@@ -329,7 +329,7 @@ void CUnit::SetEnergyStorage(float newStorage)
 
 void CUnit::PreInit(const UnitLoadParams& params)
 {
-	// if this is <= -1, we get a random ID from UnitHandler
+	// if this is < 0, we get a random ID from UnitHandler
 	id = params.unitID;
 	unitDefID = (params.unitDef)->id;
 	featureDefID = -1;
