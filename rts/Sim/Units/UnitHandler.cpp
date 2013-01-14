@@ -129,10 +129,8 @@ bool CUnitHandler::AddUnit(CUnit* unit)
 		unit->id = *(freeUnitIDs.begin());
 	} else {
 		// otherwise use given ID if not already taken
-		if (freeUnitIDs.find(unit->id) == freeUnitIDs.end()) {
-			assert(unit->id >= units.size() || units[unit->id] != NULL);
-			return false;
-		}
+		assert(unit->id < units.size());
+		assert(units[unit->id] == NULL);
 	}
 
 	units[unit->id] = unit;
