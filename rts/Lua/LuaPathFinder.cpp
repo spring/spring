@@ -204,13 +204,15 @@ int LuaPathFinder::RequestPath(lua_State* L)
 	const MoveDef* moveDef = NULL;
 	
 	if (lua_israwstring(L, 1)) {
-		moveDef = moveDefHandler->GetMoveDefFromName(lua_tostring(L, 1));
+		moveDef = moveDefHandler->GetMoveDefByName(lua_tostring(L, 1));
 	} else {
-		const int moveID = luaL_checkint(L, 1);
-		if ((moveID < 0) || ((size_t)moveID >= moveDefHandler->moveDefs.size())) {
+		const unsigned int pathType = luaL_checkint(L, 1);
+
+		if (pathType >= moveDefHandler->GetNumMoveDefs()) {
 			luaL_error(L, "Invalid moveID passed to RequestPath");
 		}
-		moveDef = moveDefHandler->moveDefs[moveID];
+
+		moveDef = moveDefHandler->GetMoveDefByPathType(pathType);
 	}
 
 	if (moveDef == NULL) {

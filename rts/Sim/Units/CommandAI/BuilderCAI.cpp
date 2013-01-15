@@ -668,7 +668,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 }
 
 
-bool CBuilderCAI::TargetInterceptable(CUnit* unit, float targetSpeed) {
+bool CBuilderCAI::TargetInterceptable(const CUnit* unit, float targetSpeed) {
 	// if the target is moving away at a higher speed than we can manage, there is little point in chasing it
 	const float maxSpeed = owner->moveType->GetMaxSpeed();
 	if (targetSpeed <= maxSpeed)
@@ -1353,7 +1353,7 @@ void CBuilderCAI::RemoveUnitFromResurrecters(CUnit* unit)
  * TODO easy: store reclaiming units per allyteam
  * TODO harder: update reclaimers as they start/finish reclaims and/or die
  */
-bool CBuilderCAI::IsUnitBeingReclaimed(CUnit* unit, CUnit *friendUnit)
+bool CBuilderCAI::IsUnitBeingReclaimed(const CUnit* unit, CUnit *friendUnit)
 {
 	bool retval = false;
 	std::list<CUnit*> rm;
@@ -1677,7 +1677,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 	bool stationary = false;
 
 	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
-		CUnit* unit = *ui;
+		const CUnit* unit = *ui;
 
 		if (teamHandler->Ally(owner->allyteam, unit->allyteam)) {
 			if (!haveEnemy && (unit->health < unit->maxHealth)) {
@@ -1686,7 +1686,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 					continue;
 				}
 				// don't help factories produce units when set on hold pos                
-				if (unit->beingBuilt && unit->moveDef && (owner->moveState == MOVESTATE_HOLDPOS)) {
+				if (unit->beingBuilt && unit->moveDef != NULL && (owner->moveState == MOVESTATE_HOLDPOS)) {
 					continue;
 				}
 				// don't assist or repair if can't assist or repair

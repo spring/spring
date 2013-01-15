@@ -13,8 +13,8 @@
 
 
 struct Command;
-struct MoveDef;
 struct WeaponDef;
+struct MoveDef;
 struct UnitDefImage;
 class IExplosionGenerator;
 class LuaTable;
@@ -54,14 +54,14 @@ public:
 	bool IsAllowedTerrainHeight(float rawHeight, float* clampedHeight = NULL) const;
 
 	bool IsTransportUnit()      const { return (transportCapacity > 0 && transportMass > 0.0f); }
-	bool IsImmobileUnit()       const { return (moveDef == NULL && !canfly && speed <= 0.0f); }
+	bool IsImmobileUnit()       const { return (pathType == -1U && !canfly && speed <= 0.0f); }
 	bool IsBuildingUnit()       const { return (IsImmobileUnit() && !yardmap.empty()); }
 	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
 	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
 	bool IsFactoryUnit()        const { return (builder &&  IsBuildingUnit()); }
 	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f); }
-	bool IsGroundUnit()         const { return (moveDef != NULL && !canfly); }
-	bool IsAirUnit()            const { return (moveDef == NULL &&  canfly); }
+	bool IsGroundUnit()         const { return (pathType != -1U && !canfly); }
+	bool IsAirUnit()            const { return (pathType == -1U &&  canfly); }
 	bool IsNonHoveringAirUnit() const { return (IsAirUnit() && !hoverAttack); }
 	bool IsFighterUnit()        const { return (IsNonHoveringAirUnit() && !HasBomberWeapon()); }
 	bool IsBomberUnit()         const { return (IsNonHoveringAirUnit() &&  HasBomberWeapon()); }
@@ -113,8 +113,6 @@ public:
 	float tidalGenerator;
 	float metalStorage;
 	float energyStorage;
-
-	bool extractSquare;
 
 	float autoHeal;     ///< amount autohealed
 	float idleAutoHeal; ///< amount autohealed only during idling
@@ -173,6 +171,8 @@ public:
 	float waterline;
 	float minWaterDepth;
 	float maxWaterDepth;
+
+	unsigned int pathType;
 
 	float armoredMultiple;
 	int armorType;
@@ -277,8 +277,6 @@ public:
 	float maxElevator;
 	float maxRudder;
 	float crashDrag;
-
-	MoveDef* moveDef;
 
 	///< The unrotated yardmap for buildings
 	///< (only non-mobile ground units can have these)

@@ -15,10 +15,10 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 	if (ud->IsGroundUnit()) {
 		// mobile ground-unit
 		assert(!ud->canfly);
-		assert(ud->moveDef != NULL);
-		assert(unit->moveDef == NULL);
+		assert(ud->pathType != -1U);
+		assert(unit->moveDef != NULL);
 
-		unit->moveDef = new MoveDef(ud->moveDef);
+		unit->moveDef = moveDefHandler->GetMoveDefByPathType(ud->pathType);
 
 		if (modInfo.useClassicGroundMoveType) {
 			return (new CClassicGroundMoveType(unit));

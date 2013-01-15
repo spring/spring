@@ -35,7 +35,7 @@ public:
 	void FinishCommand();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void BuggerOff(const float3& pos, float radius);
-	bool TargetInterceptable(CUnit *unit, float uspeed);
+	bool TargetInterceptable(const CUnit* unit, float uspeed);
 
 	void ExecuteBuildCmd(Command& c);
 	void ExecutePatrol(Command& c);
@@ -54,7 +54,7 @@ public:
 	/**
 	 * Checks if a unit is being reclaimed by a friendly con.
 	 */
-	static bool IsUnitBeingReclaimed(CUnit* unit, CUnit* friendUnit = NULL);
+	static bool IsUnitBeingReclaimed(const CUnit* unit, CUnit* friendUnit = NULL);
 	static bool IsFeatureBeingReclaimed(int featureId, CUnit* friendUnit = NULL);
 	static bool IsFeatureBeingResurrected(int featureId, CUnit* friendUnit = NULL);
 

@@ -4665,12 +4665,12 @@ int LuaSyncedRead::TestMoveOrder(lua_State* L)
 	const int unitDefID = luaL_checkint(L, 1);
 	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 
-	if (unitDef == NULL) {
+	if (unitDef == NULL || unitDef->pathType == -1U) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	const MoveDef* moveDef = unitDef->moveDef;
+	const MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(unitDef->pathType);
 
 	if (moveDef == NULL) {
 		lua_pushboolean(L, !unitDef->IsImmobileUnit());

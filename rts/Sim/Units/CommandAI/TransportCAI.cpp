@@ -294,7 +294,7 @@ bool CTransportCAI::CanTransport(const CUnit* unit) const
 bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spread, float3& found, const CUnit* unitToUnload, bool fromSynced)
 {
 	const CTransportUnit* ownerTrans = static_cast<CTransportUnit*>(owner);
-	const MoveDef* moveDef = unitToUnload->unitDef->moveDef;
+	const MoveDef* moveDef = unitToUnload->moveDef;
 	const bool isAirTrans = dynamic_cast<AAirMoveType*>(owner->moveType);
 
 	const float amax = std::max(100, std::min(1000, (int)(radius * radius / 100)));
@@ -352,7 +352,7 @@ bool CTransportCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 	if (!static_cast<CTransportUnit*>(owner)->CanLoadUnloadAtPos(pos, unitToUnload)) {
 		return false;
 	}
-	if (unitToUnload->unitDef->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->moveDef->maxSlope) {
+	if (unitToUnload->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->moveDef->maxSlope) {
 		return false;
 	}
 	if (!qf->GetUnitsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE).empty()) {
@@ -369,7 +369,7 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 		return false;
 	}
 
-	if (unitToUnload->unitDef->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->moveDef->maxSlope) {
+	if (unitToUnload->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->moveDef->maxSlope) {
 		return false;
 	}
 

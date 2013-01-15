@@ -481,9 +481,14 @@ static int SoundsTable(lua_State* L, const void* data) {
 
 static int MoveDefTable(lua_State* L, const void* data)
 {
-	const MoveDef* md = *static_cast<const MoveDef* const*>(data);
+	const unsigned int mdType = *static_cast<const unsigned int*>(data);
+	const MoveDef* md = NULL;
+
 	lua_newtable(L);
-	if (md == NULL) {
+	if (mdType == -1U) {
+		return 1;
+	}
+	if ((md = moveDefHandler->GetMoveDefByPathType(mdType)) == NULL) {
 		return 1;
 	}
 
@@ -637,8 +642,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("weapons",            ud.weapons,            WeaponsTable);
 	ADD_FUNCTION("sounds",             ud.sounds,             SoundsTable);
 	ADD_FUNCTION("model",              ud,                    ModelTable);
-	ADD_FUNCTION("moveData",           ud.moveDef,            MoveDefTable); // backward compatibility
-	ADD_FUNCTION("moveDef",            ud.moveDef,            MoveDefTable);
+	ADD_FUNCTION("moveData",           ud.pathType,           MoveDefTable); // backward compatibility
+	ADD_FUNCTION("moveDef",            ud.pathType,           MoveDefTable);
 	ADD_FUNCTION("shieldWeaponDef",    ud.shieldWeaponDef,    WeaponDefToID);
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
@@ -695,7 +700,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("metalStorage",   ud.metalStorage);
 	ADD_FLOAT("energyStorage",  ud.energyStorage);
 
-	ADD_BOOL("extractSquare", ud.extractSquare);
+	ADD_DEPRECATED_LUADEF_KEY("extractSquare");
 
 	ADD_FLOAT("power", ud.power);
 

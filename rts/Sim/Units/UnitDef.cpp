@@ -82,7 +82,6 @@ UnitDef::UnitDef()
 	, tidalGenerator(0.0f)
 	, metalStorage(0.0f)
 	, energyStorage(0.0f)
-	, extractSquare(false)
 	, autoHeal(0.0f)
 	, idleAutoHeal(0.0f)
 	, idleTime(0)
@@ -128,6 +127,7 @@ UnitDef::UnitDef()
 	, waterline(0.0f)
 	, minWaterDepth(0.0f)
 	, maxWaterDepth(0.0f)
+	, pathType(-1U)
 	, armoredMultiple(0.0f)
 	, armorType(0)
 	, flankingBonusMode(0)
@@ -199,7 +199,6 @@ UnitDef::UnitDef()
 	, maxElevator(0.0f)
 	, maxRudder(0.0f)
 	, crashDrag(0.0f)
-	, moveDef(NULL)
 	, loadingRadius(0.0f)
 	, unloadSpread(0.0f)
 	, transportCapacity(0)
@@ -511,7 +510,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	needGeo = false;
 
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
-	extractSquare = udTable.GetBool("extractSquare", false);
 
 	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
@@ -524,6 +522,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
  		cantBeTransported = true;
 	}
 
+	MoveDef* moveDef = NULL;
+
 	// aircraft have MoveTypes but no MoveDef;
 	// static structures have no use for either
 	// (but get StaticMoveType instances)
@@ -531,11 +531,12 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 		const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
-		if ((moveDef = moveDefHandler->GetMoveDefFromName(moveClass)) == NULL) {
+		if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == NULL) {
 			throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 		}
 
 		moveDef->unitDefRefCount += 1;
+		this->pathType = moveDef->pathType;
 
 		if (LOG_IS_ENABLED(L_WARNING)) {
 			const char* typeStr = NULL;
@@ -871,9 +872,9 @@ void UnitDef::SetNoCost(bool noCost)
 	}
 }
 
-
-
 bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) const {
+	const MoveDef* moveDef = (pathType != -1U)? moveDefHandler->GetMoveDefByPathType(pathType): NULL;
+
 	float maxDepth = this->maxWaterDepth;
 	float minDepth = this->minWaterDepth;
 
@@ -901,8 +902,6 @@ bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) cons
 	// <rawHeight> must lie in the range [-maxDepth, -minDepth]
 	return (rawHeight >= -maxDepth && rawHeight <= -minDepth);
 }
-
-
 
 bool UnitDef::HasBomberWeapon() const {
 	if (weapons.empty()) { return false; }

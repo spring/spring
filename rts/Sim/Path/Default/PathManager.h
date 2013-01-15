@@ -85,7 +85,7 @@ public:
 	void SetHeatOnSquare(int x, int y, int value, const CSolidObject* owner);
 	const int GetHeatOnSquare(int x, int y);
 
-	void GetOutstandingUpdates(int* med, int* low);
+	void GetNumOutstandingEstimatorUpdates(unsigned int* data) const;
 
 private:
 	unsigned int RequestPath(

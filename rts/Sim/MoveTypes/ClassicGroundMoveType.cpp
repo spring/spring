@@ -38,6 +38,7 @@ void CClassicGroundMoveType::LeaveTransport() {}
 
 #else
 
+#include "MoveDefHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
@@ -132,7 +133,6 @@ CClassicGroundMoveType::CClassicGroundMoveType(CUnit* owner):
 	accRate = std::max(0.01f, owner->unitDef->maxAcc);
 	decRate = std::max(0.01f, owner->unitDef->maxDec);
 
-	owner->unitDef->moveDef->avoidMobilesOnPath = true;
 	owner->moveDef->avoidMobilesOnPath = true;
 }
 
@@ -362,7 +362,7 @@ void CClassicGroundMoveType::ChangeSpeed()
 	float wSpeed = maxSpeed;
 
 	if (wantedSpeed > 0.0f) {
-		const float groundMod = CMoveMath::GetPosSpeedMod(*owner->unitDef->moveDef, owner->pos, flatFrontDir);
+		const float groundMod = CMoveMath::GetPosSpeedMod(*owner->moveDef, owner->pos, flatFrontDir);
 		const float3 goalDif = waypoint - owner->pos;
 		const short turn = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
@@ -447,7 +447,7 @@ void CClassicGroundMoveType::ChangeHeading(short wantedHeading) {
 
 void CClassicGroundMoveType::ImpulseAdded()
 {
-	if(owner->beingBuilt || owner->unitDef->moveDef->moveType == MoveDef::Ship_Move)
+	if(owner->beingBuilt || owner->moveDef->moveType == MoveDef::Ship_Move)
 		return;
 
 	float3& impulse = owner->residualImpulse;
@@ -520,7 +520,7 @@ void CClassicGroundMoveType::UpdateSkid()
 		float speedReduction=0.35f;
 
 		bool onSlope = (ground->GetSlope(owner->midPos.x, owner->midPos.z) >
-			owner->unitDef->moveDef->maxSlope)
+			owner->moveDef->maxSlope)
 			&& (!owner->unitDef->floatOnWater || ground->GetHeightAboveWater(midPos.x, midPos.z) > 0);
 		if (speedf < speedReduction && !onSlope) {
 			currentSpeed = 0.0f;
@@ -629,7 +629,7 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 			float3 dif = midPos - u->midPos;
 			dif /= std::max(dist, 1.f);
 
-			if (!u->moveDef) {
+			if (u->moveDef == NULL) {
 				float impactSpeed = -owner->speed.dot(dif);
 
 				if (impactSpeed > 0) {
@@ -765,7 +765,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					const int y = (moveSquareY + li->y) * 2;
 					const int blockBits = CMoveMath::BLOCK_STRUCTURE |
 					                      CMoveMath::BLOCK_MOBILE_BUSY;
-					MoveDef& moveDef = *owner->unitDef->moveDef;
+					MoveDef& moveDef = *owner->moveDef;
 					if ((CMoveMath::IsBlocked(moveDef, x, y, owner) & blockBits) ||
 					    (CMoveMath::GetPosSpeedMod(moveDef, x, y) <= 0.01f)) {
 						++etaFailures;
@@ -811,7 +811,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 						if (objectToUnit.dot(avoidanceDir) < radiusSum &&
 							math::fabs(objectDistToAvoidDirCenter) < radiusSum &&
-							(o->moveDef || Distance2D(owner, o) >= 0)) {
+							(o->moveDef != NULL || Distance2D(owner, o) >= 0)) {
 
 							if (objectDistToAvoidDirCenter > 0.0f) {
 								avoidRight +=
@@ -1323,7 +1323,7 @@ void CClassicGroundMoveType::TestNewTerrainSquare()
 	float3 newpos = owner->pos;
 
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
-		const MoveDef& md = *(owner->unitDef->moveDef);
+		const MoveDef& md = *(owner->moveDef);
 		const float cmod = CMoveMath::GetPosSpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
 		if (math::fabs(owner->frontdir.x) < math::fabs(owner->frontdir.z)) {
@@ -1444,7 +1444,7 @@ bool CClassicGroundMoveType::CheckGoalFeasability()
 	int maxx = (int) std::min(float(gs->hmapx - 1), (goalPos.x + goalDist) / (SQUARE_SIZE * 2));
 	int maxz = (int) std::min(float(gs->hmapy - 1), (goalPos.z + goalDist) / (SQUARE_SIZE * 2));
 
-	MoveDef* md = owner->unitDef->moveDef;
+	MoveDef* md = owner->moveDef;
 
 	float numBlocked = 0.0f;
 	float numSquares = 0.0f;
@@ -1561,7 +1561,7 @@ void CClassicGroundMoveType::LeaveTransport()
 bool CClassicGroundMoveType::OnSlope(){
 	return owner->unitDef->slideTolerance >= 1
 		&& (ground->GetSlope(owner->midPos.x, owner->midPos.z) >
-		owner->unitDef->moveDef->maxSlope*owner->unitDef->slideTolerance);
+		owner->moveDef->maxSlope*owner->unitDef->slideTolerance);
 }
 
 

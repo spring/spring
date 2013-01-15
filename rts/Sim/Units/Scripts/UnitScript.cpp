@@ -559,7 +559,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	float fadeupTime = 4;
 
 	const UnitDef* ud = unit->unitDef;
-	const MoveDef* md = ud->moveDef;
+	const MoveDef* md = unit->moveDef;
 
 	// hovercraft need special care
 	if (md != NULL && md->moveType == MoveDef::Hover_Move) {

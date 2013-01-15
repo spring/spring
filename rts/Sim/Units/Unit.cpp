@@ -472,8 +472,8 @@ void CUnit::PostInit(const CUnit* builder)
 	// Call initializing script functions
 	script->Create();
 
-	if (unitDef->moveDef != NULL) {
-		switch (unitDef->moveDef->moveType) {
+	if (moveDef != NULL) {
+		switch (moveDef->moveType) {
 			case MoveDef::Hover_Move: {
 				physicalState = CSolidObject::Hovering;
 			} break;
