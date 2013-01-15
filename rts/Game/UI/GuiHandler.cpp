@@ -3697,12 +3697,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					// draw extraction range
 					if (unitdef->extractRange > 0) {
 						glColor4fv(cmdColors.rangeExtract);
-
-						if (unitdef->extractSquare) {
-							glSurfaceSquare(buildpos, unitdef->extractRange, unitdef->extractRange);
-						} else {
-							glSurfaceCircle(buildpos, unitdef->extractRange, 40);
-						}
+						glSurfaceCircle(buildpos, unitdef->extractRange, 40);
 					}
 					// draw build range for immobile builders
 					if (unitdef->builder) {

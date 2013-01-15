@@ -467,7 +467,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	float clampedHeight = wantedHeight;
 
 	const UnitDef* unitDef = unit->unitDef;
-	const MoveDef* moveDef = unitDef->moveDef;
+	const MoveDef* moveDef = unit->moveDef;
 
 	if (unit->transporter != NULL) {
 		// unit is being transported, set <clampedHeight> to

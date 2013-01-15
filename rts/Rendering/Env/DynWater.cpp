@@ -1121,8 +1121,7 @@ void CDynWater::AddShipWakes()
 
 		for (std::set<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* unit = *ui;
-			const UnitDef* unitDef = unit->unitDef;
-			const MoveDef* moveDef = unitDef->moveDef;
+			const MoveDef* moveDef = unit->moveDef;
 
 			if (moveDef == NULL) {
 				continue;

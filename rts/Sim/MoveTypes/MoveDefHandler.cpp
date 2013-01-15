@@ -52,7 +52,7 @@ CR_REG_METADATA(MoveDef, (
 
 CR_REG_METADATA(MoveDefHandler, (
 	CR_MEMBER(moveDefs),
-	CR_MEMBER(name2moveDef),
+	CR_MEMBER(moveDefNames),
 	CR_MEMBER(checksum),
 	CR_RESERVED(16)
 ));
@@ -102,7 +102,7 @@ MoveDefHandler::MoveDefHandler()
 
 		MoveDef* md = new MoveDef(moveTable, num);
 		moveDefs.push_back(md);
-		name2moveDef[md->name] = md->pathType;
+		moveDefNames[md->name] = md->pathType;
 
 		crc << md->GetCheckSum();
 	}
@@ -127,10 +127,10 @@ MoveDefHandler::~MoveDefHandler()
 }
 
 
-MoveDef* MoveDefHandler::GetMoveDefFromName(const std::string& name)
+MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 {
-	map<string, int>::const_iterator it = name2moveDef.find(name);
-	if (it == name2moveDef.end()) {
+	map<string, int>::const_iterator it = moveDefNames.find(name);
+	if (it == moveDefNames.end()) {
 		return NULL;
 	}
 	return moveDefs[it->second];

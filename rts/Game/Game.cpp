@@ -1213,27 +1213,32 @@ bool CGame::Draw() {
 
 	glEnable(GL_TEXTURE_2D);
 
+	#define DBG_FONT_FLAGS (FONT_SCALE | FONT_NORM | FONT_SHADOW)
+	#define KEY_FONT_FLAGS (FONT_SCALE | FONT_CENTER | FONT_NORM)
+	#define INF_FONT_FLAGS (FONT_RIGHT | FONT_SCALE | FONT_NORM | (FONT_OUTLINE * guihandler->GetOutlineFonts()))
+
 	if (globalRendering->drawdebug) {
 		//print some infos (fps,gameframe,particles)
 		font->Begin();
 		font->SetTextColor(1,1,0.5f,0.8f);
 
-		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
+		font->glFormat(0.03f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
 		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
 
 		// 16ms := 60fps := 30simFPS + 30drawFPS
-		font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
+		font->glFormat(0.03f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
 		   (gu->avgFrameTime>30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
 		   (gu->avgDrawFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
 		   (gu->avgSimFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
 		);
 
-		CPathManager* legacy = dynamic_cast<CPathManager*>(pathManager);
-		if (legacy) {
-			int med,low;
-			legacy->GetOutstandingUpdates(&med, &low);
-			font->glFormat(0.03f, 0.12f, 0.7f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "Outstanding Pathing Updates: %i %i",
-				med, low);
+		if (pathManager->GetPathFinderType() == PFS_TYPE_DEFAULT) {
+			CPathManager* pm = static_cast<CPathManager*>(pathManager);
+			unsigned int peUpdates[2] = {0, 0};
+
+			pm->GetNumOutstandingEstimatorUpdates(peUpdates);
+			font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, "Outstanding Pathing Updates: %i %i",
+				peUpdates[0], peUpdates[1]);
 		}
 
 		font->End();
@@ -1245,19 +1250,15 @@ bool CGame::Draw() {
 
 	if (!hotBinding.empty()) {
 		glColor4f(1.0f, 0.3f, 0.3f, 1.0f);
-		font->glPrint(0.5f, 0.6f, 3.0f, FONT_SCALE | FONT_CENTER | FONT_NORM, "Hit keyset for:");
+		font->glPrint(0.5f, 0.6f, 3.0f, KEY_FONT_FLAGS, "Hit keyset for:");
 		glColor4f(0.3f, 1.0f, 0.3f, 1.0f);
-		font->glFormat(0.5f, 0.5f, 3.0f, FONT_SCALE | FONT_CENTER | FONT_NORM, "%s", hotBinding.c_str());
+		font->glFormat(0.5f, 0.5f, 3.0f, KEY_FONT_FLAGS, "%s", hotBinding.c_str());
 		glColor4f(0.3f, 0.3f, 1.0f, 1.0f);
-		font->glPrint(0.5f, 0.4f, 3.0f, FONT_SCALE | FONT_CENTER | FONT_NORM, "(or Escape)");
+		font->glPrint(0.5f, 0.4f, 3.0f, KEY_FONT_FLAGS, "(or Escape)");
 	}
 
 	if (!hideInterface) {
 		smallFont->Begin();
-
-		int font_options = FONT_RIGHT | FONT_SCALE | FONT_NORM;
-		if (guihandler->GetOutlineFonts())
-			font_options |= FONT_OUTLINE;
 
 		if (showClock) {
 			char buf[32];
@@ -1268,7 +1269,7 @@ bool CGame::Draw() {
 				SNPRINTF(buf, sizeof(buf), "%02i:%02i:%02i", seconds / 3600, (seconds / 60) % 60, seconds % 60);
 			}
 
-			smallFont->glPrint(0.99f, 0.94f, 1.0f, font_options, buf);
+			smallFont->glPrint(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 
 		if (showFPS) {
@@ -1277,7 +1278,7 @@ bool CGame::Draw() {
 
 			const float4 yellow(1.0f, 1.0f, 0.25f, 1.0f);
 			smallFont->SetColors(&yellow,NULL);
-			smallFont->glPrint(0.99f, 0.92f, 1.0f, font_options, buf);
+			smallFont->glPrint(0.99f, 0.92f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 
 		if (showSpeed) {
@@ -1286,7 +1287,7 @@ bool CGame::Draw() {
 
 			const float4 speedcol(1.0f, gs->speedFactor < gs->wantedSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
 			smallFont->SetColors(&speedcol, NULL);
-			smallFont->glPrint(0.99f, 0.90f, 1.0f, font_options, buf);
+			smallFont->glPrint(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 		
 		if (GML::SimEnabled() && mtInfoCtrl >= 5 && (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT)) {
@@ -1297,7 +1298,7 @@ bool CGame::Draw() {
 			float4 warncol(pval >= 10.0f && ((int)spring_tomsecs(currentTimePreDraw) & 128) ?
 				0.5f : std::max(0.0f, std::min(pval / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - pval / 5.0f, 1.0f)), 0.0f, 1.0f);
 			smallFont->SetColors(&warncol, NULL);
-			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+			smallFont->glPrint(0.99f, 0.88f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 
 		CPlayerRosterDrawer::Draw();

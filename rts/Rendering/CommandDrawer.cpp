@@ -227,13 +227,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				if (bi.def->extractRange > 0) {
 					lineDrawer.Break(bi.pos, cmdColors.build);
 					glColor4fv(cmdColors.rangeExtract);
-
-					if (bi.def->extractSquare) {
-						glSurfaceSquare(bi.pos, bi.def->extractRange, bi.def->extractRange);
-					} else {
-						glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
-					}
-
+					glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
 					lineDrawer.Restart();
 				}
 			}
@@ -472,13 +466,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 			if (bi.def->extractRange > 0) {
 				lineDrawer.Break(bi.pos, cmdColors.build);
 				glColor4fv(cmdColors.rangeExtract);
-
-				if (bi.def->extractSquare) {
-					glSurfaceSquare(bi.pos, bi.def->extractRange, bi.def->extractRange);
-				} else {
-					glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
-				}
-
+				glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
 				lineDrawer.Restart();
 			}
 		}

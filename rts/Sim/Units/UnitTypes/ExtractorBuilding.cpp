@@ -79,48 +79,8 @@ void CExtractorBuilding::ResetExtraction()
 /* determine if two extraction areas overlap */
 bool CExtractorBuilding::IsNeighbour(CExtractorBuilding* other)
 {
-	const int sum = int(this->unitDef->extractSquare) + int(other->unitDef->extractSquare);
-
-	if (sum == 2) {
-		// square vs. square
-		const float dx = math::fabs(this->pos.x - other->pos.x);
-		const float dz = math::fabs(this->pos.z - other->pos.z);
-		const float r = this->extractionRange + other->extractionRange;
-		return (dx < r && dz < r);
-	}
-	if (sum == 1) {
-		// circle vs. square or square vs. circle
-		const CExtractorBuilding* square = (this->unitDef->extractSquare)? this: other;
-		const CExtractorBuilding* circle = (this->unitDef->extractSquare)? other: this;
-
-		const float3 p0 = square->pos + float3(-square->extractionRange, 0.0f, -square->extractionRange); // top-left
-		const float3 p1 = square->pos + float3( square->extractionRange, 0.0f, -square->extractionRange); // top-right
-		const float3 p2 = square->pos + float3( square->extractionRange, 0.0f,  square->extractionRange); // bottom-right
-		const float3 p3 = square->pos + float3(-square->extractionRange, 0.0f,  square->extractionRange); // bottom-left
-		const float3 p4 = circle->pos + float3( circle->extractionRange, 0.0f,                     0.0f); //   0
-		const float3 p5 = circle->pos + float3(                    0.0f, 0.0f, -circle->extractionRange); //  90
-		const float3 p6 = circle->pos + float3(-circle->extractionRange, 0.0f,                     0.0f); // 180
-		const float3 p7 = circle->pos + float3(                    0.0f, 0.0f,  circle->extractionRange); // 270
-
-		// square corners must all lie outside circle
-		const bool b0 = (p0.SqDistance2D(circle->pos) > Square(circle->extractionRange));
-		const bool b1 = (p1.SqDistance2D(circle->pos) > Square(circle->extractionRange));
-		const bool b2 = (p2.SqDistance2D(circle->pos) > Square(circle->extractionRange));
-		const bool b3 = (p3.SqDistance2D(circle->pos) > Square(circle->extractionRange));
-		// circle "corners" must all lie outside square
-		const bool b4 = ((p4.x < p0.x || p4.x > p1.x) && (p4.z < p0.z || p4.z > p3.z));
-		const bool b5 = ((p5.x < p0.x || p5.x > p1.x) && (p5.z < p0.z || p5.z > p3.z));
-		const bool b6 = ((p6.x < p0.x || p6.x > p1.x) && (p6.z < p0.z || p6.z > p3.z));
-		const bool b7 = ((p7.x < p0.x || p7.x > p1.x) && (p7.z < p0.z || p7.z > p3.z));
-
-		return !(b0 && b1 && b2 && b3  &&  b4 && b5 && b6 && b7);
-	}
-	if (sum == 0) {
-		// circle vs. circle
-		return (this->pos.SqDistance2D(other->pos) < Square(this->extractionRange + other->extractionRange));
-	}
-
-	return false;
+	// circle vs. circle
+	return (this->pos.SqDistance2D(other->pos) < Square(this->extractionRange + other->extractionRange));
 }
 
 /* sets the range of extraction for this extractor, also finds overlapping neighbours. */
@@ -161,7 +121,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 			                     (z + 0.5f) * METAL_MAP_SQUARE_SIZE);
 			const float sqrCenterDistance = msqrPos.SqDistance2D(this->pos);
 
-			if (unitDef->extractSquare || sqrCenterDistance < Square(extractionRange)) {
+			if (sqrCenterDistance < Square(extractionRange)) {
 				MetalSquareOfControl msqr;
 				msqr.x = x;
 				msqr.z = z;

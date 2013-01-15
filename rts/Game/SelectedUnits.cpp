@@ -476,6 +476,7 @@ void CSelectedUnits::Draw()
 
 		for (CUnitSet::const_iterator ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
 			const CUnit* unit = *ui;
+			const MoveDef* moveDef = unit->moveDef;
 
 			if (unit->isIcon) continue;
 			if (!IsUnitSelected(unit)) continue;
@@ -483,8 +484,8 @@ void CSelectedUnits::Draw()
 			const int
 				uhxsize = (unit->xsize * SQUARE_SIZE) >> 1,
 				uhzsize = (unit->zsize * SQUARE_SIZE) >> 1,
-				mhxsize = (unit->moveDef == NULL)? uhxsize: ((unit->moveDef->xsize * SQUARE_SIZE) >> 1),
-				mhzsize = (unit->moveDef == NULL)? uhzsize: ((unit->moveDef->zsize * SQUARE_SIZE) >> 1);
+				mhxsize = (moveDef == NULL)? uhxsize: ((moveDef->xsize * SQUARE_SIZE) >> 1),
+				mhzsize = (moveDef == NULL)? uhzsize: ((moveDef->zsize * SQUARE_SIZE) >> 1);
 			const float3 verts[8] = {
 				// UnitDef footprint corners
 				float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize),

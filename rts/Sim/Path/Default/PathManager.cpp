@@ -7,8 +7,8 @@
 #include "PathEstimator.h"
 #include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
@@ -65,7 +65,7 @@ unsigned int CPathManager::RequestPath(
 	CRangedGoalWithCircularConstraint* pfDef = new CRangedGoalWithCircularConstraint(sp, gp, goalRadius, 3.0f, 2000);
 
 	// Make request.
-	return RequestPath(moveDef, sp, gp, pfDef, caller, synced);
+	return (RequestPath(moveDef, sp, gp, pfDef, caller, synced));
 }
 
 /*
@@ -81,7 +81,10 @@ unsigned int CPathManager::RequestPath(
 ) {
 	SCOPED_TIMER("PathManager::RequestPath");
 
-	MoveDef* moveDef = moveDefHandler->moveDefs[md->pathType];
+	// FIXME: this is here only because older code required a non-const version
+	MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(md->pathType);
+
+	assert(md == moveDef);
 
 	// Creates a new multipath.
 	IPath::SearchResult result = IPath::Error;
@@ -581,8 +584,9 @@ const float* CPathManager::GetNodeExtraCosts(bool synced) const {
 	return costs;
 }
 
-void CPathManager::GetOutstandingUpdates(int* med, int* low)
+void CPathManager::GetNumOutstandingEstimatorUpdates(unsigned int* data) const
 {
-	*med = medResPE->needUpdate.size();
-	*low = lowResPE->needUpdate.size();
+	data[0] = medResPE->needUpdate.size();
+	data[1] = lowResPE->needUpdate.size();
 }
+

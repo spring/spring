@@ -152,10 +152,10 @@ void QTPFS::PathManager::Load() {
 	numPathRequests   = 0;
 	maxNumLeafNodes   = 0;
 
-	nodeTrees.resize(moveDefHandler->moveDefs.size(), NULL);
-	nodeLayers.resize(moveDefHandler->moveDefs.size());
-	pathCaches.resize(moveDefHandler->moveDefs.size());
-	pathSearches.resize(moveDefHandler->moveDefs.size());
+	nodeTrees.resize(moveDefHandler->GetNumMoveDefs(), NULL);
+	nodeLayers.resize(moveDefHandler->GetNumMoveDefs());
+	pathCaches.resize(moveDefHandler->GetNumMoveDefs());
+	pathSearches.resize(moveDefHandler->GetNumMoveDefs());
 
 	// add one extra element for object-less requests
 	numCurrExecutedSearches.resize(teamHandler->ActiveTeams() + 1, 0);
@@ -185,7 +185,7 @@ void QTPFS::PathManager::Load() {
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-			if (moveDefHandler->moveDefs[layerNum]->unitDefRefCount == 0)
+			if (moveDefHandler->GetMoveDefByPathType(layerNum)->unitDefRefCount == 0)
 				continue;
 
 			#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
@@ -346,7 +346,7 @@ void QTPFS::PathManager::InitNodeLayersThread(
 void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const PathRectangle& r) {
 	nodeTrees[layerNum] = new QTPFS::QTNode(NULL,  0,  r.x1, r.z1,  r.x2, r.z2);
 
-	if (moveDefHandler->moveDefs[layerNum]->unitDefRefCount == 0)
+	if (moveDefHandler->GetMoveDefByPathType(layerNum)->unitDefRefCount == 0)
 		return;
 
 	nodeLayers[layerNum].Init(layerNum);
@@ -394,7 +394,7 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 // called in the non-staggered (#ifndef QTPFS_STAGGERED_LAYER_UPDATES)
 // layer update scheme and during initialization; see ::TerrainChange
 void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectangle& r) {
-	const MoveDef* md = moveDefHandler->moveDefs[layerNum];
+	const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
 	if (md->unitDefRefCount == 0)
 		return;
@@ -439,7 +439,7 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectan
 #ifdef QTPFS_STAGGERED_LAYER_UPDATES
 void QTPFS::PathManager::QueueNodeLayerUpdates(const PathRectangle& r) {
 	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-		const MoveDef* md = moveDefHandler->moveDefs[layerNum];
+		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
 		if (md->unitDefRefCount == 0)
 			continue;
@@ -529,7 +529,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 	// TODO: compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
-		const MoveDef* md = moveDefHandler->moveDefs[i];
+		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
 		if (md->unitDefRefCount == 0)
 			continue;
@@ -815,7 +815,7 @@ void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
 	PathCache::PathMap::const_iterator deadPathsIt;
 
 	const PathCache::PathMap& deadPaths = pathCache.GetDeadPaths();
-	const MoveDef* moveDef = moveDefHandler->moveDefs[pathType];
+	const MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(pathType);
 
 	if (!deadPaths.empty()) {
 		// re-request LIVE paths that were marked as DEAD by a TerrainChange

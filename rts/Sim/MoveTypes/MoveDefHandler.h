@@ -118,13 +118,16 @@ public:
 	MoveDefHandler();
 	~MoveDefHandler();
 
-	std::vector<MoveDef*> moveDefs;
-	std::map<std::string, int> name2moveDef;
+	MoveDef* GetMoveDefByPathType(unsigned int pathType) { return moveDefs[pathType]; }
+	MoveDef* GetMoveDefByName(const std::string& name);
 
-	MoveDef* GetMoveDefFromName(const std::string& name);
+	unsigned int GetNumMoveDefs() const { return moveDefs.size(); }
 	unsigned int GetCheckSum() const { return checksum; }
 
 private:
+	std::vector<MoveDef*> moveDefs;
+	std::map<std::string, int> moveDefNames;
+
 	unsigned int checksum;
 };
 

@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "GroundMoveType.h"
+#include "MoveDefHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
@@ -537,7 +538,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 	{
 		if (wantedSpeed > 0.0f) {
 			const UnitDef* ud = owner->unitDef;
-			const MoveDef* md = ud->moveDef;
+			const MoveDef* md = owner->moveDef;
 
 			const float groundMod = CMoveMath::GetPosSpeedMod(*md, owner->pos, flatFrontDir);
 			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
@@ -1022,7 +1023,8 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	nextObstacleAvoidanceUpdate = gs->frameNum + 1;
 
 	CUnit* avoider = owner;
-	MoveDef* avoiderMD = avoider->moveDef;
+	const UnitDef* avoiderUD = avoider->unitDef;
+	const MoveDef* avoiderMD = avoider->moveDef;
 
 	static const float AVOIDER_DIR_WEIGHT = 1.0f;
 	static const float DESIRED_DIR_WEIGHT = 0.5f;
@@ -1037,8 +1039,8 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	const vector<CSolidObject*>& nearbyObjects = qf->GetSolidsExact(avoider->pos, avoidanceRadius);
 
 	for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
-		CSolidObject* avoidee = *oi;
-		MoveDef* avoideeMD = avoidee->moveDef;
+		const CSolidObject* avoidee = *oi;
+		const MoveDef* avoideeMD = avoidee->moveDef;
 
 		// cases in which there is no need to avoid this obstacle
 		if (avoidee == owner)
@@ -1274,10 +1276,13 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 			const int xmin = std::min(cwp.x / SQUARE_SIZE, pos.x / SQUARE_SIZE) - 1, xmax = std::max(cwp.x / SQUARE_SIZE, pos.x / SQUARE_SIZE) + 1;
 			const int zmin = std::min(cwp.z / SQUARE_SIZE, pos.z / SQUARE_SIZE) - 1, zmax = std::max(cwp.z / SQUARE_SIZE, pos.z / SQUARE_SIZE) + 1;
 
+			const UnitDef* ownerUD = owner->unitDef;
+			const MoveDef* ownerMD = owner->moveDef;
+
 			for (int x = xmin; x < xmax; x++) {
 				for (int z = zmin; z < zmax; z++) {
-					const bool noStructBlock = ((CMoveMath::SquareIsBlocked(*owner->moveDef, x, z, owner) & CMoveMath::BLOCK_STRUCTURE) == 0);
-					const bool noGroundBlock = (CMoveMath::GetPosSpeedMod(*owner->moveDef, pos) >= 0.01f);
+					const bool noStructBlock = ((CMoveMath::SquareIsBlocked(*ownerMD, x, z, owner) & CMoveMath::BLOCK_STRUCTURE) == 0);
+					const bool noGroundBlock = (CMoveMath::GetPosSpeedMod(*ownerMD, pos) >= 0.01f);
 
 					if (noStructBlock && noGroundBlock) {
 						continue;
@@ -1322,6 +1327,12 @@ void CGroundMoveType::GetNextWayPoint()
 	}
 
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
+		Fail();
+	}
+	if ((CMoveMath::IsBlocked(*owner->moveDef, nextWayPoint, owner) & CMoveMath::BLOCK_STRUCTURE) != 0) {
+		// this can happen if we crushed a non-blocking feature
+		// and it spawned another feature which we cannot crush
+		// (eg.)
 		Fail();
 	}
 }
@@ -1466,8 +1477,8 @@ void CGroundMoveType::HandleObjectCollisions()
 	// (temporal resolution is still high enough to not compromise accuracy much?)
 	// if ((collider->id & 1) == (gs->frameNum & 1)) {
 	{
-		const UnitDef*   colliderUD = collider->unitDef;
-		const MoveDef*   colliderMD = collider->moveDef;
+		const UnitDef* colliderUD = collider->unitDef;
+		const MoveDef* colliderMD = collider->moveDef;
 
 		// NOTE:
 		//   use the collider's MoveDef footprint as radius since it is
@@ -1633,11 +1644,11 @@ void CGroundMoveType::HandleUnitCollisions(
 	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 		CUnit* collidee = const_cast<CUnit*>(*uit);
 
-		const bool colliderMobile = (collider->moveDef != NULL); // always true
-		const bool collideeMobile = (collidee->moveDef != NULL); // maybe true
-
 		const UnitDef* collideeUD = collidee->unitDef;
 		const MoveDef* collideeMD = collidee->moveDef;
+
+		const bool colliderMobile = (colliderMD != NULL); // always true
+		const bool collideeMobile = (collideeMD != NULL); // maybe true
 
 		// use the collidee's MoveDef footprint as radius if it is mobile
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
@@ -2009,7 +2020,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 	float3 newpos = owner->pos;
 
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
-		const MoveDef& md = *(owner->unitDef->moveDef);
+		const MoveDef& md = *(owner->moveDef);
 		const float cmod = CMoveMath::GetPosSpeedMod(md, moveSquareX, moveSquareY);
 
 		if (math::fabs(owner->frontdir.x) < math::fabs(owner->frontdir.z)) {
@@ -2226,6 +2237,7 @@ void CGroundMoveType::SetMainHeading() {
 
 bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 	const UnitDef* ud = owner->unitDef;
+	const MoveDef* md = owner->moveDef;
 	const float3& pos = owner->pos;
 
 	if (ud->slideTolerance < minSlideTolerance) { return false; }
@@ -2236,7 +2248,7 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 	// (otherwise the unit could stop on an invalid path location, and be teleported
 	// back)
 	const float gSlope = ground->GetSlope(pos.x, pos.z);
-	const float uSlope = ud->moveDef->maxSlope * ((minSlideTolerance <= 0.0f)? 1.0f: ud->slideTolerance);
+	const float uSlope = md->maxSlope * ((minSlideTolerance <= 0.0f)? 1.0f: ud->slideTolerance);
 
 	return (gSlope > uSlope);
 }
@@ -2331,7 +2343,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 {
 	if (wantedSpeed > 0.0f || currentSpeed != 0.0f) {
 		const UnitDef* ud = owner->unitDef;
-		const MoveDef* md = ud->moveDef;
+		const MoveDef* md = owner->moveDef;
 
 		float3 speedVector;
 

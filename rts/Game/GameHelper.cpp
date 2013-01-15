@@ -821,7 +821,7 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming
 		// ^ it's one of our own, or it's in LOS, so don't add an error ^
 		return pos;
 	}
-	if (gameSetup->ghostedBuildings && (unit->losStatus[allyteam] & LOS_PREVLOS) && !unit->moveDef) {
+	if (gameSetup->ghostedBuildings && (unit->losStatus[allyteam] & LOS_PREVLOS) && unit->unitDef->IsBuildingUnit()) {
 		// ^ this is a ghosted building, so don't add an error ^
 		return pos;
 	}
