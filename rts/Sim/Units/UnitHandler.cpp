@@ -61,8 +61,8 @@ void CUnitHandler::PostLoad()
 
 CUnitHandler::CUnitHandler()
 :
-	maxUnitRadius(0.0f),
-	maxUnits(0)
+	maxUnits(0),
+	maxUnitRadius(0.0f)
 {
 	// set the global (runtime-constant) unit-limit as the sum
 	// of  all team unit-limits, which is *always* <= MAX_UNITS
