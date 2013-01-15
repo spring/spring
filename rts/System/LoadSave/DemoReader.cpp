@@ -87,7 +87,10 @@ netcode::RawPacket* CDemoReader::GetData(float readTime)
 	// check needed
 	if (readTime >= nextDemoReadTime) {
 		netcode::RawPacket* buf = new netcode::RawPacket(chunkHeader.length);
-		playbackDemo->Read((char*)(buf->data), chunkHeader.length);
+		if (playbackDemo->Read((char*)(buf->data), chunkHeader.length) < chunkHeader.length) {
+			bytesRemaining = 0;
+			return NULL;
+		}
 		bytesRemaining -= chunkHeader.length;
 
 		if (bytesRemaining > 0 && !playbackDemo->Eof()) {
@@ -100,7 +103,10 @@ netcode::RawPacket* CDemoReader::GetData(float readTime)
 			}
 			if (curPos < playbackDemoSize) {
 				// read next chunk header
-				playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader));
+				if (playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader)) < sizeof(chunkHeader)) {
+					bytesRemaining = 0;
+					return NULL;
+				}
 				chunkHeader.swab();
 				nextDemoReadTime = chunkHeader.modGameTime + demoTimeOffset;
 				bytesRemaining -= sizeof(chunkHeader);
