@@ -201,7 +201,7 @@ public:
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
 	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
-	int buildFacing;                            ///< Orientation of footprint, 4 different states
+	short int buildFacing;                      ///< Orientation of footprint, 4 different states
 
 	static const float DEFAULT_MASS;
 	static const float MINIMUM_MASS;
