@@ -348,6 +348,9 @@ static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_VARYINGS, &numVaryings);
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, &maxNameLength);
 
+	if(!numVaryings)
+		return;
+
 	std::vector<std::string> varyings(numVaryings);
 	std::vector<GLchar*> varyingsPtr(numVaryings);
 	std::string name(maxNameLength, 0);
