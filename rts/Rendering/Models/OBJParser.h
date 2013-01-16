@@ -24,22 +24,23 @@ public:
 		maxs        = ZeroVector;
 	}
 
+	void UploadGeometryVBOs();
 	void DrawForList() const;
 	void SetMinMaxExtends();
 	void SetVertexTangents();
 
-	void SetVertexCount(int n) { vertices.resize(n); }
-	void SetNormalCount(int n) { vnormals.resize(n); }
-	void SetTxCoorCount(int n) { texcoors.resize(n); }
+	void SetVertexCount(unsigned int n) { vertices.resize(n); }
+	void SetNormalCount(unsigned int n) { vnormals.resize(n); }
+	void SetTxCoorCount(unsigned int n) { texcoors.resize(n); }
 
 	void AddTriangle(const SOBJTriangle& t) { triangles.push_back(t); }
 	void SetTriangle(int idx, const SOBJTriangle& t) { triangles[idx] = t; }
 	const SOBJTriangle& GetTriangle(int idx) const { return triangles[idx]; }
 
-	int GetTriangleCount() const { return (triangles.size()); }
-	int GetVertexCount() const { return vertices.size(); }
-	int GetNormalCount() const { return vnormals.size(); }
-	int GetTxCoorCount() const { return texcoors.size(); }
+	unsigned int GetTriangleCount() const { return (triangles.size()); }
+	unsigned int GetVertexCount() const { return vertices.size(); }
+	unsigned int GetNormalCount() const { return vnormals.size(); }
+	unsigned int GetTxCoorCount() const { return texcoors.size(); }
 
 	const float3& GetVertexPos(const int idx) const { return GetVertex(idx); }
 	const float3& GetVertex(const int idx) const { return vertices[idx]; }
@@ -64,6 +65,7 @@ private:
 	std::vector<float2> texcoors;
 
 	std::vector<SOBJTriangle> triangles;
+	std::vector<unsigned int> vertexDrawIndices;
 
 	std::vector<float3> sTangents;
 	std::vector<float3> tTangents;

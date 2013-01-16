@@ -75,8 +75,9 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		piece->primitiveType = fp->primitiveType;
 		piece->name = (char*) &buf[fp->name];
 		piece->parent = parent;
-		piece->vertices.reserve(fp->numVertices);
-		piece->vertexDrawOrder.reserve((size_t)(fp->vertexTableSize * 1.1f)); //1.1f is just a guess (check below)
+
+	piece->SetVertexCount(fp->numVertices);
+	piece->SetVertexDrawIndexCount(fp->vertexTableSize);
 
 	// retrieve each vertex
 	int vertexOffset = fp->vertices;
@@ -87,7 +88,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		SS3OVertex* sv = reinterpret_cast<SS3OVertex*>(&buf[vertexOffset]);
 			sv->normal.SafeANormalize();
 
-		piece->vertices.push_back(*sv);
+		piece->SetVertex(a, *sv);
 		vertexOffset += sizeof(Vertex);
 	}
 
@@ -98,12 +99,12 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	for (int a = 0; a < fp->vertexTableSize; ++a) {
 		const int vertexDrawIdx = swabDWord(*(int*) &buf[vertexTableOffset]);
 
-		piece->vertexDrawOrder.push_back(vertexDrawIdx);
+		piece->SetVertexDrawIndex(a, vertexDrawIdx);
 		vertexTableOffset += sizeof(int);
 	}
 
 
-	piece->isEmpty = piece->vertexDrawOrder.empty();
+	piece->isEmpty = (piece->GetVertexDrawIndexCount() == 0);
 	piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
 
 	piece->SetVertexTangents();
@@ -122,7 +123,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		(piece->mins - piece->goffset);
 
 	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
-
+	piece->UploadGeometryVBOs();
 
 	int childTableOffset = fp->children;
 
@@ -143,55 +144,127 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 
 
 
+void SS3OPiece::UploadGeometryVBOs()
+{
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	if (isEmpty)
+		return;
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].pos.x), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].normal.x), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_STANGENTS]);
+	glBufferData(GL_ARRAY_BUFFER, sTangents.size() * sizeof(float3), &(sTangents[0].x), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_TTANGENTS]);
+	glBufferData(GL_ARRAY_BUFFER, tTangents.size() * sizeof(float3), &(tTangents[0].x), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].textureX), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIDs[VBO_VINDICES]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexDrawIndices.size() * sizeof(unsigned int), &vertexDrawIndices[0], GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
+	// vertices.clear();
+	// vertexDrawIndices.clear();
+	sTangents.clear();
+	tTangents.clear();
+	#endif
+}
+
 void SS3OPiece::DrawForList() const
 {
-	if (isEmpty) {
+	if (isEmpty)
 		return;
-	}
-
-	const SS3OVertex* s3ov = &vertices[0];
 
 	// pass the tangents as 3D texture coordinates
 	// (array elements are float3's, which are 12
 	// bytes in size and each represent a single
 	// xyz triple)
-	if (!sTangents.empty()) {
-		glClientActiveTexture(GL_TEXTURE5);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &sTangents[0].x);
-
-		glClientActiveTexture(GL_TEXTURE6);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &tTangents[0].x);
-	}
-
-	glClientActiveTextureARB(GL_TEXTURE1_ARB);
+	glClientActiveTexture(GL_TEXTURE5);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &s3ov->textureX);
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_STANGENTS]);
+	glTexCoordPointer(3, GL_FLOAT, sizeof(float3), NULL);
+	#else
+	glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &(sTangents[0].x));
+	#endif
+
+	glClientActiveTexture(GL_TEXTURE6);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_TTANGENTS]);
+	glTexCoordPointer(3, GL_FLOAT, sizeof(float3), NULL);
+	#else
+	glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &(tTangents[0].x));
+	#endif
+
+	glClientActiveTexture(GL_TEXTURE1);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), NULL);
+	#else
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].textureX));
+	#endif
 
 	glClientActiveTexture(GL_TEXTURE0);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &s3ov->textureX);
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), NULL);
+	#else
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].textureX));
+	#endif
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), &s3ov->pos.x);
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
+	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), NULL);
+	#else
+	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].pos.x));
+	#endif
 
 	glEnableClientState(GL_NORMAL_ARRAY);
-	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &s3ov->normal.x);
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
+	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), NULL);
+	#else
+	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].normal.x));
+	#endif
+
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIDs[VBO_VINDICES]);
+	#endif
 
 	switch (primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
-			glDrawElements(GL_TRIANGLES, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
+			#ifdef USE_PIECE_GEOMETRY_VBOS
+			glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, NULL);
+			#else
+			glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, &vertexDrawIndices[0]);
+			#endif
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
 			#ifdef GLEW_NV_primitive_restart
 			if (globalRendering->supportRestartPrimitive) {
-				glPrimitiveRestartIndexNV(-1U); // GL_NV_primitive_restart: "PrimitiveRestartIndexNV is not compiled into display lists, but is executed immediately."
+				// this is not compiled into display lists, but executed immediately
+				glPrimitiveRestartIndexNV(-1U);
 				glEnableClientState(GL_PRIMITIVE_RESTART_NV);
 			}
 			#endif
 
-			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
+			#ifdef USE_PIECE_GEOMETRY_VBOS
+			glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, NULL);
+			#else
+			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawIndices.size(), GL_UNSIGNED_INT, &vertexDrawIndices[0]);
+			#endif
 
 			#ifdef GLEW_NV_primitive_restart
 			if (globalRendering->supportRestartPrimitive) {
@@ -200,19 +273,21 @@ void SS3OPiece::DrawForList() const
 			#endif
 		} break;
 		case S3O_PRIMTYPE_QUADS: {
-			glDrawElements(GL_QUADS, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
+			#ifdef USE_PIECE_GEOMETRY_VBOS
+			glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, NULL);
+			#else
+			glDrawElements(GL_QUADS, vertexDrawIndices.size(), GL_UNSIGNED_INT, &vertexDrawIndices[0]);
+			#endif
 		} break;
 	}
 
-	if (!sTangents.empty()) {
-		glClientActiveTexture(GL_TEXTURE6);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glClientActiveTexture(GL_TEXTURE6);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-		glClientActiveTexture(GL_TEXTURE5);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
+	glClientActiveTexture(GL_TEXTURE5);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glClientActiveTextureARB(GL_TEXTURE1_ARB);
+	glClientActiveTexture(GL_TEXTURE1);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	glClientActiveTexture(GL_TEXTURE0);
@@ -220,6 +295,11 @@ void SS3OPiece::DrawForList() const
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	#endif
 }
 
 void SS3OPiece::SetMinMaxExtends()
@@ -236,12 +316,15 @@ void SS3OPiece::SetMinMaxExtends()
 
 void SS3OPiece::SetVertexTangents()
 {
-	if (isEmpty || primitiveType == S3O_PRIMTYPE_QUADS) {
+	if (isEmpty)
 		return;
-	}
 
+	// always allocate space if non-empty to simplify drawing code
 	sTangents.resize(GetVertexCount(), ZeroVector);
 	tTangents.resize(GetVertexCount(), ZeroVector);
+
+	if (primitiveType == S3O_PRIMTYPE_QUADS)
+		return;
 
 	unsigned stride = 0;
 
@@ -258,8 +341,8 @@ void SS3OPiece::SetVertexTangents()
 	// by the draw order of the vertices numbered <v, v + 1, v + 2>
 	// for v in [0, n - 2]
 	const unsigned vrtMaxNr = (stride == 1)?
-		vertexDrawOrder.size() - 2:
-		vertexDrawOrder.size();
+		vertexDrawIndices.size() - 2:
+		vertexDrawIndices.size();
 
 	// set the triangle-level S- and T-tangents
 	for (unsigned vrtNr = 0; vrtNr < vrtMaxNr; vrtNr += stride) {
@@ -269,9 +352,9 @@ void SS3OPiece::SetVertexTangents()
 			flipWinding = ((vrtNr & 1) == 1);
 		}
 
-		const int v0idx = vertexDrawOrder[vrtNr                      ];
-		const int v1idx = vertexDrawOrder[vrtNr + (flipWinding? 2: 1)];
-		const int v2idx = vertexDrawOrder[vrtNr + (flipWinding? 1: 2)];
+		const int v0idx = vertexDrawIndices[vrtNr                      ];
+		const int v1idx = vertexDrawIndices[vrtNr + (flipWinding? 2: 1)];
+		const int v2idx = vertexDrawIndices[vrtNr + (flipWinding? 1: 2)];
 
 		if (v1idx == -1 || v2idx == -1) {
 			// not a valid triangle, skip
@@ -347,48 +430,48 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 {
 	switch (primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
-			for (size_t i = 0; i < vertexDrawOrder.size(); i += 3) {
+			for (size_t i = 0; i < vertexDrawIndices.size(); i += 3) {
 				if (gu->RandFloat() > pieceChance)
 					continue;
 
 				SS3OVertex* verts = new SS3OVertex[4];
 
-				verts[0] = vertices[vertexDrawOrder[i + 0]];
-				verts[1] = vertices[vertexDrawOrder[i + 1]];
-				verts[2] = vertices[vertexDrawOrder[i + 1]];
-				verts[3] = vertices[vertexDrawOrder[i + 2]];
+				verts[0] = vertices[vertexDrawIndices[i + 0]];
+				verts[1] = vertices[vertexDrawIndices[i + 1]];
+				verts[2] = vertices[vertexDrawIndices[i + 1]];
+				verts[3] = vertices[vertexDrawIndices[i + 2]];
 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
 			}
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
-			// vertexDrawOrder can contain end-of-strip markers (-1U)
-			for (size_t i = 2; i < vertexDrawOrder.size(); ) {
+			// vertexDrawIndices can contain end-of-strip markers (-1U)
+			for (size_t i = 2; i < vertexDrawIndices.size(); ) {
 				if (gu->RandFloat() > pieceChance) { i += 1; continue; }
-				if (vertexDrawOrder[i] == -1) { i += 3; continue; }
+				if (vertexDrawIndices[i] == -1) { i += 3; continue; }
 
 				SS3OVertex* verts = new SS3OVertex[4];
 
-				verts[0] = vertices[vertexDrawOrder[i - 2]];
-				verts[1] = vertices[vertexDrawOrder[i - 1]];
-				verts[2] = vertices[vertexDrawOrder[i - 1]];
-				verts[3] = vertices[vertexDrawOrder[i - 0]];
+				verts[0] = vertices[vertexDrawIndices[i - 2]];
+				verts[1] = vertices[vertexDrawIndices[i - 1]];
+				verts[2] = vertices[vertexDrawIndices[i - 1]];
+				verts[3] = vertices[vertexDrawIndices[i - 0]];
 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
 				i += 1;
 			}
 		} break;
 		case S3O_PRIMTYPE_QUADS: {
-			for (size_t i = 0; i < vertexDrawOrder.size(); i += 4) {
+			for (size_t i = 0; i < vertexDrawIndices.size(); i += 4) {
 				if (gu->RandFloat() > pieceChance)
 					continue;
 
 				SS3OVertex* verts = new SS3OVertex[4];
 
-				verts[0] = vertices[vertexDrawOrder[i + 0]];
-				verts[1] = vertices[vertexDrawOrder[i + 1]];
-				verts[2] = vertices[vertexDrawOrder[i + 2]];
-				verts[3] = vertices[vertexDrawOrder[i + 3]];
+				verts[0] = vertices[vertexDrawIndices[i + 0]];
+				verts[1] = vertices[vertexDrawIndices[i + 1]];
+				verts[2] = vertices[vertexDrawIndices[i + 2]];
+				verts[3] = vertices[vertexDrawIndices[i + 3]];
 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
 			}

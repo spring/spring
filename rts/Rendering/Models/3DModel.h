@@ -9,12 +9,24 @@
 #include <map>
 #include "System/Matrix44f.h"
 
+#define USE_PIECE_GEOMETRY_VBOS
+
 enum ModelType {
 	MODELTYPE_3DO   = 0,
 	MODELTYPE_S3O   = 1,
 	MODELTYPE_OBJ   = 2,
 	MODELTYPE_ASS   = 3, // Model loaded by Assimp library
 	MODELTYPE_OTHER = 4  // For future use. Still used in some parts of code.
+};
+
+enum VBOType {
+	VBO_VERTICES  = 0,
+	VBO_VNORMALS  = 1,
+	VBO_STANGENTS = 2,
+	VBO_TTANGENTS = 3,
+	VBO_VTEXCOORS = 4,
+	VBO_VINDICES  = 5,
+	VBO_NUMTYPES  = 6,
 };
 
 struct CollisionVolume;
@@ -34,21 +46,14 @@ typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
  */
 
 struct S3DModelPiece {
-	S3DModelPiece()
-		: model(NULL)
-		, parent(NULL)
-		, colvol(NULL)
-		, isEmpty(true)
-		, dispListID(0)
-		, type(MODELTYPE_OTHER)
-	{
-	}
+	S3DModelPiece();
 
 	virtual ~S3DModelPiece();
+	virtual void UploadGeometryVBOs() {}
 	virtual void DrawForList() const = 0;
-	virtual int GetVertexCount() const { return 0; }
-	virtual int GetNormalCount() const { return 0; }
-	virtual int GetTxCoorCount() const { return 0; }
+	virtual unsigned int GetVertexCount() const { return 0; }
+	virtual unsigned int GetNormalCount() const { return 0; }
+	virtual unsigned int GetTxCoorCount() const { return 0; }
 	virtual void SetMinMaxExtends() {}
 	virtual void SetVertexTangents() {}
 	virtual const float3& GetVertexPos(const int) const = 0;
@@ -84,6 +89,11 @@ public:
 	float3 goffset;   ///< @see root
 	float3 rot;
 	float3 scale;
+
+protected:
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	unsigned int vboIDs[VBO_NUMTYPES];
+	#endif
 };
 
 

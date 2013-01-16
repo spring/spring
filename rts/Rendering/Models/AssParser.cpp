@@ -462,7 +462,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		}
 
 		//! extract face data
-		// FIXME add piece->vertexDrawOrder.reserve()
+		// FIXME add piece->vertexDrawIndices.reserve()
 		LOG_SL(LOG_SECTION_PIECE, L_DEBUG,
 				"Processing faces for mesh %d (%d faces)",
 				meshIndex, mesh->mNumFaces);
@@ -472,7 +472,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 			for (unsigned vertexListID = 0; vertexListID < face.mNumIndices; ++vertexListID) {
 				unsigned int vertexID = mesh_vertex_mapping[face.mIndices[vertexListID]];
 				//LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "face %d vertex %d", faceIndex, vertexID);
-				piece->vertexDrawOrder.push_back(vertexID);
+				piece->vertexDrawIndices.push_back(vertexID);
 			}
 		}
 	}
@@ -631,7 +631,7 @@ void SAssPiece::DrawForList() const
 	 * anything more complex than triangles is
 	 * being split thanks to aiProcess_Triangulate
 	 */
-	glDrawElements(GL_TRIANGLES, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
+	glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, &vertexDrawIndices[0]);
 
 	if (!sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE6);
