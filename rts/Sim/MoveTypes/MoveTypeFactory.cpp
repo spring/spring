@@ -16,7 +16,7 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 		// mobile ground-unit
 		assert(!ud->canfly);
 		assert(ud->pathType != -1U);
-		assert(unit->moveDef != NULL);
+		assert(unit->moveDef == NULL);
 
 		unit->moveDef = moveDefHandler->GetMoveDefByPathType(ud->pathType);
 

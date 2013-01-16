@@ -908,18 +908,18 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	ASSERT_SYNCED(facing);
 
 	inCreateUnit = true;
-	UnitLoadParams unitParams;
-	unitParams.unitDef = unitDef; /// must be non-NULL
-	unitParams.builder = uh->GetUnit(luaL_optint(L, 8, -1)); /// may be NULL
-	unitParams.pos     = pos;
-	unitParams.speed   = ZeroVector;
-	unitParams.unitID  = luaL_optint(L, 7, -1);
-	unitParams.teamID  = teamID;
-	unitParams.facing  = facing;
-	unitParams.beingBuilt = beingBuilt;
-	unitParams.flattenGround = flattenGround;
+	UnitLoadParams params;
+	params.unitDef = unitDef; /// must be non-NULL
+	params.builder = uh->GetUnit(luaL_optint(L, 8, -1)); /// may be NULL
+	params.pos     = pos;
+	params.speed   = ZeroVector;
+	params.unitID  = luaL_optint(L, 7, -1);
+	params.teamID  = teamID;
+	params.facing  = facing;
+	params.beingBuilt = beingBuilt;
+	params.flattenGround = flattenGround;
 
-	CUnit* unit = unitLoader->LoadUnit(unitParams);
+	CUnit* unit = unitLoader->LoadUnit(params);
 	inCreateUnit = false;
 
 	if (unit != NULL) {
