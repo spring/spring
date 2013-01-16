@@ -88,6 +88,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(cylinderTargeting),
 	CR_MEMBER(minIntensity),
 	CR_MEMBER(heightBoostFactor),
+	CR_MEMBER(avoidFlags),
 	CR_MEMBER(collisionFlags),
 	CR_MEMBER(fuelUsage),
 	CR_MEMBER(weaponNum),
@@ -170,6 +171,7 @@ CWeapon::CWeapon(CUnit* owner):
 	cylinderTargeting(0.f),
 	minIntensity(0.f),
 	heightBoostFactor(-1.f),
+	avoidFlags(0),
 	collisionFlags(0),
 	fuelUsage(0),
 

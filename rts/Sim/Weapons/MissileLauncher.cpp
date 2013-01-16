@@ -114,13 +114,8 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		if (gc > 0.0f)
 			return false;
 
-		if (avoidFriendly && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength, linear, quadratic, 0, 8, owner->allyteam, true, false, false, owner)) {
-			return false;
-		}
-		if (avoidNeutral && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength, linear, quadratic, 0, 8, owner->allyteam, false, true, false, owner)) {
-			return false;
-		}
-		if (avoidFeature && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength, linear, quadratic, 0, 8, owner->allyteam, false, false, true, owner)) {
+		if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+			linear, quadratic, 0, owner->allyteam, avoidFlags, owner)) {
 			return false;
 		}
 	} else {
@@ -135,13 +130,8 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 				return false;
 			}
 		}
-		if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, true, false, false, owner)) {
-			return false;
-		}
-		if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, false, true, false, owner)) {
-			return false;
-		}
-		if (avoidFeature && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, false, false, true, owner)) {
+
+		if (TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, avoidFlags, owner)) {
 			return false;
 		}
 	}
