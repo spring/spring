@@ -60,19 +60,21 @@ public:
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
 
-	bool IsInLosForAllyTeam(int allyteam) const
+	bool IsInLosForAllyTeam(int argAllyTeam) const
 	{
 		if (alwaysVisible)
 			return true;
+
+		const bool inLOS = (argAllyTeam == -1 || loshandler->InLos(this->pos, argAllyTeam));
+
 		switch (modInfo.featureVisibility) {
 			case CModInfo::FEATURELOS_NONE:
 			default:
-				return loshandler->InLos(this->pos, allyteam);
+				return inLOS;
 			case CModInfo::FEATURELOS_GAIAONLY:
-				return (this->allyteam == -1 || loshandler->InLos(this->pos, allyteam));
+				return (this->allyteam == -1 || inLOS);
 			case CModInfo::FEATURELOS_GAIAALLIED:
-				return (this->allyteam == -1 || this->allyteam == allyteam
-					|| loshandler->InLos(this->pos, allyteam));
+				return (this->allyteam == -1 || this->allyteam == argAllyTeam || inLOS);
 			case CModInfo::FEATURELOS_ALL:
 				return true;
 		}

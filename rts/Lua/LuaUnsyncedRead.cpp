@@ -854,16 +854,12 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		}
 	}
 
-	// arg 3 - noIcons
 	const bool noIcons = lua_isboolean(L, 3) && !lua_toboolean(L, 3);
-
-	// arg 4 - noGeos
 	const bool noGeos = lua_isboolean(L, 4) && !lua_toboolean(L, 4);
 
 	bool scanAll = false;
 	static CFeatureSet visQuadFeatures;
-
-	CFeatureQuads quadIter;
+	static CFeatureQuads quadIter;
 	int count = 0;
 
 	{
