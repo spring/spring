@@ -9,5 +9,5 @@ echo " "
 echo " "
 echo "Indirect linked libraries: "
 echo "ldd ${BINARY}: "
-ldd ${BINARY}
+ldd -v ${BINARY}
 exit $?
