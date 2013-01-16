@@ -59,7 +59,7 @@ public:
 	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
 	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
 	bool IsFactoryUnit()        const { return (builder &&  IsBuildingUnit()); }
-	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f); }
+	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f && extractRange > 0.0f); }
 	bool IsGroundUnit()         const { return (pathType != -1U && !canfly); }
 	bool IsAirUnit()            const { return (pathType == -1U &&  canfly); }
 	bool IsNonHoveringAirUnit() const { return (IsAirUnit() && !hoverAttack); }

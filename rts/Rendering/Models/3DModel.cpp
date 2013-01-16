@@ -31,6 +31,28 @@ S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
  * S3DModelPiece
  */
 
+S3DModelPiece::S3DModelPiece()
+	: model(NULL)
+	, parent(NULL)
+	, colvol(NULL)
+	, isEmpty(true)
+	, dispListID(0)
+	, type(MODELTYPE_OTHER)
+{
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glGenBuffers(VBO_NUMTYPES, &vboIDs[0]);
+	#endif
+}
+
+S3DModelPiece::~S3DModelPiece()
+{
+	glDeleteLists(dispListID, 1);
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glDeleteBuffers(VBO_NUMTYPES, &vboIDs[0]);
+	#endif
+	delete colvol;
+}
+
 void S3DModelPiece::DrawStatic() const
 {
 	const bool transform = (offset.SqLength() != 0.0f);
@@ -51,14 +73,6 @@ void S3DModelPiece::DrawStatic() const
 		glPopMatrix();
 	}
 }
-
-
-S3DModelPiece::~S3DModelPiece()
-{
-	glDeleteLists(dispListID, 1);
-	delete colvol;
-}
-
 
 
 

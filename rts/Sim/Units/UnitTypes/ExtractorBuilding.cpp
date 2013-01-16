@@ -86,6 +86,9 @@ bool CExtractorBuilding::IsNeighbour(CExtractorBuilding* other)
 /* sets the range of extraction for this extractor, also finds overlapping neighbours. */
 void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 {
+	if (range <= 0.0f || depth <= 0.0f)
+		return;
+
 	extractionRange = range;
 	extractionDepth = depth;
 
