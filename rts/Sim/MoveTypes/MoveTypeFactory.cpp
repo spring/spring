@@ -30,6 +30,7 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 	if (ud->IsAirUnit()) {
 		// mobile air-unit
 		assert(ud->canfly);
+		assert(ud->pathType == -1U);
 		assert(unit->moveDef == NULL);
 
 		if (!ud->builder && !ud->IsTransportUnit() && ud->IsNonHoveringAirUnit()) {
