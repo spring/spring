@@ -71,13 +71,7 @@ bool CEmgCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		(accuracy + sprayAngle) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
-	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
-		return false;
-	}
-	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, false, true, false, owner)) {
+	if (TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
 

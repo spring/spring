@@ -139,16 +139,8 @@ bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		((1.0f - owner->limExperience * weaponDef->ownerExpAccWeight) * 0.9f);
 	const float modFlatLength = flatLength - 30.0f;
 
-	if (avoidFriendly && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
-		dir.y, quadratic, spread, 3, owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
-		dir.y, quadratic, spread, 3, owner->allyteam, false, true, false, owner )) {
-		return false;
-	}
-	if (avoidFeature && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
-		dir.y, quadratic, spread, 3, owner->allyteam, false, false, true, owner)) {
+	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+		dir.y, quadratic, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
 

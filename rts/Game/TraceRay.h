@@ -39,8 +39,6 @@ namespace TraceRay {
 		CFeature*& hitFeature,
 		bool groundOnly = false);
 
-	bool LineFeatureCol(const float3& start, const float3& dir, float length);
-
 	/**
 	 * @return true if there is an object (allied/neutral unit, feature)
 	 * within the firing cone of \<owner\> (that might be hit)
@@ -51,9 +49,7 @@ namespace TraceRay {
 		float length,
 		float spread,
 		int allyteam,
-		bool testFriendly,
-		bool testNeutral,
-		bool testFeatures,
+		int avoidFlags,
 		CUnit* owner);
 
 	/**
@@ -67,11 +63,8 @@ namespace TraceRay {
 		float linear,
 		float quadratic,
 		float spread,
-		float baseSize,
 		int allyteam,
-		bool testFriendly,
-		bool testNeutral,
-		bool testFeatures,
+		int avoidFlags,
 		CUnit* owner);
 }
 

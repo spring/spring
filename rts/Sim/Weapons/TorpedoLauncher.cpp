@@ -98,12 +98,9 @@ bool CTorpedoLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 
 	targetVec /= targetDist;
 	// +0.05f since torpedoes have an unfortunate tendency to hit own ships due to movement
-	float spread = (accuracy + sprayAngle) + 0.05f;
+	const float spread = (accuracy + sprayAngle) + 0.05f;
 
-	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, targetVec, targetDist, spread, owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, targetVec, targetDist, spread, owner->allyteam, false, true, false, owner)) {
+	if (TraceRay::TestCone(weaponMuzzlePos, targetVec, targetDist, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
 

@@ -78,10 +78,7 @@ bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* un
 
 	const float3& wdir = weaponDef->fixedLauncher? weaponDir: UpVector;
 
-	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, false, true, false, owner)) {
+	if (TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
 

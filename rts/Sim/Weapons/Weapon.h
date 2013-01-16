@@ -150,6 +150,7 @@ public:
 	float minIntensity;           // for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
 	float heightBoostFactor;      // controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
 
+	unsigned int avoidFlags;
 	unsigned int collisionFlags;
 
 	float fuelUsage;
