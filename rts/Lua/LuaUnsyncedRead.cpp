@@ -46,6 +46,7 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/NetProtocol.h"
+#include "System/Config/ConfigVariable.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -206,6 +207,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetPlayerStatistics);
 
 	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
+
+	REGISTER_LUA_CFUNC(GetConfigParams);
 
 	return true;
 }
@@ -2306,6 +2309,73 @@ int LuaUnsyncedRead::GetDrawSelectionInfo(lua_State* L)
 	return 1;
 }
 
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetConfigParams(lua_State* L)
+{
+	ConfigVariable::MetaDataMap cfgmap = ConfigVariable::GetMetaDataMap();
+	lua_createtable(L, cfgmap.size(), 0);
+
+	int i = 1;
+	for (ConfigVariable::MetaDataMap::const_iterator it = cfgmap.begin(); it != cfgmap.end(); ++it)
+	{
+		const ConfigVariableMetaData* meta = it->second;
+
+		lua_createtable(L, 0, 9);
+
+			lua_pushsstring(L, "name");
+			lua_pushsstring(L, meta->GetKey());
+			lua_rawset(L, -3);
+			if (meta->GetDescription().IsSet()) {
+				lua_pushsstring(L, "description");
+				lua_pushsstring(L, meta->GetDescription().ToString());
+				lua_rawset(L, -3);
+			}
+			lua_pushsstring(L, "type");
+			lua_pushsstring(L, meta->GetType());
+			lua_rawset(L, -3);
+			if (meta->GetDefaultValue().IsSet()) {
+				lua_pushsstring(L, "defaultValue");
+				lua_pushsstring(L, meta->GetDefaultValue().ToString());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetMinimumValue().IsSet()) {
+				lua_pushsstring(L, "minimumValue");
+				lua_pushsstring(L, meta->GetMinimumValue().ToString());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetMaximumValue().IsSet()) {
+				lua_pushsstring(L, "maximumValue");
+				lua_pushsstring(L, meta->GetMaximumValue().ToString());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetSafemodeValue().IsSet()) {
+				lua_pushsstring(L, "safemodeValue");
+				lua_pushsstring(L, meta->GetSafemodeValue().ToString());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetDeclarationFile().IsSet()) {
+				lua_pushsstring(L, "declarationFile");
+				lua_pushsstring(L, meta->GetDeclarationFile().ToString());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetDeclarationLine().IsSet()) {
+				lua_pushsstring(L, "declarationLine");
+				lua_pushnumber(L, meta->GetDeclarationLine().Get());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetReadOnly().IsSet()) {
+				lua_pushsstring(L, "readOnly");
+				lua_pushboolean(L, !!meta->GetReadOnly().Get());
+				lua_rawset(L, -3);
+			}
+
+		lua_rawseti(L, -2, i++);
+	}
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/

@@ -908,20 +908,17 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	ASSERT_SYNCED(facing);
 
 	inCreateUnit = true;
-	UnitLoadParams unitParams = {
-		unitDef,
-		uh->GetUnit(luaL_optint(L, 8, -1)),
+	UnitLoadParams unitParams;
+	unitParams.unitDef = unitDef; /// must be non-NULL
+	unitParams.builder = uh->GetUnit(luaL_optint(L, 8, -1)); /// may be NULL
+	unitParams.pos     = pos;
+	unitParams.speed   = ZeroVector;
+	unitParams.unitID  = luaL_optint(L, 7, -1);
+	unitParams.teamID  = teamID;
+	unitParams.facing  = facing;
+	unitParams.beingBuilt = beingBuilt;
+	unitParams.flattenGround = flattenGround;
 
-		pos,
-		ZeroVector,
-
-		luaL_optint(L, 7, -1),
-		teamID,
-		facing,
-
-		beingBuilt,
-		flattenGround
-	};
 	CUnit* unit = unitLoader->LoadUnit(unitParams);
 	inCreateUnit = false;
 
@@ -2347,22 +2344,18 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
-	FeatureLoadParams params = {
-		featureDef,
-		NULL,
+	FeatureLoadParams params;
+	params.featureDef = featureDef;
+	params.unitDef    = NULL;
+	params.pos        = pos;
+	params.speed      = ZeroVector;
+	params.featureID  = luaL_optint(L, 7, -1);
+	params.teamID     = team;
+	params.allyTeamID = allyTeam;
+	params.heading    = heading,
+	params.facing     = facing,
+	params.smokeTime  = 0; // smokeTime
 
-		pos,
-		ZeroVector,
-
-		luaL_optint(L, 7, -1),
-		team,
-		allyTeam,
-
-		heading,
-		facing,
-
-		0 // smokeTime
-	};
 	CFeature* feature = featureHandler->LoadFeature(params);
 	inCreateFeature = false;
 
