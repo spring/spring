@@ -60,7 +60,7 @@ void CDemoRecorder::WriteDemoFile(const std::string& name, const std::string& da
 	std::ofstream file;
 
 	file.open(name.c_str(), std::ios::binary | std::ios::out);
-	file.write(data.c_str(), demoStream->tellp());
+	file.write(data.c_str(), data.length());
 	file.flush();
 	file.close();
 }
