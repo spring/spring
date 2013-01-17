@@ -1015,6 +1015,10 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, CUnit* targetUnit
 // (terrain is NOT checked here, HaveFreeLineOfFire does that)
 bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* targetUnit) const
 {
+	if (targetUnit && (targetUnit == owner)) {
+		return false;
+	}
+
 	if (targetUnit && !(onlyTargetCategory & targetUnit->category)) {
 		return false;
 	}
