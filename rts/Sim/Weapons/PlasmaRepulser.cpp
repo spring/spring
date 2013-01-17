@@ -67,6 +67,12 @@ void CPlasmaRepulser::Init()
 }
 
 
+bool CPlasmaRepulser::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
+{
+	return true;
+}
+
+
 void CPlasmaRepulser::Update()
 {
 	const int defHitFrames = weaponDef->visibleShieldHitFrames;

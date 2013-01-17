@@ -36,6 +36,7 @@ WEAPONDUMMYTAG(table, customParams);
 WEAPONTAG(bool, avoidFriendly).defaultValue(true);
 WEAPONTAG(bool, avoidFeature).defaultValue(true);
 WEAPONTAG(bool, avoidNeutral).defaultValue(false);
+WEAPONDUMMYTAG(bool, avoidGround).defaultValue(true);
 WEAPONDUMMYTAG(bool, collideEnemy).defaultValue(true);
 WEAPONDUMMYTAG(bool, collideFriendly).defaultValue(true);
 WEAPONDUMMYTAG(bool, collideFeature).defaultValue(true);
@@ -393,6 +394,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		// CEmgProjectile
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 		size = wdTable.GetFloat("size", 3.0f);
+	} else if (type == "TorpedoLauncher") {
+		assert(waterweapon);
+		waterweapon = true;
 	} else if (type == "DGun") {
 		// CFireBallProjectile
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
@@ -421,6 +425,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	}
 	noAutoTarget = (manualfire || interceptor || isShield);
 	onlyForward = !turret && (type != "StarburstLauncher");
+	avoidGround = wdTable.GetBool("avoidGround", !onlyForward && ((collisionFlags & Collision::NOGROUND) == 0));
 }
 
 

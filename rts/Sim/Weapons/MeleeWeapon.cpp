@@ -46,6 +46,11 @@ void CMeleeWeapon::Update()
 	CWeapon::Update();
 }
 
+bool CMeleeWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
+{
+	return true;
+}
+
 void CMeleeWeapon::FireImpl()
 {
 	if (targetType == Target_Unit) {

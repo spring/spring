@@ -227,6 +227,7 @@ public:
 	bool avoidFriendly;     // if true, try to avoid friendly units while aiming
 	bool avoidFeature;      // if true, try to avoid features while aiming
 	bool avoidNeutral;      // if true, try to avoid neutral units while aiming
+	bool avoidGround;       // if true, try to avoid ground while aiming
 	/**
 	 * If nonzero, targetting units will TryTarget at the edge of collision sphere
 	 * (radius*tag value, [-1;1]) instead of its centre.

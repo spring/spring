@@ -74,35 +74,3 @@ void CTorpedoLauncher::FireImpl()
 
 	new CTorpedoProjectile(params, damageAreaOfEffect, projectileSpeed, tracking);
 }
-
-bool CTorpedoLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
-{
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
-		return false;
-
-	if (unit) {
-		// if we cannot leave water and target unit is not in water, bail
-		if (!weaponDef->submissile && !unit->inWater)
-			return false;
-	} else {
-		// if we cannot leave water and target position is not in water, bail
-		if (!weaponDef->submissile && ground->GetHeightReal(pos.x, pos.z) > 0.0f)
-			return false;
-	}
-
-	float3 targetVec = pos - weaponMuzzlePos;
-	float targetDist = targetVec.Length();
-
-	if (targetDist == 0.0f)
-		return true;
-
-	targetVec /= targetDist;
-	// +0.05f since torpedoes have an unfortunate tendency to hit own ships due to movement
-	const float spread = (accuracy + sprayAngle) + 0.05f;
-
-	if (TraceRay::TestCone(weaponMuzzlePos, targetVec, targetDist, spread, owner->allyteam, avoidFlags, owner)) {
-		return false;
-	}
-
-	return true;
-}

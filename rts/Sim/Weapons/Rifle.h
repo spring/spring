@@ -12,7 +12,6 @@ public:
 	CRifle(CUnit* owner);
 	~CRifle();
 
-	bool TryTarget(const float3 &pos,bool userTarget,CUnit* unit);
 	void Update();
 
 private:
