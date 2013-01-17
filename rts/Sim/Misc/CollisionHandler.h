@@ -11,7 +11,6 @@ struct CollisionVolume;
 class CMatrix44f;
 class CSolidObject;
 class CUnit;
-class CFeature;
 struct LocalModelPiece;
 
 enum {
@@ -68,17 +67,17 @@ class CCollisionHandler {
 
 		static void PrintStats();
 
-		static bool DetectHit(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q = NULL, bool forceTrace = false);
-		static bool DetectHit(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q = NULL, bool forceTrace = false);
+		static bool DetectHit(const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* q = NULL, bool forceTrace = false);
+		static bool DetectHit(const CSolidObject* f, const float3 p0, const float3 p1, CollisionQuery* q = NULL, bool forceTrace = false);
+		static bool DetectHit(const CollisionVolume* v, const CUnit* u, const float3 p0, const float3 p1, CollisionQuery* q, bool forceTrace = false);
+		static bool DetectHit(const CollisionVolume* v, const CSolidObject* f, const float3 p0, const float3 p1, CollisionQuery* q, bool forceTrace = false);
 		static bool MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q);
 
 	private:
 		// HITTEST_DISC helpers for DetectHit
-		static bool Collision(const CUnit* u, const float3& p, CollisionQuery* q);
-		static bool Collision(const CFeature* f, const float3& p, CollisionQuery* q);
+		static bool Collision(const CollisionVolume* v, const CSolidObject* u, const float3 p, CollisionQuery* q);
 		// HITTEST_CONT helpers for DetectHit
-		static bool Intersect(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q);
-		static bool Intersect(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q);
+		static bool Intersect(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* q);
 
 	private:
 		/**
