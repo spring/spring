@@ -4,7 +4,7 @@
 #define DEMO_RECORDER
 
 #include <vector>
-#include <fstream>
+#include <sstream>
 #include <list>
 
 #include "Demo.h"
@@ -21,7 +21,7 @@ public:
 	~CDemoRecorder();
 
 	void WriteSetupText(const std::string& text);
-	void SaveToDemo(const unsigned char* buf,const unsigned length, const float modGameTime);
+	void SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime);
 	
 	/**
 	@brief assign a map name for the demo file
@@ -45,8 +45,9 @@ private:
 	void WritePlayerStats();
 	void WriteTeamStats();
 	void WriteWinnerList();
+	void WriteDemoFile(const std::string& name, const std::string& data);
 
-	std::ofstream demoStream;
+	std::stringstream* demoStream;
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
 	std::vector<unsigned char> winningAllyTeams;

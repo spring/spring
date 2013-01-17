@@ -24,9 +24,9 @@ public:
 	float tracking;
 
 private:
-	virtual bool TestTarget(const float3& pos, bool userTarget, CUnit* unit) const;
-	virtual bool HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const;
-	virtual void FireImpl();
+	bool TestTarget(const float3& pos, bool userTarget, CUnit* unit) const;
+	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const;
+	void FireImpl();
 };
 
 #endif /* BOMB_DROPPER_H */

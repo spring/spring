@@ -1,8 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "DemoRecorder.h"
-
-
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
@@ -17,6 +15,7 @@
 #include <cassert>
 #include <cerrno>
 #include <cstring>
+#include <fstream>
 
 CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName)
 {
@@ -26,20 +25,18 @@ CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modN
 
 	SetName(mapName, modName);
 
-	const std::string filename = dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE);
-	const std::string versionString = SpringVersion::GetSync();
-	demoStream.open(filename.c_str(), std::ios::out | std::ios::binary);
+	demoStream = new std::stringstream(std::ios::out | std::ios::binary);
 
 	memset(&fileHeader, 0, sizeof(DemoFileHeader));
 	strcpy(fileHeader.magic, DEMOFILE_MAGIC);
 	fileHeader.version = DEMOFILE_VERSION;
 	fileHeader.headerSize = sizeof(DemoFileHeader);
-	STRNCPY(fileHeader.versionString, versionString.c_str(), sizeof(fileHeader.versionString) - 1);
+	STRNCPY(fileHeader.versionString, (SpringVersion::GetSync()).c_str(), sizeof(fileHeader.versionString) - 1);
 
 	__time64_t currtime = CTimeUtil::GetCurrentTime();
 	fileHeader.unixTime = currtime;
 
-	demoStream.write((char*) &fileHeader, sizeof(fileHeader));
+	demoStream->write((char*) &fileHeader, sizeof(fileHeader));
 
 	fileHeader.playerStatElemSize = sizeof(PlayerStatistics);
 	fileHeader.teamStatElemSize = sizeof(TeamStatistics);
@@ -55,8 +52,17 @@ CDemoRecorder::~CDemoRecorder()
 	WritePlayerStats();
 	WriteTeamStats();
 	WriteFileHeader();
+	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE), demoStream->str());
+}
 
-	demoStream.close();
+void CDemoRecorder::WriteDemoFile(const std::string& name, const std::string& data)
+{
+	std::ofstream file;
+
+	file.open(name.c_str(), std::ios::binary | std::ios::out);
+	file.write(data.c_str(), demoStream->tellp());
+	file.flush();
+	file.close();
 }
 
 void CDemoRecorder::WriteSetupText(const std::string& text)
@@ -67,7 +73,7 @@ void CDemoRecorder::WriteSetupText(const std::string& text)
 	}
 
 	fileHeader.scriptSize = length;
-	demoStream.write(text.c_str(), length);
+	demoStream->write(text.c_str(), length);
 }
 
 void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime)
@@ -77,10 +83,9 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 	chunkHeader.modGameTime = modGameTime;
 	chunkHeader.length = length;
 	chunkHeader.swab();
-	demoStream.write((char*) &chunkHeader, sizeof(chunkHeader));
-	demoStream.write((char*) buf, length);
+	demoStream->write((char*) &chunkHeader, sizeof(chunkHeader));
+	demoStream->write((char*) buf, length);
 	fileHeader.demoStreamSize += length + sizeof(chunkHeader);
-	demoStream.flush();
 }
 
 void CDemoRecorder::SetName(const std::string& mapname, const std::string& modname)
@@ -159,17 +164,17 @@ Write the DemoFileHeader at the start of the file and restores the original
 position in the file afterwards. */
 void CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 {
-	int pos = demoStream.tellp();
+	int pos = demoStream->tellp();
 
-	demoStream.seekp(0);
+	demoStream->seekp(0);
 
 	DemoFileHeader tmpHeader;
 	memcpy(&tmpHeader, &fileHeader, sizeof(fileHeader));
 	if (!updateStreamLength)
 		tmpHeader.demoStreamSize = 0;
 	tmpHeader.swab(); // to little endian
-	demoStream.write((char*) &tmpHeader, sizeof(tmpHeader));
-	demoStream.seekp(pos);
+	demoStream->write((char*) &tmpHeader, sizeof(tmpHeader));
+	demoStream->seekp(pos);
 }
 
 /** @brief Write the CPlayer::Statistics at the current position in the file. */
@@ -178,16 +183,16 @@ void CDemoRecorder::WritePlayerStats()
 	if (fileHeader.numPlayers == 0)
 		return;
 
-	int pos = demoStream.tellp();
+	int pos = demoStream->tellp();
 
 	for (std::vector< PlayerStatistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
 		PlayerStatistics& stats = *it;
 		stats.swab();
-		demoStream.write((char*) &stats, sizeof(PlayerStatistics));
+		demoStream->write((char*) &stats, sizeof(PlayerStatistics));
 	}
 	playerStats.clear();
 
-	fileHeader.playerStatSize = (int)demoStream.tellp() - pos;
+	fileHeader.playerStatSize = (int)demoStream->tellp() - pos;
 }
 
 
@@ -198,16 +203,16 @@ void CDemoRecorder::WriteWinnerList()
 	if (fileHeader.numTeams == 0)
 		return;
 
-	const int pos = demoStream.tellp();
+	const int pos = demoStream->tellp();
 
 	// Write the array of winningAllyTeams.
 	for (std::vector<unsigned char>::const_iterator it = winningAllyTeams.begin(); it != winningAllyTeams.end(); ++it) {
-		demoStream.write((char*) &(*it), sizeof(unsigned char));
+		demoStream->write((char*) &(*it), sizeof(unsigned char));
 	}
 
 	winningAllyTeams.clear();
 
-	fileHeader.winningAllyTeamsSize = int(demoStream.tellp()) - pos;
+	fileHeader.winningAllyTeamsSize = int(demoStream->tellp()) - pos;
 }
 
 /** @brief Write the TeamStatistics at the current position in the file. */
@@ -216,12 +221,12 @@ void CDemoRecorder::WriteTeamStats()
 	if (fileHeader.numTeams == 0)
 		return;
 
-	int pos = demoStream.tellp();
+	int pos = demoStream->tellp();
 
 	// Write array of dwords indicating number of TeamStatistics per team.
 	for (std::vector< std::vector< TeamStatistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
 		unsigned int c = swabDWord(it->size());
-		demoStream.write((char*)&c, sizeof(unsigned int));
+		demoStream->write((char*)&c, sizeof(unsigned int));
 	}
 
 	// Write big array of TeamStatistics.
@@ -229,10 +234,10 @@ void CDemoRecorder::WriteTeamStats()
 		for (std::vector< TeamStatistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
 			TeamStatistics& stats = *it2;
 			stats.swab();
-			demoStream.write((char*)&stats, sizeof(TeamStatistics));
+			demoStream->write((char*)&stats, sizeof(TeamStatistics));
 		}
 	}
 	teamStats.clear();
 
-	fileHeader.teamStatSize = (int)demoStream.tellp() - pos;
+	fileHeader.teamStatSize = (int)demoStream->tellp() - pos;
 }

@@ -644,7 +644,3 @@ float CFeature::RemainingMetal() const { return RemainingResource(def->metal); }
 float CFeature::RemainingEnergy() const { return RemainingResource(def->energy); }
 int CFeature::ChunkNumber(float f) const { return int(math::ceil(f * modInfo.reclaimMethod)); }
 
-CMatrix44f CFeature::GetTransformMatrix(const bool synced, const bool error) const
-{
-	return transMatrix;
-}
