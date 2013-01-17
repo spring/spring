@@ -50,32 +50,6 @@ void CLightningCannon::Update()
 	CWeapon::Update();
 }
 
-bool CLightningCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
-{
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
-		return false;
-
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
-		return false;
-
-	float3 dir = pos - weaponMuzzlePos;
-	float length = dir.Length();
-	if (length == 0)
-		return true;
-
-	dir /= length;
-
-	if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length, unit)) {
-		return false;
-	}
-
-	if (TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, avoidFlags, owner)) {
-		return false;
-	}
-
-	return true;
-}
-
 void CLightningCannon::Init()
 {
 	CWeapon::Init();

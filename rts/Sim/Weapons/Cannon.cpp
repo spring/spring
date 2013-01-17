@@ -97,12 +97,9 @@ void CCannon::Update()
 	CWeapon::Update();
 }
 
-bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
-{
-	if (!CWeapon::TryTarget(pos, userTarget, unit)) {
-		return false;
-	}
 
+bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
+{
 	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
 		return false;
 
@@ -111,7 +108,7 @@ bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	}
 
 	float3 dif(pos - weaponMuzzlePos);
-	float3 dir(GetWantedDir(dif));
+	float3 dir(GetWantedDir2(dif));
 
 	if (dir.SqLength() == 0) {
 		return false;
@@ -139,6 +136,7 @@ bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		((1.0f - owner->limExperience * weaponDef->ownerExpAccWeight) * 0.9f);
 	const float modFlatLength = flatLength - 30.0f;
 
+	//FIXME add a forcedUserTarget (a forced fire mode enabled with meta key or something) and skip the test below then
 	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
 		dir.y, quadratic, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
@@ -146,7 +144,6 @@ bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 
 	return true;
 }
-
 
 void CCannon::FireImpl()
 {
@@ -216,10 +213,18 @@ float3 CCannon::GetWantedDir(const float3& diff)
 		return lastDir;
 	}
 
+	const float3 dir = GetWantedDir2(diff);
+	lastDiff = diff;
+	lastDir  = dir;
+	return dir;
+}
+
+float3 CCannon::GetWantedDir2(const float3& diff) const
+{
 	const float Dsq = diff.SqLength();
 	const float DFsq = diff.SqLength2D();
-	const float& g = gravity;
-	const float& v = projectileSpeed;
+	const float g = gravity;
+	const float v = projectileSpeed;
 	const float dy  = diff.y;
 	const float dxz = math::sqrt(DFsq);
 	float Vxz = 0.0f;
@@ -254,9 +259,6 @@ float3 CCannon::GetWantedDir(const float3& diff)
 		dir *= Vxz;
 		dir.y = Vy;
 		dir.SafeNormalize();
-
-		lastDiff = diff;
-		lastDir = dir;
 	}
 
 	return dir;

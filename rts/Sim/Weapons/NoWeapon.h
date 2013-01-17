@@ -15,11 +15,11 @@ public:
 
 	void Update();
 	void SlowUpdate();
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 
 	void Init();
 
 private:
+	virtual bool TestTarget(const float3& pos,bool userTarget,CUnit* unit) const;
 	virtual void FireImpl();
 };
 

@@ -68,14 +68,8 @@ void CStarburstLauncher::FireImpl()
 	new CStarburstProjectile(params, damageAreaOfEffect, projectileSpeed, tracking, (int) uptime, maxRange, aimError);
 }
 
-bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
+bool CStarburstLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
 {
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
-		return false;
-
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
-		return false;
-
 	const float3& wdir = weaponDef->fixedLauncher? weaponDir: UpVector;
 
 	if (TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, avoidFlags, owner)) {

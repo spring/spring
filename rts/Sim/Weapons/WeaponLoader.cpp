@@ -173,9 +173,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	}
 
 	weapon->fuelUsage = defWeapon->fuelUsage;
-	weapon->avoidFriendly = weaponDef->avoidFriendly;
-	weapon->avoidFeature = weaponDef->avoidFeature;
-	weapon->avoidNeutral = weaponDef->avoidNeutral;
 	weapon->targetBorder = weaponDef->targetBorder;
 	weapon->cylinderTargeting = weaponDef->cylinderTargeting;
 	weapon->minIntensity = weaponDef->minIntensity;
@@ -185,6 +182,7 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	if (!weaponDef->avoidNeutral)  weapon->avoidFlags |= Collision::NONEUTRALS;
 	if (!weaponDef->avoidFriendly) weapon->avoidFlags |= Collision::NOFRIENDLIES;
 	if (!weaponDef->avoidFeature)  weapon->avoidFlags |= Collision::NOFEATURES;
+	if (!weaponDef->avoidGround)   weapon->avoidFlags |= Collision::NOGROUND;
 
 	weapon->SetWeaponNum(owner->weapons.size());
 	weapon->Init();

@@ -19,6 +19,7 @@ public:
 	~CPlasmaRepulser();
 	void Init();
 	void DependentDied(CObject* o);
+	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const;
 
 	void Update();
 	void SlowUpdate();

@@ -14,8 +14,6 @@ public:
 	~CLightningCannon();
 
 	void Update();
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
-
 	void Init();
 
 	float3 color;

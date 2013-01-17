@@ -80,60 +80,38 @@ void CMissileLauncher::FireImpl()
 	new CMissileProjectile(params, damageAreaOfEffect, projectileSpeed);
 }
 
-bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
+bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
 {
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
+	// do a different test depending on if the missile has high
+	// trajectory (parabolic vs. linear ground intersection)
+	if (weaponDef->trajectoryHeight <= 0.0f)
+		return CWeapon::HaveFreeLineOfFire(pos, userTarget, unit);
+
+	float3 dir(pos - weaponMuzzlePos);
+
+	float3 flatDir(dir.x, 0, dir.z);
+	dir.SafeNormalize();
+	float flatLength = flatDir.Length();
+
+	if (flatLength == 0)
+		return true;
+
+	flatDir /= flatLength;
+
+	const float linear = dir.y + weaponDef->trajectoryHeight;
+	const float quadratic = -weaponDef->trajectoryHeight / flatLength;
+	const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
+		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 30, linear, quadratic):
+		-1.0f;
+	const float modFlatLength = flatLength - 30.0f;
+
+	if (gc > 0.0f)
 		return false;
 
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
+	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+		linear, quadratic, 0, owner->allyteam, avoidFlags, owner)) {
 		return false;
-
-	float3 dir = pos - weaponMuzzlePos;
-
-	if (weaponDef->trajectoryHeight > 0.0f) {
-		// do a different test depending on if the missile has high
-		// trajectory (parabolic vs. linear ground intersection; in
-		// the latter case, HaveFreeLineOfFire() checks the NOGROUND
-		// collision flag for us)
-		float3 flatDir(dir.x, 0, dir.z);
-		dir.SafeNormalize();
-		float flatLength = flatDir.Length();
-
-		if (flatLength == 0)
-			return true;
-
-		flatDir /= flatLength;
-
-		const float linear = dir.y + weaponDef->trajectoryHeight;
-		const float quadratic = -weaponDef->trajectoryHeight / flatLength;
-		const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
-			ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 30, linear, quadratic):
-			-1.0f;
-		const float modFlatLength = flatLength - 30.0f;
-
-		if (gc > 0.0f)
-			return false;
-
-		if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
-			linear, quadratic, 0, owner->allyteam, avoidFlags, owner)) {
-			return false;
-		}
-	} else {
-		const float length = dir.Length();
-		if (length == 0)
-			return true;
-
-		dir /= length;
-
-		if (!onlyForward) {
-			if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length, unit)) {
-				return false;
-			}
-		}
-
-		if (TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, avoidFlags, owner)) {
-			return false;
-		}
 	}
+
 	return true;
 }

@@ -14,7 +14,6 @@ public:
 	~CTorpedoLauncher();
 
 	void Update();
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 
 	float tracking;
 

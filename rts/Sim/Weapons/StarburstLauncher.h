@@ -14,13 +14,13 @@ public:
 	~CStarburstLauncher();
 
 	void Update();
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 	float GetRange2D(float yDiff) const;
 
 	float tracking;
 	float uptime;
 
 private:
+	virtual bool HaveFreeLineOfFire(const float3& pos,bool userTarget,CUnit* unit) const;
 	virtual void FireImpl();
 };
 

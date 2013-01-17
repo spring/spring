@@ -13,8 +13,6 @@ public:
 	CBeamLaser(CUnit* owner);
 
 	void Update();
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
-
 	void Init();
 	void FireInternal(float3 dir, bool sweepFire);
 

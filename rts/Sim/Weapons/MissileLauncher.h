@@ -14,9 +14,10 @@ public:
 	~CMissileLauncher();
 
 	void Update();
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
+
 
 private:
+	virtual bool HaveFreeLineOfFire(const float3& pos,bool userTarget,CUnit* unit) const;
 	virtual void FireImpl();
 };
 
