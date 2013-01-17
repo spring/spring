@@ -606,6 +606,9 @@ bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
 	if (!enemy)
 		return false;
 
+	if (enemy == owner)
+		return false;
+
 	if (owner->unitDef->noChaseCategory & enemy->category)
 		return false;
 
@@ -1057,6 +1060,8 @@ void CMobileCAI::FinishCommand()
 
 bool CMobileCAI::MobileAutoGenerateTarget()
 {
+	//FIXME merge with CWeapon::AutoTarget()
+
 	assert(commandQue.empty());
 
 	const bool canAttack = (owner->unitDef->canAttack && !owner->weapons.empty());
@@ -1101,7 +1106,7 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 
 			if (owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)) {
 				const float searchRadius = owner->maxRange + 150 * owner->moveState * owner->moveState;
-				const CUnit* enemy = helper->GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this); //FIXME
+				const CUnit* enemy = helper->GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
 
 				if (enemy != NULL) {
 					Command c(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
