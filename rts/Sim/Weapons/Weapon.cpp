@@ -1040,6 +1040,8 @@ bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* targe
 	if (weaponDef->stockpile && !numStockpiled) {
 		return false;
 	}
+
+	return true;
 }
 
 bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, CUnit* targetUnit)
@@ -1095,11 +1097,10 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit
 		CUnit* unit = NULL;
 		CFeature* feature = NULL;
 		const float g = TraceRay::TraceRay(weaponMuzzlePos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
-
 		const float3 gpos = weaponMuzzlePos + dir * g;
-		
+
 		// true iff ground does not block the ray of length <length> from <pos> along <dir>
-		if (g > 0.0f && gpos.SqDistance(pos) > damageAreaOfEffect)
+		if (g > 0.0f && gpos.SqDistance(pos) > Square(damageAreaOfEffect))
 			return false;
 	}
 

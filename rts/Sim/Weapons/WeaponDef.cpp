@@ -36,7 +36,7 @@ WEAPONDUMMYTAG(table, customParams);
 WEAPONTAG(bool, avoidFriendly).defaultValue(true);
 WEAPONTAG(bool, avoidFeature).defaultValue(true);
 WEAPONTAG(bool, avoidNeutral).defaultValue(false);
-WEAPONDUMMYTAG(bool, avoidGround).defaultValue(true);
+WEAPONTAG(bool, avoidGround).defaultValue(true);
 WEAPONDUMMYTAG(bool, collideEnemy).defaultValue(true);
 WEAPONDUMMYTAG(bool, collideFriendly).defaultValue(true);
 WEAPONDUMMYTAG(bool, collideFeature).defaultValue(true);
@@ -425,7 +425,6 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	}
 	noAutoTarget = (manualfire || interceptor || isShield);
 	onlyForward = !turret && (type != "StarburstLauncher");
-	avoidGround = wdTable.GetBool("avoidGround", !onlyForward && ((collisionFlags & Collision::NOGROUND) == 0));
 }
 
 
