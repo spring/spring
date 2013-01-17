@@ -86,11 +86,8 @@ bool CExtractorBuilding::IsNeighbour(CExtractorBuilding* other)
 /* sets the range of extraction for this extractor, also finds overlapping neighbours. */
 void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 {
-	if (range <= 0.0f || depth <= 0.0f)
-		return;
-
-	extractionRange = range;
-	extractionDepth = depth;
+	extractionRange = std::max(range, 0.001f);
+	extractionDepth = std::max(depth, 0.0f);
 
 	// find any neighbouring extractors
 	const std::vector<CUnit*> &cu = qf->GetUnits(pos, extractionRange + maxExtractionRange);
