@@ -460,9 +460,6 @@ public:
 	float3 posErrorDelta;
 	int	nextPosErrorUpdate;
 
-	/// true if the unit has weapons that can fire at underwater targets
-	bool hasUWWeapons;
-
 	/// true if the unit currently wants to be cloaked
 	bool wantCloak;
 	/// true if a script currently wants the unit to be cloaked

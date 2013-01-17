@@ -33,10 +33,6 @@ CBombDropper::CBombDropper(CUnit* owner, bool useTorps)
 	, tracking(0)
 {
 	onlyForward = true;
-
-	if (useTorps && owner) {
-		owner->hasUWWeapons = true;
-	}
 }
 
 CBombDropper::~CBombDropper()
