@@ -1208,6 +1208,11 @@ bool CGame::Draw() {
 					rcvr->Draw();
 				}
 			}
+		} else {
+			if (globalRendering->dualScreenMode) {
+				// minimap is on its own screen, so always draw it
+				minimap->Draw();
+			}
 		}
 	}
 
