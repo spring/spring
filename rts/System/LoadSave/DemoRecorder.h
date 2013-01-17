@@ -41,13 +41,14 @@ public:
 	void SetWinningAllyTeams(const std::vector<unsigned char>& winningAllyTeams);
 
 private:
-	void WriteFileHeader(bool updateStreamLength = true);
+	unsigned int WriteFileHeader(bool updateStreamLength);
+	void SetFileHeader();
 	void WritePlayerStats();
 	void WriteTeamStats();
 	void WriteWinnerList();
 	void WriteDemoFile(const std::string& name, const std::string& data);
 
-	std::stringstream* demoStream;
+	std::stringstream demoStream;
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
 	std::vector<unsigned char> winningAllyTeams;
