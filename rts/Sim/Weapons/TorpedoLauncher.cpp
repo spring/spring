@@ -19,7 +19,6 @@ CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
 : CWeapon(owner),
 	tracking(0)
 {
-	if (owner) owner->hasUWWeapons=true;
 }
 
 CTorpedoLauncher::~CTorpedoLauncher()

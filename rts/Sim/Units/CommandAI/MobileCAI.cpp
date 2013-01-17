@@ -603,12 +603,31 @@ void CMobileCAI::ExecuteFight(Command& c)
 }
 
 bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
-	return enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
-		&& !(owner->unitDef->noChaseCategory & enemy->category)
-		&& !enemy->IsNeutral()
-		// on "Hold pos", a target can not be valid if there exists no line of fire to it.
-		&& (owner->moveState > MOVESTATE_HOLDPOS || owner->weapons.empty() ||
-				owner->weapons.front()->TryTargetRotate(const_cast<CUnit*>(enemy), false));
+	if (!enemy)
+		return false;
+
+	if (owner->unitDef->noChaseCategory & enemy->category)
+		return false;
+
+	// don't _auto_ chase neutrals
+	if (enemy->IsNeutral())
+		return false;
+
+	if (owner->weapons.empty())
+		return false;
+
+	// on "Hold pos", a target can not be valid if there exists no line of fire to it.
+	if (owner->moveState == MOVESTATE_HOLDPOS && !owner->weapons.front()->TryTargetRotate(const_cast<CUnit*>(enemy), false))
+		return false;
+
+	// test if any weapon can target the enemy unit
+	for (std::vector<CWeapon*>::iterator it = owner->weapons.begin(); it != owner->weapons.end(); ++it) {
+		if ((*it)->TestTarget(enemy->pos, false, const_cast<CUnit*>(enemy))) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -1082,7 +1101,7 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 
 			if (owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)) {
 				const float searchRadius = owner->maxRange + 150 * owner->moveState * owner->moveState;
-				const CUnit* enemy = helper->GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
+				const CUnit* enemy = helper->GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this); //FIXME
 
 				if (enemy != NULL) {
 					Command c(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
