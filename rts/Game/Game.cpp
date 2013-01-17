@@ -6,7 +6,7 @@
 #include <time.h>
 #include <cctype>
 #include <locale>
-#include <sstream>
+#include <fstream>
 #include <stdexcept>
 
 #include <boost/thread/thread.hpp>

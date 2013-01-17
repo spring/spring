@@ -19,8 +19,8 @@ public:
 	void Init();
 
 private:
-	virtual bool TestTarget(const float3& pos,bool userTarget,CUnit* unit) const;
-	virtual void FireImpl();
+	bool TestTarget(const float3& pos,bool userTarget,CUnit* unit) const;
+	void FireImpl();
 };
 
 
