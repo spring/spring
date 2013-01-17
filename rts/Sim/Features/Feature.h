@@ -80,6 +80,8 @@ public:
 		}
 	}
 
+	virtual CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const;
+
 public:
 	int defID;
 
