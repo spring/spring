@@ -46,7 +46,7 @@ private:
 	void WritePlayerStats();
 	void WriteTeamStats();
 	void WriteWinnerList();
-	void WriteDemoFile(const std::string& name, const std::string& data);
+	void WriteDemoFile(const std::string& name);
 
 	std::stringstream demoStream;
 	std::vector<PlayerStatistics> playerStats;

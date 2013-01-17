@@ -17,7 +17,7 @@
 #include <cstring>
 #include <fstream>
 
-CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName): demoStream(std::ios::binary | std::ios::out)
+CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName): demoStream(std::ios::binary | std::ios::out | std::ios::in)
 {
 	// We want this folder to exist
 	if (!FileSystem::CreateDirectory("demos"))
@@ -33,7 +33,7 @@ CDemoRecorder::~CDemoRecorder()
 	WritePlayerStats();
 	WriteTeamStats();
 	WriteFileHeader(true);
-	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE), demoStream.str());
+	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE));
 }
 
 void CDemoRecorder::SetFileHeader()
@@ -52,12 +52,12 @@ void CDemoRecorder::SetFileHeader()
 	demoStream.seekp(WriteFileHeader(false) + sizeof(DemoFileHeader));
 }
 
-void CDemoRecorder::WriteDemoFile(const std::string& name, const std::string& data)
+void CDemoRecorder::WriteDemoFile(const std::string& name)
 {
 	std::ofstream file;
 
 	file.open(name.c_str(), std::ios::binary | std::ios::out);
-	file.write(data.c_str(), data.length());
+	file << demoStream.rdbuf();
 	file.flush();
 	file.close();
 }
