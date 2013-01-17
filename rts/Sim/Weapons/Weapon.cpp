@@ -942,7 +942,6 @@ bool CWeapon::SetTargetBorderPos(
 
 	const float tbScale = math::fabsf(targetBorder);
 
-	CollisionVolume* prvColVol = targetUnit->collisionVolume;
 	CollisionVolume  tmpColVol = CollisionVolume(targetUnit->collisionVolume);
 	CollisionQuery   tmpColQry;
 
@@ -953,10 +952,9 @@ bool CWeapon::SetTargetBorderPos(
 	tmpColVol.SetBoundingRadius();
 	tmpColVol.SetUseContHitTest(false);
 
-	targetUnit->collisionVolume = &tmpColVol;
 	targetBorderPos = rawTargetPos;
 
-	if (CCollisionHandler::DetectHit(targetUnit, weaponMuzzlePos, ZeroVector, NULL)) {
+	if (CCollisionHandler::DetectHit(&tmpColVol, targetUnit, weaponMuzzlePos, ZeroVector, NULL)) {
 		// our weapon muzzle is inside the target unit's volume; this
 		// means we do not need to make any adjustments to targetVec
 		// (in this case targetBorderPos remains equal to targetPos)
@@ -981,7 +979,7 @@ bool CWeapon::SetTargetBorderPos(
 		const float3 targetRayPos = rawTargetPos + targetOffset;
 
 		// adjust the length of <targetVec> based on the targetBorder factor
-		if (CCollisionHandler::DetectHit(targetUnit, weaponMuzzlePos, targetRayPos, &tmpColQry)) {
+		if (CCollisionHandler::DetectHit(&tmpColVol, targetUnit, weaponMuzzlePos, targetRayPos, &tmpColQry)) {
 			if (targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * rawTargetPos.distance(tmpColQry.GetIngressPos())); }
 			if (targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * rawTargetPos.distance(tmpColQry.GetEgressPos())); }
 
@@ -989,15 +987,65 @@ bool CWeapon::SetTargetBorderPos(
 		}
 	}
 
-	targetUnit->collisionVolume = prvColVol;
-
 	// true indicates we took the else-branch and rawTargetDir was normalized
 	// note: this does *NOT* also imply that targetBorderPos != rawTargetPos
 	return (rawTargetDir.SqLength() == 1.0f);
 }
 
+bool CWeapon::GetTargetBorderPos(const CUnit* targetUnit, const float3& rawTargetPos, float3& rawTargetVec, float3& rawTargetDir) const
+{
+	if (targetBorder == 0.0f)
+		return false;
+	if (targetUnit == NULL)
+		return false;
 
-bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, CUnit* targetUnit)
+	const float tbScale = math::fabsf(targetBorder);
+
+	CollisionVolume  tmpColVol(targetUnit->collisionVolume);
+	CollisionQuery   tmpColQry;
+
+	// test for "collision" with a temporarily volume
+	// (scaled uniformly by the absolute target-border
+	// factor)
+	tmpColVol.RescaleAxes(float3(tbScale, tbScale, tbScale));
+	tmpColVol.SetBoundingRadius();
+	tmpColVol.SetUseContHitTest(false);
+
+	if (CCollisionHandler::DetectHit(&tmpColVol, targetUnit, weaponMuzzlePos, ZeroVector, NULL)) {
+		// our weapon muzzle is inside the target unit's volume; this
+		// means we do not need to make any adjustments to targetVec
+		rawTargetVec = ZeroVector;
+	} else {
+		rawTargetDir = rawTargetDir.SafeNormalize();
+
+		// otherwise, perform a raytrace to find the proper length correction
+		// factor for non-spherical coldet volumes based on the ray's ingress
+		// (for positive TB values) or egress (for negative TB values) position;
+		// this either increases or decreases the length of <targetVec> but does
+		// not change its direction
+		tmpColVol.SetUseContHitTest(true);
+
+		// make the ray-segment long enough so it can reach the far side of the
+		// scaled collision volume (helps to ensure a ray-intersection is found)
+		//
+		// note: ray-intersection is NOT guaranteed if the volume itself has a
+		// non-zero offset, since here we are "shooting" at the target UNIT's
+		// aimpoint
+		const float3 targetOffset = rawTargetDir * (tmpColVol.GetBoundingRadius() * 2.0f);
+		const float3 targetRayPos = rawTargetPos + targetOffset;
+
+		// adjust the length of <targetVec> based on the targetBorder factor
+		if (CCollisionHandler::DetectHit(&tmpColVol, targetUnit, weaponMuzzlePos, targetRayPos, &tmpColQry)) {
+			if (targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * rawTargetPos.distance(tmpColQry.GetIngressPos())); }
+			if (targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * rawTargetPos.distance(tmpColQry.GetEgressPos())); }
+		}
+	}
+
+	// true indicates we took the else-branch and rawTargetDir was normalized
+	return (rawTargetDir.SqLength() == 1.0f);
+}
+
+bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, CUnit* targetUnit) const
 {
 	if (!TestTarget(tgtPos, userTarget, targetUnit))
 		return false;
@@ -1048,13 +1096,13 @@ bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* targe
 	return true;
 }
 
-bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, CUnit* targetUnit)
+bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, CUnit* targetUnit) const
 {
 	float3 tmpTargetPos = tgtPos;
 	float3 tmpTargetVec = tmpTargetPos - weaponMuzzlePos;
 	float3 tmpTargetDir = tmpTargetVec;
 
-	const bool normalized = SetTargetBorderPos(targetUnit, tmpTargetPos, tmpTargetVec, tmpTargetDir); //FIXME make a const version of this
+	const bool normalized = GetTargetBorderPos(targetUnit, tmpTargetPos, tmpTargetVec, tmpTargetDir);
 
 	const float heightDiff = (weaponMuzzlePos.y + tmpTargetVec.y) - owner->pos.y; // negative when target below owner
 	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
