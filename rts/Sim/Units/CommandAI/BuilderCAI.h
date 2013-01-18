@@ -77,7 +77,7 @@ private:
 		REC_ENEMYONLY  = 1<<4,
 		REC_SPECIAL    = 1<<5
 	};
-	typedef BitwiseEnum<ReclaimOptions> ReclaimOption;
+	typedef Bitwise::BitwiseEnum<ReclaimOptions> ReclaimOption;
 
 private:
 	/**

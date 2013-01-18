@@ -73,7 +73,7 @@ void QTPFS::PathCache::AddTempPath(IPath* path) {
 	assert(tempPaths.find(path->GetID()) == tempPaths.end());
 	assert(livePaths.find(path->GetID()) == livePaths.end());
 
-	tempPaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
+	tempPaths.insert(std::pair<unsigned int, IPath*>(path->GetID(), path));
 }
 
 void QTPFS::PathCache::AddLivePath(IPath* path) {
@@ -86,7 +86,7 @@ void QTPFS::PathCache::AddLivePath(IPath* path) {
 
 	// promote a path from temporary- to live-status (no deletion)
 	tempPaths.erase(path->GetID());
-	livePaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
+	livePaths.insert(std::pair<unsigned int, IPath*>(path->GetID(), path));
 }
 
 void QTPFS::PathCache::DelPath(unsigned int pathID) {
@@ -183,7 +183,7 @@ bool QTPFS::PathCache::MarkDeadPaths(const QTPFS::PathRectangle& r) {
 			// remember the ID of each path affected by the deformation
 			if (havePointInRect || edgeCrossesRect) {
 				assert(tempPaths.find(path->GetID()) == tempPaths.end());
-				deadPaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
+				deadPaths.insert(std::pair<unsigned int, IPath*>(path->GetID(), path));
 				livePathIts.push_back(it);
 				break;
 			}
