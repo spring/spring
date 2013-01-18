@@ -169,7 +169,6 @@
 #include "nv_dds.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
-#include "System/mmgr.h"
 #include "System/Log/ILog.h"
 
 using namespace std;

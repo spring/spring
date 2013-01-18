@@ -10,6 +10,7 @@
 #include "Game/CameraHandler.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
+#include "Game/GameServer.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Player.h"
@@ -45,11 +46,13 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/NetProtocol.h"
-#include "System/mmgr.h"
+#include "System/Config/ConfigVariable.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/LoadSave/demofile.h"
+#include "System/LoadSave/DemoReader.h"
 #include "System/Sound/SoundChannels.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
@@ -78,6 +81,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	lua_rawset(L, -3)
 
 	REGISTER_LUA_CFUNC(IsReplay);
+	REGISTER_LUA_CFUNC(GetReplayLength);
 	REGISTER_LUA_CFUNC(GetModUICtrl);
 
 	REGISTER_LUA_CFUNC(GetDrawFrame);
@@ -204,6 +208,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
+	REGISTER_LUA_CFUNC(GetConfigParams);
+
 	return true;
 }
 
@@ -283,6 +289,17 @@ int LuaUnsyncedRead::IsReplay(lua_State* L)
 		lua_pushboolean(L, false);
 	}
 	return 1;
+}
+
+
+int LuaUnsyncedRead::GetReplayLength(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	if (gameServer && gameServer->GetDemoReader()) {
+		lua_pushnumber(L, gameServer->GetDemoReader()->GetFileHeader().gameTime);
+		return 1;
+	}
+	return 0;
 }
 
 
@@ -837,16 +854,12 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		}
 	}
 
-	// arg 3 - noIcons
 	const bool noIcons = lua_isboolean(L, 3) && !lua_toboolean(L, 3);
-
-	// arg 4 - noGeos
 	const bool noGeos = lua_isboolean(L, 4) && !lua_toboolean(L, 4);
 
 	bool scanAll = false;
 	static CFeatureSet visQuadFeatures;
-
-	CFeatureQuads quadIter;
+	static CFeatureQuads quadIter;
 	int count = 0;
 
 	{
@@ -2292,6 +2305,73 @@ int LuaUnsyncedRead::GetDrawSelectionInfo(lua_State* L)
 	return 1;
 }
 
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetConfigParams(lua_State* L)
+{
+	ConfigVariable::MetaDataMap cfgmap = ConfigVariable::GetMetaDataMap();
+	lua_createtable(L, cfgmap.size(), 0);
+
+	int i = 1;
+	for (ConfigVariable::MetaDataMap::const_iterator it = cfgmap.begin(); it != cfgmap.end(); ++it)
+	{
+		const ConfigVariableMetaData* meta = it->second;
+
+		lua_createtable(L, 0, 9);
+
+			lua_pushsstring(L, "name");
+			lua_pushsstring(L, meta->GetKey());
+			lua_rawset(L, -3);
+			if (meta->GetDescription().IsSet()) {
+				lua_pushsstring(L, "description");
+				lua_pushsstring(L, meta->GetDescription().ToString());
+				lua_rawset(L, -3);
+			}
+			lua_pushsstring(L, "type");
+			lua_pushsstring(L, meta->GetType());
+			lua_rawset(L, -3);
+			if (meta->GetDefaultValue().IsSet()) {
+				lua_pushsstring(L, "defaultValue");
+				lua_pushsstring(L, meta->GetDefaultValue().ToString());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetMinimumValue().IsSet()) {
+				lua_pushsstring(L, "minimumValue");
+				lua_pushsstring(L, meta->GetMinimumValue().ToString());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetMaximumValue().IsSet()) {
+				lua_pushsstring(L, "maximumValue");
+				lua_pushsstring(L, meta->GetMaximumValue().ToString());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetSafemodeValue().IsSet()) {
+				lua_pushsstring(L, "safemodeValue");
+				lua_pushsstring(L, meta->GetSafemodeValue().ToString());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetDeclarationFile().IsSet()) {
+				lua_pushsstring(L, "declarationFile");
+				lua_pushsstring(L, meta->GetDeclarationFile().ToString());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetDeclarationLine().IsSet()) {
+				lua_pushsstring(L, "declarationLine");
+				lua_pushnumber(L, meta->GetDeclarationLine().Get());
+				lua_rawset(L, -3);
+			}
+			if (meta->GetReadOnly().IsSet()) {
+				lua_pushsstring(L, "readOnly");
+				lua_pushboolean(L, !!meta->GetReadOnly().Get());
+				lua_rawset(L, -3);
+			}
+
+		lua_rawseti(L, -2, i++);
+	}
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/

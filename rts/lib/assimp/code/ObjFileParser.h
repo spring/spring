@@ -116,8 +116,6 @@ private:
 	void reportErrorTokenInFace();
 
 private:
-	///	Default material name
-	static const std::string DEFAULT_MATERIAL;
 	//!	Iterator to current position in buffer
 	DataArrayIt m_DataIt;
 	//!	Iterator to end position of buffer

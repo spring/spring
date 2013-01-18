@@ -58,7 +58,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MemoryIOWrapper.h"
 
 namespace Assimp {
-	template<> const std::string LogFunctions<IFCImporter>::log_prefix = "IFC: ";
+	template<> const char* LogFunctions<IFCImporter>::log_prefix = "IFC: ";
 }
 
 using namespace Assimp;

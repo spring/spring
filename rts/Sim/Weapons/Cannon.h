@@ -22,14 +22,11 @@ public:
 
 	void Init();
 	void UpdateRange(float val);
-	bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
 	void Update();
 	bool AttackGround(float3 pos, bool userTarget);
 	float GetRange2D(float yDiff) const;
-
 	void SlowUpdate();
-	/// tells where to point the gun to hit the point at pos+diff
-	float3 GetWantedDir(const float3& diff);
+
 
 	/// unused?
 	float maxPredict;
@@ -43,6 +40,11 @@ public:
 	float gravity;
 
 private:
+	/// tells where to point the gun to hit the point at pos+diff
+	float3 GetWantedDir(const float3& diff);
+	float3 GetWantedDir2(const float3& diff) const;
+
+	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const;
 	void FireImpl();
 };
 

@@ -604,7 +604,6 @@ public:
 		return (float)(dx*dx + dz*dz);
 	}
 
-
 	/**
 	 * @brief max x pos
 	 *
@@ -658,9 +657,13 @@ public:
 	float3 cClampInMap() const { float3 f = *this; f.ClampInMap(); return f; }
 
 public:
-	float x; ///< x component
-	float y; ///< y component
-	float z; ///< z component
+	union {
+		struct { float x,y,z; };
+		struct { float r,g,b; };
+		struct { float x1,y1,x2; };
+		struct { float s,t,p; };
+		struct { float xstart, ystart, xend; };
+	};
 };
 
 /**
@@ -678,6 +681,14 @@ const float3 UpVector(0.0f, 1.0f, 0.0f);
  * (0, 0, 0)
  */
 const float3 ZeroVector(0.0f, 0.0f, 0.0f);
+
+
+namespace std {
+	float3 min(float3 v1, float3 v2);
+	float3 max(float3 v1, float3 v2);
+	
+	float3 fabs(float3 v);
+};
 
 
 #endif /* FLOAT3_H */

@@ -1,9 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "DemoRecorder.h"
-
-#include "System/mmgr.h"
-
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
@@ -18,36 +15,12 @@
 #include <cassert>
 #include <cerrno>
 #include <cstring>
+#include <fstream>
 
-CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName)
+CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName): demoStream(std::ios::binary | std::ios::out)
 {
-	// We want this folder to exist
-	if (!FileSystem::CreateDirectory("demos"))
-		return;
-
 	SetName(mapName, modName);
-
-	const std::string filename = dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE);
-	const std::string versionString = SpringVersion::GetSync();
-	demoStream.open(filename.c_str(), std::ios::out | std::ios::binary);
-
-	memset(&fileHeader, 0, sizeof(DemoFileHeader));
-	strcpy(fileHeader.magic, DEMOFILE_MAGIC);
-	fileHeader.version = DEMOFILE_VERSION;
-	fileHeader.headerSize = sizeof(DemoFileHeader);
-	STRNCPY(fileHeader.versionString, versionString.c_str(), sizeof(fileHeader.versionString) - 1);
-
-	__time64_t currtime = CTimeUtil::GetCurrentTime();
-	fileHeader.unixTime = currtime;
-
-	demoStream.write((char*) &fileHeader, sizeof(fileHeader));
-
-	fileHeader.playerStatElemSize = sizeof(PlayerStatistics);
-	fileHeader.teamStatElemSize = sizeof(TeamStatistics);
-	fileHeader.teamStatPeriod = TeamStatistics::statsPeriod;
-	fileHeader.winningAllyTeamsSize = 0;
-
-	WriteFileHeader(false);
+	SetFileHeader();
 }
 
 CDemoRecorder::~CDemoRecorder()
@@ -55,9 +28,34 @@ CDemoRecorder::~CDemoRecorder()
 	WriteWinnerList();
 	WritePlayerStats();
 	WriteTeamStats();
-	WriteFileHeader();
+	WriteFileHeader(true);
+	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE), GetStringFromStreamBuffer(demoStream.rdbuf()));
+}
 
-	demoStream.close();
+void CDemoRecorder::SetFileHeader()
+{
+	memset(&fileHeader, 0, sizeof(DemoFileHeader));
+	strcpy(fileHeader.magic, DEMOFILE_MAGIC);
+	fileHeader.version = DEMOFILE_VERSION;
+	fileHeader.headerSize = sizeof(DemoFileHeader);
+	STRNCPY(fileHeader.versionString, (SpringVersion::GetSync()).c_str(), sizeof(fileHeader.versionString) - 1);
+	fileHeader.unixTime = CTimeUtil::GetCurrentTime();
+	fileHeader.playerStatElemSize = sizeof(PlayerStatistics);
+	fileHeader.teamStatElemSize = sizeof(TeamStatistics);
+	fileHeader.teamStatPeriod = TeamStatistics::statsPeriod;
+	fileHeader.winningAllyTeamsSize = 0;
+
+	demoStream.seekp(WriteFileHeader(false) + sizeof(DemoFileHeader));
+}
+
+void CDemoRecorder::WriteDemoFile(const std::string& name, const std::string& data)
+{
+	std::ofstream file;
+
+	file.open(name.c_str(), std::ios::binary | std::ios::out);
+	file.write(data.c_str(), data.size());
+	file.flush();
+	file.close();
 }
 
 void CDemoRecorder::WriteSetupText(const std::string& text)
@@ -81,11 +79,14 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 	demoStream.write((char*) &chunkHeader, sizeof(chunkHeader));
 	demoStream.write((char*) buf, length);
 	fileHeader.demoStreamSize += length + sizeof(chunkHeader);
-	demoStream.flush();
 }
 
 void CDemoRecorder::SetName(const std::string& mapname, const std::string& modname)
 {
+	// We want this folder to exist
+	if (!FileSystem::CreateDirectory("demos"))
+		return;
+
 	// Returns the current local time as "JJJJMMDD_HHmmSS", eg: "20091231_115959"
 	const std::string curTime = CTimeUtil::GetCurrentTimeStr();
 
@@ -93,7 +94,12 @@ void CDemoRecorder::SetName(const std::string& mapname, const std::string& modna
 	std::ostringstream buf;
 
 	oss << "demos/" << curTime << "_";
-	oss << FileSystem::GetBasename(mapname) << "_" << SpringVersion::GetSync();
+	oss << FileSystem::GetBasename(mapname);
+	oss << "_";
+	// FIXME: why is this not included?
+	// oss << FileSystem::GetBasename(modname);
+	// oss << "_";
+	oss << SpringVersion::GetSync();
 	buf << oss.str() << ".sdf";
 
 	unsigned int n = 0;
@@ -158,19 +164,21 @@ void CDemoRecorder::SetWinningAllyTeams(const std::vector<unsigned char>& winnin
 /** @brief Write DemoFileHeader
 Write the DemoFileHeader at the start of the file and restores the original
 position in the file afterwards. */
-void CDemoRecorder::WriteFileHeader(bool updateStreamLength)
+unsigned int CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 {
-	int pos = demoStream.tellp();
-
-	demoStream.seekp(0);
+	const unsigned int pos = demoStream.tellp();
 
 	DemoFileHeader tmpHeader;
 	memcpy(&tmpHeader, &fileHeader, sizeof(fileHeader));
 	if (!updateStreamLength)
 		tmpHeader.demoStreamSize = 0;
 	tmpHeader.swab(); // to little endian
+
+	demoStream.seekp(0);
 	demoStream.write((char*) &tmpHeader, sizeof(tmpHeader));
 	demoStream.seekp(pos);
+
+	return pos;
 }
 
 /** @brief Write the CPlayer::Statistics at the current position in the file. */

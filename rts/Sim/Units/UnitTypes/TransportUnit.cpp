@@ -20,7 +20,6 @@
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CTransportUnit, CUnit, );
 
@@ -58,28 +57,27 @@ void CTransportUnit::Update()
 	for (std::list<TransportedUnit>::iterator ti = transportedUnits.begin(); ti != transportedUnits.end(); ++ti) {
 		CUnit* transportee = ti->unit;
 
-		float3 relPiecePos;
-		float3 absPiecePos;
+		transportee->mapSquare = mapSquare;
+
+		// by default, "hide" the transportee far underneath terrain
+		// FIXME: this is stupid, just set noDraw and disable coldet
+		float3 relPiecePos = UpVector * -10000.0f;
+		float3 absPiecePos = pos + relPiecePos;
 
 		if (ti->piece >= 0) {
 			relPiecePos = script->GetPiecePos(ti->piece);
-		} else {
-			relPiecePos = float3(0.0f, -1000.0f, 0.0f);
+			absPiecePos = pos +
+				(frontdir * relPiecePos.z) +
+				(updir    * relPiecePos.y) +
+				(rightdir * relPiecePos.x);
 		}
-
-		absPiecePos = pos +
-			(frontdir * relPiecePos.z) +
-			(updir    * relPiecePos.y) +
-			(rightdir * relPiecePos.x);
-
-		transportee->mapSquare = mapSquare;
 
 		if (unitDef->holdSteady) {
 			// slave transportee orientation to piece
 			if (ti->piece >= 0) {
 				const CMatrix44f& transMat = GetTransformMatrix(true);
 				const CMatrix44f& pieceMat = script->GetPieceMatrix(ti->piece);
-				const CMatrix44f slaveMat = pieceMat * transMat;
+				const CMatrix44f  slaveMat = pieceMat * transMat;
 
 				transportee->SetDirVectors(slaveMat);
 			}
@@ -314,7 +312,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->AddDeathDependence(this, DEPENDENCE_TRANSPORTER);
 
 	unit->transporter = this;
-	unit->toBeTransported = false;
+	unit->loadingTransportId = -1;
 	unit->SetStunned(!unitDef->isFirePlatform);
 
 	if (unit->IsStunned()) {
@@ -469,7 +467,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	float clampedHeight = wantedHeight;
 
 	const UnitDef* unitDef = unit->unitDef;
-	const MoveDef* moveDef = unitDef->moveDef;
+	const MoveDef* moveDef = unit->moveDef;
 
 	if (unit->transporter != NULL) {
 		// unit is being transported, set <clampedHeight> to

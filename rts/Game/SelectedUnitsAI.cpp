@@ -17,7 +17,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/NetProtocol.h"
-#include "System/mmgr.h"
 
 const int CMDPARAM_MOVE_X = 0;
 const int CMDPARAM_MOVE_Y = 1;

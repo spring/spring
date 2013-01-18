@@ -10,8 +10,6 @@
 #include <map>
 #include <vector>
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "System/float3.h"
@@ -21,6 +19,10 @@
 class CSoundSource;
 class SoundBuffer;
 class SoundItem;
+
+namespace boost {
+	class thread;
+};
 
 
 /// Default sound system implementation (OpenAL)

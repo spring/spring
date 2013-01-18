@@ -1,21 +1,23 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Input/InputHandler.h"
-#include <sstream>
-#include <iostream>
 
 #include <SDL.h>
 #if !defined(HEADLESS)
 	#include <SDL_syswm.h>
 #endif
 
-#include "System/mmgr.h"
+#include <iostream>
+
+#undef KeyPress
+#undef KeyRelease
 
 #include "Rendering/GL/myGL.h"
 #include "System/SpringApp.h"
 
 #include "aGui/Gui.h"
 #include "ExternalAI/IAILibraryManager.h"
+#include "Game/Benchmark.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameServer.h"
 #include "Game/GameSetup.h"
@@ -41,6 +43,7 @@
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/bitops.h"
@@ -51,6 +54,7 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/OpenMP_cond.h"
+#include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "System/FileSystem/DataDirLocater.h"
@@ -65,7 +69,6 @@
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Sound/ISound.h"
 
-#include "System/mmgr.h"
 
 #ifdef WIN32
 	#include "System/Platform/Win/WinVersion.h"
@@ -76,20 +79,15 @@
 	#include "System/Platform/Linux/myX11.h"
 #endif
 
-#undef KeyPress
-#undef KeyRelease
-
 #include "lib/gml/gml_base.h"
 #include "lib/luasocket/src/restrictions.h"
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
-CONFIG(int, DepthBufferBits).defaultValue(24);
-CONFIG(int, StencilBufferBits).defaultValue(8);
-CONFIG(int, FSAALevel).defaultValue(0);
+CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(8);
 CONFIG(int, SmoothLines).defaultValue(2).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
 CONFIG(int, SmoothPoints).defaultValue(2).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
-CONFIG(float, TextureLODBias).defaultValue(0.0f);
+CONFIG(float, TextureLODBias).defaultValue(0.0f).minimumValue(-4.0f).maximumValue(4.0f);
 CONFIG(bool, FixAltTab).defaultValue(false);
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf");
@@ -133,6 +131,44 @@ static bool MultisampleVerify()
 	}
 	return false;
 }
+
+
+#ifdef _OPENMP
+static boost::uint32_t GetOpenMPCpuCore(int index, boost::uint32_t availCores, boost::uint32_t avoidCores)
+{
+	boost::uint32_t ompCore = 1;
+
+	// find an unused core
+	{
+		while ((ompCore) && !(ompCore & availCores))
+			ompCore <<= 1;
+		int n = index;
+		// select n'th bit in availCores
+		while (n--)
+			do ompCore <<= 1; while ((ompCore) && !(ompCore & availCores));
+	}
+
+	// select one of the mainthread cores if none found
+	if (ompCore == 0) {
+		/*int cntBits =*/ count_bits_set(avoidCores);
+		ompCore = 1;
+		while ((ompCore) && !(ompCore & avoidCores))
+			ompCore <<= 1;
+		int n = index;
+		// select n'th bit in avoidCores
+		while (n--)
+			do ompCore <<= 1; while ((ompCore) && !(ompCore & avoidCores));
+	}
+
+	// fallback use all
+	if (ompCore == 0) {
+		ompCore = ~0;
+	}
+
+	return ompCore;
+}
+#endif
+
 
 
 /**
@@ -200,23 +236,6 @@ bool SpringApp::Initialize()
 	else
 		LOG("OS: 32bit native mode");
 
-	// Rename Threads
-	// We give the process itself the name `unknown`, htop & co. will still show the binary's name.
-	// But all child threads copy by default the name of their parent, so all threads that don't set
-	// their name themselves will show up as 'unknown'.
-	Threading::SetThreadName("unknown");
-#ifdef _OPENMP
-	#pragma omp parallel
-	{
-		int i = omp_get_thread_num();
-		if (i != 0) { // 0 is the source thread
-			std::ostringstream buf;
-			buf << "omp" << i;
-			Threading::SetThreadName(buf.str().c_str());
-		}
-	}
-#endif
-
 	// Install Watchdog
 	Watchdog::Install();
 	Watchdog::RegisterThread(WDT_MAIN, true);
@@ -240,7 +259,7 @@ bool SpringApp::Initialize()
 	// Initialize GLEW
 	LoadExtensions();
 
-	//! check if FSAA init worked fine
+	// check if FSAA init worked fine
 	if (globalRendering->FSAA && !MultisampleVerify())
 		globalRendering->FSAA = 0;
 
@@ -264,8 +283,40 @@ bool SpringApp::Initialize()
 	luaSocketRestrictions = new CLuaSocketRestrictions();
 
 	// Multithreading & Affinity
+	Threading::SetThreadName("unknown"); // set default threadname
 	LOG("CPU Cores: %d", Threading::GetAvailableCores());
+#ifdef _OPENMP
+	boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
+	boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
+	boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
+
+	// For latency reasons our openmp threads yield rarely and so eat a lot cputime with idleing.
+	// So it's better we always leave 1 core free for our other threads, drivers & OS
+	if (omp_get_max_threads() > 2)
+		omp_set_num_threads(omp_get_max_threads() - 1); 
+
+	// omp threads
+	boost::uint32_t ompCores = 0;
+	#pragma omp parallel reduction(|:ompCores)
+	{
+		int i = omp_get_thread_num();
+		if (i != 0) { // 0 is the source thread
+			Threading::SetThreadName(IntToString(i, "omp%i"));
+			//boost::uint32_t ompCore = 1 << i;
+			boost::uint32_t ompCore = GetOpenMPCpuCore(i - 1, ompAvailCores, mainAffinity);
+			Threading::SetAffinity(ompCore);
+			ompCores |= ompCore;
+		}
+	}
+
+	// mainthread
+	boost::uint32_t nonOmpCores = ~ompCores;
+	if (mainAffinity == 0) mainAffinity = systemCores;
+	Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
+
+#else
 	Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
+#endif
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -282,11 +333,15 @@ bool SpringApp::Initialize()
  */
 bool SpringApp::InitWindow(const char* title)
 {
+	// SDL will cause a creation of gpu-driver thread that will clone its name from the starting threads (= this one = mainthread)
+	Threading::SetThreadName("gpu-driver");
+
 	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
 #ifdef WIN32
 	// the crash reporter should be catching the errors
 	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
 #endif
+
 	if ((SDL_Init(sdlInitFlags) == -1)) {
 		LOG_L(L_FATAL, "Could not initialize SDL: %s", SDL_GetError());
 		return false;
@@ -311,6 +366,8 @@ bool SpringApp::InitWindow(const char* title)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
 
+	// anyone other thread spawned from the main-process should be `unknown`
+	Threading::SetThreadName("unknown");
 	return true;
 }
 
@@ -323,7 +380,7 @@ bool SpringApp::SetSDLVideoMode()
 {
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
-	//! w/o SDL_NOFRAME, kde's windowmanager still creates a border (in fullscreen!) and forces a `window`-resize causing a lot of trouble (in the ::SaveWindowPosition)
+	// w/o SDL_NOFRAME, kde's windowmanager still creates a border (in fullscreen!) and forces a `window`-resize causing a lot of trouble (in the ::SaveWindowPosition)
 	sdlflags |= globalRendering->fullScreen ? SDL_FULLSCREEN | SDL_NOFRAME : 0;
 
 	const bool winBorderless = configHandler->GetBool("WindowBorderless");
@@ -332,15 +389,15 @@ bool SpringApp::SetSDLVideoMode()
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); //! enable alpha channel ???
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel ???
 
-	globalRendering->depthBufferBits = configHandler->GetInt("DepthBufferBits");
+	globalRendering->depthBufferBits = 24;
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, globalRendering->depthBufferBits);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->GetInt("StencilBufferBits"));
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	//! FullScreen AntiAliasing
-	globalRendering->FSAA = Clamp(configHandler->GetInt("FSAALevel"), 0, 8);
+	globalRendering->FSAA = configHandler->GetInt("FSAALevel");
 	if (globalRendering->FSAA > 0) {
 		make_even_number(globalRendering->FSAA);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -403,7 +460,7 @@ bool SpringApp::SetSDLVideoMode()
 	}
 
 	//! setup LOD bias factor
-	const float lodBias = Clamp(configHandler->GetFloat("TextureLODBias"), -4.f, 4.f);
+	const float lodBias = configHandler->GetFloat("TextureLODBias");
 	if (math::fabs(lodBias)>0.01f) {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
 	}
@@ -713,19 +770,24 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
 	cmdline->AddInt(   'x', "xresolution",        "Set X resolution");
 	cmdline->AddInt(   'y', "yresolution",        "Set Y resolution");
-	cmdline->AddSwitch('m', "minimise",           "Start minimised");
+	cmdline->AddSwitch('b', "minimise",           "Start in background (minimised)");
 	cmdline->AddSwitch('s', "server",             "Run as a server");
 	cmdline->AddSwitch('c', "client",             "Run as a client");
 	cmdline->AddSwitch('p', "projectiledump",     "Dump projectile class info in projectiles.txt");
 	cmdline->AddSwitch('t', "textureatlas",       "Dump each finalized textureatlas in textureatlasN.tga");
+	cmdline->AddInt(   0,   "benchmark",          "Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.");
+	cmdline->AddInt(   0,   "benchmarkstart",     "Benchmark start time in minutes.");
 	cmdline->AddString('n', "name",               "Set your player name");
 	cmdline->AddString('C', "config",             "Configuration file");
 	cmdline->AddSwitch(0,   "safemode",           "Turns off many things that are known to cause problems (i.e. on PC/Mac's with lower-end graphic cards)");
 	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
 	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
 	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
+	cmdline->AddSwitch(0,   "list-def-tags",      "Dump a list of all unitdef-, weapondef-, ... tags and meta data to stdout");
 	cmdline->AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
 	cmdline->AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
+	cmdline->AddString('g', "game",               "Specify the game that will be instantly loaded");
+	cmdline->AddString('m', "map",                "Specify the map that will be instantly loaded");
 
 	try {
 		cmdline->Parse();
@@ -763,14 +825,22 @@ void SpringApp::ParseCmdLine()
 		dataDirLocater.SetIsolationModeDir(cmdline->GetString("isolation-dir"));
 	}
 
+	// mutually exclusive options that cause spring to quit immediately
+	if (cmdline->IsSet("list-config-vars")) {
+		ConfigVariable::OutputMetaDataMap();
+		exit(0);
+	}
+	else if (cmdline->IsSet("list-def-tags")) {
+		DefType::OutputTagMap();
+		exit(0);
+	}
+
 	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
 	const bool safemode = cmdline->IsSet("safemode");
-
 	ConfigHandler::Instantiate(configSource, safemode);
 	GlobalConfig::Instantiate();
 
 	// mutually exclusive options that cause spring to quit immediately
-	// and require the configHandler
 	if (cmdline->IsSet("list-ai-interfaces")) {
 		dataDirLocater.LocateDataDirs();
 		IAILibraryManager::OutputAIInterfacesInfo();
@@ -779,10 +849,6 @@ void SpringApp::ParseCmdLine()
 	else if (cmdline->IsSet("list-skirmish-ais")) {
 		dataDirLocater.LocateDataDirs();
 		IAILibraryManager::OutputSkirmishAIInfo();
-		exit(0);
-	}
-	else if (cmdline->IsSet("list-config-vars")) {
-		ConfigVariable::OutputMetaDataMap();
 		exit(0);
 	}
 
@@ -816,6 +882,34 @@ void SpringApp::ParseCmdLine()
 	globalRendering->viewSizeY = configHandler->GetInt("YResolution");
 	if (cmdline->IsSet("yresolution"))
 		globalRendering->viewSizeY = std::max(cmdline->GetInt("yresolution"), 480);
+
+
+	if (cmdline->IsSet("benchmark")) {
+		CBenchmark::enabled = true;
+		if (cmdline->IsSet("benchmarkstart")) {
+			CBenchmark::startFrame = cmdline->GetInt("benchmarkstart") * 60 * GAME_SPEED;
+		}
+		CBenchmark::endFrame = CBenchmark::startFrame + cmdline->GetInt("benchmark") * 60 * GAME_SPEED;
+	}
+}
+
+
+void SpringApp::RunScript(const std::string buf) {
+	startsetup = new ClientSetup();
+	startsetup->Init(buf);
+
+	// commandline parameters overwrite setup
+	if (cmdline->IsSet("client"))
+		startsetup->isHost = false;
+	else if (cmdline->IsSet("server"))
+		startsetup->isHost = true;
+
+#ifdef SYNCDEBUG
+	CSyncDebugger::GetInstance()->Initialize(startsetup->isHost, 64); //FIXME: add actual number of player
+#endif
+	pregame = new CPreGame(startsetup);
+	if (startsetup->isHost)
+		pregame->LoadSetupscript(buf);
 }
 
 
@@ -824,6 +918,14 @@ void SpringApp::ParseCmdLine()
  */
 void SpringApp::Startup()
 {
+	if ((cmdline->IsSet("game") && cmdline->IsSet("map"))) { // --game and --map directly specified, try to run them
+		const std::string game = cmdline->GetString("game");
+		const std::string map = cmdline->GetString("map");
+		std::string buf = StartScriptGen::CreateMinimalSetup(game, map);
+		RunScript(buf);
+		return;
+	}
+
 	std::string inputFile = cmdline->GetInputFile();
 	if (inputFile.empty())
 	{
@@ -878,29 +980,14 @@ void SpringApp::Startup()
 	else
 	{
 		LOG("Loading startscript from: %s", inputFile.c_str());
-		std::string startscript = inputFile;
-		CFileHandler fh(startscript);
+		CFileHandler fh(inputFile, SPRING_VFS_PWD_ALL);
 		if (!fh.FileExists())
-			throw content_error("Setup-script does not exist in given location: "+startscript);
+			throw content_error("Setup-script does not exist in given location: " + inputFile);
 
 		std::string buf;
 		if (!fh.LoadStringData(buf))
-			throw content_error("Setup-script cannot be read: " + startscript);
-		startsetup = new ClientSetup();
-		startsetup->Init(buf);
-
-		// commandline parameters overwrite setup
-		if (cmdline->IsSet("client"))
-			startsetup->isHost = false;
-		else if (cmdline->IsSet("server"))
-			startsetup->isHost = true;
-
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(startsetup->isHost, 64); //FIXME: add actual number of player
-#endif
-		pregame = new CPreGame(startsetup);
-		if (startsetup->isHost)
-			pregame->LoadSetupscript(buf);
+			throw content_error("Setup-script cannot be read: " + inputFile);
+		RunScript(buf);
 	}
 }
 
@@ -932,8 +1019,11 @@ int SpringApp::Update()
 		}
 	}
 
-	VSync.Delay();
-	SDL_GL_SwapBuffers();
+	{
+		ScopedTimer cputimer("SwapBuffers");
+		VSync.Delay();
+		SDL_GL_SwapBuffers();
+	}
 
 	if (globalRendering->FSAA)
 		glDisable(GL_MULTISAMPLE_ARB);
@@ -1023,18 +1113,16 @@ void SpringApp::Shutdown()
 {
 	if (gu) gu->globalQuit = true;
 
-#define DeleteAndNull(x) delete x; x = NULL;
-
 	GML::Exit();
-	DeleteAndNull(pregame);
-	DeleteAndNull(game);
+	SafeDelete(pregame);
+	SafeDelete(game);
 	SafeDelete(net);
-	DeleteAndNull(gameServer);
-	DeleteAndNull(gameSetup);
+	SafeDelete(gameServer);
+	SafeDelete(gameSetup);
 	CLoadScreen::DeleteInstance();
 	ISound::Shutdown();
-	DeleteAndNull(font);
-	DeleteAndNull(smallFont);
+	SafeDelete(font);
+	SafeDelete(smallFont);
 	CNamedTextures::Kill();
 	GLContext::Free();
 	GlobalConfig::Deallocate();
@@ -1050,19 +1138,15 @@ void SpringApp::Shutdown()
 #endif
 	SDL_Quit();
 
-	DeleteAndNull(gs);
-	DeleteAndNull(gu);
-	DeleteAndNull(globalRendering);
-	DeleteAndNull(startsetup);
-	DeleteAndNull(luaSocketRestrictions);
+	SafeDelete(gs);
+	SafeDelete(gu);
+	SafeDelete(globalRendering);
+	SafeDelete(startsetup);
+	SafeDelete(luaSocketRestrictions);
 
 	FileSystemInitializer::Cleanup();
 
 	Watchdog::Uninstall();
-
-#ifdef USE_MMGR
-	m_dumpMemoryReport();
-#endif
 }
 
 bool SpringApp::MainEventHandler(const SDL_Event& event)

@@ -81,9 +81,9 @@ namespace QTPFS {
 
 
 		// utility functions
-		bool empty() const { return (cur_idx == 0); }
-		bool full() const { return (size() >= capacity()); }
-		size_t size() const { return cur_idx; }
+		bool empty() const { return (size() == 0); }
+//		bool full() const { return (size() >= capacity()); }
+		size_t size() const { return (cur_idx); }
 		size_t capacity() const { return (max_idx + 1); }
 
 		void clear() {
@@ -157,9 +157,9 @@ namespace QTPFS {
 				const TNode n = nodes[idx];
 				const unsigned int nn = n->GetNodeNumber();
 				const unsigned int hi = n->GetHeapIndex();
-				const float fc = n->GetPathCost(NODE_PATH_COST_F);
+				const float hp = n->GetPathCost(NODE_PATH_COST_F);
 
-				printf("%s%f (idx=%lu :: nn=%u :: hi=%u)\n", tabs.c_str(), fc, idx, nn, hi);
+				printf("%s%f (idx=%lu :: nn=%u :: hi=%u)\n", tabs.c_str(), hp, idx, nn, hi);
 
 				debug_print(l_child_idx(idx), calls - 1, tabs + "\t");
 			}

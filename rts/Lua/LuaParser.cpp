@@ -8,7 +8,6 @@
 #include <boost/regex.hpp>
 
 #include "lib/streflop/streflop_cond.h"
-#include "System/mmgr.h"
 
 #include "System/float3.h"
 #include "System/float4.h"
@@ -594,8 +593,6 @@ int LuaParser::FileExists(lua_State* L)
 	if (!LuaIO::IsSimplePath(filename)) {
 		return 0;
 	}
-	//CFileHandler fh(filename, currentParser->accessModes);
-	//lua_pushboolean(L, fh.FileExists());
 	lua_pushboolean(L, CFileHandler::FileExists(filename, currentParser->accessModes));
 	return 1;
 }
@@ -876,13 +873,78 @@ bool LuaTable::PushValue(const string& mixedKey) const
 	if (!PushTable()) {
 		return false;
 	}
-	lua_pushstring(L, key.c_str());
-	lua_gettable(L, -2);
-	if (lua_isnoneornil(L, -1)) {
-		lua_pop(L, 1);
+
+	const int top = lua_gettop(L);
+
+	if (key.find(".") != std::string::npos) {
+		// nested key (e.g. "subtable.subsub.mahkey")
+		size_t lastpos = 0;
+		size_t dotpos = key.find(".");
+
+		lua_pushvalue(L, -1);
+		do {
+			const std::string subTableName = key.substr(lastpos, dotpos);
+			lastpos = dotpos + 1;
+			dotpos = key.find(".", lastpos);
+
+			lua_pushsstring(L, subTableName);
+			lua_gettable(L, -2);
+			if (!lua_istable(L, -1)) {
+				lua_pop(L, 2);
+				const int newtop = lua_gettop(L);
+				assert(newtop == top);
+				return false;
+			}
+			lua_remove(L, -2);
+		} while (dotpos != std::string::npos);
+
+		const std::string keyname = key.substr(lastpos);
+
+		// try as string
+		lua_pushsstring(L, keyname);
+		lua_gettable(L, -2);
+		if (!lua_isnoneornil(L, -1)) {
+			lua_remove(L, -2);
+			const int newtop = lua_gettop(L);
+			assert(newtop == top + 1);
+			return true;
+		}
+
+		// try as integer
+		bool failed;
+		int i = StringToInt(keyname, &failed);
+		if (failed) {
+			lua_pop(L, 2);
+			const int newtop = lua_gettop(L);
+			assert(newtop == top);
+			return false;
+		}
+		lua_pop(L, 1); // pop nil
+		lua_pushnumber(L, i);
+		lua_gettable(L, -2);
+		if (!lua_isnoneornil(L, -1)) {
+			lua_remove(L, -2);
+			const int newtop = lua_gettop(L);
+			assert(newtop == top + 1);
+			return true;
+		}
+		lua_pop(L, 2);
+		const int newtop = lua_gettop(L);
+		assert(newtop == top);
 		return false;
 	}
-	return true;
+
+	lua_pushsstring(L, key);
+	lua_gettable(L, -2);
+	if (!lua_isnoneornil(L, -1)) {
+		const int newtop = lua_gettop(L);
+		assert(newtop == top + 1);
+		return true;
+	}
+	lua_pop(L, 1);
+	const int newtop = lua_gettop(L);
+	assert(newtop == top);
+	return false;
 }
 
 
@@ -1213,7 +1275,7 @@ static bool ParseBoolean(lua_State* L, int index, bool& value)
 //  String key functions
 //
 
-int LuaTable::GetInt(const string& key, int def) const
+int LuaTable::Get(const string& key, int def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1228,7 +1290,7 @@ int LuaTable::GetInt(const string& key, int def) const
 }
 
 
-bool LuaTable::GetBool(const string& key, bool def) const
+bool LuaTable::Get(const string& key, bool def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1243,7 +1305,7 @@ bool LuaTable::GetBool(const string& key, bool def) const
 }
 
 
-float LuaTable::GetFloat(const string& key, float def) const
+float LuaTable::Get(const string& key, float def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1259,7 +1321,7 @@ float LuaTable::GetFloat(const string& key, float def) const
 
 
 
-float3 LuaTable::GetFloat3(const string& key, const float3& def) const
+float3 LuaTable::Get(const string& key, const float3& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1273,7 +1335,7 @@ float3 LuaTable::GetFloat3(const string& key, const float3& def) const
 	return value;
 }
 
-float4 LuaTable::GetFloat4(const string& key, const float4& def) const
+float4 LuaTable::Get(const string& key, const float4& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1289,7 +1351,7 @@ float4 LuaTable::GetFloat4(const string& key, const float4& def) const
 
 
 
-string LuaTable::GetString(const string& key, const string& def) const
+string LuaTable::Get(const string& key, const string& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1310,7 +1372,7 @@ string LuaTable::GetString(const string& key, const string& def) const
 //  Number key functions
 //
 
-int LuaTable::GetInt(int key, int def) const
+int LuaTable::Get(int key, int def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1325,7 +1387,7 @@ int LuaTable::GetInt(int key, int def) const
 }
 
 
-bool LuaTable::GetBool(int key, bool def) const
+bool LuaTable::Get(int key, bool def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1340,7 +1402,7 @@ bool LuaTable::GetBool(int key, bool def) const
 }
 
 
-float LuaTable::GetFloat(int key, float def) const
+float LuaTable::Get(int key, float def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1356,7 +1418,7 @@ float LuaTable::GetFloat(int key, float def) const
 
 
 
-float3 LuaTable::GetFloat3(int key, const float3& def) const
+float3 LuaTable::Get(int key, const float3& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1370,7 +1432,7 @@ float3 LuaTable::GetFloat3(int key, const float3& def) const
 	return value;
 }
 
-float4 LuaTable::GetFloat4(int key, const float4& def) const
+float4 LuaTable::Get(int key, const float4& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1386,7 +1448,7 @@ float4 LuaTable::GetFloat4(int key, const float4& def) const
 
 
 
-string LuaTable::GetString(int key, const string& def) const
+string LuaTable::Get(int key, const string& def) const
 {
 	if (!PushValue(key)) {
 		return def;
@@ -1399,6 +1461,37 @@ string LuaTable::GetString(int key, const string& def) const
 	lua_pop(L, 1);
 	return value;
 }
+
+
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Number key functions
+//
+
+float3 LuaTable::GetFloat3(int key, const float3& def) const
+{
+	return Get(key, def);
+}
+
+
+float4 LuaTable::GetFloat4(int key, const float4& def) const
+{
+	return Get(key, def);
+}
+
+
+float3 LuaTable::GetFloat3(const string& key, const float3& def) const
+{
+	return Get(key, def);
+}
+
+
+float4 LuaTable::GetFloat4(const string& key, const float4& def) const
+{
+	return Get(key, def);
+}
+
 
 
 /******************************************************************************/

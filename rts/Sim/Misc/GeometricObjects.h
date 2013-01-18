@@ -14,7 +14,7 @@ class CGeoSquareProjectile;
 
 class CGeometricObjects : public boost::noncopyable
 {
-	CR_DECLARE(CGeometricObjects);
+	CR_DECLARE_STRUCT(CGeometricObjects);
 	CR_DECLARE_SUB(GeoGroup);
 
 private:

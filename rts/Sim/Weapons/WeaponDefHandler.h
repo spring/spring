@@ -23,25 +23,13 @@ public:
 	const WeaponDef* GetWeapon(std::string weaponname) const;
 	const WeaponDef* GetWeaponById(int weaponDefId) const;
 
-	static void LoadSound(
-		const LuaTable&,
-		const std::string& soundKey,
-		const unsigned int soundIdx,
-		std::vector<GuiSoundSet::Data>&
-	);
-
-	static DamageArray DynamicDamages(const DamageArray damages, const float3 startPos,
+	static DamageArray DynamicDamages(const DamageArray& damages, const float3 startPos,
 					const float3 curPos, const float range, const float exp,
 					const float damageMin, const bool inverted);
 
 public:
 	std::vector<WeaponDef> weaponDefs;
 	std::map<std::string, int> weaponID;
-
-private:
-	void ParseWeapon(const LuaTable& wdTable, WeaponDef& wd);
-	void ParseWeaponVisuals(const LuaTable& wdTable, WeaponDef& wd);
-	void ParseWeaponSounds(const LuaTable& wdTable, WeaponDef& wd);
 };
 
 

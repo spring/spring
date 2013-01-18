@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "StrafeAirMoveType.h"
 #include "Game/Player.h"
@@ -1051,7 +1050,9 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 	assert(newState != AIRCRAFT_HOVERING);
 
 	// once in crashing, we should never change back into another state
-	assert(aircraftState != AIRCRAFT_CRASHING || newState == AIRCRAFT_CRASHING);
+	if (aircraftState == AIRCRAFT_CRASHING && newState != AIRCRAFT_CRASHING) {
+		return;
+	}
 
 	if (newState == aircraftState) {
 		return;

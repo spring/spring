@@ -10,18 +10,55 @@ return {
 }
 end
 
-local maxframes = 27000 -- run spring 15 minutes (ingame time)
+local maxframes = 36000 -- run spring 20 minutes (ingame time)
 local initialspeed = 120 -- speed at the beginning
+local minunits = 10 -- if fewer than this units are created/destroyed print a warning
+local timer
+local unitscreated = 0
+local unitsdestroyed = 0
+local maxruntime = 120 -- run at max 2 minutes
+
+local function ShowStats()
+	local time = Spring.DiffTimers(Spring.GetTimer(), timer)
+	local gameseconds = Spring.GetGameSeconds()
+	local speed = gameseconds / time
+	Spring.Echo("Test done:")
+	Spring.Echo(string.format("Realtime %is gametime: %is", time, gameseconds ))
+	Spring.Echo(string.format("Run at %.2fx real time", speed))
+	Spring.Echo(string.format("Units created: %i Units destroyed: %i", unitscreated, unitsdestroyed))
+	if unitscreated <= minunits or unitsdestroyed <= minunits then
+		Spring.Log("test.lua", LOG.ERROR, string.format("Fewer then minunits %i units were created/destroyed!", minunits))
+	end
+end
+
+function widget:GameOver()
+	Spring.Echo("GameOver called!")
+	ShowStats()
+end
 
 function widget:GameFrame(n)
 	if n==0 then -- set gamespeed at start of game
 		Spring.SendCommands("setmaxspeed " .. 1000,
 			"setminspeed " .. initialspeed,
 			"setminspeed 1")
+		timer = Spring.GetTimer()
 	end
-	if n==maxframes then
-		Spring.Echo("Tests run long enough, quitting...")
+	if (Spring.DiffTimers(Spring.GetTimer(), timer)) > maxruntime then
+		Spring.Log("test.lua", LOG.ERROR, string.format("Tests run longer than %i seconds, aborting!", maxruntime ))
 		Spring.SendCommands("quit")
 	end
+	if n==maxframes then
+		ShowStats()
+		Spring.SendCommands("quit")
+	end
+end
+
+
+function widget:UnitCreated(unitID, unitDefID, unitTeam)
+	unitscreated = unitscreated + 1
+end
+
+function widget:UnitDestroyed(unitID, unitDefID, unitTeam)
+	unitsdestroyed = unitsdestroyed + 1
 end
 

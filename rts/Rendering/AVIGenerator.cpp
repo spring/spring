@@ -14,7 +14,6 @@
 
 #include <boost/bind.hpp>
 #include <cassert>
-#include "System/mmgr.h"
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 #pragma message("Adding library: vfw32.lib")

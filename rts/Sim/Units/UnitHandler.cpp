@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cassert>
-#include "System/mmgr.h"
 
 #include "lib/gml/gmlmut.h"
 #include "lib/gml/gml_base.h"
@@ -45,7 +44,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius),
 	CR_MEMBER(unitsToBeRemoved),
-	CR_MEMBER(morphUnitToFeature),
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(unitsByDefs),
 	CR_POSTLOAD(PostLoad),
@@ -63,15 +61,18 @@ void CUnitHandler::PostLoad()
 
 CUnitHandler::CUnitHandler()
 :
-	maxUnitRadius(0.0f),
-	morphUnitToFeature(true),
-	maxUnits(0)
+	maxUnits(0),
+	maxUnitRadius(0.0f)
 {
-	// note: the number of active teams can change at run-time, so
-	// the team unit limit should be recalculated whenever one dies
-	// or spawns (but that would get complicated)
+	// set the global (runtime-constant) unit-limit as the sum
+	// of  all team unit-limits, which is *always* <= MAX_UNITS
+	// (note that this also counts the Gaia team)
+	//
+	// teams can not be created at runtime, but they can die and
+	// in that case the per-team limit is recalculated for every
+	// other team in the respective allyteam
 	for (unsigned int n = 0; n < teamHandler->ActiveTeams(); n++) {
-		maxUnits += teamHandler->Team(n)->maxUnits;
+		maxUnits += teamHandler->Team(n)->GetMaxUnits();
 	}
 
 	units.resize(maxUnits, NULL);
@@ -93,7 +94,7 @@ CUnitHandler::CUnitHandler()
 
 		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
 		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
-		std::copy(freeIDs.begin(), freeIDs.end(), std::front_inserter(freeUnitIDs));
+		std::copy(freeIDs.begin(), freeIDs.end(), std::inserter(freeUnitIDs, freeUnitIDs.begin()));
 	}
 
 	slowUpdateIterator = activeUnits.end();
@@ -113,18 +114,25 @@ CUnitHandler::~CUnitHandler()
 }
 
 
-bool CUnitHandler::AddUnit(CUnit *unit)
+bool CUnitHandler::AddUnit(CUnit* unit)
 {
-	if (freeUnitIDs.empty()) {
+	// LoadUnit should make sure this is true
+	assert(CanAddUnit(unit->id));
+
+	if (unit->id < 0) {
 		// should be unreachable (all code that goes through
 		// UnitLoader::LoadUnit --> Unit::PreInit checks the
 		// unit limit first)
-		assert(false);
-		return false;
+		assert(!freeUnitIDs.empty());
+		// pick the first available (randomized) ID
+		assert(freeUnitIDs.find(unit->id) == freeUnitIDs.end());
+		unit->id = *(freeUnitIDs.begin());
+	} else {
+		// otherwise use given ID if not already taken
+		assert(unit->id < units.size());
+		assert(units[unit->id] == NULL);
 	}
 
-	unit->id = freeUnitIDs.front();
-	freeUnitIDs.pop_front();
 	units[unit->id] = unit;
 
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
@@ -137,6 +145,8 @@ bool CUnitHandler::AddUnit(CUnit *unit)
 			++ui;
 		}
 	}
+
+	freeUnitIDs.erase(unit->id);
 	activeUnits.insert(ui, unit);
 
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
@@ -159,6 +169,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 	int delType = 0;
 
 	std::list<CUnit*>::iterator usi;
+
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		if (*usi == delUnit) {
 			if (slowUpdateIterator != activeUnits.end() && *usi == *slowUpdateIterator) {
@@ -169,17 +180,18 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 			GML_STDMUTEX_LOCK(dque); // DeleteUnitNow
 
-			int delID = delUnit->id;
-			activeUnits.erase(usi);
-			units[delID] = 0;
-			freeUnitIDs.push_back(delID);
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
+			activeUnits.erase(usi);
+			freeUnitIDs.insert(delUnit->id);
 			unitsByDefs[delTeam][delType].erase(delUnit);
 
-			CSolidObject::SetDeletingRefID(delID);
+			units[delUnit->id] = NULL;
+
+			CSolidObject::SetDeletingRefID(delUnit->id);
 			delete delUnit;
 			CSolidObject::SetDeletingRefID(-1);
+
 			break;
 		}
 	}

@@ -8,6 +8,7 @@
 
 #elif WIN32
 #include <io.h>
+#include <direct.h>
 #include <process.h>
 #include <shlobj.h>
 #include <shlwapi.h>
@@ -47,10 +48,8 @@
  * Note: requires at least Windows 2000
  * @return handle to the currently loaded module, or NULL if an error occures
  */
-static HMODULE GetCurrentModule() {
-
-	HMODULE hModule = NULL;
-
+static HMODULE GetCurrentModule()
+{
 	// both solutions use the address of this function
 	// both found at:
 	// http://stackoverflow.com/questions/557081/how-do-i-get-the-hmodule-for-the-currently-executing-code/557774
@@ -58,7 +57,7 @@ static HMODULE GetCurrentModule() {
 	// Win 2000+ solution
 	MEMORY_BASIC_INFORMATION mbi = {0};
 	::VirtualQuery((void*)GetCurrentModule, &mbi, sizeof(mbi));
-	hModule = reinterpret_cast<HMODULE>(mbi.AllocationBase);
+	HMODULE hModule = reinterpret_cast<HMODULE>(mbi.AllocationBase);
 
 	// Win XP+ solution (cleaner)
 	//::GetModuleHandleEx(
@@ -103,6 +102,26 @@ static std::string GetUserDirFromSystemApi()
 
 namespace Platform
 {
+
+static std::string origCWD;
+
+
+std::string GetOrigCWD()
+{
+	return origCWD;
+}
+
+
+void SetOrigCWD()
+{
+#ifdef WIN32
+	origCWD = _getcwd(NULL, 0);
+#else
+	origCWD = getcwd(NULL, 0);
+#endif
+	FileSystemAbstraction::EnsurePathSepAtEnd(origCWD);
+}
+
 
 std::string GetUserDir()
 {
@@ -292,7 +311,7 @@ std::string GetModuleFile(std::string moduleName)
 		LOG_L(L_WARNING, "Failed to get file path of the module \"%s\", reason: %s", moduleName.c_str(), error);
 	}
 
-	return moduleFilePath;
+	return UnQuote(moduleFilePath);
 }
 std::string GetModulePath(const std::string& moduleName)
 {

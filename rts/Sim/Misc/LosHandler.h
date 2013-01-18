@@ -101,7 +101,7 @@ public:
  */
 class CLosHandler : public boost::noncopyable
 {
-	CR_DECLARE(CLosHandler);
+	CR_DECLARE_STRUCT(CLosHandler);
 //	CR_DECLARE_SUB(CPoint);
 	CR_DECLARE_SUB(DelayedInstance);
 

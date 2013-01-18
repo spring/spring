@@ -357,7 +357,7 @@ static void DrawGrid(terrain::TQuad* tq, DrawGridParms* param)
 			return;
 		else {
 			for (int a=0;a<4;a++)
-				DrawGrid(tq->childs[a],param);
+				DrawGrid(tq->children[a],param);
 		}
 	}
 }

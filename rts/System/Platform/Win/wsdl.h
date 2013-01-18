@@ -24,6 +24,8 @@
 #ifndef INCLUDED_WSDL
 #define INCLUDED_WSDL
 
+#ifdef WIN32
+
 #include <windows.h>
 
 #include "SDL_events.h"
@@ -38,5 +40,7 @@ LRESULT OnMouseMotion(HWND hWnd, int x, int y, UINT flags);
 LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT flags);
 LRESULT OnMouseWheel(HWND hWnd, int screen_x, int screen_y, int zDelta, UINT fwKeys);
 }
+
+#endif // WIN32
 
 #endif // #ifndef INCLUDED_WSDL

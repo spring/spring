@@ -17,7 +17,7 @@ public:
 	virtual ~CBuilding() {}
 	void PostLoad() {}
 
-	void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
+	void PreInit(const UnitLoadParams& params);
 	void PostInit(const CUnit* builder);
 	void ForcedMove(const float3& newPos, int facing);
 };

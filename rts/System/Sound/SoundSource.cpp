@@ -78,8 +78,7 @@ void CSoundSource::Update()
 			Stop();
 	}
 
-	if (curStream)
-	{
+	if (curStream) {
 		if (curStream->IsFinished()) {
 			Stop();
 		}
@@ -110,11 +109,17 @@ int CSoundSource::GetCurrentPriority() const
 
 bool CSoundSource::IsPlaying() const
 {
+	if (curStream)
+		return true;
+
+	if (!curPlaying)
+		return false;
+	
 	CheckError("CSoundSource::IsPlaying");
 	ALint state;
 	alGetSourcei(id, AL_SOURCE_STATE, &state);
 	CheckError("CSoundSource::IsPlaying");
-	return (state == AL_PLAYING || curStream);
+	return (state == AL_PLAYING);
 }
 
 void CSoundSource::Stop()

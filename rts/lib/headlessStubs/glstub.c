@@ -255,6 +255,7 @@ GLAPI void APIENTRY glGetRenderbufferParameterivEXT(GLenum target, GLenum pname,
 GLAPI GLboolean APIENTRY glIsFramebufferEXT(GLuint framebuffer) {
 	return GL_FALSE;
 }
+GLAPI void APIENTRY glFramebufferTextureEXT(GLenum target, GLenum attachment, GLuint texture, GLint level) {}
 GLAPI void APIENTRY glFramebufferTexture1DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {}
 GLAPI void APIENTRY glFramebufferTexture3DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset) {}
 GLAPI void APIENTRY glGetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment, GLenum pname, GLint *params) {}
@@ -502,6 +503,7 @@ GLAPI void APIENTRY glColor3f(GLfloat red, GLfloat green, GLfloat blue ) {}
 GLAPI void APIENTRY glPolygonOffset(GLfloat factor, GLfloat units) {}
 
 GLAPI void APIENTRY glPrimitiveRestartIndexNV(GLuint index) {}
+GLAPI void APIENTRY glGetCompressedTexImage(GLenum target, GLint lod, GLvoid * img) {}
 
 #ifdef __cplusplus
 } // extern "C"

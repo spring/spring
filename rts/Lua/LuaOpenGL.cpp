@@ -16,11 +16,11 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 
-#include "System/mmgr.h"
 
 #include "LuaOpenGL.h"
 #include "LuaInclude.h"
 
+#include "LuaContextData.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaShaders.h"
@@ -317,18 +317,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
-
-void LuaOpenGL::ClearMatrixStack(int stackDepthEnum)
-{
-	GLint depth = 0;
-
-	glGetIntegerv(stackDepthEnum, &depth);
-
-	for (int i = 0; i < depth - 1; i++) {
-		glPopMatrix();
-	}
-}
-
 
 void LuaOpenGL::ResetGLState()
 {
@@ -752,15 +740,12 @@ void LuaOpenGL::DisableDrawInMiniMap()
 		DisableCommon(DRAW_MINIMAP);
 
 		glMatrixMode(GL_TEXTURE); {
-			ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 			glLoadIdentity();
 		}
 		glMatrixMode(GL_PROJECTION); {
-			ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 			glLoadIdentity();
 		}
 		glMatrixMode(GL_MODELVIEW); {
-			ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 			glLoadIdentity();
 		}
 	}
@@ -844,16 +829,13 @@ void LuaOpenGL::SetupScreenMatrices()
 void LuaOpenGL::RevertScreenMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 		gluOrtho2D(0.0, 1.0, 0.0, 1.0);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 	}
 }
@@ -911,15 +893,12 @@ void LuaOpenGL::RevertScreenLighting()
 void LuaOpenGL::ResetGenesisMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 	}
 }
@@ -928,15 +907,12 @@ void LuaOpenGL::ResetGenesisMatrices()
 void LuaOpenGL::ResetWorldMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadMatrixf(camera->GetProjectionMatrix());
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadMatrixf(camera->GetViewMatrix());
 	}
 }
@@ -945,16 +921,13 @@ void LuaOpenGL::ResetWorldMatrices()
 void LuaOpenGL::ResetWorldShadowMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 		glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, -1.0);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 	}
 }
@@ -963,15 +936,12 @@ void LuaOpenGL::ResetWorldShadowMatrices()
 void LuaOpenGL::ResetScreenMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	SetupScreenMatrices();
@@ -981,11 +951,9 @@ void LuaOpenGL::ResetScreenMatrices()
 void LuaOpenGL::ResetMiniMapMatrices()
 {
 	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
 		glLoadIdentity();
 	}
 	glMatrixMode(GL_PROJECTION); {
-		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
 		assert(minimap);
 		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
@@ -993,7 +961,6 @@ void LuaOpenGL::ResetMiniMapMatrices()
 		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
 		glScalef(1.0f / (float)minimap->GetSizeX(),
 		         1.0f / (float)minimap->GetSizeY(), 1.0f);
@@ -1494,7 +1461,7 @@ int LuaOpenGL::UnitPiece(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localModel;
 
 	const int piece = luaL_checkint(L, 2) - 1;
 	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
@@ -1510,46 +1477,28 @@ int LuaOpenGL::UnitPiece(lua_State* L)
 
 int LuaOpenGL::UnitPieceMatrix(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	const LocalModel* localModel = unit->localmodel;
-	if (localModel == NULL) {
-		return 0;
-	}
-	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
-		return 0;
-	}
-
-	CMatrix44f matrix = localModel->GetRawPieceMatrix(piece);
-	glMultMatrixf(matrix.m);
-
-	return 0;
+	return (UnitPieceMultMatrix(L));
 }
-
 
 int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
 
-	const LocalModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localModel;
 	if (localModel == NULL) {
 		return 0;
 	}
-	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
+	const unsigned int piece = luaL_checkint(L, 2) - 1;
+	if (piece >= localModel->pieces.size()) {
 		return 0;
 	}
 
-	localModel->ApplyRawPieceTransformUnsynced(piece);
-
+	glMultMatrixf(localModel->GetRawPieceMatrix(piece));
 	return 0;
 }
 
@@ -4348,7 +4297,10 @@ int LuaOpenGL::MatrixMode(lua_State* L)
 	if ((args != 1) || !lua_isnumber(L, 1)) {
 		luaL_error(L, "Incorrect arguments to gl.MatrixMode");
 	}
-	glMatrixMode((GLenum)lua_tonumber(L, 1));
+	GLenum mode = (GLenum)lua_tonumber(L, 1);
+	if (!L->lcd->SetMatrixMode(mode))
+		luaL_error(L, "Incorrect value to gl.MatrixMode");
+	glMatrixMode(mode);
 	return 0;
 }
 
@@ -4437,6 +4389,8 @@ int LuaOpenGL::PushMatrix(lua_State* L)
 		luaL_error(L, "gl.PushMatrix takes no arguments");
 	}
 
+	if (!L->lcd->PushMatrix())
+		luaL_error(L, "Matrix stack overflow");
 	glPushMatrix();
 
 	return 0;
@@ -4452,6 +4406,8 @@ int LuaOpenGL::PopMatrix(lua_State* L)
 		luaL_error(L, "gl.PopMatrix takes no arguments");
 	}
 
+	if (!L->lcd->PopMatrix())
+		luaL_error(L, "Matrix stack underflow");
 	glPopMatrix();
 
 	return 0;
@@ -4636,7 +4592,10 @@ int LuaOpenGL::CreateList(lua_State* L)
 
 	// build the list with the specified lua call/args
 	glNewList(list, GL_COMPILE);
+	MatrixStateData prevMSD = L->lcd->PushMatrixState(true);
 	const int error = lua_pcall(L, (args - 1), 0, 0);
+	MatrixStateData matData = L->lcd->GetMatrixState();
+	L->lcd->PopMatrixState(prevMSD, false);
 	glEndList();
 
 	if (error != 0) {
@@ -4647,7 +4606,7 @@ int LuaOpenGL::CreateList(lua_State* L)
 	}
 	else {
 		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
-		const unsigned int index = displayLists.NewDList(list);
+		const unsigned int index = displayLists.NewDList(list, matData);
 		lua_pushnumber(L, index);
 	}
 
@@ -4665,7 +4624,13 @@ int LuaOpenGL::CallList(lua_State* L)
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
 	if (dlist) {
-		glCallList(dlist);
+		MatrixStateData matrixStateData = displayLists.GetMatrixState(listIndex);
+		int error = L->lcd->ApplyMatrixState(matrixStateData);
+		if (error == 0) {
+			glCallList(dlist);
+			return 0;
+		}
+		luaL_error(L, "Matrix stack %sflow in gl.CallList", (error > 0) ? "over" : "under");
 	}
 	return 0;
 }
@@ -4966,8 +4931,8 @@ int LuaOpenGL::GetQuery(lua_State* L)
 
 int LuaOpenGL::GetGlobalTexNames(lua_State* L)
 {
-	map<string, C3DOTextureHandler::UnitTexture*>::const_iterator it;
-	const map<string, C3DOTextureHandler::UnitTexture*>& textures =
+	map<string, C3DOTextureHandler::UnitTexture>::const_iterator it;
+	const map<string, C3DOTextureHandler::UnitTexture>& textures =
 		texturehandler3DO->GetAtlasTextures();
 
 	lua_createtable(L, textures.size(), 0);

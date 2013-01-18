@@ -2,7 +2,6 @@
 
 #include "thread_backtrace.h"
 
-#include "System/mmgr.h"
 
 #include <vector>
 #include <stdint.h>

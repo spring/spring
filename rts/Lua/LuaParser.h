@@ -68,20 +68,36 @@ class LuaTable {
 		DataType GetType(const string& key) const;
 
 		// numeric keys
-		int    GetInt(int key, int def) const;
-		bool   GetBool(int key, bool def) const;
-		float  GetFloat(int key, float def) const;
-		float3 GetFloat3(int key, const float3& def) const;
-		float4 GetFloat4(int key, const float4& def) const;
-		string GetString(int key, const string& def) const;
+		template<typename T> T Get(int key, T def) const;
+		int    Get(int key, int def) const;
+		bool   Get(int key, bool def) const;
+		float  Get(int key, float def) const;
+		float3 Get(int key, const float3& def) const;
+		float4 Get(int key, const float4& def) const;
+		string Get(int key, const string& def) const;
+		unsigned int Get(int key, unsigned int def) const { return (unsigned int)Get(key, (int)def); }
 
 		// string keys  (always lowercase)
-		int    GetInt(const string& key, int def) const;
-		bool   GetBool(const string& key, bool def) const;
-		float  GetFloat(const string& key, float def) const;
+		template<typename T> T Get(const string& key, T def) const;
+		int    Get(const string& key, int def) const;
+		bool   Get(const string& key, bool def) const;
+		float  Get(const string& key, float def) const;
+		float3 Get(const string& key, const float3& def) const;
+		float4 Get(const string& key, const float4& def) const;
+		string Get(const string& key, const string& def) const;
+		unsigned int Get(const string& key, unsigned int def) const { return (unsigned int)Get(key, (int)def); }
+
+		template<typename T> int    GetInt(T key, int def) const { return Get(key, def); }
+		template<typename T> bool   GetBool(T key, bool def) const { return Get(key, def); }
+		template<typename T> float  GetFloat(T key, float def) const { return Get(key, def); }
+		template<typename T> string GetString(T key, const string& def) const { return Get(key, def); }
+		// we cannot use templates for float3/4 cause then we would need to #include "float3.h" in this header
+		//template<typename T> float3 GetFloat3(T key, const float3& def) const { return Get(key, def); }
+		//template<typename T> float4 GetFloat4(T key, const float4& def) const { return Get(key, def); }
+		float3 GetFloat3(int key, const float3& def) const;
+		float4 GetFloat4(int key, const float4& def) const;
 		float3 GetFloat3(const string& key, const float3& def) const;
 		float4 GetFloat4(const string& key, const float4& def) const;
-		string GetString(const string& key, const string& def) const;
 
 	private:
 		LuaTable(LuaParser* parser); // for LuaParser::GetRoot()

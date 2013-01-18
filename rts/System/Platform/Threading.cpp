@@ -2,7 +2,6 @@
 
 #include "lib/gml/gml_base.h"
 #include "Threading.h"
-#include "System/myMath.h"
 #include "System/Log/ILog.h"
 
 #include <boost/version.hpp>
@@ -35,7 +34,7 @@ namespace Threading {
 	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard)
 	{
 		if (cores_bitmask == 0) {
-			return 0xFFFFFF;
+			return ~0;
 		}
 
 	#if defined(__APPLE__)
@@ -92,7 +91,7 @@ namespace Threading {
 
 	void SetAffinityHelper(const char *threadName, uint32_t affinity) {
 		const uint32_t cpuMask  = Threading::SetAffinity(affinity);
-		if (cpuMask == 0xFFFFFF) {
+		if (cpuMask == ~0) {
 			LOG("[Threading] %s thread CPU affinity not set", threadName);
 		}
 		else if (cpuMask != affinity) {
@@ -106,29 +105,64 @@ namespace Threading {
 		}
 	}
 
-	unsigned GetAvailableCores()
+	int GetAvailableCores()
 	{
 		// auto-detect number of system threads
-#if (BOOST_VERSION >= 103500)
+	#if (BOOST_VERSION >= 103500)
 		return boost::thread::hardware_concurrency();
-#elif defined(USE_GML)
+	#elif defined(USE_GML)
 		return gmlCPUCount();
-#else
+	#else
 		return 1;
-#endif
+	#endif
 	}
+
+
+	boost::uint32_t GetAvailableCoresMask()
+	{
+		boost::uint32_t systemCores = 0;
+	#if defined(__APPLE__)
+		// no-op
+		systemCores = ~0;
+
+	#elif defined(WIN32)
+		// Get the available cores
+		DWORD curMask;
+		DWORD cpusSystem = 0;
+		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cpusSystem);
+
+		// Create mask
+		systemCores = cpusSystem;
+
+	#else
+		// Get the available cores
+		cpu_set_t cpusSystem; CPU_ZERO(&cpusSystem);
+		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
+
+		// Create mask
+		int numCpus = std::min(CPU_COUNT(&cpusSystem), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
+		for (int n = numCpus - 1; n >= 0; --n) {
+			if (CPU_ISSET(n, &cpusSystem)) {
+				systemCores |= (1 << n);
+			}
+		}
+	#endif
+
+		return systemCores;
+	}
+
 
 	void SetThreadScheduler()
 	{
-		if (!GML::Enabled()) {
-		#if defined(__APPLE__)
-			// no-op
+	#if defined(__APPLE__)
+		// no-op
 
-		#elif defined(WIN32)
-			//TODO add MMCSS (http://msdn.microsoft.com/en-us/library/ms684247.aspx)
-			//Note: only available with mingw64!!!
+	#elif defined(WIN32)
+		//TODO add MMCSS (http://msdn.microsoft.com/en-us/library/ms684247.aspx)
+		//Note: only available with mingw64!!!
 
-		#else
+	#else
+		if (!GML::Enabled()) { // with GML mainthread yields a lot, so SCHED_BATCH with its longer wakup times is counter-productive then
 			if (GetAvailableCores() > 1) {
 				// Change os scheduler for this process.
 				// This way the kernel knows that we are a CPU-intensive task
@@ -137,14 +171,13 @@ namespace Threading {
 				//Note:
 				// It _may_ be possible that this has negative impact in case
 				// threads are waiting for mutexes (-> less yields).
-				sched_param sp;
-				sched_getparam(0, &sp);
-				sp.sched_priority += 2;
-				sp.sched_priority = Clamp(sp.sched_priority, sched_get_priority_min(SCHED_BATCH), sched_get_priority_max(SCHED_BATCH));
-				sched_setscheduler(0, SCHED_BATCH, &sp);
+				int policy;
+				struct sched_param param;
+				pthread_getschedparam(Threading::GetCurrentThread(), &policy, &param);
+				pthread_setschedparam(Threading::GetCurrentThread(), SCHED_BATCH, &param);
 			}
-		#endif
 		}
+	#endif
 	}
 
 

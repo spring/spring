@@ -23,7 +23,7 @@ class CPlayer;
 class CGlobalSynced
 {
 public:
-	CR_DECLARE(CGlobalSynced);
+	CR_DECLARE_STRUCT(CGlobalSynced);
 
 	CGlobalSynced();  //!< Constructor
 	~CGlobalSynced(); //!< Destructor

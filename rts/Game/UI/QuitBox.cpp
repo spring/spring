@@ -15,7 +15,6 @@
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/TimeUtil.h"
-#include "System/mmgr.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/MsgStrings.h"

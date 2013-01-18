@@ -3,8 +3,6 @@
 #include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
-#include "System/mmgr.h"
-
 #include "FreeController.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"

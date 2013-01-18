@@ -25,7 +25,7 @@ class CLuaIntro : public CLuaHandle
 
 	protected:
 		CLuaIntro();
-		~CLuaIntro();
+		virtual ~CLuaIntro();
 
 		std::string LoadFile(const std::string& filename) const;
 

@@ -2,7 +2,11 @@
 #define SCOPED_FPU_SETTINGS
 
 // dedicated is compiled w/o streflop!
-#if defined(__SUPPORT_SNAN__) && !defined(DEDICATED)
+#if defined(__SUPPORT_SNAN__) && !defined(DEDICATED) && !defined(UNITSYNC)
+
+#include "gml/gml.h"
+#include "streflop/streflop_cond.h"
+#include "System/Platform/Threading.h"
 
 class ScopedDisableFpuExceptions {
 public:
@@ -22,6 +26,7 @@ private:
 
 #else
 
+#include <stddef.h> //NULL
 class ScopedDisableFpuExceptions {
 public:
 	ScopedDisableFpuExceptions() {

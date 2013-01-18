@@ -48,7 +48,6 @@ public:
 		, bounceSlip(0.0f)
 		, numBounce(0)
 		, maxAngle(0.0f)
-		, restTime(0.0f)
 		, uptime(0.0f)
 		, flighttime(0)
 		, metalcost(0.0f)
@@ -167,7 +166,6 @@ public:
 		, bounceSlip(0.0f)
 		, numBounce(0)
 		, maxAngle(0.0f)
-		, restTime(0.0f)
 		, uptime(0.0f)
 		, flighttime(0)
 		, metalcost(0.0f)
@@ -297,7 +295,6 @@ public:
 	int numBounce;
 
 	float maxAngle;
-	float restTime;
 
 	float uptime;
 	int flighttime;

@@ -50,7 +50,7 @@ public:
 	static const int* GetAllyVars(int ally) { return &allyVars[ally][0]; }
 	static const int* GetGlobalVars()       { return globalVars; }
 
-	const int* GetUnitVars() const { return unitVars; };
+	const int* GetUnitVars() const { return unitVars; }
 protected:
 	static std::vector< std::vector<int> > teamVars;
 	static std::vector< std::vector<int> > allyVars;
@@ -82,9 +82,9 @@ protected:
 
 	void UnblockAll(AnimInfo* anim);
 
-	bool MoveToward(float &cur, float dest, float speed);
-	bool TurnToward(float &cur, float dest, float speed);
-	bool DoSpin(float &cur, float dest, float &speed, float accel, int divisor);
+	bool MoveToward(float& cur, float dest, float speed);
+	bool TurnToward(float& cur, float dest, float speed);
+	bool DoSpin(float& cur, float dest, float& speed, float accel, int divisor);
 
 	std::list<AnimInfo*>::iterator FindAnim(AnimType anim, int piece, int axis);
 	void RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator& animInfoIt);
@@ -96,40 +96,38 @@ public:
 	// subclass is responsible for populating this with script pieces
 	const std::vector<LocalModelPiece*>& pieces;
 
-	LocalModelPiece* GetLocalModelPiece(int scriptnum) const {
-		if (scriptnum >= 0 && (size_t)scriptnum < pieces.size()) {
-			return pieces[scriptnum];
-		}else{
-			return NULL;
-		}
-	};
+	bool PieceExists(unsigned int scriptPieceNum) const {
+		// NOTE: there can be NULL pieces present from the remapping in CobInstance
+		return ((scriptPieceNum < pieces.size()) && (pieces[scriptPieceNum] != NULL));
+	}
 
-	int ScriptToModel(int scriptnum) const;
+	LocalModelPiece* GetScriptLocalModelPiece(unsigned int scriptPieceNum) const {
+		assert(PieceExists(scriptPieceNum));
+		return pieces[scriptPieceNum];
+	}
 
-	bool PieceExists(int scriptnum) const {
-		return GetLocalModelPiece(scriptnum) != NULL;
-	};
+	int ScriptToModel(int scriptPieceNum) const;
+	int ModelToScript(int lmodelPieceNum) const;
 
-#define SCRIPT_TO_LOCALPIECE_FUNC(x,y,z,w) \
-	x y(int scriptnum) const { \
-		LocalModelPiece* p = GetLocalModelPiece(scriptnum); \
-		if (p != NULL) return p->z(); \
-		return w; \
-	};
+#define SCRIPT_TO_LOCALPIECE_FUNC(x, y, z, w)                          \
+	x y(int scriptPieceNum) const {                                    \
+		if (!PieceExists(scriptPieceNum))                              \
+			return w;                                                  \
+		LocalModelPiece* p = GetScriptLocalModelPiece(scriptPieceNum); \
+		return (p->z());                                               \
+	}
 
-	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPiecePos,       GetAbsolutePos, float3(0.0f,0.0f,0.0f))
-	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix,    GetMatrix,      CMatrix44f())
-	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPieceDirection, GetDirection,   float3(1.0f,1.0f,1.0f))
-	//SCRIPT_TO_LOCALPIECE_FUNC(int,        GetPieceVertCount, GetVertCount, 0)
+	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPiecePos,       GetAbsolutePos,      float3(0.0f,0.0f,0.0f))
+	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix,    GetModelSpaceMatrix,           CMatrix44f())
+	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPieceDirection, GetDirection,        float3(1.0f,1.0f,1.0f))
 
-	bool GetEmitDirPos(int scriptnum, float3 &pos, float3 &dir) const {
-		LocalModelPiece* p = GetLocalModelPiece(scriptnum);
-		if (p != NULL) {
-			return p->GetEmitDirPos(pos, dir);
-		} else {
+	bool GetEmitDirPos(int scriptPieceNum, float3& pos, float3& dir) const {
+		if (!PieceExists(scriptPieceNum))
 			return true;
-		}
-	};
+
+		LocalModelPiece* p = GetScriptLocalModelPiece(scriptPieceNum);
+		return (p->GetEmitDirPos(pos, dir));
+	}
 
 public:
 	CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces);

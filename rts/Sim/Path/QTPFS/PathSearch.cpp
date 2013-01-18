@@ -14,6 +14,8 @@
 #include "Sim/Misc/GlobalSynced.h"
 #endif
 
+#include "System/float3.h"
+
 QTPFS::binary_heap<QTPFS::INode*> QTPFS::PathSearch::openNodes;
 
 
@@ -27,8 +29,6 @@ void QTPFS::PathSearch::Initialize(
 ) {
 	srcPoint = sourcePoint; srcPoint.ClampInBounds();
 	tgtPoint = targetPoint; tgtPoint.ClampInBounds();
-	curPoint = srcPoint;
-	nxtPoint = tgtPoint;
 
 	nodeLayer = layer;
 	pathCache = cache;
@@ -57,38 +57,34 @@ bool QTPFS::PathSearch::Execute(
 	if (haveFullPath)
 		return true;
 
-	const bool srcBlocked = (srcNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY);
-
-	std::vector<INode*>& allNodes = nodeLayer->GetNodes();
-	std::vector<INode*> ngbNodes;
-
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
 	searchExec = new PathSearchTrace::Execution(gs->frameNum);
 	#endif
 
+	// be as optimistic as possible: assume the remainder of our path will
+	// cover only flat terrain with maximum speed-modifier between nxtPoint
+	// and tgtPoint
+	// this is admissable so long as the map is not LOCALLY changed in such
+	// a way as to increase the maximum speedmod beyond the current layer's
+	// cached maximum value
 	switch (searchType) {
-		case PATH_SEARCH_ASTAR:    { hCostMult = 1.0f; } break;
-		case PATH_SEARCH_DIJKSTRA: { hCostMult = 0.0f; } break;
-		default:                   {    assert(false); } break;
+		case PATH_SEARCH_ASTAR:    { hCostMult = 1.0f / nodeLayer->GetMaxRelSpeedMod(); } break;
+		case PATH_SEARCH_DIJKSTRA: { hCostMult = 0.0f;                                  } break;
 	}
 
 	// allow the search to start from an impassable node (because single
 	// nodes can represent many terrain squares, some of which can still
 	// be passable and allow a unit to move within a node)
 	// NOTE: we need to make sure such paths do not have infinite cost!
-	if (srcBlocked) {
+	if (srcNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY) {
 		srcNode->SetMoveCost(0.0f);
 	}
 
-	{
-		openNodes.reset();
-		openNodes.push(srcNode);
-
-		UpdateNode(srcNode, NULL, 0.0f, srcPoint.distance(tgtPoint) * hCostMult, srcNode->GetMoveCost());
-	}
+	ResetState(srcNode);
+	UpdateNode(srcNode, NULL, 0);
 
 	while (!openNodes.empty()) {
-		Iterate(allNodes, ngbNodes);
+		IterateNodes(nodeLayer->GetNodes());
 
 		#ifdef QTPFS_TRACE_PATH_SEARCHES
 		searchExec->AddIteration(searchIter);
@@ -103,7 +99,7 @@ bool QTPFS::PathSearch::Execute(
 		}
 	}
 
-	if (srcBlocked) {
+	if (srcNode->GetMoveCost() == 0.0f) {
 		srcNode->SetMoveCost(QTPFS_POSITIVE_INFINITY);
 	}
 		
@@ -126,34 +122,41 @@ bool QTPFS::PathSearch::Execute(
 
 
 
-void QTPFS::PathSearch::UpdateNode(
-	INode* nxt,
-	INode* cur,
-	float gCost,
-	float hCost,
-	float mCost
-) {
+void QTPFS::PathSearch::ResetState(INode* node) {
+	// will be copied into srcNode by UpdateNode()
+	netPoints[0] = srcPoint;
+
+	gDists[0] = 0.0f;
+	hDists[0] = srcPoint.distance(tgtPoint);
+	gCosts[0] = 0.0f;
+	hCosts[0] = hDists[0] * hCostMult;
+
+	for (unsigned int i = 1; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
+		netPoints[i] = ZeroVector;
+
+		gDists[i] = 0.0f;
+		hDists[i] = 0.0f;
+		gCosts[i] = 0.0f;
+		hCosts[i] = 0.0f;
+	}
+
+	openNodes.reset();
+	openNodes.push(node);
+}
+
+void QTPFS::PathSearch::UpdateNode(INode* nextNode, INode* prevNode, unsigned int netPointIdx) {
 	// NOTE:
 	//   the heuristic must never over-estimate the distance,
 	//   but this is *impossible* to achieve on a non-regular
 	//   grid on which any node only has an average move-cost
 	//   associated with it --> paths will be "nearly optimal"
-	nxt->SetSearchState(searchState | NODE_STATE_OPEN);
-	nxt->SetPrevNode(cur);
-	nxt->SetPathCost(NODE_PATH_COST_G, gCost);
-	nxt->SetPathCost(NODE_PATH_COST_H, hCost * hCostMult);
-	nxt->SetPathCost(NODE_PATH_COST_F, gCost + (hCost * hCostMult));
-	nxt->SetPathCost(NODE_PATH_COST_M, mCost);
-
-	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-	nxt->SetNumPrevNodes((cur != NULL)? (cur->GetNumPrevNodes() + 1): 0);
-	#endif
+	nextNode->SetPrevNode(prevNode);
+	nextNode->SetPathCosts(gCosts[netPointIdx], hCosts[netPointIdx]);
+	nextNode->SetSearchState(searchState | NODE_STATE_OPEN);
+	nextNode->SetNeighborEdgeTransitionPoint(0, netPoints[netPointIdx]);
 }
 
-void QTPFS::PathSearch::Iterate(
-	const std::vector<INode*>& allNodes,
-	      std::vector<INode*>& ngbNodes
-) {
+void QTPFS::PathSearch::IterateNodes(const std::vector<INode*>& allNodes) {
 	curNode = openNodes.top();
 	curNode->SetSearchState(searchState | NODE_STATE_CLOSED);
 	#ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
@@ -171,9 +174,7 @@ void QTPFS::PathSearch::Iterate(
 
 	if (curNode == tgtNode)
 		return;
-	if (curNode != srcNode)
-		curPoint = curNode->GetNeighborEdgeTransitionPoint(curNode->GetPrevNode(), curPoint);
-	if (curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
+	if (curNode->AllSquaresImpassable())
 		return;
 
 	if (curNode->xmid() < searchRect.x1) return;
@@ -187,85 +188,87 @@ void QTPFS::PathSearch::Iterate(
 		minNode = curNode;
 	#endif
 
+	IterateNodeNeighbors(curNode->GetNeighbors(allNodes));
+}
 
-	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-	const float hWeight = math::sqrtf(curNode->GetPathCost(NODE_PATH_COST_M) / (curNode->GetNumPrevNodes() + 1));
-	#else
-	// the default speedmod on flat terrain (assuming no typemaps) is 1.0
-	// this value lies halfway between the minimum and the maximum of the
-	// speedmod range (2.0), so a node covering such terrain will receive
-	// a *relative* (average) speedmod of 0.5 --> the average move-cost of
-	// a "virtual node" containing nxtPoint and tgtPoint is the inverse of
-	// 0.5, making our "admissable" heuristic distance-weight 2.0 (1.0/0.5)
-	const float hWeight = 2.0f;
-	#endif
+void QTPFS::PathSearch::IterateNodeNeighbors(const std::vector<INode*>& nxtNodes) {
+	// if curNode equals srcNode, this is just the original srcPoint
+	const float3 curPoint = curNode->GetNeighborEdgeTransitionPoint(0);
 
-	#ifdef QTPFS_COPY_ITERATE_NEIGHBOR_NODES
-	const unsigned int numNgbs = curNode->GetNeighbors(allNodes, ngbNodes);
-	#else
-	// cannot assign to <ngbNodes> because that would still make a copy
-	const std::vector<INode*>& nxtNodes = curNode->GetNeighbors(allNodes);
-	const unsigned int numNgbs = nxtNodes.size();
-	#endif
-
-	for (unsigned int i = 0; i < numNgbs; i++) {
+	for (unsigned int i = 0; i < nxtNodes.size(); i++) {
 		// NOTE:
 		//   this uses the actual distance that edges of the final path will cover,
-		//   from <curPoint> (initialized to sourcePoint) to the middle of the edge
+		//   from <curPoint> (initialized to sourcePoint) to a position on the edge
 		//   shared between <curNode> and <nxtNode>
 		//   (each individual path-segment is weighted by the average move-cost of
-		//   the node it crosses; the heuristic is weighted by the average move-cost
-		//   of all nodes encountered along partial path thus far)
-		// NOTE:
-		//   heading for the MIDDLE of the shared edge is not always the best option
-		//   we deal with this sub-optimality later (in SmoothPath if it is enabled)
+		//   the node it crosses, which is the reciprocal of the average speed-mod)
 		// NOTE:
 		//   short paths that should have 3 points (2 nodes) can contain 4 (3 nodes);
 		//   this happens when a path takes a "detour" through a corner neighbor of
 		//   srcNode if the shared corner vertex is closer to the goal position than
-		//   the mid-point on the edge between srcNode and tgtNode
+		//   any transition-point on the edge between srcNode and tgtNode
 		// NOTE:
 		//   H needs to be of the same order as G, otherwise the search reduces to
 		//   Dijkstra (if G dominates H) or becomes inadmissable (if H dominates G)
 		//   in the first case we would explore many more nodes than necessary (CPU
 		//   nightmare), while in the second we would get low-quality paths (player
 		//   nightmare)
-		#ifdef QTPFS_COPY_ITERATE_NEIGHBOR_NODES
-		nxtNode = ngbNodes[i];
-		#else
 		nxtNode = nxtNodes[i];
-		#endif
 
-		#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(i);
-		#else
-		nxtPoint = curNode->GetNeighborEdgeTransitionPoint(nxtNode, curPoint);
-		#endif
-
-		if (nxtNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
+		if (nxtNode->AllSquaresImpassable())
 			continue;
 
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
 		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
 		const bool isTarget = (nxtNode == tgtNode);
 
-		// cannot use squared-distances because that will bias paths
-		// towards smaller nodes (eg. 1^2 + 1^2 + 1^2 + 1^2 != 4^2)
-		const float gDist = curPoint.distance(nxtPoint);
-		const float hDist = nxtPoint.distance(tgtPoint);
+		unsigned int netPointIdx = 0;
 
-		const float mCost =
-			curNode->GetPathCost(NODE_PATH_COST_M) +
-			curNode->GetMoveCost() +
-			nxtNode->GetMoveCost() * int(isTarget);
-		const float gCost =
-			curNode->GetPathCost(NODE_PATH_COST_G) +
-			curNode->GetMoveCost() * gDist +
-			nxtNode->GetMoveCost() * hDist * int(isTarget);
-		const float hCost = hWeight * hDist * int(!isTarget);
+		#if (QTPFS_MAX_NETPOINTS_PER_NODE_EDGE == 1)
+		/*if (!IntersectEdge(curNode, nxtNode, tgtPoint - curPoint))*/ {
+			// if only one transition-point is allowed per edge,
+			// this will always be the edge's center --> no need
+			// to be fancy (note that this is not always the best
+			// option, it causes local and global sub-optimalities
+			// which SmoothPath can only partially address)
+			netPoints[0] = curNode->GetNeighborEdgeTransitionPoint(1 + i);
+
+			// cannot use squared-distances because that will bias paths
+			// towards smaller nodes (eg. 1^2 + 1^2 + 1^2 + 1^2 != 4^2)
+			gDists[0] = curPoint.distance(netPoints[0]);
+			hDists[0] = tgtPoint.distance(netPoints[0]);
+			gCosts[0] =
+				curNode->GetPathCost(NODE_PATH_COST_G) +
+				curNode->GetMoveCost() * gDists[0] +
+				nxtNode->GetMoveCost() * hDists[0] * int(isTarget);
+			hCosts[0] = hDists[0] * hCostMult * int(!isTarget);
+		}
+		#else
+		// examine a number of possible transition-points
+		// along the edge between curNode and nxtNode and
+		// pick the one that minimizes g+h
+		// this fixes a few cases that path-smoothing can
+		// not handle; more points means a greater degree
+		// of non-cardinality (but gets expensive quickly)
+		for (unsigned int j = 0; j < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; j++) {
+			netPoints[j] = curNode->GetNeighborEdgeTransitionPoint(1 + i * QTPFS_MAX_NETPOINTS_PER_NODE_EDGE + j);
+
+			gDists[j] = curPoint.distance(netPoints[j]);
+			hDists[j] = tgtPoint.distance(netPoints[j]);
+			gCosts[j] =
+				curNode->GetPathCost(NODE_PATH_COST_G) +
+				curNode->GetMoveCost() * gDists[j] +
+				nxtNode->GetMoveCost() * hDists[j] * int(isTarget);
+			hCosts[j] = hDists[j] * hCostMult * int(!isTarget);
+
+			if ((gCosts[j] + hCosts[j]) < (gCosts[netPointIdx] + hCosts[netPointIdx])) {
+				netPointIdx = j;
+			}
+		}
+		#endif
 
 		if (!isCurrent) {
-			UpdateNode(nxtNode, curNode, gCost, hCost, mCost);
+			UpdateNode(nxtNode, curNode, netPointIdx);
 
 			openNodes.push(nxtNode);
 			openNodes.check_heap_property(0);
@@ -276,14 +279,12 @@ void QTPFS::PathSearch::Iterate(
 
 			continue;
 		}
-
-		if (gCost >= nxtNode->GetPathCost(NODE_PATH_COST_G))
+		if (gCosts[netPointIdx] >= nxtNode->GetPathCost(NODE_PATH_COST_G))
 			continue;
 		if (isClosed)
 			openNodes.push(nxtNode);
 
-
-		UpdateNode(nxtNode, curNode, gCost, hCost, mCost);
+		UpdateNode(nxtNode, curNode, netPointIdx);
 
 		// restore ordering in case nxtNode was already open
 		// (changing the f-cost of an OPEN node messes up the
@@ -309,7 +310,7 @@ void QTPFS::PathSearch::Finalize(IPath* path) {
 
 void QTPFS::PathSearch::TracePath(IPath* path) {
 	std::list<float3> points;
-	std::list<float3>::const_iterator pointsIt;
+//	std::list<float3>::const_iterator pointsIt;
 
 	if (srcNode != tgtNode) {
 		INode* tmpNode = tgtNode;
@@ -318,7 +319,7 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 		float3 prvPoint = tgtPoint;
 
 		while ((prvNode != NULL) && (tmpNode != srcNode)) {
-			const float3& tmpPoint = tmpNode->GetNeighborEdgeTransitionPoint(prvNode, prvPoint);
+			const float3& tmpPoint = tmpNode->GetNeighborEdgeTransitionPoint(0);
 
 			assert(!math::isinf(tmpPoint.x) && !math::isinf(tmpPoint.z));
 			assert(!math::isnan(tmpPoint.x) && !math::isnan(tmpPoint.z));

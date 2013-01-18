@@ -13,7 +13,6 @@
 #include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
 
-#include "System/mmgr.h"
 
 
 SmoothHeightMesh* smoothGround = NULL;

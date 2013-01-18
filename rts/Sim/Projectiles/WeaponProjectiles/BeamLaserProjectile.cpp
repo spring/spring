@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "BeamLaserProjectile.h"
 #include "Game/Camera.h"
@@ -9,13 +8,10 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile,
-	(float3(ZeroVector), float3(ZeroVector), 0.0f, 0.0f, float3(ZeroVector), NULL, NULL));
+CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (ProjectileParams(), 0.0f, 0.0f, float3(ZeroVector)));
 
 CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(startPos),
-	CR_MEMBER(endPos),
 	CR_MEMBER(corecolstart),
 	CR_MEMBER(corecolend),
 	CR_MEMBER(kocolstart),
@@ -28,26 +24,19 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CBeamLaserProjectile::CBeamLaserProjectile(
-	const float3& startPos, const float3& endPos,
-	float startAlpha, float endAlpha,
-	const float3& color,
-	CUnit* owner,
-	const WeaponDef* weaponDef):
 
-	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, NULL, ZeroVector, weaponDef, NULL, (weaponDef? weaponDef->beamLaserTTL: 0)),
-	startPos(startPos),
-	endPos(endPos),
-	thickness(weaponDef? weaponDef->visuals.thickness: 0.0f),
-	corethickness(weaponDef? weaponDef->visuals.corethickness: 0.0f),
-	flaresize(weaponDef? weaponDef->visuals.laserflaresize: 0.0f),
-	decay(weaponDef? weaponDef->visuals.beamdecay: 0.0f)
+CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params, float startAlpha, float endAlpha, const float3& color)
+	: CWeaponProjectile(params, true)
+	, thickness(weaponDef? weaponDef->visuals.thickness: 0.0f)
+	, corethickness(weaponDef? weaponDef->visuals.corethickness: 0.0f)
+	, flaresize(weaponDef? weaponDef->visuals.laserflaresize: 0.0f)
+	, decay(weaponDef? weaponDef->visuals.beamdecay: 0.0f)
 {
 	projectileType = WEAPON_BEAMLASER_PROJECTILE;
 	checkCol = false;
 	useAirLos = true;
 
-	SetRadiusAndHeight(pos.distance(endPos), 0.0f);
+	SetRadiusAndHeight(pos.distance(targetPos), 0.0f);
 
 	if (weaponDef) {
 		midtexx =
@@ -93,8 +82,10 @@ void CBeamLaserProjectile::Update()
 			kocolend[i] = (kocolend[i] * decay);
 		}
 
-		gCEG->Explosion(cegID, startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, 0x0, 0.0f, 0x0, endPos - startPos);
+		gCEG->Explosion(cegID, startpos + ((targetPos - startpos) / ttl), 0.0f, flaresize, 0x0, 0.0f, 0x0, targetPos - startpos);
 	}
+
+	UpdateInterception();
 }
 
 void CBeamLaserProjectile::Draw()
@@ -105,14 +96,14 @@ void CBeamLaserProjectile::Draw()
 	float camDist = dif.Length();
 	dif /= camDist;
 
-	const float3 ddir = (endPos - startPos).Normalize();
+	const float3 ddir = (targetPos - startpos).Normalize();
 	const float3 dir1 = (dif.cross(ddir)).Normalize();
 	const float3 dir2(dif.cross(dir1));
 
 	const float size = thickness;
 	const float coresize = size * corethickness;
-	const float3& pos1 = startPos;
-	const float3& pos2 = endPos;
+	const float3& pos1 = startpos;
+	const float3& pos2 = targetPos;
 
 	va->EnlargeArrays(32, 0, VA_SIZE_TC);
 
@@ -179,6 +170,6 @@ void CBeamLaserProjectile::Draw()
 void CBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	unsigned char color[4] = { kocolstart[0], kocolstart[1], kocolstart[2], 255 };
-	lines.AddVertexQC(startPos, color);
-	lines.AddVertexQC(endPos, color);
+	lines.AddVertexQC(startpos, color);
+	lines.AddVertexQC(targetPos, color);
 }

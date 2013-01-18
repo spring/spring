@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "StarburstProjectile.h"
 #include "Game/Camera.h"
@@ -15,12 +14,17 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Sync/SyncTracer.h"
+#include "System/Color.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
+#include "System/TimeProfiler.h"
 
-const float CStarburstProjectile::SMOKE_TIME = 70.0f;
+// the smokes life-time in frames
+static const float SMOKE_TIME = 70.0f;
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, ZeroVector, 0, 0, 0, 0, NULL, NULL, NULL, 0, ZeroVector));
+static const float TRACER_PARTS_STEP = 2.0f;
+
+CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ProjectileParams(), 0, 0, 0, 0, 0, ZeroVector));
 
 CR_REG_METADATA(CStarburstProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -41,6 +45,7 @@ CR_REG_METADATA(CStarburstProjectile,(
 	CR_MEMBER(missileAge),
 	CR_MEMBER(distanceToTravel),
 	CR_MEMBER(aimError),
+	CR_MEMBER(curTracerPart),
 	CR_RESERVED(16)
 	));
 
@@ -48,35 +53,27 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 {
 	// NOTE This could be tricky if gs is serialized after losHandler.
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		s.Serialize(tracerParts[a], sizeof(struct CStarburstProjectile::TracerPart));
+		s.Serialize(&tracerParts[a], sizeof(struct CStarburstProjectile::TracerPart));
 	}
 }
 
-CStarburstProjectile::CStarburstProjectile(
-	const float3& pos, const float3& speed,
-	CUnit* owner,
-	float3 targetPos,
-	float areaOfEffect, float maxSpeed,
-	float tracking, int uptime,
-	CUnit* target,
-	const WeaponDef* weaponDef,
-	CWeaponProjectile* interceptTarget,
-	float maxRange, float3 aimError):
-
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200),
-	tracking(tracking),
-	maxSpeed(maxSpeed),
-	acceleration(0.f),
-	areaOfEffect(areaOfEffect),
-	age(0),
-	oldSmoke(pos),
-	aimError(aimError),
-	drawTrail(true),
-	numParts(0),
-	doturn(true),
-	curCallback(NULL),
-	missileAge(0),
-	distanceToTravel(maxRange)
+CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params,
+	float areaOfEffect, float maxSpeed, float tracking, int uptime, float maxRange, float3 aimError)
+	: CWeaponProjectile(params)
+	, tracking(tracking)
+	, maxSpeed(maxSpeed)
+	, acceleration(0.f)
+	, areaOfEffect(areaOfEffect)
+	, age(0)
+	, oldSmoke(pos)
+	, aimError(aimError)
+	, drawTrail(true)
+	, numParts(0)
+	, doturn(true)
+	, curCallback(NULL)
+	, missileAge(0)
+	, distanceToTravel(maxRange)
+	, curTracerPart(0)
 {
 	projectileType = WEAPON_STARBURST_PROJECTILE;
 	this->uptime = uptime;
@@ -101,14 +98,11 @@ CStarburstProjectile::CStarburstProjectile(
 	drawRadius = maxSpeed * 8.0f;
 
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		tracerParts[a] = &tracerPartMem[a];
-		tracerParts[a]->dir = dir;
-		tracerParts[a]->pos = pos;
-		tracerParts[a]->speedf = curSpeed;
+		tracerParts[a].dir = dir;
+		tracerParts[a].pos = pos;
+		tracerParts[a].speedf = curSpeed;
 
-		for (float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f) {
-			tracerParts[a]->ageMods.push_back(1.0f);
-		}
+		tracerParts[a].ageMods.resize(std::floor((curSpeed + 0.6f) / TRACER_PARTS_STEP), 1.0f);
 	}
 	castShadow = true;
 
@@ -133,7 +127,7 @@ CStarburstProjectile::~CStarburstProjectile()
 {
 	// UNSYNCED
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		tracerParts[a]->ageMods.clear();
+		tracerParts[a].ageMods.clear();
 	}
 }
 
@@ -160,6 +154,17 @@ void CStarburstProjectile::Collision(CUnit* unit)
 	oldSmoke = pos;
 }
 
+void CStarburstProjectile::Collision(CFeature* feature)
+{
+	if (weaponDef->visuals.smokeTrail) {
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(), false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
+	}
+
+	oldSmokeDir = dir;
+	CWeaponProjectile::Collision(feature);
+	oldSmoke = pos;
+}
+
 
 void CStarburstProjectile::Update()
 {
@@ -168,13 +173,10 @@ void CStarburstProjectile::Update()
 	missileAge++;
 
 	if (target && weaponDef->tracks && owner()) {
-		targetPos = helper->GetUnitErrorPos(target, owner()->allyteam, true);
-	}
-	if (interceptTarget) {
-		targetPos = interceptTarget->pos;
-		if (targetPos.SqDistance(pos) < Square(areaOfEffect * 2)) {
-			interceptTarget->Collision();
-			Collision();
+		targetPos = target->pos;
+		CUnit* u = dynamic_cast<CUnit*>(target);
+		if (u) {
+			targetPos = helper->GetUnitErrorPos(u, owner()->allyteam, true);
 		}
 	}
 
@@ -257,30 +259,26 @@ void CStarburstProjectile::Update()
 
 
 	{
-		TracerPart* lastTracerPart = tracerParts[NUM_TRACER_PARTS - 1];
-
-		for (int a = NUM_TRACER_PARTS - 2; a >= 0; --a) {
-			tracerParts[a + 1] = tracerParts[a];
-		}
-
-		tracerParts[0] = lastTracerPart;
-		tracerParts[0]->pos = pos;
-		tracerParts[0]->dir = dir;
-		tracerParts[0]->speedf = curSpeed;
+		curTracerPart++;
+		curTracerPart %= NUM_TRACER_PARTS;
+		TracerPart* tracerPart = (GML::SimEnabled()) ? (TracerPart* volatile)(&tracerParts[curTracerPart]) : &tracerParts[curTracerPart];
+		tracerPart->pos = pos;
+		tracerPart->dir = dir;
+		tracerPart->speedf = curSpeed;
 
 		int newsize = 0;
-		for (float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f, ++newsize) {
+		for (float aa = 0; aa < curSpeed + 0.6f; aa += TRACER_PARTS_STEP, ++newsize) {
 			const float ageMod = (missileAge < 20) ? 1.0f : (0.6f + (rand() * 0.8f) / RAND_MAX);
 
-			if (tracerParts[0]->ageMods.size() <= newsize) {
-				tracerParts[0]->ageMods.push_back(ageMod);
+			if (tracerPart->ageMods.size() <= newsize) {
+				tracerPart->ageMods.push_back(ageMod);
 			} else {
-				tracerParts[0]->ageMods[newsize] = ageMod;
+				tracerPart->ageMods[newsize] = ageMod;
 			}
 		}
 
-		if (tracerParts[0]->ageMods.size() != newsize) {
-			tracerParts[0]->ageMods.resize(newsize);
+		if (tracerPart->ageMods.size() != newsize) {
+			tracerPart->ageMods.resize(newsize);
 		}
 	}
 
@@ -308,14 +306,13 @@ void CStarburstProjectile::Update()
 			drawTrail = (camDist > 300.0f);
 		}
 	}
+
+	UpdateInterception();
 }
 
 void CStarburstProjectile::Draw()
 {
 	inArray = true;
-
-	unsigned char col[4];
-	unsigned char col2[4];
 
 	if (weaponDef->visuals.smokeTrail) {
 		const int curNumParts = GML::SimEnabled() ? *(volatile int*) &numParts : numParts;
@@ -333,14 +330,14 @@ void CStarburstProjectile::Draw()
 			const float3 dir2 = (dif2.cross(oldSmokeDir)).ANormalize();
 
 			const float a1 =
-				((1.0f - (0.0f / SMOKE_TIME)) * 255) *
+				((1.0f - (0.0f / SMOKE_TIME))) *
 				(0.7f + math::fabs(dif1.dot(dir)));
 			const float a2 =
 				(age < 8)? 0.0f:
-				((1.0f - (age2 / SMOKE_TIME)) * 255) *
+				((1.0f - (age2 / SMOKE_TIME))) *
 				(0.7f + math::fabs(dif2.dot(oldSmokeDir)));
-			const int alpha1 = std::min(255, (int) std::max(0.0f, a1));
-			const int alpha2 = std::min(255, (int) std::max(0.0f, a2));
+			const float alpha1 = Clamp(a1, 0.0f, 1.0f);
+			const float alpha2 = Clamp(a2, 0.0f, 1.0f);
 
 			const float size1 = 1.0f;
 			const float size2 = (1.0f + age2 * (1.0f / SMOKE_TIME) * 7.0f);
@@ -350,15 +347,8 @@ void CStarburstProjectile::Draw()
 				(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) *
 				(age2 / 8.0f);
 
-			col[0] = (color * alpha1);
-			col[1] = (color * alpha1);
-			col[2] = (color * alpha1);
-			col[3] = alpha1;
-
-			col2[0] = (color * alpha2);
-			col2[1] = (color * alpha2);
-			col2[2] = (color * alpha2);
-			col2[3] = alpha2;
+			SColor col (color * alpha1, color * alpha1, color * alpha1, alpha1);
+			SColor col2(color * alpha2, color * alpha2, color * alpha2, alpha2);
 
 			va->AddVertexQTC(drawPos  - dir1 * size1, txs,                               weaponDef->visuals.texture2->ystart, col);
 			va->AddVertexQTC(drawPos  + dir1 * size1, txs,                               weaponDef->visuals.texture2->yend,   col);
@@ -369,14 +359,10 @@ void CStarburstProjectile::Draw()
 			const float dist = pos.distance(oldSmoke);
 			const float3 dirpos1 = pos - dir * dist * 0.33f;
 			const float3 dirpos2 = oldSmoke + oldSmokeDir * dist * 0.33f;
+			const SColor col(color, color, color);
 
 			for (int a = 0; a < curNumParts; ++a) {
-				//! CAUTION: loop count must match EnlargeArrays above
-				col[0] = (color * 255);
-				col[1] = (color * 255);
-				col[2] = (color * 255);
-				col[3] = 255;
-
+				// CAUTION: loop count must match EnlargeArrays above
 				const float size = 1 + (a * (1.0f / SMOKE_TIME) * 7.0f);
 				const float3 pos1 = CalcBeizer((float)a / curNumParts, pos, dirpos1, dirpos2, oldSmoke);
 
@@ -399,14 +385,16 @@ void CStarburstProjectile::DrawCallback()
 
 	unsigned char col[4];
 
+	size_t part = curTracerPart;
+
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		const TracerPart* tracerPart = GML::SimEnabled() ? *(TracerPart* volatile*) &tracerParts[a] : tracerParts[a];
+		const TracerPart* tracerPart = (GML::SimEnabled()) ? (TracerPart* volatile)(&tracerParts[part]) : &tracerParts[part];
 		const float3& opos = tracerPart->pos;
 		const float3& odir = tracerPart->dir;
 		const float ospeed = tracerPart->speedf;
 		float aa = 0;
 
-		for (AGEMOD_VECTOR::const_iterator ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += 0.15f) {
+		for (AGEMOD_VECTOR::const_iterator ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += TRACER_PARTS_STEP) {
 			const float ageMod = *ai;
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
 			const float3 interPos = opos - (odir * ((a * 0.5f) + aa));
@@ -434,6 +422,8 @@ void CStarburstProjectile::DrawCallback()
 			va->AddVertexTC(interPos - camera->right * drawsize + camera->up * drawsize, wt3->xstart, wt3->yend,   col);
 			#undef wt3
 		}
+
+		part == 0 ? part = NUM_TRACER_PARTS-1 : --part;
 	}
 
 	// draw the engine flare

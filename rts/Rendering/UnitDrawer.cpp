@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "UnitDrawer.h"
 
@@ -415,7 +414,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 #endif
 
 		if (!unit->isIcon) {
-			if ((unit->pos - camera->pos).SqLength() > (unit->sqRadius * unitDrawDistSqr)) {
+			if ((unit->pos).SqDistance(camera->pos) > (unit->sqRadius * unitDrawDistSqr)) {
 				farTextureHandler->Queue(unit);
 			} else {
 				if (!DrawUnitLOD(unit)) {
@@ -1185,7 +1184,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 			delete *it;
 			it = set_erase(deadGhostedBuildings, it);
 		} else {
-			if (camera->InView((*it)->pos, (*it)->model->radius * 2.0f)) {
+			if (camera->InView((*it)->pos, (*it)->model->drawRadius)) {
 				glPushMatrix();
 				glTranslatef3((*it)->pos);
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
@@ -1348,11 +1347,13 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 		const CTeam* t = teamHandler->Team(team);
 		const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
-		if (globalRendering->haveGLSL && shadowHandler->shadowsLoaded) {
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(9, &c[0]);
-		} else {
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &c[0]);
+		if (modelShaders[MODEL_SHADER_S3O_ACTIVE]->IsBound()) {
+			if (globalRendering->haveGLSL && shadowHandler->shadowsLoaded) {
+				modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(9, &c[0]);
+			} else {
+				modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
+				modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &c[0]);
+			}
 		}
 
 		if (LUA_DRAWING) {// FIXME?
@@ -1821,16 +1822,16 @@ inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 	}
 
 	if (unit->lodCount <= 0) {
-		unit->localmodel->Draw();
+		unit->localModel->Draw();
 	} else {
 
 		GML_LODMUTEX_LOCK(unit); // DrawUnitModel
 #ifdef USE_GML
 		if (unit->lodCount <= 0) // re-read the value inside the mutex
-			unit->localmodel->Draw();
+			unit->localModel->Draw();
 		else
 #endif
-		unit->localmodel->DrawLOD(unit->currentLOD);
+		unit->localModel->DrawLOD(unit->currentLOD);
 	}
 }
 
@@ -1897,16 +1898,16 @@ void CUnitDrawer::DrawUnitRaw(CUnit* unit)
 void CUnitDrawer::DrawUnitRawModel(CUnit* unit)
 {
 	if (unit->lodCount <= 0) {
-		unit->localmodel->Draw();
+		unit->localModel->Draw();
 	} else {
 
 		GML_LODMUTEX_LOCK(unit); // DrawUnitRawModel
 #ifdef USE_GML
 		if (unit->lodCount <= 0)
-			unit->localmodel->Draw();
+			unit->localModel->Draw();
 		else
 #endif
-		unit->localmodel->DrawLOD(unit->currentLOD);
+		unit->localModel->DrawLOD(unit->currentLOD);
 	}
 }
 
@@ -2268,7 +2269,9 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 		const icon::CIconData* icon = iconIt->first;
 		const std::set<const CUnit*>& units = iconIt->second;
 
-		if (units.empty() || !icon)
+		if (icon == NULL)
+			continue;
+		if (units.empty())
 			continue;
 
 		va->Initialize();
@@ -2474,7 +2477,7 @@ void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
 
 	unit->lodCount = count;
 	unit->lodLengths.resize(count);
-	unit->localmodel->SetLODCount(count);
+	unit->localModel->SetLODCount(count);
 
 	for (unsigned int i = oldCount; i < count; i++) {
 		unit->lodLengths[i] = -1.0f;

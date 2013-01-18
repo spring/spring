@@ -3,6 +3,11 @@
 #ifndef _LIGHT_CALC_H_
 #define _LIGHT_CALC_H_
 
+#include "Textures.h"
+#include "Rendering/GL/myGL.h"
+#include "TerrainBase.h" // typedef uchar
+struct LightingInfo;
+
 namespace terrain
 {
 	/**

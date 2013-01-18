@@ -5,6 +5,7 @@
 
 #include <string>
 
+#include "Sim/Misc/NanoPieceCache.h"
 #include "Sim/Units/Unit.h"
 #include "System/float3.h"
 
@@ -16,7 +17,7 @@ class CSolidObject;
 class CBuilder : public CUnit
 {
 private:
-	void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
+	void PreInit(const UnitLoadParams& params);
 
 public:
 	inline float f3Dist(const float3& a, const float3& b) const {
@@ -59,6 +60,9 @@ public:
 	bool CanAssistUnit(const CUnit* u, const UnitDef* def = NULL) const;
 	bool CanRepairUnit(const CUnit* u) const;
 
+	const NanoPieceCache& GetNanoPieceCache() const { return nanoPieceCache; }
+	      NanoPieceCache& GetNanoPieceCache()       { return nanoPieceCache; }
+
 public:
 	bool range3D; ///< spheres instead of infinite cylinders for range tests
 
@@ -88,6 +92,9 @@ public:
 	int tx1,tx2,tz1,tz2;
 	float3 terraformCenter;
 	float terraformRadius;
+
+private:
+	NanoPieceCache nanoPieceCache;
 };
 
 #endif // _BUILDER_H

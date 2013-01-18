@@ -23,7 +23,6 @@
 #include "System/myMath.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
-#include "System/mmgr.h"
 
 #define PLAY_SOUNDS 1
 #if (PLAY_SOUNDS == 1)
@@ -78,21 +77,19 @@ void CFactory::PostLoad()
 	}
 }
 
-void CFactory::PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build)
+void CFactory::PreInit(const UnitLoadParams& params)
 {
-	buildSpeed = def->buildSpeed / TEAM_SLOWUPDATE_RATE;
-	CBuilding::PreInit(def, team, facing, position, build);
+	unitDef = params.unitDef;
+	buildSpeed = unitDef->buildSpeed / TEAM_SLOWUPDATE_RATE;
+
+	CBuilding::PreInit(params);
 }
 
-int CFactory::GetBuildPiece()
-{
-	return script->QueryBuildInfo();
-}
 
-// GetBuildPiece() is called if piece < 0
+
 float3 CFactory::CalcBuildPos(int buildPiece)
 {
-	const float3 relBuildPos = script->GetPiecePos(buildPiece < 0 ? GetBuildPiece() : buildPiece);
+	const float3 relBuildPos = script->GetPiecePos((buildPiece < 0)? script->QueryBuildInfo() : buildPiece);
 	const float3 absBuildPos = pos + frontdir * relBuildPos.z + updir * relBuildPos.y + rightdir * relBuildPos.x;
 	return absBuildPos;
 }
@@ -101,9 +98,22 @@ float3 CFactory::CalcBuildPos(int buildPiece)
 
 void CFactory::Update()
 {
+	nanoPieceCache.Update();
+
 	if (beingBuilt) {
 		// factory is under construction, cannot build anything yet
 		CUnit::Update();
+
+		#if 1
+		// this can happen if we started being reclaimed *while* building a
+		// unit, in which case our buildee can either be allowed to finish
+		// construction (by assisting builders) or has to be killed --> the
+		// latter is easier
+		if (curBuild != NULL) {
+			StopBuild();
+		}
+		#endif
+
 		return;
 	}
 
@@ -126,7 +136,7 @@ void CFactory::Update()
 		}
 	}
 
-	if (curBuild != NULL && !beingBuilt) {
+	if (curBuild != NULL) {
 		UpdateBuild(curBuild);
 		FinishBuild(curBuild);
 	}
@@ -174,19 +184,20 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	if (blocked)
 		return;
 
-	CUnit* b = unitLoader->LoadUnit(buildeeDef, buildPos, team, true, buildFacing, this);
+	UnitLoadParams buildeeParams = {buildeeDef, this, buildPos, ZeroVector, -1, team, buildFacing, true, false};
+	CUnit* buildee = unitLoader->LoadUnit(buildeeParams);
 
 	if (!unitDef->canBeAssisted) {
-		b->soloBuilder = this;
-		b->AddDeathDependence(this, DEPENDENCE_BUILDER);
+		buildee->soloBuilder = this;
+		buildee->AddDeathDependence(this, DEPENDENCE_BUILDER);
 	}
 
-	AddDeathDependence(b, DEPENDENCE_BUILD);
+	AddDeathDependence(buildee, DEPENDENCE_BUILD);
 	script->StartBuilding();
 
 	// set curBuildDef to NULL to indicate construction
 	// has started, otherwise we would keep being called
-	curBuild = b;
+	curBuild = buildee;
 	curBuildDef = NULL;
 
 	#if (PLAY_SOUNDS == 1)
@@ -205,15 +216,15 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 	lastBuildUpdateFrame = gs->frameNum;
 
 	// buildPiece is the rotating platform
-	const int buildPiece = GetBuildPiece();
+	const int buildPiece = script->QueryBuildInfo();
 	const float3& buildPos = CalcBuildPos(buildPiece);
-	const CMatrix44f& mat = script->GetPieceMatrix(buildPiece);
-	const int h = GetHeadingFromVector(mat[2], mat[10]); //! x.z, z.z
+	const CMatrix44f& buildPieceMat = script->GetPieceMatrix(buildPiece);
+	const int buildPieceHeading = GetHeadingFromVector(buildPieceMat[2], buildPieceMat[10]); //! x.z, z.z
 
 	float3 buildeePos = buildPos;
 
 	// rotate unit nanoframe with platform
-	buildee->heading = (-h + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
+	buildee->heading = (-buildPieceHeading + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
 
 	if (buildee->unitDef->floatOnWater && (buildeePos.y <= 0.0f))
 		buildeePos.y = -buildee->unitDef->waterline;
@@ -425,13 +436,32 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		}
 
 		c.PushPos(tmpPos);
-		unit->commandAI->GiveCommand(c);
+	} else {
+		// dummy rallypoint for aircraft
+		c.PushPos(unit->pos);
 	}
 
-	for (CCommandQueue::const_iterator ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
-		c = *ci;
-		c.options |= SHIFT_KEY;
+	if (unit->commandAI->commandQue.empty()) {
 		unit->commandAI->GiveCommand(c);
+
+		// copy factory orders
+		for (CCommandQueue::const_iterator ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
+			c = *ci;
+			c.options |= SHIFT_KEY;
+
+			if (c.GetID() == CMD_MOVE) {
+				const float3 p1 = c.GetPos(0);
+				const float3 p2 = float3(p1.x + gs->randFloat() * TWOPI, p1.y, p1.z + gs->randFloat() * TWOPI);
+				// apply a small amount of random jitter to move commands
+				// such that new units do not all share the same goal-pos
+				// and start forming a "trail" back to the factory exit
+				c.SetPos(0, p2);
+			}
+
+			unit->commandAI->GiveCommand(c);
+		}
+	} else {
+		unit->commandAI->commandQue.push_front(c);
 	}
 }
 
@@ -446,14 +476,14 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 
 void CFactory::CreateNanoParticle(bool highPriority)
 {
-	const int piece = script->QueryNanoPiece();
+	const int nanoPiece = nanoPieceCache.GetNanoPiece(script);
 
 #ifdef USE_GML
 	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
 		return;
 #endif
 
-	const float3 relWeaponFirePos = script->GetPiecePos(piece);
+	const float3 relWeaponFirePos = script->GetPiecePos(nanoPiece);
 	const float3 weaponPos = pos
 		+ (frontdir * relWeaponFirePos.z)
 		+ (updir    * relWeaponFirePos.y)

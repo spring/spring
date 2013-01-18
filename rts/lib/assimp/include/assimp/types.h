@@ -65,6 +65,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __cplusplus
 #include <new>		// for std::nothrow_t
 #include <string>	// for aiString::Set(const std::string&)
+#ifdef WIN32
+#include <string.h>
+#endif
 
 namespace Assimp	{
 	//! @cond never
@@ -314,7 +317,7 @@ struct aiString
 
 	/** Append a string to the string */
 	void Append (const char* app)	{
-		const size_t len = strlen(app);
+		const size_t len = ::strlen(app);
 		if (!len) {
 			return;
 		}

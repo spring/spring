@@ -8,7 +8,6 @@
 #include "BumpWater.h"
 
 #include <boost/format.hpp>
-#include "System/mmgr.h"
 
 #include "ISky.h"
 #include "Game/Game.h"
@@ -20,6 +19,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
+#include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.h"
@@ -368,7 +368,6 @@ CBumpWater::CBumpWater()
 		glBindTexture(GL_TEXTURE_2D, normalTexture2);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 0.0);
 
 		glGenTextures(1, &normalTexture);
 		glBindTexture(GL_TEXTURE_2D, normalTexture);
@@ -462,6 +461,7 @@ CBumpWater::CBumpWater()
 		GLSLDefineConstf1(definitions, "PerlinLacunarity", mapInfo->water.perlinLacunarity);
 		GLSLDefineConstf1(definitions, "PerlinAmp",        mapInfo->water.perlinAmplitude);
 		GLSLDefineConstf1(definitions, "WindSpeed",        mapInfo->water.windSpeed);
+		GLSLDefineConstf1(definitions, "shadowDensity",  sky->GetLight()->GetGroundShadowDensity());
 	}
 
 	{
@@ -494,6 +494,9 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniformLocation("depthmap");    // idx  8, texunit 7
 		waterShader->SetUniformLocation("coastmap");    // idx  9, texunit 6
 		waterShader->SetUniformLocation("waverand");    // idx 10, texunit 8
+		waterShader->SetUniformLocation("infotex");     // idx 11, texunit 10
+		waterShader->SetUniformLocation("shadowmap");   // idx 12, texunit 9
+		waterShader->SetUniformLocation("shadowMatrix");   // idx 13
 
 		if (!waterShader->IsValid()) {
 			const char* fmt = "water-shader compilation error: %s";
@@ -519,6 +522,8 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniform1i( 8, 7);
 		waterShader->SetUniform1i( 9, 6);
 		waterShader->SetUniform1i(10, 8);
+		waterShader->SetUniform1i(11, 10);
+		waterShader->SetUniform1i(12, 9);
 		waterShader->Disable();
 		waterShader->Validate();
 
@@ -642,6 +647,7 @@ void CBumpWater::SetupUniforms(string& definitions)
 	definitions += "uniform float PerlinLacunarity;\n";
 	definitions += "uniform float PerlinAmp;\n";
 	definitions += "uniform float WindSpeed;\n";
+	definitions += "uniform float shadowDensity;\n";
 }
 
 void CBumpWater::GetUniformLocations(const Shader::IProgramObject* shader)
@@ -665,6 +671,7 @@ void CBumpWater::GetUniformLocations(const Shader::IProgramObject* shader)
 	uniforms[16] = glGetUniformLocation( shader->GetObjID(), "PerlinLacunarity" );
 	uniforms[17] = glGetUniformLocation( shader->GetObjID(), "PerlinAmp" );
 	uniforms[18] = glGetUniformLocation( shader->GetObjID(), "WindSpeed" );
+	uniforms[19] = glGetUniformLocation( shader->GetObjID(), "shadowDensity" );
 }
 
 
@@ -700,11 +707,11 @@ void CBumpWater::Update()
 
 	SCOPED_TIMER("BumpWater::Update (Coastmap)");
 
-	if ((gs->frameNum % 10) == 5 && !heightmapUpdates.empty()) {
+	if ((gs->frameNum % 10) == 0 && !heightmapUpdates.empty()) {
 		UploadCoastline();
 	}
 
-	if ((gs->frameNum % 10) == 0 && !coastmapAtlasRects.empty()) {
+	if ((gs->frameNum % 10) == 5 && !coastmapAtlasRects.empty()) {
 		UpdateCoastmap();
 	}
 }
@@ -752,28 +759,29 @@ void CBumpWater::UpdateWater(CGame* game)
 
 CBumpWater::CoastAtlasRect::CoastAtlasRect(const SRectangle& rect)
 {
-	xsize = rect.x2 - rect.x1;
-	ysize = rect.z2 - rect.z1;
-	ix1 = rect.x1;
-	ix2 = rect.x2;
-	iy1 = rect.z1;
-	iy2 = rect.z2;
-	x1 = rect.x1 / (float)gs->mapx;
-	x2 = rect.x2 / (float)gs->mapx;
-	y1 = rect.z1 / (float)gs->mapy;
-	y2 = rect.z2 / (float)gs->mapy;
+	ix1 = std::max(rect.x1 - 15, 0);
+	ix2 = std::min(rect.x2 + 15, gs->mapx);
+	iy1 = std::max(rect.y1 - 15, 0);
+	iy2 = std::min(rect.y2 + 15, gs->mapy);
+
+	xsize = ix2 - ix1;
+	ysize = iy2 - iy1;
+
+	x1 = (ix1 + 0.5f) / (float)gs->mapx;
+	x2 = (ix2 + 0.5f) / (float)gs->mapx;
+	y1 = (iy1 + 0.5f) / (float)gs->mapy;
+	y2 = (iy2 + 0.5f) / (float)gs->mapy;
 	tx1 = tx2 = ty1 = ty2 = 0.f;
 	isCoastline = true;
 }
 
 void CBumpWater::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
-	if (/*!shoreWaves ||*/ readmap->currMinHeight > 0.0f || mapInfo->map.voidWater) {
+	if (!shoreWaves || readmap->currMinHeight > 0.0f || mapInfo->map.voidWater) {
 		return;
 	}
 
-	SRectangle urect(std::max(rect.x1 - 15, 0), std::max(rect.z1 - 15, 0),  std::min(rect.x2 + 15, gs->mapx), std::min(rect.z2 + 15, gs->mapy));
-	heightmapUpdates.push_back(urect);
+	heightmapUpdates.push_back(rect);
 }
 
 
@@ -789,13 +797,9 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 	while (!heightmapUpdates.empty()) {
 		SRectangle& cuRect1 = heightmapUpdates.front();
 
-		const int width  = cuRect1.GetWidth();
-		const int height = cuRect1.GetHeight();
-
-		if ((currentPixels + (width * height) <= 512 * 512) || forceFull) {
-			CoastAtlasRect caRect(cuRect1);
-			currentPixels += width * height;
-			coastmapAtlasRects.push_back(caRect);
+		if ((currentPixels + cuRect1.GetArea() <= 512 * 512) || forceFull) {
+			currentPixels += cuRect1.GetArea();
+			coastmapAtlasRects.push_back(cuRect1);
 			heightmapUpdates.pop_front();
 		} else {
 			break;
@@ -850,11 +854,11 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 	//! save the area positions in the texture atlas
 	for (size_t i = 0; i < coastmapAtlasRects.size(); i++) {
 		CoastAtlasRect& r = coastmapAtlasRects[i];
-		const AtlasedTexture* tex = atlas.GetTexturePtr(IntToString(i));
-		r.tx1 = tex->xstart;
-		r.tx2 = tex->xend;
-		r.ty1 = tex->ystart;
-		r.ty2 = tex->yend;
+		const AtlasedTexture& tex = atlas.GetTexture(IntToString(i));
+		r.tx1 = tex.xstart;
+		r.tx2 = tex.xend;
+		r.ty1 = tex.ystart;
+		r.ty2 = tex.yend;
 	}
 }
 
@@ -900,39 +904,40 @@ void CBumpWater::UpdateCoastmap()
 	}
 	glEnd();
 
-	int n = 0;
-	for (int i = 0; i < 5; ++i) {
-		coastFBO.AttachTexture(coastUpdateTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
-		glViewport(0, 0, atlasX, atlasY);
-		glMultiTexCoord2i(GL_TEXTURE2, 1, ++n);
+	if (atlasX > 0 && atlasY > 0) {
+		int n = 0;
+		for (int i = 0; i < 5; ++i) {
+			coastFBO.AttachTexture(coastUpdateTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
+			glViewport(0, 0, atlasX, atlasY);
+			glMultiTexCoord2i(GL_TEXTURE2, 1, ++n);
 
-		glBegin(GL_QUADS);
-		for (size_t j = 0; j < coastmapAtlasRects.size(); j++) {
-			const CoastAtlasRect& r = coastmapAtlasRects[j];
-			if (!r.isCoastline) continue;
-			glTexCoord4f(r.x1, r.y1, 0.0f, 0.0f); glVertex2f(r.tx1, r.ty1);
-			glTexCoord4f(r.x1, r.y2, 0.0f, 1.0f); glVertex2f(r.tx1, r.ty2);
-			glTexCoord4f(r.x2, r.y2, 1.0f, 1.0f); glVertex2f(r.tx2, r.ty2);
-			glTexCoord4f(r.x2, r.y1, 1.0f, 0.0f); glVertex2f(r.tx2, r.ty1);
+			glBegin(GL_QUADS);
+			for (size_t j = 0; j < coastmapAtlasRects.size(); j++) {
+				const CoastAtlasRect& r = coastmapAtlasRects[j];
+				if (!r.isCoastline) continue;
+				glTexCoord4f(r.x1, r.y1, 0.0f, 0.0f); glVertex2f(r.tx1, r.ty1);
+				glTexCoord4f(r.x1, r.y2, 0.0f, 1.0f); glVertex2f(r.tx1, r.ty2);
+				glTexCoord4f(r.x2, r.y2, 1.0f, 1.0f); glVertex2f(r.tx2, r.ty2);
+				glTexCoord4f(r.x2, r.y1, 1.0f, 0.0f); glVertex2f(r.tx2, r.ty1);
+			}
+			glEnd();
+
+			coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
+			glViewport(0, 0, gs->mapx, gs->mapy);
+			glMultiTexCoord2i(GL_TEXTURE2, 0, ++n);
+
+			glBegin(GL_QUADS);
+			for (size_t j = 0; j < coastmapAtlasRects.size(); j++) {
+				const CoastAtlasRect& r = coastmapAtlasRects[j];
+				if (!r.isCoastline) continue;
+				glTexCoord4f(r.tx1, r.ty1, 0.0f, 0.0f); glVertex2f(r.x1, r.y1);
+				glTexCoord4f(r.tx1, r.ty2, 0.0f, 1.0f); glVertex2f(r.x1, r.y2);
+				glTexCoord4f(r.tx2, r.ty2, 1.0f, 1.0f); glVertex2f(r.x2, r.y2);
+				glTexCoord4f(r.tx2, r.ty1, 1.0f, 0.0f); glVertex2f(r.x2, r.y1);
+			}
+			glEnd();
 		}
-		glEnd();
-
-		coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
-		glViewport(0, 0, gs->mapx, gs->mapy);
-		glMultiTexCoord2i(GL_TEXTURE2, 0, ++n);
-
-		glBegin(GL_QUADS);
-		for (size_t j = 0; j < coastmapAtlasRects.size(); j++) {
-			const CoastAtlasRect& r = coastmapAtlasRects[j];
-			if (!r.isCoastline) continue;
-			glTexCoord4f(r.tx1, r.ty1, 0.0f, 0.0f); glVertex2f(r.x1, r.y1);
-			glTexCoord4f(r.tx1, r.ty2, 0.0f, 1.0f); glVertex2f(r.x1, r.y2);
-			glTexCoord4f(r.tx2, r.ty2, 1.0f, 1.0f); glVertex2f(r.x2, r.y2);
-			glTexCoord4f(r.tx2, r.ty1, 1.0f, 0.0f); glVertex2f(r.x2, r.y1);
-		}
-		glEnd();
 	}
-
 
 	//glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
@@ -1063,6 +1068,7 @@ void CBumpWater::SetUniforms()
 	glUniform1f( uniforms[16], mapInfo->water.perlinLacunarity);
 	glUniform1f( uniforms[17], mapInfo->water.perlinAmplitude);
 	glUniform1f( uniforms[18], mapInfo->water.windSpeed);
+	glUniform1f( uniforms[19], sky->GetLight()->GetGroundShadowDensity());
 }
 
 
@@ -1093,10 +1099,29 @@ void CBumpWater::Draw()
 
 	glDisable(GL_ALPHA_TEST);
 	if (refraction < 2) {
-		glDepthMask(0);
+		glDepthMask(GL_FALSE);
 	}
 	if (refraction > 0) {
 		glDisable(GL_BLEND);
+	}
+
+	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+
+	waterShader->SetFlag("opt_shadows", (shadowHandler && shadowHandler->shadowsLoaded));
+	waterShader->SetFlag("opt_infotex", gd->DrawExtraTex());
+
+	waterShader->Enable();
+	waterShader->SetUniform3fv(0, &camera->pos[0]);
+	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
+ 
+	if (shadowHandler && shadowHandler->shadowsLoaded) {
+		waterShader->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
+
+		glActiveTexture(GL_TEXTURE9);
+		glBindTexture(GL_TEXTURE_2D, (shadowHandler && shadowHandler->shadowsLoaded) ? shadowHandler->shadowTexture : 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	}
 
 	const int causticTexNum = (gs->frameNum % caustTextures.size());
@@ -1108,12 +1133,9 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, coastTexture);
 	glActiveTexture(GL_TEXTURE7); glBindTexture(target,        depthTexture);
 	glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, waveRandTexture);
+	//glActiveTexture(GL_TEXTURE9); see above
+	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, gd->DrawExtraTex() ? gd->infoTex : 0);
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
-
-
-	waterShader->Enable();
-	waterShader->SetUniform3fv(0, &camera->pos[0]);
-	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
 
 	if (useUniforms) {
 		SetUniforms();
@@ -1124,9 +1146,12 @@ void CBumpWater::Draw()
 
 	waterShader->Disable();
 
-
+	if (shadowHandler && shadowHandler->shadowsLoaded) {
+		glActiveTexture(GL_TEXTURE9); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+		glActiveTexture(GL_TEXTURE0);
+	}
 	if (refraction < 2) {
-		glDepthMask(1);
+		glDepthMask(GL_TRUE);
 	}
 	if (refraction > 0) {
 		glEnable(GL_BLEND);

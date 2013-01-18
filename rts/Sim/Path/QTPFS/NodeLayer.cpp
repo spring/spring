@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <limits>
+
 #include "NodeLayer.hpp"
 #include "PathManager.hpp"
 #include "Node.hpp"
@@ -9,39 +11,50 @@
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/myMath.h"
 
-// NOTE:
-//   we need a fixed range that does not become wider / narrower
-//   during terrain deformations (otherwise the bins would change
-//   across ALL nodes)
-#define PM QTPFS::PathManager
-#define PM_SPEEDMOD_RANGE (PM::MAX_SPEEDMOD_VALUE - PM::MIN_SPEEDMOD_VALUE)
+#define NL QTPFS::NodeLayer
 
-static int GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
+const float QTPFS::NodeLayer::MIN_SPEEDMOD_VALUE = 0.0f;
+const float QTPFS::NodeLayer::MAX_SPEEDMOD_VALUE = 2.0f;
+
+static NL::SpeedBinType GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
 	// NOTE:
 	//     bins N and N+1 are reserved for modifiers <= min and >= max
 	//     respectively; blocked squares MUST be in their own category
-	const int defBin = int(PM::NUM_SPEEDMOD_BINS * relSpeedMod);
-	const int maxBin = int(PM::NUM_SPEEDMOD_BINS - 1);
+	const NL::SpeedBinType defBin = NL::NUM_SPEEDMOD_BINS * relSpeedMod;
+	const NL::SpeedBinType maxBin = NL::NUM_SPEEDMOD_BINS - 1;
 
-	int speedModBin = Clamp(defBin, 0, maxBin);
+	NL::SpeedBinType speedModBin = Clamp(defBin, static_cast<NL::SpeedBinType>(0), maxBin);
 
-	if (absSpeedMod <= PM::MIN_SPEEDMOD_VALUE) { speedModBin = PM::NUM_SPEEDMOD_BINS + 0; }
-	if (absSpeedMod >= PM::MAX_SPEEDMOD_VALUE) { speedModBin = PM::NUM_SPEEDMOD_BINS + 1; }
+	if (absSpeedMod <= NL::MIN_SPEEDMOD_VALUE) { speedModBin = NL::NUM_SPEEDMOD_BINS + 0; }
+	if (absSpeedMod >= NL::MAX_SPEEDMOD_VALUE) { speedModBin = NL::NUM_SPEEDMOD_BINS + 1; }
 
 	return speedModBin;
 }
 
 
 
+QTPFS::NodeLayer::NodeLayer()
+	: layerNumber(0)
+	, numLeafNodes(0)
+	, updateCounter(0)
+	, xsize(0)
+	, zsize(0)
+	, maxRelSpeedMod(0.0f)
+	, avgRelSpeedMod(0.0f)
+{
+}
+
 void QTPFS::NodeLayer::RegisterNode(INode* n) {
-	for (unsigned int hmx = n->xmin(); hmx < n->xmax(); hmx++) {
-		for (unsigned int hmz = n->zmin(); hmz < n->zmax(); hmz++) {
+	for (unsigned int hmz = n->zmin(); hmz < n->zmax(); hmz++) {
+		for (unsigned int hmx = n->xmin(); hmx < n->xmax(); hmx++) {
 			nodeGrid[hmz * xsize + hmx] = n;
 		}
 	}
 }
 
 void QTPFS::NodeLayer::Init(unsigned int layerNum) {
+	assert((NL::NUM_SPEEDMOD_BINS + 1) <= MaxSpeedBinTypeValue());
+
 	// pre-count the root
 	numLeafNodes = 1;
 	layerNumber = layerNum;
@@ -51,8 +64,8 @@ void QTPFS::NodeLayer::Init(unsigned int layerNum) {
 
 	nodeGrid.resize(xsize * zsize, NULL);
 
-	curSpeedMods.resize(xsize * zsize, 0.0f);
-	oldSpeedMods.resize(xsize * zsize, 0.0f);
+	curSpeedMods.resize(xsize * zsize,  0);
+	oldSpeedMods.resize(xsize * zsize,  0);
 	oldSpeedBins.resize(xsize * zsize, -1);
 	curSpeedBins.resize(xsize * zsize, -1);
 }
@@ -85,18 +98,18 @@ void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md) {
 	layerUpdate->counter = ++updateCounter;
 
 	#ifdef QTPFS_IGNORE_MAP_EDGES
-	const unsigned int md_xsizeh = md->xsizeh;
-	const unsigned int md_zsizeh = md->zsizeh;
+	const unsigned int xsizehMD = md->xsizeh;
+	const unsigned int zsizehMD = md->zsizeh;
 	#endif
 
 	// make a snapshot of the terrain-state within <r>
-	for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
-		for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
+	for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
+		for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
 			const unsigned int recIdx = (hmz - r.z1) * r.GetWidth() + (hmx - r.x1);
 
 			#ifdef QTPFS_IGNORE_MAP_EDGES
-			const unsigned int chmx = Clamp(hmx, md_xsizeh, r.x2 - md_xsizeh - 1);
-			const unsigned int chmz = Clamp(hmz, md_zsizeh, r.z2 - md_zsizeh - 1);
+			const unsigned int chmx = Clamp(hmx, xsizehMD, r.x2 - xsizehMD - 1);
+			const unsigned int chmz = Clamp(hmz, zsizehMD, r.z2 - zsizehMD - 1);
 			#else
 			const unsigned int chmx = hmx;
 			const unsigned int chmz = hmz;
@@ -111,11 +124,11 @@ void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md) {
 bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 	const LayerUpdate& layerUpdate = layerUpdates.front();
 	const PathRectangle& rectangle = layerUpdate.rectangle;
-	const std::vector<float>* speedMods = &layerUpdate.speedMods;
-	const std::vector<int>* blockBits = &layerUpdate.blockBits;
-	const bool ret = Update(rectangle, NULL, speedMods, blockBits);
 
-	return ret;
+	const std::vector<float>* speedMods = &layerUpdate.speedMods;
+	const std::vector<  int>* blockBits = &layerUpdate.blockBits;
+
+	return (Update(rectangle, NULL, speedMods, blockBits));
 }
 #endif
 
@@ -125,24 +138,34 @@ bool QTPFS::NodeLayer::Update(
 	const PathRectangle& r,
 	const MoveDef* md,
 	const std::vector<float>* luSpeedMods,
-	const std::vector<int>* luBlockBits
+	const std::vector<  int>* luBlockBits
 ) {
 	unsigned int numNewBinSquares = 0;
+	unsigned int numClosedSquares = 0;
 
 	#ifdef QTPFS_IGNORE_MAP_EDGES
-	const unsigned int md_xsizeh = (md == NULL)? 0: md->xsizeh;
-	const unsigned int md_zsizeh = (md == NULL)? 0: md->zsizeh;
+	const unsigned int xsizehMD = (md == NULL)? 0: md->xsizeh;
+	const unsigned int zsizehMD = (md == NULL)? 0: md->zsizeh;
 	#endif
 
+	const bool globalUpdate =
+		((r.x1 == 0 && r.x2 == gs->mapx) &&
+		 (r.z1 == 0 && r.z2 == gs->mapy));
+
+	if (globalUpdate) {
+		maxRelSpeedMod = 0.0f;
+		avgRelSpeedMod = 0.0f;
+	}
+
 	// divide speed-modifiers into bins
-	for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
-		for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
+	for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
+		for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
 			const unsigned int sqrIdx = hmz * xsize + hmx;
 			const unsigned int recIdx = (hmz - r.z1) * r.GetWidth() + (hmx - r.x1);
 
 			#ifdef QTPFS_IGNORE_MAP_EDGES
-			const unsigned int chmx = Clamp(hmx, md_xsizeh, r.x2 - md_xsizeh - 1);
-			const unsigned int chmz = Clamp(hmz, md_zsizeh, r.z2 - md_zsizeh - 1);
+			const unsigned int chmx = Clamp(hmx, xsizehMD, r.x2 - xsizehMD - 1);
+			const unsigned int chmz = Clamp(hmz, zsizehMD, r.z2 - zsizehMD - 1);
 			#else
 			const unsigned int chmx = hmx;
 			const unsigned int chmz = hmz;
@@ -154,23 +177,35 @@ bool QTPFS::NodeLayer::Update(
 			const unsigned int blockBits = (luBlockBits == NULL)? CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
 
 			const float rawAbsSpeedMod = (luSpeedMods == NULL)? CMoveMath::GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
-			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, PM::MIN_SPEEDMOD_VALUE, PM::MAX_SPEEDMOD_VALUE);
+			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, NL::MIN_SPEEDMOD_VALUE, NL::MAX_SPEEDMOD_VALUE);
 			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
-			const float newRelSpeedMod = (newAbsSpeedMod - PM::MIN_SPEEDMOD_VALUE) / PM_SPEEDMOD_RANGE;
-			const float curRelSpeedMod = curSpeedMods[sqrIdx];
+			const float newRelSpeedMod = Clamp((newAbsSpeedMod - NL::MIN_SPEEDMOD_VALUE) / (NL::MAX_SPEEDMOD_VALUE - NL::MIN_SPEEDMOD_VALUE), 0.0f, 1.0f);
+			const float curRelSpeedMod = Clamp(curSpeedMods[sqrIdx] / float(MaxSpeedModTypeValue()), 0.0f, 1.0f);
 
-			const int newSpeedModBin = GetSpeedModBin(newAbsSpeedMod, newRelSpeedMod);
-			const int curSpeedModBin = curSpeedBins[sqrIdx];
+			const SpeedBinType newSpeedModBin = GetSpeedModBin(newAbsSpeedMod, newRelSpeedMod);
+			const SpeedBinType curSpeedModBin = curSpeedBins[sqrIdx];
 
-			numNewBinSquares += (newSpeedModBin != curSpeedModBin)? 1: 0;
+			numNewBinSquares += int(newSpeedModBin != curSpeedModBin);
+			numClosedSquares += int(newSpeedModBin == NL::NUM_SPEEDMOD_BINS);
 
 			// need to keep track of these for Tesselate
-			oldSpeedMods[sqrIdx] = curRelSpeedMod;
-			curSpeedMods[sqrIdx] = newRelSpeedMod;
+			oldSpeedMods[sqrIdx] = curRelSpeedMod * float(MaxSpeedModTypeValue());
+			curSpeedMods[sqrIdx] = newRelSpeedMod * float(MaxSpeedModTypeValue());
 
 			oldSpeedBins[sqrIdx] = curSpeedModBin;
 			curSpeedBins[sqrIdx] = newSpeedModBin;
+
+			if (globalUpdate && newRelSpeedMod > 0.0f) {
+				// only count open squares toward the maximum and average
+				maxRelSpeedMod  = std::max(maxRelSpeedMod, newRelSpeedMod);
+				avgRelSpeedMod += newRelSpeedMod;
+			}
 		}
+	}
+
+	if (globalUpdate && maxRelSpeedMod > 0.0f) {
+		// if at least one open square, set the new average
+		avgRelSpeedMod /= ((xsize * zsize) - numClosedSquares);
 	}
 
 	// if at least one square changed bin, we need to re-tesselate
@@ -199,6 +234,8 @@ bool QTPFS::NodeLayer::Update(
 #ifdef QTPFS_AMORTIZED_NODE_NEIGHBOR_CACHE_UPDATES
 #ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
 void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum) {
+	assert(!nodeGrid.empty());
+
 	const int xoff = (currFrameNum % ((gs->mapx >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 	const int zoff = (currFrameNum / ((gs->mapy >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 
@@ -214,13 +251,13 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		const int xmin =         (xoff +           0               ), zmin =         (zoff +           0               );
 		const int xmax = std::min(xmin + SQUARE_SIZE, gs->mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE, gs->mapy >> 1);
 
-		for (int x = xmin; x < xmax; x++) {
-			for (int z = zmin; z < zmax; ) {
+		for (int z = zmin; z < zmax; z++) {
+			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
+				x = n->xmax();
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z = n->zmax();
-				// z += n->zsize();
 			}
 		}
 	}
@@ -229,13 +266,13 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		const int xmin =         (xoff +              (gs->mapx >> 1)), zmin =         (zoff +           0               );
 		const int xmax = std::min(xmin + SQUARE_SIZE,  gs->mapx      ), zmax = std::min(zmin + SQUARE_SIZE, gs->mapy >> 1);
 
-		for (int x = xmin; x < xmax; x++) {
-			for (int z = zmin; z < zmax; ) {
+		for (int z = zmin; z < zmax; z++) {
+			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
+				x = n->xmax();
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z = n->zmax();
-				// z += n->zsize();
 			}
 		}
 	}
@@ -244,13 +281,13 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		const int xmin =         (xoff +              (gs->mapx >> 1)), zmin =         (zoff +              (gs->mapy >> 1));
 		const int xmax = std::min(xmin + SQUARE_SIZE,  gs->mapx      ), zmax = std::min(zmin + SQUARE_SIZE,  gs->mapy      );
 
-		for (int x = xmin; x < xmax; x++) {
-			for (int z = zmin; z < zmax; ) {
+		for (int z = zmin; z < zmax; z++) {
+			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
+				x = n->xmax();
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z = n->zmax();
-				// z += n->zsize();
 			}
 		}
 	}
@@ -259,13 +296,13 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		const int xmin =         (xoff +           0               ), zmin =         (zoff +              (gs->mapy >> 1));
 		const int xmax = std::min(xmin + SQUARE_SIZE, gs->mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE,  gs->mapy      );
 
-		for (int x = xmin; x < xmax; x++) {
-			for (int z = zmin; z < zmax; ) {
+		for (int z = zmin; z < zmax; z++) {
+			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
+				x = n->xmax();
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
-				z = n->zmax();
-				// z += n->zsize();
 			}
 		}
 	}
@@ -274,6 +311,8 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 #endif
 
 void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const PathRectangle& ur, unsigned int currMagicNum) {
+	assert(!nodeGrid.empty());
+
 	// account for the rim of nodes around the bounding box
 	// (whose neighbors also changed during re-tesselation)
 	const int xmin = std::max(ur.x1 - 1, 0), xmax = std::min(ur.x2 + 1, gs->mapx);
@@ -281,18 +320,16 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const PathRectangle& ur, uns
 
 	INode* n = NULL;
 
-	for (int x = xmin; x < xmax; x++) {
-		for (int z = zmin; z < zmax; ) {
+	for (int z = zmin; z < zmax; z++) {
+		for (int x = xmin; x < xmax; ) {
 			n = nodeGrid[z * xsize + x];
+			x = n->xmax();
 
 			// NOTE:
 			//   during initialization, currMagicNum == 0 which nodes start with already 
 			//   (does not matter because prevMagicNum == -1, so updates are not no-ops)
 			n->SetMagicNumber(currMagicNum);
 			n->UpdateNeighborCache(nodeGrid);
-
-			z = n->zmax();
-			// z += n->zsize();
 		}
 	}
 }

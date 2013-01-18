@@ -123,7 +123,7 @@ public:
 
 private:
 
-	static const std::string log_prefix;
+	static const char* log_prefix;
 
 };
 

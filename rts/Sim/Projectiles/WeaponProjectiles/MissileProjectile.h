@@ -13,12 +13,10 @@ class CMissileProjectile : public CWeaponProjectile
 protected:
 	void UpdateGroundBounce();
 public:
-	CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner,
-			float areaOfEffect, float maxSpeed, int ttl, CUnit* target,
-			const WeaponDef* weaponDef, float3 targetPos);
+	CMissileProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed);
 	~CMissileProjectile();
-	void DependentDied(CObject* o);
 	void Collision(CUnit* unit);
+	void Collision(CFeature* feature);
 	void Collision();
 
 	void Update();
@@ -34,13 +32,10 @@ private:
 	int age;
 	float3 oldSmoke;
 	float3 oldDir;
-	CUnit* target;
-public:
-	CProjectile* decoyTarget;
+
 private:
 	bool drawTrail;
 	int numParts;
-	float3 targPos;
 
 	bool isWobbling;
 	float3 wobbleDir;

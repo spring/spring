@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
@@ -23,7 +22,7 @@
 
 const float CMissileProjectile::SMOKE_TIME = 60.0f;
 
-CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, 0, 0.0f, 0.0f, NULL, NULL, ZeroVector));
+CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams(), 0.0f, 0.0f));
 
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -35,11 +34,8 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(age),
 	CR_MEMBER(oldSmoke),
 	CR_MEMBER(oldDir),
-	CR_MEMBER(target),
-	CR_MEMBER(decoyTarget),
 	CR_MEMBER(drawTrail),
 	CR_MEMBER(numParts),
-	CR_MEMBER(targPos),
 	CR_MEMBER(isWobbling),
 	CR_MEMBER(wobbleDir),
 	CR_MEMBER(wobbleTime),
@@ -54,22 +50,14 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_RESERVED(16)
 	));
 
-CMissileProjectile::CMissileProjectile(
-		const float3& pos, const float3& speed,
-		CUnit* owner,
-		float areaOfEffect, float maxSpeed, int ttl,
-		CUnit* target, const WeaponDef* weaponDef,
-		float3 targetPos)
-	: CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, NULL, ttl)
+CMissileProjectile::CMissileProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed)
+	: CWeaponProjectile(params)
 	, maxSpeed(maxSpeed)
 	, areaOfEffect(areaOfEffect)
 	, age(0)
 	, oldSmoke(pos)
-	, target(target)
-	, decoyTarget(NULL)
 	, drawTrail(true)
 	, numParts(0)
-	, targPos(targetPos)
 	, isWobbling(weaponDef? (weaponDef->wobble > 0): false)
 	, wobbleDir(ZeroVector)
 	, wobbleTime(1)
@@ -88,7 +76,7 @@ CMissileProjectile::CMissileProjectile(
 	if (weaponDef) {
 		model = weaponDef->LoadModel();
 		if (model) {
-			SetRadiusAndHeight(model->radius, model->height);
+			SetRadiusAndHeight(model);
 		}
 	}
 
@@ -106,12 +94,13 @@ CMissileProjectile::CMissileProjectile(
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	if (target) {
-		target->IncomingMissile(this);
+	CUnit* u = dynamic_cast<CUnit*>(target);
+	if (u) {
+		u->IncomingMissile(this);
 	}
 
 	if ((weaponDef) && (weaponDef->trajectoryHeight > 0)) {
-		float dist = pos.distance(targPos);
+		float dist = pos.distance(targetPos);
 		extraHeight = (dist * weaponDef->trajectoryHeight);
 
 		dist = std::max(dist, maxSpeed);
@@ -129,17 +118,6 @@ CMissileProjectile::~CMissileProjectile()
 {
 }
 
-void CMissileProjectile::DependentDied(CObject* o)
-{
-	if (o == target) {
-		target = NULL;
-	}
-	if (o == decoyTarget) {
-		decoyTarget = NULL;
-	}
-	CWeaponProjectile::DependentDied(o);
-}
-
 void CMissileProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail) {
@@ -150,7 +128,7 @@ void CMissileProjectile::Collision()
 	oldSmoke = pos;
 }
 
-void CMissileProjectile::Collision(CUnit *unit)
+void CMissileProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
 		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
@@ -160,6 +138,15 @@ void CMissileProjectile::Collision(CUnit *unit)
 	oldSmoke = pos;
 }
 
+void CMissileProjectile::Collision(CFeature* feature)
+{
+	if (weaponDef->visuals.smokeTrail) {
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+	}
+
+	CWeaponProjectile::Collision(feature);
+	oldSmoke = pos;
+}
 
 void CMissileProjectile::Update()
 {
@@ -171,18 +158,23 @@ void CMissileProjectile::Update()
 
 			float3 targSpeed(ZeroVector);
 
-			if (weaponDef->tracks && (decoyTarget || target)) {
-				if (decoyTarget) {
-					targPos = decoyTarget->pos;
-					targSpeed = decoyTarget->speed;
-				} else {
-					targSpeed = target->speed;
+			if (weaponDef->tracks && target) {
+				CSolidObject* so = dynamic_cast<CSolidObject*>(target);
+				CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
 
-					if ((target->physicalState == CSolidObject::Flying && (target->aimPos - pos).SqLength() < 150 * 150) || !owner()) {
-						targPos = target->aimPos;
-					} else {
-						targPos = helper->GetUnitErrorPos(target, owner()->allyteam, true);
+				targetPos = target->pos;
+				if (so) {
+					targetPos = so->aimPos;
+					targSpeed = so->speed;
+
+					if (owner()) {
+						CUnit* u = dynamic_cast<CUnit*>(so);
+						if (u) {
+							targetPos = helper->GetUnitErrorPos(u, owner()->allyteam, true);
+						}
 					}
+				} if (po) {
+					targSpeed = po->speed;
 				}
 			}
 
@@ -212,22 +204,22 @@ void CMissileProjectile::Update()
 				pos += danceMove;
 			}
 
-			const float3 orgTargPos = targPos;
-			const float3 targetDir = (targPos - pos).SafeNormalize();
-			const float dist = targPos.distance(pos) + 0.1f;
+			const float3 orgTargPos = targetPos;
+			const float3 targetDir = (targetPos - pos).SafeNormalize();
+			const float dist = pos.distance(targetPos) + 0.1f;
 
 			if (extraHeightTime > 0) {
 				extraHeight -= extraHeightDecay;
 				--extraHeightTime;
 
-				targPos.y += extraHeight;
+				targetPos.y += extraHeight;
 
 				if (dir.y <= 0.0f) {
 					// missile has reached apex, smoothly transition
 					// to targetDir (can still overshoot when target
 					// is too close or height difference too large)
-					const float horDiff = (targPos - pos).Length2D() + 0.01f;
-					const float verDiff = (targPos.y - pos.y) + 0.01f;
+					const float horDiff = (targetPos - pos).Length2D() + 0.01f;
+					const float verDiff = (targetPos.y - pos.y) + 0.01f;
 					const float dirDiff = math::fabs(targetDir.y - dir.y);
 					const float ratio = math::fabs(verDiff / horDiff);
 
@@ -239,7 +231,7 @@ void CMissileProjectile::Update()
 			}
 
 
-			float3 dif = (targPos + targSpeed * (dist / maxSpeed) * 0.7f - pos).SafeNormalize();
+			float3 dif = (targetPos + targSpeed * (dist / maxSpeed) * 0.7f - pos).SafeNormalize();
 			float3 dif2 = dif - dir;
 
 			if (dif2.SqLength() < Square(weaponDef->turnrate)) {
@@ -251,7 +243,7 @@ void CMissileProjectile::Update()
 				dir.SafeNormalize();
 			}
 
-			targPos = orgTargPos;
+			targetPos = orgTargPos;
 			speed = dir * curSpeed;
 		}
 
@@ -277,8 +269,6 @@ void CMissileProjectile::Update()
 
 	age++;
 	numParts++;
-
-
 	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
 		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
 			pos, oldSmoke,
@@ -300,6 +290,7 @@ void CMissileProjectile::Update()
 		}
 	}
 
+	UpdateInterception();
 	UpdateGroundBounce();
 }
 

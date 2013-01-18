@@ -5,7 +5,6 @@
 #include <SDL_timer.h>
 #include <set>
 #include <cfloat>
-#include "System/mmgr.h"
 
 #include "PreGame.h"
 
@@ -22,6 +21,7 @@
 #include "PlayerHandler.h"
 #include "System/TimeProfiler.h"
 #include "UI/InfoConsole.h"
+#include "Map/Generation/SimpleMapGenerator.h"
 
 #include "aGui/Gui.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -181,6 +181,11 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 	if (setup->mapName.empty()) {
 		throw content_error("No map selected in startscript");
+	}
+
+	if(setup->mapSeed) {
+		CSimpleMapGenerator gen(setup);
+		gen.Generate();
 	}
 
 	// We must map the map into VFS this early, because server needs the start positions.

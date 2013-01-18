@@ -64,7 +64,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 namespace Assimp {
-	template<> const std::string LogFunctions<BlenderImporter>::log_prefix = "BLEND: ";
+	template<> const char* LogFunctions<BlenderImporter>::log_prefix = "BLEND: ";
 }
 
 using namespace Assimp;

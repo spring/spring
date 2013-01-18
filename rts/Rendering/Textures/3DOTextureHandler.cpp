@@ -1,13 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include <algorithm>
 #include <cctype>
 #include <set>
 #include <sstream>
-#include "System/mmgr.h"
 
 #include "3DOTextureHandler.h"
+#include "LegacyAtlasAlloc.h"
+#include "QuadtreeAtlasAlloc.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -32,14 +33,113 @@ struct TexFile {
 	std::string name;
 };
 
-static int CompareTatex2(const void *arg1, const void *arg2) {
-	if ((*(TexFile**)arg1)->tex.ysize > (*(TexFile**)arg2)->tex.ysize) {
-		return -1;
-	}
-	return 1;
-}
 
 C3DOTextureHandler::C3DOTextureHandler()
+{
+	std::vector<TexFile*> texfiles = LoadTexFiles();
+
+	CLegacyAtlasAlloc atlas;
+	//CQuadtreeAtlasAlloc atlas;
+	atlas.SetNonPowerOfTwo(globalRendering->supportNPOTs);
+	atlas.SetMaxSize(2048, 2048);
+
+	for (std::vector<TexFile*>::iterator it = texfiles.begin(); it != texfiles.end(); ++it) {
+		atlas.AddEntry((*it)->name, int2((*it)->tex.xsize, (*it)->tex.ysize));
+	}
+
+	bool success = atlas.Allocate();
+	if (!success) {
+		throw content_error("Too many/large texture in 3do texture-atlas to fit in 2048*2048");
+	}
+
+	const size_t bigTexX = atlas.GetAtlasSize().x;
+	const size_t bigTexY = atlas.GetAtlasSize().y;
+
+	unsigned char* bigtex1 = new unsigned char[bigTexX * bigTexY * 4];
+	unsigned char* bigtex2 = new unsigned char[bigTexX * bigTexY * 4];
+	for (int a = 0; a < (bigTexX * bigTexY); ++a) {
+		bigtex1[a*4 + 0] = 128;
+		bigtex1[a*4 + 1] = 128;
+		bigtex1[a*4 + 2] = 128;
+		bigtex1[a*4 + 3] = 0;
+
+		bigtex2[a*4 + 0] = 0;
+		bigtex2[a*4 + 1] = 128;
+		bigtex2[a*4 + 2] = 0;
+		bigtex2[a*4 + 3] = 255;
+	}
+
+	for (std::vector<TexFile*>::iterator it = texfiles.begin(); it != texfiles.end(); ++it) {
+		CBitmap& curtex1 = (*it)->tex;
+		CBitmap& curtex2 = (*it)->tex2;
+
+		const size_t foundx = atlas.GetEntry((*it)->name).x;
+		const size_t foundy = atlas.GetEntry((*it)->name).y;
+		const float4 texCoords = atlas.GetTexCoords((*it)->name);
+
+		for (int y = 0; y < curtex1.ysize; ++y) {
+			for (int x = 0; x < curtex1.xsize; ++x) {
+				for (int col = 0; col < 4; ++col) {
+					bigtex1[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex1.mem[(((y * curtex1.xsize) + x) * 4) + col];
+					bigtex2[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex2.mem[(((y * curtex1.xsize) + x) * 4) + col];
+				}
+			}
+		}
+
+		textures[(*it)->name] = UnitTexture(texCoords);
+
+		delete (*it);
+	}
+
+	const int maxMipMaps = atlas.GetMaxMipMaps();
+
+	glGenTextures(1, &atlas3do1);
+		glBindTexture(GL_TEXTURE_2D, atlas3do1);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
+		if (maxMipMaps > 0) {
+			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1); //FIXME disable texcompression
+		} else {
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bigTexX, bigTexY, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1);
+		}
+
+	glGenTextures(1, &atlas3do2);
+		glBindTexture(GL_TEXTURE_2D, atlas3do2);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
+		if (maxMipMaps > 0) {
+			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2); //FIXME disable texcompression
+		} else {
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bigTexX, bigTexY, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2);
+		}
+
+#if 0
+	CBitmap save(bigtex1, bigTexX, bigTexY);
+	save.Save("unittex1.jpg");
+	CBitmap save2(bigtex2, bigTexX, bigTexY);
+	save2.Save("unittex2.jpg");
+#endif
+
+	textures["___dummy___"] = UnitTexture(0.0f, 0.0f, 1.0f, 1.0f);
+
+	delete[] bigtex1;
+	delete[] bigtex2;
+}
+
+C3DOTextureHandler::~C3DOTextureHandler()
+{
+	glDeleteTextures(1, &atlas3do1);
+	glDeleteTextures(1, &atlas3do2);
+}
+
+
+std::vector<TexFile*> C3DOTextureHandler::LoadTexFiles()
 {
 	CFileHandler teamTexFile("unittextures/tatex/teamtex.txt");
 	CFileHandler paletteFile("unittextures/tatex/palette.pal");
@@ -51,13 +151,10 @@ C3DOTextureHandler::C3DOTextureHandler()
 		teamTexes.insert(StringToLower(parser.GetCleanLine()));
 	}
 
-	TexFile* texfiles[10000];
-
-	int numfiles = 0;
-	int totalSize = 0;
+	std::vector<TexFile*> texfiles;
 
 	const std::vector<std::string>& filesBMP = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
-	std::vector<std::string> files    = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
+	std::vector<std::string> files = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
 	files.insert(files.end(), filesBMP.begin(), filesBMP.end());
 
 	std::set<string> usedNames;
@@ -73,12 +170,10 @@ C3DOTextureHandler::C3DOTextureHandler()
 
 		if(teamTexes.find(s2) == teamTexes.end()){
 			TexFile* tex = CreateTex(s, s2, false);
-			texfiles[numfiles++] = tex;
-			totalSize += tex->tex.xsize * tex->tex.ysize;
+			texfiles.push_back(tex);
 		} else {
 			TexFile* tex = CreateTex(s, s2, true);
-			texfiles[numfiles++] = tex;
-			totalSize += tex->tex.xsize * tex->tex.ysize;
+			texfiles.push_back(tex);
 		}
 	}
 
@@ -103,160 +198,18 @@ C3DOTextureHandler::C3DOTextureHandler()
 		tex->tex2.mem[2] =  0;
 		tex->tex2.mem[3] = 255;
 
-		texfiles[numfiles++] = tex;
-		totalSize += tex->tex.xsize * tex->tex.ysize;
+		texfiles.push_back(tex);
 	}
 
-	// pessimistic guess about how much space will be wasted
-	totalSize = (int)(totalSize * 1.2f);
-
-	if (totalSize < 1024*1024) {
-		bigTexX = 1024;
-		bigTexY = 1024;
-	} else if (totalSize < 1024*2048) {
-		bigTexX = 1024;
-		bigTexY = 2048;
-	} else if (totalSize < 2048*2048) {
-		bigTexX = 2048;
-		bigTexY = 2048;
-	} else {
-		bigTexX = 2048;
-		bigTexY = 2048;
-		throw content_error("Too many/large texture in 3do texture-atlas to fit in 2048*2048");
-	}
-
-	qsort(texfiles,numfiles,sizeof(TexFile*), CompareTatex2);
-
-	unsigned char* bigtex1 = new unsigned char[bigTexX * bigTexY * 4];
-	unsigned char* bigtex2 = new unsigned char[bigTexX * bigTexY * 4];
-	for (int a = 0; a < (bigTexX * bigTexY); ++a) {
-		bigtex1[a*4 + 0] = 128;
-		bigtex1[a*4 + 1] = 128;
-		bigtex1[a*4 + 2] = 128;
-		bigtex1[a*4 + 3] = 0;
-
-		bigtex2[a*4 + 0] = 0;
-		bigtex2[a*4 + 1] = 128;
-		bigtex2[a*4 + 2] = 0;
-		bigtex2[a*4 + 3] = 255;
-	}
-
-	int cury = 0;
-	int maxy = 0;
-	int foundx = 0;
-	int foundy = 0;
-	std::list<int2> nextSub;
-	std::list<int2> thisSub;
-	for (int a = 0; a < numfiles; ++a) {
-		CBitmap* curtex1 = &texfiles[a]->tex;
-		CBitmap* curtex2 = &texfiles[a]->tex2;
-
-		bool done = false;
-		while (!done) {
-			// Find space for us
-			if (thisSub.empty()) {
-				if (nextSub.empty()) {
-					cury = maxy;
-					maxy += curtex1->ysize;
-					if (maxy > bigTexY) {
-						delete[] bigtex1;
-						delete[] bigtex2;
-						throw content_error("Too many/large texture in 3do texture-atlas to fit in 2048*2048");
-					}
-					thisSub.push_back(int2(0, cury));
-				} else {
-					thisSub = nextSub;
-					nextSub.clear();
-				}
-			}
-			if (thisSub.front().x + curtex1->xsize>bigTexX) {
-				thisSub.clear();
-				continue;
-			}
-			if(thisSub.front().y+curtex1->ysize>maxy){
-				thisSub.pop_front();
-				continue;
-			}
-			// ok found space for us
-			foundx=thisSub.front().x;
-			foundy=thisSub.front().y;
-			done=true;
-
-			if (thisSub.front().y + curtex1->ysize<maxy){
-				nextSub.push_back(int2(thisSub.front().x, thisSub.front().y + curtex1->ysize));
-			}
-
-			thisSub.front().x += curtex1->xsize;
-			while ((thisSub.size() > 1) && (thisSub.front().x >= (++thisSub.begin())->x)) {
-				(++thisSub.begin())->x = thisSub.front().x;
-				thisSub.erase(thisSub.begin());
-			}
-
-		}
-		for (int y = 0; y < curtex1->ysize; ++y) {
-			for (int x = 0; x < curtex1->xsize; ++x) {
-				for (int col = 0; col < 4; ++col) {
-					bigtex1[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex1->mem[(((y * curtex1->xsize) + x) * 4) + col];
-					bigtex2[(((foundy + y) * bigTexX + (foundx + x)) * 4) + col] = curtex2->mem[(((y * curtex1->xsize) + x) * 4) + col];
-				}
-			}
-		}
-
-		UnitTexture* unittex = new UnitTexture;
-
-		unittex->xstart = (foundx + 0.5f) / (float)bigTexX;
-		unittex->ystart = (foundy + 0.5f) / (float)bigTexY;
-		unittex->xend = (foundx + curtex1->xsize - 0.5f) / (float)bigTexX;
-		unittex->yend = (foundy + curtex1->ysize - 0.5f) / (float)bigTexY;
-		textures[texfiles[a]->name] = unittex;
-
-		delete texfiles[a];
-	}
-
-	glGenTextures(1, &atlas3do1);
-	glBindTexture(GL_TEXTURE_2D, atlas3do1);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR/*_MIPMAP_NEAREST*/);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8 ,bigTexX, bigTexY, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1);
-	//glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1);
-
-	glGenTextures(1, &atlas3do2);
-	glBindTexture(GL_TEXTURE_2D, atlas3do2);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR/*_MIPMAP_NEAREST*/);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bigTexX, bigTexY, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2);
-	//glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8, bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2);
-
-
-//	CBitmap save(tex, bigTexX, bigTexY);
-//	save.Save("unittex-1x.jpg");
-
-	UnitTexture* t = new UnitTexture();
-	t->xstart = 0.0f;
-	t->ystart = 0.0f;
-	t->xend = 1.0f;
-	t->yend = 1.0f;
-	textures["___dummy___"] = t;
-
-	delete[] bigtex1;
-	delete[] bigtex2;
+	return texfiles;
 }
 
-C3DOTextureHandler::~C3DOTextureHandler()
-{
-	std::map<string,UnitTexture*>::iterator tti;
-	for (tti = textures.begin(); tti != textures.end(); ++tti) {
-		delete tti->second;
-	}
-	glDeleteTextures(1, &atlas3do1);
-	glDeleteTextures(1, &atlas3do2);
-}
 
 C3DOTextureHandler::UnitTexture* C3DOTextureHandler::Get3DOTexture(const std::string& name)
 {
-	std::map<std::string, UnitTexture*>::iterator tti;
+	std::map<std::string, UnitTexture>::iterator tti;
 	if ((tti = textures.find(name)) != textures.end()) {
-		return tti->second;
+		return &tti->second;
 	}
 
 	// unknown texture
@@ -275,9 +228,6 @@ TexFile* C3DOTextureHandler::CreateTex(const std::string& name, const std::strin
 {
 	TexFile* tex = new TexFile;
 	tex->tex.Load(name, 30);
-	//char tmp[256];
-	//sprintf(tmp, "%s%02i", name2.c_str(), team);
-	//tex->name=tmp;
 	tex->name = name2;
 
 	tex->tex2.Alloc(tex->tex.xsize, tex->tex.ysize);

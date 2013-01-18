@@ -6,7 +6,6 @@
 #include "Sim/Features/Feature.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "System/mmgr.h"
 
 CR_BIND(CollisionVolume, );
 CR_REG_METADATA(CollisionVolume, (
@@ -172,7 +171,11 @@ void CollisionVolume::InitShape(
 	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
 		if ((math::fabsf(s.x - s.y) < COLLISION_VOLUME_EPS) && (math::fabsf(s.y - s.z) < COLLISION_VOLUME_EPS)) {
 			volumeType = COLVOL_TYPE_SPHERE;
-		} else {
+		} else 
+		if ((math::fabsf(scales[volumeAxes[1]] - scales[volumeAxes[2]]) < COLLISION_VOLUME_EPS)) {
+			volumeType = COLVOL_TYPE_CYLINDER;
+		}
+		else {
 			volumeType = COLVOL_TYPE_BOX;
 		}
 	}
@@ -209,9 +212,6 @@ void CollisionVolume::SetBoundingRadius() {
 			volumeBoundingRadius = math::sqrt(volumeBoundingRadiusSq);
 		} break;
 		case COLVOL_TYPE_SPHERE: {
-			assert(math::fabs(hAxisScales.x - hAxisScales.y) < COLLISION_VOLUME_EPS);
-			assert(math::fabs(hAxisScales.y - hAxisScales.z) < COLLISION_VOLUME_EPS);
-
 			volumeBoundingRadius = hAxisScales.x;
 			volumeBoundingRadiusSq = volumeBoundingRadius * volumeBoundingRadius;
 		} break;
@@ -219,17 +219,10 @@ void CollisionVolume::SetBoundingRadius() {
 }
 
 void CollisionVolume::SetAxisScales(const float3& scales) {
-	fAxisScales.x = scales.x;
-	fAxisScales.y = scales.y;
-	fAxisScales.z = scales.z;
+	fAxisScales = scales;
+	hAxisScales = fAxisScales * 0.5f;
 
-	hAxisScales.x = fAxisScales.x * 0.5f;
-	hAxisScales.y = fAxisScales.y * 0.5f;
-	hAxisScales.z = fAxisScales.z * 0.5f;
-
-	hsqAxisScales.x = hAxisScales.x * hAxisScales.x;
-	hsqAxisScales.y = hAxisScales.y * hAxisScales.y;
-	hsqAxisScales.z = hAxisScales.z * hAxisScales.z;
+	hsqAxisScales = hAxisScales * hAxisScales;
 
 	hiAxisScales.x = 1.0f / hAxisScales.x;
 	hiAxisScales.y = 1.0f / hAxisScales.y;
@@ -237,13 +230,10 @@ void CollisionVolume::SetAxisScales(const float3& scales) {
 }
 
 void CollisionVolume::RescaleAxes(const float3& scales) {
-	fAxisScales.x *= scales.x; hAxisScales.x *= scales.x;
-	fAxisScales.y *= scales.y; hAxisScales.y *= scales.y;
-	fAxisScales.z *= scales.z; hAxisScales.z *= scales.z;
+	fAxisScales *= scales;
+	hAxisScales *= scales;
 
-	hsqAxisScales.x *= (scales.x * scales.x);
-	hsqAxisScales.y *= (scales.y * scales.y);
-	hsqAxisScales.z *= (scales.z * scales.z);
+	hsqAxisScales *= (scales * scales);
 
 	hiAxisScales.x *= (1.0f / scales.x);
 	hiAxisScales.y *= (1.0f / scales.y);
@@ -294,7 +284,7 @@ float CollisionVolume::GetPointDistance(const CUnit* u, const float3& pw) const 
 		assert(this == p->GetCollisionVolume());
 
 		// need to transform into piece-space
-		m = m * p->GetMatrix();
+		m = m * p->GetModelSpaceMatrix();
 		o = -o;
 	}
 
@@ -336,7 +326,7 @@ float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float
 			pt.z = Clamp(pv.z, -hAxisScales.z, hAxisScales.z);
 
 			// l = std::min(pv.x - pt.x, std::min(pv.y - pt.y, pv.z - pt.z));
-			d = (pv - pt).Length();
+			d = pv.distance(pt);
 		} break;
 
 		case COLVOL_TYPE_SPHERE: {

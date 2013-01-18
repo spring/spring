@@ -43,6 +43,11 @@ public:
 	{
 		return channels;
 	};
+
+	ALfloat GetLength() const
+	{
+		return length;
+	};
 	
 	int BufferSize() const;
 	
@@ -62,6 +67,7 @@ private:
 	std::string filename;
 	ALuint id;
 	ALuint channels;
+	ALfloat length;
 	
 	typedef std::map<std::string, size_t> bufferMapT;
 	typedef std::vector< boost::shared_ptr<SoundBuffer> > bufferVecT;

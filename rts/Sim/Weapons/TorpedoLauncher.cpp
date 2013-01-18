@@ -7,7 +7,6 @@
 #include "Sim/Units/Unit.h"
 #include "TorpedoLauncher.h"
 #include "WeaponDefHandler.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, (NULL));
 
@@ -20,7 +19,6 @@ CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
 : CWeapon(owner),
 	tracking(0)
 {
-	if (owner) owner->hasUWWeapons=true;
 }
 
 CTorpedoLauncher::~CTorpedoLauncher()
@@ -67,42 +65,11 @@ void CTorpedoLauncher::FireImpl()
 		startSpeed = weaponDir * weaponDef->startvelocity;
 	}
 
-	new CTorpedoProjectile(weaponMuzzlePos, startSpeed, owner, damageAreaOfEffect, projectileSpeed,
-		tracking, weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime,
-		targetUnit, weaponDef);
-}
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.end = targetPos;
+	params.speed = startSpeed;
+	params.ttl = weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime;
 
-bool CTorpedoLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
-{
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
-		return false;
-
-	if (unit) {
-		// if we cannot leave water and target unit is not in water, bail
-		if (!weaponDef->submissile && !unit->inWater)
-			return false;
-	} else {
-		// if we cannot leave water and target position is not in water, bail
-		if (!weaponDef->submissile && ground->GetHeightReal(pos.x, pos.z) > 0.0f)
-			return false;
-	}
-
-	float3 targetVec = pos - weaponMuzzlePos;
-	float targetDist = targetVec.Length();
-
-	if (targetDist == 0.0f)
-		return true;
-
-	targetVec /= targetDist;
-	// +0.05f since torpedoes have an unfortunate tendency to hit own ships due to movement
-	float spread = (accuracy + sprayAngle) + 0.05f;
-
-	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, targetVec, targetDist, spread, owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, targetVec, targetDist, spread, owner->allyteam, false, true, false, owner)) {
-		return false;
-	}
-
-	return true;
+	new CTorpedoProjectile(params, damageAreaOfEffect, projectileSpeed, tracking);
 }

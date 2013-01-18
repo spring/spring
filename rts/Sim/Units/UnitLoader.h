@@ -14,15 +14,28 @@ struct UnitDef;
 struct UnitDefWeapon;
 struct WeaponDef;
 
+struct UnitLoadParams {
+	const UnitDef* unitDef; /// must be non-NULL
+	const CUnit* builder; /// may be NULL
+
+	float3 pos;
+	float3 speed;
+
+	int unitID;
+	int teamID;
+	int facing;
+
+	bool beingBuilt;
+	bool flattenGround;
+};
+
 class CUnitLoader
 {
 public:
 	static CUnitLoader* GetInstance();
 
-	/// @param builder may be NULL
-	CUnit* LoadUnit(const std::string& name, const float3& pos, int team, bool build, int facing, const CUnit* builder);
-	/// @param builder may be NULL
-	CUnit* LoadUnit(const UnitDef* ud, const float3& pos, int team, bool build, int facing, const CUnit* builder);
+	CUnit* LoadUnit(const std::string& name, const UnitLoadParams& params);
+	CUnit* LoadUnit(const UnitLoadParams& params);
 
 	CWeapon* LoadWeapon(CUnit* owner, const UnitDefWeapon* udw);
 

@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include "System/mmgr.h"
 
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
@@ -48,6 +47,7 @@ CONFIG(int, GroundScarAlphaFade).defaultValue(0);
 CGroundDecalHandler::CGroundDecalHandler()
 	: CEventClient("[CGroundDecalHandler]", 314159, false)
 {
+	scarField = NULL;
 	if (!GetDrawDecals())
 		return;
 
@@ -130,7 +130,7 @@ CGroundDecalHandler::~CGroundDecalHandler()
 	for (std::vector<Scar*>::iterator si = scarsToBeAdded.begin(); si != scarsToBeAdded.end(); ++si) {
 		delete *si;
 	}
-	if (decalLevel != 0) {
+	if (scarField != NULL) {
 		delete[] scarField;
 
 		glDeleteTextures(1, &scarTex);
@@ -662,7 +662,7 @@ void CGroundDecalHandler::Draw()
 
 	SCOPED_TIMER("GroundDecals");
 
-	const float3 ambientColor = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
+	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
 	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
 	glEnable(GL_TEXTURE_2D);

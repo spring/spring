@@ -4,6 +4,7 @@
 SET(sources_engine_Game_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Action.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/AviVideoCapturing.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Benchmark.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Camera.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Camera/CameraController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Camera/FPSController.cpp"
@@ -36,7 +37,6 @@ SET(sources_engine_Game_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/LoadScreen.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Messages.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/NetCommands.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/OSCStatsSender.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Player.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerBase.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/PlayerHandler.cpp"

@@ -7,6 +7,7 @@
 #include "System/EventClient.h"
 //FIXME#include "LuaArrays.h"
 #include "LuaCallInCheck.h"
+#include "LuaContextData.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
@@ -31,6 +32,7 @@ using std::set;
 #define LUA_HANDLE_ORDER_UNITS_UNSYNCED  1200
 #define LUA_HANDLE_ORDER_GAIA_UNSYNCED   1300
 #define LUA_HANDLE_ORDER_UI              2000
+#define LUA_HANDLE_ORDER_INTRO           3000
 
 
 class CUnit;
@@ -41,31 +43,6 @@ struct Command;
 struct SRectangle;
 struct LuaHashString;
 struct lua_State;
-class CLuaHandle;
-
-
-struct luaContextData {
-	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
-		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false),
-		owner(NULL), drawingEnabled(false), running(0) {}
-	bool fullCtrl;
-	bool fullRead;
-	int  ctrlTeam;
-	int  readTeam;
-	int  readAllyTeam;
-	int  selectTeam;
-	//FIXME		LuaArrays arrays;
-	LuaShaders shaders;
-	LuaTextures textures;
-	//FIXME		LuaVBOs vbos;
-	LuaFBOs fbos;
-	LuaRBOs rbos;
-	CLuaDisplayLists displayLists;
-	bool synced;
-	CLuaHandle *owner;
-	bool drawingEnabled;
-	int running; //< is currently running? (0: not running; >0: is running)
-};
 
 class CLuaHandle : public CEventClient
 {
@@ -312,7 +289,7 @@ class CLuaHandle : public CEventClient
 		/// returns stack index of traceback function
 		int SetupTraceback(lua_State* L);
 		/// returns error code and sets traceback on error
-		int  RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, std::string& traceback);
+		int  RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errfuncIndex, std::string& traceback);
 		/// returns false and prints message to log on error
 		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex);
 		/// returns error code and sets errormessage on error

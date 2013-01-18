@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "SolidObject.h"
 #include "SolidObjectDef.h"
@@ -56,6 +55,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(isMoving),
 	CR_MEMBER(isUnderWater),
 	CR_MEMBER(isMarkedOnBlockingMap),
+	CR_MEMBER(groundBlockPos),
 
 	CR_MEMBER(speed),
 	CR_MEMBER(residualImpulse),
@@ -120,9 +120,6 @@ CSolidObject::CSolidObject():
 CSolidObject::~CSolidObject() {
 	blocking = false;
 
-	delete moveDef;
-	moveDef = NULL;
-
 	delete collisionVolume;
 	collisionVolume = NULL;
 }
@@ -138,17 +135,25 @@ void CSolidObject::UnBlock() {
 }
 
 void CSolidObject::Block() {
-	UnBlock();
+	if (physicalState == Flying) {
+		//FIXME why does airmovetypes really on Block() to UNblock!
+		UnBlock();
+		return;
+	}
 
 	if (!blocking) {
-		return;
-	}
-	if (physicalState == Flying) {
+		//FIXME just why???
+		UnBlock();
 		return;
 	}
 
+	if (isMarkedOnBlockingMap && groundBlockPos == pos) {
+		return;
+	}
+
+	UnBlock();
+	groundBlockPos = pos;
 	groundBlockingObjectMap->AddGroundBlockingObject(this);
-
 	assert(isMarkedOnBlockingMap);
 }
 

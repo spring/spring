@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "LightningCannon.h"
 #include "WeaponDefHandler.h"
@@ -51,38 +50,6 @@ void CLightningCannon::Update()
 	CWeapon::Update();
 }
 
-bool CLightningCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
-{
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
-		return false;
-
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
-		return false;
-
-	float3 dir = pos - weaponMuzzlePos;
-	float length = dir.Length();
-	if (length == 0)
-		return true;
-
-	dir /= length;
-
-	if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length, unit)) {
-		return false;
-	}
-
-	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
-		return false;
-	}
-	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, false, true, false, owner)) {
-		return false;
-	}
-
-	return true;
-}
-
 void CLightningCannon::Init()
 {
 	CWeapon::Init();
@@ -126,7 +93,7 @@ void CLightningCannon::FireImpl()
 	// curDir = newDir;
 
 	if (hitUnit != NULL) {
-		hitUnit->SetLastAttackedPiece(hitUnit->localmodel->GetRoot(), gs->frameNum);
+		hitUnit->SetLastAttackedPiece(hitUnit->localModel->GetRoot(), gs->frameNum);
 	}
 
 
@@ -164,15 +131,11 @@ void CLightningCannon::FireImpl()
 
 	helper->Explosion(params);
 
-	new CLightningProjectile(
-		curPos,
-		curPos + curDir * (boltLength + 10.0f),
-		owner,
-		color,
-		weaponDef,
-		10,
-		this
-	);
+	ProjectileParams pparams = GetProjectileParams();
+	pparams.pos = curPos;
+	pparams.end = curPos + curDir * (boltLength + 10.0f);
+	pparams.ttl = 10;
+	new CLightningProjectile(pparams, color);
 }
 
 

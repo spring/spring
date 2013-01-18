@@ -26,7 +26,7 @@ const unsigned int PATHESTIMATOR_VERSION = 51;
 const unsigned int MEDRES_PE_BLOCKSIZE =  8;
 const unsigned int LOWRES_PE_BLOCKSIZE = 32;
 
-const unsigned int SQUARES_TO_UPDATE = 600;
+const unsigned int SQUARES_TO_UPDATE = 1000;
 const unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
 
 const unsigned int PATH_HEATMAP_XSCALE =  1; // wrt. gs->hmapx

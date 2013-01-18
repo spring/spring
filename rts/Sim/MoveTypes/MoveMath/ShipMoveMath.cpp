@@ -2,7 +2,6 @@
 
 #include "MoveMath.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "System/mmgr.h"
 
 /*
 Calculate speed-multiplier for given height and slope data.

@@ -15,12 +15,12 @@ public:
 
 	void Update();
 	void SlowUpdate();
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 
 	void Init();
 
 private:
-	virtual void FireImpl();
+	bool TestTarget(const float3& pos,bool userTarget,CUnit* unit) const;
+	void FireImpl();
 };
 
 

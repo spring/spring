@@ -8,7 +8,6 @@
 
 #include <boost/scoped_array.hpp>
 
-#include "System/mmgr.h"
 #include "System/Util.h"
 
 #include "System/TdfParser.h"

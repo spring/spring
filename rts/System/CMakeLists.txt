@@ -3,6 +3,7 @@
 # > find . -name "*.cpp" -or -name "*.c" | sort
 # Then Sound/ stuff was removed, because it is now a separate static lib.
 SET(sources_engine_System_common
+		"${CMAKE_CURRENT_SOURCE_DIR}/AIScriptHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/AutohostInterface.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/BaseNetProtocol.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigHandler.cpp"
@@ -50,6 +51,7 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/SafeVector.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SafeCStrings.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SpringApp.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/StartScriptGen.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/FPUCheck.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/Logger.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncChecker.cpp"
@@ -66,7 +68,6 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Vec2.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float3.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float4.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/mmgr.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/myMath.cpp"
 	)
 SET(sources_engine_System_creg
@@ -75,24 +76,18 @@ SET(sources_engine_System_creg
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
 	)
 SET(sources_engine_System_FileSystem
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/IArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveLoader.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveScanner.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/BufferedArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/CacheDir.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/DataDirLocater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/DataDirsAccess.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/DirArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileFilter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystem.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystemAbstraction.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystemInitializer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/PoolArchive.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/SevenZipArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/SimpleParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/VFSHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ZipArchive.cpp"
 	)
 SET(sources_engine_System_Log
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/Backend.cpp"
@@ -208,3 +203,4 @@ MakeGlobal(sources_engine_System_Platform_Linux)
 MakeGlobal(sources_engine_System_Platform_Mac)
 MakeGlobal(sources_engine_System_Platform_Windows)
 MakeGlobal(sources_engine_System)
+Add_Subdirectory(FileSystem)

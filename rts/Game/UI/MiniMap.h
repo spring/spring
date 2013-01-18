@@ -7,6 +7,7 @@
 #include <string>
 #include <list>
 #include "InputReceiver.h"
+#include "System/float3.h"
 
 class CUnit;
 namespace icon {

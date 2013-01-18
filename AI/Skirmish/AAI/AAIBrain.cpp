@@ -200,15 +200,9 @@ void AAIBrain::GetNewScoutDest(float3 *dest, int scout)
 
 bool AAIBrain::MetalForConstr(int unit, int workertime)
 {
-	// check index
-	if(unit >= ai->Getbt()->numOfUnits)
-	{
-		ai->Log("ERROR: MetalForConstr(): index %i out of range, max units are: %i\n", unit, ai->Getbt()->numOfSides);
-		return false;
-	}
 
-	int metal = (ai->Getbt()->unitList[unit-1]->buildTime/workertime) * (ai->Getcb()->GetMetalIncome()-(ai->Getcb()->GetMetalUsage()) + ai->Getcb()->GetMetal());
-	int total_cost = ai->Getbt()->unitList[unit-1]->metalCost;
+	int metal = (ai->Getbt()->GetUnitDef(unit).buildTime/workertime) * (ai->Getcb()->GetMetalIncome()-(ai->Getcb()->GetMetalUsage()) + ai->Getcb()->GetMetal());
+	int total_cost = ai->Getbt()->GetUnitDef(unit).metalCost;
 
 	if(metal > total_cost)
 		return true;
@@ -218,12 +212,6 @@ bool AAIBrain::MetalForConstr(int unit, int workertime)
 
 bool AAIBrain::EnergyForConstr(int unit, int /*wokertime*/)
 {
-	// check index
-	if(unit >= ai->Getbt()->numOfUnits)
-	{
-		ai->Log("ERROR: EnergyForConstr(): index %i out of range, max units are: %i\n", unit, ai->Getbt()->numOfSides);
-		return false;
-	}
 
 	// check energy
 //	int energy =  ai->Getbt()->unitList[unit-1]->buildTime * (ai->Getcb()->GetEnergyIncome()-(ai->Getcb()->GetEnergyUsage()/2));

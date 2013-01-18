@@ -5,7 +5,6 @@
 #include "Sim/Projectiles/WeaponProjectiles/FireBallProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL));
 
@@ -50,7 +49,12 @@ void CDGunWeapon::FireImpl()
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
 
-	new CFireBallProjectile(weaponMuzzlePos, dir * projectileSpeed, owner, 0, targetPos, weaponDef);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.end = targetPos;
+	params.speed = dir * projectileSpeed;
+	params.ttl = 1;
+	new CFireBallProjectile(params);
 }
 
 

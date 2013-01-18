@@ -7,7 +7,6 @@
 #include "Sim/Projectiles/WeaponProjectiles/LaserProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL));
 
@@ -46,43 +45,6 @@ void CLaserCannon::Update()
 	CWeapon::Update();
 }
 
-bool CLaserCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
-{
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
-		return false;
-
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
-		return false;
-
-	float3 dir(pos - weaponMuzzlePos);
-	const float length = dir.Length();
-	if (length == 0)
-		return true;
-
-	dir /= length;
-
-	if (!onlyForward) {
-		if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length, unit)) {
-			return false;
-		}
-	}
-
-	const float spread =
-		(accuracy + sprayAngle) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
-
-	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
-		return false;
-	}
-	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, false, true, false, owner)) {
-		return false;
-	}
-
-	return true;
-}
 
 void CLaserCannon::Init()
 {
@@ -110,9 +72,9 @@ void CLaserCannon::FireImpl()
 	const float boltLength = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
 	const int boltTTL = ((weaponDef->range - fpsRangeSub) / weaponDef->projectilespeed) - (fpsRangeSub >> 2);
 
-	new CLaserProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		boltLength,
-		weaponDef->visuals.color, weaponDef->visuals.color2,
-		weaponDef->intensity, weaponDef,
-		boltTTL);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.speed = dir * projectileSpeed;
+	params.ttl = boltTTL;
+	new CLaserProjectile(params, boltLength, weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity);
 }

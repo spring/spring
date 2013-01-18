@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 #include "IPathController.hpp"
+#include "Sim/Units/Unit.h"
 #include "System/myMath.h"
 
 IPathController* IPathController::GetInstance(CUnit* owner) {
@@ -21,8 +22,6 @@ float GMTDefaultPathController::GetDeltaSpeed(
 	bool wantReverse,
 	bool isReversing
 ) const {
-	float deltaSpeed = 0.0f;
-
 	const int targetSpeedSign = int(!wantReverse) * 2 - 1;
 	const int currentSpeedSign = int(!isReversing) * 2 - 1;
 
@@ -32,19 +31,10 @@ float GMTDefaultPathController::GetDeltaSpeed(
 	const float modAccRate = std::min(absSpeedDiff, maxAccRate);
 	const float modDecRate = std::min(absSpeedDiff, maxDecRate);
 
-	if (isReversing) {
-		// speed-sign in GMT::UpdateOwnerPos is negative
-		//   --> to go faster in reverse gear, we need to add +decRate
-		//   --> to go slower in reverse gear, we need to add -accRate
-		deltaSpeed = (rawSpeedDiff < 0.0f)?  modDecRate: -modAccRate;
-	} else {
-		// speed-sign in GMT::UpdateOwnerPos is positive
-		//   --> to go faster in forward gear, we need to add +accRate
-		//   --> to go slower in forward gear, we need to add -decRate
-		deltaSpeed = (rawSpeedDiff < 0.0f)? -modDecRate:  modAccRate;
-	}
+	const float deltaSpeed = (rawSpeedDiff < 0.0f)? -modDecRate: modAccRate;
 
-	return deltaSpeed;
+	// no acceleration changes if not on ground
+	return (deltaSpeed * (1 - int(owner->inAir)));
 }
 
 short GMTDefaultPathController::GetDeltaHeading(
@@ -61,6 +51,7 @@ short GMTDefaultPathController::GetDeltaHeading(
 		deltaHeading = std::max(deltaHeading, short(-maxTurnRate));
 	}
 
-	return deltaHeading;
+	// no orientation changes if not on ground
+	return (deltaHeading * (1 - int(owner->inAir)));
 }
 

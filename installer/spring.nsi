@@ -48,11 +48,11 @@ SetCompressor /FINAL /SOLID lzma
 
 !define MUI_FINISHPAGE_SHOWREADME "http://springrts.com/wiki/Read_Me_First"
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Open $\"Read Me First$\" Webpage"
-!define MUI_FINISHPAGE_RUN "$INSTDIR\springsettings.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Configure ${PRODUCT_NAME} settings now"
+;!define MUI_FINISHPAGE_RUN "$INSTDIR\spring.exe"
+;!define MUI_FINISHPAGE_RUN_TEXT "Configure ${PRODUCT_NAME} settings now"
 !define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully installed or updated from a previous version.  You should configure Spring settings now if this is a fresh installation.  If you did not install spring to C:\Program Files\Spring you will need to point the settings program to the install location."
 
-!define MUI_FINISHPAGE_LINK "The ${PRODUCT_NAME} website"
+!define MUI_FINISHPAGE_LINK "The Spring RTS Project website"
 !define MUI_FINISHPAGE_LINK_LOCATION ${PRODUCT_WEB_SITE}
 !define MUI_FINISHPAGE_NOREBOOTSUPPORT
 
@@ -69,9 +69,6 @@ SetCompressor /FINAL /SOLID lzma
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 
 !define SP_OUTSUFFIX1 ""
-
-; if present this should hold defines with custom mingwlibs location, etc.
-!include /NONFATAL "custom_defines.nsi"
 
 ; set output filename for installer
 OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
@@ -124,8 +121,6 @@ Section "Engine" SEC_MAIN
 	!define INSTALL
 		${!echonow} "Processing: main"
 		!include "sections\main.nsh"
-		${!echonow} "Processing: springsettings"
-		!include "sections\springsettings.nsh"
 		${!echonow} "Processing: deprecated"
 	        !include "sections\deprecated.nsh"
 	!undef INSTALL
@@ -162,6 +157,8 @@ SectionGroup "Tools"
 		!define INSTALL
 			${!echonow} "Processing: rapid"
 			!insertmacro extractFile "${RAPID_ARCHIVE}" "rapid-spring-latest-win32.7z" rapid
+			#FIXME workaround for #3369
+			CopyFiles "$INSTDIR\pthreadGC2.dll" "$INSTDIR\rapid"
 		!undef INSTALL
 	SectionEnd
 !endif
@@ -245,9 +242,9 @@ Section Uninstall
 
 	!include "sections\main.nsh"
 	!include "sections\deprecated.nsh"
-	!include "sections\springsettings.nsh"
 
-	Delete "$INSTDIR\spring-multithreaded.exe"
+	# FIXME workaround part2
+	Delete "$INSTDIR\pthreadGC2.dll"
 
 	!include "sections\shortcuts_startMenu.nsh"
 	!include "sections\shortcuts_desktop.nsh"

@@ -120,7 +120,7 @@ If     (USERDOCS_HTML)
 			set_source_files_properties("${DST_FILE_${name}}" PROPERTIES GENERATED TRUE)
 		EndMacro (Userdoc_GenerateHtml)
 	Else   (PANDOC_FOUND OR MARKDOWN_FOUND)
-		Message(SEND_ERROR "user-docs generation (html/text) is not possible (disable with USERDOCS_HTML=FALSE); missing utility: pandoc or markdown")
+		Message(WARNING "user-docs generation (html/text) is not possible (disable with USERDOCS_HTML=FALSE); missing utility: pandoc or markdown")
 	EndIf  (PANDOC_FOUND OR MARKDOWN_FOUND)
 
 	Set(userdoc_html_generated "")

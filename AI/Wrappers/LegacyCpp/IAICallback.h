@@ -435,9 +435,13 @@ public:
 	/**
 	 * Returns the closest position from a given position that a building can be
 	 * built at.
+	 * @param unitdef      unitdef to search for a build position
+	 * @param pos          position to search for
+	 * @param searchRadius radius to search for a build position
 	 * @param minDist the distance in squares that the building must keep to
 	 *                other buildings, to make it easier to keep free paths
 	 *                through a base
+	 * @param facing facing of the building (0-3)
 	 */
 	virtual float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos, float searchRadius, int minDist, int facing = 0) = 0;
 

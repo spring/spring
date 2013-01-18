@@ -2,7 +2,6 @@
 
 #include <string>
 
-#include "System/mmgr.h"
 #include "LoadSaveHandler.h"
 #include "CregLoadSaveHandler.h"
 #include "LuaLoadSaveHandler.h"

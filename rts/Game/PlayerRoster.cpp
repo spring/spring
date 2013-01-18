@@ -7,7 +7,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/mmgr.h"
 #include "System/Util.h"
 
 #include <cassert>

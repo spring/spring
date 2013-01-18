@@ -25,7 +25,6 @@ class CGroup;
 class CLoadSaveInterface;
 class CMissileProjectile;
 class AMoveType;
-class CUnitAI;
 class CWeapon;
 class CUnitScript;
 struct DamageArray;
@@ -34,6 +33,8 @@ struct LocalModel;
 struct LocalModelPiece;
 struct UnitDef;
 struct UnitTrackStruct;
+struct UnitLoadParams;
+
 namespace icon {
 	class CIconData;
 }
@@ -77,7 +78,7 @@ public:
 	CUnit();
 	virtual ~CUnit();
 
-	virtual void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
+	virtual void PreInit(const UnitLoadParams& params);
 	virtual void PostInit(const CUnit* builder);
 
 	virtual void SlowUpdate();
@@ -103,7 +104,7 @@ public:
 	/// turn the unit off
 	void Deactivate();
 
-	void ForcedMove(const float3& newPos, bool snapToGround = true);
+	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
 	void SetHeadingFromDirection();
 
@@ -144,7 +145,7 @@ public:
 	void UpdateTerrainType();
 
 	void SetDirVectors(const CMatrix44f&);
-	void UpdateDirVectors(bool);
+	void UpdateDirVectors(bool, bool = false);
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }
@@ -190,12 +191,6 @@ protected:
 	void UpdateLosStatus(int allyTeam);
 	float GetFlankingDamageBonus(const float3& attackDir);
 
-private:
-	static float expMultiplier;
-	static float expPowerScale;
-	static float expHealthScale;
-	static float expReloadScale;
-	static float expGrade;
 public:
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
 	static float GetExpMultiplier()     { return expMultiplier; }
@@ -208,9 +203,12 @@ public:
 	static void  SetExpGrade(float value) { expGrade = value; }
 	static float GetExpGrade()     { return expGrade; }
 
+	static void SetSpawnFeature(bool b) { spawnFeature = b; }
+
 public:
 	const UnitDef* unitDef;
 	int unitDefID;
+	int featureDefID; // FeatureDef id of the wreck we spawn on death
 
 	/**
 	 * @brief mod controlled parameters
@@ -260,8 +258,8 @@ public:
 	float repairAmount;
 	/// transport that the unit is currently in
 	CTransportUnit* transporter;
-	/// unit is about to be picked up by a transport
-	bool toBeTransported;
+	/// id of transport that the unit is about to be picked up by
+	int loadingTransportId;
 	/// 0.0-1.0
 	float buildProgress;
 	/// whether the ground below this unit has been terraformed
@@ -353,7 +351,7 @@ public:
 	/// if the unit is part of an group (hotkey group)
 	CGroup* group;
 
-	LocalModel* localmodel;
+	LocalModel* localModel;
 	CUnitScript* script;
 
 	// only when the unit is active
@@ -456,15 +454,11 @@ public:
 	float curArmorMultiple;
 
 	std::string tooltip;
-	std::string wreckName;
 
 	/// used for innacuracy with radars etc
 	float3 posErrorVector;
 	float3 posErrorDelta;
 	int	nextPosErrorUpdate;
-
-	/// true if the unit has weapons that can fire at underwater targets
-	bool hasUWWeapons;
 
 	/// true if the unit currently wants to be cloaked
 	bool wantCloak;
@@ -525,6 +519,15 @@ public:
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
 	bool stunned;
+
+	static float expMultiplier;
+	static float expPowerScale;
+	static float expHealthScale;
+	static float expReloadScale;
+	static float expGrade;
+
+	static float empDecline;
+	static bool spawnFeature;
 };
 
 #endif // UNIT_H

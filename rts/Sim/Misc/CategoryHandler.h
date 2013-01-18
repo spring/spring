@@ -11,7 +11,7 @@
 
 class CCategoryHandler : public boost::noncopyable
 {
-	CR_DECLARE(CCategoryHandler);
+	CR_DECLARE_STRUCT(CCategoryHandler);
 
 public:
 	static inline unsigned int GetMaxCategories() {

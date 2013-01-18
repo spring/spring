@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "LobbyConnection.h"
 #include "SelectMenu.h"
 
 #include <SDL_keysym.h>
@@ -11,7 +10,7 @@
 #include <boost/cstdint.hpp>
 
 #include "SelectionWidget.h"
-#include "ScriptHandler.h"
+#include "System/AIScriptHandler.h"
 #include "Game/ClientSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/PreGame.h"
@@ -20,7 +19,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/TdfParser.h"
 #include "System/Util.h"
 #include "System/Input/InputHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -28,6 +26,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/MsgStrings.h"
+#include "System/StartScriptGen.h"
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
@@ -121,67 +120,7 @@ private:
 	};
 };
 
-std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script,
-			const std::string& playername)
-{
-	TdfParser::TdfSection setup;
-	TdfParser::TdfSection* game = setup.construct_subsection("GAME");
-	game->add_name_value("Mapname", map);
-	game->add_name_value("Gametype", mod);
-
-	TdfParser::TdfSection* modopts = game->construct_subsection("MODOPTIONS");
-	modopts->AddPair("MaxSpeed", 20);
-
-	game->AddPair("IsHost", 1);
-	game->AddPair("OnlyLocal", 1);
-	game->add_name_value("MyPlayerName", playername);
-
-	game->AddPair("NoHelperAIs", configHandler->GetBool("NoHelperAIs"));
-
-	TdfParser::TdfSection* player0 = game->construct_subsection("PLAYER0");
-	player0->add_name_value("Name", playername);
-	player0->AddPair("Team", 0);
-
-	const bool isSkirmishAITestScript = CScriptHandler::Instance().IsSkirmishAITestScript(script);
-	if (isSkirmishAITestScript) {
-		SkirmishAIData aiData = CScriptHandler::Instance().GetSkirmishAIData(script);
-		TdfParser::TdfSection* ai = game->construct_subsection("AI0");
-		ai->add_name_value("Name", "Enemy");
-		ai->add_name_value("ShortName", aiData.shortName);
-		ai->add_name_value("Version", aiData.version);
-		ai->AddPair("Host", 0);
-		ai->AddPair("Team", 1);
-	} else {
-		TdfParser::TdfSection* player1 = game->construct_subsection("PLAYER1");
-		player1->add_name_value("Name", "Enemy");
-		player1->AddPair("Team", 1);
-	}
-
-	TdfParser::TdfSection* team0 = game->construct_subsection("TEAM0");
-	team0->AddPair("TeamLeader", 0);
-	team0->AddPair("AllyTeam", 0);
-
-	TdfParser::TdfSection* team1 = game->construct_subsection("TEAM1");
-	if (isSkirmishAITestScript) {
-		team1->AddPair("TeamLeader", 0);
-	} else {
-		team1->AddPair("TeamLeader", 1);
-	}
-	team1->AddPair("AllyTeam", 1);
-
-	TdfParser::TdfSection* ally0 = game->construct_subsection("ALLYTEAM0");
-	ally0->AddPair("NumAllies", 0);
-
-	TdfParser::TdfSection* ally1 = game->construct_subsection("ALLYTEAM1");
-	ally1->AddPair("NumAllies", 0);
-
-	std::ostringstream str;
-	setup.print(str);
-
-	return str.str();
-}
-
-SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWindow(NULL), settingsWindow(NULL), curSelect(NULL)
+SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), settingsWindow(NULL), curSelect(NULL)
 {
 	SetPos(0,0);
 	SetSize(1,1);
@@ -213,8 +152,6 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 		/*agui::TextElement* title = */new agui::TextElement("Spring", menu); // will be deleted in menu
 		Button* single = new Button("Test the Game", menu);
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
-		Button* update = new Button("Lobby connect (WIP)", menu);
-		update->Clicked.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, true));
 
 		userSetting = configHandler->GetString("LastSelectedSetting");
 		Button* editsettings = new Button("Edit settings", menu);
@@ -237,7 +174,6 @@ SelectMenu::~SelectMenu()
 {
 	ShowConnectWindow(false);
 	ShowSettingsWindow(false, "");
-	ShowUpdateWindow(false);
 	CleanWindow();
 
 	delete mySettings;
@@ -248,21 +184,6 @@ bool SelectMenu::Draw()
 	SDL_Delay(10); // milliseconds
 	ClearScreen();
 	agui::gui->Draw();
-
-	return true;
-}
-
-bool SelectMenu::Update()
-{
-	if (updWindow)
-	{
-		updWindow->Poll();
-		if (updWindow->WantClose())
-		{
-			delete updWindow;
-			updWindow = NULL;
-		}
-	}
 
 	return true;
 }
@@ -287,7 +208,7 @@ void SelectMenu::Single()
 		once = true;
 		mySettings->isHost = true;
 		pregame = new CPreGame(mySettings);
-		pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
+		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
 		agui::gui->RmElement(this);
 		//delete this;
 	}
@@ -337,21 +258,6 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 		}
 		if(curSelect)
 			curSelect->list->SetFocus(true);
-	}
-}
-
-void SelectMenu::ShowUpdateWindow(bool show)
-{
-	if (show)
-	{
-		if (!updWindow)
-			updWindow = new LobbyConnection();
-		updWindow->ConnectDialog(true);
-	}
-	else if (!show && updWindow)
-	{
-		delete updWindow;
-		updWindow = NULL;
 	}
 }
 

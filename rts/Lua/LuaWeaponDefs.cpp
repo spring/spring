@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include <set>
 #include <string>
@@ -17,6 +16,7 @@
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Game/TraceRay.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -50,7 +50,7 @@ static int VisualsTable(lua_State* L, const void* data);
 static int DamagesArray(lua_State* L, const void* data);
 static int CustomParamsTable(lua_State* L, const void* data);
 static int GuiSoundSetTable(lua_State* L, const void* data);
-static int CategorySetFromBits(lua_State* L, const void* data);
+//static int CategorySetFromBits(lua_State* L, const void* data);
 
 
 /******************************************************************************/
@@ -282,10 +282,9 @@ static int DamagesArray(lua_State* L, const void* data)
 
 static int VisualsTable(lua_State* L, const void* data)
 {
-	const struct WeaponDef::Visuals& v =
-		*static_cast<const struct WeaponDef::Visuals*>(data);
+	const struct WeaponDef::Visuals& v = *static_cast<const struct WeaponDef::Visuals*>(data);
 	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "modelName",      v.modelName);
+	HSTR_PUSH_STRING(L, "modelName",      modelParser->Find(v.modelName));
 	HSTR_PUSH_NUMBER(L, "colorR",         v.color.x);
 	HSTR_PUSH_NUMBER(L, "colorG",         v.color.y);
 	HSTR_PUSH_NUMBER(L, "colorB",         v.color.z);
@@ -369,6 +368,7 @@ static inline int BuildCategorySet(lua_State* L, const vector<string>& cats)
 }
 
 
+/*
 static int CategorySetFromBits(lua_State* L, const void* data)
 {
 	const int bits = *((const int*)data);
@@ -376,7 +376,7 @@ static int CategorySetFromBits(lua_State* L, const void* data)
 		CCategoryHandler::Instance()->GetCategoryNames(bits);
 	return BuildCategorySet(L, cats);
 }
-
+*/
 
 /*static int CategorySetFromString(lua_State* L, const void* data)
 {
@@ -450,6 +450,7 @@ static bool InitParamMap()
 	ADD_DEPRECATED_LUADEF_KEY("areaOfEffect");
 	ADD_DEPRECATED_LUADEF_KEY("maxVelocity");
 	ADD_DEPRECATED_LUADEF_KEY("onlyTargetCategories");
+	ADD_DEPRECATED_LUADEF_KEY("restTime");
 
 	ADD_INT("id", wd.id);
 
@@ -497,7 +498,6 @@ static bool InitParamMap()
 	ADD_INT("numbounce",       wd.numBounce);
 
 	ADD_FLOAT("maxAngle", wd.maxAngle);
-	ADD_FLOAT("restTime", wd.restTime);
 
 	ADD_FLOAT("uptime", wd.uptime);
 
@@ -515,6 +515,7 @@ static bool InitParamMap()
 	ADD_INT("targetable",      wd.targetable);
 	ADD_BOOL("stockpile",      wd.stockpile);
 	ADD_INT("interceptor",     wd.interceptor);
+	ADD_BOOL("interceptSolo",  wd.interceptSolo);
 	ADD_FLOAT("coverageRange", wd.coverageRange);
 
 	ADD_FLOAT("stockpileTime", wd.stockpileTime);

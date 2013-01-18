@@ -725,12 +725,12 @@ struct TestObj {
 	TestObj() {
 		intvar=0;
 		for(int a=0;a<5;a++) sarray[a]=0;
-		childs[0]=childs[1]=0;
+		children[0]=children[1]=0;
 		embeddedPtr=0;
 	}
 	~TestObj() {
-		if (childs[0]) delete childs[0];
-		if (childs[1]) delete childs[1];
+		if (children[0]) delete children[0];
+		if (children[1]) delete children[1];
 	}
 
 	int intvar;
@@ -738,14 +738,14 @@ struct TestObj {
 	int sarray[5];
 	EmbeddedObj *embeddedPtr;
 	vector<int> darray;
-	TestObj *childs[2];
+	TestObj *children[2];
 	EmbeddedObj embedded;
 };
 
 CR_BIND(TestObj);
 
 CR_REG_METADATA(TestObj, (
-	CR_MEMBER(childs),
+	CR_MEMBER(children),
 	CR_MEMBER(intvar),
 	CR_MEMBER(str),
 	CR_MEMBER(sarray),
@@ -764,8 +764,8 @@ static void savetest()
 
 	TestObj *c = new TestObj;
 	c->intvar = 144;
-	o->childs [0] = c;
-	o->childs [1] = c;
+	o->children [0] = c;
+	o->children [1] = c;
 	c->embeddedPtr = &o->embedded;
 	o->embeddedPtr = &c->embedded;
 	creg::COutputStreamSerializer ss;
@@ -785,10 +785,10 @@ static void loadtest()
 	assert (rootCls == TestObj::StaticClass());
 	TestObj *obj = (TestObj*)root;
 
-	assert (obj->childs[0]->embeddedPtr == &obj->embedded);
-	assert (obj->embeddedPtr == &obj->childs[0]->embedded);
-	assert (obj->childs[0]==obj->childs[1]);
-	assert (obj->childs[0]->intvar == 144);
+	assert (obj->children[0]->embeddedPtr == &obj->embedded);
+	assert (obj->embeddedPtr == &obj->children[0]->embedded);
+	assert (obj->children[0]==obj->children[1]);
+	assert (obj->children[0]->intvar == 144);
 	assert (obj->darray.size()==1 && obj->darray[0]==3);
 	assert (obj->intvar == 1);
 	assert (obj->str == "Hi!");

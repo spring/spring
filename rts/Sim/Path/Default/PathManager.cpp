@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "PathManager.h"
 #include "PathConstants.h"
@@ -10,8 +9,8 @@
 #include "PathHeatMap.hpp"
 #include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
@@ -74,7 +73,7 @@ unsigned int CPathManager::RequestPath(
 	CRangedGoalWithCircularConstraint* pfDef = new CRangedGoalWithCircularConstraint(sp, gp, goalRadius, 3.0f, 2000);
 
 	// Make request.
-	return RequestPath(moveDef, sp, gp, pfDef, caller, synced);
+	return (RequestPath(moveDef, sp, gp, pfDef, caller, synced));
 }
 
 /*
@@ -90,7 +89,10 @@ unsigned int CPathManager::RequestPath(
 ) {
 	SCOPED_TIMER("PathManager::RequestPath");
 
-	MoveDef* moveDef = moveDefHandler->moveDefs[md->pathType];
+	// FIXME: this is here only because older code required a non-const version
+	MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(md->pathType);
+
+	assert(md == moveDef);
 
 	// Creates a new multipath.
 	IPath::SearchResult result = IPath::Error;
@@ -423,11 +425,19 @@ void CPathManager::Update()
 	lowResPE->Update();
 }
 
+
+void CPathManager::UpdateFull()
+{
+	medResPE->UpdateFull();
+	lowResPE->UpdateFull();
+}
+
+
 // used to deposit heat on the heat-map as a unit moves along its path
 void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
 {
 	pathFlowMap->AddFlow(owner);
-	pathHeatMap->AddHeat(owner, this, pathId);
+	pathHeatMap->AddHeat(owner, this, pathID);
 }
 
 
@@ -557,3 +567,10 @@ const float* CPathManager::GetNodeExtraCosts(bool synced) const {
 	const float* costs = buf.GetNodeExtraCosts(synced);
 	return costs;
 }
+
+void CPathManager::GetNumOutstandingEstimatorUpdates(unsigned int* data) const
+{
+	data[0] = medResPE->updatedBlocks.size();
+	data[1] = lowResPE->updatedBlocks.size();
+}
+

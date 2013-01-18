@@ -21,10 +21,8 @@ public:
 	CPathFinder();
 	~CPathFinder();
 
-#if !defined(USE_MMGR)
 	void* operator new(size_t size);
 	void operator delete(void* p, size_t size);
-#endif
 
 	/**
 	 * Gives a detailed path from given starting location to target defined in
@@ -84,8 +82,8 @@ private:
 		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,
 		const PathNode* parentOpenSquare,
-		unsigned int pathOpt,
 		const CSolidObject* owner,
+		unsigned int pathOptDir,
 		bool synced
 	);
 	/**
@@ -108,7 +106,7 @@ private:
 
 
 	int2 directionVectors2D[PATH_DIRECTIONS << 1];
-	float3 directionsVectors3D[PATH_DIRECTIONS << 1];
+	float3 directionVectors3D[PATH_DIRECTIONS << 1];
 	float directionCosts[PATH_DIRECTIONS << 1];
 
 	float3 start;

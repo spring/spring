@@ -162,8 +162,9 @@ static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 }
 
 static inline const MoveDef* getUnitDefMoveDefById(int skirmishAIId, int unitDefId) {
+	const unsigned int mdType = getUnitDefById(skirmishAIId, unitDefId)->pathType;
+	const MoveDef* moveDef = (mdType != -1U)? moveDefHandler->GetMoveDefByPathType(mdType): NULL;
 
-	const MoveDef* moveDef = getUnitDefById(skirmishAIId, unitDefId)->moveDef;
 	assert(moveDef != NULL); // NOTE There is a callback method to check whether MoveData is available, use it.
 	return moveDef;
 }
@@ -2145,15 +2146,11 @@ EXPORT(float) skirmishAiCallback_UnitDef_getStorage(int skirmishAIId,
 	}
 }
 
+// DEPRECATED
 EXPORT(bool) skirmishAiCallback_UnitDef_isSquareResourceExtractor(
 		int skirmishAIId, int unitDefId, int resourceId) {
 
-	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
-	if (resourceId == resourceHandler->GetMetalId()) {
-		return ud->extractSquare;
-	} else {
-		return false;
-	}
+	return false;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getBuildTime(int skirmishAIId, int unitDefId) {
@@ -2410,7 +2407,7 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToMove(int skirmishAIId, int unitD
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToHover(int skirmishAIId, int unitDefId) {
 	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
-	const MoveDef* md = ud->moveDef;
+	const MoveDef* md = (ud->pathType != -1U)? moveDefHandler->GetMoveDefByPathType(ud->pathType): NULL;
  
 	return ((md != NULL)? (md->moveType == MoveDef::Hover_Move): false);
 }
@@ -2970,7 +2967,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getCustomParams(int skirmishAIId, int uni
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isMoveDataAvailable(int skirmishAIId, int unitDefId) {
 	// NOTE We can not use getUnitDefMoveDefById() here, cause it would assert
-	return (getUnitDefById(skirmishAIId, unitDefId)->moveDef != NULL);
+	return (getUnitDefById(skirmishAIId, unitDefId)->pathType != -1U);
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getMaxAcceleration(int skirmishAIId, int unitDefId) {
@@ -3092,7 +3089,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCategory(int ski
 //########### BEGINN Unit
 EXPORT(int) skirmishAiCallback_Unit_getLimit(int skirmishAIId) {
 	const int team = skirmishAIId_teamId[skirmishAIId];
-	const int limit = teamHandler->Team(team)->maxUnits;
+	const int limit = teamHandler->Team(team)->GetMaxUnits();
 	return limit;
 }
 
@@ -3716,7 +3713,7 @@ EXPORT(bool) skirmishAiCallback_FeatureDef_isGeoThermal(int skirmishAIId, int fe
 }
 
 EXPORT(const char*) skirmishAiCallback_FeatureDef_getDeathFeature(int skirmishAIId, int featureDefId) {
-	return getFeatureDefById(skirmishAIId, featureDefId)->deathFeature.c_str();
+	return "$$deprecated$$";
 }
 
 EXPORT(int) skirmishAiCallback_FeatureDef_getXSize(int skirmishAIId, int featureDefId) {
@@ -4020,10 +4017,6 @@ EXPORT(int) skirmishAiCallback_WeaponDef_getNumBounce(int skirmishAIId, int weap
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getMaxAngle(int skirmishAIId, int weaponDefId) {
 	return getWeaponDefById(skirmishAIId, weaponDefId)->maxAngle;
-}
-
-EXPORT(float) skirmishAiCallback_WeaponDef_getRestTime(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->restTime;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getUpTime(int skirmishAIId, int weaponDefId) {
@@ -5065,7 +5058,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->WeaponDef_getBounceSlip = &skirmishAiCallback_WeaponDef_getBounceSlip;
 	callback->WeaponDef_getNumBounce = &skirmishAiCallback_WeaponDef_getNumBounce;
 	callback->WeaponDef_getMaxAngle = &skirmishAiCallback_WeaponDef_getMaxAngle;
-	callback->WeaponDef_getRestTime = &skirmishAiCallback_WeaponDef_getRestTime;
 	callback->WeaponDef_getUpTime = &skirmishAiCallback_WeaponDef_getUpTime;
 	callback->WeaponDef_getFlightTime = &skirmishAiCallback_WeaponDef_getFlightTime;
 	callback->WeaponDef_getCost = &skirmishAiCallback_WeaponDef_getCost;
