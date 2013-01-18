@@ -119,7 +119,7 @@ struct tdf_grammar : public grammar<tdf_grammar>
 			section = '['
 				>> name
 				// [ ostream_a("Just parsed a section: ", std::cout, "\n") ] // prints section name
-				[ section.context = bind(&TdfParser::TdfSection::construct_subsection)(section.context, arg1)  ]
+				[ section.context = phoenix::bind(&TdfParser::TdfSection::construct_subsection)(section.context, arg1)  ]
 				>> expect_square_bracket(ch_p(']'))
 				>> expect_brace (ch_p('{'))
 				>> *
@@ -129,7 +129,7 @@ struct tdf_grammar : public grammar<tdf_grammar>
 					[var(temp1) = arg1]
 					>> ch_p('=') // turn this into expect_equals_sign(ch_p('=')) if you want more strict parsing
 					>> lexeme_d[ (*~ch_p(';')) // might be empty too!
-					[ bind(&TdfParser::TdfSection::add_name_value)(section.context, var(temp1), construct_<std::string>(arg1,arg2)) ]
+					[ phoenix::bind(&TdfParser::TdfSection::add_name_value)(section.context, var(temp1), construct_<std::string>(arg1,arg2)) ]
 					]
 					>> expect_semicolon(ch_p(';'))
 					)

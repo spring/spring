@@ -39,7 +39,7 @@ enum YardmapStates {
 	YARDMAP_YARDFREE    = ~YARDMAP_YARD,
 	YARDMAP_GEO         = YARDMAP_BLOCKED,
 };
-typedef BitwiseEnum<YardmapStates> YardMapStatus;
+typedef Bitwise::BitwiseEnum<YardmapStates> YardMapStatus;
 
 
 
