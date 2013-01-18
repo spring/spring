@@ -17,12 +17,8 @@
 #include <cstring>
 #include <fstream>
 
-CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName): demoStream(std::ios::binary | std::ios::out | std::ios::in)
+CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName): demoStream(std::ios::binary | std::ios::out)
 {
-	// We want this folder to exist
-	if (!FileSystem::CreateDirectory("demos"))
-		return;
-
 	SetName(mapName, modName);
 	SetFileHeader();
 }
@@ -33,7 +29,7 @@ CDemoRecorder::~CDemoRecorder()
 	WritePlayerStats();
 	WriteTeamStats();
 	WriteFileHeader(true);
-	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE));
+	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE), GetStringFromStreamBuffer(demoStream.rdbuf()));
 }
 
 void CDemoRecorder::SetFileHeader()
@@ -52,12 +48,12 @@ void CDemoRecorder::SetFileHeader()
 	demoStream.seekp(WriteFileHeader(false) + sizeof(DemoFileHeader));
 }
 
-void CDemoRecorder::WriteDemoFile(const std::string& name)
+void CDemoRecorder::WriteDemoFile(const std::string& name, const std::string& data)
 {
 	std::ofstream file;
 
 	file.open(name.c_str(), std::ios::binary | std::ios::out);
-	file << demoStream.rdbuf();
+	file.write(data.c_str(), data.size());
 	file.flush();
 	file.close();
 }
@@ -87,6 +83,10 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 
 void CDemoRecorder::SetName(const std::string& mapname, const std::string& modname)
 {
+	// We want this folder to exist
+	if (!FileSystem::CreateDirectory("demos"))
+		return;
+
 	// Returns the current local time as "JJJJMMDD_HHmmSS", eg: "20091231_115959"
 	const std::string curTime = CTimeUtil::GetCurrentTimeStr();
 
@@ -94,7 +94,12 @@ void CDemoRecorder::SetName(const std::string& mapname, const std::string& modna
 	std::ostringstream buf;
 
 	oss << "demos/" << curTime << "_";
-	oss << FileSystem::GetBasename(mapname) << "_" << SpringVersion::GetSync();
+	oss << FileSystem::GetBasename(mapname);
+	oss << "_";
+	// FIXME: why is this not included?
+	// oss << FileSystem::GetBasename(modname);
+	// oss << "_";
+	oss << SpringVersion::GetSync();
 	buf << oss.str() << ".sdf";
 
 	unsigned int n = 0;
