@@ -6,7 +6,7 @@
 #include <set>
 #include <vector>
 #include <string>
-#include <ios>
+#include <fstream>
 #include <boost/cstdint.hpp>
 
 #include "VFSModes.h"
@@ -15,7 +15,7 @@
  * This is for direct VFS file content access.
  * If you need data-dir related file and dir handling methods,
  * have a look at the FileSystem class.
- * 
+ *
  * This class should be threadsafe (multiple threads can use multiple
  * CFileHandler pointing to the same file simulatneously) as long as there are
  * no new Archives added to the VFS (which should not happen after PreGame).
@@ -27,6 +27,8 @@ public:
 	CFileHandler(const std::string& fileName, const std::string& modes = SPRING_VFS_RAW_FIRST);
 	~CFileHandler();
 
+	void Open(const std::string& fileName, const std::string& modes = SPRING_VFS_RAW_FIRST);
+
 	int Read(void* buf, int length);
 	void Seek(int pos, std::ios_base::seekdir where = std::ios_base::beg);
 
@@ -34,7 +36,7 @@ public:
 	bool FileExists() const;
 
 	bool Eof() const;
-	int GetPos() const;
+	int GetPos();
 	int FileSize() const;
 
 	bool LoadStringData(std::string& data);
@@ -51,8 +53,6 @@ public:
 	static std::string ForbidModes(const std::string& modes, const std::string& forbidden);
 
 private:
-	void TryReadContent(const std::string& fileName, const std::string& modes);
-
 	bool TryReadFromPWD(const std::string& fileName);
 	bool TryReadFromRawFS(const std::string& fileName);
 	bool TryReadFromModFS(const std::string& fileName);
@@ -70,7 +70,7 @@ private:
 	static bool InsertBaseDirs(std::set<std::string>& dirSet, const std::string& path, const std::string& pattern);
 
 	std::string fileName;
-	std::ifstream* ifs;
+	std::ifstream ifs;
 	std::vector<boost::uint8_t> fileBuffer;
 	int filePos;
 	int fileSize;
