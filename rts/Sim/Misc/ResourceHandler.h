@@ -13,7 +13,7 @@ class CResourceMapAnalyzer;
 
 class CResourceHandler : public boost::noncopyable
 {
-	CR_DECLARE(CResourceHandler);
+	CR_DECLARE_STRUCT(CResourceHandler);
 
 public:
 	static CResourceHandler* GetInstance();

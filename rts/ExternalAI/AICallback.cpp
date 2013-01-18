@@ -50,7 +50,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "System/mmgr.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
@@ -726,8 +725,8 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 
 int CAICallback::InitPath(const float3& start, const float3& end, int pathType, float goalRadius)
 {
-	assert(((size_t)pathType) < moveDefHandler->moveDefs.size());
-	return pathManager->RequestPath(moveDefHandler->moveDefs.at(pathType), start, end, goalRadius, NULL, false);
+	assert(((size_t)pathType) < moveDefHandler->GetNumMoveDefs());
+	return pathManager->RequestPath(moveDefHandler->GetMoveDefByPathType(pathType), start, end, goalRadius, NULL, false);
 }
 
 float3 CAICallback::GetNextWaypoint(int pathId)
@@ -1443,7 +1442,7 @@ bool CAICallback::GetValue(int id, void *data)
 			}
 		}
 		case AIVAL_UNIT_LIMIT: {
-			*(int*) data = teamHandler->Team(team)->maxUnits;
+			*(int*) data = teamHandler->Team(team)->GetMaxUnits();
 			return true;
 		}
 		case AIVAL_SCRIPT: {

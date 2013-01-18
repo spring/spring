@@ -11,7 +11,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
-#include "System/mmgr.h"
 #include "System/Util.h"
 
 #define CLAMP(i) Clamp((i), 0, smfReadMap->maxHeightMapIdx)

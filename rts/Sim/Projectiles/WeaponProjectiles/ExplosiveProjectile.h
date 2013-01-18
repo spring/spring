@@ -9,15 +9,10 @@ class CExplosiveProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CExplosiveProjectile);
 public:
-	CExplosiveProjectile(const float3& pos, const float3& speed,
-		CUnit* owner, const WeaponDef* weaponDef,
-		int ttl = 100000, float areaOfEffect = 8.0f,
-		float gravity = 0.0f);
+	CExplosiveProjectile(const ProjectileParams& params, float areaOfEffect = 8.0f, float gravity = 0.0f);
 
 	void Update();
 	void Draw();
-	void Collision(CUnit* unit);
-	void Collision();
 
 	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
 			float shieldForce, float shieldMaxSpeed);

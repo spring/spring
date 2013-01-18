@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "glExtra.h"
 #include "VertexArray.h"
@@ -66,25 +65,35 @@ void glBallisticCircle(const float3& center, const float radius,
                        const CWeapon* weapon,
                        unsigned int resolution, float slope)
 {
-	CVertexArray* va=GetVertexArray();
+	int rdiv = 50;
+#ifdef _OPENMP
+	resolution *= 2;
+	rdiv *= 1;
+#endif
+	CVertexArray* va = GetVertexArray();
 	va->Initialize();
+	va->EnlargeArrays(resolution, 0, VA_SIZE_0);
+
+	float3* vertices = reinterpret_cast<float3*>(va->drawArray);
+	va->drawArrayPos = va->drawArray + resolution * 3;
+
+	#pragma omp parallel for
 	for (unsigned int i = 0; i < resolution; ++i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;
 		float rad = radius;
-		float3 pos;
 		float sinR = fastmath::sin(radians);
 		float cosR = fastmath::cos(radians);
+		float3 pos;
 		pos.x = center.x + (sinR * rad);
 		pos.z = center.z + (cosR * rad);
 		pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
-		float heightDiff = (pos.y - center.y)/2;
+		float heightDiff = (pos.y - center.y) * 0.5f;
 		rad -= heightDiff * slope;
-		float adjRadius = weapon ? weapon->GetRange2D(heightDiff*weapon->heightMod) : rad;
-		float adjustment = rad/2;
+		float adjRadius = weapon ? weapon->GetRange2D(heightDiff * weapon->heightMod) : rad;
+		float adjustment = rad * 0.5f;
 		float ydiff = 0;
-		int j;
-		for(j = 0; j < 50 && math::fabs(adjRadius - rad) + ydiff > .01*rad; j++){
-			if(adjRadius > rad) {
+		for(int j = 0; j < rdiv && math::fabs(adjRadius - rad) + ydiff > .01 * rad; j++){
+			if (adjRadius > rad) {
 				rad += adjustment;
 			} else {
 				rad -= adjustment;
@@ -96,13 +105,15 @@ void glBallisticCircle(const float3& center, const float radius,
 			ydiff = math::fabs(pos.y - newY);
 			pos.y = newY;
 			heightDiff = (pos.y - center.y);
-			adjRadius = weapon ? weapon->GetRange2D(heightDiff*weapon->heightMod) : rad;
+			adjRadius = weapon ? weapon->GetRange2D(heightDiff * weapon->heightMod) : rad;
 		}
 		pos.x = center.x + (sinR * adjRadius);
 		pos.z = center.z + (cosR * adjRadius);
 		pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
-		va->AddVertex0(pos);
+
+		vertices[i] = pos;
 	}
+
 	va->DrawArray0(GL_LINE_LOOP);
 }
 

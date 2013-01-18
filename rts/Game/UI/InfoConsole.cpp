@@ -2,7 +2,6 @@
 
 #include "Rendering/GL/myGL.h"
 
-#include "System/mmgr.h"
 
 #include "InfoConsole.h"
 #include "InputReceiver.h"

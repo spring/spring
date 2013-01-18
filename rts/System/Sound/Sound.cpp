@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 #include "Sound.h"
 
 #include <cstdlib>
@@ -287,6 +286,10 @@ void CSound::StartThread(int maxSounds)
 {
 	{
 		boost::recursive_mutex::scoped_lock lck(soundMutex);
+
+		// alc... will create its own thread it will copy the name from the current thread.
+		// Later we finally rename `our` audio thread.
+		Threading::SetThreadName("openal");
 
 		// NULL -> default device
 		const ALchar* deviceName = NULL;

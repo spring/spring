@@ -5,8 +5,6 @@
  * Classes for serialization of registrated class instances
  */
 
-#include "System/mmgr.h"
-
 #include "VarTypes.h"
 
 #include "System/Util.h"

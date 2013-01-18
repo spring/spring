@@ -119,13 +119,14 @@ void AAirMoveType::DependentDied(CObject* o) {
 	}
 
 	if (o == reservedPad) {
-		SetState(AIRCRAFT_TAKEOFF);
+		if (aircraftState!=AIRCRAFT_CRASHING) { //don't change state when crashing
+			SetState(AIRCRAFT_TAKEOFF);
 
-		goalPos = oldGoalPos;
-		wantedHeight = orgWantedHeight;
-
+			goalPos = oldGoalPos;
+			wantedHeight = orgWantedHeight;
+			padStatus = PAD_STATUS_FLYING;
+		}
 		reservedPad = NULL;
-		padStatus = PAD_STATUS_FLYING;
 	}
 }
 

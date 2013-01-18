@@ -11,7 +11,7 @@
 
 class CDamageArrayHandler : public boost::noncopyable
 {
-	CR_DECLARE(CDamageArrayHandler);
+	CR_DECLARE_STRUCT(CDamageArrayHandler);
 
 public:
 	CDamageArrayHandler();

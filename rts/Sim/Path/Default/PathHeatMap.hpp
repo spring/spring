@@ -6,6 +6,7 @@
 #include <vector>
 
 class CPathManager;
+class CSolidObject;
 struct MoveDef;
 
 /**

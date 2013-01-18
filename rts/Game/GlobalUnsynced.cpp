@@ -12,7 +12,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h" // for RANDINT_MAX
 #include "Sim/Units/Unit.h" // required by CREG
-#include "System/mmgr.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
@@ -58,6 +57,7 @@ CGlobalUnsynced::CGlobalUnsynced()
 
 	avgSimFrameTime = 0.0f;
 	avgDrawFrameTime = 0.0f;
+	avgFrameTime = 0.0f;
 
 	modGameTime = 0;
 	gameTime = 0;

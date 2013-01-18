@@ -8,7 +8,6 @@
 #include <boost/cstdint.hpp>
 #include <string.h>
 
-#include "System/mmgr.h"
 
 #include "LuaUtils.h"
 

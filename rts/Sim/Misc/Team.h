@@ -21,7 +21,7 @@ class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shall
 {
 	CR_DECLARE(CTeam);
 public:
-	CTeam();
+	CTeam(int _teamNum);
 
 	void ResetResourceState();
 	void SlowUpdate();
@@ -41,7 +41,13 @@ public:
 	void ClampStartPosInStartBox(float3* pos) const;
 	void StartposMessage(const float3& pos) { startPos = pos; }
 
-	CTeam& operator=(const TeamBase& base);
+	void SetMaxUnits(unsigned int n) { maxUnits = n; }
+	unsigned int GetMaxUnits() const { return maxUnits; }
+
+	CTeam& operator = (const TeamBase& base) {
+		TeamBase::operator = (base);
+		return *this;
+	}
 
 	std::string GetControllerName() const;
 

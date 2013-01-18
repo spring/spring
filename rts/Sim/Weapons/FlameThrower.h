@@ -11,7 +11,6 @@ class CFlameThrower : public CWeapon
 public:
 	CFlameThrower(CUnit* owner);
 	~CFlameThrower();
-	bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
 	void Update();
 
 	float3 color;

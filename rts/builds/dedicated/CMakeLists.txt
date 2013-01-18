@@ -1,7 +1,7 @@
 ADD_DEFINITIONS    (-DDEDICATED ${PIC_FLAG} -DNOT_USING_CREG)
 ADD_DEFINITIONS    (-DHEADLESS -DNO_SOUND)
 REMOVE_DEFINITIONS (-DSTREFLOP_SSE -DAVI_CAPTURING)
-REMOVE_DEFINITIONS (-DUSE_MMGR -DTRACE_SYNC -DSYNCDEBUG)
+REMOVE_DEFINITIONS (-DTRACE_SYNC -DSYNCDEBUG)
 
 # deactivate signaling-NANs for this library
 RemoveFlag("-fsignaling-nans")
@@ -20,7 +20,7 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 ### Assemble libraries
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
-LIST(APPEND engineDedicatedLibraries 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY} lua)
+LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
 LIST(APPEND engineDedicatedLibraries headlessStubs)
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)

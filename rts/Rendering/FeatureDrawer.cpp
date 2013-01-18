@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 #include "FeatureDrawer.h"
 
 #include "Game/Camera.h"
@@ -185,8 +184,9 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
 	const float time = /*!GML::SimEnabled() ?*/ globalRendering->timeOffset /*:
 		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)f->lastFeatUpdate) * globalRendering->weightedSpeedFactor*/;
-	f->drawPos = f->pos + (f->speed * time);
-	f->drawMidPos = f->drawPos + (f->midPos - f->pos);
+
+	f->drawPos    =    f->pos + (f->speed * time);
+	f->drawMidPos = f->midPos + (f->speed * time);
 }
 
 

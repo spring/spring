@@ -44,11 +44,9 @@ const MoveDef* IPathDrawer::GetSelectedMoveDef() {
 
 	if (!unitSet.empty()) {
 		const CUnit* unit = *(unitSet.begin());
-		const UnitDef* unitDef = unit->unitDef;
+		const MoveDef* moveDef = unit->moveDef;
 
-		if (unitDef->moveDef != NULL) {
-			md = unitDef->moveDef;
-		}
+		md = moveDef;
 	}
 
 	return md;

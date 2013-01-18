@@ -2,7 +2,6 @@
 
 #include "GuiHandler.h"
 
-#include "System/mmgr.h"
 
 #include "CommandColors.h"
 #include "KeyBindings.h"
@@ -102,7 +101,7 @@ CGuiHandler::CGuiHandler():
 	autoShowMetal = mapInfo->gui.autoShowMetal;
 
 	useStencil = false;
-	if (GLEW_NV_depth_clamp && configHandler->GetBool("StencilBufferBits")) {
+	if (GLEW_NV_depth_clamp) {
 		GLint stencilBits;
 		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
 		useStencil = (stencilBits >= 1);
@@ -3567,9 +3566,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 
 			// draw weapon range
 			if (unitdef->maxWeaponRange > 0) {
+				glDisable(GL_DEPTH_TEST);
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unitdef->maxWeaponRange,
 				                  unit->weapons[0], 40);
+				glEnable(GL_DEPTH_TEST);
 			}
 			// draw decloak distance
 			if (unit->decloakDistance > 0.0f) {
@@ -3687,19 +3688,16 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					const float3& buildpos = bpi->pos;
 					// draw weapon range
 					if (!unitdef->weapons.empty()) {
+						glDisable(GL_DEPTH_TEST);
 						glColor4fv(cmdColors.rangeAttack);
 						glBallisticCircle(buildpos, unitdef->weapons[0].def->range,
 						                  NULL, 40, unitdef->weapons[0].def->heightmod);
+						glEnable(GL_DEPTH_TEST);
 					}
 					// draw extraction range
 					if (unitdef->extractRange > 0) {
 						glColor4fv(cmdColors.rangeExtract);
-
-						if (unitdef->extractSquare) {
-							glSurfaceSquare(buildpos, unitdef->extractRange, unitdef->extractRange);
-						} else {
-							glSurfaceCircle(buildpos, unitdef->extractRange, 40);
-						}
+						glSurfaceCircle(buildpos, unitdef->extractRange, 40);
 					}
 					// draw build range for immobile builders
 					if (unitdef->builder) {
@@ -3779,9 +3777,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				continue;
 			}
 			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
+				glDisable(GL_DEPTH_TEST);
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unit->maxRange,
 				                  unit->weapons.front(), 40);
+				glEnable(GL_DEPTH_TEST);
 				if (!onMinimap && gs->cheatEnabled && globalRendering->drawdebug) {
 					DrawWeaponArc(unit);
 				}

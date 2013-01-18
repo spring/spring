@@ -152,6 +152,7 @@ public:
 		, newwork(FALSE)
 		, auxinited(FALSE)
 		, auxworker(NULL)
+		, auxworkerclass(NULL)
 		, AuxBarrier(2)
 		, AuxClientsReady(0) {
 	}

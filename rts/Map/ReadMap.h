@@ -15,10 +15,8 @@
 
 class CMetalMap;
 class CCamera;
-class CFileHandler;
 class CUnit;
 class CSolidObject;
-class CFileHandler;
 class CLoadSaveInterface;
 class CBaseGroundDrawer;
 

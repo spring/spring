@@ -12,10 +12,7 @@
 #include "PathDataTypes.h"
 #include "System/float3.h"
 
-#include <boost/thread/thread.hpp>
 #include <boost/detail/atomic_count.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/barrier.hpp>
 #include <boost/cstdint.hpp>
 
 struct MoveDef;
@@ -23,6 +20,11 @@ class CPathFinder;
 class CPathEstimatorDef;
 class CPathFinderDef;
 class CPathCache;
+
+namespace boost {
+	class thread;
+	class barrier;
+}
 
 class CPathEstimator {
 public:
@@ -43,10 +45,8 @@ public:
 	CPathEstimator(CPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
 	~CPathEstimator();
 
-#if !defined(USE_MMGR)
 	void* operator new(size_t size);
 	void operator delete(void* p, size_t size);
-#endif
 
 
 
@@ -99,6 +99,7 @@ public:
 	 * called every frame
 	 */
 	void Update();
+	void UpdateFull();
 
 	/**
 	 * Returns a checksum that can be used to check if every player has the same
@@ -115,16 +116,12 @@ public:
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& map);
 	void InitBlocks();
-	void CalcOffsetsAndPathCosts(unsigned int thread);
+
+	void CalcOffsetsAndPathCosts(unsigned int threadNum);
 	void CalculateBlockOffsets(unsigned int, unsigned int);
 	void EstimatePathCosts(unsigned int, unsigned int);
 
-	struct SingleBlock {
-		int2 blockPos;
-		const MoveDef* moveDef;
-	};
-
-	void FindOffset(const MoveDef&, unsigned int, unsigned int);
+	int2 FindOffset(const MoveDef&, unsigned int, unsigned int);
 	void CalculateVertices(const MoveDef&, unsigned int, unsigned int, unsigned int threadNum = 0);
 	void CalculateVertex(const MoveDef&, unsigned int, unsigned int, unsigned int, unsigned int threadNum = 0);
 
@@ -138,22 +135,13 @@ private:
 	void WriteFile(const std::string& cacheFileName, const std::string& map);
 	unsigned int Hash() const;
 
-	int2 mStartBlock;
-	int2 mGoalBlock;
-	int2 mGoalSqrOffset;
-	unsigned int mStartBlockIdx;
-	float mGoalHeuristic;
+private:
+	friend class CPathManager;
 
-	unsigned int maxBlocksToBeSearched;
-	unsigned int testedBlocks;
-	float maxNodeCost;
-
-	std::vector<CPathFinder*> pathFinders;
-	std::vector<boost::thread*> threads;
-
-	CPathFinder* pathFinder;
-	CPathCache* pathCache;
-
+	struct SingleBlock {
+		int2 blockPos;
+		const MoveDef* moveDef;
+	};
 
 	const unsigned int BLOCK_SIZE;
 	const unsigned int BLOCK_PIXEL_SIZE;
@@ -163,23 +151,40 @@ private:
 	unsigned int nbrOfBlocksZ;                  /// Number of blocks on the Z axis of the map.
 	unsigned int moveMathOptions;
 
+	unsigned int maxBlocksToBeSearched;
+	unsigned int testedBlocks;
+
 	unsigned int nextOffsetMessageIdx;
 	unsigned int nextCostMessageIdx;
 
 	boost::uint32_t pathChecksum;               ///< currently crc from the zip
+
 	boost::detail::atomic_count offsetBlockNum;
 	boost::detail::atomic_count costBlockNum;
 	boost::barrier* pathBarrier;
 
-	PathNodeBuffer openBlockBuffer;             /// The priority-queue used to select next block to be searched.
+	CPathFinder* pathFinder;
+	CPathCache* pathCache;
+
+	PathNodeBuffer openBlockBuffer;
 	PathNodeStateBuffer blockStates;
-	PathPriorityQueue openBlocks;
+	PathPriorityQueue openBlocks;               /// The priority-queue used to select next block to be searched.
+
+	std::vector<CPathFinder*> pathFinders;
+	std::vector<boost::thread*> threads;
 
 	std::vector<float> vertexCosts;
 	std::list<unsigned int> dirtyBlocks;        /// List of blocks changed in last search.
-	std::list<SingleBlock> changedBlocks;       /// Blocks that may need an update due to map changes.
+	std::list<SingleBlock> updatedBlocks;       /// Blocks that may need an update due to map changes.
 
 	int2 directionVectors[PATH_DIRECTIONS];
+	int2 mStartBlock;
+	int2 mGoalBlock;
+	int2 mGoalSqrOffset;
+
+	unsigned int mStartBlockIdx;
+	float mGoalHeuristic;
+
 };
 
 #endif

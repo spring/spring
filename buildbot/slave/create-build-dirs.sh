@@ -11,10 +11,11 @@ else
 	echo "skipped."
 fi
 
-echo "configuring ${BUILDDIR} with $@ ..."
+echo "building in ${BUILDDIR}"
+echo "configuring ${SOURCEDIR} with ${CMAKEPARAM} $@ ..."
 
 cd ${BUILDDIR}
-cmake ${SOURCEDIR} $@
+cmake ${CMAKEPARAM} $@ ${SOURCEDIR}
 
 echo "erasing old base content..."
 rm -rf base

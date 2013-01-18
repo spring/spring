@@ -4,6 +4,7 @@
 #define LUA_IO_H
 
 #include <stdio.h>
+#include <string>
 
 struct lua_State;
 

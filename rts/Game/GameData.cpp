@@ -3,8 +3,6 @@
 #include <assert.h>
 #include <zlib.h>
 
-#include "System/mmgr.h"
-
 #include "GameData.h"
 
 #include "System/BaseNetProtocol.h"

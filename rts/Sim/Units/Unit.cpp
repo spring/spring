@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 #include "lib/gml/gml.h"
 
 #include "UnitDef.h"
@@ -76,6 +75,9 @@
 //////////////////////////////////////////////////////////////////////
 
 //! info: SlowUpdate runs each 16th GameFrame (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
+float CUnit::empDecline   = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
+bool  CUnit::spawnFeature = true;
+
 float CUnit::expMultiplier  = 1.0f;
 float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
@@ -101,7 +103,7 @@ CUnit::CUnit() : CSolidObject(),
 	lastNanoAdd(gs->frameNum),
 	repairAmount(0.0f),
 	transporter(NULL),
-	toBeTransported(false),
+	loadingTransportId(-1),
 	buildProgress(0.0f),
 	groundLevelled(true),
 	terraformLeft(0.0f),
@@ -151,7 +153,7 @@ CUnit::CUnit() : CSolidObject(),
 	fpsControlPlayer(NULL),
 	commandAI(NULL),
 	group(NULL),
-	localmodel(NULL),
+	localModel(NULL),
 	script(NULL),
 	condUseMetal(0.0f),
 	condUseEnergy(0.0f),
@@ -210,7 +212,6 @@ CUnit::CUnit() : CSolidObject(),
 	posErrorVector(ZeroVector),
 	posErrorDelta(ZeroVector),
 	nextPosErrorUpdate(1),
-	hasUWWeapons(false),
 	wantCloak(false),
 	scriptCloak(0),
 	cloakTimeout(128),
@@ -254,9 +255,8 @@ CUnit::~CUnit()
 		// we have to wait for deathScriptFinished (but we want the delay
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
 		// to be as short as possible to prevent position jumps)
-		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
-		                               delayedWreckLevel, team, -1, true,
-		                               unitDef, deathSpeed);
+		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
+		featureHandler->CreateWreckage(params, delayedWreckLevel - 1, true);
 	}
 
 	if (unitDef->isAirBase) {
@@ -305,7 +305,7 @@ CUnit::~CUnit()
 	los = NULL;
 	radarhandler->RemoveUnit(this);
 
-	modelParser->DeleteLocalModel(localmodel);
+	modelParser->DeleteLocalModel(localModel);
 }
 
 
@@ -326,42 +326,55 @@ void CUnit::SetEnergyStorage(float newStorage)
 
 
 
-void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& position, bool build)
+void CUnit::PreInit(const UnitLoadParams& params)
 {
-	team = uTeam;
-	allyteam = teamHandler->AllyTeam(uTeam);
+	// if this is < 0, we get a random ID from UnitHandler
+	id = params.unitID;
+	unitDefID = (params.unitDef)->id;
+	featureDefID = -1;
 
-	objectDef = uDef;
-	unitDef = uDef;
-	unitDefID = unitDef->id;
+	objectDef = params.unitDef;
+	unitDef = params.unitDef;
 
-	buildFacing = std::abs(facing) % NUM_FACINGS;
+	{
+		const FeatureDef* wreckFeatureDef = featureHandler->GetFeatureDef(unitDef->wreckName);
+
+		if (wreckFeatureDef != NULL) {
+			featureDefID = wreckFeatureDef->id;
+		}
+	}
+
+	team = params.teamID;
+	allyteam = teamHandler->AllyTeam(team);
+
+	buildFacing = std::abs(params.facing) % NUM_FACINGS;
 	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
 	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 
 	// copy the UnitDef volume instance
 	// NOTE: gets deleted in ~CSolidObject
 	model = unitDef->LoadModel();
-	localmodel = new LocalModel(model);
+	localModel = new LocalModel(model);
 	collisionVolume = new CollisionVolume(unitDef->collisionVolume);
-	modelParser->CreateLocalModel(localmodel);
+	modelParser->CreateLocalModel(localModel);
 
 	if (collisionVolume->DefaultToSphere())
 		collisionVolume->InitSphere(model->radius);
 	if (collisionVolume->DefaultToFootPrint())
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
 
-	mapSquare = ground->GetSquare(position.cClampInMap());
+	speed = params.speed;
+	mapSquare = ground->GetSquare((params.pos).cClampInMap());
 
-	heading  = GetHeadingFromFacing(facing);
+	heading  = GetHeadingFromFacing(buildFacing);
 	frontdir = GetVectorFromHeading(heading);
 	updir    = UpVector;
 	rightdir = frontdir.cross(updir);
 	upright  = unitDef->upright;
 
-	Move3D(position.cClampInMap(), false);
+	Move3D((params.pos).cClampInMap(), false);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-	SetRadiusAndHeight(model->radius, model->height);
+	SetRadiusAndHeight(model);
 	UpdateDirVectors(!upright);
 	UpdateMidAndAimPos();
 
@@ -390,7 +403,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 	footprint = int2(unitDef->xsize, unitDef->zsize);
 
-	beingBuilt = build;
+	beingBuilt = params.beingBuilt;
 	mass = (beingBuilt)? mass: unitDef->mass;
 	crushResistance = unitDef->crushResistance;
 	power = unitDef->power;
@@ -408,7 +421,6 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	leaveTracks = unitDef->decalDef.leaveTrackDecals;
 
 	tooltip = unitDef->humanName + " - " + unitDef->tooltip;
-	wreckName = unitDef->wreckName;
 
 
 	// sensor parameters
@@ -459,8 +471,8 @@ void CUnit::PostInit(const CUnit* builder)
 	// Call initializing script functions
 	script->Create();
 
-	if (unitDef->moveDef != NULL) {
-		switch (unitDef->moveDef->moveType) {
+	if (moveDef != NULL) {
+		switch (moveDef->moveType) {
 			case MoveDef::Hover_Move: {
 				physicalState = CSolidObject::Hovering;
 			} break;
@@ -545,7 +557,7 @@ void CUnit::PostInit(const CUnit* builder)
 
 
 
-void CUnit::ForcedMove(const float3& newPos, bool)
+void CUnit::ForcedMove(const float3& newPos)
 {
 	if (blocking) {
 		UnBlock();
@@ -603,8 +615,11 @@ void CUnit::SetDirVectors(const CMatrix44f& matrix) {
 }
 
 // NOTE: movetypes call this directly
-void CUnit::UpdateDirVectors(bool useGroundNormal)
+void CUnit::UpdateDirVectors(bool useGroundNormal, bool isGroundUnit)
 {
+	if (isGroundUnit && inAir)
+		return;
+
 	updir    = useGroundNormal? ground->GetSmoothNormal(pos.x, pos.z): UpVector;
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();
@@ -664,7 +679,11 @@ void CUnit::Update()
 {
 	ASSERT_SYNCED(pos);
 
-	posErrorVector += posErrorDelta;
+	// UnitScript only applies piece-space transforms so
+	// we apply the forward kinematics update separately
+	// (only if we have any dirty pieces)
+	// TODO: move this to UnitScript::Tick?
+	localModel->UpdatePieceMatrices();
 
 	{
 		const bool oldInAir   = inAir;
@@ -690,11 +709,12 @@ void CUnit::Update()
 		}
 	}
 
-	if (beingBuilt)
-		return;
-
 	// 0.968 ** 16 is slightly less than 0.6, which was the old value used in SlowUpdate
 	residualImpulse *= 0.968f;
+	posErrorVector += posErrorDelta;
+
+	if (beingBuilt)
+		return;
 
 	if (travelPeriod != 0.0f) {
 		travel += speed.Length();
@@ -872,16 +892,22 @@ void CUnit::SlowUpdate()
 		// DoDamage) we potentially start decaying from a lower damage
 		// level and would otherwise be de-paralyzed more quickly than
 		// specified by <paralyzeTime>
-		paralyzeDamage -= ((modInfo.paralyzeOnMaxHealth? maxHealth: health) * 0.5f * modInfo.unitParalysisDeclineScale);
+		paralyzeDamage -= ((modInfo.paralyzeOnMaxHealth? maxHealth: health) * 0.5f * CUnit::empDecline);
 		paralyzeDamage = std::max(paralyzeDamage, 0.0f);
 	}
 
 	UpdateResources();
 
 	if (IsStunned()) {
+		// call this because we can be pushed into a different quad while stunned
+		// which would make us invulnerable to most non-/small-AOE weapon impacts
+		static_cast<AMoveType*>(moveType)->SlowUpdate();
+
+		const bool b0 = (paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health));
+		const bool b1 = (transporter == NULL || transporter->unitDef->isFirePlatform);
+
 		// de-stun only if we are not (still) inside a non-firebase transport
-		if ((paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health)) &&
-			!(transporter && !transporter->unitDef->isFirePlatform)) {
+		if (b0 && b1) {
 			SetStunned(false);
 		}
 
@@ -889,20 +915,18 @@ void CUnit::SlowUpdate()
 		return;
 	}
 
-	if (selfDCountdown && !IsStunned()) {
-		selfDCountdown--;
-		if (selfDCountdown <= 1) {
+	if (selfDCountdown > 0) {
+		if ((selfDCountdown -= 1) == 0) {
+			// avoid unfinished buildings making an explosion
 			if (!beingBuilt) {
 				KillUnit(true, false, NULL);
 			} else {
-				KillUnit(false, true, NULL);	//avoid unfinished buildings making an explosion
+				KillUnit(false, true, NULL);
 			}
-			selfDCountdown = 0;
 			return;
 		}
-		if ((selfDCountdown & 1) && (team == gu->myTeam)) {
-			LOG("%s: Self destruct in %i s",
-					unitDef->humanName.c_str(), selfDCountdown / 2);
+		if ((selfDCountdown & 1) && (team == gu->myTeam) && !gu->spectating) {
+			LOG("%s: self-destruct in %is", unitDef->humanName.c_str(), (selfDCountdown >> 1) + 1);
 		}
 	}
 
@@ -1191,7 +1215,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		// rate of paralysis-damage reduction is lower if the unit has less than
 		// maximum health to ensure stun-time is always equal to <paralyzeTime>
 		const float baseHealth = (modInfo.paralyzeOnMaxHealth? maxHealth: health);
-		const float paralysisDecayRate = baseHealth * modInfo.unitParalysisDeclineScale;
+		const float paralysisDecayRate = baseHealth * CUnit::empDecline;
 		const float sumParalysisDamage = paralysisDecayRate * paralyzeTime;
 		const float maxParalysisDamage = baseHealth + sumParalysisDamage - paralyzeDamage;
 
@@ -1900,9 +1924,9 @@ void CUnit::FinishedBuilding(bool postInit)
 		wantCloak = true;
 	}
 
-	if (unitDef->isFeature && uh->morphUnitToFeature) {
-		CFeature* f = featureHandler->CreateWreckage(
-			pos, wreckName, heading, buildFacing, 0, team, allyteam, false, NULL);
+	if (unitDef->isFeature && CUnit::spawnFeature) {
+		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
+		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
 
 		if (f) {
 			f->blockHeightChanges = true;
@@ -2149,12 +2173,12 @@ void CUnit::PostLoad()
 	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	objectDef = unitDef;
 	model = unitDef->LoadModel();
-	localmodel = new LocalModel(model);
+	localModel = new LocalModel(model);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
-	SetRadiusAndHeight(model->radius, model->height);
+	SetRadiusAndHeight(model);
 
-	modelParser->CreateLocalModel(localmodel);
+	modelParser->CreateLocalModel(localModel);
 	// FIXME: how to handle other script types (e.g. Lua) here?
 	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
 
@@ -2256,6 +2280,7 @@ CR_BIND_DERIVED(CUnit, CSolidObject, );
 CR_REG_METADATA(CUnit, (
 	// CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
+	CR_MEMBER(featureDefID),
 	CR_MEMBER(upright),
 	CR_MEMBER(deathSpeed),
 	CR_MEMBER(travel),
@@ -2272,7 +2297,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastNanoAdd),
 	CR_MEMBER(repairAmount),
 	CR_MEMBER(transporter),
-	CR_MEMBER(toBeTransported),
+	CR_MEMBER(loadingTransportId),
 	CR_MEMBER(buildProgress),
 	CR_MEMBER(groundLevelled),
 	CR_MEMBER(terraformLeft),
@@ -2326,7 +2351,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(commandAI),
 	CR_MEMBER(group),
 	// CR_MEMBER(fpsControlPlayer),
-	// CR_MEMBER(localmodel),
+	// CR_MEMBER(localModel),
 	// CR_MEMBER(script),
 	CR_MEMBER(condUseMetal),
 	CR_MEMBER(condUseEnergy),
@@ -2388,11 +2413,9 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(armoredState),
 	CR_MEMBER(armoredMultiple),
 	CR_MEMBER(curArmorMultiple),
-	CR_MEMBER(wreckName),
 	CR_MEMBER(posErrorVector),
 	CR_MEMBER(posErrorDelta),
 	CR_MEMBER(nextPosErrorUpdate),
-	CR_MEMBER(hasUWWeapons),
 	CR_MEMBER(wantCloak),
 	CR_MEMBER(scriptCloak),
 	CR_MEMBER(cloakTimeout),

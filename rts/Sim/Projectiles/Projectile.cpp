@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "Projectile.h"
 #include "Map/MapInfo.h"
@@ -137,8 +136,7 @@ void CProjectile::Collision()
 
 void CProjectile::Collision(CUnit* unit)
 {
-	deleteMe = true;
-	checkCol = false;
+	Collision();
 }
 
 void CProjectile::Collision(CFeature* feature)
@@ -154,14 +152,12 @@ void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 
 int CProjectile::DrawArray()
 {
-	int idx = 0;
-
 	va->DrawArrayTC(GL_QUADS);
 
 	// draw-index gets divided by 24 because each element is 
 	// 12 + 4 + 4 + 4 = 24 bytes in size (pos + u + v + color)
 	// for each type of "projectile"
-	idx = (va->drawIndex() / 24);
+	int idx = (va->drawIndex() / 24);
 	va = GetVertexArray();
 	va->Initialize();
 	inArray = false;

@@ -117,7 +117,7 @@ private:
 	CR_DECLARE_STRUCT(Command);
 /*
 	TODO check if usage of System/MemPool.h for this struct improves performance
-	#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
+	#if !(defined(USE_GML) && GML_ENABLE_SIM)
 	inline void* operator new(size_t size) { return mempool.Alloc(size); }
 	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
 	#endif
@@ -260,7 +260,7 @@ public:
 	}
 
 	bool IsAreaCommand() const {
-		switch(id) {
+		switch (id) {
 			case CMD_CAPTURE:
 			case CMD_LOAD_UNITS:
 			case CMD_RECLAIM:
@@ -275,6 +275,7 @@ public:
 		}
 		return false;
 	}
+	bool IsBuildCommand() const { return (id < 0); }
 
 	void PushParam(float par) { params.push_back(par); }
 	const float& GetParam(size_t idx) const { return params[idx]; }

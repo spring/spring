@@ -7,6 +7,29 @@
 
 struct WeaponDef;
 class CPlasmaRepulser;
+class CWeaponProjectile;
+class CWeapon;
+
+struct ProjectileParams {
+	ProjectileParams()
+		: ttl(0)
+		, target(NULL)
+		, owner(NULL)
+		, weapon(NULL)
+		, weaponDef(NULL)
+	{
+	}
+
+	int ttl;
+	float3 pos;
+	float3 end;
+	float3 speed;
+	CWorldObject* target; // unit, feature or weapon projectile to intercept
+	CUnit* owner;
+	CWeapon* weapon;
+	const WeaponDef* weaponDef;
+};
+
 
 /**
  * Base class for all projectiles originating from a weapon or having
@@ -32,10 +55,8 @@ public:
 	};
 
 	CWeaponProjectile();
-	CWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner,
-			CUnit* target, const float3& targetPos, const WeaponDef* weaponDef,
-			CWeaponProjectile* interceptTarget, int ttl);
-	virtual ~CWeaponProjectile() {}
+	CWeaponProjectile(const ProjectileParams& params, const bool isRay = false);
+	virtual ~CWeaponProjectile();
 
 	virtual void Collision();
 	virtual void Collision(CFeature* feature);
@@ -46,11 +67,17 @@ public:
 
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
+protected:
+	void UpdateInterception();
+	virtual void UpdateGroundBounce();
+	bool TraveledRange();
+
+public:
 	/// true if we are a nuke and an anti is on the way
 	bool targeted;
 	const WeaponDef* weaponDef;
 
-	CUnit* target;
+	CWorldObject* target;
 	float3 targetPos;
 
 	unsigned int weaponDefID;
@@ -64,11 +91,6 @@ protected:
 	int ttl;
 	int bounces;
 	bool keepBouncing;
-
-	virtual void UpdateGroundBounce();
-
-	bool TraveledRange();
-	CWeaponProjectile* interceptTarget;
 
 public:
 	void DependentDied(CObject* o);

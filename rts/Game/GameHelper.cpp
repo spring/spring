@@ -34,7 +34,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/mmgr.h"
 #include "System/myMath.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
@@ -94,12 +93,18 @@ void CGameHelper::DoExplosionDamage(
 	// linear damage falloff with distance
 	const float expDist = colVol->GetPointDistance(unit, expPos);
 	const float expRim = expDist * expEdgeEffect;
-	const float expMod = (expRadius - expDist) / (expRadius - expRim);
-	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
 
 	// return early if (distance > radius)
-	if (expMod <= 0.0f)
+	if (expDist >= expRadius)
 		return;
+
+	// expEdgeEffect should be in [0, 1], so expDist >= expDist*expEdgeEffect
+	assert(expRadius >= expRim);
+
+	// expMod will also be in [0, 1], no negatives
+	const float expMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
+
 	// TODO: damage attenuation for underwater units?
 	if (expPos.y >= 0.0f && unit->pos.y <  0.0f) {}
 	if (expPos.y <  0.0f && unit->pos.y >= 0.0f) {}
@@ -150,11 +155,14 @@ void CGameHelper::DoExplosionDamage(
 	const CollisionVolume* colVol = CollisionVolume::GetVolume(feature, colVolPos);
 	const float expDist = colVol->GetPointDistance(feature, expPos);
 	const float expRim = expDist * expEdgeEffect;
-	const float expMod = (expRadius - expDist) / (expRadius - expRim);
-	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
 
-	if (expMod <= 0.0f)
+	if (expDist >= expRadius)
 		return;
+
+	assert(expRadius >= expRim);
+
+	const float expMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
 
 	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
 	const float modImpulseScale = Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
@@ -532,7 +540,7 @@ namespace {
 
 		public:
 			ClosestUnit_InLos(const float3& pos, float searchRadius, bool canBeBlind) :
-				Base(pos, searchRadius + uh->maxUnitRadius),
+				Base(pos, searchRadius + uh->MaxUnitRadius()),
 				closeDist(searchRadius), closeUnit(NULL), canBeBlind(canBeBlind) {}
 
 			void AddUnit(CUnit* u) {
@@ -813,7 +821,7 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming
 		// ^ it's one of our own, or it's in LOS, so don't add an error ^
 		return pos;
 	}
-	if (gameSetup->ghostedBuildings && (unit->losStatus[allyteam] & LOS_PREVLOS) && !unit->moveDef) {
+	if (gameSetup->ghostedBuildings && (unit->losStatus[allyteam] & LOS_PREVLOS) && unit->unitDef->IsBuildingUnit()) {
 		// ^ this is a ghosted building, so don't add an error ^
 		return pos;
 	}

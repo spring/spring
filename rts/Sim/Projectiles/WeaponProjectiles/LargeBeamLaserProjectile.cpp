@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "LargeBeamLaserProjectile.h"
 #include "Game/Camera.h"
@@ -8,13 +7,12 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/myMath.h"
 
-CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, ZeroVector, ZeroVector, NULL, NULL));
+CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, (ProjectileParams(), ZeroVector, ZeroVector));
 
 CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(startPos),
-	CR_MEMBER(endPos),
 	CR_MEMBER(corecolstart),
 	CR_MEMBER(kocolstart),
 	CR_MEMBER(thickness),
@@ -28,13 +26,8 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
-		const float3& _startPos, const float3& _endPos,
-		const float3& color, const float3& color2,
-		CUnit* owner, const WeaponDef* weaponDef)
-	: CWeaponProjectile(_startPos + (_endPos - _startPos) * 0.5f, ZeroVector, owner, NULL, ZeroVector, weaponDef, NULL, 1)
-	, startPos(_startPos)
-	, endPos(_endPos)
+CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& params, const float3& color, const float3& color2)
+	: CWeaponProjectile(params, true)
 	, decay(1.0f)
 {
 	projectileType = WEAPON_LARGEBEAMLASER_PROJECTILE;
@@ -46,7 +39,7 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
 		this->side    = *weaponDef->visuals.texture3;
 	}
 
-	SetRadiusAndHeight(pos.distance(endPos), 0.0f);
+	SetRadiusAndHeight(pos.distance(targetPos), 0.0f);
 
 	corecolstart[0] = (color2.x * 255);
 	corecolstart[1] = (color2.y * 255);
@@ -65,7 +58,6 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
 		scrollspeed   = weaponDef->visuals.scrollspeed;
 		pulseSpeed    = weaponDef->visuals.pulseSpeed;
 		decay         = weaponDef->visuals.beamdecay;
-		ttl           = weaponDef->beamLaserTTL;
 	}
 
 	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
@@ -81,12 +73,14 @@ void CLargeBeamLaserProjectile::Update()
 			kocolstart[i] = (unsigned char) (kocolstart[i] * decay);
 		}
 
-		gCEG->Explosion(cegID, startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, NULL, 0.0f, NULL, endPos - startPos);
+		gCEG->Explosion(cegID, startpos + ((targetPos - startpos) / ttl), 0.0f, flaresize, NULL, 0.0f, NULL, targetPos - startpos);
 		ttl--;
 	}
 	else {
 		deleteMe = true;
 	}
+
+	UpdateInterception();
 }
 
 void CLargeBeamLaserProjectile::Draw()
@@ -94,7 +88,7 @@ void CLargeBeamLaserProjectile::Draw()
 	inArray = true;
 
 	float3 dif(pos - camera->pos);
-	float3 ddir(endPos - startPos);
+	float3 ddir(targetPos - startpos);
 	const float camDist = dif.Length();
 	const float beamlength = ddir.Length();
 	dif /= camDist;
@@ -103,8 +97,8 @@ void CLargeBeamLaserProjectile::Draw()
 	const float3 dir1((dif.cross(ddir)).Normalize());
 	const float3 dir2(dif.cross(dir1));
 
-	float3 pos1 = startPos;
-	float3 pos2 = endPos;
+	float3 pos1 = startpos;
+	float3 pos2 = targetPos;
 
 	float starttex = (gu->modGameTime) * scrollspeed;
 	starttex = 1.0f - (starttex - (int)starttex);
@@ -155,8 +149,8 @@ void CLargeBeamLaserProjectile::Draw()
 		float i;
 		for (i = istart; i < iend; i += tilelength) {
 			//! CAUTION: loop count must match EnlargeArrays above
-			pos1 = startPos + ddir * i;
-			pos2 = startPos + ddir * (i + tilelength);
+			pos1 = startpos + ddir * i;
+			pos2 = startpos + ddir * (i + tilelength);
 
 			va->AddVertexQTC(pos1 - (dir1 * size),     tex.xstart, tex.ystart, kocolstart);
 			va->AddVertexQTC(pos1 + (dir1 * size),     tex.xstart, tex.yend,   kocolstart);
@@ -169,8 +163,8 @@ void CLargeBeamLaserProjectile::Draw()
 		}
 
 		// draw laser end
-		pos1 = startPos + ddir * i;
-		pos2 = endPos;
+		pos1 = startpos + ddir * i;
+		pos2 = targetPos;
 		tex.xend = tex.xstart + (pos1.distance(pos2) / tilelength) * texxsize;
 
 		va->AddVertexQTC(pos1 - (dir1 * size),     tex.xstart, tex.ystart, kocolstart);
@@ -210,7 +204,7 @@ void CLargeBeamLaserProjectile::Draw()
 
 	{
 		// draw muzzleflare
-		pos1 = startPos - ddir * (size * flaresize) * 0.02f;
+		pos1 = startpos - ddir * (size * flaresize) * 0.02f;
 
 		va->AddVertexQTC(pos1 + (dir1 * muzzlesize),                       side.xstart, side.ystart, kocol);
 		va->AddVertexQTC(pos1 + (dir1 * muzzlesize) + (ddir * muzzlesize), side.xend,   side.ystart, kocol);
@@ -244,7 +238,7 @@ void CLargeBeamLaserProjectile::Draw()
 
 	{
 		// draw flare (moved slightly along the camera direction)
-		pos1 = startPos - (camera->forward * 3.0f);
+		pos1 = startpos - (camera->forward * 3.0f);
 
 		#define WT4 weaponDef->visuals.texture4
 		va->AddVertexQTC(pos1 - (camera->right * fsize) - (camera->up * fsize), WT4->xstart, WT4->ystart, kocolstart);
@@ -264,6 +258,6 @@ void CLargeBeamLaserProjectile::Draw()
 void CLargeBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	unsigned char color[4] = { kocolstart[0], kocolstart[1], kocolstart[2], 255 };
-	lines.AddVertexQC(startPos, color);
-	lines.AddVertexQC(endPos,   color);
+	lines.AddVertexQC(startpos,  color);
+	lines.AddVertexQC(targetPos, color);
 }

@@ -17,7 +17,6 @@
 #include "System/Log/ILog.h"
 #include "System/bitops.h"
 
-#include "System/mmgr.h"
 #include "string.h"
 
 
@@ -184,12 +183,14 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	// RTT with a top-down view; the view-matrix must be
 	// on the PROJECTION stack for the model shaders
 	glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
 		glLoadIdentity();
 		glOrtho(-modelradius, modelradius, -modelradius, modelradius, -modelradius, modelradius);
 		glRotatef(45.0f, 1.0f, 0.0f, 0.0f);
 		glScalef(-1.0f, 1.0f, 1.0f);
 
 	glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
 		glLoadIdentity();
 
 	for (int orient = 0; orient < numOrientations; ++orient) {
@@ -210,6 +211,11 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		// rotate by 360 / numOrientations degrees for the next orientation
 		glRotatef(-360.0f / numOrientations, 0.0f, 1.0f, 0.0f);
 	}
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
 
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
 	unitDrawer->CleanUpUnitDrawing();
@@ -248,8 +254,8 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 	const float iconSizeY = float(this->iconSizeY) / texSizeY;
 	const float2 texcoords = GetTextureCoords(farTextureNum - 1, orient);
 
-	const float3 curad = camera->up *    obj->radius;
-	const float3 crrad = camera->right * obj->radius;
+	const float3 curad = camera->up *    obj->model->radius;
+	const float3 crrad = camera->right * obj->model->radius;
 
 	va->AddVertexQT(interPos - curad + crrad, texcoords.x, texcoords.y );
 	va->AddVertexQT(interPos + curad + crrad, texcoords.x, texcoords.y + iconSizeY);

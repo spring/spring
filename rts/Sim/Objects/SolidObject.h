@@ -4,15 +4,15 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
-#include "Sim/MoveTypes/MoveDefHandler.h"
+#include "System/Matrix44f.h"
 #include "System/Vec2.h"
 #include "System/Misc/BitwiseEnum.h"
 #include "System/Sync/SyncedFloat3.h"
 #include "System/Sync/SyncedPrimitive.h"
 
+struct MoveDef;
 struct CollisionVolume;
 struct SolidObjectDef;
-struct MoveDef;
 struct SolidObjectGroundDecal;
 
 struct DamageArray;
@@ -39,7 +39,7 @@ enum YardmapStates {
 	YARDMAP_YARDFREE    = ~YARDMAP_YARD,
 	YARDMAP_GEO         = YARDMAP_BLOCKED,
 };
-typedef BitwiseEnum<YardmapStates> YardMapStatus;
+typedef Bitwise::BitwiseEnum<YardmapStates> YardMapStatus;
 
 
 
@@ -71,7 +71,7 @@ public:
 	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }
 
-	virtual void ForcedMove(const float3& newPos, bool snapToGround = true) {}
+	virtual void ForcedMove(const float3& newPos) {}
 	virtual void ForcedSpin(const float3& newDir) {}
 
 	void Move3D(const float3& v, bool relative) {
@@ -100,6 +100,12 @@ public:
 	void SetMidAndAimPos(const float3& mp, const float3& ap, bool relative) {
 		SetMidPos(mp, relative);
 		SetAimPos(ap, relative);
+	}
+
+	virtual CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const {
+		// should never get called (should be pure virtual, but cause of CREG we cannot use it)
+		assert(false);
+		return CMatrix44f();
 	}
 
 	/**
@@ -174,6 +180,7 @@ public:
 	bool isMoving;                              ///< = velocity.length() > 0.0
 	bool isUnderWater;                          ///< true if this object is completely submerged (pos + height < 0)
 	bool isMarkedOnBlockingMap;                 ///< true if this object is currently marked on the GroundBlockingMap
+	float3 groundBlockPos;
 
 	float3 speed;                               ///< current velocity vector (length in elmos/frame)
 	float3 residualImpulse;                     ///< Used to sum up external impulses.
@@ -182,7 +189,8 @@ public:
 	int allyteam;                               ///< allyteam that this->team is part of
 
 	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
-	MoveDef* moveDef;                           ///< holds information about the mobility of this object (if NULL, object is either static or aircraft)
+
+	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
 	CollisionVolume* collisionVolume;
 	SolidObjectGroundDecal* groundDecal;
 
@@ -200,7 +208,7 @@ public:
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
 	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
-	int buildFacing;                            ///< Orientation of footprint, 4 different states
+	short int buildFacing;                      ///< Orientation of footprint, 4 different states
 
 	static const float DEFAULT_MASS;
 	static const float MINIMUM_MASS;

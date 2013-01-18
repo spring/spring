@@ -21,7 +21,6 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
-#include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/SideParser.h"
@@ -61,12 +60,12 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/bitops.h"
 #include "System/myMath.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
-#include "System/mmgr.h"
 
 #include <set>
 #include <list>
@@ -213,6 +212,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitVelocity);
 	REGISTER_LUA_CFUNC(GetUnitBuildFacing);
 	REGISTER_LUA_CFUNC(GetUnitIsBuilding);
+	REGISTER_LUA_CFUNC(GetUnitCurrentBuildPower);
+	REGISTER_LUA_CFUNC(GetUnitNanoPieces);
 	REGISTER_LUA_CFUNC(GetUnitTransporter);
 	REGISTER_LUA_CFUNC(GetUnitIsTransporting);
 	REGISTER_LUA_CFUNC(GetUnitShieldState);
@@ -277,6 +278,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroundInfo);
 	REGISTER_LUA_CFUNC(GetGroundBlocked);
 	REGISTER_LUA_CFUNC(GetGroundExtremes);
+	REGISTER_LUA_CFUNC(GetTerrainTypeData);
 
 	REGISTER_LUA_CFUNC(GetSmoothMeshHeight);
 
@@ -444,6 +446,25 @@ static int PushCollisionVolumeData(lua_State* L, const CollisionVolume* vol) {
 	lua_pushnumber(L, vol->GetPrimaryAxis());
 	lua_pushboolean(L, vol->IgnoreHits());
 	return 10;
+}
+
+static int PushTerrainTypeData(lua_State* L, const CMapInfo::TerrainType* tt, bool groundInfo) {
+	lua_pushsstring(L, tt->name);
+
+	if (groundInfo) {
+		assert(lua_isnumber(L, 1));
+		assert(lua_isnumber(L, 2));
+		// WTF is this still doing here?
+		LuaMetalMap::GetMetalAmount(L);
+	}
+
+	lua_pushnumber(L, tt->hardness);
+	lua_pushnumber(L, tt->tankSpeed);
+	lua_pushnumber(L, tt->kbotSpeed);
+	lua_pushnumber(L, tt->hoverSpeed);
+	lua_pushnumber(L, tt->shipSpeed);
+	lua_pushboolean(L, tt->receiveTracks);
+	return (7 + int(groundInfo));
 }
 
 
@@ -2935,6 +2956,81 @@ int LuaSyncedRead::GetUnitIsBuilding(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitCurrentBuildPower(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const NanoPieceCache* pieceCache = NULL;
+
+	{
+		const CBuilder* builder = dynamic_cast<const CBuilder*>(unit);
+
+		if (builder != NULL) {
+			pieceCache = &builder->GetNanoPieceCache();
+		}
+
+		const CFactory* factory = dynamic_cast<const CFactory*>(unit);
+
+		if (factory != NULL) {
+			pieceCache = &factory->GetNanoPieceCache();
+		}
+	}
+
+	if (pieceCache == NULL)
+		return 0;
+
+	lua_pushnumber(L, pieceCache->GetBuildPower());
+	return 1;
+}
+
+
+int LuaSyncedRead::GetUnitNanoPieces(lua_State* L)
+{
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const NanoPieceCache* pieceCache = NULL;
+	const std::vector<int>* nanoPieces = NULL;
+
+	{
+		const CBuilder* builder = dynamic_cast<const CBuilder*>(unit);
+
+		if (builder != NULL) {
+			pieceCache = &builder->GetNanoPieceCache();
+			nanoPieces = &pieceCache->GetNanoPieces();
+		}
+
+		const CFactory* factory = dynamic_cast<const CFactory*>(unit);
+
+		if (factory != NULL) {
+			pieceCache = &factory->GetNanoPieceCache();
+			nanoPieces = &pieceCache->GetNanoPieces();
+		}
+	}
+
+	if (nanoPieces == NULL || nanoPieces->empty())
+		return 0;
+
+	lua_createtable(L, nanoPieces->size(), 0);
+
+	for (size_t p = 0; p < nanoPieces->size(); p++) {
+		const int scriptnum = (*nanoPieces)[p];
+		const int piecenum  = unit->script->ScriptToModel(scriptnum) + 1;
+
+		lua_pushnumber(L, p + 1);
+		lua_pushnumber(L, piecenum);
+		lua_rawset(L, -3);
+	}
+
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitTransporter(lua_State* L)
 {
 	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
@@ -3228,7 +3324,7 @@ int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	const LocalModel* lm = unit->localmodel;
+	const LocalModel* lm = unit->localModel;
 	const int pieceIndex = luaL_checkint(L, 2);
 
 	if (pieceIndex < 0 || pieceIndex >= lm->pieces.size()) {
@@ -4378,8 +4474,6 @@ int LuaSyncedRead::GetProjectileName(lua_State* L)
 		return 0;
 	}
 
-	assert(pro->weapon || pro->piece);
-
 	if (pro->weapon) {
 		const CWeaponProjectile* wpro = dynamic_cast<const CWeaponProjectile*>(pro);
 
@@ -4399,6 +4493,7 @@ int LuaSyncedRead::GetProjectileName(lua_State* L)
 		}
 	}
 
+	// neither weapon nor piece likely means the projectile is CExpGenSpawner, should we return any name in this case?
 	return 0;
 }
 
@@ -4441,25 +4536,19 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
 
-	const int ix = (int)(max(0.0f, min(float3::maxxpos, x)) / 16.0f);
-	const int iz = (int)(max(0.0f, min(float3::maxzpos, z)) / 16.0f);
-
-	const float metal = readmap->metalMap->GetMetalAmount(ix, iz);
+	const int ix = Clamp(x, 0.0f, float3::maxxpos) / (SQUARE_SIZE * 2);
+	const int iz = Clamp(z, 0.0f, float3::maxzpos) / (SQUARE_SIZE * 2);
 
 	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
-	const int index = min(maxIndex, (gs->hmapx * iz) + ix);
-	const int typeIndex = readmap->GetTypeMapSynced()[index];
-	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[typeIndex];
+	const int sqrIndex = std::min(maxIndex, (gs->hmapx * iz) + ix);
+	const int typeIndex = readmap->GetTypeMapSynced()[sqrIndex];
 
-	lua_pushsstring(L, tt.name);
-	lua_pushnumber(L, metal);
-	lua_pushnumber(L, tt.hardness * mapDamage->mapHardness);
-	lua_pushnumber(L, tt.tankSpeed);
-	lua_pushnumber(L, tt.kbotSpeed);
-	lua_pushnumber(L, tt.hoverSpeed);
-	lua_pushnumber(L, tt.shipSpeed);
-	lua_pushboolean(L, tt.receiveTracks);
-	return 8;
+	// arguments to LuaMetalMap::GetMetalAmount in half-heightmap coors
+	lua_pop(L, 2);
+	lua_pushnumber(L, ix);
+	lua_pushnumber(L, iz);
+
+	return (PushTerrainTypeData(L, &mapInfo->terrainTypes[typeIndex], true));
 }
 
 
@@ -4544,6 +4633,18 @@ int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 	return 2;
 }
 
+
+int LuaSyncedRead::GetTerrainTypeData(lua_State* L)
+{
+	const int tti = luaL_checkint(L, 1);
+
+	if (tti < 0 || tti >= CMapInfo::NUM_TERRAIN_TYPES) {
+		return 0;
+	}
+
+	return (PushTerrainTypeData(L, &mapInfo->terrainTypes[tti], false));
+}
+
 /******************************************************************************/
 
 int LuaSyncedRead::GetSmoothMeshHeight(lua_State *L)
@@ -4564,12 +4665,12 @@ int LuaSyncedRead::TestMoveOrder(lua_State* L)
 	const int unitDefID = luaL_checkint(L, 1);
 	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 
-	if (unitDef == NULL) {
+	if (unitDef == NULL || unitDef->pathType == -1U) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	const MoveDef* moveDef = unitDef->moveDef;
+	const MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(unitDef->pathType);
 
 	if (moveDef == NULL) {
 		lua_pushboolean(L, !unitDef->IsImmobileUnit());
@@ -4829,7 +4930,7 @@ int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localModel;
 	lua_newtable(L);
 	for (size_t i = 0; i < localModel->pieces.size(); i++) {
 		const LocalModelPiece& lp = *localModel->pieces[i];
@@ -4847,7 +4948,7 @@ int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localModel;
 	lua_newtable(L);
 	for (size_t i = 0; i < localModel->pieces.size(); i++) {
 		const LocalModelPiece& lp = *localModel->pieces[i];
@@ -4867,9 +4968,9 @@ static int GetUnitPieceInfo(lua_State* L, const ModelType& op)
 
 	HSTR_PUSH(L, "children");
 	lua_newtable(L);
-	for (int c = 0; c < (int)op.childs.size(); c++) {
+	for (int c = 0; c < (int)op.children.size(); c++) {
 		lua_pushnumber(L, c + 1);
-		lua_pushsstring(L, op.childs[c]->name);
+		lua_pushsstring(L, op.children[c]->name);
 		lua_rawset(L, -3);
 	}
 	lua_rawset(L, -3);
@@ -4911,7 +5012,7 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localModel;
 
 	const int piece = luaL_checkint(L, 2) - 1;
 	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
@@ -4929,7 +5030,7 @@ int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localModel;
 	if (localModel == NULL) {
 		return 0;
 	}
@@ -4951,7 +5052,7 @@ int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localModel;
 	if (localModel == NULL) {
 		return 0;
 	}
@@ -4984,7 +5085,7 @@ int LuaSyncedRead::GetUnitPieceDirection(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localModel;
 	if (localModel == NULL) {
 		return 0;
 	}
@@ -5006,7 +5107,7 @@ int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localModel;
 	if (localModel == NULL) {
 		return 0;
 	}
@@ -5014,7 +5115,7 @@ int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
-	const CMatrix44f mat = unit->localmodel->GetRawPieceMatrix(piece);
+	const CMatrix44f mat = localModel->GetRawPieceMatrix(piece);
 	for (int m = 0; m < 16; m++) {
 		lua_pushnumber(L, mat.m[m]);
 	}

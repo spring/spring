@@ -1101,8 +1101,6 @@ EXPORT(int              ) skirmishAiCallback_WeaponDef_getNumBounce(int skirmish
 
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getMaxAngle(int skirmishAIId, int weaponDefId);
 
-EXPORT(float            ) skirmishAiCallback_WeaponDef_getRestTime(int skirmishAIId, int weaponDefId);
-
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getUpTime(int skirmishAIId, int weaponDefId);
 
 EXPORT(int              ) skirmishAiCallback_WeaponDef_getFlightTime(int skirmishAIId, int weaponDefId);

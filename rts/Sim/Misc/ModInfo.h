@@ -16,6 +16,7 @@ public:
 		, allowCrushingAlliedUnits(false)
 		, allowUnitCollisionDamage(false)
 		, allowUnitCollisionOverlap(true)
+		, allowGroundUnitGravity(true)
 		, useClassicGroundMoveType(false)
 		, constructionDecay(true)
 		, constructionDecayTime(1000)
@@ -31,7 +32,6 @@ public:
 		, repairEnergyCostFactor(0.0f)
 		, resurrectEnergyCostFactor(0.5f)
 		, captureEnergyCostFactor(0.0f)
-		, unitParalysisDeclineScale(1.0f)
 		, paralyzeOnMaxHealth(true)
 		, transportGround(1)
 		, transportHover(0)
@@ -86,6 +86,7 @@ public:
 	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
 	bool allowUnitCollisionDamage;   // determines if units take damage from (skidding) collisions
 	bool allowUnitCollisionOverlap;  // determines if unit footprints are allowed to semi-overlap during collisions
+	bool allowGroundUnitGravity;     // determines if (ground-)units experience gravity during regular movement
 	bool useClassicGroundMoveType;   // determines if (ground-)units use the CClassicGroundMoveType path-follower
 
 	// Build behaviour
@@ -125,8 +126,6 @@ public:
 	// Capture behaviour
 	/// How much should energy should capture cost, default 0.0
 	float captureEnergyCostFactor;
-
-	float unitParalysisDeclineScale;
 
 	// Paralyze behaviour
 	/// paralyze unit depending on maxHealth? if not depending on current health, default true

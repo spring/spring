@@ -26,6 +26,7 @@ extern "C" {
  * @param filePath the path to the log file
  * @param sections A list of comma separated sections to log to the file or
  *   NULL to log everything. To include the default section, you have to include
+ * @param minLevel minimum log-level for this logfile
  * @param flush instantly flush the logfile after data was written, will cause a slowdown
  *   ",,".
  */

@@ -35,7 +35,7 @@ public:
 	void FinishCommand();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void BuggerOff(const float3& pos, float radius);
-	bool TargetInterceptable(CUnit *unit, float uspeed);
+	bool TargetInterceptable(const CUnit* unit, float uspeed);
 
 	void ExecuteBuildCmd(Command& c);
 	void ExecutePatrol(Command& c);
@@ -54,7 +54,7 @@ public:
 	/**
 	 * Checks if a unit is being reclaimed by a friendly con.
 	 */
-	static bool IsUnitBeingReclaimed(CUnit* unit, CUnit* friendUnit = NULL);
+	static bool IsUnitBeingReclaimed(const CUnit* unit, CUnit* friendUnit = NULL);
 	static bool IsFeatureBeingReclaimed(int featureId, CUnit* friendUnit = NULL);
 	static bool IsFeatureBeingResurrected(int featureId, CUnit* friendUnit = NULL);
 
@@ -77,7 +77,7 @@ private:
 		REC_ENEMYONLY  = 1<<4,
 		REC_SPECIAL    = 1<<5
 	};
-	typedef BitwiseEnum<ReclaimOptions> ReclaimOption;
+	typedef Bitwise::BitwiseEnum<ReclaimOptions> ReclaimOption;
 
 private:
 	/**
@@ -97,6 +97,9 @@ private:
 	 */
 	bool FindRepairTargetAndRepair(const float3& pos, float radius, unsigned char options, bool attackEnemy, bool builtOnly);
 	/**
+	 * @param pos         position where to search for units to capture
+	 * @param radius      radius in which are searched units to capture
+	 * @param options     command options
 	 * @param healthyOnly only capture units with capture progress or 100% health remaining
 	 */
 	bool FindCaptureTargetAndCapture(const float3& pos, float radius, unsigned char options, bool healthyOnly);

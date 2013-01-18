@@ -6,11 +6,15 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <boost/utility.hpp>
 
 #include "System/maindefines.h"
 
+
+
 #define DO_ONCE(func) \
 	struct do_once##func { do_once##func() {func();} }; static do_once##func do_once_var##func;
+
 
 static inline void StringToLowerInPlace(std::string& s)
 {
@@ -23,11 +27,40 @@ static inline std::string StringToLower(std::string s)
 	return s;
 }
 
-static inline std::string Quote(std::string s)
+/**
+ * @brief Escape special characters and wrap in double quotes.
+ */
+static inline std::string Quote(std::string esc)
 {
+	std::string::size_type pos = 0;
+	while ((pos = esc.find_first_of("\"\\\b\f\n\r\t", pos)) != std::string::npos) {
+		switch (esc[pos]) {
+			case '\"':
+			case '\\': esc.insert(pos, "\\"); break;
+			case '\b': esc.replace(pos, 1, "\\b"); break;
+			case '\f': esc.replace(pos, 1, "\\f"); break;
+			case '\n': esc.replace(pos, 1, "\\n"); break;
+			case '\r': esc.replace(pos, 1, "\\r"); break;
+			case '\t': esc.replace(pos, 1, "\\t"); break;
+		}
+		pos += 2;
+	}
+	
 	std::ostringstream buf;
-	buf << "\"" << s << "\"";
+	buf << "\"" << esc << "\"";
 	return buf.str();
+}
+
+
+/**
+ * @brief Escape special characters and wrap in double quotes.
+ */
+static inline std::string UnQuote(const std::string& str)
+{
+	if (str[0] == '"' && str[str.length() - 1] == '"') {
+		return str.substr(1, str.length() - 2);
+	}
+	return str;
 }
 
 //! replace all characters matching 'c' in a string by 'd'
@@ -72,6 +105,16 @@ static inline std::string FloatToString(float f, const std::string& format = "%f
 	return std::string(buf);
 }
 
+static inline int StringToInt(std::string str, bool* failed)
+{
+	StringTrimInPlace(str);
+	std::istringstream stream(str);
+	int buffer = 0;
+	stream >> buffer;
+	*failed = stream.fail();
+	return buffer;
+}
+
 /**
  * Returns true of the argument string matches "0|n|no|f|false".
  * The matching is done case insensitive.
@@ -90,6 +133,15 @@ bool StringEndsWith(const std::string& str, const char* postfix);
 static inline bool StringEndsWith(const std::string& str, const std::string& postfix)
 {
 	return StringEndsWith(str, postfix.c_str());
+}
+
+/// Helper function to avoid division by Zero
+static inline float SafeDivide(const float a, const float b)
+{
+	if (b==0)
+		return a;
+	else
+		return a/b;
 }
 
 /**
@@ -130,6 +182,80 @@ inline I set_erase(S &s, I i) {
 		return i;
 #endif
 }
+
+
+
+
+/**
+ * @brief Untyped base class for TypedStringConvertibleOptionalValue.
+ */
+class StringConvertibleOptionalValue : public boost::noncopyable
+{
+public:
+	StringConvertibleOptionalValue() : isSet(false) {}
+	virtual ~StringConvertibleOptionalValue() {}
+	virtual std::string ToString() const = 0;
+	bool IsSet() const { return isSet; }
+
+protected:
+	bool isSet;
+};
+
+/**
+ * @brief Wraps a value and detects whether it has been assigned to.
+ */
+template<typename T>
+class TypedStringConvertibleOptionalValue : public StringConvertibleOptionalValue
+{
+public:
+	TypedStringConvertibleOptionalValue<T>& operator=(const T& x) {
+		value = x;
+		isSet = true;
+		return *this;
+	}
+	const T& Get() const { return value; }
+
+	std::string ToString() const
+	{
+		std::ostringstream buf;
+		buf << value;
+		return buf.str();
+	}
+
+	static T FromString(const std::string& value)
+	{
+		std::istringstream buf(value);
+		T temp;
+		buf >> temp;
+		return temp;
+	}
+
+protected:
+	T value;
+};
+
+/**
+ * @brief Specialization for std::string
+ *
+ * This exists because 1) converting from std::string to std::string is a no-op
+ * and 2) converting from std::string to std::string using std::istringstream
+ * will treat spaces as word boundaries, which we do not want.
+ */
+template<>
+class TypedStringConvertibleOptionalValue<std::string> : public StringConvertibleOptionalValue
+{
+	typedef std::string T;
+
+public:
+	void operator=(const T& x) { value = x; isSet = true; }
+	const T& Get() const { return value; }
+
+	std::string ToString() const { return value; }
+	static T FromString(const std::string& value) { return value; }
+
+protected:
+	T value;
+};
 
 
 #endif // UTIL_H

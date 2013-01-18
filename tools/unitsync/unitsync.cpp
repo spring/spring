@@ -20,7 +20,7 @@
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/LuaAIImplHandler.h"
-#include "System/FileSystem/IArchive.h"
+#include "System/FileSystem/Archives/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/DataDirsAccess.h"
@@ -62,7 +62,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_UNITSYNC)
 
 // NOTE This means that the DLL can only support one instance.
 //   This is no problem in the current architecture.
-static CSyncer* syncer;
+static CSyncer* syncer = NULL;
 
 static bool logOutputInitialised = false;
 // for we do not have to include global-stuff (Sim/Misc/GlobalConstants.h)
@@ -122,7 +122,7 @@ private:
 
 static void CheckInit()
 {
-	if (!archiveScanner || !vfsHandler)
+	if (!archiveScanner || !vfsHandler || !syncer)
 		throw std::logic_error("Unitsync not initialized. Call Init first.");
 }
 
@@ -420,6 +420,7 @@ EXPORT(int) ProcessUnits()
 	int leftToProcess = -1;
 
 	try {
+		CheckInit();
 		LOG_L(L_DEBUG, "syncer: process units");
 		leftToProcess = syncer->ProcessUnits();
 	}

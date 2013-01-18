@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 #include "DebugColVolDrawer.h"
 
 #include "Game/Camera.h"
@@ -138,7 +137,7 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 	glPushMatrix();
 		glMultMatrixf(mat.m);
 
-		if (p->visible && !p->GetCollisionVolume()->IgnoreHits()) {
+		if (p->scriptSetVisible && !p->GetCollisionVolume()->IgnoreHits()) {
 			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
 				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
 			}
@@ -151,8 +150,8 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 		}
 	glPopMatrix();
 
-	for (unsigned int i = 0; i < p->childs.size(); i++) {
-		DrawUnitDebugPieceTree(p->childs[i], lap, lapf, mat);
+	for (unsigned int i = 0; i < p->children.size(); i++) {
+		DrawUnitDebugPieceTree(p->children[i], lap, lapf, mat);
 	}
 }
 
@@ -173,7 +172,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 		if (v->DefaultToPieceTree()) {
 			// draw only the piece volumes for less clutter
 			CMatrix44f mat(u->relMidPos * float3(0.0f, -1.0f, 0.0f));
-			DrawUnitDebugPieceTree(u->localmodel->GetRoot(), u->lastAttackedPiece, u->lastAttackedPieceFrame, mat);
+			DrawUnitDebugPieceTree(u->localModel->GetRoot(), u->lastAttackedPiece, u->lastAttackedPieceFrame, mat);
 		} else {
 			if (!v->IgnoreHits()) {
 				// make it fade red under attack

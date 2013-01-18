@@ -17,7 +17,7 @@
  */
 class CColorMap
 {
-	CR_DECLARE(CColorMap);
+	CR_DECLARE_STRUCT(CColorMap);
 public:
 	CColorMap();
 	/// Loads from a float vector

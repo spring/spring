@@ -3,7 +3,6 @@
 
 #include "SMFMapFile.h"
 #include "Map/ReadMap.h"
-#include "System/mmgr.h"
 #include "System/Exceptions.h"
 
 #include <cassert>

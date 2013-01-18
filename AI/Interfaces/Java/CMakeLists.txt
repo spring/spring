@@ -453,6 +453,13 @@ if    (BUILD_${myName}_AIINTERFACE)
 		"${myJavaGeneratedSourceDir}/${myPkg}/AbstractAI.java"
 		"${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
 		"${myJavaGeneratedSourceDir}/${myPkg}/JniAICallback.java"
+# FIXME: mawk seems to not support length() -> jni_wrappCommands.awk doesn't work:
+# jni_wrappCommands.awk: line 100: illegal reference to local variable names
+# jni_wrappCommands.awk: line 146: illegal reference to array cmdsTopicNames
+# jni_wrappCommands.awk: line 147: illegal reference to array cmdsTopicValues
+# jni_wrappCommands.awk: line 156: illegal reference to array unitCmdsTopicNames
+# jni_wrappCommands.awk: line 163: illegal reference to array unitCmdsTopicValues
+#		"${myJavaGeneratedSourceDir}/${myPkg}/Enumerations.java"
 		)
 
 	set(myGeneratedSources
@@ -473,7 +480,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		endif ()
 	endforeach (genFile)
 
-
+	#cleanup generated dir if some input file changed
 	add_custom_command(
 		OUTPUT
 			${myGeneratedSourceDirStubFile}
@@ -491,6 +498,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${myAwkScriptsDir}/native_wrappCallback.awk"
 			"${myAwkScriptsDir}/native_wrappCommands.awk"
 			"${myAwkScriptsDir}/jni_wrappCallback.awk"
+			"${myAwkScriptsDir}/jni_wrappCommands.awk"
 			"${myAwkScriptsDir}/jni_wrappEvents.awk"
 			"${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
 			"${springAIInterfaceSourceDir}/AISCommands.h"
@@ -573,7 +581,26 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMENT
 			"  ${myTarget}: Generating JNI events wrapper sources" VERBATIM
 		)
+	# 5. Wrapp ENUMS
 
+	add_custom_command(
+		OUTPUT
+			"${myJavaGeneratedSourceDir}/${myPkg}/Enumerations.java"
+		COMMAND "${AWK_BIN}"
+			${commonAwkScriptArgs}
+			"-f" "${myAwkScriptsDir}/jni_wrappCommands.awk"
+			"${springAIInterfaceSourceDir}/AISCommands.h"
+		DEPENDS
+			"${myGeneratedSourceDirStubFile}"
+			"${commonAwkScriptsDir}/common.awk"
+			"${commonAwkScriptsDir}/commonDoc.awk"
+			"${myAwkScriptsDir}/jni_wrappCommands.awk"
+			"${springAIInterfaceSourceDir}/AISCommands.h"
+		WORKING_DIRECTORY
+			"${myAwkScriptsDir}"
+		COMMENT
+			"  ${myTarget}: Generating enums wrapper sources" VERBATIM
+		)
 	add_custom_target(${myGenTarget} DEPENDS ${myGeneratedSources})
 	add_dependencies(generateSources ${myGenTarget})
 
@@ -636,7 +663,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			# (less then 1s per build => negliable), but prevetns multiple
 			# execution of the source generating custom-commands
 			# (which results in wrongly generated source files with "make -j <X>")
-			#${myJavaGeneratedSources}
+			${myJavaGeneratedSources}
 			${myNativeTarget}
 		WORKING_DIRECTORY
 			"${myJavaGeneratedSourceDir}"
@@ -668,7 +695,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			# (less then 1s per build => negliable), but prevetns multiple
 			# execution of the source generating custom-commands
 			# (which results in wrongly generated source files with "make -j <X>")
-			#${myJavaGeneratedSources}
+			${myJavaGeneratedSources}
 			${myNativeTarget}
 		WORKING_DIRECTORY
 			"${myBuildDir}"

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "DynWater.h"
 #include "Game/Game.h"
@@ -1122,8 +1121,7 @@ void CDynWater::AddShipWakes()
 
 		for (std::set<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* unit = *ui;
-			const UnitDef* unitDef = unit->unitDef;
-			const MoveDef* moveDef = unitDef->moveDef;
+			const MoveDef* moveDef = unit->moveDef;
 
 			if (moveDef == NULL) {
 				continue;

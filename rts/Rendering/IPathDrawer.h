@@ -16,6 +16,7 @@ public:
 	virtual void UpdateExtraTexture(int, int, int, int, unsigned char*) const {}
 
 	bool ToggleEnabled() { enabled = !enabled; return enabled; }
+	bool IsEnabled() const { return enabled; }
 
 	static IPathDrawer* GetInstance();
 	static void FreeInstance(IPathDrawer*);

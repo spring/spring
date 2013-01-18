@@ -205,6 +205,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	//! Simplified dimensions used for rough calculations
 	model->radius = metaTable.GetFloat("radius", model->radius);
 	model->height = metaTable.GetFloat("height", model->height);
+	model->drawRadius = metaTable.GetFloat("drawRadius", model->drawRadius);
 	model->relMidPos = metaTable.GetFloat3("midpos", model->relMidPos);
 	model->mins = metaTable.GetFloat3("mins", model->mins);
 	model->maxs = metaTable.GetFloat3("maxs", model->maxs);
@@ -219,6 +220,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->numobjects: %d", model->numPieces);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->radius: %f", model->radius);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->height: %f", model->height);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->drawRadius: %f", model->drawRadius);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->mins: (%f,%f,%f)", model->mins[0], model->mins[1], model->mins[2]);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->maxs: (%f,%f,%f)", model->maxs[0], model->maxs[1], model->maxs[2]);
 
@@ -460,7 +462,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		}
 
 		//! extract face data
-		// FIXME add piece->vertexDrawOrder.reserve()
+		// FIXME add piece->vertexDrawIndices.reserve()
 		LOG_SL(LOG_SECTION_PIECE, L_DEBUG,
 				"Processing faces for mesh %d (%d faces)",
 				meshIndex, mesh->mNumFaces);
@@ -470,7 +472,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 			for (unsigned vertexListID = 0; vertexListID < face.mNumIndices; ++vertexListID) {
 				unsigned int vertexID = mesh_vertex_mapping[face.mIndices[vertexListID]];
 				//LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "face %d vertex %d", faceIndex, vertexID);
-				piece->vertexDrawOrder.push_back(vertexID);
+				piece->vertexDrawIndices.push_back(vertexID);
 			}
 		}
 	}
@@ -532,7 +534,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 						"Missing piece '%s' declared as parent of '%s'.",
 						piece->parentName.c_str(), piece->name.c_str());
 			} else {
-				piece->parent->childs.push_back(piece);
+				piece->parent->children.push_back(piece);
 				++model->numPieces;
 			}
 		} else {
@@ -541,7 +543,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 			if (piece->parent == NULL) {
 				LOG_SL(LOG_SECTION_PIECE, L_ERROR, "Missing root piece");
 			} else {
-				piece->parent->childs.push_back(piece);
+				piece->parent->children.push_back(piece);
 				++model->numPieces;
 			}
 		}
@@ -562,9 +564,9 @@ void CAssParser::CalculateMinMax(S3DModelPiece* piece)
 	piece->model->maxs.y = std::max(piece->goffset.y + piece->maxs.y, piece->model->maxs.y);
 	piece->model->maxs.z = std::max(piece->goffset.z + piece->maxs.z, piece->model->maxs.z);
 
-	//! Repeat with childs
-	for (unsigned int i = 0; i < piece->childs.size(); i++) {
-		CalculateMinMax(piece->childs[i]);
+	//! Repeat with children
+	for (unsigned int i = 0; i < piece->children.size(); i++) {
+		CalculateMinMax(piece->children[i]);
 	}
 }
 
@@ -572,13 +574,8 @@ void CAssParser::CalculateMinMax(S3DModelPiece* piece)
 //! Calculate model radius from the min/max extents
 void CAssParser::CalculateRadius(S3DModel* model)
 {
-	model->radius = std::max(model->radius, math::fabs(model->maxs.x));
-	model->radius = std::max(model->radius, math::fabs(model->maxs.y));
-	model->radius = std::max(model->radius, math::fabs(model->maxs.z));
-
-	model->radius = std::max(model->radius, math::fabs(model->mins.x));
-	model->radius = std::max(model->radius, math::fabs(model->mins.y));
-	model->radius = std::max(model->radius, math::fabs(model->mins.z));
+	model->radius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
+	model->drawRadius = model->radius;
 }
 
 
@@ -634,7 +631,7 @@ void SAssPiece::DrawForList() const
 	 * anything more complex than triangles is
 	 * being split thanks to aiProcess_Triangulate
 	 */
-	glDrawElements(GL_TRIANGLES, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
+	glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, &vertexDrawIndices[0]);
 
 	if (!sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE6);

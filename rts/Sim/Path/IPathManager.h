@@ -28,6 +28,7 @@ public:
 	virtual bool PathUpdated(unsigned int pathID) { return false; }
 
 	virtual void Update() {}
+	virtual void UpdateFull() {}
 	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathID) {}
 
 	/**
@@ -149,6 +150,7 @@ public:
 	 * @param z2
 	 *     Second corners Z-axis value, defining the rectangular area
 	 *     affected by the changes.
+	 * @param type see @TerrainChangeTypes
 	 */
 	virtual void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int type) {}
 

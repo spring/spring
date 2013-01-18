@@ -369,7 +369,7 @@ template<class T>
 class gmlVectorIter {
 public:
 	T *p; 
-	gmlVectorIter() {} 
+	gmlVectorIter():p(NULL) {}
 	gmlVectorIter(T *d) {p=d;} 
 	void operator=(const GML_TYPENAME gmlVectorIter<T> &i) {p=i.p;}
 	GML_TYPENAME gmlVectorIter<T> &operator++() {++p; return *this;} 
@@ -1054,9 +1054,11 @@ public:
 		csize = 0;
 		back = front;
 	}
-	void resize(size_t i) {
+	void resize(size_t i, const T v = T()) {
 		if(i > msize)
 			i = msize;
+		for (int j = csize; j < i; ++j)
+			(*this)[back + j] = v;
 		csize = i;
 		back = (front + i) % (msize + 1);
 	}

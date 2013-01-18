@@ -174,25 +174,25 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		LOG_L(L_ERROR, "Could not finalize projectile-texture atlas. Use less/smaller textures.");
 	}
 
-	flaretex        = textureAtlas->GetTexturePtr("flare");
-	explotex        = textureAtlas->GetTexturePtr("explo");
-	explofadetex    = textureAtlas->GetTexturePtr("explofade");
-	heatcloudtex    = textureAtlas->GetTexturePtr("heatcloud");
-	laserendtex     = textureAtlas->GetTexturePtr("laserend");
-	laserfallofftex = textureAtlas->GetTexturePtr("laserfalloff");
-	randdotstex     = textureAtlas->GetTexturePtr("randdots");
-	smoketrailtex   = textureAtlas->GetTexturePtr("smoketrail");
-	waketex         = textureAtlas->GetTexturePtr("wake");
-	perlintex       = textureAtlas->GetTexturePtr("perlintex");
-	flametex        = textureAtlas->GetTexturePtr("flame");
+	flaretex        = &textureAtlas->GetTexture("flare");
+	explotex        = &textureAtlas->GetTexture("explo");
+	explofadetex    = &textureAtlas->GetTexture("explofade");
+	heatcloudtex    = &textureAtlas->GetTexture("heatcloud");
+	laserendtex     = &textureAtlas->GetTexture("laserend");
+	laserfallofftex = &textureAtlas->GetTexture("laserfalloff");
+	randdotstex     = &textureAtlas->GetTexture("randdots");
+	smoketrailtex   = &textureAtlas->GetTexture("smoketrail");
+	waketex         = &textureAtlas->GetTexture("wake");
+	perlintex       = &textureAtlas->GetTexture("perlintex");
+	flametex        = &textureAtlas->GetTexture("flame");
 
 	for (int i = 0; i < smokeTexCount; i++) {
 		const std::string smokeName = "ismoke" + IntToString(i, "%02i");
-		const AtlasedTexture* smokeTex = textureAtlas->GetTexturePtr(smokeName);
+		const AtlasedTexture* smokeTex = &textureAtlas->GetTexture(smokeName);
 		smoketex.push_back(smokeTex);
 	}
 
-#define GETTEX(t, b) (textureAtlas->GetTexturePtrWithBackup((t), (b)))
+#define GETTEX(t, b) (&textureAtlas->GetTextureWithBackup((t), (b)))
 	sbtrailtex         = GETTEX("sbtrailtexture",         "smoketrail"    );
 	missiletrailtex    = GETTEX("missiletrailtexture",    "smoketrail"    );
 	muzzleflametex     = GETTEX("muzzleflametexture",     "explo"         );
@@ -218,9 +218,9 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		LOG_L(L_ERROR, "Could not finalize groundFX texture atlas. Use less/smaller textures.");
 	}
 
-	groundflashtex = groundFXAtlas->GetTexturePtr("groundflash");
-	groundringtex = groundFXAtlas->GetTexturePtr("groundring");
-	seismictex = groundFXAtlas->GetTexturePtr("seismic");
+	groundflashtex = &groundFXAtlas->GetTexture("groundflash");
+	groundringtex = &groundFXAtlas->GetTexture("groundring");
+	seismictex = &groundFXAtlas->GetTexture("seismic");
 
 	for (int a = 0; a < 4; ++a) {
 		perlinBlend[a] = 0.0f;
@@ -368,9 +368,9 @@ void CProjectileDrawer::LoadWeaponTextures() {
 			wd.visuals.texture2 = laserendtex;
 		} else if (wd.type == "BeamLaser") {
 			if (wd.largeBeamLaser) {
-				wd.visuals.texture1 = textureAtlas->GetTexturePtr("largebeam");
+				wd.visuals.texture1 = &textureAtlas->GetTexture("largebeam");
 				wd.visuals.texture2 = laserendtex;
-				wd.visuals.texture3 = textureAtlas->GetTexturePtr("muzzleside");
+				wd.visuals.texture3 = &textureAtlas->GetTexture("muzzleside");
 				wd.visuals.texture4 = beamlaserflaretex;
 			} else {
 				wd.visuals.texture1 = laserfallofftex;
@@ -391,10 +391,10 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		}
 
 		// override the textures if we have specified names for them
-		if (wd.visuals.texNames[0] != "") { wd.visuals.texture1 = textureAtlas->GetTexturePtr(wd.visuals.texNames[0]); }
-		if (wd.visuals.texNames[1] != "") { wd.visuals.texture2 = textureAtlas->GetTexturePtr(wd.visuals.texNames[1]); }
-		if (wd.visuals.texNames[2] != "") { wd.visuals.texture3 = textureAtlas->GetTexturePtr(wd.visuals.texNames[2]); }
-		if (wd.visuals.texNames[3] != "") { wd.visuals.texture4 = textureAtlas->GetTexturePtr(wd.visuals.texNames[3]); }
+		if (wd.visuals.texNames[0] != "") { wd.visuals.texture1 = &textureAtlas->GetTexture(wd.visuals.texNames[0]); }
+		if (wd.visuals.texNames[1] != "") { wd.visuals.texture2 = &textureAtlas->GetTexture(wd.visuals.texNames[1]); }
+		if (wd.visuals.texNames[2] != "") { wd.visuals.texture3 = &textureAtlas->GetTexture(wd.visuals.texNames[2]); }
+		if (wd.visuals.texNames[3] != "") { wd.visuals.texture4 = &textureAtlas->GetTexture(wd.visuals.texNames[3]); }
 
 		// load weapon explosion generators
 		if (wd.visuals.expGenTag.empty()) {
@@ -937,7 +937,7 @@ void CProjectileDrawer::UpdateTextures() {
 
 void CProjectileDrawer::UpdatePerlin() {
 	perlinFB.Bind();
-	glViewport(perlintex->ixstart, perlintex->iystart, 128, 128);
+	glViewport(perlintex->xstart * textureAtlas->xsize, perlintex->ystart * textureAtlas->ysize, 128, 128);
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();

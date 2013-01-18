@@ -18,4 +18,4 @@
 	url = git://github.com/spring/pyunitsync.git
 [submodule "tools/pr-downloader"]
 	path = tools/pr-downloader
-	url = git://github.com/abma/pr-downloader.git
+	url = git://github.com/spring/pr-downloader.git

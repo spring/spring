@@ -8,6 +8,11 @@
 #ifndef _TYPE_DEDUCTION_H
 #define _TYPE_DEDUCTION_H
 
+#include <boost/shared_ptr.hpp>
+#include "creg.h"
+
+namespace creg {
+
 // Undefined types return 0
 template<typename T>
 struct DeduceType {
@@ -111,6 +116,7 @@ boost::shared_ptr<IType> GetType(T& var) {
 	DeduceType<T> deduce;
 	return deduce.Get();
 }
+};
 
 #endif // _TYPE_DEDUCTION_H
 

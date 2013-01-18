@@ -18,14 +18,13 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
-#include "System/mmgr.h"
 #include "System/MsgStrings.h"
 #include "System/Rectangle.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
 
-CR_BIND(CTeam,);
+CR_BIND(CTeam, (-1));
 CR_REG_METADATA(CTeam, (
 	// from CTeamBase
 	CR_MEMBER(leader),
@@ -86,8 +85,8 @@ CR_REG_METADATA(CTeam, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTeam::CTeam() :
-	teamNum(-1),
+CTeam::CTeam(int _teamNum):
+	teamNum(_teamNum),
 	maxUnits(0),
 	isDead(false),
 	gaia(false),
@@ -224,8 +223,6 @@ void CTeam::Died(bool normalDeath)
 	if (isDead)
 		return;
 
-	isDead = true;
-
 	if (normalDeath) {
 		if (leader >= 0) {
 			const CPlayer* leadPlayer = playerHandler->Player(leader);
@@ -249,13 +246,20 @@ void CTeam::Died(bool normalDeath)
 		}
 	}
 
+	// increase per-team unit-limit for each remaining team in _our_ allyteam
+	teamHandler->UpdateTeamUnitLimitsPreDeath(teamNum);
 	eventHandler.TeamDied(teamNum);
+
+	isDead = true;
 }
 
 void CTeam::AddPlayer(int playerNum)
 {
 	// note: does it matter if this team was already dead?
-	isDead = false;
+	// (besides needing to restore its original unit-limit)
+	if (isDead) {
+		teamHandler->UpdateTeamUnitLimitsPreSpawn(teamNum);
+	}
 
 	if (leader == -1) {
 		leader = playerNum;
@@ -263,6 +267,8 @@ void CTeam::AddPlayer(int playerNum)
 
 	playerHandler->Player(playerNum)->JoinTeam(teamNum);
 	playerHandler->Player(playerNum)->SetControlledTeams();
+
+	isDead = false;
 }
 
 void CTeam::KillAIs()
@@ -272,14 +278,6 @@ void CTeam::KillAIs()
 	for (CSkirmishAIHandler::ids_t::const_iterator ai = localTeamAIs.begin(); ai != localTeamAIs.end(); ++ai) {
 		skirmishAIHandler.SetLocalSkirmishAIDieing(*ai, 2 /* = team died */);
 	}
-}
-
-
-
-CTeam& CTeam::operator=(const TeamBase& base)
-{
-	TeamBase::operator=(base);
-	return *this;
 }
 
 
@@ -379,13 +377,12 @@ void CTeam::SlowUpdate()
 	//! make sure the stats update is always in a SlowUpdate
 	assert(((TeamStatistics::statsPeriod * GAME_SPEED) % TEAM_SLOWUPDATE_RATE) == 0);
 
-	const int statsFrames = TeamStatistics::statsPeriod * GAME_SPEED;
 	if (nextHistoryEntry <= gs->frameNum) {
 		currentStats->frame = gs->frameNum;
 		statHistory.push_back(*currentStats);
 		currentStats = &statHistory.back();
 
-		nextHistoryEntry = gs->frameNum + statsFrames;
+		nextHistoryEntry = gs->frameNum + (TeamStatistics::statsPeriod * GAME_SPEED);
 		currentStats->frame = nextHistoryEntry;
 	}
 }

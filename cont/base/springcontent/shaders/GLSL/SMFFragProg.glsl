@@ -1,8 +1,3 @@
-// ARB shader receives groundAmbientColor multiplied
-// by this constant; shading-texture intensities are
-// also pre-dimmed
-#define SMF_TEXSQR_SIZE 1024.0
-#define SMF_INTENSITY_MUL (210.0 / 255.0)
 #define SSMF_UNCOMPRESSED_NORMALS 0
 #define SMF_SHALLOW_WATER_DEPTH     (10.0                          )
 #define SMF_SHALLOW_WATER_DEPTH_INV ( 1.0 / SMF_SHALLOW_WATER_DEPTH)
@@ -13,14 +8,17 @@
 
 uniform vec4 lightDir;
 
-uniform sampler2D       diffuseTex;
-uniform sampler2D       normalsTex;
-uniform sampler2DShadow shadowTex;
-uniform sampler2D       detailTex;
-uniform sampler2D       specularTex;
-uniform sampler2D       infoTex;
+uniform sampler2D diffuseTex;
+uniform sampler2D normalsTex;
+uniform sampler2D detailTex;
+uniform sampler2D infoTex;
+
+#if (SMF_ARB_LIGHTING == 0)
+	uniform sampler2D specularTex;
+#endif
 
 #if (HAVE_SHADOWS == 1)
+uniform sampler2DShadow shadowTex;
 uniform mat4 shadowMat;
 uniform vec4 shadowParams;
 #endif
@@ -137,8 +135,8 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 	vec4 groundShadeInt;
 	vec4 waterShadeInt;
 
-	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (groundShadowCoeff * groundLightInt);
-	groundShadeInt.rgb *= SMF_INTENSITY_MUL;
+	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (groundLightInt * groundShadowCoeff);
+	groundShadeInt.rgb *= SMF_INTENSITY_MULT;
 
 	#if (SMF_VOID_GROUND == 1)
 	// assume the map(per)'s diffuse texture provides sensible alphas
@@ -164,7 +162,7 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 
 		waterShadeInt.rgb = waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight);
 		waterShadeInt.rgb = max(waterMinColor.rgb, waterShadeInt.rgb);
-		waterShadeInt.rgb *= SMF_INTENSITY_MUL * waterLightInt;
+		waterShadeInt.rgb *= SMF_INTENSITY_MULT * waterLightInt;
 
 		// make shadowed areas darker over deeper water
 		waterShadeInt.rgb -= (waterShadeInt.rgb * waterShadeDecay * (1.0 - groundShadowCoeff));
@@ -214,7 +212,7 @@ void main() {
 		vec2 specTexSize = 1.0 / specularTexGen;
 
 		// scale the parallax offset since it is in spectex-space
-		diffTexCoords += (uvOffset * (specTexSize / SMF_TEXSQR_SIZE));
+		diffTexCoords += (uvOffset * (specTexSize / SMF_TEXSQUARE_SIZE));
 		normTexCoords += (uvOffset * (specTexSize / normTexSize));
 		specTexCoords += (uvOffset);
 
@@ -238,8 +236,8 @@ void main() {
 	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.0, 1.0);
 
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
-	vec4 specularCol = texture2D(specularTex, specTexCoords);
 	vec4 detailCol = GetDetailTextureColor(specTexCoords);
+	vec4 specularCol = vec4(0.5, 0.5, 0.5, 1.0);
 
 	#if (SMF_SKY_REFLECTIONS == 1)
 	{
@@ -295,6 +293,8 @@ void main() {
 	#endif
 
 	#if (SMF_ARB_LIGHTING == 0)
+		specularCol = texture2D(specularTex, specTexCoords);
+
 		// sun specular lighting contribution
 		float specularExp  = specularCol.a * 16.0;
 		float specularPow  = pow(cosAngleSpecular, specularExp);
@@ -338,8 +338,8 @@ void main() {
 
 		lightScale *= ((vectorDot < cutoffDot)? 0.0: 1.0);
 
-		gl_FragColor.rgb += (lightScale *                                     gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].ambient.rgb);
-		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuseCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].diffuse.rgb * lightCosAngDiff));
+		gl_FragColor.rgb += (lightScale *                                       gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].ambient.rgb);
+		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuseCol.rgb  * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].diffuse.rgb * lightCosAngDiff));
 		gl_FragColor.rgb += (lightScale * lightAttenuation * (specularCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].specular.rgb * lightSpecularPow));
 	}
 	#endif

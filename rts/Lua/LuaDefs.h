@@ -5,7 +5,7 @@
 
 #include <map>
 #include <string>
-
+#include <assert.h>
 
 enum DataType {
 	INT_TYPE,
@@ -17,7 +17,7 @@ enum DataType {
 	ERROR_TYPE
 };
 
-
+struct lua_State;
 typedef int (*AccessFunc)(lua_State* L, const void* data);
 
 
@@ -40,35 +40,33 @@ struct DataElement {
 typedef std::map<std::string, DataElement> ParamMap;
 
 
-/* This is unused and does not compile on GCC 4.3 -- tvo 9/9/2007
-   "error: explicit template specialization cannot have a storage class"
-
-template<typename T> static DataType GetDataType(T) {
-	const bool valid_type = false;
-	assert(valid_type);
-	return ERROR_TYPE;
-}
-template<> static DataType GetDataType(int)    { return INT_TYPE; }
-template<> static DataType GetDataType(bool)   { return BOOL_TYPE; }
-template<> static DataType GetDataType(float)  { return FLOAT_TYPE; }
-template<> static DataType GetDataType(string) { return STRING_TYPE; }
-*/
-
+namespace {
+	template<typename T> DataType GetDataType(T) {
+		const bool valid_type = false;
+		assert(valid_type);
+		return ERROR_TYPE;
+	}
+	DataType GetDataType(unsigned)    { return INT_TYPE; }
+	DataType GetDataType(int)         { return INT_TYPE; }
+	DataType GetDataType(bool)        { return BOOL_TYPE; }
+	DataType GetDataType(float)       { return FLOAT_TYPE; }
+	DataType GetDataType(const std::string&) { return STRING_TYPE; }
+};
 
 #define ADDRESS(name) ((const char *)&name)
 
 // Requires a "start" address, use ADDRESS()
 #define ADD_INT(lua, cpp) \
-	paramMap[lua] = DataElement(INT_TYPE, ADDRESS(cpp) - start)
+	paramMap[lua] = DataElement(GetDataType(cpp), ADDRESS(cpp) - start)
 
 #define ADD_BOOL(lua, cpp) \
-	paramMap[lua] = DataElement(BOOL_TYPE, ADDRESS(cpp) - start)
+	paramMap[lua] = DataElement(GetDataType(cpp), ADDRESS(cpp) - start)
 
 #define ADD_FLOAT(lua, cpp) \
-	paramMap[lua] = DataElement(FLOAT_TYPE, ADDRESS(cpp) - start)
+	paramMap[lua] = DataElement(GetDataType(cpp), ADDRESS(cpp) - start)
 
 #define ADD_STRING(lua, cpp) \
-	paramMap[lua] = DataElement(STRING_TYPE, ADDRESS(cpp) - start)
+	paramMap[lua] = DataElement(GetDataType(cpp), ADDRESS(cpp) - start)
 
 #define ADD_FUNCTION(lua, cpp, func) \
 	paramMap[lua] = DataElement(FUNCTION_TYPE, ADDRESS(cpp) - start, func)

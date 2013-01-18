@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include <set>
 #include <string>
@@ -18,6 +17,7 @@
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Rendering/Models/3DModel.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "System/Log/ILog.h"
@@ -391,6 +391,14 @@ static int ModelRadius(lua_State* L, const void* data)
 }
 
 
+static int ModelName(lua_State* L, const void* data)
+{
+	const FeatureDef* fd = static_cast<const FeatureDef*>(data);
+	lua_pushsstring(L, modelParser->Find(fd->modelName));
+	return 1;
+}
+
+
 #define TYPE_MODEL_FUNC(name, param)                            \
 	static int Model ## name(lua_State* L, const void* data)    \
 	{                                                           \
@@ -434,19 +442,21 @@ static bool InitParamMap()
 
 	// TODO: share the Model* functions between LuaUnitDefs and LuaFeatureDefs
 	// ADD_FUNCTION("model",   fd, ModelTable);
-	ADD_FUNCTION("height",  fd, ModelHeight);
-	ADD_FUNCTION("radius",  fd, ModelRadius);
-	ADD_FUNCTION("minx",    fd, ModelMinx);
-	ADD_FUNCTION("midx",    fd, ModelMidx);
-	ADD_FUNCTION("maxx",    fd, ModelMaxx);
-	ADD_FUNCTION("miny",    fd, ModelMiny);
-	ADD_FUNCTION("midy",    fd, ModelMidy);
-	ADD_FUNCTION("maxy",    fd, ModelMaxy);
-	ADD_FUNCTION("minz",    fd, ModelMinz);
-	ADD_FUNCTION("midz",    fd, ModelMidz);
-	ADD_FUNCTION("maxz",    fd, ModelMaxz);
-
+	ADD_FUNCTION("height",    fd, ModelHeight);
+	ADD_FUNCTION("radius",    fd, ModelRadius);
+	ADD_FUNCTION("minx",      fd, ModelMinx);
+	ADD_FUNCTION("midx",      fd, ModelMidx);
+	ADD_FUNCTION("maxx",      fd, ModelMaxx);
+	ADD_FUNCTION("miny",      fd, ModelMiny);
+	ADD_FUNCTION("midy",      fd, ModelMidy);
+	ADD_FUNCTION("maxy",      fd, ModelMaxy);
+	ADD_FUNCTION("minz",      fd, ModelMinz);
+	ADD_FUNCTION("midz",      fd, ModelMidz);
+	ADD_FUNCTION("maxz",      fd, ModelMaxz);
+	ADD_FUNCTION("modelname", fd, ModelName);
+	
 	ADD_INT("id", fd.id);
+	ADD_INT("deathFeatureID", fd.deathFeatureDefID);
 
 	ADD_STRING("name",     fd.name);
 	ADD_STRING("tooltip",  fd.description);
@@ -476,9 +486,7 @@ static bool InitParamMap()
 
 	ADD_INT("smokeTime",    fd.smokeTime);
 
-	ADD_STRING("modelname", fd.modelName);
-	// name of feature that this turn into when killed (not reclaimed)
-	ADD_STRING("deathFeature", fd.deathFeature);
+	ADD_DEPRECATED_LUADEF_KEY("deathFeature");
 
 	return true;
 }

@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <algorithm>
-#include "System/mmgr.h"
 
 #include "Projectile.h"
 #include "ProjectileHandler.h"
@@ -408,12 +407,13 @@ void CProjectileHandler::CheckUnitCollisions(
 		}
 
 		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &cq)) {
-			if (cq.lmp != NULL) {
-				unit->SetLastAttackedPiece(cq.lmp, gs->frameNum);
+			if (cq.GetHitPiece() != NULL) {
+				unit->SetLastAttackedPiece(cq.GetHitPiece(), gs->frameNum);
 			}
 
-			p->pos = (cq.b0) ? cq.p0 : cq.p1;
+			p->pos = cq.InsideHit()? ppos0 : cq.GetIngressPos();
 			p->Collision(unit);
+			p->pos = ppos0;
 			break;
 		}
 	}
@@ -426,7 +426,8 @@ void CProjectileHandler::CheckFeatureCollisions(
 	const float3& ppos0,
 	const float3& ppos1)
 {
-	if (!p->checkCol) // already collided with unit?
+	// already collided with unit?
+	if (!p->checkCol)
 		return;
 
 	if ((p->GetCollisionFlags() & Collision::NOFEATURES) != 0)
@@ -442,8 +443,9 @@ void CProjectileHandler::CheckFeatureCollisions(
 		}
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
-			p->pos = (cq.b0) ? cq.p0 : cq.p1;
+			p->pos = cq.InsideHit()? ppos0 : cq.GetIngressPos();
 			p->Collision(feature);
+			p->pos = ppos0;
 			break;
 		}
 	}

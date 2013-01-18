@@ -5,8 +5,7 @@
 
 #include "lib/gml/gmlcnf.h"
 
-#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
-#include "System/mmgr.h"
+#if !(defined(USE_GML) && GML_ENABLE_SIM)
 #include "System/MemPool.h"
 #endif
 
@@ -18,7 +17,7 @@ struct S3DOPiece;
 struct SS3OVertex;
 
 struct FlyingPiece {
-	#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
+	#if !(defined(USE_GML) && GML_ENABLE_SIM)
 	inline void* operator new(size_t size) { return mempool.Alloc(size); }
 	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
 	#endif

@@ -7,7 +7,7 @@ if [ ! -e installer ]; then
 	echo "Error: This script needs to be run from the root directory of the archive"
 	exit 1
 fi
-WGET="wget -N"
+WGET="wget -N --cache=off"
 
 TAG=$(git describe --tags|tr -d '\n')
 
@@ -44,15 +44,6 @@ rm -rf Springlobby
 mkdir -p Springlobby
 cd Springlobby
 unzip ../downloads/latest.zip -d SLArchive
-
-mkdir SettingsDlls
-mv SLArchive/*.dll SettingsDlls
-mv SLArchive/springsettings.exe SettingsDlls
-
-
-### This version of OpenAL breaks Spring ...
-# not used anymore since May 2010
-rm -f SettingsDlls/OpenAL32.dll
 
 cd ../..
 

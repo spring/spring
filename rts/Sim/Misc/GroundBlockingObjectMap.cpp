@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <assert.h>
-#include "System/mmgr.h"
 
 #include "GroundBlockingObjectMap.h"
 
 #include "GlobalSynced.h"
 #include "GlobalConstants.h"
 #include "Sim/Objects/SolidObject.h"
+#include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/creg/STL_Map.h"
 #include "lib/gml/gmlmut.h"

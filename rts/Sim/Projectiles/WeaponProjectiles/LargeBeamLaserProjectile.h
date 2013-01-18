@@ -10,9 +10,7 @@ class CLargeBeamLaserProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CLargeBeamLaserProjectile);
 public:
-	CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos,
-			const float3& color, const float3& color2, CUnit* owner,
-			const WeaponDef* weaponDef);
+	CLargeBeamLaserProjectile(const ProjectileParams& params, const float3& color, const float3& color2);
 	~CLargeBeamLaserProjectile() {}
 
 	void Update();
@@ -20,8 +18,6 @@ public:
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
 private:
-	float3 startPos;
-	float3 endPos;
 	unsigned char corecolstart[4];
 	//unsigned char corecolend[4];
 	unsigned char kocolstart[4];

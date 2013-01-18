@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <cctype>
-#include "System/mmgr.h"
 
 #include "DamageArrayHandler.h"
 #include "DamageArray.h"

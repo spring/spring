@@ -12,7 +12,7 @@ public:
 	CBombDropper(CUnit* owner, bool useTorps);
 	~CBombDropper();
 
-	bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
+
 	void Init();
 	void Update();
 	void SlowUpdate();
@@ -24,7 +24,9 @@ public:
 	float tracking;
 
 private:
-	virtual void FireImpl();
+	bool TestTarget(const float3& pos, bool userTarget, CUnit* unit) const;
+	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const;
+	void FireImpl();
 };
 
 #endif /* BOMB_DROPPER_H */

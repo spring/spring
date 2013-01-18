@@ -14,7 +14,7 @@ class CUnit;
 
 class CAirBaseHandler : public boost::noncopyable
 {
-	CR_DECLARE(CAirBaseHandler);
+	CR_DECLARE_STRUCT(CAirBaseHandler);
 	CR_DECLARE_SUB(LandingPad);
 	CR_DECLARE_SUB(AirBase);
 

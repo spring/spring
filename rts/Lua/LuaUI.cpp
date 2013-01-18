@@ -1,9 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "LuaLobby.h" // ugh, streflop namespace corruption...
 #include "lib/gml/gmlcnf.h"
 
-#include "System/mmgr.h"
 
 #include "LuaUI.h"
 
@@ -206,7 +204,6 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Script",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
-	    !AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)        ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||

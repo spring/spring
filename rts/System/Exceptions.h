@@ -48,4 +48,15 @@ public:
 	opengl_error(const std::string& msg) : std::runtime_error(msg) {};
 };
 
+
+/**
+ * unsupported_error
+ *   thrown when code cannot be executed cause the system is unsupported (GPU is missing extensions etc.)
+ */
+class unsupported_error : public std::runtime_error
+{
+public:
+	unsupported_error(const std::string& msg) : std::runtime_error(msg) {};
+};
+
 #endif

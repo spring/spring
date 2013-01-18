@@ -4,7 +4,7 @@
 #include "PathConstants.h"
 #include "PathManager.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
 
 PathHeatMap* PathHeatMap::GetInstance() {

@@ -192,3 +192,5 @@ Else  (NOT Boost_FOUND)
 
 EndIf (NOT Boost_FOUND)
 
+add_subdirectory(headercheck)
+

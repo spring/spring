@@ -2,29 +2,6 @@
 
 set -e # abort on error
 
-Analyzecoredump() {
-
-SPRING=$1
-COREFILE=$2
-
-if [ -s $COREFILE ]; then
-	echo Core file found, creating backtrace
-	GDBCMDS=$(mktemp)
-	(
-		echo file $SPRING
-		echo core-file $COREFILE
-		echo bt full
-		echo quit
-	)>$GDBCMDS
-	gdb -batch -x $GDBCMDS
-	cat $GDBCMDS
-	# cleanup
-	rm -f $GDBCMDS
-	rm -f $COREFILE
-fi
-
-}
-
 if [ $# -le 0 ]; then
 	echo "Usage: $0 /path/to/spring testScript [parameters]"
 	exit 1
@@ -38,11 +15,6 @@ fi
 
 if [ "$(cat /proc/sys/kernel/core_pattern)" != "core" ]; then
 	echo "Please set /proc/sys/kernel/core_pattern to core"
-	exit 1
-fi
-
-if [ "$(cat /proc/sys/kernel/core_pattern)" != "core" ]; then
-	echo "Please run sudo echo core >/proc/sys/kernel/core_pattern"
 	exit 1
 fi
 
@@ -62,14 +34,13 @@ if [ ! -x $RUNCLIENT ]; then
 fi
 
 
-# limit to 1GB RAM
-ulimit -v 1000000
-# max 15 min cpu time
-ulimit -t 900
+# limit to 1.5GB RAM
+ulimit -v 1500000
+# max 3 min cpu time
+ulimit -t 180
 
-# FIXME: remove old caching files, the client-script would start immediately when they exist
-# maybe a foreign directory for the client is the cleanest way...
-rm -rf ~/.spring/cache/paths
+# delete path cache
+rm -rf ~/.spring/cache/
 
 # start up the client in background
 $RUNCLIENT $1 &
@@ -82,17 +53,15 @@ PID_HOST=$!
 # auto kill host after 15mins
 #sleep 900 && kill -9 $PID_HOST &
 
-echo waiting for host to exit
+echo waiting for host to exit, pid: $PID_HOST
 # store exit code
 wait $PID_HOST
 EXIT=$?
-Analyzecoredump $1 $HOME/.spring/core.$PID_HOST
 
-echo waiting for client to exit
+echo waiting for client to exit, pid: $PID_CLIENT
 # get spring client process exit code / wait for exit
 wait $PID_CLIENT
 EXITCHILD=$?
-Analyzecoredump $1 $HOME/.spring/core.$PID_CLIENT
 
 #reenable abbort on error
 set -e

@@ -4,7 +4,6 @@
 #include <set>
 #include <cctype>
 
-#include "System/mmgr.h"
 
 #include "LuaRules.h"
 

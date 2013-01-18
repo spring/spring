@@ -17,7 +17,7 @@ typedef std::vector<BlockingMapCell> BlockingMap;
 
 class CGroundBlockingObjectMap
 {
-	CR_DECLARE(CGroundBlockingObjectMap);
+	CR_DECLARE_STRUCT(CGroundBlockingObjectMap);
 
 public:
 	CGroundBlockingObjectMap(int numSquares) {

@@ -7,7 +7,12 @@
  * Feel free to customize this file to suit your needs.
  */
 
+#ifdef __APPLE__
+
 #import <Cocoa/Cocoa.h>
 
 @interface SDLMain : NSObject
 @end
+
+#endif
+

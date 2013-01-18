@@ -79,7 +79,7 @@ void CTeamHighlight::Update(int frameNum) {
 
 				if (p->ping != PATHING_FLAG && p->ping >= 0) {
 					const int speed = GAME_SPEED * gs->speedFactor;
-					const int ping = (p->ping * 1000) / speed;
+					const int ping = (p->ping * 1000) / std::max(1, speed);
 					minPing = std::min(ping, minPing);
 				}
 			}

@@ -8,8 +8,8 @@
 /// Structure in .s3o files representing draw primitives
 struct Piece{
 	int name;            ///< offset in file to char* name of this piece
-	int numChilds;       ///< number of sub pieces this piece has
-	int childs;          ///< file offset to table of dwords containing offsets to child pieces
+	int numchildren;       ///< number of sub pieces this piece has
+	int children;          ///< file offset to table of dwords containing offsets to child pieces
 	int numVertices;     ///< number of vertices in this piece
 	int vertices;        ///< file offset to vertices in this piece
 	int vertexType;      ///< 0 for now
@@ -25,8 +25,8 @@ struct Piece{
 	void swap()
 	{
 		swabDWordInPlace(name);
-		swabDWordInPlace(numChilds);
-		swabDWordInPlace(childs);
+		swabDWordInPlace(numchildren);
+		swabDWordInPlace(children);
 		swabDWordInPlace(numVertices);
 		swabDWordInPlace(vertices);
 		swabDWordInPlace(vertexType);

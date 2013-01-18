@@ -345,7 +345,7 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 			if (md != NULL) {
 				const QTPFS::NodeLayer& nl = pm->nodeLayers[md->pathType];
 
-				const float smr = QTPFS::PathManager::MAX_SPEEDMOD_VALUE - QTPFS::PathManager::MIN_SPEEDMOD_VALUE;
+				const float smr = QTPFS::NodeLayer::MAX_SPEEDMOD_VALUE - QTPFS::NodeLayer::MIN_SPEEDMOD_VALUE;
 				const bool los = (gs->cheatEnabled || gu->spectating);
 
 				for (int ty = starty; ty < endy; ++ty) {

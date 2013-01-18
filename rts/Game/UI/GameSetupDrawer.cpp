@@ -16,7 +16,6 @@
 #include "System/NetProtocol.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/mmgr.h"
 
 #include <SDL_timer.h>
 #include <SDL_keysym.h>

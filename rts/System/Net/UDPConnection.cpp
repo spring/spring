@@ -10,7 +10,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/cstdint.hpp>
 
-#include "System/mmgr.h"
 
 #include "Socket.h"
 #include "ProtocolDef.h"
@@ -563,11 +562,11 @@ std::string UDPConnection::Statistics() const
 {
 	std::string msg = "Statistics for UDP connection:\n";
 	msg += str( boost::format("Received: %1% bytes in %2% packets (%3% bytes/package)\n")
-			%dataRecv %recvPackets %((float)dataRecv / (float)recvPackets));
+			%dataRecv %recvPackets %(SafeDivide(dataRecv, recvPackets)));
 	msg += str( boost::format("Sent: %1% bytes in %2% packets (%3% bytes/package)\n")
-			%dataSent %sentPackets %((float)dataSent / (float)sentPackets));
+			%dataSent %sentPackets %(SafeDivide(dataSent, sentPackets)));
 	msg += str( boost::format("Relative protocol overhead: %1% up, %2% down\n")
-			%((float)sentOverhead / (float)dataSent) %((float)recvOverhead / (float)dataRecv) );
+			%SafeDivide(sentOverhead, dataSent) %SafeDivide(recvOverhead, dataRecv) );
 	msg += str( boost::format("%1% incoming chunks had been dropped, %2% outgoing chunks had to be resent\n")
 			%droppedChunks %resentChunks);
 	return msg;

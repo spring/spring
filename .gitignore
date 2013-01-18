@@ -24,6 +24,9 @@
 # DoxyGen output
 /doc/doxygen
 
+# doc/manpages
+/manpages
+
 # CMake generated version container file for use within tarballs
 /VERSION
 
@@ -35,6 +38,12 @@ CMakeFiles
 Makefile
 cmake_install.cmake
 CTestTestfile.cmake
+progress.make
+
+# Ninja related
+/.ninja_log
+/build.ninja
+/rules.ninja
 
 # Visual Studio related
 *.ncb
@@ -80,12 +89,15 @@ CTestTestfile.cmake
 *.orig
 *.dylib
 
-# ???
-progress.make
-
 #buildbot generated dir
 /build
 
 #installer downloaded/generated stuff
 /installer/Springlobby/
 /installer/*.exe
+
+#spring related files when run in portable mode
+/cache
+/lobby
+/log
+/infolog.txt

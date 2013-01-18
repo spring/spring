@@ -3,7 +3,7 @@
 #include "PathFlowMap.hpp"
 #include "PathConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/myMath.h"
 
@@ -79,6 +79,8 @@ PathFlowMap::~PathFlowMap() {
 }
 
 void PathFlowMap::Update() {
+	return;
+
 	std::vector<FlowCell>& fCells = buffers[fBufferIdx];
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
 	std::set<unsigned int>& fIndices = indices[fBufferIdx];
@@ -156,6 +158,8 @@ void PathFlowMap::Update() {
 }
 
 void PathFlowMap::AddFlow(const CSolidObject* o) {
+	return;
+
 	if (!o->blocking) {
 		return;
 	}
@@ -226,6 +230,8 @@ unsigned int PathFlowMap::GetCellIdx(const CSolidObject* o) const {
 }
 
 const float3& PathFlowMap::GetFlowVec(unsigned int hmx, unsigned int hmz) const {
+	return ZeroVector;
+
 	const std::vector<FlowCell>& fCells = buffers[fBufferIdx];
 	const unsigned int fCellIdx = (hmz / zscale) * xsize + (hmx / xscale);
 
@@ -233,6 +239,8 @@ const float3& PathFlowMap::GetFlowVec(unsigned int hmx, unsigned int hmz) const 
 }
 
 float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveDef& md, unsigned int pathOpt) const {
+	return 0.0f;
+
 	const float3& flowVec = GetFlowVec(x, z);
 	const float3& pathDir = pathOptDirs[pathOpt];
 

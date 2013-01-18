@@ -10,6 +10,7 @@
 #include "PathRectangle.hpp"
 #include "Node.hpp"
 #include "NodeHeap.hpp"
+
 #include "System/float3.h"
 
 namespace QTPFS {
@@ -110,15 +111,15 @@ namespace QTPFS {
 			: IPathSearch(pathSearchType)
 			, nodeLayer(NULL)
 			, pathCache(NULL)
+			, searchExec(NULL)
 			, srcNode(NULL)
 			, tgtNode(NULL)
 			, curNode(NULL)
 			, nxtNode(NULL)
 			, minNode(NULL)
-			, searchExec(NULL)
+			, hCostMult(0.0f)
 			, haveFullPath(false)
 			, havePartPath(false)
-			, hCostMult(0.0f)
 			{}
 		~PathSearch() { openNodes.reset(); }
 
@@ -143,30 +144,21 @@ namespace QTPFS {
 		static void FreeGlobalQueue() { openNodes.clear(); }
 
 	private:
-		void Iterate(
-			const std::vector<INode*>& allNodes,
-			      std::vector<INode*>& ngbNodes
-		);
+		void ResetState(INode* node);
+		void UpdateNode(INode* nextNode, INode* prevNode, unsigned int netPointIdx);
+
+		void IterateNodes(const std::vector<INode*>& allNodes);
+		void IterateNodeNeighbors(const std::vector<INode*>& nxtNodes);
+
 		void TracePath(IPath* path);
 		void SmoothPath(IPath* path);
-		void UpdateNode(
-			INode* nxtNode,
-			INode* curNode,
-			float gCost,
-			float hCost,
-			float mCost
-		);
-		void UpdateQueue();
+
+		// global queue: allocated once, re-used by all searches without clear()'s
+		// this relies on INode::operator< to sort the INode*'s by increasing f-cost
+		static binary_heap<INode*> openNodes;
 
 		NodeLayer* nodeLayer;
 		PathCache* pathCache;
-
-		float3 srcPoint, tgtPoint;
-		float3 curPoint, nxtPoint;
-
-		INode *srcNode, *tgtNode;
-		INode *curNode, *nxtNode;
-		INode *minNode;
 
 		// not used unless QTPFS_TRACE_PATH_SEARCHES is defined
 		PathSearchTrace::Execution* searchExec;
@@ -174,14 +166,24 @@ namespace QTPFS {
 
 		PathRectangle searchRect;
 
-		// global queue: allocated once, re-used by all searches without clear()'s
-		// this relies on INode::operator< to sort the INode*'s by increasing f-cost
-		static binary_heap<INode*> openNodes;
+		INode *srcNode, *tgtNode;
+		INode *curNode, *nxtNode;
+		INode *minNode;
+
+		float3 srcPoint;
+		float3 tgtPoint;
+
+		float3 netPoints[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
+
+		float gDists[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
+		float hDists[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
+		float gCosts[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
+		float hCosts[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
+
+		float hCostMult;
 
 		bool haveFullPath;
 		bool havePartPath;
-
-		float hCostMult;
 	};
 };
 

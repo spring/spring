@@ -27,6 +27,7 @@ public:
 	boost::uint32_t GetPathCheckSum() const;
 
 	void Update();
+	void UpdateFull();
 	void UpdatePath(const CSolidObject*, unsigned int);
 	void DeletePath(unsigned int pathID);
 
@@ -76,6 +77,8 @@ public:
 	bool SetNodeExtraCosts(const float*, unsigned int, unsigned int, bool);
 	float GetNodeExtraCost(unsigned int, unsigned int, bool) const;
 	const float* GetNodeExtraCosts(bool) const;
+
+	void GetNumOutstandingEstimatorUpdates(unsigned int* data) const;
 
 private:
 	unsigned int RequestPath(

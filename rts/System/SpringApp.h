@@ -49,6 +49,7 @@ protected:
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
+	void RunScript(const std::string buf);
 
 private:
 	std::string binaryName;

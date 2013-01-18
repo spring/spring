@@ -25,6 +25,7 @@
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
 #include "System/maindefines.h" // for SNPRINTF
+#include "System/Util.h"
 #include "System/Misc/SpringTime.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
@@ -53,13 +54,11 @@ static std::string CreateAbsolutePath(const std::string& relativePath)
 	if (relativePath.empty())
 		return relativePath;
 
-	std::string absolutePath;
+	std::string absolutePath = UnQuote(relativePath);
 
-	if (relativePath.length() > 0 && (relativePath[0] == '/')) {
+	if (absolutePath.length() > 0 && (absolutePath[0] == '/')) {
 		//! is already absolute
-		absolutePath = relativePath;
 	} else {
-		absolutePath = relativePath;
 		if (absolutePath.find("./") == 0) {
 			//! remove initial "./"
 			absolutePath = absolutePath.substr(2);
@@ -322,6 +321,11 @@ static void ForcedExitAfterFiveSecs() {
 	exit(-1);
 }
 
+static void ForcedExitAfterTenSecs() {
+	boost::this_thread::sleep(boost::posix_time::seconds(10));
+	std::_Exit(-1);
+}
+
 
 typedef struct sigaction sigaction_t;
 
@@ -361,7 +365,7 @@ namespace CrashHandler
 			//! process and analyse the raw stack trace
 			std::vector<void*> buffer(MAX_STACKTRACE_DEPTH + 2);
 			int numLines;
-			if (hThread) {
+			if (hThread && Threading::GetCurrentThread() != *hThread) {
 				LOG_L(L_ERROR, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
 				LOG_CLEANUP();
 				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    //! stack pointers
@@ -451,7 +455,7 @@ namespace CrashHandler
 	{
 		//TODO Our custom thread_backtrace() only works on the mainthread.
 		//     Use to gdb's libthread_db to get the stacktraces of all threads.
-		if (!Threading::IsMainThread(thread)) {
+		if (!Threading::IsMainThread(thread) && Threading::GetCurrentThread() != thread) {
 			LOG_L(L_ERROR, "Stacktrace (%s):", threadName.c_str());
 			LOG_L(L_ERROR, "  No Stacktraces for non-MainThread.");
 			return;
@@ -478,6 +482,7 @@ namespace CrashHandler
 
 			//! abort after 5sec
 			boost::thread(boost::bind(&ForcedExitAfterFiveSecs));
+			boost::thread(boost::bind(&ForcedExitAfterTenSecs));
 			return;
 		}
 

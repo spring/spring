@@ -2013,8 +2013,6 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *WeaponDef_getMaxAngle)(int skirmishAIId, int weaponDefId);
 
-	float             (CALLING_CONV *WeaponDef_getRestTime)(int skirmishAIId, int weaponDefId);
-
 	float             (CALLING_CONV *WeaponDef_getUpTime)(int skirmishAIId, int weaponDefId);
 
 	int               (CALLING_CONV *WeaponDef_getFlightTime)(int skirmishAIId, int weaponDefId);

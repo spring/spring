@@ -261,8 +261,11 @@ namespace creg {
 			return "void";
 		}
 	};
+};
 
 #include "TypeDeduction.h"
+
+namespace creg {
 
 /** @def CR_DECLARE
  * Add the definitions for creg binding to the class

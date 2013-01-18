@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "Game/GameHelper.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -14,6 +13,7 @@
 #include "Rendering/Models/IModelParser.h"
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
+#include "System/myMath.h"
 #include "System/Sound/SoundChannels.h"
 #ifdef TRACE_SYNC
 	#include "System/Sync/SyncTracer.h"
@@ -36,7 +36,6 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(keepBouncing),
 	CR_MEMBER(weaponDefID),
 	CR_MEMBER(cegID),
-	CR_MEMBER(interceptTarget),
 	CR_RESERVED(15),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -49,52 +48,53 @@ CWeaponProjectile::CWeaponProjectile(): CProjectile()
 	projectileType = WEAPON_BASE_PROJECTILE;
 	ttl = 0;
 	colorTeam = 0;
-	interceptTarget = NULL;
 	bounces = 0;
 	keepBouncing = true;
+	weaponDefID = 0;
 	cegID = -1U;
 }
 
-CWeaponProjectile::CWeaponProjectile(
-	const float3& pos,
-	const float3& speed,
-	CUnit* owner,
-	CUnit* target,
-	const float3& targetPos,
-	const WeaponDef* weaponDef,
-	CWeaponProjectile* interceptTarget,
-	int ttl
-):
-	CProjectile(pos, speed, owner, true, true, false),
-	targeted(false),
-	weaponDef(weaponDef),
-	target(target),
-	targetPos(targetPos),
-	weaponDefID(weaponDef? weaponDef->id: -1U),
-	cegID(-1U),
-	colorTeam(0),
-	startpos(pos),
-	ttl(ttl),
-	bounces(0),
-	keepBouncing(true),
-	interceptTarget(interceptTarget)
+
+CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool isRay)
+	: CProjectile(params.pos, params.speed, params.owner, true, true, false)
+	, targeted(false)
+	, weaponDef(params.weaponDef)
+	, target(params.target)
+	, targetPos(params.end)
+	, weaponDefID(params.weaponDef? params.weaponDef->id: -1U)
+	, cegID(-1U)
+	, colorTeam(0)
+	, startpos(params.pos)
+	, ttl(params.ttl)
+	, bounces(0)
+	, keepBouncing(true)
 {
+	assert(weaponDef != NULL);
+
+	if (isRay) {
+		pos = (startpos + targetPos) * 0.5f;
+		//pos = startpos;
+		//speed = (targetPos - startpos) + weaponDef->collisionSize; //FIXME move to CProjectileHandler::Check...Collision?
+		drawRadius = startpos.distance(targetPos);
+	}
+	
 	projectileType = WEAPON_BASE_PROJECTILE;
 
-	if (owner) {
-		colorTeam = owner->team;
+	if (params.owner) {
+		colorTeam = params.owner->team;
 	}
 
-	if (target) {
-		AddDeathDependence(target, DEPENDENCE_WEAPONTARGET);
+	CSolidObject* so = dynamic_cast<CSolidObject*>(target);
+	if (so) {
+		AddDeathDependence(so, DEPENDENCE_WEAPONTARGET);
 	}
 
-	if (interceptTarget) {
-		interceptTarget->targeted = true;
-		AddDeathDependence(interceptTarget, DEPENDENCE_INTERCEPTTARGET);
+	CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
+	if (po) {
+		if (weaponDef->interceptSolo)
+			po->targeted = true;
+		AddDeathDependence(po, DEPENDENCE_INTERCEPTTARGET);
 	}
-
-	assert(weaponDef != NULL);
 
 	alwaysVisible = weaponDef->visuals.alwaysVisible;
 	ignoreWater = weaponDef->waterweapon;
@@ -111,8 +111,15 @@ CWeaponProjectile::CWeaponProjectile(
 		assert(id >= 0);
 		interceptHandler.AddShieldInterceptableProjectile(this);
 	}
+
+	if (weaponDef->targetable)
+		interceptHandler.AddInterceptTarget(this, targetPos);
 }
 
+
+CWeaponProjectile::~CWeaponProjectile()
+{
+}
 
 
 void CWeaponProjectile::Collision()
@@ -127,14 +134,25 @@ void CWeaponProjectile::Collision(CFeature* feature)
 	}
 
 	{
+		float3 impactPos = pos;
 		float3 impactDir = speed;
+
+		switch(projectileType) {
+			case WEAPON_BEAMLASER_PROJECTILE:
+			case WEAPON_LARGEBEAMLASER_PROJECTILE:
+			case WEAPON_LIGHTNING_PROJECTILE:
+			{
+				impactPos = feature ? feature->pos : targetPos;
+				impactDir = (targetPos - startpos);
+			} break;
+		}
 
 		const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
 			weaponDef->damages:
 			weaponDefHandler->DynamicDamages(
 				weaponDef->damages,
 				startpos,
-				pos,
+				impactPos,
 				(weaponDef->dynDamageRange > 0.0f)?
 					weaponDef->dynDamageRange:
 					weaponDef->range,
@@ -143,7 +161,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			);
 
 		const CGameHelper::ExplosionParams params = {
-			pos,
+			impactPos,
 			impactDir.SafeNormalize(),
 			damageArray,
 			weaponDef,
@@ -163,26 +181,33 @@ void CWeaponProjectile::Collision(CFeature* feature)
 		helper->Explosion(params);
 	}
 
-	if (!weaponDef->noExplode) {
+	if (!weaponDef->noExplode || TraveledRange()) {
 		CProjectile::Collision();
-	} else {
-		if (TraveledRange()) {
-			CProjectile::Collision();
-		}
 	}
 }
 
 void CWeaponProjectile::Collision(CUnit* unit)
 {
 	{
+		float3 impactPos = pos;
 		float3 impactDir = speed;
+
+		switch(projectileType) {
+			case WEAPON_BEAMLASER_PROJECTILE:
+			case WEAPON_LARGEBEAMLASER_PROJECTILE:
+			case WEAPON_LIGHTNING_PROJECTILE:
+			{
+				impactPos = unit->pos;
+				impactDir = (targetPos - startpos);
+			} break;
+		}
 
 		const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
 			weaponDef->damages:
 			weaponDefHandler->DynamicDamages(
 				weaponDef->damages,
 				startpos,
-				pos,
+				impactPos,
 				(weaponDef->dynDamageRange > 0.0f)?
 					weaponDef->dynDamageRange:
 					weaponDef->range,
@@ -191,7 +216,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 			);
 
 		const CGameHelper::ExplosionParams params = {
-			pos,
+			impactPos,
 			impactDir.SafeNormalize(),
 			damageArray,
 			weaponDef,
@@ -211,11 +236,8 @@ void CWeaponProjectile::Collision(CUnit* unit)
 		helper->Explosion(params);
 	}
 
-	if (!weaponDef->noExplode) {
-		CProjectile::Collision(unit);
-	} else {
-		if (TraveledRange())
-			CProjectile::Collision();
+	if (!weaponDef->noExplode || TraveledRange()) {
+		CProjectile::Collision();
 	}
 }
 
@@ -223,7 +245,49 @@ void CWeaponProjectile::Update()
 {
 	CProjectile::Update();
 	UpdateGroundBounce();
+	UpdateInterception();
 }
+
+
+void CWeaponProjectile::UpdateInterception()
+{
+	if (!target)
+		return;
+
+	CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
+	if (!po)
+		return;
+
+	switch(projectileType) {
+		case WEAPON_BEAMLASER_PROJECTILE:
+		case WEAPON_LARGEBEAMLASER_PROJECTILE:
+		case WEAPON_LIGHTNING_PROJECTILE:
+		{
+			if (ClosestPointOnLine(startpos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
+				po->Collision();
+				Collision();
+				return;
+			}
+		} break;
+
+		case WEAPON_LASER_PROJECTILE: // important!
+		case WEAPON_BASE_PROJECTILE:
+		case WEAPON_EMG_PROJECTILE:
+		case WEAPON_EXPLOSIVE_PROJECTILE:
+		case WEAPON_FIREBALL_PROJECTILE:
+		case WEAPON_FLAME_PROJECTILE:
+		case WEAPON_MISSILE_PROJECTILE:
+		case WEAPON_STARBURST_PROJECTILE:
+		case WEAPON_TORPEDO_PROJECTILE:
+		default:
+			if (pos.SqDistance(po->pos) < Square(weaponDef->damageAreaOfEffect)) {
+			//FIXME if (pos.SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
+				po->Collision();
+				Collision();
+			}
+	}
+}
+
 
 void CWeaponProjectile::UpdateGroundBounce()
 {
@@ -284,10 +348,6 @@ void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 
 void CWeaponProjectile::DependentDied(CObject* o)
 {
-	if (o == interceptTarget) {
-		interceptTarget = NULL;
-	}
-
 	if (o == target) {
 		target = NULL;
 	}

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "EmgProjectile.h"
 #include "Game/Camera.h"
@@ -11,7 +10,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Sync/SyncTracer.h"
 
-CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, ZeroVector, 0, 0, NULL));
+CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (ProjectileParams(), ZeroVector, 0));
 
 CR_REG_METADATA(CEmgProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -20,15 +19,10 @@ CR_REG_METADATA(CEmgProjectile,(
     CR_RESERVED(8)
     ));
 
-CEmgProjectile::CEmgProjectile(
-	const float3& pos, const float3& speed,
-	CUnit* owner,
-	const float3& color, float intensity,
-	int ttl, const WeaponDef* weaponDef):
-
-	CWeaponProjectile(pos, speed, owner, NULL, ZeroVector, weaponDef, NULL, ttl),
-	intensity(intensity),
-	color(color)
+CEmgProjectile::CEmgProjectile(const ProjectileParams& params, const float3& color, float intensity)
+	: CWeaponProjectile(params)
+	, intensity(intensity)
+	, color(color)
 {
 	projectileType = WEAPON_EMG_PROJECTILE;
 
@@ -64,15 +58,7 @@ void CEmgProjectile::Update()
 		gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
 	}
 	UpdateGroundBounce();
-}
-
-void CEmgProjectile::Collision(CUnit* unit)
-{
-	CWeaponProjectile::Collision(unit);
-}
-
-void CEmgProjectile::Collision() {
-	CWeaponProjectile::Collision();
+	UpdateInterception();
 }
 
 void CEmgProjectile::Draw()

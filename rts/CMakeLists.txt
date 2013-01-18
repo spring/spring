@@ -10,12 +10,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
-### Assemble defines
-SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
-if (USE_MMGR)
-	ADD_DEFINITIONS(-DUSE_MMGR)
-endif (USE_MMGR)
-
 SET(TRACE_SYNC FALSE CACHE BOOL "Enable sync tracker")
 if (TRACE_SYNC)
 	ADD_DEFINITIONS(-DTRACE_SYNC)
@@ -74,8 +68,9 @@ ENDIF (UNIX AND NOT MINGW)
 
 FIND_PACKAGE_STATIC(ZLIB REQUIRED)
 LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY})
-LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY})
-LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY} streflop lobby assimp)
+LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+LIST(APPEND engineCommonLibraries 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
+LIST(APPEND engineCommonLibraries lua luasocket archives streflop assimp)
 
 if (MINGW AND Boost_CHRONO_FOUND)
 	# in newer boost versions the thread library depends on it
@@ -85,6 +80,14 @@ endif (MINGW AND Boost_CHRONO_FOUND)
 IF (MINGW)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
 ENDIF (MINGW)
+
+FIND_PACKAGE_STATIC(TCMalloc)
+set(USE_TCMALLOC TRUE CACHE BOOL "use tcmalloc (part of google's perftools)")
+if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
+	MESSAGE(STATUS "Using tcmalloc")
+	LIST(APPEND engineCommonLibraries ${TCMALLOC_LIBRARY})
+endif (USE_TCMALLOC AND TCMALLOC_LIBRARY)
+
 
 
 ### Assemble engine sources
