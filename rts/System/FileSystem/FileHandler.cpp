@@ -31,28 +31,27 @@ using std::string;
 /******************************************************************************/
 
 CFileHandler::CFileHandler(const char* fileName, const char* modes)
-	: ifs(NULL), filePos(0), fileSize(-1)
+	: filePos(0), fileSize(-1)
 {
 	GML_RECMUTEX_LOCK(file); // CFileHandler
 
-	TryReadContent(fileName, modes);
+	Open(fileName, modes);
 }
 
 
 CFileHandler::CFileHandler(const string& fileName, const string& modes)
-	: ifs(NULL), filePos(0), fileSize(-1)
+	: filePos(0), fileSize(-1)
 {
 	GML_RECMUTEX_LOCK(file); // CFileHandler
 
-	TryReadContent(fileName, modes);
+	Open(fileName, modes);
 }
 
 
 CFileHandler::~CFileHandler()
 {
 	GML_RECMUTEX_LOCK(file); // ~CFileHandler
-
-	delete ifs;
+	ifs.close();
 }
 
 
@@ -65,15 +64,14 @@ bool CFileHandler::TryReadFromPWD(const string& fileName)
 #else
 	const std::string fullpath(fileName);
 #endif
-	ifs = new std::ifstream(fullpath.c_str(), std::ios::in | std::ios::binary);
-	if (ifs && !ifs->bad() && ifs->is_open()) {
-		ifs->seekg(0, std::ios_base::end);
-		fileSize = ifs->tellg();
-		ifs->seekg(0, std::ios_base::beg);
+	ifs.open(fullpath.c_str(), std::ios::in | std::ios::binary);
+	if (ifs && !ifs.bad() && ifs.is_open()) {
+		ifs.seekg(0, std::ios_base::end);
+		fileSize = ifs.tellg();
+		ifs.seekg(0, std::ios_base::beg);
 		return true;
 	}
-	delete ifs;
-	ifs = NULL;
+	ifs.close();
 	return false;
 }
 
@@ -82,16 +80,15 @@ bool CFileHandler::TryReadFromRawFS(const string& fileName)
 {
 #ifndef TOOLS
 	const string rawpath = dataDirsAccess.LocateFile(fileName);
-	ifs = new std::ifstream(rawpath.c_str(), std::ios::in | std::ios::binary);
-	if (ifs && !ifs->bad() && ifs->is_open()) {
-		ifs->seekg(0, std::ios_base::end);
-		fileSize = ifs->tellg();
-		ifs->seekg(0, std::ios_base::beg);
+	ifs.open(rawpath.c_str(), std::ios::in | std::ios::binary);
+	if (ifs && !ifs.bad() && ifs.is_open()) {
+		ifs.seekg(0, std::ios_base::end);
+		fileSize = ifs.tellg();
+		ifs.seekg(0, std::ios_base::beg);
 		return true;
 	}
 #endif
-	delete ifs;
-	ifs = NULL;
+	ifs.close();
 	return false;
 }
 
@@ -107,7 +104,7 @@ bool CFileHandler::TryReadFromModFS(const string& fileName)
 	if (vfsHandler->LoadFile(file, fileBuffer)) {
 		// did we allocated more mem than needed
 		// (e.g. because of incorrect usage of std::vector)?
-		assert(fileBuffer.size() == fileBuffer.capacity()); 
+		assert(fileBuffer.size() == fileBuffer.capacity());
 
 		fileSize = fileBuffer.size();
 		return true;
@@ -129,7 +126,7 @@ bool CFileHandler::TryReadFromBaseFS(const string& fileName)
 }
 
 
-void CFileHandler::TryReadContent(const string& fileName, const string& modes)
+void CFileHandler::Open(const string& fileName, const string& modes)
 {
 	this->fileName = fileName;
 	const char* c = modes.c_str();
@@ -187,9 +184,9 @@ int CFileHandler::Read(void* buf, int length)
 {
 	GML_RECMUTEX_LOCK(file); // Read
 
-	if (ifs) {
-		ifs->read((char*)buf, length);
-		return ifs->gcount ();
+	if (ifs.is_open()) {
+		ifs.read(static_cast<char*>(buf), length);
+		return ifs.gcount();
 	}
 	else if (!fileBuffer.empty()) {
 		if ((length + filePos) > fileSize) {
@@ -211,12 +208,13 @@ void CFileHandler::Seek(int length, std::ios_base::seekdir where)
 {
 	GML_RECMUTEX_LOCK(file); // Seek
 
-	if (ifs)
+	if (ifs.is_open())
 	{
-		// on some machines, the EOF bit does not get reset when seeking to
-		// another pos
-		ifs->clear();
-		ifs->seekg(length, where);
+		// Status bits must be cleared before seeking, otherwise it might fail
+		// in the common case of EOF
+		// http://en.cppreference.com/w/cpp/io/basic_istream/seekg
+		ifs.clear();
+		ifs.seekg(length, where);
 	}
 	else if (!fileBuffer.empty())
 	{
@@ -239,8 +237,8 @@ bool CFileHandler::Eof() const
 {
 	GML_RECMUTEX_LOCK(file); // Eof
 
-	if (ifs) {
-		return ifs->eof();
+	if (ifs.is_open()) {
+		return ifs.eof();
 	}
 	if (!fileBuffer.empty()) {
 		return (filePos >= fileSize);
@@ -255,12 +253,12 @@ int CFileHandler::FileSize() const
 }
 
 
-int CFileHandler::GetPos() const
+int CFileHandler::GetPos()
 {
 	GML_RECMUTEX_LOCK(file); // GetPos
 
-	if (ifs) {
-		return ifs->tellg();
+	if (ifs.is_open()) {
+		return ifs.tellg();
 	} else {
 		return filePos;
 	}
