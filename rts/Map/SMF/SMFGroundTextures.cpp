@@ -108,7 +108,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 			} else {
 				smtFilePath = smf.smtFileNames[a];
 			}
-			tileFile = CFileHandler(smtFilePath);
+			tileFile.Open(smtFilePath);
 		}
 
 		if (!tileFile.FileExists()) {
