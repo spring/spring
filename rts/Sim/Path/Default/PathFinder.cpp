@@ -15,6 +15,8 @@
 
 #define PATHDEBUG 0
 
+using namespace Bitwise;
+
 void* CPathFinder::operator new(size_t size) { return PathAllocator::Alloc(size); }
 void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p, size); }
 
