@@ -34,7 +34,7 @@ public:
 		BLOCK_STRUCTURE   = 8,
 		BLOCK_IMPASSABLE  = 24 // := 16 | BLOCK_STRUCTURE;
 	};
-	typedef BitwiseEnum<BlockTypes> BlockType;
+	typedef Bitwise::BitwiseEnum<BlockTypes> BlockType;
 	
 
 	// returns a speed-multiplier for given position or data
