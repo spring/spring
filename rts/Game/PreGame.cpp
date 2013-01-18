@@ -183,7 +183,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 		throw content_error("No map selected in startscript");
 	}
 
-	if(setup->mapSeed) {
+	if (setup->mapSeed != 0) {
 		CSimpleMapGenerator gen(setup);
 		gen.Generate();
 	}

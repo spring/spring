@@ -1705,7 +1705,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		pushCollidee &= (!collidee->beingBuilt && !collider->usingScriptMoveType);
 
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
-		crushCollidee &= (collider->speed != ZeroVector);
+		crushCollidee &= ((colliderSpeed * collider->mass) > (collideeSpeed * collidee->mass));
 
 		// don't push/crush either party if the collidee does not block the collider (or vv.)
 		if (colliderMobile && CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
