@@ -1127,7 +1127,7 @@ void CDynWater::AddShipWakes()
 				continue;
 			}
 
-			if (moveDef->moveType == MoveDef::Hover_Move) {
+			if (moveDef->moveFamily == MoveDef::Hover) {
 				// hovercraft
 				const float3& pos = unit->pos;
 
@@ -1151,7 +1151,7 @@ void CDynWater::AddShipWakes()
 					va2->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
 					va2->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
 				}
-			} else if (moveDef->moveType == MoveDef::Ship_Move) {
+			} else if (moveDef->moveFamily == MoveDef::Ship) {
 				// surface ship
 				const float3& pos = unit->pos;
 

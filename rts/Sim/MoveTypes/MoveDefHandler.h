@@ -13,22 +13,17 @@ class MoveDefHandler;
 class CSolidObject;
 class LuaTable;
 
+#pragma pack(push, 1)
 struct MoveDef {
 	CR_DECLARE_STRUCT(MoveDef);
 
 	MoveDef();
-	MoveDef(const MoveDef* unitDefMD) { *this = *unitDefMD; }
 	MoveDef(const LuaTable& moveTable, int moveDefID);
 
 	bool TestMoveSquare(const int hmx, const int hmz) const;
 	float GetDepthMod(const float height) const;
 	unsigned int GetCheckSum() const;
 
-	enum MoveType {
-		Ground_Move = 0,
-		Hover_Move  = 1,
-		Ship_Move   = 2
-	};
 	enum MoveFamily {
 		Tank  = 0,
 		KBot  = 1,
@@ -61,8 +56,6 @@ struct MoveDef {
 
 	std::string name;
 
-	/// NOTE: rename? (because of (AMoveType*) CUnit::moveType)
-	MoveType moveType;
 	MoveFamily moveFamily;
 	TerrainClass terrainClass;
 
@@ -89,6 +82,13 @@ struct MoveDef {
 	/// number of UnitDef types that refer to this MoveDef class
 	unsigned int unitDefRefCount;
 
+	/// heatmap path-cost modifier
+	float heatMod;
+	float flowMod;
+
+	/// heat produced by a path
+	int heatProduced;
+
 	/// do we stick to the ground when in water?
 	bool followGround;
 	/// are we supposed to be a purely sub-surface ship?
@@ -104,14 +104,8 @@ struct MoveDef {
 	/// do we leave heat and avoid any left by others?
 	bool heatMapping;
 	bool flowMapping;
-
-	/// heatmap path-cost modifier
-	float heatMod;
-	float flowMod;
-
-	/// heat produced by a path
-	int heatProduced;
 };
+#pragma pack(pop)
 
 
 class MoveDefHandler

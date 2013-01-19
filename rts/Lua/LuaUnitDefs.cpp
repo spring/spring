@@ -494,19 +494,12 @@ static int MoveDefTable(lua_State* L, const void* data)
 
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);
 
-	switch (md->moveType) {
-		case MoveDef::Ship_Move:   { HSTR_PUSH_STRING(L, "type", "ship");   break; }
-		case MoveDef::Hover_Move:  { HSTR_PUSH_STRING(L, "type", "hover");  break; }
-		case MoveDef::Ground_Move: { HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		default:                   { HSTR_PUSH_STRING(L, "type", "error");  break; }
-	}
-
 	switch (md->moveFamily) {
-		case 0:  { HSTR_PUSH_STRING(L, "family", "tank");  break; }
-		case 1:  { HSTR_PUSH_STRING(L, "family", "kbot");  break; }
-		case 2:  { HSTR_PUSH_STRING(L, "family", "hover"); break; }
-		case 3:  { HSTR_PUSH_STRING(L, "family", "ship");  break; }
-		default: { HSTR_PUSH_STRING(L, "family", "error"); break; }
+		case 0:  { HSTR_PUSH_STRING(L, "family", "tank");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		case 1:  { HSTR_PUSH_STRING(L, "family", "kbot");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		case 2:  { HSTR_PUSH_STRING(L, "family", "hover"); HSTR_PUSH_STRING(L, "type",  "hover"); break; }
+		case 3:  { HSTR_PUSH_STRING(L, "family", "ship");  HSTR_PUSH_STRING(L, "type",   "ship"); break; }
+		default: { HSTR_PUSH_STRING(L, "family", "error"); HSTR_PUSH_STRING(L, "type",  "error"); break; }
 	}
 
 	HSTR_PUSH_NUMBER(L, "xsize",         md->xsize);

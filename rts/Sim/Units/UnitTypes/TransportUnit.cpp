@@ -477,12 +477,12 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 
 		if (isAllowedHeight) {
 			if (moveDef != NULL) {
-				switch (moveDef->moveType) {
-					case MoveDef::Ship_Move: {
+				switch (moveDef->moveFamily) {
+					case MoveDef::Ship: {
 						wantedHeight = std::max(-unitDef->waterline, wantedHeight);
 						clampedHeight = wantedHeight;
 					} break;
-					case MoveDef::Hover_Move: {
+					case MoveDef::Hover: {
 						wantedHeight = std::max(0.0f, wantedHeight);
 						clampedHeight = wantedHeight;
 					} break;

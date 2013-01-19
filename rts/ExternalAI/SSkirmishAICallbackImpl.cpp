@@ -2409,7 +2409,7 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToHover(int skirmishAIId, int unit
 	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
 	const MoveDef* md = (ud->pathType != -1U)? moveDefHandler->GetMoveDefByPathType(ud->pathType): NULL;
  
-	return ((md != NULL)? (md->moveType == MoveDef::Hover_Move): false);
+	return ((md != NULL)? (md->moveFamily == MoveDef::Hover): false);
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isFloater(int skirmishAIId, int unitDefId) {
@@ -3018,8 +3018,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getCrushStrength(int skirmishA
 	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->crushStrength;
 }
 
+// DEPRECATED
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getMoveType(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->moveType;
+	return -1;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getMoveFamily(int skirmishAIId, int unitDefId) {

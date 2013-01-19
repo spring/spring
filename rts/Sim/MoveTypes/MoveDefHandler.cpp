@@ -15,13 +15,12 @@
 #include "System/myMath.h"
 #include "System/Util.h"
 
-CR_BIND(MoveDef, (0));
+CR_BIND(MoveDef, ());
 CR_BIND(MoveDefHandler, );
 
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
 
-	CR_ENUM_MEMBER(moveType),
 	CR_ENUM_MEMBER(moveFamily),
 	CR_ENUM_MEMBER(terrainClass),
 
@@ -140,22 +139,39 @@ MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 
 
 
-MoveDef::MoveDef() {
-	name              = "";
+MoveDef::MoveDef()
+	: name("")
 
-	moveType          = MoveDef::Ground_Move;
-	moveFamily        = MoveDef::Tank;
-	terrainClass      = MoveDef::Mixed;
+	, moveFamily(MoveDef::Tank)
+	, terrainClass(MoveDef::Mixed)
 
-	xsize             = 0;
-	zsize             = 0;
-	xsizeh            = 0;
-	zsizeh            = 0;
+	, xsize(0)
+	, zsize(0)
+	, xsizeh(0)
+	, zsizeh(0)
 
-	depth             = 0.0f;
-	maxSlope          = 1.0f;
-	slopeMod          = 0.0f;
+	, depth(0.0f)
+	, maxSlope(1.0f)
+	, slopeMod(0.0f)
 
+	, crushStrength(0.0f)
+
+	, pathType(0)
+	, unitDefRefCount(0)
+
+	, heatMod(0.05f)
+	, flowMod(1.0f)
+
+	, heatProduced(GAME_SPEED)
+
+	, followGround(true)
+	, subMarine(false)
+
+	, avoidMobilesOnPath(true)
+
+	, heatMapping(true)
+	, flowMapping(true)
+{
 	depthModParams[DEPTHMOD_MIN_HEIGHT] = 0.0f;
 	depthModParams[DEPTHMOD_MAX_HEIGHT] = std::numeric_limits<float>::max();
 	depthModParams[DEPTHMOD_MAX_SCALE ] = std::numeric_limits<float>::max();
@@ -167,24 +183,6 @@ MoveDef::MoveDef() {
 	speedModMults[SPEEDMOD_MOBILE_IDLE_MULT] = 0.35f;
 	speedModMults[SPEEDMOD_MOBILE_MOVE_MULT] = 0.65f;
 	speedModMults[SPEEDMOD_MOBILE_NUM_MULTS] = 0.0f;
-
-	crushStrength     = 0.0f;
-
-	pathType          = 0;
-	unitDefRefCount   = 0;
-
-	followGround      = true;
-	subMarine         = false;
-
-	avoidMobilesOnPath = true;
-
-	heatMapping       = true;
-	flowMapping       = true;
-
-	heatMod           = 0.05f;
-	flowMod           = 1.0f;
-
-	heatProduced      = GAME_SPEED;
 }
 
 MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
@@ -202,18 +200,13 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 
 	if ((name.find("boat") != string::npos) ||
 	    (name.find("ship") != string::npos)) {
-		moveType   = MoveDef::Ship_Move;
 		depth      = minWaterDepth;
 		moveFamily = MoveDef::Ship;
 		subMarine  = moveTable.GetBool("subMarine", false);
 	} else if (name.find("hover") != string::npos) {
-		moveType   = MoveDef::Hover_Move;
 		maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 		moveFamily = MoveDef::Hover;
 	} else {
-		moveType = MoveDef::Ground_Move;
-		depth    = maxWaterDepth;
-
 		depthModParams[DEPTHMOD_MIN_HEIGHT] = std::max(0.00f, depthModTable.GetFloat("minHeight",                                     0.0f ));
 		depthModParams[DEPTHMOD_MAX_HEIGHT] =         (       depthModTable.GetFloat("maxHeight",        std::numeric_limits<float>::max() ));
 		depthModParams[DEPTHMOD_MAX_SCALE ] = std::max(0.01f, depthModTable.GetFloat("maxScale",         std::numeric_limits<float>::max() ));
@@ -224,6 +217,7 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 		// ensure [depthModMinHeight, depthModMaxHeight] is a valid range
 		depthModParams[DEPTHMOD_MAX_HEIGHT] = std::max(depthModParams[DEPTHMOD_MIN_HEIGHT], depthModParams[DEPTHMOD_MAX_HEIGHT]);
 
+		depth    = maxWaterDepth;
 		maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
 
 		if (name.find("tank") != string::npos) {
@@ -240,10 +234,10 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 	avoidMobilesOnPath = moveTable.GetBool("avoidMobilesOnPath", true);
 
 	heatMapping = moveTable.GetBool("heatMapping", false);
-	flowMapping  = moveTable.GetBool("flowMapping", true);
+	flowMapping = moveTable.GetBool("flowMapping", true);
 
 	heatMod = moveTable.GetFloat("heatMod", 50.0f);
-	flowMod      = moveTable.GetFloat("flowMod", 1.0f);
+	flowMod = moveTable.GetFloat("flowMod", 1.0f);
 
 	heatProduced = moveTable.GetInt("heatProduced", GAME_SPEED * 2);
 
@@ -347,14 +341,14 @@ float MoveDef::GetDepthMod(const float height) const {
 unsigned int MoveDef::GetCheckSum() const {
 	unsigned int sum = 0;
 
-	const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&moveType);
-	const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&heatProduced) + sizeof(heatProduced);
+	const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&moveFamily);
+	const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&flowMapping) + sizeof(flowMapping);
 
 	assert(minByte < maxByte);
 
 	// NOTE:
 	//   safe so long as MoveDef has no virtuals and we
-	//   make sure we do not checksum the pointer-members
+	//   make sure we do not checksum any padding bytes
 	for (const unsigned char* byte = minByte; byte != maxByte; byte++) {
 		sum ^= ((((byte + 1) - minByte) << 8) * (*byte));
 	}

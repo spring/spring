@@ -562,7 +562,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	const MoveDef* md = unit->moveDef;
 
 	// hovercraft need special care
-	if (md != NULL && md->moveType == MoveDef::Hover_Move) {
+	if (md != NULL && md->moveFamily == MoveDef::Hover) {
 		fadeupTime = 8.0f;
 		alpha = 0.15f + gu->RandFloat() * 0.2f;
 		alphaFalloff = 0.008f;
