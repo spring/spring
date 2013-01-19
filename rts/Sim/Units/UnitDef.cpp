@@ -514,7 +514,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 	// modrules transport settings
-	// FIXME: do we want to check moveDef->moveType for these?
+	// FIXME: do we want to check moveDef->moveFamily for these?
 	if ((!modInfo.transportAir    && canfly)   ||
 		(!modInfo.transportShip   && canFloat) ||
 		(!modInfo.transportHover  && canHover) ||
@@ -543,17 +543,17 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			const char* wantedTypeStr = NULL;
 
 			if (canHover) {
-				if (moveDef->moveType != MoveDef::Hover_Move) {
+				if (moveDef->moveFamily != MoveDef::Hover) {
 					typeStr       = "canHover";
 					wantedTypeStr = "hover";
 				}
 			} else if (canFloat) {
-				if (moveDef->moveType != MoveDef::Ship_Move) {
+				if (moveDef->moveFamily != MoveDef::Ship) {
 					typeStr       = "canFloat";
 					wantedTypeStr = "ship";
 				}
 			} else {
-				if (moveDef->moveType != MoveDef::Ground_Move) {
+				if (moveDef->moveFamily != MoveDef::Tank && moveDef->moveFamily != MoveDef::KBot) {
 					typeStr       = "!(canHover || canFloat)";
 					wantedTypeStr = "ground";
 				}
@@ -573,11 +573,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		floatOnWater = canFloat;
 	} else {
 		upright = upright ||
-			(moveDef->moveType == MoveDef::Hover_Move) ||
-			(moveDef->moveType == MoveDef::Ship_Move);
+			(moveDef->moveFamily == MoveDef::Hover) ||
+			(moveDef->moveFamily == MoveDef::Ship);
 		floatOnWater =
-			(moveDef->moveType == MoveDef::Hover_Move) ||
-			(moveDef->moveType == MoveDef::Ship_Move);
+			(moveDef->moveFamily == MoveDef::Hover) ||
+			(moveDef->moveFamily == MoveDef::Ship);
 	}
 
 	if (IsAirUnit()) {
@@ -880,7 +880,7 @@ bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) cons
 
 	if (moveDef != NULL) {
 		// we are a mobile ground-unit
-		if (moveDef->moveType == MoveDef::Ship_Move) {
+		if (moveDef->moveFamily == MoveDef::Ship) {
 			minDepth = moveDef->depth;
 		} else {
 			maxDepth = moveDef->depth;

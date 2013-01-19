@@ -447,7 +447,7 @@ void CClassicGroundMoveType::ChangeHeading(short wantedHeading) {
 
 void CClassicGroundMoveType::ImpulseAdded()
 {
-	if(owner->beingBuilt || owner->moveDef->moveType == MoveDef::Ship_Move)
+	if (owner->beingBuilt || owner->moveDef->moveFamily == MoveDef::Ship)
 		return;
 
 	float3& impulse = owner->residualImpulse;

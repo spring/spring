@@ -139,7 +139,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							}
 
 							// NOTE: raw speedmods are not necessarily clamped to [0, 1]
-							const float sm = CMoveMath::GetPosSpeedMod(md, sqx, sqy);
+							const float sm = CMoveMath::GetPosSpeedMod(*md, sqx, sqy);
 							const SColor& smc = GetSpeedModColor(sm * scale);
 
 							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = smc.r;

@@ -913,6 +913,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	char hashString[64] = {0};
 
 	sprintf(hashString, "%u", hash);
+	printf("[PathEstimator::%s] %s\n", __FUNCTION__, hashString);
 
 	const std::string filename = std::string(PATH_CACHE_DIR) + map + hashString + "." + cacheFileName + ".zip";
 	zipFile file;
@@ -923,7 +924,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	if (file) {
 		zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
 
-		// Write hash.
+		// Write hash. (NOTE: this also affects the CRC!)
 		zipWriteInFileInZip(file, (void*) &hash, 4);
 
 		// Write block-center-offsets.

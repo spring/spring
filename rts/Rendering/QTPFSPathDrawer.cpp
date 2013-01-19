@@ -359,7 +359,7 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 						// use node-modifiers as baseline so visualisation is in sync with alt+B
 						const QTPFS::QTNode* node = static_cast<const QTPFS::QTNode*>(nl.GetNode(sqx, sqz));
 
-						const float sm = CMoveMath::GetPosSpeedMod(md, sqx, sqz);
+						const float sm = CMoveMath::GetPosSpeedMod(*md, sqx, sqz);
 						const SColor& smc = GetSpeedModColor((los || losSqr)? node->speedModAvg * smr: sm);
 						#else
 						float scale = 1.0f;
