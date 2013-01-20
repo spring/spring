@@ -1548,7 +1548,7 @@ int LuaOpenGL::Feature(lua_State* L) // FIXME -- implement properly
 	  return 0;
 	}
 	glPushMatrix();
-	glMultMatrixf(feature->transMatrix.m);
+	glMultMatrixf(feature->GetTransformMatrix());
 	feature->model->DrawStatic();
 	glPopMatrix();
 

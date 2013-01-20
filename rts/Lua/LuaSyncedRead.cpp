@@ -4292,10 +4292,10 @@ int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 	if (feature == NULL || !IsFeatureVisible(L, feature)) {
 		return 0;
 	}
-	const float3 dir = ::GetVectorFromHeading(feature->heading);
-	lua_pushnumber(L, dir.x);
-	lua_pushnumber(L, dir.y);
-	lua_pushnumber(L, dir.z);
+	const CMatrix44f& mat = feature->GetTransformMatrix(true);
+	lua_pushnumber(L, mat[ 8]);
+	lua_pushnumber(L, mat[ 9]);
+	lua_pushnumber(L, mat[10]);
 	return 3;
 }
 

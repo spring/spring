@@ -109,7 +109,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - f->radius) >= 1.0f);
 
 	glPushMatrix();
-		glMultMatrixf(f->transMatrix.m);
+		glMultMatrixf(f->GetTransformMatrix());
 		DrawObjectMidAndAimPos(f);
 
 		if (!v->IgnoreHits()) {
