@@ -1980,6 +1980,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathFlow);
+		return true;
 	}
 };
 
