@@ -14,8 +14,8 @@ FIXME - spring-mt is merged into spring (default disabled, games can enable it w
 
 AI:
  - Shard update
- - AAI: stability & code fixes
  - AAI: refactor / fixes
+ - AAI: add BAR config
  - fix bug in /aikill
 
 pr-download:
@@ -181,6 +181,7 @@ Buildprocess:
  - detect ld.gold and compress debugsymbols
  - update 7z to v9.22
  - use tcmalloc when found (new USE_TCMALLOC use-flag)
+ - add target headercheck
 
 Windows:
  - OpenMP build
