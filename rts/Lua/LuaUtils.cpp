@@ -850,7 +850,7 @@ int LuaUtils::ZlibCompress(lua_State* L)
 	size_t inLen;
 	const char* inData = luaL_checklstring(L, 1, &inLen);
 
-	long unsigned bufsize = inLen*1.02+32;
+	long unsigned bufsize = compressBound(inLen);
 	std::vector<boost::uint8_t> compressed(bufsize, 0);
 	const int error = compress(&compressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
 	if (error == Z_OK)
