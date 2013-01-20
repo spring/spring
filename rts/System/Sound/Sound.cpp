@@ -25,7 +25,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/myMath.h"
 #include "System/Util.h"
-#include "System/Platform/errorhandler.h"
 #include "System/Platform/Watchdog.h"
 
 #include "System/float3.h"
@@ -111,7 +110,7 @@ bool CSound::HasSoundItem(const std::string& name) const
 	}
 }
 
-size_t CSound::GetSoundId(const std::string& name, bool hardFail)
+size_t CSound::GetSoundId(const std::string& name)
 {
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 
@@ -119,38 +118,22 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 		return 0;
 
 	soundMapT::const_iterator it = soundMap.find(name);
-	if (it != soundMap.end())
-	{
+	if (it != soundMap.end()) {
 		// sounditem found
 		return it->second;
-	}
-	else
-	{
+	} else {
 		soundItemDefMap::const_iterator itemDefIt = soundItemDefs.find(StringToLower(name));
-		if (itemDefIt != soundItemDefs.end())
-		{
+		if (itemDefIt != soundItemDefs.end()) {
 			return MakeItemFromDef(itemDefIt->second);
-		}
-		else
-		{
-			if (LoadSoundBuffer(name, hardFail) > 0) // maybe raw filename?
+		} else {
+			if (LoadSoundBuffer(name) > 0) // maybe raw filename?
 			{
 				soundItemDef temp = defaultItem;
 				temp["file"] = name;
 				return MakeItemFromDef(temp);
-			}
-			else
-			{
-				if (hardFail)
-				{
-					ErrorMessageBox("Couldn't open wav file", name, 0);
-					return 0;
-				}
-				else
-				{
-					LOG_L(L_WARNING, "CSound::GetSoundId: could not find sound: %s", name.c_str());
-					return 0;
-				}
+			} else {
+				LOG_L(L_ERROR, "CSound::GetSoundId: could not find sound: %s", name.c_str());
+				return 0;
 			}
 		}
 	}
@@ -420,7 +403,7 @@ size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 	if (it == itemDef.end())
 		return 0;
 
-	boost::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second, false));
+	boost::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second));
 	
 	if (!buffer)
 		return 0;
@@ -562,7 +545,7 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 }
 
 //! only used internally, locked in caller's scope
-size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
+size_t CSound::LoadSoundBuffer(const std::string& path)
 {
 	const size_t id = SoundBuffer::GetId(path);
 
@@ -572,11 +555,7 @@ size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 		CFileHandler file(path);
 
 		if (!file.FileExists()) {
-			if (hardFail) {
-				handleerror(0, "Could not open audio file", path, 0);
-			} else {
-				LOG_L(L_WARNING, "Unable to open audio file: %s", path.c_str());
-			}
+			LOG_L(L_ERROR, "Unable to open audio file: %s", path.c_str());
 			return 0;
 		}
 
@@ -587,9 +566,9 @@ size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 		bool success = false;
 		const std::string ending = file.GetFileExt();
 		if (ending == "wav") {
-			success = buffer->LoadWAV(path, buf, hardFail);
+			success = buffer->LoadWAV(path, buf);
 		} else if (ending == "ogg") {
-			success = buffer->LoadVorbis(path, buf, hardFail);
+			success = buffer->LoadVorbis(path, buf);
 		} else {
 			LOG_L(L_WARNING, "CSound::LoadALBuffer: unknown audio format: %s",
 					ending.c_str());

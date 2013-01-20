@@ -68,7 +68,7 @@ CSelectedUnits::CSelectedUnits()
 
 void CSelectedUnits::Init(unsigned numPlayers)
 {
-	soundMultiselID = sound->GetSoundId("MultiSelect", false);
+	soundMultiselID = sound->GetSoundId("MultiSelect");
 	buildIconsFirst = configHandler->GetBool("BuildIconsFirst");
 	autoAddBuiltUnitsToFactoryGroup = configHandler->GetBool("AutoAddBuiltUnitsToFactoryGroup");
 	autoAddBuiltUnitsToSelectedGroup = configHandler->GetBool("AutoAddBuiltUnitsToSelectedGroup");

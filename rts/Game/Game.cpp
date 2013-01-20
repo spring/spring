@@ -518,7 +518,7 @@ void CGame::LoadDefs()
 		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
 		sound->LoadSoundDefs("gamedata/sounds.lua");
-		chatSound = sound->GetSoundId("IncomingChat", false);
+		chatSound = sound->GetSoundId("IncomingChat");
 	}
 
 	LEAVE_SYNCED_CODE();

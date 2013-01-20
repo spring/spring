@@ -33,7 +33,7 @@ public:
 	virtual ~CSound();
 
 	virtual bool HasSoundItem(const std::string& name) const;
-	virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
+	virtual size_t GetSoundId(const std::string& name);
 	SoundItem* GetSoundItem(size_t id) const;
 
 	virtual CSoundSource* GetNextBestSource(bool lock = true);
@@ -67,7 +67,7 @@ private:
 
 	size_t MakeItemFromDef(const soundItemDef& itemDef);
 
-	size_t LoadSoundBuffer(const std::string& filename, bool hardFail);
+	size_t LoadSoundBuffer(const std::string& filename);
 
 private:
 	float masterVolume;

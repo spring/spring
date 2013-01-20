@@ -18,7 +18,7 @@ public:
 	virtual ~NullSound();
 
 	bool HasSoundItem(const std::string& name) const;
-	size_t GetSoundId(const std::string& name, bool hardFail = true);
+	size_t GetSoundId(const std::string& name);
 	SoundItem* GetSoundItem(size_t id) const { return NULL; }
 
 	CSoundSource* GetNextBestSource(bool lock = true);

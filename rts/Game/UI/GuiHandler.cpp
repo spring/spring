@@ -107,7 +107,7 @@ CGuiHandler::CGuiHandler():
 		useStencil = (stencilBits >= 1);
 	}
 
-	failedSound = sound->GetSoundId("FailedCommand", false);
+	failedSound = sound->GetSoundId("FailedCommand");
 }
 
 

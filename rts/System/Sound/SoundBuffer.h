@@ -26,8 +26,8 @@ public:
 	SoundBuffer();
 	~SoundBuffer();
 
-	bool LoadWAV(const std::string& file, std::vector<boost::uint8_t> buffer, bool strict);
-	bool LoadVorbis(const std::string& file, std::vector<boost::uint8_t> buffer, bool strict);
+	bool LoadWAV(const std::string& file, std::vector<boost::uint8_t> buffer);
+	bool LoadVorbis(const std::string& file, std::vector<boost::uint8_t> buffer);
 
 	const std::string& GetFilename() const
 	{
