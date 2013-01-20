@@ -4292,7 +4292,7 @@ int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 	if (feature == NULL || !IsFeatureVisible(L, feature)) {
 		return 0;
 	}
-	const CMatrix44f& mat = feature->GetTransformMatrix(true);
+	const CMatrix44f& mat = feature->GetTransformMatrixRef();
 	lua_pushnumber(L, mat[ 8]);
 	lua_pushnumber(L, mat[ 9]);
 	lua_pushnumber(L, mat[10]);

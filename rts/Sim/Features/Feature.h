@@ -80,9 +80,12 @@ public:
 		}
 	}
 
-	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const {
-		return transMatrix;
-	}
+	// NOTE:
+	//   unlike CUnit which recalculates the matrix on each call
+	//   (and uses the synced and error args) CFeature caches it
+	//   this matrix is identical in synced and unsynced context!
+	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const { return transMatrix; }
+	const CMatrix44f& GetTransformMatrixRef() const { return transMatrix; }
 
 public:
 	int defID;
@@ -122,10 +125,10 @@ public:
 	/// initially a copy of CUnit::speed, for trees it stores the impulse that caused the destruction
 	float3 deathSpeed;
 
-	CMatrix44f transMatrix;
-
 private:
 	void PostLoad();
+
+	CMatrix44f transMatrix;
 };
 
 #endif // _FEATURE_H
