@@ -326,7 +326,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 	if (sqDist >= std::min(farLength, sqFadeDistEnd)) return false;
 
 	glPushMatrix();
-	glMultMatrixf(feature->transMatrix.m);
+	glMultMatrixf(feature->GetTransformMatrixRef());
 
 	unitDrawer->SetTeamColour(feature->team, alpha);
 
