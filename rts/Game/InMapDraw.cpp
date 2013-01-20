@@ -40,7 +40,7 @@ public:
 	CNotificationPeeper()
 		: CEventClient("NotificationPeeper", 99, false)
 	{
-		blippSound = sound->GetSoundId("MapPoint", false);
+		blippSound = sound->GetSoundId("MapPoint");
 	}
 
 	virtual bool WantsEvent(const std::string& eventName) {

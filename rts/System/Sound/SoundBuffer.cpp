@@ -6,7 +6,6 @@
 #include "SoundLog.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
-#include "System/Platform/errorhandler.h"
 #include "System/Platform/byteorder.h"
 
 #include <vorbis/vorbisfile.h>
@@ -67,14 +66,12 @@ struct WAVHeader
 };
 #pragma pack(pop)
 
-bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> buffer, bool strict)
+bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> buffer)
 {
 	WAVHeader* header = (WAVHeader*)(&buffer[0]);
 
 	if ((buffer.empty()) || memcmp(header->riff, "RIFF", 4) || memcmp(header->wavefmt, "WAVEfmt", 7)) {
-		if (strict) {
-			ErrorMessageBox("ReadWAV: invalid header.", file, 0);
-		}
+		LOG_L(L_ERROR, "ReadWAV: invalid header: %s", file.c_str());
 		return false;
 	}
 
@@ -94,9 +91,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 #undef hswabdword
 
 	if (header->format_tag != 1) { // Microsoft PCM format?
-		if (strict) {
-			ErrorMessageBox("ReadWAV: invalid format tag.", file, 0);
-		}
+		LOG_L(L_ERROR, "ReadWAV (%s): invalid format tag", file.c_str());
 		return false;
 	}
 
@@ -105,9 +100,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 		if (header->BitsPerSample == 8) format = AL_FORMAT_MONO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_MONO16;
 		else {
-			if (strict) {
-				ErrorMessageBox("ReadWAV: invalid number of bits per sample (mono).", file, 0);
-			}
+			LOG_L(L_ERROR, "ReadWAV (%s): invalid number of bits per sample (mono)", file.c_str());
 			return false;
 		}
 	}
@@ -115,21 +108,17 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 		if (header->BitsPerSample == 8) format = AL_FORMAT_STEREO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_STEREO16;
 		else {
-			if (strict) {
-				ErrorMessageBox("ReadWAV: invalid number of bits per sample (stereo).", file, 0);
-			}
+			LOG_L(L_ERROR, "ReadWAV (%s): invalid number of bits per sample (stereo)", file.c_str());
 			return false;
 		}
 	}
 	else {
-		if (strict) {
-			ErrorMessageBox("ReadWAV (%s): invalid number of channels.", file, 0);
-		}
+		LOG_L(L_ERROR, "ReadWAV (%s): invalid number of channels.", file.c_str());
 		return false;
 	}
 
 	if (static_cast<unsigned>(header->datalen) > buffer.size() - sizeof(WAVHeader)) {
-		LOG_L(L_WARNING,
+		LOG_L(L_ERROR,
 				"WAV file %s has data length %i greater than actual data length %i",
 				file.c_str(), header->datalen,
 				(int)(buffer.size() - sizeof(WAVHeader)));
@@ -159,7 +148,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 	return true;
 }
 
-bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t> buffer, bool strict)
+bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t> buffer)
 {
 	VorbisInputBuffer buf;
 	buf.data = &buffer[0];
@@ -194,12 +183,8 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 	}
 	else
 	{
-		if (strict) {
-			ErrorMessageBox("SoundBuffer::LoadVorbis (%s): invalid number of channels.", file, 0);
-		} else {
-			LOG_L(L_WARNING, "File %s: invalid number of channels: %i",
+		LOG_L(L_ERROR, "File %s: invalid number of channels: %i",
 					file.c_str(), vorbisInfo->channels);
-		}
 		return false;
 	}
 
