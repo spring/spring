@@ -796,22 +796,30 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	tracefile << owner->id << " " << weaponNum <<  "\n";
 #endif
 
-	// If we can't get a line of fire from the muzzle, try
-	// the aim piece instead (since the weapon may just be
-	// turned in a wrong way)
-	int weaponPiece = -1;
-	bool weaponAimed = (useWeaponPosForAim == 0);
+	{
+		// If we can't get a line of fire from the muzzle, try
+		// the aim piece instead (since the weapon may just be
+		// turned in a wrong way)
+		int weaponPiece = -1;
+		bool weaponAimed = (useWeaponPosForAim == 0);
 
-	if (!weaponAimed) {
-		weaponPiece = owner->script->QueryWeapon(weaponNum);
+		if (!weaponAimed) {
+			weaponPiece = owner->script->QueryWeapon(weaponNum);
+		} else {
+			weaponPiece = owner->script->AimFromWeapon(weaponNum);
+		}
 
-		if (useWeaponPosForAim > 1)
-			useWeaponPosForAim--;
-	} else {
-		weaponPiece = owner->script->AimFromWeapon(weaponNum);
+		relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
+
+		if (!weaponAimed) {
+			weaponPiece = owner->script->AimFromWeapon(weaponNum);
+		}
+
+		relWeaponPos = owner->script->GetPiecePos(weaponPiece);
 	}
 
-	relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
+	useWeaponPosForAim = std::max(0, useWeaponPosForAim - 1);
+
 	weaponMuzzlePos =
 		owner->pos +
 		owner->frontdir * relWeaponMuzzlePos.z +
@@ -822,12 +830,6 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		owner->frontdir * relWeaponPos.z +
 		owner->updir    * relWeaponPos.y +
 		owner->rightdir * relWeaponPos.x;
-
-	if (!weaponAimed) {
-		weaponPiece = owner->script->AimFromWeapon(weaponNum);
-	}
-
-	relWeaponPos = owner->script->GetPiecePos(weaponPiece);
 
 	if (weaponMuzzlePos.y < ground->GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
@@ -899,7 +901,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 	if (targetType == Target_None) {
 		// if we can't target anything, try switching aim point
-		useWeaponPosForAim = 1 - useWeaponPosForAim;
+		useWeaponPosForAim = std::max(0, useWeaponPosForAim - 1);
 	}
 }
 
