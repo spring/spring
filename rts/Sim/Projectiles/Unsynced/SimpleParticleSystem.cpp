@@ -74,15 +74,9 @@ CSimpleParticleSystem::CSimpleParticleSystem()
 	, sizeGrowth(0.0f)
 	, sizeMod(0.0f)
 	, numParticles(0)
-	, particles(NULL)
 {
 	checkCol = false;
 	useAirLos = true;
-}
-
-CSimpleParticleSystem::~CSimpleParticleSystem()
-{
-	delete[] particles;
 }
 
 void CSimpleParticleSystem::Draw()
@@ -90,33 +84,34 @@ void CSimpleParticleSystem::Draw()
 	inArray = true;
 
 	va->EnlargeArrays(numParticles * 4, 0, VA_SIZE_TC);
+
 	if (directional) {
 		for (int i = 0; i < numParticles; i++) {
 			const Particle* p = &particles[i];
 
 			if (p->life < 1.0f) {
-				float3 dif(p->pos - camera->pos);
+				const float3 zdir = (p->pos - camera->pos).SafeANormalize();
+				const float3 ydir = (zdir.cross(p->speed)).SafeANormalize();
+				const float3 xdir = (zdir.cross(ydir));
 
-				dif.SafeANormalize();
-
-				float3 dir1 =
-					(p->speed.SqLength() > 0.001f)?
-					(dif.cross(p->speed)):
-					ZeroVector;
-
-				dir1.SafeANormalize();
-
-				const float3 dir2(dif.cross(dir1));
 				const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
 				const float size = p->size;
 
 				unsigned char color[4];
 				colorMap->GetColor(color, p->life);
 
-				va->AddVertexQTC(interPos - dir1 * size - dir2 * size, texture->xstart, texture->ystart, color);
-				va->AddVertexQTC(interPos - dir1 * size + dir2 * size, texture->xend,   texture->ystart, color);
-				va->AddVertexQTC(interPos + dir1 * size + dir2 * size, texture->xend,   texture->yend,   color);
-				va->AddVertexQTC(interPos + dir1 * size - dir2 * size, texture->xstart, texture->yend,   color);
+				if (p->speed.SqLength() > 0.001f) {
+					va->AddVertexQTC(interPos - ydir * size - xdir * size, texture->xstart, texture->ystart, color);
+					va->AddVertexQTC(interPos - ydir * size + xdir * size, texture->xend,   texture->ystart, color);
+					va->AddVertexQTC(interPos + ydir * size + xdir * size, texture->xend,   texture->yend,   color);
+					va->AddVertexQTC(interPos + ydir * size - xdir * size, texture->xstart, texture->yend,   color);
+				} else {
+					// in this case the particle's coor-system is degenerate
+					va->AddVertexQTC(interPos - camera->up * size - camera->right * size, texture->xstart, texture->ystart, color);
+					va->AddVertexQTC(interPos - camera->up * size + camera->right * size, texture->xend,   texture->ystart, color);
+					va->AddVertexQTC(interPos + camera->up * size + camera->right * size, texture->xend,   texture->yend,   color);
+					va->AddVertexQTC(interPos + camera->up * size - camera->right * size, texture->xstart, texture->yend,   color);
+				}
 			}
 		}
 	} else {
@@ -147,10 +142,9 @@ void CSimpleParticleSystem::Update()
 	for (int i = 0; i < numParticles; i++) {
 		if (particles[i].life < 1.0f) {
 			particles[i].pos += particles[i].speed;
-			particles[i].life += particles[i].decayrate;
 			particles[i].speed += gravity;
 			particles[i].speed *= airdrag;
-
+			particles[i].life += particles[i].decayrate;
 			particles[i].size = particles[i].size * sizeMod + sizeGrowth;
 
 			deleteMe = false;
@@ -162,11 +156,11 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
 {
 	CProjectile::Init(explosionPos, owner);
 
-	particles = new Particle[numParticles];
+	particles.resize(numParticles);
 
-	float3 up = emitVector;
-	float3 right = up.cross(float3(up.y, up.z, -up.x));
-	float3 forward = up.cross(right);
+	const float3 up = emitVector;
+	const float3 right = up.cross(float3(up.y, up.z, -up.x));
+	const float3 forward = up.cross(right);
 
 	// FIXME: should catch these earlier and for more projectile-types
 	if (colorMap == NULL) {
@@ -182,12 +176,11 @@ void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit* owner)
 		float az = gu->RandFloat() * 2 * PI;
 		float ay = (emitRot + (emitRotSpread * gu->RandFloat())) * (PI / 180.0);
 
-		particles[i].decayrate = 1.0f / (particleLife + (gu->RandFloat() * particleLifeSpread));
-		particles[i].life = 0;
-		particles[i].size = particleSize + gu->RandFloat()*particleSizeSpread;
 		particles[i].pos = pos;
-
 		particles[i].speed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
+		particles[i].life = 0;
+		particles[i].decayrate = 1.0f / (particleLife + (gu->RandFloat() * particleLifeSpread));
+		particles[i].size = particleSize + gu->RandFloat()*particleSizeSpread;
 	}
 
 	drawRadius = (particleSpeed + particleSpeedSpread) * (particleLife * particleLifeSpread);
@@ -213,9 +206,9 @@ CSphereParticleSpawner::CSphereParticleSpawner(): CSimpleParticleSystem()
 
 void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 {
-	float3 up = emitVector;
-	float3 right = up.cross(float3(up.y, up.z, -up.x));
-	float3 forward = up.cross(right);
+	const float3 up = emitVector;
+	const float3 right = up.cross(float3(up.y, up.z, -up.x));
+	const float3 forward = up.cross(right);
 
 	// FIXME: should catch these earlier and for more projectile-types
 	if (colorMap == NULL) {
@@ -231,7 +224,7 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 		const float az = gu->RandFloat() * 2 * PI;
 		const float ay = (emitRot + emitRotSpread*gu->RandFloat()) * (PI / 180.0);
 
-		float3 pspeed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
+		const float3 pspeed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
 
 		CGenericParticleProjectile* particle = new CGenericParticleProjectile(pos + explosionPos, pspeed, owner);
 
