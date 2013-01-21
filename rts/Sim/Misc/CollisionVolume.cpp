@@ -242,71 +242,66 @@ void CollisionVolume::RescaleAxes(const float3& scales) {
 
 
 
-const CollisionVolume* CollisionVolume::GetVolume(const CUnit* u, float3& pos) {
-	const CollisionVolume* vol = u->collisionVolume;
-	const LocalModelPiece* lap = u->lastAttackedPiece;
+float3 CollisionVolume::GetWorldSpacePos(const CSolidObject* o, const float3& extOffsets) const {
+	float3 pos = o->midPos;
+	pos += (o->rightdir * (axisOffsets.x + extOffsets.x));
+	pos += (o->updir    * (axisOffsets.y + extOffsets.y));
+	pos += (o->frontdir * (axisOffsets.z + extOffsets.z));
+	return pos;
+}
 
-	if (vol->DefaultToPieceTree() && u->HaveLastAttackedPiece(gs->frameNum)) {
-		assert(lap != NULL);
 
-		vol = lap->GetCollisionVolume();
-		pos = lap->GetAbsolutePos() + vol->GetOffsets();
-		pos = u->pos +
-			u->rightdir * pos.x +
-			u->updir    * pos.y +
-			u->frontdir * pos.z;
-	} else {
-		pos = u->midPos + vol->GetOffsets();
+
+const CollisionVolume* CollisionVolume::GetVolume(const CSolidObject* o, const LocalModelPiece* lmp) {
+	const CollisionVolume* vol = o->collisionVolume;
+
+	if (vol->DefaultToPieceTree() && lmp != NULL) {
+		vol = lmp->GetCollisionVolume();
 	}
 
 	return vol;
 }
 
-const CollisionVolume* CollisionVolume::GetVolume(const CFeature* f, float3& pos) {
-	pos = f->midPos + f->collisionVolume->GetOffsets();
-	return f->collisionVolume;
-}
 
 
+float CollisionVolume::GetPointSurfaceDistance(const CUnit* u, const LocalModelPiece* lmp, const float3& p) const {
+	const CollisionVolume* vol = u->collisionVolume;
 
-float CollisionVolume::GetPointDistance(const CUnit* u, const float3& pw) const {
-	const CollisionVolume* v = u->collisionVolume;
-	const LocalModelPiece* p = u->lastAttackedPiece;
+	CMatrix44f mat = u->GetTransformMatrix(true);
+	float3 off = GetOffsets();
 
-	CMatrix44f m = u->GetTransformMatrix(true);
-	float3 o = GetOffsets();
+	// Unit::GetTransformMatrix does not include this
+	// (its translation component is pos, not midPos)
+	mat.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 
-	m.Translate(u->relMidPos * WORLD_TO_OBJECT_SPACE);
-
-	if (v->DefaultToPieceTree() && u->HaveLastAttackedPiece(gs->frameNum)) {
+	if (vol->DefaultToPieceTree() && lmp != NULL) {
 		// NOTE: if we get here, then <this> is the piece-volume
-		assert(p != NULL);
-		assert(this == p->GetCollisionVolume());
+		assert(this == lmp->GetCollisionVolume());
 
 		// need to transform into piece-space
-		m = m * p->GetModelSpaceMatrix();
-		o = -o;
+		mat = mat * lmp->GetModelSpaceMatrix();
+		off = -off;
 	}
 
-	m.Translate(o);
-	m.InvertAffineInPlace();
+	mat.Translate(off);
+	mat.InvertAffineInPlace();
 
-	return (GetPointSurfaceDistance(m, pw));
+	return (GetPointSurfaceDistance(mat, p));
 }
 
-float CollisionVolume::GetPointDistance(const CFeature* f, const float3& pw) const {
-	CMatrix44f m = f->GetTransformMatrixRef();
+float CollisionVolume::GetPointSurfaceDistance(const CFeature* f, const LocalModelPiece* /*lmp*/, const float3& p) const {
+	CMatrix44f mat = f->GetTransformMatrixRef();
 
-	m.Translate(f->relMidPos * WORLD_TO_OBJECT_SPACE);
-	m.Translate(GetOffsets());
-	m.InvertAffineInPlace();
+	mat.Translate(f->relMidPos * WORLD_TO_OBJECT_SPACE);
+	mat.Translate(GetOffsets());
+	mat.InvertAffineInPlace();
 
-	return (GetPointSurfaceDistance(m, pw));
+	return (GetPointSurfaceDistance(mat, p));
 }
 
-float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float3& pw) const {
-	// transform <pw> to volume-space
-	float3 pv = mv.Mul(pw);
+float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float3& p) const {
+	// transform <p> from world- to volume-space
+	float3 pv = mv.Mul(p);
 	float3 pt;
 
 	float l = 0.0f;
