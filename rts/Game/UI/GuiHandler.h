@@ -159,6 +159,7 @@ private:
 
 	int  IconAtPos(int x, int y);
 	void SetCursorIcon() const;
+	bool TryTarget(const CommandDescription& cmdDesc) const;
 
 	void LoadDefaults();
 	void SanitizeConfig();
