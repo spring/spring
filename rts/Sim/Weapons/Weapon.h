@@ -74,6 +74,11 @@ public:
 protected:
 	virtual void FireImpl() {}
 
+	void UpdateTargeting();
+	void UpdateFire();
+	void UpdateStockpile();
+	void UpdateSalvo();
+
 protected:
 	ProjectileParams GetProjectileParams();
 
