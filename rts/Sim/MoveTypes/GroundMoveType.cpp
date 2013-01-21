@@ -1023,7 +1023,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	nextObstacleAvoidanceUpdate = gs->frameNum + 1;
 
 	CUnit* avoider = owner;
-	const UnitDef* avoiderUD = avoider->unitDef;
+	//const UnitDef* avoiderUD = avoider->unitDef;
 	const MoveDef* avoiderMD = avoider->moveDef;
 
 	static const float AVOIDER_DIR_WEIGHT = 1.0f;
@@ -1276,7 +1276,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 			const int xmin = std::min(cwp.x / SQUARE_SIZE, pos.x / SQUARE_SIZE) - 1, xmax = std::max(cwp.x / SQUARE_SIZE, pos.x / SQUARE_SIZE) + 1;
 			const int zmin = std::min(cwp.z / SQUARE_SIZE, pos.z / SQUARE_SIZE) - 1, zmax = std::max(cwp.z / SQUARE_SIZE, pos.z / SQUARE_SIZE) + 1;
 
-			const UnitDef* ownerUD = owner->unitDef;
+			//const UnitDef* ownerUD = owner->unitDef;
 			const MoveDef* ownerMD = owner->moveDef;
 
 			for (int x = xmin; x < xmax; x++) {
@@ -2342,7 +2342,7 @@ bool CGroundMoveType::UpdateDirectControl()
 void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 {
 	if (wantedSpeed > 0.0f || currentSpeed != 0.0f) {
-		const UnitDef* ud = owner->unitDef;
+		//const UnitDef* ud = owner->unitDef;
 		const MoveDef* md = owner->moveDef;
 
 		float3 speedVector;

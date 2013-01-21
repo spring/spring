@@ -307,7 +307,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 
 		atlas.AddEntry(it->first, int2(sizeX, sizeY));
 	}
-	bool success = atlas.Allocate();
+	/*bool success =*/ atlas.Allocate();
 
 
 
