@@ -1079,11 +1079,11 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 	for (CUnitSet::const_iterator it = selectedUnits.selectedUnits.begin(); it != selectedUnits.selectedUnits.end(); ++it) {
 		const CUnit* u = *it;
 
-		if (!u->immobile)
-			return true;
-
 		if (u->weapons.empty())
 			continue;
+
+		if (!u->immobile)
+			return true;
 
 		if (dist <= 0.0f)
 			continue;
