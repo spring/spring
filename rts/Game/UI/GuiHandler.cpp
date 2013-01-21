@@ -1069,25 +1069,24 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 	if (selectedUnits.selectedUnits.empty())
 		return true;
 
+	// get mouse hovered map pos
+	CUnit* unit = NULL;
+	CFeature* feature = NULL;
+	const float viewRange = globalRendering->viewRange * 1.4f;
+	const float dist = TraceRay::GuiTraceRay(camera->pos, mouse->dir, viewRange, true, NULL, unit, feature);
+	const float3 groundPos = camera->pos + mouse->dir * dist;
+
 	for (CUnitSet::const_iterator it = selectedUnits.selectedUnits.begin(); it != selectedUnits.selectedUnits.end(); ++it) {
 		const CUnit* u = *it;
-
-		if (u->weapons.empty())
-			continue;
 
 		if (!u->immobile)
 			return true;
 
-		// get mouse hovered map pos
-		CUnit* unit = NULL;
-		CFeature* feature = NULL;
-		const float viewRange = globalRendering->viewRange * 1.4f;
-		const float dist = TraceRay::GuiTraceRay(camera->pos, mouse->dir, viewRange, true, NULL, unit, feature);
+		if (u->weapons.empty())
+			continue;
 
 		if (dist <= 0.0f)
 			continue;
-
-		const float3 groundPos = camera->pos + mouse->dir * dist;
 
 		const CWeapon* w = *u->weapons.begin();
 		if (w->TryTarget(groundPos, false, unit))
