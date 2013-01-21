@@ -83,7 +83,7 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CSolidObject* 
 {
 	// if <v> is a sphere, then the bounding radius is just its own radius -->
 	// we do not need to test the COLVOL_TYPE_SPHERE case again when this fails
-	if (((o->midPos + v->GetOffsets()) - p).SqLength() > v->GetBoundingRadiusSq()) {
+	if ((v->GetWorldSpacePos(o) - p).SqLength() > v->GetBoundingRadiusSq()) {
 		return false;
 	}
 

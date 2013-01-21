@@ -34,7 +34,7 @@ inline static bool TestConeHelper(
 {
 	const CollisionVolume* cv = obj->collisionVolume;
 
-	const float3 objVec3D = (obj->midPos + cv->GetOffsets()) - pos3D;
+	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
 	const float  objDst1D = Clamp(objVec3D.dot(dir3D), 0.0f, length); // x
 	const float  coneSize = objDst1D * spread + 1.0f;
 
@@ -48,9 +48,9 @@ inline static bool TestConeHelper(
 		return ret;
 
 	if (obj->GetBlockingMapID() < uh->MaxUnits()) {
-		ret = ((cv->GetPointDistance(static_cast<const CUnit*>(obj), expPos3D) - coneSize) <= 0.0f);
+		ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
 	} else {
-		ret = ((cv->GetPointDistance(static_cast<const CFeature*>(obj), expPos3D) - coneSize) <= 0.0f);
+		ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
 	}
 
 	if (globalRendering->drawdebug) {
@@ -94,9 +94,14 @@ inline static bool TestTrajectoryConeHelper(
 	// lies on or inside the object's collision volume
 	// (where 'x' is actually the projected xz-distance
 	// to the object's colvol-center along dir2D)
+	//
+	// !NOTE!:
+	//   THE TRAJECTORY CURVE MIGHT STILL INTERSECT
+	//   EVEN WHEN <x, f(x)> DOES NOT LIE INSIDE CV
+	//   SO THIS CAN GENERATE FALSE NEGATIVES
 	const CollisionVolume* cv = obj->collisionVolume;
 
-	const float3 objVec3D = (obj->midPos + cv->GetOffsets()) - pos3D;
+	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
 	const float  objDst1D = Clamp(objVec3D.dot(dir2D), 0.0f, length); // x
 	const float  coneSize = objDst1D * spread + baseSize;
 
@@ -113,9 +118,9 @@ inline static bool TestTrajectoryConeHelper(
 		return ret;
 
 	if (obj->GetBlockingMapID() < uh->MaxUnits()) {
-		ret = ((cv->GetPointDistance(static_cast<const CUnit*>(obj), expPos3D) - coneSize) <= 0.0f);
+		ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
 	} else {
-		ret = ((cv->GetPointDistance(static_cast<const CFeature*>(obj), expPos3D) - coneSize) <= 0.0f);
+		ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
 	}
 
 	if (globalRendering->drawdebug) {

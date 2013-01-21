@@ -86,19 +86,21 @@ void CGameHelper::DoExplosionDamage(
 		return;
 	}
 
-	float3 colVolPos;
+	const LocalModelPiece* lap = unit->GetLastAttackedPiece(gs->frameNum);
+	const CollisionVolume* vol = CollisionVolume::GetVolume(unit, lap);
 
-	const CollisionVolume* colVol = CollisionVolume::GetVolume(unit, colVolPos);
+	const float3& lapPos = (lap != NULL && vol == lap->GetCollisionVolume())? lap->GetAbsolutePos(): ZeroVector;
+	const float3& volPos = vol->GetWorldSpacePos(unit, lapPos);
 
 	// linear damage falloff with distance
-	const float expDist = colVol->GetPointDistance(unit, expPos);
+	const float expDist = vol->GetPointSurfaceDistance(unit, lap, expPos);
 	const float expRim = expDist * expEdgeEffect;
 
 	// return early if (distance > radius)
 	if (expDist >= expRadius)
 		return;
 
-	// expEdgeEffect should be in [0, 1], so expDist >= expDist*expEdgeEffect
+	// expEdgeEffect should be in [0, 1], so expRadius >= expDist >= expDist*expEdgeEffect
 	assert(expRadius >= expRim);
 
 	// expMod will also be in [0, 1], no negatives
@@ -127,7 +129,7 @@ void CGameHelper::DoExplosionDamage(
 	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
 	const float modImpulseScale = Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
 
-	const float3 impulseDir = (colVolPos - expPos).SafeNormalize();
+	const float3 impulseDir = (volPos - expPos).SafeNormalize();
 	const float3 expImpulse = impulseDir * modImpulseScale;
 
 	const DamageArray expDamages = damages * expMod;
@@ -150,10 +152,10 @@ void CGameHelper::DoExplosionDamage(
 	const DamageArray& damages,
 	const int weaponDefID
 ) {
-	float3 colVolPos;
+	const CollisionVolume* vol = CollisionVolume::GetVolume(feature, NULL);
+	const float3& volPos = vol->GetWorldSpacePos(feature, ZeroVector);
 
-	const CollisionVolume* colVol = CollisionVolume::GetVolume(feature, colVolPos);
-	const float expDist = colVol->GetPointDistance(feature, expPos);
+	const float expDist = vol->GetPointSurfaceDistance(feature, NULL, expPos);
 	const float expRim = expDist * expEdgeEffect;
 
 	if (expDist >= expRadius)
@@ -167,7 +169,7 @@ void CGameHelper::DoExplosionDamage(
 	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
 	const float modImpulseScale = Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
 
-	const float3 impulseDir = (colVolPos - expPos).SafeNormalize();
+	const float3 impulseDir = (volPos - expPos).SafeNormalize();
 	const float3 expImpulse = impulseDir * modImpulseScale;
 
 	feature->DoDamage(damages * expMod, expImpulse, NULL, weaponDefID);

@@ -97,14 +97,15 @@ public:
 	bool DefaultToFootPrint() const { return defaultToFootPrint; }
 	bool DefaultToPieceTree() const { return defaultToPieceTree; }
 
-	float GetPointDistance(const CUnit* u, const float3& pw) const;
-	float GetPointDistance(const CFeature* u, const float3& pw) const;
+	float3 GetWorldSpacePos(const CSolidObject* o, const float3& extOffsets = ZeroVector) const;
 
-	static const CollisionVolume* GetVolume(const CUnit* u, float3& pos);
-	static const CollisionVolume* GetVolume(const CFeature* f, float3& pos);
+	float GetPointSurfaceDistance(const CUnit* u, const LocalModelPiece* lmp, const float3& p) const;
+	float GetPointSurfaceDistance(const CFeature* u, const LocalModelPiece* lmp, const float3& p) const;
+
+	static const CollisionVolume* GetVolume(const CSolidObject* o, const LocalModelPiece* lmp);
 
 private:
-	float GetPointSurfaceDistance(const CMatrix44f& m, const float3& pw) const;
+	float GetPointSurfaceDistance(const CMatrix44f& m, const float3& p) const;
 
 	float3 fAxisScales;                 ///< full-length axis scales
 	float3 hAxisScales;                 ///< half-length axis scales

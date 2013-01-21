@@ -119,8 +119,10 @@ public:
 		lastAttackedPiece      = p;
 		lastAttackedPieceFrame = f;
 	}
-	bool HaveLastAttackedPiece(int f) const {
-		return (lastAttackedPiece != NULL && lastAttackedPieceFrame == f);
+	LocalModelPiece* GetLastAttackedPiece(int f) const {
+		if (lastAttackedPieceFrame == f)
+			return lastAttackedPiece;
+		return NULL;
 	}
 
 	void DependentDied(CObject* o);
