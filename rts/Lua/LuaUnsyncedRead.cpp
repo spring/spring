@@ -1122,6 +1122,7 @@ int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 		case CBaseGroundDrawer::drawLos:                { HSTR_PUSH(L, "los"               ); break; }
 		case CBaseGroundDrawer::drawPathTraversability: { HSTR_PUSH(L, "pathTraversability"); break; }
 		case CBaseGroundDrawer::drawPathHeat:           { HSTR_PUSH(L, "pathHeat"          ); break; }
+		case CBaseGroundDrawer::drawPathFlow:		{ HSTR_PUSH(L, "pathFlow"          ); break; }
 		case CBaseGroundDrawer::drawPathCost:           { HSTR_PUSH(L, "pathCost"          ); break; }
 	}
 	return 1;

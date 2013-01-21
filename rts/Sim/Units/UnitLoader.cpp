@@ -329,7 +329,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					const float3 featurePos = float3(px, ground->GetHeightReal(px, pz), pz);
 
 					Watchdog::ClearPrimaryTimers();
-					CFeature* feature = new CFeature();
+					//CFeature* feature = new CFeature();
 					FeatureLoadParams params = {
 						featureDef,
 						NULL,
