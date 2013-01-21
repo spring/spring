@@ -226,6 +226,20 @@ static inline bool isBeingServicedOnPad(CUnit* u)
 
 void CWeapon::Update()
 {
+	UpdateTargeting();
+	UpdateStockpile();
+	UpdateFire();
+	UpdateSalvo();
+
+#ifdef TRACE_SYNC
+	tracefile << __FUNCTION__;
+	tracefile << weaponPos.x << " " << weaponPos.y << " " << weaponPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
+#endif
+}
+
+
+void CWeapon::UpdateTargeting()
+{
 	if (hasCloseTarget) {
 		int weaponPiece = -1;
 		bool weaponAimed = (useWeaponPosForAim == 0);
@@ -340,29 +354,11 @@ void CWeapon::Update()
 			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
 		}
 	}
+}
 
-	if (weaponDef->stockpile && numStockpileQued) {
-		const float p = 1.0f / stockpileTime;
 
-		if (teamHandler->Team(owner->team)->metal >= metalFireCost*p && teamHandler->Team(owner->team)->energy >= energyFireCost*p) {
-			owner->UseEnergy(energyFireCost * p);
-			owner->UseMetal(metalFireCost * p);
-			buildPercent += p;
-		} else {
-			// update the energy and metal required counts
-			teamHandler->Team(owner->team)->energyPull += energyFireCost * p;
-			teamHandler->Team(owner->team)->metalPull += metalFireCost * p;
-		}
-		if (buildPercent >= 1) {
-			const int oldCount = numStockpiled;
-			buildPercent=0;
-			numStockpileQued--;
-			numStockpiled++;
-			owner->commandAI->StockpileChanged(this);
-			eventHandler.StockpileChanged(owner, this, oldCount);
-		}
-	}
-
+void CWeapon::UpdateFire()
+{
 	bool canFire = true;
 	const CPlayer* fpsPlayer = owner->fpsControlPlayer;
 
@@ -372,7 +368,7 @@ void CWeapon::Update()
 	canFire = canFire && (salvoLeft == 0);
 	canFire = canFire && (targetType != Target_None);
 	canFire = canFire && (reloadStatus <= gs->frameNum);
-	canFire = canFire && (!weaponDef->stockpile || numStockpiled);
+	canFire = canFire && (!weaponDef->stockpile || (numStockpiled > 0));
 	canFire = canFire && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0));
 	canFire = canFire && ((fpsPlayer == NULL)
 		 || fpsPlayer->fpsController.mouse1
@@ -426,7 +422,7 @@ void CWeapon::Update()
 				owner->script->FireWeapon(weaponNum);
 			}
 		} else {
-			if (TryTarget(targetPos, haveUserTarget, targetUnit) && !weaponDef->stockpile) {
+			if (!weaponDef->stockpile && TryTarget(targetPos, haveUserTarget, targetUnit)) {
 				// update the energy and metal required counts
 				const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
 				const float averageFactor = 1.0f / (float)minPeriod;
@@ -435,7 +431,37 @@ void CWeapon::Update()
 			}
 		}
 	}
+}
 
+
+void CWeapon::UpdateStockpile()
+{
+	if (weaponDef->stockpile && numStockpileQued) {
+		const float p = 1.0f / stockpileTime;
+
+		if (teamHandler->Team(owner->team)->metal >= metalFireCost*p && teamHandler->Team(owner->team)->energy >= energyFireCost*p) {
+			owner->UseEnergy(energyFireCost * p);
+			owner->UseMetal(metalFireCost * p);
+			buildPercent += p;
+		} else {
+			// update the energy and metal required counts
+			teamHandler->Team(owner->team)->energyPull += energyFireCost * p;
+			teamHandler->Team(owner->team)->metalPull += metalFireCost * p;
+		}
+		if (buildPercent >= 1) {
+			const int oldCount = numStockpiled;
+			buildPercent=0;
+			numStockpileQued--;
+			numStockpiled++;
+			owner->commandAI->StockpileChanged(this);
+			eventHandler.StockpileChanged(owner, this, oldCount);
+		}
+	}
+}
+
+
+void CWeapon::UpdateSalvo()
+{
 	if (salvoLeft && nextSalvo <= gs->frameNum) {
 		salvoLeft--;
 		nextSalvo = gs->frameNum + salvoDelay;
@@ -496,11 +522,6 @@ void CWeapon::Update()
 		if (salvoLeft == 0) {
 			owner->script->EndBurst(weaponNum);
 		}
-
-#ifdef TRACE_SYNC
-	tracefile << __FUNCTION__;
-	tracefile << weaponPos.x << " " << weaponPos.y << " " << weaponPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
-#endif
 	}
 }
 
