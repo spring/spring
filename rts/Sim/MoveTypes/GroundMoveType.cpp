@@ -367,8 +367,7 @@ void CGroundMoveType::SlowUpdate()
 		// move us into the map, and update <oldPos>
 		// to prevent any extreme changes in <speed>
 		if (!owner->pos.IsInBounds()) {
-			owner->pos.ClampInBounds();
-			oldPos = owner->pos;
+			owner->Move3D(oldPos = owner->pos.cClampInBounds(), false);
 		}
 	}
 
@@ -1802,7 +1801,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				collider->Move3D(colliderPushPos, false);
 			}
 		} else {
-			collider->AddImpulse((collider->moveType->oldPos - collider->pos) * collideeMassScale);
+			collider->AddImpulse((collider->moveType->oldPos - collider->pos).SafeNormalize() * colliderSpeed * 2.0f * collideeMassScale);
 		}
 
 		if (pushCollidee) {
@@ -1813,7 +1812,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				collidee->Move3D(collideePushPos, false);
 			}
 		} else {
-			collidee->AddImpulse((collidee->moveType->oldPos - collidee->pos) * colliderMassScale);
+			collidee->AddImpulse((collidee->moveType->oldPos - collidee->pos).SafeNormalize() * collideeSpeed * 2.0f * colliderMassScale);
 		}
 
 		if (collider->isMoving && collidee->isMoving) {
