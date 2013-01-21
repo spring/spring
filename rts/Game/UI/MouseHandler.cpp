@@ -160,6 +160,8 @@ void CMouseHandler::LoadCursors()
 	AssignMouseCursor("Area attack",  "cursorattack",     mCenter,  false); // backup
 
 	AssignMouseCursor("Attack",       "cursorattack",     mCenter,  false);
+	AssignMouseCursor("AttackBad",    "cursorattackbad",  mCenter,  false);
+	AssignMouseCursor("AttackBad",    "cursorattack",     mCenter,  false); // backup
 	AssignMouseCursor("BuildBad",     "cursorbuildbad",   mCenter,  false);
 	AssignMouseCursor("BuildGood",    "cursorbuildgood",  mCenter,  false);
 	AssignMouseCursor("Capture",      "cursorcapture",    mCenter,  false);
