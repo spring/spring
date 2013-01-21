@@ -628,6 +628,13 @@ public:
 	 * @see #IsInMap
 	 */
 	bool IsInBounds() const;
+	/**
+	 * @brief Check against FaceHeightmap bounds
+	 *
+	 * Check if this vector is in map [0 .. gs->mapxy]
+	 * @note USE THIS!
+	 */
+	bool IsInMap() const;
 
 	/**
 	 * @brief Clamps to FaceHeightmap
@@ -640,20 +647,14 @@ public:
 	void ClampInBounds();
 
 	/**
-	 * @brief Check against FaceHeightmap bounds
-	 *
-	 * Check if this vector is in map [0 .. gs->mapxy]
-	 * @note USE THIS!
-	 */
-	bool IsInMap() const;
-
-	/**
 	 * @brief Clamps to VertexHeightmap
 	 *
 	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. gs->mapxy]
 	 * @note USE THIS!
 	 */
 	void ClampInMap();
+
+	float3 cClampInBounds() const { float3 f = *this; f.ClampInBounds(); return f; }
 	float3 cClampInMap() const { float3 f = *this; f.ClampInMap(); return f; }
 
 public:
