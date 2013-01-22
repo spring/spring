@@ -181,6 +181,7 @@ void good_fpu_init()
 	//       or the FPU state per-process on Linux.
 	//       Still it hurts nobody to call these functions ;-)
 	#ifdef _OPENMP
+		Threading::OMPCheck();
 		#pragma omp parallel
 		{
 			//good_fpu_control_registers("OMP-Init");

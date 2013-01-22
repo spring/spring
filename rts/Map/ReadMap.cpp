@@ -373,6 +373,7 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect)
 	const int x2 = std::min(gs->mapxm1, rect.x2 + 1);
 
 	int y;
+	Threading::OMPCheck();
 	#pragma omp parallel for private(y)
 	for (y = z1; y <= z2; y++) {
 		float3 fnTL;

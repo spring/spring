@@ -77,6 +77,7 @@ void glBallisticCircle(const float3& center, const float radius,
 	float3* vertices = reinterpret_cast<float3*>(va->drawArray);
 	va->drawArrayPos = va->drawArray + resolution * 3;
 
+	Threading::OMPCheck();
 	#pragma omp parallel for
 	for (unsigned int i = 0; i < resolution; ++i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;
