@@ -22,6 +22,7 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/OpenMP_cond.h"
+#include "System/Platform/Threading.h"
 #if       !defined(DEDICATED) && !defined(UNITSYNC)
 #include "System/Platform/Watchdog.h"
 #endif // !defined(DEDICATED) && !defined(UNITSYNC)
