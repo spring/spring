@@ -494,7 +494,8 @@ void CGame::ClientReadNet()
 							continue;
 						}
 
-						if ((unit->team == playerHandler->Player(playerNum)->team) || gs->godMode) {
+						// if in godMode, this is always true for any player
+						if (playerHandler->Player(playerNum)->CanControlTeam(unit->team)) {
 							selectedUnitIDs.push_back(unitID);
 						}
 					}

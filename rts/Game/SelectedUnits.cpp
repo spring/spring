@@ -198,9 +198,10 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 {
 	GML_RECMUTEX_LOCK(grpsel); // GiveCommand
 
-	if ((gu->spectating && !gs->godMode) || selectedUnits.empty()) {
+	if (gu->spectating && !gs->godMode)
 		return;
-	}
+	if (selectedUnits.empty())
+		return;
 
 	const int cmd_id = c.GetID();
 
@@ -281,7 +282,10 @@ void CSelectedUnits::HandleUnitBoxSelection(const float4& planeRight, const floa
 	int addedunits = 0;
 	int team, lastTeam;
 
-	if (gu->spectatingFullSelect) {
+	if (gu->spectatingFullSelect || gs->godMode) {
+		// any team's units can be *selected*
+		// (whether they can be given orders
+		// depends on our ability to play god)
 		team = 0;
 		lastTeam = teamHandler->ActiveTeams() - 1;
 	} else {
@@ -320,39 +324,43 @@ void CSelectedUnits::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTe
 {
 	GML_RECMUTEX_LOCK(sel); // SelectUnits
 
-	int button = SDL_BUTTON_LEFT; //FIXME make modular?
-	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
+	//FIXME make modular?
+	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
-	if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
-		if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
-			if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
-				RemoveUnit(unit);
-			} else {
-				AddUnit(unit);
-			}
+	if (unit == NULL)
+		return;
+	if (unit->team != gu->myTeam && !gu->spectatingFullSelect && !gs->godMode)
+		return;
+
+	if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
+		if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
+			RemoveUnit(unit);
 		} else {
-			//double click
-			if (unit->group && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
-				//select the current units group if it has one
-				SelectGroup(unit->group->id);
+			AddUnit(unit);
+		}
+	} else {
+		//double click
+		if (unit->group && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
+			//select the current units group if it has one
+			SelectGroup(unit->group->id);
+		} else {
+			//select all units of same type (on screen, unless CTRL is pressed)
+			int team, lastTeam;
+
+			if (gu->spectatingFullSelect || gs->godMode) {
+				team = 0;
+				lastTeam = teamHandler->ActiveTeams() - 1;
 			} else {
-				//select all units of same type (on screen, unless CTRL is pressed)
-				int team, lastTeam;
-				if (gu->spectatingFullSelect) {
-					team = 0;
-					lastTeam = teamHandler->ActiveTeams() - 1;
-				} else {
-					team = gu->myTeam;
-					lastTeam = gu->myTeam;
-				}
-				for (; team <= lastTeam; team++) {
-					CUnitSet::iterator ui;
-					CUnitSet& teamUnits = teamHandler->Team(team)->units;
-					for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
-						if ((*ui)->unitDef->id == unit->unitDef->id) {
-							if (!doInViewTest || camera->InView((*ui)->midPos) || keyInput->IsKeyPressed(SDLK_LCTRL)) {
-								AddUnit(*ui);
-							}
+				team = gu->myTeam;
+				lastTeam = gu->myTeam;
+			}
+			for (; team <= lastTeam; team++) {
+				CUnitSet::iterator ui;
+				CUnitSet& teamUnits = teamHandler->Team(team)->units;
+				for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
+					if ((*ui)->unitDef->id == unit->unitDef->id) {
+						if (!doInViewTest || camera->InView((*ui)->midPos) || keyInput->IsKeyPressed(SDLK_LCTRL)) {
+							AddUnit(*ui);
 						}
 					}
 				}
@@ -933,10 +941,12 @@ void CSelectedUnits::SendCommand(const Command& c)
 
 void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands, bool pairwise)
 {
-	// NOTE: does not check for invalid unitIDs
-
 	if (gu->spectating && !gs->godMode) {
-		return; // do not waste bandwidth
+		// do not waste bandwidth (units can be selected
+		// by any spectator, but not given orders without
+		// god-mode)
+		// note: clients verify this every NETMSG_SELECT
+		return;
 	}
 
 	const unsigned unitIDCount  = unitIDs.size();
@@ -983,9 +993,9 @@ void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const 
 	        << static_cast<unsigned char>(sameCmdOpt)
 	        << static_cast<unsigned short>(sameCmdParamSize);
 
+	// NOTE: does not check for invalid unitIDs
 	*packet << static_cast<unsigned short>(unitIDCount);
-	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it)
-	{
+	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it) {
 		*packet << static_cast<short>(*it);
 	}
 
