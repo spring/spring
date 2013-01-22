@@ -198,8 +198,7 @@ float TraceRay(
 						continue;
 
 					if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
-						const float3& intPos = (cq.IngressHit())? cq.GetIngressPos(): cq.GetEgressPos();
-						const float len = (intPos - start).dot(dir); // same as (intPos - start).Length()
+						const float len = cq.GetHitPosDist(start, dir);
 
 						// we want the closest feature (intersection point) on the ray
 						if (len < length) {
@@ -229,8 +228,7 @@ float TraceRay(
 						continue;
 
 					if (CCollisionHandler::DetectHit(u, start, start + dir * length, &cq, true)) {
-						const float3& intPos = (cq.IngressHit())? cq.GetIngressPos(): cq.GetEgressPos();
-						const float len = (intPos - start).dot(dir); // same as (intPos - start).Length()
+						const float len = cq.GetHitPosDist(start, dir);
 
 						// we want the closest unit (intersection point) on the ray
 						if (len < length) {
@@ -248,7 +246,8 @@ float TraceRay(
 	if (!ignoreGround) {
 		// ground intersection
 		const float groundLength = ground->LineGroundCol(start, start + dir * length);
-		if (length > groundLength && groundLength > 0) {
+
+		if (length > groundLength && groundLength > 0.0f) {
 			length = groundLength;
 			hitUnit = NULL;
 			hitFeature = NULL;
@@ -276,8 +275,8 @@ float GuiTraceRay(
 		return -1.0f;
 
 	// ground intersection
-	const float origlength = length;
-	const float groundLength = ground->LineGroundCol(start, start + dir * origlength, false);
+	const float guiRayLength = length;
+	const float groundLength = ground->LineGroundCol(start, start + dir * guiRayLength, false);
 	float length2 = length;
 
 	if (groundOnly)
@@ -321,23 +320,24 @@ float GuiTraceRay(
 				cv.InitSphere(unit->iconRadius);
 			}
 
-			if (CCollisionHandler::MouseHit(unit, start, start + dir * origlength, &cv, &cq)) {
+			if (CCollisionHandler::MouseHit(unit, start, start + dir * guiRayLength, &cv, &cq)) {
 				// get the distance to the ray-volume ingress point
-				const float3& ingressPos = (cq.IngressHit())? cq.GetIngressPos() : cq.GetEgressPos();
-				const float3&  egressPos = (cq.EgressHit())?  cq.GetEgressPos()  : cq.GetIngressPos();
-				const float ingressDist  = (ingressPos - start).dot(dir); // same as (intPos  - start).Length()
-				const float  egressDist  = ( egressPos - start).dot(dir); // same as (intPos2 - start).Length()
+				// (not likely to generate inside-hit special cases)
+				const float ingressDist = cq.GetIngressPosDist(start, dir);
+				const float  egressDist = cq.GetEgressPosDist(start, dir);
+
 				const bool isFactory = unit->unitDef->IsFactoryUnit();
+				const bool factoryHitBeforeUnit = ((hitFactory && ingressDist < length ) || (!hitFactory &&  egressDist < length));
+				const bool unitHitInsideFactory = ((hitFactory && ingressDist < length2) || (!hitFactory && ingressDist < length));
 
 				// give units in a factory higher priority than the factory itself
-				if (!hitUnit ||
-					(isFactory && ((hitFactory && ingressDist < length) || (!hitFactory && egressDist < length))) ||
-					(!isFactory && ((hitFactory && ingressDist < length2) || (!hitFactory && ingressDist < length)))) {
-						hitFactory = isFactory;
-						length = ingressDist;
-						length2 = egressDist;
-						hitUnit = unit;
-						hitFeature = NULL;
+				if (hitUnit == NULL || (isFactory && factoryHitBeforeUnit) || (!isFactory && unitHitInsideFactory)) {
+					hitFactory = isFactory;
+					length = ingressDist;
+					length2 = egressDist;
+
+					hitUnit = unit;
+					hitFeature = NULL;
 				}
 			}
 		}
@@ -354,16 +354,18 @@ float GuiTraceRay(
 			if (f->noSelect)
 				continue;
 
-			if (CCollisionHandler::DetectHit(f, start, start + dir * origlength, &cq, true)) {
-				const float3& ingressPos = (cq.IngressHit())? cq.GetIngressPos() : cq.GetEgressPos();
-				const float ingressDist = (ingressPos - start).dot(dir); // same as (intPos - start).Length()
+			if (CCollisionHandler::DetectHit(f, start, start + dir * guiRayLength, &cq, true)) {
+				const float hitDist = cq.GetHitPosDist(start, dir);
+
+				const bool factoryHitBeforeUnit = ( hitFactory && hitDist < length2);
+				const bool unitHitInsideFactory = (!hitFactory && hitDist < length );
 
 				// we want the closest feature (intersection point) on the ray
 				// give features in a factory (?) higher priority than the factory itself
-				if (!hitUnit ||
-					((hitFactory && ingressDist < length2) || (!hitFactory && ingressDist < length))) {
+				if (hitUnit == NULL || factoryHitBeforeUnit || unitHitInsideFactory) {
 					hitFactory = false;
-					length = ingressDist;
+					length = hitDist;
+
 					hitFeature = f;
 					hitUnit = NULL;
 				}
