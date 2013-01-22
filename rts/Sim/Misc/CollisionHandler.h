@@ -40,6 +40,18 @@ public:
 
 	const float3& GetIngressPos() const { return p0; }
 	const float3& GetEgressPos() const { return p1; }
+	const float3& GetHitPos() const {
+		if (IngressHit()) return (GetIngressPos());
+		if (EgressHit()) return (GetEgressPos());
+		return ZeroVector;
+	}
+
+	// if the hit-position equals ZeroVector (i.e. if we have an
+	// inside-hit special case), the projected distance would be
+	// negative --> clamp it
+	float GetHitPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetHitPos() - pos).dot(dir)))); }
+	float GetIngressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetIngressPos() - pos).dot(dir)))); }
+	float GetEgressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetEgressPos() - pos).dot(dir)))); }
 
 	LocalModelPiece* GetHitPiece() const { return lmp; }
 

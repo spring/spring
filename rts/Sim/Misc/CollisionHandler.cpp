@@ -47,7 +47,8 @@ bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CUnit* u, cons
 	// (whether or not the unit's regular volume is disabled)
 	//
 	// overrides forceTrace, which itself overrides testType
-	if (v->DefaultToPieceTree()) //FIXME make this available to SolidObjects too!
+	// FIXME make this available to SolidObjects too! (not worth it?)
+	if (v->DefaultToPieceTree())
 		return (CCollisionHandler::IntersectPieceTree(u, p0, p1, q));
 
 	return DetectHit(v, (const CSolidObject*)u, p0, p1, q, forceTrace);
