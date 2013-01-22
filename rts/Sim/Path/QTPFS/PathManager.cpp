@@ -250,6 +250,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const PathRectangle& rect) {
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
+		Threading::OMPCheck();
 		#pragma omp parallel
 		if (omp_get_thread_num() == 0) {
 			// "trust" OpenMP implementation to set a pool-size that
@@ -267,6 +268,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const PathRectangle& rect) {
 		const char* pstFmtStr = "  initialized node-layer %u (%u MB, %u leafs, ratio %f)";
 		#endif
 
+		Threading::OMPCheck();
 		#pragma omp parallel for private(loadMsg)
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 			#ifndef NDEBUG
@@ -360,6 +362,7 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const PathRectangle& rect) {
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
+		Threading::OMPCheck();
 		#pragma omp parallel for
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 			UpdateNodeLayer(layerNum, rect);

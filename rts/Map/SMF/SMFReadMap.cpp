@@ -364,6 +364,7 @@ void CSMFReadMap::UpdateVertexNormals(const SRectangle& update)
 	const int maxz = std::min(update.y2 + 1, H - 1);
 
 	int z;
+	Threading::OMPCheck();
 	#pragma omp parallel for private(z)
 	for (z = minz; z <= maxz; z++) {
 		for (int x = minx; x <= maxx; x++) {
@@ -532,6 +533,7 @@ void CSMFReadMap::UpdateShadingTexture(const SRectangle& update)
 		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
 
 		int y;
+		Threading::OMPCheck();
 		#pragma omp parallel for private(y)
 		for (y = 0; y < ysize; ++y) {
 			const int idx1 = (y + y1) * gs->mapx + x1;
@@ -676,6 +678,7 @@ void CSMFReadMap::UpdateShadingTexture()
 	const int idx2 = std::min(idx1 + update_rate, pixels - 1);
 
 	int idx;
+	Threading::OMPCheck();
 	#pragma omp parallel for private(idx)
 	for (idx = idx1; idx <= idx2; idx += 1025) {
 		const int idx3 = std::min(idx2, idx + 1024);

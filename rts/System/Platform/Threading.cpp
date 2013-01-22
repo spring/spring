@@ -2,7 +2,9 @@
 
 #include "lib/gml/gml_base.h"
 #include "Threading.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
+#include "System/Platform/CrashHandler.h"
 
 #include <boost/version.hpp>
 #include <boost/thread.hpp>
@@ -31,6 +33,8 @@ namespace Threading {
 	static boost::thread::id simThreadID;
 	static boost::thread::id batchThreadID;
 #endif	
+	bool OMPInited = false;
+
 	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard)
 	{
 		if (cores_bitmask == 0) {
@@ -151,6 +155,90 @@ namespace Threading {
 		return systemCores;
 	}
 
+
+	#ifdef _OPENMP
+	static boost::uint32_t GetOpenMPCpuCore(int index, boost::uint32_t availCores, boost::uint32_t avoidCores)
+	{
+		boost::uint32_t ompCore = 1;
+
+		// find an unused core
+		{
+			while ((ompCore) && !(ompCore & availCores))
+				ompCore <<= 1;
+			int n = index;
+			// select n'th bit in availCores
+			while (n--)
+				do ompCore <<= 1; while ((ompCore) && !(ompCore & availCores));
+		}
+
+		// select one of the mainthread cores if none found
+		if (ompCore == 0) {
+			/*int cntBits =*/ count_bits_set(avoidCores);
+			ompCore = 1;
+			while ((ompCore) && !(ompCore & avoidCores))
+				ompCore <<= 1;
+			int n = index;
+			// select n'th bit in avoidCores
+			while (n--)
+				do ompCore <<= 1; while ((ompCore) && !(ompCore & avoidCores));
+		}
+
+		// fallback use all
+		if (ompCore == 0) {
+			ompCore = ~0;
+		}
+
+		return ompCore;
+	}
+	#endif
+
+
+	void InitOMP(bool useOMP) {
+		if (OMPInited) {
+			LOG_L(L_ERROR, "InitOMP: OMP already initialized!");
+			return;
+		}
+		OMPInited = true;
+	#ifdef _OPENMP
+		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
+		boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
+		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
+
+		// For latency reasons our openmp threads yield rarely and so eat a lot cputime with idleing.
+		// So it's better we always leave 1 core free for our other threads, drivers & OS
+		if (!useOMP)
+			omp_set_num_threads(1);
+		else if (omp_get_max_threads() > 2)
+			omp_set_num_threads(omp_get_max_threads() - 1); 
+
+		// omp threads
+		boost::uint32_t ompCores = 0;
+	Threading::OMPCheck();
+	#pragma omp parallel reduction(|:ompCores)
+		{
+			int i = omp_get_thread_num();
+			if (i != 0) { // 0 is the source thread
+				Threading::SetThreadName(IntToString(i, "omp%i"));
+				//boost::uint32_t ompCore = 1 << i;
+				boost::uint32_t ompCore = GetOpenMPCpuCore(i - 1, ompAvailCores, mainAffinity);
+				Threading::SetAffinity(ompCore);
+				ompCores |= ompCore;
+			}
+		}
+
+		// mainthread
+		boost::uint32_t nonOmpCores = ~ompCores;
+		if (mainAffinity == 0) mainAffinity = systemCores;
+		Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
+	#else
+		Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
+	#endif
+	}
+
+	void OMPError() {
+		LOG_L(L_ERROR, "OMPCheck: Attempt to use OMP before initialization");
+		CrashHandler::OutputStacktrace();
+	}
 
 	void SetThreadScheduler()
 	{

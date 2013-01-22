@@ -327,6 +327,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	modInfo.Init(modName.c_str());
 	GML::Init(); // modinfo plays key part in MT enable/disable
+	Threading::InitOMP(!GML::Enabled());
 	Threading::SetThreadScheduler();
 
 	if (!mapInfo) {

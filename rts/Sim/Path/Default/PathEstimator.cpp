@@ -457,6 +457,7 @@ void CPathEstimator::Update() {
 	// FindOffset (threadsafe)
 	{
 		SCOPED_TIMER("CPathEstimator::FindOffset");
+		Threading::OMPCheck();
 		#pragma omp parallel for
 		for (unsigned int n = 0; n < v.size(); ++n) {
 			// copy the next block in line

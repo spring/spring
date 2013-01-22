@@ -29,7 +29,9 @@ namespace Threading {
 #endif
 	NativeThreadHandle GetCurrentThread();
 	NativeThreadId GetCurrentThreadId();
+	extern bool OMPInited;
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);
+	inline void OMPCheck();
 
 	/**
 	 * Sets the affinity of the current thread
@@ -42,6 +44,8 @@ namespace Threading {
 	void SetAffinityHelper(const char *threadName, boost::uint32_t affinity);
 	int GetAvailableCores();
 	boost::uint32_t GetAvailableCoresMask();
+	void InitOMP(bool useOMP);
+	void OMPError();
 
 	/**
 	 * Inform the OS kernel that we are a cpu-intensive task
@@ -101,6 +105,13 @@ namespace Threading {
 		return (thID1 == thID2);
 	#else
 		return pthread_equal(thID1, thID2);
+	#endif
+	}
+
+	void OMPCheck() {
+	#ifndef NDEBUG
+		if (!OMPInited)
+			OMPError();
 	#endif
 	}
 
