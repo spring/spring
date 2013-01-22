@@ -2,6 +2,7 @@
 
 #include "lib/gml/gml_base.h"
 #include "Threading.h"
+#include "System/OpenMP_cond.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
