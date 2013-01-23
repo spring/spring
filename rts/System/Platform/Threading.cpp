@@ -242,10 +242,10 @@ namespace Threading {
 		#pragma omp parallel
 		{
 			//good_fpu_control_registers("OMP-Init");
-			streflop::streflop_init<streflop::Simple>();
+			::streflop::streflop_init<streflop::Simple>();
 		#if defined(__SUPPORT_SNAN__)
 			if (!GML::Enabled() || Threading::IsSimThread())
-				streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+				::streflop::feraiseexcept(::streflop::FPU_Exceptions(::streflop::FE_INVALID | ::streflop::FE_DIVBYZERO | ::streflop::FE_OVERFLOW));
 		#endif
 		}
 
