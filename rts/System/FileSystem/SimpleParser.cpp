@@ -16,11 +16,11 @@ CSimpleParser::CSimpleParser(CFileHandler& fh)
 }
 
 CSimpleParser::CSimpleParser(const std::string& filecontent)
-	: curPos(0)
+	: file(filecontent)
+	, curPos(0)
 	, lineNumber(0)
 	, inComment(false) // /* text */ comments are not implemented
 {
-	file = filecontent;
 }
 
 

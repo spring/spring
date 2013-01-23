@@ -88,6 +88,7 @@ float CUnit::expGrade       = 0.0f;
 CUnit::CUnit() : CSolidObject(),
 	unitDef(NULL),
 	unitDefID(-1),
+	featureDefID(0),
 	upright(true),
 	travel(0.0f),
 	travelPeriod(0.0f),

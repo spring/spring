@@ -31,19 +31,16 @@ static const int UpdateRate = 15 * GAME_SPEED; //! update all 15sec
 CWind wind;
 
 
-CWind::CWind()
+CWind::CWind():
+	maxWind(100.0f),
+	minWind(0.0f),
+	curWind(ZeroVector),
+	curStrength(0.0f),
+	curDir(float3(1.0f,0.0f,0.0f)),
+	newWind(ZeroVector),
+	oldWind(ZeroVector),
+	status(0)
 {
-	curDir = float3(1.0f, 0.0f, 0.0f);
-	curStrength = 0.0f;
-
-	curWind = ZeroVector;
-	newWind = curWind;
-	oldWind = curWind;
-
-	maxWind = 100.0f;
-	minWind =   0.0f;
-
-	status = 0;
 }
 
 CWind::~CWind()

@@ -4,8 +4,8 @@
 
 #include <cstring>
 
-CDemo::CDemo()
+CDemo::CDemo():
+	demoName("demos/unnamed.sdf")
 {
-	demoName = "demos/unnamed.sdf";
 	memset(&fileHeader, 0, sizeof(DemoFileHeader));
 }

@@ -18,8 +18,10 @@ private:
 	struct CSkirmishAIScript : CScript {
 		SkirmishAIData aiData;
 
-		CSkirmishAIScript(const SkirmishAIData& data): CScript("Player vs. AI: " + data.shortName + " " + data.version) {
-			aiData = data;
+		CSkirmishAIScript(const SkirmishAIData& data):
+			CScript("Player vs. AI: " + data.shortName + " " + data.version),
+			aiData(data)
+		{
 		}
 	};
 
