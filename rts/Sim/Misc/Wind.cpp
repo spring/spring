@@ -34,11 +34,13 @@ CWind wind;
 CWind::CWind():
 	maxWind(100.0f),
 	minWind(0.0f),
-	curWind(ZeroVector),
 	curStrength(0.0f),
-	curDir(float3(1.0f,0.0f,0.0f)),
+
+	curDir(float3(1.0f, 0.0f, 0.0f)),
+	curWind(ZeroVector),
 	newWind(ZeroVector),
 	oldWind(ZeroVector),
+
 	status(0)
 {
 }

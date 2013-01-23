@@ -75,10 +75,7 @@ namespace StartScriptGen {
 					continue;
 				}
 
-				if (
-					   (versionInt == matchingVersionInt)
-					|| (versionInt == 0 && matchingVersionInt == 0)
-				) {
+				if (versionInt == matchingVersionInt) {
 					// very bad solution, fails with `10.0` vs. `9.10`
 					const int compareInt = matchingVersion.compare(it->GetVersion());
 					if (compareInt <= 0) {
