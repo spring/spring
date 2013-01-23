@@ -214,8 +214,10 @@ namespace Threading {
 
 		// For latency reasons our openmp threads yield rarely and so eat a lot cputime with idleing.
 		// So it's better we always leave 1 core free for our other threads, drivers & OS
-		if (!useOMP)
+		if (!useOMP) {
 			omp_set_num_threads(1);
+			omp_set_dynamic(0);
+		}
 		else if (omp_get_max_threads() > 2)
 			omp_set_num_threads(omp_get_max_threads() - 1); 
 
