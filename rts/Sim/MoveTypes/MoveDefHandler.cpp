@@ -146,8 +146,8 @@ MoveDef::MoveDef()
 	, terrainClass(MoveDef::Mixed)
 
 	, xsize(0)
-	, zsize(0)
 	, xsizeh(0)
+	, zsize(0)
 	, zsizeh(0)
 
 	, depth(0.0f)
