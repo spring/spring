@@ -49,8 +49,9 @@ private:
 	const buffer_string_t& GetStringFromStreamBuffer(const stream_buffer_t* buffer) const { return (CAST_SSB(buffer)->str_ref()); }
 	#undef CAST_SSB
 	#else
-	// MS's STL probably does not use the same naming conventions
-	const buffer_string_t& GetStringFromStreamBuffer(const stream_buffer_t* buffer) const { return (buffer->str()); }
+	typedef std::basic_stringbuf<char, std::char_traits<char>, std::allocator<char> > stream_buffer_t;
+	typedef stream_buffer_t::_Mystr buffer_string_t;
+	const buffer_string_t GetStringFromStreamBuffer(const stream_buffer_t* buffer) const { return (buffer->str()); }
 	#endif		
 
 
