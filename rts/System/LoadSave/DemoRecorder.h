@@ -38,30 +38,15 @@ public:
 	void SetWinningAllyTeams(const std::vector<unsigned char>& winningAllyTeams);
 
 private:
-	#ifndef _MSC_VER
-	#define CAST_SSB(b) static_cast<const spring_stringstreambuffer_t*>(b)
-	typedef std::stringstream::__stringbuf_type stream_buffer_t;
-	typedef stream_buffer_t::__string_type buffer_string_t;
-	struct spring_stringstreambuffer_t: public stream_buffer_t {
-		const buffer_string_t& str_ref() const { return _M_string; }
-	};
-
-	const buffer_string_t& GetStringFromStreamBuffer(const stream_buffer_t* buffer) const { return (CAST_SSB(buffer)->str_ref()); }
-	#undef CAST_SSB
-	#else
-	// MS's STL probably does not use the same naming conventions
-	const buffer_string_t& GetStringFromStreamBuffer(const stream_buffer_t* buffer) const { return (buffer->str()); }
-	#endif		
-
-
-	unsigned int WriteFileHeader(bool updateStreamLength);
+	void WriteFileHeader(bool updateStreamLength);
 	void SetFileHeader();
 	void WritePlayerStats();
 	void WriteTeamStats();
 	void WriteWinnerList();
-	void WriteDemoFile(const std::string& name, const std::string& data);
+	void WriteDemoFile(const std::string& name, const std::vector<unsigned char>& data);
+	void WriteToDemoBuffer(const void* data, int length);
 
-	std::stringstream demoStream;
+	std::vector<unsigned char> demoStream;
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
 	std::vector<unsigned char> winningAllyTeams;

@@ -17,7 +17,7 @@
 #include <cstring>
 #include <fstream>
 
-CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName): demoStream(std::ios::binary | std::ios::out)
+CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName)
 {
 	SetName(mapName, modName);
 	SetFileHeader();
@@ -29,7 +29,7 @@ CDemoRecorder::~CDemoRecorder()
 	WritePlayerStats();
 	WriteTeamStats();
 	WriteFileHeader(true);
-	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE), GetStringFromStreamBuffer(demoStream.rdbuf()));
+	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE), demoStream);
 }
 
 void CDemoRecorder::SetFileHeader()
@@ -45,15 +45,15 @@ void CDemoRecorder::SetFileHeader()
 	fileHeader.teamStatPeriod = TeamStatistics::statsPeriod;
 	fileHeader.winningAllyTeamsSize = 0;
 
-	demoStream.seekp(WriteFileHeader(false) + sizeof(DemoFileHeader));
+	WriteFileHeader(false);
 }
 
-void CDemoRecorder::WriteDemoFile(const std::string& name, const std::string& data)
+void CDemoRecorder::WriteDemoFile(const std::string& name, const std::vector<unsigned char>& data)
 {
 	std::ofstream file;
 
 	file.open(name.c_str(), std::ios::binary | std::ios::out);
-	file.write(data.c_str(), data.size());
+	file.write((const char*)data.data(), data.size());
 	file.flush();
 	file.close();
 }
@@ -66,7 +66,7 @@ void CDemoRecorder::WriteSetupText(const std::string& text)
 	}
 
 	fileHeader.scriptSize = length;
-	demoStream.write(text.c_str(), length);
+	WriteToDemoBuffer(text.c_str(), length);
 }
 
 void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime)
@@ -76,8 +76,8 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 	chunkHeader.modGameTime = modGameTime;
 	chunkHeader.length = length;
 	chunkHeader.swab();
-	demoStream.write((char*) &chunkHeader, sizeof(chunkHeader));
-	demoStream.write((char*) buf, length);
+	WriteToDemoBuffer(&chunkHeader, sizeof(chunkHeader));
+	WriteToDemoBuffer(buf, length);
 	fileHeader.demoStreamSize += length + sizeof(chunkHeader);
 }
 
@@ -161,24 +161,19 @@ void CDemoRecorder::SetWinningAllyTeams(const std::vector<unsigned char>& winnin
 	winningAllyTeams = winningAllyTeamIDs;
 }
 
-/** @brief Write DemoFileHeader
-Write the DemoFileHeader at the start of the file and restores the original
-position in the file afterwards. */
-unsigned int CDemoRecorder::WriteFileHeader(bool updateStreamLength)
+/** @brief Write DemoFileHeader at the start of the file */
+void CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 {
-	const unsigned int pos = demoStream.tellp();
-
 	DemoFileHeader tmpHeader;
 	memcpy(&tmpHeader, &fileHeader, sizeof(fileHeader));
 	if (!updateStreamLength)
 		tmpHeader.demoStreamSize = 0;
 	tmpHeader.swab(); // to little endian
 
-	demoStream.seekp(0);
-	demoStream.write((char*) &tmpHeader, sizeof(tmpHeader));
-	demoStream.seekp(pos);
-
-	return pos;
+	//Write header to start of stream
+	if(demoStream.size() < sizeof(tmpHeader)) 
+		demoStream.resize(sizeof(tmpHeader));
+	memcpy((void*)demoStream.data(), &tmpHeader, sizeof(tmpHeader));
 }
 
 /** @brief Write the CPlayer::Statistics at the current position in the file. */
@@ -187,16 +182,16 @@ void CDemoRecorder::WritePlayerStats()
 	if (fileHeader.numPlayers == 0)
 		return;
 
-	int pos = demoStream.tellp();
+	const size_t pos = demoStream.size();
 
 	for (std::vector< PlayerStatistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
 		PlayerStatistics& stats = *it;
 		stats.swab();
-		demoStream.write((char*) &stats, sizeof(PlayerStatistics));
+		WriteToDemoBuffer(&stats, sizeof(PlayerStatistics));
 	}
 	playerStats.clear();
 
-	fileHeader.playerStatSize = (int)demoStream.tellp() - pos;
+	fileHeader.playerStatSize = (int)demoStream.size() - pos;
 }
 
 
@@ -207,16 +202,16 @@ void CDemoRecorder::WriteWinnerList()
 	if (fileHeader.numTeams == 0)
 		return;
 
-	const int pos = demoStream.tellp();
+	const size_t pos = demoStream.size();
 
 	// Write the array of winningAllyTeams.
 	for (std::vector<unsigned char>::const_iterator it = winningAllyTeams.begin(); it != winningAllyTeams.end(); ++it) {
-		demoStream.write((char*) &(*it), sizeof(unsigned char));
+		WriteToDemoBuffer(&(*it), sizeof(unsigned char));
 	}
 
 	winningAllyTeams.clear();
 
-	fileHeader.winningAllyTeamsSize = int(demoStream.tellp()) - pos;
+	fileHeader.winningAllyTeamsSize = (int)demoStream.size() - pos;
 }
 
 /** @brief Write the TeamStatistics at the current position in the file. */
@@ -225,12 +220,12 @@ void CDemoRecorder::WriteTeamStats()
 	if (fileHeader.numTeams == 0)
 		return;
 
-	int pos = demoStream.tellp();
+	const size_t pos = demoStream.size();
 
 	// Write array of dwords indicating number of TeamStatistics per team.
 	for (std::vector< std::vector< TeamStatistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
 		unsigned int c = swabDWord(it->size());
-		demoStream.write((char*)&c, sizeof(unsigned int));
+		WriteToDemoBuffer(&c, sizeof(unsigned int));
 	}
 
 	// Write big array of TeamStatistics.
@@ -238,10 +233,15 @@ void CDemoRecorder::WriteTeamStats()
 		for (std::vector< TeamStatistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
 			TeamStatistics& stats = *it2;
 			stats.swab();
-			demoStream.write((char*)&stats, sizeof(TeamStatistics));
+			WriteToDemoBuffer(&stats, sizeof(TeamStatistics));
 		}
 	}
 	teamStats.clear();
 
-	fileHeader.teamStatSize = (int)demoStream.tellp() - pos;
+	fileHeader.teamStatSize = (int)demoStream.size() - pos;
+}
+
+void CDemoRecorder::WriteToDemoBuffer(const void* data, int length)
+{
+	demoStream.insert(demoStream.end(), (char*)data, (char*)data + length);
 }
