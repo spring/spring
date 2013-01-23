@@ -735,9 +735,10 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	//!       current (2011) packing libraries support multithreading :/
 	int i;
 #if !defined(DEDICATED) && !defined(UNITSYNC)
-	Threading::OMPCheck();
+//	Threading::OMPCheck();
 #endif
-	#pragma omp parallel for private(i)
+//	This is currently used too early, OMP is not initialized here
+//	#pragma omp parallel for private(i)
 	for (i=0; i<crcs.size(); ++i) {
 		CRCPair& crcp = crcs[i];
 		const unsigned int nameCRC = CRC().Update(crcp.filename->data(), crcp.filename->size()).GetDigest();

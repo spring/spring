@@ -618,8 +618,8 @@ void CBitmap::Blur(int iterations, float weight)
 	for (int i=0; i < iterations; ++i){
 		{
 			int j,y,x;
-// This is currently used too early, OMP is not inintialized here
 //			Threading::OMPCheck();
+//			This is currently used too early, OMP is not initialized here
 //			#pragma omp parallel for private(j,x,y)
 			for (y=0; y < ysize; y++) {
 				for (x=0; x < xsize; x++) {
