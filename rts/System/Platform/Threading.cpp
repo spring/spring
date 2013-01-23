@@ -234,7 +234,7 @@ namespace Threading {
 		if (mainAffinity == 0) mainAffinity = systemCores;
 		Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
 
-		streflop_init_omp();
+		::streflop_init_omp();
 
 	#else
 		Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
