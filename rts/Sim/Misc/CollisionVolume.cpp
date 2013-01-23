@@ -125,16 +125,16 @@ void CollisionVolume::InitShape(
 	const int tType,
 	const int pAxis)
 {
-	float3 s;
+	float3 clampedScales;
 
 	// make sure none of the scales are ever negative or zero
 	//
 	// if the clamped vector is <1, 1, 1> (ie. all scales were <= 1.0f)
 	// then we assume a "default volume" is wanted and the unit/feature
 	// instances will be assigned spheres (of size model->radius)
-	s.x = std::max(1.0f, scales.x);
-	s.y = std::max(1.0f, scales.y);
-	s.z = std::max(1.0f, scales.z);
+	clampedScales.x = std::max(1.0f, scales.x);
+	clampedScales.y = std::max(1.0f, scales.y);
+	clampedScales.z = std::max(1.0f, scales.z);
 
 	// assign these here, since we can be
 	// called from outside the constructor
@@ -169,22 +169,26 @@ void CollisionVolume::InitShape(
 	//   conversion does not create too much of a difference
 	//
 	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
-		if ((math::fabsf(s.x - s.y) < COLLISION_VOLUME_EPS) && (math::fabsf(s.y - s.z) < COLLISION_VOLUME_EPS)) {
+		const float dxyAbs = math::fabsf(clampedScales.x - clampedScales.y);
+		const float dyzAbs = math::fabsf(clampedScales.y - clampedScales.z);
+		const float d12Abs = math::fabsf(clampedScales[volumeAxes[1]] - clampedScales[volumeAxes[2]]);
+
+		if (dxyAbs < COLLISION_VOLUME_EPS && dyzAbs < COLLISION_VOLUME_EPS) {
 			volumeType = COLVOL_TYPE_SPHERE;
-		} else 
-		if ((math::fabsf(scales[volumeAxes[1]] - scales[volumeAxes[2]]) < COLLISION_VOLUME_EPS)) {
-			volumeType = COLVOL_TYPE_CYLINDER;
-		}
-		else {
-			volumeType = COLVOL_TYPE_BOX;
+		} else {
+			if (d12Abs < COLLISION_VOLUME_EPS) {
+				volumeType = COLVOL_TYPE_CYLINDER;
+			} else {
+				volumeType = COLVOL_TYPE_BOX;
+			}
 		}
 	}
 	if (volumeType == COLVOL_TYPE_CYLINDER) {
-		s[volumeAxes[1]] = std::max(s[volumeAxes[1]], s[volumeAxes[2]]);
-		s[volumeAxes[2]] =          s[volumeAxes[1]];
+		clampedScales[volumeAxes[1]] = std::max(clampedScales[volumeAxes[1]], clampedScales[volumeAxes[2]]);
+		clampedScales[volumeAxes[2]] =          clampedScales[volumeAxes[1]];
 	}
 
-	SetAxisScales(s);
+	SetAxisScales(clampedScales);
 	SetBoundingRadius();
 }
 
