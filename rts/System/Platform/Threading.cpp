@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "lib/gml/gml_base.h"
-#include "lib/streflop/streflop_cond.h"
 #include "Threading.h"
 #include "System/bitops.h"
 #include "System/OpenMP_cond.h"
@@ -21,6 +20,7 @@
 	#include <sched.h>
 #endif
 
+extern void streflop_init_omp();
 
 namespace Threading {
 	static Error* threadError = NULL;
@@ -234,20 +234,7 @@ namespace Threading {
 		if (mainAffinity == 0) mainAffinity = systemCores;
 		Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
 
-		// Initialize FPU in all OpenMP threads, too
-		// Note: Tested on Linux it seems it's not needed to do this.
-		//       Either OMP threads copy the FPU state of the mainthread
-		//       or the FPU state per-process on Linux.
-		//       Still it hurts nobody to call these functions ;-)
-		#pragma omp parallel
-		{
-			//good_fpu_control_registers("OMP-Init");
-			::streflop::streflop_init<streflop::Simple>();
-		#if defined(__SUPPORT_SNAN__)
-			if (!GML::Enabled() || Threading::IsSimThread())
-				::streflop::feraiseexcept(::streflop::FPU_Exceptions(::streflop::FE_INVALID | ::streflop::FE_DIVBYZERO | ::streflop::FE_OVERFLOW));
-		#endif
-		}
+		streflop_init_omp();
 
 	#else
 		Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));

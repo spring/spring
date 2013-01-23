@@ -184,6 +184,25 @@ void good_fpu_init()
 #endif
 }
 
+void streflop_init_omp() {
+	// Initialize FPU in all OpenMP threads, too
+	// Note: Tested on Linux it seems it's not needed to do this.
+	//       Either OMP threads copy the FPU state of the mainthread
+	//       or the FPU state per-process on Linux.
+	//       Still it hurts nobody to call these functions ;-)
+#ifdef _OPENMP
+	Threading::OMPCheck();
+	#pragma omp parallel
+	{
+		//good_fpu_control_registers("OMP-Init");
+		streflop::streflop_init<streflop::Simple>();
+	#if defined(__SUPPORT_SNAN__)
+		if (!GML::Enabled() || Threading::IsSimThread())
+			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+	#endif
+	}
+#endif
+}
 
 namespace proc {
 	#if defined(__GNUC__)
