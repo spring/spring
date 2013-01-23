@@ -310,6 +310,10 @@ void C3DModelLoader::DeleteLocalModel(LocalModel* localModel)
 
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
+	#ifdef USE_PIECE_GEOMETRY_VBOS
+	glGenBuffers(VBO_NUMTYPES, &o->vboIDs[0]);
+	#endif
+	o->UploadGeometryVBOs();
 	GLuint id = glGenLists(1);
 	glNewList(id, GL_COMPILE);
 		o->DrawForList();
