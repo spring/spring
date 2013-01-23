@@ -195,6 +195,9 @@ namespace Threading {
 	}
 	#endif
 
+	static void streflop_omp() {
+		::streflop_init_omp();
+	}
 
 	void InitOMP(bool useOMP) {
 		if (OMPInited) {
@@ -213,6 +216,8 @@ namespace Threading {
 			omp_set_num_threads(1);
 		else if (omp_get_max_threads() > 2)
 			omp_set_num_threads(omp_get_max_threads() - 1); 
+
+		streflop_omp();
 
 		// omp threads
 		boost::uint32_t ompCores = 0;
@@ -233,8 +238,6 @@ namespace Threading {
 		boost::uint32_t nonOmpCores = ~ompCores;
 		if (mainAffinity == 0) mainAffinity = systemCores;
 		Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
-
-		::streflop_init_omp();
 
 	#else
 		Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
