@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "lib/gml/gml_base.h"
+#include "lib/streflop/streflop_cond.h"
 #include "Threading.h"
 #include "System/bitops.h"
 #include "System/OpenMP_cond.h"
