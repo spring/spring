@@ -39,9 +39,7 @@ S3DModelPiece::S3DModelPiece()
 	, dispListID(0)
 	, type(MODELTYPE_OTHER)
 {
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glGenBuffers(VBO_NUMTYPES, &vboIDs[0]);
-	#endif
+	memset(vboIDs, 0, sizeof(vboIDs));
 }
 
 S3DModelPiece::~S3DModelPiece()

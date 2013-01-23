@@ -90,7 +90,6 @@ public:
 	float3 rot;
 	float3 scale;
 
-protected:
 	#ifdef USE_PIECE_GEOMETRY_VBOS
 	unsigned int vboIDs[VBO_NUMTYPES];
 	#endif

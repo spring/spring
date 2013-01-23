@@ -123,7 +123,6 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		(piece->mins - piece->goffset);
 
 	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
-	piece->UploadGeometryVBOs();
 
 	int childTableOffset = fp->children;
 
