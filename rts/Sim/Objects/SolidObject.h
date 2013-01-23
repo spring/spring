@@ -159,6 +159,7 @@ public:
 	float health;
 	float mass;                                 ///< the physical mass of this object (run-time constant)
 	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
+	float impulseDecayRate;                     ///< multiplier decaying this object's (residual) impulse each frame
 
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
@@ -213,6 +214,7 @@ public:
 	static const float DEFAULT_MASS;
 	static const float MINIMUM_MASS;
 	static const float MAXIMUM_MASS;
+	static const float IMPULSE_RATE;
 
 	static int deletingRefID;
 	static void SetDeletingRefID(int id) { deletingRefID = id; }

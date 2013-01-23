@@ -821,7 +821,7 @@ std::string CSelectedUnits::GetTooltip()
 				team = teamHandler->Team(unit->team);
 				s = team->GetControllerName();
 			} else {
-				s = (*selectedUnits.begin())->tooltip;
+				s = unit->tooltip;
 			}
 
 		}
