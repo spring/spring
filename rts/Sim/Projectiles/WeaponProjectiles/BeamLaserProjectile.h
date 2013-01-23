@@ -13,13 +13,13 @@ public:
 
 	void Update();
 	void Draw();
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
 private:
-	unsigned char corecolstart[4];
-	unsigned char corecolend[4];
-	unsigned char kocolstart[4];
-	unsigned char kocolend[4];
+	unsigned char coreColStart[4];
+	unsigned char coreColEnd[4];
+	unsigned char edgeColStart[4];
+	unsigned char edgeColEnd[4];
 
 	float thickness;
 	float corethickness;
