@@ -196,7 +196,9 @@ namespace Threading {
 	#endif
 
 	static void streflop_omp() {
+	#ifdef STREFLOP_SSE
 		::streflop_init_omp();
+	#endif
 	}
 
 	void InitOMP(bool useOMP) {
