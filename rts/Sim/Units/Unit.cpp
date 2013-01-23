@@ -236,10 +236,10 @@ CUnit::CUnit() : CSolidObject(),
 	iconRadius(0.0f),
 	lodCount(0),
 	currentLOD(0),
-#ifdef USE_GML
+
 	lastDrawFrame(-30),
-#endif
 	lastUnitUpdate(0),
+
 	stunned(false)
 {
 	GML::GetTicks(lastUnitUpdate);
@@ -692,7 +692,7 @@ void CUnit::Update()
 
 		inWater = (pos.y <= 0.0f);
 		inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x, pos.z)) > 1.0f);
-		isUnderWater = ((pos.y + ((moveDef != NULL && moveDef->subMarine)? 0.0f: model->height)) < 0.0f);
+		isUnderWater = ((pos.y + ((moveDef == NULL || !moveDef->subMarine) * model->height)) < 0.0f);
 
 		if (inAir != oldInAir) {
 			if (inAir) {
@@ -710,8 +710,7 @@ void CUnit::Update()
 		}
 	}
 
-	// 0.968 ** 16 is slightly less than 0.6, which was the old value used in SlowUpdate
-	residualImpulse *= 0.968f;
+	residualImpulse *= impulseDecayRate;
 	posErrorVector += posErrorDelta;
 
 	if (beingBuilt)
@@ -1288,6 +1287,12 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 }
 
 
+
+void CUnit::AddImpulse(const float3& addedImpulse, float newImpulseDecayRate) {
+	if ((impulseDecayRate = Clamp(newImpulseDecayRate, 0.0f, 1.0f)) > 0.0f) {
+		AddImpulse(addedImpulse);
+	}
+}
 
 void CUnit::AddImpulse(const float3& addedImpulse) {
 	if (GetTransporter() != NULL) {
@@ -2394,9 +2399,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(dontFire),
 	CR_MEMBER(moveState),
 	CR_MEMBER(activated),
-//#if defined(USE_GML) && GML_ENABLE_SIM
-//	CR_MEMBER(lastUnitUpdate),
-//#endif
 	//CR_MEMBER(model),
 	CR_MEMBER(tooltip),
 	CR_MEMBER(crashing),

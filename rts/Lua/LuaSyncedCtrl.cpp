@@ -2162,7 +2162,13 @@ int LuaSyncedCtrl::AddUnitImpulse(lua_State* L)
 	const float3 impulse(Clamp(luaL_checkfloat(L, 2), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
 	                     Clamp(luaL_checkfloat(L, 3), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
 	                     Clamp(luaL_checkfloat(L, 4), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE));
-	unit->AddImpulse(impulse);
+
+	if (lua_isnumber(L, 5)) {
+		unit->AddImpulse(impulse, lua_tonumber(L, 5));
+	} else {
+		unit->AddImpulse(impulse);
+	}
+
 	return 0;
 }
 

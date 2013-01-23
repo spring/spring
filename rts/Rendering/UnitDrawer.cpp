@@ -2031,13 +2031,23 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 	const CTransportUnit* trans = u->GetTransporter();
 
-	const float time = !GML::SimEnabled() ? globalRendering->timeOffset :
-		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)u->lastUnitUpdate) * globalRendering->weightedSpeedFactor;
-	if (trans) {
-		u->drawPos = u->pos + (trans->speed * time);
+	if (!GML::SimEnabled()) {
+		if (trans != NULL) {
+			u->drawPos = u->pos + (trans->speed * globalRendering->timeOffset);
+		} else {
+			u->drawPos = u->pos + (u->speed * globalRendering->timeOffset);
+		}
 	} else {
-		u->drawPos = u->pos + (u->speed * time);
+		const float timeOffset = (1.0f * spring_tomsecs(globalRendering->lastFrameStart)) - (1.0f * u->lastUnitUpdate);
+		const float timeInterp = timeOffset * globalRendering->weightedSpeedFactor;
+
+		if (trans != NULL) {
+			u->drawPos = u->pos + (trans->speed * timeInterp);
+		} else {
+			u->drawPos = u->pos + (u->speed * timeInterp);
+		}
 	}
+
 	u->drawMidPos = u->drawPos + (u->midPos - u->pos);
 }
 

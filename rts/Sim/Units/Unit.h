@@ -87,8 +87,10 @@ public:
 
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID);
 	virtual void DoWaterDamage();
-	virtual void AddImpulse(const float3&);
 	virtual void FinishedBuilding(bool postInit);
+
+	void AddImpulse(const float3&, float newImpulseDecayRate);
+	void AddImpulse(const float3&);
 
 	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
 	bool AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
@@ -455,8 +457,6 @@ public:
 	/// multiply all damage the unit take with this
 	float curArmorMultiple;
 
-	std::string tooltip;
-
 	/// used for innacuracy with radars etc
 	float3 posErrorVector;
 	float3 posErrorDelta;
@@ -510,13 +510,14 @@ public:
 	std::vector<float> lodLengths;
 	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
 
-#ifdef USE_GML
-	/// last draw frame
 	int lastDrawFrame;
+	unsigned int lastUnitUpdate;
+
+#ifdef USE_GML
 	boost::recursive_mutex lodmutex;
 #endif
 
-	unsigned lastUnitUpdate;
+	std::string tooltip;
 
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
