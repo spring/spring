@@ -407,9 +407,9 @@ void CMapInfo::ReadTerrainTypes()
 
 void CMapInfo::ReadPFSConstants()
 {
-	const LuaTable& pfsTable = (parser->GetRoot()).SubTable("pfsConstants");
-//	const LuaTable& legacyTable = pfsTable.SubTable("legacy");
-	const LuaTable& qtpfsTable = pfsTable.SubTable("qtpfs");
+	const LuaTable& pfsTable = (parser->GetRoot()).SubTable("pfs");
+//	const LuaTable& legacyTable = pfsTable.SubTable("legacyConstants");
+	const LuaTable& qtpfsTable = pfsTable.SubTable("qtpfsConstants");
 
 //	pfs_t::legacy_constants_t& legacyConsts = pfs.legacy_constants;
 	pfs_t::qtpfs_constants_t& qtpfsConsts = pfs.qtpfs_constants;
