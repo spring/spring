@@ -31,6 +31,8 @@ namespace QTPFS {
 		PathManager();
 		~PathManager();
 
+		static void InitStatic();
+
 		unsigned int GetPathFinderType() const { return PFS_TYPE_QTPFS; }
 		boost::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
 
@@ -64,11 +66,6 @@ namespace QTPFS {
 			std::vector<float3>& points,
 			std::vector<int>& starts
 		) const;
-
-		static NodeLayer* GetSerializingNodeLayer() { return serializingNodeLayer; }
-
-		static const unsigned int LAYERS_PER_UPDATE =  5;
-		static const unsigned int MAX_TEAM_SEARCHES = 25;
 
 	private:
 		void ThreadUpdate();
@@ -150,8 +147,8 @@ namespace QTPFS {
 		std::vector<unsigned int> numCurrExecutedSearches;
 		std::vector<unsigned int> numPrevExecutedSearches;
 
-
-		static NodeLayer* serializingNodeLayer;
+		static unsigned int LAYERS_PER_UPDATE;
+		static unsigned int MAX_TEAM_SEARCHES;
 
 		unsigned int searchStateOffset;
 		unsigned int numTerrainChanges;

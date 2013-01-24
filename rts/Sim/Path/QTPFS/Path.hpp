@@ -17,7 +17,7 @@ namespace QTPFS {
 			nextPointIndex = 0;
 			numPathUpdates = 0;
 
-			hash   = -1U;
+			hash   = -1u;
 			radius = 0.0f;
 			synced = true;
 

@@ -6,30 +6,15 @@
 #include "PathManager.hpp"
 #include "Node.hpp"
 
+#include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/myMath.h"
 
-#define NL QTPFS::NodeLayer
-
-const float QTPFS::NodeLayer::MIN_SPEEDMOD_VALUE = 0.0f;
-const float QTPFS::NodeLayer::MAX_SPEEDMOD_VALUE = 2.0f;
-
-static NL::SpeedBinType GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
-	// NOTE:
-	//     bins N and N+1 are reserved for modifiers <= min and >= max
-	//     respectively; blocked squares MUST be in their own category
-	const NL::SpeedBinType defBin = NL::NUM_SPEEDMOD_BINS * relSpeedMod;
-	const NL::SpeedBinType maxBin = NL::NUM_SPEEDMOD_BINS - 1;
-
-	NL::SpeedBinType speedModBin = Clamp(defBin, static_cast<NL::SpeedBinType>(0), maxBin);
-
-	if (absSpeedMod <= NL::MIN_SPEEDMOD_VALUE) { speedModBin = NL::NUM_SPEEDMOD_BINS + 0; }
-	if (absSpeedMod >= NL::MAX_SPEEDMOD_VALUE) { speedModBin = NL::NUM_SPEEDMOD_BINS + 1; }
-
-	return speedModBin;
-}
+unsigned int QTPFS::NodeLayer::NUM_SPEEDMOD_BINS;
+float        QTPFS::NodeLayer::MIN_SPEEDMOD_VALUE;
+float        QTPFS::NodeLayer::MAX_SPEEDMOD_VALUE;
 
 
 
@@ -44,6 +29,12 @@ QTPFS::NodeLayer::NodeLayer()
 {
 }
 
+void QTPFS::NodeLayer::InitStatic() {
+	NUM_SPEEDMOD_BINS  = std::max(  1u, mapInfo->pfs.qtpfs_constants.numSpeedModBins);
+	MIN_SPEEDMOD_VALUE = std::max(0.0f, mapInfo->pfs.qtpfs_constants.minSpeedModVal);
+	MAX_SPEEDMOD_VALUE = std::min(8.0f, mapInfo->pfs.qtpfs_constants.maxSpeedModVal);
+}
+
 void QTPFS::NodeLayer::RegisterNode(INode* n) {
 	for (unsigned int hmz = n->zmin(); hmz < n->zmax(); hmz++) {
 		for (unsigned int hmx = n->xmin(); hmx < n->xmax(); hmx++) {
@@ -53,7 +44,7 @@ void QTPFS::NodeLayer::RegisterNode(INode* n) {
 }
 
 void QTPFS::NodeLayer::Init(unsigned int layerNum) {
-	assert((NL::NUM_SPEEDMOD_BINS + 1) <= MaxSpeedBinTypeValue());
+	assert((QTPFS::NodeLayer::NUM_SPEEDMOD_BINS + 1) <= MaxSpeedBinTypeValue());
 
 	// pre-count the root
 	numLeafNodes = 1;
@@ -176,17 +167,19 @@ bool QTPFS::NodeLayer::Update(
 			//     IsBlockedNoSpeedModCheck scans entire footprint, GetPosSpeedMod just one square
 			const unsigned int blockBits = (luBlockBits == NULL)? CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
 
+			#define NL QTPFS::NodeLayer
 			const float rawAbsSpeedMod = (luSpeedMods == NULL)? CMoveMath::GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
 			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, NL::MIN_SPEEDMOD_VALUE, NL::MAX_SPEEDMOD_VALUE);
 			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
 			const float newRelSpeedMod = Clamp((newAbsSpeedMod - NL::MIN_SPEEDMOD_VALUE) / (NL::MAX_SPEEDMOD_VALUE - NL::MIN_SPEEDMOD_VALUE), 0.0f, 1.0f);
 			const float curRelSpeedMod = Clamp(curSpeedMods[sqrIdx] / float(MaxSpeedModTypeValue()), 0.0f, 1.0f);
+			#undef NL
 
 			const SpeedBinType newSpeedModBin = GetSpeedModBin(newAbsSpeedMod, newRelSpeedMod);
 			const SpeedBinType curSpeedModBin = curSpeedBins[sqrIdx];
 
 			numNewBinSquares += int(newSpeedModBin != curSpeedModBin);
-			numClosedSquares += int(newSpeedModBin == NL::NUM_SPEEDMOD_BINS);
+			numClosedSquares += int(newSpeedModBin == QTPFS::NodeLayer::NUM_SPEEDMOD_BINS);
 
 			// need to keep track of these for Tesselate
 			oldSpeedMods[sqrIdx] = curRelSpeedMod * float(MaxSpeedModTypeValue());
@@ -217,6 +210,23 @@ bool QTPFS::NodeLayer::Update(
 	// if each square happened to change to the SAME bin
 	//
 	return (numNewBinSquares > 0);
+}
+
+
+
+QTPFS::NodeLayer::SpeedBinType QTPFS::NodeLayer::GetSpeedModBin(float absSpeedMod, float relSpeedMod) const {
+	// NOTE:
+	//     bins N and N+1 are reserved for modifiers <= min and >= max
+	//     respectively; blocked squares MUST be in their own category
+	const SpeedBinType defBin = NUM_SPEEDMOD_BINS * relSpeedMod;
+	const SpeedBinType maxBin = NUM_SPEEDMOD_BINS - 1;
+
+	SpeedBinType speedModBin = Clamp(defBin, static_cast<SpeedBinType>(0), maxBin);
+
+	if (absSpeedMod <= MIN_SPEEDMOD_VALUE) { speedModBin = NUM_SPEEDMOD_BINS + 0; }
+	if (absSpeedMod >= MAX_SPEEDMOD_VALUE) { speedModBin = NUM_SPEEDMOD_BINS + 1; }
+
+	return speedModBin;
 }
 
 

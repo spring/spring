@@ -83,7 +83,7 @@ void QTPFSPathDrawer::DrawNodeTreeRec(
 	if (nt->IsLeaf()) {
 		DrawNode(nt, md, va, false, true, false);
 	} else {
-		for (unsigned int i = 0; i < QTPFS::QTNode::CHILD_COUNT; i++) {
+		for (unsigned int i = 0; i < nt->children.size(); i++) {
 			const QTPFS::QTNode* n = nt->children[i];
 			const float3 mins = float3(n->xmin() * SQUARE_SIZE, 0.0f, n->zmin() * SQUARE_SIZE);
 			const float3 maxs = float3(n->xmax() * SQUARE_SIZE, 0.0f, n->zmax() * SQUARE_SIZE);
@@ -100,7 +100,7 @@ void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, std::list<const Q
 	if (nt->IsLeaf()) {
 		nodes.push_back(nt);
 	} else {
-		for (unsigned int i = 0; i < QTPFS::QTNode::CHILD_COUNT; i++) {
+		for (unsigned int i = 0; i < nt->children.size(); i++) {
 			const QTPFS::QTNode* n = nt->children[i];
 			const float3 mins = float3(n->xmin() * SQUARE_SIZE, 0.0f, n->zmin() * SQUARE_SIZE);
 			const float3 maxs = float3(n->xmax() * SQUARE_SIZE, 0.0f, n->zmax() * SQUARE_SIZE);
