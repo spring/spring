@@ -513,7 +513,6 @@ void COBJParser::BuildModelPieceTreeRec(
 
 void SOBJPiece::UploadGeometryVBOs()
 {
-	#ifdef USE_PIECE_GEOMETRY_VBOS
 	if (isEmpty)
 		return;
 
@@ -558,7 +557,6 @@ void SOBJPiece::UploadGeometryVBOs()
 	sTangents.clear();
 	tTangents.clear();
 	triangles.clear();
-	#endif
 }
 
 void SOBJPiece::DrawForList() const

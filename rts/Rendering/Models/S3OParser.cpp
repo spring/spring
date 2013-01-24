@@ -145,7 +145,6 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 
 void SS3OPiece::UploadGeometryVBOs()
 {
-	#ifdef USE_PIECE_GEOMETRY_VBOS
 	if (isEmpty)
 		return;
 
@@ -174,7 +173,6 @@ void SS3OPiece::UploadGeometryVBOs()
 	// vertexDrawIndices.clear();
 	sTangents.clear();
 	tTangents.clear();
-	#endif
 }
 
 void SS3OPiece::DrawForList() const

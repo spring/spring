@@ -762,7 +762,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		#define SET_TRANSFORM_VECTORS(dir)           \
 			float3 rightdir, updir;                  \
                                                      \
-			if (math::fabs(dir.y) < 0.95f) {               \
+			if (math::fabs(dir.y) < 0.95f) {         \
 				rightdir = dir.cross(UpVector);      \
 				rightdir.SafeANormalize();           \
 			} else {                                 \
@@ -771,10 +771,10 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
                                                      \
 			updir = rightdir.cross(dir);
 
-		#define TRANSFORM_DRAW(mat)                                \
-			glPushMatrix();                                        \
-				glMultMatrixf(mat);                                \
-				glCallList(wp->model->GetRootPiece()->dispListID); \
+		#define TRANSFORM_DRAW(mat)                                        \
+			glPushMatrix();                                                \
+				glMultMatrixf(mat);                                        \
+				glCallList(wp->model->GetRootPiece()->GetDisplayListID()); \
 			glPopMatrix();
 
 		switch (wp->GetProjectileType()) {
