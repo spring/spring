@@ -10,7 +10,7 @@ Major Changes:
  - new cmdline arguments
  - better pathing
  - add experimental map generator (see http://springrts.com/wiki/Mapgen for details)
-FIXME - spring-mt is merged into spring (default disabled, games can enable it with ...)
+ - some new sim/weapon features
 
 AI:
  - Shard update
@@ -51,6 +51,8 @@ Lua
  - Spring.SetTerrainTypeData now only updates pathfinder when there is a real change (performance)
  - fix crash in LuaUnitDefs when trying to read deathExpWeaponDef (#3333 & #3325)
  - add Spring.GetReplayLength()
+ - add Spring.GetConfigParams()
+ - add Spring.GetUnitWeaponTryTarget(uid, wid, [number posx, number posy, number posz] | [number enemyid]) -> nil | boolean
 
 CollisionVolumes:
  ! drop support for ellipsoid-cylinders and ellipsoids
@@ -59,7 +61,8 @@ CollisionVolumes:
     no more distance approximations means no more invincible units (or features)
     and no more general "weird" cases like 3103
     THIS WILL CAUSE BALANCE CHANGES, BE PREPARED
- ! get rid of TYPE_FOOTPRINT, it was an alias for TYPE_SPHERE in the continuous case which is now default and the original intent (a shape defined by the CSG 	intersection of sphere and footprint) would have been tricky to get right
+ ! get rid of TYPE_FOOTPRINT, it was an alias for TYPE_SPHERE in the continuous case which is now default and the original intent
+   (a shape defined by the CSG intersection of sphere and footprint) would have been tricky to get right
     instead support a {Unit,Feature}Def key "useFootPrintCollisionVolume" which
     makes a collision volume a box with dimensions equal to the object's footprint
     (this overrides any custom scaling and/or offsets)
@@ -72,7 +75,9 @@ Pathing:
    - it needs low latency omp threads to work, those are currently broken in gomp, the bug will be fixed with the next release of gcc
  - QTPFS: a lot fixes & optimizations, fixed desync (#3339)
  - give pathfinder debug-data drawing its own shortcut (alt+p)
- - GMT: rewrite collision handling between units and static objects (again)   instead of using impulse to push units away, do SCII-style strafing   result: www.youtube.com/watch?v=4rycY4JfLGs
+ - rewrite collision handling between units and static objects (again)
+    instead of using impulse to push units away, do SCII-style strafing
+    results: www.youtube.com/watch?v=4rycY4JfLGs
  ! put on upper limit on directional slope tolerance for "downhill" slopes
     before, units could move across ANY downhill slope if they ended up there
     and directional checking was enabled; now the downhill slope-tolerance is
@@ -84,9 +89,11 @@ Pathing:
 
 UnitScripts:
  ! LUS/COB: deprecate QueryNanoPiece() makes SimCode ~10% faster use the new Spring.SetUnitNanoPieces instead
-    Note, once set the engine won't call `QueryNanoPiece` anymore and instead randomly toggles between the set nanopieces, saving a lot time-consuming COB/LUS calls.
+    Note, once set the engine won't call `QueryNanoPiece` anymore and instead randomly toggles between the set nanopieces,
+    saving a lot time-consuming COB/LUS calls.
  ! LUS/COB: cache QueryNanoPiece() results
-    Note, this stops QueryNanoPiece() calls after 31 times no matter what! This breaks ZK's LupsNanoSpray, fixed version can be found here http://gw.gd/Zaae.
+    Note, this stops QueryNanoPiece() calls after 31 times no matter what!
+    This breaks ZK's LupsNanoSpray, fixed version can be found here http://gw.gd/Zaae.
 
 Weapons/WeaponDefs:
  ! remove of manualBombSettings (backward-compability code in weapondefs_post.lua)
@@ -95,6 +102,9 @@ Weapons/WeaponDefs:
  ! removed isShield. Use weaponType="Shield" instead!
  - new 'interceptSolo', if true (=default) don't allow any other interceptors to target the same projectile
  - allow any weapons to be interceptors/targetables (not that all combinations work/make sense)
+ ! stop subs/AA-fighters trying to chase hovers and tanks (check all equipped weapons if they can target the unit, before _auto_ chasing enemies in FireAtWill)
+ ! all weapons will now obey avoidFriendly, avoidNeutral, avoidFeature + avoidGround
+ ! add new avoidGround weapondef tag (default true)
 
 FeatureDefs:
  ! remove "nodrawundergray" now that there is a proper "floating" tag
@@ -116,6 +126,7 @@ Misc:
  - new configtag "StacktraceOnGLErrors": Create a stacktrace when an OpenGL error occurs (only available in DEBUG builds)
  - fix performance leak in CSolidObject::Block()
  ! remove OSC
+ - add new `cursorattackbad` mousecursor, used for static defense when giving a CMD_ATTACK
 
 Rendering:
  - speedup minimap icon rendering
@@ -125,6 +136,7 @@ Rendering:
  - move `lastFrameTime` calculation from the end of a drawframe to the beginning this way vsync locktimes are counted to the previous frame time
  ! removal of DepthBufferBits & StencilBufferBits
  - BumpWater renders now with shadowmap & infotex
+ - clamp map ShadowDensity 0..1 (fixes shadow distortions on maps like Iamma)
 
 Sim Bugfixes:
  ! stop buildframe decaying on reclaiming
@@ -154,6 +166,7 @@ Sim Bugfixes:
  - fix air transports have trouble loading multiple units if units are large (3307)
  - fix partly reclaiming factory allows unit teleportation/remote destruction (3308)
  - fix 'SetFeaturePosition snapToGround get reset when there is terraform nearby' (3243)
+ ! disable collision checking between transporter & transportee
 
 Bugfixes:
  - fix network connection is not properly closed when an error occurs in pregame (3166)
