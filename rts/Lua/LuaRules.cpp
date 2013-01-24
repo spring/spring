@@ -831,6 +831,8 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 {
 	if (!haveAllowWeaponTargetCheck)
 		return -1;
+	if (!watchWeaponDefs[attackerWeaponDefID])
+		return -1;
 
 	LUA_CALL_IN_CHECK(L, -1);
 	lua_checkstack(L, 3 + 1);
@@ -850,9 +852,7 @@ int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int atta
 	lua_pushnumber(L, attackerWeaponNum);
 	lua_pushnumber(L, attackerWeaponDefID);
 
-	const bool success = RunCallInTraceback(cmdStr, 3, 1, errfunc);
-
-	if (!success)
+	if (!RunCallInTraceback(cmdStr, 3, 1, errfunc))
 		return ret;
 
 	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1))? 1: 0;
@@ -874,6 +874,8 @@ bool CLuaRules::AllowWeaponTarget(
 
 	if (!haveAllowWeaponTarget)
 		return ret;
+	if (!watchWeaponDefs[attackerWeaponDefID])
+		return ret;
 
 	LUA_CALL_IN_CHECK(L, true);
 	lua_checkstack(L, 5 + 2);
@@ -893,9 +895,7 @@ bool CLuaRules::AllowWeaponTarget(
 	lua_pushnumber(L, attackerWeaponDefID);
 	lua_pushnumber(L, *targetPriority);
 
-	const bool success = RunCallInTraceback(cmdStr, 5, 2, errfunc);
-
-	if (!success)
+	if (!RunCallInTraceback(cmdStr, 5, 2, errfunc))
 		return ret;
 
 	ret = lua_toboolean(L, -2);

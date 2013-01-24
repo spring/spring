@@ -619,9 +619,11 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 	const float heightMod = weapon->heightMod;
 	const float aHeight   = weapon->weaponPos.y;
 
+	const WeaponDef* weaponDef = weapon->weaponDef;
+
 	// how much damage the weapon deals over 1 second
-	const float secDamage = weapon->weaponDef->damages.GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
-	const bool paralyzer  = !!weapon->weaponDef->damages.paralyzeDamageTime;
+	const float secDamage = weaponDef->damages.GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
+	const bool paralyzer  = (weaponDef->damages.paralyzeDamageTime != 0);
 
 	const std::vector<int>& quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->initMinHeight)) * heightMod);
 
@@ -658,7 +660,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 				tempTargetUnits[targetUnit->id] = tempNum;
 
-				if (targetUnit->isUnderWater && !weapon->weaponDef->waterweapon) {
+				if (targetUnit->isUnderWater && !weaponDef->waterweapon) {
 					continue;
 				}
 				if (targetUnit->isDead) {
@@ -684,8 +686,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				}
 
 				const float dist2D = (pos - targPos).Length2D();
-				const float rangeMul = (dist2D * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
-				const float damageMul = weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
+				const float rangeMul = (dist2D * weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
+				const float damageMul = weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
 
 				targetPriority *= rangeMul;
 
@@ -719,8 +721,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				}
 
 				if (luaRules != NULL) {
-					const bool targetAllowed = luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weapon->weaponDef->id, &targetPriority);
-					if (!targetAllowed) {
+					if (!luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
 						continue;
 					}
 				}
