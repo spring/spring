@@ -5,6 +5,9 @@
 # * ${BUILD_DIR}/maphelper.sdz
 # * ${BUILD_DIR}/cursors.sdz
 
+#abort on error
+set -e
+
 ORIG_DIR=$(pwd)
 
 # absolute or relative to spring source root
@@ -51,25 +54,13 @@ rm -f ${ARCHIVE_FILE}
 ${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
 cd ..
 
-echo "Creating springcontent.sdz"
-cd springcontent/
-ARCHIVE_FILE=${BUILD_DIR}/springcontent.sdz
-rm -f ${ARCHIVE_FILE}
-${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
-cd ..
-
-echo "Creating maphelper.sdz"
-cd maphelper/
-ARCHIVE_FILE=${BUILD_DIR}/maphelper.sdz
-rm -f ${ARCHIVE_FILE}
-${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
-cd ..
-
-echo "Creating cursors.sdz"
-cd cursors/
-ARCHIVE_FILE=${BUILD_DIR}/cursors.sdz
-rm -f ${ARCHIVE_FILE}
-${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
-cd ..
+for archive in springcontent maphelper cursors; do
+	echo "Creating $archive.sdz"
+	cd $archive/
+	ARCHIVE_FILE=${BUILD_DIR}/$archive.sdz
+	rm -f ${ARCHIVE_FILE}
+	${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
+	cd ..
+done
 
 cd ${ORIG_DIR}
