@@ -1068,7 +1068,7 @@ bool CWeapon::GetTargetBorderPos(const CUnit* targetUnit, const float3& rawTarge
 	return (rawTargetDir.SqLength() == 1.0f);
 }
 
-bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, CUnit* targetUnit) const
+bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, const CUnit* targetUnit) const
 {
 	if (!TestTarget(tgtPos, userTarget, targetUnit))
 		return false;
@@ -1084,7 +1084,7 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, CUnit* targetUnit
 // if targetUnit != NULL, this checks our onlyTargetCategory against unit->category
 // etc. as well as range, otherwise the only concern is range and angular difference
 // (terrain is NOT checked here, HaveFreeLineOfFire does that)
-bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* targetUnit) const
+bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
 {
 	if (targetUnit && (targetUnit == owner)) {
 		return false;
@@ -1119,7 +1119,7 @@ bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* targe
 	return true;
 }
 
-bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, CUnit* targetUnit) const
+bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
 {
 	float3 tmpTargetPos = tgtPos;
 	float3 tmpTargetVec = tmpTargetPos - weaponMuzzlePos;
@@ -1154,7 +1154,7 @@ bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, CUnit* target
 }
 
 
-bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
+bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	float3 dir = pos - weaponMuzzlePos;
 	float length = dir.Length();

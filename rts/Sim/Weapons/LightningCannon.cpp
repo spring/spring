@@ -88,9 +88,6 @@ void CLightningCannon::FireImpl()
 	}
 
 	hitPos = curPos + curDir * boltLength;
-	// NOTE: we still need the old position and direction for the projectile
-	// curPos = hitPos;
-	// curDir = newDir;
 
 	if (hitUnit != NULL) {
 		hitUnit->SetLastAttackedPiece(hitUnit->localModel->GetRoot(), gs->frameNum);

@@ -220,6 +220,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitFlanking);
 	REGISTER_LUA_CFUNC(GetUnitWeaponState);
 	REGISTER_LUA_CFUNC(GetUnitWeaponVectors);
+	REGISTER_LUA_CFUNC(GetUnitWeaponTryTarget);
 	REGISTER_LUA_CFUNC(GetUnitTravel);
 	REGISTER_LUA_CFUNC(GetUnitFuel);
 	REGISTER_LUA_CFUNC(GetUnitEstimatedPath);
@@ -3231,6 +3232,35 @@ int LuaSyncedRead::GetUnitWeaponVectors(lua_State* L)
 	lua_pushnumber(L, dir->z);
 
 	return 6;
+}
+
+
+int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int weaponNum = luaL_checkint(L, 2);
+	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
+		return 0;
+	}
+	const int args = lua_gettop(L);
+	
+	const CUnit* enemey = NULL;
+	float3 pos;
+	if (args >= 5) {
+		pos.x = luaL_optnumber(L, 3, 0.0f);
+		pos.y = luaL_optnumber(L, 4, 0.0f);
+		pos.z = luaL_optnumber(L, 5, 0.0f);
+	} else {
+		enemey = ParseUnit(L, __FUNCTION__, 3);
+	}
+
+	const CWeapon* weapon = unit->weapons[weaponNum];
+	const bool targetable = weapon->TryTarget(pos, true, enemey);
+	lua_pushboolean(L, targetable);
+	return 1;
 }
 
 

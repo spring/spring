@@ -39,13 +39,13 @@ public:
 	bool GetTargetBorderPos(const CUnit*, const float3&, float3&, float3&) const;
 
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
-	virtual bool TestTarget(const float3& pos, bool userTarget, CUnit* unit) const;
+	virtual bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
 	/// test if the enemy/mapspot is in range/angle
-	bool TestRange(const float3& pos, bool userTarget, CUnit* unit) const;
+	bool TestRange(const float3& pos, bool userTarget, const CUnit* unit) const;
 	/// test if something is blocking our LineOfFire
-	virtual bool HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const;
+	virtual bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
 
-	bool TryTarget(const float3& pos, bool userTarget, CUnit* unit) const;
+	bool TryTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
 	bool TryTarget(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(float3 pos, bool userTarget);
