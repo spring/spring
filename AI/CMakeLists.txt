@@ -36,9 +36,9 @@ set(CMAKE_C_FLAGS_PROFILE        "${CMAKE_CXX_FLAGS_PROFILE}")
 remove_definitions(-DSTREFLOP_SSE)
 add_definitions(${PIC_FLAG} -D_REENTRANT -D_GNU_SOURCE=1)
 
-if    (WIN32)
+if    (MINGW)
 	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--kill-at -Wl,--add-stdcall-alias")
-endif (WIN32)
+endif (MINGW)
 
 
 # Assemble common additional native AI sources
