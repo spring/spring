@@ -20,12 +20,12 @@ namespace QTPFS {
 
 	namespace PathSearchTrace {
 		struct Iteration {
-			Iteration() { nodeIndices.push_back(-1U); }
+			Iteration() { nodeIndices.push_back(-1u); }
 			~Iteration() { nodeIndices.clear(); }
 
 			void Clear() {
 				nodeIndices.clear();
-				nodeIndices.push_back(-1U);
+				nodeIndices.push_back(-1u);
 			}
 			void SetPoppedNodeIdx(unsigned int i) { (nodeIndices.front()) = i; }
 			void AddPushedNodeIdx(unsigned int i) { (nodeIndices.push_back(i)); }

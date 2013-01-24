@@ -13,6 +13,7 @@
 
 #include "Game/GameSetup.h"
 #include "Game/LoadScreen.h"
+#include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
@@ -81,12 +82,17 @@ namespace QTPFS {
 		return ((numThreads == 0)? numCores: numThreads);
 	}
 
-	NodeLayer* PathManager::serializingNodeLayer = NULL;
+	unsigned int PathManager::LAYERS_PER_UPDATE;
+	unsigned int PathManager::MAX_TEAM_SEARCHES;
 }
 
 
 
 QTPFS::PathManager::PathManager() {
+	QTNode::InitStatic();
+	NodeLayer::InitStatic();
+	PathManager::InitStatic();
+
 	pmLoadThread = boost::thread(boost::bind(&PathManager::Load, this));
 	pmLoadScreen.Loop();
 	pmLoadThread.join();
@@ -141,6 +147,11 @@ QTPFS::PathManager::~PathManager() {
 	delete condThreadUpdate;
 	delete condThreadUpdated;
 	#endif
+}
+
+void QTPFS::PathManager::InitStatic() {
+	LAYERS_PER_UPDATE = std::max(1u, mapInfo->pfs.qtpfs_constants.layersPerUpdate);
+	MAX_TEAM_SEARCHES = std::max(1u, mapInfo->pfs.qtpfs_constants.maxTeamSearches);
 }
 
 void QTPFS::PathManager::Load() {
@@ -415,10 +426,10 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectan
 	PathRectangle mr; mr.ForceTesselation(r.ForceTesselation());
 	PathRectangle ur; ur.ForceTesselation(r.ForceTesselation());
 
-	mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MIN_SIZE_X >> 1),        0);
-	mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MIN_SIZE_Z >> 1),        0);
-	mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MIN_SIZE_X >> 1), gs->mapx);
-	mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MIN_SIZE_Z >> 1), gs->mapy);
+	mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MinSizeX() >> 1),        0);
+	mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MinSizeZ() >> 1),        0);
+	mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MinSizeX() >> 1), gs->mapx);
+	mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MinSizeZ() >> 1), gs->mapy);
 	ur.x1 = mr.x1;
 	ur.z1 = mr.z1;
 	ur.x2 = mr.x2;
@@ -450,10 +461,10 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const PathRectangle& r) {
 		PathRectangle mr; mr.ForceTesselation(r.ForceTesselation());
 		// PathRectangle ur; ur.ForceTesselation(r.ForceTesselation());
 
-		mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MIN_SIZE_X >> 1),        0);
-		mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MIN_SIZE_Z >> 1),        0);
-		mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MIN_SIZE_X >> 1), gs->mapx);
-		mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MIN_SIZE_Z >> 1), gs->mapy);
+		mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MinSizeX() >> 1),        0);
+		mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MinSizeZ() >> 1),        0);
+		mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MinSizeX() >> 1), gs->mapx);
+		mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MinSizeZ() >> 1), gs->mapy);
 
 		nodeLayers[layerNum].QueueUpdate(mr, md);
 	}
@@ -582,9 +593,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		pmLoadScreen.AddLoadMessage(loadMsg);
 		#endif
 
-		serializingNodeLayer = &nodeLayers[i];
-		nodeTrees[i]->Serialize(*fileStreams[i], &fileSizes[i], haveCacheDir);
-		serializingNodeLayer = NULL;
+		nodeTrees[i]->Serialize(*fileStreams[i], nodeLayers[i], &fileSizes[i], haveCacheDir);
 
 		fileStreams[i]->flush();
 		fileStreams[i]->close();

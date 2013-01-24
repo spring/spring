@@ -62,7 +62,7 @@ namespace QTPFS {
 			assert(cur_idx <= max_idx);
 
 			// kill old root
-			nodes[cur_idx]->SetHeapIndex(-1U);
+			nodes[cur_idx]->SetHeapIndex(-1u);
 			nodes[cur_idx] = NULL;
 
 			// move new root (former last node) down if necessary
@@ -90,7 +90,7 @@ namespace QTPFS {
 			nodes.clear();
 
 			cur_idx =  0;
-			max_idx = -1U;
+			max_idx = -1u;
 		}
 
 		void reserve(size_t size) {
@@ -238,7 +238,7 @@ namespace QTPFS {
 		}
 
 		void dec_heap(size_t p_idx) {
-			size_t   c_idx = -1U;
+			size_t   c_idx = -1u;
 			size_t l_c_idx = l_child_idx(p_idx);
 			size_t r_c_idx = r_child_idx(p_idx);
 

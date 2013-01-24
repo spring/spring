@@ -411,13 +411,17 @@ void CMapInfo::ReadPFSConstants()
 //	const LuaTable& legacyTable = pfsTable.SubTable("legacy");
 	const LuaTable& qtpfsTable = pfsTable.SubTable("qtpfs");
 
-	// TODO
-	pfs.qtpfs.minNodeSizeX    = qtpfsTable.GetInt("minNodeSizeX",     8);
-	pfs.qtpfs.minNodeSizeZ    = qtpfsTable.GetInt("minNodeSizeZ",     8);
-	pfs.qtpfs.maxNodeDepth    = qtpfsTable.GetInt("maxNodeDepth",    16);
-	pfs.qtpfs.numSpeedBins    = qtpfsTable.GetInt("numSpeedBins",    10);
-	pfs.qtpfs.layersPerUpdate = qtpfsTable.GetInt("layersPerUpdate",  5);
-	pfs.qtpfs.maxTeamSearches = qtpfsTable.GetInt("maxTeamSearches", 25);
+//	pfs_t::legacy_constants_t& legacyConsts = pfs.legacy_constants;
+	pfs_t::qtpfs_constants_t& qtpfsConsts = pfs.qtpfs_constants;
+
+	qtpfsConsts.layersPerUpdate = qtpfsTable.GetInt("layersPerUpdate",  5);
+	qtpfsConsts.maxTeamSearches = qtpfsTable.GetInt("maxTeamSearches", 25);
+	qtpfsConsts.minNodeSizeX    = qtpfsTable.GetInt("minNodeSizeX",     8);
+	qtpfsConsts.minNodeSizeZ    = qtpfsTable.GetInt("minNodeSizeZ",     8);
+	qtpfsConsts.maxNodeDepth    = qtpfsTable.GetInt("maxNodeDepth",    16);
+	qtpfsConsts.numSpeedModBins = qtpfsTable.GetInt("numSpeedModBins", 10);
+	qtpfsConsts.minSpeedModVal  = std::max(                      0.0f, qtpfsTable.GetFloat("minSpeedModVal", 0.0f));
+	qtpfsConsts.maxSpeedModVal  = std::max(qtpfsConsts.minSpeedModVal, qtpfsTable.GetFloat("maxSpeedModVal", 2.0f));
 }
 
 void CMapInfo::ReadSound()

@@ -195,17 +195,19 @@ public:
 	} sm3;
 
 	struct pfs_t {
-		struct legacy_t {
-		} legacy;
+		struct legacy_constants_t {
+		} legacy_constants;
 
-		struct qtpfs_t {
+		struct qtpfs_constants_t {
+			unsigned int layersPerUpdate;
+			unsigned int maxTeamSearches;
 			unsigned int minNodeSizeX;
 			unsigned int minNodeSizeZ;
 			unsigned int maxNodeDepth;
-			unsigned int numSpeedBins;
-			unsigned int layersPerUpdate;
-			unsigned int maxTeamSearches;
-		} qtpfs;
+			unsigned int numSpeedModBins;
+			float        minSpeedModVal;
+			float        maxSpeedModVal;
+		} qtpfs_constants;
 	} pfs;
 
 
