@@ -46,8 +46,6 @@ private:
 
 	void CreateLists(S3DModelPiece* o);
 	void CreateListsNow(S3DModelPiece* o);
-
-	void DeleteChildren(S3DModelPiece* o);
 };
 
 extern C3DModelLoader* modelParser;
