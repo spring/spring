@@ -97,7 +97,7 @@ C3DModelLoader::~C3DModelLoader()
 	// delete model cache
 	for (std::list<S3DModel*>::iterator mi = models.begin(); mi != models.end(); ++mi) {
 		S3DModel* model = *mi;
-		DeleteChildren(model->GetRootPiece());
+		model->DeletePieces(model->GetRootPiece());
 		delete model;
 	}
 
@@ -268,23 +268,13 @@ void C3DModelLoader::Update() {
 }
 
 
-void C3DModelLoader::DeleteChildren(S3DModelPiece* o)
-{
-	for (std::vector<S3DModelPiece*>::iterator di = o->children.begin(); di != o->children.end(); ++di) {
-		DeleteChildren(*di);
-	}
-
-	o->children.clear();
-	delete o;
-}
-
 
 void C3DModelLoader::CreateLocalModel(LocalModel* localModel)
 {
 	const S3DModel* model = localModel->original;
 	const S3DModelPiece* root = model->GetRootPiece();
 
-	const bool dlistLoaded = (root->dispListID != 0);
+	const bool dlistLoaded = (root->GetDisplayListID() != 0);
 
 	if (!dlistLoaded && GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // CreateLocalModel
@@ -311,21 +301,18 @@ void C3DModelLoader::DeleteLocalModel(LocalModel* localModel)
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
 	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glGenBuffers(VBO_NUMTYPES, &o->vboIDs[0]);
+	o->CreateUploadGeometryVBOs();
 	#endif
-	o->UploadGeometryVBOs();
-	GLuint id = glGenLists(1);
-	glNewList(id, GL_COMPILE);
-		o->DrawForList();
-	glEndList();
 
-	for (std::vector<S3DModelPiece*>::iterator bs = o->children.begin(); bs != o->children.end(); ++bs) {
-		CreateListsNow(*bs);
+	const unsigned int dlistID = o->CreateDrawForList();
+
+	for (unsigned int n = 0; n < o->GetChildCount(); n++) {
+		CreateListsNow(o->GetChild(n));
 	}
 
 	// bind when everything is ready, should be more safe in multithreaded scenarios
 	// TODO: still for 100% safety it should use GL_SYNC
-	o->dispListID = id;
+	o->SetDisplayListID(dlistID);
 }
 
 

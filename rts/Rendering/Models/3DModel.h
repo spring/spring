@@ -47,19 +47,26 @@ typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
 
 struct S3DModelPiece {
 	S3DModelPiece();
-
 	virtual ~S3DModelPiece();
-	virtual void UploadGeometryVBOs() {}
-	virtual void DrawForList() const = 0;
+
+	virtual unsigned int CreateDrawForList() const;
+	virtual void CreateUploadGeometryVBOs() {
+		CreateGeometryVBOs();
+		UploadGeometryVBOs();
+	}
+
 	virtual unsigned int GetVertexCount() const { return 0; }
 	virtual unsigned int GetNormalCount() const { return 0; }
 	virtual unsigned int GetTxCoorCount() const { return 0; }
+
 	virtual void SetMinMaxExtends() {}
 	virtual void SetVertexTangents() {}
+
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
 	virtual float3 GetPosOffset() const { return ZeroVector; }
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
+
 	void DrawStatic() const;
 
 	void SetCollisionVolume(CollisionVolume* cv) { colvol = cv; }
@@ -68,6 +75,9 @@ struct S3DModelPiece {
 
 	unsigned int GetChildCount() const { return children.size(); }
 	S3DModelPiece* GetChild(unsigned int i) const { return children[i]; }
+
+	unsigned int GetDisplayListID() const { return dispListID; }
+	void SetDisplayListID(unsigned int id) { dispListID = id; }
 
 public:
 	std::string name;
@@ -78,10 +88,8 @@ public:
 	S3DModelPiece* parent;
 	CollisionVolume* colvol;
 
-	bool isEmpty;
-	unsigned int dispListID;
-
 	ModelType type;
+	bool isEmpty;
 
 	float3 mins;
 	float3 maxs;
@@ -89,6 +97,14 @@ public:
 	float3 goffset;   ///< @see root
 	float3 rot;
 	float3 scale;
+
+protected:
+	virtual void CreateGeometryVBOs();
+	virtual void UploadGeometryVBOs() {}
+
+	virtual void DrawForList() const = 0;
+
+	unsigned int dispListID;
 
 	#ifdef USE_PIECE_GEOMETRY_VBOS
 	unsigned int vboIDs[VBO_NUMTYPES];
@@ -127,6 +143,7 @@ struct S3DModel
 	S3DModelPiece* GetRootPiece() const { return rootPiece; }
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
 	void DrawStatic() const { rootPiece->DrawStatic(); }
+	void DeletePieces(S3DModelPiece* piece);
 	S3DModelPiece* FindPiece(const std::string& name) const;
 
 public:

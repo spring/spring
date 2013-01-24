@@ -18,6 +18,14 @@
 /** ****************************************************************************************************
  * S3DModel
  */
+void S3DModel::DeletePieces(S3DModelPiece* piece)
+{
+	for (unsigned int n = 0; n < piece->GetChildCount(); n++) {
+		DeletePieces(piece->GetChild(n));
+	}
+
+	delete piece;
+}
 
 S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
 {
@@ -35,9 +43,9 @@ S3DModelPiece::S3DModelPiece()
 	: model(NULL)
 	, parent(NULL)
 	, colvol(NULL)
+	, type(MODELTYPE_OTHER)
 	, isEmpty(true)
 	, dispListID(0)
-	, type(MODELTYPE_OTHER)
 {
 	memset(vboIDs, 0, sizeof(vboIDs));
 }
@@ -49,6 +57,21 @@ S3DModelPiece::~S3DModelPiece()
 	glDeleteBuffers(VBO_NUMTYPES, &vboIDs[0]);
 	#endif
 	delete colvol;
+}
+
+void S3DModelPiece::CreateGeometryVBOs() {
+	glGenBuffers(VBO_NUMTYPES, &vboIDs[0]);
+}
+
+unsigned int S3DModelPiece::CreateDrawForList() const
+{
+	const unsigned int dlistID = glGenLists(1);
+
+	glNewList(dlistID, GL_COMPILE);
+	DrawForList();
+	glEndList();
+
+	return dlistID;
 }
 
 void S3DModelPiece::DrawStatic() const
@@ -102,7 +125,7 @@ void LocalModel::SetLODCount(unsigned int count)
 void LocalModel::ReloadDisplayLists()
 {
 	for (std::vector<LocalModelPiece*>::iterator piece = pieces.begin(); piece != pieces.end(); ++piece) {
-		(*piece)->dispListID = (*piece)->original->dispListID;
+		(*piece)->dispListID = (*piece)->original->GetDisplayListID();
 	}
 }
 
@@ -150,7 +173,7 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 {
 	assert(piece != NULL);
 
-	dispListID =  piece->dispListID;
+	dispListID =  piece->GetDisplayListID();
 	pos        =  piece->offset;
 
 	children.reserve(piece->children.size());
