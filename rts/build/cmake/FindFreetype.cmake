@@ -102,6 +102,7 @@ if    (NOT FREETYPE_LIBRARY OR NOT FREETYPE_INCLUDE_DIR)
 				/usr/local
 				/usr/bin
 				"${MINGWLIBS}"
+				"${MINGWLIBS}/freetype"
 			NO_DEFAULT_PATH
 			)
 
