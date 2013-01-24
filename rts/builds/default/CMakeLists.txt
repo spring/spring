@@ -18,7 +18,7 @@ FIND_PACKAGE_STATIC(OpenGL REQUIRED)
 FIND_PACKAGE_STATIC(GLU REQUIRED)
 FIND_PACKAGE_STATIC(GLEW 1.5.1 REQUIRED)
 LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
-
+LIST(APPEND engineIncludes ${GLEW_INCLUDE_DIR})
 
 FIND_PACKAGE_STATIC(Freetype REQUIRED)
 foreach(f ${FREETYPE_INCLUDE_DIRS})
@@ -53,22 +53,30 @@ LIST(APPEND engineLibraries ${sound-impl})
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 
 LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
-if (MINGW AND Boost_CHRONO_FOUND)
+if (WIN32 AND Boost_CHRONO_FOUND)
 	# in newer boost versions the thread library depends on it
 	LIST(APPEND engineLibraries ${Boost_CHRONO_LIBRARY})
-endif (MINGW AND Boost_CHRONO_FOUND)
+endif (WIN32 AND Boost_CHRONO_FOUND)
 
 ### Assemble external incude dirs
 LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
 
 INCLUDE_DIRECTORIES(${engineIncludes})
 
+if   (MSVC)
+	# set vmg flag to work around small pointer-to-member bug in spring
+	# and enable multi-processor compiling
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /MP")
+endif(MSVC)
+
 ### Add icon and manifest to exe using windres
 IF    (WIN32)
-	SET(ENGINE_ICON_DIR "${ENGINE_SRC_ROOT_DIR}")
-	SET(ENGINE_ICON_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-	SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-	CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
+	IF   (MINGW)
+		SET(ENGINE_ICON_DIR "${ENGINE_SRC_ROOT_DIR}")
+		SET(ENGINE_ICON_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
+		SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
+		CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
+	ENDIF(MINGW)
 ELSE  (WIN32)
 	SET(ENGINE_ICON "")
 ENDIF (WIN32)
@@ -78,7 +86,7 @@ MakeGlobal(engineLibraries)
 MakeGlobal(engineIncludes)
 
 ### Build the executable
-ADD_EXECUTABLE(engine-default ${engineSources} ${ENGINE_ICON} ${engineHeaders})
+ADD_EXECUTABLE(engine-default ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-default ${engineLibraries})
 SET_TARGET_PROPERTIES(engine-default PROPERTIES OUTPUT_NAME "spring")
 
