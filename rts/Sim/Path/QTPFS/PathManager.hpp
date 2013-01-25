@@ -40,6 +40,7 @@ namespace QTPFS {
 
 		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type);
 		void Update();
+		void UpdateFull();
 		void UpdatePath(const CSolidObject* owner, unsigned int pathID);
 		void DeletePath(unsigned int pathID);
 
@@ -106,7 +107,7 @@ namespace QTPFS {
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 		void QueueNodeLayerUpdates(const PathRectangle& r);
-		void ExecQueuedNodeLayerUpdates(unsigned int layerNum);
+		void ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool flushQueue);
 		#endif
 
 		void ExecuteQueuedSearches(unsigned int pathType);
