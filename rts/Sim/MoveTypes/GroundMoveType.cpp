@@ -1517,6 +1517,9 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	bool checkYardMap,
 	bool checkTerrain
 ) {
+	if (checkTerrain && collider->inAir)
+		return;
+
 	// for factories, check if collidee's position is behind us (which means we are likely exiting)
 	//
 	// NOTE:
@@ -2365,50 +2368,49 @@ bool CGroundMoveType::UpdateDirectControl()
 
 void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 {
-	if (wantedSpeed > 0.0f || currentSpeed != 0.0f) {
-		//const UnitDef* ud = owner->unitDef;
+	float3 speedVector;
+
+	if (modInfo.allowGroundUnitGravity) {
+		#define hAcc deltaSpeed
+		#define vAcc mapInfo->map.gravity
+
+		const bool g = ((owner->pos.y + owner->speed.y) >= GetGroundHeight(owner->pos + owner->speed));
+
+		// use terrain-tangent vector because it does not
+		// depend on UnitDef::upright (unlike o->frontdir)
+		const float3& gndNormVec = GetGroundNormal(owner->pos);
+		const float3  gndTangVec = gndNormVec.cross(owner->rightdir);
+
+		// never drop below terrain
+		owner->speed.y =
+			(               owner->speed.dot(  UpVector) * (    g)) +
+			(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - g));
+
+		// NOTE: new speed-vector has to be parallel to frontdir
+		// TODO: more realistic hovercraft motion might not want this
+		const float3 accelVec =
+			(gndTangVec * hAcc) +
+			(  UpVector * vAcc);
+		const float3 speedVec = owner->speed + accelVec;
+
+		speedVector =
+			(flatFrontDir * speedVec.dot(flatFrontDir)) +
+			(    UpVector * speedVec.dot(    UpVector));
+		#undef vAcc
+		#undef hAcc
+	} else {
+		// LuaSyncedCtrl::SetUnitVelocity directly assigns
+		// to owner->speed which gets overridden below, so
+		// need to calculate hSpeedScale from it (not from
+		// currentSpeed) directly
+		const int    speedSign  = int(!reversing) * 2 - 1;
+		const float  speedScale = owner->speed.Length() * speedSign + deltaSpeed;
+
+		speedVector = owner->frontdir * speedScale;
+	}
+
+	if (speedVector != ZeroVector) {
 		const MoveDef* md = owner->moveDef;
-
-		float3 speedVector;
-
-		if (modInfo.allowGroundUnitGravity) {
-			#define hAcc deltaSpeed
-			#define vAcc mapInfo->map.gravity
-
-			const bool g = ((owner->pos.y + owner->speed.y) >= GetGroundHeight(owner->pos + owner->speed));
-
-			// use terrain-tangent vector because it does not
-			// depend on UnitDef::upright (unlike o->frontdir)
-			const float3& gndNormVec = GetGroundNormal(owner->pos);
-			const float3  gndTangVec = gndNormVec.cross(owner->rightdir);
-
-			// never drop below terrain
-			owner->speed.y =
-				(               owner->speed.dot(  UpVector) * (    g)) +
-				(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - g));
-
-			// NOTE: new speed-vector has to be parallel to frontdir
-			const float3 accelVec =
-				(gndTangVec * hAcc) +
-				(  UpVector * vAcc);
-			const float3 speedVec = owner->speed + accelVec;
-
-			speedVector =
-				(flatFrontDir * speedVec.dot(flatFrontDir)) +
-				(    UpVector * speedVec.dot(    UpVector));
-
-			#undef vAcc
-			#undef hAcc
-		} else {
-			// LuaSyncedCtrl::SetUnitVelocity directly assigns
-			// to owner->speed which gets overridden below, so
-			// need to calculate hSpeedScale from it (not from
-			// currentSpeed) directly
-			const int    speedSign  = int(!reversing) * 2 - 1;
-			const float  speedScale = owner->speed.Length() * speedSign + deltaSpeed;
-
-			speedVector = owner->frontdir * speedScale;
-		}
 
 		// NOTE: don't check for structure blockage, coldet handles that
 		//
@@ -2435,13 +2437,13 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			// use the simplest possible Euler integration
 			owner->Move3D(owner->speed = speedVector, true);
 		}
-
-		reversing    = (speedVector.dot(flatFrontDir) < 0.0f);
-		currentSpeed = math::fabs(speedVector.dot(flatFrontDir));
-		deltaSpeed   = 0.0f;
-
-		assert(math::fabs(currentSpeed) < 1e6f);
 	}
+
+	reversing    = (speedVector.dot(flatFrontDir) < 0.0f);
+	currentSpeed = math::fabs(speedVector.dot(flatFrontDir));
+	deltaSpeed   = 0.0f;
+
+	assert(math::fabs(currentSpeed) < 1e6f);
 }
 
 bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
