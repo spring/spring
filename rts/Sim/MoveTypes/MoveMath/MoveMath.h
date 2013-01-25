@@ -63,6 +63,9 @@ public:
 
 	// returns the block-status of a single quare
 	static BlockType SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
+	static BlockType SquareIsBlocked(const MoveDef& moveDef, const float3& pos, const CSolidObject* collider) {
+		return SquareIsBlocked(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE, collider);
+	}
 
 public:
 	static bool noHoverWaterMove;

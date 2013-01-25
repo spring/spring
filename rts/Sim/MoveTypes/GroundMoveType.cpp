@@ -1327,12 +1327,20 @@ void CGroundMoveType::GetNextWayPoint()
 
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
 		Fail();
-	}
-	if ((CMoveMath::IsBlocked(*owner->moveDef, nextWayPoint, owner) & CMoveMath::BLOCK_STRUCTURE) != 0) {
-		// this can happen if we crushed a non-blocking feature
-		// and it spawned another feature which we cannot crush
-		// (eg.)
-		Fail();
+	} else {
+		#define CWP_BLOCK_MASK CMoveMath::SquareIsBlocked(*owner->moveDef, currWayPoint, owner)
+		#define NWP_BLOCK_MASK CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner)
+
+		if ((CWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) != 0 || (NWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) != 0) {
+			// this can happen if we crushed a non-blocking feature
+			// and it spawned another feature which we cannot crush
+			// (eg.) --> repath
+			StopEngine();
+			StartEngine();
+		}
+
+		#undef NWP_BLOCK_MASK
+		#undef CWP_BLOCK_MASK
 	}
 }
 
@@ -1508,15 +1516,22 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	bool checkYardMap
 ) {
 	// for factories, check if collidee's position is behind us (which means we are likely exiting)
-	// NOTE: allow units to move _through_ idle open factories? (pathfinder and coldet disagree now)
+	//
+	// NOTE:
+	//   allow units to move _through_ idle open factories by extending the collidee's footprint such
+	//   that insideYardMap is true in a larger area (otherwise pathfinder and coldet would disagree)
+	// 
+	const int xext = std::max(1, colliderMD->xsizeh << 1);
+	const int zext = std::max(1, colliderMD->zsizeh << 1);
+
 	const bool exitingYardMap =
 		((collider->frontdir.dot(separationVector) > 0.0f) &&
 		 (collider->   speed.dot(separationVector) > 0.0f));
 	const bool insideYardMap =
-		(collider->pos.x >= (collidee->pos.x - ((collidee->xsize >> 1) - 0) * SQUARE_SIZE)) &&
-		(collider->pos.x <= (collidee->pos.x + ((collidee->xsize >> 1) - 0) * SQUARE_SIZE)) &&
-		(collider->pos.z >= (collidee->pos.z - ((collidee->zsize >> 1) - 0) * SQUARE_SIZE)) &&
-		(collider->pos.z <= (collidee->pos.z + ((collidee->zsize >> 1) - 0) * SQUARE_SIZE));
+		(collider->pos.x >= (collidee->pos.x - ((collidee->xsize >> 1) - xext) * SQUARE_SIZE)) &&
+		(collider->pos.x <= (collidee->pos.x + ((collidee->xsize >> 1) + xext) * SQUARE_SIZE)) &&
+		(collider->pos.z >= (collidee->pos.z - ((collidee->zsize >> 1) - zext) * SQUARE_SIZE)) &&
+		(collider->pos.z <= (collidee->pos.z + ((collidee->zsize >> 1) + zext) * SQUARE_SIZE));
 
 	bool wantRequestPath = false;
 
