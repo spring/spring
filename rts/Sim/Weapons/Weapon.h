@@ -32,8 +32,7 @@ public:
 
 	void DependentDied(CObject* o);
 
-	bool AllowWeaponTargetCheck();
-	bool TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit) const;
+
 	bool CheckTargetAngleConstraint(const float3& worldTargetDir, const float3& worldWeaponDir) const;
 	bool SetTargetBorderPos(CUnit*, float3&, float3&, float3&);
 	bool GetTargetBorderPos(const CUnit*, const float3&, float3&, float3&) const;
@@ -79,8 +78,15 @@ protected:
 	void UpdateStockpile();
 	void UpdateSalvo();
 
+	static bool TargetUnitOrPositionInUnderWater(const float3& targetPos, const CUnit* targetUnit);
+	static bool TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit);
+
 protected:
 	ProjectileParams GetProjectileParams();
+
+private:
+	inline bool AllowWeaponTargetCheck();
+	void UpdateRelWeaponPos();
 
 public:
 	CUnit* owner;

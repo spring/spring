@@ -49,27 +49,23 @@ void CTorpedoLauncher::Update()
 
 void CTorpedoLauncher::FireImpl()
 {
-	float3 dir;
-	dir=targetPos-weaponMuzzlePos;
+	float3 dir = targetPos - weaponMuzzlePos;
 	dir.Normalize();
-	if(weaponDef->trajectoryHeight>0){
-		dir.y+=weaponDef->trajectoryHeight;
+	if (weaponDef->trajectoryHeight > 0){
+		dir.y += weaponDef->trajectoryHeight;
 		dir.Normalize();
 	}
 
-	float3 startSpeed;
-	if (!weaponDef->fixedLauncher) {
-		startSpeed = dir * weaponDef->startvelocity;
-	}
-	else {
+	float3 startSpeed = dir * weaponDef->startvelocity;
+	if (weaponDef->fixedLauncher) {
 		startSpeed = weaponDir * weaponDef->startvelocity;
 	}
 
 	ProjectileParams params = GetProjectileParams();
+	params.speed = startSpeed;
 	params.pos = weaponMuzzlePos;
 	params.end = targetPos;
-	params.speed = startSpeed;
-	params.ttl = weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime;
+	params.ttl = (weaponDef->flighttime == 0)? (int) (range / projectileSpeed + 25): weaponDef->flighttime;
 
 	new CTorpedoProjectile(params, damageAreaOfEffect, projectileSpeed, tracking);
 }
