@@ -391,11 +391,14 @@ float CUnitHandler::GetBuildHeight(const float3& pos, const UnitDef* unitdef, bo
 	}
 
 	// find the average height of the footprint-border squares
-	const float avgH = sumBorderSquareHeight / numBorderSquares;
-
+	float avgH = sumBorderSquareHeight / numBorderSquares;
+	
 	// and clamp it to [minH, maxH] if necessary
-	if (avgH < minH && minH < maxH) { return (minH + 0.01f); }
-	if (avgH > maxH && maxH > minH) { return (maxH - 0.01f); }
+	if (avgH < minH && minH < maxH) { avgH = (minH + 0.01f); }
+	if (avgH > maxH && maxH > minH) { avgH = (maxH - 0.01f); }
+
+	if (unitdef->floatOnWater && avgH < 0.0f)
+		avgH = -unitdef->waterline;
 
 	return avgH;
 }

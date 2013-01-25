@@ -875,12 +875,7 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
 	const UnitDef* ud = buildInfo.def;
-	const float bh = uh->GetBuildHeight(pos, ud, synced);
-
-	pos.y = bh;
-
-	if (ud->floatOnWater && bh < 0.0f)
-		pos.y = -ud->waterline;
+	pos.y = uh->GetBuildHeight(pos, ud, synced);
 
 	return pos;
 }
