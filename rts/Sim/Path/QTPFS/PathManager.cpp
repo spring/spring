@@ -470,7 +470,7 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const PathRectangle& r) {
 	}
 }
 
-void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum) {
+void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool flushQueue) {
 	// flush this layer's entire update-queue if necessary
 	//
 	// called at run-time only, not load-time so we always
@@ -501,7 +501,7 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum) {
 
 		nodeLayers[layerNum].PopQueuedUpdate();
 
-		if (pathSearches[layerNum].empty()) {
+		if (!flushQueue && pathSearches[layerNum].empty()) {
 			// no pending searches this frame, stop flushing
 			break;
 		}
@@ -666,6 +666,19 @@ void QTPFS::PathManager::Update() {
 	#endif
 }
 
+void QTPFS::PathManager::UpdateFull() {
+	assert(gs->frameNum == 0);
+
+	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
+	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+		assert((pathCaches[layerNum].GetDeadPaths()).empty());
+		assert((pathSearches[layerNum]).empty());
+
+		ExecQueuedNodeLayerUpdates(layerNum, true);
+	}
+	#endif
+}
+
 void QTPFS::PathManager::ThreadUpdate() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	while (!nodeLayers.empty()) {
@@ -702,7 +715,7 @@ void QTPFS::PathManager::ThreadUpdate() {
 
 			#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 			// NOTE: *must* be called between QueueDeadPathSearches and ExecuteQueuedSearches
-			ExecQueuedNodeLayerUpdates(pathTypeUpdate);
+			ExecQueuedNodeLayerUpdates(pathTypeUpdate, false);
 			#endif
 
 			ExecuteQueuedSearches(pathTypeUpdate);
