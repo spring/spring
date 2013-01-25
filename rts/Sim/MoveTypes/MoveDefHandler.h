@@ -116,7 +116,7 @@ public:
 	~MoveDefHandler();
 
 	MoveDef* GetMoveDefByPathType(unsigned int pathType) { return moveDefs[pathType]; }
-	MoveDef* GetMoveDefByName(const std::string& name);
+	MoveDef* GetMoveDefByName(const std::string& name) const;
 
 	unsigned int GetNumMoveDefs() const { return moveDefs.size(); }
 	unsigned int GetCheckSum() const { return checksum; }
