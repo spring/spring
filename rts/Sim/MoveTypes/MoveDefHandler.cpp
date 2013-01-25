@@ -94,6 +94,7 @@ MoveDefHandler::MoveDefHandler()
 		crc << terrType.hoverSpeed << terrType.shipSpeed;
 	}
 
+	moveDefs.reserve(rootTable.GetLength());
 	for (size_t num = 1; /* no test */; num++) {
 		const LuaTable moveTable = rootTable.SubTable(num);
 
@@ -128,7 +129,7 @@ MoveDefHandler::~MoveDefHandler()
 }
 
 
-MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
+MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name) const
 {
 	map<string, int>::const_iterator it = moveDefNames.find(name);
 	if (it == moveDefNames.end()) {
