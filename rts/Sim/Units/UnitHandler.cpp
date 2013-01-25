@@ -12,13 +12,16 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/EventHandler.h"
 #include "System/EventBatchHandler.h"
 #include "System/Log/ILog.h"
@@ -426,6 +429,10 @@ BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 	const int x2 = x1 + xsize * SQUARE_SIZE;
 	const float bh = GetBuildHeight(pos, buildInfo.def, synced);
 
+	const MoveDef* moveDef = (buildInfo.def->pathType != -1U) ? moveDefHandler->GetMoveDefByPathType(buildInfo.def->pathType) : NULL;
+	const S3DModel* model = buildInfo.def->LoadModel();
+	const float buildHeight = (model != NULL) ? math::fabs(model->height) : 10.0f;
+
 	BuildSquareStatus canBuild = BUILDSQUARE_OPEN;
 
 	if (buildInfo.def->needGeo) {
@@ -449,7 +456,7 @@ BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
 			for (int z = z1; z < z2; z += SQUARE_SIZE) {
-				BuildSquareStatus tbs = TestBuildSquare(float3(x, pos.y, z), buildInfo.def, feature, gu->myAllyTeam, synced);
+				BuildSquareStatus tbs = TestBuildSquare(float3(x, bh, z), buildHeight, buildInfo.def, moveDef, feature, gu->myAllyTeam, synced);
 
 				if (tbs != BUILDSQUARE_BLOCKED) {
 					//??? what does this do?
@@ -483,8 +490,7 @@ BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 		// this can be called in either context
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
 			for (int z = z1; z < z2; z += SQUARE_SIZE) {
-				canBuild = std::min(canBuild, TestBuildSquare(float3(x, bh, z), buildInfo.def, feature, allyteam, synced));
-
+				canBuild = std::min(canBuild, TestBuildSquare(float3(x, bh, z), buildHeight, buildInfo.def, moveDef, feature, allyteam, synced));
 				if (canBuild == BUILDSQUARE_BLOCKED) {
 					return BUILDSQUARE_BLOCKED;
 				}
@@ -496,8 +502,7 @@ BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 }
 
 
-
-BuildSquareStatus CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFeature*& feature, int allyteam, bool synced)
+BuildSquareStatus CUnitHandler::TestBuildSquare(const float3& pos, const float buildHeight, const UnitDef* unitdef, const MoveDef* moveDef, CFeature*& feature, int allyteam, bool synced)
 {
 	if (!pos.IsInMap()) {
 		return BUILDSQUARE_BLOCKED;
@@ -509,22 +514,33 @@ BuildSquareStatus CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef
 	CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
 
 	if (s != NULL) {
-		CFeature* f;
-		if ((f = dynamic_cast<CFeature*>(s))) {
+		CFeature* f = dynamic_cast<CFeature*>(s);
+		if (f != NULL) {
 			if ((allyteam < 0) || f->IsInLosForAllyTeam(allyteam)) {
 				if (!f->def->reclaimable) {
-					return BUILDSQUARE_BLOCKED;
+					ret = BUILDSQUARE_BLOCKED;
+				} else {
+					ret = BUILDSQUARE_RECLAIMABLE;
+					feature = f;
 				}
-				ret = BUILDSQUARE_RECLAIMABLE;
-				feature = f;
 			}
 		} else if (!dynamic_cast<CUnit*>(s) || (allyteam < 0) ||
 				(static_cast<CUnit*>(s)->losStatus[allyteam] & LOS_INLOS)) {
 			if (s->immobile) {
-				return BUILDSQUARE_BLOCKED;
+				ret = BUILDSQUARE_BLOCKED;
 			} else {
 				ret = BUILDSQUARE_OCCUPIED;
 			}
+		}
+
+		if ((ret == BUILDSQUARE_BLOCKED) || (ret == BUILDSQUARE_OCCUPIED)) {
+			if (CMoveMath::IsNonBlocking(s, moveDef, pos, buildHeight)) {
+				ret = BUILDSQUARE_OPEN;
+			}
+		}
+
+		if (ret == BUILDSQUARE_BLOCKED) {
+			return ret;
 		}
 	}
 

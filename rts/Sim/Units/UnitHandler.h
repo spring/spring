@@ -88,7 +88,7 @@ public:
 
 private:
 	///< test a single mapsquare for build possibility
-	BuildSquareStatus TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature, int allyteam, bool synced);
+	static BuildSquareStatus TestBuildSquare(const float3& pos, const float buildHeight, const UnitDef* unitdef, const MoveDef* moveDef, CFeature *&feature, int allyteam, bool synced);
 
 private:
 	std::set<unsigned int> freeUnitIDs;
