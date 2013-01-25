@@ -3245,21 +3245,21 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
 		return 0;
 	}
-	const int args = lua_gettop(L);
-	
-	const CUnit* enemey = NULL;
+
+	const CWeapon* weapon = unit->weapons[weaponNum];	
+	const CUnit* enemy = NULL;
+
 	float3 pos;
-	if (args >= 5) {
+
+	if (lua_gettop(L) >= 5) {
 		pos.x = luaL_optnumber(L, 3, 0.0f);
 		pos.y = luaL_optnumber(L, 4, 0.0f);
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 	} else {
-		enemey = ParseUnit(L, __FUNCTION__, 3);
+		enemy = ParseUnit(L, __FUNCTION__, 3);
 	}
 
-	const CWeapon* weapon = unit->weapons[weaponNum];
-	const bool targetable = weapon->TryTarget(pos, true, enemey);
-	lua_pushboolean(L, targetable);
+	lua_pushboolean(L, weapon->TryTarget(pos, true, enemy));
 	return 1;
 }
 
