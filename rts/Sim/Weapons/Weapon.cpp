@@ -224,6 +224,30 @@ static inline bool isBeingServicedOnPad(CUnit* u)
 	return (a != NULL && a->GetPadStatus() != 0);
 }
 
+
+void CWeapon::UpdateRelWeaponPos()
+{
+	// If we can't get a line of fire from the muzzle, try
+	// the aim piece instead (since the weapon may just be
+	// turned in a wrong way)
+	int weaponPiece = -1;
+	bool weaponAimed = (useWeaponPosForAim == 0);
+
+	if (!weaponAimed) {
+		weaponPiece = owner->script->QueryWeapon(weaponNum);
+	} else {
+		weaponPiece = owner->script->AimFromWeapon(weaponNum);
+	}
+
+	relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
+
+	if (!weaponAimed) {
+		weaponPiece = owner->script->AimFromWeapon(weaponNum);
+	}
+
+	relWeaponPos = owner->script->GetPiecePos(weaponPiece);
+}
+
 void CWeapon::Update()
 {
 	UpdateTargeting();
@@ -241,25 +265,7 @@ void CWeapon::Update()
 void CWeapon::UpdateTargeting()
 {
 	if (hasCloseTarget) {
-		int weaponPiece = -1;
-		bool weaponAimed = (useWeaponPosForAim == 0);
-
-		// if we couldn't get a line of fire from the
-		// muzzle, try if we can get it from the aim
-		// piece
-		if (!weaponAimed) {
-			weaponPiece = owner->script->QueryWeapon(weaponNum);
-		} else {
-			weaponPiece = owner->script->AimFromWeapon(weaponNum);
-		}
-
-		relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
-
-		if (!weaponAimed) {
-			weaponPiece = owner->script->AimFromWeapon(weaponNum);
-		}
-
-		relWeaponPos = owner->script->GetPiecePos(weaponPiece);
+		UpdateRelWeaponPos();
 	}
 
 	if (targetType == Target_Unit) {
@@ -387,12 +393,11 @@ void CWeapon::UpdateFire()
 			weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z +
 			                               owner->updir    * relWeaponMuzzlePos.y +
 			                               owner->rightdir * relWeaponMuzzlePos.x;
-			useWeaponPosForAim = reloadTime / 16 + 8;
 			weaponDir = owner->frontdir * weaponDir.z +
 			            owner->updir    * weaponDir.y +
 			            owner->rightdir * weaponDir.x;
-
 			weaponDir.SafeNormalize();
+			useWeaponPosForAim = reloadTime / 16 + 8;
 
 			if (TryTarget(targetPos, haveUserTarget, targetUnit) && !CobBlockShot(targetUnit)) {
 				if (weaponDef->stockpile) {
@@ -480,7 +485,7 @@ void CWeapon::UpdateSalvo()
 			int piece = owner->script->AimFromWeapon(weaponNum);
 			relWeaponPos = owner->script->GetPiecePos(piece);
 
-			piece = owner->script->/*AimFromWeapon*/QueryWeapon(weaponNum);
+			piece = owner->script->QueryWeapon(weaponNum);
 			owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
 
 			weaponPos = owner->pos +
@@ -660,7 +665,7 @@ void CWeapon::HoldFire()
 
 
 
-inline bool CWeapon::AllowWeaponTargetCheck()
+bool CWeapon::AllowWeaponTargetCheck()
 {
 	if (luaRules != NULL) {
 		const int checkAllowed = luaRules->AllowWeaponTargetCheck(owner->id, weaponNum, weaponDef->id);
@@ -796,28 +801,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	tracefile << owner->id << " " << weaponNum <<  "\n";
 #endif
 
-	{
-		// If we can't get a line of fire from the muzzle, try
-		// the aim piece instead (since the weapon may just be
-		// turned in a wrong way)
-		int weaponPiece = -1;
-		bool weaponAimed = (useWeaponPosForAim == 0);
-
-		if (!weaponAimed) {
-			weaponPiece = owner->script->QueryWeapon(weaponNum);
-		} else {
-			weaponPiece = owner->script->AimFromWeapon(weaponNum);
-		}
-
-		relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
-
-		if (!weaponAimed) {
-			weaponPiece = owner->script->AimFromWeapon(weaponNum);
-		}
-
-		relWeaponPos = owner->script->GetPiecePos(weaponPiece);
-	}
-
+	UpdateRelWeaponPos();
 	useWeaponPosForAim = std::max(0, useWeaponPosForAim - 1);
 
 	weaponMuzzlePos =
@@ -925,10 +909,19 @@ void CWeapon::DependentDied(CObject* o)
 	}
 }
 
-bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit) const
+bool CWeapon::TargetUnitOrPositionInUnderWater(const float3& targetPos, const CUnit* targetUnit)
 {
 	if (targetUnit != NULL) {
 		return (targetUnit->isUnderWater);
+	} else {
+		return (targetPos.y < 0.0f);
+	}
+}
+
+bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit)
+{
+	if (targetUnit != NULL) {
+		return (targetUnit->inWater);
 	} else {
 		return (targetPos.y < 0.0f);
 	}
@@ -1095,7 +1088,7 @@ bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit*
 	}
 
 	// test: ground/water -> water
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(tgtPos, targetUnit))
+	if (!weaponDef->waterweapon && TargetUnitOrPositionInUnderWater(tgtPos, targetUnit))
 		return false;
 
 	// test: water -> *
@@ -1175,7 +1168,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 		const float3 gpos = weaponMuzzlePos + dir * g;
 
 		// true iff ground does not block the ray of length <length> from <pos> along <dir>
-		if (g > 0.0f && gpos.SqDistance(pos) > Square(damageAreaOfEffect))
+		if ((g > 0.0f) && (gpos.SqDistance(pos) > Square(damageAreaOfEffect)))
 			return false;
 	}
 

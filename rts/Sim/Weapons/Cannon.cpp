@@ -100,7 +100,7 @@ void CCannon::Update()
 
 bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
 {
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
+	if (!weaponDef->waterweapon && TargetUnitOrPositionInUnderWater(pos, unit))
 		return false;
 
 	if (projectileSpeed == 0) {
