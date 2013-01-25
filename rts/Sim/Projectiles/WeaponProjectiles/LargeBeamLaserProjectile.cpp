@@ -109,7 +109,8 @@ void CLargeBeamLaserProjectile::Draw()
 
 	const float beamTileMinDst = polyLength * (1.0f - startTex);
 	const float beamTileMaxDst = beamLength - tilelength;
-	const float numTiles = std::floor(((std::max(beamTileMinDst, beamTileMaxDst) - beamTileMinDst) / tilelength) + 0.5f);
+	// note: beamTileMaxDst can be negative, in which case we want numBeamTiles to equal zero
+	const float numBeamTiles = std::floor(((std::max(beamTileMinDst, beamTileMaxDst) - beamTileMinDst) / tilelength) + 0.5f);
 
 	AtlasedTexture tex = beamtex;
 
@@ -166,7 +167,7 @@ void CLargeBeamLaserProjectile::Draw()
 		}
 
 		// draw laser end
-		pos1 = startpos + zdir * (beamTileMinDst + numTiles * tilelength);
+		pos1 = startpos + zdir * (beamTileMinDst + numBeamTiles * tilelength);
 		pos2 = targetPos;
 		tex.xend = tex.xstart + (pos1.distance(pos2) / tilelength) * texSizeX;
 
