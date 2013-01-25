@@ -205,10 +205,6 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	if (!collidee->pos.IsInBounds())
 		return true;
 
-	// if unit is restricted to land with height > 0,
-	// it can not be blocked by underwater obstacles
-	if (colliderMD.terrainClass == MoveDef::Land)
-		return (collidee->isUnderWater);
 
 	// some objects appear to have negative model heights
 	// (the model parsers allow it for some reason), take
