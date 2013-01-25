@@ -71,7 +71,8 @@ private:
 		const float collideeRadius,
 		const float3& separationVector,
 		bool canRequestPath,
-		bool checkYardMap = false);
+		bool checkYardMap,
+		bool checkTerrain);
 
 	void HandleUnitCollisions(
 		CUnit* collider,

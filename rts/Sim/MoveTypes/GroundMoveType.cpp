@@ -1500,6 +1500,7 @@ void CGroundMoveType::HandleObjectCollisions()
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
+		HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
 	}
 
 	collider->Block();
@@ -1513,7 +1514,8 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	const float collideeRadius,
 	const float3& separationVector,
 	bool canRequestPath,
-	bool checkYardMap
+	bool checkYardMap,
+	bool checkTerrain
 ) {
 	// for factories, check if collidee's position is behind us (which means we are likely exiting)
 	//
@@ -1535,7 +1537,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 
 	bool wantRequestPath = false;
 
-	if (checkYardMap && insideYardMap) {
+	if ((checkYardMap && insideYardMap) || checkTerrain) {
 		const int xmid = (collider->pos.x + collider->speed.x) / SQUARE_SIZE;
 		const int zmid = (collider->pos.z + collider->speed.z) / SQUARE_SIZE;
 
@@ -1561,8 +1563,13 @@ void CGroundMoveType::HandleStaticObjectCollision(
 				const int xabs = xmid + x;
 				const int zabs = zmid + z;
 
-				if ((CMoveMath::SquareIsBlocked(*colliderMD, xabs, zabs, collider) & CMoveMath::BLOCK_STRUCTURE) == 0)
-					continue;
+				if (checkTerrain) {
+					if (CMoveMath::GetPosSpeedMod(*colliderMD, collider->pos) > 0.01f)
+						continue;
+				} else {
+					if ((CMoveMath::SquareIsBlocked(*colliderMD, xabs, zabs, collider) & CMoveMath::BLOCK_STRUCTURE) == 0)
+						continue;
+				}
 
 				const float3 squarePos = float3(xabs * SQUARE_SIZE + (SQUARE_SIZE >> 1), 0.0f, zabs * SQUARE_SIZE + (SQUARE_SIZE >> 1));
 				const float3 squareVec = collider->pos - squarePos;
@@ -1745,7 +1752,8 @@ void CGroundMoveType::HandleUnitCollisions(
 				collideeRadius,
 				separationVector,
 				(gs->frameNum > pathRequestDelay),
-				collideeUD->IsFactoryUnit());
+				collideeUD->IsFactoryUnit(),
+				false);
 
 			continue;
 		}
@@ -1896,7 +1904,9 @@ void CGroundMoveType::HandleFeatureCollisions(
 				colliderRadius,
 				collideeRadius,
 				separationVector,
-				(gs->frameNum > pathRequestDelay));
+				(gs->frameNum > pathRequestDelay),
+				false,
+				false);
 
 			continue;
 		}
