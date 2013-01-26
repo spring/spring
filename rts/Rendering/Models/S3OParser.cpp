@@ -258,7 +258,7 @@ void SS3OPiece::DrawForList() const
 			#endif
 
 			#ifdef USE_PIECE_GEOMETRY_VBOS
-			glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, NULL);
+			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawIndices.size(), GL_UNSIGNED_INT, NULL);
 			#else
 			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawIndices.size(), GL_UNSIGNED_INT, &vertexDrawIndices[0]);
 			#endif
@@ -271,7 +271,7 @@ void SS3OPiece::DrawForList() const
 		} break;
 		case S3O_PRIMTYPE_QUADS: {
 			#ifdef USE_PIECE_GEOMETRY_VBOS
-			glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, NULL);
+			glDrawElements(GL_QUADS, vertexDrawIndices.size(), GL_UNSIGNED_INT, NULL);
 			#else
 			glDrawElements(GL_QUADS, vertexDrawIndices.size(), GL_UNSIGNED_INT, &vertexDrawIndices[0]);
 			#endif
