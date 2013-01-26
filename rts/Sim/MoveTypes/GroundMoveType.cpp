@@ -1517,7 +1517,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	bool checkYardMap,
 	bool checkTerrain
 ) {
-	if (checkTerrain && collider->inAir)
+	if (checkTerrain && (!collider->isMoving || collider->inAir))
 		return;
 
 	// for factories, check if collidee's position is behind us (which means we are likely exiting)
