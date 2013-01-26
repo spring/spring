@@ -910,10 +910,10 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	inCreateUnit = true;
 	UnitLoadParams params;
 	params.unitDef = unitDef; /// must be non-NULL
-	params.builder = uh->GetUnit(luaL_optint(L, 8, -1)); /// may be NULL
+	params.builder = uh->GetUnit(luaL_optint(L, 10, -1)); /// may be NULL
 	params.pos     = pos;
 	params.speed   = ZeroVector;
-	params.unitID  = luaL_optint(L, 7, -1);
+	params.unitID  = luaL_optint(L, 9, -1);
 	params.teamID  = teamID;
 	params.facing  = facing;
 	params.beingBuilt = beingBuilt;
