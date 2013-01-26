@@ -29,7 +29,7 @@ CDemoRecorder::~CDemoRecorder()
 	WritePlayerStats();
 	WriteTeamStats();
 	WriteFileHeader(true);
-	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE), GetStringFromStreamBuffer(demoStream.rdbuf()));
+	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE), demoStream.str());
 }
 
 void CDemoRecorder::SetFileHeader()
@@ -52,6 +52,11 @@ void CDemoRecorder::WriteDemoFile(const std::string& name, const std::string& da
 {
 	std::ofstream file;
 
+	// using operator<<(basic_stringbuf*) requires the stream to be opened with std::ios::in
+	// stringbuf::{eback(), egptr(), gptr()} are protected so we cannot access them directly
+	// (plus data is not guaranteed to be stored contiguously) ==> the only clean OO solution
+	// that avoids str()'s copy would be to supply our own stringbuffer backend to demoStream
+	// which is slightly overdoing it
 	file.open(name.c_str(), std::ios::binary | std::ios::out);
 	file.write(data.c_str(), data.size());
 	file.flush();
