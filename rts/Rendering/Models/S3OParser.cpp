@@ -149,18 +149,18 @@ void SS3OPiece::UploadGeometryVBOs()
 		return;
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].pos.x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex) - offsetof(SS3OVertex, pos) - offsetof(float3, x), &(vertices[0].pos.x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].normal.x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex) - offsetof(SS3OVertex, normal) - offsetof(float3, x), &(vertices[0].normal.x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_STANGENTS]);
-	glBufferData(GL_ARRAY_BUFFER, sTangents.size() * sizeof(float3), &(sTangents[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sTangents.size() * sizeof(float3) - offsetof(float3, x), &(sTangents[0].x), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_TTANGENTS]);
-	glBufferData(GL_ARRAY_BUFFER, tTangents.size() * sizeof(float3), &(tTangents[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, tTangents.size() * sizeof(float3) - offsetof(float3, x), &(tTangents[0].x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].textureX), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex) - offsetof(SS3OVertex, textureX), &(vertices[0].textureX), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIDs[VBO_VINDICES]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexDrawIndices.size() * sizeof(unsigned int), &vertexDrawIndices[0], GL_STATIC_DRAW);
