@@ -13,7 +13,7 @@ IPathManager* IPathManager::GetInstance(unsigned int type) {
 	if (pm == NULL) {
 		const char* fmtStr = "[IPathManager::GetInstance] using %s path-manager";
 		const char* typeStr = "";
-
+type = PFS_TYPE_QTPFS;
 		switch (type) {
 			case PFS_TYPE_DEFAULT: { typeStr = "DEFAULT"; pm = new       CPathManager(); } break;
 			case PFS_TYPE_QTPFS:   { typeStr = "QTPFS";   pm = new QTPFS::PathManager(); } break;
