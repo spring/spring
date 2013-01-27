@@ -10,7 +10,6 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GroundFlash.h"
-#include "Rendering/Models/S3OParser.h" // for delete [] SS3OVertex*
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/CollisionHandler.h"
@@ -537,8 +536,6 @@ void CProjectileHandler::AddFlyingPiece(int team, float3 pos, float3 speed, cons
 void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts)
 {
 	if (textureType <= 0) {
-		if (verts != NULL)
-			delete [] verts;
 		return; // texture 0 means 3do
 	}
 
