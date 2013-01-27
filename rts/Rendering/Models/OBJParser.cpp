@@ -527,18 +527,18 @@ void SOBJPiece::UploadGeometryVBOs()
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float3), &(vertices[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float3) - offsetof(float3, x), &(vertices[0].x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float3), &(vnormals[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float3) - offsetof(float3, x), &(vnormals[0].x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_STANGENTS]);
-	glBufferData(GL_ARRAY_BUFFER, sTangents.size() * sizeof(float3), &(sTangents[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sTangents.size() * sizeof(float3) - offsetof(float3, x), &(sTangents[0].x), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_TTANGENTS]);
-	glBufferData(GL_ARRAY_BUFFER, tTangents.size() * sizeof(float3), &(tTangents[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, tTangents.size() * sizeof(float3) - offsetof(float3, x), &(tTangents[0].x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
-	glBufferData(GL_ARRAY_BUFFER, texcoors.size() * sizeof(float2), &(texcoors[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, texcoors.size() * sizeof(float2) - offsetof(float2, x), &(texcoors[0].x), GL_STATIC_DRAW);
 
 	// FIXME:
 	//   assumes vIndices, nIndices and tIndices are identical in layout for all vertices
