@@ -5,6 +5,7 @@
 
 #include <new>
 #include <cstring> // for size_t
+#include <vector>
 
 static const size_t MAX_MEM_SIZE = 200;
 
@@ -32,6 +33,7 @@ private:
 
 	void* nextFree[MAX_MEM_SIZE + 1];
 	int poolSize[MAX_MEM_SIZE + 1];
+	std::vector<void *> allocated;
 };
 
 extern CMemPool mempool;

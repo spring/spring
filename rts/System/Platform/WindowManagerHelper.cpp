@@ -44,6 +44,17 @@ void WindowManagerHelper::SetIcon(const CBitmap* icon) {
 	}
 }
 
+void WindowManagerHelper::FreeIcon() {
+	SDL_WM_SetIcon(NULL, NULL);
+	if (currentIcon != NULL) {
+		// release the old icon
+		unsigned char* pixelData = (unsigned char*) currentIcon->pixels;
+		SDL_FreeSurface(currentIcon);
+		delete[] pixelData;
+		currentIcon = NULL;
+	}
+}
+
 void WindowManagerHelper::SetCaption(const std::string& title, const std::string& titleShort) {
 
 	// titleShort may only ever be used under X11, but not QT(KDE) or Windows

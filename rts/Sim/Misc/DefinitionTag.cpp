@@ -19,6 +19,11 @@ using std::string;
 	LOG_L(L_ERROR, "%s:%d: " fmt, data->GetDeclarationFile().Get().c_str(), data->GetDeclarationLine().Get(), ## __VA_ARGS__) \
 
 
+DefType::~DefType() {
+	for (MetaDataMap::const_iterator it = map.begin(); it != map.end(); ++it)
+		delete it->second;
+}
+
 std::map<std::string, const DefType*>& DefType::GetTypes()
 {
 	static std::map<std::string, const DefType*> tagtypes;

@@ -42,7 +42,7 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 
 
 bool CEndGameBox::enabled = true;
-
+CEndGameBox* CEndGameBox::endGameBox = NULL;
 
 CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 	: CInputReceiver()
@@ -53,6 +53,7 @@ CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 	, winners(winningAllyTeams)
 	, graphTex(0)
 {
+	endGameBox = this;
 	box.x1 = 0.14f;
 	box.y1 = 0.1f;
 	box.x2 = 0.86f;
@@ -88,6 +89,7 @@ CEndGameBox::~CEndGameBox()
 	if (graphTex) {
 		glDeleteTextures(1,&graphTex);
 	}
+	endGameBox = NULL;
 }
 
 bool CEndGameBox::MousePress(int x, int y, int button)

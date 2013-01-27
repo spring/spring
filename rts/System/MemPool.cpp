@@ -24,6 +24,7 @@ void* CMemPool::Alloc(size_t numBytes)
 			nextFree[numBytes] = (*(void**)pnt);
 		} else {
 			void* newBlock = ::operator new(numBytes * poolSize[numBytes]);
+			allocated.push_back(newBlock);
 			for (int i = 0; i < (poolSize[numBytes] - 1); ++i) {
 				*(void**)&((char*)newBlock)[(i) * numBytes] = (void*)&((char*)newBlock)[(i + 1) * numBytes];
 			}
@@ -54,4 +55,6 @@ void CMemPool::Free(void* pnt, size_t numBytes)
 
 CMemPool::~CMemPool()
 {
+	for(std::vector<void *>::iterator i = allocated.begin(); i != allocated.end(); ++i)
+		::operator delete(*i);
 }

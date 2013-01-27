@@ -114,11 +114,14 @@ std::string GetOrigCWD()
 
 void SetOrigCWD()
 {
+	char *buf;
 #ifdef WIN32
-	origCWD = _getcwd(NULL, 0);
+	buf = _getcwd(NULL, 0);
 #else
-	origCWD = getcwd(NULL, 0);
+	buf = getcwd(NULL, 0);
 #endif
+	origCWD = buf;
+	free(buf);
 	FileSystemAbstraction::EnsurePathSepAtEnd(origCWD);
 }
 

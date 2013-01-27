@@ -356,6 +356,7 @@ CGame::~CGame()
 		teamHandler->Team(t)->Died(false);
 	} 
 
+	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
 
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
@@ -1918,7 +1919,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 	gameOver = true;
 	eventHandler.GameOver(winningAllyTeams);
 
-	new CEndGameBox(winningAllyTeams);
+	CEndGameBox::Create(winningAllyTeams);
 #ifdef    HEADLESS
 	profiler.PrintProfilingInfo();
 #endif // HEADLESS

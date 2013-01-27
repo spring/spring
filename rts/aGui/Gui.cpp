@@ -21,6 +21,22 @@ Gui::Gui()
 
 void Gui::Draw()
 {
+	Clean();
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0, 1, 0, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it) {
+		(*it).element->Draw();
+	}
+}
+
+void Gui::Clean() {
 	for (ElList::iterator it = toBeAdded.begin(); it != toBeAdded.end(); ++it)
 	{
 		bool duplicate = false;
@@ -56,18 +72,10 @@ void Gui::Draw()
 		}
 	}
 	toBeRemoved.clear();
+}
 
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_ALPHA_TEST);
-	glEnable(GL_BLEND);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0, 1, 0, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it) {
-		(*it).element->Draw();
-	}
+Gui::~Gui() {
+	Clean();
 }
 
 void Gui::AddElement(GuiElement* elem, bool asBackground)
@@ -135,8 +143,16 @@ bool Gui::HandleEvent(const SDL_Event& ev)
 Gui* gui = NULL;
 void InitGui()
 {
-	if (!gui)
+	if (gui == NULL)
 		gui = new Gui();
-};
+}
+
+void FreeGui()
+{
+	if (gui != NULL) {
+		delete gui;
+		gui = NULL;
+	}
+}
 
 }

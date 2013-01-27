@@ -220,6 +220,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 
 	camera->~CCamera();
 	new (camera) CCamera(*reinterpret_cast<CCamera*>(cameraMemBuf));
+	reinterpret_cast<CCamera*>(cameraMemBuf)->~CCamera();
 	camera->Update();
 }
 

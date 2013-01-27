@@ -95,10 +95,14 @@ C3DModelLoader::C3DModelLoader()
 C3DModelLoader::~C3DModelLoader()
 {
 	// delete model cache
-	for (std::list<S3DModel*>::iterator mi = models.begin(); mi != models.end(); ++mi) {
-		S3DModel* model = *mi;
-		model->DeletePieces(model->GetRootPiece());
-		delete model;
+	std::set<S3DModel*> deletedModels;
+	for (ModelMap::iterator mi = cache.begin(); mi != cache.end(); ++mi) {
+		S3DModel* model = mi->second;
+		if (deletedModels.find(model) == deletedModels.end()) {
+			model->DeletePieces(model->GetRootPiece());
+			delete model;
+			deletedModels.insert(model);
+		}
 	}
 
 	// get rid of Spring's native parsers
@@ -240,8 +244,7 @@ dummy:
 
 	cache[name] = model; // cache the model
 	cache[modelPath] = model; // cache the model
-	models.push_back(model);
-	model->id = models.size(); // IDs start with 1
+	model->id = cache.size(); // IDs start with 1
 
 	return model;
 }

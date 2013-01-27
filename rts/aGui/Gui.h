@@ -17,7 +17,9 @@ class Gui
 {
 public:
 	Gui();
+	virtual ~Gui();
 	
+	void Clean();
 	void Draw();
 	void AddElement(GuiElement*, bool asBackground = false);
 	/// deletes the element on the next draw
@@ -45,6 +47,7 @@ private:
 
 extern Gui* gui;
 void InitGui();
+void FreeGui();
 
 }
 

@@ -217,6 +217,7 @@ class DefType
 {
 public:
 	DefType(const std::string& name);
+	virtual ~DefType();
 
 	template<typename T> DefTagBuilder<T> AddTag(const char* name) {
 		DefTagTypedMetaData<T>* meta = new DefTagTypedMetaData<T>(name);

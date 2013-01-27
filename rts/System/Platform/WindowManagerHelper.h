@@ -20,6 +20,7 @@ public:
 	 * Note: Must be called before the first call to SDL_SetVideoMode.
 	 */
 	static void SetIcon(const CBitmap* icon);
+	static void FreeIcon();
 
 	/**
 	 * Sets the window-manager captions/titles for the running process.

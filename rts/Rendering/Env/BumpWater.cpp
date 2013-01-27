@@ -1260,6 +1260,7 @@ void CBumpWater::DrawReflection(CGame* game)
 //	camera = realCam;
 	camera->~CCamera();
 	new (camera) CCamera(*(reinterpret_cast<CCamera*>(realCam)));
+	reinterpret_cast<CCamera*>(realCam)->~CCamera();
 	camera->Update();
 }
 
