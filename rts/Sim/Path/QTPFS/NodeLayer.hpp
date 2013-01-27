@@ -91,6 +91,9 @@ namespace QTPFS {
 			return memFootPrint;
 		}
 
+		static float        MIN_SPEEDMOD_VALUE;
+		static float        MAX_SPEEDMOD_VALUE;
+
 	private:
 		std::vector<INode*> nodeGrid;
 
@@ -108,8 +111,6 @@ namespace QTPFS {
 		//   during terrain deformations (otherwise the bins would change
 		//   across ALL nodes)
 		static unsigned int NUM_SPEEDMOD_BINS;
-		static float        MIN_SPEEDMOD_VALUE;
-		static float        MAX_SPEEDMOD_VALUE;
 
 		unsigned int layerNumber;
 		unsigned int numLeafNodes;
