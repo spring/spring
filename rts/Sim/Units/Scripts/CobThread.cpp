@@ -39,8 +39,10 @@ CCobThread::~CCobThread()
 		//LOG_L(L_DEBUG, "%s callback with %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
 		(*callback)(retCode, cbParam1, cbParam2);
 	}
-	if(owner)
+	if (owner)
 		owner->threads.remove(this);
+
+	SetCallback(NULL, NULL, NULL);
 }
 
 void CCobThread::SetCallback(CBCobThreadFinish cb, void* p1, void* p2)

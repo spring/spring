@@ -43,7 +43,7 @@ CCobEngine::~CCobEngine()
 		running.pop_front();
 		delete tmp;
 	}
-	while(!wantToRun.empty()) {
+	while (!wantToRun.empty()) {
 		CCobThread *tmp = wantToRun.front();
 		tmp->SetCallback(NULL, NULL, NULL);
 		wantToRun.pop_front();
