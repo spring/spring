@@ -38,20 +38,17 @@ CCobEngine::~CCobEngine()
 {
 	//Should delete all things that the scheduler knows
 	while (!running.empty()) {
-		CCobThread *tmp = running.front();
-		tmp->SetCallback(NULL, NULL, NULL);
+		CCobThread* tmp = running.front();
 		running.pop_front();
 		delete tmp;
 	}
 	while (!wantToRun.empty()) {
-		CCobThread *tmp = wantToRun.front();
-		tmp->SetCallback(NULL, NULL, NULL);
+		CCobThread* tmp = wantToRun.front();
 		wantToRun.pop_front();
 		delete tmp;
 	}
 	while (!sleeping.empty()) {
-		CCobThread *tmp = sleeping.top();
-		tmp->SetCallback(NULL, NULL, NULL);
+		CCobThread* tmp = sleeping.top();
 		sleeping.pop();
 		delete tmp;
 	}
