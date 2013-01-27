@@ -89,21 +89,30 @@ C3DModelLoader::C3DModelLoader()
 
 	// FIXME: unify the metadata formats of CAssParser and COBJParser
 	RegisterAssimpModelParsers(parsers, new CAssParser());
+
+	// dummy first model, model IDs start at 1
+	models.reserve(32);
+	models.push_back(NULL);
 }
 
 
 C3DModelLoader::~C3DModelLoader()
 {
 	// delete model cache
-	std::set<S3DModel*> deletedModels;
-	for (ModelMap::iterator mi = cache.begin(); mi != cache.end(); ++mi) {
-		S3DModel* model = mi->second;
-		if (deletedModels.find(model) == deletedModels.end()) {
-			model->DeletePieces(model->GetRootPiece());
-			delete model;
-			deletedModels.insert(model);
-		}
+	for (unsigned int n = 1; n < models.size(); n++) {
+		S3DModel* model = models[n];
+
+		assert(model != NULL);
+		assert(model->GetRootPiece() != NULL);
+
+		model->DeletePieces(model->GetRootPiece());
+		model->SetRootPiece(NULL);
+
+		delete model;
 	}
+
+	models.clear();
+	cache.clear();
 
 	// get rid of Spring's native parsers
 	delete parsers["3do"]; parsers.erase("3do");
@@ -154,23 +163,23 @@ void CheckModelNormals(const S3DModel* model) {
 }
 
 
-std::string C3DModelLoader::Find(std::string name) const
+std::string C3DModelLoader::FindModelPath(std::string name) const
 {
 	const std::string& fileExt = FileSystem::GetExtension(name);
 
 	if (fileExt.empty()) {
 		for (ParserMap::const_iterator it = parsers.begin(); it != parsers.end(); ++it) {
 			const std::string& supportedExt = it->first;
+
 			if (CFileHandler::FileExists(name + "." + supportedExt, SPRING_VFS_ZIP)) {
-				name += "." + supportedExt;
-				break;
+				name += "." + supportedExt; break;
 			}
 		}
 	}
 
 	if (!CFileHandler::FileExists(name, SPRING_VFS_ZIP)) {
 		if (name.find("objects3d/") == std::string::npos) {
-			return Find("objects3d/" + name);
+			return FindModelPath("objects3d/" + name);
 		}
 	}
 
@@ -178,31 +187,31 @@ std::string C3DModelLoader::Find(std::string name) const
 }
 
 
-S3DModel* C3DModelLoader::Load3DModel(std::string name)
+S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 {
 	GML_RECMUTEX_LOCK(model); // Load3DModel
 
-	StringToLowerInPlace(name);
+	StringToLowerInPlace(modelName);
 
 	// search in cache first
 	ModelMap::iterator ci;
 	ParserMap::iterator pi;
 
-	if ((ci = cache.find(name)) != cache.end()) {
-		return ci->second;
+	if ((ci = cache.find(modelName)) != cache.end()) {
+		return models[ci->second];
 	}
 
-	const std::string modelPath = Find(name);
+	const std::string modelPath = FindModelPath(modelName);
 
 	if ((ci = cache.find(modelPath)) != cache.end()) {
-		return ci->second;
+		return models[ci->second];
 	}
+
 
 	// not found in cache, create the model and cache it
 	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
 
-	pi = parsers.find(fileExt);
-	if (pi != parsers.end()) {
+	if ((pi = parsers.find(fileExt)) != parsers.end()) {
 		IModelParser* p = pi->second;
 		S3DModel* model = NULL;
 		S3DModelPiece* root = NULL;
@@ -210,7 +219,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name)
 		try {
 			model = p->Load(modelPath);
 		} catch (const content_error& ex) {
-			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
+			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", modelName.c_str(), ex.what());
 			goto dummy;
 		}
 
@@ -218,16 +227,12 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name)
 			CreateLists(root);
 		}
 
-		cache[name] = model; // cache the model
-		cache[modelPath] = model; // cache the model
-		model->id = cache.size(); // IDs start with 1
-
+		AddModelToCache(model, modelName, modelPath);
 		CheckModelNormals(model);
-
 		return model;
 	}
 
-	LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
+	LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
 
 dummy:
 	// crash-dummy
@@ -242,11 +247,18 @@ dummy:
 		CreateLists(model->GetRootPiece());
 	}
 
-	cache[name] = model; // cache the model
-	cache[modelPath] = model; // cache the model
-	model->id = cache.size(); // IDs start with 1
-
+	AddModelToCache(model, modelName, modelPath);
 	return model;
+}
+
+void C3DModelLoader::AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath) {
+	model->id = models.size(); // IDs start at 1
+	models.push_back(model);
+
+	assert(models[model->id] == model);
+
+	cache[modelName] = model->id;
+	cache[modelPath] = model->id;
 }
 
 void C3DModelLoader::Update() {

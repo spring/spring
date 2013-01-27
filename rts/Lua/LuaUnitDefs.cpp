@@ -537,7 +537,7 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 
 static int ModelTable(lua_State* L, const void* data) {
 	const UnitDef* ud = static_cast<const UnitDef*>(data);
-	const std::string modelFile = modelParser->Find(ud->modelName);
+	const std::string modelFile = modelParser->FindModelPath(ud->modelName);
 
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "type", StringToLower(FileSystem::GetExtension(modelFile)));
