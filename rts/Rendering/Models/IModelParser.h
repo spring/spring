@@ -28,23 +28,25 @@ public:
 	void CreateLocalModel(LocalModel* model);
 	void DeleteLocalModel(LocalModel* model);
 
-	std::string Find(std::string name) const;
-	S3DModel* Load3DModel(std::string name);
+	std::string FindModelPath(std::string name) const;
+	S3DModel* Load3DModel(std::string modelName);
 
-	typedef std::map<std::string, S3DModel*> ModelMap;
+	typedef std::map<std::string, unsigned int> ModelMap;
 	typedef std::map<std::string, IModelParser*> ParserMap;
 
 private:
+	void AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath);
+	void CreateLists(S3DModelPiece* o);
+	void CreateListsNow(S3DModelPiece* o);
+
 	ModelMap cache;
 	ParserMap parsers;
 
+	std::vector<S3DModel*> models;
 	std::list<S3DModelPiece*> createLists;
 
 	std::list<LocalModel*> fixLocalModels;
 	std::list<LocalModel*> deleteLocalModels;
-
-	void CreateLists(S3DModelPiece* o);
-	void CreateListsNow(S3DModelPiece* o);
 };
 
 extern C3DModelLoader* modelParser;

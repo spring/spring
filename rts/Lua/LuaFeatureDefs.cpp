@@ -394,7 +394,7 @@ static int ModelRadius(lua_State* L, const void* data)
 static int ModelName(lua_State* L, const void* data)
 {
 	const FeatureDef* fd = static_cast<const FeatureDef*>(data);
-	lua_pushsstring(L, modelParser->Find(fd->modelName));
+	lua_pushsstring(L, modelParser->FindModelPath(fd->modelName));
 	return 1;
 }
 
