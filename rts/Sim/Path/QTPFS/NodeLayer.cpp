@@ -13,8 +13,8 @@
 #include "System/myMath.h"
 
 unsigned int QTPFS::NodeLayer::NUM_SPEEDMOD_BINS;
-float QTPFS::NodeLayer::MIN_SPEEDMOD_VALUE = 0.0f;
-float QTPFS::NodeLayer::MAX_SPEEDMOD_VALUE = 0.0f;
+float        QTPFS::NodeLayer::MIN_SPEEDMOD_VALUE;
+float        QTPFS::NodeLayer::MAX_SPEEDMOD_VALUE;
 
 
 
