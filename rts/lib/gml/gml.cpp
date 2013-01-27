@@ -353,6 +353,11 @@ ArrayBuffer(0), ElementArrayBuffer(0), PixelPackBuffer(0),PixelUnpackBuffer(0)
 	Size2=Queue2+GML_INIT_QUEUE_SIZE;
 }
 
+gmlQueue::~gmlQueue() {
+	delete Queue1;
+	delete Queue2;
+}
+
 BYTE *gmlQueue::Realloc(BYTE **e) {
 	int oldsize=WriteSize-Write;
 	int newsize=oldsize*2;

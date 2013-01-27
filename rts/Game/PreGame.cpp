@@ -25,6 +25,7 @@
 
 #include "aGui/Gui.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Menu/SelectMenu.h"
 #include "Rendering/glFont.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -53,6 +54,7 @@ using std::string;
 CONFIG(bool, DemoFromDemo).defaultValue(false);
 
 CPreGame* pregame = NULL;
+extern SelectMenu* selectMenu;
 
 CPreGame::CPreGame(const ClientSetup* setup) :
 	settings(setup),
@@ -78,6 +80,7 @@ CPreGame::~CPreGame()
 {
 	// don't delete infoconsole, its beeing reused by CGame
 	agui::gui->Draw(); // delete leftover gui elements (remove once the gui is drawn ingame)
+	selectMenu = NULL;
 
 	pregame = NULL;
 }

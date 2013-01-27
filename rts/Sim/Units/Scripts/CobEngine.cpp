@@ -37,18 +37,26 @@ CCobEngine::CCobEngine()
 CCobEngine::~CCobEngine()
 {
 	//Should delete all things that the scheduler knows
-	for (std::list<CCobThread *>::iterator i = running.begin(); i != running.end(); ++i) {
-		delete *i;
+	while (!running.empty()) {
+		CCobThread *tmp = running.front();
+		tmp->SetCallback(NULL, NULL, NULL);
+		running.pop_front();
+		delete tmp;
 	}
-	for (std::list<CCobThread *>::iterator i = wantToRun.begin(); i != wantToRun.end(); ++i) {
-		delete *i;
+	while(!wantToRun.empty()) {
+		CCobThread *tmp = wantToRun.front();
+		tmp->SetCallback(NULL, NULL, NULL);
+		wantToRun.pop_front();
+		delete tmp;
 	}
-	while (sleeping.size() > 0) {
-		CCobThread *tmp;
-		tmp = sleeping.top();
+	while (!sleeping.empty()) {
+		CCobThread *tmp = sleeping.top();
+		tmp->SetCallback(NULL, NULL, NULL);
 		sleeping.pop();
 		delete tmp;
 	}
+
+	assert(running.empty() && wantToRun.empty() && sleeping.empty());
 }
 
 

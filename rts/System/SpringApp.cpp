@@ -108,6 +108,7 @@ CONFIG(int, MultiThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0).m
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName);
 
 
+SelectMenu* selectMenu = NULL;
 ClientSetup* startsetup = NULL;
 
 
@@ -869,7 +870,8 @@ void SpringApp::Startup()
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(server, 64);
 #endif
-		activeController = new SelectMenu(server);
+		selectMenu = new SelectMenu(server);
+		activeController = selectMenu;
 	}
 	else if (inputFile.rfind("sdf") == inputFile.size() - 3)
 	{
@@ -1046,11 +1048,14 @@ void SpringApp::Shutdown()
 	GML::Exit();
 	SafeDelete(pregame);
 	SafeDelete(game);
+	agui::FreeGui();
+	SafeDelete(selectMenu);
 	SafeDelete(net);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);
 	CLoadScreen::DeleteInstance();
 	ISound::Shutdown();
+	FreeJoystick();
 	SafeDelete(font);
 	SafeDelete(smallFont);
 	CNamedTextures::Kill();
@@ -1063,6 +1068,7 @@ void SpringApp::Shutdown()
 	KeyInput::FreeInstance(keyInput);
 
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
+	WindowManagerHelper::FreeIcon();
 #if !defined(HEADLESS)
 	SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_JOYSTICK);
 #endif

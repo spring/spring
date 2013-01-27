@@ -37,7 +37,6 @@ public:
 private:
 	ModelMap cache;
 	ParserMap parsers;
-	std::list<S3DModel*> models;
 
 	std::list<S3DModelPiece*> createLists;
 

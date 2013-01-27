@@ -94,6 +94,7 @@ struct gmlQueue {
 	GLuint PixelUnpackBuffer;
 	
 	gmlQueue();
+	virtual ~gmlQueue();
 	
 	BYTE *Realloc(BYTE **e=NULL);
 	BYTE *WaitRealloc(BYTE **e=NULL);
