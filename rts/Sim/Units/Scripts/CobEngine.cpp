@@ -37,23 +37,24 @@ CCobEngine::CCobEngine()
 CCobEngine::~CCobEngine()
 {
 	//Should delete all things that the scheduler knows
-	while (!running.empty()) {
-		CCobThread* tmp = running.front();
-		running.pop_front();
-		delete tmp;
-	}
-	while (!wantToRun.empty()) {
-		CCobThread* tmp = wantToRun.front();
-		wantToRun.pop_front();
-		delete tmp;
-	}
-	while (!sleeping.empty()) {
-		CCobThread* tmp = sleeping.top();
-		sleeping.pop();
-		delete tmp;
-	}
-
-	assert(running.empty() && wantToRun.empty() && sleeping.empty());
+	do {
+		while (!running.empty()) {
+			CCobThread* tmp = running.front();
+			running.pop_front();
+			delete tmp;
+		}
+		while (!wantToRun.empty()) {
+			CCobThread* tmp = wantToRun.front();
+			wantToRun.pop_front();
+			delete tmp;
+		}
+		while (!sleeping.empty()) {
+			CCobThread* tmp = sleeping.top();
+			sleeping.pop();
+			delete tmp;
+		}
+		// callbacks may add new threads
+	} while (!running.empty() || !wantToRun.empty() || !sleeping.empty());
 }
 
 

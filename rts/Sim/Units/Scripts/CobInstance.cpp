@@ -75,16 +75,22 @@ CCobInstance::~CCobInstance()
 	//this may be dangerous, is it really desired?
 	//Destroy();
 
-	for (int animType = ATurn; animType <= AMove; animType++) {
-		for (std::list<AnimInfo *>::iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
-			// All threads blocking on animations can be killed safely from here since the scheduler does not
-			// know about them
-			for (std::list<IAnimListener *>::iterator j = (*i)->listeners.begin(); j != (*i)->listeners.end(); ++j) {
-				delete *j;
+	do {
+		for (int animType = ATurn; animType <= AMove; animType++) {
+			for (std::list<AnimInfo *>::iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
+				// All threads blocking on animations can be killed safely from here since the scheduler does not
+				// know about them
+				std::list<IAnimListener *>& listeners = (*i)->listeners;
+				while (!listeners.empty()) {
+					IAnimListener* al = listeners.front();
+					listeners.pop_front();
+					delete al;
+				}
+				// the anims are deleted in ~CUnitScript
 			}
-			// the anims are deleted in ~CUnitScript
 		}
-	}
+		// callbacks may add new threads, and therefore listeners
+	} while (HaveListeners());
 
 	// Can't delete the thread here because that would confuse the scheduler to no end
 	// Instead, mark it as dead. It is the function calling Tick that is responsible for delete.
