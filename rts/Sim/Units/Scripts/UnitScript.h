@@ -168,6 +168,7 @@ public:
 	bool HaveAnimations() const {
 		return (!anims[ATurn].empty() || !anims[ASpin].empty() || !anims[AMove].empty());
 	}
+	inline bool HaveListeners() const;
 
 	// checks for callin existence
 	bool HasSetSFXOccupy () const { return hasSetSFXOccupy; }
@@ -226,5 +227,16 @@ public:
 	static void BenchmarkScript(CUnitScript* script);
 	static void BenchmarkScript(const std::string& unitname);
 };
+
+inline bool CUnitScript::HaveListeners() const {
+	for (int animType = ATurn; animType <= AMove; animType++) {
+		for (std::list<AnimInfo *>::const_iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
+			if (!(*i)->listeners.empty()) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 #endif // UNIT_SCRIPT_H
