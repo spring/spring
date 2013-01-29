@@ -56,6 +56,7 @@ void CModInfo::Init(const char* modArchive)
 		allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", false);
 		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", true);
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", true);
+		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", true);
 		useClassicGroundMoveType = movementTbl.GetBool("useClassicGroundMoveType", (gameSetup->modName.find("Balanced Annihilation") != std::string::npos));
 	}
 
