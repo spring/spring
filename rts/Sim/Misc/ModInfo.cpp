@@ -47,6 +47,32 @@ void CModInfo::Init(const char* modArchive)
 	const LuaTable& root = parser.GetRoot();
 
 	{
+		// system
+		const LuaTable& system = root.SubTable("system");
+		const size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
+
+		bool disableGML = (numThreads == 1);
+
+		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
+		luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
+
+		if (numThreads == 0) {
+			if (Threading::GetAvailableCores() <= 1     ) disableGML = true;
+			if (luaThreadingModel == MT_LUA_NONE        ) disableGML = true;
+			if (luaThreadingModel == MT_LUA_SINGLE      ) disableGML = true;
+			if (luaThreadingModel == MT_LUA_SINGLE_BATCH) disableGML = true;
+		}
+
+		if (disableGML) {
+			// single core, or this game did not make any effort to
+			// specifically support MT ==> disable it by default
+			GML::Enable(false);
+		}
+
+		GML::SetCheckCallChain(globalConfig->GetMultiThreadLua() == MT_LUA_SINGLE_BATCH);
+	}
+
+	{
 		// movement
 		const LuaTable& movementTbl = root.SubTable("movement");
 		allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
@@ -56,7 +82,7 @@ void CModInfo::Init(const char* modArchive)
 		allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", false);
 		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", true);
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", true);
-		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", true);
+		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == PFS_TYPE_QTPFS));
 		useClassicGroundMoveType = movementTbl.GetBool("useClassicGroundMoveType", (gameSetup->modName.find("Balanced Annihilation") != std::string::npos));
 	}
 
@@ -173,32 +199,6 @@ void CModInfo::Init(const char* modArchive)
 			throw content_error("Sensors\\Los\\AirLosMipLevel out of bounds. "
 				                "The minimum value is 0. The maximum value is 30.");
 		}
-	}
-
-	{
-		// system
-		const LuaTable& system = root.SubTable("system");
-		const size_t numThreads = std::max(0, configHandler->GetInt("MultiThreadCount"));
-
-		bool disableGML = (numThreads == 1);
-
-		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
-		luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
-
-		if (numThreads == 0) {
-			if (Threading::GetAvailableCores() <= 1     ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_NONE        ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_SINGLE      ) disableGML = true;
-			if (luaThreadingModel == MT_LUA_SINGLE_BATCH) disableGML = true;
-		}
-
-		if (disableGML) {
-			// single core, or this game did not make any effort to
-			// specifically support MT ==> disable it by default
-			GML::Enable(false);
-		}
-
-		GML::SetCheckCallChain(globalConfig->GetMultiThreadLua() == MT_LUA_SINGLE_BATCH);
 	}
 }
 
