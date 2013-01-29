@@ -157,6 +157,7 @@ Misc:
  - get rid of the 'extractSquare' non-feature for extractor buildings
  - when a team dies, redistribute unit-limits over the remaining teams in that team's allyteam (also means dead teams can no longer produce any units)
  - record demos in-memory to make speccheating 1% harder
+ - make hovercraft with non-zero waterline transition into/out of water more smoothly
  - make unit movement more physically-based:
      add modrule 'allowGroundUnitGravity'; allows fast units to catch air
      add modrule 'allowHoverUnitStrafing'; allows hovercraft to slide in turns

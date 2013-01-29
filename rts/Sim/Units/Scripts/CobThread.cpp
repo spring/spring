@@ -691,7 +691,7 @@ bool CCobThread::Tick()
 		}
 	}
 
-	return state != Dead; // can arrive here as dead, through CCobInstance::Signal()
+	return (state != Dead); // can arrive here as dead, through CCobInstance::Signal()
 }
 
 void CCobThread::ShowError(const string& msg)
