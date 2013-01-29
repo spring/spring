@@ -25,7 +25,7 @@ public:
 
 	static bool enabled;
 	static void Create(const std::vector<unsigned char>& winningAllyTeams) { if (endGameBox == NULL) new CEndGameBox(winningAllyTeams);}
-	static void Destroy() { if (endGameBox != NULL) delete endGameBox; }
+	static void Destroy() { if (endGameBox != NULL) { delete endGameBox; endGameBox = NULL; } }
 
 protected:
 	static CEndGameBox* endGameBox;
