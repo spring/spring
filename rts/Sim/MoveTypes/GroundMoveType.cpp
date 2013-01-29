@@ -2374,28 +2374,31 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		#define hAcc deltaSpeed
 		#define vAcc mapInfo->map.gravity
 
-		const bool g = ((owner->pos.y + owner->speed.y) >= GetGroundHeight(owner->pos + owner->speed));
+		const bool applyGravity = ((owner->pos.y + owner->speed.y) >= GetGroundHeight(owner->pos + owner->speed));
 
 		// use terrain-tangent vector because it does not
 		// depend on UnitDef::upright (unlike o->frontdir)
 		const float3& gndNormVec = GetGroundNormal(owner->pos);
 		const float3  gndTangVec = gndNormVec.cross(owner->rightdir);
+		const float3   flatSpeed = float3(owner->speed.x, 0.0f, owner->speed.z);
 
 		// never drop below terrain
 		owner->speed.y =
-			(               owner->speed.dot(  UpVector) * (    g)) +
-			(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - g));
+			(               owner->speed.dot(  UpVector) * (    applyGravity)) +
+			(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - applyGravity));
 
-		// NOTE: new speed-vector has to be parallel to frontdir
-		// TODO: more realistic hovercraft motion might not want this
-		const float3 accelVec =
-			(gndTangVec * hAcc) +
-			(  UpVector * vAcc);
-		const float3 speedVec = owner->speed + accelVec;
+		if (owner->moveDef->moveFamily != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
+			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc);
+			const float3 speedVec = owner->speed + accelVec;
 
-		speedVector =
-			(flatFrontDir * speedVec.dot(flatFrontDir)) +
-			(    UpVector * speedVec.dot(    UpVector));
+			speedVector += (flatFrontDir * speedVec.dot(flatFrontDir));
+			speedVector += (    UpVector * speedVec.dot(    UpVector));
+		} else {
+			speedVector += (               gndTangVec *   std::max(0.0f,    owner->speed.dot(gndTangVec) + hAcc * 1.0f)) * 1.00f;
+			speedVector += (   flatSpeed - gndTangVec * /*std::max(0.0f,*/( owner->speed.dot(gndTangVec) - hAcc * 0.0f)) * 0.95f;
+			speedVector += UpVector * (owner->speed + UpVector * vAcc).dot(UpVector);
+		}
+
 		#undef vAcc
 		#undef hAcc
 	} else {

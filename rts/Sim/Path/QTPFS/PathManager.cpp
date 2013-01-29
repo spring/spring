@@ -501,7 +501,7 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool 
 
 		nodeLayers[layerNum].PopQueuedUpdate();
 
-		if (!flushQueue && pathSearches[layerNum].empty()) {
+		if (!flushQueue) {
 			// no pending searches this frame, stop flushing
 			break;
 		}
@@ -715,7 +715,7 @@ void QTPFS::PathManager::ThreadUpdate() {
 
 			#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 			// NOTE: *must* be called between QueueDeadPathSearches and ExecuteQueuedSearches
-			ExecQueuedNodeLayerUpdates(pathTypeUpdate, false);
+			ExecQueuedNodeLayerUpdates(pathTypeUpdate, !pathSearches[pathTypeUpdate].empty());
 			#endif
 
 			ExecuteQueuedSearches(pathTypeUpdate);
