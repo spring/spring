@@ -425,12 +425,14 @@ void SS3OPiece::SetVertexTangents()
 
 void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const
 {
+	// NOTE: is this still even possible for S3O pieces?
+	if (texType <= 0)
+		return;
+
 	switch (primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
 			for (size_t i = 0; i < vertexDrawIndices.size(); i += 3) {
 				if (gu->RandFloat() > pieceChance)
-					continue;
-				if (texType <= 0)
 					continue;
 
 				SS3OVertex* verts = new SS3OVertex[4];
@@ -448,7 +450,6 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 			for (size_t i = 2; i < vertexDrawIndices.size(); ) {
 				if (gu->RandFloat() > pieceChance) { i += 1; continue; }
 				if (vertexDrawIndices[i] == -1) { i += 3; continue; }
-				if (texType <= 0) continue;
 
 				SS3OVertex* verts = new SS3OVertex[4];
 
@@ -464,8 +465,6 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 		case S3O_PRIMTYPE_QUADS: {
 			for (size_t i = 0; i < vertexDrawIndices.size(); i += 4) {
 				if (gu->RandFloat() > pieceChance)
-					continue;
-				if (texType <= 0)
 					continue;
 
 				SS3OVertex* verts = new SS3OVertex[4];
