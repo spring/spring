@@ -148,20 +148,24 @@ void SS3OPiece::UploadGeometryVBOs()
 	if (isEmpty)
 		return;
 
+	vertices.reserve(vertices.size() + 1); // glBufferData reads beyond last element
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].pos.x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].normal.x), GL_STATIC_DRAW);
 
+	sTangents.reserve(sTangents.size() + 1);
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_STANGENTS]);
 	glBufferData(GL_ARRAY_BUFFER, sTangents.size() * sizeof(float3), &(sTangents[0].x), GL_STATIC_DRAW);
+	tTangents.reserve(tTangents.size() + 1);
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_TTANGENTS]);
 	glBufferData(GL_ARRAY_BUFFER, tTangents.size() * sizeof(float3), &(tTangents[0].x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].textureX), GL_STATIC_DRAW);
 
+	vertexDrawIndices.reserve(vertexDrawIndices.size() + 1);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIDs[VBO_VINDICES]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexDrawIndices.size() * sizeof(unsigned int), &vertexDrawIndices[0], GL_STATIC_DRAW);
 
