@@ -23,6 +23,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
+#include "System/Platform/Watchdog.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 
@@ -675,6 +676,7 @@ void QTPFS::PathManager::UpdateFull() {
 		assert((pathSearches[layerNum]).empty());
 
 		ExecQueuedNodeLayerUpdates(layerNum, true);
+		Watchdog::ClearTimer();
 	}
 	#endif
 }
