@@ -526,23 +526,29 @@ void SOBJPiece::UploadGeometryVBOs()
 		vertexDrawIndices[i * 3 + 2] = tri.vIndices[2];
 	}
 
+	vertices.reserve(vertices.size() + 1); // glBufferData reads beyond last element
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float3), &(vertices[0].x), GL_STATIC_DRAW);
 
+	vnormals.reserve(vnormals.size() + 1);
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float3), &(vnormals[0].x), GL_STATIC_DRAW);
 
+	sTangents.reserve(sTangents.size() + 1);
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_STANGENTS]);
 	glBufferData(GL_ARRAY_BUFFER, sTangents.size() * sizeof(float3), &(sTangents[0].x), GL_STATIC_DRAW);
+	tTangents.reserve(tTangents.size() + 1);
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_TTANGENTS]);
 	glBufferData(GL_ARRAY_BUFFER, tTangents.size() * sizeof(float3), &(tTangents[0].x), GL_STATIC_DRAW);
 
+	texcoors.reserve(texcoors.size() + 1);
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
 	glBufferData(GL_ARRAY_BUFFER, texcoors.size() * sizeof(float2), &(texcoors[0].x), GL_STATIC_DRAW);
 
 	// FIXME:
 	//   assumes vIndices, nIndices and tIndices are identical in layout for all vertices
 	//   (not a big problem because OBJ models must have a normal and texcoord per vertex)
+	vertexDrawIndices.reserve(vertexDrawIndices.size() + 1);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIDs[VBO_VINDICES]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexDrawIndices.size() * sizeof(unsigned int), &(vertexDrawIndices[0]), GL_STATIC_DRAW);
 
