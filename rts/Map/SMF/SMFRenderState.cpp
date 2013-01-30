@@ -421,8 +421,8 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-	smfShaderGLSL->SetFlag("HAVE_SHADOWS", (shadowHandler->shadowsLoaded) ? 1 : 0);
-	smfShaderGLSL->SetFlag("HAVE_INFOTEX", (smfGroundDrawer->DrawExtraTex()) ? 1 : 0);
+	smfShaderGLSL->SetFlag("HAVE_SHADOWS", int(shadowHandler->shadowsLoaded));
+	smfShaderGLSL->SetFlag("HAVE_INFOTEX", int(smfGroundDrawer->DrawExtraTex()));
 
 	smfShaderGLSL->Enable();
 	smfShaderGLSL->SetUniform2f(9, readmap->currMinHeight, readmap->currMaxHeight);

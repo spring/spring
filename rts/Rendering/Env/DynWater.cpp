@@ -298,7 +298,7 @@ CDynWater::~CDynWater()
 
 void CDynWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 1.0f)) {
+	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 0.0f)) {
 		return;
 	}
 
@@ -418,7 +418,7 @@ void CDynWater::UpdateWater(CGame* game)
 
 void CDynWater::Update()
 {
-	if ((!mapInfo->water.forceRendering) && (readmap->currMinHeight > 1.0f)) {
+	if ((!mapInfo->water.forceRendering) && (readmap->currMinHeight > 0.0f)) {
 		return;
 	}
 
@@ -479,14 +479,17 @@ void CDynWater::DrawReflection(CGame* game)
 			glEnable(GL_CLIP_PLANE2);
 			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
-			shadowHandler->shadowsLoaded = false;
+			// FIXME-3429:
+			//   this causes the SMF shader to be RECOMPILED each frame
+			//   (because of abdb611014fbb903341fe731835ecf831e31d9b2)
+			// shadowHandler->shadowsLoaded = false;
 
 			CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 				gd->SetupReflDrawPass();
 				gd->Draw(DrawPass::WaterReflection);
 				gd->SetupBaseDrawPass();
 
-			shadowHandler->shadowsLoaded = shadowsLoaded;
+			// shadowHandler->shadowsLoaded = shadowsLoaded;
 
 			unitDrawer->Draw(true);
 			featureDrawer->Draw();
