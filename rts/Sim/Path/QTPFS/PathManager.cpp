@@ -967,11 +967,11 @@ void QTPFS::PathManager::DeletePath(unsigned int pathID) {
 }
 
 unsigned int QTPFS::PathManager::RequestPath(
+	CSolidObject* object,
 	const MoveDef* moveDef,
 	const float3& sourcePoint,
 	const float3& targetPoint,
 	float radius,
-	CSolidObject* object,
 	bool synced)
 {
 	SCOPED_TIMER("PathManager::RequestPath");
@@ -1002,11 +1002,11 @@ bool QTPFS::PathManager::PathUpdated(unsigned int pathID) {
 
 
 float3 QTPFS::PathManager::NextWayPoint(
+	const CSolidObject*, // owner
 	unsigned int pathID,
+	unsigned int, // numRetries
 	float3 point,
 	float, // radius,
-	int, // numRetries
-	const CSolidObject*, // owner
 	bool // synced
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");

@@ -211,7 +211,7 @@ void CGroundMoveType::PostLoad()
 {
 	// HACK: re-initialize path after load
 	if (pathId != 0) {
-		pathId = pathManager->RequestPath(owner->moveDef, owner->pos, goalPos, goalRadius, owner);
+		pathId = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true);
 	}
 }
 
@@ -1182,15 +1182,15 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 void CGroundMoveType::GetNewPath()
 {
 	assert(pathId == 0);
-	pathId = pathManager->RequestPath(owner->moveDef, owner->pos, goalPos, goalRadius, owner);
+	pathId = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true);
 
 	// if new path received, can't be at waypoint
 	if (pathId != 0) {
 		atGoal = false;
 		atEndOfPath = false;
 
-		currWayPoint = pathManager->NextWayPoint(pathId,   owner->pos, 1.25f * SQUARE_SIZE, 0, owner);
-		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner);
+		currWayPoint = pathManager->NextWayPoint(owner, pathId, 0,   owner->pos, 1.25f * SQUARE_SIZE, true);
+		nextWayPoint = pathManager->NextWayPoint(owner, pathId, 0, currWayPoint, 1.25f * SQUARE_SIZE, true);
 
 		pathController->SetRealGoalPosition(pathId, goalPos);
 		pathController->SetTempGoalPosition(pathId, currWayPoint);
@@ -1222,8 +1222,8 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 			// but still has the same ID; in this case (which is
 			// specific to QTPFS) we don't go through GetNewPath
 			//
-			cwp = pathManager->NextWayPoint(pathId, pos, 1.25f * SQUARE_SIZE, 0, owner);
-			nwp = pathManager->NextWayPoint(pathId, cwp, 1.25f * SQUARE_SIZE, 0, owner);
+			cwp = pathManager->NextWayPoint(owner, pathId, 0, pos, 1.25f * SQUARE_SIZE, true);
+			nwp = pathManager->NextWayPoint(owner, pathId, 0, cwp, 1.25f * SQUARE_SIZE, true);
 		}
 
 		if (DEBUG_DRAWING_ENABLED) {
@@ -1322,7 +1322,7 @@ void CGroundMoveType::GetNextWayPoint()
 
 		// NOTE: pathfinder implementation should ensure waypoints are not equal
 		currWayPoint = nextWayPoint;
-		nextWayPoint = pathManager->NextWayPoint(pathId, currWayPoint, 1.25f * SQUARE_SIZE, 0, owner);
+		nextWayPoint = pathManager->NextWayPoint(owner, pathId, 0, currWayPoint, 1.25f * SQUARE_SIZE, true);
 	}
 
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {

@@ -66,12 +66,12 @@ public:
 	 *     waypoint could be found.
 	 */
 	virtual float3 NextWayPoint(
+		const CSolidObject* owner,
 		unsigned int pathID,
+		unsigned int numRetries,
 		float3 callerPos,
-		float minDistance = 0.0f,
-		int numRetries = 0,
-		const CSolidObject* owner = NULL,
-		bool synced = true
+		float radius,
+		bool synced
 	) { return ZeroVector; }
 
 
@@ -127,12 +127,12 @@ public:
 	 *     could be found
 	 */
 	virtual unsigned int RequestPath(
+		CSolidObject* caller,
 		const MoveDef* moveDef,
 		const float3& startPos,
 		const float3& goalPos,
-		float goalRadius = 8.0f,
-		CSolidObject* caller = 0,
-		bool synced = true
+		float goalRadius,
+		bool synced
 	) { return 0; }
 
 	/**
@@ -160,7 +160,7 @@ public:
 	virtual float GetNodeExtraCost(unsigned int x, unsigned int z, bool synced) const { return 0.0f; }
 	virtual const float* GetNodeExtraCosts(bool synced) const { return NULL; }
 
-	virtual int2 GetNumQueuedUpdates() const {}
+	virtual int2 GetNumQueuedUpdates() const { return (int2(0, 0)); }
 };
 
 extern IPathManager* pathManager;

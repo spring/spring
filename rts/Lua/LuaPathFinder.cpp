@@ -125,7 +125,7 @@ static int path_next(lua_State* L)
 	const float minDist = luaL_optfloat(L, 5, 0.0f);
 
 	const bool synced = CLuaHandle::GetHandleSynced(L);
-	const float3 point = pathManager->NextWayPoint(pathID, callerPos, minDist, 0, 0, synced);
+	const float3 point = pathManager->NextWayPoint(NULL, pathID, 0, callerPos, minDist, synced);
 
 	if ((point.x == -1.0f) &&
 	    (point.y == -1.0f) &&
@@ -230,7 +230,7 @@ int LuaPathFinder::RequestPath(lua_State* L)
 	const float radius = luaL_optfloat(L, 8, 8.0f);
 
 	const bool synced = CLuaHandle::GetHandleSynced(L);
-	const int pathID = pathManager->RequestPath(moveDef, start, end, radius, NULL, synced);
+	const int pathID = pathManager->RequestPath(NULL, moveDef, start, end, radius, synced);
 
 	if (pathID == 0) {
 		return 0;
