@@ -13,7 +13,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
-#include "System/Vec2.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
@@ -110,12 +109,8 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	piece->SetVertexTangents();
 	piece->SetMinMaxExtends();
 
-	model->mins.x = std::min(piece->mins.x, model->mins.x);
-	model->mins.y = std::min(piece->mins.y, model->mins.y);
-	model->mins.z = std::min(piece->mins.z, model->mins.z);
-	model->maxs.x = std::max(piece->maxs.x, model->maxs.x);
-	model->maxs.y = std::max(piece->maxs.y, model->maxs.y);
-	model->maxs.z = std::max(piece->maxs.z, model->maxs.z);
+	model->mins = std::min(piece->mins, model->mins);
+	model->maxs = std::max(piece->maxs, model->maxs);
 
 	const float3 cvScales = piece->maxs - piece->mins;
 	const float3 cvOffset =
@@ -148,30 +143,22 @@ void SS3OPiece::UploadGeometryVBOs()
 	if (isEmpty)
 		return;
 
-	// glBufferData reads beyond last element since either pos, normal or textureX will have a non-zero offset in SS30Vertex.
-	vertices.reserve(vertices.size() + 1);
-	sTangents.reserve(sTangents.size() + 1);
-	tTangents.reserve(tTangents.size() + 1);
+	//FIXME merge into vboAttributes!!!
+	vbosTangents.Bind(GL_ARRAY_BUFFER);
+	vbosTangents.Resize(sTangents.size() * sizeof(float3), GL_STATIC_DRAW, &sTangents[0]);
+	vbosTangents.Unbind();
+	vbotTangents.Bind(GL_ARRAY_BUFFER);
+	vbotTangents.Resize(tTangents.size() * sizeof(float3), GL_STATIC_DRAW, &tTangents[0]);
+	vbotTangents.Unbind();
 
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].pos.x), GL_STATIC_DRAW);
+	//FIXME share 1 VBO for ALL models
+	vboAttributes.Bind(GL_ARRAY_BUFFER);
+	vboAttributes.Resize(vertices.size() * sizeof(SS3OVertex), GL_STATIC_DRAW, &vertices[0]);
+	vboAttributes.Unbind();
 
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].normal.x), GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_STANGENTS]);
-	glBufferData(GL_ARRAY_BUFFER, sTangents.size() * sizeof(float3), &(sTangents[0].x), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_TTANGENTS]);
-	glBufferData(GL_ARRAY_BUFFER, tTangents.size() * sizeof(float3), &(tTangents[0].x), GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].textureX), GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIDs[VBO_VINDICES]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexDrawIndices.size() * sizeof(unsigned int), &vertexDrawIndices[0], GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+	vboIndices.Resize(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
+	vboIndices.Unbind();
 
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
 	// vertices.clear();
@@ -189,69 +176,39 @@ void SS3OPiece::DrawForList() const
 	// (array elements are float3's, which are 12
 	// bytes in size and each represent a single
 	// xyz triple)
-	glClientActiveTexture(GL_TEXTURE5);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_STANGENTS]);
-	glTexCoordPointer(3, GL_FLOAT, sizeof(float3), NULL);
-	#else
-	glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &(sTangents[0].x));
-	#endif
 
-	glClientActiveTexture(GL_TEXTURE6);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_TTANGENTS]);
-	glTexCoordPointer(3, GL_FLOAT, sizeof(float3), NULL);
-	#else
-	glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &(tTangents[0].x));
-	#endif
+	vbosTangents.Bind(GL_ARRAY_BUFFER);
+		glClientActiveTexture(GL_TEXTURE5);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), vbosTangents.GetPtr());
+	vbotTangents.Unbind();
 
-	glClientActiveTexture(GL_TEXTURE1);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), NULL);
-	#else
-	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].textureX));
-	#endif
+	vbotTangents.Bind(GL_ARRAY_BUFFER);
+		glClientActiveTexture(GL_TEXTURE6);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), vbotTangents.GetPtr());
+	vbotTangents.Unbind();
 
-	glClientActiveTexture(GL_TEXTURE0);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), NULL);
-	#else
-	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].textureX));
-	#endif
+	vboAttributes.Bind(GL_ARRAY_BUFFER);
+		glClientActiveTexture(GL_TEXTURE0);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, texCoord)));
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
-	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), NULL);
-	#else
-	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].pos.x));
-	#endif
+		glClientActiveTexture(GL_TEXTURE1);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, texCoord)));
 
-	glEnableClientState(GL_NORMAL_ARRAY);
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
-	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), NULL);
-	#else
-	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].normal.x));
-	#endif
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, pos)));
 
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIDs[VBO_VINDICES]);
-	#endif
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, normal)));
+	vboAttributes.Unbind();
 
+	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
 	switch (primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
-			#ifdef USE_PIECE_GEOMETRY_VBOS
-			glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, NULL);
-			#else
-			glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, &vertexDrawIndices[0]);
-			#endif
+			glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
 			#ifdef GLEW_NV_primitive_restart
@@ -262,11 +219,7 @@ void SS3OPiece::DrawForList() const
 			}
 			#endif
 
-			#ifdef USE_PIECE_GEOMETRY_VBOS
-			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawIndices.size(), GL_UNSIGNED_INT, NULL);
-			#else
-			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawIndices.size(), GL_UNSIGNED_INT, &vertexDrawIndices[0]);
-			#endif
+			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 
 			#ifdef GLEW_NV_primitive_restart
 			if (globalRendering->supportRestartPrimitive) {
@@ -275,13 +228,10 @@ void SS3OPiece::DrawForList() const
 			#endif
 		} break;
 		case S3O_PRIMTYPE_QUADS: {
-			#ifdef USE_PIECE_GEOMETRY_VBOS
-			glDrawElements(GL_QUADS, vertexDrawIndices.size(), GL_UNSIGNED_INT, NULL);
-			#else
-			glDrawElements(GL_QUADS, vertexDrawIndices.size(), GL_UNSIGNED_INT, &vertexDrawIndices[0]);
-			#endif
+			glDrawElements(GL_QUADS, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 		} break;
 	}
+	vboIndices.Unbind();
 
 	glClientActiveTexture(GL_TEXTURE6);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -297,22 +247,13 @@ void SS3OPiece::DrawForList() const
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
-
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	#endif
 }
 
 void SS3OPiece::SetMinMaxExtends()
 {
 	for (std::vector<SS3OVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
-		mins.x = std::min(mins.x, (goffset.x + vi->pos.x));
-		mins.y = std::min(mins.y, (goffset.y + vi->pos.y));
-		mins.z = std::min(mins.z, (goffset.z + vi->pos.z));
-		maxs.x = std::max(maxs.x, (goffset.x + vi->pos.x));
-		maxs.y = std::max(maxs.y, (goffset.y + vi->pos.y));
-		maxs.z = std::max(maxs.z, (goffset.z + vi->pos.z));
+		mins = std::min(mins, (goffset + vi->pos));
+		maxs = std::max(maxs, (goffset + vi->pos));
 	}
 }
 
@@ -372,9 +313,9 @@ void SS3OPiece::SetVertexTangents()
 		const float3& p1 = vrt1->pos;
 		const float3& p2 = vrt2->pos;
 
-		const float2 tc0(vrt0->textureX, vrt0->textureY);
-		const float2 tc1(vrt1->textureX, vrt1->textureY);
-		const float2 tc2(vrt2->textureX, vrt2->textureY);
+		const float2 tc0(vrt0->texCoord.x, vrt0->texCoord.y);
+		const float2 tc1(vrt1->texCoord.x, vrt1->texCoord.y);
+		const float2 tc2(vrt2->texCoord.x, vrt2->texCoord.y);
 
 		const float x1x0 = p1.x - p0.x, x2x0 = p2.x - p0.x;
 		const float y1y0 = p1.y - p0.y, y2y0 = p2.y - p0.y;

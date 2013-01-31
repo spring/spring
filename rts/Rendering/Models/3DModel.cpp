@@ -47,20 +47,12 @@ S3DModelPiece::S3DModelPiece()
 	, isEmpty(true)
 	, dispListID(0)
 {
-	memset(vboIDs, 0, sizeof(vboIDs));
 }
 
 S3DModelPiece::~S3DModelPiece()
 {
 	glDeleteLists(dispListID, 1);
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	glDeleteBuffers(VBO_NUMTYPES, &vboIDs[0]);
-	#endif
 	delete colvol;
-}
-
-void S3DModelPiece::CreateGeometryVBOs() {
-	glGenBuffers(VBO_NUMTYPES, &vboIDs[0]);
 }
 
 unsigned int S3DModelPiece::CreateDrawForList() const

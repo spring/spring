@@ -7,9 +7,9 @@
 #include <string>
 #include <set>
 #include <map>
+#include "Rendering/GL/VBO.h"
 #include "System/Matrix44f.h"
 
-#define USE_PIECE_GEOMETRY_VBOS
 
 enum ModelType {
 	MODELTYPE_3DO   = 0,
@@ -17,16 +17,6 @@ enum ModelType {
 	MODELTYPE_OBJ   = 2,
 	MODELTYPE_ASS   = 3, // Model loaded by Assimp library
 	MODELTYPE_OTHER = 4  // For future use. Still used in some parts of code.
-};
-
-enum VBOType {
-	VBO_VERTICES  = 0,
-	VBO_VNORMALS  = 1,
-	VBO_STANGENTS = 2,
-	VBO_TTANGENTS = 3,
-	VBO_VTEXCOORS = 4,
-	VBO_VINDICES  = 5,
-	VBO_NUMTYPES  = 6,
 };
 
 struct CollisionVolume;
@@ -50,10 +40,7 @@ struct S3DModelPiece {
 	virtual ~S3DModelPiece();
 
 	virtual unsigned int CreateDrawForList() const;
-	virtual void CreateUploadGeometryVBOs() {
-		CreateGeometryVBOs();
-		UploadGeometryVBOs();
-	}
+	virtual void UploadGeometryVBOs() {}
 
 	virtual unsigned int GetVertexCount() const { return 0; }
 	virtual unsigned int GetNormalCount() const { return 0; }
@@ -99,16 +86,14 @@ public:
 	float3 scale;
 
 protected:
-	virtual void CreateGeometryVBOs();
-	virtual void UploadGeometryVBOs() {}
-
 	virtual void DrawForList() const = 0;
 
 	unsigned int dispListID;
 
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	unsigned int vboIDs[VBO_NUMTYPES];
-	#endif
+	VBO vboIndices;
+	VBO vboAttributes;
+	VBO vbosTangents;
+	VBO vbotTangents;
 };
 
 
