@@ -33,8 +33,8 @@ CONFIG(int, MaxDynamicMapLights)
 CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false);
 
 CONFIG(int, ROAM)
-	.defaultValue(VBO)
-	.safemodeValue(DL)
+	.defaultValue(Patch::VBO)
+	.safemodeValue(Patch::DL)
 	.description("Use ROAM for terrain mesh rendering. 1=VBO mode, 2=DL mode, 3=VA mode");
 
 

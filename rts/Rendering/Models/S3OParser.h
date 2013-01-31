@@ -7,6 +7,7 @@
 #include "IModelParser.h"
 #include "System/Vec2.h"
 
+//FIXME ATi wants 64 _byte_ aligned data in VBOs, but this struct is 32byte (with tangents 56byte)
 struct SS3OVertex {
 	float3 pos;
 	float3 normal;

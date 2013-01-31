@@ -24,18 +24,6 @@ class CCamera;
 #define MAX_POOL_SIZE (8000000)
 
 
-
-/**
- * Patch render mode
- * way indices/vertices are send to the GPU
- */
-enum RenderMode {
-	VBO = 1,
-	DL  = 2,
-	VA  = 3
-};
-
-
 /**
  * TriTreeNode Struct
  * Store the triangle tree data, but no coordinates!
@@ -109,6 +97,13 @@ private:
  */
 class Patch
 {
+public:
+	enum RenderMode {
+		VBO = 1,
+		DL  = 2,
+		VA  = 3
+	};
+
 public:
 	Patch();
 	~Patch();
