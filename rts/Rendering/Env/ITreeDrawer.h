@@ -23,6 +23,7 @@ public:
 	void Draw(bool drawReflection);
 	virtual void Draw(float treeDistance, bool drawReflection) = 0;
 	virtual void DrawGrass() {}
+	virtual void DrawShadowGrass() {}
 	virtual void Update() = 0;
 
 	virtual void ResetPos(const float3& pos) = 0;

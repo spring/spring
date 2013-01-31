@@ -1015,6 +1015,12 @@ void CAdvTreeDrawer::DrawGrass()
 	}
 }
 
+void CAdvTreeDrawer::DrawShadowGrass()
+{
+	if (drawTrees) {
+		grassDrawer->DrawShadow();
+	}
+}
 void CAdvTreeDrawer::ResetPos(const float3& pos)
 {
 	const int x = (int) pos.x / TREE_SQUARE_SIZE / SQUARE_SIZE;

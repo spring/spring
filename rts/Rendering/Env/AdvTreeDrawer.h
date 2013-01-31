@@ -28,6 +28,7 @@ public:
 	void DeleteTree(const float3& pos);
 	void AddFallingTree(const float3& pos, const float3& dir, int type);
 	void DrawGrass();
+	void DrawShadowGrass();
 	void AddGrass(const float3& pos);
 	void RemoveGrass(int x, int z);
 	void DrawShadowPass();

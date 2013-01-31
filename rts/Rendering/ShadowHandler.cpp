@@ -322,9 +322,11 @@ void CShadowHandler::DrawShadowPasses()
 		glCullFace(GL_BACK);
 			eventHandler.DrawWorldShadow();
 
-			if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0)
+			if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0) {
 				treeDrawer->DrawShadowPass();
-			
+				treeDrawer->DrawShadowGrass();
+			}
+
 			if ((shadowGenBits & SHADOWGEN_BIT_PROJ) != 0)
 				projectileDrawer->DrawShadowPass();
 
