@@ -11,14 +11,13 @@
 #ifndef TSC_H
 #define TSC_H
 
-#define DETACH_SYNCED 1
-
 #include <list>
 #include <vector>
 
 #include "System/creg/creg_cond.h"
 #include "gmlcnf.h"
 #include <set>
+#include <map>
 
 /////////////////////////////////////////////////////////
 //
@@ -270,6 +269,52 @@ private:
 };
 
 
+template <class C, class K, class V, class I>
+class ThreadMapRender {
+private:
+	typedef std::map<K,V> TMapC;
+
+public:
+	CR_DECLARE_STRUCT(ThreadMapRender);
+
+	~ThreadMapRender() {
+		clear();
+	}
+
+	const TMapC& get_render_map() const { return contRender; }
+
+	void clear() {
+	}
+
+	void PostLoad() {
+	}
+
+	//! SIMULATION/SYNCED METHODS
+	void push(const C& x, const V& y) {
+		contRender[I::Index(x)] = y;
+	}
+
+public:
+	//! RENDER/UNSYNCED METHODS
+	void delay_add() {
+	}
+
+	void add_delayed() {
+	}
+
+	void erase_delete(const C& x) {
+		contRender.erase(I::Index(x));
+	}
+
+	void delay_delete() {
+	}
+
+	void delete_delayed() {
+	}
+
+private:
+	TMapC contRender;
+};
 
 
 template <class T>
@@ -834,6 +879,86 @@ private:
 	std::vector<T> delRender;
 	std::set<T> postDelRender;
 	std::vector<T> removeRender;
+};
+
+
+
+template <class C, class K, class V, class I>
+class ThreadMapRender {
+private:
+	typedef std::map<K,V> TMapC;
+	typedef std::map<C,V> TMap;
+	typedef std::set<C> TSet;
+	typedef typename TMap::const_iterator constMapIT;
+	typedef typename TMap::iterator MapIT;
+	typedef typename TSet::const_iterator constSetIT;
+	typedef typename TSet::iterator SetIT;
+
+public:
+	CR_DECLARE_STRUCT(ThreadMapRender);
+
+	~ThreadMapRender() {
+		clear();
+	}
+
+	const TMapC& get_render_map() const { return contRender; }
+
+	void clear() {
+	}
+
+	void PostLoad() {
+	}
+
+	//! SIMULATION/SYNCED METHODS
+	void push(const C& x, const V& y) {
+		preAddRender[x] = y;
+	}
+
+public:
+	//! RENDER/UNSYNCED METHODS
+	void delay_add() {
+		for (constMapIT it = preAddRender.begin(); it != preAddRender.end(); ++it) {
+			addRender[it->first] = it->second;
+		}
+		preAddRender.clear();
+	}
+
+	void add_delayed() {
+		for (constMapIT it = addRender.begin(); it != addRender.end(); ++it) {
+			contRender[I::Index(it->first)] = it->second;
+		}
+		addRender.clear();
+	}
+
+	void erase_delete(const C& x) {
+		delRender.insert(x);
+	}
+
+	void delay_delete() {
+		for (constSetIT it = delRender.begin(); it != delRender.end(); ++it) {
+			postDelRender.insert(*it);
+		}
+		delRender.clear();
+	}
+
+	void delete_delayed() {
+		for (SetIT it = postDelRender.begin(); it != postDelRender.end();) {
+			C s = *it;
+			if((contRender.erase(I::Index(s))) || addRender.erase(s)) {
+				it = set_erase(postDelRender, it);
+			}
+			else {
+				++it;
+			}
+		}
+	}
+
+private:
+	TMap preAddRender;
+	TMap addRender;
+	TMapC contRender;
+	TSet delRender;
+	TSet postDelRender;
 };
 
 #endif
