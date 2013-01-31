@@ -60,7 +60,7 @@ public:
 	void PostLoad();
 
 	inline const ProjectileMapPair* GetMapPairBySyncedID(int id) const {
-		bool renderAccess = (GML::SimEnabled() && !GML::IsSimThread());
+		const bool renderAccess = (GML::SimEnabled() && !Threading::IsSimThread());
 		const ProjectileMap& projectileIDs = renderAccess ? syncedRenderProjectileIDs.get_render_map() : syncedProjectileIDs;
 		ProjectileMap::const_iterator it = projectileIDs.find(id);
 		if (it == projectileIDs.end()) {
@@ -71,7 +71,7 @@ public:
 	inline const ProjectileMapPair* GetMapPairByUnsyncedID(int id) const {
 		if (UNSYNCED_PROJ_NOEVENT)
 			return NULL; // unsynced projectiles have no IDs if UNSYNCED_PROJ_NOEVENT
-		bool renderAccess = (GML::SimEnabled() && !GML::IsSimThread());
+		const bool renderAccess = (GML::SimEnabled() && !Threading::IsSimThread());
 		const ProjectileMap& projectileIDs = renderAccess ? unsyncedRenderProjectileIDs.get_render_map() : unsyncedProjectileIDs;
 		ProjectileMap::const_iterator it = projectileIDs.find(id);
 		if (it == projectileIDs.end()) {
