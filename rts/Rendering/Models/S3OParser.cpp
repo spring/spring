@@ -161,7 +161,7 @@ void SS3OPiece::UploadGeometryVBOs()
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float3), &(vertices[0].x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
-	glBufferData(GL_ARRAY_BUFFER, vnormals.size() * sizeof(float3), &(vnormals[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float3), &(vnormals[0].x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_STANGENTS]);
 	glBufferData(GL_ARRAY_BUFFER, sTangents.size() * sizeof(float3), &(sTangents[0].x), GL_STATIC_DRAW);
@@ -169,7 +169,7 @@ void SS3OPiece::UploadGeometryVBOs()
 	glBufferData(GL_ARRAY_BUFFER, tTangents.size() * sizeof(float3), &(tTangents[0].x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
-	glBufferData(GL_ARRAY_BUFFER, texcoors.size() * sizeof(float2), &(texcoors[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float2), &(texcoors[0].x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIDs[VBO_VINDICES]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexDrawIndices.size() * sizeof(unsigned int), &vertexDrawIndices[0], GL_STATIC_DRAW);
@@ -443,13 +443,12 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 					continue;
 
 				SS3OVertex* verts = new SS3OVertex[4];
-				const int offsets[4] = {0, 1, 1, 2};
 
 				for (unsigned int j = 0; j < 4; j++) {
-					verts[j].pos      = vertices[vertexDrawIndices[i + offsets[j]]];
-					verts[j].normal   = vnormals[vertexDrawIndices[i + offsets[j]]];
-					verts[j].textureX = texcoors[vertexDrawIndices[i + offsets[j]]].x;
-					verts[j].textureY = texcoors[vertexDrawIndices[i + offsets[j]]].y;
+					verts[j].pos      = vertices[vertexDrawIndices[i + j]];
+					verts[j].normal   = vnormals[vertexDrawIndices[i + j]];
+					verts[j].textureX = texcoors[vertexDrawIndices[i + j]].x;
+					verts[j].textureY = texcoors[vertexDrawIndices[i + j]].y;
 				}
 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
@@ -465,10 +464,10 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 				const int offsets[4] = {-2, -1, -1, 0};
 
 				for (unsigned int j = 0; j < 4; j++) {
-					verts[j].pos      = vertices[vertexDrawIndices[i + offsets[j]]];
-					verts[j].normal   = vnormals[vertexDrawIndices[i + offsets[j]]];
-					verts[j].textureX = texcoors[vertexDrawIndices[i + offsets[j]]].x;
-					verts[j].textureY = texcoors[vertexDrawIndices[i + offsets[j]]].y;
+					verts[j].pos      = vertices[vertexDrawIndices[i - offsets[j]]];
+					verts[j].normal   = vnormals[vertexDrawIndices[i - offsets[j]]];
+					verts[j].textureX = texcoors[vertexDrawIndices[i - offsets[j]]].x;
+					verts[j].textureY = texcoors[vertexDrawIndices[i - offsets[j]]].y;
 				}
 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
