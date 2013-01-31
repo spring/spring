@@ -18,6 +18,7 @@ public:
 	~CGrassDrawer();
 
 	void Draw();
+	void DrawShadow();
 	void AddGrass(const float3& pos);
 	void ResetPos(const float3& pos);
 	void RemoveGrass(int x, int z);
@@ -46,13 +47,21 @@ public:
 		GRASS_PROGRAM_NEAR_SHADOW = 0,  // near-grass shader (V+F) with self-shadowing
 		GRASS_PROGRAM_DIST_SHADOW = 1,  // far-grass shader (V+F) with self-shadowing
 		GRASS_PROGRAM_DIST_BASIC  = 2,  // far-grass shader (V) without self-shadowing
-		GRASS_PROGRAM_LAST        = 3
+		GRASS_PROGRAM_SHADOW_GEN  = 3,
+		GRASS_PROGRAM_LAST        = 4
 	};
 
 protected:
 	void LoadGrassShaders();
 	void CreateGrassBladeTex(unsigned char* buf);
 	void CreateFarTex();
+
+	void SetupGlState();
+	void ResetGlState1();
+	void ResetGlState2();
+	void DrawFarBillboards(const std::vector<CGrassDrawer::InviewGrass>& inviewGrass);
+	void DrawNearBillboards(const std::vector<InviewNearGrass>& inviewNearGrass);
+	void GarbageCollect();
 
 	GrassStruct grass[32 * 32];
 	NearGrassStruct nearGrass[32 * 32];
@@ -72,6 +81,7 @@ protected:
 	unsigned int farTex;
 
 	std::vector<Shader::IProgramObject*> grassShaders;
+	Shader::IProgramObject* grassShader;
 
 	float maxGrassDist;
 	float maxDetailedDist;
