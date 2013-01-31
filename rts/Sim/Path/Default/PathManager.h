@@ -33,21 +33,21 @@ public:
 
 
 	float3 NextWayPoint(
+		const CSolidObject* owner,
 		unsigned int pathID,
+		unsigned int numRetries,
 		float3 callerPos,
-		float minDistance = 0.0f,
-		int numRetries = 0,
-		const CSolidObject* owner = NULL,
-		bool synced = true
+		float radius,
+		bool synced
 	);
 
 	unsigned int RequestPath(
+		CSolidObject* caller,
 		const MoveDef* moveDef,
 		const float3& startPos,
 		const float3& goalPos,
-		float goalRadius = 8.0f,
-		CSolidObject* caller = 0,
-		bool synced = true
+		float goalRadius,
+		bool synced
 	);
 
 	/**

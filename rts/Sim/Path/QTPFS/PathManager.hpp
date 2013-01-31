@@ -45,21 +45,21 @@ namespace QTPFS {
 		void DeletePath(unsigned int pathID);
 
 		unsigned int RequestPath(
+			CSolidObject* object,
 			const MoveDef* moveDef,
 			const float3& sourcePos,
 			const float3& targetPos,
 			float radius,
-			CSolidObject* object,
 			bool synced
 		);
 
 		float3 NextWayPoint(
+			const CSolidObject*, // owner
 			unsigned int pathID,
+			unsigned int, // numRetries
 			float3 point,
-			float radius = 0.0f,
-			int = 0, // numRetries
-			const CSolidObject* = 0, // owner
-			bool synced = true
+			float radius,
+			bool synced
 		);
 
 		void GetPathWayPoints(

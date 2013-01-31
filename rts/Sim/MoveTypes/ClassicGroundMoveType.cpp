@@ -896,7 +896,7 @@ void CClassicGroundMoveType::GetNewPath()
 	}
 
 	pathManager->DeletePath(pathId);
-	pathId = pathManager->RequestPath(owner->moveDef, owner->pos, goalPos, goalRadius, owner);
+	pathId = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true);
 
 	nextWaypoint = owner->pos;
 
@@ -914,7 +914,7 @@ void CClassicGroundMoveType::GetNextWayPoint()
 {
 	if (pathId != 0) {
 		waypoint = nextWaypoint;
-		nextWaypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f*SQUARE_SIZE, 0, owner);
+		nextWaypoint = pathManager->NextWayPoint(owner, pathId, 0, waypoint, 1.25f * SQUARE_SIZE, true);
 
 		if (nextWaypoint.x != -1) {
 			etaWaypoint = int(30.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 50;

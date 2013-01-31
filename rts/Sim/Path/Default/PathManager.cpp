@@ -59,11 +59,11 @@ Help-function.
 Turns a start->goal-request into a well-defined request.
 */
 unsigned int CPathManager::RequestPath(
+	CSolidObject* caller,
 	const MoveDef* moveDef,
 	const float3& startPos,
 	const float3& goalPos,
 	float goalRadius,
-	CSolidObject* caller,
 	bool synced
 ) {
 	float3 sp(startPos); sp.ClampInBounds();
@@ -304,11 +304,11 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 Removes and return the next waypoint in the multipath corresponding to given id.
 */
 float3 CPathManager::NextWayPoint(
-	unsigned int pathID,
-	float3 callerPos,
-	float minDistance,
-	int numRetries,
 	const CSolidObject* owner,
+	unsigned int pathID,
+	unsigned int numRetries,
+	float3 callerPos,
+	float radius,
 	bool synced
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");
@@ -373,14 +373,14 @@ float3 CPathManager::NextWayPoint(
 					waypoint = noPathPoint; break;
 				}
 			} else {
-				waypoint = NextWayPoint(pathID, callerPos, minDistance, numRetries + 1, owner, synced);
+				waypoint = NextWayPoint(owner, pathID, numRetries + 1, callerPos, radius, synced);
 				break;
 			}
 		} else {
 			waypoint = multiPath->maxResPath.path.back();
 			multiPath->maxResPath.path.pop_back();
 		}
-	} while (callerPos.SqDistance2D(waypoint) < Square(minDistance) && waypoint != multiPath->maxResPath.pathGoal);
+	} while (callerPos.SqDistance2D(waypoint) < Square(radius) && waypoint != multiPath->maxResPath.pathGoal);
 
 	// indicate this is not a temporary waypoint
 	// (the default PFS does not queue requests)
