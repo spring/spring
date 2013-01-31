@@ -148,11 +148,10 @@ void SS3OPiece::UploadGeometryVBOs()
 	if (isEmpty)
 		return;
 
-	// glBufferData reads beyond last element IF offsetof(float3, x) != 0
+	// glBufferData reads beyond last element since either pos, normal or textureX will have a non-zero offset in SS30Vertex.
 	vertices.reserve(vertices.size() + 1);
 	sTangents.reserve(sTangents.size() + 1);
 	tTangents.reserve(tTangents.size() + 1);
-	vertexDrawIndices.reserve(vertexDrawIndices.size() + 1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].pos.x), GL_STATIC_DRAW);

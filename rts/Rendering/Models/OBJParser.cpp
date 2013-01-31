@@ -522,7 +522,7 @@ void SOBJPiece::UploadGeometryVBOs()
 	sTangents.reserve(sTangents.size() + 1);
 	tTangents.reserve(tTangents.size() + 1);
 	texcoors.reserve(texcoors.size() + 1);
-	vertexDrawIndices.reserve(GetTriangleCount() * 3 + 1);
+	vertexDrawIndices.reserve(GetTriangleCount() * 3);
 
 	// generate the index-list; only needed when using VBO's
 	for (unsigned int i = 0; i < GetTriangleCount(); i++) {
