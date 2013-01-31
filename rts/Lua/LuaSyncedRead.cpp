@@ -2431,6 +2431,8 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
+	bool renderAccess = GML::SimEnabled() && !GML::IsSimThread();
+
 	const vector<CProjectile*>& rectProjectiles = qf->GetProjectilesExact(mins, maxs);
 	const unsigned int rectProjectileCount = rectProjectiles.size();
 	unsigned int arrayIndex = 1;
@@ -2441,6 +2443,8 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 		if (CLuaHandle::GetHandleFullRead(L)) {
 			for (unsigned int i = 0; i < rectProjectileCount; i++) {
 				const CProjectile* pro = rectProjectiles[i];
+				if (renderAccess && !ph->RenderAccess(pro))
+					continue;
 
 				if (pro->weapon && excludeWeaponProjectiles) { continue; }
 				if (pro->piece && excludePieceProjectiles) { continue; }
@@ -2453,6 +2457,8 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	} else {
 		for (unsigned int i = 0; i < rectProjectileCount; i++) {
 			const CProjectile* pro = rectProjectiles[i];
+			if (renderAccess && !ph->RenderAccess(pro))
+				continue;
 			const CUnit* unit = pro->owner();
 			const ProjectileMapPair proPair(const_cast<CProjectile*>(pro), ((unit != NULL)? unit->allyteam: CLuaHandle::GetHandleReadAllyTeam(L)));
 

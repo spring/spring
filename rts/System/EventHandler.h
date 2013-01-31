@@ -808,11 +808,7 @@ inline void CEventHandler::ProjectileCreated(const CProjectile* proj, int allyTe
 inline void CEventHandler::ProjectileDestroyed(const CProjectile* proj, int allyTeam)
 {
 	if (proj->synced) {
-#if DETACH_SYNCED
 		(eventBatchHandler->GetSyncedProjectileCreatedDestroyedBatch()).erase_delete(proj);
-#else
-		(eventBatchHandler->GetSyncedProjectileCreatedDestroyedBatch()).erase_remove_synced(proj);
-#endif
 	} else {
 		(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).erase_delete(proj);
 	}

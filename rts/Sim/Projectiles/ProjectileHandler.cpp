@@ -78,6 +78,8 @@ bool piececmp::operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const
 
 void projdetach::Detach(CProjectile *p) { p->Detach(); }
 
+int ProjectileID::Index(const CProjectile* p) { return p->id; }
+CProjectile* ProjectileID::Unindex(ProjectileMap::const_iterator i) { return i->second.first; }
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -196,6 +198,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 				pIt = syncedProjectileIDs.find(p->id);
 
 				eventHandler.ProjectileDestroyed((pIt->second).first, (pIt->second).second);
+				syncedRenderProjectileIDs.erase_delete(p);
 				syncedProjectileIDs.erase(pIt);
 
 				freeSyncedIDs.push_back(p->id);
@@ -209,15 +212,12 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 				pIt = unsyncedProjectileIDs.find(p->id);
 
 				eventHandler.ProjectileDestroyed((pIt->second).first, (pIt->second).second);
+				unsyncedRenderProjectileIDs.erase_delete(p);
 				unsyncedProjectileIDs.erase(pIt);
 
 				freeUnsyncedIDs.push_back(p->id);
 #endif
-#if DETACH_SYNCED
 				pci = pc.erase_detach(pci);
-#else
-				pci = pc.erase_delete(pci);
-#endif
 			}
 		} else {
 			PROJECTILE_SANITY_CHECK(p);
@@ -250,19 +250,18 @@ void CProjectileHandler::Update()
 		{
 			GML_STDMUTEX_LOCK(rproj); // Update
 
-			if (syncedProjectiles.can_delete_synced()) {
-#if !DETACH_SYNCED
-				GML_RECMUTEX_LOCK(proj); // Update
+			syncedRenderProjectileIDs.delay_delete();
+			syncedRenderProjectileIDs.delay_add();
+#if !UNSYNCED_PROJ_NOEVENT
+			unsyncedRenderProjectileIDs.delay_delete();
+			unsyncedRenderProjectileIDs.delay_add();
 #endif
 
+			if (syncedProjectiles.can_delete_synced()) {
 				eventHandler.DeleteSyncedProjectiles();
 				//! delete all projectiles that were
 				//! queued (push_back'ed) for deletion
-#if DETACH_SYNCED
 				syncedProjectiles.detach_erased_synced();
-#else
-				syncedProjectiles.delete_erased_synced();
-#endif
 			}
 
 			eventHandler.UpdateProjectiles();
@@ -329,6 +328,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	std::list<int>* freeIDs = NULL;
 	std::map<int, ProjectileMapPair>* proIDs = NULL;
 	int* maxUsedID = NULL;
+	ProjectileRenderMap* newProIDs = NULL;
 	int newID = 0;
 
 	if (p->synced) {
@@ -336,6 +336,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		freeIDs = &freeSyncedIDs;
 		proIDs = &syncedProjectileIDs;
 		maxUsedID = &maxUsedSyncedID;
+		newProIDs = &syncedRenderProjectileIDs;
 
 		ASSERT_SYNCED(*maxUsedID);
 		ASSERT_SYNCED(freeIDs->size());
@@ -348,6 +349,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		freeIDs = &freeUnsyncedIDs;
 		proIDs = &unsyncedProjectileIDs;
 		maxUsedID = &maxUsedUnsyncedID;
+		newProIDs = &unsyncedRenderProjectileIDs;
 	}
 
 	if (!freeIDs->empty()) {
@@ -370,6 +372,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 	p->id = newID;
 	(*proIDs)[p->id] = pp;
+	newProIDs->push(p, pp);
 
 	eventHandler.ProjectileCreated(pp.first, pp.second);
 }
@@ -609,4 +612,13 @@ void CProjectileHandler::AddNanoParticle(
 	} else {
 		new CGfxProjectile(startPos, (dif + error) * 3, int(l / 3), color);
 	}
+}
+
+bool CProjectileHandler::RenderAccess(const CProjectile *p) const {
+#if UNSYNCED_PROJ_NOEVENT
+	return p->synced && syncedRenderProjectileIDs.get_render_map().find(p->id) != syncedRenderProjectileIDs.get_render_map().end();
+#else
+	return (p->synced ? syncedRenderProjectileIDs.get_render_map().find(p->id) != syncedRenderProjectileIDs.get_render_map().end() :
+				unsyncedRenderProjectileIDs.get_render_map().find(p->id) != unsyncedRenderProjectileIDs.get_render_map().end());
+#endif
 }

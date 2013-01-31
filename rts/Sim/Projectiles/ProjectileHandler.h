@@ -42,6 +42,11 @@ typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, piece
 typedef ThreadListSimRender<std::set<FlyingPiece*, piececmp>, void, FlyingPiece*> FlyingPieceContainer;
 #endif
 
+struct ProjectileID {
+	static int Index(const CProjectile*);
+	static CProjectile* Unindex(ProjectileMap::const_iterator i);
+};
+typedef ThreadMapRender<CProjectile*, int, ProjectileMapPair, ProjectileID> ProjectileRenderMap;
 
 
 class CProjectileHandler
@@ -55,15 +60,21 @@ public:
 	void PostLoad();
 
 	inline const ProjectileMapPair* GetMapPairBySyncedID(int id) const {
-		ProjectileMap::const_iterator it = syncedProjectileIDs.find(id);
-		if (it == syncedProjectileIDs.end()) {
+		bool renderAccess = (GML::SimEnabled() && !GML::IsSimThread());
+		const ProjectileMap& projectileIDs = renderAccess ? syncedRenderProjectileIDs.get_render_map() : syncedProjectileIDs;
+		ProjectileMap::const_iterator it = projectileIDs.find(id);
+		if (it == projectileIDs.end()) {
 			return NULL;
 		}
 		return &(it->second);
 	}
 	inline const ProjectileMapPair* GetMapPairByUnsyncedID(int id) const {
-		ProjectileMap::const_iterator it = unsyncedProjectileIDs.find(id);
-		if (it == unsyncedProjectileIDs.end()) {
+		if (UNSYNCED_PROJ_NOEVENT)
+			return NULL; // unsynced projectiles have no IDs if UNSYNCED_PROJ_NOEVENT
+		bool renderAccess = (GML::SimEnabled() && !GML::IsSimThread());
+		const ProjectileMap& projectileIDs = renderAccess ? unsyncedRenderProjectileIDs.get_render_map() : unsyncedProjectileIDs;
+		ProjectileMap::const_iterator it = projectileIDs.find(id);
+		if (it == projectileIDs.end()) {
 			return NULL;
 		}
 		return &(it->second);
@@ -91,6 +102,7 @@ public:
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, bool highPriority);
 	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
+	bool RenderAccess(const CProjectile *p) const;
 
 public:
 	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
@@ -105,6 +117,9 @@ public:
 	int currentNanoParticles;
 	float particleSaturation;      // currentParticles / maxParticles ratio
 	float nanoParticleSaturation;
+
+	ProjectileRenderMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
+	ProjectileRenderMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
 
 private:
 	int maxUsedSyncedID;
