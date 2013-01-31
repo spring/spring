@@ -27,17 +27,17 @@ public:
 	{
 		Init(team, pos, speed);
 
-		//! 3D0
+		//! 3D0 (TODO: 3DOFlyingPiece subclass)
 		prim = piece;
 		object = _object;
 	}
 
-	FlyingPiece(int team, const float3& pos, const float3& speed, int textureType, SS3OVertex* _verts)
+	FlyingPiece(int team, const float3& pos, const float3& speed, int textureType, const SS3OVertex* _geometry)
 	{
 		Init(team, pos, speed);
 
-		//! S30
-		verts = _verts;
+		//! S30 (TODO: S3OFlyingPiece subclass)
+		geometry = _geometry;
 		texture = textureType;
 	}
 
@@ -48,8 +48,8 @@ public:
 public:
 	const S3DOPrimitive* prim;
 	const S3DOPiece* object;
+	const SS3OVertex* geometry;
 
-	SS3OVertex* verts;
 	size_t texture;
 
 	float3 pos;

@@ -536,13 +536,13 @@ void CProjectileHandler::AddFlyingPiece(int team, float3 pos, float3 speed, cons
 	flyingPieces3DO.insert(fp);
 }
 
-void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts)
+void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, const SS3OVertex* geometry)
 {
 	if (textureType <= 0) {
 		return; // texture 0 means 3do
 	}
 
-	FlyingPiece* fp = new FlyingPiece(team, pos, speed, textureType, verts);
+	FlyingPiece* fp = new FlyingPiece(team, pos, speed, textureType, geometry);
 	flyingPiecesS3O.insert(fp);
 }
 
@@ -614,11 +614,17 @@ void CProjectileHandler::AddNanoParticle(
 	}
 }
 
-bool CProjectileHandler::RenderAccess(const CProjectile *p) const {
-#if UNSYNCED_PROJ_NOEVENT
-	return p->synced && syncedRenderProjectileIDs.get_render_map().find(p->id) != syncedRenderProjectileIDs.get_render_map().end();
-#else
-	return (p->synced ? syncedRenderProjectileIDs.get_render_map().find(p->id) != syncedRenderProjectileIDs.get_render_map().end() :
-				unsyncedRenderProjectileIDs.get_render_map().find(p->id) != unsyncedRenderProjectileIDs.get_render_map().end());
-#endif
+bool CProjectileHandler::RenderAccess(const CProjectile* p) const {
+	const ProjectileMap* pmap = NULL;
+
+	if (p->synced) {
+		pmap = &(syncedRenderProjectileIDs.get_render_map());
+	} else {
+		#ifndef UNSYNCED_PROJ_NOEVENT
+		pmap = &(unsyncedRenderProjectileIDs.get_render_map());
+		#endif
+	}
+
+	return (pmap != NULL && pmap->find(p->id) != pmap->end());
 }
+

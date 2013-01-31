@@ -5,11 +5,13 @@
 
 #include <map>
 #include "IModelParser.h"
+#include "System/Vec2.h"
 
 
 struct SS3OVertex {
 	float3 pos;
 	float3 normal;
+
 	float textureX;
 	float textureY;
 };
@@ -21,26 +23,31 @@ struct SS3OPiece: public S3DModelPiece {
 	void DrawForList() const;
 
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }
+	void SetNormalCount(unsigned int n) { vnormals.resize(n); }
+	void SetTxCoorCount(unsigned int n) { texcoors.resize(n); }
 	void SetVertexDrawIndexCount(unsigned int n) { vertexDrawIndices.resize(n); }
 
 	void SetMinMaxExtends();
 	void SetVertexTangents();
 
-	void SetVertex(int idx, const SS3OVertex& v) { vertices[idx] = v; }
+	void SetVertex(int idx, const float3& v) { vertices[idx] = v; }
+	void SetNormal(int idx, const float3& v) { vnormals[idx] = v; }
+	void SetTxCoor(int idx, const float2& v) { texcoors[idx] = v; }
 	void SetVertexDrawIndex(int idx, const unsigned int drawIdx) { vertexDrawIndices[idx] = drawIdx; }
 
 	unsigned int GetVertexCount() const { return vertices.size(); }
 	unsigned int GetVertexDrawIndexCount() const { return vertexDrawIndices.size(); }
 
-	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
-	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
-	void Shatter(float pieceChance, int texType, int team, const float3& pos,
-			const float3& speed) const;
+	const float3& GetVertexPos(const int idx) const { return vertices[idx]; }
+	const float3& GetNormal(const int idx) const { return vnormals[idx]; }
+	void Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const;
 
 	int primitiveType;
 
 private:
-	std::vector<SS3OVertex> vertices;
+	std::vector<float3> vertices;
+	std::vector<float3> vnormals;
+	std::vector<float2> texcoors;
 	std::vector<unsigned int> vertexDrawIndices;
 
 	// cannot store these in SS3OVertex
