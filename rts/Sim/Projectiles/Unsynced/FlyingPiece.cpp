@@ -13,14 +13,14 @@
 #include "System/Matrix44f.h"
 
 FlyingPiece::~FlyingPiece() {
-	delete[] geometry;
+	delete[] verts;
 }
 
 void FlyingPiece::Init(int _team, const float3& _pos, const float3& _speed)
 {
-	prim     = NULL;
-	object   = NULL;
-	geometry = NULL;
+	prim   = NULL;
+	object = NULL;
+	verts  = NULL;
 
 	pos   = _pos;
 	speed = _speed;
@@ -85,7 +85,7 @@ void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertex
 			}
 
 			for (int i = 0; i < 4; i++) {
-				const SS3OVertex& v = geometry[i];
+				const SS3OVertex& v = verts[i];
 				tp = m.Mul(v.pos) + interPos;
 				tn = m.Mul(v.normal);
 				va->AddVertexQTN(tp, v.textureX, v.textureY, tn);

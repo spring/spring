@@ -60,7 +60,7 @@ public:
 	void PostLoad();
 
 	inline const ProjectileMapPair* GetMapPairBySyncedID(int id) const {
-		const bool renderAccess = (GML::SimEnabled() && !GML::IsSimThread());
+		bool renderAccess = (GML::SimEnabled() && !GML::IsSimThread());
 		const ProjectileMap& projectileIDs = renderAccess ? syncedRenderProjectileIDs.get_render_map() : syncedProjectileIDs;
 		ProjectileMap::const_iterator it = projectileIDs.find(id);
 		if (it == projectileIDs.end()) {
@@ -71,7 +71,7 @@ public:
 	inline const ProjectileMapPair* GetMapPairByUnsyncedID(int id) const {
 		if (UNSYNCED_PROJ_NOEVENT)
 			return NULL; // unsynced projectiles have no IDs if UNSYNCED_PROJ_NOEVENT
-		const bool renderAccess = (GML::SimEnabled() && !GML::IsSimThread());
+		bool renderAccess = (GML::SimEnabled() && !GML::IsSimThread());
 		const ProjectileMap& projectileIDs = renderAccess ? unsyncedRenderProjectileIDs.get_render_map() : unsyncedProjectileIDs;
 		ProjectileMap::const_iterator it = projectileIDs.find(id);
 		if (it == projectileIDs.end()) {
@@ -99,10 +99,10 @@ public:
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
 	void AddFlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece);
-	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, const SS3OVertex* geometry);
+	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, bool highPriority);
 	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
-	bool RenderAccess(const CProjectile* p) const;
+	bool RenderAccess(const CProjectile *p) const;
 
 public:
 	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state

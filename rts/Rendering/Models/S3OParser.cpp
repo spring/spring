@@ -77,8 +77,6 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		piece->parent = parent;
 
 	piece->SetVertexCount(fp->numVertices);
-	piece->SetNormalCount(fp->numVertices);
-	piece->SetTxCoorCount(fp->numVertices);
 	piece->SetVertexDrawIndexCount(fp->vertexTableSize);
 
 	// retrieve each vertex
@@ -90,9 +88,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		SS3OVertex* sv = reinterpret_cast<SS3OVertex*>(&buf[vertexOffset]);
 			sv->normal.SafeANormalize();
 
-		piece->SetVertex(a, sv->pos);
-		piece->SetNormal(a, sv->normal);
-		piece->SetTxCoor(a, float2(sv->textureX, sv->textureY));
+		piece->SetVertex(a, *sv);
 		vertexOffset += sizeof(Vertex);
 	}
 
@@ -158,10 +154,10 @@ void SS3OPiece::UploadGeometryVBOs()
 	tTangents.reserve(tTangents.size() + 1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float3), &(vertices[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].pos.x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float3), &(vnormals[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].normal.x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_STANGENTS]);
 	glBufferData(GL_ARRAY_BUFFER, sTangents.size() * sizeof(float3), &(sTangents[0].x), GL_STATIC_DRAW);
@@ -169,7 +165,7 @@ void SS3OPiece::UploadGeometryVBOs()
 	glBufferData(GL_ARRAY_BUFFER, tTangents.size() * sizeof(float3), &(tTangents[0].x), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float2), &(texcoors[0].x), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SS3OVertex), &(vertices[0].textureX), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIDs[VBO_VINDICES]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexDrawIndices.size() * sizeof(unsigned int), &vertexDrawIndices[0], GL_STATIC_DRAW);
@@ -179,8 +175,6 @@ void SS3OPiece::UploadGeometryVBOs()
 
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
 	// vertices.clear();
-	// vnormals.clear();
-	// texcoors.clear();
 	// vertexDrawIndices.clear();
 	sTangents.clear();
 	tTangents.clear();
@@ -217,34 +211,34 @@ void SS3OPiece::DrawForList() const
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	#ifdef USE_PIECE_GEOMETRY_VBOS
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(float2), NULL);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), NULL);
 	#else
-	glTexCoordPointer(2, GL_FLOAT, sizeof(float2), &(texcoors[0].x));
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].textureX));
 	#endif
 
 	glClientActiveTexture(GL_TEXTURE0);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	#ifdef USE_PIECE_GEOMETRY_VBOS
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VTEXCOORS]);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(float2), NULL);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), NULL);
 	#else
-	glTexCoordPointer(2, GL_FLOAT, sizeof(float2), &(texcoors[0].x));
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].textureX));
 	#endif
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	#ifdef USE_PIECE_GEOMETRY_VBOS
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VERTICES]);
-	glVertexPointer(3, GL_FLOAT, sizeof(float3), NULL);
+	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), NULL);
 	#else
-	glVertexPointer(3, GL_FLOAT, sizeof(float3), &(vertices[0].x));
+	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].pos.x));
 	#endif
 
 	glEnableClientState(GL_NORMAL_ARRAY);
 	#ifdef USE_PIECE_GEOMETRY_VBOS
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[VBO_VNORMALS]);
-	glNormalPointer(GL_FLOAT, sizeof(float3), NULL);
+	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), NULL);
 	#else
-	glNormalPointer(GL_FLOAT, sizeof(float3), &(vnormals[0].x));
+	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &(vertices[0].normal.x));
 	#endif
 
 	#ifdef USE_PIECE_GEOMETRY_VBOS
@@ -312,13 +306,13 @@ void SS3OPiece::DrawForList() const
 
 void SS3OPiece::SetMinMaxExtends()
 {
-	for (unsigned int n = 0; n < vertices.size(); n++) {
-		mins.x = std::min(mins.x, (goffset.x + vertices[n].x));
-		mins.y = std::min(mins.y, (goffset.y + vertices[n].y));
-		mins.z = std::min(mins.z, (goffset.z + vertices[n].z));
-		maxs.x = std::max(maxs.x, (goffset.x + vertices[n].x));
-		maxs.y = std::max(maxs.y, (goffset.y + vertices[n].y));
-		maxs.z = std::max(maxs.z, (goffset.z + vertices[n].z));
+	for (std::vector<SS3OVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
+		mins.x = std::min(mins.x, (goffset.x + vi->pos.x));
+		mins.y = std::min(mins.y, (goffset.y + vi->pos.y));
+		mins.z = std::min(mins.z, (goffset.z + vi->pos.z));
+		maxs.x = std::max(maxs.x, (goffset.x + vi->pos.x));
+		maxs.y = std::max(maxs.y, (goffset.y + vi->pos.y));
+		maxs.z = std::max(maxs.z, (goffset.z + vi->pos.z));
 	}
 }
 
@@ -370,13 +364,17 @@ void SS3OPiece::SetVertexTangents()
 			vrtNr += 3; continue;
 		}
 
-		const float3& p0 = vertices[v0idx];
-		const float3& p1 = vertices[v1idx];
-		const float3& p2 = vertices[v2idx];
+		const SS3OVertex* vrt0 = &vertices[v0idx];
+		const SS3OVertex* vrt1 = &vertices[v1idx];
+		const SS3OVertex* vrt2 = &vertices[v2idx];
 
-		const float2& tc0 = texcoors[v0idx];
-		const float2& tc1 = texcoors[v1idx];
-		const float2& tc2 = texcoors[v2idx];
+		const float3& p0 = vrt0->pos;
+		const float3& p1 = vrt1->pos;
+		const float3& p2 = vrt2->pos;
+
+		const float2 tc0(vrt0->textureX, vrt0->textureY);
+		const float2 tc1(vrt1->textureX, vrt1->textureY);
+		const float2 tc2(vrt2->textureX, vrt2->textureY);
 
 		const float x1x0 = p1.x - p0.x, x2x0 = p2.x - p0.x;
 		const float y1y0 = p1.y - p0.y, y2y0 = p2.y - p0.y;
@@ -406,7 +404,7 @@ void SS3OPiece::SetVertexTangents()
 
 	// set the smoothed per-vertex tangents
 	for (int vrtIdx = vertices.size() - 1; vrtIdx >= 0; vrtIdx--) {
-		float3& n = vnormals[vrtIdx];
+		float3& n = vertices[vrtIdx].normal;
 		float3& s = sTangents[vrtIdx];
 		float3& t = tTangents[vrtIdx];
 		int h = 1;
@@ -444,12 +442,10 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 
 				SS3OVertex* verts = new SS3OVertex[4];
 
-				for (unsigned int j = 0; j < 4; j++) {
-					verts[j].pos      = vertices[vertexDrawIndices[i + j]];
-					verts[j].normal   = vnormals[vertexDrawIndices[i + j]];
-					verts[j].textureX = texcoors[vertexDrawIndices[i + j]].x;
-					verts[j].textureY = texcoors[vertexDrawIndices[i + j]].y;
-				}
+				verts[0] = vertices[vertexDrawIndices[i + 0]];
+				verts[1] = vertices[vertexDrawIndices[i + 1]];
+				verts[2] = vertices[vertexDrawIndices[i + 1]];
+				verts[3] = vertices[vertexDrawIndices[i + 2]];
 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
 			}
@@ -462,12 +458,10 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 
 				SS3OVertex* verts = new SS3OVertex[4];
 
-				for (unsigned int j = 0; j < 4; j++) {
-			//		verts[j].pos      = vertices[vertexDrawIndices[i - j]];
-			//		verts[j].normal   = vnormals[vertexDrawIndices[i - j]];
-			//		verts[j].textureX = texcoors[vertexDrawIndices[i - j]].x;
-			//		verts[j].textureY = texcoors[vertexDrawIndices[i - j]].y;
-				}
+				verts[0] = vertices[vertexDrawIndices[i - 2]];
+				verts[1] = vertices[vertexDrawIndices[i - 1]];
+				verts[2] = vertices[vertexDrawIndices[i - 1]];
+				verts[3] = vertices[vertexDrawIndices[i - 0]];
 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
 				i += 1;
@@ -480,12 +474,10 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 
 				SS3OVertex* verts = new SS3OVertex[4];
 
-				for (unsigned int j = 0; j < 4; j++) {
-					verts[j].pos      = vertices[vertexDrawIndices[i + j]];
-					verts[j].normal   = vnormals[vertexDrawIndices[i + j]];
-					verts[j].textureX = texcoors[vertexDrawIndices[i + j]].x;
-					verts[j].textureY = texcoors[vertexDrawIndices[i + j]].y;
-				}
+				verts[0] = vertices[vertexDrawIndices[i + 0]];
+				verts[1] = vertices[vertexDrawIndices[i + 1]];
+				verts[2] = vertices[vertexDrawIndices[i + 2]];
+				verts[3] = vertices[vertexDrawIndices[i + 3]];
 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);
 			}
