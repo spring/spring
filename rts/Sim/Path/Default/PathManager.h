@@ -78,7 +78,7 @@ public:
 	float GetNodeExtraCost(unsigned int, unsigned int, bool) const;
 	const float* GetNodeExtraCosts(bool) const;
 
-	void GetNumOutstandingEstimatorUpdates(unsigned int* data) const;
+	int2 GetNumQueuedUpdates() const;
 
 private:
 	unsigned int RequestPath(

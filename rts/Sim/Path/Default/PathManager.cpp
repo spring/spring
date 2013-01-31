@@ -568,9 +568,10 @@ const float* CPathManager::GetNodeExtraCosts(bool synced) const {
 	return costs;
 }
 
-void CPathManager::GetNumOutstandingEstimatorUpdates(unsigned int* data) const
-{
-	data[0] = medResPE->updatedBlocks.size();
-	data[1] = lowResPE->updatedBlocks.size();
+int2 CPathManager::GetNumQueuedUpdates() const {
+	int2 data;
+	data.x = medResPE->updatedBlocks.size();
+	data.y = lowResPE->updatedBlocks.size();
+	return data;
 }
 

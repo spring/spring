@@ -105,7 +105,6 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Path/IPathManager.h"
-#include "Sim/Path/Default/PathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -1234,18 +1233,21 @@ bool CGame::Draw() {
 
 		// 16ms := 60fps := 30simFPS + 30drawFPS
 		font->glFormat(0.03f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
-		   (gu->avgFrameTime>30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
-		   (gu->avgDrawFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
-		   (gu->avgSimFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
+		   (gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
+		   (gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
+		   (gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
 		);
 
-		if (pathManager->GetPathFinderType() == PFS_TYPE_DEFAULT) {
-			CPathManager* pm = static_cast<CPathManager*>(pathManager);
-			unsigned int peUpdates[2] = {0, 0};
+		const int2 pfsUpdates = pathManager->GetNumQueuedUpdates();
+		const char* fmtString = "[%s-PFS] queued updates: %i %i";
 
-			pm->GetNumOutstandingEstimatorUpdates(peUpdates);
-			font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, "Outstanding Pathing Updates: %i %i",
-				peUpdates[0], peUpdates[1]);
+		switch (pathManager->GetPathFinderType()) {
+			case PFS_TYPE_DEFAULT: {
+				font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "DEFAULT", pfsUpdates.x, pfsUpdates.y);
+			} break;
+			case PFS_TYPE_QTPFS: {
+				font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "QT", pfsUpdates.x, pfsUpdates.y);
+			} break;
 		}
 
 		font->End();

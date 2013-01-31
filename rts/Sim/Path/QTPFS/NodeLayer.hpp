@@ -47,6 +47,7 @@ namespace QTPFS {
 		bool ExecQueuedUpdate();
 		bool HaveQueuedUpdate() const { return (!layerUpdates.empty()); }
 		const LayerUpdate& GetQueuedUpdate() const { return (layerUpdates.front()); }
+		unsigned int NumQueuedUpdates() const { return (layerUpdates.size()); }
 		#endif
 
 		bool Update(
