@@ -126,6 +126,23 @@ Else  (NOT Boost_FOUND)
 
 
 ################################################################################
+### Float3
+
+	Set(test_Float3_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testFloat3.cpp"
+		)
+
+	ADD_EXECUTABLE(test_Float3 ${test_Float3_src})
+	TARGET_LINK_LIBRARIES(test_Float3
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+		)
+
+	ADD_TEST(NAME testFloat3 COMMAND test_Float3)
+	Add_Dependencies(tests test_Float3)
+
+
+################################################################################
 ### BitwiseEnum
 
 	Set(test_BitwiseEnum_src
