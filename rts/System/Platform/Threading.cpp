@@ -10,6 +10,7 @@
 
 #include <boost/version.hpp>
 #include <boost/thread.hpp>
+#include <boost/cstdint.hpp>
 #if defined(__APPLE__)
 #elif defined(WIN32)
 	#include <windows.h>
@@ -96,8 +97,8 @@ namespace Threading {
 	#endif
 	}
 
-	void SetAffinityHelper(const char *threadName, uint32_t affinity) {
-		const uint32_t cpuMask  = Threading::SetAffinity(affinity);
+	void SetAffinityHelper(const char *threadName, boost::uint32_t affinity) {
+		const boost::uint32_t cpuMask  = Threading::SetAffinity(affinity);
 		if (cpuMask == ~0) {
 			LOG("[Threading] %s thread CPU affinity not set", threadName);
 		}

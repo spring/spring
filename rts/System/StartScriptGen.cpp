@@ -9,6 +9,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Log/ILog.h"
+#include <boost/cstdint.hpp>
 
 namespace StartScriptGen {
 
@@ -17,10 +18,10 @@ namespace StartScriptGen {
 //  Helpers
 //
 
-	static uint64_t ExtractVersionNumber(const std::string& version)
+	static boost::uint64_t ExtractVersionNumber(const std::string& version)
 	{
 		std::istringstream iss(version);
-		uint64_t versionInt = 0;
+		boost::uint64_t versionInt = 0;
 		int num;
 		while (true) {
 			if (iss >> num) {
@@ -61,12 +62,12 @@ namespace StartScriptGen {
 
 		std::string matchingName;
 		std::string matchingVersion;
-		uint64_t matchingVersionInt = 0;
+		boost::uint64_t matchingVersionInt = 0;
 
 		for (std::vector<CArchiveScanner::ArchiveData>::const_iterator it = found.begin(); it != found.end(); ++it) {
 			if (lowerLazyName == StringToLower(it->GetShortName())) {
 				// find latest version of the game
-				uint64_t versionInt = ExtractVersionNumber(it->GetVersion());
+				boost::uint64_t versionInt = ExtractVersionNumber(it->GetVersion());
 
 				if (versionInt > matchingVersionInt) {
 					matchingName = it->GetName();
