@@ -68,6 +68,8 @@ namespace QTPFS {
 			std::vector<int>& starts
 		) const;
 
+		int2 GetNumQueuedUpdates() const;
+
 	private:
 		void ThreadUpdate();
 		void Load();
