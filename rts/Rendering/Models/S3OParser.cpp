@@ -461,13 +461,12 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 				if (vertexDrawIndices[i] == -1) { i += 3; continue; }
 
 				SS3OVertex* verts = new SS3OVertex[4];
-				const int offsets[4] = {-2, -1, -1, 0};
 
 				for (unsigned int j = 0; j < 4; j++) {
-					verts[j].pos      = vertices[vertexDrawIndices[i - offsets[j]]];
-					verts[j].normal   = vnormals[vertexDrawIndices[i - offsets[j]]];
-					verts[j].textureX = texcoors[vertexDrawIndices[i - offsets[j]]].x;
-					verts[j].textureY = texcoors[vertexDrawIndices[i - offsets[j]]].y;
+			//		verts[j].pos      = vertices[vertexDrawIndices[i - j]];
+			//		verts[j].normal   = vnormals[vertexDrawIndices[i - j]];
+			//		verts[j].textureX = texcoors[vertexDrawIndices[i - j]].x;
+			//		verts[j].textureY = texcoors[vertexDrawIndices[i - j]].y;
 				}
 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->RandVector() * 2.0f, verts);

@@ -16,14 +16,6 @@ struct SS3OVertex {
 	float textureY;
 };
 
-struct SS3OTriangle {
-	unsigned int v0idx;
-	unsigned int v1idx;
-	unsigned int v2idx;
-	float3 sTangent;
-	float3 tTangent;
-};
-
 struct SS3OPiece: public S3DModelPiece {
 	SS3OPiece() { parent = NULL; primitiveType = 0; }
 
@@ -63,6 +55,13 @@ private:
 	std::vector<float3> tTangents; // == B(itangent) dirs
 };
 
+struct SS3OTriangle {
+	unsigned int v0idx;
+	unsigned int v1idx;
+	unsigned int v2idx;
+	float3 sTangent;
+	float3 tTangent;
+};
 
 
 enum {S3O_PRIMTYPE_TRIANGLES = 0, S3O_PRIMTYPE_TRIANGLE_STRIP = 1, S3O_PRIMTYPE_QUADS = 2};
