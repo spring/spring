@@ -26,7 +26,7 @@
 // -------------------------------------------------------------------------------------------------
 // STATICS
 
-RenderMode Patch::renderMode = VBO;
+Patch::RenderMode Patch::renderMode = Patch::VBO;
 
 static size_t poolSize = 0;
 static std::vector<CTriNodePool*> pools;
