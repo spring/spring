@@ -88,7 +88,7 @@ void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertex
 				const SS3OVertex& v = verts[i];
 				tp = m.Mul(v.pos) + interPos;
 				tn = m.Mul(v.normal);
-				va->AddVertexQTN(tp, v.textureX, v.textureY, tn);
+				va->AddVertexQTN(tp, v.texCoord.x, v.texCoord.y, tn);
 			}
 		} break;
 

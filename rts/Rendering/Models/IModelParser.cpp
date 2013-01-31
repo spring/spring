@@ -315,9 +315,7 @@ void C3DModelLoader::DeleteLocalModel(LocalModel* localModel)
 
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
-	#ifdef USE_PIECE_GEOMETRY_VBOS
-	o->CreateUploadGeometryVBOs();
-	#endif
+	o->UploadGeometryVBOs();
 
 	const unsigned int dlistID = o->CreateDrawForList();
 

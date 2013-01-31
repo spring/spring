@@ -76,7 +76,7 @@ VBO::~VBO()
 }
 
 
-void VBO::Bind(GLenum target)
+void VBO::Bind(GLenum target) const
 {
 	assert(!bound);
 
@@ -85,6 +85,18 @@ void VBO::Bind(GLenum target)
 		curBoundTarget = target;
 		glBindBuffer(target, vboId);
 	}
+}
+
+
+void VBO::Unbind() const
+{
+	assert(bound);
+
+	if (VBOused) {
+		glBindBuffer(curBoundTarget, 0);
+	}
+
+	bound = false;
 }
 
 
@@ -195,7 +207,7 @@ void VBO::UnmapBuffer()
 }
 
 
-const GLvoid* VBO::GetPtr(GLintptr offset)
+const GLvoid* VBO::GetPtr(GLintptr offset) const
 {
 	assert(bound);
 

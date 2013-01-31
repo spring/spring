@@ -5,13 +5,14 @@
 
 #include <map>
 #include "IModelParser.h"
-
+#include "System/Vec2.h"
 
 struct SS3OVertex {
 	float3 pos;
 	float3 normal;
-	float textureX;
-	float textureY;
+	float2 texCoord;
+	//float3 sTangent;
+	//float3 tTangent;
 };
 
 struct SS3OPiece: public S3DModelPiece {
