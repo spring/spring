@@ -46,9 +46,6 @@ struct S3DModelPiece {
 	virtual unsigned int GetNormalCount() const { return 0; }
 	virtual unsigned int GetTxCoorCount() const { return 0; }
 
-	virtual void SetMinMaxExtends() {}
-	virtual void SetVertexTangents() {}
-
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
 	virtual float3 GetPosOffset() const { return ZeroVector; }
