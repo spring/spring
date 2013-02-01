@@ -68,6 +68,21 @@ public:
 
 	virtual bool AddBuildPower(float amount, CUnit* builder) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID) {}
+
+	virtual void StoreImpulse(const float3& impulse, float newImpulseDecayRate) {
+		if ((impulseDecayRate = std::min(std::max(newImpulseDecayRate, 0.0f), 1.0f)) > 0.0f) {
+			StoreImpulse(impulse);
+		}
+	}
+
+	virtual void StoreImpulse(const float3& impulse) {
+		residualImpulse += impulse;
+	}
+	virtual void ApplyImpulse() {
+		speed += residualImpulse;
+		residualImpulse = ZeroVector;
+	}
+
 	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }
 
@@ -184,7 +199,7 @@ public:
 	float3 groundBlockPos;
 
 	float3 speed;                               ///< current velocity vector (length in elmos/frame)
-	float3 residualImpulse;                     ///< Used to sum up external impulses.
+	float3 residualImpulse;                     ///< Used to sum up external impulses. TODO: remove this, impulse is ALWAYS applied immediately now
 
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of

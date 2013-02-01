@@ -2164,9 +2164,9 @@ int LuaSyncedCtrl::AddUnitImpulse(lua_State* L)
 	                     Clamp(luaL_checkfloat(L, 4), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE));
 
 	if (lua_isnumber(L, 5)) {
-		unit->AddImpulse(impulse, lua_tonumber(L, 5));
+		unit->StoreImpulse(impulse, lua_tonumber(L, 5));
 	} else {
-		unit->AddImpulse(impulse);
+		unit->StoreImpulse(impulse);
 	}
 
 	return 0;

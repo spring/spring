@@ -630,42 +630,33 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 
 
 
-void CGroundMoveType::ImpulseAdded(const float3&)
+void CGroundMoveType::ImpulseAdded(const float3& impulse)
 {
 	// NOTE: ships must be able to receive impulse too (for collision handling)
 	if (owner->beingBuilt)
 		return;
-
-	float3& impulse = owner->residualImpulse;
-	float3& speed = owner->speed;
-
-	if (skidding) {
-		speed += impulse;
-		impulse = ZeroVector;
-	}
-
-	const float3& groundNormal = ground->GetNormal(owner->pos.x, owner->pos.z);
-	const float groundImpulseScale = impulse.dot(groundNormal);
-
-	if (groundImpulseScale < 0.0f)
-		impulse -= (groundNormal * groundImpulseScale);
-
-	if (impulse.SqLength() <= 9.0f && groundImpulseScale <= 0.3f)
+	// TODO: or apply impulse to the transporter?
+	if (owner->GetTransporter() != NULL)
+		return;
+	// NOTE:
+	//   we no longer delay the skidding-state until owner has "accumulated" an
+	//   arbitrary hardcoded amount of impulse (possibly across several frames!),
+	//   but enter it on any vector with non-zero length
+	//   there should probably be a configurable minimum-impulse below which the
+	//   unit does not react at all, re-use SolidObject::residualImpulse for this
+	if (impulse.SqLength() <= 0.01f)
 		return;
 
 	skidding = true;
 	useHeading = false;
-
-	speed += impulse;
-	impulse = ZeroVector;
 
 	skidRotSpeed = 0.0f;
 	skidRotAccel = 0.0f;
 
 	float3 skidDir = owner->frontdir;
 
-	if (speed.SqLength2D() >= 0.01f) {
-		skidDir = speed;
+	if (owner->speed.SqLength2D() >= 0.01f) {
+		skidDir = owner->speed;
 		skidDir.y = 0.0f;
 		skidDir.Normalize();
 	}
@@ -675,7 +666,7 @@ void CGroundMoveType::ImpulseAdded(const float3&)
 	oldPhysState = owner->physicalState;
 	owner->physicalState = CSolidObject::Flying;
 
-	if (speed.dot(groundNormal) > 0.2f) {
+	if (owner->speed.dot(ground->GetNormal(owner->pos.x, owner->pos.z)) > 0.2f) {
 		skidRotAccel = (gs->randFloat() - 0.5f) * 0.04f;
 		flying = true;
 	}
@@ -1827,7 +1818,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				collider->Move3D(colliderPushPos, false);
 			}
 		} else {
-			collider->AddImpulse((collider->moveType->oldPos - collider->pos).SafeNormalize() * colliderSpeed * 2.0f * collideeMassScale);
+			collider->StoreImpulse((collider->moveType->oldPos - collider->pos).SafeNormalize() * colliderSpeed * 2.0f * collideeMassScale);
 		}
 
 		if (pushCollidee) {
@@ -1838,7 +1829,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				collidee->Move3D(collideePushPos, false);
 			}
 		} else {
-			collidee->AddImpulse((collidee->moveType->oldPos - collidee->pos).SafeNormalize() * collideeSpeed * 2.0f * colliderMassScale);
+			collidee->StoreImpulse((collidee->moveType->oldPos - collidee->pos).SafeNormalize() * collideeSpeed * 2.0f * colliderMassScale);
 		}
 
 		if (collider->isMoving && collidee->isMoving) {
