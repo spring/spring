@@ -546,12 +546,13 @@ void SOBJPiece::UploadGeometryVBOs()
 	vbotTangents.Resize(tTangents.size() * sizeof(float3), GL_STATIC_DRAW, &tTangents[0]);
 	vbotTangents.Unbind();
 
+	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+	vboIndices.Resize(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
+	vboIndices.Unbind();
+
 	// FIXME:
 	//   assumes vIndices, nIndices and tIndices are identical in layout for all vertices
 	//   (not a big problem because OBJ models must have a normal and texcoord per vertex)
-	vbotTangents.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vbotTangents.Resize(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
-	vbotTangents.Unbind();
 
 
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
