@@ -8,6 +8,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 
@@ -35,6 +36,8 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
 ));
+
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -164,3 +167,16 @@ int CProjectile::DrawArray()
 
 	return idx;
 }
+
+CUnit* CProjectile::owner() const {
+	// Note: this death dependency optimization using "ownerId" is logically flawed,
+	//  since ids are being reused it could return a unit that is not the original owner
+	CUnit* unit = uh->GetUnit(ownerId);
+
+	// make volatile
+	if (GML::SimEnabled())
+		return (*(CUnit* volatile*) &unit);
+
+	return unit;
+}
+

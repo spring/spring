@@ -415,7 +415,7 @@ static inline bool IsFeatureVisible(lua_State* L, const CFeature* feature)
 	return feature->IsInLosForAllyTeam(CLuaHandle::GetHandleReadAllyTeam(L));
 }
 
-static inline bool IsProjectileVisible(lua_State* L, const ProjectileMapPair& pp)
+static inline bool IsProjectileVisible(lua_State* L, const ProjectileMapValPair& pp)
 {
 	const CProjectile* pro = pp.first;
 	const int proAllyteam = pp.second;
@@ -543,7 +543,7 @@ static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
 	const int proID = luaL_checkint(L, index);
-	const ProjectileMapPair* pp = ph->GetMapPairBySyncedID(proID);
+	const ProjectileMapValPair* pp = ph->GetMapPairBySyncedID(proID);
 	if (!pp) {
 		return NULL;
 	}
@@ -2460,7 +2460,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 			if (renderAccess && !ph->RenderAccess(pro))
 				continue;
 			const CUnit* unit = pro->owner();
-			const ProjectileMapPair proPair(const_cast<CProjectile*>(pro), ((unit != NULL)? unit->allyteam: CLuaHandle::GetHandleReadAllyTeam(L)));
+			const ProjectileMapValPair proPair(const_cast<CProjectile*>(pro), ((unit != NULL)? unit->allyteam: CLuaHandle::GetHandleReadAllyTeam(L)));
 
 			if (pro->weapon && excludeWeaponProjectiles) { continue; }
 			if (pro->piece && excludePieceProjectiles) { continue; }

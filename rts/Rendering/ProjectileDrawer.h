@@ -9,28 +9,24 @@
 
 #include "lib/gml/ThreadSafeContainers.h"
 #include "Rendering/GL/FBO.h"
-#include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
 
 class CTextureAtlas;
 struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
-struct piececmp;
 class IWorldObjectModelRenderer;
+class LuaTable;
 
 
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
 #if defined(USE_GML) && GML_ENABLE_SIM
-typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, piececmp>, FlyingPiece*> FlyingPieceContainer;
+typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, FlyingPieceComparator>, FlyingPiece*> FlyingPieceContainer;
 #else
-typedef ThreadListSimRender<std::set<FlyingPiece*, piececmp>, void, FlyingPiece*> FlyingPieceContainer;
+typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
 #endif
 
-// need this for distset ordering
-struct distcmp {
-	bool operator() (const CProjectile* arg1, const CProjectile* arg2) const;
-};
 
 class CProjectileDrawer: public CEventClient {
 public:
@@ -133,7 +129,7 @@ private:
 	 * z-sorted set of all projectiles; used to
 	 * render particle effects in back-to-front order
 	 */
-	std::set<CProjectile*, distcmp> zSortedProjectiles;
+	std::set<CProjectile*, ProjectileDistanceComparator> zSortedProjectiles;
 };
 
 extern CProjectileDrawer* projectileDrawer;

@@ -13,7 +13,7 @@
 #include "Rendering/Models/S3OParser.h"
 
 SS3OFlyingPiece::~SS3OFlyingPiece() {
-	delete[] geometry;
+	delete[] chunk;
 }
 
 
@@ -23,6 +23,9 @@ bool FlyingPiece::Update() {
 	speed    *= 0.996f;
 	speed.y  += mapInfo->map.gravity; // fp's are not projectiles
 	rotAngle += rotSpeed;
+
+	transMat.LoadIdentity();
+	transMat.Rotate(rotAngle, rotAxis);
 
 	return (pos.y >= ground->GetApproximateHeight(pos.x, pos.z - 10.0f, false));
 }
@@ -49,9 +52,6 @@ void FlyingPiece::DrawCommon(size_t* lastTeam, CVertexArray* va) {
 		va->Initialize();
 		unitDrawer->SetTeamColour(team);
 	}
-
-	transMat.LoadIdentity();
-	transMat.Rotate(rotAngle, rotAxis);
 }
 
 void S3DOFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va) {
@@ -59,10 +59,10 @@ void S3DOFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va) 
 
 	const float3& interPos = pos + speed * globalRendering->timeOffset;
 
-	const C3DOTextureHandler::UnitTexture* tex = prim->texture;
+	const C3DOTextureHandler::UnitTexture* tex = chunk->texture;
 
-	const std::vector<S3DOVertex>& vertices    = object->vertices;
-	const std::vector<int>&        verticesIdx = prim->vertices;
+	const std::vector<S3DOVertex>& vertices = piece->vertices;
+	const std::vector<int>&         indices = chunk->vertices;
 
 	const float uvCoords[8] = {
 		tex->xstart, tex->ystart,
@@ -72,7 +72,7 @@ void S3DOFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va) 
 	};
 
 	for (int i = 0; i < 4; i++) {
-		const S3DOVertex& v = vertices[verticesIdx[i]];
+		const S3DOVertex& v = vertices[indices[i]];
 		const float3 tp = transMat.Mul(v.pos) + interPos;
 		const float3 tn = transMat.Mul(v.normal);
 		va->AddVertexQTN(tp, uvCoords[i << 1], uvCoords[(i << 1) + 1], tn);
@@ -97,7 +97,7 @@ void SS3OFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va) 
 	}
 
 	for (int i = 0; i < 4; i++) {
-		const SS3OVertex& v = geometry[i];
+		const SS3OVertex& v = chunk[i];
 		const float3 tp = transMat.Mul(v.pos) + interPos;
 		const float3 tn = transMat.Mul(v.normal);
 		va->AddVertexQTN(tp, v.texCoord.x, v.texCoord.y, tn);

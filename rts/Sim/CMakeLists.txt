@@ -74,6 +74,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/PieceProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Projectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ProjectileHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ProjectileFunctors.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/BitmapMuzzleFlame.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/BubbleProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/DirtProjectile.cpp"
