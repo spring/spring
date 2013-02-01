@@ -143,14 +143,6 @@ void SS3OPiece::UploadGeometryVBOs()
 	if (isEmpty)
 		return;
 
-	//FIXME merge into vboAttributes!!!
-	vbosTangents.Bind(GL_ARRAY_BUFFER);
-	vbosTangents.Resize(sTangents.size() * sizeof(float3), GL_STATIC_DRAW, &sTangents[0]);
-	vbosTangents.Unbind();
-	vbotTangents.Bind(GL_ARRAY_BUFFER);
-	vbotTangents.Resize(tTangents.size() * sizeof(float3), GL_STATIC_DRAW, &tTangents[0]);
-	vbotTangents.Unbind();
-
 	//FIXME share 1 VBO for ALL models
 	vboAttributes.Bind(GL_ARRAY_BUFFER);
 	vboAttributes.Resize(vertices.size() * sizeof(SS3OVertex), GL_STATIC_DRAW, &vertices[0]);
@@ -163,32 +155,13 @@ void SS3OPiece::UploadGeometryVBOs()
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
 	// vertices.clear();
 	// vertexDrawIndices.clear();
-	sTangents.clear();
-	tTangents.clear();
 }
 
 void SS3OPiece::DrawForList() const
 {
 	if (isEmpty)
 		return;
-
-	// pass the tangents as 3D texture coordinates
-	// (array elements are float3's, which are 12
-	// bytes in size and each represent a single
-	// xyz triple)
-
-	vbosTangents.Bind(GL_ARRAY_BUFFER);
-		glClientActiveTexture(GL_TEXTURE5);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), vbosTangents.GetPtr());
-	vbotTangents.Unbind();
-
-	vbotTangents.Bind(GL_ARRAY_BUFFER);
-		glClientActiveTexture(GL_TEXTURE6);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), vbotTangents.GetPtr());
-	vbotTangents.Unbind();
-
+	
 	vboAttributes.Bind(GL_ARRAY_BUFFER);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, pos)));
@@ -203,6 +176,14 @@ void SS3OPiece::DrawForList() const
 		glClientActiveTexture(GL_TEXTURE1);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, texCoord)));
+
+		glClientActiveTexture(GL_TEXTURE5);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, sTangent)));
+
+		glClientActiveTexture(GL_TEXTURE6);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, tTangent)));
 	vboAttributes.Unbind();
 
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
@@ -261,10 +242,6 @@ void SS3OPiece::SetVertexTangents()
 {
 	if (isEmpty)
 		return;
-
-	// always allocate space if non-empty to simplify drawing code
-	sTangents.resize(GetVertexCount(), ZeroVector);
-	tTangents.resize(GetVertexCount(), ZeroVector);
 
 	if (primitiveType == S3O_PRIMTYPE_QUADS)
 		return;
@@ -334,20 +311,20 @@ void SS3OPiece::SetVertexTangents()
 		const float3 sdir((t2 * x1x0 - t1 * x2x0) * r, (t2 * y1y0 - t1 * y2y0) * r, (t2 * z1z0 - t1 * z2z0) * r);
 		const float3 tdir((s1 * x2x0 - s2 * x1x0) * r, (s1 * y2y0 - s2 * y1y0) * r, (s1 * z2z0 - s2 * z1z0) * r);
 
-		sTangents[v0idx] += sdir;
-		sTangents[v1idx] += sdir;
-		sTangents[v2idx] += sdir;
+		vertices[v0idx].sTangent += sdir;
+		vertices[v1idx].sTangent += sdir;
+		vertices[v2idx].sTangent += sdir;
 
-		tTangents[v0idx] += tdir;
-		tTangents[v1idx] += tdir;
-		tTangents[v2idx] += tdir;
+		vertices[v0idx].tTangent += tdir;
+		vertices[v1idx].tTangent += tdir;
+		vertices[v2idx].tTangent += tdir;
 	}
 
 	// set the smoothed per-vertex tangents
 	for (int vrtIdx = vertices.size() - 1; vrtIdx >= 0; vrtIdx--) {
 		float3& n = vertices[vrtIdx].normal;
-		float3& s = sTangents[vrtIdx];
-		float3& t = tTangents[vrtIdx];
+		float3& s = vertices[vrtIdx].sTangent;
+		float3& t = vertices[vrtIdx].tTangent;
 		int h = 1;
 
 		if (math::isnan(n.x) || math::isnan(n.y) || math::isnan(n.z)) {
@@ -371,6 +348,8 @@ void SS3OPiece::SetVertexTangents()
 
 void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const
 {
+	//FIXME when all models share 1 vbo use that instead of recreating VAs
+
 	// NOTE: is this still even possible for S3O pieces?
 	if (texType <= 0)
 		return;
