@@ -633,7 +633,7 @@ void SAssPiece::DrawForList() const
 		* anything more complex than triangles is
 		* being split thanks to aiProcess_Triangulate
 		*/
-		//glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
+		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 	vboIndices.Unbind();
 
 	glClientActiveTexture(GL_TEXTURE6);
