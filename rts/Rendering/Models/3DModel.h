@@ -89,8 +89,6 @@ protected:
 
 	VBO vboIndices;
 	VBO vboAttributes;
-	VBO vbosTangents;
-	VBO vbotTangents;
 };
 
 
