@@ -54,36 +54,37 @@ protected:
 
 struct S3DOFlyingPiece: public FlyingPiece {
 public:
-	S3DOFlyingPiece(const float3& pos, const float3& speed, int team, const S3DOPiece* _object, const S3DOPrimitive* piece)
+	S3DOFlyingPiece(const float3& pos, const float3& speed, int team, const S3DOPiece* _piece, const S3DOPrimitive* _chunk)
 	{
 		InitCommon(pos, speed, team);
 
-		prim = piece;
-		object = _object;
+		piece = _piece;
+		chunk = _chunk;
 	}
 
 	void Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va);
 
 private:
-	const S3DOPrimitive* prim;
-	const S3DOPiece* object;
+	const S3DOPiece* piece;
+	const S3DOPrimitive* chunk;
 };
 
 struct SS3OFlyingPiece: public FlyingPiece {
 public:
 	~SS3OFlyingPiece();
-	SS3OFlyingPiece(const float3& pos, const float3& speed, int team, int textureType, const SS3OVertex* _geometry)
+	SS3OFlyingPiece(const float3& pos, const float3& speed, int team, int textureType, const SS3OVertex* _chunk)
 	{
 		InitCommon(pos, speed, team);
 
-		geometry = _geometry;
+		chunk = _chunk;
 		texture = textureType;
 	}
 
 	void Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va);
 
 private:
-	const SS3OVertex* geometry;
+	const SS3OVertex* chunk;
 };
 
 #endif // FLYING_PIECE_H
+

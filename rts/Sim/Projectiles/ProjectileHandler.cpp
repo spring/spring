@@ -66,20 +66,6 @@ CR_REG_METADATA(CProjectileHandler, (
 
 
 
-// need this for AddFlyingPiece
-bool piececmp::operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const {
-	if (fp1->GetTexture() != fp2->GetTexture())
-		return (fp1->GetTexture() > fp2->GetTexture());
-	if (fp1->GetTeam() != fp2->GetTeam())
-		return (fp1->GetTeam() > fp2->GetTeam());
-	return (fp1 > fp2);
-}
-
-void projdetach::Detach(CProjectile *p) { p->Detach(); }
-
-int ProjectileID::Index(const CProjectile* p) { return p->id; }
-CProjectile* ProjectileID::Unindex(ProjectileMap::const_iterator i) { return i->second.first; }
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -285,16 +271,16 @@ void CProjectileHandler::Update()
 			groundFlashes.delay_add();
 		}
 
-		#define UPDATE_FLYING_PIECES(fpContainer)                                        \
-			FlyingPieceContainer::iterator pti = fpContainer.begin();                    \
-                                                                                         \
-			while (pti != fpContainer.end()) {                                           \
-				FlyingPiece* p = *pti;                                                   \
-				if (!p->Update()) {                                                      \
-					pti = fpContainer.erase_delete_set(pti);                             \
-				} else {                                                                 \
-					++pti;                                                               \
-				}                                                                        \
+		#define UPDATE_FLYING_PIECES(fpContainer)                      \
+			FlyingPieceContainer::iterator pti = fpContainer.begin();  \
+                                                                       \
+			while (pti != fpContainer.end()) {                         \
+				FlyingPiece* p = *pti;                                 \
+				if (!p->Update()) {                                    \
+					pti = fpContainer.erase_delete_set(pti);           \
+				} else {                                               \
+					++pti;                                             \
+				}                                                      \
 			}
 
 		{ UPDATE_FLYING_PIECES(flyingPieces3DO); }
@@ -320,17 +306,18 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	assert(p->id < 0);
 	
 	std::list<int>* freeIDs = NULL;
-	std::map<int, ProjectileMapPair>* proIDs = NULL;
-	int* maxUsedID = NULL;
+	ProjectileMap* proIDs = NULL;
 	ProjectileRenderMap* newProIDs = NULL;
-	int newID = 0;
+
+	int* maxUsedID = NULL;
+	int newUsedID = 0;
 
 	if (p->synced) {
 		syncedProjectiles.push(p);
 		freeIDs = &freeSyncedIDs;
 		proIDs = &syncedProjectileIDs;
-		maxUsedID = &maxUsedSyncedID;
 		newProIDs = &syncedRenderProjectileIDs;
+		maxUsedID = &maxUsedSyncedID;
 
 		ASSERT_SYNCED(*maxUsedID);
 		ASSERT_SYNCED(freeIDs->size());
@@ -342,16 +329,16 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 #endif
 		freeIDs = &freeUnsyncedIDs;
 		proIDs = &unsyncedProjectileIDs;
-		maxUsedID = &maxUsedUnsyncedID;
 		newProIDs = &unsyncedRenderProjectileIDs;
+		maxUsedID = &maxUsedUnsyncedID;
 	}
 
 	if (!freeIDs->empty()) {
-		newID = freeIDs->front();
+		newUsedID = freeIDs->front();
 		freeIDs->pop_front();
 	} else {
 		(*maxUsedID)++;
-		newID = *maxUsedID;
+		newUsedID = *maxUsedID;
 	}
 
 	if ((*maxUsedID) > (1 << 24)) {
@@ -359,16 +346,18 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	}
 	
 	if (p->synced) {
-		ASSERT_SYNCED(newID);
+		ASSERT_SYNCED(newUsedID);
 	}
 
-	ProjectileMapPair pp(p, p->owner() ? p->owner()->allyteam : -1);
+	p->id = newUsedID;
 
-	p->id = newID;
-	(*proIDs)[p->id] = pp;
-	newProIDs->push(p, pp);
+	const ProjectileMapValPair vp(p, p->owner() ? p->owner()->allyteam : -1);
+	const ProjectileMapKeyPair kp(p->id, vp);
 
-	eventHandler.ProjectileCreated(pp.first, pp.second);
+	proIDs->insert(kp);
+	newProIDs->push(p, vp);
+
+	eventHandler.ProjectileCreated(vp.first, vp.second);
 }
 
 
@@ -528,10 +517,10 @@ void CProjectileHandler::AddFlyingPiece(
 	const float3& pos,
 	const float3& speed,
 	int team,
-	const S3DOPiece* object,
-	const S3DOPrimitive* piece)
+	const S3DOPiece* piece,
+	const S3DOPrimitive* chunk)
 {
-	FlyingPiece* fp = new S3DOFlyingPiece(pos, speed, team, object, piece);
+	FlyingPiece* fp = new S3DOFlyingPiece(pos, speed, team, piece, chunk);
 	flyingPieces3DO.insert(fp);
 }
 
@@ -540,11 +529,11 @@ void CProjectileHandler::AddFlyingPiece(
 	const float3& speed,
 	int team,
 	int textureType,
-	const SS3OVertex* verts)
+	const SS3OVertex* chunk)
 {
 	assert(textureType > 0);
 
-	FlyingPiece* fp = new SS3OFlyingPiece(pos, speed, team, textureType, verts);
+	FlyingPiece* fp = new SS3OFlyingPiece(pos, speed, team, textureType, chunk);
 	flyingPiecesS3O.insert(fp);
 }
 

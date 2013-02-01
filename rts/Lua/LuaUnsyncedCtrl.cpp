@@ -258,7 +258,7 @@ static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, 
 
 	const int projID = lua_toint(L, index);
 
-	const ProjectileMapPair* pp = NULL;
+	const ProjectileMapValPair* pp = NULL;
 	if (synced) {
 		pp = ph->GetMapPairBySyncedID(projID);
 	} else {

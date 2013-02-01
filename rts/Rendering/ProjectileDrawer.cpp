@@ -37,15 +37,6 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
-bool distcmp::operator() (const CProjectile* arg1, const CProjectile* arg2) const {
-	if (arg1->tempdist != arg2->tempdist) // strict ordering required
-		return (arg1->tempdist > arg2->tempdist);
-	return (arg1 > arg2);
-}
-
-
-
-
 
 
 CProjectileDrawer* projectileDrawer = NULL;
@@ -666,7 +657,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		CProjectile::va->Initialize();
 
 		// draw the particle effects
-		for (std::set<CProjectile*, distcmp>::iterator it = zSortedProjectiles.begin(); it != zSortedProjectiles.end(); ++it) {
+		for (std::set<CProjectile*, ProjectileDistanceComparator>::iterator it = zSortedProjectiles.begin(); it != zSortedProjectiles.end(); ++it) {
 			(*it)->Draw();
 		}
 	}
