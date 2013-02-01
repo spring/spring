@@ -98,8 +98,8 @@ public:
 	
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
-	void AddFlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece);
-	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
+	void AddFlyingPiece(const float3& pos, const float3& speed, int team, const S3DOPiece* object, const S3DOPrimitive* piece);
+	void AddFlyingPiece(const float3& pos, const float3& speed, int team, int textureType, const SS3OVertex* verts);
 	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, bool highPriority);
 	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
 	bool RenderAccess(const CProjectile *p) const;

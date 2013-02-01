@@ -7,7 +7,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GroundFlash.h"
 #include "Sim/Features/Feature.h"
@@ -69,10 +68,10 @@ CR_REG_METADATA(CProjectileHandler, (
 
 // need this for AddFlyingPiece
 bool piececmp::operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const {
-	if (fp1->texture != fp2->texture)
-		return (fp1->texture > fp2->texture);
-	if (fp1->team != fp2->team)
-		return (fp1->team > fp2->team);
+	if (fp1->GetTexture() != fp2->GetTexture())
+		return (fp1->GetTexture() > fp2->GetTexture());
+	if (fp1->GetTeam() != fp2->GetTeam())
+		return (fp1->GetTeam() > fp2->GetTeam());
 	return (fp1 > fp2);
 }
 
@@ -291,12 +290,7 @@ void CProjectileHandler::Update()
                                                                                          \
 			while (pti != fpContainer.end()) {                                           \
 				FlyingPiece* p = *pti;                                                   \
-				p->pos     += p->speed;                                                  \
-				p->speed   *= 0.996f;                                                    \
-				p->speed.y += mapInfo->map.gravity; /* fp's are not projectiles */       \
-				p->rot     += p->rotSpeed;                                               \
-                                                                                         \
-				if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10)) {  \
+				if (!p->Update()) {                                                      \
 					pti = fpContainer.erase_delete_set(pti);                             \
 				} else {                                                                 \
 					++pti;                                                               \
@@ -530,19 +524,27 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 }
 
 
-void CProjectileHandler::AddFlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece)
+void CProjectileHandler::AddFlyingPiece(
+	const float3& pos,
+	const float3& speed,
+	int team,
+	const S3DOPiece* object,
+	const S3DOPrimitive* piece)
 {
-	FlyingPiece* fp = new FlyingPiece(team, pos, speed, object, piece);
+	FlyingPiece* fp = new S3DOFlyingPiece(pos, speed, team, object, piece);
 	flyingPieces3DO.insert(fp);
 }
 
-void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts)
+void CProjectileHandler::AddFlyingPiece(
+	const float3& pos,
+	const float3& speed,
+	int team,
+	int textureType,
+	const SS3OVertex* verts)
 {
-	if (textureType <= 0) {
-		return; // texture 0 means 3do
-	}
+	assert(textureType > 0);
 
-	FlyingPiece* fp = new FlyingPiece(team, pos, speed, textureType, verts);
+	FlyingPiece* fp = new SS3OFlyingPiece(pos, speed, team, textureType, verts);
 	flyingPiecesS3O.insert(fp);
 }
 
@@ -614,11 +616,17 @@ void CProjectileHandler::AddNanoParticle(
 	}
 }
 
-bool CProjectileHandler::RenderAccess(const CProjectile *p) const {
-#if UNSYNCED_PROJ_NOEVENT
-	return p->synced && syncedRenderProjectileIDs.get_render_map().find(p->id) != syncedRenderProjectileIDs.get_render_map().end();
-#else
-	return (p->synced ? syncedRenderProjectileIDs.get_render_map().find(p->id) != syncedRenderProjectileIDs.get_render_map().end() :
-				unsyncedRenderProjectileIDs.get_render_map().find(p->id) != unsyncedRenderProjectileIDs.get_render_map().end());
-#endif
+bool CProjectileHandler::RenderAccess(const CProjectile* p) const {
+	const ProjectileMap* pmap = NULL;
+
+	if (p->synced) {
+		pmap = &(syncedRenderProjectileIDs.get_render_map());
+	} else {
+		#ifndef UNSYNCED_PROJ_NOEVENT
+		pmap = &(unsyncedRenderProjectileIDs.get_render_map());
+		#endif
+	}
+
+	return (pmap != NULL && pmap->find(p->id) != pmap->end());
 }
+

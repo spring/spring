@@ -607,7 +607,7 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 		size_t lastTeam = -1;
 
 		for (fpi = container->render_begin(); fpi != container->render_end(); ++fpi) {
-			(*fpi)->Draw(modelType, &lastTeam, &lastTex, va);
+			(*fpi)->Draw(&lastTeam, &lastTex, va);
 		}
 
 		(*drawnPieces) += (va->drawIndex() / 32);
