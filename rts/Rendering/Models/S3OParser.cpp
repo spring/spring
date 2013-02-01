@@ -84,10 +84,13 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	for (int a = 0; a < fp->numVertices; ++a) {
 		Vertex* v = reinterpret_cast<Vertex*>(&buf[vertexOffset]);
 			v->swap();
-		SS3OVertex* sv = reinterpret_cast<SS3OVertex*>(&buf[vertexOffset]);
-			sv->normal.SafeANormalize();
 
-		piece->SetVertex(a, *sv);
+		SS3OVertex sv;
+		sv.pos = float3(v->xpos, v->ypos, v->zpos);
+		sv.normal = float3(v->xnormal, v->ynormal, v->znormal).SafeANormalize();
+		sv.texCoord = float2(v->texu, v->texv);
+
+		piece->SetVertex(a, sv);
 		vertexOffset += sizeof(Vertex);
 	}
 
@@ -290,9 +293,9 @@ void SS3OPiece::SetVertexTangents()
 		const float3& p1 = vrt1->pos;
 		const float3& p2 = vrt2->pos;
 
-		const float2 tc0(vrt0->texCoord.x, vrt0->texCoord.y);
-		const float2 tc1(vrt1->texCoord.x, vrt1->texCoord.y);
-		const float2 tc2(vrt2->texCoord.x, vrt2->texCoord.y);
+		const float2 tc0(vrt0->texCoord);
+		const float2 tc1(vrt1->texCoord);
+		const float2 tc2(vrt2->texCoord);
 
 		const float x1x0 = p1.x - p0.x, x2x0 = p2.x - p0.x;
 		const float y1y0 = p1.y - p0.y, y2y0 = p2.y - p0.y;
