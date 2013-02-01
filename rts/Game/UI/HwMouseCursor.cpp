@@ -501,9 +501,11 @@ void CHwX11Cursor::Finish()
 	if (cimages.size()<1)
 		return;
 
+	int squaresize = next_power_of_2( std::max(xmaxsize,ymaxsize) );
+
 	//resize images
 	for (std::vector<XcursorImage*>::iterator it = cimages.begin(); it < cimages.end(); ++it)
-		resizeImage(*it, xmaxsize, ymaxsize);
+		resizeImage(*it, squaresize, squaresize);
 
 	XcursorImages *cis = XcursorImagesCreate(cimages.size());
 	cis->nimage = cimages.size();
