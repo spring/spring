@@ -189,7 +189,7 @@ void SS3OPiece::DrawForList() const
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
 	switch (primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
-			glDrawElements(GL_TRIANGLES, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
+			glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
 			#ifdef GLEW_NV_primitive_restart
@@ -200,7 +200,7 @@ void SS3OPiece::DrawForList() const
 			}
 			#endif
 
-			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
+			glDrawRangeElements(GL_TRIANGLE_STRIP, 0, vertices.size() - 1, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 
 			#ifdef GLEW_NV_primitive_restart
 			if (globalRendering->supportRestartPrimitive) {
@@ -209,7 +209,7 @@ void SS3OPiece::DrawForList() const
 			#endif
 		} break;
 		case S3O_PRIMTYPE_QUADS: {
-			glDrawElements(GL_QUADS, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
+			glDrawRangeElements(GL_QUADS, 0, vertices.size() - 1, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 		} break;
 	}
 	vboIndices.Unbind();
