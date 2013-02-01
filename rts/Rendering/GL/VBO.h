@@ -10,10 +10,6 @@
  *
  * Vertex buffer Object class (ARB_vertex_buffer_object).
  */
-
-#ifdef VBO
-#error asdasdsadsas
-#endif
 class VBO
 {
 public:
