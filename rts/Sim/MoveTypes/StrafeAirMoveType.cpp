@@ -1102,16 +1102,6 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 
 
-void CStrafeAirMoveType::ImpulseAdded(const float3&)
-{
-	if (aircraftState == AIRCRAFT_FLYING) {
-		owner->speed += owner->residualImpulse;
-		owner->residualImpulse = ZeroVector;
-	}
-}
-
-
-
 float3 CStrafeAirMoveType::FindLandingPos() const
 {
 	const float3 ret(-1.0f, -1.0f, -1.0f);

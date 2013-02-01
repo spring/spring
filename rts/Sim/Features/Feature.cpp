@@ -42,7 +42,6 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(fireTime),
 	CR_MEMBER(smokeTime),
 	CR_MEMBER(myFire),
-	CR_MEMBER(deathSpeed),
 	CR_MEMBER(transMatrix),
 	CR_RESERVED(64),
 	CR_POSTLOAD(PostLoad)
@@ -198,8 +197,8 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 		finalHeight = ground->GetHeightReal(pos.x, pos.z);
 	}
 
-	deathSpeed = params.speed;
-	isMoving = ((deathSpeed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
+	speed = params.speed;
+	isMoving = ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
 }
 
 
@@ -351,10 +350,15 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit
 		return; // paralyzers do not damage features
 	}
 
-	residualImpulse = impulse;
-	health -= damages[0];
+	// NOTE: for trees, impulse is used to drive their falling animation
+	StoreImpulse(impulse / mass);
+	ApplyImpulse();
 
-	if (health <= 0 && def->destructable) {
+	if (impulse != ZeroVector) {
+		featureHandler->SetFeatureUpdateable(this);
+	}
+
+	if ((health -= damages[0]) <= 0.0f && def->destructable) {
 		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, ZeroVector, -1, team, -1, heading, buildFacing, 0};
 		CFeature* deathFeature = featureHandler->CreateWreckage(params, 0, false);
 
@@ -365,12 +369,8 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse, CUnit
 			deathFeature->reclaimLeft = reclaimLeft;
 		}
 
-		if (def->drawType >= DRAWTYPE_TREE)
-			deathSpeed = impulse; // re-use deathSpeed: impulse is needed for creation of falling trees
-
 		featureHandler->DeleteFeature(this);
 		blockHeightChanges = false;
-
 	}
 }
 
@@ -442,37 +442,37 @@ bool CFeature::UpdatePosition()
 			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
 
-			deathSpeed *= 0.999999f;
-			deathSpeed *= (1.0f - (int(reachedWater ) * 0.05f));
-			deathSpeed *= (1.0f - (int(reachedGround) * 0.10f));
+			speed *= 0.999999f;
+			speed *= (1.0f - (int(reachedWater ) * 0.05f));
+			speed *= (1.0f - (int(reachedGround) * 0.10f));
 
-			if (deathSpeed.SqLength2D() > 0.01f) {
+			if (speed.SqLength2D() > 0.01f) {
 				UnBlock();
 				qf->RemoveFeature(this);
 
 				// update our forward speed (and quadfield
 				// position) if it is still greater than 0
-				Move3D(deathSpeed, true);
+				Move3D(speed, true);
 
 				qf->AddFeature(this);
 				Block();
 			} else {
-				deathSpeed.x = 0.0f;
-				deathSpeed.z = 0.0f;
+				speed.x = 0.0f;
+				speed.z = 0.0f;
 			}
 
 			if (!reachedGround) {
 				if (!reachedWater) {
 					// quadratic acceleration if not in water
-					deathSpeed.y += mapInfo->map.gravity;
+					speed.y += mapInfo->map.gravity;
 				} else {
 					// constant downward speed otherwise
-					deathSpeed.y = mapInfo->map.gravity;
+					speed.y = mapInfo->map.gravity;
 				}
 
-				Move1D(deathSpeed.y, 1, true);
+				Move1D(speed.y, 1, true);
 			} else {
-				deathSpeed.y = 0.0f;
+				speed.y = 0.0f;
 
 				// last Update() may have sunk us into
 				// ground if pos.y was only marginally
@@ -486,13 +486,16 @@ bool CFeature::UpdatePosition()
 				// ensure that no more forward-speed updates are done
 				// (prevents wrecks floating in mid-air at edge of map
 				// due to gravity no longer being applied either)
-				deathSpeed = ZeroVector;
+				speed = ZeroVector;
 			}
 
 			eventHandler.FeatureMoved(this, oldPos);
 			CalculateTransform();
 		}
 	} else {
+		// any feature that is not a dead unit (ie. rocks, trees, ...)
+		// these never move in the xz-plane no matter how much impulse
+		// is applied, only gravity affects them
 		if (pos.y > finalHeight) {
 			if (pos.y > 0.0f) {
 				speed.y += mapInfo->map.gravity;
@@ -515,8 +518,10 @@ bool CFeature::UpdatePosition()
 		transMatrix[13] = pos.y;
 	}
 
+	residualImpulse *= impulseDecayRate;
+
 	isUnderWater = ((pos.y + height) < 0.0f);
-	isMoving = ((deathSpeed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
+	isMoving = ((speed != ZeroVector) || (std::fabs(pos.y - finalHeight) >= 0.01f));
 
 	return isMoving;
 }

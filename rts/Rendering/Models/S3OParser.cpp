@@ -293,9 +293,9 @@ void SS3OPiece::SetVertexTangents()
 		const float3& p1 = vrt1->pos;
 		const float3& p2 = vrt2->pos;
 
-		const float2 tc0(vrt0->texCoord);
-		const float2 tc1(vrt1->texCoord);
-		const float2 tc2(vrt2->texCoord);
+		const float2& tc0 = vrt0->texCoord;
+		const float2& tc1 = vrt1->texCoord;
+		const float2& tc2 = vrt2->texCoord;
 
 		const float x1x0 = p1.x - p0.x, x2x0 = p2.x - p0.x;
 		const float y1y0 = p1.y - p0.y, y2y0 = p2.y - p0.y;

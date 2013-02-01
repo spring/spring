@@ -1185,7 +1185,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		damage = newDamage;
 	}
 
-	AddImpulse((impulse * impulseMult) / mass);
+	StoreImpulse((impulse * impulseMult) / mass);
 
 	if (!isParalyzer) { // real damage
 		if (damage > 0.0f) {
@@ -1288,23 +1288,18 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 
 
 
-void CUnit::AddImpulse(const float3& addedImpulse, float newImpulseDecayRate) {
-	if ((impulseDecayRate = Clamp(newImpulseDecayRate, 0.0f, 1.0f)) > 0.0f) {
-		AddImpulse(addedImpulse);
-	}
+void CUnit::StoreImpulse(const float3& impulse, float newImpulseDecayRate) {
+	CSolidObject::StoreImpulse(impulse, newImpulseDecayRate);
 }
 
-void CUnit::AddImpulse(const float3& addedImpulse) {
-	if (GetTransporter() != NULL) {
-		// or apply impulse to the transporter?
-		return;
-	}
+void CUnit::StoreImpulse(const float3& impulse) {
+	const float3& groundNormal = ground->GetNormal(pos.x, pos.z);
+	const float groundImpulseScale = std::min(0.0f, residualImpulse.dot(groundNormal));
 
-	residualImpulse += addedImpulse;
+	CSolidObject::StoreImpulse(impulse - (groundNormal * groundImpulseScale));
+	CSolidObject::ApplyImpulse();
 
-	if (addedImpulse.SqLength() >= 0.01f) {
-		moveType->ImpulseAdded(addedImpulse);
-	}
+	moveType->ImpulseAdded(impulse);
 }
 
 
