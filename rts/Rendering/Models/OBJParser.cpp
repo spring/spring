@@ -422,26 +422,18 @@ void COBJParser::BuildModelPieceTreeRec(
 		// for (per-piece) coldet purposes; the model extends do bound
 		// all pieces
 		if (overrideMins) {
-			piece->mins.x = std::min(piece->mins.x, vertexGlobalPos.x);
-			piece->mins.y = std::min(piece->mins.y, vertexGlobalPos.y);
-			piece->mins.z = std::min(piece->mins.z, vertexGlobalPos.z);
+			piece->mins = std::min(piece->mins, vertexGlobalPos);
 		}
 		if (overrideMaxs) {
-			piece->maxs.x = std::max(piece->maxs.x, vertexGlobalPos.x);
-			piece->maxs.y = std::max(piece->maxs.y, vertexGlobalPos.y);
-			piece->maxs.z = std::max(piece->maxs.z, vertexGlobalPos.z);
+			piece->maxs = std::max(piece->maxs, vertexGlobalPos);
 		}
 
 		// we want vertices in piece-space
 		piece->SetVertex(i, vertexLocalPos);
 	}
 
-	model->mins.x = std::min(piece->mins.x, model->mins.x);
-	model->mins.y = std::min(piece->mins.y, model->mins.y);
-	model->mins.z = std::min(piece->mins.z, model->mins.z);
-	model->maxs.x = std::max(piece->maxs.x, model->maxs.x);
-	model->maxs.y = std::max(piece->maxs.y, model->maxs.y);
-	model->maxs.z = std::max(piece->maxs.z, model->maxs.z);
+	model->mins = std::min(piece->mins, model->mins);
+	model->maxs = std::max(piece->maxs, model->maxs);
 
 	const float3 cvScales = piece->maxs - piece->mins;
 	const float3 cvOffset =
@@ -586,6 +578,7 @@ void SOBJPiece::DrawForList() const
 		glClientActiveTexture(GL_TEXTURE0);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, sizeof(float2), vboTexcoords.GetPtr());
+
 		glClientActiveTexture(GL_TEXTURE1);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, sizeof(float2), vboTexcoords.GetPtr());
