@@ -130,7 +130,7 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 
 	// the mapping is 1:1 for Lua scripts, but not necessarily for COB
 	// CobInstance::MapScriptToModelPieces does the remapping (if any)
-	lmpParent->SetLModelPieceIndex(pieceNum);
+	lmpParent->SetLModelPieceIndex(pieces.size() - 1);
 	lmpParent->SetScriptPieceIndex(pieceNum);
 
 	for (unsigned int i = 0; i < mpParent->GetChildCount(); i++) {
