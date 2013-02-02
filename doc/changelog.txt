@@ -207,6 +207,7 @@ Sim Bugfixes:
  ! disable collision checking between transporter & transportee
  - fix being-built units having order queues overwritten upon completion (#3342)
  - fix FPE's in {Large}BeamLaserProjectile (#3413 & #3414)
+ - fix impulse not being applied to features (unit wrecks)
 
 Bugfixes:
  - fix network connection is not properly closed when an error occurs in pregame (3166)
