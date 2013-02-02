@@ -658,10 +658,11 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	skidRotSpeed = 0.0f;
 	skidRotAccel = 0.0f;
 
+	float3 newSpeed = owner->speed + owner->residualImpulse;
 	float3 skidDir = owner->frontdir;
 
-	if ((owner->speed + impulse).SqLength2D() >= 0.01f) {
-		skidDir = owner->speed + impulse;
+	if (newSpeed.SqLength2D() >= 0.01f) {
+		skidDir = newSpeed;
 		skidDir.y = 0.0f;
 		skidDir.Normalize();
 	}
@@ -671,12 +672,12 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	oldPhysState = owner->physicalState;
 	owner->physicalState = CSolidObject::Flying;
 
-	if ((owner->speed + impulse).dot(ground->GetNormal(owner->pos.x, owner->pos.z)) > 0.2f) {
+	if (newSpeed.dot(ground->GetNormal(owner->pos.x, owner->pos.z)) > 0.2f) {
 		skidRotAccel = (gs->randFloat() - 0.5f) * 0.04f;
 		flying = true;
 	}
 
-	ASSERT_SANE_OWNER_SPEED(owner->speed);
+	ASSERT_SANE_OWNER_SPEED(newSpeed);
 	// indicate we want to react to the impulse
 	return true;
 }
