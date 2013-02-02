@@ -23,7 +23,7 @@ pr-download:
  - fixes / speedups
  - add c-api to shared lib & use it for pr-downloader
 
-Unitsync
+Unitsync:
  ! fix return in GetInfoMapSize (#2996)
  - no crashes in unitsync without init any more (#3120)
  ! ProcessUnits, GetUnitCount, GetMapCount, GetMapArchiveCount,
@@ -34,7 +34,10 @@ Unitsync
    GetOptionStringMaxLen, GetOptionListCount and GetModValidMapCount
    returns now -1/-1.0f on error
 
-Lua
+Lua:
+ ! make TeamHandler::IsActiveTeam check Team::isDead
+ ! gl.UnitPieceMatrix & gl.UnitPieceMultMatrix do now the same and work from UnitSpace & aren't recursive anymore (don't depend on the parent-piece)
+ ! remove LuaLobby
  - enable luasocket as default and always allow to listen (UDP & TCP)
  - new Spring.GetTerrainTypeData (already on wiki)
  - new Spring.GetUnitCurrentBuildPower(unitID) -> number 0..1 
@@ -45,9 +48,6 @@ Lua
  - Lua: make Spring.GetPlayerRoster really return a boolean for spectator as the wiki says
  - fix crash when calling Script.Kill() (3292)
  - fix Spring.GetUnitNearestAlly takes self into account (3293)
- ! make TeamHandler::IsActiveTeam check Team::isDead
- ! gl.UnitPieceMatrix & gl.UnitPieceMultMatrix do now the same and work from UnitSpace & aren't recursive anymore (don't depend on the parent-piece)
- ! remove LuaLobby
  - Spring.SetTerrainTypeData now only updates pathfinder when there is a real change (performance)
  - fix crash in LuaUnitDefs when trying to read deathExpWeaponDef (#3333 & #3325)
  - add Spring.GetReplayLength()
@@ -64,6 +64,9 @@ Lua
  - fix Spring.GetFeatureDirection returning direction in (x,z)-plane only (#1599)
  - couple the AllowWeapon* callins to SetWatchWeapon state
  - add optional 4th argument to Spring.SetUnitImpulse to control a unit's impulse decay-rate (now unhardcoded)
+ ! Game.version now returns the same as `spring --sync-version`, e.g. "92.0" or "91.0.1-1283-gf3805a7"
+ - new Game.engine_flags (unsynced only) to get additional buildflags, e.g. "OMP" or "MT-Sim DEBUG"
+
 
 CollisionVolumes:
  ! drop support for ellipsoid-cylinders and ellipsoids
@@ -118,6 +121,9 @@ UnitScripts:
  ! LUS/COB: cache QueryNanoPiece() results
     Note, this stops QueryNanoPiece() calls after 31 times no matter what!
     This breaks ZK's LupsNanoSpray, fixed version can be found here http://gw.gd/Zaae.
+
+Models:
+ - Assimp parsed models now support a 2nd texcoord
 
 Weapons/WeaponDefs:
  ! remove of manualBombSettings (backward-compability code in weapondefs_post.lua)
@@ -175,6 +181,8 @@ Rendering:
  - BumpWater renders now with shadowmap & infotex
  - clamp map ShadowDensity 0..1 (fixes shadow distortions on maps like Iamma)
  - use VBOs for S3O and OBJ model piece geometry
+ - fix grass shadow rendering (no self-shadowing yet)
+ ! changed `usable` range of GrassDetail configtag, so you can set it now >10 to increase viewrange w/o getting Tribble plushies
 
 Sim Bugfixes:
  ! stop buildframe decaying on reclaiming
@@ -208,6 +216,7 @@ Sim Bugfixes:
  - fix being-built units having order queues overwritten upon completion (#3342)
  - fix FPE's in {Large}BeamLaserProjectile (#3413 & #3414)
  - fix impulse not being applied to features (unit wrecks)
+ - allow underwater units to build stuff on the waterplane
 
 Bugfixes:
  - fix network connection is not properly closed when an error occurs in pregame (3166)
@@ -246,6 +255,7 @@ Windows:
 
 Linux:
  - Linux's ctrl+c: `hardkill` after 10sec (and 5 seconds softkill)
+ - workaorund issue in FOSS ati drivers with NPOT cursors
 
 
 -- 91.0 ---------------------------------------------------------
