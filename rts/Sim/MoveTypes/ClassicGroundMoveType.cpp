@@ -32,7 +32,7 @@ void CClassicGroundMoveType::StartMoving(float3, float, float) {}
 void CClassicGroundMoveType::StopMoving() {}
 void CClassicGroundMoveType::KeepPointingTo(float3, float, bool) {}
 void CClassicGroundMoveType::KeepPointingTo(CUnit*, float, bool) {}
-void CClassicGroundMoveType::ImpulseAdded() {}
+bool CClassicGroundMoveType::CanApplyImpulse() { return false; }
 void CClassicGroundMoveType::SetMaxSpeed(float) {}
 void CClassicGroundMoveType::LeaveTransport() {}
 
@@ -445,10 +445,10 @@ void CClassicGroundMoveType::ChangeHeading(short wantedHeading) {
 	flatFrontDir.Normalize();
 }
 
-void CClassicGroundMoveType::ImpulseAdded()
+bool CClassicGroundMoveType::CanApplyImpulse()
 {
 	if (owner->beingBuilt || owner->moveDef->moveFamily == MoveDef::Ship)
-		return;
+		return false;
 
 	float3& impulse = owner->residualImpulse;
 	float3& speed = owner->speed;
@@ -486,6 +486,8 @@ void CClassicGroundMoveType::ImpulseAdded()
 			skidRotSpeed2 = (gs->randFloat() - 0.5f) * 0.04f;
 		}
 	}
+
+	return true;
 }
 
 void CClassicGroundMoveType::UpdateSkid()
