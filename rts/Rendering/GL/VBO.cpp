@@ -78,10 +78,8 @@ void VBO::Bind(GLenum target) const
 
 	bound = true;
 	if (VBOused) {
-		if (vboId == 0)
-			glGenBuffers(1, &static_cast<GLuint>(vboId));
 		curBoundTarget = target;
-		glBindBuffer(target, vboId);
+		glBindBuffer(target, *(const_cast<GLuint*>(&vboId)) = GenBuffer());
 	}
 }
 
@@ -216,4 +214,15 @@ const GLvoid* VBO::GetPtr(GLintptr offset) const
 		return (GLvoid*)(data + offset);
 	}
 }
+
+GLuint VBO::GenBuffer() const {
+	GLuint buffer = vboId;
+
+	if (VBOused && buffer == 0) {
+		glGenBuffers(1, &buffer);
+	}
+
+	return buffer;
+}
+
 
