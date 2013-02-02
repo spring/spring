@@ -693,9 +693,9 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			return;
 		}
 
-		if (tempOrder && owner->moveState == MOVESTATE_MANEUVER) {
-			// limit how far away we go
-			if (LinePointDist(commandPos1, commandPos2, unit->pos) > 500) {
+		if (tempOrder && owner->moveState <= MOVESTATE_MANEUVER) {
+			// limit how far away we go when not roaming
+			if (LinePointDist(commandPos1, commandPos2, unit->pos) > std::max(500.0f, GetBuildRange(unit->radius))) {
 				StopMove();
 				FinishCommand();
 				return;
