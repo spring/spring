@@ -2385,7 +2385,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			(               owner->speed.dot(  UpVector) * (    applyGravity)) +
 			(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - applyGravity));
 
-		if (false) { //owner->moveDef->moveFamily != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
+		if (owner->moveDef->moveFamily != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
 			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc);
 			const float3 speedVec = owner->speed + accelVec;
 
