@@ -24,7 +24,7 @@
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 
-CONFIG(int, GrassDetail).defaultValue(40);
+CONFIG(int, GrassDetail).defaultValue(7);
 
 static const float turfSize        = 20.0f;            // single turf size
 static const float partTurfSize    = turfSize * 0.6f;  // single turf size
