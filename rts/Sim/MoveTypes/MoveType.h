@@ -23,7 +23,7 @@ public:
 	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive) = 0;
 	virtual void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 	virtual void StopMoving() = 0;
-	virtual void ImpulseAdded(const float3&) {}
+	virtual bool CanApplyImpulse(const float3&) { return false; }
 	virtual void LeaveTransport() {}
 
 	virtual void SetGoal(const float3& pos) { goalPos = pos; }

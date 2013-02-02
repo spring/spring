@@ -1297,9 +1297,10 @@ void CUnit::StoreImpulse(const float3& impulse) {
 	const float groundImpulseScale = std::min(0.0f, residualImpulse.dot(groundNormal));
 
 	CSolidObject::StoreImpulse(impulse - (groundNormal * groundImpulseScale));
-	CSolidObject::ApplyImpulse();
 
-	moveType->ImpulseAdded(impulse);
+	if (moveType->CanApplyImpulse(impulse)) {
+		CSolidObject::ApplyImpulse();
+	}
 }
 
 

@@ -630,22 +630,27 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 
 
 
-void CGroundMoveType::ImpulseAdded(const float3& impulse)
+bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 {
 	// NOTE: ships must be able to receive impulse too (for collision handling)
 	if (owner->beingBuilt)
-		return;
+		return false;
 	// TODO: or apply impulse to the transporter?
 	if (owner->GetTransporter() != NULL)
-		return;
-	// NOTE:
-	//   we no longer delay the skidding-state until owner has "accumulated" an
-	//   arbitrary hardcoded amount of impulse (possibly across several frames!),
-	//   but enter it on any vector with non-zero length
-	//   there should probably be a configurable minimum-impulse below which the
-	//   unit does not react at all, re-use SolidObject::residualImpulse for this
+		return false;
 	if (impulse.SqLength() <= 0.01f)
-		return;
+		return false;
+	// TODO (92.0+):
+	//   we should not delay the skidding-state until owner has "accumulated" an
+	//   arbitrary hardcoded amount of impulse (possibly across several frames!),
+	//   but enter it on any vector with non-zero length --> most weapon impulses
+	//   will just reduce the unit's speed a bit
+	//   there should probably be a configurable minimum-impulse below which the
+	//   unit does not react at all (can re-use SolidObject::residualImpulse for
+	//   this) but also does NOT store the impulse like a small-charge capacitor,
+	//   see CUnit:: StoreImpulse
+	if (owner->residualImpulse.SqLength() <= 9.0f)
+		return false;
 
 	skidding = true;
 	useHeading = false;
@@ -655,8 +660,8 @@ void CGroundMoveType::ImpulseAdded(const float3& impulse)
 
 	float3 skidDir = owner->frontdir;
 
-	if (owner->speed.SqLength2D() >= 0.01f) {
-		skidDir = owner->speed;
+	if ((owner->speed + impulse).SqLength2D() >= 0.01f) {
+		skidDir = owner->speed + impulse;
 		skidDir.y = 0.0f;
 		skidDir.Normalize();
 	}
@@ -666,12 +671,14 @@ void CGroundMoveType::ImpulseAdded(const float3& impulse)
 	oldPhysState = owner->physicalState;
 	owner->physicalState = CSolidObject::Flying;
 
-	if (owner->speed.dot(ground->GetNormal(owner->pos.x, owner->pos.z)) > 0.2f) {
+	if ((owner->speed + impulse).dot(ground->GetNormal(owner->pos.x, owner->pos.z)) > 0.2f) {
 		skidRotAccel = (gs->randFloat() - 0.5f) * 0.04f;
 		flying = true;
 	}
 
 	ASSERT_SANE_OWNER_SPEED(speed);
+	// indicate we want to react to the impulse
+	return true;
 }
 
 void CGroundMoveType::UpdateSkid()
@@ -2378,16 +2385,17 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			(               owner->speed.dot(  UpVector) * (    applyGravity)) +
 			(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - applyGravity));
 
-		if (owner->moveDef->moveFamily != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
+		if (false) { //owner->moveDef->moveFamily != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
 			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc);
 			const float3 speedVec = owner->speed + accelVec;
 
-			speedVector += (flatFrontDir * speedVec.dot(flatFrontDir));
+			// NOTE: the 0.99f term ensures speed-vector always decays when wantedSpeed and deltaSpeed are 0
+			speedVector += (flatFrontDir * speedVec.dot(flatFrontDir)) * 0.99f;
 			speedVector += (    UpVector * speedVec.dot(    UpVector));
 		} else {
-			speedVector += (               gndTangVec *   std::max(0.0f,    owner->speed.dot(gndTangVec) + hAcc * 1.0f)) * 1.00f;
+			speedVector += (               gndTangVec *   std::max(0.0f,    owner->speed.dot(gndTangVec) + hAcc * 1.0f)) * 0.99f;
 			speedVector += (   flatSpeed - gndTangVec * /*std::max(0.0f,*/( owner->speed.dot(gndTangVec) - hAcc * 0.0f)) * 0.95f;
-			speedVector += UpVector * (owner->speed + UpVector * vAcc).dot(UpVector);
+			speedVector += UpVector * (owner->speed * 0.999f + UpVector * vAcc).dot(UpVector);
 		}
 
 		#undef vAcc
