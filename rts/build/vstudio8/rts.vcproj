@@ -3644,6 +3644,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Projectiles\ProjectileFunctors.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\ProjectileFunctors.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Projectiles\ProjectileHandler.cpp"
 					>
 				</File>
