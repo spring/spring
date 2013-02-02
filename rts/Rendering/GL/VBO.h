@@ -39,16 +39,16 @@ public:
 	GLubyte* MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access = GL_WRITE_ONLY);
 	void UnmapBuffer();
 
-	// either this or assert(bound);
-	GLuint GetId() { return (vboId = GenBuffer()); }
+	GLuint GetId() const {
+		if (VBOused && vboId == 0) glGenBuffers(1, &vboId);
+		return vboId;
+	}
 
 	size_t GetSize() const { return size; }
 	const GLvoid* GetPtr(GLintptr offset = 0) const;
 
 protected:
-	GLuint GenBuffer() const;
-
-	GLuint vboId;
+	mutable GLuint vboId;
 	size_t size;
 	mutable GLenum curBoundTarget;
 	GLenum defTarget;

@@ -56,8 +56,11 @@ VBO::VBO(GLenum _defTarget) : vboId(0)
 	usage = GL_STREAM_DRAW;
 	nullSizeMapped = false;
 
-	// glGenBuffers here would break MultiThreadShareLists = 0
 	VBOused = IsSupported();
+
+	// With GML the ctor can be called by a non-render thread
+	// so delay the buffer generation to the first usage
+	//if (VBOused) glGenBuffers(1, &vboId);
 }
 
 
@@ -79,7 +82,7 @@ void VBO::Bind(GLenum target) const
 	bound = true;
 	if (VBOused) {
 		curBoundTarget = target;
-		glBindBuffer(target, *(const_cast<GLuint*>(&vboId)) = GenBuffer());
+		glBindBuffer(target, GetId());
 	}
 }
 
@@ -214,15 +217,3 @@ const GLvoid* VBO::GetPtr(GLintptr offset) const
 		return (GLvoid*)(data + offset);
 	}
 }
-
-GLuint VBO::GenBuffer() const {
-	GLuint buffer = vboId;
-
-	if (VBOused && buffer == 0) {
-		glGenBuffers(1, &buffer);
-	}
-
-	return buffer;
-}
-
-
