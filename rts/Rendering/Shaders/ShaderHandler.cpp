@@ -32,7 +32,9 @@ void CShaderHandler::ReleaseProgramObjects(const std::string& poClass) {
 
 	for (ProgramObjMapIt it = programObjects[poClass].begin(); it != programObjects[poClass].end(); ++it) {
 		// free the program object and its attachments
-		(it->second)->Release(); delete (it->second);
+		if (it->second != Shader::nullProgramObject) {
+			(it->second)->Release(); delete (it->second);
+		}
 	}
 
 	programObjects[poClass].clear();
@@ -92,7 +94,7 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 	bool arbShader = (lowerSoName.find("arb") != std::string::npos);
 /*
 	bool arbShader =
-		lowerSoName.find("glsl") == std::string::npos &&
+		lowerSoName.find(".glsl") == std::string::npos &&
 		lowerSoName.find(".vert") == std::string::npos &&
 		lowerSoName.find(".frag") == std::string::npos;
 */

@@ -145,7 +145,7 @@ namespace Shader {
 		SShaderFlagState() : updates(0), lastUpdates(0), lastHash(0) {}
 		virtual ~SShaderFlagState() {}
 
-		int GetHash();
+		unsigned int GetHash();
 
 		std::string GetString() const
 		{

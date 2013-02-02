@@ -6,7 +6,7 @@
 
 
 namespace Shader {
-	int SShaderFlagState::GetHash()
+	unsigned int SShaderFlagState::GetHash()
 	{
 		if (updates != lastUpdates) {
 			lastUpdates = updates;
