@@ -5,6 +5,7 @@
 
 #include "LuaInclude.h"
 
+#include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
@@ -48,7 +49,10 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	const bool ghostedBuildings = gameSetup->ghostedBuildings;
 	const int  startPosType     = gameSetup->startPosType;
 
-	LuaPushNamedString(L, "version",       SpringVersion::GetFull());
+	LuaPushNamedString(L, "version",       SpringVersion::GetSync());
+	if (!CLuaHandle::GetHandleSynced(L)) {
+		LuaPushNamedString(L, "engine_flags",  SpringVersion::GetAdditional());
+	}
 
 	if (uh) {
 		LuaPushNamedNumber(L, "maxUnits",      uh->MaxUnits());
