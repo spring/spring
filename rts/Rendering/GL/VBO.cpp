@@ -56,12 +56,8 @@ VBO::VBO(GLenum _defTarget) : vboId(0)
 	usage = GL_STREAM_DRAW;
 	nullSizeMapped = false;
 
-	if (IsSupported()) {
-		glGenBuffers(1, &vboId);
-		VBOused = true;
-	} else {
-		VBOused = false;
-	}
+	// glGenBuffers here would break MultiThreadShareLists = 0
+	VBOused = IsSupported();
 }
 
 
@@ -82,6 +78,8 @@ void VBO::Bind(GLenum target) const
 
 	bound = true;
 	if (VBOused) {
+		if (vboId == 0)
+			glGenBuffers(1, &static_cast<GLuint>(vboId));
 		curBoundTarget = target;
 		glBindBuffer(target, vboId);
 	}

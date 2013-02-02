@@ -39,7 +39,11 @@ public:
 	GLubyte* MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access = GL_WRITE_ONLY);
 	void UnmapBuffer();
 
-	GLuint GetId() const { return vboId; }
+	GLuint GetId() const {
+		if (VBOused && vboId == 0)
+			glGenBuffers(1, &static_cast<GLuint>(vboId)); // either this or assert(bound);
+		return vboId;
+	}
 	size_t GetSize() const { return size; }
 	const GLvoid* GetPtr(GLintptr offset = 0) const;
 
