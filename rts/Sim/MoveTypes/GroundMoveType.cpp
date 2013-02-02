@@ -676,7 +676,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 		flying = true;
 	}
 
-	ASSERT_SANE_OWNER_SPEED(speed);
+	ASSERT_SANE_OWNER_SPEED(owner->speed);
 	// indicate we want to react to the impulse
 	return true;
 }
