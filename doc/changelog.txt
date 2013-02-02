@@ -65,7 +65,7 @@ Lua:
  - couple the AllowWeapon* callins to SetWatchWeapon state
  - add optional 4th argument to Spring.SetUnitImpulse to control a unit's impulse decay-rate (now unhardcoded)
  ! Game.version now returns the same as `spring --sync-version`, e.g. "92.0" or "91.0.1-1283-gf3805a7"
- - new Game.engine_flags (unsynced only) to get additional buildflags, e.g. "OMP" or "MT-Sim DEBUG"
+ - new Game.buildFlags (unsynced only) to get additional engine buildflags, e.g. "OMP" or "MT-Sim DEBUG"
 
 
 CollisionVolumes:
