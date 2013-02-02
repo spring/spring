@@ -60,7 +60,7 @@ namespace Shader {
 
 	struct IProgramObject : public SShaderFlagState {
 	public:
-		IProgramObject(const std::string& poName): name(poName), objID(0), valid(false), bound(false), curHash(0) {}
+		IProgramObject(const std::string& poName): name(poName), objID(0), curHash(0), valid(false), bound(false) {}
 		virtual ~IProgramObject() {}
 
 		virtual void Enable() = 0;
@@ -115,14 +115,14 @@ namespace Shader {
 
 	protected:
 		std::string name;
+		std::string log;
+
 		unsigned int objID;
+		unsigned int curHash;
+
 		bool valid;
-	
 		bool bound;
 
-		int curHash;
-
-		std::string log;
 		SOVec shaderObjs;
 	};
 

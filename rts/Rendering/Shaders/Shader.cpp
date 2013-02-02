@@ -82,8 +82,9 @@ static std::string GetShaderSource(std::string fileName)
 
 
 namespace Shader {
-	static NullShaderObject nullShaderObject_(0,"");
+	static NullShaderObject nullShaderObject_(0, "");
 	static NullProgramObject nullProgramObject_("NullProgram");
+
 	NullShaderObject* nullShaderObject = &nullShaderObject_;
 	NullProgramObject* nullProgramObject = &nullProgramObject_;
 
@@ -189,7 +190,7 @@ namespace Shader {
 	}
 	void IProgramObject::RecompileIfNeeded()
 	{
-		const int hash = GetHash();
+		const unsigned int hash = GetHash();
 		if (hash != curHash) {
 			const std::string definitionFlags = GetString();
 			for (SOVecIt it = shaderObjs.begin(); it != shaderObjs.end(); ++it) {
