@@ -286,7 +286,7 @@ struct LocalModel
 	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx]->GetModelSpaceMatrix(); }
 
 private:
-	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent, size_t pieceNum = 0);
+	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent);
 
 public:
 	const S3DModel* original;
