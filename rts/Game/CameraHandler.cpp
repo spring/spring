@@ -144,11 +144,11 @@ void CCameraHandler::UpdateCam()
 	}
 	else {
 		const float timeRatio = (cameraTimeEnd - curTime) / (cameraTimeEnd - cameraTimeStart);
-		const float ratio = 1.0f - (float)math::pow(timeRatio, cameraTimeExponent);
+		const float tweenFact = 1.0f - (float)math::pow(timeRatio, cameraTimeExponent);
 
-		camera->pos     = mix(startCam.pos, wantedCamPos, ratio);
-		camera->forward = mix(startCam.dir, wantedCamDir, ratio);
-		camera->SetFov(   mix(startCam.fov, wantedCamFOV, ratio));
+		camera->pos     = mix(startCam.pos, wantedCamPos, tweenFact);
+		camera->forward = mix(startCam.dir, wantedCamDir, tweenFact);
+		camera->SetFov(   mix(startCam.fov, wantedCamFOV, tweenFact));
 		camera->forward.Normalize();
 	}
 }
