@@ -784,21 +784,27 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 		// defined, assume it is not supposed to be a building
 		// (so do not assign a default per facing)
 		return;
+	} else {
+		yardmap.resize(xsize * zsize);
 	}
 
 	StringToLowerInPlace(yardMapStr);
 
-	// read the yardmap in half resolution from the LuaDef string
-	const unsigned int hxsize = xsize >> 1;
-	const unsigned int hzsize = zsize >> 1;
+	const bool highResMap = (yardMapStr[0] == 'h');
 
-	std::vector<YardMapStatus> yardMap(hxsize * hzsize, YARDMAP_BLOCKED);
-	std::string foundUnknownChars;
+	const unsigned int hxsize = xsize >> (1 - highResMap);
+	const unsigned int hzsize = zsize >> (1 - highResMap);
 
-	unsigned int idx = 0;
+	// if high-res yardmap, start at second character
+	unsigned int ymReadIdx = highResMap;
+	unsigned int ymCopyIdx = 0;
 
-	for (unsigned int n = 0; n < yardMapStr.size(); n++) {
-		const unsigned char c = yardMapStr[n];
+	std::vector<YardMapStatus> defYardMap(hxsize * hzsize, YARDMAP_BLOCKED);
+	std::string unknownChars;
+
+	// read the yardmap from the LuaDef string
+	while (ymReadIdx < yardMapStr.size()) {
+		const unsigned char c = yardMapStr[ymReadIdx++];
 
 		if (isspace(c))
 			continue;
@@ -816,33 +822,33 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 			case 'f':
 			case 'o': ys = YARDMAP_BLOCKED; break;
 			default:
-				if (foundUnknownChars.find_first_of(c) == std::string::npos)
-					foundUnknownChars += c;
+				if (unknownChars.find_first_of(c) == std::string::npos)
+					unknownChars += c;
 		}
 
-		if (idx < hxsize * hzsize) {
-			yardMap[idx] = ys;
+		if (ymCopyIdx < defYardMap.size()) {
+			defYardMap[ymCopyIdx++] = ys;
 		}
-		idx++;
 	}
 
 	// print warnings
-	if (idx > yardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap/blockmap contains "_STPF_" excess char(s)!", name.c_str(), idx - yardMap.size());
+	if (ymCopyIdx > defYardMap.size())
+		LOG_L(L_WARNING, "%s: Given yardmap contains "_STPF_" excess char(s)!", name.c_str(), ymCopyIdx - defYardMap.size());
 
-	if (idx > 0 && idx < yardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap/blockmap requires "_STPF_" extra char(s)!", name.c_str(), yardMap.size() - idx);
+	if (ymCopyIdx > 0 && ymCopyIdx < defYardMap.size())
+		LOG_L(L_WARNING, "%s: Given yardmap requires "_STPF_" extra char(s)!", name.c_str(), defYardMap.size() - ymCopyIdx);
 
-	if (!foundUnknownChars.empty())
-		LOG_L(L_WARNING, "%s: Unknown char(s) in yardmap/blockmap \"%s\"!", name.c_str(), foundUnknownChars.c_str());
+	if (!unknownChars.empty())
+		LOG_L(L_WARNING, "%s: Given yardmap unknown char(s) \"%s\"!", name.c_str(), unknownChars.c_str());
 
-	// write in doubled resolution to final unitdef tag
-	yardmap.resize(xsize * zsize);
-	for (unsigned int z = 0; z < zsize; z++) {
-		for (unsigned int x = 0; x < xsize; x++) {
-			const unsigned int yardMapIdx = (x >> 1) + ((z >> 1) * hxsize);
-			const YardMapStatus yardMapChar = yardMap[yardMapIdx];
-			yardmap[x + z * xsize] = yardMapChar;
+	// write the final yardmap at blocking-map resolution
+	// in case of a high-res map, this becomes a 1:1 copy 
+	for (unsigned int bmz = 0; bmz < zsize; bmz++) {
+		for (unsigned int bmx = 0; bmx < xsize; bmx++) {
+			const unsigned int yardMapIdx = (bmx >> (1 - highResMap)) + ((bmz >> (1 - highResMap)) * hxsize);
+			const YardMapStatus yardMapChar = defYardMap[yardMapIdx];
+
+			yardmap[bmx + bmz * xsize] = yardMapChar;
 		}
 	}
 }
