@@ -171,6 +171,8 @@ Misc:
      add modrule 'allowHoverUnitStrafing'; allows hovercraft to slide in turns
      ground units cannot change speed or direction in mid-air
  - in god-mode, units can now be selected and commanded by any player even when not spectating (#3412)
+ - support double-resolution yardmaps for buildings (these require four times as many characters, beware)
+   the engine will interpret a yardmap string as such if its FIRST (and ONLY its first) character is 'h'
 
 Rendering:
  - speedup minimap icon rendering
