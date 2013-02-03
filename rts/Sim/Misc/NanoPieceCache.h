@@ -23,6 +23,7 @@ public:
 	      std::vector<int>& GetNanoPieces()       { return nanoPieces; }
 
 private:
+	// script-piece indices
 	std::vector<int> nanoPieces;
 
 	int lastNanoPieceCnt;
