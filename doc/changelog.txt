@@ -11,6 +11,7 @@ Major Changes:
  - better pathing
  - add experimental map generator (see http://springrts.com/wiki/Mapgen for details)
  - some new sim/weapon features
+ - single threaded executable is now deprecated
 
 AI:
  - Shard update
@@ -66,6 +67,7 @@ Lua:
  - add optional 4th argument to Spring.SetUnitImpulse to control a unit's impulse decay-rate (now unhardcoded)
  ! Game.version now returns the same as `spring --sync-version`, e.g. "92.0" or "91.0.1-1283-gf3805a7"
  - new Game.buildFlags (unsynced only) to get additional engine buildflags, e.g. "OMP" or "MT-Sim DEBUG"
+ - Better notification and protection from unbalanced OpenGL matrix stack after return from Lua rendering code
 
 
 CollisionVolumes:
@@ -224,6 +226,8 @@ Bugfixes:
  - fix "Transport endpoint is not connected"
  - fix secret exploit
  - fix secret exploit #2
+ - fix memory leaks, particularly when the game is minimized
+ - fix several crashes in multithreaded exe
 
 Cmdline Arguments:
  - new --game (-g) & --map (-m)
