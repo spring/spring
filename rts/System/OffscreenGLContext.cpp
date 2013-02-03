@@ -5,6 +5,7 @@
 
 #include "System/Exceptions.h"
 #include "System/maindefines.h"
+#include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 
 
@@ -37,21 +38,16 @@ COffscreenGLContext::COffscreenGLContext()
 	}
 
 	int status = TRUE;
+	offscreenRC = NULL;
 #ifdef WGL_ARB_create_context
 	if (wglCreateContextAttribsARB) {
-		static const int contextAttribs[] = {
-			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
-			WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
-			0
-		};
-
+		static const int contextAttribs[] = { WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB, 0 };
 		offscreenRC = wglCreateContextAttribsARB(hdc, mainRC, contextAttribs);
-		if (!offscreenRC) {
-			throw opengl_error("Couldn't create an offscreen GL context: wglCreateContextAttribsARB failed!");
-		}
-	} else
+		if (!offscreenRC)
+			LOG_L(L_WARNING, "Couldn't create an offscreen GL context: wglCreateContextAttribsARB failed!");
+	}
 #endif
-	{
+	if (!offscreenRC) {
 		//! create a 2nd GL context
 		offscreenRC = wglCreateContext(hdc);
 		if (!offscreenRC) {
