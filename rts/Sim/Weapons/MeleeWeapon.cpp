@@ -46,7 +46,7 @@ void CMeleeWeapon::Update()
 	CWeapon::Update();
 }
 
-bool CMeleeWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
+bool CMeleeWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	return true;
 }

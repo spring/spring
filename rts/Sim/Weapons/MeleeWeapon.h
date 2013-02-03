@@ -15,7 +15,7 @@ public:
 	void Update();
 
 private:
-	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const;
+	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
 	void FireImpl();
 };
 

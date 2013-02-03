@@ -44,7 +44,7 @@ private:
 	float3 GetWantedDir(const float3& diff);
 	float3 GetWantedDir2(const float3& diff) const;
 
-	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const;
+	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
 	void FireImpl();
 };
 
