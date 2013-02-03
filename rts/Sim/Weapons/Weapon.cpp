@@ -1104,11 +1104,6 @@ bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit*
 		return false;
 	}
 
-	//XXX: wrong place for this check?
-	if (weaponDef->stockpile && !numStockpiled) {
-		return false;
-	}
-
 	return true;
 }
 

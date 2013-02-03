@@ -67,7 +67,7 @@ void CPlasmaRepulser::Init()
 }
 
 
-bool CPlasmaRepulser::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
+bool CPlasmaRepulser::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	return true;
 }

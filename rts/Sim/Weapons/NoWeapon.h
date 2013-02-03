@@ -19,7 +19,7 @@ public:
 	void Init();
 
 private:
-	bool TestTarget(const float3& pos,bool userTarget,CUnit* unit) const;
+	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
 	void FireImpl();
 };
 

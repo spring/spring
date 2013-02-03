@@ -68,7 +68,7 @@ void CStarburstLauncher::FireImpl()
 	new CStarburstProjectile(params, damageAreaOfEffect, projectileSpeed, tracking, (int) uptime, maxRange, aimError);
 }
 
-bool CStarburstLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
+bool CStarburstLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	const float3& wdir = weaponDef->fixedLauncher? weaponDir: UpVector;
 

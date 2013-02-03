@@ -18,7 +18,7 @@ void CNoWeapon::Update()
 {
 }
 
-bool CNoWeapon::TestTarget(const float3& pos,bool userTarget,CUnit* unit) const
+bool CNoWeapon::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	return false;
 }

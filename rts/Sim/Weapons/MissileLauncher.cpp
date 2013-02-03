@@ -80,7 +80,7 @@ void CMissileLauncher::FireImpl()
 	new CMissileProjectile(params, damageAreaOfEffect, projectileSpeed);
 }
 
-bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, CUnit* unit) const
+bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	// do a different test depending on if the missile has high
 	// trajectory (parabolic vs. linear ground intersection)
