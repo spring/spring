@@ -476,14 +476,14 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 
 void CFactory::CreateNanoParticle(bool highPriority)
 {
-	const int nanoPiece = nanoPieceCache.GetNanoPiece(script);
+	const int scriptNanoPiece = nanoPieceCache.GetNanoPiece(script);
 
 #ifdef USE_GML
 	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
 		return;
 #endif
 
-	const float3 relWeaponFirePos = script->GetPiecePos(nanoPiece);
+	const float3 relWeaponFirePos = script->GetPiecePos(scriptNanoPiece);
 	const float3 weaponPos = pos
 		+ (frontdir * relWeaponFirePos.z)
 		+ (updir    * relWeaponFirePos.y)
