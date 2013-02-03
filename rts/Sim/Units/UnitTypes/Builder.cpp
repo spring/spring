@@ -143,10 +143,14 @@ bool CBuilder::CanAssistUnit(const CUnit* u, const UnitDef* def) const
 
 bool CBuilder::CanRepairUnit(const CUnit* u) const
 {
-	return
-		   unitDef->canRepair
-		&& (!u->beingBuilt)
-		&& u->unitDef->repairable && (u->health < u->maxHealth);
+	if (!unitDef->canRepair)
+		return false;
+	if (u->beingBuilt)
+		return false;
+	if (u->health >= u->maxHealth)
+		return false;
+
+	return (u->unitDef->repairable);
 }
 
 
@@ -156,6 +160,8 @@ void CBuilder::Update()
 
 	const CCommandQueue& cQueue = cai->commandQue;
 	const Command& fCommand = (!cQueue.empty())? cQueue.front(): Command(CMD_STOP);
+
+	nanoPieceCache.Update();
 
 	if (!beingBuilt && !IsStunned()) {
 		if (terraforming && inBuildStance) {
