@@ -626,14 +626,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	activateWhenBuilt = udTable.GetBool("activateWhenBuilt", false);
 	onoffable = udTable.GetBool("onoffable", false);
 
-	// footprint sizes are assumed to be expressed in TA-engine units;
-	// Spring's heightmap resolution is double the footprint (yardmap)
-	// resolution, so we scale the values (which are not allowed to be
-	// 0)
-	// NOTE that this is done for the FeatureDef and MoveDef footprints
-	// as well
-	xsize = std::max(1 * 2, (udTable.GetInt("footprintX", 1) * 2));
-	zsize = std::max(1 * 2, (udTable.GetInt("footprintZ", 1) * 2));
+	xsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintX", 1) * SPRING_FOOTPRINT_SCALE));
+	zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE));
 
 	if (IsImmobileUnit()) {
 		CreateYardMap(udTable.GetString("yardMap", ""));
@@ -839,10 +833,11 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 		LOG_L(L_WARNING, "%s: Given yardmap requires "_STPF_" extra char(s)!", name.c_str(), defYardMap.size() - ymCopyIdx);
 
 	if (!unknownChars.empty())
-		LOG_L(L_WARNING, "%s: Given yardmap unknown char(s) \"%s\"!", name.c_str(), unknownChars.c_str());
+		LOG_L(L_WARNING, "%s: Given yardmap contains unknown char(s) \"%s\"!", name.c_str(), unknownChars.c_str());
 
 	// write the final yardmap at blocking-map resolution
-	// in case of a high-res map, this becomes a 1:1 copy 
+	// (in case of a high-res map this becomes a 1:1 copy,
+	// otherwise the given yardmap will be upsampled)
 	for (unsigned int bmz = 0; bmz < zsize; bmz++) {
 		for (unsigned int bmx = 0; bmx < xsize; bmx++) {
 			const unsigned int yardMapIdx = (bmx >> (1 - highResMap)) + ((bmz >> (1 - highResMap)) * hxsize);
