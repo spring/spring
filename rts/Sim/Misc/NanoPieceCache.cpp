@@ -39,7 +39,3 @@ int NanoPieceCache::GetNanoPiece(CUnitScript* ownerScript) {
 	return nanoPiece;
 }
 
-
-void NanoPieceCache::StopPolling() {
-	lastNanoPieceCnt = 1e6;
-}

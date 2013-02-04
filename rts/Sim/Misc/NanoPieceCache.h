@@ -24,10 +24,10 @@ public:
 	const std::vector<int>& GetNanoPieces() const { return nanoPieces; }
 	      std::vector<int>& GetNanoPieces()       { return nanoPieces; }
 
-	void StopPolling();
+	void StopPolling() { lastNanoPieceCnt = 1e6; }
 
 private:
-	// script-piece indices
+	// model-piece indices
 	std::vector<int> nanoPieces;
 
 	int lastNanoPieceCnt;
