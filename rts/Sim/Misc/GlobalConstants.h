@@ -13,9 +13,10 @@ const int SQUARE_SIZE = 8;
 /**
  * @brief footprint scale
  *
- * Multiplier for {Unit, Feature, MoveDef} footprint sizes which are
+ * Multiplier for {Unit, Feature, Move}Def footprint sizes which are
  * assumed to be expressed in "TA units". The resolution of Spring's
- * blocking-map is twice that of TA's.
+ * blocking-map is twice that of TA's; a "TA-footprint" square covers
+ * SQUARE_SIZE*2 x SQUARE_SIZE*2 elmos.
  */
 const int SPRING_FOOTPRINT_SCALE = 2;
 
