@@ -476,19 +476,23 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 
 void CFactory::CreateNanoParticle(bool highPriority)
 {
-	const int scriptNanoPiece = nanoPieceCache.GetNanoPiece(script);
+	const int modelNanoPiece = nanoPieceCache.GetNanoPiece(script);
 
 #ifdef USE_GML
 	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
 		return;
 #endif
 
-	const float3 relWeaponFirePos = script->GetPiecePos(scriptNanoPiece);
-	const float3 weaponPos = pos
-		+ (frontdir * relWeaponFirePos.z)
-		+ (updir    * relWeaponFirePos.y)
-		+ (rightdir * relWeaponFirePos.x);
+	if (localModel == NULL || !localModel->HasPiece(modelNanoPiece))
+		return;
+
+	const float3 relNanoFirePos = localModel->GetRawPiecePos(modelNanoPiece);
+
+	const float3 nanoPos = pos
+		+ (frontdir * relNanoFirePos.z)
+		+ (updir    * relNanoFirePos.y)
+		+ (rightdir * relNanoFirePos.x);
 
 	// unsynced
-	ph->AddNanoParticle(weaponPos, curBuild->midPos, unitDef, team, highPriority);
+	ph->AddNanoParticle(nanoPos, curBuild->midPos, unitDef, team, highPriority);
 }

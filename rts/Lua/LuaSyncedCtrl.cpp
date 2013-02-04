@@ -1557,12 +1557,12 @@ int LuaSyncedCtrl::SetUnitNanoPieces(lua_State* L)
 
 	for (lua_pushnil(L); lua_next(L, 2) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -1)) {
-			const int scriptPieceNum  = lua_toint(L, -1) - 1;
+			const int modelPieceNum = lua_toint(L, -1) - 1; //lua 1-indexed, c++ 0-indexed
 
-			if (unit->script->PieceExists(scriptPieceNum)) {
-				nanoPieces->push_back(scriptPieceNum);
+			if (unit->localModel->HasPiece(modelPieceNum)) {
+				nanoPieces->push_back(modelPieceNum);
 			} else {
-				luaL_error(L, "[SetUnitNanoPieces] incorrect script-piece number %d", scriptPieceNum);
+				luaL_error(L, "[SetUnitNanoPieces] incorrect model-piece number %d", modelPieceNum);
 			}
 		}
 	}

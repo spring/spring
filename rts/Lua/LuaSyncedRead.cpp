@@ -3026,10 +3026,10 @@ int LuaSyncedRead::GetUnitNanoPieces(lua_State* L)
 	lua_createtable(L, nanoPieces->size(), 0);
 
 	for (size_t p = 0; p < nanoPieces->size(); p++) {
-		const int scriptPieceNum = (*nanoPieces)[p];
+		const int modelPieceNum = (*nanoPieces)[p];
 
 		lua_pushnumber(L, p + 1);
-		lua_pushnumber(L, scriptPieceNum);
+		lua_pushnumber(L, modelPieceNum + 1); //lua 1-indexed, c++ 0-indexed
 		lua_rawset(L, -3);
 	}
 
