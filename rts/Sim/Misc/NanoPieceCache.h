@@ -24,6 +24,8 @@ public:
 	const std::vector<int>& GetNanoPieces() const { return nanoPieces; }
 	      std::vector<int>& GetNanoPieces()       { return nanoPieces; }
 
+	void StopPolling();
+
 private:
 	// script-piece indices
 	std::vector<int> nanoPieces;

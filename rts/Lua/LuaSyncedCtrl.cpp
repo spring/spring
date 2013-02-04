@@ -1553,6 +1553,7 @@ int LuaSyncedCtrl::SetUnitNanoPieces(lua_State* L)
 		return 0;
 
 	nanoPieces->clear();
+	pieceCache->StopPolling();
 	luaL_checktype(L, 2, LUA_TTABLE);
 
 	for (lua_pushnil(L); lua_next(L, 2) != 0; lua_pop(L, 1)) {
