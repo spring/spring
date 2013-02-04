@@ -839,7 +839,9 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 	const S3DModelPiece* omp = lmp->original;
 	const float pieceChance = 1.0f - (ph->currentParticles - (ph->maxParticles - 2000)) / 2000.0f;
 
-	omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed);
+	if (pieceChance > 0.0f) {
+		omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed);
+	}
 }
 
 

@@ -17,6 +17,8 @@ public:
 	void Update() { curBuildPowerMask >>= 1; }
 
 	float GetBuildPower() const { return (count_bits_set(curBuildPowerMask) / float(UNIT_SLOWUPDATE_RATE)); }
+
+	/// returns modelPiece (NOT scriptModelPiece)
 	int GetNanoPiece(CUnitScript* ownerScript);
 
 	const std::vector<int>& GetNanoPieces() const { return nanoPieces; }

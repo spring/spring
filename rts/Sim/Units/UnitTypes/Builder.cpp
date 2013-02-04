@@ -807,19 +807,23 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 
 void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse, bool highPriority)
 {
-	const int scriptNanoPiece = nanoPieceCache.GetNanoPiece(script);
+	const int modelNanoPiece = nanoPieceCache.GetNanoPiece(script);
 
 #ifdef USE_GML
 	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
 		return;
 #endif
 
-	const float3 relWeaponFirePos = script->GetPiecePos(scriptNanoPiece);
-	const float3 weaponPos = pos
-		+ (frontdir * relWeaponFirePos.z)
-		+ (updir    * relWeaponFirePos.y)
-		+ (rightdir * relWeaponFirePos.x);
+	if (localModel == NULL || !localModel->HasPiece(modelNanoPiece))
+		return;
+
+	const float3 relNanoFirePos = localModel->GetRawPiecePos(modelNanoPiece);
+
+	const float3 nanoPos = pos
+		+ (frontdir * relNanoFirePos.z)
+		+ (updir    * relNanoFirePos.y)
+		+ (rightdir * relNanoFirePos.x);
 
 	// unsynced
-	ph->AddNanoParticle(weaponPos, goal, unitDef, team, radius, inverse, highPriority);
+	ph->AddNanoParticle(nanoPos, goal, unitDef, team, radius, inverse, highPriority);
 }
