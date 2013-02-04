@@ -280,13 +280,12 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 
 	const int xsizeDef = std::max(1, moveTable.GetInt("footprintX",        1));
 	const int zsizeDef = std::max(1, moveTable.GetInt("footprintZ", xsizeDef));
-	const int scale    = 2;
 
 	// make all mobile footprints point-symmetric in heightmap space
 	// (meaning that only non-even dimensions are possible and each
 	// footprint always has a unique center square)
-	xsize = xsizeDef * scale;
-	zsize = zsizeDef * scale;
+	xsize = xsizeDef * SPRING_FOOTPRINT_SCALE;
+	zsize = zsizeDef * SPRING_FOOTPRINT_SCALE;
 	xsize -= ((xsize & 1)? 0: 1);
 	zsize -= ((zsize & 1)? 0: 1);
 	// precalculated data for MoveMath

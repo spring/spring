@@ -11,6 +11,15 @@
 const int SQUARE_SIZE = 8;
 
 /**
+ * @brief footprint scale
+ *
+ * Multiplier for {Unit, Feature, MoveDef} footprint sizes which are
+ * assumed to be expressed in "TA units". The resolution of Spring's
+ * blocking-map is twice that of TA's.
+ */
+const int SPRING_FOOTPRINT_SCALE = 2;
+
+/**
  * conversion factor from elmos to meters
  */
 const float ELMOS_TO_METERS = 1.0f / SQUARE_SIZE;
