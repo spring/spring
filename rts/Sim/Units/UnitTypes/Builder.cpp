@@ -103,12 +103,12 @@ CBuilder::~CBuilder()
 
 void CBuilder::PostLoad()
 {
-	if (curResurrect)  ScriptStartBuilding(curResurrect->pos);
-	if (curBuild)      ScriptStartBuilding(curBuild->pos);
-	if (curCapture)    ScriptStartBuilding(curCapture->pos);
-	if (curReclaim)    ScriptStartBuilding(curReclaim->pos);
-	if (terraforming)  ScriptStartBuilding(terraformCenter);
-	if (helpTerraform) ScriptStartBuilding(helpTerraform->terraformCenter);
+	if (curResurrect)  ScriptStartBuilding(curResurrect->pos, false);
+	if (curBuild)      ScriptStartBuilding(curBuild->pos, false);
+	if (curCapture)    ScriptStartBuilding(curCapture->pos, false);
+	if (curReclaim)    ScriptStartBuilding(curReclaim->pos, false);
+	if (terraforming)  ScriptStartBuilding(terraformCenter, false);
+	if (helpTerraform) ScriptStartBuilding(helpTerraform->terraformCenter, false);
 }
 
 
@@ -492,7 +492,7 @@ void CBuilder::SetRepairTarget(CUnit* target)
 		terraforming = true;
 	}
 
-	ScriptStartBuilding(target->pos);
+	ScriptStartBuilding(target->pos, false);
 }
 
 
@@ -519,7 +519,7 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 	curReclaim = target;
 
 	AddDeathDependence(curReclaim, DEPENDENCE_RECLAIM);
-	ScriptStartBuilding(target->pos);
+	ScriptStartBuilding(target->pos, false);
 }
 
 
@@ -534,7 +534,7 @@ void CBuilder::SetResurrectTarget(CFeature* target)
 	curResurrect = target;
 
 	AddDeathDependence(curResurrect, DEPENDENCE_RESURRECT);
-	ScriptStartBuilding(target->pos);
+	ScriptStartBuilding(target->pos, false);
 }
 
 
@@ -549,7 +549,7 @@ void CBuilder::SetCaptureTarget(CUnit* target)
 	curCapture = target;
 
 	AddDeathDependence(curCapture, DEPENDENCE_CAPTURE);
-	ScriptStartBuilding(target->pos);
+	ScriptStartBuilding(target->pos, false);
 }
 
 
@@ -580,7 +580,7 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	}
 	myTerraformLeft = tcost;
 
-	ScriptStartBuilding(centerPos);
+	ScriptStartBuilding(centerPos, false);
 }
 
 
@@ -648,7 +648,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 			if (u != NULL && CanAssistUnit(u, buildInfo.def)) {
 				curBuild = u;
 				AddDeathDependence(u, DEPENDENCE_BUILD);
-				ScriptStartBuilding(u->pos);
+				ScriptStartBuilding(u->pos, false);
 				return true;
 			}
 
@@ -660,7 +660,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 			return false;
 	}
 
-	if ((waitStance = !ScriptStartBuilding(buildInfo.pos))) {
+	if ((waitStance = !ScriptStartBuilding(buildInfo.pos, true))) {
 		return false;
 	}
 
@@ -766,7 +766,7 @@ void CBuilder::DependentDied(CObject *o)
 }
 
 
-bool CBuilder::ScriptStartBuilding(float3 pos)
+bool CBuilder::ScriptStartBuilding(float3 pos, bool silent)
 {
 	if (script->HasStartBuilding()) {
 		const float3 wantedDir = (pos - midPos).Normalize();
@@ -781,7 +781,7 @@ bool CBuilder::ScriptStartBuilding(float3 pos)
 	}
 
 	#if (PLAY_SOUNDS == 1)
-	if (inBuildStance && losStatus[gu->myAllyTeam] & LOS_INLOS) {
+	if ((!silent || inBuildStance) && losStatus[gu->myAllyTeam] & LOS_INLOS) {
 		Channels::General.PlayRandomSample(unitDef->sounds.build, pos);
 	}
 	#endif
@@ -800,7 +800,7 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 	helpTerraform = unit;
 
 	AddDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
-	ScriptStartBuilding(unit->terraformCenter);
+	ScriptStartBuilding(unit->terraformCenter, false);
 }
 
 
