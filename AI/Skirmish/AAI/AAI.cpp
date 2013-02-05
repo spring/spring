@@ -1001,7 +1001,7 @@ void AAI::Log(const char* format, ...)
 	va_start(args, format);
 	const int bytes = vfprintf(file, format, args);
 	if (bytes<0) { //write to stderr if write to file failed
-		fprintf(stderr, format, args);
+		vfprintf(stderr, format, args);
 	}
 	va_end(args);
 }
