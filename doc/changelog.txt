@@ -172,6 +172,7 @@ Misc:
      add modrule 'allowHoverUnitStrafing'; allows hovercraft to slide in turns
      ground units cannot change speed or direction in mid-air
  - in god-mode, units can now be selected and commanded by any player even when not spectating (#3412)
+ - fix multiple build-started sounds being played when ordering single builder to construct something
 
 Rendering:
  - speedup minimap icon rendering
