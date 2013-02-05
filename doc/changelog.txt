@@ -17,7 +17,7 @@ AI:
  - Shard update
  - AAI: refactor / fixes
  - AAI: add BAR config
- - AAI: update XTA config, now works only with XTA > 9.71
+ - AAI: update XTA config, to work with XTA > 9.71
  - fix bug in /aikill
 
 pr-download:
