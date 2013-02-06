@@ -125,7 +125,7 @@ namespace QTPFS {
 			const bool synced
 		);
 
-		void ExecuteSearch(
+		bool ExecuteSearch(
 			PathSearchList& searches,
 			PathSearchListIt& searchesIt,
 			NodeLayer& nodeLayer,
