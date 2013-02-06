@@ -756,12 +756,14 @@ void QTPFS::PathManager::ExecuteQueuedSearches(unsigned int pathType) {
 		// execute pending searches collected via
 		// RequestPath and QueueDeadPathSearches
 		while (searchesIt != searches.end()) {
-			ExecuteSearch(searches, searchesIt, nodeLayer, pathCache, pathType);
+			if (ExecuteSearch(searches, searchesIt, nodeLayer, pathCache, pathType)) {
+				searchStateOffset += NODE_STATE_OFFSET;
+			}
 		}
 	}
 }
 
-void QTPFS::PathManager::ExecuteSearch(
+bool QTPFS::PathManager::ExecuteSearch(
 	PathSearchList& searches,
 	PathSearchListIt& searchesIt,
 	NodeLayer& nodeLayer,
@@ -784,7 +786,7 @@ void QTPFS::PathManager::ExecuteSearch(
 	// DeletePath before we got a chance to process it
 	if (path->GetID() == 0) {
 		DeleteSearch(search, searchesIt);
-		return;
+		return false;
 	}
 
 	assert(search->GetID() != 0);
@@ -800,7 +802,7 @@ void QTPFS::PathManager::ExecuteSearch(
 		if (sharedPathsIt != sharedPaths.end()) {
 			if (search->SharedFinalize(sharedPathsIt->second, path)) {
 				DeleteSearch(search, searchesIt);
-				return;
+				return false;
 			}
 		}
 		#endif
@@ -810,7 +812,7 @@ void QTPFS::PathManager::ExecuteSearch(
 		const unsigned int numPrevSearches = numPrevExecutedSearches[search->GetTeam()];
 
 		if ((numCurrSearches - numPrevSearches) >= MAX_TEAM_SEARCHES) {
-			++searchesIt; return;
+			++searchesIt; return false;
 		}
 
 		numCurrExecutedSearches[search->GetTeam()] += 1;
@@ -833,8 +835,6 @@ void QTPFS::PathManager::ExecuteSearch(
 	}
 
 	DeleteSearch(search, searchesIt);
-
-	searchStateOffset += NODE_STATE_OFFSET;
 }
 
 void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
