@@ -835,6 +835,7 @@ bool QTPFS::PathManager::ExecuteSearch(
 	}
 
 	DeleteSearch(search, searchesIt);
+	return true;
 }
 
 void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
