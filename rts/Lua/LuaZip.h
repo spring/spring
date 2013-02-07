@@ -49,5 +49,10 @@ private: // metatable methods
 	static int meta_read(lua_State* L);
 };
 
+class LuaZipFolder {
+public:
+    static int ZipFolder(lua_State* L, const std::string& folderPath, const std::string& zipFilePath, bool includeFolder, const std::string& modes);
+};
+
 
 #endif /* _LUA_ZIP_H_ */
