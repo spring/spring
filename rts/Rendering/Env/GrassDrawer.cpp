@@ -155,13 +155,13 @@ void CGrassDrawer::LoadGrassShaders() {
 		"grassNearAdvShader",
 		"grassDistAdvShader",
 		"grassDistDefShader",
-		"grassShadGenShader"
+		// "grassShadGenShader"
 	};
 	static const std::string shaderDefines[GRASS_PROGRAM_LAST] = {
 		"#define GRASS_NEAR_SHADOW\n",
 		"#define GRASS_DIST_SHADOW\n",
 		"#define GRASS_DIST_BASIC\n",
-		"#define GRASS_SHADOW_GEN\n"
+		// "#define GRASS_SHADOW_GEN\n"
 	};
 
 	static const int NUM_UNIFORMS = 11;
