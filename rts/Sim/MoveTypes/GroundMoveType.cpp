@@ -2369,6 +2369,13 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 {
 	float3 speedVector;
 
+	// if being built, the nanoframe might not be exactly on
+	// the ground and would jitter from gravity acting on it
+	// --> nanoframes can not move anyway, just return early
+	// (units that become reverse-built will stop instantly)
+	if (owner->beingBuilt)
+		return;
+
 	if (modInfo.allowGroundUnitGravity) {
 		#define hAcc deltaSpeed
 		#define vAcc mapInfo->map.gravity
