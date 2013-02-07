@@ -191,6 +191,7 @@ void CGrassDrawer::LoadGrassShaders() {
 		// these remain stubs if !shadowsSupported
 		grassShaders[GRASS_PROGRAM_NEAR_SHADOW] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_NEAR_SHADOW] + "ARB", true);
 		grassShaders[GRASS_PROGRAM_DIST_SHADOW] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_DIST_SHADOW] + "ARB", true);
+		// grassShaders[GRASS_PROGRAM_SHADOW_GEN] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_SHADOW_GEN] + "ARB", true);
 
 		if (shadowHandler->shadowsSupported) {
 			grassShaders[GRASS_PROGRAM_NEAR_SHADOW]->AttachShaderObject(sh->CreateShaderObject("ARB/grass.vp", "", GL_VERTEX_PROGRAM_ARB));
@@ -211,7 +212,6 @@ void CGrassDrawer::LoadGrassShaders() {
 		if (globalRendering->haveGLSL) {
 			for (int j = 0; j < NUM_UNIFORMS; j++) {
 				grassShaders[i]->SetUniformLocation(uniformNames[j]);
-				
 			}
 
 			grassShaders[i]->SetUniformLocation("shadingTex");
