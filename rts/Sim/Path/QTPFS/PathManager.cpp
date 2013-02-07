@@ -849,7 +849,7 @@ void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
 		// re-request LIVE paths that were marked as DEAD by a TerrainChange
 		// for each of these now-dead paths, reset the active point-idx to 0
 		for (deadPathsIt = deadPaths.begin(); deadPathsIt != deadPaths.end(); ++deadPathsIt) {
-			QueueSearch(deadPathsIt->second, NULL, moveDef, ZeroVector, ZeroVector, -1.0f, false);
+			QueueSearch(deadPathsIt->second, NULL, moveDef, ZeroVector, ZeroVector, -1.0f, true);
 		}
 
 		pathCache.KillDeadPaths();
@@ -865,6 +865,12 @@ unsigned int QTPFS::PathManager::QueueSearch(
 	const float radius,
 	const bool synced
 ) {
+	// TODO:
+	//     introduce synced and unsynced path-caches;
+	//     somehow support extra-cost overlays again
+	if (!synced)
+		return 0;
+
 	// NOTE:
 	//     all paths get deleted by the cache they are in;
 	//     all searches get deleted by subsequent Update's
@@ -886,7 +892,6 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		assert(sourcePoint == ZeroVector);
 		assert(targetPoint == ZeroVector);
 		assert(radius == -1.0f);
-		assert(!synced);
 
 		const CSolidObject* obj = oldPath->GetOwner();
 		const float3& pos = (obj != NULL)? obj->pos: oldPath->GetSourcePoint();
@@ -923,10 +928,6 @@ unsigned int QTPFS::PathManager::QueueSearch(
 
 	assert((pathCaches[moveDef->pathType].GetTempPath(newPath->GetID()))->GetID() == 0);
 
-	// TODO:
-	//     introduce synced and unsynced path-caches;
-	//     somehow support extra-cost overlays again
-	//
 	// map the path-ID to the index of the cache that stores it
 	pathTypes[newPath->GetID()] = moveDef->pathType;
 	pathSearches[moveDef->pathType].push_back(newSearch);
@@ -1008,12 +1009,15 @@ float3 QTPFS::PathManager::NextWayPoint(
 	unsigned int, // numRetries
 	float3 point,
 	float, // radius,
-	bool // synced
+	bool synced
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");
 
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 	const float3 noPathPoint = float3(-1.0f, 0.0f, -1.0f);
+
+	if (!synced)
+		return noPathPoint;
 
 	// dangling ID after a re-request failure or regular deletion
 	// return an error-vector so GMT knows it should stop the unit
