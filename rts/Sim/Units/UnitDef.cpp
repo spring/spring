@@ -308,7 +308,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	}
 
 
-	builder = udTable.GetBool("builder", false);
 	buildRange3D = udTable.GetBool("buildRange3D", false);
 	// 128.0f is the ancient default
 	buildDistance = udTable.GetFloat("buildDistance", 128.0f);
@@ -316,10 +315,10 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// to not overlap for a 1x1 constructor building a 1x1 structure
 	buildDistance = std::max(38.0f, buildDistance);
 	buildSpeed = udTable.GetFloat("workerTime", 0.0f);
-	builder = builder && (buildSpeed > 0.0f);
+	builder = udTable.GetBool("builder", false) && (buildSpeed > 0.0f);
 
 	repairSpeed    = udTable.GetFloat("repairSpeed",    buildSpeed);
-	maxRepairSpeed = udTable.GetFloat("maxRepairSpeed", 1e20f);
+	maxRepairSpeed = udTable.GetFloat("maxRepairSpeed",      1e20f);
 	reclaimSpeed   = udTable.GetFloat("reclaimSpeed",   buildSpeed);
 	resurrectSpeed = udTable.GetFloat("resurrectSpeed", buildSpeed);
 	captureSpeed   = udTable.GetFloat("captureSpeed",   buildSpeed);
@@ -340,11 +339,15 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	canSelfD     = udTable.GetBool("canSelfDestruct", true);
 	canKamikaze  = udTable.GetBool("kamikaze",        false);
 
-	canRestore   = udTable.GetBool("canRestore",   builder && terraformSpeed > 0.0f);
-	canRepair    = udTable.GetBool("canRepair",    builder &&    repairSpeed > 0.0f);
-	canReclaim   = udTable.GetBool("canReclaim",   builder &&   reclaimSpeed > 0.0f);
-	canCapture   = udTable.GetBool("canCapture",   builder &&   captureSpeed > 0.0f);
-	canResurrect = udTable.GetBool("canResurrect", builder && resurrectSpeed > 0.0f);
+	// capture and resurrect count as special abilities
+	// (because captureSpeed and resurrectSpeed default
+	// to buildSpeed, canCapture and canResurrect would
+	// otherwise become true for all regular builders)
+	canRestore   = udTable.GetBool("canRestore",   builder) && (terraformSpeed > 0.0f);
+	canRepair    = udTable.GetBool("canRepair",    builder) && (   repairSpeed > 0.0f);
+	canReclaim   = udTable.GetBool("canReclaim",   builder) && (  reclaimSpeed > 0.0f);
+	canCapture   = udTable.GetBool("canCapture",     false) && (  captureSpeed > 0.0f);
+	canResurrect = udTable.GetBool("canResurrect",   false) && (resurrectSpeed > 0.0f);
 	canAssist    = udTable.GetBool("canAssist",    builder);
 
 	canBeAssisted = udTable.GetBool("canBeAssisted", true);
