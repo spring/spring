@@ -173,6 +173,9 @@ Misc:
      ground units cannot change speed or direction in mid-air
  - in god-mode, units can now be selected and commanded by any player even when not spectating (#3412)
  - fix multiple build-started sounds being played when ordering single builder to construct something
+ ! UnitDef::can{Restore, Repair, Reclaim, Capture, Resurrect} now default to true only if the unit is
+   a builder and has the corresponding {Terraform, Repair, Reclaim, Capture, Resurrect}Speed property
+   set to a non-zero value
 
 Rendering:
  - speedup minimap icon rendering

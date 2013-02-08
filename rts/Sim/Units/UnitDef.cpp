@@ -336,16 +336,16 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	canPatrol    = udTable.GetBool("canPatrol",       true);
 	canGuard     = udTable.GetBool("canGuard",        true);
 	canRepeat    = udTable.GetBool("canRepeat",       true);
-	canResurrect = udTable.GetBool("canResurrect",    false);
-	canCapture   = udTable.GetBool("canCapture",      false);
 	canCloak     = udTable.GetBool("canCloak",        (udTable.GetFloat("cloakCost", 0.0f) != 0.0f));
 	canSelfD     = udTable.GetBool("canSelfDestruct", true);
 	canKamikaze  = udTable.GetBool("kamikaze",        false);
 
-	canRestore   = udTable.GetBool("canRestore", builder);
-	canRepair    = udTable.GetBool("canRepair",  builder);
-	canReclaim   = udTable.GetBool("canReclaim", builder);
-	canAssist    = udTable.GetBool("canAssist",  builder);
+	canRestore   = udTable.GetBool("canRestore",   builder && terraformSpeed > 0.0f);
+	canRepair    = udTable.GetBool("canRepair",    builder &&    repairSpeed > 0.0f);
+	canReclaim   = udTable.GetBool("canReclaim",   builder &&   reclaimSpeed > 0.0f);
+	canCapture   = udTable.GetBool("canCapture",   builder &&   captureSpeed > 0.0f);
+	canResurrect = udTable.GetBool("canResurrect", builder && resurrectSpeed > 0.0f);
+	canAssist    = udTable.GetBool("canAssist",    builder);
 
 	canBeAssisted = udTable.GetBool("canBeAssisted", true);
 	canSelfRepair = udTable.GetBool("canSelfRepair", false);
