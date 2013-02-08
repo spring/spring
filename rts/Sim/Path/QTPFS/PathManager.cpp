@@ -9,7 +9,6 @@
 
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
-#include "PathRectangle.hpp"
 
 #include "Game/GameSetup.h"
 #include "Game/LoadScreen.h"
@@ -24,11 +23,12 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Watchdog.h"
+#include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 
-#define NUL_RECTANGLE PathRectangle(0, 0,         0,        0, false)
-#define MAP_RECTANGLE PathRectangle(0, 0,  gs->mapx, gs->mapy, false)
+#define NUL_RECTANGLE SRectangle(0, 0,         0,        0)
+#define MAP_RECTANGLE SRectangle(0, 0,  gs->mapx, gs->mapy)
 
 namespace QTPFS {
 	struct PMLoadScreen {
@@ -240,7 +240,7 @@ boost::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
 
 
 
-void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const PathRectangle& r) {
+void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const SRectangle& r) {
 	static std::vector<boost::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
 
 	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
@@ -254,7 +254,7 @@ void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const PathRectangle& r)
 
 
 
-void QTPFS::PathManager::InitNodeLayersThreaded(const PathRectangle& rect) {
+void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 	streflop::streflop_init<streflop::Simple>();
 
 	char loadMsg[512] = {'\0'};
@@ -322,7 +322,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const PathRectangle& rect) {
 void QTPFS::PathManager::InitNodeLayersThread(
 	unsigned int threadNum,
 	unsigned int numThreads,
-	const PathRectangle& rect
+	const SRectangle& rect
 ) {
 	const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
 	const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
@@ -357,7 +357,7 @@ void QTPFS::PathManager::InitNodeLayersThread(
 	}
 }
 
-void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const PathRectangle& r) {
+void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const SRectangle& r) {
 	nodeTrees[layerNum] = new QTPFS::QTNode(NULL,  0,  r.x1, r.z1,  r.x2, r.z2);
 
 	if (moveDefHandler->GetMoveDefByPathType(layerNum)->unitDefRefCount == 0)
@@ -369,7 +369,7 @@ void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const PathRectangl
 
 
 
-void QTPFS::PathManager::UpdateNodeLayersThreaded(const PathRectangle& rect) {
+void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 	streflop::streflop_init<streflop::Simple>();
 
 	#ifdef QTPFS_OPENMP_ENABLED
@@ -392,7 +392,7 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const PathRectangle& rect) {
 void QTPFS::PathManager::UpdateNodeLayersThread(
 	unsigned int threadNum,
 	unsigned int numThreads,
-	const PathRectangle& rect
+	const SRectangle& rect
 ) {
 	const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
 	const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
@@ -408,7 +408,7 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 
 // called in the non-staggered (#ifndef QTPFS_STAGGERED_LAYER_UPDATES)
 // layer update scheme and during initialization; see ::TerrainChange
-void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectangle& r) {
+void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r) {
 	const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
 	if (md->unitDefRefCount == 0)
@@ -424,8 +424,8 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectan
 
 	// adjust the borders so we are not left with "rims" of
 	// impassable squares when eg. a structure is reclaimed
-	PathRectangle mr; mr.ForceTesselation(r.ForceTesselation());
-	PathRectangle ur; ur.ForceTesselation(r.ForceTesselation());
+	SRectangle mr;
+	SRectangle ur;
 
 	mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MinSizeX() >> 1),        0);
 	mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MinSizeZ() >> 1),        0);
@@ -452,15 +452,15 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const PathRectan
 
 
 #ifdef QTPFS_STAGGERED_LAYER_UPDATES
-void QTPFS::PathManager::QueueNodeLayerUpdates(const PathRectangle& r) {
+void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
 
 		if (md->unitDefRefCount == 0)
 			continue;
 
-		PathRectangle mr; mr.ForceTesselation(r.ForceTesselation());
-		// PathRectangle ur; ur.ForceTesselation(r.ForceTesselation());
+		SRectangle mr;
+		// SRectangle ur;
 
 		mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MinSizeX() >> 1),        0);
 		mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MinSizeZ() >> 1),        0);
@@ -479,9 +479,9 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool 
 	//
 	while (nodeLayers[layerNum].HaveQueuedUpdate()) {
 		const LayerUpdate& lu = nodeLayers[layerNum].GetQueuedUpdate();
-		const PathRectangle& mr = lu.rectangle;
+		const SRectangle& mr = lu.rectangle;
 
-		PathRectangle ur = mr;
+		SRectangle ur = mr;
 
 		if (nodeLayers[layerNum].ExecQueuedUpdate()) {
 			nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr, ur);
@@ -623,22 +623,19 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type) {
 	SCOPED_TIMER("PathManager::TerrainChange");
 
-	#ifdef QTPFS_FORCE_TESSELATE_OBJECT_YARDMAPS
-	const bool forceTesselation = (type == TERRAINCHANGE_OBJECT_INSERTED || type == TERRAINCHANGE_OBJECT_INSERTED_YM);
-	#else
-	const bool forceTesselation = false;
-	#endif
-
+	// if type is TERRAINCHANGE_OBJECT_INSERTED  or TERRAINCHANGE_OBJECT_INSERTED_YM,
+	// this rectangle covers the yardmap of a CSolidObject* and will be tesselated to
+	// maximum depth automatically
 	numTerrainChanges += 1;
 
 	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 	// defer layer-updates to ::Update so we can stagger them
 	// this may or may not be more efficient than updating all
 	// layers right away, depends on many factors
-	QueueNodeLayerUpdates(PathRectangle(x1, z1,  x2, z2, forceTesselation));
+	QueueNodeLayerUpdates(SRectangle(x1, z1,  x2, z2));
 	#else
 	// update all layers right now for this change-event
-	UpdateNodeLayersThreaded(PathRectangle(x1, z1,  x2, z2, forceTesselation));
+	UpdateNodeLayersThreaded(SRectangle(x1, z1,  x2, z2));
 	#endif
 }
 

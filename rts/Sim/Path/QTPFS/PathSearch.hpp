@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "PathDefines.hpp"
-#include "PathRectangle.hpp"
 #include "Node.hpp"
 #include "NodeHeap.hpp"
 
@@ -78,7 +77,7 @@ namespace QTPFS {
 			PathCache* cache,
 			const float3& sourcePoint,
 			const float3& targetPoint,
-			const PathRectangle& searchArea
+			const SRectangle& searchArea
 		) = 0;
 		virtual bool Execute(
 			unsigned int searchStateOffset = 0,
@@ -128,7 +127,7 @@ namespace QTPFS {
 			PathCache* cache,
 			const float3& sourcePoint,
 			const float3& targetPoint,
-			const PathRectangle& searchArea
+			const SRectangle& searchArea
 		);
 		bool Execute(
 			unsigned int searchStateOffset = 0,
@@ -164,7 +163,7 @@ namespace QTPFS {
 		PathSearchTrace::Execution* searchExec;
 		PathSearchTrace::Iteration searchIter;
 
-		PathRectangle searchRect;
+		SRectangle searchRect;
 
 		INode *srcNode, *tgtNode;
 		INode *curNode, *nxtNode;

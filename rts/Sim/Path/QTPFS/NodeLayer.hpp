@@ -7,18 +7,17 @@
 #include <list> // for QTPFS_STAGGERED_LAYER_UPDATES
 #include <boost/cstdint.hpp>
 
+#include "System/Rectangle.h"
 #include "PathDefines.hpp"
-#include "PathRectangle.hpp"
 
 struct MoveDef;
 
 namespace QTPFS {
-	struct PathRectangle;
 	struct INode;
 
 	#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 	struct LayerUpdate {
-		PathRectangle rectangle;
+		SRectangle rectangle;
 
 		std::vector<float> speedMods;
 		std::vector<int  > blockBits;
@@ -42,7 +41,7 @@ namespace QTPFS {
 		void Clear();
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		void QueueUpdate(const PathRectangle& r, const MoveDef* md);
+		void QueueUpdate(const SRectangle& r, const MoveDef* md);
 		void PopQueuedUpdate() { layerUpdates.pop_front(); }
 		bool ExecQueuedUpdate();
 		bool HaveQueuedUpdate() const { return (!layerUpdates.empty()); }
@@ -51,14 +50,14 @@ namespace QTPFS {
 		#endif
 
 		bool Update(
-			const PathRectangle& r,
+			const SRectangle& r,
 			const MoveDef* md,
 			const std::vector<float>* luSpeedMods = NULL,
 			const std::vector<  int>* luBlockBits = NULL
 		);
 
 		void ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum);
-		void ExecNodeNeighborCacheUpdates(const PathRectangle& ur, unsigned int currMagicNum);
+		void ExecNodeNeighborCacheUpdates(const SRectangle& ur, unsigned int currMagicNum);
 
 		float GetNodeRatio() const { return (numLeafNodes / std::max(1.0f, float(xsize * zsize))); }
 		const INode* GetNode(unsigned int x, unsigned int z) const { return nodeGrid[z * xsize + x]; }

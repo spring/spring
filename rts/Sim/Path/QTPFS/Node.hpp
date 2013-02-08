@@ -11,13 +11,13 @@
 #include "PathDefines.hpp"
 
 #include "System/float3.h"
+#include "System/Rectangle.h"
 
 #ifndef QTPFS_VIRTUAL_NODE_FUNCTIONS
 #define QTNode INode
 #endif
 
 namespace QTPFS {
-	struct PathRectangle;
 	struct NodeLayer;
 	struct INode {
 	public:
@@ -43,10 +43,10 @@ namespace QTPFS {
 		#endif
 
 		unsigned int GetNeighborRelation(const INode* ngb) const;
-		unsigned int GetRectangleRelation(const PathRectangle& r) const;
+		unsigned int GetRectangleRelation(const SRectangle& r) const;
 		float GetDistance(const INode* n, unsigned int type) const;
 		float3 GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos, float alpha) const;
-		PathRectangle ClipRectangle(const PathRectangle& r) const;
+		SRectangle ClipRectangle(const SRectangle& r) const;
 
 		#ifdef QTPFS_VIRTUAL_NODE_FUNCTIONS
 		virtual unsigned int xmin() const = 0;
@@ -124,8 +124,8 @@ namespace QTPFS {
 		boost::uint64_t GetCheckSum() const;
 
 		void Delete();
-		void PreTesselate(NodeLayer& nl, const PathRectangle& r, PathRectangle& ur);
-		void Tesselate(NodeLayer& nl, const PathRectangle& r);
+		void PreTesselate(NodeLayer& nl, const SRectangle& r, SRectangle& ur);
+		void Tesselate(NodeLayer& nl, const SRectangle& r);
 		void Serialize(std::fstream& fStream, NodeLayer& nodeLayer, unsigned int* streamSize, bool readMode);
 
 		bool IsLeaf() const;
@@ -172,7 +172,7 @@ namespace QTPFS {
 	private:
 		bool UpdateMoveCost(
 			const NodeLayer& nl,
-			const PathRectangle& r,
+			const SRectangle& r,
 			unsigned int& numNewBinSquares,
 			unsigned int& numDifBinSquares,
 			unsigned int& numClosedSquares,

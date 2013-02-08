@@ -9,7 +9,6 @@
 #include "NodeLayer.hpp"
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
-#include "PathRectangle.hpp"
 
 #include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -83,7 +82,7 @@ unsigned int QTPFS::INode::GetNeighborRelation(const INode* ngb) const {
 	return rel;
 }
 
-unsigned int QTPFS::INode::GetRectangleRelation(const PathRectangle& r) const {
+unsigned int QTPFS::INode::GetRectangleRelation(const SRectangle& r) const {
 	// NOTE: we consider "interior" to be the set of all
 	// legal indices, and conversely "exterior" the set
 	// of all illegal indices (min-edges are inclusive,
@@ -171,8 +170,8 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 //     at its default value (0.0, which no node can logically
 //     have)
 //
-QTPFS::PathRectangle QTPFS::INode::ClipRectangle(const PathRectangle& r) const {
-	PathRectangle cr = r;
+SRectangle QTPFS::INode::ClipRectangle(const SRectangle& r) const {
+	SRectangle cr = r;
 	cr.x1 = std::max(int(xmin()), r.x1);
 	cr.z1 = std::max(int(zmin()), r.z1);
 	cr.x2 = std::min(int(xmax()), r.x2);
@@ -387,7 +386,7 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 	// this code can be VERY slow in the worst-case (eg. when <r>
 	// overlaps all four children of the ROOT node), but minimizes
 	// the overall number of nodes in the tree at any given time
-	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const PathRectangle& r, PathRectangle& ur) {
+	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r, SRectangle& ur) {
 		bool cont = false;
 
 		if (!IsLeaf()) {
@@ -413,11 +412,11 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 
 #else
 
-	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const PathRectangle& r, PathRectangle& ur) {
+	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r, SRectangle& ur) {
 		const unsigned int rel = GetRectangleRelation(r);
 
 		// use <r> if it is fully inside <this>, otherwise clip against our edges
-		const PathRectangle& cr = (rel != REL_RECT_INTERIOR_NODE)? ClipRectangle(r): r;
+		const SRectangle& cr = (rel != REL_RECT_INTERIOR_NODE)? ClipRectangle(r): r;
 
 		if ((cr.x2 - cr.x1) <= 0 || (cr.z2 - cr.z1) <= 0) {
 			return;
@@ -457,7 +456,7 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 
 
 
-void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r) {
+void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r) {
 	unsigned int numNewBinSquares = 0; // nr. of squares in <r> that changed bin after deformation
 	unsigned int numDifBinSquares = 0; // nr. of different bin-types across all squares within <r>
 	unsigned int numClosedSquares = 0;
@@ -497,7 +496,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r) {
 
 		for (unsigned int i = 0; i < children.size(); i++) {
 			QTNode* cn = children[i];
-			PathRectangle cr = cn->ClipRectangle(r);
+			SRectangle cr = cn->ClipRectangle(r);
 
 			cn->Tesselate(nl, cr);
 			assert(cn->GetMoveCost() != -1.0f);
@@ -511,7 +510,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const PathRectangle& r) {
 
 bool QTPFS::QTNode::UpdateMoveCost(
 	const NodeLayer& nl,
-	const PathRectangle& r,
+	const SRectangle& r,
 	unsigned int& numNewBinSquares,
 	unsigned int& numDifBinSquares,
 	unsigned int& numClosedSquares,
@@ -595,17 +594,6 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	wantSplit |= (numDifBinSquares > 0);
 	needSplit |= (numClosedSquares > 0 && numClosedSquares < area());
 
-	if (numClosedSquares > 0) {
-		if (numClosedSquares < area()) {
-			moveCostAvg = QTPFS_CLOSED_NODE_COST * (numClosedSquares / float(xsize() * xsize()));
-		} else {
-			moveCostAvg = QTPFS_POSITIVE_INFINITY;
-		}
-	}
-
-	return (wantSplit || needSplit);
-
-	#if 0
 	// if we are not going to tesselate this node further
 	// and there is at least one impassable square inside
 	// it, make sure the pathfinder will not pick us
@@ -624,8 +612,6 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	//
 	//   this is crucial for handling the squares underneath
 	//   static obstacles (eg. factories) if MIN_SIZE_* != 1
-	//   and ifndef QTPFS_FORCE_TESSELATE_OBJECT_YARDMAPS
-	//
 	if (numClosedSquares > 0) {
 		if (numClosedSquares < area()) {
 			moveCostAvg = QTPFS_CLOSED_NODE_COST * (numClosedSquares / float(xsize() * xsize()));
@@ -634,8 +620,7 @@ bool QTPFS::QTNode::UpdateMoveCost(
 		}
 	}
 
-	return false;
-	#endif
+	return (wantSplit || needSplit);
 }
 
 
