@@ -13,6 +13,7 @@
 #include "PathSearch.hpp"
 
 struct MoveDef;
+struct SRectangle;
 class CSolidObject;
 
 #ifdef QTPFS_ENABLE_THREADED_UPDATE
@@ -24,7 +25,6 @@ namespace boost {
 #endif
 
 namespace QTPFS {
-	struct PathRectangle;
 	struct QTNode;
 	class PathManager: public IPathManager {
 	public:
@@ -79,7 +79,7 @@ namespace QTPFS {
 		typedef void (PathManager::*MemberFunc)(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const PathRectangle& rect
+			const SRectangle& rect
 		);
 		typedef std::map<unsigned int, unsigned int> PathTypeMap;
 		typedef std::map<unsigned int, unsigned int>::iterator PathTypeMapIt;
@@ -90,25 +90,25 @@ namespace QTPFS {
 		typedef std::list<IPathSearch*> PathSearchList;
 		typedef std::list<IPathSearch*>::iterator PathSearchListIt;
 
-		void SpawnBoostThreads(MemberFunc f, const PathRectangle& r);
+		void SpawnBoostThreads(MemberFunc f, const SRectangle& r);
 
-		void InitNodeLayersThreaded(const PathRectangle& rect);
-		void UpdateNodeLayersThreaded(const PathRectangle& rect);
+		void InitNodeLayersThreaded(const SRectangle& rect);
+		void UpdateNodeLayersThreaded(const SRectangle& rect);
 		void InitNodeLayersThread(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const PathRectangle& rect
+			const SRectangle& rect
 		);
 		void UpdateNodeLayersThread(
 			unsigned int threadNum,
 			unsigned int numThreads,
-			const PathRectangle& rect
+			const SRectangle& rect
 		);
-		void InitNodeLayer(unsigned int layerNum, const PathRectangle& r);
-		void UpdateNodeLayer(unsigned int layerNum, const PathRectangle& r);
+		void InitNodeLayer(unsigned int layerNum, const SRectangle& r);
+		void UpdateNodeLayer(unsigned int layerNum, const SRectangle& r);
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		void QueueNodeLayerUpdates(const PathRectangle& r);
+		void QueueNodeLayerUpdates(const SRectangle& r);
 		void ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool flushQueue);
 		#endif
 
