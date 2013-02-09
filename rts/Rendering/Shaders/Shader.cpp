@@ -96,13 +96,14 @@ namespace Shader {
 		glGenProgramsARB(1, &objID);
 	}
 
-	void ARBShaderObject::Compile() {
+	void ARBShaderObject::Compile(bool reloadFromDisk) {
 		glEnable(type);
 
-		const std::string srcStr = GetShaderSource(srcFile);
+		if (reloadFromDisk)
+			curShaderSrc = GetShaderSource(srcFile);
 
 		glBindProgramARB(type, objID);
-		glProgramStringARB(type, GL_PROGRAM_FORMAT_ASCII_ARB, srcStr.size(), srcStr.c_str());
+		glProgramStringARB(type, GL_PROGRAM_FORMAT_ASCII_ARB, curShaderSrc.size(), curShaderSrc.c_str());
 
 		int errorPos = -1;
 		int isNative =  0;
@@ -130,8 +131,11 @@ namespace Shader {
 	{
 		assert(globalRendering->haveGLSL); // non-debug check is done in ShaderHandler
 	}
-	void GLSLShaderObject::Compile() {
-		std::string srcStr = GetShaderSource(srcFile).c_str();
+	void GLSLShaderObject::Compile(bool reloadFromDisk) {
+		if (reloadFromDisk)
+			curShaderSrc = GetShaderSource(srcFile);
+
+		std::string srcStr = curShaderSrc;
 
 		// extract #version and put it in first line
 		std::string version;
@@ -197,7 +201,7 @@ namespace Shader {
 				(*it)->SetDefinitions(definitionFlags);
 			}
 			curHash = hash;
-			Reload();
+			Reload(false);
 		}
 	}
 
@@ -235,7 +239,7 @@ namespace Shader {
 	void ARBProgramObject::Release() {
 		IProgramObject::Release();
 	}
-	void ARBProgramObject::Reload() {
+	void ARBProgramObject::Reload(bool reloadFromDisk) {
 		
 	}
 
@@ -310,7 +314,7 @@ namespace Shader {
 		objID = 0;
 	}
 
-	void GLSLProgramObject::Reload() {
+	void GLSLProgramObject::Reload(bool reloadFromDisk) {
 		log = "";
 		valid = false;
 
@@ -325,7 +329,7 @@ namespace Shader {
 		}
 		for (SOVecIt it = GetAttachedShaderObjs().begin(); it != GetAttachedShaderObjs().end(); ++it) {
 			(*it)->Release();
-			(*it)->Compile();
+			(*it)->Compile(reloadFromDisk);
 		}
 
 		objID = glCreateProgram();
