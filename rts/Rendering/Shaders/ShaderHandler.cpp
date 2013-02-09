@@ -19,7 +19,7 @@ CShaderHandler* CShaderHandler::GetInstance() {
 void CShaderHandler::ReloadAll() {
 	for (std::map<std::string, ProgramObjMap>::iterator it = programObjects.begin(); it != programObjects.end(); ++it) {
 		for (ProgramObjMapIt jt = it->second.begin(); jt != it->second.end(); ++jt) {
-			(jt->second)->Reload();
+			(jt->second)->Reload(true);
 		}
 	}
 }
@@ -125,6 +125,6 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 		return so;
 	}
 
-	so->Compile();
+	so->Compile(true);
 	return so;
 }
