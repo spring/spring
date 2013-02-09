@@ -11,7 +11,6 @@ Major Changes:
  - better pathing
  - add experimental map generator (see http://springrts.com/wiki/Mapgen for details)
  - some new sim/weapon features
- - single threaded executable is now deprecated
 
 AI:
  - Shard update
@@ -60,11 +59,11 @@ Lua:
  - add mapHardness to the Game constants table (#3390); make Spring.GetGroundInfo now match its wiki documentation
  - make Create{Feature, Unit} take an optional (7th, 9th) {feature,unit}ID argument to spawn a feature/unit with a specific ID
  - make CreateUnit take an optional (10th) builderID argument
- - deprecate LuaUnitDefs.extractSquare
- - replace LuaFeatureDefs.deathFeature(string) by LuaFeatureDefs.deathFeatureID(number)
+ ! deprecate LuaUnitDefs.extractSquare
+ ! replace LuaFeatureDefs.deathFeature(string) by LuaFeatureDefs.deathFeatureID(number)
  - fix crash in Spring.GetVisibleFeatures (#3400)
  - fix Spring.GetFeatureDirection returning direction in (x,z)-plane only (#1599)
- - couple the AllowWeapon* callins to SetWatchWeapon state
+ ! couple the AllowWeapon* callins to SetWatchWeapon state
  - add optional 4th argument to Spring.SetUnitImpulse to control a unit's impulse decay-rate (now unhardcoded)
  ! Game.version now returns the same as `spring --sync-version`, e.g. "92.0" or "91.0.1-1283-gf3805a7"
  - new Game.buildFlags (unsynced only) to get additional engine buildflags, e.g. "OMP" or "MT-Sim DEBUG"
