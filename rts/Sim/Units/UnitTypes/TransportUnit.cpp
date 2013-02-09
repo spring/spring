@@ -142,73 +142,60 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			if (transportee->isDead)
 				continue;
 
-			const float gh = ground->GetHeightReal(transportee->pos.x, transportee->pos.z);
-
 			transportee->transporter = NULL;
 			transportee->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
 
-			// prevent a position teleport on the next movetype update if
-			// the transport died in a place that the unit being carried
-			// could not get to on its own
-			if (!transportee->pos.IsInBounds()) {
-				transportee->KillUnit(false, false, NULL, false);
-				continue;
-			} else {
-				// immobile units can still be transported
-				// via script trickery, guard against this
-				if (!transportee->unitDef->IsAllowedTerrainHeight(gh)) {
-					transportee->KillUnit(false, false, NULL, false);
-					continue;
-				}
-			}
-
 			if (!unitDef->releaseHeld) {
 				if (!selfDestruct) {
-					// we don't want it to leave a corpse
+					// we don't want transportees to leave a corpse
 					transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED);
 				}
 
 				transportee->KillUnit(selfDestruct, reclaimed, attacker);
 			} else {
-				// place unit near the place of death of the transport
-				// if it's a ground transport and uses a piece-in-ground method
-				// to hide units
-				if (transportee->pos.y < gh) {
-					const float k = (transportee->radius + radius) * std::max(unitDef->unloadSpread, 1.0f);
+				// NOTE: game's responsibility to deal with edge-cases now
+				transportee->Move3D(transportee->pos.cClampInBounds(), false);
+
+				// if this transporter uses the piece-underneath-ground
+				// method to "hide" transportees, place transportee near
+				// the transporter's place of death
+				if (transportee->pos.y < ground->GetHeightReal(transportee->pos.x, transportee->pos.z)) {
+					const float r1 = transportee->radius + radius;
+					const float r2 = r1 * std::max(unitDef->unloadSpread, 1.0f);
 
 					// try to unload in a presently unoccupied spot
-					// unload on a wreck if suitable position not found
+					// (if no such spot, unload on transporter wreck)
 					for (int i = 0; i < 10; ++i) {
 						float3 pos = transportee->pos;
-						pos.x += (gs->randFloat() * 2 * k - k);
-						pos.z += (gs->randFloat() * 2 * k - k);
-						pos.y = ground->GetHeightReal(transportee->pos.x, transportee->pos.z);
+						pos.x += (gs->randFloat() * 2.0f * r2 - r2);
+						pos.z += (gs->randFloat() * 2.0f * r2 - r2);
+						pos.y = ground->GetHeightReal(pos.x, pos.z);
 
-						if (qf->GetUnitsExact(pos, transportee->radius + 2).empty()) {
+						if (!pos.IsInBounds())
+							continue;
+
+						if (qf->GetUnitsExact(pos, transportee->radius + 2.0f).empty()) {
 							transportee->Move3D(pos, false);
 							break;
 						}
 					}
-				} else if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(transportee->moveType)) {
-					mt->StartFlying();
+				} else {
+					if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(transportee->moveType)) {
+						mt->StartFlying();
+					}
 				}
 
 				transportee->moveType->SlowUpdate();
 				transportee->moveType->LeaveTransport();
 
-				// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
+				// issue a move order so that units dropped from flying
+				// transports won't try to return to their pick-up spot
 				if (unitDef->canfly && transportee->unitDef->canmove) {
-					Command c(CMD_MOVE, float3(transportee->pos.x, ground->GetHeightAboveWater(transportee->pos.x, transportee->pos.z), transportee->pos.z));
-					transportee->commandAI->GiveCommand(c);
+					transportee->commandAI->GiveCommand(Command(CMD_MOVE, transportee->pos));
 				}
 
 				transportee->SetStunned(transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
 				transportee->speed = speed * (0.5f + 0.5f * gs->randFloat());
-
-				if (CBuilding* building = dynamic_cast<CBuilding*>(transportee)) {
-					// this building may end up in a strange position, so kill it
-					building->KillUnit(selfDestruct, reclaimed, attacker);
-				}
 
 				eventHandler.UnitUnloaded(transportee, this);
 			}
