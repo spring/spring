@@ -124,8 +124,11 @@ UnitScripts:
     Note, this stops QueryNanoPiece() calls after 31 times no matter what!
     This breaks ZK's LupsNanoSpray, fixed version can be found here http://gw.gd/Zaae.
 
-Models:
- - Assimp parsed models now support a 2nd texcoord
+Models/Assimp:
+ - support a 2nd texcoord
+ - auto-calc midPos
+ - read texture filepaths from modelfile if available
+ - extended auto-finding of textures
 
 Weapons/WeaponDefs:
  ! remove of manualBombSettings (backward-compability code in weapondefs_post.lua)
