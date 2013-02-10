@@ -172,9 +172,13 @@ void CPathEstimator::InitBlocks() {
 void CPathEstimator::CalcOffsetsAndPathCosts(unsigned int threadNum) {
 	// reset FPU state for synced computations
 	streflop::streflop_init<streflop::Simple>();
-	// FIXME: not running any thread on core 0 is a big perf-hit
-	// Threading::SetAffinity(1 << threadNum);
-	Threading::SetAffinity(~0);
+
+	if (threadNum > 0) {
+		// FIXME: not running any thread on core 0 is a big perf-hit
+		// Threading::SetAffinity(1 << threadNum);
+		Threading::SetAffinity(~0);
+		Threading::SetThreadName(IntToString(threadNum, "pathhelper%i"));
+	}
 
 	// NOTE: EstimatePathCosts() [B] is temporally dependent on CalculateBlockOffsets() [A],
 	// A must be completely finished before B_i can be safely called. This means we cannot

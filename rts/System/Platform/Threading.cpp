@@ -37,7 +37,36 @@ namespace Threading {
 	static boost::thread::id simThreadID;
 	static boost::thread::id batchThreadID;
 #endif	
-	bool OMPInited = false;
+#if defined(__APPLE__)
+#elif defined(WIN32)
+	static DWORD cpusSystem = 0;
+#else
+	static cpu_set_t cpusSystem;
+#endif
+
+	void DetectCores()
+	{
+		static bool inited = false;
+		if (inited)
+			return;
+		
+	#if defined(__APPLE__)
+		// no-op
+
+	#elif defined(WIN32)
+		// Get the available cores
+		DWORD curMask;
+		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cpusSystem);
+
+	#else
+		// Get the available cores
+		CPU_ZERO(&cpusSystem);
+		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
+	#endif
+
+		inited = true;
+	}
+
 
 	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard)
 	{
@@ -49,11 +78,6 @@ namespace Threading {
 		// no-op
 
 	#elif defined(WIN32)
-		// Get the available cores
-		DWORD curMask;
-		DWORD cpusSystem = 0;
-		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cpusSystem);
-
 		// Create mask
 		DWORD_PTR cpusWanted = (cores_bitmask & cpusSystem);
 
@@ -69,12 +93,8 @@ namespace Threading {
 		// Return final mask
 		return (result > 0) ? (boost::uint32_t)cpusWanted : 0;
 	#else
-		// Get the available cores
-		cpu_set_t cpusSystem; CPU_ZERO(&cpusSystem);
-		cpu_set_t cpusWanted; CPU_ZERO(&cpusWanted);
-		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
-
 		// Create mask
+		cpu_set_t cpusWanted; CPU_ZERO(&cpusWanted);
 		int numCpus = std::min(CPU_COUNT(&cpusSystem), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
 		for (int n = numCpus - 1; n >= 0; --n) {
 			if ((cores_bitmask & (1 << n)) != 0) {
@@ -134,19 +154,10 @@ namespace Threading {
 		systemCores = ~0;
 
 	#elif defined(WIN32)
-		// Get the available cores
-		DWORD curMask;
-		DWORD cpusSystem = 0;
-		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cpusSystem);
-
 		// Create mask
 		systemCores = cpusSystem;
 
 	#else
-		// Get the available cores
-		cpu_set_t cpusSystem; CPU_ZERO(&cpusSystem);
-		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
-
 		// Create mask
 		int numCpus = std::min(CPU_COUNT(&cpusSystem), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
 		for (int n = numCpus - 1; n >= 0; --n) {
@@ -159,6 +170,8 @@ namespace Threading {
 		return systemCores;
 	}
 
+
+	bool OMPInited = false;
 
 	#ifdef _OPENMP
 	static boost::uint32_t GetOpenMPCpuCore(int index, boost::uint32_t availCores, boost::uint32_t avoidCores)

@@ -47,6 +47,7 @@ int Run(int argc, char* argv[])
 	}
 #endif
 
+	Threading::DetectCores();
 	Threading::SetMainThread();
 
 #ifdef USE_GML
