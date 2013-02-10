@@ -18,7 +18,7 @@ public:
 
 	bool IsGoal(unsigned int xSquare, unsigned int zSquare) const;
 	float Heuristic(unsigned int xSquare, unsigned int zSquare) const;
-	bool GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& moveMathOptions, const CSolidObject* owner) const;
+	bool GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const;
 	int2 GoalSquareOffset(unsigned int blockSize) const;
 
 	float3 goal;

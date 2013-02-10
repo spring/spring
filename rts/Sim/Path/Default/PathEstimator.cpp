@@ -172,7 +172,8 @@ void CPathEstimator::InitBlocks() {
 void CPathEstimator::CalcOffsetsAndPathCosts(unsigned int threadNum) {
 	// reset FPU state for synced computations
 	streflop::streflop_init<streflop::Simple>();
-	// Threading::SetAffinity(i<<thread);
+	// FIXME: not running any thread on core 0 is a big perf-hit
+	// Threading::SetAffinity(1 << threadNum);
 	Threading::SetAffinity(~0);
 
 	// NOTE: EstimatePathCosts() [B] is temporally dependent on CalculateBlockOffsets() [A],
@@ -303,7 +304,7 @@ int2 CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, uns
  * (always 4 out of 8 vertices connected to the block)
  */
 void CPathEstimator::CalculateVertices(const MoveDef& moveDef, unsigned int blockX, unsigned int blockZ, unsigned int thread) {
-	for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++)
+	for (unsigned int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++)
 		CalculateVertex(moveDef, blockX, blockZ, dir, thread);
 }
 
@@ -318,8 +319,8 @@ void CPathEstimator::CalculateVertex(
 	unsigned int direction,
 	unsigned int threadNum)
 {
-	const int childBlockX = parentBlockX + directionVectors[direction].x;
-	const int childBlockZ = parentBlockZ + directionVectors[direction].y;
+	const unsigned int childBlockX = parentBlockX + directionVectors[direction].x;
+	const unsigned int childBlockZ = parentBlockZ + directionVectors[direction].y;
 
 	const unsigned int parentBlockNbr = parentBlockZ * nbrOfBlocksX + parentBlockX;
 	const unsigned int vertexNbr =
@@ -328,7 +329,7 @@ void CPathEstimator::CalculateVertex(
 		direction;
 
 	// outside map?
-	if (childBlockX < 0 || childBlockZ < 0 || childBlockX >= nbrOfBlocksX || childBlockZ >= nbrOfBlocksZ) {
+	if (childBlockX >= nbrOfBlocksX || childBlockZ >= nbrOfBlocksZ) {
 		vertexCosts[vertexNbr] = PATHCOST_INFINITY;
 		return;
 	}
@@ -355,7 +356,7 @@ void CPathEstimator::CalculateVertex(
 	// use this thread's "private" CPathFinder instance
 	// (rather than locking pathFinder->GetPath()) if we
 	// are in one
-	result = pathFinders[threadNum]->GetPath(moveDef, startPos, pfDef, path, false, true, MAX_SEARCHED_NODES_PF >> 2, false, 0, true);
+	result = pathFinders[threadNum]->GetPath(moveDef, startPos, pfDef, NULL, path, MAX_SEARCHED_NODES_PF >> 2, false, true, false, true);
 
 	// store the result
 	if (result == IPath::Ok)
@@ -598,8 +599,8 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveDef& moveDef, const CPa
 	blockStates.nodeMask[mStartBlockIdx] |= PATHOPT_OPEN;
 	blockStates.fCost[mStartBlockIdx] = 0.0f;
 	blockStates.gCost[mStartBlockIdx] = 0.0f;
-	blockStates.SetMaxFCost(0.0f);
-	blockStates.SetMaxGCost(0.0f);
+	blockStates.SetMaxCost(NODE_COST_F, 0.0f);
+	blockStates.SetMaxCost(NODE_COST_G, 0.0f);
 
 	dirtyBlocks.push_back(mStartBlockIdx);
 
@@ -777,8 +778,8 @@ void CPathEstimator::TestBlock(
 		ob->nodeNum = blockIdx;
 	openBlocks.push(ob);
 
-	blockStates.SetMaxFCost(std::max(blockStates.GetMaxFCost(), fCost));
-	blockStates.SetMaxGCost(std::max(blockStates.GetMaxGCost(), gCost));
+	blockStates.SetMaxCost(NODE_COST_F, std::max(blockStates.GetMaxCost(NODE_COST_F), fCost));
+	blockStates.SetMaxCost(NODE_COST_G, std::max(blockStates.GetMaxCost(NODE_COST_G), gCost));
 
 	// mark this block as open
 	blockStates.fCost[blockIdx] = fCost;

@@ -65,8 +65,6 @@ struct PathNodeStateBuffer {
 	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes)
 		: extraCostsOverlaySynced(NULL)
 		, extraCostsOverlayUnsynced(NULL)
-		, fCostMax(0.0f)
-		, gCostMax(0.0f)
 		, br(bufRes)
 		, mr(mapRes)
 	{
@@ -86,6 +84,10 @@ struct PathNodeStateBuffer {
 			peParentNodePos.resize(br.x * br.y, int2(-1, -1));
 			peNodeOffsets.resize(br.x * br.y);
 		}
+
+		maxCosts[NODE_COST_F] = 0.0f;
+		maxCosts[NODE_COST_G] = 0.0f;
+		maxCosts[NODE_COST_H] = 0.0f;
 	}
 
 	unsigned int GetSize() const { return fCost.size(); }
@@ -115,10 +117,8 @@ struct PathNodeStateBuffer {
 		return memFootPrint;
 	}
 
-	void SetMaxFCost(float c) { fCostMax = c; }
-	void SetMaxGCost(float c) { gCostMax = c; }
-	float GetMaxFCost() const { return fCostMax; }
-	float GetMaxGCost() const { return gCostMax; }
+	void SetMaxCost(unsigned int t, float c) { maxCosts[t] = c; }
+	float GetMaxCost(unsigned int t) const { return maxCosts[t]; }
 
 	/// {@param xhm} and {@param zhm} are always passed in heightmap-coordinates
 	float GetNodeExtraCost(unsigned int xhm, unsigned int zhm, bool synced) const {
@@ -215,8 +215,7 @@ private:
 	const float* extraCostsOverlayUnsynced;
 
 private:
-	float fCostMax;
-	float gCostMax;
+	float maxCosts[3];
 
 	int2 ps; ///< patch size (eg. 1 for PF, BLOCK_SIZE for PE); ignored when extraCosts != NULL
 	int2 br; ///< buffer resolution (equal to mr / ps); ignored when extraCosts != NULL
