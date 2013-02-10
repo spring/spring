@@ -34,9 +34,8 @@ CPathFinder::CPathFinder()
 	, exactPath(false)
 	, testMobile(false)
 	, needPath(false)
-	, maxSquaresToBeSearched(0)
+	, maxOpenNodes(0)
 	, testedNodes(0)
-	, maxNodeCost(0.0f)
 	, squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx, gs->mapy))
 {
 	static const int   dirScale = 2;
@@ -106,13 +105,12 @@ IPath::SearchResult CPathFinder::GetPath(
 	bool needPath,
 	bool synced
 ) {
-
 	// Clear the given path.
 	path.path.clear();
 	path.squares.clear();
 	path.pathCost = PATHCOST_INFINITY;
 
-	maxSquaresToBeSearched = std::min(MAX_SEARCHED_NODES_PF - 8U, maxNodes);
+	maxOpenNodes = std::min(MAX_SEARCHED_NODES_PF - 8U, maxNodes);
 
 	this->testMobile = testMobile;
 	this->exactPath = exactPath;
@@ -211,7 +209,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 IPath::SearchResult CPathFinder::DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced) {
 	bool foundGoal = false;
 
-	while (!openSquares.empty() && (openSquareBuffer.GetSize() < maxSquaresToBeSearched)) {
+	while (!openSquares.empty() && (openSquareBuffer.GetSize() < maxOpenNodes)) {
 		// Get the open square with lowest expected path-cost.
 		PathNode* os = const_cast<PathNode*>(openSquares.top());
 		openSquares.pop();
@@ -253,7 +251,7 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveDef& moveDef, const CPathFin
 		return IPath::Ok;
 
 	// Could not reach the goal.
-	if (openSquareBuffer.GetSize() >= maxSquaresToBeSearched)
+	if (openSquareBuffer.GetSize() >= maxOpenNodes)
 		return IPath::GoalOutOfRange;
 
 	// Search could not reach the goal, due to the unit being locked in.
