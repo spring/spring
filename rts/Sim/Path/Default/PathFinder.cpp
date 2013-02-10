@@ -77,14 +77,14 @@ CPathFinder::CPathFinder()
 	directionVectors3D[PATHOPT_RIGHT | PATHOPT_DOWN].ANormalize();
 	directionVectors3D[PATHOPT_LEFT  | PATHOPT_DOWN].ANormalize();
 
-	directionCosts[PATHOPT_LEFT                ] =    1.0f * dirScale;
-	directionCosts[PATHOPT_RIGHT               ] =    1.0f * dirScale;
-	directionCosts[PATHOPT_UP                  ] =    1.0f * dirScale;
-	directionCosts[PATHOPT_DOWN                ] =    1.0f * dirScale;
-	directionCosts[PATHOPT_LEFT  | PATHOPT_UP  ] = dirCost * dirScale;
-	directionCosts[PATHOPT_RIGHT | PATHOPT_UP  ] = dirCost * dirScale;
-	directionCosts[PATHOPT_RIGHT | PATHOPT_DOWN] = dirCost * dirScale;
-	directionCosts[PATHOPT_LEFT  | PATHOPT_DOWN] = dirCost * dirScale;
+	directionCosts[PATHOPT_LEFT                ] =    1.0f; // * dirScale;
+	directionCosts[PATHOPT_RIGHT               ] =    1.0f; // * dirScale;
+	directionCosts[PATHOPT_UP                  ] =    1.0f; // * dirScale;
+	directionCosts[PATHOPT_DOWN                ] =    1.0f; // * dirScale;
+	directionCosts[PATHOPT_LEFT  | PATHOPT_UP  ] = dirCost; // * dirScale;
+	directionCosts[PATHOPT_RIGHT | PATHOPT_UP  ] = dirCost; // * dirScale;
+	directionCosts[PATHOPT_RIGHT | PATHOPT_DOWN] = dirCost; // * dirScale;
+	directionCosts[PATHOPT_LEFT  | PATHOPT_DOWN] = dirCost; // * dirScale;
 }
 
 CPathFinder::~CPathFinder()
@@ -98,12 +98,12 @@ IPath::SearchResult CPathFinder::GetPath(
 	const MoveDef& moveDef,
 	const float3& startPos,
 	const CPathFinderDef& pfDef,
+	const CSolidObject* owner,
 	IPath::Path& path,
+	unsigned int maxNodes,
 	bool testMobile,
 	bool exactPath,
-	unsigned int maxNodes,
 	bool needPath,
-	const CSolidObject* owner,
 	bool synced
 ) {
 
@@ -113,6 +113,7 @@ IPath::SearchResult CPathFinder::GetPath(
 	path.pathCost = PATHCOST_INFINITY;
 
 	maxSquaresToBeSearched = std::min(MAX_SEARCHED_NODES_PF - 8U, maxNodes);
+
 	this->testMobile = testMobile;
 	this->exactPath = exactPath;
 	this->needPath = needPath;
@@ -176,8 +177,8 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	squareStates.fCost[mStartSquareIdx] = 0.0f;
 	squareStates.gCost[mStartSquareIdx] = 0.0f;
 
-	squareStates.SetMaxFCost(0.0f);
-	squareStates.SetMaxGCost(0.0f);
+	squareStates.SetMaxCost(NODE_COST_F, 0.0f);
+	squareStates.SetMaxCost(NODE_COST_G, 0.0f);
 
 	dirtySquares.push_back(mStartSquareIdx);
 
@@ -364,8 +365,8 @@ bool CPathFinder::TestSquare(
 		os->nodeNum = sqrIdx;
 	openSquares.push(os);
 
-	squareStates.SetMaxFCost(std::max(squareStates.GetMaxFCost(), fCost));
-	squareStates.SetMaxGCost(std::max(squareStates.GetMaxGCost(), gCost));
+	squareStates.SetMaxCost(NODE_COST_F, std::max(squareStates.GetMaxCost(NODE_COST_F), fCost));
+	squareStates.SetMaxCost(NODE_COST_G, std::max(squareStates.GetMaxCost(NODE_COST_G), gCost));
 
 	// mark this square as open
 	squareStates.fCost[sqrIdx] = os->fCost;

@@ -51,12 +51,12 @@ public:
 		const MoveDef& moveDef,
 		const float3& startPos,
 		const CPathFinderDef& pfDef,
+		const CSolidObject* owner,
 		IPath::Path& path,
+		unsigned int maxSearchedNodes,
 		bool testMobile,
 		bool exactPath,
-		unsigned int maxSearchedNodes,
 		bool needPath,
-		const CSolidObject* owner,
 		bool synced
 	);
 

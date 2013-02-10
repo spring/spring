@@ -9,14 +9,12 @@ CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float
 goal(goalCenter),
 sqGoalRadius(goalRadius * goalRadius)
 {
-	// make sure that the goal can be reached with 2-square resolution
-	if (sqGoalRadius < (SQUARE_SIZE * SQUARE_SIZE * 2))
-		sqGoalRadius = (SQUARE_SIZE * SQUARE_SIZE * 2);
-
 	goalSquareX = goalCenter.x / SQUARE_SIZE;
 	goalSquareZ = goalCenter.z / SQUARE_SIZE;
 
-	startInGoalRadius = sqGoalRadius >= sqGoalDistance;
+	// make sure that the goal can be reached with 2-square resolution
+	sqGoalRadius = std::max(sqGoalRadius, SQUARE_SIZE * SQUARE_SIZE * 2.0f);
+	startInGoalRadius = (sqGoalRadius >= sqGoalDistance);
 }
 
 // returns true when the goal is within our defined range
@@ -24,24 +22,24 @@ bool CPathFinderDef::IsGoal(unsigned int xSquare, unsigned int zSquare) const {
 	return (SquareToFloat3(xSquare, zSquare).SqDistance2D(goal) <= sqGoalRadius);
 }
 
-// returns distance to goal center in map-squares
+// returns distance to goal center in heightmap-squares
 float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare) const
 {
-	const int dx = std::abs(int(xSquare) - int(goalSquareX));
-	const int dz = std::abs(int(zSquare) - int(goalSquareZ));
+	const float dx = std::abs(int(xSquare) - int(goalSquareX));
+	const float dz = std::abs(int(zSquare) - int(goalSquareZ));
 	return (std::max(dx, dz) * 0.5f + std::min(dx, dz) * 0.2f);
 }
 
 
 // returns if the goal is inaccessable: this is
 // true if the goal area is "small" and blocked
-bool CPathFinderDef::GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& moveMathOptions, const CSolidObject* owner) const {
+bool CPathFinderDef::GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const {
 	const float r0 = SQUARE_SIZE * SQUARE_SIZE * 4.0f;
 	const float r1 = ((moveDef.xsize * SQUARE_SIZE) >> 1) * ((moveDef.zsize * SQUARE_SIZE) >> 1) * 1.5f;
 
 	return
 		((sqGoalRadius < r0 || sqGoalRadius <= r1) &&
-		(CMoveMath::IsBlocked(moveDef, goal, owner) & moveMathOptions));
+		(CMoveMath::IsBlocked(moveDef, goal, owner) & blockMask));
 }
 
 int2 CPathFinderDef::GoalSquareOffset(unsigned int blockSize) const {
