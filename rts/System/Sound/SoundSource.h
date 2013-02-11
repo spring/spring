@@ -7,7 +7,6 @@
 
 #include <al.h>
 #include <boost/noncopyable.hpp>
-#include <boost/thread/recursive_mutex.hpp>
 
 class IAudioChannel;
 class float3;

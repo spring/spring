@@ -3,7 +3,6 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "System/mmgr.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
 #include "CommandColors.h"
@@ -300,8 +299,8 @@ void CMiniMap::SetSlaveMode(bool newMode)
 		mouseMove   = false;
 		mouseResize = false;
 	}
-	static int oldButtonSize = 16;
 	if (newMode != slaveDrawMode) {
+		static int oldButtonSize = 16;
 		if (newMode) {
 			oldButtonSize = buttonSize;
 			buttonSize = 0;
@@ -503,6 +502,7 @@ void CMiniMap::MoveView(int x, int y)
 	float3 clickPos;
 	clickPos.x = ((float(x -                               xpos          )) /  width) * (gs->mapx * SQUARE_SIZE);
 	clickPos.z = ((float(y - (globalRendering->viewSizeY - ypos - height))) / height) * (gs->mapy * SQUARE_SIZE);
+	camHandler->CameraTransition(0.0f);
 	camHandler->GetCurrentController().SetPos(clickPos);
 	unitTracker.Disable();
 }
@@ -543,7 +543,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 		if (gu->spectatingFullSelect) {
 			unit = helper->GetClosestUnit(pos, size);
 		} else {
-			unit = helper->GetClosestFriendlyUnit(pos, size, gu->myAllyTeam);
+			unit = helper->GetClosestFriendlyUnit(NULL, pos, size, gu->myAllyTeam);
 		}
 
 		selectedUnits.HandleSingleUnitClickSelection(unit, false);
@@ -1013,18 +1013,7 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 	{
 		GML_RECMUTEX_LOCK(unit); // DrawForReal
-
-		const std::set<CUnit*>& units = unitDrawer->GetUnsortedUnits();
-
-		for (std::set<CUnit*>::const_iterator it = units.begin(); it != units.end(); ++it) {
-			DrawUnit(*it);
-		}
-
-		// highlight the selected unit
-		CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
-		if (unit != NULL) {
-			DrawUnitHighlight(unit);
-		}
+		unitDrawer->DrawUnitMiniMapIcons();
 	}
 
 	glDisable(GL_ALPHA_TEST);
@@ -1383,6 +1372,7 @@ void CMiniMap::DrawButtons()
 
 
 
+#if 0
 inline const icon::CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) const
 {
 	scale = 1.0f;
@@ -1412,7 +1402,6 @@ inline const icon::CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& sc
 
 	return NULL;
 }
-
 
 void CMiniMap::DrawUnit(const CUnit* unit)
 {
@@ -1469,7 +1458,6 @@ void CMiniMap::DrawUnit(const CUnit* unit)
 	iconData->Draw(x0, y0, x1, y1);
 }
 
-
 void CMiniMap::DrawUnitHighlight(const CUnit* unit)
 {
 	glEnable(GL_ALPHA_TEST);
@@ -1494,6 +1482,7 @@ void CMiniMap::DrawUnitHighlight(const CUnit* unit)
 
 	return;
 }
+#endif
 
 
 void CMiniMap::DrawNotes()

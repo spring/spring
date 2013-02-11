@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <string.h>
-#include "System/mmgr.h"
 
 #include "Camera.h"
 #include "Map/ReadMap.h"
@@ -218,6 +217,10 @@ bool CCamera::InView(const float3& p, float radius) const
 
 void CCamera::UpdateForward()
 {
+	// NOTE:
+	//   only FreeController calls this, others just seem to manipulate
+	//   azimuth (.x) and zenith (.y) angles for their own (redundant?)
+	//   copy of Camera::forward (CameraController::dir)
 	forward.z = math::cos(rot.y) * math::cos(rot.x);
 	forward.x = math::sin(rot.y) * math::cos(rot.x);
 	forward.y = math::sin(rot.x);

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "AdvTreeDrawer.h"
 #include "AdvTreeGenerator.h"
@@ -436,7 +435,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	const int activeFarTex = (camera->forward.z < 0.0f)? treeGen->farTex[0]: treeGen->farTex[1];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+//	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	Shader::IProgramObject* treeShader = NULL;
 
 	const CMapInfo::light_t& light = mapInfo->light;
@@ -1016,6 +1015,12 @@ void CAdvTreeDrawer::DrawGrass()
 	}
 }
 
+void CAdvTreeDrawer::DrawShadowGrass()
+{
+	if (drawTrees) {
+		grassDrawer->DrawShadow();
+	}
+}
 void CAdvTreeDrawer::ResetPos(const float3& pos)
 {
 	const int x = (int) pos.x / TREE_SQUARE_SIZE / SQUARE_SIZE;

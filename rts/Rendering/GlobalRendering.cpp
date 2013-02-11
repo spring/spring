@@ -6,7 +6,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/mmgr.h"
 #include "System/Util.h"
 #include "System/Vec2.h"
 #include "System/Config/ConfigHandler.h"
@@ -28,8 +27,9 @@ CONFIG(bool, TeamNanoSpray).defaultValue(true);
  */
 CGlobalRendering* globalRendering;
 
-const float CGlobalRendering::MAX_VIEW_RANGE = 8000.0f;
-const float CGlobalRendering::NEAR_PLANE     =    2.8f;
+const float CGlobalRendering::MAX_VIEW_RANGE     = 8000.0f;
+const float CGlobalRendering::NEAR_PLANE         =    2.8f;
+const float CGlobalRendering::SMF_INTENSITY_MULT = 210.0f / 255.0f;
 
 CR_BIND(CGlobalRendering, );
 

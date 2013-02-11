@@ -34,8 +34,10 @@ def getContents(archives):
 	files=[]
 	for archive in archives:
 		path, prefix=parseArgv(archive)
-		output=subprocess.check_output(["7z","l","-slt", path])
+		output=str(subprocess.check_output(["7z","l","-slt", path]))
 		lines=output.split("\n")
+		if (len(lines)==1): # python 3 hack
+			lines = output.split("\\n")
 		for line in lines:
 			isdir=False
 			if line.startswith('Path = '):
@@ -52,27 +54,27 @@ def writeNsh(files, paths, argv):
 	"""
 		writes uninstall cmds for files + paths into the file nsh
 	"""
-	print "; This file is automaticly created, don't edit it!"
+	print("; This file is automaticly created, don't edit it!")
 	command="make_uninstall_nsh.py"
 	for arg in argv:
 		command=command+" " +arg
 
-	print "; created with: %s" % command
-	print ";"
+	print("; created with: %s" % command)
+	print(";")
 	for file in files:
-		print 'Delete "$INSTDIR\%s"'%(file)
+		print('Delete "$INSTDIR\%s"'%(file))
 	for path in paths:
-		print 'RmDir "$INSTDIR\%s"'%(path)
+		print('RmDir "$INSTDIR\%s"'%(path))
 	for archive in argv:
 		path, prefix = parseArgv(archive)
 		if prefix!="":
 			#strip backslash at the end
 			if prefix.endswith("\\"):
 				prefix=prefix[:-1]
-			print 'RmDir "$INSTDIR\%s"'%(prefix)
+			print('RmDir "$INSTDIR\%s"'%(prefix))
 
 if len(sys.argv)<2:
-	print "Usage %s [<7z archive>[:<subpath to extract]]+"%(sys.argv[0])
+	print("Usage %s [<7z archive>[:<subpath to extract]]+"%(sys.argv[0]))
 else:
 	files, paths = getContents(sys.argv[1:])
 	writeNsh(files, paths, sys.argv[1:])

@@ -4,7 +4,6 @@
 #include <string>
 #include <set>
 
-#include "System/mmgr.h"
 
 #include "SideParser.h"
 #include "Lua/LuaParser.h"

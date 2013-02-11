@@ -10,6 +10,23 @@
 #ifndef _FPU_CHECK_H
 #define _FPU_CHECK_H
 
+
 extern void good_fpu_control_registers(const char* text);
+extern void good_fpu_init();
+
+
+#if defined(__GNUC__)
+	#define _noinline __attribute__((__noinline__))
+#else
+	#define _noinline
+#endif
+
+namespace proc {
+	_noinline void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d);
+
+	unsigned int GetProcMaxStandardLevel();
+	unsigned int GetProcMaxExtendedLevel();
+	unsigned int GetProcSSEBits();
+}
 
 #endif // !_FPU_CHECK_H

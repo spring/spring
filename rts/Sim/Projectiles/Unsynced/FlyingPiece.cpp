@@ -2,7 +2,8 @@
 
 #include "FlyingPiece.h"
 #include "Game/GlobalUnsynced.h"
-#include "Rendering/GlobalRendering.h"
+#include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
@@ -10,30 +11,39 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Models/3DOParser.h"
 #include "Rendering/Models/S3OParser.h"
-#include "System/Matrix44f.h"
 
-FlyingPiece::~FlyingPiece() {
-	delete[] verts;
+SS3OFlyingPiece::~SS3OFlyingPiece() {
+	delete[] chunk;
 }
 
-void FlyingPiece::Init(int _team, const float3& _pos, const float3& _speed)
-{
-	prim   = NULL;
-	object = NULL;
-	verts  = NULL;
 
+
+bool FlyingPiece::Update() {
+	pos      += speed;
+	speed    *= 0.996f;
+	speed.y  += mapInfo->map.gravity; // fp's are not projectiles
+	rotAngle += rotSpeed;
+
+	transMat.LoadIdentity();
+	transMat.Rotate(rotAngle, rotAxis);
+
+	return (pos.y >= ground->GetApproximateHeight(pos.x, pos.z - 10.0f, false));
+}
+
+void FlyingPiece::InitCommon(const float3& _pos, const float3& _speed, int _team)
+{
 	pos   = _pos;
 	speed = _speed;
 
 	texture = 0;
 	team    = _team;
 
-	rotAxis  = gu->usRandVector().ANormalize();
-	rotSpeed = gu->usRandFloat() * 0.1f;
-	rot = 0;
+	rotAxis  = gu->RandVector().ANormalize();
+	rotSpeed = gu->RandFloat() * 0.1f;
+	rotAngle = 0.0f;
 }
 
-void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertexArray* va) {
+void FlyingPiece::DrawCommon(size_t* lastTeam, CVertexArray* va) {
 
 	if (team != *lastTeam) {
 		*lastTeam = team;
@@ -42,57 +52,55 @@ void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertex
 		va->Initialize();
 		unitDrawer->SetTeamColour(team);
 	}
+}
 
-	CMatrix44f m;
-	m.Rotate(rot, rotAxis);
-	float3 tp, tn;
+void S3DOFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va) {
+	DrawCommon(lastTeam, va);
 
-	const float3 interPos = pos + speed * globalRendering->timeOffset;
+	const float3& interPos = pos + speed * globalRendering->timeOffset;
 
-	switch (modelType) {
-		case MODELTYPE_3DO: {
-			const C3DOTextureHandler::UnitTexture* tex = prim->texture;
+	const C3DOTextureHandler::UnitTexture* tex = chunk->texture;
 
-			const std::vector<S3DOVertex>& vertices    = object->vertices;
-			const std::vector<int>&        verticesIdx = prim->vertices;
+	const std::vector<S3DOVertex>& vertices = piece->vertices;
+	const std::vector<int>&         indices = chunk->vertices;
 
-			const float uvCoords[8] = {
-				tex->xstart, tex->ystart,
-				tex->xend,   tex->ystart,
-				tex->xend,   tex->yend,
-				tex->xstart, tex->yend
-			};
+	const float uvCoords[8] = {
+		tex->xstart, tex->ystart,
+		tex->xend,   tex->ystart,
+		tex->xend,   tex->yend,
+		tex->xstart, tex->yend
+	};
 
-			for (int i = 0; i < 4; i++) {
-				const S3DOVertex& v = vertices[verticesIdx[i]];
-				tp = m.Mul(v.pos) + interPos;
-				tn = m.Mul(v.normal);
-				va->AddVertexQTN(tp, uvCoords[i << 1], uvCoords[(i << 1) + 1], tn);
-			}
-		} break;
-
-		case MODELTYPE_S3O: {
-			if (texture != *lastTex) {
-				*lastTex = texture;
-
-				if (*lastTex == 0) {
-					return;
-				}
-
-				va->DrawArrayTN(GL_QUADS);
-				va->Initialize();
-				texturehandlerS3O->SetS3oTexture(texture);
-			}
-
-			for (int i = 0; i < 4; i++) {
-				const SS3OVertex& v = verts[i];
-				tp = m.Mul(v.pos) + interPos;
-				tn = m.Mul(v.normal);
-				va->AddVertexQTN(tp, v.textureX, v.textureY, tn);
-			}
-		} break;
-
-		default: {
-		} break;
+	for (int i = 0; i < 4; i++) {
+		const S3DOVertex& v = vertices[indices[i]];
+		const float3 tp = transMat.Mul(v.pos) + interPos;
+		const float3 tn = transMat.Mul(v.normal);
+		va->AddVertexQTN(tp, uvCoords[i << 1], uvCoords[(i << 1) + 1], tn);
 	}
 }
+
+void SS3OFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va) {
+	DrawCommon(lastTeam, va);
+
+	const float3& interPos = pos + speed * globalRendering->timeOffset;
+
+	if (texture != *lastTex) {
+		*lastTex = texture;
+
+		if (*lastTex == 0) {
+			return;
+		}
+
+		va->DrawArrayTN(GL_QUADS);
+		va->Initialize();
+		texturehandlerS3O->SetS3oTexture(texture);
+	}
+
+	for (int i = 0; i < 4; i++) {
+		const SS3OVertex& v = chunk[i];
+		const float3 tp = transMat.Mul(v.pos) + interPos;
+		const float3 tn = transMat.Mul(v.normal);
+		va->AddVertexQTN(tp, v.texCoord.x, v.texCoord.y, tn);
+	}
+}
+

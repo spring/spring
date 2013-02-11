@@ -168,7 +168,7 @@ CUnitScript* CLuaUnitScript::activeScript;
 
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
-	: CUnitScript(unit, unit->localmodel->pieces)
+	: CUnitScript(unit, unit->localModel->pieces)
 	, handle(CLuaHandle::GetHandle(L)), L(L)
 	, scriptIndex(LUAFN_Last, LUA_NOREF)
 	, inKilled(false)
@@ -403,11 +403,13 @@ int CLuaUnitScript::RunQueryCallIn(int fn)
 	const int scriptNum = (int)PopNumber(fn, 0) - 1;
 
 	if (LOG_IS_ENABLED(L_DEBUG)) {
-		LocalModelPiece* piece = GetLocalModelPiece(scriptNum);
-		LOG_L(L_DEBUG, "%s: %d %s",
-				CLuaUnitScriptNames::GetScriptName(fn).c_str(),
-				scriptNum,
-				(piece && piece->original) ? piece->original->name.c_str() : "n/a");
+		if (PieceExists(scriptNum)) {
+			LocalModelPiece* piece = GetScriptLocalModelPiece(scriptNum);
+			LOG_L(L_DEBUG, "%s: %d %s",
+					CLuaUnitScriptNames::GetScriptName(fn).c_str(),
+					scriptNum,
+					(piece->original) ? piece->original->name.c_str() : "n/a");
+		}
 	}
 
 	return scriptNum;
@@ -431,11 +433,13 @@ int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
 	const int scriptNum = (int)PopNumber(fn, 0) - 1;
 
 	if (LOG_IS_ENABLED(L_DEBUG)) {
-		LocalModelPiece* piece = GetLocalModelPiece(scriptNum);
-		LOG_L(L_DEBUG, "%s: %d %s",
-				CLuaUnitScriptNames::GetScriptName(fn).c_str(),
-				scriptNum,
-				(piece && piece->original) ? piece->original->name.c_str() : "n/a");
+		if (PieceExists(scriptNum)) {
+			LocalModelPiece* piece = GetScriptLocalModelPiece(scriptNum);
+			LOG_L(L_DEBUG, "%s: %d %s",
+					CLuaUnitScriptNames::GetScriptName(fn).c_str(),
+					scriptNum,
+					(piece->original) ? piece->original->name.c_str() : "n/a");
+		}
 	}
 
 	return scriptNum;
@@ -1181,7 +1185,7 @@ int CLuaUnitScript::SetPieceVisibility(lua_State* L)
 	}
 
 	// note: for Lua unit scripts it would be confusing if the unit's
-	// unit->script->pieces differs from the unit->localmodel->pieces.
+	// unit->script->pieces differs from the unit->localModel->pieces.
 
 	const int piece = luaL_checkint(L, 1) - 1;
 	const bool visible = lua_toboolean(L, 2);
@@ -1414,11 +1418,12 @@ int CLuaUnitScript::SetDeathScriptFinished(lua_State* L)
 static inline LocalModelPiece* ParseLocalModelPiece(lua_State* L, CUnitScript* script, const char* caller)
 {
 	const int piece = luaL_checkint(L, 1) - 1;
-	LocalModelPiece* p = script->GetLocalModelPiece(piece);
-	if (p == NULL) {
+
+	if (!script->PieceExists(piece)) {
 		luaL_error(L, "%s(): Invalid piecenumber", caller);
 	}
-	return p;
+
+	return (script->GetScriptLocalModelPiece(piece));
 }
 
 

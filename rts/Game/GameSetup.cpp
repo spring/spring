@@ -1,8 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include "System/mmgr.h"
-
 #include "GameSetup.h"
 #include "System/TdfParser.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -26,9 +24,10 @@ CGameSetup::CGameSetup()
 	: fixedAllies(true)
 	, mapHash(0)
 	, modHash(0)
+	, mapSeed(0)
 	, useLuaGaia(true)
 	, startPosType(StartPos_Fixed)
-	, maxUnits(1500)
+	, maxUnitsPerTeam(1500)
 	, ghostedBuildings(true)
 	, disableMapDamage(false)
 	, maxSpeed(0.0f)
@@ -211,15 +210,6 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 
 		skirmishAIStartingData.push_back(data);
 	}
-
-	unsigned aiCount = 0;
-	if (!file.GetValue(aiCount, "GAME\\NumSkirmishAIs")
-			|| skirmishAIStartingData.size() == aiCount) {
-		aiCount = skirmishAIStartingData.size();
-	} else {
-		throw content_error(
-				"incorrect number of skirmish AIs in GameSetup script");
-	}
 }
 
 const std::vector<SkirmishAIData>& CGameSetup::GetSkirmishAIs() const {
@@ -386,7 +376,9 @@ bool CGameSetup::Init(const std::string& buf)
 	// Used by dedicated server only
 	file.GetTDef(mapHash, unsigned(0), "GAME\\MapHash");
 	file.GetTDef(modHash, unsigned(0), "GAME\\ModHash");
+	file.GetTDef(mapSeed, unsigned(0), "GAME\\MapSeed");
 
+	gameID      = file.SGetValueDef("",  "GAME\\GameID");
 	modName     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
 	saveName    = file.SGetValueDef("",  "GAME\\Savefile");
@@ -395,12 +387,12 @@ bool CGameSetup::Init(const std::string& buf)
 
 	file.GetTDef(gameStartDelay, (unsigned int) 4, "GAME\\GameStartDelay");
 
-	file.GetDef(onlyLocal,        "0", "GAME\\OnlyLocal");
-	file.GetDef(useLuaGaia,       "1", "GAME\\ModOptions\\LuaGaia");
-	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");
-	file.GetDef(maxUnits,       "1500", "GAME\\ModOptions\\MaxUnits");
-	file.GetDef(disableMapDamage, "0", "GAME\\ModOptions\\DisableMapDamage");
-	file.GetDef(ghostedBuildings, "1", "GAME\\ModOptions\\GhostedBuildings");
+	file.GetDef(onlyLocal,           "0", "GAME\\OnlyLocal");
+	file.GetDef(useLuaGaia,          "1", "GAME\\ModOptions\\LuaGaia");
+	file.GetDef(noHelperAIs,         "0", "GAME\\ModOptions\\NoHelperAIs");
+	file.GetDef(maxUnitsPerTeam,  "1500", "GAME\\ModOptions\\MaxUnits");
+	file.GetDef(disableMapDamage,    "0", "GAME\\ModOptions\\DisableMapDamage");
+	file.GetDef(ghostedBuildings,    "1", "GAME\\ModOptions\\GhostedBuildings");
 
 	file.GetDef(maxSpeed, "3.0", "GAME\\ModOptions\\MaxSpeed");
 	file.GetDef(minSpeed, "0.3", "GAME\\ModOptions\\MinSpeed");

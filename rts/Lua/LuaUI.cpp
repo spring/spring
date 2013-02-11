@@ -1,8 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "LuaLobby.h" // ugh, streflop namespace corruption...
+#include "lib/gml/gmlcnf.h"
 
-#include "System/mmgr.h"
 
 #include "LuaUI.h"
 
@@ -61,7 +60,7 @@
 #include <SDL_timer.h>
 
 CONFIG(bool, LuaSocketEnabled)
-	.defaultValue(false)
+	.defaultValue(true)
 	.description("Enable LuaSocket support, allows a lua-widget to make TCP/UDP Connections")
 	.readOnly(true)
 ;
@@ -98,8 +97,6 @@ void CLuaUI::LoadHandler()
 		return;
 	}
 
-	GML_STDMUTEX_LOCK(luaui); // LoadHandler
-
 	new CLuaUI();
 
 	if (!luaUI->IsValid()) {
@@ -112,9 +109,6 @@ void CLuaUI::FreeHandler()
 {
 	static bool inFree = false;
 	if (!inFree) {
-
-		GML_STDMUTEX_LOCK(luaui); // FreeHandler
-
 		inFree = true;
 		delete luaUI;
 		inFree = false;
@@ -210,7 +204,6 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Script",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
-	    !AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)        ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
@@ -412,7 +405,7 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect, floa
 		return;
 	}
 #if defined(USE_GML) && GML_ENABLE_SIM
-	float shockFrontDistAdj = distadj ? *distadj : this->shockFrontDistAdj;
+	float shockFrontDistAdj = (GML::Enabled() && distadj) ? *distadj : this->shockFrontDistAdj;
 #endif
 	float3 gap = (camera->pos - pos);
 	float dist = gap.Length() + shockFrontDistAdj;
@@ -459,7 +452,7 @@ void CLuaUI::ExecuteUIEventBatch() {
 
 	std::vector<LuaUIEvent> lleb;
 	{
-		GML_STDMUTEX_LOCK(llbatch);
+		GML_STDMUTEX_LOCK(llbatch); // ExecuteUIEventBatch
 
 		if(luaUIEventBatch.empty())
 			return;
@@ -870,7 +863,7 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 
 			lua_settop(srcState, 0);
 
-			GML_STDMUTEX_LOCK(scall);
+			GML_STDMUTEX_LOCK(scall); // UnsyncedXCall
 
 			delayedCallsFromSynced.push_back(DelayDataDump());
 

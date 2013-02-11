@@ -17,7 +17,7 @@ class CSimpleParticleSystem : public CProjectile
 
 public:
 	CSimpleParticleSystem();
-	virtual ~CSimpleParticleSystem();
+	virtual ~CSimpleParticleSystem() { particles.clear(); }
 
 	virtual void Draw();
 	virtual void Update();
@@ -52,8 +52,8 @@ protected:
 		CR_DECLARE_STRUCT(Particle);
 
 		float3 pos;
-		float life;
 		float3 speed;
+		float life;
 		float decayrate;
 		float size;
 		float sizeGrowth;
@@ -61,7 +61,7 @@ protected:
 	};
 
 protected:
-	 Particle* particles;
+	 std::vector<Particle> particles;
 };
 
 /**

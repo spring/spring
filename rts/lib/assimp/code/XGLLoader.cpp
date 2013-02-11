@@ -77,7 +77,7 @@ struct free_it
 	void* free;
 };
 
-template<> const std::string LogFunctions<XGLImporter>::log_prefix = "XGL: ";
+template<> const char* LogFunctions<XGLImporter>::log_prefix = "XGL: ";
 
 
 // ------------------------------------------------------------------------------------------------

@@ -12,7 +12,9 @@
 #include "lobject.h"
 #include "ltm.h"
 #include "lzio.h"
+#ifndef BUILDING_AI
 #include <boost/thread/recursive_mutex.hpp>
+#endif
 struct luaContextData;
 
 
@@ -134,8 +136,10 @@ struct lua_State {
   GCObject *gclist;
   struct lua_longjmp *errorJmp;  /* current error recover point */
   ptrdiff_t errfunc;  /* current error handling function (stack index) */
-	boost::recursive_mutex *luamutex;
-	luaContextData *lcd;
+#ifndef BUILDING_AI
+  boost::recursive_mutex *luamutex; // Spring MT needs this
+  luaContextData *lcd; // Spring MT needs this
+#endif
 };
 
 

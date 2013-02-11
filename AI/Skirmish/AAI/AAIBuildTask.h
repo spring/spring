@@ -13,7 +13,6 @@ public:
 
 	void BuildtaskFailed();
 
-	AAI* ai;
 
 	int def_id;
 	int unit_id;
@@ -23,4 +22,6 @@ public:
 	int builder_id;
 
 	int order_tick;
+private:
+	AAI* ai;
 };

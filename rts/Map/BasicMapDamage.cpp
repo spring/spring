@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "BasicMapDamage.h"
 #include "ReadMap.h"
@@ -200,7 +199,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	}
 
 	readmap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
-	pathManager->TerrainChange(x1, y1, x2, y2);
+	pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
 }
 

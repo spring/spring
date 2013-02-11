@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 #include <SDL.h>
 
 #include "Rendering/GL/myGL.h"
@@ -39,6 +38,7 @@
 #include <vector>
 
 CONFIG(int, LoadingMT).defaultValue(-1).safemodeValue(0);
+CONFIG(bool, ShowLoadMessages).defaultValue(true);
 
 CLoadScreen* CLoadScreen::singleton = NULL;
 
@@ -50,7 +50,8 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	saveFile(_saveFile),
 	netHeartbeatThread(NULL),
 	gameLoadThread(NULL),
-	mt_loading(true),
+	mtLoading(true),
+	showMessages(true),
 	startupTexture(0),
 	aspectRatio(1.0f),
 	last_draw(0)
@@ -69,13 +70,15 @@ void CLoadScreen::Init()
 	skirmishAIHandler.LoadPreGame();
 
 #ifdef HEADLESS
-	mt_loading = false;
+	mtLoading = false;
+	showMessages = false;
 #else
 	const int mtCfg = configHandler->GetInt("LoadingMT");
 	// user override
-	mt_loading = (mtCfg > 0);
+	mtLoading = (mtCfg > 0);
 	// runtime detect. disable for intel/mesa drivers, they crash at multithreaded OpenGL (date: Nov. 2011)
-	mt_loading |= (mtCfg < 0) && !globalRendering->haveMesa && !globalRendering->haveIntel;
+	mtLoading |= (mtCfg < 0) && !globalRendering->haveMesa && !globalRendering->haveIntel;
+	showMessages = configHandler->GetBool("ShowLoadMessages");
 #endif
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
@@ -104,17 +107,17 @@ void CLoadScreen::Init()
 
 	try {
 		//! Create the Game Loading Thread
-		if (mt_loading)
+		if (mtLoading)
 			gameLoadThread = new COffscreenGLThread( boost::bind(&CGame::LoadGame, game, mapName) );
 
 	} catch (const opengl_error& gle) {
 		LOG_L(L_WARNING, "Offscreen GL Context creation failed, "
 				"falling back to single-threaded loading. The problem was: %s",
 				gle.what());
-		mt_loading = false;
+		mtLoading = false;
 	}
 
-	if (!mt_loading) {
+	if (!mtLoading) {
 		LOG("LoadingScreen: single-threaded");
 		game->LoadGame(mapName);
 	}
@@ -125,7 +128,7 @@ CLoadScreen::~CLoadScreen()
 {
 	// at this point, the thread running CGame::LoadGame
 	// has finished and deregistered itself from WatchDog
-	if (mt_loading && gameLoadThread)
+	if (mtLoading && gameLoadThread)
 		gameLoadThread->Join();
 	delete gameLoadThread; gameLoadThread = NULL;
 
@@ -180,7 +183,7 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 	singleton = new CLoadScreen(mapName, modName, saveFile);
 	// Init() already requires GetInstance() to work.
 	singleton->Init();
-	if (!singleton->mt_loading) {
+	if (!singleton->mtLoading) {
 		game->SetupRenderingParams();
 		CLoadScreen::DeleteInstance();
 	}
@@ -242,7 +245,7 @@ bool CLoadScreen::Update()
 bool CLoadScreen::Draw()
 {
 	//! Limit the Frames Per Second to not lock a singlethreaded CPU from loading the game
-	if (mt_loading) {
+	if (mtLoading) {
 		spring_time now = spring_gettime();
 		unsigned diff_ms = spring_tomsecs(now - last_draw);
 		static const unsigned wantedFPS = 50;
@@ -287,33 +290,35 @@ bool CLoadScreen::Draw()
 			glEnd();
 		}
 
-		font->Begin();
-			font->SetTextColor(0.5f,0.5f,0.5f,0.9f);
-			font->glPrint(0.1f,0.9f,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
-				oldLoadMessages);
+		if (showMessages) {
+			font->Begin();
+				font->SetTextColor(0.5f,0.5f,0.5f,0.9f);
+				font->glPrint(0.1f,0.9f,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
+					oldLoadMessages);
 
-			font->SetTextColor(0.9f,0.9f,0.9f,0.9f);
-			float posy = font->GetTextNumLines(oldLoadMessages) * font->GetLineHeight() * globalRendering->viewSizeY / 35.0f;
-			font->glPrint(0.1f,0.9f - posy * globalRendering->pixelY,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
-				curLoadMessage);
-		font->End();
+				font->SetTextColor(0.9f,0.9f,0.9f,0.9f);
+				float posy = font->GetTextNumLines(oldLoadMessages) * font->GetLineHeight() * globalRendering->viewSizeY / 35.0f;
+				font->glPrint(0.1f,0.9f - posy * globalRendering->pixelY,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
+					curLoadMessage);
+			font->End();
+		}
 	}
 
 	font->Begin();
 		font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
 		font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
-#ifdef USE_GML
-		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), GML::ThreadCount());
-#else
-		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			"Spring %s", SpringVersion::GetFull().c_str());
-#endif
+		if (GML::Enabled()) {
+			font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+				"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), GML::ThreadCount());
+		} else {
+			font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+				"Spring %s", SpringVersion::GetFull().c_str());
+		}
 		font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			"This program is distributed under the GNU General Public License, see license.html for more info");
 	font->End();
 
-	if (!mt_loading)
+	if (!mtLoading)
 		SDL_GL_SwapBuffers();
 
 	return true;
@@ -349,7 +354,7 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	//! Here it is done for the loading thread, for the mainthread it is done in CLoadScreen::Update()
 	good_fpu_control_registers(curLoadMessage.c_str());
 
-	if (!mt_loading)
+	if (!mtLoading)
 		Draw();
 }
 
@@ -379,7 +384,7 @@ static string SelectPicture(const std::string& dir, const std::string& prefix)
 		return "";
 	}
 
-	return pics[gu->usRandInt() % pics.size()];
+	return pics[gu->RandInt() % pics.size()];
 }
 
 

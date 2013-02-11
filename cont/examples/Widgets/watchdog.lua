@@ -31,15 +31,8 @@ function widget:Shutdown()
 	debug.sethook()
 end
 
-
-function widget:GameFrame(n)
+function widget:Update()
 	-- reset watchdog counter
 	i=0
---	used for testing
---	if n==10 then
---		Spring.Echo("Starting endless loop")
---		while true do
---		end
---	end
 end
 

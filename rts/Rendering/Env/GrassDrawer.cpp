@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <algorithm>
-#include "System/mmgr.h"
 
 #include "GrassDrawer.h"
 #include "Game/Camera.h"
@@ -25,7 +24,7 @@
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 
-CONFIG(int, GrassDetail).defaultValue(3);
+CONFIG(int, GrassDetail).defaultValue(7);
 
 static const float turfSize        = 20.0f;            // single turf size
 static const float partTurfSize    = turfSize * 0.6f;  // single turf size
@@ -78,10 +77,11 @@ CGrassDrawer::CGrassDrawer()
 	maxGrassDist = 800 + math::sqrt((float) detail) * 240;
 	maxDetailedDist = 146 + detail * 24;
 	detailedBlocks = int((maxDetailedDist - 24) / bMSsq) + 1;
-	numTurfs = 3 + int(detail * 0.5f);
-	strawPerTurf = 50 + int(math::sqrt((float) detail) * 10);
+	const float detail_lim = std::min(3, detail);
+	numTurfs = 3 + int(detail_lim * 0.5f);
+	strawPerTurf = 50 + int(math::sqrt(detail_lim) * 10);
 
-	blocksX = gs->mapx / grassSquareSize  /grassBlockSize;
+	blocksX = gs->mapx / grassSquareSize / grassBlockSize;
 	blocksY = gs->mapy / grassSquareSize / grassBlockSize;
 
 	for (int y = 0; y < 32; y++) {
@@ -96,11 +96,9 @@ CGrassDrawer::CGrassDrawer()
 	}
 
 	lastListClean = 0;
-	grassDL = glGenLists(8);
+	grassDL = glGenLists(1);
 	srand(15);
-	for (int a = 0; a < 1; ++a) {
-		CreateGrassDispList(grassDL + a);
-	}
+	CreateGrassDispList(grassDL);
 
 	{
 		CBitmap grassBladeTexBM;
@@ -125,7 +123,7 @@ CGrassDrawer::CGrassDrawer()
 	LoadGrassShaders();
 }
 
-CGrassDrawer::~CGrassDrawer(void)
+CGrassDrawer::~CGrassDrawer()
 {
 	if (grassOff)
 		return;
@@ -139,7 +137,7 @@ CGrassDrawer::~CGrassDrawer(void)
 
 	delete[] grassMap;
 
-	glDeleteLists(grassDL, 8);
+	glDeleteLists(grassDL, 1);
 	glDeleteTextures(1, &grassBladeTex);
 	glDeleteTextures(1, &farTex);
 
@@ -156,15 +154,17 @@ void CGrassDrawer::LoadGrassShaders() {
 	static const std::string shaderNames[GRASS_PROGRAM_LAST] = {
 		"grassNearAdvShader",
 		"grassDistAdvShader",
-		"grassDistDefShader"
+		"grassDistDefShader",
+		// "grassShadGenShader"
 	};
 	static const std::string shaderDefines[GRASS_PROGRAM_LAST] = {
-		"#define GRASS_NEAR_SHADOW\n",
-		"#define GRASS_DIST_SHADOW\n",
-		"#define GRASS_DIST_BASIC\n"
+		"#define DISTANCE_NEAR\n#define HAVE_SHADOW\n",
+		"#define DISTANCE_FAR\n#define HAVE_SHADOW\n",
+		"#define DISTANCE_FAR\n",
+		// "#define GRASS_SHADOW_GEN\n"
 	};
 
-	static const int NUM_UNIFORMS = 10;
+	static const int NUM_UNIFORMS = 11;
 	static const std::string uniformNames[NUM_UNIFORMS] = {
 		"mapSizePO2",
 		"mapSize",
@@ -176,11 +176,12 @@ void CGrassDrawer::LoadGrassShaders() {
 		"shadowParams",
 		"simFrame",
 		"windSpeed",
+		"camPos"
 	};
 
 	const std::string extraDefs =
 		(mapInfo->grass.bladeWaveScale > 0.0f)?
-		"#define GRASS_ANIMATION\n":
+		"#define ANIMATION\n":
 		"";
 
 	if (!globalRendering->haveGLSL) {
@@ -190,6 +191,7 @@ void CGrassDrawer::LoadGrassShaders() {
 		// these remain stubs if !shadowsSupported
 		grassShaders[GRASS_PROGRAM_NEAR_SHADOW] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_NEAR_SHADOW] + "ARB", true);
 		grassShaders[GRASS_PROGRAM_DIST_SHADOW] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_DIST_SHADOW] + "ARB", true);
+		// grassShaders[GRASS_PROGRAM_SHADOW_GEN] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_SHADOW_GEN] + "ARB", true);
 
 		if (shadowHandler->shadowsSupported) {
 			grassShaders[GRASS_PROGRAM_NEAR_SHADOW]->AttachShaderObject(sh->CreateShaderObject("ARB/grass.vp", "", GL_VERTEX_PROGRAM_ARB));
@@ -199,6 +201,7 @@ void CGrassDrawer::LoadGrassShaders() {
 		for (int i = GRASS_PROGRAM_NEAR_SHADOW; i < GRASS_PROGRAM_LAST; i++) {
 			grassShaders[i] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[i] + "GLSL", false);
 			grassShaders[i]->AttachShaderObject(sh->CreateShaderObject("GLSL/GrassVertProg.glsl", shaderDefines[i] + extraDefs, GL_VERTEX_SHADER));
+			grassShaders[i]->AttachShaderObject(sh->CreateShaderObject("GLSL/GrassFragProg.glsl", shaderDefines[i] + extraDefs, GL_FRAGMENT_SHADER));
 		}
 	}
 
@@ -211,9 +214,20 @@ void CGrassDrawer::LoadGrassShaders() {
 				grassShaders[i]->SetUniformLocation(uniformNames[j]);
 			}
 
+			grassShaders[i]->SetUniformLocation("shadingTex");
+			grassShaders[i]->SetUniformLocation("shadowMap");
+			grassShaders[i]->SetUniformLocation("grassShadingTex");
+			grassShaders[i]->SetUniformLocation("bladeTex");
+			grassShaders[i]->SetUniformLocation("infoMap");
+
 			grassShaders[i]->Enable();
 			grassShaders[i]->SetUniform2f(0, 1.0f / (gs->pwr2mapx  * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
 			grassShaders[i]->SetUniform2f(1, 1.0f / (gs->mapx      * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
+			grassShaders[i]->SetUniform1i(NUM_UNIFORMS,     0);
+			grassShaders[i]->SetUniform1i(NUM_UNIFORMS + 1, 1);
+			grassShaders[i]->SetUniform1i(NUM_UNIFORMS + 2, 2);
+			grassShaders[i]->SetUniform1i(NUM_UNIFORMS + 3, 3);
+			grassShaders[i]->SetUniform1i(NUM_UNIFORMS + 4, 4);
 			grassShaders[i]->Disable();
 			grassShaders[i]->Validate();
 		}
@@ -238,81 +252,149 @@ public:
 	int cx, cy;
 	CGrassDrawer* gd;
 
-	void DrawQuad(int x, int y) {
-		const float maxDetailedDist = gd->maxDetailedDist;
+	void DrawQuad(int x, int y);
+};
 
-		int xgbs = x * grassBlockSize, xgbsx = 0;
-		int ygbs = y * grassBlockSize, ygbsy = 0;
 
-		CGrassDrawer::NearGrassStruct* nearGrass = gd->nearGrass;
+void CGrassBlockDrawer::DrawQuad(int x, int y)
+{
+	const float maxDetailedDist = gd->maxDetailedDist;
 
-		if (abs(x - cx) <= gd->detailedBlocks && abs(y - cy) <= gd->detailedBlocks) {
-			//! blocks close to the camera
+	int xgbs = x * grassBlockSize, xgbsx = 0;
+	int ygbs = y * grassBlockSize, ygbsy = 0;
+
+	CGrassDrawer::NearGrassStruct* nearGrass = gd->nearGrass;
+
+	if (abs(x - cx) <= gd->detailedBlocks && abs(y - cy) <= gd->detailedBlocks) {
+		//! blocks close to the camera
+		ygbsy = ygbs;
+
+		for (int y2 = 0; y2 < grassBlockSize; ++y2) {
+			xgbsx = xgbs;
+
+			const unsigned char* gm = gd->grassMap +
+				ygbsy * gs->mapx / grassSquareSize +
+				xgbsx;
+
+			for (int x2 = 0; x2 < grassBlockSize; ++x2) { //!loop over all squares in block
+				if (*gm) {
+					float3 squarePos((xgbsx + 0.5f) * gSSsq, 0.0f, (ygbsy + 0.5f) * gSSsq);
+						squarePos.y = ground->GetHeightReal(squarePos.x, squarePos.z, false);
+
+					const float sqdist = (camera->pos - squarePos).SqLength();
+
+					if (sqdist < (maxDetailedDist * maxDetailedDist)) {
+						//! close grass, draw directly
+						srand(ygbsy * 1025 + xgbsx);
+						rand();
+						rand();
+
+						for (int a = 0; a < gd->numTurfs; a++) {
+							const float dx = (xgbsx + fRand(1)) * gSSsq;
+							const float dy = (ygbsy + fRand(1)) * gSSsq;
+							const float col = 0.62f;
+
+							float3 pos(dx, ground->GetHeightReal(dx, dy, false), dy);
+								pos.y -= ground->GetSlope(dx, dy, false) * 10.0f + 0.03f;
+
+							glColor3f(col, col, col);
+
+							glPushMatrix();
+							glTranslatef3(pos);
+							CGrassDrawer::NearGrassStruct* ng = &nearGrass[(ygbsy & 31) * 32 + (xgbsx & 31)];
+
+							if (ng->square != ygbsy * 2048 + xgbsx) {
+								const float3 v = squarePos - camera->pos;
+								ng->rotation = GetHeadingFromVector(v.x, v.z) * 180.0f / 32768 + 180; //FIXME make more random
+								ng->square = ygbsy * 2048 + xgbsx;
+							}
+
+							glRotatef(ng->rotation, 0.0f, 1.0f, 0.0f);
+							glCallList(gd->grassDL);
+							glPopMatrix();
+						}
+					} else {
+						//! near but not close, save for later drawing
+						CGrassDrawer::InviewNearGrass iv;
+							iv.dist = sqdist;
+							iv.x = xgbsx;
+							iv.y = ygbsy;
+						inviewNearGrass.push_back(iv);
+						nearGrass[(ygbsy & 31) * 32 + (xgbsx & 31)].square = -1;
+					}
+
+				}
+
+				++gm;
+				++xgbsx;
+			}
+
+			++ygbsy;
+		}
+
+		return;
+	}
+
+	float3 dif;
+		dif.x = camera->pos.x - ((x + 0.5f) * bMSsq);
+		dif.y = 0.0f;
+		dif.z = camera->pos.z - ((y + 0.5f) * bMSsq);
+	const float dist = dif.Length2D();
+	dif /= dist;
+
+	if (dist < gd->maxGrassDist) {
+		int curSquare = y * gd->blocksX + x;
+		int curModSquare = (y & 31) * 32 + (x & 31);
+
+		CGrassDrawer::GrassStruct* grass = gd->grass + curModSquare;
+		grass->lastSeen = gs->frameNum;
+
+		if (grass->square != curSquare) {
+			grass->square = curSquare;
+
+			delete grass->va;
+			grass->va = NULL;
+		}
+
+		if (!grass->va) {
+			grass->va = new CVertexArray;
+			grass->pos = float3((x + 0.5f) * bMSsq, ground->GetHeightReal((x + 0.5f) * bMSsq, (y + 0.5f) * bMSsq, false), (y + 0.5f) * bMSsq);
+
+			va = grass->va;
+			va->Initialize();
+			va->EnlargeArrays(grassBlockSize * grassBlockSize * gd->numTurfs * 4, 0, VA_SIZE_TN);
+
 			ygbsy = ygbs;
 
 			for (int y2 = 0; y2 < grassBlockSize; ++y2) {
+				//! CAUTION: loop count must match EnlargeArrays above
 				xgbsx = xgbs;
 
-				const unsigned char* gm = gd->grassMap +
+				unsigned char* gm = gd->grassMap +
 					ygbsy * gs->mapx / grassSquareSize +
 					xgbsx;
 
-				for (int x2 = 0; x2 < grassBlockSize; ++x2) { //!loop over all squares in block
+				for (int x2 = 0; x2 < grassBlockSize; ++x2) {
+					//! CAUTION: loop count must match EnlargeArrays above
 					if (*gm) {
-						float3 squarePos((xgbsx + 0.5f) * gSSsq, 0.0f, (ygbsy + 0.5f) * gSSsq);
-							squarePos.y = ground->GetHeightReal(squarePos.x, squarePos.z, false);
+						srand(ygbsy * 1025 + xgbsx);
+						rand();
+						rand();
 
-						/*if (!camera->InView(squarePos, gSSsq * 2.0f)) { //the QuadField visibility check should be enough
-							// double the radius of the check, grass on the left of
-							// the screen gets prematurely clipped even at moderate
-							// zoom levels otherwise
-							continue;
-						}*/
+						for (int a = 0; a < gd->numTurfs; a++) {
+							//! CAUTION: loop count must match EnlargeArrays above
+							const float dx = (xgbsx + fRand(1)) * gSSsq;
+							const float dy = (ygbsy + fRand(1)) * gSSsq;
+							const float col = 1.0f;
 
-						const float sqdist = (camera->pos - squarePos).SqLength();
+							float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
+								pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
-						if (sqdist < (maxDetailedDist * maxDetailedDist)) {
-							//! close grass, draw directly
-							srand(ygbsy * 1025 + xgbsx);
-							rand();
-							rand();
-
-							for (int a = 0; a < gd->numTurfs; a++) {
-								const float dx = (xgbsx + fRand(1)) * gSSsq;
-								const float dy = (ygbsy + fRand(1)) * gSSsq;
-								const float col = 0.62f;
-
-								float3 pos(dx, ground->GetHeightReal(dx, dy, false), dy);
-									pos.y -= ground->GetSlope(dx, dy, false) * 10.0f + 0.03f;
-
-								glColor3f(col, col, col);
-
-								//if (camera->InView(pos, turfSize * 0.7f)) { //the QuadField visibility check should be enough
-									glPushMatrix();
-									glTranslatef3(pos);
-									CGrassDrawer::NearGrassStruct* ng = &nearGrass[(ygbsy & 31) * 32 + (xgbsx & 31)];
-
-									if (ng->square != ygbsy * 2048 + xgbsx) {
-										const float3 v = squarePos - camera->pos;
-										ng->rotation = GetHeadingFromVector(v.x, v.z) * 180.0f / 32768 + 180;
-										ng->square = ygbsy * 2048 + xgbsx;
-									}
-
-									glRotatef(ng->rotation, 0.0f, 1.0f, 0.0f);
-									glCallList(gd->grassDL);
-									glPopMatrix();
-								//}
-							}
-						} else {
-							//! near but not close, save for later drawing
-							CGrassDrawer::InviewNearGrass iv;
-								iv.dist = sqdist;
-								iv.x = xgbsx;
-								iv.y = ygbsy;
-							inviewNearGrass.push_back(iv);
-							nearGrass[(ygbsy & 31) * 32 + (xgbsx & 31)].square = -1;
+							va->AddVertexQTN(pos, 0.0f,         0.0f, float3(-partTurfSize, -partTurfSize, col));
+							va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
+							va->AddVertexQTN(pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize,  partTurfSize, col));
+							va->AddVertexQTN(pos, 0.0f,         1.0f, float3(-partTurfSize,  partTurfSize, col));
 						}
-
 					}
 
 					++gm;
@@ -321,106 +403,23 @@ public:
 
 				++ygbsy;
 			}
-
-			return;
 		}
 
-		float3 dif;
-			dif.x = camera->pos.x - ((x + 0.5f) * bMSsq);
-			dif.y = 0.0f;
-			dif.z = camera->pos.z - ((y + 0.5f) * bMSsq);
-		const float dist = dif.Length2D();
-		dif /= dist;
-
-		if (dist < gd->maxGrassDist) {
-			int curSquare = y * gd->blocksX + x;
-			int curModSquare = (y & 31) * 32 + (x & 31);
-
-			CGrassDrawer::GrassStruct* grass = gd->grass + curModSquare;
-			grass->lastSeen = gs->frameNum;
-
-			if (grass->square != curSquare) {
-				grass->square = curSquare;
-
-				delete grass->va;
-				grass->va = NULL;
-			}
-
-			if (!grass->va) {
-				grass->va = new CVertexArray;;
-				grass->pos = float3((x + 0.5f) * bMSsq, ground->GetHeightReal((x + 0.5f) * bMSsq, (y + 0.5f) * bMSsq, false), (y + 0.5f) * bMSsq);
-
-				va = grass->va;
-				va->Initialize();
-				va->EnlargeArrays(grassBlockSize * grassBlockSize * gd->numTurfs * 4, 0, VA_SIZE_TN);
-
-				ygbsy = ygbs;
-
-				for (int y2 = 0; y2 < grassBlockSize; ++y2) {
-					//! CAUTION: loop count must match EnlargeArrays above
-					xgbsx = xgbs;
-
-					unsigned char* gm = gd->grassMap +
-						ygbsy * gs->mapx / grassSquareSize +
-						xgbsx;
-
-					for (int x2 = 0; x2 < grassBlockSize; ++x2) {
-						//! CAUTION: loop count must match EnlargeArrays above
-						if (*gm) {
-							srand(ygbsy * 1025 + xgbsx);
-							rand();
-							rand();
-
-							for (int a = 0; a < gd->numTurfs; a++) {
-								//! CAUTION: loop count must match EnlargeArrays above
-								const float dx = (xgbsx + fRand(1)) * gSSsq;
-								const float dy = (ygbsy + fRand(1)) * gSSsq;
-								const float col = 1.0f;
-
-								float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
-									pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
-
-								va->AddVertexQTN(pos, 0.0f,         0.0f, float3(-partTurfSize, -partTurfSize, col));
-								va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
-								va->AddVertexQTN(pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize,  partTurfSize, col));
-								va->AddVertexQTN(pos, 0.0f,         1.0f, float3(-partTurfSize,  partTurfSize, col));
-							}
-						}
-
-						++gm;
-						++xgbsx;
-					}
-
-					++ygbsy;
-				}
-			}
-
-			CGrassDrawer::InviewGrass ig;
-				ig.num = curModSquare;
-				ig.dist = dist;
-			inviewGrass.push_back(ig);
-		}
+		CGrassDrawer::InviewGrass ig;
+			ig.num = curModSquare;
+			ig.dist = dist;
+		inviewGrass.push_back(ig);
 	}
-};
+}
 
-
-
-void CGrassDrawer::Draw(void)
+void CGrassDrawer::SetupGlState()
 {
-	if (grassOff || !readmap->GetGrassShadingTexture())
-		return;
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
-	glPushAttrib(GL_CURRENT_BIT);
-	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
-
-	const float grassDistance = maxGrassDist;
 	const float3 windSpeed =
 		wind.GetCurrentDirection() *
 		wind.GetCurrentStrength() *
 		mapInfo->grass.bladeWaveScale;
-
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-	Shader::IProgramObject* grassShader = NULL;
 
 	if (shadowHandler->shadowsLoaded) {
 		grassShader = grassShaders[GRASS_PROGRAM_NEAR_SHADOW];
@@ -431,30 +430,14 @@ void CGrassDrawer::Draw(void)
 			grassShader->SetUniform2f(14, 1.0f / (gs->mapx     * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
 		}
 
-
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, GL_SRC_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, GL_SRC_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-		glEnable(GL_TEXTURE_2D);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_ALPHA);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1.0f - sky->GetLight()->GetGroundShadowDensity());
 
 		static const float texConstant[] = {
 			mapInfo->light.groundAmbientColor.x * 1.24f,
@@ -462,37 +445,29 @@ void CGrassDrawer::Draw(void)
 			mapInfo->light.groundAmbientColor.z * 1.24f,
 			1.0f
 		};
-
 		glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_CONSTANT);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_ARB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_ARB, GL_SRC_ALPHA);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_INTERPOLATE_ARB);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_CONSTANT);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
-		glEnable(GL_TEXTURE_2D);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
 
 		glActiveTextureARB(GL_TEXTURE3_ARB);
-		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, grassBladeTex);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+		grassShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
+		if (gd->DrawExtraTex()) {
+			glActiveTextureARB(GL_TEXTURE4_ARB);
+			glBindTexture(GL_TEXTURE_2D, gd->infoTex);
+		}
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
 		if (globalRendering->haveGLSL) {
-			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
-			grassShader->SetUniform4fv(7, &(shadowHandler->GetShadowParams().x));
+			grassShader->SetUniform2f(2, 0.0f, 0.0f);
+			grassShader->SetUniformMatrix4fv(6, false, shadowHandler->shadowMatrix);
+			grassShader->SetUniform4fv(7, shadowHandler->GetShadowParams());
 			grassShader->SetUniform1f(8, gs->frameNum);
-			grassShader->SetUniform3fv(9, &(windSpeed.x));
+			grassShader->SetUniform3fv(9, &windSpeed.x);
+			grassShader->SetUniform3fv(10, &camera->pos.x);
 		} else {
 			glMatrixMode(GL_MATRIX0_ARB);
 			glLoadMatrixf(shadowHandler->shadowMatrix.m);
@@ -554,28 +529,23 @@ void CGrassDrawer::Draw(void)
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	}
-
-	CGrassBlockDrawer drawer;
-		drawer.cx = int(camera->pos.x / bMSsq);
-		drawer.cy = int(camera->pos.z / bMSsq);
-		drawer.gd = this;
-
-	GML_RECMUTEX_LOCK(grass); // Draw
-
-	readmap->GridVisibility(camera, blockMapSize, maxGrassDist, &drawer);
+}
 
 
-	CVertexArray* va = drawer.va;
+void CGrassDrawer::ResetGlState1()
+{
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
-	std::sort(drawer.inviewGrass.begin(), drawer.inviewGrass.end(), GrassSort);
-	std::sort(drawer.inviewNearGrass.begin(), drawer.inviewNearGrass.end(), GrassSortNear);
+	const float3 windSpeed =
+		wind.GetCurrentDirection() *
+		wind.GetCurrentStrength() *
+		mapInfo->grass.bladeWaveScale;
 
 	glEnable(GL_BLEND);
 	glEnable(GL_ALPHA_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc(GL_GREATER, 0.01f);
 	glDepthMask(false);
-
 
 	if (shadowHandler->shadowsLoaded) {
 		glActiveTextureARB(GL_TEXTURE3_ARB);
@@ -590,32 +560,45 @@ void CGrassDrawer::Draw(void)
 		grassShader->Disable();
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_SHADOW];
 		grassShader->Enable();
+		grassShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
 
 		if (globalRendering->haveGLSL) {
 			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
-			grassShader->SetUniform4fv(7, &(shadowHandler->GetShadowParams().x));
+			grassShader->SetUniform4fv(7, shadowHandler->GetShadowParams());
 			grassShader->SetUniform1f(8, gs->frameNum);
-			grassShader->SetUniform3fv(9, &(windSpeed.x));
+			grassShader->SetUniform3fv(9, &windSpeed.x);
+			grassShader->SetUniform3fv(10, &camera->pos.x);
 		}
 	} else {
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_BASIC];
 		grassShader->Enable();
 
-		if (!globalRendering->haveGLSL) {
+		if (globalRendering->haveGLSL) {
+			grassShader->SetUniform1f(8, gs->frameNum);
+			grassShader->SetUniform3fv(9, &windSpeed.x);
+			grassShader->SetUniform3fv(10, &camera->pos.x);
+		} else {
 			grassShader->SetUniform2f(13, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
 			grassShader->SetUniform2f(12, 1.0f / (gs->mapx     * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
-		} else {
-			grassShader->SetUniform1f(8, gs->frameNum);
-			grassShader->SetUniform3fv(9, &(windSpeed.x));
 		}
 
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glDisable(GL_TEXTURE_2D);
+
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
+
+		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, farTex);
+		glEnable(GL_TEXTURE_2D);
 
 		if (gd->DrawExtraTex()) {
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 			glDisable(GL_TEXTURE_GEN_S);
 			glDisable(GL_TEXTURE_GEN_T);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -628,9 +611,54 @@ void CGrassDrawer::Draw(void)
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
+}
 
 
-	for (std::vector<CGrassDrawer::InviewGrass>::iterator gi = drawer.inviewGrass.begin(); gi != drawer.inviewGrass.end(); ++gi) {
+void CGrassDrawer::ResetGlState2()
+{
+	grassShader->Disable();
+	glDepthMask(true);
+
+	if (globalRendering->drawFog) {
+		glEnable(GL_FOG);
+	}
+
+	glDisable(GL_ALPHA_TEST);
+
+	if (shadowHandler->shadowsLoaded) {
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+	} else {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		if (gd->DrawExtraTex()) {
+			glActiveTextureARB(GL_TEXTURE3_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glDisable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+		}
+	}
+
+	glActiveTextureARB(GL_TEXTURE4_ARB);
+	glDisable(GL_TEXTURE_2D);
+	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glDisable(GL_TEXTURE_2D);
+	glActiveTextureARB(GL_TEXTURE2_ARB);
+	glDisable(GL_TEXTURE_2D);
+	glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glDisable(GL_TEXTURE_2D);
+}
+
+
+void CGrassDrawer::DrawFarBillboards(const std::vector<CGrassDrawer::InviewGrass>& inviewGrass)
+{
+	const float grassDistance = maxGrassDist;
+
+	for (std::vector<CGrassDrawer::InviewGrass>::const_iterator gi = inviewGrass.begin(); gi != inviewGrass.end(); ++gi) {
 		if ((*gi).dist + 128 < grassDistance) {
 			glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 		} else {
@@ -658,11 +686,12 @@ void CGrassDrawer::Draw(void)
 
 		grass[(*gi).num].va->DrawArrayTN(GL_QUADS);
 	}
+}
 
 
-	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
-
-	for (std::vector<InviewNearGrass>::iterator gi = drawer.inviewNearGrass.begin(); gi != drawer.inviewNearGrass.end(); ++gi) {
+void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inviewNearGrass)
+{
+	for (std::vector<InviewNearGrass>::const_iterator gi = inviewNearGrass.begin(); gi != inviewNearGrass.end(); ++gi) {
 		const int x = (*gi).x;
 		const int y = (*gi).y;
 
@@ -692,7 +721,7 @@ void CGrassDrawer::Draw(void)
 			rand();
 			rand();
 
-			va = GetVertexArray();
+			CVertexArray* va = GetVertexArray();
 			va->Initialize();
 			va->EnlargeArrays(numTurfs * 4, 0, VA_SIZE_TN);
 
@@ -705,59 +734,102 @@ void CGrassDrawer::Draw(void)
 				float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
 					pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
-				//if (camera->InView(pos, turfSize * 0.7f)) { //the QuadField visibility check should be enough
-					va->AddVertexQTN(pos,         0.0f, 0.0f, float3(-partTurfSize, -partTurfSize, col));
-					va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
-					va->AddVertexQTN(pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize,  partTurfSize, col));
-					va->AddVertexQTN(pos,         0.0f, 1.0f, float3(-partTurfSize,  partTurfSize, col));
-				//}
+				va->AddVertexQTN(pos,         0.0f, 0.0f, float3(-partTurfSize, -partTurfSize, col));
+				va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
+				va->AddVertexQTN(pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize,  partTurfSize, col));
+				va->AddVertexQTN(pos,         0.0f, 1.0f, float3(-partTurfSize,  partTurfSize, col));
 			}
 
 			va->DrawArrayTN(GL_QUADS);
 		}
 	}
+}
 
 
-	grassShader->Disable();
-	glDepthMask(true);
+void CGrassDrawer::Draw()
+{
+	if (grassOff || !readmap->GetGrassShadingTexture())
+		return;
 
-	if (globalRendering->drawFog) {
-		glEnable(GL_FOG);
-	}
+	glPushAttrib(GL_CURRENT_BIT);
+	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 
-	glDisable(GL_ALPHA_TEST);
+	SetupGlState();
+		GML_RECMUTEX_LOCK(grass); // Draw
+		static CGrassBlockDrawer drawer;
+			drawer.cx = int(camera->pos.x / bMSsq);
+			drawer.cy = int(camera->pos.z / bMSsq);
+			drawer.inviewGrass.clear();
+			drawer.inviewNearGrass.clear();
+			drawer.gd = this;
 
-	if (shadowHandler->shadowsLoaded) {
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glActiveTextureARB(GL_TEXTURE1_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		glActiveTextureARB(GL_TEXTURE3_ARB);
-		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-	} else {
-		if (gd->DrawExtraTex()) {
-			glActiveTextureARB(GL_TEXTURE3_ARB);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-		}
-	}
+		readmap->GridVisibility(camera, blockMapSize, maxGrassDist, &drawer);
+		std::sort(drawer.inviewGrass.begin(), drawer.inviewGrass.end(), GrassSort);
+		std::sort(drawer.inviewNearGrass.begin(), drawer.inviewNearGrass.end(), GrassSortNear);
+	ResetGlState1();
 
-	glActiveTextureARB(GL_TEXTURE1_ARB);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTextureARB(GL_TEXTURE2_ARB);
-	glDisable(GL_TEXTURE_2D);
-	glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
+	DrawFarBillboards(drawer.inviewGrass);
 
+	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
+	DrawNearBillboards(drawer.inviewNearGrass);
+
+	ResetGlState2();
 	glPopAttrib();
 
+	GarbageCollect();
+}
 
+
+void CGrassDrawer::DrawShadow()
+{
+	// Grass self-shadowing doesn't look that good atm
+	/*if (grassOff || !readmap->GetGrassShadingTexture())
+		return;
+
+	const float3 windSpeed =
+		wind.GetCurrentDirection() *
+		wind.GetCurrentStrength() *
+		mapInfo->grass.bladeWaveScale;
+
+	grassShader = grassShaders[GRASS_PROGRAM_SHADOW_GEN];
+	grassShader->Enable();
+		grassShader->SetUniform2f(2, 0.0f, 0.0f);
+		grassShader->SetUniformMatrix4fv(6, false, shadowHandler->shadowMatrix);
+		grassShader->SetUniform4fv(7, shadowHandler->GetShadowParams());
+		grassShader->SetUniform1f(8, gs->frameNum);
+		grassShader->SetUniform3fv(9, &windSpeed.x);
+		grassShader->SetUniform3fv(10, &camera->pos.x);
+
+	glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, activeFarTex);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_CULL_FACE);
+
+	glPolygonOffset(5, 15);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+
+	GML_RECMUTEX_LOCK(grass); // Draw
+	static CGrassBlockDrawer drawer;
+		drawer.cx = int(camera->pos.x / bMSsq);
+		drawer.cy = int(camera->pos.z / bMSsq);
+		drawer.inviewGrass.clear();
+		drawer.inviewNearGrass.clear();
+		drawer.gd = this;
+	readmap->GridVisibility(camera, blockMapSize, maxGrassDist * 10.0f, &drawer);
+
+	glEnable(GL_CULL_FACE);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_ALPHA_TEST);
+
+	grassShader->Disable();*/
+}
+
+
+void CGrassDrawer::GarbageCollect()
+{
 	const int startClean = (lastListClean * 20) % (32 * 32);
 	const int endClean = (gs->frameNum * 20) % (32 * 32);
 
@@ -785,6 +857,7 @@ void CGrassDrawer::Draw(void)
 
 	lastListClean = gs->frameNum;
 }
+
 
 void CGrassDrawer::ResetPos(const float3& pos)
 {
@@ -879,7 +952,7 @@ void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 	}
 }
 
-void CGrassDrawer::CreateFarTex(void)
+void CGrassDrawer::CreateFarTex()
 {
 	int sizeMod=2;
 	unsigned char* buf=new unsigned char[64*sizeMod*1024*sizeMod*4];

@@ -37,6 +37,7 @@ public:
 	void ClearCommandDependencies();
 	/// feeds into GiveCommandReal()
 	void GiveCommand(const Command& c, bool fromSynced = true);
+	void ClearTargetLock(const Command &fc);
 	virtual int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
@@ -94,6 +95,8 @@ public:
 	void UpdateStockpileIcon();
 	bool CanChangeFireState();
 
+	virtual bool AllowedCommand(const Command& c, bool fromSynced);
+
 	CWeapon* stockpileWeapon;
 
 	std::vector<CommandDescription> possibleCommands;
@@ -117,7 +120,6 @@ public:
 	bool unimportantMove;
 
 protected:
-	virtual bool AllowedCommand(const Command& c, bool fromSynced);
 	virtual void SelectNewAreaAttackTargetOrPos(const Command& ac) {}
 
 	bool IsAttackCapable() const;
@@ -149,11 +151,11 @@ inline void CCommandAI::SetOrderTarget(CUnit* o) {
 		// NOTE As we do not include Unit.h,
 		//   the compiler does not know that CUnit derives from CObject,
 		//   and thus we can not use static_cast<CObject*>(...) here.
-		DeleteDeathDependence((CObject*)orderTarget, DEPENDENCE_ORDERTARGET);
+		DeleteDeathDependence(reinterpret_cast<CObject*>(orderTarget), DEPENDENCE_ORDERTARGET);
 	}
 	orderTarget = o;
 	if (orderTarget != NULL) {
-		AddDeathDependence((CObject*)orderTarget, DEPENDENCE_ORDERTARGET);
+		AddDeathDependence(reinterpret_cast<CObject*>(orderTarget), DEPENDENCE_ORDERTARGET);
 	}
 }
 

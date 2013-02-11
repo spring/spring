@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "LuaIntro.h"
 
@@ -65,7 +64,7 @@ void CLuaIntro::FreeHandler()
 /******************************************************************************/
 
 CLuaIntro::CLuaIntro()
-: CLuaHandle("LuaIntro", LUA_HANDLE_ORDER_UI, true)
+: CLuaHandle("LuaIntro", LUA_HANDLE_ORDER_INTRO, true)
 {
 	LuaIntro = this;
 

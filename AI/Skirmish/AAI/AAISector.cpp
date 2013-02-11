@@ -40,8 +40,6 @@ AAISector::~AAISector(void)
 void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bottom)
 {
 	this->ai = ai;
-	this->ut = ai->ut;
-	this->map = ai->map;
 
 	// set coordinates of the corners
 	this->x = x;
@@ -55,17 +53,17 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 	// determine map border distance
 	map_border_dist = x;
 
-	if(map->xSectors - x < map_border_dist)
-		map_border_dist = map->xSectors - x;
+	if(ai->Getmap()->xSectors - x < map_border_dist)
+		map_border_dist = ai->Getmap()->xSectors - x;
 
 	if(y < map_border_dist)
 		map_border_dist = y;
 
-	if(map->ySectors - y < map_border_dist)
-		map_border_dist = map->ySectors - y;
+	if(ai->Getmap()->ySectors - y < map_border_dist)
+		map_border_dist = ai->Getmap()->ySectors - y;
 
 	float3 center = GetCenter();
-	continent = map->GetContinentID(&center);
+	continent = ai->Getmap()->GetContinentID(&center);
 
 	// init all kind of stuff
 	freeMetalSpots = false;
@@ -76,11 +74,12 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 
 	// nothing sighted in that sector
 	enemy_structures = 0;
+	enemies_on_radar = 0;
 	own_structures = 0;
 	allied_structures = 0;
 	failed_defences = 0;
 
-	int categories = ai->bt->assault_categories.size();
+	int categories = ai->Getbt()->assault_categories.size();
 
 	combats_learned.resize(categories, 0);
 	combats_this_game.resize(categories, 0);
@@ -120,9 +119,9 @@ bool AAISector::SetBase(bool base)
 	if(base)
 	{
 		// check if already occupied (may happen if two coms start in same sector)
-		if(map->team_sector_map[x][y] >= 0)
+		if(ai->Getmap()->team_sector_map[x][y] >= 0)
 		{
-			fprintf(ai->file, "\nTeam %i could not add sector %i,%i to base, already occupied by ally team %i!\n\n",ai->cb->GetMyTeam(), x, y, map->team_sector_map[x][y]);
+			ai->Log("\nTeam %i could not add sector %i,%i to base, already occupied by ally team %i!\n\n",ai->Getcb()->GetMyTeam(), x, y, ai->Getmap()->team_sector_map[x][y]);
 			return false;
 		}
 
@@ -133,7 +132,7 @@ bool AAISector::SetBase(bool base)
 		{
 			if(!(*spot)->occupied)
 			{
-				ai->brain->freeBaseSpots = true;
+				ai->Getbrain()->freeBaseSpots = true;
 				break;
 			}
 		}
@@ -141,7 +140,7 @@ bool AAISector::SetBase(bool base)
 		// increase importance
 		importance_this_game += 1;
 
-		map->team_sector_map[x][y] = ai->cb->GetMyAllyTeam();
+		ai->Getmap()->team_sector_map[x][y] = ai->Getcb()->GetMyAllyTeam();
 
 		if(importance_this_game > cfg->MAX_SECTOR_IMPORTANCE)
 			importance_this_game = cfg->MAX_SECTOR_IMPORTANCE;
@@ -152,7 +151,7 @@ bool AAISector::SetBase(bool base)
 	{
 		distance_to_base = 1;
 
-		map->team_sector_map[x][y] = -1;
+		ai->Getmap()->team_sector_map[x][y] = -1;
 
 		return true;
 	}
@@ -192,7 +191,7 @@ void AAISector::FreeMetalSpot(float3 pos, const UnitDef *extractor)
 		{
 			// compare positions
 			spot_pos = (*spot)->pos;
-			ai->map->Pos2FinalBuildPos(&spot_pos, extractor);
+			ai->Getmap()->Pos2FinalBuildPos(&spot_pos, extractor);
 
 			if(pos.x == spot_pos.x && pos.z == spot_pos.z)
 			{
@@ -204,7 +203,7 @@ void AAISector::FreeMetalSpot(float3 pos, const UnitDef *extractor)
 
 				// if part of the base, tell the brain that the base has now free spots again
 				if(distance_to_base == 0)
-					ai->brain->freeBaseSpots = true;
+					ai->Getbrain()->freeBaseSpots = true;
 
 				return;
 			}
@@ -224,7 +223,7 @@ void AAISector::AddExtractor(int unit_id, int def_id, float3 *pos)
 		{
 			// compare positions
 			spot_pos = (*spot)->pos;
-			ai->map->Pos2FinalBuildPos(&spot_pos, ai->bt->unitList[def_id-1]);
+			ai->Getmap()->Pos2FinalBuildPos(&spot_pos, &ai->Getbt()->GetUnitDef(def_id));
 
 			if(pos->x == spot_pos.x && pos->z == spot_pos.z)
 			{
@@ -257,15 +256,15 @@ float3 AAISector::GetBuildsite(int building, bool water)
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
 
-	return map->GetBuildSiteInRect(ai->bt->unitList[building-1], xStart, xEnd, yStart, yEnd, water);
+	return ai->Getmap()->GetBuildSiteInRect(&ai->Getbt()->GetUnitDef(building), xStart, xEnd, yStart, yEnd, water);
 }
 
 float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, float terrain_modifier, bool water)
 {
 	float3 best_pos = ZeroVector, pos;
-	const UnitDef *def = ai->bt->unitList[building-1];
+	const UnitDef *def = &ai->Getbt()->GetUnitDef(building);
 
-	int my_team = ai->cb->GetMyAllyTeam();
+	int my_team = ai->Getcb()->GetMyAllyTeam();
 
 	float my_rating, best_rating = -10000;
 
@@ -283,16 +282,16 @@ float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, float
 		else
 		{
 			// filter out frontiers to other base sectors
-			if(x > 0 && map->sector[x-1][y].distance_to_base > 0 && map->sector[x-1][y].allied_structures < 100 && map->team_sector_map[x-1][y] != my_team )
+			if(x > 0 && ai->Getmap()->sector[x-1][y].distance_to_base > 0 && ai->Getmap()->sector[x-1][y].allied_structures < 100 && ai->Getmap()->team_sector_map[x-1][y] != my_team )
 				directions.push_back(WEST);
 
-			if(x < map->xSectors-1 && map->sector[x+1][y].distance_to_base > 0 && map->sector[x+1][y].allied_structures < 100 && map->team_sector_map[x+1][y] != my_team)
+			if(x < ai->Getmap()->xSectors-1 && ai->Getmap()->sector[x+1][y].distance_to_base > 0 && ai->Getmap()->sector[x+1][y].allied_structures < 100 && ai->Getmap()->team_sector_map[x+1][y] != my_team)
 				directions.push_back(EAST);
 
-			if(y > 0 && map->sector[x][y-1].distance_to_base > 0 && map->sector[x][y-1].allied_structures < 100 && map->team_sector_map[x][y-1] != my_team)
+			if(y > 0 && ai->Getmap()->sector[x][y-1].distance_to_base > 0 && ai->Getmap()->sector[x][y-1].allied_structures < 100 && ai->Getmap()->team_sector_map[x][y-1] != my_team)
 				directions.push_back(NORTH);
 
-			if(y < map->ySectors-1 && map->sector[x][y+1].distance_to_base > 0 && map->sector[x][y+1].allied_structures < 100 && map->team_sector_map[x][y+1] != my_team)
+			if(y < ai->Getmap()->ySectors-1 && ai->Getmap()->sector[x][y+1].distance_to_base > 0 && ai->Getmap()->sector[x][y+1].allied_structures < 100 && ai->Getmap()->team_sector_map[x][y+1] != my_team)
 				directions.push_back(SOUTH);
 		}
 	}
@@ -308,42 +307,42 @@ float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, float
 		// get area to perform search
 		if(*dir == CENTER)
 		{
-			xStart = x * map->xSectorSizeMap;
-			xEnd = (x+1) * map->xSectorSizeMap;
-			yStart = y * map->ySectorSizeMap;
-			yEnd = (y+1) * map->ySectorSizeMap;
+			xStart = x * ai->Getmap()->xSectorSizeMap;
+			xEnd = (x+1) * ai->Getmap()->xSectorSizeMap;
+			yStart = y * ai->Getmap()->ySectorSizeMap;
+			yEnd = (y+1) * ai->Getmap()->ySectorSizeMap;
 		}
 		else if(*dir == WEST)
 		{
-			xStart = x * map->xSectorSizeMap;
-			xEnd = x * map->xSectorSizeMap + map->xSectorSizeMap/4.0f;
-			yStart = y * map->ySectorSizeMap;
-			yEnd = (y+1) * map->ySectorSizeMap;
+			xStart = x * ai->Getmap()->xSectorSizeMap;
+			xEnd = x * ai->Getmap()->xSectorSizeMap + ai->Getmap()->xSectorSizeMap/4.0f;
+			yStart = y * ai->Getmap()->ySectorSizeMap;
+			yEnd = (y+1) * ai->Getmap()->ySectorSizeMap;
 		}
 		else if(*dir == EAST)
 		{
-			xStart = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/4.0f;
-			xEnd = (x+1) * map->xSectorSizeMap;
-			yStart = y * map->ySectorSizeMap;
-			yEnd = (y+1) * map->ySectorSizeMap;
+			xStart = (x+1) * ai->Getmap()->xSectorSizeMap - ai->Getmap()->xSectorSizeMap/4.0f;
+			xEnd = (x+1) * ai->Getmap()->xSectorSizeMap;
+			yStart = y * ai->Getmap()->ySectorSizeMap;
+			yEnd = (y+1) * ai->Getmap()->ySectorSizeMap;
 		}
 		else if(*dir == NORTH)
 		{
-			xStart = x * map->xSectorSizeMap;
-			xEnd = (x+1) * map->xSectorSizeMap;
-			yStart = y * map->ySectorSizeMap;
-			yEnd = y * map->ySectorSizeMap + map->ySectorSizeMap/4.0f;
+			xStart = x * ai->Getmap()->xSectorSizeMap;
+			xEnd = (x+1) * ai->Getmap()->xSectorSizeMap;
+			yStart = y * ai->Getmap()->ySectorSizeMap;
+			yEnd = y * ai->Getmap()->ySectorSizeMap + ai->Getmap()->ySectorSizeMap/4.0f;
 		}
 		else if(*dir == SOUTH)
 		{
-			xStart = x * map->xSectorSizeMap ;
-			xEnd = (x+1) * map->xSectorSizeMap;
-			yStart = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/4.0f;
-			yEnd = (y+1) * map->ySectorSizeMap;
+			xStart = x * ai->Getmap()->xSectorSizeMap ;
+			xEnd = (x+1) * ai->Getmap()->xSectorSizeMap;
+			yStart = (y+1) * ai->Getmap()->ySectorSizeMap - ai->Getmap()->ySectorSizeMap/4.0f;
+			yEnd = (y+1) * ai->Getmap()->ySectorSizeMap;
 		}
 
 		//
-		my_rating = map->GetDefenceBuildsite(&pos, def, xStart, xEnd, yStart, yEnd, category, terrain_modifier, water);
+		my_rating = ai->Getmap()->GetDefenceBuildsite(&pos, def, xStart, xEnd, yStart, yEnd, category, terrain_modifier, water);
 
 		if(my_rating > best_rating)
 		{
@@ -361,7 +360,7 @@ float3 AAISector::GetCenterBuildsite(int building, bool water)
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
 
-	return map->GetCenterBuildsite(ai->bt->unitList[building-1], xStart, xEnd, yStart, yEnd, water);
+	return ai->Getmap()->GetCenterBuildsite(&ai->Getbt()->GetUnitDef(building), xStart, xEnd, yStart, yEnd, water);
 }
 
 float3 AAISector::GetRadarArtyBuildsite(int building, float range, bool water)
@@ -370,14 +369,14 @@ float3 AAISector::GetRadarArtyBuildsite(int building, float range, bool water)
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
 
-	return map->GetRadarArtyBuildsite(ai->bt->unitList[building-1], xStart, xEnd, yStart, yEnd, range, water);
+	return ai->Getmap()->GetRadarArtyBuildsite(&ai->Getbt()->GetUnitDef(building), xStart, xEnd, yStart, yEnd, range, water);
 }
 
 float3 AAISector::GetHighestBuildsite(int building)
 {
 	if(building < 1)
 	{
-		fprintf(ai->file, "ERROR: Invalid building def id %i passed to AAISector::GetRadarBuildsite()\n", building);
+		ai->Log("ERROR: Invalid building def id %i passed to AAISector::GetRadarBuildsite()\n", building);
 		return ZeroVector;
 	}
 
@@ -385,14 +384,14 @@ float3 AAISector::GetHighestBuildsite(int building)
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
 
-	return map->GetHighestBuildsite(ai->bt->unitList[building-1], xStart, xEnd, yStart, yEnd);
+	return ai->Getmap()->GetHighestBuildsite(&ai->Getbt()->GetUnitDef(building), xStart, xEnd, yStart, yEnd);
 }
 
 float3 AAISector::GetRandomBuildsite(int building, int tries, bool water)
 {
 	if(building < 1)
 	{
-		fprintf(ai->file, "ERROR: Invalid building def id %i passed to AAISector::GetRadarBuildsite()\n", building);
+		ai->Log("ERROR: Invalid building def id %i passed to AAISector::GetRadarBuildsite()\n", building);
 		return ZeroVector;
 	}
 
@@ -400,43 +399,43 @@ float3 AAISector::GetRandomBuildsite(int building, int tries, bool water)
 
 	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
 
-	return map->GetRandomBuildsite(ai->bt->unitList[building-1], xStart, xEnd, yStart, yEnd, tries, water);
+	return ai->Getmap()->GetRandomBuildsite(&ai->Getbt()->GetUnitDef(building), xStart, xEnd, yStart, yEnd, tries, water);
 }
 
 void AAISector::GetBuildsiteRectangle(int *xStart, int *xEnd, int *yStart, int *yEnd)
 {
-	*xStart = x * map->xSectorSizeMap;
-	*xEnd = *xStart + map->xSectorSizeMap;
+	*xStart = x * ai->Getmap()->xSectorSizeMap;
+	*xEnd = *xStart + ai->Getmap()->xSectorSizeMap;
 
 	if(*xStart == 0)
 		*xStart = 8;
 
-	*yStart = y * map->ySectorSizeMap;
-	*yEnd = *yStart + map->ySectorSizeMap;
+	*yStart = y * ai->Getmap()->ySectorSizeMap;
+	*yEnd = *yStart + ai->Getmap()->ySectorSizeMap;
 
 	if(*yStart == 0)
 		*yStart = 8;
 
 	// reserve buildspace for def. buildings
-	if(x > 0 && map->sector[x-1][y].distance_to_base > 0 )
-		*xStart += map->xSectorSizeMap/8;
+	if(x > 0 && ai->Getmap()->sector[x-1][y].distance_to_base > 0 )
+		*xStart += ai->Getmap()->xSectorSizeMap/8;
 
-	if(x < map->xSectors-1 && map->sector[x+1][y].distance_to_base > 0)
-		*xEnd -= map->xSectorSizeMap/8;
+	if(x < ai->Getmap()->xSectors-1 && ai->Getmap()->sector[x+1][y].distance_to_base > 0)
+		*xEnd -= ai->Getmap()->xSectorSizeMap/8;
 
-	if(y > 0 && map->sector[x][y-1].distance_to_base > 0)
-		*yStart += map->ySectorSizeMap/8;
+	if(y > 0 && ai->Getmap()->sector[x][y-1].distance_to_base > 0)
+		*yStart += ai->Getmap()->ySectorSizeMap/8;
 
-	if(y < map->ySectors-1 && map->sector[x][y+1].distance_to_base > 0)
-		*yEnd -= map->ySectorSizeMap/8;
+	if(y < ai->Getmap()->ySectors-1 && ai->Getmap()->sector[x][y+1].distance_to_base > 0)
+		*yEnd -= ai->Getmap()->ySectorSizeMap/8;
 }
 
 // converts unit positions to cell coordinates
 void AAISector::Pos2SectorMapPos(float3 *pos, const UnitDef* def)
 {
 	// get cell index of middlepoint
-	pos->x = ((int) pos->x/SQUARE_SIZE)%ai->map->xSectorSizeMap;
-	pos->z = ((int) pos->z/SQUARE_SIZE)%ai->map->ySectorSizeMap;
+	pos->x = ((int) pos->x/SQUARE_SIZE)%ai->Getmap()->xSectorSizeMap;
+	pos->z = ((int) pos->z/SQUARE_SIZE)%ai->Getmap()->ySectorSizeMap;
 
 	// shift to the leftmost uppermost cell
 	pos->x -= def->xsize/2;
@@ -454,8 +453,8 @@ void AAISector::SectorMapPos2Pos(float3 *pos, const UnitDef *def)
 	pos->z += def->zsize/2;
 
 	// get cell position on complete map
-	pos->x += x * ai->map->xSectorSizeMap;
-	pos->z += y * ai->map->ySectorSizeMap;
+	pos->x += x * ai->Getmap()->xSectorSizeMap;
+	pos->z += y * ai->Getmap()->ySectorSizeMap;
 
 	// back to unit coordinates
 	pos->x *= SQUARE_SIZE;
@@ -467,7 +466,7 @@ UnitCategory AAISector::GetWeakestCategory()
 	UnitCategory weakest = UNKNOWN;
 	float importance, most_important = 0;
 
-	float learned = 60000 / (ai->cb->GetCurrentFrame() + 30000) + 0.5;
+	float learned = 60000 / (ai->Getcb()->GetCurrentFrame() + 30000) + 0.5;
 	float current = 2.5 - learned;
 
 	if(interior)
@@ -476,7 +475,7 @@ UnitCategory AAISector::GetWeakestCategory()
 	}
 	else
 	{
-		for(list<UnitCategory>::iterator cat = ai->bt->assault_categories.begin(); cat != ai->bt->assault_categories.end(); ++cat)
+		for(list<UnitCategory>::iterator cat = ai->Getbt()->assault_categories.begin(); cat != ai->Getbt()->assault_categories.end(); ++cat)
 		{
 			importance = GetThreatBy(*cat, learned, current) / ( 0.1f + GetMyDefencePowerAgainstAssaultCategory(*cat));
 
@@ -580,16 +579,16 @@ float AAISector::GetEnemyAreaCombatPowerVs(int combat_category, float neighbour_
 
 	// take neighbouring sectors into account (if possible)
 	if(x > 0)
-		result += neighbour_importance * ai->map->sector[x-1][y].enemy_mobile_combat_power[combat_category];
+		result += neighbour_importance * ai->Getmap()->sector[x-1][y].enemy_mobile_combat_power[combat_category];
 
-	if(x < map->xSectors-1)
-		result += neighbour_importance * ai->map->sector[x+1][y].enemy_mobile_combat_power[combat_category];
+	if(x < ai->Getmap()->xSectors-1)
+		result += neighbour_importance * ai->Getmap()->sector[x+1][y].enemy_mobile_combat_power[combat_category];
 
 	if(y > 0)
-		result += neighbour_importance * ai->map->sector[x][y-1].enemy_mobile_combat_power[combat_category];
+		result += neighbour_importance * ai->Getmap()->sector[x][y-1].enemy_mobile_combat_power[combat_category];
 
-	if(y < map->ySectors-1)
-		result += neighbour_importance * ai->map->sector[x][y+1].enemy_mobile_combat_power[combat_category];
+	if(y < ai->Getmap()->ySectors-1)
+		result += neighbour_importance * ai->Getmap()->sector[x][y+1].enemy_mobile_combat_power[combat_category];
 
 	return result;
 }
@@ -610,34 +609,34 @@ float AAISector::GetOverallThreat(float learned, float current)
 
 void AAISector::RemoveBuildingType(int def_id)
 {
-	my_buildings[ai->bt->units_static[def_id].category] -= 1;
+	my_buildings[ai->Getbt()->units_static[def_id].category] -= 1;
 }
 
 float AAISector::GetWaterRatio()
 {
 	float water_ratio = 0;
 
-	for(int xPos = x * map->xSectorSizeMap; xPos < (x+1) * map->xSectorSizeMap; ++xPos)
+	for(int xPos = x * ai->Getmap()->xSectorSizeMap; xPos < (x+1) * ai->Getmap()->xSectorSizeMap; ++xPos)
 	{
-		for(int yPos = y * map->ySectorSizeMap; yPos < (y+1) * map->ySectorSizeMap; ++yPos)
+		for(int yPos = y * ai->Getmap()->ySectorSizeMap; yPos < (y+1) * ai->Getmap()->ySectorSizeMap; ++yPos)
 		{
-			if(map->buildmap[xPos + yPos * map->xMapSize] == 4)
+			if(ai->Getmap()->buildmap[xPos + yPos * ai->Getmap()->xMapSize] == 4)
 				water_ratio +=1;
 		}
 	}
 
-	return water_ratio / ((float)(map->xSectorSizeMap * map->ySectorSizeMap));
+	return water_ratio / ((float)(ai->Getmap()->xSectorSizeMap * ai->Getmap()->ySectorSizeMap));
 }
 
 float AAISector::GetFlatRatio()
 {
 	// get number of cliffy tiles
-	float flat_ratio = map->GetCliffyCells(left/SQUARE_SIZE, top/SQUARE_SIZE, map->xSectorSizeMap, map->ySectorSizeMap);
+	float flat_ratio = ai->Getmap()->GetCliffyCells(left/SQUARE_SIZE, top/SQUARE_SIZE, ai->Getmap()->xSectorSizeMap, ai->Getmap()->ySectorSizeMap);
 
 	// get number of flat tiles
-	flat_ratio = (float)(map->xSectorSizeMap * map->ySectorSizeMap) - flat_ratio;
+	flat_ratio = (float)(ai->Getmap()->xSectorSizeMap * ai->Getmap()->ySectorSizeMap) - flat_ratio;
 
-	flat_ratio /= (float)(map->xSectorSizeMap * map->ySectorSizeMap);
+	flat_ratio /= (float)(ai->Getmap()->xSectorSizeMap * ai->Getmap()->ySectorSizeMap);
 
 	return flat_ratio;
 }
@@ -703,11 +702,11 @@ bool AAISector::ConnectedToOcean()
 	int y_cell = (top + bottom) / 16.0f;
 
 	// get continent
-	int cont = map->GetContinentID(x_cell, y_cell);
+	int cont = ai->Getmap()->GetContinentID(x_cell, y_cell);
 
-	if(map->continents[cont].water)
+	if(ai->Getmap()->continents[cont].water)
 	{
-		if(map->continents[cont].size > 1200 && map->continents[cont].size > 0.5f * (float)map->avg_water_continent_size )
+		if(ai->Getmap()->continents[cont].size > 1200 && ai->Getmap()->continents[cont].size > 0.5f * (float)ai->Getmap()->avg_water_continent_size )
 			return true;
 	}
 
@@ -722,21 +721,21 @@ void AAISector::GetMovePos(float3 *pos)
 	// try to get random spot
 	for(int i = 0; i < 6; ++i)
 	{
-		pos->x = left + map->xSectorSize * (0.2f + 0.06f * (float)(rand()%11) );
-		pos->z = top + map->ySectorSize * (0.2f + 0.06f * (float)(rand()%11) );
+		pos->x = left + ai->Getmap()->xSectorSize * (0.2f + 0.06f * (float)(rand()%11) );
+		pos->z = top + ai->Getmap()->ySectorSize * (0.2f + 0.06f * (float)(rand()%11) );
 
 		// check if blocked by  building
 		x = (int) (pos->x / SQUARE_SIZE);
 		y = (int) (pos->z / SQUARE_SIZE);
 
-		if(map->buildmap[x + y * map->xMapSize] != 1)
+		if(ai->Getmap()->buildmap[x + y * ai->Getmap()->xMapSize] != 1)
 			return;
 	}
 
 	// search systematically
-	for(int i = 0; i < map->xSectorSizeMap; i += 8)
+	for(int i = 0; i < ai->Getmap()->xSectorSizeMap; i += 8)
 	{
-		for(int j = 0; j < map->ySectorSizeMap; j += 8)
+		for(int j = 0; j < ai->Getmap()->ySectorSizeMap; j += 8)
 		{
 			pos->x = left + i * SQUARE_SIZE;
 			pos->z = top + j * SQUARE_SIZE;
@@ -745,7 +744,7 @@ void AAISector::GetMovePos(float3 *pos)
 			x = (int) (pos->x / SQUARE_SIZE);
 			y = (int) (pos->z / SQUARE_SIZE);
 
-			if(map->buildmap[x + y * map->xMapSize] != 1)
+			if(ai->Getmap()->buildmap[x + y * ai->Getmap()->xMapSize] != 1)
 				return;
 		}
 	}
@@ -754,7 +753,7 @@ void AAISector::GetMovePos(float3 *pos)
 	*pos = ZeroVector;
 }
 
-void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, int continent)
+void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int /*movement_type*/, int continent)
 {
 	int x,y;
 	*pos = ZeroVector;
@@ -762,25 +761,25 @@ void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, i
 	// try to get random spot
 	for(int i = 0; i < 6; ++i)
 	{
-		pos->x = left + map->xSectorSize * (0.2f + 0.06f * (float)(rand()%11) );
-		pos->z = top + map->ySectorSize * (0.2f + 0.06f * (float)(rand()%11) );
+		pos->x = left + ai->Getmap()->xSectorSize * (0.2f + 0.06f * (float)(rand()%11) );
+		pos->z = top + ai->Getmap()->ySectorSize * (0.2f + 0.06f * (float)(rand()%11) );
 
 		// check if blocked by  building
 		x = (int) (pos->x / SQUARE_SIZE);
 		y = (int) (pos->z / SQUARE_SIZE);
 
-		if(map->buildmap[x + y * map->xMapSize] != 1)
+		if(ai->Getmap()->buildmap[x + y * ai->Getmap()->xMapSize] != 1)
 		{
 			//check continent
-			if(map->GetContinentID(pos) == continent)
+			if(ai->Getmap()->GetContinentID(pos) == continent)
 				return;
 		}
 	}
 
 	// search systematically
-	for(int i = 0; i < map->xSectorSizeMap; i += 8)
+	for(int i = 0; i < ai->Getmap()->xSectorSizeMap; i += 8)
 	{
-		for(int j = 0; j < map->ySectorSizeMap; j += 8)
+		for(int j = 0; j < ai->Getmap()->ySectorSizeMap; j += 8)
 		{
 			pos->x = left + i * SQUARE_SIZE;
 			pos->z = top + j * SQUARE_SIZE;
@@ -789,9 +788,9 @@ void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, i
 			x = (int) (pos->x / SQUARE_SIZE);
 			y = (int) (pos->z / SQUARE_SIZE);
 
-			if(map->buildmap[x + y * map->xMapSize] != 1)
+			if(ai->Getmap()->buildmap[x + y * ai->Getmap()->xMapSize] != 1)
 			{
-				if(map->GetContinentID(pos) == continent)
+				if(ai->Getmap()->GetContinentID(pos) == continent)
 					return;
 			}
 		}
@@ -804,16 +803,16 @@ int AAISector::GetEdgeDistance()
 {
 	if(x > y)
 	{
-		if(y < map->ySectors - y)
+		if(y < ai->Getmap()->ySectors - y)
 			return y;
 		else
-			return map->ySectors - y;
+			return ai->Getmap()->ySectors - y;
 	}
 	else
 	{
-		if(x < map->xSectors - x)
+		if(x < ai->Getmap()->xSectors - x)
 			return x;
 		else
-			return map->xSectors - x;
+			return ai->Getmap()->xSectors - x;
 	}
 }

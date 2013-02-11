@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Net/UDPConnection.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/TeamHighlight.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Lua/LuaConfig.h"
+#include "lib/gml/gml_base.h"
 
 CONFIG(int, NetworkLossFactor)
 .defaultValue(netcode::UDPConnection::MIN_LOSS_FACTOR)
@@ -59,6 +59,9 @@ CONFIG(int, TeamHighlight)
 CONFIG(bool, EnableDrawCallIns)
 	.defaultValue(true);
 
+CONFIG(bool, LuaWritableConfigFile)
+	.defaultValue(true);
+
 CONFIG(int, MultiThreadLua)
 	.defaultValue(MT_LUA_DEFAULT)
 	.minimumValue(MT_LUA_FIRST)
@@ -90,6 +93,8 @@ GlobalConfig::GlobalConfig()
 	if (linkIncomingMaxPacketRate > 0 && linkIncomingSustainedBandwidth <= 0)
 		linkIncomingSustainedBandwidth = linkIncomingPeakBandwidth = 1024 * 1024;
 
+	luaWritableConfigFile = configHandler->GetBool("LuaWritableConfigFile");
+
 #if defined(USE_GML) && GML_ENABLE_SIM
 	enableDrawCallIns = configHandler->GetBool("EnableDrawCallIns");
 #endif
@@ -102,7 +107,7 @@ GlobalConfig::GlobalConfig()
 int GlobalConfig::GetMultiThreadLua()
 {
 #if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
-	return std::max((int)MT_LUA_FIRSTACTIVE, std::min((multiThreadLua == MT_LUA_DEFAULT) ? modInfo.luaThreadingModel : multiThreadLua, (int)MT_LUA_LAST));
+	return (!GML::Enabled()) ? MT_LUA_NONE : std::max((int)MT_LUA_FIRSTACTIVE, std::min((multiThreadLua == MT_LUA_DEFAULT) ? modInfo.luaThreadingModel : multiThreadLua, (int)MT_LUA_LAST));
 #else
 	return MT_LUA_NONE;
 #endif

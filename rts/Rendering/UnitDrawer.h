@@ -13,7 +13,6 @@
 #include "System/EventClient.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
-struct S3DModel;
 struct UnitDef;
 class CWorldObject;
 class IWorldObjectModelRenderer;
@@ -21,19 +20,15 @@ class CUnit;
 class CFeature;
 struct Command;
 struct BuildInfo;
-struct BuildingGroundDecal;
+struct SolidObjectGroundDecal;
+struct GhostSolidObject;
 
+namespace icon {
+	class CIconData;
+}
 namespace Shader {
 	struct IProgramObject;
 }
-
-struct GhostBuilding {
-	BuildingGroundDecal* decal;
-	float3 pos;
-	S3DModel* model;
-	int facing;
-	int team;
-};
 
 class CUnitDrawer: public CEventClient
 {
@@ -41,9 +36,9 @@ public:
 	//! CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
 		return
-			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed") ||
+			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed" ) ||
 			(eventName == "RenderUnitCloakChanged" || eventName == "RenderUnitLOSChanged") ||
-			(eventName == "SunChanged");
+			(eventName == "PlayerChanged"          || eventName == "SunChanged"          );
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -54,6 +49,7 @@ public:
 	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
 	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 
+	void PlayerChanged(int playerNum);
 	void SunChanged(const float3& sunDir);
 
 public:
@@ -95,6 +91,8 @@ public:
 	/** CGame::DrawDirectControlHud,  **/
 	void DrawIndividual(CUnit* unit);
 
+	void DrawUnitMiniMapIcons() const;
+
 	static unsigned int CalcUnitLOD(const CUnit* unit, unsigned int lastLOD);
 	static unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD);
 	static void SetUnitLODCount(CUnit* unit, unsigned int count);
@@ -104,6 +102,7 @@ public:
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
 	GL::LightHandler* GetLightHandler() { return &lightHandler; }
+
 
 #ifdef USE_GML
 	bool multiThreadDrawUnit;
@@ -116,16 +115,17 @@ public:
 	bool showHealthBars;
 
 	static void DrawOpaqueUnitMT(void* c, CUnit* unit) {
-		CUnitDrawer* const ud = (CUnitDrawer*) c;
+		CUnitDrawer* const ud = reinterpret_cast<CUnitDrawer*>(c);
 		ud->DrawOpaqueUnit(unit, ud->mt_excludeUnit, ud->mt_drawReflection, ud->mt_drawRefraction);
 	}
 
 	static void DrawOpaqueUnitShadowMT(void* c, CUnit* unit) {
-		((CUnitDrawer*) c)->DrawOpaqueUnitShadow(unit);
+		reinterpret_cast<CUnitDrawer*>(c)->DrawOpaqueUnitShadow(unit);
 	}
 
 	void DrawUnitStats(CUnit* unit);
 #endif
+
 
 private:
 	bool LoadModelShaders();
@@ -143,7 +143,10 @@ private:
 	void DrawOpaqueAIUnits();
 	void DrawCloakedAIUnits();
 	void DrawGhostedBuildings(int modelType);
+
 	void DrawUnitIcons(bool drawReflection);
+	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
+	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 
 	// note: make these static?
 	void DrawUnitBeingBuilt(CUnit* unit);
@@ -223,7 +226,7 @@ private:
 	std::set<CUnit*> unsortedUnits;
 
 	/// buildings that were in LOS_PREVLOS when they died and not in LOS since
-	std::vector<std::set<GhostBuilding*> > deadGhostBuildings;
+	std::vector<std::set<GhostSolidObject*> > deadGhostBuildings;
 	/// buildings that left LOS but are still alive
 	std::vector<std::set<CUnit*> > liveGhostBuildings;
 
@@ -233,6 +236,7 @@ private:
 #endif
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
+	std::map<icon::CIconData*, std::set<const CUnit*> > unitsByIcon;
 
 	GL::LightHandler lightHandler;
 };

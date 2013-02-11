@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "StartPosSelecter.h"
 #include "MouseHandler.h"
@@ -18,7 +17,7 @@
 CStartPosSelecter* CStartPosSelecter::selector = NULL;
 
 
-CStartPosSelecter::CStartPosSelecter(void) : CInputReceiver(BACK)
+CStartPosSelecter::CStartPosSelecter() : CInputReceiver(BACK)
 {
 	showReady = true;
 	startPosSet = false;
@@ -30,7 +29,7 @@ CStartPosSelecter::CStartPosSelecter(void) : CInputReceiver(BACK)
 }
 
 
-CStartPosSelecter::~CStartPosSelecter(void)
+CStartPosSelecter::~CStartPosSelecter()
 {
 	selector = NULL;
 }

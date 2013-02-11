@@ -10,12 +10,11 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/Models/IModelParser.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
@@ -68,216 +67,192 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 /******************************************************************************/
 
 UnitDef::UnitDef()
-: id(-1)
-, cobID(-1)
-, collisionVolume(NULL)
-, decoyDef(NULL)
-, techLevel(-1)
-, metalUpkeep(0.0f)
-, energyUpkeep(0.0f)
-, metalMake(0.0f)
-, makesMetal(0.0f)
-, energyMake(0.0f)
-, metalCost(0.0f)
-, energyCost(0.0f)
-, buildTime(0.0f)
-, extractsMetal(0.0f)
-, extractRange(0.0f)
-, windGenerator(0.0f)
-, tidalGenerator(0.0f)
-, metalStorage(0.0f)
-, energyStorage(0.0f)
-, extractSquare(false)
-, autoHeal(0.0f)
-, idleAutoHeal(0.0f)
-, idleTime(0)
-, power(0.0f)
-, health(0.0f)
-, category(-1)
-, speed(0.0f)
-, rSpeed(0.0f)
-, turnRate(0.0f)
-, turnInPlace(false)
-, turnInPlaceSpeedLimit(0.0f)
-, turnInPlaceAngleLimit(0.0f)
-, upright(false)
-, blocking(true)
-, collide(false)
-, losHeight(0.0f)
-, radarHeight(0.0f)
-, losRadius(0.0f)
-, airLosRadius(0.0f)
-, radarRadius(0.0f)
-, sonarRadius(0.0f)
-, jammerRadius(0.0f)
-, sonarJamRadius(0.0f)
-, seismicRadius(0.0f)
-, seismicSignature(0.0f)
-, stealth(false)
-, sonarStealth(false)
-, buildRange3D(false)
-, buildDistance(16.0f) // 16.0f is the minimum distance between two 1x1 units
-, buildSpeed(0.0f)
-, reclaimSpeed(0.0f)
-, repairSpeed(0.0f)
-, maxRepairSpeed(0.0f)
-, resurrectSpeed(0.0f)
-, captureSpeed(0.0f)
-, terraformSpeed(0.0f)
+	: cobID(-1)
+	, decoyDef(NULL)
+	, techLevel(-1)
+	, metalUpkeep(0.0f)
+	, energyUpkeep(0.0f)
+	, metalMake(0.0f)
+	, makesMetal(0.0f)
+	, energyMake(0.0f)
+	, buildTime(0.0f)
+	, extractsMetal(0.0f)
+	, extractRange(0.0f)
+	, windGenerator(0.0f)
+	, tidalGenerator(0.0f)
+	, metalStorage(0.0f)
+	, energyStorage(0.0f)
+	, autoHeal(0.0f)
+	, idleAutoHeal(0.0f)
+	, idleTime(0)
+	, power(0.0f)
+	, category(-1)
+	, speed(0.0f)
+	, rSpeed(0.0f)
+	, turnRate(0.0f)
+	, turnInPlace(false)
+	, turnInPlaceSpeedLimit(0.0f)
+	, turnInPlaceAngleLimit(0.0f)
+	, collide(false)
+	, losHeight(0.0f)
+	, radarHeight(0.0f)
+	, losRadius(0.0f)
+	, airLosRadius(0.0f)
+	, radarRadius(0.0f)
+	, sonarRadius(0.0f)
+	, jammerRadius(0.0f)
+	, sonarJamRadius(0.0f)
+	, seismicRadius(0.0f)
+	, seismicSignature(0.0f)
+	, stealth(false)
+	, sonarStealth(false)
+	, buildRange3D(false)
+	, buildDistance(16.0f) // 16.0f is the minimum distance between two 1x1 units
+	, buildSpeed(0.0f)
+	, reclaimSpeed(0.0f)
+	, repairSpeed(0.0f)
+	, maxRepairSpeed(0.0f)
+	, resurrectSpeed(0.0f)
+	, captureSpeed(0.0f)
+	, terraformSpeed(0.0f)
 
-, mass(0.0f)
-, crushResistance(0.0f)
+	, canSubmerge(false)
+	, canfly(false)
+	, floatOnWater(false)
+	, pushResistant(false)
+	, strafeToAttack(false)
+	, minCollisionSpeed(0.0f)
+	, slideTolerance(0.0f)
+	, maxHeightDif(0.0f)
+	, waterline(0.0f)
+	, minWaterDepth(0.0f)
+	, maxWaterDepth(0.0f)
+	, pathType(-1U)
+	, armoredMultiple(0.0f)
+	, armorType(0)
+	, flankingBonusMode(0)
+	, flankingBonusDir(ZeroVector)
+	, flankingBonusMax(0.0f)
+	, flankingBonusMin(0.0f)
+	, flankingBonusMobilityAdd(0.0f)
+	, shieldWeaponDef(NULL)
+	, stockpileWeaponDef(NULL)
+	, maxWeaponRange(0.0f)
+	, maxCoverage(0.0f)
+	, deathExpWeaponDef(NULL)
+	, selfdExpWeaponDef(NULL)
+	, buildPic(NULL)
+	, selfDCountdown(0)
+	, builder(false)
+	, activateWhenBuilt(false)
+	, onoffable(false)
+	, fullHealthFactory(false)
+	, factoryHeadingTakeoff(false)
+	, capturable(false)
+	, repairable(false)
 
-, canSubmerge(false)
-, canfly(false)
-, floatOnWater(false)
-, pushResistant(false)
-, strafeToAttack(false)
-, minCollisionSpeed(0.0f)
-, slideTolerance(0.0f)
-, maxHeightDif(0.0f)
-, waterline(0.0f)
-, minWaterDepth(0.0f)
-, maxWaterDepth(0.0f)
-, armoredMultiple(0.0f)
-, armorType(0)
-, flankingBonusMode(0)
-, flankingBonusDir(ZeroVector)
-, flankingBonusMax(0.0f)
-, flankingBonusMin(0.0f)
-, flankingBonusMobilityAdd(0.0f)
-, usePieceCollisionVolumes(false)
-, shieldWeaponDef(NULL)
-, stockpileWeaponDef(NULL)
-, maxWeaponRange(0.0f)
-, maxCoverage(0.0f)
-, buildPic(NULL)
-, selfDCountdown(0)
-, builder(false)
-, activateWhenBuilt(false)
-, onoffable(false)
-, fullHealthFactory(false)
-, factoryHeadingTakeoff(false)
-, reclaimable(false)
-, capturable(false)
-, repairable(false)
+	, canmove(false)
+	, canHover(false)
+	, canAttack(false)
+	, canFight(false)
+	, canPatrol(false)
+	, canGuard(false)
+	, canRepeat(false)
+	, canResurrect(false)
+	, canCapture(false)
+	, canCloak(false)
+	, canSelfD(true)
+	, canKamikaze(false)
 
-, canmove(false)
-, canHover(false)
-, canAttack(false)
-, canFight(false)
-, canPatrol(false)
-, canGuard(false)
-, canRepeat(false)
-, canResurrect(false)
-, canCapture(false)
-, canCloak(false)
-, canSelfD(true)
-, canKamikaze(false)
+	, canRestore(false)
+	, canRepair(false)
+	, canReclaim(false)
+	, canAssist(false)
 
-, canRestore(false)
-, canRepair(false)
-, canReclaim(false)
-, canAssist(false)
+	, canBeAssisted(false)
+	, canSelfRepair(false)
 
-, canBeAssisted(false)
-, canSelfRepair(false)
+	, canFireControl(false)
+	, canManualFire(false)
 
-, canFireControl(false)
-, canManualFire(false)
-
-, fireState(FIRESTATE_HOLDFIRE)
-, moveState(MOVESTATE_HOLDPOS)
-, wingDrag(0.0f)
-, wingAngle(0.0f)
-, drag(0.0f)
-, frontToSpeed(0.0f)
-, speedToFront(0.0f)
-, myGravity(0.0f)
-, maxBank(0.0f)
-, maxPitch(0.0f)
-, turnRadius(0.0f)
-, wantedHeight(0.0f)
-, verticalSpeed(0.0f)
-, useSmoothMesh(false)
-, hoverAttack(false)
-, airStrafe(false)
-, dlHoverFactor(0.0f)
-, bankingAllowed(false)
-, maxAcc(0.0f)
-, maxDec(0.0f)
-, maxAileron(0.0f)
-, maxElevator(0.0f)
-, maxRudder(0.0f)
-, crashDrag(0.0f)
-, moveDef(NULL)
-, xsize(0)
-, zsize(0)
-, loadingRadius(0.0f)
-, unloadSpread(0.0f)
-, transportCapacity(0)
-, transportSize(0)
-, minTransportSize(0)
-, isAirBase(false)
-, isFirePlatform(false)
-, transportMass(0.0f)
-, minTransportMass(0.0f)
-, holdSteady(false)
-, releaseHeld(false)
-, cantBeTransported(false)
-, transportByEnemy(false)
-, transportUnloadMethod(0)
-, fallSpeed(0.0f)
-, unitFallSpeed(0.0f)
-, startCloaked(false)
-, cloakCost(0.0f)
-, cloakCostMoving(0.0f)
-, decloakDistance(0.0f)
-, decloakSpherical(false)
-, decloakOnFire(false)
-, cloakTimeout(0)
-, kamikazeDist(0.0f)
-, kamikazeUseLOS(false)
-, targfac(false)
-, needGeo(false)
-, isFeature(false)
-, hideDamage(false)
-, showPlayerName(false)
-, highTrajectoryType(0)
-, noChaseCategory(0)
-, leaveTracks(false)
-, trackWidth(0.0f)
-, trackOffset(0.0f)
-, trackStrength(0.0f)
-, trackStretch(0.0f)
-, trackType(0)
-, canDropFlare(false)
-, flareReloadTime(0.0f)
-, flareEfficiency(0.0f)
-, flareDelay(0.0f)
-, flareDropVector(ZeroVector)
-, flareTime(0)
-, flareSalvoSize(0)
-, flareSalvoDelay(0)
-, canLoopbackAttack(false)
-, levelGround(false)
-, useBuildingGroundDecal(false)
-, buildingDecalType(-1)
-, buildingDecalSizeX(0)
-, buildingDecalSizeY(0)
-, buildingDecalDecaySpeed(0.0f)
-, showNanoFrame(false)
-, showNanoSpray(false)
-, nanoColor(ZeroVector)
-, maxFuel(0.0f)
-, refuelTime(0.0f)
-, minAirBasePower(0.0f)
-, maxThisUnit(0)
-, realMetalCost(0.0f)
-, realEnergyCost(0.0f)
-, realMetalUpkeep(0.0f)
-, realEnergyUpkeep(0.0f)
-, realBuildTime(0.0f)
+	, fireState(FIRESTATE_HOLDFIRE)
+	, moveState(MOVESTATE_HOLDPOS)
+	, wingDrag(0.0f)
+	, wingAngle(0.0f)
+	, drag(0.0f)
+	, frontToSpeed(0.0f)
+	, speedToFront(0.0f)
+	, myGravity(0.0f)
+	, maxBank(0.0f)
+	, maxPitch(0.0f)
+	, turnRadius(0.0f)
+	, wantedHeight(0.0f)
+	, verticalSpeed(0.0f)
+	, useSmoothMesh(false)
+	, hoverAttack(false)
+	, airStrafe(false)
+	, dlHoverFactor(0.0f)
+	, bankingAllowed(false)
+	, maxAcc(0.0f)
+	, maxDec(0.0f)
+	, maxAileron(0.0f)
+	, maxElevator(0.0f)
+	, maxRudder(0.0f)
+	, crashDrag(0.0f)
+	, loadingRadius(0.0f)
+	, unloadSpread(0.0f)
+	, transportCapacity(0)
+	, transportSize(0)
+	, minTransportSize(0)
+	, isAirBase(false)
+	, isFirePlatform(false)
+	, transportMass(0.0f)
+	, minTransportMass(0.0f)
+	, holdSteady(false)
+	, releaseHeld(false)
+	, cantBeTransported(false)
+	, transportByEnemy(false)
+	, transportUnloadMethod(0)
+	, fallSpeed(0.0f)
+	, unitFallSpeed(0.0f)
+	, startCloaked(false)
+	, cloakCost(0.0f)
+	, cloakCostMoving(0.0f)
+	, decloakDistance(0.0f)
+	, decloakSpherical(false)
+	, decloakOnFire(false)
+	, cloakTimeout(0)
+	, kamikazeDist(0.0f)
+	, kamikazeUseLOS(false)
+	, targfac(false)
+	, needGeo(false)
+	, isFeature(false)
+	, hideDamage(false)
+	, showPlayerName(false)
+	, highTrajectoryType(0)
+	, noChaseCategory(0)
+	, canDropFlare(false)
+	, flareReloadTime(0.0f)
+	, flareEfficiency(0.0f)
+	, flareDelay(0.0f)
+	, flareDropVector(ZeroVector)
+	, flareTime(0)
+	, flareSalvoSize(0)
+	, flareSalvoDelay(0)
+	, canLoopbackAttack(false)
+	, levelGround(false)
+	, showNanoFrame(false)
+	, showNanoSpray(false)
+	, nanoColor(ZeroVector)
+	, maxFuel(0.0f)
+	, refuelTime(0.0f)
+	, minAirBasePower(0.0f)
+	, maxThisUnit(0)
+	, realMetalCost(0.0f)
+	, realEnergyCost(0.0f)
+	, realMetalUpkeep(0.0f)
+	, realEnergyUpkeep(0.0f)
+	, realBuildTime(0.0f)
 {
 }
 
@@ -291,6 +266,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	name = unitName;
 	humanName = udTable.GetString("name", "");
 	tooltip = udTable.GetString("description", name);
+	wreckName = udTable.GetString("corpse", "");
 	buildPicName = udTable.GetString("buildPic", "");
 	decoyName = udTable.GetString("decoyFor", "");
 
@@ -314,11 +290,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	// iff a mass value is not defined, default to metalCost
 	// (do not allow it to be zero or negative in either case)
-	metalCost = std::max(1.0f, udTable.GetFloat("buildCostMetal", 0.0f));
-	mass = Clamp(udTable.GetFloat("mass", metalCost), CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
+	metal = std::max(1.0f, udTable.GetFloat("buildCostMetal", 0.0f));
+	mass = Clamp(udTable.GetFloat("mass", metal), CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
 	crushResistance = udTable.GetFloat("crushResistance", mass);
 
-	energyCost = udTable.GetFloat("buildCostEnergy", 0.0f);
+	energy = udTable.GetFloat("buildCostEnergy", 0.0f);
 	buildTime = std::max(0.1f, udTable.GetFloat("buildTime", 0.0f)); //avoid some nasty divide by 0
 
 	cobID = udTable.GetInt("cobID", -1);
@@ -332,7 +308,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	}
 
 
-	builder = udTable.GetBool("builder", false);
 	buildRange3D = udTable.GetBool("buildRange3D", false);
 	// 128.0f is the ancient default
 	buildDistance = udTable.GetFloat("buildDistance", 128.0f);
@@ -340,10 +315,10 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// to not overlap for a 1x1 constructor building a 1x1 structure
 	buildDistance = std::max(38.0f, buildDistance);
 	buildSpeed = udTable.GetFloat("workerTime", 0.0f);
-	builder = builder && (buildSpeed > 0.0f);
+	builder = udTable.GetBool("builder", false) && (buildSpeed > 0.0f);
 
 	repairSpeed    = udTable.GetFloat("repairSpeed",    buildSpeed);
-	maxRepairSpeed = udTable.GetFloat("maxRepairSpeed", 1e20f);
+	maxRepairSpeed = udTable.GetFloat("maxRepairSpeed",      1e20f);
 	reclaimSpeed   = udTable.GetFloat("reclaimSpeed",   buildSpeed);
 	resurrectSpeed = udTable.GetFloat("resurrectSpeed", buildSpeed);
 	captureSpeed   = udTable.GetFloat("captureSpeed",   buildSpeed);
@@ -360,16 +335,20 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	canPatrol    = udTable.GetBool("canPatrol",       true);
 	canGuard     = udTable.GetBool("canGuard",        true);
 	canRepeat    = udTable.GetBool("canRepeat",       true);
-	canResurrect = udTable.GetBool("canResurrect",    false);
-	canCapture   = udTable.GetBool("canCapture",      false);
 	canCloak     = udTable.GetBool("canCloak",        (udTable.GetFloat("cloakCost", 0.0f) != 0.0f));
 	canSelfD     = udTable.GetBool("canSelfDestruct", true);
 	canKamikaze  = udTable.GetBool("kamikaze",        false);
 
-	canRestore   = udTable.GetBool("canRestore", builder);
-	canRepair    = udTable.GetBool("canRepair",  builder);
-	canReclaim   = udTable.GetBool("canReclaim", builder);
-	canAssist    = udTable.GetBool("canAssist",  builder);
+	// capture and resurrect count as special abilities
+	// (because captureSpeed and resurrectSpeed default
+	// to buildSpeed, canCapture and canResurrect would
+	// otherwise become true for all regular builders)
+	canRestore   = udTable.GetBool("canRestore",   builder) && (terraformSpeed > 0.0f);
+	canRepair    = udTable.GetBool("canRepair",    builder) && (   repairSpeed > 0.0f);
+	canReclaim   = udTable.GetBool("canReclaim",   builder) && (  reclaimSpeed > 0.0f);
+	canCapture   = udTable.GetBool("canCapture",     false) && (  captureSpeed > 0.0f);
+	canResurrect = udTable.GetBool("canResurrect",   false) && (resurrectSpeed > 0.0f);
+	canAssist    = udTable.GetBool("canAssist",    builder);
 
 	canBeAssisted = udTable.GetBool("canBeAssisted", true);
 	canSelfRepair = udTable.GetBool("canSelfRepair", false);
@@ -534,18 +513,19 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	needGeo = false;
 
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
-	extractSquare = udTable.GetBool("extractSquare", false);
 
 	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 	// modrules transport settings
-	// FIXME: do we want to check moveDef->moveType for these?
+	// FIXME: do we want to check moveDef->moveFamily for these?
 	if ((!modInfo.transportAir    && canfly)   ||
 		(!modInfo.transportShip   && canFloat) ||
 		(!modInfo.transportHover  && canHover) ||
 		(!modInfo.transportGround && !canHover && !canFloat && !canfly)) {
  		cantBeTransported = true;
 	}
+
+	MoveDef* moveDef = NULL;
 
 	// aircraft have MoveTypes but no MoveDef;
 	// static structures have no use for either
@@ -554,28 +534,29 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 		const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
-		if ((moveDef = moveDefHandler->GetMoveDefFromName(moveClass)) == NULL) {
+		if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == NULL) {
 			throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 		}
 
 		moveDef->unitDefRefCount += 1;
+		this->pathType = moveDef->pathType;
 
 		if (LOG_IS_ENABLED(L_WARNING)) {
 			const char* typeStr = NULL;
 			const char* wantedTypeStr = NULL;
 
 			if (canHover) {
-				if (moveDef->moveType != MoveDef::Hover_Move) {
+				if (moveDef->moveFamily != MoveDef::Hover) {
 					typeStr       = "canHover";
 					wantedTypeStr = "hover";
 				}
 			} else if (canFloat) {
-				if (moveDef->moveType != MoveDef::Ship_Move) {
+				if (moveDef->moveFamily != MoveDef::Ship) {
 					typeStr       = "canFloat";
 					wantedTypeStr = "ship";
 				}
 			} else {
-				if (moveDef->moveType != MoveDef::Ground_Move) {
+				if (moveDef->moveFamily != MoveDef::Tank && moveDef->moveFamily != MoveDef::KBot) {
 					typeStr       = "!(canHover || canFloat)";
 					wantedTypeStr = "ground";
 				}
@@ -595,11 +576,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		floatOnWater = canFloat;
 	} else {
 		upright = upright ||
-			(moveDef->moveType == MoveDef::Hover_Move) ||
-			(moveDef->moveType == MoveDef::Ship_Move);
+			(moveDef->moveFamily == MoveDef::Hover) ||
+			(moveDef->moveFamily == MoveDef::Ship);
 		floatOnWater =
-			(moveDef->moveType == MoveDef::Hover_Move) ||
-			(moveDef->moveType == MoveDef::Ship_Move);
+			(moveDef->moveFamily == MoveDef::Hover) ||
+			(moveDef->moveFamily == MoveDef::Ship);
 	}
 
 	if (IsAirUnit()) {
@@ -625,21 +606,17 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	}
 
 
-	objectName = udTable.GetString("objectName", "");
-	if (objectName.find(".") == std::string::npos) {
-		objectName += ".3do"; // NOTE: get rid of this?
-	}
-	modelDef.modelPath = "objects3d/" + objectName;
-	modelDef.modelName = objectName;
-
+	modelName = udTable.GetString("objectName", "");
 	scriptName = udTable.GetString("script", unitName + ".cob");
-	scriptPath = "scripts/" + scriptName;
 
-	wreckName = udTable.GetString("corpse", "");
-	deathExplosion = udTable.GetString("explodeAs", "");
-	selfDExplosion = udTable.GetString("selfDestructAs", "");
+	deathExpWeaponDef = weaponDefHandler->GetWeapon(udTable.GetString("explodeAs", ""));
+	selfdExpWeaponDef = weaponDefHandler->GetWeapon(udTable.GetString("selfDestructAs", ""));
+	if (deathExpWeaponDef == NULL) { deathExpWeaponDef = weaponDefHandler->GetWeapon("NOWEAPON"); }
+	if (selfdExpWeaponDef == NULL) { selfdExpWeaponDef = weaponDefHandler->GetWeapon("NOWEAPON"); }
+	assert(deathExpWeaponDef);
+	assert(selfdExpWeaponDef);
 
-	power = udTable.GetFloat("power", (metalCost + (energyCost / 60.0f)));
+	power = udTable.GetFloat("power", (metal + (energy / 60.0f)));
 
 	// Prevent a division by zero in experience calculations.
 	if (power < 1.0e-3f) {
@@ -664,18 +641,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		CreateYardMap(udTable.GetString("yardMap", ""));
 	}
 
-	leaveTracks   = udTable.GetBool("leaveTracks", false);
-	trackTypeName = udTable.GetString("trackType", "StdTank");
-	trackWidth    = udTable.GetFloat("trackWidth",   32.0f);
-	trackOffset   = udTable.GetFloat("trackOffset",   0.0f);
-	trackStrength = udTable.GetFloat("trackStrength", 0.0f);
-	trackStretch  = udTable.GetFloat("trackStretch",  1.0f);
-
-	useBuildingGroundDecal = udTable.GetBool("useBuildingGroundDecal", false);
-	buildingDecalTypeName = udTable.GetString("buildingGroundDecalType", "");
-	buildingDecalSizeX = udTable.GetInt("buildingGroundDecalSizeX", 4);
-	buildingDecalSizeY = udTable.GetInt("buildingGroundDecalSizeY", 4);
-	buildingDecalDecaySpeed = udTable.GetFloat("buildingGroundDecalDecaySpeed", 0.1f);
+	decalDef.Parse(udTable);
 
 	canDropFlare    = udTable.GetBool("canDropFlare", false);
 	flareReloadTime = udTable.GetFloat("flareReload",     5.0f);
@@ -693,16 +659,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
-	collisionVolume = new CollisionVolume(
-		udTable.GetString("collisionVolumeType", ""),
-		udTable.GetFloat3("collisionVolumeScales", ZeroVector),
-		udTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		CollisionVolume::COLVOL_HITTEST_CONT
-	);
-
-	if ((usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false))) {
-		collisionVolume->Disable();
-	}
+	ParseCollisionVolume(udTable);
 
 
 	seismicRadius    = udTable.GetInt("seismicDistance", 0);
@@ -753,33 +710,12 @@ UnitDef::~UnitDef()
 		buildPic = NULL;
 	}
 
-	delete collisionVolume;
-	collisionVolume = NULL;
-
 	for (std::vector<IExplosionGenerator*>::iterator it = sfxExplGens.begin(); it != sfxExplGens.end(); ++it) {
 		explGenHandler->UnloadGenerator(*it);
 		*it = NULL;
 	}
 }
 
-
-S3DModel* UnitDef::LoadModel() const
-{
-	if (this->modelDef.model == NULL) {
-		this->modelDef.model = modelParser->Load3DModel(this->modelDef.modelPath);
-		this->modelDef.modelTextures["tex1"] = this->modelDef.model->tex1;
-		this->modelDef.modelTextures["tex2"] = this->modelDef.model->tex2;
-	} else {
-		eventHandler.LoadedModelRequested();
-	}
-
-	return (this->modelDef.model);
-}
-
-float UnitDef::GetModelRadius() const
-{
-	return (LoadModel()->radius);
-}
 
 
 void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
@@ -919,35 +855,35 @@ void UnitDef::SetNoCost(bool noCost)
 {
 	if (noCost) {
 		// initialized from UnitDefHandler::PushNewUnitDef
-		realMetalCost    = metalCost;
-		realEnergyCost   = energyCost;
+		realMetalCost    = metal;
+		realEnergyCost   = energy;
 		realMetalUpkeep  = metalUpkeep;
 		realEnergyUpkeep = energyUpkeep;
 		realBuildTime    = buildTime;
 
-		metalCost    =  1.0f;
-		energyCost   =  1.0f;
+		metal        =  1.0f;
+		energy       =  1.0f;
 		buildTime    = 10.0f;
 		metalUpkeep  =  0.0f;
 		energyUpkeep =  0.0f;
 	} else {
-		metalCost    = realMetalCost;
-		energyCost   = realEnergyCost;
+		metal        = realMetalCost;
+		energy       = realEnergyCost;
 		buildTime    = realBuildTime;
 		metalUpkeep  = realMetalUpkeep;
 		energyUpkeep = realEnergyUpkeep;
 	}
 }
 
-
-
 bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) const {
+	const MoveDef* moveDef = (pathType != -1U)? moveDefHandler->GetMoveDefByPathType(pathType): NULL;
+
 	float maxDepth = this->maxWaterDepth;
 	float minDepth = this->minWaterDepth;
 
 	if (moveDef != NULL) {
 		// we are a mobile ground-unit
-		if (moveDef->moveType == MoveDef::Ship_Move) {
+		if (moveDef->moveFamily == MoveDef::Ship) {
 			minDepth = moveDef->depth;
 		} else {
 			maxDepth = moveDef->depth;
@@ -969,8 +905,6 @@ bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) cons
 	// <rawHeight> must lie in the range [-maxDepth, -minDepth]
 	return (rawHeight >= -maxDepth && rawHeight <= -minDepth);
 }
-
-
 
 bool UnitDef::HasBomberWeapon() const {
 	if (weapons.empty()) { return false; }

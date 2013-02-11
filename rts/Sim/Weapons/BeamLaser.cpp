@@ -18,7 +18,6 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "PlasmaRepulser.h"
 #include "WeaponDefHandler.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));
 
@@ -39,7 +38,7 @@ CBeamLaser::CBeamLaser(CUnit* owner)
 
 
 
-void CBeamLaser::Update(void)
+void CBeamLaser::Update()
 {
 	if (targetType != Target_None) {
 		weaponPos =
@@ -94,46 +93,8 @@ void CBeamLaser::Update(void)
 	}
 }
 
-bool CBeamLaser::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
-{
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
-		return false;
 
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
-		return false;
-
-	float3 dir = pos - weaponMuzzlePos;
-	float length = dir.Length();
-
-	if (length == 0.0f)
-		return true;
-
-	dir /= length;
-
-	if (!onlyForward) {
-		if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length, unit)) {
-			return false;
-		}
-	}
-
-	const float spread =
-		(accuracy + sprayAngle) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
-
-	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
-		return false;
-	}
-	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, false, true, false, owner)) {
-		return false;
-	}
-
-	return true;
-}
-
-void CBeamLaser::Init(void)
+void CBeamLaser::Init()
 {
 	if (!weaponDef->beamburst) {
 		salvoDelay = 0;
@@ -150,7 +111,7 @@ void CBeamLaser::Init(void)
 	muzzleFlareSize = 0;
 }
 
-void CBeamLaser::FireImpl(void)
+void CBeamLaser::FireImpl()
 {
 	float3 dir;
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
@@ -260,10 +221,15 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 			const float startAlpha = (1.0f - (curLength             ) / (range * 1.3f)) * baseAlpha;
 			const float endAlpha   = (1.0f - (curLength + beamLength) / (range * 1.3f)) * baseAlpha;
 
+			ProjectileParams params = GetProjectileParams();
+			params.pos = curPos;
+			params.end = hitPos;
+			params.ttl = std::max(1, weaponDef->beamLaserTTL);
+
 			if (weaponDef->largeBeamLaser) {
-				new CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner, weaponDef);
+				new CLargeBeamLaserProjectile(params, color, weaponDef->visuals.color2);
 			} else {
-				new CBeamLaserProjectile(curPos, hitPos, startAlpha, endAlpha, color, owner, weaponDef);
+				new CBeamLaserProjectile(params, startAlpha, endAlpha, color);
 			}
 		}
 
@@ -279,7 +245,7 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 		// getting the actual piece here is probably overdoing it
 		// TODO change this if we really need proper flanking bonus support
 		// for beam-lasers
-		hitUnit->SetLastAttackedPiece(hitUnit->localmodel->GetRoot(), gs->frameNum);
+		hitUnit->SetLastAttackedPiece(hitUnit->localModel->GetRoot(), gs->frameNum);
 
 		if (targetBorder > 0.0f) {
 			actualRange += (hitUnit->radius * targetBorder);

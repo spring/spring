@@ -62,7 +62,7 @@
 	#if _MSC_VER > 1310 // >= Visual Studio 2005
 		#define PRINTF    printf_s
 		#define FPRINTF   fprintf_s
-		#define SNPRINTF  sprintf_s
+		#define SNPRINTF  _snprintf // sprintf_s misbehaves in debug mode, triggering breakpoints
 		#define VSNPRINTF _vsnprintf // vsprintf_s misbehaves in debug mode, triggering breakpoints
 		#define STRCPY    strcpy
 		#define STRCPYS   strcpy_s

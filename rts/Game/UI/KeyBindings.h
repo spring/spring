@@ -14,7 +14,6 @@
 #include "Game/Action.h"
 
 class CUnit;
-class CFileHandler;
 class CSimpleParser;
 
 

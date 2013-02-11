@@ -2,7 +2,6 @@
 
 #include "3DOParser.h"
 
-#include "System/mmgr.h"
 
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/myGL.h"
@@ -155,13 +154,9 @@ S3DModel* C3DOParser::Load(const std::string& name)
 	S3DOPiece* rootPiece = LoadPiece(model, 0, NULL, &model->numPieces);
 
 	model->SetRootPiece(rootPiece);
-	model->radius =
-		(((model->maxs.x - model->mins.x) * 0.5f) * ((model->maxs.x - model->mins.x) * 0.5f)) +
-		(((model->maxs.y - model->mins.y) * 0.5f) * ((model->maxs.y - model->mins.y) * 0.5f)) +
-		(((model->maxs.z - model->mins.z) * 0.5f) * ((model->maxs.z - model->mins.z) * 0.5f));
-	model->radius = math::sqrt(model->radius);
+	model->radius = ((model->maxs - model->mins) * 0.5f).Length();
 	model->height = model->maxs.y - model->mins.y;
-	// model->height = model->radius * 2.0f;
+	model->drawRadius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
 	model->relMidPos = (model->maxs - model->mins) * 0.5f;
 	model->relMidPos.x = 0.0f; // ?
 	model->relMidPos.z = 0.0f; // ?
@@ -366,7 +361,6 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	S3DOPiece* piece = new S3DOPiece();
 		piece->name = s;
 		piece->parent = parent;
-		piece->dispListID = 0;
 		piece->type = MODELTYPE_3DO;
 
 		piece->mins = DEF_MIN_SIZE;
@@ -381,35 +375,27 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	CalcNormals(piece);
 	piece->SetMinMaxExtends();
 
-	model->mins.x = std::min(piece->mins.x, model->mins.x);
-	model->mins.y = std::min(piece->mins.y, model->mins.y);
-	model->mins.z = std::min(piece->mins.z, model->mins.z);
-	model->maxs.x = std::max(piece->maxs.x, model->maxs.x);
-	model->maxs.y = std::max(piece->maxs.y, model->maxs.y);
-	model->maxs.z = std::max(piece->maxs.z, model->maxs.z);
+	model->mins = std::min(piece->mins, model->mins);
+	model->maxs = std::max(piece->maxs, model->maxs);
 
 	const float3 cvScales = piece->maxs - piece->mins;
 	const float3 cvOffset =
 		(piece->maxs - piece->goffset) +
 		(piece->mins - piece->goffset);
-	const float radiusSq =
-		((cvScales.x * 0.5f) * (cvScales.x * 0.5f)) +
-		((cvScales.y * 0.5f) * (cvScales.y * 0.5f)) +
-		((cvScales.z * 0.5f) * (cvScales.z * 0.5f));
-
+	const float radiusSq = (cvScales * 0.5f).SqLength();
 	piece->radius = math::sqrt(radiusSq);
 	piece->relMidPos = cvOffset * 0.5f;
-	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT));
+	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
 
 
 	if (me.OffsetToChildObject > 0) {
-		piece->childs.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj));
+		piece->children.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj));
 	}
 
 	piece->isEmpty = (piece->prims.size() < 1);
 
 	if (me.OffsetToSiblingObject > 0) {
-		parent->childs.push_back(LoadPiece(model, me.OffsetToSiblingObject, parent, numobj));
+		parent->children.push_back(LoadPiece(model, me.OffsetToSiblingObject, parent, numobj));
 	}
 
 	return piece;
@@ -441,7 +427,6 @@ void S3DOPiece::DrawForList() const
 	va1->Initialize();
 	va2->Initialize();
 
-	// glFrontFace(GL_CW);
 	for (std::vector<S3DOPrimitive>::const_iterator ps = prims.begin(); ps != prims.end(); ++ps) {
 		C3DOTextureHandler::UnitTexture* tex = ps->texture;
 
@@ -455,17 +440,28 @@ void S3DOPiece::DrawForList() const
 			va2->AddVertexTN(vertices[ps->vertices[1]].pos, tex->xend,   tex->ystart, ps->vnormals[1]);
 			va2->AddVertexTN(vertices[ps->vertices[2]].pos, tex->xend,   tex->yend,   ps->vnormals[2]);
 		} else {
-			glNormal3f(ps->primNormal.x, ps->primNormal.y, ps->primNormal.z);
-			glBegin(GL_TRIANGLE_FAN);
+			/*glBegin(GL_TRIANGLE_FAN);
+			glNormalf3(ps->primNormal);
 			glTexCoord2f(tex->xstart, tex->ystart);
 
 			for (std::vector<int>::const_iterator fi = ps->vertices.begin(); fi != ps->vertices.end(); ++fi) {
-				const float3& t = vertices[(*fi)].pos;
-
-				glNormalf3(ps->primNormal);
-				glVertex3f(t.x, t.y, t.z);
+				glVertexf3(vertices[(*fi)].pos);
 			}
-			glEnd();
+			glEnd();*/
+
+			//workaround: split fan into triangles to workaround a bug in Mesa drivers with fans, dlists & glbegin..glend
+			if (ps->vertices.size() >= 3) {
+				std::vector<int>::const_iterator fi = ps->vertices.begin();
+				const float3* edge1 = &(vertices[*fi].pos); ++fi;
+				const float3* edge2 = &(vertices[*fi].pos); ++fi;
+				for (; fi != ps->vertices.end(); ++fi) {
+					const float3* edge3 = &(vertices[*fi].pos);
+					va2->AddVertexTN(*edge1, tex->xstart, tex->ystart, ps->primNormal);
+					va2->AddVertexTN(*edge2, tex->xstart, tex->ystart, ps->primNormal);
+					va2->AddVertexTN(*edge3, tex->xstart, tex->ystart, ps->primNormal);
+					edge2 = edge3;
+				}
+			}
 		}
 	}
 
@@ -474,29 +470,22 @@ void S3DOPiece::DrawForList() const
 	if (va2->drawIndex() != 0) {
 		va2->DrawArrayTN(GL_TRIANGLES);
 	}
-
-	// glFrontFace(GL_CCW);
 }
 
 void S3DOPiece::SetMinMaxExtends()
 {
 	for (std::vector<S3DOVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
-		mins.x = std::min(mins.x, (goffset.x + vi->pos.x));
-		mins.y = std::min(mins.y, (goffset.y + vi->pos.y));
-		mins.z = std::min(mins.z, (goffset.z + vi->pos.z));
-
-		maxs.x = std::max(maxs.x, (goffset.x + vi->pos.x));
-		maxs.y = std::max(maxs.y, (goffset.y + vi->pos.y));
-		maxs.z = std::max(maxs.z, (goffset.z + vi->pos.z));
+		mins = std::min(mins, (goffset + vi->pos));
+		maxs = std::max(maxs, (goffset + vi->pos));
 	}
 }
 
 void S3DOPiece::Shatter(float pieceChance, int /*texType*/, int team, const float3& pos, const float3& speed) const
 {
 	for (std::vector<S3DOPrimitive>::const_iterator pi = prims.begin(); pi != prims.end(); ++pi) {
-		if (gu->usRandFloat() > pieceChance || pi->numVertex != 4)
+		if (gu->RandFloat() > pieceChance || pi->numVertex != 4)
 			continue;
 
-		ph->AddFlyingPiece(team, pos, speed + gu->usRandVector() * 2.0f, this, &*pi);
+		ph->AddFlyingPiece(pos, speed + gu->RandVector() * 2.0f, team, this, &*pi);
 	}
 }

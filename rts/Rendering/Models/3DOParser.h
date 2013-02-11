@@ -13,7 +13,6 @@
 
 
 class CMatrix44f;
-class CFileHandler;
 
 struct S3DOVertex {
 	float3 pos;
@@ -41,7 +40,7 @@ struct S3DOPiece: public S3DModelPiece {
 
 	void DrawForList() const;
 	void SetMinMaxExtends();
-	int GetVertexCount() const { return vertices.size(); }
+	unsigned int GetVertexCount() const { return vertices.size(); }
 	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
 

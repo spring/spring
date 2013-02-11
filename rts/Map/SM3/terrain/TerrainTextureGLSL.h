@@ -3,6 +3,8 @@
 #ifndef _TERRAIN_TEXTURE_GLSL_H_
 #define _TERRAIN_TEXTURE_GLSL_H_
 
+#include "TerrainTexture.h"
+
 namespace terrain 
 {
 	struct Blendmap;

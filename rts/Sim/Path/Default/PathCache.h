@@ -13,7 +13,7 @@ class CPathCache
 {
 public:
 	CPathCache(int blocksX,int blocksZ);
-	~CPathCache(void);
+	~CPathCache();
 
 	struct CacheItem {
 		IPath::SearchResult result;
@@ -26,7 +26,7 @@ public:
 
 	void AddPath(IPath::Path* path, IPath::SearchResult result, int2 startBlock,int2 goalBlock,float goalRadius,int pathType);
 	CacheItem* GetCachedPath(int2 startBlock,int2 goalBlock,float goalRadius,int pathType);
-	void Update(void);
+	void Update();
 
 	std::map<unsigned int,CacheItem*> cachedPaths;
 
@@ -35,7 +35,7 @@ public:
 		unsigned int hash;
 	};
 	std::list<CacheQue> cacheQue;
-	void RemoveFrontQueItem(void);
+	void RemoveFrontQueItem();
 
 	int blocksX;
 	int blocksZ;

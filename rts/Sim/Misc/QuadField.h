@@ -18,7 +18,7 @@ class CSolidObject;
 
 class CQuadField : boost::noncopyable
 {
-	CR_DECLARE(CQuadField);
+	CR_DECLARE_STRUCT(CQuadField);
 	CR_DECLARE_SUB(Quad);
 
 public:

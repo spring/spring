@@ -22,7 +22,7 @@ class AAIUnitTable;
 class AAIExecute
 {
 public:
-	AAIExecute(AAI* ai, AAIBrain *brain);
+	AAIExecute(AAI* ai);
 	~AAIExecute(void);
 
 	void InitAI(int commander_unit_id, const UnitDef *commander_def);
@@ -84,7 +84,7 @@ public:
 	// builds all kind of buildings
 	bool BuildFactory();
 	bool BuildDefences();
-	void BuildUnit(UnitCategory category, float speed, float cost, float range, float power, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, float eff, bool urgent);
+//	void BuildUnit(UnitCategory category, float speed, float cost, float range, float power, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, float eff, bool urgent);
 	bool BuildRadar();
 	bool BuildJammer();
 	bool BuildExtractor();
@@ -205,11 +205,6 @@ public:
 
 private:
 	AAI *ai;
-	IAICallback *cb;
-	AAIBuildTable *bt;
-	AAIBrain *brain;
-	AAIMap *map;
-	AAIUnitTable *ut;
 
 	// stores which buildque belongs to what kind of factory
 	vector<int> factory_table;

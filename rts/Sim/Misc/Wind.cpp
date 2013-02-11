@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "Wind.h"
 #include "GlobalSynced.h"
@@ -32,19 +31,18 @@ static const int UpdateRate = 15 * GAME_SPEED; //! update all 15sec
 CWind wind;
 
 
-CWind::CWind()
+CWind::CWind():
+	maxWind(100.0f),
+	minWind(0.0f),
+	curStrength(0.0f),
+
+	curDir(float3(1.0f, 0.0f, 0.0f)),
+	curWind(ZeroVector),
+	newWind(ZeroVector),
+	oldWind(ZeroVector),
+
+	status(0)
 {
-	curDir = float3(1.0f, 0.0f, 0.0f);
-	curStrength = 0.0f;
-
-	curWind = ZeroVector;
-	newWind = curWind;
-	oldWind = curWind;
-
-	maxWind = 100.0f;
-	minWind =   0.0f;
-
-	status = 0;
 }
 
 CWind::~CWind()

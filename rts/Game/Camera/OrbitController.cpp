@@ -44,7 +44,7 @@ void COrbitController::Init(const float3& p, const float3& tar)
 
 	const float l = (tar == ZeroVector)?
 		std::max(ground->LineGroundCol(p, p + cam->forward * 1024.0f, false), 512.0f):
-		(p - tar).Length();
+		p.distance(tar);
 
 	const float3 t = (tar == ZeroVector)? (p + cam->forward * l): tar;
 	const float3 v = (t - p);
@@ -281,9 +281,7 @@ void COrbitController::SwitchTo(bool showText)
 
 void COrbitController::GetState(StateMap& sm) const
 {
-	sm["px"] = camera->pos.x;
-	sm["py"] = camera->pos.y;
-	sm["pz"] = camera->pos.z;
+	CCameraController::GetState(sm);
 
 	sm["tx"] = cen.x;
 	sm["ty"] = cen.y;
@@ -292,9 +290,7 @@ void COrbitController::GetState(StateMap& sm) const
 
 bool COrbitController::SetState(const StateMap& sm)
 {
-	SetStateFloat(sm, "px", camera->pos.x);
-	SetStateFloat(sm, "py", camera->pos.y);
-	SetStateFloat(sm, "pz", camera->pos.z);
+	CCameraController::SetState(sm);
 
 	SetStateFloat(sm, "tx", cen.x);
 	SetStateFloat(sm, "ty", cen.y);

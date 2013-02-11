@@ -70,6 +70,7 @@ class LuaSyncedCtrl
 		static int SetUnitAlwaysVisible(lua_State* L);
 		static int SetUnitMetalExtraction(lua_State* L);
 		static int SetUnitBuildSpeed(lua_State* L);
+		static int SetUnitNanoPieces(lua_State* L);
 		static int SetUnitBlocking(lua_State* L);
 		static int SetUnitCrashing(lua_State* L);
 		static int SetUnitShieldState(lua_State* L);

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "TooltipConsole.h"
 #include "MouseHandler.h"
@@ -210,7 +209,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 						 unit->energyMake, unit->energyUse);
 		} else {
 			// display adjusted decoy stats
-			const float cost = decoyDef->metalCost + (decoyDef->energyCost / 60.0f);
+			const float cost = decoyDef->metal + (decoyDef->energy / 60.0f);
 			const float healthScale = (decoyDef->health / unitDef->health);
 			float fuelScale;
 			if (unitDef->maxFuel > 0.0f) {

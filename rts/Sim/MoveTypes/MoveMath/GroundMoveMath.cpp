@@ -1,22 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "GroundMoveMath.h"
-#include "Map/ReadMap.h"
-#include "Sim/Objects/SolidObject.h"
-#include "Sim/Features/Feature.h"
-
-CR_BIND_DERIVED(CGroundMoveMath, CMoveMath, );
-
-float CGroundMoveMath::waterDamageCost = 1.0f;
+#include "MoveMath.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 
 /*
 Calculate speed-multiplier for given height and slope data.
 */
-float CGroundMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope) const
+float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slope)
 {
 	float speedMod = 0.0f;
 
-	// too steep or too deep?
+	// slope too steep or square too deep?
 	if (slope > moveDef.maxSlope)
 		return speedMod;
 	if (-height > moveDef.depth)
@@ -30,35 +24,36 @@ float CGroundMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slop
 	return speedMod;
 }
 
-float CGroundMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const
+float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod)
 {
 	float speedMod = 0.0f;
 
-	// too steep or too deep?
-	if ((slope * moveSlope) > moveDef.maxSlope)
-		return speedMod;
-	if ((moveSlope < 0) && (-height > moveDef.depth))
+	// NOTE:
+	//    dirSlopeMod is always a value in [-1, 1], so <slope * mod>
+	//    is never greater than <slope> and never less than <-slope>
+	//
+	//    any slope > (tolerance * 2) is always non-navigable (up or down)
+	//    any slope < (tolerance    ) is always     navigable (up or down)
+	//    for any in-between slope it depends on the directional modifier
+	if (slope > (moveDef.maxSlope * 2.0f))
 		return speedMod;
 
-	// slope-mod
-	speedMod = 1.0f / (1.0f + std::max(0.0f, slope * moveSlope) * moveDef.slopeMod);
+	// too steep downhill slope?
+	if (dirSlopeMod <= 0.0f && (slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
+		return speedMod;
+	// too steep uphill slope?
+	if (dirSlopeMod  > 0.0f && (slope * dirSlopeMod) > ( moveDef.maxSlope       ))
+		return speedMod;
+
+	// is this square below our maxWaterDepth and are we going further downhill?
+	if ((dirSlopeMod < 0.0f) && (-height > moveDef.depth))
+		return speedMod;
+
+	// slope-mod (speedMod is not increased or decreased by downhill slopes)
+	speedMod = 1.0f / (1.0f + std::max(0.0f, slope * dirSlopeMod) * moveDef.slopeMod);
 	speedMod *= ((height < 0.0f)? waterDamageCost: 1.0f);
 	speedMod *= moveDef.GetDepthMod(height);
 
 	return speedMod;
 }
 
-
-
-/*
-Gives the ground-level of given square.
-*/
-float CGroundMoveMath::yLevel(int xSquare, int zSquare) const
-{
-	return readmap->GetCenterHeightMapSynced()[xSquare + zSquare * gs->mapx];
-}
-
-float CGroundMoveMath::yLevel(const float3& pos) const
-{
-	return (ground->GetHeightReal(pos.x, pos.z) + 10.0f);
-}

@@ -4,6 +4,10 @@
 #define LUA_HELPER_H
 
 #include "Sim/Misc/TeamHandler.h"
+#include "System/EventClient.h"
+#include "LuaHandle.h"
+
+class CFeature;
 
 /******************************************************************************/
 /******************************************************************************/

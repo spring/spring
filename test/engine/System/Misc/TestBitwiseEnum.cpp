@@ -1,11 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Misc/BitwiseEnum.h"
+
 #include <stdlib.h>
 
 #define BOOST_TEST_MODULE BitwiseEnum
 #include <boost/test/unit_test.hpp>
 
+using namespace Bitwise;
 
 namespace Colors { enum Colors {red, green, blue}; };
 enum Vehicles {car, bus, train};

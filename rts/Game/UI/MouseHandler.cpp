@@ -40,7 +40,6 @@
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
-#include "System/mmgr.h"
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
@@ -161,6 +160,8 @@ void CMouseHandler::LoadCursors()
 	AssignMouseCursor("Area attack",  "cursorattack",     mCenter,  false); // backup
 
 	AssignMouseCursor("Attack",       "cursorattack",     mCenter,  false);
+	AssignMouseCursor("AttackBad",    "cursorattackbad",  mCenter,  false);
+	AssignMouseCursor("AttackBad",    "cursorattack",     mCenter,  false); // backup
 	AssignMouseCursor("BuildBad",     "cursorbuildbad",   mCenter,  false);
 	AssignMouseCursor("BuildGood",    "cursorbuildgood",  mCenter,  false);
 	AssignMouseCursor("Capture",      "cursorcapture",    mCenter,  false);
@@ -308,8 +309,8 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		return;
 	}
 
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	if (!game->hideInterface) {
 		for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 			CInputReceiver* recv=*ri;
@@ -526,8 +527,8 @@ void CMouseHandler::DrawSelectionBox()
 std::string CMouseHandler::GetCurrentTooltip()
 {
 	std::string s;
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		CInputReceiver* recv=*ri;
 		if (recv && recv->IsAbove(lastx, lasty)) {

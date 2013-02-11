@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "System/mmgr.h"
 
 #include "Messages.h"
 #include "Game/GlobalUnsynced.h"
@@ -92,5 +91,5 @@ string CMessages::Pick(const message_list_t& vec) const
 	if (vec.size() == 1) {
 		return vec[0];
 	}
-	return vec[gu->usRandInt() % vec.size()];
+	return vec[gu->RandInt() % vec.size()];
 }

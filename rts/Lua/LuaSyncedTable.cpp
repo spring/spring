@@ -6,7 +6,6 @@
 //         __newindex call. This could be used in conjunction with the
 //         current setup to avoid table creation in WrapTable().
 
-#include "System/mmgr.h"
 
 #include "LuaSyncedTable.h"
 
@@ -87,7 +86,7 @@ static bool WrapTable(lua_State* L)
 
 /******************************************************************************/
 
-inline static bool SafeType(lua_State* L, const int& index)
+inline static bool SafeType(lua_State* L, const int index)
 {
 	const int t = lua_type(L, index);
 

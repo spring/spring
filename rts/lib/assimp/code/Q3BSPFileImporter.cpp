@@ -62,7 +62,7 @@ namespace Assimp
 
 using namespace Q3BSP;
 
-static const std::string Q3BSPExtension = "pk3";
+static const char* Q3BSPExtension = "pk3";
 
 // ------------------------------------------------------------------------------------------------
 //	Local function to create a material key name.
@@ -161,7 +161,7 @@ Q3BSPFileImporter::~Q3BSPFileImporter()
 bool Q3BSPFileImporter::CanRead( const std::string& rFile, IOSystem* /*pIOHandler*/, bool checkSig ) const
 {
 	if(!checkSig) {
-		return SimpleExtensionCheck( rFile, Q3BSPExtension.c_str() );
+		return SimpleExtensionCheck( rFile, Q3BSPExtension );
 	}
 	// TODO perhaps add keyword based detection
 	return false;

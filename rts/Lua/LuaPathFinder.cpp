@@ -1,14 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include "System/mmgr.h"
-
 #include "LuaPathFinder.h"
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Sim/Path/IPathManager.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 
 #include <stdlib.h>
 #include <algorithm>
@@ -127,7 +125,7 @@ static int path_next(lua_State* L)
 	const float minDist = luaL_optfloat(L, 5, 0.0f);
 
 	const bool synced = CLuaHandle::GetHandleSynced(L);
-	const float3 point = pathManager->NextWayPoint(pathID, callerPos, minDist, 0, 0, synced);
+	const float3 point = pathManager->NextWayPoint(NULL, pathID, 0, callerPos, minDist, synced);
 
 	if ((point.x == -1.0f) &&
 	    (point.y == -1.0f) &&
@@ -206,13 +204,15 @@ int LuaPathFinder::RequestPath(lua_State* L)
 	const MoveDef* moveDef = NULL;
 	
 	if (lua_israwstring(L, 1)) {
-		moveDef = moveDefHandler->GetMoveDefFromName(lua_tostring(L, 1));
+		moveDef = moveDefHandler->GetMoveDefByName(lua_tostring(L, 1));
 	} else {
-		const int moveID = luaL_checkint(L, 1);
-		if ((moveID < 0) || ((size_t)moveID >= moveDefHandler->moveDefs.size())) {
+		const unsigned int pathType = luaL_checkint(L, 1);
+
+		if (pathType >= moveDefHandler->GetNumMoveDefs()) {
 			luaL_error(L, "Invalid moveID passed to RequestPath");
 		}
-		moveDef = moveDefHandler->moveDefs[moveID];
+
+		moveDef = moveDefHandler->GetMoveDefByPathType(pathType);
 	}
 
 	if (moveDef == NULL) {
@@ -230,7 +230,7 @@ int LuaPathFinder::RequestPath(lua_State* L)
 	const float radius = luaL_optfloat(L, 8, 8.0f);
 
 	const bool synced = CLuaHandle::GetHandleSynced(L);
-	const int pathID = pathManager->RequestPath(moveDef, start, end, radius, NULL, synced);
+	const int pathID = pathManager->RequestPath(NULL, moveDef, start, end, radius, synced);
 
 	if (pathID == 0) {
 		return 0;

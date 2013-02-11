@@ -6,7 +6,7 @@
 #include <time.h>
 #include <cctype>
 #include <locale>
-#include <sstream>
+#include <fstream>
 #include <stdexcept>
 
 #include <boost/thread/thread.hpp>
@@ -14,9 +14,9 @@
 
 #include <SDL_keyboard.h>
 
-#include "System/mmgr.h"
 
 #include "Game.h"
+#include "Benchmark.h"
 #include "Camera.h"
 #include "CameraHandler.h"
 #include "ChatMessage.h"
@@ -36,7 +36,6 @@
 #include "PlayerRosterDrawer.h"
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
-#include "OSCStatsSender.h"
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
 #include "InMapDrawModel.h"
@@ -58,7 +57,6 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/Screenshot.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
@@ -104,7 +102,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ResourceHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -196,7 +194,7 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(frameStartTime),
 //	CR_MEMBER(lastUpdateTime),
 //	CR_MEMBER(lastSimFrameTime),
-//	CR_MEMBER(lastDrawFrameUpdate),
+//	CR_MEMBER(lastDrawFrameTime),
 //	CR_MEMBER(lastModGameTimeMeasure),
 //	CR_MEMBER(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
@@ -228,11 +226,10 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(skipping),
 	CR_MEMBER(playing),
 //	CR_MEMBER(lastFrameTime),
-//	CR_MEMBER(leastQue),
+//	CR_MEMBER(unconsumedFrames),
 //	CR_MEMBER(msgProcTimeLeft),
 //	CR_MEMBER(consumeSpeed),
 //	CR_MEMBER(lastframe),
-//	CR_MEMBER(leastQue),
 
 	CR_POSTLOAD(PostLoad)
 ));
@@ -249,7 +246,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, frameStartTime(spring_gettime())
 	, lastUpdateTime(spring_gettime())
 	, lastSimFrameTime(spring_gettime())
-	, lastDrawFrameUpdate(spring_gettime())
+	, lastDrawFrameTime(spring_gettime())
 	, lastModGameTimeMeasure(spring_gettime())
 	, updateDeltaSeconds(0.0f)
 	, lastCpuUsageTime(0.0f)
@@ -259,7 +256,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, skipping(false)
 	, playing(false)
 	, chatting(false)
-	, leastQue(0)
+	, unconsumedFrames(0)
 	, msgProcTimeLeft(0.0f)
 	, consumeSpeed(1.0f)
 	, lastframe(spring_gettime())
@@ -328,13 +325,16 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
 
 	modInfo.Init(modName.c_str());
+	GML::Init(); // modinfo plays key part in MT enable/disable
+	Threading::InitOMP(!GML::Enabled());
+	Threading::SetThreadScheduler();
 
 	if (!mapInfo) {
 		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
 
 	int mtl = globalConfig->GetMultiThreadLua();
-	showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED)) ? mtl : MT_LUA_NONE;
+	showMTInfo = showMTInfo ? mtl : -1;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
@@ -355,6 +355,7 @@ CGame::~CGame()
 		teamHandler->Team(t)->Died(false);
 	} 
 
+	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
 
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
@@ -433,7 +434,6 @@ CGame::~CGame()
 	SafeDelete(archiveScanner);
 
 	SafeDelete(gameServer);
-	SafeDelete(net);
 	ISound::Shutdown();
 
 	game = NULL;
@@ -445,13 +445,14 @@ CGame::~CGame()
 void CGame::LoadGame(const std::string& mapName)
 {
 	GML::ThreadNumber(GML_LOAD_THREAD_NUM);
+	Threading::SetThreadName("loading");
 
 	Watchdog::RegisterThread(WDT_LOAD);
-
-
 	if (!gu->globalQuit) LoadDefs();
-	if (!gu->globalQuit) LoadSimulation(mapName);
-	if (!gu->globalQuit) LoadRendering();
+	if (!gu->globalQuit) PreLoadSimulation(mapName);
+	if (!gu->globalQuit) PreLoadRendering();
+	if (!gu->globalQuit) PostLoadSimulation();
+	if (!gu->globalQuit) PostLoadRendering();
 	if (!gu->globalQuit) LoadInterface();
 	if (!gu->globalQuit) LoadLua();
 	if (!gu->globalQuit) LoadFinalize();
@@ -461,6 +462,7 @@ void CGame::LoadGame(const std::string& mapName)
 		saveFile->LoadGame();
 	}
 
+	Threading::SetThreadName("unknown");
 	Watchdog::DeregisterThread(WDT_LOAD);
 }
 
@@ -517,13 +519,13 @@ void CGame::LoadDefs()
 		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
 		sound->LoadSoundDefs("gamedata/sounds.lua");
-		chatSound = sound->GetSoundId("IncomingChat", false);
+		chatSound = sound->GetSoundId("IncomingChat");
 	}
 
 	LEAVE_SYNCED_CODE();
 }
 
-void CGame::LoadSimulation(const std::string& mapName)
+void CGame::PreLoadSimulation(const std::string& mapName)
 {
 	ENTER_SYNCED_CODE();
 
@@ -550,19 +552,10 @@ void CGame::LoadSimulation(const std::string& mapName)
 	qf = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
+}
 
-	{
-		//! FIXME: these five need to be loaded before featureHandler
-		//! (maps with features have their models loaded at startup)
-		modelParser = new C3DModelLoader();
-
-		loadscreen->SetLoadMessage("Creating Unit Textures");
-		texturehandler3DO = new C3DOTextureHandler();
-		texturehandlerS3O = new CS3OTextureHandler();
-
-		featureDrawer = new CFeatureDrawer();
-	}
-
+void CGame::PostLoadSimulation()
+{
 	loadscreen->SetLoadMessage("Loading Weapon Definitions");
 	weaponDefHandler = new CWeaponDefHandler();
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
@@ -575,14 +568,16 @@ void CGame::LoadSimulation(const std::string& mapName)
 
 	loadscreen->SetLoadMessage("Loading Feature Definitions");
 	featureHandler = new CFeatureHandler();
-	loadscreen->SetLoadMessage("Initializing Map Features");
-	featureHandler->LoadFeaturesFromMap(saveFile != NULL);
 
-	mapDamage = IMapDamage::GetMapDamage();
 	loshandler = new CLosHandler();
 	radarhandler = new CRadarHandler(false);
 
+	mapDamage = IMapDamage::GetMapDamage();
 	pathManager = IPathManager::GetInstance(modInfo.pathFinderSystem);
+
+	// load map-specific features after pathManager so it knows about them (via TerrainChange)
+	loadscreen->SetLoadMessage("Initializing Map Features");
+	featureHandler->LoadFeaturesFromMap(saveFile != NULL);
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
@@ -600,8 +595,22 @@ void CGame::LoadSimulation(const std::string& mapName)
 	LEAVE_SYNCED_CODE();
 }
 
-void CGame::LoadRendering()
+void CGame::PreLoadRendering()
 {
+	//! these need to be loaded before featureHandler
+	//! (maps with features have their models loaded at startup)
+	modelParser = new C3DModelLoader();
+
+	loadscreen->SetLoadMessage("Creating Unit Textures");
+	texturehandler3DO = new C3DOTextureHandler();
+	texturehandlerS3O = new CS3OTextureHandler();
+
+	featureDrawer = new CFeatureDrawer();
+	loadscreen->SetLoadMessage("Creating Sky");
+	sky = ISky::GetSky();
+}
+
+void CGame::PostLoadRendering() {
 	worldDrawer = new CWorldDrawer();
 }
 
@@ -716,13 +725,20 @@ void CGame::LoadLua()
 
 void CGame::LoadFinalize()
 {
-	loadscreen->SetLoadMessage("Finalizing");
+	loadscreen->SetLoadMessage("Initializing PathCache");
 	eventHandler.GamePreload();
+	pathManager->UpdateFull(); // mapfeatures are not in written pathcaches, so we need to repath those & other stuff done by Lua
+
+	loadscreen->SetLoadMessage("Finalizing");
+
+	if (CBenchmark::enabled) {
+		static CBenchmark benchmark;
+	}
 
 	lastframe = spring_gettime();
 	lastModGameTimeMeasure = lastframe;
 	lastSimFrameTime = lastframe;
-	lastDrawFrameUpdate = lastframe;
+	lastDrawFrameTime = lastframe;
 	lastCpuUsageTime = gu->gameTime;
 	updateDeltaSeconds = 0.0f;
 
@@ -790,8 +806,8 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 	}
 
 	// try the input receivers
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		CInputReceiver* recv = *ri;
 		if (recv && recv->KeyPressed(key, isRepeat)) {
@@ -824,8 +840,8 @@ int CGame::KeyReleased(unsigned short k)
 	}
 
 	// try the input receivers
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		CInputReceiver* recv = *ri;
 		if (recv && recv->KeyReleased(k)) {
@@ -861,8 +877,9 @@ bool CGame::Update()
 
 		// Some netcode stuff
 		if (!gameServer) {
-			consumeSpeed = GAME_SPEED * gs->speedFactor + leastQue - 2;
-			leastQue = 10000;
+			const int consumeFrameSpeed = (unconsumedFrames < 0) ? 10000 : unconsumedFrames;
+			consumeSpeed = GAME_SPEED * gs->speedFactor + consumeFrameSpeed - 2;
+			unconsumedFrames = -1;
 			msgProcTimeLeft = 0.0f;
 		}
 	}
@@ -912,6 +929,10 @@ bool CGame::UpdateUnsynced()
 	const float dif = skipping ? 0.010f : difTime * 0.001f;
 	lastModGameTimeMeasure = currentTime;
 
+	globalRendering->lastFrameTime = spring_tomsecs(currentTime - lastDrawFrameTime) / 1000.f;
+	lastDrawFrameTime = currentTime; //FIXME merge with lastModGameTimeMeasure
+	gu->avgFrameTime = mix(gu->avgFrameTime, globalRendering->lastFrameTime * 1000.f, 0.05f);
+
 	// Update game times
 	gu->gameTime += dif;
 	gu->modGameTime += (gs->paused) ? 0.0f : dif * gs->speedFactor;
@@ -952,7 +973,7 @@ bool CGame::UpdateUnsynced()
 	// Update the interpolation coefficient (globalRendering->timeOffset)
 	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
 		globalRendering->lastFrameStart = currentTime;
-		globalRendering->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->userSpeedFactor;
+		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = spring_tomsecs(globalRendering->lastFrameStart - lastSimFrameTime) * globalRendering->weightedSpeedFactor;
 	} else  {
 		globalRendering->timeOffset = 0;
@@ -992,11 +1013,9 @@ bool CGame::UpdateUnsynced()
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	if (doDrawWorld) {
-		// do as early as possible (give OpenGL time to upload textures etc.)
-		{
-			SCOPED_TIMER("GroundDrawer::Update");
-			gd->Update();
-		}
+		worldDrawer->Update();
+		CNamedTextures::Update();
+		modelParser->Update();
 
 		if (newSimFrame) {
 			projectileDrawer->UpdateTextures();
@@ -1004,20 +1023,11 @@ bool CGame::UpdateUnsynced()
 			sky->GetLight()->Update();
 			water->Update();
 		}
-
-		CNamedTextures::Update();
-		texturehandlerS3O->Update();
-		modelParser->Update();
-		worldDrawer->Update();
 	}
 
 
 	if (newSimFrame) {
 		CInputReceiver::CollectGarbage();
-	
-		if (!(gs->frameNum & 31)) {
-			oscStatsSender->Update(gs->frameNum);
-		}
 	}
 
 	// always update ExtraTexture & SoundListener with <=30Hz (even when paused)
@@ -1097,16 +1107,21 @@ bool CGame::Draw() {
 		return true;
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
-	const spring_time currentTime = spring_gettime();
+	const spring_time currentTimePreDraw = spring_gettime();
 
 	eventHandler.DrawGenesis();
 
 	if (!globalRendering->active) {
 		spring_sleep(spring_msecs(10));
-		return true;
+
+		// return early if and only if less than 30K milliseconds have passed since last draw-frame
+		// so we force render two frames per minute when minimized to clear batches and free memory
+		// don't need to mess with globalRendering->active since only mouse-input code depends on it
+		if (spring_tomsecs(currentTimePreDraw - lastDrawFrameTime) < 30*1000)
+			return true;
 	}
 
-	CTeamHighlight::Enable(spring_tomsecs(currentTime));
+	CTeamHighlight::Enable(spring_tomsecs(currentTimePreDraw));
 
 	if (unitTracker.Enabled()) {
 		unitTracker.SetCam();
@@ -1186,30 +1201,54 @@ bool CGame::Draw() {
 		SCOPED_TIMER("InputReceivers::Draw");
 
 		if (!hideInterface) {
-			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-			std::deque<CInputReceiver*>::reverse_iterator ri;
+			std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+			std::list<CInputReceiver*>::reverse_iterator ri;
 			for (ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
 				CInputReceiver* rcvr = *ri;
 				if (rcvr) {
 					rcvr->Draw();
 				}
 			}
+		} else {
+			if (globalRendering->dualScreenMode) {
+				// minimap is on its own screen, so always draw it
+				minimap->Draw();
+			}
 		}
 	}
 
 	glEnable(GL_TEXTURE_2D);
+
+	#define DBG_FONT_FLAGS (FONT_SCALE | FONT_NORM | FONT_SHADOW)
+	#define KEY_FONT_FLAGS (FONT_SCALE | FONT_CENTER | FONT_NORM)
+	#define INF_FONT_FLAGS (FONT_RIGHT | FONT_SCALE | FONT_NORM | (FONT_OUTLINE * guihandler->GetOutlineFonts()))
 
 	if (globalRendering->drawdebug) {
 		//print some infos (fps,gameframe,particles)
 		font->Begin();
 		font->SetTextColor(1,1,0.5f,0.8f);
 
-		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f Particles: %d (%d)",
-		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
+		font->glFormat(0.03f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
+		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
 
 		// 16ms := 60fps := 30simFPS + 30drawFPS
-		font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM | FONT_SHADOW, "avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
-		   (gu->avgDrawFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime, (gu->avgSimFrameTime>16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime);
+		font->glFormat(0.03f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
+		   (gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
+		   (gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
+		   (gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
+		);
+
+		const int2 pfsUpdates = pathManager->GetNumQueuedUpdates();
+		const char* fmtString = "[%s-PFS] queued updates: %i %i";
+
+		switch (pathManager->GetPathFinderType()) {
+			case PFS_TYPE_DEFAULT: {
+				font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "DEFAULT", pfsUpdates.x, pfsUpdates.y);
+			} break;
+			case PFS_TYPE_QTPFS: {
+				font->glFormat(0.03f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "QT", pfsUpdates.x, pfsUpdates.y);
+			} break;
+		}
 
 		font->End();
 	}
@@ -1220,19 +1259,15 @@ bool CGame::Draw() {
 
 	if (!hotBinding.empty()) {
 		glColor4f(1.0f, 0.3f, 0.3f, 1.0f);
-		font->glPrint(0.5f, 0.6f, 3.0f, FONT_SCALE | FONT_CENTER | FONT_NORM, "Hit keyset for:");
+		font->glPrint(0.5f, 0.6f, 3.0f, KEY_FONT_FLAGS, "Hit keyset for:");
 		glColor4f(0.3f, 1.0f, 0.3f, 1.0f);
-		font->glFormat(0.5f, 0.5f, 3.0f, FONT_SCALE | FONT_CENTER | FONT_NORM, "%s", hotBinding.c_str());
+		font->glFormat(0.5f, 0.5f, 3.0f, KEY_FONT_FLAGS, "%s", hotBinding.c_str());
 		glColor4f(0.3f, 0.3f, 1.0f, 1.0f);
-		font->glPrint(0.5f, 0.4f, 3.0f, FONT_SCALE | FONT_CENTER | FONT_NORM, "(or Escape)");
+		font->glPrint(0.5f, 0.4f, 3.0f, KEY_FONT_FLAGS, "(or Escape)");
 	}
 
 	if (!hideInterface) {
 		smallFont->Begin();
-
-		int font_options = FONT_RIGHT | FONT_SCALE | FONT_NORM;
-		if (guihandler->GetOutlineFonts())
-			font_options |= FONT_OUTLINE;
 
 		if (showClock) {
 			char buf[32];
@@ -1243,7 +1278,7 @@ bool CGame::Draw() {
 				SNPRINTF(buf, sizeof(buf), "%02i:%02i:%02i", seconds / 3600, (seconds / 60) % 60, seconds % 60);
 			}
 
-			smallFont->glPrint(0.99f, 0.94f, 1.0f, font_options, buf);
+			smallFont->glPrint(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 
 		if (showFPS) {
@@ -1252,16 +1287,16 @@ bool CGame::Draw() {
 
 			const float4 yellow(1.0f, 1.0f, 0.25f, 1.0f);
 			smallFont->SetColors(&yellow,NULL);
-			smallFont->glPrint(0.99f, 0.92f, 1.0f, font_options, buf);
+			smallFont->glPrint(0.99f, 0.92f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 
 		if (showSpeed) {
 			char buf[32];
 			SNPRINTF(buf, sizeof(buf), "%2.2f", gs->speedFactor);
 
-			const float4 speedcol(1.0f, gs->speedFactor < gs->userSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
+			const float4 speedcol(1.0f, gs->speedFactor < gs->wantedSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
 			smallFont->SetColors(&speedcol, NULL);
-			smallFont->glPrint(0.99f, 0.90f, 1.0f, font_options, buf);
+			smallFont->glPrint(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 		
 		if (GML::SimEnabled() && mtInfoCtrl >= 5 && (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT)) {
@@ -1269,10 +1304,10 @@ bool CGame::Draw() {
 			const char *pstr = (showMTInfo == MT_LUA_DUAL_EXPORT) ? "LUA-EXP-SIZE(MT): %2.1fK" : "LUA-SYNC-CPU(MT): %2.1f%%";
 			char buf[40];
 			SNPRINTF(buf, sizeof(buf), pstr, pval);
-			float4 warncol(pval >= 10.0f && ((int)spring_tomsecs(currentTime) & 128) ?
+			float4 warncol(pval >= 10.0f && ((int)spring_tomsecs(currentTimePreDraw) & 128) ?
 				0.5f : std::max(0.0f, std::min(pval / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - pval / 5.0f, 1.0f)), 0.0f, 1.0f);
 			smallFont->SetColors(&warncol, NULL);
-			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+			smallFont->glPrint(0.99f, 0.88f, 1.0f, INF_FONT_FLAGS, buf);
 		}
 
 		CPlayerRosterDrawer::Draw();
@@ -1288,17 +1323,13 @@ bool CGame::Draw() {
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 
-	const spring_time start = spring_gettime();
-	globalRendering->lastFrameTime = spring_tomsecs(start - lastDrawFrameUpdate) / 1000.f;
-	lastDrawFrameUpdate = start;
-
 	videoCapturing->RenderFrame();
 
 	SetDrawMode(gameNotDrawing);
-
 	CTeamHighlight::Disable();
 
-	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, float(spring_tomsecs(spring_gettime() - currentTime)), 0.05f);
+	const spring_time currentTimePostDraw = spring_gettime();
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, spring_tomsecs(currentTimePostDraw - currentTimePreDraw), 0.05f);
 
 	return true;
 }
@@ -1333,7 +1364,7 @@ void CGame::DrawInputText()
 	const string caretStr = tempstring.substr(0, caretPos);
 	const float caretWidth = fontSize * font->GetTextWidth(caretStr) * globalRendering->pixelX;
 
-	char c = userInput[writingPos];
+	char c = (writingPos >= userInput.size()) ? '\0' : userInput[writingPos];
 	if (c == 0) { c = ' '; }
 
 	const float cw = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
@@ -1447,8 +1478,6 @@ void CGame::StartPlaying()
 void CGame::SimFrame() {
 	ENTER_SYNCED_CODE();
 
-	ScopedTimer cputimer("Game::SimFrame", true); // SimFrame
-
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = spring_gettime();
 
@@ -1458,14 +1487,10 @@ void CGame::SimFrame() {
 	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
 #endif
 
-#ifdef USE_MMGR
-	if (!(gs->frameNum & 31))
-		m_validateAllAllocUnits();
-#endif
-
-	eventHandler.GameFrame(gs->frameNum);
-
 	if (!skipping) {
+		SCOPED_TIMER("Game::SimFrame_Unsynced");
+
+		// everything here is unsynced and should ideally moved to Game::Update()
 		infoConsole->Update();
 		waitCommandsAI.Update();
 		geometricObjects->Update();
@@ -1481,14 +1506,15 @@ void CGame::SimFrame() {
 	}
 
 	// everything from here is simulation
-	// don't use SCOPED_TIMER here because this is the only timer needed always
-	ScopedTimer forced("Game::SimFrame (Update)");
-
+	{
+		SCOPED_TIMER("EventHandler::GameFrame");
+		eventHandler.GameFrame(gs->frameNum);
+	}
+	SCOPED_TIMER("SimFrame");
 	helper->Update();
 	mapDamage->Update();
 	pathManager->Update();
 	uh->Update();
-	groundDecals->Update();
 	ph->Update();
 	featureHandler->Update();
 	GCobEngine.Tick(33);
@@ -1505,7 +1531,7 @@ void CGame::SimFrame() {
 
 	#ifdef HEADLESS
 	{
-		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->userSpeedFactor);
+		const float msecMaxSimFrameTime = 1000.0f / (GAME_SPEED * gs->wantedSpeedFactor);
 		const float msecDifSimFrameTime = spring_tomsecs(lastSimFrameTime) - spring_tomsecs(lastFrameTime);
 		// multiply by 0.5 to give unsynced code some execution time (50% of our sleep-budget)
 		const float msecSleepTime = (msecMaxSimFrameTime - msecDifSimFrameTime) * 0.5f;
@@ -1675,7 +1701,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 
 		std::string name = (gameServer != NULL)? "Server": "Client";
 		name += "GameState-";
-		name += IntToString(gu->usRandInt());
+		name += IntToString(gu->RandInt());
 		name += "-[";
 		name += IntToString(gMinFrameNum);
 		name += "-";
@@ -1729,8 +1755,8 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 	for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
 		const CUnit* u = *unitsIt;
 		const std::vector<CWeapon*>& weapons = u->weapons;
-		const LocalModel* lm = u->localmodel;
-		const S3DModel* om = u->localmodel->original;
+		const LocalModel* lm = u->localModel;
+		const S3DModel* om = lm->original;
 		const std::vector<LocalModelPiece*>& pieces = lm->pieces;
 		const float3& pos = u->pos;
 		const float3& xdir = u->rightdir;
@@ -1761,7 +1787,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 			file << "\t\t\t\tname: " << omp->name << " (parentName: " << omp->parentName << ")\n";
 			file << "\t\t\t\tpos: <" << ppos.x << ", " << ppos.y << ", " << ppos.z << ">\n";
 			file << "\t\t\t\trot: <" << prot.x << ", " << prot.y << ", " << prot.z << ">\n";
-			file << "\t\t\t\tvisible: " << lmp->visible << "\n";
+			file << "\t\t\t\tvisible: " << lmp->scriptSetVisible << "\n";
 			file << "\n";
 		}
 		#endif
@@ -1895,7 +1921,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 	gameOver = true;
 	eventHandler.GameOver(winningAllyTeams);
 
-	new CEndGameBox(winningAllyTeams);
+	CEndGameBox::Create(winningAllyTeams);
 #ifdef    HEADLESS
 	profiler.PrintProfilingInfo();
 #endif // HEADLESS
@@ -2066,11 +2092,12 @@ void CGame::StartSkip(int toFrame) {
 	if (!skipSoundmute)
 		sound->Mute(); // no sounds
 
+	//FIXME not smart to change SYNCED values in demo playbacks etc.
 	skipOldSpeed     = gs->speedFactor;
-	skipOldUserSpeed = gs->userSpeedFactor;
+	skipOldUserSpeed = gs->wantedSpeedFactor;
 	const float speed = 1.0f;
 	gs->speedFactor     = speed;
-	gs->userSpeedFactor = speed;
+	gs->wantedSpeedFactor = speed;
 
 	skipLastDraw = spring_gettime();
 
@@ -2079,19 +2106,21 @@ void CGame::StartSkip(int toFrame) {
 
 void CGame::EndSkip() {
 	return; // FIXME
+/*
 	skipping = false;
 
 	gu->gameTime    += skipSeconds;
 	gu->modGameTime += skipSeconds;
 
 	gs->speedFactor     = skipOldSpeed;
-	gs->userSpeedFactor = skipOldUserSpeed;
+	gs->wantedSpeedFactor = skipOldUserSpeed;
 
 	if (!skipSoundmute) {
 		sound->Mute(); // sounds back on
 	}
 
 	LOG("Skipped %.1f seconds", skipSeconds);
+*/
 }
 
 
@@ -2136,14 +2165,14 @@ void CGame::ReloadCOB(const string& msg, int player)
 		LOG_L(L_WARNING, "Unknown unit name: \"%s\"", unitName.c_str());
 		return;
 	}
-	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr(udef->scriptPath);
+	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr("scripts/" + udef->scriptName);
 	if (oldScript == NULL) {
-		LOG_L(L_WARNING, "Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptPath.c_str());
+		LOG_L(L_WARNING, "Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptName.c_str());
 		return;
 	}
-	CCobFile* newScript = GCobFileHandler.ReloadCobFile(udef->scriptPath);
+	CCobFile* newScript = GCobFileHandler.ReloadCobFile("scripts/" + udef->scriptName);
 	if (newScript == NULL) {
-		LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptPath.c_str());
+		LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptName.c_str());
 		return;
 	}
 	int count = 0;

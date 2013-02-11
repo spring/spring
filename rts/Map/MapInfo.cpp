@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "MapInfo.h"
 
@@ -11,6 +10,7 @@
 #include "Lua/LuaParser.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
+#include "System/myMath.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 	#include "System/Sound/EFX.h"
@@ -33,7 +33,6 @@ const CMapInfo* mapInfo = NULL;
 
 
 CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
-	: mapInfoFile(mapInfoFile)
 {
 	map.name = mapName;
 
@@ -43,11 +42,14 @@ CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
 	}
 
 	LuaParser resParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	LuaTable resTable;
+
 	if (!resParser.Execute()) {
 		LOG_L(L_ERROR, "%s", resParser.GetErrorLog().c_str());
 	}
-	LuaTable resTbl = resParser.GetRoot();
-	resRoot = &resTbl;
+
+	resTable = resParser.GetRoot();
+	resRoot = &resTable;
 
 	ReadGlobal();
 	ReadAtmosphere();
@@ -59,6 +61,7 @@ CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
 	ReadSMF();
 	ReadSM3();
 	ReadTerrainTypes();
+	ReadPFSConstants();
 	ReadSound();
 
 	//FIXME save all data in an array, so we can destroy the lua context (to save mem)?
@@ -96,8 +99,9 @@ void CMapInfo::ReadGlobal()
 	map.tidalStrength   = topTable.GetFloat("tidalStrength", 0.0f);
 	map.maxMetal        = topTable.GetFloat("maxMetal", 0.02f);
 	map.extractorRadius = topTable.GetFloat("extractorRadius", 500.0f);
-
-	map.voidWater = topTable.GetBool("voidWater", false);
+	map.voidAlphaMin    = topTable.GetFloat("voidAlphaMin", 0.9f);
+	map.voidWater       = topTable.GetBool("voidWater", false);
+	map.voidGround      = topTable.GetBool("voidGround", false);
 
 	// clamps
 	if (-0.001f < map.hardness && map.hardness <= 0.0f)
@@ -196,6 +200,15 @@ void CMapInfo::ReadLight()
 	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
 
 	light.specularExponent = lightTable.GetFloat("specularExponent", 100.0f);
+
+	if (light.groundShadowDensity > 1.0 || light.groundShadowDensity < 0.0) {
+		LOG_L(L_WARNING, "MapInfo.lua: Incorrect value \"groundShadowDensity=%f\"! Clamping to 0..1 range!!", light.groundShadowDensity);
+		light.groundShadowDensity = Clamp(light.groundShadowDensity, 0.0f, 1.0f);
+	}
+	if (light.unitShadowDensity > 1.0 || light.unitShadowDensity < 0.0) {
+		LOG_L(L_WARNING, "MapInfo.lua: Incorrect value \"unitShadowDensity=%f\"! Clamping to 0..1 range!!", light.unitShadowDensity);
+		light.unitShadowDensity = Clamp(light.unitShadowDensity, 0.0f, 1.0f);
+	}
 }
 
 
@@ -392,6 +405,24 @@ void CMapInfo::ReadTerrainTypes()
 	}
 }
 
+void CMapInfo::ReadPFSConstants()
+{
+	const LuaTable& pfsTable = (parser->GetRoot()).SubTable("pfs");
+//	const LuaTable& legacyTable = pfsTable.SubTable("legacyConstants");
+	const LuaTable& qtpfsTable = pfsTable.SubTable("qtpfsConstants");
+
+//	pfs_t::legacy_constants_t& legacyConsts = pfs.legacy_constants;
+	pfs_t::qtpfs_constants_t& qtpfsConsts = pfs.qtpfs_constants;
+
+	qtpfsConsts.layersPerUpdate = qtpfsTable.GetInt("layersPerUpdate",  5);
+	qtpfsConsts.maxTeamSearches = qtpfsTable.GetInt("maxTeamSearches", 25);
+	qtpfsConsts.minNodeSizeX    = qtpfsTable.GetInt("minNodeSizeX",     8);
+	qtpfsConsts.minNodeSizeZ    = qtpfsTable.GetInt("minNodeSizeZ",     8);
+	qtpfsConsts.maxNodeDepth    = qtpfsTable.GetInt("maxNodeDepth",    16);
+	qtpfsConsts.numSpeedModBins = qtpfsTable.GetInt("numSpeedModBins", 10);
+	qtpfsConsts.minSpeedModVal  = std::max(                      0.0f, qtpfsTable.GetFloat("minSpeedModVal", 0.0f));
+	qtpfsConsts.maxSpeedModVal  = std::max(qtpfsConsts.minSpeedModVal, qtpfsTable.GetFloat("maxSpeedModVal", 2.0f));
+}
 
 void CMapInfo::ReadSound()
 {
@@ -416,7 +447,7 @@ void CMapInfo::ReadSound()
 		if (luaType == LuaTable::NIL)
 			continue;
 		
-		const ALuint& param = it->second;
+		const ALuint param = it->second;
 		const unsigned& type = alParamType[param];
 		switch (type) {
 			case EFXParamTypes::FLOAT:
@@ -434,7 +465,7 @@ void CMapInfo::ReadSound()
 		if (luaType == LuaTable::NIL)
 			continue;
 
-		const ALuint& param = it->second;
+		const ALuint param = it->second;
 		const unsigned& type = alParamType[param];
 		switch (type) {
 			case EFXParamTypes::VECTOR:

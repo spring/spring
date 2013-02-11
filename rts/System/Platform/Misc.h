@@ -10,6 +10,14 @@ namespace Platform
 {
 
 /**
+ * Returns the path to the original PWD/CWD dir from where the user started the execution.
+ * For security reasons we change the CWD to Spring's write-dir (most of the time it's the home-dir), so we need to cache the PWD/CWD.
+ * @return path to the CWD, with trailing path separator
+ */
+std::string GetOrigCWD();
+void SetOrigCWD();
+
+/**
  * Returns the path to the current users dir for storing application settings.
  * examples:
  * - "/home/pablo"
@@ -67,7 +75,7 @@ std::string GetModuleFile(std::string moduleName = "");
  * If moduleName is "", the path to the current library is returned.
  * @see GetModuleFile()
  * @param  moduleName eg. "spring" or "unitsync", "" for current
- * @return path to the current module dir or ""
+ * @return path to the current module dir (with trailing path separator) or ""
  */
 std::string GetModulePath(const std::string& moduleName = "");
 

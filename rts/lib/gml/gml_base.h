@@ -3,10 +3,11 @@
 #ifndef GML_BASE_H_
 #define GML_BASE_H_
 
-#include "gml.h"
+#include "gmlcls.h"
 #include "Game/GameController.h"
 
 #ifdef USE_GML
+#include <SDL_timer.h>
 namespace GML {
 	void Init();
 	void Exit();
@@ -23,6 +24,8 @@ namespace GML {
 	inline void SetLuaUIState(lua_State *L) { gmlLuaUIState = L; }
 	inline void SetCheckCallChain(bool cc) { gmlCheckCallChain = cc; }
 	inline void EnableCallChainWarnings(bool cw) { gmlCallChainWarning = (cw ? 0 : GML_MAX_CALL_CHAIN_WARNINGS); }
+	inline unsigned int UpdateTicks() { gmlNextTickUpdate = 100; return gmlCurrentTicks = SDL_GetTicks(); }
+	inline void GetTicks(unsigned int &var) { var = (--gmlNextTickUpdate > 0) ? gmlCurrentTicks : UpdateTicks(); }
 };
 #else
 namespace GML {
@@ -41,6 +44,8 @@ namespace GML {
 	inline void SetLuaUIState(void *L) {}
 	inline void SetCheckCallChain(bool cc) {}
 	inline void EnableCallChainWarnings(bool cw) {}
+	inline unsigned int UpdateTicks() { return 0; }
+	inline void GetTicks(unsigned int &var) {}
 };
 #endif
 

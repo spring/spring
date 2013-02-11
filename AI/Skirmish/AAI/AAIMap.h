@@ -165,8 +165,6 @@ private:
 	std::string LocateMapCacheFile(const bool forWriting) const;
 
 	AAI *ai;
-	IAICallback *cb;
-	AAIBuildTable *bt;
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// static (shared with other ai players)

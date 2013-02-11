@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "UnitLoader.h"
 #include "Unit.h"
@@ -44,23 +43,22 @@ CUnitLoader* CUnitLoader::GetInstance()
 
 
 
-CUnit* CUnitLoader::LoadUnit(const std::string& name, const float3& pos, int team,
-                             bool build, int facing, const CUnit* builder)
+CUnit* CUnitLoader::LoadUnit(const std::string& name, const UnitLoadParams& params)
 {
-	const UnitDef* ud = unitDefHandler->GetUnitDefByName(name);
+	const_cast<UnitLoadParams&>(params).unitDef = unitDefHandler->GetUnitDefByName(name);
 
-	if (ud == NULL) {
+	if (params.unitDef == NULL) {
 		throw content_error("Couldn't find unittype " +  name);
 	}
 
-	return LoadUnit(ud, pos, team, build, facing, builder);
+	return (LoadUnit(params));
 }
 
 
-CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
-                             bool build, int facing, const CUnit* builder)
+CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 {
 	CUnit* unit = NULL;
+	UnitLoadParams& params = const_cast<UnitLoadParams&>(cparams);
 
 	SCOPED_TIMER("UnitLoader::LoadUnit");
 
@@ -68,9 +66,17 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 		GML_RECMUTEX_LOCK(sel); // LoadUnit - for anti deadlock purposes.
 		GML_RECMUTEX_LOCK(quad); // LoadUnit - make sure other threads cannot access an incomplete unit
 
-		if (team < 0) {
-			team = teamHandler->GaiaTeamID(); // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
-			if (team < 0)
+		const UnitDef* ud = params.unitDef;
+
+		if (ud == NULL)
+			return unit;
+		// need to check this BEFORE creating the instance
+		if (!uh->CanAddUnit(cparams.unitID))
+			return unit;
+
+		if (params.teamID < 0) {
+			// FIXME use gs->gaiaTeamID ?  (once it is always enabled)
+			if ((params.teamID = teamHandler->GaiaTeamID()) < 0)
 				throw content_error("Invalid team and no gaia team to put unit in");
 		}
 
@@ -97,7 +103,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 			unit = new CUnit();
 		}
 
-		unit->PreInit(ud, team, facing, pos, build);
+		unit->PreInit(params);
 
 		if (ud->IsTransportUnit()) {
 			new CTransportCAI(unit);
@@ -118,8 +124,12 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 		}
 	}
 
-	unit->PostInit(builder);
+	unit->PostInit(params.builder);
 	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(unit, unit->isCloaked));
+
+	if (params.flattenGround) {
+		FlattenGround(unit);
+	}
 
 	return unit;
 }
@@ -196,8 +206,8 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		unsigned int currentNumUnits = receivingTeam->units.size();
 
 		// make sure team unit-limit is not exceeded
-		if ((currentNumUnits + numRequestedUnits) > receivingTeam->maxUnits) {
-			numRequestedUnits = receivingTeam->maxUnits - currentNumUnits;
+		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits()) {
+			numRequestedUnits = receivingTeam->GetMaxUnits() - currentNumUnits;
 		}
 
 		// make sure square is entirely on the map
@@ -211,16 +221,23 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 			Watchdog::ClearPrimaryTimers(); // the other thread may be waiting for a mutex held by this one, triggering hang detection
 			const float px = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 			const float pz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
-			const float3 unitPos = float3(px, ground->GetHeightReal(px, pz), pz);
-			const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(a);
 
-			if (unitDef != NULL) {
-				const CUnit* unit = LoadUnit(unitDef, unitPos, team, false, 0, NULL);
+			const UnitLoadParams unitParams = {
+				unitDefHandler->GetUnitDefByID(a),
+				NULL, 
 
-				if (unit != NULL) {
-					FlattenGround(unit);
-				}
-			}
+				float3(px, ground->GetHeightReal(px, pz), pz),
+				ZeroVector,
+
+				-1,
+				team,
+				FACING_SOUTH,
+
+				false,
+				true,
+			};
+
+			LoadUnit(unitParams);
 		}
 	} else {
 		unsigned int numRequestedUnits = amount;
@@ -229,14 +246,14 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		if (receivingTeam->AtUnitLimit()) {
 			LOG_L(L_WARNING,
 				"[%s] unable to give more units to team %d (current: %u, team limit: %u, global limit: %u)",
-				__FUNCTION__, team, currentNumUnits, receivingTeam->maxUnits, uh->MaxUnits()
+				__FUNCTION__, team, currentNumUnits, receivingTeam->GetMaxUnits(), uh->MaxUnits()
 			);
 			return;
 		}
 
 		// make sure team unit-limit is not exceeded
-		if ((currentNumUnits + numRequestedUnits) > receivingTeam->maxUnits) {
-			numRequestedUnits = receivingTeam->maxUnits - currentNumUnits;
+		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits()) {
+			numRequestedUnits = receivingTeam->GetMaxUnits() - currentNumUnits;
 		}
 
 		const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(objectName);
@@ -257,22 +274,31 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 				pos.z - (((squareSize - 1) * zsize * SQUARE_SIZE) / 2)
 			);
 
-			int total = numRequestedUnits;
+			int unitsLoaded = numRequestedUnits;
 
 			for (int z = 0; z < squareSize; ++z) {
-				for (int x = 0; x < squareSize && total > 0; ++x) {
+				for (int x = 0; x < squareSize && (unitsLoaded-- > 0); ++x) {
 					const float px = squarePos.x + x * xsize * SQUARE_SIZE;
 					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
 
-					const float3 unitPos = float3(px, ground->GetHeightReal(px, pz), pz);
 					Watchdog::ClearPrimaryTimers();
-					const CUnit* unit = LoadUnit(unitDef, unitPos, team, false, 0, NULL);
 
-					if (unit != NULL) {
-						FlattenGround(unit);
-					}
+					const UnitLoadParams unitParams = {
+						unitDef,
+						NULL, 
 
-					--total;
+						float3(px, ground->GetHeightReal(px, pz), pz),
+						ZeroVector,
+
+						-1,
+						team,
+						FACING_SOUTH,
+
+						false,
+						true,
+					};
+
+					LoadUnit(unitParams);
 				}
 			}
 
@@ -303,9 +329,23 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					const float3 featurePos = float3(px, ground->GetHeightReal(px, pz), pz);
 
 					Watchdog::ClearPrimaryTimers();
-					CFeature* feature = new CFeature();
-					// Initialize() adds the feature to the FeatureHandler -> no memory-leak
-					feature->Initialize(featurePos, featureDef, 0, 0, team, featureAllyTeam, NULL);
+					FeatureLoadParams params = {
+						featureDef,
+						NULL,
+
+						featurePos,
+						ZeroVector,
+
+						team,
+						featureAllyTeam,
+
+						0, // rotation
+						FACING_SOUTH,
+
+						0, // smokeTime
+					};
+
+					featureHandler->LoadFeature(params);
 
 					--total;
 				}

@@ -15,7 +15,7 @@ class CCommandQueue {
 	friend class CAIAICallback; // the C++ AI interface wrapper
 
 	// see CommandAI.cpp for further creg stuff for this class
-	CR_DECLARE(CCommandQueue);
+	CR_DECLARE_STRUCT(CCommandQueue);
 
 	public:
 		enum QueueType {

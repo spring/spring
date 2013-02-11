@@ -4,16 +4,28 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
+#include "System/Matrix44f.h"
 #include "System/Vec2.h"
 #include "System/Misc/BitwiseEnum.h"
 #include "System/Sync/SyncedFloat3.h"
 #include "System/Sync/SyncedPrimitive.h"
 
-class CUnit;
-struct DamageArray;
-struct CollisionVolume;
 struct MoveDef;
+struct CollisionVolume;
+struct SolidObjectDef;
+struct SolidObjectGroundDecal;
 
+struct DamageArray;
+class CUnit;
+
+enum TerrainChangeTypes {
+	TERRAINCHANGE_DAMAGE_RECALCULATION = 0, // update after regular explosion or terraform event
+	TERRAINCHANGE_SQUARE_TYPEMAP_INDEX = 1, // update after typemap-index of a square changed (Lua)
+	TERRAINCHANGE_TYPEMAP_SPEED_VALUES = 2, // update after speed-values of a terrain-type changed (Lua)
+	TERRAINCHANGE_OBJECT_INSERTED      = 3,
+	TERRAINCHANGE_OBJECT_INSERTED_YM   = 4,
+	TERRAINCHANGE_OBJECT_DELETED       = 5,
+};
 
 enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
@@ -27,7 +39,7 @@ enum YardmapStates {
 	YARDMAP_YARDFREE    = ~YARDMAP_YARD,
 	YARDMAP_GEO         = YARDMAP_BLOCKED,
 };
-typedef BitwiseEnum<YardmapStates> YardMapStatus;
+typedef Bitwise::BitwiseEnum<YardmapStates> YardMapStatus;
 
 
 
@@ -56,10 +68,25 @@ public:
 
 	virtual bool AddBuildPower(float amount, CUnit* builder) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID) {}
+
+	virtual void StoreImpulse(const float3& impulse, float newImpulseDecayRate) {
+		if ((impulseDecayRate = std::min(std::max(newImpulseDecayRate, 0.0f), 1.0f)) > 0.0f) {
+			StoreImpulse(impulse);
+		}
+	}
+
+	virtual void StoreImpulse(const float3& impulse) {
+		residualImpulse += impulse;
+	}
+	virtual void ApplyImpulse() {
+		speed += residualImpulse;
+		residualImpulse = ZeroVector;
+	}
+
 	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual int GetBlockingMapID() const { return -1; }
 
-	virtual void ForcedMove(const float3& newPos, bool snapToGround = true) {}
+	virtual void ForcedMove(const float3& newPos) {}
 	virtual void ForcedSpin(const float3& newDir) {}
 
 	void Move3D(const float3& v, bool relative) {
@@ -90,6 +117,12 @@ public:
 		SetAimPos(ap, relative);
 	}
 
+	virtual CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const {
+		// should never get called (should be pure virtual, but cause of CREG we cannot use it)
+		assert(false);
+		return CMatrix44f();
+	}
+
 	/**
 	 * Adds this object to the GroundBlockingMap if and only if its collidable
 	 * property is set (blocking), else does nothing (except call UnBlock()).
@@ -104,7 +137,7 @@ public:
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
-	YardMapStatus GetGroundBlockingAtPos(float3 gpos) const;
+	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 
 private:
 	void SetMidPos(const float3& mp, bool relative) {
@@ -141,6 +174,7 @@ public:
 	float health;
 	float mass;                                 ///< the physical mass of this object (run-time constant)
 	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
+	float impulseDecayRate;                     ///< multiplier decaying this object's (residual) impulse each frame
 
 	bool blocking;                              ///< if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
@@ -162,15 +196,19 @@ public:
 	bool isMoving;                              ///< = velocity.length() > 0.0
 	bool isUnderWater;                          ///< true if this object is completely submerged (pos + height < 0)
 	bool isMarkedOnBlockingMap;                 ///< true if this object is currently marked on the GroundBlockingMap
+	float3 groundBlockPos;
 
 	float3 speed;                               ///< current velocity vector (length in elmos/frame)
-	float3 residualImpulse;                     ///< Used to sum up external impulses.
+	float3 residualImpulse;                     ///< Used to sum up external impulses. TODO: remove this, impulse is ALWAYS applied immediately now
 
 	int team;                                   ///< team that "owns" this object
 	int allyteam;                               ///< allyteam that this->team is part of
 
-	MoveDef* moveDef;                           ///< holds information about the mobility of this object (if NULL, object is either static or aircraft)
+	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
+
+	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
 	CollisionVolume* collisionVolume;
+	SolidObjectGroundDecal* groundDecal;
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)
@@ -186,11 +224,12 @@ public:
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
 	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
-	int buildFacing;                            ///< Orientation of footprint, 4 different states
+	short int buildFacing;                      ///< Orientation of footprint, 4 different states
 
 	static const float DEFAULT_MASS;
 	static const float MINIMUM_MASS;
 	static const float MAXIMUM_MASS;
+	static const float IMPULSE_RATE;
 
 	static int deletingRefID;
 	static void SetDeletingRefID(int id) { deletingRefID = id; }

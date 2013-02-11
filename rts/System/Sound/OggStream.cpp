@@ -65,6 +65,9 @@ COggStream::COggStream(ALuint _source)
 	for (unsigned i = 0; i < NUM_BUFFERS; ++i) {
 		buffers[i] = 0;
 	}
+	for (unsigned i = 0; i < BUFFER_SIZE; ++i) {
+		pcmDecodeBuffer[i] = 0;
+	}
 }
 
 COggStream::~COggStream()

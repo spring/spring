@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "HoverAirMoveType.h"
 #include "Game/Player.h"
@@ -10,6 +9,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
+#include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
@@ -118,6 +118,11 @@ void CHoverAirMoveType::SetGoal(float3 newPos, float distance)
 
 void CHoverAirMoveType::SetState(AircraftState newState)
 {
+	// once in crashing, we should never change back into another state
+	if (aircraftState == AIRCRAFT_CRASHING && newState != AIRCRAFT_CRASHING) {
+		return;
+	}
+
 	if (newState == aircraftState) {
 		return;
 	}
@@ -138,8 +143,10 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 
 	aircraftState = newState;
 
-	// Do animations
 	switch (aircraftState) {
+		case AIRCRAFT_CRASHING:
+			owner->SetCrashing(true);
+			break;
 		case AIRCRAFT_LANDED:
 			//FIXME already inform commandAI in AIRCRAFT_LANDING!
 			//FIXME Problem is StopMove() also calls owner->script->StopMoving() what should only be called when landed. Also see CStrafeAirMoveType::SetState().
@@ -245,39 +252,36 @@ void CHoverAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressi
 void CHoverAirMoveType::ExecuteStop()
 {
 	wantToStop = false;
+	wantedSpeed = ZeroVector;
 
 	switch (aircraftState) {
-		case AIRCRAFT_TAKEOFF:
+		case AIRCRAFT_TAKEOFF: {
 			if (!dontLand && autoLand) {
 				SetState(AIRCRAFT_LANDING);
 				// trick to land directly
 				waitCounter = GAME_SPEED;
 				break;
-			} // let it fall through
-		case AIRCRAFT_FLYING:
-			if (owner->unitDef->DontLand()) {
-				goalPos = owner->pos;
+			}
+		} // fall through
+		case AIRCRAFT_FLYING: {
+			goalPos = owner->pos;
+
+			if (owner->unitDef->DontLand() || dontLand || !autoLand) {
 				SetState(AIRCRAFT_HOVERING);
-			} else if (dontLand || !autoLand) {
-				goalPos = owner->pos;
-				wantedSpeed = ZeroVector;
 			} else {
 				SetState(AIRCRAFT_LANDING);
 			}
-			break;
-		case AIRCRAFT_LANDING:
-			break;
-		case AIRCRAFT_LANDED:
-			break;
-		case AIRCRAFT_CRASHING:
-			break;
-		case AIRCRAFT_HOVERING:
+		} break;
+		case AIRCRAFT_LANDING: {} break;
+		case AIRCRAFT_LANDED: {} break;
+		case AIRCRAFT_CRASHING: {} break;
+		case AIRCRAFT_HOVERING: {
 			if (!dontLand && autoLand) {
 				// land immediately
 				SetState(AIRCRAFT_LANDING);
 				waitCounter = GAME_SPEED;
 			}
-			break;
+		} break;
 	}
 }
 
@@ -287,6 +291,7 @@ void CHoverAirMoveType::StopMoving()
 	forceHeading = false;
 	owner->isMoving = false;
 	wantedHeight = orgWantedHeight;
+
 	if (progressState != AMoveType::Failed)
 		progressState = AMoveType::Done;
 }
@@ -344,13 +349,14 @@ void CHoverAirMoveType::UpdateHovering()
 	if (l > (maxSpeed * maxSpeed)) {
 		deltaDir *= maxSpeed / NOZERO(math::sqrt(l));
 	}
-	wantedSpeed = owner->speed + deltaDir;
 
 	// random movement (a sort of fake wind effect)
 	// random drift values are in range -0.5 ... 0.5
-	randomWind = float3(randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f, 0.0f,
-                        randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f);
-	wantedSpeed += randomWind * driftSpeed * 0.5f;
+	randomWind.x = randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f;
+	randomWind.z = randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f;
+
+	wantedSpeed = owner->speed + deltaDir;
+	wantedSpeed += (randomWind * driftSpeed * 0.5f);
 
 	UpdateAirPhysics();
 }
@@ -564,6 +570,7 @@ void CHoverAirMoveType::UpdateLanding()
 
 	// collision detection does not let us get
 	// closer to the ground than <radius> elmos
+	// (wrt. midPos.y)
 	if (altitude <= owner->radius) {
 		SetState(AIRCRAFT_LANDED);
 	}
@@ -707,10 +714,17 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	float wh = wantedHeight; // wanted RELATIVE height (altitude)
 	float ws = 0.0f;         // wanted vertical speed
 
-	// always stay above the actual terrain
+	// always stay above the actual terrain (therefore either the value of
+	// <midPos.y - radius> or pos.y must never become smaller than the real
+	// ground height)
+	// note: unlike StrafeAirMoveType, UpdateTakeoff calls UpdateAirPhysics
+	// so we ignore terrain while we are in the takeoff state to avoid jumps
 	if (modInfo.allowAircraftToHitGround) {
-		if (curAbsHeight > (pos.y - owner->radius)) {
-			owner->Move1D(curAbsHeight + owner->radius + 0.01f, 1, false);
+		const bool groundContact = (curAbsHeight > (owner->midPos.y - owner->radius));
+		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
+
+		if (groundContact && handleContact) {
+			owner->Move1D(curAbsHeight - (owner->midPos.y - owner->radius) + 0.01f, 1, true);
 		}
 	}
 
@@ -800,48 +814,51 @@ bool CHoverAirMoveType::Update()
 
 	AAirMoveType::Update();
 
-	if (owner->stunned || owner->beingBuilt) {
+	if ((owner->IsStunned() && !owner->IsCrashing()) || owner->beingBuilt) {
 		wantedSpeed = ZeroVector;
-		wantToStop = true;
+
+		UpdateAirPhysics();
+		return (HandleCollisions());
 	}
 
-	// Allow us to stop if wanted
-	if (wantToStop) {
+	// allow us to stop if wanted (changes aircraft state)
+	if (wantToStop)
 		ExecuteStop();
-	}
 
 	const float3 lastSpeed = speed;
 
-	if (owner->fpsControlPlayer != NULL) {
-		SetState(AIRCRAFT_FLYING);
+	if (aircraftState != AIRCRAFT_CRASHING) {
+		if (owner->fpsControlPlayer != NULL) {
+			SetState(AIRCRAFT_FLYING);
 
-		const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
+			const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
 
-		const float3 forward = con.viewDir;
-		const float3 right = forward.cross(UpVector);
-		const float3 nextPos = pos + speed;
+			const float3 forward = con.viewDir;
+			const float3 right = forward.cross(UpVector);
+			const float3 nextPos = pos + speed;
 
-		float3 flatForward = forward;
-		flatForward.y = 0.0f;
-		flatForward.Normalize();
+			float3 flatForward = forward;
+			flatForward.y = 0.0f;
+			flatForward.Normalize();
 
-		wantedSpeed = ZeroVector;
+			wantedSpeed = ZeroVector;
 
-		if (con.forward) wantedSpeed += flatForward;
-		if (con.back   ) wantedSpeed -= flatForward;
-		if (con.right  ) wantedSpeed += right;
-		if (con.left   ) wantedSpeed -= right;
+			if (con.forward) wantedSpeed += flatForward;
+			if (con.back   ) wantedSpeed -= flatForward;
+			if (con.right  ) wantedSpeed += right;
+			if (con.left   ) wantedSpeed -= right;
 
-		wantedSpeed.Normalize();
-		wantedSpeed *= maxSpeed;
+			wantedSpeed.Normalize();
+			wantedSpeed *= maxSpeed;
 
-		if (!nextPos.IsInBounds()) {
-			speed = ZeroVector;
+			if (!nextPos.IsInBounds()) {
+				speed = ZeroVector;
+			}
+
+			UpdateAirPhysics();
+			wantedHeading = GetHeadingFromVector(flatForward.x, flatForward.z);
 		}
 
-		UpdateAirPhysics();
-		wantedHeading = GetHeadingFromVector(flatForward.x, flatForward.z);
-	} else {
 		if (reservedPad != NULL) {
 			MoveToRepairPad();
 
@@ -849,27 +866,39 @@ bool CHoverAirMoveType::Update()
 				flyState = FLY_LANDING;
 			}
 		}
+	}
 
-		// Main state handling
-		switch (aircraftState) {
-			case AIRCRAFT_LANDED:
-				UpdateLanded();
-				break;
-			case AIRCRAFT_TAKEOFF:
-				UpdateTakeoff();
-				break;
-			case AIRCRAFT_FLYING:
-				UpdateFlying();
-				break;
-			case AIRCRAFT_LANDING:
-				UpdateLanding();
-				break;
-			case AIRCRAFT_HOVERING:
-				UpdateHovering();
-				break;
-			case AIRCRAFT_CRASHING:
-				break;
-		}
+	switch (aircraftState) {
+		case AIRCRAFT_LANDED:
+			UpdateLanded();
+			break;
+		case AIRCRAFT_TAKEOFF:
+			UpdateTakeoff();
+			break;
+		case AIRCRAFT_FLYING:
+			UpdateFlying();
+			break;
+		case AIRCRAFT_LANDING:
+			UpdateLanding();
+			break;
+		case AIRCRAFT_HOVERING:
+			UpdateHovering();
+			break;
+		case AIRCRAFT_CRASHING: {
+			UpdateAirPhysics();
+
+			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
+				owner->SetCrashing(false);
+				owner->KillUnit(true, false, 0);
+			} else {
+				#define SPIN_DIR(o) ((o->id & 1) * 2 - 1)
+				wantedHeading = GetHeadingFromVector(owner->rightdir.x * SPIN_DIR(owner), owner->rightdir.z * SPIN_DIR(owner));
+				wantedHeight = 0.0f;
+				#undef SPIN_DIR
+			}
+
+			new CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
+		} break;
 	}
 
 
@@ -979,6 +1008,7 @@ bool CHoverAirMoveType::HandleCollisions()
 		// check for collisions if not on a pad, not being built, or not taking off
 		// includes an extra condition for transports, which are exempt while loading
 		const bool checkCollisions = collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF);
+		bool hitBuilding = false;
 
 		if (!loadingUnits && checkCollisions) {
 			const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
@@ -1001,6 +1031,8 @@ bool CHoverAirMoveType::HandleCollisions()
 				if (unit->mass >= CSolidObject::DEFAULT_MASS || unit->immobile) {
 					owner->Move3D(-dif * (dist - totRad), true);
 					owner->speed *= 0.99f;
+
+					hitBuilding = true;
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
 
@@ -1013,6 +1045,11 @@ bool CHoverAirMoveType::HandleCollisions()
 					unit->speed -= (dif * colSpeed * (part));
 				}
 			}
+		}
+
+		if (hitBuilding && owner->IsCrashing()) {
+			owner->KillUnit(true, false, 0);
+			return true;
 		}
 
 		if (pos.x < 0.0f) {

@@ -11,7 +11,6 @@
 #include "System/Log/FileSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/Level.h"
-#include "System/mmgr.h"
 
 #include <string>
 #include <set>

@@ -3,14 +3,13 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gml_base.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)
 #endif
 
 #include "ExplosionGenerator.h"
-#include "Sim/Units/UnitHandler.h"
 #include "System/float3.h"
 #include "System/Vec2.h"
 
@@ -41,16 +40,8 @@ public:
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 
-	inline CUnit* owner() const {
-		// Note: this death dependency optimization using "ownerId" is logically flawed,
-		//  since ids are being reused it could return a unit that is not the original owner
-		CUnit* unit = uh->GetUnit(ownerId);
-		return GML::SimEnabled() ? *(CUnit* volatile*)&unit : unit; // make volatile
-	}
-
-	int GetOwnerID() const {
-		return ownerId;
-	}
+	CUnit* owner() const;
+	int GetOwnerID() const { return ownerId; }
 
 	void SetQuadFieldCellCoors(const int2& cell) { quadFieldCellCoors = cell; }
 	int2 GetQuadFieldCellCoors() const { return quadFieldCellCoors; }
@@ -95,3 +86,4 @@ protected:
 };
 
 #endif /* PROJECTILE_H */
+

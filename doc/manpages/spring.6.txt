@@ -12,14 +12,16 @@ ifdef::DEDICATED[{BINARY} - An open source RTS game engine - Dedicated Server]
 
 Synopsis
 --------
-ifndef::GUILESS[*{BINARY}* [-f|--fullscreen] [-w|--window] [-x|--xresolution 'SIZE'] [-y|--yresolution 'SIZE'] [-m|--minimise] [--safemode] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-t|--textureatlas] [-i|--isolation] [--isolation-dir 'PATH'] [-n|--name 'STRING'] [-C|--config 'FILE'] ['SCRIPT']]
-ifdef::HEADLESS[*{BINARY}* [--safemode] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-i|--isolation] [--isolation-dir 'PATH'] [-n|--name 'STRING'] [-C|--config 'FILE'] SCRIPT]
+ifndef::GUILESS[*{BINARY}* [-f|--fullscreen] [-w|--window] [-x|--xresolution 'SIZE'] [-y|--yresolution 'SIZE'] [-m|--minimise] [--safemode] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-t|--textureatlas] [--benchmark 'TIME' [--benchmarkstart 'TIME']] [-i|--isolation] [--isolation-dir 'PATH'] [-n|--name 'STRING'] [-C|--config 'FILE'] ['SCRIPT']]
+ifdef::HEADLESS[*{BINARY}* [--safemode] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [--benchmark 'TIME' [--benchmarkstart 'TIME']] [-i|--isolation] [--isolation-dir 'PATH'] [-n|--name 'STRING'] [-C|--config 'FILE'] SCRIPT]
 ifdef::DEDICATED[*{BINARY}* [-i|--isolation] [--isolation-dir 'PATH'] [-C|--config 'FILE'] SCRIPT]
 ifndef::DEDICATED[]
 
 *{BINARY}* --list-ai-interfaces
 
 *{BINARY}* --list-skirmish-ais
+
+*{BINARY}* --list-def-tags
 endif::DEDICATED[]
 
 *{BINARY}* --list-config-vars
@@ -84,8 +86,8 @@ ifndef::GUILESS[ ]
 ifndef::GUILESS[*-y, --yresolution*::'SIZE'::]
 ifndef::GUILESS[  Set Y resolution]
 ifndef::GUILESS[ ]
-ifndef::GUILESS[*-m, --minimise*::]
-ifndef::GUILESS[  Start minimised]
+ifndef::GUILESS[*-b, --minimise*::]
+ifndef::GUILESS[  Start in background (minimised)]
 ifndef::DEDICATED[ ]
 ifndef::DEDICATED[*--safemode*::]
 ifndef::DEDICATED[  Turns off many things that are known to cause problems (i.e. on PC/Mac's with lower-end graphic cards)]
@@ -101,6 +103,12 @@ ifndef::DEDICATED[  Dump projectile class info (alias CEG classes) into projecti
 ifndef::GUILESS[ ]
 ifndef::GUILESS[*-t, --textureatlas*::]
 ifndef::GUILESS[  Dump each finalised textureatlas into textureatlasN.tga]
+ifndef::GUILESS[ ]
+ifndef::GUILESS[*--benchmark*::'TIME'::]
+ifndef::GUILESS[  Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.]
+ifndef::GUILESS[ ]
+ifndef::GUILESS[*--benchmarkstart*::'TIME'::]
+ifndef::GUILESS[  Benchmark start time in minutes.]
 
 *-i, --isolation*::
   Limit the data-dir (games & maps) scanner to one directory
@@ -121,9 +129,19 @@ ifndef::DEDICATED[  Dump a list of available AI Interfaces to STDOUT]
 ifndef::DEDICATED[ ]
 ifndef::DEDICATED[*--list-skirmish-ais*::]
 ifndef::DEDICATED[  Dump a list of available Skirmish AIs to STDOUT]
+ifndef::DEDICATED[ ]
+ifndef::DEDICATED[*--list-def-tags*::]
+ifndef::DEDICATED[  Dump a list of available Definition Tags to STDOUT]
 
 *--list-config-vars*::
   Dump all default config vars in JSON-format to STDOUT
+
+*-g, --game*::'GAME'::
+  instantly start the GAME with a minimal setup. Requires --map to be present, too.
+  Sets the modoption minimalsetup = 1
+
+*-m, --map*::'MAP'::
+  Requires --game to be set, too. see --game
 
 DATA DIR
 --------

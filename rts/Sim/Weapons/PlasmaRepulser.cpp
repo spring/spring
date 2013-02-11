@@ -14,7 +14,6 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/mmgr.h"
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL));
@@ -44,7 +43,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 }
 
 
-CPlasmaRepulser::~CPlasmaRepulser(void)
+CPlasmaRepulser::~CPlasmaRepulser()
 {
 	interceptHandler.RemovePlasmaRepulser(this);
 	shieldProjectile->PreDelete();
@@ -65,6 +64,12 @@ void CPlasmaRepulser::Init()
 
 	// deleted by ProjectileHandler
 	shieldProjectile = new ShieldProjectile(this);
+}
+
+
+bool CPlasmaRepulser::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+{
+	return true;
 }
 
 
@@ -184,7 +189,7 @@ void CPlasmaRepulser::Update()
 }
 
 
-void CPlasmaRepulser::SlowUpdate(void)
+void CPlasmaRepulser::SlowUpdate()
 {
 	const int piece = owner->script->QueryWeapon(weaponNum);
 	relWeaponPos = owner->script->GetPiecePos(piece);
@@ -241,7 +246,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 	// BeamLasers and LightningCannons are hitscan (their projectiles do not move),
 	// they call InterceptHandler to figure out if a shield is in the way so check
 	// the stunned-state here keep things consistent
-	if (owner->stunned) {
+	if (owner->IsStunned() || owner->beingBuilt) {
 		return -1.0f;
 	}
 
@@ -280,7 +285,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 
 void CPlasmaRepulser::DependentDied(CObject* o)
 {
-	hasGfx.erase((CWeaponProjectile*) o);
+	hasGfx.erase(static_cast<CWeaponProjectile*>(o));
 	CWeapon::DependentDied(o);
 }
 

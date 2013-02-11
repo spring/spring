@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "AdvWater.h"
 #include "ISky.h"
@@ -232,7 +231,7 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
-	if ((!mapInfo->water.forceRendering && (readmap->currMinHeight > 1.0f)) || mapInfo->map.voidWater) {
+	if ((!mapInfo->water.forceRendering && (readmap->currMinHeight > 0.0f)) || mapInfo->map.voidWater) {
 		return;
 	}
 
@@ -348,6 +347,7 @@ void CAdvWater::UpdateWater(CGame* game)
 //	camera = realCam;
 	camera->~CCamera();
 	new (camera) CCamera(*(reinterpret_cast<CCamera*>(realCam)));
+	reinterpret_cast<CCamera*>(realCam)->~CCamera();
 
 	camera->Update();
 	glPopAttrib();

@@ -13,13 +13,12 @@
 #include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
 
-#include "System/mmgr.h"
 
 
 SmoothHeightMesh* smoothGround = NULL;
 
 
-static float Interpolate(float x, float y, const int& maxx, const int& maxy, const float& res, const float* heightmap)
+static float Interpolate(float x, float y, const int maxx, const int maxy, const float res, const float* heightmap)
 {
 	x = Clamp(x / res, 0.0f, maxx - 1.0f);
 	y = Clamp(y / res, 0.0f, maxy - 1.0f);
@@ -264,6 +263,7 @@ inline static void BlurHorizontal(
 	const float recipn = 1.0f / n;
 
 	int y;
+	Threading::OMPCheck();
 	#pragma omp parallel for private(y) schedule(static, 1000)
 	for (y = 0; y <= maxy; ++y) {
 		float avg = 0.0f;
@@ -318,6 +318,7 @@ inline static void BlurVertical(
 	const float recipn = 1.0f / n;
 
 	int x;
+	Threading::OMPCheck();
 	#pragma omp parallel for private(x) schedule(static, 1000)
 	for (x = 0; x <= maxx; ++x) {
 		float avg = 0.0f;

@@ -31,6 +31,7 @@ public:
 		drawHeight,
 		drawPathTraversability,
 		drawPathHeat,
+		drawPathFlow,
 		drawPathCost,
 	};
 
@@ -60,9 +61,7 @@ public:
 	void DisableExtraTexture();
 	void SetHeightTexture();
 	void SetMetalTexture(const CMetalMap*);
-	void TogglePathTraversabilityTexture();
-	void TogglePathHeatTexture();
-	void TogglePathCostTexture();
+	void TogglePathTexture(BaseGroundDrawMode);
 	void ToggleLosTexture();
 	void ToggleRadarAndJammer();
 	bool UpdateExtraTexture();

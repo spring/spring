@@ -12,12 +12,10 @@
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 #include "System/NetProtocol.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/mmgr.h"
 
 #include <SDL_timer.h>
 #include <SDL_keysym.h>

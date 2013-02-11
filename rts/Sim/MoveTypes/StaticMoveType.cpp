@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "StaticMoveType.h"
 #include "Map/Ground.h"
@@ -16,7 +15,7 @@ void CStaticMoveType::SlowUpdate()
 {
 	// NOTE:
 	//     static buildings don't have any unitDef->moveDef, hence we need
-	//     to get the ground height instead of calling ->moveMath->yLevel()
+	//     to get the ground height instead of calling CMoveMath::yLevel()
 	// FIXME: intercept heightmapUpdate events and update buildings y-pos only on-demand!
 	const UnitDef* ud = owner->unitDef;
 

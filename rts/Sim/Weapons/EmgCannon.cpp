@@ -9,7 +9,6 @@
 #include "Sim/Units/Unit.h"
 #include "System/Sync/SyncTracer.h"
 #include "WeaponDefHandler.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL));
 
@@ -22,11 +21,11 @@ CEmgCannon::CEmgCannon(CUnit* owner)
 {
 }
 
-CEmgCannon::~CEmgCannon(void)
+CEmgCannon::~CEmgCannon()
 {
 }
 
-void CEmgCannon::Update(void)
+void CEmgCannon::Update()
 {
 	if(targetType != Target_None){
 		weaponPos = owner->pos +
@@ -49,43 +48,8 @@ void CEmgCannon::Update(void)
 	CWeapon::Update();
 }
 
-bool CEmgCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
-{
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
-		return false;
 
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
-		return false;
-
-	float3 dir(pos - weaponMuzzlePos);
-	float length = dir.Length();
-	if (length == 0)
-		return true;
-
-	dir /= length;
-
-	if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length, unit)) {
-		return false;
-	}
-
-	const float spread =
-		(accuracy + sprayAngle) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
-
-	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
-		return false;
-	}
-	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, false, true, false, owner)) {
-		return false;
-	}
-
-	return true;
-}
-
-void CEmgCannon::Init(void)
+void CEmgCannon::Init()
 {
 	CWeapon::Init();
 }
@@ -105,7 +69,9 @@ void CEmgCannon::FireImpl()
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
 
-	new CEmgProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		weaponDef->visuals.color, weaponDef->intensity, (int) (range / projectileSpeed),
-		weaponDef);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.speed = dir * projectileSpeed;
+	params.ttl = (int) (range / projectileSpeed);
+	new CEmgProjectile(params, weaponDef->visuals.color, weaponDef->intensity);
 }

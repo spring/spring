@@ -7,12 +7,16 @@
 #include <set>
 #include <vector>
 #include <stack>
+
+#include "lib/gml/gmlcnf.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
+#include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/MemPool.h"
 #include "System/float3.h"
 
-#define UNSYNCED_PROJ_NOEVENT 1 // bypass id and event handling for unsynced projectiles (faster)
+// bypass id and event handling for unsynced projectiles (faster)
+#define UNSYNCED_PROJ_NOEVENT 1
 
 class CProjectile;
 class CUnit;
@@ -24,23 +28,22 @@ struct S3DOPrimitive;
 struct S3DOPiece;
 struct SS3OVertex;
 
-struct piececmp {
-	bool operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const;
-};
-struct projdetach {
-	static void Detach(CProjectile* p);
-};
 
-typedef std::pair<CProjectile*, int> ProjectileMapPair;
-typedef std::map<int, ProjectileMapPair> ProjectileMap;
-typedef ThreadListSim<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*, projdetach> ProjectileContainer;
+
+typedef std::pair<CProjectile*, int> ProjectileMapValPair;
+typedef std::pair<int, ProjectileMapValPair> ProjectileMapKeyPair;
+typedef std::map<int, ProjectileMapValPair> ProjectileMap;
+
+typedef ThreadListSim<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*, ProjectileDetacher> ProjectileContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
+
 #if defined(USE_GML) && GML_ENABLE_SIM
-typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, piececmp>, FlyingPiece*> FlyingPieceContainer;
+typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, FlyingPieceComparator>, FlyingPiece*> FlyingPieceContainer;
 #else
-typedef ThreadListSimRender<std::set<FlyingPiece*, piececmp>, void, FlyingPiece*> FlyingPieceContainer;
+typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
 #endif
 
+typedef ThreadMapRender<CProjectile*, int, ProjectileMapValPair, ProjectileIndexer> ProjectileRenderMap;
 
 
 class CProjectileHandler
@@ -53,18 +56,28 @@ public:
 	void Serialize(creg::ISerializer* s);
 	void PostLoad();
 
-	inline const ProjectileMapPair* GetMapPairBySyncedID(int id) const {
-		ProjectileMap::const_iterator it = syncedProjectileIDs.find(id);
-		if (it == syncedProjectileIDs.end()) {
+	inline const ProjectileMapValPair* GetMapPairBySyncedID(int id) const {
+		const bool renderAccess = (GML::SimEnabled() && !Threading::IsSimThread());
+		const ProjectileMap& projectileIDs = renderAccess ? syncedRenderProjectileIDs.get_render_map() : syncedProjectileIDs;
+		const ProjectileMap::const_iterator it = projectileIDs.find(id);
+
+		if (it == projectileIDs.end())
 			return NULL;
-		}
+
 		return &(it->second);
 	}
-	inline const ProjectileMapPair* GetMapPairByUnsyncedID(int id) const {
-		ProjectileMap::const_iterator it = unsyncedProjectileIDs.find(id);
-		if (it == unsyncedProjectileIDs.end()) {
+
+	inline const ProjectileMapValPair* GetMapPairByUnsyncedID(int id) const {
+		if (UNSYNCED_PROJ_NOEVENT)
+			return NULL; // unsynced projectiles have no IDs if UNSYNCED_PROJ_NOEVENT
+
+		const bool renderAccess = (GML::SimEnabled() && !Threading::IsSimThread());
+		const ProjectileMap& projectileIDs = renderAccess ? unsyncedRenderProjectileIDs.get_render_map() : unsyncedProjectileIDs;
+		const ProjectileMap::const_iterator it = projectileIDs.find(id);
+
+		if (it == projectileIDs.end())
 			return NULL;
-		}
+
 		return &(it->second);
 	}
 
@@ -86,10 +99,11 @@ public:
 	
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
-	void AddFlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece);
-	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
+	void AddFlyingPiece(const float3& pos, const float3& speed, int team, const S3DOPiece* piece, const S3DOPrimitive* chunk);
+	void AddFlyingPiece(const float3& pos, const float3& speed, int team, int textureType, const SS3OVertex* chunk);
 	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, bool highPriority);
 	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
+	bool RenderAccess(const CProjectile *p) const;
 
 public:
 	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
@@ -104,6 +118,9 @@ public:
 	int currentNanoParticles;
 	float particleSaturation;      // currentParticles / maxParticles ratio
 	float nanoParticleSaturation;
+
+	ProjectileRenderMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
+	ProjectileRenderMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
 
 private:
 	int maxUsedSyncedID;

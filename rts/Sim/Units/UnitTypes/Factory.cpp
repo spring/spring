@@ -23,7 +23,6 @@
 #include "System/myMath.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
-#include "System/mmgr.h"
 
 #define PLAY_SOUNDS 1
 #if (PLAY_SOUNDS == 1)
@@ -78,21 +77,19 @@ void CFactory::PostLoad()
 	}
 }
 
-void CFactory::PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build)
+void CFactory::PreInit(const UnitLoadParams& params)
 {
-	buildSpeed = def->buildSpeed / TEAM_SLOWUPDATE_RATE;
-	CBuilding::PreInit(def, team, facing, position, build);
+	unitDef = params.unitDef;
+	buildSpeed = unitDef->buildSpeed / TEAM_SLOWUPDATE_RATE;
+
+	CBuilding::PreInit(params);
 }
 
-int CFactory::GetBuildPiece()
-{
-	return script->QueryBuildInfo();
-}
 
-// GetBuildPiece() is called if piece < 0
+
 float3 CFactory::CalcBuildPos(int buildPiece)
 {
-	const float3 relBuildPos = script->GetPiecePos(buildPiece < 0 ? GetBuildPiece() : buildPiece);
+	const float3 relBuildPos = script->GetPiecePos((buildPiece < 0)? script->QueryBuildInfo() : buildPiece);
 	const float3 absBuildPos = pos + frontdir * relBuildPos.z + updir * relBuildPos.y + rightdir * relBuildPos.x;
 	return absBuildPos;
 }
@@ -101,15 +98,28 @@ float3 CFactory::CalcBuildPos(int buildPiece)
 
 void CFactory::Update()
 {
+	nanoPieceCache.Update();
+
 	if (beingBuilt) {
 		// factory is under construction, cannot build anything yet
 		CUnit::Update();
+
+		#if 1
+		// this can happen if we started being reclaimed *while* building a
+		// unit, in which case our buildee can either be allowed to finish
+		// construction (by assisting builders) or has to be killed --> the
+		// latter is easier
+		if (curBuild != NULL) {
+			StopBuild();
+		}
+		#endif
+
 		return;
 	}
 
 
 	if (curBuildDef != NULL) {
-		if (!opening && !stunned) {
+		if (!opening && !IsStunned()) {
 			if (groundBlockingObjectMap->CanOpenYard(this)) {
 				script->Activate();
 				groundBlockingObjectMap->OpenBlockingYard(this);
@@ -121,17 +131,17 @@ void CFactory::Update()
 			}
 		}
 
-		if (opening && inBuildStance && !stunned) {
+		if (opening && inBuildStance && !IsStunned()) {
 			StartBuild(curBuildDef);
 		}
 	}
 
-	if (curBuild != NULL && !beingBuilt) {
+	if (curBuild != NULL) {
 		UpdateBuild(curBuild);
 		FinishBuild(curBuild);
 	}
 
-	const bool wantClose = (!stunned && opening && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
+	const bool wantClose = (!IsStunned() && opening && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
 	const bool closeYard = (wantClose && curBuild == NULL && groundBlockingObjectMap->CanCloseYard(this));
 
 	if (closeYard) {
@@ -174,19 +184,20 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	if (blocked)
 		return;
 
-	CUnit* b = unitLoader->LoadUnit(buildeeDef, buildPos, team, true, buildFacing, this);
+	UnitLoadParams buildeeParams = {buildeeDef, this, buildPos, ZeroVector, -1, team, buildFacing, true, false};
+	CUnit* buildee = unitLoader->LoadUnit(buildeeParams);
 
 	if (!unitDef->canBeAssisted) {
-		b->soloBuilder = this;
-		b->AddDeathDependence(this, DEPENDENCE_BUILDER);
+		buildee->soloBuilder = this;
+		buildee->AddDeathDependence(this, DEPENDENCE_BUILDER);
 	}
 
-	AddDeathDependence(b, DEPENDENCE_BUILD);
+	AddDeathDependence(buildee, DEPENDENCE_BUILD);
 	script->StartBuilding();
 
 	// set curBuildDef to NULL to indicate construction
 	// has started, otherwise we would keep being called
-	curBuild = b;
+	curBuild = buildee;
 	curBuildDef = NULL;
 
 	#if (PLAY_SOUNDS == 1)
@@ -197,7 +208,7 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 }
 
 void CFactory::UpdateBuild(CUnit* buildee) {
-	if (stunned)
+	if (IsStunned())
 		return;
 
 	// factory not under construction and
@@ -205,15 +216,15 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 	lastBuildUpdateFrame = gs->frameNum;
 
 	// buildPiece is the rotating platform
-	const int buildPiece = GetBuildPiece();
+	const int buildPiece = script->QueryBuildInfo();
 	const float3& buildPos = CalcBuildPos(buildPiece);
-	const CMatrix44f& mat = script->GetPieceMatrix(buildPiece);
-	const int h = GetHeadingFromVector(mat[2], mat[10]); //! x.z, z.z
+	const CMatrix44f& buildPieceMat = script->GetPieceMatrix(buildPiece);
+	const int buildPieceHeading = GetHeadingFromVector(buildPieceMat[2], buildPieceMat[10]); //! x.z, z.z
 
 	float3 buildeePos = buildPos;
 
 	// rotate unit nanoframe with platform
-	buildee->heading = (-h + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
+	buildee->heading = (-buildPieceHeading + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
 
 	if (buildee->unitDef->floatOnWater && (buildeePos.y <= 0.0f))
 		buildeePos.y = -buildee->unitDef->waterline;
@@ -246,7 +257,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	}
 
 	const CCommandAI* bcai = buildee->commandAI;
-	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) && static_cast<const CMobileCAI*>(bcai)->unimportantMove);
+	const bool assignOrders = bcai->commandQue.empty() || (dynamic_cast<const CMobileCAI*>(bcai) != NULL);
 
 	if (assignOrders) {
 		AssignBuildeeOrders(buildee);
@@ -320,28 +331,82 @@ void CFactory::DependentDied(CObject* o)
 
 void CFactory::SendToEmptySpot(CUnit* unit)
 {
-	float r = radius * 1.7f + unit->radius * 4;
-	float3 foundPos = pos + frontdir * r;
+	const float searchRadius = radius * 4.0f + unit->radius * 4.0f;
+	const int numSteps = 36;
 
-	for (int a = 0; a < 20; ++a) {
-		float3 testPos = pos + frontdir * r * math::cos(a * PI / 10) + rightdir * r * math::sin(a * PI / 10);
+	float3 foundPos = pos + frontdir * searchRadius;
+	float3 tempPos = foundPos;
+
+	for (int x = 0; x < numSteps; ++x) {
+		const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
+		const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
+
+		float3 testPos = pos + frontdir * a + rightdir * b;
+
+		if (!testPos.IsInMap())
+			continue;
+		// don't pick spots behind the factory (because
+		// units will want to path through it when open
+		// which slows down production)
+		if ((testPos - pos).dot(frontdir) < 0.0f)
+			continue;
+
 		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
 
 		if (qf->GetSolidsExact(testPos, unit->radius * 1.5f).empty()) {
-			foundPos = testPos;
-			break;
+			foundPos = testPos; break;
 		}
 	}
 
-	Command c(CMD_MOVE, foundPos);
-	unit->commandAI->GiveCommand(c);
+	if (foundPos == tempPos) {
+		// no empty spot found, pick one randomly so units do not pile up even more
+		// also make sure not to loop forever if we happen to be facing a map border
+		foundPos.y = 0.0f;
+
+		do {
+			const float x = ((gs->randInt() * 1.0f) / RANDINT_MAX) * numSteps;
+			const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
+			const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
+
+			foundPos.x = pos.x + frontdir.x * a + rightdir.x * b;
+			foundPos.z = pos.z + frontdir.z * a + rightdir.z * b;
+			foundPos.y += 1.0f;
+		} while ((!foundPos.IsInMap() || (foundPos - pos).dot(frontdir) < 0.0f) && (foundPos.y < 100.0f));
+
+		foundPos.y = ground->GetHeightAboveWater(foundPos.x, foundPos.z);
+	}
+
+	// first queue a temporary waypoint outside the factory
+	// (otherwise units will try to turn before exiting when
+	// foundPos lies behind exit and cause jams / get stuck)
+	// we assume this temporary point is not itself blocked
+	// (redundant now foundPos always lies in front of us)
+	//
+	// NOTE:
+	//   MobileCAI::AutoGenerateTarget inserts a _third_
+	//   command when |foundPos - tempPos| >= 100 elmos,
+	//   because MobileCAI::FinishCommand only updates
+	//   lastUserGoal for non-internal orders --> the
+	//   final order given here should not be internal
+	//   (and should also be more than CMD_CANCEL_DIST
+	//   elmos distant from foundPos)
+	//
+	//   Command c0(CMD_MOVE, tempPos);
+	Command c1(CMD_MOVE, SHIFT_KEY | INTERNAL_ORDER, foundPos);
+	Command c2(CMD_MOVE, SHIFT_KEY,                  foundPos + frontdir * 20.0f);
+	// unit->commandAI->GiveCommand(c0);
+	unit->commandAI->GiveCommand(c1);
+	unit->commandAI->GiveCommand(c2);
 }
 
 void CFactory::AssignBuildeeOrders(CUnit* unit) {
-	const CFactoryCAI* facAI = static_cast<CFactoryCAI*>(commandAI);
-	const CCommandQueue& newUnitCmds = facAI->newUnitCommands;
+	CCommandAI* unitCAI = unit->commandAI;
+	CCommandQueue& unitCmdQue = unitCAI->commandQue;
 
-	if (newUnitCmds.empty()) {
+	const CFactoryCAI* factoryCAI = static_cast<CFactoryCAI*>(commandAI);
+	const CCommandQueue& factoryCmdQue = factoryCAI->newUnitCommands;
+
+	if (factoryCmdQue.empty() && unitCmdQue.empty()) {
 		SendToEmptySpot(unit);
 		return;
 	}
@@ -374,13 +439,32 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		}
 
 		c.PushPos(tmpPos);
-		unit->commandAI->GiveCommand(c);
+	} else {
+		// dummy rallypoint for aircraft
+		c.PushPos(unit->pos);
 	}
 
-	for (CCommandQueue::const_iterator ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
-		c = *ci;
-		c.options |= SHIFT_KEY;
-		unit->commandAI->GiveCommand(c);
+	if (unitCmdQue.empty()) {
+		unitCAI->GiveCommand(c);
+
+		// copy factory orders for new unit
+		for (CCommandQueue::const_iterator ci = factoryCmdQue.begin(); ci != factoryCmdQue.end(); ++ci) {
+			c = *ci;
+			c.options |= SHIFT_KEY;
+
+			if (c.GetID() == CMD_MOVE) {
+				const float3 p1 = c.GetPos(0);
+				const float3 p2 = float3(p1.x + gs->randFloat() * TWOPI, p1.y, p1.z + gs->randFloat() * TWOPI);
+				// apply a small amount of random jitter to move commands
+				// such that new units do not all share the same goal-pos
+				// and start forming a "trail" back to the factory exit
+				c.SetPos(0, p2);
+			}
+
+			unitCAI->GiveCommand(c);
+		}
+	} else {
+		unitCmdQue.push_front(c);
 	}
 }
 
@@ -395,19 +479,23 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 
 void CFactory::CreateNanoParticle(bool highPriority)
 {
-	const int piece = script->QueryNanoPiece();
+	const int modelNanoPiece = nanoPieceCache.GetNanoPiece(script);
 
 #ifdef USE_GML
-	if (gs->frameNum - lastDrawFrame > 20)
+	if (GML::Enabled() && ((gs->frameNum - lastDrawFrame) > 20))
 		return;
 #endif
 
-	const float3 relWeaponFirePos = script->GetPiecePos(piece);
-	const float3 weaponPos = pos
-		+ (frontdir * relWeaponFirePos.z)
-		+ (updir    * relWeaponFirePos.y)
-		+ (rightdir * relWeaponFirePos.x);
+	if (localModel == NULL || !localModel->HasPiece(modelNanoPiece))
+		return;
+
+	const float3 relNanoFirePos = localModel->GetRawPiecePos(modelNanoPiece);
+
+	const float3 nanoPos = pos
+		+ (frontdir * relNanoFirePos.z)
+		+ (updir    * relNanoFirePos.y)
+		+ (rightdir * relNanoFirePos.x);
 
 	// unsynced
-	ph->AddNanoParticle(weaponPos, curBuild->midPos, unitDef, team, highPriority);
+	ph->AddNanoParticle(nanoPos, curBuild->midPos, unitDef, team, highPriority);
 }

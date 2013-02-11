@@ -9,6 +9,7 @@
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 #include "System/SafeVector.h"
+#include "lib/gml/gmlcnf.h"
 
 // ID's lower than 0 are reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
@@ -83,15 +84,19 @@
 
 
 // bits for the option field of Command
+// NOTE:
+//   these names are misleading, eg. the SHIFT_KEY bit
+//   really means that an order gets queued instead of
+//   executed immediately (a better name for it would
+//   be QUEUED_ORDER), ALT_KEY in most contexts means
+//   OVERRIDE_QUEUED_ORDER, etc.
+//
 #define META_KEY        (1 << 2) //   4
-#define DONT_REPEAT     (1 << 3) //   8
+#define INTERNAL_ORDER  (1 << 3) //   8
 #define RIGHT_MOUSE_KEY (1 << 4) //  16
 #define SHIFT_KEY       (1 << 5) //  32
 #define CONTROL_KEY     (1 << 6) //  64
 #define ALT_KEY         (1 << 7) // 128
-
-
-#define INTERNAL_ORDER  (DONT_REPEAT)
 
 enum {
 	MOVESTATE_NONE     = -1,
@@ -112,13 +117,35 @@ private:
 	CR_DECLARE_STRUCT(Command);
 /*
 	TODO check if usage of System/MemPool.h for this struct improves performance
-	#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
+	#if !(defined(USE_GML) && GML_ENABLE_SIM)
 	inline void* operator new(size_t size) { return mempool.Alloc(size); }
 	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
 	#endif
 */
 
 public:
+	Command()
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(0)
+	{}
+
+	Command(const Command& c) {
+		*this = c;
+	}
+
+	Command& operator = (const Command& c) {
+		id = c.id;
+		aiCommandId = c.aiCommandId;
+		options = c.options;
+		tag = c.tag;
+		timeOut = c.timeOut;
+		params = c.params;
+		return *this;
+	}
+
 	Command(const float3& pos)
 		: aiCommandId(-1)
 		, options(0)
@@ -162,7 +189,7 @@ public:
 		, timeOut(INT_MAX)
 		, id(cmdID)
 	{
-		params.push_back(param);
+		PushParam(param);
 	}
 
 	Command(const int cmdID, const unsigned char cmdOptions, const float3& pos)
@@ -182,35 +209,8 @@ public:
 		, timeOut(INT_MAX)
 		, id(cmdID)
 	{
-		params.push_back(param);
+		PushParam(param);
 		PushPos(pos);
-	}
-
-	Command()
-		: aiCommandId(-1)
-		, options(0)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(0)
-	{}
-
-	Command(const Command& c)
-		: aiCommandId(c.aiCommandId)
-		, options(c.options)
-		, params(c.params)
-		, tag(c.tag)
-		, timeOut(c.timeOut)
-		, id(c.id)
-	{}
-
-	Command& operator = (const Command& c) {
-		id = c.id;
-		aiCommandId = c.aiCommandId;
-		options = c.options;
-		tag = c.tag;
-		timeOut = c.timeOut;
-		params = c.params;
-		return *this;
 	}
 
 	~Command() { params.clear(); }
@@ -260,7 +260,7 @@ public:
 	}
 
 	bool IsAreaCommand() const {
-		switch(id) {
+		switch (id) {
 			case CMD_CAPTURE:
 			case CMD_LOAD_UNITS:
 			case CMD_RECLAIM:
@@ -275,6 +275,7 @@ public:
 		}
 		return false;
 	}
+	bool IsBuildCommand() const { return (id < 0); }
 
 	void PushParam(float par) { params.push_back(par); }
 	const float& GetParam(size_t idx) const { return params[idx]; }

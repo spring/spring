@@ -50,12 +50,20 @@
 #define GML_SIM_THREAD_NUM 2 // thread number of sim thread
 #define GML_DEBUG_MUTEX 0 // debugs the mutex locking order
 #define GML_MAX_CALL_CHAIN_WARNINGS 5 // max number of warnings for invalid chained calls from synced Lua to LuaUI
+#define GML_MAX_NUM_THREADS (32+2) // extra for the Sim & Loading threads
+#define GML_COMPATIBLE_MODE 1 // enable to make a MT build that can switch to fully ST compatible mode
+
 //#define BOOST_AC_USE_PTHREADS
+extern bool gmlEnabled;
 
 namespace GML {
 #ifdef USE_GML
-	inline bool SimEnabled() { return GML_ENABLE_SIM ? true : false; }
+	inline bool Enabled() { return (!GML_COMPATIBLE_MODE) || gmlEnabled; }
+	inline void Enable(bool enable) { gmlEnabled = enable; }
+	inline bool SimEnabled() { return Enabled() && (GML_ENABLE_SIM ? true : false); }
 #else
+	inline bool Enabled() { return false; }
+	inline void Enable(bool /*enable*/) {}
 	inline bool SimEnabled() { return false; }
 #endif
 };

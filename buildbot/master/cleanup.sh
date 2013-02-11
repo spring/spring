@@ -15,11 +15,12 @@ RMDIR="rmdir"
 # Uncomment this for dry run.
 #RM=echo
 #RMDIR=echo
+BUILDBOTDIR=/home/buildbot/www/default
 
 #old debug files
-find /home/buildbot/www -type f -not -path '*/master/*' -path "*dbg.7z*" -mtime +${DBG_AGE} -exec ${RM} '{}' \;
+find ${BUILDBOTDIR} -type f -not -path '*/master/*' -path "*dbg.7z*" -mtime +${DBG_AGE} -exec ${RM} '{}' \;
 #very old files
-find /home/buildbot/www -type f -not -path '*/master/*' -mtime +${AGE} -exec ${RM} '{}' \;
+find ${BUILDBOTDIR} -type f -not -path '*/master/*' -mtime +${AGE} -exec ${RM} '{}' \;
 #empty directories
-find /home/buildbot/www -ignore_readdir_race -type d -empty -exec ${RMDIR} '{}' \;
+find ${BUILDBOTDIR} -ignore_readdir_race -type d -empty -exec ${RMDIR} '{}' \;
 

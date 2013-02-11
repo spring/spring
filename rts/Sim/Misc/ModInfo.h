@@ -16,6 +16,8 @@ public:
 		, allowCrushingAlliedUnits(false)
 		, allowUnitCollisionDamage(false)
 		, allowUnitCollisionOverlap(true)
+		, allowGroundUnitGravity(true)
+		, allowHoverUnitStrafing(true)
 		, useClassicGroundMoveType(false)
 		, constructionDecay(true)
 		, constructionDecayTime(1000)
@@ -85,6 +87,8 @@ public:
 	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
 	bool allowUnitCollisionDamage;   // determines if units take damage from (skidding) collisions
 	bool allowUnitCollisionOverlap;  // determines if unit footprints are allowed to semi-overlap during collisions
+	bool allowGroundUnitGravity;     // determines if (ground-)units experience gravity during regular movement
+	bool allowHoverUnitStrafing;     // determines if (hover-)units carry their momentum sideways when turning
 	bool useClassicGroundMoveType;   // determines if (ground-)units use the CClassicGroundMoveType path-follower
 
 	// Build behaviour

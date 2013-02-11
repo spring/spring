@@ -4,6 +4,7 @@
 
 #include "PathCache.hpp"
 #include "PathDefines.hpp"
+
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -23,7 +24,7 @@ static void GetRectangleCollisionVolume(const SRectangle& r, CollisionVolume& v,
 	rm.y = 0.0f;
 
 	#define CV CollisionVolume
-	v.Init(vScales, ZeroVector, CV::COLVOL_TYPE_BOX, CV::COLVOL_HITTEST_CONT, CV::COLVOL_AXIS_Y);
+	v.InitShape(vScales, ZeroVector, CV::COLVOL_TYPE_BOX, CV::COLVOL_HITTEST_CONT, CV::COLVOL_AXIS_Y);
 	#undef CV
 }
 
@@ -72,7 +73,7 @@ void QTPFS::PathCache::AddTempPath(IPath* path) {
 	assert(tempPaths.find(path->GetID()) == tempPaths.end());
 	assert(livePaths.find(path->GetID()) == livePaths.end());
 
-	tempPaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
+	tempPaths.insert(std::pair<unsigned int, IPath*>(path->GetID(), path));
 }
 
 void QTPFS::PathCache::AddLivePath(IPath* path) {
@@ -85,7 +86,7 @@ void QTPFS::PathCache::AddLivePath(IPath* path) {
 
 	// promote a path from temporary- to live-status (no deletion)
 	tempPaths.erase(path->GetID());
-	livePaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
+	livePaths.insert(std::pair<unsigned int, IPath*>(path->GetID(), path));
 }
 
 void QTPFS::PathCache::DelPath(unsigned int pathID) {
@@ -151,7 +152,7 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 		// figure out if <path> has at least one edge crossing <r>
 		// we only care about the segments we have not yet visited
 		const unsigned int minIdx = std::max(path->GetNextPointIndex(), 2U) - 2;
-		const unsigned int maxIdx = std::max(path->NumPoints(), 1U) - 1;
+		const unsigned int maxIdx = std::max(path->NumPoints(), 1u) - 1;
 
 		for (unsigned int i = minIdx; i < maxIdx; i++) {
 			const float3& p0 = path->GetPoint(i    );
@@ -182,7 +183,7 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 			// remember the ID of each path affected by the deformation
 			if (havePointInRect || edgeCrossesRect) {
 				assert(tempPaths.find(path->GetID()) == tempPaths.end());
-				deadPaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
+				deadPaths.insert(std::pair<unsigned int, IPath*>(path->GetID(), path));
 				livePathIts.push_back(it);
 				break;
 			}

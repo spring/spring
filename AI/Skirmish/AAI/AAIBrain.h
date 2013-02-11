@@ -57,7 +57,7 @@ public:
 
 	// adds/subtracts def. cap. for a single unit
 	void AddDefenceCapabilities(int def_id, UnitCategory category);
-	void SubtractDefenceCapabilities(int def_id, UnitCategory category);
+//	void SubtractDefenceCapabilities(int def_id, UnitCategory category);
 
 	// returns true if sufficient ressources to build unit are availbale
 	bool RessourcesForConstr(int unit, int workertime = 175);
@@ -131,11 +131,6 @@ public:
 	// pos where com spawned
 	float3 start_pos;
 
-	AAIExecute *execute;
-
 private:
 	AAI *ai;
-	AAIMap *map;
-	IAICallback *cb;
-	AAIBuildTable *bt;
 };

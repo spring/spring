@@ -255,7 +255,7 @@ const char *inet_tryconnect(p_socket ps, const char *address,
         unsigned short port, p_timeout tm)
 {
     if (!isAllowed(ps, address, port, true))
-	return "conect denied";
+	return "connect denied";
 
     struct sockaddr_in remote;
     int err;
@@ -282,8 +282,11 @@ const char *inet_tryconnect(p_socket ps, const char *address,
 \*-------------------------------------------------------------------------*/
 const char *inet_trybind(p_socket ps, const char *address, unsigned short port)
 {
+    /*
+    // bind is always allowed
     if (!isAllowed(ps, address, port, false))
 	return "bind denied";
+    */
 
     struct sockaddr_in local;
     int err;

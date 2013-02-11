@@ -2,9 +2,9 @@
 
 #include "DemoReader.h"
 
-#include "System/mmgr.h"
 
 #include "System/Exceptions.h"
+#include "System/FileSystem/FileHandler.h"
 #include "System/Net/RawPacket.h"
 #include "Game/GameVersion.h"
 
@@ -14,15 +14,16 @@
 #include <cstring>
 
 CDemoReader::CDemoReader(const std::string& filename, float curTime)
+	: playbackDemo(NULL)
 {
-	playbackDemo.open(filename.c_str(), std::ios::binary);
+	playbackDemo = new CFileHandler(filename, SPRING_VFS_PWD_ALL);
 
-	if (!playbackDemo.is_open()) {
+	if (!playbackDemo->FileExists()) {
 		// file not found -> exception
 		throw user_error(std::string("Demofile not found: ")+filename);
 	}
 
-	playbackDemo.read((char*)&fileHeader, sizeof(fileHeader));
+	playbackDemo->Read((char*)&fileHeader, sizeof(fileHeader));
 	fileHeader.swab();
 
 	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic))
@@ -36,23 +37,26 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 #ifndef _DEBUG
 		|| (SpringVersion::IsRelease() && strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()))
 #endif
-	) {
-		throw std::runtime_error(std::string("Demofile corrupt or created by a different version of Spring: ")+filename);
+		) {
+			throw std::runtime_error(std::string("Demofile corrupt or created by a different version of Spring: ")+filename);
 	}
 
 	if (fileHeader.scriptSize != 0) {
 		char* buf = new char[fileHeader.scriptSize];
-		playbackDemo.read(buf, fileHeader.scriptSize);
+		playbackDemo->Read(buf, fileHeader.scriptSize);
 		setupScript = std::string(buf, fileHeader.scriptSize);
 		delete[] buf;
 	}
 
-	playbackDemo.read((char*)&chunkHeader, sizeof(chunkHeader));
+	playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader));
 	chunkHeader.swab();
 
 	demoTimeOffset = curTime - chunkHeader.modGameTime - 0.1f;
 	nextDemoReadTime = curTime - 0.01f;
 
+	long curPos = playbackDemo->GetPos();
+	playbackDemo->Seek(0, std::ios::end);
+	playbackDemoSize = playbackDemo->GetPos();
 	if (fileHeader.demoStreamSize != 0) {
 		bytesRemaining = fileHeader.demoStreamSize;
 	}
@@ -61,12 +65,17 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		// but at most filesize bytes to block watching demo of running game.
 		// For this we must determine the file size.
 		// (if this had still used CFileHandler that would have been easier ;-))
-		long curPos = playbackDemo.tellg();
-		playbackDemo.seekg(0, std::ios::end);
- 		bytesRemaining = (long) playbackDemo.tellg() - curPos;
- 		playbackDemo.seekg(curPos);
+		bytesRemaining = playbackDemoSize - curPos;
 	}
+	playbackDemo->Seek(curPos);
 }
+
+
+CDemoReader::~CDemoReader()
+{
+	delete playbackDemo;
+}
+
 
 netcode::RawPacket* CDemoReader::GetData(float readTime)
 {
@@ -76,28 +85,44 @@ netcode::RawPacket* CDemoReader::GetData(float readTime)
 	// when paused, modGameTime does not increase (ie. we
 	// always pass the same readTime value) so no seperate
 	// check needed
-	if (readTime > nextDemoReadTime) {
+	if (readTime >= nextDemoReadTime) {
 		netcode::RawPacket* buf = new netcode::RawPacket(chunkHeader.length);
-		playbackDemo.read((char*)(buf->data), chunkHeader.length);
+		if (playbackDemo->Read((char*)(buf->data), chunkHeader.length) < chunkHeader.length) {
+			bytesRemaining = 0;
+			return NULL;
+		}
 		bytesRemaining -= chunkHeader.length;
 
-		if (!ReachedEnd()) {
-			// read next chunk header
-			playbackDemo.read((char*)&chunkHeader, sizeof(chunkHeader));
-			chunkHeader.swab();
-			nextDemoReadTime = chunkHeader.modGameTime + demoTimeOffset;
-			bytesRemaining -= sizeof(chunkHeader);
+		if (bytesRemaining > 0 && !playbackDemo->Eof()) {
+			long curPos = playbackDemo->GetPos();
+			if (readTime == nextDemoReadTime) {
+				playbackDemo->Seek(0, std::ios::end);
+				if (playbackDemoSize != playbackDemo->GetPos())
+					readTime = -nextDemoReadTime;
+				playbackDemo->Seek(curPos);
+			}
+			if (curPos < playbackDemoSize) {
+				// read next chunk header
+				if (playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader)) < sizeof(chunkHeader)) {
+					bytesRemaining = 0;
+					return NULL;
+				}
+				chunkHeader.swab();
+				nextDemoReadTime = chunkHeader.modGameTime + demoTimeOffset;
+				bytesRemaining -= sizeof(chunkHeader);
+			}
 		}
 
-		return buf;
+		return (readTime < 0) ? NULL : buf;
 	} else {
 		return NULL;
 	}
 }
 
-bool CDemoReader::ReachedEnd() const
+bool CDemoReader::ReachedEnd()
 {
-	if (bytesRemaining <= 0 || playbackDemo.eof())
+	if (bytesRemaining <= 0 || playbackDemo->Eof() ||
+		(playbackDemo->GetPos() > playbackDemoSize) )
 		return true;
 	else
 		return false;
@@ -111,8 +136,8 @@ void CDemoReader::LoadStats()
 		return;
 	}
 
-	const int curPos = playbackDemo.tellg();
-	playbackDemo.seekg(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
+	const int curPos = playbackDemo->GetPos();
+	playbackDemo->Seek(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
 
 	winningAllyTeams.clear();
 	playerStats.clear();
@@ -120,13 +145,13 @@ void CDemoReader::LoadStats()
 
 	for (int allyTeamNum = 0; allyTeamNum < fileHeader.winningAllyTeamsSize; ++allyTeamNum) {
 		unsigned char winnerAllyTeam;
-		playbackDemo.read((char*) &winnerAllyTeam, sizeof(unsigned char));
+		playbackDemo->Read((char*) &winnerAllyTeam, sizeof(unsigned char));
 		winningAllyTeams.push_back(winnerAllyTeam);
 	}
 
 	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum) {
 		PlayerStatistics buf;
-		playbackDemo.read((char*) &buf, sizeof(buf));
+		playbackDemo->Read((char*) &buf, sizeof(buf));
 		buf.swab();
 		playerStats.push_back(buf);
 	}
@@ -135,17 +160,17 @@ void CDemoReader::LoadStats()
 		teamStats.resize(fileHeader.numTeams);
 		// Read the array containing the number of team stats for each team.
 		std::vector<int> numStatsPerTeam(fileHeader.numTeams, 0);
-		playbackDemo.read((char*) (&numStatsPerTeam[0]), numStatsPerTeam.size());
+		playbackDemo->Read((char*) (&numStatsPerTeam[0]), numStatsPerTeam.size());
 
 		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum) {
 			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i) {
 				TeamStatistics buf;
-				playbackDemo.read((char*) &buf, sizeof(buf));
+				playbackDemo->Read((char*) &buf, sizeof(buf));
 				buf.swab();
 				teamStats[teamNum].push_back(buf);
 			}
 		}
 	}
 
-	playbackDemo.seekg(curPos);
+	playbackDemo->Seek(curPos);
 }

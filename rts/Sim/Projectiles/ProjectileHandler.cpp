@@ -1,14 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <algorithm>
-#include "System/mmgr.h"
 
 #include "Projectile.h"
 #include "ProjectileHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GroundFlash.h"
 #include "Sim/Features/Feature.h"
@@ -27,6 +25,7 @@
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
+#include "lib/gml/gmlmut.h"
 
 // reserve 5% of maxNanoParticles for important stuff such as capture and reclaim other teams' units
 #define NORMAL_NANO_PRIO 0.95f
@@ -65,18 +64,6 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_POSTLOAD(PostLoad)
 ));
 
-
-
-// need this for AddFlyingPiece
-bool piececmp::operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const {
-	if (fp1->texture != fp2->texture)
-		return (fp1->texture > fp2->texture);
-	if (fp1->team != fp2->team)
-		return (fp1->team > fp2->team);
-	return (fp1 > fp2);
-}
-
-void projdetach::Detach(CProjectile *p) { p->Detach(); }
 
 
 //////////////////////////////////////////////////////////////////////
@@ -196,6 +183,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 				pIt = syncedProjectileIDs.find(p->id);
 
 				eventHandler.ProjectileDestroyed((pIt->second).first, (pIt->second).second);
+				syncedRenderProjectileIDs.erase_delete(p);
 				syncedProjectileIDs.erase(pIt);
 
 				freeSyncedIDs.push_back(p->id);
@@ -209,15 +197,12 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 				pIt = unsyncedProjectileIDs.find(p->id);
 
 				eventHandler.ProjectileDestroyed((pIt->second).first, (pIt->second).second);
+				unsyncedRenderProjectileIDs.erase_delete(p);
 				unsyncedProjectileIDs.erase(pIt);
 
 				freeUnsyncedIDs.push_back(p->id);
 #endif
-#if DETACH_SYNCED
 				pci = pc.erase_detach(pci);
-#else
-				pci = pc.erase_delete(pci);
-#endif
 			}
 		} else {
 			PROJECTILE_SANITY_CHECK(p);
@@ -226,7 +211,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			qf->MovedProjectile(p);
 
 			PROJECTILE_SANITY_CHECK(p);
-			GML_GET_TICKS(p->lastProjUpdate);
+			GML::GetTicks(p->lastProjUpdate);
 
 			++pci;
 		}
@@ -241,7 +226,7 @@ void CProjectileHandler::Update()
 
 	{
 		SCOPED_TIMER("ProjectileHandler::Update");
-		GML_UPDATE_TICKS();
+		GML::UpdateTicks();
 
 		UpdateProjectileContainer(syncedProjectiles, true);
 		UpdateProjectileContainer(unsyncedProjectiles, false);
@@ -250,19 +235,18 @@ void CProjectileHandler::Update()
 		{
 			GML_STDMUTEX_LOCK(rproj); // Update
 
-			if (syncedProjectiles.can_delete_synced()) {
-#if !DETACH_SYNCED
-				GML_RECMUTEX_LOCK(proj); // Update
+			syncedRenderProjectileIDs.delay_delete();
+			syncedRenderProjectileIDs.delay_add();
+#if !UNSYNCED_PROJ_NOEVENT
+			unsyncedRenderProjectileIDs.delay_delete();
+			unsyncedRenderProjectileIDs.delay_add();
 #endif
 
+			if (syncedProjectiles.can_delete_synced()) {
 				eventHandler.DeleteSyncedProjectiles();
 				//! delete all projectiles that were
 				//! queued (push_back'ed) for deletion
-#if DETACH_SYNCED
 				syncedProjectiles.detach_erased_synced();
-#else
-				syncedProjectiles.delete_erased_synced();
-#endif
 			}
 
 			eventHandler.UpdateProjectiles();
@@ -287,21 +271,16 @@ void CProjectileHandler::Update()
 			groundFlashes.delay_add();
 		}
 
-		#define UPDATE_FLYING_PIECES(fpContainer)                                        \
-			FlyingPieceContainer::iterator pti = fpContainer.begin();                    \
-                                                                                         \
-			while (pti != fpContainer.end()) {                                           \
-				FlyingPiece* p = *pti;                                                   \
-				p->pos     += p->speed;                                                  \
-				p->speed   *= 0.996f;                                                    \
-				p->speed.y += mapInfo->map.gravity; /* fp's are not projectiles */       \
-				p->rot     += p->rotSpeed;                                               \
-                                                                                         \
-				if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10)) {  \
-					pti = fpContainer.erase_delete_set(pti);                             \
-				} else {                                                                 \
-					++pti;                                                               \
-				}                                                                        \
+		#define UPDATE_FLYING_PIECES(fpContainer)                      \
+			FlyingPieceContainer::iterator pti = fpContainer.begin();  \
+                                                                       \
+			while (pti != fpContainer.end()) {                         \
+				FlyingPiece* p = *pti;                                 \
+				if (!p->Update()) {                                    \
+					pti = fpContainer.erase_delete_set(pti);           \
+				} else {                                               \
+					++pti;                                             \
+				}                                                      \
 			}
 
 		{ UPDATE_FLYING_PIECES(flyingPieces3DO); }
@@ -327,14 +306,17 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	assert(p->id < 0);
 	
 	std::list<int>* freeIDs = NULL;
-	std::map<int, ProjectileMapPair>* proIDs = NULL;
+	ProjectileMap* proIDs = NULL;
+	ProjectileRenderMap* newProIDs = NULL;
+
 	int* maxUsedID = NULL;
-	int newID = 0;
+	int newUsedID = 0;
 
 	if (p->synced) {
 		syncedProjectiles.push(p);
 		freeIDs = &freeSyncedIDs;
 		proIDs = &syncedProjectileIDs;
+		newProIDs = &syncedRenderProjectileIDs;
 		maxUsedID = &maxUsedSyncedID;
 
 		ASSERT_SYNCED(*maxUsedID);
@@ -347,15 +329,16 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 #endif
 		freeIDs = &freeUnsyncedIDs;
 		proIDs = &unsyncedProjectileIDs;
+		newProIDs = &unsyncedRenderProjectileIDs;
 		maxUsedID = &maxUsedUnsyncedID;
 	}
 
 	if (!freeIDs->empty()) {
-		newID = freeIDs->front();
+		newUsedID = freeIDs->front();
 		freeIDs->pop_front();
 	} else {
 		(*maxUsedID)++;
-		newID = *maxUsedID;
+		newUsedID = *maxUsedID;
 	}
 
 	if ((*maxUsedID) > (1 << 24)) {
@@ -363,15 +346,18 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	}
 	
 	if (p->synced) {
-		ASSERT_SYNCED(newID);
+		ASSERT_SYNCED(newUsedID);
 	}
 
-	ProjectileMapPair pp(p, p->owner() ? p->owner()->allyteam : -1);
+	p->id = newUsedID;
 
-	p->id = newID;
-	(*proIDs)[p->id] = pp;
+	const ProjectileMapValPair vp(p, p->owner() ? p->owner()->allyteam : -1);
+	const ProjectileMapKeyPair kp(p->id, vp);
 
-	eventHandler.ProjectileCreated(pp.first, pp.second);
+	proIDs->insert(kp);
+	newProIDs->push(p, vp);
+
+	eventHandler.ProjectileCreated(vp.first, vp.second);
 }
 
 
@@ -388,7 +374,6 @@ void CProjectileHandler::CheckUnitCollisions(
 
 	for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
 		CUnit* unit = *ui;
-		CollisionVolume* volume = unit->collisionVolume;
 
 		const CUnit* attacker = p->owner();
 
@@ -408,27 +393,13 @@ void CProjectileHandler::CheckUnitCollisions(
 		}
 
 		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &cq)) {
-			if (cq.lmp != NULL) {
-				unit->SetLastAttackedPiece(cq.lmp, gs->frameNum);
+			if (cq.GetHitPiece() != NULL) {
+				unit->SetLastAttackedPiece(cq.GetHitPiece(), gs->frameNum);
 			}
 
-			// The current projectile <p> won't reach the raytraced surface impact
-			// position until ::Update() is called (same frame). This is a problem
-			// when dealing with fast low-AOE projectiles since they would do almost
-			// no damage if detonated outside the collision volume. Therefore, smuggle
-			// a bit with its position now (rather than rolling it back in ::Update()
-			// and waiting for the next-frame CheckUnitCol(), which is problematic
-			// for noExplode projectiles).
-
-			const bool raytraced = (volume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
-			const float3 pimpp =
-				(cq.b0 && cq.b1)? (cq.p0 + cq.p1) * 0.5f:
-				(cq.b0         )? (cq.p0 + ppos1) * 0.5f:
-				                  (ppos0 + cq.p1) * 0.5f;
-
-			p->pos = (raytraced)? pimpp: ppos0;
+			p->pos = cq.InsideHit()? ppos0 : cq.GetIngressPos();
 			p->Collision(unit);
-			p->pos = (raytraced)? ppos0: p->pos;
+			p->pos = ppos0;
 			break;
 		}
 	}
@@ -441,7 +412,8 @@ void CProjectileHandler::CheckFeatureCollisions(
 	const float3& ppos0,
 	const float3& ppos1)
 {
-	if (!p->checkCol) // already collided with unit?
+	// already collided with unit?
+	if (!p->checkCol)
 		return;
 
 	if ((p->GetCollisionFlags() & Collision::NOFEATURES) != 0)
@@ -451,22 +423,15 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
 		CFeature* feature = *fi;
-		CollisionVolume* volume = feature->collisionVolume;
 
 		if (!feature->blocking) {
 			continue;
 		}
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
-			const bool raytraced = (volume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
-			const float3 pimpp =
-				(cq.b0 && cq.b1)? (cq.p0 + cq.p1) * 0.5f:
-				(cq.b0         )? (cq.p0 + ppos1) * 0.5f:
-								  (ppos0 + cq.p1) * 0.5f;
-
-			p->pos = (raytraced)? pimpp: ppos0;
+			p->pos = cq.InsideHit()? ppos0 : cq.GetIngressPos();
 			p->Collision(feature);
-			p->pos = (raytraced)? ppos0: p->pos;
+			p->pos = ppos0;
 			break;
 		}
 	}
@@ -548,18 +513,27 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 }
 
 
-void CProjectileHandler::AddFlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece)
+void CProjectileHandler::AddFlyingPiece(
+	const float3& pos,
+	const float3& speed,
+	int team,
+	const S3DOPiece* piece,
+	const S3DOPrimitive* chunk)
 {
-	FlyingPiece* fp = new FlyingPiece(team, pos, speed, object, piece);
+	FlyingPiece* fp = new S3DOFlyingPiece(pos, speed, team, piece, chunk);
 	flyingPieces3DO.insert(fp);
 }
 
-void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts)
+void CProjectileHandler::AddFlyingPiece(
+	const float3& pos,
+	const float3& speed,
+	int team,
+	int textureType,
+	const SS3OVertex* chunk)
 {
-	if (textureType <= 0)
-		return; // texture 0 means 3do
+	assert(textureType > 0);
 
-	FlyingPiece* fp = new FlyingPiece(team, pos, speed, textureType, verts);
+	FlyingPiece* fp = new SS3OFlyingPiece(pos, speed, team, textureType, chunk);
 	flyingPiecesS3O.insert(fp);
 }
 
@@ -582,7 +556,7 @@ void CProjectileHandler::AddNanoParticle(
 	const float l = fastmath::apxsqrt2(dif.SqLength());
 
 	dif /= l;
-	dif += gu->usRandVector() * 0.15f;
+	dif += gu->RandVector() * 0.15f;
 
 	float3 color = unitDef->nanoColor;
 
@@ -615,7 +589,7 @@ void CProjectileHandler::AddNanoParticle(
 	const float l = fastmath::apxsqrt2(dif.SqLength());
 	dif /= l;
 
-	float3 error = gu->usRandVector() * (radius / l);
+	float3 error = gu->RandVector() * (radius / l);
 	float3 color = unitDef->nanoColor;
 
 	if (globalRendering->teamNanospray) {
@@ -630,3 +604,18 @@ void CProjectileHandler::AddNanoParticle(
 		new CGfxProjectile(startPos, (dif + error) * 3, int(l / 3), color);
 	}
 }
+
+bool CProjectileHandler::RenderAccess(const CProjectile* p) const {
+	const ProjectileMap* pmap = NULL;
+
+	if (p->synced) {
+		pmap = &(syncedRenderProjectileIDs.get_render_map());
+	} else {
+		#ifndef UNSYNCED_PROJ_NOEVENT
+		pmap = &(unsyncedRenderProjectileIDs.get_render_map());
+		#endif
+	}
+
+	return (pmap != NULL && pmap->find(p->id) != pmap->end());
+}
+

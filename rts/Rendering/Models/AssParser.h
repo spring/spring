@@ -7,47 +7,45 @@
 #include <map>
 #include "IModelParser.h"
 #include "System/float3.h"
+#include "System/Vec2.h"
 
 struct aiNode;
 struct aiScene;
 class LuaTable;
 
 struct SAssVertex {
-	SAssVertex() : normal(UpVector), textureX(0.f), textureY(0.f), hasNormal(false), hasTangent(false) {}
+	SAssVertex() : normal(UpVector) {}
 
 	float3 pos;
 	float3 normal;
-	float textureX;
-	float textureY;
-	bool hasNormal;
-	bool hasTangent;
+	float2 texCoord;
+	float2 texCoord2; // optional, still good too have. Also makes sure the struct is 64byte in size (ATi's prefers such VBOs)
+	float3 sTangent;
+	float3 tTangent;
 };
 
 struct SAssPiece: public S3DModelPiece
 {
-	SAssPiece() : node(NULL) {}
+	SAssPiece() : node(NULL), hasTexCoord2(false) {}
 
 	void DrawForList() const;
+	void UploadGeometryVBOs();
 	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }	
 	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
 	
+	unsigned int GetVertexCount() const { return vertices.size(); }
+	unsigned int GetNormalCount() const { return vertices.size(); }
+	unsigned int GetTxCoorCount() const { return vertices.size(); }
+
 	//FIXME implement
-	//int GetVertexCount() const { return 0; }
-	//int GetNormalCount() const { return 0; }
-	//int GetTxCoorCount() const { return 0; }
-	//void SetMinMaxExtends() {}
-	//void SetVertexTangents() {}
-	//float3 GetPosOffset() const { return ZeroVector; }
 	//void Shatter(float, int, int, const float3&, const float3&) const
 	
 public:
 	aiNode* node;
 	std::vector<SAssVertex> vertices;
-	std::vector<unsigned int> vertexDrawOrder;
+	std::vector<unsigned int> vertexDrawIndices;
 
-	//! cannot store these in SAssVertex
-	std::vector<float3> sTangents; //! == T(angent) dirs
-	std::vector<float3> tTangents; //! == B(itangent) dirs
+	bool hasTexCoord2;
 };
 
 struct SAssModel: public S3DModel
@@ -74,7 +72,9 @@ private:
 	static void BuildPieceHierarchy(S3DModel* model);
 	static void CalculateRadius(S3DModel* model);
 	static void CalculateHeight(S3DModel* model);
+	static void CalculateMidPos(S3DModel* model);
 	static void CalculateMinMax(S3DModelPiece* piece);
+	static void FindTextures(S3DModel* model, const aiScene* scene, const LuaTable& metaTable, const std::string& modelFilePath);
 	static void LoadPieceTransformations(SAssPiece* piece, const LuaTable& metaTable);
 	
 	void CalculatePerMeshMinMax(SAssModel* model);

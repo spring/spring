@@ -7,7 +7,6 @@
 
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-#include "System/mmgr.h"
 
 #include <boost/regex.hpp>
 

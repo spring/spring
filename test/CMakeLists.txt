@@ -14,10 +14,10 @@ Else  (NOT Boost_FOUND)
 
 	SET(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
 	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR})
-	If	(NOT WIN32)
+	If	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 		#Win32 tests links static
 		add_definitions(-DBOOST_TEST_DYN_LINK)
-	EndIf	(NOT WIN32)
+	EndIf	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 	add_definitions(-DSYNCCHECK -DUNIT_TEST)
 
 	Set(test_Log_sources
@@ -118,10 +118,28 @@ Else  (NOT Boost_FOUND)
 	ADD_EXECUTABLE(test_RectangleOptimizer ${test_RectangleOptimizer_src})
 	TARGET_LINK_LIBRARIES(test_RectangleOptimizer
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
 		)
 
 	ADD_TEST(NAME testRectangleOptimizer COMMAND test_RectangleOptimizer)
 	Add_Dependencies(tests test_RectangleOptimizer)
+
+
+################################################################################
+### Float3
+
+	Set(test_Float3_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testFloat3.cpp"
+		)
+
+	ADD_EXECUTABLE(test_Float3 ${test_Float3_src})
+	TARGET_LINK_LIBRARIES(test_Float3
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+		)
+
+	ADD_TEST(NAME testFloat3 COMMAND test_Float3)
+	Add_Dependencies(tests test_Float3)
 
 
 ################################################################################
@@ -190,4 +208,6 @@ Else  (NOT Boost_FOUND)
 
 
 EndIf (NOT Boost_FOUND)
+
+add_subdirectory(headercheck)
 

@@ -3,7 +3,7 @@
 #ifndef LUA_EVENT_BATCH_H
 #define LUA_EVENT_BATCH_H
 
-#include "Rendering/GL/myGL.h"
+#include "lib/gml/gmlcnf.h"
 #include "System/Platform/Synchro.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/Unit.h"

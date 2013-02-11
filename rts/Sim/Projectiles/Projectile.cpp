@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "Projectile.h"
 #include "Map/MapInfo.h"
@@ -9,6 +8,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 
@@ -37,6 +37,8 @@ CR_REG_METADATA(CProjectile,
 	CR_RESERVED(8)
 ));
 
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -59,7 +61,7 @@ CProjectile::CProjectile():
 	projectileType(-1U),
 	collisionFlags(0)
 {
-	GML_GET_TICKS(lastProjUpdate);
+	GML::GetTicks(lastProjUpdate);
 }
 
 CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece):
@@ -79,7 +81,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	collisionFlags(0)
 {
 	Init(ZeroVector, owner);
-	GML_GET_TICKS(lastProjUpdate);
+	GML::GetTicks(lastProjUpdate);
 }
 
 void CProjectile::Detach() {
@@ -137,8 +139,7 @@ void CProjectile::Collision()
 
 void CProjectile::Collision(CUnit* unit)
 {
-	deleteMe = true;
-	checkCol = false;
+	Collision();
 }
 
 void CProjectile::Collision(CFeature* feature)
@@ -154,17 +155,28 @@ void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 
 int CProjectile::DrawArray()
 {
-	int idx = 0;
-
 	va->DrawArrayTC(GL_QUADS);
 
 	// draw-index gets divided by 24 because each element is 
 	// 12 + 4 + 4 + 4 = 24 bytes in size (pos + u + v + color)
 	// for each type of "projectile"
-	idx = (va->drawIndex() / 24);
+	int idx = (va->drawIndex() / 24);
 	va = GetVertexArray();
 	va->Initialize();
 	inArray = false;
 
 	return idx;
 }
+
+CUnit* CProjectile::owner() const {
+	// Note: this death dependency optimization using "ownerId" is logically flawed,
+	//  since ids are being reused it could return a unit that is not the original owner
+	CUnit* unit = uh->GetUnit(ownerId);
+
+	// make volatile
+	if (GML::SimEnabled())
+		return (*(CUnit* volatile*) &unit);
+
+	return unit;
+}
+

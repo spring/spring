@@ -176,6 +176,7 @@ void CRoamMeshDrawer::Update()
 		}
 
 		{ //SCOPED_TIMER("ROAM::GenerateIndexArray");
+			Threading::OMPCheck();
 			#pragma omp parallel for
 			for (int i = m_Patches.size() - 1; i >= 0; --i) {
 				Patch* it = &m_Patches[i];
@@ -329,6 +330,7 @@ void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 	// But instead we take a safety distance between the thread's working
 	// area (which is 2 patches), so they don't conflict with each other.
 	for (int idx = 0; idx < 9; ++idx) {
+		Threading::OMPCheck();
 		#pragma omp parallel for
 		for (int i = m_Patches.size() - 1; i >= 0; --i) {
 			Patch* it = &m_Patches[i];

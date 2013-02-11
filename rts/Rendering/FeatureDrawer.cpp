@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 #include "FeatureDrawer.h"
 
 #include "Game/Camera.h"
@@ -10,6 +9,7 @@
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
@@ -66,7 +66,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 #ifdef USE_GML
-	showRezBars = configHandler->GetBool("ShowRezBars");
+	showRezBars = GML::Enabled() && configHandler->GetBool("ShowRezBars");
 #endif
 	featureDrawDistance = configHandler->GetFloat("FeatureDrawDistance");
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
@@ -100,10 +100,10 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 	CFeature* f = const_cast<CFeature*>(feature);
 	texturehandlerS3O->UpdateDraw();
 
-	if (GML::SimEnabled() && !GML::ShareLists() && f->model && TEX_TYPE(f) < 0)
-		TEX_TYPE(f) = texturehandlerS3O->LoadS3OTextureNow(f->model);
+	if (GML::SimEnabled() && !GML::ShareLists() && feature->model && TEX_TYPE(feature) < 0)
+		TEX_TYPE(f) = texturehandlerS3O->LoadS3OTextureNow(feature->model);
 
-	if (f->def->drawType == DRAWTYPE_MODEL) {
+	if (feature->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
 		UpdateDrawQuad(f);
 
@@ -128,10 +128,13 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 		opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 		cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 	}
+
+	if (feature->objectDef->decalDef.useGroundDecal)
+		groundDecals->RemoveSolidObject(f, NULL);
 }
 
 
-void CFeatureDrawer::RenderFeatureMoved(const CFeature* feature)
+void CFeatureDrawer::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
 
@@ -181,8 +184,9 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
 	const float time = /*!GML::SimEnabled() ?*/ globalRendering->timeOffset /*:
 		((float)spring_tomsecs(globalRendering->lastFrameStart) - (float)f->lastFeatUpdate) * globalRendering->weightedSpeedFactor*/;
-	f->drawPos = f->pos + (f->speed * time);
-	f->drawMidPos = f->drawPos + (f->midPos - f->pos);
+
+	f->drawPos    =    f->pos + (f->speed * time);
+	f->drawMidPos = f->midPos + (f->speed * time);
 }
 
 
@@ -322,7 +326,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 	if (sqDist >= std::min(farLength, sqFadeDistEnd)) return false;
 
 	glPushMatrix();
-	glMultMatrixf(feature->transMatrix.m);
+	glMultMatrixf(feature->GetTransformMatrixRef());
 
 	unitDrawer->SetTeamColour(feature->team, alpha);
 

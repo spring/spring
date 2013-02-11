@@ -22,7 +22,7 @@ endmacro (AIInterfaceMessage type msg)
 
 # Add all AI Interface submodules
 GetListOfSubModules(AI_INTERFACE_DIRS)
-set(DEPS_AI_INTERFACES )
+set(DEPS_AI_INTERFACES "")
 foreach    (aiInterfaceDir ${AI_INTERFACE_DIRS})
 	if     (NOT "${aiInterfaceDir}" STREQUAL "Python")
 	Add_Subdirectory(${aiInterfaceDir})

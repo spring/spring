@@ -5,8 +5,6 @@
 #include <cctype>
 #include <cstring>
 
-#include "System/mmgr.h"
-
 #include "KeyBindings.h"
 #include "KeyBindingsLog.h"
 #include "SDL_keysym.h"
@@ -146,6 +144,7 @@ defaultBindings[] = {
 	{  "Alt+Shift+a", "areaattack"   },
 	{        "Alt+b", "debug"        },
 	{        "Alt+v", "debugcolvol"  },
+	{        "Alt+p", "debugpath"    },
 	{            "d", "manualfire"   },
 	{      "Shift+d", "manualfire"   },
 	{       "Ctrl+d", "selfd"        },
@@ -198,6 +197,7 @@ defaultBindings[] = {
 	{ "Any+f5",  "HideInterface"         },
 	{ "Any+f6",  "NoSound"               },
 	{ "Any+f7",  "DynamicSky"            },
+
 	{ "Ctrl+Shift+f8", "savegame" },
 	{ "Any+f9",  "showhealthbars" }, // MT only
 	{ "Ctrl+Shift+f10", "createvideo" },

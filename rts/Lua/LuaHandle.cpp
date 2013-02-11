@@ -35,7 +35,6 @@
 #include "System/GlobalConfig.h"
 #include "System/Rectangle.h"
 #include "System/ScopedFPUSettings.h"
-#include "System/mmgr.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
@@ -138,11 +137,12 @@ void CLuaHandle::KillLua()
 int CLuaHandle::KillActiveHandle(lua_State* L)
 {
 	CLuaHandle* ah = GetHandle(L);
-	if (ah) {
+	if (ah != NULL) {
 		const int args = lua_gettop(L);
 		if ((args >= 1) && lua_isstring(L, 1)) {
 			ah->killMsg = lua_tostring(L, 1);
 		}
+		// get rid of us next GameFrame call
 		ah->killMe = true;
 	}
 	return 0;
@@ -407,7 +407,7 @@ int CLuaHandle::SetupTraceback(lua_State *L)
 }
 
 
-int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, std::string& traceback)
+int CLuaHandle::RunCallInTraceback(const LuaHashString* hs, int inArgs, int outArgs, int errfuncIndex, std::string& traceback)
 {
 	// do not signal floating point exceptions in user Lua code
 	ScopedDisableFpuExceptions fe;
@@ -416,7 +416,11 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 	SetRunning(L, true);
 	// disable GC outside of this scope to prevent sync errors and similar
 	lua_gc(L, LUA_GCRESTART, 0);
+	MatrixStateData prevMSD = L->lcd->PushMatrixState();
+	LuaOpenGL::InitMatrixState(L, hs);
 	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
+	LuaOpenGL::CheckMatrixState(L, hs, error);
+	L->lcd->PopMatrixState(prevMSD);
 	lua_gc(L, LUA_GCSTOP, 0);
 
 	SetRunning(L, false);
@@ -442,7 +446,7 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex)
 {
 	std::string traceback;
-	const int error = RunCallInTraceback(inArgs, outArgs, errfuncIndex, traceback);
+	const int error = RunCallInTraceback(&hs, inArgs, outArgs, errfuncIndex, traceback);
 
 	if (error != 0) {
 		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s, %s", GetName().c_str(),
@@ -455,7 +459,7 @@ bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int out
 
 int CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errormessage)
 {
-	return RunCallInTraceback(inArgs, outArgs, 0, errormessage);
+	return RunCallInTraceback(NULL, inArgs, outArgs, 0, errormessage);
 }
 
 /******************************************************************************/
@@ -590,7 +594,7 @@ void CLuaHandle::GameFrame(int frameNum)
 		if (!killMsg.empty()) {
 			msg += ": " + killMsg;
 		}
-		LOG("Disabled %s", msg.c_str());
+		LOG("[%s] disabled %s", __FUNCTION__, msg.c_str());
 		delete this;
 		return;
 	}

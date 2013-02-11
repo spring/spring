@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cstring>
-#include "System/mmgr.h"
 
 #include "VertexArray.h"
 
@@ -276,6 +275,25 @@ void CVertexArray::DrawArray2dT(const int drawType, unsigned int stride)
 	DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
+}
+
+
+void CVertexArray::DrawArray2dTC(const int drawType, unsigned int stride)
+{
+	if (drawIndex() == 0)
+		return;
+
+	CheckEndStrip();
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glVertexPointer(2, GL_FLOAT, stride, drawArray);
+	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 2);
+	glColorPointer(4, GL_UNSIGNED_BYTE, stride, drawArray + 4);
+	DrawArrays(drawType, stride);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
 }
 
 

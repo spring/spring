@@ -3,8 +3,8 @@
 #include "DefaultPathDrawer.h"
 #include "QTPFSPathDrawer.h"
 #include "Game/SelectedUnits.h"
-#include "Rendering/GL/myGL.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "lib/gml/gmlmut.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Path/Default/PathManager.h"
 #include "Sim/Path/QTPFS/PathManager.hpp"
@@ -44,11 +44,9 @@ const MoveDef* IPathDrawer::GetSelectedMoveDef() {
 
 	if (!unitSet.empty()) {
 		const CUnit* unit = *(unitSet.begin());
-		const UnitDef* unitDef = unit->unitDef;
+		const MoveDef* moveDef = unit->moveDef;
 
-		if (unitDef->moveDef != NULL) {
-			md = unitDef->moveDef;
-		}
+		md = moveDef;
 	}
 
 	return md;
@@ -67,7 +65,7 @@ SColor IPathDrawer::GetSpeedModColor(const float sm) {
 }
 
 #if 0
-float IPathDrawer::GetSpeedModNoObstacles(const MoveDef* md, const CMoveMath* mm, int sqx, int sqz) {
+float IPathDrawer::GetSpeedModNoObstacles(const MoveDef* md, int sqx, int sqz) {
 	float m = 0.0f;
 
 	const int hmIdx = sqz * gs->mapxp1 + sqx;

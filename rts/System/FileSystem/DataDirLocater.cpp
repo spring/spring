@@ -26,7 +26,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "FileSystem.h"
 #include "CacheDir.h"
-#include "System/mmgr.h"
 #include "System/Exceptions.h"
 #include "System/maindefines.h" // for sPS, cPS, cPD
 #include "System/Platform/Misc.h"

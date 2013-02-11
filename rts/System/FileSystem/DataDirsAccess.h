@@ -80,10 +80,8 @@ public:
 	/**
 	 * Returns true if path is a relative path that exists in the writable
 	 * data-dir.
-	 * As it is not known what the person initially creating
-	 * this function, intended to do with prefix, it is ignored.
 	 */
-	bool InWriteDir(const std::string& path, const std::string& prefix = "");
+	bool InWriteDir(const std::string& path);
 	///@}
 
 private:

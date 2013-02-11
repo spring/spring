@@ -16,12 +16,13 @@ class CPlasmaRepulser :
 	CR_DECLARE(CPlasmaRepulser);
 public:
 	CPlasmaRepulser(CUnit* owner);
-	~CPlasmaRepulser(void);
-	void Init(void);
+	~CPlasmaRepulser();
+	void Init();
 	void DependentDied(CObject* o);
+	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
 
-	void Update(void);
-	void SlowUpdate(void);
+	void Update();
+	void SlowUpdate();
 
 	void NewProjectile(CWeaponProjectile* p);
 	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);

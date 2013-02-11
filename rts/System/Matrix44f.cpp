@@ -2,7 +2,6 @@
 
 #include "System/Matrix44f.h"
 #include <memory.h>
-#include "System/mmgr.h"
 
 CR_BIND(CMatrix44f, );
 
@@ -12,6 +11,16 @@ CR_REG_METADATA(CMatrix44f, CR_MEMBER(m));
 CMatrix44f::CMatrix44f()
 {
 	LoadIdentity();
+}
+
+CMatrix44f::CMatrix44f(const CMatrix44f& mat)
+{
+	for (int i = 0; i < 16; i += 4) {
+		m[i    ] = mat[i    ];
+		m[i + 1] = mat[i + 1];
+		m[i + 2] = mat[i + 2];
+		m[i + 3] = mat[i + 3];
+	}
 }
 
 

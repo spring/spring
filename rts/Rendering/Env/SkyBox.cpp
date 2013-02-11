@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "SkyBox.h"
 #include "Rendering/GlobalRendering.h"
@@ -45,7 +44,7 @@ CSkyBox::CSkyBox(const std::string& texture)
 	globalRendering->drawFog = (fogStart <= 0.99f);
 }
 
-CSkyBox::~CSkyBox(void)
+CSkyBox::~CSkyBox()
 {
 }
 

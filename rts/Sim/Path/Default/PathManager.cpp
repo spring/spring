@@ -1,15 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "PathManager.h"
 #include "PathConstants.h"
 #include "PathFinder.h"
 #include "PathEstimator.h"
+#include "PathFlowMap.hpp"
+#include "PathHeatMap.hpp"
 #include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
+#include "Sim/Objects/SolidObjectDef.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
@@ -22,9 +23,12 @@
 
 CPathManager::CPathManager(): nextPathID(0)
 {
+	pathFlowMap = PathFlowMap::GetInstance();
+	pathHeatMap = PathHeatMap::GetInstance();
+
 	maxResPF = new CPathFinder();
-	medResPE = new CPathEstimator(maxResPF,  8, "pe",  mapInfo->map.name);
-	lowResPE = new CPathEstimator(maxResPF, 32, "pe2", mapInfo->map.name);
+	medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
+	lowResPE = new CPathEstimator(maxResPF, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
 
 	LOG("[CPathManager] pathing data checksum: %08x", GetPathCheckSum());
 
@@ -43,6 +47,9 @@ CPathManager::~CPathManager()
 	delete lowResPE;
 	delete medResPE;
 	delete maxResPF;
+
+	PathHeatMap::FreeInstance(pathHeatMap);
+	PathFlowMap::FreeInstance(pathFlowMap);
 }
 
 
@@ -52,11 +59,11 @@ Help-function.
 Turns a start->goal-request into a well-defined request.
 */
 unsigned int CPathManager::RequestPath(
+	CSolidObject* caller,
 	const MoveDef* moveDef,
 	const float3& startPos,
 	const float3& goalPos,
 	float goalRadius,
-	CSolidObject* caller,
 	bool synced
 ) {
 	float3 sp(startPos); sp.ClampInBounds();
@@ -66,7 +73,7 @@ unsigned int CPathManager::RequestPath(
 	CRangedGoalWithCircularConstraint* pfDef = new CRangedGoalWithCircularConstraint(sp, gp, goalRadius, 3.0f, 2000);
 
 	// Make request.
-	return RequestPath(moveDef, sp, gp, pfDef, caller, synced);
+	return (RequestPath(moveDef, sp, gp, pfDef, caller, synced));
 }
 
 /*
@@ -82,8 +89,10 @@ unsigned int CPathManager::RequestPath(
 ) {
 	SCOPED_TIMER("PathManager::RequestPath");
 
-	MoveDef* moveDef = moveDefHandler->moveDefs[md->pathType];
-	moveDef->tempOwner = caller;
+	// FIXME: this is here only because older code required a non-const version
+	MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(md->pathType);
+
+	assert(md == moveDef);
 
 	// Creates a new multipath.
 	IPath::SearchResult result = IPath::Error;
@@ -95,7 +104,6 @@ unsigned int CPathManager::RequestPath(
 		caller->UnBlock();
 	}
 
-	const int ownerId = caller? caller->id: 0;
 	unsigned int pathID = 0;
 
 	// choose the PF or the PE depending on the projected 2D goal-distance
@@ -105,7 +113,7 @@ unsigned int CPathManager::RequestPath(
 	const float goalDist2D = pfDef->Heuristic(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE) + math::fabs(goalPos.y - startPos.y) / SQUARE_SIZE;
 
 	if (goalDist2D < DETAILED_DISTANCE) {
-		result = maxResPF->GetPath(*moveDef, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, ownerId, synced);
+		result = maxResPF->GetPath(*moveDef, startPos, *pfDef, caller, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, false, true, synced);
 
 		#if (PM_UNCONSTRAINED_MAXRES_FALLBACK_SEARCH == 1)
 		// unnecessary so long as a fallback path exists within the
@@ -127,7 +135,7 @@ unsigned int CPathManager::RequestPath(
 
 		// CantGetCloser may be a false positive due to PE approximations and large goalRadius
 		if (result == IPath::CantGetCloser && (startPos - goalPos).SqLength2D() > pfDef->sqGoalRadius)
-			result = maxResPF->GetPath(*moveDef, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, ownerId, synced);
+			result = maxResPF->GetPath(*moveDef, startPos, *pfDef, caller, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, false, true, synced);
 
 		#if (PM_UNCONSTRAINED_MEDRES_FALLBACK_SEARCH == 1)
 		pfDef->DisableConstraint(true);
@@ -144,7 +152,7 @@ unsigned int CPathManager::RequestPath(
 		if (result == IPath::CantGetCloser && (startPos - goalPos).SqLength2D() > pfDef->sqGoalRadius) {
 			result = medResPE->GetPath(*moveDef, startPos, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, synced);
 			if (result == IPath::CantGetCloser) // Same thing again
-				result = maxResPF->GetPath(*moveDef, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, ownerId, synced);
+				result = maxResPF->GetPath(*moveDef, startPos, *pfDef, caller, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, false, true, synced);
 		}
 
 		#if (PM_UNCONSTRAINED_LOWRES_FALLBACK_SEARCH == 1)
@@ -157,9 +165,23 @@ unsigned int CPathManager::RequestPath(
 		}
 	}
 
-	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-		LowRes2MedRes(*newPath, startPos, ownerId, synced);
-		MedRes2MaxRes(*newPath, startPos, ownerId, synced);
+	if (result != IPath::Error) {
+		if (result != IPath::CantGetCloser) {
+			LowRes2MedRes(*newPath, startPos, caller, synced);
+			MedRes2MaxRes(*newPath, startPos, caller, synced);
+		} else {
+			// add one dummy waypoint so that the calling MoveType
+			// does not consider this request a failure, which can
+			// happen when startPos is very close to goalPos
+			//
+			// otherwise, code relying on MoveType::progressState
+			// (eg. BuilderCAI::MoveInBuildRange) would misbehave
+			// (eg. reject build orders)
+			if (newPath->maxResPath.path.empty()) {
+				newPath->maxResPath.path.push_back(startPos);
+				newPath->maxResPath.squares.push_back(int2(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE));
+			}
+		}
 
 		newPath->searchResult = result;
 		pathID = Store(newPath);
@@ -171,7 +193,6 @@ unsigned int CPathManager::RequestPath(
 		caller->Block();
 	}
 
-	moveDef->tempOwner = NULL;
 	return pathID;
 }
 
@@ -187,7 +208,7 @@ unsigned int CPathManager::Store(MultiPath* path)
 
 
 // converts part of a med-res path into a high-res path
-void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, int ownerId, bool synced) const
+void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, const CSolidObject* owner, bool synced) const
 {
 	IPath::Path& maxResPath = multiPath.maxResPath;
 	IPath::Path& medResPath = multiPath.medResPath;
@@ -221,9 +242,9 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, i
 	IPath::SearchResult result = IPath::Error;
 
 	if (medResPath.path.empty() && lowResPath.path.empty()) {
-		result = maxResPF->GetPath(*multiPath.moveDef, startPos, *multiPath.peDef, maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, ownerId, synced);
+		result = maxResPF->GetPath(*multiPath.moveDef, startPos, *multiPath.peDef, owner, maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, false, true, synced);
 	} else {
-		result = maxResPF->GetPath(*multiPath.moveDef, startPos, rangedGoalPFD, maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, ownerId, synced);
+		result = maxResPF->GetPath(*multiPath.moveDef, startPos, rangedGoalPFD, owner, maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, false, true, synced);
 	}
 
 	// If no refined path could be found, set goal as desired goal.
@@ -233,7 +254,7 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, i
 }
 
 // converts part of a low-res path into a med-res path
-void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, int ownerId, bool synced) const
+void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, const CSolidObject* owner, bool synced) const
 {
 	IPath::Path& medResPath = multiPath.medResPath;
 	IPath::Path& lowResPath = multiPath.lowResPath;
@@ -283,11 +304,11 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, i
 Removes and return the next waypoint in the multipath corresponding to given id.
 */
 float3 CPathManager::NextWayPoint(
+	const CSolidObject* owner,
 	unsigned int pathID,
+	unsigned int numRetries,
 	float3 callerPos,
-	float minDistance,
-	int numRetries,
-	int ownerId,
+	float radius,
 	bool synced
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");
@@ -302,12 +323,9 @@ float3 CPathManager::NextWayPoint(
 		return noPathPoint;
 
 	// Find corresponding multipath.
-	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
-
-	if (pi == pathMap.end())
+	MultiPath* multiPath = GetMultiPath(pathID);
+	if (multiPath == NULL)
 		return noPathPoint;
-
-	MultiPath* multiPath = pi->second;
 
 	if (callerPos == ZeroVector) {
 		if (!multiPath->maxResPath.path.empty())
@@ -323,14 +341,14 @@ float3 CPathManager::NextWayPoint(
 			(multiPath->lowResPath.path.back().SqDistance2D(callerPos) < Square(MIN_ESTIMATE_DISTANCE * SQUARE_SIZE) ||
 			multiPath->medResPath.path.size() <= 2)) {
 
-			LowRes2MedRes(*multiPath, callerPos, ownerId, synced);
+			LowRes2MedRes(*multiPath, callerPos, owner, synced);
 		}
 
 		if (multiPath->caller) {
 			multiPath->caller->UnBlock();
 		}
 
-		MedRes2MaxRes(*multiPath, callerPos, ownerId, synced);
+		MedRes2MaxRes(*multiPath, callerPos, owner, synced);
 
 		if (multiPath->caller) {
 			multiPath->caller->Block();
@@ -355,14 +373,14 @@ float3 CPathManager::NextWayPoint(
 					waypoint = noPathPoint; break;
 				}
 			} else {
-				waypoint = NextWayPoint(pathID, callerPos, minDistance, numRetries + 1, ownerId, synced);
+				waypoint = NextWayPoint(owner, pathID, numRetries + 1, callerPos, radius, synced);
 				break;
 			}
 		} else {
 			waypoint = multiPath->maxResPath.path.back();
 			multiPath->maxResPath.path.pop_back();
 		}
-	} while (callerPos.SqDistance2D(waypoint) < Square(minDistance) && waypoint != multiPath->maxResPath.pathGoal);
+	} while (callerPos.SqDistance2D(waypoint) < Square(radius) && waypoint != multiPath->maxResPath.pathGoal);
 
 	// indicate this is not a temporary waypoint
 	// (the default PFS does not queue requests)
@@ -378,12 +396,10 @@ void CPathManager::DeletePath(unsigned int pathID) {
 	if (pathID == 0)
 		return;
 
-	const std::map<unsigned int, MultiPath*>::iterator pi = pathMap.find(pathID);
+	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
 	if (pi == pathMap.end())
 		return;
-
-	const MultiPath* multiPath = pi->second;
-
+	MultiPath* multiPath = pi->second;
 	pathMap.erase(pathID);
 	delete multiPath;
 }
@@ -391,7 +407,7 @@ void CPathManager::DeletePath(unsigned int pathID) {
 
 
 // Tells estimators about changes in or on the map.
-void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {
+void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int /*type*/) {
 	medResPE->MapChanged(x1, z1, x2, z2);
 	lowResPE->MapChanged(x1, z1, x2, z2);
 }
@@ -401,44 +417,28 @@ void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int 
 void CPathManager::Update()
 {
 	SCOPED_TIMER("PathManager::Update");
-	maxResPF->UpdateHeatMap();
+
+	pathFlowMap->Update();
+	pathHeatMap->Update();
+
 	medResPE->Update();
 	lowResPE->Update();
 }
 
-// used to deposit heat on the heat-map as a unit moves along its path
-void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
+
+void CPathManager::UpdateFull()
 {
-	if (pathID == 0)
-		return;
-	if (!owner->moveDef->heatMapping)
-		return;
-
-#ifndef USE_GML
-	static std::vector<int2> points;
-#else
-	std::vector<int2> points;
-#endif
-
-	GetDetailedPathSquares(pathID, points);
-
-	if (!points.empty()) {
-		float scale = 1.0f / points.size();
-		unsigned int i = points.size();
-
-		for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
-			SetHeatOnSquare(it->x, it->y, i * scale * owner->moveDef->heatProduced, owner->id); i--;
-		}
-	}
+	medResPE->UpdateFull();
+	lowResPE->UpdateFull();
 }
 
 
-
-void CPathManager::SetHeatMappingEnabled(bool enabled) { maxResPF->SetHeatMapState(enabled); }
-bool CPathManager::GetHeatMappingEnabled() { return maxResPF->GetHeatMapState(); }
-
-void CPathManager::SetHeatOnSquare(int x, int y, int value, int ownerId) { maxResPF->UpdateHeatValue(x, y, value, ownerId); }
-const int CPathManager::GetHeatOnSquare(int x, int y) { return maxResPF->GetHeatValue(x, y); }
+// used to deposit heat on the heat-map as a unit moves along its path
+void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
+{
+	pathFlowMap->AddFlow(owner);
+	pathHeatMap->AddHeat(owner, this, pathID);
+}
 
 
 
@@ -447,12 +447,10 @@ void CPathManager::GetDetailedPath(unsigned pathID, std::vector<float3>& points)
 {
 	points.clear();
 
-	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
-	if (pi == pathMap.end()) {
+	MultiPath* multiPath = GetMultiPath(pathID);
+	if (multiPath == NULL)
 		return;
-	}
 
-	const MultiPath* multiPath = pi->second;
 	const IPath::path_list_type& maxResPoints = multiPath->maxResPath.path;
 
 	points.reserve(maxResPoints.size());
@@ -466,12 +464,10 @@ void CPathManager::GetDetailedPathSquares(unsigned pathID, std::vector<int2>& po
 {
 	points.clear();
 
-	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
-	if (pi == pathMap.end()) {
+	MultiPath* multiPath = GetMultiPath(pathID);
+	if (multiPath == NULL)
 		return;
-	}
 
-	const MultiPath* multiPath = pi->second;
 	const IPath::square_list_type& maxResSquares = multiPath->maxResPath.squares;
 
 	points.reserve(maxResSquares.size());
@@ -491,12 +487,10 @@ void CPathManager::GetPathWayPoints(
 	points.clear();
 	starts.clear();
 
-	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
-	if (pi == pathMap.end()) {
+	MultiPath* multiPath = GetMultiPath(pathID);
+	if (multiPath == NULL)
 		return;
-	}
 
-	const MultiPath* multiPath = pi->second;
 	const IPath::path_list_type& maxResPoints = multiPath->maxResPath.path;
 	const IPath::path_list_type& medResPoints = multiPath->medResPath.path;
 	const IPath::path_list_type& lowResPoints = multiPath->lowResPath.path;
@@ -573,3 +567,11 @@ const float* CPathManager::GetNodeExtraCosts(bool synced) const {
 	const float* costs = buf.GetNodeExtraCosts(synced);
 	return costs;
 }
+
+int2 CPathManager::GetNumQueuedUpdates() const {
+	int2 data;
+	data.x = medResPE->updatedBlocks.size();
+	data.y = lowResPE->updatedBlocks.size();
+	return data;
+}
+

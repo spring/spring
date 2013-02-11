@@ -58,12 +58,12 @@ inline void glSecondaryColorf3(const float3& v)
 	glSecondaryColor3f(v.x, v.y, v.z);
 }
 
-inline void glColorf4(const float3& v, const float& alpha)
+inline void glColorf4(const float3& v, const float alpha)
 {
 	glColor4f(v.x, v.y, v.z, alpha);
 }
 
-inline void glUniformf3(const GLint& location, const float3& v)
+inline void glUniformf3(const GLint location, const float3& v)
 {
 	glUniform3f(location, v.x, v.y, v.z);
 }

@@ -34,7 +34,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Groups/Group.h"
@@ -50,7 +50,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "System/mmgr.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
@@ -703,7 +702,7 @@ bool CAICallback::IsUnitParalyzed(int unitId) {
 	verify();
 	const CUnit* unit = GetInLosUnit(unitId);
 	if (unit) {
-		isParalyzed = unit->stunned;
+		isParalyzed = unit->IsStunned();
 	}
 
 	return isParalyzed;
@@ -726,13 +725,13 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 
 int CAICallback::InitPath(const float3& start, const float3& end, int pathType, float goalRadius)
 {
-	assert(((size_t)pathType) < moveDefHandler->moveDefs.size());
-	return pathManager->RequestPath(moveDefHandler->moveDefs.at(pathType), start, end, goalRadius, NULL, false);
+	assert(((size_t)pathType) < moveDefHandler->GetNumMoveDefs());
+	return pathManager->RequestPath(NULL, moveDefHandler->GetMoveDefByPathType(pathType), start, end, goalRadius, false);
 }
 
 float3 CAICallback::GetNextWaypoint(int pathId)
 {
-	return pathManager->NextWayPoint(pathId, ZeroVector, 0.0f, 0, 0, false);
+	return pathManager->NextWayPoint(NULL, pathId, 0, ZeroVector, 0.0f, false);
 }
 
 void CAICallback::FreePath(int pathId)
@@ -759,13 +758,13 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType, float g
 	}
 
 	// distance to first intermediate node
-	pathLen = (points[0] - start).Length();
+	pathLen = start.distance(points[0]);
 
 	// we don't care which path segment has
 	// what resolution, just lump all points
 	// together
 	for (size_t i = 1; i < points.size(); i++) {
-		pathLen += (points[i] - points[i - 1]).Length();
+		pathLen += points[i].distance(points[i - 1]);
 	}
 
 	/*
@@ -1443,7 +1442,7 @@ bool CAICallback::GetValue(int id, void *data)
 			}
 		}
 		case AIVAL_UNIT_LIMIT: {
-			*(int*) data = teamHandler->Team(team)->maxUnits;
+			*(int*) data = teamHandler->Team(team)->GetMaxUnits();
 			return true;
 		}
 		case AIVAL_SCRIPT: {

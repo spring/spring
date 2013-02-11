@@ -8,7 +8,6 @@
 //#include <IL/ilu.h>
 #include <SDL_video.h>
 #include <boost/thread.hpp>
-#include "System/mmgr.h"
 
 #ifndef BITMAP_NO_OPENGL
 	#include "Rendering/GL/myGL.h"
@@ -367,8 +366,6 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 #ifndef BITMAP_NO_OPENGL
 const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 {
-	ScopedTimer timer("Textures::CBitmap::CreateTexture");
-
 	if (type == BitmapTypeDDS) {
 		return CreateDDSTexture(0, mipmaps);
 	}
@@ -621,7 +618,9 @@ void CBitmap::Blur(int iterations, float weight)
 	for (int i=0; i < iterations; ++i){
 		{
 			int j,y,x;
-			#pragma omp parallel for private(j,x,y)
+//			Threading::OMPCheck();
+//			This is currently used too early, OMP is not initialized here
+//			#pragma omp parallel for private(j,x,y)
 			for (y=0; y < ysize; y++) {
 				for (x=0; x < xsize; x++) {
 					for (j=0; j < channels; j++) {

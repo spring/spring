@@ -3,7 +3,6 @@
 #ifndef _GAME_SERVER_H
 #define _GAME_SERVER_H
 
-#include <boost/thread/thread.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <string>
 #include <map>
@@ -19,6 +18,10 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Platform/Synchro.h"
 
+
+namespace boost {
+	class thread;
+}
 
 namespace netcode
 {
@@ -41,7 +44,7 @@ class GameSkirmishAI;
  * this value is used as the sending player-number.
  */
 const unsigned SERVER_PLAYER = 255;
-const unsigned numCommands = 20;
+const unsigned numCommands = 22;
 extern const std::string commands[numCommands];
 
 class GameTeam : public TeamBase
@@ -89,6 +92,7 @@ public:
 	void UpdateSpeedControl(int speedCtrl);
 	static std::string SpeedControlToString(int speedCtrl);
 
+	const boost::scoped_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
 	#ifdef DEDICATED
 	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
 	#endif
@@ -106,6 +110,12 @@ private:
 	 * @brief kick the specified player from the battle
 	 */
 	void KickPlayer(const int playerNum);
+	/**
+	 * @brief force the specified player to spectate
+	 */
+	void SpecPlayer(const int playerNum);
+
+	void ResignPlayer(const int playerNum);
 
 	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
 
@@ -116,6 +126,8 @@ private:
 	void ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet);
 	void CheckSync();
 	void ServerReadNet();
+
+	void LagProtection();
 
 	/** @brief Generate a unique game identifier and send it to all clients. */
 	void GenerateAndSendGameID();
@@ -144,6 +156,7 @@ private:
 
 	float GetDemoTime() const;
 
+private:
 	/////////////////// game status variables ///////////////////
 
 	unsigned char playerNumberMap[256];

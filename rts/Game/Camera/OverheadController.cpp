@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 #include <SDL_keysym.h>
 #include <boost/cstdint.hpp>
 
@@ -79,6 +78,7 @@ void COverheadController::ScreenEdgeMove(float3 move)
 
 void COverheadController::MouseWheelMove(float move)
 {
+	camHandler->CameraTransition(0.05f);
 	const float shiftSpeed = (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3.0f : 1.0f);
 	
 	// tilt the camera if LCTRL is pressed
@@ -175,13 +175,7 @@ void COverheadController::SwitchTo(bool showText)
 
 void COverheadController::GetState(StateMap& sm) const
 {
-	sm["px"] = pos.x;
-	sm["py"] = pos.y;
-	sm["pz"] = pos.z;
-
-	sm["dx"] = dir.x;
-	sm["dy"] = dir.y;
-	sm["dz"] = dir.z;
+	CCameraController::GetState(sm);
 
 	sm["height"]  = height;
 	sm["zscale"]  = zscale;
@@ -190,13 +184,7 @@ void COverheadController::GetState(StateMap& sm) const
 
 bool COverheadController::SetState(const StateMap& sm)
 {
-	SetStateFloat(sm, "px", pos.x);
-	SetStateFloat(sm, "py", pos.y);
-	SetStateFloat(sm, "pz", pos.z);
-
-	SetStateFloat(sm, "dx", dir.x);
-	SetStateFloat(sm, "dy", dir.y);
-	SetStateFloat(sm, "dz", dir.z);
+	CCameraController::SetState(sm);
 
 	SetStateFloat(sm, "height", height);
 	SetStateFloat(sm, "zscale", zscale);

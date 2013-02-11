@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "InputReceiver.h"
 #include "Rendering/GL/myGL.h"
@@ -11,11 +10,11 @@ float CInputReceiver::guiAlpha = 0.8f;
 CInputReceiver* CInputReceiver::activeReceiver = NULL;
 
 
-std::deque<CInputReceiver*>& GetInputReceivers()
+std::list<CInputReceiver*>& GetInputReceivers()
 {
 	// This construct fixes order of initialization between different
 	// compilation units using inputReceivers. (mantis # 34)
-	static std::deque<CInputReceiver*> s_inputReceivers;
+	static std::list<CInputReceiver*> s_inputReceivers;
 	return s_inputReceivers;
 }
 
@@ -38,8 +37,8 @@ CInputReceiver::~CInputReceiver()
 	if (activeReceiver == this) {
 		activeReceiver = NULL;
 	}
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		if (*ri == this) {
 			// we may be deleted while there are still iterators active
@@ -54,8 +53,8 @@ void CInputReceiver::CollectGarbage()
 {
 	// erase one NULL element each call (should be enough for now)
 	// called once every sec from CGame::Update
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		if (*ri == NULL) {
 			inputReceivers.erase(ri);
@@ -66,8 +65,8 @@ void CInputReceiver::CollectGarbage()
 
 CInputReceiver* CInputReceiver::GetReceiverAt(int x,int y)
 {
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::deque<CInputReceiver*>::iterator ri;
+	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		CInputReceiver* recv = *ri;
 		if (recv && recv->IsAbove(x,y)) {

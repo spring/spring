@@ -2,7 +2,6 @@
 
 #include <fstream>
 #include <SDL_keysym.h>
-#include "System/mmgr.h"
 
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"

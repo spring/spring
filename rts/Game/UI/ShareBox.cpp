@@ -12,7 +12,6 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/NetProtocol.h"
-#include "System/mmgr.h"
 #include "System/MsgStrings.h"
 
 #include <SDL_keysym.h>

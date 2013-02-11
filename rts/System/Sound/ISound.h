@@ -29,7 +29,7 @@ public:
 	}
 
 	virtual bool HasSoundItem(const std::string& name) const = 0;
-	virtual size_t GetSoundId(const std::string& name, bool hardFail = true) = 0;
+	virtual size_t GetSoundId(const std::string& name) = 0;
 	virtual SoundItem* GetSoundItem(size_t id) const = 0;
 
 	/**

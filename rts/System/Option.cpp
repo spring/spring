@@ -140,7 +140,7 @@ static void option_parseOption(const LuaTable& root, int index, Option& opt,
 			opt.list.push_back(item);
 		}
 
-		if (opt.list.size() <= 0) {
+		if (opt.list.empty()) {
 			throw content_error("parseOption: (key=" + opt.key + ") subtables: empty list");
 		}
 

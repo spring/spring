@@ -10,12 +10,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
-### Assemble defines
-SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
-if (USE_MMGR)
-	ADD_DEFINITIONS(-DUSE_MMGR)
-endif (USE_MMGR)
-
 SET(TRACE_SYNC FALSE CACHE BOOL "Enable sync tracker")
 if (TRACE_SYNC)
 	ADD_DEFINITIONS(-DTRACE_SYNC)
@@ -38,7 +32,8 @@ endif (SYNCDEBUG)
 # Only used by GML build, but used in builds/GML and lib/gml
 SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
 
-
+### give error when not found
+FIND_PACKAGE_STATIC(DevIL REQUIRED)
 
 ### Assemble common incude dirs
 INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
@@ -54,24 +49,46 @@ if    (NO_SOUND)
 endif (NO_SOUND)
 
 ### Find include directories and add platform specific libraries
-LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${TIFF_LIBRARY} ${PNG_LIBRARY})
-LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
-LIST(APPEND engineCommonLibraries lua luasocket 7zip oscpack ${SPRING_MINIZIP_LIBRARY} streflop lobby assimp)
+IF    (UNIX AND NOT MINGW)
+	IF    (PREFER_STATIC_LIBS)
+		PREFER_STATIC_LIBS()
+		FIND_LIBRARY(C_LIBRARY c)
+		FIND_LIBRARY(MATH_LIBRARY m)
+		#FIND_LIBRARY(PTHREAD_LIBRARY pthread)
+		#FIND_LIBRARY(OMP_LIBRARY gomp) FIXME it's hidden in some subfolders
+		UNPREFER_STATIC_LIBS()
 
-IF    (PREFER_STATIC_LIBS)
-	# dependency of minizip
-	FIND_PACKAGE_STATIC(ZLIB REQUIRED)
-	LIST(APPEND engineCommonLibraries ${ZLIB_LIBRARY})
-ENDIF (PREFER_STATIC_LIBS)
+		LIST(APPEND engineCommonLibraries ${C_LIBRARY} ${MATH_LIBRARY})
+		#LIST(APPEND engineCommonLibraries ${PTHREAD_LIBRARY} ${OMP_LIBRARY})
+	ENDIF (PREFER_STATIC_LIBS)
 
-IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineCommonLibraries dl)
-ENDIF (UNIX)
+ENDIF (UNIX AND NOT MINGW)
 
-IF (MINGW)
-	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
-ENDIF (MINGW)
+FIND_PACKAGE_STATIC(ZLIB REQUIRED)
+LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY} ${TIFF_LIBRARY} ${GIF_LIBRARY})
+LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+LIST(APPEND engineCommonLibraries 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
+LIST(APPEND engineCommonLibraries lua luasocket archives streflop assimp)
+include_directories(${ZLIB_INCLUDE_DIR})
+
+if (MINGW AND Boost_CHRONO_FOUND)
+	# in newer boost versions the thread library depends on it
+	LIST(APPEND engineCommonLibraries ${Boost_CHRONO_LIBRARY})
+endif (MINGW AND Boost_CHRONO_FOUND)
+
+IF (WIN32)
+	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES})
+ENDIF (WIN32)
+
+FIND_PACKAGE_STATIC(TCMalloc)
+set(USE_TCMALLOC TRUE CACHE BOOL "use tcmalloc (part of google's perftools)")
+if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
+	MESSAGE(STATUS "Using tcmalloc")
+	LIST(APPEND engineCommonLibraries ${TCMALLOC_LIBRARY})
+endif (USE_TCMALLOC AND TCMALLOC_LIBRARY)
+
 
 
 ### Assemble engine sources
@@ -95,7 +112,6 @@ SET(engineSources
 		${sources_engine_Sim}
 		${sources_engine_System}
 		${sources_engine_ExternalAI}
-		${nedmalloc_obj} # TODO remove? (seems never to be set)
 	)
 
 ### Add headers for generated project files (e.g. Code::Blocks)

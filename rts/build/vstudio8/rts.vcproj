@@ -43,7 +43,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x502"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="DEBUG;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
+				PreprocessorDefinitions="DEBUG;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -132,7 +132,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
+				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
@@ -227,7 +227,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
+				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -325,7 +325,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="SYNCDEBUG;_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
+				PreprocessorDefinitions="SYNCDEBUG;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
@@ -419,7 +419,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;USE_GML;USE_GML_SIM;AVI_CAPTURING"
+				PreprocessorDefinitions="_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;USE_GML;USE_GML_SIM;AVI_CAPTURING"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -514,7 +514,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x502"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="DEBUG;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM;SYNCCHECK"
+				PreprocessorDefinitions="DEBUG;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM;SYNCCHECK"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -603,7 +603,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="DEDICATED;_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;AVI_CAPTURING"
+				PreprocessorDefinitions="DEDICATED;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;AVI_CAPTURING"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -699,7 +699,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x502"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib;../../lib/minizip"
-				PreprocessorDefinitions="DEBUG;DEDICATED;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
+				PreprocessorDefinitions="DEBUG;DEDICATED;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -934,6 +934,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\AviVideoCapturing.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\Benchmark.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\Benchmark.h"
 				>
 			</File>
 			<File
@@ -1190,14 +1198,6 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\NetCommands.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\OSCStatsSender.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\OSCStatsSender.h"
 				>
 			</File>
 			<File
@@ -2317,14 +2317,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\GroundDecalHandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Rendering\GroundDecalHandler.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Rendering\GroundFlash.cpp"
 				>
 			</File>
@@ -2528,6 +2520,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Rendering\Env\Decals\DecalsDrawerGL4.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\Decals\DecalsDrawerGL4.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Env\DynWater.cpp"
 					>
 				</File>
@@ -2541,6 +2541,22 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Env\GrassDrawer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\Decals\GroundDecalHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\Decals\GroundDecalHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\IGroundDecalDrawer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\IGroundDecalDrawer.h"
 					>
 				</File>
 				<File
@@ -2696,11 +2712,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\GL\PBO.cpp"
+					RelativePath="..\..\Rendering\GL\VBO.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\GL\PBO.h"
+					RelativePath="..\..\Rendering\GL\VBO.h"
 					>
 				</File>
 				<File
@@ -2749,6 +2765,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\CommandDrawer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\LegacyAtlasAlloc.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\LegacyAtlasAlloc.h"
 					>
 				</File>
 				<File
@@ -2832,6 +2856,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Rendering\Textures\QuadtreeAtlasAlloc.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\QuadtreeAtlasAlloc.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Textures\S3OTextureHandler.cpp"
 					>
 				</File>
@@ -2860,6 +2892,14 @@
 				Name="Shaders"
 				>
 				<File
+					RelativePath="..\..\Rendering\Shaders\GLSLCopyState.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Shaders\GLSLCopyState.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Shaders\Shader.cpp"
 					>
 				</File>
@@ -2873,6 +2913,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Shaders\ShaderHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Shaders\ShaderStates.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Shaders\ShaderStates.h"
 					>
 				</File>
 			</Filter>
@@ -3596,6 +3644,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Projectiles\ProjectileFunctors.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\ProjectileFunctors.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Projectiles\ProjectileHandler.cpp"
 					>
 				</File>
@@ -4187,6 +4243,22 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\Sim\Path\Default\PathFlowMap.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathFlowMap.hpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathHeatMap.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathHeatMap.hpp"
+						>
+					</File>
+					<File
 						RelativePath="..\..\Sim\Path\Default\PathManager.cpp"
 						>
 					</File>
@@ -4340,6 +4412,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Objects\SolidObjectDef.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Objects\SolidObjectDef.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Objects\WorldObject.cpp"
 					>
 				</File>
@@ -4384,11 +4464,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveInfo.cpp"
+					RelativePath="..\..\Sim\MoveTypes\MoveDefHandler.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\MoveInfo.h"
+					RelativePath="..\..\Sim\MoveTypes\MoveDefHandler.h"
 					>
 				</File>
 				<File
@@ -4600,6 +4680,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\DefinitionTag.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\DefinitionTag.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\GeometricObjects.cpp"
 					>
 				</File>
@@ -4721,6 +4809,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\ModInfo.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\NanoPieceCache.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\NanoPieceCache.h"
 					>
 				</File>
 				<File
@@ -4852,6 +4948,14 @@
 		<Filter
 			Name="System"
 			>
+			<File
+				RelativePath="..\..\System\AIScriptHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\AIScriptHandler.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\System\AutohostInterface.cpp"
 				>
@@ -4998,6 +5102,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\bitops.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\CRC.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\CRC.h"
 				>
 			</File>
 			<File
@@ -5175,14 +5287,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\mmgr.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\mmgr.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\System\NetProtocol.cpp"
 				>
 				<FileConfiguration
@@ -5304,6 +5408,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\SpringApp.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\StartScriptGen.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\StartScriptGen.h"
 				>
 			</File>
 			<File
@@ -5490,10 +5602,6 @@
 				Name="FileSystem"
 				>
 				<File
-					RelativePath="..\..\System\FileSystem\ArchiveFactory.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\FileSystem\ArchiveLoader.cpp"
 					>
 				</File>
@@ -5504,81 +5612,9 @@
 				<File
 					RelativePath="..\..\System\FileSystem\ArchiveScanner.cpp"
 					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\ArchiveScanner.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\BufferedArchive.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\BufferedArchive.h"
 					>
 				</File>
 				<File
@@ -5587,78 +5623,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\CacheDir.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\CRC.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\CRC.h"
 					>
 				</File>
 				<File
@@ -5678,80 +5642,8 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\DirArchive.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\DirArchive.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\FileSystem\FileFilter.cpp"
 					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\FileFilter.h"
@@ -5794,168 +5686,8 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\IArchive.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\IArchive.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\PoolArchive.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\PoolArchive.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\SevenZipArchive.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\SevenZipArchive.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\FileSystem\SimpleParser.cpp"
 					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\SimpleParser.h"
@@ -5973,17 +5705,69 @@
 					RelativePath="..\..\System\FileSystem\VFSModes.h"
 					>
 				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\ZipArchive.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\ZipArchive.h"
-					>
-				</File>
 				<Filter
-					Name="Libraries"
+					Name="Archives"
 					>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\ArchiveFactory.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\BufferedArchive.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\BufferedArchive.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\DirArchive.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\DirArchive.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\IArchive.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\IArchive.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\PoolArchive.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\PoolArchive.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\SevenZipArchive.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\SevenZipArchive.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\VirtualArchive.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\VirtualArchive.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\ZipArchive.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\FileSystem\Archives\ZipArchive.h"
+						>
+					</File>
 				</Filter>
 			</Filter>
 			<Filter
@@ -8555,6 +8339,26 @@
 					</Filter>
 				</Filter>
 			</Filter>
+			<Filter
+				Name="Generation"
+				>
+				<File
+					RelativePath="..\..\Map\Generation\MapGenerator.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\Generation\MapGenerator.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\Generation\SimpleMapGenerator.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\Generation\SimpleMapGenerator.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Lua"
@@ -8688,14 +8492,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lua\LuaIO.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Lua\LuaIO.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Lua\LuaIntro.cpp"
 				>
 			</File>
@@ -8704,11 +8500,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lua\LuaLobby.cpp"
+				RelativePath="..\..\Lua\LuaIO.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lua\LuaLobby.h"
+				RelativePath="..\..\Lua\LuaIO.h"
 				>
 			</File>
 			<File
@@ -16572,36 +16368,20 @@
 				</File>
 			</Filter>
 			<Filter
-				Name="oscpack"
-				>
-				<File
-					RelativePath="..\..\lib\oscpack\OscException.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\oscpack\OscHostEndianness.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\oscpack\OscOutboundPacketStream.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\oscpack\OscOutboundPacketStream.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\oscpack\OscTypes.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\oscpack\OscTypes.h"
-					>
-				</File>
-			</Filter>
-			<Filter
 				Name="7z"
 				>
+				<File
+					RelativePath="..\..\lib\7z\7z.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\7z\7zAlloc.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\7z\7zAlloc.h"
+					>
+				</File>
 				<File
 					RelativePath="..\..\lib\7z\7zBuf.c"
 					>
@@ -16623,11 +16403,23 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\7z\7zCrcOpt.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\7z\7zDec.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\7z\7zFile.c"
 					>
 				</File>
 				<File
 					RelativePath="..\..\lib\7z\7zFile.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\7z\7zIn.c"
 					>
 				</File>
 				<File
@@ -16655,7 +16447,19 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\7z\CpuArch.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\7z\CpuArch.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\7z\Lzma2Dec.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\7z\Lzma2Dec.h"
 					>
 				</File>
 				<File
@@ -16667,289 +16471,29 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\7z\Ppmd.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\7z\Ppmd7.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\7z\Ppmd7.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\7z\Ppmd7Dec.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\7z\Types.h"
 					>
 				</File>
 				<Filter
 					Name="Archive"
 					>
-					<Filter
-						Name="7z"
-						>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zAlloc.c"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zAlloc.h"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zDecode.c"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zDecode.h"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zExtract.c"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zExtract.h"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zHeader.c"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zHeader.h"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zIn.c"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zIn.h"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zItem.c"
-							>
-						</File>
-						<File
-							RelativePath="..\..\lib\7z\Archive\7z\7zItem.h"
-							>
-						</File>
-					</Filter>
 				</Filter>
-			</Filter>
-			<Filter
-				Name="liblobby"
-				>
-				<File
-					RelativePath="..\..\lib\lobby\Connection.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lobby\Connection.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lobby\RawTextMessage.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\lobby\RawTextMessage.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="md5"
-				>
-				<File
-					RelativePath="..\..\lib\md5\base64.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\md5\base64.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\md5\md5.c"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\lib\md5\md5.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="minizip"
-				>
-				<File
-					RelativePath="..\..\lib\minizip\crypt.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\minizip\ioapi.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\minizip\ioapi.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\minizip\iowin32.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\minizip\iowin32.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\minizip\unzip.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\minizip\unzip.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\minizip\zip.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\minizip\zip.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="assimp"
@@ -18271,6 +17815,38 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="minizip"
+				>
+				<File
+					RelativePath="..\..\lib\minizip\crypt.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\minizip\ioapi.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\minizip\ioapi.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\minizip\unzip.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\minizip\unzip.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\minizip\zip.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\minizip\zip.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="aGUI"
@@ -18364,22 +17940,6 @@
 			Name="Menu"
 			>
 			<File
-				RelativePath="..\..\Menu\LobbyConnection.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Menu\LobbyConnection.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Menu\ScriptHandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Menu\ScriptHandler.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Menu\SelectionWidget.cpp"
 				>
 			</File>
@@ -18393,14 +17953,6 @@
 			</File>
 			<File
 				RelativePath="..\..\Menu\SelectMenu.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Menu\UpdaterWindow.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Menu\UpdaterWindow.h"
 				>
 			</File>
 		</Filter>

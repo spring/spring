@@ -3,23 +3,27 @@
 #ifndef MOVEMATH_H
 #define MOVEMATH_H
 
-#include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/Objects/SolidObject.h"
+#include "Map/ReadMap.h"
 #include "System/float3.h"
 #include "System/Misc/BitwiseEnum.h"
 
-
+struct MoveDef;
+class CSolidObject;
 class CMoveMath {
 	CR_DECLARE(CMoveMath);
-	
+
 protected:
-	virtual float SpeedMod(const MoveDef& moveDef, float height, float slope) const = 0;
-	virtual float SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const = 0;
+	static float GroundSpeedMod(const MoveDef& moveDef, float height, float slope);
+	static float GroundSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod);
+	static float HoverSpeedMod(const MoveDef& moveDef, float height, float slope);
+	static float HoverSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod);
+	static float ShipSpeedMod(const MoveDef& moveDef, float height, float slope);
+	static float ShipSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod);
 
 public:
 	// gives the y-coordinate the unit will "stand on"
-	virtual float yLevel(const float3& pos) const;
-	virtual float yLevel(int xSquare, int Square) const = 0;
+	static float yLevel(const MoveDef& moveDef, const float3& pos);
+	static float yLevel(const MoveDef& moveDef, int xSquare, int zSquare);
 
 public:
 	enum BlockTypes {
@@ -30,51 +34,61 @@ public:
 		BLOCK_STRUCTURE   = 8,
 		BLOCK_IMPASSABLE  = 24 // := 16 | BLOCK_STRUCTURE;
 	};
-	typedef BitwiseEnum<BlockTypes> BlockType;
+	typedef Bitwise::BitwiseEnum<BlockTypes> BlockType;
 	
 
 	// returns a speed-multiplier for given position or data
-	float GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare) const;
-	float GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare, const float3& moveDir) const;
-	float GetPosSpeedMod(const MoveDef& moveDef, const float3& pos) const
+	static float GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare);
+	static float GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare, const float3& moveDir);
+	static float GetPosSpeedMod(const MoveDef& moveDef, const float3& pos)
 	{
 		return GetPosSpeedMod(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE);
 	}
-	float GetPosSpeedMod(const MoveDef& moveDef, const float3& pos, const float3& moveDir) const
+	static float GetPosSpeedMod(const MoveDef& moveDef, const float3& pos, const float3& moveDir)
 	{
 		return GetPosSpeedMod(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE, moveDir);
 	}
 
 	// tells whether a position is blocked (inaccessable for a given object's MoveDef)
-	inline BlockType IsBlocked(const MoveDef& moveDef, const float3& pos) const;
-	inline BlockType IsBlocked(const MoveDef& moveDef, int xSquare, int zSquare) const;
-	BlockType IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare) const;
-	bool IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSquare) const;
-	bool IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int zSquare) const;
-	bool IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int zSquare) const;
+	static inline BlockType IsBlocked(const MoveDef& moveDef, const float3& pos, const CSolidObject* collider);
+	static inline BlockType IsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
+	static BlockType IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
+	static bool IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
+	static bool IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
+	static bool IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 	
 	// tells whether a given object is blocking the given MoveDef
 	static bool CrushResistant(const MoveDef& colliderMD, const CSolidObject* collidee);
-	static bool IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* collidee);
+	static bool IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* collidee, const CSolidObject* collider);
+	static bool IsNonBlocking(const CSolidObject* collidee, const MoveDef* colliderMD, const float3 colliderPos, const float colliderHeight);
 
 	// returns the block-status of a single quare
-	static BlockType SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare);
+	static BlockType SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
+	static BlockType SquareIsBlocked(const MoveDef& moveDef, const float3& pos, const CSolidObject* collider) {
+		return SquareIsBlocked(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE, collider);
+	}
 
-	virtual ~CMoveMath() {}
+public:
+	static bool noHoverWaterMove;
+	static float waterDamageCost;
 };
 
+
+
 /* Check if a given square-position is accessable by the MoveDef footprint. */
-inline CMoveMath::BlockType CMoveMath::IsBlocked(const MoveDef& moveDef, int xSquare, int zSquare) const
+inline CMoveMath::BlockType CMoveMath::IsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
 	if (GetPosSpeedMod(moveDef, xSquare, zSquare) == 0.0f)
 		return BLOCK_IMPASSABLE;
-	return IsBlockedNoSpeedModCheck(moveDef, xSquare, zSquare);
+
+	return IsBlockedNoSpeedModCheck(moveDef, xSquare, zSquare, collider);
 }
 
 /* Converts a point-request into a square-positional request. */
-inline CMoveMath::BlockType CMoveMath::IsBlocked(const MoveDef& moveDef, const float3& pos) const
+inline CMoveMath::BlockType CMoveMath::IsBlocked(const MoveDef& moveDef, const float3& pos, const CSolidObject* collider)
 {
-	return IsBlocked(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE);
+	return IsBlocked(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE, collider);
 }
 
 #endif
+

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "DynWater.h"
 #include "Game/Game.h"
@@ -19,7 +18,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Log/ILog.h"
@@ -299,7 +298,7 @@ CDynWater::~CDynWater()
 
 void CDynWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 1.0f)) {
+	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 0.0f)) {
 		return;
 	}
 
@@ -392,7 +391,7 @@ void CDynWater::Draw()
 
 void CDynWater::UpdateWater(CGame* game)
 {
-	if ((!mapInfo->water.forceRendering && (readmap->currMinHeight > 1.0f)) || mapInfo->map.voidWater) {
+	if ((!mapInfo->water.forceRendering && (readmap->currMinHeight > 0.0f)) || mapInfo->map.voidWater) {
 		return;
 	}
 
@@ -419,7 +418,7 @@ void CDynWater::UpdateWater(CGame* game)
 
 void CDynWater::Update()
 {
-	if ((!mapInfo->water.forceRendering) && (readmap->currMinHeight > 1.0f)) {
+	if ((!mapInfo->water.forceRendering) && (readmap->currMinHeight > 0.0f)) {
 		return;
 	}
 
@@ -448,7 +447,6 @@ void CDynWater::Update()
 
 void CDynWater::DrawReflection(CGame* game)
 {
-	const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
 	const bool shadowsLoaded = shadowHandler->shadowsLoaded;
 
 //	CCamera* realCam = camera;
@@ -476,17 +474,22 @@ void CDynWater::DrawReflection(CGame* game)
 		sky->Draw();
 
 		{
+			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
+
 			glEnable(GL_CLIP_PLANE2);
 			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
-			shadowHandler->shadowsLoaded = false;
+			// FIXME-3429:
+			//   this causes the SMF shader to be RECOMPILED each frame
+			//   (because of abdb611014fbb903341fe731835ecf831e31d9b2)
+			// shadowHandler->shadowsLoaded = false;
 
 			CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 				gd->SetupReflDrawPass();
 				gd->Draw(DrawPass::WaterReflection);
 				gd->SetupBaseDrawPass();
 
-			shadowHandler->shadowsLoaded = shadowsLoaded;
+			// shadowHandler->shadowsLoaded = shadowsLoaded;
 
 			unitDrawer->Draw(true);
 			featureDrawer->Draw();
@@ -1121,14 +1124,13 @@ void CDynWater::AddShipWakes()
 
 		for (std::set<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* unit = *ui;
-			const UnitDef* unitDef = unit->unitDef;
-			const MoveDef* moveDef = unitDef->moveDef;
+			const MoveDef* moveDef = unit->moveDef;
 
 			if (moveDef == NULL) {
 				continue;
 			}
 
-			if (moveDef->moveType == MoveDef::Hover_Move) {
+			if (moveDef->moveFamily == MoveDef::Hover) {
 				// hovercraft
 				const float3& pos = unit->pos;
 
@@ -1152,7 +1154,7 @@ void CDynWater::AddShipWakes()
 					va2->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
 					va2->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
 				}
-			} else if (moveDef->moveType == MoveDef::Ship_Move) {
+			} else if (moveDef->moveFamily == MoveDef::Ship) {
 				// surface ship
 				const float3& pos = unit->pos;
 

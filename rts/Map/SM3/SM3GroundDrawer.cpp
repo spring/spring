@@ -9,7 +9,7 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Shaders/Shader.h"

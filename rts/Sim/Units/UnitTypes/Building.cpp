@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "Building.h"
 #include "Game/GameHelper.h"
@@ -21,20 +20,19 @@ CR_REG_METADATA(CBuilding, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilding::CBuilding(): buildingDecal(0)
+CBuilding::CBuilding()
 {
 	immobile = true;
 }
 
 
 
-void CBuilding::PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build)
+void CBuilding::PreInit(const UnitLoadParams& params)
 {
-	if (def->levelGround) {
-		blockHeightChanges = true;
-	}
+	unitDef = params.unitDef;
+	blockHeightChanges = unitDef->levelGround;
 
-	CUnit::PreInit(def, team, facing, position, build);
+	CUnit::PreInit(params);
 }
 
 void CBuilding::PostInit(const CUnit* builder)

@@ -4,7 +4,6 @@
 #include <sstream>
 #include <cstring>
 
-#include "System/mmgr.h"
 
 #include "ColorMap.h"
 #include "Bitmap.h"

@@ -118,6 +118,7 @@ public:
 	unsigned int GetArchiveCompleteChecksum(const std::string& name) const;
 	/// like GetArchiveCompleteChecksum, throws exception if mismatch
 	void CheckArchive(const std::string& name, unsigned checksum) const;
+	void ScanArchive(const std::string& fullName, bool checksum = false);
 
 	std::string ArchiveFromName(const std::string& s) const;
 	std::string NameFromArchive(const std::string& s) const;
@@ -178,7 +179,6 @@ private:
 	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
 	void Scan(const std::string& curPath, bool doChecksum);
 
-	void ScanArchive(const std::string& fullName, bool checksum = false);
 	/// scan mapinfo / modinfo lua files
 	bool ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err);
 

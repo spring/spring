@@ -11,9 +11,7 @@ class CLightningProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CLightningProjectile);
 public:
-	CLightningProjectile(const float3& pos, const float3& end, CUnit* owner,
-			const float3& color, const WeaponDef* weaponDef, int ttl = 10,
-			CWeapon* weap = NULL);
+	CLightningProjectile(const ProjectileParams& params, const float3& color);
 	~CLightningProjectile();
 
 	void Update();
@@ -23,7 +21,6 @@ public:
 
 private:
 	float3 color;
-	float3 endPos;
 	CWeapon* weapon;
 
 	#define displacements_size 10

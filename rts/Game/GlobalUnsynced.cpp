@@ -12,7 +12,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h" // for RANDINT_MAX
 #include "Sim/Units/Unit.h" // required by CREG
-#include "System/mmgr.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
@@ -31,6 +30,7 @@
 CGlobalUnsynced* gu;
 
 const float CGlobalUnsynced::reconnectSimDrawBalance = 0.15f;
+UnsyncedRNG CGlobalUnsynced::rng;
 
 CR_BIND(CGlobalUnsynced, );
 
@@ -45,18 +45,19 @@ CR_REG_METADATA(CGlobalUnsynced, (
 	CR_MEMBER(spectatingFullView),
 	CR_MEMBER(spectatingFullSelect),
 	CR_MEMBER(fpsMode),
-	CR_MEMBER(usRandSeed),
 	CR_RESERVED(64)
 ));
 
 CGlobalUnsynced::CGlobalUnsynced()
 {
-	usRandSeed = time(NULL) % ((SDL_GetTicks() + 1) * 9007);
+	unsigned seed = time(NULL) % ((SDL_GetTicks() + 1) * 9007);
+	rng.Seed(seed);
 
 	simFPS = 0.0f;
 
 	avgSimFrameTime = 0.0f;
 	avgDrawFrameTime = 0.0f;
+	avgFrameTime = 0.0f;
 
 	modGameTime = 0;
 	gameTime = 0;
@@ -88,47 +89,6 @@ CGlobalUnsynced::~CGlobalUnsynced()
 void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
 {
 	playerHandler->LoadFromSetup(setup);
-}
-
-
-
-/**
- * @return unsynced random integer
- *
- * Returns an unsynced random integer
- */
-int CGlobalUnsynced::usRandInt()
-{
-	usRandSeed = (usRandSeed * 214013L + 2531011L);
-	return (usRandSeed >> 16) & RANDINT_MAX;
-}
-
-/**
- * @return unsynced random float
- *
- * returns an unsynced random float
- */
-float CGlobalUnsynced::usRandFloat()
-{
-	usRandSeed = (usRandSeed * 214013L + 2531011L);
-	return float((usRandSeed >> 16) & RANDINT_MAX) / RANDINT_MAX;
-}
-
-/**
- * @return unsynced random vector
- *
- * returns an unsynced random vector
- */
-float3 CGlobalUnsynced::usRandVector()
-{
-	float3 ret;
-	do {
-		ret.x = usRandFloat() * 2 - 1;
-		ret.y = usRandFloat() * 2 - 1;
-		ret.z = usRandFloat() * 2 - 1;
-	} while (ret.SqLength() > 1);
-
-	return ret;
 }
 
 

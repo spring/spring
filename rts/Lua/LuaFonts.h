@@ -3,7 +3,6 @@
 #ifndef LUA_FONTS_H
 #define LUA_FONTS_H
 
-#include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 
 struct lua_State;

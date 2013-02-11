@@ -17,6 +17,7 @@
 #define TREE_RADIUS 20
 
 struct FeatureDef;
+struct FeatureLoadParams;
 class CUnit;
 struct DamageArray;
 class CFireProjectile;
@@ -35,8 +36,7 @@ public:
 	 * Pos of quad must not change after this.
 	 * This will add this to the FeatureHandler.
 	 */
-	void Initialize(const float3& pos, const FeatureDef* def, short int heading, int facing,
-		int team, int allyteam, const UnitDef* udef, const float3& speed = ZeroVector, int smokeTime = 0);
+	void Initialize(const FeatureLoadParams& params);
 	int GetBlockingMapID() const { return id + (10 * uh->MaxUnits()); }
 
 	/**
@@ -45,36 +45,47 @@ public:
 	 */
 	bool AddBuildPower(float amount, CUnit* builder);
 	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID);
-	void ForcedMove(const float3& newPos, bool snapToGround = true);
+	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
-	bool Update(void);
-	bool UpdatePosition(void);
-	void StartFire(void);
+	bool Update();
+	bool UpdatePosition();
+	void UpdateFinalHeight(bool useGroundHeight);
+	void StartFire();
+	void EmitGeoSmoke();
 	float RemainingResource(float res) const;
-	float RemainingMetal(void) const;
-	float RemainingEnergy(void) const;
-	int ChunkNumber(float f);
+	float RemainingMetal() const;
+	float RemainingEnergy() const;
+	int ChunkNumber(float f) const;
 	void CalculateTransform();
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
 
-	bool IsInLosForAllyTeam(int allyteam) const
+	bool IsInLosForAllyTeam(int argAllyTeam) const
 	{
 		if (alwaysVisible)
 			return true;
+
+		const bool inLOS = (argAllyTeam == -1 || loshandler->InLos(this->pos, argAllyTeam));
+
 		switch (modInfo.featureVisibility) {
 			case CModInfo::FEATURELOS_NONE:
 			default:
-				return loshandler->InLos(this->pos, allyteam);
+				return inLOS;
 			case CModInfo::FEATURELOS_GAIAONLY:
-				return (this->allyteam == -1 || loshandler->InLos(this->pos, allyteam));
+				return (this->allyteam == -1 || inLOS);
 			case CModInfo::FEATURELOS_GAIAALLIED:
-				return (this->allyteam == -1 || this->allyteam == allyteam
-					|| loshandler->InLos(this->pos, allyteam));
+				return (this->allyteam == -1 || this->allyteam == argAllyTeam || inLOS);
 			case CModInfo::FEATURELOS_ALL:
 				return true;
 		}
 	}
+
+	// NOTE:
+	//   unlike CUnit which recalculates the matrix on each call
+	//   (and uses the synced and error args) CFeature caches it
+	//   this matrix is identical in synced and unsynced context!
+	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const { return transMatrix; }
+	const CMatrix44f& GetTransformMatrixRef() const { return transMatrix; }
 
 public:
 	int defID;
@@ -87,37 +98,34 @@ public:
 	 * until the corpse has been fully 'repaired'.
 	 */
 	bool isRepairingBeforeResurrect;
+	bool isAtFinalHeight;
+	bool isMoving;
+	bool inUpdateQue;
 
 	float resurrectProgress;
 	float reclaimLeft;
+	float finalHeight;
 
 	int tempNum;
 	int lastReclaim;
 
+	/// which drawQuad we are part of
+	int drawQuad;
+	int fireTime;
+	int smokeTime;
+
 	const FeatureDef* def;
 	const UnitDef* udef; /// type of unit this feature should be resurrected to
 
-	CMatrix44f transMatrix;
-
-	bool inUpdateQue;
-	/// which drawQuad we are part of
-	int drawQuad;
-
-	float finalHeight;
-	bool reachedFinalPos;
-
 	CFireProjectile* myFire;
-	int fireTime;
-	int emitSmokeTime;
 
 	/// the solid object that is on top of the geothermal
 	CSolidObject* solidOnTop;
 
-	/// initially a copy of CUnit::speed
-	float3 deathSpeed;
-
 private:
 	void PostLoad();
+
+	CMatrix44f transMatrix;
 };
 
 #endif // _FEATURE_H

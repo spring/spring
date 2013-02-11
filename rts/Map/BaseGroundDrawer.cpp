@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "BaseGroundDrawer.h"
 
@@ -27,7 +26,7 @@ CONFIG(float, GroundLODScaleUnitReflection).defaultValue(1.0f);
 CONFIG(bool, HighResLos).defaultValue(false);
 CONFIG(int, ExtraTextureUpdateRate).defaultValue(45);
 
-CBaseGroundDrawer::CBaseGroundDrawer(void)
+CBaseGroundDrawer::CBaseGroundDrawer()
 {
 	LODScaleReflection = configHandler->GetFloat("GroundLODScaleReflection");
 	LODScaleRefraction = configHandler->GetFloat("GroundLODScaleRefraction");
@@ -83,7 +82,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 }
 
 
-CBaseGroundDrawer::~CBaseGroundDrawer(void)
+CBaseGroundDrawer::~CBaseGroundDrawer()
 {
 	if (infoTex!=0) {
 		glDeleteTextures(1, &infoTex);
@@ -93,7 +92,7 @@ CBaseGroundDrawer::~CBaseGroundDrawer(void)
 }
 
 
-void CBaseGroundDrawer::DrawShadowPass(void)
+void CBaseGroundDrawer::DrawShadowPass()
 {}
 
 
@@ -193,50 +192,30 @@ void CBaseGroundDrawer::SetMetalTexture(const CMetalMap* map)
 }
 
 
-void CBaseGroundDrawer::TogglePathTraversabilityTexture()
+void CBaseGroundDrawer::TogglePathTexture(BaseGroundDrawMode mode)
 {
-	if (drawMode == drawPathTraversability) {
-		DisableExtraTexture();
-	} else {
-		SetDrawMode(drawPathTraversability);
+	switch (mode) {
+		case drawPathTraversability:
+		case drawPathHeat:
+		case drawPathFlow:
+		case drawPathCost: {
+			if (drawMode == mode) {
+				DisableExtraTexture();
+			} else {
+				SetDrawMode(mode);
 
-		extraTex = 0;
-		highResInfoTexWanted = false;
-		updateTextureState = 0;
+				extraTex = 0;
+				highResInfoTexWanted = false;
+				updateTextureState = 0;
 
-		while (!UpdateExtraTexture());
+				while (!UpdateExtraTexture());
+			}
+		} break;
+
+		default: {
+		} break;
 	}
 }
-
-void CBaseGroundDrawer::TogglePathHeatTexture()
-{
-	if (drawMode == drawPathHeat) {
-		DisableExtraTexture();
-	} else {
-		SetDrawMode(drawPathHeat);
-
-		extraTex = 0;
-		highResInfoTexWanted = false;
-		updateTextureState = 0;
-
-		while (!UpdateExtraTexture());
-	}
-}
-
-void CBaseGroundDrawer::TogglePathCostTexture()
-{
-	if (drawMode == drawPathCost) {
-		DisableExtraTexture();
-	} else {
-		SetDrawMode(drawPathCost);
-		extraTex = 0;
-		highResInfoTexWanted = false;
-		updateTextureState = 0;
-
-		while (!UpdateExtraTexture());
-	}
-}
-
 
 
 void CBaseGroundDrawer::ToggleLosTexture()
@@ -298,7 +277,7 @@ static inline int InterpolateLos(const unsigned short* p, int xsize, int ysize,
 //   updateTextureState = extraTextureUpdateRate:   Copy the buffer into a texture
 bool CBaseGroundDrawer::UpdateExtraTexture()
 {
-	if (mapInfo->map.voidWater && readmap->currMaxHeight<0) {
+	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return true;
 	}
 
@@ -342,6 +321,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		switch (drawMode) {
 			case drawPathTraversability:
 			case drawPathHeat:
+			case drawPathFlow:
 			case drawPathCost: {
 				pathDrawer->UpdateExtraTexture(drawMode, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
 			} break;

@@ -19,7 +19,6 @@
 #include <stdlib.h> // why is this here?
 
 #include "System/Net/Connection.h"
-#include "System/mmgr.h"
 
 #include "GameServer.h"
 
@@ -37,6 +36,9 @@
 #include "System/TdfParser.h"
 #include "GlobalUnsynced.h" // for syncdebug
 #include "Sim/Misc/GlobalConstants.h"
+#ifndef DEDICATED
+	#include "Sim/Misc/GlobalSynced.h"
+#endif
 
 #include "Player.h"
 #include "IVideoCapturing.h"
@@ -54,6 +56,7 @@
 #include "System/CRC.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/MsgStrings.h"
+#include "System/myMath.h"
 #include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoReader.h"
@@ -99,7 +102,7 @@ const std::string commands[numCommands] = {
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
 	"nocost", "forcestart", "nospectatorchat", "nospecdraw",
 	"skip", "reloadcob", "reloadcegs", "devlua", "editdefs",
-	"singlestep"
+	"singlestep", "spec", "specbynum"
 };
 using boost::format;
 
@@ -710,12 +713,14 @@ void CGameServer::CheckSync()
 				for (std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
 					int playerNum = s->first;
 #ifdef DEBUG
+					LOG_L(L_ERROR,"%s", str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum).c_str());
 					Message(str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
 #else
 					PrivateMessage(playerNum, str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
 #endif
 				}
 			}
+			SetExitCode(-1);
 		}
 
 		// Remove complete sets (for which all player's checksums have been received).
@@ -762,58 +767,7 @@ void CGameServer::Update()
 		lastPlayerInfo = spring_gettime();
 
 		if (serverFrameNum > 0) {
-			//send info about the players
-			std::vector<float> cpu;
-			std::vector<int> ping;
-			float refCpu = 0.0f;
-			for (size_t a = 0; a < players.size(); ++a) {
-				if (players[a].myState == GameParticipant::INGAME) {
-					int curPing = (serverFrameNum - players[a].lastFrameResponse);
-					if (players[a].isReconn && curPing < 2 * GAME_SPEED)
-						players[a].isReconn = false;
-					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, curPing));
-					float correctedCpu = players[a].isLocal ? players[a].cpuUsage :
-						std::max(0.0f, std::min(players[a].cpuUsage - 0.0025f * (float)players[a].luaLockTime, 1.0f));
-					if (demoReader ? !players[a].isFromDemo : !players[a].spectator) {
-						if (!players[a].isReconn && correctedCpu > refCpu)
-							refCpu = correctedCpu;
-						cpu.push_back(correctedCpu);
-						ping.push_back(curPing);
-					}
-				}
-			}
-
-			medianCpu = 0.0f;
-			medianPing = 0;
-			if (curSpeedCtrl > 0 && !cpu.empty()) {
-				std::sort(cpu.begin(), cpu.end());
-				std::sort(ping.begin(), ping.end());
-
-				int midpos = cpu.size() / 2;
-				medianCpu = cpu[midpos];
-				medianPing = ping[midpos];
-				if (midpos * 2 == cpu.size()) {
-					medianCpu = (medianCpu + cpu[midpos - 1]) / 2.0f;
-					medianPing = (medianPing + ping[midpos - 1]) / 2;
-				}
-				refCpu = medianCpu;
-			}
-
-			if (refCpu > 0.0f) {
-				// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
-				float wantedCpu = (curSpeedCtrl > 0) ? 0.6f + (1 - internalSpeed / userSpeedFactor) * 0.5f : 0.75f + (1 - internalSpeed / userSpeedFactor) * 0.5f;
-				float newSpeed = internalSpeed * wantedCpu / refCpu;
-//				float speedMod=1+wantedCpu-refCpu;
-//				LOG_L(L_DEBUG, "Speed REF %f MED %f WANT %f SPEEDM %f NSPEED %f",refCpu,medianCpu,wantedCpu,speedMod,newSpeed);
-				newSpeed = (newSpeed + internalSpeed) * 0.5f;
-				newSpeed = std::max(newSpeed, (curSpeedCtrl > 0) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
-				if (newSpeed > userSpeedFactor)
-					newSpeed = userSpeedFactor;
-				if (newSpeed < 0.1f)
-					newSpeed = 0.1f;
-				if (newSpeed != internalSpeed)
-					InternalSpeedChange(newSpeed);
-			}
+			LagProtection();
 		}
 		else {
 			for (size_t a = 0; a < players.size(); ++a) {
@@ -870,6 +824,83 @@ void CGameServer::Update()
 }
 
 
+
+void CGameServer::LagProtection()
+{
+	std::vector<float> cpu;
+	std::vector<int> ping;
+	cpu.reserve(players.size());
+	ping.reserve(players.size());
+
+	// detect reference cpu usage
+	float refCpuUsage = 0.0f;
+	for (size_t a = 0; a < players.size(); ++a) {
+		GameParticipant& player = players[a];
+		if (player.myState == GameParticipant::INGAME) {
+			// send info about the players
+			const int curPing = (serverFrameNum - player.lastFrameResponse);
+			Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, player.cpuUsage, curPing));
+
+			const float playerCpuUsage = player.isLocal ? player.cpuUsage : player.cpuUsage - 0.0025f * (float)player.luaLockTime;
+			const float correctedCpu   = Clamp(playerCpuUsage, 0.0f, 1.0f);
+
+			if (player.isReconn && curPing < 2 * GAME_SPEED)
+				player.isReconn = false;
+
+			if ((player.isLocal) || (demoReader ? !player.isFromDemo : !player.spectator)) {
+				if (!player.isReconn && correctedCpu > refCpuUsage)
+					refCpuUsage = correctedCpu;
+				cpu.push_back(correctedCpu);
+				ping.push_back(curPing);
+			}
+		}
+	}
+
+	// calculate median values
+	medianCpu = 0.0f;
+	medianPing = 0;
+	if (curSpeedCtrl > 0 && !cpu.empty()) {
+		std::sort(cpu.begin(), cpu.end());
+		std::sort(ping.begin(), ping.end());
+
+		int midpos = cpu.size() / 2;
+		medianCpu = cpu[midpos];
+		medianPing = ping[midpos];
+		if (midpos * 2 == cpu.size()) {
+			medianCpu = (medianCpu + cpu[midpos - 1]) / 2.0f;
+			medianPing = (medianPing + ping[midpos - 1]) / 2;
+		}
+		refCpuUsage = medianCpu;
+	}
+
+	// adjust game speed
+	if (refCpuUsage > 0.0f && !isPaused) {
+		// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
+		float wantedCpuUsage = (curSpeedCtrl > 0) ?  0.60f : 0.75f;
+		wantedCpuUsage += (1.0f - internalSpeed / userSpeedFactor) * 0.5f; //???
+	
+		float newSpeed = internalSpeed * wantedCpuUsage / refCpuUsage;
+		newSpeed = (newSpeed + internalSpeed) * 0.5f;
+		newSpeed = Clamp(newSpeed, 0.1f, userSpeedFactor);
+		if (userSpeedFactor <= 2.f)
+			newSpeed = std::max(newSpeed, (curSpeedCtrl > 0) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
+
+#ifndef DEDICATED
+		// adjust game speed to localclient's (:= host) maximum SimFrame rate
+		//FIXME instead of using CpuUsage for connected clients use their avgSimFrameTime or rather maxSimFPS, too (which isn't send via network yet!)
+		const float maxSimFPS = (1000.0f / gu->avgSimFrameTime) * (1.0f - gu->reconnectSimDrawBalance);
+		newSpeed = Clamp(newSpeed, 0.1f, ((maxSimFPS / GAME_SPEED) + internalSpeed) * 0.5f);
+#endif
+
+		//float speedMod = 1.f + wantedCpuUsage - refCpuUsage;
+		//LOG_L(L_DEBUG, "Speed REF %f MED %f WANT %f SPEEDM %f NSPEED %f", refCpuUsage, medianCpu, wantedCpuUsage, speedMod, newSpeed);
+
+		if (newSpeed != internalSpeed)
+			InternalSpeedChange(newSpeed);
+	}
+}
+
+
 /// has to be consistent with Game.cpp/CPlayerHandler
 static std::vector<int> getPlayersInTeam(const std::vector<GameParticipant>& players, const int teamId) {
 	std::vector<int> playersInTeam;
@@ -911,7 +942,6 @@ static std::vector<unsigned char> getSkirmishAIIds(const std::map<unsigned char,
 static int countNumSkirmishAIsInTeam(const std::map<unsigned char, GameSkirmishAI>& ais, const int teamId) {
 	return getSkirmishAIIds(ais, teamId).size();
 }
-
 
 
 void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet)
@@ -1393,30 +1423,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 						Message(str(format("Spectator %s sent invalid team resign") %players[player].name), true);
 						break;
 					}
-					Broadcast(CBaseNetProtocol::Get().SendResign(player));
+					ResignPlayer(player);
 
-					//players[player].team = 0;
-					players[player].spectator = true;
-					// actualize all teams of which the player is leader
-					for (size_t t = 0; t < teams.size(); ++t) {
-						if (teams[t].leader == player) {
-							const std::vector<int> &teamPlayers = getPlayersInTeam(players, t);
-							const std::vector<unsigned char> &teamAIs  = getSkirmishAIIds(ais, t);
-							if ((teamPlayers.size() + teamAIs.size()) == 0) {
-								// no controllers left in team
-								teams[t].active = false;
-								teams[t].leader = -1;
-							} else if (teamPlayers.empty()) {
-								// no human player left in team
-								teams[t].leader = ais[teamAIs[0]].hostPlayer;
-							} else {
-								// still human controllers left in team
-								teams[t].leader = teamPlayers[0];
-							}
-						}
-					}
-					if (hostif)
-						hostif->SendPlayerDefeated(player);
 					break;
 				}
 				case TEAMMSG_JOIN_TEAM: {
@@ -1838,8 +1846,30 @@ void CGameServer::GenerateAndSendGameID()
 	gameID.intArray[2] = crc.GetDigest();
 
 	CRC entropy;
-	entropy.Update(spring_tomsecs(lastTick-serverStartTime));
+	entropy.Update(spring_tomsecs(lastTick - serverStartTime));
 	gameID.intArray[3] = entropy.GetDigest();
+
+	// fixed gameID?
+	if (!setup->gameID.empty()) {
+		unsigned char p[16];
+	#ifdef __MINGW32__
+		// workaround missing C99 support in a msvc lib with %02hhx
+		generatedGameID = (sscanf(setup->gameID.c_str(),
+		      "%02hc%02hc%02hc%02hc%02hc%02hc%02hc%02hc"
+		      "%02hc%02hc%02hc%02hc%02hc%02hc%02hc%02hc",
+		      &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
+		      &p[ 8], &p[ 9], &p[10], &p[11], &p[12], &p[13], &p[14], &p[15]) == 16);
+	#else
+		generatedGameID = (sscanf(setup->gameID.c_str(),
+		      "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx"
+		      "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
+		      &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
+		      &p[ 8], &p[ 9], &p[10], &p[11], &p[12], &p[13], &p[14], &p[15]) == 16);
+	#endif
+		if (generatedGameID)
+			for (int i = 0; i<16; ++i)
+				gameID.charArray[i] =  p[i];
+	}
 
 	Broadcast(CBaseNetProtocol::Get().SendGameID(gameID.charArray));
 #ifdef DEDICATED
@@ -1874,10 +1904,14 @@ void CGameServer::CheckForGameStart(bool forced)
 	if (allReady || forced) {
 		if (!spring_istime(readyTime)) {
 			readyTime = spring_gettime();
-			rng.Seed(spring_tomsecs(readyTime-serverStartTime));
+
 			// we have to wait at least 1 msec, because 0 is a special case
 			const unsigned countdown = std::max(1, spring_tomsecs(gameStartDelay));
 			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(countdown));
+
+			// make seed more random
+			if (setup->gameID.empty())
+				rng.Seed(spring_tomsecs(readyTime - serverStartTime));
 		}
 	}
 	if (spring_istime(readyTime) && ((spring_gettime() - readyTime) > gameStartDelay)) {
@@ -1906,27 +1940,29 @@ void CGameServer::StartGame()
 		return;
 	}
 
+	{
+		std::vector<bool> teamStartPosSent(teams.size(), false);
+
+		// send start position for player controlled teams
+		for (size_t a = 0; a < players.size(); ++a) {
+			if (!players[a].spectator) {
+				const unsigned aTeam = players[a].team;
+				Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
+				teamStartPosSent[aTeam] = true;
+			}
+		}
+
+		// send start position for all other teams
+		for (size_t a = 0; a < teams.size(); ++a) {
+			if (!teamStartPosSent[a]) {
+				// teams which aren't player controlled are always ready
+				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
+			}
+		}
+	}
+
 	GenerateAndSendGameID();
-
-	std::vector<bool> teamStartPosSent(teams.size(), false);
-
-	// send start position for player controlled teams
-	for (size_t a = 0; a < players.size(); ++a) {
-		if (!players[a].spectator) {
-			const unsigned aTeam = players[a].team;
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
-			teamStartPosSent[aTeam] = true;
-		}
-	}
-
-	// send start position for all other teams
-	for (size_t a = 0; a < teams.size(); ++a) {
-		if (!teamStartPosSent[a]) {
-			// teams which aren't player controlled are always ready
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
-		}
-	}
-
+	rng.Seed(gameID.intArray[0] ^ gameID.intArray[1] ^ gameID.intArray[2] ^ gameID.intArray[3]);
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
 	if (hostif)
@@ -1962,6 +1998,24 @@ void CGameServer::PushAction(const Action& action)
 				if (playerLower.find(name)==0) {	// can kick on substrings of name
 					if (!players[a].isLocal) // do not kick host
 						KickPlayer(a);
+				}
+			}
+		}
+	}
+	if (action.command == "specbynum") {
+		if (!action.extra.empty()) {
+			const int playerNum = atoi(action.extra.c_str());
+			SpecPlayer(playerNum);
+		}
+	}
+	else if (action.command == "spec") {
+		if (!action.extra.empty()) {
+			std::string name = action.extra;
+			StringToLowerInPlace(name);
+			for (size_t a=0; a < players.size();++a) {
+				std::string playerLower = StringToLower(players[a].name);
+				if (playerLower.find(name)==0) {	// can spec on substrings of name
+					SpecPlayer(a);
 				}
 			}
 		}
@@ -2132,62 +2186,68 @@ bool CGameServer::HasFinished() const
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
-	if (!demoReader) {
-		// use NEWFRAME_MSGes from demo otherwise
-		Threading::RecursiveScopedLock(gameServerMutex, !fromServerThread);
-
-		CheckSync();
-		int newFrames = 1;
-
-		if (!fixedFrameTime) {
-			spring_time currentTick = spring_gettime();
-			spring_duration timeElapsed = currentTick - lastTick;
-
-			if (timeElapsed > spring_msecs(200))
-				timeElapsed = spring_msecs(200);
-
-			timeLeft += GAME_SPEED * internalSpeed * float(spring_tomsecs(timeElapsed)) * 0.001f;
-			lastTick=currentTick;
-			newFrames = (timeLeft > 0)? int(math::ceil(timeLeft)): 0;
-			timeLeft -= newFrames;
-
-			if (hasLocalClient) {
-				// needs to set lastTick and stuff, otherwise we will get all the left out NEWFRAME's at once when client has catched up
-				if (players[localClientNumber].lastFrameResponse + GAME_SPEED*2 <= serverFrameNum)
-					return;
-			}
-		}
-
-		const bool rec = videoCapturing->IsCapturing();
-		const bool normalFrame = !isPaused && !rec;
-		const bool videoFrame = !isPaused && fixedFrameTime;
-		const bool singleStep = fixedFrameTime && !rec;
-
-		if (normalFrame || videoFrame || singleStep) {
-			for (int i=0; i < newFrames; ++i) {
-				assert(!demoReader);
-				++serverFrameNum;
-				// Send out new frame messages.
-				if ((serverFrameNum % serverKeyframeIntervall) == 0)
-					Broadcast(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
-				else
-					Broadcast(CBaseNetProtocol::Get().SendNewFrame());
-
-				// every gameProgressFrameInterval, we broadcast current frame in a special message that doesn't get cached and skips normal queue, to let players know their loading %
-				if ((serverFrameNum%gameProgressFrameInterval) == 0) {
-					CBaseNetProtocol::PacketType progressPacket = CBaseNetProtocol::Get().SendCurrentFrameProgress(serverFrameNum);
-					// we cannot use broadcast here, since we want to skip caching
-					for (size_t p = 0; p < players.size(); ++p)
-						players[p].SendData(progressPacket);
-				}
-#ifdef SYNCCHECK
-				outstandingSyncFrames.insert(serverFrameNum);
-#endif
-			}
-		}
-	} else {
+	if (demoReader) {
 		CheckSync();
 		SendDemoData(-1);
+		return;
+	}
+
+	Threading::RecursiveScopedLock(gameServerMutex, !fromServerThread);
+
+	CheckSync();
+	int newFrames = 1;
+
+	if (!fixedFrameTime) {
+		spring_time currentTick = spring_gettime();
+		spring_duration timeElapsed = currentTick - lastTick;
+
+		if (timeElapsed > spring_msecs(200))
+			timeElapsed = spring_msecs(200);
+
+		timeLeft += GAME_SPEED * internalSpeed * float(spring_tomsecs(timeElapsed)) * 0.001f;
+		lastTick  = currentTick;
+		newFrames = (timeLeft > 0)? int(math::ceil(timeLeft)): 0;
+		timeLeft -= newFrames;
+
+#ifndef DEDICATED
+		if (hasLocalClient) {
+			// Don't create newFrames when localClient (:= host) isn't able to process them fast enough.
+			// Despite still allow to create a few in advance to not lag other connected clients.
+			const float simFramesBehind = serverFrameNum - players[localClientNumber].lastFrameResponse;
+			const float a          = std::min(simFramesBehind / GAME_SPEED, 1.0f);
+			const int curSimFPS    = std::max((int)gu->simFPS, GAME_SPEED); // max advance 1sec in the future
+			const int maxNewFrames = mix(curSimFPS, 0, a);
+			newFrames = std::min(newFrames, maxNewFrames);
+		}
+#endif
+	}
+
+	const bool rec = videoCapturing->IsCapturing();
+	const bool normalFrame = !isPaused && !rec;
+	const bool videoFrame = !isPaused && fixedFrameTime;
+	const bool singleStep = fixedFrameTime && !rec;
+
+	if (normalFrame || videoFrame || singleStep) {
+		for (int i=0; i < newFrames; ++i) {
+			assert(!demoReader);
+			++serverFrameNum;
+			// Send out new frame messages.
+			if ((serverFrameNum % serverKeyframeIntervall) == 0)
+				Broadcast(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
+			else
+				Broadcast(CBaseNetProtocol::Get().SendNewFrame());
+
+			// every gameProgressFrameInterval, we broadcast current frame in a special message that doesn't get cached and skips normal queue, to let players know their loading %
+			if ((serverFrameNum%gameProgressFrameInterval) == 0) {
+				CBaseNetProtocol::PacketType progressPacket = CBaseNetProtocol::Get().SendCurrentFrameProgress(serverFrameNum);
+				// we cannot use broadcast here, since we want to skip caching
+				for (size_t p = 0; p < players.size(); ++p)
+					players[p].SendData(progressPacket);
+			}
+#ifdef SYNCCHECK
+			outstandingSyncFrames.insert(serverFrameNum);
+#endif
+		}
 	}
 }
 
@@ -2250,6 +2310,7 @@ void CGameServer::UpdateLoop()
 {
 	try {
 		Threading::SetThreadName("netcode");
+		Threading::SetAffinity(~0);
 
 		while (!quitServer) {
 			spring_sleep(spring_msecs(10));
@@ -2283,17 +2344,57 @@ bool CGameServer::WaitsOnCon() const
 
 void CGameServer::KickPlayer(const int playerNum)
 {
-	if (players[playerNum].link) { // only kick connected players
-		Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
-		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
-		players[playerNum].Kill("Kicked from the battle", true);
-		UpdateSpeedControl(speedControl);
-		if (hostif)
-			hostif->SendPlayerLeft(playerNum, 2);
+	if (!players[playerNum].link) { // only kick connected players
+		Message(str(format("Attempt to kick user %d who is not connected") %playerNum));
+		return;
 	}
-	else
-		Message(str(format("Attempt to kick player %d who is not connected") %playerNum));
+	Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
+	Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
+	players[playerNum].Kill("Kicked from the battle", true);
+	UpdateSpeedControl(speedControl);
+	if (hostif)
+		hostif->SendPlayerLeft(playerNum, 2);
+}
 
+void CGameServer::SpecPlayer(const int player) {
+	if (!players[player].link) {
+		Message(str(format("Attempt to spec user %d who is not connected") %player));
+		return;
+	}
+	if (players[player].spectator) {
+		Message(str(format("Attempt to spec user %d who is spectating already") %player));
+		return;
+	}
+	Message(str(format(PlayerResigned) %players[player].name %"forced spec"));
+	ResignPlayer(player);
+}
+
+void CGameServer::ResignPlayer(const int player)
+{
+	Broadcast(CBaseNetProtocol::Get().SendResign(player));
+
+	//players[player].team = 0;
+	players[player].spectator = true;
+	// actualize all teams of which the player is leader
+	for (size_t t = 0; t < teams.size(); ++t) {
+		if (teams[t].leader == player) {
+			const std::vector<int> &teamPlayers = getPlayersInTeam(players, t);
+			const std::vector<unsigned char> &teamAIs  = getSkirmishAIIds(ais, t);
+			if ((teamPlayers.size() + teamAIs.size()) == 0) {
+				// no controllers left in team
+				teams[t].active = false;
+				teams[t].leader = -1;
+			} else if (teamPlayers.empty()) {
+				// no human player left in team
+				teams[t].leader = ais[teamAIs[0]].hostPlayer;
+			} else {
+				// still human controllers left in team
+				teams[t].leader = teamPlayers[0];
+			}
+		}
+	}
+	if (hostif)
+		hostif->SendPlayerDefeated(player);
 }
 
 

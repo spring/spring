@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include <list>
 #include <cstdlib>
@@ -274,7 +273,7 @@ void CLosHandler::CleanupInstance(LosInstance* instance)
 }
 
 
-void CLosHandler::Update(void)
+void CLosHandler::Update()
 {
 	while (!delayQue.empty() && delayQue.front().timeoutTime < gs->frameNum) {
 		FreeInstance(delayQue.front().instance);

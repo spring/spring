@@ -13,6 +13,19 @@ if [ ! -x "$1" ]; then
 	exit 1
 fi
 
+if [ "$(cat /proc/sys/kernel/core_pattern)" != "core" ]; then
+	echo "Please set /proc/sys/kernel/core_pattern to core"
+	exit 1
+fi
+
+if [ "$(cat /proc/sys/kernel/core_uses_pid)" != "1" ]; then
+	echo "Please run sudo echo 1 >/proc/sys/kernel/core_uses_pid"
+	exit 1
+fi
+
+# enable core dumps
+ulimit -c unlimited
+
 RUNCLIENT=test/validation/run-client.sh
 
 if [ ! -x $RUNCLIENT ]; then
@@ -20,52 +33,50 @@ if [ ! -x $RUNCLIENT ]; then
 	exit 1
 fi
 
-GDBCMDS=$(mktemp)
-(
-	echo file $1
-	echo run $2 $3 $4 $5 $6 $7 $8 $9
-	echo bt full
-	echo quit
-)>$GDBCMDS
 
-# limit to 1GB RAM
-ulimit -v 1000000
-# max 15 min cpu time
-ulimit -t 900
+# limit to 1.5GB RAM
+ulimit -v 1500000
+# max 3 min cpu time
+ulimit -t 180
 
-# FIXME: remove old caching files, the client-script would start immediately when they exist
-# maybe a foreign directory for the client is the cleanest way...
-rm -rf ~/.spring/cache/paths
+# delete path cache
+rm -rf ~/.spring/cache/
 
 # start up the client in background
 $RUNCLIENT $1 &
 PID_CLIENT=$!
 
 set +e #temp disable abort on error
-#gdb -batch -return-child-result -x $GDBCMDS &
 $@ &
-
 PID_HOST=$!
 
 # auto kill host after 15mins
 #sleep 900 && kill -9 $PID_HOST &
 
+echo waiting for host to exit, pid: $PID_HOST
 # store exit code
 wait $PID_HOST
 EXIT=$?
-set -e
 
-# cleanup
-rm -f $GDBCMDS
-
+echo waiting for client to exit, pid: $PID_CLIENT
 # get spring client process exit code / wait for exit
 wait $PID_CLIENT
 EXITCHILD=$?
-# wait for client to exit
+
+#reenable abbort on error
+set -e
+
+if [ -d ~/.spring/AI ]; then
+	echo Server and client exited, dumping log files in ~/.spring/AI
+	find ~/.spring/AI -regex '.*\.\(txt\|log\)' -type f -exec echo {} \; -exec cat {} \; -delete
+fi
+
+# exit with exit code of server/client if failed
 if [ $EXITCHILD -ne 0 ];
 then
-	echo "Error: Spring-client exited with error code $EXITCHILD"
+	echo Client exited with $EXITCHILD
 	exit $EXITCHILD
 fi
+
 exit $EXIT
 

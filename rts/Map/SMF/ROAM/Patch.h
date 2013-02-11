@@ -20,19 +20,8 @@ class CCamera;
 #define VARIANCE_DEPTH (12)
 
 // How many TriTreeNodes should be allocated?
-#define POOL_SIZE (500000)
-
-
-
-/**
- * Patch render mode
- * way indices/vertices are send to the GPU
- */
-enum RenderMode {
-	VBO = 1,
-	DL  = 2,
-	VA  = 3
-};
+#define POOL_SIZE      (500000)
+#define MAX_POOL_SIZE (8000000)
 
 
 /**
@@ -76,7 +65,7 @@ struct TriTreeNode
 class CTriNodePool
 {
 public:
-	static void InitPools();
+	static void InitPools(const size_t newPoolSize = POOL_SIZE);
 	static void FreePools();
 	static void ResetAll();
 	inline static CTriNodePool* GetPool();
@@ -89,6 +78,10 @@ public:
 
 	void Reset();
 	TriTreeNode* AllocateTri();
+
+	bool RunOutOfNodes() const {
+		return (m_NextTriNode >= pool.size());
+	}
 
 private:
 	std::vector<TriTreeNode> pool;
@@ -104,6 +97,13 @@ private:
  */
 class Patch
 {
+public:
+	enum RenderMode {
+		VBO = 1,
+		DL  = 2,
+		VA  = 3
+	};
+
 public:
 	Patch();
 	~Patch();
@@ -135,7 +135,7 @@ public:
 	static void SwitchRenderMode(int mode = -1);
 
 	//void UpdateVisibility(CCamera*& cam);
-	static void UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int& numPatchesX);
+	static void UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX);
 
 protected:
 	void VBOUploadVertices();
@@ -143,9 +143,9 @@ protected:
 private:
 	// The recursive half of the Patch Class
 	void Split(TriTreeNode* tri);
-	void RecursTessellate(TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, const int& node);
-	void RecursRender(TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int maxdepth);
-	float RecursComputeVariance(const int& leftX, const int& leftY, const float& leftZ, const int& rightX, const int& rightY, const float& rightZ, const int& apexX, const int& apexY, const float& apexZ, const int& node);
+	void RecursTessellate(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, const int node);
+	void RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex);
+	float RecursComputeVariance(const int leftX, const int leftY, const float leftZ, const int rightX, const int rightY, const float rightZ, const int apexX, const int apexY, const float apexZ, const int node);
 
 protected:
 	static RenderMode renderMode;

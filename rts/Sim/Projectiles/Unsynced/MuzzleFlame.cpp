@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
@@ -43,7 +42,7 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3&
 	randSmokeDir.resize(numSmoke);
 
 	for (int a = 0; a < numSmoke; ++a) {
-		randSmokeDir[a] = dir + gu->usRandFloat() * 0.4f;
+		randSmokeDir[a] = dir + gu->RandFloat() * 0.4f;
 	}
 }
 

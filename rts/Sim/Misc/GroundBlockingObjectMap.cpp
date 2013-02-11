@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <assert.h>
-#include "System/mmgr.h"
 
 #include "GroundBlockingObjectMap.h"
 
 #include "GlobalSynced.h"
 #include "GlobalConstants.h"
 #include "Sim/Objects/SolidObject.h"
+#include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/creg/STL_Map.h"
 #include "lib/gml/gmlmut.h"
@@ -32,11 +32,13 @@ inline static const int GetObjectID(CSolidObject* obj)
 
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 {
-	if (object->blockMap) {
+	if (object->blockMap != NULL) {
+		// if object has a yardmap, add it to map selectively
+		// (checking the specific state of each yardmap cell)
 		AddGroundBlockingObject(object, YARDMAP_BLOCKED);
 		return;
 	}
-	
+
 	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
 
 	const int objID = GetObjectID(object);
@@ -56,19 +58,16 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 	for (int zSqr = minZSqr; zSqr < maxZSqr; zSqr++) {
 		for (int xSqr = minXSqr; xSqr < maxXSqr; xSqr++) {
-			const int idx = xSqr + zSqr * gs->mapx;
-
-			BlockingMapCell& cell = groundBlockingMap[idx];
+			BlockingMapCell& cell = groundBlockingMap[xSqr + zSqr * gs->mapx];
 			cell[objID] = object;
 		}
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
 	if (object->moveDef == NULL && pathManager) {
-		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
+		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr, TERRAINCHANGE_OBJECT_INSERTED);
 	}
 }
-
 
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, const YardMapStatus& mask)
 {
@@ -94,10 +93,9 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 			// unit yardmaps always contain sx=UnitDef::xsize * sz=UnitDef::zsize
 			// cells (the unit->moveDef footprint can have different dimensions)
 			const float3 testPos = float3(x, 0.0f, z) * SQUARE_SIZE;
-			if (object->GetGroundBlockingAtPos(testPos) & mask) {
-				const int idx = x + (z) * gs->mapx;
 
-				BlockingMapCell& cell = groundBlockingMap[idx];
+			if (object->GetGroundBlockingMaskAtPos(testPos) & mask) {
+				BlockingMapCell& cell = groundBlockingMap[x + (z) * gs->mapx];
 				cell[objID] = object;
 			}
 		}
@@ -105,7 +103,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 
 	// FIXME: needs dependency injection (observer pattern?)
 	if (object->moveDef == NULL && pathManager) {
-		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
+		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr, TERRAINCHANGE_OBJECT_INSERTED_YM);
 	}
 }
 
@@ -134,7 +132,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 
 	// FIXME: needs dependency injection (observer pattern?)
 	if (object->moveDef == NULL && pathManager) {
-		pathManager->TerrainChange(bx, bz, bx + sx, bz + sz);
+		pathManager->TerrainChange(bx, bz, bx + sx, bz + sz, TERRAINCHANGE_OBJECT_DELETED);
 	}
 }
 
@@ -237,7 +235,7 @@ inline bool CGroundBlockingObjectMap::CheckYard(CSolidObject* yardUnit, const Ya
 
 	for (int z = yardUnit->mapPos.y; z < yardUnit->mapPos.y + yardUnit->zsize; ++z) {
 		for (int x = yardUnit->mapPos.x; x < yardUnit->mapPos.x + yardUnit->xsize; ++x) {
-			if (yardUnit->GetGroundBlockingAtPos(float3(x * SQUARE_SIZE, 0.0f, z * SQUARE_SIZE)) & mask)
+			if (yardUnit->GetGroundBlockingMaskAtPos(float3(x * SQUARE_SIZE, 0.0f, z * SQUARE_SIZE)) & mask)
 				if (GroundBlocked(x, z, yardUnit))
 					return false;
 		}

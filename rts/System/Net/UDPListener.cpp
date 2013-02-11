@@ -16,7 +16,6 @@
 #include <list>
 #include <queue>
 
-#include "System/mmgr.h"
 
 #include "ProtocolDef.h"
 #include "UDPConnection.h"

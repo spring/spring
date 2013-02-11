@@ -5,10 +5,9 @@
 #include "GroupHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "System/EventHandler.h"
-#include "System/Platform/errorhandler.h"
-#include "System/mmgr.h"
 #include "System/creg/STL_Set.h"
 #include "System/float3.h"
+#include "lib/gml/gmlmut.h"
 
 CR_BIND(CGroup, (0, NULL))
 

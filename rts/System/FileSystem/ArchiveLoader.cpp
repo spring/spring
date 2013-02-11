@@ -1,16 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "ArchiveLoader.h"
 
-#include "ArchiveFactory.h"
-
-#include "IArchive.h"
-#include "PoolArchive.h"
-#include "DirArchive.h"
-#include "ZipArchive.h"
-#include "SevenZipArchive.h"
+#include "Archives/ArchiveFactory.h"
+#include "Archives/IArchive.h"
+#include "Archives/PoolArchive.h"
+#include "Archives/DirArchive.h"
+#include "Archives/ZipArchive.h"
+#include "Archives/SevenZipArchive.h"
+#include "Archives/VirtualArchive.h"
 
 #include "FileSystem.h"
 #include "DataDirsAccess.h"
@@ -25,6 +24,7 @@ CArchiveLoader::CArchiveLoader()
 	AddFactory(new CDirArchiveFactory());
 	AddFactory(new CZipArchiveFactory());
 	AddFactory(new CSevenZipArchiveFactory());
+	AddFactory(new CVirtualArchiveFactory());
 }
 
 CArchiveLoader::~CArchiveLoader()

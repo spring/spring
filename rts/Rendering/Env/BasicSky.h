@@ -3,7 +3,6 @@
 #ifndef BASIC_SKY_H
 #define BASIC_SKY_H
 
-#include "Rendering/GL/myGL.h"
 #include "ISky.h"
 
 class CBasicSky : public ISky

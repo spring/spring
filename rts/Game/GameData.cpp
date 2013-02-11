@@ -3,8 +3,6 @@
 #include <assert.h>
 #include <zlib.h>
 
-#include "System/mmgr.h"
-
 #include "GameData.h"
 
 #include "System/BaseNetProtocol.h"
@@ -61,7 +59,7 @@ const netcode::RawPacket* GameData::Pack() const
 {
 	if (compressed.empty())
 	{
-		long unsigned bufsize = (setupText.size() * 1.02) + 32;
+		long unsigned bufsize = compressBound(setupText.size());
 		compressed.resize(bufsize);
 		const int error = compress(&compressed[0], &bufsize, reinterpret_cast<const boost::uint8_t*>(setupText.c_str()), setupText.length());
 		compressed.resize(bufsize);

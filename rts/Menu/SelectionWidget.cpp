@@ -8,7 +8,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Exceptions.h"
 #include "System/Config/ConfigHandler.h"
-#include "ScriptHandler.h"
+#include "System/AIScriptHandler.h"
 
 const std::string SelectionWidget::NoModSelect = "No game selected";
 const std::string SelectionWidget::NoMapSelect = "No map selected";
@@ -106,8 +106,8 @@ void SelectionWidget::ShowScriptList()
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectScript, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 
-	CScriptHandler::ScriptList scriptList = CScriptHandler::Instance().GetScriptList();
-	for (CScriptHandler::ScriptList::iterator it = scriptList.begin(); it != scriptList.end(); ++it) {
+	CAIScriptHandler::ScriptList scriptList = CAIScriptHandler::Instance().GetScriptList();
+	for (CAIScriptHandler::ScriptList::iterator it = scriptList.begin(); it != scriptList.end(); ++it) {
 		curSelect->list->AddItem(*it, "");
 	}
 

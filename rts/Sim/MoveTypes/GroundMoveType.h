@@ -8,7 +8,6 @@
 
 struct UnitDef;
 struct MoveDef;
-class CMoveMath;
 class IPathController;
 
 class CGroundMoveType : public AMoveType
@@ -32,7 +31,7 @@ public:
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 
 	void TestNewTerrainSquare();
-	void ImpulseAdded(const float3&);
+	bool CanApplyImpulse(const float3&);
 	void LeaveTransport();
 
 	void StartSkidding() { skidding = true; }
@@ -47,7 +46,7 @@ public:
 	static void DeleteLineTable();
 
 private:
-	float3 ObstacleAvoidance(const float3& desiredDir);
+	float3 GetObstacleAvoidanceDir(const float3& desiredDir);
 	float Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal = 0.0f);
 
 	void GetNewPath();
@@ -64,19 +63,16 @@ private:
 	void Fail();
 
 	void HandleObjectCollisions();
-	void HandleStaticObjectCollisionYM(
-		CUnit* collider,
-		CSolidObject* collidee,
-		const MoveDef* colliderMD,
-		const CMoveMath* colliderMM,
-		bool repath);
 	void HandleStaticObjectCollision(
 		CUnit* collider,
 		CSolidObject* collidee,
 		const MoveDef* colliderMD,
-		const CMoveMath* colliderMM,
-		const float3& collisionImpulse,
-		bool repath);
+		const float colliderRadius,
+		const float collideeRadius,
+		const float3& separationVector,
+		bool canRequestPath,
+		bool checkYardMap,
+		bool checkTerrain);
 
 	void HandleUnitCollisions(
 		CUnit* collider,
@@ -84,16 +80,14 @@ private:
 		const float colliderRadius,
 		const float3& sepDirMask,
 		const UnitDef* colliderUD,
-		const MoveDef* colliderMD,
-		const CMoveMath* colliderMM);
+		const MoveDef* colliderMD);
 	void HandleFeatureCollisions(
 		CUnit* collider,
 		const float colliderSpeed,
 		const float colliderRadius,
 		const float3& sepDirMask,
 		const UnitDef* colliderUD,
-		const MoveDef* colliderMD,
-		const CMoveMath* colliderMM);
+		const MoveDef* colliderMD);
 
 	void SetMainHeading();
 	void ChangeSpeed(float, bool, bool = false);
@@ -104,6 +98,7 @@ private:
 	void CheckCollisionSkid();
 	void CalcSkidRot();
 
+	const float3& GetGroundNormal(const float3&) const;
 	float GetGroundHeight(const float3&) const;
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();

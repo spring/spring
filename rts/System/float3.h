@@ -10,6 +10,7 @@
 #include "System/creg/creg_cond.h"
 #include "System/FastMath.h"
 #ifndef BUILDING_AI
+#include "lib/gml/gml_base.h"
 #include "System/Platform/Threading.h"
 #endif
 
@@ -455,8 +456,8 @@ public:
 	 */
 	float3& Normalize() {
 #if defined(__SUPPORT_SNAN__)
-#if defined(USE_GML) && !defined(BUILDING_AI)
-		if (!Threading::IsSimThread())
+#ifndef BUILDING_AI
+		if (GML::Enabled() && !Threading::IsSimThread())
 			return SafeNormalize();
 #endif
 		assert(SqLength() > NORMALIZE_EPS);
@@ -506,8 +507,8 @@ public:
 	 */
 	float3& ANormalize() {
 #if defined(__SUPPORT_SNAN__)
-#if defined(USE_GML) && !defined(BUILDING_AI)
-		if (!Threading::IsSimThread())
+#ifndef BUILDING_AI
+		if (GML::Enabled() && !Threading::IsSimThread())
 			return SafeANormalize();
 #endif
 		assert(SqLength() > NORMALIZE_EPS);
@@ -603,7 +604,6 @@ public:
 		return (float)(dx*dx + dz*dz);
 	}
 
-
 	/**
 	 * @brief max x pos
 	 *
@@ -628,6 +628,13 @@ public:
 	 * @see #IsInMap
 	 */
 	bool IsInBounds() const;
+	/**
+	 * @brief Check against FaceHeightmap bounds
+	 *
+	 * Check if this vector is in map [0 .. gs->mapxy]
+	 * @note USE THIS!
+	 */
+	bool IsInMap() const;
 
 	/**
 	 * @brief Clamps to FaceHeightmap
@@ -640,26 +647,24 @@ public:
 	void ClampInBounds();
 
 	/**
-	 * @brief Check against FaceHeightmap bounds
-	 *
-	 * Check if this vector is in map [0 .. gs->mapxy]
-	 * @note USE THIS!
-	 */
-	bool IsInMap() const;
-
-	/**
 	 * @brief Clamps to VertexHeightmap
 	 *
 	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. gs->mapxy]
 	 * @note USE THIS!
 	 */
 	void ClampInMap();
+
+	float3 cClampInBounds() const { float3 f = *this; f.ClampInBounds(); return f; }
 	float3 cClampInMap() const { float3 f = *this; f.ClampInMap(); return f; }
 
 public:
-	float x; ///< x component
-	float y; ///< y component
-	float z; ///< z component
+	union {
+		struct { float x,y,z; };
+		struct { float r,g,b; };
+		struct { float x1,y1,x2; };
+		struct { float s,t,p; };
+		struct { float xstart, ystart, xend; };
+	};
 };
 
 /**
@@ -677,6 +682,14 @@ const float3 UpVector(0.0f, 1.0f, 0.0f);
  * (0, 0, 0)
  */
 const float3 ZeroVector(0.0f, 0.0f, 0.0f);
+
+
+namespace std {
+	float3 min(float3 v1, float3 v2);
+	float3 max(float3 v1, float3 v2);
+	
+	float3 fabs(float3 v);
+};
 
 
 #endif /* FLOAT3_H */

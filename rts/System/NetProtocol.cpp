@@ -6,7 +6,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "System/mmgr.h"
 
 // NOTE: these _must_ be included before NetProtocol.h due to some ambiguity in
 // Boost hash_float.hpp ("call of overloaded ‘ldexp(float&, int&)’ is ambiguous")
@@ -144,6 +143,7 @@ void CNetProtocol::Send(const netcode::RawPacket* pkt)
 
 void CNetProtocol::UpdateLoop()
 {
+	Threading::SetThreadName("heartbeat");
 	loading = true;
 	while (loading) {
 		Update();

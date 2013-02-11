@@ -279,7 +279,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 #define GML_MAKEASS_I() GML_MAKEASS_H() p->I=I;
 #define GML_MAKEASS_J() GML_MAKEASS_I() p->J=J;
 
-#define GML_RETVAL(ft) return (ft)*(volatile ft *)&(p->ret);
+#define GML_RETVAL(ft) return (ft) *reinterpret_cast<volatile ft *>(&(p->ret));
 
 #define GML_RELOC()\
 	while(qd->WritePos+datasize>=qd->WriteSize)\
@@ -289,7 +289,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 	gmlQueue *qd=&gmlQueues[gmlThreadNumber];\
 	int datasize=sizeof(gml##name##Data);\
 	GML_RELOC()\
-	gml##name##Data *p=(gml##name##Data *)qd->WritePos;\
+	gml##name##Data *p=reinterpret_cast<gml##name##Data *>(qd->WritePos);\
 	p->type=gml##name##Enum;
 
 #define GML_UPD_POS()\
@@ -303,7 +303,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 	int size=sizefun;\
 	int datasize=sizeof(gml##name##Data)+size;\
 	GML_RELOC()\
-	gml##name##Data *p=(gml##name##Data *)qd->WritePos;\
+	gml##name##Data *p=reinterpret_cast<gml##name##Data *>(qd->WritePos);\
 	p->type=gml##name##Enum;
 
 #define GML_PREP_VAR_SIZE(name,sizefun)\
@@ -347,7 +347,7 @@ public:
 #define GML_CURRENT_LUA(currentLuaState) (currentLuaState ? "LUA" : "Unknown")
 #define GML_THREAD_ERROR(msg, ret)\
 	lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
-	LOG_SL("GML", L_ERROR, "Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
+	LOG_SL("Threading", L_ERROR, "Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
 	if(currentLuaState)\
 		luaL_error(currentLuaState, "Invalid call");\
 	ret
@@ -380,7 +380,7 @@ public:
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRETVAL(rettype))\
 	}
 #else
-#define GML_ITEMLOG_PRINT() LOG_SL("GML", L_ERROR, "Sim thread called %s", GML_FUNCTION);
+#define GML_ITEMLOG_PRINT() LOG_SL("Threading", L_ERROR, "Sim thread called %s", GML_FUNCTION);
 #define GML_DUMMYRET()
 #define GML_DUMMYRETVAL(rettype)
 #define GML_IF_SIM_THREAD_RET(thread,name)
@@ -1217,6 +1217,7 @@ GML_MAKEFUN4P(VertexPointer,GLint,GLenum,GLsizei,const GLvoid, VP)
 GML_MAKEFUN3VDA(DrawArrays,GLenum,GLint,GLsizei)
 GML_MAKEFUN2V(Fogfv,GLenum,const GLfloat,GLfloat,gmlNumArgsFog(A))
 GML_MAKEFUN5(FramebufferTexture2DEXT,GLenum,GLenum,GLenum,GLuint,GLint)
+GML_MAKEFUN4(FramebufferTextureEXT,GLenum,GLenum,GLuint,GLint)
 GML_MAKEFUN4P(TexCoordPointer,GLint,GLenum,GLsizei,const GLvoid, TCP)
 GML_MAKEFUN9S(TexSubImage2D,GLenum,GLint,GLint,GLint,GLsizei,GLsizei,GLenum,GLenum,const GLvoid,E*F*gmlNumArgsTexImage(G)*gmlSizeOf(H))
 GML_MAKEFUN2V(ClipPlane,GLenum,const GLdouble,GLdouble,4)
@@ -1266,6 +1267,7 @@ GML_MAKEFUN1(ClearStencil,GLint)
 GML_MAKEFUN4P(ColorPointer,GLint,GLenum,GLsizei,const GLvoid, CP)
 GML_MAKEFUN1(DeleteShader,GLuint)
 GML_MAKEFUN4VDE(DrawElements,GLenum,GLsizei,GLenum,const GLvoid)
+GML_MAKEFUN1(GenerateMipmap,GLenum)
 GML_MAKEFUN1(GenerateMipmapEXT,GLenum)
 GML_MAKEFUN3(Materialf,GLenum,GLenum,GLfloat,)
 GML_MAKEFUN3P(NormalPointer,GLenum,GLsizei,const GLvoid, NP)
@@ -1356,6 +1358,7 @@ GML_MAKEFUN4(StencilFuncSeparate,GLenum,GLenum,GLint,GLuint)
 GML_MAKEFUN4(StencilOpSeparate,GLenum,GLenum,GLenum,GLenum)
 GML_MAKEFUN2(BeginQuery,GLenum,GLuint,)
 GML_MAKEFUN1(EndQuery,GLenum)
+GML_MAKEFUN3(GetQueryObjectiv,GLuint,GLenum,GLint *,,GML_SYNC())
 GML_MAKEFUN3(GetQueryObjectuiv,GLuint,GLenum,GLuint *,,GML_SYNC())
 GML_MAKEFUN2(BlendEquationSeparate,GLenum,GLenum,)
 GML_MAKEFUN4(BlendFuncSeparate,GLenum,GLenum,GLenum,GLenum)
@@ -1367,6 +1370,7 @@ GML_MAKEFUN2R(MapBuffer,GLenum,GLenum,GLvoid *)
 GML_MAKEFUN1R(UnmapBuffer,GLenum,GLboolean,)
 GML_MAKEFUN8VP(CompressedTexImage2D,GLenum,GLint,GLenum,GLsizei,GLsizei,GLint,GLsizei,const GLvoid,BYTE,G)
 GML_MAKEFUN1R(IsShader,GLuint, GLboolean,)
+GML_MAKEFUN1R(IsProgram,GLuint, GLboolean,)
 GML_MAKEFUN3(Vertex3i,GLint,GLint,GLint,)
 GML_MAKEFUN2(GetIntegerv,GLenum,GLint *,GML_CACHE(GLenum,GLint,gmlGetIntegervCache,A,B),GML_SYNC())//
 GML_MAKEFUN1R(CheckFramebufferStatusEXT,GLenum, GLenum,GML_DEFAULT_RET(A==GL_FRAMEBUFFER_EXT,GL_FRAMEBUFFER_COMPLETE_EXT))
@@ -1424,14 +1428,26 @@ GML_MAKEFUN3(MultiTexCoord2i,GLenum,GLint,GLint,)
 GML_MAKEFUN3(GetQueryiv,GLenum,GLenum,GLint *,,GML_SYNC())
 GML_MAKEFUN2(GetBooleanv,GLenum, GLboolean *,,GML_SYNC())
 GML_MAKEFUN1(ValidateProgram,GLuint)
+GML_MAKEFUN3V(Uniform1iv,GLint,GLsizei,const GLint,GLint,B)
 GML_MAKEFUN3V(Uniform2iv,GLint,GLsizei,const GLint,GLint,2*B)
 GML_MAKEFUN3V(Uniform3iv,GLint,GLsizei,const GLint,GLint,3*B)
 GML_MAKEFUN3V(Uniform4iv,GLint,GLsizei,const GLint,GLint,4*B)
 GML_MAKEFUN3V(Uniform2fv,GLint,GLsizei,const GLfloat,GLfloat,2*B)
 GML_MAKEFUN3V(Uniform3fv,GLint,GLsizei,const GLfloat,GLfloat,3*B)
 GML_MAKEFUN3V(Uniform4fv,GLint,GLsizei,const GLfloat,GLfloat,4*B)
+GML_MAKEFUN3V(Uniform1uiv,GLint,GLsizei,const GLuint,GLuint,B)
+GML_MAKEFUN3V(Uniform2uiv,GLint,GLsizei,const GLuint,GLuint,2*B)
+GML_MAKEFUN3V(Uniform3uiv,GLint,GLsizei,const GLuint,GLuint,3*B)
+GML_MAKEFUN3V(Uniform4uiv,GLint,GLsizei,const GLuint,GLuint,4*B)
 GML_MAKEFUN4R(MapBufferRange,GLenum,GLintptr,GLsizeiptr,GLbitfield,GLvoid *)
 GML_MAKEFUN1(PrimitiveRestartIndexNV,GLuint)
 GML_MAKEFUN6VDRE(DrawRangeElements,GLenum,GLuint,GLuint,GLsizei,GLenum,const GLvoid)
+GML_MAKEFUN3(GetUniformfv,GLuint,GLint,GLfloat *,,GML_SYNC())
+GML_MAKEFUN3(GetUniformiv,GLuint,GLint,GLint *,,GML_SYNC())
+GML_MAKEFUN3(GetUniformuiv,GLuint,GLint,GLuint *,,GML_SYNC())
+GML_MAKEFUN7(GetActiveAttrib,GLuint,GLuint,GLsizei,GLsizei *,GLint *,GLenum *,GLchar *,GML_SYNC())
+GML_MAKEFUN2R(GetAttribLocation,GLuint,const GLchar *,GLint)
+GML_MAKEFUN3(BindAttribLocation,GLuint,GLuint,const GLchar *,)
+GML_MAKEFUN3(GetCompressedTexImage,GLenum,GLint,GLvoid *,,GML_SYNC())
 
 #endif // _GML_FUN_H

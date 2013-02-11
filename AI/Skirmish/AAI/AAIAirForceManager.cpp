@@ -14,14 +14,11 @@
 #include "AAIGroup.h"
 #include "AAIMap.h"
 
-AAIAirForceManager::AAIAirForceManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt)
+AAIAirForceManager::AAIAirForceManager(AAI *ai)
 {
 	this->ai = ai;
-	this->bt = bt;
-	this->cb = cb;
-	this->map = ai->map;
 
-	my_team = cb->GetMyTeam();
+	my_team = ai->Getcb()->GetMyTeam();
 	num_of_targets = 0;
 
 	targets.resize(cfg->MAX_AIR_TARGETS);
@@ -29,7 +26,7 @@ AAIAirForceManager::AAIAirForceManager(AAI *ai, IAICallback *cb, AAIBuildTable *
 	for(int i = 0; i < cfg->MAX_AIR_TARGETS; ++i)
 		targets[i].unit_id = -1;
 
-	air_groups = &ai->group_list[AIR_ASSAULT];
+	air_groups = &ai->Getgroup_list()[AIR_ASSAULT];
 }
 
 AAIAirForceManager::~AAIAirForceManager(void)
@@ -40,29 +37,29 @@ AAIAirForceManager::~AAIAirForceManager(void)
 void AAIAirForceManager::CheckTarget(int unit_id, const UnitDef *def)
 {
 	// do not attack own units
-	if(my_team != cb->GetUnitTeam(unit_id))
+	if(my_team != ai->Getcb()->GetUnitTeam(unit_id))
 	{
-		float3 pos = cb->GetUnitPos(unit_id);
+		float3 pos = ai->Getcb()->GetUnitPos(unit_id);
 
 		// calculate in which sector unit is located
-		int x = pos.x/map->xSectorSize;
-		int y = pos.z/map->ySectorSize;
+		int x = pos.x/ai->Getmap()->xSectorSize;
+		int y = pos.z/ai->Getmap()->ySectorSize;
 
 		// check if unit is within the map
-		if(x >= 0 && x < map->xSectors && y >= 0 && y < map->ySectors)
+		if(x >= 0 && x < ai->Getmap()->xSectors && y >= 0 && y < ai->Getmap()->ySectors)
 		{
 			// check for anti air defences if low on units
-			if(map->sector[x][y].lost_units[AIR_ASSAULT-COMMANDER] >= cfg->MAX_AIR_GROUP_SIZE && ai->group_list[AIR_ASSAULT].size() < 5)
+			if(ai->Getmap()->sector[x][y].lost_units[AIR_ASSAULT-COMMANDER] >= cfg->MAX_AIR_GROUP_SIZE && ai->Getgroup_list()[AIR_ASSAULT].size() < 5)
 				return;
 
 			AAIGroup *group;
 			int max_groups;
 
-			UnitCategory category = bt->units_static[def->id].category;
+			UnitCategory category = ai->Getbt()->units_static[def->id].category;
 
-			if(bt->unitList[def->id-1]->health > 8000)
+			if(ai->Getbt()->GetUnitDef(def->id).health > 8000)
 				max_groups = 3;
-			else if(bt->unitList[def->id-1]->health > 4000)
+			else if(ai->Getbt()->GetUnitDef(def->id).health > 4000)
 				max_groups = 2;
 			else
 				max_groups = 1;
@@ -102,16 +99,16 @@ void AAIAirForceManager::CheckBombTarget(int unit_id, int def_id)
 		return;
 
 	// do not add own units or units that ar already on target list
-	if(my_team != cb->GetUnitTeam(unit_id) && !IsTarget(unit_id))
+	if(my_team != ai->Getcb()->GetUnitTeam(unit_id) && !IsTarget(unit_id))
 	{
-		float3 pos = cb->GetUnitPos(unit_id);
+		float3 pos = ai->Getcb()->GetUnitPos(unit_id);
 
 		// calculate in which sector unit is located
-		int x = pos.x/map->xSectorSize;
-		int y = pos.z/map->ySectorSize;
+		int x = pos.x/ai->Getmap()->xSectorSize;
+		int y = pos.z/ai->Getmap()->ySectorSize;
 
 		// check if unit is within the map
-		if(x >= 0 && x < map->xSectors && y >= 0 && y < map->ySectors)
+		if(x >= 0 && x < ai->Getmap()->xSectors && y >= 0 && y < ai->Getmap()->ySectors)
 		{
 			AddTarget(unit_id, def_id);
 		}
@@ -124,15 +121,15 @@ void AAIAirForceManager::AddTarget(int unit_id, int def_id)
 	{
 		if(targets[i].unit_id == -1)
 		{
-			ai->cb->SendTextMsg("Target added...", 0);
+			ai->LogConsole("Target added...");
 
-			targets[i].pos = cb->GetUnitPos(unit_id);
+			targets[i].pos = ai->Getcb()->GetUnitPos(unit_id);
 			targets[i].def_id = def_id;
-			targets[i].cost = bt->units_static[def_id].cost;
-			targets[i].health = cb->GetUnitHealth(unit_id);
-			targets[i].category = bt->units_static[def_id].category;
+			targets[i].cost = ai->Getbt()->units_static[def_id].cost;
+			targets[i].health = ai->Getcb()->GetUnitHealth(unit_id);
+			targets[i].category = ai->Getbt()->units_static[def_id].category;
 
-			ai->ut->units[unit_id].status = BOMB_TARGET;
+			ai->Getut()->units[unit_id].status = BOMB_TARGET;
 
 			++num_of_targets;
 
@@ -156,11 +153,11 @@ void AAIAirForceManager::RemoveTarget(int unit_id)
 	{
 		if(targets[i].unit_id == unit_id)
 		{
-			ai->cb->SendTextMsg("Target removed...", 0);
+			ai->LogConsole("Target removed...");
 
 			targets[i].unit_id = -1;
 
-			ai->ut->units[unit_id].status = ENEMY_UNIT;
+			ai->Getut()->units[unit_id].status = ENEMY_UNIT;
 
 			--num_of_targets;
 
@@ -179,10 +176,10 @@ void AAIAirForceManager::BombBestUnit(float cost, float danger)
 	{
 		if(targets[i].unit_id != -1)
 		{
-			x = targets[i].pos.x/map->xSectorSize;
-			y = targets[i].pos.z/map->ySectorSize;
+			x = targets[i].pos.x/ai->Getmap()->xSectorSize;
+			y = targets[i].pos.z/ai->Getmap()->ySectorSize;
 
-			current = pow(targets[i].cost, cost) / (1.0f + map->sector[x][y].enemy_stat_combat_power[1] * danger) * targets[i].health / bt->unitList[targets[i].def_id-1]->health ;
+			current = pow(targets[i].cost, cost) / (1.0f + ai->Getmap()->sector[x][y].enemy_stat_combat_power[1] * danger) * targets[i].health / ai->Getbt()->GetUnitDef(targets[i].def_id).health ;
 
 			if(current > best)
 			{
@@ -198,7 +195,7 @@ void AAIAirForceManager::BombBestUnit(float cost, float danger)
 
 		if(group)
 		{
-			//ai->cb->SendTextMsg("Bombing...", 0);
+			//ai->LogConsole("Bombing...");
 			group->BombTarget(targets[i].unit_id, &targets[i].pos);
 
 			targets[i].unit_id = -1;

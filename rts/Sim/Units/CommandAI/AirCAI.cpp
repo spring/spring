@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "AirCAI.h"
 #include "Game/GameHelper.h"
@@ -25,10 +24,10 @@
 
 static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
 	if (owner->usingScriptMoveType) {
-		return ((CStrafeAirMoveType*) owner->prevMoveType);
+		return static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
 	}
 
-	return ((CStrafeAirMoveType*) owner->moveType);
+	return static_cast<CStrafeAirMoveType*>(owner->moveType);
 }
 
 
@@ -222,14 +221,14 @@ void CAirCAI::SlowUpdate()
 
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (commandQue.empty()) {
-		if (!AirAutoGenerateTarget((AAirMoveType*) owner->moveType)) {
+		if (!AirAutoGenerateTarget(static_cast<AAirMoveType*>(owner->moveType))) {
 			// if no target found, queue is still empty so bail now
 			return;
 		}
 	}
 	#endif
 
-	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
+	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
 	Command& c = commandQue.front();
 
 	if (c.GetID() == CMD_WAIT) {
@@ -282,7 +281,7 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 		if (myPlane->IsFighter()) {
 			const float3 P = owner->pos + (owner->speed * 10.0);
 			const float R = 1000.0f * owner->moveState;
-			const CUnit* enemy = helper->GetClosestEnemyAircraft(P, R, owner->allyteam);
+			const CUnit* enemy = helper->GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
 
 			if (IsValidTarget(enemy)) {
 				Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
@@ -312,7 +311,7 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 void CAirCAI::ExecuteFight(Command& c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
-	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
+	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
 
 	if (tempOrder) {
 		tempOrder = false;
@@ -363,7 +362,7 @@ void CAirCAI::ExecuteFight(Command& c)
 			const float3 P = ClosestPointOnLine(commandPos1, commandPos2, owner->pos + owner->speed*10);
 			const float R = 1000.0f * owner->moveState;
 
-			enemy = helper->GetClosestEnemyAircraft(P, R, owner->allyteam);
+			enemy = helper->GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
 		}
 		if (IsValidTarget(enemy) && (owner->moveState != MOVESTATE_MANEUVER
 				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
@@ -445,13 +444,8 @@ void CAirCAI::ExecuteAttack(Command& c)
 			FinishCommand();
 			return;
 		}
-		if ((c.params.size() == 3) && (commandQue.size() > 1)) {
-			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, true);
-			FinishCommand();
-			return;
-		}
 		if (orderTarget) {
-			if (orderTarget->unitDef->canfly && orderTarget->crashing) {
+			if (orderTarget->unitDef->canfly && orderTarget->IsCrashing()) {
 				owner->AttackUnit(NULL, false, false);
 				FinishCommand();
 				return;
@@ -492,7 +486,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 void CAirCAI::ExecuteAreaAttack(Command& c)
 {
 	assert(owner->unitDef->canAttack);
-	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
+	AAirMoveType* myPlane = static_cast<AAirMoveType*>(owner->moveType);
 
 	if (targetDied) {
 		targetDied = false;
@@ -535,7 +529,7 @@ void CAirCAI::ExecuteGuard(Command& c)
 	const bool pushAttackCommand =
 		(owner->maxRange > 0.0f) &&
 		owner->unitDef->canAttack &&
-		((guardee->lastAttack + 40) < gs->frameNum) &&
+		((guardee->lastAttackFrame + 40) < gs->frameNum) &&
 		IsValidTarget(guardee->lastAttacker);
 
 	if (pushAttackCommand) {
@@ -578,8 +572,8 @@ int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
 	if (!CMobileCAI::IsValidTarget(enemy)) return false;
-	if (enemy->crashing) return false;
-	return (((CStrafeAirMoveType*)owner->moveType)->isFighter || !enemy->unitDef->canfly);
+	if (enemy->IsCrashing()) return false;
+	return (static_cast<CStrafeAirMoveType*>(owner->moveType)->isFighter || !enemy->unitDef->canfly);
 }
 
 
@@ -606,8 +600,26 @@ void CAirCAI::SetGoal(const float3& pos, const float3& curPos, float goalRadius)
 	CMobileCAI::SetGoal(pos, curPos, goalRadius);
 }
 
+CStrafeAirMoveType* CAirCAI::GetOwnerMoveType()
+{
+	CStrafeAirMoveType* airMT;
+
+	if (owner->usingScriptMoveType) {
+		airMT = static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
+	} else {
+		airMT = static_cast<CStrafeAirMoveType*>(owner->moveType);
+	}
+
+	return airMT;
+}
+
 void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
-	assert(ac.GetID() == CMD_AREA_ATTACK);
+	assert(ac.GetID() == CMD_AREA_ATTACK || (ac.GetID() == CMD_ATTACK && ac.GetParamsCount() >= 3));
+
+	if (ac.GetID() == CMD_ATTACK) {
+		FinishCommand();
+		return;
+	}
 
 	const float3& pos = ac.GetPos(0);
 	const float radius = ac.params[3];
@@ -623,7 +635,7 @@ void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 		SetGoal(attackPos, owner->pos);
 	} else {
 		// note: the range of randFloat() is inclusive of 1.0f
-		const unsigned int unitIdx = gs->randFloat() * (enemyUnitIDs.size() - 1);
+		const unsigned int unitIdx = std::min<int>(gs->randFloat() * enemyUnitIDs.size(), enemyUnitIDs.size() - 1);
 		const unsigned int unitID = enemyUnitIDs[unitIdx];
 
 		CUnit* targetUnit = uh->GetUnitUnsafe(unitID);

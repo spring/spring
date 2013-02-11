@@ -19,7 +19,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -33,7 +33,6 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-#include "System/mmgr.h"
 #include "System/NetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Input/KeyInput.h"
@@ -69,7 +68,7 @@ CSelectedUnits::CSelectedUnits()
 
 void CSelectedUnits::Init(unsigned numPlayers)
 {
-	soundMultiselID = sound->GetSoundId("MultiSelect", false);
+	soundMultiselID = sound->GetSoundId("MultiSelect");
 	buildIconsFirst = configHandler->GetBool("BuildIconsFirst");
 	autoAddBuiltUnitsToFactoryGroup = configHandler->GetBool("AutoAddBuiltUnitsToFactoryGroup");
 	autoAddBuiltUnitsToSelectedGroup = configHandler->GetBool("AutoAddBuiltUnitsToSelectedGroup");
@@ -199,11 +198,12 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 {
 	GML_RECMUTEX_LOCK(grpsel); // GiveCommand
 
-	if ((gu->spectating && !gs->godMode) || selectedUnits.empty()) {
+	if (gu->spectating && !gs->godMode)
 		return;
-	}
+	if (selectedUnits.empty())
+		return;
 
-	const int& cmd_id = c.GetID();
+	const int cmd_id = c.GetID();
 
 	if (fromUser) { // add some statistics
 		playerHandler->Player(gu->myPlayerNum)->currentStats.numCommands++;
@@ -282,7 +282,10 @@ void CSelectedUnits::HandleUnitBoxSelection(const float4& planeRight, const floa
 	int addedunits = 0;
 	int team, lastTeam;
 
-	if (gu->spectatingFullSelect) {
+	if (gu->spectatingFullSelect || gs->godMode) {
+		// any team's units can be *selected*
+		// (whether they can be given orders
+		// depends on our ability to play god)
 		team = 0;
 		lastTeam = teamHandler->ActiveTeams() - 1;
 	} else {
@@ -321,39 +324,43 @@ void CSelectedUnits::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTe
 {
 	GML_RECMUTEX_LOCK(sel); // SelectUnits
 
-	int button = SDL_BUTTON_LEFT; //FIXME make modular?
-	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
+	//FIXME make modular?
+	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
-	if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
-		if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
-			if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
-				RemoveUnit(unit);
-			} else {
-				AddUnit(unit);
-			}
+	if (unit == NULL)
+		return;
+	if (unit->team != gu->myTeam && !gu->spectatingFullSelect && !gs->godMode)
+		return;
+
+	if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
+		if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
+			RemoveUnit(unit);
 		} else {
-			//double click
-			if (unit->group && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
-				//select the current units group if it has one
-				SelectGroup(unit->group->id);
+			AddUnit(unit);
+		}
+	} else {
+		//double click
+		if (unit->group && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
+			//select the current units group if it has one
+			SelectGroup(unit->group->id);
+		} else {
+			//select all units of same type (on screen, unless CTRL is pressed)
+			int team, lastTeam;
+
+			if (gu->spectatingFullSelect || gs->godMode) {
+				team = 0;
+				lastTeam = teamHandler->ActiveTeams() - 1;
 			} else {
-				//select all units of same type (on screen, unless CTRL is pressed)
-				int team, lastTeam;
-				if (gu->spectatingFullSelect) {
-					team = 0;
-					lastTeam = teamHandler->ActiveTeams() - 1;
-				} else {
-					team = gu->myTeam;
-					lastTeam = gu->myTeam;
-				}
-				for (; team <= lastTeam; team++) {
-					CUnitSet::iterator ui;
-					CUnitSet& teamUnits = teamHandler->Team(team)->units;
-					for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
-						if ((*ui)->unitDef->id == unit->unitDef->id) {
-							if (!doInViewTest || camera->InView((*ui)->midPos) || keyInput->IsKeyPressed(SDLK_LCTRL)) {
-								AddUnit(*ui);
-							}
+				team = gu->myTeam;
+				lastTeam = gu->myTeam;
+			}
+			for (; team <= lastTeam; team++) {
+				CUnitSet::iterator ui;
+				CUnitSet& teamUnits = teamHandler->Team(team)->units;
+				for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
+					if ((*ui)->unitDef->id == unit->unitDef->id) {
+						if (!doInViewTest || camera->InView((*ui)->midPos) || keyInput->IsKeyPressed(SDLK_LCTRL)) {
+							AddUnit(*ui);
 						}
 					}
 				}
@@ -477,6 +484,7 @@ void CSelectedUnits::Draw()
 
 		for (CUnitSet::const_iterator ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
 			const CUnit* unit = *ui;
+			const MoveDef* moveDef = unit->moveDef;
 
 			if (unit->isIcon) continue;
 			if (!IsUnitSelected(unit)) continue;
@@ -484,8 +492,8 @@ void CSelectedUnits::Draw()
 			const int
 				uhxsize = (unit->xsize * SQUARE_SIZE) >> 1,
 				uhzsize = (unit->zsize * SQUARE_SIZE) >> 1,
-				mhxsize = (unit->moveDef == NULL)? uhxsize: ((unit->moveDef->xsize * SQUARE_SIZE) >> 1),
-				mhzsize = (unit->moveDef == NULL)? uhzsize: ((unit->moveDef->zsize * SQUARE_SIZE) >> 1);
+				mhxsize = (moveDef == NULL)? uhxsize: ((moveDef->xsize * SQUARE_SIZE) >> 1),
+				mhzsize = (moveDef == NULL)? uhzsize: ((moveDef->zsize * SQUARE_SIZE) >> 1);
 			const float3 verts[8] = {
 				// UnitDef footprint corners
 				float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize),
@@ -813,7 +821,7 @@ std::string CSelectedUnits::GetTooltip()
 				team = teamHandler->Team(unit->team);
 				s = team->GetControllerName();
 			} else {
-				s = (*selectedUnits.begin())->tooltip;
+				s = unit->tooltip;
 			}
 
 		}
@@ -831,7 +839,6 @@ std::string CSelectedUnits::GetTooltip()
 	{
 		GML_RECMUTEX_LOCK(sel); // GetTooltip
 
-		char tmp[500];
 		int numFuel = 0;
 		float maxHealth = 0.0f, curHealth = 0.0f;
 		float maxFuel = 0.0f, curFuel = 0.0f;
@@ -880,6 +887,7 @@ std::string CSelectedUnits::GetTooltip()
 
 		if (gs->cheatEnabled && (num == 1)) {
 			const CUnit* unit = *selectedUnits.begin();
+			char tmp[500];
 			SNPRINTF(tmp, sizeof(tmp), "\xff\xc0\xc0\xff  [TechLevel %i]",
 				unit->unitDef->techLevel);
 			s += tmp;
@@ -933,10 +941,12 @@ void CSelectedUnits::SendCommand(const Command& c)
 
 void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands, bool pairwise)
 {
-	// NOTE: does not check for invalid unitIDs
-
 	if (gu->spectating && !gs->godMode) {
-		return; // do not waste bandwidth
+		// do not waste bandwidth (units can be selected
+		// by any spectator, but not given orders without
+		// god-mode)
+		// note: clients verify this every NETMSG_SELECT
+		return;
 	}
 
 	const unsigned unitIDCount  = unitIDs.size();
@@ -983,9 +993,9 @@ void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const 
 	        << static_cast<unsigned char>(sameCmdOpt)
 	        << static_cast<unsigned short>(sameCmdParamSize);
 
+	// NOTE: does not check for invalid unitIDs
 	*packet << static_cast<unsigned short>(unitIDCount);
-	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it)
-	{
+	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it) {
 		*packet << static_cast<short>(*it);
 	}
 

@@ -8,20 +8,24 @@
 #include <map>
 
 #include "System/creg/creg_cond.h"
+#include "System/float4.h"
 
-/** @brief Class for combining multiple bitmaps into one large single bitmap. */
-struct AtlasedTexture
+
+class IAtlasAllocator;
+
+
+/** @brief texture coordinations of an atlas image. */
+//typedef float4 AtlasedTexture;
+
+struct AtlasedTexture : public float4
 {
-public:
-	CR_DECLARE_STRUCT(AtlasedTexture);
-	float xstart;
-	float xend;
-	float ystart;
-	float yend;
+	AtlasedTexture() : float4() {}
+	AtlasedTexture(const float4& f) : float4(f) {}
 
-	int ixstart;
-	int iystart;
+	CR_DECLARE_STRUCT(AtlasedTexture);
 };
+
+
 
 /**
  * @brief Same as AtlasedTexture, but with a different name,
@@ -29,10 +33,11 @@ public:
  */
 struct GroundFXTexture : public AtlasedTexture
 {
-public:
-	CR_DECLARE_STRUCT(AtlasedTexture);
+	CR_DECLARE_STRUCT(GroundFXTexture);
 };
 
+
+/** @brief Class for combining multiple bitmaps into one large single bitmap. */
 class CTextureAtlas
 {
 public:
@@ -45,10 +50,11 @@ public:
 	int xsize;
 	int ysize;
 
-
+public:
 	CTextureAtlas(int maxxSize, int maxySize);
 	~CTextureAtlas();
 
+public:
 	enum TextureType {
 		RGBA32
 	};
@@ -65,47 +71,39 @@ public:
 	//! Add a texture from a file, returns -1 if failed.
 	int AddTexFromFile(std::string name, std::string file);
 
+public:
 	/**
 	 * Creates the atlas containing all the specified textures.
 	 * @return true if suceeded, false if not all textures did fit
 	 *         into the specified maxsize.
 	 */
 	bool Finalize();
-
 	void BindTexture();
 
+public:
 	/**
 	 * @return a boolean true if the texture exists within
 	 *         the "textures" map and false if it does not.
 	 */
 	bool TextureExists(const std::string& name);
 
-
-	//! @return a Texture struct of the specified texture
-	AtlasedTexture GetTexture(const std::string& name);
-	/**
-	 * @return a pointer to a Texture struct of the specified texture,
-	 *         this pointer points to the actuall Texture struct stored,
-	 *         do not delete or modify
-	 */
-	AtlasedTexture* GetTexturePtr(const std::string& name);
+	//! @return reference to the Texture struct of the specified texture
+	AtlasedTexture& GetTexture(const std::string& name);
 	
 	/**
 	 * @return a Texture struct of the specified texture if it exists,
 	 *         otherwise return a backup texture.
 	 */
-	AtlasedTexture GetTextureWithBackup(const std::string& name, const std::string& backupName);
-	AtlasedTexture* GetTexturePtrWithBackup(const std::string& name, const std::string& backupName);
+	AtlasedTexture& GetTextureWithBackup(const std::string& name, const std::string& backupName);
 
 protected:
+	IAtlasAllocator* atlasAllocator;
+
 	struct MemTex
 	{
 		std::vector<std::string> names;
-		int xsize;
-		int ysize;
+		int xsize, ysize;
 		TextureType texType;
-		int xpos;
-		int ypos;
 		void* data;
 	};
 
@@ -116,12 +114,9 @@ protected:
 	std::map<std::string, AtlasedTexture> textures;
 	int maxxsize;
 	int maxysize;
-	int usedPixels;
 	bool initialized;
 
 	int GetBPP(TextureType tetxType);
-	static int CompareTex(MemTex* tex1, MemTex* tex2);
-	bool IncreaseSize();
 	void CreateTexture();
 };
 

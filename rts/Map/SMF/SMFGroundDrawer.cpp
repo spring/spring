@@ -9,7 +9,7 @@
 #include "Map/ReadMap.h"
 #include "Map/SMF/Legacy/LegacyMeshDrawer.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/ShadowHandler.h"
@@ -21,7 +21,6 @@
 #include "System/FastMath.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/mmgr.h"
 
 
 
@@ -34,8 +33,8 @@ CONFIG(int, MaxDynamicMapLights)
 CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false);
 
 CONFIG(int, ROAM)
-	.defaultValue(VBO)
-	.safemodeValue(DL)
+	.defaultValue(Patch::VBO)
+	.safemodeValue(Patch::DL)
 	.description("Use ROAM for terrain mesh rendering. 1=VBO mode, 2=DL mode, 3=VA mode");
 
 
@@ -224,23 +223,24 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	UpdateCamRestraints(cam2);
 	smfRenderState->Enable(this, drawPass);
 
+	{
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
-			if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
-				glEnable(GL_ALPHA_TEST);
-				glAlphaFunc(GL_GREATER, 0.9f);
-			}
+		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
+			glEnable(GL_ALPHA_TEST);
+			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
+		}
 
-				meshDrawer->DrawMesh(drawPass);
-	
-			if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
-				glDisable(GL_ALPHA_TEST);
-			}
+		meshDrawer->DrawMesh(drawPass);
 
+		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
+			glDisable(GL_ALPHA_TEST);
+		}
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
+	}
 
 	smfRenderState->Disable(this, drawPass);
 	glDisable(GL_CULL_FACE);
@@ -256,7 +256,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 }
 
 
-void CSMFGroundDrawer::DrawShadowPass(void)
+void CSMFGroundDrawer::DrawShadowPass()
 {
 	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return;
@@ -276,9 +276,9 @@ void CSMFGroundDrawer::DrawShadowPass(void)
 
 
 
-void CSMFGroundDrawer::SetupBaseDrawPass(void) { smfRenderStateSSP->SetCurrentShader(DrawPass::Normal); }
-void CSMFGroundDrawer::SetupReflDrawPass(void) { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterReflection); }
-void CSMFGroundDrawer::SetupRefrDrawPass(void) { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterRefraction); }
+void CSMFGroundDrawer::SetupBaseDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::Normal); }
+void CSMFGroundDrawer::SetupReflDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterReflection); }
+void CSMFGroundDrawer::SetupRefrDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterRefraction); }
 
 void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
 {
@@ -290,7 +290,7 @@ void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY
 
 void CSMFGroundDrawer::Update()
 {
-	if (mapInfo->map.voidWater && (readmap->currMaxHeight < 0.0f)) {
+	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return;
 	}
 

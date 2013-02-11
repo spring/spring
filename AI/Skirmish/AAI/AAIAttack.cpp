@@ -38,13 +38,13 @@ bool AAIAttack::Failed()
 	if(!combat_groups.empty())
 	{
 		// check if still enough power to attack target sector
-		if(ai->am->SufficientAttackPowerVS(dest, &combat_groups, 1.3f))
+		if(ai->Getam()->SufficientAttackPowerVS(dest, &combat_groups, 1.3f))
 		{
 			// check if sufficient power to combat enemy units
 			float3 pos = (*combat_groups.begin())->GetGroupPos();
-			AAISector *sector = ai->map->GetSectorOfPos(&pos);
+			AAISector *sector = ai->Getmap()->GetSectorOfPos(&pos);
 
-			if(sector && ai->am->SufficientCombatPowerAt(sector, &combat_groups, 2))
+			if(sector && ai->Getam()->SufficientCombatPowerAt(sector, &combat_groups, 2))
 				return false;
 		}
 	}
@@ -61,7 +61,7 @@ void AAIAttack::StopAttack()
 	{
 		// get rally point somewhere between current pos an base
 		pos = (*group)->GetGroupPos();
-//		sector = ai->map->GetSectorOfPos(&pos);
+//		sector = ai->Getmap()->GetSectorOfPos(&pos);
 
 		(*group)->GetNewRallyPoint();
 
@@ -88,7 +88,7 @@ void AAIAttack::StopAttack()
 	{
 		// get rally point somewhere between current pos an base
 		pos = (*group)->GetGroupPos();
-//		sector = ai->map->GetSectorOfPos(&pos);
+//		sector = ai->Getmap()->GetSectorOfPos(&pos);
 
 		(*group)->GetNewRallyPoint();
 
@@ -124,7 +124,7 @@ void AAIAttack::AttackSector(AAISector *sector)
 
 	dest = sector;
 
-	lastAttack = ai->cb->GetCurrentFrame();
+	lastAttack = ai->Getcb()->GetCurrentFrame();
 
 	for(set<AAIGroup*>::iterator group = combat_groups.begin(); group != combat_groups.end(); ++group)
 	{
@@ -189,5 +189,5 @@ void AAIAttack::RemoveGroup(AAIGroup *group)
 		arty_groups.erase(group);
 	}
 
-	ai->am->CheckAttack(this);
+	ai->Getam()->CheckAttack(this);
 }
