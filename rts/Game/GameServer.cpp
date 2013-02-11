@@ -73,7 +73,7 @@
 using netcode::RawPacket;
 
 CONFIG(int, SpeedControl).defaultValue(0);
-CONFIG(bool, AllowAdditionalPlayers).defaultValue(true);
+CONFIG(bool, AllowAdditionalPlayers).defaultValue(false);
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
 CONFIG(int, AutohostPort).defaultValue(0);
