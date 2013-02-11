@@ -822,7 +822,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 					unknownChars += c;
 		}
 
-		if (ymCopyIdx >= defYardMap.size());
+		if (ymCopyIdx >= defYardMap.size())
 			continue;
 
 		defYardMap[ymCopyIdx++] = ys;
