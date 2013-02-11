@@ -218,7 +218,7 @@ private:
 	bool noHelperAIs;
 	bool canReconnect;
 	bool allowSpecDraw;
-	bool allowAdditionalPlayers;
+	bool bypassScriptPasswordCheck;
 	bool whiteListAdditionalPlayers;
 	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 

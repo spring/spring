@@ -73,7 +73,7 @@
 using netcode::RawPacket;
 
 CONFIG(int, SpeedControl).defaultValue(0);
-CONFIG(bool, AllowAdditionalPlayers).defaultValue(false);
+CONFIG(bool, bypassScriptPasswordCheck).defaultValue(false);
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
 CONFIG(int, AutohostPort).defaultValue(0);
@@ -160,7 +160,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	speedControl = configHandler->GetInt("SpeedControl");
 	UpdateSpeedControl(--speedControl + 1);
 
-	allowAdditionalPlayers = configHandler->GetBool("AllowAdditionalPlayers");
+	bypassScriptPasswordCheck = configHandler->GetBool("BypassScriptPasswordCheck");
 	whiteListAdditionalPlayers = configHandler->GetBool("WhiteListAdditionalPlayers");
 
 	if (!setup->onlyLocal) {
@@ -567,7 +567,7 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 {
 	for (size_t p = 0; p < players.size(); ++p)
 		players[p].SendData(packet);
-	if (canReconnect || allowAdditionalPlayers || !gameHasStarted)
+	if (canReconnect || bypassScriptPasswordCheck || !gameHasStarted)
 		AddToPacketCache(packet);
 #ifdef DEDICATED
 	if (demoRecorder)
@@ -878,7 +878,7 @@ void CGameServer::LagProtection()
 		// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
 		float wantedCpuUsage = (curSpeedCtrl > 0) ?  0.60f : 0.75f;
 		wantedCpuUsage += (1.0f - internalSpeed / userSpeedFactor) * 0.5f; //???
-	
+
 		float newSpeed = internalSpeed * wantedCpuUsage / refCpuUsage;
 		newSpeed = (newSpeed + internalSpeed) * 0.5f;
 		newSpeed = Clamp(newSpeed, 0.1f, userSpeedFactor);
@@ -1924,10 +1924,10 @@ void CGameServer::StartGame()
 	assert(!gameHasStarted);
 	gameHasStarted = true;
 	startTime = gameTime;
-	if (!canReconnect && !allowAdditionalPlayers)
+	if (!canReconnect && !bypassScriptPasswordCheck)
 		packetCache.clear(); // free memory
 
-	if (UDPNet && !canReconnect && !allowAdditionalPlayers)
+	if (UDPNet && !canReconnect && !bypassScriptPasswordCheck)
 		UDPNet->SetAcceptingConnections(false); // do not accept new connections
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
@@ -2460,7 +2460,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	}
 
 	if (newPlayerNumber >= players.size() && errmsg == "") {
-		if (demoReader || allowAdditionalPlayers)
+		if (demoReader || bypassScriptPasswordCheck)
 			AddAdditionalUser(name, passwd);
 		else
 			errmsg = "User name not authorized to connect";
