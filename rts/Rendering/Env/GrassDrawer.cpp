@@ -158,9 +158,9 @@ void CGrassDrawer::LoadGrassShaders() {
 		// "grassShadGenShader"
 	};
 	static const std::string shaderDefines[GRASS_PROGRAM_LAST] = {
-		"#define GRASS_NEAR_SHADOW\n",
-		"#define GRASS_DIST_SHADOW\n",
-		"#define GRASS_DIST_BASIC\n",
+		"#define DISTANCE_NEAR\n#define HAVE_SHADOW\n",
+		"#define DISTANCE_FAR\n#define HAVE_SHADOW\n",
+		"#define DISTANCE_FAR\n",
 		// "#define GRASS_SHADOW_GEN\n"
 	};
 
@@ -181,7 +181,7 @@ void CGrassDrawer::LoadGrassShaders() {
 
 	const std::string extraDefs =
 		(mapInfo->grass.bladeWaveScale > 0.0f)?
-		"#define GRASS_ANIMATION\n":
+		"#define ANIMATION\n":
 		"";
 
 	if (!globalRendering->haveGLSL) {
@@ -218,6 +218,7 @@ void CGrassDrawer::LoadGrassShaders() {
 			grassShaders[i]->SetUniformLocation("shadowMap");
 			grassShaders[i]->SetUniformLocation("grassShadingTex");
 			grassShaders[i]->SetUniformLocation("bladeTex");
+			grassShaders[i]->SetUniformLocation("infoMap");
 
 			grassShaders[i]->Enable();
 			grassShaders[i]->SetUniform2f(0, 1.0f / (gs->pwr2mapx  * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
@@ -226,6 +227,7 @@ void CGrassDrawer::LoadGrassShaders() {
 			grassShaders[i]->SetUniform1i(NUM_UNIFORMS + 1, 1);
 			grassShaders[i]->SetUniform1i(NUM_UNIFORMS + 2, 2);
 			grassShaders[i]->SetUniform1i(NUM_UNIFORMS + 3, 3);
+			grassShaders[i]->SetUniform1i(NUM_UNIFORMS + 4, 4);
 			grassShaders[i]->Disable();
 			grassShaders[i]->Validate();
 		}
@@ -451,6 +453,12 @@ void CGrassDrawer::SetupGlState()
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, grassBladeTex);
 
+		grassShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
+		if (gd->DrawExtraTex()) {
+			glActiveTextureARB(GL_TEXTURE4_ARB);
+			glBindTexture(GL_TEXTURE_2D, gd->infoTex);
+		}
+
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
 		if (globalRendering->haveGLSL) {
@@ -552,6 +560,7 @@ void CGrassDrawer::ResetGlState1()
 		grassShader->Disable();
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_SHADOW];
 		grassShader->Enable();
+		grassShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
 
 		if (globalRendering->haveGLSL) {
 			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
@@ -573,13 +582,23 @@ void CGrassDrawer::ResetGlState1()
 			grassShader->SetUniform2f(12, 1.0f / (gs->mapx     * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
 		}
 
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glDisable(GL_TEXTURE_2D);
+
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
+
+		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, farTex);
+		glEnable(GL_TEXTURE_2D);
 
 		if (gd->DrawExtraTex()) {
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 			glDisable(GL_TEXTURE_GEN_S);
 			glDisable(GL_TEXTURE_GEN_T);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -622,6 +641,8 @@ void CGrassDrawer::ResetGlState2()
 		}
 	}
 
+	glActiveTextureARB(GL_TEXTURE4_ARB);
+	glDisable(GL_TEXTURE_2D);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -629,6 +650,7 @@ void CGrassDrawer::ResetGlState2()
 	glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -746,10 +768,10 @@ void CGrassDrawer::Draw()
 		std::sort(drawer.inviewNearGrass.begin(), drawer.inviewNearGrass.end(), GrassSortNear);
 	ResetGlState1();
 
+	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 	DrawFarBillboards(drawer.inviewGrass);
 
 	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
-
 	DrawNearBillboards(drawer.inviewNearGrass);
 
 	ResetGlState2();
