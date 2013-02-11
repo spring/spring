@@ -72,6 +72,7 @@ public:
 		else s->SerializeObjectPtr(ptr, objectClass);
 	}
 	std::string GetName() { return objectClass->name + "*"; }
+	size_t GetSize() { return sizeof(T*); }
 	Class* objectClass;
 };
 

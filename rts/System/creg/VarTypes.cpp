@@ -101,6 +101,33 @@ std::string BasicType::GetName()
 	return std::string();
 }
 
+size_t BasicType::GetSize()
+{
+	switch(id) {
+#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+		case crSyncedSint: return sizeof(int);
+		case crSyncedUint: return sizeof(unsigned);
+		case crSyncedSshort: return sizeof(short);
+		case crSyncedUshort: return sizeof(unsigned short);
+		case crSyncedSchar: return sizeof(char);
+		case crSyncedUchar: return sizeof(unsigned char);
+		case crSyncedFloat: return sizeof(float);
+		case crSyncedDouble: return sizeof(double);
+		case crSyncedBool: return sizeof(bool);
+#endif
+		case crInt: return sizeof(int);
+		case crUInt: return sizeof(unsigned);
+		case crShort: return sizeof(short);
+		case crUShort: return sizeof(unsigned short);
+		case crChar:  return sizeof(char);
+		case crUChar: return sizeof(unsigned char);
+		case crFloat: return sizeof(float);
+		case crDouble: return sizeof(double);
+		case crBool: return sizeof(bool);
+	};
+	return 0; //???
+}
+
 boost::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t)
 {
 	return boost::shared_ptr<IType>(new BasicType(t));
@@ -109,6 +136,11 @@ boost::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t)
 std::string StringType::GetName()
 {
 	return "string";
+}
+
+size_t StringType::GetSize()
+{
+	return sizeof(std::string);
 }
 
 StringType::StringType(boost::shared_ptr<IType> charType) : DynamicArrayType<string>(charType) {}
@@ -127,6 +159,11 @@ void ObjectInstanceType::Serialize(ISerializer* s, void* inst)
 std::string ObjectInstanceType::GetName()
 {
 	return objectClass->name;
+}
+
+size_t ObjectInstanceType::GetSize()
+{
+	return objectClass->size;
 }
 
 boost::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType)
