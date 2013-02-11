@@ -25,7 +25,7 @@ void QTPFS::PathSearch::Initialize(
 	PathCache* cache,
 	const float3& sourcePoint,
 	const float3& targetPoint,
-	const PathRectangle& searchArea
+	const SRectangle& searchArea
 ) {
 	srcPoint = sourcePoint; srcPoint.ClampInBounds();
 	tgtPoint = targetPoint; tgtPoint.ClampInBounds();

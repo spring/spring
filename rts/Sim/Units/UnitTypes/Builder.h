@@ -44,13 +44,13 @@ public:
 	void SlowUpdate();
 	void DependentDied(CObject* o);
 
-	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitstance);
+	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitStance);
 	float CalculateBuildTerraformCost(BuildInfo& buildInfo);
 	void StopBuild(bool callScript = true);
 	void SetRepairTarget(CUnit* target);
 	void SetReclaimTarget(CSolidObject* object);
 	void StartRestore(float3 centerPos, float radius);
-	void SetBuildStanceToward(float3 pos);
+	bool ScriptStartBuilding(float3 pos, bool silent);
 
 	void HelpTerraform(CBuilder* unit);
 	void CreateNanoParticle(const float3& goal, float radius, bool inverse, bool highPriority = false);

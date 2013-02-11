@@ -157,39 +157,12 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	model->name = modelFilePath;
 	model->type = MODELTYPE_ASS;
 	model->scene = scene;
-	//model->meta = &metaTable;
 
-	//! Gather per mesh info
+	// Gather per mesh info
 	CalculatePerMeshMinMax(model);
 
-	//! Assign textures
-	//! The S3O texture handler uses two textures.
-	//! The first contains diffuse color (RGB) and teamcolor (A)
-	//! The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
-	if (metaTable.KeyExists("tex1")) {
-		model->tex1 = metaTable.GetString("tex1", "default.png");
-	} else {
-		//! Search for a texture
-		std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + ".*");
-		for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
-			model->tex1 = FileSystem::GetFilename(*fi);
-			break; //! there can be only one!
-		}
-	}
-	if (metaTable.KeyExists("tex2")) {
-		model->tex2 = metaTable.GetString("tex2", "");
-	} else {
-		//! Search for a texture
-		std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + "2.*");
-		for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
-			model->tex2 = FileSystem::GetFilename(*fi);
-			break; //! there can be only one!
-		}
-	}
-	model->flipTexY = metaTable.GetBool("fliptextures", true); //! Flip texture upside down
-	model->invertTexAlpha = metaTable.GetBool("invertteamcolor", true); //! Reverse teamcolor levels
-
-	//! Load textures
+	// Load textures
+	FindTextures(model, scene, metaTable, modelName);
 	LOG_S(LOG_SECTION_MODEL, "Loading textures. Tex1: '%s' Tex2: '%s'",
 			model->tex1.c_str(), model->tex2.c_str());
 	texturehandlerS3O->LoadS3OTexture(model);
@@ -199,23 +172,23 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 			scene->mRootNode->mName.data);
 	LoadPiece(model, scene->mRootNode, metaTable);
 
-	//! Update piece hierarchy based on metadata
+	// Update piece hierarchy based on metadata
 	BuildPieceHierarchy( model );
 
-	//! Simplified dimensions used for rough calculations
+	// Calculate model dimensions
+	CalculateMinMax( model->rootPiece );
+	CalculateRadius( model );
+	CalculateHeight( model );
+	CalculateMidPos( model );
+
+	// Simplified dimensions used for rough calculations
 	model->radius = metaTable.GetFloat("radius", model->radius);
 	model->height = metaTable.GetFloat("height", model->height);
-	model->drawRadius = metaTable.GetFloat("drawRadius", model->drawRadius);
 	model->relMidPos = metaTable.GetFloat3("midpos", model->relMidPos);
 	model->mins = metaTable.GetFloat3("mins", model->mins);
 	model->maxs = metaTable.GetFloat3("maxs", model->maxs);
 
-	//! Calculate model dimensions if not set
-	if (!metaTable.KeyExists("mins") || !metaTable.KeyExists("maxs")) CalculateMinMax( model->rootPiece );
-	if (model->radius < 0.0001f) CalculateRadius( model );
-	if (model->height < 0.0001f) CalculateHeight( model );
-
-	//! Verbose logging of model properties
+	// Verbose logging of model properties
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->name: %s", model->name.c_str());
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->numobjects: %d", model->numPieces);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->radius: %f", model->radius);
@@ -461,9 +434,9 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		}
 	}
 	
-	piece->isEmpty = (piece->vertices.size() == 0);
+	piece->isEmpty = piece->vertices.empty();
 
-	//! collision volume for piece (not sure about these coords)
+	// collision volume for piece (not sure about these coords)
 	// FIXME add metatable tags for this!!!!
 	const float3 cvScales = piece->maxs - piece->mins;
 	const float3 cvOffset = (piece->maxs - piece->offset) + (piece->mins - piece->offset);
@@ -565,6 +538,98 @@ void CAssParser::CalculateRadius(S3DModel* model)
 void CAssParser::CalculateHeight(S3DModel* model)
 {
 	model->height = model->maxs.z;
+}
+
+
+void CAssParser::CalculateMidPos(S3DModel* model)
+{
+	model->relMidPos.y = (model->maxs.y - model->mins.y) * 0.5f;
+}
+
+
+void CAssParser::FindTextures(S3DModel* model, const aiScene* scene, const LuaTable& metaTable, const std::string& modelFilePath)
+{
+	const std::string modelPath = FileSystem::GetDirectory(modelFilePath);
+	const std::string modelName = FileSystem::GetBasename(modelFilePath);
+
+	// Assign textures
+	// The S3O texture handler uses two textures.
+	// The first contains diffuse color (RGB) and teamcolor (A)
+	// The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
+
+	// gather model defined textures
+	if (scene->mNumMaterials > 0) {
+		const aiMaterial* mat = scene->mMaterials[0]; //only check first material
+
+		//FIXME support these too (we need to allow to construct tex1 & tex2 from several sources)
+		/*aiTextureType_EMISSIVE
+		aiTextureType_HEIGHT
+		aiTextureType_NORMALS
+		aiTextureType_SHININESS
+		aiTextureType_OPACITY*/
+
+		aiString textureFile;
+
+		mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE,  0), textureFile);
+		if (strcmp(textureFile.C_Str(), "") == 0) model->tex1 = textureFile.C_Str();
+		textureFile.Clear();
+
+		mat->Get(AI_MATKEY_TEXTURE(aiTextureType_UNKNOWN,  0), textureFile);
+		if (strcmp(textureFile.C_Str(), "") == 0) model->tex1 = textureFile.C_Str();
+		textureFile.Clear();
+
+		mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), textureFile);
+		if (strcmp(textureFile.C_Str(), "") == 0) model->tex1 = textureFile.C_Str();
+		textureFile.Clear();
+	}
+
+	// try to load from metafile
+	model->tex1 = metaTable.GetString("tex1", model->tex1);
+	model->tex2 = metaTable.GetString("tex2", model->tex2);
+
+	// try to find by name
+	if (model->tex1.empty()) {
+		const std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + ".*");
+		for(std::vector<std::string>::const_iterator fi = files.begin(); fi != files.end(); ++fi) {
+			model->tex1 = FileSystem::GetFilename(*fi);
+			break; // there can be only one!
+		}
+	}
+	if (model->tex2.empty()) {
+		const std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + "2.*");
+		for(std::vector<std::string>::const_iterator fi = files.begin(); fi != files.end(); ++fi) {
+			model->tex2 = FileSystem::GetFilename(*fi);
+			break; // there can be only one!
+		}
+	}
+
+	// last chance
+	if (model->tex1.empty()) {
+		const std::vector<std::string> files = CFileHandler::FindFiles(modelPath, "diffuse.*");
+		for(std::vector<std::string>::const_iterator fi = files.begin(); fi != files.end(); ++fi) {
+			model->tex2 = FileSystem::GetFilename(*fi);
+			break; // there can be only one!
+		}
+	}
+
+	// correct filepath?
+	if (!CFileHandler::FileExists(model->tex1, SPRING_VFS_ZIP)) {
+		if (CFileHandler::FileExists("unittextures/" + model->tex1, SPRING_VFS_ZIP)) {
+			model->tex1 = "unittextures/" + model->tex1;
+		} else if (CFileHandler::FileExists(modelPath + model->tex1, SPRING_VFS_ZIP)) {
+			model->tex1 = modelPath + model->tex1;
+		}
+	}
+	if (!CFileHandler::FileExists(model->tex2, SPRING_VFS_ZIP)) {
+		if (CFileHandler::FileExists("unittextures/" + model->tex2, SPRING_VFS_ZIP)) {
+			model->tex1 = "unittextures/" + model->tex2;
+		} else if (CFileHandler::FileExists(modelPath + model->tex2, SPRING_VFS_ZIP)) {
+			model->tex2 = modelPath + model->tex2;
+		}
+	}
+
+	model->flipTexY = metaTable.GetBool("fliptextures", true); // Flip texture upside down
+	model->invertTexAlpha = metaTable.GetBool("invertteamcolor", true); // Reverse teamcolor levels
 }
 
 

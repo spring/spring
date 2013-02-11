@@ -43,20 +43,20 @@ public:
 	 *   If this option is true, a path is returned only if it's completed all
 	 *   the way to the goal defined in pfDef. All SearchResult::OutOfRange are
 	 *   then turned into SearchResult::CantGetCloser.
-	 * @param maxSearchedNodes The maximum number of nodes/squares the search
-	 *   are allowed to analyze. This restriction could be used in cases where
-	 *   CPU-consumption are critical.
+	 * @param maxNodes The maximum number of nodes / squares the search is
+	 *   allowed to analyze. This restriction could be used in cases where
+	 *   CPU-consumption is critical.
 	 */
 	IPath::SearchResult GetPath(
 		const MoveDef& moveDef,
 		const float3& startPos,
 		const CPathFinderDef& pfDef,
+		const CSolidObject* owner,
 		IPath::Path& path,
+		unsigned int maxNodes,
 		bool testMobile,
 		bool exactPath,
-		unsigned int maxSearchedNodes,
 		bool needPath,
-		const CSolidObject* owner,
 		bool synced
 	);
 
@@ -121,9 +121,8 @@ private:
 	bool testMobile;
 	bool needPath;
 
-	unsigned int maxSquaresToBeSearched;
+	unsigned int maxOpenNodes;
 	unsigned int testedNodes;
-	float maxNodeCost;
 
 	PathNodeBuffer openSquareBuffer;
 	PathNodeStateBuffer squareStates;

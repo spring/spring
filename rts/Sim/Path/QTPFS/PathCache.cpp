@@ -4,13 +4,13 @@
 
 #include "PathCache.hpp"
 #include "PathDefines.hpp"
-#include "PathRectangle.hpp"
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "System/Rectangle.h"
 
-static void GetRectangleCollisionVolume(const QTPFS::PathRectangle& r, CollisionVolume& v, float3& rm) {
+static void GetRectangleCollisionVolume(const SRectangle& r, CollisionVolume& v, float3& rm) {
 	float3 vScales;
 
 	// rectangle dimensions (WS)
@@ -117,7 +117,7 @@ void QTPFS::PathCache::DelPath(unsigned int pathID) {
 
 
 
-bool QTPFS::PathCache::MarkDeadPaths(const QTPFS::PathRectangle& r) {
+bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 	#ifdef QTPFS_IGNORE_DEAD_PATHS
 	return false;
 	#endif

@@ -17,7 +17,7 @@ namespace Shader {
 		virtual ~IShaderObject() {
 		}
 
-		virtual void Compile() {}
+		virtual void Compile(bool reloadFromDisk) {}
 		virtual void Release() {}
 		unsigned int GetObjID() const { return objID; }
 		int GetType() const { return type; }
@@ -31,6 +31,7 @@ namespace Shader {
 		bool valid;
 
 		std::string srcFile;
+		std::string curShaderSrc;
 		std::string definitions;
 		std::string definitions2;
 		std::string log;
@@ -44,14 +45,14 @@ namespace Shader {
 	struct ARBShaderObject: public Shader::IShaderObject {
 	public:
 		ARBShaderObject(int, const std::string&, const std::string& shDefinitions = "");
-		void Compile();
+		void Compile(bool reloadFromDisk);
 		void Release();
 	};
 
 	struct GLSLShaderObject: public Shader::IShaderObject {
 	public:
 		GLSLShaderObject(int, const std::string&, const std::string& shDefinitions = "");
-		void Compile();
+		void Compile(bool reloadFromDisk);
 		void Release();
 	};
 
@@ -68,7 +69,7 @@ namespace Shader {
 		virtual void Link() {}
 		virtual void Validate() {}
 		virtual void Release() = 0;
-		virtual void Reload() = 0;
+		virtual void Reload(bool reloadFromDisk) = 0;
 		void RecompileIfNeeded();
 		bool IsBound() const { return bound; }
 
@@ -132,7 +133,7 @@ namespace Shader {
 		void Enable() {}
 		void Disable() {}
 		void Release() {}
-		void Reload() {}
+		void Reload(bool reloadFromDisk) {}
 
 		void SetUniform1i(int idx, int   v0) {}
 		void SetUniform2i(int idx, int   v0, int   v1) {}
@@ -158,7 +159,7 @@ namespace Shader {
 		void Disable();
 		void Link();
 		void Release();
-		void Reload();
+		void Reload(bool reloadFromDisk);
 
 		void SetUniformTarget(int target) { uniformTarget = target; }
 
@@ -192,7 +193,7 @@ namespace Shader {
 		void Link();
 		void Validate();
 		void Release();
-		void Reload();
+		void Reload(bool reloadFromDisk);
 
 		void SetUniformLocation(const std::string&);
 

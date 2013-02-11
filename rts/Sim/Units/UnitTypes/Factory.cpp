@@ -400,10 +400,13 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 }
 
 void CFactory::AssignBuildeeOrders(CUnit* unit) {
-	const CFactoryCAI* facAI = static_cast<CFactoryCAI*>(commandAI);
-	const CCommandQueue& newUnitCmds = facAI->newUnitCommands;
+	CCommandAI* unitCAI = unit->commandAI;
+	CCommandQueue& unitCmdQue = unitCAI->commandQue;
 
-	if (newUnitCmds.empty()) {
+	const CFactoryCAI* factoryCAI = static_cast<CFactoryCAI*>(commandAI);
+	const CCommandQueue& factoryCmdQue = factoryCAI->newUnitCommands;
+
+	if (factoryCmdQue.empty() && unitCmdQue.empty()) {
 		SendToEmptySpot(unit);
 		return;
 	}
@@ -441,11 +444,11 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		c.PushPos(unit->pos);
 	}
 
-	if (unit->commandAI->commandQue.empty()) {
-		unit->commandAI->GiveCommand(c);
+	if (unitCmdQue.empty()) {
+		unitCAI->GiveCommand(c);
 
-		// copy factory orders
-		for (CCommandQueue::const_iterator ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
+		// copy factory orders for new unit
+		for (CCommandQueue::const_iterator ci = factoryCmdQue.begin(); ci != factoryCmdQue.end(); ++ci) {
 			c = *ci;
 			c.options |= SHIFT_KEY;
 
@@ -458,10 +461,10 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 				c.SetPos(0, p2);
 			}
 
-			unit->commandAI->GiveCommand(c);
+			unitCAI->GiveCommand(c);
 		}
 	} else {
-		unit->commandAI->commandQue.push_front(c);
+		unitCmdQue.push_front(c);
 	}
 }
 

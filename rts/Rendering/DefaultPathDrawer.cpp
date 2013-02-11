@@ -207,9 +207,9 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			const unsigned int lowResBlockSize = pm->lowResPE->BLOCK_SIZE, lowResBlocksX = pm->lowResPE->nbrOfBlocksX;
 
 			const float gCostMax[3] = {
-				std::max(1.0f, maxResStates.GetMaxGCost()),
-				std::max(1.0f, medResStates.GetMaxGCost()),
-				std::max(1.0f, lowResStates.GetMaxGCost()),
+				std::max(1.0f, maxResStates.GetMaxCost(NODE_COST_G)),
+				std::max(1.0f, medResStates.GetMaxCost(NODE_COST_G)),
+				std::max(1.0f, lowResStates.GetMaxCost(NODE_COST_G)),
 			};
 
 			for (int ty = starty; ty < endy; ++ty) {

@@ -63,7 +63,9 @@ private:
 	boost::recursive_mutex mutex;
 	boost::thread* netHeartbeatThread;
 	COffscreenGLThread* gameLoadThread;
-	bool mt_loading;
+
+	bool mtLoading;
+	bool showMessages;
 
 	unsigned int startupTexture;
 	float aspectRatio;
