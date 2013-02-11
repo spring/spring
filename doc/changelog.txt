@@ -146,7 +146,6 @@ FeatureDefs:
 
 GameServer:
  - a new GameID tag to script.txt
- ! default enable AllowAdditionalPlayers
  ! always account local players (even when host is a spectator!)
  ! don't lower-limit gameSpeed to `userSpeedFactor * 0.5f` when userSpeedFactor is greater than 2
  - make game ways more responsive when running at high speeds
