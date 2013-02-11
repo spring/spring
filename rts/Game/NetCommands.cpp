@@ -58,7 +58,7 @@ void CGame::ClientReadNet()
 	boost::shared_ptr<const netcode::RawPacket> packet;
 
 	// compute new msgProcTimeLeft to "smooth" out SimFrame() calls
-	if (!gameServer) {
+	if (gameServer == NULL) {
 		const spring_time currentFrame = spring_gettime();
 
 		if (skipping) {
@@ -405,31 +405,33 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_SYNCRESPONSE: {
-#if (defined(SYNCCHECK) && !defined(NDEBUG))
-				// NOTE:
-				//     this packet is also sent during live games,
-				//     during which we should just ignore it (the
-				//     server does sync-checking for us)
-				netcode::UnpackPacket pckt(packet, 1);
+#if (defined(SYNCCHECK))
+				if (gameServer != NULL && gameServer->GetDemoReader() != NULL) {
+					// NOTE:
+					//     this packet is also sent during live games,
+					//     during which we should just ignore it (the
+					//     server does sync-checking for us)
+					netcode::UnpackPacket pckt(packet, 1);
 
-				unsigned char playerNum; pckt >> playerNum;
-				          int  frameNum; pckt >> frameNum;
-				unsigned  int  checkSum; pckt >> checkSum;
+					unsigned char playerNum; pckt >> playerNum;
+						      int  frameNum; pckt >> frameNum;
+					unsigned  int  checkSum; pckt >> checkSum;
 
-				const unsigned int ourCheckSum = CSyncChecker::GetChecksum();
-				const char* fmtStr =
-					"[DESYNC_WARNING] checksum %x from player %d (%s)"
-					" does not match our checksum %x for frame-number %d";
-				const CPlayer* player = playerHandler->Player(playerNum);
+					const unsigned int ourCheckSum = CSyncChecker::GetChecksum();
+					const char* fmtStr =
+						"[DESYNC_WARNING] checksum %x from player %d (%s)"
+						" does not match our checksum %x for frame-number %d";
+					const CPlayer* player = playerHandler->Player(playerNum);
 
-				// check if our checksum for this frame matches what
-				// player <playerNum> sent to the server at the same
-				// frame in the original game (in case of a demo)
-				if (playerNum == gu->myPlayerNum) { return; }
-				if (gs->frameNum != frameNum) { return; }
-				if (checkSum == ourCheckSum) { return; }
+					// check if our checksum for this frame matches what
+					// player <playerNum> sent to the server at the same
+					// frame in the original game (in case of a demo)
+					if (playerNum == gu->myPlayerNum) { return; }
+					if (gs->frameNum != frameNum) { return; }
+					if (checkSum == ourCheckSum) { return; }
 
-				LOG_L(L_ERROR, fmtStr, checkSum, playerNum, player->name.c_str(), ourCheckSum, gs->frameNum);
+					LOG_L(L_ERROR, fmtStr, checkSum, playerNum, player->name.c_str(), ourCheckSum, gs->frameNum);
+				}
 #endif
 			} break;
 

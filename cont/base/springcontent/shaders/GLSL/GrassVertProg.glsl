@@ -16,13 +16,13 @@ uniform float simFrame;
 uniform vec3 windSpeed;
 
 void main() {
-	#if defined(GRASS_NEAR_SHADOW) || defined(GRASS_SHADOW_GEN)
-	#ifdef GRASS_SHADOW_GEN
-	vec4 vertexPos = gl_Vertex;
-	#else
-	vec4 vertexPos = gl_ModelViewMatrix * gl_Vertex;
-	#endif
-		#ifdef GRASS_ANIMATION
+	#ifdef DISTANCE_NEAR
+		#ifdef SHADOW_GEN
+		vec4 vertexPos = gl_Vertex;
+		#else
+		vec4 vertexPos = gl_ModelViewMatrix * gl_Vertex;
+		#endif
+		#ifdef ANIMATION
 		vec2 windScale;
 		windScale.x = sin((simFrame + gl_MultiTexCoord0.s) * 5.0 / (10.0 + floor(gl_MultiTexCoord0.s))) * 0.01;
 		windScale.y = (1.0 + sin((vertexPos.x + vertexPos.z) / 45.0 + simFrame / 15.0)) * 0.025;
@@ -35,9 +35,9 @@ void main() {
 	vec4 worldPos = vertexPos;
 	#endif
 
-	#if defined(GRASS_DIST_BASIC) || defined(GRASS_DIST_SHADOW)
+	#ifdef DISTANCE_FAR
 	vec4 worldPos = gl_Vertex;
-		#ifdef GRASS_ANIMATION
+		#ifdef ANIMATION
 		float windScale =
 			0.005 * (1.0 + sin((worldPos.x + worldPos.z) / 45.0 + simFrame / 15.0)) *
 			gl_Normal.y * (1.0 - texOffset.x);
@@ -52,10 +52,10 @@ void main() {
 	vec4 vertexPos = gl_ModelViewMatrix * worldPos;
 	#endif
 
-	#if defined(GRASS_NEAR_SHADOW) || defined(GRASS_DIST_SHADOW) || defined(GRASS_SHADOW_GEN)
+	#if defined(HAVE_SHADOW) || defined(SHADOW_GEN)
 	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
-	#ifdef GRASS_SHADOW_GEN
+	#ifdef SHADOW_GEN
 	vec4 vertexShadowPos = gl_ModelViewMatrix * worldPos;
 	#else
 	vec4 vertexShadowPos = shadowMatrix * worldPos;
@@ -66,7 +66,7 @@ void main() {
 	gl_TexCoord[1] = vertexShadowPos;
 	#endif
 
-	#ifdef GRASS_SHADOW_GEN
+	#ifdef SHADOW_GEN
 	{
 		gl_TexCoord[3].st = gl_MultiTexCoord0.st + texOffset;
 		gl_Position = gl_ProjectionMatrix * vertexShadowPos;

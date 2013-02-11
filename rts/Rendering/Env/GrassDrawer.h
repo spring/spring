@@ -47,8 +47,8 @@ public:
 		GRASS_PROGRAM_NEAR_SHADOW = 0,  // near-grass shader (V+F) with self-shadowing
 		GRASS_PROGRAM_DIST_SHADOW = 1,  // far-grass shader (V+F) with self-shadowing
 		GRASS_PROGRAM_DIST_BASIC  = 2,  // far-grass shader (V) without self-shadowing
-		GRASS_PROGRAM_SHADOW_GEN  = 3,
-		GRASS_PROGRAM_LAST        = 4
+		// GRASS_PROGRAM_SHADOW_GEN  = 3,
+		GRASS_PROGRAM_LAST        = 3
 	};
 
 protected:

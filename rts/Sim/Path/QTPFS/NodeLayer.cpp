@@ -77,7 +77,7 @@ void QTPFS::NodeLayer::Clear() {
 
 
 #ifdef QTPFS_STAGGERED_LAYER_UPDATES
-void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md) {
+void QTPFS::NodeLayer::QueueUpdate(const SRectangle& r, const MoveDef* md) {
 	layerUpdates.push_back(LayerUpdate());
 	LayerUpdate* layerUpdate = &(layerUpdates.back());
 
@@ -114,7 +114,7 @@ void QTPFS::NodeLayer::QueueUpdate(const PathRectangle& r, const MoveDef* md) {
 
 bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 	const LayerUpdate& layerUpdate = layerUpdates.front();
-	const PathRectangle& rectangle = layerUpdate.rectangle;
+	const SRectangle& rectangle = layerUpdate.rectangle;
 
 	const std::vector<float>* speedMods = &layerUpdate.speedMods;
 	const std::vector<  int>* blockBits = &layerUpdate.blockBits;
@@ -126,7 +126,7 @@ bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 
 
 bool QTPFS::NodeLayer::Update(
-	const PathRectangle& r,
+	const SRectangle& r,
 	const MoveDef* md,
 	const std::vector<float>* luSpeedMods,
 	const std::vector<  int>* luBlockBits
@@ -320,7 +320,7 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 #endif
 #endif
 
-void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const PathRectangle& ur, unsigned int currMagicNum) {
+void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const SRectangle& ur, unsigned int currMagicNum) {
 	assert(!nodeGrid.empty());
 
 	// account for the rim of nodes around the bounding box

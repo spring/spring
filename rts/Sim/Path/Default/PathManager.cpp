@@ -113,7 +113,7 @@ unsigned int CPathManager::RequestPath(
 	const float goalDist2D = pfDef->Heuristic(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE) + math::fabs(goalPos.y - startPos.y) / SQUARE_SIZE;
 
 	if (goalDist2D < DETAILED_DISTANCE) {
-		result = maxResPF->GetPath(*moveDef, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, caller, synced);
+		result = maxResPF->GetPath(*moveDef, startPos, *pfDef, caller, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, false, true, synced);
 
 		#if (PM_UNCONSTRAINED_MAXRES_FALLBACK_SEARCH == 1)
 		// unnecessary so long as a fallback path exists within the
@@ -135,7 +135,7 @@ unsigned int CPathManager::RequestPath(
 
 		// CantGetCloser may be a false positive due to PE approximations and large goalRadius
 		if (result == IPath::CantGetCloser && (startPos - goalPos).SqLength2D() > pfDef->sqGoalRadius)
-			result = maxResPF->GetPath(*moveDef, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, caller, synced);
+			result = maxResPF->GetPath(*moveDef, startPos, *pfDef, caller, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, false, true, synced);
 
 		#if (PM_UNCONSTRAINED_MEDRES_FALLBACK_SEARCH == 1)
 		pfDef->DisableConstraint(true);
@@ -152,7 +152,7 @@ unsigned int CPathManager::RequestPath(
 		if (result == IPath::CantGetCloser && (startPos - goalPos).SqLength2D() > pfDef->sqGoalRadius) {
 			result = medResPE->GetPath(*moveDef, startPos, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3, synced);
 			if (result == IPath::CantGetCloser) // Same thing again
-				result = maxResPF->GetPath(*moveDef, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, caller, synced);
+				result = maxResPF->GetPath(*moveDef, startPos, *pfDef, caller, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, false, true, synced);
 		}
 
 		#if (PM_UNCONSTRAINED_LOWRES_FALLBACK_SEARCH == 1)
@@ -242,9 +242,9 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 	IPath::SearchResult result = IPath::Error;
 
 	if (medResPath.path.empty() && lowResPath.path.empty()) {
-		result = maxResPF->GetPath(*multiPath.moveDef, startPos, *multiPath.peDef, maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, owner, synced);
+		result = maxResPF->GetPath(*multiPath.moveDef, startPos, *multiPath.peDef, owner, maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, false, true, synced);
 	} else {
-		result = maxResPF->GetPath(*multiPath.moveDef, startPos, rangedGoalPFD, maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 3, true, owner, synced);
+		result = maxResPF->GetPath(*multiPath.moveDef, startPos, rangedGoalPFD, owner, maxResPath, MAX_SEARCHED_NODES_PF >> 3, true, false, true, synced);
 	}
 
 	// If no refined path could be found, set goal as desired goal.

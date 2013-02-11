@@ -29,9 +29,8 @@ namespace Threading {
 #endif
 	NativeThreadHandle GetCurrentThread();
 	NativeThreadId GetCurrentThreadId();
-	extern bool OMPInited;
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);
-	inline void OMPCheck();
+
 
 	/**
 	 * Sets the affinity of the current thread
@@ -40,12 +39,20 @@ namespace Threading {
 	 * are numbered logically from 1 to N) we want to run.
 	 * Note: that this approach will fail when N > 32.
 	 */
+	void DetectCores();
 	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard = true);
 	void SetAffinityHelper(const char *threadName, boost::uint32_t affinity);
 	int GetAvailableCores();
 	boost::uint32_t GetAvailableCoresMask();
+
+
+	/**
+	 * OpenMP related stuff
+	 */
 	void InitOMP(bool useOMP);
 	void OMPError();
+	extern bool OMPInited;
+	inline void OMPCheck();
 
 	/**
 	 * Inform the OS kernel that we are a cpu-intensive task
