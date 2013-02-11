@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "S3OTextureHandler.h"
 
@@ -48,17 +47,14 @@ CS3OTextureHandler::CS3OTextureHandler()
 CS3OTextureHandler::~CS3OTextureHandler()
 {
 	for (int i = 0; i < s3oTextures.size(); ++i){
-		glDeleteTextures (1, &s3oTextures[i]->tex1);
-		glDeleteTextures (1, &s3oTextures[i]->tex2);
+		glDeleteTextures(1, &s3oTextures[i]->tex1);
+		glDeleteTextures(1, &s3oTextures[i]->tex2);
 		delete s3oTextures[i];
 	}
 }
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
 	model->textureType = GML::SimEnabled() && !GML::ShareLists() && GML::IsSimThread() ? -1 : LoadS3OTextureNow(model);
-}
-
-void CS3OTextureHandler::Update() {
 }
 
 int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)

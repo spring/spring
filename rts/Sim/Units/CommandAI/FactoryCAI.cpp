@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "FactoryCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
@@ -91,7 +90,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		possibleCommands.push_back(c);
 	}
 
-	CFactory* fac=(CFactory*)owner;
+	CFactory* fac = static_cast<CFactory*>(owner);
 
 	map<int, string>::const_iterator bi;
 	for (bi = fac->unitDef->buildOptions.begin(); bi != fac->unitDef->buildOptions.end(); ++bi) {
@@ -116,7 +115,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 
 		char tmp[1024];
 		sprintf(tmp, "\nHealth %.0f\nMetal cost %.0f\nEnergy cost %.0f Build time %.0f",
-		        ud->health, ud->metalCost, ud->energyCost, ud->buildTime);
+		        ud->health, ud->metal, ud->energy, ud->buildTime);
 		if (c.disabled) {
 			c.tooltip = "\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff";
 		} else {
@@ -137,21 +136,25 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 
 void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
-	const int& cmd_id = c.GetID();
+	const int cmdID = c.GetID();
 	
 	// move is always allowed for factories (passed to units it produces)
-	if ((cmd_id == CMD_SET_WANTED_MAX_SPEED) ||
-	    ((cmd_id != CMD_MOVE) && !AllowedCommand(c, fromSynced))) {
+	if ((cmdID == CMD_SET_WANTED_MAX_SPEED) ||
+	    ((cmdID != CMD_MOVE) && !AllowedCommand(c, fromSynced))) {
 		return;
 	}
 
-	map<int, BuildOption>::iterator boi = buildOptions.find(cmd_id);
+	map<int, BuildOption>::iterator boi = buildOptions.find(cmdID);
 
-	// not a build order so queue it to built units
+	// not a build order (or a build order we do not support, eg. if multiple
+	// factories of different types were selected) so queue it to built units
 	if (boi == buildOptions.end()) {
-		if ((nonQueingCommands.find(cmd_id) != nonQueingCommands.end()) ||
-		    (cmd_id == CMD_INSERT) || (cmd_id == CMD_REMOVE) ||
-		    (!(c.options & SHIFT_KEY) && ((cmd_id == CMD_WAIT) || (cmd_id == CMD_SELFD)))) {
+		if (cmdID < 0)
+			return;
+
+		if ((nonQueingCommands.find(cmdID) != nonQueingCommands.end()) ||
+		    (cmdID == CMD_INSERT) || (cmdID == CMD_REMOVE) ||
+		    (!(c.options & SHIFT_KEY) && ((cmdID == CMD_WAIT) || (cmdID == CMD_SELFD)))) {
 			CCommandAI::GiveAllowedCommand(c);
 			return;
 		}
@@ -164,10 +167,10 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 		CCommandAI::AddCommandDependency(c);
 
-		if (cmd_id != CMD_STOP) {
-			if ((cmd_id == CMD_WAIT) || (cmd_id == CMD_SELFD)) {
-				if (!newUnitCommands.empty() && (newUnitCommands.back().GetID() == cmd_id)) {
-					if (cmd_id == CMD_WAIT) {
+		if (cmdID != CMD_STOP) {
+			if ((cmdID == CMD_WAIT) || (cmdID == CMD_SELFD)) {
+				if (!newUnitCommands.empty() && (newUnitCommands.back().GetID() == cmdID)) {
+					if (cmdID == CMD_WAIT) {
 						waitCommandsAI.RemoveWaitCommand(owner, c);
 					}
 					newUnitCommands.pop_back();
@@ -190,9 +193,11 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 		// the first new-unit build order can not be WAIT or SELFD
 		while (!newUnitCommands.empty()) {
-			const int& id = newUnitCommands.front().GetID();
+			const Command& newUnitCommand = newUnitCommands.front();
+			const int id = newUnitCommand.GetID();
+
 			if ((id == CMD_WAIT) || (id == CMD_SELFD)) {
-				if (cmd_id == CMD_WAIT) {
+				if (cmdID == CMD_WAIT) {
 					waitCommandsAI.RemoveWaitCommand(owner, c);
 				}
 				newUnitCommands.pop_front();
@@ -205,42 +210,39 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	}
 
 	BuildOption& bo = boi->second;
-
 	int numItems = 1;
+
 	if (c.options & SHIFT_KEY)   { numItems *= 5; }
 	if (c.options & CONTROL_KEY) { numItems *= 20; }
 
 	if (c.options & RIGHT_MOUSE_KEY) {
 		bo.numQued -= numItems;
-		if (bo.numQued < 0) {
-			bo.numQued = 0;
-		}
+		bo.numQued  = std::max(bo.numQued, 0);
 
 		int numToErase = numItems;
 		if (c.options & ALT_KEY) {
 			for (unsigned int cmdNum = 0; cmdNum < commandQue.size() && numToErase; ++cmdNum) {
-				if (commandQue[cmdNum].GetID() == cmd_id) {
+				if (commandQue[cmdNum].GetID() == cmdID) {
 					commandQue[cmdNum] = Command(CMD_STOP);
 					numToErase--;
 				}
 			}
 		} else {
 			for (int cmdNum = commandQue.size() - 1; cmdNum != -1 && numToErase; --cmdNum) {
-				if (commandQue[cmdNum].GetID() == cmd_id) {
+				if (commandQue[cmdNum].GetID() == cmdID) {
 					commandQue[cmdNum] = Command(CMD_STOP);
 					numToErase--;
 				}
 			}
 		}
-		UpdateIconName(cmd_id, bo);
+		UpdateIconName(cmdID, bo);
 		SlowUpdate();
-	}
-	else {
+	} else {
 		if (c.options & ALT_KEY) {
 			for (int a = 0; a < numItems; ++a) {
 				if (repeatOrders) {
 					Command nc(c);
-					nc.options |= DONT_REPEAT;
+					nc.options |= INTERNAL_ORDER;
 					if (commandQue.empty()) {
 						commandQue.push_front(nc);
 					} else {
@@ -251,7 +253,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				}
 			}
 			if (!repeatOrders) {
-				CFactory* fac = (CFactory*)owner;
+				CFactory* fac = static_cast<CFactory*>(owner);
 				fac->StopBuild();
 			}
 		} else {
@@ -260,7 +262,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 		}
 		bo.numQued += numItems;
-		UpdateIconName(cmd_id, bo);
+		UpdateIconName(cmdID, bo);
 
 		SlowUpdate();
 	}
@@ -277,7 +279,7 @@ void CFactoryCAI::InsertBuildCommand(CCommandQueue::iterator& it,
 	}
 	if (!commandQue.empty() && (it == commandQue.begin())) {
 		// ExecuteStop(), without the pop_front()
-		CFactory* fac = (CFactory*)owner;
+		CFactory* fac = static_cast<CFactory*>(owner);
 		fac->StopBuild();
 	}
 	commandQue.insert(it, newCmd);
@@ -312,7 +314,7 @@ void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& b
 	// NOTE: the queue should not be empty at this point!
 	const Command frontCommand = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
-	if (!repeatOrders || (buildCommand.options & DONT_REPEAT))
+	if (!repeatOrders || (buildCommand.options & INTERNAL_ORDER))
 		buildOption.numQued--;
 
 	UpdateIconName(buildCommand.GetID(), buildOption);
@@ -357,7 +359,7 @@ void CFactoryCAI::SlowUpdate()
 	if (commandQue.empty() || owner->beingBuilt)
 		return;
 
-	CFactory* fac = (CFactory*) owner;
+	CFactory* fac = static_cast<CFactory*>(owner);
 
 	while (!commandQue.empty()) {
 		Command& c = commandQue.front();
@@ -395,7 +397,7 @@ void CFactoryCAI::SlowUpdate()
 
 void CFactoryCAI::ExecuteStop(Command& c)
 {
-	CFactory* fac = (CFactory*) owner;
+	CFactory* fac = static_cast<CFactory*>(owner);
 	fac->StopBuild();
 
 	commandQue.pop_front();

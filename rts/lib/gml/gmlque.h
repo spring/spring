@@ -17,7 +17,7 @@ struct VAdata {
 	GLsizei stride;
 	const GLvoid *pointer;
 	GLuint buffer;
-	VAdata(){}
+	VAdata(): size(0), type(0), normalized(true),stride(0), pointer(NULL), buffer(0) {}
 	VAdata(GLint si, GLenum ty, GLboolean no, GLsizei st, const GLvoid *po, GLuint buf):
 	size(si),type(ty),normalized(no),stride(st),pointer(po),buffer(buf) {}
 };
@@ -94,6 +94,7 @@ struct gmlQueue {
 	GLuint PixelUnpackBuffer;
 	
 	gmlQueue();
+	virtual ~gmlQueue();
 	
 	BYTE *Realloc(BYTE **e=NULL);
 	BYTE *WaitRealloc(BYTE **e=NULL);

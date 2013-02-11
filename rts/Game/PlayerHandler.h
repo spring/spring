@@ -15,7 +15,7 @@ class CPlayer;
 class CPlayerHandler
 {
 public:
-	CR_DECLARE(CPlayerHandler);
+	CR_DECLARE_STRUCT(CPlayerHandler);
 
 	CPlayerHandler();
 	~CPlayerHandler();

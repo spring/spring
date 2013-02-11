@@ -1,12 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Rendering/GL/myGL.h"
 #include <map>
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
 #include <set>
 #include <cfloat>
-#include "System/mmgr.h"
 
 #include "PreGame.h"
 
@@ -23,9 +21,11 @@
 #include "PlayerHandler.h"
 #include "System/TimeProfiler.h"
 #include "UI/InfoConsole.h"
+#include "Map/Generation/SimpleMapGenerator.h"
 
 #include "aGui/Gui.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Menu/SelectMenu.h"
 #include "Rendering/glFont.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -54,6 +54,7 @@ using std::string;
 CONFIG(bool, DemoFromDemo).defaultValue(false);
 
 CPreGame* pregame = NULL;
+extern SelectMenu* selectMenu;
 
 CPreGame::CPreGame(const ClientSetup* setup) :
 	settings(setup),
@@ -79,6 +80,7 @@ CPreGame::~CPreGame()
 {
 	// don't delete infoconsole, its beeing reused by CGame
 	agui::gui->Draw(); // delete leftover gui elements (remove once the gui is drawn ingame)
+	selectMenu = NULL;
 
 	pregame = NULL;
 }
@@ -178,10 +180,15 @@ void CPreGame::StartServer(const std::string& setupscript)
 	CGameSetup* setup = new CGameSetup();
 	setup->Init(setupscript);
 
-	startupData->SetRandomSeed(static_cast<unsigned>(gu->usRandInt()));
+	startupData->SetRandomSeed(static_cast<unsigned>(gu->RandInt()));
 
 	if (setup->mapName.empty()) {
 		throw content_error("No map selected in startscript");
+	}
+
+	if (setup->mapSeed != 0) {
+		CSimpleMapGenerator gen(setup);
+		gen.Generate();
 	}
 
 	// We must map the map into VFS this early, because server needs the start positions.

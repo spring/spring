@@ -7,10 +7,7 @@
 #include "System/float3.h"
 #include "System/Vec2.h"
 
-class IPath {
-public:
-	virtual ~IPath() {}
-
+namespace IPath {
 	enum SearchResult {
 		Ok,
 		GoalOutOfRange,

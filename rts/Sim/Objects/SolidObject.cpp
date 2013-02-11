@@ -1,20 +1,22 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "SolidObject.h"
+#include "SolidObjectDef.h"
 #include "Map/ReadMap.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "System/myMath.h"
 
 int CSolidObject::deletingRefID = -1;
+
 const float CSolidObject::DEFAULT_MASS = 1e5f;
 const float CSolidObject::MINIMUM_MASS = 1e0f; // 1.0f
 const float CSolidObject::MAXIMUM_MASS = 1e6f;
+const float CSolidObject::IMPULSE_RATE = 0.968f;
 
 CR_BIND_DERIVED(CSolidObject, CWorldObject, );
 CR_REG_METADATA(CSolidObject,
@@ -22,6 +24,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(health),
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
+	CR_MEMBER(impulseDecayRate),
 
 	CR_MEMBER(blocking),
 	CR_MEMBER(crushable),
@@ -55,6 +58,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(isMoving),
 	CR_MEMBER(isUnderWater),
 	CR_MEMBER(isMarkedOnBlockingMap),
+	CR_MEMBER(groundBlockPos),
 
 	CR_MEMBER(speed),
 	CR_MEMBER(residualImpulse),
@@ -62,6 +66,8 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
 
+	// TODO: register SolidObjectDef with CREG
+	// CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
 
@@ -75,6 +81,8 @@ CSolidObject::CSolidObject():
 	health(0.0f),
 	mass(DEFAULT_MASS),
 	crushResistance(0.0f),
+	impulseDecayRate(IMPULSE_RATE),
+
 	blocking(false),
 	crushable(false),
 	immobile(false),
@@ -97,8 +105,12 @@ CSolidObject::CSolidObject():
 	residualImpulse(ZeroVector),
 	team(0),
 	allyteam(0),
+
+	objectDef(NULL),
 	moveDef(NULL),
 	collisionVolume(NULL),
+	groundDecal(NULL),
+
 	frontdir(0.0f, 0.0f, 1.0f),
 	rightdir(-1.0f, 0.0f, 0.0f),
 	updir(0.0f, 1.0f, 0.0f),
@@ -112,9 +124,6 @@ CSolidObject::CSolidObject():
 
 CSolidObject::~CSolidObject() {
 	blocking = false;
-
-	delete moveDef;
-	moveDef = NULL;
 
 	delete collisionVolume;
 	collisionVolume = NULL;
@@ -131,22 +140,30 @@ void CSolidObject::UnBlock() {
 }
 
 void CSolidObject::Block() {
-	UnBlock();
+	if (physicalState == Flying) {
+		//FIXME why does airmovetypes really on Block() to UNblock!
+		UnBlock();
+		return;
+	}
 
 	if (!blocking) {
-		return;
-	}
-	if (physicalState == Flying) {
+		//FIXME just why???
+		UnBlock();
 		return;
 	}
 
+	if (isMarkedOnBlockingMap && groundBlockPos == pos) {
+		return;
+	}
+
+	UnBlock();
+	groundBlockPos = pos;
 	groundBlockingObjectMap->AddGroundBlockingObject(this);
-
 	assert(isMarkedOnBlockingMap);
 }
 
 
-YardMapStatus CSolidObject::GetGroundBlockingAtPos(float3 gpos) const
+YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 {
 	if (!blockMap)
 		return YARDMAP_OPEN;
@@ -180,7 +197,7 @@ YardMapStatus CSolidObject::GetGroundBlockingAtPos(float3 gpos) const
 		frontv = fronts[buildFacing];
 		rightv = rights[buildFacing];
 
-		gpos   -= float3(mapPos.x * SQUARE_SIZE, 0.0f, mapPos.y * SQUARE_SIZE);
+		gpos -= float3(mapPos.x * SQUARE_SIZE, 0.0f, mapPos.y * SQUARE_SIZE);
 
 		// need to revert some of the transformations of CSolidObject::GetMapPos()
 		gpos.x += SQUARE_SIZE / 2 - (this->xsize >> 1) * SQUARE_SIZE; 

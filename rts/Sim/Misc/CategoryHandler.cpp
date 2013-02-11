@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include "System/mmgr.h"
 
 #include "CategoryHandler.h"
 

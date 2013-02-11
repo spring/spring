@@ -27,6 +27,10 @@
  *  foo(Vehicles::car);                // not valid
  *  foo(1);                            // not valid
  **/
+
+namespace Bitwise
+{
+
 template <class Enum>
 class BitwiseEnum
 {
@@ -175,6 +179,8 @@ template <class Enum>
 inline BitwiseEnum<Enum> operator | (Enum a, Enum b)
 {
 	return BitwiseEnum<Enum>(a) | BitwiseEnum<Enum>(b);
+}
+
 }
 
 

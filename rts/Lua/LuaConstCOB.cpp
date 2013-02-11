@@ -2,7 +2,6 @@
 
 /* exports the #defines from CobDefines.h to Lua */
 
-#include "System/mmgr.h"
 #include "LuaConstCOB.h"
 #include "LuaInclude.h"
 #include "LuaUtils.h"

@@ -3,7 +3,6 @@
 #include "Rendering/GL/myGL.h"
 #include <algorithm>
 #include <cctype>
-#include "System/mmgr.h"
 
 #include "IModelParser.h"
 #include "3DModel.h"
@@ -13,7 +12,7 @@
 #include "OBJParser.h"
 #include "AssParser.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Units/Unit.h"
+#include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
@@ -90,19 +89,29 @@ C3DModelLoader::C3DModelLoader()
 
 	// FIXME: unify the metadata formats of CAssParser and COBJParser
 	RegisterAssimpModelParsers(parsers, new CAssParser());
+
+	// dummy first model, model IDs start at 1
+	models.reserve(32);
+	models.push_back(NULL);
 }
 
 
 C3DModelLoader::~C3DModelLoader()
 {
 	// delete model cache
-	ModelMap::iterator ci;
-	for (ci = cache.begin(); ci != cache.end(); ++ci) {
-		S3DModel* model = ci->second;
+	for (unsigned int n = 1; n < models.size(); n++) {
+		S3DModel* model = models[n];
 
-		DeleteChilds(model->GetRootPiece());
+		assert(model != NULL);
+		assert(model->GetRootPiece() != NULL);
+
+		model->DeletePieces(model->GetRootPiece());
+		model->SetRootPiece(NULL);
+
 		delete model;
 	}
+
+	models.clear();
 	cache.clear();
 
 	// get rid of Spring's native parsers
@@ -154,72 +163,119 @@ void CheckModelNormals(const S3DModel* model) {
 }
 
 
+std::string C3DModelLoader::FindModelPath(std::string name) const
+{
+	const std::string& fileExt = FileSystem::GetExtension(name);
 
-S3DModel* C3DModelLoader::Load3DModel(std::string name)
+	if (fileExt.empty()) {
+		for (ParserMap::const_iterator it = parsers.begin(); it != parsers.end(); ++it) {
+			const std::string& supportedExt = it->first;
+
+			if (CFileHandler::FileExists(name + "." + supportedExt, SPRING_VFS_ZIP)) {
+				name += "." + supportedExt; break;
+			}
+		}
+	}
+
+	if (!CFileHandler::FileExists(name, SPRING_VFS_ZIP)) {
+		if (name.find("objects3d/") == std::string::npos) {
+			return FindModelPath("objects3d/" + name);
+		}
+	}
+
+	return name;
+}
+
+
+S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 {
 	GML_RECMUTEX_LOCK(model); // Load3DModel
 
-	StringToLowerInPlace(name);
+	StringToLowerInPlace(modelName);
 
 	// search in cache first
 	ModelMap::iterator ci;
-	if ((ci = cache.find(name)) != cache.end()) {
-		return ci->second;
+	ParserMap::iterator pi;
+
+	if ((ci = cache.find(modelName)) != cache.end()) {
+		return models[ci->second];
 	}
 
-	// not found in cache, create the model and cache it
-	const std::string& fileExt = FileSystem::GetExtension(name);
-	const ParserMap::iterator pi = parsers.find(fileExt);
+	const std::string modelPath = FindModelPath(modelName);
 
-	if (pi != parsers.end()) {
+	if ((ci = cache.find(modelPath)) != cache.end()) {
+		return models[ci->second];
+	}
+
+
+	// not found in cache, create the model and cache it
+	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
+
+	if ((pi = parsers.find(fileExt)) != parsers.end()) {
 		IModelParser* p = pi->second;
 		S3DModel* model = NULL;
 		S3DModelPiece* root = NULL;
 
 		try {
-			model = p->Load(name);
+			model = p->Load(modelPath);
 		} catch (const content_error& ex) {
-			// crash-dummy
-			model = new S3DModel();
-			model->type = ModelExtToModelType(parsers, StringToLower(fileExt));
-			model->numPieces = 1;
-			model->SetRootPiece(ModelTypeToModelPiece(model->type));
-			model->GetRootPiece()->SetCollisionVolume(new CollisionVolume("box", UpVector * -1.0f, ZeroVector, CollisionVolume::COLVOL_HITTEST_CONT));
-
-			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
+			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", modelName.c_str(), ex.what());
+			goto dummy;
 		}
 
 		if ((root = model->GetRootPiece()) != NULL) {
 			CreateLists(root);
 		}
 
-		cache[name] = model; // cache the model
-		model->id = cache.size(); // IDs start with 1
-
+		AddModelToCache(model, modelName, modelPath);
 		CheckModelNormals(model);
-
 		return model;
 	}
 
-	LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
-	return NULL;
+	LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
+
+dummy:
+	// crash-dummy
+	S3DModel* model = new S3DModel();
+	model->type = MODELTYPE_3DO;
+	model->numPieces = 1;
+	// give it one dummy piece
+	model->SetRootPiece(ModelTypeToModelPiece(MODELTYPE_3DO));
+	model->GetRootPiece()->SetCollisionVolume(new CollisionVolume("box", -UpVector, ZeroVector));
+
+	if (model->GetRootPiece() != NULL) {
+		CreateLists(model->GetRootPiece());
+	}
+
+	AddModelToCache(model, modelName, modelPath);
+	return model;
+}
+
+void C3DModelLoader::AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath) {
+	model->id = models.size(); // IDs start at 1
+	models.push_back(model);
+
+	assert(models[model->id] == model);
+
+	cache[modelName] = model->id;
+	cache[modelPath] = model->id;
 }
 
 void C3DModelLoader::Update() {
 	if (GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // Update
 
-		for (std::vector<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
+		for (std::list<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
 			CreateListsNow(*it);
 		}
 		createLists.clear();
 
-		for (std::set<CUnit*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
-			SetLocalModelPieceDisplayLists(*i);
+		for (std::list<LocalModel*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
+			(*i)->ReloadDisplayLists();
 		}
 		fixLocalModels.clear();
 
-		for (std::vector<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i) {
+		for (std::list<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i) {
 			delete *i;
 		}
 		deleteLocalModels.clear();
@@ -227,77 +283,55 @@ void C3DModelLoader::Update() {
 }
 
 
-void C3DModelLoader::DeleteChilds(S3DModelPiece* o)
-{
-	for (std::vector<S3DModelPiece*>::iterator di = o->childs.begin(); di != o->childs.end(); ++di) {
-		DeleteChilds(*di);
-	}
 
-	o->childs.clear();
-	delete o;
+void C3DModelLoader::CreateLocalModel(LocalModel* localModel)
+{
+	const S3DModel* model = localModel->original;
+	const S3DModelPiece* root = model->GetRootPiece();
+
+	const bool dlistLoaded = (root->GetDisplayListID() != 0);
+
+	if (!dlistLoaded && GML::SimEnabled() && !GML::ShareLists()) {
+		GML_RECMUTEX_LOCK(model); // CreateLocalModel
+
+		fixLocalModels.push_back(localModel);
+	}
 }
 
-
-void C3DModelLoader::DeleteLocalModel(CUnit* unit)
+void C3DModelLoader::DeleteLocalModel(LocalModel* localModel)
 {
 	if (GML::SimEnabled() && !GML::ShareLists()) {
 		GML_RECMUTEX_LOCK(model); // DeleteLocalModel
 
-		fixLocalModels.erase(unit);
-		deleteLocalModels.push_back(unit->localmodel);
-	}
-	else {
-		delete unit->localmodel;
-	}
-}
-
-void C3DModelLoader::CreateLocalModel(CUnit* unit)
-{
-	if (GML::SimEnabled() && !GML::ShareLists()) {
-		GML_RECMUTEX_LOCK(model); // CreateLocalModel
-
-		unit->localmodel = new LocalModel(unit->model);
-		fixLocalModels.insert(unit);
-	}
-	else {
-		unit->localmodel = new LocalModel(unit->model);
-		// SetLocalModelPieceDisplayLists(unit);
-	}
-}
-
-
-void C3DModelLoader::SetLocalModelPieceDisplayLists(CUnit* unit)
-{
-	int piecenum = 0;
-	SetLocalModelPieceDisplayLists(unit->model->GetRootPiece(), unit->localmodel, &piecenum);
-}
-
-void C3DModelLoader::SetLocalModelPieceDisplayLists(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
-{
-	lmodel->pieces[*piecenum]->dispListID = model->dispListID;
-
-	for (unsigned int i = 0; i < model->childs.size(); i++) {
-		(*piecenum)++;
-		SetLocalModelPieceDisplayLists(model->childs[i], lmodel, piecenum);
+		std::list<LocalModel*>::iterator it = find(fixLocalModels.begin(), fixLocalModels.end(), localModel);
+		if (it != fixLocalModels.end())
+			fixLocalModels.erase(it);
+		deleteLocalModels.push_back(localModel);
+	} else {
+		delete localModel;
 	}
 }
 
 
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
-	o->dispListID = glGenLists(1);
-	glNewList(o->dispListID, GL_COMPILE);
-		o->DrawForList();
-	glEndList();
+	o->UploadGeometryVBOs();
 
-	for (std::vector<S3DModelPiece*>::iterator bs = o->childs.begin(); bs != o->childs.end(); ++bs) {
-		CreateListsNow(*bs);
+	const unsigned int dlistID = o->CreateDrawForList();
+
+	for (unsigned int n = 0; n < o->GetChildCount(); n++) {
+		CreateListsNow(o->GetChild(n));
 	}
+
+	// bind when everything is ready, should be more safe in multithreaded scenarios
+	// TODO: still for 100% safety it should use GL_SYNC
+	o->SetDisplayListID(dlistID);
 }
 
 
 void C3DModelLoader::CreateLists(S3DModelPiece* o) {
 	if (GML::SimEnabled() && !GML::ShareLists())
+		// already mutex'ed via ::Load3DModel()
 		createLists.push_back(o);
 	else
 		CreateListsNow(o);

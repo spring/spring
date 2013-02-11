@@ -3,7 +3,7 @@
 #ifndef PBO_H
 #define PBO_H
 
-#include "Rendering/GL/myGL.h"
+#include "VBO.h"
 
 /**
  * @brief PBO
@@ -11,35 +11,14 @@
  * Pixelbuffer Object class (EXT_pixel_buffer_object).
  * WARNING: CANNOT BE USED IN COMBINATION WITH gluBuild2DMipmaps/glBuildMipmaps!!!
  */
-class PBO
+class PBO : public VBO
 {
 public:
-	PBO();
-	~PBO();
+	PBO() : VBO(GL_PIXEL_UNPACK_BUFFER) {}
+	virtual ~PBO() {}
 
-	static bool IsSupported();
-
-	void Bind();
-	void Unbind(bool discard = true);
-
-	void Resize(GLsizeiptr size, GLenum usage = GL_STREAM_DRAW);
-
-	GLubyte* MapBuffer(GLbitfield access = GL_WRITE_ONLY);
-	GLubyte* MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access = GL_WRITE_ONLY);
-	void UnmapBuffer();
-
-	const GLvoid* GetPtr(GLintptr offset = 0);
-
-protected:
-	GLuint pboId;
-	size_t size;
-
-private:
-	bool PBOused;
-	bool bound;
-	bool mapped;
-
-	GLubyte* data;
+	void Bind() const { VBO::Bind(GL_PIXEL_UNPACK_BUFFER); }
+	void Unbind(bool discard = true) { VBO::Unbind(discard); }
 };
 
 #endif /* PBO_H */

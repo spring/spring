@@ -116,8 +116,11 @@ bool util_isPathAbsolute(const char* path);
  *    ".../AI/Interface/Java/0.1/jlib/jna/jna.jar"
  *    ".../AI/Interface/Java/0.1/jlib/jna/linux-i386.jar"
  *
- * @param  suffix  files to list have to end with this suffix, eg. ".jar"
- * @param  recursive  list files recursively
+ * @param dir          root directory to search for files
+ * @param suffix       files to list have to end with this suffix, eg. ".jar"
+ * @param fileNames    resulting array with filenames
+ * @param recursive    list files recursively
+ * @param maxFileNames max files to return
  */
 unsigned int util_listFiles(const char* dir, const char* suffix,
 		char** fileNames, bool recursive, const unsigned int maxFileNames);
@@ -129,6 +132,7 @@ void util_removeTrailingSlash(char* fsPath);
 
 /**
  * Returns true if the file specified in filePath exists.
+ * @param filePath path to the file
  */
 bool util_fileExists(const char* filePath);
 

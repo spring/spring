@@ -119,13 +119,14 @@ void AAirMoveType::DependentDied(CObject* o) {
 	}
 
 	if (o == reservedPad) {
-		SetState(AIRCRAFT_TAKEOFF);
+		if (aircraftState!=AIRCRAFT_CRASHING) { //don't change state when crashing
+			SetState(AIRCRAFT_TAKEOFF);
 
-		goalPos = oldGoalPos;
-		wantedHeight = orgWantedHeight;
-
+			goalPos = oldGoalPos;
+			wantedHeight = orgWantedHeight;
+			padStatus = PAD_STATUS_FLYING;
+		}
 		reservedPad = NULL;
-		padStatus = PAD_STATUS_FLYING;
 	}
 }
 
@@ -264,7 +265,7 @@ void AAirMoveType::CheckForCollision()
 bool AAirMoveType::MoveToRepairPad() {
 	CUnit* airBase = reservedPad->GetUnit();
 
-	if (airBase->beingBuilt || airBase->stunned) {
+	if (airBase->beingBuilt || airBase->IsStunned()) {
 		// pad became inoperable after being reserved
 		DependentDied(airBase);
 		return false;
@@ -295,7 +296,10 @@ bool AAirMoveType::MoveToRepairPad() {
 			reservedLandingPos = absPadPos;
 			wantedHeight = absPadPos.y - ground->GetHeightAboveWater(absPadPos.x, absPadPos.z);
 
-			if ((owner->pos.SqDistance(absPadPos) < SQUARE_SIZE * SQUARE_SIZE) || aircraftState == AIRCRAFT_LANDED) {
+			const float curPadDistanceSq = owner->midPos.SqDistance(absPadPos);
+			const float minPadDistanceSq = owner->radius * owner->radius;
+
+			if (curPadDistanceSq < minPadDistanceSq || aircraftState == AIRCRAFT_LANDED) {
 				padStatus = PAD_STATUS_ARRIVED;
 				owner->speed = ZeroVector;
 			}

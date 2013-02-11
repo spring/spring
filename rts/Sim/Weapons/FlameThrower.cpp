@@ -6,7 +6,6 @@
 #include "Sim/Projectiles/WeaponProjectiles/FlameProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CFlameThrower, CWeapon, (NULL));
 
@@ -21,11 +20,11 @@ CFlameThrower::CFlameThrower(CUnit* owner)
 {
 }
 
-CFlameThrower::~CFlameThrower(void)
+CFlameThrower::~CFlameThrower()
 {
 }
 
-void CFlameThrower::FireImpl(void)
+void CFlameThrower::FireImpl()
 {
 	const float3 dir = (targetPos - weaponMuzzlePos).Normalize();
 	const float3 spread =
@@ -33,43 +32,15 @@ void CFlameThrower::FireImpl(void)
 		weaponDef->ownerExpAccWeight) -
 		(dir * 0.001f);
 
-	new CFlameProjectile(weaponMuzzlePos, dir * projectileSpeed,
-		spread, owner, weaponDef, (int) (range / projectileSpeed * weaponDef->duration));
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.speed = dir * projectileSpeed;
+	params.ttl = (int) (range / projectileSpeed * weaponDef->duration);
+	new CFlameProjectile(params, spread);
 }
 
-bool CFlameThrower::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
-{
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
-		return false;
 
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
-		return false;
-
-	float3 dir(pos - weaponMuzzlePos);
-	float length = dir.Length();
-	if (length == 0)
-		return true;
-
-	dir /= length;
-
-	if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length, unit)) {
-		return false;
-	}
-
-	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
-		return false;
-	}
-	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, false, true, false, owner)) {
-		return false;
-	}
-
-	return true;
-}
-
-void CFlameThrower::Update(void)
+void CFlameThrower::Update()
 {
 	if(targetType != Target_None){
 		weaponPos = owner->pos +

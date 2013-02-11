@@ -3,8 +3,6 @@
 
 #include <string>
 
-#include "System/mmgr.h"
-
 #include "LuaInputReceiver.h"
 #include "System/EventHandler.h"
 

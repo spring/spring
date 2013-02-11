@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "CobThread.h"
 #include "CobFile.h"
@@ -40,8 +39,10 @@ CCobThread::~CCobThread()
 		//LOG_L(L_DEBUG, "%s callback with %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
 		(*callback)(retCode, cbParam1, cbParam2);
 	}
-	if(owner)
+	if (owner)
 		owner->threads.remove(this);
+
+	SetCallback(NULL, NULL, NULL);
 }
 
 void CCobThread::SetCallback(CBCobThreadFinish cb, void* p1, void* p2)
@@ -690,7 +691,7 @@ bool CCobThread::Tick()
 		}
 	}
 
-	return true;
+	return (state != Dead); // can arrive here as dead, through CCobInstance::Signal()
 }
 
 void CCobThread::ShowError(const string& msg)

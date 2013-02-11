@@ -5,6 +5,7 @@
 
 #include "System/Exceptions.h"
 #include "System/maindefines.h"
+#include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 
 
@@ -22,7 +23,7 @@ void COffscreenGLContext::WorkerThreadFree() {}
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! WINDOWS
 
-#include <wingdi.h> //! wgl...
+#include <GL/wglew.h>
 
 COffscreenGLContext::COffscreenGLContext()
 {
@@ -36,20 +37,30 @@ COffscreenGLContext::COffscreenGLContext()
 		throw opengl_error("Couldn't create an offscreen GL context: wglGetCurrentDC failed!");
 	}
 
-
-	//! create a 2nd GL context
-	offscreenRC = wglCreateContext(hdc);
-	if (!offscreenRC) {
-		throw opengl_error("Couldn't create an offscreen GL context: wglCreateContext failed!");
+	int status = TRUE;
+	offscreenRC = NULL;
+#ifdef WGL_ARB_create_context
+	if (wglCreateContextAttribsARB) {
+		static const int contextAttribs[] = { WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB, 0 };
+		offscreenRC = wglCreateContextAttribsARB(hdc, mainRC, contextAttribs);
+		if (!offscreenRC)
+			LOG_L(L_WARNING, "Couldn't create an offscreen GL context: wglCreateContextAttribsARB failed!");
 	}
+#endif
+	if (!offscreenRC) {
+		//! create a 2nd GL context
+		offscreenRC = wglCreateContext(hdc);
+		if (!offscreenRC) {
+			throw opengl_error("Couldn't create an offscreen GL context: wglCreateContext failed!");
+		}
 
-
-	//! share the GL resources (textures,DLists,shaders,...)
-	if(!wglMakeCurrent(NULL, NULL))
-		throw opengl_error("Could not deactivate rendering context");
-	int status = wglShareLists(mainRC, offscreenRC);
-	if(!wglMakeCurrent(hdc, mainRC))
-		throw opengl_error("Could not activate rendering context");
+		//! share the GL resources (textures,DLists,shaders,...)
+		if (!wglMakeCurrent(NULL, NULL))
+			throw opengl_error("Could not deactivate rendering context");
+		status = wglShareLists(mainRC, offscreenRC);
+		if (!wglMakeCurrent(hdc, mainRC))
+			throw opengl_error("Could not activate rendering context");
+	}
 
 	if (!status) {
 		DWORD err = GetLastError();

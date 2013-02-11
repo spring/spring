@@ -9,13 +9,8 @@ class CTorpedoProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CTorpedoProjectile);
 public:
-	CTorpedoProjectile(const float3& pos, const float3& speed, CUnit* owner,
-			float areaOfEffect, float maxSpeed, float tracking, int ttl,
-			CUnit* target, const WeaponDef* weaponDef);
+	CTorpedoProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed, float tracking);
 	~CTorpedoProjectile();
-	void DependentDied(CObject* o);
-	void Collision(CUnit* unit);
-	void Collision();
 
 	void Update();
 	void Draw();
@@ -25,7 +20,6 @@ private:
 	float maxSpeed;
 	float curSpeed;
 	float areaOfEffect;
-	CUnit* target;
 	int nextBubble;
 	float texx;
 	float texy;

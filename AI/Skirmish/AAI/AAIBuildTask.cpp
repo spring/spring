@@ -35,17 +35,17 @@ void AAIBuildTask::BuilderDestroyed()
 	// com only allowed if buildpos is inside the base
 	bool commander = false;
 
-	int x = build_pos.x / ai->map->xSectorSize;
-	int y = build_pos.z / ai->map->ySectorSize;
+	int x = build_pos.x / ai->Getmap()->xSectorSize;
+	int y = build_pos.z / ai->Getmap()->ySectorSize;
 
-	if(x >= 0 && y >= 0 && x < ai->map->xSectors && y < ai->map->ySectors)
+	if(x >= 0 && y >= 0 && x < ai->Getmap()->xSectors && y < ai->Getmap()->ySectors)
 	{
-		if(ai->map->sector[x][y].distance_to_base == 0)
+		if(ai->Getmap()->sector[x][y].distance_to_base == 0)
 			commander = true;
 	}
 
 	// look for new builder
-	AAIConstructor* new_builder = ai->ut->FindClosestAssistant(build_pos, 10, commander);
+	AAIConstructor* new_builder = ai->Getut()->FindClosestAssistant(build_pos, 10, commander);
 
 	if(new_builder)
 	{
@@ -57,10 +57,10 @@ void AAIBuildTask::BuilderDestroyed()
 void AAIBuildTask::BuildtaskFailed()
 {
 	// cleanup buildmap etc.
-	if(ai->bt->units_static[def_id].category <= METAL_MAKER)
-		ai->execute->ConstructionFailed(build_pos, def_id);
+	if(ai->Getbt()->units_static[def_id].category <= METAL_MAKER)
+		ai->Getexecute()->ConstructionFailed(build_pos, def_id);
 
 	// tell builder to stop construction (and release assisters) (if still alive)
-	if(builder_id >= 0 && ai->ut->units[builder_id].cons)
-		ai->ut->units[builder_id].cons->ConstructionFinished();
+	if(builder_id >= 0 && ai->Getut()->units[builder_id].cons)
+		ai->Getut()->units[builder_id].cons->ConstructionFinished();
 }

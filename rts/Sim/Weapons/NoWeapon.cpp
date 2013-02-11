@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "NoWeapon.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CNoWeapon, CWeapon, (NULL));
 
@@ -11,20 +10,20 @@ CNoWeapon::CNoWeapon(CUnit *owner) : CWeapon(owner)
 }
 
 
-CNoWeapon::~CNoWeapon(void)
+CNoWeapon::~CNoWeapon()
 {
 }
 
-void CNoWeapon::Update(void)
+void CNoWeapon::Update()
 {
 }
 
-bool CNoWeapon::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
+bool CNoWeapon::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	return false;
 }
 
-void CNoWeapon::Init(void)
+void CNoWeapon::Init()
 {
 }
 

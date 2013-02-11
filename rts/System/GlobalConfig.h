@@ -93,6 +93,13 @@ public:
 	 */
 	int linkIncomingMaxWaitingPackets;
 
+	/**
+	 * @brief luaWritableConfigFile
+	 *
+	 * Allows Lua to write to springsettings/springrc file
+	 */
+	bool luaWritableConfigFile;
+
 #if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
 	/**
 	 * @brief multiThreadLua

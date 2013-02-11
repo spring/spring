@@ -16,22 +16,15 @@ CMemPool::CMemPool()
 void* CMemPool::Alloc(size_t numBytes)
 {
 	if (UseExternalMemory(numBytes)) {
-#ifdef USE_MMGR
-		return (void*)new char[numBytes];
-#else
 		return ::operator new(numBytes);
-#endif
 	} else {
 		void* pnt = nextFree[numBytes];
 
 		if (pnt) {
 			nextFree[numBytes] = (*(void**)pnt);
 		} else {
-			#ifdef USE_MMGR
-			void* newBlock = (void*)new char[numBytes * poolSize[numBytes]];
-			#else
 			void* newBlock = ::operator new(numBytes * poolSize[numBytes]);
-			#endif
+			allocated.push_back(newBlock);
 			for (int i = 0; i < (poolSize[numBytes] - 1); ++i) {
 				*(void**)&((char*)newBlock)[(i) * numBytes] = (void*)&((char*)newBlock)[(i + 1) * numBytes];
 			}
@@ -53,11 +46,7 @@ void CMemPool::Free(void* pnt, size_t numBytes)
 	}
 
 	if (UseExternalMemory(numBytes)) {
-		#ifdef USE_MMGR
-		delete[] (char*)pnt;
-		#else
 		::operator delete(pnt);
-		#endif
 	} else {
 		*(void**)pnt = nextFree[numBytes];
 		nextFree[numBytes] = pnt;
@@ -66,4 +55,6 @@ void CMemPool::Free(void* pnt, size_t numBytes)
 
 CMemPool::~CMemPool()
 {
+	for(std::vector<void *>::iterator i = allocated.begin(); i != allocated.end(); ++i)
+		::operator delete(*i);
 }

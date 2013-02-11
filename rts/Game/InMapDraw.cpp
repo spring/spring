@@ -2,7 +2,6 @@
 
 #include "SDL_mouse.h"
 #include "SDL_keyboard.h"
-#include "System/mmgr.h"
 
 #include "InMapDraw.h"
 
@@ -41,7 +40,7 @@ public:
 	CNotificationPeeper()
 		: CEventClient("NotificationPeeper", 99, false)
 	{
-		blippSound = sound->GetSoundId("MapPoint", false);
+		blippSound = sound->GetSoundId("MapPoint");
 	}
 
 	virtual bool WantsEvent(const std::string& eventName) {

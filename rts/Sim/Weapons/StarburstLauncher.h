@@ -11,17 +11,17 @@ class CStarburstLauncher :
 	CR_DECLARE(CStarburstLauncher);
 public:
 	CStarburstLauncher(CUnit* owner);
-	~CStarburstLauncher(void);
+	~CStarburstLauncher();
 
-	void Update(void);
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
+	void Update();
 	float GetRange2D(float yDiff) const;
 
 	float tracking;
 	float uptime;
 
 private:
-	virtual void FireImpl();
+	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
+	void FireImpl();
 };
 
 #endif /* STARBURSTLAUNCHER_H */

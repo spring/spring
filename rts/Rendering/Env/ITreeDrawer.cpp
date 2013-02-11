@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "ITreeDrawer.h"
 #include "BasicTreeDrawer.h"
@@ -11,6 +10,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
@@ -25,12 +25,14 @@ ITreeDrawer* treeDrawer = NULL;
 
 
 ITreeDrawer::ITreeDrawer()
-	: drawTrees(true)
+	: CEventClient("[ITreeDrawer]", 314444, false), drawTrees(true)
 {
+	eventHandler.AddClient(this);
 	baseTreeDistance = configHandler->GetInt("TreeRadius") / 256.0f;
 }
 
 ITreeDrawer::~ITreeDrawer() {
+	eventHandler.RemoveClient(this);
 	configHandler->Set("TreeRadius", (unsigned int) (baseTreeDistance * 256));
 }
 
@@ -102,3 +104,19 @@ void ITreeDrawer::Update() {
 	delDispLists.clear();
 }
 
+void ITreeDrawer::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {
+	if (feature->def->drawType >= DRAWTYPE_TREE) {
+		DeleteTree(oldpos);
+		AddTree(feature->def->drawType - 1, newpos, 1.0f);
+	}
+}
+
+void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
+	if (feature->def->drawType >= DRAWTYPE_TREE) {
+		DeleteTree(feature->pos);
+
+		if (feature->speed.SqLength2D() > 0.25f) {
+			AddFallingTree(feature->pos, feature->speed, feature->def->drawType - 1);
+		}
+	}
+}

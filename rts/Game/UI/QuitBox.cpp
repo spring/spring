@@ -15,7 +15,6 @@
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/TimeUtil.h"
-#include "System/mmgr.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/MsgStrings.h"
@@ -27,7 +26,7 @@
 
 #undef CreateDirectory
 
-CQuitBox::CQuitBox(void)
+CQuitBox::CQuitBox()
 {
 	box.x1 = 0.34f;
 	box.y1 = 0.18f;
@@ -99,11 +98,11 @@ CQuitBox::CQuitBox(void)
 	}
 }
 
-CQuitBox::~CQuitBox(void)
+CQuitBox::~CQuitBox()
 {
 }
 
-void CQuitBox::Draw(void)
+void CQuitBox::Draw()
 {
 	float mx=MouseX(mouse->lastx);
 	float my=MouseY(mouse->lasty);

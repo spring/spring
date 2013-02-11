@@ -14,13 +14,15 @@ struct DamageArray
 public:
 	DamageArray(float damage = 1.0f);
 	DamageArray(const DamageArray& other) { *this = other; }
-	~DamageArray() { damages.clear(); }
+	~DamageArray() { }
 
 	DamageArray& operator = (const DamageArray& other);
 	DamageArray operator * (float damageMult) const;
 
 	float& operator [] (int i)       { return damages.at(i); }
 	float  operator [] (int i) const { return damages.at(i); }
+
+	void SetDefaultDamage(float damage);
 
 	int GetNumTypes() const { return damages.size(); }
 	float GetTypeDamage(int typeIndex) const { return damages.at(typeIndex); }

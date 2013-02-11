@@ -7,6 +7,7 @@
 #include <string>
 #include <list>
 #include "InputReceiver.h"
+#include "System/float3.h"
 
 class CUnit;
 namespace icon {
@@ -47,14 +48,22 @@ class CMiniMap : public CInputReceiver {
 
 		bool GetMaximized() const { return maximized; }
 
-		inline int GetPosX()  const { return xpos; }
-		inline int GetPosY()  const { return ypos; }
-		inline int GetSizeX() const { return width; }
-		inline int GetSizeY() const { return height; }
+		int GetPosX()  const { return xpos; }
+		int GetPosY()  const { return ypos; }
+		int GetSizeX() const { return width; }
+		int GetSizeY() const { return height; }
+		float GetUnitSizeX() const { return unitSizeX; }
+		float GetUnitSizeY() const { return unitSizeY; }
 
 		void SetSlaveMode(bool value);
 		bool GetSlaveMode() const { return slaveDrawMode; }
-		
+
+		bool UseUnitIcons() const { return useIcons; }
+		bool UseSimpleColors() const { return simpleColors; }
+
+		const unsigned char* GetMyTeamIconColor() const { return &myColor[0]; }
+		const unsigned char* GetAllyTeamIconColor() const { return &allyColor[0]; }
+		const unsigned char* GetEnemyTeamIconColor() const { return &enemyColor[0]; }
 	protected:
 		void ParseGeometry(const std::string& geostr);
 		void ToggleMaximized(bool maxspect);
@@ -68,7 +77,9 @@ class CMiniMap : public CInputReceiver {
 		void DrawNotes();
 		void DrawButtons();
 		void DrawMinimizedButton();
+		#if 0
 		void DrawUnit(const CUnit* unit);
+		#endif
 		void DrawUnitHighlight(const CUnit* unit);
 		void DrawCircle(const float3& pos, float radius);
 		void DrawSquare(const float3& pos, float xsize, float zsize);

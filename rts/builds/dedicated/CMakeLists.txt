@@ -1,7 +1,7 @@
 ADD_DEFINITIONS    (-DDEDICATED ${PIC_FLAG} -DNOT_USING_CREG)
 ADD_DEFINITIONS    (-DHEADLESS -DNO_SOUND)
 REMOVE_DEFINITIONS (-DSTREFLOP_SSE -DAVI_CAPTURING)
-REMOVE_DEFINITIONS (-DUSE_MMGR -DTRACE_SYNC -DSYNCDEBUG)
+REMOVE_DEFINITIONS (-DTRACE_SYNC -DSYNCDEBUG)
 
 # deactivate signaling-NANs for this library
 RemoveFlag("-fsignaling-nans")
@@ -19,8 +19,8 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
 ### Assemble libraries
-LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
-LIST(APPEND engineDedicatedLibraries 7zip ${SPRING_MINIZIP_LIBRARY} lua)
+LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
 LIST(APPEND engineDedicatedLibraries headlessStubs)
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
@@ -54,17 +54,17 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
 ### Assemble sources
 IF	(UNIX)
 	SET(sources_engine_Platform_CrashHandler
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler)
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp)
 ELSEIF	(WIN32)
 	SET(sources_engine_Platform_CrashHandler
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/CrashHandler)
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh.cpp
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/CrashHandler.cpp)
 ELSE	()
 	SET(sources_engine_Platform_CrashHandler
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Mac/CrashHandler)
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Mac/CrashHandler.cpp)
 ENDIF	()
 
 SET(system_files
@@ -72,30 +72,30 @@ SET(system_files
 	${sources_engine_System_Log}
 	${sources_engine_System_Net}
 	${sources_engine_Platform_CrashHandler}
-	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigHandler
-	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigLocater
-	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigSource
-	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable
-	${ENGINE_SRC_ROOT_DIR}/System/CRC
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading
-	${ENGINE_SRC_ROOT_DIR}/System/TdfParser
-	${ENGINE_SRC_ROOT_DIR}/System/GlobalConfig
-	${ENGINE_SRC_ROOT_DIR}/System/Info
-	${ENGINE_SRC_ROOT_DIR}/System/LogOutput
-	${ENGINE_SRC_ROOT_DIR}/System/TimeUtil
-	${ENGINE_SRC_ROOT_DIR}/System/BaseNetProtocol
-	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/Demo
-	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader
-	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoRecorder
-	${ENGINE_SRC_ROOT_DIR}/System/AutohostInterface
-	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings
-	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG
-	${ENGINE_SRC_ROOT_DIR}/System/Util
-	${ENGINE_SRC_ROOT_DIR}/System/float4
+	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigHandler.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigLocater.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigSource.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/CRC.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/TdfParser.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/GlobalConfig.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Info.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/LogOutput.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/TimeUtil.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/BaseNetProtocol.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/Demo.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoRecorder.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/AutohostInterface.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
+	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/float4.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/Backend.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFilter.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFormatter.cpp
@@ -106,32 +106,32 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Misc/SpringTime.cpp
 	)
 IF    (WIN32)
-	LIST(APPEND system_files ${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/WinVersion)
+	LIST(APPEND system_files ${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/WinVersion.cpp)
 ENDIF (WIN32)
 
 SET(engineDedicatedSources
 	${system_files}
 	${sources_engine_Game_Server}
 	${sources_engine_System_Log}
-	${ENGINE_SRC_ROOT_DIR}/Game/GameServer
-	${ENGINE_SRC_ROOT_DIR}/Game/ClientSetup
-	${ENGINE_SRC_ROOT_DIR}/Game/GameSetup
-	${ENGINE_SRC_ROOT_DIR}/Game/GameData
-	${ENGINE_SRC_ROOT_DIR}/Game/PlayerBase
-	${ENGINE_SRC_ROOT_DIR}/Game/PlayerStatistics
-	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion
-	${ENGINE_SRC_ROOT_DIR}/Game/IVideoCapturing
-	${ENGINE_SRC_ROOT_DIR}/Game/DummyVideoCapturing
-	${ENGINE_SRC_ROOT_DIR}/Game/CommandMessage
-	${ENGINE_SRC_ROOT_DIR}/Game/ChatMessage
-	${ENGINE_SRC_ROOT_DIR}/Game/Action
-	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamBase
-	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamStatistics
-	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/AllyTeam
-	${ENGINE_SRC_ROOT_DIR}/Lua/LuaIO
-	${ENGINE_SRC_ROOT_DIR}/Lua/LuaParser
-	${ENGINE_SRC_ROOT_DIR}/Lua/LuaUtils
-	${ENGINE_SRC_ROOT_DIR}/Map/MapParser
+	${ENGINE_SRC_ROOT_DIR}/Game/GameServer.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/ClientSetup.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/GameSetup.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/GameData.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/PlayerBase.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/PlayerStatistics.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/IVideoCapturing.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/DummyVideoCapturing.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/CommandMessage.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/ChatMessage.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/Action.cpp
+	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamBase.cpp
+	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamStatistics.cpp
+	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/AllyTeam.cpp
+	${ENGINE_SRC_ROOT_DIR}/Lua/LuaIO.cpp
+	${ENGINE_SRC_ROOT_DIR}/Lua/LuaParser.cpp
+	${ENGINE_SRC_ROOT_DIR}/Lua/LuaUtils.cpp
+	${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
 	)
 
 
@@ -144,7 +144,7 @@ IF    (MINGW)
 ENDIF (MINGW)
 
 ADD_LIBRARY(springserver SHARED
-		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
+		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
 		${sources_engine_System_Log_sinkFile}
 		${sources_engine_System_Log_sinkOutputDebugString}
 	)
@@ -152,7 +152,7 @@ TARGET_LINK_LIBRARIES(springserver springserver-static)
 
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
-		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
+		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
 		${sources_engine_System_Log_sinkConsole}
 		${sources_engine_System_Log_sinkFile}
 		${sources_engine_System_Log_sinkOutputDebugString}

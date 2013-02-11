@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cassert>
-#include "System/mmgr.h"
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
+#include "lib/gml/gml_base.h"
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
@@ -12,13 +12,16 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/EventHandler.h"
 #include "System/EventBatchHandler.h"
 #include "System/Log/ILog.h"
@@ -44,7 +47,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius),
 	CR_MEMBER(unitsToBeRemoved),
-	CR_MEMBER(morphUnitToFeature),
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(unitsByDefs),
 	CR_POSTLOAD(PostLoad),
@@ -62,15 +64,18 @@ void CUnitHandler::PostLoad()
 
 CUnitHandler::CUnitHandler()
 :
-	maxUnitRadius(0.0f),
-	morphUnitToFeature(true),
-	maxUnits(0)
+	maxUnits(0),
+	maxUnitRadius(0.0f)
 {
-	// note: the number of active teams can change at run-time, so
-	// the team unit limit should be recalculated whenever one dies
-	// or spawns (but that would get complicated)
+	// set the global (runtime-constant) unit-limit as the sum
+	// of  all team unit-limits, which is *always* <= MAX_UNITS
+	// (note that this also counts the Gaia team)
+	//
+	// teams can not be created at runtime, but they can die and
+	// in that case the per-team limit is recalculated for every
+	// other team in the respective allyteam
 	for (unsigned int n = 0; n < teamHandler->ActiveTeams(); n++) {
-		maxUnits += teamHandler->Team(n)->maxUnits;
+		maxUnits += teamHandler->Team(n)->GetMaxUnits();
 	}
 
 	units.resize(maxUnits, NULL);
@@ -92,7 +97,7 @@ CUnitHandler::CUnitHandler()
 
 		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
 		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
-		std::copy(freeIDs.begin(), freeIDs.end(), std::front_inserter(freeUnitIDs));
+		std::copy(freeIDs.begin(), freeIDs.end(), std::inserter(freeUnitIDs, freeUnitIDs.begin()));
 	}
 
 	slowUpdateIterator = activeUnits.end();
@@ -112,18 +117,25 @@ CUnitHandler::~CUnitHandler()
 }
 
 
-bool CUnitHandler::AddUnit(CUnit *unit)
+bool CUnitHandler::AddUnit(CUnit* unit)
 {
-	if (freeUnitIDs.empty()) {
+	// LoadUnit should make sure this is true
+	assert(CanAddUnit(unit->id));
+
+	if (unit->id < 0) {
 		// should be unreachable (all code that goes through
 		// UnitLoader::LoadUnit --> Unit::PreInit checks the
 		// unit limit first)
-		assert(false);
-		return false;
+		assert(!freeUnitIDs.empty());
+		// pick the first available (randomized) ID
+		assert(freeUnitIDs.find(unit->id) == freeUnitIDs.end());
+		unit->id = *(freeUnitIDs.begin());
+	} else {
+		// otherwise use given ID if not already taken
+		assert(unit->id < units.size());
+		assert(units[unit->id] == NULL);
 	}
 
-	unit->id = freeUnitIDs.front();
-	freeUnitIDs.pop_front();
 	units[unit->id] = unit;
 
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
@@ -136,6 +148,8 @@ bool CUnitHandler::AddUnit(CUnit *unit)
 			++ui;
 		}
 	}
+
+	freeUnitIDs.erase(unit->id);
 	activeUnits.insert(ui, unit);
 
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
@@ -158,6 +172,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 	int delType = 0;
 
 	std::list<CUnit*>::iterator usi;
+
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		if (*usi == delUnit) {
 			if (slowUpdateIterator != activeUnits.end() && *usi == *slowUpdateIterator) {
@@ -168,17 +183,18 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 			GML_STDMUTEX_LOCK(dque); // DeleteUnitNow
 
-			int delID = delUnit->id;
-			activeUnits.erase(usi);
-			units[delID] = 0;
-			freeUnitIDs.push_back(delID);
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
+			activeUnits.erase(usi);
+			freeUnitIDs.insert(delUnit->id);
 			unitsByDefs[delTeam][delType].erase(delUnit);
 
-			CSolidObject::SetDeletingRefID(delID);
+			units[delUnit->id] = NULL;
+
+			CSolidObject::SetDeletingRefID(delUnit->id);
 			delete delUnit;
 			CSolidObject::SetDeletingRefID(-1);
+
 			break;
 		}
 	}
@@ -225,7 +241,7 @@ void CUnitHandler::Update()
 		eventHandler.UpdateUnits();
 	}
 
-	GML_UPDATE_TICKS();
+	GML::UpdateTicks();
 
 	#define VECTOR_SANITY_CHECK(v)                              \
 		assert(!math::isnan(v.x) && !math::isinf(v.x)); \
@@ -269,7 +285,7 @@ void CUnitHandler::Update()
 			}
 
 			UNIT_SANITY_CHECK(unit);
-			GML_GET_TICKS(unit->lastUnitUpdate);
+			GML::GetTicks(unit->lastUnitUpdate);
 		}
 	}
 
@@ -378,11 +394,14 @@ float CUnitHandler::GetBuildHeight(const float3& pos, const UnitDef* unitdef, bo
 	}
 
 	// find the average height of the footprint-border squares
-	const float avgH = sumBorderSquareHeight / numBorderSquares;
-
+	float avgH = sumBorderSquareHeight / numBorderSquares;
+	
 	// and clamp it to [minH, maxH] if necessary
-	if (avgH < minH && minH < maxH) { return (minH + 0.01f); }
-	if (avgH > maxH && maxH > minH) { return (maxH - 0.01f); }
+	if (avgH < minH && minH < maxH) { avgH = (minH + 0.01f); }
+	if (avgH > maxH && maxH > minH) { avgH = (maxH - 0.01f); }
+
+	if (unitdef->floatOnWater && avgH < 0.0f)
+		avgH = -unitdef->waterline;
 
 	return avgH;
 }
@@ -410,6 +429,10 @@ BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 	const int x2 = x1 + xsize * SQUARE_SIZE;
 	const float bh = GetBuildHeight(pos, buildInfo.def, synced);
 
+	const MoveDef* moveDef = (buildInfo.def->pathType != -1U) ? moveDefHandler->GetMoveDefByPathType(buildInfo.def->pathType) : NULL;
+	const S3DModel* model = buildInfo.def->LoadModel();
+	const float buildHeight = (model != NULL) ? math::fabs(model->height) : 10.0f;
+
 	BuildSquareStatus canBuild = BUILDSQUARE_OPEN;
 
 	if (buildInfo.def->needGeo) {
@@ -433,7 +456,7 @@ BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
 			for (int z = z1; z < z2; z += SQUARE_SIZE) {
-				BuildSquareStatus tbs = TestBuildSquare(float3(x, pos.y, z), buildInfo.def, feature, gu->myAllyTeam, synced);
+				BuildSquareStatus tbs = TestBuildSquare(float3(x, bh, z), buildHeight, buildInfo.def, moveDef, feature, gu->myAllyTeam, synced);
 
 				if (tbs != BUILDSQUARE_BLOCKED) {
 					//??? what does this do?
@@ -467,8 +490,7 @@ BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 		// this can be called in either context
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
 			for (int z = z1; z < z2; z += SQUARE_SIZE) {
-				canBuild = std::min(canBuild, TestBuildSquare(float3(x, bh, z), buildInfo.def, feature, allyteam, synced));
-
+				canBuild = std::min(canBuild, TestBuildSquare(float3(x, bh, z), buildHeight, buildInfo.def, moveDef, feature, allyteam, synced));
 				if (canBuild == BUILDSQUARE_BLOCKED) {
 					return BUILDSQUARE_BLOCKED;
 				}
@@ -480,8 +502,7 @@ BuildSquareStatus CUnitHandler::TestUnitBuildSquare(
 }
 
 
-
-BuildSquareStatus CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFeature*& feature, int allyteam, bool synced)
+BuildSquareStatus CUnitHandler::TestBuildSquare(const float3& pos, const float buildHeight, const UnitDef* unitdef, const MoveDef* moveDef, CFeature*& feature, int allyteam, bool synced)
 {
 	if (!pos.IsInMap()) {
 		return BUILDSQUARE_BLOCKED;
@@ -493,22 +514,33 @@ BuildSquareStatus CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef
 	CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
 
 	if (s != NULL) {
-		CFeature* f;
-		if ((f = dynamic_cast<CFeature*>(s))) {
+		CFeature* f = dynamic_cast<CFeature*>(s);
+		if (f != NULL) {
 			if ((allyteam < 0) || f->IsInLosForAllyTeam(allyteam)) {
 				if (!f->def->reclaimable) {
-					return BUILDSQUARE_BLOCKED;
+					ret = BUILDSQUARE_BLOCKED;
+				} else {
+					ret = BUILDSQUARE_RECLAIMABLE;
+					feature = f;
 				}
-				ret = BUILDSQUARE_RECLAIMABLE;
-				feature = f;
 			}
 		} else if (!dynamic_cast<CUnit*>(s) || (allyteam < 0) ||
-			(((CUnit*) s)->losStatus[allyteam] & LOS_INLOS)) {
+				(static_cast<CUnit*>(s)->losStatus[allyteam] & LOS_INLOS)) {
 			if (s->immobile) {
-				return BUILDSQUARE_BLOCKED;
+				ret = BUILDSQUARE_BLOCKED;
 			} else {
 				ret = BUILDSQUARE_OCCUPIED;
 			}
+		}
+
+		if ((ret == BUILDSQUARE_BLOCKED) || (ret == BUILDSQUARE_OCCUPIED)) {
+			if (CMoveMath::IsNonBlocking(s, moveDef, pos, buildHeight)) {
+				ret = BUILDSQUARE_OPEN;
+			}
+		}
+
+		if (ret == BUILDSQUARE_BLOCKED) {
+			return ret;
 		}
 	}
 

@@ -1,13 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
@@ -21,6 +19,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
@@ -127,7 +126,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	for (int a = 0; a < 8; ++a) {
 		oldInfos[a] = new OldInfo;
 		oldInfos[a]->pos = pos;
-		oldInfos[a]->size = gu->usRandFloat() * 2 + 2;
+		oldInfos[a]->size = gu->RandFloat() * 2 + 2;
 	}
 
 	SetRadiusAndHeight(radius, 0.0f);
@@ -271,13 +270,13 @@ bool CPieceProjectile::HasVertices() const
 	return (omp->GetVertexCount() > 0);
 }
 
-float3 CPieceProjectile::RandomVertexPos(void)
+float3 CPieceProjectile::RandomVertexPos()
 {
 	if (!HasVertices()) {
 		return ZeroVector;
 	}
 
-	const int vertexNum = (int) (gu->usRandFloat() * 0.99f * omp->GetVertexCount());
+	const int vertexNum = (int) (gu->RandFloat() * 0.99f * omp->GetVertexCount());
 	const float3& pos = omp->GetVertexPos(vertexNum);
 
 	return pos;
@@ -310,7 +309,7 @@ void CPieceProjectile::Update()
 
 		oldInfos[0] = tempOldInfo;
 		oldInfos[0]->pos = m.GetPos();
-		oldInfos[0]->size = gu->usRandFloat() * 1 + 1;
+		oldInfos[0]->size = gu->RandFloat() * 1 + 1;
 	}
 
 	age++;
@@ -441,7 +440,6 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 void CPieceProjectile::DrawCallback()
 {
 	inArray = true;
-	unsigned char col[4];
 
 	if (flags & PF_Fire) {
 		va->EnlargeArrays(8 * 4, 0, VA_SIZE_TC);
@@ -449,6 +447,7 @@ void CPieceProjectile::DrawCallback()
 			float modage = age;
 			float3 interPos = oldInfos[age]->pos;
 			float size = oldInfos[age]->size;
+			unsigned char col[4];
 
 			float alpha = (7.5f - modage) * (1.0f / 8);
 			col[0] = (unsigned char) (255 * alpha);

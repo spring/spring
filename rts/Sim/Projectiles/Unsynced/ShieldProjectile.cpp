@@ -26,27 +26,24 @@ static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
 
 ShieldProjectile::ShieldProjectile(CPlasmaRepulser* shield_)
 	: CProjectile(
-		shield_->weaponPos, // pos
-		ZeroVector, // speed
-		shield_->owner, // owner
-		false, // isSynced
-		false, // isWeapon
-		false  // isPiece
-	)
+			shield_->weaponPos, // pos
+			ZeroVector, // speed
+			shield_->owner, // owner
+			false, // isSynced
+			false, // isWeapon
+			false  // isPiece
+		)
+	, shield(shield_)
+	, shieldTexture(NULL)
+	, lastAllowDrawingUpdate(-1)
+	, allowDrawing(false)
 {
-	shield = shield_;
-	shieldTexture = NULL;
-
 	checkCol      = false;
 	deleteMe      = false;
 	alwaysVisible = false;
 	useAirLos     = true;
-
-	lastAllowDrawingUpdate = -1;
-	allowDrawing = false;
-
-	drawRadius = 1.0f;
-	mygravity = 0.0f;
+	drawRadius    = 1.0f;
+	mygravity     = 0.0f;
 
 	const CUnit* u = shield->owner;
 	const WeaponDef* wd = shield->weaponDef;
@@ -114,7 +111,7 @@ bool ShieldProjectile::AllowDrawing() {
 	// if the unit that emits this shield is stunned or not
 	// yet finished, prevent the shield segments from being
 	// drawn
-	if (shield->owner->stunned || shield->owner->beingBuilt)
+	if (shield->owner->IsStunned() || shield->owner->beingBuilt)
 		return allowDrawing;
 	if (shieldSegments.empty())
 		return allowDrawing;
@@ -135,34 +132,32 @@ bool ShieldProjectile::AllowDrawing() {
 #define NUM_VERTICES_Y 5
 
 ShieldSegmentProjectile::ShieldSegmentProjectile(
-	ShieldProjectile* shieldProjectile_,
-	const WeaponDef* shieldWeaponDef,
-	const float3& shieldSegmentPos,
-	const int xpart,
-	const int ypart
-): CProjectile(
-	shieldSegmentPos,
-	ZeroVector,
-	shieldProjectile_->owner(),
-	false,
-	false,
-	false
-) {
-	shieldProjectile = shieldProjectile_;
-
+			ShieldProjectile* shieldProjectile_,
+			const WeaponDef* shieldWeaponDef,
+			const float3& shieldSegmentPos,
+			const int xpart,
+			const int ypart
+		)
+	: CProjectile(
+			shieldSegmentPos,
+			ZeroVector,
+			shieldProjectile_->owner(),
+			false,
+			false,
+			false
+		)
+	, shieldProjectile(shieldProjectile_)
+	, segmentPos(shieldSegmentPos)
+	, segmentColor(shieldWeaponDef->shieldBadColor)
+	, segmentSize(shieldWeaponDef->shieldRadius)
+	, segmentAlpha(shieldWeaponDef->shieldAlpha)
+{
 	checkCol      = false;
 	deleteMe      = false;
 	alwaysVisible = false;
 	useAirLos     = true;
-
-	drawRadius = shieldWeaponDef->shieldRadius * 0.4f;
-	mygravity = 0.0f;
-
-	segmentPos = shieldSegmentPos;
-	segmentColor = shieldWeaponDef->shieldBadColor;
-
-	segmentSize = shieldWeaponDef->shieldRadius;
-	segmentAlpha = shieldWeaponDef->shieldAlpha;
+	drawRadius    = shieldWeaponDef->shieldRadius * 0.4f;
+	mygravity     = 0.0f;
 
 	#define texture shieldProjectile->GetShieldTexture()
 	usePerlinTex = (texture == projectileDrawer->perlintex);
@@ -265,6 +260,8 @@ void ShieldSegmentProjectile::Draw() {
 	const CPlasmaRepulser* shield = shieldProjectile->GetShield();
 	if (shield == NULL)
 		return;
+	if (!shield->isEnabled)
+		return;
 	const WeaponDef* shieldDef = shield->weaponDef;
 
 	// lerp between badColor and goodColor based on shield's current power
@@ -272,19 +269,16 @@ void ShieldSegmentProjectile::Draw() {
 
 	segmentPos   = shieldProjectile->pos;
 	segmentColor = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
-	segmentAlpha = shieldDef->shieldAlpha;
+	segmentAlpha = shieldDef->visibleShield * shieldDef->shieldAlpha;
 
 	if (shield->hitFrames > 0 && shieldDef->visibleShieldHitFrames > 0) {
 		// when a shield is hit, increase segment's opacity to
 		// min(1, def->alpha + k * def->alpha) with k in [1, 0]
-		segmentAlpha += (shield->hitFrames / float(shieldDef->visibleShieldHitFrames));
-		segmentAlpha *= shieldDef->shieldAlpha;
+		segmentAlpha += (shield->hitFrames / float(shieldDef->visibleShieldHitFrames)) * shieldDef->shieldAlpha;
 		segmentAlpha = std::min(segmentAlpha, 1.0f);
 	}
 
 	if (segmentAlpha <= 0.0f)
-		return;
-	if (!shield->isEnabled)
 		return;
 
 	const unsigned char segmentColorRGBA[4] = {

@@ -26,14 +26,15 @@
 // -------------------------------------------------------------------------------------------------
 // STATICS
 
-RenderMode Patch::renderMode = VBO;
+Patch::RenderMode Patch::renderMode = Patch::VBO;
 
-
+static size_t poolSize = 0;
 static std::vector<CTriNodePool*> pools;
 
-void CTriNodePool::InitPools()
+void CTriNodePool::InitPools(const size_t newPoolSize)
 {
 	if (pools.empty()) {
+		Threading::OMPCheck();
 		#pragma omp parallel
 		{
 			#pragma omp master
@@ -43,7 +44,8 @@ void CTriNodePool::InitPools()
 			#else
 				int numThreads = 1;
 			#endif
-				const size_t allocPerThread = std::max(POOL_SIZE / numThreads, POOL_SIZE / 3);
+				poolSize = newPoolSize;
+				const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
 				pools.reserve(numThreads);
 				for (; numThreads > 0; --numThreads) {
 					pools.push_back(new CTriNodePool(allocPerThread));
@@ -65,6 +67,21 @@ void CTriNodePool::FreePools()
 
 void CTriNodePool::ResetAll()
 {
+	bool runOutOfNodes = false;
+	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
+		if ((*it)->RunOutOfNodes()) {
+			runOutOfNodes = true;
+			break;
+		}
+	}
+	if (runOutOfNodes) {
+		if (poolSize < MAX_POOL_SIZE) {
+			FreePools();
+			InitPools(std::min(poolSize * 2, size_t(MAX_POOL_SIZE)));
+			return;
+		}
+	}
+
 	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
 		(*it)->Reset();
 	}
@@ -99,7 +116,7 @@ void CTriNodePool::Reset()
 TriTreeNode* CTriNodePool::AllocateTri()
 {
 	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
-	if (m_NextTriNode >= pool.size())
+	if (RunOutOfNodes())
 		return NULL;
 
 	TriTreeNode* pTri = &pool[m_NextTriNode++];
@@ -263,8 +280,12 @@ void Patch::Split(TriTreeNode* tri)
 	tri->RightChild = pool->AllocateTri();
 
 	// If creation failed, just exit.
-	if (!tri->IsBranch())
+	if (!tri->IsBranch()) {
+		// make sure both nodes are NULL if just the right one failed
+		// special handling the cause that only one of them is NULL wouldn't make sense (only less performance)
+		tri->LeftChild = NULL;
 		return;
+	}
 
 	// Fill in the information we can get from the parent (neighbor pointers)
 	tri->LeftChild->BaseNeighbor = tri->LeftNeighbor;
@@ -319,7 +340,7 @@ void Patch::Split(TriTreeNode* tri)
 // Tessellate a Patch.
 // Will continue to split until the variance metric is met.
 //
-void Patch::RecursTessellate(TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, const int& node)
+void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, const int node)
 {
 	const bool canFurtherTes = ((abs(left.x - right.x) > 1) || (abs(left.y - right.y) > 1));
 	if (!canFurtherTes)
@@ -364,9 +385,9 @@ void Patch::RecursTessellate(TriTreeNode* const& tri, const int2& left, const in
 //
 
 
-void Patch::RecursRender(TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int maxdepth)
+void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex)
 {
-	if ( tri->IsLeaf() /*|| maxdepth>12*/ ) {
+	if ( tri->IsLeaf()) {
 		indices.push_back(apex.x  + apex.y  * (PATCH_SIZE + 1));
 		indices.push_back(left.x  + left.y  * (PATCH_SIZE + 1));
 		indices.push_back(right.x + right.y * (PATCH_SIZE + 1));
@@ -375,8 +396,8 @@ void Patch::RecursRender(TriTreeNode* const& tri, const int2& left, const int2& 
 			(left.x + right.x) >> 1, // Compute X coordinate of center of Hypotenuse
 			(left.y + right.y) >> 1  // Compute Y coord...
 		);
-		RecursRender(tri->LeftChild,  apex,  left, center, maxdepth + 1);
-		RecursRender(tri->RightChild, right, apex, center, maxdepth + 1);
+		RecursRender(tri->LeftChild,  apex,  left, center);
+		RecursRender(tri->RightChild, right, apex, center);
 	}
 }
 
@@ -385,9 +406,9 @@ void Patch::RecursRender(TriTreeNode* const& tri, const int2& left, const int2& 
 // ---------------------------------------------------------------------
 // Computes Variance over the entire tree.  Does not examine node relationships.
 //
-float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const float& leftZ,
-		const int& rightX, const int& rightY, const float& rightZ,
-		const int& apexX, const int& apexY, const float& apexZ, const int& node)
+float Patch::RecursComputeVariance(const int leftX, const int leftY, const float leftZ,
+		const int rightX, const int rightY, const float rightZ,
+		const int apexX, const int apexY, const float apexZ, const int node)
 {
 	/*
 	 *       /|\
@@ -464,7 +485,7 @@ void Patch::Tessellate(const float3& campos, int groundDetail)
 	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float3 myPos(myx,myy,myz);
 
-	camDistLODFactor  = (myPos - campos).Length();
+	camDistLODFactor  = myPos.distance(campos);
 	camDistLODFactor *= 300.0f / groundDetail; // MAGIC NUMBER 1: increase the dividend to reduce LOD in camera distance
 	camDistLODFactor  = std::max(1.0f, camDistLODFactor);
 	camDistLODFactor  = 1.0f / camDistLODFactor;
@@ -533,8 +554,8 @@ void Patch::Draw()
 void Patch::GenerateIndices()
 {
 	indices.clear();
-	RecursRender(&m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   0);
-	RecursRender(&m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 0);
+	RecursRender(&m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0)                  );
+	RecursRender(&m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
 }
 
 
@@ -642,7 +663,7 @@ public:
 };
 
 
-void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int& numPatchesX)
+void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX)
 {
 	// very slow
 	//for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {

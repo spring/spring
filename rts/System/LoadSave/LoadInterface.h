@@ -11,7 +11,7 @@ class CLoadInterface :
 {
 public:
 	CLoadInterface(std::ifstream* ifs);
-	~CLoadInterface(void);
+	~CLoadInterface();
 
 	void lsBool(bool& v);
 	void lsChar(char& v);

@@ -33,6 +33,13 @@ void InitJoystick()
 	};
 }
 
+void FreeJoystick() {
+	if (stick != NULL) {
+		delete stick;
+		stick = NULL;
+	}
+}
+
 Joystick::Joystick()
 {
 	const int numSticks = SDL_NumJoysticks();

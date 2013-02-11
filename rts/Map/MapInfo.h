@@ -19,6 +19,10 @@ class MapParser;
 class CMapInfo
 {
 public:
+	/** Terrain type, there can be 256 of these:
+	    "MAP\TerrainType0" up to "MAP\TerrainType255" */
+	static const int NUM_TERRAIN_TYPES = 256;
+
 	/**
 	 * @param mapInfoFile mapinfo file, aka sm3 / smf (full path)
 	 * @param mapName human readable mapname e.g. DeltaSiegeDry
@@ -68,7 +72,9 @@ public:
 		float tidalStrength;
 		float maxMetal;        ///< what metal value 255 in the metal map is worth
 		float extractorRadius; ///< extraction radius for mines
+		float voidAlphaMin;
 		bool  voidWater;
+		bool  voidGround;
 	} map;
 
 	/** GUI settings (used by CGuiHandler) */
@@ -188,9 +194,23 @@ public:
 		std::string minimap; ///< "MAP\minimap"
 	} sm3;
 
-	/** Terrain type, there can be 256 of these:
-	    "MAP\TerrainType0" up to "MAP\TerrainType255" */
-	static const int NUM_TERRAIN_TYPES = 256;
+	struct pfs_t {
+		struct legacy_constants_t {
+		} legacy_constants;
+
+		struct qtpfs_constants_t {
+			unsigned int layersPerUpdate;
+			unsigned int maxTeamSearches;
+			unsigned int minNodeSizeX;
+			unsigned int minNodeSizeZ;
+			unsigned int maxNodeDepth;
+			unsigned int numSpeedModBins;
+			float        minSpeedModVal;
+			float        maxSpeedModVal;
+		} qtpfs_constants;
+	} pfs;
+
+
 	struct TerrainType {
 		std::string name;
 		float hardness;
@@ -200,8 +220,9 @@ public:
 		float shipSpeed;   ///< "ShipMoveSpeed"
 		bool receiveTracks;
 	};
+
 	TerrainType terrainTypes[NUM_TERRAIN_TYPES];
-	
+
 	/**
 	 * Sound EFX param structure
 	 */
@@ -220,9 +241,9 @@ private:
 	void ReadSMF();
 	void ReadSM3();
 	void ReadTerrainTypes();
+	void ReadPFSConstants();
 	void ReadSound();
 
-	std::string mapInfoFile;
 	MapParser* parser; // map       parser root table
 	LuaTable* resRoot; // resources parser root table
 };

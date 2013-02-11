@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "FireBallProjectile.h"
 #include "Game/Camera.h"
@@ -12,7 +11,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/creg/STL_Deque.h"
 
-CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, NULL, ZeroVector, NULL));
+CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (ProjectileParams()));
 CR_BIND(CFireBallProjectile::Spark, );
 
 CR_REG_METADATA(CFireBallProjectile,(
@@ -29,12 +28,8 @@ CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_RESERVED(8)
 	));
 
-CFireBallProjectile::CFireBallProjectile(
-	const float3& pos, const float3& speed,
-	CUnit* owner, CUnit* target,
-	const float3& targetPos,
-	const WeaponDef* weaponDef):
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, NULL, 1)
+CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params)
+	: CWeaponProjectile(params)
 {
 	projectileType = WEAPON_FIREBALL_PROJECTILE;
 
@@ -107,9 +102,8 @@ void CFireBallProjectile::Update()
 			}
 		}
 
-		if (weaponDef->noExplode) {
-			if (TraveledRange())
-				checkCol = false;
+		if (weaponDef->noExplode && TraveledRange()) {
+			checkCol = false;
 		}
 
 		EmitSpark();
@@ -133,6 +127,7 @@ void CFireBallProjectile::Update()
 
 	gCEG->Explosion(cegID, pos, ttl, !sparks.empty() ? sparks[0].size : 0.0f, NULL, 0.0f, NULL, speed);
 	UpdateGroundBounce();
+	UpdateInterception();
 }
 
 void CFireBallProjectile::EmitSpark()

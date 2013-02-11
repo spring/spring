@@ -50,20 +50,41 @@ public:
 	void EnemyEnterRadar(int enemy);				//called when an enemy enters radar coverage (not called if enemy go directly from not known -> los)
 	void EnemyLeaveRadar(int enemy);				//called when an enemy leaves radar coverage (not called if enemy go directly from inlos -> now known)
 
-	void RecvChatMessage(const char* msg,int player) {}	//called when someone writes a chat msg
-	void RecvLuaMessage(const char* inData, const char** outData) {}
+	void RecvChatMessage(const char* /*msg*/,int /*player*/) {}	//called when someone writes a chat msg
+	void RecvLuaMessage(const char* /*inData*/, const char** /*outData*/) {}
 
-	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir);	//called when an enemy inside los or radar is damaged
+	void EnemyDamaged(int /*damaged*/,int /*attacker*/,float /*damage*/,float3 /*dir*/) {}	//called when an enemy inside los or radar is damaged
 	void EnemyDestroyed(int enemy, int attacker);
+	void Log(const char* format, ...);
+	void LogConsole(const char* format, ...);
 
 	int HandleEvent(int msg, const void *data);
+	//return count of aai instances
+	int GetInstances() { return aai_instance; }
 
 	// called every frame
 	void Update();
 
+	IAICallback* Getcb() { return cb; }
+	IGlobalAICallback* Getaicb() { return aicb; }
+	int Getside()
+	{
+		assert(side>=0);
+		assert(side<=2);
+		return side;
+	}
+	list<AAIBuildTask*>& Getbuild_tasks() { return build_tasks; }
+	AAIBrain* Getbrain() { return brain; }
+	AAIExecute* Getexecute() { return execute; }
+	AAIUnitTable* Getut() { return ut; }
+	AAIMap* Getmap() { return map; }
+	AAIAirForceManager* Getaf() { return af; }
+	AAIAttackManager* Getam() { return am; }
+	AAIBuildTable* Getbt() { return bt; }
+	vector<list<AAIGroup*> >& Getgroup_list() { return group_list; }
 
-	Profiler* GetProfiler();
-
+private:
+	Profiler* GetProfiler(){ return profiler; }
 
 	// callbacks
 	IAICallback* cb;
@@ -71,9 +92,6 @@ public:
 
 	// side 1= arm, 2 = core, 0 = neutral
 	int side;
-
-	// if there is more than one instance of AAI, make sure to allocate/free memory only once
-	int aai_instance;
 
 	// list of buildtasks
 	list<AAIBuildTask*> build_tasks;
@@ -88,10 +106,11 @@ public:
 
 	vector<list<AAIGroup*> > group_list;  // unit groups
 
+	Profiler* profiler;
+	FILE *file;
 	bool initialized;
 
-	FILE *file;
+	// if there is more than one instance of AAI, make sure to allocate/free memory only once
+	static int aai_instance;
 
-private:
-	Profiler* profiler;
 };

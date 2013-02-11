@@ -28,9 +28,9 @@ CLuaSocketRestrictions::CLuaSocketRestrictions()
 {
 #ifndef TEST
 	addRules(TCP_CONNECT, configHandler->GetString("TCPAllowConnect"));
-	addRules(TCP_LISTEN,  configHandler->GetString("TCPAllowListen"));
+//	addRules(TCP_LISTEN,  configHandler->GetString("TCPAllowListen"));
 	addRules(UDP_CONNECT, configHandler->GetString("UDPAllowConnect"));
-	addRules(UDP_LISTEN,  configHandler->GetString("UDPAllowListen"));
+//	addRules(UDP_LISTEN,  configHandler->GetString("UDPAllowListen"));
 #endif
 }
 

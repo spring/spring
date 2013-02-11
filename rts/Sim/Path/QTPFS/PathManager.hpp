@@ -31,32 +31,35 @@ namespace QTPFS {
 		PathManager();
 		~PathManager();
 
+		static void InitStatic();
+
 		unsigned int GetPathFinderType() const { return PFS_TYPE_QTPFS; }
 		boost::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
 
 		bool PathUpdated(unsigned int pathID);
 
-		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2);
+		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type);
 		void Update();
+		void UpdateFull();
 		void UpdatePath(const CSolidObject* owner, unsigned int pathID);
 		void DeletePath(unsigned int pathID);
 
 		unsigned int RequestPath(
+			CSolidObject* object,
 			const MoveDef* moveDef,
 			const float3& sourcePos,
 			const float3& targetPos,
 			float radius,
-			CSolidObject* object,
 			bool synced
 		);
 
 		float3 NextWayPoint(
+			const CSolidObject*, // owner
 			unsigned int pathID,
+			unsigned int, // numRetries
 			float3 point,
-			float radius = 0.0f,
-			int = 0, // numRetries
-			int = 0, // ownerID
-			bool synced = true
+			float radius,
+			bool synced
 		);
 
 		void GetPathWayPoints(
@@ -65,14 +68,7 @@ namespace QTPFS {
 			std::vector<int>& starts
 		) const;
 
-		static NodeLayer* GetSerializingNodeLayer() { return serializingNodeLayer; }
-
-		static const unsigned int LAYERS_PER_UPDATE =  5;
-		static const unsigned int MAX_TEAM_SEARCHES = 25;
-		static const unsigned int NUM_SPEEDMOD_BINS = 10;
-
-		static const float MIN_SPEEDMOD_VALUE;
-		static const float MAX_SPEEDMOD_VALUE;
+		int2 GetNumQueuedUpdates() const;
 
 	private:
 		void ThreadUpdate();
@@ -108,12 +104,12 @@ namespace QTPFS {
 			unsigned int numThreads,
 			const SRectangle& rect
 		);
-		void InitNodeLayer(unsigned int layerNum, const SRectangle& rect);
+		void InitNodeLayer(unsigned int layerNum, const SRectangle& r);
 		void UpdateNodeLayer(unsigned int layerNum, const SRectangle& r);
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 		void QueueNodeLayerUpdates(const SRectangle& r);
-		void ExecQueuedNodeLayerUpdates(unsigned int layerNum);
+		void ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool flushQueue);
 		#endif
 
 		void ExecuteQueuedSearches(unsigned int pathType);
@@ -129,7 +125,7 @@ namespace QTPFS {
 			const bool synced
 		);
 
-		void ExecuteSearch(
+		bool ExecuteSearch(
 			PathSearchList& searches,
 			PathSearchListIt& searchesIt,
 			NodeLayer& nodeLayer,
@@ -154,8 +150,8 @@ namespace QTPFS {
 		std::vector<unsigned int> numCurrExecutedSearches;
 		std::vector<unsigned int> numPrevExecutedSearches;
 
-
-		static NodeLayer* serializingNodeLayer;
+		static unsigned int LAYERS_PER_UPDATE;
+		static unsigned int MAX_TEAM_SEARCHES;
 
 		unsigned int searchStateOffset;
 		unsigned int numTerrainChanges;

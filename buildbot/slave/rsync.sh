@@ -10,7 +10,12 @@ REMOTE_RSYNC="nice -19 ionice -c3 rsync" #prevent QQ about rsync killing server
 
 umask 022
 
-#cleanup installed files before rsyncing
+# use old files as base to reduce upload
+# Commented out cause it doesn't work. Binaries & debugsymbols just don't share data between compiles :<
+#RSYNC="${RSYNC} --fuzzy"
+#RSYNC="${RSYNC} --compare-dest=\"${REMOTE_BASE}/${CONFIG}/${BRANCH}/LATEST_LINUX_STATIC/\""
+
+# cleanup installed files before rsyncing
 rm -rf ${TMP_BASE}/inst/
 
 # Rsync archives to a world-visible location.

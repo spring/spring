@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "PlayerRosterDrawer.h"
 
@@ -11,7 +10,6 @@
 #include "Game/UI/GuiHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -63,7 +61,7 @@ void CPlayerRosterDrawer::Draw()
 					prefix = "E";	//no alliance at all
 				}
 			}
-			float4 cpucolor(!p->spectator && p->cpuUsage > 0.75f && gs->speedFactor < gs->userSpeedFactor * 0.99f &&
+			float4 cpucolor(!p->spectator && p->cpuUsage > 0.75f && gs->speedFactor < gs->wantedSpeedFactor * 0.99f &&
 				(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, p->cpuUsage * 2.0f / 0.75f)),
 					std::min(1.0f, std::max(0.01f, (1.0f - p->cpuUsage / 0.75f) * 2.0f)), 0.01f, 1.0f);
 			int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));

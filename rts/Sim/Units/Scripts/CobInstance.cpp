@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "CobEngine.h"
 #include "CobFile.h"
@@ -63,7 +62,7 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 		staticVars.push_back(0);
 	}
 
-	MapScriptToModelPieces(unit->localmodel);
+	MapScriptToModelPieces(unit->localModel);
 
 	hasSetSFXOccupy  = HasFunction(COBFN_SetSFXOccupy);
 	hasRockUnit      = HasFunction(COBFN_RockUnit);
@@ -76,16 +75,22 @@ CCobInstance::~CCobInstance()
 	//this may be dangerous, is it really desired?
 	//Destroy();
 
-	for (int animType = ATurn; animType <= AMove; animType++) {
-		for (std::list<AnimInfo *>::iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
-			// All threads blocking on animations can be killed safely from here since the scheduler does not
-			// know about them
-			for (std::list<IAnimListener *>::iterator j = (*i)->listeners.begin(); j != (*i)->listeners.end(); ++j) {
-				delete *j;
+	do {
+		for (int animType = ATurn; animType <= AMove; animType++) {
+			for (std::list<AnimInfo *>::iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
+				// All threads blocking on animations can be killed safely from here since the scheduler does not
+				// know about them
+				std::list<IAnimListener *>& listeners = (*i)->listeners;
+				while (!listeners.empty()) {
+					IAnimListener* al = listeners.front();
+					listeners.pop_front();
+					delete al;
+				}
+				// the anims are deleted in ~CUnitScript
 			}
-			// the anims are deleted in ~CUnitScript
 		}
-	}
+		// callbacks may add new threads, and therefore listeners
+	} while (HaveListeners());
 
 	// Can't delete the thread here because that would confuse the scheduler to no end
 	// Instead, mark it as dead. It is the function calling Tick that is responsible for delete.
@@ -99,40 +104,48 @@ CCobInstance::~CCobInstance()
 
 void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 {
+	std::vector<std::string>& pieceNames = script.pieceNames; // already in lowercase!
+	std::vector<LocalModelPiece*>& lmodelPieces = lmodel->pieces;
+
 	pieces.clear();
-	pieces.reserve(script.pieceNames.size());
+	pieces.reserve(pieceNames.size());
 
-	std::vector<LocalModelPiece*>& lp = lmodel->pieces;
-
-	for (size_t piecenum=0; piecenum<script.pieceNames.size(); piecenum++) {
-		std::string& scriptname = script.pieceNames[piecenum]; // is already in lowercase!
-
-		unsigned int cur;
+	// clear the default assumed 1:1 mapping
+	for (size_t lmodelPieceNum = 0; lmodelPieceNum < lmodelPieces.size(); lmodelPieceNum++) {
+		lmodelPieces[lmodelPieceNum]->SetScriptPieceIndex(-1);
+	}
+	for (size_t scriptPieceNum = 0; scriptPieceNum < pieceNames.size(); scriptPieceNum++) {
+		unsigned int lmodelPieceNum;
 
 		// Map this piecename to an index in the script's pieceinfo
-		for (cur=0; cur<lp.size(); cur++) {
-			if (lp[cur]->original->name.compare(scriptname) == 0) {
+		for (lmodelPieceNum = 0; lmodelPieceNum < lmodelPieces.size(); lmodelPieceNum++) {
+			if (lmodelPieces[lmodelPieceNum]->original->name.compare(pieceNames[scriptPieceNum]) == 0) {
 				break;
 			}
 		}
 
 		// Not found? Try lowercase
-		if (cur == lp.size()) {
-			for (cur=0; cur<lp.size(); cur++) {
-				if (StringToLower(lp[cur]->original->name).compare(scriptname) == 0) {
+		if (lmodelPieceNum == lmodelPieces.size()) {
+			for (lmodelPieceNum = 0; lmodelPieceNum < lmodelPieces.size(); lmodelPieceNum++) {
+				if (StringToLower(lmodelPieces[lmodelPieceNum]->original->name).compare(pieceNames[scriptPieceNum]) == 0) {
 					break;
 				}
 			}
 		}
 
 		// Did we find it?
-		if (cur < lp.size()) {
-			pieces.push_back(lp[cur]);
+		if (lmodelPieceNum < lmodelPieces.size()) {
+			lmodelPieces[lmodelPieceNum]->SetScriptPieceIndex(scriptPieceNum);
+			pieces.push_back(lmodelPieces[lmodelPieceNum]);
 		} else {
 			pieces.push_back(NULL);
-			LOG_L(L_WARNING,
-					"Couldn't find a piece named \"%s\" in the model (in %s)",
-					scriptname.c_str(), script.name.c_str());
+
+			const char* fmtString = "[%s] could not find piece named \"%s\" in model \"%s\" (referenced by script \"%s\")";
+			const char* pieceName = pieceNames[scriptPieceNum].c_str();
+			const char* modelName = lmodel->original->name.c_str();
+			const char* scriptName = script.name.c_str();
+
+			LOG_L(L_WARNING, fmtString, __FUNCTION__, pieceName, modelName, scriptName);
 		}
 	}
 }
@@ -187,7 +200,7 @@ void CCobInstance::Create()
 // Called when a unit's Killed script finishes executing
 static void CUnitKilledCB(int retCode, void* p1, void* p2)
 {
-	CUnit* self = (CUnit*) p1;
+	CUnit* self = static_cast<CUnit*>(p1);
 	self->deathScriptFinished = true;
 	self->delayedWreckLevel = retCode;
 }
@@ -355,7 +368,7 @@ int CCobInstance::QueryWeapon(int weaponNum)
 // Called when unit's AimWeapon script finished executing
 static void ScriptCallback(int retCode, void* p1, void* p2)
 {
-	((CWeapon*)p1)->angleGood = (retCode == 1);
+	static_cast<CWeapon*>(p1)->angleGood = (retCode == 1);
 }
 
 void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
@@ -371,7 +384,7 @@ void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 // Called when unit's AimWeapon script finished executing (for shield weapon)
 static void ShieldScriptCallback(int retCode, void* p1, void* p2)
 {
-	((CPlasmaRepulser*)p1)->isEnabled = !!retCode;
+	static_cast<CPlasmaRepulser*>(p1)->isEnabled = !!retCode;
 }
 
 void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)

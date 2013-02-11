@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gml_base.h"
 #include <windows.h>
 #include <process.h>
 #include <imagehlp.h>
@@ -245,7 +245,7 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 
 		if (SymGetSymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym)) {
 			// This is the code path taken on VC if debugging syms are found.
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%s+%#0lx) [0x%08lX]", count, modname, pSym->Name, Disp, sf.AddrPC.Offset);
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%.*s+%#0lx) [0x%08lX]", count, modname, pSym->MaxNameLength, pSym->Name, Disp, sf.AddrPC.Offset);
 		} else {
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
 			if (strstr(modname, ".exe")) {
@@ -313,9 +313,8 @@ void CleanupStacktrace() {
 
 void OutputStacktrace() {
 	LOG_L(L_ERROR, "Error handler invoked for Spring %s.", SpringVersion::GetFull().c_str());
-#ifdef USE_GML
-	LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
-#endif
+	if (GML::Enabled())
+		LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
 
 	PrepareStacktrace();
 
@@ -338,9 +337,8 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	// Prologue.
 	logSinkHandler.SetSinking(false);
 	LOG_L(L_ERROR, "Spring %s has crashed.", SpringVersion::GetFull().c_str());
-#ifdef USE_GML
-	LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
-#endif
+	if (GML::Enabled())
+		LOG_L(L_ERROR, "MT with %d threads.", GML::ThreadCount());
 
 	PrepareStacktrace();
 

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "FlameProjectile.h"
 #include "Game/Camera.h"
@@ -11,13 +10,10 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, ZeroVector, NULL, NULL, 0));
+CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (ProjectileParams(), ZeroVector));
 
 CR_REG_METADATA(CFlameProjectile,(
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(color),
-	CR_MEMBER(color2),
-	CR_MEMBER(intensity),
 	CR_MEMBER(spread),
 	CR_MEMBER(curTime),
 	CR_MEMBER(physLife),
@@ -26,16 +22,10 @@ CR_REG_METADATA(CFlameProjectile,(
 	));
 
 
-CFlameProjectile::CFlameProjectile(
-	const float3& pos, const float3& speed, const float3& spread,
-	CUnit* owner, const WeaponDef* weaponDef, int ttl):
-
-	CWeaponProjectile(pos, speed, owner, NULL, ZeroVector, weaponDef, NULL, ttl),
-	color(color),
-	color2(color2),
-	intensity(intensity),
-	spread(spread),
-	curTime(0)
+CFlameProjectile::CFlameProjectile(const ProjectileParams& params, const float3& spread)
+	: CWeaponProjectile(params)
+	, spread(spread)
+	, curTime(0)
 {
 	projectileType = WEAPON_FLAME_PROJECTILE;
 	invttl = 1.0f / ttl;
@@ -62,11 +52,6 @@ void CFlameProjectile::Collision()
 	curTime += 0.05f;
 }
 
-void CFlameProjectile::Collision(CUnit* unit)
-{
-	CWeaponProjectile::Collision(unit);
-}
-
 void CFlameProjectile::Update()
 {
 	if (!luaMoveCtrl) {
@@ -74,6 +59,7 @@ void CFlameProjectile::Update()
 		UpdateGroundBounce();
 		speed += spread;
 	}
+	UpdateInterception();
 
 	radius = radius + weaponDef->sizeGrowth;
 	sqRadius = radius * radius;
@@ -88,7 +74,7 @@ void CFlameProjectile::Update()
 		deleteMe = true;
 	}
 
-	gCEG->Explosion(cegID, pos, curTime, intensity, NULL, 0.0f, NULL, speed);
+	gCEG->Explosion(cegID, pos, curTime, 0.0f, NULL, 0.0f, NULL, speed);
 }
 
 void CFlameProjectile::Draw()

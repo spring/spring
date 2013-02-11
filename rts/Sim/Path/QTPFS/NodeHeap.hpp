@@ -62,7 +62,7 @@ namespace QTPFS {
 			assert(cur_idx <= max_idx);
 
 			// kill old root
-			nodes[cur_idx]->SetHeapIndex(-1U);
+			nodes[cur_idx]->SetHeapIndex(-1u);
 			nodes[cur_idx] = NULL;
 
 			// move new root (former last node) down if necessary
@@ -81,16 +81,16 @@ namespace QTPFS {
 
 
 		// utility functions
-		bool empty() const { return (cur_idx == 0); }
-		bool full() const { return (size() >= capacity()); }
-		size_t size() const { return cur_idx; }
+		bool empty() const { return (size() == 0); }
+//		bool full() const { return (size() >= capacity()); }
+		size_t size() const { return (cur_idx); }
 		size_t capacity() const { return (max_idx + 1); }
 
 		void clear() {
 			nodes.clear();
 
 			cur_idx =  0;
-			max_idx = -1U;
+			max_idx = -1u;
 		}
 
 		void reserve(size_t size) {
@@ -157,9 +157,9 @@ namespace QTPFS {
 				const TNode n = nodes[idx];
 				const unsigned int nn = n->GetNodeNumber();
 				const unsigned int hi = n->GetHeapIndex();
-				const float fc = n->GetPathCost(NODE_PATH_COST_F);
+				const float hp = n->GetPathCost(NODE_PATH_COST_F);
 
-				printf("%s%f (idx=%lu :: nn=%u :: hi=%u)\n", tabs.c_str(), fc, idx, nn, hi);
+				printf("%s%f (idx=%lu :: nn=%u :: hi=%u)\n", tabs.c_str(), hp, idx, nn, hi);
 
 				debug_print(l_child_idx(idx), calls - 1, tabs + "\t");
 			}
@@ -238,7 +238,7 @@ namespace QTPFS {
 		}
 
 		void dec_heap(size_t p_idx) {
-			size_t   c_idx = -1U;
+			size_t   c_idx = -1u;
 			size_t l_c_idx = l_child_idx(p_idx);
 			size_t r_c_idx = r_child_idx(p_idx);
 

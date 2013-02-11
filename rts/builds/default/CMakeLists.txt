@@ -9,19 +9,23 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 
 ### Assemble libraries
-FIND_PACKAGE_STATIC(SDL REQUIRED)
-INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-LIST(APPEND engineLibraries ${SDL_LIBRARY})
+FIND_PACKAGE(SDL REQUIRED)
+SET(engineIncludes ${SDL_INCLUDE_DIR})
+SET(engineLibraries ${SDL_LIBRARY})
 
 
 FIND_PACKAGE_STATIC(OpenGL REQUIRED)
 FIND_PACKAGE_STATIC(GLU REQUIRED)
 FIND_PACKAGE_STATIC(GLEW 1.5.1 REQUIRED)
 LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
-
+if   (MSVC)
+	LIST(APPEND engineIncludes ${GLEW_INCLUDE_DIR})
+endif(MSVC)
 
 FIND_PACKAGE_STATIC(Freetype REQUIRED)
-INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIRS})
+foreach(f ${FREETYPE_INCLUDE_DIRS})
+	LIST(APPEND engineIncludes ${f})
+endforeach(f)
 LIST(APPEND engineLibraries ${FREETYPE_LIBRARIES})
 
 IF    (PREFER_STATIC_LIBS)
@@ -50,27 +54,41 @@ LIST(APPEND engineLibraries ${sound-impl})
 
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
-
+LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
+if (WIN32 AND Boost_CHRONO_FOUND)
+	# in newer boost versions the thread library depends on it
+	LIST(APPEND engineLibraries ${Boost_CHRONO_LIBRARY})
+endif (WIN32 AND Boost_CHRONO_FOUND)
 
 ### Assemble external incude dirs
-INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
+LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
 
+INCLUDE_DIRECTORIES(${engineIncludes})
+
+if   (MSVC)
+	# set vmg flag to work around small pointer-to-member bug in spring
+	# and enable multi-processor compiling
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /MP")
+endif(MSVC)
 
 ### Add icon and manifest to exe using windres
 IF    (WIN32)
-	SET(ENGINE_ICON_DIR "${ENGINE_SRC_ROOT_DIR}")
-	SET(ENGINE_ICON_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-	SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-	CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
+	IF   (MINGW)
+		SET(ENGINE_ICON_DIR "${ENGINE_SRC_ROOT_DIR}")
+		SET(ENGINE_ICON_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
+		SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
+		CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
+	ENDIF(MINGW)
 ELSE  (WIN32)
 	SET(ENGINE_ICON "")
 ENDIF (WIN32)
 
+### allow engineLibraries to be used in multithreaded, too
+MakeGlobal(engineLibraries)
+MakeGlobal(engineIncludes)
 
 ### Build the executable
-ADD_EXECUTABLE(engine-default ${engineSources} ${ENGINE_ICON} ${engineHeaders})
+ADD_EXECUTABLE(engine-default ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-default ${engineLibraries})
 SET_TARGET_PROPERTIES(engine-default PROPERTIES OUTPUT_NAME "spring")
 

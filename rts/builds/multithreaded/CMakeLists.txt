@@ -10,8 +10,11 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 ### Assemble defines
 ADD_DEFINITIONS(-DUSE_GML)
-# USE_GML requires this
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")
+
+if   (NOT MSVC)
+	# USE_GML requires this
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")
+endif(NOT MSVC)
 
 # USE_GML_SIM requires USE_GML
 ADD_DEFINITIONS(-DUSE_GML_SIM)
@@ -21,49 +24,23 @@ if (USE_GML_DEBUG)
 endif (USE_GML_DEBUG)
 
 
-### Assemble libraries
-FIND_PACKAGE(SDL REQUIRED)
-INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-LIST(APPEND engineLibraries ${SDL_LIBRARY})
-
-FIND_PACKAGE(OpenGL REQUIRED)
-FIND_PACKAGE(GLU REQUIRED)
-FIND_PACKAGE(GLEW 1.5.1 REQUIRED)
-LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
-
-FIND_PACKAGE_STATIC(Freetype REQUIRED)
-LIST(APPEND engineLibraries ${FREETYPE_LIBRARIES})
-
-IF    (UNIX)
-	FIND_PACKAGE(X11 REQUIRED)
-	LIST(APPEND engineLibraries ${X11_X11_LIB} ${X11_Xcursor_LIB})
-ENDIF (UNIX)
-
-LIST(APPEND engineLibraries ${sound-impl})
-
-LIST(APPEND engineLibraries ${engineCommonLibraries})
-
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
-
-
-### Assemble external incude dirs
-INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-
-
 ### Add icon and manifest to exe using windres
 IF    (WIN32)
-	SET(ENGINE_ICON_GML_DIR "${ENGINE_SRC_ROOT_DIR}")
-	SET(ENGINE_ICON_GML_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-	SET(ENGINE_ICON_GML_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-	CreateResourceCompileCommand(ENGINE_ICON_GML "${ENGINE_ICON_GML_DIR}" "${ENGINE_ICON_GML_RES}" "${ENGINE_ICON_GML_OBJ}")
+	IF   (MINGW)
+		SET(ENGINE_ICON_GML_DIR "${ENGINE_SRC_ROOT_DIR}")
+		SET(ENGINE_ICON_GML_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
+		SET(ENGINE_ICON_GML_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
+		CreateResourceCompileCommand(ENGINE_ICON_GML "${ENGINE_ICON_GML_DIR}" "${ENGINE_ICON_GML_RES}" "${ENGINE_ICON_GML_OBJ}")
+	ENDIF(MINGW)
 ELSE  (WIN32)
 	SET(ENGINE_ICON_GML "")
 ENDIF (WIN32)
 
+### Assemble external incude dirs (defined in ../default/CMakeLists.txt)
+INCLUDE_DIRECTORIES(${engineIncludes})
 
 ### Build the executable
-ADD_EXECUTABLE(engine-multithreaded ${engineSources} ${ENGINE_ICON_GML} ${engineHeaders})
+ADD_EXECUTABLE(engine-multithreaded ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON_GML} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-multithreaded gml ${engineLibraries})
 SET_TARGET_PROPERTIES(engine-multithreaded PROPERTIES OUTPUT_NAME "spring-multithreaded")
 

@@ -11,16 +11,16 @@ class CNoWeapon :
 	CR_DECLARE(CNoWeapon);
 public:
 	CNoWeapon(CUnit *owner = 0);
-	~CNoWeapon(void);
+	~CNoWeapon();
 
-	void Update(void);
-	void SlowUpdate(void);
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
+	void Update();
+	void SlowUpdate();
 
-	void Init(void);
+	void Init();
 
 private:
-	virtual void FireImpl();
+	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
+	void FireImpl();
 };
 
 

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 #include "lib/gml/gml.h"
 
 #include "UnitDef.h"
@@ -35,7 +34,6 @@
 #include "Map/ReadMap.h"
 
 #include "Rendering/Models/IModelParser.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GroundFlash.h"
 
 #include "Sim/Units/Groups/Group.h"
@@ -50,7 +48,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/MoveTypeFactory.h"
 #include "Sim/MoveTypes/ScriptMoveType.h"
@@ -77,7 +75,9 @@
 //////////////////////////////////////////////////////////////////////
 
 //! info: SlowUpdate runs each 16th GameFrame (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
-float CUnit::empDecline     = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
+float CUnit::empDecline   = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
+bool  CUnit::spawnFeature = true;
+
 float CUnit::expMultiplier  = 1.0f;
 float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
@@ -88,6 +88,7 @@ float CUnit::expGrade       = 0.0f;
 CUnit::CUnit() : CSolidObject(),
 	unitDef(NULL),
 	unitDefID(-1),
+	featureDefID(-1),
 	upright(true),
 	travel(0.0f),
 	travelPeriod(0.0f),
@@ -103,7 +104,7 @@ CUnit::CUnit() : CSolidObject(),
 	lastNanoAdd(gs->frameNum),
 	repairAmount(0.0f),
 	transporter(NULL),
-	toBeTransported(false),
+	loadingTransportId(-1),
 	buildProgress(0.0f),
 	groundLevelled(true),
 	terraformLeft(0.0f),
@@ -111,7 +112,6 @@ CUnit::CUnit() : CSolidObject(),
 	realAirLosRadius(0),
 	losStatus(teamHandler->ActiveAllyTeams(), 0),
 	inBuildStance(false),
-	stunned(false),
 	useHighTrajectory(false),
 	dontUseWeapons(false),
 	dontFire(false),
@@ -154,7 +154,7 @@ CUnit::CUnit() : CSolidObject(),
 	fpsControlPlayer(NULL),
 	commandAI(NULL),
 	group(NULL),
-	localmodel(NULL),
+	localModel(NULL),
 	script(NULL),
 	condUseMetal(0.0f),
 	condUseEnergy(0.0f),
@@ -186,7 +186,7 @@ CUnit::CUnit() : CSolidObject(),
 	lastAttacker(NULL),
 	lastAttackedPiece(NULL),
 	lastAttackedPieceFrame(-1),
-	lastAttack(-200),
+	lastAttackFrame(-200),
 	lastFireWeapon(0),
 	recentDamage(0.0f),
 	attackTarget(NULL),
@@ -213,7 +213,6 @@ CUnit::CUnit() : CSolidObject(),
 	posErrorVector(ZeroVector),
 	posErrorDelta(ZeroVector),
 	nextPosErrorUpdate(1),
-	hasUWWeapons(false),
 	wantCloak(false),
 	scriptCloak(0),
 	cloakTimeout(128),
@@ -224,6 +223,7 @@ CUnit::CUnit() : CSolidObject(),
 	curTerrainType(0),
 	selfDCountdown(0),
 	myTrack(NULL),
+	myIcon(NULL),
 	lastFlareDrop(0),
 	currentFuel(0.0f),
 	alphaThreshold(0.1f),
@@ -236,12 +236,13 @@ CUnit::CUnit() : CSolidObject(),
 	iconRadius(0.0f),
 	lodCount(0),
 	currentLOD(0),
-#ifdef USE_GML
+
 	lastDrawFrame(-30),
-#endif
-	lastUnitUpdate(0)
+	lastUnitUpdate(0),
+
+	stunned(false)
 {
-	GML_GET_TICKS(lastUnitUpdate);
+	GML::GetTicks(lastUnitUpdate);
 }
 
 CUnit::~CUnit()
@@ -255,9 +256,8 @@ CUnit::~CUnit()
 		// we have to wait for deathScriptFinished (but we want the delay
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
 		// to be as short as possible to prevent position jumps)
-		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
-		                               delayedWreckLevel, team, -1, true,
-		                               unitDef, deathSpeed);
+		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
+		featureHandler->CreateWreckage(params, delayedWreckLevel - 1, true);
 	}
 
 	if (unitDef->isAirBase) {
@@ -306,7 +306,7 @@ CUnit::~CUnit()
 	los = NULL;
 	radarhandler->RemoveUnit(this);
 
-	modelParser->DeleteLocalModel(this);
+	modelParser->DeleteLocalModel(localModel);
 }
 
 
@@ -327,31 +327,55 @@ void CUnit::SetEnergyStorage(float newStorage)
 
 
 
-void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& position, bool build)
+void CUnit::PreInit(const UnitLoadParams& params)
 {
-	team = uTeam;
-	allyteam = teamHandler->AllyTeam(uTeam);
+	// if this is < 0, we get a random ID from UnitHandler
+	id = params.unitID;
+	unitDefID = (params.unitDef)->id;
+	featureDefID = -1;
 
-	unitDef = uDef;
-	unitDefID = unitDef->id;
+	objectDef = params.unitDef;
+	unitDef = params.unitDef;
+
+	{
+		const FeatureDef* wreckFeatureDef = featureHandler->GetFeatureDef(unitDef->wreckName);
+
+		if (wreckFeatureDef != NULL) {
+			featureDefID = wreckFeatureDef->id;
+		}
+	}
+
+	team = params.teamID;
+	allyteam = teamHandler->AllyTeam(team);
+
+	buildFacing = std::abs(params.facing) % NUM_FACINGS;
+	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
+	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 
 	// copy the UnitDef volume instance
 	// NOTE: gets deleted in ~CSolidObject
 	model = unitDef->LoadModel();
-	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius);
-	modelParser->CreateLocalModel(this);
+	localModel = new LocalModel(model);
+	collisionVolume = new CollisionVolume(unitDef->collisionVolume);
+	modelParser->CreateLocalModel(localModel);
 
-	mapSquare = ground->GetSquare(position.cClampInMap());
+	if (collisionVolume->DefaultToSphere())
+		collisionVolume->InitSphere(model->radius);
+	if (collisionVolume->DefaultToFootPrint())
+		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
 
-	heading  = GetHeadingFromFacing(facing);
+	speed = params.speed;
+	mapSquare = ground->GetSquare((params.pos).cClampInMap());
+
+	heading  = GetHeadingFromFacing(buildFacing);
 	frontdir = GetVectorFromHeading(heading);
 	updir    = UpVector;
 	rightdir = frontdir.cross(updir);
 	upright  = unitDef->upright;
 
-	Move3D(position.cClampInMap(), false);
+	Move3D((params.pos).cClampInMap(), false);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-	SetRadiusAndHeight(model->radius, model->height);
+	SetRadiusAndHeight(model);
 	UpdateDirVectors(!upright);
 	UpdateMidAndAimPos();
 
@@ -377,14 +401,10 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 	ASSERT_SYNCED(pos);
 
-	buildFacing = std::abs(facing) % NUM_FACINGS;
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
-
 	footprint = int2(unitDef->xsize, unitDef->zsize);
-	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
-	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 
-	beingBuilt = build;
+	beingBuilt = params.beingBuilt;
 	mass = (beingBuilt)? mass: unitDef->mass;
 	crushResistance = unitDef->crushResistance;
 	power = unitDef->power;
@@ -392,17 +412,16 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	health = beingBuilt? 0.1f: unitDef->health;
 	losHeight = unitDef->losHeight;
 	radarHeight = unitDef->radarHeight;
-	metalCost = unitDef->metalCost;
-	energyCost = unitDef->energyCost;
+	metalCost = unitDef->metal;
+	energyCost = unitDef->energy;
 	buildTime = unitDef->buildTime;
 	currentFuel = unitDef->maxFuel;
 	armoredMultiple = std::max(0.0001f, unitDef->armoredMultiple); // armored multiple of 0 will crash spring
 	armorType = unitDef->armorType;
 	category = unitDef->category;
-	leaveTracks = unitDef->leaveTracks;
+	leaveTracks = unitDef->decalDef.leaveTrackDecals;
 
 	tooltip = unitDef->humanName + " - " + unitDef->tooltip;
-	wreckName = unitDef->wreckName;
 
 
 	// sensor parameters
@@ -443,7 +462,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 		unitDef->tidalGenerator * mapInfo->map.tidalStrength;
 
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
-	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
+	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
 }
 
 
@@ -453,12 +472,12 @@ void CUnit::PostInit(const CUnit* builder)
 	// Call initializing script functions
 	script->Create();
 
-	if (unitDef->moveDef != NULL) {
-		switch (unitDef->moveDef->moveType) {
-			case MoveDef::Hover_Move: {
+	if (moveDef != NULL) {
+		switch (moveDef->moveFamily) {
+			case MoveDef::Hover: {
 				physicalState = CSolidObject::Hovering;
 			} break;
-			case MoveDef::Ship_Move: {
+			case MoveDef::Ship: {
 				physicalState = CSolidObject::Floating;
 			} break;
 			default: {
@@ -539,20 +558,15 @@ void CUnit::PostInit(const CUnit* builder)
 
 
 
-void CUnit::ForcedMove(const float3& newPos, bool)
+void CUnit::ForcedMove(const float3& newPos)
 {
 	if (blocking) {
 		UnBlock();
 	}
 
-	CBuilding* building = dynamic_cast<CBuilding*>(this);
-	if (building)
-		groundDecals->RemoveBuilding(building, NULL);
-
 	Move3D(newPos - pos, true);
 
-	if (building)
-		groundDecals->AddBuilding(building);
+	eventHandler.UnitMoved(this);
 
 	if (blocking) {
 		Block();
@@ -602,8 +616,11 @@ void CUnit::SetDirVectors(const CMatrix44f& matrix) {
 }
 
 // NOTE: movetypes call this directly
-void CUnit::UpdateDirVectors(bool useGroundNormal)
+void CUnit::UpdateDirVectors(bool useGroundNormal, bool isGroundUnit)
 {
+	if (isGroundUnit && inAir)
+		return;
+
 	updir    = useGroundNormal? ground->GetSmoothNormal(pos.x, pos.z): UpVector;
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();
@@ -663,7 +680,11 @@ void CUnit::Update()
 {
 	ASSERT_SYNCED(pos);
 
-	posErrorVector += posErrorDelta;
+	// UnitScript only applies piece-space transforms so
+	// we apply the forward kinematics update separately
+	// (only if we have any dirty pieces)
+	// TODO: move this to UnitScript::Tick?
+	localModel->UpdatePieceMatrices();
 
 	{
 		const bool oldInAir   = inAir;
@@ -671,7 +692,7 @@ void CUnit::Update()
 
 		inWater = (pos.y <= 0.0f);
 		inAir   = (!inWater) && ((pos.y - ground->GetHeightAboveWater(pos.x, pos.z)) > 1.0f);
-		isUnderWater = ((pos.y + ((moveDef != NULL && moveDef->subMarine)? 0.0f: model->height)) < 0.0f);
+		isUnderWater = ((pos.y + ((moveDef == NULL || !moveDef->subMarine) * model->height)) < 0.0f);
 
 		if (inAir != oldInAir) {
 			if (inAir) {
@@ -689,11 +710,11 @@ void CUnit::Update()
 		}
 	}
 
+	residualImpulse *= impulseDecayRate;
+	posErrorVector += posErrorDelta;
+
 	if (beingBuilt)
 		return;
-
-	// 0.968 ** 16 is slightly less than 0.6, which was the old value used in SlowUpdate
-	residualImpulse *= 0.968f;
 
 	if (travelPeriod != 0.0f) {
 		travel += speed.Length();
@@ -703,7 +724,7 @@ void CUnit::Update()
 	recentDamage *= 0.9f;
 	flankingBonusMobility += flankingBonusMobilityAdd;
 
-	if (stunned) {
+	if (IsStunned()) {
 		// leave the pad if reserved
 		moveType->UnreservePad(moveType->GetReservedPad());
 
@@ -826,6 +847,19 @@ inline void CUnit::UpdateLosStatus(int at)
 }
 
 
+void CUnit::SetStunned(bool stun) {
+	stunned = stun;
+
+	if (moveType->progressState == AMoveType::Active) {
+		if (stunned) {
+			script->StopMoving();
+		} else {
+			script->StartMoving();
+		}
+	}
+}
+
+
 void CUnit::SlowUpdate()
 {
 	--nextPosErrorUpdate;
@@ -864,31 +898,35 @@ void CUnit::SlowUpdate()
 
 	UpdateResources();
 
-	if (stunned) {
+	if (IsStunned()) {
+		// call this because we can be pushed into a different quad while stunned
+		// which would make us invulnerable to most non-/small-AOE weapon impacts
+		static_cast<AMoveType*>(moveType)->SlowUpdate();
+
+		const bool b0 = (paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health));
+		const bool b1 = (transporter == NULL || transporter->unitDef->isFirePlatform);
+
 		// de-stun only if we are not (still) inside a non-firebase transport
-		if ((paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health)) &&
-			!(transporter && !transporter->unitDef->isFirePlatform)) {
-			stunned = false;
+		if (b0 && b1) {
+			SetStunned(false);
 		}
 
 		SlowUpdateCloak(true);
 		return;
 	}
 
-	if (selfDCountdown && !stunned) {
-		selfDCountdown--;
-		if (selfDCountdown <= 1) {
+	if (selfDCountdown > 0) {
+		if ((selfDCountdown -= 1) == 0) {
+			// avoid unfinished buildings making an explosion
 			if (!beingBuilt) {
 				KillUnit(true, false, NULL);
 			} else {
-				KillUnit(false, true, NULL);	//avoid unfinished buildings making an explosion
+				KillUnit(false, true, NULL);
 			}
-			selfDCountdown = 0;
 			return;
 		}
-		if ((selfDCountdown & 1) && (team == gu->myTeam)) {
-			LOG("%s: Self destruct in %i s",
-					unitDef->humanName.c_str(), selfDCountdown / 2);
+		if ((selfDCountdown & 1) && (team == gu->myTeam) && !gu->spectating) {
+			LOG("%s: self-destruct in %is", unitDef->humanName.c_str(), (selfDCountdown >> 1) + 1);
 		}
 	}
 
@@ -952,14 +990,12 @@ void CUnit::SlowUpdate()
 	AddEnergy(energyTickMake * 0.5f);
 
 	if (health < maxHealth) {
-		health += unitDef->autoHeal;
-
 		if (restTime > unitDef->idleTime) {
 			health += unitDef->idleAutoHeal;
 		}
-		if (health > maxHealth) {
-			health = maxHealth;
-		}
+
+		health += unitDef->autoHeal;
+		health = std::min(health, maxHealth);
 	}
 
 	SlowUpdateCloak(false);
@@ -1027,18 +1063,19 @@ void CUnit::SlowUpdateWeapons() {
 			//     either 1) ::AttackUnit was called with a (non-NULL)
 			//     target-unit which the CAI did *not* auto-select, or
 			//     2) ::AttackGround was called with any user-selected
-			//     position
+			//     position and all checks succeeded
 			if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
 				if (attackTarget != NULL) {
 					w->AttackUnit(attackTarget, w->haveUserTarget);
 				} else if (userAttackGround) {
-					w->AttackGround(attackPos, w->haveUserTarget);
+					// this implies a user-order
+					w->AttackGround(attackPos, true);
 				}
 			}
 
 			if (lastAttacker == NULL)
 				continue;
-			if ((lastAttack + 200) <= gs->frameNum)
+			if ((lastAttackFrame + 200) <= gs->frameNum)
 				continue;
 			if (w->targetType != Target_None)
 				continue;
@@ -1111,7 +1148,7 @@ void CUnit::DoWaterDamage()
 
 void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID)
 {
-	if (isDead) {
+	if (isDead || crashing) {
 		return;
 	}
 
@@ -1129,11 +1166,13 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		restTime = 0; // bleeding != resting
 	}
 
-	float3 hitDir = -impulse;
-	hitDir.y = 0.0f;
-	hitDir.SafeNormalize();
+	{
+		float3 hitDir = -impulse;
+		hitDir.y = 0.0f;
+		hitDir.SafeNormalize();
 
-	script->HitByWeapon(hitDir, weaponDefID, /*inout*/ damage);
+		script->HitByWeapon(hitDir, weaponDefID, /*inout*/ damage);
+	}
 
 	float experienceMod = expMultiplier;
 	float newDamage = damage;
@@ -1146,7 +1185,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 		damage = newDamage;
 	}
 
-	AddImpulse((impulse * impulseMult) / mass);
+	StoreImpulse((impulse * impulseMult) / mass);
 
 	if (!isParalyzer) { // real damage
 		if (damage > 0.0f) {
@@ -1159,11 +1198,10 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			health -= damage;
 		} else { // healing
 			health -= damage;
-			if (health > maxHealth) {
-				health = maxHealth;
-			}
+			health = std::min(health, maxHealth);
+
 			if (health > paralyzeDamage && !modInfo.paralyzeOnMaxHealth) {
-				stunned = false;
+				SetStunned(false);
 			}
 		}
 	} else {
@@ -1185,7 +1223,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			// clamp the dealt paralysis-damage to [0, maxParalysisDamage]
 			damage = std::min(damage, std::max(0.0f, maxParalysisDamage));
 
-			if (stunned) {
+			if (IsStunned()) {
 				// no attacker gains experience from a stunned target
 				experienceMod = 0.0f;
 			}
@@ -1194,7 +1232,7 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			paralyzeDamage += damage;
 
 			if (paralyzeDamage >= baseHealth) {
-				stunned = true;
+				SetStunned(true);
 			}
 		} else {
 			if (paralyzeDamage <= 0.0f) {
@@ -1207,20 +1245,12 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 			paralyzeDamage = std::max(paralyzeDamage, 0.0f);
 
 			if (paralyzeDamage <= baseHealth) {
-				stunned = false;
+				SetStunned(false);
 			}
 		}
 	}
 
-	if (damage > 0.0f) {
-		recentDamage += damage;
-
-		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
-			attacker->AddExperience(0.1f * experienceMod
-			                             * (power / attacker->power)
-			                             * (damage + std::min(0.0f, health)) / maxHealth);
-		}
-	}
+	recentDamage += damage;
 
 	eventHandler.UnitDamaged(this, attacker, damage, weaponDefID, isParalyzer);
 	eoh->UnitDamaged(*this, attacker, damage, weaponDefID, isParalyzer);
@@ -1229,6 +1259,18 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 	tracefile << "Damage: ";
 	tracefile << id << " " << damage << "\n";
 #endif
+
+	if (damage > 0.0f) {
+		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
+			const float scaledExpMod = 0.1f * experienceMod * (power / attacker->power);
+			const float scaledDamage = std::max(0.0f, (damage + std::min(0.0f, health))) / maxHealth;
+			// alternative
+			// scaledDamage = (max(healthPreDamage, 0) - max(health, 0)) / maxHealth
+
+			// FIXME: why is experience added a second time when health <= 0.0f?
+			attacker->AddExperience(scaledExpMod * scaledDamage);
+		}
+	}
 
 	if (health <= 0.0f) {
 		KillUnit(false, false, attacker);
@@ -1246,16 +1288,18 @@ void CUnit::DoDamage(const DamageArray& damages, const float3& impulse, CUnit* a
 
 
 
-void CUnit::AddImpulse(const float3& addedImpulse) {
-	if (GetTransporter() != NULL) {
-		// or apply impulse to the transporter?
-		return;
-	}
+void CUnit::StoreImpulse(const float3& impulse, float newImpulseDecayRate) {
+	CSolidObject::StoreImpulse(impulse, newImpulseDecayRate);
+}
 
-	residualImpulse += addedImpulse;
+void CUnit::StoreImpulse(const float3& impulse) {
+	const float3& groundNormal = ground->GetNormal(pos.x, pos.z);
+	const float groundImpulseScale = std::min(0.0f, residualImpulse.dot(groundNormal));
 
-	if (addedImpulse.SqLength() >= 0.01f) {
-		moveType->ImpulseAdded(addedImpulse);
+	CSolidObject::StoreImpulse(impulse - (groundNormal * groundImpulseScale));
+
+	if (moveType->CanApplyImpulse(impulse)) {
+		CSolidObject::ApplyImpulse();
 	}
 }
 
@@ -1572,6 +1616,8 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 {
 	bool ret = false;
 
+	// remember whether this was a user-order for SlowUpdateWeapons
+	// (because CCommandAI does not keep calling us, but ::SUW does)
 	haveManualFireRequest = wantManualFire;
 	userAttackGround = isUserTarget;
 
@@ -1589,7 +1635,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 		w->haveUserTarget = false; // this should be false for ground-attack commands
 
 		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
-			ret |= (w->AttackGround(pos, true));
+			ret |= (w->AttackGround(pos, isUserTarget));
 		}
 	}
 
@@ -1609,14 +1655,15 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
 	}
 
-	lastAttack = gs->frameNum;
+	lastAttackFrame = gs->frameNum;
 	lastAttacker = attacker;
+
 	AddDeathDependence(attacker, DEPENDENCE_ATTACKER);
 }
 
 void CUnit::DependentDied(CObject* o)
 {
-	if (o == attackTarget) { attackTarget   = NULL; }
+	if (o == attackTarget) { attackTarget = NULL; }
 	if (o == soloBuilder)  { soloBuilder  = NULL; }
 	if (o == transporter)  { transporter  = NULL; }
 	if (o == lastAttacker) { lastAttacker = NULL; }
@@ -1708,14 +1755,20 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 }
 
 
+#if defined(USE_GML) && defined(__GNUC__) && (__GNUC__ == 4)
+// This is supposed to fix some GCC crashbug related to threading
+// The MOVAPS SSE instruction is otherwise getting misaligned data
+__attribute__ ((force_align_arg_pointer))
+#endif
 bool CUnit::AddBuildPower(float amount, CUnit* builder)
 {
+	// stop decaying on building AND reclaim
+	lastNanoAdd = gs->frameNum;
+
 	if (amount >= 0.0f) { //  build / repair
 		if (!beingBuilt && (health >= maxHealth)) {
 			return false;
 		}
-
-		lastNanoAdd = gs->frameNum;
 
 		if (beingBuilt) { //build
 			const float part = std::min(amount / buildTime, 1.0f - buildProgress);
@@ -1768,7 +1821,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			return true;
 		}
 	} else { // reclaim
-		if (isDead) {
+		if (isDead || crashing) {
 			return false;
 		}
 
@@ -1873,9 +1926,9 @@ void CUnit::FinishedBuilding(bool postInit)
 		wantCloak = true;
 	}
 
-	if (unitDef->isFeature && uh->morphUnitToFeature) {
-		CFeature* f = featureHandler->CreateWreckage(
-			pos, wreckName, heading, buildFacing, 0, team, allyteam, false, NULL);
+	if (unitDef->isFeature && CUnit::spawnFeature) {
+		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
+		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
 
 		if (f) {
 			f->blockHeightChanges = true;
@@ -1907,8 +1960,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	}
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
-		const std::string& exp = (selfDestruct) ? unitDef->selfDExplosion : unitDef->deathExplosion;
-		const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
+		const WeaponDef* wd = (selfDestruct)? unitDef->selfdExpWeaponDef: unitDef->deathExpWeaponDef;
 
 		if (wd != NULL) {
 			CGameHelper::ExplosionParams params = {
@@ -1945,11 +1997,9 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	if (!deathScriptFinished) {
 		// put the unit in a pseudo-zombie state until Killed finishes
 		speed = ZeroVector;
-		stunned = true;
+		SetStunned(true);
 		paralyzeDamage = 100.0f * maxHealth;
-		if (health < 0.0f) {
-			health = 0.0f;
-		}
+		health = std::max(health, 0.0f);
 	}
 }
 
@@ -2123,14 +2173,16 @@ void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
 	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
+	objectDef = unitDef;
 	model = unitDef->LoadModel();
+	localModel = new LocalModel(model);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
-	SetRadiusAndHeight(model->radius, model->height);
+	SetRadiusAndHeight(model);
 
-	modelParser->CreateLocalModel(this);
+	modelParser->CreateLocalModel(localModel);
 	// FIXME: how to handle other script types (e.g. Lua) here?
-	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
+	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
 
 	// Call initializing script functions
 	script->Create();
@@ -2166,53 +2218,50 @@ void CUnit::StopAttackingAllyTeam(int ally)
 	}
 }
 
-void CUnit::SlowUpdateCloak(bool stunCheck)
-{
-	const bool oldCloak = isCloaked;
 
+bool CUnit::GetNewCloakState(bool stunCheck) {
 	if (stunCheck) {
-		if (stunned && isCloaked && scriptCloak <= 3) {
-			isCloaked = false;
+		if (IsStunned() && isCloaked && scriptCloak <= 3) {
+			return false;
 		}
-	} else {
-		if (scriptCloak >= 3) {
-			isCloaked = true;
-		} else if (wantCloak || (scriptCloak >= 1)) {
-			if ((decloakDistance > 0.0f) &&
-				helper->GetClosestEnemyUnitNoLosTest(midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false)) {
-				curCloakTimeout = gs->frameNum + cloakTimeout;
-				isCloaked = false;
-			}
-			if (isCloaked || (gs->frameNum >= curCloakTimeout)) {
-				if (scriptCloak >= 2) {
-					isCloaked = true;
-				}
-				else {
-					float cloakCost = unitDef->cloakCost;
-					if (speed.SqLength() > 0.2f) {
-						cloakCost = unitDef->cloakCostMoving;
-					}
-					if (UseEnergy(cloakCost * 0.5f)) {
-						isCloaked = true;
-					} else {
-						isCloaked = false;
-					}
-				}
-			} else {
-				isCloaked = false;
-			}
-		} else {
-			isCloaked = false;
+
+		return isCloaked;
+	}
+
+	if (scriptCloak >= 3) {
+		return true;
+	}
+
+	if (wantCloak || (scriptCloak >= 1)) {
+		const CUnit* closestEnemy = helper->GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
+		const float cloakCost = (speed.SqLength() > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
+
+		if (decloakDistance > 0.0f && closestEnemy != NULL) {
+			curCloakTimeout = gs->frameNum + cloakTimeout;
+			return false;
+		}
+
+		if (isCloaked || (gs->frameNum >= curCloakTimeout)) {
+			return ((scriptCloak >= 2) || UseEnergy(cloakCost * 0.5f));
 		}
 	}
 
-	if (oldCloak != isCloaked) {
-		if (isCloaked) {
+	return false;
+}
+void CUnit::SlowUpdateCloak(bool stunCheck)
+{
+	const bool oldCloak = isCloaked;
+	const bool newCloak = GetNewCloakState(stunCheck);
+
+	if (oldCloak != newCloak) {
+		if (newCloak) {
 			eventHandler.UnitCloaked(this);
 		} else {
 			eventHandler.UnitDecloaked(this);
 		}
 	}
+
+	isCloaked = newCloak;
 }
 
 void CUnit::ScriptDecloak(bool updateCloakTimeOut)
@@ -2233,6 +2282,7 @@ CR_BIND_DERIVED(CUnit, CSolidObject, );
 CR_REG_METADATA(CUnit, (
 	// CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
+	CR_MEMBER(featureDefID),
 	CR_MEMBER(upright),
 	CR_MEMBER(deathSpeed),
 	CR_MEMBER(travel),
@@ -2249,7 +2299,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastNanoAdd),
 	CR_MEMBER(repairAmount),
 	CR_MEMBER(transporter),
-	CR_MEMBER(toBeTransported),
+	CR_MEMBER(loadingTransportId),
 	CR_MEMBER(buildProgress),
 	CR_MEMBER(groundLevelled),
 	CR_MEMBER(terraformLeft),
@@ -2303,7 +2353,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(commandAI),
 	CR_MEMBER(group),
 	// CR_MEMBER(fpsControlPlayer),
-	// CR_MEMBER(localmodel),
+	// CR_MEMBER(localModel),
 	// CR_MEMBER(script),
 	CR_MEMBER(condUseMetal),
 	CR_MEMBER(condUseEnergy),
@@ -2335,7 +2385,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastAttacker),
 	// CR_MEMBER(lastAttackedPiece),
 	CR_MEMBER(lastAttackedPieceFrame),
-	CR_MEMBER(lastAttack),
+	CR_MEMBER(lastAttackFrame),
 	CR_MEMBER(lastFireWeapon),
 	CR_MEMBER(recentDamage),
 	CR_MEMBER(attackTarget),
@@ -2345,9 +2395,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(dontFire),
 	CR_MEMBER(moveState),
 	CR_MEMBER(activated),
-//#if defined(USE_GML) && GML_ENABLE_SIM
-//	CR_MEMBER(lastUnitUpdate),
-//#endif
 	//CR_MEMBER(model),
 	CR_MEMBER(tooltip),
 	CR_MEMBER(crashing),
@@ -2365,11 +2412,9 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(armoredState),
 	CR_MEMBER(armoredMultiple),
 	CR_MEMBER(curArmorMultiple),
-	CR_MEMBER(wreckName),
 	CR_MEMBER(posErrorVector),
 	CR_MEMBER(posErrorDelta),
 	CR_MEMBER(nextPosErrorUpdate),
-	CR_MEMBER(hasUWWeapons),
 	CR_MEMBER(wantCloak),
 	CR_MEMBER(scriptCloak),
 	CR_MEMBER(cloakTimeout),
@@ -2379,7 +2424,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastTerrainType),
 	CR_MEMBER(curTerrainType),
 	CR_MEMBER(selfDCountdown),
-	//CR_MEMBER(myTrack), // unused
 	CR_MEMBER(incomingMissiles),
 	CR_MEMBER(lastFlareDrop),
 	CR_MEMBER(currentFuel),

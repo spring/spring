@@ -12,10 +12,8 @@ class CLaserCannon :
 public:
 	CLaserCannon(CUnit* owner);
 
-	void Update(void);
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
-
-	void Init(void);
+	void Update();
+	void Init();
 
 	float3 color;
 

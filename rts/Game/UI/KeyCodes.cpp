@@ -2,7 +2,6 @@
 
 #include <cctype>
 
-#include "System/mmgr.h"
 
 #include "KeyCodes.h"
 #include "SDL_keysym.h"

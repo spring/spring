@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <algorithm>
-#include "System/mmgr.h"
 
 #include "PathCache.h"
 
@@ -18,7 +17,7 @@ CPathCache::CPathCache(int blocksX,int blocksZ)
 	numCacheMisses=0;
 }
 
-CPathCache::~CPathCache(void)
+CPathCache::~CPathCache()
 {
 	LOG("Path cache hits %i %.0f%%",
 			numCacheHits, ((numCacheHits + numCacheMisses) != 0)
@@ -69,13 +68,13 @@ CPathCache::CacheItem* CPathCache::GetCachedPath(int2 startBlock,int2 goalBlock,
 	return 0;
 }
 
-void CPathCache::Update(void)
+void CPathCache::Update()
 {
 	while(!cacheQue.empty() && cacheQue.front().timeout<gs->frameNum)
 		RemoveFrontQueItem();
 }
 
-void CPathCache::RemoveFrontQueItem(void)
+void CPathCache::RemoveFrontQueItem()
 {
 	delete cachedPaths[cacheQue.front().hash];
 	cachedPaths.erase(cacheQue.front().hash);

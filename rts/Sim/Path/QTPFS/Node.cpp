@@ -1,42 +1,62 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cassert>
-#include <cmath>
 #include <limits>
+
+#include "lib/streflop/streflop_cond.h"
 
 #include "Node.hpp"
 #include "NodeLayer.hpp"
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
 
+#include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/Rectangle.h"
-#include "System/myMath.h"
+
+#define QTNODE_CHILD_COUNT 4
+
+unsigned int QTPFS::QTNode::MIN_SIZE_X;
+unsigned int QTPFS::QTNode::MIN_SIZE_Z;
+unsigned int QTPFS::QTNode::MAX_DEPTH;
 
 
 
 void QTPFS::INode::SetPathCost(unsigned int type, float cost) {
+	#ifndef QTPFS_ENABLE_MICRO_OPTIMIZATION_HACKS
 	switch (type) {
 		case NODE_PATH_COST_F: { fCost = cost; return; } break;
 		case NODE_PATH_COST_G: { gCost = cost; return; } break;
 		case NODE_PATH_COST_H: { hCost = cost; return; } break;
-		case NODE_PATH_COST_M: { mCost = cost; return; } break;
 	}
 
 	assert(false);
+	#else
+	assert(&gCost == &fCost + 1);
+	assert(&hCost == &gCost + 1);
+	assert(type <= NODE_PATH_COST_H);
+
+	*(&fCost + type) = cost;
+	#endif
 }
 
 float QTPFS::INode::GetPathCost(unsigned int type) const {
+	#ifndef QTPFS_ENABLE_MICRO_OPTIMIZATION_HACKS
 	switch (type) {
 		case NODE_PATH_COST_F: { return fCost; } break;
 		case NODE_PATH_COST_G: { return gCost; } break;
 		case NODE_PATH_COST_H: { return hCost; } break;
-		case NODE_PATH_COST_M: { return mCost; } break;
 	}
 
 	assert(false);
 	return 0.0f;
+	#else
+	assert(&gCost == &fCost + 1);
+	assert(&hCost == &gCost + 1);
+	assert(type <= NODE_PATH_COST_H);
+
+	return *(&fCost + type);
+	#endif
 }
 
 float QTPFS::INode::GetDistance(const INode* n, unsigned int type) const {
@@ -44,7 +64,7 @@ float QTPFS::INode::GetDistance(const INode* n, unsigned int type) const {
 	const float dz = float(zmid() * SQUARE_SIZE) - float(n->zmid() * SQUARE_SIZE);
 
 	switch (type) {
-		case NODE_DIST_EUCLIDEAN: { return math::sqrt((dx * dx) + (dz * dz)); } break;
+		case NODE_DIST_EUCLIDEAN: { return (math::sqrt((dx * dx) + (dz * dz))); } break;
 		case NODE_DIST_MANHATTAN: { return (math::fabs(dx) + math::fabs(dz)); } break;
 	}
 
@@ -52,17 +72,12 @@ float QTPFS::INode::GetDistance(const INode* n, unsigned int type) const {
 }
 
 unsigned int QTPFS::INode::GetNeighborRelation(const INode* ngb) const {
-	const bool edgeL = (xmin() == ngb->xmax());
-	const bool edgeR = (xmax() == ngb->xmin());
-	const bool edgeT = (zmin() == ngb->zmax());
-	const bool edgeB = (zmax() == ngb->zmin());
-
 	unsigned int rel = 0;
 
-	if (edgeL) { rel |= REL_NGB_EDGE_L; }
-	if (edgeR) { rel |= REL_NGB_EDGE_R; }
-	if (edgeT) { rel |= REL_NGB_EDGE_T; }
-	if (edgeB) { rel |= REL_NGB_EDGE_B; }
+	rel |= ((xmin() == ngb->xmax()) * REL_NGB_EDGE_L);
+	rel |= ((xmax() == ngb->xmin()) * REL_NGB_EDGE_R);
+	rel |= ((zmin() == ngb->zmax()) * REL_NGB_EDGE_T);
+	rel |= ((zmax() == ngb->zmin()) * REL_NGB_EDGE_B);
 
 	return rel;
 }
@@ -80,8 +95,8 @@ unsigned int QTPFS::INode::GetRectangleRelation(const SRectangle& r) const {
 	return REL_NODE_OVERLAPS_RECT;
 }
 
-float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos) const {
-	float3 p = ZeroVector;
+float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos, float alpha) const {
+	float3 p;
 
 	const unsigned int
 		minx = std::max(xmin(), ngb->xmin()),
@@ -97,19 +112,22 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 	//     mode is broken in that regard) and this would not
 	//     hold for a path through multiple neighboring nodes
 	//     with xsize and/or zsize equal to 1 heightmap square
+	#ifndef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
 	const float
-		midx = (maxx + minx) * 0.5f,
-		midz = (maxz + minz) * 0.5f;
+		midx = minx * (1.0f - alpha) + maxx * (0.0f + alpha),
+		midz = minz * (1.0f - alpha) + maxz * (0.0f + alpha);
+	#endif
 
 	switch (GetNeighborRelation(ngb)) {
-		#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
-		#define CAST static_cast<unsigned int>
-
 		// corners
 		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
 		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
 		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
 		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
+
+		#ifdef QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+		#define CAST static_cast<unsigned int>
+
 		// edges
 		// clamp <pos> (assumed to be inside <this>) to
 		// the shared-edge bounds and ortho-project it
@@ -124,11 +142,6 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 		#undef CAST
 		#else
 
-		// corners
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
-		case REL_NGB_EDGE_T | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_R: { p.x = xmax() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
-		case REL_NGB_EDGE_B | REL_NGB_EDGE_L: { p.x = xmin() * SQUARE_SIZE; p.z = zmax() * SQUARE_SIZE; } break;
 		// edges
 		case REL_NGB_EDGE_T:                  { p.x = midx   * SQUARE_SIZE; p.z = zmin() * SQUARE_SIZE; } break;
 		case REL_NGB_EDGE_R:                  { p.x = xmax() * SQUARE_SIZE; p.z = midz   * SQUARE_SIZE; } break;
@@ -158,7 +171,7 @@ float3 QTPFS::INode::GetNeighborEdgeTransitionPoint(const INode* ngb, const floa
 //     have)
 //
 SRectangle QTPFS::INode::ClipRectangle(const SRectangle& r) const {
-	SRectangle cr = SRectangle(0, 0, 0, 0);
+	SRectangle cr = r;
 	cr.x1 = std::max(int(xmin()), r.x1);
 	cr.z1 = std::max(int(zmin()), r.z1);
 	cr.x2 = std::min(int(xmax()), r.x2);
@@ -171,6 +184,12 @@ SRectangle QTPFS::INode::ClipRectangle(const SRectangle& r) const {
 
 
 
+void QTPFS::QTNode::InitStatic() {
+	MIN_SIZE_X = std::max(1u, mapInfo->pfs.qtpfs_constants.minNodeSizeX);
+	MIN_SIZE_Z = std::max(1u, mapInfo->pfs.qtpfs_constants.minNodeSizeZ);
+	MAX_DEPTH  = std::max(1u, mapInfo->pfs.qtpfs_constants.maxNodeDepth);
+}
+
 QTPFS::QTNode::QTNode(
 	const QTNode* parent,
 	unsigned int nn,
@@ -181,34 +200,33 @@ QTPFS::QTNode::QTNode(
 	assert(MIN_SIZE_Z > 0);
 
 	nodeNumber = nn;
-	heapIndex = -1U;
+	heapIndex = -1u;
 
 	searchState  =   0;
 	currMagicNum =   0;
-	prevMagicNum = -1U;
+	prevMagicNum = -1u;
 
-	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
-	numPrevNodes = 0;
-	#endif
-
-	_xmin = x1; _xmax = x2;
-	_zmin = z1; _zmax = z2;
 	_depth = (parent != NULL)? parent->depth() + 1: 0;
+	_xminxmax = (x2 << 16) | (x1 << 0);
+	_zminzmax = (z2 << 16) | (z1 << 0);
 
+	assert(x2 < (1 << 16));
+	assert(z2 < (1 << 16));
 	assert(xsize() != 0);
 	assert(zsize() != 0);
 
 	fCost = 0.0f;
 	gCost = 0.0f;
 	hCost = 0.0f;
-	mCost = 0.0f;
 
 	speedModSum =  0.0f;
 	speedModAvg =  0.0f;
 	moveCostAvg = -1.0f;
 
+	prevNode = NULL;
+
 	// for leafs, all children remain NULL
-	children.resize(QTNode::CHILD_COUNT, NULL);
+	children.resize(QTNODE_CHILD_COUNT, NULL);
 }
 
 QTPFS::QTNode::~QTNode() {
@@ -218,7 +236,7 @@ QTPFS::QTNode::~QTNode() {
 
 void QTPFS::QTNode::Delete() {
 	if (!IsLeaf()) {
-		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
+		for (unsigned int i = 0; i < children.size(); i++) {
 			children[i]->Delete(); children[i] = NULL;
 		}
 	}
@@ -235,8 +253,9 @@ boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
 	if (IsLeaf()) {
 		memFootPrint += (neighbors.size() * sizeof(INode*));
 		memFootPrint += (children.size() * sizeof(QTNode*));
+		memFootPrint += (netpoints.size() * sizeof(float3));
 	} else {
-		for (unsigned int i = 0; i < CHILD_COUNT; i++) {
+		for (unsigned int i = 0; i < children.size(); i++) {
 			memFootPrint += (children[i]->GetMemFootPrint());
 		}
 	}
@@ -248,13 +267,8 @@ boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
 	boost::uint64_t sum = 0;
 
 	{
-		#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
 		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);
-		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&numPrevNodes) + sizeof(numPrevNodes);
-		#else
-		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);
-		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&mCost) + sizeof(mCost);
-		#endif
+		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&hCost) + sizeof(hCost);
 
 		assert(minByte < maxByte);
 
@@ -264,7 +278,7 @@ boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
 		}
 	}
 	{
-		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&_xmin);
+		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&_depth);
 		const unsigned char* maxByte = reinterpret_cast<const unsigned char*>(&prevMagicNum) + sizeof(prevMagicNum);
 
 		assert(minByte < maxByte);
@@ -287,7 +301,7 @@ boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
 
 
 bool QTPFS::QTNode::IsLeaf() const {
-	assert(children.size() == QTNode::CHILD_COUNT);
+	assert(children.size() == QTNODE_CHILD_COUNT);
 	assert(
 		(children[0] == NULL && children[1] == NULL && children[2] == NULL && children[3] == NULL) ||
 		(children[0] != NULL && children[1] != NULL && children[2] != NULL && children[3] != NULL)
@@ -295,8 +309,12 @@ bool QTPFS::QTNode::IsLeaf() const {
 	return (children[0] == NULL);
 }
 
-bool QTPFS::QTNode::CanSplit() const {
+bool QTPFS::QTNode::CanSplit(bool forced) const {
 	// NOTE: caller must additionally check IsLeaf() before calling Split()
+	if (forced) {
+		return ((xsize() >> 1) > 0 && (zsize() >> 1) > 0);
+	}
+
 	if (depth() >= MAX_DEPTH) { return false; }
 
 	#ifdef QTPFS_CONSERVATIVE_NODE_SPLITS
@@ -304,9 +322,8 @@ bool QTPFS::QTNode::CanSplit() const {
 	if (zsize() <= MIN_SIZE_Z) { return false; }
 	#else
 	// aggressive splitting, important with respect to yardmaps
-	// (one yardmap square represents four 1x1 heightmap squares
-	// and the minimum node size is 2 heightmap squares for both
-	// dimensions)
+	// (one yardmap square represents four heightmap squares; a
+	// node represents MIN_SIZE_X by MIN_SIZE_Z of such squares)
 	if (((xsize() >> 1) ==          0) || ((zsize() >> 1) ==          0)) { return false; }
 	if (( xsize()       <= MIN_SIZE_X) && ( zsize()       <= MIN_SIZE_Z)) { return false; }
 	#endif
@@ -316,11 +333,12 @@ bool QTPFS::QTNode::CanSplit() const {
 
 
 
-bool QTPFS::QTNode::Split(NodeLayer& nl) {
-	if (!CanSplit())
+bool QTPFS::QTNode::Split(NodeLayer& nl, bool forced) {
+	if (!CanSplit(forced))
 		return false;
 
 	neighbors.clear();
+	netpoints.clear();
 
 	// can only split leaf-nodes (ie. nodes with NULL-children)
 	assert(children[NODE_IDX_TL] == NULL);
@@ -346,7 +364,7 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 	neighbors.clear();
 
 	// get rid of our children completely, but not of <this>!
-	for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
+	for (unsigned int i = 0; i < children.size(); i++) {
 		children[i]->Delete(); children[i] = NULL;
 	}
 
@@ -368,26 +386,33 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 	// this code can be VERY slow in the worst-case (eg. when <r>
 	// overlaps all four children of the ROOT node), but minimizes
 	// the overall number of nodes in the tree at any given time
-	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
-		bool recursed = false;
+	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r, SRectangle& ur) {
+		bool cont = false;
 
 		if (!IsLeaf()) {
-			for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-				if (children[i]->GetRectangleRelation(r) == REL_RECT_INTERIOR_NODE) {
-					children[i]->PreTesselate(nl, r); recursed = true; break;
+			for (unsigned int i = 0; i < children.size(); i++) {
+				if ((cont |= (children[i]->GetRectangleRelation(r) == REL_RECT_INTERIOR_NODE))) {
+					// only need to descend down one branch
+					children[i]->PreTesselate(nl, r, ur);
+					break;
 				}
 			}
 		}
 
-		if (!recursed) {
+		if (!cont) {
+			ur.x1 = std::min(ur.x1, int(xmin()));
+			ur.z1 = std::min(ur.z1, int(zmin()));
+			ur.x2 = std::max(ur.x2, int(xmax()));
+			ur.z2 = std::max(ur.z2, int(zmax()));
+
 			Merge(nl);
-			Tesselate(nl, r, true, false);
+			Tesselate(nl, r);
 		}
 	}
 
 #else
 
-	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
+	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r, SRectangle& ur) {
 		const unsigned int rel = GetRectangleRelation(r);
 
 		// use <r> if it is fully inside <this>, otherwise clip against our edges
@@ -405,19 +430,25 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 		// breaking <r> up into pieces while descending further)
 		//
 		const bool leaf = IsLeaf();
-		const bool cont = (rel != REL_RECT_INTERIOR_NODE)?
+		const bool cont = (rel == REL_RECT_INTERIOR_NODE) ||
 			(((xsize() >> 1) > (cr.x2 - cr.x1)) &&
-			 ((zsize() >> 1) > (cr.z2 - cr.z1))):
-			true;
+			 ((zsize() >> 1) > (cr.z2 - cr.z1)));
 
 		if (leaf || !cont) {
+			// extend a bounding box around every
+			// node modified during re-tesselation
+			ur.x1 = std::min(ur.x1, int(xmin()));
+			ur.z1 = std::min(ur.z1, int(zmin()));
+			ur.x2 = std::max(ur.x2, int(xmax()));
+			ur.z2 = std::max(ur.z2, int(zmax()));
+
 			Merge(nl);
-			Tesselate(nl, cr, true, false);
+			Tesselate(nl, cr);
 			return;
 		}
 
-		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-			children[i]->PreTesselate(nl, cr);
+		for (unsigned int i = 0; i < children.size(); i++) {
+			children[i]->PreTesselate(nl, cr, ur);
 		}
 	}
 
@@ -425,13 +456,15 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 
 
 
-void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, bool split) {
+void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r) {
 	unsigned int numNewBinSquares = 0; // nr. of squares in <r> that changed bin after deformation
 	unsigned int numDifBinSquares = 0; // nr. of different bin-types across all squares within <r>
 	unsigned int numClosedSquares = 0;
 
 	// if true, we are at the bottom of the recursion
 	bool registerNode = true;
+	bool wantSplit = false;
+	bool needSplit = false;
 
 	// if we just entered Tesselate from PreTesselate, <this> was
 	// merged and we need to update squares across the entire node
@@ -456,14 +489,16 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 	// technically required whenever numRefBinSquares is zero, ie.
 	// when ALL squares in <r> changed bins in unison
 	//
-	if (UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares) && Split(nl)) {
+	UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares, wantSplit, needSplit);
+
+	if ((wantSplit && Split(nl, false)) || (needSplit && Split(nl, true))) {
 		registerNode = false;
 
-		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
+		for (unsigned int i = 0; i < children.size(); i++) {
 			QTNode* cn = children[i];
 			SRectangle cr = cn->ClipRectangle(r);
 
-			cn->Tesselate(nl, cr, false, true);
+			cn->Tesselate(nl, cr);
 			assert(cn->GetMoveCost() != -1.0f);
 		}
 	}
@@ -478,14 +513,16 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	const SRectangle& r,
 	unsigned int& numNewBinSquares,
 	unsigned int& numDifBinSquares,
-	unsigned int& numClosedSquares
+	unsigned int& numClosedSquares,
+	bool& wantSplit,
+	bool& needSplit
 ) {
-	const std::vector<int>& oldSpeedBins = nl.GetOldSpeedBins();
-	const std::vector<int>& curSpeedBins = nl.GetCurSpeedBins();
-	const std::vector<float>& oldSpeedMods = nl.GetOldSpeedMods();
-	const std::vector<float>& curSpeedMods = nl.GetCurSpeedMods();
+	const std::vector<NodeLayer::SpeedBinType>& oldSpeedBins = nl.GetOldSpeedBins();
+	const std::vector<NodeLayer::SpeedBinType>& curSpeedBins = nl.GetCurSpeedBins();
+	const std::vector<NodeLayer::SpeedModType>& oldSpeedMods = nl.GetOldSpeedMods();
+	const std::vector<NodeLayer::SpeedModType>& curSpeedMods = nl.GetCurSpeedMods();
 
-	const int refSpeedBin = curSpeedBins[zmin() * gs->mapx + xmin()];
+	const NodeLayer::SpeedBinType refSpeedBin = curSpeedBins[zmin() * gs->mapx + xmin()];
 
 	// <this> can either just have been merged or added as
 	// new child of split parent; in the former case we can
@@ -509,19 +546,19 @@ bool QTPFS::QTNode::UpdateMoveCost(
 		const unsigned int minz = std::max(r.z1, int(zmin()));
 		const unsigned int maxz = std::min(r.z2, int(zmax()));
 
-		for (unsigned int hmx = minx; hmx < maxx; hmx++) {
-			for (unsigned int hmz = minz; hmz < maxz; hmz++) {
+		for (unsigned int hmz = minz; hmz < maxz; hmz++) {
+			for (unsigned int hmx = minx; hmx < maxx; hmx++) {
 				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
-				const int oldSpeedBin = oldSpeedBins[sqrIdx];
-				const int curSpeedBin = curSpeedBins[sqrIdx];
+				const NodeLayer::SpeedBinType oldSpeedBin = oldSpeedBins[sqrIdx];
+				const NodeLayer::SpeedBinType curSpeedBin = curSpeedBins[sqrIdx];
 
-				numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
-				numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
-				numClosedSquares += (curSpeedMods[sqrIdx] <= 0.0f)? 1: 0;
+				numNewBinSquares += int(curSpeedBin != oldSpeedBin);
+				numDifBinSquares += int(curSpeedBin != refSpeedBin);
+				numClosedSquares += int(curSpeedMods[sqrIdx] <= 0);
 
-				speedModSum -= oldSpeedMods[sqrIdx];
-				speedModSum += curSpeedMods[sqrIdx];
+				speedModSum -= (oldSpeedMods[sqrIdx] / float(NodeLayer::MaxSpeedModTypeValue()));
+				speedModSum += (curSpeedMods[sqrIdx] / float(NodeLayer::MaxSpeedModTypeValue()));
 
 				assert(speedModSum >= 0.0f);
 			}
@@ -529,18 +566,18 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	} else {
 		speedModSum = 0.0f;
 
-		for (unsigned int hmx = xmin(); hmx < xmax(); hmx++) {
-			for (unsigned int hmz = zmin(); hmz < zmax(); hmz++) {
+		for (unsigned int hmz = zmin(); hmz < zmax(); hmz++) {
+			for (unsigned int hmx = xmin(); hmx < xmax(); hmx++) {
 				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
-				const int oldSpeedBin = oldSpeedBins[sqrIdx];
-				const int curSpeedBin = curSpeedBins[sqrIdx];
+				const NodeLayer::SpeedBinType oldSpeedBin = oldSpeedBins[sqrIdx];
+				const NodeLayer::SpeedBinType curSpeedBin = curSpeedBins[sqrIdx];
 
-				numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
-				numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
-				numClosedSquares += (curSpeedMods[sqrIdx] <= 0.0f)? 1: 0;
+				numNewBinSquares += int(curSpeedBin != oldSpeedBin);
+				numDifBinSquares += int(curSpeedBin != refSpeedBin);
+				numClosedSquares += int(curSpeedMods[sqrIdx] <= 0);
 
-				speedModSum += curSpeedMods[sqrIdx];
+				speedModSum += (curSpeedMods[sqrIdx] / float(NodeLayer::MaxSpeedModTypeValue()));
 			}
 		}
 	}
@@ -548,13 +585,14 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	// (re-)calculate the average cost of this node
 	assert(speedModSum >= 0.0f);
 
-	speedModAvg = speedModSum / (xsize() * zsize());
+	speedModAvg = speedModSum / area();
 	moveCostAvg = (speedModAvg <= 0.001f)? QTPFS_POSITIVE_INFINITY: (1.0f / speedModAvg);
 
+	// no node can have ZERO traversal cost
 	assert(moveCostAvg > 0.0f);
 
-	if (numDifBinSquares > 0 && CanSplit())
-		return true;
+	wantSplit |= (numDifBinSquares > 0);
+	needSplit |= (numClosedSquares > 0 && numClosedSquares < area());
 
 	// if we are not going to tesselate this node further
 	// and there is at least one impassable square inside
@@ -572,15 +610,17 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	//   of a lane would otherwise be unable to find a path
 	//   out of their factories
 	//
+	//   this is crucial for handling the squares underneath
+	//   static obstacles (eg. factories) if MIN_SIZE_* != 1
 	if (numClosedSquares > 0) {
-		if (numClosedSquares < (xsize() * zsize())) {
+		if (numClosedSquares < area()) {
 			moveCostAvg = QTPFS_CLOSED_NODE_COST * (numClosedSquares / float(xsize() * xsize()));
 		} else {
 			moveCostAvg = QTPFS_POSITIVE_INFINITY;
 		}
 	}
 
-	return false;
+	return (wantSplit || needSplit);
 }
 
 
@@ -608,11 +648,14 @@ unsigned int QTPFS::QTNode::GetMaxNumNeighbors() const {
 
 
 
-void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
+void QTPFS::QTNode::Serialize(std::fstream& fStream, NodeLayer& nodeLayer, unsigned int* streamSize, bool readMode) {
 	// overwritten when de-serializing
-	unsigned int numChildren = IsLeaf()? 0: QTNode::CHILD_COUNT;
+	unsigned int numChildren = QTNODE_CHILD_COUNT * (1 - int(IsLeaf()));
 
-	if (read) {
+	(*streamSize) += (2 * sizeof(unsigned int));
+	(*streamSize) += (3 * sizeof(float));
+
+	if (readMode) {
 		fStream.read(reinterpret_cast<char*>(&nodeNumber), sizeof(unsigned int));
 		fStream.read(reinterpret_cast<char*>(&numChildren), sizeof(unsigned int));
 
@@ -623,10 +666,10 @@ void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
 		if (numChildren > 0) {
 			// re-create child nodes
 			assert(IsLeaf());
-			Split(*PathManager::GetSerializingNodeLayer());
+			Split(nodeLayer, true);
 		} else {
 			// node was a leaf in an earlier life, register it
-			PathManager::GetSerializingNodeLayer()->RegisterNode(this);
+			nodeLayer.RegisterNode(this);
 		}
 	} else {
 		fStream.write(reinterpret_cast<const char*>(&nodeNumber), sizeof(unsigned int));
@@ -638,12 +681,14 @@ void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
 	}
 
 	for (unsigned int i = 0; i < numChildren; i++) {
-		children[i]->Serialize(fStream, read);
+		children[i]->Serialize(fStream, nodeLayer, streamSize, readMode);
 	}
 }
 
 unsigned int QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes, std::vector<INode*>& ngbs) {
+	#ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
 	UpdateNeighborCache(nodes);
+	#endif
 
 	if (!neighbors.empty()) {
 		ngbs.clear();
@@ -656,12 +701,18 @@ unsigned int QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes, std::
 }
 
 const std::vector<QTPFS::INode*>& QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes) {
+	#ifdef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
 	UpdateNeighborCache(nodes);
+	#endif
 	return neighbors;
 }
 
+// this is *either* called from ::GetNeighbors when the conservative
+// update-scheme is enabled, *or* from PM::ExecQueuedNodeLayerUpdates
+// (never both)
 bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 	assert(IsLeaf());
+	assert(!nodes.empty());
 
 	if (prevMagicNum != currMagicNum) {
 		prevMagicNum = currMagicNum;
@@ -674,10 +725,11 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 			neighbors.clear();
 			neighbors.reserve(maxNgbs + 4);
 
-			#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-			etp_cache.clear();
-			etp_cache.reserve(maxNgbs + 4);
-			#endif
+			netpoints.clear();
+			netpoints.reserve(1 + maxNgbs * QTPFS_MAX_NETPOINTS_PER_NODE_EDGE + 4);
+			// NOTE: caching ETP's breaks QTPFS_ORTHOPROJECTED_EDGE_TRANSITIONS
+			// NOTE: [0] is a reserved index and must always be valid
+			netpoints.push_back(float3());
 
 			INode* ngb = NULL;
 
@@ -687,12 +739,13 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_L (west) neighbors
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmz += ngb->zsize();
+					hmz = ngb->zmax();
 
 					neighbors.push_back(ngb);
-					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
-					#endif
+
+					for (unsigned int i = 0; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
+						netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, float3(), QTPFS_NETPOINT_EDGE_SPACING_SCALE * (i + 1)));
+					}
 				}
 
 				ngbRels |= REL_NGB_EDGE_L;
@@ -703,12 +756,13 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_R (east) neighbors
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmz += ngb->zsize();
+					hmz = ngb->zmax();
 
 					neighbors.push_back(ngb);
-					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
-					#endif
+
+					for (unsigned int i = 0; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
+						netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, float3(), QTPFS_NETPOINT_EDGE_SPACING_SCALE * (i + 1)));
+					}
 				}
 
 				ngbRels |= REL_NGB_EDGE_R;
@@ -720,12 +774,13 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_T (north) neighbors
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmx += ngb->xsize();
+					hmx = ngb->xmax();
 
 					neighbors.push_back(ngb);
-					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
-					#endif
+
+					for (unsigned int i = 0; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
+						netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, float3(), QTPFS_NETPOINT_EDGE_SPACING_SCALE * (i + 1)));
+					}
 				}
 
 				ngbRels |= REL_NGB_EDGE_T;
@@ -736,12 +791,13 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				// walk along EDGE_B (south) neighbors
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
-					hmx += ngb->xsize();
+					hmx = ngb->xmax();
 
 					neighbors.push_back(ngb);
-					#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-					etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, ZeroVector));
-					#endif
+
+					for (unsigned int i = 0; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
+						netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngb, float3(), QTPFS_NETPOINT_EDGE_SPACING_SCALE * (i + 1)));
+					}
 				}
 
 				ngbRels |= REL_NGB_EDGE_B;
@@ -757,10 +813,13 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_TL ngb must be distinct from EDGE_L and EDGE_T ngbs
 					if (ngbC != ngbL && ngbC != ngbT) {
-						neighbors.push_back(ngbC);
-						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
-						#endif
+						if (ngbL->AllSquaresAccessible() && ngbT->AllSquaresAccessible()) {
+							neighbors.push_back(ngbC);
+
+							for (unsigned int i = 0; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
+								netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, float3(), QTPFS_NETPOINT_EDGE_SPACING_SCALE * (i + 1)));
+							}
+						}
 					}
 				}
 				if ((ngbRels & REL_NGB_EDGE_B) != 0) {
@@ -770,10 +829,13 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_BL ngb must be distinct from EDGE_L and EDGE_B ngbs
 					if (ngbC != ngbL && ngbC != ngbB) {
-						neighbors.push_back(ngbC);
-						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
-						#endif
+						if (ngbL->AllSquaresAccessible() && ngbB->AllSquaresAccessible()) {
+							neighbors.push_back(ngbC);
+
+							for (unsigned int i = 0; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
+								netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, float3(), QTPFS_NETPOINT_EDGE_SPACING_SCALE * (i + 1)));
+							}
+						}
 					}
 				}
 			}
@@ -787,10 +849,13 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_TR ngb must be distinct from EDGE_R and EDGE_T ngbs
 					if (ngbC != ngbR && ngbC != ngbT) {
-						neighbors.push_back(ngbC);
-						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
-						#endif
+						if (ngbR->AllSquaresAccessible() && ngbT->AllSquaresAccessible()) {
+							neighbors.push_back(ngbC);
+
+							for (unsigned int i = 0; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
+								netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, float3(), QTPFS_NETPOINT_EDGE_SPACING_SCALE * (i + 1)));
+							}
+						}
 					}
 				}
 				if ((ngbRels & REL_NGB_EDGE_B) != 0) {
@@ -800,13 +865,22 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 					// VERT_BR ngb must be distinct from EDGE_R and EDGE_B ngbs
 					if (ngbC != ngbR && ngbC != ngbB) {
-						neighbors.push_back(ngbC);
-						#ifdef QTPFS_CACHED_EDGE_TRANSITION_POINTS
-						etp_cache.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, ZeroVector));
-						#endif
+						if (ngbR->AllSquaresAccessible() && ngbB->AllSquaresAccessible()) {
+							neighbors.push_back(ngbC);
+
+							for (unsigned int i = 0; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
+								netpoints.push_back(INode::GetNeighborEdgeTransitionPoint(ngbC, float3(), QTPFS_NETPOINT_EDGE_SPACING_SCALE * (i + 1)));
+							}
+						}
 					}
 				}
 			}
+			#endif
+
+			// NOTE: gcc 4.7 should FINALLY define __cplusplus properly (and accept -std=c++11)
+			#if (__cplusplus >= 201103L)
+			// neighbors.shrink_to_fit();
+			// netpoints.shrink_to_fit();
 			#endif
 		}
 

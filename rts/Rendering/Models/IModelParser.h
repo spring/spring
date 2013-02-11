@@ -4,9 +4,8 @@
 #define IMODELPARSER_H
 
 #include <map>
-#include <vector>
 #include <string>
-#include <set>
+#include <list>
 
 #include "System/Matrix44f.h"
 #include "3DModel.h"
@@ -19,10 +18,6 @@ public:
 	virtual ~IModelParser() {}
 };
 
-
-class CUnit;
-class CAssParser;
-
 class C3DModelLoader
 {
 public:
@@ -30,31 +25,28 @@ public:
 	~C3DModelLoader();
 
 	void Update();
-	S3DModel* Load3DModel(std::string name);
+	void CreateLocalModel(LocalModel* model);
+	void DeleteLocalModel(LocalModel* model);
 
-	void DeleteLocalModel(CUnit* unit);
-	void CreateLocalModel(CUnit* unit);
+	std::string FindModelPath(std::string name) const;
+	S3DModel* Load3DModel(std::string modelName);
 
-	typedef std::map<std::string, S3DModel*> ModelMap;
+	typedef std::map<std::string, unsigned int> ModelMap;
 	typedef std::map<std::string, IModelParser*> ParserMap;
 
 private:
-	// FIXME make some static?
-	ModelMap cache;
-	ParserMap parsers;
-
-	std::vector<S3DModelPiece*> createLists;
-
-	std::set<CUnit*> fixLocalModels;
-	std::vector<LocalModel*> deleteLocalModels;
-
+	void AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath);
 	void CreateLists(S3DModelPiece* o);
 	void CreateListsNow(S3DModelPiece* o);
 
-	void DeleteChilds(S3DModelPiece* o);
+	ModelMap cache;
+	ParserMap parsers;
 
-	void SetLocalModelPieceDisplayLists(CUnit* unit);
-	void SetLocalModelPieceDisplayLists(S3DModelPiece* model, LocalModel* lmodel, int* piecenum);
+	std::vector<S3DModel*> models;
+	std::list<S3DModelPiece*> createLists;
+
+	std::list<LocalModel*> fixLocalModels;
+	std::list<LocalModel*> deleteLocalModels;
 };
 
 extern C3DModelLoader* modelParser;

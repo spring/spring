@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "BuilderCAI.h"
 
@@ -67,6 +66,7 @@ CUnitSet CBuilderCAI::resurrecters;
 
 CBuilderCAI::CBuilderCAI():
 	CMobileCAI(),
+	owner_builder(NULL),
 	building(false),
 	cachedRadiusId(0),
 	cachedRadius(0),
@@ -91,7 +91,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 	lastPC3(-1),
 	range3D(owner->unitDef->buildRange3D)
 {
-	owner_builder = (CBuilder*) owner;
+	owner_builder = static_cast<CBuilder*>(owner);
 
 	CommandDescription c;
 	if (owner->unitDef->canRepair) {
@@ -175,7 +175,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 
 		char tmp[1024];
 		sprintf(tmp, "\nHealth %.0f\nMetal cost %.0f\nEnergy cost %.0f Build time %.0f",
-		        ud->health, ud->metalCost, ud->energyCost, ud->buildTime);
+		        ud->health, ud->metal, ud->energy, ud->buildTime);
 		if (c.disabled) {
 			c.tooltip = "\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff";
 		} else {
@@ -203,7 +203,7 @@ CBuilderCAI::~CBuilderCAI()
 void CBuilderCAI::PostLoad()
 {
 	if (!commandQue.empty()) {
-		owner_builder = (CBuilder*) owner;
+		owner_builder = static_cast<CBuilder*>(owner);
 
 		Command& c = commandQue.front();
 
@@ -412,10 +412,11 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()
 			&& c.GetID() != CMD_WAIT) {
 		building = false;
-		((CBuilder*) owner)->StopBuild();
+		static_cast<CBuilder*>(owner)->StopBuild();
 	}
 
-	map<int,string>::iterator boi = buildOptions.find(c.GetID());
+	const map<int,string>::const_iterator boi = buildOptions.find(c.GetID());
+
 	if (boi != buildOptions.end()) {
 		if (c.params.size() < 3) {
 			return;
@@ -451,7 +452,11 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			CMobileCAI::GiveCommandReal(c);
 			return;
 		}
+	} else {
+		if (c.GetID() < 0)
+			return;
 	}
+
 	CMobileCAI::GiveCommandReal(c);
 }
 
@@ -466,7 +471,7 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
-	if (owner->beingBuilt || owner->stunned) {
+	if (owner->beingBuilt || owner->IsStunned()) {
 		return;
 	}
 
@@ -567,7 +572,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		build.Parse(c);
 	}
 
-	assert(build.def->id == -c.GetID() && build.def->id != NULL);
+	assert(build.def->id == -c.GetID() && build.def->id != 0);
 	const float buildeeRadius = GetBuildOptionRadius(build.def, c.GetID());
 
 	if (building) {
@@ -663,7 +668,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 }
 
 
-bool CBuilderCAI::TargetInterceptable(CUnit* unit, float targetSpeed) {
+bool CBuilderCAI::TargetInterceptable(const CUnit* unit, float targetSpeed) {
 	// if the target is moving away at a higher speed than we can manage, there is little point in chasing it
 	const float maxSpeed = owner->moveType->GetMaxSpeed();
 	if (targetSpeed <= maxSpeed)
@@ -688,9 +693,9 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			return;
 		}
 
-		if (tempOrder && owner->moveState == MOVESTATE_MANEUVER) {
-			// limit how far away we go
-			if (LinePointDist(commandPos1, commandPos2, unit->pos) > 500) {
+		if (tempOrder && owner->moveState <= MOVESTATE_MANEUVER) {
+			// limit how far away we go when not roaming
+			if (LinePointDist(commandPos1, commandPos2, unit->pos) > std::max(500.0f, GetBuildRange(unit->radius))) {
 				StopMove();
 				FinishCommand();
 				return;
@@ -1348,7 +1353,7 @@ void CBuilderCAI::RemoveUnitFromResurrecters(CUnit* unit)
  * TODO easy: store reclaiming units per allyteam
  * TODO harder: update reclaimers as they start/finish reclaims and/or die
  */
-bool CBuilderCAI::IsUnitBeingReclaimed(CUnit* unit, CUnit *friendUnit)
+bool CBuilderCAI::IsUnitBeingReclaimed(const CUnit* unit, CUnit *friendUnit)
 {
 	bool retval = false;
 	std::list<CUnit*> rm;
@@ -1454,7 +1459,6 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 	const CSolidObject* best = NULL;
 	float bestDist = bestStartDist;
 	bool stationary = false;
-	bool metal = false;
 	int rid = -1;
 
 	if (recUnits || recEnemy || recEnemyOnly) {
@@ -1499,6 +1503,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 		best = NULL;
 		const CTeam* team = teamHandler->Team(owner->team);
 		const std::vector<CFeature*>& features = qf->GetFeaturesExact(pos, radius);
+		bool metal = false;
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			const CFeature* f = *fi;
 			if (f->def->reclaimable && (recSpecial || f->def->autoreclaim) &&
@@ -1672,7 +1677,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 	bool stationary = false;
 
 	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
-		CUnit* unit = *ui;
+		const CUnit* unit = *ui;
 
 		if (teamHandler->Ally(owner->allyteam, unit->allyteam)) {
 			if (!haveEnemy && (unit->health < unit->maxHealth)) {
@@ -1681,7 +1686,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 					continue;
 				}
 				// don't help factories produce units when set on hold pos                
-				if (unit->beingBuilt && unit->moveDef && (owner->moveState == MOVESTATE_HOLDPOS)) {
+				if (unit->beingBuilt && unit->moveDef != NULL && (owner->moveState == MOVESTATE_HOLDPOS)) {
 					continue;
 				}
 				// don't assist or repair if can't assist or repair

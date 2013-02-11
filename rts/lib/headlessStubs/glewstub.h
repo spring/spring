@@ -50,6 +50,10 @@ extern "C" {
 #define GLEW_ARB_shadow_ambient GL_FALSE
 #define GLEW_ARB_imaging GL_FALSE
 #define GLEW_ARB_occlusion_query GL_FALSE
+#define GLEW_ARB_geometry_shader4 GL_FALSE
+#define GLEW_ARB_transform_feedback_instanced GL_FALSE
+#define GLEW_ARB_uniform_buffer_object GL_FALSE
+#define GLEW_ARB_transform_feedback3 GL_FALSE
 
 #define GLXEW_SGI_video_sync GL_FALSE
 

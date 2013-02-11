@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "UnsyncedGameCommands.h"
+#include "lib/gml/gmlcnf.h"
 
 #include "UnsyncedActionExecutor.h"
 #include "SyncedGameCommands.h"
@@ -35,12 +36,14 @@
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
+#include "Rendering/IPathDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/glFont.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
@@ -801,10 +804,8 @@ public:
 				share = true;
 			}
 
-			CTeam* teamToKill = teamHandler->IsActiveTeam(teamToKillId) ?
-			                          teamHandler->Team(teamToKillId) : NULL;
-			const CTeam* teamToReceiveUnits = teamHandler->Team(teamToReceiveUnitsId) ?
-			                                  teamHandler->Team(teamToReceiveUnitsId) : NULL;
+			CTeam* teamToKill = (teamHandler->IsActiveTeam(teamToKillId))? teamHandler->Team(teamToKillId) : NULL;
+			const CTeam* teamToReceiveUnits = (teamHandler->IsActiveTeam(teamToReceiveUnitsId))? teamHandler->Team(teamToReceiveUnitsId): NULL;
 
 			if (teamToKill == NULL) {
 				LOG_L(L_WARNING, "Team to %s: not a valid team number: \"%s\"", actionName.c_str(), args[0].c_str());
@@ -1020,7 +1021,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
-		if (ais.size() > 0) {
+		if (!ais.empty()) {
 			CSkirmishAIHandler::id_ai_t::const_iterator ai;
 			LOG("%s | %s | %s | %s | %s | %s",
 					"ID",
@@ -1324,6 +1325,8 @@ public:
 			"Enable/Disable rendering of health-bars for units") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		if (!GML::Enabled())
+			return false;
 #ifdef USE_GML
 		SetBoolArg(unitDrawer->showHealthBars, action.GetArgs());
 		LogSystemStatus("rendering of health-bars", unitDrawer->showHealthBars);
@@ -1340,6 +1343,8 @@ public:
 			"Enable/Disable rendering of resource-bars for features") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		if (!GML::Enabled())
+			return false;
 #ifdef USE_GML
 		bool showResBars = featureDrawer->GetShowRezBars();
 		SetBoolArg(showResBars, action.GetArgs());
@@ -1380,12 +1385,11 @@ public:
 			"Enable/Disable debug info rendering mode") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
 		// toggle
-		const bool drawDebug = !globalRendering->drawdebug;
-		ProfileDrawer::SetEnabled(drawDebug);
-		globalRendering->drawdebug = drawDebug;
-		LogSystemStatus("debug info rendering mode", globalRendering->drawdebug);
+		globalRendering->drawdebug = !globalRendering->drawdebug;
+
+		ProfileDrawer::SetEnabled(globalRendering->drawdebug);
+		LogSystemStatus("debug-info rendering mode", globalRendering->drawdebug);
 		return true;
 	}
 };
@@ -1479,12 +1483,12 @@ public:
 class DynamicSkyActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DynamicSkyActionExecutor() : IUnsyncedActionExecutor("DynamicSky",
-			"Enable/Disable rendering of the dynamic sky") {}
+			"Enable/Disable dynamic-sky rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 
 		SetBoolArg(sky->dynamicSky, action.GetArgs());
-		LogSystemStatus("rendering of the dynamic sky", sky->dynamicSky);
+		LogSystemStatus("dynamic-sky rendering", sky->dynamicSky);
 		return true;
 	}
 };
@@ -1494,14 +1498,14 @@ public:
 class DynamicSunActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DynamicSunActionExecutor() : IUnsyncedActionExecutor("DynamicSun",
-			"Enable/Disable rendering of dynamic sun") {}
+			"Enable/Disable dynamic-sun rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool dynamicSun = sky->GetLight()->IsDynamic();
 		SetBoolArg(dynamicSun, action.GetArgs());
 		sky->SetLight(dynamicSun);
-		LogSystemStatus("rendering of the dynamic sun", sky->GetLight()->IsDynamic());
+		LogSystemStatus("dynamic-sun rendering", sky->GetLight()->IsDynamic());
 		return true;
 	}
 };
@@ -1515,9 +1519,11 @@ public:
 			"Enable/Disable multi threaded ground rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		SetBoolArg(gd->multiThreadDrawGround, action.GetArgs());
+		configHandler->Set("MultiThreadDrawGround", gd->multiThreadDrawGround ? 1 : 0);
 		LogSystemStatus("Multi threaded ground rendering", gd->multiThreadDrawGround);
 		return true;
 	}
@@ -1531,9 +1537,11 @@ public:
 			"Enable/Disable multi threaded ground shadow rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		SetBoolArg(gd->multiThreadDrawGroundShadow, action.GetArgs());
+		configHandler->Set("MultiThreadDrawGroundShadow", gd->multiThreadDrawGroundShadow ? 1 : 0);
 		LogSystemStatus("Multi threaded ground shadow rendering", gd->multiThreadDrawGroundShadow);
 		return true;
 	}
@@ -1547,8 +1555,10 @@ public:
 			"Enable/Disable multi threaded unit rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 		SetBoolArg(unitDrawer->multiThreadDrawUnit, action.GetArgs());
+		configHandler->Set("MultiThreadDrawUnit", unitDrawer->multiThreadDrawUnit ? 1 : 0);
 		LogSystemStatus("Multi threaded unit rendering", unitDrawer->multiThreadDrawUnit);
 		return true;
 	}
@@ -1562,8 +1572,10 @@ public:
 			"Enable/Disable multi threaded unit shadow rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 		SetBoolArg(unitDrawer->multiThreadDrawUnitShadow, action.GetArgs());
+		configHandler->Set("MultiThreadDrawUnitShadow", unitDrawer->multiThreadDrawUnitShadow ? 1 : 0);
 		LogSystemStatus("Multi threaded unit shadow rendering", unitDrawer->multiThreadDrawUnitShadow);
 		return true;
 	}
@@ -1577,9 +1589,9 @@ public:
 			"Enable/Disable multi threaded rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-
 		bool mtEnabled = IsMTEnabled();
 		SetBoolArg(mtEnabled, action.GetArgs());
 		gd->multiThreadDrawGround = mtEnabled;
@@ -1612,10 +1624,10 @@ public:
 
 	bool inverse;
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!GML::Enabled())
+			return false;
 #	if GML_ENABLE_SIM
 		bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
-
 		// HACK GetInnerAction() should not be used here
 		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? ((inverse && action.GetArgs().empty()) ? !mtEnabled : mtEnabled) : GML::MultiThreadSim();
 		SetBoolArg(mtSim, action.GetArgs());
@@ -1823,7 +1835,7 @@ public:
 			" The engine will try to simulate more frames per second") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		float speed = gs->userSpeedFactor;
+		float speed = gs->wantedSpeedFactor;
 		if (speed < 5) {
 			speed += (speed < 2) ? 0.1f : 0.2f;
 			float fPart = speed - (int)speed;
@@ -1848,7 +1860,7 @@ public:
 			" The engine will try to simulate less frames per second") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		float speed = gs->userSpeedFactor;
+		float speed = gs->wantedSpeedFactor;
 		if (speed <= 5) {
 			speed -= (speed <= 2) ? 0.1f : 0.2f;
 			float fPart = speed - (int)speed;
@@ -1942,36 +1954,43 @@ public:
 class ShowPathTraversabilityActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ShowPathTraversabilityActionExecutor() : IUnsyncedActionExecutor("ShowPathTraversability",
-			"Enable rendering of the auxiliary traversability-map (slope-map) overlay") {}
+			"Enable rendering of the path traversability-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathTraversabilityTexture();
+		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathTraversability);
 		return true;
 	}
 };
-
-
 
 class ShowPathHeatActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ShowPathHeatActionExecutor() : IUnsyncedActionExecutor("ShowPathHeat",
-			"Enable/Disable rendering of the path heat map overlay", true) {}
+			"Enable/Disable rendering of the path heat-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathHeatTexture();
+		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathHeat);
 		return true;
 	}
 };
 
+class ShowPathFlowActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowPathFlowActionExecutor() : IUnsyncedActionExecutor("ShowPathFlow",
+			"Enable/Disable rendering of the path flow-map overlay", true) {}
 
+	bool Execute(const UnsyncedAction& action) const {
+		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathFlow);
+		return true;
+	}
+};
 
 class ShowPathCostActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ShowPathCostActionExecutor() : IUnsyncedActionExecutor("ShowPathCost",
-			"Enable rendering of the path costs map overlay", true) {}
+			"Enable rendering of the path cost-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readmap->GetGroundDrawer()->TogglePathCostTexture();
+		readmap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathCost);
 		return true;
 	}
 };
@@ -2002,7 +2021,7 @@ public:
 			return false;
 
 		// already shown?
-		const std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+		const std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (inputReceivers.empty() || (dynamic_cast<CShareBox*>(inputReceivers.front()) != NULL))
 			return false;
 
@@ -2020,7 +2039,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		// already shown?
-		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if  (inputReceivers.empty() || dynamic_cast<CQuitBox*>(inputReceivers.front()))
 			return false;
 
@@ -2040,7 +2059,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		// already shown?
-		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (inputReceivers.empty() || dynamic_cast<CQuitBox*>(inputReceivers.front()))
 			return false;
 
@@ -2228,12 +2247,14 @@ public:
 			"Shows/Hides the multi threading info panel") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		bool showMTInfo = (game->showMTInfo != MT_LUA_NONE);
+		if (!GML::Enabled())
+			return false;
+		bool showMTInfo = (game->showMTInfo != -1);
 		SetBoolArg(showMTInfo, action.GetArgs());
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
 		int mtl = globalConfig->GetMultiThreadLua();
-		game->showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED)) ? mtl : MT_LUA_NONE;
+		game->showMTInfo = showMTInfo ? mtl : -1;
+		GML::EnableCallChainWarnings(!!game->showMTInfo);
 		return true;
 	}
 };
@@ -2605,12 +2626,11 @@ public:
 			" explosion.") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (groundDecals) {
-			bool drawDecals = groundDecals->GetDrawDecals();
-			SetBoolArg(drawDecals, action.GetArgs());
-			groundDecals->SetDrawDecals(drawDecals);
-		}
-		LogSystemStatus("Ground-decals rendering", (groundDecals != NULL) ? groundDecals->GetDrawDecals() : false);
+		bool drawDecals = IGroundDecalDrawer::GetDrawDecals();
+		SetBoolArg(drawDecals, action.GetArgs());
+		IGroundDecalDrawer::SetDrawDecals(drawDecals);
+
+		LogSystemStatus("Ground-decals rendering", IGroundDecalDrawer::GetDrawDecals());
 		return true;
 	}
 };
@@ -2823,21 +2843,31 @@ public:
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		SetBoolArg(gd->wireframe, action.GetArgs());
 		sky->wireframe = gd->wireframe;
-		LogSystemStatus("drawing of the map as wire-frame", gd->wireframe);
+		LogSystemStatus("wireframe map-drawing mode", gd->wireframe);
 		return true;
 	}
 };
 
 
 
-class DebugColVolActionExecutor : public IUnsyncedActionExecutor {
+class DebugColVolDrawerActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DebugColVolActionExecutor()
-		: IUnsyncedActionExecutor("DebugColVol",
-			"Enable/Disable drawing of collision volumes for units & features.") {}
+	DebugColVolDrawerActionExecutor(): IUnsyncedActionExecutor("DebugColVol", "Enable/Disable drawing of collision volumes") {
+	}
 
 	bool Execute(const UnsyncedAction& action) const {
 		SetBoolArg(DebugColVolDrawer::enable, action.GetArgs());
+		return true;
+	}
+};
+
+class DebugPathDrawerActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugPathDrawerActionExecutor(): IUnsyncedActionExecutor("DebugPath", "Enable/Disable drawing of pathfinder debug-data") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LogSystemStatus("path-debug rendering mode", pathDrawer->ToggleEnabled());
 		return true;
 	}
 };
@@ -3046,6 +3076,21 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		game->ReloadGame();
+		return true;
+	}
+};
+
+
+
+class ReloadShadersActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ReloadShadersActionExecutor() : IUnsyncedActionExecutor("ReloadShaders",
+			"Reloads all engine shaders") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LOG("Reloading all engine shaders");
+		//FIXME make threadsafe!
+		shaderHandler->ReloadAll();
 		return true;
 	}
 };
@@ -3319,7 +3364,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ShowRezurectionBarsActionExecutor()); // MT only
 	AddActionExecutor(new PauseActionExecutor());
 	AddActionExecutor(new DebugActionExecutor());
-	AddActionExecutor(new DebugColVolActionExecutor());
+	AddActionExecutor(new DebugColVolDrawerActionExecutor());
+	AddActionExecutor(new DebugPathDrawerActionExecutor());
 	AddActionExecutor(new NoSoundActionExecutor());
 	AddActionExecutor(new SoundChannelEnableActionExecutor());
 	AddActionExecutor(new CreateVideoActionExecutor());
@@ -3354,6 +3400,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ShowMetalMapActionExecutor());
 	AddActionExecutor(new ShowPathTraversabilityActionExecutor());
 	AddActionExecutor(new ShowPathHeatActionExecutor());
+	AddActionExecutor(new ShowPathFlowActionExecutor());
 	AddActionExecutor(new ShowPathCostActionExecutor());
 	AddActionExecutor(new ToggleLOSActionExecutor());
 	AddActionExecutor(new ShareDialogActionExecutor());
@@ -3412,6 +3459,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DumpStateActionExecutor());
 	AddActionExecutor(new SaveActionExecutor());
 	AddActionExecutor(new ReloadGameActionExecutor());
+	AddActionExecutor(new ReloadShadersActionExecutor());
 	AddActionExecutor(new DebugInfoActionExecutor());
 	AddActionExecutor(new BenchmarkScriptActionExecutor());
 	// XXX are these redirects really required?

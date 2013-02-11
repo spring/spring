@@ -52,14 +52,16 @@
 
 uniform float frame;
 uniform vec3 eyePos;
+
 varying vec3 eyeVec;
 varying vec3 ligVec;
+varying vec3 worldPos;
 
-void main(void)
+void main()
 {
 	// COMPUTE TEXCOORDS
-	gl_TexCoord[0] = TexGenPlane*gl_Vertex.xzxz;
-	gl_TexCoord[5].st = ShadingPlane.xy*gl_Vertex.xz;
+	gl_TexCoord[0] = TexGenPlane * gl_Vertex.xzxz;
+	gl_TexCoord[5].st = ShadingPlane.xy * gl_Vertex.xz;
 
 	// COMPUTE WAVE TEXTURE COORDS
 	float fstart = PerlinStartFreq;
@@ -84,7 +86,8 @@ void main(void)
 	ligVec = normalize(SunDir*20000.0 + MapMid - myVertex.xyz);
 
 	// FOG
-	gl_FogFragCoord = (gl_ModelViewMatrix*gl_Vertex).z;
+	worldPos = myVertex.xyz;
+	gl_FogFragCoord = (gl_ModelViewMatrix * myVertex).z;
 
 	// POSITION
 	gl_Position = gl_ModelViewProjectionMatrix * myVertex;

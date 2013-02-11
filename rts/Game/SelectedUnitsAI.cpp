@@ -17,7 +17,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/NetProtocol.h"
-#include "System/mmgr.h"
 
 const int CMDPARAM_MOVE_X = 0;
 const int CMDPARAM_MOVE_Y = 1;
@@ -105,7 +104,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 	std::vector<int>::const_iterator ui;
 
 	const int nbrOfSelectedUnits = netSelected.size();
-	const int& cmd_id = c.GetID();
+	const int cmd_id = c.GetID();
 
 	if (nbrOfSelectedUnits < 1) {
 		// no units to command
@@ -410,7 +409,7 @@ void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 				// give weaponless units a long range to make them go to the back
 				range = 2000;
 			}
-			const float value = ((ud->metalCost * 60) + ud->energyCost) / unit->unitDef->health * range;
+			const float value = ((ud->metal * 60) + ud->energy) / unit->unitDef->health * range;
 			out.insert(std::pair<float, int>(value, *ui));
 		}
 	}

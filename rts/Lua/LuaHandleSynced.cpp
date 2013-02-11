@@ -4,7 +4,6 @@
 #include <set>
 #include <cctype>
 
-#include "System/mmgr.h"
 
 #include "LuaHandleSynced.h"
 
@@ -105,7 +104,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	if (GetFullCtrl()) {
 		watchUnitDefs.resize(unitDefHandler->unitDefs.size() + 1, false);
 		watchFeatureDefs.resize(featureHandler->GetFeatureDefs().size(), false);
-		watchWeaponDefs.resize(weaponDefHandler->numWeaponDefs, false);
+		watchWeaponDefs.resize(weaponDefHandler->weaponDefs.size(), false);
 	}
 
 	const string syncedCode   = LoadFile(syncedFile, modes);
@@ -650,9 +649,10 @@ bool CLuaHandleSynced::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 /******************************************************************************/
 /******************************************************************************/
 //
-//  Call-ins
+//  Call-ins (first two are unused)
 //
 
+#if 0
 bool CLuaHandleSynced::Initialize(const string& syncData)
 {
 	LUA_CALL_IN_CHECK(L, true);
@@ -681,7 +681,6 @@ bool CLuaHandleSynced::Initialize(const string& syncData)
 	lua_pop(L, 1);
 	return retval;
 }
-
 
 string CLuaHandleSynced::GetSyncData()
 {
@@ -714,6 +713,7 @@ string CLuaHandleSynced::GetSyncData()
 
 	return syncData;
 }
+#endif
 
 
 bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)

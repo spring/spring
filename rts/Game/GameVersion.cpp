@@ -70,12 +70,12 @@ std::string GetAdditional()
 	#define GV_ADD_SPACE " "
 #endif
 
-#if defined USE_MMGR
-	GV_ADD_SPACE "mmgr"
+#if defined PROFILE
+	GV_ADD_SPACE "Profile"
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif
-
+	
 #if defined USE_GML
 	GV_ADD_SPACE "MT"
 	#undef  GV_ADD_SPACE

@@ -28,7 +28,7 @@ Release Time
 		git merge release --no-ff
 2)  Tag the release:
 		export REL_VERS=85.0
-		git tag -a -m "${REL_VERS} release [changed APIs: Lua]" ${REL_VERS}
+		git tag -a -m "${REL_VERS} release [changed APIs: Lua, unitsync, AI]" ${REL_VERS}
     Make sure it looks correct:
 		gitk master develop release &
 3)  Create the source-packages (note: this even works if you got unindexed files in your repo, it creates a repo clone to gen the package):
@@ -50,9 +50,9 @@ Release Time
 10) Write the news post for the springrts.com frontpage, while waiting for the
     buildbot to compile the master branch.
 11) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}-MacOSX-10.6-SnowLeopard.zip
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}.exe
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}_portable.7z
+		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
 12) you should now have these files:
 	* spring_${REL_VERS}.exe
 	* spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip

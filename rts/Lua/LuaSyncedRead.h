@@ -119,12 +119,15 @@ class LuaSyncedRead {
 		static int GetUnitVelocity(lua_State* L);
 		static int GetUnitBuildFacing(lua_State* L);
 		static int GetUnitIsBuilding(lua_State* L);
+		static int GetUnitCurrentBuildPower(lua_State* L);
+		static int GetUnitNanoPieces(lua_State* L);
 		static int GetUnitTransporter(lua_State* L);
 		static int GetUnitIsTransporting(lua_State* L);
 		static int GetUnitShieldState(lua_State* L);
 		static int GetUnitFlanking(lua_State* L);
 		static int GetUnitWeaponState(lua_State* L);
 		static int GetUnitWeaponVectors(lua_State* L);
+		static int GetUnitWeaponTryTarget(lua_State* L);
 		static int GetUnitTravel(lua_State* L);
 		static int GetUnitFuel(lua_State* L);
 		static int GetUnitEstimatedPath(lua_State* L);
@@ -186,6 +189,7 @@ class LuaSyncedRead {
 		static int GetGroundInfo(lua_State* L);
 		static int GetGroundBlocked(lua_State* L);
 		static int GetGroundExtremes(lua_State* L);
+		static int GetTerrainTypeData(lua_State* L);
 
 		static int GetSmoothMeshHeight(lua_State* L);
 

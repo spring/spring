@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "StrafeAirMoveType.h"
 #include "Game/Player.h"
@@ -158,31 +157,9 @@ bool CStrafeAirMoveType::Update()
 	// need to additionally check that we are not crashing,
 	// otherwise we might fall through the map when stunned
 	// (the kill-on-impact code is not reached in that case)
-	if ((owner->stunned && !owner->crashing) || owner->beingBuilt) {
+	if ((owner->IsStunned() && !owner->IsCrashing()) || owner->beingBuilt) {
 		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
 		return (HandleCollisions());
-	}
-
-	if (owner->fpsControlPlayer != NULL && !(aircraftState == AIRCRAFT_CRASHING)) {
-		SetState(AIRCRAFT_FLYING);
-		inefficientAttackTime = 0;
-
-		const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
-
-		if (con.forward || con.back || con.left || con.right) {
-			float aileron = 0.0f;
-			float elevator = 0.0f;
-
-			if (con.forward) { elevator -= 1; }
-			if (con.back   ) { elevator += 1; }
-			if (con.right  ) { aileron  += 1; }
-			if (con.left   ) { aileron  -= 1; }
-
-			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
-			maneuver = 0;
-
-			return (HandleCollisions());
-		}
 	}
 
 	// somewhat hackish, but planes that have attack orders
@@ -192,6 +169,28 @@ bool CStrafeAirMoveType::Update()
 	const bool allowAttack = (reservedPad == NULL && !outOfFuel);
 
 	if (aircraftState != AIRCRAFT_CRASHING) {
+		if (owner->fpsControlPlayer != NULL) {
+			SetState(AIRCRAFT_FLYING);
+			inefficientAttackTime = 0;
+
+			const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
+
+			if (con.forward || con.back || con.left || con.right) {
+				float aileron = 0.0f;
+				float elevator = 0.0f;
+
+				if (con.forward) { elevator -= 1; }
+				if (con.back   ) { elevator += 1; }
+				if (con.right  ) { aileron  += 1; }
+				if (con.left   ) { aileron  -= 1; }
+
+				UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
+				maneuver = 0;
+
+				return (HandleCollisions());
+			}
+		}
+
 		if (reservedPad != NULL) {
 			MoveToRepairPad();
 		} else {
@@ -255,7 +254,8 @@ bool CStrafeAirMoveType::Update()
 			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
 
 			if ((ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
-				owner->crashing = false; owner->KillUnit(true, false, 0);
+				owner->SetCrashing(false);
+				owner->KillUnit(true, false, 0);
 			}
 
 			new CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
@@ -295,9 +295,9 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 		// check for collisions if not on a pad, not being built, or not taking off
 		const bool checkCollisions = collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF);
+		bool hitBuilding = false;
 
 		if (checkCollisions) {
-			bool hitBuilding = false;
 			const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 
 			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
@@ -320,6 +320,7 @@ bool CStrafeAirMoveType::HandleCollisions() {
 
 					owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
 					unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT);
+
 					hitBuilding = true;
 				} else {
 					const float part = owner->mass / (owner->mass + unit->mass);
@@ -335,17 +336,14 @@ bool CStrafeAirMoveType::HandleCollisions() {
 					owner->speed *= 0.99f;
 				}
 			}
+		}
 
-			if (hitBuilding && owner->crashing) {
-				// if our collision sphere overlapped with that
-				// of a building and we're crashing, die right
-				// now rather than waiting until we're close
-				// enough to the ground (which may never happen
-				// if eg. we're going down over a crowded field
-				// of windmills due to col-det)
-				owner->KillUnit(true, false, 0);
-				return true;
-			}
+		if (hitBuilding && owner->IsCrashing()) {
+			// if crashing and we hit a building, die right now
+			// rather than waiting until we are close enough to
+			// the ground
+			owner->KillUnit(true, false, 0);
+			return true;
 		}
 
 		if (pos.x < 0.0f) {
@@ -506,7 +504,7 @@ void CStrafeAirMoveType::UpdateFighterAttack()
 	oldGoalPos = goalPos;
 	goalPos = tgp;
 
-	const float goalLength = (goalPos - pos).Length();
+	const float goalLength = pos.distance(goalPos);
 	const float3 goalDir =
 		(goalLength > 0.0f)?
 		(goalPos - pos) / goalLength:
@@ -933,6 +931,7 @@ void CStrafeAirMoveType::UpdateLanding()
 
 	// collision detection does not let us get
 	// closer to the ground than <radius> elmos
+	// (wrt. midPos.y)
 	if (altitude <= owner->radius) {
 		SetState(AIRCRAFT_LANDED);
 	}
@@ -956,8 +955,8 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	lastElevatorPos = elevator;
 
 	const float gHeight = ground->GetHeightAboveWater(pos.x, pos.z);
-	const float speedf = speed.Length() + 0.1f;
-	const float3 speeddir = speed / speedf;
+	const float speedf = speed.Length();
+	const float3 speeddir = speed / (speedf + 0.1f);
 
 	if (owner->fpsControlPlayer != NULL) {
 		if ((pos.y - gHeight) > wantedHeight * 1.2f) {
@@ -968,8 +967,9 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	}
 
 
+	// apply gravity only when in the air
+	speed.y += (mapInfo->map.gravity * myGravity) * int((owner->midPos.y - owner->radius) > gHeight);
 	speed += (engineThrustVector * maxAcc * engine);
-	speed.y += (mapInfo->map.gravity * myGravity * (owner->beingBuilt? 0.0f: 1.0f));
 
 	if (aircraftState == AIRCRAFT_CRASHING) {
 		speed *= crashDrag;
@@ -980,25 +980,39 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	const float3 wingDir = updir * (1 - wingAngle) - frontdir * wingAngle;
 	const float wingForce = wingDir.dot(speed) * wingDrag;
 
-	frontdir += (rightdir * rudder   * maxRudder   * speedf); // yaw
-	updir    += (rightdir * aileron  * maxAileron  * speedf); // roll
-	frontdir += (updir    * elevator * maxElevator * speedf); // pitch
-	frontdir += ((speeddir - frontdir) * frontToSpeed);
+	if (!owner->IsStunned()) {
+		frontdir += (rightdir * rudder   * maxRudder   * speedf); // yaw
+		updir    += (rightdir * aileron  * maxAileron  * speedf); // roll
+		frontdir += (updir    * elevator * maxElevator * speedf); // pitch
+		frontdir += ((speeddir - frontdir) * frontToSpeed);
 
-	speed -= (wingDir * wingForce);
-	speed += ((frontdir * speedf - speed) * speedToFront);
+		speed -= (wingDir * wingForce);
+		speed += ((frontdir * speedf - speed) * speedToFront);
+		speed *= (1 - int(owner->beingBuilt && aircraftState == AIRCRAFT_LANDED));
+	}
 
 	if (nextPosInBounds) {
 		owner->Move3D(speed, true);
 	}
 
 	// bounce away on ground collisions (including water surface)
+	// NOTE:
+	//   as soon as we get stunned, Update calls UpdateAirPhysics
+	//   and pops us into the air because of the ground-collision
+	//   logic --> check if we are already on the ground first
+	//
+	//   impulse from weapon impacts can add speed and cause us
+	//   to start bouncing with ever-increasing amplitude while
+	//   stunned, so the same applies there
 	if (modInfo.allowAircraftToHitGround) {
-		if (gHeight > (owner->pos.y - owner->radius)) {
-			owner->Move1D(gHeight + owner->radius + 0.01f, 1, false);
+		const bool groundContact = (gHeight > (owner->midPos.y - owner->radius));
+		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
+
+		if (groundContact && handleContact) {
+			owner->Move1D(gHeight - (owner->midPos.y - owner->radius) + 0.01f, 1, true);
 
 			const float3& gNormal = ground->GetNormal(pos.x, pos.z);
-			const float impactSpeed = -speed.dot(gNormal);
+			const float impactSpeed = -speed.dot(gNormal) * int(1 - owner->IsStunned());
 
 			if (impactSpeed > 0.0f) {
 				// fix for mantis #1355
@@ -1006,7 +1020,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 				// near map edges) where their forward speed wasn't allowed to build up
 				// therefore add a vertical component help get off the ground if |speed|
 				// is below a certain threshold
-				if (speed.SqLength() > (0.09f * owner->unitDef->speed * owner->unitDef->speed)) {
+				if (speed.SqLength() > (0.09f * Square(owner->unitDef->speed))) {
 					speed *= 0.95f;
 				} else {
 					speed.y += impactSpeed;
@@ -1036,7 +1050,9 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 	assert(newState != AIRCRAFT_HOVERING);
 
 	// once in crashing, we should never change back into another state
-	assert(aircraftState != AIRCRAFT_CRASHING || newState == AIRCRAFT_CRASHING);
+	if (aircraftState == AIRCRAFT_CRASHING && newState != AIRCRAFT_CRASHING) {
+		return;
+	}
 
 	if (newState == aircraftState) {
 		return;
@@ -1056,7 +1072,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 	switch (aircraftState) {
 		case AIRCRAFT_CRASHING:
-			owner->crashing = true;
+			owner->SetCrashing(true);
 			break;
 		case AIRCRAFT_FLYING:
 			owner->Activate();
@@ -1082,16 +1098,6 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 	// this checks our physicalState, and blocks only
 	// if not flying (otherwise unblocks and returns)
 	owner->Block();
-}
-
-
-
-void CStrafeAirMoveType::ImpulseAdded(const float3&)
-{
-	if (aircraftState == AIRCRAFT_FLYING) {
-		owner->speed += owner->residualImpulse;
-		owner->residualImpulse = ZeroVector;
-	}
 }
 
 

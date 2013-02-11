@@ -36,6 +36,8 @@ bool GetJVMPath(const char* jrePath, const char* jvmType,
 /**
  * Find the path to a JRE install dir, using platform dependent means.
  *
+ * @param path       path of the JRE installation
+ * @param pathSize   size of the path parameter
  * @param configFile path to a simple text file containing only a path to the
  *                   JRE installation to use, or NULL
  * @param arch see GetArchPath(), use NULL for the default value

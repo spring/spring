@@ -8,7 +8,6 @@
 
 #include <boost/scoped_array.hpp>
 
-#include "System/mmgr.h"
 #include "System/Util.h"
 
 #include "System/TdfParser.h"
@@ -189,7 +188,7 @@ void TdfParser::LoadFile(std::string const& filename)
 	this->filename = filename;
 	CFileHandler file(filename);
 	if (!file.FileExists()) {
-		throw content_error(("file " + filename + " not found").c_str());
+		throw content_error("file " + filename + " not found");
 	}
 
 	const size_t fileBuf_size = file.FileSize();

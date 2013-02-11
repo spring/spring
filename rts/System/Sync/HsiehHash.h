@@ -21,8 +21,10 @@
  * This hash function is roughly 4x as fast as CRC32, but even that is too slow.
  * We use a very simplistic add/xor feedback scheme when not debugging.
  */
-static inline boost::uint32_t HsiehHash (const char * data, int len, boost::uint32_t hash)
+static inline boost::uint32_t HsiehHash (const void* data_, int len, boost::uint32_t hash)
 {
+	const char* data = static_cast<const char*>(data_);
+	
 	boost::uint32_t tmp;
 	int rem;
 

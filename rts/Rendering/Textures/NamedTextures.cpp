@@ -4,7 +4,6 @@
 #include <boost/unordered_map.hpp>
 #include <vector>
 
-#include "System/mmgr.h"
 
 #include "NamedTextures.h"
 
@@ -54,8 +53,6 @@ namespace CNamedTextures {
 
 	static bool Load(const std::string& texName, unsigned int texID)
 	{
-		ScopedTimer timer("Textures::NamedTextures");
-
 		//! strip off the qualifiers
 		std::string filename = texName;
 		bool border  = false;
@@ -230,7 +227,7 @@ namespace CNamedTextures {
 		// cached
 		TEXMAP::iterator it = texMap.find(texName);
 		if (it != texMap.end()) {
-			const GLuint& texID = it->second.id;
+			const GLuint texID = it->second.id;
 			glBindTexture(GL_TEXTURE_2D, texID);
 			return (texID != 0);
 		}

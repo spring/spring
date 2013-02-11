@@ -10,6 +10,7 @@
 #include "IPath.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
+#include "Sim/Objects/SolidObject.h"
 
 struct MoveDef;
 class CPathFinderDef;
@@ -20,10 +21,8 @@ public:
 	CPathFinder();
 	~CPathFinder();
 
-#if !defined(USE_MMGR)
 	void* operator new(size_t size);
 	void operator delete(void* p, size_t size);
-#endif
 
 	/**
 	 * Gives a detailed path from given starting location to target defined in
@@ -44,75 +43,37 @@ public:
 	 *   If this option is true, a path is returned only if it's completed all
 	 *   the way to the goal defined in pfDef. All SearchResult::OutOfRange are
 	 *   then turned into SearchResult::CantGetCloser.
-	 * @param maxSearchedNodes The maximum number of nodes/squares the search
-	 *   are allowed to analyze. This restriction could be used in cases where
-	 *   CPU-consumption are critical.
+	 * @param maxNodes The maximum number of nodes / squares the search is
+	 *   allowed to analyze. This restriction could be used in cases where
+	 *   CPU-consumption is critical.
 	 */
 	IPath::SearchResult GetPath(
 		const MoveDef& moveDef,
 		const float3& startPos,
 		const CPathFinderDef& pfDef,
+		const CSolidObject* owner,
 		IPath::Path& path,
+		unsigned int maxNodes,
 		bool testMobile,
 		bool exactPath,
-		unsigned int maxSearchedNodes,
 		bool needPath,
-		int ownerId,
 		bool synced
 	);
 
 
-
-	/**
-	 * @brief Enable/disable heat mapping.
-	 *
-	 * Heat mapping makes the pathfinder value unused paths more. Less path overlap should
-	 * make units behave more intelligently.
-	 */
-	void InitHeatMap();
-	void SetHeatMapState(bool enabled);
-	bool GetHeatMapState() { return heatMapping; }
-	void UpdateHeatMap();
-
-	void UpdateHeatValue(const int& x, const int& y, const int& value, const int& ownerId)
-	{
-		const int i = GetHeatMapIndex(x, y);
-		if (heatmap[i].value < value + heatMapOffset) {
-			heatmap[i].value = value + heatMapOffset;
-			heatmap[i].ownerId = ownerId;
-		}
-	}
-
-	const int GetHeatOwner(const int& x, const int& y)
-	{
-		const int i = GetHeatMapIndex(x, y);
-		return heatmap[i].ownerId;
-	}
-
-	const int GetHeatValue(const int& x, const int& y)
-	{
-		const int i = GetHeatMapIndex(x, y);
-		return std::max(0, heatmap[i].value - heatMapOffset);
-	}
-
-
 	// size of the memory-region we hold allocated (excluding sizeof(*this))
-	unsigned int GetMemFootPrint() const { return ((heatmap.size() * sizeof(HeatMapValue)) + squareStates.GetMemFootPrint()); }
+	// (PathManager stores HeatMap and FlowMap, so we do not need to add them)
+	unsigned int GetMemFootPrint() const { return (squareStates.GetMemFootPrint()); }
 
 	PathNodeStateBuffer& GetNodeStateBuffer() { return squareStates; }
 
 private:
-	// Heat mapping
-	int GetHeatMapIndex(int x, int y);
-
-	/**
-	 * Clear things up from last search.
-	 */
+	/// Clear things up from last search.
 	void ResetSearch();
 	/// Set up the starting point of the search.
-	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, int ownerId, bool synced);
+	IPath::SearchResult InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
 	/// Performs the actual search.
-	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, int ownerId, bool synced);
+	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner, bool synced);
 	/**
 	 * Test the availability and value of a square,
 	 * and possibly add it to the queue of open squares.
@@ -121,8 +82,8 @@ private:
 		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,
 		const PathNode* parentOpenSquare,
-		unsigned int enterDirection,
-		int ownerId,
+		const CSolidObject* owner,
+		unsigned int pathOptDir,
 		bool synced
 	);
 	/**
@@ -143,44 +104,31 @@ private:
 		int2 square
 	);
 
-	struct HeatMapValue {
-		HeatMapValue()
-			: value(0)
-			, ownerId(0)
-		{}
-		int value;
-		int ownerId;
-	};
 
-	std::vector<HeatMapValue> heatmap; ///< resolution is hmapx*hmapy
-	int heatMapOffset;                 ///< heatmap values are relative to this
-	bool heatMapping;
-
-	int2 dirVectors2D[16];             ///< Unit square-movement in given direction.
-	float3 dirVectors3D[16];
-	float moveCost[16];                ///< The cost of moving in given direction.
+	int2 directionVectors2D[PATH_DIRECTIONS << 1];
+	float3 directionVectors3D[PATH_DIRECTIONS << 1];
+	float directionCosts[PATH_DIRECTIONS << 1];
 
 	float3 start;
-	int startxSqr;
-	int startzSqr;
-	int startSquare;
 
-	int goalSquare;                    ///< Is sat during the search as the square closest to the goal.
-	float goalHeuristic;               ///< The heuristic value of goalSquare.
+	unsigned int startxSqr;
+	unsigned int startzSqr;
+	unsigned int mStartSquareIdx;
+	unsigned int mGoalSquareIdx;                     ///< set during each search as the square closest to the goal
+	float mGoalHeuristic;                            ///< heuristic value of goalSquareIdx
 
 	bool exactPath;
 	bool testMobile;
 	bool needPath;
 
-	unsigned int maxSquaresToBeSearched;
+	unsigned int maxOpenNodes;
 	unsigned int testedNodes;
-	float maxNodeCost;
 
 	PathNodeBuffer openSquareBuffer;
 	PathNodeStateBuffer squareStates;
 	PathPriorityQueue openSquares;
 
-	std::vector<int> dirtySquares;     ///< Squares tested by search.
+	std::vector<unsigned int> dirtySquares;         ///< Squares tested by search.
 };
 
 #endif // PATH_FINDER_H

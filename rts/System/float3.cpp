@@ -48,3 +48,32 @@ void float3::ClampInMap()
 	x = Clamp(x, 0.0f, maxxpos + 1);
 	z = Clamp(z, 0.0f, maxzpos + 1);
 }
+
+namespace std {
+	float3 min(float3 v1, float3 v2)
+	{
+		return float3(
+			std::min(v1.x, v2.x),
+			std::min(v1.y, v2.y),
+			std::min(v1.z, v2.z)
+		);
+	}
+
+	float3 max(float3 v1, float3 v2)
+	{
+		return float3(
+			std::max(v1.x, v2.x),
+			std::max(v1.y, v2.y),
+			std::max(v1.z, v2.z)
+		);
+	}
+
+	float3 fabs(float3 v)
+	{
+		return float3(
+			std::fabs(v.x),
+			std::fabs(v.y),
+			std::fabs(v.z)
+		);
+	}
+};

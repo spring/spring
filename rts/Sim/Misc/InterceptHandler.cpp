@@ -2,7 +2,6 @@
 
 #include <limits>
 
-#include "System/mmgr.h"
 
 #include "InterceptHandler.h"
 
@@ -67,7 +66,7 @@ void CInterceptHandler::Update(bool forced) {
 			//
 			// these checks all need to be evaluated periodically, not just
 			// when a projectile is created and handed to AddInterceptTarget
-			const float interceptDist = (w->weaponPos - p->pos).Length();
+			const float interceptDist = w->weaponPos.distance(p->pos);
 			const float impactDist = ground->LineGroundCol(p->pos, p->pos + p->dir * interceptDist);
 
 			const float3& pFlightPos = p->pos;
@@ -176,7 +175,7 @@ float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const floa
 
 
 void CInterceptHandler::DependentDied(CObject* o) {
-	std::map<int, CWeaponProjectile*>::iterator it = interceptables.find(((CWeaponProjectile*) o)->id);
+	std::map<int, CWeaponProjectile*>::iterator it = interceptables.find(static_cast<CWeaponProjectile*>(o)->id);
 
 	if (it != interceptables.end()) {
 		interceptables.erase(it->first);

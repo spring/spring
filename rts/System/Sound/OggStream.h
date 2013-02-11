@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef OGGSTREAM_H
-#define OGGSTREAM_H
+#ifndef OGG_STREAM_H
+#define OGG_STREAM_H
 
 #include <al.h>
 #include <ogg/ogg.h>
@@ -39,9 +39,10 @@ private:
 	void ReleaseBuffers();
 
 	/**
-	@brief Decode next part of the stream and queue it for playing
-	@return wheter it is the end of the stream (check for IsPlaying() wheter the complete stream was played)
-	*/
+	 * @brief Decode next part of the stream and queue it for playing
+	 * @return whether it is the end of the stream
+	 *   (check for IsPlaying() whether the complete stream was played)
+	 */
 	bool UpdateBuffers();
 
 	OggVorbis_File oggStream;
@@ -66,5 +67,4 @@ private:
 	std::string vendor;
 };
 
-
-#endif
+#endif // OGG_STREAM_H

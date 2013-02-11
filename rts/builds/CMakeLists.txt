@@ -24,7 +24,6 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 			gamedata
 			unitsync
 			${DEPS_AI_ALL}
-			ArchiveMover
 		)
 	# Create a custom meta build target
 	add_custom_target(${myBuildTarget}

@@ -311,7 +311,7 @@ namespace nv_dds
             void flip_blocks_dxtc5(DXTColBlock *line, unsigned int numBlocks);
             void flip_dxt5_alpha(DXT5AlphaBlock *block);
 
-            void write_texture(const CTexture &texture, FILE *fp);
+            bool write_texture(const CTexture &texture, FILE *fp);
 
             unsigned int m_format;
             unsigned int m_components;

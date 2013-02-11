@@ -11,7 +11,7 @@
 #include "System/EventHandler.h"
 #include "System/BaseNetProtocol.h"
 #include "System/creg/STL_List.h"
-#include "System/mmgr.h"
+#include "lib/gml/gmlmut.h"
 
 
 CInMapDrawModel* inMapDrawerModel = NULL;

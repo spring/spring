@@ -11,7 +11,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
-#include "System/mmgr.h"
 #include "System/Util.h"
 
 #define CLAMP(i) Clamp((i), 0, smfReadMap->maxHeightMapIdx)
@@ -54,10 +53,6 @@ CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 CLegacyMeshDrawer::~CLegacyMeshDrawer()
 {
-#ifdef USE_GML
-	configHandler->Set("MultiThreadDrawGround", multiThreadDrawGround ? 1 : 0);
-	configHandler->Set("MultiThreadDrawGroundShadow", multiThreadDrawGroundShadow ? 1 : 0);
-#endif
 }
 
 
@@ -971,9 +966,8 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 void CLegacyMeshDrawer::DrawShadowMesh()
 {
-	const int NUM_LODS = 4;
-
 	{ // profiler scope
+		const int NUM_LODS = 4;
 #ifdef USE_GML
 		// Profiler results, 4 threads: multiThreadDrawGroundShadow is rarely faster than single threaded rendering (therefore disabled by default)
 		const bool mt = GML_PROFILER(multiThreadDrawGroundShadow)

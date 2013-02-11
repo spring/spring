@@ -34,7 +34,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/mmgr.h"
 #include "System/myMath.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
@@ -76,10 +75,10 @@ void CGameHelper::DoExplosionDamage(
 	CUnit* unit,
 	CUnit* owner,
 	const float3& expPos,
-	float expRad,
-	float expSpeed,
-	float edgeEffectiveness,
-	bool ignoreOwner,
+	const float expRadius,
+	const float expSpeed,
+	const float expEdgeEffect,
+	const bool ignoreOwner,
 	const DamageArray& damages,
 	const int weaponDefID
 ) {
@@ -87,133 +86,100 @@ void CGameHelper::DoExplosionDamage(
 		return;
 	}
 
-	// dist is equal to the maximum of "distance from center
-	// of unit to center of explosion" and "unit radius + 0.1",
-	// where "center of unit" is determined by the relative
-	// position of its collision volume and "unit radius" by
-	// the volume's minimally-bounding sphere
-	//
-	const int damageFrame = unit->lastAttackedPieceFrame;
-	const LocalModelPiece* piece = unit->lastAttackedPiece;
-	const CollisionVolume* volume = NULL;
+	const LocalModelPiece* lap = unit->GetLastAttackedPiece(gs->frameNum);
+	const CollisionVolume* vol = CollisionVolume::GetVolume(unit, lap);
 
-	float3 basePos;
-	float3 diffPos;
+	const float3& lapPos = (lap != NULL && vol == lap->GetCollisionVolume())? lap->GetAbsolutePos(): ZeroVector;
+	const float3& volPos = vol->GetWorldSpacePos(unit, lapPos);
 
-	if (piece != NULL && unit->unitDef->usePieceCollisionVolumes && damageFrame == gs->frameNum) {
-		volume = piece->GetCollisionVolume();
-		basePos = piece->GetAbsolutePos() + volume->GetOffsets();
-		basePos = unit->pos + 
-			unit->rightdir * basePos.x +
-			unit->updir    * basePos.y +
-			unit->frontdir * basePos.z;
-	} else {
-		volume = unit->collisionVolume;
-		basePos = unit->midPos + volume->GetOffsets();
-	}
+	// linear damage falloff with distance
+	const float expDist = vol->GetPointSurfaceDistance(unit, lap, expPos);
+	const float expRim = expDist * expEdgeEffect;
 
-	diffPos = basePos - expPos;
-
-	const float volRad = volume->GetBoundingRadius();
-	const float expDist = std::max(diffPos.Length(), volRad + 0.1f);
-
-	// expDist2 is the distance from the boundary of the
-	// _volume's_ minimally-bounding sphere (!) to the
-	// explosion center, unless unit->isUnderWater and
-	// the explosion is above water: then center2center
-	// distance is used
-	//
-	// NOTE #1: this will be only an approximation when
-	// the unit's collision volume is not a sphere, but
-	// a better one than when using unit->radius
-	//
-	// NOTE #2: if an explosion occurs right underneath
-	// a unit's map footprint, it can cause damage even
-	// if the unit's collision volume is greatly offset
-	// (because CQuadField is again based exclusively on
-	// unit->radius, so the iteration will include units
-	// that should not be touched)
-	// Clamp expDist to radius to prevent division by zero
-	// (expDist2 can never be > radius). We still need the
-	// original expDist later to normalize diffPos.
-	// expDist2 _can_ exceed radius when explosion is eg.
-	// on shield surface: in that case don't do any damage
-	float expDist2 = expDist - volRad;
-	float expDist1 = std::min(expDist, expRad);
-
-	if (expDist2 > expRad) {
+	// return early if (distance > radius)
+	if (expDist >= expRadius)
 		return;
-	}
 
-	if (unit->isUnderWater && (expPos.y > -1.0f)) {
-		// should make it harder to damage subs with above-water weapons
-		expDist2 += volRad;
-		expDist2 = std::min(expDist2, expRad);
-	}
+	// expEdgeEffect should be in [0, 1], so expRadius >= expDist >= expDist*expEdgeEffect
+	assert(expRadius >= expRim);
 
-	const float mod1 = std::max(0.01f, (expRad - expDist1) / (expRad - (expDist1 * edgeEffectiveness)));
-	const float mod2 = std::max(0.01f, (expRad - expDist2) / (expRad - (expDist2 * edgeEffectiveness)));
+	// expMod will also be in [0, 1], no negatives
+	const float expMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
 
-	diffPos /= expDist;
-	diffPos.y += 0.12f;
+	// TODO: damage attenuation for underwater units?
+	if (expPos.y >= 0.0f && unit->pos.y <  0.0f) {}
+	if (expPos.y <  0.0f && unit->pos.y >= 0.0f) {}
 
-	// limit the impulse to prevent later FP overflow
+	// NOTE: if an explosion occurs right underneath a
+	// unit's map footprint, it might cause damage even
+	// if the unit's collision volume is greatly offset
+	// (because CQuadField coverage is based exclusively
+	// on unit->radius, so the DoDamage() iteration will
+	// include units that should not be touched)
+	//
+	// also limit the impulse to prevent later FP overflow
 	// (several weapons have _default_ damage values in the order of 1e4,
 	// which make the simulation highly unstable because they can impart
 	// speeds of several thousand elmos/frame to units and throw them far
 	// outside the map)
-	const DamageArray damageDone = damages * mod2;
-	const float rawImpulseStrength = damages.impulseFactor * mod1 * (damages.GetDefaultDamage() + damages.impulseBoost) * 3.2f;
-	const float modImpulseStrength = Clamp(rawImpulseStrength, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
-	const float3 addedImpulse = diffPos * modImpulseStrength;
+	// DamageArray::operator* scales damage multipliers,
+	// not the impulse factor --> need to scale manually
+	// by it for impulse
+	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
+	const float modImpulseScale = Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
 
-	if (expDist2 < (expSpeed * 4.0f)) { // damage directly
-		unit->DoDamage(damageDone, addedImpulse, owner, weaponDefID);
-	} else { // damage later
-		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponDefID);
-		waitingDamages[(gs->frameNum + int(expDist2 / expSpeed) - 3) & 127].push_front(wd);
+	const float3 impulseDir = (volPos - expPos).SafeNormalize();
+	const float3 expImpulse = impulseDir * modImpulseScale;
+
+	const DamageArray expDamages = damages * expMod;
+
+	if (expDist < (expSpeed * DIRECT_EXPLOSION_DAMAGE_SPEED_SCALE)) {
+		// damage directly
+		unit->DoDamage(expDamages, expImpulse, owner, weaponDefID);
+	} else {
+		// damage later
+		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, expDamages, expImpulse, weaponDefID);
+		waitingDamages[(gs->frameNum + int(expDist / expSpeed) - 3) & 127].push_front(wd);
 	}
 }
 
 void CGameHelper::DoExplosionDamage(
 	CFeature* feature,
 	const float3& expPos,
-	float expRad,
+	const float expRadius,
+	const float expEdgeEffect,
 	const DamageArray& damages,
 	const int weaponDefID
 ) {
-	const CollisionVolume* cv = feature->collisionVolume;
+	const CollisionVolume* vol = CollisionVolume::GetVolume(feature, NULL);
+	const float3& volPos = vol->GetWorldSpacePos(feature, ZeroVector);
 
-	if (cv) {
-		const float3 dif = (feature->midPos + cv->GetOffsets()) - expPos;
+	const float expDist = vol->GetPointSurfaceDistance(feature, NULL, expPos);
+	const float expRim = expDist * expEdgeEffect;
 
-		float expDist = std::max(dif.Length(), 0.1f);
-		float expMod = (expRad - expDist) / expRad;
-		float dmgScale = (damages.GetDefaultDamage() + damages.impulseBoost);
+	if (expDist >= expRadius)
+		return;
 
-		// always do some damage with explosive stuff
-		// (DDM wreckage etc. is too big to normally
-		// be damaged otherwise, even by BB shells)
-		// NOTE: this will also be only approximate
-		// for non-spherical volumes
-		if ((expRad > SQUARE_SIZE) && (expDist < (cv->GetBoundingRadius() * 1.1f)) && (expMod < 0.1f)) {
-			expMod = 0.1f;
-		}
+	assert(expRadius >= expRim);
 
-		if (expMod > 0.0f) {
-			const DamageArray modDamages = damages * expMod;
-			const float3& modImpulse = dif * (damages.impulseFactor * expMod / expDist * dmgScale);
+	const float expMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float dmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
 
-			feature->DoDamage(modDamages, modImpulse, NULL, weaponDefID);
-		}
-	}
+	const float rawImpulseScale = damages.impulseFactor * expMod * dmgMult;
+	const float modImpulseScale = Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
+
+	const float3 impulseDir = (volPos - expPos).SafeNormalize();
+	const float3 expImpulse = impulseDir * modImpulseScale;
+
+	feature->DoDamage(damages * expMod, expImpulse, NULL, weaponDefID);
 }
 
 
 
 void CGameHelper::Explosion(const ExplosionParams& params) {
-	const float3& pos = params.pos;
 	const float3& dir = params.dir;
+	const float3 expPos = params.pos;
 	const DamageArray& damages = params.damages;
 
 	// if weaponDef is NULL, this is a piece-explosion
@@ -221,7 +187,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	const WeaponDef* weaponDef = params.weaponDef;
 	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -CSolidObject::DAMAGE_EXPLOSION_DEBRIS;
 
-	const float3 expPos = pos;
 
 	CUnit* owner = params.owner;
 	CUnit* hitUnit = params.hitUnit;
@@ -229,7 +194,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 	const float craterAOE = std::max(1.0f, params.craterAreaOfEffect);
 	const float damageAOE = std::max(1.0f, params.damageAreaOfEffect);
-	const float edgeEffectiveness = params.edgeEffectiveness;
+	const float expEdgeEffect = params.edgeEffectiveness;
 	const float expSpeed = params.explosionSpeed;
 	const float gfxMod = params.gfxMod;
 	const float realHeight = ground->GetHeightReal(expPos.x, expPos.z);
@@ -248,9 +213,9 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 	if (impactOnly) {
 		if (hitUnit) {
-			DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, edgeEffectiveness, ignoreOwner, damages, weaponDefID);
+			DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID);
 		} else if (hitFeature) {
-			DoExplosionDamage(hitFeature, expPos, damageAOE, damages, weaponDefID);
+			DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID);
 		}
 	} else {
 		{
@@ -265,14 +230,14 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 					hitUnitDamaged = true;
 				}
 
-				DoExplosionDamage(unit, owner, expPos, damageAOE, expSpeed, edgeEffectiveness, ignoreOwner, damages, weaponDefID);
+				DoExplosionDamage(unit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID);
 			}
 
 			// HACK: for a unit with an offset coldet volume, the explosion
 			// (from an impacting projectile) position might not correspond
 			// to its quadfield position so we need to damage it separately
 			if (hitUnit != NULL && !hitUnitDamaged) {
-				DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, edgeEffectiveness, ignoreOwner, damages, weaponDefID);
+				DoExplosionDamage(hitUnit, owner, expPos, damageAOE, expSpeed, expEdgeEffect, ignoreOwner, damages, weaponDefID);
 			}
 		}
 
@@ -288,11 +253,11 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 					hitFeatureDamaged = true;
 				}
 
-				DoExplosionDamage(feature, expPos, damageAOE, damages, weaponDefID);
+				DoExplosionDamage(feature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID);
 			}
 
 			if (hitFeature != NULL && !hitFeatureDamaged) {
-				DoExplosionDamage(hitFeature, expPos, damageAOE, damages, weaponDefID);
+				DoExplosionDamage(hitFeature, expPos, damageAOE, expEdgeEffect, damages, weaponDefID);
 			}
 		}
 
@@ -365,7 +330,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
-	GML_RECMUTEX_LOCK(qnum);
+	GML_RECMUTEX_LOCK(qnum); // QueryUnits
 
 	const vector<int> &quads = qf->GetQuads(query.pos, query.radius);
 
@@ -393,246 +358,252 @@ static inline void QueryUnits(TFilter filter, TQuery& query)
 
 
 namespace {
-namespace Filter {
+	namespace Filter {
 
-/**
- * Base class for Filter::Friendly and Filter::Enemy.
- */
-struct Base
-{
-	const int searchAllyteam;
-	Base(int at) : searchAllyteam(at) {}
-};
+		/**
+		 * Base class for Filter::Friendly and Filter::Enemy.
+		 */
+		struct Base
+		{
+			const int searchAllyteam;
+			Base(int at) : searchAllyteam(at) {}
+		};
 
-/**
- * Look for friendly units only.
- * All units are included by default.
- */
-struct Friendly : public Base
-{
-	Friendly(int at) : Base(at) {}
-	bool Team(int t) { return teamHandler->Ally(searchAllyteam, t); }
-	bool Unit(const CUnit*) { return true; }
-};
+		/**
+		 * Look for friendly units only.
+		 * All units are included by default.
+		 */
+		struct Friendly : public Base
+		{
+		public:
+			Friendly(const CUnit* exclUnit, int allyTeam) : Base(allyTeam), excludeUnit(exclUnit) {}
+			bool Team(int allyTeam) { return teamHandler->Ally(searchAllyteam, allyTeam); }
+			bool Unit(const CUnit* unit) { return (unit != excludeUnit); }
+		protected:
+			const CUnit* excludeUnit;
+		};
 
-/**
- * Look for enemy units only.
- * All units are included by default.
- */
-struct Enemy : public Base
-{
-	Enemy(int at) : Base(at) {}
-	bool Team(int t) { return !teamHandler->Ally(searchAllyteam, t); }
-	bool Unit(const CUnit*) { return true; }
-};
+		/**
+		 * Look for enemy units only.
+		 * All units are included by default.
+		 */
+		struct Enemy : public Base
+		{
+		public:
+			Enemy(const CUnit* exclUnit, int allyTeam) : Base(allyTeam), excludeUnit(exclUnit) {}
+			bool Team(int allyTeam) { return !teamHandler->Ally(searchAllyteam, allyTeam); }
+			bool Unit(const CUnit* unit) { return (unit != excludeUnit); }
+		protected:
+			const CUnit* excludeUnit;
+		};
 
-/**
- * Look for enemy units which are in LOS/Radar only.
- */
-struct Enemy_InLos : public Enemy
-{
-	Enemy_InLos(int at) : Enemy(at) {}
-	bool Unit(const CUnit* u) {
-		return (u->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR));
-	}
-};
+		/**
+		 * Look for enemy units which are in LOS/Radar only.
+		 */
+		struct Enemy_InLos : public Enemy
+		{
+			Enemy_InLos(const CUnit* exclUnit, int allyTeam) : Enemy(exclUnit, allyTeam) {}
+			bool Unit(const CUnit* u) {
+				return (u != excludeUnit && u->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR));
+			}
+		};
 
-/**
- * Look for enemy aircraft which are in LOS/Radar only.
- */
-struct EnemyAircraft : public Enemy_InLos
-{
-	EnemyAircraft(int at) : Enemy_InLos(at) {}
-	bool Unit(const CUnit* u) {
-		return u->unitDef->canfly && !u->crashing && Enemy_InLos::Unit(u);
-	}
-};
+		/**
+		 * Look for enemy aircraft which are in LOS/Radar only.
+		 */
+		struct EnemyAircraft : public Enemy_InLos
+		{
+			EnemyAircraft(const CUnit* exclUnit, int allyTeam) : Enemy_InLos(exclUnit, allyTeam) {}
+			bool Unit(const CUnit* u) {
+				return (u->unitDef->canfly && !u->IsCrashing() && Enemy_InLos::Unit(u));
+			}
+		};
 
-/**
- * Look for units of any team. Enemy units must be in LOS/Radar.
- *
- * NOT SYNCED
- */
-struct Friendly_All_Plus_Enemy_InLos_NOT_SYNCED
-{
-	bool Team(int) const { return true; }
-	bool Unit(const CUnit* u) const {
-		return (u->allyteam == gu->myAllyTeam) ||
-		       (u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) ||
-		       gu->spectatingFullView;
-	}
-};
+		/**
+		 * Look for units of any team. Enemy units must be in LOS/Radar.
+		 *
+		 * NOT SYNCED
+		 */
+		struct Friendly_All_Plus_Enemy_InLos_NOT_SYNCED
+		{
+			bool Team(int) const { return true; }
+			bool Unit(const CUnit* u) const {
+				return (u->allyteam == gu->myAllyTeam) ||
+					   (u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) ||
+					   gu->spectatingFullView;
+			}
+		};
 
-/**
- * Delegates filtering to CMobileCAI::IsValidTarget.
- *
- * This is necessary in CMobileCAI and CAirCAI so they can select the closest
- * enemy unit which they consider a valid target.
- *
- * Without the valid target condition, units don't attack anything if an
- * the nearest enemy is an invalid target. (e.g. noChaseCategory)
- */
-struct Enemy_InLos_ValidTarget : public Enemy_InLos
-{
-	const CMobileCAI* const cai;
-	Enemy_InLos_ValidTarget(int at, const CMobileCAI* cai) :
-		Enemy_InLos(at), cai(cai) {}
-	bool Unit(const CUnit* u) {
-		return Enemy_InLos::Unit(u) && cai->IsValidTarget(u);
-	}
-};
+		/**
+		 * Delegates filtering to CMobileCAI::IsValidTarget.
+		 *
+		 * This is necessary in CMobileCAI and CAirCAI so they can select the closest
+		 * enemy unit which they consider a valid target.
+		 *
+		 * Without the valid target condition, units don't attack anything if an
+		 * the nearest enemy is an invalid target. (e.g. noChaseCategory)
+		 */
+		struct Enemy_InLos_ValidTarget : public Enemy_InLos
+		{
+			const CMobileCAI* const cai;
 
-}; // end of namespace Filter
+			Enemy_InLos_ValidTarget(int at, const CMobileCAI* cai) :
+				Enemy_InLos(NULL, at), cai(cai) {}
+
+			bool Unit(const CUnit* u) {
+				return Enemy_InLos::Unit(u) && cai->IsValidTarget(u);
+			}
+		};
+
+	}; // end of namespace Filter
 
 
-namespace Query {
+	namespace Query {
 
-/**
- * Base class for Query objects, containing the basic methods needed by
- * QueryUnits which defined the search area.
- */
-struct Base
-{
-	const float3& pos;
-	const float radius;
-	const float sqRadius;
-	Base(const float3& pos, float searchRadius) :
-		pos(pos), radius(searchRadius), sqRadius(searchRadius * searchRadius) {}
-};
+		/**
+		 * Base class for Query objects, containing the basic methods needed by
+		 * QueryUnits which defined the search area.
+		 */
+		struct Base
+		{
+			const float3& pos;
+			const float radius;
+			const float sqRadius;
+			Base(const float3& pos, float searchRadius) :
+				pos(pos), radius(searchRadius), sqRadius(searchRadius * searchRadius) {}
+		};
 
-/**
- * Return the closest unit.
- */
-struct ClosestUnit : public Base
-{
-protected:
-	float closeSqDist;
-	CUnit* closeUnit;
+		/**
+		 * Return the closest unit.
+		 */
+		struct ClosestUnit : public Base
+		{
+		protected:
+			float closeSqDist;
+			CUnit* closeUnit;
 
-public:
-	ClosestUnit(const float3& pos, float searchRadius) :
-		Base(pos, searchRadius), closeSqDist(sqRadius), closeUnit(NULL) {}
+		public:
+			ClosestUnit(const float3& pos, float searchRadius) :
+				Base(pos, searchRadius), closeSqDist(sqRadius), closeUnit(NULL) {}
 
-	void AddUnit(CUnit* u) {
-		const float sqDist = (pos - u->midPos).SqLength2D();
-		if (sqDist <= closeSqDist) {
-			closeSqDist = sqDist;
-			closeUnit = u;
-		}
-	}
+			void AddUnit(CUnit* u) {
+				const float sqDist = (pos - u->midPos).SqLength2D();
+				if (sqDist <= closeSqDist) {
+					closeSqDist = sqDist;
+					closeUnit = u;
+				}
+			}
 
-	CUnit* GetClosestUnit() const { return closeUnit; }
-};
+			CUnit* GetClosestUnit() const { return closeUnit; }
+		};
 
-/**
- * Return the closest unit, using CGameHelper::GetUnitErrorPos
- * instead of the unit's actual position.
- *
- * NOT SYNCED
- */
-struct ClosestUnit_ErrorPos_NOT_SYNCED : public ClosestUnit
-{
-	ClosestUnit_ErrorPos_NOT_SYNCED(const float3& pos, float searchRadius) :
-		ClosestUnit(pos, searchRadius) {}
+		/**
+		 * Return the closest unit, using CGameHelper::GetUnitErrorPos
+		 * instead of the unit's actual position.
+		 *
+		 * NOT SYNCED
+		 */
+		struct ClosestUnit_ErrorPos_NOT_SYNCED : public ClosestUnit
+		{
+			ClosestUnit_ErrorPos_NOT_SYNCED(const float3& pos, float searchRadius) :
+				ClosestUnit(pos, searchRadius) {}
 
-	void AddUnit(CUnit* u) {
-		float3 unitPos;
-		if (gu->spectatingFullView) {
-			unitPos = u->midPos;
-		} else {
-			unitPos = helper->GetUnitErrorPos(u, gu->myAllyTeam);
-		}
-		const float sqDist = (pos - unitPos).SqLength2D();
-		if (sqDist <= closeSqDist) {
-			closeSqDist = sqDist;
-			closeUnit = u;
-		}
-	}
-};
+			void AddUnit(CUnit* u) {
+				float3 unitPos;
+				if (gu->spectatingFullView) {
+					unitPos = u->midPos;
+				} else {
+					unitPos = helper->GetUnitErrorPos(u, gu->myAllyTeam);
+				}
+				const float sqDist = (pos - unitPos).SqLength2D();
+				if (sqDist <= closeSqDist) {
+					closeSqDist = sqDist;
+					closeUnit = u;
+				}
+			}
+		};
 
-/**
- * Returns the closest unit (3D) which may have LOS on the search position.
- * LOS is spherical in the context of this query. Whether the unit actually has
- * LOS depends on nearby obstacles.
- *
- * Search area just needs to touch the unit's radius: this query includes the
- * target unit's radius.
- *
- * If canBeBlind is true then the LOS test is skipped.
- */
-struct ClosestUnit_InLos : public Base
-{
-protected:
-	float closeDist;
-	CUnit* closeUnit;
-	const bool canBeBlind;
+		/**
+		 * Returns the closest unit (3D) which may have LOS on the search position.
+		 * LOS is spherical in the context of this query. Whether the unit actually has
+		 * LOS depends on nearby obstacles.
+		 *
+		 * Search area just needs to touch the unit's radius: this query includes the
+		 * target unit's radius.
+		 *
+		 * If canBeBlind is true then the LOS test is skipped.
+		 */
+		struct ClosestUnit_InLos : public Base
+		{
+		protected:
+			float closeDist;
+			CUnit* closeUnit;
+			const bool canBeBlind;
 
-public:
-	ClosestUnit_InLos(const float3& pos, float searchRadius, bool canBeBlind) :
-		Base(pos, searchRadius + uh->maxUnitRadius),
-		closeDist(searchRadius), closeUnit(NULL), canBeBlind(canBeBlind) {}
+		public:
+			ClosestUnit_InLos(const float3& pos, float searchRadius, bool canBeBlind) :
+				Base(pos, searchRadius + uh->MaxUnitRadius()),
+				closeDist(searchRadius), closeUnit(NULL), canBeBlind(canBeBlind) {}
 
-	void AddUnit(CUnit* u) {
-		// FIXME: use volumeBoundingRadius?
-		// (more for consistency than need)
-		const float dist =
-			(pos - u->midPos).Length() -
-			u->radius;
+			void AddUnit(CUnit* u) {
+				// FIXME: use volumeBoundingRadius?
+				// (more for consistency than need)
+				const float dist = pos.distance(u->midPos) - u->radius;
 
-		if (dist <= closeDist &&
-			(canBeBlind || u->losRadius * loshandler->losDiv > dist)) {
-			closeDist = dist;
-			closeUnit = u;
-		}
-	}
+				if (dist <= closeDist &&
+					(canBeBlind || u->losRadius * loshandler->losDiv > dist)) {
+					closeDist = dist;
+					closeUnit = u;
+				}
+			}
 
-	CUnit* GetClosestUnit() const { return closeUnit; }
-};
+			CUnit* GetClosestUnit() const { return closeUnit; }
+		};
 
-/**
- * Returns the closest unit (2D) which may have LOS on the search position.
- * Whether it actually has LOS depends on nearby obstacles.
- *
- * If canBeBlind is true then the LOS test is skipped.
- */
-struct ClosestUnit_InLos_Cylinder : public ClosestUnit
-{
-	const bool canBeBlind;
+		/**
+		 * Returns the closest unit (2D) which may have LOS on the search position.
+		 * Whether it actually has LOS depends on nearby obstacles.
+		 *
+		 * If canBeBlind is true then the LOS test is skipped.
+		 */
+		struct ClosestUnit_InLos_Cylinder : public ClosestUnit
+		{
+			const bool canBeBlind;
 
-	ClosestUnit_InLos_Cylinder(const float3& pos, float searchRadius, bool canBeBlind) :
-		ClosestUnit(pos, searchRadius), canBeBlind(canBeBlind) {}
+			ClosestUnit_InLos_Cylinder(const float3& pos, float searchRadius, bool canBeBlind) :
+				ClosestUnit(pos, searchRadius), canBeBlind(canBeBlind) {}
 
-	void AddUnit(CUnit* u) {
-		const float sqDist = (pos - u->midPos).SqLength2D();
+			void AddUnit(CUnit* u) {
+				const float sqDist = (pos - u->midPos).SqLength2D();
 
-		if (sqDist <= closeSqDist &&
-			(canBeBlind || Square(u->losRadius * loshandler->losDiv) > sqDist)) {
-			closeSqDist = sqDist;
-			closeUnit = u;
-		}
-	}
-};
+				if (sqDist <= closeSqDist &&
+					(canBeBlind || Square(u->losRadius * loshandler->losDiv) > sqDist)) {
+					closeSqDist = sqDist;
+					closeUnit = u;
+				}
+			}
+		};
 
-/**
- * Return the unitIDs of all units exactly within the search area.
- */
-struct AllUnitsById : public Base
-{
-protected:
-	vector<int>& found;
+		/**
+		 * Return the unitIDs of all units exactly within the search area.
+		 */
+		struct AllUnitsById : public Base
+		{
+		protected:
+			vector<int>& found;
 
-public:
-	AllUnitsById(const float3& pos, float searchRadius, vector<int>& found) :
-		Base(pos, searchRadius), found(found) {}
+		public:
+			AllUnitsById(const float3& pos, float searchRadius, vector<int>& found) :
+				Base(pos, searchRadius), found(found) {}
 
-	void AddUnit(CUnit* u) {
-		if ((pos - u->midPos).SqLength2D() <= sqRadius) {
-			found.push_back(u->id);
-		}
-	}
-};
+			void AddUnit(CUnit* u) {
+				if ((pos - u->midPos).SqLength2D() <= sqRadius) {
+					found.push_back(u->id);
+				}
+			}
+		};
 
-}; // end of namespace Query
+	}; // end of namespace Query
 }; // end of namespace
 
 // Use this instead of unit->tempNum here, because it requires a mutex lock that will deadlock if luaRules is invoked simultaneously.
@@ -648,9 +619,11 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 	const float heightMod = weapon->heightMod;
 	const float aHeight   = weapon->weaponPos.y;
 
+	const WeaponDef* weaponDef = weapon->weaponDef;
+
 	// how much damage the weapon deals over 1 second
-	const float secDamage = weapon->weaponDef->damages.GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
-	const bool paralyzer  = !!weapon->weaponDef->damages.paralyzeDamageTime;
+	const float secDamage = weaponDef->damages.GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
+	const bool paralyzer  = (weaponDef->damages.paralyzeDamageTime != 0);
 
 	const std::vector<int>& quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->initMinHeight)) * heightMod);
 
@@ -687,7 +660,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 				tempTargetUnits[targetUnit->id] = tempNum;
 
-				if (targetUnit->isUnderWater && !weapon->weaponDef->waterweapon) {
+				if (targetUnit->isUnderWater && !weaponDef->waterweapon) {
 					continue;
 				}
 				if (targetUnit->isDead) {
@@ -713,8 +686,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				}
 
 				const float dist2D = (pos - targPos).Length2D();
-				const float rangeMul = (dist2D * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
-				const float damageMul = weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
+				const float rangeMul = (dist2D * weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
+				const float damageMul = weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
 
 				targetPriority *= rangeMul;
 
@@ -742,14 +715,13 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 					if (targetUnit->category & weapon->badTargetCategory) {
 						targetPriority *= 100.0f;
 					}
-					if (targetUnit->crashing) {
+					if (targetUnit->IsCrashing()) {
 						targetPriority *= 1000.0f;
 					}
 				}
 
 				if (luaRules != NULL) {
-					const bool targetAllowed = luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weapon->weaponDef->id, &targetPriority);
-					if (!targetAllowed) {
+					if (!luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
 						continue;
 					}
 				}
@@ -771,17 +743,17 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 #endif
 }
 
-CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float searchRadius)
+CUnit* CGameHelper::GetClosestUnit(const float3& pos, float searchRadius)
 {
 	Query::ClosestUnit_ErrorPos_NOT_SYNCED q(pos, searchRadius);
 	QueryUnits(Filter::Friendly_All_Plus_Enemy_InLos_NOT_SYNCED(), q);
 	return q.GetClosestUnit();
 }
 
-CUnit* CGameHelper::GetClosestEnemyUnit(const float3& pos, float searchRadius, int searchAllyteam)
+CUnit* CGameHelper::GetClosestEnemyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam)
 {
 	Query::ClosestUnit q(pos, searchRadius);
-	QueryUnits(Filter::Enemy_InLos(searchAllyteam), q);
+	QueryUnits(Filter::Enemy_InLos(excludeUnit, searchAllyteam), q);
 	return q.GetClosestUnit();
 }
 
@@ -792,48 +764,51 @@ CUnit* CGameHelper::GetClosestValidTarget(const float3& pos, float searchRadius,
 	return q.GetClosestUnit();
 }
 
-CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float searchRadius,
-                                                 int searchAllyteam, bool sphere, bool canBeBlind)
-{
-	if (sphere) { // includes target radius
-
+CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(
+	const CUnit* excludeUnit,
+	const float3& pos,
+	float searchRadius,
+	int searchAllyteam,
+	bool sphere,
+	bool canBeBlind
+) {
+	if (sphere) {
+		// includes target radius
 		Query::ClosestUnit_InLos q(pos, searchRadius, canBeBlind);
-		QueryUnits(Filter::Enemy(searchAllyteam), q);
+		QueryUnits(Filter::Enemy(excludeUnit, searchAllyteam), q);
 		return q.GetClosestUnit();
-
-	} else { // cylinder  (doesn't include target radius)
-
+	} else {
+		// cylinder (doesn't include target radius)
 		Query::ClosestUnit_InLos_Cylinder q(pos, searchRadius, canBeBlind);
-		QueryUnits(Filter::Enemy(searchAllyteam), q);
+		QueryUnits(Filter::Enemy(excludeUnit, searchAllyteam), q);
 		return q.GetClosestUnit();
-
 	}
 }
 
-CUnit* CGameHelper::GetClosestFriendlyUnit(const float3 &pos, float searchRadius, int searchAllyteam)
+CUnit* CGameHelper::GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam)
 {
 	Query::ClosestUnit q(pos, searchRadius);
-	QueryUnits(Filter::Friendly(searchAllyteam), q);
+	QueryUnits(Filter::Friendly(excludeUnit, searchAllyteam), q);
 	return q.GetClosestUnit();
 }
 
-CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float searchRadius, int searchAllyteam)
+CUnit* CGameHelper::GetClosestEnemyAircraft(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam)
 {
 	Query::ClosestUnit q(pos, searchRadius);
-	QueryUnits(Filter::EnemyAircraft(searchAllyteam), q);
+	QueryUnits(Filter::EnemyAircraft(excludeUnit, searchAllyteam), q);
 	return q.GetClosestUnit();
 }
 
-void CGameHelper::GetEnemyUnits(const float3 &pos, float searchRadius, int searchAllyteam, vector<int> &found)
+void CGameHelper::GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, vector<int> &found)
 {
 	Query::AllUnitsById q(pos, searchRadius, found);
-	QueryUnits(Filter::Enemy_InLos(searchAllyteam), q);
+	QueryUnits(Filter::Enemy_InLos(NULL, searchAllyteam), q);
 }
 
-void CGameHelper::GetEnemyUnitsNoLosTest(const float3 &pos, float searchRadius, int searchAllyteam, vector<int> &found)
+void CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, vector<int> &found)
 {
 	Query::AllUnitsById q(pos, searchRadius, found);
-	QueryUnits(Filter::Enemy(searchAllyteam), q);
+	QueryUnits(Filter::Enemy(NULL, searchAllyteam), q);
 }
 
 
@@ -849,7 +824,7 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming
 		// ^ it's one of our own, or it's in LOS, so don't add an error ^
 		return pos;
 	}
-	if (gameSetup->ghostedBuildings && (unit->losStatus[allyteam] & LOS_PREVLOS) && !unit->moveDef) {
+	if (gameSetup->ghostedBuildings && (unit->losStatus[allyteam] & LOS_PREVLOS) && unit->unitDef->IsBuildingUnit()) {
 		// ^ this is a ghosted building, so don't add an error ^
 		return pos;
 	}
@@ -900,12 +875,7 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
 	const UnitDef* ud = buildInfo.def;
-	const float bh = uh->GetBuildHeight(pos, ud, synced);
-
-	pos.y = bh;
-
-	if (ud->floatOnWater && bh < 0.0f)
-		pos.y = -ud->waterline;
+	pos.y = uh->GetBuildHeight(pos, ud, synced);
 
 	return pos;
 }

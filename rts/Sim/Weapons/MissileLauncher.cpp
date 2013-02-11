@@ -8,7 +8,6 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL));
 
@@ -21,11 +20,11 @@ CMissileLauncher::CMissileLauncher(CUnit* owner)
 {
 }
 
-CMissileLauncher::~CMissileLauncher(void)
+CMissileLauncher::~CMissileLauncher()
 {
 }
 
-void CMissileLauncher::Update(void)
+void CMissileLauncher::Update()
 {
 	if (targetType != Target_None) {
 		weaponPos = owner->pos + owner->frontdir * relWeaponPos.z + owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
@@ -72,78 +71,47 @@ void CMissileLauncher::FireImpl()
 	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType))
 		startSpeed += owner->speed;
 
-	new CMissileProjectile(weaponMuzzlePos, startSpeed, owner, damageAreaOfEffect,
-			projectileSpeed,
-			weaponDef->flighttime == 0
-                ? (int) (range / projectileSpeed + 25 * weaponDef->selfExplode)
-                : weaponDef->flighttime,
-			targetUnit, weaponDef, targetPos);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.end = targetPos;
+	params.speed = startSpeed;
+	params.ttl = weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
+
+	new CMissileProjectile(params, damageAreaOfEffect, projectileSpeed);
 }
 
-bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
+bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
+	// do a different test depending on if the missile has high
+	// trajectory (parabolic vs. linear ground intersection)
+	if (weaponDef->trajectoryHeight <= 0.0f)
+		return CWeapon::HaveFreeLineOfFire(pos, userTarget, unit);
+
+	float3 dir(pos - weaponMuzzlePos);
+
+	float3 flatDir(dir.x, 0, dir.z);
+	dir.SafeNormalize();
+	float flatLength = flatDir.Length();
+
+	if (flatLength == 0)
+		return true;
+
+	flatDir /= flatLength;
+
+	const float linear = dir.y + weaponDef->trajectoryHeight;
+	const float quadratic = -weaponDef->trajectoryHeight / flatLength;
+	const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
+		ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 30, linear, quadratic):
+		-1.0f;
+	const float modFlatLength = flatLength - 30.0f;
+
+	if (gc > 0.0f)
 		return false;
 
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
+	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+		linear, quadratic, 0, owner->allyteam, avoidFlags, owner)) {
 		return false;
-
-	float3 dir = pos - weaponMuzzlePos;
-
-	if (weaponDef->trajectoryHeight > 0.0f) {
-		// do a different test depending on if the missile has high
-		// trajectory (parabolic vs. linear ground intersection; in
-		// the latter case, HaveFreeLineOfFire() checks the NOGROUND
-		// collision flag for us)
-		float3 flatDir(dir.x, 0, dir.z);
-		dir.SafeNormalize();
-		float flatLength = flatDir.Length();
-
-		if (flatLength == 0)
-			return true;
-
-		flatDir /= flatLength;
-
-		const float linear = dir.y + weaponDef->trajectoryHeight;
-		const float quadratic = -weaponDef->trajectoryHeight / flatLength;
-		const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
-			ground->TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength - 30, linear, quadratic):
-			-1.0f;
-		const float modFlatLength = flatLength - 30.0f;
-
-		if (gc > 0.0f)
-			return false;
-
-		if (avoidFriendly && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength, linear, quadratic, 0, 8, owner->allyteam, true, false, false, owner)) {
-			return false;
-		}
-		if (avoidNeutral && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength, linear, quadratic, 0, 8, owner->allyteam, false, true, false, owner)) {
-			return false;
-		}
-		if (avoidFeature && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength, linear, quadratic, 0, 8, owner->allyteam, false, false, true, owner)) {
-			return false;
-		}
-	} else {
-		const float length = dir.Length();
-		if (length == 0)
-			return true;
-
-		dir /= length;
-
-		if (!onlyForward) {
-			if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length, unit)) {
-				return false;
-			}
-		}
-		if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, true, false, false, owner)) {
-			return false;
-		}
-		if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, false, true, false, owner)) {
-			return false;
-		}
-		if (avoidFeature && TraceRay::TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, false, false, true, owner)) {
-			return false;
-		}
 	}
+
 	return true;
 }

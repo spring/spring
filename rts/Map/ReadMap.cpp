@@ -2,7 +2,6 @@
 
 
 #include <cstdlib>
-#include "System/mmgr.h"
 
 #include "ReadMap.h"
 #include "MapDamage.h"
@@ -114,8 +113,8 @@ CReadMap::CReadMap()
 	, currMinHeight(0.0f)
 	, currMaxHeight(0.0f)
 	, mapChecksum(0)
-	, heightMapSynced(NULL)
-	, heightMapUnsynced(NULL)
+	, heightMapSyncedPtr(NULL)
+	, heightMapUnsyncedPtr(NULL)
 {
 }
 
@@ -186,8 +185,8 @@ void CReadMap::Initialize()
 	slopeMap.resize(gs->hmapx * gs->hmapy);
 	visVertexNormals.resize(gs->mapxp1 * gs->mapyp1);
 
-	assert(heightMapSynced != NULL);
-	assert(heightMapUnsynced != NULL);
+	assert(heightMapSyncedPtr != NULL);
+	assert(heightMapUnsyncedPtr != NULL);
 
 	CalcHeightmapChecksum();
 	UpdateHeightMapSynced(SRectangle(0, 0, gs->mapx, gs->mapy), true);
@@ -237,9 +236,6 @@ void CReadMap::UpdateDraw()
 			unsyncedHeightMapUpdates.swap(unsyncedHeightMapUpdatesTemp); // swap to avoid Optimize() inside a mutex
 	}
 	{
-
-		SCOPED_TIMER("ReadMap::UpdateHeightMapOptimize");
-
 		static bool first = true;
 		if (!first) {
 			if (!unsyncedHeightMapUpdatesTemp.empty()) {
@@ -266,8 +262,6 @@ void CReadMap::UpdateDraw()
 	}
 	// unsyncedHeightMapUpdatesTemp is now guaranteed empty
 
-	SCOPED_TIMER("ReadMap::UpdateHeightMapUnsynced");
-
 	for (ushmuIt = ushmu.begin(); ushmuIt != ushmu.end(); ++ushmuIt) {
 		UpdateHeightMapUnsynced(*ushmuIt);
 	}
@@ -284,8 +278,6 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 		return;
 	}
 
-	SCOPED_TIMER("ReadMap::UpdateHeightMapSynced");
-
 	rect.x1 = std::max(         0, rect.x1 - 1);
 	rect.z1 = std::max(         0, rect.z1 - 1);
 	rect.x2 = std::min(gs->mapxm1, rect.x2 + 1);
@@ -300,7 +292,7 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 	// push the unsynced update
 	if (initialize) {
 		// push 1st update through without LOS check
-		GML_STDMUTEX_LOCK(map);
+		GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
 		unsyncedHeightMapUpdates.push_back(rect);
 	} else {
 		InitHeightMapDigestsVectors();
@@ -319,7 +311,7 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 		HeightMapUpdateLOSCheck(rect);
 	}
 #else
-	GML_STDMUTEX_LOCK(map);
+	GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
 	unsyncedHeightMapUpdates.push_back(rect);
 #endif
 }
@@ -381,6 +373,7 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect)
 	const int x2 = std::min(gs->mapxm1, rect.x2 + 1);
 
 	int y;
+	Threading::OMPCheck();
 	#pragma omp parallel for private(y)
 	for (y = z1; y <= z2; y++) {
 		float3 fnTL;
@@ -480,7 +473,7 @@ void CReadMap::UpdateSlopemap(const SRectangle& rect)
 /// split the update into multiple invididual (los-square) chunks:
 void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& rect)
 {
-	GML_STDMUTEX_LOCK(map);
+	GML_STDMUTEX_LOCK(map); // HeightMapUpdateLOSCheck
 
 	InitHeightMapDigestsVectors();
 	const int losSqSize = loshandler->losDiv / SQUARE_SIZE; // size of LOS square in heightmap coords

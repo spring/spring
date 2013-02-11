@@ -3,8 +3,6 @@
 #include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
-#include "System/mmgr.h"
-
 #include "FreeController.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
@@ -412,19 +410,8 @@ void CFreeController::SwitchTo(bool showText)
 
 void CFreeController::GetState(StateMap& sm) const
 {
-	sm["px"] = pos.x;
-	sm["py"] = pos.y;
-	sm["pz"] = pos.z;
+	CCameraController::GetState(sm);
 
-	sm["dx"] = dir.x;
-	sm["dy"] = dir.y;
-	sm["dz"] = dir.z;
-
-	sm["rx"] = camera->rot.x;
-	sm["ry"] = camera->rot.y;
-	sm["rz"] = camera->rot.z;
-
-	sm["fov"]         = fov;
 	sm["gndOffset"]   = gndOffset;
 	sm["gravity"]     = gravity;
 	sm["slide"]       = slide;
@@ -438,6 +425,10 @@ void CFreeController::GetState(StateMap& sm) const
 	sm["invertAlt"]   = invertAlt ? +1.0f : -1.0f;
 	sm["gndLock"]     = gndLock   ? +1.0f : -1.0f;
 
+	sm["rx"] = camera->rot.x;
+	sm["ry"] = camera->rot.y;
+	sm["rz"] = camera->rot.z;
+
 	sm["vx"] = prevVel.x;
 	sm["vy"] = prevVel.y;
 	sm["vz"] = prevVel.z;
@@ -450,17 +441,7 @@ void CFreeController::GetState(StateMap& sm) const
 
 bool CFreeController::SetState(const StateMap& sm)
 {
-	SetStateFloat(sm, "px", pos.x);
-	SetStateFloat(sm, "py", pos.y);
-	SetStateFloat(sm, "pz", pos.z);
-
-	SetStateFloat(sm, "dx", dir.x);
-	SetStateFloat(sm, "dy", dir.y);
-	SetStateFloat(sm, "dz", dir.z);
-
-	SetStateFloat(sm, "rx", camera->rot.x);
-	SetStateFloat(sm, "ry", camera->rot.y);
-	SetStateFloat(sm, "rz", camera->rot.z);
+	CCameraController::SetState(sm);
 
 	SetStateFloat(sm, "fov",         fov);
 	SetStateFloat(sm, "gndOffset",   gndOffset);
@@ -475,6 +456,10 @@ bool CFreeController::SetState(const StateMap& sm)
 	SetStateBool (sm, "goForward",   goForward);
 	SetStateBool (sm, "invertAlt",   invertAlt);
 	SetStateBool (sm, "gndLock",     gndLock);
+
+	SetStateFloat(sm, "rx", camera->rot.x);
+	SetStateFloat(sm, "ry", camera->rot.y);
+	SetStateFloat(sm, "rz", camera->rot.z);
 
 	SetStateFloat(sm, "vx", prevVel.x);
 	SetStateFloat(sm, "vy", prevVel.y);

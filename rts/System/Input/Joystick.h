@@ -9,6 +9,7 @@
 union SDL_Event;
 
 void InitJoystick();
+void FreeJoystick();
 
 class Joystick
 {

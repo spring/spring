@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "CobEngine.h"
 #include "CobThread.h"
@@ -38,18 +37,24 @@ CCobEngine::CCobEngine()
 CCobEngine::~CCobEngine()
 {
 	//Should delete all things that the scheduler knows
-	for (std::list<CCobThread *>::iterator i = running.begin(); i != running.end(); ++i) {
-		delete *i;
-	}
-	for (std::list<CCobThread *>::iterator i = wantToRun.begin(); i != wantToRun.end(); ++i) {
-		delete *i;
-	}
-	while (sleeping.size() > 0) {
-		CCobThread *tmp;
-		tmp = sleeping.top();
-		sleeping.pop();
-		delete tmp;
-	}
+	do {
+		while (!running.empty()) {
+			CCobThread* tmp = running.front();
+			running.pop_front();
+			delete tmp;
+		}
+		while (!wantToRun.empty()) {
+			CCobThread* tmp = wantToRun.front();
+			wantToRun.pop_front();
+			delete tmp;
+		}
+		while (!sleeping.empty()) {
+			CCobThread* tmp = sleeping.top();
+			sleeping.pop();
+			delete tmp;
+		}
+		// callbacks may add new threads
+	} while (!running.empty() || !wantToRun.empty() || !sleeping.empty());
 }
 
 

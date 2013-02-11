@@ -26,8 +26,8 @@ public:
 	SoundBuffer();
 	~SoundBuffer();
 
-	bool LoadWAV(const std::string& file, std::vector<boost::uint8_t> buffer, bool strict);
-	bool LoadVorbis(const std::string& file, std::vector<boost::uint8_t> buffer, bool strict);
+	bool LoadWAV(const std::string& file, std::vector<boost::uint8_t> buffer);
+	bool LoadVorbis(const std::string& file, std::vector<boost::uint8_t> buffer);
 
 	const std::string& GetFilename() const
 	{
@@ -42,6 +42,11 @@ public:
 	ALuint GetChannels() const
 	{
 		return channels;
+	};
+
+	ALfloat GetLength() const
+	{
+		return length;
 	};
 	
 	int BufferSize() const;
@@ -62,6 +67,7 @@ private:
 	std::string filename;
 	ALuint id;
 	ALuint channels;
+	ALfloat length;
 	
 	typedef std::map<std::string, size_t> bufferMapT;
 	typedef std::vector< boost::shared_ptr<SoundBuffer> > bufferVecT;

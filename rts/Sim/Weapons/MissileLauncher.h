@@ -11,13 +11,14 @@ class CMissileLauncher :
 	CR_DECLARE(CMissileLauncher);
 public:
 	CMissileLauncher(CUnit* owner);
-	~CMissileLauncher(void);
+	~CMissileLauncher();
 
-	void Update(void);
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
+	void Update();
+
 
 private:
-	virtual void FireImpl();
+	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
+	void FireImpl();
 };
 
 

@@ -2,7 +2,6 @@
 
 #include "FileFilter.h"
 
-#include "System/mmgr.h"
 
 #include <boost/regex.hpp>
 

@@ -20,7 +20,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -125,7 +125,7 @@ void CUnitScript::UnblockAll(AnimInfo* anim)
  * @param speed float max increment per tick
  * @return returns true if destination was reached, false otherwise
  */
-bool CUnitScript::MoveToward(float &cur, float dest, float speed)
+bool CUnitScript::MoveToward(float& cur, float dest, float speed)
 {
 	const float delta = dest - cur;
 
@@ -151,7 +151,7 @@ bool CUnitScript::MoveToward(float &cur, float dest, float speed)
  * @param speed float max increment per tick
  * @return returns true if destination was reached, false otherwise
  */
-bool CUnitScript::TurnToward(float &cur, float dest, float speed)
+bool CUnitScript::TurnToward(float& cur, float dest, float speed)
 {
 	float delta = dest - cur;
 
@@ -187,7 +187,7 @@ bool CUnitScript::TurnToward(float &cur, float dest, float speed)
  * @param divisor int is the deltatime, it is not added before the call because speed may have to be updated
  * @return true if the desired speed is 0 and it is reached, false otherwise
  */
-bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int divisor)
+bool CUnitScript::DoSpin(float& cur, float dest, float &speed, float accel, int divisor)
 {
 	const float delta = dest - speed;
 
@@ -230,6 +230,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetPosition(pos);
+				unit->localModel->PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -243,6 +244,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
+				unit->localModel->PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -256,6 +258,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
+				unit->localModel->PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -454,13 +457,13 @@ void CUnitScript::StopSpin(int piece, int axis, float decel)
 
 void CUnitScript::Turn(int piece, int axis, float speed, float destination)
 {
-	AddAnim(ATurn, piece, axis, speed, destination, 0);
+	AddAnim(ATurn, piece, axis, std::max(speed, -speed), destination, 0);
 }
 
 
 void CUnitScript::Move(int piece, int axis, float speed, float destination)
 {
-	AddAnim(AMove, piece, axis, speed, destination, 0);
+	AddAnim(AMove, piece, axis, std::max(speed, -speed), destination, 0);
 }
 
 
@@ -471,10 +474,14 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 		return;
 	}
 
+	LocalModel* m = unit->localModel;
 	LocalModelPiece* p = pieces[piece];
+
 	float3 pos = p->GetPosition();
 	pos[axis] = pieces[piece]->original->offset[axis] + destination;
+
 	p->SetPosition(pos);
+	m->PieceUpdated(piece);
 }
 
 
@@ -485,10 +492,14 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 		return;
 	}
 
+	LocalModel* m = unit->localModel;
 	LocalModelPiece* p = pieces[piece];
+
 	float3 rot = p->GetRotation();
 	rot[axis] = destination;
+
 	p->SetRotation(rot);
+	m->PieceUpdated(piece);
 }
 
 
@@ -499,10 +510,7 @@ void CUnitScript::SetVisibility(int piece, bool visible)
 		return;
 	}
 
-	LocalModelPiece* p = pieces[piece];
-	if (p->visible != visible) {
-		p->visible = visible;
-	}
+	pieces[piece]->scriptSetVisible = visible;
 }
 
 
@@ -546,17 +554,17 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		unit->updir    * relDir.y +
 		unit->rightdir * relDir.x;
 
-	float alpha = 0.3f + gu->usRandFloat() * 0.2f;
+	float alpha = 0.3f + gu->RandFloat() * 0.2f;
 	float alphaFalloff = 0.004f;
 	float fadeupTime = 4;
 
-	const UnitDef* ud = unit->unitDef;
-	const MoveDef* md = ud->moveDef;
+	//const UnitDef* ud = unit->unitDef;
+	const MoveDef* md = unit->moveDef;
 
 	// hovercraft need special care
-	if (md != NULL && md->moveType == MoveDef::Hover_Move) {
+	if (md != NULL && md->moveFamily == MoveDef::Hover) {
 		fadeupTime = 8.0f;
-		alpha = 0.15f + gu->usRandFloat() * 0.2f;
+		alpha = 0.15f + gu->RandFloat() * 0.2f;
 		alphaFalloff = 0.008f;
 	}
 
@@ -564,10 +572,10 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		case SFX_REVERSE_WAKE:
 		case SFX_REVERSE_WAKE_2: {  //reverse wake
 			new CWakeProjectile(
-				pos + gu->usRandVector() * 2.0f,
+				pos + gu->RandVector() * 2.0f,
 				dir * 0.4f,
-				6.0f + gu->usRandFloat() * 4.0f,
-				0.15f + gu->usRandFloat() * 0.3f,
+				6.0f + gu->RandFloat() * 4.0f,
+				0.15f + gu->RandFloat() * 0.3f,
 				unit,
 				alpha, alphaFalloff, fadeupTime
 			);
@@ -577,10 +585,10 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		case SFX_WAKE_2:  //wake 2, in TA it lives longer..
 		case SFX_WAKE: {  //regular ship wake
 			new CWakeProjectile(
-				pos + gu->usRandVector() * 2.0f,
+				pos + gu->RandVector() * 2.0f,
 				dir * 0.4f,
-				6.0f + gu->usRandFloat() * 4.0f,
-				0.15f + gu->usRandFloat() * 0.3f,
+				6.0f + gu->RandFloat() * 4.0f,
+				0.15f + gu->RandFloat() * 0.3f,
 				unit,
 				alpha, alphaFalloff, fadeupTime
 			);
@@ -588,25 +596,25 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		}
 
 		case SFX_BUBBLE: {  //submarine bubble. does not provide direction through piece vertices..
-			float3 pspeed = gu->usRandVector() * 0.1f;
+			float3 pspeed = gu->RandVector() * 0.1f;
 				pspeed.y += 0.2f;
 
 			new CBubbleProjectile(
-				pos + gu->usRandVector() * 2.0f,
+				pos + gu->RandVector() * 2.0f,
 				pspeed,
-				40.0f + gu->usRandFloat() * 30.0f,
-				1.0f + gu->usRandFloat() * 2.0f,
+				40.0f + gu->RandFloat() * 30.0f,
+				1.0f + gu->RandFloat() * 2.0f,
 				0.01f,
 				unit,
-				0.3f + gu->usRandFloat() * 0.3f
+				0.3f + gu->RandFloat() * 0.3f
 			);
 		} break;
 
 		case SFX_WHITE_SMOKE:  //damaged unit smoke
-			new CSmokeProjectile(pos, gu->usRandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.5f);
+			new CSmokeProjectile(pos, gu->RandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.5f);
 			break;
 		case SFX_BLACK_SMOKE:  //damaged unit smoke
-			new CSmokeProjectile(pos, gu->usRandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.6f);
+			new CSmokeProjectile(pos, gu->RandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.6f);
 			break;
 		case SFX_VTOL: {
 			const float3 speed =
@@ -618,8 +626,8 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			CHeatCloudProjectile* hc = new CHeatCloudProjectile(
 				pos,
 				speed,
-				10 + gu->usRandFloat() * 5,
-				3 + gu->usRandFloat() * 2,
+				10 + gu->RandFloat() * 5,
+				3 + gu->RandFloat() * 2,
 				unit
 			);
 			hc->size = 3;
@@ -831,7 +839,9 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 	const S3DModelPiece* omp = lmp->original;
 	const float pieceChance = 1.0f - (ph->currentParticles - (ph->maxParticles - 2000)) / 2000.0f;
 
-	omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed);
+	if (pieceChance > 0.0f) {
+		omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed);
+	}
 }
 
 
@@ -1101,7 +1111,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (unit->shieldWeapon == NULL) {
 			return -1;
 		}
-		const CPlasmaRepulser* shield = (CPlasmaRepulser*) unit->shieldWeapon;
+		const CPlasmaRepulser* shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
 		return int(shield->curPower * float(COBSCALE));
 	}
 
@@ -1112,7 +1122,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return unit->sonarStealth ? 1 : 0;
 	}
 	case CRASHING:
-		return !!unit->crashing;
+		return !!unit->IsCrashing();
 	case ALPHA_THRESHOLD: {
 		return int(unit->alphaThreshold * 255);
 	}
@@ -1575,7 +1585,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case SHIELD_POWER: {
 			if (unit->shieldWeapon != NULL) {
-				CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
+				CPlasmaRepulser* shield = static_cast<CPlasmaRepulser*>(unit->shieldWeapon);
 				shield->curPower = std::max(0.0f, float(param) / float(COBSCALE));
 			}
 			break;
@@ -1697,15 +1707,23 @@ void CUnitScript::BenchmarkScript(const std::string& unitname)
 /******************************************************************************/
 /******************************************************************************/
 
-int CUnitScript::ScriptToModel(int scriptnum) const {
-	const LocalModelPiece* p = GetLocalModelPiece(scriptnum);
+int CUnitScript::ScriptToModel(int scriptPieceNum) const {
+	if (!PieceExists(scriptPieceNum))
+		return -1;
 
-	if (p == NULL) return -1;
+	const LocalModelPiece* smp = GetScriptLocalModelPiece(scriptPieceNum);
 
-	int i = 0;
-	const std::vector<LocalModelPiece*>& modelpieces = unit->localmodel->pieces;
-	for (std::vector<LocalModelPiece*>::const_iterator pm = modelpieces.begin(); pm != modelpieces.end(); ++pm, ++i) {
-		if (p == *pm) return i;
-	}
-	return -1;
+	return (smp->GetLModelPieceIndex());
 };
+
+int CUnitScript::ModelToScript(int lmodelPieceNum) const {
+	const LocalModel* lm = unit->localModel;
+
+	if (!lm->HasPiece(lmodelPieceNum))
+		return -1;
+
+	const LocalModelPiece* lmp = lm->GetPiece(lmodelPieceNum);
+
+	return (lmp->GetScriptPieceIndex());
+};
+

@@ -20,10 +20,8 @@ struct SRectangle;
 namespace QTPFS {
 	struct PathCache {
 		PathCache() {
-			for (unsigned int n = 0; n <= PATH_TYPE_DEAD; n++) {
-				numCacheHits[n] = 0;
-				numCacheMisses[n] = 0;
-			}
+			numCacheHits.resize(PATH_TYPE_DEAD + 1, 0);
+			numCacheMisses.resize(PATH_TYPE_DEAD + 1, 0);
 		}
 
 		typedef std::map<unsigned int, IPath*> PathMap;
@@ -56,8 +54,8 @@ namespace QTPFS {
 		PathMap livePaths;
 		PathMap deadPaths;
 
-		unsigned int numCacheHits[PATH_TYPE_DEAD + 1];
-		unsigned int numCacheMisses[PATH_TYPE_DEAD + 1];
+		std::vector<unsigned int> numCacheHits;
+		std::vector<unsigned int> numCacheMisses;
 	};
 };
 

@@ -2,16 +2,15 @@
 
 #include "Rendering/GL/myGL.h"
 
-#include "System/mmgr.h"
 
 #include "WorldDrawer.h"
 #include "Rendering/Env/CubeMapHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/FarTextureHandler.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
@@ -41,13 +40,9 @@
 CWorldDrawer::CWorldDrawer()
 {
 	// rendering components
-	loadscreen->SetLoadMessage("Creating Sky");
-	sky = ISky::GetSky();
-
 	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
 	cubeMapHandler = new CubeMapHandler();
 	shadowHandler = new CShadowHandler();
-	groundDecals = new CGroundDecalHandler();
 
 	loadscreen->SetLoadMessage("Creating GroundDrawer");
 	readmap->NewGroundDrawer();
@@ -85,21 +80,26 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(inMapDrawerView);
 
 	SafeDelete(featureDrawer);
-	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler, groundDecals
+	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler
 	SafeDelete(projectileDrawer);
 
 	SafeDelete(farTextureHandler);
 	SafeDelete(heightMapTexture);
 
 	SafeDelete(cubeMapHandler);
-	SafeDelete(groundDecals);
+	IGroundDecalDrawer::FreeInstance();
 }
 
 
 void CWorldDrawer::Update()
 {
-	treeDrawer->Update();
 	readmap->UpdateDraw();
+	if (globalRendering->drawGround) {
+		SCOPED_TIMER("GroundDrawer::Update");
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		gd->Update();
+	}
+	treeDrawer->Update();
 	unitDrawer->Update();
 	featureDrawer->Update();
 	lineDrawer.UpdateLineStipple();
@@ -120,6 +120,7 @@ void CWorldDrawer::Draw()
 	if (globalRendering->drawGround) {
 		SCOPED_TIMER("WorldDrawer::Terrain");
 		gd->Draw(DrawPass::Normal);
+		groundDecals->Draw();
 		smoothHeightMeshDrawer->Draw(1.0f);
 		treeDrawer->DrawGrass();
 		gd->DrawTrees();

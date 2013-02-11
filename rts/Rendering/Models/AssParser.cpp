@@ -157,39 +157,12 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	model->name = modelFilePath;
 	model->type = MODELTYPE_ASS;
 	model->scene = scene;
-	//model->meta = &metaTable;
 
-	//! Gather per mesh info
+	// Gather per mesh info
 	CalculatePerMeshMinMax(model);
 
-	//! Assign textures
-	//! The S3O texture handler uses two textures.
-	//! The first contains diffuse color (RGB) and teamcolor (A)
-	//! The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
-	if (metaTable.KeyExists("tex1")) {
-		model->tex1 = metaTable.GetString("tex1", "default.png");
-	} else {
-		//! Search for a texture
-		std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + ".*");
-		for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
-			model->tex1 = FileSystem::GetFilename(*fi);
-			break; //! there can be only one!
-		}
-	}
-	if (metaTable.KeyExists("tex2")) {
-		model->tex2 = metaTable.GetString("tex2", "");
-	} else {
-		//! Search for a texture
-		std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + "2.*");
-		for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
-			model->tex2 = FileSystem::GetFilename(*fi);
-			break; //! there can be only one!
-		}
-	}
-	model->flipTexY = metaTable.GetBool("fliptextures", true); //! Flip texture upside down
-	model->invertTexAlpha = metaTable.GetBool("invertteamcolor", true); //! Reverse teamcolor levels
-
-	//! Load textures
+	// Load textures
+	FindTextures(model, scene, metaTable, modelName);
 	LOG_S(LOG_SECTION_MODEL, "Loading textures. Tex1: '%s' Tex2: '%s'",
 			model->tex1.c_str(), model->tex2.c_str());
 	texturehandlerS3O->LoadS3OTexture(model);
@@ -199,26 +172,28 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 			scene->mRootNode->mName.data);
 	LoadPiece(model, scene->mRootNode, metaTable);
 
-	//! Update piece hierarchy based on metadata
+	// Update piece hierarchy based on metadata
 	BuildPieceHierarchy( model );
 
-	//! Simplified dimensions used for rough calculations
+	// Calculate model dimensions
+	CalculateMinMax( model->rootPiece );
+	CalculateRadius( model );
+	CalculateHeight( model );
+	CalculateMidPos( model );
+
+	// Simplified dimensions used for rough calculations
 	model->radius = metaTable.GetFloat("radius", model->radius);
 	model->height = metaTable.GetFloat("height", model->height);
 	model->relMidPos = metaTable.GetFloat3("midpos", model->relMidPos);
 	model->mins = metaTable.GetFloat3("mins", model->mins);
 	model->maxs = metaTable.GetFloat3("maxs", model->maxs);
 
-	//! Calculate model dimensions if not set
-	if (!metaTable.KeyExists("mins") || !metaTable.KeyExists("maxs")) CalculateMinMax( model->rootPiece );
-	if (model->radius < 0.0001f) CalculateRadius( model );
-	if (model->height < 0.0001f) CalculateHeight( model );
-
-	//! Verbose logging of model properties
+	// Verbose logging of model properties
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->name: %s", model->name.c_str());
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->numobjects: %d", model->numPieces);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->radius: %f", model->radius);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->height: %f", model->height);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->drawRadius: %f", model->drawRadius);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->mins: (%f,%f,%f)", model->mins[0], model->mins[1], model->mins[2]);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->maxs: (%f,%f,%f)", model->maxs[0], model->maxs[1], model->maxs[2]);
 
@@ -238,12 +213,8 @@ void CAssParser::CalculatePerMeshMinMax(SAssModel* model)
 		SAssModel::MinMax& minmax = model->mesh_minmax[i];
 		for (size_t vertexIndex= 0; vertexIndex < mesh.mNumVertices; vertexIndex++) {
 			const aiVector3D& aiVertex = mesh.mVertices[vertexIndex];
-			minmax.mins.x = std::min(minmax.mins.x, aiVertex.x);
-			minmax.mins.y = std::min(minmax.mins.y, aiVertex.y);
-			minmax.mins.z = std::min(minmax.mins.z, aiVertex.z);
-			minmax.maxs.x = std::max(minmax.maxs.x, aiVertex.x);
-			minmax.maxs.y = std::max(minmax.maxs.y, aiVertex.y);
-			minmax.maxs.z = std::max(minmax.maxs.z, aiVertex.z);
+			minmax.mins = std::min(minmax.mins, float3(aiVertex.x, aiVertex.y, aiVertex.z));
+			minmax.maxs = std::max(minmax.maxs, float3(aiVertex.x, aiVertex.y, aiVertex.z));
 		}
 	}
 }
@@ -344,12 +315,8 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	for (unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; meshListIndex++) {
 		unsigned int meshIndex = node->mMeshes[meshListIndex];
 		SAssModel::MinMax& minmax = model->mesh_minmax[meshIndex];
-		piece->mins.x = std::min(piece->mins.x, minmax.mins.x);
-		piece->mins.y = std::min(piece->mins.y, minmax.mins.y);
-		piece->mins.z = std::min(piece->mins.z, minmax.mins.z);
-		piece->maxs.x = std::max(piece->maxs.x, minmax.maxs.x);
-		piece->maxs.y = std::max(piece->maxs.y, minmax.maxs.y);
-		piece->maxs.z = std::max(piece->maxs.z, minmax.maxs.z);
+		piece->mins = std::min(piece->mins, minmax.mins);
+		piece->maxs = std::max(piece->maxs, minmax.maxs);
 	}
 
 
@@ -406,81 +373,75 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 				(mesh->HasTangentsAndBitangents() ? "Y" : "N"),
 				(mesh->HasTextureCoords(0) ? "Y" : "N"));
 
-		// FIXME add piece->vertices.reserve()
+		piece->vertices.reserve(piece->vertices.size() + mesh->mNumVertices);
 		for (unsigned vertexIndex= 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
 			SAssVertex vertex;
 
-			//! vertex coordinates
-			//LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Fetching vertex %d from mesh", vertexIndex);
+			// vertex coordinates
 			const aiVector3D& aiVertex = mesh->mVertices[vertexIndex];
 			vertex.pos.x = aiVertex.x;
 			vertex.pos.y = aiVertex.y;
 			vertex.pos.z = aiVertex.z;
 
-			//LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "vertex position %d: %f %f %f", vertexIndex, vertex.pos.x, vertex.pos.y, vertex.pos.z);
-
-			//! vertex normal
+			// vertex normal
 			LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Fetching normal for vertex %d",
 					vertexIndex);
 			const aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
-			vertex.hasNormal = !IS_QNAN(aiNormal);
-			if (vertex.hasNormal) {
+			if (!IS_QNAN(aiNormal)) {
 				vertex.normal.x = aiNormal.x;
 				vertex.normal.y = aiNormal.y;
 				vertex.normal.z = aiNormal.z;
-				//LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "vertex normal %d: %f %f %f",vertexIndex, vertex.normal.x, vertex.normal.y,vertex.normal.z);
 			}
 
-			//! vertex tangent, x is positive in texture axis
+			// vertex tangent, x is positive in texture axis
 			if (mesh->HasTangentsAndBitangents()) {
 				LOG_SL(LOG_SECTION_PIECE, L_DEBUG,
 						"Fetching tangent for vertex %d", vertexIndex );
 				const aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
 				const aiVector3D& aiBitangent = mesh->mBitangents[vertexIndex];
-				vertex.hasTangent = !IS_QNAN(aiBitangent) && !IS_QNAN(aiTangent);
 
-				const float3 tangent(aiTangent.x, aiTangent.y, aiTangent.z);
-				//LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "vertex tangent %d: %f %f %f",vertexIndex, tangent.x, tangent.y,tangent.z);
-				piece->sTangents.push_back(tangent);
-
-				const float3 bitangent(aiBitangent.x, aiBitangent.y, aiBitangent.z);
-				//LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "vertex bitangent %d: %f %f %f",vertexIndex, bitangent.x, bitangent.y,bitangent.z);
-				piece->tTangents.push_back(bitangent);
+				vertex.sTangent = float3(aiTangent.x, aiTangent.y, aiTangent.z);
+				vertex.tTangent = float3(aiBitangent.x, aiBitangent.y, aiBitangent.z);
 			}
 
-			//! vertex texcoords
+			// vertex texcoords
 			if (mesh->HasTextureCoords(0)) {
-				vertex.textureX = mesh->mTextureCoords[0][vertexIndex].x;
-				vertex.textureY = mesh->mTextureCoords[0][vertexIndex].y;
-				//LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "vertex texcoords %d: %f %f", vertexIndex, vertex.textureX, vertex.textureY);
+				vertex.texCoord.x = mesh->mTextureCoords[0][vertexIndex].x;
+				vertex.texCoord.y = mesh->mTextureCoords[0][vertexIndex].y;
+			}
+
+			if (mesh->HasTextureCoords(1)) {
+				piece->hasTexCoord2 = true,
+				vertex.texCoord2.x = mesh->mTextureCoords[1][vertexIndex].x;
+				vertex.texCoord2.y = mesh->mTextureCoords[1][vertexIndex].y;
 			}
 
 			mesh_vertex_mapping.push_back(piece->vertices.size());
 			piece->vertices.push_back(vertex);
 		}
 
-		//! extract face data
-		// FIXME add piece->vertexDrawOrder.reserve()
+		// extract face data
 		LOG_SL(LOG_SECTION_PIECE, L_DEBUG,
 				"Processing faces for mesh %d (%d faces)",
 				meshIndex, mesh->mNumFaces);
+		piece->vertexDrawIndices.reserve(piece->vertexDrawIndices.size() + mesh->mNumFaces * 3);
 		for (unsigned faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex) {
 			const aiFace& face = mesh->mFaces[faceIndex];
-			//! get the vertex belonging to the mesh
 			for (unsigned vertexListID = 0; vertexListID < face.mNumIndices; ++vertexListID) {
 				unsigned int vertexID = mesh_vertex_mapping[face.mIndices[vertexListID]];
-				//LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "face %d vertex %d", faceIndex, vertexID);
-				piece->vertexDrawOrder.push_back(vertexID);
+				piece->vertexDrawIndices.push_back(vertexID);
 			}
 		}
 	}
+	
+	piece->isEmpty = piece->vertices.empty();
 
-	//! collision volume for piece (not sure about these coords)
+	// collision volume for piece (not sure about these coords)
 	// FIXME add metatable tags for this!!!!
 	const float3 cvScales = piece->maxs - piece->mins;
 	const float3 cvOffset = (piece->maxs - piece->offset) + (piece->mins - piece->offset);
-	//const float3 cvOffset(piece->offset.x, piece->offset.y, piece->offset.z);
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset, CollisionVolume::COLVOL_HITTEST_CONT);
+
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset);
 
 	//! Get parent name from metadata or model
 	if (pieceTable.KeyExists("parent")) {
@@ -532,7 +493,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 						"Missing piece '%s' declared as parent of '%s'.",
 						piece->parentName.c_str(), piece->name.c_str());
 			} else {
-				piece->parent->childs.push_back(piece);
+				piece->parent->children.push_back(piece);
 				++model->numPieces;
 			}
 		} else {
@@ -541,7 +502,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 			if (piece->parent == NULL) {
 				LOG_SL(LOG_SECTION_PIECE, L_ERROR, "Missing root piece");
 			} else {
-				piece->parent->childs.push_back(piece);
+				piece->parent->children.push_back(piece);
 				++model->numPieces;
 			}
 		}
@@ -549,22 +510,18 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 }
 
 
-//! Iterate over the model and calculate its overall dimensions
+// Iterate over the model and calculate its overall dimensions
 void CAssParser::CalculateMinMax(S3DModelPiece* piece)
 {
 	piece->goffset = piece->parent ? piece->parent->goffset + piece->offset : piece->offset;
 
-	//! update model min/max extents
-	piece->model->mins.x = std::min(piece->goffset.x + piece->mins.x, piece->model->mins.x);
-	piece->model->mins.y = std::min(piece->goffset.y + piece->mins.y, piece->model->mins.y);
-	piece->model->mins.z = std::min(piece->goffset.z + piece->mins.z, piece->model->mins.z);
-	piece->model->maxs.x = std::max(piece->goffset.x + piece->maxs.x, piece->model->maxs.x);
-	piece->model->maxs.y = std::max(piece->goffset.y + piece->maxs.y, piece->model->maxs.y);
-	piece->model->maxs.z = std::max(piece->goffset.z + piece->maxs.z, piece->model->maxs.z);
+	// update model min/max extents
+	piece->model->mins = std::min(piece->goffset + piece->mins, piece->model->mins);
+	piece->model->maxs = std::max(piece->goffset + piece->maxs, piece->model->maxs);
 
-	//! Repeat with childs
-	for (unsigned int i = 0; i < piece->childs.size(); i++) {
-		CalculateMinMax(piece->childs[i]);
+	// Repeat with children
+	for (unsigned int i = 0; i < piece->children.size(); i++) {
+		CalculateMinMax(piece->children[i]);
 	}
 }
 
@@ -572,13 +529,8 @@ void CAssParser::CalculateMinMax(S3DModelPiece* piece)
 //! Calculate model radius from the min/max extents
 void CAssParser::CalculateRadius(S3DModel* model)
 {
-	model->radius = std::max(model->radius, math::fabs(model->maxs.x));
-	model->radius = std::max(model->radius, math::fabs(model->maxs.y));
-	model->radius = std::max(model->radius, math::fabs(model->maxs.z));
-
-	model->radius = std::max(model->radius, math::fabs(model->mins.x));
-	model->radius = std::max(model->radius, math::fabs(model->mins.y));
-	model->radius = std::max(model->radius, math::fabs(model->mins.z));
+	model->radius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
+	model->drawRadius = model->radius;
 }
 
 
@@ -589,61 +541,177 @@ void CAssParser::CalculateHeight(S3DModel* model)
 }
 
 
+void CAssParser::CalculateMidPos(S3DModel* model)
+{
+	model->relMidPos.y = (model->maxs.y - model->mins.y) * 0.5f;
+}
+
+
+void CAssParser::FindTextures(S3DModel* model, const aiScene* scene, const LuaTable& metaTable, const std::string& modelFilePath)
+{
+	const std::string modelPath = FileSystem::GetDirectory(modelFilePath);
+	const std::string modelName = FileSystem::GetBasename(modelFilePath);
+
+	// Assign textures
+	// The S3O texture handler uses two textures.
+	// The first contains diffuse color (RGB) and teamcolor (A)
+	// The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
+
+	// gather model defined textures
+	if (scene->mNumMaterials > 0) {
+		const aiMaterial* mat = scene->mMaterials[0]; //only check first material
+
+		//FIXME support these too (we need to allow to construct tex1 & tex2 from several sources)
+		/*aiTextureType_EMISSIVE
+		aiTextureType_HEIGHT
+		aiTextureType_NORMALS
+		aiTextureType_SHININESS
+		aiTextureType_OPACITY*/
+
+		aiString textureFile;
+
+		mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE,  0), textureFile);
+		if (strcmp(textureFile.C_Str(), "") == 0) model->tex1 = textureFile.C_Str();
+		textureFile.Clear();
+
+		mat->Get(AI_MATKEY_TEXTURE(aiTextureType_UNKNOWN,  0), textureFile);
+		if (strcmp(textureFile.C_Str(), "") == 0) model->tex1 = textureFile.C_Str();
+		textureFile.Clear();
+
+		mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), textureFile);
+		if (strcmp(textureFile.C_Str(), "") == 0) model->tex1 = textureFile.C_Str();
+		textureFile.Clear();
+	}
+
+	// try to load from metafile
+	model->tex1 = metaTable.GetString("tex1", model->tex1);
+	model->tex2 = metaTable.GetString("tex2", model->tex2);
+
+	// try to find by name
+	if (model->tex1.empty()) {
+		const std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + ".*");
+		for(std::vector<std::string>::const_iterator fi = files.begin(); fi != files.end(); ++fi) {
+			model->tex1 = FileSystem::GetFilename(*fi);
+			break; // there can be only one!
+		}
+	}
+	if (model->tex2.empty()) {
+		const std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + "2.*");
+		for(std::vector<std::string>::const_iterator fi = files.begin(); fi != files.end(); ++fi) {
+			model->tex2 = FileSystem::GetFilename(*fi);
+			break; // there can be only one!
+		}
+	}
+
+	// last chance
+	if (model->tex1.empty()) {
+		const std::vector<std::string> files = CFileHandler::FindFiles(modelPath, "diffuse.*");
+		for(std::vector<std::string>::const_iterator fi = files.begin(); fi != files.end(); ++fi) {
+			model->tex2 = FileSystem::GetFilename(*fi);
+			break; // there can be only one!
+		}
+	}
+
+	// correct filepath?
+	if (!CFileHandler::FileExists(model->tex1, SPRING_VFS_ZIP)) {
+		if (CFileHandler::FileExists("unittextures/" + model->tex1, SPRING_VFS_ZIP)) {
+			model->tex1 = "unittextures/" + model->tex1;
+		} else if (CFileHandler::FileExists(modelPath + model->tex1, SPRING_VFS_ZIP)) {
+			model->tex1 = modelPath + model->tex1;
+		}
+	}
+	if (!CFileHandler::FileExists(model->tex2, SPRING_VFS_ZIP)) {
+		if (CFileHandler::FileExists("unittextures/" + model->tex2, SPRING_VFS_ZIP)) {
+			model->tex1 = "unittextures/" + model->tex2;
+		} else if (CFileHandler::FileExists(modelPath + model->tex2, SPRING_VFS_ZIP)) {
+			model->tex2 = modelPath + model->tex2;
+		}
+	}
+
+	model->flipTexY = metaTable.GetBool("fliptextures", true); // Flip texture upside down
+	model->invertTexAlpha = metaTable.GetBool("invertteamcolor", true); // Reverse teamcolor levels
+}
+
+
+void SAssPiece::UploadGeometryVBOs()
+{
+	if (isEmpty)
+		return;
+
+	//FIXME share 1 VBO for ALL models
+	vboAttributes.Bind(GL_ARRAY_BUFFER);
+	vboAttributes.Resize(vertices.size() * sizeof(SAssVertex), GL_STATIC_DRAW, &vertices[0]);
+	vboAttributes.Unbind();
+
+	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+	vboIndices.Resize(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
+	vboIndices.Unbind();
+
+	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
+	// vertices.clear();
+	// vertexDrawIndices.clear();
+}
+
+
 void SAssPiece::DrawForList() const
 {
 	if (isEmpty) {
 		return;
 	}
 	LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Compiling piece %s", name.c_str());
-	//! Add GL commands to the pieces displaylist
 
-	const SAssVertex* sAssV = &vertices[0];
+	vboAttributes.Bind(GL_ARRAY_BUFFER);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, pos)));
 
-	//! pass the tangents as 3D texture coordinates
-	//! (array elements are float3's, which are 12
-	//! bytes in size and each represent a single
-	//! xyz triple)
-	//! TODO: test if we have this many texunits
-	//! (if not, could only send the s-tangents)?
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glNormalPointer(GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, normal)));
 
-	if (!sTangents.empty()) {
+		glClientActiveTexture(GL_TEXTURE0);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoord)));
+
+		glClientActiveTexture(GL_TEXTURE1);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoord)));
+
+		if (hasTexCoord2) {
+			glClientActiveTexture(GL_TEXTURE2);
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoord2)));
+		}
+
 		glClientActiveTexture(GL_TEXTURE5);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &sTangents[0].x);
-	}
-	if (!tTangents.empty()) {
+		glTexCoordPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, sTangent)));
+
 		glClientActiveTexture(GL_TEXTURE6);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &tTangents[0].x);
-	}
+		glTexCoordPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, tTangent)));
+	vboAttributes.Unbind();
 
-	glClientActiveTexture(GL_TEXTURE0);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), &sAssV->textureX);
+	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+		/*
+		* since aiProcess_SortByPType is being used,
+		* we're sure we'll get only 1 type here,
+		* so combination check isn't needed, also
+		* anything more complex than triangles is
+		* being split thanks to aiProcess_Triangulate
+		*/
+		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
+	vboIndices.Unbind();
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, sizeof(SAssVertex), &sAssV->pos.x);
+	glClientActiveTexture(GL_TEXTURE6);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glEnableClientState(GL_NORMAL_ARRAY);
-	glNormalPointer(GL_FLOAT, sizeof(SAssVertex), &sAssV->normal.x);
+	glClientActiveTexture(GL_TEXTURE5);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	/*
-	 * since aiProcess_SortByPType is being used,
-	 * we're sure we'll get only 1 type here,
-	 * so combination check isn't needed, also
-	 * anything more complex than triangles is
-	 * being split thanks to aiProcess_Triangulate
-	 */
-	glDrawElements(GL_TRIANGLES, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
+	glClientActiveTexture(GL_TEXTURE2);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	if (!sTangents.empty()) {
-		glClientActiveTexture(GL_TEXTURE6);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
-	if (!tTangents.empty()) {
-		glClientActiveTexture(GL_TEXTURE5);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
+	glClientActiveTexture(GL_TEXTURE1);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	glClientActiveTexture(GL_TEXTURE0);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);

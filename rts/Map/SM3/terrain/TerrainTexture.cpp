@@ -368,7 +368,7 @@ namespace terrain {
 
 		if (!node->isLeaf()) {
 			for (int a=0;a<4;a++)
-				ReloadTexProg(node->childs[a], gi);
+				ReloadTexProg(node->children[a], gi);
 		}
 	}
 
@@ -421,7 +421,7 @@ namespace terrain {
 
 		if (!node->isLeaf()) {
 			for (int a = 0; a < 4; a++)
-				CreateTexProg(node->childs[a], gi);
+				CreateTexProg(node->children[a], gi);
 		}
 
 	}

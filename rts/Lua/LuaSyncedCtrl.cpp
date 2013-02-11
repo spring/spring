@@ -5,8 +5,6 @@
 #include <list>
 #include <cctype>
 
-#include "System/mmgr.h"
-
 #include "LuaSyncedCtrl.h"
 
 #include "LuaInclude.h"
@@ -27,7 +25,7 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -64,6 +62,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
+#include "System/Sync/HsiehHash.h"
 #include "LuaHelper.h"
 
 using std::max;
@@ -154,6 +153,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
+	REGISTER_LUA_CFUNC(SetUnitNanoPieces);
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
 	REGISTER_LUA_CFUNC(SetUnitCrashing);
 	REGISTER_LUA_CFUNC(SetUnitShieldState);
@@ -326,7 +326,7 @@ static inline CProjectile* ParseProjectile(lua_State* L,
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad projectile ID", caller);
 	}
-	const ProjectileMapPair* pmp = ph->GetMapPairBySyncedID(lua_toint(L, index));
+	const ProjectileMapValPair* pmp = ph->GetMapPairBySyncedID(lua_toint(L, index));
 	if (pmp == NULL) {
 		return NULL;
 	}
@@ -666,7 +666,7 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 
 	//! set the los checking of the parameter
 	if (lua_istable(L, losIndex)) {
-		const int& table = losIndex;
+		const int table = losIndex;
 		int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE;
 
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
@@ -888,6 +888,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	const bool flattenGround = (lua_isboolean(L, 8) && lua_toboolean(L, 8)) || lua_isnone(L, 8); // default true
 
 	int teamID = CtrlTeam(L);
+
 	if (lua_israwnumber(L, 6)) {
 		teamID = lua_toint(L, 6);
 	}
@@ -906,15 +907,22 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	ASSERT_SYNCED(pos);
 	ASSERT_SYNCED(facing);
 
-	// FIXME -- allow specifying the 'builder' parameter?
 	inCreateUnit = true;
-	CUnit* unit = unitLoader->LoadUnit(unitDef, pos, teamID, beingBuilt, facing, NULL);
+	UnitLoadParams params;
+	params.unitDef = unitDef; /// must be non-NULL
+	params.builder = uh->GetUnit(luaL_optint(L, 10, -1)); /// may be NULL
+	params.pos     = pos;
+	params.speed   = ZeroVector;
+	params.unitID  = luaL_optint(L, 9, -1);
+	params.teamID  = teamID;
+	params.facing  = facing;
+	params.beingBuilt = beingBuilt;
+	params.flattenGround = flattenGround;
+
+	CUnit* unit = unitLoader->LoadUnit(params);
 	inCreateUnit = false;
 
 	if (unit != NULL) {
-		if (flattenGround)
-			unitLoader->FlattenGround(unit);
-
 		lua_pushnumber(L, unit->id);
 		return 1;
 	}
@@ -1139,9 +1147,9 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 				else if (key == "paralyze") {
 					unit->paralyzeDamage = max(0.0f, value);
 					if (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health)) {
-						unit->stunned = true;
+						unit->SetStunned(true);
 					} else if (value < 0.0f) {
-						unit->stunned = false;
+						unit->SetStunned(false);
 					}
 				}
 				else if (key == "build") {
@@ -1515,6 +1523,55 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetUnitNanoPieces(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	NanoPieceCache* pieceCache = NULL;
+	std::vector<int>* nanoPieces = NULL;
+
+	{
+		CBuilder* builder = dynamic_cast<CBuilder*>(unit);
+
+		if (builder != NULL) {
+			pieceCache = &builder->GetNanoPieceCache();
+			nanoPieces = &pieceCache->GetNanoPieces();
+		}
+
+		CFactory* factory = dynamic_cast<CFactory*>(unit);
+
+		if (factory != NULL) {
+			pieceCache = &factory->GetNanoPieceCache();
+			nanoPieces = &pieceCache->GetNanoPieces();
+		}
+	}
+
+	if (nanoPieces == NULL)
+		return 0;
+
+	nanoPieces->clear();
+	pieceCache->StopPolling();
+	luaL_checktype(L, 2, LUA_TTABLE);
+
+	for (lua_pushnil(L); lua_next(L, 2) != 0; lua_pop(L, 1)) {
+		if (lua_israwnumber(L, -1)) {
+			const int modelPieceNum = lua_toint(L, -1) - 1; //lua 1-indexed, c++ 0-indexed
+
+			if (unit->localModel->HasPiece(modelPieceNum)) {
+				nanoPieces->push_back(modelPieceNum);
+			} else {
+				luaL_error(L, "[SetUnitNanoPieces] incorrect model-piece number %d", modelPieceNum);
+			}
+		}
+	}
+
+	return 0;
+}
+
+
 int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1794,11 +1851,7 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES)   { luaL_argerror(L,  8, "invalid vType"); }
-	if (tType >= CollisionVolume::COLVOL_NUM_HITTESTS) { luaL_argerror(L,  9, "invalid tType"); }
-	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  )   { luaL_argerror(L, 10, "invalid pAxis"); }
-
-	unit->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
+	unit->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
 	return 0;
 }
 
@@ -1820,7 +1873,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	LocalModel* localModel = unit->localmodel;
+	LocalModel* localModel = unit->localModel;
 
 	// 2nd argument: piece index
 	const int  pieceIndex = luaL_checkint(L, 2);
@@ -1840,7 +1893,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 		arg = 7;
 	}
 	if (!enable) {
-		lmp->GetCollisionVolume()->Disable();
+		lmp->GetCollisionVolume()->SetIgnoreHits(true);
 		return 0;
 	}
 
@@ -1856,18 +1909,15 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	const float yo  = luaL_checkfloat(L, arg++);
 	const float zo  = luaL_checkfloat(L, arg++);
 	const unsigned int vType = luaL_checkint(L, arg++);
+//	const unsigned int tType = luaL_checkint(L, arg++);
 	const unsigned int pAxis = luaL_checkint(L, arg++);
-	const unsigned int tType = CollisionVolume::COLVOL_HITTEST_CONT;
 
 	const float3 scales(xs, ys, zs);
 	const float3 offset(xo, yo, zo);
 
-	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES) { luaL_argerror(L, arg - 2, "invalid vType"); }
-	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  ) { luaL_argerror(L, arg - 1, "invalid pAxis"); }
-
-	// finish
-	lmp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
-	lmp->GetCollisionVolume()->Enable();
+	// piece volumes are not allowed to use discrete hit-testing
+	lmp->GetCollisionVolume()->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
+	lmp->GetCollisionVolume()->SetIgnoreHits(false);
 
 	return 0;
 }
@@ -2087,7 +2137,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		attacker = uh->units[attackerID];
 	}
 
-	if (weaponDefID >= weaponDefHandler->numWeaponDefs) {
+	if (weaponDefID >= weaponDefHandler->weaponDefs.size()) {
 		return 0;
 	}
 
@@ -2112,7 +2162,13 @@ int LuaSyncedCtrl::AddUnitImpulse(lua_State* L)
 	const float3 impulse(Clamp(luaL_checkfloat(L, 2), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
 	                     Clamp(luaL_checkfloat(L, 3), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
 	                     Clamp(luaL_checkfloat(L, 4), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE));
-	unit->AddImpulse(impulse);
+
+	if (lua_isnumber(L, 5)) {
+		unit->StoreImpulse(impulse, lua_tonumber(L, 5));
+	} else {
+		unit->StoreImpulse(impulse);
+	}
+
 	return 0;
 }
 
@@ -2211,12 +2267,11 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
-	CBuilding* building = dynamic_cast<CBuilding*>(unit);
-	if (building)
-		groundDecals->ForceRemoveBuilding(building);
+
+	groundDecals->ForceRemoveSolidObject(unit);
 	return 0;
 }
 
@@ -2248,6 +2303,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	CheckAllowGameChanges(L);
 
 	const FeatureDef* featureDef = NULL;
+
 	if (lua_israwstring(L, 1)) {
 		featureDef = featureHandler->GetFeatureDef(lua_tostring(L, 1));
 	} else if (lua_israwnumber(L, 1)) {
@@ -2294,13 +2350,27 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
-	CFeature* feature = new CFeature();
-	feature->Initialize(pos, featureDef, heading, facing, team, allyTeam, NULL);
+	FeatureLoadParams params;
+	params.featureDef = featureDef;
+	params.unitDef    = NULL;
+	params.pos        = pos;
+	params.speed      = ZeroVector;
+	params.featureID  = luaL_optint(L, 7, -1);
+	params.teamID     = team;
+	params.allyTeamID = allyTeam;
+	params.heading    = heading,
+	params.facing     = facing,
+	params.smokeTime  = 0; // smokeTime
+
+	CFeature* feature = featureHandler->LoadFeature(params);
 	inCreateFeature = false;
 
-	lua_pushnumber(L, feature->id);
+	if (feature != NULL) {
+		lua_pushnumber(L, feature->id);
+		return 1;
+	}
 
-	return 1;
+	return 0;
 }
 
 
@@ -2386,7 +2456,9 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
 	const bool snap(luaL_optboolean(L, 5, true));
 
-	feature->ForcedMove(pos, snap);
+	feature->ForcedMove(pos);
+	feature->UpdateFinalHeight(snap);
+
 	return 0;
 }
 
@@ -2400,8 +2472,8 @@ int LuaSyncedCtrl::SetFeatureDirection(lua_State* L)
 	float3 dir(luaL_checkfloat(L, 2),
 	           luaL_checkfloat(L, 3),
 	           luaL_checkfloat(L, 4));
-	dir.Normalize();
-	feature->ForcedSpin(dir);
+
+	feature->ForcedSpin(dir.Normalize());
 	return 0;
 }
 
@@ -2524,8 +2596,7 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	feature->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
-
+	feature->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
 	return 0;
 }
 
@@ -2968,8 +3039,7 @@ int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			const int index = (z * gs->mapxp1) + x;
-			readmap->SetHeight(index, height);
+			readmap->SetHeight((z * gs->mapxp1) + x, height);
 		}
 	}
 
@@ -2983,14 +3053,15 @@ int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 	if (mapDamage->disabled) {
 		return 0;
 	}
+
 	float height;
 	int x1, x2, z1, z2;
+
 	ParseMapParams(L, __FUNCTION__, height, x1, z1, x2, z2);
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			const int index = (z * gs->mapxp1) + x;
-			readmap->AddHeight(index, height);
+			readmap->AddHeight((z * gs->mapxp1) + x, height);
 		}
 	}
 
@@ -3353,7 +3424,7 @@ int LuaSyncedCtrl::SetMapSquareTerrainType(lua_State* L)
 	const int ntt = luaL_checkint(L, 3);
 
 	readmap->GetTypeMapSynced()[tz * gs->hmapx + tx] = std::max(0, std::min(ntt, (CMapInfo::NUM_TERRAIN_TYPES - 1)));
-	pathManager->TerrainChange(hx, hz,  hx + 1, hz + 1);
+	pathManager->TerrainChange(hx, hz,  hx + 1, hz + 1,  TERRAINCHANGE_SQUARE_TYPEMAP_INDEX);
 
 	lua_pushnumber(L, ott);
 	return 1;
@@ -3371,10 +3442,19 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 
 	CMapInfo::TerrainType* tt = const_cast<CMapInfo::TerrainType*>(&mapInfo->terrainTypes[tti]);
 
+	const int checksumOld = HsiehHash(tt, sizeof(CMapInfo::TerrainType), 0);
+
 	if (args >= 2 && lua_isnumber(L, 2)) { tt->tankSpeed  = lua_tofloat(L, 2); }
 	if (args >= 3 && lua_isnumber(L, 3)) { tt->kbotSpeed  = lua_tofloat(L, 3); }
 	if (args >= 4 && lua_isnumber(L, 4)) { tt->hoverSpeed = lua_tofloat(L, 4); }
 	if (args >= 5 && lua_isnumber(L, 5)) { tt->shipSpeed  = lua_tofloat(L, 5); }
+
+	const int checksumNew = HsiehHash(tt, sizeof(CMapInfo::TerrainType), 0);
+	if (checksumOld == checksumNew) {
+		// no change, no need to repath
+		lua_pushboolean(L, true);
+		return 1;
+	}
 
 	/*
 	if (!mapDamage->disabled) {
@@ -3393,7 +3473,7 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 	for (int tx = 0; tx < gs->hmapx; tx++) {
 		for (int tz = 0; tz < gs->hmapy; tz++) {
 			if (typeMap[tz * gs->hmapx + tx] == tti) {
-				pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1);
+				pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1,  TERRAINCHANGE_TYPEMAP_SPEED_VALUES);
 			}
 		}
 	}
@@ -3452,7 +3532,7 @@ int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
 	if (!lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetUnitToFeature()");
 	}
-	uh->morphUnitToFeature = lua_toboolean(L, 1);
+	CUnit::SetSpawnFeature(lua_toboolean(L, 1));
 	return 0;
 }
 

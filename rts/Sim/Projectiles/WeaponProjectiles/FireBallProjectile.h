@@ -5,6 +5,7 @@
 
 #include "WeaponProjectile.h"
 #include <deque>
+#include "lib/gml/gmlcnf.h"
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 #define SPARK_QUEUE gmlCircularQueue<CFireBallProjectile::Spark,32>
@@ -17,8 +18,7 @@ class CFireBallProjectile : public CWeaponProjectile
 	CR_DECLARE(CFireBallProjectile);
 	CR_DECLARE_SUB(Spark);
 public:
-	CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner,
-			CUnit *target, const float3 &targetPos, const WeaponDef* weaponDef);
+	CFireBallProjectile(const ProjectileParams& params);
 	~CFireBallProjectile();
 
 	void Draw();

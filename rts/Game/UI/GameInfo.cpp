@@ -1,8 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include "System/mmgr.h"
-
 #include "GameInfo.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
@@ -49,7 +47,7 @@ bool CGameInfo::IsActive()
 }
 
 
-CGameInfo::CGameInfo(void)
+CGameInfo::CGameInfo()
 {
 	box.x1=0.5f;
 	box.y1=0.5f;
@@ -57,7 +55,7 @@ CGameInfo::CGameInfo(void)
 	box.y2=0.5f;
 }
 
-CGameInfo::~CGameInfo(void)
+CGameInfo::~CGameInfo()
 {
 	instance = NULL;
 }
@@ -172,16 +170,17 @@ void CGameInfo::Draw()
 	labels.push_back("Spring Version:");
 	values.push_back(SpringVersion::GetFull());
 
-#ifdef USE_GML
-	labels.push_back("MT Threads:");
-	values.push_back(IntToString(GML::ThreadCount()));
-#endif
+	if (GML::Enabled()) {
+		labels.push_back("MT Threads:");
+		values.push_back(IntToString(GML::ThreadCount()));
+	}
 
 	labels.push_back("Game Speed:");
 	values.push_back(gs->speedFactor);
 
 	labels.push_back("Gravity:");
-	values.push_back(-(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED));
+	sprintf(buf, "%.2f (%.2f e/f^2)", -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED), -mapInfo->map.gravity);
+	values.push_back(buf);
 
 	labels.push_back("Tidal:");
 	values.push_back(mapInfo->map.tidalStrength);

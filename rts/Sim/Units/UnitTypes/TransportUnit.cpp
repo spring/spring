@@ -4,8 +4,7 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
-#include "Rendering/GroundDecalHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Units/Scripts/CobInstance.h"
@@ -21,7 +20,6 @@
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CTransportUnit, CUnit, );
 
@@ -59,28 +57,27 @@ void CTransportUnit::Update()
 	for (std::list<TransportedUnit>::iterator ti = transportedUnits.begin(); ti != transportedUnits.end(); ++ti) {
 		CUnit* transportee = ti->unit;
 
-		float3 relPiecePos;
-		float3 absPiecePos;
+		transportee->mapSquare = mapSquare;
+
+		// by default, "hide" the transportee far underneath terrain
+		// FIXME: this is stupid, just set noDraw and disable coldet
+		float3 relPiecePos = UpVector * -10000.0f;
+		float3 absPiecePos = pos + relPiecePos;
 
 		if (ti->piece >= 0) {
 			relPiecePos = script->GetPiecePos(ti->piece);
-		} else {
-			relPiecePos = float3(0.0f, -1000.0f, 0.0f);
+			absPiecePos = pos +
+				(frontdir * relPiecePos.z) +
+				(updir    * relPiecePos.y) +
+				(rightdir * relPiecePos.x);
 		}
-
-		absPiecePos = pos +
-			(frontdir * relPiecePos.z) +
-			(updir    * relPiecePos.y) +
-			(rightdir * relPiecePos.x);
-
-		transportee->mapSquare = mapSquare;
 
 		if (unitDef->holdSteady) {
 			// slave transportee orientation to piece
 			if (ti->piece >= 0) {
 				const CMatrix44f& transMat = GetTransformMatrix(true);
 				const CMatrix44f& pieceMat = script->GetPieceMatrix(ti->piece);
-				const CMatrix44f slaveMat = pieceMat * transMat;
+				const CMatrix44f  slaveMat = pieceMat * transMat;
 
 				transportee->SetDirVectors(slaveMat);
 			}
@@ -97,7 +94,7 @@ void CTransportUnit::Update()
 		transportee->SetHeadingFromDirection();
 
 		// see ::AttachUnit
-		if (transportee->stunned) {
+		if (transportee->IsStunned()) {
 			qf->MovedUnit(transportee);
 		}
 	}
@@ -145,73 +142,60 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			if (transportee->isDead)
 				continue;
 
-			const float gh = ground->GetHeightReal(transportee->pos.x, transportee->pos.z);
-
 			transportee->transporter = NULL;
 			transportee->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
 
-			// prevent a position teleport on the next movetype update if
-			// the transport died in a place that the unit being carried
-			// could not get to on its own
-			if (!transportee->pos.IsInBounds()) {
-				transportee->KillUnit(false, false, NULL, false);
-				continue;
-			} else {
-				// immobile units can still be transported
-				// via script trickery, guard against this
-				if (!transportee->unitDef->IsAllowedTerrainHeight(gh)) {
-					transportee->KillUnit(false, false, NULL, false);
-					continue;
-				}
-			}
-
 			if (!unitDef->releaseHeld) {
 				if (!selfDestruct) {
-					// we don't want it to leave a corpse
+					// we don't want transportees to leave a corpse
 					transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED);
 				}
 
 				transportee->KillUnit(selfDestruct, reclaimed, attacker);
 			} else {
-				// place unit near the place of death of the transport
-				// if it's a ground transport and uses a piece-in-ground method
-				// to hide units
-				if (transportee->pos.y < gh) {
-					const float k = (transportee->radius + radius) * std::max(unitDef->unloadSpread, 1.0f);
+				// NOTE: game's responsibility to deal with edge-cases now
+				transportee->Move3D(transportee->pos.cClampInBounds(), false);
+
+				// if this transporter uses the piece-underneath-ground
+				// method to "hide" transportees, place transportee near
+				// the transporter's place of death
+				if (transportee->pos.y < ground->GetHeightReal(transportee->pos.x, transportee->pos.z)) {
+					const float r1 = transportee->radius + radius;
+					const float r2 = r1 * std::max(unitDef->unloadSpread, 1.0f);
 
 					// try to unload in a presently unoccupied spot
-					// unload on a wreck if suitable position not found
+					// (if no such spot, unload on transporter wreck)
 					for (int i = 0; i < 10; ++i) {
 						float3 pos = transportee->pos;
-						pos.x += (gs->randFloat() * 2 * k - k);
-						pos.z += (gs->randFloat() * 2 * k - k);
-						pos.y = ground->GetHeightReal(transportee->pos.x, transportee->pos.z);
+						pos.x += (gs->randFloat() * 2.0f * r2 - r2);
+						pos.z += (gs->randFloat() * 2.0f * r2 - r2);
+						pos.y = ground->GetHeightReal(pos.x, pos.z);
 
-						if (qf->GetUnitsExact(pos, transportee->radius + 2).empty()) {
+						if (!pos.IsInBounds())
+							continue;
+
+						if (qf->GetUnitsExact(pos, transportee->radius + 2.0f).empty()) {
 							transportee->Move3D(pos, false);
 							break;
 						}
 					}
-				} else if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(transportee->moveType)) {
-					mt->StartFlying();
+				} else {
+					if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(transportee->moveType)) {
+						mt->StartFlying();
+					}
 				}
 
 				transportee->moveType->SlowUpdate();
 				transportee->moveType->LeaveTransport();
 
-				// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
+				// issue a move order so that units dropped from flying
+				// transports won't try to return to their pick-up spot
 				if (unitDef->canfly && transportee->unitDef->canmove) {
-					Command c(CMD_MOVE, float3(transportee->pos.x, ground->GetHeightAboveWater(transportee->pos.x, transportee->pos.z), transportee->pos.z));
-					transportee->commandAI->GiveCommand(c);
+					transportee->commandAI->GiveCommand(Command(CMD_MOVE, transportee->pos));
 				}
 
-				transportee->stunned = (transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
+				transportee->SetStunned(transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
 				transportee->speed = speed * (0.5f + 0.5f * gs->randFloat());
-
-				if (CBuilding* building = dynamic_cast<CBuilding*>(transportee)) {
-					// this building may end up in a strange position, so kill it
-					building->KillUnit(selfDestruct, reclaimed, attacker);
-				}
 
 				eventHandler.UnitUnloaded(transportee, this);
 			}
@@ -315,10 +299,10 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->AddDeathDependence(this, DEPENDENCE_TRANSPORTER);
 
 	unit->transporter = this;
-	unit->toBeTransported = false;
-	unit->stunned = !unitDef->isFirePlatform;
+	unit->loadingTransportId = -1;
+	unit->SetStunned(!unitDef->isFirePlatform);
 
-	if (unit->stunned) {
+	if (unit->IsStunned()) {
 		// make sure unit does not fire etc in transport
 		selectedUnits.RemoveUnit(unit);
 	}
@@ -338,9 +322,8 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 
 	unit->los = NULL;
 
-	if (CBuilding* building = dynamic_cast<CBuilding*>(unit)) {
+	if (dynamic_cast<CBuilding*>(unit) != NULL) {
 		unitLoader->RestoreGround(unit);
-		groundDecals->RemoveBuilding(building, NULL);
 	}
 
 	if (dynamic_cast<CHoverAirMoveType*>(moveType)) {
@@ -384,7 +367,7 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			}
 
 			// de-stun detaching units in case we are not a fire-platform
-			unit->stunned = (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
+			unit->SetStunned(unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
 
 			unit->moveType->SlowUpdate();
 			unit->moveType->LeaveTransport();
@@ -446,9 +429,10 @@ bool CTransportUnit::DetachUnitFromAir(CUnit* unit, const float3& pos)
 
 
 
-bool CTransportUnit::CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit) const {
+bool CTransportUnit::CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* loadingHeight) const {
 	bool canLoadUnload = false;
 	float loadHeight = GetLoadUnloadHeight(wantedPos, unit, &canLoadUnload);
+	if (loadingHeight) *loadingHeight = loadHeight;
 
 	// for a given unit, we can *potentially* load/unload it at <wantedPos> if
 	//     we are not a gunship-style transport, or
@@ -470,7 +454,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	float clampedHeight = wantedHeight;
 
 	const UnitDef* unitDef = unit->unitDef;
-	const MoveDef* moveDef = unitDef->moveDef;
+	const MoveDef* moveDef = unit->moveDef;
 
 	if (unit->transporter != NULL) {
 		// unit is being transported, set <clampedHeight> to
@@ -480,12 +464,12 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 
 		if (isAllowedHeight) {
 			if (moveDef != NULL) {
-				switch (moveDef->moveType) {
-					case MoveDef::Ship_Move: {
+				switch (moveDef->moveFamily) {
+					case MoveDef::Ship: {
 						wantedHeight = std::max(-unitDef->waterline, wantedHeight);
 						clampedHeight = wantedHeight;
 					} break;
-					case MoveDef::Hover_Move: {
+					case MoveDef::Hover: {
 						wantedHeight = std::max(0.0f, wantedHeight);
 						clampedHeight = wantedHeight;
 					} break;

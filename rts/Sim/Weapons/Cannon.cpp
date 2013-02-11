@@ -12,7 +12,6 @@
 #include "WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/FastMath.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CCannon, CWeapon, (NULL));
 
@@ -45,7 +44,7 @@ CCannon::CCannon(CUnit* owner)
 	maxPredict = 0.0f;
 }
 
-void CCannon::Init(void)
+void CCannon::Init()
 {
 	gravity = weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity);
 	highTrajectory = weaponDef->highTrajectory == 1;
@@ -64,7 +63,6 @@ void CCannon::UpdateRange(float val)
 {
 	range = val;
 	// initialize range factor
-	rangeFactor = 1;
 	rangeFactor = (float)range/GetRange2D(0);
 	// do not extend range if the modder specified speed too low
 	// for the projectile to reach specified range
@@ -99,13 +97,10 @@ void CCannon::Update()
 	CWeapon::Update();
 }
 
-bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
-{
-	if (!CWeapon::TryTarget(pos, userTarget, unit)) {
-		return false;
-	}
 
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
+bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+{
+	if (!weaponDef->waterweapon && TargetUnitOrPositionInUnderWater(pos, unit))
 		return false;
 
 	if (projectileSpeed == 0) {
@@ -113,7 +108,7 @@ bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	}
 
 	float3 dif(pos - weaponMuzzlePos);
-	float3 dir(GetWantedDir(dif));
+	float3 dir(GetWantedDir2(dif));
 
 	if (dir.SqLength() == 0) {
 		return false;
@@ -141,24 +136,16 @@ bool CCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		((1.0f - owner->limExperience * weaponDef->ownerExpAccWeight) * 0.9f);
 	const float modFlatLength = flatLength - 30.0f;
 
-	if (avoidFriendly && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
-		dir.y, quadratic, spread, 3, owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
-		dir.y, quadratic, spread, 3, owner->allyteam, false, true, false, owner )) {
-		return false;
-	}
-	if (avoidFeature && TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
-		dir.y, quadratic, spread, 3, owner->allyteam, false, false, true, owner)) {
+	//FIXME add a forcedUserTarget (a forced fire mode enabled with meta key or something) and skip the test below then
+	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, modFlatLength,
+		dir.y, quadratic, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
 
 	return true;
 }
 
-
-void CCannon::FireImpl(void)
+void CCannon::FireImpl()
 {
 	float3 diff = targetPos - weaponMuzzlePos;
 	float3 dir = (diff.SqLength() > 4.0) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
@@ -182,11 +169,15 @@ void CCannon::FireImpl(void)
 		ttl=predict*2;
 	}
 
-	new CExplosiveProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		weaponDef, ttl, damageAreaOfEffect, gravity);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos;
+	params.speed = dir * projectileSpeed;
+	params.ttl = ttl;
+
+	new CExplosiveProjectile(params, damageAreaOfEffect, gravity);
 }
 
-void CCannon::SlowUpdate(void)
+void CCannon::SlowUpdate()
 {
 	if(weaponDef->highTrajectory == 2 && owner->useHighTrajectory!=highTrajectory){
 		highTrajectory=owner->useHighTrajectory;
@@ -222,10 +213,18 @@ float3 CCannon::GetWantedDir(const float3& diff)
 		return lastDir;
 	}
 
+	const float3 dir = GetWantedDir2(diff);
+	lastDiff = diff;
+	lastDir  = dir;
+	return dir;
+}
+
+float3 CCannon::GetWantedDir2(const float3& diff) const
+{
 	const float Dsq = diff.SqLength();
 	const float DFsq = diff.SqLength2D();
-	const float& g = gravity;
-	const float& v = projectileSpeed;
+	const float g = gravity;
+	const float v = projectileSpeed;
 	const float dy  = diff.y;
 	const float dxz = math::sqrt(DFsq);
 	float Vxz = 0.0f;
@@ -260,9 +259,6 @@ float3 CCannon::GetWantedDir(const float3& diff)
 		dir *= Vxz;
 		dir.y = Vy;
 		dir.SafeNormalize();
-
-		lastDiff = diff;
-		lastDir = dir;
 	}
 
 	return dir;

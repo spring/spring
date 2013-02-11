@@ -13,7 +13,7 @@
  * that does not remain synced.
  */
 class CGlobalRendering {
-	CR_DECLARE(CGlobalRendering);
+	CR_DECLARE_STRUCT(CGlobalRendering);
 
 	CGlobalRendering();
 
@@ -43,7 +43,7 @@ public:
 	/// the starting time in tick for last draw frame
 	spring_time lastFrameStart;
 
-	/// 0.001f * GAME_SPEED * gs->speedFactor, used for rendering
+	/// 0.001f * gu->simFPS, used for rendering
 	float weightedSpeedFactor;
 
 	/// the draw frame number (never 0)
@@ -244,6 +244,11 @@ public:
 	* @brief near z-plane distance in elmos
 	*/
 	static const float NEAR_PLANE;
+
+
+	/// magic constant to reduce overblending on SMF maps
+	/// (scales the MapInfo::light_t::ground*Color values)
+	static const float SMF_INTENSITY_MULT;
 };
 
 extern CGlobalRendering* globalRendering;

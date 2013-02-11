@@ -16,9 +16,6 @@ Else   (MINIZIP_FOUND)
 			"zip"
 			"ioapi"
 		)
-	IF    (WIN32)
-		LIST(APPEND miniZipSources "iowin32")
-	ENDIF (WIN32)
 
 	FIND_PACKAGE(ZLIB REQUIRED)
 

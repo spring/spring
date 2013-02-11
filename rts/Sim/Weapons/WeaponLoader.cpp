@@ -18,6 +18,7 @@
 #include "StarburstLauncher.h"
 #include "TorpedoLauncher.h"
 
+#include "Game/TraceRay.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -172,14 +173,16 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	}
 
 	weapon->fuelUsage = defWeapon->fuelUsage;
-	weapon->avoidFriendly = weaponDef->avoidFriendly;
-	weapon->avoidFeature = weaponDef->avoidFeature;
-	weapon->avoidNeutral = weaponDef->avoidNeutral;
 	weapon->targetBorder = weaponDef->targetBorder;
 	weapon->cylinderTargeting = weaponDef->cylinderTargeting;
 	weapon->minIntensity = weaponDef->minIntensity;
 	weapon->heightBoostFactor = weaponDef->heightBoostFactor;
 	weapon->collisionFlags = weaponDef->collisionFlags;
+
+	if (!weaponDef->avoidNeutral)  weapon->avoidFlags |= Collision::NONEUTRALS;
+	if (!weaponDef->avoidFriendly) weapon->avoidFlags |= Collision::NOFRIENDLIES;
+	if (!weaponDef->avoidFeature)  weapon->avoidFlags |= Collision::NOFEATURES;
+	if (!weaponDef->avoidGround)   weapon->avoidFlags |= Collision::NOGROUND;
 
 	weapon->SetWeaponNum(owner->weapons.size());
 	weapon->Init();

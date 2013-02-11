@@ -1,25 +1,48 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "MoveMath.h"
-#include "Map/ReadMap.h"
+
 #include "Map/MapInfo.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
+#include "Sim/Objects/SolidObject.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "System/mmgr.h"
 
-CR_BIND_INTERFACE(CMoveMath);
+bool CMoveMath::noHoverWaterMove = false;
+float CMoveMath::waterDamageCost = 0.0f;
 
-/* Converts a point-request into a square-positional request. */
-float CMoveMath::yLevel(const float3& pos) const
+
+
+float CMoveMath::yLevel(const MoveDef& moveDef, int xSqr, int zSqr)
 {
-	return yLevel((pos.x / SQUARE_SIZE), (pos.z / SQUARE_SIZE));
+	switch (moveDef.moveFamily) {
+		case MoveDef::Tank: // fall-through
+		case MoveDef::KBot:  { return (readmap->GetCenterHeightMapSynced()[xSqr + zSqr * gs->mapx]);                 } break; // NOTE: why not just GetHeightReal too?
+		case MoveDef::Hover: { return (ground->GetHeightAboveWater(xSqr * SQUARE_SIZE, zSqr * SQUARE_SIZE) + 10.0f); } break;
+		case MoveDef::Ship:  { return (                                                                       0.0f); } break;
+	}
+
+	return 0.0f;
+}
+
+float CMoveMath::yLevel(const MoveDef& moveDef, const float3& pos)
+{
+	switch (moveDef.moveFamily) {
+		case MoveDef::Tank: // fall-through
+		case MoveDef::KBot:  { return (ground->GetHeightReal      (pos.x, pos.z) + 10.0f); } break;
+		case MoveDef::Hover: { return (ground->GetHeightAboveWater(pos.x, pos.z) + 10.0f); } break;
+		case MoveDef::Ship:  { return (                                             0.0f); } break;
+	}
+
+	return 0.0f;
 }
 
 
+
 /* calculate the local speed-modifier for this MoveDef */
-float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare) const
+float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare)
 {
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
 		return 0.0f;
@@ -34,17 +57,17 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
 	switch (moveDef.moveFamily) {
-		case MoveDef::Tank:  { return (SpeedMod(moveDef, height, slope) * tt.tankSpeed ); } break;
-		case MoveDef::KBot:  { return (SpeedMod(moveDef, height, slope) * tt.kbotSpeed ); } break;
-		case MoveDef::Hover: { return (SpeedMod(moveDef, height, slope) * tt.hoverSpeed); } break;
-		case MoveDef::Ship:  { return (SpeedMod(moveDef, height, slope) * tt.shipSpeed ); } break;
+		case MoveDef::Tank:  { return (GroundSpeedMod(moveDef, height, slope) * tt.tankSpeed ); } break;
+		case MoveDef::KBot:  { return (GroundSpeedMod(moveDef, height, slope) * tt.kbotSpeed ); } break;
+		case MoveDef::Hover: { return ( HoverSpeedMod(moveDef, height, slope) * tt.hoverSpeed); } break;
+		case MoveDef::Ship:  { return (  ShipSpeedMod(moveDef, height, slope) * tt.shipSpeed ); } break;
 		default: {} break;
 	}
 
 	return 0.0f;
 }
 
-float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare, const float3& moveDir) const
+float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare, const float3& moveDir)
 {
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
 		return 0.0f;
@@ -53,22 +76,35 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 	const int square = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
 	const int squareTerrType = readmap->GetTypeMapSynced()[square];
 
-	const float height  = readmap->GetMIPHeightMapSynced(1)[square];
-	const float slope   = readmap->GetSlopeMapSynced()[square];
+	const float height = readmap->GetMIPHeightMapSynced(1)[square];
+	const float slope  = readmap->GetSlopeMapSynced()[square];
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
-	float3 flatNorm = readmap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
-		flatNorm.y = 0.0f;
-		flatNorm.SafeNormalize();
+	#if 1
+	// with a flat normal, only consider the normalized xz-direction
+	// (the actual steepness is represented by the "slope" variable)
+	float3 sqrNormal = readmap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
+		sqrNormal.y = 0.0f;
+		sqrNormal.SafeNormalize();
+	#else
+	const float3& sqrNormal = readmap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
+	#endif
 
-	const float moveSlope = -moveDir.dot(flatNorm);
+	// note: moveDir is (or should be) a unit vector in the xz-plane, y=0
+	// scale is negative for "downhill" slopes, positive for "uphill" ones
+	const float dirSlopeMod = -moveDir.dot(sqrNormal);
+	//
+	// treat every move-direction as either fully uphill or fully downhill
+	// (otherwise units are still able to move orthogonally across vertical
+	// faces --> fixed)
+	//   const float dirSlopeMod = (moveDir.dot(sqrNormal) < 0.0f) * 2.0f - 1.0f;
 
 	switch (moveDef.moveFamily) {
-		case MoveDef::Tank:  { return (SpeedMod(moveDef, height, slope, moveSlope) * tt.tankSpeed ); } break;
-		case MoveDef::KBot:  { return (SpeedMod(moveDef, height, slope, moveSlope) * tt.kbotSpeed ); } break;
-		case MoveDef::Hover: { return (SpeedMod(moveDef, height, slope, moveSlope) * tt.hoverSpeed); } break;
-		case MoveDef::Ship:  { return (SpeedMod(moveDef, height, slope, moveSlope) * tt.shipSpeed ); } break;
+		case MoveDef::Tank:  { return (GroundSpeedMod(moveDef, height, slope, dirSlopeMod) * tt.tankSpeed ); } break;
+		case MoveDef::KBot:  { return (GroundSpeedMod(moveDef, height, slope, dirSlopeMod) * tt.kbotSpeed ); } break;
+		case MoveDef::Hover: { return ( HoverSpeedMod(moveDef, height, slope, dirSlopeMod) * tt.hoverSpeed); } break;
+		case MoveDef::Ship:  { return (  ShipSpeedMod(moveDef, height, slope, dirSlopeMod) * tt.shipSpeed ); } break;
 		default: {} break;
 	}
 
@@ -76,32 +112,31 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 }
 
 /* Check if a given square-position is accessable by the MoveDef footprint. */
-CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare) const
+CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
 	BlockType ret = BLOCK_NONE;
 	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
 	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
 	const int xstep = 2, zstep = 2;
 	// (footprints are point-symmetric around <xSquare, zSquare>)
-	for (int x = xmin; x <= xmax; x += xstep) {
-		for (int z = zmin; z <= zmax; z += zstep) {
-			ret |= SquareIsBlocked(moveDef, x, z);
+	for (int z = zmin; z <= zmax; z += zstep) {
+		for (int x = xmin; x <= xmax; x += xstep) {
+			ret |= SquareIsBlocked(moveDef, x, z, collider);
 		}
 	}
-
 	return ret;
 }
 
 /* Optimized function to check if a given square-position has a structure block. */
-bool CMoveMath::IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSquare) const
+bool CMoveMath::IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
 	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
 	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
 	const int xstep = 2, zstep = 2;
 	// (footprints are point-symmetric around <xSquare, zSquare>)
-	for (int x = xmin; x <= xmax; x += xstep) {
-		for (int z = zmin; z <= zmax; z += zstep) {
-			if (SquareIsBlocked(moveDef, x, z) & BLOCK_STRUCTURE)
+	for (int z = zmin; z <= zmax; z += zstep) {
+		for (int x = xmin; x <= xmax; x += xstep) {
+			if (SquareIsBlocked(moveDef, x, z, collider) & BLOCK_STRUCTURE)
 				return true;
 		}
 	}
@@ -111,14 +146,14 @@ bool CMoveMath::IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSqu
 
 /* Optimized function to check if the square at the given position has a structure block, 
    provided that the square at (xSquare - 1, zSquare) did not have a structure block */
-bool CMoveMath::IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int zSquare) const
+bool CMoveMath::IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
 	const int                                  xmax = xSquare + moveDef.xsizeh;
 	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
 	const int zstep = 2;
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int z = zmin; z <= zmax; z += zstep) {
-		if (SquareIsBlocked(moveDef, xmax, z) & BLOCK_STRUCTURE)
+		if (SquareIsBlocked(moveDef, xmax, z, collider) & BLOCK_STRUCTURE)
 			return true;
 	}
 
@@ -127,14 +162,14 @@ bool CMoveMath::IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int 
 
 /* Optimized function to check if the square at the given position has a structure block, 
    provided that the square at (xSquare, zSquare - 1) did not have a structure block */
-bool CMoveMath::IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int zSquare) const
+bool CMoveMath::IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
 	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
 	const int                                  zmax = zSquare + moveDef.zsizeh;
 	const int xstep = 2;
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int x = xmin; x <= xmax; x += xstep) {
-		if (SquareIsBlocked(moveDef, x, zmax) & BLOCK_STRUCTURE)
+		if (SquareIsBlocked(moveDef, x, zmax, collider) & BLOCK_STRUCTURE)
 			return true;
 	}
 
@@ -158,51 +193,20 @@ bool CMoveMath::CrushResistant(const MoveDef& colliderMD, const CSolidObject* co
  * check if an object is NON-blocking for a given MoveDef
  * (ex. a submarine's moveDef vs. a surface ship object)
  */
-bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* collidee)
+bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* collidee, const CSolidObject* collider)
 {
-	const CSolidObject* collider = colliderMD.tempOwner;
-
-	if (!collidee->blocking)
+	if (collider == collidee)
 		return true;
 
-	if (collider == collidee)
+	if (collider != NULL)
+		return IsNonBlocking(collidee, collider->moveDef, collider->pos, collider->height);
+
+	if (!collidee->blocking)
 		return true;
 
 	// if obstacle is out of map bounds, it cannot block us
 	if (!collidee->pos.IsInBounds())
 		return true;
-
-	// if unit is restricted to land with height > 0,
-	// it can not be blocked by underwater obstacles
-	if (colliderMD.terrainClass == MoveDef::Land)
-		return (collidee->isUnderWater);
-
-	// some objects appear to have negative model heights
-	// (the model parsers allow it for some reason), take
-	// absolute values to prevent them from being regarded
-	// as non-blocking
-	const float colliderMdlHgt = (collider != NULL)? math::fabs(collider->height): 1e6;
-	const float collideeMdlHgt =                     math::fabs(collidee->height);
-	const float colliderGndAlt = (collider != NULL)? collider->pos.y: 1e6f;
-	const float collideeGndAlt =                     collidee->pos.y;
-
-	if (collider != NULL) {
-		// simple case: if unit and obstacle have non-zero
-		// vertical separation as measured by their (model)
-		// heights, unit can always pass obstacle
-		//
-		// note: in many cases separation is not sufficient
-		// even when it logically should be (submarines vs.
-		// floating DT in shallow water eg.)
-		// note: if unit and obstacle are on a steep slope,
-		// this can return true even when their horizontal
-		// separation points to a collision
-		if (math::fabs(colliderGndAlt - collideeGndAlt) <= 1.0f) return false;
-		if ((colliderGndAlt + colliderMdlHgt) < collideeGndAlt) return true;
-		if ((collideeGndAlt + collideeMdlHgt) < colliderGndAlt) return true;
-
-		return false;
-	}
 
 	// (code below is only reachable from stand-alone PE invocations)
 	// remaining conditions under which obstacle does NOT block unit
@@ -223,6 +227,12 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	// owner would need to be accessible (but the path-estimator
 	// defs aren't tied to any)
 	//
+
+	const float colliderMdlHgt = 1e6;
+	const float collideeMdlHgt = math::fabs(collidee->height);
+	const float colliderGndAlt = 1e6f;
+	const float collideeGndAlt = collidee->pos.y;
+
 	if (colliderMD.followGround) {
 		const float collideeMinHgt = collideeGndAlt - collideeMdlHgt;
 		const float colliderMaxHgt = ground->GetHeightReal(collidee->pos.x, collidee->pos.z) + (SQUARE_SIZE >> 1);
@@ -245,9 +255,40 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 }
 
 
+bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const MoveDef* colliderMD, const float3 colliderPos, const float colliderHeight)
+{
+	if (!collidee->blocking)
+		return true;
+
+	// if obstacle is out of map bounds, it cannot block us
+	if (!collidee->pos.IsInBounds())
+		return true;
+
+	const float colliderMdlHgt = colliderHeight;
+	const float collideeMdlHgt = math::fabs(collidee->height);
+	const float colliderGndAlt = colliderPos.y;
+	const float collideeGndAlt = collidee->pos.y;
+
+	// simple case: if unit and obstacle have non-zero
+	// vertical separation as measured by their (model)
+	// heights, unit can always pass obstacle
+	//
+	// note: in many cases separation is not sufficient
+	// even when it logically should be (submarines vs.
+	// floating DT in shallow water eg.)
+	// note: if unit and obstacle are on a steep slope,
+	// this can return true even when their horizontal
+	// separation points to a collision
+	if (math::fabs(colliderGndAlt - collideeGndAlt) <= 1.0f) return false;
+	if ((colliderGndAlt + colliderMdlHgt) < collideeGndAlt) return true;
+	if ((collideeGndAlt + collideeMdlHgt) < colliderGndAlt) return true;
+
+	return false;
+}
+
 
 /* Check if a single square is accessable (for any object which uses the given MoveDef). */
-CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare)
+CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
 	// bounds-check
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
@@ -258,9 +299,9 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 	const BlockingMapCell& c = groundBlockingObjectMap->GetCell(xSquare + zSquare * gs->mapx);
 
 	for (BlockingMapCellIt it = c.begin(); it != c.end(); ++it) {
-		CSolidObject* obstacle = it->second;
+		const CSolidObject* obstacle = it->second;
 
-		if (IsNonBlocking(moveDef, obstacle)) {
+		if (IsNonBlocking(moveDef, obstacle, collider)) {
 			continue;
 		}
 
@@ -269,7 +310,7 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 			if (obstacle->isMoving) {
 				r |= BLOCK_MOVING;
 			} else {
-				CUnit& u = *static_cast<CUnit*>(obstacle);
+				const CUnit& u = *static_cast<const CUnit*>(obstacle);
 				if (!u.beingBuilt && u.commandAI->commandQue.empty()) {
 					// idling mobile unit
 					r |= BLOCK_MOBILE;

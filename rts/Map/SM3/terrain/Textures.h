@@ -3,6 +3,9 @@
 #ifndef TERRAIN_TEXTURES_H
 #define TERRAIN_TEXTURES_H
 
+#include <string>
+#include "Rendering/GL/myGL.h"
+
 class TdfParser;
 class CBitmap;
 

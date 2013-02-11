@@ -25,14 +25,9 @@ DamageArray::DamageArray(float damage)
 	, craterMult(1.0f)
 	, craterBoost(0.0f)
 {
-	if (damageArrayHandler != NULL) {
-		damages.resize(damageArrayHandler->GetNumTypes(), damage);
-		assert(!damages.empty());
-	} else {
-		// default-damage only (never reached?)
-		damages.resize(1, damage);
-	}
+	SetDefaultDamage(damage);
 }
+
 
 DamageArray& DamageArray::operator = (const DamageArray& other) {
 	paralyzeDamageTime = other.paralyzeDamageTime;
@@ -53,6 +48,18 @@ DamageArray DamageArray::operator * (float damageMult) const {
 	return da;
 }
 
+
+void DamageArray::SetDefaultDamage(float damage)
+{
+	damages.clear();
+	if (damageArrayHandler != NULL) {
+		damages.resize(damageArrayHandler->GetNumTypes(), damage);
+		assert(!damages.empty());
+	} else {
+		// default-damage only (never reached?)
+		damages.resize(1, damage);
+	}
+}
 
 
 void DamageArray::creg_Serialize(creg::ISerializer& s)

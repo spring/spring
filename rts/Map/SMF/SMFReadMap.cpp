@@ -18,7 +18,6 @@
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/OpenMP_cond.h"
-#include "System/mmgr.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -122,8 +121,8 @@ void CSMFReadMap::LoadHeightMap()
 	cornerHeightMapUnsynced.resize((width + 1) * (height + 1));
 	#endif
 
-	heightMapSynced   = &cornerHeightMapSynced;
-	heightMapUnsynced = &cornerHeightMapUnsynced;
+	heightMapSyncedPtr   = &cornerHeightMapSynced;
+	heightMapUnsyncedPtr = &cornerHeightMapUnsynced;
 
 	const float minH = mapInfo->smf.minHeightOverride ? mapInfo->smf.minHeight : header.minHeight;
 	const float maxH = mapInfo->smf.maxHeightOverride ? mapInfo->smf.maxHeight : header.maxHeight;
@@ -165,8 +164,8 @@ void CSMFReadMap::InitializeWaterHeightColors()
 	for (int a = 0; a < 1024; ++a) {
 		for (int b = 0; b < 3; ++b) {
 			const float absorbColor = mapInfo->water.baseColor[b] - mapInfo->water.absorb[b] * a;
-			const float clampedColor = max(mapInfo->water.minColor[b], absorbColor);
-			waterHeightColors[a * 4 + b] = clampedColor * 210;
+			const float clampedColor = std::max(mapInfo->water.minColor[b], absorbColor);
+			waterHeightColors[a * 4 + b] = std::min(255.0f, clampedColor * 255.0f);
 		}
 		waterHeightColors[a * 4 + 3] = 1;
 	}
@@ -365,6 +364,7 @@ void CSMFReadMap::UpdateVertexNormals(const SRectangle& update)
 	const int maxz = std::min(update.y2 + 1, H - 1);
 
 	int z;
+	Threading::OMPCheck();
 	#pragma omp parallel for private(z)
 	for (z = minz; z <= maxz; z++) {
 		for (int x = minx; x <= maxx; x++) {
@@ -533,6 +533,7 @@ void CSMFReadMap::UpdateShadingTexture(const SRectangle& update)
 		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
 
 		int y;
+		Threading::OMPCheck();
 		#pragma omp parallel for private(y)
 		for (y = 0; y < ysize; ++y) {
 			const int idx1 = (y + y1) * gs->mapx + x1;
@@ -557,7 +558,7 @@ void CSMFReadMap::UpdateShadingTexture(const SRectangle& update)
 }
 
 
-const float CSMFReadMap::GetCenterHeightUnsynced(const int& x, const int& y) const
+const float CSMFReadMap::GetCenterHeightUnsynced(const int x, const int y) const
 {
 	static const float* hm = GetCornerHeightMapUnsynced();
 
@@ -581,21 +582,22 @@ void CSMFReadMap::UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) c
 
 		if (height < 0.0f) {
 			// Underwater
-			const int h = std::min((int)(-height), 1023); // waterHeightColors array just holds 1024 colors
-			float light = std::min((DiffuseSunCoeff(xi, yi) + 0.2f) * 2.0f, 1.0f);
+			const int clampedHeight = std::min((int)(-height), int(sizeof(waterHeightColors) / 4) - 1);
+			float lightIntensity = std::min((DiffuseSunCoeff(xi, yi) + 0.2f) * 2.0f, 1.0f);
 
 			if (height > -10.0f) {
 				const float wc = -height * 0.1f;
-				const float3 light3 = GetLightValue(xi, yi) * (1.0f - wc) * 255.0f;
-				light *= wc;
+				const float3 lightColor = GetLightValue(xi, yi) * (1.0f - wc) * 255.0f;
 
-				dst[i * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
-				dst[i * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
-				dst[i * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
+				lightIntensity *= wc;
+
+				dst[i * 4 + 0] = (unsigned char) (waterHeightColors[clampedHeight * 4 + 0] * lightIntensity + lightColor.x);
+				dst[i * 4 + 1] = (unsigned char) (waterHeightColors[clampedHeight * 4 + 1] * lightIntensity + lightColor.y);
+				dst[i * 4 + 2] = (unsigned char) (waterHeightColors[clampedHeight * 4 + 2] * lightIntensity + lightColor.z);
 			} else {
-				dst[i * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
-				dst[i * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
-				dst[i * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
+				dst[i * 4 + 0] = (unsigned char) (waterHeightColors[clampedHeight * 4 + 0] * lightIntensity);
+				dst[i * 4 + 1] = (unsigned char) (waterHeightColors[clampedHeight * 4 + 1] * lightIntensity);
+				dst[i * 4 + 2] = (unsigned char) (waterHeightColors[clampedHeight * 4 + 2] * lightIntensity);
 			}
 			dst[i * 4 + 3] = EncodeHeight(height);
 		} else {
@@ -610,7 +612,7 @@ void CSMFReadMap::UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) c
 }
 
 
-float CSMFReadMap::DiffuseSunCoeff(const int& x, const int& y) const
+float CSMFReadMap::DiffuseSunCoeff(const int x, const int y) const
 {
 	const float3& N = centerNormalsUnsynced[y * gs->mapx + x];
 	const float3& L = sky->GetLight()->GetLightDir();
@@ -618,17 +620,15 @@ float CSMFReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 }
 
 
-float3 CSMFReadMap::GetLightValue(const int& x, const int& y) const
+float3 CSMFReadMap::GetLightValue(const int x, const int y) const
 {
 	float3 light =
 		mapInfo->light.groundAmbientColor +
 		mapInfo->light.groundSunColor * DiffuseSunCoeff(x, y);
-	light *= (210.0f / 255.0f); // reduce overblending (also makes the picture less bright)
+	light *= CGlobalRendering::SMF_INTENSITY_MULT;
 
 	for (int a = 0; a < 3; ++a) {
-		if (light[a] > 1.0f) {
-			light[a] = 1.0f;
-		}
+		light[a] = std::min(light[a], 1.0f);
 	}
 
 	return light;
@@ -678,6 +678,7 @@ void CSMFReadMap::UpdateShadingTexture()
 	const int idx2 = std::min(idx1 + update_rate, pixels - 1);
 
 	int idx;
+	Threading::OMPCheck();
 	#pragma omp parallel for private(idx)
 	for (idx = idx1; idx <= idx2; idx += 1025) {
 		const int idx3 = std::min(idx2, idx + 1024);

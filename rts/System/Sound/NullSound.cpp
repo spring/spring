@@ -16,7 +16,7 @@ bool NullSound::HasSoundItem(const std::string& name) const {
 	return false;
 }
 
-size_t NullSound::GetSoundId(const std::string& name, bool hardFail) {
+size_t NullSound::GetSoundId(const std::string& name) {
 	return 0;
 }
 

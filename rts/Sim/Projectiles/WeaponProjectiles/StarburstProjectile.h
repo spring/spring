@@ -5,6 +5,7 @@
 
 #include "WeaponProjectile.h"
 #include <vector>
+#include "lib/gml/gmlcnf.h"
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 #define AGEMOD_VECTOR gmlCircularQueue<float, 64>
@@ -19,14 +20,11 @@ class CStarburstProjectile : public CWeaponProjectile
 	CR_DECLARE(CStarburstProjectile);
 	void creg_Serialize(creg::ISerializer& s);
 public:
-	CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
-			float3 targetPos, float areaOfEffect, float maxSpeed,float tracking,
-			int uptime, CUnit* target, const WeaponDef* weaponDef,
-			CWeaponProjectile* interceptTarget, float maxRange,
-			float3 aimError);
+	CStarburstProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed, float tracking, int uptime, float maxRange, float3 aimError);
 	~CStarburstProjectile();
 	virtual void Detach();
 	void Collision(CUnit* unit);
+	void Collision(CFeature* feature);
 	void Collision();
 	void Update();
 	void Draw();
@@ -56,8 +54,6 @@ private:
 	float distanceToTravel;
 
 	static const int NUM_TRACER_PARTS = 5;
-	/// the smokes life-time in frames
-	static const float SMOKE_TIME;
 
 	struct TracerPart {
 		float3 pos;
@@ -65,8 +61,8 @@ private:
 		float speedf;
 		AGEMOD_VECTOR ageMods;
 	};
-	TracerPart *tracerParts[NUM_TRACER_PARTS];
-	TracerPart tracerPartMem[NUM_TRACER_PARTS];
+	size_t curTracerPart;
+	TracerPart tracerParts[NUM_TRACER_PARTS];
 };
 
 #endif /* STARBURST_PROJECTILE_H */

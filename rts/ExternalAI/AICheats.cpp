@@ -15,7 +15,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/GameServer.h"
 #include "Game/GameSetup.h"
-#include "System/mmgr.h"
+#include "System/myMath.h"
 
 #include <vector>
 #include <list>
@@ -92,7 +92,9 @@ int CAICheats::CreateUnit(const char* name, const float3& pos)
 	int unitId = 0;
 
 	if (!OnlyPassiveCheats()) {
-		CUnit* unit = unitLoader->LoadUnit(name, pos, ai->GetTeamId(), false, 0, NULL);
+		const UnitLoadParams unitParams = {NULL, NULL, pos, ZeroVector, -1, ai->GetTeamId(), FACING_SOUTH, false, false};
+		const CUnit* unit = unitLoader->LoadUnit(name, unitParams);
+
 		if (unit) {
 			unitId = unit->id;
 		}
@@ -386,7 +388,7 @@ bool CAICheats::IsUnitParalyzed(int unitId) const
 
 	const CUnit* unit = GetUnit(unitId);
 	if (unit) {
-		stunned = unit->stunned;
+		stunned = unit->IsStunned();
 	}
 
 	return stunned;

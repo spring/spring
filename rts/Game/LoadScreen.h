@@ -4,15 +4,16 @@
 #define _LOAD_SCREEN_H
 
 #include <string>
-#include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "GameController.h"
-/// \#include "Rendering/GL/myGL.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/OffscreenGLContext.h"
 #include "System/Misc/SpringTime.h"
 
+namespace boost {
+	class thread;
+}
 
 class CLoadScreen : public CGameController
 {
@@ -62,7 +63,9 @@ private:
 	boost::recursive_mutex mutex;
 	boost::thread* netHeartbeatThread;
 	COffscreenGLThread* gameLoadThread;
-	bool mt_loading;
+
+	bool mtLoading;
+	bool showMessages;
 
 	unsigned int startupTexture;
 	float aspectRatio;

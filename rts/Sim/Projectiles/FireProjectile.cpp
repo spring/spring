@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "FireProjectile.h"
 #include "Game/Camera.h"
@@ -17,6 +16,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "System/creg/STL_List.h"
+#include "lib/gml/gmlcnf.h"
 
 CR_BIND_DERIVED(CFireProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0));
 CR_BIND(CFireProjectile::SubParticle, );
@@ -81,21 +81,21 @@ void CFireProjectile::Update()
 			//! unsynced code
 			SubParticle sub;
 			sub.age = 0;
-			sub.maxSize = (0.7f + gu->usRandFloat()*0.3f) * particleSize;
-			sub.posDif = gu->usRandVector() * emitRadius;
+			sub.maxSize = (0.7f + gu->RandFloat()*0.3f) * particleSize;
+			sub.posDif = gu->RandVector() * emitRadius;
 			sub.pos = emitPos;
 			sub.pos.y += sub.posDif.y;
 			sub.posDif.y = 0;
-			sub.rotSpeed = (gu->usRandFloat() - 0.5f) * 4;
-			sub.smokeType = gu->usRandInt() % projectileDrawer->smoketex.size();
+			sub.rotSpeed = (gu->RandFloat() - 0.5f) * 4;
+			sub.smokeType = gu->RandInt() % projectileDrawer->smoketex.size();
 			subParticles.push_front(sub);
 
-			sub.maxSize = (0.7f + gu->usRandFloat()*0.3f) * particleSize;
-			sub.posDif = gu->usRandVector() * emitRadius;
+			sub.maxSize = (0.7f + gu->RandFloat()*0.3f) * particleSize;
+			sub.posDif = gu->RandVector() * emitRadius;
 			sub.pos = emitPos;
 			sub.pos.y += sub.posDif.y - radius*0.3f;
 			sub.posDif.y = 0;
-			sub.rotSpeed=(gu->usRandFloat() - 0.5f) * 4;
+			sub.rotSpeed=(gu->RandFloat() - 0.5f) * 4;
 			subParticles2.push_front(sub);
 		}
 		if (!(ttl & 31)) {

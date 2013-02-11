@@ -3,9 +3,7 @@
 #include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
-#include "System/mmgr.h"
-
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
 #include "GroupHandler.h"
 #include "Group.h"
 #include "Game/SelectedUnits.h"

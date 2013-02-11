@@ -11,7 +11,7 @@ class CSaveInterface :
 {
 public:
 	CSaveInterface(std::ofstream* ofs);
-	~CSaveInterface(void);
+	~CSaveInterface();
 
 	void lsBool(bool& v);
 	void lsChar(char& v);

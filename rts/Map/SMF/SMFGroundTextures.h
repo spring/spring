@@ -6,7 +6,6 @@
 #include "Map/BaseGroundTextures.h"
 #include "Rendering/GL/PBO.h"
 
-class CFileHandler;
 class CSMFReadMap;
 
 class CSMFGroundTextures: public CBaseGroundTextures

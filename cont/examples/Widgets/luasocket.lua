@@ -101,7 +101,7 @@ local function SocketClosed(sock)
 	Spring.Echo("closed connection")
 end
 
-function widget:DrawScreen(n)
+function widget:Update()
 	if set==nil or #set<=0 then
 		return
 	end

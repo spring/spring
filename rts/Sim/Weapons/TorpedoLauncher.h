@@ -11,15 +11,14 @@ class CTorpedoLauncher :
 	CR_DECLARE(CTorpedoLauncher);
 public:
 	CTorpedoLauncher(CUnit* owner);
-	~CTorpedoLauncher(void);
+	~CTorpedoLauncher();
 
-	void Update(void);
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
+	void Update();
 
 	float tracking;
 
 private:
-	virtual void FireImpl(void);
+	virtual void FireImpl();
 };
 
 

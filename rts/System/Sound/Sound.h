@@ -10,8 +10,6 @@
 #include <map>
 #include <vector>
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "System/float3.h"
@@ -22,6 +20,10 @@ class CSoundSource;
 class SoundBuffer;
 class SoundItem;
 
+namespace boost {
+	class thread;
+};
+
 
 /// Default sound system implementation (OpenAL)
 class CSound : public ISound
@@ -31,7 +33,7 @@ public:
 	virtual ~CSound();
 
 	virtual bool HasSoundItem(const std::string& name) const;
-	virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
+	virtual size_t GetSoundId(const std::string& name);
 	SoundItem* GetSoundItem(size_t id) const;
 
 	virtual CSoundSource* GetNextBestSource(bool lock = true);
@@ -65,7 +67,7 @@ private:
 
 	size_t MakeItemFromDef(const soundItemDef& itemDef);
 
-	size_t LoadSoundBuffer(const std::string& filename, bool hardFail);
+	size_t LoadSoundBuffer(const std::string& filename);
 
 private:
 	float masterVolume;

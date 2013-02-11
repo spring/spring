@@ -52,11 +52,11 @@
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Util.h"
-#include "System/mmgr.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
@@ -258,7 +258,7 @@ static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, 
 
 	const int projID = lua_toint(L, index);
 
-	const ProjectileMapPair* pp = NULL;
+	const ProjectileMapValPair* pp = NULL;
 	if (synced) {
 		pp = ph->GetMapPairBySyncedID(projID);
 	} else {
@@ -547,7 +547,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 	}
 	bool success = false;
 	const string soundFile = lua_tostring(L, 1);
-	const unsigned int soundID = sound->GetSoundId(soundFile, false);
+	const unsigned int soundID = sound->GetSoundId(soundFile);
 	if (soundID > 0) {
 		float volume = luaL_optfloat(L, 2, 1.0f);
 		float3 pos;
@@ -702,7 +702,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 				const string key = StringToLower(lua_tostring(L, -2));
 				std::map<std::string, ALuint>::iterator it = nameToALFilterParam.find(key);
 				if (it != nameToALFilterParam.end()) {
-					ALuint& param = it->second;
+					ALuint param = it->second;
 					if (lua_isnumber(L, -1)) {
 						if (alParamType[param] == EFXParamTypes::FLOAT) {
 							const float value = lua_tofloat(L, -1);
@@ -724,7 +724,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 				const string key = StringToLower(lua_tostring(L, -2));
 				std::map<std::string, ALuint>::iterator it = nameToALParam.find(key);
 				if (it != nameToALParam.end()) {
-					ALuint& param = it->second;
+					ALuint param = it->second;
 					if (lua_istable(L, -1)) {
 						if (alParamType[param] == EFXParamTypes::VECTOR) {
 							float3 v;
@@ -1796,7 +1796,9 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 
 	lua_settop(L, 0); // pop the input arguments
 
+	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
 	guihandler->RunCustomCommands(cmds, false);
+	configHandler->EnableWriting(true);
 
 	return 0;
 }
@@ -2029,7 +2031,9 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 {
 	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
+		// FIXME: why not put this in UnsyncedRead without the ModUICtrl restriction?
+		lua_pushnumber(L, 0);
+		return 1;
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int def     = luaL_optint(L, 2, 0);
@@ -2052,14 +2056,18 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 		LOG_L(L_ERROR, "tried to set readonly (int) %s = %d", name.c_str(), value);
 		return 0;
 	}
+	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
 	configHandler->Set(name, value, useOverlay);
+	configHandler->EnableWriting(true);
 	return 0;
 }
 
 int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 {
 	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
+		// FIXME: why not put this in UnsyncedRead without the ModUICtrl restriction?
+		lua_pushstring(L, "");
+		return 1;
 	}
 	const string name = luaL_checkstring(L, 1);
 	const string def  = luaL_optstring(L, 2, "");
@@ -2083,7 +2091,9 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 		LOG_L(L_ERROR, "tried to set readonly (string) %s = %s", name.c_str(), value.c_str());
 		return 0;
 	}
+	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
 	configHandler->SetString(name, value, useOverlay);
+	configHandler->EnableWriting(true);
 	return 0;
 }
 
@@ -2284,7 +2294,7 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // SetUnitGroup - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(group); // SetUnitGroup
 
 	if (!CLuaHandle::CheckModUICtrl(L)) {
 		return 0;

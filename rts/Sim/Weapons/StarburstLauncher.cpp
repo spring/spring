@@ -2,12 +2,10 @@
 
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/StarburstProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "StarburstLauncher.h"
 #include "WeaponDefHandler.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CStarburstLauncher, CWeapon, (NULL));
 
@@ -61,29 +59,20 @@ void CStarburstLauncher::FireImpl()
 		(gs->randVector() * sprayAngle + salvoError) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
-	CStarburstProjectile* p =
-		new CStarburstProjectile(weaponMuzzlePos + float3(0, 2, 0), speed, owner,
-		targetPos, damageAreaOfEffect, projectileSpeed, tracking, (int) uptime, targetUnit,
-		weaponDef, interceptTarget, maxRange, aimError);
+	ProjectileParams params = GetProjectileParams();
+	params.pos = weaponMuzzlePos + float3(0, 2, 0);
+	params.end = targetPos;
+	params.speed = speed;
+	params.ttl = 200; //???
 
-	if (weaponDef->targetable)
-		interceptHandler.AddInterceptTarget(p, targetPos);
+	new CStarburstProjectile(params, damageAreaOfEffect, projectileSpeed, tracking, (int) uptime, maxRange, aimError);
 }
 
-bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
+bool CStarburstLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
-	if (!CWeapon::TryTarget(pos, userTarget, unit))
-		return false;
-
-	if (!weaponDef->waterweapon && TargetUnitOrPositionInWater(pos, unit))
-		return false;
-
 	const float3& wdir = weaponDef->fixedLauncher? weaponDir: UpVector;
 
-	if (avoidFriendly && TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, true, false, false, owner)) {
-		return false;
-	}
-	if (avoidNeutral && TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, false, true, false, owner)) {
+	if (TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
 

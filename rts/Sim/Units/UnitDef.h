@@ -3,36 +3,21 @@
 #ifndef UNITDEF_H
 #define UNITDEF_H
 
-#include <string>
 #include <vector>
-#include <map>
 
 #include "Rendering/Icon.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/SolidObject.h"
+#include "Sim/Objects/SolidObjectDef.h"
 #include "System/float3.h"
 
 
 struct Command;
-struct MoveDef;
 struct WeaponDef;
-struct S3DModel;
+struct MoveDef;
 struct UnitDefImage;
-struct CollisionVolume;
 class IExplosionGenerator;
 class LuaTable;
-
-
-struct UnitModelDef
-{
-	UnitModelDef(): model(NULL) {}
-
-	S3DModel* model;
-
-	std::string modelPath;
-	std::string modelName;
-	std::map<std::string, std::string> modelTextures;
-};
 
 
 struct UnitDefWeapon {
@@ -57,29 +42,26 @@ struct UnitDefWeapon {
 };
 
 
-struct UnitDef
+struct UnitDef: public SolidObjectDef
 {
 public:
 	UnitDef(const LuaTable& udTable, const std::string& unitName, int id);
 	UnitDef();
 	~UnitDef();
 
-	S3DModel* LoadModel() const;
-	float GetModelRadius() const;
-
 	bool DontLand() const { return dlHoverFactor >= 0.0f; }
 	void SetNoCost(bool noCost);
 	bool IsAllowedTerrainHeight(float rawHeight, float* clampedHeight = NULL) const;
 
 	bool IsTransportUnit()      const { return (transportCapacity > 0 && transportMass > 0.0f); }
-	bool IsImmobileUnit()       const { return (moveDef == NULL && !canfly && speed <= 0.0f); }
+	bool IsImmobileUnit()       const { return (pathType == -1U && !canfly && speed <= 0.0f); }
 	bool IsBuildingUnit()       const { return (IsImmobileUnit() && !yardmap.empty()); }
 	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
 	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
 	bool IsFactoryUnit()        const { return (builder &&  IsBuildingUnit()); }
-	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f); }
-	bool IsGroundUnit()         const { return (moveDef != NULL && !canfly); }
-	bool IsAirUnit()            const { return (moveDef == NULL &&  canfly); }
+	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f && extractRange > 0.0f); }
+	bool IsGroundUnit()         const { return (pathType != -1U && !canfly); }
+	bool IsAirUnit()            const { return (pathType == -1U &&  canfly); }
 	bool IsNonHoveringAirUnit() const { return (IsAirUnit() && !hoverAttack); }
 	bool IsFighterUnit()        const { return (IsNonHoveringAirUnit() && !HasBomberWeapon()); }
 	bool IsBomberUnit()         const { return (IsNonHoveringAirUnit() &&  HasBomberWeapon()); }
@@ -110,16 +92,11 @@ public:
 		return "Unknown";
 	}
 
-	std::string name;
 	std::string humanName;
+	std::string decoyName;
 
-
-	int id;                 ///< unique id for this type of unit
 	int cobID;              ///< associated with the COB \<GET COB_ID unitID\> call
 
-	CollisionVolume* collisionVolume;
-
-	std::string decoyName;
 	const UnitDef* decoyDef;
 
 	int techLevel;
@@ -129,8 +106,6 @@ public:
 	float metalMake;		///< metal will always be created
 	float makesMetal;		///< metal will be created when unit is on and enough energy can be drained
 	float energyMake;
-	float metalCost;
-	float energyCost;
 	float buildTime;
 	float extractsMetal;
 	float extractRange;
@@ -139,14 +114,11 @@ public:
 	float metalStorage;
 	float energyStorage;
 
-	bool extractSquare;
-
 	float autoHeal;     ///< amount autohealed
 	float idleAutoHeal; ///< amount autohealed only during idling
 	int idleTime;       ///< time a unit needs to idle before its considered idling
 
 	float power;
-	float health;
 	unsigned int category;
 
 	float speed;        ///< maximum forward speed the unit can attain (elmos/sec)
@@ -162,8 +134,6 @@ public:
 	///< without slowing down
 	float turnInPlaceAngleLimit;
 
-	bool upright;
-	bool blocking;
 	bool collide;
 
 	float losHeight;
@@ -190,9 +160,6 @@ public:
 	float captureSpeed;
 	float terraformSpeed;
 
-	float mass;
-	float crushResistance;
-
 	bool canSubmerge;
 	bool canfly;
 	bool floatOnWater;
@@ -204,6 +171,8 @@ public:
 	float waterline;
 	float minWaterDepth;
 	float maxWaterDepth;
+
+	unsigned int pathType;
 
 	float armoredMultiple;
 	int armorType;
@@ -220,13 +189,7 @@ public:
 	float  flankingBonusMin; ///< damage factor for the most protected direction
 	float  flankingBonusMobilityAdd; ///< how much the ability of the flanking bonus direction to move builds up each frame
 
-	std::string objectName;     ///< raw name of the unit's model without objects3d prefix, eg. "armjeth.s3o"
 	std::string scriptName;     ///< the name of the unit's script, e.g. "armjeth.cob"
-	std::string scriptPath;     ///< the path of the unit's script, e.g. "scripts/armjeth.cob"
-
-	mutable UnitModelDef modelDef;
-
-	bool usePieceCollisionVolumes;		///< if true, projectile collisions are checked per-piece
 
 	std::vector<UnitDefWeapon> weapons;
 	const WeaponDef* shieldWeaponDef;
@@ -239,8 +202,8 @@ public:
 	std::string tooltip;
 	std::string wreckName;
 
-	std::string deathExplosion;
-	std::string selfDExplosion;
+	const WeaponDef* deathExpWeaponDef;
+	const WeaponDef* selfdExpWeaponDef;
 
 	std::string categoryString;
 
@@ -257,7 +220,6 @@ public:
 	bool fullHealthFactory;
 	bool factoryHeadingTakeoff;
 
-	bool reclaimable;
 	bool capturable;
 	bool repairable;
 
@@ -316,16 +278,9 @@ public:
 	float maxRudder;
 	float crashDrag;
 
-	MoveDef* moveDef;
-
 	///< The unrotated yardmap for buildings
 	///< (only non-mobile ground units can have these)
 	std::vector<YardMapStatus> yardmap;
-
-	///< both sizes expressed in heightmap coordinates; M x N
-	///< footprint covers M*SQUARE_SIZE x N*SQUARE_SIZE elmos
-	int xsize;
-	int zsize;
 
 	float loadingRadius;							///< for transports
 	float unloadSpread;
@@ -379,14 +334,6 @@ public:
 	};
 	SoundStruct sounds;
 
-	bool leaveTracks;
-	std::string trackTypeName;
-	float trackWidth;
-	float trackOffset;
-	float trackStrength;
-	float trackStretch;
-	int trackType;
-
 	bool canDropFlare;
 	float flareReloadTime;
 	float flareEfficiency;
@@ -398,13 +345,6 @@ public:
 
 	bool canLoopbackAttack;  ///< only matters for fighter aircraft
 	bool levelGround;        ///< only matters for buildings
-
-	bool useBuildingGroundDecal;
-	std::string buildingDecalTypeName;
-	int buildingDecalType;
-	int buildingDecalSizeX;
-	int buildingDecalSizeY;
-	float buildingDecalDecaySpeed;
 
 	bool showNanoFrame;								///< Does the nano frame animation get shown during construction?
 	bool showNanoSpray;								///< Does nano spray get shown at all?
@@ -419,8 +359,6 @@ public:
 	std::vector<IExplosionGenerator*> sfxExplGens;	///< list of explosion generators for use in scripts
 
 	int maxThisUnit;								///< number of units of this type allowed simultaneously in the game
-
-	std::map<std::string, std::string> customParams;
 
 private:
 	void ParseWeaponsTable(const LuaTable& weaponsTable);

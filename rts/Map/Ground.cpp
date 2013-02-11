@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "Ground.h"
 #include "ReadMap.h"
@@ -69,12 +68,12 @@ static inline float InterpolateHeight(float x, float y, const float* heightmap)
 
 
 static inline float LineGroundSquareCol(
-	const float*& heightmap,
-	const float3*& normalmap,
+	const float* heightmap,
+	const float3* normalmap,
 	const float3& from,
 	const float3& to,
-	const int& xs,
-	const int& ys)
+	const int xs,
+	const int ys)
 {
 	const bool inMap = (xs >= 0) && (ys >= 0) && (xs <= gs->mapxm1) && (ys <= gs->mapym1);
 //	assert(inMap);
@@ -237,7 +236,7 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 		return -1.0f;
 	}
 
-	const float skippedDist = (pfrom - from).Length();
+	const float skippedDist = pfrom.distance(from);
 
 	if (synced) { //TODO do this in unsynced too once the map border rendering is finished?
 		// check if our start position is underground (assume ground is unpassable for cannons etc.)
@@ -407,15 +406,21 @@ float CGround::GetOrigHeight(float x, float y) const
 }
 
 
-const float3& CGround::GetNormal(float x, float y, bool synced) const
+const float3& CGround::GetNormal(float x, float z, bool synced) const
 {
-	int xsquare = int(x) / SQUARE_SIZE;
-	int ysquare = int(y) / SQUARE_SIZE;
-	xsquare = Clamp(xsquare, 0, gs->mapxm1);
-	ysquare = Clamp(ysquare, 0, gs->mapym1);
+	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, gs->mapxm1);
+	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, gs->mapym1);
 
 	const float3* normalMap = readmap->GetCenterNormals(synced);
-	return normalMap[xsquare + ysquare * gs->mapx];
+	return normalMap[xsquare + zsquare * gs->mapx];
+}
+
+const float3& CGround::GetNormalAboveWater(const float3& p, bool synced) const
+{
+	if (GetHeightReal(p.x, p.z, synced) <= 0.0f)
+		return UpVector;
+
+	return (GetNormal(p.x, p.z, synced));
 }
 
 

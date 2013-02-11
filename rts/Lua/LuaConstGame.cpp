@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "LuaConstGame.h"
 
 #include "LuaInclude.h"
 
+#include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
@@ -44,12 +44,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	assert(gameSetup);
 	
 	// FIXME  --  this is getting silly, convert to userdata?
-
-	const float gravity = -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED);
-	const bool ghostedBuildings = gameSetup->ghostedBuildings;
-	const int  startPosType     = gameSetup->startPosType;
-
-	LuaPushNamedString(L, "version",       SpringVersion::GetFull());
+	LuaPushNamedString(L, "version", SpringVersion::GetSync());
+	LuaPushNamedString(L, "buildFlags", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetAdditional(): "");
 
 	if (uh) {
 		LuaPushNamedNumber(L, "maxUnits",      uh->MaxUnits());
@@ -59,19 +55,23 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "gameSpeed",     GAME_SPEED);
 	LuaPushNamedNumber(L, "squareSize",    SQUARE_SIZE);
 
-	LuaPushNamedNumber(L, "startPosType",  startPosType);
+	LuaPushNamedNumber(L, "startPosType",  gameSetup->startPosType);
+	LuaPushNamedBool(L,   "ghostedBuildings", gameSetup->ghostedBuildings);
 
-	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
-
-	if (mapDamage) {
-		LuaPushNamedBool(L,   "mapDamage",           !mapDamage->disabled);
-	}
-	LuaPushNamedNumber(L, "gravity",             gravity);
+	LuaPushNamedNumber(L, "gravity",             -mapInfo->map.gravity * GAME_SPEED * GAME_SPEED);
 	LuaPushNamedNumber(L, "windMin",             wind.GetMinWind());
 	LuaPushNamedNumber(L, "windMax",             wind.GetMaxWind());
 	LuaPushNamedString(L, "mapName",             mapInfo->map.name);
 	LuaPushNamedString(L, "mapHumanName",        mapInfo->map.description); //! deprecated
 	LuaPushNamedString(L, "mapDescription",      mapInfo->map.description);
+	LuaPushNamedNumber(L, "mapHardness",         mapInfo->map.hardness);
+
+	if (mapDamage) {
+		// damage is enabled iff !mapInfo->map.notDeformable
+		LuaPushNamedBool(L, "mapDamage", !mapDamage->disabled);
+	}
+
+
 	if (readmap) {
 		//FIXME make this available in LoadScreen already!
 		LuaPushNamedNumber(L, "mapX",                readmap->width  / 64);
@@ -89,7 +89,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "waterFoamTexture",    mapInfo->water.foamTexture);
 	LuaPushNamedString(L, "waterNormalTexture",  mapInfo->water.normalTexture);
 	LuaPushNamedNumber(L, "waterNumTiles",       mapInfo->water.numTiles);
-	LuaPushNamedBool(L,   "waterVoid",           mapInfo->map.voidWater);
+	LuaPushNamedBool(L,   "voidWater",           mapInfo->map.voidWater);
+	LuaPushNamedBool(L,   "voidGround",          mapInfo->map.voidGround);
 	LuaPushNamedBool(L,   "waterHasWaterPlane",  mapInfo->water.hasWaterPlane);
 	LuaPushNamedBool(L,   "waterForceRendering", mapInfo->water.forceRendering);
 	LuaPushNamedColor(L,  "waterAbsorb",         mapInfo->water.absorb);

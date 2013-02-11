@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 
 #include "InMapDrawView.h"
 #include "Rendering/Colors.h"
@@ -193,7 +192,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 void CInMapDrawView::Draw()
 {
-	GML_STDMUTEX_LOCK(inmap); //! Draw
+	GML_STDMUTEX_LOCK(inmap); // Draw
 
 	CVertexArray* pointsVa = GetVertexArray();
 	pointsVa->Initialize();

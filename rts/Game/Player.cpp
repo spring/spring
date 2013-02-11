@@ -2,7 +2,6 @@
 
 #include <assert.h>
 
-#include "System/mmgr.h"
 
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Player.h"
@@ -116,7 +115,7 @@ void CPlayer::StartSpectating()
 		//FIXME use eventHandler?
 		CLuaUI::UpdateTeams();
 		selectedUnits.ClearSelected();
-		readmap->BecomeSpectator();
+		if(readmap != NULL) readmap->BecomeSpectator();
 		unitTracker.Disable();
 	}
 

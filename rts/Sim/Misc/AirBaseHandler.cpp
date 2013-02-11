@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
 #include "AirBaseHandler.h"
 
 #include "GlobalSynced.h"
@@ -133,7 +132,7 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 			// do not pick ourselves as a landing pad
 			continue;
 		}
-		if (baseUnit->beingBuilt || baseUnit->stunned) {
+		if (baseUnit->beingBuilt || baseUnit->IsStunned()) {
 			continue;
 		}
 

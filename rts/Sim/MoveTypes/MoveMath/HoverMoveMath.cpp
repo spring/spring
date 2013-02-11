@@ -1,54 +1,39 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "HoverMoveMath.h"
-#include "Map/ReadMap.h"
-#include "Sim/Objects/SolidObject.h"
-#include "Map/Ground.h"
-
-CR_BIND_DERIVED(CHoverMoveMath, CMoveMath, );
-
-bool CHoverMoveMath::noWaterMove = false;
-
+#include "MoveMath.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 
 /*
 Calculate speed-multiplier for given height and slope data.
 */
-float CHoverMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope) const
+float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float slope)
 {
 	// no speed-penalty if on water (unless noWaterMove)
-	if (height < 0.0f) {
-		return (noWaterMove? 0.0f: 1.0f);
-	}
-
+	if (height < 0.0f)
+		return (1.0f * !noHoverWaterMove);
+	// slope too steep?
 	if (slope > moveDef.maxSlope)
 		return 0.0f;
 
 	return (1.0f / (1.0f + slope * moveDef.slopeMod));
 }
 
-float CHoverMoveMath::SpeedMod(const MoveDef& moveDef, float height, float slope, float moveSlope) const
+float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod)
 {
 	// no speed-penalty if on water
 	if (height < 0.0f)
 		return 1.0f;
 
-	if ((slope * moveSlope) > moveDef.maxSlope)
+	if (slope > (moveDef.maxSlope * 2.0f))
 		return 0.0f;
 
-	return (1.0f / (1.0f + std::max(0.0f, slope * moveSlope) * moveDef.slopeMod));
+	// too steep downhill slope?
+	if (dirSlopeMod <= 0.0f && (slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
+		return 0.0f;
+	// too steep uphill slope?
+	if (dirSlopeMod  > 0.0f && (slope * dirSlopeMod) > ( moveDef.maxSlope       ))
+		return 0.0f;
+
+	return (1.0f / (1.0f + std::max(0.0f, slope * dirSlopeMod) * moveDef.slopeMod));
 }
 
-
-
-/*
-Gives a position slightly over ground and water level.
-*/
-float CHoverMoveMath::yLevel(int xSquare, int zSquare) const
-{
-	return (ground->GetHeightAboveWater(xSquare * SQUARE_SIZE, zSquare * SQUARE_SIZE) + 10.0f);
-}
-
-float CHoverMoveMath::yLevel(const float3& pos) const
-{
-	return (ground->GetHeightAboveWater(pos.x, pos.z) + 10.0f);
-}

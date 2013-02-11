@@ -6,7 +6,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/float3.h"
 
-struct BuildingGroundDecal;
+struct SolidObjectGroundDecal;
 
 class CBuilding : public CUnit
 {
@@ -17,11 +17,9 @@ public:
 	virtual ~CBuilding() {}
 	void PostLoad() {}
 
-	void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
+	void PreInit(const UnitLoadParams& params);
 	void PostInit(const CUnit* builder);
 	void ForcedMove(const float3& newPos, int facing);
-
-	BuildingGroundDecal* buildingDecal;
 };
 
 #endif // _BUILDING_H
