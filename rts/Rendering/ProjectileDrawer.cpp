@@ -678,7 +678,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// note: nano-particles (CGfxProjectile instances) also
 		// contribute to the count, but have their own creation
 		// cutoff
-		ph->currentParticles += CProjectile::DrawArray();
+		ph->currentParticles += CProjectile::DrawArray(); //count drawn (visible) c-particle
 	}
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -686,9 +686,9 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glDepthMask(GL_TRUE);
 
-	ph->currentParticles  = int(ph->currentParticles * 0.2f);
-	ph->currentParticles += int(0.2f * drawnPieces + 0.3f * numFlyingPieces);
-	ph->currentParticles += (renderProjectiles.size() * 0.8f);
+	ph->currentParticles  = int(ph->currentParticles * 0.2f); //refactor the particle count??
+	ph->currentParticles += int(0.2f * drawnPieces + 0.3f * numFlyingPieces); //count debris
+	//ph->currentParticles += (renderProjectiles.size() * 0.8f); //recount every particle even if not drawn??!
 
 	// NOTE: should projectiles that have a model be counted here?
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
