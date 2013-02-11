@@ -48,6 +48,7 @@ SET(sources_engine_Game_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/SelectedUnitsAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SyncedGameCommands.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TraceRay.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/TeamController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/CommandColors.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/CursorIcons.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/EndGameBox.cpp"
