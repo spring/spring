@@ -18,10 +18,8 @@ const std::string CacheDir::defaultAdditionalText = "# This file is a cache dire
 
 bool CacheDir::IsCacheDir(const std::string& dir) {
 
-	bool isTagged = false;
-
 	const std::string cacheFile = GetCacheTagFilePath(dir);
-	isTagged = CacheDir::FileContentStartsWith(cacheFile, CacheDir::tagFile_content, CacheDir::tagFile_content_size);
+	bool isTagged = CacheDir::FileContentStartsWith(cacheFile, CacheDir::tagFile_content, CacheDir::tagFile_content_size);
 
 	return isTagged;
 }
