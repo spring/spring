@@ -3,6 +3,7 @@
 #ifndef TEAM_CONTROLLER_H
 #define TEAM_CONTROLLER_H
 
+#include "System/creg/creg_cond.h"
 #include "System/Platform/byteorder.h" // for swabDWord
 
 #include <string>
@@ -18,6 +19,7 @@
 class TeamController
 {
 public:
+	CR_DECLARE_STRUCT(TeamController);
 
 	/**
 	 * @brief Constructor assigning default values.

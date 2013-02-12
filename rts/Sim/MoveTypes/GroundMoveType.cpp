@@ -648,7 +648,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	//   there should probably be a configurable minimum-impulse below which the
 	//   unit does not react at all (can re-use SolidObject::residualImpulse for
 	//   this) but also does NOT store the impulse like a small-charge capacitor,
-	//   see CUnit:: StoreImpulse
+	//   see CUnit::StoreImpulse
 	if (owner->residualImpulse.SqLength() <= 9.0f)
 		return false;
 
@@ -1826,7 +1826,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				collider->Move3D(colliderPushPos, false);
 			}
 		} else {
-			collider->StoreImpulse((collider->moveType->oldPos - collider->pos).SafeNormalize() * colliderSpeed * 2.0f * collideeMassScale);
+			collider->StoreImpulse((-collider->speed + (collider->moveType->oldPos - collider->pos).SafeNormalize()) * sepDirMask * collideeMassScale);
 		}
 
 		if (pushCollidee) {
@@ -1837,7 +1837,7 @@ void CGroundMoveType::HandleUnitCollisions(
 				collidee->Move3D(collideePushPos, false);
 			}
 		} else {
-			collidee->StoreImpulse((collidee->moveType->oldPos - collidee->pos).SafeNormalize() * collideeSpeed * 2.0f * colliderMassScale);
+			collidee->StoreImpulse((-collidee->speed + (collidee->moveType->oldPos - collidee->pos).SafeNormalize()) * sepDirMask * colliderMassScale);
 		}
 
 		if (collider->isMoving && collidee->isMoving) {

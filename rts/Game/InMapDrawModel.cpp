@@ -30,7 +30,7 @@ CR_BIND(CInMapDrawModel::MapDrawPrimitive, (false, -1, NULL));
 CR_REG_METADATA_SUB(CInMapDrawModel, MapDrawPrimitive, (
 	CR_MEMBER(spectator),
 	CR_MEMBER(teamID),
-//	CR_MEMBER(teamController), // TODO this is only left out due to lazyness to creg-ify TeamController
+	CR_MEMBER(teamController),
 	CR_RESERVED(4)
 ));
 

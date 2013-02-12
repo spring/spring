@@ -20,6 +20,7 @@ namespace creg
 
 		void Serialize(ISerializer* s, void* instance);
 		std::string GetName();
+		size_t GetSize();
 
 		BasicTypeID id;
 	};
@@ -31,6 +32,7 @@ namespace creg
 		~ObjectInstanceType() {}
 		void Serialize(ISerializer* s, void* instance);
 		std::string GetName();
+		size_t GetSize();
 
 		Class* objectClass;
 	};
@@ -40,6 +42,7 @@ namespace creg
 	public:
 		StringType(boost::shared_ptr<IType> charType);
 		std::string GetName();
+		size_t GetSize();
 	};
 
 };
