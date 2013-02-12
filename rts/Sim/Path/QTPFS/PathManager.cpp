@@ -473,10 +473,15 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 
 void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool flushQueue) {
 	// flush this layer's entire update-queue if necessary
+	// (otherwise eat through 5 percent of it s.t. updates
+	// do not pile up faster than we consume them)
 	//
 	// called at run-time only, not load-time so we always
 	// *want* (as opposed to need) a tesselation pass here
 	//
+	unsigned int maxExecutedUpdates = nodeLayers[layerNum].NumQueuedUpdates() * 0.05f;
+	unsigned int numExecutedUpdates = 0;
+
 	while (nodeLayers[layerNum].HaveQueuedUpdate()) {
 		const LayerUpdate& lu = nodeLayers[layerNum].GetQueuedUpdate();
 		const SRectangle& mr = lu.rectangle;
@@ -502,7 +507,7 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool 
 
 		nodeLayers[layerNum].PopQueuedUpdate();
 
-		if (!flushQueue) {
+		if ((!flushQueue) && ((numExecutedUpdates += 1) >= maxExecutedUpdates)) {
 			// no pending searches this frame, stop flushing
 			break;
 		}
