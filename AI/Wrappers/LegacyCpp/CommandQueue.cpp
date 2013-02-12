@@ -5,7 +5,7 @@
 #include "System/creg/creg_cond.h"
 
 #ifdef USING_CREG
-creg::Class* springLegacyAI::CCommandQueue::GetClass() {
+creg::Class* springLegacyAI::CCommandQueue::GetClass() const {
 	return NULL;
 }
 #endif
