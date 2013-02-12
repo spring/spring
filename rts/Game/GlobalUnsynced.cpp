@@ -44,7 +44,8 @@ CR_REG_METADATA(CGlobalUnsynced, (
 	CR_MEMBER(spectating),
 	CR_MEMBER(spectatingFullView),
 	CR_MEMBER(spectatingFullSelect),
-	CR_MEMBER(fpsMode),
+	CR_IGNORED(fpsMode),
+	CR_IGNORED(globalQuit),
 	CR_RESERVED(64)
 ));
 

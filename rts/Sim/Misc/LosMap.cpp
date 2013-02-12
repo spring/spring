@@ -180,7 +180,6 @@ void CLosTables::OutputTable(int Table)
 	for(float i=Radius; i>=1; i-=0.5f) {
 		r2 = (int)(i * i);
 
-		y = (int)i;
 		x = 1;
 		y = (int) (math::sqrt((float)r2 - 1) + 0.5f);
 		while (x < y) {

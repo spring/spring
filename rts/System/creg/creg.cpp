@@ -65,6 +65,7 @@ void System::InitializeClasses()
 
 		cls->binder = c;
 		cls->name = c->name;
+		cls->size = c->size;
 		cls->base = c->base ? c->base->class_ : 0;
 		mapNameToClass [cls->name] = cls;
 
@@ -92,7 +93,7 @@ void System::FreeClasses()
 
 Class* System::GetClass(const string& name)
 {
-	map<string, Class*>::iterator c = mapNameToClass.find(name);
+	map<string, Class*>::const_iterator c = mapNameToClass.find(name);
 	if (c == mapNameToClass.end()) {
 		return NULL;
 	}

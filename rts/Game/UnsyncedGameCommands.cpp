@@ -793,12 +793,9 @@ public:
 		if (!args.empty()) {
 			size_t skirmishAIId           = 0; // will only be used if !badArgs
 			bool share = false;
-			int teamToKillId         = -1;
 			int teamToReceiveUnitsId = -1;
+			int teamToKillId = atoi(args[0].c_str());
 
-			if (args.size() >= 1) {
-				teamToKillId = atoi(args[0].c_str());
-			}
 			if ((args.size() >= 2) && kill) {
 				teamToReceiveUnitsId = atoi(args[1].c_str());
 				share = true;
@@ -912,15 +909,12 @@ public:
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
 		if (!args.empty()) {
-			int         teamToControlId = -1;
 			std::string aiShortName     = "";
 			std::string aiVersion       = "";
 			std::string aiName          = "";
 			std::map<std::string, std::string> aiOptions;
 
-			if (args.size() >= 1) {
-				teamToControlId = atoi(args[0].c_str());
-			}
+			int teamToControlId = atoi(args[0].c_str());
 			if (args.size() >= 2) {
 				aiShortName = args[1];
 			} else {
