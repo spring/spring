@@ -2382,6 +2382,12 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 		const bool applyGravity = ((owner->pos.y + owner->speed.y) >= GetGroundHeight(owner->pos + owner->speed));
 
+		// NOTE:
+		//   the drag terms ensure speed-vector always
+		//   decays if wantedSpeed and deltaSpeed are 0
+		const float dragCoeff = (0.9999f * owner->inAir) + (0.99f * (1 - owner->inAir));
+		const float slipCoeff = (0.9999f * owner->inAir) + (0.95f * (1 - owner->inAir));
+
 		// use terrain-tangent vector because it does not
 		// depend on UnitDef::upright (unlike o->frontdir)
 		const float3& gndNormVec = GetGroundNormal(owner->pos);
@@ -2390,20 +2396,20 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 		// never drop below terrain
 		owner->speed.y =
-			(               owner->speed.dot(  UpVector) * (    applyGravity)) +
-			(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - applyGravity));
+			(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - applyGravity)) +
+			(  UpVector.y * owner->speed.dot(  UpVector) * (    applyGravity));
 
 		if (owner->moveDef->moveFamily != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
 			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc);
 			const float3 speedVec = owner->speed + accelVec;
 
-			// NOTE: the 0.99f term ensures speed-vector always decays when wantedSpeed and deltaSpeed are 0
-			speedVector += (flatFrontDir * speedVec.dot(flatFrontDir)) * 0.99f;
+			speedVector += (flatFrontDir * speedVec.dot(flatFrontDir)) * dragCoeff;
 			speedVector += (    UpVector * speedVec.dot(    UpVector));
 		} else {
-			speedVector += (               gndTangVec *   std::max(0.0f,    owner->speed.dot(gndTangVec) + hAcc * 1.0f)) * 0.99f;
-			speedVector += (   flatSpeed - gndTangVec * /*std::max(0.0f,*/( owner->speed.dot(gndTangVec) - hAcc * 0.0f)) * 0.95f;
-			speedVector += UpVector * (owner->speed * 0.999f + UpVector * vAcc).dot(UpVector);
+			// TODO: also apply to non-hovercraft on low-gravity maps?
+			speedVector += (               gndTangVec * (  std::max(0.0f,   owner->speed.dot(gndTangVec) + hAcc * 1.0f))) * dragCoeff;
+			speedVector += (   flatSpeed - gndTangVec * (/*std::max(0.0f,*/ owner->speed.dot(gndTangVec) - hAcc * 0.0f )) * slipCoeff;
+			speedVector += UpVector * (owner->speed + UpVector * vAcc).dot(UpVector);
 		}
 
 		#undef vAcc
