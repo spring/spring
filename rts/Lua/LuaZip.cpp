@@ -501,8 +501,9 @@ void RecurseZipFolder(const string& folderPath, zipFile& zip, const string& zipF
 int LuaZipFolder::ZipFolder(lua_State* L, const string& folderPath, const string& zipFilePath, bool includeFolder, const string& modes)
 {
 	zipFile zipFolderFile = zipOpen(zipFilePath.c_str(), APPEND_STATUS_CREATE);
-	string normFolderPath = FileSystem::GetNormalizedPath(folderPath);
 
+	const string normFolderPath = FileSystem::GetNormalizedPath(folderPath);
+	const string folderName = (includeFolder)? FileSystem::GetFilename(normFolderPath) + "/": "";
 	char buf[1024] = {'\0'};
 
 	if (zipFolderFile == NULL) {
@@ -512,16 +513,12 @@ int LuaZipFolder::ZipFolder(lua_State* L, const string& folderPath, const string
 	}
 
 	if (!dataDirsAccess.InWriteDir(normFolderPath)) {
-		SNPRINTF(buf, sizeof(buf), "[%s] cannot zip %s: outside writable data-directory", __FUNCTION__, normFolderPath.c_str());
+		SNPRINTF(buf, sizeof(buf), "[%s] cannot zip \"%s\": outside writable data-directory", __FUNCTION__, normFolderPath.c_str());
 		lua_pushstring(L, buf);
+		zipClose(zipFolderFile, NULL);
 		return 1;
 	}
 
-	// CHECKME: can this path go out of data dir? how can this be checked?
-	string folderName = "";
-	if (includeFolder) {
-		folderName = FileSystem::GetFilename(normFolderPath) + "/";
-	}
 	RecurseZipFolder(folderPath, zipFolderFile, folderName, modes);
 
 	zipClose(zipFolderFile, NULL);
