@@ -299,7 +299,7 @@ void CWeapon::UpdateTargeting()
 		targetPos.y = std::max(targetPos.y, ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 
 		if (!weaponDef->waterweapon) {
-			targetPos.y = std::max(targetPos.y, 1.0f);
+			targetPos.y = std::max(targetPos.y, 0.0f);
 		}
 	}
 
@@ -540,8 +540,8 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 	}
 
 	// keep target positions on the surface if this weapon hates water
-	if (!weaponDef->waterweapon && (newTargetPos.y < 1.0f)) {
-		newTargetPos.y = 1.0f;
+	if (!weaponDef->waterweapon) {
+		newTargetPos.y = std::max(newTargetPos.y, 0.0f);
 	}
 
 	weaponMuzzlePos =
@@ -1210,8 +1210,8 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 		return false;
 	}
 
-	if (!weaponDef->waterweapon && pos.y < 1) {
-		pos.y = 1;
+	if (!weaponDef->waterweapon) {
+		pos.y = std::max(pos.y, 0.0f);
 	}
 
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);

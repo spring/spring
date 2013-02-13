@@ -261,12 +261,13 @@ float TraceRay(
 float GuiTraceRay(
 	const float3& start,
 	const float3& dir,
-	float length,
-	bool useRadar,
+	const float length,
 	const CUnit* exclude,
 	CUnit*& hitUnit,
 	CFeature*& hitFeature,
-	bool groundOnly
+	bool useRadar,
+	bool groundOnly,
+	bool ignoreWater
 ) {
 	hitUnit = NULL;
 	hitFeature = NULL;
@@ -276,11 +277,17 @@ float GuiTraceRay(
 
 	// ground intersection
 	const float guiRayLength = length;
-	const float groundLength = ground->LineGroundCol(start, start + dir * guiRayLength, false);
-	float length2 = length;
+	const float groundRayLength = ground->LineGroundCol(start, start + dir * guiRayLength, false);
+	const float waterRayLength = math::floor(math::fabs(start.y / std::min(dir.y, -0.00001f)));
 
+	float minRayLength = groundRayLength;
+	float minIngressDist = length;
+	float minEgressDist = length;
+
+	if (!ignoreWater)
+		minRayLength = std::min(groundRayLength, waterRayLength);
 	if (groundOnly)
-		return groundLength;
+		return minRayLength;
 
 	GML_RECMUTEX_LOCK(quad); // GuiTraceRay
 
@@ -327,14 +334,14 @@ float GuiTraceRay(
 				const float  egressDist = cq.GetEgressPosDist(start, dir);
 
 				const bool isFactory = unit->unitDef->IsFactoryUnit();
-				const bool factoryHitBeforeUnit = ((hitFactory && ingressDist < length ) || (!hitFactory &&  egressDist < length));
-				const bool unitHitInsideFactory = ((hitFactory && ingressDist < length2) || (!hitFactory && ingressDist < length));
+				const bool factoryHitBeforeUnit = ((hitFactory && ingressDist < minIngressDist) || (!hitFactory &&  egressDist < minIngressDist));
+				const bool unitHitInsideFactory = ((hitFactory && ingressDist <  minEgressDist) || (!hitFactory && ingressDist < minIngressDist));
 
 				// give units in a factory higher priority than the factory itself
 				if (hitUnit == NULL || (isFactory && factoryHitBeforeUnit) || (!isFactory && unitHitInsideFactory)) {
 					hitFactory = isFactory;
-					length = ingressDist;
-					length2 = egressDist;
+					minIngressDist = ingressDist;
+					minEgressDist = egressDist;
 
 					hitUnit = unit;
 					hitFeature = NULL;
@@ -357,14 +364,14 @@ float GuiTraceRay(
 			if (CCollisionHandler::DetectHit(f, start, start + dir * guiRayLength, &cq, true)) {
 				const float hitDist = cq.GetHitPosDist(start, dir);
 
-				const bool factoryHitBeforeUnit = ( hitFactory && hitDist < length2);
-				const bool unitHitInsideFactory = (!hitFactory && hitDist < length );
+				const bool factoryHitBeforeUnit = ( hitFactory && hitDist <  minEgressDist);
+				const bool unitHitInsideFactory = (!hitFactory && hitDist < minIngressDist);
 
 				// we want the closest feature (intersection point) on the ray
 				// give features in a factory (?) higher priority than the factory itself
 				if (hitUnit == NULL || factoryHitBeforeUnit || unitHitInsideFactory) {
 					hitFactory = false;
-					length = hitDist;
+					minIngressDist = hitDist;
 
 					hitFeature = f;
 					hitUnit = NULL;
@@ -373,13 +380,14 @@ float GuiTraceRay(
 		}
 	}
 
-	if ((groundLength > 0.0f) && ((groundLength + 200.0f) < length)) {
-		length     = groundLength;
+	if ((minRayLength > 0.0f) && ((minRayLength + 200.0f) < minIngressDist)) {
+		minIngressDist = minRayLength;
+
 		hitUnit    = NULL;
 		hitFeature = NULL;
 	}
 
-	return length;
+	return minIngressDist;
 }
 
 
