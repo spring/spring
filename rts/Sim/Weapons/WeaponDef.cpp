@@ -255,13 +255,13 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	WeaponDefs.Load(this, wdTable);
 
 	if (wdTable.KeyExists("cylinderTargetting"))
-		LOG_L(L_WARNING, "WeaponDef cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).");
+		LOG_L(L_WARNING, "WeaponDef (%s) cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).", name.c_str());
 
 	if (wdTable.KeyExists("color1") || wdTable.KeyExists("color2"))
-		LOG_L(L_WARNING, "WeaponDef color1 & color2 (= hue & sat) are removed. Use rgbColor instead!");
+		LOG_L(L_WARNING, "WeaponDef (%s) color1 & color2 (= hue & sat) are removed. Use rgbColor instead!", name.c_str());
 
 	if (wdTable.KeyExists("isShield"))
-		LOG_L(L_WARNING, "WeaponDef isShield is removed. Use weaponType=\"Shield\" instead!");
+		LOG_L(L_WARNING, "WeaponDef (%s) isShield is removed. Use weaponType=\"Shield\" instead!", name.c_str());
 
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
 	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
