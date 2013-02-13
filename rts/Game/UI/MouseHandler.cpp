@@ -444,7 +444,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		} else {
 			CUnit* unit;
 			CFeature* feature;
-			TraceRay::GuiTraceRay(camera->pos, dir, globalRendering->viewRange * 1.4f, false, NULL, unit, feature);
+			TraceRay::GuiTraceRay(camera->pos, dir, globalRendering->viewRange * 1.4f, NULL, unit, feature, false);
 
 			selectedUnits.HandleSingleUnitClickSelection(unit, true);
 		}
@@ -545,15 +545,16 @@ std::string CMouseHandler::GetCurrentTooltip()
 	}
 
 	const float range = (globalRendering->viewRange * 1.4f);
+	float dist = 0.0f;
 
 	CUnit* unit;
 	CFeature* feature;
-	float dist;
+
 	{
 		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCurrentTooltip
 		GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCurrentTooltip
 
-		dist = TraceRay::GuiTraceRay(camera->pos, dir, range, true, NULL, unit, feature);
+		dist = TraceRay::GuiTraceRay(camera->pos, dir, range, NULL, unit, feature, true, false, true);
 
 		if (unit)    return CTooltipConsole::MakeUnitString(unit);
 		if (feature) return CTooltipConsole::MakeFeatureString(feature);
