@@ -443,13 +443,13 @@ int LuaZipFileReader::meta_read(lua_State* L)
 
 /******************************************************************************/
 
-//generates the info for the zipped version of the file
-zip_fileinfo* GenerateZipFileInfo(const string& path) {
+// generates the info for the zipped version of the file
+static zip_fileinfo* GenerateZipFileInfo(const string& path) {
 	string fileModificationDate = FileSystem::GetFileModificationDate(path);
 
 	zip_fileinfo* zipfi = new zip_fileinfo();
 	zipfi->dosDate = 0;
-	//FIXME: the year 10k problem :)
+	// FIXME: the year 10k problem :)
 	zipfi->tmz_date.tm_year = atoi(fileModificationDate.substr(0, 4).c_str()) - 1900;
 	zipfi->tmz_date.tm_mon = atoi(fileModificationDate.substr(4, 2).c_str());
 	zipfi->tmz_date.tm_mday = atoi(fileModificationDate.substr(6, 2).c_str());
@@ -461,7 +461,7 @@ zip_fileinfo* GenerateZipFileInfo(const string& path) {
 }
 
 void RecurseZipFolder(const string& folderPath, zipFile& zip, const string& zipFolderPath, const string& modes) {
-	//recurse through all the subdirs
+	// recurse through all the subdirs
 	vector<string> folderPaths = CFileHandler::SubDirs(folderPath, "*", modes);
 	for (vector<string>::iterator it = folderPaths.begin(); it != folderPaths.end(); ++it) {
 		const string& childFolderPath = *it;
@@ -469,13 +469,13 @@ void RecurseZipFolder(const string& folderPath, zipFile& zip, const string& zipF
 		const string childZipFolderPath = zipFolderPath + childFolderName + "/";
 
 		zip_fileinfo* zipfi = GenerateZipFileInfo(childFolderPath);
-		//write a special file for the dir, so empty folders get added
+		// write a special file for the dir, so empty folders get added
 		zipOpenNewFileInZip(zip, childZipFolderPath.c_str(), zipfi, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
 		zipWriteInFileInZip(zip, "", 0);
 		zipCloseFileInZip(zip);
 		delete zipfi;
-		
-        //recurse
+
+        // recurse
 		RecurseZipFolder(*it, zip, childZipFolderPath, modes);
 	}
 
@@ -500,24 +500,30 @@ void RecurseZipFolder(const string& folderPath, zipFile& zip, const string& zipF
 
 int LuaZipFolder::ZipFolder(lua_State* L, const string& folderPath, const string& zipFilePath, bool includeFolder, const string& modes)
 {
-	zipFile zip = zipOpen(zipFilePath.c_str(), APPEND_STATUS_CREATE);
-	if (!zip)
-	{
-		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "Could not open zip file %s for writing",
-				zipFilePath.c_str());
+	zipFile zipFolderFile = zipOpen(zipFilePath.c_str(), APPEND_STATUS_CREATE);
+	string normFolderPath = FileSystem::GetNormalizedPath(folderPath);
+
+	char buf[1024] = {'\0'};
+
+	if (zipFolderFile == NULL) {
+		SNPRINTF(buf, sizeof(buf), "[%s] could not open zipfile \"%s\" for writing", __FUNCTION__, zipFilePath.c_str());
 		lua_pushstring(L, buf);
-		lua_error(L);
+		return 1;
 	}
 
-	//CHECKME: can this path go out of data dir? how can this be checked?
+	if (!dataDirsAccess.InWriteDir(normFolderPath)) {
+		SNPRINTF(buf, sizeof(buf), "[%s] cannot zip %s: outside writable data-directory", __FUNCTION__, normFolderPath.c_str());
+		lua_pushstring(L, buf);
+		return 1;
+	}
+
+	// CHECKME: can this path go out of data dir? how can this be checked?
 	string folderName = "";
 	if (includeFolder) {
-		const string folderCanonicalPath = FileSystem::GetNormalizedPath(folderPath);
-		folderName = FileSystem::GetFilename(folderCanonicalPath) + "/";
+		folderName = FileSystem::GetFilename(normFolderPath) + "/";
 	}
-	RecurseZipFolder(folderPath, zip, folderName, modes);
+	RecurseZipFolder(folderPath, zipFolderFile, folderName, modes);
 
-	zipClose(zip, NULL);
+	zipClose(zipFolderFile, NULL);
 	return 0;
 }
