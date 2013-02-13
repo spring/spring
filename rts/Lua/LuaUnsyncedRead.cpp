@@ -1287,9 +1287,10 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	// window coordinates
 	const int mx = luaL_checkint(L, 1);
 	const int my = luaL_checkint(L, 2);
-	const bool onlyCoords = (lua_isboolean(L, 3) && lua_toboolean(L, 3));
-	const bool useMiniMap = (lua_isboolean(L, 4) && lua_toboolean(L, 4));
-	const bool includeSky = (lua_isboolean(L, 5) && lua_toboolean(L, 5));
+	const bool onlyCoords  = (lua_isboolean(L, 3) && lua_toboolean(L, 3));
+	const bool useMiniMap  = (lua_isboolean(L, 4) && lua_toboolean(L, 4));
+	const bool includeSky  = (lua_isboolean(L, 5) && lua_toboolean(L, 5));
+	const bool ignoreWater = (lua_isboolean(L, 6) && lua_toboolean(L, 6));
 
 	const int wx = mx + globalRendering->viewPosX;
 	const int wy = globalRendering->viewSizeY - 1 - my - globalRendering->viewPosY;
@@ -1337,7 +1338,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 // FIXME	const int origAllyTeam = gu->myAllyTeam;
 //	gu->myAllyTeam = readAllyTeam;
-	const float dist = TraceRay::GuiTraceRay(pos, dir, range, true, NULL, unit, feature, onlyCoords);
+	const float dist = TraceRay::GuiTraceRay(pos, dir, range, NULL, unit, feature, true, onlyCoords, ignoreWater);
 //	gu->myAllyTeam = origAllyTeam;
 
 	if ((dist < 0.0f || dist > badRange) && unit == NULL && feature == NULL) {

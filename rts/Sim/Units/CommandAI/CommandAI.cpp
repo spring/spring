@@ -446,8 +446,14 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			} else {
 				if (c.params.size() >= 3) {
 					const float3 cPos = c.GetPos(0);
-					//FIXME is fromSynced really sync-safe??? const float gHeight = ground->GetHeightReal(cPos.x, cPos.z, fromSynced);
-					const float gHeight = ground->GetHeightReal(cPos.x, cPos.z, true);
+					// FIXME: is fromSynced really sync-safe???
+					// NOTE:
+					//   uses gHeight = min(cPos.y, GetHeightAboveWater) instead
+					//   of gHeight = GetHeightReal because GuiTraceRay can stop
+					//   at water surface, so the attack-position would be moved
+					//   UNDERWATER and cause ground-attack orders to fail
+					// const float gHeight = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, fromSynced));
+					const float gHeight = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, true));
 
 					#if 0
 					// check if attack-ground is really attack-ground
