@@ -2180,8 +2180,8 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 
 	CWeapon* frontWeapon = owner->weapons.front();
 
-	if (!frontWeapon->weaponDef->waterweapon && mainHeadingPos.y <= 1.0f) {
-		mainHeadingPos.y = 1.0f;
+	if (!frontWeapon->weaponDef->waterweapon) {
+		mainHeadingPos.y = std::max(mainHeadingPos.y, 0.0f);
 	}
 
 	float3 dir1 = frontWeapon->mainDir;
