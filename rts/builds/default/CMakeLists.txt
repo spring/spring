@@ -50,6 +50,10 @@ IF (APPLE)
 	LIST(APPEND engineLibraries ${COREFOUNDATION_LIBRARY})
 ENDIF (APPLE)
 
+if    (USE_LIBSQUISH)
+	LIST(APPEND engineLibraries squish rgetc1)
+endif (USE_LIBSQUISH)
+
 LIST(APPEND engineLibraries ${sound-impl})
 
 LIST(APPEND engineLibraries ${engineCommonLibraries})
