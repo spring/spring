@@ -1,0 +1,21 @@
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+SET(SQUISH_SRCS
+	alpha
+	clusterfit
+	colourblock
+	colourfit
+	colourset
+	maths
+	rangefit
+	singlecolourfit
+	squish
+)
+
+ADD_LIBRARY(squish STATIC ${SQUISH_SRCS})
+
+IF(NOT WIN32)
+	IF(CMAKE_COMPILER_IS_GNUCXX)
+		SET_TARGET_PROPERTIES(squish PROPERTIES COMPILE_FLAGS -fPIC)
+	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+ENDIF(NOT WIN32)

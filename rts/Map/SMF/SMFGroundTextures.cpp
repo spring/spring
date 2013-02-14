@@ -4,6 +4,10 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
+#if defined(USE_LIBSQUISH) && !defined(HEADLESS)
+	#include "lib/squish/squish.h"
+	#include "lib/rg-etc1/rg_etc1.h"
+#endif
 
 #include "SMFGroundTextures.h"
 #include "SMFFormat.h"
@@ -137,7 +141,6 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 	}
 
 	loadscreen->SetLoadMessage("Reading Tile Map");
-
 	{
 		ifs->Read(&tileMap[0], smfMap->tileCount * sizeof(int));
 
@@ -145,6 +148,35 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 			swabDWordInPlace(tileMap[i]);
 		}
 	}
+
+	texformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+
+#if defined(USE_LIBSQUISH) && !defined(HEADLESS) && defined(GLEW_ARB_ES3_compatibility)
+	// Not all FOSS drivers support S3TC, use ETC1 for those
+	const bool useETC1 = (!GLEW_EXT_texture_compression_s3tc) && GLEW_ARB_ES3_compatibility;
+	if (useETC1) {
+		// note 1: Mesa should support this
+		// note 2: Nvidia supports ETC but preprocesses the texture (on the CPU) each upload = slow -> makes no sense to add it as another map compression format
+		// note 3: for both DXT1 & ETC1/2 blocksize is 8 bytes per 4x4 pixel block -> perfect for us :)
+
+		loadscreen->SetLoadMessage("Recompress MapTiles with ETC1");
+
+		texformat = GL_COMPRESSED_RGB8_ETC2; // ETC2 is backward compatible with ETC1! GLEW doesn't have the ETC1 extension :<
+
+		const int numTiles = tiles.size() / 8;
+
+		rg_etc1::pack_etc1_block_init();
+		rg_etc1::etc1_pack_params pack_params;
+		pack_params.m_quality = rg_etc1::cLowQuality; // must be low, all others take _ages_ to process
+
+		#pragma omp parallel for
+		for (int i = 0; i < numTiles; ++i) {
+			squish::u8 rgba[64]; // 4x4 pixels * 4 * 1byte channels = 64byte
+			squish::Decompress(rgba, &tiles[i * 8], squish::kDxt1);
+			rg_etc1::pack_etc1_block(&tiles[i * 8], (const unsigned int*)rgba, pack_params);
+		}
+	}
+#endif
 
 	loadscreen->SetLoadMessage("Loading Square Textures");
 
@@ -374,7 +406,6 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	if (texSizeY != (smfMap->bigTexSize >> texMipLevel)) { return false; }
 
 	static const GLenum ttarget = GL_TEXTURE_2D;
-	static const GLenum tformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 
 	const int mipSqSize = smfMap->bigTexSize >> texMipLevel;
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
@@ -385,7 +416,7 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	pbo.UnmapBuffer();
 
 	glBindTexture(ttarget, texID);
-	glCompressedTexImage2D(ttarget, 0, tformat, texSizeX, texSizeY, 0, numSqBytes, pbo.GetPtr());
+	glCompressedTexImage2D(ttarget, 0, texformat, texSizeX, texSizeY, 0, numSqBytes, pbo.GetPtr());
 	glBindTexture(ttarget, 0);
 
 	pbo.Unbind();
@@ -434,7 +465,6 @@ void CSMFGroundTextures::ExtractSquareTiles(
 void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 {
 	static const GLenum ttarget = GL_TEXTURE_2D;
-	static const GLenum tformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 
 	const int mipSqSize = smfMap->bigTexSize >> level;
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
@@ -466,7 +496,7 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 		glTexParameterf(ttarget, GL_TEXTURE_PRIORITY, 0.5f);
 	}
 
-	glCompressedTexImage2D(ttarget, 0, tformat, mipSqSize, mipSqSize, 0, numSqBytes, pbo.GetPtr());
+	glCompressedTexImage2D(ttarget, 0, texformat, mipSqSize, mipSqSize, 0, numSqBytes, pbo.GetPtr());
 	pbo.Unbind();
 }
 
