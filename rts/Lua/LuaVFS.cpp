@@ -87,7 +87,7 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "DirList",		UnsyncDirList);
 	HSTR_PUSH_CFUNC(L, "SubDirs",		UnsyncSubDirs);
 	HSTR_PUSH_CFUNC(L, "UseArchive",	UseArchive);
-	HSTR_PUSH_CFUNC(L, "CompressFolder",CompressFolder);
+	HSTR_PUSH_CFUNC(L, "CompressFolder",	CompressFolder);
 	HSTR_PUSH_CFUNC(L, "MapArchive",	MapArchive);
 
 	HSTR_PUSH_CFUNC(L, "ZlibCompress", ZlibCompress);
@@ -470,22 +470,16 @@ int LuaVFS::MapArchive(lua_State* L)
 
 int LuaVFS::CompressFolder(lua_State* L)
 {
-	const int args = lua_gettop(L);
-	if (args < 1 || !lua_isstring(L, 1) ||
-		(args >= 2 && !lua_isstring(L, 2)) ||
-		(args >= 3 && !lua_isstring(L, 3)) ||
-		(args >= 4 && !lua_isboolean(L, 4)) || args > 5) {
-		luaL_error(L, "Incorrect arguments to CompressFolder()");
-	}
-
-	const string folderPath = lua_tostring(L, 1);
-	//"sdz" is the default type if not specified
+	const string folderPath = luaL_checkstring(L, 1);
+	
 	const string archiveType = luaL_optstring(L, 2, "zip");
 	if (archiveType != "zip" && archiveType != "7z") { //TODO: add 7z support
 		luaL_error(L, ("Unsupported archive type " + archiveType).c_str());
 	}
+
+	 // "sdz" is the default type if not specified
 	const string compressedFilePath = luaL_optstring(L, 3, (folderPath + ".sdz").c_str());
-	bool includeFolder = luaL_optboolean(L, 4, false);
+	const bool includeFolder = luaL_optboolean(L, 4, false);
 	const string modes = GetModes(L, 5, false);
 
 	if (CFileHandler::FileExists(compressedFilePath, modes)) {
