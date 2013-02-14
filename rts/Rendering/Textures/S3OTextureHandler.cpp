@@ -76,17 +76,19 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	CBitmap tex2bm;
 	S3oTex* tex = new S3oTex();
 
-	if (!tex1bm.Load(std::string("unittextures/" + model->tex1))) {
-		LOG_L(L_WARNING, "[%s] could not load texture \"%s\" from model \"%s\"",
-				__FUNCTION__, model->tex1.c_str(), model->name.c_str());
+	if (!tex1bm.Load(model->tex1)) {
+		if (!tex1bm.Load(std::string("unittextures/" + model->tex1))) {
+			LOG_L(L_WARNING, "[%s] could not load texture \"%s\" from model \"%s\"",
+					__FUNCTION__, model->tex1.c_str(), model->name.c_str());
 
-		// file not found (or headless build), set single pixel to red so unit is visible
-		tex1bm.channels = 4;
-		tex1bm.Alloc(1, 1);
-		tex1bm.mem[0] = 255;
-		tex1bm.mem[1] =   0;
-		tex1bm.mem[2] =   0;
-		tex1bm.mem[3] = 255;
+			// file not found (or headless build), set single pixel to red so unit is visible
+			tex1bm.channels = 4;
+			tex1bm.Alloc(1, 1);
+			tex1bm.mem[0] = 255;
+			tex1bm.mem[1] =   0;
+			tex1bm.mem[2] =   0;
+			tex1bm.mem[3] = 255;
+		}
 	}
 	if (model->flipTexY) tex1bm.ReverseYAxis();
 	if (model->invertTexAlpha) tex1bm.InvertAlpha();
@@ -100,13 +102,15 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	// being generated if it couldn't be loaded.
 	// Also many map features specify a tex2 but don't ship it with the map,
 	// so throwing here would cause maps to break.
-	if (!tex2bm.Load(std::string("unittextures/" + model->tex2))) {
-		tex2bm.channels = 4;
-		tex2bm.Alloc(1, 1);
-		tex2bm.mem[0] =   0; // self-illum
-		tex2bm.mem[1] =   0; // spec+refl
-		tex2bm.mem[2] =   0; // unused
-		tex2bm.mem[3] = 255; // team-color
+	if (!tex2bm.Load(model->tex2)) {
+		if (!tex2bm.Load(std::string("unittextures/" + model->tex2))) {
+			tex2bm.channels = 4;
+			tex2bm.Alloc(1, 1);
+			tex2bm.mem[0] =   0; // self-illum
+			tex2bm.mem[1] =   0; // spec+refl
+			tex2bm.mem[2] =   0; // unused
+			tex2bm.mem[3] = 255; // team-color
+		}
 	}
 	if (model->flipTexY) tex2bm.ReverseYAxis();
 
