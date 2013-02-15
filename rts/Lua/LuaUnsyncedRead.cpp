@@ -1355,7 +1355,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 				lua_pushnumber(L, unit->id);
 				return 2;
 			}
-	
+
 			if (feature != NULL) {
 				lua_pushliteral(L, "feature");
 				lua_pushnumber(L, feature->id);
@@ -1378,7 +1378,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 /******************************************************************************/
 
-static void AddPlayerToRoster(lua_State* L, int playerID)
+static void AddPlayerToRoster(lua_State* L, int playerID, bool addPathInfos)
 {
 #define PUSH_ROSTER_ENTRY(type, val) \
 	lua_pushnumber(L, index); index++; \
@@ -1394,8 +1394,13 @@ static void AddPlayerToRoster(lua_State* L, int playerID)
 	PUSH_ROSTER_ENTRY(boolean, p->spectator);
 	PUSH_ROSTER_ENTRY(number, p->cpuUsage);
 	const float pingScale = (GAME_SPEED * gs->speedFactor);
-	const float pingSecs = float(p->ping - 1) / pingScale;
-	PUSH_ROSTER_ENTRY(number, pingSecs);
+	if ( !addPathInfos || p->ping != PATHING_FLAG ) {
+		const float pingSecs = float(p->ping - 1) / pingScale;
+		PUSH_ROSTER_ENTRY(number, pingSecs);
+	} else {
+		const float pingSecs = float(p->ping);
+		PUSH_ROSTER_ENTRY(number, pingSecs);
+	}
 }
 
 
@@ -2203,7 +2208,7 @@ int LuaUnsyncedRead::GetMyAllyTeamID(lua_State* L)
 int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 0) && ((args != 1) || !lua_isnumber(L, 1))) {
+	if ( ( args > 2 ) || ( (args == 1 && !lua_isnumber(L, 1) ) ) || ( args == 2 && !lua_isboolean(L, 2) ) ) {
 		luaL_error(L, "Incorrect arguments to GetPlayerRoster([type])");
 	}
 
@@ -2214,14 +2219,19 @@ int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 		playerRoster.SetSortTypeByCode((PlayerRoster::SortType)type);
 	}
 
+	bool addpathinfos = false;
+	if (args == 2) {
+		addpathinfos =lua_toboolean(L,2);
+	}
+
 	int count;
-	const std::vector<int>& players = playerRoster.GetIndices(&count);
+	const std::vector<int>& players = playerRoster.GetIndices(&count,addpathinfos);
 
 	playerRoster.SetSortTypeByCode(oldSort); // revert
 
 	lua_createtable(L, count, 0);
 	for (int i = 0; i < count; i++) {
-		AddPlayerToRoster(L, players[i]);
+		AddPlayerToRoster(L, players[i],addpathinfos);
 		lua_rawseti(L, -2, i + 1);
 	}
 
