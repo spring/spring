@@ -1255,8 +1255,8 @@ public:
 		game->userInput = game->userInputPrefix;
 		game->writingPos = (int)game->userInput.length();
 		game->chatting = true;
-
-		if (action.GetKey() != SDLK_RETURN) {
+		//this command can get called too from console or lua, if so GetKey is -1, don't drop next char then
+		if (action.GetKey() != SDLK_RETURN && action.GetKey() != -1 ) {
 			game->ignoreNextChar = true;
 		}
 
