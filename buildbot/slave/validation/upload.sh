@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
 
-. buildbot/slave/prepare.sh
+# this script is already called from tests-analyze.sh, so no need to call it here
+#. buildbot/slave/prepare.sh
 
 REMOTE_HOST=springrts.com
 REMOTE_USER=buildbot
