@@ -130,10 +130,6 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		userWriting = false;
 		writingPos = 0;
 
-		if (key == SDLK_RETURN) {
-			// prevent game start when host enters a chat message
-			keyInput->SetKeyState(key, 0);
-		}
 		if (chatting) {
 			string command;
 
@@ -1240,10 +1236,6 @@ class ChatActionExecutor : public IUnsyncedActionExecutor {
 
 public:
 	bool Execute(const UnsyncedAction& action) const {
-		// if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
-		if (action.GetKey() == SDLK_RETURN && !game->playing && keyInput->IsKeyPressed(SDLK_LCTRL))
-			return false;
-
 		if (setUserInputPrefix) {
 			game->userInputPrefix = userInputPrefix;
 		}
