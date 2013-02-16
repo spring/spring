@@ -2053,14 +2053,15 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			}
 		}
 		else if ((msg.destination < playerHandler->ActivePlayers()) && player)
-		{
-			if (msg.destination == gu->myPlayerNum && !player->spectator) {
+		{	// player -> spectators and spectator -> player PMs should be forbidden
+			// player <-> player and spectator <-> spectator are allowed
+			if (msg.destination == gu->myPlayerNum && player->spectator == gu->spectating) {
 				LOG("%sPrivate: %s", label.c_str(), s.c_str());
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 			else if (player->playerNum == gu->myPlayerNum)
 			{
-				LOG("You whispered %s: %s", player->name.c_str(), s.c_str());
+				LOG("You whispered %s: %s", playerHandler->Player(msg.destination)->name.c_str(), s.c_str());
 			}
 		}
 	}
