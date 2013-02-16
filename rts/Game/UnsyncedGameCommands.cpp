@@ -1143,7 +1143,7 @@ public:
 			"Starts/Ends alliance of the local players ally-team with another ally-team") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!gu->spectating)
+		if (gu->spectating)
 			return false;
 
 		if (action.GetArgs().size() > 0) {
