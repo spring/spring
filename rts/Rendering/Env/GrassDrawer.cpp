@@ -641,6 +641,8 @@ void CGrassDrawer::ResetGlState2()
 		}
 	}
 
+	glActiveTextureARB(GL_TEXTURE3_ARB);
+	glDisable(GL_TEXTURE_2D);
 	glActiveTextureARB(GL_TEXTURE4_ARB);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
