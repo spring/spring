@@ -94,7 +94,7 @@ MakeGlobal(engineIncludes)
 ### Build the executable
 ADD_EXECUTABLE(engine-default ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(engine-default ${engineLibraries})
-SET_TARGET_PROPERTIES(engine-default PROPERTIES OUTPUT_NAME "spring")
+SET_TARGET_PROPERTIES(engine-default PROPERTIES OUTPUT_NAME "spring-singlethreaded")
 
 
 ### Install the executable
