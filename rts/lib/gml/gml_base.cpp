@@ -5,7 +5,6 @@
 #include "gml_base.h"
 #include "gmlsrv.h"
 
-#include "Game/GameController.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/OffscreenGLContext.h"
@@ -57,7 +56,7 @@ static void gmlSimLoop(void*)
 					Watchdog::ClearTimer(WDT_SIM); 
 					gmlProcessor->ExpandAuxQueue();
 
-					if(!GML::UpdateSim(activeController))
+					if(!Threading::UpdateSim(activeController))
 						gmlKeepRunning = false;
 
 					gmlProcessor->GetQueue();
@@ -75,15 +74,6 @@ static void gmlSimLoop(void*)
 #endif
 
 namespace GML {
-
-	bool UpdateSim(CGameController *ac) {
-		GML_MSTMUTEX_LOCK(sim); // UpdateSim
-
-		Threading::SetSimThread(true);
-		bool ret = ac->Update();
-		Threading::SetSimThread(false);
-		return ret;
-	}
 
 	void Init()
 	{
