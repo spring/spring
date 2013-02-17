@@ -185,6 +185,7 @@ void good_fpu_init()
 }
 
 void streflop_init_omp() {
+#ifndef DEDICATED
 	// Initialize FPU in all OpenMP threads, too
 	// Note: Tested on Linux it seems it's not needed to do this.
 	//       Either OMP threads copy the FPU state of the mainthread
@@ -201,6 +202,7 @@ void streflop_init_omp() {
 			streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
 	}
+#endif
 #endif
 }
 
