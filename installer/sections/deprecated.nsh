@@ -35,6 +35,7 @@
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Update CA.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk"
 
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringDownloader.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
