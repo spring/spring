@@ -1071,6 +1071,10 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)msg.fromPlayer));
 					break;
 				}
+				if (a < mutedPlayers.size() && mutedPlayers[a]&0x1 ) {
+					//this player is muted, drop his messages quietly
+					break;
+				}
 				GotChatMessage(msg);
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format("Player %s sent invalid ChatMessage: %s") %players[a].name %ex.what()));
@@ -1303,6 +1307,10 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				pckt >> playerNum;
 				if (playerNum != a) {
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+					break;
+				}
+				if (a < mutedPlayers.size() && mutedPlayers[a]&0x2 ) {
+					//this player is muted, drop his messages quietly
 					break;
 				}
 				if (!players[playerNum].spectator || allowSpecDraw)
@@ -2002,6 +2010,53 @@ void CGameServer::PushAction(const Action& action)
 			}
 		}
 	}
+	else if (action.command == "mute") {
+
+		if (action.extra.empty()) {
+			LOG_L(L_WARNING,"failed to mute player, usage:", "/mute <playername> [chatmute] [drawmute]");
+		}
+		else {
+			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
+			if ( tokens.size() < 1 || tokens.size() > 3 ) {
+				LOG_L(L_WARNING,"failed to mute player, usage:", "/mute <playername> [chatmute] [drawmute]");
+			}
+			else {
+				std::string name = tokens[0];
+				StringToLowerInPlace(name);
+				bool muteChat;
+				bool muteDraw;
+				if ( tokens.size() >= 1 ) SetBoolArg(muteChat, tokens[1]);
+				if ( tokens.size() >= 2 ) SetBoolArg(muteDraw, tokens[2]);
+				for (size_t a=0; a < players.size();++a) {
+					std::string playerLower = StringToLower(players[a].name);
+					if (playerLower.find(name)==0) {	// can kick on substrings of name
+						MutePlayer(a,muteChat,muteDraw);
+						break;
+					}
+				}
+			}
+		}
+	}
+	else if (action.command == "mutebynum") {
+
+		if (action.extra.empty()) {
+			LOG_L(L_WARNING,"failed to mute player, usage:", "/mutebynum <player-id> [chatmute] [drawmute]");
+		}
+		else {
+			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
+			if ( tokens.size() < 1 || tokens.size() > 3 ) {
+				LOG_L(L_WARNING,"failed to mute player, usage:", "/mutebynum <player-id> [chatmute] [drawmute]");
+			}
+			else {
+				int playerID = atoi(tokens[0].c_str());
+				bool muteChat;
+				bool muteDraw;
+				if ( tokens.size() >= 1 ) SetBoolArg(muteChat, tokens[1]);
+				if ( tokens.size() >= 2 ) SetBoolArg(muteDraw, tokens[2]);
+				MutePlayer(playerID,muteChat,muteDraw);
+			}
+		}
+	}
 	if (action.command == "specbynum") {
 		if (!action.extra.empty()) {
 			const int playerNum = atoi(action.extra.c_str());
@@ -2354,6 +2409,23 @@ void CGameServer::KickPlayer(const int playerNum)
 	UpdateSpeedControl(speedControl);
 	if (hostif)
 		hostif->SendPlayerLeft(playerNum, 2);
+}
+
+void CGameServer::MutePlayer(const int playerNum, bool muteChat, bool muteDraw )
+{
+	if ( playerNum >= players.size() ) {
+		LOG_L(L_WARNING,"invalid playerNum");
+		return;
+	}
+	int muteState = 0;
+	muteState = muteChat;
+	muteState += ((int)muteDraw)*2;
+	if ( playerNum < mutedPlayers.size() ) {
+		mutedPlayers[playerNum] = muteState;
+	}
+	else {
+		mutedPlayers.insert(mutedPlayers.begin()+playerNum,muteState);
+	}
 }
 
 void CGameServer::SpecPlayer(const int player) {
