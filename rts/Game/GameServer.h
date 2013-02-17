@@ -115,6 +115,11 @@ private:
 	 */
 	void SpecPlayer(const int playerNum);
 
+	/**
+	 * @brief drops chat or drawin messages for given playerNum
+	 */
+	void MutePlayer(const int playerNum, bool muteChat, bool muteDraw );
+
 	void ResignPlayer(const int playerNum);
 
 	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
@@ -189,6 +194,8 @@ private:
 	std::vector<GameParticipant> players;
 	std::vector<GameTeam> teams;
 	std::vector<unsigned char> winningAllyTeams;
+	//! bit0: chat mute, bit1: drawing mute
+	std::vector<int> mutedPlayers;
 
 	float medianCpu;
 	int medianPing;
