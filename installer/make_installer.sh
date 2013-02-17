@@ -26,7 +26,6 @@ fi
 mkdir -p installer/downloads
 cd installer/downloads
 
-$WGET http://springrts.com/dl/rapid-spring-latest-win32.7z
 $WGET http://zero-k.info/lobby/setup.exe
 $WGET http://zero-k.info/lobby/setup_icon.ico
 $WGET http://www.springlobby.info/windows/latest.zip
@@ -48,13 +47,10 @@ unzip ../downloads/latest.zip -d SLArchive
 cd ../..
 
 #create uninstall.nsh
-installer/make_uninstall_nsh.py \
-installer/downloads/spring_testing_minimal-portable.7z \
-installer/downloads/rapid-spring-latest-win32.7z:rapid\\ >installer/downloads/uninstall.nsh
+installer/make_uninstall_nsh.py installer/downloads/spring_testing_minimal-portable.7z >installer/downloads/uninstall.nsh
 
 
 makensis -V3 $NSISDEFINES $@ -DNSI_UNINSTALL_FILES=downloads/uninstall.nsh \
--DRAPID_ARCHIVE=downloads/rapid-spring-latest-win32.7z \
 -DMIN_PORTABLE_ARCHIVE=downloads/spring_testing_minimal-portable.7z \
 -DVCREDIST=downloads/vcredist_x86.exe \
  installer/spring.nsi

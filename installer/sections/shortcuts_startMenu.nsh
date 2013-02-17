@@ -11,11 +11,6 @@
 	${If} ${SectionIsSelected} ${SEC_ZERO_K_LOBBY}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Zero-K Lobby.lnk" "$INSTDIR\Zero-K.exe"
 	${EndIf}
-!ifdef RAPID_ARCHIVE
-	${If} ${SectionIsSelected} ${SEC_RAPID}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk" "$INSTDIR\rapid\rapid-gui.exe"
-	${EndIf}
-!endif
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring (safemode).lnk" "$INSTDIR\spring.exe" "--safemode"
@@ -30,7 +25,6 @@
 	; Shortcuts
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringLobby.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Zero-K Lobby.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring (safemode).lnk"
