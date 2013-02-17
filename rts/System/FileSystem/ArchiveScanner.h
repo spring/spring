@@ -157,11 +157,11 @@ private:
 			{}
 		std::string path;
 		std::string origName;     ///< Could be useful to have the non-lowercased name around
-		unsigned int modified;
+		std::string replaced;     ///< If not empty, use that archive instead
 		ArchiveData archiveData;
+		unsigned int modified;
 		unsigned int checksum;
 		bool updated;
-		std::string replaced;     ///< If not empty, use that archive instead
 	};
 	struct BrokenArchive
 	{
