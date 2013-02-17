@@ -2,6 +2,7 @@
 
 #include "lib/gml/gml_base.h"
 #include "Threading.h"
+#include "Game/GameController.h"
 #include "System/bitops.h"
 #include "System/OpenMP_cond.h"
 #include "System/Config/ConfigHandler.h"
