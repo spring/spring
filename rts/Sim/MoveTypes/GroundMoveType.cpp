@@ -1708,14 +1708,6 @@ void CGroundMoveType::HandleUnitCollisions(
 		bool pushCollidee = collideeMobile;
 		bool crushCollidee = false;
 
-		// if not an allied collision, neither party is allowed to be pushed (bi-directional) and both stop
-		// if an allied collision, only the collidee is allowed to be crushed (uni-directional) and neither stop
-		//
-		// first rule can be ignored at will by either party (only through Lua) such that it is not stopped
-		// however neither party can override its pushResistant gene: the party that has it set will ignore
-		// pushing contributions from the other WITHOUT being forcibly stopped, unless *both* happen to be
-		// push-resistant (then both are stopped) --> technically correct but produces deadlocked units, so
-		// this is NOT enforced
 		const bool alliedCollision =
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
@@ -1724,8 +1716,8 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
-		pushCollider &= (!collider->beingBuilt && !collidee->usingScriptMoveType);
-		pushCollidee &= (!collidee->beingBuilt && !collider->usingScriptMoveType);
+		pushCollider &= (!collider->beingBuilt && !collidee->usingScriptMoveType && !colliderUD->pushResistant);
+		pushCollidee &= (!collidee->beingBuilt && !collider->usingScriptMoveType && !collideeUD->pushResistant);
 
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= ((colliderSpeed * collider->mass) > (collideeSpeed * collidee->mass));
@@ -1812,32 +1804,25 @@ void CGroundMoveType::HandleUnitCollisions(
 		// squares (without resetting their position which stops them dead in
 		// their tracks and undoes previous legitimate pushes made this frame)
 		//
-		// ignore pushing contributions from idling friendly collidee's
-		// (or if we are resistant to them) without stopping; this will
-		// ONLY take effect if pushCollider is still true
-		//
-		// either both parties are pushed, or only one party is
-		// pushed and the other is stopped, or both are stopped
-		if (pushCollider) {
+		// if pushCollider and pushCollidee are both false (eg. if each party
+		// is pushResistant), treat the collision as regular and push both to
+		// avoid deadlocks
+		if (pushCollider || !pushCollidee) {
 			const bool colliderPushPosFree = !POS_IMPASSABLE(colliderMD, colliderPushPos, collider);
 			const bool colliderPushAllowed = (!colliderUD->pushResistant || collideeUD->pushResistant);
 
 			if (colliderPushPosFree && colliderPushAllowed) {
 				collider->Move3D(colliderPushPos, false);
 			}
-		} else {
-			collider->StoreImpulse((-collider->speed + (collider->moveType->oldPos - collider->pos).SafeNormalize()) * sepDirMask * collideeMassScale);
 		}
 
-		if (pushCollidee) {
+		if (pushCollidee || !pushCollider) {
 			const bool collideePushPosFree = !POS_IMPASSABLE(collideeMD, collideePushPos, collidee);
 			const bool collideePushAllowed = (!collideeUD->pushResistant || colliderUD->pushResistant);
 
 			if (collideePushPosFree && collideePushAllowed) {
 				collidee->Move3D(collideePushPos, false);
 			}
-		} else {
-			collidee->StoreImpulse((-collidee->speed + (collidee->moveType->oldPos - collidee->pos).SafeNormalize()) * sepDirMask * colliderMassScale);
 		}
 
 		if (collider->isMoving && collidee->isMoving) {
