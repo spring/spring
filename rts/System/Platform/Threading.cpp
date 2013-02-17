@@ -3,6 +3,7 @@
 #include "lib/gml/gml_base.h"
 #include "lib/gml/gmlmut.h"
 #include "Threading.h"
+#include "Game/GameController.h"
 #include "System/bitops.h"
 #include "System/OpenMP_cond.h"
 #include "System/Config/ConfigHandler.h"
@@ -359,8 +360,8 @@ namespace Threading {
 	#endif
 	}
 
-	bool UpdateSim(CGameController *ac) {
-		GML_MSTMUTEX_LOCK(sim); // UpdateSim
+	bool UpdateGameController(CGameController* ac) {
+		GML_MSTMUTEX_LOCK(sim); // UpdateGameController
 
 		SetSimThread(true);
 		bool ret = ac->Update();
