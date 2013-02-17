@@ -754,11 +754,24 @@ void CGame::ClientReadNet()
 					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui) {
 						CUnit* unit = uh->GetUnit(*ui);
 
-						if (unit && unit->team == srcTeamID && !unit->beingBuilt) {
-							if (unit->fpsControlPlayer == NULL)
-								unit->ChangeTeam(dstTeamID, CUnit::ChangeGiven);
-						}
+						if (unit == NULL)
+							continue;
+						if (unit->fpsControlPlayer != NULL)
+							continue;
+						// in godmode we can have units selected that are not ours
+						if (unit->team != srcTeamID)
+							continue;
+
+						if (unit->isDead)
+							continue;
+						if (unit->beingBuilt)
+							continue; // why?
+						if (unit->IsStunned() || unit->IsCrashing())
+							continue;
+
+						unit->ChangeTeam(dstTeamID, CUnit::ChangeGiven);
 					}
+
 					netSelUnits.clear();
 				}
 				AddTraffic(player, packetCode, dataLength);
