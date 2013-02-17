@@ -1034,11 +1034,12 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
 	const float avoiderRadius = FOOTPRINT_RADIUS(avoiderMD->xsize, avoiderMD->zsize, 1.0f);
 
-	const vector<CSolidObject*>& nearbyObjects = qf->GetSolidsExact(avoider->pos, avoidanceRadius);
+	const vector<CSolidObject*>& objects = qf->GetSolidsExact(avoider->pos, avoidanceRadius);
 
-	for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
+	for (vector<CSolidObject*>::const_iterator oi = objects.begin(); oi != objects.end(); ++oi) {
 		const CSolidObject* avoidee = *oi;
 		const MoveDef* avoideeMD = avoidee->moveDef;
+		const UnitDef* avoideeUD = dynamic_cast<const UnitDef*>(avoidee->objectDef);
 
 		// cases in which there is no need to avoid this obstacle
 		if (avoidee == owner)
@@ -1051,8 +1052,8 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		if (!CMoveMath::CrushResistant(*avoiderMD, avoidee))
 			continue;
 
-		const bool avoideeMobile = (avoideeMD != NULL);
-		const bool avoidMobiles = avoiderMD->avoidMobilesOnPath;
+		const bool avoideeMobile  = (avoideeMD != NULL);
+		const bool avoideeMovable = (avoideeUD != NULL && !avoideeUD->pushResistant);
 
 		const float3 avoideeVector = (avoider->pos + avoider->speed) - (avoidee->pos + avoidee->speed);
 
@@ -1069,9 +1070,11 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 
 		// do not bother steering around idling MOBILE objects
 		// (since collision handling will just push them aside)
-		// TODO: also check if !avoideeUD->pushResistant
-		if (avoideeMobile && (!avoidMobiles || (!avoidee->isMoving && avoidee->allyteam == avoider->allyteam)))
-			continue;
+		if (avoideeMobile && avoideeMovable) {
+			if (!avoiderMD->avoidMobilesOnPath || (!avoidee->isMoving && avoidee->allyteam == avoider->allyteam)) {
+				continue;
+			}
+		}
 		// ignore objects that are more than this many degrees off-center from us
 		if (avoider->frontdir.dot(-(avoideeVector / avoideeDist)) < MAX_AVOIDEE_COSINE)
 			continue;
