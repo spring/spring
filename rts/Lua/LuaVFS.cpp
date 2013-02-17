@@ -490,6 +490,7 @@ int LuaVFS::CompressFolder(lua_State* L)
 	} else if (archiveType == "7z") {
 		SevenZipFolder(L, folderPath, compressedFilePath, includeFolder, modes);
 	}
+	return 0;
 }
 
 /******************************************************************************/
@@ -497,6 +498,7 @@ int LuaVFS::CompressFolder(lua_State* L)
 int LuaVFS::SevenZipFolder(lua_State* L, const string& folderPath, const string& zipFilePath, bool includeFolder, const string& modes)
 {
 	luaL_error(L, "Seven zip compression is not implemented yet.");
+	return 0;
 }
 
 /******************************************************************************/
