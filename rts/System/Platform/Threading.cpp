@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "lib/gml/gml_base.h"
+#include "lib/gml/gmlmut.h"
 #include "Threading.h"
 #include "System/bitops.h"
 #include "System/OpenMP_cond.h"
@@ -356,6 +357,15 @@ namespace Threading {
 	#else
 		return boost::this_thread::get_id() == simThreadID;
 	#endif
+	}
+
+	bool UpdateSim(CGameController *ac) {
+		GML_MSTMUTEX_LOCK(sim); // UpdateSim
+
+		SetSimThread(true);
+		bool ret = ac->Update();
+		SetSimThread(false);
+		return ret;
 	}
 
 	void SetBatchThread(bool set) {

@@ -12,6 +12,7 @@
 #ifdef __APPLE__
 	#include <libkern/OSAtomic.h> // OSAtomicIncrement64
 #endif
+#include "Game/GameController.h"
 #include "System/Platform/Win/win32.h"
 #include <boost/cstdint.hpp>
 
@@ -72,6 +73,7 @@ namespace Threading {
 	 */
 	void SetSimThread(bool set);
 	bool IsSimThread();
+	bool UpdateSim(CGameController *ac);
 	void SetBatchThread(bool set);
 	bool IsBatchThread();
 
