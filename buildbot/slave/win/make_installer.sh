@@ -30,6 +30,7 @@ make install DESTDIR=${DEST}
 #strip symbols and archive them
 cd ${INSTALLDIR}
 EXECUTABLES="$(find -name '*.exe' -printf ' %f') unitsync.dll springserver.dll $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll) $(find -name pr-downloader_shared.dll -printf ' %f')"
+DEBUGFILES=""
 for tostripfile in ${EXECUTABLES}; do
 	if [ -f ${tostripfile} ]; then
 		# dont strip binaries that we processed earlier
@@ -39,6 +40,7 @@ for tostripfile in ${EXECUTABLES}; do
 			${MINGW_HOST}objcopy --only-keep-debug ${tostripfile} ${debugfile}
 			${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile}
 			${MINGW_HOST}objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}
+			DEBUGFILES="${DEBUGFILES} ${debugfile}"
 		else
 			echo "not stripping ${tostripfile}"
 		fi
@@ -63,9 +65,8 @@ for file in spring-dedicated.exe spring-headless.exe; do
 	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file}
 done
 
-#create archives for translate_stacktrace.py
-
-${SEVENZIP_NONSOLID} ${TMP_PATH}/${VERSION}_spring_dbg.7z ${EXECUTABLES}
+#create archive for translate_stacktrace.py
+${SEVENZIP_NONSOLID} ${TMP_PATH}/${VERSION}_spring_dbg.7z ${DEBUGFILES}
 
 cd ${SOURCEDIR}
 
