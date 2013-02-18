@@ -448,8 +448,8 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		// if it is a nanoframe help to finish it
 		if (nanoFrame) {
 			Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER, nanoFrame->id);
-			CMobileCAI::GiveCommandReal(c2);
-			CMobileCAI::GiveCommandReal(c);
+			CMobileCAI::GiveCommandReal(c2, fromSynced);
+			CMobileCAI::GiveCommandReal(c, fromSynced);
 			return;
 		}
 	} else {
@@ -457,7 +457,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			return;
 	}
 
-	CMobileCAI::GiveCommandReal(c);
+	CMobileCAI::GiveCommandReal(c, fromSynced);
 }
 
 
