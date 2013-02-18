@@ -11,6 +11,7 @@ echo "Installing into $DEST"
 
 #Ultra settings, max number of threads taken from commandline.
 SEVENZIP="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
+SEVENZIP_NONSOLID="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=off -mmt=${2:-on}"
 ZIP="zip -r9"
 
 cd ${BUILDDIR}
@@ -18,10 +19,12 @@ make install DESTDIR=${DEST}
 cd ${INSTALLDIR}
 
 
-BINARIES="spring* lib*.so pr-downloader $(find AI/Skirmish -name libSkirmishAI.so) $(find AI/Interfaces -name libAIInterface.so)"
+EXECUTABLES="spring* lib*.so pr-downloader $(find AI/Skirmish -name libSkirmishAI.so) $(find AI/Interfaces -name libAIInterface.so)"
+
+DEBUGFILES=""
 
 #strip symbols into a separate file
-for tostripfile in ${BINARIES}; do
+for tostripfile in ${EXECUTABLES}; do
 	if [ -f ${tostripfile} ]; then
 		if readelf -h ${tostripfile} &> /dev/null; then
 			# dont strip binaries that we processed earlier
@@ -31,6 +34,7 @@ for tostripfile in ${BINARIES}; do
 				objcopy --only-keep-debug ${tostripfile} ${debugfile}
 				strip --strip-debug --strip-unneeded ${tostripfile}
 				objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}
+				DEBUGFILES="${DEBUGFILES} ${debugfile}"
 			else
 				echo "not stripping ${tostripfile}"
 			fi
@@ -60,23 +64,8 @@ fi
 
 mkdir -p ${TMP_PATH}
 
-#create archives for translate_stacktrace.py
-for tocompress in ${BINARIES}; do
-	if [ -f ${tocompress} ]; then
-		if readelf -h ${tocompress} &> /dev/null; then
-			#get parent-parent-directory name of file
-			name=$(basename $(dirname $(dirname ${tocompress})))
-
-			#set to filename without suffix if no parent dir
-			if [ ${name} == "." ]; then
-				name=${tocompress%.*}
-			fi
-			debugfile=${tocompress%.*}.dbg
-			archive_debug="${TMP_PATH}/${VERSION}_${name}_${FILEPREFIX}_dbg.7z"
-			[ -f ${debugfile} ] && ${SEVENZIP} "${archive_debug}" ${debugfile} && rm ${debugfile}
-		fi
-	fi
-done
+#create archive for translate_stacktrace.py
+${SEVENZIP_NONSOLID} ${TMP_PATH}/${VERSION}_spring_dbg.7z ${DEBUGFILES}
 
 
 #absolute path to the minimal portable (engine, unitsync + ais)
