@@ -84,15 +84,43 @@ CTransportCAI::CTransportCAI(CUnit* owner)
 CTransportCAI::~CTransportCAI()
 {
 	// if uh == NULL then all pointers to units should be considered dangling pointers
-	if (uh && toBeTransportedUnitId != -1) {
-		CUnit* transportee = uh->GetUnitUnsafe(toBeTransportedUnitId);
-
-		if (transportee) {
-			transportee->loadingTransportId = -1;
-		}
-
-		toBeTransportedUnitId = -1;
+	if (uh != NULL) {
+		SetTransportee(NULL);
 	}
+}
+
+
+void CTransportCAI::SetTransportee(CUnit* unit) {
+	if (unit != NULL) {
+		// reset existing transportee
+		if (toBeTransportedUnitId != unit->id) {
+			CUnit* transportee = (toBeTransportedUnitId == -1) ? NULL : uh->GetUnitUnsafe(toBeTransportedUnitId);
+			if ((transportee != NULL) && (transportee->loadingTransportId == owner->id))
+				transportee->loadingTransportId = -1;
+			toBeTransportedUnitId = unit->id;
+		}
+		CUnit* transport = (unit->loadingTransportId == -1) ? NULL : uh->GetUnitUnsafe(unit->loadingTransportId);
+		// let the closest transport be loadingTransportId, in case of multiple fighting transports
+		if ((transport == NULL) || ((transport != owner) && (transport->pos.SqDistance(unit->pos) > owner->pos.SqDistance(unit->pos)))) {
+			unit->loadingTransportId = owner->id;
+		}
+	} else {
+		if (toBeTransportedUnitId != -1) {
+			CUnit* transportee = uh->GetUnitUnsafe(toBeTransportedUnitId);
+			// only reset loadingTransportId if it is this transport
+			if ((transportee != NULL) && (transportee->loadingTransportId == owner->id))
+				transportee->loadingTransportId = -1;
+			toBeTransportedUnitId = -1;
+		}
+	}
+}
+
+
+void CTransportCAI::GiveCommandReal(const Command& c, bool fromSynced) {
+	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()){
+		SetTransportee(NULL);
+	}
+	return CMobileCAI::GiveCommandReal(c, fromSynced);
 }
 
 
@@ -158,8 +186,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 			return;
 		}
 		if (unit && CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))) {
-			toBeTransportedUnitId = unit->id;
-			unit->loadingTransportId = this->owner->id;
+			SetTransportee(unit);
 
 			const float sqDist = unit->pos.SqDistance2D(owner->pos);
 			const bool inLoadingRadius = (sqDist <= Square(owner->unitDef->loadingRadius));
@@ -191,6 +218,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 						am->dontLand = true;
 
 						owner->script->BeginTransport(unit);
+						SetTransportee(NULL);
 						transport->AttachUnit(unit, owner->script->QueryTransport(unit));
 						am->SetWantedAltitude(0);
 
@@ -310,9 +338,7 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 		for (int b = 0; b < bmax; ++b) {
 			// FIXME: using a deterministic technique might be better, since it would allow an unload command to be tested for validity from unsynced (with predictable results)
 			const float ang = 2.0f * PI * (fromSynced ? gs->randFloat() : gu->RandFloat());
-			float len = a; // prefer unload near center
-			if (a != 0 || b != 0)
-				len += (fromSynced ? gs->randFloat() : gu->RandFloat());
+			float len = amax * math::sqrt(fromSynced ? gs->randFloat() : gu->RandFloat());
 			len /= amax;
 			delta.x = len * math::sin(ang);
 			delta.z = len * math::cos(ang);
@@ -841,8 +867,12 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 		CUnit* unit = (*ui);
 		float dist = unit->pos.SqDistance2D(owner->pos);
 
-		if (unit->loadingTransportId >= 0)
-			continue;
+		if (unit->loadingTransportId != -1 && unit->loadingTransportId != owner->id) {
+			CUnit* trans = uh->GetUnitUnsafe(unit->loadingTransportId);
+			if ((trans != NULL) && teamHandler->AlliedTeams(owner->team, trans->team)) {
+				continue; // don't refuse to load comm only because the enemy is trying to nap it at the same time
+			}
+		}
 		if (dist >= bestDist)
 			continue;
 		if (!CanTransport(unit))
@@ -894,15 +924,7 @@ void CTransportCAI::FinishCommand()
 		am->loadingUnits = false;
 	}
 
-	if (toBeTransportedUnitId != -1) {
-		CUnit* transportee = uh->GetUnitUnsafe(toBeTransportedUnitId);
-
-		if (transportee) {
-			transportee->loadingTransportId = -1;
-		}
-
-		toBeTransportedUnitId = -1;
-	}
+	SetTransportee(NULL);
 
 	CMobileCAI::FinishCommand();
 
