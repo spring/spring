@@ -92,7 +92,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 	goalPos = owner->pos;
 }
 
-void CAirCAI::GiveCommandReal(const Command& c)
+void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
 	// take care not to allow aircraft to be ordered to move out of the map
 	if ((c.GetID() != CMD_MOVE) && !AllowedCommand(c, true)) {
