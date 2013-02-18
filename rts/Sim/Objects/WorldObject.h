@@ -30,9 +30,9 @@ public:
 		this->pos = pos;
 	}
 
-	virtual ~CWorldObject() {
-	}
+	virtual ~CWorldObject() {}
 
+	void SetPos(const float3& p) { pos = p; }
 	void SetRadiusAndHeight(float r, float h)
 	{
 		radius = r;
