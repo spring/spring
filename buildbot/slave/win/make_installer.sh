@@ -11,6 +11,7 @@ echo "Installing into $DEST"
 
 #Ultra settings, max number of threads taken from commandline.
 SEVENZIP="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
+SEVENZIP_NONSOLID="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=off -mmt=${2:-on}"
 ZIP="zip -r9"
 
 if [ -z $MINGWLIBS_PATH ]; then
@@ -28,7 +29,7 @@ make install DESTDIR=${DEST}
 
 #strip symbols and archive them
 cd ${INSTALLDIR}
-EXECUTABLES="spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll springserver.dll $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll) $(find -name pr-downloader.exe -or -name pr-downloader_shared.dll -printf '%f ')"
+EXECUTABLES="$(find -name '*.exe' -printf '%f') unitsync.dll springserver.dll $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll) $(find -name pr-downloader_shared.dll)"
 for tostripfile in ${EXECUTABLES}; do
 	if [ -f ${tostripfile} ]; then
 		# dont strip binaries that we processed earlier
@@ -63,18 +64,8 @@ for file in spring-dedicated.exe spring-headless.exe; do
 done
 
 #create archives for translate_stacktrace.py
-for tocompress in ${EXECUTABLES}; do
-	#get parent-parent-directory name of file
-	name=$(basename $(dirname $(dirname ${tocompress})))
 
-	#set to filename without suffix if no parent dir
-	if [ ${name} == "." ]; then
-		name=${tocompress%.*}
-	fi
-	debugfile=${tocompress%.*}.dbg
-	archive_debug="${TMP_PATH}/${VERSION}_${name}_dbg.7z"
-	[ ! -f ${debugfile} ] || ${SEVENZIP} "${archive_debug}" ${debugfile}
-done
+${SEVENZIP_NONSOLID} ${TMP_PATH}/${VERSION}_spring_dbg.7z ${EXECUTABLES}
 
 cd ${SOURCEDIR}
 
