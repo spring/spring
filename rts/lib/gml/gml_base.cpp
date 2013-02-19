@@ -56,7 +56,7 @@ static void gmlSimLoop(void*)
 					Watchdog::ClearTimer(WDT_SIM); 
 					gmlProcessor->ExpandAuxQueue();
 
-					if(!Threading::UpdateGameController(activeController))
+					if (!Threading::UpdateGameController(activeController))
 						gmlKeepRunning = false;
 
 					gmlProcessor->GetQueue();
