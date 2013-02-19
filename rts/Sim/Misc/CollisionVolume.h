@@ -64,6 +64,7 @@ public:
 
 	void RescaleAxes(const float3& scales);
 	void SetAxisScales(const float3& scales);
+	void FixTypeAndScale(float3& scales);
 	void SetBoundingRadius();
 
 	int GetVolumeType() const { return volumeType; }
