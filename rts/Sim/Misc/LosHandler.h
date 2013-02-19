@@ -110,33 +110,30 @@ public:
 	void FreeInstance(LosInstance* instance);
 
 	inline bool InLos(const CWorldObject* object, int allyTeam) const {
-		if (object->alwaysVisible || gs->globalLOS[allyTeam]) {
+		if (object->alwaysVisible || gs->globalLOS[allyTeam])
 			return true;
-		} else if (object->useAirLos) {
+		if (object->useAirLos)
 			return (InAirLos(object->pos, allyTeam));
-		} else {
-			return (InLos(object->pos, allyTeam));
-		}
+
+		return (InLos(object->pos, allyTeam));
 	}
 
 	inline bool InLos(const CUnit* unit, int allyTeam) const {
 		// NOTE: units are treated differently than world objects in 2 ways:
-		//       1. they can be cloaked
+		//       1. they can be cloaked (has to be checked BEFORE all other cases)
 		//       2. when underwater, they only get LOS if they also have sonar
 		//          (when the requireSonarUnderWater variable is enabled)
-		if (unit->alwaysVisible || gs->globalLOS[allyTeam]) {
-			return true;
-		} else if (unit->isCloaked) {
+		if (unit->isCloaked)
 			return false;
-		} else if (unit->useAirLos) {
+		if (unit->alwaysVisible || gs->globalLOS[allyTeam])
+			return true;
+		if (unit->useAirLos)
 			return (InAirLos(unit->pos, allyTeam));
-		} else {
-			if (unit->isUnderWater && requireSonarUnderWater &&
-			    !radarhandler->InRadar(unit, allyTeam)) {
-				return false;
-			}
-			return (InLos(unit->pos, allyTeam));
-		}
+
+		if (unit->isUnderWater && requireSonarUnderWater)
+			return (radarhandler->InRadar(unit, allyTeam));
+
+		return (InLos(unit->pos, allyTeam));
 	}
 
 	inline bool InLos(const float3& pos, int allyTeam) const {
