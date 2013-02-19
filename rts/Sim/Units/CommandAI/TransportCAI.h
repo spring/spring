@@ -27,6 +27,8 @@ public:
 	CTransportCAI();
 	~CTransportCAI();
 
+	void SetTransportee(CUnit* unit);
+	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void SlowUpdate();
 
 	bool CanTransport(const CUnit* unit) const;
