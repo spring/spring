@@ -1247,7 +1247,7 @@ int CCommandAI::UpdateTargetLostTimer(int targetUnitID)
 		return (targetLostTimer = TARGET_LOST_TIMER);
 
 	// keep tracking so long as target is on radar (or indefinitely if immobile)
-	if ((targetUnit->losStatus[owner->allyteam] & LOS_INRADAR) || targetUnitDef->IsImmobileUnit())
+	if ((targetUnit->losStatus[owner->allyteam] & LOS_INRADAR))
 		return (targetLostTimer = TARGET_LOST_TIMER);
 
 	return (std::max(--targetLostTimer, 0));
