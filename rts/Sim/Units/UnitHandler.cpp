@@ -43,7 +43,8 @@ CR_BIND(CUnitHandler, );
 CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(activeUnits),
 	CR_MEMBER(units),
-	CR_MEMBER(freeUnitIDs),
+	CR_MEMBER(freeUnitIndexToIdentMap),
+	CR_MEMBER(freeUnitIdentToIndexMap),
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius),
 	CR_MEMBER(unitsToBeRemoved),
@@ -58,7 +59,7 @@ CR_REG_METADATA(CUnitHandler, (
 void CUnitHandler::PostLoad()
 {
 	// reset any synced stuff that is not saved
-	slowUpdateIterator = activeUnits.end();
+	activeSlowUpdateUnit = activeUnits.end();
 }
 
 
@@ -97,10 +98,25 @@ CUnitHandler::CUnitHandler()
 
 		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
 		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
-		std::copy(freeIDs.begin(), freeIDs.end(), std::inserter(freeUnitIDs, freeUnitIDs.begin()));
+
+		// NOTE:
+		//   any randomization would be undone by using a std::set as-is
+		//   instead create a bi-directional mapping from indices to ID's
+		//   (where the ID's are a random permutation of the index range)
+		//   such that ID's can be assigned and returned to the pool with
+		//   their original index
+		//
+		//     freeUnitIndexToIdentMap = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
+		//     freeUnitIdentToIndexMap = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}
+		//
+		//   (the ID --> index map is never changed at runtime!)
+		for (unsigned int n = 0; n < freeIDs.size(); n++) {
+			freeUnitIndexToIdentMap.insert(std::pair<unsigned int, unsigned int>(n, freeIDs[n]));
+			freeUnitIdentToIndexMap.insert(std::pair<unsigned int, unsigned int>(freeIDs[n], n));
+		}
 	}
 
-	slowUpdateIterator = activeUnits.end();
+	activeSlowUpdateUnit = activeUnits.end();
 	airBaseHandler = new CAirBaseHandler();
 }
 
@@ -116,29 +132,10 @@ CUnitHandler::~CUnitHandler()
 	delete airBaseHandler;
 }
 
-
-bool CUnitHandler::AddUnit(CUnit* unit)
+void CUnitHandler::InsertActiveUnit(CUnit* unit)
 {
-	// LoadUnit should make sure this is true
-	assert(CanAddUnit(unit->id));
-
-	if (unit->id < 0) {
-		// should be unreachable (all code that goes through
-		// UnitLoader::LoadUnit --> Unit::PreInit checks the
-		// unit limit first)
-		assert(!freeUnitIDs.empty());
-		// pick the first available (randomized) ID
-		assert(freeUnitIDs.find(unit->id) == freeUnitIDs.end());
-		unit->id = *(freeUnitIDs.begin());
-	} else {
-		// otherwise use given ID if not already taken
-		assert(unit->id < units.size());
-		assert(units[unit->id] == NULL);
-	}
-
-	units[unit->id] = unit;
-
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
+
 	if (ui != activeUnits.end()) {
 		// randomize this to make the slow-update order random (good if one
 		// builds say many buildings at once and then many mobile ones etc)
@@ -149,8 +146,34 @@ bool CUnitHandler::AddUnit(CUnit* unit)
 		}
 	}
 
-	freeUnitIDs.erase(unit->id);
+	if (unit->id < 0) {
+		// should be unreachable (all code that goes through
+		// UnitLoader::LoadUnit --> Unit::PreInit checks the
+		// unit limit first)
+		assert(!freeUnitIndexToIdentMap.empty());
+		assert(!freeUnitIdentToIndexMap.empty());
+
+		// pick first available free ID if we want a random one
+		unit->id = (freeUnitIndexToIdentMap.begin())->second;
+	}
+
+	assert(unit->id < units.size());
+	assert(units[unit->id] == NULL);
+	assert(freeUnitIndexToIdentMap.find(freeUnitIdentToIndexMap[unit->id]) != freeUnitIndexToIdentMap.end());
+
+	freeUnitIndexToIdentMap.erase(freeUnitIdentToIndexMap[unit->id]);
 	activeUnits.insert(ui, unit);
+
+	units[unit->id] = unit;
+}
+
+
+bool CUnitHandler::AddUnit(CUnit* unit)
+{
+	// LoadUnit should make sure this is true
+	assert(CanAddUnit(unit->id));
+
+	InsertActiveUnit(unit);
 
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
 	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
@@ -175,8 +198,8 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		if (*usi == delUnit) {
-			if (slowUpdateIterator != activeUnits.end() && *usi == *slowUpdateIterator) {
-				++slowUpdateIterator;
+			if (activeSlowUpdateUnit != activeUnits.end() && *usi == *activeSlowUpdateUnit) {
+				++activeSlowUpdateUnit;
 			}
 			delTeam = delUnit->team;
 			delType = delUnit->unitDef->id;
@@ -186,7 +209,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
 			activeUnits.erase(usi);
-			freeUnitIDs.insert(delUnit->id);
+			freeUnitIndexToIdentMap.insert(std::pair<unsigned int, unsigned int>(freeUnitIdentToIndexMap[delUnit->id], delUnit->id));
 			unitsByDefs[delTeam][delType].erase(delUnit);
 
 			units[delUnit->id] = NULL;
@@ -318,14 +341,14 @@ void CUnitHandler::Update()
 
 		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
 		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE - 1)) == 0) {
-			slowUpdateIterator = activeUnits.begin();
+			activeSlowUpdateUnit = activeUnits.begin();
 		}
 
 		// stagger the SlowUpdate's
 		int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
 
-		for (; slowUpdateIterator != activeUnits.end() && n != 0; ++slowUpdateIterator) {
-			CUnit* unit = *slowUpdateIterator;
+		for (; activeSlowUpdateUnit != activeUnits.end() && n != 0; ++activeSlowUpdateUnit) {
+			CUnit* unit = *activeSlowUpdateUnit;
 
 			UNIT_SANITY_CHECK(unit);
 			unit->SlowUpdate();

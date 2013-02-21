@@ -1717,6 +1717,11 @@ void CGroundMoveType::HandleUnitCollisions(
 		const bool collideeYields = (collider->isMoving && !collidee->isMoving);
 		const bool ignoreCollidee = ((collideeYields && alliedCollision) || colliderUD->pushResistant);
 
+		// FIXME:
+		//   allowPushingEnemyUnits is (now) useless because alliances are bi-directional
+		//   ie. if !alliedCollision, pushCollider and pushCollidee BOTH become false and
+		//   the collision is treated normally --> not what we want here, but the desired
+		//   behavior (making each party stop and block the other) has many corner-cases
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
 		pushCollider &= (!collider->beingBuilt && !collider->usingScriptMoveType && !colliderUD->pushResistant);
@@ -1800,9 +1805,6 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / colliderRelRadius): 1.0f) * int(!ignoreCollidee);
 		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / collideeRelRadius): 1.0f);
 
-		const float3 colliderPushPos = collider->pos + (colResponseVec * colliderMassScale);
-		const float3 collideePushPos = collidee->pos - (colResponseVec * collideeMassScale);
-
 		// try to prevent both parties from being pushed onto non-traversable
 		// squares (without resetting their position which stops them dead in
 		// their tracks and undoes previous legitimate pushes made this frame)
@@ -1810,37 +1812,36 @@ void CGroundMoveType::HandleUnitCollisions(
 		// if pushCollider and pushCollidee are both false (eg. if each party
 		// is pushResistant), treat the collision as regular and push both to
 		// avoid deadlocks
-		if (pushCollider || !pushCollidee) {
-			const bool colliderPushPosFree = !POS_IMPASSABLE(colliderMD, colliderPushPos, collider);
-			const bool colliderPushAllowed = (!colliderUD->pushResistant || collideeUD->pushResistant);
+		#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
+		const int colliderSlideSign = SIGN( separationVector.dot(collider->rightdir));
+		const int collideeSlideSign = SIGN(-separationVector.dot(collidee->rightdir));
+		#undef SIGN
 
-			if (colliderPushPosFree && colliderPushAllowed) {
+		const float3 colliderSlideVec = collider->rightdir * colliderSlideSign * (1.0f / penDistance);
+		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance);
+		const float3 colliderPushPos  = collider->pos + (colResponseVec * colliderMassScale);
+		const float3 collideePushPos  = collidee->pos - (colResponseVec * collideeMassScale);
+		const float3 colliderSlidePos = collider->pos + colliderSlideVec * r2;
+		const float3 collideeSlidePos = collidee->pos + collideeSlideVec * r1;
+
+		if ((pushCollider || !pushCollidee) && colliderMobile) {
+			if (!POS_IMPASSABLE(colliderMD, colliderPushPos, collider)) {
 				collider->Move3D(colliderPushPos, false);
 			}
-		}
-
-		if (pushCollidee || !pushCollider) {
-			const bool collideePushPosFree = !POS_IMPASSABLE(collideeMD, collideePushPos, collidee);
-			const bool collideePushAllowed = (!collideeUD->pushResistant || colliderUD->pushResistant);
-
-			if (collideePushPosFree && collideePushAllowed) {
-				collidee->Move3D(collideePushPos, false);
+			// also push collider laterally
+			if (!POS_IMPASSABLE(colliderMD, colliderSlidePos, collider)) {
+				collider->Move3D(colliderSlideVec * r2, true);
 			}
 		}
 
-		if (collider->isMoving && collidee->isMoving) {
-			#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
-			// also push collider and collidee laterally in opposite directions
-			const int colliderSign = SIGN( separationVector.dot(collider->rightdir));
-			const int collideeSign = SIGN(-separationVector.dot(collidee->rightdir));
-			const float3 colliderSlideVec = collider->rightdir * colliderSign * (1.0f / penDistance);
-			const float3 collideeSlideVec = collidee->rightdir * collideeSign * (1.0f / penDistance);
-			const bool colliderSlidePosFree = pushCollider && !POS_IMPASSABLE(colliderMD, collider->pos + colliderSlideVec * r2, collider);
-			const bool collideeSlidePosFree = pushCollidee && !POS_IMPASSABLE(collideeMD, collidee->pos + collideeSlideVec * r1, collidee);
-
-			if (colliderSlidePosFree) { collider->Move3D(colliderSlideVec * r2, true); }
-			if (collideeSlidePosFree) { collidee->Move3D(collideeSlideVec * r1, true); }
-			#undef SIGN
+		if ((pushCollidee || !pushCollider) && collideeMobile) {
+			if (!POS_IMPASSABLE(collideeMD, collideePushPos, collidee)) {
+				collidee->Move3D(collideePushPos, false);
+			}
+			// also push collidee laterally
+			if (!POS_IMPASSABLE(collideeMD, collideeSlidePos, collidee)) {
+				collidee->Move3D(collideeSlideVec * r1, true);
+			}
 		}
 	}
 }
