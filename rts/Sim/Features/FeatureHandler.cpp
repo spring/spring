@@ -17,15 +17,7 @@
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Set.h"
 
-
-using std::list;
-using std::map;
-using std::string;
-using std::vector;
-
-
 CFeatureHandler* featureHandler = NULL;
-
 
 /******************************************************************************/
 
@@ -36,7 +28,8 @@ CR_REG_METADATA(CFeatureHandler, (
 //	CR_MEMBER(featureDefs),
 //	CR_MEMBER(featureDefsVector),
 
-	CR_MEMBER(freeFeatureIDs),
+	CR_MEMBER(freeFeatureIndexToIdentMap),
+	CR_MEMBER(freeFeatureIdentToIndexMap),
 	CR_MEMBER(toBeFreedFeatureIDs),
 	CR_MEMBER(activeFeatures),
 	CR_MEMBER(features),
@@ -60,19 +53,19 @@ CFeatureHandler::CFeatureHandler()
 	featureDefsVector.push_back(NULL);
 
 	// get most of the feature defs (missing trees and geovent from the map)
-	vector<string> keys;
+	std::vector<std::string> keys;
 	rootTable.GetKeys(keys);
 
 	for (unsigned int i = 0; i < keys.size(); i++) {
-		const string& nameMixedCase = keys[i];
-		const string& nameLowerCase = StringToLower(nameMixedCase);
+		const std::string& nameMixedCase = keys[i];
+		const std::string& nameLowerCase = StringToLower(nameMixedCase);
 		const LuaTable& fdTable = rootTable.SubTable(nameMixedCase);
 
 		AddFeatureDef(nameLowerCase, CreateFeatureDef(fdTable, nameLowerCase));
 	}
 	for (unsigned int i = 0; i < keys.size(); i++) {
-		const string& nameMixedCase = keys[i];
-		const string& nameLowerCase = StringToLower(nameMixedCase);
+		const std::string& nameMixedCase = keys[i];
+		const std::string& nameLowerCase = StringToLower(nameMixedCase);
 		const LuaTable& fdTable = rootTable.SubTable(nameMixedCase);
 
 		const FeatureDef* fd = GetFeatureDef(nameLowerCase);
@@ -102,12 +95,12 @@ CFeatureHandler::~CFeatureHandler()
 
 
 
-void CFeatureHandler::AddFeatureDef(const string& name, FeatureDef* fd)
+void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
 {
 	if (fd == NULL)
 		return;
 
-	map<string, const FeatureDef*>::const_iterator it = featureDefs.find(name);
+	std::map<std::string, const FeatureDef*>::const_iterator it = featureDefs.find(name);
 
 	if (it != featureDefs.end()) {
 		featureDefsVector[it->second->id] = fd;
@@ -120,9 +113,9 @@ void CFeatureHandler::AddFeatureDef(const string& name, FeatureDef* fd)
 }
 
 
-FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mixedCase) const
+FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std::string& mixedCase) const
 {
-	const string& name = StringToLower(mixedCase);
+	const std::string& name = StringToLower(mixedCase);
 	if (featureDefs.find(name) != featureDefs.end()) {
 		return NULL;
 	}
@@ -342,41 +335,73 @@ CFeature* CFeatureHandler::LoadFeature(const FeatureLoadParams& params) {
 	return feature;
 }
 
+
+bool CFeatureHandler::NeedAllocateNewFeatureIDs(const CFeature* feature) const
+{
+	if (feature->id < 0 && freeFeatureIndexToIdentMap.empty())
+		return true;
+	if (feature->id >= 0 && feature->id >= features.size())
+		return true;
+
+	return false;
+}
+
+void CFeatureHandler::AllocateNewFeatureIDs(const CFeature* feature)
+{
+	// allocate new batch of (randomly shuffled) feature id's
+	//
+	// if feature->id is non-negative, then allocate enough to
+	// make it a valid index (we have no hard MAX_FEATURES cap)
+	const unsigned int K = features.size();
+	const unsigned int N = freeFeatureIdentToIndexMap.size();
+
+	std::vector<int> newIDs(std::max(int(K) + 100, feature->id + 1) - int(K));
+
+	for (unsigned k = 0; k < newIDs.size(); k++)
+		newIDs[k] = K + k;
+
+	features.resize(K + newIDs.size(), NULL);
+
+	SyncedRNG rng;
+	std::random_shuffle(newIDs.begin(), newIDs.end(), rng);
+	std::random_shuffle(newIDs.begin(), newIDs.end(), rng);
+
+	for (unsigned int n = 0; n < newIDs.size(); n++) {
+		freeFeatureIndexToIdentMap.insert(std::pair<unsigned int, unsigned int>(N + n, newIDs[n]));
+		freeFeatureIdentToIndexMap.insert(std::pair<unsigned int, unsigned int>(newIDs[n], N + n));
+	}
+}
+
+void CFeatureHandler::InsertActiveFeature(CFeature* feature)
+{
+	if (feature->id < 0) {
+		assert(!freeFeatureIndexToIdentMap.empty());
+		assert(!freeFeatureIdentToIndexMap.empty());
+
+		feature->id = (freeFeatureIndexToIdentMap.begin())->second;
+	}
+
+	assert(feature->id < features.size());
+	assert(features[feature->id] == NULL);
+	assert(freeFeatureIndexToIdentMap.find(freeFeatureIdentToIndexMap[feature->id]) != freeFeatureIndexToIdentMap.end());
+
+	freeFeatureIndexToIdentMap.erase(freeFeatureIdentToIndexMap[feature->id]);
+	activeFeatures.insert(feature);
+	features[feature->id] = feature;
+}
+
+
+
 bool CFeatureHandler::AddFeature(CFeature* feature)
 {
 	// LoadFeature should make sure this is true
 	assert(CanAddFeature(feature->id));
 
-	if ((feature->id < 0 && freeFeatureIDs.empty()) || (feature->id >= 0 && feature->id >= freeFeatureIDs.size())) {
-		// allocate new ids and randomly insert to freeFeatureIDs
-		//
-		// if feature->id is non-negative, then allocate enough to
-		// make it a valid index (we have no hard MAX_FEATURES cap)
-		std::vector<int> newIDs(std::max(int(features.size()) + 100, feature->id + 1) - int(features.size()));
-
-		for (unsigned i = 0; i < newIDs.size(); ++i)
-			newIDs[i] = i + features.size();
-
-		features.resize(features.size() + newIDs.size(), NULL);
-
-		SyncedRNG rng;
-		std::random_shuffle(newIDs.begin(), newIDs.end(), rng); // synced
-		std::copy(newIDs.begin(), newIDs.end(), std::inserter(freeFeatureIDs, freeFeatureIDs.begin()));
+	if (NeedAllocateNewFeatureIDs(feature)) {
+		AllocateNewFeatureIDs(feature);
 	}
 
-
-	if (feature->id < 0) {
-		assert(!freeFeatureIDs.empty());
-		assert(freeFeatureIDs.find(feature->id) == freeFeatureIDs.end());
-		feature->id = *(freeFeatureIDs.begin());
-	} else {
-		assert(feature->id < features.size());
-		assert(features[feature->id] == NULL);
-	}
-
-	freeFeatureIDs.erase(feature->id);
-	activeFeatures.insert(feature);
-	features[feature->id] = feature;
+	InsertActiveFeature(feature);
 	SetFeatureUpdateable(feature);
 
 	eventHandler.FeatureCreated(feature);
@@ -395,8 +420,8 @@ CFeature* CFeatureHandler::GetFeature(int id)
 {
 	if (id >= 0 && id < features.size())
 		return features[id];
-	else
-		return 0;
+
+	return NULL;
 }
 
 
@@ -439,7 +464,7 @@ void CFeatureHandler::Update()
 	SCOPED_TIMER("FeatureHandler::Update");
 
 	if ((gs->frameNum & 31) == 0) {
-		for (list<int>::iterator it = toBeFreedFeatureIDs.begin(); it != toBeFreedFeatureIDs.end(); ) {
+		for (std::list<int>::iterator it = toBeFreedFeatureIDs.begin(); it != toBeFreedFeatureIDs.end(); ) {
 			if (CBuilderCAI::IsFeatureBeingReclaimed(*it)) {
 				// postpone putting this ID back into the free pool
 				// (this gives area-reclaimers time to choose a new
@@ -447,7 +472,7 @@ void CFeatureHandler::Update()
 				++it;
 			} else {
 				assert(features[*it] == NULL);
-				freeFeatureIDs.insert(*it);
+				freeFeatureIndexToIdentMap.insert(std::pair<unsigned int, unsigned int>(freeFeatureIdentToIndexMap[*it], *it));
 				it = toBeFreedFeatureIDs.erase(it);
 			}
 		}
@@ -515,14 +540,14 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 
 void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
-	const vector<int>& quads = qf->GetQuadsRectangle(
+	const std::vector<int>& quads = qf->GetQuadsRectangle(
 		float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
 		float3(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE)
 	);
 
-	for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-		list<CFeature*>::const_iterator fi;
-		const list<CFeature*>& features = qf->GetQuad(*qi).features;
+	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
+		std::list<CFeature*>::const_iterator fi;
+		const std::list<CFeature*>& features = qf->GetQuad(*qi).features;
 
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
