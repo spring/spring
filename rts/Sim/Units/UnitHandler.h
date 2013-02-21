@@ -4,11 +4,12 @@
 #define UNITHANDLER_H
 
 #include <vector>
-#include <list>
 
 #include "UnitDef.h"
 #include "UnitSet.h"
 #include "CommandAI/Command.h"
+#include "System/creg/STL_Map.h"
+#include "System/creg/STL_List.h"
 
 class CUnit;
 class CBuilderCAI;
@@ -43,7 +44,7 @@ public:
 	bool CanAddUnit(int id) const {
 		// do we want to be assigned a random ID and are any left in pool?
 		if (id < 0)
-			return (!freeUnitIDs.empty());
+			return (!freeUnitIndexToIdentMap.empty());
 		// is this ID not already in use?
 		if (id < MaxUnits())
 			return (units[id] == NULL);
@@ -84,16 +85,20 @@ public:
 
 	std::list<CUnit*> activeUnits;                    ///< used to get all active units
 	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
-	std::list<CBuilderCAI*> builderCAIs; //FIXME use std::set? (std::set is ingeneral not syncsafe, but when using a custom compare func it can)
+	std::list<CBuilderCAI*> builderCAIs;              // TODO use std::set? (with custom compare-func for sync)
 
 private:
+	void InsertActiveUnit(CUnit* unit);
+
 	///< test a single mapsquare for build possibility
 	static BuildSquareStatus TestBuildSquare(const float3& pos, const float buildHeight, const UnitDef* unitdef, const MoveDef* moveDef, CFeature *&feature, int allyteam, bool synced);
 
 private:
-	std::set<unsigned int> freeUnitIDs;
-	std::vector<CUnit*> unitsToBeRemoved;            ///< units that will be removed at start of next update
-	std::list<CUnit*>::iterator slowUpdateIterator;
+	std::map<unsigned int, unsigned int> freeUnitIndexToIdentMap;
+	std::map<unsigned int, unsigned int> freeUnitIdentToIndexMap;
+
+	std::vector<CUnit*> unitsToBeRemoved;              ///< units that will be removed at start of next update
+	std::list<CUnit*>::iterator activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
 
 	///< global unit-limit (derived from the per-team limit)
 	///< units.size() is equal to this and constant at runtime
