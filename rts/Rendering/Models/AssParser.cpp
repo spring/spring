@@ -33,8 +33,11 @@
 static const float DEGTORAD = PI / 180.f;
 static const float RADTODEG = 180.f / PI;
 
-//! triangulate guarantees the most complex mesh is a triangle
-//! sortbytype ensure only 1 type of primitive type per mesh is used
+static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
+static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
+
+// triangulate guarantees the most complex mesh is a triangle
+// sortbytype ensure only 1 type of primitive type per mesh is used
 static const int ASS_POSTPROCESS_OPTIONS =
 	  aiProcess_RemoveComponent
 	| aiProcess_FindInvalidData
@@ -72,6 +75,12 @@ static float3 QuaternionToRadianAngles(aiQuaternion q1)
 		result.z = math::atan2(2*q1.x*q1.w-2*q1.y*q1.z , -sqx + sqy - sqz + sqw);
 	}
 	return result;
+}
+
+
+static inline float3 aiVectorToFloat3(const aiVector3D v)
+{
+	return float3(v.x, v.y, v.z);
 }
 
 
@@ -211,11 +220,19 @@ void CAssParser::CalculatePerMeshMinMax(SAssModel* model)
 		const aiMesh& mesh = *scene->mMeshes[i];
 
 		SAssModel::MinMax& minmax = model->mesh_minmax[i];
+		minmax.mins = DEF_MIN_SIZE;
+		minmax.maxs = DEF_MAX_SIZE;
+
 		for (size_t vertexIndex= 0; vertexIndex < mesh.mNumVertices; vertexIndex++) {
 			const aiVector3D& aiVertex = mesh.mVertices[vertexIndex];
-			minmax.mins = std::min(minmax.mins, float3(aiVertex.x, aiVertex.y, aiVertex.z));
-			minmax.maxs = std::max(minmax.maxs, float3(aiVertex.x, aiVertex.y, aiVertex.z));
+			minmax.mins = std::min(minmax.mins, aiVectorToFloat3(aiVertex));
+			minmax.maxs = std::max(minmax.maxs, aiVectorToFloat3(aiVertex));
 		}
+
+		if (minmax.mins == DEF_MIN_SIZE)
+			minmax.mins = ZeroVector;
+		if (minmax.maxs == DEF_MAX_SIZE)
+			minmax.maxs = ZeroVector;
 	}
 }
 
@@ -335,7 +352,8 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	}
 	if (strcmp(node->mName.data, "SpringRadius") == 0) {
 		if (!metaTable.KeyExists("midpos")) {
-			model->relMidPos = float3(piece->offset.x, piece->offset.z, piece->offset.y); //! Y and Z are swapped because this piece isn't rotated
+			//FIXME the swizzle looks wrong, the vertex positions below aren't swizzled and work fine!
+			model->relMidPos = float3(piece->offset.x, piece->offset.z, piece->offset.y); // Y and Z are swapped because this piece isn't rotated
 			LOG_S(LOG_SECTION_MODEL,
 					"Model midpos of (%f,%f,%f) set by special node 'SpringRadius'",
 					model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
@@ -361,7 +379,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		unsigned int meshIndex = node->mMeshes[meshListIndex];
 		LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Fetching mesh %d from scene",
 				meshIndex);
-		aiMesh* mesh = model->scene->mMeshes[meshIndex];
+		const aiMesh* mesh = model->scene->mMeshes[meshIndex];
 		std::vector<unsigned> mesh_vertex_mapping;
 		//! extract vertex data
 		LOG_SL(LOG_SECTION_PIECE, L_DEBUG,
@@ -374,23 +392,19 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 				(mesh->HasTextureCoords(0) ? "Y" : "N"));
 
 		piece->vertices.reserve(piece->vertices.size() + mesh->mNumVertices);
-		for (unsigned vertexIndex= 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
+		for (unsigned vertexIndex = 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
 			SAssVertex vertex;
 
 			// vertex coordinates
 			const aiVector3D& aiVertex = mesh->mVertices[vertexIndex];
-			vertex.pos.x = aiVertex.x;
-			vertex.pos.y = aiVertex.y;
-			vertex.pos.z = aiVertex.z;
+			vertex.pos = aiVectorToFloat3(aiVertex);
 
 			// vertex normal
 			LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Fetching normal for vertex %d",
 					vertexIndex);
 			const aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
 			if (!IS_QNAN(aiNormal)) {
-				vertex.normal.x = aiNormal.x;
-				vertex.normal.y = aiNormal.y;
-				vertex.normal.z = aiNormal.z;
+				vertex.normal = aiVectorToFloat3(aiNormal);
 			}
 
 			// vertex tangent, x is positive in texture axis
@@ -400,8 +414,8 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 				const aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
 				const aiVector3D& aiBitangent = mesh->mBitangents[vertexIndex];
 
-				vertex.sTangent = float3(aiTangent.x, aiTangent.y, aiTangent.z);
-				vertex.tTangent = float3(aiBitangent.x, aiBitangent.y, aiBitangent.z);
+				vertex.sTangent = aiVectorToFloat3(aiTangent);
+				vertex.tTangent = aiVectorToFloat3(aiBitangent);
 			}
 
 			// vertex texcoords
@@ -424,10 +438,18 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		LOG_SL(LOG_SECTION_PIECE, L_DEBUG,
 				"Processing faces for mesh %d (%d faces)",
 				meshIndex, mesh->mNumFaces);
+		/*
+		 * since aiProcess_SortByPType is being used,
+		 * we're sure we'll get only 1 type here,
+		 * so combination check isn't needed, also
+		 * anything more complex than triangles is
+		 * being split thanks to aiProcess_Triangulate
+		 */
 		piece->vertexDrawIndices.reserve(piece->vertexDrawIndices.size() + mesh->mNumFaces * 3);
 		for (unsigned faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex) {
 			const aiFace& face = mesh->mFaces[faceIndex];
-			for (unsigned vertexListID = 0; vertexListID < face.mNumIndices; ++vertexListID) {
+			assert(face.mNumIndices == 3);
+			for (unsigned vertexListID = 0; vertexListID < 3; ++vertexListID) {
 				unsigned int vertexID = mesh_vertex_mapping[face.mIndices[vertexListID]];
 				piece->vertexDrawIndices.push_back(vertexID);
 			}
