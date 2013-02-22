@@ -43,6 +43,8 @@ void CInterceptHandler::Update(bool forced) {
 		// const float3& wOwnerPos = wOwner->pos;
 		const float3& wPos = w->weaponPos;
 
+		assert(wDef->interceptor || wDef->isShield);
+
 		for (pit = interceptables.begin(); pit != interceptables.end(); ++pit) {
 			CWeaponProjectile* p = pit->second;
 			const WeaponDef* pDef = p->weaponDef;

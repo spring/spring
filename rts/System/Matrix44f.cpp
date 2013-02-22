@@ -194,6 +194,26 @@ void CMatrix44f::Rotate(float rad, const float3& axis)
 }
 
 
+void CMatrix44f::Scale(const float3 scales)
+{
+	m[0]  *= scales.x;
+	m[1]  *= scales.y;
+	m[2]  *= scales.z;
+
+	m[4]  *= scales.x;
+	m[5]  *= scales.y;
+	m[6]  *= scales.z;
+
+	m[8]  *= scales.x;
+	m[9]  *= scales.y;
+	m[10] *= scales.z;
+
+	m[12] *= scales.x;
+	m[13] *= scales.y;
+	m[14] *= scales.z;
+}
+
+
 void CMatrix44f::Translate(float x, float y, float z)
 {
 	m[12] += x*m[0] + y*m[4] + z*m[8];
