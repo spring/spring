@@ -12,6 +12,9 @@
 #include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Path/IPathManager.h"
+#include "Sim/Path/Default/PathManager.h"
+#include "Sim/Path/QTPFS/PathManager.hpp"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
@@ -200,6 +203,17 @@ void CGameInfo::Draw()
 
 	labels.push_back("Game Name:");
 	values.push_back(gameSetup->modName);
+
+	labels.push_back("PathFinder:");
+	if (dynamic_cast<QTPFS::PathManager*>(pathManager) != NULL) {
+		values.push_back("QTPFS");
+	} else
+	if (dynamic_cast<CPathManager*>(pathManager) != NULL) {
+		values.push_back("Default");
+	} else
+	{
+		values.push_back("unknown");
+	}
 
 	if (gs->cheatEnabled) {
 		labels.push_back("CHEATS:");
