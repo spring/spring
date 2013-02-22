@@ -225,8 +225,8 @@ void CAssParser::CalculatePerMeshMinMax(SAssModel* model)
 
 		for (size_t vertexIndex= 0; vertexIndex < mesh.mNumVertices; vertexIndex++) {
 			const aiVector3D& aiVertex = mesh.mVertices[vertexIndex];
-			minmax.mins = std::min(minmax.mins, WorldVectorToFloat3(aiVertex));
-			minmax.maxs = std::max(minmax.maxs, WorldVectorToFloat3(aiVertex));
+			minmax.mins = std::min(minmax.mins, aiVectorToFloat3(aiVertex));
+			minmax.maxs = std::max(minmax.maxs, aiVectorToFloat3(aiVertex));
 		}
 
 		if (minmax.mins == DEF_MIN_SIZE)
