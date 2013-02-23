@@ -21,7 +21,10 @@ Bugfixes:
  - fixed #3481
 
 Pr-Downloader:
- - fixed interoperability with 64bit windows
+ - workaround CVE-2013-0249 (disable all protocols expect http/https)
+ - reduce log messages
+ - fix invalid timeout
+ - fix ignored depends in http-downloads
 
 Assimp:
  ! apply rotations & scalings
