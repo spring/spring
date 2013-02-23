@@ -25,7 +25,7 @@ namespace TraceRay {
 		const float3& start,
 		const float3& dir,
 		float length,
-		int collisionFlags,
+		int avoidFlags,
 		const CUnit* owner,
 		CUnit*& hitUnit,
 		CFeature*& hitFeature);
