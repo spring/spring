@@ -51,7 +51,7 @@ cat <<EOD
 		startmetal=1000;
 		deathmode=com;
 		mo_transportenemy=com;
-		pathfinder=qtpfs;
+		pathfinder=default;
 	}
 	NumRestrictions=0;
 	[RESTRICT]
