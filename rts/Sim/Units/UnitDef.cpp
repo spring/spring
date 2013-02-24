@@ -430,8 +430,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	showNanoSpray = udTable.GetBool("showNanoSpray", true);
 	nanoColor = udTable.GetFloat3("nanoColor", float3(0.2f,0.7f,0.2f));
 
-	canSubmerge = udTable.GetBool("canSubmerge", false);
 	canfly      = udTable.GetBool("canFly",      false);
+	canSubmerge = udTable.GetBool("canSubmerge", false) && canfly;
 
 	airStrafe      = udTable.GetBool("airStrafe", true);
 	hoverAttack    = udTable.GetBool("hoverAttack", false);
@@ -464,7 +464,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	holdSteady        = udTable.GetBool("holdSteady",        false);
 	releaseHeld       = udTable.GetBool("releaseHeld",       false);
-	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveDef());
+	cantBeTransported = udTable.GetBool("cantBeTransported", !RequireMoveDef());
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
 	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
@@ -511,26 +511,16 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	ParseWeaponsTable(weaponsTable);
 
 	needGeo = false;
-
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 
 	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
-
-	// modrules transport settings
-	// FIXME: do we want to check moveDef->moveFamily for these?
-	if ((!modInfo.transportAir    && canfly)   ||
-		(!modInfo.transportShip   && canFloat) ||
-		(!modInfo.transportHover  && canHover) ||
-		(!modInfo.transportGround && !canHover && !canFloat && !canfly)) {
- 		cantBeTransported = true;
-	}
 
 	MoveDef* moveDef = NULL;
 
 	// aircraft have MoveTypes but no MoveDef;
 	// static structures have no use for either
 	// (but get StaticMoveType instances)
-	if (WantsMoveDef()) {
+	if (RequireMoveDef()) {
 		const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 		const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
@@ -572,16 +562,24 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	}
 
 	if (moveDef == NULL) {
-		upright = upright || !canfly;
-		floatOnWater = canFloat;
+		upright           |= !canfly;
+		floatOnWater      |= canFloat;
+
+		cantBeTransported |= (!modInfo.transportAir && !canfly);
 	} else {
-		upright = upright ||
-			(moveDef->moveFamily == MoveDef::Hover) ||
-			(moveDef->moveFamily == MoveDef::Ship);
-		floatOnWater =
-			(moveDef->moveFamily == MoveDef::Hover) ||
-			(moveDef->moveFamily == MoveDef::Ship);
+		upright           |= (moveDef->moveFamily == MoveDef::Hover);
+		upright           |= (moveDef->moveFamily == MoveDef::Ship );
+		floatOnWater      |= (moveDef->moveFamily == MoveDef::Hover);
+		floatOnWater      |= (moveDef->moveFamily == MoveDef::Ship );
+
+		cantBeTransported |= (!modInfo.transportGround && moveDef->moveFamily == MoveDef::Tank );
+		cantBeTransported |= (!modInfo.transportGround && moveDef->moveFamily == MoveDef::KBot );
+		cantBeTransported |= (!modInfo.transportShip   && moveDef->moveFamily == MoveDef::Ship );
+		cantBeTransported |= (!modInfo.transportHover  && moveDef->moveFamily == MoveDef::Hover);
 	}
+
+	// modrules transport settings
+	cantBeTransported |= (!modInfo.transportGround && IsGroundUnit());
 
 	if (IsAirUnit()) {
 		if (IsFighterUnit() || IsBomberUnit()) {
@@ -880,28 +878,29 @@ void UnitDef::SetNoCost(bool noCost)
 bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) const {
 	const MoveDef* moveDef = (pathType != -1U)? moveDefHandler->GetMoveDefByPathType(pathType): NULL;
 
-	float maxDepth = this->maxWaterDepth;
-	float minDepth = this->minWaterDepth;
+	float maxDepth = +1e6f;
+	float minDepth = -1e6f;
 
 	if (moveDef != NULL) {
-		// we are a mobile ground-unit
+		// we are a mobile ground-unit, use MoveDef limits
 		if (moveDef->moveFamily == MoveDef::Ship) {
 			minDepth = moveDef->depth;
 		} else {
 			maxDepth = moveDef->depth;
 		}
-	}
-
-	if (floatOnWater) {
-		// if we are a surface unit, <maxDepth> is irrelevant
-		// (eg. hovercraft may be dropped anywhere over water)
-		maxDepth = +10e6f;
+	} else {
+		if (!canfly) {
+			// we are a building, use UnitDef limits
+			minDepth = this->minWaterDepth;
+			maxDepth = this->maxWaterDepth;
+		} else {
+			maxDepth *= canSubmerge;
+			maxDepth *= (1 - floatOnWater);
+		}
 	}
 
 	if (clampedHeight != NULL) {
-		*clampedHeight = rawHeight;
-		*clampedHeight = std::max(*clampedHeight, -maxDepth);
-		*clampedHeight = std::min(*clampedHeight, -minDepth);
+		*clampedHeight = Clamp(rawHeight, -maxDepth, -minDepth);
 	}
 
 	// <rawHeight> must lie in the range [-maxDepth, -minDepth]
