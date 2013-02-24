@@ -1528,17 +1528,17 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	//   allow units to move _through_ idle open factories by extending the collidee's footprint such
 	//   that insideYardMap is true in a larger area (otherwise pathfinder and coldet would disagree)
 	// 
-	const int xext = std::max(1, colliderMD->xsizeh << 1);
-	const int zext = std::max(1, colliderMD->zsizeh << 1);
+	const int xext = ((collidee->xsize >> 1) + std::max(1, colliderMD->xsizeh));
+	const int zext = ((collidee->zsize >> 1) + std::max(1, colliderMD->zsizeh));
 
 	const bool exitingYardMap =
 		((collider->frontdir.dot(separationVector) > 0.0f) &&
 		 (collider->   speed.dot(separationVector) > 0.0f));
 	const bool insideYardMap =
-		(collider->pos.x >= (collidee->pos.x - ((collidee->xsize >> 1) - xext) * SQUARE_SIZE)) &&
-		(collider->pos.x <= (collidee->pos.x + ((collidee->xsize >> 1) + xext) * SQUARE_SIZE)) &&
-		(collider->pos.z >= (collidee->pos.z - ((collidee->zsize >> 1) - zext) * SQUARE_SIZE)) &&
-		(collider->pos.z <= (collidee->pos.z + ((collidee->zsize >> 1) + zext) * SQUARE_SIZE));
+		(collider->pos.x >= (collidee->pos.x - xext * SQUARE_SIZE)) &&
+		(collider->pos.x <= (collidee->pos.x + xext * SQUARE_SIZE)) &&
+		(collider->pos.z >= (collidee->pos.z - zext * SQUARE_SIZE)) &&
+		(collider->pos.z <= (collidee->pos.z + zext * SQUARE_SIZE));
 
 	bool wantRequestPath = false;
 
