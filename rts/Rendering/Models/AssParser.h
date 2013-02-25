@@ -70,12 +70,10 @@ public:
 private:
 	static SAssPiece* LoadPiece(SAssModel* model, aiNode* node, const LuaTable& metaTable);
 	static void BuildPieceHierarchy(S3DModel* model);
-	static void CalculateRadius(S3DModel* model);
-	static void CalculateHeight(S3DModel* model);
-	static void CalculateMidPos(S3DModel* model);
-	static void CalculateMinMax(S3DModelPiece* piece);
+	static void CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece);
+	static void CalculateModelProperties(S3DModel* model, const LuaTable& metaTable);
 	static void FindTextures(S3DModel* model, const aiScene* scene, const LuaTable& metaTable, const std::string& modelFilePath);
-	static void LoadPieceTransformations(SAssPiece* piece, const LuaTable& metaTable);
+	static void LoadPieceTransformations(const S3DModel* model, SAssPiece* piece, const LuaTable& metaTable);
 	
 	void CalculatePerMeshMinMax(SAssModel* model);
 };
