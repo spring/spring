@@ -40,8 +40,7 @@ S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
  */
 
 S3DModelPiece::S3DModelPiece()
-	: model(NULL)
-	, parent(NULL)
+	: parent(NULL)
 	, colvol(NULL)
 	, type(MODELTYPE_OTHER)
 	, isEmpty(true)
