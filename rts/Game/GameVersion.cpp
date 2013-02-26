@@ -216,6 +216,9 @@ bool IsRelease()
 
 const std::string GetMinorModifier()
 {
+#ifdef UNITSYNC
+	return "";
+#endif
 	return (GetMinorInt() == 0) ? "" : ("-" + GetMinor());
 }
 
