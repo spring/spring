@@ -14,6 +14,7 @@
 #include "Socket.h"
 #include "ProtocolDef.h"
 #include "Exception.h"
+#include "System/BaseNetProtocol.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/CRC.h"
 #include "System/GlobalConfig.h"
@@ -591,6 +592,7 @@ void UDPConnection::SetMTU(unsigned mtu2)
 
 void UDPConnection::Init()
 {
+	CBaseNetProtocol::Get(); // make sure protocoldef is initialized
 	lastNakTime = spring_gettime();
 	lastSendTime = spring_gettime();
 	lastUnackResent = spring_gettime();
