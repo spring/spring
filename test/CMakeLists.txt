@@ -67,7 +67,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	ADD_TEST(NAME testUDPListener COMMAND test_UDPListener)
-	Add_Dependencies(tests test_UDPListener)
+	Add_Dependencies(tests generateVersionFiles test_UDPListener)
 
 
 
