@@ -41,6 +41,7 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Option.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Clipboard.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/CmdLineParams.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/EngineTypeHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/errorhandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Misc.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/SharedLib.cpp"
