@@ -10,6 +10,7 @@
 #include <cstring>
 #include <boost/version.hpp>
 #include <boost/config.hpp>
+#include <stdio.h>
 
 /**
  * @brief Defines the current version string.
