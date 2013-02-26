@@ -1277,6 +1277,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\TeamController.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\TeamController.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\TraceRay.cpp"
 				>
 			</File>
@@ -5795,6 +5803,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\CrashHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\EngineTypeHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\EngineTypeHandler.h"
 					>
 				</File>
 				<File
