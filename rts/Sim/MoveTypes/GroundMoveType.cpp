@@ -326,6 +326,8 @@ void CGroundMoveType::SlowUpdate()
 	if (owner->GetTransporter() != NULL) {
 		if (progressState == Active)
 			StopEngine();
+
+		AMoveType::SlowUpdate();
 		return;
 	}
 
