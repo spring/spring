@@ -23,6 +23,7 @@
 #include "GameServer.h"
 
 #include "GameSetup.h"
+#include "GameVersion.h"
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
@@ -60,6 +61,7 @@
 #include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoReader.h"
+#include "System/Platform/EngineTypeHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 #ifndef DEDICATED
@@ -1726,26 +1728,52 @@ void CGameServer::ServerReadNet()
 				netcode::UnpackPacket msg(packet, 3);
 				std::string name, passwd, version;
 				unsigned char reconnect, netloss;
-				unsigned short netversion;
+				unsigned short netversion, enginetype, engineversionmajor, engineversionminor, enginepatchset;
 				msg >> netversion;
 				if (netversion != NETWORK_VERSION)
-					throw netcode::UnpackPacketException("Wrong network version");
+					throw netcode::UnpackPacketException(str(format("Wrong network version: %d, required version: %d") %(int)netversion %(int)NETWORK_VERSION));
+				msg >> enginetype;
+				msg >> engineversionmajor;
+				msg >> engineversionminor;
+				msg >> enginepatchset;
 				msg >> name;
 				msg >> passwd;
 				msg >> version;
 				msg >> reconnect;
 				msg >> netloss;
-				BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect, netloss);
+				boost::shared_ptr<netcode::CConnection> newconn = UDPNet->AcceptConnection();
+				unsigned int curenginetype = EngineTypeHandler::GetCurrentEngineType();
+				if (enginetype != curenginetype || engineversionmajor != SpringVersion::GetMajorInt() || engineversionminor != SpringVersion::GetMinorInt()) {
+					std::string enginereq = EngineTypeHandler::GetEngine(curenginetype, SpringVersion::GetMajorInt(), SpringVersion::GetMinorInt(), SpringVersion::GetPatchSetInt());
+					std::string enginereqshort = EngineTypeHandler::GetEngine(curenginetype, SpringVersion::GetMajorInt(), SpringVersion::GetMinorInt(), SpringVersion::GetPatchSetInt(), true);
+					std::string engineinst = EngineTypeHandler::GetEngine(enginetype, engineversionmajor, engineversionminor, enginepatchset);
+					newconn->Unmute();
+					newconn->SendData(CBaseNetProtocol::Get().SendRequestEngineType(curenginetype));
+					newconn->SendData(CBaseNetProtocol::Get().SendQuit("Wrong engine type or version!\n\nThis server requires engine: " + enginereq + "\n\nCurrently installed engine: " + engineinst));
+					newconn->Flush(true);
+					newconn->Close();
+					Message("Connection attempt rejected: This server requires engine " + enginereqshort);
+					UDPNet->RejectConnection();
+				} else {
+					BindConnection(name, passwd, version, false, newconn, reconnect, netloss);
+				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format(ConnectionReject) %ex.what() %packet->data[0] %packet->data[2] %packet->length));
+				Message(str(format(ConnectionReject) %ex.what() %(int)packet->data[0] %(int)packet->data[2] %packet->length));
 				UDPNet->RejectConnection();
 			}
 		}
 		else {
 			if (packet && packet->length >= 3)
-				Message(str(format(ConnectionReject) %"Invalid message ID" %packet->data[0] %packet->data[2] %packet->length));
-			else
-				Message("Connection attempt rejected: Packet too short");
+				Message(str(format(ConnectionReject) %"Invalid message ID" %(int)packet->data[0] %(int)packet->data[2] %packet->length));
+			else {
+				std::string pkts;
+				if (packet) {
+					for (int i = 0; i < packet->length; ++i) {
+						pkts += str(format(" 0x%x") %(int)packet->data[i]);
+					}
+				}
+				Message("Connection attempt rejected: Packet too short" + pkts);
+			}
 			UDPNet->RejectConnection();
 		}
 	}

@@ -2,11 +2,13 @@
 
 #include "System/BaseNetProtocol.h"
 
+#include "Game/GameVersion.h"
 #include "Game/PlayerStatistics.h"
 #include "Sim/Misc/TeamStatistics.h"
 #include "System/Net/RawPacket.h"
 #include "System/Net/PackPacket.h"
 #include "System/Net/ProtocolDef.h"
+#include "System/Platform/EngineTypeHandler.h"
 #include <boost/cstdint.hpp>
 
 using netcode::PackPacket;
@@ -173,6 +175,10 @@ PacketType CBaseNetProtocol::SendLuaDrawTime(uchar myPlayerNum, int mSec) {
 	return SendCustomData(myPlayerNum, CUSTOM_DATA_LUADRAWTIME, mSec);
 }
 
+PacketType CBaseNetProtocol::SendRequestEngineType(int type) {
+	return SendCustomData(0, CUSTOM_DATA_ENGINETYPE, type);
+}
+
 PacketType CBaseNetProtocol::SendDirectControl(uchar myPlayerNum)
 {
 	PackPacket* packet = new PackPacket(2, NETMSG_DIRECT_CONTROL);
@@ -190,9 +196,11 @@ PacketType CBaseNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar st
 
 PacketType CBaseNetProtocol::SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int netloss, bool reconnect)
 {
-	boost::uint16_t size = 10 + name.size() + passwd.size() + version.size();
+	boost::uint16_t size = 18 + name.size() + passwd.size() + version.size();
 	PackPacket* packet = new PackPacket(size , NETMSG_ATTEMPTCONNECT);
-	*packet << size << NETWORK_VERSION << name << passwd << version << uchar(reconnect) << uchar(netloss);
+	*packet << size << NETWORK_VERSION << static_cast<unsigned short>(EngineTypeHandler::GetCurrentEngineType())
+					<< static_cast<unsigned short>(SpringVersion::GetMajorInt()) << static_cast<unsigned short>(SpringVersion::GetMinorInt())
+					<< static_cast<unsigned short>(SpringVersion::GetPatchSetInt()) << name << passwd << version << uchar(reconnect) << uchar(netloss);
 	return PacketType(packet);
 }
 
