@@ -66,8 +66,10 @@ Else  (NOT Boost_FOUND)
 			7zip
 		)
 
+	Add_Dependencies(test_UDPListener generateVersionFiles)
+
 	ADD_TEST(NAME testUDPListener COMMAND test_UDPListener)
-	Add_Dependencies(tests generateVersionFiles test_UDPListener)
+	Add_Dependencies(tests test_UDPListener)
 
 
 
