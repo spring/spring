@@ -13,7 +13,6 @@ namespace EngineTypeHandler {
 	std::vector<EngineTypeInfo> engineTypes;
 	std::string restartExecutable;
 	std::string restartErrorMessage;
-	const unsigned short ENGINE_TYPE = 0; // support for multiple engine types that are not sync compatible
 
 	bool Init() {
 		engineTypes.push_back(EngineTypeInfo("Spring", "http://springrts.com/wiki/Download", "spring")); // 0
@@ -28,8 +27,6 @@ namespace EngineTypeHandler {
 			return NULL;
 		return &engineTypes[enginetype];
 	}
-
-	unsigned int GetCurrentEngineType() { return ENGINE_TYPE; }
 
 	std::string GetEngine(unsigned short enginetype, unsigned short engineversionmajor, unsigned short engineversionminor, unsigned short enginepatchset, bool brief) {
 		std::string minorversion = (engineversionminor == 0) ? "" : boost::str(boost::format("-%d") %(int)engineversionminor);

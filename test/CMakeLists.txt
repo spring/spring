@@ -52,7 +52,6 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/Net/UDPConnection.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/Connection.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/Socket.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Platform/EngineTypeHandler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/CRC.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/NullGlobalConfig.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Nullerrorhandler.cpp"
