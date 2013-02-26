@@ -12,6 +12,7 @@
 #include "lib/gml/gml_base.h"
 #include "lib/gml/gmlmut.h"
 #include "System/Exceptions.h"
+#include "System/Platform/EngineTypeHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Misc.h"
@@ -147,7 +148,17 @@ int main(int argc, char* argv[])
 	}
   #endif
 #endif
-	return Run(argc, argv);
+	int ret = Run(argc, argv);
+	std::string exe = EngineTypeHandler::GetRestartExecutable();
+	if (exe != "") {
+		std::vector<std::string> args;
+		for (int i=1; i<argc; i++)
+			args.push_back(argv[i]);
+		if (!EngineTypeHandler::RestartEngine(exe, args)) {
+			handleerror(NULL, EngineTypeHandler::GetRestartErrorMessage(), "Missing engine type", MBF_OK | MBF_EXCL);
+		}
+	}
+	return ret;
 }
 
 
