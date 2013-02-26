@@ -20,7 +20,7 @@ struct MoveDef {
 	MoveDef();
 	MoveDef(const LuaTable& moveTable, int moveDefID);
 
-	bool TestMoveSquare(const int hmx, const int hmz) const;
+	bool TestMoveSquare(const int hmx, const int hmz, const CSolidObject* collider) const;
 	float GetDepthMod(const float height) const;
 	unsigned int GetCheckSum() const;
 
