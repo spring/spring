@@ -440,9 +440,11 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		for (unsigned faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex) {
 			const aiFace& face = mesh->mFaces[faceIndex];
 			assert(face.mNumIndices == 3);
-			for (unsigned vertexListID = 0; vertexListID < 3; ++vertexListID) {
-				unsigned int vertexID = mesh_vertex_mapping[face.mIndices[vertexListID]];
-				piece->vertexDrawIndices.push_back(vertexID);
+
+			for (unsigned vertexListID = 0; vertexListID < face.mNumIndices; ++vertexListID) {
+				const unsigned int vertexFaceIdx = face.mIndices[vertexListID];
+				const unsigned int vertexDrawIdx = mesh_vertex_mapping[vertexFaceIdx];
+				piece->vertexDrawIndices.push_back(vertexDrawIdx);
 			}
 		}
 	}
