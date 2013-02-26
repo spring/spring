@@ -77,6 +77,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigSource.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/CRC.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/EngineTypeHandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams.cpp
