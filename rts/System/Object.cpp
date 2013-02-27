@@ -10,8 +10,13 @@
 CR_BIND(CObject, )
 
 CR_REG_METADATA(CObject, (
-//	CR_MEMBER(listening),
-//	CR_MEMBER(listeners),
+    CR_MEMBER(sync_id),
+
+    CR_MEMBER(detached),
+    
+    CR_IGNORED(listening), //handled in Serialize
+    CR_IGNORED(listeners), //handled in Serialize
+
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 	));
@@ -75,9 +80,8 @@ CObject::~CObject()
 
 void CObject::Serialize(creg::ISerializer* ser)
 {
-	//FIXME this was written when listeners & listening were std::list's, with switching to std::set it would need a rewrite
-	assert(false);
-	/*if (ser->IsWriting()) {
+	//CHECKME this was written when listeners & listening were std::list's, with switching to std::set it would need a rewrite
+	if (ser->IsWriting()) {
 		int num = listening.size();
 		ser->Serialize(&num, sizeof(int));
 		for (std::map<DependenceType, TSyncSafeSet >::iterator i = listening.begin(); i != listening.end(); ++i) {
@@ -110,23 +114,23 @@ void CObject::Serialize(creg::ISerializer* ser)
 			ser->Serialize(&size, sizeof(int));
 			TSyncSafeSet& dl = listening[(DependenceType)dt];
 			for (int o = 0; o < size; o++) {
-				TSyncSafeSet::iterator oi = dl.insert(NULL);
-				ser->SerializeObjectPtr((void**)&*oi, NULL);
+                CObject* obj;
+				ser->SerializeObjectPtr((void**)&*obj, NULL);
+				dl.insert(obj);
 			}
 		}
-	}*/
+	}
 }
 
 void CObject::PostLoad()
 {
-	//FIXME this was written when listeners & listening were std::list's, with switching to std::set it would need a rewrite
-	assert(false);
-	/*for (std::map<DependenceType, TSyncSafeSet >::iterator i = listening.begin(); i != listening.end(); ++i) {
+	//CHECKME this was written when listeners & listening were std::list's, with switching to std::set it would need a rewrite
+	for (std::map<DependenceType, TSyncSafeSet >::iterator i = listening.begin(); i != listening.end(); ++i) {
 		for (TSyncSafeSet::iterator oi = i->second.begin(); oi != i->second.end(); ++oi) {
 			TSyncSafeSet& dl = (*oi)->listeners[i->first];
 			dl.insert(this);
 		}
-	}*/
+	}
 }
 
 void CObject::DependentDied(CObject* obj)
