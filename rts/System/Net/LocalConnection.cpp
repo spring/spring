@@ -6,6 +6,7 @@
 
 #include "Exception.h"
 #include "ProtocolDef.h"
+#include "System/BaseNetProtocol.h"
 #include "System/Log/ILog.h"
 
 namespace netcode {
@@ -22,6 +23,7 @@ CLocalConnection::CLocalConnection()
 	}
 	instance = instances;
 	instances++;
+	CBaseNetProtocol::Get(); // make sure protocoldef is initialized
 }
 
 CLocalConnection::~CLocalConnection()

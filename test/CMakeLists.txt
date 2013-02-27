@@ -11,6 +11,7 @@ Else  (NOT Boost_FOUND)
 
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+	INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/src-generated/engine)
 
 	SET(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
 	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR})
@@ -42,6 +43,8 @@ Else  (NOT Boost_FOUND)
 
 	Set(test_UDPListener_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Net/TestUDPListener.cpp"
+			"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
+			"${ENGINE_SOURCE_DIR}/System/BaseNetProtocol.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/UDPListener.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/RawPacket.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/PackPacket.cpp"
@@ -63,6 +66,8 @@ Else  (NOT Boost_FOUND)
 			${WS2_32_LIBRARY}
 			7zip
 		)
+
+	Add_Dependencies(test_UDPListener generateVersionFiles)
 
 	ADD_TEST(NAME testUDPListener COMMAND test_UDPListener)
 	Add_Dependencies(tests test_UDPListener)

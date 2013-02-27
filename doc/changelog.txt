@@ -3,11 +3,38 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 
--- 9x.0 ---------------------------------------------------------
-
+--- 9x.0 ---------------------------------------------------------
 Misc:
- - support double-resolution yardmaps for buildings (these require four times as many characters, beware)
-   the engine will interpret a yardmap string as such if its FIRST (and ONLY its first) character is 'h'
+- support double-resolution yardmaps for buildings (these require four times as many characters, beware)
+  the engine will interpret a yardmap string as such if its FIRST (and ONLY its first) character is 'h'
+
+
+-- 93.0 ---------------------------------------------------------
+
+Bugfixes:
+ - fixed disappearing GUI with non-GLSL drivers & grass rendering (3dtrees=1)
+ - fixed not working assimp textures
+ - fixed /ally
+ - fixed /chat[|ally|spec|all], so it doesn't misbehave when called from lua
+ - fixed attack-ground orders placed on water
+ - fixed collision bug
+ - make dead/crashing/stunned units unshareable (may fix #3476)
+ - fixed objects with cylindrical CVs would not take damage if hit in rear endcap
+ - block Lua from creating non-uniformly scaled COLVOL_TYPE_SPHERE volumes
+ - make sure pastetext and buffertext don't strip whitespaces from the attached message
+ - allow whisper between spec <-> spec (player -> spec and spec -> player whispers are still forbidden)
+ - fixed flying transport reservation not flushed properly with area commands (#3478)
+ - fixed #3481
+
+Pr-Downloader:
+ - workaround CVE-2013-0249 (disable all protocols expect http/https)
+ - reduce log messages
+ - fix invalid timeout
+ - fix ignored depends in http-downloads
+
+Assimp:
+ ! apply rotations & scalings
+ - fixed per-piece colvols
 
 
 -- 92.0 ---------------------------------------------------------

@@ -202,6 +202,12 @@ void CPlasmaRepulser::SlowUpdate()
 
 void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 {
+	// PlasmaRepulser instances are created if type == "Shield",
+	// but projectiles are removed from incomingProjectiles only
+	// if def->interceptor || def->isShield --> dangling pointers
+	// due to isShield being a separate tag (in 91.0)
+	assert(weaponDef->isShield);
+
 	if (weaponDef->smartShield && teamHandler->AlliedTeams(p->owner()->team, owner->team)) {
 		return;
 	}

@@ -35,17 +35,14 @@ inline static bool TestConeHelper(
 	const CollisionVolume* cv = obj->collisionVolume;
 
 	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
-	const float  objDst1D = Clamp(objVec3D.dot(dir3D), 0.0f, length); // x
-	const float  coneSize = objDst1D * spread + 1.0f;
-
-	bool ret = false;
+	const float  objDst1D = Clamp(objVec3D.dot(dir3D), -length, length);
+	const float  coneSize = math::fabs(objDst1D) * spread + 1.0f;
 
 	// theoretical impact position assuming no spread
 	const float3 expVec3D = dir3D * objDst1D;
 	const float3 expPos3D = pos3D + expVec3D;
 
-	if (objDst1D <= 0.0f)
-		return ret;
+	bool ret = false;
 
 	if (obj->GetBlockingMapID() < uh->MaxUnits()) {
 		ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
@@ -53,7 +50,7 @@ inline static bool TestConeHelper(
 		ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
 	}
 
-	if (globalRendering->drawdebug && (!GML::SimEnabled() || Threading::IsSimThread())) {
+	if (globalRendering->drawdebugtraceray && (!GML::SimEnabled() || Threading::IsSimThread())) {
 		#define go geometricObjects
 
 		if (ret) {
@@ -84,6 +81,9 @@ inline static bool TestTrajectoryConeHelper(
 {
 	// trajectory is a parabola f(x)=a*x*x + b*x with
 	// parameters a = quadratic, b = linear, and c = 0
+	// (x = objDst1D, negative values represent objects
+	// "behind" the testee whose collision volumes might
+	// still be intersected by its trajectory arc)
 	//
 	// firing-cone is centered along dir2D with radius
 	// <x * spread + baseSize> (usually baseSize != 0
@@ -102,8 +102,8 @@ inline static bool TestTrajectoryConeHelper(
 	const CollisionVolume* cv = obj->collisionVolume;
 
 	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
-	const float  objDst1D = Clamp(objVec3D.dot(dir2D), 0.0f, length); // x
-	const float  coneSize = objDst1D * spread + baseSize;
+	const float  objDst1D = Clamp(objVec3D.dot(dir2D), -length, length);
+	const float  coneSize = math::fabs(objDst1D) * spread + baseSize;
 
 	// theoretical impact position assuming no spread
 	// note that unlike TestConeHelper these positions
@@ -114,16 +114,13 @@ inline static bool TestTrajectoryConeHelper(
 
 	bool ret = false;
 
-	if (objDst1D <= 0.0f)
-		return ret;
-
 	if (obj->GetBlockingMapID() < uh->MaxUnits()) {
 		ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
 	} else {
 		ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
 	}
 
-	if (globalRendering->drawdebug && (!GML::SimEnabled() || Threading::IsSimThread())) {
+	if (globalRendering->drawdebugtraceray && (!GML::SimEnabled() || Threading::IsSimThread())) {
 		// FIXME? seems to under-estimate gravity near edge of range
 		// (Cannon and MissileLauncher both subtract 30 elmos from it
 		// in HaveFreeLineOfFire???)
@@ -154,16 +151,16 @@ float TraceRay(
 	const float3& start,
 	const float3& dir,
 	float length,
-	int collisionFlags,
+	int avoidFlags,
 	const CUnit* owner,
 	CUnit*& hitUnit,
 	CFeature*& hitFeature
 ) {
-	const bool ignoreEnemies  = ((collisionFlags & Collision::NOENEMIES   ) != 0);
-	const bool ignoreAllies   = ((collisionFlags & Collision::NOFRIENDLIES) != 0);
-	const bool ignoreFeatures = ((collisionFlags & Collision::NOFEATURES  ) != 0);
-	const bool ignoreNeutrals = ((collisionFlags & Collision::NONEUTRALS  ) != 0);
-	const bool ignoreGround   = ((collisionFlags & Collision::NOGROUND    ) != 0);
+	const bool ignoreEnemies  = ((avoidFlags & Collision::NOENEMIES   ) != 0);
+	const bool ignoreAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
+	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
+	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
+	const bool ignoreGround   = ((avoidFlags & Collision::NOGROUND    ) != 0);
 
 	const bool ignoreUnits = ignoreEnemies && ignoreAllies && ignoreNeutrals;
 
@@ -408,10 +405,14 @@ bool TestCone(
 	if (qf->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
 		return true;
 
+	const bool ignoreAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
+	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
+	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
+
 	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
 		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
-		if ((avoidFlags & Collision::NOFRIENDLIES) == 0) {
+		if (!ignoreAllies) {
 			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
 			      std::list<CUnit*>::const_iterator unitsIt;
 
@@ -426,7 +427,7 @@ bool TestCone(
 			}
 		}
 
-		if ((avoidFlags & Collision::NONEUTRALS) == 0) {
+		if (!ignoreNeutrals) {
 			const std::list<CUnit*>& units = quad.units;
 			      std::list<CUnit*>::const_iterator unitsIt;
 
@@ -443,7 +444,7 @@ bool TestCone(
 			}
 		}
 
-		if ((avoidFlags & Collision::NOFEATURES) == 0) {
+		if (!ignoreFeatures) {
 			const std::list<CFeature*>& features = quad.features;
 			      std::list<CFeature*>::const_iterator featuresIt;
 
@@ -483,11 +484,17 @@ bool TestTrajectoryCone(
 	if (qf->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
 		return true;
 
+	const bool ignoreAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
+	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
+	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
+
+	const float safetyRadii[2] = {2.0f, 0.5f};
+
 	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
 		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
 
 		// friendly units in this quad
-		if ((avoidFlags & Collision::NOFRIENDLIES) == 0) {
+		if (!ignoreAllies) {
 			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
 			      std::list<CUnit*>::const_iterator unitsIt;
 
@@ -497,14 +504,14 @@ bool TestTrajectoryCone(
 				if (u == owner)
 					continue;
 
-				const float safetyRadius = (u->immobile) ? 0.5f : 2.0f;
-				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadius, u))
+				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u)) {
 					return true;
+				}
 			}
 		}
 
 		// neutral units in this quad
-		if ((avoidFlags & Collision::NONEUTRALS) == 0) {
+		if (!ignoreNeutrals) {
 			const std::list<CUnit*>& units = quad.units;
 			      std::list<CUnit*>::const_iterator unitsIt;
 
@@ -516,14 +523,13 @@ bool TestTrajectoryCone(
 				if (!u->IsNeutral())
 					continue;
 
-				const float safetyRadius = (u->immobile) ? 0.5f : 2.0f;
-				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadius, u))
+				if (TestTrajectoryConeHelper(from, dir, length, linear, quadratic, spread, safetyRadii[u->immobile], u))
 					return true;
 			}
 		}
 
 		// features in this quad
-		if ((avoidFlags & Collision::NOFEATURES) == 0) {
+		if (!ignoreFeatures) {
 			const std::list<CFeature*>& features = quad.features;
 			      std::list<CFeature*>::const_iterator featuresIt;
 

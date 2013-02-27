@@ -372,13 +372,8 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 		lastParamName = ctorParamsNoTypes;
 		sub(/^.*,[ \t]*/, "", lastParamName);
 		if (match(lastParamName, /^[^ \t]+Id$/)) {
-			if (clsName_c == "Unit") {
-				# the first valid unit ID is 1
-				print("\t\t" "if (" lastParamName " <= 0) {") >> outFile_jni_c;
-			} else {
-				# ... for all other IDs, the first valid one is 0
-				print("\t\t" "if (" lastParamName " < 0) {") >> outFile_jni_c;
-			}
+			# id's < 0 are invalid, return null
+			print("\t\t" "if (" lastParamName " < 0) {") >> outFile_jni_c;
 			print("\t\t\t" "return null;") >> outFile_jni_c;
 			print("\t\t" "}") >> outFile_jni_c;
 			print("") >> outFile_jni_c;

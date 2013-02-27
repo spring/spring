@@ -27,6 +27,7 @@ public:
 	void RotateY(float rad);
 	void RotateZ(float rad);
 	void Rotate(float rad, const float3& axis); //! axis is assumed to be normalized
+	void Scale(const float3 scales);
 	void Translate(float x, float y, float z);
 	void Translate(const float3& pos);
 	void SetPos(float x, float y, float z);
