@@ -74,7 +74,7 @@
 
 using netcode::RawPacket;
 
-CONFIG(int, SpeedControl).defaultValue(0);
+CONFIG(int, SpeedControl).defaultValue(1);
 CONFIG(bool, BypassScriptPasswordCheck).defaultValue(false);
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
