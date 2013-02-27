@@ -14,6 +14,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
+#include "System/myMath.h"
 #include "lib/gml/gml_base.h"
 
 CModInfo modInfo;
@@ -173,11 +174,9 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// feature visibility
 		const LuaTable& featureLOS = root.SubTable("featureLOS");
-		featureVisibility = featureLOS.GetInt("featureVisibility", FEATURELOS_ALL);
 
-		if (featureVisibility < FEATURELOS_NONE || featureVisibility > FEATURELOS_ALL) {
-			throw content_error("invalid modinfo: featureVisibility, valid range is 0..3");
-		}
+		featureVisibility = featureLOS.GetInt("featureVisibility", FEATURELOS_ALL);
+		featureVisibility = Clamp(featureVisibility, int(FEATURELOS_NONE), int(FEATURELOS_ALL));
 	}
 
 	{
