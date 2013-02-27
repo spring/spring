@@ -250,8 +250,10 @@ void CWeapon::UpdateRelWeaponPos()
 
 void CWeapon::Update()
 {
-	UpdateTargeting();
 	UpdateStockpile();
+	if (weaponDef->stockpile && numStockpiled <= 0 && salvoLeft <= 0) return;
+
+	UpdateTargeting();
 	UpdateFire();
 	UpdateSalvo();
 
