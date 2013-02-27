@@ -28,10 +28,10 @@ public:
 
 	virtual void ResetPos(const float3& pos) = 0;
 
-	virtual void AddTree(int type, const float3& pos, float size) = 0;
+	virtual void AddTree(int treeID, int treeType, const float3& pos, float size) = 0;
 	virtual void DeleteTree(const float3& pos) = 0;
 
-	virtual void AddFallingTree(const float3& pos, const float3& dir, int type) {}
+	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
 	virtual void AddGrass(const float3& pos) {}
 	virtual void RemoveGrass(int x, int z) {}
 	virtual void DrawShadowPass();
@@ -48,6 +48,13 @@ public:
 
 	float baseTreeDistance;
 	bool drawTrees;
+
+	struct TreeStruct {
+		int id;
+		int type;
+
+		float3 pos;
+	};
 
 private:
 	void AddTrees();
