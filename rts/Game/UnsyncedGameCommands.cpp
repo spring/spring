@@ -1644,7 +1644,7 @@ public:
 class SpeedControlActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SpeedControlActionExecutor() : IUnsyncedActionExecutor("SpeedControl",
-			"Set the speed-control mode to one of: 0=Default, 1=Average_CPU, 2=Maximum_CPU") {}
+			"Sets how server adjusts speed according to player's load (CPU), 0: use highest, 1: use average") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (!gameServer) {
@@ -1653,7 +1653,7 @@ public:
 		if (action.GetArgs().empty()) {
 			// switch to next value
 			++game->speedControl;
-			if (game->speedControl > 2) {
+			if (game->speedControl > 1) {
 				game->speedControl = 0;
 			}
 		} else {
@@ -1661,7 +1661,7 @@ public:
 			game->speedControl = atoi(action.GetArgs().c_str());
 		}
 		// constrain to bounds
-		game->speedControl = std::max(0, std::min(game->speedControl, 2));
+		game->speedControl = std::max(0, std::min(game->speedControl, 1));
 		gameServer->UpdateSpeedControl(game->speedControl);
 		return true;
 	}
