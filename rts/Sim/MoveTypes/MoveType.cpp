@@ -25,8 +25,7 @@ CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(repairBelowHealth),
 
 	CR_MEMBER(useHeading),
-	CR_ENUM_MEMBER(progressState),
-	CR_RESERVED(32)
+	CR_ENUM_MEMBER(progressState)
 ));
 
 AMoveType::AMoveType(CUnit* owner):
