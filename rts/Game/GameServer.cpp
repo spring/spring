@@ -1752,8 +1752,8 @@ void CGameServer::ServerReadNet()
 					newconn->SendData(CBaseNetProtocol::Get().SendQuit("Wrong engine type or version!\n\nThis server requires engine: " + enginereq + "\n\nCurrently installed engine: " + engineinst));
 					newconn->Flush(true);
 					newconn->Close();
+					newconn.reset();
 					Message("Connection attempt rejected: This server requires engine " + enginereqshort);
-					UDPNet->RejectConnection();
 				} else {
 					BindConnection(name, passwd, version, false, newconn, reconnect, netloss);
 				}
