@@ -1465,8 +1465,6 @@ void CGame::StartPlaying()
 	// and both share the same SimFrame!
 	eventHandler.GameFrame(0);
 
-	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
-
 #if defined(USE_GML) && GML_ENABLE_SIM
 	extern void PrintMTStartupMessage(int showMTInfo);
 	PrintMTStartupMessage(showMTInfo);
