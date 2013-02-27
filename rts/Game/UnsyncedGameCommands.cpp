@@ -1647,26 +1647,22 @@ public:
 			"Set the speed-control mode to one of: 0=Default, 1=Average_CPU, 2=Maximum_CPU") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
+		if (!gameServer) {
+			return false;
+		}
 		if (action.GetArgs().empty()) {
 			// switch to next value
 			++game->speedControl;
 			if (game->speedControl > 2) {
-				game->speedControl = -2;
+				game->speedControl = 0;
 			}
 		} else {
 			// set value
 			game->speedControl = atoi(action.GetArgs().c_str());
 		}
 		// constrain to bounds
-		game->speedControl = std::max(-2, std::min(game->speedControl, 2));
-
-		net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, game->speedControl));
-		LOG("Speed Control: %s", CGameServer::SpeedControlToString(game->speedControl).c_str());
-		configHandler->Set("SpeedControl", game->speedControl);
-		if (gameServer) {
-			gameServer->UpdateSpeedControl(game->speedControl);
-		}
+		game->speedControl = std::max(0, std::min(game->speedControl, 2));
+		gameServer->UpdateSpeedControl(game->speedControl);
 		return true;
 	}
 };

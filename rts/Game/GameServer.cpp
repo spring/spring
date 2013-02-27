@@ -160,7 +160,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	medianPing = 0;
 	curSpeedCtrl = 0;
 	speedControl = configHandler->GetInt("SpeedControl");
-	UpdateSpeedControl(--speedControl + 1);
+	UpdateSpeedControl(speedControl);
 
 	bypassScriptPasswordCheck = configHandler->GetBool("BypassScriptPasswordCheck");
 	whiteListAdditionalPlayers = configHandler->GetBool("WhiteListAdditionalPlayers");
@@ -1011,10 +1011,6 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			}
 			const enum CustomData dataType = (enum CustomData)inbuf[2];
 			switch (dataType) {
-				case CUSTOM_DATA_SPEEDCONTROL:
-					players[a].speedControl = *((int*)&inbuf[3]);
-					UpdateSpeedControl(speedControl);
-					break;
 				case CUSTOM_DATA_LUADRAWTIME:
 					players[a].luaLockTime = *((int*)&inbuf[3]);
 					break;
@@ -1028,7 +1024,6 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" normal quit"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 1));
 			players[a].Kill("User exited");
-			UpdateSpeedControl(speedControl);
 			if (hostif)
 				hostif->SendPlayerLeft(a, 1);
 			break;
@@ -1791,7 +1786,6 @@ void CGameServer::ServerReadNet()
 			Message(str(format(PlayerLeft) %player.GetType() %player.name %" timeout")); //this must happen BEFORE the reset!
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 0));
 			player.Kill("User timeout");
-			UpdateSpeedControl(speedControl);
 			if (hostif)
 				hostif->SendPlayerLeft(a, 0);
 			continue;
@@ -2335,37 +2329,10 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 }
 
 void CGameServer::UpdateSpeedControl(int speedCtrl) {
-	if (speedControl != speedCtrl) {
-		speedControl = speedCtrl;
-		curSpeedCtrl = (speedControl == 1 || speedControl == -1) ? 1 : 0;
-	}
-	if (speedControl >= 0) {
-		int oldSpeedCtrl = curSpeedCtrl;
-		int avgVotes = 0;
-		int maxVotes = 0;
-		for (size_t i = 0; i < players.size(); ++i) {
-			if (players[i].link) {
-				int sc = players[i].speedControl;
-				if (sc == 1 || sc == -1)
-					++avgVotes;
-				else if (sc == 2 || sc == -2)
-					++maxVotes;
-			}
-		}
-
-		if (avgVotes > maxVotes)
-			curSpeedCtrl = 1;
-		else if (avgVotes < maxVotes)
-			curSpeedCtrl = 0;
-		else
-			curSpeedCtrl = (speedControl == 1) ? 1 : 0;
-
-		if (curSpeedCtrl != oldSpeedCtrl) {
-			Message(str(format("Server speed control: %s CPU [%d/%d]")
-					%(curSpeedCtrl ? "Average" : "Maximum")
-					%(curSpeedCtrl ? avgVotes : maxVotes)
-					%(avgVotes + maxVotes)));
-		}
+	if (curSpeedCtrl != speedCtrl) {
+		Message(str(format("Server speed control: %s")
+			%(SpeedControlToString(speedCtrl).c_str())));
+		curSpeedCtrl = speedCtrl;
 	}
 }
 
@@ -2374,18 +2341,13 @@ std::string CGameServer::SpeedControlToString(int speedCtrl) {
 	std::string desc;
 	if (speedCtrl == 0) {
 		desc = "Default";
-	} else if ((speedCtrl == 1) || (speedCtrl == -1)) {
+	} else if (speedCtrl == 1) {
 		desc = "Average CPU";
-	} else if ((speedCtrl == 2) || (speedCtrl == -2)) {
+	} else if (speedCtrl == 2) {
 		desc = "Maximum CPU";
 	} else {
 		desc = "<invalid>";
 	}
-
-	if (speedCtrl < 0) {
-		desc += " (server voting disabled)";
-	}
-
 	return desc;
 }
 
@@ -2434,7 +2396,6 @@ void CGameServer::KickPlayer(const int playerNum)
 	Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
 	Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
 	players[playerNum].Kill("Kicked from the battle", true);
-	UpdateSpeedControl(speedControl);
 	if (hostif)
 		hostif->SendPlayerLeft(playerNum, 2);
 }
@@ -2596,7 +2557,6 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(newPlayerNumber, 0));
 		newPlayer.link.reset(); // prevent sending a quit message since this might kill the new connection
 		newPlayer.Kill("Terminating connection");
-		UpdateSpeedControl(speedControl);
 		if (hostif)
 			hostif->SendPlayerLeft(newPlayerNumber, 0);
 	}
