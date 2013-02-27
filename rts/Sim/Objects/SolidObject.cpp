@@ -33,8 +33,8 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
 
-	CR_MEMBER(luaDraw),
-	CR_MEMBER(noSelect),
+	CR_MEMBER_UN(luaDraw),
+	CR_MEMBER_UN(noSelect),
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
@@ -42,18 +42,6 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
-
-	CR_MEMBER(frontdir),
-	CR_MEMBER(rightdir),
-	CR_MEMBER(updir),
-
-	CR_MEMBER(relMidPos),
-	CR_MEMBER(midPos),
-	// can not get creg work on templates
-	CR_MEMBER(mapPos),
-
-//	CR_MEMBER(drawPos),
-//	CR_MEMBER(drawMidPos),
 
 	CR_MEMBER(isMoving),
 	CR_MEMBER(isUnderWater),
@@ -66,15 +54,32 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
 
-	// TODO: register SolidObjectDef with CREG
-	// CR_MEMBER(objectDef),
+ 	// TODO: register SolidObjectDef with CREG
+	//CR_MEMBER(objectDef),
+
 	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
+	//CR_MEMBER(groundDecal),
 
-	CR_MEMBER(buildFacing),
+	CR_MEMBER(frontdir),
+	CR_MEMBER(rightdir),
+	CR_MEMBER(updir),
 
-	CR_RESERVED(16))
-);
+	CR_MEMBER(relMidPos),
+ 	CR_MEMBER(relAimPos),
+	CR_MEMBER(midPos),
+	CR_MEMBER(aimPos),
+	// can not get creg work on templates (NOTE: what??)
+	CR_MEMBER(mapPos),
+
+	CR_MEMBER_UN(drawPos),
+	CR_MEMBER_UN(drawMidPos),
+
+	//CR_MEMBER(blockMap),
+	CR_MEMBER(buildFacing)
+
+	//CR_RESERVED(16)
+));
 
 
 CSolidObject::CSolidObject():

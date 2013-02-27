@@ -477,6 +477,15 @@ namespace creg {
 	class_->AddMember( #Member, new creg::IgnoredType(sizeof(null->Member)), (unsigned int)(((char*)&null->Member)-((char*)0)))
 
 
+/** @def CR_MEMBER_UN
+ * Registers a member variable that is unsynced.
+ * It may be saved depending on the purpose.
+ * Currently works as CR_IGNORED.
+ */
+#define CR_MEMBER_UN(Member) \
+    CR_IGNORED( Member )
+
+
 /** @def CR_RESERVED
  *  @author Victor Muraviev
  * Registers a unused space for compatibility

@@ -2280,20 +2280,27 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 
 CR_BIND_DERIVED(CUnit, CSolidObject, );
 CR_REG_METADATA(CUnit, (
-	// CR_MEMBER(unitDef),
+	CR_IGNORED(unitDef), //handled in PostLoad
 	CR_MEMBER(unitDefID),
 	CR_MEMBER(featureDefID),
+
 	CR_MEMBER(upright),
+
 	CR_MEMBER(deathSpeed),
+
 	CR_MEMBER(travel),
 	CR_MEMBER(travelPeriod),
+
 	CR_MEMBER(power),
+
+	CR_MEMBER(maxHealth),
 	CR_MEMBER(paralyzeDamage),
 	CR_MEMBER(captureProgress),
-	CR_MEMBER(maxHealth),
 	CR_MEMBER(experience),
 	CR_MEMBER(limExperience),
+
 	CR_MEMBER(neutral),
+
 	CR_MEMBER(soloBuilder),
 	CR_MEMBER(beingBuilt),
 	CR_MEMBER(lastNanoAdd),
@@ -2305,35 +2312,50 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(terraformLeft),
 	CR_MEMBER(realLosRadius),
 	CR_MEMBER(realAirLosRadius),
+
 	CR_MEMBER(losStatus),
+
 	CR_MEMBER(inBuildStance),
-	CR_MEMBER(stunned),
 	CR_MEMBER(useHighTrajectory),
+
 	CR_MEMBER(dontUseWeapons),
+	CR_MEMBER(dontFire),
+
 	CR_MEMBER(deathScriptFinished),
 	CR_MEMBER(delayedWreckLevel),
+
 	CR_MEMBER(restTime),
 	CR_MEMBER(outOfMapTime),
+
 	CR_MEMBER(weapons),
 	CR_MEMBER(shieldWeapon),
 	CR_MEMBER(stockpileWeapon),
 	CR_MEMBER(reloadSpeed),
 	CR_MEMBER(maxRange),
+
 	CR_MEMBER(haveTarget),
 	CR_MEMBER(haveManualFireRequest),
+
 	CR_MEMBER(lastMuzzleFlameSize),
 	CR_MEMBER(lastMuzzleFlameDir),
+
 	CR_MEMBER(armorType),
 	CR_MEMBER(category),
+
 	CR_MEMBER(quads),
 	CR_MEMBER(los),
+
 	CR_MEMBER(tempNum),
+
 	CR_MEMBER(mapSquare),
+
 	CR_MEMBER(losRadius),
 	CR_MEMBER(airLosRadius),
 	CR_MEMBER(lastLosUpdate),
+
 	CR_MEMBER(losHeight),
 	CR_MEMBER(radarHeight),
+
 	CR_MEMBER(radarRadius),
 	CR_MEMBER(sonarRadius),
 	CR_MEMBER(jammerRadius),
@@ -2342,19 +2364,23 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(seismicSignature),
 	CR_MEMBER(hasRadarCapacity),
 	CR_MEMBER(radarSquares),
-	CR_MEMBER(oldRadarPos.x),
-	CR_MEMBER(oldRadarPos.y),
+	CR_MEMBER(oldRadarPos),
 	CR_MEMBER(hasRadarPos),
 	CR_MEMBER(stealth),
 	CR_MEMBER(sonarStealth),
+
 	CR_MEMBER(moveType),
 	CR_MEMBER(prevMoveType),
 	CR_MEMBER(usingScriptMoveType),
+
+	// CR_MEMBER(fpsControlPlayer),
 	CR_MEMBER(commandAI),
 	CR_MEMBER(group),
-	// CR_MEMBER(fpsControlPlayer),
+
+
 	// CR_MEMBER(localModel),
 	// CR_MEMBER(script),
+
 	CR_MEMBER(condUseMetal),
 	CR_MEMBER(condUseEnergy),
 	CR_MEMBER(condMakeMetal),
@@ -2363,10 +2389,12 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(uncondUseEnergy),
 	CR_MEMBER(uncondMakeMetal),
 	CR_MEMBER(uncondMakeEnergy),
+
 	CR_MEMBER(metalUse),
 	CR_MEMBER(energyUse),
 	CR_MEMBER(metalMake),
 	CR_MEMBER(energyMake),
+
 	CR_MEMBER(metalUseI),
 	CR_MEMBER(energyUseI),
 	CR_MEMBER(metalMakeI),
@@ -2376,73 +2404,110 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(metalMakeold),
 	CR_MEMBER(energyMakeold),
 	CR_MEMBER(energyTickMake),
+
 	CR_MEMBER(metalExtract),
+
 	CR_MEMBER(metalCost),
 	CR_MEMBER(energyCost),
 	CR_MEMBER(buildTime),
+
 	CR_MEMBER(metalStorage),
 	CR_MEMBER(energyStorage),
+
 	CR_MEMBER(lastAttacker),
 	// CR_MEMBER(lastAttackedPiece),
 	CR_MEMBER(lastAttackedPieceFrame),
 	CR_MEMBER(lastAttackFrame),
 	CR_MEMBER(lastFireWeapon),
 	CR_MEMBER(recentDamage),
+
 	CR_MEMBER(attackTarget),
 	CR_MEMBER(attackPos),
+
 	CR_MEMBER(userAttackGround),
+
 	CR_MEMBER(fireState),
-	CR_MEMBER(dontFire),
 	CR_MEMBER(moveState),
+
 	CR_MEMBER(activated),
-	//CR_MEMBER(model),
-	CR_MEMBER(tooltip),
+
 	CR_MEMBER(crashing),
 	CR_MEMBER(isDead),
 	CR_MEMBER(falling),
 	CR_MEMBER(fallSpeed),
+
 	CR_MEMBER(inAir),
 	CR_MEMBER(inWater),
+
 	CR_MEMBER(flankingBonusMode),
 	CR_MEMBER(flankingBonusDir),
 	CR_MEMBER(flankingBonusMobility),
 	CR_MEMBER(flankingBonusMobilityAdd),
 	CR_MEMBER(flankingBonusAvgDamage),
 	CR_MEMBER(flankingBonusDifDamage),
+
 	CR_MEMBER(armoredState),
 	CR_MEMBER(armoredMultiple),
 	CR_MEMBER(curArmorMultiple),
+
 	CR_MEMBER(posErrorVector),
 	CR_MEMBER(posErrorDelta),
 	CR_MEMBER(nextPosErrorUpdate),
+
 	CR_MEMBER(wantCloak),
 	CR_MEMBER(scriptCloak),
 	CR_MEMBER(cloakTimeout),
 	CR_MEMBER(curCloakTimeout),
 	CR_MEMBER(isCloaked),
 	CR_MEMBER(decloakDistance),
+
 	CR_MEMBER(lastTerrainType),
 	CR_MEMBER(curTerrainType),
+
 	CR_MEMBER(selfDCountdown),
+
+	CR_IGNORED(myTrack),
+	CR_IGNORED(myIcon),
+
 	CR_MEMBER(incomingMissiles),
 	CR_MEMBER(lastFlareDrop),
+
 	CR_MEMBER(currentFuel),
-	CR_MEMBER(noDraw),
-	CR_MEMBER(noMinimap),
-	CR_MEMBER(leaveTracks),
-//	CR_MEMBER(isSelected),
-//	CR_MEMBER(isIcon),
-//	CR_MEMBER(iconRadius),
-//	CR_MEMBER(weaponHitMod),
-//	CR_MEMBER(luaMats),
+
 	CR_MEMBER(alphaThreshold),
 	CR_MEMBER(cegDamage),
-//	CR_MEMBER(lastDrawFrame),
+
+	CR_MEMBER_UN(noDraw),
+	CR_MEMBER_UN(noMinimap),
+	CR_MEMBER_UN(leaveTracks),
+
+//	CR_MEMBER_UN(isSelected),
+//	CR_MEMBER_UN(isIcon),
+//	CR_MEMBER_UN(iconRadius),
+
+	CR_MEMBER_UN(lodCount),
+	CR_MEMBER_UN(currentLOD),
+//	CR_MEMBER_UN(lastDrawFrame),
+//	CR_MEMBER_UN(lastUnitUpdate),
+
+#ifdef USE_GML
+	CR_MEMBER_UN(lodmutex),
+#endif
+
+	CR_MEMBER_UN(tooltip),
+
+	CR_MEMBER(stunned),
+
 //	CR_MEMBER(expMultiplier),
 //	CR_MEMBER(expPowerScale),
 //	CR_MEMBER(expHealthScale),
 //	CR_MEMBER(expReloadScale),
 //	CR_MEMBER(expGrade),
+
+//	CR_MEMBER(empDecline),
+//	CR_MEMBER(spawnFeature),
+
+//	CR_MEMBER(model),
 
 	CR_POSTLOAD(PostLoad)
 ));

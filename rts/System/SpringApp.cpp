@@ -171,6 +171,7 @@ static void TestCregClasses()
 				LOG_L(L_WARNING, "  member %20s, type %12s, offset %3u, size %u", memberName.c_str(), typeName.c_str(), memberOffset, typeSize);
 			}*/
 		} else {
+			LOG( "CREG: Class %s fine, size %u", className.c_str(), classSize);
 			fineClasses++;
 		}
 		
