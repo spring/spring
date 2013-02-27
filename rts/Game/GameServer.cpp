@@ -74,7 +74,7 @@
 
 using netcode::RawPacket;
 
-CONFIG(int, SpeedControl).defaultValue(1);
+CONFIG(int, SpeedControl).defaultValue(0);
 CONFIG(bool, BypassScriptPasswordCheck).defaultValue(false);
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
@@ -861,7 +861,7 @@ void CGameServer::LagProtection()
 	// calculate median values
 	medianCpu = 0.0f;
 	medianPing = 0;
-	if (curSpeedCtrl > 0 && !cpu.empty()) {
+	if (curSpeedCtrl == 1 && !cpu.empty()) {
 		std::sort(cpu.begin(), cpu.end());
 		std::sort(ping.begin(), ping.end());
 
@@ -878,14 +878,14 @@ void CGameServer::LagProtection()
 	// adjust game speed
 	if (refCpuUsage > 0.0f && !isPaused) {
 		// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
-		float wantedCpuUsage = (curSpeedCtrl > 0) ?  0.60f : 0.75f;
+		float wantedCpuUsage = (curSpeedCtrl == 1) ?  0.60f : 0.75f;
 		wantedCpuUsage += (1.0f - internalSpeed / userSpeedFactor) * 0.5f; //???
 
 		float newSpeed = internalSpeed * wantedCpuUsage / refCpuUsage;
 		newSpeed = (newSpeed + internalSpeed) * 0.5f;
 		newSpeed = Clamp(newSpeed, 0.1f, userSpeedFactor);
 		if (userSpeedFactor <= 2.f)
-			newSpeed = std::max(newSpeed, (curSpeedCtrl > 0) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
+			newSpeed = std::max(newSpeed, (curSpeedCtrl == 1) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
 
 #ifndef DEDICATED
 		// adjust game speed to localclient's (:= host) maximum SimFrame rate
@@ -971,8 +971,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				if (!players[a].isLocal && players[a].spectator && !demoReader) {
 					PrivateMessage(a, "Spectators cannot pause the game");
 				}
-				else if (curSpeedCtrl > 0 && !isPaused && !players[a].isLocal &&
-					(players[a].spectator || (curSpeedCtrl > 0 &&
+				else if (curSpeedCtrl == 1 && !isPaused && !players[a].isLocal &&
+					(players[a].spectator || (curSpeedCtrl == 1 &&
 					(players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu)) ||
 					(serverFrameNum - players[a].lastFrameResponse) - medianPing > internalSpeed * GAME_SPEED / 2)))) {
 						PrivateMessage(a, "Pausing rejected (cpu load or ping is too high)");
@@ -2329,10 +2329,14 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 }
 
 void CGameServer::UpdateSpeedControl(int speedCtrl) {
-	if (curSpeedCtrl != speedCtrl) {
+	int remappedSpeedCtrl = speedCtrl;
+	if (speedCtrl == 0) { // 0: default, is remapped to a new type
+		remappedSpeedCtrl == 2;
+	}
+	if (remappedSpeedCtrl != curSpeedCtrl) {
 		Message(str(format("Server speed control: %s")
 			%(SpeedControlToString(speedCtrl).c_str())));
-		curSpeedCtrl = speedCtrl;
+		curSpeedCtrl = remappedSpeedCtrl;
 	}
 }
 
@@ -2626,10 +2630,10 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
-	if (curSpeedCtrl > 0 &&
+	if (curSpeedCtrl == 1 &&
 		player >= 0 && static_cast<unsigned int>(player) != SERVER_PLAYER &&
 		!players[player].isLocal && !isPaused &&
-		(players[player].spectator || (curSpeedCtrl > 0 &&
+		(players[player].spectator || (curSpeedCtrl == 1 &&
 		(players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu)) ||
 		(serverFrameNum - players[player].lastFrameResponse) - medianPing > internalSpeed * GAME_SPEED / 2)))) {
 		PrivateMessage(player, "Speed change rejected (cpu load or ping is too high)");
