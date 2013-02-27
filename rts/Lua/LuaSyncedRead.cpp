@@ -4724,7 +4724,7 @@ int LuaSyncedRead::TestMoveOrder(lua_State* L)
 	}
 
 	if (los) {
-		ret = moveDef->TestMoveSquare(pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE, NULL);
+		ret = moveDef->TestMoveSquare(NULL, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE);
 	}
 
 	lua_pushboolean(L, ret);

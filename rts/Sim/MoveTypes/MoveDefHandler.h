@@ -6,8 +6,9 @@
 #include <vector>
 #include <map>
 #include <string>
+
+#include "System/float3.h"
 #include "System/creg/creg_cond.h"
-#include "Sim/Misc/GlobalConstants.h"
 
 class MoveDefHandler;
 class CSolidObject;
@@ -20,7 +21,21 @@ struct MoveDef {
 	MoveDef();
 	MoveDef(const LuaTable& moveTable, int moveDefID);
 
-	bool TestMoveSquare(const int hmx, const int hmz, const CSolidObject* collider) const;
+	bool TestMoveSquare(
+		const CSolidObject* collider,
+		const int hmx,
+		const int hmz,
+		const float3& testMoveDir = ZeroVector,
+		bool testTerrain = true,
+		bool testObjects = true
+	) const;
+	bool TestMoveSquare(
+		const CSolidObject* collider,
+		const float3& testMovePos,
+		const float3& testMoveDir = ZeroVector,
+		bool testTerrain = true,
+		bool testObjects = true
+	) const;
 	float GetDepthMod(const float height) const;
 	unsigned int GetCheckSum() const;
 
