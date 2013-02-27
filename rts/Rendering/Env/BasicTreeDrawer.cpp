@@ -264,7 +264,7 @@ void CBasicTreeSquareDrawer::DrawTreeVertexMid2(const float3& pos, bool enlarge)
 
 void CBasicTreeSquareDrawer::DrawQuad(int x, int y)
 {
-	CBasicTreeDrawer::TreeSquareStruct* tss = &td->trees[(y * td->treesX) + x];
+	ITreeDrawer::TreeSquareStruct* tss = &td->trees[(y * td->treesX) + x];
 
 	float3 dif;
 		dif.x = camera->pos.x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
