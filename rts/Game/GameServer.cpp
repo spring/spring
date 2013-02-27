@@ -2331,7 +2331,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 void CGameServer::UpdateSpeedControl(int speedCtrl) {
 	int remappedSpeedCtrl = speedCtrl;
 	if (speedCtrl == 0) { // 0: default, is remapped to a new type
-		remappedSpeedCtrl == 1;
+		remappedSpeedCtrl = 1;
 	}
 	if (remappedSpeedCtrl != curSpeedCtrl) {
 		Message(str(format("Server speed control: %s")
