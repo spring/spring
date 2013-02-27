@@ -72,9 +72,14 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE)
 
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
+
+#if 0
 #define POS_IMPASSABLE(md, pos, u)                                               \
 	(((CMoveMath::IsBlocked(*md, pos, u) & CMoveMath::BLOCK_STRUCTURE) != 0) ||  \
 	 ((CMoveMath::GetPosSpeedMod(*md, pos) <= 0.01f)))
+#else
+#define POS_IMPASSABLE(md, pos, u) (!md->TestMoveSquare(u, (pos).x / SQUARE_SIZE, (pos).z / SQUARE_SIZE))
+#endif
 
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -1504,7 +1509,8 @@ void CGroundMoveType::HandleObjectCollisions()
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
-		HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
+		// terrain
+		// HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
 	}
 
 	collider->Block();
@@ -1819,30 +1825,28 @@ void CGroundMoveType::HandleUnitCollisions(
 		const int collideeSlideSign = SIGN(-separationVector.dot(collidee->rightdir));
 		#undef SIGN
 
-		const float3 colliderSlideVec = collider->rightdir * colliderSlideSign * (1.0f / penDistance);
-		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance);
-		const float3 colliderPushPos  = collider->pos + (colResponseVec * colliderMassScale);
-		const float3 collideePushPos  = collidee->pos - (colResponseVec * collideeMassScale);
-		const float3 colliderSlidePos = collider->pos + colliderSlideVec * r2;
-		const float3 collideeSlidePos = collidee->pos + collideeSlideVec * r1;
+		const float3 colliderPushVec  =  colResponseVec * colliderMassScale;
+		const float3 collideePushVec  = -colResponseVec * collideeMassScale;
+		const float3 colliderSlideVec = collider->rightdir * colliderSlideSign * (1.0f / penDistance) * r2;
+		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance) * r1;
 
 		if ((pushCollider || !pushCollidee) && colliderMobile) {
-			if (!POS_IMPASSABLE(colliderMD, colliderPushPos, collider)) {
-				collider->Move3D(colliderPushPos, false);
+			if (!POS_IMPASSABLE(colliderMD, collider->pos + colliderPushVec, collider)) {
+				collider->Move3D(collider->pos + colliderPushVec, false);
 			}
 			// also push collider laterally
-			if (!POS_IMPASSABLE(colliderMD, colliderSlidePos, collider)) {
-				collider->Move3D(colliderSlideVec * r2, true);
+			if (!POS_IMPASSABLE(colliderMD, collider->pos + colliderSlideVec, collider)) {
+				collider->Move3D(collider->pos + colliderSlideVec, false);
 			}
 		}
 
 		if ((pushCollidee || !pushCollider) && collideeMobile) {
-			if (!POS_IMPASSABLE(collideeMD, collideePushPos, collidee)) {
-				collidee->Move3D(collideePushPos, false);
+			if (!POS_IMPASSABLE(collideeMD, collidee->pos + collideePushVec, collidee)) {
+				collidee->Move3D(collidee->pos + collideePushVec, false);
 			}
 			// also push collidee laterally
-			if (!POS_IMPASSABLE(collideeMD, collideeSlidePos, collidee)) {
-				collidee->Move3D(collideeSlideVec * r1, true);
+			if (!POS_IMPASSABLE(collideeMD, collidee->pos + collideeSlideVec, collidee)) {
+				collidee->Move3D(collidee->pos + collideeSlideVec, false);
 			}
 		}
 	}
@@ -2427,10 +2431,23 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		// only use directional passability test if we already spilled over into terrain that the pathfinder
 		// would consider impassable, otherwise many units will enter regions where pathing fails totally
 		//
-		// const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
+		#if 1
+		const bool terrainBlocked = (!md->TestMoveSquare(owner, owner->pos, ZeroVector, true, false))?
+			(!md->TestMoveSquare(owner, owner->pos + speedVector, flatFrontDir, true, false)):
+			(!md->TestMoveSquare(owner, owner->pos + speedVector,   ZeroVector, true, false));
+		#else
 		const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos) <= 0.01f)?
 			(CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f):
 			(CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector              ) <= 0.01f);
+
+		// if not already stuck, test terrain in our entire footprint
+		// otherwise be more lenient and only test our center square
+		//
+		// const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos) <= 0.01f)?
+		//     (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f):
+		//     (!md->TestMoveSquare(owner, owner->pos + speedVector, flatFrontDir, true, false));
+		#endif
+
 		const bool terrainIgnored = pathController->IgnoreTerrain(*md, owner->pos + speedVector);
 
 		if (terrainBlocked && !terrainIgnored && !owner->inAir) {

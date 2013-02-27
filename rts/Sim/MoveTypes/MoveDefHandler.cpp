@@ -1,13 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/lexical_cast.hpp>
-
 #include "MoveDefHandler.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_Map.h"
 #include "System/Exceptions.h"
@@ -295,22 +294,44 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 	assert((zsize & 1) == 1);
 }
 
-bool MoveDef::TestMoveSquare(const int hmx, const int hmz, const CSolidObject* collider) const {
+bool MoveDef::TestMoveSquare(
+	const CSolidObject* collider,
+	const int hmx,
+	const int hmz,
+	const float3& testMoveDir,
+	bool testTerrain,
+	bool testObjects
+) const {
 	bool ret = true;
 
-	// test the entire footprint
-	for (int j = -zsizeh; j <= zsizeh; j++) {
-		for (int i = -xsizeh; i <= xsizeh; i++) {
-			const float speedMod = CMoveMath::GetPosSpeedMod(*this, hmx + i, hmz + j);
-			const CMoveMath::BlockType blockBits = CMoveMath::IsBlocked(*this, hmx + i, hmz + j, collider);
+	if (testTerrain || testObjects) {
+		// test the entire footprint
+		for (int j = -zsizeh; (j <= zsizeh) && ret; j++) {
+			for (int i = -xsizeh; (i <= xsizeh) && ret; i++) {
+				const float speedMod = (testMoveDir != ZeroVector)?
+					CMoveMath::GetPosSpeedMod(*this, hmx + i, hmz + j, testMoveDir):
+					CMoveMath::GetPosSpeedMod(*this, hmx + i, hmz + j);
+				const CMoveMath::BlockType blockBits = CMoveMath::IsBlocked(*this, hmx + i, hmz + j, collider);
 
-			// check both terrain and the blocking-map
-			ret &= ((speedMod > 0.0f) && ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0));
+				if (testTerrain) { ret &= (speedMod > 0.0f); }
+				if (testObjects) { ret &= ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0); }
+			}
 		}
 	}
 
 	return ret;
 }
+
+bool MoveDef::TestMoveSquare(
+	const CSolidObject* collider,
+	const float3& testMovePos,
+	const float3& testMoveDir,
+	bool testTerrain,
+	bool testObjects
+) const {
+	return (TestMoveSquare(collider, testMovePos.x / SQUARE_SIZE, testMovePos.z / SQUARE_SIZE, testMoveDir, testTerrain, testObjects));
+}
+
 
 float MoveDef::GetDepthMod(const float height) const {
 	// [DEPTHMOD_{MIN, MAX}_HEIGHT] are always >= 0,
