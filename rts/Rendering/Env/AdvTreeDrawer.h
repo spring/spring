@@ -54,15 +54,6 @@ public:
 		float fallPos;
 	};
 
-	struct TreeSquareStruct {
-		unsigned int dispList;
-		unsigned int farDispList;
-		int lastSeen;
-		int lastSeenFar;
-		float3 viewVector;
-		std::map<int, TreeStruct> trees;
-	};
-
 	int lastListClean;
 	float oldTreeDistance;
 
