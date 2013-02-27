@@ -63,7 +63,8 @@ void CCannon::UpdateRange(float val)
 {
 	range = val;
 	// initialize range factor
-	rangeFactor = (float)range/GetRange2D(0);
+	rangeFactor = 1.f;
+	rangeFactor = range / GetRange2D(0);
 	// do not extend range if the modder specified speed too low
 	// for the projectile to reach specified range
 	if (rangeFactor > 1.f || rangeFactor <= 0.f)
