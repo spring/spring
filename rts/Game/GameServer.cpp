@@ -74,7 +74,7 @@
 
 using netcode::RawPacket;
 
-CONFIG(int, SpeedControl).defaultValue(0);
+CONFIG(int, SpeedControl).defaultValue(1).description("Sets how server adjusts speed according to player's load (CPU), 0: use highest, 1: use average");
 CONFIG(bool, BypassScriptPasswordCheck).defaultValue(false);
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
@@ -158,9 +158,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 
 	medianCpu = 0.0f;
 	medianPing = 0;
-	curSpeedCtrl = 0;
-	speedControl = configHandler->GetInt("SpeedControl");
-	UpdateSpeedControl(speedControl);
+	curSpeedCtrl = configHandler->GetInt("SpeedControl");
 
 	bypassScriptPasswordCheck = configHandler->GetBool("BypassScriptPasswordCheck");
 	whiteListAdditionalPlayers = configHandler->GetBool("WhiteListAdditionalPlayers");
@@ -2329,14 +2327,9 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 }
 
 void CGameServer::UpdateSpeedControl(int speedCtrl) {
-	int remappedSpeedCtrl = speedCtrl;
-	if (speedCtrl == 0) { // 0: default, is remapped to a new type
-		remappedSpeedCtrl = 1;
-	}
-	if (remappedSpeedCtrl != curSpeedCtrl) {
+	if (speedCtrl != curSpeedCtrl) {
 		Message(str(format("Server speed control: %s")
 			%(SpeedControlToString(speedCtrl).c_str())));
-		curSpeedCtrl = remappedSpeedCtrl;
 	}
 }
 
@@ -2344,11 +2337,9 @@ std::string CGameServer::SpeedControlToString(int speedCtrl) {
 
 	std::string desc;
 	if (speedCtrl == 0) {
-		desc = "Default";
+		desc = "Maximum CPU";
 	} else if (speedCtrl == 1) {
 		desc = "Average CPU";
-	} else if (speedCtrl == 2) {
-		desc = "Maximum CPU";
 	} else {
 		desc = "<invalid>";
 	}
