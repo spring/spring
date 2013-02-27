@@ -26,9 +26,6 @@ CLightningCannon::CLightningCannon(CUnit* owner)
 {
 }
 
-CLightningCannon::~CLightningCannon()
-{
-}
 
 void CLightningCannon::Update()
 {

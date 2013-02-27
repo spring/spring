@@ -10,8 +10,6 @@ class CBombDropper : public CWeapon
 	CR_DECLARE(CBombDropper);
 public:
 	CBombDropper(CUnit* owner, bool useTorps);
-	~CBombDropper();
-
 
 	void Init();
 	void Update();

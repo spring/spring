@@ -21,10 +21,6 @@ CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
 {
 }
 
-CTorpedoLauncher::~CTorpedoLauncher()
-{
-}
-
 
 void CTorpedoLauncher::Update()
 {

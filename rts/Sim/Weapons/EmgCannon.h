@@ -10,7 +10,6 @@ class CEmgCannon : public CWeapon
 	CR_DECLARE(CEmgCannon);
 public:
 	CEmgCannon(CUnit* owner);
-	~CEmgCannon();
 
 	void Update();
 	void Init();

@@ -27,10 +27,6 @@ CRifle::CRifle(CUnit* owner)
 {
 }
 
-CRifle::~CRifle()
-{
-
-}
 
 void CRifle::Update()
 {

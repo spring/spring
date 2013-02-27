@@ -20,9 +20,6 @@ CMissileLauncher::CMissileLauncher(CUnit* owner)
 {
 }
 
-CMissileLauncher::~CMissileLauncher()
-{
-}
 
 void CMissileLauncher::Update()
 {

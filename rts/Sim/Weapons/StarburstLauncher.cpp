@@ -22,9 +22,6 @@ CStarburstLauncher::CStarburstLauncher(CUnit* owner)
 {
 }
 
-CStarburstLauncher::~CStarburstLauncher(void)
-{
-}
 
 void CStarburstLauncher::Update(void)
 {

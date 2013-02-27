@@ -20,9 +20,6 @@ CFlameThrower::CFlameThrower(CUnit* owner)
 {
 }
 
-CFlameThrower::~CFlameThrower()
-{
-}
 
 void CFlameThrower::FireImpl()
 {

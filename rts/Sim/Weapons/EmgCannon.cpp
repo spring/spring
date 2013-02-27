@@ -21,9 +21,6 @@ CEmgCannon::CEmgCannon(CUnit* owner)
 {
 }
 
-CEmgCannon::~CEmgCannon()
-{
-}
 
 void CEmgCannon::Update()
 {

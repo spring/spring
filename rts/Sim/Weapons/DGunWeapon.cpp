@@ -17,9 +17,6 @@ CDGunWeapon::CDGunWeapon(CUnit* owner)
 {
 }
 
-CDGunWeapon::~CDGunWeapon()
-{
-}
 
 void CDGunWeapon::Update()
 {
