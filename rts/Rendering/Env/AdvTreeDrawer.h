@@ -24,9 +24,9 @@ public:
 	void Draw(float treeDistance, bool drawReflection);
 	void Update();
 	void ResetPos(const float3& pos);
-	void AddTree(int type, const float3& pos, float size);
+	void AddTree(int treeID, int treeType, const float3& pos, float size);
 	void DeleteTree(const float3& pos);
-	void AddFallingTree(const float3& pos, const float3& dir, int type);
+	void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir);
 	void DrawGrass();
 	void DrawShadowGrass();
 	void AddGrass(const float3& pos);
@@ -38,17 +38,15 @@ public:
 	static void DrawTreeVertexMid(CVertexArray* va, const float3& pos, float dx, float dy, bool enlarge = true);
 	static void DrawTreeVertexFar(CVertexArray* va, const float3& pos, const float3& swd, float dx, float dy, bool enlarge = true);
 
-	struct TreeStruct {
-		float3 pos;
-		int type;
-	};
 	struct FadeTree {
+		int id;
+		int type;
 		float3 pos;
 		float relDist;
 		float deltaY;
-		int type;
 	};
 	struct FallingTree {
+		int id;
 		int type;
 		float3 pos;
 		float3 dir;

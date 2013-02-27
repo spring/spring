@@ -22,13 +22,8 @@ public:
 	void Draw(float treeDistance, bool drawReflection);
 	void Update();
 	void ResetPos(const float3& pos);
-	void AddTree(int type, const float3& pos, float size);
+	void AddTree(int treeID, int treeType, const float3& pos, float size);
 	void DeleteTree(const float3& pos);
-
-	struct TreeStruct {
-		float3 pos;
-		int type;
-	};
 
 	struct TreeSquareStruct {
 		TreeSquareStruct()
