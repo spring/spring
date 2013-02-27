@@ -11,7 +11,6 @@ class CTorpedoLauncher :
 	CR_DECLARE(CTorpedoLauncher);
 public:
 	CTorpedoLauncher(CUnit* owner);
-	~CTorpedoLauncher();
 
 	void Update();
 

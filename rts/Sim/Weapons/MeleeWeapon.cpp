@@ -20,10 +20,6 @@ CMeleeWeapon::CMeleeWeapon(CUnit* owner)
 {
 }
 
-CMeleeWeapon::~CMeleeWeapon()
-{
-
-}
 
 void CMeleeWeapon::Update()
 {

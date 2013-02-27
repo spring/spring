@@ -76,10 +76,6 @@ void CCannon::UpdateRange(float val)
 		heightBoostFactor = (2.f - rangeFactor) / math::sqrt(rangeFactor);
 }
 
-CCannon::~CCannon()
-{
-
-}
 
 void CCannon::Update()
 {
@@ -150,7 +146,7 @@ void CCannon::FireImpl()
 {
 	float3 diff = targetPos - weaponMuzzlePos;
 	float3 dir = (diff.SqLength() > 4.0) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
-	dir += 
+	dir +=
 		(gs->randVector() * sprayAngle + salvoError) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 	dir.SafeNormalize();

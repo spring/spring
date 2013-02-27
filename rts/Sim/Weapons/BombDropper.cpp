@@ -35,10 +35,6 @@ CBombDropper::CBombDropper(CUnit* owner, bool useTorps)
 	onlyForward = true;
 }
 
-CBombDropper::~CBombDropper()
-{
-
-}
 
 void CBombDropper::Update()
 {

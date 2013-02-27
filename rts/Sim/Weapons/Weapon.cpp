@@ -317,7 +317,7 @@ void CWeapon::UpdateTargeting()
 			owner->rightdir * mainDir.x +
 			owner->updir    * mainDir.y;
 		const bool targetAngleConstraint = CheckTargetAngleConstraint(worldTargetDir, worldMainDir);
- 
+
 		if (angleGood && !targetAngleConstraint) {
  			// weapon finished a previously started AimWeapon thread and wants to
  			// fire, but target is no longer within contraints --> wait for re-aim

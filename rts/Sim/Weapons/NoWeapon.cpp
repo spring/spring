@@ -10,10 +10,6 @@ CNoWeapon::CNoWeapon(CUnit *owner) : CWeapon(owner)
 }
 
 
-CNoWeapon::~CNoWeapon()
-{
-}
-
 void CNoWeapon::Update()
 {
 }
