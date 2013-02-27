@@ -169,6 +169,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 		rg_etc1::etc1_pack_params pack_params;
 		pack_params.m_quality = rg_etc1::cLowQuality; // must be low, all others take _ages_ to process
 
+		Threading::OMPCheck();
 		#pragma omp parallel for
 		for (int i = 0; i < numTiles; ++i) {
 			squish::u8 rgba[64]; // 4x4 pixels * 4 * 1byte channels = 64byte
