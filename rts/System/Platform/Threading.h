@@ -119,10 +119,10 @@ namespace Threading {
 	}
 
 	void OMPCheck() {
-	#ifndef NDEBUG
+//	#ifndef NDEBUG
 		if (!OMPInited)
 			OMPError();
-	#endif
+//	#endif
 	}
 
 

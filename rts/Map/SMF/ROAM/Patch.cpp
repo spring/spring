@@ -91,6 +91,7 @@ void CTriNodePool::ResetAll()
 CTriNodePool* CTriNodePool::GetPool()
 {
 #ifdef _OPENMP
+	Threading::OMPCheck();
 	const size_t th_id = omp_get_thread_num();
 	return pools[th_id];
 #else
