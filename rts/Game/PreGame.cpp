@@ -48,7 +48,6 @@
 #include "System/Platform/EngineTypeHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "lib/luasocket/src/restrictions.h"
-#include <boost/format.hpp>
 
 using netcode::RawPacket;
 using std::string;
@@ -225,8 +224,6 @@ void CPreGame::UpdateClientNet()
 		return;
 	}
 
-	int engineType = -1;
-	int engineMinor = -1;
 	boost::shared_ptr<const RawPacket> packet;
 	while ((packet = net->GetData(gs->frameNum)))
 	{
@@ -242,22 +239,11 @@ void CPreGame::UpdateClientNet()
 					std::string message;
 					pckt >> message;
 					LOG("%s", message.c_str());
-					if ((engineType >= 0 && (engineType != EngineTypeHandler::GetCurrentEngineType())) || 
-							(engineMinor >= 0 && (engineMinor != SpringVersion::GetMinorInt()))) {
-						EngineTypeHandler::EngineTypeInfo* eti = EngineTypeHandler::GetEngineTypeInfo(engineType);
-						if (eti == NULL) {
-							LOG_L(L_ERROR, "Unknown engine type: %d", engineType);
-						} else {
-							SetExitCode(1);
-							gu->globalQuit = true;
-							net->Close(true);
-							std::string newexe = eti->exe;
-							if (engineMinor > 0)
-								newexe += boost::str(boost::format("-%d") %engineMinor);
-							LOG("Preparing to start %s", newexe.c_str());
-							EngineTypeHandler::SetRestartExecutable(newexe, message);
-							return;
-						}
+					if (EngineTypeHandler::WillRestartEngine(message)) {
+						SetExitCode(1);
+						gu->globalQuit = true;
+						net->Close(true);
+						return;
 					}
 					handleerror(NULL, "Remote requested quit: " + message, "Quit message", MBF_OK | MBF_EXCL);
 				} catch (const netcode::UnpackPacketException& ex) {
@@ -276,9 +262,7 @@ void CPreGame::UpdateClientNet()
 					pckt >> data;
 					switch (datatype) {
 						case CUSTOM_DATA_ENGINETYPE:
-							engineType = data & 0xFFFF;
-							engineMinor = data >> 16;
-							LOG("Server requested engine type: %d, minor version: %d", engineType, engineMinor);
+							EngineTypeHandler::SetRequestedEngineType(data & 0xFFFF, data >> 16);
 							break;
 						default:
 							LOG_L(L_ERROR, "Got invalid CustomData type: %d", (int)datatype);

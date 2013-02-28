@@ -2,6 +2,7 @@
 
 #include "EngineTypeHandler.h"
 
+#include "Game/GameVersion.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Misc.h"
@@ -13,6 +14,9 @@ namespace EngineTypeHandler {
 	std::vector<EngineTypeInfo> engineTypes;
 	std::string restartExecutable;
 	std::string restartErrorMessage;
+	int reqEngineType = -1;
+	int reqEngineMinor = -1;
+
 
 	bool Init() {
 		engineTypes.push_back(EngineTypeInfo("Spring", "http://springrts.com/wiki/Download", "spring")); // 0
@@ -34,6 +38,30 @@ namespace EngineTypeHandler {
 		if (et == NULL)
 			return boost::str(boost::format("Unknown (%d) %d%s.%d") %(int)enginetype %(int)engineversionmajor %minorversion %(int)enginepatchset);
 		return boost::str(boost::format("%s %d%s.%d%s") %et->name %(int)engineversionmajor %minorversion %(int)enginepatchset %(brief ? "" : ("   [ " + et->info + " ]")));
+	}
+
+	void SetRequestedEngineType(int engineType, int engineMinor) {
+		reqEngineType = engineType;
+		reqEngineMinor = engineMinor;
+		LOG("Server requested engine type: %d, minor version: %d", engineType, engineMinor);
+	}
+
+	bool WillRestartEngine(const std::string& message) {
+		if ((reqEngineType >= 0 && (reqEngineType != EngineTypeHandler::GetCurrentEngineType())) || 
+			(reqEngineMinor >= 0 && (reqEngineMinor != SpringVersion::GetMinorInt()))) {
+				EngineTypeHandler::EngineTypeInfo* eti = EngineTypeHandler::GetEngineTypeInfo(reqEngineType);
+				if (eti == NULL) {
+					LOG_L(L_ERROR, "Unknown engine type: %d", reqEngineType);
+				} else {
+					std::string newexe = eti->exe;
+					if (reqEngineMinor > 0)
+						newexe += boost::str(boost::format("-%d") %reqEngineMinor);
+					LOG("Preparing to start %s", newexe.c_str());
+					SetRestartExecutable(newexe, message);
+					return true;
+				}
+		}
+		return false;
 	}
 
 	bool RestartEngine(const std::string& exe, std::vector<std::string>& args) {
