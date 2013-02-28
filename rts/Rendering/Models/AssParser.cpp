@@ -182,8 +182,20 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	LoadPiece(model, scene->mRootNode, metaTable);
 
 	// Update piece hierarchy based on metadata
-	BuildPieceHierarchy(model);
-	CalculateModelProperties(model, metaTable);
+	BuildPieceHierarchy( model );
+
+	// Calculate model dimensions
+	CalculateMinMax( model->rootPiece );
+	CalculateRadius( model );
+	CalculateHeight( model );
+	CalculateMidPos( model );
+
+	// Simplified dimensions used for rough calculations
+	model->radius = metaTable.GetFloat("radius", model->radius);
+	model->height = metaTable.GetFloat("height", model->height);
+	model->relMidPos = metaTable.GetFloat3("midpos", model->relMidPos);
+	model->mins = metaTable.GetFloat3("mins", model->mins);
+	model->maxs = metaTable.GetFloat3("maxs", model->maxs);
 
 	// Verbose logging of model properties
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->name: %s", model->name.c_str());
@@ -225,7 +237,7 @@ void CAssParser::CalculatePerMeshMinMax(SAssModel* model)
 }
 
 
-void CAssParser::LoadPieceTransformations(const S3DModel* model, SAssPiece* piece, const LuaTable& pieceMetaTable)
+void CAssParser::LoadPieceTransformations(SAssPiece* piece, const LuaTable& pieceMetaTable)
 {
 	//! Process transforms
 	float3 rotate, scale, offset;
@@ -235,7 +247,7 @@ void CAssParser::LoadPieceTransformations(const S3DModel* model, SAssPiece* piec
 
 	LOG_S(LOG_SECTION_PIECE,
 			"(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)",
-			model->numPieces, piece->name.c_str(),
+			piece->model->numPieces, piece->name.c_str(),
 			_offset.x, _offset.y, _offset.z,
 			_rotate.x, _rotate.y, _rotate.z,
 			_scale.x, _scale.y, _scale.z
@@ -261,7 +273,7 @@ void CAssParser::LoadPieceTransformations(const S3DModel* model, SAssPiece* piec
 
 	LOG_S(LOG_SECTION_PIECE,
 			"(%d:%s) Relative offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)",
-			model->numPieces, piece->name.c_str(),
+			piece->model->numPieces, piece->name.c_str(),
 			offset.x, offset.y, offset.z,
 			rotate.x, rotate.y, rotate.z,
 			scale.x, scale.y, scale.z
@@ -279,6 +291,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	SAssPiece* piece = new SAssPiece;
 	piece->type = MODELTYPE_OTHER;
 	piece->node = node;
+	piece->model = model;
 	piece->isEmpty = (node->mNumMeshes == 0);
 
 	if (node->mParent) {
@@ -292,7 +305,6 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	if (piece->name.empty()) {
 		piece->name = "piece";
 	}
-
 	ModelPieceMap::const_iterator it = model->pieces.find(piece->name);
 	if (it != model->pieces.end()) {
 		char buf[64];
@@ -314,17 +326,15 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	}
 
 	//! Load transforms
-	LoadPieceTransformations(model, piece, pieceTable);
+	LoadPieceTransformations(piece, pieceTable);
 
 	//! Update piece min/max extents
 	for (unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; meshListIndex++) {
-		const unsigned int meshIndex = node->mMeshes[meshListIndex];
-		const SAssModel::MinMax& minmax = model->mesh_minmax[meshIndex];
-
+		unsigned int meshIndex = node->mMeshes[meshListIndex];
+		SAssModel::MinMax& minmax = model->mesh_minmax[meshIndex];
 		piece->mins = std::min(piece->mins, minmax.mins);
 		piece->maxs = std::max(piece->maxs, minmax.maxs);
 	}
-
 
 
 	//! Check if piece is special (ie, used to set Spring model properties)
@@ -362,7 +372,6 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		delete piece;
 		return NULL;
 	}
-
 
 
 	//! Get vertex data from node meshes
@@ -451,6 +460,13 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	
 	piece->isEmpty = piece->vertices.empty();
 
+	// collision volume for piece (not sure about these coords)
+	// FIXME add metatable tags for this!!!!
+	const float3 cvScales = piece->maxs - piece->mins;
+	const float3 cvOffset = (piece->maxs - piece->offset) + (piece->mins - piece->offset);
+
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset);
+
 	//! Get parent name from metadata or model
 	if (pieceTable.KeyExists("parent")) {
 		piece->parentName = pieceTable.GetString("parent", "");
@@ -484,80 +500,74 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 //! Because of metadata overrides we don't know the true hierarchy until all pieces have been loaded
 void CAssParser::BuildPieceHierarchy(S3DModel* model)
 {
+	model->numPieces = 0;
+	
 	//! Loop through all pieces and create missing hierarchy info
-	for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != model->pieces.end(); ++it) {
+	for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != model->pieces.end(); ++it)
+	{
 		S3DModelPiece* piece = it->second;
-
 		if (piece->name == "root") {
 			piece->parent = NULL;
-			assert(model->GetRootPiece() == NULL);
 			model->SetRootPiece(piece); // FIXME what if called multiple times?
-			continue;
-		}
-
-		if (piece->parentName != "") {
-			if ((piece->parent = model->FindPiece(piece->parentName)) == NULL) {
+			++model->numPieces;
+		} else if (piece->parentName != "") {
+			piece->parent = model->FindPiece(piece->parentName);
+			if (piece->parent == NULL) {
 				LOG_SL(LOG_SECTION_PIECE, L_ERROR,
 						"Missing piece '%s' declared as parent of '%s'.",
 						piece->parentName.c_str(), piece->name.c_str());
 			} else {
 				piece->parent->children.push_back(piece);
+				++model->numPieces;
 			}
-
-			continue;
-		}
-
-		//! A piece with no parent that isn't the root (orphan)
-		if ((piece->parent = model->FindPiece("root")) == NULL) {
-			LOG_SL(LOG_SECTION_PIECE, L_ERROR, "Missing root piece");
 		} else {
-			piece->parent->children.push_back(piece);
+			//! A piece with no parent that isn't the root (orphan)
+			piece->parent = model->FindPiece("root");
+			if (piece->parent == NULL) {
+				LOG_SL(LOG_SECTION_PIECE, L_ERROR, "Missing root piece");
+			} else {
+				piece->parent->children.push_back(piece);
+				++model->numPieces;
+			}
 		}
 	}
 }
 
 
 // Iterate over the model and calculate its overall dimensions
-void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
+void CAssParser::CalculateMinMax(S3DModelPiece* piece)
 {
-	model->numPieces += 1;
+	piece->goffset = piece->parent ? piece->parent->goffset + piece->offset : piece->offset;
 
 	// update model min/max extents
-	model->mins = std::min(piece->goffset + piece->mins, model->mins);
-	model->maxs = std::max(piece->goffset + piece->maxs, model->maxs);
-
-	// cannot set this until parent relations are known, so either here or in BuildPieceHierarchy()
-	piece->goffset = piece->offset + ((piece->parent != NULL)? piece->parent->goffset: ZeroVector);
-
-	const float3 cvScales = piece->maxs - piece->mins;
-	const float3 cvOffset =
-		(piece->maxs - piece->goffset) +
-		(piece->mins - piece->goffset);
-
-	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f));
+	piece->model->mins = std::min(piece->goffset + piece->mins, piece->model->mins);
+	piece->model->maxs = std::max(piece->goffset + piece->maxs, piece->model->maxs);
 
 	// Repeat with children
 	for (unsigned int i = 0; i < piece->children.size(); i++) {
-		CalculateModelDimensions(model, piece->children[i]);
+		CalculateMinMax(piece->children[i]);
 	}
 }
 
+
 //! Calculate model radius from the min/max extents
-void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& metaTable)
+void CAssParser::CalculateRadius(S3DModel* model)
 {
-	CalculateModelDimensions(model, model->rootPiece);
-
-	// note: overrides default midpos of the SpringRadius piece
-	model->relMidPos.y = (model->maxs.y - model->mins.y) * 0.5f;
-
-	// Simplified dimensions used for rough calculations
-	model->radius = metaTable.GetFloat("radius", std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length());
-	model->height = metaTable.GetFloat("height", model->maxs.z);
-	model->relMidPos = metaTable.GetFloat3("midpos", model->relMidPos);
-	model->mins = metaTable.GetFloat3("mins", model->mins);
-	model->maxs = metaTable.GetFloat3("maxs", model->maxs);
-
+	model->radius = std::max(std::fabs(model->maxs), std::fabs(model->mins)).Length();
 	model->drawRadius = model->radius;
+}
+
+
+//! Calculate model height from the min/max extents
+void CAssParser::CalculateHeight(S3DModel* model)
+{
+	model->height = model->maxs.z;
+}
+
+
+void CAssParser::CalculateMidPos(S3DModel* model)
+{
+	model->relMidPos.y = (model->maxs.y - model->mins.y) * 0.5f;
 }
 
 
@@ -669,9 +679,9 @@ void SAssPiece::UploadGeometryVBOs()
 
 void SAssPiece::DrawForList() const
 {
-	if (isEmpty)
+	if (isEmpty) {
 		return;
-
+	}
 	LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Compiling piece %s", name.c_str());
 
 	vboAttributes.Bind(GL_ARRAY_BUFFER);
