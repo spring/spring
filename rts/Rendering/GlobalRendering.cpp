@@ -19,7 +19,6 @@ CONFIG(int, AtiHacks).defaultValue(-1);
 CONFIG(bool, DualScreenMode).defaultValue(false);
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false);
 CONFIG(bool, TeamNanoSpray).defaultValue(true);
-CONFIG(bool, DrawDebugTraceRay).defaultValue(false);
 
 /**
  * @brief global rendering
@@ -233,8 +232,6 @@ void CGlobalRendering::PostInit() {
 	);
 
 	teamNanospray = configHandler->GetBool("TeamNanoSpray");
-
-	drawdebugtraceray = configHandler->GetBool("DrawDebugTraceRay");
 }
 
 
