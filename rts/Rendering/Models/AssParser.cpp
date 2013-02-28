@@ -158,8 +158,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 				modelFilePath.c_str(), scene->mNumMeshes, scene->mNumMaterials,
 				scene->mNumTextures );
 	} else {
-		LOG_SL(LOG_SECTION_MODEL, L_ERROR, "Model Import: %s",
-				importer.GetErrorString());
+		throw content_error("[AssimpParser] Model Import: " + std::string(importer.GetErrorString()));
 	}
 
 	SAssModel* model = new SAssModel;
