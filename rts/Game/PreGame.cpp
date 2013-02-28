@@ -48,6 +48,7 @@
 #include "System/Platform/EngineTypeHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "lib/luasocket/src/restrictions.h"
+#include <boost/format.hpp>
 
 using netcode::RawPacket;
 using std::string;
@@ -225,6 +226,7 @@ void CPreGame::UpdateClientNet()
 	}
 
 	int engineType = -1;
+	int engineMinor = -1;
 	boost::shared_ptr<const RawPacket> packet;
 	while ((packet = net->GetData(gs->frameNum)))
 	{
@@ -240,7 +242,8 @@ void CPreGame::UpdateClientNet()
 					std::string message;
 					pckt >> message;
 					LOG("%s", message.c_str());
-					if (engineType >= 0 && engineType != EngineTypeHandler::GetCurrentEngineType()) {
+					if ((engineType >= 0 && (engineType != EngineTypeHandler::GetCurrentEngineType())) || 
+							(engineMinor >= 0 && (engineMinor != SpringVersion::GetMinorInt()))) {
 						EngineTypeHandler::EngineTypeInfo* eti = EngineTypeHandler::GetEngineTypeInfo(engineType);
 						if (eti == NULL) {
 							LOG_L(L_ERROR, "Unknown engine type: %d", engineType);
@@ -248,8 +251,11 @@ void CPreGame::UpdateClientNet()
 							SetExitCode(1);
 							gu->globalQuit = true;
 							net->Close(true);
-							LOG("Preparing to start %s", eti->exe.c_str());
-							EngineTypeHandler::SetRestartExecutable(eti->exe, message);
+							std::string newexe = eti->exe;
+							if (engineMinor > 0)
+								newexe += boost::str(boost::format("-%d") %engineMinor);
+							LOG("Preparing to start %s", newexe.c_str());
+							EngineTypeHandler::SetRestartExecutable(newexe, message);
 							return;
 						}
 					}
@@ -270,8 +276,9 @@ void CPreGame::UpdateClientNet()
 					pckt >> data;
 					switch (datatype) {
 						case CUSTOM_DATA_ENGINETYPE:
-							engineType = data;
-							LOG("Server requested engine type: %d", engineType);
+							engineType = data & 0xFFFF;
+							engineMinor = data >> 16;
+							LOG("Server requested engine type: %d, minor version: %d", engineType, engineMinor);
 							break;
 						default:
 							LOG_L(L_ERROR, "Got invalid CustomData type: %d", (int)datatype);
