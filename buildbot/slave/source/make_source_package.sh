@@ -9,7 +9,7 @@ set -e
 
 OUTPUTDIR=${TMP_PATH}
 
-if [ -z "${TMP_PATH}"  ||  "${TMP_PATH}" == "/" ]; then
+if [ -z "${TMP_PATH}" ]  || [ "${TMP_PATH}" == "/" ]; then
 	echo "Invalid path: ${TMP_PATH}"
 	exit 1;
 fi
