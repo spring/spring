@@ -68,6 +68,7 @@ public:
 	std::string parentName;
 	std::vector<S3DModelPiece*> children;
 
+	S3DModel* model;
 	S3DModelPiece* parent;
 	CollisionVolume* colvol;
 
