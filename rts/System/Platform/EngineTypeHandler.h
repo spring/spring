@@ -20,6 +20,10 @@ namespace EngineTypeHandler {
 
 	std::string GetEngine(unsigned short enginetype, unsigned short engineversionmajor, unsigned short engineversionminor, unsigned short enginepatchset, bool brief = false);
 
+	void SetRequestedEngineType(int engineType, int engineMinor);
+
+	bool WillRestartEngine(const std::string& message);
+
 	bool RestartEngine(const std::string& exe, std::vector<std::string>& args);
 
 	void SetRestartExecutable(const std::string& exe, const std::string& errmsg);
