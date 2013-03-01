@@ -13,8 +13,11 @@
 	#include <libkern/OSAtomic.h> // OSAtomicIncrement64
 #endif
 
+#include "System/OpenMP_cond.h"
 #include "System/Platform/Win/win32.h"
+#include "lib/gml/gmlcnf.h"
 #include <boost/cstdint.hpp>
+#include "lib/gml/gml_base.h"
 
 class CGameController;
 
@@ -122,6 +125,10 @@ namespace Threading {
 	#ifndef NDEBUG
 		if (!OMPInited)
 			OMPError();
+	#endif
+	#if !defined(DEDICATED) && defined(_OPENMP)
+		if (GML::Enabled()) // the only way to completely avoid OMP threads to be created
+			omp_set_num_threads(1); // is to call omp_set_num_threads before EVERY omp section
 	#endif
 	}
 
