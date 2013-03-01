@@ -1714,13 +1714,15 @@ void CGroundMoveType::HandleUnitCollisions(
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
 		const bool collideeYields = (collider->isMoving && !collidee->isMoving);
-		const bool ignoreCollidee = ((collideeYields && alliedCollision) || colliderUD->pushResistant);
+		const bool ignoreCollidee = (collideeYields && alliedCollision);
 
 		// FIXME:
 		//   allowPushingEnemyUnits is (now) useless because alliances are bi-directional
 		//   ie. if !alliedCollision, pushCollider and pushCollidee BOTH become false and
 		//   the collision is treated normally --> not what we want here, but the desired
 		//   behavior (making each party stop and block the other) has many corner-cases
+		//   this also happens when both parties are pushResistant --> make each respond
+		//   to the other as a static obstacle so the tags still have some effect
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
 		pushCollider &= (!collider->beingBuilt && !collider->usingScriptMoveType && !colliderUD->pushResistant);
@@ -1743,8 +1745,9 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		eventHandler.UnitUnitCollision(collider, collidee);
 
-		if (!collideeMobile && !collideeUD->IsAirUnit()) {
-			// building (always axis-aligned, but possibly has a yardmap)
+		if ((!collideeMobile && !collideeUD->IsAirUnit()) || (!pushCollider && !pushCollidee)) {
+			// building (always axis-aligned, possibly has a yardmap)
+			// or semi-static collidee that should be handled as such
 			HandleStaticObjectCollision(
 				collider,
 				collidee,
@@ -1801,7 +1804,7 @@ void CGroundMoveType::HandleUnitCollisions(
  			r2 = s2 / (s1 + s2 + 1.0f);
 
 		// far from a realistic treatment, but works
-		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / colliderRelRadius): 1.0f) * int(!ignoreCollidee);
+		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / colliderRelRadius): 1.0f);
 		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / collideeRelRadius): 1.0f);
 
 		// try to prevent both parties from being pushed onto non-traversable
@@ -1816,7 +1819,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		const int collideeSlideSign = SIGN(-separationVector.dot(collidee->rightdir));
 		#undef SIGN
 
-		const float3 colliderPushVec  =  colResponseVec * colliderMassScale;
+		const float3 colliderPushVec  =  colResponseVec * colliderMassScale * int(!ignoreCollidee);
 		const float3 collideePushVec  = -colResponseVec * collideeMassScale;
 		const float3 colliderSlideVec = collider->rightdir * colliderSlideSign * (1.0f / penDistance) * r2;
 		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance) * r1;
