@@ -216,7 +216,7 @@ bool IsRelease()
 
 const std::string GetMinorModifier()
 {
-#ifdef UNITSYNC
+#if defined(UNITSYNC) || !defined(CUSTOM_ENGINE_TYPE) 
 	return "";
 #endif
 	return (GetMinorInt() == 0) ? "" : ("-" + GetMinor());
