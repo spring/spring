@@ -72,14 +72,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE)
 
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
-
-#if 0
-#define POS_IMPASSABLE(md, pos, u)                                               \
-	(((CMoveMath::IsBlocked(*md, pos, u) & CMoveMath::BLOCK_STRUCTURE) != 0) ||  \
-	 ((CMoveMath::GetPosSpeedMod(*md, pos) <= 0.01f)))
-#else
 #define POS_IMPASSABLE(md, pos, u) (!md->TestMoveSquare(u, (pos).x / SQUARE_SIZE, (pos).z / SQUARE_SIZE))
-#endif
 
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
