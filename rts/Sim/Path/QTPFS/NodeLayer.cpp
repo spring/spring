@@ -106,9 +106,10 @@ void QTPFS::NodeLayer::QueueUpdate(const SRectangle& r, const MoveDef* md) {
 			const unsigned int chmz = hmz;
 			#endif
 
-			// layerUpdate->speedMods[recIdx] = CMoveMath::GetPosSpeedMod(*md, chmx, chmz) * md->TestMoveSquare(NULL, chmx, chmz, ZeroVector, true, false);
-			layerUpdate->speedMods[recIdx] = CMoveMath::GetPosSpeedMod(*md, chmx, chmz);
-			layerUpdate->blockBits[recIdx] = CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL);
+			layerUpdate->speedMods[recIdx] = NodeLayer::MAX_SPEEDMOD_VALUE;
+			layerUpdate->blockBits[recIdx] = 0;
+
+			md->TestMoveSquare(NULL, chmx, chmz, ZeroVector, true, true, false, &layerUpdate->speedMods[recIdx], &layerUpdate->blockBits[recIdx]);
 		}
 	}
 }
@@ -132,6 +133,8 @@ bool QTPFS::NodeLayer::Update(
 	const std::vector<float>* luSpeedMods,
 	const std::vector<  int>* luBlockBits
 ) {
+	assert((luSpeedMods == NULL && luBlockBits == NULL) || (luSpeedMods != NULL && luBlockBits != NULL));
+
 	unsigned int numNewBinSquares = 0;
 	unsigned int numClosedSquares = 0;
 
@@ -163,16 +166,20 @@ bool QTPFS::NodeLayer::Update(
 			const unsigned int chmz = hmz;
 			#endif
 
-			// NOTE:
-			//     GetPosSpeedMod only checks the terrain (height/slope/type), not the blocking-map
-			//     IsBlockedNoSpeedModCheck scans entire footprint, GetPosSpeedMod just one square
-			const unsigned int blockBits = (luBlockBits == NULL)? CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
+			float minSpeedMod = NodeLayer::MAX_SPEEDMOD_VALUE;
+			int   maxBlockBit = 0;
+
+			if (luBlockBits == NULL || luSpeedMods == NULL) {
+				// FIXME: this needs to be faster (fewer duplicate checks per square)
+				md->TestMoveSquare(NULL, chmx, chmz, ZeroVector, true, true, false, &minSpeedMod, &maxBlockBit);
+			} else {
+				minSpeedMod = (*luSpeedMods)[recIdx];
+				maxBlockBit = (*luBlockBits)[recIdx];
+			}
 
 			#define NL QTPFS::NodeLayer
-			// const float rawAbsSpeedMod = (luSpeedMods == NULL)? (CMoveMath::GetPosSpeedMod(*md, chmx, chmz) * md->TestMoveSquare(NULL, chmx, chmz, ZeroVector, true, false)): (*luSpeedMods)[recIdx];
-			const float rawAbsSpeedMod = (luSpeedMods == NULL)? CMoveMath::GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
-			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, NL::MIN_SPEEDMOD_VALUE, NL::MAX_SPEEDMOD_VALUE);
-			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
+			const float tmpAbsSpeedMod = Clamp(minSpeedMod, NL::MIN_SPEEDMOD_VALUE, NL::MAX_SPEEDMOD_VALUE);
+			const float newAbsSpeedMod = tmpAbsSpeedMod * ((maxBlockBit & CMoveMath::BLOCK_STRUCTURE) == 0);
 			const float newRelSpeedMod = Clamp((newAbsSpeedMod - NL::MIN_SPEEDMOD_VALUE) / (NL::MAX_SPEEDMOD_VALUE - NL::MIN_SPEEDMOD_VALUE), 0.0f, 1.0f);
 			const float curRelSpeedMod = Clamp(curSpeedMods[sqrIdx] / float(MaxSpeedModTypeValue()), 0.0f, 1.0f);
 			#undef NL
