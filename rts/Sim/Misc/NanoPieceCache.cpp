@@ -16,7 +16,7 @@ int NanoPieceCache::GetNanoPiece(CUnitScript* ownerScript) {
 		nanoPiece = nanoPieces[rnd % cnt];
 	}
 
-	if (lastNanoPieceCnt <= MAX_QUERYNANOPIECE_CALLS) {
+	if (lastNanoPieceCnt <= 30) {
 		// only do so 30 times and then use the cache
 		const int scriptPiece = ownerScript->QueryNanoPiece();
 		const int modelPiece  = ownerScript->ScriptToModel(scriptPiece);
