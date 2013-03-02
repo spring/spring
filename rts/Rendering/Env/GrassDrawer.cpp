@@ -473,6 +473,21 @@ void CGrassDrawer::SetupGlState()
 			glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		}
 
+		if (!globalRendering->haveGLSL) {
+			glActiveTextureARB(GL_TEXTURE1_ARB);
+			glEnable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE2_ARB);
+			glEnable(GL_TEXTURE_2D);
+			glActiveTextureARB(GL_TEXTURE3_ARB);
+			glEnable(GL_TEXTURE_2D);
+			if (gd->DrawExtraTex()) {
+				glActiveTextureARB(GL_TEXTURE4_ARB);
+				glEnable(GL_TEXTURE_2D);
+			}
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+			glEnable(GL_TEXTURE_2D);
+		}
+
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glMultMatrixf(camera->GetViewMatrix());
@@ -630,24 +645,21 @@ void CGrassDrawer::ResetGlState2()
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		glActiveTextureARB(GL_TEXTURE0_ARB);
 	} else {
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		if (gd->DrawExtraTex()) {
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
 		}
 	}
 
-	glActiveTextureARB(GL_TEXTURE3_ARB);
-	glDisable(GL_TEXTURE_2D);
 	glActiveTextureARB(GL_TEXTURE4_ARB);
 	glDisable(GL_TEXTURE_2D);
-	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glActiveTextureARB(GL_TEXTURE3_ARB);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTextureARB(GL_TEXTURE2_ARB);
+	glDisable(GL_TEXTURE_2D);
+	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glDisable(GL_TEXTURE_2D);
 	glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
