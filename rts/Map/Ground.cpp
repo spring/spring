@@ -195,10 +195,12 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 inline static bool ClampInMapHeight(float3& from, float3& to)
 {
 	const float heightAboveMapMax = from.y - readmap->currMaxHeight;
-	if (heightAboveMapMax <= 0)
+
+	if (heightAboveMapMax <= 0.0f)
 		return false;
 
 	const float3 dir = (to - from);
+
 	if (dir.y >= 0.0f) {
 		// both `from` & `to` are above map's height
 		from = float3(-1.0f, -1.0f, -1.0f);
@@ -206,7 +208,7 @@ inline static bool ClampInMapHeight(float3& from, float3& to)
 		return true;
 	}
 
-	from += dir * (-heightAboveMapMax / dir.y);
+	from += (dir * (-heightAboveMapMax / dir.y));
 	return true;
 }
 
@@ -242,8 +244,8 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 		// check if our start position is underground (assume ground is unpassable for cannons etc.)
 		const int sx = from.x / SQUARE_SIZE;
 		const int sz = from.z / SQUARE_SIZE;
-		const float& h = hm[sz * gs->mapxp1 + sx];
-		if (from.y <= h) {
+
+		if (from.y <= hm[sz * gs->mapxp1 + sx]) {
 			return 0.0f + skippedDist;
 		}
 	}
@@ -269,8 +271,9 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 	if ((fsx == tsx) && (fsz == tsz)) {
 		// <from> and <to> are the same
 		const float ret = LineGroundSquareCol(hm, nm,  from, to,  fsx, fsz);
+
 		if (ret >= 0.0f) {
-			return ret;
+			return (ret + skippedDist);
 		}
 	} else if (fsx == tsx) {
 		// ray is parallel to z-axis
@@ -278,8 +281,9 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 
 		while (keepgoing) {
 			const float ret = LineGroundSquareCol(hm, nm,  from, to,  fsx, zp);
+
 			if (ret >= 0.0f) {
-				return ret + skippedDist;
+				return (ret + skippedDist);
 			}
 
 			keepgoing = (zp != tsz);
@@ -292,8 +296,9 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 
 		while (keepgoing) {
 			const float ret = LineGroundSquareCol(hm, nm,  from, to,  xp, fsz);
+
 			if (ret >= 0.0f) {
-				return ret + skippedDist;
+				return (ret + skippedDist);
 			}
 
 			keepgoing = (xp != tsx);
@@ -329,15 +334,18 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 		while (keepgoing) {
 			// do the collision test with the squares triangles
 			const float ret = LineGroundSquareCol(hm, nm,  from, to,  curx, curz);
+
 			if (ret >= 0.0f) {
-				return ret + skippedDist;
+				return (ret + skippedDist);
 			}
 
 			// check if we reached the end already and need to stop the loop
 			const bool endReached = (curx == tsx && curz == tsz);
 			const bool beyondEnd = ((curx - tsx) * dirx > 0) || ((curz - tsz) * dirz > 0);
+
 			assert(!beyondEnd);
 			keepgoing = !endReached && !beyondEnd;
+
 			if (!keepgoing)
 				 break;
 
@@ -369,9 +377,6 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 				assert(curz != nextz);
 				curz = nextz;
 			}
-
-			const bool beyondEnd_ = ((curx - tsx) * dirx > 0) || ((curz - tsz) * dirz > 0);
-			assert(!beyondEnd_);
 		}
 	}
 

@@ -1072,7 +1072,7 @@ bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, const CUnit* targ
 		return false;
 
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with ctrl key or something) and skip the tests below then
-	return HaveFreeLineOfFire(tgtPos, userTarget, targetUnit);
+	return (HaveFreeLineOfFire(tgtPos, userTarget, targetUnit));
 }
 
 
