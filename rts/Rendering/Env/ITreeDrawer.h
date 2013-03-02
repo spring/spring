@@ -55,23 +55,6 @@ public:
 
 		float3 pos;
 	};
-	struct TreeSquareStruct {
-		TreeSquareStruct()
-			: dispList(0)
-			, farDispList(0)
-			, lastSeen(0)
-			, lastSeenFar(0)
-		{}
-
-		unsigned int dispList;
-		unsigned int farDispList;
-
-		int lastSeen;
-		int lastSeenFar;
-
-		float3 viewVector;
-		std::map<int, TreeStruct> trees;
-	};
 
 private:
 	void AddTrees();

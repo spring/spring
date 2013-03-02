@@ -25,8 +25,23 @@ public:
 	void AddTree(int treeID, int treeType, const float3& pos, float size);
 	void DeleteTree(const float3& pos);
 
-	TreeSquareStruct* trees;
+	struct TreeSquareStruct {
+		TreeSquareStruct()
+			: dispList(0)
+			, farDispList(0)
+			, lastSeen(0)
+			, lastSeenFar(0)
+		{}
 
+		unsigned int dispList;
+		unsigned int farDispList;
+		int lastSeen;
+		int lastSeenFar;
+		float3 viewVector;
+		std::map<int, TreeStruct> trees;
+	};
+
+	TreeSquareStruct* trees;
 	int treesX;
 	int treesY;
 	int nTrees;
