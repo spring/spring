@@ -23,24 +23,18 @@ struct MoveDef {
 
 	bool TestMoveSquare(
 		const CSolidObject* collider,
-		const int xTestMoveSqr,
-		const int zTestMoveSqr,
+		const int hmx,
+		const int hmz,
 		const float3& testMoveDir = ZeroVector,
 		bool testTerrain = true,
-		bool testObjects = true,
-		bool centerOnly = false,
-		float* minSpeedMod = NULL,
-		int* maxBlockBit = NULL
+		bool testObjects = true
 	) const;
 	bool TestMoveSquare(
 		const CSolidObject* collider,
 		const float3& testMovePos,
 		const float3& testMoveDir = ZeroVector,
 		bool testTerrain = true,
-		bool testObjects = true,
-		bool centerOnly = false,
-		float* minSpeedMod = NULL,
-		int* maxBlockBit = NULL
+		bool testObjects = true
 	) const;
 	float GetDepthMod(const float height) const;
 	unsigned int GetCheckSum() const;
