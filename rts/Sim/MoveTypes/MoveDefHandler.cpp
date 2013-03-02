@@ -296,35 +296,25 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 
 bool MoveDef::TestMoveSquare(
 	const CSolidObject* collider,
-	const int xTestMoveSqr,
-	const int zTestMoveSqr,
+	const int hmx,
+	const int hmz,
 	const float3& testMoveDir,
 	bool testTerrain,
-	bool testObjects,
-	bool centerOnly,
-	float* minSpeedMod,
-	int* maxBlockBit
+	bool testObjects
 ) const {
 	bool ret = true;
 
 	if (testTerrain || testObjects) {
-		const int jMin = -zsizeh * (1 - centerOnly), jMax = zsizeh * (1 - centerOnly);
-		const int iMin = -xsizeh * (1 - centerOnly), iMax = xsizeh * (1 - centerOnly);
-
-		for (int j = jMin; (j <= jMax) && ret; j++) {
-			for (int i = iMin; (i <= iMax) && ret; i++) {
-				// GetPosSpeedMod only checks *one* square of terrain
-				// (heightmap/slopemap/typemap), not the blocking-map
+		// test the entire footprint
+		for (int j = -zsizeh; (j <= zsizeh) && ret; j++) {
+			for (int i = -xsizeh; (i <= xsizeh) && ret; i++) {
 				const float speedMod = (testMoveDir != ZeroVector)?
-					CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + i, zTestMoveSqr + j, testMoveDir):
-					CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + i, zTestMoveSqr + j);
-				const CMoveMath::BlockType blockBits = CMoveMath::SquareIsBlocked(*this, xTestMoveSqr + i, zTestMoveSqr + j, collider);
+					CMoveMath::GetPosSpeedMod(*this, hmx + i, hmz + j, testMoveDir):
+					CMoveMath::GetPosSpeedMod(*this, hmx + i, hmz + j);
+				const CMoveMath::BlockType blockBits = CMoveMath::IsBlocked(*this, hmx + i, hmz + j, collider);
 
 				if (testTerrain) { ret &= (speedMod > 0.0f); }
 				if (testObjects) { ret &= ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0); }
-
-				if (minSpeedMod != NULL) { *minSpeedMod = std::min(*minSpeedMod,    (speedMod )); }
-				if (maxBlockBit != NULL) { *maxBlockBit = std::max(*maxBlockBit, int(blockBits)); }
 			}
 		}
 	}
@@ -337,15 +327,9 @@ bool MoveDef::TestMoveSquare(
 	const float3& testMovePos,
 	const float3& testMoveDir,
 	bool testTerrain,
-	bool testObjects,
-	bool centerOnly,
-	float* minSpeedMod,
-	int* maxBlockBit
+	bool testObjects
 ) const {
-	const int xTestMoveSqr = testMovePos.x / SQUARE_SIZE;
-	const int zTestMoveSqr = testMovePos.z / SQUARE_SIZE;
-
-	return (TestMoveSquare(collider, xTestMoveSqr, zTestMoveSqr, testMoveDir, testTerrain, testObjects, centerOnly, minSpeedMod, maxBlockBit));
+	return (TestMoveSquare(collider, testMovePos.x / SQUARE_SIZE, testMovePos.z / SQUARE_SIZE, testMoveDir, testTerrain, testObjects));
 }
 
 
