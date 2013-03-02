@@ -17,6 +17,7 @@
 #include "System/Platform/Win/win32.h"
 #include "lib/gml/gmlcnf.h"
 #include <boost/cstdint.hpp>
+#include "lib/gml/gml_base.h"
 
 class CGameController;
 

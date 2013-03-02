@@ -1,13 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/lexical_cast.hpp>
-
 #include "MoveDefHandler.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_Map.h"
 #include "System/Exceptions.h"
@@ -295,22 +294,60 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 	assert((zsize & 1) == 1);
 }
 
-bool MoveDef::TestMoveSquare(const int hmx, const int hmz) const {
+bool MoveDef::TestMoveSquare(
+	const CSolidObject* collider,
+	const int xTestMoveSqr,
+	const int zTestMoveSqr,
+	const float3& testMoveDir,
+	bool testTerrain,
+	bool testObjects,
+	bool centerOnly,
+	float* minSpeedMod,
+	int* maxBlockBit
+) const {
 	bool ret = true;
 
-	// test the entire footprint
-	for (int i = hmx - xsizeh; i <= hmx + xsizeh; i++) {
-		for (int j = hmz - zsizeh; j <= hmz + zsizeh; j++) {
-			const float speedMod = CMoveMath::GetPosSpeedMod(*this, hmx + i, hmz + j);
-			const CMoveMath::BlockType blockBits = CMoveMath::IsBlocked(*this, hmx + i, hmz + j, NULL);
+	if (testTerrain || testObjects) {
+		const int jMin = -zsizeh * (1 - centerOnly), jMax = zsizeh * (1 - centerOnly);
+		const int iMin = -xsizeh * (1 - centerOnly), iMax = xsizeh * (1 - centerOnly);
 
-			// check both terrain and the blocking-map
-			ret &= ((speedMod > 0.0f) && ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0));
+		for (int j = jMin; (j <= jMax) && ret; j++) {
+			for (int i = iMin; (i <= iMax) && ret; i++) {
+				// GetPosSpeedMod only checks *one* square of terrain
+				// (heightmap/slopemap/typemap), not the blocking-map
+				const float speedMod = (testMoveDir != ZeroVector)?
+					CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + i, zTestMoveSqr + j, testMoveDir):
+					CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + i, zTestMoveSqr + j);
+				const CMoveMath::BlockType blockBits = CMoveMath::SquareIsBlocked(*this, xTestMoveSqr + i, zTestMoveSqr + j, collider);
+
+				if (testTerrain) { ret &= (speedMod > 0.0f); }
+				if (testObjects) { ret &= ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0); }
+
+				if (minSpeedMod != NULL) { *minSpeedMod = std::min(*minSpeedMod,    (speedMod )); }
+				if (maxBlockBit != NULL) { *maxBlockBit = std::max(*maxBlockBit, int(blockBits)); }
+			}
 		}
 	}
 
 	return ret;
 }
+
+bool MoveDef::TestMoveSquare(
+	const CSolidObject* collider,
+	const float3& testMovePos,
+	const float3& testMoveDir,
+	bool testTerrain,
+	bool testObjects,
+	bool centerOnly,
+	float* minSpeedMod,
+	int* maxBlockBit
+) const {
+	const int xTestMoveSqr = testMovePos.x / SQUARE_SIZE;
+	const int zTestMoveSqr = testMovePos.z / SQUARE_SIZE;
+
+	return (TestMoveSquare(collider, xTestMoveSqr, zTestMoveSqr, testMoveDir, testTerrain, testObjects, centerOnly, minSpeedMod, maxBlockBit));
+}
+
 
 float MoveDef::GetDepthMod(const float height) const {
 	// [DEPTHMOD_{MIN, MAX}_HEIGHT] are always >= 0,
