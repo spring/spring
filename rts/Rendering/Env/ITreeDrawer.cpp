@@ -40,15 +40,11 @@ ITreeDrawer::~ITreeDrawer() {
 
 void ITreeDrawer::AddTrees()
 {
-	for (int fID = 0; /* no test*/; fID++) {
+	for (int fID = 0; (featureHandler->GetFeature(fID)) != NULL; fID++) {
 		const CFeature* f = featureHandler->GetFeature(fID);
 
-		if (f) {
-			if (f->def->drawType >= DRAWTYPE_TREE) {
-				AddTree(f->def->drawType - 1, f->pos, 1.0f);
-			}
-		} else {
-			break;
+		if (f->def->drawType >= DRAWTYPE_TREE) {
+			AddTree(f->id, f->def->drawType - 1, f->pos, 1.0f);
 		}
 	}
 }
@@ -107,7 +103,7 @@ void ITreeDrawer::Update() {
 void ITreeDrawer::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {
 	if (feature->def->drawType >= DRAWTYPE_TREE) {
 		DeleteTree(oldpos);
-		AddTree(feature->def->drawType - 1, newpos, 1.0f);
+		AddTree(feature->id, feature->def->drawType - 1, newpos, 1.0f);
 	}
 }
 
@@ -116,7 +112,7 @@ void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
 		DeleteTree(feature->pos);
 
 		if (feature->speed.SqLength2D() > 0.25f) {
-			AddFallingTree(feature->pos, feature->speed, feature->def->drawType - 1);
+			AddFallingTree(feature->id, feature->def->drawType - 1, feature->pos, feature->speed);
 		}
 	}
 }

@@ -72,9 +72,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE)
 
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
-#define POS_IMPASSABLE(md, pos, u)                                               \
-	(((CMoveMath::IsBlocked(*md, pos, u) & CMoveMath::BLOCK_STRUCTURE) != 0) ||  \
-	 ((CMoveMath::GetPosSpeedMod(*md, pos) <= 0.01f)))
+#define POS_IMPASSABLE(md, pos, u) (!md->TestMoveSquare(u, (pos).x / SQUARE_SIZE, (pos).z / SQUARE_SIZE))
 
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -324,50 +322,50 @@ bool CGroundMoveType::Update()
 void CGroundMoveType::SlowUpdate()
 {
 	if (owner->GetTransporter() != NULL) {
-		if (progressState == Active)
+		if (progressState == Active) {
 			StopEngine();
-		return;
-	}
+		}
+	} else {
+		if (progressState == Active) {
+			if (pathId != 0) {
+				if (idling) {
+					numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
+				} else {
+					numIdlingSlowUpdates = std::max(0, int(numIdlingSlowUpdates - 1));
+				}
 
-	if (progressState == Active) {
-		if (pathId != 0) {
-			if (idling) {
-				numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
+				if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
+					// case A: we have a path but are not moving
+					LOG_L(L_DEBUG,
+							"SlowUpdate: unit %i has pathID %i but %i ETA failures",
+							owner->id, pathId, numIdlingUpdates);
+
+					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
+						StopEngine();
+						StartEngine();
+					} else {
+						// unit probably ended up on a non-traversable
+						// square, or got stuck in a non-moving crowd
+						Fail();
+					}
+				}
 			} else {
-				numIdlingSlowUpdates = std::max(0, int(numIdlingSlowUpdates - 1));
-			}
+				if (gs->frameNum > pathRequestDelay) {
+					// case B: we want to be moving but don't have a path
+					LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
 
-			if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
-				// case A: we have a path but are not moving
-				LOG_L(L_DEBUG,
-						"SlowUpdate: unit %i has pathID %i but %i ETA failures",
-						owner->id, pathId, numIdlingUpdates);
-
-				if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
 					StopEngine();
 					StartEngine();
-				} else {
-					// unit probably ended up on a non-traversable
-					// square, or got stuck in a non-moving crowd
-					Fail();
 				}
 			}
-		} else {
-			if (gs->frameNum > pathRequestDelay) {
-				// case B: we want to be moving but don't have a path
-				LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
-
-				StopEngine();
-				StartEngine();
-			}
 		}
-	}
 
-	if (!flying) {
-		// move us into the map, and update <oldPos>
-		// to prevent any extreme changes in <speed>
-		if (!owner->pos.IsInBounds()) {
-			owner->Move3D(oldPos = owner->pos.cClampInBounds(), false);
+		if (!flying) {
+			// move us into the map, and update <oldPos>
+			// to prevent any extreme changes in <speed>
+			if (!owner->pos.IsInBounds()) {
+				owner->Move3D(oldPos = owner->pos.cClampInBounds(), false);
+			}
 		}
 	}
 
@@ -1502,7 +1500,8 @@ void CGroundMoveType::HandleObjectCollisions()
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
-		HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
+		// terrain
+		// HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
 	}
 
 	collider->Block();
@@ -1715,13 +1714,15 @@ void CGroundMoveType::HandleUnitCollisions(
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
 		const bool collideeYields = (collider->isMoving && !collidee->isMoving);
-		const bool ignoreCollidee = ((collideeYields && alliedCollision) || colliderUD->pushResistant);
+		const bool ignoreCollidee = (collideeYields && alliedCollision);
 
 		// FIXME:
 		//   allowPushingEnemyUnits is (now) useless because alliances are bi-directional
 		//   ie. if !alliedCollision, pushCollider and pushCollidee BOTH become false and
 		//   the collision is treated normally --> not what we want here, but the desired
 		//   behavior (making each party stop and block the other) has many corner-cases
+		//   this also happens when both parties are pushResistant --> make each respond
+		//   to the other as a static obstacle so the tags still have some effect
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
 		pushCollider &= (!collider->beingBuilt && !collider->usingScriptMoveType && !colliderUD->pushResistant);
@@ -1744,8 +1745,9 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		eventHandler.UnitUnitCollision(collider, collidee);
 
-		if (!collideeMobile && !collideeUD->IsAirUnit()) {
-			// building (always axis-aligned, but possibly has a yardmap)
+		if ((!collideeMobile && !collideeUD->IsAirUnit()) || (!pushCollider && !pushCollidee)) {
+			// building (always axis-aligned, possibly has a yardmap)
+			// or semi-static collidee that should be handled as such
 			HandleStaticObjectCollision(
 				collider,
 				collidee,
@@ -1802,7 +1804,7 @@ void CGroundMoveType::HandleUnitCollisions(
  			r2 = s2 / (s1 + s2 + 1.0f);
 
 		// far from a realistic treatment, but works
-		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / colliderRelRadius): 1.0f) * int(!ignoreCollidee);
+		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / colliderRelRadius): 1.0f);
 		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / collideeRelRadius): 1.0f);
 
 		// try to prevent both parties from being pushed onto non-traversable
@@ -1817,30 +1819,28 @@ void CGroundMoveType::HandleUnitCollisions(
 		const int collideeSlideSign = SIGN(-separationVector.dot(collidee->rightdir));
 		#undef SIGN
 
-		const float3 colliderSlideVec = collider->rightdir * colliderSlideSign * (1.0f / penDistance);
-		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance);
-		const float3 colliderPushPos  = collider->pos + (colResponseVec * colliderMassScale);
-		const float3 collideePushPos  = collidee->pos - (colResponseVec * collideeMassScale);
-		const float3 colliderSlidePos = collider->pos + colliderSlideVec * r2;
-		const float3 collideeSlidePos = collidee->pos + collideeSlideVec * r1;
+		const float3 colliderPushVec  =  colResponseVec * colliderMassScale * int(!ignoreCollidee);
+		const float3 collideePushVec  = -colResponseVec * collideeMassScale;
+		const float3 colliderSlideVec = collider->rightdir * colliderSlideSign * (1.0f / penDistance) * r2;
+		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance) * r1;
 
 		if ((pushCollider || !pushCollidee) && colliderMobile) {
-			if (!POS_IMPASSABLE(colliderMD, colliderPushPos, collider)) {
-				collider->Move3D(colliderPushPos, false);
+			if (!POS_IMPASSABLE(colliderMD, collider->pos + colliderPushVec, collider)) {
+				collider->Move3D(collider->pos + colliderPushVec, false);
 			}
 			// also push collider laterally
-			if (!POS_IMPASSABLE(colliderMD, colliderSlidePos, collider)) {
-				collider->Move3D(colliderSlideVec * r2, true);
+			if (!POS_IMPASSABLE(colliderMD, collider->pos + colliderSlideVec, collider)) {
+				collider->Move3D(collider->pos + colliderSlideVec, false);
 			}
 		}
 
 		if ((pushCollidee || !pushCollider) && collideeMobile) {
-			if (!POS_IMPASSABLE(collideeMD, collideePushPos, collidee)) {
-				collidee->Move3D(collideePushPos, false);
+			if (!POS_IMPASSABLE(collideeMD, collidee->pos + collideePushVec, collidee)) {
+				collidee->Move3D(collidee->pos + collideePushVec, false);
 			}
 			// also push collidee laterally
-			if (!POS_IMPASSABLE(collideeMD, collideeSlidePos, collidee)) {
-				collidee->Move3D(collideeSlideVec * r1, true);
+			if (!POS_IMPASSABLE(collideeMD, collidee->pos + collideeSlideVec, collidee)) {
+				collidee->Move3D(collidee->pos + collideeSlideVec, false);
 			}
 		}
 	}
@@ -2425,10 +2425,23 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		// only use directional passability test if we already spilled over into terrain that the pathfinder
 		// would consider impassable, otherwise many units will enter regions where pathing fails totally
 		//
-		// const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
+		#if 1
+		const bool terrainBlocked = (!md->TestMoveSquare(owner, owner->pos, ZeroVector, true, false))?
+			(!md->TestMoveSquare(owner, owner->pos + speedVector, flatFrontDir, true, false)):
+			(!md->TestMoveSquare(owner, owner->pos + speedVector,   ZeroVector, true, false));
+		#else
 		const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos) <= 0.01f)?
 			(CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f):
 			(CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector              ) <= 0.01f);
+
+		// if not already stuck, test terrain in our entire footprint
+		// otherwise be more lenient and only test our center square
+		//
+		// const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos) <= 0.01f)?
+		//     (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f):
+		//     (!md->TestMoveSquare(owner, owner->pos + speedVector, flatFrontDir, true, false));
+		#endif
+
 		const bool terrainIgnored = pathController->IgnoreTerrain(*md, owner->pos + speedVector);
 
 		if (terrainBlocked && !terrainIgnored && !owner->inAir) {
