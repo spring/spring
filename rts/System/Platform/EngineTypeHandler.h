@@ -6,6 +6,7 @@
 #include "Game/GameVersion.h"
 #include <string>
 #include <vector>
+#include <stdio.h>
 
 namespace EngineTypeHandler {
 
