@@ -42,9 +42,13 @@ BEGIN {
     myClass = "Enumerations";
 
     #create empty arrays, holding names and values of the two enumerations
+	cmdsTopicNamesLength = 0;
     split("", cmdsTopicNames);
+	cmdsTopicValuesLength = 0;
     split("", cmdsTopicValues);
+	unitCmdsTopicNamesLength = 0;
     split("", unitCmdsTopicNames);
+	unitCmdsTopicValuesLength = 0;
     split("", unitCmdsTopicValues);
 }
 
@@ -79,18 +83,18 @@ function printJavaHeader() {
 }
 
 function printJavaEnums(enums) {
-    printJavaEnum("CommandTopic", cmdsTopicNames, cmdsTopicValues);
+    printJavaEnum("CommandTopic", cmdsTopicNames, cmdsTopicNamesLength, cmdsTopicValues);
     print("") >> outFile_i;
-    printJavaEnum("UnitCommandOptions", unitCmdsTopicNames, unitCmdsTopicValues);
+    printJavaEnum("UnitCommandOptions", unitCmdsTopicNames, unitCmdsTopicNamesLength, unitCmdsTopicValues);
 }
 
-function printJavaEnum(enumName, names, values) {
+function printJavaEnum(enumName, names, namesLength, values) {
 	outFile_i = createJavaFileName(myClass);
     printEnumHeader(enumName);
 
     # Prints the enum members and values
     first = 0;
-	for (i=0; i<length(names);i++) {
+	for (i=0; i<namesLength;i++) {
         if (first == 0) {
             first = 1;
             printf("\t\t") >> outFile_i;
@@ -143,8 +147,10 @@ function printJavaEnd() {
 	if (doWrapp) {
         #parse enumeration of format x = number1,
 		sub(",", "", $4);
-		cmdsTopicNames[length(cmdsTopicNames)] = $2;
-		cmdsTopicValues[length(cmdsTopicValues)] = $4;
+		cmdsTopicNames[cmdsTopicNamesLength] = $2;
+		cmdsTopicNamesLength++;
+		cmdsTopicValues[cmdsTopicValuesLength] = $4;
+		cmdsTopicValuesLength++;
 	} else {
 		print("Java-AIInterface: NOTE: JNI level: COMMANDS: intentionally not wrapped: " $2);
 	}
@@ -153,14 +159,16 @@ function printJavaEnd() {
 /^[ \t]*UNIT_COMMAND_.*$/ {
 	doWrapp = !match(($0), /.*COMMAND_NULL.*/);
 	if (doWrapp) {
-		unitCmdsTopicNames[length(unitCmdsTopicNames)] = $2;
+		unitCmdsTopicNames[unitCmdsTopicNamesLength] = $2;
+		unitCmdsTopicNamesLength++;
         #parse enumeration of format x = (number1 << number2),
         sub("[ \t]*//.*", "", $0);
 		sub(",", "", $0);
 		sub($3, "", $0);
 		sub($2, "", $0);
 		sub("[ \t]*", "", $0);
-		unitCmdsTopicValues[length(unitCmdsTopicValues)] = $0;
+		unitCmdsTopicValues[unitCmdsTopicValuesLength] = $0;
+		unitCmdsTopicValuesLength++;
 	} else {
 		print("Java-AIInterface: NOTE: JNI level: UNIT_COMMANDS: intentionally not wrapped: " $2);
 	}
