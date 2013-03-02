@@ -24,13 +24,11 @@ public:
 	const std::vector<int>& GetNanoPieces() const { return nanoPieces; }
 	      std::vector<int>& GetNanoPieces()       { return nanoPieces; }
 
-	void StopPolling() { lastNanoPieceCnt = MAX_QUERYNANOPIECE_CALLS * 2; }
+	void StopPolling() { lastNanoPieceCnt = 1e6; }
 
 private:
 	// model-piece indices
 	std::vector<int> nanoPieces;
-
-	static const int MAX_QUERYNANOPIECE_CALLS = 30;
 
 	int lastNanoPieceCnt;
 	int curBuildPowerMask;
