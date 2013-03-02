@@ -174,9 +174,12 @@ public:
 	virtual bool ChangeTeam(int team, ChangeType type);
 	virtual void StopAttackingAllyTeam(int ally);
 
+	void SetTransporter(CTransportUnit* trans) { transporter = trans; }
 	inline CTransportUnit* GetTransporter() const {
 		// In MT transporter may suddenly be changed to NULL by sim
-		return GML::SimEnabled() ? *(CTransportUnit * volatile *)&transporter : transporter;
+		if (GML::SimEnabled())
+			return (*(CTransportUnit* volatile*) &transporter);
+		return transporter;
 	}
 
 public:
