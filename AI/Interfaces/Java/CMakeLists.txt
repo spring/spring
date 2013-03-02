@@ -453,13 +453,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		"${myJavaGeneratedSourceDir}/${myPkg}/AbstractAI.java"
 		"${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
 		"${myJavaGeneratedSourceDir}/${myPkg}/JniAICallback.java"
-# FIXME: mawk seems to not support length() -> jni_wrappCommands.awk doesn't work:
-# jni_wrappCommands.awk: line 100: illegal reference to local variable names
-# jni_wrappCommands.awk: line 146: illegal reference to array cmdsTopicNames
-# jni_wrappCommands.awk: line 147: illegal reference to array cmdsTopicValues
-# jni_wrappCommands.awk: line 156: illegal reference to array unitCmdsTopicNames
-# jni_wrappCommands.awk: line 163: illegal reference to array unitCmdsTopicValues
-#		"${myJavaGeneratedSourceDir}/${myPkg}/Enumerations.java"
+		"${myJavaGeneratedSourceDir}/${myPkg}/Enumerations.java"
 		)
 
 	set(myGeneratedSources
