@@ -36,11 +36,11 @@ namespace EngineTypeHandler {
 	}
 
 	std::string GetEngine(const EngineTypeVersion &etv, bool brief) {
-		std::string minorversion = (etv.minor == 0) ? "" : boost::str(boost::format("-%d") %(int)etv.minor);
+		std::string minorversion = (etv.minorv == 0) ? "" : boost::str(boost::format("-%d") %(int)etv.minorv);
 		EngineTypeInfo* et = GetEngineTypeInfo(etv.type);
 		if (et == NULL)
-			return boost::str(boost::format("Unknown (%d) %d%s.%d") %(int)etv.type %(int)etv.major %minorversion %(int)etv.patch);
-		return boost::str(boost::format("%s %d%s.%d%s") %et->name %(int)etv.major %minorversion %(int)etv.patch %(brief ? "" : ("   [ " + et->info + " ]")));
+			return boost::str(boost::format("Unknown (%d) %d%s.%d") %(int)etv.type %(int)etv.majorv %minorversion %(int)etv.patch);
+		return boost::str(boost::format("%s %d%s.%d%s") %et->name %(int)etv.majorv %minorversion %(int)etv.patch %(brief ? "" : ("   [ " + et->info + " ]")));
 	}
 
 	void SetRequestedEngineType(int engineType, int engineMinor) {

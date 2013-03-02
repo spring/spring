@@ -15,11 +15,11 @@ namespace EngineTypeHandler {
 		std::string name, info, exe;
 	};
 	struct EngineTypeVersion {
-		EngineTypeVersion() : type(-1), major(-1), minor(-1), patch(-1) {}
-		EngineTypeVersion(unsigned int tp, unsigned short maj, unsigned short min, unsigned short pat) : type(tp), major(maj), minor(min), patch(pat) {}
-		bool operator==(const EngineTypeVersion& other) const { return type == other.type && major == other.major && minor == other.minor; }
+		EngineTypeVersion() : type(-1), majorv(-1), minorv(-1), patch(-1) {}
+		EngineTypeVersion(unsigned int tp, unsigned short maj, unsigned short min, unsigned short pat) : type(tp), majorv(maj), minorv(min), patch(pat) {}
+		bool operator==(const EngineTypeVersion& other) const { return type == other.type && majorv == other.majorv && minorv == other.minorv; }
 		bool operator!=(const EngineTypeVersion& other) const { return !(*this == other); }
-		unsigned short type, major, minor, patch;
+		unsigned short type, majorv, minorv, patch;
 	};
 
 	EngineTypeInfo* GetEngineTypeInfo(unsigned int enginetype);
