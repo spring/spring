@@ -2,7 +2,6 @@
 
 #include "System/BaseNetProtocol.h"
 
-#include "Game/GameVersion.h"
 #include "Game/PlayerStatistics.h"
 #include "Sim/Misc/TeamStatistics.h"
 #include "System/Net/RawPacket.h"
@@ -192,11 +191,9 @@ PacketType CBaseNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar st
 
 PacketType CBaseNetProtocol::SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int netloss, bool reconnect)
 {
-	boost::uint16_t size = 18 + name.size() + passwd.size() + version.size();
+	boost::uint16_t size = 10 + sizeof(EngineTypeHandler::EngineTypeVersion) + name.size() + passwd.size() + version.size();
 	PackPacket* packet = new PackPacket(size , NETMSG_ATTEMPTCONNECT);
-	*packet << size << NETWORK_VERSION << static_cast<unsigned short>(EngineTypeHandler::GetCurrentEngineType())
-					<< static_cast<unsigned short>(SpringVersion::GetMajorInt()) << static_cast<unsigned short>(SpringVersion::GetMinorInt())
-					<< static_cast<unsigned short>(SpringVersion::GetPatchSetInt()) << name << passwd << version << uchar(reconnect) << uchar(netloss);
+	*packet << size << NETWORK_VERSION << EngineTypeHandler::GetCurrentEngineTypeVersion() << name << passwd << version << uchar(reconnect) << uchar(netloss);
 	return PacketType(packet);
 }
 
