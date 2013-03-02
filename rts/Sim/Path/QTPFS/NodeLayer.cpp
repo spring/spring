@@ -106,7 +106,6 @@ void QTPFS::NodeLayer::QueueUpdate(const SRectangle& r, const MoveDef* md) {
 			const unsigned int chmz = hmz;
 			#endif
 
-			// layerUpdate->speedMods[recIdx] = CMoveMath::GetPosSpeedMod(*md, chmx, chmz) * md->TestMoveSquare(NULL, chmx, chmz, ZeroVector, true, false);
 			layerUpdate->speedMods[recIdx] = CMoveMath::GetPosSpeedMod(*md, chmx, chmz);
 			layerUpdate->blockBits[recIdx] = CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL);
 		}
@@ -169,7 +168,6 @@ bool QTPFS::NodeLayer::Update(
 			const unsigned int blockBits = (luBlockBits == NULL)? CMoveMath::IsBlockedNoSpeedModCheck(*md, chmx, chmz, NULL): (*luBlockBits)[recIdx];
 
 			#define NL QTPFS::NodeLayer
-			// const float rawAbsSpeedMod = (luSpeedMods == NULL)? (CMoveMath::GetPosSpeedMod(*md, chmx, chmz) * md->TestMoveSquare(NULL, chmx, chmz, ZeroVector, true, false)): (*luSpeedMods)[recIdx];
 			const float rawAbsSpeedMod = (luSpeedMods == NULL)? CMoveMath::GetPosSpeedMod(*md, chmx, chmz): (*luSpeedMods)[recIdx];
 			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, NL::MIN_SPEEDMOD_VALUE, NL::MAX_SPEEDMOD_VALUE);
 			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;

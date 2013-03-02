@@ -329,50 +329,52 @@ bool CGroundMoveType::Update()
 void CGroundMoveType::SlowUpdate()
 {
 	if (owner->GetTransporter() != NULL) {
-		if (progressState == Active) {
+		if (progressState == Active)
 			StopEngine();
-		}
-	} else {
-		if (progressState == Active) {
-			if (pathId != 0) {
-				if (idling) {
-					numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
-				} else {
-					numIdlingSlowUpdates = std::max(0, int(numIdlingSlowUpdates - 1));
-				}
 
-				if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
-					// case A: we have a path but are not moving
-					LOG_L(L_DEBUG,
-							"SlowUpdate: unit %i has pathID %i but %i ETA failures",
-							owner->id, pathId, numIdlingUpdates);
+		AMoveType::SlowUpdate();
+		return;
+	}
 
-					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
-						StopEngine();
-						StartEngine();
-					} else {
-						// unit probably ended up on a non-traversable
-						// square, or got stuck in a non-moving crowd
-						Fail();
-					}
-				}
+	if (progressState == Active) {
+		if (pathId != 0) {
+			if (idling) {
+				numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
 			} else {
-				if (gs->frameNum > pathRequestDelay) {
-					// case B: we want to be moving but don't have a path
-					LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
+				numIdlingSlowUpdates = std::max(0, int(numIdlingSlowUpdates - 1));
+			}
 
+			if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
+				// case A: we have a path but are not moving
+				LOG_L(L_DEBUG,
+						"SlowUpdate: unit %i has pathID %i but %i ETA failures",
+						owner->id, pathId, numIdlingUpdates);
+
+				if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
 					StopEngine();
 					StartEngine();
+				} else {
+					// unit probably ended up on a non-traversable
+					// square, or got stuck in a non-moving crowd
+					Fail();
 				}
 			}
-		}
+		} else {
+			if (gs->frameNum > pathRequestDelay) {
+				// case B: we want to be moving but don't have a path
+				LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
 
-		if (!flying) {
-			// move us into the map, and update <oldPos>
-			// to prevent any extreme changes in <speed>
-			if (!owner->pos.IsInBounds()) {
-				owner->Move3D(oldPos = owner->pos.cClampInBounds(), false);
+				StopEngine();
+				StartEngine();
 			}
+		}
+	}
+
+	if (!flying) {
+		// move us into the map, and update <oldPos>
+		// to prevent any extreme changes in <speed>
+		if (!owner->pos.IsInBounds()) {
+			owner->Move3D(oldPos = owner->pos.cClampInBounds(), false);
 		}
 	}
 
