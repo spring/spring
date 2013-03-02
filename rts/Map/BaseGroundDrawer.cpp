@@ -337,7 +337,8 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 						const int alx = ((x*2) >> loshandler->airMipLevel);
 						const int aly = ((y_2) >> loshandler->airMipLevel);
 						if (myAirLos[alx + (aly * loshandler->airSizeX)]) {
-							infoTexMem[a + COLOR_R] = (unsigned char)std::min(255.0f, 900.0f * fastmath::apxsqrt(fastmath::apxsqrt(extractDepthMap[y_hmapx + x])));
+							float extractDepth = extractDepthMap[y_hmapx + x];
+							infoTexMem[a + COLOR_R] = (unsigned char)std::min(255.0f, 900.0f * fastmath::apxsqrt(fastmath::apxsqrt(extractDepth)));
 						} else {
 							infoTexMem[a + COLOR_R] = 0;
 						}
