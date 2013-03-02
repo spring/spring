@@ -196,7 +196,7 @@ MoveDef::MoveDef(const LuaTable& moveTable, int moveDefID) {
 	const LuaTable& speedModMultsTable = moveTable.SubTable("speedModMults");
 
 	const float minWaterDepth = moveTable.GetFloat("minWaterDepth", 10.0f);
-	const float maxWaterDepth = moveTable.GetFloat("maxWaterDepth",  0.0f);
+	const float maxWaterDepth = moveTable.GetFloat("maxWaterDepth", 0.0f);
 
 	if ((name.find("boat") != string::npos) ||
 	    (name.find("ship") != string::npos)) {
