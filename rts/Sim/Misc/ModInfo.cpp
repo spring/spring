@@ -75,7 +75,6 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// movement
 		const LuaTable& movementTbl = root.SubTable("movement");
-
 		allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
 		allowAircraftToHitGround = movementTbl.GetBool("allowAircraftToHitGround", true);
 		allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);
@@ -90,7 +89,6 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// construction
 		const LuaTable& constructionTbl = root.SubTable("construction");
-
 		constructionDecay = constructionTbl.GetBool("constructionDecay", true);
 		constructionDecayTime = (int)(constructionTbl.GetFloat("constructionDecayTime", 6.66) * 30);
 		constructionDecaySpeed = std::max(constructionTbl.GetFloat("constructionDecaySpeed", 0.03), 0.01f);
@@ -99,7 +97,6 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// reclaim
 		const LuaTable& reclaimTbl = root.SubTable("reclaim");
-
 		multiReclaim  = reclaimTbl.GetInt("multiReclaim",  0);
 		reclaimMethod = reclaimTbl.GetInt("reclaimMethod", 1);
 		reclaimUnitMethod = reclaimTbl.GetInt("unitMethod", 1);
@@ -137,7 +134,6 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// fire-at-dead-units
 		const LuaTable& fireAtDeadTbl = root.SubTable("fireAtDead");
-
 		fireAtKilled   = fireAtDeadTbl.GetBool("fireAtKilled", false);
 		fireAtCrashing = fireAtDeadTbl.GetBool("fireAtCrashing", false);
 	}
@@ -145,19 +141,17 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// transportability
 		const LuaTable& transportTbl = root.SubTable("transportability");
+		transportAir    = transportTbl.GetInt("transportAir",   false);
+		transportShip   = transportTbl.GetInt("transportShip",  false);
+		transportHover  = transportTbl.GetInt("transportHover", false);
+		transportGround = transportTbl.GetInt("transportGround", true);
 
-		transportAir    = transportTbl.GetBool("transportAir",   false);
-		transportShip   = transportTbl.GetBool("transportShip",  false);
-		transportHover  = transportTbl.GetBool("transportHover", false);
-		transportGround = transportTbl.GetBool("transportGround", true);
-
-		targetableTransportedUnits = transportTbl.GetBool("targetableTransportedUnits", false);
+		targetableTransportedUnits = transportTbl.GetInt("targetableTransportedUnits", false);
 	}
 
 	{
 		// experience
 		const LuaTable& experienceTbl = root.SubTable("experience");
-
 		CUnit::SetExpMultiplier (experienceTbl.GetFloat("experienceMult", 1.0f));
 		CUnit::SetExpPowerScale (experienceTbl.GetFloat("powerScale",  1.0f));
 		CUnit::SetExpHealthScale(experienceTbl.GetFloat("healthScale", 0.7f));
