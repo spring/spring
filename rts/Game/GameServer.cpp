@@ -1738,7 +1738,7 @@ void CGameServer::ServerReadNet()
 					std::string enginereqshort = EngineTypeHandler::GetEngine(curetv, true);
 					std::string engineinst = EngineTypeHandler::GetEngine(etv);
 					newconn->Unmute();
-					newconn->SendData(CBaseNetProtocol::Get().SendRequestEngineType(curetv.type, curetv.minor));
+					newconn->SendData(CBaseNetProtocol::Get().SendRequestEngineType(curetv.type, curetv.minorv));
 					newconn->SendData(CBaseNetProtocol::Get().SendQuit("Wrong engine type or version!\n\nThis server requires engine: " + enginereq + "\n\nCurrently installed engine: " + engineinst));
 					newconn->Flush(true);
 					newconn->Close();
