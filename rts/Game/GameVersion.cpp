@@ -10,7 +10,6 @@
 #include <cstring>
 #include <boost/version.hpp>
 #include <boost/config.hpp>
-#include <stdio.h>
 
 /**
  * @brief Defines the current version string.
@@ -26,36 +25,15 @@ const std::string& GetMajor()
 	return major;
 }
 
-int GetMajorInt()
-{
-	int major = 0;
-	sscanf(GetMajor().c_str(), "%d", &major);
-	return major;
-}
-
 const std::string& GetMinor()
 {
 	static const std::string minor = "0";
 	return minor;
 }
 
-int GetMinorInt()
-{
-	int minor = 0;
-	sscanf(GetMinor().c_str(), "%d", &minor);
-	return minor;
-}
-
 const std::string& GetPatchSet()
 {
 	static const std::string patchSet = SPRING_VERSION_ENGINE_PATCH_SET;
-	return patchSet;
-}
-
-int GetPatchSetInt()
-{
-	int patchSet = 0;
-	sscanf(GetPatchSet().c_str(), "%d", &patchSet);
 	return patchSet;
 }
 
@@ -214,19 +192,11 @@ bool IsRelease()
 	return release;
 }
 
-const std::string GetMinorModifier()
-{
-#if defined(UNITSYNC) || !defined(CUSTOM_ENGINE_TYPE) 
-	return "";
-#endif
-	return (GetMinorInt() == 0) ? "" : ("-" + GetMinor());
-}
-
 const std::string& Get()
 {
 	static const std::string base = IsRelease()
-			? GetMajor() + GetMinorModifier()
-			: (GetMajor() + GetMinorModifier() + "." + GetPatchSet() + ".1");
+			? GetMajor()
+			: (GetMajor() + "." + GetPatchSet() + ".1");
 
 	return base;
 }
@@ -234,7 +204,7 @@ const std::string& Get()
 const std::string& GetSync()
 {
 	static const std::string sync = IsRelease()
-			? GetMajor() + GetMinorModifier()
+			? GetMajor()
 			: SPRING_VERSION_ENGINE;
 
 	return sync;

@@ -28,7 +28,6 @@ namespace SpringVersion
 	 * This matches the regex "[0-9]+".
 	 */
 	extern const std::string& GetMajor();
-	extern int GetMajorInt();
 
 	/**
 	 * Minor version number (e.g. "5")
@@ -43,7 +42,6 @@ namespace SpringVersion
 	 * This matches the regex "[0-9]+[+-]?".
 	 */
 	extern const std::string& GetMinor();
-	extern int GetMinorInt();
 
 	/**
 	 * Patch-set version part (e.g. "0" or "2")
@@ -52,7 +50,6 @@ namespace SpringVersion
 	 * This matches the regex "[0-9]+".
 	 */
 	extern const std::string& GetPatchSet();
-	extern int GetPatchSetInt();
 
 	/**
 	 * SCM Commits version part (e.g. "" or "13")
