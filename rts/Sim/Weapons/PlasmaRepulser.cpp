@@ -213,8 +213,9 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 	}
 
 	float3 dir = p->speed;
-	if (p->targetPos != ZeroVector) {
-		dir = p->targetPos - p->pos; // assume that it will travel roughly in the direction of the targetpos if it have one
+	if (p->GetTargetPos() != ZeroVector) {
+		// assume projectile will travel roughly in the direction of its targetpos
+		dir = p->GetTargetPos() - p->pos;
 	}
 
 	dir.y = 0.0f;

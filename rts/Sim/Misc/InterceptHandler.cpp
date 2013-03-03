@@ -73,10 +73,10 @@ void CInterceptHandler::Update(bool forced) {
 
 			const float3& pFlightPos = p->pos;
 			const float3& pImpactPos = p->pos + p->dir * impactDist;
-			const float3& pTargetPos = p->targetPos;
+			const float3& pTargetPos = p->GetTargetPos();
 
 			if ((pTargetPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {
-				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
+				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
 				w->incomingProjectiles[p->id] = p;
 				continue; // 1
 			}
@@ -90,7 +90,7 @@ void CInterceptHandler::Update(bool forced) {
 			}
 
 			if ((pFlightPos - wPos).SqLength2D() < Square(wDef->coverageRange)) {
-				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
+				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
 				w->incomingProjectiles[p->id] = p;
 				continue; // 2
 			}
@@ -103,7 +103,7 @@ void CInterceptHandler::Update(bool forced) {
 				// area during transition from vertical to horizontal flight, so we
 				// perform an extra test (NOTE: assumes non-parabolic trajectory)
 				if (pTargetDir.dot(pImpactDir) >= 0.999f) {
-					w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
+					w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
 					w->incomingProjectiles[p->id] = p;
 					continue; // 3
 				}
@@ -115,7 +115,7 @@ void CInterceptHandler::Update(bool forced) {
 			const float3 pMinSeparationVec = wPos - pMinSeparationPos;
 
 			if (pMinSeparationVec.SqLength() < Square(wDef->coverageRange)) {
-				w->AddDeathDependence(p, CObject::DEPENDENCE_INTERCEPT);
+				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
 				w->incomingProjectiles[p->id] = p;
 				continue; // 4
 			}
@@ -133,7 +133,7 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target, const floa
 	// if the target projectile dies in any way, we need to remove it
 	// (we cannot rely on any interceptor telling us, because they may
 	// die before the interceptable itself does)
-	AddDeathDependence(target, CObject::DEPENDENCE_INTERCEPTABLE);
+	AddDeathDependence(target, DEPENDENCE_INTERCEPTABLE);
 
 	Update(true);
 }
