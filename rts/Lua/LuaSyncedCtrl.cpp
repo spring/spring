@@ -2741,7 +2741,7 @@ int LuaSyncedCtrl::SetProjectileSpinAngle(lua_State* L)
 		return 0;
 	}
 
-	CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+	CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
 	pproj->spinAngle = luaL_optfloat(L, 2, 0.0f);
 	return 0;
 }
@@ -2753,7 +2753,7 @@ int LuaSyncedCtrl::SetProjectileSpinSpeed(lua_State* L)
 		return 0;
 	}
 
-	CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+	CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
 	pproj->spinSpeed = luaL_optfloat(L, 2, 0.0f);
 	return 0;
 }
@@ -2765,7 +2765,7 @@ int LuaSyncedCtrl::SetProjectileSpinVec(lua_State* L)
 		return 0;
 	}
 
-	CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+	CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
 	pproj->spinVec.x = luaL_optfloat(L, 2, 0.0f);
 	pproj->spinVec.y = luaL_optfloat(L, 3, 0.0f);
 	pproj->spinVec.z = luaL_optfloat(L, 4, 0.0f);
@@ -2783,13 +2783,13 @@ int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 	assert(proj->weapon || proj->piece);
 
 	if (proj->weapon) {
-		CWeaponProjectile* wproj = dynamic_cast<CWeaponProjectile*>(proj);
+		CWeaponProjectile* wproj = static_cast<CWeaponProjectile*>(proj);
 		if (wproj != NULL) {
 			wproj->cegID = gCEG->Load(explGenHandler, luaL_checkstring(L, 2));
 		}
 	}
 	if (proj->piece) {
-		CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+		CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
 		if (pproj != NULL) {
 			pproj->cegID = gCEG->Load(explGenHandler, luaL_checkstring(L, 2));
 		}
