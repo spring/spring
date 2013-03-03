@@ -1,16 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "LightningCannon.h"
+#include "PlasmaRepulser.h"
+#include "WeaponDef.h"
 #include "WeaponDefHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "PlasmaRepulser.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
-#include "Sim/Projectiles/WeaponProjectiles/LightningProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
 
@@ -19,10 +19,9 @@ CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL));
 CR_REG_METADATA(CLightningCannon,(
 	CR_MEMBER(color),
 	CR_RESERVED(8)
-	));
+));
 
-CLightningCannon::CLightningCannon(CUnit* owner)
-: CWeapon(owner)
+CLightningCannon::CLightningCannon(CUnit* owner): CWeapon(owner)
 {
 }
 
@@ -129,7 +128,8 @@ void CLightningCannon::FireImpl()
 	pparams.pos = curPos;
 	pparams.end = curPos + curDir * (boltLength + 10.0f);
 	pparams.ttl = 10;
-	new CLightningProjectile(pparams, color);
+
+	WeaponProjectileFactory::LoadProjectile(pparams);
 }
 
 

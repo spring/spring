@@ -108,6 +108,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/WeaponProjectiles/StarburstProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/WeaponProjectiles/TorpedoProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/WeaponProjectiles/WeaponProjectile.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/WeaponProjectiles/WeaponProjectileFactory.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/BuildInfo.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/AirCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/BuilderCAI.cpp"

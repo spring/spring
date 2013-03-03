@@ -355,7 +355,7 @@ void CWeaponProjectile::DependentDied(CObject* o)
 
 void CWeaponProjectile::PostLoad()
 {
-	weaponDef = weaponDefHandler->GetWeaponById(weaponDefID);
+	weaponDef = weaponDefHandler->GetWeaponDefByID(weaponDefID);
 
 //	if(weaponDef->interceptedByShieldType)
 //		interceptHandler.AddShieldInterceptableProjectile(this);

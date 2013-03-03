@@ -328,26 +328,6 @@ static inline CUnit* ParseSelectUnit(lua_State* L,
 }
 
 
-static int ParseFloatArray(lua_State* L, int index, float* array, int size)
-{
-	if (!lua_istable(L, index)) {
-		return -1;
-	}
-	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
-	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
-		if (lua_isnumber(L, -1)) {
-			array[i] = lua_tofloat(L, -1);
-			lua_pop(L, 1);
-		} else {
-			lua_pop(L, 1);
-			return i;
-		}
-	}
-	return size;
-}
-
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -728,7 +708,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 					if (lua_istable(L, -1)) {
 						if (alParamType[param] == EFXParamTypes::VECTOR) {
 							float3 v;
-							const int size = ParseFloatArray(L, -1, &v[0], 3);
+							const int size = LuaUtils::ParseFloatArray(L, -1, &v[0], 3);
 							if (size >= 3) {
 								efxprops->properties_v[param] = v;
 							}
@@ -1170,7 +1150,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 			const string key = lua_tostring(L, -2);
 			if (lua_istable(L, -1)) {
 				float color[3];
-				const int size = ParseFloatArray(L, -1, color, 3);
+				const int size = LuaUtils::ParseFloatArray(L, -1, color, 3);
 				if (size >= 3) {
 					if (key == "absorb") {
 						w.absorb = color;
@@ -1259,7 +1239,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 
 
 
-static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* caller)
+static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const char* caller)
 {
 	if (!lua_istable(L, tblIdx)) {
 		luaL_error(L, "[%s] argument %i must be a table!", caller, tblIdx);
@@ -1272,7 +1252,7 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 
 			if (lua_istable(L, -1)) {
 				float array[3] = {0.0f, 0.0f, 0.0f};
-				const int size = ParseFloatArray(L, -1, array, 3);
+				const int size = LuaUtils::ParseFloatArray(L, -1, array, 3);
 
 				if (size == 3) {
 					if (key == "position") {
@@ -1299,9 +1279,11 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 						light.SetDecayFunctionType(array);
 					}
 				}
+
+				continue;
 			}
 
-			else if (lua_isnumber(L, -1)) {
+			if (lua_isnumber(L, -1)) {
 				if (key == "radius") {
 					light.SetRadius(std::max(1.0f, lua_tofloat(L, -1)));
 				} else if (key == "fov") {
@@ -1313,9 +1295,12 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 				} else if (key == "ignoreLOS") {
 					light.SetIgnoreLOS(lua_toboolean(L, -1));
 				}
+
+				continue;
 			}
 		}
 	}
+
 	return true;
 }
 
@@ -1332,7 +1317,7 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L)
 	unsigned int lightHandle = -1U;
 
 	if (lightHandler != NULL) {
-		if (ParseLight(L, 1, light, __FUNCTION__)) {
+		if (ParseLight(L, light, 1, __FUNCTION__)) {
 			lightHandle = lightHandler->AddLight(light);
 		}
 	}
@@ -1353,7 +1338,7 @@ int LuaUnsyncedCtrl::AddModelLight(lua_State* L)
 	unsigned int lightHandle = -1U;
 
 	if (lightHandler != NULL) {
-		if (ParseLight(L, 1, light, __FUNCTION__)) {
+		if (ParseLight(L, light, 1, __FUNCTION__)) {
 			lightHandle = lightHandler->AddLight(light);
 		}
 	}
@@ -1376,7 +1361,7 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L)
 	bool ret = false;
 
 	if (light != NULL) {
-		ret = ParseLight(L, 2, *light, __FUNCTION__);
+		ret = ParseLight(L, *light, 2, __FUNCTION__);
 	}
 
 	lua_pushboolean(L, ret);
@@ -1396,7 +1381,7 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L)
 	bool ret = false;
 
 	if (light != NULL) {
-		ret = ParseLight(L, 2, *light, __FUNCTION__);
+		ret = ParseLight(L, *light, 2, __FUNCTION__);
 	}
 
 	lua_pushboolean(L, ret);
@@ -1993,9 +1978,9 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 	float red[4];
 	float green[4];
 	float blue[4];
-	if ((ParseFloatArray(L, 1, red,   4) != 4) ||
-	    (ParseFloatArray(L, 2, green, 4) != 4) ||
-	    (ParseFloatArray(L, 3, blue,  4) != 4)) {
+	if ((LuaUtils::ParseFloatArray(L, 1, red,   4) != 4) ||
+	    (LuaUtils::ParseFloatArray(L, 2, green, 4) != 4) ||
+	    (LuaUtils::ParseFloatArray(L, 3, blue,  4) != 4)) {
 		luaL_error(L, "Incorrect arguments to SetLosViewColors()");
 	}
 	const int scale = CBaseGroundDrawer::losColorScale;

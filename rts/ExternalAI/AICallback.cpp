@@ -1862,7 +1862,7 @@ void CAICallback::GetMapLines(std::vector<LineMarker>& lm, int lm_sizeMax, bool 
 
 const WeaponDef* CAICallback::GetWeapon(const char* weaponName)
 {
-	return weaponDefHandler->GetWeapon(weaponName);
+	return weaponDefHandler->GetWeaponDef(weaponName);
 }
 const WeaponDef* CAICallback::GetWeaponDefById(int weaponDefId)
 {

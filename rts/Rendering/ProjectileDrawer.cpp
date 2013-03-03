@@ -769,10 +769,10 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 			glPopMatrix();
 
 		switch (wp->GetProjectileType()) {
-			case CWeaponProjectile::WEAPON_BASE_PROJECTILE:
-			case CWeaponProjectile::WEAPON_EXPLOSIVE_PROJECTILE: 
-			case CWeaponProjectile::WEAPON_LASER_PROJECTILE:
-			case CWeaponProjectile::WEAPON_TORPEDO_PROJECTILE: {
+			case WEAPON_BASE_PROJECTILE:
+			case WEAPON_EXPLOSIVE_PROJECTILE: 
+			case WEAPON_LASER_PROJECTILE:
+			case WEAPON_TORPEDO_PROJECTILE: {
 				if (!shadowPass) {
 					unitDrawer->SetTeamColour(wp->colorTeam);
 				}
@@ -786,7 +786,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 				TRANSFORM_DRAW(transMatrix);
 			} break;
 
-			case CWeaponProjectile::WEAPON_MISSILE_PROJECTILE: {
+			case WEAPON_MISSILE_PROJECTILE: {
 				if (!shadowPass) {
 					unitDrawer->SetTeamColour(wp->colorTeam);
 				}
@@ -798,7 +798,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 				TRANSFORM_DRAW(transMatrix);
 			} break;
 
-			case CWeaponProjectile::WEAPON_STARBURST_PROJECTILE: {
+			case WEAPON_STARBURST_PROJECTILE: {
 				if (!shadowPass) {
 					unitDrawer->SetTeamColour(wp->colorTeam);
 				}

@@ -1,6 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "BeamLaser.h"
+#include "PlasmaRepulser.h"
+#include "WeaponDef.h"
+#include "WeaponDefHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -10,14 +13,10 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
-#include "Sim/Projectiles/WeaponProjectiles/BeamLaserProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/LargeBeamLaserProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/LaserProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "PlasmaRepulser.h"
-#include "WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));
 
@@ -26,7 +25,7 @@ CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(oldDir),
 	CR_MEMBER(damageMul),
 	CR_RESERVED(16)
-	));
+));
 
 CBeamLaser::CBeamLaser(CUnit* owner)
 : CWeapon(owner),
@@ -225,12 +224,10 @@ void CBeamLaser::FireInternal(float3 curDir, bool sweepFire)
 			params.pos = curPos;
 			params.end = hitPos;
 			params.ttl = std::max(1, weaponDef->beamLaserTTL);
+			params.startAlpha = startAlpha;
+			params.endAlpha = endAlpha;
 
-			if (weaponDef->largeBeamLaser) {
-				new CLargeBeamLaserProjectile(params, color, weaponDef->visuals.color2);
-			} else {
-				new CBeamLaserProjectile(params, startAlpha, endAlpha, color);
-			}
+			WeaponProjectileFactory::LoadProjectile(params);
 		}
 
 		curPos = hitPos;

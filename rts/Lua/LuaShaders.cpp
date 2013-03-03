@@ -163,46 +163,6 @@ int LuaShaders::GetShaderLog(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static int ParseIntArray(lua_State* L, int* array, int size)
-{
-	if (!lua_istable(L, -1)) {
-		return -1;
-	}
-	const int table = lua_gettop(L);
-	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
-		if (lua_isnumber(L, -1)) {
-			array[i] = lua_toint(L, -1);
-			lua_pop(L, 1);
-		} else {
-			lua_pop(L, 1);
-			return i;
-		}
-	}
-	return size;
-}
-
-
-static int ParseFloatArray(lua_State* L, float* array, int size)
-{
-	if (!lua_istable(L, -1)) {
-		return -1;
-	}
-	const int table = lua_gettop(L);
-	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
-		if (lua_isnumber(L, -1)) {
-			array[i] = lua_tofloat(L, -1);
-			lua_pop(L, 1);
-		} else {
-			lua_pop(L, 1);
-			return i;
-		}
-	}
-	return size;
-}
-
-
 static bool ParseUniformTable(lua_State* L, int index, GLuint progName)
 {
 	lua_getfield(L, index, "uniform");
@@ -219,7 +179,7 @@ static bool ParseUniformTable(lua_State* L, int index, GLuint progName)
 					}
 					else if (lua_istable(L, -1)) {
 						float a[4];
-						const int count = ParseFloatArray(L, a, 4);
+						const int count = LuaUtils::ParseFloatArray(L, -1, a, 4);
 						switch (count) {
 							case 1: { glUniform1f(loc, a[0]);                   break; }
 							case 2: { glUniform2f(loc, a[0], a[1]);             break; }
@@ -252,7 +212,7 @@ static bool ParseUniformIntTable(lua_State* L, int index, GLuint progName)
 					}
 					else if (lua_istable(L, -1)) {
 						int a[4];
-						const int count = ParseIntArray(L, a, 4);
+						const int count = LuaUtils::ParseIntArray(L, -1, a, 4);
 						switch (count) {
 							case 1: { glUniform1i(loc, a[0]);                   break; }
 							case 2: { glUniform2i(loc, a[0], a[1]);             break; }
@@ -281,7 +241,7 @@ static bool ParseUniformMatrixTable(lua_State* L, int index, GLuint progName)
 				if (loc >= 0) {
 					if (lua_istable(L, -1)) {
 						float a[16];
-						const int count = ParseFloatArray(L, a, 16);
+						const int count = LuaUtils::ParseFloatArray(L, -1, a, 16);
 						switch (count) {
 							case (2 * 2): { glUniformMatrix2fv(loc, 1, GL_FALSE, a); break; }
 							case (3 * 3): { glUniformMatrix3fv(loc, 1, GL_FALSE, a); break; }

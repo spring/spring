@@ -1,23 +1,22 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "EmgCannon.h"
+#include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
-#include "Sim/Projectiles/WeaponProjectiles/EmgProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "System/Sync/SyncTracer.h"
-#include "WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL));
 
 CR_REG_METADATA(CEmgCannon,(
-				CR_RESERVED(8)
-				));
+	CR_RESERVED(8)
+));
 
-CEmgCannon::CEmgCannon(CUnit* owner)
-: CWeapon(owner)
+CEmgCannon::CEmgCannon(CUnit* owner): CWeapon(owner)
 {
 }
 
@@ -70,5 +69,6 @@ void CEmgCannon::FireImpl()
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
 	params.ttl = (int) (range / projectileSpeed);
-	new CEmgProjectile(params, weaponDef->visuals.color, weaponDef->intensity);
+
+	WeaponProjectileFactory::LoadProjectile(params);
 }
