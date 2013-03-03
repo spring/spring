@@ -3549,17 +3549,15 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 
 int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
 {
-	const WeaponDef* weaponDef = weaponDefHandler->GetWeaponDefByID(luaL_checkint(L, 1));
+	ProjectileParams params;
 
-	if (weaponDef == NULL) {
+	if ((params.weaponDef = weaponDefHandler->GetWeaponDefByID(luaL_checkint(L, 1))) == NULL) {
 		lua_pushboolean(L, false);
-		return 0;
+	} else {
+		ParseProjectileParams(L, params, 2, __FUNCTION__);
+		lua_pushboolean(L, WeaponProjectileFactory::LoadProjectile(params));
 	}
 
-	ProjectileParams params;
-	ParseProjectileParams(L, params, 2, __FUNCTION__);
-
-	lua_pushboolean(L, WeaponProjectileFactory::LoadProjectile(params));
 	return 1;
 }
 
