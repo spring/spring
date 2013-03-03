@@ -180,6 +180,7 @@ class LuaSyncedRead {
 		static int GetProjectileSpinAngle(lua_State* L);
 		static int GetProjectileSpinSpeed(lua_State* L);
 		static int GetProjectileSpinVec(lua_State* L);
+		static int GetProjectileTarget(lua_State* L);
 		static int GetProjectileType(lua_State* L);
 		static int GetProjectileName(lua_State* L);
 
