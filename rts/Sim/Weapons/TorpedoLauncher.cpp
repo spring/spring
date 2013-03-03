@@ -1,19 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "TorpedoLauncher.h"
+#include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "Sim/Projectiles/WeaponProjectiles/TorpedoProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
-#include "TorpedoLauncher.h"
-#include "WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, (NULL));
 
 CR_REG_METADATA(CTorpedoLauncher,(
-		CR_MEMBER(tracking),
-		CR_RESERVED(8)
-		));
+	CR_MEMBER(tracking),
+	CR_RESERVED(8)
+));
 
 CTorpedoLauncher::CTorpedoLauncher(CUnit* owner)
 : CWeapon(owner),
@@ -45,23 +45,19 @@ void CTorpedoLauncher::Update()
 
 void CTorpedoLauncher::FireImpl()
 {
-	float3 dir = targetPos - weaponMuzzlePos;
-	dir.Normalize();
-	if (weaponDef->trajectoryHeight > 0){
+	float3 dir = (targetPos - weaponMuzzlePos).Normalize();
+
+	if (weaponDef->trajectoryHeight > 0) {
 		dir.y += weaponDef->trajectoryHeight;
 		dir.Normalize();
 	}
 
-	float3 startSpeed = dir * weaponDef->startvelocity;
-	if (weaponDef->fixedLauncher) {
-		startSpeed = weaponDir * weaponDef->startvelocity;
-	}
-
 	ProjectileParams params = GetProjectileParams();
-	params.speed = startSpeed;
+	params.speed = ((weaponDef->fixedLauncher)? weaponDir: dir) * weaponDef->startvelocity;
 	params.pos = weaponMuzzlePos;
 	params.end = targetPos;
 	params.ttl = (weaponDef->flighttime == 0)? (int) (range / projectileSpeed + 25): weaponDef->flighttime;
+	params.tracking = tracking;
 
-	new CTorpedoProjectile(params, damageAreaOfEffect, projectileSpeed, tracking);
+	WeaponProjectileFactory::LoadProjectile(params);
 }

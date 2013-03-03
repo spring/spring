@@ -171,7 +171,7 @@ static inline const MoveDef* getUnitDefMoveDefById(int skirmishAIId, int unitDef
 
 static inline const WeaponDef* getWeaponDefById(int skirmishAIId, int weaponDefId) {
 
-	const WeaponDef* weaponDef = weaponDefHandler->GetWeaponById(weaponDefId);
+	const WeaponDef* weaponDef = weaponDefHandler->GetWeaponDefByID(weaponDefId);
 	assert(weaponDef != NULL);
 	return weaponDef;
 }

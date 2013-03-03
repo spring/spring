@@ -42,6 +42,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -202,6 +203,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetProjectilePosition);
 	REGISTER_LUA_CFUNC(SetProjectileVelocity);
 	REGISTER_LUA_CFUNC(SetProjectileCollision);
+	REGISTER_LUA_CFUNC(SetProjectileTarget);
 
 	REGISTER_LUA_CFUNC(SetProjectileGravity);
 	REGISTER_LUA_CFUNC(SetProjectileSpinAngle);
@@ -241,6 +243,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetMapSquareTerrainType);
 	REGISTER_LUA_CFUNC(SetTerrainTypeData);
 
+	REGISTER_LUA_CFUNC(SpawnProjectile);
 	REGISTER_LUA_CFUNC(SpawnCEG);
 
 	REGISTER_LUA_CFUNC(EditUnitCmdDesc);
@@ -336,6 +339,60 @@ static inline CProjectile* ParseProjectile(lua_State* L,
 	return pmp->first;
 }
 
+static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const int tblIdx, const char* caller)
+{
+	if (!lua_istable(L, tblIdx)) {
+		luaL_error(L, "[%s] argument %i must be a table!", caller, tblIdx);
+		return false;
+	}
+
+	for (lua_pushnil(L); lua_next(L, tblIdx) != 0; lua_pop(L, 1)) {
+		if (lua_israwstring(L, -2)) {
+			const std::string& key = lua_tostring(L, -2);
+
+			if (lua_istable(L, -1)) {
+				float array[3] = {0.0f, 0.0f, 0.0f};
+				const int size = LuaUtils::ParseFloatArray(L, -1, array, 3);
+
+				if (size == 3) {
+				    if (key == "pos") {
+						params.pos = array;
+					} else if (key == "end") {
+						params.end = array;
+					} else if (key == "speed") {
+						params.speed = array;
+					} else if (key == "spread") {
+						params.spread = array;
+					} else if (key == "error") {
+						params.error = array;
+					}
+				}
+
+				continue;
+			}
+
+			if (lua_isnumber(L, -1)) {
+				if (key == "ttl") {
+					params.ttl = lua_tofloat(L, -1);
+				} else if (key == "gravity") {
+					params.gravity = lua_tofloat(L, -1);
+				} else if (key == "tracking") {
+					params.tracking = lua_tofloat(L, -1);
+				} else if (key == "maxRange") {
+					params.maxRange = lua_tofloat(L, -1);
+				} else if (key == "startAlpha") {
+					params.startAlpha = lua_tofloat(L, -1);
+				} else if (key == "endAlpha") {
+					params.endAlpha = lua_tofloat(L, -1);
+				}
+
+				continue;
+			}
+		}
+	}
+
+	return true;
+}
 
 static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 {
@@ -2660,6 +2717,11 @@ int LuaSyncedCtrl::SetProjectileCollision(lua_State* L)
 	return 0;
 }
 
+int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
+{
+	return 0; // TODO
+}
+
 
 int LuaSyncedCtrl::SetProjectileGravity(lua_State* L)
 {
@@ -3484,6 +3546,22 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
+
+int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
+{
+	const WeaponDef* weaponDef = weaponDefHandler->GetWeaponDefByID(luaL_checkint(L, 1));
+
+	if (weaponDef == NULL) {
+		lua_pushboolean(L, false);
+		return 0;
+	}
+
+	ProjectileParams params;
+	ParseProjectileParams(L, params, 2, __FUNCTION__);
+
+	lua_pushboolean(L, WeaponProjectileFactory::LoadProjectile(params));
+	return 1;
+}
 
 int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 {

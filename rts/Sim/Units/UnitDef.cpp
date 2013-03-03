@@ -607,10 +607,10 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	modelName = udTable.GetString("objectName", "");
 	scriptName = udTable.GetString("script", unitName + ".cob");
 
-	deathExpWeaponDef = weaponDefHandler->GetWeapon(udTable.GetString("explodeAs", ""));
-	selfdExpWeaponDef = weaponDefHandler->GetWeapon(udTable.GetString("selfDestructAs", ""));
-	if (deathExpWeaponDef == NULL) { deathExpWeaponDef = weaponDefHandler->GetWeapon("NOWEAPON"); }
-	if (selfdExpWeaponDef == NULL) { selfdExpWeaponDef = weaponDefHandler->GetWeapon("NOWEAPON"); }
+	deathExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("explodeAs", ""));
+	selfdExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("selfDestructAs", ""));
+	if (deathExpWeaponDef == NULL) { deathExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON"); }
+	if (selfdExpWeaponDef == NULL) { selfdExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON"); }
 	assert(deathExpWeaponDef);
 	assert(selfdExpWeaponDef);
 
@@ -712,7 +712,7 @@ UnitDef::~UnitDef()
 
 void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 {
-	const WeaponDef* noWeaponDef = weaponDefHandler->GetWeapon("NOWEAPON");
+	const WeaponDef* noWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON");
 
 	for (int w = 0; w < MAX_WEAPONS_PER_UNIT; w++) {
 		LuaTable wTable;
@@ -725,7 +725,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 		const WeaponDef* wd = NULL;
 		if (!name.empty()) {
-			wd = weaponDefHandler->GetWeapon(name);
+			wd = weaponDefHandler->GetWeaponDef(name);
 		}
 
 		if (wd == NULL) {

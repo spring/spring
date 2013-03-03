@@ -6,7 +6,7 @@
 #include "Map/MapInfo.h"
 #include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "System/Sync/SyncTracer.h"
 #include "WeaponDefHandler.h"
@@ -25,7 +25,7 @@ CR_REG_METADATA(CCannon,(
 	CR_MEMBER(lastDir),
 	CR_MEMBER(gravity),
 	CR_RESERVED(32)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -46,7 +46,7 @@ CCannon::CCannon(CUnit* owner)
 
 void CCannon::Init()
 {
-	gravity = weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity);
+	gravity = (weaponDef->myGravity == 0)? mapInfo->map.gravity : -(weaponDef->myGravity);
 	highTrajectory = weaponDef->highTrajectory == 1;
 	if(highTrajectory){
 		maxPredict=projectileSpeed*2/-gravity;
@@ -170,8 +170,9 @@ void CCannon::FireImpl()
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
 	params.ttl = ttl;
+	params.gravity = gravity;
 
-	new CExplosiveProjectile(params, damageAreaOfEffect, gravity);
+	WeaponProjectileFactory::LoadProjectile(params);
 }
 
 void CCannon::SlowUpdate()

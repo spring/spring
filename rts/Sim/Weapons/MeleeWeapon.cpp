@@ -1,15 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "MeleeWeapon.h"
+#include "WeaponDef.h"
 #include "Sim/Units/Unit.h"
-#include "WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (NULL));
 
 CR_REG_METADATA(CMeleeWeapon,(
 	CR_RESERVED(8)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -118,6 +118,8 @@ class LuaSyncedCtrl
 		static int SetProjectilePosition(lua_State* L);
 		static int SetProjectileVelocity(lua_State* L);
 		static int SetProjectileCollision(lua_State* L);
+		static int SetProjectileTarget(lua_State* L);
+
 		static int SetProjectileGravity(lua_State* L);
 		static int SetProjectileSpinAngle(lua_State* L);
 		static int SetProjectileSpinSpeed(lua_State* L);
@@ -143,6 +145,7 @@ class LuaSyncedCtrl
 		static int SetMapSquareTerrainType(lua_State* L);
 		static int SetTerrainTypeData(lua_State* L);
 
+		static int SpawnProjectile(lua_State* L);
 		static int SpawnCEG(lua_State* L);
 
 		// LuaRules  (fullCtrl)

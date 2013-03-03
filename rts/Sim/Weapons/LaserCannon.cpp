@@ -1,22 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Game/TraceRay.h"
 #include "LaserCannon.h"
+#include "WeaponDef.h"
+#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
-#include "Sim/Projectiles/WeaponProjectiles/LaserProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
-#include "WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL));
 
 CR_REG_METADATA(CLaserCannon,(
 	CR_MEMBER(color),
 	CR_RESERVED(8)
-	));
+));
 
-CLaserCannon::CLaserCannon(CUnit* owner)
-: CWeapon(owner)
+CLaserCannon::CLaserCannon(CUnit* owner): CWeapon(owner)
 {
 }
 
@@ -69,12 +68,12 @@ void CLaserCannon::FireImpl()
 
 	// subtract a magic 24 elmos in FPS mode (helps against range-exploits)
 	const int fpsRangeSub = (owner->fpsControlPlayer != NULL)? (SQUARE_SIZE * 3): 0;
-	const float boltLength = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
 	const int boltTTL = ((weaponDef->range - fpsRangeSub) / weaponDef->projectilespeed) - (fpsRangeSub >> 2);
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
 	params.ttl = boltTTL;
-	new CLaserProjectile(params, boltLength, weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity);
+
+	WeaponProjectileFactory::LoadProjectile(params);
 }

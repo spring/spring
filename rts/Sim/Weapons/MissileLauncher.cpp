@@ -1,22 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "MissileLauncher.h"
+#include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "MissileLauncher.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
-#include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
-#include "WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL));
 
 CR_REG_METADATA(CMissileLauncher,(
 	CR_RESERVED(8)
-	));
+));
 
-CMissileLauncher::CMissileLauncher(CUnit* owner)
-: CWeapon(owner)
+CMissileLauncher::CMissileLauncher(CUnit* owner): CWeapon(owner)
 {
 }
 
@@ -74,7 +72,7 @@ void CMissileLauncher::FireImpl()
 	params.speed = startSpeed;
 	params.ttl = weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
 
-	new CMissileProjectile(params, damageAreaOfEffect, projectileSpeed);
+	WeaponProjectileFactory::LoadProjectile(params);
 }
 
 bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const

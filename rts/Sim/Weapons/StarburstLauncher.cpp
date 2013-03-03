@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "StarburstLauncher.h"
+#include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
-#include "Sim/Projectiles/WeaponProjectiles/StarburstProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
-#include "StarburstLauncher.h"
-#include "WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CStarburstLauncher, CWeapon, (NULL));
 
@@ -13,7 +13,7 @@ CR_REG_METADATA(CStarburstLauncher,(
 	CR_MEMBER(uptime),
 	CR_MEMBER(tracking),
 	CR_RESERVED(8)
-	));
+));
 
 CStarburstLauncher::CStarburstLauncher(CUnit* owner)
 : CWeapon(owner),
@@ -50,8 +50,6 @@ void CStarburstLauncher::FireImpl()
 		speed = weaponDir * weaponDef->startvelocity;
 	}
 
-	const float maxRange = (weaponDef->flighttime > 0 || weaponDef->fixedLauncher)?
-		MAX_PROJECTILE_RANGE: range;
 	const float3 aimError =
 		(gs->randVector() * sprayAngle + salvoError) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
@@ -60,9 +58,12 @@ void CStarburstLauncher::FireImpl()
 	params.pos = weaponMuzzlePos + float3(0, 2, 0);
 	params.end = targetPos;
 	params.speed = speed;
+	params.error = aimError;
 	params.ttl = 200; //???
+	params.tracking = tracking;
+	params.maxRange = (weaponDef->flighttime > 0 || weaponDef->fixedLauncher)? MAX_PROJECTILE_RANGE: range;
 
-	new CStarburstProjectile(params, damageAreaOfEffect, projectileSpeed, tracking, (int) uptime, maxRange, aimError);
+	WeaponProjectileFactory::LoadProjectile(params);
 }
 
 bool CStarburstLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const

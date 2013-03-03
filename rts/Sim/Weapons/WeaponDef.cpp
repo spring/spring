@@ -10,11 +10,11 @@
 #include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
-
 
 CR_BIND(WeaponDef, );
 
@@ -232,9 +232,12 @@ WEAPONDUMMYTAG(float, soundHitWetVolume).fallbackName("soundHitVolume").defaultV
 WeaponDef::WeaponDef()
 {
 	id = 0;
+	projectileType = WEAPON_BASE_PROJECTILE;
 	collisionFlags = 0;
+
 	explosionGenerator = NULL;
 	bounceExplosionGenerator = NULL;
+
 	isShield = false;
 	noAutoTarget = false;
 	onlyForward = false;
@@ -243,11 +246,10 @@ WeaponDef::WeaponDef()
 	WeaponDefs.Load(this, wdTable);
 }
 
-
 WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	: name(name_)
 	, id(id_)
-	, isShield(false)
+	, projectileType(WEAPON_BASE_PROJECTILE)
 	, collisionFlags(0)
 	, explosionGenerator(NULL)
 	, bounceExplosionGenerator(NULL)
@@ -303,18 +305,21 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	{
 		const LuaTable dmgTable = wdTable.SubTable("damage");
 		float defDamage = dmgTable.GetFloat("default", 1.0f);
-		if (defDamage == 0.0f) {
-			defDamage = 1.0f; //avoid division by zeros
-		}
+
+		// avoid division by zeros
+		if (defDamage == 0.0f)
+			defDamage = 1.0f;
+
 		damages.SetDefaultDamage(defDamage);
 
 		if (!paralyzer)
 			damages.paralyzeDamageTime = 0;
 
 		std::map<string, float> dmgs;
+		std::map<string, float>::const_iterator di;
+
 		dmgTable.GetMap(dmgs);
 
-		std::map<string, float>::const_iterator di;
 		for (di = dmgs.begin(); di != dmgs.end(); ++di) {
 			const int type = damageArrayHandler->GetTypeFromName(di->first);
 			if (type != 0) {
@@ -328,10 +333,10 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		}
 
 		const float tempsize = 2.0f + std::min(defDamage * 0.0025f, damageAreaOfEffect * 0.1f);
-		size = wdTable.GetFloat("size", tempsize);
-
 		const float gd = std::max(30.0f, defDamage / 20.0f);
 		const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (math::sqrt(gd) * 0.7f)) * 0.5f;
+
+		size = wdTable.GetFloat("size", tempsize);
 		explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
 	}
 
@@ -346,72 +351,100 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 	// get some weapon specific defaults
 	int defInterceptType = 0;
-	if ((type == "Cannon") || (type == "EmgCannon")) {
-		defInterceptType = 1;
-	} else if ((type == "LaserCannon") || (type == "BeamLaser")) {
-		defInterceptType = 2;
-	} else if ((type == "StarburstLauncher") || (type == "MissileLauncher")) {
-		defInterceptType = 4;
-	} else if (type == "AircraftBomb") {
-		defInterceptType = 8;
-	} else if (type == "Flame") {
-		defInterceptType = 16;
-	} else if (type == "TorpedoLauncher") {
-		defInterceptType = 32;
-	} else if (type == "LightningCannon") {
-		defInterceptType = 64;
-	} else if (type == "Rifle") {
-		defInterceptType = 128;
-	} else if (type == "Melee") {
-		defInterceptType = 256;
-	}
-	interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 
 	if (type == "Cannon") {
 		// CExplosiveProjectile
+		defInterceptType = 1;
+		projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
+
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 		intensity = wdTable.GetFloat("intensity", 0.2f);
 	} else if (type == "Rifle") {
+		// no projectile or intercept type
+		defInterceptType = 128;
+
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 	} else if (type == "Melee") {
-		// ...
+		// no projectile or intercept type
+		defInterceptType = 256;
 	} else if (type == "Flame") {
 		// CFlameProjectile
+		projectileType = WEAPON_FLAME_PROJECTILE;
+		defInterceptType = 16;
+
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
 		collisionSize     = wdTable.GetFloat("collisionSize", 0.5f);
 	} else if (type == "MissileLauncher") {
 		// CMissileProjectile
+		projectileType = WEAPON_MISSILE_PROJECTILE;
+		defInterceptType = 4;
+
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 	} else if (type == "LaserCannon") {
 		// CLaserProjectile
+		projectileType = WEAPON_LASER_PROJECTILE;
+		defInterceptType = 2;
+
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
 		collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
 	} else if (type == "BeamLaser") {
+		projectileType = largeBeamLaser? WEAPON_LARGEBEAMLASER_PROJECTILE: WEAPON_BEAMLASER_PROJECTILE;
+		defInterceptType = 2;
+
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
 	} else if (type == "LightningCannon") {
+		projectileType = WEAPON_LIGHTNING_PROJECTILE;
+		defInterceptType = 64;
+
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 	} else if (type == "EmgCannon") {
 		// CEmgProjectile
+		projectileType = WEAPON_EMG_PROJECTILE;
+		defInterceptType = 1;
+
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 		size = wdTable.GetFloat("size", 3.0f);
 	} else if (type == "TorpedoLauncher") {
-		assert(waterweapon);
+		// WeaponLoader will create either BombDropper with dropTorpedoes = true
+		// (owner->unitDef->canfly && !weaponDef->submissile) or TorpedoLauncher
+		// (both types of weapons will spawn TorpedoProjectile's)
+		//
+		projectileType = WEAPON_TORPEDO_PROJECTILE;
+		defInterceptType = 32;
+
 		waterweapon = true;
 	} else if (type == "DGun") {
 		// CFireBallProjectile
+		projectileType = WEAPON_FIREBALL_PROJECTILE;
+
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 		collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
 	} else if (type == "StarburstLauncher") {
 		// CStarburstProjectile
+		projectileType = WEAPON_STARBURST_PROJECTILE;
+		defInterceptType = 4;
+
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+	} else if (type == "AircraftBomb") {
+		// WeaponLoader will create BombDropper with dropTorpedoes = false
+		// BombDropper with dropTorpedoes=false spawns ExplosiveProjectile's
+		//
+		projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
+		defInterceptType = 8;
+
+		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
 	} else {
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
 	}
 
+	interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
+
 	const std::string& colormap = wdTable.GetString("colormap", "");
-	visuals.colorMap = NULL;
+
 	if (!colormap.empty()) {
 		visuals.colorMap = CColorMap::LoadFromDefString(colormap);
+	} else {
+		visuals.colorMap = NULL;
 	}
 
 	ParseWeaponSounds(wdTable);
@@ -451,37 +484,33 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 		(hitSound.getVolume(0) == -1.0f)  ||
 		(hitSound.getVolume(1) == -1.0f);
 
-	if (forceSetVolume) {
-		if (damages[0] <= 50.0f) {
-			fireSound.setVolume(0, 5.0f);
-			hitSound.setVolume(0, 5.0f);
-			hitSound.setVolume(1, 5.0f);
-		} else {
-			float fireSoundVolume = math::sqrt(damages[0] * 0.5f);
+	if (!forceSetVolume)
+		return;
 
-			if (type == "LaserCannon") {
-				fireSoundVolume *= 0.5f;
-			}
+	if (damages[0] <= 50.0f) {
+		fireSound.setVolume(0, 5.0f);
+		hitSound.setVolume(0, 5.0f);
+		hitSound.setVolume(1, 5.0f);
+	} else {
+		float fireSoundVolume = math::sqrt(damages[0] * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
+		float hitSoundVolume = fireSoundVolume;
 
-			float hitSoundVolume = fireSoundVolume;
-
-			if ((fireSoundVolume > 100.0f) &&
-			    ((type == "MissileLauncher") ||
-			     (type == "StarburstLauncher"))) {
+		if (fireSoundVolume > 100.0f) {
+			if (type == "MissileLauncher" || type == "StarburstLauncher") {
 				fireSoundVolume = 10.0f * math::sqrt(hitSoundVolume);
 			}
-
-			if (damageAreaOfEffect > 8.0f) {
-				hitSoundVolume *= 2.0f;
-			}
-			if (type == "DGun") {
-				hitSoundVolume *= 0.15f;
-			}
-
-			if (fireSound.getVolume(0) == -1.0f) { fireSound.setVolume(0, fireSoundVolume); }
-			if (hitSound.getVolume(0) == -1.0f) { hitSound.setVolume(0, hitSoundVolume); }
-			if (hitSound.getVolume(1) == -1.0f) { hitSound.setVolume(1, hitSoundVolume); }
 		}
+
+		if (damageAreaOfEffect > 8.0f) {
+			hitSoundVolume *= 2.0f;
+		}
+		if (type == "DGun") {
+			hitSoundVolume *= 0.15f;
+		}
+
+		if (fireSound.getVolume(0) == -1.0f) { fireSound.setVolume(0, fireSoundVolume); }
+		if (hitSound.getVolume(0) == -1.0f) { hitSound.setVolume(0, hitSoundVolume); }
+		if (hitSound.getVolume(1) == -1.0f) { hitSound.setVolume(1, hitSoundVolume); }
 	}
 }
 

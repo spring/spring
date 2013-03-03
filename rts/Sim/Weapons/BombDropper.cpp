@@ -1,16 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "BombDropper.h"
+#include "WeaponDef.h"
 #include "Game/GameHelper.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Team.h"
 #include "Map/MapInfo.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
-#include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/TorpedoProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
-#include "WeaponDefHandler.h"
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, false));
@@ -20,7 +18,7 @@ CR_REG_METADATA(CBombDropper,(
 	CR_MEMBER(bombMoveRange),
 	CR_MEMBER(tracking),
 	CR_RESERVED(16)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -97,23 +95,26 @@ void CBombDropper::FireImpl()
 
 	if (dropTorpedoes) {
 		float3 speed = owner->speed;
+
 		if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
-			speed = targetPos - weaponPos;
-			speed.Normalize();
-			speed *= 5;
+			speed = (targetPos - weaponPos).Normalize();
+			speed *= 5.0f;
 		}
-		int ttl;
-		if (weaponDef->flighttime == 0) {
-			ttl = (int)((range / projectileSpeed) + 15 + predict);
-		} else {
-			ttl = weaponDef->flighttime;
+
+		int ttl = weaponDef->flighttime;
+
+		if (ttl == 0) {
+			ttl = int((range / projectileSpeed) + 15 + predict);
 		}
 
 		ProjectileParams params = GetProjectileParams();
 		params.pos = weaponPos;
 		params.speed = speed;
 		params.ttl = ttl;
-		new CTorpedoProjectile(params, damageAreaOfEffect, projectileSpeed, tracking);
+		params.tracking = tracking;
+
+		assert(weaponDef->projectileType == WEAPON_TORPEDO_PROJECTILE);
+		WeaponProjectileFactory::LoadProjectile(params);
 	} else {
 		// fudge a bit better lateral aim to compensate for imprecise aircraft steering
 		float3 dif = targetPos-weaponPos;
@@ -135,8 +136,10 @@ void CBombDropper::FireImpl()
 		params.pos = weaponPos;
 		params.speed = owner->speed + dif;
 		params.ttl = 1000;
-		new CExplosiveProjectile(params, damageAreaOfEffect,
-				((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity)));
+		params.gravity = (weaponDef->myGravity == 0)? mapInfo->map.gravity: -weaponDef->myGravity;
+
+		assert(weaponDef->projectileType == WEAPON_EXPLOSIVE_PROJECTILE);
+		WeaponProjectileFactory::LoadProjectile(params);
 	}
 }
 
