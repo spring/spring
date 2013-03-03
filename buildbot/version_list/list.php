@@ -54,8 +54,8 @@ function getFileInfo($os, $regex, $path){
 $res = array();
 $regexes = array(
 	"windows" => "/win32\/spring_(.*)_minimal-portable.7z$/",
-	"macosx" => "/[sS]pring_(.*)[_-]MacOSX-.*.zip$/",
-	"linux" => "/linux32\/spring_(.*)_minimal-portable-linux-static.7z$/",
+	"macosx" => "/osx64\/[sS]pring_(.*)[_-]MacOSX-.*.zip$/",
+	"linux" => "/linux\/spring_(.*)_minimal-portable-linux-static.7z$/",
 	"linux64" => "/linux64\/spring_(.*)_minimal-portable-linux-static.7z$/"
 	);
 while(count($dirs)>0) {
@@ -82,6 +82,6 @@ while(count($dirs)>0) {
 	closedir($dh);
 }
 
-$db ->close();
+$db->close();
 echo json_encode($res);
 
