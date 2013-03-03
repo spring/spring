@@ -33,7 +33,6 @@ struct ProjectileParams {
 	float3 error;
 
 	// unit, feature or weapon projectile to intercept
-	// TODO: add Spring.{Get,Set}ProjectileTarget
 	CWorldObject* target;
 	CUnit* owner;
 
@@ -71,6 +70,26 @@ public:
 
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
+	void DependentDied(CObject* o);
+	void PostLoad();
+
+	void SetTargetObject(CWorldObject* newTarget) {
+		if (newTarget != NULL) {
+			targetPos = newTarget->pos;
+		}
+
+		target = newTarget;
+	}
+
+	const CWorldObject* GetTargetObject() const { return target; }
+	      CWorldObject* GetTargetObject()       { return target; }
+
+	void SetStartPos(const float3& newStartPos) { startpos = newStartPos; }
+	void SetTargetPos(const float3& newTargetPos) { targetPos = newTargetPos; }
+
+	const float3& GetStartPos() const { return startpos; }
+	const float3& GetTargetPos() const { return targetPos; }
+
 protected:
 	void UpdateInterception();
 	virtual void UpdateGroundBounce();
@@ -81,24 +100,20 @@ public:
 	bool targeted;
 	const WeaponDef* weaponDef;
 
-	CWorldObject* target;
-	float3 targetPos;
-
 	unsigned int weaponDefID;
 	unsigned int cegID;
 
 	int colorTeam;
 
 protected:
+	CWorldObject* target;
+
 	float3 startpos;
+	float3 targetPos;
 
 	int ttl;
 	int bounces;
 	bool keepBouncing;
-
-public:
-	void DependentDied(CObject* o);
-	void PostLoad();
 };
 
 #endif /* WEAPON_PROJECTILE_H */
