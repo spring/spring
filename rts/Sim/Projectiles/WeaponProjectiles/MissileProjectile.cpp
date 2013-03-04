@@ -22,14 +22,14 @@
 
 const float CMissileProjectile::SMOKE_TIME = 60.0f;
 
-CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams(), 0.0f, 0.0f));
+CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(dir),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(curSpeed),
-//	CR_MEMBER(ttl),
+	// CR_MEMBER(ttl),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(age),
 	CR_MEMBER(oldSmoke),
@@ -48,41 +48,50 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(extraHeightDecay),
 	CR_MEMBER(extraHeightTime),
 	CR_RESERVED(16)
-	));
+));
 
-CMissileProjectile::CMissileProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed)
-	: CWeaponProjectile(params)
-	, maxSpeed(maxSpeed)
-	, areaOfEffect(areaOfEffect)
+CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+	, maxSpeed(0.0f)
+	, curSpeed(0.0f)
+	, areaOfEffect(0.0f)
+	, extraHeight(0.0f)
+	, extraHeightDecay(0.0f)
+
 	, age(0)
-	, oldSmoke(pos)
-	, drawTrail(true)
 	, numParts(0)
-	, isWobbling(weaponDef? (weaponDef->wobble > 0): false)
-	, wobbleDir(ZeroVector)
-	, wobbleTime(1)
-	, wobbleDif(ZeroVector)
-	, isDancing(weaponDef? (weaponDef->dance > 0): false)
-	, danceTime(1)
-	, danceMove(ZeroVector)
-	, danceCenter(ZeroVector)
 	, extraHeightTime(0)
+
+	, drawTrail(true)
+	, isDancing(false)
+	, isWobbling(false)
+
+	, danceTime(1)
+	, wobbleTime(1)
+
+	, oldSmoke(pos)
 {
 	projectileType = WEAPON_MISSILE_PROJECTILE;
+
 	curSpeed = speed.Length();
 	dir = (curSpeed > 0.0f) ? speed / curSpeed : ZeroVector;
 	oldDir = dir;
 
-	if (weaponDef) {
-		model = weaponDef->LoadModel();
-		if (model) {
+	if (weaponDef != NULL) {
+		if ((model = weaponDef->LoadModel()) != NULL) {
 			SetRadiusAndHeight(model);
 		}
+
+		maxSpeed = weaponDef->projectilespeed;
+		areaOfEffect = weaponDef->damageAreaOfEffect;
+
+		isDancing = (weaponDef->dance > 0);
+		isWobbling = (weaponDef->wobble > 0);
 	}
 
 	drawRadius = radius + maxSpeed * 8;
 
 	float3 camDir = (pos - camera->pos).ANormalize();
+
 	if ((camera->pos.distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000) < 200) {
 		drawTrail = false;
 	}
@@ -95,7 +104,8 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params, float are
 #endif
 
 	CUnit* u = dynamic_cast<CUnit*>(target);
-	if (u) {
+
+	if (u != NULL) {
 		u->IncomingMissile(this);
 	}
 
@@ -112,10 +122,6 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params, float are
 
 
 	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
-}
-
-CMissileProjectile::~CMissileProjectile()
-{
 }
 
 void CMissileProjectile::Collision()

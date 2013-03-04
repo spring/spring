@@ -20,8 +20,9 @@ class CStarburstProjectile : public CWeaponProjectile
 	CR_DECLARE(CStarburstProjectile);
 	void creg_Serialize(creg::ISerializer& s);
 public:
-	CStarburstProjectile(const ProjectileParams& params, float areaOfEffect, float maxSpeed, float tracking, int uptime, float maxRange, float3 aimError);
+	CStarburstProjectile(const ProjectileParams& params);
 	~CStarburstProjectile();
+
 	virtual void Detach();
 	void Collision(CUnit* unit);
 	void Collision(CFeature* feature);
@@ -40,18 +41,24 @@ private:
 	float maxSpeed;
 	float curSpeed;
 	float acceleration;
-	int uptime;
 	float areaOfEffect;
+	float distanceToTravel;
+
+	int uptime;
 	int age;
+
 	float3 oldSmoke;
 	float3 oldSmokeDir;
 	float3 aimError;
+
 	bool drawTrail;
-	int numParts;
 	bool doturn;
+
 	CSmokeTrailProjectile* curCallback;
+
+	int numParts;
 	int missileAge;
-	float distanceToTravel;
+	size_t curTracerPart;
 
 	static const int NUM_TRACER_PARTS = 5;
 
@@ -61,7 +68,7 @@ private:
 		float speedf;
 		AGEMOD_VECTOR ageMods;
 	};
-	size_t curTracerPart;
+
 	TracerPart tracerParts[NUM_TRACER_PARTS];
 };
 

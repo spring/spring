@@ -14,7 +14,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams(), 1, 1));
+CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
@@ -27,24 +27,24 @@ CR_REG_METADATA(CExplosiveProjectile, (
 //////////////////////////////////////////////////////////////////////
 
 
-CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params, float areaOfEffect, float g)
-	: CWeaponProjectile(params)
-	, areaOfEffect(areaOfEffect)
-	, curTime(0)
+CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+	, areaOfEffect(0.0f)
+	, invttl(0.0f)
+	, curTime(0.0f)
 {
 	projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
 
-	//! either map or weaponDef gravity
-	mygravity = g;
+	mygravity = params.gravity;
 	useAirLos = true;
 
-	if (weaponDef) {
+	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
+		areaOfEffect = weaponDef->damageAreaOfEffect;
 	}
 
 	if (ttl <= 0) {
-		invttl = 1;
+		invttl = 1.0f;
 	} else {
 		invttl = 1.0f / ttl;
 	}

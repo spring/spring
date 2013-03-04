@@ -19,7 +19,6 @@ class CFireBallProjectile : public CWeaponProjectile
 	CR_DECLARE_SUB(Spark);
 public:
 	CFireBallProjectile(const ProjectileParams& params);
-	~CFireBallProjectile();
 
 	void Draw();
 	void Update();

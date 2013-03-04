@@ -23,15 +23,15 @@ unsigned int WeaponProjectileFactory::LoadProjectile(const ProjectileParams& par
 
 	switch (weaponDef->projectileType) {
 		case WEAPON_EMG_PROJECTILE: {
-			projectile = new CEmgProjectile(params, weaponDef->visuals.color, weaponDef->intensity);
+			projectile = new CEmgProjectile(params);
 		} break;
 
 		case WEAPON_EXPLOSIVE_PROJECTILE: {
-			projectile = new CExplosiveProjectile(params, weaponDef->damageAreaOfEffect, params.gravity);
+			projectile = new CExplosiveProjectile(params);
 		} break;
 
 		case WEAPON_FLAME_PROJECTILE: {
-			projectile = new CFlameProjectile(params, params.spread);
+			projectile = new CFlameProjectile(params);
 		} break;
 
 		case WEAPON_FIREBALL_PROJECTILE: {
@@ -39,31 +39,31 @@ unsigned int WeaponProjectileFactory::LoadProjectile(const ProjectileParams& par
 		} break;
 
 		case WEAPON_LASER_PROJECTILE: {
-			projectile = new CLaserProjectile(params, weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED), weaponDef->visuals.color, weaponDef->visuals.color2, weaponDef->intensity);
+			projectile = new CLaserProjectile(params);
 		} break;
 
 		case WEAPON_MISSILE_PROJECTILE: {
-			projectile = new CMissileProjectile(params, weaponDef->damageAreaOfEffect, weaponDef->projectilespeed);
+			projectile = new CMissileProjectile(params);
 		} break;
 
 		case WEAPON_BEAMLASER_PROJECTILE: {
-			projectile = new CBeamLaserProjectile(params, params.startAlpha, params.endAlpha, weaponDef->visuals.color);
+			projectile = new CBeamLaserProjectile(params);
 		} break;
 
 		case WEAPON_LARGEBEAMLASER_PROJECTILE: {
-			projectile = new CLargeBeamLaserProjectile(params, weaponDef->visuals.color, weaponDef->visuals.color2);
+			projectile = new CLargeBeamLaserProjectile(params);
 		} break;
 
 		case WEAPON_LIGHTNING_PROJECTILE: {
-			projectile = new CLightningProjectile(params, weaponDef->visuals.color);
+			projectile = new CLightningProjectile(params);
 		} break;
 
 		case WEAPON_STARBURST_PROJECTILE: {
-			projectile = new CStarburstProjectile(params, weaponDef->damageAreaOfEffect, weaponDef->projectilespeed, params.tracking, weaponDef->uptime * GAME_SPEED, params.maxRange, params.error);
+			projectile = new CStarburstProjectile(params);
 		} break;
 
 		case WEAPON_TORPEDO_PROJECTILE: {
-			projectile = new CTorpedoProjectile(params, weaponDef->damageAreaOfEffect, weaponDef->projectilespeed, params.tracking);
+			projectile = new CTorpedoProjectile(params);
 		} break;
 
 		default: {
