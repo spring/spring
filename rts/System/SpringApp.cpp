@@ -136,7 +136,7 @@ static bool MultisampleVerify()
 /**
  * Tests if all CREG classes are complete
  */
-static void TestCregClasses()
+static bool TestCregClasses()
 {
 	creg::System::InitializeClasses();
 
@@ -180,9 +180,11 @@ static void TestCregClasses()
 
 	if (brokenClasses > 0) {
 		LOG_L(L_WARNING, "CREG Results: %i of %i classes are broken", brokenClasses, brokenClasses + fineClasses);
-	} else {
-		LOG("CREG: Everything fine");
+		return false;
 	}
+
+	LOG("CREG: Everything fine");
+	return true;
 }
 
 
@@ -819,8 +821,10 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	}
 	else if (cmdline->IsSet("test-creg")) {
-		TestCregClasses();
-		exit(0);
+		if (TestCregClasses()) {
+			exit(0);
+		}
+		exit(1);
 	}
 
 	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
