@@ -9,7 +9,7 @@ class CExplosiveProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CExplosiveProjectile);
 public:
-	CExplosiveProjectile(const ProjectileParams& params, float areaOfEffect = 8.0f, float gravity = 0.0f);
+	CExplosiveProjectile(const ProjectileParams& params);
 
 	void Update();
 	void Draw();

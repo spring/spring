@@ -11,7 +11,7 @@ class CLightningProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CLightningProjectile);
 public:
-	CLightningProjectile(const ProjectileParams& params, const float3& color);
+	CLightningProjectile(const ProjectileParams& params);
 
 	void Update();
 	void Draw();

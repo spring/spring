@@ -24,7 +24,7 @@ static const float SMOKE_TIME = 70.0f;
 
 static const float TRACER_PARTS_STEP = 2.0f;
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ProjectileParams(), 0, 0, 0, 0, 0, ZeroVector));
+CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ProjectileParams()));
 
 CR_REG_METADATA(CStarburstProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -47,7 +47,7 @@ CR_REG_METADATA(CStarburstProjectile,(
 	CR_MEMBER(aimError),
 	CR_MEMBER(curTracerPart),
 	CR_RESERVED(16)
-	));
+));
 
 void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 {
@@ -57,30 +57,41 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 	}
 }
 
-CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params,
-	float areaOfEffect, float maxSpeed, float tracking, int uptime, float maxRange, float3 aimError)
-	: CWeaponProjectile(params)
-	, tracking(tracking)
-	, maxSpeed(maxSpeed)
+CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+	, tracking(0.0f)
+	, maxGoodDif(0.0f)
+	, maxSpeed(0.0f)
+	, curSpeed(0.0f)
 	, acceleration(0.f)
-	, areaOfEffect(areaOfEffect)
+	, areaOfEffect(0.0f)
+	, distanceToTravel(0.0f)
+
+	, uptime(0)
 	, age(0)
+
 	, oldSmoke(pos)
-	, aimError(aimError)
+
 	, drawTrail(true)
-	, numParts(0)
 	, doturn(true)
 	, curCallback(NULL)
+
+	, numParts(0)
 	, missileAge(0)
-	, distanceToTravel(maxRange)
 	, curTracerPart(0)
 {
 	projectileType = WEAPON_STARBURST_PROJECTILE;
-	this->uptime = uptime;
 
-	if (weaponDef) {
+	tracking = params.tracking;
+	distanceToTravel = params.maxRange;
+	aimError = params.error;
+
+	if (weaponDef != NULL) {
+		maxSpeed = weaponDef->projectilespeed;
+		areaOfEffect = weaponDef->damageAreaOfEffect;
+		uptime = weaponDef->uptime * GAME_SPEED;
+
 		if (weaponDef->flighttime == 0) {
-			ttl = (int) std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
+			ttl = std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
 		} else {
 			ttl = weaponDef->flighttime;
 		}
