@@ -3611,12 +3611,12 @@ int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
 	ProjectileParams params;
 
 	if ((params.weaponDef = weaponDefHandler->GetWeaponDefByID(luaL_checkint(L, 1))) == NULL) {
-		lua_pushboolean(L, false);
-	} else {
-		ParseProjectileParams(L, params, 2, __FUNCTION__);
-		lua_pushboolean(L, WeaponProjectileFactory::LoadProjectile(params));
+		return 0;
 	}
 
+	ParseProjectileParams(L, params, 2, __FUNCTION__);
+
+	lua_pushnumber(L, WeaponProjectileFactory::LoadProjectile(params));
 	return 1;
 }
 

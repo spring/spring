@@ -9,7 +9,7 @@ struct ProjectileExtParams {
 
 class WeaponProjectileFactory {
 public:
-	static bool LoadProjectile(const ProjectileParams& params);
+	static unsigned int LoadProjectile(const ProjectileParams& params);
 };
 
 #endif
