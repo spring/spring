@@ -10,12 +10,13 @@
 CR_BIND(CObject, )
 
 CR_REG_METADATA(CObject, (
-    CR_MEMBER(sync_id),
+	//FIXME: creg is missing int64
+	//CR_MEMBER(sync_id),
 
-    CR_MEMBER(detached),
-    
-    CR_IGNORED(listening), //handled in Serialize
-    CR_IGNORED(listeners), //handled in Serialize
+	CR_MEMBER(detached),
+
+	CR_IGNORED(listening), //handled in Serialize
+	CR_IGNORED(listeners), //handled in Serialize
 
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
