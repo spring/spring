@@ -2851,6 +2851,7 @@ public:
 	}
 };
 
+
 class DebugPathDrawerActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DebugPathDrawerActionExecutor(): IUnsyncedActionExecutor("DebugPath", "Enable/Disable drawing of pathfinder debug-data") {
@@ -2858,6 +2859,19 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		LogSystemStatus("path-debug rendering mode", pathDrawer->ToggleEnabled());
+		return true;
+	}
+};
+
+
+class DebugTraceRayDrawerActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugTraceRayDrawerActionExecutor(): IUnsyncedActionExecutor("DebugTraceRay", "Enable/Disable drawing of traceray debug-data") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		globalRendering->drawdebugtraceray = !globalRendering->drawdebugtraceray;
+		LogSystemStatus("traceray debug rendering mode", globalRendering->drawdebugtraceray);
 		return true;
 	}
 };
@@ -3356,6 +3370,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DebugActionExecutor());
 	AddActionExecutor(new DebugColVolDrawerActionExecutor());
 	AddActionExecutor(new DebugPathDrawerActionExecutor());
+	AddActionExecutor(new DebugTraceRayDrawerActionExecutor());
 	AddActionExecutor(new NoSoundActionExecutor());
 	AddActionExecutor(new SoundChannelEnableActionExecutor());
 	AddActionExecutor(new CreateVideoActionExecutor());
