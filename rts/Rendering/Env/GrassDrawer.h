@@ -56,9 +56,10 @@ protected:
 	void CreateGrassBladeTex(unsigned char* buf);
 	void CreateFarTex();
 
-	void SetupGlState();
-	void ResetGlState1();
-	void ResetGlState2();
+	void SetupGlStateNear();
+	void ResetGlStateNear();
+	void SetupGlStateFar();
+	void ResetGlStateFar();
 	void DrawFarBillboards(const std::vector<CGrassDrawer::InviewGrass>& inviewGrass);
 	void DrawNearBillboards(const std::vector<InviewNearGrass>& inviewNearGrass);
 	void GarbageCollect();
