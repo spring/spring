@@ -135,12 +135,6 @@ public:
 	 */
 	bool drawdebug;
 
-	/**
-	 * @brief draw debug
-	 *
-	 * Whether debugging info is drawn
-	 */
-	bool drawdebugtraceray;
 
 	/**
 	 * Does the user want team colored nanospray?
