@@ -36,6 +36,33 @@ CReadMap* readmap = NULL;
 
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
+	//CR_MEMBER(metalMap), //handled in Serialize
+	CR_MEMBER(width),
+	CR_MEMBER(height),
+	CR_MEMBER(initMinHeight),
+	CR_MEMBER(initMaxHeight),
+	CR_IGNORED(currMinHeight),
+	CR_IGNORED(currMaxHeight),
+	CR_MEMBER(mapChecksum),
+	//CR_MEMBER(heightMapSyncedPtr),
+	//CR_MEMBER(heightMapUnsyncedPtr),
+	CR_MEMBER(originalHeightMap),
+	CR_IGNORED(centerHeightMap),
+	CR_IGNORED(mipCenterHeightMaps),
+	//CR_MEMBER(mipPointerHeightMaps),
+	CR_IGNORED(visVertexNormals),
+	CR_IGNORED(faceNormalsSynced),
+	CR_IGNORED(faceNormalsUnsynced),
+	CR_IGNORED(centerNormalsSynced),
+	CR_IGNORED(centerNormalsUnsynced),
+	CR_IGNORED(slopeMap),
+	CR_MEMBER(typeMap),
+	//CR_MEMBER(unsyncedHeightMapUpdates),
+	//CR_MEMBER(unsyncedHeightMapUpdatesTemp),
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	CR_MEMBER(syncedHeightMapDigests),
+	CR_MEMBER(unsyncedHeightMapDigests),
+#endif
 	CR_SERIALIZER(Serialize)
 ));
 

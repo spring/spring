@@ -19,7 +19,8 @@ CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams()));
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(areaOfEffect),
-	CR_RESERVED(16)
+	CR_MEMBER(invttl),
+	CR_MEMBER(curTime)
 ));
 
 //////////////////////////////////////////////////////////////////////

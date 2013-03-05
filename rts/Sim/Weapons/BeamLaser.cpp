@@ -24,7 +24,7 @@ CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(color),
 	CR_MEMBER(oldDir),
 	CR_MEMBER(damageMul),
-	CR_RESERVED(16)
+	CR_MEMBER(lastFireFrame)
 ));
 
 CBeamLaser::CBeamLaser(CUnit* owner)
