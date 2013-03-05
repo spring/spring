@@ -67,7 +67,7 @@ const WeaponDef* CWeaponDefHandler::GetWeaponDefByID(int weaponDefId) const
 
 
 
-DamageArray CWeaponDefHandler::DynamicDamages(const DamageArray& damages, const float3 startPos, const float3 curPos, const float range, const float exp, const float damageMin, const bool inverted)
+DamageArray CWeaponDefHandler::DynamicDamages(const DamageArray& damages, const float3& startPos, const float3& curPos, const float range, const float exp, const float damageMin, const bool inverted)
 {
 	DamageArray dynDamages(damages);
 
