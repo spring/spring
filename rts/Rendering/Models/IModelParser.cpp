@@ -23,20 +23,6 @@
 C3DModelLoader* modelParser = NULL;
 
 
-
-static inline ModelType ModelExtToModelType(const C3DModelLoader::ParserMap& parsers, const std::string& ext) {
-	if (ext == "3do") { return MODELTYPE_3DO; }
-	if (ext == "s3o") { return MODELTYPE_S3O; }
-	if (ext == "obj") { return MODELTYPE_OBJ; }
-
-	if (parsers.find(ext) != parsers.end()) {
-		return MODELTYPE_ASS;
-	}
-
-	// FIXME: this should be a content error?
-	return MODELTYPE_OTHER;
-}
-
 static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
 	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
 	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
@@ -114,17 +100,14 @@ C3DModelLoader::~C3DModelLoader()
 	models.clear();
 	cache.clear();
 
-	// get rid of Spring's native parsers
-	delete parsers["3do"]; parsers.erase("3do");
-	delete parsers["s3o"]; parsers.erase("s3o");
-	delete parsers["obj"]; parsers.erase("obj");
-
-	if (!parsers.empty()) {
-		// delete the shared Assimp parser
-		ParserMap::iterator pi = parsers.begin();
-		delete pi->second;
+	// delete the parser instances (one parser can be linked to multiple extensions, so check if we already deleted it)
+	std::set<IModelParser*> deletedParsers;
+	for (ParserMap::const_iterator it = parsers.begin(); it != parsers.end(); ++it) {
+		if (deletedParsers.find(it->second) == deletedParsers.end()) {
+			deletedParsers.insert(it->second);
+			delete it->second;
+		}
 	}
-
 	parsers.clear();
 
 	if (GML::SimEnabled() && !GML::ShareLists()) {
