@@ -145,6 +145,9 @@ class LuaSyncedCtrl
 		static int SetMapSquareTerrainType(lua_State* L);
 		static int SetTerrainTypeData(lua_State* L);
 
+		static int UnitWeaponFire(lua_State* L);
+		static int UnitWeaponHoldFire(lua_State* L);
+
 		static int SpawnProjectile(lua_State* L);
 		static int SpawnCEG(lua_State* L);
 

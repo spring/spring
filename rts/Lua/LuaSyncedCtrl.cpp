@@ -245,6 +245,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetMapSquareTerrainType);
 	REGISTER_LUA_CFUNC(SetTerrainTypeData);
 
+	REGISTER_LUA_CFUNC(UnitWeaponFire);
+	REGISTER_LUA_CFUNC(UnitWeaponHoldFire);
+
 	REGISTER_LUA_CFUNC(SpawnProjectile);
 	REGISTER_LUA_CFUNC(SpawnCEG);
 
@@ -3619,6 +3622,31 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
+
+int LuaSyncedCtrl::UnitWeaponFire(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
+		return 0;
+	if (static_cast<uint32_t>(luaL_checkint(L, 2)) >= unit->weapons.size())
+		return 0;
+
+	unit->weapons[luaL_checkint(L, 2)]->Fire();
+	return 0;
+}
+int LuaSyncedCtrl::UnitWeaponHoldFire(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
+		return 0;
+	if (static_cast<uint32_t>(luaL_checkint(L, 2)) >= unit->weapons.size())
+		return 0;
+
+	unit->weapons[luaL_checkint(L, 2)]->HoldFire();
+	return 0;
+}
 
 int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
 {
