@@ -24,44 +24,20 @@ CR_REG_METADATA(CRadarHandler, (
 	CR_MEMBER(radarAlgo),
 
 	// all handled in Serialize (why? creg do do that itself, too.)
-	CR_IGNORED(radarMaps),
-	CR_IGNORED(airRadarMaps),
-	CR_IGNORED(sonarMaps),
-	CR_IGNORED(jammerMaps),
+	CR_MEMBER(radarMaps),
+	CR_MEMBER(airRadarMaps),
+	CR_MEMBER(sonarMaps),
+	CR_MEMBER(jammerMaps),
 #ifdef SONAR_JAMMER_MAPS
-	CR_IGNORED(sonarJammerMaps),
+	CR_MEMBER(sonarJammerMaps),
 #endif
-	CR_IGNORED(seismicMaps),
-	CR_IGNORED(commonJammerMap),
-	CR_IGNORED(commonSonarJammerMap),
-
-	CR_SERIALIZER(Serialize)
+	CR_MEMBER(seismicMaps),
+	CR_MEMBER(commonJammerMap),
+	CR_MEMBER(commonSonarJammerMap)
 ));
 
 
 CRadarHandler* radarhandler = NULL;
-
-
-void CRadarHandler::Serialize(creg::ISerializer& s)
-{
-	const int size = xsize*zsize*2;
-
-	// NOTE This could be tricky if teamHandler is serialized after radarHandler.
-	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		s.Serialize(&radarMaps[a].front(), size);
-		if (!circularRadar) {
-			s.Serialize(&airRadarMaps[a].front(), size);
-		}
-		s.Serialize(&sonarMaps[a].front(), size);
-		s.Serialize(&jammerMaps[a].front(), size);
-#ifdef SONAR_JAMMER_MAPS
-		s.Serialize(&sonarJammerMaps[a].front(), size);
-#endif
-		s.Serialize(&seismicMaps[a].front(), size);
-	}
-	s.Serialize(&commonJammerMap.front(), size);
-	s.Serialize(&commonSonarJammerMap.front(), size);
-}
 
 
 CRadarHandler::CRadarHandler(bool circularRadar)
