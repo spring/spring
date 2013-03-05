@@ -20,7 +20,7 @@ public:
 	};
 
 	IWater();
-	virtual ~IWater();
+	virtual ~IWater() {}
 
 	virtual void Draw() {}
 	virtual void Update() {}

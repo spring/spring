@@ -151,7 +151,7 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	lastUpdate = 0;
 
 	eventHandler.AddClient(this);
-	helper->AddExplosionListener(this);
+	CExplosionCreator::AddExplosionListener(this);
 
 	if (!globalRendering->haveGLSL) {
 		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GLSL");
@@ -196,7 +196,6 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 CDecalsDrawerGL4::~CDecalsDrawerGL4()
 {
 	eventHandler.RemoveClient(this);
-	if (helper != NULL) helper->RemoveExplosionListener(this);
 
 	glDeleteTextures(1, &tbo);
 	glDeleteTextures(1, &depthTex);

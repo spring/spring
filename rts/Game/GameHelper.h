@@ -23,7 +23,7 @@ struct BuildInfo;
 class IExplosionGenerator;
 class CStdExplosionGenerator;
 
-class CGameHelper : public CExplosionCreator
+class CGameHelper
 {
 public:
 	enum {

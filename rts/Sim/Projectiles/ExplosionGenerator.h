@@ -82,7 +82,6 @@ class IExplosionGenerator
 {
 	CR_DECLARE(IExplosionGenerator);
 
-public:
 	IExplosionGenerator(): generatorID(0) {}
 	virtual ~IExplosionGenerator() {}
 
