@@ -1155,7 +1155,11 @@ bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, const CUnit* 
 bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	float3 dir = pos - weaponMuzzlePos;
-	float length = dir.Length();
+
+	const float length = dir.Length();
+	const float spread =
+		(accuracy + sprayAngle) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
 	if (length == 0.0f)
 		return true;
@@ -1169,18 +1173,16 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 		//     they use TrajectoryGroundCol with an external check for the NOGROUND flag
 		CUnit* unit = NULL;
 		CFeature* feature = NULL;
-		const float g = TraceRay::TraceRay(weaponMuzzlePos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
-		const float3 gpos = weaponMuzzlePos + dir * g;
+
+		const float gdst = TraceRay::TraceRay(weaponMuzzlePos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
+		const float3 gpos = weaponMuzzlePos + dir * gdst;
 
 		// true iff ground does not block the ray of length <length> from <pos> along <dir>
-		if ((g > 0.0f) && (gpos.SqDistance(pos) > Square(damageAreaOfEffect)))
+		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(damageAreaOfEffect)))
 			return false;
 	}
 
 	// friendly, neutral & feature check
-	const float spread =
-		(accuracy + sprayAngle) *
-		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 	if (TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
