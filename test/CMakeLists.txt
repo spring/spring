@@ -210,7 +210,7 @@ Else  (NOT Boost_FOUND)
 	Add_Dependencies(tests test_LuaSocketRestrictions)
 ################################################################################
 ### CREG
-	add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring --test-creg)
+	add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
 	add_dependencies(tests testCreg)
 ################################################################################
 EndIf (NOT Boost_FOUND)
