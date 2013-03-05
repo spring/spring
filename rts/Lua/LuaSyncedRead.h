@@ -213,11 +213,16 @@ class LuaSyncedRead {
 		static int GetUnitPieceMatrix(lua_State* L);
 		static int GetUnitScriptPiece(lua_State* L);
 		static int GetUnitScriptNames(lua_State* L);
-	
-		static int TraceRay(lua_State* L);         // not implemented
-		static int TraceRayUnits(lua_State* L);    // not implemented
-		static int TraceRayFeatures(lua_State* L); // not implemented
-		static int TraceRayGround(lua_State* L);   // not implemented
+
+		static int WeaponTryTarget(lua_State* L);
+		static int WeaponTestTarget(lua_State* L);
+		static int WeaponTestRange(lua_State* L);
+		static int WeaponHaveFreeLineOfFire(lua_State* L);
+
+		static int TraceRay(lua_State* L);           // not implemented
+		static int TraceRayUnits(lua_State* L);      // not implemented
+		static int TraceRayFeatures(lua_State* L);   // not implemented
+		static int TraceRayGround(lua_State* L);     // not implemented
 
 		static int GetCOBUnitVar(lua_State* L);
 		static int GetCOBTeamVar(lua_State* L);
