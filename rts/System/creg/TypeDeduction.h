@@ -33,6 +33,7 @@ struct IsBasicType {
 		enum {Yes=1, No=0 };										\
 	};
 
+CREG_SUPPORT_BASIC_TYPE(int64_t, crInt64)
 CREG_SUPPORT_BASIC_TYPE(int, crInt)
 CREG_SUPPORT_BASIC_TYPE(unsigned int, crUInt)
 CREG_SUPPORT_BASIC_TYPE(short, crShort)

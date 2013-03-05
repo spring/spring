@@ -45,6 +45,9 @@ void BasicType::Serialize(ISerializer* s, void* inst)
 	case crUChar:
 		s->Serialize(inst, 1);
 		break;
+	case crInt64:
+		s->SerializeInt(inst, 8);
+		break;
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 	case crSyncedFloat://FIXME
 #endif
@@ -94,6 +97,7 @@ std::string BasicType::GetName()
 		case crUShort: return "ushort";
 		case crChar:  return "char";
 		case crUChar: return "uchar";
+		case crInt64: return "int64";
 		case crFloat: return "float";
 		case crDouble: return "double";
 		case crBool: return "bool";
@@ -121,6 +125,7 @@ size_t BasicType::GetSize()
 		case crUShort: return sizeof(unsigned short);
 		case crChar:  return sizeof(char);
 		case crUChar: return sizeof(unsigned char);
+		case crInt64: return sizeof(int64_t);
 		case crFloat: return sizeof(float);
 		case crDouble: return sizeof(double);
 		case crBool: return sizeof(bool);
