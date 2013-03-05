@@ -123,8 +123,6 @@ public:
 
 private:
 	CLosAlgorithm radarAlgo;
-
-	void Serialize(creg::ISerializer& s);
 };
 
 extern CRadarHandler* radarhandler;

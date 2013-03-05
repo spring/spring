@@ -48,7 +48,7 @@ CR_REG_METADATA_SUB(CWaitCommandsAI,Wait, (
 					CR_MEMBER(code),
 					CR_MEMBER(key),
 					CR_MEMBER(valid),
-					//CR_MEMBER(deadTime), FIXME runtime clock relative time!
+					//CR_MEMBER(deadTime), FIXME runtime clock relative time! (transform to spring_time instead and write a Serialize for it it!)
 					CR_POSTLOAD(PostLoad)
 					));
 
