@@ -23,7 +23,6 @@ CR_REG_METADATA(CRadarHandler, (
 	CR_MEMBER(circularRadar),
 	CR_MEMBER(radarAlgo),
 
-	// all handled in Serialize (why? creg do do that itself, too.)
 	CR_MEMBER(radarMaps),
 	CR_MEMBER(airRadarMaps),
 	CR_MEMBER(sonarMaps),
