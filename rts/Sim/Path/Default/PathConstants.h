@@ -92,11 +92,12 @@ static inline int GetBlockVertexOffset(unsigned int pathDir, unsigned int numBlo
 }
 
 // PF and PE flags
-static const unsigned int PATHOPT_OPEN      =  16;
-static const unsigned int PATHOPT_CLOSED    =  32;
-static const unsigned int PATHOPT_FORBIDDEN =  64;
-static const unsigned int PATHOPT_BLOCKED   = 128;
-static const unsigned int PATHOPT_OBSOLETE  = 256;
+static const unsigned int PATHOPT_START     =  16;
+static const unsigned int PATHOPT_OPEN      =  32;
+static const unsigned int PATHOPT_CLOSED    =  64;
+static const unsigned int PATHOPT_FORBIDDEN = 128;
+static const unsigned int PATHOPT_BLOCKED   = 256;
+static const unsigned int PATHOPT_OBSOLETE  = 512;
 
 enum {
 	NODE_COST_F = 0,
