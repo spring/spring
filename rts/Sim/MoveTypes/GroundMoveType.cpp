@@ -72,9 +72,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE)
 
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
-#define POS_IMPASSABLE(md, pos, u)                                               \
-	(((CMoveMath::IsBlocked(*md, pos, u) & CMoveMath::BLOCK_STRUCTURE) != 0) ||  \
-	 ((CMoveMath::GetPosSpeedMod(*md, pos) <= 0.01f)))
+#define POS_IMPASSABLE(md, pos, u) (!md->TestMoveSquare(u, (pos).x / SQUARE_SIZE, (pos).z / SQUARE_SIZE))
 
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -324,50 +322,50 @@ bool CGroundMoveType::Update()
 void CGroundMoveType::SlowUpdate()
 {
 	if (owner->GetTransporter() != NULL) {
-		if (progressState == Active)
+		if (progressState == Active) {
 			StopEngine();
-		return;
-	}
+		}
+	} else {
+		if (progressState == Active) {
+			if (pathId != 0) {
+				if (idling) {
+					numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
+				} else {
+					numIdlingSlowUpdates = std::max(0, int(numIdlingSlowUpdates - 1));
+				}
 
-	if (progressState == Active) {
-		if (pathId != 0) {
-			if (idling) {
-				numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
+				if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
+					// case A: we have a path but are not moving
+					LOG_L(L_DEBUG,
+							"SlowUpdate: unit %i has pathID %i but %i ETA failures",
+							owner->id, pathId, numIdlingUpdates);
+
+					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
+						StopEngine();
+						StartEngine();
+					} else {
+						// unit probably ended up on a non-traversable
+						// square, or got stuck in a non-moving crowd
+						Fail();
+					}
+				}
 			} else {
-				numIdlingSlowUpdates = std::max(0, int(numIdlingSlowUpdates - 1));
-			}
+				if (gs->frameNum > pathRequestDelay) {
+					// case B: we want to be moving but don't have a path
+					LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
 
-			if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
-				// case A: we have a path but are not moving
-				LOG_L(L_DEBUG,
-						"SlowUpdate: unit %i has pathID %i but %i ETA failures",
-						owner->id, pathId, numIdlingUpdates);
-
-				if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
 					StopEngine();
 					StartEngine();
-				} else {
-					// unit probably ended up on a non-traversable
-					// square, or got stuck in a non-moving crowd
-					Fail();
 				}
 			}
-		} else {
-			if (gs->frameNum > pathRequestDelay) {
-				// case B: we want to be moving but don't have a path
-				LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
-
-				StopEngine();
-				StartEngine();
-			}
 		}
-	}
 
-	if (!flying) {
-		// move us into the map, and update <oldPos>
-		// to prevent any extreme changes in <speed>
-		if (!owner->pos.IsInBounds()) {
-			owner->Move3D(oldPos = owner->pos.cClampInBounds(), false);
+		if (!flying) {
+			// move us into the map, and update <oldPos>
+			// to prevent any extreme changes in <speed>
+			if (!owner->pos.IsInBounds()) {
+				owner->Move3D(oldPos = owner->pos.cClampInBounds(), false);
+			}
 		}
 	}
 
@@ -648,7 +646,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	//   there should probably be a configurable minimum-impulse below which the
 	//   unit does not react at all (can re-use SolidObject::residualImpulse for
 	//   this) but also does NOT store the impulse like a small-charge capacitor,
-	//   see CUnit:: StoreImpulse
+	//   see CUnit::StoreImpulse
 	if (owner->residualImpulse.SqLength() <= 9.0f)
 		return false;
 
@@ -1034,11 +1032,12 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
 	const float avoiderRadius = FOOTPRINT_RADIUS(avoiderMD->xsize, avoiderMD->zsize, 1.0f);
 
-	const vector<CSolidObject*>& nearbyObjects = qf->GetSolidsExact(avoider->pos, avoidanceRadius);
+	const vector<CSolidObject*>& objects = qf->GetSolidsExact(avoider->pos, avoidanceRadius);
 
-	for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
+	for (vector<CSolidObject*>::const_iterator oi = objects.begin(); oi != objects.end(); ++oi) {
 		const CSolidObject* avoidee = *oi;
 		const MoveDef* avoideeMD = avoidee->moveDef;
+		const UnitDef* avoideeUD = dynamic_cast<const UnitDef*>(avoidee->objectDef);
 
 		// cases in which there is no need to avoid this obstacle
 		if (avoidee == owner)
@@ -1051,8 +1050,8 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		if (!CMoveMath::CrushResistant(*avoiderMD, avoidee))
 			continue;
 
-		const bool avoideeMobile = (avoideeMD != NULL);
-		const bool avoidMobiles = avoiderMD->avoidMobilesOnPath;
+		const bool avoideeMobile  = (avoideeMD != NULL);
+		const bool avoideeMovable = (avoideeUD != NULL && !avoideeUD->pushResistant);
 
 		const float3 avoideeVector = (avoider->pos + avoider->speed) - (avoidee->pos + avoidee->speed);
 
@@ -1069,9 +1068,11 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 
 		// do not bother steering around idling MOBILE objects
 		// (since collision handling will just push them aside)
-		// TODO: also check if !avoideeUD->pushResistant
-		if (avoideeMobile && (!avoidMobiles || (!avoidee->isMoving && avoidee->allyteam == avoider->allyteam)))
-			continue;
+		if (avoideeMobile && avoideeMovable) {
+			if (!avoiderMD->avoidMobilesOnPath || (!avoidee->isMoving && avoidee->allyteam == avoider->allyteam)) {
+				continue;
+			}
+		}
 		// ignore objects that are more than this many degrees off-center from us
 		if (avoider->frontdir.dot(-(avoideeVector / avoideeDist)) < MAX_AVOIDEE_COSINE)
 			continue;
@@ -1499,7 +1500,8 @@ void CGroundMoveType::HandleObjectCollisions()
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, sepDirMask, colliderUD, colliderMD);
-		HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
+		// terrain
+		// HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
 	}
 
 	collider->Block();
@@ -1525,17 +1527,17 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	//   allow units to move _through_ idle open factories by extending the collidee's footprint such
 	//   that insideYardMap is true in a larger area (otherwise pathfinder and coldet would disagree)
 	// 
-	const int xext = std::max(1, colliderMD->xsizeh << 1);
-	const int zext = std::max(1, colliderMD->zsizeh << 1);
+	const int xext = ((collidee->xsize >> 1) + std::max(1, colliderMD->xsizeh));
+	const int zext = ((collidee->zsize >> 1) + std::max(1, colliderMD->zsizeh));
 
 	const bool exitingYardMap =
 		((collider->frontdir.dot(separationVector) > 0.0f) &&
 		 (collider->   speed.dot(separationVector) > 0.0f));
 	const bool insideYardMap =
-		(collider->pos.x >= (collidee->pos.x - ((collidee->xsize >> 1) - xext) * SQUARE_SIZE)) &&
-		(collider->pos.x <= (collidee->pos.x + ((collidee->xsize >> 1) + xext) * SQUARE_SIZE)) &&
-		(collider->pos.z >= (collidee->pos.z - ((collidee->zsize >> 1) - zext) * SQUARE_SIZE)) &&
-		(collider->pos.z <= (collidee->pos.z + ((collidee->zsize >> 1) + zext) * SQUARE_SIZE));
+		(collider->pos.x >= (collidee->pos.x - xext * SQUARE_SIZE)) &&
+		(collider->pos.x <= (collidee->pos.x + xext * SQUARE_SIZE)) &&
+		(collider->pos.z >= (collidee->pos.z - zext * SQUARE_SIZE)) &&
+		(collider->pos.z <= (collidee->pos.z + zext * SQUARE_SIZE));
 
 	bool wantRequestPath = false;
 
@@ -1708,24 +1710,23 @@ void CGroundMoveType::HandleUnitCollisions(
 		bool pushCollidee = collideeMobile;
 		bool crushCollidee = false;
 
-		// if not an allied collision, neither party is allowed to be pushed (bi-directional) and both stop
-		// if an allied collision, only the collidee is allowed to be crushed (uni-directional) and neither stop
-		//
-		// first rule can be ignored at will by either party (only through Lua) such that it is not stopped
-		// however neither party can override its pushResistant gene: the party that has it set will ignore
-		// pushing contributions from the other WITHOUT being forcibly stopped, unless *both* happen to be
-		// push-resistant (then both are stopped) --> technically correct but produces deadlocked units, so
-		// this is NOT enforced
 		const bool alliedCollision =
 			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
 			teamHandler->Ally(collidee->allyteam, collider->allyteam);
 		const bool collideeYields = (collider->isMoving && !collidee->isMoving);
-		const bool ignoreCollidee = ((collideeYields && alliedCollision) || colliderUD->pushResistant);
+		const bool ignoreCollidee = (collideeYields && alliedCollision);
 
+		// FIXME:
+		//   allowPushingEnemyUnits is (now) useless because alliances are bi-directional
+		//   ie. if !alliedCollision, pushCollider and pushCollidee BOTH become false and
+		//   the collision is treated normally --> not what we want here, but the desired
+		//   behavior (making each party stop and block the other) has many corner-cases
+		//   this also happens when both parties are pushResistant --> make each respond
+		//   to the other as a static obstacle so the tags still have some effect
 		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
-		pushCollider &= (!collider->beingBuilt && !collidee->usingScriptMoveType);
-		pushCollidee &= (!collidee->beingBuilt && !collider->usingScriptMoveType);
+		pushCollider &= (!collider->beingBuilt && !collider->usingScriptMoveType && !colliderUD->pushResistant);
+		pushCollidee &= (!collidee->beingBuilt && !collidee->usingScriptMoveType && !collideeUD->pushResistant);
 
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= ((colliderSpeed * collider->mass) > (collideeSpeed * collidee->mass));
@@ -1744,8 +1745,9 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		eventHandler.UnitUnitCollision(collider, collidee);
 
-		if (!collideeMobile && !collideeUD->IsAirUnit()) {
-			// building (always axis-aligned, but possibly has a yardmap)
+		if ((!collideeMobile && !collideeUD->IsAirUnit()) || (!pushCollider && !pushCollidee)) {
+			// building (always axis-aligned, possibly has a yardmap)
+			// or semi-static collidee that should be handled as such
 			HandleStaticObjectCollision(
 				collider,
 				collidee,
@@ -1802,57 +1804,44 @@ void CGroundMoveType::HandleUnitCollisions(
  			r2 = s2 / (s1 + s2 + 1.0f);
 
 		// far from a realistic treatment, but works
-		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / colliderRelRadius): 1.0f) * int(!ignoreCollidee);
+		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / colliderRelRadius): 1.0f);
 		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f) * (modInfo.allowUnitCollisionOverlap? (1.0f / collideeRelRadius): 1.0f);
-
-		const float3 colliderPushPos = collider->pos + (colResponseVec * colliderMassScale);
-		const float3 collideePushPos = collidee->pos - (colResponseVec * collideeMassScale);
 
 		// try to prevent both parties from being pushed onto non-traversable
 		// squares (without resetting their position which stops them dead in
 		// their tracks and undoes previous legitimate pushes made this frame)
 		//
-		// ignore pushing contributions from idling friendly collidee's
-		// (or if we are resistant to them) without stopping; this will
-		// ONLY take effect if pushCollider is still true
-		//
-		// either both parties are pushed, or only one party is
-		// pushed and the other is stopped, or both are stopped
-		if (pushCollider) {
-			const bool colliderPushPosFree = !POS_IMPASSABLE(colliderMD, colliderPushPos, collider);
-			const bool colliderPushAllowed = (!colliderUD->pushResistant || collideeUD->pushResistant);
+		// if pushCollider and pushCollidee are both false (eg. if each party
+		// is pushResistant), treat the collision as regular and push both to
+		// avoid deadlocks
+		#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
+		const int colliderSlideSign = SIGN( separationVector.dot(collider->rightdir));
+		const int collideeSlideSign = SIGN(-separationVector.dot(collidee->rightdir));
+		#undef SIGN
 
-			if (colliderPushPosFree && colliderPushAllowed) {
-				collider->Move3D(colliderPushPos, false);
+		const float3 colliderPushVec  =  colResponseVec * colliderMassScale * int(!ignoreCollidee);
+		const float3 collideePushVec  = -colResponseVec * collideeMassScale;
+		const float3 colliderSlideVec = collider->rightdir * colliderSlideSign * (1.0f / penDistance) * r2;
+		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance) * r1;
+
+		if ((pushCollider || !pushCollidee) && colliderMobile) {
+			if (!POS_IMPASSABLE(colliderMD, collider->pos + colliderPushVec, collider)) {
+				collider->Move3D(collider->pos + colliderPushVec, false);
 			}
-		} else {
-			collider->StoreImpulse((collider->moveType->oldPos - collider->pos).SafeNormalize() * colliderSpeed * 2.0f * collideeMassScale);
+			// also push collider laterally
+			if (!POS_IMPASSABLE(colliderMD, collider->pos + colliderSlideVec, collider)) {
+				collider->Move3D(collider->pos + colliderSlideVec, false);
+			}
 		}
 
-		if (pushCollidee) {
-			const bool collideePushPosFree = !POS_IMPASSABLE(collideeMD, collideePushPos, collidee);
-			const bool collideePushAllowed = (!collideeUD->pushResistant || colliderUD->pushResistant);
-
-			if (collideePushPosFree && collideePushAllowed) {
-				collidee->Move3D(collideePushPos, false);
+		if ((pushCollidee || !pushCollider) && collideeMobile) {
+			if (!POS_IMPASSABLE(collideeMD, collidee->pos + collideePushVec, collidee)) {
+				collidee->Move3D(collidee->pos + collideePushVec, false);
 			}
-		} else {
-			collidee->StoreImpulse((collidee->moveType->oldPos - collidee->pos).SafeNormalize() * collideeSpeed * 2.0f * colliderMassScale);
-		}
-
-		if (collider->isMoving && collidee->isMoving) {
-			#define SIGN(v) ((int(v >= 0.0f) * 2) - 1)
-			// also push collider and collidee laterally in opposite directions
-			const int colliderSign = SIGN( separationVector.dot(collider->rightdir));
-			const int collideeSign = SIGN(-separationVector.dot(collidee->rightdir));
-			const float3 colliderSlideVec = collider->rightdir * colliderSign * (1.0f / penDistance);
-			const float3 collideeSlideVec = collidee->rightdir * collideeSign * (1.0f / penDistance);
-			const bool colliderSlidePosFree = pushCollider && !POS_IMPASSABLE(colliderMD, collider->pos + colliderSlideVec * r2, collider);
-			const bool collideeSlidePosFree = pushCollidee && !POS_IMPASSABLE(collideeMD, collidee->pos + collideeSlideVec * r1, collidee);
-
-			if (colliderSlidePosFree) { collider->Move3D(colliderSlideVec * r2, true); }
-			if (collideeSlidePosFree) { collidee->Move3D(collideeSlideVec * r1, true); }
-			#undef SIGN
+			// also push collidee laterally
+			if (!POS_IMPASSABLE(collideeMD, collidee->pos + collideeSlideVec, collidee)) {
+				collidee->Move3D(collidee->pos + collideeSlideVec, false);
+			}
 		}
 	}
 }
@@ -2180,8 +2169,8 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 
 	CWeapon* frontWeapon = owner->weapons.front();
 
-	if (!frontWeapon->weaponDef->waterweapon && mainHeadingPos.y <= 1.0f) {
-		mainHeadingPos.y = 1.0f;
+	if (!frontWeapon->weaponDef->waterweapon) {
+		mainHeadingPos.y = std::max(mainHeadingPos.y, 0.0f);
 	}
 
 	float3 dir1 = frontWeapon->mainDir;
@@ -2382,6 +2371,12 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 		const bool applyGravity = ((owner->pos.y + owner->speed.y) >= GetGroundHeight(owner->pos + owner->speed));
 
+		// NOTE:
+		//   the drag terms ensure speed-vector always
+		//   decays if wantedSpeed and deltaSpeed are 0
+		const float dragCoeff = (0.9999f * owner->inAir) + (0.99f * (1 - owner->inAir));
+		const float slipCoeff = (0.9999f * owner->inAir) + (0.95f * (1 - owner->inAir));
+
 		// use terrain-tangent vector because it does not
 		// depend on UnitDef::upright (unlike o->frontdir)
 		const float3& gndNormVec = GetGroundNormal(owner->pos);
@@ -2390,20 +2385,20 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 		// never drop below terrain
 		owner->speed.y =
-			(               owner->speed.dot(  UpVector) * (    applyGravity)) +
-			(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - applyGravity));
+			(gndTangVec.y * owner->speed.dot(gndTangVec) * (1 - applyGravity)) +
+			(  UpVector.y * owner->speed.dot(  UpVector) * (    applyGravity));
 
 		if (owner->moveDef->moveFamily != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
 			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc);
 			const float3 speedVec = owner->speed + accelVec;
 
-			// NOTE: the 0.99f term ensures speed-vector always decays when wantedSpeed and deltaSpeed are 0
-			speedVector += (flatFrontDir * speedVec.dot(flatFrontDir)) * 0.99f;
+			speedVector += (flatFrontDir * speedVec.dot(flatFrontDir)) * dragCoeff;
 			speedVector += (    UpVector * speedVec.dot(    UpVector));
 		} else {
-			speedVector += (               gndTangVec *   std::max(0.0f,    owner->speed.dot(gndTangVec) + hAcc * 1.0f)) * 0.99f;
-			speedVector += (   flatSpeed - gndTangVec * /*std::max(0.0f,*/( owner->speed.dot(gndTangVec) - hAcc * 0.0f)) * 0.95f;
-			speedVector += UpVector * (owner->speed * 0.999f + UpVector * vAcc).dot(UpVector);
+			// TODO: also apply to non-hovercraft on low-gravity maps?
+			speedVector += (               gndTangVec * (  std::max(0.0f,   owner->speed.dot(gndTangVec) + hAcc * 1.0f))) * dragCoeff;
+			speedVector += (   flatSpeed - gndTangVec * (/*std::max(0.0f,*/ owner->speed.dot(gndTangVec) - hAcc * 0.0f )) * slipCoeff;
+			speedVector += UpVector * (owner->speed + UpVector * vAcc).dot(UpVector);
 		}
 
 		#undef vAcc
@@ -2430,10 +2425,23 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		// only use directional passability test if we already spilled over into terrain that the pathfinder
 		// would consider impassable, otherwise many units will enter regions where pathing fails totally
 		//
-		// const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f);
+		#if 1
+		const bool terrainBlocked = (!md->TestMoveSquare(owner, owner->pos, ZeroVector, true, false))?
+			(!md->TestMoveSquare(owner, owner->pos + speedVector, flatFrontDir, true, false)):
+			(!md->TestMoveSquare(owner, owner->pos + speedVector,   ZeroVector, true, false));
+		#else
 		const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos) <= 0.01f)?
 			(CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f):
 			(CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector              ) <= 0.01f);
+
+		// if not already stuck, test terrain in our entire footprint
+		// otherwise be more lenient and only test our center square
+		//
+		// const bool terrainBlocked = (CMoveMath::GetPosSpeedMod(*md, owner->pos) <= 0.01f)?
+		//     (CMoveMath::GetPosSpeedMod(*md, owner->pos + speedVector, flatFrontDir) <= 0.01f):
+		//     (!md->TestMoveSquare(owner, owner->pos + speedVector, flatFrontDir, true, false));
+		#endif
+
 		const bool terrainIgnored = pathController->IgnoreTerrain(*md, owner->pos + speedVector);
 
 		if (terrainBlocked && !terrainIgnored && !owner->inAir) {

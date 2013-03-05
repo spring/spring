@@ -159,35 +159,7 @@ void CollisionVolume::InitShape(
 		} break;
 	}
 
-	// NOTE:
-	//   ellipses are now ALWAYS auto-converted to boxes or
-	//   to spheres depending on scale values, cylinders to
-	//   base cylinders (ie. with circular cross-section)
-	//
-	//   we assume that if the volume-type is set to ellipse
-	//   then its shape is largely anisotropic such that the
-	//   conversion does not create too much of a difference
-	//
-	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
-		const float dxyAbs = math::fabsf(clampedScales.x - clampedScales.y);
-		const float dyzAbs = math::fabsf(clampedScales.y - clampedScales.z);
-		const float d12Abs = math::fabsf(clampedScales[volumeAxes[1]] - clampedScales[volumeAxes[2]]);
-
-		if (dxyAbs < COLLISION_VOLUME_EPS && dyzAbs < COLLISION_VOLUME_EPS) {
-			volumeType = COLVOL_TYPE_SPHERE;
-		} else {
-			if (d12Abs < COLLISION_VOLUME_EPS) {
-				volumeType = COLVOL_TYPE_CYLINDER;
-			} else {
-				volumeType = COLVOL_TYPE_BOX;
-			}
-		}
-	}
-	if (volumeType == COLVOL_TYPE_CYLINDER) {
-		clampedScales[volumeAxes[1]] = std::max(clampedScales[volumeAxes[1]], clampedScales[volumeAxes[2]]);
-		clampedScales[volumeAxes[2]] =          clampedScales[volumeAxes[1]];
-	}
-
+	FixTypeAndScale(clampedScales);
 	SetAxisScales(clampedScales);
 	SetBoundingRadius();
 }
@@ -242,6 +214,46 @@ void CollisionVolume::RescaleAxes(const float3& scales) {
 	hiAxisScales.x *= (1.0f / scales.x);
 	hiAxisScales.y *= (1.0f / scales.y);
 	hiAxisScales.z *= (1.0f / scales.z);
+}
+
+void CollisionVolume::FixTypeAndScale(float3& scales) {
+	// NOTE:
+	//   ellipses are now ALWAYS auto-converted to boxes or
+	//   to spheres depending on scale values, cylinders to
+	//   base cylinders (ie. with circular cross-section)
+	//
+	//   we assume that if the volume-type is set to ellipse
+	//   then its shape is largely anisotropic such that the
+	//   conversion does not create too much of a difference
+	//
+	//   prevent Lua (which calls InitShape directly) from
+	//   creating non-uniform spheres to emulate ellipsoids
+	if (volumeType == COLVOL_TYPE_SPHERE) {
+		scales.x = std::max(scales.x, std::max(scales.y, scales.z));
+		scales.y = scales.x;
+		scales.z = scales.x;
+	}
+
+	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
+		const float dxyAbs = math::fabsf(scales.x - scales.y);
+		const float dyzAbs = math::fabsf(scales.y - scales.z);
+		const float d12Abs = math::fabsf(scales[volumeAxes[1]] - scales[volumeAxes[2]]);
+
+		if (dxyAbs < COLLISION_VOLUME_EPS && dyzAbs < COLLISION_VOLUME_EPS) {
+			volumeType = COLVOL_TYPE_SPHERE;
+		} else {
+			if (d12Abs < COLLISION_VOLUME_EPS) {
+				volumeType = COLVOL_TYPE_CYLINDER;
+			} else {
+				volumeType = COLVOL_TYPE_BOX;
+			}
+		}
+	}
+
+	if (volumeType == COLVOL_TYPE_CYLINDER) {
+		scales[volumeAxes[1]] = std::max(scales[volumeAxes[1]], scales[volumeAxes[2]]);
+		scales[volumeAxes[2]] =          scales[volumeAxes[1]];
+	}
 }
 
 

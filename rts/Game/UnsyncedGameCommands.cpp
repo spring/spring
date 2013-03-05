@@ -215,9 +215,12 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		return true;
 	}
 	else if (action.command == "pastetext") {
-		if (!action.extra.empty()) {
-			userInput.insert(writingPos, action.extra);
-			writingPos += action.extra.length();
+		//we cannot use extra commands because tokenization strips multiple spaces
+		//or even trailing spaces, the text should be copied verbatim
+		const std::string pastecommand = "pastetext ";
+		if (action.rawline.length() > pastecommand.length()) {
+			userInput.insert(writingPos, action.rawline.substr(pastecommand.length(), action.rawline.length()-pastecommand.length()));
+			writingPos += action.rawline.length()-pastecommand.length();
 		} else {
 			PasteClipboard();
 		}
@@ -446,7 +449,7 @@ public:
 		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readmap->GetGroundDrawer());
 		if (!smfGD)
 			return false;
-		
+
 		if (!action.GetArgs().empty()) {
 			int useRoam = -1;
 			int roamMode = -1;
@@ -732,7 +735,7 @@ public:
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
 		if (selUnits.empty())
 			return false;
-		
+
 		// XXX this code is duplicated in CGroup::CalculateCenter(), move to CUnitSet maybe
 		float3 pos(0.0f, 0.0f, 0.0f);
 		CUnitSet::const_iterator ui;
@@ -1121,7 +1124,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!gu->spectating)
 			return false;
-		
+
 		if (!action.GetArgs().empty()) {
 			const int mode = atoi(action.GetArgs().c_str());
 			gu->spectatingFullView   = !!(mode & 1);
@@ -1143,7 +1146,7 @@ public:
 			"Starts/Ends alliance of the local players ally-team with another ally-team") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!gu->spectating)
+		if (gu->spectating)
 			return false;
 
 		if (action.GetArgs().size() > 0) {
@@ -1255,8 +1258,8 @@ public:
 		game->userInput = game->userInputPrefix;
 		game->writingPos = (int)game->userInput.length();
 		game->chatting = true;
-
-		if (action.GetKey() != SDLK_RETURN) {
+		//this command can get called too from console or lua, if so GetKey is -1, don't drop next char then
+		if (action.GetKey() != SDLK_RETURN && action.GetKey() != -1 ) {
 			game->ignoreNextChar = true;
 		}
 
@@ -1372,7 +1375,7 @@ public:
 		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
 		game->lastframe = spring_gettime(); // XXX this required here?
 		return true;
-		
+
 	}
 
 };
@@ -2708,10 +2711,12 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!game->userWriting)
 			return false;
-
-		if (!action.GetArgs().empty()) {
-			game->userInput.insert(game->writingPos, action.GetArgs());
-			game->writingPos += action.GetArgs().length();
+		//we cannot use extra commands because tokenization strips multiple spaces
+		//or even trailing spaces, the text should be copied verbatim
+		const std::string pastecommand = "pastetext ";
+		if (action.GetInnerAction().rawline.length() > pastecommand.length() ) {
+			game->userInput.insert(game->writingPos, action.GetInnerAction().rawline.substr(pastecommand.length(), action.GetInnerAction().rawline.length()-pastecommand.length()));
+			game->writingPos += action.GetInnerAction().rawline.length()-pastecommand.length();
 		} else {
 			game->PasteClipboard();
 		}
@@ -2729,8 +2734,11 @@ public:
 			" of the command, later on") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!action.GetArgs().empty()) {
-			game->consoleHistory->AddLine(action.GetArgs());
+		//we cannot use extra commands because tokenization strips multiple spaces
+		//or even trailing spaces, the text should be copied verbatim
+		const std::string buffercommand = "buffertext ";
+		if (action.GetInnerAction().rawline.length() > buffercommand.length() ) {
+			game->consoleHistory->AddLine(action.GetInnerAction().rawline.substr(buffercommand.length(), action.GetInnerAction().rawline.length()-buffercommand.length()));
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 		}
@@ -2861,6 +2869,7 @@ public:
 	}
 };
 
+
 class DebugPathDrawerActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DebugPathDrawerActionExecutor(): IUnsyncedActionExecutor("DebugPath", "Enable/Disable drawing of pathfinder debug-data") {
@@ -2868,6 +2877,19 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		LogSystemStatus("path-debug rendering mode", pathDrawer->ToggleEnabled());
+		return true;
+	}
+};
+
+
+class DebugTraceRayDrawerActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugTraceRayDrawerActionExecutor(): IUnsyncedActionExecutor("DebugTraceRay", "Enable/Disable drawing of traceray debug-data") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		globalRendering->drawdebugtraceray = !globalRendering->drawdebugtraceray;
+		LogSystemStatus("traceray debug rendering mode", globalRendering->drawdebugtraceray);
 		return true;
 	}
 };
@@ -2988,7 +3010,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (selectedUnits.selectedUnits.empty())
 			return false;
-		
+
 		// kill selected units
 		std::stringstream ss;
 		ss << GetCommand();
@@ -3366,6 +3388,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DebugActionExecutor());
 	AddActionExecutor(new DebugColVolDrawerActionExecutor());
 	AddActionExecutor(new DebugPathDrawerActionExecutor());
+	AddActionExecutor(new DebugTraceRayDrawerActionExecutor());
 	AddActionExecutor(new NoSoundActionExecutor());
 	AddActionExecutor(new SoundChannelEnableActionExecutor());
 	AddActionExecutor(new CreateVideoActionExecutor());

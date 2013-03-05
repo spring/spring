@@ -430,8 +430,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	showNanoSpray = udTable.GetBool("showNanoSpray", true);
 	nanoColor = udTable.GetFloat3("nanoColor", float3(0.2f,0.7f,0.2f));
 
-	canSubmerge = udTable.GetBool("canSubmerge", false);
 	canfly      = udTable.GetBool("canFly",      false);
+	canSubmerge = udTable.GetBool("canSubmerge", false) && canfly;
 
 	airStrafe      = udTable.GetBool("airStrafe", true);
 	hoverAttack    = udTable.GetBool("hoverAttack", false);
@@ -464,7 +464,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	holdSteady        = udTable.GetBool("holdSteady",        false);
 	releaseHeld       = udTable.GetBool("releaseHeld",       false);
-	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveDef());
+	cantBeTransported = udTable.GetBool("cantBeTransported", !RequireMoveDef());
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
 	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
@@ -511,26 +511,16 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	ParseWeaponsTable(weaponsTable);
 
 	needGeo = false;
-
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 
 	const bool canFloat = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
-
-	// modrules transport settings
-	// FIXME: do we want to check moveDef->moveFamily for these?
-	if ((!modInfo.transportAir    && canfly)   ||
-		(!modInfo.transportShip   && canFloat) ||
-		(!modInfo.transportHover  && canHover) ||
-		(!modInfo.transportGround && !canHover && !canFloat && !canfly)) {
- 		cantBeTransported = true;
-	}
 
 	MoveDef* moveDef = NULL;
 
 	// aircraft have MoveTypes but no MoveDef;
 	// static structures have no use for either
 	// (but get StaticMoveType instances)
-	if (WantsMoveDef()) {
+	if (RequireMoveDef()) {
 		const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 		const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
@@ -572,16 +562,24 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	}
 
 	if (moveDef == NULL) {
-		upright = upright || !canfly;
-		floatOnWater = canFloat;
+		upright           |= !canfly;
+		floatOnWater      |= canFloat;
+
+		cantBeTransported |= (!modInfo.transportAir && !canfly);
 	} else {
-		upright = upright ||
-			(moveDef->moveFamily == MoveDef::Hover) ||
-			(moveDef->moveFamily == MoveDef::Ship);
-		floatOnWater =
-			(moveDef->moveFamily == MoveDef::Hover) ||
-			(moveDef->moveFamily == MoveDef::Ship);
+		upright           |= (moveDef->moveFamily == MoveDef::Hover);
+		upright           |= (moveDef->moveFamily == MoveDef::Ship );
+		floatOnWater      |= (moveDef->moveFamily == MoveDef::Hover);
+		floatOnWater      |= (moveDef->moveFamily == MoveDef::Ship );
+
+		cantBeTransported |= (!modInfo.transportGround && moveDef->moveFamily == MoveDef::Tank );
+		cantBeTransported |= (!modInfo.transportGround && moveDef->moveFamily == MoveDef::KBot );
+		cantBeTransported |= (!modInfo.transportShip   && moveDef->moveFamily == MoveDef::Ship );
+		cantBeTransported |= (!modInfo.transportHover  && moveDef->moveFamily == MoveDef::Hover);
 	}
+
+	// modrules transport settings
+	cantBeTransported |= (!modInfo.transportGround && IsGroundUnit());
 
 	if (IsAirUnit()) {
 		if (IsFighterUnit() || IsBomberUnit()) {
@@ -628,14 +626,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	activateWhenBuilt = udTable.GetBool("activateWhenBuilt", false);
 	onoffable = udTable.GetBool("onoffable", false);
 
-	// footprint sizes are assumed to be expressed in TA-engine units;
-	// Spring's heightmap resolution is double the footprint (yardmap)
-	// resolution, so we scale the values (which are not allowed to be
-	// 0)
-	// NOTE that this is done for the FeatureDef and MoveDef footprints
-	// as well
-	xsize = std::max(1 * 2, (udTable.GetInt("footprintX", 1) * 2));
-	zsize = std::max(1 * 2, (udTable.GetInt("footprintZ", 1) * 2));
+	xsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintX", 1) * SPRING_FOOTPRINT_SCALE));
+	zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE));
 
 	if (IsImmobileUnit()) {
 		CreateYardMap(udTable.GetString("yardMap", ""));
@@ -786,21 +778,27 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 		// defined, assume it is not supposed to be a building
 		// (so do not assign a default per facing)
 		return;
+	} else {
+		yardmap.resize(xsize * zsize);
 	}
 
 	StringToLowerInPlace(yardMapStr);
 
-	// read the yardmap in half resolution from the LuaDef string
-	const unsigned int hxsize = xsize >> 1;
-	const unsigned int hzsize = zsize >> 1;
+	const bool highResMap = (yardMapStr[0] == 'h');
 
-	std::vector<YardMapStatus> yardMap(hxsize * hzsize, YARDMAP_BLOCKED);
-	std::string foundUnknownChars;
+	const unsigned int hxsize = xsize >> (1 - highResMap);
+	const unsigned int hzsize = zsize >> (1 - highResMap);
 
-	unsigned int idx = 0;
+	// if high-res yardmap, start at second character
+	unsigned int ymReadIdx = highResMap;
+	unsigned int ymCopyIdx = 0;
 
-	for (unsigned int n = 0; n < yardMapStr.size(); n++) {
-		const unsigned char c = yardMapStr[n];
+	std::vector<YardMapStatus> defYardMap(hxsize * hzsize, YARDMAP_BLOCKED);
+	std::string unknownChars;
+
+	// read the yardmap from the LuaDef string
+	while (ymReadIdx < yardMapStr.size()) {
+		const unsigned char c = yardMapStr[ymReadIdx++];
 
 		if (isspace(c))
 			continue;
@@ -818,33 +816,34 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 			case 'f':
 			case 'o': ys = YARDMAP_BLOCKED; break;
 			default:
-				if (foundUnknownChars.find_first_of(c) == std::string::npos)
-					foundUnknownChars += c;
+				if (unknownChars.find_first_of(c) == std::string::npos)
+					unknownChars += c;
 		}
 
-		if (idx < hxsize * hzsize) {
-			yardMap[idx] = ys;
+		if (ymCopyIdx < defYardMap.size()) {
+			defYardMap[ymCopyIdx++] = ys;
 		}
-		idx++;
 	}
 
 	// print warnings
-	if (idx > yardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap/blockmap contains "_STPF_" excess char(s)!", name.c_str(), idx - yardMap.size());
+	if (ymCopyIdx > defYardMap.size())
+		LOG_L(L_WARNING, "%s: Given yardmap contains "_STPF_" excess char(s)!", name.c_str(), ymCopyIdx - defYardMap.size());
 
-	if (idx > 0 && idx < yardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap/blockmap requires "_STPF_" extra char(s)!", name.c_str(), yardMap.size() - idx);
+	if (ymCopyIdx > 0 && ymCopyIdx < defYardMap.size())
+		LOG_L(L_WARNING, "%s: Given yardmap requires "_STPF_" extra char(s)!", name.c_str(), defYardMap.size() - ymCopyIdx);
 
-	if (!foundUnknownChars.empty())
-		LOG_L(L_WARNING, "%s: Unknown char(s) in yardmap/blockmap \"%s\"!", name.c_str(), foundUnknownChars.c_str());
+	if (!unknownChars.empty())
+		LOG_L(L_WARNING, "%s: Given yardmap contains unknown char(s) \"%s\"!", name.c_str(), unknownChars.c_str());
 
-	// write in doubled resolution to final unitdef tag
-	yardmap.resize(xsize * zsize);
-	for (unsigned int z = 0; z < zsize; z++) {
-		for (unsigned int x = 0; x < xsize; x++) {
-			const unsigned int yardMapIdx = (x >> 1) + ((z >> 1) * hxsize);
-			const YardMapStatus yardMapChar = yardMap[yardMapIdx];
-			yardmap[x + z * xsize] = yardMapChar;
+	// write the final yardmap at blocking-map resolution
+	// (in case of a high-res map this becomes a 1:1 copy,
+	// otherwise the given yardmap will be upsampled)
+	for (unsigned int bmz = 0; bmz < zsize; bmz++) {
+		for (unsigned int bmx = 0; bmx < xsize; bmx++) {
+			const unsigned int yardMapIdx = (bmx >> (1 - highResMap)) + ((bmz >> (1 - highResMap)) * hxsize);
+			const YardMapStatus yardMapChar = defYardMap[yardMapIdx];
+
+			yardmap[bmx + bmz * xsize] = yardMapChar;
 		}
 	}
 }
@@ -878,28 +877,29 @@ void UnitDef::SetNoCost(bool noCost)
 bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) const {
 	const MoveDef* moveDef = (pathType != -1U)? moveDefHandler->GetMoveDefByPathType(pathType): NULL;
 
-	float maxDepth = this->maxWaterDepth;
-	float minDepth = this->minWaterDepth;
+	float maxDepth = +1e6f;
+	float minDepth = -1e6f;
 
 	if (moveDef != NULL) {
-		// we are a mobile ground-unit
+		// we are a mobile ground-unit, use MoveDef limits
 		if (moveDef->moveFamily == MoveDef::Ship) {
 			minDepth = moveDef->depth;
 		} else {
 			maxDepth = moveDef->depth;
 		}
-	}
-
-	if (floatOnWater) {
-		// if we are a surface unit, <maxDepth> is irrelevant
-		// (eg. hovercraft may be dropped anywhere over water)
-		maxDepth = +10e6f;
+	} else {
+		if (!canfly) {
+			// we are a building, use UnitDef limits
+			minDepth = this->minWaterDepth;
+			maxDepth = this->maxWaterDepth;
+		} else {
+			maxDepth *= canSubmerge;
+			maxDepth *= (1 - floatOnWater);
+		}
 	}
 
 	if (clampedHeight != NULL) {
-		*clampedHeight = rawHeight;
-		*clampedHeight = std::max(*clampedHeight, -maxDepth);
-		*clampedHeight = std::min(*clampedHeight, -minDepth);
+		*clampedHeight = Clamp(rawHeight, -maxDepth, -minDepth);
 	}
 
 	// <rawHeight> must lie in the range [-maxDepth, -minDepth]

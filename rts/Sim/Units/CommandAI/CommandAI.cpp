@@ -446,8 +446,14 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			} else {
 				if (c.params.size() >= 3) {
 					const float3 cPos = c.GetPos(0);
-					//FIXME is fromSynced really sync-safe??? const float gHeight = ground->GetHeightReal(cPos.x, cPos.z, fromSynced);
-					const float gHeight = ground->GetHeightReal(cPos.x, cPos.z, true);
+					// FIXME: is fromSynced really sync-safe???
+					// NOTE:
+					//   uses gHeight = min(cPos.y, GetHeightAboveWater) instead
+					//   of gHeight = GetHeightReal because GuiTraceRay can stop
+					//   at water surface, so the attack-position would be moved
+					//   UNDERWATER and cause ground-attack orders to fail
+					// const float gHeight = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, fromSynced));
+					const float gHeight = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, true));
 
 					#if 0
 					// check if attack-ground is really attack-ground
@@ -1229,21 +1235,22 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 }
 
 
-int CCommandAI::UpdateTargetLostTimer(int unitID)
+int CCommandAI::UpdateTargetLostTimer(int targetUnitID)
 {
-	const CUnit* unit = uh->GetUnit(unitID);
+	const CUnit* targetUnit = uh->GetUnit(targetUnitID);
+	const UnitDef* targetUnitDef = (targetUnit != NULL)? targetUnit->unitDef: NULL;
 
-	if (targetLostTimer > 0)
-		--targetLostTimer;
+	if (targetUnit == NULL)
+		return (targetLostTimer = 0);
 
-	if (unit == NULL) {
-		targetLostTimer = 0;
-	} else {
-		if ((unit->losStatus[owner->allyteam] & LOS_INRADAR) || unit->unitDef->IsImmobileUnit())
-			targetLostTimer = TARGET_LOST_TIMER;
-	}
+	if (targetUnitDef->IsImmobileUnit())
+		return (targetLostTimer = TARGET_LOST_TIMER);
 
-	return targetLostTimer;
+	// keep tracking so long as target is on radar (or indefinitely if immobile)
+	if ((targetUnit->losStatus[owner->allyteam] & LOS_INRADAR))
+		return (targetLostTimer = TARGET_LOST_TIMER);
+
+	return (std::max(--targetLostTimer, 0));
 }
 
 

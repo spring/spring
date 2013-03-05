@@ -397,9 +397,14 @@ void CProjectileHandler::CheckUnitCollisions(
 				unit->SetLastAttackedPiece(cq.GetHitPiece(), gs->frameNum);
 			}
 
-			p->pos = cq.InsideHit()? ppos0 : cq.GetIngressPos();
-			p->Collision(unit);
-			p->pos = ppos0;
+			if (!cq.InsideHit()) {
+				p->SetPos(cq.GetHitPos());
+				p->Collision(unit);
+				p->SetPos(ppos0);
+			} else {
+				p->Collision(unit);
+			}
+
 			break;
 		}
 	}
@@ -429,9 +434,14 @@ void CProjectileHandler::CheckFeatureCollisions(
 		}
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
-			p->pos = cq.InsideHit()? ppos0 : cq.GetIngressPos();
-			p->Collision(feature);
-			p->pos = ppos0;
+			if (!cq.InsideHit()) {
+				p->SetPos(cq.GetHitPos());
+				p->Collision(feature);
+				p->SetPos(ppos0);
+			} else {
+				p->Collision(feature);
+			}
+
 			break;
 		}
 	}
