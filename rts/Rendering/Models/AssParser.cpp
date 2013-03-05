@@ -51,22 +51,22 @@ static const int ASS_POSTPROCESS_OPTIONS =
 	| aiProcess_SplitLargeMeshes;
 
 
-//! Convert Assimp quaternion to radians around x, y and z
+// Convert Assimp quaternion to radians around x, y and z
 static float3 QuaternionToRadianAngles(aiQuaternion q1)
 {
 	float sqw = q1.w*q1.w;
 	float sqx = q1.x*q1.x;
 	float sqy = q1.y*q1.y;
 	float sqz = q1.z*q1.z;
-	float unit = sqx + sqy + sqz + sqw; //! if normalised is one, otherwise is correction factor
+	float unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
 	float test = q1.x*q1.y + q1.z*q1.w;
 
 	float3 result;
 
-	if (test > 0.499f * unit) { //! singularity at north pole
+	if (test > 0.499f * unit) { // singularity at north pole
 		result.x = 2 * math::atan2(q1.x,q1.w);
 		result.y = PI/2;
-	} else if (test < -0.499f * unit) { //! singularity at south pole
+	} else if (test < -0.499f * unit) { // singularity at south pole
 		result.x = -2 * math::atan2(q1.x,q1.w);
 		result.y = -PI/2;
 	} else {
@@ -103,11 +103,11 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	const std::string modelPath  = FileSystem::GetDirectory(modelFilePath);
 	const std::string modelName  = FileSystem::GetBasename(modelFilePath);
 
-	//! LOAD METADATA
-	//! Load the lua metafile. This contains properties unique to Spring models and must return a table
+	// LOAD METADATA
+	// Load the lua metafile. This contains properties unique to Spring models and must return a table
 	std::string metaFileName = modelFilePath + ".lua";
 	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP)) {
-		//! Try again without the model file extension
+		// Try again without the model file extension
 		metaFileName = modelPath + '/' + modelName + ".lua";
 	}
 	LuaParser metaFileParser(metaFileName, SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -117,30 +117,30 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 		LOG_SL(LOG_SECTION_MODEL, L_ERROR, "'%s': %s. Using defaults.", metaFileName.c_str(), metaFileParser.GetErrorLog().c_str());
 	}
 
-	//! Get the (root-level) model table
+	// Get the (root-level) model table
 	const LuaTable& metaTable = metaFileParser.GetRoot();
 	if (metaTable.IsValid()) {
 		LOG_S(LOG_SECTION_MODEL, "Found valid model metadata in '%s'", metaFileName.c_str());
 	}
 
 
-	//! LOAD MODEL DATA
-	//! Create a model importer instance
+	// LOAD MODEL DATA
+	// Create a model importer instance
 	Assimp::Importer importer;
 
-	//! Create a logger for debugging model loading issues
+	// Create a logger for debugging model loading issues
 	Assimp::DefaultLogger::create("",Assimp::Logger::VERBOSE);
 	const unsigned int severity = Assimp::Logger::Debugging|Assimp::Logger::Info|Assimp::Logger::Err|Assimp::Logger::Warn;
 	Assimp::DefaultLogger::get()->attachStream( new AssLogStream(), severity );
 
-	//! Give the importer an IO class that handles Spring's VFS
+	// Give the importer an IO class that handles Spring's VFS
 	importer.SetIOHandler( new AssVFSSystem() );
 
-	//! Speed-up processing by skipping things we don't need
+	// Speed-up processing by skipping things we don't need
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_CAMERAS|aiComponent_LIGHTS|aiComponent_TEXTURES|aiComponent_ANIMATIONS);
 
 #ifndef BITMAP_NO_OPENGL
-	//! Optimize VBO-Mesh sizes/ranges
+	// Optimize VBO-Mesh sizes/ranges
 	GLint maxIndices  = 1024;
 	GLint maxVertices = 1024;
 	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &maxIndices);
@@ -149,7 +149,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, maxIndices/3);
 #endif
 
-	//! Read the model file to build a scene object
+	// Read the model file to build a scene object
 	LOG_S(LOG_SECTION_MODEL, "Importing model file: %s", modelFilePath.c_str() );
 	const aiScene* scene = importer.ReadFile( modelFilePath, ASS_POSTPROCESS_OPTIONS );
 	if (scene != NULL) {
@@ -175,7 +175,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 			model->tex1.c_str(), model->tex2.c_str());
 	texturehandlerS3O->LoadS3OTexture(model);
 
-	//! Load all pieces in the model
+	// Load all pieces in the model
 	LOG_S(LOG_SECTION_MODEL, "Loading pieces from root node '%s'",
 			scene->mRootNode->mName.data);
 	LoadPiece(model, scene->mRootNode, metaTable);
@@ -246,7 +246,7 @@ void CAssParser::LoadPieceTransformations(const S3DModel* model, SAssPiece* piec
 	offset.z = pieceMetaTable.GetFloat("offsetz", offset.z);
 
 	rotate   = QuaternionToRadianAngles(_rotate);
-	rotate   = float3(rotate.z, rotate.x, rotate.y); //! swizzle
+	rotate   = float3(rotate.z, rotate.x, rotate.y); // swizzle
 	rotate   = pieceMetaTable.GetFloat3("rotate", rotate * RADTODEG);
 	rotate.x = pieceMetaTable.GetFloat("rotatex", rotate.x);
 	rotate.y = pieceMetaTable.GetFloat("rotatey", rotate.y);
@@ -273,7 +273,7 @@ void CAssParser::LoadPieceTransformations(const S3DModel* model, SAssPiece* piec
 
 SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable& metaTable)
 {
-	//! Create new piece
+	// Create new piece
 	++model->numPieces;
 	SAssPiece* piece = new SAssPiece;
 	piece->type = MODELTYPE_OTHER;
@@ -305,7 +305,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	LOG_S(LOG_SECTION_PIECE, "Converting node '%s' to piece '%s' (%d meshes).",
 			node->mName.data, piece->name.c_str(), node->mNumMeshes);
 
-	//! Load additional piece properties from metadata
+	// Load additional piece properties from metadata
 	const LuaTable& pieceTable = metaTable.SubTable("pieces").SubTable(piece->name);
 	if (pieceTable.IsValid()) {
 		LOG_S(LOG_SECTION_PIECE, "Found metadata for piece '%s'",
@@ -325,10 +325,9 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	}
 
 
-
-	//! Check if piece is special (ie, used to set Spring model properties)
+	// Check if piece is special (ie, used to set Spring model properties)
 	if (strcmp(node->mName.data, "SpringHeight") == 0) {
-		//! Set the model height to this nodes Z value
+		// Set the model height to this nodes Z value
 		if (!metaTable.KeyExists("height")) {
 			model->height = piece->offset.z;
 			LOG_S(LOG_SECTION_MODEL,
@@ -349,9 +348,9 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		}
 		if (!metaTable.KeyExists("radius")) {
 			if (piece->maxs.x <= 0.00001f) {
-				model->radius = piece->scale.x; //! the blender import script only sets the scale property
+				model->radius = piece->scale.x; // the blender import script only sets the scale property
 			} else {
-				model->radius = piece->maxs.x; //! use the transformed mesh extents
+				model->radius = piece->maxs.x; // use the transformed mesh extents
 			}
 			LOG_S(LOG_SECTION_MODEL,
 					"Model radius of %f set by special node 'SpringRadius'",
@@ -371,7 +370,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 				meshIndex);
 		const aiMesh* mesh = model->scene->mMeshes[meshIndex];
 		std::vector<unsigned> mesh_vertex_mapping;
-		//! extract vertex data
+		// extract vertex data
 		LOG_SL(LOG_SECTION_PIECE, L_DEBUG,
 				"Processing vertices for mesh %d (%d vertices)",
 				meshIndex, mesh->mNumVertices);
@@ -456,7 +455,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	} else if (node->mParent) {
 		if (node->mParent->mParent) {
 			piece->parentName = std::string(node->mParent->mName.data);
-		} else { //! my parent is the root, which gets renamed
+		} else { // my parent is the root, which gets renamed
 			piece->parentName = "root";
 		}
 	} else {
@@ -466,11 +465,11 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	LOG_S(LOG_SECTION_PIECE, "Loaded model piece: %s with %d meshes",
 			piece->name.c_str(), node->mNumMeshes);
 
-	//! Verbose logging of piece properties
+	// Verbose logging of piece properties
 	LOG_S(LOG_SECTION_PIECE, "piece->name: %s", piece->name.c_str());
 	LOG_S(LOG_SECTION_PIECE, "piece->parent: %s", piece->parentName.c_str());
 
-	//! Recursively process all child pieces
+	// Recursively process all child pieces
 	for (unsigned int i = 0; i < node->mNumChildren; ++i) {
 		LoadPiece(model, node->mChildren[i], metaTable);
 	}
