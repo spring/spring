@@ -54,6 +54,9 @@ ClassBinder::ClassBinder(const char* className, unsigned int cf,
 
 void System::InitializeClasses()
 {
+	if (!classes.empty())
+		return;
+
 	// Create Class instances
 	for (ClassBinder* c = binderList; c; c = c->nextBinder) {
 		c->class_ = new Class;
