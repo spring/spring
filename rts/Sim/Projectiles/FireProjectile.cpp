@@ -44,6 +44,18 @@ CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	CR_RESERVED(8)
 	));
 
+#if defined(USE_GML) && GML_ENABLE_SIM
+	typedef CFireProjectile::part_list_type part_list_type; // the creg define dislikes "::" in the name
+
+	CR_BIND_TEMPLATE(part_list_type, );
+	CR_REG_METADATA(part_list_type, (
+		CR_MEMBER(elements),
+		CR_MEMBER(front),
+		CR_MEMBER(back),
+		CR_MEMBER(csize),
+		CR_MEMBER(msize)
+	));
+#endif
 
 CFireProjectile::CFireProjectile(const float3& pos, const float3& speed, CUnit* owner, int emitTtl, float emitRadius, int particleTtl, float particleSize):
 	//! these are synced, but neither weapon nor piece
@@ -113,7 +125,7 @@ void CFireProjectile::Update()
 		}
 	}
 
-	for(SUBPARTICLE_LIST::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
+	for(part_list_type::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
 		pi->age+=ageSpeed;
 		if(pi->age>1){
 			subParticles.pop_back();
@@ -122,7 +134,7 @@ void CFireProjectile::Update()
 		pi->pos+=speed + wind.GetCurrentWind()*pi->age*0.05f + pi->posDif*0.1f;
 		pi->posDif*=0.9f;
 	}
-	for(SUBPARTICLE_LIST::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
+	for(part_list_type::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
 		pi->age+=ageSpeed*1.5f;
 		if(pi->age>1){
 			subParticles2.pop_back();
@@ -148,9 +160,9 @@ void CFireProjectile::Draw()
 	va->EnlargeArrays(sz2 * 4 + sz * 8, 0, VA_SIZE_TC);
 #if defined(USE_GML) && GML_ENABLE_SIM
 	size_t temp = 0;
-	for(SUBPARTICLE_LIST::iterator pi = subParticles2.begin(); temp < sz2; ++pi, ++temp) {
+	for(part_list_type::iterator pi = subParticles2.begin(); temp < sz2; ++pi, ++temp) {
 #else
-	for(SUBPARTICLE_LIST::iterator pi = subParticles2.begin(); pi != subParticles2.end(); ++pi) {
+	for(part_list_type::iterator pi = subParticles2.begin(); pi != subParticles2.end(); ++pi) {
 #endif
 		float age = pi->age+ageSpeed*globalRendering->timeOffset;
 		float size = pi->maxSize*(age);
@@ -174,14 +186,14 @@ void CFireProjectile::Draw()
 	}
 #if defined(USE_GML) && GML_ENABLE_SIM
 	temp = 0;
-	for (SUBPARTICLE_LIST::iterator pi = subParticles.begin(); temp < sz; ++pi, ++temp) {
+	for (part_list_type::iterator pi = subParticles.begin(); temp < sz; ++pi, ++temp) {
 		int smokeType = *(volatile int *)&pi->smokeType;
 		if (smokeType < 0 || smokeType >= projectileDrawer->smoketex.size()) {
 			continue;
 		}
 		const AtlasedTexture *at = projectileDrawer->smoketex[smokeType];
 #else
-	for (SUBPARTICLE_LIST::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
+	for (part_list_type::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
 		const AtlasedTexture* at = projectileDrawer->smoketex[pi->smokeType];
 #endif
 		float age = pi->age+ageSpeed * globalRendering->timeOffset;

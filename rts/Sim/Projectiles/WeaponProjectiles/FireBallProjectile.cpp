@@ -28,6 +28,20 @@ CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_RESERVED(8)
 ));
 
+#if defined(USE_GML) && GML_ENABLE_SIM
+	typedef CFireBallProjectile::spark_list_type spark_list_type; // the creg define dislikes "::" in the name
+
+	CR_BIND_TEMPLATE(spark_list_type, );
+	CR_REG_METADATA(spark_list_type, (
+		CR_MEMBER(elements),
+		CR_MEMBER(front),
+		CR_MEMBER(back),
+		CR_MEMBER(csize),
+		CR_MEMBER(msize)
+	));
+#endif
+
+
 CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 {
 	projectileType = WEAPON_FIREBALL_PROJECTILE;

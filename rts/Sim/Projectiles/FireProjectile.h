@@ -7,11 +7,6 @@
 #include <list>
 #include "lib/gml/gmlcnf.h"
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-#define SUBPARTICLE_LIST gmlCircularQueue<CFireProjectile::SubParticle,16>
-#else
-#define SUBPARTICLE_LIST std::list<SubParticle>
-#endif
 
 class CFireProjectile : public CProjectile
 {
@@ -28,7 +23,7 @@ public:
 	int ttl;
 	float3 emitPos;
 	float emitRadius;
-		
+
 	int particleTime;
 	float particleSize;
 	float ageSpeed;
@@ -43,8 +38,14 @@ public:
 		int smokeType;
 	};
 
-	SUBPARTICLE_LIST subParticles;
-	SUBPARTICLE_LIST subParticles2;
+#if defined(USE_GML) && GML_ENABLE_SIM
+	typedef gmlCircularQueue<CFireProjectile::SubParticle,16> part_list_type;
+#else
+	typedef std::list<SubParticle> part_list_type;
+#endif
+
+	part_list_type subParticles;
+	part_list_type subParticles2;
 
 private:
 	virtual void FireImpl() {};

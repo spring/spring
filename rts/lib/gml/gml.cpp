@@ -3,8 +3,8 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used, distributed and modified 
-// freely for any purpose, as long as 
+// to be used, distributed and modified
+// freely for any purpose, as long as
 // this notice remains unchanged
 
 // GML works by "patching" all OpenGL calls. It is injected via a #include "gml.h" statement located in myGL.h.
@@ -1248,27 +1248,5 @@ void gmlQueue::ExecuteSynced(void (gmlQueue::*execfun)() ) {
 #endif
 //	GML_DEBUG("ExecuteSync ",procs, 2);
 }
-
-#if GML_ENABLE_SIM
-#include "Sim/Projectiles/FireProjectile.h"
-CR_BIND_TEMPLATE(SUBPARTICLE_LIST, );
-CR_REG_METADATA(SUBPARTICLE_LIST, (
-		CR_MEMBER(elements),
-		CR_MEMBER(front),
-		CR_MEMBER(back),
-		CR_MEMBER(csize),
-		CR_MEMBER(msize)
-		));
-
-#include "Sim/Projectiles/WeaponProjectiles/FireBallProjectile.h"
-CR_BIND_TEMPLATE(SPARK_QUEUE, );
-CR_REG_METADATA(SPARK_QUEUE, (
-		CR_MEMBER(elements),
-		CR_MEMBER(front),
-		CR_MEMBER(back),
-		CR_MEMBER(csize),
-		CR_MEMBER(msize)
-		));
-#endif
 
 #endif
