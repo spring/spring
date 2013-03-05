@@ -895,7 +895,7 @@ void SpringApp::ParseCmdLine()
 }
 
 
-void SpringApp::RunScript(const std::string buf) {
+void SpringApp::RunScript(const std::string& buf) {
 	startsetup = new ClientSetup();
 	startsetup->Init(buf);
 

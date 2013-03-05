@@ -228,9 +228,9 @@ bool CMoveMath::IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* col
 	// defs aren't tied to any)
 	//
 
-	const float colliderMdlHgt = 1e6;
+	//const float colliderMdlHgt = 1e6;
 	const float collideeMdlHgt = math::fabs(collidee->height);
-	const float colliderGndAlt = 1e6f;
+	//const float colliderGndAlt = 1e6f;
 	const float collideeGndAlt = collidee->pos.y;
 
 	if (colliderMD.followGround) {

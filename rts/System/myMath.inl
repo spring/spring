@@ -92,7 +92,7 @@ inline short int GetHeadingFromVector(const float dx, const float dz)
 }
 
 // vec should be normalized
-inline shortint2 GetHAndPFromVector(const float3 vec)
+inline shortint2 GetHAndPFromVector(const float3& vec)
 {
 	shortint2 ret;
 
@@ -108,7 +108,7 @@ inline shortint2 GetHAndPFromVector(const float3 vec)
 }
 
 // vec should be normalized
-inline float2 GetHAndPFromVectorF(const float3 vec)
+inline float2 GetHAndPFromVectorF(const float3& vec)
 {
 	float2 ret;
 
@@ -123,7 +123,7 @@ inline float3 GetVectorFromHeading(const short int heading)
 	return float3(v.x, 0.0f, v.y);
 }
 
-inline float3 CalcBeizer(const float i, const float3 p1, const float3 p2, const float3 p3, const float3 p4)
+inline float3 CalcBeizer(const float i, const float3& p1, const float3& p2, const float3& p3, const float3& p4)
 {
 	float ni = 1 - i;
 

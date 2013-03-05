@@ -61,15 +61,15 @@ short int GetHeadingFromFacing(const int facing) _pure _warn_unused_result;
 int GetFacingFromHeading(const short int heading) _pure _warn_unused_result;
 float GetHeadingFromVectorF(const float dx, const float dz) _pure _warn_unused_result;
 short int GetHeadingFromVector(const float dx, const float dz) _pure _warn_unused_result;
-shortint2 GetHAndPFromVector(const float3 vec) _pure _warn_unused_result; // vec should be normalized
-float2 GetHAndPFromVectorF(const float3 vec) _pure _warn_unused_result; // vec should be normalized
+shortint2 GetHAndPFromVector(const float3& vec) _pure _warn_unused_result; // vec should be normalized
+float2 GetHAndPFromVectorF(const float3& vec) _pure _warn_unused_result; // vec should be normalized
 float3 GetVectorFromHeading(const short int heading) _pure _warn_unused_result;
 float3 GetVectorFromHAndPExact(const short int heading, const short int pitch) _pure _warn_unused_result;
 
-float3 CalcBeizer(const float i, const float3 p1, const float3 p2, const float3 p3, const float3 p4) _pure _warn_unused_result;
+float3 CalcBeizer(const float i, const float3& p1, const float3& p2, const float3& p3, const float3& p4) _pure _warn_unused_result;
 
-float LinePointDist(const float3 l1, const float3 l2, const float3 p) _pure _warn_unused_result;
-float3 ClosestPointOnLine(const float3 l1, const float3 l2, const float3 p) _pure _warn_unused_result;
+float LinePointDist(const float3& l1, const float3& l2, const float3& p) _pure _warn_unused_result;
+float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p) _pure _warn_unused_result;
 
 /**
  * @brief Returns the intersection points of a ray with the map boundary (2d only)
@@ -77,7 +77,7 @@ float3 ClosestPointOnLine(const float3 l1, const float3 l2, const float3 p) _pur
  * @param dir float3 direction of the ray
  * @return <near,far> std::pair<float,float> distance to the intersection points in mulitples of `dir`
  */
-std::pair<float,float> GetMapBoundaryIntersectionPoints(const float3 start, const float3 dir) _pure _warn_unused_result;
+std::pair<float,float> GetMapBoundaryIntersectionPoints(const float3& start, const float3& dir) _pure _warn_unused_result;
 
 /**
  * @brief clamps a line (start & end points) to the map boundaries
@@ -93,7 +93,7 @@ bool ClampLineInMap(float3& start, float3& end);
  * @param end float3 the `end` point of the line
  * @return true if changed
  */
-bool ClampRayInMap(const float3 start, float3& end);
+bool ClampRayInMap(const float3& start, float3& end);
 
 
 float smoothstep(const float edge0, const float edge1, const float value) _pure _warn_unused_result;
