@@ -31,7 +31,6 @@ set(FILES
 	shaders/ARB/treeFarShadow.vp
 	shaders/ARB/waterDynNormal.fp
 	shaders/ARB/waterDynWave3.vp
-	shaders/ARB/grassFarNS.vp
 	shaders/ARB/clouds.fp
 	shaders/ARB/units3o.fp
 	shaders/ARB/water.fp
@@ -62,9 +61,7 @@ set(FILES
 	shaders/ARB/groundFPshadow.fp
 	shaders/ARB/dwDetailNormal.fp
 	shaders/ARB/dwDetailNormal.vp
-	shaders/ARB/grass.vp
 	shaders/ARB/tree.vp
-	shaders/ARB/grassFar.vp
 	gamedata/messages.lua
 	gamedata/unitdefs.lua
 	gamedata/explosion_alias.lua
