@@ -26,6 +26,7 @@ namespace creg {
 		crInt,		crUInt,
 		crShort,	crUShort,
 		crChar,		crUChar,
+		crInt64,
 		crFloat,
 		crDouble,
 		crBool,

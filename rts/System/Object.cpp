@@ -10,8 +10,7 @@
 CR_BIND(CObject, )
 
 CR_REG_METADATA(CObject, (
-	//FIXME: creg is missing int64
-	//CR_MEMBER(sync_id),
+	CR_MEMBER(sync_id),
 
 	CR_MEMBER(detached),
 
@@ -51,7 +50,7 @@ void CObject::Detach()
 
 		for (TSyncSafeSet::iterator di = objs.begin(); di != objs.end(); ++di) {
 			CObject* const& obj = (*di);
-			
+
 			obj->DependentDied(this);
 
 			assert(obj->listening.find(depType) != obj->listening.end());
