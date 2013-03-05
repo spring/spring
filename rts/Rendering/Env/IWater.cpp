@@ -24,14 +24,7 @@ IWater::IWater()
 	, drawRefraction(false)
  	, drawSolid(false)
 {
-	helper->AddExplosionListener(this);
-}
-
-IWater::~IWater()
-{
-	if (helper != NULL) {
-		helper->RemoveExplosionListener(this);
-	}
+	CExplosionCreator::AddExplosionListener(this);
 }
 
 

@@ -288,7 +288,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	}
 
 	CExplosionEvent explosionEvent(expPos, damages.GetDefaultDamage(), damageAOE, weaponDef);
-	FireExplosionEvent(explosionEvent);
+	CExplosionCreator::FireExplosionEvent(explosionEvent);
 
 	#if (PLAY_SOUNDS == 1)
 	if (weaponDef != NULL) {
