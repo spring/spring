@@ -121,8 +121,6 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	tracefile << "[" << __FUNCTION__ << "] ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 void CStarburstProjectile::Detach()

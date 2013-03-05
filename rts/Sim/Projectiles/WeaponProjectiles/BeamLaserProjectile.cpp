@@ -70,8 +70,6 @@ CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params): CWea
 		memset(&edgeColStart[0], 0, sizeof(edgeColStart));
 		memset(&edgeColEnd[0], 0, sizeof(edgeColEnd));
 	}
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 

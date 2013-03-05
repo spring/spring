@@ -54,8 +54,6 @@ CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWea
 	tracefile << "New explosive: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 void CExplosiveProjectile::Update()

@@ -47,8 +47,6 @@ CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWea
 	tracefile << "New lightning: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << end.x << " " << end.y << " " << end.z << "\n";
 #endif
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 void CLightningProjectile::Update()

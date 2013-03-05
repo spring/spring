@@ -118,8 +118,6 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 	if (u != NULL) {
 		u->IncomingMissile(this);
 	}
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 void CMissileProjectile::Collision()

@@ -373,7 +373,11 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 			}
 
 			if (lua_isnumber(L, -1)) {
-				if (key == "ttl") {
+				if (key == "owner") {
+					params.ownerID = lua_toint(L, -1);
+				} else if (key == "team") {
+					params.teamID = lua_toint(L, -1);
+				} else if (key == "ttl") {
 					params.ttl = lua_tofloat(L, -1);
 				} else if (key == "gravity") {
 					params.gravity = lua_tofloat(L, -1);
@@ -393,6 +397,8 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 			if (lua_isstring(L, -1)) {
 				if (key == "model") {
 					params.model = modelParser->Load3DModel(lua_tostring(L, -1));
+				} else if (key == "cegtag") {
+					params.cegID = gCEG->Load(explGenHandler, lua_tostring(L, -1));
 				}
 
 				continue;
