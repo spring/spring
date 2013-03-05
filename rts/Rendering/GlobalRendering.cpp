@@ -90,6 +90,7 @@ CGlobalRendering::CGlobalRendering()
 	, drawMapMarks(true)
 	, drawFog(true)
 	, drawdebug(false)
+	, drawdebugtraceray(false)
 
 	, teamNanospray(true)
 	, active(true)

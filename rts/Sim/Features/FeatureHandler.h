@@ -63,8 +63,8 @@ public:
 private:
 	bool CanAddFeature(int id) const {
 		// do we want to be assigned a random ID? (in case
-		// freeFeatureIDs is empty, AddFeature will always
-		// allocate more)
+		// freeFeatureIndexToIdentMap is empty, AddFeature
+		// will always allocate more)
 		if (id < 0)
 			return true;
 		// is this ID not already in use?
@@ -73,6 +73,9 @@ private:
 		// AddFeature will make new room for us
 		return true;
 	}
+	bool NeedAllocateNewFeatureIDs(const CFeature* feature) const;
+	void AllocateNewFeatureIDs(const CFeature* feature);
+	void InsertActiveFeature(CFeature* feature);
 
 	FeatureDef* CreateDefaultTreeFeatureDef(const std::string& name) const;
 	FeatureDef* CreateDefaultGeoFeatureDef(const std::string& name) const;
@@ -84,7 +87,9 @@ private:
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;
 
-	std::set<int> freeFeatureIDs;
+	std::map<unsigned int, unsigned int> freeFeatureIndexToIdentMap;
+	std::map<unsigned int, unsigned int> freeFeatureIdentToIndexMap;
+
 	std::list<int> toBeFreedFeatureIDs;
 	CFeatureSet activeFeatures;
 	std::vector<CFeature*> features;

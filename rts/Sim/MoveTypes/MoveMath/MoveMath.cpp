@@ -310,8 +310,9 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 			if (obstacle->isMoving) {
 				r |= BLOCK_MOVING;
 			} else {
-				const CUnit& u = *static_cast<const CUnit*>(obstacle);
-				if (!u.beingBuilt && u.commandAI->commandQue.empty()) {
+				const CUnit* u = static_cast<const CUnit*>(obstacle);
+
+				if (!u->beingBuilt && u->commandAI->commandQue.empty()) {
 					// idling mobile unit
 					r |= BLOCK_MOBILE;
 				} else {

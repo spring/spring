@@ -1,7 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "lib/gml/gml_base.h"
+#include "lib/gml/gmlmut.h"
 #include "Threading.h"
+#include "Game/GameController.h"
 #include "System/bitops.h"
 #include "System/OpenMP_cond.h"
 #include "System/Config/ConfigHandler.h"
@@ -222,44 +224,42 @@ namespace Threading {
 		}
 		OMPInited = true;
 	#ifdef _OPENMP
-		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
-		boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
-		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
+		if (useOMP) {
+			boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
+			boost::uint32_t mainAffinity  = systemCores & configHandler->GetUnsigned("SetCoreAffinity");
+			boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 
-		// For latency reasons our openmp threads yield rarely and so eat a lot cputime with idleing.
-		// So it's better we always leave 1 core free for our other threads, drivers & OS
-		if (!useOMP) {
-			omp_set_num_threads(1);
-			omp_set_dynamic(0);
-		}
-		else if (omp_get_max_threads() > 2)
-			omp_set_num_threads(omp_get_max_threads() - 1); 
+			// For latency reasons our openmp threads yield rarely and so eat a lot cputime with idleing.
+			// So it's better we always leave 1 core free for our other threads, drivers & OS
+			if (omp_get_max_threads() > 2)
+				omp_set_num_threads(omp_get_max_threads() - 1); 
 
-		streflop_omp();
+			streflop_omp();
 
-		// omp threads
-		boost::uint32_t ompCores = 0;
-	Threading::OMPCheck();
-	#pragma omp parallel reduction(|:ompCores)
-		{
-			int i = omp_get_thread_num();
-			if (i != 0) { // 0 is the source thread
-				Threading::SetThreadName(IntToString(i, "omp%i"));
-				//boost::uint32_t ompCore = 1 << i;
-				boost::uint32_t ompCore = GetOpenMPCpuCore(i - 1, ompAvailCores, mainAffinity);
-				Threading::SetAffinity(ompCore);
-				ompCores |= ompCore;
+			// omp threads
+			boost::uint32_t ompCores = 0;
+			Threading::OMPCheck();
+			#pragma omp parallel reduction(|:ompCores)
+			{
+				int i = omp_get_thread_num();
+				if (i != 0) { // 0 is the source thread
+					Threading::SetThreadName(IntToString(i, "omp%i"));
+					//boost::uint32_t ompCore = 1 << i;
+					boost::uint32_t ompCore = GetOpenMPCpuCore(i - 1, ompAvailCores, mainAffinity);
+					Threading::SetAffinity(ompCore);
+					ompCores |= ompCore;
+				}
 			}
+
+			// mainthread
+			boost::uint32_t nonOmpCores = ~ompCores;
+			if (mainAffinity == 0) mainAffinity = systemCores;
+			Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
+		} else
+#endif
+		{
+			Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
 		}
-
-		// mainthread
-		boost::uint32_t nonOmpCores = ~ompCores;
-		if (mainAffinity == 0) mainAffinity = systemCores;
-		Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
-
-	#else
-		Threading::SetAffinityHelper("Main", configHandler->GetUnsigned("SetCoreAffinity"));
-	#endif
 	}
 
 	void OMPError() {
@@ -356,6 +356,15 @@ namespace Threading {
 	#else
 		return boost::this_thread::get_id() == simThreadID;
 	#endif
+	}
+
+	bool UpdateGameController(CGameController* ac) {
+		GML_MSTMUTEX_LOCK(sim); // UpdateGameController
+
+		SetSimThread(true);
+		bool ret = ac->Update();
+		SetSimThread(false);
+		return ret;
 	}
 
 	void SetBatchThread(bool set) {

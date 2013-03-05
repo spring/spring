@@ -339,29 +339,23 @@ void CSelectedUnits::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTe
 			AddUnit(unit);
 		}
 	} else {
-		//double click
-		if (unit->group && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
-			//select the current units group if it has one
-			SelectGroup(unit->group->id);
-		} else {
-			//select all units of same type (on screen, unless CTRL is pressed)
-			int team, lastTeam;
+		//double click, select all units of same type (on screen, unless CTRL is pressed)
+		int team, lastTeam;
 
-			if (gu->spectatingFullSelect || gs->godMode) {
-				team = 0;
-				lastTeam = teamHandler->ActiveTeams() - 1;
-			} else {
-				team = gu->myTeam;
-				lastTeam = gu->myTeam;
-			}
-			for (; team <= lastTeam; team++) {
-				CUnitSet::iterator ui;
-				CUnitSet& teamUnits = teamHandler->Team(team)->units;
-				for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
-					if ((*ui)->unitDef->id == unit->unitDef->id) {
-						if (!doInViewTest || camera->InView((*ui)->midPos) || keyInput->IsKeyPressed(SDLK_LCTRL)) {
-							AddUnit(*ui);
-						}
+		if (gu->spectatingFullSelect || gs->godMode) {
+			team = 0;
+			lastTeam = teamHandler->ActiveTeams() - 1;
+		} else {
+			team = gu->myTeam;
+			lastTeam = gu->myTeam;
+		}
+		for (; team <= lastTeam; team++) {
+			CUnitSet::iterator ui;
+			CUnitSet& teamUnits = teamHandler->Team(team)->units;
+			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
+				if ((*ui)->unitDef->id == unit->unitDef->id) {
+					if (!doInViewTest || keyInput->IsKeyPressed(SDLK_LCTRL) || camera->InView((*ui)->midPos)) {
+						AddUnit(*ui);
 					}
 				}
 			}

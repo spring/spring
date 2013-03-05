@@ -156,6 +156,7 @@ void CCameraHandler::UpdateCam()
 
 void CCameraHandler::CameraTransition(float time)
 {
+	UpdateCam(); // this prevents camera stutter when multithreading
 	time = std::max(time, 0.0f) * cameraTimeFactor;
 
 	cameraTimeStart = spring_tomsecs(spring_gettime()) / 1000.0f;

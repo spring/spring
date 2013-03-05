@@ -40,8 +40,7 @@ S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
  */
 
 S3DModelPiece::S3DModelPiece()
-	: model(NULL)
-	, parent(NULL)
+	: parent(NULL)
 	, colvol(NULL)
 	, type(MODELTYPE_OTHER)
 	, isEmpty(true)
@@ -169,6 +168,7 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 
 	dispListID =  piece->GetDisplayListID();
 	pos        =  piece->offset;
+	rot        =  piece->rot;
 
 	children.reserve(piece->children.size());
 
@@ -193,6 +193,7 @@ bool LocalModelPiece::UpdateMatrix()
 		pieceSpaceMat.LoadIdentity();
 
 		// Translate & Rotate are faster than matrix-mul!
+		if (original->scale.SqLength() != 0.0f) { pieceSpaceMat.Scale(original->scale);  r = false; }
 		if (pos.SqLength() != 0.0f) { pieceSpaceMat.Translate(pos);  r = false; }
 		if (         rot.y != 0.0f) { pieceSpaceMat.RotateY(-rot.y); r = false; }
 		if (         rot.x != 0.0f) { pieceSpaceMat.RotateX(-rot.x); r = false; }

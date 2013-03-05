@@ -25,19 +25,20 @@ namespace TraceRay {
 		const float3& start,
 		const float3& dir,
 		float length,
-		int collisionFlags,
+		int avoidFlags,
 		const CUnit* owner,
 		CUnit*& hitUnit,
 		CFeature*& hitFeature);
 	float GuiTraceRay(
 		const float3& start,
 		const float3& dir,
-		float length,
-		bool useRadar,
+		const float length,
 		const CUnit* exclude,
 		CUnit*& hitUnit,
 		CFeature*& hitFeature,
-		bool groundOnly = false);
+		bool useRadar,
+		bool groundOnly = false,
+		bool ignoreWater = false);
 
 	/**
 	 * @return true if there is an object (allied/neutral unit, feature)
