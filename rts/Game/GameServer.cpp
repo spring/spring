@@ -2030,12 +2030,12 @@ void CGameServer::PushAction(const Action& action)
 	else if (action.command == "mute") {
 
 		if (action.extra.empty()) {
-			LOG_L(L_WARNING,"failed to mute player, usage:", "/mute <playername> [chatmute] [drawmute]");
+			LOG_L(L_WARNING,"failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
 		}
 		else {
 			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
 			if ( tokens.size() < 1 || tokens.size() > 3 ) {
-				LOG_L(L_WARNING,"failed to mute player, usage:", "/mute <playername> [chatmute] [drawmute]");
+				LOG_L(L_WARNING,"failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
 			}
 			else {
 				std::string name = tokens[0];
@@ -2057,12 +2057,12 @@ void CGameServer::PushAction(const Action& action)
 	else if (action.command == "mutebynum") {
 
 		if (action.extra.empty()) {
-			LOG_L(L_WARNING,"failed to mute player, usage:", "/mutebynum <player-id> [chatmute] [drawmute]");
+			LOG_L(L_WARNING,"failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
 		}
 		else {
 			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
 			if ( tokens.size() < 1 || tokens.size() > 3 ) {
-				LOG_L(L_WARNING,"failed to mute player, usage:", "/mutebynum <player-id> [chatmute] [drawmute]");
+				LOG_L(L_WARNING,"failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
 			}
 			else {
 				int playerID = atoi(tokens[0].c_str());
