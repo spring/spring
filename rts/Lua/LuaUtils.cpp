@@ -1026,14 +1026,19 @@ int LuaUtils::isuserdata(lua_State* L)
 int LuaUtils::PushDebugTraceback(lua_State *L)
 {
 	lua_getglobal(L, DEBUG_TABLE);
-	if (!lua_istable(L, -1)) {
-		return 0;
+	if (lua_istable(L, -1)) {
+		lua_getfield(L, -1, DEBUG_FUNC);
+		if (!lua_isfunction(L, -1)) {
+			return 0;
+		}
+		lua_remove(L, -2);
+	} else {
+		lua_pop(L, 1);
+		static const LuaHashString traceback("traceback");
+		if (!traceback.GetRegistryFunc(L)) {
+			return 0;
+		}
 	}
-	lua_getfield(L, -1, DEBUG_FUNC);
-	if (!lua_isfunction(L, -1)) {
-		return 0;
-	}
-	lua_remove(L, -2);
 
 	return lua_gettop(L);
 }

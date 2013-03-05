@@ -8,13 +8,7 @@
 //FIXME#include "LuaArrays.h"
 #include "LuaCallInCheck.h"
 #include "LuaContextData.h"
-#include "LuaShaders.h"
-#include "LuaTextures.h"
-#include "LuaFBOs.h"
-#include "LuaRBOs.h"
 #include "LuaUtils.h"
-//FIXME#include "LuaVBOs.h"
-#include "LuaDisplayLists.h"
 #include "System/Platform/Threading.h"
 
 #include <string>
@@ -43,6 +37,12 @@ struct Command;
 struct SRectangle;
 struct LuaHashString;
 struct lua_State;
+class LuaRBOs;
+class LuaFBOs;
+class LuaTextures;
+class LuaShaders;
+class CLuaDisplayLists;
+
 
 class CLuaHandle : public CEventClient
 {
@@ -340,8 +340,6 @@ class CLuaHandle : public CEventClient
 
 		bool killMe;
 		string killMsg;
-
-		bool printTracebacks;
 
 		vector<bool> watchUnitDefs;
 		vector<bool> watchFeatureDefs;
