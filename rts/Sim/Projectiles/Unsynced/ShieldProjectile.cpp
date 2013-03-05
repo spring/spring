@@ -13,8 +13,25 @@
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(ShieldProjectile, CProjectile, (NULL));
-CR_BIND_DERIVED(ShieldSegmentProjectile, CProjectile, (NULL, NULL, ZeroVector, 0, 0));
+CR_REG_METADATA(ShieldProjectile, (
+	//CR_IGNORED(shield), FIXME is pointer
+	//CR_IGNORED(shieldTexture), FIXME is pointer
+	CR_MEMBER(lastAllowDrawingUpdate),
+	CR_MEMBER(allowDrawing),
+	CR_IGNORED(shieldSegments) //FIXME pointers
+));
 
+CR_BIND_DERIVED(ShieldSegmentProjectile, CProjectile, (NULL, NULL, ZeroVector, 0, 0));
+CR_REG_METADATA(ShieldSegmentProjectile, (
+	//CR_IGNORED(shieldProjectile), FIXME is pointer
+	CR_MEMBER(segmentPos),
+	CR_MEMBER(segmentColor),
+	CR_IGNORED(vertices),
+	CR_IGNORED(texCoors),
+	CR_MEMBER(segmentSize),
+	CR_MEMBER(segmentAlpha),
+	CR_MEMBER(usePerlinTex)
+));
 
 static std::vector<float3> spherevertices;
 static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;

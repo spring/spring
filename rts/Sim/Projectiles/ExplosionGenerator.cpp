@@ -36,8 +36,13 @@ CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
 CR_REG_METADATA(CExpGenSpawnable, );
 
 CR_BIND_INTERFACE(IExplosionGenerator);
+CR_REG_METADATA(IExplosionGenerator, (
+	CR_MEMBER(generatorID)
+));
+
 CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, );
 CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
+
 
 CExplosionGeneratorHandler* explGenHandler = NULL;
 CCustomExplosionGenerator* gCEG = NULL;

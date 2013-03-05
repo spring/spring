@@ -77,7 +77,7 @@ CR_REG_METADATA(CTeam, (
 	//CR_MEMBER(statHistory),
 	CR_MEMBER(modParams),
 	CR_MEMBER(modParamsMap),
-	CR_RESERVED(64)
+	CR_IGNORED(highlight)
 ));
 
 
@@ -117,7 +117,7 @@ CTeam::CTeam(int _teamNum):
 	origColor[1] = 0;
 	origColor[2] = 0;
 	origColor[3] = 0;
-	
+
 	statHistory.push_back(TeamStatistics());
 	currentStats = &statHistory.back();
 }
