@@ -20,61 +20,7 @@ using std::string;
 
 void BasicType::Serialize(ISerializer* s, void* inst)
 {
-	switch (id) {
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedSint://FIXME
-	case crSyncedUint:
-#endif
-	case crInt:
-	case crUInt:
-		s->SerializeInt(inst, 4);
-		break;
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedSshort://FIXME
-	case crSyncedUshort:
-#endif
-	case crShort:
-	case crUShort:
-		s->SerializeInt(inst, 2);
-		break;
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedSchar://FIXME
-	case crSyncedUchar:
-#endif
-	case crChar:
-	case crUChar:
-		s->Serialize(inst, 1);
-		break;
-	case crInt64:
-		s->SerializeInt(inst, 8);
-		break;
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedFloat://FIXME
-#endif
-	case crFloat:
-		s->Serialize(inst, 4);
-		break;
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedDouble://FIXME
-#endif
-	case crDouble:
-		s->Serialize(inst, 8);
-		break;
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-	case crSyncedBool://FIXME
-#endif
-	case crBool:{
-		// I'm not sure if bool is the same size on all compilers.. so it's stored as a byte
-		if (s->IsWriting())  {
-			char v = *(bool*)inst ? 1 : 0;
-			s->Serialize(&v,1);
-		} else {
-			char v;
-			s->Serialize(&v,1);
-			*(bool*)inst=!!v;
-		}
-		break;}
-	}
+	s->SerializeInt(inst, GetSize());
 }
 
 std::string BasicType::GetName()
