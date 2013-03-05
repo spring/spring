@@ -145,20 +145,29 @@ static bool TestCregClasses()
 
 	const std::vector<creg::Class*>& cregClasses = creg::System::GetClasses();
 	for (std::vector<creg::Class*>::const_iterator it = cregClasses.begin(); it != cregClasses.end(); ++it) {
-		const std::string& className = (*it)->name;
-		const size_t classSize = (*it)->size;
+		const creg::Class* c = *it;
+
+		const std::string& className = c->name;
+		const size_t classSize = c->size;
 
 		size_t cregSize = 0;
 
-		const std::vector<creg::Class::Member*>& classMembers = (*it)->members;
-		for (std::vector<creg::Class::Member*>::const_iterator jt = classMembers.begin(); jt != classMembers.end(); ++jt) {
-			const size_t memberOffset = (*jt)->offset;
-			const size_t typeSize = (*jt)->type->GetSize();
-			cregSize = std::max(cregSize, memberOffset + typeSize);
+		const creg::Class* c_base = c;
+		while (c_base){
+			const std::vector<creg::Class::Member*>& classMembers = c_base->members;
+			for (std::vector<creg::Class::Member*>::const_iterator jt = classMembers.begin(); jt != classMembers.end(); ++jt) {
+				const size_t memberOffset = (*jt)->offset;
+				const size_t typeSize = (*jt)->type->GetSize();
+				cregSize = std::max(cregSize, memberOffset + typeSize);
+			}
+
+			c_base = c_base->base;
 		}
 
+
 		// alignment padding
-		if (cregSize % 4 > 0) cregSize += 4 - (cregSize % 4);
+		const float alignment = c->alignment;
+		cregSize = std::ceil(cregSize / alignment) * alignment; //FIXME too simple, gcc's appending rules are ways more complicated
 
 		if (cregSize != classSize) {
 			brokenClasses++;

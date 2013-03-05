@@ -35,7 +35,7 @@ ClassBinder* System::binderList = 0;
 vector<Class*> System::classes;
 
 ClassBinder::ClassBinder(const char* className, unsigned int cf,
-		ClassBinder* baseClsBinder, IMemberRegistrator** mreg, int instanceSize,
+		ClassBinder* baseClsBinder, IMemberRegistrator** mreg, int instanceSize, int instanceAlignment,
 		void (*constructorProc)(void* inst), void (*destructorProc)(void* inst))
 	: class_(NULL)
 	, base(baseClsBinder)
@@ -43,6 +43,7 @@ ClassBinder::ClassBinder(const char* className, unsigned int cf,
 	, memberRegistrator(mreg)
 	, name(className)
 	, size(instanceSize)
+	, alignment(instanceAlignment)
 	, constructor(constructorProc)
 	, destructor(destructorProc)
 	, nextBinder(NULL)
@@ -69,7 +70,8 @@ void System::InitializeClasses()
 		cls->binder = c;
 		cls->name = c->name;
 		cls->size = c->size;
-		cls->base = c->base ? c->base->class_ : 0;
+		cls->alignment = c->alignment;
+		cls->base = c->base ? c->base->class_ : NULL;
 		mapNameToClass [cls->name] = cls;
 
 		if (cls->base) {
@@ -114,10 +116,12 @@ void System::AddClassBinder(ClassBinder* cb)
 // ------------------------------------------------------------------
 
 Class::Class() :
-	binder(0),
-	base(0),
-	serializeProc(0),
-	postLoadProc(0)
+	binder(NULL),
+	size(0),
+	alignment(0),
+	base(NULL),
+	serializeProc(NULL),
+	postLoadProc(NULL)
 {}
 
 Class::~Class()

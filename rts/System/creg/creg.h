@@ -12,6 +12,7 @@
 #include "ISerializer.h"
 #include "System/Sync/SyncedPrimitive.h"
 
+
 namespace creg {
 
 	class IType;
@@ -84,7 +85,7 @@ namespace creg {
 	{
 	public:
 		ClassBinder(const char* className, unsigned int cf, ClassBinder* base,
-				IMemberRegistrator** mreg, int instanceSize,
+				IMemberRegistrator** mreg, int instanceSize, int instanceAlignment,
 				void (*constructorProc)(void* instance),
 				void (*destructorProc)(void* instance));
 
@@ -94,6 +95,7 @@ namespace creg {
 		IMemberRegistrator** memberRegistrator;
 		const char* name;
 		int size; // size of an instance in bytes
+		int alignment;
 		void (*constructor)(void* instance);
 		/**
 		 * Needed for classes without virtual destructor.
@@ -174,7 +176,8 @@ namespace creg {
 		std::vector <Class*> derivedClasses;
 		ClassBinder* binder;
 		std::string name;
-		size_t size;
+		int size;
+		int alignment;
 		Class* base;
 		void (_DummyStruct::*serializeProc)(ISerializer& s);
 		void (_DummyStruct::*postLoadProc)();
@@ -295,6 +298,16 @@ namespace creg {
 
 #include "TypeDeduction.h"
 
+// detect if c++11
+#if __cplusplus <= 199711L
+	template<typename t>
+	size_t alignof_() {
+		return (sizeof(t) > sizeof(int*)) ? sizeof(int*) : sizeof(t);
+	}
+	#define alignof(t) alignof_<t>()
+#endif
+
+
 namespace creg {
 
 /** @def CR_DECLARE
@@ -346,7 +359,7 @@ namespace creg {
 	creg::Class* TCls::GetClass() const { return binder.class_; } \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-	creg::ClassBinder TCls::binder(#TCls, 0, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
+	creg::ClassBinder TCls::binder(#TCls, 0, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
 
 /** @def CR_BIND_DERIVED_SUB
  * Bind a derived class inside another class to creg
@@ -361,7 +374,7 @@ namespace creg {
 	creg::Class* TSuper::TCls::GetClass() const { return binder.class_; }  \
 	void TSuper::TCls::_ConstructInstance(void* d) { new(d) TCls ctor_args; }  \
 	void TSuper::TCls::_DestructInstance(void* d) { ((TCls*)d)->~TCls(); }  \
-	creg::ClassBinder TSuper::TCls::binder(#TSuper "::" #TCls, 0, &TBase::binder, &TSuper::TCls::memberRegistrator, sizeof(TSuper::TCls), TSuper::TCls::_ConstructInstance, TSuper::TCls::_DestructInstance);
+	creg::ClassBinder TSuper::TCls::binder(#TSuper "::" #TCls, 0, &TBase::binder, &TSuper::TCls::memberRegistrator, sizeof(TSuper::TCls), alignof(TCls), TSuper::TCls::_ConstructInstance, TSuper::TCls::_DestructInstance);
 
 /** @def CR_BIND
  * Bind a class not derived from CObject
@@ -374,14 +387,14 @@ namespace creg {
 	creg::Class* TCls::GetClass() const { return binder.class_; } \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-	creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
+	creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
 // Stupid GCC likes this template<> crap very much
 #define CR_BIND_TEMPLATE(TCls, ctor_args) \
 	template<> creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	template<> creg::Class* TCls::GetClass() const { return binder.class_; } \
 	template<> void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	template<> void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-	template<> creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
+	template<> creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
 
 /** @def CR_BIND_DERIVED_INTERFACE
  * Bind an abstract derived class
@@ -392,7 +405,7 @@ namespace creg {
 #define CR_BIND_DERIVED_INTERFACE(TCls, TBase)	\
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	creg::Class* TCls::GetClass() const { return binder.class_; } \
-	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), 0, 0);
+	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), 0, 0);
 
 /** @def CR_BIND_INTERFACE
  * Bind an abstract class
@@ -404,7 +417,7 @@ namespace creg {
 #define CR_BIND_INTERFACE(TCls)	\
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	creg::Class* TCls::GetClass() const { return binder.class_; } \
-	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, 0, &TCls::memberRegistrator, sizeof(TCls), 0, 0);
+	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), 0, 0);
 
 /** @def CR_REG_METADATA
  * Binds the class metadata to the class itself
