@@ -43,6 +43,8 @@ public:
 
 	void SetRadiusAndHeight(S3DModel* model);
 
+private:
+	void PostLoad();
 
 public:
 	int id;

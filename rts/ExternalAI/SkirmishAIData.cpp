@@ -18,7 +18,6 @@ CR_REG_METADATA(SkirmishAIData, (
 	CR_MEMBER(version),
 	CR_MEMBER(optionKeys),
 	CR_MEMBER(options),
-	CR_MEMBER(isLuaAI),
-//	CR_MEMBER(currentStats),
-	CR_RESERVED(32)
+	CR_MEMBER(isLuaAI)
+	//CR_MEMBER(currentStats)
 ));

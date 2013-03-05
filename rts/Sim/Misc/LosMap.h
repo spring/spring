@@ -11,6 +11,8 @@
 /// map containing counts of how many units have Line Of Sight (LOS) to each square
 class CLosMap
 {
+	CR_DECLARE_STRUCT(CLosMap);
+
 public:
 	CLosMap() : size(0, 0), sendReadmapEvents(false) {}
 
@@ -44,6 +46,8 @@ protected:
 /// algorithm to calculate LOS squares using raycasting, taking terrain into account
 class CLosAlgorithm
 {
+	CR_DECLARE_STRUCT(CLosAlgorithm);
+
 public:
 	CLosAlgorithm(int2 size, float minMaxAng, float extraHeight, const float* heightmap)
 	: size(size), minMaxAng(minMaxAng), extraHeight(extraHeight), heightmap(heightmap) {}
@@ -54,9 +58,9 @@ private:
 	void UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
 	void SafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
 
-	const int2 size;
-	const float minMaxAng;
-	const float extraHeight;
+	int2 size;
+	float minMaxAng;
+	float extraHeight;
 	const float* const heightmap;
 };
 

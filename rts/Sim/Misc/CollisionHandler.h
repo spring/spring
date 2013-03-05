@@ -72,8 +72,6 @@ private:
  */
 class CCollisionHandler {
 	public:
-		CR_DECLARE(CCollisionHandler)
-
 		CCollisionHandler() {}
 		~CCollisionHandler() {}
 

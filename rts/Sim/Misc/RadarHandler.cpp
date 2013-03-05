@@ -11,16 +11,31 @@
 CR_BIND(CRadarHandler, (false));
 
 CR_REG_METADATA(CRadarHandler, (
-	CR_SERIALIZER(Serialize),
-	// radarMaps, airRadarMaps, sonarMaps, jammerMaps, sonarJammerMaps,
-	// seismicMaps, commonJammerMap, commonSonarJammerMap
-	//CR_MEMBER(circularRadar),
 	CR_MEMBER(radarErrorSize),
 	CR_MEMBER(baseRadarErrorSize),
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
 	CR_MEMBER(targFacEffect),
-	CR_RESERVED(32)
+
+	CR_MEMBER(radarMipLevel),
+	CR_MEMBER(radarDiv),
+	CR_MEMBER(invRadarDiv),
+	CR_MEMBER(circularRadar),
+	CR_MEMBER(radarAlgo),
+
+	// all handled in Serialize (why? creg do do that itself, too.)
+	CR_IGNORED(radarMaps),
+	CR_IGNORED(airRadarMaps),
+	CR_IGNORED(sonarMaps),
+	CR_IGNORED(jammerMaps),
+#ifdef SONAR_JAMMER_MAPS
+	CR_IGNORED(sonarJammerMaps),
+#endif
+	CR_IGNORED(seismicMaps),
+	CR_IGNORED(commonJammerMap),
+	CR_IGNORED(commonSonarJammerMap),
+
+	CR_SERIALIZER(Serialize)
 ));
 
 

@@ -37,7 +37,11 @@ CR_REG_METADATA(CFactory, (
 	CR_MEMBER(curBuild),
 	CR_MEMBER(nextBuildUnitDefID),
 	CR_MEMBER(lastBuildUpdateFrame),
-	CR_RESERVED(16),
+	//CR_MEMBER(curBuildDef), FIXME is pointer
+	//CR_MEMBER(curBuild), FIXME is pointer
+	//CR_MEMBER(finishedBuildFunc), FIXME is pointer
+	CR_MEMBER(finishedBuildCommand),
+	CR_MEMBER(nanoPieceCache),
 	CR_POSTLOAD(PostLoad)
 ));
 

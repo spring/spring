@@ -15,6 +15,25 @@
 #include <cstring>
 
 
+CR_BIND(CLosMap, );
+
+CR_REG_METADATA(CLosMap, (
+	CR_MEMBER(size),
+	CR_MEMBER(map),
+	CR_MEMBER(sendReadmapEvents)
+));
+
+
+
+CR_BIND(CLosAlgorithm, (int2(), 0.0f, 0.0f, NULL));
+
+CR_REG_METADATA(CLosAlgorithm, (
+	CR_MEMBER(size),
+	CR_MEMBER(minMaxAng),
+	CR_MEMBER(extraHeight),
+	CR_IGNORED(heightmap)
+	//CR_MEMBER(heightmap) FIXME is pointer
+));
 
 
 

@@ -102,7 +102,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(errorVector),
 	CR_MEMBER(errorVectorAdd),
 	CR_MEMBER(targetPos),
-	CR_RESERVED(64)
+	CR_MEMBER(targetBorderPos)
 ));
 
 //////////////////////////////////////////////////////////////////////
