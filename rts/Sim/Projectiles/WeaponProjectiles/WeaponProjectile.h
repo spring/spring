@@ -7,6 +7,7 @@
 #include "WeaponProjectileTypes.h"
 
 struct WeaponDef;
+struct S3DModel;
 class CPlasmaRepulser;
 class CWeaponProjectile;
 
@@ -14,6 +15,7 @@ struct ProjectileParams {
 	ProjectileParams()
 		: target(NULL)
 		, owner(NULL)
+		, model(NULL)
 		, weaponDef(NULL)
 
 		, ttl(0)
@@ -35,6 +37,7 @@ struct ProjectileParams {
 	// unit, feature or weapon projectile to intercept
 	CWorldObject* target;
 	CUnit* owner;
+	S3DModel* model;
 
 	const WeaponDef* weaponDef;
 
@@ -59,7 +62,7 @@ class CWeaponProjectile : public CProjectile
 public:
 	CWeaponProjectile();
 	CWeaponProjectile(const ProjectileParams& params, const bool isRay = false);
-	virtual ~CWeaponProjectile();
+	virtual ~CWeaponProjectile() {}
 
 	virtual void Collision();
 	virtual void Collision(CFeature* feature);
@@ -84,36 +87,39 @@ public:
 	const CWorldObject* GetTargetObject() const { return target; }
 	      CWorldObject* GetTargetObject()       { return target; }
 
+	const WeaponDef* GetWeaponDef() const { return weaponDef; }
+
 	void SetStartPos(const float3& newStartPos) { startpos = newStartPos; }
 	void SetTargetPos(const float3& newTargetPos) { targetPos = newTargetPos; }
 
 	const float3& GetStartPos() const { return startpos; }
 	const float3& GetTargetPos() const { return targetPos; }
 
+	void SetBeingIntercepted(bool b) { targeted = b; }
+	bool IsBeingIntercepted() const { return targeted; }
+
 protected:
 	void UpdateInterception();
 	virtual void UpdateGroundBounce();
 	bool TraveledRange();
 
-public:
-	/// true if we are a nuke and an anti is on the way
-	bool targeted;
-	const WeaponDef* weaponDef;
-
-	unsigned int weaponDefID;
-	unsigned int cegID;
-
-	int colorTeam;
-
 protected:
+	const WeaponDef* weaponDef;
+	// const CWorldObject* target;
 	CWorldObject* target;
 
-	float3 startpos;
-	float3 targetPos;
+	unsigned int weaponDefID;
 
 	int ttl;
 	int bounces;
+
 	bool keepBouncing;
+	/// true if we are an interceptable projectile
+	// and an interceptor projectile is on the way
+	bool targeted;
+
+	float3 startpos;
+	float3 targetPos;
 };
 
 #endif /* WEAPON_PROJECTILE_H */

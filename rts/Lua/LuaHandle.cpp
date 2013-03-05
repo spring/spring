@@ -1367,7 +1367,7 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 
 	const CUnit* owner = p->owner();
 	const CWeaponProjectile* wp = p->weapon? static_cast<const CWeaponProjectile*>(p): NULL;
-	const WeaponDef* wd = p->weapon? wp->weaponDef: NULL;
+	const WeaponDef* wd = p->weapon? wp->GetWeaponDef(): NULL;
 
 	// if this weapon-type is not being watched, bail
 	if (p->weapon && (wd == NULL || !watchWeaponDefs[wd->id]))
@@ -1400,7 +1400,7 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 	if (!p->weapon && !p->piece) return;
 	if (p->weapon) {
 		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
-		const WeaponDef* wd = wp->weaponDef;
+		const WeaponDef* wd = wp->GetWeaponDef();
 
 		// if this weapon-type is not being watched, bail
 		if (wd == NULL || !watchWeaponDefs[wd->id]) return;

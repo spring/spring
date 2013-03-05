@@ -10,7 +10,6 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Rendering/Colors.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/Models/IModelParser.h"
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
@@ -30,46 +29,53 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(target),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(startpos),
-	CR_MEMBER(colorTeam),
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
 	CR_MEMBER(keepBouncing),
 	CR_MEMBER(weaponDefID),
-	CR_MEMBER(cegID),
 	CR_RESERVED(15),
 	CR_POSTLOAD(PostLoad)
 ));
 
 CWeaponProjectile::CWeaponProjectile(): CProjectile()
-{
-	targeted = false;
-	weaponDef = NULL;
-	target = NULL;
-	projectileType = WEAPON_BASE_PROJECTILE;
-	ttl = 0;
-	colorTeam = 0;
-	bounces = 0;
-	keepBouncing = true;
-	weaponDefID = 0;
-	cegID = -1U;
-}
+	, weaponDef(NULL)
+	, target(NULL)
 
+	, weaponDefID(0)
+
+	, ttl(0)
+	, bounces(0)
+
+	, keepBouncing(true)
+	, targeted(false)
+{
+}
 
 CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool isRay)
 	: CProjectile(params.pos, params.speed, params.owner, true, true, false)
-	, targeted(false)
+
 	, weaponDef(params.weaponDef)
 	, target(params.target)
-	, targetPos(params.end)
-	, weaponDefID(params.weaponDef? params.weaponDef->id: -1U)
-	, cegID(-1U)
-	, colorTeam(0)
-	, startpos(params.pos)
+
+	, weaponDefID(-1u)
+
 	, ttl(params.ttl)
 	, bounces(0)
+
 	, keepBouncing(true)
+	, targeted(false)
+
+	, startpos(params.pos)
+	, targetPos(params.end)
 {
 	assert(weaponDef != NULL);
+
+	projectileType = WEAPON_BASE_PROJECTILE;
+
+	collisionFlags = weaponDef->collisionFlags;
+	weaponDefID = params.weaponDef->id;
+	alwaysVisible = weaponDef->visuals.alwaysVisible;
+	ignoreWater = weaponDef->waterweapon;
 
 	if (isRay) {
 		pos = (startpos + targetPos) * 0.5f;
@@ -78,30 +84,26 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 		drawRadius = startpos.distance(targetPos);
 	}
 	
-	projectileType = WEAPON_BASE_PROJECTILE;
-
-	if (params.owner) {
-		colorTeam = params.owner->team;
-	}
-
-	CSolidObject* so = dynamic_cast<CSolidObject*>(target);
-	if (so) {
+	CSolidObject* so = NULL;
+	CWeaponProjectile* po = NULL;
+	
+	if ((so = dynamic_cast<CSolidObject*>(target)) != NULL) {
 		AddDeathDependence(so, DEPENDENCE_WEAPONTARGET);
 	}
-
-	CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
-	if (po) {
-		if (weaponDef->interceptSolo)
-			po->targeted = true;
+	if ((po = dynamic_cast<CWeaponProjectile*>(target)) != NULL) {
+		po->SetBeingIntercepted(po->IsBeingIntercepted() || weaponDef->interceptSolo);
 		AddDeathDependence(po, DEPENDENCE_INTERCEPTTARGET);
 	}
 
-	alwaysVisible = weaponDef->visuals.alwaysVisible;
-	ignoreWater = weaponDef->waterweapon;
+	if (params.model != NULL) {
+		model = params.model;
+	} else {
+		model = weaponDef->LoadModel();
+	}
 
-	model = weaponDef->LoadModel();
-
-	collisionFlags = weaponDef->collisionFlags;
+	if (params.owner != NULL) {
+		teamID = params.owner->team;
+	}
 
 	ph->AddProjectile(this);
 	ASSERT_SYNCED(id);
@@ -116,12 +118,6 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 		interceptHandler.AddInterceptTarget(this, targetPos);
 }
 
-
-CWeaponProjectile::~CWeaponProjectile()
-{
-}
-
-
 void CWeaponProjectile::Collision()
 {
 	Collision((CFeature*)NULL);
@@ -133,53 +129,51 @@ void CWeaponProjectile::Collision(CFeature* feature)
 		feature->StartFire();
 	}
 
-	{
-		float3 impactPos = pos;
-		float3 impactDir = speed;
+	float3 impactPos = pos;
+	float3 impactDir = speed;
 
-		switch(projectileType) {
-			case WEAPON_BEAMLASER_PROJECTILE:
-			case WEAPON_LARGEBEAMLASER_PROJECTILE:
-			case WEAPON_LIGHTNING_PROJECTILE:
-			{
-				impactPos = feature ? feature->pos : targetPos;
-				impactDir = (targetPos - startpos);
-			} break;
-		}
-
-		const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
-			weaponDef->damages:
-			weaponDefHandler->DynamicDamages(
-				weaponDef->damages,
-				startpos,
-				impactPos,
-				(weaponDef->dynDamageRange > 0.0f)?
-					weaponDef->dynDamageRange:
-					weaponDef->range,
-				weaponDef->dynDamageExp, weaponDef->dynDamageMin,
-				weaponDef->dynDamageInverted
-			);
-
-		const CGameHelper::ExplosionParams params = {
-			impactPos,
-			impactDir.SafeNormalize(),
-			damageArray,
-			weaponDef,
-			owner(),
-			NULL,                                             // hitUnit
-			feature,
-			weaponDef->craterAreaOfEffect,
-			weaponDef->damageAreaOfEffect,
-			weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed,
-			weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
-			weaponDef->impactOnly,
-			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
-			true                                              // damgeGround
-		};
-
-		helper->Explosion(params);
+	switch (projectileType) {
+		case WEAPON_BEAMLASER_PROJECTILE:
+		case WEAPON_LARGEBEAMLASER_PROJECTILE:
+		case WEAPON_LIGHTNING_PROJECTILE:
+		{
+			impactPos = feature ? feature->pos : targetPos;
+			impactDir = (targetPos - startpos);
+		} break;
 	}
+
+	const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
+		weaponDef->damages:
+		weaponDefHandler->DynamicDamages(
+			weaponDef->damages,
+			startpos,
+			impactPos,
+			(weaponDef->dynDamageRange > 0.0f)?
+				weaponDef->dynDamageRange:
+				weaponDef->range,
+			weaponDef->dynDamageExp, weaponDef->dynDamageMin,
+			weaponDef->dynDamageInverted
+		);
+
+	const CGameHelper::ExplosionParams params = {
+		impactPos,
+		impactDir.SafeNormalize(),
+		damageArray,
+		weaponDef,
+		owner(),
+		NULL,                                             // hitUnit
+		feature,
+		weaponDef->craterAreaOfEffect,
+		weaponDef->damageAreaOfEffect,
+		weaponDef->edgeEffectiveness,
+		weaponDef->explosionSpeed,
+		weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
+		weaponDef->impactOnly,
+		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
+		true                                              // damgeGround
+	};
+
+	helper->Explosion(params);
 
 	if (!weaponDef->noExplode || TraveledRange()) {
 		CProjectile::Collision();
@@ -188,53 +182,51 @@ void CWeaponProjectile::Collision(CFeature* feature)
 
 void CWeaponProjectile::Collision(CUnit* unit)
 {
-	{
-		float3 impactPos = pos;
-		float3 impactDir = speed;
+	float3 impactPos = pos;
+	float3 impactDir = speed;
 
-		switch(projectileType) {
-			case WEAPON_BEAMLASER_PROJECTILE:
-			case WEAPON_LARGEBEAMLASER_PROJECTILE:
-			case WEAPON_LIGHTNING_PROJECTILE:
-			{
-				impactPos = unit->pos;
-				impactDir = (targetPos - startpos);
-			} break;
-		}
-
-		const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
-			weaponDef->damages:
-			weaponDefHandler->DynamicDamages(
-				weaponDef->damages,
-				startpos,
-				impactPos,
-				(weaponDef->dynDamageRange > 0.0f)?
-					weaponDef->dynDamageRange:
-					weaponDef->range,
-				weaponDef->dynDamageExp, weaponDef->dynDamageMin,
-				weaponDef->dynDamageInverted
-			);
-
-		const CGameHelper::ExplosionParams params = {
-			impactPos,
-			impactDir.SafeNormalize(),
-			damageArray,
-			weaponDef,
-			owner(),
-			unit,
-			NULL,                                            // hitFeature
-			weaponDef->craterAreaOfEffect,
-			weaponDef->damageAreaOfEffect,
-			weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed,
-			weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
-			weaponDef->impactOnly,
-			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
-			true                                              // damageGround
-		};
-
-		helper->Explosion(params);
+	switch (projectileType) {
+		case WEAPON_BEAMLASER_PROJECTILE:
+		case WEAPON_LARGEBEAMLASER_PROJECTILE:
+		case WEAPON_LIGHTNING_PROJECTILE:
+		{
+			impactPos = unit->pos;
+			impactDir = (targetPos - startpos);
+		} break;
 	}
+
+	const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
+		weaponDef->damages:
+		weaponDefHandler->DynamicDamages(
+			weaponDef->damages,
+			startpos,
+			impactPos,
+			(weaponDef->dynDamageRange > 0.0f)?
+				weaponDef->dynDamageRange:
+				weaponDef->range,
+			weaponDef->dynDamageExp, weaponDef->dynDamageMin,
+			weaponDef->dynDamageInverted
+		);
+
+	const CGameHelper::ExplosionParams params = {
+		impactPos,
+		impactDir.SafeNormalize(),
+		damageArray,
+		weaponDef,
+		owner(),
+		unit,
+		NULL,                                            // hitFeature
+		weaponDef->craterAreaOfEffect,
+		weaponDef->damageAreaOfEffect,
+		weaponDef->edgeEffectiveness,
+		weaponDef->explosionSpeed,
+		weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
+		weaponDef->impactOnly,
+		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
+		true                                              // damageGround
+	};
+
+	helper->Explosion(params);
 
 	if (!weaponDef->noExplode || TraveledRange()) {
 		CProjectile::Collision();
@@ -258,7 +250,7 @@ void CWeaponProjectile::UpdateInterception()
 	if (!po)
 		return;
 
-	switch(projectileType) {
+	switch (projectileType) {
 		case WEAPON_BEAMLASER_PROJECTILE:
 		case WEAPON_LARGEBEAMLASER_PROJECTILE:
 		case WEAPON_LIGHTNING_PROJECTILE:
@@ -324,7 +316,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 
 				if (weaponDef->bounceExplosionGenerator) {
 					weaponDef->bounceExplosionGenerator->Explosion(
-						-1U, pos, speed.Length(), 1, owner(), 1, NULL, normal
+						-1u, pos, speed.Length(), 1, owner(), 1, NULL, normal
 					);
 				}
 			}
@@ -356,11 +348,10 @@ void CWeaponProjectile::DependentDied(CObject* o)
 void CWeaponProjectile::PostLoad()
 {
 	weaponDef = weaponDefHandler->GetWeaponDefByID(weaponDefID);
+	model = weaponDef->LoadModel();
 
 //	if(weaponDef->interceptedByShieldType)
 //		interceptHandler.AddShieldInterceptableProjectile(this);
-
-	model = weaponDef->LoadModel();
 
 //	collisionFlags = weaponDef->collisionFlags;
 }

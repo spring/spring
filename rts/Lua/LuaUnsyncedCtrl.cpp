@@ -1252,9 +1252,8 @@ static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const c
 
 			if (lua_istable(L, -1)) {
 				float array[3] = {0.0f, 0.0f, 0.0f};
-				const int size = LuaUtils::ParseFloatArray(L, -1, array, 3);
 
-				if (size == 3) {
+				if (LuaUtils::ParseFloatArray(L, -1, array, 3) == 3) {
 					if (key == "position") {
 						light.SetPosition(array);
 					} else if (key == "direction") {

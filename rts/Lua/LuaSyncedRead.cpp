@@ -4539,10 +4539,10 @@ int LuaSyncedRead::GetProjectileName(lua_State* L)
 	if (pro->weapon) {
 		const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
 
-		if (wpro != NULL && wpro->weaponDef != NULL) {
+		if (wpro != NULL && wpro->GetWeaponDef() != NULL) {
 			// maybe CWeaponProjectile derivatives
 			// should have actual names themselves?
-			lua_pushsstring(L, wpro->weaponDef->name);
+			lua_pushsstring(L, wpro->GetWeaponDef()->name);
 			return 1;
 		}
 	}

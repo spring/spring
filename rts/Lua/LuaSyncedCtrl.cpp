@@ -27,6 +27,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ITreeDrawer.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -353,9 +354,8 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 
 			if (lua_istable(L, -1)) {
 				float array[3] = {0.0f, 0.0f, 0.0f};
-				const int size = LuaUtils::ParseFloatArray(L, -1, array, 3);
 
-				if (size == 3) {
+				if (LuaUtils::ParseFloatArray(L, -1, array, 3) == 3) {
 				    if (key == "pos") {
 						params.pos = array;
 					} else if (key == "end") {
@@ -385,6 +385,14 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 					params.startAlpha = lua_tofloat(L, -1);
 				} else if (key == "endAlpha") {
 					params.endAlpha = lua_tofloat(L, -1);
+				}
+
+				continue;
+			}
+
+			if (lua_isstring(L, -1)) {
+				if (key == "model") {
+					params.model = modelParser->Load3DModel(lua_tostring(L, -1));
 				}
 
 				continue;
@@ -2844,13 +2852,13 @@ int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 	if (proj->weapon) {
 		CWeaponProjectile* wproj = static_cast<CWeaponProjectile*>(proj);
 		if (wproj != NULL) {
-			wproj->cegID = gCEG->Load(explGenHandler, luaL_checkstring(L, 2));
+			wproj->SetCustomExplosionGeneratorID(gCEG->Load(explGenHandler, luaL_checkstring(L, 2)));
 		}
 	}
 	if (proj->piece) {
 		CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
 		if (pproj != NULL) {
-			pproj->cegID = gCEG->Load(explGenHandler, luaL_checkstring(L, 2));
+			pproj->SetCustomExplosionGeneratorID(gCEG->Load(explGenHandler, luaL_checkstring(L, 2)));
 		}
 	}
 
