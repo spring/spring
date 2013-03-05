@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(ImplicitConversions)
 	ENTER_SYNCED_CODE();
 
 	SyncedSshort ss = 4;
-	SyncedSlong sl = 3;
+	SyncedSchar sl = 3;
 
 	(void)(ss + sl);
 
