@@ -66,6 +66,7 @@ class CAssParser: public IModelParser
 {
 public:
 	S3DModel* Load(const std::string& modelFileName);
+	ModelType GetType() const { return MODELTYPE_ASS; }
 
 private:
 	static SAssPiece* LoadPiece(SAssModel* model, aiNode* node, const LuaTable& metaTable);

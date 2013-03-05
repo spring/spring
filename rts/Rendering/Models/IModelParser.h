@@ -14,8 +14,9 @@
 class IModelParser
 {
 public:
-	virtual S3DModel* Load(const std::string& name) = 0;
 	virtual ~IModelParser() {}
+	virtual S3DModel* Load(const std::string& name) = 0;
+	virtual ModelType GetType() const = 0;
 };
 
 class C3DModelLoader

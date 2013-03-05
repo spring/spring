@@ -52,6 +52,7 @@ class CS3OParser: public IModelParser
 {
 public:
 	S3DModel* Load(const std::string& name);
+	ModelType GetType() const { return MODELTYPE_S3O; }
 
 private:
 	SS3OPiece* LoadPiece(S3DModel*, SS3OPiece*, unsigned char* buf, int offset);
