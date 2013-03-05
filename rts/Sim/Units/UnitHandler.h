@@ -38,7 +38,6 @@ public:
 	void DeleteUnit(CUnit* unit);
 	void DeleteUnitNow(CUnit* unit);
 	bool AddUnit(CUnit* unit);
-	void Serialize(creg::ISerializer& s) {}
 	void PostLoad();
 
 	bool CanAddUnit(int id) const {

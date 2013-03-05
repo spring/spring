@@ -50,8 +50,7 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(unitsToBeRemoved),
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(unitsByDefs),
-	CR_POSTLOAD(PostLoad),
-	CR_SERIALIZER(Serialize)
+	CR_POSTLOAD(PostLoad)
 ));
 
 
@@ -418,7 +417,7 @@ float CUnitHandler::GetBuildHeight(const float3& pos, const UnitDef* unitdef, bo
 
 	// find the average height of the footprint-border squares
 	float avgH = sumBorderSquareHeight / numBorderSquares;
-	
+
 	// and clamp it to [minH, maxH] if necessary
 	if (avgH < minH && minH < maxH) { avgH = (minH + 0.01f); }
 	if (avgH > maxH && maxH > minH) { avgH = (maxH - 0.01f); }
