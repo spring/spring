@@ -101,8 +101,16 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 		model = weaponDef->LoadModel();
 	}
 
-	if (params.owner != NULL) {
-		teamID = params.owner->team;
+	if (params.owner == NULL) {
+		// the else-case (default) is handled in CProjectile::Init
+		ownerID = params.ownerID;
+		teamID = params.teamID;
+	}
+
+	if (params.cegID != -1u) {
+		cegID = params.cegID;
+	} else {
+		cegID = gCEG->Load(explGenHandler, weaponDef->cegTag);
 	}
 
 	ph->AddProjectile(this);

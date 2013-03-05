@@ -38,8 +38,6 @@ CFlameProjectile::CFlameProjectile(const ProjectileParams& params): CWeaponProje
 
 		physLife = 1.0f / weaponDef->duration;
 	}
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 void CFlameProjectile::Collision()

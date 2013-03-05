@@ -18,6 +18,10 @@ struct ProjectileParams {
 		, model(NULL)
 		, weaponDef(NULL)
 
+		, ownerID(-1u)
+		, teamID(-1u)
+		, cegID(-1u)
+
 		, ttl(0)
 		, gravity(0.0f)
 		, tracking(0.0f)
@@ -40,6 +44,10 @@ struct ProjectileParams {
 	S3DModel* model;
 
 	const WeaponDef* weaponDef;
+
+	unsigned int ownerID;
+	unsigned int teamID;
+	unsigned int cegID;
 
 	int ttl;
 	float gravity;

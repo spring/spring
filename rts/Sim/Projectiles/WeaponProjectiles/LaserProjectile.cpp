@@ -67,8 +67,6 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 	tracefile << "New laser: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 void CLaserProjectile::Update()

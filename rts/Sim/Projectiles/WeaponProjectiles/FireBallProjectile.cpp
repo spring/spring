@@ -50,8 +50,6 @@ CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeapo
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 	}
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 void CFireBallProjectile::Draw()

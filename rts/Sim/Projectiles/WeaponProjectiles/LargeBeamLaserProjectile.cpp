@@ -66,8 +66,6 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& par
 	}
 
 	SetRadiusAndHeight(pos.distance(targetPos), 0.0f);
-
-	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }
 
 
