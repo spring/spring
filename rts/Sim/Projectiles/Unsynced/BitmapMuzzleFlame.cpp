@@ -13,6 +13,9 @@ CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, );
 
 CR_REG_METADATA(CBitmapMuzzleFlame,
 (
+	CR_MEMBER(invttl),
+	CR_MEMBER(life),
+	CR_MEMBER(createTime),
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(sideTexture),
 		CR_MEMBER(frontTexture),
@@ -23,8 +26,7 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(ttl),
 		CR_MEMBER(frontOffset),
-	CR_MEMBER_ENDFLAG(CM_Config),
-	CR_RESERVED(8)
+	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
 CBitmapMuzzleFlame::CBitmapMuzzleFlame()

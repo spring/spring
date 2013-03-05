@@ -36,7 +36,8 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(speed),
 	CR_MEMBER_ENDFLAG(CM_Config),
-	CR_RESERVED(8)
+
+	CR_IGNORED(quadFieldCellIter) // runtime. set in ctor
 ));
 
 
@@ -173,7 +174,7 @@ int CProjectile::DrawArray()
 {
 	va->DrawArrayTC(GL_QUADS);
 
-	// draw-index gets divided by 24 because each element is 
+	// draw-index gets divided by 24 because each element is
 	// 12 + 4 + 4 + 4 = 24 bytes in size (pos + u + v + color)
 	// for each type of "projectile"
 	int idx = (va->drawIndex() / 24);

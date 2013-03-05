@@ -15,8 +15,16 @@ CR_REG_METADATA(CWorldObject, (
 		CR_MEMBER(useAirLos),
 		CR_MEMBER(alwaysVisible),
 	CR_MEMBER_ENDFLAG(CM_Config),
-	CR_RESERVED(16))
-);
+	CR_IGNORED(model), //loaded in PostLoad
+	CR_POSTLOAD(PostLoad)
+));
+
+
+void CWorldObject::PostLoad()
+{
+	//FIXME load `model` here
+	assert(false);
+}
 
 
 void CWorldObject::SetRadiusAndHeight(S3DModel* model)

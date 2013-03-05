@@ -48,7 +48,7 @@ CR_REG_METADATA_SUB(CWaitCommandsAI,Wait, (
 					CR_MEMBER(code),
 					CR_MEMBER(key),
 					CR_MEMBER(valid),
-					CR_RESERVED(16),
+					//CR_MEMBER(deadTime), FIXME runtime clock relative time!
 					CR_POSTLOAD(PostLoad)
 					));
 

@@ -24,11 +24,20 @@ CR_BIND_DERIVED(CStandardGroundFlash, CGroundFlash, );
 CR_REG_METADATA(CStandardGroundFlash, (
  	CR_MEMBER_BEGINFLAG(CM_Config),
  		CR_MEMBER(flashSize),
-		CR_MEMBER(circleAlpha),
 		CR_MEMBER(flashAlpha),
 		CR_MEMBER(circleGrowth),
+		CR_MEMBER(circleAlpha),
 		CR_MEMBER(color),
-	CR_MEMBER_ENDFLAG(CM_Config)
+	CR_MEMBER_ENDFLAG(CM_Config),
+
+	CR_MEMBER(side1),
+	CR_MEMBER(side2),
+	CR_MEMBER(circleSize),
+	CR_MEMBER(flashAge),
+	CR_MEMBER(flashAgeSpeed),
+	CR_MEMBER(circleAlphaDec),
+	CR_MEMBER(color),
+	CR_MEMBER(ttl)
 ));
 
 CR_BIND_DERIVED(CSeismicGroundFlash, CGroundFlash, (ZeroVector, 1, 0, 1, 1, 1, ZeroVector));
@@ -83,7 +92,7 @@ CStandardGroundFlash::CStandardGroundFlash()
 	color[0] = 0;
 	color[1] = 0;
 	color[2] = 0;
-	
+
 	circleAlphaDec = 0.0f;
 	flashAgeSpeed = 0.0f;
 	flashAge = 0.0f;

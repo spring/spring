@@ -53,7 +53,11 @@ public:
 };
 
 CR_BIND(CGameStateCollector, );
-CR_REG_METADATA(CGameStateCollector, CR_SERIALIZER(Serialize));
+CR_REG_METADATA(CGameStateCollector, (
+	CR_MEMBER(mapName),
+	CR_MEMBER(modName),
+	CR_SERIALIZER(Serialize)
+));
 
 static void WriteString(std::ostream& s, std::string& str)
 {

@@ -13,7 +13,6 @@
 #include "System/Matrix44f.h"
 #include "System/Log/ILog.h"
 
-CR_BIND(CCollisionHandler, );
 
 unsigned int CCollisionHandler::numDiscTests = 0;
 unsigned int CCollisionHandler::numContTests = 0;
