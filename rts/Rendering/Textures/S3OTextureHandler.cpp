@@ -87,7 +87,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 			tex1bm.mem[0] = 255;
 			tex1bm.mem[1] =   0;
 			tex1bm.mem[2] =   0;
-			tex1bm.mem[3] = 255;
+			tex1bm.mem[3] = 255; // team-color
 		}
 	}
 	if (model->flipTexY) tex1bm.ReverseYAxis();
@@ -109,7 +109,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 			tex2bm.mem[0] =   0; // self-illum
 			tex2bm.mem[1] =   0; // spec+refl
 			tex2bm.mem[2] =   0; // unused
-			tex2bm.mem[3] = 255; // team-color
+			tex2bm.mem[3] = 255; // transparency
 		}
 	}
 	if (model->flipTexY) tex2bm.ReverseYAxis();
