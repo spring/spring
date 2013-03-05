@@ -248,7 +248,7 @@ float3 COrbitController::GetOrbitPos() const
 	float cx = distance;
 	float cy = 0.0f;
 	float cz = 0.0f;
-	float tx = cx;
+	float tx;
 
 	tx = cx;
 	cx = cx * math::cos(beta) + cy * math::sin(beta);
