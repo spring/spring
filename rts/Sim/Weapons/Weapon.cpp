@@ -1324,7 +1324,7 @@ void CWeapon::UpdateInterceptTarget()
 		CWeaponProjectile* p = pi->second;
 
 		// set by CWeaponProjectile's ctor when the interceptor fires
-		if (p->targeted)
+		if (p->IsBeingIntercepted())
 			continue;
 		if ((curInterceptTargetDistSq = (p->pos - weaponPos).SqLength()) >= minInterceptTargetDistSq)
 			continue;

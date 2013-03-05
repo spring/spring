@@ -24,7 +24,9 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(deleteMe),
 	CR_MEMBER(castShadow), // unsynced
 
-	CR_MEMBER(ownerId),
+	CR_MEMBER(ownerID),
+	CR_MEMBER(teamID),
+	CR_MEMBER(cegID),
 	CR_MEMBER(projectileType),
 	CR_MEMBER(collisionFlags),
 
@@ -46,39 +48,52 @@ bool CProjectile::inArray = false;
 CVertexArray* CProjectile::va = NULL;
 
 
-CProjectile::CProjectile():
-	synced(false),
-	weapon(false),
-	piece(false),
-	luaMoveCtrl(false),
-	checkCol(true),
-	ignoreWater(false),
-	deleteMe(false),
-	castShadow(false),
-	speed(ZeroVector),
-	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	ownerId(-1),
-	projectileType(-1U),
-	collisionFlags(0)
+CProjectile::CProjectile()
+	: synced(false)
+	, weapon(false)
+	, piece(false)
+
+	, luaMoveCtrl(false)
+	, checkCol(true)
+	, ignoreWater(false)
+	, deleteMe(false)
+	, castShadow(false)
+
+	, speed(ZeroVector)
+	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
+
+	, ownerID(-1u)
+	, teamID(-1u)
+	, cegID(-1u)
+
+	, projectileType(-1u)
+	, collisionFlags(0)
 {
 	GML::GetTicks(lastProjUpdate);
 }
 
-CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece):
-	CExpGenSpawnable(pos),
-	synced(isSynced),
-	weapon(isWeapon),
-	piece(isPiece),
-	luaMoveCtrl(false),
-	checkCol(true),
-	ignoreWater(false),
-	deleteMe(false),
-	castShadow(false),
-	speed(spd),
-	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	ownerId(-1),
-	projectileType(-1U),
-	collisionFlags(0)
+CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece)
+	: CExpGenSpawnable(pos)
+
+	, synced(isSynced)
+	, weapon(isWeapon)
+	, piece(isPiece)
+
+	, luaMoveCtrl(false)
+	, checkCol(true)
+	, ignoreWater(false)
+	, deleteMe(false)
+	, castShadow(false)
+
+	, speed(spd)
+	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
+
+	, ownerID(-1u)
+	, teamID(-1u)
+	, cegID(-1u)
+
+	, projectileType(-1u)
+	, collisionFlags(0)
 {
 	Init(ZeroVector, owner);
 	GML::GetTicks(lastProjUpdate);
@@ -101,7 +116,8 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 {
 	if (owner != NULL) {
 		// must be set before the AddProjectile call
-		ownerId = owner->id;
+		ownerID = owner->id;
+		teamID = owner->team;
 	}
 	if (!(weapon || piece)) {
 		// NOTE:
@@ -169,9 +185,9 @@ int CProjectile::DrawArray()
 }
 
 CUnit* CProjectile::owner() const {
-	// Note: this death dependency optimization using "ownerId" is logically flawed,
+	// Note: this death dependency optimization using "ownerID" is logically flawed,
 	//  since ids are being reused it could return a unit that is not the original owner
-	CUnit* unit = uh->GetUnit(ownerId);
+	CUnit* unit = uh->GetUnit(ownerID);
 
 	// make volatile
 	if (GML::SimEnabled())

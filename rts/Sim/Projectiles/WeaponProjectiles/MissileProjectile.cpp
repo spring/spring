@@ -76,16 +76,26 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 	dir = (curSpeed > 0.0f) ? speed / curSpeed : ZeroVector;
 	oldDir = dir;
 
+	if (model != NULL) {
+		SetRadiusAndHeight(model);
+	}
 	if (weaponDef != NULL) {
-		if ((model = weaponDef->LoadModel()) != NULL) {
-			SetRadiusAndHeight(model);
-		}
-
 		maxSpeed = weaponDef->projectilespeed;
 		areaOfEffect = weaponDef->damageAreaOfEffect;
 
 		isDancing = (weaponDef->dance > 0);
 		isWobbling = (weaponDef->wobble > 0);
+
+		if (weaponDef->trajectoryHeight > 0.0f) {
+			const float dist = pos.distance(targetPos);
+
+			assert(maxSpeed > 0.0f);
+			assert(extraHeightTime > 0);
+
+			extraHeight = (dist * weaponDef->trajectoryHeight);
+			extraHeightTime = int(std::max(dist, maxSpeed) / maxSpeed);
+			extraHeightDecay = extraHeight / extraHeightTime;
+		}
 	}
 
 	drawRadius = radius + maxSpeed * 8;
@@ -108,18 +118,6 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 	if (u != NULL) {
 		u->IncomingMissile(this);
 	}
-
-	if ((weaponDef) && (weaponDef->trajectoryHeight > 0)) {
-		float dist = pos.distance(targetPos);
-		extraHeight = (dist * weaponDef->trajectoryHeight);
-
-		dist = std::max(dist, maxSpeed);
-
-		assert(maxSpeed > 0.0f);
-		extraHeightTime = (int)(dist / maxSpeed);
-		extraHeightDecay = extraHeight / extraHeightTime;
-	}
-
 
 	cegID = gCEG->Load(explGenHandler, (weaponDef != NULL)? weaponDef->cegTag: "");
 }

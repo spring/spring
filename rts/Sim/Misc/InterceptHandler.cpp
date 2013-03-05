@@ -47,7 +47,7 @@ void CInterceptHandler::Update(bool forced) {
 
 		for (pit = interceptables.begin(); pit != interceptables.end(); ++pit) {
 			CWeaponProjectile* p = pit->second;
-			const WeaponDef* pDef = p->weaponDef;
+			const WeaponDef* pDef = p->GetWeaponDef();
 
 			if ((pDef->targetable & wDef->interceptor) == 0)
 				continue;
@@ -142,7 +142,8 @@ void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
 {
 	for (std::list<CPlasmaRepulser*>::iterator wi = repulsors.begin(); wi != repulsors.end(); ++wi) {
 		CPlasmaRepulser* shield = *wi;
-		if (shield->weaponDef->shieldInterceptType & p->weaponDef->interceptedByShieldType) {
+
+		if (shield->weaponDef->shieldInterceptType & p->GetWeaponDef()->interceptedByShieldType) {
 			shield->NewProjectile(p);
 		}
 	}

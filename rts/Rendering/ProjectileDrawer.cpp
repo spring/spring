@@ -774,7 +774,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 			case WEAPON_LASER_PROJECTILE:
 			case WEAPON_TORPEDO_PROJECTILE: {
 				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->colorTeam);
+					unitDrawer->SetTeamColour(wp->GetTeamID());
 				}
 
 				float3 dir(wp->speed);
@@ -788,7 +788,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 
 			case WEAPON_MISSILE_PROJECTILE: {
 				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->colorTeam);
+					unitDrawer->SetTeamColour(wp->GetTeamID());
 				}
 
 				SET_TRANSFORM_VECTORS(wp->dir);
@@ -800,7 +800,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 
 			case WEAPON_STARBURST_PROJECTILE: {
 				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->colorTeam);
+					unitDrawer->SetTeamColour(wp->GetTeamID());
 				}
 
 				SET_TRANSFORM_VECTORS(wp->dir);
@@ -821,7 +821,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		const CPieceProjectile* pp = dynamic_cast<const CPieceProjectile*>(p);
 
 		if (!shadowPass) {
-			unitDrawer->SetTeamColour(pp->colorTeam);
+			unitDrawer->SetTeamColour(pp->GetTeamID());
 		}
 
 		if (pp->alphaThreshold != 0.1f) {
