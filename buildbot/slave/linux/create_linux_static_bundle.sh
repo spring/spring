@@ -2,7 +2,7 @@
 set -e
 . buildbot/slave/prepare.sh
 
-FILEPREFIX="linux-static"
+FILEPREFIX="${OUTPUTDIR}-static"
 
 DEST=${TMP_BASE}/inst
 INSTALLDIR=${DEST}
