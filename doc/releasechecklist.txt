@@ -60,7 +60,7 @@ Release Time
 	* spring_${REL_VERS}_src.tar.gz
 	* spring_${REL_VERS}_src.tar.lzma
 	Upload them to SF (replace USER with your SF account name):
-		rsync --progress -h -e ssh spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
+		rsync --progress -h spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
 10) Post the news post.
 11) download page mirror links:
     Ask someone with access to http://springrts.com/dl/ to put spring_${REL_VERS}* stuff there.
