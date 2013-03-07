@@ -7,6 +7,11 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/TimeProfiler.h"
 
+#ifdef SONAR_JAMMER_MAPS
+	#define SONAR_MAPS CR_MEMBER(sonarJammerMaps),
+#else
+	#define SONAR_MAPS
+#endif
 
 CR_BIND(CRadarHandler, (false));
 
@@ -27,9 +32,7 @@ CR_REG_METADATA(CRadarHandler, (
 	CR_MEMBER(airRadarMaps),
 	CR_MEMBER(sonarMaps),
 	CR_MEMBER(jammerMaps),
-#ifdef SONAR_JAMMER_MAPS
-	CR_MEMBER(sonarJammerMaps),
-#endif
+	SONAR_MAPS
 	CR_MEMBER(seismicMaps),
 	CR_MEMBER(commonJammerMap),
 	CR_MEMBER(commonSonarJammerMap)

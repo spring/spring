@@ -71,7 +71,7 @@ size_t BasicType::GetSize()
 		case crUShort: return sizeof(unsigned short);
 		case crChar:  return sizeof(char);
 		case crUChar: return sizeof(unsigned char);
-		case crInt64: return sizeof(int64_t);
+		case crInt64: return sizeof(boost::int64_t);
 		case crFloat: return sizeof(float);
 		case crDouble: return sizeof(double);
 		case crBool: return sizeof(bool);

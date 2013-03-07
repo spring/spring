@@ -2278,6 +2278,12 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	}
 }
 
+#ifdef USE_GML
+	#define LOD_MUTEX CR_MEMBER_UN(lodmutex),
+#else
+	#define LOD_MUTEX
+#endif
+
 CR_BIND_DERIVED(CUnit, CSolidObject, );
 CR_REG_METADATA(CUnit, (
 	CR_IGNORED(unitDef), //handled in PostLoad
@@ -2490,9 +2496,7 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER_UN(lastDrawFrame),
 //	CR_MEMBER_UN(lastUnitUpdate),
 
-#ifdef USE_GML
-	CR_MEMBER_UN(lodmutex),
-#endif
+	LOD_MUTEX
 
 	CR_MEMBER_UN(tooltip),
 
