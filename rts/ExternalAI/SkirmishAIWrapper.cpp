@@ -141,29 +141,29 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 		// fallback code to help the AI if it
 		// doesn't implement load/save support
 		Init();
-		for (size_t a = 0; a < uh->MaxUnits(); a++) {
-			if (!uh->units[a])
+		for (size_t a = 0; a < unitHandler->MaxUnits(); a++) {
+			if (!unitHandler->units[a])
 				continue;
 
-			if (uh->units[a]->team == teamId) {
+			if (unitHandler->units[a]->team == teamId) {
 				try {
 					UnitCreated(a, -1);
 				} CATCH_AI_EXCEPTION;
-				if (!uh->units[a]->beingBuilt)
+				if (!unitHandler->units[a]->beingBuilt)
 					try {
 						UnitFinished(a);
 					} CATCH_AI_EXCEPTION;
 			} else {
-				if ((uh->units[a]->allyteam == teamHandler->AllyTeam(teamId))
-						|| teamHandler->Ally(teamHandler->AllyTeam(teamId), uh->units[a]->allyteam)) {
+				if ((unitHandler->units[a]->allyteam == teamHandler->AllyTeam(teamId))
+						|| teamHandler->Ally(teamHandler->AllyTeam(teamId), unitHandler->units[a]->allyteam)) {
 					// do nothing
 				} else {
-					if (uh->units[a]->losStatus[teamHandler->AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS)) {
+					if (unitHandler->units[a]->losStatus[teamHandler->AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS)) {
 						try {
 							EnemyEnterRadar(a);
 						} CATCH_AI_EXCEPTION;
 					}
-					if (uh->units[a]->losStatus[teamHandler->AllyTeam(teamId)] & LOS_INLOS) {
+					if (unitHandler->units[a]->losStatus[teamHandler->AllyTeam(teamId)] & LOS_INLOS) {
 						try {
 							EnemyEnterLOS(a);
 						} CATCH_AI_EXCEPTION;
@@ -400,7 +400,7 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 	for (int i = 0; i < unitIds_size; ++i) {
 		unitIds[i] = selectedUnits.at(i);
 	}
-	const int cCommandId = extractAICommandTopic(&c, uh->MaxUnits());
+	const int cCommandId = extractAICommandTopic(&c, unitHandler->MaxUnits());
 
 	SPlayerCommandEvent evtData = {unitIds, unitIds_size, cCommandId, playerId};
 	ai->HandleEvent(EVENT_PLAYER_COMMAND, &evtData);

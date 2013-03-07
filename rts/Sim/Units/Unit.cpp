@@ -301,7 +301,7 @@ CUnit::~CUnit()
 		delete *wi;
 	}
 
-	qf->RemoveUnit(this);
+	quadField->RemoveUnit(this);
 	loshandler->DelayedFreeInstance(los);
 	los = NULL;
 	radarhandler->RemoveUnit(this);
@@ -379,8 +379,8 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	UpdateDirVectors(!upright);
 	UpdateMidAndAimPos();
 
-	uh->AddUnit(this);
-	qf->MovedUnit(this);
+	unitHandler->AddUnit(this);
+	quadField->MovedUnit(this);
 
 	hasRadarPos = false;
 
@@ -572,7 +572,7 @@ void CUnit::ForcedMove(const float3& newPos)
 		Block();
 	}
 
-	qf->MovedUnit(this);
+	quadField->MovedUnit(this);
 	loshandler->MoveUnit(this, false);
 	radarhandler->MoveUnit(this);
 }
@@ -1004,13 +1004,13 @@ void CUnit::SlowUpdate()
 		if (fireState >= FIRESTATE_FIREATWILL) {
 			std::vector<int> nearbyUnits;
 			if (unitDef->kamikazeUseLOS) {
-				helper->GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
+				CGameHelper::GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
 			} else {
-				helper->GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
+				CGameHelper::GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
 			}
 
 			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it) {
-				const CUnit* victim = uh->GetUnitUnsafe(*it);
+				const CUnit* victim = unitHandler->GetUnitUnsafe(*it);
 				const float3 dif = pos - victim->pos;
 
 				if (dif.SqLength() < Square(unitDef->kamikazeDist)) {
@@ -1313,7 +1313,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 	float3 interPos = synced ? pos : drawPos;
 
 	if (error && !synced && !gu->spectatingFullView) {
-		interPos += helper->GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
+		interPos += CGameHelper::GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
 	}
 
 	return CMatrix44f(interPos, -rightdir, updir, frontdir);
@@ -1416,7 +1416,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	// do not allow unit count violations due to team swapping
 	// (this includes unit captures)
-	if (uh->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit) {
+	if (unitHandler->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit) {
 		return false;
 	}
 
@@ -1439,7 +1439,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	eventHandler.UnitTaken(this, oldteam, newteam);
 	eoh->UnitCaptured(*this, oldteam, newteam);
 
-	qf->RemoveUnit(this);
+	quadField->RemoveUnit(this);
 	quads.clear();
 	loshandler->FreeInstance(los);
 	los = 0;
@@ -1470,8 +1470,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	team = newteam;
 	allyteam = teamHandler->AllyTeam(newteam);
 
-	uh->unitsByDefs[oldteam][unitDef->id].erase(this);
-	uh->unitsByDefs[newteam][unitDef->id].insert(this);
+	unitHandler->unitsByDefs[oldteam][unitDef->id].erase(this);
+	unitHandler->unitsByDefs[newteam][unitDef->id].insert(this);
 
 	neutral = false;
 
@@ -1479,7 +1479,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	losStatus[allyteam] = LOS_ALL_MASK_BITS |
 		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
-	qf->MovedUnit(this);
+	quadField->MovedUnit(this);
 	radarhandler->MoveUnit(this);
 
 	if (unitDef->isAirBase) {
@@ -2233,7 +2233,7 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 	}
 
 	if (wantCloak || (scriptCloak >= 1)) {
-		const CUnit* closestEnemy = helper->GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
+		const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
 		const float cloakCost = (speed.SqLength() > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
 
 		if (decloakDistance > 0.0f && closestEnemy != NULL) {

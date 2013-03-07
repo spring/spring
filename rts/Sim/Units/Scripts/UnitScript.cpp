@@ -522,7 +522,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		return;
 	}
 
-	if (ph->particleSaturation > 1.0f && sfxType < SFX_CEG) {
+	if (projectileHandler->particleSaturation > 1.0f && sfxType < SFX_CEG) {
 		// skip adding (unsynced!) particles when we have too many
 		return;
 	}
@@ -713,8 +713,8 @@ void CUnitScript::AttachUnit(int piece, int u)
 #ifndef _CONSOLE
 	CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
 
-	if (tu && uh->units[u]) {
-		tu->AttachUnit(uh->units[u], piece);
+	if (tu && unitHandler->units[u]) {
+		tu->AttachUnit(unitHandler->units[u], piece);
 	}
 #endif
 }
@@ -725,8 +725,8 @@ void CUnitScript::DropUnit(int u)
 #ifndef _CONSOLE
 	CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
 
-	if (tu && uh->units[u]) {
-		tu->DetachUnit(uh->units[u]);
+	if (tu && unitHandler->units[u]) {
+		tu->DetachUnit(unitHandler->units[u]);
 	}
 #endif
 }
@@ -821,8 +821,8 @@ void CUnitScript::Explode(int piece, int flags)
 			int newflags = PF_Fall; // if they don't fall they could live forever
 			if (flags & PF_Explode) { newflags |= PF_Explode; }
 			//if (flags & PF_Fall) { newflags |=  PF_Fall; }
-			if ((flags & PF_Smoke) && ph->particleSaturation < 1) { newflags |= PF_Smoke; }
-			if ((flags & PF_Fire) && ph->particleSaturation < 0.95f) { newflags |= PF_Fire; }
+			if ((flags & PF_Smoke) && projectileHandler->particleSaturation < 1) { newflags |= PF_Smoke; }
+			if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
 			if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 
 			//LOG_L(L_DEBUG, "Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
@@ -837,7 +837,7 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 {
 	const LocalModelPiece* lmp = pieces[piece];
 	const S3DModelPiece* omp = lmp->original;
-	const float pieceChance = 1.0f - (ph->currentParticles - (ph->maxParticles - 2000)) / 2000.0f;
+	const float pieceChance = 1.0f - (projectileHandler->currentParticles - (projectileHandler->maxParticles - 2000)) / 2000.0f;
 
 	if (pieceChance > 0.0f) {
 		omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed);
@@ -896,7 +896,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return int((unit->health / unit->maxHealth) * 100.0f);
 
-		const CUnit* u = uh->GetUnit(p1);
+		const CUnit* u = unitHandler->GetUnit(p1);
 
 		if (u == NULL)
 			return 0;
@@ -936,7 +936,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return PACKXZ(unit->pos.x, unit->pos.z);
 
-		const CUnit* u = uh->GetUnit(p1);
+		const CUnit* u = unitHandler->GetUnit(p1);
 
 		if (u == NULL)
 			return PACKXZ(0, 0);
@@ -947,7 +947,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return int(unit->pos.y * COBSCALE);
 
-		const CUnit* u = uh->GetUnit(p1);
+		const CUnit* u = unitHandler->GetUnit(p1);
 
 		if (u == NULL)
 			return 0;
@@ -958,7 +958,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return int(unit->radius * COBSCALE);
 
-		const CUnit* u = uh->GetUnit(p1);
+		const CUnit* u = unitHandler->GetUnit(p1);
 
 		if (u == NULL)
 			return 0;
@@ -1001,16 +1001,16 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case IN_WATER:
 		return (unit->pos.y < 0.0f) ? 1 : 0;
 	case MAX_ID:
-		return uh->MaxUnits()-1;
+		return unitHandler->MaxUnits()-1;
 	case MY_ID:
 		return unit->id;
 
 	case UNIT_TEAM: {
-		const CUnit* u = uh->GetUnit(p1);
+		const CUnit* u = unitHandler->GetUnit(p1);
 		return (u != NULL)? unit->team : 0;
 	}
 	case UNIT_ALLIED: {
-		const CUnit* u = uh->GetUnit(p1);
+		const CUnit* u = unitHandler->GetUnit(p1);
 
 		if (u != NULL) {
 			return teamHandler->Ally(unit->allyteam, u->allyteam) ? 1 : 0;
@@ -1019,7 +1019,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return 0;
 	}
 	case UNIT_BUILD_PERCENT_LEFT: {
-		const CUnit* u = uh->GetUnit(p1);
+		const CUnit* u = unitHandler->GetUnit(p1);
 
 		if (u != NULL) {
 			return int((1.0f - u->buildProgress) * 100);
@@ -1050,7 +1050,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return unit->heading;
 		}
 
-		const CUnit* u = uh->GetUnit(p1);
+		const CUnit* u = unitHandler->GetUnit(p1);
 
 		if (u != NULL) {
 			return u->heading;
@@ -1131,7 +1131,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0) {
 			return unit->unitDef->cobID;
 		} else {
-			const CUnit* u = uh->GetUnit(p1);
+			const CUnit* u = unitHandler->GetUnit(p1);
 			return ((u == NULL)? -1 : u->unitDef->cobID);
 		}
 	}
@@ -1199,7 +1199,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 		//! if targetID is 0, just sets weapon->haveUserTarget
 		//! to false (and targetType to None) without attacking
-		CUnit* target = (targetID > 0)? uh->GetUnit(targetID): NULL;
+		CUnit* target = (targetID > 0)? unitHandler->GetUnit(targetID): NULL;
 		return (weapon->AttackUnit(target, userTarget) ? 1 : 0);
 	}
 	case SET_WEAPON_GROUND_TARGET: {
@@ -1251,7 +1251,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return int((unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage) * COBSCALE);
 	case KILL_UNIT: {
 		//! ID 0 is reserved for the script's owner
-		CUnit* u = (p1 > 0)? uh->GetUnit(p1): this->unit;
+		CUnit* u = (p1 > 0)? unitHandler->GetUnit(p1): this->unit;
 
 		if (u == NULL) {
 			return 0;
@@ -1371,7 +1371,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			}
 			else if (p1 > 0) {
 				// get the unit var for another unit
-				const CUnit* u = uh->GetUnit(p1);
+				const CUnit* u = unitHandler->GetUnit(p1);
 
 				if (u != NULL && u->script != NULL) {
 					return u->script->unitVars[varID];
@@ -1381,7 +1381,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				// set the unit var for another unit
 				p1 = -p1;
 
-				CUnit* u = uh->GetUnit(p1);
+				CUnit* u = unitHandler->GetUnit(p1);
 
 				if (u != NULL && u->script != NULL) {
 					u->script->unitVars[varID] = p2;
@@ -1510,7 +1510,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case BUGGER_OFF: {
 			if (param != 0) {
-				helper->BuggerOff(unit->pos + unit->frontdir * unit->radius, unit->radius * 1.5f, true, false, unit->team, NULL);
+				CGameHelper::BuggerOff(unit->pos + unit->frontdir * unit->radius, unit->radius * 1.5f, true, false, unit->team, NULL);
 			}
 			break;
 		}
@@ -1692,8 +1692,8 @@ void CUnitScript::BenchmarkScript(CUnitScript* script)
 
 void CUnitScript::BenchmarkScript(const std::string& unitname)
 {
-	std::list<CUnit*>::iterator ui = uh->activeUnits.begin();
-	for (; ui != uh->activeUnits.end(); ++ui) {
+	std::list<CUnit*>::iterator ui = unitHandler->activeUnits.begin();
+	for (; ui != unitHandler->activeUnits.end(); ++ui) {
 		CUnit* unit = *ui;
 		if (unit->unitDef->name == unitname) {
 			BenchmarkScript(unit->script);

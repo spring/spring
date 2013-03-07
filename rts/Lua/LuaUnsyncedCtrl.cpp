@@ -260,9 +260,9 @@ static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, 
 
 	const ProjectileMapValPair* pp = NULL;
 	if (synced) {
-		pp = ph->GetMapPairBySyncedID(projID);
+		pp = projectileHandler->GetMapPairBySyncedID(projID);
 	} else {
-		pp = ph->GetMapPairByUnsyncedID(projID);
+		pp = projectileHandler->GetMapPairByUnsyncedID(projID);
 	}
 
 	return (pp) ? pp->first : NULL;
@@ -278,11 +278,11 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	}
 
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 
-	return uh->units[unitID];
+	return unitHandler->units[unitID];
 }
 
 
@@ -360,7 +360,7 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 	std::set<int>::const_iterator ui;
 
 	for (ui = drawCmdQueueUnits.begin(); ui != drawCmdQueueUnits.end(); ++ui) {
-		const CUnit* unit = uh->GetUnit(*ui);
+		const CUnit* unit = unitHandler->GetUnit(*ui);
 
 		if (unit == NULL || unit->commandAI == NULL) {
 			continue;

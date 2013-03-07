@@ -36,7 +36,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/Misc/QuadField.h" // for qf->GetFeaturesExact(pos, radius)
+#include "Sim/Misc/QuadField.h" // for quadField->GetFeaturesExact(pos, radius)
 #include "System/SafeCStrings.h"
 #include "System/myMath.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -111,7 +111,7 @@ static bool isControlledByLocalPlayer(int skirmishAIId) {
 static const CUnit* getUnit(int unitId) {
 
 	if (unitId < MAX_UNITS) {
-		return uh->units[unitId];
+		return unitHandler->units[unitId];
 	} else {
 		return NULL;
 	}
@@ -755,7 +755,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 		default: {
 			// check if it is a unit command
-			Command* c = static_cast<Command*>(newCommand(commandData, commandTopic, uh->MaxUnits()));
+			Command* c = static_cast<Command*>(newCommand(commandData, commandTopic, unitHandler->MaxUnits()));
 			if (c != NULL) { // it is a unit command
 				c->aiCommandId = commandId;
 				const SStopUnitCommand* cmd = static_cast<SStopUnitCommand*>(commandData);
@@ -3095,7 +3095,7 @@ EXPORT(int) skirmishAiCallback_Unit_getLimit(int skirmishAIId) {
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getMax(int skirmishAIId) {
-	return uh->MaxUnits();
+	return unitHandler->MaxUnits();
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getDef(int skirmishAIId, int unitId) {
@@ -3522,7 +3522,7 @@ EXPORT(int) skirmishAiCallback_Unit_getLastUserOrderFrame(int skirmishAIId, int 
 
 	if (!isControlledByLocalPlayer(skirmishAIId)) return -1;
 
-	return uh->units[unitId]->commandAI->lastUserCommand;
+	return unitHandler->units[unitId]->commandAI->lastUserCommand;
 }
 
 //########### END Unit
@@ -3585,8 +3585,8 @@ EXPORT(int) skirmishAiCallback_getTeamUnits(int skirmishAIId, int* unitIds, int 
 	int a = 0;
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
-	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin();
-			ui != uh->activeUnits.end(); ++ui) {
+	for (std::list<CUnit*>::iterator ui = unitHandler->activeUnits.begin();
+			ui != unitHandler->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
 		if (u->team == teamId) {
@@ -3777,7 +3777,7 @@ EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3,
 
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		// cheating
-		const std::vector<CFeature*>& fset = qf->GetFeaturesExact(pos_posF3, radius);
+		const std::vector<CFeature*>& fset = quadField->GetFeaturesExact(pos_posF3, radius);
 		const int featureIds_sizeReal = fset.size();
 
 		int featureIds_size = featureIds_sizeReal;

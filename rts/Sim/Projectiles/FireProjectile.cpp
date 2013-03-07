@@ -89,7 +89,7 @@ void CFireProjectile::Update()
 {
 	ttl--;
 	if (ttl > 0) {
-		if (ph->particleSaturation < 0.8f || (ph->particleSaturation < 1 && (gs->frameNum & 1))) {
+		if (projectileHandler->particleSaturation < 0.8f || (projectileHandler->particleSaturation < 1 && (gs->frameNum & 1))) {
 			//! unsynced code
 			SubParticle sub;
 			sub.age = 0;
@@ -112,13 +112,13 @@ void CFireProjectile::Update()
 		}
 		if (!(ttl & 31)) {
 			//! synced code
-			const std::vector<CFeature*>& f = qf->GetFeaturesExact(emitPos + wind.GetCurrentWind()*0.7f, emitRadius * 2);
+			const std::vector<CFeature*>& f = quadField->GetFeaturesExact(emitPos + wind.GetCurrentWind()*0.7f, emitRadius * 2);
 			for (std::vector<CFeature*>::const_iterator fi = f.begin(); fi != f.end(); ++fi) {
 				if (gs->randFloat() > 0.8f) {
 					(*fi)->StartFire();
 				}
 			}
-			const std::vector<CUnit*>& units = qf->GetUnitsExact(emitPos + wind.GetCurrentWind()*0.7f, emitRadius * 2);
+			const std::vector<CUnit*>& units = quadField->GetUnitsExact(emitPos + wind.GetCurrentWind()*0.7f, emitRadius * 2);
 			for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 				(*ui)->DoDamage(DamageArray(30), ZeroVector, NULL, -CSolidObject::DAMAGE_EXTSOURCE_FIRE);
 			}

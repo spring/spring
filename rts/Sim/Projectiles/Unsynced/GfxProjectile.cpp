@@ -45,15 +45,15 @@ CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeT
 	this->color[3] = 20;
 	drawRadius = 3;
 
-	if (ph) {
-		ph->currentNanoParticles += 1;
+	if (projectileHandler != NULL) {
+		projectileHandler->currentNanoParticles += 1;
 	}
 }
 
 CGfxProjectile::~CGfxProjectile()
 {
-	if (ph) {
-		ph->currentNanoParticles -= 1;
+	if (projectileHandler != NULL) {
+		projectileHandler->currentNanoParticles -= 1;
 	}
 }
 

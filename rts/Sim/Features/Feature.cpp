@@ -81,7 +81,7 @@ CFeature::~CFeature()
 		UnBlock();
 	}
 
-	qf->RemoveFeature(this);
+	quadField->RemoveFeature(this);
 
 	if (myFire) {
 		myFire->StopFire();
@@ -182,7 +182,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
 
 	featureHandler->AddFeature(this);
-	qf->AddFeature(this);
+	quadField->AddFeature(this);
 
 	// maybe should not be here, but it prevents crashes caused by team = -1
 	ChangeTeam(team);
@@ -392,7 +392,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	}
 
 	// remove from managers
-	qf->RemoveFeature(this);
+	quadField->RemoveFeature(this);
 
 	const float3 oldPos = pos;
 
@@ -403,7 +403,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	CalculateTransform();
 
 	// insert into managers
-	qf->AddFeature(this);
+	quadField->AddFeature(this);
 
 	if (blocking) {
 		Block();
@@ -448,13 +448,13 @@ bool CFeature::UpdatePosition()
 
 			if (speed.SqLength2D() > 0.01f) {
 				UnBlock();
-				qf->RemoveFeature(this);
+				quadField->RemoveFeature(this);
 
 				// update our forward speed (and quadfield
 				// position) if it is still greater than 0
 				Move3D(speed, true);
 
-				qf->AddFeature(this);
+				quadField->AddFeature(this);
 				Block();
 			} else {
 				speed.x = 0.0f;
@@ -555,7 +555,7 @@ bool CFeature::Update()
 	continueUpdating |= (def->geoThermal);
 
 	if (smokeTime != 0) {
-		if (!((gs->frameNum + id) & 3) && ph->particleSaturation < 0.7f) {
+		if (!((gs->frameNum + id) & 3) && projectileHandler->particleSaturation < 0.7f) {
 			new CSmokeProjectile(midPos + gu->RandVector() * radius * 0.3f,
 				gu->RandVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
 		}
@@ -589,7 +589,7 @@ void CFeature::EmitGeoSmoke()
 {
 	if ((gs->frameNum + id % 5) % 5 == 0) {
 		// Find the unit closest to the geothermal
-		const vector<CSolidObject*>& objs = qf->GetSolidsExact(pos, 0.0f);
+		const vector<CSolidObject*>& objs = quadField->GetSolidsExact(pos, 0.0f);
 		float bestDist = std::numeric_limits<float>::max();
 
 		CSolidObject* so = NULL;
@@ -616,7 +616,7 @@ void CFeature::EmitGeoSmoke()
 	const CUnit* u = dynamic_cast<CUnit*>(solidOnTop);
 
 	if (u == NULL || !u->unitDef->needGeo) {
-		if ((ph->particleSaturation < 0.7f) || (ph->particleSaturation < 1 && !(gs->frameNum & 3))) {
+		if ((projectileHandler->particleSaturation < 0.7f) || (projectileHandler->particleSaturation < 1 && !(gs->frameNum & 3))) {
 			const float3 pPos = gu->RandVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
 			const float3 pSpeed = (gu->RandVector() * 0.5f) + (UpVector * 2.0f);
 

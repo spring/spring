@@ -45,7 +45,7 @@ void CWreckProjectile::Update()
 
 	pos += speed;
 
-	if (!(gs->frameNum & (ph->particleSaturation < 0.5f? 1: 3))) {
+	if (!(gs->frameNum & (projectileHandler->particleSaturation < 0.5f? 1: 3))) {
 		CSmokeProjectile* hp = new CSmokeProjectile(pos, ZeroVector, 50, 4, 0.3f, owner(), 0.5f);
 		hp->size += 0.1f;
 	}

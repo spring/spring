@@ -37,7 +37,7 @@ public:
 	 * This will add this to the FeatureHandler.
 	 */
 	void Initialize(const FeatureLoadParams& params);
-	int GetBlockingMapID() const { return id + (10 * uh->MaxUnits()); }
+	int GetBlockingMapID() const { return id + (10 * unitHandler->MaxUnits()); }
 
 	/**
 	 * Negative amount = reclaim

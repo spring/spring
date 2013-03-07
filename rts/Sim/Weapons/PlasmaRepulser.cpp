@@ -98,7 +98,7 @@ void CPlasmaRepulser::Update()
 	}
 
 	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
-		assert(ph->GetMapPairBySyncedID(pi->first)); // valid projectile id?
+		assert(projectileHandler->GetMapPairBySyncedID(pi->first)); // valid projectile id?
 
 		CWeaponProjectile* pro = pi->second;
 		const WeaponDef* proWD = pro->GetWeaponDef();

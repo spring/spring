@@ -95,7 +95,7 @@ void CTransportUnit::Update()
 
 		// see ::AttachUnit
 		if (transportee->IsStunned()) {
-			qf->MovedUnit(transportee);
+			quadField->MovedUnit(transportee);
 		}
 	}
 }
@@ -174,7 +174,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 						if (!pos.IsInBounds())
 							continue;
 
-						if (qf->GetUnitsExact(pos, transportee->radius + 2.0f).empty()) {
+						if (quadField->GetUnitsExact(pos, transportee->radius + 2.0f).empty()) {
 							transportee->Move3D(pos, false);
 							break;
 						}
@@ -309,7 +309,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	// up-to-date by MoveType::SlowUpdate, otherwise by
 	// ::Update
 	//
-	// qf->RemoveUnit(unit);
+	// quadField->RemoveUnit(unit);
 
 	unit->los = NULL;
 
@@ -470,10 +470,10 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 			// for transported structures, <wantedPos> must be free/buildable
 			// (note: TestUnitBuildSquare calls IsAllowedTerrainHeight again)
 			BuildInfo bi(transporteeUnitDef, wantedPos, unit->buildFacing);
-			bi.pos = helper->Pos2BuildPos(bi, true);
+			bi.pos = CGameHelper::Pos2BuildPos(bi, true);
 			CFeature* f = NULL;
 
-			if (isAllowedHeight && (!uh->TestUnitBuildSquare(bi, f, -1, true) || f != NULL))
+			if (isAllowedHeight && (!CGameHelper::TestUnitBuildSquare(bi, f, -1, true) || f != NULL))
 				isAllowedHeight = false;
 		}
 	}

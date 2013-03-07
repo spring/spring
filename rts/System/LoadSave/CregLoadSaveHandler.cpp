@@ -90,15 +90,15 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 	s.SerializeObjectInstance(gu, gu->GetClass());
 	s.SerializeObjectInstance(game, game->GetClass());
 	s.SerializeObjectInstance(readmap, readmap->GetClass());
-	s.SerializeObjectInstance(qf, qf->GetClass());
+	s.SerializeObjectInstance(quadField, quadField->GetClass());
 	s.SerializeObjectInstance(featureHandler, featureHandler->GetClass());
 	s.SerializeObjectInstance(loshandler, loshandler->GetClass());
 	s.SerializeObjectInstance(radarhandler, radarhandler->GetClass());
 	s.SerializeObjectInstance(airBaseHandler, airBaseHandler->GetClass());
 	s.SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
 	s.SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
-	s.SerializeObjectInstance(uh, uh->GetClass());
-	s.SerializeObjectInstance(ph, ph->GetClass());
+	s.SerializeObjectInstance(unitHandler, unitHandler->GetClass());
+	s.SerializeObjectInstance(projectileHandler, projectileHandler->GetClass());
 //	std::map<std::string, int> unitRestrictions;
 	s.SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s.SerializeObjectInstance(&wind, wind.GetClass());

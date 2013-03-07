@@ -44,7 +44,7 @@ inline static bool TestConeHelper(
 
 	bool ret = false;
 
-	if (obj->GetBlockingMapID() < uh->MaxUnits()) {
+	if (obj->GetBlockingMapID() < unitHandler->MaxUnits()) {
 		ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
 	} else {
 		ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
@@ -114,7 +114,7 @@ inline static bool TestTrajectoryConeHelper(
 
 	bool ret = false;
 
-	if (obj->GetBlockingMapID() < uh->MaxUnits()) {
+	if (obj->GetBlockingMapID() < unitHandler->MaxUnits()) {
 		ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
 	} else {
 		ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f);
@@ -178,12 +178,12 @@ float TraceRay(
 		int* begQuad = NULL;
 		int* endQuad = NULL;
 
-		qf->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
+		quadField->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
 
 		// feature intersection
 		if (!ignoreFeatures) {
 			for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-				const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
+				const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
 
 				for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 					CFeature* f = *ui;
@@ -210,7 +210,7 @@ float TraceRay(
 		// unit intersection
 		if (!ignoreUnits) {
 			for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-				const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
+				const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
 
 				for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 					CUnit* u = *ui;
@@ -293,13 +293,13 @@ float GuiTraceRay(
 	bool hitFactory = false;
 	CollisionQuery cq;
 
-	qf->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
+	quadField->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
 
 	std::list<CUnit*>::const_iterator ui;
 	std::list<CFeature*>::const_iterator fi;
 
 	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
+		const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
 
 		// Unit Intersection
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
@@ -402,7 +402,7 @@ bool TestCone(
 	int* begQuad = NULL;
 	int* endQuad = NULL;
 
-	if (qf->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
+	if (quadField->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
 		return true;
 
 	const bool ignoreAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
@@ -410,7 +410,7 @@ bool TestCone(
 	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
 
 	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
+		const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
 
 		if (!ignoreAllies) {
 			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
@@ -481,7 +481,7 @@ bool TestTrajectoryCone(
 	int* begQuad = NULL;
 	int* endQuad = NULL;
 
-	if (qf->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
+	if (quadField->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
 		return true;
 
 	const bool ignoreAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
@@ -491,7 +491,7 @@ bool TestTrajectoryCone(
 	const float safetyRadii[2] = {2.0f, 0.5f};
 
 	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-		const CQuadField::Quad& quad = qf->GetQuad(*quadPtr);
+		const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
 
 		// friendly units in this quad
 		if (!ignoreAllies) {

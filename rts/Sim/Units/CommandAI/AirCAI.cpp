@@ -281,7 +281,7 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 		if (myPlane->IsFighter()) {
 			const float3 P = owner->pos + (owner->speed * 10.0);
 			const float R = 1000.0f * owner->moveState;
-			const CUnit* enemy = helper->GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
+			const CUnit* enemy = CGameHelper::GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
 
 			if (IsValidTarget(enemy)) {
 				Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
@@ -292,7 +292,7 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 		} else {
 			const float3 P = owner->pos + (owner->speed * 20.0f);
 			const float R = 500.0f * owner->moveState;
-			const CUnit* enemy = helper->GetClosestValidTarget(P, R, owner->allyteam, this);
+			const CUnit* enemy = CGameHelper::GetClosestValidTarget(P, R, owner->allyteam, this);
 
 			if (enemy != NULL) {
 				Command nc(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
@@ -362,7 +362,7 @@ void CAirCAI::ExecuteFight(Command& c)
 			const float3 P = ClosestPointOnLine(commandPos1, commandPos2, owner->pos + owner->speed*10);
 			const float R = 1000.0f * owner->moveState;
 
-			enemy = helper->GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
+			enemy = CGameHelper::GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
 		}
 		if (IsValidTarget(enemy) && (owner->moveState != MOVESTATE_MANEUVER
 				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
@@ -390,7 +390,7 @@ void CAirCAI::ExecuteFight(Command& c)
 			const float3 P = ClosestPointOnLine(commandPos1, commandPos2, owner->pos + owner->speed * 20);
 			const float R = 500.0f * owner->moveState;
 
-			enemy = helper->GetClosestValidTarget(P, R, owner->allyteam, this);
+			enemy = CGameHelper::GetClosestValidTarget(P, R, owner->allyteam, this);
 
 			if (enemy != NULL) {
 				PushOrUpdateReturnFight();
@@ -460,7 +460,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 		targetAge = 0;
 
 		if (c.params.size() == 1) {
-			CUnit* targetUnit = uh->GetUnit(c.params[0]);
+			CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
 
 			if (targetUnit == NULL) { FinishCommand(); return; }
 			if (targetUnit == owner) { FinishCommand(); return; }
@@ -520,7 +520,7 @@ void CAirCAI::ExecuteGuard(Command& c)
 {
 	assert(owner->unitDef->canGuard);
 
-	const CUnit* guardee = uh->GetUnit(c.params[0]);
+	const CUnit* guardee = unitHandler->GetUnit(c.params[0]);
 
 	if (guardee == NULL) { FinishCommand(); return; }
 	if (UpdateTargetLostTimer(guardee->id) == 0) { FinishCommand(); return; }
@@ -625,7 +625,7 @@ void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 	const float radius = ac.params[3];
 
 	std::vector<int> enemyUnitIDs;
-	helper->GetEnemyUnits(pos, radius, owner->allyteam, enemyUnitIDs);
+	CGameHelper::GetEnemyUnits(pos, radius, owner->allyteam, enemyUnitIDs);
 
 	if (enemyUnitIDs.empty()) {
 		float3 attackPos = pos + (gs->randVector() * radius);
@@ -638,7 +638,7 @@ void CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 		const unsigned int unitIdx = std::min<int>(gs->randFloat() * enemyUnitIDs.size(), enemyUnitIDs.size() - 1);
 		const unsigned int unitID = enemyUnitIDs[unitIdx];
 
-		CUnit* targetUnit = uh->GetUnitUnsafe(unitID);
+		CUnit* targetUnit = unitHandler->GetUnitUnsafe(unitID);
 
 		SetOrderTarget(targetUnit);
 		owner->AttackUnit(targetUnit, (ac.options & INTERNAL_ORDER) == 0, false);

@@ -45,7 +45,7 @@ CExtractorBuilding::CExtractorBuilding():
 CExtractorBuilding::~CExtractorBuilding()
 {
 	// if uh == NULL then all pointers to units should be considered dangling pointers
-	if (uh) {
+	if (unitHandler != NULL) {
 		ResetExtraction();
 	}
 }
@@ -90,7 +90,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	extractionDepth = std::max(depth, 0.0f);
 
 	// find any neighbouring extractors
-	const std::vector<CUnit*> &cu = qf->GetUnits(pos, extractionRange + maxExtractionRange);
+	const std::vector<CUnit*> &cu = quadField->GetUnits(pos, extractionRange + maxExtractionRange);
 	maxExtractionRange = std::max(extractionRange, maxExtractionRange);
 
 	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {

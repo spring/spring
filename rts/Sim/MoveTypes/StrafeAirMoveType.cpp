@@ -298,7 +298,7 @@ bool CStrafeAirMoveType::HandleCollisions() {
 		bool hitBuilding = false;
 
 		if (checkCollisions) {
-			const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
+			const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
 
 			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 				CUnit* unit = *ui;

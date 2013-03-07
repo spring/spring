@@ -55,7 +55,7 @@ CR_REG_METADATA_SUB(CQuadField, Quad, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CQuadField* qf;
+CQuadField* quadField = NULL;
 
 CQuadField::CQuadField()
 {

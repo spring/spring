@@ -312,7 +312,7 @@ void CClassicGroundMoveType::SlowUpdate()
 			radarhandler->MoveUnit(owner);
 		}
 
-		qf->MovedUnit(owner);
+		quadField->MovedUnit(owner);
 	}
 }
 
@@ -618,8 +618,8 @@ void CClassicGroundMoveType::CheckCollisionSkid()
 {
 	const SyncedFloat3& midPos = owner->midPos;
 
-	const vector<CUnit*>& nearUnits = qf->GetUnitsExact(midPos, owner->radius);
-	const vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(midPos, owner->radius);
+	const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(midPos, owner->radius);
+	const vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(midPos, owner->radius);
 
 	for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 		CUnit* u = (*ui);
@@ -789,7 +789,7 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			MoveDef* moveDef = owner->moveDef;
 
-			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
+			vector<CSolidObject*> nearbyObjects = quadField->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
 			vector<CSolidObject*> objectsOnPath;
 			vector<CSolidObject*>::iterator oi;
 
@@ -1147,7 +1147,7 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 			}
 
 			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
-				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
+				CGameHelper::BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
 			}
 
 			owner->Move3D(posDelta, true);
@@ -1225,7 +1225,7 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 			}
 
 			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
-				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
+				CGameHelper::BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
 			}
 
 			owner->Move3D(posDelta, true);

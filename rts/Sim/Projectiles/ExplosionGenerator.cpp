@@ -277,7 +277,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	new CHeatCloudProjectile(npos, float3(0.0f, 0.3f, 0.0f), 8 + sqrtDmg * 0.5f, 7 + damage * 2.8f, owner);
 
-	if (ph->particleSaturation < 1.0f) {
+	if (projectileHandler->particleSaturation < 1.0f) {
 		// turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage      = damage;
 		float smokeDamageSQRT  = 0.0f;
@@ -923,7 +923,7 @@ bool CCustomExplosionGenerator::Explosion(
 
 		// If we're saturated, spawn only synced projectiles.
 		// Whether a class is synced is determined by the creg::CF_Synced flag.
-		if (ph->particleSaturation > 1 && !(psi.flags & SPW_SYNCED)) {
+		if (projectileHandler->particleSaturation > 1 && !(psi.flags & SPW_SYNCED)) {
 			continue;
 		}
 

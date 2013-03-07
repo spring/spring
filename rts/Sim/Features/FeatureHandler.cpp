@@ -504,7 +504,7 @@ void CFeatureHandler::Update()
 						updateFeatures.erase(feature);
 					}
 
-					CSolidObject::SetDeletingRefID(feature->id + uh->MaxUnits());
+					CSolidObject::SetDeletingRefID(feature->id + unitHandler->MaxUnits());
 					delete feature;
 					CSolidObject::SetDeletingRefID(-1);
 				}
@@ -540,14 +540,14 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 
 void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
-	const std::vector<int>& quads = qf->GetQuadsRectangle(
+	const std::vector<int>& quads = quadField->GetQuadsRectangle(
 		float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
 		float3(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE)
 	);
 
 	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		std::list<CFeature*>::const_iterator fi;
-		const std::list<CFeature*>& features = qf->GetQuad(*qi).features;
+		const std::list<CFeature*>& features = quadField->GetQuad(*qi).features;
 
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;

@@ -199,7 +199,7 @@ CLuaUnitScript::~CLuaUnitScript()
 void CLuaUnitScript::HandleFreed(CLuaHandle* handle)
 {
 	std::list<CUnit*>::iterator ui;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (ui = unitHandler->activeUnits.begin(); ui != unitHandler->activeUnits.end(); ++ui) {
 		CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>((*ui)->script);
 
 		// kill only the Lua scripts running in this handle
@@ -949,10 +949,10 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 		luaL_error(L, "%s(): Bad unitID", caller);
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %d", caller, unitID);
 	}
-	return uh->units[unitID];
+	return unitHandler->units[unitID];
 }
 
 

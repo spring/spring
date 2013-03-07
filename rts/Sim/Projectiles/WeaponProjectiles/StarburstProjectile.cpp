@@ -185,7 +185,7 @@ void CStarburstProjectile::Update()
 		targetPos = target->pos;
 		CUnit* u = dynamic_cast<CUnit*>(target);
 		if (u) {
-			targetPos = helper->GetUnitErrorPos(u, owner()->allyteam, true);
+			targetPos = CGameHelper::GetUnitErrorPos(u, owner()->allyteam, true);
 		}
 	}
 

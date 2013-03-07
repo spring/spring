@@ -77,7 +77,7 @@ void AMoveType::SlowUpdate()
 			}
 		}
 
-		qf->MovedUnit(owner);
+		quadField->MovedUnit(owner);
 	}
 }
 

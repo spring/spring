@@ -173,7 +173,7 @@ public:
 				break;
 			}
 
-			CUnit* unit = uh->GetUnit(unitId);
+			CUnit* unit = unitHandler->GetUnit(unitId);
 
 			if (unit != NULL) {
 				unit->KillUnit(false, false, 0);
@@ -378,16 +378,16 @@ public:
 		ASSERT_SYNCED((short)(gu->myPlayerNum * 123 + 123));
 		//ASSERT_SYNCED(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
 
-		for (size_t i = uh->MaxUnits() - 1; i >= 0; --i) {
-			if (uh->units[i]) {
+		for (size_t i = unitHandler->MaxUnits() - 1; i >= 0; --i) {
+			if (unitHandler->units[i]) {
 				if (action.GetPlayerID() == gu->myPlayerNum) {
-					++uh->units[i]->midPos.x; // and desync...
-					++uh->units[i]->midPos.x;
+					++unitHandler->units[i]->midPos.x; // and desync...
+					++unitHandler->units[i]->midPos.x;
 				} else {
 					// execute the same amount of flops on any other player,
 					// but do not desync (it is a NOP)
-					++uh->units[i]->midPos.x;
-					--uh->units[i]->midPos.x;
+					++unitHandler->units[i]->midPos.x;
+					--unitHandler->units[i]->midPos.x;
 				}
 				break;
 			}
