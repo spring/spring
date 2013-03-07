@@ -72,7 +72,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE)
 
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
-#define POS_IMPASSABLE(md, pos, u) (!md->TestMoveSquare(u, (pos).x / SQUARE_SIZE, (pos).z / SQUARE_SIZE))
+#define POS_IMPASSABLE(md, pos, u) (!md->TestMoveSquare(u, pos))
 
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -845,8 +845,8 @@ void CGroundMoveType::CheckCollisionSkid()
 	//     derived from o->pos (!)
 	const float3& pos = collider->pos;
 	const UnitDef* colliderUD = collider->unitDef;
-	const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, collider->radius);
-	const vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(pos, collider->radius);
+	const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, collider->radius);
+	const vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(pos, collider->radius);
 
 	vector<CUnit*>::const_iterator ui;
 	vector<CFeature*>::const_iterator fi;
@@ -1032,7 +1032,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
 	const float avoiderRadius = FOOTPRINT_RADIUS(avoiderMD->xsize, avoiderMD->zsize, 1.0f);
 
-	const vector<CSolidObject*>& objects = qf->GetSolidsExact(avoider->pos, avoidanceRadius);
+	const vector<CSolidObject*>& objects = quadField->GetSolidsExact(avoider->pos, avoidanceRadius);
 
 	for (vector<CSolidObject*>::const_iterator oi = objects.begin(); oi != objects.end(); ++oi) {
 		const CSolidObject* avoidee = *oi;
@@ -1659,7 +1659,7 @@ void CGroundMoveType::HandleUnitCollisions(
 ) {
 	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
 
-	const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(collider->pos, searchRadius);
+	const std::vector<CUnit*>& nearUnits = quadField->GetUnitsExact(collider->pos, searchRadius);
 	      std::vector<CUnit*>::const_iterator uit;
 
 	// NOTE: probably too large for most units (eg. causes tree falling animations to be skipped)
@@ -1856,7 +1856,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 ) {
 	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
 
-	const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(collider->pos, searchRadius);
+	const std::vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(collider->pos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
 
 	const int dirSign = int(!reversing) * 2 - 1;
@@ -1927,10 +1927,10 @@ void CGroundMoveType::HandleFeatureCollisions(
 		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f);
 		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f);
 
-		qf->RemoveFeature(collidee);
+		quadField->RemoveFeature(collidee);
 		collider->Move3D( colResponseVec * colliderMassScale, true);
 		collidee->Move3D(-colResponseVec * collideeMassScale, true);
-		qf->AddFeature(collidee);
+		quadField->AddFeature(collidee);
 	}
 }
 

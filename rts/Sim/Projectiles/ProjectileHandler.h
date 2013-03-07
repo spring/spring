@@ -132,6 +132,6 @@ private:
 };
 
 
-extern CProjectileHandler* ph;
+extern CProjectileHandler* projectileHandler;
 
 #endif /* PROJECTILE_HANDLER_H */

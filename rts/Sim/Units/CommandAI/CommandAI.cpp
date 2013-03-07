@@ -325,9 +325,9 @@ void CCommandAI::AddCommandDependency(const Command& c) {
 	int cpos;
 	if (c.IsObjectCommand(cpos)) {
 		int refId = c.params[cpos];
-		CObject* ref = (refId < uh->MaxUnits()) ?
-				static_cast<CObject*>(uh->GetUnit(refId)) :
-				static_cast<CObject*>(featureHandler->GetFeature(refId - uh->MaxUnits()));
+		CObject* ref = (refId < unitHandler->MaxUnits()) ?
+				static_cast<CObject*>(unitHandler->GetUnit(refId)) :
+				static_cast<CObject*>(featureHandler->GetFeature(refId - unitHandler->MaxUnits()));
 		if (ref) {
 			AddDeathDependence(ref, DEPENDENCE_COMMANDQUE);
 		}
@@ -359,7 +359,7 @@ static inline const CUnit* GetCommandUnit(const Command& c, int idx) {
 		return NULL;
 	}
 
-	const CUnit* unit = uh->GetUnit(c.params[idx]);
+	const CUnit* unit = unitHandler->GetUnit(c.params[idx]);
 	return unit;
 }
 
@@ -519,8 +519,8 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			if (reclaimeeUnit == NULL && !c.params.empty()) {
 				const unsigned int reclaimeeFeatureID(c.params[0]);
 
-				if (reclaimeeFeatureID >= uh->MaxUnits()) {
-					reclaimeeFeature = featureHandler->GetFeature(reclaimeeFeatureID - uh->MaxUnits());
+				if (reclaimeeFeatureID >= unitHandler->MaxUnits()) {
+					reclaimeeFeature = featureHandler->GetFeature(reclaimeeFeatureID - unitHandler->MaxUnits());
 
 					if (reclaimeeFeature && !reclaimeeFeature->def->reclaimable) {
 						return false;
@@ -1237,7 +1237,7 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 
 int CCommandAI::UpdateTargetLostTimer(int targetUnitID)
 {
-	const CUnit* targetUnit = uh->GetUnit(targetUnitID);
+	const CUnit* targetUnit = unitHandler->GetUnit(targetUnitID);
 	const UnitDef* targetUnitDef = (targetUnit != NULL)? targetUnit->unitDef: NULL;
 
 	if (targetUnit == NULL)
@@ -1269,7 +1269,7 @@ void CCommandAI::ExecuteAttack(Command& c)
 		}
 	} else {
 		if (c.params.size() == 1) {
-			CUnit* targetUnit = uh->GetUnit(c.params[0]);
+			CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
 
 			if (targetUnit == NULL) { FinishCommand(); return; }
 			if (targetUnit == owner) { FinishCommand(); return; }
@@ -1634,7 +1634,7 @@ void CCommandAI::StopAttackingAllyTeam(int ally)
 		const Command& c = *it;
 
 		if ((c.GetID() == CMD_FIGHT || c.GetID() == CMD_ATTACK) && c.params.size() == 1) {
-			const CUnit* target = uh->GetUnit(c.params[0]);
+			const CUnit* target = unitHandler->GetUnit(c.params[0]);
 
 			if (target && target->allyteam == ally) {
 				todel.push_back(it - commandQue.begin());

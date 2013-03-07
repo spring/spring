@@ -1018,11 +1018,11 @@ void CGuiHandler::SetCursorIcon() const
 			bi.pos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
 			bi.buildFacing = bi.buildFacing;
 			bi.def = unitDefHandler->GetUnitDefByID(-cmdDesc.id);
-			bi.pos = helper->Pos2BuildPos(bi, false);
+			bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 			// if an unit (enemy), is not in LOS, then TestUnitBuildSquare()
 			// does not consider it when checking for position blocking
 			CFeature* feature = NULL;
-			if (!uh->TestUnitBuildSquare(bi, feature, gu->myAllyTeam, false)) {
+			if (!CGameHelper::TestUnitBuildSquare(bi, feature, gu->myAllyTeam, false)) {
 				newCursor = "BuildBad";
 			} else {
 				newCursor = "BuildGood";
@@ -2228,7 +2228,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (buildPos.size() == 1) {
 				CFeature* feature = NULL;
 				// TODO Maybe also check out-of-range for immobile builder?
-				if (!uh->TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam, false)) {
+				if (!CGameHelper::TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam, false)) {
 					return defaultRet;
 				}
 			}
@@ -2336,7 +2336,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 
 				if (feature && commands[tempInCommand].type == CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) { // clicked on feature
-					c.PushParam(uh->MaxUnits() + feature->id);
+					c.PushParam(unitHandler->MaxUnits() + feature->id);
 				} else if (unit && commands[tempInCommand].type != CMDTYPE_ICON_AREA) { // clicked on unit
 					if (c.GetID() == CMD_RESURRECT)
 						return defaultRet; // cannot resurrect units!
@@ -2452,7 +2452,7 @@ static void FillRowOfBuildPos(const BuildInfo& startInfo, float x, float z, floa
 {
 	for (int i = 0; i < n; ++i) {
 		BuildInfo bi(startInfo.def, float3(x, 0.0f, z), (startInfo.buildFacing + facing) % NUM_FACINGS);
-		bi.pos=helper->Pos2BuildPos(bi, false);
+		bi.pos=CGameHelper::Pos2BuildPos(bi, false);
 		if (!nocancel || !WouldCancelAnyQueued(bi)) {
 			ret.push_back(bi);
 		}
@@ -2466,8 +2466,8 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 {
 	std::vector<BuildInfo> ret;
 
-	float3 start = helper->Pos2BuildPos(startInfo, false);
-	float3 end = helper->Pos2BuildPos(endInfo, false);
+	float3 start = CGameHelper::Pos2BuildPos(startInfo, false);
+	float3 end = CGameHelper::Pos2BuildPos(endInfo, false);
 
 	BuildInfo other; // the unit around which buildings can be circled
 
@@ -2483,7 +2483,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			other.pos = unit->pos;
 			other.buildFacing = unit->buildFacing;
 		} else {
-			Command c = uh->GetBuildCommand(cameraPos, mouseDir);
+			Command c = CGameHelper::GetBuildCommand(cameraPos, mouseDir);
 			if (c.GetID() < 0 && c.params.size() == 4) {
 				other.pos = c.GetPos(0);
 				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
@@ -2499,7 +2499,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		int xsize = startInfo.GetXSize() * SQUARE_SIZE;
 		int zsize = startInfo.GetZSize() * SQUARE_SIZE;
 
-		start = end = helper->Pos2BuildPos(other, false);
+		start = end = CGameHelper::Pos2BuildPos(other, false);
 		start.x -= oxsize / 2;
 		start.z -= ozsize / 2;
 		end.x += oxsize / 2;
@@ -3689,7 +3689,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			GML_STDMUTEX_LOCK(cai); // DrawMapStuff
 			// draw build distance for all immobile builders during build commands
 			std::list<CBuilderCAI*>::const_iterator bi;
-			for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
+			for (bi = unitHandler->builderCAIs.begin(); bi != unitHandler->builderCAIs.end(); ++bi) {
 				const CUnit* unit = (*bi)->owner;
 				if ((unit == pointedAt) || (unit->team != gu->myTeam)) {
 					continue;

@@ -174,7 +174,7 @@ void CPlayer::StartControllingUnit()
 		}
 
 		// pick the first unit we have selected
-		newControlleeUnit = uh->GetUnit(ourSelectedUnits[0]);
+		newControlleeUnit = unitHandler->GetUnit(ourSelectedUnits[0]);
 
 		if (newControlleeUnit == NULL || newControlleeUnit->weapons.empty()) {
 			return;

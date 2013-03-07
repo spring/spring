@@ -5,6 +5,7 @@
 
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Projectiles/ExplosionListener.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
 #include "System/MemPool.h"
 
@@ -19,6 +20,7 @@ class CSolidObject;
 class CFeature;
 class CMobileCAI;
 struct UnitDef;
+struct MoveDef;
 struct BuildInfo;
 class IExplosionGenerator;
 class CStdExplosionGenerator;
@@ -30,6 +32,13 @@ public:
 		TEST_ALLIED  = 1,
 		TEST_NEUTRAL = 2,
 	};
+	enum BuildSquareStatus {
+		BUILDSQUARE_BLOCKED     = 0,
+		BUILDSQUARE_OCCUPIED    = 1,
+		BUILDSQUARE_RECLAIMABLE = 2,
+		BUILDSQUARE_OPEN        = 3
+	};
+
 
 	struct ExplosionParams {
 		const float3& pos;
@@ -54,12 +63,12 @@ public:
 	CGameHelper();
 	~CGameHelper();
 
-	void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
-	void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
-	CUnit* GetClosestUnit(const float3& pos, float searchRadius);
-	CUnit* GetClosestEnemyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
-	CUnit* GetClosestValidTarget(const float3& pos, float radius, int searchAllyteam, const CMobileCAI* cai);
-	CUnit* GetClosestEnemyUnitNoLosTest(
+	static void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+	static void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+	static CUnit* GetClosestUnit(const float3& pos, float searchRadius);
+	static CUnit* GetClosestEnemyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
+	static CUnit* GetClosestValidTarget(const float3& pos, float radius, int searchAllyteam, const CMobileCAI* cai);
+	static CUnit* GetClosestEnemyUnitNoLosTest(
 		const CUnit* excludeUnit,
 		const float3& pos,
 		float searchRadius,
@@ -67,22 +76,40 @@ public:
 		bool sphere,
 		bool canBeBlind
 	);
-	CUnit* GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
-	CUnit* GetClosestEnemyAircraft(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
+	static CUnit* GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
+	static CUnit* GetClosestEnemyAircraft(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 
 	// get the mid- or aim-position of a unit, offset by an error vector if not in LOS for <allyteam>
-	float3 GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming = false);
+	static float3 GetUnitErrorPos(const CUnit* unit, int allyteam, bool aiming = false);
 
-	void BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* exclude);
-	float3 Pos2BuildPos(const BuildInfo& buildInfo, bool synced);
+	static void BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* exclude);
+	static float3 Pos2BuildPos(const BuildInfo& buildInfo, bool synced);
+
+	///< test a single mapsquare for build possibility
+	static BuildSquareStatus TestBuildSquare(const float3& pos, const float buildHeight, const UnitDef* unitdef, const MoveDef* moveDef, CFeature *&feature, int allyteam, bool synced);
+
+	///< test if a unit can be built at specified position
+	static BuildSquareStatus TestUnitBuildSquare(
+		const BuildInfo&,
+		CFeature*&,
+		int allyteam,
+		bool synced,
+		std::vector<float3>* canbuildpos = NULL,
+		std::vector<float3>* featurepos = NULL,
+		std::vector<float3>* nobuildpos = NULL,
+		const std::vector<Command>* commands = NULL
+	);
+	static float GetBuildHeight(const float3& pos, const UnitDef* unitdef, bool synced = true);
+	static Command GetBuildCommand(const float3& pos, const float3& dir);
 
 	/**
 	 * @param minDist measured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
 	 */
-	float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
+	static float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
+
+	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets);
 
 	void Update();
-	void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets);
 
 	void DoExplosionDamage(
 		CUnit* unit,

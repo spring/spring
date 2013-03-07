@@ -204,7 +204,7 @@ void AAirMoveType::CheckForCollision()
 	const SyncedFloat3& forward = owner->frontdir;
 
 	const float3 midTestPos = pos + forward * 121.0f;
-	const std::vector<CUnit*>& others = qf->GetUnitsExact(midTestPos, 115.0f);
+	const std::vector<CUnit*>& others = quadField->GetUnitsExact(midTestPos, 115.0f);
 
 	float dist = 200.0f;
 

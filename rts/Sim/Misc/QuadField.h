@@ -120,6 +120,6 @@ private:
 	int numQuadsZ;
 };
 
-extern CQuadField* qf;
+extern CQuadField* quadField;
 
 #endif /* QUAD_FIELD_H */

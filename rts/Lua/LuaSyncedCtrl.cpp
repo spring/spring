@@ -285,10 +285,10 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 		luaL_error(L, "%s(): Bad unitID", caller);
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
-	CUnit* unit = uh->units[unitID];
+	CUnit* unit = unitHandler->units[unitID];
 	if (unit == NULL) {
 		return NULL;
 	}
@@ -334,7 +334,7 @@ static inline CProjectile* ParseProjectile(lua_State* L,
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad projectile ID", caller);
 	}
-	const ProjectileMapValPair* pmp = ph->GetMapPairBySyncedID(lua_toint(L, index));
+	const ProjectileMapValPair* pmp = projectileHandler->GetMapPairBySyncedID(lua_toint(L, index));
 	if (pmp == NULL) {
 		return NULL;
 	}
@@ -975,7 +975,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		luaL_error(L, "[%s()]: not a controllable team (%d)", __FUNCTION__, teamID);
 		return 0;
 	}
-	if (!uh->CanBuildUnit(unitDef, teamID)) {
+	if (!unitHandler->CanBuildUnit(unitDef, teamID)) {
 		return 0; // unit limit reached
 	}
 
@@ -985,7 +985,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	inCreateUnit = true;
 	UnitLoadParams params;
 	params.unitDef = unitDef; /// must be non-NULL
-	params.builder = uh->GetUnit(luaL_optint(L, 10, -1)); /// may be NULL
+	params.builder = unitHandler->GetUnit(luaL_optint(L, 10, -1)); /// may be NULL
 	params.pos     = pos;
 	params.speed   = ZeroVector;
 	params.unitID  = luaL_optint(L, 9, -1);
@@ -1864,13 +1864,13 @@ int LuaSyncedCtrl::SetUnitMidAndAimPos(lua_State* L)
 
 	if (updateQuads) {
 		// safety, possibly just need MovedUnit
-		qf->RemoveUnit(unit);
+		quadField->RemoveUnit(unit);
 	}
 
 	unit->SetMidAndAimPos(newMidPos, newAimPos, setRelative);
 
 	if (updateQuads) {
-		qf->MovedUnit(unit);
+		quadField->MovedUnit(unit);
 	}
 
 	lua_pushboolean(L, true);
@@ -1892,13 +1892,13 @@ int LuaSyncedCtrl::SetUnitRadiusAndHeight(lua_State* L)
 
 	if (updateQuads) {
 		// safety, possibly just need MovedUnit
-		qf->RemoveUnit(unit);
+		quadField->RemoveUnit(unit);
 	}
 
 	unit->SetRadiusAndHeight(newRadius, newHeight);
 
 	if (updateQuads) {
-		qf->MovedUnit(unit);
+		quadField->MovedUnit(unit);
 	}
 
 	lua_pushboolean(L, true);
@@ -2206,10 +2206,10 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 
 	CUnit* attacker = NULL;
 	if (attackerID >= 0) {
-		if (static_cast<size_t>(attackerID) >= uh->MaxUnits()) {
+		if (static_cast<size_t>(attackerID) >= unitHandler->MaxUnits()) {
 			return 0;
 		}
-		attacker = uh->units[attackerID];
+		attacker = unitHandler->units[attackerID];
 	}
 
 	if (weaponDefID >= weaponDefHandler->weaponDefs.size()) {
@@ -2611,13 +2611,13 @@ int LuaSyncedCtrl::SetFeatureMidAndAimPos(lua_State* L)
 	#undef FLOAT
 
 	if (updateQuads) {
-		qf->RemoveFeature(feature);
+		quadField->RemoveFeature(feature);
 	}
 
 	feature->SetMidAndAimPos(newMidPos, newAimPos, setRelative);
 
 	if (updateQuads) {
-		qf->AddFeature(feature);
+		quadField->AddFeature(feature);
 	}
 
 	lua_pushboolean(L, true);
@@ -2638,13 +2638,13 @@ int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
 	const bool updateQuads = (newRadius != feature->radius);
 
 	if (updateQuads) {
-		qf->RemoveFeature(feature);
+		quadField->RemoveFeature(feature);
 	}
 
 	feature->SetRadiusAndHeight(newRadius, newHeight);
 
 	if (updateQuads) {
-		qf->AddFeature(feature);
+		quadField->AddFeature(feature);
 	}
 
 	lua_pushboolean(L, true);

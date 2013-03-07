@@ -93,19 +93,19 @@ void EventBatchHandler::UpdateProjectiles() {
 void EventBatchHandler::UpdateDrawProjectiles() {
 	GML_STDMUTEX_LOCK(rproj); // UpdateDrawProjectiles
 
-	ph->syncedRenderProjectileIDs.delete_delayed();
+	projectileHandler->syncedRenderProjectileIDs.delete_delayed();
 	syncedProjectileCreatedDestroyedEventBatch.delete_delayed();
 
 	syncedProjectileCreatedDestroyedEventBatch.add_delayed();
-	ph->syncedRenderProjectileIDs.add_delayed();
+	projectileHandler->syncedRenderProjectileIDs.add_delayed();
 
 #if !UNSYNCED_PROJ_NOEVENT
-	ph->unsyncedRenderProjectileIDs.delete_delayed();
+	projectileHandler->unsyncedRenderProjectileIDs.delete_delayed();
 #endif
 	unsyncedProjectileCreatedDestroyedEventBatch.delete_delayed();
 	unsyncedProjectileCreatedDestroyedEventBatch.add_delayed();
 #if !UNSYNCED_PROJ_NOEVENT
-	ph->unsyncedRenderProjectileIDs.add_delayed();
+	projectileHandler->unsyncedRenderProjectileIDs.add_delayed();
 #endif
 }
 void EventBatchHandler::DeleteSyncedProjectiles() {

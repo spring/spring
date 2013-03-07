@@ -129,7 +129,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	ph->AddProjectile(this);
+	projectileHandler->AddProjectile(this);
 }
 
 void CPieceProjectile::Detach()

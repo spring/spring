@@ -84,7 +84,7 @@ CTransportCAI::CTransportCAI(CUnit* owner)
 CTransportCAI::~CTransportCAI()
 {
 	// if uh == NULL then all pointers to units should be considered dangling pointers
-	if (uh != NULL) {
+	if (unitHandler != NULL) {
 		SetTransportee(NULL);
 	}
 }
@@ -94,19 +94,19 @@ void CTransportCAI::SetTransportee(CUnit* unit) {
 	if (unit != NULL) {
 		// reset existing transportee
 		if (toBeTransportedUnitId != unit->id) {
-			CUnit* transportee = (toBeTransportedUnitId == -1) ? NULL : uh->GetUnitUnsafe(toBeTransportedUnitId);
+			CUnit* transportee = (toBeTransportedUnitId == -1) ? NULL : unitHandler->GetUnitUnsafe(toBeTransportedUnitId);
 			if ((transportee != NULL) && (transportee->loadingTransportId == owner->id))
 				transportee->loadingTransportId = -1;
 			toBeTransportedUnitId = unit->id;
 		}
-		CUnit* transport = (unit->loadingTransportId == -1) ? NULL : uh->GetUnitUnsafe(unit->loadingTransportId);
+		CUnit* transport = (unit->loadingTransportId == -1) ? NULL : unitHandler->GetUnitUnsafe(unit->loadingTransportId);
 		// let the closest transport be loadingTransportId, in case of multiple fighting transports
 		if ((transport == NULL) || ((transport != owner) && (transport->pos.SqDistance(unit->pos) > owner->pos.SqDistance(unit->pos)))) {
 			unit->loadingTransportId = owner->id;
 		}
 	} else {
 		if (toBeTransportedUnitId != -1) {
-			CUnit* transportee = uh->GetUnitUnsafe(toBeTransportedUnitId);
+			CUnit* transportee = unitHandler->GetUnitUnsafe(toBeTransportedUnitId);
 			// only reset loadingTransportId if it is this transport
 			if ((transportee != NULL) && (transportee->loadingTransportId == owner->id))
 				transportee->loadingTransportId = -1;
@@ -153,7 +153,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 
 	if (c.params.size() == 1) {
 		// load single unit
-		CUnit* unit = uh->GetUnit(c.params[0]);
+		CUnit* unit = unitHandler->GetUnit(c.params[0]);
 
 		if (!unit) {
 			FinishCommand();
@@ -359,7 +359,7 @@ bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spre
 		if (moveDef != NULL && ground->GetSlope(pos.x, pos.z) > moveDef->maxSlope)
 			continue;
 
-		const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, spread);
+		const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, spread);
 
 		if ((isAirTrans && (units.size() > 1 || (units.size() == 1 && units[0] != owner))) ||
 			(!isAirTrans && !units.empty()))
@@ -381,7 +381,7 @@ bool CTransportCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 	if (unitToUnload->moveDef && ground->GetSlope(pos.x,pos.z) > unitToUnload->moveDef->maxSlope) {
 		return false;
 	}
-	if (!qf->GetUnitsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE).empty()) {
+	if (!quadField->GetUnitsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE).empty()) {
 		return false;
 	}
 
@@ -399,7 +399,7 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 		return false;
 	}
 
-	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE);
+	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE);
 	CTransportUnit* me = static_cast<CTransportUnit*>(owner);
 	for (std::vector<CUnit*>::const_iterator it = units.begin(); it != units.end(); ++it) {
 		// check if the units are in the transport
@@ -861,14 +861,14 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 	CUnit* bestUnit = NULL;
 	float bestDist = std::numeric_limits<float>::max();
 
-	const std::vector<CUnit*>& units = qf->GetUnitsExact(center, radius);
+	const std::vector<CUnit*>& units = quadField->GetUnitsExact(center, radius);
 
 	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 		CUnit* unit = (*ui);
 		float dist = unit->pos.SqDistance2D(owner->pos);
 
 		if (unit->loadingTransportId != -1 && unit->loadingTransportId != owner->id) {
-			CUnit* trans = uh->GetUnitUnsafe(unit->loadingTransportId);
+			CUnit* trans = unitHandler->GetUnitUnsafe(unit->loadingTransportId);
 			if ((trans != NULL) && teamHandler->AlliedTeams(owner->team, trans->team)) {
 				continue; // don't refuse to load comm only because the enemy is trying to nap it at the same time
 			}
@@ -947,7 +947,7 @@ bool CTransportCAI::IsBusyLoading(const CUnit* unit) const
 
 	switch (cmd.GetParamsCount()) {
 		case 1: {
-			const CUnit* loadee = uh->GetUnit(cmd.GetParam(0));
+			const CUnit* loadee = unitHandler->GetUnit(cmd.GetParam(0));
 
 			if (loadee == NULL)
 				return false;

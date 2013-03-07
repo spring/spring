@@ -20,7 +20,7 @@
 #include <vector>
 #include <list>
 
-#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)uh->MaxUnits())
+#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
 
 CUnit* CAICheats::GetUnit(int unitId) const {
@@ -28,7 +28,7 @@ CUnit* CAICheats::GetUnit(int unitId) const {
 	CUnit* unit = NULL;
 
 	if (CHECK_UNITID(unitId)) {
-		unit = uh->units[unitId];
+		unit = unitHandler->units[unitId];
 	}
 
 	return unit;
@@ -201,24 +201,24 @@ static inline bool unit_IsEnemy(CUnit* unit) {
 int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
-	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsEnemy);
+	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsEnemy);
 }
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
 	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsEnemy);
 }
 
 int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
-	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsNeutral);
+	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsNeutral);
 }
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
 	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsNeutral);
 }
 
@@ -447,7 +447,7 @@ int CAICheats::HandleCommand(int commandId, void* data)
 			AIHCTraceRay* cmdData = static_cast<AIHCTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = uh->units[cmdData->srcUID];
+				const CUnit* srcUnit = unitHandler->units[cmdData->srcUID];
 				CUnit* hitUnit = NULL;
 				CFeature* hitFeature = NULL;
 
@@ -465,7 +465,7 @@ int CAICheats::HandleCommand(int commandId, void* data)
 			AIHCFeatureTraceRay* cmdData = static_cast<AIHCFeatureTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = uh->units[cmdData->srcUID];
+				const CUnit* srcUnit = unitHandler->units[cmdData->srcUID];
 				CUnit* hitUnit = NULL;
 				CFeature* hitFeature = NULL;
 

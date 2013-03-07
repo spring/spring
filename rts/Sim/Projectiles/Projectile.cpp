@@ -103,7 +103,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 void CProjectile::Detach() {
 	// SYNCED
 	if (synced) {
-		qf->RemoveProjectile(this);
+		quadField->RemoveProjectile(this);
 	}
 	CExpGenSpawnable::Detach();
 }
@@ -126,10 +126,10 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 		//   to CProjectileHandler (other code needs to be able
 		//   to dyna-cast CProjectile*'s to those derived types,
 		//   and adding them here would throw away too much RTTI)
-		ph->AddProjectile(this);
+		projectileHandler->AddProjectile(this);
 	}
 	if (synced) {
-		qf->AddProjectile(this);
+		quadField->AddProjectile(this);
 	}
 
 	pos += offset;
@@ -188,7 +188,7 @@ int CProjectile::DrawArray()
 CUnit* CProjectile::owner() const {
 	// Note: this death dependency optimization using "ownerID" is logically flawed,
 	//  since ids are being reused it could return a unit that is not the original owner
-	CUnit* unit = uh->GetUnit(ownerID);
+	CUnit* unit = unitHandler->GetUnit(ownerID);
 
 	// make volatile
 	if (GML::SimEnabled())

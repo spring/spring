@@ -1263,10 +1263,10 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
-	CUnit* unit = uh->units[unitID];
+	CUnit* unit = unitHandler->units[unitID];
 	if (unit == NULL) {
 		return NULL;
 	}
@@ -1596,10 +1596,10 @@ static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
-	CUnit* unit = uh->units[unitID];
+	CUnit* unit = unitHandler->units[unitID];
 	if (unit == NULL) {
 		return NULL;
 	}

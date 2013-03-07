@@ -22,7 +22,7 @@
 
 CBasicMapDamage::CBasicMapDamage()
 {
-	const int numQuads = qf->GetNumQuadsX() * qf->GetNumQuadsZ();
+	const int numQuads = quadField->GetNumQuadsX() * quadField->GetNumQuadsZ();
 	inRelosQue = new bool[numQuads];
 	for (int a = 0; a < numQuads; ++a) {
 		inRelosQue[a] = false;
@@ -123,7 +123,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 	// calculate how much to offset the buildings in the explosion radius with
 	// (while still keeping the ground below them flat)
-	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
 	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 		CUnit* unit = *ui;
 
@@ -174,11 +174,11 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
 	const int decy = std::max(                     0, (y1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	const int incy = std::min(qf->GetNumQuadsZ() - 1, (y2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	const int incy = std::min(quadField->GetNumQuadsZ() - 1, (y2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
 	const int decx = std::max(                     0, (x1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	const int incx = std::min(qf->GetNumQuadsX() - 1, (x2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	const int incx = std::min(quadField->GetNumQuadsX() - 1, (x2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
 
-	const int numQuadsX = qf->GetNumQuadsX();
+	const int numQuadsX = quadField->GetNumQuadsX();
 	const int frameNum  = gs->frameNum;
 
 	for (int y = decy; y <= incy; y++) {
@@ -191,7 +191,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 			rs.x = x;
 			rs.y = y;
 			rs.neededUpdate = frameNum;
-			rs.numUnits = qf->GetQuadAt(x, y).units.size();
+			rs.numUnits = quadField->GetQuadAt(x, y).units.size();
 			relosSize += rs.numUnits;
 			inRelosQue[y * numQuadsX + x] = true;
 			relosQue.push_back(rs);
@@ -243,7 +243,7 @@ void CBasicMapDamage::Update()
 				}
 			}
 
-			CUnit* unit = uh->units[bi->id];
+			CUnit* unit = unitHandler->units[bi->id];
 			if (unit) {
 				unit->Move1D(dif, 1, true);
 			}
@@ -271,7 +271,7 @@ void CBasicMapDamage::UpdateLos()
 		}
 
 		RelosSquare* rs = &relosQue.front();
-		const std::list<CUnit*>& units = qf->GetQuadAt(rs->x, rs->y).units;
+		const std::list<CUnit*>& units = quadField->GetQuadAt(rs->x, rs->y).units;
 
 		std::list<CUnit*>::const_iterator ui;
 		for (ui = units.begin(); ui != units.end(); ++ui) {
@@ -279,7 +279,7 @@ void CBasicMapDamage::UpdateLos()
 		}
 		relosSize -= rs->numUnits;
 		neededLosUpdate = rs->neededUpdate;
-		inRelosQue[rs->y * qf->GetNumQuadsX() + rs->x] = false;
+		inRelosQue[rs->y * quadField->GetNumQuadsX() + rs->x] = false;
 		relosQue.pop_front();
 	}
 
@@ -288,7 +288,7 @@ void CBasicMapDamage::UpdateLos()
 			return;
 		}
 
-		CUnit* unit = uh->units[relosUnits.front()];
+		CUnit* unit = unitHandler->units[relosUnits.front()];
 		relosUnits.pop_front();
 
 		if (unit == NULL || unit->lastLosUpdate >= neededLosUpdate) {

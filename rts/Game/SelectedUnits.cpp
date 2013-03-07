@@ -83,7 +83,7 @@ bool CSelectedUnits::IsUnitSelected(const CUnit* unit) const
 
 bool CSelectedUnits::IsUnitSelected(const int unitID) const
 {
-	const CUnit* u = uh->GetUnit(unitID);
+	const CUnit* u = unitHandler->GetUnit(unitID);
 	return (u != NULL && IsUnitSelected(u));
 }
 
@@ -545,7 +545,7 @@ void CSelectedUnits::Draw()
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
 			std::list<CBuilderCAI*>::const_iterator bi;
-			for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
+			for (bi = unitHandler->builderCAIs.begin(); bi != unitHandler->builderCAIs.end(); ++bi) {
 				CBuilderCAI* builder = *bi;
 				if (builder->owner->team == gu->myTeam) {
 					if (!myColor) {
@@ -608,7 +608,7 @@ void CSelectedUnits::ClearNetSelect(int playerId)
 
 void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerId)
 {
-	CUnit* unit = uh->units[unitid];
+	CUnit* unit = unitHandler->units[unitid];
 	if (unit == NULL) {
 		return;
 	}

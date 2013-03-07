@@ -399,8 +399,8 @@ CGame::~CGame()
 	SafeDelete(texturehandlerS3O);
 
 	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
-	SafeDelete(uh); // CUnitHandler*, depends on modelParser (via ~CUnit)
-	SafeDelete(ph); // CProjectileHandler*
+	SafeDelete(unitHandler); // depends on modelParser (via ~CUnit)
+	SafeDelete(projectileHandler);
 
 	SafeDelete(cubeMapHandler);
 	SafeDelete(modelParser);
@@ -412,7 +412,7 @@ CGame::~CGame()
 	SafeDelete(radarhandler);
 	SafeDelete(loshandler);
 	SafeDelete(mapDamage);
-	SafeDelete(qf);
+	SafeDelete(quadField);
 	SafeDelete(moveDefHandler);
 	SafeDelete(unitDefHandler);
 	SafeDelete(weaponDefHandler);
@@ -549,7 +549,7 @@ void CGame::PreLoadSimulation(const std::string& mapName)
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler();
-	qf = new CQuadField();
+	quadField = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
 }
@@ -563,8 +563,8 @@ void CGame::PostLoadSimulation()
 
 	CGroundMoveType::CreateLineTable();
 
-	uh = new CUnitHandler();
-	ph = new CProjectileHandler();
+	unitHandler = new CUnitHandler();
+	projectileHandler = new CProjectileHandler();
 
 	loadscreen->SetLoadMessage("Loading Feature Definitions");
 	featureHandler = new CFeatureHandler();
@@ -1229,7 +1229,7 @@ bool CGame::Draw() {
 		font->SetTextColor(1,1,0.5f,0.8f);
 
 		font->glFormat(0.03f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
-		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
+		    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, projectileHandler->syncedProjectiles.size() + projectileHandler->unsyncedProjectiles.size(), projectileHandler->currentParticles);
 
 		// 16ms := 60fps := 30simFPS + 30drawFPS
 		font->glFormat(0.03f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
@@ -1512,8 +1512,8 @@ void CGame::SimFrame() {
 	helper->Update();
 	mapDamage->Update();
 	pathManager->Update();
-	uh->Update();
-	ph->Update();
+	unitHandler->Update();
+	projectileHandler->Update();
 	featureHandler->Update();
 	GCobEngine.Tick(33);
 	GUnitScriptEngine.Tick(33);
@@ -1726,9 +1726,9 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 	if ((gs->frameNum % gFramePeriod) != 0) { return; }
 
 	// we only care about the synced projectile data here
-	const std::list<CUnit*>& units = uh->activeUnits;
+	const std::list<CUnit*>& units = unitHandler->activeUnits;
 	const CFeatureSet& features = featureHandler->GetActiveFeatures();
-	      ProjectileContainer& projectiles = ph->syncedProjectiles;
+	      ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
 
 	std::list<CUnit*>::const_iterator unitsIt;
 	CFeatureSet::const_iterator featuresIt;
@@ -2175,8 +2175,8 @@ void CGame::ReloadCOB(const string& msg, int player)
 		return;
 	}
 	int count = 0;
-	for (size_t i = 0; i < uh->MaxUnits(); i++) {
-		CUnit* unit = uh->units[i];
+	for (size_t i = 0; i < unitHandler->MaxUnits(); i++) {
+		CUnit* unit = unitHandler->units[i];
 		if (unit != NULL) {
 			CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
 			if (cob != NULL && cob->GetScriptAddr() == oldScript) {
@@ -2207,10 +2207,10 @@ void CGame::SelectUnits(const string& line)
 			if (endPtr == startPtr) {
 				continue; // bad number
 			}
-			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= uh->MaxUnits())) {
+			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= unitHandler->MaxUnits())) {
 				continue; // bad index
 			}
-			CUnit* unit = uh->units[unitIndex];
+			CUnit* unit = unitHandler->units[unitIndex];
 			if (unit == NULL) {
 				continue; // bad pointer
 			}
@@ -2245,7 +2245,7 @@ void CGame::SelectCycle(const string& command)
 		selectedUnits.ClearSelected();
 		set<int>::const_iterator it;
 		for (it = unitIDs.begin(); it != unitIDs.end(); ++it) {
-			CUnit* unit = uh->units[*it];
+			CUnit* unit = unitHandler->units[*it];
 			if (unit != NULL) {
 				selectedUnits.AddUnit(unit);
 			}
@@ -2262,7 +2262,7 @@ void CGame::SelectCycle(const string& command)
 		}
 		selectedUnits.ClearSelected();
 		lastID = *unitIDs.begin();
-		selectedUnits.AddUnit(uh->units[lastID]);
+		selectedUnits.AddUnit(unitHandler->units[lastID]);
 		return;
 	}
 
@@ -2270,12 +2270,12 @@ void CGame::SelectCycle(const string& command)
 	set<int> tmpSet;
 	set<int>::const_iterator it;
 	for (it = unitIDs.begin(); it != unitIDs.end(); ++it) {
-		if (uh->units[*it] != NULL) {
+		if (unitHandler->units[*it] != NULL) {
 			tmpSet.insert(*it);
 		}
 	}
 	unitIDs = tmpSet;
-	if ((lastID >= 0) && (uh->units[lastID] == NULL)) {
+	if ((lastID >= 0) && (unitHandler->units[lastID] == NULL)) {
 		lastID = -1;
 	}
 
@@ -2293,7 +2293,7 @@ void CGame::SelectCycle(const string& command)
 				lastID = *unitIDs.begin();
 			}
 		}
-		selectedUnits.AddUnit(uh->units[lastID]);
+		selectedUnits.AddUnit(unitHandler->units[lastID]);
 	}
 }
 

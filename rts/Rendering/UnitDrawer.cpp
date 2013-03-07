@@ -906,7 +906,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	if (gu->spectatingFullView) {
 		pos = unit->drawMidPos;
 	} else {
-		pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
+		pos = CGameHelper::GetUnitErrorPos(unit, gu->myAllyTeam);
 	}
 
 	float dist = fastmath::sqrt2(fastmath::sqrt2((pos - camera->pos).SqLength()));
@@ -1148,7 +1148,7 @@ void CUnitDrawer::DrawCloakedAIUnits()
 			SetTeamColour(ti->second.team, cloakAlpha3);
 
 			BuildInfo bi(unitdef, pos, ti->second.facing);
-			pos = helper->Pos2BuildPos(bi, false);
+			pos = CGameHelper::Pos2BuildPos(bi, false);
 
 			const float xsize = bi.GetXSize() * 4;
 			const float zsize = bi.GetZSize() * 4;
@@ -2098,9 +2098,9 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	const int x2 =    x1 + (buildInfo.GetXSize() *        SQUARE_SIZE);
 	const int z1 = pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE);
 	const int z2 =    z1 + (buildInfo.GetZSize() *        SQUARE_SIZE);
-	const float h = uh->GetBuildHeight(pos, buildInfo.def, false);
+	const float h = CGameHelper::GetBuildHeight(pos, buildInfo.def, false);
 
-	const bool canBuild = !!uh->TestUnitBuildSquare(
+	const bool canBuild = !!CGameHelper::TestUnitBuildSquare(
 		buildInfo,
 		feature,
 		-1,
@@ -2251,7 +2251,7 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 
 	const float iconScale = GetUnitIconScale(unit);
 	const float3& iconPos = (!gu->spectatingFullView)?
-		helper->GetUnitErrorPos(unit, gu->myAllyTeam):
+		CGameHelper::GetUnitErrorPos(unit, gu->myAllyTeam):
 		static_cast<float3>(unit->midPos);
 
 	const float iconSizeX = (iconScale * minimap->GetUnitSizeX());

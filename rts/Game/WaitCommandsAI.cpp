@@ -686,10 +686,10 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 
 	if (cmd.params.size() == 1) {
 		const int unitID = (int)cmd.params[0];
-		if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
+		if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 			return;
 		}
-		CUnit* unit = uh->units[unitID];
+		CUnit* unit = unitHandler->units[unitID];
 		if (unit == NULL) {
 			return;
 		}
@@ -857,7 +857,7 @@ void CWaitCommandsAI::DeathWait::SelectAreaUnits(
 	const float3 mins(std::min(pos0.x, pos1.x), 0.0f, std::min(pos0.z, pos1.z));
 	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));
 
-	const std::vector<CUnit*> &tmpUnits = qf->GetUnitsExact(mins, maxs);
+	const std::vector<CUnit*> &tmpUnits = quadField->GetUnitsExact(mins, maxs);
 
 	const int count = (int)tmpUnits.size();
 	for (int i = 0; i < count; i++) {

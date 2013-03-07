@@ -65,10 +65,10 @@
 
 // Cast id to unsigned to catch negative ids in the same operations,
 // cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning.
-#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)uh->MaxUnits())
+#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
 // With some hacking you can raise an abort (assert) instead of ignoring the id,
-//#define CHECK_UNITID(id) (assert(id > 0 && id < uh->MaxUnits()), true)
+//#define CHECK_UNITID(id) (assert(id > 0 && id < unitHandler->MaxUnits()), true)
 // ...or disable the check altogether for release.
 //#define CHECK_UNITID(id) true
 
@@ -78,7 +78,7 @@ CUnit* CAICallback::GetUnit(int unitId) const {
 	CUnit* unit = NULL;
 
 	if (CHECK_UNITID(unitId)) {
-		unit = uh->units[unitId];
+		unit = unitHandler->units[unitId];
 	}
 
 	return unit;
@@ -89,7 +89,7 @@ CUnit* CAICallback::GetMyTeamUnit(int unitId) const {
 	CUnit* unit = NULL;
 
 	if (CHECK_UNITID(unitId)) {
-		CUnit* unitTmp = uh->units[unitId];
+		CUnit* unitTmp = unitHandler->units[unitId];
 		if (unitTmp && (unitTmp->team == team)) {
 			unit = unitTmp;
 		}
@@ -103,7 +103,7 @@ CUnit* CAICallback::GetInSensorRangeUnit(int unitId, unsigned short losFlags) co
 	CUnit* unit = NULL;
 
 	if (CHECK_UNITID(unitId)) {
-		CUnit* unitTmp = uh->units[unitId];
+		CUnit* unitTmp = unitHandler->units[unitId];
 		// Skip in-sensor-range test if the unit is allied with our team.
 		// This prevents errors where an allied unit is starting to build,
 		// but is not yet (technically) in LOS, because LOS was not yet updated,
@@ -386,7 +386,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 		return -2;
 	}
 
-	const CUnit * unit = uh->units[unitId];
+	const CUnit * unit = unitHandler->units[unitId];
 
 	if (!unit) {
 		return -3;
@@ -462,7 +462,7 @@ float CAICallback::GetUnitHealth(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = uh->units[unitId];
+		const CUnit* unit = unitHandler->units[unitId];
 
 		if (unit) {
 			const int allyTeam = teamHandler->AllyTeam(team);
@@ -492,7 +492,7 @@ float CAICallback::GetUnitMaxHealth(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = uh->units[unitId];
+		const CUnit* unit = unitHandler->units[unitId];
 		if (unit) {
 			const int allyTeam = teamHandler->AllyTeam(team);
 			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
@@ -519,7 +519,7 @@ float CAICallback::GetUnitSpeed(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = uh->units[unitId];
+		const CUnit* unit = unitHandler->units[unitId];
 		if (unit) {
 			const int allyTeam = teamHandler->AllyTeam(team);
 			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
@@ -545,7 +545,7 @@ float CAICallback::GetUnitPower(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = uh->units[unitId];
+		const CUnit* unit = unitHandler->units[unitId];
 		if (unit) {
 			const int allyTeam = teamHandler->AllyTeam(team);
 			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
@@ -585,7 +585,7 @@ float CAICallback::GetUnitMaxRange(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = uh->units[unitId];
+		const CUnit* unit = unitHandler->units[unitId];
 		if (unit) {
 			const int allyTeam = teamHandler->AllyTeam(team);
 			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
@@ -611,7 +611,7 @@ const UnitDef* CAICallback::GetUnitDef(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = uh->units[unitId];
+		const CUnit* unit = unitHandler->units[unitId];
 		if (unit) {
 			const UnitDef* unitDef = unit->unitDef;
 			const int allyTeam = teamHandler->AllyTeam(team);
@@ -652,7 +652,7 @@ float3 CAICallback::GetUnitPos(int unitId)
 	verify();
 	const CUnit* unit = GetInLosAndRadarUnit(unitId);
 	if (unit) {
-		return helper->GetUnitErrorPos(unit, teamHandler->AllyTeam(team));
+		return CGameHelper::GetUnitErrorPos(unit, teamHandler->AllyTeam(team));
 	}
 	return ZeroVector;
 }
@@ -920,21 +920,21 @@ int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	verify();
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsEnemyAndInLos);
+	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsEnemyAndInLos);
 }
 
 int CAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max)
 {
 	verify();
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsEnemyAndInLosOrRadar);
+	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsEnemyAndInLosOrRadar);
 }
 
 int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
-	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(team);
 	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsEnemyAndInLos);
 }
@@ -944,14 +944,14 @@ int CAICallback::GetFriendlyUnits(int* unitIds, int unitIds_max)
 {
 	verify();
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsFriendly);
+	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsFriendly);
 }
 
 int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
-	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(team);
 	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsFriendly);
 }
@@ -961,13 +961,13 @@ int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
 	verify();
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsNeutralAndInLos);
+	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsNeutralAndInLos);
 }
 
 int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
 	verify();
-	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(team);
 	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsNeutralAndInLos);
 }
@@ -1167,14 +1167,14 @@ bool CAICallback::CanBuildAt(const UnitDef* unitDef, const float3& pos, int faci
 {
 	CFeature* blockingF = NULL;
 	BuildInfo bi(unitDef, pos, facing);
-	bi.pos = helper->Pos2BuildPos(bi, false);
-	return !!uh->TestUnitBuildSquare(bi, blockingF, teamHandler->AllyTeam(team), false);
+	bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+	return !!CGameHelper::TestUnitBuildSquare(bi, blockingF, teamHandler->AllyTeam(team), false);
 }
 
 
 float3 CAICallback::ClosestBuildSite(const UnitDef* unitDef, const float3& pos, float searchRadius, int minDist, int facing)
 {
-	return helper->ClosestBuildSite(team, unitDef, pos, searchRadius, minDist, facing);
+	return CGameHelper::ClosestBuildSite(team, unitDef, pos, searchRadius, minDist, facing);
 }
 
 
@@ -1291,7 +1291,7 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const floa
 	int featureIds_size = 0;
 
 	verify();
-	const std::vector<CFeature*>& ft = qf->GetFeaturesExact(pos, radius);
+	const std::vector<CFeature*>& ft = quadField->GetFeaturesExact(pos, radius);
 	const int allyteam = teamHandler->AllyTeam(team);
 
 	std::vector<CFeature*>::const_iterator it;
@@ -1497,7 +1497,7 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			AIHCTraceRay* cmdData = static_cast<AIHCTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = uh->units[cmdData->srcUID];
+				const CUnit* srcUnit = unitHandler->units[cmdData->srcUID];
 
 				if (srcUnit != NULL) {
 					CUnit* hitUnit = NULL;
@@ -1523,7 +1523,7 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			AIHCFeatureTraceRay* cmdData = static_cast<AIHCFeatureTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = uh->units[cmdData->srcUID];
+				const CUnit* srcUnit = unitHandler->units[cmdData->srcUID];
 
 				if (srcUnit != NULL) {
 					CUnit* hitUnit = NULL;
@@ -1673,7 +1673,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 {
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = uh->units[unitId];
+		const CUnit* unit = unitHandler->units[unitId];
 		const int allyTeam = teamHandler->AllyTeam(team);
 		myAllyTeamId = allyTeam;
 		if (!(unit && unit_IsInLos(unit))) {
@@ -1877,7 +1877,7 @@ bool CAICallback::CanBuildUnit(int unitDefID)
 	if (ud == NULL) {
 		return false;
 	}
-	return uh->CanBuildUnit(ud, team);
+	return unitHandler->CanBuildUnit(ud, team);
 }
 
 

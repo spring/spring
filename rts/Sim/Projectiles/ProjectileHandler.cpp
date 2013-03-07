@@ -37,7 +37,7 @@ using namespace std;
 CONFIG(int, MaxParticles).defaultValue(1000);
 CONFIG(int, MaxNanoParticles).defaultValue(2500);
 
-CProjectileHandler* ph;
+CProjectileHandler* projectileHandler = NULL;
 
 
 CR_BIND_TEMPLATE(ProjectileContainer, )
@@ -101,8 +101,6 @@ CProjectileHandler::~CProjectileHandler()
 
 	syncedProjectileIDs.clear();
 	unsyncedProjectileIDs.clear();
-
-	ph = NULL;
 
 	CCollisionHandler::PrintStats();
 }
@@ -208,7 +206,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			PROJECTILE_SANITY_CHECK(p);
 
 			p->Update();
-			qf->MovedProjectile(p);
+			quadField->MovedProjectile(p);
 
 			PROJECTILE_SANITY_CHECK(p);
 			GML::GetTicks(p->lastProjUpdate);
@@ -448,8 +446,8 @@ void CProjectileHandler::CheckFeatureCollisions(
 }
 
 void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
-	static std::vector<CUnit*> tempUnits(uh->MaxUnits(), NULL);
-	static std::vector<CFeature*> tempFeatures(uh->MaxUnits(), NULL);
+	static std::vector<CUnit*> tempUnits(unitHandler->MaxUnits(), NULL);
+	static std::vector<CFeature*> tempFeatures(unitHandler->MaxUnits(), NULL);
 
 	for (ProjectileContainer::iterator pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
@@ -462,7 +460,7 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 			CUnit** endUnit = &tempUnits[0];
 			CFeature** endFeature = &tempFeatures[0];
 
-			qf->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
+			quadField->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
 
 			CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
 			CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);

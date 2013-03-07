@@ -103,7 +103,7 @@ void CTorpedoProjectile::Update()
 						if (pos.SqDistance(so->aimPos) > 150 * 150 && owner()) {
 							CUnit* u = dynamic_cast<CUnit*>(so);
 							if (u) {
-								targetPos = helper->GetUnitErrorPos(u, owner()->allyteam, true);
+								targetPos = CGameHelper::GetUnitErrorPos(u, owner()->allyteam, true);
 							}
 						}
 					} if (po) {

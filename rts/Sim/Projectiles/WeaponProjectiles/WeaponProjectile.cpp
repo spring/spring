@@ -113,7 +113,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 		cegID = gCEG->Load(explGenHandler, weaponDef->cegTag);
 	}
 
-	ph->AddProjectile(this);
+	projectileHandler->AddProjectile(this);
 	ASSERT_SYNCED(id);
 
 	if (weaponDef->interceptedByShieldType) {

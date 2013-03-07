@@ -288,7 +288,7 @@ void CWeapon::UpdateTargeting()
 			lead *= (weaponDef->leadLimit + weaponDef->leadBonus*owner->experience) / (lead.Length() + 0.01f);
 		}
 
-		const float3 errorPos = helper->GetUnitErrorPos(targetUnit, owner->allyteam, true);
+		const float3 errorPos = CGameHelper::GetUnitErrorPos(targetUnit, owner->allyteam, true);
 		const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * targetUnit->speed.Length() * (1.0f - owner->limExperience));
 
 		float3 tmpTargetPos = errorPos + lead + errorVector * errorScale;
@@ -631,7 +631,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	}
 	#endif
 
-	const float3 errorPos = helper->GetUnitErrorPos(newTargetUnit, owner->allyteam, true);
+	const float3 errorPos = CGameHelper::GetUnitErrorPos(newTargetUnit, owner->allyteam, true);
 	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * newTargetUnit->speed.Length() * (1.0f - owner->limExperience));
 	const float3 newTargetPos = errorPos + errorVector * errorScale;
 
@@ -730,7 +730,7 @@ void CWeapon::AutoTarget() {
 	//   <targets> can contain duplicates if a unit covers multiple quads
 	//   <targets> is normally sorted such that all bad TC units are at the
 	//   end, but Lua can mess with the ordering arbitrarily
-	helper->GenerateWeaponTargets(this, targetUnit, targets);
+	CGameHelper::GenerateWeaponTargets(this, targetUnit, targets);
 
 	CUnit* prevTargetUnit = NULL;
 	CUnit* goodTargetUnit = NULL;
@@ -869,7 +869,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 		if (slavedTo->targetType == Target_Unit) {
 			const float3 tp =
-				helper->GetUnitErrorPos(slavedTo->targetUnit, owner->allyteam, true) +
+				CGameHelper::GetUnitErrorPos(slavedTo->targetUnit, owner->allyteam, true) +
 				errorVector * (weaponDef->targetMoveError * GAME_SPEED * slavedTo->targetUnit->speed.Length() * (1.0f - owner->limExperience));
 
 			if (TryTarget(tp, false, slavedTo->targetUnit)) {
@@ -1192,7 +1192,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 
 
 bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
-	const float3 errorPos = helper->GetUnitErrorPos(unit, owner->allyteam, true);
+	const float3 errorPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam, true);
 	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;
@@ -1202,7 +1202,7 @@ bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
 }
 
 bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
-	const float3 errorPos = helper->GetUnitErrorPos(unit, owner->allyteam, true);
+	const float3 errorPos = CGameHelper::GetUnitErrorPos(unit, owner->allyteam, true);
 	const float errorScale = (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
 
 	float3 tempTargetPos = errorPos + errorVector * errorScale;

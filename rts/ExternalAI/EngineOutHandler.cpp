@@ -408,7 +408,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 		float3 attackDir_damagedsView = ZeroVector;
 		if (attacker) {
 			attackDir_damagedsView =
-					helper->GetUnitErrorPos(attacker, damaged.allyteam)
+					CGameHelper::GetUnitErrorPos(attacker, damaged.allyteam)
 					- damaged.pos;
 			attackDir_damagedsView.ANormalize();
 		}
@@ -432,7 +432,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 				&& (team_skirmishAIs.find(at) != team_skirmishAIs.end())) {
 			// direction from the attacker's view
 			const float3 attackDir = (attacker->pos
-						- helper->GetUnitErrorPos(&damaged, attacker->allyteam))
+						- CGameHelper::GetUnitErrorPos(&damaged, attacker->allyteam))
 						.ANormalize();
 			const bool damagedInLosOrRadar = IsUnitInLosOrRadarOfAllyTeam(damaged, attacker->allyteam);
 			for (ids_t::iterator ai = team_skirmishAIs[at].begin(); ai != team_skirmishAIs[at].end(); ++ai)
@@ -486,7 +486,7 @@ void CEngineOutHandler::CommandFinished(const CUnit& unit, const Command& comman
 
 	const int teamId           = unit.team;
 	const int unitId           = unit.id;
-	const int aiCommandTopicId = extractAICommandTopic(&command, uh->MaxUnits());
+	const int aiCommandTopicId = extractAICommandTopic(&command, unitHandler->MaxUnits());
 
 	DO_FOR_TEAM_SKIRMISH_AIS(CommandFinished(unitId, command.aiCommandId, aiCommandTopicId), teamId);
 }

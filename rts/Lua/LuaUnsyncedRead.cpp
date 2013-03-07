@@ -227,10 +227,10 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		return NULL;
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
-	CUnit* unit = uh->units[unitID];
+	CUnit* unit = unitHandler->units[unitID];
 	if (unit == NULL) {
 		return NULL;
 	}
@@ -672,7 +672,7 @@ public:
 
 	void DrawQuad(int x, int y)
 	{
-		const CQuadField::Quad& q = qf->GetQuadAt(x,y);
+		const CQuadField::Quad& q = quadField->GetQuadAt(x,y);
 		if (!q.units.empty())
 			visunits.push_back(&q.units);
 		count += q.units.size();
@@ -690,7 +690,7 @@ public:
 
 	void DrawQuad(int x, int y)
 	{
-		const CQuadField::Quad& q = qf->GetQuadAt(x,y);
+		const CQuadField::Quad& q = quadField->GetQuadAt(x,y);
 		if (!q.features.empty())
 			visfeatures.push_back(&q.features);
 		count += q.features.size();
@@ -748,7 +748,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		lua_createtable(L, quadIter.count, 0);
 
 		// setup the list of unit sets
-		if (quadIter.count > uh->activeUnits.size()/3) {
+		if (quadIter.count > unitHandler->activeUnits.size()/3) {
 			// if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
 			if (teamID >= 0) {
 				unitSets.push_back(&teamHandler->Team(teamID)->units);

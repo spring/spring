@@ -148,7 +148,7 @@ CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, f
 	side1.ANormalize();
 	side2 = side1.cross(normal);
 
-	ph->AddGroundFlash(this);
+	projectileHandler->AddGroundFlash(this);
 }
 
 bool CStandardGroundFlash::Update()
@@ -255,7 +255,7 @@ void CSimpleGroundFlash::Init(const float3& explosionPos, CUnit* owner)
 	side1.ANormalize();
 	side2 = side1.cross(normal);
 
-	ph->AddGroundFlash(this);
+	projectileHandler->AddGroundFlash(this);
 }
 
 void CSimpleGroundFlash::Draw()
@@ -325,7 +325,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, int ttl, int fade, flo
 	side1.SafeANormalize();
 	side2 = side1.cross(normal);
 
-	ph->AddGroundFlash(this);
+	projectileHandler->AddGroundFlash(this);
 }
 
 void CSeismicGroundFlash::Draw()
