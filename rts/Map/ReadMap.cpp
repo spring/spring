@@ -34,6 +34,13 @@
 // assigned to in CGame::CGame ("readmap = CReadMap::LoadMap(mapname)")
 CReadMap* readmap = NULL;
 
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	#define	HEIGHTMAP_DIGESTS CR_MEMBER(syncedHeightMapDigests), \
+					CR_MEMBER(unsyncedHeightMapDigests),
+#else
+	#define HEIGHTMAP_DIGESTS
+#endif
+
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
 	//CR_MEMBER(metalMap), //handled in Serialize
@@ -59,10 +66,7 @@ CR_REG_METADATA(CReadMap, (
 	CR_MEMBER(typeMap),
 	//CR_MEMBER(unsyncedHeightMapUpdates),
 	//CR_MEMBER(unsyncedHeightMapUpdatesTemp),
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	CR_MEMBER(syncedHeightMapDigests),
-	CR_MEMBER(unsyncedHeightMapDigests),
-#endif
+	HEIGHTMAP_DIGESTS
 	CR_SERIALIZER(Serialize)
 ));
 
