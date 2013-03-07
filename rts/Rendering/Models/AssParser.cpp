@@ -601,26 +601,26 @@ void CAssParser::FindTextures(S3DModel* model, const aiScene* scene, const LuaTa
 
 	// try to find by name
 	if (model->tex1.empty()) {
-		const std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + ".*");
-		for(std::vector<std::string>::const_iterator fi = files.begin(); fi != files.end(); ++fi) {
-			model->tex1 = FileSystem::GetFilename(*fi);
-			break; // there can be only one!
+		const std::vector<std::string>& files = CFileHandler::FindFiles("unittextures/", modelName + ".*");
+
+		if (!files.empty()) {
+			model->tex1 = FileSystem::GetFilename(files[0]);
 		}
 	}
 	if (model->tex2.empty()) {
-		const std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + "2.*");
-		for(std::vector<std::string>::const_iterator fi = files.begin(); fi != files.end(); ++fi) {
-			model->tex2 = FileSystem::GetFilename(*fi);
-			break; // there can be only one!
+		const std::vector<std::string>& files = CFileHandler::FindFiles("unittextures/", modelName + "2.*");
+
+		if (!files.empty()) {
+			model->tex2 = FileSystem::GetFilename(files[0]);
 		}
 	}
 
-	// last chance
+	// last chance for primary texture
 	if (model->tex1.empty()) {
-		const std::vector<std::string> files = CFileHandler::FindFiles(modelPath, "diffuse.*");
-		for(std::vector<std::string>::const_iterator fi = files.begin(); fi != files.end(); ++fi) {
-			model->tex2 = FileSystem::GetFilename(*fi);
-			break; // there can be only one!
+		const std::vector<std::string>& files = CFileHandler::FindFiles(modelPath, "diffuse.*");
+
+		if (!files.empty()) {
+			model->tex1 = FileSystem::GetFilename(files[0]);
 		}
 	}
 
@@ -634,7 +634,7 @@ void CAssParser::FindTextures(S3DModel* model, const aiScene* scene, const LuaTa
 	}
 	if (!CFileHandler::FileExists(model->tex2, SPRING_VFS_ZIP)) {
 		if (CFileHandler::FileExists("unittextures/" + model->tex2, SPRING_VFS_ZIP)) {
-			model->tex1 = "unittextures/" + model->tex2;
+			model->tex2 = "unittextures/" + model->tex2;
 		} else if (CFileHandler::FileExists(modelPath + model->tex2, SPRING_VFS_ZIP)) {
 			model->tex2 = modelPath + model->tex2;
 		}
