@@ -1072,26 +1072,29 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 	// get mouse-hovered map pos
 	CUnit* unit = NULL;
 	CFeature* feature = NULL;
+
 	const float viewRange = globalRendering->viewRange * 1.4f;
 	const float dist = TraceRay::GuiTraceRay(camera->pos, mouse->dir, viewRange, NULL, unit, feature, true);
 	const float3 groundPos = camera->pos + mouse->dir * dist;
 
+	if (dist <= 0.0f)
+		return false;
+
 	for (CUnitSet::const_iterator it = selectedUnits.selectedUnits.begin(); it != selectedUnits.selectedUnits.end(); ++it) {
 		const CUnit* u = *it;
 
+		// assume mobile units can get within weapon range of groundPos
+		// (mobile *kamikaze* units can attack by blowing themselves up)
+		if (!u->immobile)
+			return (u->unitDef->canKamikaze || !u->weapons.empty());
 		if (u->weapons.empty())
 			continue;
 
-		if (!u->immobile)
-			return true;
-
-		if (dist <= 0.0f)
-			continue;
-
-		// TODO: why not test ALL weapons?
-		const CWeapon* w = u->weapons[0];
-		if (w->TryTarget(groundPos, false, unit))
-			return true;
+		for (unsigned int n = 0; n < u->weapons.size(); n++) {
+			if (u->weapons[n]->TryTarget(groundPos, false, unit)) {
+				return true;
+			}
+		}
 	}
 
 	return false;
