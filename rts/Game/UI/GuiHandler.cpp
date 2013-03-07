@@ -1087,8 +1087,6 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 		// (mobile *kamikaze* units can attack by blowing themselves up)
 		if (!u->immobile)
 			return (u->unitDef->canKamikaze || !u->weapons.empty());
-		if (u->weapons.empty())
-			continue;
 
 		for (unsigned int n = 0; n < u->weapons.size(); n++) {
 			if (u->weapons[n]->TryTarget(groundPos, false, unit)) {
