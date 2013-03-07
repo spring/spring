@@ -3938,6 +3938,18 @@
 						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\WeaponProjectile.h"
 						>
 					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\WeaponProjectileFactory.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\WeaponProjectileFactory.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\WeaponProjectiles\WeaponProjectileTypes.h"
+						>
+					</File>
 				</Filter>
 			</Filter>
 			<Filter
