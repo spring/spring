@@ -88,7 +88,7 @@ namespace creg
 				}
 			}
 		}
-		std::string GetName() { return "map<" + keyType->GetName() + ", " + mappedType->GetName(); }
+		std::string GetName() { return "map<" + keyType->GetName() + ", " + mappedType->GetName() + ">"; }
 		size_t GetSize() { return sizeof(T); }
 	};
 

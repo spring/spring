@@ -65,7 +65,7 @@ namespace creg {
 				if (!objEmbedded) {
 					for (Class *base=class_->base;base;base=base->base)
 						if (base==objClass) return true;
-				} 
+				}
 				if (!isEmbedded) {
 					for (Class *base=objClass->base;base;base=base->base)
 						if (base==class_) return true;
@@ -77,10 +77,10 @@ namespace creg {
 		// Temporary class reference
 		struct ClassRef;
 
-		std::ostream *stream;
-		std::map <void*,std::vector<ObjectRef*> > ptrToId;
-		std::list <ObjectRef> objects;
-		std::vector <ObjectRef*> pendingObjects; // these objects still have to be saved
+		std::ostream* stream;
+		std::map<void*,std::vector<ObjectRef*> > ptrToId;
+		std::list<ObjectRef> objects;
+		std::vector<ObjectRef*> pendingObjects; // these objects still have to be saved
 
 		// Serialize all class names
 		void WriteObjectInfo ();
@@ -107,7 +107,7 @@ namespace creg {
 
 		/** @see ISerializer::SerializeObjectPtr */
 		void SerializeObjectPtr (void **ptr, Class *cls);
-		
+
 		/** @see ISerializer::SerializeObjectInstance */
 		void SerializeObjectInstance (void *inst, Class *cls);
 
@@ -162,7 +162,7 @@ namespace creg {
 
 		/** @see ISerializer::SerializeObjectPtr */
 		void SerializeObjectPtr (void **ptr, Class *cls);
-		
+
 		/** @see ISerializer::SerializeObjectInstance */
 		void SerializeObjectInstance (void *inst, Class *cls);
 
