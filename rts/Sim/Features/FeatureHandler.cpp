@@ -418,10 +418,8 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 
 CFeature* CFeatureHandler::GetFeature(int id)
 {
-	if (id >= 0 && id < features.size()) {
-		assert(features[id]);
+	if (id >= 0 && id < features.size())
 		return features[id];
-	}
 
 	return NULL;
 }
