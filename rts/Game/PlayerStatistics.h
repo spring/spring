@@ -4,7 +4,7 @@
 #define PLAYER_STATISTICS_H
 
 #include "TeamController.h"
-#include "System/creg/creg.h"
+#include "System/creg/creg_cond.h"
 
 
 /**

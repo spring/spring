@@ -4,7 +4,7 @@
 #define SKIRMISH_AI_BASE_H
 
 #include "Game/TeamController.h"
-#include "System/creg/creg.h"
+#include "System/creg/creg_cond.h"
 
 #include <string>
 #include <map>
