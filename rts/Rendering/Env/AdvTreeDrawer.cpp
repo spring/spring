@@ -363,6 +363,8 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
 				const CFeature* f = featureHandler->GetFeature(ts->id);
 
+				if (f == NULL)
+					continue;
 				if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 					continue;
 
@@ -402,6 +404,8 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
 				const CFeature* f = featureHandler->GetFeature(ts->id);
 
+				if (f == NULL)
+					continue;
 				// note: will cause some trees to be invisible if list is not refreshed
 				if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 					continue;
@@ -565,6 +569,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 					const TreeStruct* ts = &ti->second;
 					const CFeature* f = featureHandler->GetFeature(ts->id);
 
+					if (f == NULL)
+						continue;
 					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 						continue;
 					if (!camera->InView(ts->pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
@@ -618,10 +624,13 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 		// draw trees that have been marked as falling
 		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
-			const CFeature* f = featureHandler->GetFeature(fti->id);
+			// const CFeature* f = featureHandler->GetFeature(fti->id);
 			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
 
-			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
+			// featureID is invalid for falling trees
+			// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
+			//   continue;
+			if (!loshandler->InLos(pos, gu->myAllyTeam))
 				continue;
 			if (!camera->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
@@ -673,6 +682,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		for (FadeTree* pFTree = fadeTrees; pFTree < pFT; ++pFTree) {
 			const CFeature* f = featureHandler->GetFeature(pFTree->id);
 
+			if (f == NULL)
+				continue;
 			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
 			if (!camera->InView(pFTree->pos, MAX_TREE_HEIGHT / 2.0f))
@@ -796,6 +807,8 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
 				const CFeature* f = featureHandler->GetFeature(ts->id);
 
+				if (f == NULL)
+					continue;
 				// note: will cause some trees to be invisible if list is not refreshed
 				if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 					continue;
@@ -835,6 +848,8 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
 				const CFeature* f = featureHandler->GetFeature(ts->id);
 
+				if (f == NULL)
+					continue;
 				if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 					continue;
 
@@ -938,6 +953,8 @@ void CAdvTreeDrawer::DrawShadowPass()
 					const TreeStruct* ts = &ti->second;
 					const CFeature* f = featureHandler->GetFeature(ts->id);
 
+					if (f == NULL)
+						continue;
 					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 						continue;
 					if (!camera->InView(ts->pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2 + 150))
@@ -985,10 +1002,13 @@ void CAdvTreeDrawer::DrawShadowPass()
 		po->SetUniform3f((globalRendering->haveGLSL? 3: 10), 0.0f, 0.0f, 0.0f);
 
 		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
-			const CFeature* f = featureHandler->GetFeature(fti->id);
+			// const CFeature* f = featureHandler->GetFeature(fti->id);
 			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
 
-			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
+			// featureID is invalid for falling trees
+			// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
+			//   continue;
+			if (!loshandler->InLos(pos, gu->myAllyTeam))
 				continue;
 			if (!camera->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
@@ -1029,6 +1049,8 @@ void CAdvTreeDrawer::DrawShadowPass()
 		for (FadeTree* pFTree = fadeTrees; pFTree < pFT; ++pFTree) {
 			const CFeature* f = featureHandler->GetFeature(pFTree->id);
 
+			if (f == NULL)
+				continue;
 			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
 			if (!camera->InView(pFTree->pos, MAX_TREE_HEIGHT / 2.0f))
