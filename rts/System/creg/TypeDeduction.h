@@ -105,6 +105,15 @@ struct DeduceType<std::vector<T> > {
 	}
 };
 
+// std::vector<bool> is not a std::vector but a BitArray instead!
+template<>
+struct DeduceType<std::vector<bool> > {
+	boost::shared_ptr<IType> Get() {
+		DeduceType<bool> elemtype;
+		return boost::shared_ptr<IType>(new BitArrayType<std::vector<bool> >(elemtype.Get()));
+	}
+};
+
 // String type
 template<> struct DeduceType<std::string > {
 	boost::shared_ptr<IType> Get() { return IType::CreateStringType(); }

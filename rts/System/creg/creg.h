@@ -207,7 +207,7 @@ namespace creg {
 			T& ct = *(T*)inst;
 			if (s->IsWriting()) {
 				int size = (int)ct.size();
-				s->SerializeInt(&size,sizeof(int));
+				s->SerializeInt(&size, sizeof(int));
 				for (int a = 0; a < size; a++) {
 					elemType->Serialize(s, &ct[a]);
 				}
@@ -251,6 +251,40 @@ namespace creg {
 			for (int a = 0; a < Size; a++)
 				elemType->Serialize(s, &array[a]);
 		}
+	};
+
+	template<typename T>
+	class BitArrayType : public IType
+	{
+	public:
+		boost::shared_ptr<IType> elemType;
+
+		BitArrayType(boost::shared_ptr<IType> et)
+			: elemType(et) {}
+		~BitArrayType() {}
+
+		void Serialize(ISerializer* s, void* inst) {
+			T* ct = (T*)inst;
+			if (s->IsWriting()) {
+				int size = (int)ct->size();
+				s->SerializeInt(&size, sizeof(int));
+				for (int a = 0; a < size; a++) {
+					bool b = (*ct)[a];
+					elemType->Serialize(s, &b);
+				}
+			} else {
+				int size;
+				s->SerializeInt(&size, sizeof(int));
+				ct->resize(size);
+				for (int a = 0; a < size; a++) {
+					bool b;
+					elemType->Serialize(s, &b);
+					(*ct)[a] = b;
+				}
+			}
+		}
+		std::string GetName() { return elemType->GetName() + "[]"; }
+		size_t GetSize() { return sizeof(T); }
 	};
 
 	class EmptyType : public IType
