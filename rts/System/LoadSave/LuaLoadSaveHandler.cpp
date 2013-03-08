@@ -189,9 +189,13 @@ void CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 
 void CLuaLoadSaveHandler::LoadGame()
 {
+	ENTER_SYNCED_CODE();
+
 	LoadEventClients();
 	LoadAIData();
 	LoadHeightmap();
+
+	LEAVE_SYNCED_CODE();
 }
 
 
