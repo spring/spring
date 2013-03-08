@@ -40,9 +40,9 @@ ITreeDrawer::~ITreeDrawer() {
 
 void ITreeDrawer::AddTrees()
 {
-	for (int fID = 0; (featureHandler->GetFeature(fID)) != NULL; fID++) {
-		const CFeature* f = featureHandler->GetFeature(fID);
-
+	const CFeatureSet& features = featureHandler->GetActiveFeatures();
+	for (CFeatureSet::const_iterator it = features.begin(); it != features.end(); ++it) {
+		const CFeature* f = *it;
 		if (f->def->drawType >= DRAWTYPE_TREE) {
 			AddTree(f->id, f->def->drawType - 1, f->pos, 1.0f);
 		}
