@@ -8,7 +8,7 @@
 #include <list>
 
 #include "System/float3.h"
-#include "System/creg/creg.h"
+#include "System/creg/creg_cond.h"
 
 class CPlayer;
 class TeamController;
