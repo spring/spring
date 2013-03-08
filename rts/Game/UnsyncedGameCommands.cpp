@@ -2383,14 +2383,14 @@ public:
 class SafeGLActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SafeGLActionExecutor() : IUnsyncedActionExecutor("SafeGL",
-			"Enables/Disables OpenGL save-mode") {}
+			"Enables/Disables OpenGL safe-mode") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		bool saveMode = LuaOpenGL::GetSafeMode();
-		SetBoolArg(saveMode, action.GetArgs());
-		LuaOpenGL::SetSafeMode(saveMode);
-		LogSystemStatus("OpenGL save-mode", LuaOpenGL::GetSafeMode());
+		bool safeMode = LuaOpenGL::GetSafeMode();
+		SetBoolArg(safeMode, action.GetArgs());
+		LuaOpenGL::SetSafeMode(safeMode);
+		LogSystemStatus("OpenGL safe-mode", LuaOpenGL::GetSafeMode());
 		return true;
 	}
 };
