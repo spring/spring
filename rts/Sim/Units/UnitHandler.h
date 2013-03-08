@@ -56,7 +56,7 @@ public:
 
 	std::list<CUnit*> activeUnits;                    ///< used to get all active units
 	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
-	std::list<CBuilderCAI*> builderCAIs;              // TODO use std::set? (with custom compare-func for sync)
+	std::map<unsigned int, CBuilderCAI*> builderCAIs;
 
 private:
 	void InsertActiveUnit(CUnit* unit);

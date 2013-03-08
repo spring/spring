@@ -353,14 +353,17 @@ void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
 	GML_STDMUTEX_LOCK(cai); // AddBuilderCAI
 
-	builderCAIs.push_back(b);
+	// called from CBuilderCAI --> owner is already valid
+	builderCAIs[b->owner->id] = b;
 }
 
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
 	GML_STDMUTEX_LOCK(cai); // RemoveBuilderCAI
 
-	builderCAIs.remove(b);
+	// called from ~CUnit --> owner is still valid
+	assert(b->owner != NULL);
+	builderCAIs.erase(b->owner->id);
 }
 
 
