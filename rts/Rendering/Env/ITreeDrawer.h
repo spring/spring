@@ -29,7 +29,7 @@ public:
 	virtual void ResetPos(const float3& pos) = 0;
 
 	virtual void AddTree(int treeID, int treeType, const float3& pos, float size) = 0;
-	virtual void DeleteTree(const float3& pos) = 0;
+	virtual void DeleteTree(int treeID, const float3& pos) = 0;
 
 	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
 	virtual void AddGrass(const float3& pos) {}

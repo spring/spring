@@ -23,7 +23,7 @@ public:
 	void Update();
 	void ResetPos(const float3& pos);
 	void AddTree(int treeID, int treeType, const float3& pos, float size);
-	void DeleteTree(const float3& pos);
+	void DeleteTree(int treeID, const float3& pos);
 
 	TreeSquareStruct* trees;
 
