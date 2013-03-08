@@ -361,8 +361,9 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
+				const CFeature* f = featureHandler->GetFeature(ts->id);
 
-				if (!loshandler->InLos(ts->pos, gu->myAllyTeam))
+				if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 					continue;
 
 				if (ts->type < 8) {
@@ -399,9 +400,10 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
+				const CFeature* f = featureHandler->GetFeature(ts->id);
 
 				// note: will cause some trees to be invisible if list is not refreshed
-				if (!loshandler->InLos(ts->pos, gu->myAllyTeam))
+				if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 					continue;
 
 				if (ts->type < 8) {
@@ -561,8 +563,9 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 				for (std::map<int, TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
 					const TreeStruct* ts = &ti->second;
+					const CFeature* f = featureHandler->GetFeature(ts->id);
 
-					if (!loshandler->InLos(ts->pos, gu->myAllyTeam))
+					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 						continue;
 					if (!camera->InView(ts->pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 						continue;
@@ -615,10 +618,10 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 		// draw trees that have been marked as falling
 		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
-			//Note: featureID is invalid for falling trees (the feature is already dead!!!)
+			const CFeature* f = featureHandler->GetFeature(fti->id);
 			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
 
-			if (!loshandler->InLos(pos, gu->myAllyTeam))
+			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
 			if (!camera->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
@@ -668,7 +671,9 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 		// draw faded mid-distance trees
 		for (FadeTree* pFTree = fadeTrees; pFTree < pFT; ++pFTree) {
-			if (!loshandler->InLos(pFTree->pos, gu->myAllyTeam))
+			const CFeature* f = featureHandler->GetFeature(pFTree->id);
+
+			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
 			if (!camera->InView(pFTree->pos, MAX_TREE_HEIGHT / 2.0f))
 				continue;
@@ -789,9 +794,10 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
+				const CFeature* f = featureHandler->GetFeature(ts->id);
 
 				// note: will cause some trees to be invisible if list is not refreshed
-				if (!loshandler->InLos(ts->pos, gu->myAllyTeam))
+				if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 					continue;
 
 				if (ts->type < 8) {
@@ -827,8 +833,9 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &ti->second;
+				const CFeature* f = featureHandler->GetFeature(ts->id);
 
-				if (!loshandler->InLos(ts->pos, gu->myAllyTeam))
+				if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 					continue;
 
 				if (ts->type < 8) {
@@ -929,8 +936,9 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 				for (std::map<int, TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
 					const TreeStruct* ts = &ti->second;
+					const CFeature* f = featureHandler->GetFeature(ts->id);
 
-					if (!loshandler->InLos(ts->pos, gu->myAllyTeam))
+					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 						continue;
 					if (!camera->InView(ts->pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2 + 150))
 						continue;
@@ -960,6 +968,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 						glCallList(dispList);
 						glAlphaFunc(GL_GREATER, 0.5f);
 
+						pFT->id = f->id;
 						pFT->type = type;
 						pFT->pos = ts->pos;
 						pFT->deltaY = dy;
@@ -976,10 +985,10 @@ void CAdvTreeDrawer::DrawShadowPass()
 		po->SetUniform3f((globalRendering->haveGLSL? 3: 10), 0.0f, 0.0f, 0.0f);
 
 		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
-			//Note: featureID is invalid for falling trees (the feature is already dead!!!)
+			const CFeature* f = featureHandler->GetFeature(fti->id);
 			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
 
-			if (!loshandler->InLos(pos, gu->myAllyTeam))
+			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
 			if (!camera->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
@@ -1018,7 +1027,9 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 		// draw faded mid-distance trees
 		for (FadeTree* pFTree = fadeTrees; pFTree < pFT; ++pFTree) {
-			if (!loshandler->InLos(pFTree->pos, gu->myAllyTeam))
+			const CFeature* f = featureHandler->GetFeature(pFTree->id);
+
+			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
 			if (!camera->InView(pFTree->pos, MAX_TREE_HEIGHT / 2.0f))
 				continue;
@@ -1077,6 +1088,7 @@ void CAdvTreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float 
 	GML_STDMUTEX_LOCK(tree); // AddTree
 
 	TreeStruct ts;
+	ts.id = treeID;
 	ts.type = treeType;
 	ts.pos = pos;
 
@@ -1113,6 +1125,8 @@ void CAdvTreeDrawer::AddFallingTree(int treeID, int treeType, const float3& pos,
 	}
 
 	FallingTree ft;
+
+	ft.id = treeID;
 	ft.type = treeType;
 	ft.pos = pos;
 	ft.dir = dirPlane.Normalize();
@@ -1125,11 +1139,14 @@ void CAdvTreeDrawer::AddFallingTree(int treeID, int treeType, const float3& pos,
 void CAdvTreeDrawer::AddGrass(const float3& pos)
 {
 	GML_STDMUTEX_LOCK(tree); // AddGrass
+
 	grassDrawer->AddGrass(pos);
 }
 
 void CAdvTreeDrawer::RemoveGrass(int x, int z)
 {
 	GML_STDMUTEX_LOCK(tree); // RemoveGrass
+
 	grassDrawer->RemoveGrass(x, z);
 }
+

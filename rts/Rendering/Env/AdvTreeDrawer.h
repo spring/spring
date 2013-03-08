@@ -39,12 +39,14 @@ public:
 	static void DrawTreeVertexFar(CVertexArray* va, const float3& pos, const float3& swd, float dx, float dy, bool enlarge = true);
 
 	struct FadeTree {
+		int id;
 		int type;
 		float3 pos;
 		float relDist;
 		float deltaY;
 	};
 	struct FallingTree {
+		int id;
 		int type;
 		float3 pos;
 		float3 dir;
