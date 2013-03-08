@@ -544,22 +544,27 @@ void CSelectedUnits::Draw()
 
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
-			std::list<CBuilderCAI*>::const_iterator bi;
-			for (bi = unitHandler->builderCAIs.begin(); bi != unitHandler->builderCAIs.end(); ++bi) {
-				CBuilderCAI* builder = *bi;
-				if (builder->owner->team == gu->myTeam) {
+
+			const std::map<unsigned int, CBuilderCAI*>& builderCAIs = unitHandler->builderCAIs;
+			      std::map<unsigned int, CBuilderCAI*>::const_iterator bi;
+
+			for (bi = builderCAIs.begin(); bi != builderCAIs.end(); ++bi) {
+				const CBuilderCAI* builderCAI = bi->second;
+				const CUnit* builder = builderCAI->owner;
+
+				if (builder->team == gu->myTeam) {
 					if (!myColor) {
 						glColor4fv(cmdColors.buildBox);
 						myColor = true;
 					}
-					commandDrawer->DrawQuedBuildingSquares(builder);
+					commandDrawer->DrawQuedBuildingSquares(builderCAI);
 				}
-				else if (teamHandler->AlliedTeams(builder->owner->team, gu->myTeam)) {
+				else if (teamHandler->AlliedTeams(builder->team, gu->myTeam)) {
 					if (myColor) {
 						glColor4fv(cmdColors.allyBuildBox);
 						myColor = false;
 					}
-					commandDrawer->DrawQuedBuildingSquares(builder);
+					commandDrawer->DrawQuedBuildingSquares(builderCAI);
 				}
 			}
 		}

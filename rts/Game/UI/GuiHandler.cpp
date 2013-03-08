@@ -3688,21 +3688,27 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 		{ // limit the locking scope to avoid deadlock
 			GML_STDMUTEX_LOCK(cai); // DrawMapStuff
+
 			// draw build distance for all immobile builders during build commands
-			std::list<CBuilderCAI*>::const_iterator bi;
-			for (bi = unitHandler->builderCAIs.begin(); bi != unitHandler->builderCAIs.end(); ++bi) {
-				const CUnit* unit = (*bi)->owner;
-				if ((unit == pointedAt) || (unit->team != gu->myTeam)) {
+			const std::map<unsigned int, CBuilderCAI*>& builderCAIs = unitHandler->builderCAIs;
+			      std::map<unsigned int, CBuilderCAI*>::const_iterator bi;
+
+			for (bi = builderCAIs.begin(); bi != builderCAIs.end(); ++bi) {
+				const CBuilderCAI* builderCAI = bi->second;
+				const CUnit* builder = builderCAI->owner;
+				const UnitDef* builderDef = builder->unitDef;
+
+				if ((builder == pointedAt) || (builder->team != gu->myTeam)) {
 					continue;
 				}
-				const UnitDef* unitdef = unit->unitDef;
-				if (unitdef->builder && (!unitdef->canmove || selectedUnits.IsUnitSelected(unit))) {
-					const float radius = unitdef->buildDistance;
+
+				if (builderDef->builder && (!builderDef->canmove || selectedUnits.IsUnitSelected(builder))) {
+					const float radius = builderDef->buildDistance;
 					if (radius > 0.0f) {
 						glDisable(GL_TEXTURE_2D);
 						const float* color = cmdColors.rangeBuild;
 						glColor4f(color[0], color[1], color[2], color[3] * 0.333f);
-						glSurfaceCircle(unit->pos, radius, 40);
+						glSurfaceCircle(builder->pos, radius, 40);
 					}
 				}
 			}
