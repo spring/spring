@@ -35,6 +35,16 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_MEMBER(teamId),
 	CR_MEMBER(cheatEvents),
 	CR_MEMBER(key),
+
+	// handled in PostLoad
+	CR_IGNORED(initialized),
+	CR_IGNORED(released),
+	CR_IGNORED(ai),
+	CR_IGNORED(callback),
+	CR_IGNORED(cheats),
+	CR_IGNORED(c_callback),
+	CR_IGNORED(info),
+
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 ));

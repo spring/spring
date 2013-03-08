@@ -48,6 +48,7 @@ public:
 
 	void PushGroupChange(int id);
 
+public:
 	std::vector<CGroup*> groups;
 	int team;
 

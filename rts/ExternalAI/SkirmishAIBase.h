@@ -4,6 +4,7 @@
 #define SKIRMISH_AI_BASE_H
 
 #include "Game/TeamController.h"
+#include "System/creg/creg.h"
 
 #include <string>
 #include <map>
@@ -50,6 +51,8 @@ public:
  */
 class SkirmishAIStatistics : public TeamControllerStatistics
 {
+	CR_DECLARE(SkirmishAIStatistics);
+
 public:
 	/**
 	 * @brief Constructor assigning default values.

@@ -6,9 +6,13 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "System/creg/creg_cond.h"
+
 
 class AllyTeam
 {
+	CR_DECLARE_STRUCT(AllyTeam);
+
 public:
 	AllyTeam();
 

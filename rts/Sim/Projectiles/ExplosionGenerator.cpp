@@ -25,6 +25,7 @@
 #include "Sim/Projectiles/Unsynced/WakeProjectile.h"
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
 
+#include "System/creg/STL_Map.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
@@ -41,7 +42,39 @@ CR_REG_METADATA(IExplosionGenerator, (
 ));
 
 CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, );
+
+CR_BIND(CCustomExplosionGenerator::ProjectileSpawnInfo, )
+CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
+	//CR_MEMBER(projectileClass), FIXME is pointer
+	CR_MEMBER(code),
+	CR_MEMBER(count),
+	CR_MEMBER(flags)
+));
+
+CR_BIND(CCustomExplosionGenerator::GroundFlashInfo, )
+CR_REG_METADATA_SUB(CCustomExplosionGenerator, GroundFlashInfo, (
+	CR_MEMBER(flashSize),
+	CR_MEMBER(flashAlpha),
+	CR_MEMBER(circleGrowth),
+	CR_MEMBER(circleAlpha),
+	CR_MEMBER(ttl),
+	CR_MEMBER(color),
+	CR_MEMBER(flags)
+));
+
+CR_BIND(CCustomExplosionGenerator::CEGData, )
+CR_REG_METADATA_SUB(CCustomExplosionGenerator, CEGData, (
+	CR_MEMBER(projectileSpawn),
+	CR_MEMBER(groundFlash),
+	CR_MEMBER(useDefaultExplosions)
+));
+
 CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
+CR_REG_METADATA(CCustomExplosionGenerator, (
+	CR_MEMBER(explosionIDs),
+	CR_MEMBER(explosionData)//,
+	//CR_MEMBER(spawnExplGens) FIXME contains pointers
+));
 
 
 CExplosionGeneratorHandler* explGenHandler = NULL;
