@@ -360,11 +360,11 @@ void CSelectedUnits::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTe
 				}
 			}
 		}
-
-		#if (PLAY_SOUNDS == 1)
-		Channels::UnitReply.PlayRandomSample(unit->unitDef->sounds.select, unit);
-		#endif
 	}
+
+	#if (PLAY_SOUNDS == 1)
+	Channels::UnitReply.PlayRandomSample(unit->unitDef->sounds.select, unit);
+	#endif
 }
 
 
