@@ -22,25 +22,16 @@
 #include "System/myMath.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
+#include "System/creg/STL_Set.h"
 
 CR_BIND(CPlayer,);
-
 CR_REG_METADATA(CPlayer, (
-	CR_MEMBER(name),
-	CR_MEMBER(countryCode),
-	CR_MEMBER(rank),
-	CR_MEMBER(spectator),
-	CR_MEMBER(team),
-
 	CR_MEMBER(active),
 	CR_MEMBER(playerNum),
-//	CR_MEMBER(readyToStart),
-//	CR_MEMBER(cpuUsage),
-//	CR_MEMBER(ping),
-//	CR_MEMBER(currentStats),
-
-//	CR_MEMBER(controlledTeams),
-	CR_RESERVED(32)
+	CR_IGNORED(ping),
+	//CR_MEMBER(currentStats), FIXME add their classes to creg
+	//CR_MEMBER(fpsController), FIXME add their classes to creg
+	CR_MEMBER(controlledTeams)
 ));
 
 

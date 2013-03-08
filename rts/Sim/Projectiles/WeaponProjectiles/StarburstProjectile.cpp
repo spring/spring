@@ -24,9 +24,17 @@ static const float SMOKE_TIME = 70.0f;
 
 static const float TRACER_PARTS_STEP = 2.0f;
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND(CStarburstProjectile::TracerPart, )
+CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
+	CR_MEMBER(pos),
+	CR_MEMBER(dir),
+	CR_MEMBER(speedf),
+	CR_MEMBER(ageMods)
+));
 
-CR_REG_METADATA(CStarburstProjectile,(
+
+CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_REG_METADATA(CStarburstProjectile, (
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
 	CR_MEMBER(maxGoodDif),
@@ -46,16 +54,9 @@ CR_REG_METADATA(CStarburstProjectile,(
 	CR_MEMBER(distanceToTravel),
 	CR_MEMBER(aimError),
 	CR_MEMBER(curTracerPart),
-	CR_RESERVED(16)
+	CR_MEMBER(tracerParts)
 ));
 
-void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
-{
-	// NOTE This could be tricky if gs is serialized after losHandler.
-	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		s.Serialize(&tracerParts[a], sizeof(struct CStarburstProjectile::TracerPart));
-	}
-}
 
 CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, tracking(0.0f)
@@ -403,7 +404,7 @@ void CStarburstProjectile::DrawCallback()
 		const float ospeed = tracerPart->speedf;
 		float aa = 0;
 
-		for (AGEMOD_VECTOR::const_iterator ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += TRACER_PARTS_STEP) {
+		for (std::vector<float>::const_iterator ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += TRACER_PARTS_STEP) {
 			const float ageMod = *ai;
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
 			const float3 interPos = opos - (odir * ((a * 0.5f) + aa));

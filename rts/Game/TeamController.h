@@ -51,6 +51,8 @@ public:
  */
 class TeamControllerStatistics {
 public:
+	CR_DECLARE(TeamControllerStatistics);
+
 	TeamControllerStatistics()
 		: numCommands(0)
 		, unitCommands(0) {}
@@ -64,7 +66,7 @@ public:
 
 protected:
 	/// Change structure from host endian to little endian or vice versa.
-	void swabTC() {
+	void swab() {
 		swabDWordInPlace(numCommands);
 		swabDWordInPlace(unitCommands);
 	}

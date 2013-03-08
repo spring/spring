@@ -55,11 +55,28 @@ CR_BIND(CProjectileHandler, );
 CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(syncedProjectiles),
 	CR_MEMBER(unsyncedProjectiles),
-	CR_MEMBER(syncedProjectileIDs),
-	CR_MEMBER(freeSyncedIDs),
+	//CR_MEMBER(flyingPieces3DO),
+	//CR_MEMBER(flyingPiecesS3O),
+	//CR_MEMBER(groundFlashes),
+
+	CR_MEMBER(maxParticles),
+	CR_MEMBER(maxNanoParticles),
+	CR_MEMBER(currentParticles),
+	CR_MEMBER(currentNanoParticles),
+	CR_MEMBER(particleSaturation),
+	CR_MEMBER(nanoParticleSaturation),
+
 	CR_MEMBER(maxUsedSyncedID),
-	CR_MEMBER(groundFlashes),
-	CR_RESERVED(32),
+	CR_MEMBER(maxUsedUnsyncedID),
+
+	//CR_MEMBER(syncedRenderProjectileIDs),
+	//CR_MEMBER(unsyncedRenderProjectileIDs),
+
+	CR_MEMBER(freeSyncedIDs),
+	CR_MEMBER(freeUnsyncedIDs),
+	CR_MEMBER(syncedProjectileIDs),
+	CR_MEMBER(unsyncedProjectileIDs),
+
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -302,7 +319,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 {
 	// already initialized?
 	assert(p->id < 0);
-	
+
 	std::list<int>* freeIDs = NULL;
 	ProjectileMap* proIDs = NULL;
 	ProjectileRenderMap* newProIDs = NULL;
@@ -342,7 +359,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	if ((*maxUsedID) > (1 << 24)) {
 		LOG_L(L_WARNING, "Lua %s projectile IDs are now out of range", (p->synced? "synced": "unsynced"));
 	}
-	
+
 	if (p->synced) {
 		ASSERT_SYNCED(newUsedID);
 	}

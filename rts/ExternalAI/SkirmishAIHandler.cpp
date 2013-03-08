@@ -26,7 +26,7 @@ CR_REG_METADATA(CSkirmishAIHandler, (
 	CR_MEMBER(id_libKey),
 	CR_MEMBER(gameInitialized),
 	CR_MEMBER(luaAIShortNames),
-	CR_RESERVED(64)
+	CR_IGNORED(currentAIId)
 ));
 
 

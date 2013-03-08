@@ -3,12 +3,26 @@
 #include "AllyTeam.h"
 
 #include <cstdlib>
+#include "System/creg/STL_Map.h"
 
-AllyTeam::AllyTeam() :
-startRectTop(0),
-startRectBottom(1),
-startRectLeft(0),
-startRectRight(1)
+
+CR_BIND(AllyTeam, );
+
+CR_REG_METADATA(AllyTeam, (
+	CR_MEMBER(startRectTop),
+	CR_MEMBER(startRectBottom),
+	CR_MEMBER(startRectLeft),
+	CR_MEMBER(startRectRight),
+	CR_MEMBER(allies),
+	CR_MEMBER(customValues)
+));
+
+
+AllyTeam::AllyTeam()
+	: startRectTop(0)
+	, startRectBottom(1)
+	, startRectLeft(0)
+	, startRectRight(1)
 {
 }
 

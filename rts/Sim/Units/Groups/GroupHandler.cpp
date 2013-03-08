@@ -11,6 +11,7 @@
 #include "Game/Camera/CameraController.h"
 #include "Game/CameraHandler.h"
 #include "Sim/Units/Unit.h"
+#include "System/creg/STL_Set.h"
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
@@ -22,11 +23,12 @@ std::vector<CGroupHandler*> grouphandlers;
 CR_BIND(CGroupHandler, (0))
 
 CR_REG_METADATA(CGroupHandler, (
-				CR_MEMBER(groups),
-				CR_MEMBER(team),
-				CR_MEMBER(freeGroups),
-				CR_MEMBER(firstUnusedGroup)
-				));
+	CR_MEMBER(groups),
+	CR_MEMBER(team),
+	CR_MEMBER(freeGroups),
+	CR_MEMBER(firstUnusedGroup),
+	CR_MEMBER(changedGroups)
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
