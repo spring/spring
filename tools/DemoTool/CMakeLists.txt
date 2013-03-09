@@ -40,6 +40,7 @@ IF (MINGW)
 	# To enable console output/force a console window to open
 	SET_TARGET_PROPERTIES(demotool PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
 ENDIF (MINGW)
+add_definitions(-DNOT_USING_CREG)
 TARGET_LINK_LIBRARIES(demotool ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 Add_Dependencies(demotool generateVersionFiles)
 
