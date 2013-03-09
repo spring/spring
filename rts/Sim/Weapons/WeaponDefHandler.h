@@ -23,8 +23,8 @@ public:
 	const WeaponDef* GetWeaponDef(std::string weaponname) const;
 	const WeaponDef* GetWeaponDefByID(int weaponDefId) const;
 
-	static DamageArray DynamicDamages(const DamageArray& damages, const float3& startPos,
-					const float3& curPos, const float range, const float exp,
+	static DamageArray DynamicDamages(const DamageArray& damages, const float3 startPos,
+					const float3 curPos, const float range, const float exp,
 					const float damageMin, const bool inverted);
 
 public:
