@@ -72,6 +72,7 @@ public:
 	CWeaponProjectile(const ProjectileParams& params, const bool isRay = false);
 	virtual ~CWeaponProjectile() {}
 
+	virtual void Explode(CUnit* hitUnit, CFeature* hitFeature, float3 impactPos, float3 impactDir);
 	virtual void Collision();
 	virtual void Collision(CFeature* feature);
 	virtual void Collision(CUnit* unit);
@@ -109,7 +110,9 @@ public:
 protected:
 	void UpdateInterception();
 	virtual void UpdateGroundBounce();
-	bool TraveledRange();
+
+	bool TraveledRange() const;
+	bool IsHitScan() const;
 
 protected:
 	const WeaponDef* weaponDef;
@@ -121,7 +124,6 @@ protected:
 	int ttl;
 	int bounces;
 
-	bool keepBouncing;
 	/// true if we are an interceptable projectile
 	// and an interceptor projectile is on the way
 	bool targeted;

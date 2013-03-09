@@ -31,11 +31,12 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(startpos),
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
-	CR_MEMBER(keepBouncing),
 	CR_MEMBER(weaponDefID),
 	CR_RESERVED(15),
 	CR_POSTLOAD(PostLoad)
 ));
+
+
 
 CWeaponProjectile::CWeaponProjectile(): CProjectile()
 	, weaponDef(NULL)
@@ -46,7 +47,6 @@ CWeaponProjectile::CWeaponProjectile(): CProjectile()
 	, ttl(0)
 	, bounces(0)
 
-	, keepBouncing(true)
 	, targeted(false)
 {
 }
@@ -62,7 +62,6 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 	, ttl(params.ttl)
 	, bounces(0)
 
-	, keepBouncing(true)
 	, targeted(false)
 
 	, startpos(params.pos)
@@ -122,34 +121,19 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 		interceptHandler.AddShieldInterceptableProjectile(this);
 	}
 
-	if (weaponDef->targetable)
+	if (weaponDef->targetable) {
 		interceptHandler.AddInterceptTarget(this, targetPos);
+	}
 }
 
-void CWeaponProjectile::Collision()
-{
-	Collision((CFeature*)NULL);
-}
 
-void CWeaponProjectile::Collision(CFeature* feature)
-{
-	if (feature && (gs->randFloat() < weaponDef->fireStarter)) {
-		feature->StartFire();
-	}
 
-	float3 impactPos = pos;
-	float3 impactDir = speed;
-
-	switch (projectileType) {
-		case WEAPON_BEAMLASER_PROJECTILE:
-		case WEAPON_LARGEBEAMLASER_PROJECTILE:
-		case WEAPON_LIGHTNING_PROJECTILE:
-		{
-			impactPos = feature ? feature->pos : targetPos;
-			impactDir = (targetPos - startpos);
-		} break;
-	}
-
+void CWeaponProjectile::Explode(
+	CUnit* hitUnit,
+	CFeature* hitFeature,
+	float3 impactPos,
+	float3 impactDir
+) {
 	const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
 		weaponDef->damages:
 		weaponDefHandler->DynamicDamages(
@@ -169,8 +153,8 @@ void CWeaponProjectile::Collision(CFeature* feature)
 		damageArray,
 		weaponDef,
 		owner(),
-		NULL,                                             // hitUnit
-		feature,
+		hitUnit,
+		hitFeature,
 		weaponDef->craterAreaOfEffect,
 		weaponDef->damageAreaOfEffect,
 		weaponDef->edgeEffectiveness,
@@ -184,8 +168,39 @@ void CWeaponProjectile::Collision(CFeature* feature)
 	helper->Explosion(params);
 
 	if (!weaponDef->noExplode || TraveledRange()) {
+		// remove ourselves from the simulation (otherwise
+		// keep traveling and generating more explosions)
 		CProjectile::Collision();
 	}
+}
+
+void CWeaponProjectile::Collision()
+{
+	Collision((CFeature*) NULL);
+}
+
+void CWeaponProjectile::Collision(CFeature* feature)
+{
+	float3 impactPos = pos;
+	float3 impactDir = speed;
+
+	if (feature != NULL) {
+		if (IsHitScan()) {
+			impactPos = feature->pos;
+			impactDir = targetPos - startpos;
+		}
+
+		if (gs->randFloat() < weaponDef->fireStarter) {
+			feature->StartFire();
+		}
+	} else {
+		if (IsHitScan()) {
+			impactPos = targetPos;
+			impactDir = targetPos - startpos;
+		}
+	}
+
+	Explode(NULL, feature, impactPos, impactDir);
 }
 
 void CWeaponProjectile::Collision(CUnit* unit)
@@ -193,52 +208,16 @@ void CWeaponProjectile::Collision(CUnit* unit)
 	float3 impactPos = pos;
 	float3 impactDir = speed;
 
-	switch (projectileType) {
-		case WEAPON_BEAMLASER_PROJECTILE:
-		case WEAPON_LARGEBEAMLASER_PROJECTILE:
-		case WEAPON_LIGHTNING_PROJECTILE:
-		{
+	if (unit != NULL) {
+		if (IsHitScan()) {
 			impactPos = unit->pos;
-			impactDir = (targetPos - startpos);
-		} break;
+			impactDir = targetPos - startpos;
+		}
+	} else {
+		assert(false);
 	}
 
-	const DamageArray& damageArray = (weaponDef->dynDamageExp <= 0.0f)?
-		weaponDef->damages:
-		weaponDefHandler->DynamicDamages(
-			weaponDef->damages,
-			startpos,
-			impactPos,
-			(weaponDef->dynDamageRange > 0.0f)?
-				weaponDef->dynDamageRange:
-				weaponDef->range,
-			weaponDef->dynDamageExp, weaponDef->dynDamageMin,
-			weaponDef->dynDamageInverted
-		);
-
-	const CGameHelper::ExplosionParams params = {
-		impactPos,
-		impactDir.SafeNormalize(),
-		damageArray,
-		weaponDef,
-		owner(),
-		unit,
-		NULL,                                            // hitFeature
-		weaponDef->craterAreaOfEffect,
-		weaponDef->damageAreaOfEffect,
-		weaponDef->edgeEffectiveness,
-		weaponDef->explosionSpeed,
-		weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
-		weaponDef->impactOnly,
-		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
-		true                                              // damageGround
-	};
-
-	helper->Explosion(params);
-
-	if (!weaponDef->noExplode || TraveledRange()) {
-		CProjectile::Collision();
-	}
+	Explode(unit, NULL, impactPos, impactDir);
 }
 
 void CWeaponProjectile::Update()
@@ -251,92 +230,81 @@ void CWeaponProjectile::Update()
 
 void CWeaponProjectile::UpdateInterception()
 {
-	if (!target)
+	if (target == NULL)
 		return;
 
 	CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
-	if (!po)
+
+	if (po == NULL)
 		return;
 
-	switch (projectileType) {
-		case WEAPON_BEAMLASER_PROJECTILE:
-		case WEAPON_LARGEBEAMLASER_PROJECTILE:
-		case WEAPON_LIGHTNING_PROJECTILE:
-		{
-			if (ClosestPointOnLine(startpos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
-				po->Collision();
-				Collision();
-				return;
-			}
-		} break;
-
-		case WEAPON_LASER_PROJECTILE: // important!
-		case WEAPON_BASE_PROJECTILE:
-		case WEAPON_EMG_PROJECTILE:
-		case WEAPON_EXPLOSIVE_PROJECTILE:
-		case WEAPON_FIREBALL_PROJECTILE:
-		case WEAPON_FLAME_PROJECTILE:
-		case WEAPON_MISSILE_PROJECTILE:
-		case WEAPON_STARBURST_PROJECTILE:
-		case WEAPON_TORPEDO_PROJECTILE:
-		default:
-			if (pos.SqDistance(po->pos) < Square(weaponDef->damageAreaOfEffect)) {
-			//FIXME if (pos.SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
-				po->Collision();
-				Collision();
-			}
+	if (IsHitScan()) {
+		if (ClosestPointOnLine(startpos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
+			po->Collision();
+			Collision();
+		}
+	} else {
+		// FIXME: if (pos.SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
+		if (pos.SqDistance(po->pos) < Square(weaponDef->damageAreaOfEffect)) {
+			po->Collision();
+			Collision();
+		}
 	}
 }
 
 
 void CWeaponProjectile::UpdateGroundBounce()
 {
-	if (luaMoveCtrl) {
+	if (luaMoveCtrl)
 		return;
+	if (ttl <= 0 && weaponDef->numBounce < 0)
+		return;
+	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
+		return;
+
+	float wh = 0.0f;
+
+	if (!weaponDef->waterBounce) {
+		wh = ground->GetHeightReal(pos.x, pos.z);
+	} else if (weaponDef->groundBounce) {
+		wh = ground->GetHeightAboveWater(pos.x, pos.z);
 	}
 
-	if ((weaponDef->groundBounce || weaponDef->waterBounce)
-			&& (ttl > 0 || weaponDef->numBounce >= 0))
-	{
-		float wh = 0;
+	if (pos.y >= wh)
+		return;
+	if (weaponDef->numBounce >= 0 && (bounces += 1) > weaponDef->numBounce)
+		return;
 
-		if (!weaponDef->waterBounce) {
-			wh = ground->GetHeightReal(pos.x, pos.z);
-		} else if (weaponDef->groundBounce) {
-			wh = ground->GetHeightAboveWater(pos.x, pos.z);
-		}
+	const float3& normal = ground->GetNormal(pos.x, pos.z);
+	const float dot = speed.dot(normal);
 
-		if (pos.y < wh) {
-			bounces++;
+	pos -= speed;
+	speed -= (speed + normal * math::fabs(dot)) * (1 - weaponDef->bounceSlip);
+	speed += (normal * (math::fabs(dot))) * (1 + weaponDef->bounceRebound);
+	pos += speed;
 
-			if (!keepBouncing || (this->weaponDef->numBounce >= 0
-							&& bounces > this->weaponDef->numBounce)) {
-				//Collision();
-				keepBouncing = false;
-			} else {
-				const float3& normal = ground->GetNormal(pos.x, pos.z);
-				const float dot = speed.dot(normal);
+	if (weaponDef->bounceExplosionGenerator == NULL)
+		return;
 
-				pos -= speed;
-				speed -= (speed + normal * math::fabs(dot)) * (1 - weaponDef->bounceSlip);
-				speed += (normal * (math::fabs(dot))) * (1 + weaponDef->bounceRebound);
-				pos += speed;
-
-				if (weaponDef->bounceExplosionGenerator) {
-					weaponDef->bounceExplosionGenerator->Explosion(
-						-1u, pos, speed.Length(), 1, owner(), 1, NULL, normal
-					);
-				}
-			}
-		}
-	}
-
+	weaponDef->bounceExplosionGenerator->Explosion(-1u, pos, speed.Length(), 1, owner(), 1, NULL, normal);
 }
 
-bool CWeaponProjectile::TraveledRange()
+
+
+bool CWeaponProjectile::TraveledRange() const
 {
-	float trangeSq = (pos - startpos).SqLength();
-	return (trangeSq > (weaponDef->range * weaponDef->range));
+	return ((pos - startpos).SqLength() > (weaponDef->range * weaponDef->range));
+}
+
+bool CWeaponProjectile::IsHitScan() const
+{
+	switch (projectileType) {
+		case WEAPON_BEAMLASER_PROJECTILE:      { return true; } break;
+		case WEAPON_LARGEBEAMLASER_PROJECTILE: { return true; } break;
+		case WEAPON_LIGHTNING_PROJECTILE:      { return true; } break;
+	}
+
+	return false;
 }
 
 
