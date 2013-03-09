@@ -63,7 +63,7 @@ float3 GetVectorFromHAndPExact(const short int heading, const short int pitch)
 	return ret;
 }
 
-float LinePointDist(const float3& l1, const float3& l2, const float3& p)
+float LinePointDist(const float3 l1, const float3 l2, const float3 p)
 {
 	float3 dir(l2 - l1);
 	float length = dir.Length();
@@ -83,7 +83,7 @@ float LinePointDist(const float3& l1, const float3& l2, const float3& p)
  * @brief calculate closest point on linepiece from l1 to l2
  * Note, this clamps the returned point to a position between l1 and l2.
  */
-float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p)
+float3 ClosestPointOnLine(const float3 l1, const float3 l2, const float3 p)
 {
 	float3 dir(l2-l1);
 	float3 pdir(p-l1);
@@ -107,7 +107,7 @@ float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p)
  * credits:
  * http://ompf.org/ray/ray_box.html
  */
-std::pair<float, float> GetMapBoundaryIntersectionPoints(const float3& start, const float3& dir)
+std::pair<float, float> GetMapBoundaryIntersectionPoints(const float3 start, const float3 dir)
 {
 	const float rcpdirx = (dir.x != 0.0f)? (1.0f / dir.x): 10000.0f;
 	const float rcpdirz = (dir.z != 0.0f)? (1.0f / dir.z): 10000.0f;
@@ -164,7 +164,7 @@ bool ClampLineInMap(float3& start, float3& end)
 }
 
 
-bool ClampRayInMap(const float3& start, float3& end)
+bool ClampRayInMap(const float3 start, float3& end)
 {
 	const float3 dir = end - start;
 	std::pair<float, float> interp = GetMapBoundaryIntersectionPoints(start, dir);
