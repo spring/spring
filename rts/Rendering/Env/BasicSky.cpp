@@ -568,7 +568,7 @@ void CBasicSky::DrawSun()
 	for (int x = 0; x < 32; ++x) {
 		const float cx1 = (*cvs0++) * (1.0f - ffx) + (*cvs1++) * ffx;
 		const float cx2 = (*cvs2++) * (1.0f - ffx) + (*cvs3++) * ffx;
-		const float cover = std::min(127.5f, cx1 * (1 - ffy) + cx2 * ffy);
+		const float cover = std::min(127.5f, cx1 * (1.0f - ffy) + cx2 * ffy);
 
 		mid += cover;
 	}
