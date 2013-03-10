@@ -147,6 +147,7 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 
 	if ((selectedUnits.IsGroupSelected(num)) && !group->units.empty()) {
 		const float3 groupCenter = group->CalculateCenter();
+		camHandler->CameraTransition(0.5f);
 		camHandler->GetCurrentController().SetPos(groupCenter);
 	}
 
