@@ -546,61 +546,70 @@ void CAdvSky::CreateTransformVectors()
 
 void CAdvSky::DrawSun()
 {
+	const CMatrix44f discMat(camera->pos, sundir1, UpVector, sundir2);
+	const float3 xzSunCameraPos =
+		sundir1 * camera->pos.x +
+		sundir2 * camera->pos.z;
+	const float3 modSunColor = sunColor * skyLight->GetLightIntensity();
+
 	glPushMatrix();
-	CMatrix44f m(camera->pos,sundir1,UpVector,sundir2);
-	glMultMatrixf(m.m);
+	glMultMatrixf(discMat.m);
+	glScalef(globalRendering->zNear, globalRendering->zNear, globalRendering->zNear);
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_ALPHA_TEST);
-	static unsigned char buf[128];
 	glEnable(GL_TEXTURE_2D);
 
-	float3 modCamera=sundir1*camera->pos.x+sundir2*camera->pos.z;
+	static unsigned char buf[128];
 
-	float ymod=(sunTexCoordY-0.5f)*domeWidth*0.025f*256;
-	float fy=ymod+modCamera.z*CLOUD_SIZE*0.000025f;
-	int baseY=int(math::floor(fy))&CLOUD_MASK;
-	fy-=math::floor(fy);
-	float fx=gs->frameNum*0.00005f*CLOUD_SIZE+modCamera.x*CLOUD_SIZE*0.000025f;
-	int baseX=int(math::floor(fx))&CLOUD_MASK;
-	fx-=math::floor(fx);
+	const float ymod = (sunTexCoordY - 0.5f) * domeWidth * 0.025f * 256;
+	const float fx = gs->frameNum * 0.00005f * CLOUD_SIZE + xzSunCameraPos.x * CLOUD_SIZE * 0.000025f;
+	const float fy = ymod + xzSunCameraPos.z * CLOUD_SIZE * 0.000025f;
+	const float ffx = fx - math::floor(fx);
+	const float ffy = fy - math::floor(fy);
+	const int baseX = int(fx) & CLOUD_MASK;
+	const int baseY = int(fy) & CLOUD_MASK;
 
-	float *cvs=(float *)covers[0], *cvs1=(float *)covers[1], *cvs2=(float *)covers[2], *cvs3=(float *)covers[3];
-	if(baseX!=oldCoverBaseX || baseY!=oldCoverBaseY){
-		oldCoverBaseX=baseX;
-		oldCoverBaseY=baseY;
-		CreateCover(baseX,baseY,cvs);
-		CreateCover(baseX+1,baseY,cvs1);
-		CreateCover(baseX,baseY+1,cvs2);
-		CreateCover(baseX+1,baseY+1,cvs3);
+	float
+		*cvs0 = (float*) covers[0],
+		*cvs1 = (float*) covers[1],
+		*cvs2 = (float*) covers[2],
+		*cvs3 = (float*) covers[3];
+
+	if (baseX != oldCoverBaseX || baseY != oldCoverBaseY) {
+		oldCoverBaseX = baseX;
+		oldCoverBaseY = baseY;
+
+		CreateCover(baseX,     baseY,     cvs0);
+		CreateCover(baseX + 1, baseY,     cvs1);
+		CreateCover(baseX,     baseY + 1, cvs2);
+		CreateCover(baseX + 1, baseY + 1, cvs3);
 	}
 
-	float mid=0;
-	unsigned char *bf=buf+32, *bf2=buf+64;
-	for(int x=0;x<32;++x){
-		float cx1=(*cvs++)*(1-fx)+(*cvs1++)*fx;
-		float cx2=(*cvs2++)*(1-fx)+(*cvs3++)*fx;
+	float mid = 0.0f;
+	unsigned char
+		*bf1 = buf + 32,
+		*bf2 = buf + 64;
 
-		float cover=cx1*(1-fy)+cx2*fy;
-		if(cover>127.5f)
-			cover=127.5f;
-		mid+=cover;
+	for (int x = 0; x < 32; ++x) {
+		const float cx1 =(*cvs0++) * (1.0f - ffx) + (*cvs1++) * ffx;
+		const float cx2 =(*cvs2++) * (1.0f - ffx) + (*cvs3++) * ffx;
+		const float cover = std::min(127.5f, cx1 * (1.0f - ffy) + cx2 * ffy);
 
-		(*bf++)=(unsigned char)(255-cover*2);
-		(*bf2++)=(unsigned char)(128-cover);
+		mid += cover;
+
+		(*bf1++) = (unsigned char) (255 - cover * 2.0f);
+		(*bf2++) = (unsigned char) (128 - cover       );
 	}
-	mid*=1.0f/32;
-	for(int x=0;x<32;++x){
-		buf[x]=(unsigned char)(255-mid*2);
+
+	for (int x = 0; x < 32; ++x) {
+		buf[x] = (unsigned char)(255 - (mid * 0.03125f) * 2.0f);
 	}
 
 	glBindTexture(GL_TEXTURE_2D, sunFlareTex);
-	glTexSubImage2D(GL_TEXTURE_2D,0,0,0,32,3,GL_LUMINANCE,GL_UNSIGNED_BYTE,buf);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 32, 3, GL_LUMINANCE, GL_UNSIGNED_BYTE, buf);
 
-	const float si = skyLight->GetLightIntensity();
-	const float3 sc = sunColor * si;
-
-	glColor4f(sc.x, sc.y, sc.z, 0.0f);
+	glColor4f(modSunColor.x, modSunColor.y, modSunColor.z, 0.0f);
 	glCallList(sunFlareList);
 
 	glEnable(GL_DEPTH_TEST);
@@ -608,29 +617,34 @@ void CAdvSky::DrawSun()
 }
 
 void CAdvSky::UpdateSunFlare() {
-	if(sunFlareList)
+	if (sunFlareList != 0)
 		glDeleteLists(sunFlareList, 1);
-	float3 ldir=modSunDir.cross(UpVector);
-	ldir.ANormalize();
-	float3 udir=modSunDir.cross(ldir);
 
-	sunFlareList=glGenLists(1);
+	const float3 ydir = UpVector;
+	const float3 xdir = float3(1.0f, 0.0f, 0.0f);
+	const float3 zdir = float3(0.0f, 0.0f, 1.0f);
+
+	sunFlareList = glGenLists(1);
 	glNewList(sunFlareList, GL_COMPILE);
-	glDisable(GL_FOG);
-	glBindTexture(GL_TEXTURE_2D, sunFlareTex);
-	glBlendFunc(GL_ONE_MINUS_DST_COLOR,GL_ONE);
-	glBegin(GL_TRIANGLE_STRIP);
-	for(int x=0;x<257;++x){
-		float dx = math::sin(x*2*PI/256.0f);
-		float dy = math::cos(x*2*PI/256.0f);
+		glDisable(GL_FOG);
+		glBindTexture(GL_TEXTURE_2D, sunFlareTex);
+		glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE);
+		glBegin(GL_TRIANGLE_STRIP);
 
-		glTexCoord2f(x/256.0f,0.125f);
-		glVertexf3(modSunDir*5+ldir*dx*0.0014f+udir*dy*0.0014f);
-		glTexCoord2f(x/256.0f,0.875f);
-		glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
-	}
-	glEnd();
-	if (globalRendering->drawFog) glEnable(GL_FOG);
+		for (int x = 0; x < 257; ++x) {
+			const float dx = math::sin(x * 2.0f * PI / 256.0f);
+			const float dy = math::cos(x * 2.0f * PI / 256.0f);
+			const float dz = 5.0f;
+
+			glTexCoord2f(x / 256.0f, 0.25f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
+			glTexCoord2f(x / 256.0f, 0.75f); glVertexf3(zdir * dz + xdir * dx * 4.0000f + ydir * dy * 4.0000f);
+		}
+
+		glEnd();
+
+		if (globalRendering->drawFog)
+			glEnable(GL_FOG);
+
 	glEndList();
 }
 
@@ -811,8 +825,8 @@ void CAdvSky::UpdateSunDir() {
 	sundir2.ANormalize();
 	sundir1 = sundir2.cross(UpVector);
 
-	modSunDir.y = L.y;
 	modSunDir.x = 0.0f;
+	modSunDir.y = L.y;
 	modSunDir.z = math::sqrt(L.x * L.x + L.z * L.z);
 
 	sunTexCoordX = 0.5f;
