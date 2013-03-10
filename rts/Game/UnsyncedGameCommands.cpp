@@ -743,8 +743,8 @@ public:
 			pos += (*ui)->midPos;
 		}
 		pos /= (float)selUnits.size();
-		camHandler->GetCurrentController().SetPos(pos);
 		camHandler->CameraTransition(0.6f);
+		camHandler->GetCurrentController().SetPos(pos);
 		return true;
 	}
 };
@@ -1227,8 +1227,8 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		// cycle through the positions
-		camHandler->GetCurrentController().SetPos(game->infoConsole->GetMsgPos());
 		camHandler->CameraTransition(0.6f);
+		camHandler->GetCurrentController().SetPos(game->infoConsole->GetMsgPos());
 		return true;
 	}
 };
