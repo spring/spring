@@ -183,10 +183,13 @@ void CMapInfo::ReadLight()
 	light.sunStartAngle = lightTable.GetFloat("sunStartAngle", 0.0f);
 	light.sunOrbitTime = lightTable.GetFloat("sunOrbitTime", 1440.0f);
 	light.sunDir = lightTable.GetFloat4("sunDir", float4(0.0f, 1.0f, 2.0f, FLT_MAX));
-	if (light.sunDir.w == FLT_MAX) { // if four params are not specified for sundir, fallback to the old three param format
+
+	if (light.sunDir.w == FLT_MAX) {
+		// if four params are not specified for sundir, fallback to the old three param format
 		light.sunDir = lightTable.GetFloat3("sunDir", float3(0.0f, 1.0f, 2.0f));
 		light.sunDir.w = FLT_MAX;
 	}
+
 	light.sunDir.ANormalize();
 
 	light.groundAmbientColor  = lightTable.GetFloat3("groundAmbientColor", float3(0.5f, 0.5f, 0.5f));
