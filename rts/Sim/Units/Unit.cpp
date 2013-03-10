@@ -1469,16 +1469,16 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	team = newteam;
 	allyteam = teamHandler->AllyTeam(newteam);
+	neutral = false;
 
 	unitHandler->unitsByDefs[oldteam][unitDef->id].erase(this);
 	unitHandler->unitsByDefs[newteam][unitDef->id].insert(this);
 
-	neutral = false;
+	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
+		UpdateLosStatus(at);
+	}
 
 	loshandler->MoveUnit(this, false);
-	losStatus[allyteam] = LOS_ALL_MASK_BITS |
-		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
-
 	quadField->MovedUnit(this);
 	radarhandler->MoveUnit(this);
 
