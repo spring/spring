@@ -155,19 +155,19 @@ void CCamera::ComputeViewRange()
 {
 	float wantedViewRange = CGlobalRendering::MAX_VIEW_RANGE;
 
-	// Camera height dependent (i.e. TAB-view)
-	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, readmap->currMinHeight)) * 2.4f);
-
-	// View angle dependent (i.e. FPS-view)
 	const float azimuthCos       = forward.dot(UpVector);
 	const float maxDistToBorderX = std::max(pos.x, float3::maxxpos - pos.x);
 	const float maxDistToBorderZ = std::max(pos.z, float3::maxzpos - pos.z);
 	const float minViewRange     = (1.0f - azimuthCos) * math::sqrt(Square(maxDistToBorderX) + Square(maxDistToBorderZ));
+
+	// Camera-height dependent (i.e. TAB-view)
+	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, readmap->currMinHeight)) * 2.4f);
+	// View-angle dependent (i.e. FPS-view)
 	wantedViewRange = std::max(wantedViewRange, minViewRange);
-	//LOG("viewRange %f", wantedViewRange);
 
 	// Update
 	const float factor = wantedViewRange / CGlobalRendering::MAX_VIEW_RANGE;
+
 	globalRendering->zNear     = CGlobalRendering::NEAR_PLANE * factor;
 	globalRendering->viewRange = CGlobalRendering::MAX_VIEW_RANGE * factor;
 }
