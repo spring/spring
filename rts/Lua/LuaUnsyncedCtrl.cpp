@@ -854,8 +854,8 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 		transTime = lua_tofloat(L, 4);
 	}
 
-	camHandler->GetCurrentController().SetPos(pos);
 	camHandler->CameraTransition(transTime);
+	camHandler->GetCurrentController().SetPos(pos);
 
 	return 0;
 }
@@ -888,8 +888,8 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		}
 	}
 
-	lua_pushboolean(L, camHandler->SetState(camState));
 	camHandler->CameraTransition(camTime);
+	lua_pushboolean(L, camHandler->SetState(camState));
 
 	if (!CLuaHandle::GetHandleSynced(L)) {
 		return 1;
