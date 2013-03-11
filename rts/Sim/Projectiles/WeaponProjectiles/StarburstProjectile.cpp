@@ -24,12 +24,15 @@ static const float SMOKE_TIME = 70.0f;
 
 static const float TRACER_PARTS_STEP = 2.0f;
 
+static const float MAX_NUM_AGEMODS = 32;
+
 CR_BIND(CStarburstProjectile::TracerPart, )
 CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
 	CR_MEMBER(pos),
 	CR_MEMBER(dir),
 	CR_MEMBER(speedf),
-	CR_MEMBER(ageMods)
+	CR_MEMBER(ageMods),
+	CR_MEMBER(numAgeMods)
 ));
 
 
@@ -114,7 +117,8 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 		tracerParts[a].pos = pos;
 		tracerParts[a].speedf = curSpeed;
 
-		tracerParts[a].ageMods.resize(std::floor((curSpeed + 0.6f) / TRACER_PARTS_STEP), 1.0f);
+		tracerParts[a].ageMods.resize(MAX_NUM_AGEMODS, 1.0f);
+		tracerParts[a].numAgeMods = std::min(MAX_NUM_AGEMODS, std::floor((curSpeed + 0.6f) / TRACER_PARTS_STEP));
 	}
 	castShadow = true;
 
@@ -276,19 +280,14 @@ void CStarburstProjectile::Update()
 		tracerPart->dir = dir;
 		tracerPart->speedf = curSpeed;
 
-		int newsize = 0;
-		for (float aa = 0; aa < curSpeed + 0.6f; aa += TRACER_PARTS_STEP, ++newsize) {
+		size_t newsize = 0;
+		for (float aa = 0; aa < curSpeed + 0.6f && newsize < MAX_NUM_AGEMODS; aa += TRACER_PARTS_STEP, ++newsize) {
 			const float ageMod = (missileAge < 20) ? 1.0f : (0.6f + (rand() * 0.8f) / RAND_MAX);
-
-			if (tracerPart->ageMods.size() <= newsize) {
-				tracerPart->ageMods.push_back(ageMod);
-			} else {
-				tracerPart->ageMods[newsize] = ageMod;
-			}
+			tracerPart->ageMods[newsize] = ageMod;
 		}
 
-		if (tracerPart->ageMods.size() != newsize) {
-			tracerPart->ageMods.resize(newsize);
+		if (tracerPart->numAgeMods != newsize) {
+			tracerPart->numAgeMods = GML::SimEnabled() ? *(volatile size_t*)&newsize : newsize;
 		}
 	}
 
@@ -404,8 +403,9 @@ void CStarburstProjectile::DrawCallback()
 		const float ospeed = tracerPart->speedf;
 		float aa = 0;
 
-		for (std::vector<float>::const_iterator ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += TRACER_PARTS_STEP) {
-			const float ageMod = *ai;
+		size_t numAgeMods = GML::SimEnabled() ? *(volatile size_t*)&tracerPart->numAgeMods : tracerPart->numAgeMods;
+		for (int num = 0; num < numAgeMods; aa += TRACER_PARTS_STEP, ++num) {
+			const float ageMod = tracerPart->ageMods[num];
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
 			const float3 interPos = opos - (odir * ((a * 0.5f) + aa));
 

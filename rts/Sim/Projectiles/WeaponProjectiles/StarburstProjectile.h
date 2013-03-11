@@ -63,7 +63,8 @@ private:
 		float3 pos;
 		float3 dir;
 		float speedf;
-		std::vector<float> ageMods; //FIXME uses too much space use a fixed array?
+		std::vector<float> ageMods;
+		size_t numAgeMods;
 	};
 
 	TracerPart tracerParts[NUM_TRACER_PARTS];
