@@ -259,9 +259,9 @@ void CStarburstProjectile::Update()
 
 
 	{
-		curTracerPart++;
-		curTracerPart %= NUM_TRACER_PARTS;
-		TracerPart* tracerPart = (GML::SimEnabled()) ? (TracerPart* volatile)(&tracerParts[curTracerPart]) : &tracerParts[curTracerPart];
+		size_t newTracerPart = (curTracerPart + 1) % NUM_TRACER_PARTS;
+		curTracerPart = GML::SimEnabled() ? *(volatile size_t*)&newTracerPart : newTracerPart;
+		TracerPart* tracerPart = &tracerParts[curTracerPart];
 		tracerPart->pos = pos;
 		tracerPart->dir = dir;
 		tracerPart->speedf = curSpeed;
@@ -385,10 +385,10 @@ void CStarburstProjectile::DrawCallback()
 
 	unsigned char col[4];
 
-	size_t part = curTracerPart;
+	size_t part = GML::SimEnabled() ? *(volatile size_t*)&curTracerPart : curTracerPart;
 
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		const TracerPart* tracerPart = (GML::SimEnabled()) ? (TracerPart* volatile)(&tracerParts[part]) : &tracerParts[part];
+		const TracerPart* tracerPart = &tracerParts[part];
 		const float3& opos = tracerPart->pos;
 		const float3& odir = tracerPart->dir;
 		const float ospeed = tracerPart->speedf;
@@ -423,7 +423,7 @@ void CStarburstProjectile::DrawCallback()
 			#undef wt3
 		}
 
-		part == 0 ? part = NUM_TRACER_PARTS-1 : --part;
+		part = (part == 0) ? NUM_TRACER_PARTS - 1 : part - 1;
 	}
 
 	// draw the engine flare
