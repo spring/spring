@@ -5,6 +5,7 @@
 
 #include "lib/streflop/streflop_cond.h"
 #include "System/creg/creg_cond.h"
+#include "System/FastMath.h"
 
 // can't easily use templates because of creg
 
