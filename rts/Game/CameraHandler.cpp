@@ -247,6 +247,7 @@ void CCameraHandler::ToggleState()
 
 void CCameraHandler::ToggleOverviewCamera()
 {
+	CameraTransition(1.0f);
 	if (controllerStack.empty()) {
 		PushMode();
 		SetCameraMode(CAMERA_MODE_OVERVIEW);
@@ -254,7 +255,6 @@ void CCameraHandler::ToggleOverviewCamera()
 	else {
 		PopMode();
 	}
-	CameraTransition(1.0f);
 }
 
 
