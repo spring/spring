@@ -24,7 +24,7 @@ static const float SMOKE_TIME = 70.0f;
 
 static const float TRACER_PARTS_STEP = 2.0f;
 
-static const float MAX_NUM_AGEMODS = 32;
+static const size_t MAX_NUM_AGEMODS = 32;
 
 CR_BIND(CStarburstProjectile::TracerPart, )
 CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
@@ -118,7 +118,7 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 		tracerParts[a].speedf = curSpeed;
 
 		tracerParts[a].ageMods.resize(MAX_NUM_AGEMODS, 1.0f);
-		tracerParts[a].numAgeMods = std::min(MAX_NUM_AGEMODS, std::floor((curSpeed + 0.6f) / TRACER_PARTS_STEP));
+		tracerParts[a].numAgeMods = std::min(MAX_NUM_AGEMODS, (size_t)std::floor((curSpeed + 0.6f) / TRACER_PARTS_STEP));
 	}
 	castShadow = true;
 
