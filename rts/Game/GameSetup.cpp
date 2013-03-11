@@ -18,7 +18,20 @@
 #include <boost/format.hpp>
 
 
-const CGameSetup* gameSetup = NULL;
+CR_BIND(CGameSetup,);
+CR_REG_METADATA(CGameSetup, (
+	CR_MEMBER(gameSetupText),
+	CR_POSTLOAD(PostLoad)
+));
+
+void CGameSetup::PostLoad()
+{
+	const std::string buf = gameSetupText;
+	Init(buf);
+}
+
+
+CGameSetup* gameSetup = NULL;
 
 CGameSetup::CGameSetup()
 	: fixedAllies(true)

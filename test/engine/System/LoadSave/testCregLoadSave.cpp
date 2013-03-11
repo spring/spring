@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/creg/creg.h"
+#include "System/creg/creg_cond.h"
 #include "System/creg/Serializer.h"
 #include <fstream>
 #include <sstream>

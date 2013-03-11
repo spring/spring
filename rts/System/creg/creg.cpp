@@ -35,7 +35,7 @@ ClassBinder* System::binderList = 0;
 vector<Class*> System::classes;
 
 ClassBinder::ClassBinder(const char* className, unsigned int cf,
-		ClassBinder* baseClsBinder, IMemberRegistrator** mreg, int instanceSize, int instanceAlignment,
+		ClassBinder* baseClsBinder, IMemberRegistrator** mreg, int instanceSize, int instanceAlignment, bool hasVTable,
 		void (*constructorProc)(void* inst), void (*destructorProc)(void* inst))
 	: class_(NULL)
 	, base(baseClsBinder)
@@ -44,6 +44,7 @@ ClassBinder::ClassBinder(const char* className, unsigned int cf,
 	, name(className)
 	, size(instanceSize)
 	, alignment(instanceAlignment)
+	, hasVTable(hasVTable)
 	, constructor(constructorProc)
 	, destructor(destructorProc)
 	, nextBinder(NULL)
@@ -175,28 +176,38 @@ void Class::SetFlag(ClassFlags flag)
 	binder->flags = (ClassFlags) (binder->flags | flag);
 }
 
-void Class::AddMember(const char* name, IType* type, unsigned int offset)
+bool Class::AddMember(const char* name, IType* type, unsigned int offset, int alignment)
 {
+	if (FindMember(name))
+		return false;
+
 	Member* member = new Member;
 
 	member->name = name;
 	member->offset = offset;
 	member->type = boost::shared_ptr<IType>(type);
+	member->alignment = alignment;
 	member->flags = currentMemberFlags;
 
 	members.push_back(member);
+	return true;
 }
 
-void Class::AddMember(const char* name, boost::shared_ptr<IType> type, unsigned int offset)
+bool Class::AddMember(const char* name, boost::shared_ptr<IType> type, unsigned int offset, int alignment)
 {
+	if (FindMember(name))
+		return false;
+
 	Member* member = new Member;
 
 	member->name = name;
 	member->offset = offset;
 	member->type = type;
+	member->alignment = alignment;
 	member->flags = currentMemberFlags;
 
 	members.push_back(member);
+	return true;
 }
 
 Class::Member* Class::FindMember(const char* name)
@@ -240,8 +251,9 @@ void Class::DeleteInstance(void* inst)
 	operator_delete(inst);
 }
 
-static void StringHash(const std::string& str, unsigned int hash)
+static void StringHash(const std::string& str, unsigned int& hash)
 {
+	// FIXME use HsiehHash.h?
 	unsigned int a = 63689;
 	for (std::string::const_iterator si = str.begin(); si != str.end(); ++si) {
 		hash = hash * a + (*si);
@@ -255,6 +267,8 @@ void Class::CalculateChecksum(unsigned int& checksum)
 		Member* m = members[a];
 		checksum += m->flags;
 		StringHash(m->name, checksum);
+		StringHash(m->type->GetName(), checksum);
+		checksum += m->type->GetSize();
 	}
 	if (base) {
 		base->CalculateChecksum(checksum);
