@@ -2,6 +2,12 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 93.1 ---------------------------------------------------------
+
+Bugfixes:
+ - fixed treedrawer crash
+ - fixed MT crashes
+
 
 -- 93.0 ---------------------------------------------------------
 
