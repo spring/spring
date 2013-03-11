@@ -24,18 +24,8 @@
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
 
-CR_BIND(CTeam, (-1));
+CR_BIND_DERIVED(CTeam, TeamBase, (-1));
 CR_REG_METADATA(CTeam, (
-	// from CTeamBase
-	CR_MEMBER(leader),
-	CR_MEMBER(color),
-	CR_MEMBER(incomeMultiplier),
-	CR_MEMBER(side),
-	CR_MEMBER(startPos),
-	CR_MEMBER(teamStartNum),
-	CR_MEMBER(teamAllyteam),
-	// CR_MEMBER(customValues),
-	// from CTeam
 	CR_MEMBER(teamNum),
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(isDead),
@@ -72,9 +62,9 @@ CR_REG_METADATA(CTeam, (
 	CR_MEMBER(prevEnergySent),
 	CR_MEMBER(prevEnergyReceived),
 	CR_MEMBER(prevEnergyExcess),
-	//CR_MEMBER(currentStats),
 	CR_MEMBER(nextHistoryEntry),
 	//CR_MEMBER(statHistory),
+	//CR_MEMBER(currentStats),
 	CR_MEMBER(modParams),
 	CR_MEMBER(modParamsMap),
 	CR_IGNORED(highlight)

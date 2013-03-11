@@ -44,13 +44,13 @@ CR_REG_METADATA(CBuilder, (
 	CR_MEMBER(resurrectSpeed),
 	CR_MEMBER(captureSpeed),
 	CR_MEMBER(terraformSpeed),
-	//CR_MEMBER(curResurrect), FIXME is pointer!
+	CR_MEMBER(curResurrect),
 	CR_MEMBER(lastResurrected),
-	//CR_MEMBER(curBuild), FIXME is pointer!
-	//CR_MEMBER(curCapture), FIXME is pointer!
-	//CR_MEMBER(curReclaim), FIXME is pointer!
+	CR_MEMBER(curBuild),
+	CR_MEMBER(curCapture),
+	CR_MEMBER(curReclaim),
 	CR_MEMBER(reclaimingUnit),
-	//CR_MEMBER(helpTerraform), FIXME is pointer!
+	CR_MEMBER(helpTerraform),
 	CR_MEMBER(terraforming),
 	CR_MEMBER(myTerraformLeft),
 	CR_MEMBER(terraformHelp),

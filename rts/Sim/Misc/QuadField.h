@@ -112,8 +112,6 @@ public:
 	const static int NUM_TEMP_QUADS = 1024;
 
 private:
-	void Serialize(creg::ISerializer& s);
-
 	std::vector<Quad> baseQuads;
 	std::vector<int> tempQuads;
 	int numQuadsX;

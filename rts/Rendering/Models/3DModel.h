@@ -9,6 +9,7 @@
 #include <map>
 #include "Rendering/GL/VBO.h"
 #include "System/Matrix44f.h"
+#include "System/creg/creg_cond.h"
 
 
 enum ModelType {
@@ -160,6 +161,8 @@ public:
 
 struct LocalModelPiece
 {
+	CR_DECLARE_STRUCT(LocalModelPiece);
+
 	LocalModelPiece(const S3DModelPiece* piece);
 	~LocalModelPiece();
 
@@ -226,6 +229,8 @@ public:
 
 struct LocalModel
 {
+	CR_DECLARE_STRUCT(LocalModel);
+
 	LocalModel(const S3DModel* model)
 		: original(model)
 		, dirtyPieces(model->numPieces)

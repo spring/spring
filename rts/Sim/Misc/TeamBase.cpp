@@ -6,6 +6,20 @@
 #include <sstream>
 
 #include "System/Util.h"
+#include "System/creg/STL_Map.h"
+
+
+CR_BIND(TeamBase, );
+CR_REG_METADATA(TeamBase, (
+	CR_MEMBER(leader),
+	CR_MEMBER(color),
+	CR_MEMBER(incomeMultiplier),
+	CR_MEMBER(side),
+	CR_MEMBER(startPos),
+	CR_MEMBER(teamStartNum),
+	CR_MEMBER(teamAllyteam),
+	CR_MEMBER(customValues)
+));
 
 
 unsigned char TeamBase::teamDefaultColor[10][4] =

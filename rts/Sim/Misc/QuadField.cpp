@@ -19,9 +19,7 @@ CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(baseQuads),
 	CR_MEMBER(numQuadsX),
 	CR_MEMBER(numQuadsZ),
-	CR_MEMBER(tempQuads),
-	CR_RESERVED(8),
-	CR_SERIALIZER(Serialize)
+	CR_MEMBER(tempQuads)
 ));
 
 
@@ -29,20 +27,8 @@ CQuadField::Quad::Quad() : teamUnits(teamHandler->ActiveAllyTeams())
 {
 }
 
-void CQuadField::Serialize(creg::ISerializer& s)
-{
-	// no need to alloc quad array, this has already been done in constructor
-	for (int z = 0; z < numQuadsZ; ++z) {
-		for (int x = 0; x < numQuadsX; ++x) {
-			s.SerializeObjectInstance(&baseQuads[(z * numQuadsX) + x], Quad::StaticClass());
-		}
-	}
-}
-
-
 
 CR_BIND(CQuadField::Quad, );
-
 CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_MEMBER(units),
 	CR_MEMBER(teamUnits),
@@ -233,7 +219,7 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& 
 			if (unit->tempNum == tempNum) { continue; }
 			if (pos.x < mins.x || pos.x > maxs.x) { continue; }
 			if (pos.z < mins.z || pos.z > maxs.z) { continue; }
-			
+
 			unit->tempNum = tempNum;
 			units.push_back(unit);
 		}

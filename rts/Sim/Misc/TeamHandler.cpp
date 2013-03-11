@@ -15,7 +15,7 @@ CR_BIND(CTeamHandler, );
 CR_REG_METADATA(CTeamHandler, (
 	CR_MEMBER(gaiaTeamID),
 	CR_MEMBER(gaiaAllyTeamID),
-	//CR_MEMBER(teams), FIXME contains pointers!
+	CR_MEMBER(teams),
 	CR_MEMBER(allyTeams)
 ));
 

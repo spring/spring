@@ -13,7 +13,6 @@
 class CUnit;
 class CFeature;
 class CWeapon;
-class CLoadSaveInterface;
 struct Command;
 
 class CCommandAI : public CObject
@@ -45,7 +44,6 @@ public:
 	virtual void FinishCommand();
 	virtual void WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo);
 	virtual void BuggerOff(const float3& pos, float radius) {}
-	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	/**
 	 * @brief Determines if c will cancel a queued command
 	 * @return true if c will cancel a queued command

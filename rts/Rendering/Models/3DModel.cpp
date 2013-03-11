@@ -14,6 +14,38 @@
 #include <algorithm>
 #include <cctype>
 
+CR_BIND(LocalModelPiece, (NULL));
+CR_REG_METADATA(LocalModelPiece, (
+	CR_MEMBER(pos),
+	CR_MEMBER(rot),
+	CR_MEMBER(dir),
+	CR_MEMBER(pieceSpaceMat),
+	CR_MEMBER(modelSpaceMat),
+	CR_MEMBER(colvol),
+	CR_MEMBER(numUpdatesSynced),
+	CR_MEMBER(lastMatrixUpdate),
+	CR_MEMBER(scriptSetVisible),
+	CR_MEMBER(identityTransform),
+	CR_MEMBER(lmodelPieceIndex),
+	CR_MEMBER(scriptPieceIndex),
+	CR_MEMBER(parent),
+
+	// reload
+	CR_IGNORED(children),
+	CR_IGNORED(dispListID),
+	CR_IGNORED(original),
+
+	CR_IGNORED(lodDispLists) //FIXME GL idx!
+));
+
+CR_BIND(LocalModel, (NULL));
+CR_REG_METADATA(LocalModel, (
+	CR_IGNORED(original),
+	CR_IGNORED(dirtyPieces),
+	CR_IGNORED(lodCount), //FIXME?
+	CR_MEMBER(pieces)
+));
+
 
 /** ****************************************************************************************************
  * S3DModel

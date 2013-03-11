@@ -80,7 +80,6 @@ CObject::~CObject()
 
 void CObject::Serialize(creg::ISerializer* ser)
 {
-	//CHECKME this was written when listeners & listening were std::list's, with switching to std::set it would need a rewrite
 	if (ser->IsWriting()) {
 		int num = listening.size();
 		ser->Serialize(&num, sizeof(int));
@@ -114,7 +113,7 @@ void CObject::Serialize(creg::ISerializer* ser)
 			ser->Serialize(&size, sizeof(int));
 			TSyncSafeSet& dl = listening[(DependenceType)dt];
 			for (int o = 0; o < size; o++) {
-                CObject* obj;
+				CObject* obj;
 				ser->SerializeObjectPtr((void**)&*obj, NULL);
 				dl.insert(obj);
 			}
@@ -124,7 +123,6 @@ void CObject::Serialize(creg::ISerializer* ser)
 
 void CObject::PostLoad()
 {
-	//CHECKME this was written when listeners & listening were std::list's, with switching to std::set it would need a rewrite
 	for (std::map<DependenceType, TSyncSafeSet >::iterator i = listening.begin(); i != listening.end(); ++i) {
 		for (TSyncSafeSet::iterator oi = i->second.begin(); oi != i->second.end(); ++oi) {
 			TSyncSafeSet& dl = (*oi)->listeners[i->first];

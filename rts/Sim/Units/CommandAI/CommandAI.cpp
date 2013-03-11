@@ -1513,32 +1513,6 @@ void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 	}
 }
 
-void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
-{
-	int queSize = commandQue.size();
-	file->lsInt(queSize);
-	for (int a = 0; a < queSize; ++a) {
-		if (loading) {
-			commandQue.push_back(Command());
-		}
-		Command& c = commandQue[a];
-		int cmdID = c.GetID();
-		file->lsInt(cmdID);
-		file->lsUChar(c.options);
-		file->lsInt(c.timeOut);
-
-		int paramSize = c.params.size();
-		file->lsInt(paramSize);
-		for (int b = 0; b < paramSize; ++b) {
-			if (loading) {
-				c.PushParam(0.0f);
-			}
-			file->lsFloat(c.params[b]);
-		}
-	}
-}
-
-
 void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2)
 {
 	const float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);

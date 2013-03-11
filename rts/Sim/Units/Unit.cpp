@@ -2121,26 +2121,6 @@ void CUnit::UpdateWind(float x, float z, float strength)
 }
 
 
-void CUnit::LoadSave(CLoadSaveInterface* file, bool loading)
-{
-	file->lsShort(heading);
-	file->lsFloat(buildProgress);
-	file->lsFloat(health);
-	file->lsFloat(experience);
-	if (loading) {
-		const float exp = experience;
-		experience = 0.0f;
-		limExperience = 0.0f;
-		AddExperience(exp);
-	}
-	file->lsInt(moveState);
-	file->lsInt(fireState);
-	file->lsBool(isCloaked);
-	file->lsBool(wantCloak);
-	commandAI->LoadSave(file, loading);
-}
-
-
 void CUnit::IncomingMissile(CMissileProjectile* missile)
 {
 	if (unitDef->canDropFlare) {
@@ -2172,25 +2152,23 @@ void CUnit::ReleaseTempHoldFire()
 void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
-	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
+	unitDef = unitDefHandler->GetUnitDefByID(unitDefID); // strange. creg should handle this by itself already, but it doesn't
 	objectDef = unitDef;
 	model = unitDef->LoadModel();
 	localModel = new LocalModel(model);
+	modelParser->CreateLocalModel(localModel);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
+	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
+	UpdateDirVectors(!upright);
+	UpdateMidAndAimPos();
 
-	modelParser->CreateLocalModel(localModel);
 	// FIXME: how to handle other script types (e.g. Lua) here?
 	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
 
 	// Call initializing script functions
 	script->Create();
-
-	for (vector<CWeapon*>::iterator i = weapons.begin(); i != weapons.end(); ++i) {
-		(*i)->weaponDef = unitDef->weapons[(*i)->weaponNum].def;
-	}
-
 	script->SetSFXOccupy(curTerrainType);
 
 	if (unitDef->windGenerator > 0.0f) {
@@ -2200,6 +2178,9 @@ void CUnit::PostLoad()
 	if (activated) {
 		script->Activate();
 	}
+
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(this, isCloaked));
+
 }
 
 
@@ -2286,9 +2267,12 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 
 CR_BIND_DERIVED(CUnit, CSolidObject, );
 CR_REG_METADATA(CUnit, (
-	CR_IGNORED(unitDef), //handled in PostLoad
+	CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
 	CR_MEMBER(featureDefID),
+
+	CR_MEMBER(modParams),
+	CR_MEMBER(modParamsMap),
 
 	CR_MEMBER(upright),
 
@@ -2384,7 +2368,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(group),
 
 
-	// CR_MEMBER(localModel),
+	//CR_MEMBER(localModel), //
 	// CR_MEMBER(script),
 
 	CR_MEMBER(condUseMetal),
@@ -2421,7 +2405,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(energyStorage),
 
 	CR_MEMBER(lastAttacker),
-	// CR_MEMBER(lastAttackedPiece),
+	CR_MEMBER(lastAttackedPiece),
 	CR_MEMBER(lastAttackedPieceFrame),
 	CR_MEMBER(lastAttackFrame),
 	CR_MEMBER(lastFireWeapon),
@@ -2487,14 +2471,14 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER_UN(noMinimap),
 	CR_MEMBER_UN(leaveTracks),
 
-//	CR_MEMBER_UN(isSelected),
-//	CR_MEMBER_UN(isIcon),
-//	CR_MEMBER_UN(iconRadius),
+	CR_MEMBER_UN(isSelected),
+	CR_MEMBER_UN(isIcon),
+	CR_MEMBER(iconRadius),
 
 	CR_MEMBER_UN(lodCount),
 	CR_MEMBER_UN(currentLOD),
-//	CR_MEMBER_UN(lastDrawFrame),
-//	CR_MEMBER_UN(lastUnitUpdate),
+	CR_MEMBER_UN(lastDrawFrame),
+	CR_MEMBER(lastUnitUpdate),
 
 	LOD_MUTEX
 

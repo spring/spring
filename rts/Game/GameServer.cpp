@@ -318,11 +318,12 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 	}
 }
 
-void CGameServer::PostLoad(unsigned newlastTick, int newServerFrameNum)
+void CGameServer::PostLoad(int newServerFrameNum)
 {
 	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
-	lastTick = spring_msecs(newlastTick);
 	serverFrameNum = newServerFrameNum;
+
+	gameHasStarted = (serverFrameNum > 0);
 
 	std::vector<GameParticipant>::iterator it;
 	for (it = players.begin(); it != players.end(); ++it) {

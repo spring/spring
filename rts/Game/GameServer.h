@@ -76,7 +76,7 @@ public:
 	 * @brief Set frame after loading
 	 * WARNING! No checks are done, so be carefull
 	 */
-	void PostLoad(unsigned lastTick, int serverFrameNum);
+	void PostLoad(int serverFrameNum);
 
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 

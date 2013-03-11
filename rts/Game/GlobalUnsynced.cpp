@@ -35,18 +35,23 @@ UnsyncedRNG CGlobalUnsynced::rng;
 CR_BIND(CGlobalUnsynced, );
 
 CR_REG_METADATA(CGlobalUnsynced, (
+	CR_IGNORED(simFPS),
+	CR_IGNORED(avgSimFrameTime),
+	CR_IGNORED(avgDrawFrameTime),
+	CR_IGNORED(avgFrameTime),
 	CR_MEMBER(modGameTime),
 	CR_MEMBER(gameTime),
 	CR_MEMBER(startTime),
 	CR_MEMBER(myPlayerNum),
 	CR_MEMBER(myTeam),
 	CR_MEMBER(myAllyTeam),
+	CR_MEMBER(myPlayingTeam),
+	CR_MEMBER(myPlayingAllyTeam),
 	CR_MEMBER(spectating),
 	CR_MEMBER(spectatingFullView),
 	CR_MEMBER(spectatingFullSelect),
 	CR_IGNORED(fpsMode),
-	CR_IGNORED(globalQuit),
-	CR_RESERVED(64)
+	CR_IGNORED(globalQuit)
 ));
 
 CGlobalUnsynced::CGlobalUnsynced()
