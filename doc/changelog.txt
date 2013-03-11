@@ -2,6 +2,18 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 93.1 ---------------------------------------------------------
+
+Bugfixes:
+ - fixed treedrawer crash
+ - fixed MT crashes
+ - fixed X11 cursor offset
+ - fixed smooth camera transitions
+ - fixed clipped sun
+ - fixed selection sounds
+ - fixed attack cursor for kamikaze units
+ - fixed wrong assimp texture
+
 
 -- 93.0 ---------------------------------------------------------
 
@@ -69,7 +81,7 @@ Lua:
  ! remove LuaLobby
  - enable luasocket as default and always allow to listen (UDP & TCP)
  - new Spring.GetTerrainTypeData (already on wiki)
- - new Spring.GetUnitCurrentBuildPower(unitID) -> number 0..1 
+ - new Spring.GetUnitCurrentBuildPower(unitID) -> number 0..1
  - new Spring.SetUnitNanoPieces(unitID, {piece1, piece2, ...})
  - new Spring.GetUnitNanoPieces(unitID) -> table {piece1, piece2, ...}
  - replace Spring.Echo with Spring.Log in most places in cont/
@@ -935,7 +947,7 @@ Engine / misc defs:
  - scan in 'effects/' as well as 'gamedata/explosions' for CEG definitions
 
 Engine / misc commands:
- - add a /clearmapmarks command 
+ - add a /clearmapmarks command
  - rename /advshading to /advmodelshading; add an /advmapshading analogue
  - add '/reloadCEGs [cegtag]'; reloads all CEGs or one specific CEG by tag
  - add '/dumpstate <minFrame> <maxFrame> [frameInt]'
@@ -1071,7 +1083,7 @@ Engine / Internal:
      disable console logging for unitsync
      disable console output for dedicated server shared library
      turn off flushing to log-file completely
- - added GL_ARB_debug_output support (callback-based opengl error reporting) 
+ - added GL_ARB_debug_output support (callback-based opengl error reporting)
    NOTE: this doesn't work yet, because most drivers export this ext only for so called debug contexts.
    Creating those is impossible with near all current GL frameworks (SDL, SFML, ...).
  - fixed unnecessary memory allocation in Archive7Zip

@@ -95,7 +95,7 @@ class CHwWinCursor : public IHwCursor {
 #ifndef _MSC_VER
 	#pragma pop(pack)
 #endif
-		
+
 	protected:
 		struct ImageData {
 			unsigned char* data;
@@ -511,8 +511,8 @@ void CHwX11Cursor::Finish()
 	cis->nimage = cimages.size();
 	for (int i = 0; i < int(cimages.size()); ++i) {
 		XcursorImage* ci = cimages[i];
-		ci->xhot = (hotSpot==CMouseCursor::TopLeft) ? 0 : ci->width/2;
-		ci->yhot = (hotSpot==CMouseCursor::TopLeft) ? 0 : ci->height/2;
+		ci->xhot = (hotSpot==CMouseCursor::TopLeft) ? 0 : xmaxsize/2;
+		ci->yhot = (hotSpot==CMouseCursor::TopLeft) ? 0 : ymaxsize/2;
 		cis->images[i] = ci;
 	}
 
