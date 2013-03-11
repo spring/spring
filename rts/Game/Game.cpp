@@ -348,12 +348,6 @@ CGame::~CGame()
 
 	ENTER_SYNCED_CODE();
 
-	// Kill all teams that are still alive, in
-	// case the game did not do so through Lua.
-	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
-		teamHandler->Team(t)->Died(false);
-	} 
-
 	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
 
@@ -369,6 +363,15 @@ CGame::~CGame()
 	CColorMap::DeleteColormaps();
 	CEngineOutHandler::Destroy();
 	CResourceHandler::FreeInstance();
+
+	// Kill all teams that are still alive, in
+	// case the game did not do so through Lua.
+	// must happen after Lua (cause CGame is
+	// already null'ed and it causes a Lua event,
+	// which could issue Lua code that tries to access it)
+	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
+		teamHandler->Team(t)->Died(false);
+	}
 
 	CWordCompletion::DestroyInstance();
 
