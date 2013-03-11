@@ -56,6 +56,7 @@
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
+#include "System/creg/creg_runtime_tests.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/FileHandler.h"
@@ -133,68 +134,7 @@ static bool MultisampleVerify()
 }
 
 
-/**
- * Tests if all CREG classes are complete
- */
-static bool TestCregClasses()
-{
-	creg::System::InitializeClasses();
 
-	int fineClasses = 0;
-	int brokenClasses = 0;
-
-	const std::vector<creg::Class*>& cregClasses = creg::System::GetClasses();
-	for (std::vector<creg::Class*>::const_iterator it = cregClasses.begin(); it != cregClasses.end(); ++it) {
-		const creg::Class* c = *it;
-
-		const std::string& className = c->name;
-		const size_t classSize = c->size;
-
-		size_t cregSize = 0;
-
-		const creg::Class* c_base = c;
-		while (c_base){
-			const std::vector<creg::Class::Member*>& classMembers = c_base->members;
-			for (std::vector<creg::Class::Member*>::const_iterator jt = classMembers.begin(); jt != classMembers.end(); ++jt) {
-				const size_t memberOffset = (*jt)->offset;
-				const size_t typeSize = (*jt)->type->GetSize();
-				cregSize = std::max(cregSize, memberOffset + typeSize);
-			}
-
-			c_base = c_base->base;
-		}
-
-
-		// alignment padding
-		const float alignment = c->alignment;
-		cregSize = std::ceil(cregSize / alignment) * alignment; //FIXME too simple, gcc's appending rules are ways more complicated
-
-		if (cregSize != classSize) {
-			brokenClasses++;
-			LOG_L(L_WARNING, "CREG: Missing param(s) in class %s, real size %u, creg size %u", className.c_str(), classSize, cregSize);
-			/*for (std::vector<creg::Class::Member*>::const_iterator jt = classMembers.begin(); jt != classMembers.end(); ++jt) {
-				const std::string memberName   = (*jt)->name;
-				const size_t      memberOffset = (*jt)->offset;
-				const std::string typeName = (*jt)->type->GetName();
-				const size_t      typeSize = (*jt)->type->GetSize();
-				LOG_L(L_WARNING, "  member %20s, type %12s, offset %3u, size %u", memberName.c_str(), typeName.c_str(), memberOffset, typeSize);
-			}*/
-		} else {
-			//LOG( "CREG: Class %s fine, size %u", className.c_str(), classSize);
-			fineClasses++;
-		}
-
-		//FIXME check for holes in the CREG class, too
-	}
-
-	if (brokenClasses > 0) {
-		LOG_L(L_WARNING, "CREG Results: %i of %i classes are broken", brokenClasses, brokenClasses + fineClasses);
-		return false;
-	}
-
-	LOG("CREG: Everything fine");
-	return true;
-}
 
 
 /**
@@ -830,10 +770,8 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	}
 	else if (cmdline->IsSet("test-creg")) {
-		if (TestCregClasses()) {
-			exit(0);
-		}
-		exit(1);
+		int res = creg::RuntimeTest();
+		exit(res);
 	}
 
 	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");

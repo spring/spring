@@ -12,11 +12,15 @@
 #include "Sim/Misc/TeamBase.h"
 #include "Sim/Misc/AllyTeam.h"
 #include "ExternalAI/SkirmishAIData.h"
+#include "System/creg/creg_cond.h"
 
 class TdfParser;
 
 class CGameSetup
 {
+	CR_DECLARE_STRUCT(CGameSetup);
+	void PostLoad();
+
 public:
 	CGameSetup();
 	~CGameSetup();
@@ -152,6 +156,6 @@ private:
 	std::map<std::string, int> restrictedUnits;
 };
 
-extern const CGameSetup* gameSetup;
+extern CGameSetup* gameSetup;
 
 #endif // _GAME_SETUP_H

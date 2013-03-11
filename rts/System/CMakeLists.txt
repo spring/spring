@@ -73,6 +73,7 @@ SET(sources_engine_System_creg
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/VarTypes.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg_runtime_tests.cpp"
 	)
 SET(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveLoader.cpp"

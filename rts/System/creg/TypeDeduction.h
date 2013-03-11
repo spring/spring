@@ -9,7 +9,7 @@
 #define _TYPE_DEDUCTION_H
 
 #include <boost/shared_ptr.hpp>
-#include "creg.h"
+#include "creg_cond.h"
 #include <boost/cstdint.hpp>
 
 namespace creg {

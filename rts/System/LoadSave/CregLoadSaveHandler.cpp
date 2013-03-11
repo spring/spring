@@ -47,15 +47,10 @@ public:
 	CGameStateCollector() {}
 
 	void Serialize(creg::ISerializer& s);
-
-	std::string mapName;
-	std::string modName;
 };
 
 CR_BIND(CGameStateCollector, );
 CR_REG_METADATA(CGameStateCollector, (
-	CR_MEMBER(mapName),
-	CR_MEMBER(modName),
 	CR_SERIALIZER(Serialize)
 ));
 
@@ -77,6 +72,7 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 	// GetClass() works because readmap and uh both have to exist already
 	s.SerializeObjectInstance(gs, gs->GetClass());
 	s.SerializeObjectInstance(gu, gu->GetClass());
+	s.SerializeObjectInstance(gameSetup, gameSetup->GetClass());
 	s.SerializeObjectInstance(game, game->GetClass());
 	s.SerializeObjectInstance(readmap, readmap->GetClass());
 	s.SerializeObjectInstance(quadField, quadField->GetClass());
@@ -161,6 +157,9 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 	// we set them to empty strings, as ReadString() does append,
 	// and we would end up with the correct value but two times
 	// eg: "AbcAbc" instead of "Abc"
+
+	//FIXME remove
+	/**/
 	scriptText = "";
 	modName = "";
 	mapName = "";
@@ -179,6 +178,7 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 	}
 	ReadString(*ifs, modName);
 	ReadString(*ifs, mapName);
+	/**/
 }
 
 /// this should be called on frame 0 when the game has started
