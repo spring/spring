@@ -770,7 +770,7 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	}
 	else if (cmdline->IsSet("test-creg")) {
-		int res = creg::RuntimeTest();
+		int res = creg::RuntimeTest() ? 0 : 1;
 		exit(res);
 	}
 
