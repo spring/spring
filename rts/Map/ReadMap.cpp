@@ -19,7 +19,6 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/LoadSave/LoadSaveInterface.h"
 #include "System/Misc/RectangleOptimizer.h"
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
