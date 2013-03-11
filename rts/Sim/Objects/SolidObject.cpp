@@ -33,8 +33,8 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
 
-	CR_MEMBER_UN(luaDraw),
-	CR_MEMBER_UN(noSelect),
+	CR_MEMBER(luaDraw),
+	CR_MEMBER(noSelect),
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
@@ -69,16 +69,13 @@ CR_REG_METADATA(CSolidObject,
  	CR_MEMBER(relAimPos),
 	CR_MEMBER(midPos),
 	CR_MEMBER(aimPos),
-	// can not get creg work on templates (NOTE: what??)
 	CR_MEMBER(mapPos),
 
-	CR_MEMBER_UN(drawPos),
-	CR_MEMBER_UN(drawMidPos),
+	CR_MEMBER(drawPos),
+	CR_MEMBER(drawMidPos),
 
-	//CR_MEMBER(blockMap),
+	//CR_MEMBER(blockMap), //FIXME add bitwiseenum to creg
 	CR_MEMBER(buildFacing)
-
-	//CR_RESERVED(16)
 ));
 
 
@@ -146,7 +143,7 @@ void CSolidObject::UnBlock() {
 
 void CSolidObject::Block() {
 	if (physicalState == Flying) {
-		//FIXME why does airmovetypes really on Block() to UNblock!
+		//FIXME why does airmovetypes really rely on Block() to UNblock!
 		UnBlock();
 		return;
 	}

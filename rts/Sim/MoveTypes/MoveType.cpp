@@ -39,9 +39,9 @@ AMoveType::AMoveType(CUnit* owner):
 
 	progressState(Done),
 
-	maxSpeed(owner->unitDef->speed / GAME_SPEED),
-	maxSpeedDef(owner->unitDef->speed / GAME_SPEED),
-	maxWantedSpeed(owner->unitDef->speed / GAME_SPEED),
+	maxSpeed(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
+	maxSpeedDef(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
+	maxWantedSpeed(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
 
 	repairBelowHealth(0.3f)
 {

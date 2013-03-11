@@ -21,7 +21,7 @@ class CUnit;
 class CPlayer : public PlayerBase
 {
 public:
-	CR_DECLARE_STRUCT(CPlayer);
+	CR_DECLARE(CPlayer);
 
 	CPlayer();
 	~CPlayer() {}

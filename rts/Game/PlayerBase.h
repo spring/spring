@@ -4,6 +4,7 @@
 #define PLAYER_BASE_H
 
 #include "Game/TeamController.h"
+#include "System/creg/creg_cond.h"
 
 #include <string>
 #include <map>
@@ -13,6 +14,8 @@
  */
 class PlayerBase : public TeamController
 {
+	CR_DECLARE(PlayerBase);
+
 public:
 	typedef std::map<std::string, std::string> customOpts;
 
@@ -20,7 +23,7 @@ public:
 	 * @brief Constructor assigning standard values
 	 */
 	PlayerBase();
-	
+
 	void SetValue(const std::string& key, const std::string& value);
 	const customOpts& GetAllValues() const {
 		return customValues;

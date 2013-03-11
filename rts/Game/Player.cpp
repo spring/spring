@@ -24,7 +24,8 @@
 #include "System/Log/ILog.h"
 #include "System/creg/STL_Set.h"
 
-CR_BIND(CPlayer,);
+
+CR_BIND_DERIVED(CPlayer, PlayerBase, );
 CR_REG_METADATA(CPlayer, (
 	CR_MEMBER(active),
 	CR_MEMBER(playerNum),

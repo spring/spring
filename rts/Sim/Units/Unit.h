@@ -22,7 +22,6 @@
 class CPlayer;
 class CCommandAI;
 class CGroup;
-class CLoadSaveInterface;
 class CMissileProjectile;
 class AMoveType;
 class CWeapon;
@@ -184,7 +183,6 @@ public:
 
 public:
 	virtual void KillUnit(bool SelfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence = true);
-	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	virtual void IncomingMissile(CMissileProjectile* missile);
 	void TempHoldFire();
 	void ReleaseTempHoldFire();

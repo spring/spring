@@ -41,9 +41,12 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(drawQuad),
 	CR_MEMBER(fireTime),
 	CR_MEMBER(smokeTime),
+	CR_MEMBER(fireTime),
+	CR_IGNORED(def), //reconstructed in PostLoad
+	CR_MEMBER(udef),
 	CR_MEMBER(myFire),
+	CR_MEMBER(solidOnTop),
 	CR_MEMBER(transMatrix),
-	CR_RESERVED(64),
 	CR_POSTLOAD(PostLoad)
 ));
 

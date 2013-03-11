@@ -19,7 +19,7 @@
 class TeamController
 {
 public:
-	CR_DECLARE_STRUCT(TeamController);
+	CR_DECLARE(TeamController);
 
 	/**
 	 * @brief Constructor assigning default values.

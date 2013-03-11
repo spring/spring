@@ -161,7 +161,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	flying(false),
 	reversing(false),
 	idling(false),
-	canReverse(owner->unitDef->rSpeed > 0.0f),
+	canReverse(owner ? owner->unitDef->rSpeed > 0.0f : false),
 	useMainHeading(false),
 
 	skidRotVector(UpVector),
@@ -180,20 +180,19 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	numIdlingUpdates(0),
 	numIdlingSlowUpdates(0),
 
+	moveSquareX(owner ? owner->pos.x / MIN_WAYPOINT_DISTANCE : 0),
+	moveSquareY(owner ? owner->pos.z / MIN_WAYPOINT_DISTANCE : 0),
+
 	wantedHeading(0)
 {
-	assert(owner != NULL);
-	assert(owner->unitDef != NULL);
+	if (owner && owner->unitDef) {
+		// maxSpeed is set in AMoveType's ctor
+		maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
 
-	moveSquareX = owner->pos.x / MIN_WAYPOINT_DISTANCE;
-	moveSquareY = owner->pos.z / MIN_WAYPOINT_DISTANCE;
-
-	// maxSpeed is set in AMoveType's ctor
-	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
-
-	turnRate = owner->unitDef->turnRate;
-	accRate = std::max(0.01f, owner->unitDef->maxAcc);
-	decRate = std::max(0.01f, owner->unitDef->maxDec);
+		turnRate = owner->unitDef->turnRate;
+		accRate = std::max(0.01f, owner->unitDef->maxAcc);
+		decRate = std::max(0.01f, owner->unitDef->maxDec);
+	}
 }
 
 CGroundMoveType::~CGroundMoveType()

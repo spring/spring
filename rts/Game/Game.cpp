@@ -187,26 +187,26 @@ CGame* game = NULL;
 CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame,(
-//	CR_MEMBER(finishedLoading),
-//	CR_MEMBER(drawMode),
-//	CR_MEMBER(thisFps),
+	CR_IGNORED(finishedLoading),
+	CR_IGNORED(thisFps),
 	CR_MEMBER(lastSimFrame),
-//	CR_MEMBER(frameStartTime),
-//	CR_MEMBER(lastUpdateTime),
-//	CR_MEMBER(lastSimFrameTime),
-//	CR_MEMBER(lastDrawFrameTime),
-//	CR_MEMBER(lastModGameTimeMeasure),
-//	CR_MEMBER(updateDeltaSeconds),
+	CR_IGNORED(frameStartTime),
+	CR_IGNORED(lastUpdateTime),
+	CR_IGNORED(lastSimFrameTime),
+	CR_IGNORED(lastDrawFrameTime),
+	CR_IGNORED(lastModGameTimeMeasure),
+	CR_IGNORED(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
 	CR_MEMBER(userInputPrefix),
 	CR_MEMBER(lastTick),
 	CR_MEMBER(chatSound),
-//	CR_MEMBER(camMove),
-//	CR_MEMBER(camRot),
+	CR_IGNORED(camMove),
+	CR_IGNORED(camRot),
 	CR_MEMBER(hideInterface),
 	CR_MEMBER(gameOver),
-//	CR_MEMBER(windowedEdgeMove),
-//	CR_MEMBER(fullscreenEdgeMove),
+	CR_IGNORED(gameDrawMode);
+	CR_IGNORED(windowedEdgeMove),
+	CR_IGNORED(fullscreenEdgeMove),
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
@@ -215,21 +215,20 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(mtInfoCtrl),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
-//	CR_MEMBER(script),
-//	CR_MEMBER(infoConsole),
-//	CR_MEMBER(consoleHistory),
-//	CR_MEMBER(hotBinding),
-//	CR_MEMBER(inputTextPosX),
-//	CR_MEMBER(inputTextPosY),
-//	CR_MEMBER(inputTextSizeX),
-//	CR_MEMBER(inputTextSizeY),
-//	CR_MEMBER(skipping),
+	//CR_MEMBER(infoConsole),
+	//CR_MEMBER(consoleHistory),
+	CR_IGNORED(hotBinding),
+	CR_IGNORED(inputTextPosX),
+	CR_IGNORED(inputTextPosY),
+	CR_IGNORED(inputTextSizeX),
+	CR_IGNORED(inputTextSizeY),
+	CR_IGNORED(skipping),
 	CR_MEMBER(playing),
-//	CR_MEMBER(lastFrameTime),
-//	CR_MEMBER(unconsumedFrames),
-//	CR_MEMBER(msgProcTimeLeft),
-//	CR_MEMBER(consumeSpeed),
-//	CR_MEMBER(lastframe),
+	CR_IGNORED(lastFrameTime),
+	CR_IGNORED(unconsumedFrames),
+	CR_IGNORED(msgProcTimeLeft),
+	CR_IGNORED(consumeSpeed),
+	CR_IGNORED(lastframe),
 
 	CR_POSTLOAD(PostLoad)
 ));
@@ -749,8 +748,9 @@ void CGame::LoadFinalize()
 
 void CGame::PostLoad()
 {
+	GameSetupDrawer::Disable();
 	if (gameServer) {
-		gameServer->PostLoad(lastTick, gs->frameNum);
+		gameServer->PostLoad(gs->frameNum);
 	}
 }
 

@@ -19,12 +19,11 @@
 #include <limits>
 
 CR_BIND(CInterceptHandler, )
-CR_REG_METADATA(CInterceptHandler, /*(
-	//FIXME all use pointers use Serialize() and save projID instead
-	//CR_MEMBER(interceptors),
-	//CR_MEMBER(repulsors),
-	//CR_MEMBER(interceptables)
-)*/);
+CR_REG_METADATA(CInterceptHandler, (
+	CR_MEMBER(interceptors),
+	CR_MEMBER(repulsors)//,
+	//CR_MEMBER(interceptables) FIXME
+));
 
 CInterceptHandler interceptHandler;
 

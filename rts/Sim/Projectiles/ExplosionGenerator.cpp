@@ -73,7 +73,7 @@ CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
 CR_REG_METADATA(CCustomExplosionGenerator, (
 	CR_MEMBER(explosionIDs),
 	CR_MEMBER(explosionData)//,
-	//CR_MEMBER(spawnExplGens) FIXME contains pointers
+	//CR_MEMBER(spawnExplGens) FIXME
 ));
 
 
