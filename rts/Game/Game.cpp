@@ -186,7 +186,7 @@ CGame* game = NULL;
 
 CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
-CR_REG_METADATA(CGame,(
+CR_REG_METADATA(CGame, (
 	CR_IGNORED(finishedLoading),
 	CR_IGNORED(thisFps),
 	CR_MEMBER(lastSimFrame),
@@ -204,7 +204,7 @@ CR_REG_METADATA(CGame,(
 	CR_IGNORED(camRot),
 	CR_MEMBER(hideInterface),
 	CR_MEMBER(gameOver),
-	CR_IGNORED(gameDrawMode);
+	CR_IGNORED(gameDrawMode),
 	CR_IGNORED(windowedEdgeMove),
 	CR_IGNORED(fullscreenEdgeMove),
 	CR_MEMBER(showFPS),

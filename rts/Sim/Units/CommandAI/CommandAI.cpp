@@ -23,7 +23,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
-#include "System/LoadSave/LoadSaveInterface.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/creg/STL_Set.h"
