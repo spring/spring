@@ -8,6 +8,11 @@ Bugfixes:
  - fixed treedrawer crash
  - fixed MT crashes
  - fixed X11 cursor offset
+ - fixed smooth camera transitions
+ - fixed clipped sun
+ - fixed selection sounds
+ - fixed attack cursor for kamikaze units
+ - fixed wrong assimp texture
 
 
 -- 93.0 ---------------------------------------------------------
