@@ -12,7 +12,7 @@ class CUnit;
 
 class CWind : public boost::noncopyable
 {
-	CR_DECLARE(CWind);
+	CR_DECLARE_STRUCT(CWind);
 
 public:
 	CWind();

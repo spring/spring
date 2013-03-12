@@ -25,14 +25,13 @@ CR_BIND_DERIVED(CWeaponProjectile, CProjectile, );
 CR_REG_METADATA(CWeaponProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(targeted),
-//	CR_MEMBER(weaponDef),
+	CR_IGNORED(weaponDef), //PostLoad
 	CR_MEMBER(target),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(startpos),
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
 	CR_MEMBER(weaponDefID),
-	CR_RESERVED(15),
 	CR_POSTLOAD(PostLoad)
 ));
 
@@ -82,10 +81,10 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params, const bool 
 		//speed = (targetPos - startpos) + weaponDef->collisionSize; //FIXME move to CProjectileHandler::Check...Collision?
 		drawRadius = startpos.distance(targetPos);
 	}
-	
+
 	CSolidObject* so = NULL;
 	CWeaponProjectile* po = NULL;
-	
+
 	if ((so = dynamic_cast<CSolidObject*>(target)) != NULL) {
 		AddDeathDependence(so, DEPENDENCE_WEAPONTARGET);
 	}
@@ -325,9 +324,4 @@ void CWeaponProjectile::PostLoad()
 {
 	weaponDef = weaponDefHandler->GetWeaponDefByID(weaponDefID);
 	model = weaponDef->LoadModel();
-
-//	if(weaponDef->interceptedByShieldType)
-//		interceptHandler.AddShieldInterceptableProjectile(this);
-
-//	collisionFlags = weaponDef->collisionFlags;
 }

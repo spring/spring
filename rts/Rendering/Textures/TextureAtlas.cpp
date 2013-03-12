@@ -18,8 +18,13 @@
 #include <list>
 #include <cstring>
 
-CR_BIND_DERIVED(AtlasedTexture, float4, );
-CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );
+CR_BIND(AtlasedTexture, );
+CR_REG_METADATA(AtlasedTexture,
+		(CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)));
+
+CR_BIND(GroundFXTexture, );
+CR_REG_METADATA(GroundFXTexture,
+		(CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)));
 
 // texture spacing in the atlas (in pixels)
 #define TEXMARGIN 2

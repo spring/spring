@@ -22,7 +22,12 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(checkCol),
 	CR_MEMBER(ignoreWater),
 	CR_MEMBER(deleteMe),
-	CR_MEMBER(castShadow), // unsynced
+	CR_MEMBER(castShadow),
+
+	CR_MEMBER(lastProjUpdate),
+	CR_MEMBER(dir),
+	CR_MEMBER(drawPos),
+	CR_IGNORED(tempdist),
 
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),

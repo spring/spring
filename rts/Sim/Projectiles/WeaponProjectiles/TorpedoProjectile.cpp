@@ -24,14 +24,12 @@ CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ProjectileParams()));
 CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
-	CR_MEMBER(dir),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(curSpeed),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(nextBubble),
 	CR_MEMBER(texx),
-	CR_MEMBER(texy),
-	CR_RESERVED(16)
+	CR_MEMBER(texy)
 ));
 
 CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponProjectile(params)

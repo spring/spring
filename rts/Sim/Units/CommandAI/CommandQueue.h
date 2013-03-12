@@ -15,7 +15,7 @@ class CCommandQueue {
 	friend class CFactoryCAI;
 
 	// see CommandAI.cpp for further creg stuff for this class
-	CR_DECLARE(CCommandQueue);
+	CR_DECLARE_STRUCT(CCommandQueue);
 
 	public:
 		enum QueueType {
@@ -51,13 +51,13 @@ class CCommandQueue {
 		{
 			GML_STDMUTEX_LOCK(cai); // pop_back
 
-			queue.pop_back(); 
+			queue.pop_back();
 		}
 		inline void pop_front()
 		{
 			GML_STDMUTEX_LOCK(cai); // pop_front
 
-			queue.pop_front(); 
+			queue.pop_front();
 		}
 
 		inline iterator erase(iterator pos)
@@ -74,9 +74,9 @@ class CCommandQueue {
 		}
 		inline void clear()
 		{
-			GML_STDMUTEX_LOCK(cai); // clear 
+			GML_STDMUTEX_LOCK(cai); // clear
 
-			queue.clear(); 
+			queue.clear();
 		}
 
 		inline iterator       end()         { return queue.end(); }

@@ -63,8 +63,8 @@ CR_REG_METADATA(CTeam, (
 	CR_MEMBER(prevEnergyReceived),
 	CR_MEMBER(prevEnergyExcess),
 	CR_MEMBER(nextHistoryEntry),
-	//CR_MEMBER(statHistory),
-	//CR_MEMBER(currentStats),
+	CR_MEMBER(statHistory),
+	CR_MEMBER(currentStats),
 	CR_MEMBER(modParams),
 	CR_MEMBER(modParamsMap),
 	CR_IGNORED(highlight)

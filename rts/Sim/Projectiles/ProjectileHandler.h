@@ -48,7 +48,7 @@ typedef ThreadMapRender<CProjectile*, int, ProjectileMapValPair, ProjectileIndex
 
 class CProjectileHandler
 {
-	CR_DECLARE(CProjectileHandler);
+	CR_DECLARE_STRUCT(CProjectileHandler);
 
 public:
 	CProjectileHandler();
@@ -96,7 +96,7 @@ public:
 		particleSaturation     = (maxParticles     > 0)? (currentParticles     / float(maxParticles    )): 1.0f;
 		nanoParticleSaturation = (maxNanoParticles > 0)? (currentNanoParticles / float(maxNanoParticles)): 1.0f;
 	}
-	
+
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
 	void AddFlyingPiece(const float3& pos, const float3& speed, int team, const S3DOPiece* piece, const S3DOPrimitive* chunk);

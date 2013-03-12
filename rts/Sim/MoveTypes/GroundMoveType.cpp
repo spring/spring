@@ -76,8 +76,8 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
-
 CR_REG_METADATA(CGroundMoveType, (
+	CR_IGNORED(pathController),
 	CR_MEMBER(turnRate),
 	CR_MEMBER(accRate),
 	CR_MEMBER(decRate),
@@ -126,7 +126,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(skidRotAccel),
 	CR_ENUM_MEMBER(oldPhysState),
 
-	CR_RESERVED(64),
 	CR_POSTLOAD(PostLoad)
 ));
 
@@ -136,7 +135,7 @@ std::vector<int2> CGroundMoveType::lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
 
 CGroundMoveType::CGroundMoveType(CUnit* owner):
 	AMoveType(owner),
-	pathController(IPathController::GetInstance(owner)),
+	pathController(owner ? IPathController::GetInstance(owner) : NULL),
 
 	turnRate(0.1f),
 	accRate(0.01f),
@@ -206,6 +205,8 @@ CGroundMoveType::~CGroundMoveType()
 
 void CGroundMoveType::PostLoad()
 {
+	pathController = IPathController::GetInstance(owner);
+
 	// HACK: re-initialize path after load
 	if (pathId != 0) {
 		pathId = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true);
